@@ -154,6 +154,9 @@ static void update(IDirect3DLightImpl* This) {
 
 static void activate(IDirect3DLightImpl* This) {
     IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+
+    TRACE("(%p)\n", This);
+    
     ENTER_GL();
     update(This);
     /* If was not active, activate it */
@@ -166,6 +169,9 @@ static void activate(IDirect3DLightImpl* This) {
 
 static void desactivate(IDirect3DLightImpl* This) {
     IDirect3DLightGLImpl *glThis = (IDirect3DLightGLImpl *) This;
+    
+    TRACE("(%p)\n", This);
+    
     ENTER_GL();
     /* If was not active, activate it */
     if ((glThis->parent.light.dwFlags & D3DLIGHT_ACTIVE) != 0) {

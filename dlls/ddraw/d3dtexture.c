@@ -266,10 +266,13 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *surf_ptr, IDirect3DDeviceImpl *d3dd
 	    snoop_texture(surf_ptr);
 
 	    if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						  gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == D3D_OK) {
+						  gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == DD_OK) {
 	        upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		upload_surface_to_tex_memory_release();
 		gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
+	    } else {
+		ERR("Problem for upload of texture %d (level = %d / initial done = %d).\n",
+		    gl_surf_ptr->tex_name, surf_ptr->mipmap_level, gl_surf_ptr->initial_upload_done);
 	    }
 	}
 	
@@ -302,6 +305,8 @@ gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *This, DWORD dwFlags, LPDDCOLORKEY c
 
     if (glThis->dirty_flag == SURFACE_GL) {
 	GLuint cur_tex;
+
+	TRACE(" flushing GL texture back to memory.\n");
 	
 	ENTER_GL();
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
@@ -368,6 +373,10 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		return DDERR_INVALIDPARAMS;
 	    }
 
+	    if ((width == 0) || (height == 0)) {
+		return DD_OK;
+	    }
+	    
 	    TRACE(" direct frame buffer => texture BltFast override.\n");
 	    
 	    ENTER_GL();
@@ -380,24 +389,29 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 		  (width == surf_ptr->surface_desc.dwWidth) && (height == surf_ptr->surface_desc.dwHeight))) {
 		/* If not 'full size' and the surface is dirty, first flush it to GL before doing the copy. */
 	        if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						      gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) != D3D_OK) {
+						      gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) == DD_OK) {
 		    upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
 		} else {
+		    glBindTexture(GL_TEXTURE_2D, cur_tex);
+		    LEAVE_GL();
+		    ERR("Error at texture upload !\n");
 		    return DDERR_INVALIDPARAMS;
 		}
 	    }
 
 	    /* This is a hack and would need some clean-up :-) */
 	    if (gl_surf_ptr->initial_upload_done == FALSE) {
-		gl_surf_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
 		if (upload_surface_to_tex_memory_init(surf_ptr, surf_ptr->mipmap_level, &(gl_surf_ptr->current_internal_format),
-						       gl_surf_ptr->initial_upload_done == FALSE, TRUE, 0, 0) != D3D_OK) {
+						      TRUE, TRUE, 0, 0) == DD_OK) {
 		    upload_surface_to_tex_memory(NULL, 0, 0, &(gl_surf_ptr->surface_ptr));
 		    upload_surface_to_tex_memory_release();
 		    gl_surf_ptr->dirty_flag = SURFACE_MEMORY;
 		} else {
+		    glBindTexture(GL_TEXTURE_2D, cur_tex);
+		    LEAVE_GL();
+		    ERR("Error at texture upload (initial case) !\n");
 		    return DDERR_INVALIDPARAMS;
 		}
 	    }
@@ -489,6 +503,8 @@ static void gltex_set_palette(IDirectDrawSurfaceImpl* This, IDirectDrawPaletteIm
 
     if (glThis->dirty_flag == SURFACE_GL) {
 	GLuint cur_tex;
+	
+	TRACE(" flushing GL texture back to memory.\n");
 	
 	ENTER_GL();
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
@@ -836,18 +852,19 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	   to save those... */
 	surf->aux_blt = gltex_blt;
 	surf->aux_bltfast = gltex_bltfast;
-
+	
+	TRACE(" GL texture created for surface %p (private data at %p)\n", surf, private);
+	
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {
 	    glGenTextures(1, &(private->tex_name));
 	    if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
-	    TRACE(" GL texture created for surface %p (private data at %p and GL id %d).\n", surf, private, private->tex_name);
+	    TRACE(" GL texture id is : %d.\n", private->tex_name);
 	    private->__global_dirty_flag = (at_creation == FALSE ? SURFACE_MEMORY_DIRTY : SURFACE_MEMORY);
 	    private->global_dirty_flag = &(private->__global_dirty_flag);
 	} else {
 	    private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
-	    TRACE(" GL texture created for surface %p (private data at %p and GL id reusing id %d from surface %p (%p)).\n",
-		  surf, private, private->tex_name, main, main->tex_private);
+	    TRACE(" GL texture id reusing id %d from surface %p (private at %p)).\n", private->tex_name, main, main->tex_private);
 	    private->global_dirty_flag = &(((IDirect3DTextureGLImpl *) (main->tex_private))->__global_dirty_flag);
 	}
 	LEAVE_GL();

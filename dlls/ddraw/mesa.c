@@ -88,8 +88,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
     DWORD dwRenderState = lpStateBlock->render_state[dwRenderStateType - 1];
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     
-    if (TRACE_ON(ddraw))
-        TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
+    TRACE("%s = %08lx\n", _get_renderstate(dwRenderStateType), dwRenderState);
 
     /* First, all the stipple patterns */
     if ((dwRenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00) &&
@@ -623,169 +622,189 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
 	   RGB Textures
 	   ************ */
 	if (src_pf->u1.dwRGBBitCount == 8) {
-	    if ((src_pf->u2.dwRBitMask == 0xE0) &&
-		(src_pf->u3.dwGBitMask == 0x1C) &&
-		(src_pf->u4.dwBBitMask == 0x03)) {
-		/* **********************
-		   GL_UNSIGNED_BYTE_3_3_2
-		   ********************** */
-		if (colorkey_active) {
-		    /* This texture format will never be used.. So do not care about color keying
-		       up until the point in time it will be needed :-) */
-		    FIXME(" ColorKeying not supported in the RGB 332 format !");
-		}
-		current_format = GL_RGB;
-		internal_format = GL_RGB;
-		current_pixel_format = GL_UNSIGNED_BYTE_3_3_2;
-		convert_type = NO_CONVERSION;
-	    } else {
+	    if ((src_pf->dwFlags & DDPF_ALPHAPIXELS) &&
+		(src_pf->u5.dwRGBAlphaBitMask != 0x00)) {
 		error = TRUE;
+	    } else {
+		if ((src_pf->u2.dwRBitMask == 0xE0) &&
+		    (src_pf->u3.dwGBitMask == 0x1C) &&
+		    (src_pf->u4.dwBBitMask == 0x03)) {
+		    /* **********************
+		       GL_UNSIGNED_BYTE_3_3_2
+		       ********************** */
+		    if (colorkey_active) {
+			/* This texture format will never be used.. So do not care about color keying
+			   up until the point in time it will be needed :-) */
+			FIXME(" ColorKeying not supported in the RGB 332 format !");
+		    }
+		    current_format = GL_RGB;
+		    internal_format = GL_RGB;
+		    current_pixel_format = GL_UNSIGNED_BYTE_3_3_2;
+		    convert_type = NO_CONVERSION;
+		} else {
+		    error = TRUE;
+		}
 	    }
 	} else if (src_pf->u1.dwRGBBitCount == 16) {
-	    if ((src_pf->u2.dwRBitMask ==        0xF800) &&
-		(src_pf->u3.dwGBitMask ==        0x07E0) &&
-		(src_pf->u4.dwBBitMask ==        0x001F) &&
-		(src_pf->u5.dwRGBAlphaBitMask == 0x0000)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_565;
+	    if ((src_pf->dwFlags & DDPF_ALPHAPIXELS) &&
+		(src_pf->u5.dwRGBAlphaBitMask != 0x0000)) {
+		if ((src_pf->u2.dwRBitMask ==        0xF800) &&
+		    (src_pf->u3.dwGBitMask ==        0x07C0) &&
+		    (src_pf->u4.dwBBitMask ==        0x003E) &&
+		    (src_pf->u5.dwRGBAlphaBitMask == 0x0001)) {
 		    current_format = GL_RGBA;
 		    internal_format = GL_RGBA;
 		    current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_RGB;
-		    internal_format = GL_RGB;
-		    current_pixel_format = GL_UNSIGNED_SHORT_5_6_5;
-		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0xF800) &&
-		       (src_pf->u3.dwGBitMask ==        0x07C0) &&
-		       (src_pf->u4.dwBBitMask ==        0x003E) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0x0001)) {
-		current_format = GL_RGBA;
-		internal_format = GL_RGBA;
-		current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_5551;
-		} else {
-		    convert_type = NO_CONVERSION;
-		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0xF000) &&
-		       (src_pf->u3.dwGBitMask ==        0x0F00) &&
-		       (src_pf->u4.dwBBitMask ==        0x00F0) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0x000F)) {
-		current_format = GL_RGBA;
-		internal_format = GL_RGBA;
-		current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_4444;
-		} else {
-		    convert_type = NO_CONVERSION;
-		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0x0F00) &&
-		       (src_pf->u3.dwGBitMask ==        0x00F0) &&
-		       (src_pf->u4.dwBBitMask ==        0x000F) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0xF000)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_4444_ARGB;
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_5551;
+		    } else {
+			convert_type = NO_CONVERSION;
+		    }
+		} else if ((src_pf->u2.dwRBitMask ==        0xF000) &&
+			   (src_pf->u3.dwGBitMask ==        0x0F00) &&
+			   (src_pf->u4.dwBBitMask ==        0x00F0) &&
+			   (src_pf->u5.dwRGBAlphaBitMask == 0x000F)) {
 		    current_format = GL_RGBA;
 		    internal_format = GL_RGBA;
 		    current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_4444;
+		    } else {
+			convert_type = NO_CONVERSION;
+		    }
+		} else if ((src_pf->u2.dwRBitMask ==        0x0F00) &&
+			   (src_pf->u3.dwGBitMask ==        0x00F0) &&
+			   (src_pf->u4.dwBBitMask ==        0x000F) &&
+			   (src_pf->u5.dwRGBAlphaBitMask == 0xF000)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_4444_ARGB;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_BGRA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+		    }
+		} else if ((src_pf->u2.dwRBitMask ==        0x7C00) &&
+			   (src_pf->u3.dwGBitMask ==        0x03E0) &&
+			   (src_pf->u4.dwBBitMask ==        0x001F) &&
+			   (src_pf->u5.dwRGBAlphaBitMask == 0x8000)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_1555;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_BGRA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+		    }
 		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_BGRA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_SHORT_4_4_4_4_REV;
+		    error = TRUE;
 		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0x7C00) &&
-		       (src_pf->u3.dwGBitMask ==        0x03E0) &&
-		       (src_pf->u4.dwBBitMask ==        0x001F) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0x8000)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_1555;
+	    } else {
+		if ((src_pf->u2.dwRBitMask == 0xF800) &&
+		    (src_pf->u3.dwGBitMask == 0x07E0) &&
+		    (src_pf->u4.dwBBitMask == 0x001F)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_565;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_RGB;
+			internal_format = GL_RGB;
+			current_pixel_format = GL_UNSIGNED_SHORT_5_6_5;
+		    }
+		} else if ((src_pf->u2.dwRBitMask == 0x7C00) &&
+			   (src_pf->u3.dwGBitMask == 0x03E0) &&
+			   (src_pf->u4.dwBBitMask == 0x001F)) {
+		    convert_type = CONVERT_555;
 		    current_format = GL_RGBA;
 		    internal_format = GL_RGBA;
 		    current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_BGRA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_SHORT_1_5_5_5_REV;
+		    error = TRUE;
 		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0x7C00) &&
-		       (src_pf->u3.dwGBitMask ==        0x03E0) &&
-		       (src_pf->u4.dwBBitMask ==        0x001F) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0x0000)) {
-		convert_type = CONVERT_555;
-		current_format = GL_RGBA;
-		internal_format = GL_RGBA;
-		current_pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
-	    } else {
-		error = TRUE;
 	    }
 	} else if (src_pf->u1.dwRGBBitCount == 24) {
-	    if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
-		(src_pf->u3.dwGBitMask ==        0x0000FF00) &&
-		(src_pf->u4.dwBBitMask ==        0x000000FF) &&
-		(src_pf->u5.dwRGBAlphaBitMask == 0x00000000)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_RGB24;
-		    current_format = GL_RGBA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_BGR;
-		    internal_format = GL_RGB;
-		    current_pixel_format = GL_UNSIGNED_BYTE;
-		}
-	    } else {
+	    if ((src_pf->dwFlags & DDPF_ALPHAPIXELS) &&
+		(src_pf->u5.dwRGBAlphaBitMask != 0x000000)) {
 		error = TRUE;
+	    } else {
+		if ((src_pf->u2.dwRBitMask == 0xFF0000) &&
+		    (src_pf->u3.dwGBitMask == 0x00FF00) &&
+		    (src_pf->u4.dwBBitMask == 0x0000FF)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_RGB24;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_BGR;
+			internal_format = GL_RGB;
+			current_pixel_format = GL_UNSIGNED_BYTE;
+		    }
+		} else {
+		    error = TRUE;
+		}
 	    }
 	} else if (src_pf->u1.dwRGBBitCount == 32) {
-	    if ((src_pf->u2.dwRBitMask ==        0xFF000000) &&
-		(src_pf->u3.dwGBitMask ==        0x00FF0000) &&
-		(src_pf->u4.dwBBitMask ==        0x0000FF00) &&
-		(src_pf->u5.dwRGBAlphaBitMask == 0x000000FF)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_8888;
-		} else {
-		    convert_type = NO_CONVERSION;
-		}
-		current_format = GL_RGBA;
-		internal_format = GL_RGBA;
-		current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-	    } else if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
-		       (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
-		       (src_pf->u4.dwBBitMask ==        0x000000FF) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0xFF000000)) {
-		if (colorkey_active) {
-		    convert_type = CONVERT_CK_8888_ARGB;
+	    if ((src_pf->dwFlags & DDPF_ALPHAPIXELS) &&
+		(src_pf->u5.dwRGBAlphaBitMask != 0x00000000)) {
+		if ((src_pf->u2.dwRBitMask ==        0xFF000000) &&
+		    (src_pf->u3.dwGBitMask ==        0x00FF0000) &&
+		    (src_pf->u4.dwBBitMask ==        0x0000FF00) &&
+		    (src_pf->u5.dwRGBAlphaBitMask == 0x000000FF)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_8888;
+		    } else {
+			convert_type = NO_CONVERSION;
+		    }
 		    current_format = GL_RGBA;
 		    internal_format = GL_RGBA;
 		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		} else if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
+			   (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
+			   (src_pf->u4.dwBBitMask ==        0x000000FF) &&
+			   (src_pf->u5.dwRGBAlphaBitMask == 0xFF000000)) {
+		    if (colorkey_active) {
+			convert_type = CONVERT_CK_8888_ARGB;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_BGRA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		    }
 		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_BGRA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
-		}
-	    } else if ((src_pf->u2.dwRBitMask ==        0x00FF0000) &&
-		       (src_pf->u3.dwGBitMask ==        0x0000FF00) &&
-		       (src_pf->u4.dwBBitMask ==        0x000000FF) &&
-		       (src_pf->u5.dwRGBAlphaBitMask == 0x00000000)) {
-		if (need_alpha_ck == TRUE) {
-		    convert_type = CONVERT_RGB32_888;
-		    current_format = GL_RGBA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
-		} else {
-		    convert_type = NO_CONVERSION;
-		    current_format = GL_BGRA;
-		    internal_format = GL_RGBA;
-		    current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		    error = TRUE;
 		}
 	    } else {
-		error = TRUE;
+		if ((src_pf->u2.dwRBitMask == 0x00FF0000) &&
+		    (src_pf->u3.dwGBitMask == 0x0000FF00) &&
+		    (src_pf->u4.dwBBitMask == 0x000000FF)) {
+		    if (need_alpha_ck == TRUE) {
+			convert_type = CONVERT_RGB32_888;
+			current_format = GL_RGBA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+		    } else {
+			convert_type = NO_CONVERSION;
+			current_format = GL_BGRA;
+			internal_format = GL_RGBA;
+			current_pixel_format = GL_UNSIGNED_INT_8_8_8_8_REV;
+		    }
+		} else {
+		    error = TRUE;
+		}
 	    }
 	} else {
 	    error = TRUE;
@@ -795,8 +814,8 @@ HRESULT upload_surface_to_tex_memory_init(IDirectDrawSurfaceImpl *surf_ptr, GLui
     } 
 
     if (error == TRUE) {
+	ERR("Unsupported pixel format for textures : \n");
 	if (ERR_ON(ddraw)) {
-	    ERR("  unsupported pixel format for textures : \n");
 	    DDRAW_dump_pixelformat(src_pf);
 	}
 	return DDERR_INVALIDPIXELFORMAT;

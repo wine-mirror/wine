@@ -126,8 +126,8 @@ static void set_context(IDirect3DDeviceImpl* This)
 {
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
    
-    ENTER_GL();
     TRACE("glxMakeCurrent %p, %ld, %p\n",glThis->display,glThis->drawable, glThis->gl_context);
+    ENTER_GL();
     if (glXMakeCurrent(glThis->display, glThis->drawable, glThis->gl_context) == False) {
 	ERR("Error in setting current context (context %p drawable %ld)!\n",
 	    glThis->gl_context, glThis->drawable);
@@ -1093,6 +1093,11 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     int num_active_stages = 0;
 
+    /* I put the trace before the various locks... So as to better understand where locks occur :-) */
+    if (TRACE_ON(ddraw)) {
+        TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
+    }
+
     /* This is to prevent 'thread contention' between a thread locking the device and another
        doing 3D display on it... */
     EnterCriticalSection(&(This->crit));   
@@ -1104,10 +1109,6 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 
     glThis->state = SURFACE_GL;
     
-    if (TRACE_ON(ddraw)) {
-        TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
-    }
-
     /* Just a hack for now.. Will have to find better algorithm :-/ */
     if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
         vertex_lighted = TRUE;
@@ -1925,6 +1926,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 		
 		if (glThis->current_bound_texture[stage] == NULL) {
 		    if (This->state_block.texture_stage_state[stage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
+			TRACE(" enabling 2D texturing and");
 			glEnable(GL_TEXTURE_2D);
 		    }
 		}
@@ -1933,6 +1935,13 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 	    }
 
 	    glThis->current_bound_texture[stage] = This->current_texture[stage];
+	} else {
+	    if (glThis->current_bound_texture[stage] == NULL) {
+		TRACE(" displaying without texturing activated for stage %ld.\n", stage);
+	    } else {
+		TRACE(" using already bound texture id %d for stage %ld.\n",
+		      ((IDirect3DTextureGLImpl *) (glThis->current_bound_texture[stage])->tex_private)->tex_name, stage);
+	    }
 	}
 
 	/* If no texure valid for this stage, go out of the loop */
@@ -2500,6 +2509,8 @@ d3ddevice_set_ortho(IDirect3DDeviceImpl *This)
 {
     GLfloat height, width;
     GLfloat trans_mat[16];
+
+    TRACE("(%p)\n", This);
     
     width = This->surface->surface_desc.dwWidth;
     height = This->surface->surface_desc.dwHeight;
@@ -2534,6 +2545,8 @@ void
 d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 		       D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat)
 {
+    TRACE("(%p,%08lx,%p,%p,%p)\n", This, matrices, world_mat, view_mat, proj_mat);
+    
     ENTER_GL();
     if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED)) != 0) {
         glMatrixMode(GL_MODELVIEW);
@@ -2645,7 +2658,10 @@ d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
 {
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     DWORD tex_mat, tex_stage;
-    if ((matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED)) != 0) {
+
+    TRACE("(%p,%08lx)\n", This, matrices);
+    
+    if (matrices & (VIEWMAT_CHANGED|WORLDMAT_CHANGED|PROJMAT_CHANGED)) {
         if (glThis->transform_state == GL_TRANSFORM_NORMAL) {
 	    /* This will force an update of the transform state at the next drawing. */
 	    glThis->transform_state = GL_TRANSFORM_NONE;
@@ -2722,24 +2738,34 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	/* Note that here we cannot do 'optmizations' about the WriteOnly flag... Indeed, a game
 	   may only write to the device... But when we will blit it back to the screen, we need
 	   also to blit correctly the parts the application did not overwrite... */
-	
-	if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
-	    (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0xF800) &&
-	    (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x07E0) &&
-	    (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x001F) &&
-	    (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000)) {
-	    buffer_type = GL_UNSIGNED_SHORT_5_6_5;
-	    buffer_color = GL_RGB;
-	} else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
-		   (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
-		   (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
-		   (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
-		   (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
-	    buffer_type = GL_UNSIGNED_BYTE;
-	    buffer_color = GL_BGRA;
-	    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+
+	if (((This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_RGB) != 0) &&
+	    (((This->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_ALPHAPIXELS) == 0) ||
+	     (This->surface_desc.u4.ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000))) {
+	    if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 16) &&
+		(This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0xF800) &&
+		(This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x07E0) &&
+		(This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x001F)) {
+		buffer_type = GL_UNSIGNED_SHORT_5_6_5;
+		buffer_color = GL_RGB;
+	    } else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 24) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0xFF0000) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x00FF00) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x0000FF)) {
+		buffer_type = GL_UNSIGNED_BYTE;
+		buffer_color = GL_RGB;
+	    } else if ((This->surface_desc.u4.ddpfPixelFormat.u1.dwRGBBitCount == 32) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u2.dwRBitMask == 0x00FF0000) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u3.dwGBitMask == 0x0000FF00) &&
+		       (This->surface_desc.u4.ddpfPixelFormat.u4.dwBBitMask == 0x000000FF)) {
+		buffer_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+		buffer_color = GL_BGRA;
+	    } else {
+		ERR(" unsupported pixel format at device locking.\n");
+		return;
+	    }
 	} else {
-	    ERR(" unsupported pixel format at device locking.\n");
+	    ERR(" unsupported pixel format at device locking - alpha on frame buffer.\n");
 	    return;
 	}
 
@@ -2774,8 +2800,6 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	    dst += This->surface_desc.u1.lPitch;
 	}
 
-	glPixelStorei(GL_PACK_SWAP_BYTES, FALSE);
-	
 	if (is_front)
 	    gl_d3d_dev->front_state = SURFACE_MEMORY;
 	else
@@ -2834,7 +2858,7 @@ static void d3ddevice_flush_to_frame_buffer(IDirect3DDeviceImpl *d3d_dev, LPCREC
 
     
     if (upload_surface_to_tex_memory_init(surf, 0, &gl_d3d_dev->current_internal_format,
-					  initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != D3D_OK) {
+					  initial, FALSE, UNLOCK_TEX_SIZE, UNLOCK_TEX_SIZE) != DD_OK) {
         ERR(" unsupported pixel format at frame buffer flush.\n");
 	return;
     }
@@ -2948,6 +2972,9 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
     if ((This->lastlocktype & DDLOCK_READONLY) == 0) {
         if (is_front == TRUE) {
 	    GLenum prev_draw;
+
+	    TRACE(" flushing front buffer immediatly on screen.\n");
+	    
 	    ENTER_GL();
 	    glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 	    glDrawBuffer(GL_FRONT);
@@ -3008,10 +3035,12 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     object->matrices_updated = d3ddevice_matrices_updated;
     object->flush_to_framebuffer = d3ddevice_flush_to_frame_buffer;
     
-    InitializeCriticalSection(&(object->crit));
-    
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 
+    InitializeCriticalSection(&(object->crit));
+
+    TRACE(" device critical section : %p\n", &(object->crit));
+    
     device_context = GetDC(surface->ddraw_owner->window);
     gl_object->display = get_display(device_context);
     gl_object->drawable = get_drawable(device_context);
