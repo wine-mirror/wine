@@ -642,6 +642,7 @@ typedef struct SAVEDSTATES {
         BOOL                      renderState[HIGHEST_RENDER_STATE];
         BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
+        BOOL                      vertexDecl;
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl

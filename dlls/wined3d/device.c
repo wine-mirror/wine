@@ -3535,6 +3535,60 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     return D3D_OK;
 }
 
+/*****
+ * Vertex Declaration
+ *****/
+extern HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This, const DWORD* pDecl, IWineD3DVertexDeclarationImpl* object);
+extern HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl* This, const D3DVERTEXELEMENT9* pDecl, IWineD3DVertexDeclarationImpl* object);
+
+HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface, UINT iDeclVersion, CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexDeclarationImpl* object = NULL;
+    HRESULT hr = D3D_OK;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVertexDeclarationImpl));
+    
+    object->lpVtbl = &IWineD3DVertexDeclaration_Vtbl;
+    object->wineD3DDevice = This;
+    object->ref = 1;
+    object->allFVF = 0;
+
+    *ppDecl = (IWineD3DVertexDeclaration*) object;
+
+    if (8 == iDeclVersion) {
+      /** @TODO */
+      hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(This, (const DWORD*) pDeclaration, object);
+    } else {
+      hr = IWineD3DVertexDeclarationImpl_ParseDeclaration9(This, (const D3DVERTEXELEMENT9*) pDeclaration, object);
+    }
+
+    return hr;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;   
+    
+    TRACE("(%p) : pDecl=%p\n", This, pDecl);
+
+    IWineD3DVertexDeclaration_AddRef(pDecl);
+    if (NULL != This->updateStateBlock->vertexDecl) {
+      IWineD3DVertexDeclaration_Release(This->updateStateBlock->vertexDecl);
+    }
+    This->updateStateBlock->vertexDecl = pDecl;
+    This->updateStateBlock->changed.vertexDecl = TRUE;
+    This->updateStateBlock->set.vertexDecl = TRUE;
+    return D3D_OK;
+}
+HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppDecl) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p) : pDecl=%p\n", This, ppDecl);
+    
+    *ppDecl = This->updateStateBlock->vertexDecl;
+    if (NULL != *ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -3628,5 +3682,9 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_DrawPrimitiveUP,
     IWineD3DDeviceImpl_DrawIndexedPrimitiveUP,
 
+    IWineD3DDeviceImpl_CreateVertexDeclaration,
+    IWineD3DDeviceImpl_SetVertexDeclaration,
+    IWineD3DDeviceImpl_GetVertexDeclaration,
+    
     IWineD3DDeviceImpl_SetupTextureStates
 };

@@ -131,7 +131,9 @@ typedef struct IWineD3DVolumeTexture  IWineD3DVolumeTexture;
 typedef struct IWineD3DStateBlock     IWineD3DStateBlock;
 typedef struct IWineD3DSurface        IWineD3DSurface;
 typedef struct IWineD3DVolume         IWineD3DVolume;
-typedef struct IWineD3DVertexDeclaration         IWineD3DVertexDeclaration;
+typedef struct IWineD3DVertexDeclaration   IWineD3DVertexDeclaration;
+typedef struct IWineD3DVertexShader        IWineD3DVertexShader;
+typedef struct IWineD3DPixelShader         IWineD3DPixelShader;
 
 /*****************************************************************************
  * Callback functions required for predefining surfaces / stencils
@@ -279,10 +281,11 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,INT baseVIdx, UINT  minIndex,UINT  NumVertices,UINT  startIndex,UINT  primCount) PURE;
     STDMETHOD(DrawPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  PrimitiveCount,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
     STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ D3DPRIMITIVETYPE  PrimitiveType,UINT  MinVertexIndex,UINT  NumVertexIndices,UINT  PrimitiveCount,CONST void * pIndexData,D3DFORMAT  IndexDataFormat,CONST void * pVertexStreamZeroData,UINT  VertexStreamZeroStride) PURE;
+    STDMETHOD(CreateVertexDeclaration)(THIS_ UINT iDeclVersion, CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppDecl) PURE;
+    STDMETHOD(SetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration* pDecl) PURE;
+    STDMETHOD(GetVertexDeclaration)(THIS_ IWineD3DVertexDeclaration** ppDecl) PURE;
     /*** Internal use IWineD3D methods ***/
     STDMETHOD_(void, SetupTextureStates)(THIS_ DWORD Stage, DWORD Flags);
-
-
 };
 #undef INTERFACE
 
@@ -873,10 +876,7 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DVertexDeclaration methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
-    STDMETHOD(GetDeclaration8)(THIS_ DWORD*, DWORD* pSizeOfData) PURE;
-#ifdef __WINE_D3D9_H
-    STDMETHOD(GetDeclaration9)(THIS_ D3DVERTEXELEMENT9*, UINT* pNumElements) PURE;
-#endif
+    STDMETHOD(GetDeclaration)(THIS_ UINT iDeclVersion, VOID*, DWORD* pSize) PURE;
 };
 #undef INTERFACE
 
@@ -887,12 +887,11 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
 #define IWineD3DVertexDeclaration_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWineD3DVertexDeclaration methods ***/
 #define IWineD3DVertexDeclaration_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
-#define IWineD3DVertexDeclaration_GetDeclaration8(p,a,b)     (p)->lpVtbl->GetDeclaration8(p,a,b)
-#define IWineD3DVertexDeclaration_GetDeclaration9(p,a,b)     (p)->lpVtbl->GetDeclaration9(p,a,b)
+#define IWineD3DVertexDeclaration_GetDeclaration(p,a,b,c)    (p)->lpVtbl->GetDeclaration8(p,a,b,c)
 #endif
 
 /*****************************************************************************
- * WineD3DStateBlock interface 
+ * IWineD3DStateBlock interface 
  */
 #define INTERFACE IWineD3DStateBlock
 DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
@@ -918,76 +917,80 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
 #endif
 
 
+/*****************************************************************************
+ * IWineD3DVertexShader interface 
+ */
+#define INTERFACE IWineD3DVertexShader
+DECLARE_INTERFACE_(IWineD3DVertexShader,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DVertexShader methods ***/
+    STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
+    STDMETHOD(SetConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
+    STDMETHOD(SetConstantI)(THIS_ UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(GetConstantB)(THIS_ UINT StartRegister, BOOL*  pConstantData, UINT BoolCount) PURE;
+    STDMETHOD(GetConstantI)(THIS_ UINT StartRegister, INT*   pConstantData, UINT Vector4iCount) PURE;
+    STDMETHOD(GetConstantF)(THIS_ UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) PURE;
+    /* Internal Interfaces */
+    STDMETHOD_(DWORD, GetVersion)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DVertexShader_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DVertexShader_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define IWineD3DVertexShader_Release(p)                           (p)->lpVtbl->Release(p)
+/*** IWineD3DVertexShader methods ***/
+#define IWineD3DVertexShader_GetFunction(p,a,b)                   (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DVertexShader_SetConstantB(p,a,b,c)                (p)->lpVtbl->SetConstantB(p,a,b,c)
+#define IWineD3DVertexShader_SetConstantI(p,a,b,c)                (p)->lpVtbl->SetConstantI(p,a,b,c)
+#define IWineD3DVertexShader_SetConstantF(p,a,b,c)                (p)->lpVtbl->SetConstantF(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantB(p,a,b,c)                (p)->lpVtbl->GetConstantB(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantI(p,a,b,c)                (p)->lpVtbl->GetConstantI(p,a,b,c)
+#define IWineD3DVertexShader_GetConstantF(p,a,b,c)                (p)->lpVtbl->GetConstantF(p,a,b,c)
+#define IWineD3DVertexShader_GetVersion(p)                        (p)->lpVtbl->GetVersion(p)
+#endif
+
+/*****************************************************************************
+ * IWineD3DPixelShader interface 
+ */
+#define INTERFACE IWineD3DPixelShader
+DECLARE_INTERFACE_(IWineD3DPixelShader,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3DPixelShader methods ***/
+    STDMETHOD(GetFunction)(THIS_ VOID* pData, UINT* pSizeOfData) PURE;
+    STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
+    STDMETHOD(GetConstantF)(THIS_ UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) PURE;
+    /* Internal Interfaces */
+    STDMETHOD_(DWORD, GetVersion)(THIS) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3DPixelShader_QueryInterface(p,a,b)                (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DPixelShader_AddRef(p)                            (p)->lpVtbl->AddRef(p)
+#define IWineD3DPixelShader_Release(p)                           (p)->lpVtbl->Release(p)
+/*** IWineD3DPixelShader methods ***/
+#define IWineD3DPixelShader_GetFunction(p,a,b)                   (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DPixelShader_SetConstantF(p,a,b,c)                (p)->lpVtbl->SetConstantF(p,a,b,c)
+#define IWineD3DPixelShader_GetConstantF(p,a,b,c)                (p)->lpVtbl->GetConstantF(p,a,b,c)
+#define IWineD3DPixelShader_GetVersion(p)                        (p)->lpVtbl->GetVersion(p)
+#endif
+
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
-/*****************************************************************
- * Some defines
- */
-
-/* Device caps */
-#define MAX_PALETTES      256
-#define MAX_STREAMS       16
-#define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
-#define MAX_LEVELS        256
-
-/* Other useful values */
-#define HIGHEST_RENDER_STATE 174
-#define HIGHEST_TEXTURE_STATE 29
-#define HIGHEST_TRANSFORMSTATE 512
-#define D3DSBT_RECORDED 0xfffffffe
-
-#define D3D_VSHADER_MAX_CONSTANTS 96
-#define D3D_PSHADER_MAX_CONSTANTS 32
-
-/*****************************************************************
- * Some includes
- */
-
-#include "wine/wined3d_gl.h"
-#include "wine/wined3d_types.h"
-
-#include <stdarg.h>
-#include <windef.h>
-#include <winbase.h>
-
-/*****************************************************************
- * Some defines
- */
-
-typedef struct IDirect3DImpl IDirect3DImpl;
-typedef struct IDirect3DBaseTextureImpl IDirect3DBaseTextureImpl;
-typedef struct IDirect3DVolumeTextureImpl IDirect3DVolumeTextureImpl;
-typedef struct IDirect3DDeviceImpl IDirect3DDeviceImpl;
-typedef struct IDirect3DTextureImpl IDirect3DTextureImpl;
-typedef struct IDirect3DCubeTextureImpl IDirect3DCubeTextureImpl;
-typedef struct IDirect3DIndexBufferImpl IDirect3DIndexBufferImpl;
-typedef struct IDirect3DSurfaceImpl IDirect3DSurfaceImpl;
-typedef struct IDirect3DSwapChainImpl IDirect3DSwapChainImpl;
-typedef struct IDirect3DResourceImpl IDirect3DResourceImpl;
-typedef struct IDirect3DVolumeImpl IDirect3DVolumeImpl;
-typedef struct IDirect3DVertexBufferImpl IDirect3DVertexBufferImpl;
-typedef struct IDirect3DStateBlockImpl IDirect3DStateBlockImpl;
-typedef struct IDirect3DVertexDeclarationImpl IDirect3DVertexDeclarationImpl;
-typedef struct IDirect3DVertexShaderImpl IDirect3DVertexShaderImpl;
-typedef struct IDirect3DPixelShaderImpl IDirect3DPixelShaderImpl;
-
-
-/*************************************************************
- * d3dcore interfaces defs
- */
-
-/** Vertex Shader API */
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* This, CONST DWORD* pFunction);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetFunction(IDirect3DVertexShaderImpl* This, VOID* pData, UINT* pSizeOfData);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_SetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantB(IDirect3DVertexShaderImpl* This, UINT StartRegister, BOOL*  pConstantData, UINT BoolCount);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantI(IDirect3DVertexShaderImpl* This, UINT StartRegister, INT*   pConstantData, UINT Vector4iCount);
-extern HRESULT WINAPI IDirect3DVertexShaderImpl_GetConstantF(IDirect3DVertexShaderImpl* This, UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount);
 /* internal Interfaces */
-extern DWORD   WINAPI IDirect3DVertexShaderImpl_GetVersion(IDirect3DVertexShaderImpl* This);
 extern HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* This, VSHADERINPUTDATA* input, VSHADEROUTPUTDATA* output);
-
 #endif /* Temporary #if 0 */
 
 
