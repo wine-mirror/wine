@@ -1058,8 +1058,14 @@ DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
     if (ret && lastpart)
     {
         LPSTR p = buffer + strlen(buffer);
-        while ((p > buffer + 2) && (*p != '\\')) p--;
-        *lastpart = p + 1;
+
+	/* if the path closed with '\', *lastpart is 0 */
+	if (*p != '\\')
+        {
+	  while ((p > buffer + 2) && (*p != '\\')) p--;
+          *lastpart = p + 1;
+	}
+	else *lastpart = NULL;
     }
     return ret;
 }
