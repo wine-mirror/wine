@@ -106,6 +106,10 @@ static struct IDirect3D2_VTable			d3d2vt;
 static XF86VidModeModeInfo *orig_mode = NULL;
 #endif
 
+#ifdef HAVE_LIBXXSHM
+static int XShmErrorFlag = 0;
+#endif
+
 BOOL32
 DDRAW_DGA_Available(void)
 {
@@ -2312,12 +2316,17 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
-static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
-  XImage *img;
-  void *img_data;
-
 #ifdef HAVE_LIBXXSHM
-  if (this->e.xlib.xshm_active) {
+/* Error handlers for Image creation */
+static int XShmErrorHandler(Display *dpy, XErrorEvent *event) {
+  XShmErrorFlag = 1;
+  return 0;
+}
+
+static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
+  XImage *img;
+  int (*WineXHandler)(Display *, XErrorEvent *);
+
     img = TSXShmCreateImage(display,
 			    DefaultVisualOfScreen(X11DRV_GetXScreen()),
 			    this->d.screen_depth,
@@ -2327,11 +2336,16 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
 			    lpdsf->s.surface_desc.dwWidth,
 			    lpdsf->s.surface_desc.dwHeight);
     
-    if (img == NULL)
+  if (img == NULL) {
+    ERR(ddraw, "Error creating XShm image. Reverting to standard X images !\n");
+    this->e.xlib.xshm_active = 0;
       return NULL;
+  }
 
     lpdsf->t.xlib.shminfo.shmid = shmget( IPC_PRIVATE, img->bytes_per_line * img->height, IPC_CREAT|0777 );
     if (lpdsf->t.xlib.shminfo.shmid < 0) {
+    ERR(ddraw, "Error creating shared memory segment. Reverting to standard X images !\n");
+    this->e.xlib.xshm_active = 0;
       TSXDestroyImage(img);
       return NULL;
     }
@@ -2339,15 +2353,51 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
     lpdsf->t.xlib.shminfo.shmaddr = img->data = (char*)shmat(lpdsf->t.xlib.shminfo.shmid, 0, 0);
       
     if (img->data == (char *) -1) {
+    ERR(ddraw, "Error attaching shared memory segment. Reverting to standard X images !\n");
+    this->e.xlib.xshm_active = 0;
       TSXDestroyImage(img);
       shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
       return NULL;
     }
     lpdsf->t.xlib.shminfo.readOnly = False;
       
-    TSXShmAttach(display, &(lpdsf->t.xlib.shminfo));
+  /* This is where things start to get trickier....
+     First, we flush the current X connections to be sure to catch all non-XShm related
+     errors */
     TSXSync(display, False);
+  /* Then we enter in the non-thread safe part of the tests */
+  EnterCriticalSection( &X11DRV_CritSection );
+  
+  /* Reset the error flag, sets our new error handler and try to attach the surface */
+  XShmErrorFlag = 0;
+  WineXHandler = XSetErrorHandler(XShmErrorHandler);
+  XShmAttach(display, &(lpdsf->t.xlib.shminfo));
+  XSync(display, False);
 
+  /* Check the error flag */
+  if (XShmErrorFlag) {
+    /* An error occured */
+    XFlush(display);
+    XShmErrorFlag = 0;
+    XDestroyImage(img);
+    shmdt(lpdsf->t.xlib.shminfo.shmaddr);
+    shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
+    XSetErrorHandler(WineXHandler);
+
+    ERR(ddraw, "Error attaching shared memory segment to X server. Reverting to standard X images !\n");
+    this->e.xlib.xshm_active = 0;
+    
+    /* Leave the critical section */
+    LeaveCriticalSection( &X11DRV_CritSection );
+
+    return NULL;
+  }
+
+  /* Here, to be REALLY sure, I should do a XShmPutImage to check if this works,
+     but it may be a bit overkill.... */
+  XSetErrorHandler(WineXHandler);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
 
     if (this->d.depth != this->d.screen_depth) {
@@ -2358,7 +2408,21 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
     } else {
     lpdsf->s.surface_desc.y.lpSurface = img->data;
     }
-  } else {
+
+  return img;
+}
+#endif /* HAVE_LIBXXSHM */
+
+static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
+  XImage *img = NULL;
+  void *img_data;
+
+#ifdef HAVE_LIBXXSHM
+  if (this->e.xlib.xshm_active) {
+    img = create_xshmimage(this, lpdsf);
+  }
+    
+  if (img == NULL) {
 #endif
     /* Allocate surface memory */
     lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
@@ -3746,6 +3810,8 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	(*lplpDD)->ref = 1;
 	(*lplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
+	/* At DirectDraw creation, the depth is the default depth */
+	(*lplpDD)->d.depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 	(*lplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 	(*lplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
