@@ -1038,8 +1038,8 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
   TRACE(keyboard, "scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n",
           scanCode, vkey, ansi);
 
-  if ((vkey >= 0x30) && (vkey <= 0x39) &&
-      (vkey >= 0x41) && (vkey <= 0x5a)) /* Windows VK_* are ANSI codes */
+  if ( ((vkey >= 0x30) && (vkey <= 0x39)) ||
+      ( (vkey >= 0x41) && (vkey <= 0x5a)) ) /* Windows VK_* are ANSI codes */
       {
         if ((nSize >= 2) && lpBuffer)
 	{
