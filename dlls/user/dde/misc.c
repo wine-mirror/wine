@@ -1349,13 +1349,17 @@ DWORD WINAPI DdeGetData(HDDEDATA hData, LPBYTE pDst, DWORD cbMax, DWORD cbOff)
     DWORD   dwSize, dwRet;
     LPBYTE  pByte;
     
-    TRACE("(%08lx,%p,%ld,%ld)\n",(DWORD)hData,pDst,cbMax,cbOff);
+    TRACE("(%08lx,%p,%ld,%ld)\n",(DWORD)hData, pDst, cbMax, cbOff);
     
     pByte = DdeAccessData(hData, &dwSize);
     
     if (pByte) 
     {
-	if (cbOff + cbMax < dwSize)
+        if (!pDst)
+        {
+            dwRet = dwSize;
+        }
+        else if (cbOff + cbMax < dwSize)
 	{
 	    dwRet = cbMax;
 	}
@@ -1401,7 +1405,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
     {
 	*pcbDataSize = GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD);
     }
-    
+    TRACE("=> %08lx (%lu)\n", (DWORD)(pDdh + 1), GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD));
     return (LPBYTE)(pDdh + 1);
 }
 
