@@ -2639,8 +2639,8 @@ static void MENU_KeyRight( MTRACKER* pmt, UINT wFlags )
  *
  * Menu tracking code.
  */
-static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
-                              HWND hwnd, const RECT *lprect )
+static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
+                            HWND hwnd, const RECT *lprect )
 {
     MSG msg;
     POPUPMENU *menu;
@@ -2661,7 +2661,11 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
           (lprect) ? lprect->right : 0,  (lprect) ? lprect->bottom : 0);
 
     fEndMenu = FALSE;
-    if (!(menu = MENU_GetMenu( hmenu ))) return FALSE;
+    if (!(menu = MENU_GetMenu( hmenu )))
+    {
+        SetLastError(ERROR_INVALID_MENU_HANDLE);
+        return FALSE;
+    }
 
     if (wFlags & TPM_BUTTONDOWN)
     {
@@ -2926,7 +2930,9 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     }
 
     /* The return value is only used by TrackPopupMenu */
-    return ((executedMenuId != -1) ? executedMenuId : 0);
+    if (!(wFlags & TPM_RETURNCMD)) return TRUE;
+    if (executedMenuId == -1) executedMenuId = 0;
+    return executedMenuId;
 }
 
 /***********************************************************************
@@ -3073,11 +3079,8 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
         SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
 
     if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 ))
-	ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
+        ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd, lpRect );
     MENU_ExitTracking(hWnd);
-
-    if( (!(wFlags & TPM_RETURNCMD)) && (ret != FALSE) )
-	ret = 1;
 
     return ret;
 }
