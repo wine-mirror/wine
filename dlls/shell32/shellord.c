@@ -190,43 +190,57 @@ void WINAPI RegisterShellHook32(HWND32 hwnd, DWORD y) {
  *
  * Format and output errormessage.
  *
+ * idText	resource ID of title or LPSTR
+ * idTitle	resource ID of title or LPSTR
+ *
  * NOTES
  *     exported by ordinal
  */
-void __cdecl
-ShellMessageBoxW(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID arglist) {
-	WCHAR	buf[100];
+INT32 __cdecl
+ShellMessageBoxW(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
+{	WCHAR	szText[100],szTitle[100],szTemp[256];
+	LPWSTR   pszText = &szText[0], pszTitle = &szTitle[0];
+	LPVOID	args = &arglist;
 
-	if (!LoadString32W(hmod,x,buf,100))
-		lstrcpyAtoW (buf,"Desktop");
+	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n",(DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
-	FIXME(shell,"(%08lx,%08lx,%08lx,%08lx(%s),%08lx,%p):stub.\n",
-		(DWORD)hmod,(DWORD)hwnd,id,x,debugstr_w(buf),type,arglist);
+	if (!HIWORD (idTitle))
+	  LoadString32W(hmod,idTitle,pszTitle,100);
+	else
+	  pszTitle = (LPWSTR)idTitle;
+
+	if (! HIWORD (idText))
+	  LoadString32W(hmod,idText,pszText,100);
+	else
+	  pszText = (LPWSTR)idText;
+
+	FormatMessage32W(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,szText,0,0,szTemp,256,args);
+	return MessageBox32W(hwnd,szTemp,szTitle,uType);
 }
 
 /*************************************************************************
  * ShellMessageBoxA [SHELL32.183]
- *
- * Format and output errormessage.
- *
- * NOTES
- *     exported by ordinal
  */
-void __cdecl
-ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,LPVOID arglist) {
-	char	buf[100],buf2[100]/*,*buf3*/;
-/*	LPVOID	args = &arglist;*/
+INT32 __cdecl
+ShellMessageBoxA(HMODULE32 hmod,HWND32 hwnd,DWORD idText,DWORD idTitle,DWORD uType,LPCVOID arglist) 
+{	char	szText[100],szTitle[100],szTemp[256];
+	LPSTR   pszText = &szText[0], pszTitle = &szTitle[0];
+	LPVOID	args = &arglist;
 
-	if (!LoadString32A(hmod,x,buf,100))
-		strcpy(buf,"Desktop");
-/*	LoadString32A(hmod,id,buf2,100); */
-	/* FIXME: the varargs handling doesn't. */
-/*	FormatMessage32A(0x500,buf2,0,0,(LPSTR)&buf3,256,(LPDWORD)&args); */
+	TRACE(shell,"(%08lx,%08lx,%08lx,%08lx,%08lx,%p)\n", (DWORD)hmod,(DWORD)hwnd,idText,idTitle,uType,arglist);
 
-	FIXME(shell,"(%08lx,%08lx,%08lx(%s),%08lx(%s),%08lx,%p):stub.\n",
-		(DWORD)hmod,(DWORD)hwnd,id,buf2,x,buf,type,arglist
-	);
-	/*MessageBox32A(hwnd,buf3,buf,id|0x10000);*/
+	if (!HIWORD (idTitle))
+	  LoadString32A(hmod,idTitle,pszTitle,100);
+	else
+	  pszTitle = (LPSTR)idTitle;
+
+	if (! HIWORD (idText))
+	  LoadString32A(hmod,idText,pszText,100);
+	else
+	  pszText = (LPSTR)idText;
+
+	FormatMessage32A(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY ,pszText,0,0,szTemp,256,args);
+	return MessageBox32A(hwnd,szTemp,pszTitle,uType);
 }
 
 /*************************************************************************
