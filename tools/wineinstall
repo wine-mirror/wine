@@ -32,6 +32,14 @@
 #  added file existence checks to the registry copying
 #  fixed problem with no-windows directory creation
 #  some text reformatting from Eric Maryniak
+# Jan 5 2000 - Chris Morgan
+#  use default config file in /documentation/samples/config
+#  replace .winerc with ~/.wine/config in printed text
+#  added user question to convert .winerc file(if exists) or use the default
+#    config file
+#  updated global config name, wine.conf -> wine.config
+#  add conf_question to allow root to install a local config file and
+#    registry
 
 #--- defaults (change these if you are a packager)
 CONFARGS=--enable-opengl      # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -40,13 +48,14 @@ sysconfdir=$prefix/etc        # where wine.conf and global registry is supposed 
 bindir=$prefix/bin            # where winelib apps will be (or is) installed
 libdir=$prefix/lib            # where libwine.so will be (or is) installed
 exdir=documentation/samples   # where the example system.ini resides
-CONF=$sysconfdir/wine.conf    # default path of the wine.conf
+CONF=$sysconfdir/wine.config  # default path of the wine.config
 BINDIST=no                    # whether called from a binary package config script
-DOCONF=auto                   # whether to autogenerate wine.conf
+DOCONF=auto                   # whether to autogenerate wine.config
 DOWCHK=auto                   # whether to autoconfigure existing-windows installation
 DOWINE=auto                   # whether to autoconfigure no-windows installation
 DOREG=auto                    # whether to install default registry
 SYSREG=yes                    # whether to make root's registry global (system-default)
+CONVCONF=no		      # whether we are converting an existing .winerc or not
 
 # "make install" still installs the dlls into $libdir, but this may change in the future
 # (DLLPATH should point to them if/when they are not in standard ld.so paths)
@@ -60,7 +69,7 @@ HDEBUGGER=debugger/winedbg    # the (non-installed) path of winedbg
 WINECONF=tools/wineconf       # the path of wineconf perl script
 
 # this is only for no-windows installs
-WINEINI=wine.ini              # the path of default wine.ini (also used by wineconf)
+WINEINI=$exdir/config         # the path of default wine config file (also used by wineconf)
 WININI=/dev/null              # the path of default win.ini
 SYSTEMINI=$exdir/system.ini   # the path of default system.ini
 REGAPI=programs/regapi/regapi # the path of regapi winelib application
@@ -117,7 +126,7 @@ function conf_string_answer {
 
 # startup...
 
-echo "WINE Installer v0.5"
+echo "WINE Installer v0.6"
 echo
 
 if [ "$BINDIST" = 'no' ]
@@ -263,14 +272,14 @@ fi
 }
 fi # BINDIST
 
-# now check whether we should generate wine.conf
+# now check whether we should generate wine.config
 if [ -z "$DOCONF" ]
 then DOCONF=auto
 fi
 
 if [ "$DOCONF" = 'auto' ]
 then {
-  # see if we already have a system wine.conf
+  # see if we already have a system wine.config
   if [ -f $CONF ]
   then DOCONF=no
   fi
@@ -281,14 +290,14 @@ if [ "$DOCONF" != 'no' ]
 then {
   if [ `whoami` != 'root' ]
   then {
-    CONF=~/.winerc
+    CONF=~/.wine/config
     if ! [ -f $CONF ]
     then {
       if [ "$DOCONF" != 'yes' ]
       then {
-        conf_question medium make_user_winerc \
-         "Since you aren't root, and there's no system wine.conf, I assume" \
-         "you want a user-specific .winerc. Am I correct?"
+        conf_question medium make_user_config \
+         "Since you aren't root, and there's no system wine.config, I assume" \
+         "you want a user-specific ~/.wine/config. Am I correct?"
         conf_yesno_answer "(yes/no) "
         DOCONF="$ANSWER"
       }
@@ -296,7 +305,7 @@ then {
       if [ "$DOCONF" = 'no' ]
       then {
         conf_question high need_root \
-         "Aborting install. Try again as root to generate a system wine.conf."
+         "Aborting install. Try again as root to generate a system wine.config."
         exit 1
       }
       fi
@@ -312,13 +321,14 @@ then {
 }
 fi
 
-# generate wine.conf from existing windows install, if any
+# generate wine.config from existing windows install, if any
 if [ "$DOCONF" = 'yes' ]
 then {
   if [ "$DOWCHK" = 'yes' ] || [ "$DOWCHK" = 'auto' ]
   then {
     echo
     echo -n "Searching for an existing Windows installation..."
+    mkdir -p ~/.wine
     if ! $WINECONF -inifile "$WINEINI" > $CONF 2>/dev/null
     then {
       rm -f $CONF
@@ -393,15 +403,34 @@ then {
   done
   [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
   [ -f "$CROOT/windows/system.ini" ] || cp "$SYSTEMINI" "$CROOT/windows/system.ini"
-  if [ "$DOCONF" = 'yes' ]
+  
+  if [ -f ~/.winerc ]
   then {
-    sed "s|Path=/c\$|Path=${CROOT}|" $WINEINI > $CONF
+    conf_question medium convert_config \
+     "I found a the old version Wine config file, .winerc, in your " \
+     "home directory.  I can convert this to the new format or use the" \
+     "new default Wine config file. Convert?"
+    conf_yesno_answer "(yes/no) "
+    if [ "$ANSWER" = 'yes' ]
+    then {
+      WINEINI=~/.winerc
+      CONVCONF=yes
+    }
+    fi
+  }
+  fi
+
+  # create $CONF using the default config file $WINEINI  
+  if [ "$DOCONF" = 'yes' ] && [ "$CONVCONF" = 'no' ]
+  then {
+    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $CONF
     conf_reset_question default_config
     conf_question low default_config \
      "Created $CONF using default Wine configuration." \
      "You probably want to review the file, though."
   }
   fi
+
   # now we really should install the registry
   if [ "$DOREG" = 'auto' ]
   then DOREG=yes
@@ -411,19 +440,30 @@ elif [ -z "$CROOT" ]
 then {
   echo
   echo "Reading current Wine configuration from $CONF..."
-  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^Path=\(.*\)/\1/p' $CONF`
+  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^"Path" = \(.*\)/\1/p' $CONF`
   echo "Drive C is configured at $CROOT."
 }
 fi
 echo
 
-# fixup EXTRA_LD_LIBRARY_PATH
-if [ "$DOCONF" = 'yes' ]
+# if root ask the user if they want to setup a local config file and
+#registry
+if [ `whoami` = 'root' ]
 then {
-  echo "Setting EXTRA_LD_LIBRARY_PATH in .winerc to $DLLPATH..."
-  sed "s|EXTRA_LD_LIBRARY_PATH=.*|EXTRA_LD_LIBRARY_PATH=${DLLPATH}|" $CONF > $CONF.new
-  mv -f $CONF.new $CONF
-  echo
+  echo "You are running wineinstall as root. Do you want to create a local config file and install the registry?"
+  conf_yesno_answer "(yes/no) "
+  if [ "$ANSWER" = 'yes' ]
+  then {
+    CONF=~/.wine/config
+    mkdir -p ~/.wine
+    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $CONF
+    conf_reset_question default_config
+    conf_question low default_config \
+     "Created $CONF using default Wine configuration." \
+     "You probably want to review the file, though."    
+  } else
+    DOREG=no
+  fi
 }
 fi
 
@@ -452,7 +492,6 @@ then {
   if [ "$BINDIST" = 'no' ]
   then {
     echo "Compiling regapi..."
-    echo
     (cd programs/regapi; make)
     echo
   }
@@ -461,7 +500,12 @@ then {
 
   # create a temporary wineinstall.conf file using ttydrv,
   # so that we don't have to run regapi under X
-  sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $CONF > $TMPCONF
+  if [ "$CONVCONF" = 'yes' ]
+  then
+    sed "s/GraphicsDriver=.*/GraphicsDriver=ttydrv/" $WINEINI > $TMPCONF
+  else
+    sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" $CONF > $TMPCONF
+  fi
 
   # create a temporary wineinstall.reg with fixed debugger path
   $DEFCAT $DEFREG | sed "s|debugger/winedbg|${DEBUGGER}|" > $TMPREG
@@ -476,17 +520,27 @@ then {
     conf_question high regapi_error
     exit 1
   }
-  else echo "Registry entries successfully installed."
+  else {
+    echo
+    echo "Registry entries successfully installed."
+  }
   fi
   rm -f $TMPCONF $TMPREG
   if [ "$SYSREG" = 'auto' ]
   then SYSREG=yes
   fi
+
+  # if we converted we need to change the graphics driver back
+  if [ "$CONVCONF" = 'yes' ]
+  then
+    sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"x11drv\"/" $CONF > $CONF.new
+    mv $CONF.new $CONF
+  fi
 }
 fi
 
 # make root's registry global, if desired
-if [ `whoami` = 'root' ] && [ "$SYSREG" = 'yes' ]
+if [ `whoami` = 'root' ] && [ "$DOREG" = 'yes' ] && [ "$SYSREG" = 'yes' ]
 then {
   [ -d ~/.wine ] || mkdir ~/.wine
   if ! [ -f $sysconfdir/wine.userreg ]
