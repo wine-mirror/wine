@@ -22,8 +22,6 @@
  * FIXME:
  *  1. Implement following extended styles:
  *	     CBES_EX_NOSIZELIMIT
- *  2. Notify CBEN_DRAGBEGIN is not implemented.
- *
  */
 
 #include <string.h>
@@ -71,14 +69,15 @@ typedef struct
 } COMBOEX_INFO;
 
 /* internal flags in the COMBOEX_INFO structure */
-#define  WCBE_ACTEDIT		0x00000001     /* Edit active i.e.
+#define  WCBE_ACTEDIT		0x00000001  /* Edit active i.e.
                                              * CBEN_BEGINEDIT issued
                                              * but CBEN_ENDEDIT{A|W}
                                              * not yet issued. */
-#define  WCBE_EDITCHG		0x00000002     /* Edit issued EN_CHANGE */
+#define  WCBE_EDITCHG		0x00000002  /* Edit issued EN_CHANGE */
 #define  WCBE_EDITHASCHANGED	(WCBE_ACTEDIT | WCBE_EDITCHG)
-#define  WCBE_EDITFOCUSED	0x00000004     /* Edit control has focus */
-
+#define  WCBE_EDITFOCUSED	0x00000004  /* Edit control has focus */
+#define  WCBE_MOUSECAPTURED	0x00000008  /* Combo has captured mouse */
+#define  WCBE_MOUSEDRAGGED      0x00000010  /* User has dragged in combo */
 
 #define ID_CB_EDIT		1001
 
@@ -240,6 +239,26 @@ static INT COMBOEX_NotifyEndEdit (COMBOEX_INFO *infoPtr, NMCBEENDEDITW *neew, LP
         neea.iWhy = neew->iWhy;
 
         return COMBOEX_Notify (infoPtr, CBEN_ENDEDITA, &neea.hdr);
+    }
+}
+
+
+static void COMBOEX_NotifyDragBegin(COMBOEX_INFO *infoPtr, LPCWSTR wstr)
+{
+    /* Change the Text item from Unicode to ANSI if necessary for NOTIFY */
+    if (infoPtr->NtfUnicode) {
+        NMCBEDRAGBEGINW ndbw;
+
+	ndbw.iItemid = -1;
+	lstrcpynW(ndbw.szText, wstr, CBEMAXSTRLEN);
+	COMBOEX_Notify (infoPtr, CBEN_DRAGBEGINW, &ndbw.hdr);
+    } else {
+	NMCBEDRAGBEGINA ndba;
+
+	ndba.iItemid = -1;
+	WideCharToMultiByte (CP_ACP, 0, wstr, -1, ndba.szText, CBEMAXSTRLEN, 0, 0);
+
+	COMBOEX_Notify (infoPtr, CBEN_DRAGBEGINA, &ndba.hdr);
     }
 }
 
@@ -1840,6 +1859,7 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     HDC hDC;
     HWND focusedhwnd;
     RECT rect;
+    POINT pt;
     WCHAR edit_text[260];
 
     TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx, info_ptr=%p\n",
@@ -1888,6 +1908,43 @@ COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    COMBOEX_Notify (infoPtr, NM_SETCURSOR, (NMHDR *)&nmmse);
 	    return CallWindowProcW (infoPtr->prevComboWndProc,
 				   hwnd, uMsg, wParam, lParam);
+
+    case WM_LBUTTONDOWN:
+	    GetClientRect (hwnd, &rect);
+	    rect.bottom = rect.top + SendMessageW(infoPtr->hwndSelf,
+			                          CB_GETITEMHEIGHT, -1, 0);
+	    rect.left = rect.right - GetSystemMetrics(SM_CXVSCROLL);
+	    pt.x = LOWORD(lParam);
+	    pt.y = HIWORD(lParam);
+	    if (PtInRect(&rect, pt))
+		return CallWindowProcW (infoPtr->prevComboWndProc,
+				        hwnd, uMsg, wParam, lParam);
+	    infoPtr->flags |= WCBE_MOUSECAPTURED;
+	    SetCapture(hwnd);
+	    break;
+
+    case WM_LBUTTONUP:
+	    if (!(infoPtr->flags & WCBE_MOUSECAPTURED))
+		return CallWindowProcW (infoPtr->prevComboWndProc,
+				        hwnd, uMsg, wParam, lParam);
+	    ReleaseCapture();
+	    infoPtr->flags &= ~WCBE_MOUSECAPTURED;
+	    if (infoPtr->flags & WCBE_MOUSEDRAGGED) {
+		infoPtr->flags &= ~WCBE_MOUSEDRAGGED;
+	    } else {
+		SendMessageW(hwnd, CB_SHOWDROPDOWN, TRUE, 0);
+	    }
+	    break;
+
+    case WM_MOUSEMOVE:
+	    if ( (infoPtr->flags & WCBE_MOUSECAPTURED) &&
+		!(infoPtr->flags & WCBE_MOUSEDRAGGED)) {
+		GetWindowTextW (infoPtr->hwndEdit, edit_text, 260);
+		COMBOEX_NotifyDragBegin(infoPtr, edit_text);
+		infoPtr->flags |= WCBE_MOUSEDRAGGED;
+	    }
+	    return CallWindowProcW (infoPtr->prevComboWndProc,
+			            hwnd, uMsg, wParam, lParam);
 
     case WM_COMMAND:
 	    switch (HIWORD(wParam)) {
@@ -2120,8 +2177,6 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case CB_LIMITTEXT:
 	case CB_RESETCONTENT:
 	case CB_SELECTSTRING:
-	    FIXME("(0x%x 0x%x 0x%lx): possibly missing function\n",
-		  uMsg, wParam, lParam);
 
 /*   Combo messages OK to just forward to the regular COMBO */
 	case CB_GETCOUNT:
