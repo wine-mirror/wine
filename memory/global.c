@@ -399,7 +399,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 	    WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
 	    sel = 0;
 	}
-	if (!GET_ARENA_PTR(handle)->base) 
+	else if (!GET_ARENA_PTR(handle)->base) 
             sel = 0;
         else
             GET_ARENA_PTR(handle)->lockCount++;
