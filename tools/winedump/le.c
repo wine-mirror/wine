@@ -276,7 +276,7 @@ static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
         pmap = &(pmap[pobj->o32_pagemap - 1]);
         for (j = 0; j < pobj->o32_mapsize; j++)
         {
-            printf("        %08x %06x %02x\n",
+            printf("        %08lx %06x %02x\n",
                    pobj->o32_pagemap + j,
                    (pmap->o32_pagedataoffset << 8) + pmap->o32_pagesize,
                    (int)pmap->o32_pageflags);
