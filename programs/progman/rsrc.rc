@@ -28,4 +28,4 @@
 #include "Sw.rc"
 #include "Va.rc"
 #include "Wa.rc"
-
+#include "Ru.rc"

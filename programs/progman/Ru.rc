@@ -1,0 +1,122 @@
+/* 
+ * Program Manager
+ *
+ * Copyright 2000 Vasily Volchenko
+ */
+/* There is a difficulty to use correct codepage for messages, menus etc... So I have added the following line. 
+May be, such line should be present in EVERY ??.rc file, but... I can't test any language except Russian and English :-) 
+So, everyone, test your native languages!!!
+*/
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#define LANGUAGE_ID                  Ru
+#define LANGUAGE_NUMBER              8
+#define LANGUAGE_MENU_ITEM           "&Русский"
+
+/* Menu */
+
+#define MENU_FILE                    "&Файл"
+#define MENU_FILE_NEW                "&Создать..."
+#define MENU_FILE_OPEN               "О&ткрыть\tEnter"
+#define MENU_FILE_MOVE               "&Переместить...\tF7"
+#define MENU_FILE_COPY               "&Копировать...\tF8"
+#define MENU_FILE_DELETE             "&Удалить\tEntf"
+#define MENU_FILE_ATTRIBUTES         "&Атрибуты...\tAlt+Enter"
+#define MENU_FILE_EXECUTE            "&Запустить..."
+#define MENU_FILE_EXIT               "Вы&ход из Windows..."
+
+#define MENU_OPTIONS                 "&Параметры"
+#define MENU_OPTIONS_AUTO_ARRANGE    "&Автоупорядочение"
+#define MENU_OPTIONS_MIN_ON_RUN      "&Свернуть при запуске"
+#define MENU_OPTIONS_SAVE_SETTINGS   "&Сохранять настройки при выходе"
+
+#define MENU_WINDOWS                 "&Окна"
+#define MENU_WINDOWS_OVERLAP         "&Каскад\tShift+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "&Мозаика\tShift+F4"
+#define MENU_WINDOWS_ARRANGE         "&Упорядочить при выходе"
+
+#define MENU_LANGUAGE                "&Язык"
+
+#define MENU_HELP                    "&Справка"
+#define MENU_HELP_CONTENTS           "&Содержание"
+#define MENU_HELP_SEARCH             "&Поиск..."
+#define MENU_HELP_HELP_ON_HELP       "&Гиперсправка"
+#define MENU_HELP_TUTORIAL           "&Учебник"
+
+#define MENU_INFO                    "&Сведения..."
+#define MENU_INFO_LICENSE            "&Лицензия"
+#define MENU_INFO_NO_WARRANTY        "&Никакой ГАРАНТИИ"
+#define MENU_INFO_ABOUT_WINE         "&О WINE"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "OK"
+#define DIALOG_CANCEL                "Отмена"
+#define DIALOG_BROWSE                "&Обзор"
+#define DIALOG_HELP                  "&Справка"
+
+#define DIALOG_NEW_CAPTION           "Создать программный объект"
+#define DIALOG_NEW_NEW               "Создать"
+#define DIALOG_NEW_GROUP             "&Группу программ"
+#define DIALOG_NEW_PROGRAM           "&Программный элемент"
+
+#define DIALOG_MOVE_CAPTION          "Переместить программу"
+#define DIALOG_MOVE_PROGRAM          "Переместить программу:"
+#define DIALOG_MOVE_FROM_GROUP       "Из группы:"
+#define DIALOG_MOVE_TO_GROUP         "&В группу:"
+
+#define DIALOG_COPY_CAPTION          "Копировать программу"
+#define DIALOG_COPY_PROGRAM          "Копировать программу:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "Атрибуты программной группы"
+#define DIALOG_GROUP_DESCRIPTION     "&Описание:"
+#define DIALOG_GROUP_FILE            "&Файл группы:"
+
+#define DIALOG_PROGRAM_CAPTION       "Аттрибуты программы"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "&Командная строка:"
+#define DIALOG_PROGRAM_DIRECTORY     "&Рабочий каталог:"
+#define DIALOG_PROGRAM_HOT_KEY       "&Комбинация клавиш:"
+#define DIALOG_PROGRAM_SYMBOL        "В виде &Значка"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "&Другой значок..."
+
+#define DIALOG_SYMBOL_CAPTION        "Выбрать значок"
+#define DIALOG_SYMBOL_FILE           "&Имя файла:"
+#define DIALOG_SYMBOL_CURRENT        "&Текущий значок:"
+
+#define DIALOG_EXECUTE_CAPTION       "Запустить программу"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "Диспетчер программ"
+#define STRING_ERROR                      "ОШИБКА"
+#define STRING_WARNING                    "ПРЕДУПРЕЖДЕНИЕ"
+#define STRING_INFO                       "Сведения"
+#define STRING_DELETE                     "Удалить"
+#define STRING_DELETE_GROUP_s             "Удалить группу `%s' ?"
+#define STRING_DELETE_PROGRAM_s           "Удалить программу `%s' ?"
+#define STRING_NOT_IMPLEMENTED            "Ещё не реализовано"
+#define STRING_FILE_READ_ERROR_s          "Ошибка чтения `%s' "
+#define STRING_FILE_WRITE_ERROR_s         "Ошибка записи `%s' "
+
+#define STRING_GRPFILE_READ_ERROR_s       "\Файл группы `%s' не может быть открыт.\n\Надо ли в следующий раз пытаться это сделать?"
+
+#define STRING_OUT_OF_MEMORY              "Мало памяти"
+#define STRING_WINHELP_ERROR              "Справка не доступна"
+#define STRING_UNKNOWN_FEATURE_s          "Неизвестное свойство %s"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "Файл `%s' существует. Он не был перезаписан."
+#define STRING_SAVE_GROUP_AS_s            "Группа сохраняется под именем `%s' во избежание перезаписи оригинала"
+
+#define STRING_NO_HOT_KEY                 "Нет"
+
+#define STRING_ALL_FILES                  "Все файлы (*.*)"
+#define STRING_PROGRAMS                   "Программы"
+#define STRING_LIBRARIES_DLL              "Библиотеки (*.dll)"
+#define STRING_SYMBOL_FILES               "Файлы значков"
+/* Who has written 'Symbol files'? This has double meaning!!!*/
+#define STRING_SYMBOLS_ICO                "Значки (*.ico)"
+
+#include "Xx.rc"

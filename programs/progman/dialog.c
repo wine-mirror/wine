@@ -7,7 +7,6 @@
 #include "windows.h"
 #include "commdlg.h"
 #include "progman.h"
-
 static BOOL    DIALOG_BrowsePrograms(HWND, LPSTR, INT);
 static BOOL    DIALOG_BrowseSymbols(HWND, LPSTR, INT);
 static LRESULT DIALOG_NEW_DlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -549,7 +548,7 @@ static BOOL DIALOG_Browse(HWND hDlg, LPCSTR lpszzFilter,
   openfilename.nMaxCustFilter    = 0;
   openfilename.nFilterIndex      = 0;
   openfilename.lpstrFile         = lpstrFile;
-  openfilename.nMaxFile          = sizeof(lpstrFile);
+  openfilename.nMaxFile          = nMaxFile;
   openfilename.lpstrFileTitle    = 0;
   openfilename.nMaxFileTitle     = 0;
   openfilename.lpstrInitialDir   = 0;
