@@ -19,6 +19,19 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * TODO:   (in rough order of priority)
+ *   - A mind bogglingly vast amount of stuff
+ *
+ *   - Complete X11DRV page, so all controls are hooked up
+ *   - Implement autodetect for drive configuration
+ *   - Figure out whether we need the virtual vs real drive selection stuff at the top of the property page
+ *   - Implement explicit mode vs instant-apply mode
+ *   - AppDefaults handling
+ *   - DLL editing
+ *   - Make a list of prefs that have been dropped from the UI/should be eliminated
+ *   - Multimedia page
+ *   - Settings migration code (from old configs)
+ *
  */
 
 #include <assert.h>
