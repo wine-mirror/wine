@@ -38,13 +38,13 @@ static BOOL bForce            = FALSE; /* Is set to TRUE when -force is
 
 /* Globals used by the api setValue, queryValue */
 static LPSTR currentKeyName   = NULL;
-static HKEY  currentKeyClass  = NULL;
-static HKEY  currentKeyHandle = NULL;
+static HKEY  currentKeyClass  = 0;
+static HKEY  currentKeyHandle = 0;
 static BOOL  bTheKeyIsOpen    = FALSE;
 
-/* Delimitors used to parse the "value"="data" pair for setValue*/
+/* Delimiters used to parse the "value"="data" pair for setValue*/
 #define SET_VALUE_MAX_ARGS    2 
-/* Delimitors used to parse the "value" to query queryValue*/
+/* Delimiters used to parse the "value" to query queryValue*/
 #define QUERY_VALUE_MAX_ARGS  1 
 
 static const char *setValueDelim[SET_VALUE_MAX_ARGS]   = {"=", ""};  
@@ -99,7 +99,7 @@ static void doDeleteKey(LPSTR lpsLine);
 static void doQueryValue(LPSTR lpsLine);
 
 /*
- * current suuported api
+ * current supported api
  */
 static const char* commandNames[COMMAND_COUNT] = {
   "setValue", 
@@ -158,17 +158,17 @@ static HRESULT setValue(LPSTR *argv);
 static void    processQueryValue(LPSTR cmdline);
 
 /*
- * Help Text displyed when invalid parameters are provided
+ * Help Text displayed when invalid parameters are provided
  */
 static char helpText[] = "
 NAME
           regapi - provide a command line interface to the wine registry.
 
-SYNOPSYS
+SYNOPSIS
           regapi commandName [-force] < file
 
 DESCRIPTION
-          regapi allows editing the wine resgistry.  It processes the given 
+          regapi allows editing the wine registry.  It processes the given 
           commandName for every line in the stdin data stream.  Input data 
           format may vary depending on the commandName see INPUT FILE FORMAT.
 
@@ -185,7 +185,7 @@ OPTIONS
               was previously set to another value.
 
           < file
-              STDIN chanel, provide a file name with line of the appropriate
+              STDIN channel, provide a file name with line of the appropriate
               format.
 
 INPUT FILE FORMAT
@@ -217,7 +217,7 @@ INPUT FILE FORMAT
               
 
 /******************************************************************************
- * This funtion returns the HKEY associated with the data type encoded in the 
+ * This function returns the HKEY associated with the data type encoded in the 
  * value.  It modify the input parameter (key value) in order to skip this 
  * "now useless" data type information.
  */
@@ -261,7 +261,7 @@ LPSTR getRegKeyName(LPSTR lpLine)
   keyNameBeg  = strstr(lpLineCopy, "\\");  /* The key name start by '\' */
   keyNameBeg++;                            /* but is not part of the key name */
   keyNameEnd  = strstr(lpLineCopy, "]");   /* The key name end by ']' */
-  *keyNameEnd = NULL;                      /* Isolate the key name */
+  *keyNameEnd = '\0';                      /* Isolate the key name */
  
   currentKeyName = HeapAlloc(GetProcessHeap(), 0, strlen(keyNameBeg)+1);
   if (currentKeyName != NULL)
@@ -287,7 +287,7 @@ static HKEY getRegClass(LPSTR lpClass)
   strcpy(lpClassCopy, lpClass);
 
   classNameEnd  = strstr(lpClassCopy, "\\");  /* The class name end by '\' */
-  *classNameEnd = NULL;                       /* Isolate the class name */
+  *classNameEnd = '\0';                       /* Isolate the class name */
   classNameBeg  = &lpClassCopy[1];            /* Skip the '[' */
   
   if      (strcmp( classNameBeg, "HKEY_LOCAL_MACHINE") == IDENTICAL )
@@ -321,7 +321,7 @@ static LPSTR getArg( LPSTR arg)
    */
   len = strlen(arg); 
 
-  if( arg[len-1] == '\"' ) arg[len-1] = NULL;
+  if( arg[len-1] == '\"' ) arg[len-1] = '\0';
   if( arg[0]     == '\"' ) arg++;
 
   tmp = HeapAlloc(GetProcessHeap(), 0, strlen(arg)+1);
@@ -371,7 +371,7 @@ static DWORD convertHexToDWord(char *str, BYTE *buf)
 }
 
 /******************************************************************************
- * Converts a hex buffer into a hex coma separated values 
+ * Converts a hex buffer into a hex comma separated values 
  */
 static char* convertHexToHexCSV(BYTE *buf, ULONG bufLen)
 {
@@ -396,8 +396,8 @@ static char* convertHexToHexCSV(BYTE *buf, ULONG bufLen)
     strcat(str, ",");
   }                                   
 
-  /* Get rid of the last coma */
-  str[strlen(str)-1] = NULL;
+  /* Get rid of the last comma */
+  str[strlen(str)-1] = '\0';
   return str;
 }
 
@@ -426,11 +426,11 @@ static char* convertHexToDWORDStr(BYTE *buf, ULONG bufLen)
     strcat(str, res);
   }                                   
 
-  /* Get rid of the last coma */
+  /* Get rid of the last comma */
   return str;
 }
 /******************************************************************************
- * Converts a hex coma separated values list into a hex list.
+ * Converts a hex comma separated values list into a hex list.
  */
 static DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
 {
@@ -448,7 +448,7 @@ static DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
    * not contains ",".  It is more likely because the data is invalid.
    */
   if ( ( strlen(str) > 2) && ( strstr(str, ",") == NULL) )
-    printf("regapi: WARNING converting CSV hex stream with no coma, "
+    printf("regapi: WARNING converting CSV hex stream with no comma, "
            "input data seems invalid.\n");
 
   while (strPos < strLen)
@@ -477,7 +477,7 @@ static HRESULT setValue(LPSTR *argv)
 {
   HRESULT hRes;
   DWORD   dwSize          = KEY_MAX_LEN;
-  DWORD   dwType          = NULL;
+  DWORD   dwType          = 0;
   DWORD   dwDataType;
 
   LPSTR   lpsCurrentValue;
@@ -495,7 +495,7 @@ static HRESULT setValue(LPSTR *argv)
    * blank in the wine registry.
    */
   if( (keyValue[0] == '@') && (strlen(keyValue) == 1) )
-    keyValue[0] = NULL;
+    keyValue[0] = '\0';
 
   /* Get the data type stored into the value field */
   dwDataType = getDataType(&keyData);
@@ -615,7 +615,7 @@ static void processSetValue(LPSTR cmdline)
   LPSTR token         = NULL;      /* current token analized */
   ULONG argCounter    = 0;         /* counter of args */
   INT   counter;
-  HRESULT hRes = NULL;
+  HRESULT hRes = 0;
 
   /*
    * Init storage and parse the line
@@ -670,7 +670,7 @@ static void processQueryValue(LPSTR cmdline)
   LPSTR   token      = NULL;         /* current token analized */
   ULONG   argCounter = 0;            /* counter of args */
   INT     counter;
-  HRESULT hRes       = NULL;
+  HRESULT hRes       = 0;
   LPSTR   keyValue   = NULL;
   LPSTR   lpsRes     = NULL;
 
@@ -808,8 +808,8 @@ static void closeKey()
   bTheKeyIsOpen    = FALSE;
 
   currentKeyName   = NULL;
-  currentKeyClass  = NULL;
-  currentKeyHandle = NULL;
+  currentKeyClass  = 0;
+  currentKeyHandle = 0;
 }
 
 /******************************************************************************
@@ -984,18 +984,18 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
      */
     if ( stdInput != NULL )
     {
-      stdInput[strlen(stdInput) -1] = NULL; /* get rid of new line */
+      stdInput[strlen(stdInput) -1] = '\0'; /* get rid of new line */
 
       if( stdInput[0] == '#' )              /* this is a comment, skip */
         continue;
 
       while( stdInput[strlen(stdInput) -1] == '\\' ){ /* a '\' char in the end of the current line means  */
                                                       /* that this line is not complete and we have to get */
-          stdInput[strlen(stdInput) -1]= NULL;        /* the rest in the next lines */
+          stdInput[strlen(stdInput) -1]= '\0';        /* the rest in the next lines */
 
           nextLine = fgets(nextLine, STDIN_MAX_LEN, stdin);
 
-          nextLine[strlen(nextLine)-1] = NULL;
+          nextLine[strlen(nextLine)-1] = '\0';
 
           if ( (strlen(stdInput)+strlen(nextLine)) > currentSize){
 
@@ -1018,18 +1018,16 @@ int PASCAL WinMain (HANDLE inst, HANDLE prev, LPSTR cmdline, int show)
       break;
   }
 
+#if 0 
   /* 
    * Save the registry only if it was modified 
    */
-  if ( commandSaveRegistry[cmdIndex] != FALSE )
-    SHELL_SaveRegistry();
-
+ if ( commandSaveRegistry[cmdIndex] != FALSE )
+       SHELL_SaveRegistry();
+#endif
   HeapFree(GetProcessHeap(), 0, nextLine);
 
   HeapFree(GetProcessHeap(), 0, stdInput);
 
   return SUCCESS;
 }
-
-
-
