@@ -324,6 +324,8 @@ struct x11drv_thread_data
     Display *display;
     HANDLE   display_fd;
     int      process_event_count;  /* recursion count for event processing */
+    Cursor   cursor;               /* current cursor */
+    Window   cursor_window;        /* current window that contains the cursor */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);

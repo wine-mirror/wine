@@ -134,9 +134,31 @@ static void send_mouse_event( HWND hwnd, DWORD flags, DWORD posX, DWORD posY,
 
 
 /***********************************************************************
- *		X11DRV_GetCursor
+ *		update_cursor
+ *
+ * Update the cursor of a window on a mouse event.
  */
-Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
+static void update_cursor( HWND hwnd, Window win )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
+    if (win == X11DRV_get_client_window( hwnd ))
+        win = X11DRV_get_whole_window( hwnd );  /* always set cursor on whole window */
+
+    if (data->cursor_window != win)
+    {
+        data->cursor_window = win;
+        if (data->cursor) TSXDefineCursor( data->display, win, data->cursor );
+    }
+}
+
+
+/***********************************************************************
+ *		create_cursor
+ *
+ * Create an X cursor from a Windows one.
+ */
+static Cursor create_cursor( Display *display, CURSORICONINFO *ptr )
 {
     Pixmap pixmapBits, pixmapMask, pixmapMaskInv, pixmapAll;
     XColor fg, bg;
@@ -420,13 +442,6 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
     return cursor;
 }
 
-/* set the cursor of a window; helper for X11DRV_SetCursor */
-static BOOL CALLBACK set_win_cursor( HWND hwnd, LPARAM cursor )
-{
-    Window win = X11DRV_get_whole_window( hwnd );
-    if (win) TSXDefineCursor( thread_display(), win, (Cursor)cursor );
-    return TRUE;
-}
 
 /***********************************************************************
  *		SetCursor (X11DRV.@)
@@ -440,27 +455,34 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
         /* If in desktop mode, set the cursor on the desktop window */
 
         wine_tsx11_lock();
-        cursor = X11DRV_GetCursor( gdi_display, lpCursor );
+        cursor = create_cursor( gdi_display, lpCursor );
         if (cursor)
         {
             XDefineCursor( gdi_display, root_window, cursor );
+	    /* Make the change take effect immediately */
+	    XFlush(gdi_display);
             XFreeCursor( gdi_display, cursor );
         }
         wine_tsx11_unlock();
     }
     else /* set the same cursor for all top-level windows of the current thread */
     {
-        Display *display = thread_display();
+        struct x11drv_thread_data *data = x11drv_thread_data();
 
         wine_tsx11_lock();
-        cursor = X11DRV_GetCursor( display, lpCursor );
-        wine_tsx11_unlock();
+        cursor = create_cursor( data->display, lpCursor );
         if (cursor)
         {
-/*            EnumThreadWindows( GetCurrentThreadId(), set_win_cursor, (LPARAM)cursor );*/
-            EnumWindows( set_win_cursor, (LPARAM)cursor );
-            TSXFreeCursor( display, cursor );
+            if (data->cursor) XFreeCursor( data->display, data->cursor );
+            data->cursor = cursor;
+            if (data->cursor_window)
+            {
+                XDefineCursor( data->display, data->cursor_window, cursor );
+                /* Make the change take effect immediately */
+                XFlush( data->display );
+            }
         }
+        wine_tsx11_unlock();
     }
 }
 
@@ -493,6 +515,7 @@ void X11DRV_GetCursorPos(LPPOINT pos)
                         &rootX, &rootY, &winX, &winY, &xstate ))
     return;
 
+  update_key_state( xstate );
   TRACE("pointer at (%d,%d)\n", winX, winY );
   pos->x = winX;
   pos->y = winY;
@@ -503,18 +526,7 @@ void X11DRV_GetCursorPos(LPPOINT pos)
  */
 void X11DRV_InitMouse( BYTE *key_state_table )
 {
-    Window root, child;
-    int root_x, root_y, child_x, child_y;
-    unsigned int KeyState;
-
     pKeyStateTable = key_state_table;
-    /* Get the current mouse position and simulate an absolute mouse
-       movement to initialize the mouse global variables */
-    TSXQueryPointer( thread_display(), root_window, &root, &child,
-                     &root_x, &root_y, &child_x, &child_y, &KeyState);
-    update_key_state( KeyState );
-    send_mouse_event( 0, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
-                      root_x, root_y, 0, GetTickCount() + X11DRV_server_startticks );
 }
 
 
@@ -528,7 +540,9 @@ void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event )
     POINT pt;
 
     if (buttonNum >= NB_BUTTONS) return;
+    if (!hwnd) return;
 
+    update_cursor( hwnd, event->window );
     get_coords( &hwnd, event->window, event->x, event->y, &pt );
 
     switch (buttonNum)
@@ -555,7 +569,9 @@ void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event )
     POINT pt;
 
     if (buttonNum >= NB_BUTTONS || !button_up_flags[buttonNum]) return;
+    if (!hwnd) return;
 
+    update_cursor( hwnd, event->window );
     get_coords( &hwnd, event->window, event->x, event->y, &pt );
     update_key_state( event->state );
     send_mouse_event( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
@@ -570,6 +586,28 @@ void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event )
 {
     POINT pt;
 
+    if (!hwnd) return;
+
+    update_cursor( hwnd, event->window );
+    get_coords( &hwnd, event->window, event->x, event->y, &pt );
+    update_key_state( event->state );
+    send_mouse_event( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+                      pt.x, pt.y, 0, event->time );
+}
+
+
+/***********************************************************************
+ *           X11DRV_EnterNotify
+ */
+void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event )
+{
+    POINT pt;
+
+    if (event->detail == NotifyVirtual || event->detail == NotifyNonlinearVirtual) return;
+    if (!hwnd) return;
+
+    /* simulate a mouse motion event */
+    update_cursor( hwnd, event->window );
     get_coords( &hwnd, event->window, event->x, event->y, &pt );
     update_key_state( event->state );
     send_mouse_event( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,

@@ -102,6 +102,7 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
 extern void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event );
 extern void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event );
 extern void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event );
+extern void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event );
 extern void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event );
 extern void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event );
 extern void X11DRV_Expose( HWND hwnd, XExposeEvent *event );
@@ -296,6 +297,10 @@ static void EVENT_ProcessEvent( XEvent *event )
 
     case MotionNotify:
       X11DRV_MotionNotify( hWnd, (XMotionEvent*)event );
+      break;
+
+    case EnterNotify:
+      X11DRV_EnterNotify( hWnd, (XCrossingEvent*)event );
       break;
 
     case FocusIn:

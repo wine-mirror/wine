@@ -115,7 +115,6 @@ inline static BOOL is_client_window_mapped( WND *win )
  *              get_window_attributes
  *
  * Fill the window attributes structure for an X window.
- * Returned cursor must be freed by caller.
  */
 static int get_window_attributes( Display *display, WND *win, XSetWindowAttributes *attr )
 {
@@ -128,14 +127,13 @@ static int get_window_attributes( Display *display, WND *win, XSetWindowAttribut
     attr->override_redirect = !managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((win->clsStyle & CS_SAVEBITS) != 0);
-    attr->cursor            = None;
+    attr->cursor            = x11drv_thread_data()->cursor;
     attr->event_mask        = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                               ButtonPressMask | ButtonReleaseMask);
+                               ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
+
     if (is_window_top_level( win ))
-    {
         attr->event_mask |= StructureNotifyMask | FocusChangeMask | KeymapStateMask;
-        attr->cursor = X11DRV_GetCursor( display, GlobalLock16(GetCursor()) );
-    }
+
     return (CWOverrideRedirect | CWSaveUnder | CWEventMask | CWColormap | CWCursor);
 }
 
@@ -153,7 +151,6 @@ static void sync_window_style( Display *display, WND *win )
     wine_tsx11_lock();
     mask = get_window_attributes( display, win, &attr );
     XChangeWindowAttributes( display, get_whole_window(win), mask, &attr );
-    if (attr.cursor) XFreeCursor( display, attr.cursor );
     wine_tsx11_unlock();
 }
 
@@ -200,7 +197,7 @@ static Window create_icon_window( Display *display, WND *win )
     XSetWindowAttributes attr;
 
     attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask);
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
     attr.bit_gravity = NorthWestGravity;
     attr.backing_store = NotUseful/*WhenMapped*/;
     attr.colormap      = X11DRV_PALETTE_PaletteXColormap; /* Needed due to our visual */
@@ -230,6 +227,8 @@ inline static void destroy_icon_window( Display *display, WND *win )
     struct x11drv_win_data *data = win->pDriverData;
 
     if (!data->icon_window) return;
+    if (x11drv_thread_data()->cursor_window == data->icon_window)
+        x11drv_thread_data()->cursor_window = None;
     wine_tsx11_lock();
     XDeleteContext( display, data->icon_window, winContext );
     XDestroyWindow( display, data->icon_window );
@@ -695,7 +694,6 @@ static Window create_whole_window( Display *display, WND *win )
     data->whole_window = XCreateWindow( display, parent, rect.left, rect.top, cx, cy,
                                         0, screen_depth, InputOutput, visual,
                                         mask, &attr );
-    if (attr.cursor) XFreeCursor( display, attr.cursor );
 
     if (!data->whole_window)
     {
@@ -734,7 +732,7 @@ static Window create_client_window( Display *display, WND *win )
     data->client_rect = rect;
 
     attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
-                       ButtonPressMask | ButtonReleaseMask);
+                       ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
     attr.bit_gravity = (win->clsStyle & (CS_VREDRAW | CS_HREDRAW)) ?
                        ForgetGravity : NorthWestGravity;
     attr.backing_store = NotUseful/*WhenMapped*/;
@@ -827,7 +825,8 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  */
 BOOL X11DRV_DestroyWindow( HWND hwnd )
 {
-    Display *display = thread_display();
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+    Display *display = thread_data->display;
     WND *wndPtr = WIN_GetPtr( hwnd );
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
 
@@ -836,6 +835,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     if (data->whole_window)
     {
         TRACE( "win %x xwin %lx/%lx\n", hwnd, data->whole_window, data->client_window );
+        if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
         wine_tsx11_lock();
         XSync( gdi_display, False );  /* flush any reference to this drawable in GDI queue */
         XDeleteContext( display, data->whole_window, winContext );

@@ -456,6 +456,8 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
         ExitProcess(1);
     }
     data->process_event_count = 0;
+    data->cursor = None;
+    data->cursor_window = None;
     NtCurrentTeb()->driver_data = data;
     return data;
 }
