@@ -3245,7 +3245,7 @@ void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,
 {
   BITMAPOBJ *bmp;
   X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcDst->physDev;
-  int nColorMap = 0, *colorMap = NULL;
+  int nColorMap = 0, *colorMap = NULL, aColorMap = FALSE;
 
   TRACE("(%p,%p,%ld,%ld,%ld,%ld,%ld,%ld)\n", dcSrc, dcDst,
     xSrc, ySrc, xDest, yDest, width, height);
@@ -3272,17 +3272,30 @@ void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,
       height = bmp->bitmap.bmHeight - ySrc;
     /* if the source bitmap is 8bpp or less, we're supposed to use the
      * DC's palette for color conversion (not the DIB color table) */
-    if (bmp->dib->dsBm.bmBitsPixel <= 8)
-      colorMap = X11DRV_DIB_BuildColorMap( dcSrc, (WORD)-1,
-					   bmp->dib->dsBm.bmBitsPixel,
-					   (BITMAPINFO*)&(bmp->dib->dsBmih),
-					   &nColorMap );
+    if (bmp->dib->dsBm.bmBitsPixel <= 8) {
+      X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
+      if ((!dcSrc->hPalette) ||
+	  (dcSrc->hPalette == GetStockObject(DEFAULT_PALETTE))) {
+	/* HACK: no palette has been set in the source DC,
+	 * use the DIB colormap instead - this is necessary in some
+	 * cases since we need to do depth conversion in some places
+	 * where real Windows can just copy data straight over */
+	colorMap = dib->colorMap;
+	nColorMap = dib->nColorMap;
+      } else {
+	colorMap = X11DRV_DIB_BuildColorMap( dcSrc, (WORD)-1,
+					     bmp->dib->dsBm.bmBitsPixel,
+					     (BITMAPINFO*)&(bmp->dib->dsBmih),
+					     &nColorMap );
+	if (colorMap) aColorMap = TRUE;
+      }
+    }
     /* perform the copy */
     X11DRV_DIB_DoCopyDIBSection(bmp, FALSE, colorMap, nColorMap,
 				physDev->drawable, xSrc, ySrc, xDest, yDest,
 				width, height);
     /* free color mapping */
-    if (colorMap)
+    if (aColorMap)
       HeapFree(GetProcessHeap(), 0, colorMap);
   }
   GDI_ReleaseObj( dcSrc->hBitmap );
