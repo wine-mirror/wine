@@ -107,7 +107,7 @@ LTEXT         "Copy program:",    IDIGNORE,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
 LTEXT         "From group:", IDIGNORE,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&To group::",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&To group:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Cancel",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
