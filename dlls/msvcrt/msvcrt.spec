@@ -109,7 +109,7 @@
 @ cdecl __p__acmdln()  __p__acmdln
 @ stub __p__amblksiz #()
 @ cdecl __p__commode()  __p__commode
-@ stub __p__daylight #()
+@ cdecl __p__daylight() MSVCRT___p__daylight
 @ stub __p__dstbias #()
 @ cdecl __p__environ() __p__environ
 @ stub __p__fileinfo #()
@@ -193,7 +193,7 @@
 @ varargs _cscanf(str) _cscanf
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long) _cwait
-@ stub _daylight
+@ extern _daylight MSVCRT___daylight
 @ stub _dstbias
 @ cdecl _dup (long) _dup
 @ cdecl _dup2 (long long) _dup2

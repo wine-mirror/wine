@@ -37,7 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-
 /* INTERNAL: Return formatted current time/date */
 char* msvcrt_get_current_time(char* out, const char* format)
 {
@@ -140,4 +139,17 @@ void _ftime(struct _timeb *buf)
   buf->millitm = 0; /* FIXME */
   buf->timezone = 0;
   buf->dstflag = 0;
+}
+
+/*********************************************************************
+ *		_daylight (MSVCRT.@)
+ */
+int MSVCRT___daylight = 1; /* FIXME: assume daylight */
+
+/*********************************************************************
+ *		__p_daylight (MSVCRT.@)
+ */
+void *MSVCRT___p__daylight(void)
+{
+	return &MSVCRT___daylight;
 }
