@@ -78,6 +78,8 @@ typedef struct tagWINE_MCIDRIVER {
         DWORD	                dwYieldData;
         BOOL			bIs32;
         HTASK16			hCreatorTask;
+        UINT			uTypeCmdTable;
+        UINT			uSpecificCmdTable;
         struct tagWINE_MCIDRIVER*	lpNext;
 } WINE_MCIDRIVER, *LPWINE_MCIDRIVER;
 
@@ -110,11 +112,11 @@ typedef struct tagWINE_MM_IDATA {
     HANDLE			hWinMM32Instance;
     HANDLE			hWinMM16Instance;
     HANDLE			h16Module32;
+    CRITICAL_SECTION		cs;
     /* mm timer part */
     HANDLE			hMMTimer;
     DWORD			mmSysTimeMS;
     LPWINE_TIMERENTRY 		lpTimerList;
-    CRITICAL_SECTION		cs;
     int				nSizeLpTimers;
     LPWINE_TIMERENTRY		lpTimers;
     /* mci part */
@@ -123,32 +125,19 @@ typedef struct tagWINE_MM_IDATA {
 
 /* function prototypes */
 
-extern MCI_MapType		MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam);
-extern MCI_MapType		MCI_UnMapMsg16To32A(WORD uDevTyp, WORD wMsg, DWORD lParam);
-
-extern DWORD 			MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms);
-extern DWORD 			MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms);
-extern DWORD 			MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParms);
-extern DWORD 			MCI_Break(UINT uDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms);
-
 typedef LONG			(*MCIPROC16)(DWORD, HDRVR16, WORD, DWORD, DWORD);
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
 
-extern WORD		   	MCI_GetDevTypeFromString(LPCSTR str);
-extern LPCSTR		   	MCI_GetStringFromDevType(WORD type);
 extern LPWINE_MCIDRIVER		MCI_GetDriver(UINT16 uDevID);
 extern UINT			MCI_GetDriverFromString(LPCSTR str);
 extern DWORD			MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr);
-extern const char* 		MCI_CommandToString(UINT16 wMsg);
-
-extern int			mciInstalledCount;
-extern int			mciInstalledListLen;
-extern LPSTR			lpmciInstallNames;
+extern const char* 		MCI_MessageToString(UINT16 wMsg);
 
 extern UINT16		WINAPI	MCI_DefYieldProc(UINT16 wDevID, DWORD data);
 
 extern LRESULT			MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32);
 
+extern DWORD			MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
 extern DWORD 			MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2);
 extern DWORD 			MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2, UINT size);
