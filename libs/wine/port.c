@@ -116,7 +116,7 @@ __declspec(naked) void wine_switch_to_stack( void (*func)(void *), void *arg, vo
 __ASM_GLOBAL_FUNC( wine_switch_to_stack,
                    "mov %o0, %l0\n\t" /* store first argument */
                    "mov %o1, %l1\n\t" /* store second argument */
-                   "mov %o2, %sp\n\t" /* store stack */
+                   "sub %o2, 96, %sp\n\t" /* store stack */
                    "call %l0, 0\n\t" /* call func */
                    "mov %l1, %o0\n\t" /* delay slot:  arg for func */
                    "ta 0x01"); /* breakpoint - we never get here */
