@@ -15,16 +15,6 @@ SPEC_SRCS16 = \
 	user.exe.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/controls/button.c \
-	$(TOPOBJDIR)/controls/combo.c \
-	$(TOPOBJDIR)/controls/desktop.c \
-	$(TOPOBJDIR)/controls/edit.c \
-	$(TOPOBJDIR)/controls/icontitle.c \
-	$(TOPOBJDIR)/controls/listbox.c \
-	$(TOPOBJDIR)/controls/menu.c \
-	$(TOPOBJDIR)/controls/scroll.c \
-	$(TOPOBJDIR)/controls/static.c \
-	$(TOPOBJDIR)/controls/uitools.c \
 	$(TOPOBJDIR)/windows/class.c \
 	$(TOPOBJDIR)/windows/clipboard.c \
 	$(TOPOBJDIR)/windows/cursoricon.c \
@@ -54,18 +44,25 @@ C_SRCS = \
 	$(TOPOBJDIR)/windows/winhelp.c \
 	$(TOPOBJDIR)/windows/winpos.c \
 	$(TOPOBJDIR)/windows/winproc.c \
+	button.c \
 	cache.c \
 	caret.c \
+	combo.c \
 	dde/client.c \
 	dde/ddeml16.c \
 	dde/misc.c \
 	dde/server.c \
+	desktop.c \
 	dialog16.c \
 	display.c \
+	edit.c \
 	exticon.c \
 	focus.c \
 	hook.c \
+	icontitle.c \
+	listbox.c \
 	lstr.c \
+	menu.c \
 	message.c \
 	misc.c \
 	mouse.c \
@@ -73,7 +70,10 @@ C_SRCS = \
 	painting.c \
 	property.c \
 	resource.c \
+	scroll.c \
+	static.c \
 	text.c \
+	uitools.c \
 	user_main.c \
 	wsprintf.c
 
@@ -156,7 +156,6 @@ RC_SRCS16 = \
 SUBDIRS = tests
 
 EXTRASUBDIRS = \
-	$(TOPOBJDIR)/controls \
 	$(TOPOBJDIR)/windows \
 	dde \
 	resources

@@ -239,7 +239,6 @@ Note: these directories will ultimately get moved into their
 respective dlls.
 
 	misc/			- KERNEL registry 
-	controls/		- USER built-in widgets
 	windows/		- USER window management
 
 

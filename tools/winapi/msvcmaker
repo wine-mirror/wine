@@ -87,9 +87,9 @@ sub read_spec_file {
     }
 }
 
-my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv objects);
-my @ntdll_dirs = qw(files misc);
-my @user32_dirs = qw(controls dlls/user/dde windows);
+my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv);
+my @ntdll_dirs = qw(misc);
+my @user32_dirs = qw(dlls/user/dde windows);
 
 push @makefile_in_files, "tools/winebuild/Makefile.in";
 
@@ -685,7 +685,7 @@ sub _generate_dsp {
 		push @includes, "..";
 	    }
 
-	    if($project =~ /^user32_(?:controls|windows)$/) {
+	    if($project =~ /^user32_(?:windows)$/) {
 		push @includes, "..\\dlls\\user";
 	    }
 
