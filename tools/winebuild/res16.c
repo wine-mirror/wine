@@ -98,7 +98,7 @@ static struct res_type *add_type( const struct resource *res )
 }
 
 /* get the next byte from the current resource file */
-static WORD get_byte(void)
+static unsigned char get_byte(void)
 {
     unsigned char ret = *file_pos++;
     if (file_pos > file_end) fatal_error( "%s is a truncated/corrupted file\n", file_name );
