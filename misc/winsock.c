@@ -14,14 +14,18 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
+#ifdef HAVE_SYS_IPC_H
+# include <sys/ipc.h>
+#endif
 #include <sys/ioctl.h>
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
 #if defined(__svr4__) || defined(__sun)
 #include <sys/ioccom.h>
-#include <sys/sockio.h>
+#ifdef HAVE_SYS_SOCKIO_H
+# include <sys/sockio.h>
+#endif
 #endif
 
 #if defined(__EMX__)
@@ -32,12 +36,24 @@
 # include <sys/param.h>
 #endif
 
-#include <sys/msg.h>
-#include <sys/wait.h>
+#ifdef HAVE_SYS_MSG_H
+# include <sys/msg.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>

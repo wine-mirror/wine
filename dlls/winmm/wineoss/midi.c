@@ -12,6 +12,8 @@
  * 		98/11 	splitted in midi.c and mcimidi.c
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>

@@ -74,7 +74,9 @@ const char *strerror( int err )
 #if !defined(HAVE_CLONE) && defined(__linux__)
 #include <assert.h>
 #include <errno.h>
-#include <syscall.h>
+#ifdef HAVE_SYSCALL_H
+# include <syscall.h>
+#endif
 int clone( int (*fn)(void *), void *stack, int flags, void *arg )
 {
 #ifdef __i386__
