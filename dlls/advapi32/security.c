@@ -2800,7 +2800,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
     LPWSTR StringSecurityDescriptorW;
 
     len = MultiByteToWideChar(CP_ACP, 0, StringSecurityDescriptor, -1, NULL, 0);
-    StringSecurityDescriptorW = (LPWSTR)HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    StringSecurityDescriptorW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
     if (StringSecurityDescriptorW)
     {
@@ -2909,7 +2909,7 @@ BOOL WINAPI ConvertStringSidToSidA(LPCSTR StringSid, PSID* Sid)
     else
     {
         UINT len = MultiByteToWideChar(CP_ACP, 0, StringSid, -1, NULL, 0);
-        LPWSTR wStringSid = (LPWSTR)HeapAlloc(GetProcessHeap(), 0,
+        LPWSTR wStringSid = HeapAlloc(GetProcessHeap(), 0,
          len * sizeof(WCHAR));
 
         MultiByteToWideChar(CP_ACP, 0, StringSid, -1, wStringSid, len);

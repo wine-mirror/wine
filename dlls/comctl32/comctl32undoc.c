@@ -1824,7 +1824,7 @@ HDPA WINAPI DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
 
     if (!hdpaNew) {
 	/* create a new DPA */
-	hdpaTemp = (HDPA)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
+	hdpaTemp = HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				    sizeof(*hdpaTemp));
 	hdpaTemp->hHeap = hdpa->hHeap;
 	hdpaTemp->nGrow = hdpa->nGrow;
@@ -1844,8 +1844,7 @@ HDPA WINAPI DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
     nNewItems = hdpaTemp->nGrow *
 		((INT)((hdpa->nItemCount - 1) / hdpaTemp->nGrow) + 1);
     nSize = nNewItems * sizeof(LPVOID);
-    hdpaTemp->ptrs =
-	(LPVOID*)HeapAlloc (hdpaTemp->hHeap, HEAP_ZERO_MEMORY, nSize);
+    hdpaTemp->ptrs = HeapAlloc (hdpaTemp->hHeap, HEAP_ZERO_MEMORY, nSize);
     hdpaTemp->nMaxCount = nNewItems;
 
     /* clone the pointer array */
@@ -1985,9 +1984,9 @@ BOOL WINAPI DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 	    INT nSize = nNewItems * sizeof(LPVOID);
 
 	    if (hdpa->ptrs)
-	        lpTemp = (LPVOID*)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, hdpa->ptrs, nSize);
+	        lpTemp = HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, hdpa->ptrs, nSize);
 	    else
-		lpTemp = (LPVOID*)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, nSize);
+		lpTemp = HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY, nSize);
 	    
 	    if (!lpTemp)
 		return FALSE;
@@ -2046,7 +2045,7 @@ LPVOID WINAPI DPA_DeletePtr (const HDPA hdpa, INT i)
     if ((hdpa->nMaxCount - hdpa->nItemCount) >= hdpa->nGrow) {
 	INT nNewItems = max(hdpa->nGrow * 2, hdpa->nItemCount);
 	nSize = nNewItems * sizeof(LPVOID);
-	lpDest = (LPVOID)HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
+	lpDest = HeapReAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				      hdpa->ptrs, nSize);
 	if (!lpDest)
 	    return NULL;
@@ -2083,7 +2082,7 @@ BOOL WINAPI DPA_DeleteAllPtrs (const HDPA hdpa)
 
     hdpa->nItemCount = 0;
     hdpa->nMaxCount = hdpa->nGrow * 2;
-    hdpa->ptrs = (LPVOID*)HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
+    hdpa->ptrs = HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
 				     hdpa->nMaxCount * sizeof(LPVOID));
 
     return TRUE;
@@ -2280,7 +2279,7 @@ HDPA WINAPI DPA_CreateEx (INT nGrow, HANDLE hHeap)
     TRACE("(%d %p)\n", nGrow, hHeap);
 
     if (hHeap)
-	hdpa = (HDPA)HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
+	hdpa = HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
     else
 	hdpa = Alloc (sizeof(*hdpa));
 

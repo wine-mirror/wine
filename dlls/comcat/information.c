@@ -437,8 +437,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
 
     if (This == NULL || ppenum == NULL) return E_POINTER;
 
-    new_this = (IEnumCATEGORYINFOImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
+    new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
     new_this->lpVtbl = This->lpVtbl;
@@ -467,8 +466,7 @@ static LPENUMCATEGORYINFO COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid)
 {
     IEnumCATEGORYINFOImpl *This;
 
-    This = (IEnumCATEGORYINFOImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumCATEGORYINFOImpl));
     if (This) {
 	WCHAR keyname[21] = { 'C', 'o', 'm', 'p', 'o', 'n', 'e', 'n',
 			      't', ' ', 'C', 'a', 't', 'e', 'g', 'o',
@@ -515,7 +513,7 @@ static struct class_categories *COMCAT_PrepareClassCategories(
     struct class_categories *categories;
     WCHAR *strings;
 
-    categories = (struct class_categories *)HeapAlloc(
+    categories = HeapAlloc(
 	GetProcessHeap(), HEAP_ZERO_MEMORY,
 	sizeof(struct class_categories) +
 	((impl_count + req_count) * 39 + 2) * sizeof(WCHAR));
@@ -740,14 +738,13 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
 
     if (This == NULL || ppenum == NULL) return E_POINTER;
 
-    new_this = (CLSID_IEnumGUIDImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
+    new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
     new_this->lpVtbl = This->lpVtbl;
     new_this->ref = 1;
     size = HeapSize(GetProcessHeap(), 0, (LPVOID)This->categories);
-    new_this->categories = (struct class_categories *)
+    new_this->categories =
 	HeapAlloc(GetProcessHeap(), 0, size);
     if (new_this->categories == NULL) {
 	HeapFree(GetProcessHeap(), 0, new_this);
@@ -778,8 +775,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
 {
     CLSID_IEnumGUIDImpl *This;
 
-    This = (CLSID_IEnumGUIDImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
     if (This) {
 	WCHAR keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
 
@@ -924,8 +920,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Clone(
 
     if (This == NULL || ppenum == NULL) return E_POINTER;
 
-    new_this = (CATID_IEnumGUIDImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
+    new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
     if (new_this == NULL) return E_OUTOFMEMORY;
 
     new_this->lpVtbl = This->lpVtbl;
@@ -955,8 +950,7 @@ static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
 {
     CATID_IEnumGUIDImpl *This;
 
-    This = (CATID_IEnumGUIDImpl *) HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
     if (This) {
 	WCHAR prefix[6] = { 'C', 'L', 'S', 'I', 'D', '\\' };
 

@@ -284,8 +284,7 @@ struct {
 
 static LPWSTR GetWideString(const char* szString)
 {
-  LPWSTR wszString = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
-					 (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+  LPWSTR wszString = HeapAlloc(GetProcessHeap(), 0, (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
   
   MultiByteToWideChar(0, 0, szString, -1, wszString, INTERNET_MAX_URL_LENGTH);
 

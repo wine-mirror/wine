@@ -180,7 +180,7 @@ void winapi_test(int flags)
         if (length)
         {
             char *buffer;
-            buffer = (char*)HeapAlloc(GetProcessHeap(),0,length+1);
+            buffer = HeapAlloc(GetProcessHeap(),0,length+1);
 
             rc = InternetReadFile(hor,buffer,length,&length);
 
