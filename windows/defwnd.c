@@ -1034,6 +1034,19 @@ LRESULT WINAPI DefWindowProcW(
 	}
 	break;
 
+    case WM_IME_STARTCOMPOSITION:
+    case WM_IME_COMPOSITION:
+    case WM_IME_ENDCOMPOSITION:
+    case WM_IME_SELECT:
+	{
+	    HWND hwndIME;
+
+	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+	    if (hwndIME)
+		result = SendMessageW( hwndIME, msg, wParam, lParam );
+	}
+	break;
+
     case WM_INPUTLANGCHANGEREQUEST:
         /* notify about the switch only if it's really our current layout */
         if ((HKL)lParam == GetKeyboardLayout(0))
