@@ -11,7 +11,7 @@
 
 /* wcstombs for single-byte code page */
 static inline int wcstombs_sbcs( const struct sbcs_table *table,
-                                 const unsigned short *src, unsigned int srclen,
+                                 const WCHAR *src, unsigned int srclen,
                                  char *dst, unsigned int dstlen )
 {
     const unsigned char  * const uni2cp_low = table->uni2cp_low;
@@ -57,11 +57,11 @@ static inline int wcstombs_sbcs( const struct sbcs_table *table,
 
 /* slow version of wcstombs_sbcs that handles the various flags */
 static int wcstombs_sbcs_slow( const struct sbcs_table *table, int flags,
-                               const unsigned short *src, unsigned int srclen,
+                               const WCHAR *src, unsigned int srclen,
                                char *dst, unsigned int dstlen,
                                const char *defchar, int *used )
 {
-    const unsigned short * const cp2uni = table->cp2uni;
+    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned char  * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
     const unsigned char table_default = table->info.def_char & 0xff;
@@ -95,7 +95,7 @@ static int wcstombs_sbcs_slow( const struct sbcs_table *table, int flags,
 
 /* query necessary dst length for src string */
 static inline int get_length_dbcs( const struct dbcs_table *table,
-                                   const unsigned short *src, unsigned int srclen )
+                                   const WCHAR *src, unsigned int srclen )
 {
     const unsigned short * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
@@ -110,7 +110,7 @@ static inline int get_length_dbcs( const struct dbcs_table *table,
 
 /* wcstombs for double-byte code page */
 static inline int wcstombs_dbcs( const struct dbcs_table *table,
-                                 const unsigned short *src, unsigned int srclen,
+                                 const WCHAR *src, unsigned int srclen,
                                  char *dst, unsigned int dstlen )
 {
     const unsigned short * const uni2cp_low = table->uni2cp_low;
@@ -134,15 +134,15 @@ static inline int wcstombs_dbcs( const struct dbcs_table *table,
 
 /* slow version of wcstombs_dbcs that handles the various flags */
 static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
-                               const unsigned short *src, unsigned int srclen,
+                               const WCHAR *src, unsigned int srclen,
                                char *dst, unsigned int dstlen,
                                const char *defchar, int *used )
 {
+    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned short * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
-    const unsigned short * const cp2uni = table->cp2uni;
-    const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
-    unsigned short defchar_value = table->info.def_char;
+    const unsigned char  * const cp2uni_lb = table->cp2uni_leadbytes;
+    WCHAR defchar_value = table->info.def_char;
     int len, tmp;
 
     if (defchar) defchar_value = defchar[1] ? ((defchar[0] << 8) | defchar[1]) : defchar[0];
@@ -191,7 +191,7 @@ static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
 /* wide char to multi byte string conversion */
 /* return -1 on dst buffer overflow */
 int cp_wcstombs( const union cptable *table, int flags,
-                 const unsigned short *src, int srclen,
+                 const WCHAR *src, int srclen,
                  char *dst, int dstlen, const char *defchar, int *used )
 {
     if (table->info.char_size == 1)

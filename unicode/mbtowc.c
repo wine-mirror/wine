@@ -13,7 +13,7 @@
 static inline int check_invalid_chars_sbcs( const struct sbcs_table *table,
                                             const unsigned char *src, unsigned int srclen )
 {
-    const unsigned short * const cp2uni = table->cp2uni;
+    const WCHAR * const cp2uni = table->cp2uni;
     while (srclen)
     {
         if (cp2uni[*src] == table->info.def_unicode_char && *src != table->info.def_char)
@@ -28,9 +28,9 @@ static inline int check_invalid_chars_sbcs( const struct sbcs_table *table,
 /* all lengths are in characters, not bytes */
 static inline int mbstowcs_sbcs( const struct sbcs_table *table,
                                  const unsigned char *src, unsigned int srclen,
-                                 unsigned short *dst, unsigned int dstlen )
+                                 WCHAR *dst, unsigned int dstlen )
 {
-    const unsigned short * const cp2uni = table->cp2uni;
+    const WCHAR * const cp2uni = table->cp2uni;
     int ret = srclen;
 
     if (dstlen < srclen)
@@ -92,7 +92,7 @@ static inline int get_length_dbcs( const struct dbcs_table *table,
 static inline int check_invalid_chars_dbcs( const struct dbcs_table *table,
                                             const unsigned char *src, unsigned int srclen )
 {
-    const unsigned short * const cp2uni = table->cp2uni;
+    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
 
     while (srclen)
@@ -118,9 +118,9 @@ static inline int check_invalid_chars_dbcs( const struct dbcs_table *table,
 /* all lengths are in characters, not bytes */
 static inline int mbstowcs_dbcs( const struct dbcs_table *table,
                                  const unsigned char *src, unsigned int srclen,
-                                 unsigned short *dst, unsigned int dstlen )
+                                 WCHAR *dst, unsigned int dstlen )
 {
-    const unsigned short * const cp2uni = table->cp2uni;
+    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned char * const cp2uni_lb = table->cp2uni_leadbytes;
     int len;
 
@@ -143,7 +143,7 @@ static inline int mbstowcs_dbcs( const struct dbcs_table *table,
 /* return -1 on dst buffer overflow, -2 on invalid input char */
 int cp_mbstowcs( const union cptable *table, int flags,
                  const char *src, int srclen,
-                 unsigned short *dst, int dstlen )
+                 WCHAR *dst, int dstlen )
 {
     if (table->info.char_size == 1)
     {

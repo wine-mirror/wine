@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "wine/winestring.h"
+#include "wine/unicode.h"
 #include "crtdll.h"
 #include "heap.h"
 #include "winnls.h"
@@ -17,9 +18,7 @@
 #include "ntdll_misc.h"
 #include "ntddk.h"
 
-#include "casemap.h"
-
-DEFAULT_DEBUG_CHANNEL(ntdll)
+DEFAULT_DEBUG_CHANNEL(ntdll);
 
 /*	STRING FUNCTIONS	*/
 
@@ -28,8 +27,7 @@ DEFAULT_DEBUG_CHANNEL(ntdll)
  */
 WCHAR CDECL NTDLL_towupper(WCHAR code)
 {
-    const WCHAR * ptr = uprtable[HIBYTE(code)];
-    return ptr ? ptr[LOBYTE(code)] : code;
+    return toupperW(code);
 }
 
 /**************************************************************************
@@ -37,8 +35,7 @@ WCHAR CDECL NTDLL_towupper(WCHAR code)
  */
 WCHAR CDECL NTDLL_towlower(WCHAR code)
 {
-    const WCHAR * ptr = lwrtable[HIBYTE(code)];
-    return ptr ? ptr[LOBYTE(code)] : code;
+    return tolowerW(code);
 }
 
 /**************************************************************************
@@ -259,7 +256,7 @@ DWORD WINAPI RtlUpcaseUnicodeString(
 
 	for (i=0; i < len/sizeof(WCHAR); i++)
 	{
-	  dest->Buffer[i] = NTDLL_towupper(src->Buffer[i]);
+	  dest->Buffer[i] = toupperW(src->Buffer[i]);
 	}
 	dest->Length = len;
 	return STATUS_SUCCESS;
@@ -363,7 +360,7 @@ WINAPI RtlUpcaseUnicodeStringToOemString(
 
 	for (i=0; i < len; i++)
 	{
-	  oem->Buffer[i] = NTDLL_towupper((char)(uni->Buffer[i]));
+	  oem->Buffer[i] = toupperW((char)(uni->Buffer[i]));
 	}
 	oem->Buffer[i] = 0;
 	return STATUS_SUCCESS;

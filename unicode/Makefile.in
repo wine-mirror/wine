@@ -62,6 +62,7 @@ CODEPAGES = \
 	28599
 
 C_SRCS = \
+	casemap.c \
 	cptable.c \
 	mbtowc.c \
 	wctomb.c \

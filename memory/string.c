@@ -12,18 +12,17 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
 #include "wine/exception.h"
+#include "wine/unicode.h"
 #include "winerror.h"
-#include "crtdll.h"
 #include "ldt.h"
 #include "debugtools.h"
 #include "winnls.h"
 
-DEFAULT_DEBUG_CHANNEL(string)
+DEFAULT_DEBUG_CHANNEL(string);
 
 static const BYTE STRING_Oem2Ansi[256] =
 "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\244"
@@ -123,7 +122,7 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     __TRY
     {
-        CRTDLL_wcscat( dst, src );
+        strcatW( dst, src );
     }
     __EXCEPT(page_fault)
     {
@@ -209,28 +208,11 @@ INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
  */
 INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
 {
-    INT res;
-
-#if 0
-    /* Too much!  (From registry loading.)  */
-    TRACE("strcmpi %s and %s\n",
-		   debugstr_w (str1), debugstr_w (str2));
-#endif
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    while (*str1)
-    {
-        if ((*str1<0x100 ) && (*str2<0x100)) {
-	    if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
-	} else {
-	    if ((res = NTDLL_towupper(*str1) - NTDLL_towupper(*str2)) != 0) return res;
-	}
-        str1++;
-        str2++;
-    }
-    return NTDLL_towupper(*str1) - NTDLL_towupper(*str2);
+    return strcmpiW( str1, str2 );
 }
 
 
@@ -272,7 +254,7 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     __TRY
     {
-        CRTDLL_wcscpy( dst, src );
+        strcpyW( dst, src );
     }
     __EXCEPT(page_fault)
     {
@@ -377,7 +359,7 @@ INT WINAPI lstrlenW( LPCWSTR str )
     INT ret;
     __TRY
     {
-        ret = CRTDLL_wcslen(str);
+        ret = strlenW(str);
     }
     __EXCEPT(page_fault)
     {

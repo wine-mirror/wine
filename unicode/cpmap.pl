@@ -80,6 +80,7 @@ $DEF_CHAR = ord '?';
 # main routine
 
 READ_DEFAULTS();
+DUMP_CASE_MAPPINGS();
 
 foreach $file (@allfiles) { HANDLE_FILE( @$file ); }
 
@@ -94,6 +95,8 @@ sub READ_DEFAULTS
 {
     @unicode_defaults = ();
     @unicode_aliases = ();
+    @tolower_table = ();
+    @toupper_table = ();
 
     # first setup a few default mappings
 
@@ -124,12 +127,16 @@ sub READ_DEFAULTS
     # now build mappings from the decomposition field of the Unicode database
 
     open UNICODEDATA or die "Cannot open $UNICODEDATA";
+    print "Loading $UNICODEDATA\n";
     while (<UNICODEDATA>)
     {
 	# Decode the fields ...
 	($code, $name, $cat, $comb, $bidi, 
 	 $decomp, $dec, $dig, $num, $mirror, 
 	 $oldname, $comment, $upper, $lower, $title) = split /;/;
+
+        if ($lower ne "") { $tolower_table[hex $code] = hex $lower; }
+        if ($upper ne "") { $toupper_table[hex $code] = hex $upper; }
 
         next if $decomp eq "";  # no decomposition, skip it
 
@@ -294,24 +301,32 @@ sub ADD_DEFAULT_MAPPINGS
     }
 }
 
+################################################################
+# dump an array of integers
+sub DUMP_ARRAY
+{
+    my ($format,$default,@array) = @_;
+    my $i, $ret = "    ";
+    for ($i = 0; $i < $#array; $i++)
+    {
+        $ret .= sprintf($format, defined $array[$i] ? $array[$i] : $default);
+        $ret .= (($i % 8) != 7) ? ", " : ",\n    ";
+    }
+    $ret .= sprintf($format, defined $array[$i] ? $array[$i] : $default);
+    return $ret;
+}
 
 ################################################################
 # dump an SBCS mapping table
 sub DUMP_SBCS_TABLE
 {
     my ($codepage, $name) = @_;
-    my $x, $y;
+    my $i;
 
     # output the ascii->unicode table
 
-    printf OUTPUT "static const unsigned short cp2uni[256] =\n{\n    ";
-    my $i = 0;
-    for ($i = 0; $i < 256; $i++)
-    {
-        printf OUTPUT "0x%04x", (defined $cp2uni[$i] ? $cp2uni[$i] : $DEF_CHAR);
-        if (($i % 8) != 7) { printf OUTPUT ", "; }
-        else { print OUTPUT (($i < 255) ? ",\n    " : "\n};\n\n"); }
-    }
+    printf OUTPUT "static const WCHAR cp2uni[256] =\n";
+    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[0 .. 255] );
 
     # count the number of unicode->ascii subtables that contain something
 
@@ -327,41 +342,27 @@ sub DUMP_SBCS_TABLE
 
     # output all the subtables into a single array
 
-    printf OUTPUT "static const unsigned char uni2cp_low[%d] =\n{\n   ", $subtables*256;
-    for ($y = 0; $y < 256; $y++)
+    printf OUTPUT "static const unsigned char uni2cp_low[%d] =\n{\n", $subtables*256;
+    for ($i = 0; $i < 256; $i++)
     {
-        next unless $filled[$y];
-        printf OUTPUT " /* 0x%02x00 .. 0x%02xff */\n   ", $y, $y;
-        for ($x = 0; $x < 256; $x++)
-        {
-            printf OUTPUT " 0x%02x,", (defined $uni2cp[($y<<8)+$x] ?
-                                     $uni2cp[($y<<8)+$x] : $DEF_CHAR);
-            if (($x % 8) == 7) { printf OUTPUT "\n   "; }
-        }
+        next unless $filled[$i];
+        printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%02x", $DEF_CHAR, @uni2cp[($i<<8) .. ($i<<8)+255] );
     }
-    printf OUTPUT " /* defaults */\n   ";
-    for ($x = 0; $x < 256; $x++)
-    {
-        printf OUTPUT " 0x%02x", $DEF_CHAR;
-        if (($x % 8) != 7) { printf OUTPUT ","; }
-        else { print OUTPUT (($x < 255) ? ",\n   " : "\n};\n\n"); }
-    }
+    printf OUTPUT "    /* defaults */\n";
+    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, ($DEF_CHAR) x 256 );
 
     # output a table of the offsets of the subtables in the previous array
 
-    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n{\n    ";
     my $pos = 0;
-    for ($y = 0; $y < 256; $y++)
+    my @offsets = ();
+    for ($i = 0; $i < 256; $i++)
     {
-        if ($filled[$y])
-        {
-            printf OUTPUT "0x%04x", $pos;
-            $pos += 256;
-        }
-        else { printf OUTPUT "0x%04x", ($subtables-1) * 256; }
-        if (($y % 8) != 7) { printf OUTPUT ", "; }
-        else { print OUTPUT (($y < 255) ? ",\n    " : "\n};\n\n"); }
+        if ($filled[$i]) { push @offsets, $pos; $pos += 256; }
+        else { push @offsets, ($subtables-1) * 256; }
     }
+    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
+    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @offsets );
 
     # output the code page descriptor
 
@@ -400,26 +401,15 @@ sub DUMP_DBCS_TABLE
 
     # output the ascii->unicode table for the single byte chars
 
-    printf OUTPUT "static const unsigned short cp2uni[%d] =\n{\n    ",
-                  256 * ($#lblist + 2 + $unused);
-    for ($x = 0; $x < 256; $x++)
-    {
-        printf OUTPUT "0x%04x", (defined $cp2uni[$x] ? $cp2uni[$x] : $DEF_CHAR);
-        if (($x % 8) != 7) { printf OUTPUT ", "; }
-        else { print OUTPUT ",\n    "; }
-    }
+    printf OUTPUT "static const WCHAR cp2uni[%d] =\n", 256 * ($#lblist + 2 + $unused);
+    printf OUTPUT "{\n%s,\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[0 .. 255] );
 
     # output the default table for unused lead bytes
 
     if ($unused)
     {
-        printf OUTPUT "/* unused lead bytes */\n    ";
-        for ($x = 0; $x < 256; $x++)
-        {
-            printf OUTPUT "0x%04x", $DEF_CHAR;
-            if (($x % 8) != 7) { printf OUTPUT ", "; }
-            else { print OUTPUT ",\n    "; }
-        }
+        printf OUTPUT "    /* unused lead bytes */\n";
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 0, ($DEF_CHAR) x 256 );
     }
 
     # output the ascii->unicode table for each DBCS lead byte
@@ -427,13 +417,9 @@ sub DUMP_DBCS_TABLE
     for ($y = 0; $y <= $#lblist; $y++)
     {
         my $base = $lblist[$y] << 8;
-        printf OUTPUT "/* lead byte %02x */\n    ", $lblist[$y];
-        for ($x = 0; $x < 256; $x++)
-        {
-            printf OUTPUT "0x%04x", (defined $cp2uni[$base+$x] ? $cp2uni[$base+$x] : $DEF_CHAR);
-            if (($x % 8) != 7) { printf OUTPUT ", "; }
-            else { print OUTPUT (($x < 255 || $y < $#lblist) ? ",\n    " : "\n};\n\n"); }
-        }
+        printf OUTPUT "    /* lead byte %02x */\n", $lblist[$y];
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @cp2uni[$base .. $base+255] );
+        printf OUTPUT ($y < $#lblist) ? ",\n" : "\n};\n\n";
     }
 
     # output the lead byte subtables offsets
@@ -446,14 +432,8 @@ sub DUMP_DBCS_TABLE
         # increment all lead bytes offset to take into account the unused table
         for ($x = 0; $x <= $#lead_bytes; $x++) { $offsets[$lead_bytes[$x]]++; }
     }
-
-    printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n{\n    ";
-    for ($x = 0; $x < 256; $x++)
-    {
-        printf OUTPUT "0x%02x", $offsets[$x];
-        if (($x % 8) != 7) { printf OUTPUT ", "; }
-        else { print OUTPUT (($x < 255) ? ",\n    " : "\n};\n\n"); }
-    }
+    printf OUTPUT "static const unsigned char cp2uni_leadbytes[256] =\n";
+    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%02x", 0, @offsets );
 
     # count the number of unicode->ascii subtables that contain something
 
@@ -469,42 +449,27 @@ sub DUMP_DBCS_TABLE
 
     # output all the subtables into a single array
 
-    printf OUTPUT "static const unsigned short uni2cp_low[%d] =\n{\n   ", $subtables*256;
+    printf OUTPUT "static const unsigned short uni2cp_low[%d] =\n{\n", $subtables*256;
     for ($y = 0; $y < 256; $y++)
     {
         next unless $filled[$y];
-        printf OUTPUT " /* 0x%02x00 .. 0x%02xff */\n   ", $y, $y;
-        for ($x = 0; $x < 256; $x++)
-        {
-            printf OUTPUT " 0x%04x,", (defined $uni2cp[($y<<8)+$x] ?
-                                     $uni2cp[($y<<8)+$x] : $DEF_CHAR);
-            if (($x % 8) == 7) { printf OUTPUT "\n   "; }
-        }
+        printf OUTPUT "    /* 0x%02x00 .. 0x%02xff */\n", $y, $y;
+        printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", $DEF_CHAR, @uni2cp[($y<<8) .. ($y<<8)+255] );
     }
-    printf OUTPUT " /* defaults */\n   ";
-    for ($x = 0; $x < 256; $x++)
-    {
-        printf OUTPUT " 0x%04x", $DEF_CHAR;
-        if (($x % 8) != 7) { printf OUTPUT ","; }
-        else { print OUTPUT (($x < 255) ? ",\n   " : "\n};\n\n"); }
-    }
+    printf OUTPUT "    /* defaults */\n";
+    printf OUTPUT "%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, ($DEF_CHAR) x 256 );
 
     # output a table of the offsets of the subtables in the previous array
 
-    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n{\n    ";
     my $pos = 0;
+    my @offsets = ();
     for ($y = 0; $y < 256; $y++)
     {
-        if ($filled[$y])
-        {
-            printf OUTPUT "0x%04x", $pos;
-            $pos += 256;
-        }
-        else { printf OUTPUT "0x%04x", ($subtables-1) * 256; }
-
-        if (($y % 8) != 7) { printf OUTPUT ", "; }
-        else { print OUTPUT (($y < 255) ? ",\n    " : "\n};\n\n"); }
+        if ($filled[$y]) { push @offsets, $pos; $pos += 256; }
+        else { push @offsets, ($subtables-1) * 256; }
     }
+    printf OUTPUT "static const unsigned short uni2cp_high[256] =\n";
+    printf OUTPUT "{\n%s\n};\n\n", DUMP_ARRAY( "0x%04x", 0, @offsets );
 
     # output the code page descriptor
 
@@ -546,6 +511,62 @@ sub DUMP_LB_RANGES
 
 
 ################################################################
+# dump the case mapping tables
+sub DUMP_CASE_MAPPINGS
+{
+    open OUTPUT,">casemap.c" or die "Cannot create casemap.c";
+    printf "Building casemap.c\n";
+    printf OUTPUT "/* Unicode case mappings */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    DUMP_CASE_TABLE( "casemap_lower", @tolower_table );
+    DUMP_CASE_TABLE( "casemap_upper", @toupper_table );
+    close OUTPUT;
+}
+
+
+################################################################
+# dump a case mapping table
+sub DUMP_CASE_TABLE
+{
+    my ($name,@table) = @_;
+
+    # count the number of sub tables that contain something
+
+    my @filled = ();
+    my $pos = 512;
+    for ($i = 0; $i < 65536; $i++)
+    {
+        next unless defined $table[$i];
+        $filled[$i >> 8] = $pos;
+        $pos += 256;
+        $i = ($i & ~255) + 256;
+    }
+    for ($i = 0; $i < 65536; $i++)
+    {
+        next unless defined $table[$i];
+        $table[$i] = ($table[$i] - $i) & 0xffff;
+    }
+
+    # dump the table
+
+    printf OUTPUT "const WCHAR %s[%d] =\n", $name, $pos;
+    printf OUTPUT "{\n    /* index */\n";
+    printf OUTPUT "%s,\n", DUMP_ARRAY( "0x%04x", 256, @filled );
+    printf OUTPUT "    /* defaults */\n";
+    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 256 );
+    for ($i = 0; $i < 256; $i++)
+    {
+        next unless $filled[$i];
+        printf OUTPUT ",\n    /* 0x%02x00 .. 0x%02xff */\n", $i, $i;
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table[($i<<8) .. ($i<<8)+255] );
+    }
+    printf OUTPUT "\n};\n";
+}
+
+
+################################################################
 # read an input file and generate the corresponding .c file
 sub HANDLE_FILE
 {
@@ -571,6 +592,7 @@ sub HANDLE_FILE
 
     if ($#lead_bytes == -1) { DUMP_SBCS_TABLE( $codepage, $comment ); }
     else { DUMP_DBCS_TABLE( $codepage, $comment ); }
+    close OUTPUT;
 }
 
 
