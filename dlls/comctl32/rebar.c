@@ -1,5 +1,5 @@
 /*
- * Rebar control    rev 6d
+ * Rebar control    rev 6e
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -51,6 +51,9 @@
  *     traces. (6d)
  * 14. Make handling of ComboBox and ComboBoxEx the same in 
  *     _MoveChildWindow. (6d)
+ * 15. Changes in phase 2 of _Layout for WinRAR example. (6e)
+ * 16. Do notify change size of children for WM_SIZE message. (6e)
+ * 17. Re-validate first band when second is added (for gripper add). (6e)
  *
  *
  *
@@ -1009,9 +1012,13 @@ REBAR_Layout (HWND hwnd, LPRECT lpRect, BOOL notify, BOOL resetclient)
         INT i, j, prev_rh, current_rh, new_rh, adj_rh;
 	REBAR_BAND *prev, *current, *walk;
 
-	if (((dwStyle & CCS_VERT) ? (x < adjcx) : (y < adjcy)) && 
+/*	if (((dwStyle & CCS_VERT) ? (x < adjcx) : (y < adjcy)) && */
+
+	if (((dwStyle & CCS_VERT) ? (adjcx - x > 4) : (adjcy - y > 4)) && 
 	    (infoPtr->uNumBands > 1)) {
 	    for (i=infoPtr->uNumBands-2; i>=0; i--) {
+		TRACE("adjcx=%d, adjcy=%d, x=%d, y=%d\n",
+		      adjcx, adjcy, x, y);
 	        prev = &infoPtr->bands[i];
 		prev_rh = ircBrb(prev) - ircBlt(prev);
 		current = &infoPtr->bands[i+1];
@@ -1330,13 +1337,6 @@ REBAR_ValidateBand (HWND hwnd, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
         /* Always have 4 pixels before anything else */
         header += REBAR_ALWAYS_SPACE;
     }
-    else {  /* no gripper will be drawn */
-        if (((lpBand->fMask & RBBIM_IMAGE) && (infoPtr->himl)) ||
-	    ((lpBand->fMask & RBBIM_TEXT) && (lpBand->lpText)))
-	    /* if no gripper but either image or text, then leave space */
-	    header += REBAR_ALWAYS_SPACE;
-    }
-
 
     /* image is visible */
     if ((lpBand->fMask & RBBIM_IMAGE) && (infoPtr->himl)) {
@@ -1365,6 +1365,12 @@ REBAR_ValidateBand (HWND hwnd, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 
 	SelectObject (hdc, hOldFont);
 	ReleaseDC (0, hdc);
+    }
+
+    /* if no gripper but either image or text, then leave space */
+    if ((lpBand->fStatus & (HAS_IMAGE | HAS_TEXT)) &&
+	!(lpBand->fStatus & HAS_GRIPPER)) {
+	header += REBAR_ALWAYS_SPACE;
     }
 
     /* check if user overrode the header value */
@@ -2406,6 +2412,9 @@ REBAR_InsertBandA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     REBAR_ValidateBand (hwnd, infoPtr, lpBand);
+    /* On insert of second band, revalidate band 1 to possible add gripper */
+    if (infoPtr->uNumBands == 2)
+	REBAR_ValidateBand (hwnd, infoPtr, &infoPtr->bands[0]);
 
     REBAR_DumpBand (hwnd);
 
@@ -2486,6 +2495,9 @@ REBAR_InsertBandW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     REBAR_ValidateBand (hwnd, infoPtr, lpBand);
+    /* On insert of second band, revalidate band 1 to possible add gripper */
+    if (infoPtr->uNumBands == 2)
+	REBAR_ValidateBand (hwnd, infoPtr, &infoPtr->bands[0]);
 
     REBAR_DumpBand (hwnd);
 
@@ -3154,7 +3166,7 @@ REBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    rcClient.right, rcClient.bottom);
     }
 
-    REBAR_Layout (hwnd, &rcClient, FALSE, TRUE);
+    REBAR_Layout (hwnd, &rcClient, TRUE, TRUE);
     REBAR_ForceResize (hwnd);
     infoPtr->fStatus &= ~AUTO_RESIZE;
     REBAR_MoveChildWindows (hwnd);
