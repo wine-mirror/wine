@@ -92,15 +92,15 @@ static void *_xmalloc( size_t size )
     return res;
 }
 
-/* _strdupnA [Internal] */
-static LPSTR _strdupnA(LPCSTR str,size_t len)
+/* _xstrdup [Internal] */
+static LPSTR _xstrdup(LPCSTR str)
 {
     LPSTR ret;
+    size_t len = strlen(str) + 1;
 
     if (!str) return NULL;
-    ret = _xmalloc( len + 1 );
+    ret = _xmalloc( len );
     memcpy( ret, str, len );
-    ret[len] = 0x00;
     return ret;
 }
 
@@ -698,9 +698,12 @@ static int _w95_dump_dke(LPSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *d
 
     if (level <= 0) {
         /* create new subkey name */
-        new_key_name = _strdupnA(key_name,strlen(key_name)+dkh->keynamelen+1);
-        if (strcmp(new_key_name,"") != 0) strcat(new_key_name,"\\");
-        strncat(new_key_name,dkh->name,dkh->keynamelen);
+        size_t len = strlen(key_name);
+        new_key_name = _xmalloc(len+dkh->keynamelen+2);
+        memcpy( new_key_name, key_name, len );
+        if (len) new_key_name[len++] = '\\';
+        memcpy( new_key_name + len, dkh->name, dkh->keynamelen );
+        new_key_name[len + dkh->keynamelen] = 0;
 
         /* walk sibling keys */
         if (dke->next != 0xffffffff ) {
@@ -730,7 +733,7 @@ static int _w95_dump_dke(LPSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *d
             _dump_strAtoW(new_key_name,strlen(new_key_name),f,"[]");
             fprintf(f,"]\n");
         }
-    } else new_key_name = _strdupnA(key_name,strlen(key_name));
+    } else new_key_name = _xstrdup(key_name);
 
     /* next sub key */
     if (dke->nextsub != 0xffffffff) {
@@ -1008,9 +1011,12 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
     /* create the new key */
     if (level <= 0) {
         /* create new subkey name */
-        new_key_name = _strdupnA(key_name,strlen(key_name)+nk->name_len+1);
-        if (strcmp(new_key_name,"") != 0) strcat(new_key_name,"\\");
-        strncat(new_key_name,nk->name,nk->name_len);
+        size_t len = strlen(key_name);
+        new_key_name = _xmalloc( len+nk->name_len+2 );
+        memcpy( new_key_name, key_name, len );
+        if (len) new_key_name[len++] = '\\';
+        memcpy( new_key_name + len, nk->name, nk->name_len );
+        new_key_name[len + nk->name_len] = 0;
 
         /* write the key path (something like [Software\\Microsoft\\..]) only if:
            1) key has some values
@@ -1038,7 +1044,7 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
                 return FALSE;
             }
         }
-    } else new_key_name = _strdupnA(key_name,strlen(key_name));
+    } else new_key_name = _xstrdup(key_name);
 
     /* loop through the subkeys */
     if (nk->nr_subkeys) {
