@@ -205,6 +205,17 @@ static void QueueMouseRelay(DWORD mx, DWORD my, WORD mask)
     data->but = mouse_info.but;
     data->x = mouse_info.x;
     data->y = mouse_info.y;
+
+    /*
+     * Fake mickeys. 
+     *
+     * FIXME: This is not entirely correct. If mouse if moved to the edge
+     *        of the screen, mouse will stop moving and mickeys won't
+     *        be updated even though they should be.
+     */
+    data->mx = mouse_info.x * (mouse_info.HMPratio / 8);
+    data->my = mouse_info.y * (mouse_info.VMPratio / 8);
+
     DOSVM_QueueEvent(-1, DOS_PRIORITY_MOUSE, MouseRelay, data);
   }
 }
