@@ -536,7 +536,9 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         }
 
 	/* just to get rid of some race conditions between play, stop and pause */
+	LeaveCriticalSection(&wma->cs);
 	waveOutReset(wma->hWave);
+	EnterCriticalSection(&wma->cs);
 
 	for (i = 0; i < nHdr; i++)
 	    waveOutUnprepareHeader(wma->hWave, &waveHdr[i], sizeof(WAVEHDR));
@@ -548,7 +550,9 @@ static	DWORD	MCIAVI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 	HeapFree(GetProcessHeap(), 0, waveHdr);
 
 	if (wma->hWave) {
+	    LeaveCriticalSection(&wma->cs);
 	    waveOutClose(wma->hWave);
+	    EnterCriticalSection(&wma->cs);
 	    wma->hWave = 0;
 	}
 	CloseHandle(wma->hEvent);
@@ -643,7 +647,6 @@ static	DWORD	MCIAVI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
-    DWORD ret;
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -653,10 +656,13 @@ static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (wma->dwStatus == MCI_MODE_PLAY)
 	wma->dwStatus = MCI_MODE_PAUSE;
 
-    ret = (wma->lpWaveFormat) ? waveOutPause(wma->hWave) : 0;
-    
+    if (wma->lpWaveFormat) {
+    	LeaveCriticalSection(&wma->cs);
+	return waveOutPause(wma->hWave);
+    }
+       
     LeaveCriticalSection(&wma->cs);
-    return ret;
+    return 0;
 }
 
 /***************************************************************************
@@ -665,9 +671,8 @@ static	DWORD	MCIAVI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 static	DWORD	MCIAVI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIAVI *wma;
-    DWORD ret;
 
-    FIXME("(%04x, %08lX, %p) : stub\n", wDevID, dwFlags, lpParms);
+    TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIAVI_mciGetOpenDev(wDevID);
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
@@ -677,10 +682,13 @@ static	DWORD	MCIAVI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lp
     if (wma->dwStatus == MCI_MODE_PAUSE)
 	wma->dwStatus = MCI_MODE_PLAY;
 
-    ret = (wma->lpWaveFormat) ? waveOutRestart(wma->hWave) : 0;
+    if (wma->lpWaveFormat) {
+    	LeaveCriticalSection(&wma->cs);
+	return waveOutRestart(wma->hWave);
+    }
 
     LeaveCriticalSection(&wma->cs);
-    return ret;
+    return 0;
 }
 
 /***************************************************************************
