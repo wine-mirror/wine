@@ -59,6 +59,14 @@ static struct rev_info *rev_infos = NULL;
 
 static const char *wineloader;
 
+static int running_under_wine ()
+{
+    HMODULE module = GetModuleHandleA("ntdll.dll");
+
+    if (!module) return 0;
+    return (GetProcAddress(module, "wine_get_unix_file_name") != NULL);
+}
+
 void print_version ()
 {
     OSVERSIONINFOEX ver;
@@ -83,6 +91,8 @@ void print_version ()
              "    wSuiteMask=%d\n    wProductType=%d\n    wReserved=%d\n",
              ver.wServicePackMajor, ver.wServicePackMinor, ver.wSuiteMask,
              ver.wProductType, ver.wReserved);
+
+    xprintf ("    bRunningUnderWine=%d\n", running_under_wine ());
 }
 
 static inline int is_dot_dir(const char* x)
