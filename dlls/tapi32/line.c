@@ -257,12 +257,127 @@ DWORD WINAPI lineGetConfRelatedCalls(HCALL hCall, LPLINECALLLIST lpCallList)
     return 0;
 }	
 
+typedef struct tagTAPI_CountryInfo
+{
+    DWORD  dwCountryID;
+    DWORD  dwCountryCode;
+    LPSTR  lpCountryName;
+    LPSTR  lpSameAreaRule; 
+    LPSTR  lpLongDistanceRule; 
+    LPSTR  lpInternationalRule; 
+} TAPI_CountryInfo;
+
+/* FIXME: this should be stored in an ini file... perhaps TAPI.INI */
+static TAPI_CountryInfo TAPI_LCList[] =
+{
+    { 1, 61, "Australia", "", "0", "0011" },
+    { 2, 86, "China", "", "0", "00" },
+    { 3, 82, "Korea", "", "0", "00" },
+    { 4, 1,  "USA", "", "0", "001" },
+};
+
+#define NUMCOUNTRIES (sizeof TAPI_LCList/sizeof (TAPI_CountryInfo))
+
 /***********************************************************************
  *		lineGetCountry (TAPI32.@)
  */
 DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRYLIST lpLineCountryList)
 {
-    FIXME("(%08lx, %08lx, %p): stub.\n", dwCountryID, dwAPIVersion, lpLineCountryList);
+    DWORD dwAvailSize, dwOffset, i;
+    LPLINECOUNTRYENTRY lpLCE;
+
+    TRACE("(%08lx, %08lx, %p): stub.\n", dwCountryID, dwAPIVersion, lpLineCountryList);
+
+    dwAvailSize = lpLineCountryList->dwTotalSize;
+    dwOffset = sizeof (LINECOUNTRYLIST);
+
+    if(dwAvailSize<dwOffset)
+        return LINEERR_STRUCTURETOOSMALL;
+
+    if(!lpLineCountryList)
+        return LINEERR_INVALPOINTER;
+
+    memset(lpLineCountryList, 0, dwAvailSize);
+
+    lpLineCountryList->dwUsedSize          = dwOffset;
+    lpLineCountryList->dwNumCountries      = 0;
+    lpLineCountryList->dwCountryListSize   = 0;
+    lpLineCountryList->dwCountryListOffset = dwOffset;
+
+    lpLCE = (LPLINECOUNTRYENTRY)(&lpLineCountryList[1]);
+    dwOffset+= NUMCOUNTRIES * sizeof (LINECOUNTRYENTRY);
+
+    for(i=0; i<NUMCOUNTRIES; i++)
+    {
+        LPSTR lpstr;
+        DWORD len;
+
+        if(dwCountryID && (TAPI_LCList[i].dwCountryID != dwCountryID))
+            continue;
+
+        len  = lstrlenA (TAPI_LCList[i].lpCountryName)+1;
+        len += lstrlenA (TAPI_LCList[i].lpSameAreaRule)+1;
+        len += lstrlenA (TAPI_LCList[i].lpLongDistanceRule)+1;
+        len += lstrlenA (TAPI_LCList[i].lpInternationalRule)+1;
+
+        if(dwAvailSize<(dwOffset+len))
+        {
+            dwOffset+=len;
+            continue;
+        }
+
+        lpLineCountryList->dwNumCountries++;
+        lpLineCountryList->dwCountryListSize += len;
+        lpLineCountryList->dwUsedSize += sizeof (LINECOUNTRYENTRY); /* maybe wrong */
+
+        TRACE("Adding country %s at %p\n", TAPI_LCList[i].lpCountryName, lpLCE);
+
+        lpLCE[i].dwCountryID   = TAPI_LCList[i].dwCountryID;
+        lpLCE[i].dwCountryCode = TAPI_LCList[i].dwCountryCode;
+
+        /* deal with troublesome dwNextCountryID */
+        if( (i+1) == NUMCOUNTRIES )
+            lpLCE[i].dwNextCountryID = 0;
+        else
+            lpLCE[i].dwNextCountryID = TAPI_LCList[i+1].dwCountryID;
+
+        /* add country name */
+        len = lstrlenA(TAPI_LCList[i].lpCountryName)+1;
+        lpLCE[i].dwCountryNameSize = len;
+        lpLCE[i].dwCountryNameOffset = dwOffset;
+        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
+        lstrcpyA(lpstr, TAPI_LCList[i].lpCountryName);
+        dwOffset+=len;
+
+        /* add Same Area Rule */
+        len = lstrlenA (TAPI_LCList[i].lpSameAreaRule)+1;
+        lpLCE[i].dwSameAreaRuleSize = len;
+        lpLCE[i].dwSameAreaRuleOffset = dwOffset;
+        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
+        lstrcpyA(lpstr, TAPI_LCList[i].lpSameAreaRule);
+        dwOffset+=len;
+
+        /* add Long Distance Rule */
+        len = lstrlenA (TAPI_LCList[i].lpLongDistanceRule)+1;
+        lpLCE[i].dwLongDistanceRuleSize = len;
+        lpLCE[i].dwLongDistanceRuleOffset = dwOffset;
+        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
+        lstrcpyA(lpstr, TAPI_LCList[i].lpLongDistanceRule);
+        dwOffset+=len;
+
+        /* add Long Distance Rule */
+        len = lstrlenA (TAPI_LCList[i].lpInternationalRule)+1;
+        lpLCE[i].dwInternationalRuleSize = len;
+        lpLCE[i].dwInternationalRuleOffset = dwOffset;
+        lpstr = ((LPSTR)lpLineCountryList)+dwOffset;
+        lstrcpyA(lpstr, TAPI_LCList[i].lpInternationalRule);
+        dwOffset+=len;
+    }
+
+    lpLineCountryList->dwNeededSize = dwOffset;
+
+    TRACE("%ld available %ld required\n", dwAvailSize, dwOffset);
+
     return 0;
 }
 

@@ -20,7 +20,14 @@ typedef HANDLE HPHONE, *LPHPHONE;
 typedef HANDLE HPHONEAPP, *LPHPHONEAPP;
 
 /* FIXME: bogus codes !! */
-#define TAPIERR_REQUESTFAILED   20
+#define TAPIERR_REQUESTFAILED          20
+#define LINEERR_INCOMPATIBLEAPIVERSION 1
+#define LINEERR_NOMEM                  1
+#define LINEERR_INIFILECORRUPT         1
+#define LINEERR_OPERATIONFAILED        1
+#define LINEERR_INVALCOUNTRYCODE       1
+#define LINEERR_STRUCTURETOOSMALL      1
+#define LINEERR_INVALPOINTER           1
 
 typedef struct lineaddresscaps_tag {
     DWORD dwTotalSize;
@@ -227,6 +234,20 @@ typedef struct linecountrylist_tag {
     DWORD dwCountryListSize;
     DWORD dwCountryListOffset;
 } LINECOUNTRYLIST, *LPLINECOUNTRYLIST;
+
+typedef struct linecountryentry_tag {
+    DWORD dwCountryID;
+    DWORD dwCountryCode;
+    DWORD dwNextCountryID;
+    DWORD dwCountryNameSize;
+    DWORD dwCountryNameOffset;
+    DWORD dwSameAreaRuleSize;
+    DWORD dwSameAreaRuleOffset;
+    DWORD dwLongDistanceRuleSize;
+    DWORD dwLongDistanceRuleOffset;
+    DWORD dwInternationalRuleSize;
+    DWORD dwInternationalRuleOffset;
+} LINECOUNTRYENTRY, *LPLINECOUNTRYENTRY;
 
 typedef struct linedevcaps_tag {
     DWORD dwTotalSize;
