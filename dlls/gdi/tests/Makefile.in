@@ -7,6 +7,7 @@ IMPORTS   = user32 gdi32
 
 CTESTS = \
 	bitmap.c \
+	brush.c \
 	gdiobj.c \
 	generated.c \
 	metafile.c

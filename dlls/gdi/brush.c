@@ -101,41 +101,12 @@ static HGLOBAL16 dib_copy(BITMAPINFO *info, UINT coloruse)
  * - Windows 95 and earlier cannot create brushes from bitmaps or DIBs larger
  *   than 8x8 pixels. If a larger bitmap is given, only a portion of the bitmap
  *   is used.
- * - If the brush to be created matches a stock brush, a stock brush will be
- *   returned. This behaviour is undocumented.
  */
 HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
-    static const DWORD stockMap[] = { /* Map of RGB colors of stock brushes */
-        RGB(255,255,255), WHITE_BRUSH,
-        RGB(192,192,192), LTGRAY_BRUSH,
-        RGB(128,128,128), GRAY_BRUSH,
-        RGB(0,0,0),       BLACK_BRUSH
-    };
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
 
-    if (brush->lbStyle == BS_SOLID)
-    {
-        size_t i;
-
-        /* If a solid brush is created in a color matching one of the 
-         * stock brushes, native returns the stock object (GDI heap 
-         * optimisation). Some apps rely on this as they otherwise
-         * would leak their brushes.
-         */
-        for (i = 0; i < (sizeof(stockMap)/sizeof(stockMap[0])); i += 2)
-        {
-            if (brush->lbColor == stockMap[i])
-            {
-                HBRUSH hBr = GetStockObject(stockMap[i + 1]);
-                if (hBr)
-                    return hBr; /* Return stock brush */
-                break; /* Being called to create a stock brush, fall through */
-            }
-        }
-    }
-    
     if (!(ptr = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC,
                                 (HGDIOBJ *)&hbrush, &brush_funcs ))) return 0;
     ptr->logbrush.lbStyle = brush->lbStyle;
