@@ -24,7 +24,7 @@ type	win32
 @ stub CsrProbeForWrite
 @ stub CsrSetPriorityClass
 @ stub CsrpProcessCallbackRequest
-@ stub DbgBreakPoint
+@ stdcall DbgBreakPoint() DbgBreakPoint
 @ varargs DbgPrint(str) DbgPrint
 @ stub DbgPrompt
 @ stub DbgSsHandleKmApiMsg
@@ -32,7 +32,7 @@ type	win32
 @ stub DbgUiConnectToDbg
 @ stub DbgUiContinue
 @ stub DbgUiWaitStateChange
-@ stub DbgUserBreakPoint
+@ stdcall DbgUserBreakPoint() DbgUserBreakPoint
 @ stub KiUserApcDispatcher
 @ stub KiUserCallbackDispatcher
 @ stub KiUserExceptionDispatcher

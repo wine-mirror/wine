@@ -566,21 +566,25 @@ static HANDLER_DEF(trap_handler)
 
     handler_init( &context, HANDLER_CONTEXT );
 
-    switch(get_trap_code(HANDLER_CONTEXT))
-    {
-    case T_TRCTRAP:  /* Single-step exception */
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-        break;
-    case T_BPTFLT:   /* Breakpoint exception */
-    default:
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        break;
-    }
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Eip;
     rec.NumberParameters = 0;
+
+    switch(get_trap_code(HANDLER_CONTEXT))
+    {
+    case T_TRCTRAP:  /* Single-step exception */
+        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
+        context.EFlags &= ~0x100;  /* clear single-step flag */
+        break;
+    case T_BPTFLT:   /* Breakpoint exception */
+        rec.ExceptionAddress--;  /* back up over the int3 instruction */
+        /* fall through */
+    default:
+        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        break;
+    }
     EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, HANDLER_CONTEXT );
 }
@@ -724,5 +728,15 @@ BOOL SIGNAL_Init(void)
     perror("sigaction");
     return FALSE;
 }
+
+/**********************************************************************
+ *		DbgBreakPoint   (NTDLL)
+ */
+__ASM_GLOBAL_FUNC( DbgBreakPoint, "int3; ret");
+
+/**********************************************************************
+ *		DbgUserBreakPoint   (NTDLL)
+ */
+__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int3; ret");
 
 #endif  /* __i386__ */

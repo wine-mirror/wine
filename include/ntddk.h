@@ -961,6 +961,7 @@ NTSTATUS WINAPI NtClose(
 
 /*	misc */
 
+void WINAPI DbgBreakPoint(void);
 void WINAPIV DbgPrint(LPCSTR fmt, ...);
 
 DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4);

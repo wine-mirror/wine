@@ -289,18 +289,11 @@ void WINAPI RtlRaiseStatus( NTSTATUS status )
 
 
 /***********************************************************************
- *           EXC_DebugBreak / DebugBreak (KERNEL32.181)
+ *           DebugBreak (KERNEL32.181)
  */
-DEFINE_REGS_ENTRYPOINT_0( DebugBreak, EXC_DebugBreak )
-void WINAPI EXC_DebugBreak( CONTEXT *context )
+void WINAPI DebugBreak(void)
 {
-    EXCEPTION_RECORD rec;
-
-    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
-    rec.ExceptionFlags   = 0;
-    rec.ExceptionRecord  = NULL;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, context );
+    DbgBreakPoint();
 }
 
 
@@ -310,6 +303,13 @@ void WINAPI EXC_DebugBreak( CONTEXT *context )
 void WINAPI DebugBreak16( CONTEXT86 *context )
 {
 #ifdef __i386__
-    EXC_DebugBreak( context );
+    EXCEPTION_RECORD rec;
+
+    rec.ExceptionCode    = EXCEPTION_BREAKPOINT;
+    rec.ExceptionFlags   = 0;
+    rec.ExceptionRecord  = NULL;
+    rec.ExceptionAddress = GET_IP(context); 
+    rec.NumberParameters = 0;
+    EXC_RtlRaiseException( &rec, context );
 #endif  /* defined(__i386__) */
 }
