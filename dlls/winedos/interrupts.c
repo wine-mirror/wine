@@ -45,7 +45,7 @@ static const INTPROC DOSVM_VectorsBuiltin[] =
 {
   /* 00 */ 0,                  0,                  0,                  0,
   /* 04 */ 0,                  0,                  0,                  0,
-  /* 08 */ 0,                  DOSVM_Int09Handler, 0,                  0,
+  /* 08 */ DOSVM_Int08Handler, DOSVM_Int09Handler, 0,                  0,
   /* 0C */ 0,                  0,                  0,                  0,
   /* 10 */ DOSVM_Int10Handler, DOSVM_Int11Handler, DOSVM_Int12Handler, DOSVM_Int13Handler,
   /* 14 */ 0,                  DOSVM_Int15Handler, DOSVM_Int16Handler, DOSVM_Int17Handler,

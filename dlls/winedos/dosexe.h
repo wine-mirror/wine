@@ -264,6 +264,9 @@ void DOSVM_BuildCallFrame( CONTEXT86 *, DOSRELAY, LPVOID );
 extern void SB_ioport_out( WORD port, BYTE val );
 extern BYTE SB_ioport_in( WORD port );
 
+/* timer.c */
+extern void WINAPI DOSVM_Int08Handler(CONTEXT86*);
+
 /* xms.c */
 extern void WINAPI XMS_Handler(CONTEXT86*);
 

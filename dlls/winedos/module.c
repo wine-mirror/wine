@@ -152,37 +152,6 @@ static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdtail, int length )
     /* FIXME: more PSP stuff */
 }
 
-/* default INT 08 handler: increases timer tick counter but not much more */
-static char int08[]={
- 0xCD,0x1C,           /* int $0x1c */
- 0x50,                /* pushw %ax */
- 0x1E,                /* pushw %ds */
- 0xB8,0x40,0x00,      /* movw $0x40,%ax */
- 0x8E,0xD8,           /* movw %ax,%ds */
-#if 0
- 0x83,0x06,0x6C,0x00,0x01, /* addw $1,(0x6c) */
- 0x83,0x16,0x6E,0x00,0x00, /* adcw $0,(0x6e) */
-#else
- 0x66,0xFF,0x06,0x6C,0x00, /* incl (0x6c) */
-#endif
- 0xB0,0x20,           /* movb $0x20,%al */
- 0xE6,0x20,           /* outb %al,$0x20 */
- 0x1F,                /* popw %ax */
- 0x58,                /* popw %ax */
- 0xCF                 /* iret */
-};
-
-static void MZ_InitHandlers(void)
-{
- WORD seg;
- LPBYTE start = DOSVM_AllocCodeUMB( sizeof(int08), &seg, 0 );
- memcpy(start,int08,sizeof(int08));
-/* INT 08: point it at our tick-incrementing handler */
- ((SEGPTR*)0)[0x08]=MAKESEGPTR(seg,0);
-/* INT 1C: just point it to IRET, we don't want to handle it ourselves */
- ((SEGPTR*)0)[0x1C]=MAKESEGPTR(seg,sizeof(int08)-1);
-}
-
 static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
 {
  unsigned sz=0;
@@ -213,7 +182,6 @@ static BOOL MZ_InitMemory(void)
     DOSMEM_Init(TRUE);
     DOSDEV_InstallDOSDevices();
 
-    MZ_InitHandlers();
     return TRUE;
 }
 

@@ -124,3 +124,44 @@ void WINAPI DOSVM_SetTimer( UINT ticks )
     if (!DOSVM_IsWin16())
         MZ_RunInThread( TIMER_DoSetTimer, ticks );
 }
+
+
+/***********************************************************************
+ *              DOSVM_Int08Handler
+ *
+ * DOS interrupt 08h handler (IRQ0 - TIMER).
+ */
+void WINAPI DOSVM_Int08Handler( CONTEXT86 *context )
+{
+    BIOSDATA *bios_data      = BIOS_DATA;
+    CONTEXT86 nested_context = *context;
+    FARPROC16 int1c_proc     = DOSVM_GetRMHandler( 0x1c );
+    
+    nested_context.SegCs = SELECTOROF(int1c_proc);
+    nested_context.Eip   = OFFSETOF(int1c_proc);
+
+    /*
+     * Update BIOS ticks since midnight.
+     *
+     * FIXME: What to do when number of ticks exceeds ticks per day?
+     */
+    bios_data->Ticks++;
+
+    /*
+     * If IRQ is called from protected mode, convert
+     * context into VM86 context. Stack is invalidated so
+     * that DPMI_CallRMProc allocates a new stack.
+     */
+    if (!ISV86(&nested_context))
+    {
+        nested_context.EFlags |= V86_FLAG;
+        nested_context.SegSs = 0;
+    }
+
+    /*
+     * Call interrupt 0x1c.
+     */
+    DPMI_CallRMProc( &nested_context, NULL, 0, TRUE );
+
+    DOSVM_AcknowledgeIRQ( context );
+}
