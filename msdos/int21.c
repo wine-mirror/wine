@@ -876,43 +876,6 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
 }
 
 
-static void fLock( CONTEXT86 * context )
-{
-
-    switch ( AX_reg(context) & 0xff )
-    {
-        case 0x00: /* LOCK */
-	  TRACE("lock handle %d offset %ld length %ld\n",
-		BX_reg(context),
-		MAKELONG(DX_reg(context),CX_reg(context)),
-		MAKELONG(DI_reg(context),SI_reg(context))) ;
-          if (!LockFile(DosFileHandleToWin32Handle(BX_reg(context)),
-                        MAKELONG(DX_reg(context),CX_reg(context)), 0,
-                        MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
-	    SET_AX( context, GetLastError() );
-	    SET_CFLAG(context);
-	  }
-          break;
-
-	case 0x01: /* UNLOCK */
-	  TRACE("unlock handle %d offset %ld length %ld\n",
-		BX_reg(context),
-		MAKELONG(DX_reg(context),CX_reg(context)),
-		MAKELONG(DI_reg(context),SI_reg(context))) ;
-          if (!UnlockFile(DosFileHandleToWin32Handle(BX_reg(context)),
-                          MAKELONG(DX_reg(context),CX_reg(context)), 0,
-                          MAKELONG(DI_reg(context),SI_reg(context)), 0)) {
-	    SET_AX( context, GetLastError() );
-	    SET_CFLAG(context);
-	  }
-	  return;
-	default:
-	  SET_AX( context, 0x0001 );
-	  SET_CFLAG(context);
-	  return;
-     }
-}
-
 static BOOL
 INT21_networkfunc (CONTEXT86 *context)
 {
@@ -978,26 +941,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             _hwrite16( 1, data, (int)p - (int)data);
             SET_AL( context, '$' ); /* yes, '$' (0x24) gets returned in AL */
         }
-        break;
-
-    case 0x0a: /* BUFFERED INPUT */
-      {
-	char *buffer = ((char *)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-						   context->Edx ));
-	int res;
-
-	TRACE("BUFFERED INPUT (size=%d)\n",buffer[0]);
-	if (buffer[1])
-	  TRACE("Handle old chars in buffer!\n");
-	res=_lread16( 0, buffer+2,buffer[0]);
-	buffer[1]=res;
-	if(buffer[res+1] == '\n')
-	  buffer[res+1] = '\r';
-	break;
-      }
-
-    case 0x5c: /* "FLOCK" - RECORD LOCKING */
-        fLock(context);
         break;
 
     case 0x0e: /* SELECT DEFAULT DRIVE */

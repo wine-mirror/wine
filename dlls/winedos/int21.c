@@ -283,6 +283,80 @@ static WORD INT21_GetHeapSelector( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_BufferedInput
+ *
+ * Handler for function 0x0a.
+ *
+ * Reads a string of characters from standard input until
+ * enter key is pressed.
+ */
+static void INT21_BufferedInput( CONTEXT86 *context )
+{
+    BYTE *ptr = CTX_SEG_OFF_TO_LIN(context,
+                                   context->SegDs,
+                                   context->Edx);
+    BYTE capacity = ptr[0]; /* includes CR */
+    BYTE length = 0;        /* excludes CR */
+
+    TRACE( "BUFFERED INPUT (size=%d)\n", capacity );
+
+    /*
+     * Return immediately if capacity is zero.
+     *
+     * FIXME: What to return to application?
+     */
+    if (capacity == 0)
+        return;
+
+    /*
+     * FIXME: Some documents state that
+     *        ptr[1] holds number of chars from last input which 
+     *        may be recalled on entry, other documents do not mention
+     *        this at all.
+     */
+    if (ptr[1])
+        TRACE( "Handle old chars in buffer!\n" );
+
+    while(TRUE)
+    {
+        BYTE ascii;
+        BYTE scan;
+
+        DOSVM_Int16ReadChar( &ascii, &scan, FALSE );
+
+        if (ascii == '\r' || ascii == '\n')
+        {
+            /*
+             * FIXME: What should be echoed here?
+             */
+            DOSVM_PutChar( '\r' );
+            DOSVM_PutChar( '\n' );
+            ptr[1] = length;
+            ptr[2 + length] = '\r';
+            return;
+        }
+
+        /*
+         * FIXME: This function is supposed to support
+         *        DOS editing keys...
+         */
+
+        /*
+         * If the buffer becomes filled to within one byte of
+         * capacity, DOS rejects all further characters up to,
+         * but not including, the terminating carriage return.
+         */
+        if (ascii != 0 && length < capacity-1)
+        {
+            DOSVM_PutChar( ascii );
+            ptr[2 + length] = ascii;
+            length++;
+        }
+    }
+}
+
+
+/***********************************************************************
  *           INT21_ExtendedCountryInformation
  *
  * Handler for function 0x65.
@@ -792,7 +866,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x0a: /* BUFFERED INPUT */
-        INT_Int21Handler( context );
+        INT21_BufferedInput( context );
         break;
 
     case 0x0b: /* GET STDIN STATUS */
@@ -1222,22 +1296,30 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x58: /* GET OR SET MEMORY ALLOCATION STRATEGY */
-	TRACE( "GET OR SET MEMORY ALLOCATION STRATEGY, subfunction %d\n", 
-               AL_reg(context) );
         switch (AL_reg(context))
         {
-        case 0x00: /* GET ALLOCATION STRATEGY */
-            SET_AX( context, 1 ); /* low memory best fit */
+        case 0x00: /* GET MEMORY ALLOCATION STRATEGY */
+            TRACE( "GET MEMORY ALLOCATION STRATEGY\n" );
+            SET_AX( context, 0 ); /* low memory first fit */
             break;
 
         case 0x01: /* SET ALLOCATION STRATEGY */
-            TRACE( "Set allocation strategy to %d - ignored\n",
+            TRACE( "SET MEMORY ALLOCATION STRATEGY to %d - ignored\n",
                    BL_reg(context) );
+            break;
+
+        case 0x02: /* GET UMB LINK STATE */
+            TRACE( "GET UMB LINK STATE\n" );
+            SET_AL( context, 0 ); /* UMBs not part of DOS memory chain */
+            break;
+
+        case 0x03: /* SET UMB LINK STATE */
+            TRACE( "SET UMB LINK STATE to %d - ignored\n",
+                   BX_reg(context) );
             break;
 
         default:
             INT_BARF( context, 0x21 );
-            break;
         }
         break;
 
@@ -1247,8 +1329,35 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
 
     case 0x5a: /* CREATE TEMPORARY FILE */
     case 0x5b: /* CREATE NEW FILE */ 
-    case 0x5c: /* "FLOCK" - RECORD LOCKING */
         INT_Int21Handler( context );
+        break;
+
+    case 0x5c: /* "FLOCK" - RECORD LOCKING */
+        {
+            DWORD  offset = MAKELONG(DX_reg(context), CX_reg(context));
+            DWORD  length = MAKELONG(DI_reg(context), SI_reg(context));
+            HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
+
+            switch (AL_reg(context))
+            {
+            case 0x00: /* LOCK */
+                TRACE( "lock handle %d offset %ld length %ld\n",
+                       BX_reg(context), offset, length );
+                if (!LockFile( handle, offset, 0, length, 0 ))
+                    bSetDOSExtendedError = TRUE;
+                break;
+
+            case 0x01: /* UNLOCK */
+                TRACE( "unlock handle %d offset %ld length %ld\n",
+                       BX_reg(context), offset, length );
+                if (!UnlockFile( handle, offset, 0, length, 0 ))
+                    bSetDOSExtendedError = TRUE;
+                break;
+
+            default:
+                INT_BARF( context, 0x21 );
+            }
+        }
         break;
 
     case 0x5d: /* NETWORK 5D */
