@@ -268,7 +268,12 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 	 Control_WndProc_Create(hWnd, (CREATESTRUCTA*)lParam2);
 	 return 0;
       case WM_DESTROY:
-	 while ((panel->first = Control_UnloadApplet(panel->first)));
+         {
+	    CPlApplet*	applet = panel->first;
+	    while (applet)
+	       applet = Control_UnloadApplet(applet);
+         }
+         PostQuitMessage(0);
 	 break;
       case WM_PAINT:
 	 return Control_WndProc_Paint(panel, lParam1);
@@ -288,7 +293,7 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 {
     WNDCLASSA	wc;
     MSG		msg;
-
+    const CHAR* appName = "Wine Control Panel";
     wc.style = CS_HREDRAW|CS_VREDRAW;
     wc.lpfnWndProc = Control_WndProc;
     wc.cbClsExtra = 0;
@@ -302,16 +307,22 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 
     if (!RegisterClassA(&wc)) return;
 
-    CreateWindowExA(0, wc.lpszClassName, "Wine Control Panel",
+    CreateWindowExA(0, wc.lpszClassName, appName,
 		    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		    CW_USEDEFAULT, CW_USEDEFAULT,
 		    CW_USEDEFAULT, CW_USEDEFAULT,
 		    hWnd, NULL, hInst, panel);
     if (!panel->hWnd) return;
+
+    if (!panel->first) {
+	/* FIXME appName & message should be localized  */
+	MessageBoxA(panel->hWnd, "Cannot load any applets", appName, MB_OK);
+	return;
+    }
+
     while (GetMessageA(&msg, panel->hWnd, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
-	if (!panel->first) break;
     }
 }
 
@@ -328,7 +339,7 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
     *p++ = '\\';
     lstrcpyW(p, wszAllCpl);
 
-    if ((h = FindFirstFileW(buffer, &fd)) != 0) {
+    if ((h = FindFirstFileW(buffer, &fd)) != INVALID_HANDLE_VALUE) {
         do {
 	   lstrcpyW(p, fd.cFileName);
 	   Control_LoadApplet(hWnd, buffer, panel);
@@ -336,7 +347,7 @@ static	void	Control_DoWindow(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 	FindClose(h);
     }
 
-    if (panel->first) Control_DoInterface(panel, hWnd, hInst);
+    Control_DoInterface(panel, hWnd, hInst);
 }
 
 static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
