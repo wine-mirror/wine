@@ -8,6 +8,8 @@ EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
 	audio.c \
+	dscapture.c \
+	dsrender.c \
 	midi.c \
 	midipatch.c \
 	mixer.c \
