@@ -679,21 +679,28 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface3_Blt(
 static HRESULT WINAPI IDirectDrawSurface3_BltFast(
 	LPDIRECTDRAWSURFACE3 this,DWORD dstx,DWORD dsty,LPDIRECTDRAWSURFACE3 src,LPRECT32 rsrc,DWORD trans
 ) {
-	int	i,bpp;
+	int		i,bpp;
+	DDSURFACEDESC	ddesc,sdesc;
+
 	if (TRACE_ON(ddraw)) {
-	    FIXME(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx),stub!\n",
+	    TRACE(ddraw,"(%p)->(%ld,%ld,%p,%p,%08lx)\n",
 		    this,dstx,dsty,src,rsrc,trans
 	    );
 	    TRACE(ddraw,"	trans:");_dump_DDBLTFAST(trans);fprintf(stderr,"\n");
 	    TRACE(ddraw,"	srcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	}
+	/* We need to lock the surfaces, or we won't get refreshes when done */
+	src ->lpvtbl->fnLock(src, NULL,&sdesc,0,0);
+	this->lpvtbl->fnLock(this,NULL,&ddesc,0,0);
 	bpp = this->s.ddraw->d.depth/8;
 	for (i=0;i<rsrc->bottom-rsrc->top;i++) {
-		memcpy(	this->s.surface+((i+dsty)*this->s.width*bpp)+dstx*bpp,
-			src->s.surface +(rsrc->top+i)*src->s.width*bpp+rsrc->left*bpp,
+		memcpy(	ddesc.y.lpSurface+(dsty     +i)*ddesc.lPitch+dstx*bpp,
+			sdesc.y.lpSurface+(rsrc->top+i)*sdesc.lPitch+rsrc->left*bpp,
 			(rsrc->right-rsrc->left)*bpp
 		);
 	}
+	this->lpvtbl->fnUnlock(this,ddesc.y.lpSurface);
+	src ->lpvtbl->fnUnlock(src,sdesc.y.lpSurface);
 	return 0;
 }
 
