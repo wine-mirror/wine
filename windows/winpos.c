@@ -760,8 +760,8 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     }
     MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
     MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN);
-    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN);
+    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN) + 2*GetSystemMetrics(SM_CXFRAME);
+    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN) + 2*GetSystemMetrics(SM_CYFRAME);
 
     if (HAS_DLGFRAME( style, exstyle ))
     {
