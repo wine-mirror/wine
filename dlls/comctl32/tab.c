@@ -1637,6 +1637,14 @@ TAB_DrawItemInterior
     DRAWITEMSTRUCT dis;
     UINT id;
 
+    drawRect->top += 2;
+    drawRect->right -= 1;
+    if ( iItem == infoPtr->iSelected )
+    {
+        drawRect->right -= 1;
+        drawRect->left += 1;
+    }
+
     /*
      * get the control id
      */
