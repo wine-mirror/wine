@@ -834,6 +834,109 @@ typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE
 #define	FORMAT_MESSAGE_ARGUMENT_ARRAY	0x00002000
 #define	FORMAT_MESSAGE_MAX_WIDTH_MASK	0x000000FF
 
+/* flags to ACTCTX[AW] */
+#define ACTCTX_FLAG_PROCESSOR_ARCHITECTURE_VALID  (0x00000001)
+#define ACTCTX_FLAG_LANGID_VALID                  (0x00000002)
+#define ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID      (0x00000004)
+#define ACTCTX_FLAG_RESOURCE_NAME_VALID           (0x00000008)
+#define ACTCTX_FLAG_SET_PROCESS_DEFAULT           (0x00000010)
+#define ACTCTX_FLAG_APPLICATION_NAME_VALID        (0x00000020)
+#define ACTCTX_FLAG_SOURCE_IS_ASSEMBLYREF         (0x00000040)
+#define ACTCTX_FLAG_HMODULE_VALID                 (0x00000080)
+
+/* flags to DeactiveActCtx */
+#define DEACTIVATE_ACTCTX_FLAG_FORCE_EARLY_DEACTIVATION  (0x00000001)
+
+/* flags to FindActCtxSection{Guid,String[AW]} */
+#define FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX            (0x00000001)
+#define FIND_ACTCTX_SECTION_KEY_RETURN_FLAGS              (0x00000002)
+#define FIND_ACTCTX_SECTION_KEY_RETURN_ASSEMBLY_METADATA  (0x00000004)
+
+/* flags to QueryActCtxW */
+#define QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX  (0x00000004)
+#define QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE  (0x00000008)
+#define QUERY_ACTCTX_FLAG_ACTCTX_IS_ADDRESS  (0x00000010)
+#define QUERY_ACTCTX_FLAG_NO_ADDREF          (0x80000000)
+
+typedef struct tagACTCTXA {
+    ULONG   cbSize;
+    DWORD   dwFlags;
+    LPCSTR  lpSource;
+    USHORT  wProcessorArchitecture;
+    LANGID  wLangId;
+    LPCSTR  lpAssemblyDirectory;
+    LPCSTR  lpResourceName;
+    LPCSTR  lpApplicationName;
+    HMODULE hModule;
+} ACTCTXA, *PACTCTXA;
+
+typedef struct tagACTCTXW {
+    ULONG   cbSize;
+    DWORD   dwFlags;
+    LPCWSTR lpSource;
+    USHORT  wProcessorArchitecture;
+    LANGID  wLangId;
+    LPCWSTR lpAssemblyDirectory;
+    LPCWSTR lpResourceName;
+    LPCWSTR lpApplicationName;
+    HMODULE hModule;
+} ACTCTXW, *PACTCTXW;
+
+DECL_WINELIB_TYPE_AW(ACTCTX)
+DECL_WINELIB_TYPE_AW(PACTCTX)
+
+typedef const ACTCTXA *PCACTCTXA;
+typedef const ACTCTXW *PCACTCTXW;
+DECL_WINELIB_TYPE_AW(PCACTCTX)
+
+typedef struct tagACTCTX_SECTION_KEYED_DATA_2600 {
+    ULONG  cbSize;
+    ULONG  ulDataFormatVersion;
+    PVOID  lpData;
+    ULONG  ulLength;
+    PVOID  lpSectionGlobalData;
+    ULONG  ulSectionGlobalDataLength;
+    PVOID  lpSectionBase;
+    ULONG  ulSectionTotalLength;
+    HANDLE hActCtx;
+    ULONG  ulAssemblyRosterIndex;
+} ACTCTX_SECTION_KEYED_DATA_2600, *PACTCTX_SECTION_KEYED_DATA_2600;
+typedef const ACTCTX_SECTION_KEYED_DATA_2600 *PCACTCTX_SECTION_KEYED_DATA_2600;
+
+typedef struct tagACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA {
+    PVOID lpInformation;
+    PVOID lpSectionBase;
+    ULONG ulSectionLength;
+    PVOID lpSectionGlobalDataBase;
+    ULONG ulSectionGlobalDataLength;
+} ACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA, *PACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA;
+typedef const ACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA *PCACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA;
+
+typedef struct tagACTCTX_SECTION_KEYED_DATA {
+    ULONG  cbSize;
+    ULONG  ulDataFormatVersion;
+    PVOID  lpData;
+    ULONG  ulLength;
+    PVOID  lpSectionGlobalData;
+    ULONG  ulSectionGlobalDataLength;
+    PVOID  lpSectionBase;
+    ULONG  ulSectionTotalLength;
+    HANDLE hActCtx;
+    ULONG  ulAssemblyRosterIndex;
+
+    /* Non 2600 extra fields */
+    ULONG ulFlags;
+    ACTCTX_SECTION_KEYED_DATA_ASSEMBLY_METADATA AssemblyMetadata;
+} ACTCTX_SECTION_KEYED_DATA, *PACTCTX_SECTION_KEYED_DATA;
+typedef const ACTCTX_SECTION_KEYED_DATA *PCACTCTX_SECTION_KEYED_DATA;
+
+typedef struct _ACTIVATION_CONTEXT_BASIC_INFORMATION {
+    HANDLE hActCtx;
+    DWORD  dwFlags;
+} ACTIVATION_CONTEXT_BASIC_INFORMATION, *PACTIVATION_CONTEXT_BASIC_INFORMATION;
+
+typedef BOOL (WINAPI *PQUERYACTCTXW_FUNC)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T *);
+
 typedef struct tagCOMSTAT
 {
     DWORD fCtsHold : 1;
@@ -1097,7 +1200,9 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
 #define DDD_NO_BROADCAST_SYSTEM     0x00000008
 #define DDD_LUID_BROADCAST_DRIVE    0x00000010
 
+BOOL        WINAPI ActivateActCtx(HANDLE,ULONG_PTR *);
 BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
+VOID        WINAPI AddRefActCtx(HANDLE);
 PVOID       WINAPI AddVectoredExceptionHandler(ULONG,PVECTORED_EXCEPTION_HANDLER);
 BOOL        WINAPI AttachThreadInput(DWORD,DWORD,BOOL);
 BOOL        WINAPI AccessCheck(PSECURITY_DESCRIPTOR,HANDLE,DWORD,PGENERIC_MAPPING,PPRIVILEGE_SET,LPDWORD,LPDWORD,LPBOOL);
@@ -1151,6 +1256,9 @@ INT         WINAPI CompareFileTime(const FILETIME*,const FILETIME*);
 BOOL        WINAPI ConvertFiberToThread(void);
 LPVOID      WINAPI ConvertThreadToFiber(LPVOID);
 LPVOID      WINAPI ConvertThreadToFiberEx(LPVOID,DWORD);
+HANDLE      WINAPI CreateActCtxA(PCACTCTXA);
+HANDLE      WINAPI CreateActCtxW(PCACTCTXW);
+#define     CreateActCtx WINELIB_NAME_AW(CreateActCtx)
 HANDLE      WINAPI CreateEventA(LPSECURITY_ATTRIBUTES,BOOL,BOOL,LPCSTR);
 HANDLE      WINAPI CreateEventW(LPSECURITY_ATTRIBUTES,BOOL,BOOL,LPCWSTR);
 #define     CreateEvent WINELIB_NAME_AW(CreateEvent)
@@ -1190,6 +1298,7 @@ BOOL        WINAPI CreateTimerQueueTimer(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOI
 HANDLE      WINAPI CreateWaitableTimerA(LPSECURITY_ATTRIBUTES,BOOL,LPCSTR);
 HANDLE      WINAPI CreateWaitableTimerW(LPSECURITY_ATTRIBUTES,BOOL,LPCWSTR);
 #define     CreateWaitableTimer WINELIB_NAME_AW(CreateWaitableTimer)
+BOOL        WINAPI DeactivateActCtx(DWORD,ULONG_PTR);
 BOOL        WINAPI DebugActiveProcess(DWORD);
 BOOL        WINAPI DebugActiveProcessStop(DWORD);
 void        WINAPI DebugBreak(void);
@@ -1238,6 +1347,10 @@ DWORD       WINAPI ExpandEnvironmentStringsW(LPCWSTR,LPWSTR,DWORD);
 BOOL        WINAPI FileTimeToDosDateTime(const FILETIME*,LPWORD,LPWORD);
 BOOL        WINAPI FileTimeToLocalFileTime(const FILETIME*,LPFILETIME);
 BOOL        WINAPI FileTimeToSystemTime(const FILETIME*,LPSYSTEMTIME);
+BOOL        WINAPI FindActCtxSectionStringA(DWORD,const GUID *,ULONG,LPCSTR,PACTCTX_SECTION_KEYED_DATA);
+BOOL        WINAPI FindActCtxSectionStringW(DWORD,const GUID *,ULONG,LPCWSTR,PACTCTX_SECTION_KEYED_DATA);
+#define     FindActCtxSectionString WINELIB_NAME_AW(FindActCtxSectionString)
+BOOL        WINAPI FindActCtxSectionGuid(DWORD,const GUID *,ULONG,const GUID *,PACTCTX_SECTION_KEYED_DATA);
 HANDLE      WINAPI FindFirstChangeNotificationA(LPCSTR,BOOL,DWORD);
 HANDLE      WINAPI FindFirstChangeNotificationW(LPCWSTR,BOOL,DWORD);
 #define     FindFirstChangeNotification WINELIB_NAME_AW(FindFirstChangeNotification)
@@ -1270,6 +1383,7 @@ BOOL        WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
 VOID        WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
 PVOID       WINAPI FreeSid(PSID);
+BOOL        WINAPI GetCurrentActCtx(HANDLE *);
 BOOL        WINAPI GetCommConfig(HANDLE,LPCOMMCONFIG,LPDWORD);
 BOOL        WINAPI GetCommMask(HANDLE,LPDWORD);
 BOOL        WINAPI GetCommModemStatus(HANDLE,LPDWORD);
@@ -1445,6 +1559,7 @@ BOOL        WINAPI PeekNamedPipe(HANDLE,PVOID,DWORD,PDWORD,PDWORD,PDWORD);
 DWORD       WINAPI PrepareTape(HANDLE,DWORD,BOOL);
 BOOL        WINAPI PulseEvent(HANDLE);
 BOOL        WINAPI PurgeComm(HANDLE,DWORD);
+BOOL        WINAPI QueryActCtxW(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T *);
 DWORD       WINAPI QueryDosDeviceA(LPCSTR,LPSTR,DWORD);
 DWORD       WINAPI QueryDosDeviceW(LPCWSTR,LPWSTR,DWORD);
 #define     QueryDosDevice WINELIB_NAME_AW(QueryDosDevice)
@@ -1458,6 +1573,7 @@ BOOL        WINAPI ReadFileEx(HANDLE,LPVOID,DWORD,LPOVERLAPPED,LPOVERLAPPED_COMP
 HANDLE      WINAPI RegisterEventSourceA(LPCSTR,LPCSTR);
 HANDLE      WINAPI RegisterEventSourceW(LPCWSTR,LPCWSTR);
 #define     RegisterEventSource WINELIB_NAME_AW(RegisterEventSource)
+VOID        WINAPI ReleaseActCtx(HANDLE);
 BOOL        WINAPI ReleaseMutex(HANDLE);
 BOOL        WINAPI ReleaseSemaphore(HANDLE,LONG,LPLONG);
 ULONG       WINAPI RemoveVectoredExceptionHandler(PVOID);
@@ -1570,6 +1686,8 @@ BOOL        WINAPI WaitNamedPipeW(LPCWSTR,DWORD);
 BOOL        WINAPI WriteFile(HANDLE,LPCVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI WriteFileEx(HANDLE,LPCVOID,DWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
 DWORD       WINAPI WriteTapemark(HANDLE,DWORD,DWORD,BOOL);
+BOOL        WINAPI ZombifyActCtx(HANDLE);
+
 ATOM        WINAPI AddAtomA(LPCSTR);
 ATOM        WINAPI AddAtomW(LPCWSTR);
 #define     AddAtom WINELIB_NAME_AW(AddAtom)

@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(actctx);
  *
  * Create an activation context.
  */
-HANDLE WINAPI CreateActCtxA(PVOID /*PACTCTXA*/ pActCtx)
+HANDLE WINAPI CreateActCtxA(PCACTCTXA pActCtx)
 {
   FIXME("stub!\n");
   return INVALID_HANDLE_VALUE;
@@ -48,7 +48,7 @@ HANDLE WINAPI CreateActCtxA(PVOID /*PACTCTXA*/ pActCtx)
  *
  * Create an activation context.
  */
-HANDLE WINAPI CreateActCtxW(PVOID /*PACTCTXW*/ pActCtx)
+HANDLE WINAPI CreateActCtxW(PCACTCTXW pActCtx)
 {
   FIXME("stub!\n");
   return INVALID_HANDLE_VALUE;
@@ -59,7 +59,7 @@ HANDLE WINAPI CreateActCtxW(PVOID /*PACTCTXW*/ pActCtx)
  *
  * Activate an activation context.
  */
-BOOL WINAPI ActivateActCtx(PVOID /*HACTCTX*/ hActCtx, ULONG_PTR ulCookie)
+BOOL WINAPI ActivateActCtx(HANDLE hActCtx, ULONG_PTR *ulCookie)
 {
   FIXME("stub!\n");
   return FALSE;
@@ -125,7 +125,7 @@ BOOL WINAPI ZombifyActCtx(HANDLE hActCtx)
  */
 BOOL WINAPI FindActCtxSectionStringA(DWORD dwFlags, const GUID* lpExtGuid,
                                     ULONG ulId, LPCSTR lpSearchStr,
-                                    PVOID /*PACTCTX_SECTION_KEYED_DATA*/ pInfo)
+                                    PACTCTX_SECTION_KEYED_DATA pInfo)
 {
   FIXME("stub!\n");
   return FALSE;
@@ -138,7 +138,7 @@ BOOL WINAPI FindActCtxSectionStringA(DWORD dwFlags, const GUID* lpExtGuid,
  */
 BOOL WINAPI FindActCtxSectionStringW(DWORD dwFlags, const GUID* lpExtGuid,
                                     ULONG ulId, LPCWSTR lpSearchStr,
-                                    PVOID /*PACTCTX_SECTION_KEYED_DATA*/ pInfo)
+                                    PACTCTX_SECTION_KEYED_DATA pInfo)
 {
   FIXME("stub!\n");
   return FALSE;
@@ -151,7 +151,7 @@ BOOL WINAPI FindActCtxSectionStringW(DWORD dwFlags, const GUID* lpExtGuid,
  */
 BOOL WINAPI FindActCtxSectionGuid(DWORD dwFlags, const GUID* lpExtGuid,
                                   ULONG ulId, const GUID* lpSearchGuid,
-                                  PVOID /*PACTCTX_SECTION_KEYED_DATA*/ pInfo)
+                                  PACTCTX_SECTION_KEYED_DATA pInfo)
 {
   FIXME("stub!\n");
   return FALSE;
