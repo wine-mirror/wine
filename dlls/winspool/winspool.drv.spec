@@ -78,8 +78,8 @@ import	kernel32.dll
 169 stub EnumPrintProcessorDatatypesW
 170 stub EnumPrintProcessorsA
 171 stub EnumPrintProcessorsW
-172 stub EnumPrinterDriversA
-173 stub EnumPrinterDriversW
+172 stdcall EnumPrinterDriversA(str str long ptr long ptr ptr) EnumPrinterDriversA
+173 stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr) EnumPrinterDriversW
 174 stdcall EnumPrintersA(long ptr long ptr long ptr ptr) EnumPrintersA
 175 stdcall EnumPrintersW(long ptr long ptr long ptr ptr) EnumPrintersW
 176 stub ExtDeviceMode
