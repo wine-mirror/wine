@@ -292,6 +292,7 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceData(
 
 	TRACE(dinput,"(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
     		this,dodsize,dod,entries,entries?*entries:0,flags);
+	EVENT_WaitNetEvent(FALSE,TRUE);
 	if (entries)
 		xentries = *entries; 
 	else
@@ -311,6 +312,7 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceData(
 		if (!(flags & DIGDD_PEEK))
 			kthis->keystate[i] = InputKeyStateTable[i]&0x80;
 	}
+	if (n) fprintf(stderr,"%d entries\n",n);
 	*entries = n;
 	return 0;
 }

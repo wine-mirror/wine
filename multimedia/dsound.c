@@ -571,7 +571,7 @@ DSOUND_setformat(LPWAVEFORMATEX wfex) {
 		return -1;
 	}
 	if ((xx&format)!=format) {/* format unsupported */
-		WARN(dsound,"SNDCTL_DSP_GETFMTS: format not supported\n"); 
+		FIXME(dsound,"SNDCTL_DSP_GETFMTS: format not supported\n"); 
 		return -1;
 	}
 	nformat = format;
@@ -580,7 +580,7 @@ DSOUND_setformat(LPWAVEFORMATEX wfex) {
 		return -1;
 	}
 	if (nformat!=format) {/* didn't work */
-		WARN(dsound,"SNDCTL_DSP_GETFMTS: format not set\n"); 
+		FIXME(dsound,"SNDCTL_DSP_GETFMTS: format not set\n"); 
 		return -1;
 	}
 
@@ -629,11 +629,8 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 	int	j,buflen = dsb->buflen;
 	LPDSBPOSITIONNOTIFY	nextevent;
 	int	xdiff = dsb->wfx.nSamplesPerSec-dsound->wfx.nSamplesPerSec;
-
-	/* Insomnia - Going along with REAL author's style */
-	long	Rvoldec, Lvoldec;
+	long	Rvoldec, Lvoldec, samp;
 	long	pan = dsb->pan;
-	long samp;	/* temporary sample workspace */
 
 	{
 		double	tmpr=dsb->volume-500;
@@ -659,7 +656,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
                         dsb->wfx.nSamplesPerSec,dsound->wfx.nSamplesPerSec);
 	}
 	nextevent = DSOUND_nextevent(dsb);
-/*	TRACE(dsound,"(%d.%d.%d.%d)\n",dsound->wfx.wBitsPerSample,dsb->wfx.wBitsPerSample,dsound->wfx.nChannels,dsb->wfx.nChannels);*/
+	TRACE(dsound,"(%d.%d.%d.%d)\n",dsound->wfx.wBitsPerSample,dsb->wfx.wBitsPerSample,dsound->wfx.nChannels,dsb->wfx.nChannels);
 
 	if (dsound->wfx.wBitsPerSample == 8) {
 		char	*playbuf8 = (char*)playbuf;
@@ -667,6 +664,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 		if (dsb->wfx.wBitsPerSample == 8) {
 			unsigned char	*xbuf = (unsigned char*)(dsb->buffer);
 			if (dsb->wfx.nChannels == 1) {
+				/* 8.1 -> 8.2 */
 				for (j=0;j<sizeof(playbuf)/2;j++) {
 			
 					dsb->playpos=(dsb->playpos+1)%buflen;
@@ -677,7 +675,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					}
 					/* Insomnia- volume, panning, and correcting against wrap */
 					/* Left Channel */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 					samp *= Lvoldec;
 					samp >>= 16;
 					samp += playbuf8[(j<<1)];
@@ -686,7 +684,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					playbuf8[(j<<1)] = (short)samp;
 
 					/* Right Channel */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 					samp *= Rvoldec;
 					samp >>= 16;
 					samp += playbuf8[(j<<1)+1];
@@ -698,6 +696,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					CHECK_EVENT
 				}
 			} else {
+				/* 8.2 -> 8.2 */
 				for (j=0;j<sizeof(playbuf);j++) {
 					dsb->playpos=(dsb->playpos+1)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
@@ -706,7 +705,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						return;
 					}
 					/* Insomnia- volume, panning, and correcting against wrap */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 
 					/* Right Channel */
 					if(j&1) samp *= Rvoldec;
@@ -726,7 +725,8 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 		} else { /* 16 */
 			short	*xbuf = (short*)(dsb->buffer);
 			if (dsb->wfx.nChannels == 1) {
-				for (j=0;j<sizeof(playbuf)/2;j++) {
+				/* 16.1 -> 8.2 */
+				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
 					dsb->playpos=(dsb->playpos+2)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
 						dsb->playing = 0;
@@ -756,6 +756,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					CHECK_EVENT
 				}
 			} else {
+				/* 16.2 -> 8.2 */
 				for (j=0;j<sizeof(playbuf);j++) {
 					dsb->playpos=(dsb->playpos+2)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
@@ -787,6 +788,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 /*			unsigned char	*xbuf = (unsigned char*)(dsb->buffer); */
 			char	*xbuf = dsb->buffer;
 			if (dsb->wfx.nChannels == 1) {
+				/* 8.1 -> 16.2 */
 				WARN(dsound,"Mixing 8-bit stereo into 16!!\n");
 				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
 					dsb->playpos=(dsb->playpos+1)%buflen;
@@ -797,7 +799,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					}
 					/* Insomnia- volume, panning, and correcting against wrap */
 					/* Left Channel */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 					samp *= Lvoldec;
 					samp >>= 8;
 					samp += playbuf[(j<<1)];
@@ -806,7 +808,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					playbuf[(j<<1)] = (short)samp;
 
 					/* Right Channel */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 					samp *= Rvoldec;
 					samp >>= 8;
 					samp += playbuf[(j<<1)+1];
@@ -818,6 +820,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 					CHECK_EVENT
 				}
 			} else {
+				/* 8.2 -> 16.2 */
 				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0]);j++) {
 					dsb->playpos=(dsb->playpos+1)%buflen;
 					if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
@@ -826,7 +829,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 						return;
 					}
 					/* Insomnia- volume, panning, and correcting against wrap */
-					samp = xbuf[dsb->playpos>>1];
+					samp = xbuf[dsb->playpos];
 
 					/* Right Channel */
 					if(j&1) samp *= Rvoldec;
@@ -844,6 +847,7 @@ DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
 				}
 			}
 		} else { /* 16 */
+			/* 16.1 -> 16.2 */
 			short	*xbuf = (short*)(dsb->buffer);
 			if (dsb->wfx.nChannels == 1) {
 				for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
@@ -968,15 +972,13 @@ DSOUND_thread(LPVOID arg) {
 			if (!dsb || !dsb->lpvtbl)
 				continue;
 			dsb->lpvtbl->fnAddRef(dsb);
-			if (dsb->buflen && dsb->playing) {
-				playing++;
+			if (dsb->buflen && dsb->playing)
 				DSOUND_MixInBuffer(dsb);
-			}
 			dsb->lpvtbl->fnRelease(dsb);
 		}
 		dsound->lpvtbl->fnRelease(dsound);
 
-		/*fputc('0'+playing,stderr);*/
+		fputc('0'+playing,stderr);
 		curleft = 0;
 		while (curleft < sizeof(playbuf)) {
 			res = write(audiofd,(LPBYTE)playbuf+curleft,sizeof(playbuf)-curleft);
