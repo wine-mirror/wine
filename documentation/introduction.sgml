@@ -48,7 +48,7 @@
           </footnote>
           However, Wine makes it possible to run native Windows
           applications alongside native Linux applications on a Linux
-          (or Solaris) system.  You can share desktop space between MS
+          (or BSD or Solaris) system.  You can share desktop space between MS
           Word and GnuCash, overlapping their windows, iconizing them,
           and even running them from the same launcher.
         </para>
@@ -98,6 +98,21 @@
         <para>
         </para>
       </sect2>
+      <sect2>
+        <title>Burning questions and comments</title>
+        <para>
+          If during reading this document there is something you
+          can't figure out, or think could be explained better, or
+          that should have been included, please immediately mail to
+          &name-web-admin; <email>&email-web-admin</email> or
+          post a bug report at the
+          <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink> to
+          let us know how this document can be improved.
+          Remember, Open Source is
+          "free as in free speech, not as in free beer":
+          it can only work in case of very active involvement of its users !
+        </para>
+      </sect2>
     </sect1>
 
 <!-- *** Not really useful as is, but may be able to recycle this elsewhere...
@@ -142,7 +157,7 @@
             <listitem>
               <para>
                 a computer ;-) Wine: only PCs >= i386 are supported at
-                the moment.  Winelib: other platforms might be
+                the moment.  Winelib: other platforms may be
                 supported, but can be tricky.
               </para>
             </listitem>
@@ -155,7 +170,7 @@
             <listitem>
               <para>
                 >= 16MB of RAM.  Everything below is pretty much
-                unusable.  >= 64 MB is needed for a "good" execution.
+                unusable.  >= 64 MB is needed for "good" execution.
               </para>
             </listitem>
             <listitem>
@@ -163,7 +178,7 @@
                 an X11 window system (XFree86 etc.).  Wine is prepared
                 for other graphics display drivers, but writing
                 support is not too easy.  The text console display
-                driver is nearly usable.
+                driver (ttydrv) is nearly usable.
               </para>
             </listitem>
           </itemizedlist>
@@ -181,7 +196,7 @@
           <itemizedlist>
             <listitem>
               <para>
-                Support for executing DOS, Win 3.x and Win9x/NT/Win2000
+                Support for executing DOS, Win 3.x and Win9x/NT/Win2000/XP
                 programs (most of Win32's controls are supported)
               </para>
             </listitem>

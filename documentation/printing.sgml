@@ -59,8 +59,7 @@
 printer=on
         </screen>
         <para>
-          to the [wine] section of <filename>wine.conf</filename> (or
-          <filename>~/.wine/config</filename>). This lets
+          to the [wine] section of the wine config file. This lets
           <function>CreateDC</function> proceed if its driver argument is a 16
           bit driver. You will probably also need to add
         </para>
@@ -77,7 +76,7 @@ printer=on
         <title>Spooling</title>
         <para>
           Spooling is rather primitive. The [spooler] section of
-          <filename>wine.conf</filename> maps a port (e.g.
+          the wine config file maps a port (e.g.
           <systemitem>LPT1:</systemitem>) to a file or a command via a pipe. For
           example the following lines
         </para>
@@ -95,7 +94,7 @@ printer=on
 	<para>
 	  There are now also virtual spool queues called
 	  <systemitem>LPR:printername</systemitem>, which send the data
-	  to <command>lpr -Pprintername</command>. You do not need to 
+	  to <command>lpr -Pprintername</command>. You do not need to
 	  specify those in the config file, they are handled automatically by
 	  <filename>dlls/gdi/printdrv.c</filename>.
 	</para>
@@ -133,7 +132,7 @@ printer=on
 	  <title>Installation of LPR /etc/printcap based printers</title>
 	  <para>
 	    If your system is not yet using CUPS, it probably uses LPRng
-	    or a LPR based system with configuration based on /etc/printcap.
+	    or a LPR based system with configuration based on <filename>/etc/printcap</filename>.
 	  </para>
 	  <para>
 	    If it does, your printers in <filename>/etc/printcap</filename>
@@ -141,7 +140,7 @@ printer=on
 	    printers and also configured mostly automatic.
 	  </para>
 	  <para>
-	    Since WINE cannot find out what type of printer this is, you 
+	    Since WINE cannot find out what type of printer this is, you
 	    need to specify a PPD file in the [ppd] section of
 	    <filename>~/.wine/config</filename>. Either use the shortcut
 	    name and make the entry look like:
@@ -238,7 +237,7 @@ printer=on
 	  </para>
 	  <para>
 	    Note that you need not set <literal>printer=on</literal> in
-	    the [wine] section of <filename>wine.conf</filename>, this
+	    the [wine] section of the wine config file, this
 	    enables printing via external printer drivers and does not
 	    affect the builtin PostScript driver.
 	  </para>

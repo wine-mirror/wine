@@ -25,7 +25,7 @@
         linkend="getting-dist-other">other</link> distributions.
       </para>
       <para>
-        If you're not lucky enough to have an available package for
+        If you're not lucky enough to have a package available for
         your operating system, or if you'd prefer a newer version of
         Wine than already exists as a package, you may have to
         download the Wine source code and compile it yourself on your
@@ -33,7 +33,7 @@
         especially with the many helpful tools that come with Wine.
         You don't need any programming experience to compile and
         install Wine, although it might be nice to have some minor
-        UNIX administrative skill.  We'll cover how to retrieve and
+        UNIX administrative skills.  We'll cover how to retrieve and
         compile the official source releases from the <link
         linkend="getting-source-ftp">FTP archives</link>, and also how
         to get the cutting edge up-to-the-minute fresh Wine source
@@ -113,7 +113,7 @@ $ su -
 
       <para>
         Redhat/RPM users can use <ulink url="http://rpmfind.net/linux/RPM/">
-          rpmfind.net</ulink> to track down available Wine RPM binaries.  
+          rpmfind.net</ulink> to track down available Wine RPM binaries.
         <ulink url="http://rpmfind.net/linux/RPM/WByName.html"> This
           page</ulink> contains a list of all rpmfind packages that start with
         the letter "W", including a few Wine packages
@@ -160,7 +160,7 @@ $ su -
       <para>
         The safest way to grab the source is from one of the official
         FTP archives.  An up to date listing is in the <ulink
-        url="http://www.winehq.com/source/ANNOUNCE">ANNOUNCE </ulink>
+        url="http://www.winehq.com/source/ANNOUNCE">ANNOUNCE</ulink>
         file in the Wine distribution (which you would have if you
         already downloaded it).  Here is a (possibly out of date) list
         of FTP servers carrying Wine:
@@ -168,15 +168,8 @@ $ su -
       <itemizedlist>
         <listitem>
           <para>
-            <ulink url="ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/">
-              ftp://metalab.unc.edu/pub/Linux/ALPHA/wine/development/
-            </ulink>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <ulink url="ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/">
-              ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/development/
+            <ulink url="ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/">
+              ftp://ftp.ibiblio.org/pub/Linux/ALPHA/wine/development/
             </ulink>
           </para>
         </listitem>
@@ -184,6 +177,13 @@ $ su -
           <para>
             <ulink url="ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/">
               ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/
+            </ulink>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <ulink url="ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/sunsite.unc.edu/ALPHA/wine/development/">
+              ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/sunsite.unc.edu/ALPHA/wine/development/
             </ulink>
           </para>
         </listitem>
@@ -237,13 +237,13 @@ $ cvs checkout wine
         the updates:
       </para>
       <screen>
-$ cvs -dP update
+$ cvs -PAd update
       </screen>
       <para>
         <command>cvs update</command> works from inside the source tree.
         You don't need the <envar>CVSROOT</envar> environment variable
         to run it either.  You just have to be inside the source tree.
-        The <parameter>-d</parameter> and <parameter>-P</parameter>
+        The <parameter>-P</parameter>, <parameter>-A</parameter> and <parameter>-d</parameter>
         options make sure your local Wine tree directory structure stays
         in sync with the remote repository.
       </para>
@@ -313,18 +313,18 @@ $ patch -p0 --dry-run < ../patch_to_apply.diff
       </para>
       <para>
         The <parameter>-p0</parameter> option to  <command>patch</command>
-	tells it to keep the full file name from the patch file. For example, 
+	tells it to keep the full file name from the patch file. For example,
 	if the file name in the patch file was
 	 <filename>wine/programs/clock/main.c</filename>.
-	Setting the <parameter>-p0</parameter> option would apply the patch 
+	Setting the <parameter>-p0</parameter> option would apply the patch
 	to the file of the same name i.e.
 	<filename>wine/programs/clock/main.c </filename>.
-	Setting the <parameter>-p1</parameter> option would strip off the 
-	first part of the file name and apply 
+	Setting the <parameter>-p1</parameter> option would strip off the
+	first part of the file name and apply
 	the patch instead to <filename>programs/clock/main.c </filename>.
-	The <parameter>-p1</parameter> option would be useful if you named 
-	your top level wine directory differently to the person who sent you 
-	the patch. For the <parameter>-p1</parameter> option 
+	The <parameter>-p1</parameter> option would be useful if you named
+	your top level wine directory differently to the person who sent you
+	the patch. For the <parameter>-p1</parameter> option
 	<command>patch</command> should be run from the top level wine directory.
 
       </para>

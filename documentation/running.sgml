@@ -53,7 +53,7 @@ Options:
       </para>
       <screen>
 [wine]
-"Path"="c:\windows;c:\windows\system;e:\;e:\test;f:\"
+"Path"="c:\\windows;c:\\windows\\system;e:\\;e:\\test;f:\\"
       </screen>
       <para>
         You could run the file
@@ -67,18 +67,20 @@ Options:
         <filename>c:\myapps\foo.exe</filename> with this command:
       </para>
       <screen>
-<prompt>$</prompt> <userinput>wine c:\myapps\foo.exe</userinput>
+<prompt>$</prompt> <userinput>wine c:\\myapps\\foo.exe</userinput>
       </screen>
+      <para>
+      (note the backslash-escaped "\" !)
+      </para>
 
       <para>
         If you want to run a console program (aka a CUI executable), use
 	<command>wineconsole</command> instead of <command>wine</command>
 	to start it. It will display the program in a separate Window
 	(this requires X11 to be run). If you don't, you'll still be able
-	to run able your program, in the Unix console were you're started
-	your program, but with very limited capacities (so, your program
-	might work, but your mileage may vary). This shall be improved
-	in the future.
+	to run your program directly in the Unix console where you started it,
+	but with very limited capacities (so your program might work,
+	but your mileage may vary). This shall be improved in the future.
       </para>
     </sect1>
 
@@ -89,7 +91,7 @@ Options:
         <title>--debugmsg [channels]</title>
         <para>
           Wine isn't perfect, and many Windows applications still
-          don't run without bugs under Wine (but then, many of them
+          don't run without bugs under Wine (but then, a lot of programs
           don't run without bugs under native Windows either!).  To
           make it easier for people to track down the causes behind
           each bug, Wine provides a number of <firstterm>debug
@@ -155,7 +157,7 @@ Options:
         </screen>
         <para>
           Here is a master list of all the debug channels and classes
-          in Wine.  More channels might be added to (or subtracted
+          in Wine.  More channels will be added to (or subtracted
           from) later versions.
         </para>
 
@@ -245,21 +247,27 @@ winspool</><entry>wnet</><entry>x11</>
       <sect2>
         <title>--dll</title>
         <para>
-
+          Specifies whether to load the builtin or the native (if
+	  available) version of a DLL.
+	  Example:
+	  <screen>
+<prompt>$</prompt> <userinput>wine --dll setupx=n foo.exe</userinput>
+          </screen>
+	  See the <link linkend="dlls">DLL chapter</link> for more details.
         </para>
       </sect2>
 
       <sect2>
         <title>--help</title>
         <para>
-
+          Shows a small command line help page.
         </para>
       </sect2>
 
       <sect2>
         <title>--version</title>
         <para>
-
+	  Shows the Wine version string. Useful to verify your installation.
         </para>
       </sect2>
     </sect1>

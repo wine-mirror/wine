@@ -760,7 +760,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
           <listitem>
             <para>
               for messages intended for the user (specifically those that
-              report errors in <filename>wine.conf</filename>), use the
+              report errors in the wine config file), use the
               <literal>MSG</literal> macro. Use it like a
               <function>printf</function>:
               <programlisting>

@@ -20,7 +20,7 @@
         way -- advanced developers will probably prefer this.
       </para>
       <para>
-        When using either approach please report the problem you found 
+        When using either approach please report the problem you found
         along with any relevant information to
 	<ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
       </para>
@@ -56,7 +56,7 @@
             <para>
               Post the bug to
 	      <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
-	      Please, search Bugzilla database to check whether your problem is 
+	      Please, search Bugzilla database to check whether your problem is
 	      already found before posting a bug report.
 	      Include your own detailed description of the problem with
 	      relevant information. Attach the "Nice Formatted Report"
@@ -157,7 +157,7 @@
                 <term>all shells:</term>
                 <listitem>
                   <screen>
-<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out; 
+<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out;
 <prompt>$ </prompt>tail -n 100 filename.out > report_file
                   </screen>
                   <para>
@@ -166,7 +166,7 @@
                     prints out so many debug msgs that they flood the terminal, eating CPU.)
                   </para>
                 </listitem>
-              </varlistentry>	
+              </varlistentry>
               <varlistentry>
                 <term>tcsh and other csh-like shells:</term>
                 <listitem>
@@ -184,7 +184,7 @@
 <prompt>$ </prompt>tail -100 filename.out > report_file
                   </screen>
                 </listitem>
-              </varlistentry>                  
+              </varlistentry>
             </variablelist>
             <para>
               <filename>report_file</filename> will now contain the
@@ -197,8 +197,8 @@
           <listitem>
             <para>
               Post the bug to <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>.
-              Please, search the Bugzilla database to check whether your problem 
-              is already reported. If it is already reported attach the bug report 
+              Please, search the Bugzilla database to check whether your problem
+              is already reported. If it is already reported attach the bug report
               and add any other relevant information to the original bug report.
             </para>
             <para>
@@ -209,17 +209,6 @@
             </para>
           </listitem>
         </orderedlist>
-      </sect2>
-
-      <sect2>
-        <title>Questions and comments</title>
-        <para>
-          If after reading this document there is something you
-          couldn't figure out, or think could be explained better, or
-          that should have been included, please post to
-	  <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink> to
-          let us know how this document can be improved.
-        </para>
       </sect2>
     </sect1>
  </chapter>

@@ -20,7 +20,7 @@
 
     <sect2>
       <title>Registry structure</title>
-  
+
       <para>
         The Windows registry is an elaborate tree structure, and not
         even most Windows programmers are fully aware of how the
@@ -36,23 +36,23 @@
           <term>HKEY_LOCAL_MACHINE</term>
           <listitem>
             <para>
-              This fundamental root key (in win9x, stored in the
+              This fundamental root key (in win9x it's stored in the
               hidden file <filename>system.dat</filename>) contains
               everything pertaining to the current Windows
               installation.
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term>HKEY_USERS</term>
           <listitem>
             <para>
-              This fundamental root key (in win9x, stored in the
+              This fundamental root key (in win9x it's stored in the
               hidden file <filename>user.dat</filename>) contains
               configuration data for every user of the installation.
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term>HKEY_CLASSES_ROOT</term>
           <listitem>
@@ -62,7 +62,7 @@
               associations, OLE document handlers, and COM classes.
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term>HKEY_CURRENT_USER</term>
           <listitem>
@@ -77,7 +77,7 @@
 
     <sect2>
       <title>Using a Windows registry</title>
-  
+
       <para>
         If you point Wine at an existing MS Windows installation (by
         setting the appropriate directories in
@@ -102,7 +102,7 @@
 
     <sect2>
       <title>Wine registry data files</title>
-  
+
       <para>
         In the user's home directory, there is a subdirectory named
         <filename>.wine</filename>, where Wine will try to save its
@@ -117,7 +117,7 @@
               This file contains HKEY_LOCAL_MACHINE.
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term><filename>user.reg</filename></term>
           <listitem>
@@ -125,7 +125,7 @@
               This file contains HKEY_CURRENT_USER.
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term><filename>userdef.reg</filename></term>
           <listitem>
@@ -134,7 +134,7 @@
               user settings).
             </para>
           </listitem>
-        </varlistentry>          
+        </varlistentry>
         <varlistentry>
           <term><filename>wine.userreg</filename></term>
           <listitem>
@@ -149,9 +149,12 @@
       <para>
         All of these files are human-readable text files, so unlike
         Windows, you can actually use an ordinary text editor on them
-        if you must.
+        if you want (make sure you don't have Wine running when modifying
+	them, otherwise your changes will be discarded).
       </para>
       <para>
+        FIXME: global config currently not implemented.
+
         In addition to these files, Wine can also optionally load from
         global registry files residing in the same directory as the
         global <filename>wine.conf</filename> (i.e.
@@ -177,7 +180,7 @@
 
     <sect2>
       <title>System administration</title>
-  
+
       <para>
         With the above file structure, it is possible for a system
         administrator to configure the system so that a system Wine
@@ -247,8 +250,8 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
       <title>The [registry] section</title>
 
       <para>
-        With the above information fresh in mind, let's look at the 
-	<filename>wine.conf</filename>/<filename>~/.wine/config</filename>
+        With the above information fresh in mind, let's look at the
+	<filename>wine.conf</filename> / <filename>~/.wine/config</filename>
         options for handling the registry.
       </para>
 
@@ -295,12 +298,17 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
           </listitem>
         </varlistentry>
         <varlistentry>
-          <term>UseNewFormat</term>
+          <term>SaveOnlyUpdatedKeys</term>
           <listitem>
             <para>
-              This option is obsolete. Wine now always uses the new
-              format; support for the old format was removed a while
-              ago.
+              Controls whether the entire registry is saved to the
+              user's registry files, or only subkeys the user have
+              actually changed. Considering that the user's registry
+              will override any global registry files and Windows
+              registry files, it usually makes sense to only save
+              user-modified subkeys; that way, changes to the rest of
+              the global or Windows registries will still affect the
+              user.
             </para>
           </listitem>
         </varlistentry>
@@ -316,17 +324,12 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
           </listitem>
         </varlistentry>
         <varlistentry>
-          <term>SaveOnlyUpdatedKeys</term>
+          <term>UseNewFormat</term>
           <listitem>
             <para>
-              Controls whether the entire registry is saved to the
-              user's registry files, or only subkeys the user have
-              actually changed. Considering that the user's registry
-              will override any global registry files and Windows
-              registry files, it usually makes sense to only save
-              user-modified subkeys; that way, changes to the rest of
-              the global or Windows registries will still affect the
-              user.
+              This option is obsolete. Wine now always uses the new
+              format; support for the old format was removed a while
+              ago.
             </para>
           </listitem>
         </varlistentry>

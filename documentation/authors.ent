@@ -13,6 +13,9 @@
 -->
 
 
+<!entity name-web-admin "WineHQ Web-Admin">
+<!entity email-web-admin "web-admin@winehq.com">
+
 <!entity name-jonathan-buzzard "Jonathan Buzzard">
 <!entity email-jonathan-buzzard "jab@hex.prestel.co.uk">
 
@@ -112,5 +115,3 @@
 
 <!entity name-koen-deforche "Koen Deforche">
 <!entity email-koen-deforche "jozef@kotnet.org">
-
-

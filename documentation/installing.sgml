@@ -7,7 +7,7 @@
 
       <para>
         Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-        
+
       </para>
 
       <sect2>
@@ -72,7 +72,8 @@
           paths, class IDs, and more; it must be installed before most
           <filename>INSTALL.EXE</filename> or
           <filename>SETUP.EXE</filename> applications will work. The
-          registry is covered in more detail in an earlier article.
+          registry is covered in more detail <link
+	  linkend="registry">here</link>.
         </para>
       </sect2>
 
@@ -134,9 +135,9 @@ C:\                Root directory of primary disk drive
           file existence to determine whether a particular feature
           (such as Winsock and its TCP/IP networking) is available. If
           this is a problem for you, you can create empty files in the
-          <filename>system</filename> directory to make the
-          application think it's there, and Wine's built-in DLL will
-          be loaded when the application actually asks for it.
+          configured <filename>c:\windows\system</filename> directory
+	  to make the application think it's there, and Wine's built-in DLL
+	  will be loaded when the application actually asks for it.
           (Unfortunately, <filename>tools/wineinstall</filename> does
           not create such empty files itself.)
         </para>
@@ -212,7 +213,7 @@ C:\                Root directory of primary disk drive
             Use <filename>tools/wineinstall</filename> to compile Wine
             and install the default registry. Or if you prefer to do
             it yourself, compile <filename>programs/regapi</filename>,
-            and run: 
+            and run:
           </para>
 		  <screen>
 			<userinput>programs/regapi/regapi setValue &lt; winedefault.reg</userinput>
@@ -242,10 +243,10 @@ C:\                Root directory of primary disk drive
         <listitem>
           <para>
             Run the application with <parameter>--debugmsg
-              +module,+file</parameter> to find out which files are
+              +loaddll</parameter> to find out which files are
             needed. Copy the required DLLs one by one to the
             <filename>C:\windows\system</filename> directory. Do not
-            copy KERNEL/KERNEL32, GDI/GDI32, or USER/USER32. These
+            copy KERNEL/KERNEL32, GDI/GDI32, USER/USER32 or NTDLL. These
             implement the core functionality of the Windows API, and
             the Wine internal versions must be used.
           </para>
@@ -519,7 +520,7 @@ drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
           <filename>AnApp</filename> directories while only root has
           write access to all other directories.
         </para>
-      </sect2>    
+      </sect2>
     </sect1>
 
     <sect1 id="scsi-support">
@@ -556,8 +557,8 @@ drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
         if you're running as root, all bets are off).
       </para>
       <para>
-        So please make sure that <emphasis>all</emphasis> SCSI devices not needed by the program 
-        have their permissions set as restricted as possible ! 
+        So please make sure that <emphasis>all</emphasis> SCSI devices not needed by the program
+        have their permissions set as restricted as possible !
       </para>
 
       <para>

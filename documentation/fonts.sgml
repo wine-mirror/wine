@@ -32,7 +32,7 @@
           fonts (<filename>VGASYS.FON</filename>,
           <filename>SSERIFE.FON</filename>, and
           <filename>SERIFE.FON</filename>) into the format that the X
-          Window System can recognize. 
+          Window System can recognize.
         </para>
 
         <orderedlist>
@@ -62,7 +62,7 @@
               copied fonts to. If you are already in X you should run
               <command>xset fp rehash</command> to make X server aware
               of the new fonts. You may also or instead have to restart
-              the font server (using e.g. 
+              the font server (using e.g.
               <command>/etc/init.d/xfs restart</command>
               under RedHat 7.1)
             </para>
@@ -252,7 +252,7 @@ Alias1 = ...
               <literal>-sony-fixed-</literal> are different fonts Wine
               modified the second extracted name to make sure Windows
               programs can distinguish them because only extracted
-              names appear in the font selection dialogs. 
+              names appear in the font selection dialogs.
             </para>
           </listitem>
           <listitem>
@@ -398,7 +398,7 @@ Resolution = &lt;integer value&gt;
 
       <orderedlist>
         <listitem>
-          <para>Get <filename>freetype-1.0.full.tar.gz</filename></para>
+          <para>Get a freetype source archive (<filename>freetype-X.Y.tar.gz</filename> ?).</para>
         </listitem>
         <listitem>
           <para>Read docs, unpack, configure and install</para>
@@ -485,7 +485,7 @@ FontPath "tcp/localhost:7100"
           </para>
         </listitem>
         <listitem>
-          <para>Test with e.g <command>xlsfont | grep arial</command></para>
+          <para>Test with e.g. <command>xlsfont | grep arial</command></para>
         </listitem>
       </orderedlist>
 

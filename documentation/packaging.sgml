@@ -1,6 +1,6 @@
-<!-- Wine Packaging guidelines.  This is a rough outline only, 
+<!-- Wine Packaging guidelines.  This is a rough outline only,
      and much of this was up for open debate on wine-devel.  -->
-  
+
     <chapter id="pkg-preface"> <title>Preface</title>
 
         <sect1 id="pkg-authors"> <title>Authors</title>
@@ -115,7 +115,7 @@
     <para>
         It expresses the basic principles that the
         Wine developers have agreed should be
-        used when building Wine.  
+        used when building Wine.
         It also attempts to highlight the areas
         where there are different approaches
         to packaging Wine, so that the packager
@@ -152,11 +152,11 @@
 
             <listitem>
               <para>
-              Comply with Filesystem Hierarchy Standard 
+              Comply with Filesystem Hierarchy Standard
               </para>
               <para>
               A Wine installation should, as much as possible, comply
-              with the 
+              with the
                 <ulink url="http://www.pathname.com/fhs/">FHS standard</ulink>.
               </para>
             </listitem>
@@ -167,7 +167,7 @@
                 </para>
                 <para>
                 None of the flexibility built into Wine should
-                be hidden from the end user. 
+                be hidden from the end user.
                 </para>
             </listitem>
 
@@ -766,8 +766,8 @@
         </para>
         <para>
         At the time of this writing, I do not have a
-        definitive list of documentation files to 
-        be installed.  However, they do include 
+        definitive list of documentation files to
+        be installed.  However, they do include
         the HTML files generated from the SGML in the Wine CVS tree.
         </para>
         </listitem>
@@ -813,6 +813,8 @@
                     This is the global Wine configuration file.  It
                     is only used if the user running Wine has
                     no local configuration file.
+		    Global wine configuration is currently not possible;
+		    this might get reenabled at some time.
                     </para>
                     <para>
                     Some packagers feel that this file should not
@@ -866,7 +868,7 @@
                 .dat files from a Windows partion are loaded,
                 then global registry settings from <link linkend=ETCDIR endterm=etcdir.id></link>,
                 and then finally local registry settings are
-                loaded from <link linkend=WINECONFDIR endterm=wineconfdir.id></link> 
+                loaded from <link linkend=WINECONFDIR endterm=wineconfdir.id></link>
                 .  As each set are loaded,
                 they can override the prior entries.  Thus,
                 the local registry files take precedence.
@@ -884,7 +886,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/system.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the user's local copy of 
+                    This file contains the user's local copy of
                     the HKEY_LOCAL_MACHINE registry hive.  In general
                     use, it will contain only changes made to the
                     default registry values.
@@ -895,7 +897,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/user.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the user's local copy of 
+                    This file contains the user's local copy of
                     the HKEY_CURRENT_USER registry hive.  In
                     general use, it will contain only changes made to the
                     default registry values.
@@ -906,7 +908,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/userdef.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the user's local copy of 
+                    This file contains the user's local copy of
                     the HKEY_USERS\.Default registry hive.  In
                     general use, it will contain only changes made to the
                     default registry values.
@@ -1007,7 +1009,7 @@
         to the end user, so that they can intelligently
         choose their configuration.
         </para>
-        
+
 
         <orderedlist>
 
@@ -1039,10 +1041,10 @@
             </listitem>
 
             <listitem>
-                <para> 
+                <para>
                 Windows Dynamic Link Libraries ([WINDOWSDIR]/system32/*.dll)
                 </para>
-                <para> 
+                <para>
                 Wine has the ability to use the actual Windows DLL files
                 when running an application.  An end user can configure
                 Wine so that Wine uses some or all of these DLL files
@@ -1060,7 +1062,7 @@
 
         <para>
         There has recently been a lot of discussion on the Wine
-        development mailing list about the best way to 
+        development mailing list about the best way to
         build Wine packages.
         </para>
         <para>
@@ -1082,7 +1084,7 @@
         </para>
         <para>
         At this point, there is no consensus
-        amongst the wine-devel community on this subject. 
+        amongst the wine-devel community on this subject.
         </para>
         </sect1>
 
@@ -1096,7 +1098,7 @@
         then :
         </para>
         <orderedlist>
-        
+
             <listitem>
             <para>
             all <link linkend=binfiles>binary files</link> go into
@@ -1155,7 +1157,7 @@
         check again tomorrow).
         </para>
         </sect2>
-        
+
         </sect1>
 
         <sect1 id="pkg-whattomake"><title>What files to create</title>
@@ -1186,7 +1188,7 @@
                 <para>
                 This approach has the benefit of simplicity in that all
                 Wine files are either stored under /opt/wine or under
-                ~/.wine.  Further, there is only ever one Wine 
+                ~/.wine.  Further, there is only ever one Wine
                 configuration file.
                 </para>
                 <para>
@@ -1225,7 +1227,7 @@
                 <para>
                 A flaw with this approach, however, is it doesn't
                 give the user an obvious way to choose not to
-                use a Windows partition.  
+                use a Windows partition.
                 </para>
             </listitem>
 
@@ -1626,7 +1628,7 @@ Serial=87654321
 Device=/dev/fd0
 Filesystem=win95
 
-; 
+;
 ; Comment in ONLY if you have a second floppy or the automounter hangs
 ; for 5 minutes.
 ;
@@ -1640,12 +1642,12 @@ Filesystem=win95
 
 
 ;
-; Drive 'C' links to the user's homedirectory. 
-; 
+; Drive 'C' links to the user's homedirectory.
+;
 ; This must point to a writeable directory structure (not your readonly
 ; mounted DOS partitions!) since programs want to dump stuff into
 ; "Program Files/" "Programme/", "windows/", "windows/system/" etc.
-; 
+;
 ; The basic structure is set up using the config script.
 ;
 [Drive C]
@@ -1656,7 +1658,7 @@ Filesystem=win95
 
 ;
 ; /tmp/ directory
-; 
+;
 ; The temp drive (and directory) points to /tmp/. Windows programs fill it
 ; with junk, so it is approbiate.
 ;
@@ -1668,9 +1670,9 @@ Filesystem=win95
 
 ;
 ; 'U'ser homedirectory
-; 
+;
 ; Just in case you want C:\ elsewhere.
-; 
+;
 [Drive U]
 Path=${HOME}
 Type=hd
@@ -1679,14 +1681,14 @@ Filesystem=win95
 
 ;
 ; CD-'R'OM drive (automounted)
-; 
+;
 ; The default cdrom drive.
 ;
 ; If an application (or game) wants a specific CD-ROM you might have to
 ; temporary change the Label to the one of the CD itself.
 ;
 ; How to read them is described in /usr/doc/wine-cvs-xxxxx/cdrom-labels.
-; 
+;
 [Drive R]
 Path=/auto/cdrom
 Type=cdrom
@@ -1694,9 +1696,9 @@ Label=CD-Rom
 Filesystem=win95
 
 ;
-; The drive where the old windows installation resides (it points to the 
+; The drive where the old windows installation resides (it points to the
 ; windows/ subdirectory).
-; 
+;
 ; The Path is modified by the winesetup script.
 ;
 [Drive W]
@@ -1707,7 +1709,7 @@ Filesystem=win95
 ;
 ; The UNIX Root directory, so all other programs and directories are reachable.
 ;
-; type network is used to tell programs to not write here. 
+; type network is used to tell programs to not write here.
 ;
 [Drive Z]
 Path=/
@@ -1719,7 +1721,7 @@ Filesystem=win95
 ; Standard Windows path entries. WINE will not work if they are incorrect.
 ;
 [wine]
-; 
+;
 ; The windows/ directory. It must be writeable, for programs write into it.
 ;
 Windows=c:\windows
@@ -1749,7 +1751,7 @@ SymbolTableFile=./wine.sym
 
 # &lt;wineconf&gt;
 
-; 
+;
 ; Dll loadorder defaults. No need to modify.
 ;
 [DllDefaults]
@@ -1774,7 +1776,7 @@ winsock	= wsock32
 
 ;
 ; What type of dll to use in their respective loadorder.
-; 
+;
 [DllOverrides]
 kernel32, gdi32, user32	= builtin
 kernel, gdi, user	= builtin
@@ -1807,7 +1809,7 @@ AllocSystemColors=100
 
 ;;
 ; Font specification. You usually do not need to edit this section.
-; 
+;
 ; Read documentation/fonts before adding aliases
 ;
 [fonts]
@@ -1820,7 +1822,7 @@ Default = -adobe-times-
 ;
 ; serial ports used by "COM1" "COM2" "COM3" "COM4". Useful for applications
 ; that try to access serial ports.
-; 
+;
 [serialports]
 Com1=/dev/ttyS0
 Com2=/dev/ttyS1
@@ -1828,7 +1830,7 @@ Com3=/dev/modem,38400
 Com4=/dev/modem
 
 ;
-; parallel port(s) used by "LPT1" etc. Useful for applications that try to 
+; parallel port(s) used by "LPT1" etc. Useful for applications that try to
 ; access these ports.
 ;
 [parallelports]
@@ -1843,7 +1845,7 @@ LPT1:=|lpr
 LPT2:=|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -
 LPT3:=/dev/lp3
 
-; 
+;
 ; Allow port access to WINE started by the root user. Useful for some
 ; supported devices, but it can make the system unstable.
 ; Read /usr/doc/wine-cvs-xxxxx/ioport-trace-hints.
@@ -1914,7 +1916,7 @@ Startup=
             wineconf/wineinstall.
             </para>
             <para>
-            Currently, winesetup duplicates all of the code contained 
+            Currently, winesetup duplicates all of the code contained
             in wineconf.
             </para>
             <para>

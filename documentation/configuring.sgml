@@ -18,17 +18,17 @@
           <itemizedlist>
             <listitem>
               <para>
-                Drives and Information about them
+                Drives and information about them
               </para>
             </listitem>
             <listitem>
               <para>
-                Directory Settings
+                Directory settings
               </para>
             </listitem>
             <listitem>
               <para>
-                Port Settings
+                Port settings
               </para>
             </listitem>
             <listitem>
@@ -38,12 +38,12 @@
             </listitem>
             <listitem>
               <para>
-                Wine's DLL Usage
+                Wine's DLL usage
               </para>
             </listitem>
             <listitem>
               <para>
-                Wine's Multimedia drivers and DLL configuration
+                Wine's multimedia drivers and DLL configuration
               </para>
             </listitem>
           </itemizedlist>
@@ -524,10 +524,13 @@ And here is a setup for Drive A, a generic floppy drive:
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
-                  <term>elfdll</term>
+                  <term>builtin</term>
                   <listitem><para>
-                      ELF encapsulated windows DLL's. This is currently
-                      experimental (Not working yet).
+                      The most common form of DLL loading. This is
+                      what you will use if the DLL is error-prone in
+                      native form (KERNEL for example), you don't have
+                      the native DLL, or you just want to be
+                      Microsoft-free.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -537,13 +540,10 @@ And here is a setup for Drive A, a generic floppy drive:
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
-                  <term>builtin</term>
+                  <term>elfdll</term>
                   <listitem><para>
-                      The most common form of DLL loading. This is
-                      what you will use if the DLL is error-prone in
-                      native form (KERNEL for example), you don't have
-                      the native DLL, or you just want to be
-                      Microsoft-free.
+                      ELF encapsulated windows DLL's.
+		      No longer used, ignored.
                     </para></listitem>
                 </varlistentry>
               </variablelist>
@@ -570,14 +570,14 @@ And here is a setup for Drive A, a generic floppy drive:
         <sect3>
           <title>The [DllPairs] Section</title>
           <para>
-          At one time, there was a section called [DllPairs] in the 
+          At one time, there was a section called [DllPairs] in the
           default configuration file, but this has been obsoleted
           because the pairing information has now been embedded into
           Wine itself. (The purpose of this section was merely to be
           able to issue warnings if the user attempted to pair
           codependent 16-bit/32-bit DLLs of different types.) If you
-          still have this in your <filename>wine.conf</filename> or
-          <filename>~/.wine/config</filename>, you may safely delete it.
+          still have this in your <filename>~/.wine/.config</filename> or
+          <filename>wine.conf</filename>, you may safely delete it.
           </para>
 	</sect3>
 
@@ -614,18 +614,22 @@ And here is a setup for Drive A, a generic floppy drive:
             that was included with your wine package):
             <programlisting>
 [DllOverrides]
+"rpcrt4"       = "builtin, native"
+"oleaut32"     = "builtin, native"
+"ole32"        = "builtin, native"
 "commdlg"      = "builtin, native"
 "comdlg32"     = "builtin, native"
 "ver"          = "builtin, native"
 "version"      = "builtin, native"
 "shell"        = "builtin, native"
 "shell32"      = "builtin, native"
+"shfolder"     = "builtin, native"
+"shlwapi"      = "builtin, native"
+"shdocvw"      = "builtin, native"
 "lzexpand"     = "builtin, native"
 "lz32"         = "builtin, native"
 "comctl32"     = "builtin, native"
 "commctrl"     = "builtin, native"
-"wsock32"      = "builtin"
-"winsock"      = "builtin"
 "advapi32"     = "builtin, native"
 "crtdll"       = "builtin, native"
 "mpr"          = "builtin, native"
@@ -633,8 +637,7 @@ And here is a setup for Drive A, a generic floppy drive:
 "ddraw"        = "builtin, native"
 "dinput"       = "builtin, native"
 "dsound"       = "builtin, native"
-"mmsystem"     = "builtin"
-"winmm"        = "builtin"
+"opengl32"     = "builtin, native"
 "msvcrt"       = "native, builtin"
 "msvideo"      = "builtin, native"
 "msvfw32"      = "builtin, native"
@@ -647,16 +650,16 @@ And here is a setup for Drive A, a generic floppy drive:
 "msacm"        = "builtin, native"
 "msacm32"      = "builtin, native"
 "midimap.drv"  = "builtin, native"
-"wnaspi32"     = "builtin"
-"icmp"         = "builtin"
+; you can specify applications too
+"notepad.exe"  = "native, builtin"
+; default for all other dlls
+"*" = "native, builtin"
             </programlisting>
           </para>
           <note>
             <para>
-              You see that elfdll or so is the first option for a few
-              of these dll's. This will fail for you, but you won't
-              notice it as wine will just use the second or third
-              option.
+              If loading of the libraries that are listed first fails,
+              wine will just go on by using the second or third option.
             </para>
           </note>
         </sect3>
@@ -686,7 +689,7 @@ And here is a setup for Drive A, a generic floppy drive:
             The default font wine uses. Fool around with it if you'd like.
           </para>
           <para>
-OPTIONAL: 
+OPTIONAL:
           </para>
           <para>
             The <literal>Alias</literal> setting allows you to map an X font to a font
@@ -708,10 +711,10 @@ OPTIONAL:
           </para>
           <para>
             Here is an example of an alias without masking. The font will show up in windows
-            apps as "Google". When defining an alias in a config file, forget about my
-            comment text (The "&lt;-- blah" stuff)
+            apps as "Google".
+
             <programlisting>
-"Alias0" = "Foo,--google-"      &lt;
+"Alias0" = "Foo,--google-"
             </programlisting>
           </para>
           <para>
@@ -722,7 +725,8 @@ OPTIONAL:
             </programlisting>
           </para>
           <para>
-            For more info check out <filename>&lt;dirs to wine>/documentation/fonts</filename>
+            For more info check out the <link linkend="fonts">Fonts</link>
+	    chapter.
           </para>
         </sect3>
 
@@ -731,7 +735,7 @@ OPTIONAL:
           <para>
             Even though it sounds like a lot of sections, these are
             all closely related. They are all for communications and
-            parallel ports. 
+            parallel ports.
           </para>
           <para>
             The [serialports] section tells wine what serial ports it
@@ -776,18 +780,18 @@ OPTIONAL:
             time, so it won't work perfectly. IT IS OPTIONAL. The only
             setting you use in this section works to map a port (LPT1,
             for example) to a file or a command. Here is an example,
-            mapping LPT1 to the file <filename>out.ps</filename>: 
+            mapping LPT1 to the file <filename>out.ps</filename>:
             <programlisting>"LPT1:" = "out.ps"</programlisting>
           </para>
           <para>
             The following command maps printing jobs to LPT1 to the
-            command <command>lpr</command>. Notice  the |: 
+            command <command>lpr</command>. Notice  the |:
             <programlisting>"LPT1:" = "|lpr"</programlisting>
           </para>
           <para>
             The [ports] section is usually useful only for people who
             need direct port access for programs requiring dongles or
-            scanners. IF YOU DON'T NEED IT, DON'T USE IT! 
+            scanners. IF YOU DON'T NEED IT, DON'T USE IT!
           </para>
           <para>
             <programlisting>"read" = "0x779,0x379,0x280-0x2a0"</programlisting>
@@ -871,18 +875,18 @@ OPTIONAL:
 
           <para>
 	    The content of the section looks like:
-	    <programlisting> 
+	    <programlisting>
 [WinMM]
 "Drivers" = "wineoss.drv"
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
-	    </programlisting> 
+	    </programlisting>
 	    All the keys must be defined:
 	    <itemizedlist>
 	      <listitem>
 	        <para>
-		  The "Drivers" key is a ';' separated list of modules name, each of 
-		  them containing a low level driver. All those drivers will be loaded 
+		  The "Drivers" key is a ';' separated list of modules name, each of
+		  them containing a low level driver. All those drivers will be loaded
 		  when MMSYSTEM/WINMM is started and will provide their inner features.
 	        </para>
 	      </listitem>
@@ -894,8 +898,8 @@ OPTIONAL:
 	      </listitem>
 	      <listitem>
 	        <para>
-		  The "MidiMapper" represents the name of the module containing the Midi 
-		  Mapper driver. Only one Midi mapper can be defined in the system.
+		  The "MidiMapper" represents the name of the module containing the MIDI
+		  Mapper driver. Only one MIDI mapper can be defined in the system.
 	        </para>
 	      </listitem>
 	    </itemizedlist>
@@ -905,23 +909,25 @@ OPTIONAL:
         <sect3>
           <title>The [AppDefaults] Section</title>
           <para>
-            The section is used to overwrite the setting of this file for a
+            The section is used to overwrite certain settings of this file for a
             special program with different settings.
             [AppDefaults] is not the real name of the section. The real name
-            consists of the leading word AppDefaults followed by the name 
-            of the executable the section is valid for. The end of the section
-            name is the name of the section of the configuration file its 
-            values should be overwritten with different settings. The three 
-            parts of the section name are separated by two backslashes.
+            consists of the leading word AppDefaults followed by the name
+            of the executable the section is valid for.
+	    The end of the section name is the name of the
+	    corresponding "standard" section of the configuration file
+	    that should have some of its settings overwritten with the
+	    application specific settings you define.
+	    The three parts of the section name are separated by two backslashes.
           </para>
           <para>
-            Currently wine supports only overwriting the sections 
-            [DllOverrides] and [x11drv].
+            Currently wine supports only overwriting the sections
+            [DllOverrides], [x11drv], [version] and [dsound].
           </para>
           <para>
             Here is an example that overwrites the normal settings for a
             program:
-	    <programlisting> 
+	    <programlisting>
 ;; default settings
 [x11drv]
 "Managed" = "Y"
@@ -931,7 +937,7 @@ OPTIONAL:
 [AppDefaults\\install.exe\\x11drv]
 "Managed" = "N"
 "Desktop" = "800x600"
-	    </programlisting> 
+	    </programlisting>
           </para>
         </sect3>
       </sect2>
@@ -948,21 +954,21 @@ OPTIONAL:
                 A systemwide config file, used for anyone who doesn't
                 have their own. NOTE: this file is currently unused as a
                 new global configuration mechanism is not in place at this
-                time
+                time.
             </para></listitem>
           </varlistentry>
           <varlistentry>
             <term><filename>$HOME/.wine/config</filename></term>
             <listitem><para>
-                Your own config file, that only is used for your user. 
+                Your own config file (which only is used for your user).
             </para></listitem>
           </varlistentry>
         </variablelist>
         <para>
-          So copy your version of the <filename>wine.conf</filename> file to
-          <filename>/usr/local/etc/wine.conf</filename> or
-          <filename>$HOME/.wine/config</filename> for wine to recognize
-	  it. 
+          So copy your version of the wine config file to
+          <filename>$HOME/.wine/config</filename>
+	  or <filename>/usr/local/etc/wine.conf</filename>
+	  for wine to recognize it.
         </para>
       </sect2>
 
@@ -970,7 +976,7 @@ OPTIONAL:
         <title>What If It Doesn't Work?</title>
         <para>
           There is always a chance that things will go wrong. If the
-          unthinkable happens report the problem to
+          unthinkable happens, report the problem to
 	  <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>,
 	  try the newsgroup
           <systemitem>comp.emulators.ms-windows.wine</systemitem>,
@@ -985,8 +991,7 @@ OPTIONAL:
           </listitem>
           <listitem>
             <para>
-              <filename>http://www.la-sorciere.de/wine/index.html</filename>
-              (optional but recommended)
+              <filename>http://www.winehq.org/trouble/</filename>
             </para>
           </listitem>
         </itemizedlist>
@@ -1060,15 +1065,13 @@ OPTIONAL:
                 that want to draw their own.
               </para>
             </listitem>
-          </varlistentry>          
+          </varlistentry>
           <varlistentry>
             <term>Managed</term>
             <listitem>
               <para>
-                Specified by using the
-                <parameter>--managed</parameter> command-line option
-                or the <literal>Managed</literal>
-                <filename>wine.conf</filename> option (see below).
+                Specified by using the <literal>Managed</literal>
+                wine config file option (see below).
                 Ordinary top-level frame windows with thick borders,
                 title bars, and system menus will be managed by your
                 window manager. This lets these applications integrate
@@ -1084,11 +1087,11 @@ OPTIONAL:
             <term>Desktop-in-a-Box</term>
             <listitem>
               <para>
-                Specified by using the
-                <parameter>--desktop</parameter> command-line option
-                (with a geometry, e.g. <parameter>--desktop
-                  800x600</parameter> for a such-sized desktop, or
-                even <parameter>--desktop 800x600+0+0</parameter> to
+                Specified by using the <literal>Desktop</literal>
+		wine config file option (see below).
+                (adding a geometry, e.g. <literal>800x600</literal>
+		for a such-sized desktop, or
+                even <literal>800x600+0+0</literal> to
                 automatically position the desktop at the upper-left
                 corner of the display). This is the mode most
                 compatible with the Windows model. All application
@@ -1098,6 +1101,8 @@ OPTIONAL:
                 applications can roam freely within this virtual
                 workspace and think they own it all, without
                 disturbing your other X apps.
+		Note: currently there's on desktop window for every
+		application; this will be fixed in the future.
               </para>
             </listitem>
           </varlistentry>
@@ -1109,68 +1114,6 @@ OPTIONAL:
 
         <variablelist>
           <varlistentry>
-            <term>AllocSystemColors</term>
-            <listitem>
-              <para>
-                Applies only if you have a palette-based display, i.e.
-                if your X server is set to a depth of 8bpp, and if you
-                haven't requested a private color map. It specifies
-                the maximum number of shared colormap cells (palette
-                entries) Wine should occupy. The higher this value,
-                the less colors will be available to other
-                applications.
-              </para>
-            </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>PrivateColorMap</term>
-            <listitem>
-              <para>
-                Applies only if you have a palette-based display, i.e.
-                if your X server is set to a depth of 8bpp. It
-                specifies that you don't want to use the shared color
-                map, but a private color map, where all 256 colors are
-                available. The disadvantage is that Wine's private
-                color map is only seen while the mouse pointer is
-                inside a Wine window, so psychedelic flashing and
-                funky colors will become routine if you use the mouse
-                a lot.
-              </para>
-            </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>PerfectGraphics</term>
-            <listitem>
-              <para>
-                This option only determines whether fast X11 routines
-                or exact Wine routines will be used for certain ROP
-                codes in blit operations. Most users won't notice any
-                difference.
-              </para>
-            </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>ScreenDepth</term>
-            <listitem>
-              <para>
-                Applies only to multi-depth displays. It specifies
-                which of the available depths Wine should use (and
-                tell Windows apps about).
-              </para>
-            </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>Display</term>
-            <listitem>
-              <para>
-                This specifies which X11 display to use, and if
-                specified, will override both the
-                <envar>DISPLAY</envar> environment variable and the
-                <parameter>--display</parameter> command-line option.
-              </para>
-            </listitem>
-          </varlistentry>          
-          <varlistentry>
             <term>Managed</term>
             <listitem>
               <para>
@@ -1179,7 +1122,30 @@ OPTIONAL:
                 by default.
               </para>
             </listitem>
-          </varlistentry>          
+          </varlistentry>
+          <varlistentry>
+            <term>Desktop</term>
+            <listitem>
+              <para>
+                Creates a main desktop window of a specified size
+		to display all Windows applications in.
+		The size argument could e.g. be "800x600".
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>DXGrab</term>
+            <listitem>
+              <para>
+                If you don't use DGA, you may want an alternative
+                means to convince the mouse cursor to stay within the
+                game window. This option does that. Of course, as with
+                DGA, if Wine crashes, you're in trouble (although not
+                as badly as in the DGA case, since you can still use
+                the keyboard to get out of X).
+              </para>
+            </listitem>
+          </varlistentry>
           <varlistentry>
             <term>UseDGA</term>
             <listitem>
@@ -1200,7 +1166,7 @@ OPTIONAL:
                 <filename>/dev/mem</filename>.
               </para>
             </listitem>
-          </varlistentry>          
+          </varlistentry>
           <varlistentry>
             <term>UseXShm</term>
             <listitem>
@@ -1215,20 +1181,7 @@ OPTIONAL:
                 sometimes.
               </para>
             </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>DXGrab</term>
-            <listitem>
-              <para>
-                If you don't use DGA, you may want an alternative
-                means to convince the mouse cursor to stay within the
-                game window. This option does that. Of course, as with
-                DGA, if Wine crashes, you're in trouble (although not
-                as badly as in the DGA case, since you can still use
-                the keyboard to get out of X).
-              </para>
-            </listitem>
-          </varlistentry>          
+          </varlistentry>
           <varlistentry>
             <term>DesktopDoubleBuffered</term>
             <listitem>
@@ -1239,6 +1192,80 @@ OPTIONAL:
                 create the desktop window with a double-buffered
                 visual, something most OpenGL games need to run
                 correctly.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>AllocSystemColors</term>
+            <listitem>
+              <para>
+                Applies only if you have a palette-based display, i.e.
+                if your X server is set to a depth of 8bpp, and if you
+                haven't requested a private color map. It specifies
+                the maximum number of shared colormap cells (palette
+                entries) Wine should occupy. The higher this value,
+                the less colors will be available to other
+                applications.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>PrivateColorMap</term>
+            <listitem>
+              <para>
+                Applies only if you have a palette-based display, i.e.
+                if your X server is set to a depth of 8bpp. It
+                specifies that you don't want to use the shared color
+                map, but a private color map, where all 256 colors are
+                available. The disadvantage is that Wine's private
+                color map is only seen while the mouse pointer is
+                inside a Wine window, so psychedelic flashing and
+                funky colors will become routine if you use the mouse
+                a lot.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Synchronous</term>
+            <listitem>
+              <para>
+                To be used for debugging X11 operations.
+		If Wine crashes with an X11 error, then you should enable
+		Synchronous mode to disable X11 request caching in order
+		to make sure that the X11 error happens directly after
+		the corresponding X11 call in the log file appears.
+		Will slow down X11 output !
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>ScreenDepth</term>
+            <listitem>
+              <para>
+                Applies only to multi-depth displays. It specifies
+                which of the available depths Wine should use (and
+                tell Windows apps about).
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Display</term>
+            <listitem>
+              <para>
+                This specifies which X11 display to use, and if
+                specified, will override the
+                <envar>DISPLAY</envar> environment variable.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>PerfectGraphics</term>
+            <listitem>
+              <para>
+                This option only determines whether fast X11 routines
+                or exact Wine routines will be used for certain ROP
+                codes in blit operations. Most users won't notice any
+                difference.
               </para>
             </listitem>
           </varlistentry>
@@ -1260,17 +1287,8 @@ OPTIONAL:
               </para>
             </listitem>
           </varlistentry>
-          <varlistentry>
-            <term>Synchronous</term>
-            <listitem>
-              <para>
-                <!-- FIXME: To be documented -->
-                To be documented...
-              </para>
-            </listitem>
-          </varlistentry>
         </variablelist>
-      </sect2>          
+      </sect2>
     </sect1>
 
     &registry;
@@ -1439,16 +1457,16 @@ OPTIONAL:
       <title>DLL configuration</title>
       <sect2 id="dll-overrides">
         <title>DLL Overrides</title>
-  
+
         <para>
           Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
         </para>
         <para>
           (Extracted from <filename>wine/documentation/dll-overrides</filename>)
         </para>
-  
+
         <para>
-          The <filename>wine.conf</filename> directives [DllDefaults]
+          The wine config file directives [DllDefaults]
           and [DllOverrides] are the subject of some confusion. The
           overall purpose of most of these directives are clear enough,
           though - given a choice, should Wine use its own built-in
@@ -1456,7 +1474,7 @@ OPTIONAL:
           in an existing Windows installation? This document explains
           how this feature works.
         </para>
-  
+
         <sect3>
           <title>DLL types</title>
           <variablelist>
@@ -1477,24 +1495,6 @@ OPTIONAL:
                 </para> </listitem>
             </varlistentry>
             <varlistentry>
-              <term>elfdll</term>
-              <listitem> <para>
-                  An "elfdll" is a Wine <filename>.so</filename> file
-                  with a special Windows-like file structure that is as
-                  close to Windows as possible, and that can also
-                  seamlessly link dynamically with "native" DLLs, by
-                  using special ELF loader and linker tricks. Bertho
-                  Stultiens did some work on this, but this feature has
-                  not yet been merged back into Wine (because of
-                  political reasons and lack of time), so this DLL type
-                  does not exist in the official Wine at this time. In
-                  the meantime, the "builtin" DLL type gained some of
-                  the features of elfdlls (such as dynamic loading), so
-                  it's possible that "elfdll" functionality will be
-                  folded into "builtin" at some point.
-                </para> </listitem>
-            </varlistentry>
-            <varlistentry>
               <term>so</term>
               <listitem> <para>
                   A native Unix <filename>.so</filename> file, with
@@ -1504,9 +1504,9 @@ OPTIONAL:
                   same API on both Windows and Unix.
                 </para> </listitem>
             </varlistentry>
-          </variablelist>          
+          </variablelist>
         </sect3>
-  
+
         <sect3>
           <title>The [DllDefaults] section</title>
           <variablelist>
@@ -1520,7 +1520,7 @@ OPTIONAL:
             </varlistentry>
           </variablelist>
         </sect3>
-  
+
         <sect3>
           <title>The [DllPairs] section</title>
           <para>
@@ -1530,11 +1530,11 @@ OPTIONAL:
             Wine itself. (The purpose of this section was merely to be
             able to issue warnings if the user attempted to pair
             codependent 16-bit/32-bit DLLs of different types.) If you
-            still have this in your <filename>wine.conf</filename> or
-            <filename>~/.wine/config</filename>, you may safely delete it.
+            still have this in your <filename>~/.wine/config</filename> or
+            <filename>wine.conf</filename>, you may safely delete it.
           </para>
         </sect3>
-  
+
         <sect3>
           <title>The [DllOverrides] section</title>
           <para>
@@ -1568,7 +1568,7 @@ OPTIONAL:
                   Graphics Device Interface. No effort has been made at trying to
                   run native GDI. Leave at <literal>builtin</literal>.
                 </para> </listitem>
-            </varlistentry>          
+            </varlistentry>
             <varlistentry>
               <term>user, user32</term>
               <listitem> <para>
@@ -1612,7 +1612,7 @@ OPTIONAL:
                   <literal>native</literal>. Leave at
                   <literal>builtin</literal>.
                 </para> </listitem>
-            </varlistentry>          
+            </varlistentry>
             <varlistentry>
               <term>display</term>
               <listitem> <para>
@@ -1662,7 +1662,7 @@ OPTIONAL:
                   most undocumented pieces of Windows, you may have luck with the
                   <literal>native</literal> version, should you need it.
                 </para> </listitem>
-            </varlistentry>          
+            </varlistentry>
             <varlistentry>
               <term>winsock, wsock32</term>
               <listitem> <para>
@@ -1730,7 +1730,7 @@ OPTIONAL:
                   DirectInput. Running this <literal>native</literal>
                   may or may not work.
                 </para> </listitem>
-            </varlistentry>          
+            </varlistentry>
             <varlistentry>
               <term>dsound</term>
               <listitem> <para>
@@ -1820,16 +1820,16 @@ OPTIONAL:
                   doesn't exist.
                 </para> </listitem>
             </varlistentry>
-          </variablelist>          
+          </variablelist>
         </sect3>
       </sect2>
       <sect2 id="dll-missing">
         <title>Missing DLLs</title>
-  
+
         <para>
           Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
         </para>
-  
+
         <para>
 	  In case Wine complains about a missing DLL, you should check whether
 	  this file is a publicly available DLL or a custom DLL belonging
@@ -1839,13 +1839,35 @@ OPTIONAL:
 	  DLLs usually get loaded according to the mechanism of the
 	  SearchPath() function.
 	  This function searches directories in the following order:
-	  
-	  a) The directory the program was started from.
-	  b) The current directory.
-	  c) The Windows system directory.
-	  d) The Windows directory.
-	  e) The PATH variable directories.
-	  
+
+          <orderedlist>
+            <listitem>
+              <para>
+	        The directory the program was started from.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+	        The current directory.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+	        The Windows system directory.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+	        The Windows directory.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+	        The PATH variable directories.
+              </para>
+            </listitem>
+          </orderedlist>
+
 	  In short: either put the required DLL into your application
 	  directory (might be ugly), or usually put it into the Windows system
 	  directory. Just find out its directory by having a look at the Wine
@@ -2000,7 +2022,7 @@ static const char main_key_NO[MAIN_LEN][4] =
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","øØ","æÆ","'*",
  "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
  "&lt;>"
-};   
+};
       </programlisting>
       <para>
         Except that " and \ needs to be quoted with a backslash, and
@@ -2019,7 +2041,7 @@ static struct {
 } main_key_tab[]={
 ...
 ...
- {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &amp;main_key_NO},  
+ {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &amp;main_key_NO},
 ...
       </programlisting>
       <para>

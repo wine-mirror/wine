@@ -124,7 +124,7 @@
                 <listitem>
                   <para>works with console handles</para>
                 </listitem>
-              </itemizedlist>            
+              </itemizedlist>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -236,10 +236,10 @@ wine -console ncurses+xterm &lt;application&gt;
         </sect3>
 
         <sect3>
-          <title>II. <filename>wine.conf</filename> Configuration</title>
+          <title>II. wine config file configuration</title>
 
           <para>
-            In the <filename>wine.conf</filename> file, you can create
+            In the wine config file, you can create
             a section called [console] that contains configuration
             options that are respected by the assorted console
             drivers.
@@ -370,7 +370,7 @@ wine -console ncurses+xterm &lt;application&gt;
             As X terminals typically use a 24x80 screen resolution
             rather than the typical 25x80 one, it is necessary to
             resize the screen to allow a DOS program to work
-            full-screen. There is a <filename>wine.conf</filename>
+            full-screen. There is a wine config file
             option to work around this in some cases but run-time
             resizing will be disabled.
           </para>
