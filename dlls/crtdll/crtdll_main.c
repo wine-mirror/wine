@@ -615,6 +615,17 @@ time_t __cdecl CRTDLL_time(time_t *timeptr)
 }
 
 /*********************************************************************
+ *                  difftime      (CRTDLL.357)
+ */
+double __cdecl CRTDLL_difftime (time_t time1, time_t time2)
+{
+	double timediff;
+
+	timediff = (double)(time1 - time2);
+	return timediff;
+}
+
+/*********************************************************************
  *                  clock         (CRTDLL.350)
  */
 clock_t __cdecl CRTDLL_clock(void)

@@ -359,7 +359,7 @@ init    CRTDLL_Init
 @ cdecl cos(double) cos
 @ cdecl cosh(double) cosh
 @ cdecl ctime(ptr) ctime
-@ stub difftime
+@ cdecl difftime(long long) CRTDLL_difftime
 @ cdecl div(long long) div
 @ cdecl exit(long) CRTDLL_exit
 @ cdecl exp(double) exp
