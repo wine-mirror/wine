@@ -79,13 +79,15 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     COLORREF clrOld;
     LPWSTR lpText = NULL;
 
-    TRACE ("iString: %lx\n", btnPtr->iString);
+    TRACE ("iString: %x\n", btnPtr->iString);
 
     /* get a pointer to the text */
-    if (HIWORD(btnPtr->iString) != 0)
-	lpText = (LPWSTR)btnPtr->iString;
+    if (btnPtr->iString == -1)
+        FIXME("Undocumented Index -1\n");
+    else if (HIWORD(btnPtr->iString) != 0)
+        lpText = (LPWSTR)btnPtr->iString;
     else if ((btnPtr->iString >= 0) && (btnPtr->iString < infoPtr->nNumStrings))
-	lpText = infoPtr->strings[btnPtr->iString];
+        lpText = infoPtr->strings[btnPtr->iString];
 
     TRACE ("lpText: \"%s\"\n", debugstr_w(lpText));
 
@@ -1527,7 +1529,7 @@ TOOLBAR_ChangeBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->iBitmap = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,NULL,RDW_ERASE|RDW_INVALIDATE);
+    RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE);
 
     return TRUE;
 }
@@ -1570,9 +1572,9 @@ TOOLBAR_CheckButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if( bChecked != LOWORD(lParam) )
     {
 	if (nOldIndex != -1)
-            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,NULL,
+            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,(HRGN)NULL,
             RDW_ERASE|RDW_INVALIDATE);
-        RedrawWindow(hwnd,&btnPtr->rect,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+        RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
     }
 
     /* FIXME: Send a WM_NOTIFY?? */
@@ -1710,7 +1712,7 @@ TOOLBAR_EnableButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* redraw the button only if the state of the button changed */
     if(bState != (btnPtr->fsState & TBSTATE_ENABLED)) {	
-            RedrawWindow(hwnd,&btnPtr->rect,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
+            RedrawWindow(hwnd,&btnPtr->rect,0,RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
     }
 
     return TRUE;
@@ -2200,7 +2202,7 @@ TOOLBAR_Indeterminate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_INDETERMINATE;
 
-    RedrawWindow(hwnd,&btnPtr->rect,NULL,
+    RedrawWindow(hwnd,&btnPtr->rect,0,
                  RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
@@ -2467,7 +2469,7 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-    RedrawWindow(hwnd,&btnPtr->rect,NULL,
+    RedrawWindow(hwnd,&btnPtr->rect,0,
                  RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
@@ -2928,7 +2930,7 @@ TOOLBAR_SetState (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->fsState = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,NULL,
+    RedrawWindow(hwnd,&btnPtr->rect,0,
                  RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
     return TRUE;
@@ -2949,7 +2951,7 @@ TOOLBAR_SetStyle (HWND hwnd, WPARAM wParam, LPARAM lParam)
     btnPtr = &infoPtr->buttons[nIndex];
     btnPtr->fsStyle = LOWORD(lParam);
 
-    RedrawWindow(hwnd,&btnPtr->rect,NULL,
+    RedrawWindow(hwnd,&btnPtr->rect,0,
                  RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
     if (infoPtr->hwndToolTip) {
@@ -3143,7 +3145,7 @@ TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	btnPtr->fsState |= TBSTATE_PRESSED;
 
-        RedrawWindow(hwnd,&btnPtr->rect,NULL,
+        RedrawWindow(hwnd,&btnPtr->rect,0,
                      RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
     }
     else if (GetWindowLongA (hwnd, GWL_STYLE) & CCS_ADJUSTABLE)
@@ -3195,7 +3197,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	btnPtr->fsState |= TBSTATE_PRESSED;
         btnPtr->bHot = FALSE;
 
-        RedrawWindow(hwnd,&btnPtr->rect,NULL,
+        RedrawWindow(hwnd,&btnPtr->rect,0,
                      RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
     }
 
@@ -3254,9 +3256,9 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    bSendMessage = FALSE;
 
 	if (nOldIndex != -1)
-            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,NULL,
+            RedrawWindow(hwnd,&infoPtr->buttons[nOldIndex].rect,0,
                          RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-        RedrawWindow(hwnd,&btnPtr->rect,NULL,
+        RedrawWindow(hwnd,&btnPtr->rect,0,
                      RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
 	if (bSendMessage) {
@@ -3387,7 +3389,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
             /* only enabled buttons show hot effect */            
             if(infoPtr->buttons[nHit].fsState & TBSTATE_ENABLED)
             {
-                RedrawWindow(hwnd,&btnPtr->rect,NULL,
+                RedrawWindow(hwnd,&btnPtr->rect,0,
                          RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
             }
 	}
@@ -3396,12 +3398,12 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	    if (infoPtr->nOldHit == infoPtr->nButtonDown) {
 		btnPtr->fsState &= ~TBSTATE_PRESSED;
-                RedrawWindow(hwnd,&btnPtr->rect,NULL,
+                RedrawWindow(hwnd,&btnPtr->rect,0,
                              RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 	    }
 	    else if (nHit == infoPtr->nButtonDown) {
 		btnPtr->fsState |= TBSTATE_PRESSED;
-                RedrawWindow(hwnd,&btnPtr->rect,NULL,
+                RedrawWindow(hwnd,&btnPtr->rect,0,
                              RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 	    }
 	}
