@@ -36,7 +36,6 @@
 #include "palette.h"
 #include "color.h"
 #include "region.h"
-#include "struct32.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(graphics);

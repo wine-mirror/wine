@@ -15,7 +15,6 @@ C_SRCS = \
 	kernel32.c \
 	newfns.c \
 	process.c \
-	struct32.c \
 	time.c
 
 all: $(MODULE).o
