@@ -115,6 +115,7 @@ extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 
 /* int31.c */
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
+extern BOOL WINAPI DOSVM_IsDos32();
 
 /* int33.c */
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);

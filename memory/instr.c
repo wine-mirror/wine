@@ -25,6 +25,7 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "wine/debug.h"
+#include "callback.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 WINE_DECLARE_DEBUG_CHANNEL(io);
@@ -684,34 +685,14 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
             break;  /* Unable to emulate it */
 
         case 0xcd: /* int <XX> */
-            if (long_op)
-            {
-                FARPROC48 addr = INT_GetPMHandler48( instr[1] );
-                DWORD *stack = get_stack( context );
-                /* Push the flags and return address on the stack */
-                *(--stack) = context->EFlags;
-                *(--stack) = context->SegCs;
-                *(--stack) = context->Eip + prefixlen + 2;
-                add_stack(context, -3 * sizeof(DWORD));
-                /* Jump to the interrupt handler */
-                context->SegCs  = addr.selector;
-                context->Eip = addr.offset;
+           if(!Dosvm.EmulateInterruptPM && !DPMI_LoadDosSystem())
+               ERR("could not initialize interrupt handling\n");
+           else {
+               context->Eip += prefixlen + 2;
+               Dosvm.EmulateInterruptPM( context, instr[1] );
                return TRUE;
-            }
-            else
-            {
-                FARPROC16 addr = INT_GetPMHandler( instr[1] );
-                WORD *stack = get_stack( context );
-                /* Push the flags and return address on the stack */
-                *(--stack) = LOWORD(context->EFlags);
-                *(--stack) = context->SegCs;
-                *(--stack) = LOWORD(context->Eip) + prefixlen + 2;
-                add_stack(context, -3 * sizeof(WORD));
-                /* Jump to the interrupt handler */
-                context->SegCs  = HIWORD(addr);
-                context->Eip = LOWORD(addr);
-            }
-            return TRUE;
+           }
+           break;  /* Unable to emulate it */
 
         case 0xcf: /* iret */
             if (long_op)

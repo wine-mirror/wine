@@ -65,6 +65,17 @@ static RMCB *FirstRMCB = NULL;
 static WORD dpmi_flag;
 
 /**********************************************************************
+ *          DOSVM_IsDos32
+ * 
+ * Return TRUE if we are in 32-bit protected mode DOS process.
+ */
+BOOL DOSVM_IsDos32()
+{
+  return (dpmi_flag & 1) ? TRUE : FALSE;
+}
+
+
+/**********************************************************************
  *	    INT_GetRealModeContext
  */
 static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT86 *context )

@@ -1,6 +1,7 @@
 init DOSVM_Init
 
 @ stdcall LoadDosExe(str long) MZ_LoadImage
+@ stdcall EmulateInterruptPM(ptr long) DOSVM_EmulateInterruptPM
 
 # DPMI functions
 @ stdcall CallRMInt(ptr) DOSVM_CallRMInt

@@ -198,6 +198,7 @@ static BOOL MZ_InitMemory(void)
     /* initialize the memory */
     TRACE("Initializing DOS memory structures\n");
     DOSMEM_Init(TRUE);
+    DOSDEV_InstallDOSDevices();
 
     MZ_InitHandlers();
     return TRUE;

@@ -270,8 +270,9 @@ extern char IO_pp_init(void);
 #define PTR_REAL_TO_LIN(seg,off) \
    ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 
-/* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and
- *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer
+/* NOTE: Interrupts might get called from four modes: real mode, 16-bit, 
+ *       32-bit segmented (DPMI32) and 32-bit linear (via DeviceIoControl).
+ *       For automatic conversion of pointer
  *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
  *       the contents of a segment register as second and the contents of
  *       a *32-bit* general register as third parameter, e.g.
@@ -279,15 +280,21 @@ extern char IO_pp_init(void);
  *       This will generate a linear pointer in all three cases:
  *         Real-Mode:   Seg*16 + LOWORD(Offset)
  *         16-bit:      convert (Seg, LOWORD(Offset)) to linear
- *         32-bit:      use Offset as linear address (DeviceIoControl!)
+ *         32-bit segmented: convert (Seg, Offset) to linear
+ *         32-bit linear:    use Offset as linear address (DeviceIoControl!)
  *
  *       Real-mode is recognized by checking the V86 bit in the flags register,
- *       32-bit mode is recognized by checking whether 'seg' is a system selector
- *       (0 counts also as 32-bit segment).
+ *       32-bit linear mode is recognized by checking whether 'seg' is 
+ *       a system selector (0 counts also as 32-bit segment) and 32-bit 
+ *       segmented mode is recognized by checking whether 'seg' is 32-bit
+ *       selector which is neither system selector nor zero.
  */
 #define CTX_SEG_OFF_TO_LIN(context,seg,off) \
     (ISV86(context) ? PTR_REAL_TO_LIN((seg),(off)) : \
-     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(ULONG_PTR)(off) : MapSL(MAKESEGPTR((seg),(off))))
+     (!seg || IS_SELECTOR_SYSTEM(seg))? (void *)(ULONG_PTR)(off) : \
+      (IS_SELECTOR_32BIT(seg) ? \
+       (void *)((off) + (char*)MapSL(MAKESEGPTR((seg),0))) : \
+       MapSL(MAKESEGPTR((seg),(off)))))
 
 #define INT_BARF(context,num) \
     ERR( "int%x: unknown/not implemented parameters:\n" \

@@ -696,10 +696,6 @@ BOOL WINAPI DOSVM_Init( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved 
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
-        /* initialize the memory */
-        TRACE("Initializing DOS memory structures\n");
-        DOSMEM_Init( TRUE );
-        DOSDEV_InstallDOSDevices();
         DOSVM_dpmi_segments = DOSMEM_GetDPMISegments();
 
 #ifdef MZ_SUPPORTED

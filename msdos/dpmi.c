@@ -74,6 +74,7 @@ BOOL DPMI_LoadDosSystem(void)
     GET_ADDR(inport);
     GET_ADDR(outport);
     GET_ADDR(ASPIHandler);
+    GET_ADDR(EmulateInterruptPM);
 #undef GET_ADDR
     return TRUE;
 }

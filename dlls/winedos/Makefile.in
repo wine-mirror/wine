@@ -25,6 +25,7 @@ C_SRCS = \
 	int31.c \
 	int33.c \
 	int67.c \
+	interrupts.c \
 	ioports.c \
 	module.c \
 	soundblaster.c \
