@@ -4,7 +4,7 @@
  *
  * Copyright 	1994 Martin Ayotte
  *		1999 Eric Pouech
- *             2000 Francois Jacques
+ *              2000 Francois Jacques
  */
 
 #include "winerror.h"
@@ -13,6 +13,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
+#include "digitalv.h"
 #include "heap.h"
 #include "debugtools.h"
 
@@ -23,20 +24,19 @@ typedef struct {
     HANDLE			hWave;
     int				nUseCount;	/* Incremented for each shared open */
     BOOL			fShareable;	/* TRUE if first open was shareable */
-    WORD			wNotifyDeviceID;/* MCI device ID with a pending notification */
     HMMIO			hFile;		/* mmio file handle open as Element */
     MCI_WAVE_OPEN_PARMSA 	openParms;
     LPWAVEFORMATEX		lpWaveFormat;
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
     volatile WORD		dwStatus;	/* one from MCI_MODE_xxxx */
     DWORD			dwMciTimeFormat;/* One of the supported MCI_FORMAT_xxxx */
-    DWORD                      dwRemaining;    /* remaining bytes to play or record */
+    DWORD                      	dwRemaining;    /* remaining bytes to play or record */
     DWORD			dwPosition;	/* position in bytes in chunk */
     HANDLE			hEvent;		/* for synchronization */
     DWORD			dwEventCount;	/* for synchronization */
-    BOOL                       bTemporaryFile; /* temporary file (MCI_RECORD) */
-    MMCKINFO                   ckMainRIFF;     /* main RIFF chunk */
-    MMCKINFO                   ckWaveData;     /* data chunk */
+    BOOL                       	bTemporaryFile; /* temporary file (MCI_RECORD) */
+    MMCKINFO                   	ckMainRIFF;     /* main RIFF chunk */
+    MMCKINFO                   	ckWaveData;     /* data chunk */
 } WINE_MCIWAVE;
 
 /* ===================================================================
@@ -330,7 +330,6 @@ err:
 static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpOpenParms)
 {
     DWORD		dwRet = 0;
-    DWORD		dwDeviceID;
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
     CHAR*               pszTmpFileName = 0;
     
@@ -350,13 +349,11 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 
     wmw->nUseCount++;
     
-    dwDeviceID = lpOpenParms->wDeviceID;
-    
     wmw->fInput = FALSE;
     wmw->hWave = 0;
     wmw->dwStatus = MCI_MODE_NOT_READY;	
 
-    TRACE("wDevID=%04X (lpParams->wDeviceID=%08lX)\n", wDevID, dwDeviceID);
+    TRACE("wDevID=%04X (lpParams->wDeviceID=%08X)\n", wDevID, lpOpenParms->wDeviceID);
     
     if (dwFlags & MCI_OPEN_ELEMENT) {
 	if (dwFlags & MCI_OPEN_ELEMENT_ID) {
@@ -457,8 +454,6 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 	    /* Additional openParms is temporary file's name */
 	    wmw->openParms.lpstrElementName = pszTmpFileName;
     }
-    
-    wmw->wNotifyDeviceID = dwDeviceID;
     
     if (dwRet == 0) {
 	if (wmw->lpWaveFormat) {
@@ -568,7 +563,7 @@ static DWORD WAVE_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
     
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     
     return dwRet;
@@ -614,7 +609,7 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 
     if ((dwFlags & MCI_NOTIFY) && lpParms) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID,
+			wmw->openParms.wDeviceID,
 			(dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
     }
 
@@ -705,7 +700,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     wmw->dwStatus = MCI_MODE_PLAY;
     
     if (!(dwFlags & MCI_WAIT)) {
-	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, MCI_PLAY, dwFlags, 
+	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_PLAY, dwFlags, 
 				    (DWORD)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
@@ -841,7 +836,7 @@ cleanUp:
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID, 
+			wmw->openParms.wDeviceID, 
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -941,7 +936,7 @@ static DWORD WAVE_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     wmw->dwStatus = MCI_MODE_RECORD;
     
     if (!(dwFlags & MCI_WAIT)) { 
-	return MCI_SendCommandAsync(wmw->wNotifyDeviceID, MCI_RECORD, dwFlags, 
+	return MCI_SendCommandAsync(wmw->openParms.wDeviceID, MCI_RECORD, dwFlags, 
 				    (DWORD)lpParms, sizeof(MCI_RECORD_PARMS));
     }
 
@@ -1048,7 +1043,7 @@ cleanUp:
 
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID, 
+			wmw->openParms.wDeviceID, 
 			dwRet ? MCI_NOTIFY_FAILURE : MCI_NOTIFY_SUCCESSFUL);
     }
 
@@ -1134,7 +1129,7 @@ static DWORD WAVE_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	
 	if (dwFlags & MCI_NOTIFY) {
 	    mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			    wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			    wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
 	}
     }
     return ret;	
@@ -1255,8 +1250,7 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
 	if (ret == ERROR_SUCCESS) wparam = MCI_NOTIFY_SUCCESSFUL;
 
     	mciDriverNotify( (HWND) LOWORD(lpParms->dwCallback), 
-		wmw->wNotifyDeviceID, 
-		wparam);
+			 wmw->openParms.wDeviceID, wparam);
     }
 
     return ret;
@@ -1403,7 +1397,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
     }
     if (dwFlags & MCI_NOTIFY) {
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			wmw->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			wmw->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return ret;
 }
@@ -1580,6 +1574,9 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_WINDOW:
 	TRACE("Unsupported command [%lu]\n", wMsg);
 	break;
+	/* option which can be silenced */
+    case MCI_CONFIGURE:
+	return 0;
     case MCI_OPEN:
     case MCI_CLOSE:
 	ERR("Shouldn't receive a MCI_OPEN or CLOSE message\n");
