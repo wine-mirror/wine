@@ -45,8 +45,8 @@
 #include <fcntl.h>
 
 //#define EMULATE_SB16
-#define FRAG_SIZE  1764
-#define FRAG_COUNT 1
+#define FRAG_SIZE  1024
+#define FRAG_COUNT 10
 
 /* avoid type conflicts */
 #define INT32 X_INT32
@@ -140,23 +140,21 @@ typedef struct {
     PCMWAVEFORMAT		format;
     WAVEOUTCAPSA		caps;
     int				Id;
-    int				open;
+
+    int                         open;
     AuServer                    *AuServ;
     AuDeviceID                  AuDev;
     AuFlowID                    AuFlow;
-    int				bps;
-    int                         sendBytes;
-    int				writeBytes;
-    int                         freeBytes;
-    int				maxBytes;
-    int				gettime;
-    struct timeval 		last_tv;
+    BOOL                        FlowStarted;
 
-    int				BufferUsed;
-    DWORD                       dwBufferSize;           /* size of whole buffer in bytes */
+    DWORD                       writeBytes;
+    DWORD                       freeBytes;
+    DWORD                       sendBytes;
 
-    char*			sound_buffer;
-    long			buffer_size;
+    DWORD                       BufferSize;           /* size of whole buffer in bytes */
+
+    char*                       SoundBuffer;
+    long                        BufferUsed;
 
     DWORD			volume_left;		/* volume control information */
     DWORD			volume_right;
@@ -167,14 +165,14 @@ typedef struct {
     LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
     DWORD			dwLoops;		/* private copy of loop counter */
 
-    DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
-    DWORD                       dwWrittenTotal;         /* number of bytes written to the audio device since opening */
+    DWORD			PlayedTotal;		/* number of bytes actually played since opening */
+    DWORD                       WrittenTotal;         /* number of bytes written to the audio device since opening */
 
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
     HANDLE			hThread;
     DWORD			dwThreadID;
-    MSG_RING		msgRing;
+    MSG_RING			msgRing;
 } WINE_WAVEOUT;
 
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
@@ -187,12 +185,13 @@ static AuBool event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd);
 static int nas_init(void);
 static int nas_end(void);
 
-static int nas_dev(WINE_WAVEOUT* wwo);
+static int nas_finddev(WINE_WAVEOUT* wwo);
 static int nas_open(WINE_WAVEOUT* wwo);
+static int nas_free(WINE_WAVEOUT* wwo);
 static int nas_close(WINE_WAVEOUT* wwo);
-int nas_getdelay(WINE_WAVEOUT* wwo);
 static void buffer_resize(WINE_WAVEOUT* wwo, int len);
-static int send_buffer(WINE_WAVEOUT* wwo);
+static int nas_add_buffer(WINE_WAVEOUT* wwo);
+static int nas_send_buffer(WINE_WAVEOUT* wwo);
 
 /* These strings used only for tracing */
 static const char *wodPlayerCmdString[] = {
@@ -328,14 +327,8 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
  */
 void		NAS_CloseDevice(WINE_WAVEOUT* wwo)
 {
-
   TRACE("NAS_CloseDevice\n");
   nas_close(wwo);
-/*
-  if(wwo->sound_buffer)
-    HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
-  wwo->buffer_size = 0;
-*/
 }
 
 /******************************************************************
@@ -549,12 +542,7 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
  */
 static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo)
 {
-    static int i = 0;
-    /* total played is the bytes written less the bytes to write ;-) */
-    if (wwo->sendBytes)
-       wwo->dwPlayedTotal = wwo->writeBytes;
-    else
-	wwo->dwPlayedTotal = i++;
+    wwo->PlayedTotal = wwo->WrittenTotal;
     return TRUE;
 }
 
@@ -620,31 +608,6 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
 }
 
 /**************************************************************************
- * 			     wodPlayer_WriteMaxFrags            [internal]
- * Writes the maximum number of bytes possible to the DSP and returns
- * the number of bytes written.
- */
-static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo)
-{
-    DWORD len = wwo->lpPlayPtr->dwBufferLength;
-
-    buffer_resize(wwo, len);
-    memcpy(wwo->sound_buffer + wwo->BufferUsed, wwo->lpPlayPtr->lpData, len);
-    wwo->BufferUsed += len;
-    wwo->dwWrittenTotal += len;
-
-//    if (wwo->BufferUsed < 8820 && wwo->writeBytes == 0)
-//       return len;
-
-    if (wwo->freeBytes)
-       send_buffer(wwo);
-
-    return len;
-
-}
-
-
-/**************************************************************************
  * 				wodPlayer_NotifyCompletions	[internal]
  *
  * Notifies and remove from queue all wavehdrs which have been played to
@@ -661,8 +624,10 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
      * - we hit the beginning of a running loop
      * - we hit a wavehdr which hasn't finished playing
      */
+    wodUpdatePlayedTotal(wwo);
+
     while ((lpWaveHdr = wwo->lpQueuePtr) && (force || (lpWaveHdr != wwo->lpPlayPtr &&
-            lpWaveHdr != wwo->lpLoopPtr && lpWaveHdr->reserved <= wwo->dwPlayedTotal))) {
+            lpWaveHdr != wwo->lpLoopPtr && lpWaveHdr->reserved <= wwo->PlayedTotal))) {
 
 	wwo->lpQueuePtr = lpWaveHdr->lpNext;
 
@@ -688,6 +653,8 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
     /* we aren't able to flush any data that has already been written */
     /* to nas, otherwise we would do the flushing here */
 
+    nas_free(wwo);
+
     if (reset) {
         enum win_wm_message     msg;
         DWORD                   param;
@@ -698,7 +665,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 
 	wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
 	wwo->state = WINE_WS_STOPPED;
-	wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+	wwo->PlayedTotal = wwo->WrittenTotal = 0;
 
         /* remove any existing message in the ring */
         EnterCriticalSection(&wwo->msgRing.msg_crst);
@@ -725,11 +692,11 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
             /* complicated case, not handled yet (could imply modifying the loop counter */
             FIXME("Pausing while in loop isn't correctly handled yet, except strange results\n");
             wwo->lpPlayPtr = wwo->lpLoopPtr;
-            wwo->dwWrittenTotal = wwo->dwPlayedTotal; /* this is wrong !!! */
+            wwo->WrittenTotal = wwo->PlayedTotal; /* this is wrong !!! */
         } else {
 	    /* the data already written is going to be played, so take */
 	    /* this fact into account here */
-	    wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+	    wwo->PlayedTotal = wwo->WrittenTotal;
         }
 	wwo->state = WINE_WS_PAUSED;
     }
@@ -801,56 +768,37 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
 }
 
 /**************************************************************************
- * 			     wodPlayer_FeedDSP			[internal]
- * Feed as much sound data as we can into the DSP and return the number of
- * milliseconds before it will be necessary to feed the DSP again.
- */
-static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
-{
-    wodUpdatePlayedTotal(wwo);
-
-    // Feed wavehdrs until we run out of wavehdrs or DSP space
- 	 while(wwo->lpPlayPtr) {
-	   TRACE("feeding waveheaders until we run out of space\n");
-	   wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-	   wodPlayer_WriteMaxFrags(wwo);
-           wodPlayer_PlayPtrNext(wwo);
-           wodUpdatePlayedTotal(wwo);
-	 }
-
-    return 1;
-}
-
-
-/**************************************************************************
  * 				wodPlayer			[internal]
  */
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
     WORD	  uDevID = (DWORD)pmt;
     WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
-    DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
-    DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
-    DWORD         dwSleepTime;
 
     wwo->state = WINE_WS_STOPPED;
     SetEvent(wwo->hStartUpEvent);
 
     for (;;) {
-        /** Wait for the shortest time before an action is required.  If there
-         *  are no pending actions, wait forever for a command.
-         */
-       dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
-        TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
-        AuHandleEvents(wwo->AuServ);
-        WaitForSingleObject(wwo->msgRing.msg_event, 1);
+
+        if (wwo->FlowStarted) {
+           AuHandleEvents(wwo->AuServ);
+
+           if (wwo->state == WINE_WS_PLAYING && wwo->freeBytes && wwo->BufferUsed)
+              nas_send_buffer(wwo);
+        }
+
+        if (wwo->BufferUsed <= FRAG_SIZE && wwo->writeBytes > 0)
+           wodPlayer_NotifyCompletions(wwo, FALSE);
+
+        WaitForSingleObject(wwo->msgRing.msg_event, 20);
         wodPlayer_ProcessMessages(wwo);
-	if (wwo->state == WINE_WS_PLAYING) {
-	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
-	    dwNextNotifyTime = wodPlayer_NotifyCompletions(wwo, FALSE);
-	} else {
-	    dwNextFeedTime = dwNextNotifyTime = INFINITE;
-	}
+
+        while(wwo->lpPlayPtr) {
+           wwo->lpPlayPtr->reserved = wwo->WrittenTotal + wwo->lpPlayPtr->dwBufferLength;
+           nas_add_buffer(wwo);
+           wodPlayer_PlayPtrNext(wwo);
+        }
+
     }
 }
 
@@ -951,7 +899,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("stream=0x%lx, dwBufferSize=%ld\n", (long)wwo->AuServ, wwo->dwBufferSize);
+    TRACE("stream=0x%lx, BufferSize=%ld\n", (long)wwo->AuServ, wwo->BufferSize);
 
     TRACE("wBitsPerSample=%u nAvgBytesPerSec=%lu nSamplesPerSec=%lu nChannels=%u nBlockAlign=%u\n",
 	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
@@ -977,10 +925,6 @@ static DWORD wodClose(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
 
-/*
-ret = WAVERR_STILLPLAYING;
-return ret;
-*/
     wwo = &WOutDev[wDevID];
     if (wwo->lpQueuePtr) {
 	WARN("buffers still playing !\n");
@@ -1162,14 +1106,14 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
 
     wwo = &WOutDev[wDevID];
-    NAS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
-    val = wwo->dwPlayedTotal;
+//    NAS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+    val = wwo->WrittenTotal;
 
     TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
 	  lpTime->wType, wwo->format.wBitsPerSample,
 	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
 	  wwo->format.wf.nAvgBytesPerSec);
-    TRACE("dwPlayedTotal=%lu\n", val);
+    TRACE("PlayedTotal=%lu\n", val);
 
     switch (lpTime->wType) {
     case TIME_BYTES:
@@ -1177,7 +1121,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
 	break;
     case TIME_SAMPLES:
-	lpTime->u.sample = val * 8 / wwo->format.wBitsPerSample /wwo->format.wf.nChannels;
+	lpTime->u.sample = val * 8 / wwo->format.wBitsPerSample / wwo->format.wf.nChannels;
 	TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
 	break;
     case TIME_SMPTE:
@@ -1325,7 +1269,7 @@ static int nas_init(void) {
     return 1;
 }
 
-static int nas_dev(WINE_WAVEOUT* wwo) {
+static int nas_finddev(WINE_WAVEOUT* wwo) {
    int i;
 
     for (i = 0; i < AuServerNumDevices(wwo->AuServ); i++) {
@@ -1345,57 +1289,45 @@ static int nas_dev(WINE_WAVEOUT* wwo) {
 
 static int nas_open(WINE_WAVEOUT* wwo) {
     AuElement elements[3];
-    AuEvent   ev;
-    AFormat   fmt;
 
     if (!wwo->AuServ)
        return 0;
 
-    if (!nas_dev(wwo))
+    if (!nas_finddev(wwo))
        return 0;
 
     if (!(wwo->AuFlow = AuCreateFlow(wwo->AuServ, NULL)))
        return 0;
 
-    wwo->dwBufferSize = (2500 * wwo->format.wf.nSamplesPerSec) / 1000;
-
-    fmt = wwo->format.wBitsPerSample == 16 ? AuFormatLinearSigned16LSB : AuFormatLinearUnsigned8;
-    wwo->bps = wwo->format.wf.nSamplesPerSec * wwo->format.wf.nChannels * AuSizeofFormat(fmt);
-
-    wwo->dwBufferSize = 4096;//8820;//FRAG_SIZE * FRAG_COUNT;
-
-    AuRegisterEventHandler(wwo->AuServ, AuEventHandlerIDMask, 0, wwo->AuFlow,
-                           event_handler, (AuPointer) wwo);
+    wwo->BufferSize = FRAG_SIZE * FRAG_COUNT;
 
     AuMakeElementImportClient(&elements[0], wwo->format.wf.nSamplesPerSec,
            wwo->format.wBitsPerSample == 16 ? AuFormatLinearSigned16LSB : AuFormatLinearUnsigned8,
-           wwo->format.wf.nChannels, AuTrue, wwo->dwBufferSize, wwo->dwBufferSize / 2, 0, NULL);
+           wwo->format.wf.nChannels, AuTrue, wwo->BufferSize, wwo->BufferSize / 2, 0, NULL);
 
     AuMakeElementExportDevice(&elements[1], 0, wwo->AuDev, wwo->format.wf.nSamplesPerSec,
                               AuUnlimitedSamples, 0, NULL);
 
     AuSetElements(wwo->AuServ, wwo->AuFlow, AuTrue, 2, elements, NULL);
 
+    AuRegisterEventHandler(wwo->AuServ, AuEventHandlerIDMask, 0, wwo->AuFlow,
+                           event_handler, (AuPointer) wwo);
 
-    wwo->dwPlayedTotal = 0;
-    wwo->dwWrittenTotal = 0;
 
-    wwo->dwPlayedTotal = 0;
-    wwo->dwWrittenTotal = 0;
+    wwo->PlayedTotal = 0;
+    wwo->WrittenTotal = 0;
     wwo->open = 1;
 
     wwo->BufferUsed = 0;
-    wwo->sendBytes = 0;
     wwo->writeBytes = 0;
-    wwo->freeBytes = -1;
-    wwo->gettime = 0;
-    wwo->sound_buffer = NULL;
-    gettimeofday(&wwo->last_tv, 0);
+    wwo->freeBytes = 0;
+    wwo->sendBytes = 0;
+    wwo->SoundBuffer = NULL;
+    wwo->FlowStarted = 0;
 
     AuStartFlow(wwo->AuServ, wwo->AuFlow, NULL);
-
-    AuNextEvent(wwo->AuServ, AuTrue, &ev);
-    AuDispatchEvent(wwo->AuServ, &ev);
+    AuPauseFlow(wwo->AuServ, wwo->AuFlow, NULL);
+    wwo->FlowStarted = 1;
 
     return 1;
 }
@@ -1410,39 +1342,35 @@ event_handler(AuServer* aud, AuEvent* ev, AuEventHandlerRec* hnd)
                 AuElementNotifyEvent* event = (AuElementNotifyEvent *)ev;
 
 
-        TRACE("event_handler: kind %s state %s->%s reason %s numbytes %ld freeB %d maxB %d\n",
-                        nas_elementnotify_kind(event->kind),
-                        nas_state(event->prev_state),
-                        nas_state(event->cur_state),
-                        nas_reason(event->reason),
-                        event->num_bytes, wwo->freeBytes, wwo->maxBytes);
-
-
                 switch (event->kind) {
-                case AuElementNotifyKindLowWater:
-                        if (wwo->freeBytes >= 0) {
+                   case AuElementNotifyKindLowWater:
+                     wwo->freeBytes += event->num_bytes;
+                     if (wwo->writeBytes > 0)
+                        wwo->sendBytes += event->num_bytes;
+                    if (wwo->freeBytes && wwo->BufferUsed)
+                        nas_send_buffer(wwo);
+                   break;
+
+                   case AuElementNotifyKindState:
+                     TRACE("ev: kind %s state %s->%s reason %s numbytes %ld freeB %lu\n",
+                                     nas_elementnotify_kind(event->kind),
+                                     nas_state(event->prev_state),
+                                     nas_state(event->cur_state),
+                                     nas_reason(event->reason),
+                                     event->num_bytes, wwo->freeBytes);
+
+                     if (event->cur_state ==  AuStatePause && event->reason != AuReasonUser) {
+                        wwo->freeBytes += event->num_bytes;
+                        if (wwo->writeBytes > 0)
                            wwo->sendBytes += event->num_bytes;
-                           wwo->freeBytes += event->num_bytes;
-                           send_buffer(wwo);
-                        } else {
-                           wwo->freeBytes = event->num_bytes;
-			   wwo->maxBytes = event->num_bytes;
-                        }
-                        break;
-                case AuElementNotifyKindState:
-                        if (event->cur_state ==  AuStatePause && event->reason != AuReasonUser) {
-                           if (wwo->freeBytes >= 0) {
-                              wwo->sendBytes += event->num_bytes;
-                              wwo->freeBytes += event->num_bytes;
-			      send_buffer(wwo);
-                           } else {
-                              wwo->freeBytes = event->num_bytes;
-			      wwo->maxBytes = event->num_bytes;
-                           }
-                        }
-                        break;
+                        if (wwo->sendBytes > wwo->writeBytes)
+                           wwo->sendBytes = wwo->writeBytes;
+                       if (wwo->freeBytes && wwo->BufferUsed)
+                           nas_send_buffer(wwo);
+                     }
+                   break;
                 }
-        }
+           }
         }
         return AuTrue;
 }
@@ -1451,109 +1379,108 @@ static void
 buffer_resize(WINE_WAVEOUT* wwo, int len)
 {
         void *newbuf = malloc(wwo->BufferUsed + len);
-        void *oldbuf = wwo->sound_buffer;
+        void *oldbuf = wwo->SoundBuffer;
         memcpy(newbuf, oldbuf, wwo->BufferUsed);
-        wwo->sound_buffer = newbuf;
+        wwo->SoundBuffer = newbuf;
         if (oldbuf != NULL)
            free(oldbuf);
 }
 
-static int send_buffer(WINE_WAVEOUT* wwo) {
-  int len;
+static int nas_add_buffer(WINE_WAVEOUT* wwo) {
+    int len = wwo->lpPlayPtr->dwBufferLength;
+
+    buffer_resize(wwo, len);
+    memcpy(wwo->SoundBuffer + wwo->BufferUsed, wwo->lpPlayPtr->lpData, len);
+    wwo->BufferUsed += len;
+    wwo->WrittenTotal += len;
+    return len;
+}
+
+static int nas_send_buffer(WINE_WAVEOUT* wwo) {
+  int oldb , len;
   char *ptr, *newdata;
   newdata = NULL;
+  oldb = len = 0;
 
-  if (!wwo->freeBytes)
+  if (wwo->freeBytes <= 0)
      return 0;
 
-  if (wwo->sound_buffer == NULL || wwo->BufferUsed == 0)
+  if (wwo->SoundBuffer == NULL || wwo->BufferUsed == 0) {
      return 0;
+  }
 
   if (wwo->BufferUsed <= wwo->freeBytes) {
      len = wwo->BufferUsed;
-     ptr = wwo->sound_buffer;
+     ptr = wwo->SoundBuffer;
   } else {
      len = wwo->freeBytes;
      ptr = malloc(len);
-     memcpy(ptr,wwo->sound_buffer,len);
+     memcpy(ptr,wwo->SoundBuffer,len);
      newdata = malloc(wwo->BufferUsed - len);
-     memcpy(newdata, wwo->sound_buffer + len, wwo->BufferUsed - len);
+     memcpy(newdata, wwo->SoundBuffer + len, wwo->BufferUsed - len);
   }
 
-TRACE("envoye de %d bytes / %d bytes\n", len, wwo->BufferUsed);
-
- wwo->BufferUsed -= len;
+ TRACE("envoye de %d bytes / %lu bytes / freeBytes %lu\n", len, wwo->BufferUsed, wwo->freeBytes);
 
  AuWriteElement(wwo->AuServ, wwo->AuFlow, 0, len, ptr, AuFalse, NULL);
 
- gettimeofday(&wwo->last_tv,0);
+ wwo->BufferUsed -= len;
  wwo->freeBytes -= len;
  wwo->writeBytes += len;
 
- if (wwo->sound_buffer != NULL)
-    free(wwo->sound_buffer);
+ free(ptr);
 
- wwo->sound_buffer = NULL;
+ wwo->SoundBuffer = NULL;
 
  if (newdata != NULL)
-    wwo->sound_buffer = newdata;
+    wwo->SoundBuffer = newdata;
 
  return len;
 }
 
+static int nas_free(WINE_WAVEOUT* wwo)
+{
+
+  if (!wwo->FlowStarted && wwo->BufferUsed) {
+     AuStartFlow(wwo->AuServ, wwo->AuFlow, NULL);
+     wwo->FlowStarted = 1;
+  }
+
+  while (wwo->BufferUsed || wwo->writeBytes != wwo->sendBytes) {
+    if (wwo->freeBytes)
+       nas_send_buffer(wwo);
+    AuHandleEvents(wwo->AuServ);
+  }
+
+  AuFlush(wwo->AuServ);
+  return TRUE;
+}
+
 static int nas_close(WINE_WAVEOUT* wwo)
 {
-    AuEvent ev;
-    AuFlush(wwo->AuServ);
+  AuEvent ev;
 
-    if (wwo->writeBytes > 0) {
-       while (wwo->sendBytes != wwo->writeBytes) {
-         AuNextEvent(wwo->AuServ, AuTrue, &ev);
-         AuDispatchEvent(wwo->AuServ, &ev);
-	 send_buffer(wwo);
-       }
-    }
+  nas_free(wwo);
 
-    AuStopFlow(wwo->AuServ, wwo->AuFlow, NULL);
-    AuDestroyFlow(wwo->AuServ, wwo->AuFlow, NULL);
+  AuStopFlow(wwo->AuServ, wwo->AuFlow, NULL);
+  AuDestroyFlow(wwo->AuServ, wwo->AuFlow, NULL);
+  AuFlush(wwo->AuServ);
+  AuNextEvent(wwo->AuServ, AuTrue, &ev);
+  AuDispatchEvent(wwo->AuServ, &ev);
 
-    AuNextEvent(wwo->AuServ, AuTrue, &ev);
-    AuDispatchEvent(wwo->AuServ, &ev);
-
-    wwo->AuFlow = 0;
-    wwo->open = 0;
-    return 1;
+  wwo->AuFlow = 0;
+  wwo->open = 0;
+  wwo->BufferUsed = 0;
+  wwo->freeBytes = 0;
+  wwo->SoundBuffer = NULL;
+  return 1;
 }
 
 static int nas_end(void)
 {
-        AuCloseServer(AuServ);
-        AuServ = 0;
-        return 1;
-}
-
-int
-nas_getdelay(WINE_WAVEOUT* wwo)
-{
-        static struct timeval now_tv;
-        static int temp, temp2;
-        int retval = 0;
-
-        gettimeofday(&now_tv, 0);
-        temp = now_tv.tv_sec - wwo->last_tv.tv_sec;
-        temp *= 44100;
-
-        temp2 = now_tv.tv_usec - wwo->last_tv.tv_usec;
-        temp2 /= 1000;
-        temp2 *= 44100;
-        temp2 /= 1000;
-        temp += temp2;
-
-        retval = temp - 32768;
-
-        if (retval < 0) retval = 0;
-
-        return (retval);
+  AuCloseServer(AuServ);
+  AuServ = 0;
+  return 1;
 }
 
 #else /* !HAVE_NAS */
