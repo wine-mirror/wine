@@ -1173,16 +1173,15 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
         /* FIXME - justification needs doing yet.  Remember that the base
          * data will not be in logical coordinates.
          */
-	if( !lpnFit || extent+tSize.cx <= maxExt )
+	extent += tSize.cx;
+	if( !lpnFit || extent <= maxExt )
         /* It is allowed to be equal. */
         {
-	    extent+=tSize.cx;
 	    nFit++;
-	    str++;
 	    if( alpDx ) alpDx[index] = extent;
-	    if( tSize.cy > size->cy ) size->cy = tSize.cy;
         }
-        else break;
+	if( tSize.cy > size->cy ) size->cy = tSize.cy;
+	str++;
     }
     size->cx = extent;
     if(lpnFit) *lpnFit = nFit;
