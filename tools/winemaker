@@ -560,7 +560,7 @@ sub source_scan_directory($$$$)
     } elsif (-f "$fullentry") {
       if ($dentry =~ /\.(exe|dll)$/i) {
 	$targets{$dentry}=1;
-      } elsif ($dentry =~ /\.c$/i and $dentry !~ /\.spec\.c$/) {
+      } elsif ($dentry =~ /\.c$/i and $dentry !~ /\.(dbg|spec)\.c$/) {
 	push @sources_c,"$dentry";
       } elsif ($dentry =~ /\.(cpp|cxx)$/i) {
 	if ($dentry =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
@@ -1893,15 +1893,16 @@ sub generate_project_files($)
     print FILEO "\t_list=\"\$(EXES:%=%.so) \$(DLLS:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(dlldir)/\$\$i;done\n";
   }
   print FILEO "\n";
-  print FILEO "clean::\n";
-  print FILEO "\t\$(RM)";
   if (@$project[$P_PATH] eq "") {
-      print FILEO " wineapploader";
+      print FILEO "clean::\n";
+      print FILEO "\t\$(RM) wineapploader\n";
+      print FILEO "\n";
+      print FILEO "distclean: clean\n";
+      print FILEO "\t\$(RM) config.* configure.lineno Make.rules\n";
+      print FILEO "\t\$(RM) -r autom4te.cache\n";
+      print FILEO "\tfind . -name Makefile -exec \$(RM) {} \\;\n";
+      print FILEO "\n";
   }
-  if (@{@$project[$P_TARGETS]} > 0) {
-      print FILEO " \$(EXES:%.exe=%)";
-  }
-  print FILEO "\n\n";
 
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "### Target specific build rules\n\n";
@@ -1926,16 +1927,19 @@ sub generate_project_files($)
         $all_libs="\$(${canon}_LIBRARIES:%=-l%) \$(ALL_LIBRARIES)";
       }
 
+      print FILEO "\$(${canon}_MODULE).dbg.c: \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
+      print FILEO "\t\$(LDPATH) \$(WINEBUILD) -o \$\@ --debug -C\$(SRCDIR) \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
+      print FILEO "\n";
       print FILEO "\$(${canon}_MODULE).spec.c: \$(${canon}_SPEC_SRCS) \$(${canon}_RC_SRCS:.rc=.res) \$(${canon}_OBJS)\n";
       print FILEO "\t\$(LDPATH) \$(WINEBUILD) -fPIC -o \$\@ $mode \$(${canon}_SPEC_SRCS:%=--spec %) \$(${canon}_RC_SRCS:%.rc=%.res) \$(${canon}_OBJS) \$(${canon}_DLL_PATH) \$(WINE_DLL_PATH) \$(GLOBAL_DLL_PATH) $all_dlls\n";
       print FILEO "\n";
-      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_MODULE).spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS)\n";
+      print FILEO "\$(${canon}_MODULE).so: \$(${canon}_MODULE).dbg.o \$(${canon}_MODULE).spec.o \$(${canon}_OBJS) \$(${canon}_DEPENDS)\n";
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(LDXXSHARED)";
       } else {
         print FILEO "\t\$(LDSHARED)";
       }
-      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).spec.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
+      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_MODULE).spec.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
       if (@$target[$T_TYPE] != $TT_DLL) {
         print FILEO "\ttest -f \$(${canon}_BASEMODULE) || \$(INSTALL_SCRIPT) wineapploader \$(${canon}_BASEMODULE)\n";
       }
@@ -2338,8 +2342,8 @@ dnl **** Check for gcc strength-reduce bug ****
 
 if test "x${GCC}" = "xyes"
 then
-  AC_CACHE_CHECK( "for gcc strength-reduce bug", ac_cv_c_gcc_strength_bug,
-                  AC_TRY_RUN([
+  AC_CACHE_CHECK([for gcc strength-reduce bug], ac_cv_c_gcc_strength_bug,
+                 AC_TRY_RUN([
 int main(void) {
   static int Array[[3]];
   unsigned int B = 3;
@@ -2361,7 +2365,7 @@ dnl **** Check for working dll ****
 LDSHARED=""
 LDXXSHARED=""
 LDDLLFLAGS=""
-AC_CACHE_CHECK("whether we can build a Linux dll",
+AC_CACHE_CHECK([whether we can build a Linux dll],
                ac_cv_c_dll_linux,
 [saved_cflags=$CFLAGS
 CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
@@ -2374,7 +2378,7 @@ then
   LDXXSHARED="\$(CXX) -shared"
   LDDLLFLAGS="-Wl,-Bsymbolic"
 else
-  AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
+  AC_CACHE_CHECK([whether we can build a UnixWare (Solaris) dll],
                 ac_cv_c_dll_unixware,
   [saved_cflags=$CFLAGS
   CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
@@ -2387,7 +2391,7 @@ else
     LDXXSHARED="\$(CXX) -Wl,-G"
     LDDLLFLAGS="-Wl,-B,symbolic"
   else
-    AC_CACHE_CHECK("whether we can build a NetBSD dll",
+    AC_CACHE_CHECK([whether we can build a NetBSD dll],
                    ac_cv_c_dll_netbsd,
     [saved_cflags=$CFLAGS
     CFLAGS="$CFLAGS -fPIC -Wl,-Bshareable,-Bforcearchive"
@@ -2415,7 +2419,7 @@ AC_SUBST(LDDLLFLAGS)
 
 dnl *** check for the need to define __i386__
 
-AC_CACHE_CHECK("whether we need to define __i386__",ac_cv_cpp_def_i386,
+AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
  AC_EGREP_CPP(yes,[#if (defined(i386) || defined(__i386)) && !defined(__i386__)
 yes
 #endif],
@@ -2427,7 +2431,7 @@ fi
 
 dnl *** check for the need to define __sparc__
 
-AC_CACHE_CHECK("whether we need to define __sparc__",ac_cv_cpp_def_sparc,
+AC_CACHE_CHECK([whether we need to define __sparc__],ac_cv_cpp_def_sparc,
  AC_EGREP_CPP(yes,[#if (defined(sparc) || defined(__sparc)) && !defined(__sparc__)
 yes
 #endif],
@@ -2440,7 +2444,7 @@ fi
 
 dnl *** check for the need to define __sun__
 
-AC_CACHE_CHECK("whether we need to define __sun__",ac_cv_cpp_def_sun,
+AC_CACHE_CHECK([whether we need to define __sun__],ac_cv_cpp_def_sun,
  AC_EGREP_CPP(yes,[#if (defined(sun) || defined(__sun)) && !defined(__sun__)
 yes
 #endif],
@@ -2457,7 +2461,7 @@ if test "x${GCC}" = "xyes"
 then
   OLDCXXFLAGS="$CXXFLAGS";
   CXXFLAGS="-fpermissive";
-  AC_CACHE_CHECK("for g++ -fpermissive option", has_gxx_permissive,
+  AC_CACHE_CHECK([for g++ -fpermissive option], has_gxx_permissive,
     AC_TRY_COMPILE(,[
         for (int i=0;i<2;i++);
         i=0;
@@ -2466,7 +2470,7 @@ then
       [has_gxx_permissive="no"])
    )
   CXXFLAGS="-fno-for-scope";
-  AC_CACHE_CHECK("for g++ -fno-for-scope option", has_gxx_no_for_scope,
+  AC_CACHE_CHECK([for g++ -fno-for-scope option], has_gxx_no_for_scope,
     AC_TRY_COMPILE(,[
         for (int i=0;i<2;i++);
         i=0;
@@ -2631,11 +2635,9 @@ fi])
 if test -n "$WINE_ROOT"
 then
   WINE_INCLUDE_ROOT="$WINE_ROOT/include:$WINE_ROOT/include/wine:$WINE_ROOT/include/wine/windows:$WINE_ROOT/include/windows"
-  WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/library"
-  WINE_UNICODE_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/unicode"
-  WINE_UUID_ROOT="$WINE_ROOT:$WINE_ROOT/lib:$WINE_ROOT/ole"
+  WINE_LIBRARY_ROOT="$WINE_ROOT:$WINE_ROOT/libs:$WINE_ROOT/lib"
+  WINE_DLL_ROOT="$WINE_ROOT/dlls:$WINE_ROOT/lib:$WINE_ROOT/lib/wine"
   WINE_TOOL_PATH="$WINE_ROOT:$WINE_ROOT/bin:$WINE_ROOT/tools/wrc:$WINE_ROOT/tools/winebuild"
-  WINE_DLL_ROOT="$WINE_ROOT/dlls:$WINE_ROOT/lib"
 fi
 
 AC_ARG_WITH(wine-includes,
@@ -2660,8 +2662,6 @@ fi])
 if test -n "$WINE_LIBRARIES"
 then
   WINE_LIBRARY_ROOT="$WINE_LIBRARIES"
-  WINE_UNICODE_ROOT="$WINE_LIBRARIES:$WINE_LIBRARIES/unicode:$WINE_LIBRARIES/../unicode"
-  WINE_UUID_ROOT="$WINE_LIBRARIES:$WINE_LIBRARIES/ole:$WINE_LIBRARIES/../ole"
 fi
 
 AC_ARG_WITH(wine-dlls,
@@ -2725,46 +2725,23 @@ else
   WINE_LIBRARY_PATH=""
 fi
 
-if test -z "$WINE_UNICODE_ROOT"
-then
-  WINE_UNICODE_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
-else
-  AC_PATH_FILE(WINE_UNICODE_ROOT,[libwine_unicode.so],[
-    AC_MSG_ERROR([Could not find the Wine libraries (libwine_unicode.so)])
-  ],$WINE_UNICODE_ROOT)
-fi
-AC_PATH_LIBRARY(WINE_UNICODE_ROOT,[-lwine_unicode],[$WINE_LIBRARY_PATH -lwine],[
-  AC_MSG_ERROR([Could not link with the Wine libraries (libwine_unicode.so)])
-],[$WINE_UNICODE_ROOT])
+save_LIBS="$LIBS"
+LIBS="$WINE_LIBRARY_PATH $LIBS"
 
-if test -n "$WINE_UNICODE_ROOT" -a "$WINE_UNICODE_ROOT" != "$WINE_LIBRARY_ROOT"
-then
-  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UNICODE_ROOT"
-  LDPATH="$LDPATH:$WINE_UNICODE_ROOT"
-fi
+AC_CHECK_LIB(wine_unicode,wine_cp_wcstombs,[],[
+    AC_MSG_ERROR([Could not find the Wine dlls (libwine_unicode.so)])
+])
+AC_CHECK_LIB(wine_uuid,IID_IUnknown,[],[
+    AC_MSG_ERROR([Could not find the Wine dlls (libwine_uuid.so)])
+])
 
-if test -z "$WINE_UUID_ROOT"
-then
-  WINE_UUID_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
-else
-  AC_PATH_FILE(WINE_UUID_ROOT,[libwine_uuid.a],[
-    AC_MSG_ERROR([Could not find the Wine libraries (libwine_uuid.a)])
-  ],$WINE_UUID_ROOT)
-fi
-AC_PATH_LIBRARY(WINE_UUID_ROOT,[-lwine_uuid],[$WINE_LIBRARY_PATH -lwine],[
-  AC_MSG_ERROR([Could not link with the Wine libraries (libwine_uuid.a)])
-],[$WINE_UUID_ROOT])
-
-if test -n "$WINE_UUID_ROOT" -a "$WINE_UUID_ROOT" != "$WINE_LIBRARY_ROOT"
-then
-  WINE_LIBRARY_PATH="$WINE_LIBRARY_PATH -L$WINE_UUID_ROOT"
-fi
+LIBS="$save_LIBS"
 
 if test -z "$WINE_DLL_ROOT"
 then
   if test -n "$WINE_LIBRARY_ROOT"
   then
-    WINE_DLL_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls"
+    WINE_DLL_ROOT="$WINE_LIBRARY_ROOT:$WINE_LIBRARY_ROOT/dlls:$WINE_LIBRARY_ROOT/wine"
   else
     WINE_DLL_ROOT="/lib:/lib/wine:/usr/lib:/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine"
   fi
@@ -3052,10 +3029,9 @@ conf_manext     = 5
 
 OBJS            = $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o) \
                   $(SPEC_SRCS:.spec=.spec.o)
-CLEAN_FILES     = *.spec.c y.tab.c y.tab.h lex.yy.c \
+CLEAN_FILES     = *.dbg.c *.spec.c y.tab.c y.tab.h lex.yy.c \
                   core *.orig *.rej \
                   \\\#*\\\# *~ *% .\\\#*
-DISTCLEAN_FILES = config.* Makefile Make.rules
 
 # Implicit rules
 
@@ -3094,12 +3070,9 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(EXES:%.exe=%) $(EXES:%=%.so) $(EXES:%=%.spec.o) $(DLLS:%=%.so) $(DLLS:%=%.spec.o)
-
-# Rule for distcleaning
-
-distclean: clean
-	$(RM) $(DISTCLEAN_FILES)
+	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS)
+	$(RM) $(DLLS:%=%.dbg.o) $(DLLS:%=%.spec.o) $(DLLS:%=%.so)
+	$(RM) $(EXES:%=%.dbg.o) $(EXES:%=%.spec.o) $(EXES:%=%.so) $(EXES:%.exe=%)
 
 # Rules for installing
 
@@ -3229,35 +3202,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 int WINAPI main(int argc, char** argv, char** envp)
 #endif
 {
-    /*void* appLibrary;*/
     HINSTANCE hApp = 0, hMFC = 0, hMain = 0;
     void* appMain;
-    /*char* libName;*/
     int retcode;
-
-    /* Load the application's library */
-    /*libName=(char*)malloc(2+strlen(appName)+3+1);*/
-    /* FIXME: we should get the wrapper's path and use that as the base for
-     * the library
-     */
-    /*sprintf(libName,"./%s.so",appName);*/
-    /*appLibrary=dlopen(libName,RTLD_NOW);*/
-    /*if (appLibrary==NULL) {*/
-        /*sprintf(libName,"%s.so",appName);*/
-        /*appLibrary=dlopen(libName,RTLD_NOW);*/
-    /*}*/
-    /*if (appLibrary==NULL) {*/
-        /*char format[]="Could not load the %s library:\r\n%s";*/
-        /*char* error;*/
-        /*char* msg;*/
-
-        /*error=dlerror();*/
-        /*msg=(char*)malloc(strlen(format)+strlen(libName)+strlen(error));*/
-        /*sprintf(msg,format,libName,error);*/
-        /*MessageBox(NULL,msg,"dlopen error",MB_OK);*/
-        /*free(msg);*/
-        /*return 1;*/
-    /*}*/
 
     /* Then if this application is MFC based, load the MFC module */
     /* FIXME: I'm not sure this is really necessary */
@@ -3324,8 +3271,6 @@ int WINAPI main(int argc, char** argv, char** envp)
     if (hMFC!=NULL) {
         FreeLibrary(hMFC);
     }
-    /*dlclose(appLibrary);*/
-    /*free(libName);*/
 
     return retcode;
 }
