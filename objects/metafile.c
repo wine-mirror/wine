@@ -942,6 +942,11 @@ void WINAPI PlayMetaFileRecord16(
        	SetTextJustification(hdc, *(mr->rdParm + 1), *(mr->rdParm));
 	break;
 
+    case META_EXTFLOODFILL:
+        ExtFloodFill(hdc, (INT16)*(mr->rdParm + 4), (INT16)*(mr->rdParm + 3),
+                     MAKELONG(*(mr->rdParm+1), *(mr->rdParm + 2)),*(mr->rdParm));
+        break;
+
 #define META_UNIMP(x) case x: FIXME(metafile, "PlayMetaFileRecord:record type "#x" not implemented.\n");break;
     META_UNIMP(META_FRAMEREGION)
     META_UNIMP(META_DRAWTEXT)
@@ -949,7 +954,6 @@ void WINAPI PlayMetaFileRecord16(
     META_UNIMP(META_ANIMATEPALETTE)
     META_UNIMP(META_SETPALENTRIES)
     META_UNIMP(META_RESIZEPALETTE)
-    META_UNIMP(META_EXTFLOODFILL)
     META_UNIMP(META_RESETDC)
     META_UNIMP(META_STARTDOC)
     META_UNIMP(META_STARTPAGE)
