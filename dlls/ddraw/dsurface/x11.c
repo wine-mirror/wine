@@ -366,6 +366,7 @@ ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 iface) {
     /* Free the clipper if present */
     if(This->s.lpClipper)
 	IDirectDrawClipper_Release(This->s.lpClipper);
+    HeapFree(GetProcessHeap(),0,This->private);
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
 }
