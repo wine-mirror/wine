@@ -2471,6 +2471,116 @@ todo_wine {
     ok(!IsWindow(child4), "child4 still exists\n");
 }
 
+static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LPCREATESTRUCT lpcs;
+    LPSTYLESTRUCT lpss;
+
+    switch (msg)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+        lpcs = (LPCREATESTRUCT)lparam;
+        lpss = (LPSTYLESTRUCT)lpcs->lpCreateParams;
+        if (lpss)
+        {
+            if ((lpcs->dwExStyle & WS_EX_DLGMODALFRAME) ||
+                ((!(lpcs->dwExStyle & WS_EX_STATICEDGE)) &&
+                    (lpcs->style & (WS_DLGFRAME | WS_THICKFRAME))))
+                ok(lpcs->dwExStyle & WS_EX_WINDOWEDGE, "Window should have WS_EX_WINDOWEDGE style\n");
+            else
+                ok(!(lpcs->dwExStyle & WS_EX_WINDOWEDGE), "Window shouldn't have WS_EX_WINDOWEDGE style\n");
+
+            ok((lpss->styleOld & ~WS_EX_WINDOWEDGE) == (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE),
+                "Ex style (0x%08lx) should match what the caller passed to CreateWindowEx (0x%08lx)\n",
+                (lpss->styleOld & ~WS_EX_WINDOWEDGE), (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE));
+
+            ok(lpss->styleNew == lpcs->style,
+                "Style (0x%08lx) should match what the caller passed to CreateWindowEx (0x%08lx)\n",
+                lpss->styleNew, lpcs->style);
+        }
+        break;
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static ATOM atomStyleCheckClass;
+
+static void register_style_check_class(void)
+{
+    WNDCLASS wc =
+    {
+        0,
+        StyleCheckProc,
+        0,
+        0,
+        GetModuleHandle(NULL),
+        NULL,
+        LoadCursor(NULL, IDC_ARROW),
+        (HBRUSH)(COLOR_BTNFACE+1),
+        NULL,
+        TEXT("WineStyleCheck"),
+    };
+    
+    atomStyleCheckClass = RegisterClass(&wc);
+}
+
+static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyleOut, DWORD dwExStyleOut)
+{
+    DWORD dwActualStyle;
+    DWORD dwActualExStyle;
+    STYLESTRUCT ss;
+    HWND hwnd;
+    HWND hwndParent = NULL;
+    MSG msg;
+
+    ss.styleNew = dwStyleIn;
+    ss.styleOld = dwExStyleIn;
+
+    if (dwStyleIn & WS_CHILD)
+    {
+        hwndParent = CreateWindowEx(0, MAKEINTATOM(atomStyleCheckClass), NULL,
+            WS_OVERLAPPEDWINDOW, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    }
+
+    hwnd = CreateWindowEx(dwExStyleIn, MAKEINTATOM(atomStyleCheckClass), NULL,
+                    dwStyleIn, 0, 0, 0, 0, hwndParent, NULL, NULL, &ss);
+    assert(hwnd);
+
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    dwActualStyle = GetWindowLong(hwnd, GWL_STYLE);
+    dwActualExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+    ok((dwActualStyle == dwStyleOut) && (dwActualExStyle == dwExStyleOut),
+        "Style (0x%08lx) should really be 0x%08lx and/or Ex style (0x%08lx) should really be 0x%08lx\n",
+        dwActualStyle, dwStyleOut, dwActualExStyle, dwExStyleOut);
+
+    DestroyWindow(hwnd);
+    if (hwndParent) DestroyWindow(hwndParent);
+}
+
+/* tests what window styles the window manager automatically adds */
+static void test_window_styles()
+{
+    register_style_check_class();
+
+    check_window_style(0, 0, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_WINDOWEDGE);
+    check_window_style(WS_OVERLAPPEDWINDOW, 0, WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
+    check_window_style(WS_CHILD, 0, WS_CHILD, 0);
+    check_window_style(WS_CHILD, WS_EX_WINDOWEDGE, WS_CHILD, 0);
+    check_window_style(0, WS_EX_TOOLWINDOW, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW);
+    check_window_style(WS_POPUP, 0, WS_POPUP|WS_CLIPSIBLINGS, 0);
+    check_window_style(WS_POPUP, WS_EX_WINDOWEDGE, WS_POPUP|WS_CLIPSIBLINGS, 0);
+    check_window_style(WS_CHILD, WS_EX_DLGMODALFRAME, WS_CHILD, WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME);
+    check_window_style(WS_CHILD, WS_EX_DLGMODALFRAME|WS_EX_STATICEDGE, WS_CHILD, WS_EX_STATICEDGE|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME);
+    check_window_style(WS_CAPTION, WS_EX_STATICEDGE, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_STATICEDGE|WS_EX_WINDOWEDGE);
+    check_window_style(0, WS_EX_APPWINDOW, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_APPWINDOW|WS_EX_WINDOWEDGE);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2531,4 +2641,6 @@ START_TEST(win)
     test_nccalcscroll( hwndMain);
 
     UnhookWindowsHookEx(hhook);
+    
+    test_window_styles();
 }

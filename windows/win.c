@@ -1111,31 +1111,12 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
 
-    /* Correct the window styles.
-     *
-     * It affects both the style loaded into the WIN structure and
-     * passed in the CREATESTRUCT to the WM_[NC]CREATE.
-     *
-     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so
-     * why does the user get to set it?
-     */
-
-    /* This has been tested for WS_CHILD | WS_VISIBLE.  It has not been
-     * tested for WS_POPUP
-     */
     if ((cs->dwExStyle & WS_EX_DLGMODALFRAME) ||
         ((!(cs->dwExStyle & WS_EX_STATICEDGE)) &&
           (cs->style & (WS_DLGFRAME | WS_THICKFRAME))))
         cs->dwExStyle |= WS_EX_WINDOWEDGE;
     else
         cs->dwExStyle &= ~WS_EX_WINDOWEDGE;
-
-    if (!(cs->style & WS_CHILD))
-    {
-        cs->style |= WS_CLIPSIBLINGS;
-        if (!(cs->style & WS_POPUP))
-            cs->style |= WS_CAPTION;
-    }
 
     /* Create the window structure */
 
@@ -1165,7 +1146,31 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hIconSmall     = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU) ? MENU_GetSysMenu( hwnd, 0 ) : 0;
 
-    if (!(cs->style & (WS_CHILD | WS_POPUP)))
+    /*
+     * Correct the window styles.
+     *
+     * It affects only the style loaded into the WIN structure.
+     */
+
+    if (!(wndPtr->dwStyle & WS_CHILD))
+    {
+        wndPtr->dwStyle |= WS_CLIPSIBLINGS;
+        if (!(wndPtr->dwStyle & WS_POPUP))
+            wndPtr->dwStyle |= WS_CAPTION;
+    }
+
+    /*
+     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so
+     * why does the user get to set it?
+     */
+
+    if ((wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) ||
+          (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)))
+        wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
+    else
+        wndPtr->dwExStyle &= ~WS_EX_WINDOWEDGE;
+
+    if (!(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
         wndPtr->flags |= WIN_NEED_SIZE;
 
     SERVER_START_REQ( set_window_info )

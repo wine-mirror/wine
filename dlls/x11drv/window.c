@@ -871,6 +871,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     RECT rect;
     DWORD style;
     CBT_CREATEWNDA cbtc;
+    CREATESTRUCTA cbcs;
     BOOL ret = FALSE;
 
     if (cs->cx > 65535)
@@ -926,7 +927,15 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     }
 
     /* Call the WH_CBT hook */
-    cbtc.lpcs = cs;
+    
+    /* the window style passed to the hook must be the real window style,
+     * rather than just the window style that the caller to CreateWindowEx
+     * passed in, so we have to copy the original CREATESTRUCT and get the
+     * the real style. */
+    cbcs = *cs;
+    cbcs.style = GetWindowLongW(hwnd, GWL_STYLE);
+
+    cbtc.lpcs = &cbcs;
     cbtc.hwndInsertAfter = HWND_TOP;
     if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ))
     {
