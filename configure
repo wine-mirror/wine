@@ -12451,7 +12451,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.so | sed 's/^.*\(libX11\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_X11" = "x"
   then
      ac_cv_lib_soname_X11="libX11.so"
@@ -12516,7 +12516,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.so | sed 's/^.*\(libXext\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_Xext" = "x"
   then
      ac_cv_lib_soname_Xext="libXext.so"
@@ -12581,7 +12581,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.so | sed 's/^.*\(libXrender\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_Xrender" = "x"
   then
      ac_cv_lib_soname_Xrender="libXrender.so"
@@ -12646,7 +12646,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.so | sed 's/^.*\(libfreetype\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_freetype" = "x"
   then
      ac_cv_lib_soname_freetype="libfreetype.so"
@@ -12711,7 +12711,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_GL=`$ac_cv_path_LDD conftest$ac_exeext | grep libGL\\.so | sed 's/^.*\(libGL\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_GL" = "x"
   then
      ac_cv_lib_soname_GL="libGL.so"
@@ -12776,7 +12776,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_cups=`$ac_cv_path_LDD conftest$ac_exeext | grep libcups\\.so | sed 's/^.*\(libcups\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_cups" = "x"
   then
      ac_cv_lib_soname_cups="libcups.so"
@@ -12841,7 +12841,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_jack=`$ac_cv_path_LDD conftest$ac_exeext | grep libjack\\.so | sed 's/^.*\(libjack\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_jack" = "x"
   then
      ac_cv_lib_soname_jack="libjack.so"
@@ -12906,7 +12906,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.so | sed 's/^.*\(libssl\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_ssl" = "x"
   then
      ac_cv_lib_soname_ssl="libssl.so"
@@ -12971,7 +12971,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.so | sed 's/^.*\(libcrypto\.so[^	 ]*\).*$/\1/'`
   if test "x$ac_cv_lib_soname_crypto" = "x"
   then
      ac_cv_lib_soname_crypto="libcrypto.so"
