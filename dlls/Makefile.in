@@ -380,7 +380,7 @@ crtdll/libcrtdll.so: libkernel32.so
 ddraw/libddraw.so: libole32.so libuser32.so libx11drv.so libgdi32.so libkernel32.so
 dinput/libdinput.so: libuser32.so libkernel32.so
 dplay/libdplay.so: libdplayx.so
-dplayx/libdplayx.so: libole32.so libadvapi32.so libkernel32.so
+dplayx/libdplayx.so: libwinmm.so libole32.so libadvapi32.so libkernel32.so
 dsound/libdsound.so: libwinmm.so libkernel32.so
 gdi/libgdi32.so: libkernel32.so
 icmp/libicmp.so: libkernel32.so

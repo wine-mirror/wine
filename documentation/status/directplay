@@ -44,6 +44,12 @@ dplayx_messages.h,
 dplayx_messages.c: Messaging interface required for both DirectPlay and 
                    DirectPlayLobby.
 
+dplaysp.c,
+dplaysp.h: COM interface between DPLAYX and the service provider dlls. dplaysp.h is
+           something that should be included into any service provider. Basically 
+           the COM interface is partially documented but is generally lacking in the
+           finer points.
+
 Presently the architectural relationship between this files is a little shakey, but
 isn't so sufficiently bad that it needs fixing yet.
 
@@ -56,7 +62,17 @@ However, now that address separation is a reality, all binary samples provided
 in the sdk can be used. I have had success spawning processes and one
 directx7 example will allow creation of an app and allow another to join it.
 Unfortunately, there isn't much for it to be able to do give the state of
-inter lobby messaging.
+inter directlobby or directplay messaging.
+
+Messages which work:
+
+For session enumeration: DPMSGCMD_ENUMSESSIONSREPLY & DPMSGCMD_ENUMSESSIONSREQUEST
+                         have most fields understood, but not all. Everything _seems_
+                         to work.
+
+For playerid requesting: DPMSGCMD_REQUESTNEWPLAYERID & DPMSGCMD_NEWPLAYERIDREPLY
+                         barely work. This needs to be completed for sessions to be
+                         able to actually start.
 
 A small issue will be the fact that DirectX 6.1(ie. DirectPlay4) introduces a layer of functionality
 inside the DP objects which provide guaranteed protocol delivery. This is
@@ -96,18 +112,21 @@ TODO:
     share registry implementation (or at least simplify).
   - Add in appropriate RegCloseKey calls for all the opening we're doing...
   - Fix all the buffer sizes for registry calls. They're off by one - but in a safe direction.
-  - Find out how to call the service provider dlls - they don't have a published interface!
+  - (done) Find out how to call the service provider dlls - they don't have a published interface!
   - Fix race condition on interface destruction
   - Handles need to be correctly reference counted
   - Need to check if we need to deallocate any list objects when destroying 
     dplay interface
   - RunApplication process spawning needs to have correct syncronization.
   - Need to get inter lobby messages working.
+  - Decypher dplay messages between applications and implement...
+  - Need to implement lobby session spawning.
 
 ENHANCEMENTS:
   - Improve footprint and realtime blocking by setting up a seperate data share
     between lobby application and client since there can be multiple apps per 
-    client.
+    client. Also get rid of offset dependency by making data offset independent 
+    somehow.
   - Handle everything in UNICODE (as server does) and do conversions for ANSI 
     interfaces. Should cut down on dplayx code base and maintanability (marginally)
     and could be used to improve efficiency of dialog with the server (it wouldn't
@@ -124,34 +143,23 @@ Programs to make work:
 
 Next API to implement on a per SDK program basis:
   override.exe
-  - fixme:dplay:DirectPlayCreate Modem binding not supported yet
-  - DirectPlay3AImpl_InitializeConnection
-  - DirectPlay2AImpl_Open
-  - ?
+  - (calls dpserial so basic problems with that remain)
+  - after that ?
 
   dplaunch.exe
-  - Just needs final process startup messages to be exchanged correctly!
+  - I think that everything is basically working. The launched app may not
+    work on the other hand.
 
   lserver.exe
-  - IDirectPlayLobby2WImpl_Connect 
-  - fixme:dplay:DirectPlayCreate Modem binding not supported yet
-  - IDirectPlay3WImpl_CreatePlayer 
-  - IDirectPlay3WImpl_CreateGroup
-  - IDirectPlay3WImpl_SetGroupData
-  - IDirectPlay3WImpl_Send
-  - ?
+  - Missing messaging portion. Everything else works.
  
   bellhop.exe
-  - DP_SendSessionRequestBroadcast (implement the name server stuff)
+  - Need to implement lobby server support.
   - ?
 
   dpslots.exe
-  - IDirectPlayLobby3AImpl_ConnectEx
-  - ?
-
-  override.exe
-  - DirectPlayCreate Service provider binding not supported yet
-  - ?
+  - Works as host except for message stuff
+  - Missing correct handling of receipt of playerid
 
 Other TODO:
 

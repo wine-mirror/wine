@@ -18,7 +18,7 @@
 
 /* FIXME: Need to add interface locking inside procedures */
 
-DEFAULT_DEBUG_CHANNEL(dplay);
+DEFAULT_DEBUG_CHANNEL(dplay)
 
 /* Prototypes */
 static BOOL DPSP_CreateIUnknown( LPVOID lpSP );
@@ -369,6 +369,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData
   FIXME( "(%p)->(0x%08lx,%p,%p,0x%08lx): stub\n", 
          This, idPlayer, lplpData, lpdwDataSize, dwFlags );
 
+  /* What to do in the case where there is nothing set yet? */
+
   *lplpData     = This->sp->lpPlayerData;
   *lpdwDataSize = This->sp->dwPlayerDataSize;
 
@@ -440,6 +442,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
       break;
     }
 
+    case DPMSGCMD_GETNAMETABLE:
+    case DPMSGCMD_GETNAMETABLEREPLY:
     case DPMSGCMD_NEWPLAYERIDREPLY:
     case DPMSGCMD_REQUESTNEWPLAYERID:
     {
@@ -795,6 +799,8 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPData
     FIXME( "Undocumented dwFlags 0x%08lx used\n", dwFlags );
   }
 #endif
+
+  /* FIXME: What to do in the case where this isn't initialized yet? */
 
   /* Yes, we're supposed to return a pointer to the memory we have stored! */
   if( dwFlags == DPSET_REMOTE )

@@ -149,10 +149,6 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
   DWORD                      dwWaitReturn;
   HRESULT                    hr = DP_OK;
 
-  FIXME( "semi stub\n" );
-
-  DebugBreak();
-
   dwMsgSize = This->dp2->spData.dwSPHeaderSize + sizeof( *lpMsgBody );
 
   lpMsg = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwMsgSize );
@@ -185,6 +181,8 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
 
     /* Setup for receipt */
     This->dp2->hMsgReceipt = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    TRACE( "Sending request for player id\n" );
  
     hr = (*This->dp2->spData.lpCB->Send)( &data );
 
@@ -192,6 +190,7 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
     {
       ERR( "Request for new playerID send failed: %s\n",
            DPLAYX_HresultToString( hr ) );
+      return DPERR_NOCONNECTION;
     }
   }
 
@@ -199,13 +198,36 @@ HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
   if( dwWaitReturn != WAIT_OBJECT_0 )
   {
     ERR( "Wait failed 0x%08lx\n", dwWaitReturn );
+    hr = DPERR_TIMEOUT;
   }
 
   CloseHandle( This->dp2->hMsgReceipt );
   This->dp2->hMsgReceipt = 0;
 
   /* Need to examine the data and extract the new player id */
-  /* I just hope that dplay doesn't return the whole new player! */
+  if( !FAILED(hr) )
+  {
+    LPCDPMSG_NEWPLAYERIDREPLY lpcReply; 
+
+    lpcReply = (LPCDPMSG_NEWPLAYERIDREPLY)This->dp2->lpMsgReceived;
+
+    *lpdpidAllocatedId = lpcReply->dpidNewPlayerId;   
+
+    TRACE( "Received reply for id = 0x%08lx\n", lpcReply->dpidNewPlayerId );
+
+    /* FIXME: I think that the rest of the message has something to do
+     *        with remote data for the player that perhaps I need to setup.
+     */
+#if 0
+   /* Set the passed service provider data */
+   IDirectPlaySP_SetSPData( This->dp2->spData.lpISP, data, 
+                            msgsize, DPSET_REMOTE );
+
+#endif
+
+    HeapFree( GetProcessHeap(), 0, This->dp2->lpMsgReceived ); 
+    This->dp2->lpMsgReceived = NULL;
+  }
 
   return hr;
 }

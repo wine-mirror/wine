@@ -55,23 +55,27 @@ typedef BOOL (CALLBACK* LPENUMMRUCALLBACK)( LPCVOID lpData,
 ICOM_DEFINE(IDirectPlaySP,IUnknown)
 #undef ICOM_INTERFACE
 
+
+/* NOTE: The microsoft provided header file doesn't have these access 
+ * functions
+ */
 /*** IUnknown methods ***/
-#define IDirectPlaySP_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectPlaySP_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IDirectPlaySP_Release(p)            ICOM_CALL (Release,p)
+#define IDirectPlaySP_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectPlaySP_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IDirectPlaySP_Release(p)                   ICOM_CALL (Release,p)
 /*** IDirectPlaySP methods ***/
-#define IDirectPlaySP_AddMRUEntry           ICOM_CALL5(AddMRUEntry,p,a,b,c,d,e)
-#define IDirectPlaySP_CreateAddress         ICOM_CALL6(CreateAddress,p,a,b,c,d,e,f)
-#define IDirectPlaySP_EnumAddress           ICOM_CALL4(EnumAddress,p,a,b,c,d)
-#define IDirectPlaySP_EnumMRUEntries        ICOM_CALL4(EnumMRUEntries,p,a,b,c,d)
-#define IDirectPlaySP_GetPlayerFlags        ICOM_CALL2(GetPlayerFlags,p,a,b)
-#define IDirectPlaySP_GetSPPlayerData       ICOM_CALL4(GetSPPlayerData,p,a,b,c,d)
-#define IDirectPlaySP_HandleMessage         ICOM_CALL3(HandleMessage,p,a,b,c)
-#define IDirectPlaySP_SetSPPlayerData       ICOM_CALL4(SetSPPlayerData,p,a,b,c,d)
-#define IDirectPlaySP_CreateCompoundAddress ICOM_CALL4(CreateCompoundAddress,p,a,b,c,d)
-#define IDirectPlaySP_GetSPData             ICOM_CALL3(GetSPData,p,a,b,c)
-#define IDirectPlaySP_SetSPData             ICOM_CALL3(SetSPData,p,a,b,c)
-#define IDirectPlaySP_SendComplete          ICOM_CALL2(SendComplete,p,a,b)
+#define IDirectPlaySP_AddMRUEntry(p,a,b,c,d,e)     ICOM_CALL5(AddMRUEntry,p,a,b,c,d,e)
+#define IDirectPlaySP_CreateAddress(p,a,b,c,d,e,f) ICOM_CALL6(CreateAddress,p,a,b,c,d,e,f)
+#define IDirectPlaySP_EnumAddress(p,a,b,c,d)       ICOM_CALL4(EnumAddress,p,a,b,c,d)
+#define IDirectPlaySP_EnumMRUEntries(p,a,b,c,d)    ICOM_CALL4(EnumMRUEntries,p,a,b,c,d)
+#define IDirectPlaySP_GetPlayerFlags(p,a,b)        ICOM_CALL2(GetPlayerFlags,p,a,b)
+#define IDirectPlaySP_GetSPPlayerData(p,a,b,c,d)   ICOM_CALL4(GetSPPlayerData,p,a,b,c,d)
+#define IDirectPlaySP_HandleMessage(p,a,b,c)       ICOM_CALL3(HandleMessage,p,a,b,c)
+#define IDirectPlaySP_SetSPPlayerData(p,a,b,c,d)   ICOM_CALL4(SetSPPlayerData,p,a,b,c,d)
+#define IDirectPlaySP_CreateCompoundAddress(p,a,b,c,d)  ICOM_CALL4(CreateCompoundAddress,p,a,b,c,d)
+#define IDirectPlaySP_GetSPData(p,a,b,c)           ICOM_CALL3(GetSPData,p,a,b,c)
+#define IDirectPlaySP_SetSPData(p,a,b,c)           ICOM_CALL3(SetSPData,p,a,b,c)
+#define IDirectPlaySP_SendComplete(p,a,b)          ICOM_CALL2(SendComplete,p,a,b)
 
 /* SP Callback stuff */
 

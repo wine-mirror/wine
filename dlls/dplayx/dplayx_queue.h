@@ -77,7 +77,7 @@ do {                                                    \
  */
 #define DPQ_FIND_ENTRY( head, elm, field, fieldCompareOperator, fieldToCompare, rc )\
 do {                                                           \
-  (rc) = (head).lpQHFirst; /* NULL head? */                    \
+  (rc) = DPQ_FIRST(head); /* NULL head? */                     \
                                                                \
   while( rc )                                                  \
   {                                                            \
@@ -98,6 +98,39 @@ do {                                                           \
 
 /* head - pointer to DPQ_HEAD struct
  * elm  - how to find the next element
+ * field - to be concatenated to rc to compare with fieldToCompare
+ * fieldToCompare - The value that we're comparing against
+ * compare_cb - Callback to invoke to determine if comparision should continue.
+ *              Callback must be defined with DPQ_DECL_COMPARECB. 
+ * rc - Variable to put the return code. Same type as (head).lpQHFirst
+ */
+#define DPQ_FIND_ENTRY_CB( head, elm, field, compare_cb, fieldToCompare, rc )\
+do {                                                           \
+  (rc) = DPQ_FIRST(head); /* NULL head? */                     \
+                                                               \
+  while( rc )                                                  \
+  {                                                            \
+      /* What we're searching for? */                          \
+      if( compare_cb( &((rc)->field), &(fieldToCompare) ) )    \
+      {                                                        \
+        break; /* no more */                                   \
+      }                                                        \
+                                                               \
+      /* End of list check */                                  \
+      if( ( (rc) = (rc)->elm.lpQNext ) == (head).lpQHFirst )   \
+      {                                                        \
+        rc = NULL;                                             \
+        break;                                                 \
+      }                                                        \
+  }                                                            \
+} while(0)
+
+/* How to define the method to be passed to DPQ_DELETEQ */
+#define DPQ_DECL_COMPARECB( name, type ) BOOL name( const type* elem1, const type* elem2 )
+
+
+/* head - pointer to DPQ_HEAD struct
+ * elm  - how to find the next element
  * field - to be concatenated to rc to compare with fieldToEqual
  * fieldToCompare - The value that we're comparing against
  * fieldCompareOperator - The logical operator to compare field and
@@ -115,19 +148,42 @@ do {                                                           \
   }                                                            \
 } while(0)
 
+/* head - pointer to DPQ_HEAD struct
+ * elm  - how to find the next element
+ * field - to be concatenated to rc to compare with fieldToCompare
+ * fieldToCompare - The value that we're comparing against
+ * compare_cb - Callback to invoke to determine if comparision should continue.
+ *              Callback must be defined with DPQ_DECL_COMPARECB.
+ * rc - Variable to put the return code. Same type as (head).lpQHFirst
+ */
+#define DPQ_REMOVE_ENTRY_CB( head, elm, field, compare_cb, fieldToCompare, rc )\
+do {                                                           \
+  DPQ_FIND_ENTRY_CB( head, elm, field, compare_cb, fieldToCompare, rc );\
+                                                               \
+  /* Was the element found? */                                 \
+  if( rc )                                                     \
+  {                                                            \
+    DPQ_REMOVE( head, rc, elm );                               \
+  }                                                            \
+} while(0)
+
+
 /* Delete the entire queue 
  * head - pointer to the head of the queue
  * field - field to access the next elements of the queue
  * type - type of the pointer to the element element
  * df - a delete function to be called. Declared with DPQ_DECL_DELETECB.
  */
-#define DPQ_DELETEQ( head, field, type, df )            \
-while( !DPQ_IS_EMPTY(head) )                               \
-{                                                       \
-  type holder = (head).lpQHFirst;                      \
-  DPQ_REMOVE( head, holder, field );                    \
-  df( holder );                                \
-}
+#define DPQ_DELETEQ( head, field, type, df )     \
+do                                               \
+{                                                \
+  while( !DPQ_IS_EMPTY(head) )                   \
+  {                                              \
+    type holder = DPQ_FIRST(head);               \
+    DPQ_REMOVE( head, holder, field );           \
+    df( holder );                                \
+  }                                              \
+} while(0)
 
 /* How to define the method to be passed to DPQ_DELETEQ */
 #define DPQ_DECL_DELETECB( name, type ) void name( type elem )
