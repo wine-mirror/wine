@@ -1433,37 +1433,6 @@ static LRESULT WINAPI MDIClientWndProcW( HWND hwnd, UINT message, WPARAM wParam,
 }
 
 /***********************************************************************
- *		DefFrameProc (USER.445)
- */
-LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
-                               UINT16 message, WPARAM16 wParam, LPARAM lParam )
-{
-    switch (message)
-    {
-    case WM_SETTEXT:
-        lParam = (LPARAM)MapSL(lParam);
-        /* fall through */
-    case WM_COMMAND:
-    case WM_NCACTIVATE:
-    case WM_SETFOCUS:
-    case WM_SIZE:
-        return DefFrameProcA( WIN_Handle32(hwnd), WIN_Handle32(hwndMDIClient),
-                              message, wParam, lParam );
-
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU next_menu;
-            DefFrameProcW( WIN_Handle32(hwnd), WIN_Handle32(hwndMDIClient),
-                           message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( HMENU_16(next_menu.hmenuNext), HWND_16(next_menu.hwndNext) );
-        }
-    default:
-        return DefWindowProc16(hwnd, message, wParam, lParam);
-    }
-}
-
-
-/***********************************************************************
  *		DefFrameProcA (USER32.@)
  */
 LRESULT WINAPI DefFrameProcA( HWND hwnd, HWND hwndMDIClient,
@@ -1588,47 +1557,6 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
 
     return DefWindowProcW( hwnd, message, wParam, lParam );
 }
-
-
-/***********************************************************************
- *		DefMDIChildProc (USER.447)
- */
-LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
-                                  WPARAM16 wParam, LPARAM lParam )
-{
-    switch (message)
-    {
-    case WM_SETTEXT:
-        return DefMDIChildProcA( WIN_Handle32(hwnd), message, wParam, (LPARAM)MapSL(lParam) );
-    case WM_MENUCHAR:
-    case WM_CLOSE:
-    case WM_SETFOCUS:
-    case WM_CHILDACTIVATE:
-    case WM_SYSCOMMAND:
-    case WM_SETVISIBLE:
-    case WM_SIZE:
-    case WM_SYSCHAR:
-        return DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, lParam );
-    case WM_GETMINMAXINFO:
-        {
-            MINMAXINFO16 *mmi16 = (MINMAXINFO16 *)MapSL(lParam);
-            MINMAXINFO mmi;
-            STRUCT32_MINMAXINFO16to32( mmi16, &mmi );
-            DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&mmi );
-            STRUCT32_MINMAXINFO32to16( &mmi, mmi16 );
-            return 0;
-        }
-    case WM_NEXTMENU:
-        {
-            MDINEXTMENU next_menu;
-            DefMDIChildProcW( WIN_Handle32(hwnd), message, wParam, (LPARAM)&next_menu );
-            return MAKELONG( HMENU_16(next_menu.hmenuNext), HWND_16(next_menu.hwndNext) );
-        }
-    default:
-        return DefWindowProc16(hwnd, message, wParam, lParam);
-    }
-}
-
 
 /***********************************************************************
  *		DefMDIChildProcA (USER32.@)
