@@ -858,8 +858,25 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 
     if (avail)
     {
-        FIXME_(dosfs)("no per-user quota support yet\n");
-        /* Quick hack */
+        if (FIXME_ON(dosfs))
+	{
+            /* On Windows2000, we need to check the disk quota
+	       allocated for the user owning the calling process. We
+	       don't want to be more obtrusive than necessary with the
+	       FIXME messages, so don't print the FIXME unless Wine is
+	       actually masquerading as Windows2000. */
+
+            OSVERSIONINFOA ovi;
+	    ovi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+	    if (GetVersionExA(&ovi))
+	    {
+	      if (ovi.dwPlatformId == VER_PLATFORM_WIN32_NT && ovi.dwMajorVersion > 4)
+                  FIXME_(dosfs)("no per-user quota support yet\n");
+	    }
+	}
+
+        /* Quick hack, should eventually be fixed to work 100% with
+           Windows2000 (see comment above). */
         avail->HighPart = totalfree->HighPart;
         avail->LowPart = totalfree->LowPart ;
     }
