@@ -3890,7 +3890,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr)
 	    nmlv.iItem = i;
 	    notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 	}
-	if (infoPtr->dwStyle & LVS_OWNERDATA)
+	if (!(infoPtr->dwStyle & LVS_OWNERDATA))
 	{
 	    hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, i);
 	    for (j = 0; j < hdpaSubItems->nItemCount; j++)
