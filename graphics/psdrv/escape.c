@@ -48,8 +48,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	return 1;
           
     case QUERYESCSUPPORT:
-        if(cbInput != 2) {
-	    WARN("cbInput != 2 (=%d) for QUERYESCSUPPORT\n", cbInput);
+        if(cbInput < 2) {
+	    WARN("cbInput < 2 (=%d) for QUERYESCSUPPORT\n", cbInput);
 	    return 0;
 	} else {
 	    UINT16 num = *(UINT16 *)PTR_SEG_TO_LIN(lpInData);
@@ -81,10 +81,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	}
 
     case SETABORTPROC:
-        FIXME("SETABORTPROC: Ignoring\n");
-
-/*	dc->w.lpfnPrint = (FARPROC16)lpInData;
- */
+        TRACE("SETABORTPROC\n");
+	dc->w.spfnPrint = (FARPROC16)lpInData;
 	return 1;
 
     case STARTDOC:

@@ -127,7 +127,8 @@ typedef struct
     INT         GraphicsMode;      /* Graphics mode */
     INT         DCOrgX;            /* DC origin */
     INT         DCOrgY;
-    FARPROC16     lpfnPrint;         /* AbortProc for Printing */
+    FARPROC16     spfnPrint;         /* 16bit AbortProc for Printing */
+    ABORTPROC     lpfnPrint;         /* 32bit AbortProc for Printing */
     INT         CursPosX;          /* Current position */
     INT         CursPosY;
     INT         ArcDirection;

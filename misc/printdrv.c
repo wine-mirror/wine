@@ -71,6 +71,8 @@ INT16 WINAPI EndPage16( HDC16 hdc )
  */
 INT WINAPI StartDocA(HDC hdc ,const DOCINFOA* doc)
 {
+    TRACE("DocName = '%s' Output = '%s' Datatype = '%s'\n",
+	  doc->lpszDocName, doc->lpszOutput, doc->lpszDatatype);
     return  Escape(hdc,
 		   STARTDOC,
 		   strlen(doc->lpszDocName),
@@ -154,10 +156,27 @@ INT WINAPI AbortDoc(HDC hdc)
 BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 {
     DC *dc = DC_GetDCPtr( hdc );
+    BOOL16 ret;
 
-    if ((!dc) || (!dc->w.lpfnPrint))
-	return TRUE;
-    return Callbacks->CallDrvAbortProc(dc->w.lpfnPrint, hdc, 0);
+    if(!dc) {
+        ERR("Invalid hdc %04x\n", hdc);
+	return FALSE;
+    }
+
+    if(!dc->w.lpfnPrint && !dc->w.spfnPrint)
+        return TRUE;
+
+    if(dc->w.lpfnPrint && dc->w.spfnPrint)
+        FIXME("16 and 32 bit AbortProcs set?\n");
+
+    if(dc->w.spfnPrint) {
+        TRACE("Calling 16bit AbortProc\n");
+	ret = Callbacks->CallDrvAbortProc(dc->w.spfnPrint, hdc, 0);
+    } else {
+        TRACE("Calling 32bit AbortProc\n");
+	ret = dc->w.lpfnPrint(hdc,0);
+    }
+    return ret;
 }
 
 /**********************************************************************
@@ -167,7 +186,7 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
 {
     return Escape16(hdc, SETABORTPROC, 0, abrtprc, (SEGPTR)0);
-} 
+}
 
 /**********************************************************************
  *           SetAbortProc32   (GDI32.301)
@@ -175,8 +194,10 @@ INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
  */
 INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
-    FIXME("stub\n");
-    return 1;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    dc->w.lpfnPrint = abrtprc;
+    return TRUE;
 }
 
 

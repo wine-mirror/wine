@@ -304,7 +304,7 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
        /* save the callback address and call Control with hdc as lpInData */
 	    HDC16 *seghdc = SEGPTR_NEW(HDC16);
 	    *seghdc = dc->hSelf;
-	    dc->w.lpfnPrint = (FARPROC16)lpInData;
+	    dc->w.spfnPrint = (FARPROC16)lpInData;
             nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
 				  SEGPTR_GET(seghdc), lpOutData);
 	    SEGPTR_FREE(seghdc);

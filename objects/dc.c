@@ -63,6 +63,7 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->GraphicsMode        = GM_COMPATIBLE;
     win_dc_info->DCOrgX              = 0;
     win_dc_info->DCOrgY              = 0;
+    win_dc_info->spfnPrint           = 0;
     win_dc_info->lpfnPrint           = NULL;
     win_dc_info->CursPosX            = 0;
     win_dc_info->CursPosY            = 0;
