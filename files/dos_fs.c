@@ -1901,9 +1901,8 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
  * file name mask. Either or both can be NULL.
  *
  * NOTE: This is supposed to be only called by the int21 emulation
- *       routines. Thus, we should own the Win16Mutex anyway.
- *       Nevertheless, we explicitly enter it to ensure the static
- *       directory cache is protected.
+ *       routines, and so assumes that the Win16Mutex is held to
+ *       protect the static directory cache.
  */
 int DOSFS_FindNext( const char *path, const char *short_mask,
                     const char *long_mask, int drive, BYTE attr,
@@ -1918,8 +1917,6 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     TRACE("(%s, %s, %s, %x, %x, %x, %p)\n", debugstr_a(path),
           debugstr_a(short_mask), debugstr_a(long_mask), drive, attr, skip,
           entry);
-
-    _EnterWin16Lock();
 
     RtlCreateUnicodeStringFromAsciiz(&short_maskW, short_mask);
     RtlCreateUnicodeStringFromAsciiz(&long_maskW, long_mask);
@@ -1979,8 +1976,6 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         if (info.u.dos_dir) DOSFS_CloseDir( info.u.dos_dir );
         memset( &info, '\0', sizeof(info) );
     }
-
-    _LeaveWin16Lock();
 
     return count;
 }
@@ -2490,127 +2485,4 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags,LPCSTR devname,LPCSTR targetpath) {
 	FIXME("(0x%08lx,%s,%s),stub!\n",flags,devname,targetpath);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
-}
-
-/*
-   --- 16 bit functions ---
-*/
-
-/*************************************************************************
- *           FindFirstFile   (KERNEL.413)
- */
-HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
-{
-    DOS_FULL_NAME full_name;
-    HGLOBAL16 handle;
-    FIND_FIRST_INFO *info;
-    WCHAR pathW[MAX_PATH];
-    char *p;
-    INT long_mask_len;
-    UINT codepage;
-
-    data->dwReserved0 = data->dwReserved1 = 0x0;
-    if (!path) return INVALID_HANDLE_VALUE16;
-    MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, MAX_PATH);
-    if (!DOSFS_GetFullName( pathW, FALSE, &full_name ))
-        return INVALID_HANDLE_VALUE16;
-    if (!(handle = GlobalAlloc16( GMEM_MOVEABLE, sizeof(FIND_FIRST_INFO) )))
-        return INVALID_HANDLE_VALUE16;
-    info = (FIND_FIRST_INFO *)GlobalLock16( handle );
-    info->path = HeapAlloc( GetProcessHeap(), 0, strlen(full_name.long_name)+1 );
-    strcpy( info->path, full_name.long_name );
-
-    codepage = DRIVE_GetCodepage(full_name.drive);
-    p = strrchr( info->path, '/' );
-    *p++ = '\0';
-    long_mask_len = MultiByteToWideChar(codepage, 0, p, -1, NULL, 0);
-    info->long_mask = HeapAlloc( GetProcessHeap(), 0, long_mask_len * sizeof(WCHAR) );
-    MultiByteToWideChar(codepage, 0, p, -1, info->long_mask, long_mask_len);
-
-    info->short_mask = NULL;
-    info->attr = 0xff;
-    info->drive = full_name.drive;
-    info->cur_pos = 0;
-
-    info->u.dos_dir = DOSFS_OpenDir( codepage, info->path );
-
-    GlobalUnlock16( handle );
-    if (!FindNextFile16( handle, data ))
-    {
-        FindClose16( handle );
-        SetLastError( ERROR_NO_MORE_FILES );
-        return INVALID_HANDLE_VALUE16;
-    }
-    return handle;
-}
-
-/*************************************************************************
- *           FindNextFile   (KERNEL.414)
- */
-BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
-{
-    FIND_FIRST_INFO *info;
-    WIN32_FIND_DATAW dataW;
-    BOOL ret = FALSE;
-    DWORD gle = ERROR_NO_MORE_FILES;
-
-    if ((handle == INVALID_HANDLE_VALUE16) ||
-       !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return ret;
-    }
-    if (!info->path || !info->u.dos_dir)
-    {
-        goto done;
-    }
-    if (!DOSFS_FindNextEx( info, &dataW ))
-    {
-        DOSFS_CloseDir( info->u.dos_dir ); info->u.dos_dir = NULL;
-        HeapFree( GetProcessHeap(), 0, info->path );
-        info->path = NULL;
-        HeapFree( GetProcessHeap(), 0, info->long_mask );
-        info->long_mask = NULL;
-        goto done;
-    }
-
-    ret = TRUE;
-
-    data->dwFileAttributes = dataW.dwFileAttributes;
-    data->ftCreationTime   = dataW.ftCreationTime;
-    data->ftLastAccessTime = dataW.ftLastAccessTime;
-    data->ftLastWriteTime  = dataW.ftLastWriteTime;
-    data->nFileSizeHigh    = dataW.nFileSizeHigh;
-    data->nFileSizeLow     = dataW.nFileSizeLow;
-    WideCharToMultiByte( CP_ACP, 0, dataW.cFileName, -1,
-                         data->cFileName, sizeof(data->cFileName), NULL, NULL );
-    WideCharToMultiByte( CP_ACP, 0, dataW.cAlternateFileName, -1,
-                         data->cAlternateFileName,
-                         sizeof(data->cAlternateFileName), NULL, NULL );
-done:
-    if( !ret ) SetLastError( gle );
-    GlobalUnlock16( handle );
-
-    return ret;
-}
-
-/*************************************************************************
- *           FindClose   (KERNEL.415)
- */
-BOOL16 WINAPI FindClose16( HANDLE16 handle )
-{
-    FIND_FIRST_INFO *info;
-
-    if ((handle == INVALID_HANDLE_VALUE16) ||
-        !(info = (FIND_FIRST_INFO *)GlobalLock16( handle )))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
-    if (info->u.dos_dir) DOSFS_CloseDir( info->u.dos_dir );
-    if (info->path) HeapFree( GetProcessHeap(), 0, info->path );
-    if (info->long_mask) HeapFree( GetProcessHeap(), 0, info->long_mask );
-    GlobalUnlock16( handle );
-    GlobalFree16( handle );
-    return TRUE;
 }

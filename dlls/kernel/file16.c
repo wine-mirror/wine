@@ -220,3 +220,63 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
     return SetHandleCount( count );
 }
+
+
+/*************************************************************************
+ *           FindFirstFile   (KERNEL.413)
+ */
+HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATAA *data )
+{
+    HGLOBAL16 h16;
+    HANDLE handle, *ptr;
+
+    if (!(h16 = GlobalAlloc16( GMEM_MOVEABLE, sizeof(handle) ))) return INVALID_HANDLE_VALUE16;
+    ptr = GlobalLock16( h16 );
+    *ptr = handle = FindFirstFileA( path, data );
+    GlobalUnlock16( h16 );
+
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        GlobalFree16( h16 );
+        h16 = INVALID_HANDLE_VALUE16;
+    }
+    return h16;
+}
+
+
+/*************************************************************************
+ *           FindNextFile   (KERNEL.414)
+ */
+BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATAA *data )
+{
+    HANDLE *ptr;
+    BOOL ret = FALSE;
+
+    if ((handle == INVALID_HANDLE_VALUE16) || !(ptr = GlobalLock16( handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return ret;
+    }
+    ret = FindNextFileA( *ptr, data );
+    GlobalUnlock16( handle );
+    return ret;
+}
+
+
+/*************************************************************************
+ *           FindClose   (KERNEL.415)
+ */
+BOOL16 WINAPI FindClose16( HANDLE16 handle )
+{
+    HANDLE *ptr;
+
+    if ((handle == INVALID_HANDLE_VALUE16) || !(ptr = GlobalLock16( handle )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    FindClose( *ptr );
+    GlobalUnlock16( handle );
+    GlobalFree16( handle );
+    return TRUE;
+}
