@@ -135,7 +135,7 @@ HRESULT WINAPI IDirect3DImpl_FindDevice(
 /* This is for checking the correctness of the prototypes/functions.
  * Do not remove.
  */
-static WINE_UNUSED ICOM_VTABLE(IDirect3D) d3dvt = {
+static ICOM_VTABLE(IDirect3D) WINE_UNUSED d3dvt = {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3DImpl_QueryInterface,
     IDirect3DImpl_AddRef,
@@ -265,7 +265,7 @@ HRESULT WINAPI IDirect3D2Impl_CreateDevice(
 /* This is for checking the correctness of the prototypes/functions.
  * Do not remove.
  */
-static WINE_UNUSED ICOM_VTABLE(IDirect3D2) d3d2vt = 
+static ICOM_VTABLE(IDirect3D2) WINE_UNUSED d3d2vt = 
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3D2Impl_QueryInterface,

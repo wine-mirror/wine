@@ -140,14 +140,14 @@ extern int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DD
 extern LPDIRECT3DTEXTURE2 mesa_d3dtexture2_create(IDirectDrawSurface4Impl*);
 extern LPDIRECT3DTEXTURE mesa_d3dtexture_create(IDirectDrawSurface4Impl*);
 
-static const WINE_UNUSED GUID IID_D3DDEVICE2_OpenGL = {
+static const GUID WINE_UNUSED IID_D3DDEVICE2_OpenGL = {
   0x39a0da38,
   0x7e57,
   0x11d2,
   { 0x8b,0x7c,0x0e,0x4e,0xd8,0x3c,0x2b,0x3c }
 };
 
-static const WINE_UNUSED GUID IID_D3DDEVICE_OpenGL = {
+static const GUID WINE_UNUSED IID_D3DDEVICE_OpenGL = {
   0x31416d44,
   0x86ae,
   0x11d2,

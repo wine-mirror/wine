@@ -670,7 +670,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
 /*******************************************************************************
  *				Direct3DDevice VTable
  */
-static WINE_UNUSED ICOM_VTABLE(IDirect3DDevice) d3d_d3ddevice_vtbl = 
+static ICOM_VTABLE(IDirect3DDevice) WINE_UNUSED d3d_d3ddevice_vtbl = 
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDeviceImpl_QueryInterface,

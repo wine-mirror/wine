@@ -9,7 +9,7 @@
 #include "winuser.h"
 #include "ddraw.h"
 
-static WINE_UNUSED const char *ddProp = "WINE_DDRAW_Property";
+static const char WINE_UNUSED *ddProp = "WINE_DDRAW_Property";
 
 /****************************************************************************
  * This is the main DirectDraw driver interface. It is supposed to be called
