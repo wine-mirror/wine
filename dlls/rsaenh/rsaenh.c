@@ -938,6 +938,8 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
     TRACE("(phProv=%p, pszContainer=%s, dwFlags=%08lx, pVTable=%p)\n", phProv, 
           debugstr_a(pszContainer), dwFlags, pVTable);
 
+    SetLastError(ERROR_SUCCESS);
+	
     if (!load_lib()) return FALSE;
     
     if (pszContainer ? strlen(pszContainer) : 0) 
