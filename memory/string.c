@@ -238,8 +238,7 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 {
-    /* this is how Windows does it */
-    memmove( (LPSTR)PTR_SEG_TO_LIN(dst), src, strlen(src)+1 );
+    if (!lstrcpyA( PTR_SEG_TO_LIN(dst), src )) dst = 0;
     return dst;
 }
 
@@ -256,6 +255,7 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
     }
     __EXCEPT(page_fault)
     {
+        ERR("(%p, %p): page fault occurred ! Caused by bug ?\n", dst, src);
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
