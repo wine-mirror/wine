@@ -98,7 +98,8 @@ static void set_timer_maxval(unsigned timer, unsigned maxval)
 {
     switch (timer) {
         case 0: /* System timer counter divisor */
-            Dosvm.SetTimer(maxval);
+            if (Dosvm.Current())
+	      Dosvm.SetTimer(maxval);
             break;
         case 1: /* RAM refresh */
             FIXME("RAM refresh counter handling not implemented !\n");
@@ -307,7 +308,10 @@ DWORD IO_inport( int port, int size )
 	    if (chan == 0) /* System timer counter divisor */
 	    {
 		/* FIXME: Dosvm.GetTimer() returns quite rigid values */
-		tempval = dummy_ctr + (WORD)Dosvm.GetTimer();
+	        if (Dosvm.Current())
+		  tempval = dummy_ctr + (WORD)Dosvm.GetTimer();
+		else
+		  tempval = dummy_ctr;
 	    }
 	    else
 	    {
@@ -415,7 +419,8 @@ void IO_outport( int port, int size, DWORD value )
     switch (port)
     {
     case 0x20:
-        Dosvm.OutPIC( port, (BYTE)value );
+        if (Dosvm.Current())
+	  Dosvm.OutPIC( port, (BYTE)value );
         break;
     case 0x40:
     case 0x41:
@@ -472,7 +477,10 @@ void IO_outport( int port, int size, DWORD value )
 	    tmr_8253[chan].latched = TRUE;
 	    dummy_ctr -= 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
 	    if (chan == 0) /* System timer divisor */
-		tmr_8253[chan].latch = dummy_ctr + (WORD)Dosvm.GetTimer();
+	        if (Dosvm.Current())
+		  tmr_8253[chan].latch = dummy_ctr + (WORD)Dosvm.GetTimer();
+	        else
+		  tmr_8253[chan].latch = dummy_ctr;
 	    else
 	    {
 		/* FIXME: intelligent hardware timer emulation needed */
