@@ -82,7 +82,7 @@ typedef struct tagICONCACHE
 
 static ICONCACHE *IconAnchor = NULL;
 static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT;
-static DWORD ICON_HOTSPOT = 0x42424242;
+static WORD ICON_HOTSPOT = 0x4242;
 
 /**********************************************************************
  *	    CURSORICON_FindSharedIcon
@@ -1793,8 +1793,8 @@ BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
 	 (ciconinfo->ptHotSpot.y == ICON_HOTSPOT) )
     {
       iconinfo->fIcon    = TRUE;
-      iconinfo->xHotspot = 0;
-      iconinfo->yHotspot = 0;
+      iconinfo->xHotspot = ciconinfo->nWidth / 2;
+      iconinfo->yHotspot = ciconinfo->nHeight / 2;
     }
     else
     {
