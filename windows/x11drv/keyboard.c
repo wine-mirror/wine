@@ -43,28 +43,52 @@ static const int main_key_scan[MAIN_LEN] =
    0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,
    0x1E,0x1F,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x2B,
    0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
-   0x56 /* the 102th key (actually to the left of the Z) */
+   0x56 /* the 102nd key (actually to the right of l-shift) */
 };
 
 /*** DEFINE YOUR NEW LANGUAGE-SPECIFIC MAPPINGS BELOW, SEE EXISTING TABLES */
 
-/* the VK mappings for the main keyboard will be auto-assigned as before */
-/* so what we have here is just the character tables */
+/* the VK mappings for the main keyboard will be auto-assigned as before,
+   so what we have here is just the character tables */
 /* order: Normal, Shift, AltGr, Shift-AltGr */
-/* I just wrote in what is guaranteed to be correct (i.e. what's written on the keycaps),
-   not the bunch of special characters behind AltGr and Shift-AltGr */
+/* We recommend you write just what is guaranteed to be correct (i.e. what's
+   written on the keycaps), not the bunch of special characters behind AltGr
+   and Shift-AltGr if it can vary among different X servers */
+/* Remember that your 102nd key (to the right of l-shift) should be on a
+   separate line, see existing tables */
+/* If Wine fails to match your new table, use -debugmsg +key to find out why */
+/* Remember to also add your new table to the layout index table far below! */
 
-/*** United States keyboard layout */
+/*** United States keyboard layout (mostly contributed by Uwe Bonnes) */
 static const char main_key_US[MAIN_LEN][4] =
 {
- /* FIXME: what did the US keyboard look like again? fill in the blanks, please */
- "","1!","2\"","3#","4$","5%","6","7","8","9(","0)","-","+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[","]",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";","","",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>","?"
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
-/*** Norwegian keyboard layout */
+/*** French keyboard layout (contributed by Eric Pouech) */
+static const char main_key_FR[MAIN_LEN][4] =
+{
+ "²","&1","é2~","\"3#","'4{","(5[","-6|","è7","_8\\","ç9^±","à0@",")°]","=+}",
+ "aA","zZ","eE","rR","tT","yY","uU","iI","oO","pP","","$£¤",
+ "qQ","sSß","dD","fF","gG","hH","jJ","kK","lL","mM","ù%","*µ",
+ "wW","xX","cC","vV","bB","nN",",?",";.",":/","!§",
+ "<>"
+};
+
+/*** German keyboard layout (contributed by Ulrich Weigand) */
+static const char main_key_DE[MAIN_LEN][4] =
+{
+ "^°","1!","2\"","3§","4$","5%","6&","7/{","8([","9)]","0=}","ß?\\","'",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üÜ","+*~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öÖ","äÄ","#´",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>"
+};
+
+/*** Norwegian keyboard layout (contributed by Ove Kåven) */
 static const char main_key_NO[MAIN_LEN][4] =
 {
  "|§","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?","\\`´",
@@ -74,13 +98,26 @@ static const char main_key_NO[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Danish keyboard layout (contributed by Bertho Stultiens) */
+static const char main_key_DA[MAIN_LEN][4] =
+{
+ "½§","1!","2\"@","3#£","4¤$","5%","6&","7/{","8([","9)]","0=}","+?","´|",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","åÅ","¨^~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","øØ","'*",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>\\"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static struct {
- WORD lang,codepage;
+ WORD lang, ansi_codepage, oem_codepage;
  const char (*key)[MAIN_LEN][4];
 } main_key_tab[]={
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),437,&main_key_US},
- {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),865,&main_key_NO},
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US), 1252, 437, &main_key_US},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),     1252, 850, &main_key_FR},
+ {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),     1252, 850, &main_key_DE},
+ {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &main_key_NO},
+ {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),     1252, 865, &main_key_DA},
 
  {0} /* sentinel */
 };
@@ -465,6 +502,7 @@ void X11DRV_KEYBOARD_DetectLayout(void)
 	    main_key_tab[kbd_layout].lang);
       FIXME(keyboard,"Please define your layout in windows/x11drv/keyboard.c, and submit them\n");
       FIXME(keyboard,"to us for inclusion into future Wine releases.\n");
+      FIXME(keyboard,"See documentation/keyboard for more information.\n");
     }
     TRACE(keyboard,"detected layout is %04x\n",main_key_tab[kbd_layout].lang);
 }
