@@ -24,7 +24,9 @@ C_SRCS = \
 	wowthunk.c
 
 RC_SRCS = \
-	kernel.rc \
+	kernel.rc
+
+RC_SRCS16 = \
 	version16.rc
 
 MC_SRCS = \

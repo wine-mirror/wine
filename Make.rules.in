@@ -271,7 +271,7 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
 depend: $(MAKEDEP) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(MC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
 
 # Rules for cleaning
 
@@ -282,7 +282,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(PROGRAMS)
 
 # Rules for installing
 
@@ -299,6 +299,8 @@ $(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
 $(GLUE:.c=.glue.c): $(WINEBUILD) $(TOPSRCDIR)/include/builtin16.h
 
 $(RC_SRCS:.rc=.res): $(WRC)
+
+$(RC_SRCS16:.rc=.res): $(WRC)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 

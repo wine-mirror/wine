@@ -24,9 +24,11 @@ C_SRCS = \
 	wsprintf.c
 
 RC_SRCS = \
+	resources/user32.rc
+
+RC_SRCS16 = \
 	resources/display.rc \
 	resources/mouse.rc \
-	resources/user32.rc \
 	resources/version16.rc
 
 GLUE = thunk.c

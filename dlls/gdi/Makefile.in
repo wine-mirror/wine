@@ -15,7 +15,9 @@ C_SRCS = \
 	wing.c
 
 RC_SRCS= \
-	version.rc \
+	version.rc
+
+RC_SRCS16= \
 	version16.rc
 
 GLUE = printdrv.c thunk.c
