@@ -511,6 +511,18 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       DOSVM_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));
       if (func) {
 	/* don't execute, just return startup state */
+        /*
+         * From Ralph Brown:
+         *  For function 01h, the AX value to be passed to the child program 
+         *  is put on top of the child's stack
+         */
+        LPBYTE stack;
+        init_sp -= 2;
+        stack = (LPBYTE) CTX_SEG_OFF_TO_LIN(context, init_ss, init_sp);
+        /* FIXME: push AX correctly */
+        stack[0] = 0x00;    /* push AL */
+        stack[1] = 0x00;    /* push AH */
+	
 	blk->init_cs = init_cs;
 	blk->init_ip = init_ip;
 	blk->init_ss = init_ss;
