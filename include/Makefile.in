@@ -168,6 +168,7 @@ WINDOWS_INCLUDES = \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
+	sspi.h \
 	storage.h \
 	strmif.h \
 	tapi.h \
