@@ -46,7 +46,7 @@ typedef void (*MSVCRT_sig_handler_func)(void);
 /* VC++ extensions to Win32 SEH */
 typedef struct _SCOPETABLE
 {
-  DWORD previousTryLevel;
+  int previousTryLevel;
   int (*lpfnFilter)(PEXCEPTION_POINTERS);
   int (*lpfnHandler)(void);
 } SCOPETABLE, *PSCOPETABLE;
@@ -57,12 +57,12 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
   void (*handler)(PEXCEPTION_RECORD, PEXCEPTION_FRAME,
                   PCONTEXT, PEXCEPTION_RECORD);
   PSCOPETABLE scopetable;
-  DWORD trylevel;
+  int trylevel;
   int _ebp;
   PEXCEPTION_POINTERS xpointers;
 } MSVCRT_EXCEPTION_FRAME;
 
-#define TRYLEVEL_END 0xffffffff /* End of trylevel list */
+#define TRYLEVEL_END (-1) /* End of trylevel list */
 
 #if defined(__GNUC__) && defined(__i386__)
 inline static void call_finally_block( void *code_block, void *base_ptr )
@@ -107,7 +107,7 @@ int _XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
 #ifdef __i386__
 /* Provided for VC++ binary compatability only */
 __ASM_GLOBAL_FUNC(_EH_prolog,
-                  "pushl $0xff\n\t"
+                  "pushl $-1\n\t"
                   "pushl %eax\n\t"
                   "pushl %fs:0\n\t"
                   "movl  %esp, %fs:0\n\t"
@@ -130,14 +130,12 @@ void _global_unwind2(PEXCEPTION_FRAME frame)
 /*******************************************************************
  *		_local_unwind2 (MSVCRT.@)
  */
-void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame,
-                    DWORD trylevel)
+void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame, int trylevel)
 {
   MSVCRT_EXCEPTION_FRAME *curframe = frame;
-  DWORD curtrylevel = 0xfe;
   EXCEPTION_FRAME reg;
 
-  TRACE("(%p,%ld,%ld)\n",frame, frame->trylevel, trylevel);
+  TRACE("(%p,%d,%d)\n",frame, frame->trylevel, trylevel);
 
   /* Register a handler in case of a nested exception */
   reg.Handler = (PEXCEPTION_HANDLER)MSVCRT_nested_handler;
@@ -146,7 +144,7 @@ void _local_unwind2(MSVCRT_EXCEPTION_FRAME* frame,
 
   while (frame->trylevel != TRYLEVEL_END && frame->trylevel != trylevel)
   {
-    curtrylevel = frame->scopetable[frame->trylevel].previousTryLevel;
+    int curtrylevel = frame->scopetable[frame->trylevel].previousTryLevel;
     curframe = frame;
     curframe->trylevel = curtrylevel;
     if (!frame->scopetable[curtrylevel].lpfnFilter)
@@ -183,7 +181,8 @@ int _except_handler3(PEXCEPTION_RECORD rec,
                      PCONTEXT context, void* dispatcher)
 {
 #if defined(__GNUC__) && defined(__i386__)
-  long retval, trylevel;
+  long retval;
+  int trylevel;
   EXCEPTION_POINTERS exceptPtrs;
   PSCOPETABLE pScopeTable;
 
