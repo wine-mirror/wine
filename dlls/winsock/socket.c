@@ -2330,80 +2330,12 @@ INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
  */
 SOCKET WINAPI WS_socket(int af, int type, int protocol)
 {
-    SOCKET ret;
-
     TRACE("af=%d type=%d protocol=%d\n", af, type, protocol);
 
-    /* check the socket family */
-    switch(af) 
-    {
-#ifdef HAVE_IPX
-	case WS_AF_IPX:	af = AF_IPX;
-#endif
-	case AF_INET:
-	case AF_UNSPEC: break;
-	default:        SetLastError(WSAEAFNOSUPPORT); 
-			return INVALID_SOCKET;
-    }
-
-    /* check the socket type */
-    switch(type) 
-    {
-	case WS_SOCK_STREAM:
-	    type=SOCK_STREAM;
-	    break;
-	case WS_SOCK_DGRAM:
-	    type=SOCK_DGRAM;
-	    break;
-	case WS_SOCK_RAW:
-	    type=SOCK_RAW;
-	    break;
-	default:        SetLastError(WSAESOCKTNOSUPPORT); 
-			return INVALID_SOCKET;
-    }
-
-    /* check the protocol type */
-    if ( protocol < 0 )  /* don't support negative values */
-    { SetLastError(WSAEPROTONOSUPPORT); return INVALID_SOCKET; }
-
-    if ( af == AF_UNSPEC)  /* did they not specify the address family? */
-        switch(protocol) 
-	{
-          case IPPROTO_TCP:
-             if (type == SOCK_STREAM) { af = AF_INET; break; }
-          case IPPROTO_UDP:
-             if (type == SOCK_DGRAM)  { af = AF_INET; break; }
-          default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
-        }
-
-    SERVER_START_REQ( create_socket )
-    {
-        req->family   = af;
-        req->type     = type;
-        req->protocol = protocol;
-        req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-        req->inherit  = TRUE;
-        set_error( wine_server_call( req ) );
-        ret = (SOCKET)reply->handle;
-    }
-    SERVER_END_REQ;
-    if (ret)
-    {
-        TRACE("\tcreated %04x\n", ret );
-        return ret;
-    }
-
-    if (GetLastError() == WSAEACCES) /* raw socket denied */
-    {
-	if (type == SOCK_RAW)
-	    MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, will fail unless running as root\n");
-        else
-            MESSAGE("WS_SOCKET: not enough privileges to create socket, try running as root\n");
-        SetLastError(WSAESOCKTNOSUPPORT);
-    }
-
-    WARN("\t\tfailed!\n");
-    return INVALID_SOCKET;
+    /* The Winsock2 specification states that socket() always opens sockets
+       in overlapped mode.
+       FIXME: is the SO_OPENTYPE behaviour correct? */
+    return WSASocketA ( af, type, protocol, NULL, 0, (opentype ? 0 : WSA_FLAG_OVERLAPPED) );
 }
 
 /***********************************************************************
@@ -2974,15 +2906,93 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
                          LPWSAPROTOCOL_INFOA lpProtocolInfo,
                          GROUP g, DWORD dwFlags)
 {
+    SOCKET ret;
+
    /* 
       FIXME: The "advanced" parameters of WSASocketA (lpProtocolInfo,
-      g, dwFlags) are ignored.
+      g, dwFlags except WSA_FLAG_OVERLAPPED) are ignored.
    */
-   
+
    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n", 
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
-   return ( WS_socket (af, type, protocol) );
+    /* check the socket family */
+    switch(af)
+    {
+#ifdef HAVE_IPX
+        case WS_AF_IPX: af = AF_IPX;
+#endif
+        case AF_INET:
+        case AF_UNSPEC:
+            break;
+        default:
+            SetLastError(WSAEAFNOSUPPORT);
+            return INVALID_SOCKET;
+    }
+
+    /* check the socket type */
+    switch(type)
+    {
+        case WS_SOCK_STREAM:
+            type=SOCK_STREAM;
+            break;
+        case WS_SOCK_DGRAM:
+            type=SOCK_DGRAM;
+            break;
+        case WS_SOCK_RAW:
+            type=SOCK_RAW;
+            break;
+        default:
+            SetLastError(WSAESOCKTNOSUPPORT);
+            return INVALID_SOCKET;
+    }
+
+    /* check the protocol type */
+    if ( protocol < 0 )  /* don't support negative values */
+    {
+        SetLastError(WSAEPROTONOSUPPORT);
+        return INVALID_SOCKET;
+    }
+
+    if ( af == AF_UNSPEC)  /* did they not specify the address family? */
+        switch(protocol)
+	{
+          case IPPROTO_TCP:
+             if (type == SOCK_STREAM) { af = AF_INET; break; }
+          case IPPROTO_UDP:
+             if (type == SOCK_DGRAM)  { af = AF_INET; break; }
+          default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
+        }
+
+    SERVER_START_REQ( create_socket )
+    {
+        req->family   = af;
+        req->type     = type;
+        req->protocol = protocol;
+        req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+        req->flags    = dwFlags;
+        req->inherit  = TRUE;
+        set_error( wine_server_call( req ) );
+        ret = (SOCKET)reply->handle;
+    }
+    SERVER_END_REQ;
+    if (ret)
+    {
+        TRACE("\tcreated %04x\n", ret );
+        return ret;
+    }
+
+    if (GetLastError() == WSAEACCES) /* raw socket denied */
+    {
+        if (type == SOCK_RAW)
+            MESSAGE("WARNING: Trying to create a socket of type SOCK_RAW, will fail unless running as root\n");
+        else
+            MESSAGE("WS_SOCKET: not enough privileges to create socket, try running as root\n");
+        SetLastError(WSAESOCKTNOSUPPORT);
+    }
+
+    WARN("\t\tfailed!\n");
+    return INVALID_SOCKET;
 }
 
 
