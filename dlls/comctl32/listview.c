@@ -3284,10 +3284,13 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
     lvItem.iItem = nItem;
+    lvItem.state = 0;
     lvItem.iSubItem = nSubItem;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     lvItem.pszText = szDispText;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
+    if (nSubItem > 0 && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) 
+	lvItem.state = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
     TRACE("   lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
     /* now check if we need to update the focus rectangle */
@@ -3310,9 +3313,8 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (lvItem.state & LVIS_FOCUSED) nmlvcd.nmcd.uItemState |= CDIS_FOCUS;
     if (lvItem.iItem == infoPtr->nHotItem) nmlvcd.nmcd.uItemState |= CDIS_HOT;
     nmlvcd.nmcd.lItemlParam = lvItem.lParam;
-    if ((lvItem.state & LVIS_SELECTED) && 
-	(lvItem.iSubItem == 0 || 
-	 (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))))
+
+    if (lvItem.state & LVIS_SELECTED)
     {
 	if (infoPtr->bFocus)
 	{
@@ -3348,9 +3350,13 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     if (infoPtr->hwndEdit && lprcFocus && nSubItem == 0) goto postpaint;
 
     /* Set the text attributes */
-    SetBkMode(hdc, nmlvcd.clrTextBk == CLR_NONE ? TRANSPARENT : OPAQUE);
     if (nmlvcd.clrTextBk != CLR_NONE)
+    {
+	SetBkMode(hdc, OPAQUE);
 	SetBkColor(hdc, nmlvcd.clrTextBk == CLR_DEFAULT ? infoPtr->clrTextBkDefault : nmlvcd.clrTextBk);
+    }
+    else
+	SetBkMode(hdc, TRANSPARENT);
     SetTextColor(hdc, nmlvcd.clrText);
 
     /* draw the selection background, if we're drawing the main item */
