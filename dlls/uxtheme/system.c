@@ -780,3 +780,23 @@ HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
     FIXME("%s %s: stub\n", debugstr_w(pszIniFileName), debugstr_w(pszUnknown));
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/**********************************************************************
+ *      CheckThemeSignature                                (UXTHEME.29)
+ *
+ * Validates the signature of a theme file
+ *
+ * PARAMS
+ *     pszIniFileName      Path to a theme file
+ */
+HRESULT WINAPI CheckThemeSignature(LPCWSTR pszThemeFileName)
+{
+    PTHEME_FILE pt;
+    HRESULT hr;
+    TRACE("(%s)\n", debugstr_w(pszThemeFileName));
+    hr = MSSTYLES_OpenThemeFile(pszThemeFileName, NULL, NULL, &pt);
+    if(FAILED(hr))
+        return hr;
+    MSSTYLES_CloseThemeFile(pt);
+    return S_OK;
+}
