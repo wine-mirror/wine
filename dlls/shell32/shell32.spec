@@ -121,12 +121,12 @@ init	Shell32LibMain
  126 stdcall SHOutOfMemoryMessageBox (long long long) SHOutOfMemoryMessageBox
  127 stdcall SHWinHelp (long long long long) SHWinHelp
  128 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
- 129 stub DAD_AutoScroll
- 130 stub DAD_DragEnter
- 131 stub DAD_DragEnterEx
- 132 stub DAD_DragLeave
+ 129 stdcall DAD_AutoScroll(long ptr ptr) DAD_AutoScroll
+ 130 stdcall DAD_DragEnter(long) DAD_DragEnter
+ 131 stdcall DAD_DragEnterEx(long long long) DAD_DragEnterEx
+ 132 stdcall DAD_DragLeave() DAD_DragLeave
  133 stdcall DragQueryFileW(long long ptr long) DragQueryFileW
- 134 stub DAD_DragMove
+ 134 stdcall DAD_DragMove(long long) DAD_DragMove
  135 stdcall DragQueryPoint(long ptr) DragQueryPoint
  136 stdcall DAD_SetDragImage(long long) DAD_SetDragImage
  137 stdcall DAD_ShowDragImage (long) DAD_ShowDragImage

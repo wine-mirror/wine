@@ -972,6 +972,51 @@ void WINAPI SHFreeUnusedLibraries (void)
 	FIXME("stub\n");
 }
 /*************************************************************************
+ * DAD_AutoScroll				[SHELL32.129]
+ *
+ */
+DWORD WINAPI DAD_AutoScroll(HWND hwnd, LPSCROLLSAMPLES samples, LPPOINT pt)
+{
+    FIXME("hwnd = %04x %p %p\n",hwnd,samples,pt);
+    return 0;
+}
+/*************************************************************************
+ * DAD_DragEnter				[SHELL32.130]
+ *
+ */
+BOOL WINAPI DAD_DragEnter(HWND hwnd)
+{
+    FIXME("hwnd = %04x\n",hwnd);
+    return FALSE;
+}
+/*************************************************************************
+ * DAD_DragEnterEx				[SHELL32.131]
+ *
+ */
+BOOL WINAPI DAD_DragEnterEx(HWND hwnd, POINT p)
+{
+    FIXME("hwnd = %04x (%ld,%ld)\n",hwnd,p.x,p.y);
+    return FALSE;
+}
+/*************************************************************************
+ * DAD_DragMove				[SHELL32.134]
+ *
+ */
+BOOL WINAPI DAD_DragMove(POINT p)
+{
+    FIXME("(%ld,%ld)\n",p.x,p.y);
+    return FALSE;
+}
+/*************************************************************************
+ * DAD_Leave				[SHELL32.132]
+ *
+ */
+BOOL WINAPI DAD_DragLeave(VOID)
+{
+    FIXME("\n");
+    return FALSE;
+}
+/*************************************************************************
  * DAD_SetDragImage				[SHELL32.136]
  *
  * NOTES
