@@ -41,6 +41,10 @@ BOOL32 MAIN_EmulatorInit(void)
     return TRUE;
 }
 
+typedef BOOL32 (*WINAPI tGetMessage)(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max);
+typedef BOOL32 (*WINAPI tTranslateMessage)(const MSG32* msg);
+typedef LONG   (*WINAPI tDispatchMessage)( const MSG32* msg );
+
 /***********************************************************************
  *           Main loop of initial task
  */
@@ -50,11 +54,11 @@ void MAIN_EmulatorRun( void )
     HINSTANCE32 handle;
     int i;
 
-    BOOL32 (*WINAPI pGetMessage)(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max);
-    BOOL32 (*WINAPI pTranslateMessage)( const MSG32* msg );
-    LONG   (*WINAPI pDispatchMessage)( const MSG32* msg );
-    HMODULE32 hModule;
-    MSG32 msg;
+    tGetMessage		pGetMessage;
+    tTranslateMessage	pTranslateMessage;
+    tDispatchMessage	pDispatchMessage;
+    HMODULE32		hModule;
+    MSG32		msg;
 
     /* Load system DLLs into the initial process (and initialize them) */
     if (   !LoadLibrary16("GDI.EXE" ) || !LoadLibrary32A("GDI32.DLL" )
@@ -104,9 +108,9 @@ void MAIN_EmulatorRun( void )
     /* Start message loop for desktop window */
 
     hModule = GetModuleHandle32A( "USER32" );
-    pGetMessage       = GetProcAddress32( hModule, "GetMessageA" ); 
-    pTranslateMessage = GetProcAddress32( hModule, "TranslateMessage" ); 
-    pDispatchMessage  = GetProcAddress32( hModule, "DispatchMessageA" ); 
+    pGetMessage       = (tGetMessage)GetProcAddress32( hModule, "GetMessageA" ); 
+    pTranslateMessage = (tTranslateMessage)GetProcAddress32( hModule, "TranslateMessage" ); 
+    pDispatchMessage  = (tDispatchMessage)GetProcAddress32( hModule, "DispatchMessageA" ); 
 
     assert( pGetMessage );
     assert( pTranslateMessage );
