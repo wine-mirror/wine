@@ -3852,16 +3852,16 @@ static void test_VarCyInt(void)
      "expected hres " #x ", got hres=0x%08lx", hres)
 
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
-  out.u.s.scale == (BYTE)scl && out.u.s.sign == (BYTE)sgn && \
-  out.Hi32 == (ULONG)hi && out.u1.Lo64 == (ULONG64)lo, \
+  out.u.s.scale == (BYTE)(scl) && out.u.s.sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && out.u1.Lo64 == (ULONG64)(lo), \
   "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG)((LONG64)lo >> 32), (LONG)(lo & 0xffffffff), out.u.s.scale, \
+  scl, sgn, hi, (LONG)((LONG64)(lo) >> 32), (LONG)((lo) & 0xffffffff), out.u.s.scale, \
   out.u.s.sign, out.Hi32, out.u1.s1.Mid32, out.u1.s1.Lo32, hres)
 
 #define EXPECTDEC64(scl, sgn, hi, mid, lo) ok(hres == S_OK && \
-  out.u.s.scale == (BYTE)scl && out.u.s.sign == (BYTE)sgn && \
-  out.Hi32 == (ULONG)hi && out.u1.s1.Mid32 == (ULONG)mid && \
-  out.u1.s1.Lo32 == (ULONG)lo, \
+  out.u.s.scale == (BYTE)(scl) && out.u.s.sign == (BYTE)(sgn) && \
+  out.Hi32 == (ULONG)(hi) && out.u1.s1.Mid32 == (ULONG)(mid) && \
+  out.u1.s1.Lo32 == (ULONG)(lo), \
   "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
   scl, sgn, hi, (LONG)(mid), (LONG)(lo), out.u.s.scale, \
   out.u.s.sign, out.Hi32, out.u1.s1.Mid32, out.u1.s1.Lo32, hres)
@@ -4115,8 +4115,8 @@ static void test_VarDecAdd(void)
   SETDEC(l,0,0x80,0,2); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0x80,0,1);
 
   SETDEC(l,0,0,0,0xffffffff); SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd); EXPECTDEC(0,0,0,0xfffffffe);
-  SETDEC(l,0,0,0,0xffffffff); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,0x100000000);
-  SETDEC(l,0,0,0,0xffffffff); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,0x100000000);
+  SETDEC(l,0,0,0,0xffffffff); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,(ULONG64)1 << 32);
+  SETDEC(l,0,0,0,0xffffffff); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC(0,0,0,(ULONG64)1 << 32);
 
   SETDEC64(l,0,0,0,0xffffffff,0); SETDEC(r,0,0,0,1);    MATH2(VarDecAdd); EXPECTDEC64(0,0,0,0xffffffff,1);
   SETDEC64(l,0,0,0,0xffffffff,0); SETDEC(r,0,0x80,0,1); MATH2(VarDecAdd);
