@@ -120,7 +120,7 @@ static void function_header( FILE *outfile, const char *name )
  */
 static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int short_ret )
 {
-    char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
+    const char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
 
     /* Function header */
     if (thunk) function_header( outfile, "__wine_call_from_16_thunk" );
@@ -753,7 +753,7 @@ static void BuildRet16Func( FILE *outfile )
  */
 static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 {
-    char *name = isEx? "CBClientEx" : "CBClient";
+    const char *name = isEx? "CBClientEx" : "CBClient";
     int size = isEx? 24 : 12;
 
     /* Function header */
@@ -889,7 +889,7 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 
 static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
 {
-    char *name = isEx? "CBClientEx" : "CBClient";
+    const char *name = isEx? "CBClientEx" : "CBClient";
 
     /* '16-bit' return stub */
 

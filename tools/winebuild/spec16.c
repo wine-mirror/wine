@@ -346,7 +346,7 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
     int usecdecl = 0;
     int varargs = 0;
     const char *args = profile + 7;
-    char *ret_type;
+    const char *ret_type;
 
     /* Parse function type */
 

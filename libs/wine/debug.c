@@ -143,12 +143,13 @@ void wine_dbg_add_option( const char *name, unsigned char set, unsigned char cle
 /* parse a set of debugging option specifications and add them to the option list */
 int wine_dbg_parse_options( const char *str )
 {
-    char *p, *opt, *next, *options;
+    char *opt, *next, *options;
     int i, errors = 0;
 
     if (!(options = strdup(str))) return -1;
     for (opt = options; opt; opt = next)
     {
+        const char *p;
         unsigned char set = 0, clear = 0;
 
         if ((next = strchr( opt, ',' ))) *next++ = 0;

@@ -66,7 +66,7 @@ int debugging = 0;
 char *owner_name = NULL;
 char *dll_name = NULL;
 char *dll_file_name = NULL;
-char *init_func = NULL;
+const char *init_func = NULL;
 char **debug_channels = NULL;
 char **lib_path = NULL;
 

@@ -58,13 +58,13 @@ char*	g_lpstrCharSet = NULL;
 char*   g_lpstrInputFile = NULL;
 int     g_outputPoints = 0;
 
-static char*	errorDLLRead = "Unable to read Windows DLL.\n";
-static char*    errorFNTRead = "Unable to read .FNT file.\n";
-static char*    errorOpenFile = "Unable to open file.\n";
-static char*    errorMemory = "Memory allocation error.\n";
-static char*    errorFile = "Corrupt or invalid file.\n";
-static char*    errorFontData = "Unable to parse font data: Error ";
-static char*    errorEmpty = "No fonts found.\n";
+static const char*  errorDLLRead = "Unable to read Windows DLL.\n";
+static const char*  errorFNTRead = "Unable to read .FNT file.\n";
+static const char*  errorOpenFile = "Unable to open file.\n";
+static const char*  errorMemory = "Memory allocation error.\n";
+static const char*  errorFile = "Corrupt or invalid file.\n";
+static const char*  errorFontData = "Unable to parse font data: Error ";
+static const char*  errorEmpty = "No fonts found.\n";
 
 /* info */
 

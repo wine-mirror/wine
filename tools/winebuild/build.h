@@ -191,7 +191,7 @@ extern int kill_at;
 extern char *owner_name;
 extern char *dll_name;
 extern char *dll_file_name;
-extern char *init_func;
+extern const char *init_func;
 extern char *input_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
