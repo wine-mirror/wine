@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
  * %S ???
  * %* all following parameters (see batfile)
  */
-static void argify(char* res, int len, const char* fmt, const char* lpFile)
+static BOOL argify(char* res, int len, const char* fmt, const char* lpFile)
 {
     char        xlpFile[1024];
     BOOL        done = FALSE;
@@ -97,6 +97,47 @@ static void argify(char* res, int len, const char* fmt, const char* lpFile)
             *res++ = *fmt++;
     }
     *res = '\0';
+    return done;
+}
+
+/*************************************************************************
+ *	SHELL_ExecuteA [Internal]
+ *
+ */
+static HINSTANCE SHELL_ExecuteA(char *lpCmd, LPSHELLEXECUTEINFOA sei, BOOL is32)
+{
+    STARTUPINFOA  startup;
+    PROCESS_INFORMATION info;
+    HINSTANCE retval = 31;
+
+    TRACE("Execute %s from directory %s\n", lpCmd, sei->lpDirectory);
+    ZeroMemory(&startup,sizeof(STARTUPINFOA));
+    startup.cb = sizeof(STARTUPINFOA);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = sei->nShow;
+    if (is32)
+    {
+        if (CreateProcessA(NULL, lpCmd, NULL, NULL, FALSE, 0,
+                        NULL, sei->lpDirectory, &startup, &info))
+        {
+            retval = (HINSTANCE)33;
+            if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
+	        sei->hProcess = info.hProcess;
+            else
+                CloseHandle( info.hProcess );
+            CloseHandle( info.hThread );
+        }
+        else if ((retval = GetLastError()) >= (HINSTANCE)32)
+        {
+            FIXME("Strange error set by CreateProcess: %d\n", retval);
+            retval = (HINSTANCE)ERROR_BAD_FORMAT;
+        }
+    }
+    else
+        retval = WinExec16(lpCmd, sei->nShow);
+
+    sei->hInstApp = retval;
+    return retval;
 }
 
 /*************************************************************************
@@ -113,7 +154,7 @@ static void argify(char* res, int len, const char* fmt, const char* lpFile)
  *              command (it'll be used afterwards for more information
  *              on the operation)
  */
-static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
+static HINSTANCE SHELL_FindExecutable(LPCSTR lpPath, LPCSTR lpFile, LPCSTR lpOperation,
                                       LPSTR lpResult, LPSTR key)
 {
     char *extension = NULL; /* pointer to file extension */
@@ -140,7 +181,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
         return 2; /* File not found. Close enough, I guess. */
     }
 
-    if (SearchPathA(NULL, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
+    if (SearchPathA(lpPath, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
     {
         TRACE("SearchPathA returned non-zero\n");
         lpFile = xlpFile;
@@ -298,7 +339,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  */
 static unsigned dde_connect(char* key, char* start, char* ddeexec,
                             const char* lpFile,
-                            int iCmdShow, BOOL is32)
+                            LPSHELLEXECUTEINFOA sei, BOOL is32)
 {
     char*       endkey = key + strlen(key);
     char        app[256], topic[256], ifexec[256], res[256];
@@ -338,7 +379,7 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     if (!hConv)
     {
         TRACE("Launching '%s'\n", start);
-        ret = (is32) ? WinExec(start, iCmdShow) : WinExec16(start, iCmdShow);
+        ret = SHELL_ExecuteA(start, sei, is32);
         if (ret < 32)
         {
             TRACE("Couldn't launch\n");
@@ -369,7 +410,10 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
     return ret;
 }
 
-static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, INT iShowCmd, BOOL is32)
+/*************************************************************************
+ *	execute_from_key [Internal]
+ */
+static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, LPSHELLEXECUTEINFOA sei, BOOL is32)
 {
     char cmd[1024] = "";
     LONG cmdlen = sizeof(cmd);
@@ -391,15 +435,14 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, INT iShowCmd, BOOL i
         if (RegQueryValueA(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", key, param);
-            retval = dde_connect(key, cmd, param, lpFile, iShowCmd, is32);
+            retval = dde_connect(key, cmd, param, lpFile, sei, is32);
         }
         else
         {
             /* Is there a replace() function anywhere? */
             cmd[cmdlen] = '\0';
             argify(param, sizeof(param), cmd, lpFile);
-
-            retval = (is32) ? WinExec(param, iShowCmd) : WinExec16(param, iShowCmd);
+            retval = SHELL_ExecuteA(param, sei, is32);
         }
     }
     else TRACE("ooch\n");
@@ -433,7 +476,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
         SetCurrentDirectoryA(lpDirectory);
     }
 
-    retval = SHELL_FindExecutable(lpFile, "open", lpResult, NULL);
+    retval = SHELL_FindExecutable(lpDirectory, lpFile, "open", lpResult, NULL);
 
     TRACE("returning %s\n", lpResult);
     if (lpDirectory)
@@ -455,24 +498,22 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
  */
 BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
 {
-    CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
+    CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20],fileName[MAX_PATH];
     LPSTR pos;
     int gap, len;
-    STARTUPINFOA  startup;
-    PROCESS_INFORMATION info;
     char lpstrProtocol[256];
-    LPCSTR lpFile, lpOperation;
+    LPCSTR lpFile,lpOperation;
     HINSTANCE retval = 31;
-    char old_dir[1024];
     char cmd[1024];
-    INT iShowCmd;
+    BOOL done;
 
-    TRACE("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s incomplete\n",
+    TRACE("mask=0x%08lx hwnd=0x%04x verb=%s file=%s parm=%s dir=%s show=0x%08x class=%s\n",
             sei->fMask, sei->hwnd, debugstr_a(sei->lpVerb),
             debugstr_a(sei->lpFile), debugstr_a(sei->lpParameters),
             debugstr_a(sei->lpDirectory), sei->nShow,
             (sei->fMask & SEE_MASK_CLASSNAME) ? debugstr_a(sei->lpClass) : "not used");
 
+    sei->hProcess = (HANDLE)NULL;
     ZeroMemory(szApplicationName,MAX_PATH);
     if (sei->lpFile)
         strcpy(szApplicationName, sei->lpFile);
@@ -481,22 +522,13 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
     if (sei->lpParameters)
         strcpy(szCommandline, sei->lpParameters);
 
-    if (sei->fMask & (SEE_MASK_CLASSKEY | SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
+    if (sei->fMask & ((SEE_MASK_CLASSKEY & ~SEE_MASK_CLASSNAME) |
+        SEE_MASK_INVOKEIDLIST | SEE_MASK_ICON | SEE_MASK_HOTKEY |
         SEE_MASK_CONNECTNETDRV | SEE_MASK_FLAG_DDEWAIT |
         SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI | SEE_MASK_UNICODE |
         SEE_MASK_NO_CONSOLE | SEE_MASK_ASYNCOK | SEE_MASK_HMONITOR ))
     {
         FIXME("flags ignored: 0x%08lx\n", sei->fMask);
-    }
-
-    /* launch a document by fileclass like 'Wordpad.Document.1' */
-    if (sei->fMask & SEE_MASK_CLASSNAME)
-    {
-        /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
-        /* the commandline contains 'c:\Path\wordpad.exe "%1"' */
-        HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
-        /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
-        TRACE("SEE_MASK_CLASSNAME->'%s'\n", szCommandline);
     }
 
     /* process the IDList */
@@ -526,53 +558,64 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         }
     }
 
+    if (sei->fMask & SEE_MASK_CLASSNAME)
+    {
+	/* launch a document by fileclass like 'WordPad.Document.1' */
+        /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
+        /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
+        HCR_GetExecuteCommand(sei->lpClass, (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
+        /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
+        TRACE("SEE_MASK_CLASSNAME->'%s', doc->'%s'\n", szCommandline, szApplicationName);
+
+        cmd[0] = '\0';
+        done = argify(cmd, sizeof(cmd), szCommandline, szApplicationName);
+        if (!done && szApplicationName[0])
+        {
+            strcat(cmd, " ");
+            strcat(cmd, szApplicationName);
+        }
+        retval = SHELL_ExecuteA(cmd, sei, is32);
+        if (retval > 32)
+            return TRUE;
+        else
+            return FALSE;
+    }
+
+    /* We set the default to open, and that should generally work.
+       But that is not really the way the MS docs say to do it. */
+    if (sei->lpVerb == NULL)
+        lpOperation = "open";
+    else
+        lpOperation = sei->lpVerb;
+
+    /* Else, try to execute the filename */
     TRACE("execute:'%s','%s'\n",szApplicationName, szCommandline);
 
+    strcpy(fileName, szApplicationName);
+    lpFile = fileName;
     if (szCommandline[0]) {
         strcat(szApplicationName, " ");
         strcat(szApplicationName, szCommandline);
     }
 
-    ZeroMemory(&startup,sizeof(STARTUPINFOA));
-    startup.cb = sizeof(STARTUPINFOA);
-
-    if (CreateProcessA(NULL, szApplicationName,
-                    NULL, NULL, FALSE, 0,
-                    NULL, sei->lpDirectory,
-                    &startup, &info))
-    {
-        sei->hInstApp = 33;
-        if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
-	    sei->hProcess = info.hProcess;
-        else
-            CloseHandle( info.hProcess );
-        CloseHandle( info.hThread );
+    retval = SHELL_ExecuteA(szApplicationName, sei, is32);
+    if (retval > 32)
         return TRUE;
-    }
 
-    if (sei->lpVerb == NULL) /* default is open */
-        lpOperation = "open";
-    else
-        lpOperation = sei->lpVerb;
-
-    lpFile = sei->lpFile;
-    iShowCmd = sei->nShow;
-    if (sei->lpDirectory)
-    {
-        GetCurrentDirectoryA(sizeof(old_dir), old_dir);
-        SetCurrentDirectoryA(sei->lpDirectory);
-    }
-
+    /* Else, try to find the executable */
     cmd[0] = '\0';
-    retval = SHELL_FindExecutable(lpFile, lpOperation, cmd, lpstrProtocol);
-
+    retval = SHELL_FindExecutable(sei->lpDirectory, lpFile, lpOperation, cmd, lpstrProtocol);
     if (retval > 32)  /* Found */
     {
-        TRACE("%s/%s => %s/%s\n", lpFile, lpOperation, cmd, lpstrProtocol);
+        if (szCommandline[0]) {
+            strcat(cmd, " ");
+            strcat(cmd, szCommandline);
+        }
+        TRACE("%s/%s => %s/%s\n", szApplicationName, lpOperation, cmd, lpstrProtocol);
         if (*lpstrProtocol)
-            retval = execute_from_key(lpstrProtocol, lpFile, iShowCmd, is32);
+            retval = execute_from_key(lpstrProtocol, szApplicationName, sei, is32);
         else
-            retval = (is32) ? WinExec(cmd, iShowCmd) : WinExec16(cmd, iShowCmd);
+            retval = SHELL_ExecuteA(cmd, sei, is32);
     }
     else if (PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
     {
@@ -601,7 +644,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
             lpFile += iSize;
             while (*lpFile == ':') lpFile++;
         }
-        retval = execute_from_key(lpstrProtocol, lpFile, iShowCmd, is32);
+        retval = execute_from_key(lpstrProtocol, lpFile, sei, is32);
     }
     /* Check if file specified is in the form www.??????.*** */
     else if (!strncasecmp(lpFile, "www", 3))
@@ -612,9 +655,6 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
         retval = ShellExecuteA(sei->hwnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
     }
 
-    if (sei->lpDirectory)
-        SetCurrentDirectoryA(old_dir);
-
     if (retval <= 32)
     {
         sei->hInstApp = retval;
@@ -622,12 +662,6 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, BOOL is32)
     }
 
     sei->hInstApp = 33;
-
-    if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
-        sei->hProcess = info.hProcess;
-    else
-        CloseHandle( info.hProcess );
-    CloseHandle( info.hThread );
     return TRUE;
 }
 
