@@ -1023,3 +1023,6 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 @ cdecl __wine_dbg_header_trace(ptr str) __wine_dbg_header_trace
 @ cdecl wine_dbg_vprintf(str ptr) wine_dbg_vprintf
 @ varargs wine_dbg_printf(str) wine_dbg_printf
+
+# Command-line
+@ cdecl __wine_get_main_args(ptr) __wine_get_main_args

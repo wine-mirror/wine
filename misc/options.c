@@ -25,11 +25,6 @@ struct option
     const char *usage;
 };
 
-/* Most Windows C/C++ compilers use something like this to */
-/* access argc and argv globally: */
-int _ARGC;
-char **_ARGV;
-
 /* default options */
 struct options Options =
 {
@@ -45,6 +40,9 @@ const char *argv0;       /* the original argv[0] */
 const char *full_argv0;  /* the full path of argv[0] (if known) */
 
 static char *inherit_str;  /* options to pass to child processes */
+
+static int app_argc;       /* argc/argv to pass to application */
+static char **app_argv;
 
 static void out_of_memory(void) WINE_NORETURN;
 static void out_of_memory(void)
@@ -342,7 +340,21 @@ void OPTIONS_ParseOptions( char *argv[] )
     }
 
     /* count the resulting arguments */
-    _ARGV = argv;
-    _ARGC = 0;
-    while (argv[_ARGC]) _ARGC++;
+    app_argv = argv;
+    app_argc = 0;
+    while (argv[app_argc]) app_argc++;
 }
+
+
+/***********************************************************************
+ *              __wine_get_main_args
+ *
+ * Return the argc/argv that the application should see.
+ * Used by the startup code generated in the .spec.c file.
+ */
+int __wine_get_main_args( char ***argv )
+{
+    *argv = app_argv;
+    return app_argc;
+}
+
