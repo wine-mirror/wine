@@ -497,7 +497,7 @@ static void test_marshal_proxy_mta_apartment_shutdown()
     HANDLE thread;
 
     CoUninitialize();
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     cLocks = 0;
 
@@ -506,7 +506,7 @@ static void test_marshal_proxy_mta_apartment_shutdown()
     tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
 
     ok_more_than_one_lock();
-	
+
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
     ok_ole_success(hr, CoUnmarshalInterface);
@@ -524,7 +524,7 @@ static void test_marshal_proxy_mta_apartment_shutdown()
 
     end_host_object(tid, thread);
 
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
 
 struct ncu_params
@@ -540,7 +540,7 @@ static DWORD CALLBACK no_couninitialize_proc(LPVOID p)
 	struct ncu_params *ncu_params = (struct ncu_params *)p;
 	HRESULT hr;
 
-	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	pCoInitializeEx(NULL, COINIT_MULTITHREADED);
 
 	hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
 	ok_ole_success(hr, CoMarshalInterface);
@@ -912,7 +912,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     HRESULT hr;
     IUnknown * proxy = NULL;
 
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
     
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
