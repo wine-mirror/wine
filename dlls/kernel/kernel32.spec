@@ -947,6 +947,6 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 # 16-bit relays
 @ cdecl __wine_register_dll_16(ptr) __wine_register_dll_16
 @ varargs __wine_call_from_16_word() __wine_call_from_16_word
-@ varargs __wine_call_from_16_long() __wine_call_from_16_word
-@ varargs __wine_call_from_16_regs() __wine_call_from_16_word
-@ varargs __wine_call_from_16_thunk() __wine_call_from_16_word
+@ varargs __wine_call_from_16_long() __wine_call_from_16_long
+@ varargs __wine_call_from_16_regs() __wine_call_from_16_regs
+@ varargs __wine_call_from_16_thunk() __wine_call_from_16_thunk
