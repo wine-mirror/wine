@@ -41,8 +41,9 @@
  * The finally_func must be defined with the WINE_FINALLY_FUNC macro.
  *
  * Warning: inside a __TRY or __EXCEPT block, 'break' or 'continue' statements
- *          break out of the current block. 'return' causes disaster and must
- *          never be used.
+ *          break out of the current block. You cannot use 'return', 'goto'
+ *          or 'longjmp' to leave a __TRY block, as this will surely crash.
+ *          You can use them to leave a __EXCEPT block though.
  *
  * -- AJ
  */
@@ -54,8 +55,8 @@
 #ifdef USE_COMPILER_EXCEPTIONS
 
 #define __TRY __try
-#define __EXCEPT(func,arg) __except((func)(GetExceptionInformation(),GetExceptionCode(),(arg)))
-#define __FINALLY(func,arg) __finally { (func)(!AbnormalTermination(),(arg)); }
+#define __EXCEPT(func) __except((func)(GetExceptionInformation()))
+#define __FINALLY(func) __finally { (func)(!AbnormalTermination()); }
 #define __ENDTRY /*nothing*/
 
 #else  /* USE_COMPILER_EXCEPTIONS */
@@ -67,17 +68,16 @@
          { \
              do {
 
-#define __EXCEPT(func,arg) \
+#define __EXCEPT(func) \
              } while(0); \
              EXC_pop_frame( &__f.frame ); \
              break; \
          } else { \
              __f.frame.Handler = (PEXCEPTION_HANDLER)WINE_exception_handler; \
-             __f.u.e.filter = (func); \
-             __f.u.e.param = (LPVOID)(arg); \
+             __f.u.filter = (func); \
              EXC_push_frame( &__f.frame ); \
-             if (setjmp( __f.u.e.jmp)) { \
-                 EXC_pop_frame( &__f.frame ); \
+             if (setjmp( __f.jmp)) { \
+                 const __WINE_FRAME * const __eptr WINE_UNUSED = &__f; \
                  do {
 
 #define __ENDTRY \
@@ -88,57 +88,44 @@
          } \
     } while (0);
 
-#define __FINALLY(func,arg) \
+#define __FINALLY(func) \
              } while(0); \
              EXC_pop_frame( &__f.frame ); \
-             (func)( TRUE, (LPVOID)(arg) ); \
+             (func)(1); \
              break; \
          } else { \
              __f.frame.Handler = (PEXCEPTION_HANDLER)WINE_finally_handler; \
-             __f.u.f.finally_func = (func); \
-             __f.u.f.param = (LPVOID)(arg); \
+             __f.u.finally_func = (func); \
              EXC_push_frame( &__f.frame ); \
              __first = 0; \
          } \
     } while (0);
 
 
-/* Dummy structure for using GetExceptionCode in filter as well as in handler */
-typedef struct
-{
-     union { struct { DWORD code; } e; } u;
-} __WINE_DUMMY_FRAME;
+typedef DWORD (*CALLBACK __WINE_FILTER)(PEXCEPTION_POINTERS);
+typedef void (*CALLBACK __WINE_FINALLY)(BOOL);
 
-typedef DWORD (*CALLBACK __WINE_FILTER)(PEXCEPTION_POINTERS,__WINE_DUMMY_FRAME,LPVOID);
-typedef void (*CALLBACK __WINE_FINALLY)(BOOL,LPVOID);
-
-#define WINE_EXCEPTION_FILTER(func,arg) \
-    DWORD WINAPI func( EXCEPTION_POINTERS *__eptr, __WINE_DUMMY_FRAME __f, LPVOID arg )
-#define WINE_FINALLY_FUNC(func,arg) \
-    void WINAPI func( BOOL __normal, LPVOID arg )
+#define WINE_EXCEPTION_FILTER(func) DWORD WINAPI func( EXCEPTION_POINTERS *__eptr )
+#define WINE_FINALLY_FUNC(func) void WINAPI func( BOOL __normal )
 
 #define GetExceptionInformation() (__eptr)
-#define GetExceptionCode()        (__f.u.e.code)
+#define GetExceptionCode()        (__eptr->ExceptionRecord->ExceptionCode)
 #define AbnormalTermination()     (!__normal)
 
-typedef struct
+typedef struct __tagWINE_FRAME
 {
     EXCEPTION_FRAME frame;
     union
     {
-        struct  /* exception data */
-        {
-            __WINE_FILTER   filter;
-            LPVOID          param;
-            DWORD           code;
-            jmp_buf         jmp;
-        } e;
-        struct  /* finally data */
-        {
-            __WINE_FINALLY  finally_func;
-            LPVOID          param;
-        } f;
+        /* exception data */
+        __WINE_FILTER filter;
+        /* finally data */
+        __WINE_FINALLY finally_func;
     } u;
+    jmp_buf jmp;
+    /* hack to make GetExceptionCode() work in handler */
+    DWORD ExceptionCode;
+    const struct __tagWINE_FRAME *ExceptionRecord;
 } __WINE_FRAME;
 
 extern DWORD WINAPI WINE_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
@@ -158,7 +145,7 @@ static inline EXCEPTION_FRAME *EXC_push_frame( EXCEPTION_FRAME *frame )
                          : "=&r" (prev) : "r" (frame) : "memory" );
     return prev;
 #else
-    TEB * teb = NtCurrentTeb();
+    TEB * teb = CURRENT();
     frame->Prev = teb->except;
     teb->except = frame;
     return frame->Prev;
@@ -173,9 +160,16 @@ static inline EXCEPTION_FRAME *EXC_pop_frame( EXCEPTION_FRAME *frame )
     return frame->Prev;
 
 #else
-    NtCurrentTeb()->except = frame->Prev;
+    CURRENT()->except = frame->Prev;
     return frame->Prev;
 #endif
 }
+
+#ifdef __WINE__
+typedef DWORD (*DEBUGHOOK)( EXCEPTION_RECORD *, CONTEXT *, BOOL );
+extern void EXC_SetDebugEventHook( DEBUGHOOK hook );
+extern DEBUGHOOK EXC_GetDebugEventHook(void);
+extern void EXC_InitHandlers(void);
+#endif
 
 #endif  /* __WINE_WINE_EXCEPTION_H */

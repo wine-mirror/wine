@@ -69,16 +69,18 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     char message[80];
     PDB *pdb = PROCESS_Current();
 
-    if (pdb->flags & PDB32_DEBUGGED)
-    {
-        if (DEBUG_SendExceptionEvent( epointers->ExceptionRecord, FALSE ) == DBG_CONTINUE)
-            return EXCEPTION_CONTINUE_EXECUTION;
-    }
-    else if (pdb->top_filter)
+    if (pdb->flags & PDB32_DEBUGGED) return EXCEPTION_CONTINUE_SEARCH;
+
+    if (pdb->top_filter)
     {
         DWORD ret = pdb->top_filter( epointers );
         if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
     }
+
+    /* FIXME: does not belong here */
+    if (((*EXC_GetDebugEventHook())( epointers->ExceptionRecord,
+                                     epointers->ContextRecord, FALSE )) == DBG_CONTINUE)
+        return EXCEPTION_CONTINUE_EXECUTION;
 
     /* FIXME: Should check the current error mode */
 
@@ -115,15 +117,12 @@ DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *
 
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND | EH_NESTED_CALL))
         return ExceptionContinueSearch;
-    if (wine_frame->u.e.filter)
+    if (wine_frame->u.filter)
     {
         EXCEPTION_POINTERS ptrs;
-        __WINE_DUMMY_FRAME dummy;
-
         ptrs.ExceptionRecord = record;
         ptrs.ContextRecord = context;
-        dummy.u.e.code = record->ExceptionCode;
-        switch(wine_frame->u.e.filter( &ptrs, dummy, wine_frame->u.e.param ))
+        switch(wine_frame->u.filter( &ptrs ))
         {
         case EXCEPTION_CONTINUE_SEARCH:
             return ExceptionContinueSearch;
@@ -136,8 +135,13 @@ DWORD WINAPI WINE_exception_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *
             assert( FALSE );
         }
     }
+    /* hack to make GetExceptionCode() work in handler */
+    wine_frame->ExceptionCode   = record->ExceptionCode;
+    wine_frame->ExceptionRecord = wine_frame;
+
     RtlUnwind( frame, 0, record, 0 );
-    longjmp( wine_frame->u.e.jmp, 1 );
+    EXC_pop_frame( frame );
+    longjmp( wine_frame->jmp, 1 );
 }
 
 
@@ -153,6 +157,6 @@ DWORD WINAPI WINE_finally_handler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *fr
 
     if (!(record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
         return ExceptionContinueSearch;
-    wine_frame->u.f.finally_func( FALSE, wine_frame->u.f.param );
+    wine_frame->u.finally_func( FALSE );
     return ExceptionContinueSearch;
 }
