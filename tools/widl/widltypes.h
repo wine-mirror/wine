@@ -240,6 +240,7 @@ struct _typelib_entry_t {
         type_t *interface;
         type_t *module;
         type_t *structure;
+        type_t *enumeration;
     } u;
     DECL_LINK(typelib_entry_t)
 };

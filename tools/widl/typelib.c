@@ -250,3 +250,16 @@ void add_struct(type_t *structure)
      LINK(entry, typelib->entry);
      typelib->entry = entry;
 }
+
+void add_enum(type_t *enumeration)
+{
+     typelib_entry_t *entry;
+     if (!typelib) return;
+
+     chat("add enum: %s\n", enumeration->name);
+     entry = xmalloc(sizeof(*entry));
+     entry->kind = TKIND_ENUM;
+     entry->u.enumeration = enumeration;
+     LINK(entry, typelib->entry);
+     typelib->entry = entry;
+}

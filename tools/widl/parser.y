@@ -428,15 +428,19 @@ enum_list: enum
 enum:	  ident '=' expr_const			{ $$ = reg_const($1);
 						  $$->eval = $3;
 						  $$->lval = $3->cval;
+                                                  $$->type = make_type(RPC_FC_LONG, &std_int);
 						}
 	| ident					{ $$ = reg_const($1);
 						  $$->lval = 0; /* default for first enum entry */
+                                                  $$->type = make_type(RPC_FC_LONG, &std_int);
 						}
 	;
 
 enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM);
 						  $$->fields = $4;
 						  $$->defined = TRUE;
+                                                  if(in_typelib)
+                                                      add_enum($$);
 						}
 	;
 

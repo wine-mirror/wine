@@ -1353,9 +1353,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     typeinfo->names[index] = offset;
 
     namedata = typeinfo->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
-    namedata[9] &= ~0x10;
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
+        namedata[9] &= ~0x10;
     }
 
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
@@ -1369,49 +1369,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     return S_OK;
 }
 
-
-static void set_alignment(
-        msft_typeinfo_t* typeinfo,
-        WORD cbAlignment)
-{
-
-    if (!cbAlignment) return;
-    if (cbAlignment > 16) return;
-
-    typeinfo->typeinfo->typekind &= ~0xf800;
-
-    /* FIXME: There's probably some way to simplify this. */
-    switch (typeinfo->typeinfo->typekind & 15) {
-    case TKIND_ALIAS:
-    default:
-	break;
-
-    case TKIND_ENUM:
-    case TKIND_INTERFACE:
-    case TKIND_DISPATCH:
-    case TKIND_COCLASS:
-	if (cbAlignment > 4) cbAlignment = 4;
-	break;
-
-    case TKIND_RECORD:
-    case TKIND_MODULE:
-    case TKIND_UNION:
-	cbAlignment = 1;
-	break;
-    }
-
-    typeinfo->typeinfo->typekind |= cbAlignment << 11;
-
-    return;
-}
-
 static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 {
     int offset;
     INT *typedata;
     int var_datawidth;
     int var_alignment;
-    int var_type_size;
+    int var_type_size, var_kind = 0 /* VAR_PERINSTANCE */; 
     int alignment;
     int varflags = 0;
     attr_t *attr;
@@ -1460,20 +1424,26 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     /* pad out starting position to data width */
     typeinfo->datawidth += var_alignment - 1;
     typeinfo->datawidth &= ~(var_alignment - 1);
-    typedata[4] = typeinfo->datawidth;
-    
-    /* add the new variable to the total data width */
-    typeinfo->datawidth += var_datawidth;
+
+    if((typeinfo->typeinfo->typekind & 0xf) == TKIND_ENUM) {
+        write_value(typeinfo->typelib, &typedata[4], VT_I4, &var->lval);
+        var_kind = 2; /* VAR_CONST */
+        var_type_size += 16; /* sizeof(VARIANT) */
+        typeinfo->datawidth = var_datawidth;
+    } else {
+        typedata[4] = typeinfo->datawidth;
+        typeinfo->datawidth += var_datawidth;
+    }
 
     /* add type description size to total required allocation */
-    typedata[3] += var_type_size << 16;
+    typedata[3] += var_type_size << 16 | var_kind;
 
     /* fix type alignment */
     alignment = (typeinfo->typeinfo->typekind >> 11) & 0x1f;
     if (alignment < var_alignment) {
 	alignment = var_alignment;
-	typeinfo->typeinfo->typekind &= ~0xf800;
-	typeinfo->typeinfo->typekind |= alignment << 11;
+	typeinfo->typeinfo->typekind &= ~0xffc0;
+	typeinfo->typeinfo->typekind |= alignment << 11 | alignment << 6;
     }
 
     /* ??? */
@@ -1499,7 +1469,9 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     if (*((INT *)namedata) == -1) {
 	*((INT *)namedata) = typeinfo->typelib->typelib_typeinfo_offsets[typeinfo->typeinfo->typekind >> 16];
 	namedata[9] |= 0x10;
-    }
+    } else
+        namedata[9] &= ~0x10;
+
     if ((typeinfo->typeinfo->typekind & 15) == TKIND_ENUM) {
 	namedata[9] |= 0x20;
     }
@@ -1544,8 +1516,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
     msft_typeinfo->typeinfo = typeinfo;
 
-    typeinfo->typekind |= kind | 0x220;
-    set_alignment(msft_typeinfo, 4);
+    typeinfo->typekind |= kind | 0x20;
 
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
@@ -1620,6 +1591,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs,
                                          typelib->typelib_header.nrtypeinfos);
     msft_typeinfo->typeinfo->size = 4;
+    msft_typeinfo->typeinfo->typekind |= 0x2200;
 
     if(interface->ref)
         add_impl_type(msft_typeinfo, interface->ref);
@@ -1651,6 +1623,25 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     }
 }
 
+static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
+{
+    int idx = 0;
+    var_t *cur = enumeration->fields;
+    msft_typeinfo_t *msft_typeinfo;
+
+    enumeration->typelib_idx = typelib->typelib_header.nrtypeinfos;
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ENUM, enumeration->name, enumeration->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+    msft_typeinfo->typeinfo->size = 0;
+
+    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+    while(cur) {
+        add_var_desc(msft_typeinfo, idx, cur);
+        idx++;
+        cur = PREV_LINK(cur);
+    }
+}
+
 static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 {
     switch(entry->kind) {
@@ -1662,12 +1653,15 @@ static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
         add_structure_typeinfo(typelib, entry->u.structure);
         break;
 
+    case TKIND_ENUM:
+        add_enum_typeinfo(typelib, entry->u.enumeration);
+        break;
+
     default:
         error("add_entry: unhandled type %d\n", entry->kind);
         break;
     }
 }
-
 
 static void set_name(msft_typelib_t *typelib)
 {
