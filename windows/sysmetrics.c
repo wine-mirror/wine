@@ -117,8 +117,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYEDGE] = sysMetrics[SM_CXEDGE];
     sysMetrics[SM_CXMINSPACING] = 160;
     sysMetrics[SM_CYMINSPACING] = 24;
-    sysMetrics[SM_CXSMICON] =
-	sysMetrics[SM_CYSIZE] - (sysMetrics[SM_CYSIZE] % 2) - 2;
+    sysMetrics[SM_CXSMICON] = sysMetrics[SM_CYSIZE] - (sysMetrics[SM_CYSIZE] % 2);
     sysMetrics[SM_CYSMICON] = sysMetrics[SM_CXSMICON];
     sysMetrics[SM_CYSMCAPTION] = 16;
     sysMetrics[SM_CXSMSIZE] = 15;

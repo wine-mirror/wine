@@ -808,6 +808,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
 {
     WND*	child = WIN_FindWndPtr(hChild);
     HMENU  	hSysPopup = 0;
+  HBITMAP hSysMenuBitmap = 0;
 
     TRACE(mdi,"frame %p,child %04x\n",frame,hChild);
 
@@ -831,8 +832,44 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
     AppendMenuA(frame->wIDmenu,MF_HELP | MF_BITMAP,
                    SC_RESTORE, (LPSTR)(DWORD)HBMMENU_MBAR_RESTORE );
 
+  /* In Win 95 look, the system menu is replaced by the child icon */
+
+  if(TWEAK_WineLook > WIN31_LOOK)
+  {
+    HICON hIcon = GetClassLongA(hChild, GCL_HICONSM);
+    if (!hIcon)
+      hIcon = GetClassLongA(hChild, GCL_HICON);
+    if (hIcon)
+    {
+      HDC hMemDC;
+      HBITMAP hBitmap, hOldBitmap;
+      HBRUSH hBrush;
+      HDC hdc = GetDC(hChild);
+
+      if (hdc)
+      {
+        int cx, cy;
+        cx = GetSystemMetrics(SM_CXSMICON);
+        cy = GetSystemMetrics(SM_CYSMICON);
+        hMemDC = CreateCompatibleDC(hdc);
+        hBitmap = CreateCompatibleBitmap(hdc, cx, cy);
+        hOldBitmap = SelectObject(hMemDC, hBitmap);
+        SetMapMode(hMemDC, MM_TEXT);
+        hBrush = CreateSolidBrush(GetSysColor(COLOR_MENU));
+        DrawIconEx(hMemDC, 0, 0, hIcon, cx, cy, 0, hBrush, DI_NORMAL);
+        SelectObject (hMemDC, hOldBitmap);
+        DeleteObject(hBrush);
+        DeleteDC(hMemDC);
+        ReleaseDC(hChild, hdc);
+        hSysMenuBitmap = hBitmap;
+      }
+    }
+  }
+  else
+    hSysMenuBitmap = hBmpClose;
+
     if( !InsertMenuA(frame->wIDmenu,0,MF_BYPOSITION | MF_BITMAP | MF_POPUP,
-                    hSysPopup, (LPSTR)(DWORD)hBmpClose ))
+                    hSysPopup, (LPSTR)(DWORD)hSysMenuBitmap))
     {  
         TRACE(mdi,"not inserted\n");
 	DestroyMenu(hSysPopup); 
