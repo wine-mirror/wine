@@ -1686,6 +1686,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
          * (global active queue may have changed)
          */
         pTempActiveQueue = QUEUE_Lock( hActiveQueue );
+        if(!pTempActiveQueue)
+            goto CLEANUP_END;
+
         hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
         QUEUE_Unlock( pTempActiveQueue );
         if( hwndPrevActive != hwndActive )
