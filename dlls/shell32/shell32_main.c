@@ -673,8 +673,8 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
  *	Any ideas on how this is to be implimented?
  */
 BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   TRACE_(shell)("\n");
-    return FALSE;
+{   FIXME_(shell)("Taskbar Notification Area functionality not implemented !\n");
+    return TRUE; /* pretend success */
 }
 
 /*************************************************************************
@@ -684,8 +684,8 @@ BOOL WINAPI Shell_NotifyIcon(	DWORD dwMessage, PNOTIFYICONDATAA pnid )
  *	Any ideas on how this is to be implimented?
  */
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
-{   TRACE_(shell)("\n");
-    return FALSE;
+{   FIXME_(shell)("Taskbar Notification Area functionality not implemented !\n");
+    return TRUE; /* pretend success */
 }
 
 /*************************************************************************
