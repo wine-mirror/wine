@@ -36,6 +36,12 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
     sys = calloc(1,sizeof(MOUSESYSTEM));
     DOSVM_SetSystemData(0x33, sys);
     break;
+  case 0x01:
+    FIXME("Show mouse cursor\n");
+    break;
+  case 0x02:
+    FIXME("Hide mouse cursor\n");
+    break;
   case 0x03:
     TRACE("Return mouse position and button status\n");
     BX_reg(context) = sys->but;
@@ -45,10 +51,25 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
   case 0x04:
     FIXME("Position mouse cursor\n");
     break;
+  case 0x07:
+    FIXME("Define horizontal mouse cursor range\n");
+    break;
+  case 0x08:
+    FIXME("Define vertical mouse cursor range\n");
+    break;
+  case 0x09:
+    FIXME("Define graphics mouse cursor\n");
+    break;
+  case 0x0A:
+    FIXME("Define text mouse cursor\n");
+    break;
   case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
     sys->callmask = CX_reg(context);
     sys->callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
+    break;
+  case 0x10:
+    FIXME("Define screen region for update\n");
     break;
   default:
     INT_BARF(context,0x33);
