@@ -1,6 +1,6 @@
 /*
  * VGA hardware emulation
- * 
+ *
  * Copyright 1998 Ove Kåven (with some help from Marcus Meissner)
  *
  * This library is free software; you can redistribute it and/or
@@ -102,8 +102,8 @@ static PALETTEENTRY vga_def_palette[256]={
   {0,0,0} /* FIXME: a series of continuous rainbow hues should follow */
 };
 
-/* 
- *   This palette is the dos default, converted from 18 bit color to 24. 
+/*
+ *   This palette is the dos default, converted from 18 bit color to 24.
  *      It contains only 64 entries of colors--all others are zeros.
  *          --Robert 'Admiral' Coeyman
  */
@@ -386,12 +386,12 @@ char VGA_GetColor16(int reg)
 }
 
 /* set all 17 [char wide] colors at once in 16 color mode. */
-void VGA_Set16Palette(char *Table) 
+void VGA_Set16Palette(char *Table)
 {
 	PALETTEENTRY *pal;
 	int c;
 
-    if (!lpddraw) return;         /* return if we're in text only mode */     
+    if (!lpddraw) return;         /* return if we're in text only mode */
 	bcopy((void *)&vga_16_palette,(void *)Table,17);
 		                    /* copy the entries into the table */
     for (c=0; c<17; c++) {                                /* 17 entries */
@@ -402,10 +402,10 @@ void VGA_Set16Palette(char *Table)
 }
 
 /* Get all 17 [ char wide ] colors at once in 16 color mode. */
-void VGA_Get16Palette(char *Table) 
+void VGA_Get16Palette(char *Table)
 {
 
-    if (!lpddraw) return;         /* return if we're in text only mode */     
+    if (!lpddraw) return;         /* return if we're in text only mode */
 	bcopy((void *)Table,(void *)&vga_16_palette,17);
 		                    /* copy the entries into the table */
 }
@@ -507,7 +507,7 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
     siz.Y = 1;
     off.X = 0;
     off.Y = 0;
-    dest.Top=Y; 
+    dest.Top=Y;
     dest.Bottom=Y;
 
     VGA_GetAlphaMode(&XR, &YR);
@@ -517,7 +517,7 @@ void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
        dest.Right = X + count;
 
         *dat++ = ch;
-        if (attr>=0) 
+        if (attr>=0)
          *dat = attr;
        else
          info.Attributes = *dat;
@@ -548,7 +548,7 @@ void VGA_PutChar(BYTE ascii)
 
     VGA_GetAlphaMode(&width, &height);
     VGA_GetCursorPos(&x, &y);
-  
+
     switch(ascii) {
     case '\b':
         VGA_PutCharAt(' ', x, y);
@@ -563,7 +563,7 @@ void VGA_PutChar(BYTE ascii)
         y++;
        x = 0;
        break;
-  
+
     case '\a':
         break;
 
@@ -598,7 +598,7 @@ void VGA_SetTextAttribute(BYTE attr)
     SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
-void VGA_ClearText(unsigned row1, unsigned col1, 
+void VGA_ClearText(unsigned row1, unsigned col1,
                   unsigned row2, unsigned col2,
                   BYTE attr)
 {
@@ -608,7 +608,7 @@ void VGA_ClearText(unsigned row1, unsigned col1,
     HANDLE con = VGA_AlphaConsole();
     VGA_GetAlphaMode(&width, &height);
 
-    EnterCriticalSection(&vga_lock); 
+    EnterCriticalSection(&vga_lock);
 
     for(y=row1; y<=row2; y++) {
         off.X = col1;
@@ -626,14 +626,14 @@ void VGA_ClearText(unsigned row1, unsigned col1,
     LeaveCriticalSection(&vga_lock);
 }
 
-void VGA_ScrollUpText(unsigned row1, unsigned col1, 
+void VGA_ScrollUpText(unsigned row1, unsigned col1,
                      unsigned row2, unsigned col2,
                      unsigned lines, BYTE attr)
 {
     FIXME("not implemented\n");
 }
 
-void VGA_ScrollDownText(unsigned row1, unsigned col1, 
+void VGA_ScrollDownText(unsigned row1, unsigned col1,
                        unsigned row2, unsigned col2,
                        unsigned lines, BYTE attr)
 {

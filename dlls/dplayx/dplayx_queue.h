@@ -1,5 +1,5 @@
 /* A queue definition based on sys/queue.h TAILQ definitions
- * 
+ *
  * Copyright 2000 Peter Hunnisett
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ do{                                          \
 #define DPQ_FIRST( head ) ( (head).lpQHFirst )
 
 /* Check if the queue has any elements */
-#define DPQ_IS_EMPTY( head ) ( DPQ_FIRST(head) == NULL ) 
+#define DPQ_IS_EMPTY( head ) ( DPQ_FIRST(head) == NULL )
 
 /* Next entry -- FIXME: Convert everything over to this macro ... */
 #define DPQ_NEXT( elem ) (elem).lpQNext
@@ -85,7 +85,7 @@ do {                                                    \
  * field - to be concatenated to rc to compare with fieldToCompare
  * fieldToCompare - The value that we're comparing against
  * fieldCompareOperator - The logical operator to compare field and
- *                        fieldToCompare. 
+ *                        fieldToCompare.
  * rc - Variable to put the return code. Same type as (head).lpQHFirst
  */
 #define DPQ_FIND_ENTRY( head, elm, field, fieldCompareOperator, fieldToCompare, rc )\
@@ -114,7 +114,7 @@ do {                                                           \
  * field - to be concatenated to rc to compare with fieldToCompare
  * fieldToCompare - The value that we're comparing against
  * compare_cb - Callback to invoke to determine if comparision should continue.
- *              Callback must be defined with DPQ_DECL_COMPARECB. 
+ *              Callback must be defined with DPQ_DECL_COMPARECB.
  * rc - Variable to put the return code. Same type as (head).lpQHFirst
  */
 #define DPQ_FIND_ENTRY_CB( head, elm, field, compare_cb, fieldToCompare, rc )\
@@ -181,7 +181,7 @@ do {                                                           \
 } while(0)
 
 
-/* Delete the entire queue 
+/* Delete the entire queue
  * head - pointer to the head of the queue
  * field - field to access the next elements of the queue
  * type - type of the pointer to the element element

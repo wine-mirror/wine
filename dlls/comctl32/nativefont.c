@@ -123,7 +123,7 @@ NATIVEFONT_Register (void)
     wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = WC_NATIVEFONTCTLA;
- 
+
     RegisterClassA (&wndClass);
 }
 

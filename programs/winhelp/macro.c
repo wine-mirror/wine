@@ -474,7 +474,7 @@ VOID MACRO_Prev(VOID)
 VOID MACRO_Print(VOID)
 {
     PRINTDLG printer;
-    
+
     printer.lStructSize         = sizeof(printer);
     printer.hwndOwner           = Globals.active_win->hMainWnd;
     printer.hInstance           = Globals.hInstance;
@@ -494,7 +494,7 @@ VOID MACRO_Print(VOID)
     printer.lpSetupTemplateName = 0;
     printer.hPrintTemplate      = 0;
     printer.hSetupTemplate      = 0;
-        
+
     if (PrintDlgA(&printer)) {
         fprintf(stderr, "Print()\n");
     };

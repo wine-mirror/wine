@@ -49,7 +49,7 @@
  * sequence to identify the file.
  * -- FIXME --
  *
- * 
+ *
  * Keywords:
  *	Codepages
  *	Facility
@@ -669,7 +669,7 @@ int yylex(void)
 					int t = char_table[ch];
 					if((t & CH_PUNCT) || !(t & CH_SHORTNAME))
 						break;
-					
+
 					push_unichar(ch);
 					n++;
 					ch = get_unichar();
@@ -716,7 +716,7 @@ int yylex(void)
 
 			if(isspace(ch))	/* Ignore space */
 				continue;
-	
+
 			if(isdigit(ch))
 				return scan_number(ch);
 		}

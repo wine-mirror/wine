@@ -216,7 +216,7 @@ SNOOP_GetProcAddress(HMODULE hmod,LPCSTR name,DWORD ordinal,FARPROC origfun) {
 		return origfun;
 	assert(ordinal < dll->nrofordinals);
 	fun = dll->funs+ordinal;
-	if (!fun->name) 
+	if (!fun->name)
 	  {
 	    fun->name = HeapAlloc(GetProcessHeap(),0,strlen(name)+1);
 	    strcpy( fun->name, name );

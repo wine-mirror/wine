@@ -213,7 +213,7 @@ static void sock_wake_up( struct sock *sock, int pollev )
 inline static int sock_error(int s)
 {
     unsigned int optval = 0, optlen;
-    
+
     optlen = sizeof(optval);
     getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
     return optval ? sock_get_error(optval) : 0;
@@ -729,9 +729,9 @@ DECL_HANDLER(set_socket_event)
     if (sock->mask)
         sock->state |= FD_WINE_NONBLOCKING;
 
-    /* if a network event is pending, signal the event object 
+    /* if a network event is pending, signal the event object
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
-       before a WSAEventSelect() was done on it. 
+       before a WSAEventSelect() was done on it.
        (when dealing with Asynchronous socket)  */
     if (sock->pmask & sock->mask) sock_wake_up( sock, pollev );
 

@@ -1,6 +1,6 @@
 /*
  * WineMine (resource.h)
- * 
+ *
  * Copyright 2000 Joshua Thielen <jt85296@ltu.edu>
  *
  * This library is free software; you can redistribute it and/or

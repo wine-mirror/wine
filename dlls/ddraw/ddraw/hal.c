@@ -47,7 +47,7 @@ static DDVERSIONDATA hal_version;
 static DD32BITDRIVERDATA hal_driverdata;
 static HINSTANCE hal_instance;
 
-static const DDDEVICEIDENTIFIER2 hal_device = 
+static const DDDEVICEIDENTIFIER2 hal_device =
 {
     "display",
     "DirectDraw HAL",
@@ -501,7 +501,7 @@ HAL_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 
     TRACE("(%p)->(%ldx%ldx%ld,%ld Hz,%08lx)\n",This,dwWidth,dwHeight,dwBPP,dwRefreshRate,dwFlags);
     hr = User_DirectDraw_SetDisplayMode(iface, dwWidth, dwHeight, dwBPP,
-					dwRefreshRate, dwFlags);      
+					dwRefreshRate, dwFlags);
 
     if (SUCCEEDED(hr)) {
 	if (!(dd_gbl.dwFlags & DDRAWI_MODECHANGED)) dd_gbl.dwModeIndexOrig = dd_gbl.dwModeIndex;

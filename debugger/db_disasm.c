@@ -1,25 +1,25 @@
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -30,23 +30,23 @@
  * 	Add a switch to disassemble 16-bit code.
  * 	Fix spelling of 'lods' opcodes.
  * 	[91/10/30            dbg]
- * 
+ *
  * Revision 2.5  91/10/09  16:05:58  af
  * 	Supported disassemble of non current task by passing task parameter.
  * 	[91/08/29            tak]
- * 
+ *
  * Revision 2.4  91/05/14  16:05:04  mrt
  * 	Correcting copyright
- * 
+ *
  * Revision 2.3  91/02/05  17:11:03  mrt
  * 	Changed to new Mach copyright
  * 	[91/02/01  17:31:03  mrt]
- * 
+ *
  * Revision 2.2  90/08/27  21:55:56  dbg
  * 	Fix register operand for move to/from control/test/debug
  * 	register instructions.  Add i486 instructions.
  * 	[90/08/27            dbg]
- * 
+ *
  * 	Import db_sym.h.  Print instruction displacements in
  * 	current radix (signed).  Change calling sequence of
  * 	db_disasm.
@@ -55,7 +55,7 @@
  * 	[90/08/08            dbg]
  * 	Created.
  * 	[90/07/25            dbg]
- * 
+ *
  */
 
 /*
@@ -280,23 +280,23 @@ static const struct inst db_inst_0f3x[] = {
 };
 
 static const struct inst db_inst_0f4x[] = {
-/*40*/	{ "cmovo", TRUE,  NONE,  op2(E, R), 0 }, 
-/*41*/	{ "cmovno", TRUE, NONE,  op2(E, R),	0 }, 
-/*42*/	{ "cmovnae",TRUE, NONE,  op2(E, R), 0 }, 
-/*43*/	{ "cmovnb", TRUE, NONE,  op2(E, R),	0 }, 
-/*44*/	{ "cmove", TRUE,  NONE,  op2(E, R), 0 }, 
-/*45*/	{ "cmovne", TRUE, NONE,  op2(E, R), 0 }, 
-/*46*/	{ "cmovna", TRUE, NONE,  op2(E, R), 0 }, 
-/*47*/	{ "cmova",  TRUE, NONE,  op2(E, R), 0 }, 
+/*40*/	{ "cmovo", TRUE,  NONE,  op2(E, R), 0 },
+/*41*/	{ "cmovno", TRUE, NONE,  op2(E, R),	0 },
+/*42*/	{ "cmovnae",TRUE, NONE,  op2(E, R), 0 },
+/*43*/	{ "cmovnb", TRUE, NONE,  op2(E, R),	0 },
+/*44*/	{ "cmove", TRUE,  NONE,  op2(E, R), 0 },
+/*45*/	{ "cmovne", TRUE, NONE,  op2(E, R), 0 },
+/*46*/	{ "cmovna", TRUE, NONE,  op2(E, R), 0 },
+/*47*/	{ "cmova",  TRUE, NONE,  op2(E, R), 0 },
 
-/*48*/	{ "cmovs", TRUE,  NONE,  op2(E, R), 0 }, 
-/*49*/	{ "cmovns", TRUE, NONE,  op2(E, R), 0 }, 
-/*4a*/	{ "cmovpe", TRUE, NONE,  op2(E, R), 0 }, 
-/*4b*/	{ "cmovpo", TRUE, NONE,  op2(E, R), 0 }, 
-/*4c*/	{ "cmovl", TRUE,  NONE,  op2(E, R), 0 }, 
-/*4d*/	{ "cmovge", TRUE, NONE,  op2(E, R), 0 }, 
-/*4e*/	{ "cmovle", TRUE, NONE,  op2(E, R), 0 }, 
-/*4f*/	{ "cmovnle",TRUE, NONE,  op2(E, R), 0 }, 
+/*48*/	{ "cmovs", TRUE,  NONE,  op2(E, R), 0 },
+/*49*/	{ "cmovns", TRUE, NONE,  op2(E, R), 0 },
+/*4a*/	{ "cmovpe", TRUE, NONE,  op2(E, R), 0 },
+/*4b*/	{ "cmovpo", TRUE, NONE,  op2(E, R), 0 },
+/*4c*/	{ "cmovl", TRUE,  NONE,  op2(E, R), 0 },
+/*4d*/	{ "cmovge", TRUE, NONE,  op2(E, R), 0 },
+/*4e*/	{ "cmovle", TRUE, NONE,  op2(E, R), 0 },
+/*4f*/	{ "cmovnle",TRUE, NONE,  op2(E, R), 0 },
 };
 
 static const struct inst db_inst_0f5x[] = {
@@ -320,43 +320,43 @@ static const struct inst db_inst_0f5x[] = {
 };
 
 static const struct inst db_inst_0f6x[] = {
-/*60*/	{ "punpcklbw", TRUE, NONE,  op2(E, MX), 0 }, 
-/*61*/	{ "punpcklwd", TRUE, NONE,  op2(E, MX),	0 }, 
-/*62*/	{ "punpckldq", TRUE, NONE,  op2(E, MX), 0 }, 
-/*63*/	{ "packsswb",  TRUE, NONE,  op2(E, MX),	0 }, 
-/*64*/	{ "pcmpgtb",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*65*/	{ "pcmpgtw",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*66*/	{ "pcmpgtd",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*67*/	{ "packuswb",  TRUE, NONE,  op2(E, MX), 0 }, 
+/*60*/	{ "punpcklbw", TRUE, NONE,  op2(E, MX), 0 },
+/*61*/	{ "punpcklwd", TRUE, NONE,  op2(E, MX),	0 },
+/*62*/	{ "punpckldq", TRUE, NONE,  op2(E, MX), 0 },
+/*63*/	{ "packsswb",  TRUE, NONE,  op2(E, MX),	0 },
+/*64*/	{ "pcmpgtb",   TRUE, NONE,  op2(E, MX), 0 },
+/*65*/	{ "pcmpgtw",   TRUE, NONE,  op2(E, MX), 0 },
+/*66*/	{ "pcmpgtd",   TRUE, NONE,  op2(E, MX), 0 },
+/*67*/	{ "packuswb",  TRUE, NONE,  op2(E, MX), 0 },
 
-/*68*/	{ "punpckhbw", TRUE, NONE,  op2(E, MX), 0 }, 
-/*69*/	{ "punpckhwd", TRUE, NONE,  op2(E, MX), 0 }, 
-/*6a*/	{ "punpckhdq", TRUE, NONE,  op2(E, MX), 0 }, 
-/*6b*/	{ "packssdw",  TRUE, NONE,  op2(E, MX), 0 }, 
-/*6c*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*6d*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*6e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 }, 
-/*6f*/	{ "movq",      TRUE, NONE,  op2(E, MX), 0 }, 
+/*68*/	{ "punpckhbw", TRUE, NONE,  op2(E, MX), 0 },
+/*69*/	{ "punpckhwd", TRUE, NONE,  op2(E, MX), 0 },
+/*6a*/	{ "punpckhdq", TRUE, NONE,  op2(E, MX), 0 },
+/*6b*/	{ "packssdw",  TRUE, NONE,  op2(E, MX), 0 },
+/*6c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*6d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*6e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
+/*6f*/	{ "movq",      TRUE, NONE,  op2(E, MX), 0 },
 };
 
 static const struct inst db_inst_0f7x[] = {
-/*70*/	{ "pshufw",    TRUE, NONE,  op2(MX, EMX), 0 }, 
+/*70*/	{ "pshufw",    TRUE, NONE,  op2(MX, EMX), 0 },
 /*71*/	{ "(grp10)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp10 },
-/*72*/	{ "(grp11)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp11 }, 
-/*73*/	{ "(grp12)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp12 }, 
-/*74*/	{ "pcmpeqb",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*75*/	{ "pcmpeqw",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*76*/	{ "pcmpeqd",   TRUE, NONE,  op2(E, MX), 0 }, 
-/*77*/	{ "emms",      FALSE,NONE,  0, 0 }, 
+/*72*/	{ "(grp11)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp11 },
+/*73*/	{ "(grp12)",   TRUE, BYTE,  op2(EMX, I), (char*)db_Grp12 },
+/*74*/	{ "pcmpeqb",   TRUE, NONE,  op2(E, MX), 0 },
+/*75*/	{ "pcmpeqw",   TRUE, NONE,  op2(E, MX), 0 },
+/*76*/	{ "pcmpeqd",   TRUE, NONE,  op2(E, MX), 0 },
+/*77*/	{ "emms",      FALSE,NONE,  0, 0 },
 
-/*78*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*79*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*7a*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*7b*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*7c*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*7d*/	{ "(bad)",     TRUE, NONE,  0, 0 }, 
-/*7e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 }, 
-/*7f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 }, 
+/*78*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*79*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7a*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7b*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7c*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7d*/	{ "(bad)",     TRUE, NONE,  0, 0 },
+/*7e*/	{ "movd",      TRUE, NONE,  op2(E, MX), 0 },
+/*7f*/	{ "movq",      TRUE, NONE,  op2(EMX, MX), 0 },
 };
 
 static const struct inst db_inst_0f8x[] = {
@@ -1209,11 +1209,11 @@ void db_print_address(char *seg, int size, struct i_addr *addrp, int byref)
 	    if (addrp->index)
 		DEBUG_Printf(DBG_CHN_MESG,",%s,%d", addrp->index, 1<<addrp->ss);
 	    DEBUG_Printf(DBG_CHN_MESG,")");
-	} 
+	}
 	else {
 
 	    /* try to get destination of indirect call
-	       does not work for segmented adresses */	
+	       does not work for segmented adresses */
 	    if (!seg && byref) {
 	       void*	a1;
 	       void*	a2;
@@ -1812,7 +1812,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 			  {
 			    DEBUG_PrintAddress( &address, short_addr ? MODE_16 : MODE_32, TRUE );
 			  }
-		      
+
                     }
 		    break;
 	    }

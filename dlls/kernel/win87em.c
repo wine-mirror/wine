@@ -40,7 +40,7 @@ struct Win87EmInfoStruct
  * (int13 error reporting of coprocessor)
  */
 
-/* have a look at /usr/src/linux/arch/i386/math-emu/ *.[ch] for more info 
+/* have a look at /usr/src/linux/arch/i386/math-emu/ *.[ch] for more info
  * especially control_w.h and status_w.h
  */
 /* FIXME: Still rather skeletal implementation only */
@@ -122,7 +122,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         WIN87_Init(context);
         break;
 
-    case 2: /* deinstall emulator (decrease instanceref), deinstall NMI vector	
+    case 2: /* deinstall emulator (decrease instanceref), deinstall NMI vector
              * if zero. Every '0' call should have a matching '2' call.
              */
         WIN87_Init(context);
@@ -131,7 +131,7 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         if (!RefCount && Installed)
             RestoreInt02h();
 #endif
-        
+
         break;
 
     case 3:
@@ -173,8 +173,8 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         /* OUT: DX:AX variable popped */
         {
             DWORD dw=0;
-            /* I don't know much about asm() programming. This could be 
-             * wrong. 
+            /* I don't know much about asm() programming. This could be
+             * wrong.
              */
 /* FIXME: could someone who really understands asm() fix this please? --AJ */
 /*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */

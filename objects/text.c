@@ -115,7 +115,7 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 	lpdx32 = (LPINT)HeapAlloc( GetProcessHeap(),0, sizeof(INT)*count );
 	if(lpdx32 == NULL) return FALSE;
 	for (i=count;i--;) lpdx32[i]=lpDx[i];
-    }    
+    }
     if (lprect)	CONV_RECT16TO32(lprect,&rect32);
     ret = ExtTextOutA(hdc,x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
     if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
@@ -273,7 +273,7 @@ UINT WINAPI GetTextCharsetInfo(
  * Draw several Strings
  */
 BOOL WINAPI PolyTextOutA (
-			  HDC hdc,               /* [in] Handle to device context */			  
+			  HDC hdc,               /* [in] Handle to device context */
 			  PPOLYTEXTA pptxt,      /* [in] Array of strings */
 			  INT cStrings           /* [in] Number of strings in array */
 			  )
@@ -290,8 +290,8 @@ BOOL WINAPI PolyTextOutA (
  *
  * Draw several Strings
  */
-BOOL WINAPI PolyTextOutW ( 
-			  HDC hdc,               /* [in] Handle to device context */			  
+BOOL WINAPI PolyTextOutW (
+			  HDC hdc,               /* [in] Handle to device context */
 			  PPOLYTEXTW pptxt,      /* [in] Array of strings */
 			  INT cStrings           /* [in] Number of strings in array */
 			  )

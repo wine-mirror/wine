@@ -30,13 +30,13 @@
 #include "wineacm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
-	
+
 /**********************************************************************/
-	
+
 HINSTANCE	MSACM_hInstance32 = 0;
 
 /***********************************************************************
- *           MSACM_LibMain (MSACM32.init) 
+ *           MSACM_LibMain (MSACM32.init)
  */
 BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -110,7 +110,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     MMRESULT		mmr = MMSYSERR_NOERROR;
 
     TRACE("(0x%08x, %d, %p);\n", hao, uMetric, pMetric);
-    
+
 #define CheckLocal(padid) (!bLocal || ((padid)->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_LOCAL))
 
     switch (uMetric) {
@@ -131,7 +131,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     case ACM_METRIC_COUNT_LOCAL_CODECS:
 	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
+	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
 		(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CODEC) &&
 		CheckLocal(padid))
 		val++;
@@ -144,7 +144,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     case ACM_METRIC_COUNT_LOCAL_CONVERTERS:
 	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
+	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
 		 (padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_CONVERTER) &&
 		CheckLocal(padid))
 		val++;
@@ -157,8 +157,8 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
     case ACM_METRIC_COUNT_LOCAL_FILTERS:
 	if (hao) return MMSYSERR_INVALHANDLE;
 	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
-	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
-		(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_FILTER) && 
+	    if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
+		(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_FILTER) &&
 		CheckLocal(padid))
 		val++;
 	*(LPDWORD)pMetric = val;
@@ -174,7 +174,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 		val++;
 	*(LPDWORD)pMetric = val;
 	break;
-    
+
     case ACM_METRIC_MAX_SIZE_FORMAT:
 	if (hao == (HACMOBJ)NULL) {
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {

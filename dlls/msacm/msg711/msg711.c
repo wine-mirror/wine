@@ -48,23 +48,23 @@ static	DWORD	G711_drvClose(DWORD dwDevID)
     return 1;
 }
 
-typedef struct tagAcmG711Data 
+typedef struct tagAcmG711Data
 {
-    void (*convert)(PACMDRVSTREAMINSTANCE adsi, 
+    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
 		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
 } AcmG711Data;
 
 /* table to list all supported formats... those are the basic ones. this
  * also helps given a unique index to each of the supported formats
  */
-typedef	struct 
+typedef	struct
 {
     int		nChannels;
     int		nBits;
     int		rate;
 } Format;
 
-static Format PCM_Formats[] = 
+static Format PCM_Formats[] =
 {
     /*{1,  8,  8000}, {2,  8,  8000}, */{1, 16,  8000}, {2, 16,  8000},
     /*{1,  8, 11025}, {2,  8, 11025}, */{1, 16, 11025}, {2, 16, 11025},
@@ -72,15 +72,15 @@ static Format PCM_Formats[] =
     /*{1,  8, 44100}, {2,  8, 44100}, */{1, 16, 44100}, {2, 16, 44100},
 };
 
-static Format ALaw_Formats[] = 
+static Format ALaw_Formats[] =
 {
-    {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025}, 
+    {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025},
     {1,  8, 22050}, {2,	8, 22050},  {1,  8, 44100}, {2,	 8, 44100},
 };
 
-static Format ULaw_Formats[] = 
+static Format ULaw_Formats[] =
 {
-    {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025}, 
+    {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025},
     {1,  8, 22050}, {2,	8, 22050},  {1,  8, 44100}, {2,	 8, 44100},
 };
 
@@ -95,8 +95,8 @@ static	DWORD	G711_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
     int 	i, hi;
     Format*	fmts;
-    
-    switch (wfx->wFormatTag) 
+
+    switch (wfx->wFormatTag)
     {
     case WAVE_FORMAT_PCM:
 	hi = NUM_PCM_FORMATS;
@@ -113,15 +113,15 @@ static	DWORD	G711_GetFormatIndex(LPWAVEFORMATEX wfx)
     default:
 	return 0xFFFFFFFF;
     }
-    
-    for (i = 0; i < hi; i++) 
+
+    for (i = 0; i < hi; i++)
     {
 	if (wfx->nChannels == fmts[i].nChannels &&
 	    wfx->nSamplesPerSec == fmts[i].rate &&
 	    wfx->wBitsPerSample == fmts[i].nBits)
 	    return i;
     }
-    
+
     return 0xFFFFFFFF;
 }
 
@@ -198,7 +198,7 @@ static inline void  W16(unsigned char* dst, short s)
  * bli@cpk.auc.dk
  *
  */
- 
+
 #define	SIGN_BIT	(0x80)		/* Sign bit for a A-law byte. */
 #define	QUANT_MASK	(0xf)		/* Quantization field mask. */
 #define	NSEGS		(8)		/* Number of A-law segments. */
@@ -223,7 +223,7 @@ static unsigned char _u2a[128] = {			/* u- to A-law conversions */
 	64,	65,	66,	67,	68,	69,	70,	71,
 	72,	73,	74,	75,	76,	77,	78,	79,
 /* corrected:
-	81,	82,	83,	84,	85,	86,	87,	88, 
+	81,	82,	83,	84,	85,	86,	87,	88,
    should be: */
 	80,	82,	83,	84,	85,	86,	87,	88,
 	89,	90,	91,	92,	93,	94,	95,	96,
@@ -261,7 +261,7 @@ search(
     int		size)	        /* changed from "short" *drago* */
 {
     int		i;	/* changed from "short" *drago* */
-    
+
     for (i = 0; i < size; i++) {
         if (val <= *table++)
             return (i);
@@ -295,21 +295,21 @@ linear2alaw(int pcm_val)	/* 2's complement (16-bit range) */
     int		mask;	/* changed from "short" *drago* */
     int		seg;	/* changed from "short" *drago* */
     unsigned char	aval;
-    
+
     pcm_val = pcm_val >> 3;
-    
+
     if (pcm_val >= 0) {
         mask = 0xD5;		/* sign (7th) bit = 1 */
     } else {
         mask = 0x55;		/* sign bit = 0 */
         pcm_val = -pcm_val - 1;
     }
-    
+
     /* Convert the scaled magnitude to segment number. */
     seg = search(pcm_val, seg_aend, 8);
-    
+
     /* Combine the sign, segment, and quantization bits. */
-    
+
     if (seg >= 8)		/* out of range, return maximum value. */
         return (unsigned char) (0x7F ^ mask);
     else {
@@ -332,9 +332,9 @@ alaw2linear(unsigned char a_val)
 {
     int		t;	/* changed from "short" *drago* */
     int		seg;	/* changed from "short" *drago* */
-    
+
     a_val ^= 0x55;
-    
+
     t = (a_val & QUANT_MASK) << 4;
     seg = ((unsigned)a_val & SEG_MASK) >> SEG_SHIFT;
     switch (seg) {
@@ -352,7 +352,7 @@ alaw2linear(unsigned char a_val)
 }
 #else
 /* EPP (for Wine):
- * this array has been statically generated from the above routine 
+ * this array has been statically generated from the above routine
  */
 static unsigned short _a2l[] = {
 0xEA80, 0xEB80, 0xE880, 0xE980, 0xEE80, 0xEF80, 0xEC80, 0xED80,
@@ -433,7 +433,7 @@ linear2ulaw(short pcm_val)	/* 2's complement (16-bit range) */
     short		mask;
     short		seg;
     unsigned char	uval;
-    
+
     /* Get the sign and the magnitude of the value. */
     pcm_val = pcm_val >> 2;
     if (pcm_val < 0) {
@@ -444,10 +444,10 @@ linear2ulaw(short pcm_val)	/* 2's complement (16-bit range) */
     }
     if ( pcm_val > CLIP ) pcm_val = CLIP;		/* clip the magnitude */
     pcm_val += (BIAS >> 2);
-    
+
     /* Convert the scaled magnitude to segment number. */
     seg = search(pcm_val, seg_uend, 8);
-    
+
     /*
      * Combine the sign, segment, quantization bits;
      * and complement the code word.
@@ -474,22 +474,22 @@ static inline short
 ulaw2linear(unsigned char u_val)
 {
     short		t;
-    
+
     /* Complement to obtain normal u-law value. */
     u_val = ~u_val;
-    
+
     /*
      * Extract and bias the quantization bits. Then
      * shift up by the segment number and subtract out the bias.
      */
     t = ((u_val & QUANT_MASK) << 3) + BIAS;
     t <<= ((unsigned)u_val & SEG_MASK) >> SEG_SHIFT;
-    
+
     return ((u_val & SIGN_BIT) ? (BIAS - t) : (t - BIAS));
 }
 #else
 /* EPP (for Wine):
- * this array has been statically generated from the above routine 
+ * this array has been statically generated from the above routine
  */
 static unsigned short _u2l[] = {
 0x8284, 0x8684, 0x8A84, 0x8E84, 0x9284, 0x9684, 0x9A84, 0x9E84,
@@ -532,7 +532,7 @@ static inline short ulaw2linear(unsigned char u_val)
 #endif
 
 /* A-law to u-law conversion */
-static inline unsigned char 
+static inline unsigned char
 alaw2ulaw(unsigned char aval)
 {
     aval &= 0xff;
@@ -551,14 +551,14 @@ ulaw2alaw(unsigned char uval)
 
 /* -------------------------------------------------------------------------------*/
 
-static void cvtXXalaw16K(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD srcsize, 
+static void cvtXXalaw16K(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD srcsize,
                          unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize, *dstsize / 2);
     DWORD       i;
     short       w;
-    
+
     *srcsize = len;
     *dstsize = len * 2;
     for (i = 0; i < len; i++)
@@ -568,8 +568,8 @@ static void cvtXXalaw16K(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static void cvtXX16alawK(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD srcsize, 
+static void cvtXX16alawK(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD srcsize,
                          unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize / 2, *dstsize);
@@ -583,8 +583,8 @@ static void cvtXX16alawK(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static void cvtXXulaw16K(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD srcsize, 
+static void cvtXXulaw16K(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD srcsize,
                          unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize, *dstsize / 2);
@@ -600,8 +600,8 @@ static void cvtXXulaw16K(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static void cvtXX16ulawK(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD srcsize, 
+static void cvtXX16ulawK(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD srcsize,
                          unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize / 2, *dstsize);
@@ -615,8 +615,8 @@ static void cvtXX16ulawK(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static void cvtXXalawulawK(PACMDRVSTREAMINSTANCE adsi, 
-                           const unsigned char* src, LPDWORD srcsize, 
+static void cvtXXalawulawK(PACMDRVSTREAMINSTANCE adsi,
+                           const unsigned char* src, LPDWORD srcsize,
                            unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize, *dstsize);
@@ -630,8 +630,8 @@ static void cvtXXalawulawK(PACMDRVSTREAMINSTANCE adsi,
 }
 
 
-static void cvtXXulawalawK(PACMDRVSTREAMINSTANCE adsi, 
-                           const unsigned char* src, LPDWORD srcsize, 
+static void cvtXXulawalawK(PACMDRVSTREAMINSTANCE adsi,
+                           const unsigned char* src, LPDWORD srcsize,
                            unsigned char* dst, LPDWORD dstsize)
 {
     DWORD       len = min(*srcsize, *dstsize);
@@ -669,7 +669,7 @@ static	LRESULT G711_DriverDetails(PACMDRIVERDETAILSW add)
     MultiByteToWideChar( CP_ACP, 0, "Refer to LICENSE file", -1,
                          add->szLicensing, sizeof(add->szLicensing)/sizeof(WCHAR) );
     add->szFeatures[0] = 0;
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -682,21 +682,21 @@ static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
     static WCHAR szPcm[]={'P','C','M',0};
     static WCHAR szALaw[]={'A','-','L','a','w',0};
     static WCHAR szULaw[]={'U','-','L','a','w',0};
-    
-    switch (dwQuery) 
+
+    switch (dwQuery)
     {
     case ACM_FORMATTAGDETAILSF_INDEX:
 	if (aftd->dwFormatTagIndex >= 3) return ACMERR_NOTPOSSIBLE;
 	break;
     case ACM_FORMATTAGDETAILSF_LARGESTSIZE:
-	if (aftd->dwFormatTag == WAVE_FORMAT_UNKNOWN) 
+	if (aftd->dwFormatTag == WAVE_FORMAT_UNKNOWN)
         {
             aftd->dwFormatTagIndex = 1;
 	    break;
 	}
 	/* fall thru */
-    case ACM_FORMATTAGDETAILSF_FORMATTAG: 
-	switch (aftd->dwFormatTag) 
+    case ACM_FORMATTAGDETAILSF_FORMATTAG:
+	switch (aftd->dwFormatTag)
         {
 	case WAVE_FORMAT_PCM:	aftd->dwFormatTagIndex = 0; break;
 	case WAVE_FORMAT_ALAW:  aftd->dwFormatTagIndex = 1; break;
@@ -708,9 +708,9 @@ static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
-    
+
     aftd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
-    switch (aftd->dwFormatTagIndex) 
+    switch (aftd->dwFormatTagIndex)
     {
     case 0:
 	aftd->dwFormatTag = WAVE_FORMAT_PCM;
@@ -740,14 +740,14 @@ static	LRESULT	G711_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
  */
 static	LRESULT	G711_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
-    switch (dwQuery) 
+    switch (dwQuery)
     {
     case ACM_FORMATDETAILSF_FORMAT:
 	if (G711_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
 	break;
     case ACM_FORMATDETAILSF_INDEX:
 	afd->pwfx->wFormatTag = afd->dwFormatTag;
-	switch (afd->dwFormatTag) 
+	switch (afd->dwFormatTag)
         {
 	case WAVE_FORMAT_PCM:
 	    if (afd->dwFormatIndex >= NUM_PCM_FORMATS) return ACMERR_NOTPOSSIBLE;
@@ -763,7 +763,7 @@ static	LRESULT	G711_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nSamplesPerSec = ALaw_Formats[afd->dwFormatIndex].rate;
 	    afd->pwfx->wBitsPerSample = ALaw_Formats[afd->dwFormatIndex].nBits;
 	    afd->pwfx->nBlockAlign = ALaw_Formats[afd->dwFormatIndex].nChannels;
-	    afd->pwfx->nAvgBytesPerSec = afd->pwfx->nSamplesPerSec * afd->pwfx->nChannels; 
+	    afd->pwfx->nAvgBytesPerSec = afd->pwfx->nSamplesPerSec * afd->pwfx->nChannels;
             afd->pwfx->cbSize = 0;
 	    break;
 	case WAVE_FORMAT_MULAW:
@@ -772,7 +772,7 @@ static	LRESULT	G711_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nSamplesPerSec = ULaw_Formats[afd->dwFormatIndex].rate;
 	    afd->pwfx->wBitsPerSample = ULaw_Formats[afd->dwFormatIndex].nBits;
 	    afd->pwfx->nBlockAlign = ULaw_Formats[afd->dwFormatIndex].nChannels;
-	    afd->pwfx->nAvgBytesPerSec = afd->pwfx->nSamplesPerSec * afd->pwfx->nChannels; 
+	    afd->pwfx->nAvgBytesPerSec = afd->pwfx->nSamplesPerSec * afd->pwfx->nChannels;
             afd->pwfx->cbSize = 0;
 	    break;
 	default:
@@ -782,11 +782,11 @@ static	LRESULT	G711_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	break;
     default:
 	WARN("Unsupported query %08lx\n", dwQuery);
-	return MMSYSERR_NOTSUPPORTED;	
+	return MMSYSERR_NOTSUPPORTED;
     }
     afd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
     afd->szFormat[0] = 0; /* let MSACM format this for us... */
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -808,14 +808,14 @@ static	LRESULT	G711_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
     if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_NSAMPLESPERSEC))
         adfs->pwfxDst->nSamplesPerSec = adfs->pwfxSrc->nSamplesPerSec;
 
-    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WBITSPERSAMPLE)) 
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WBITSPERSAMPLE))
     {
-	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM) 
+	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM)
             adfs->pwfxDst->wBitsPerSample = 8;
         else
             adfs->pwfxDst->wBitsPerSample = 16;
     }
-    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)) 
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG))
     {
 	switch (adfs->pwfxSrc->wFormatTag)
         {
@@ -867,25 +867,25 @@ static	LRESULT	G711_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
     AcmG711Data*	aad;
 
     assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
-    
+
     if (G711_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
 	G711_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
 	return ACMERR_NOTPOSSIBLE;
-    
+
     aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmG711Data));
     if (aad == 0) return MMSYSERR_NOMEM;
-    
+
     adsi->dwDriver = (DWORD)aad;
-    
+
     if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
 	goto theEnd;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ALAW &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
-	/* resampling or mono <=> stereo not available 
+	/* resampling or mono <=> stereo not available
          * G711 algo only define 16 bit per sample output
          */
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
@@ -898,21 +898,21 @@ static	LRESULT	G711_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    aad->convert = cvtXXalaw16K;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
             adsi->pwfxSrc->wBitsPerSample != 16)
 	    goto theEnd;
-        
+
 	/* g711 coding... */
 	if (adsi->pwfxSrc->wBitsPerSample == 16)
 	    aad->convert = cvtXX16alawK;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MULAW &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
-	/* resampling or mono <=> stereo not available 
+	/* resampling or mono <=> stereo not available
          * G711 algo only define 16 bit per sample output
          */
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
@@ -925,34 +925,34 @@ static	LRESULT	G711_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    aad->convert = cvtXXulaw16K;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
             adsi->pwfxSrc->wBitsPerSample != 16)
 	    goto theEnd;
-        
+
 	/* g711 coding... */
 	if (adsi->pwfxSrc->wBitsPerSample == 16)
 	    aad->convert = cvtXX16ulawK;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MULAW &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_ALAW)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels)
 	    goto theEnd;
-        
+
 	/* MU-Law => A-Law... */
         aad->convert = cvtXXulawalawK;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ALAW &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MULAW) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MULAW)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels)
 	    goto theEnd;
-        
+
 	/* A-Law => MU-Law... */
         aad->convert = cvtXXalawulawK;
     }
@@ -961,7 +961,7 @@ static	LRESULT	G711_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
     G711_Reset(adsi, aad);
 
     return MMSYSERR_NOERROR;
-    
+
  theEnd:
     HeapFree(GetProcessHeap(), 0, aad);
     adsi->dwDriver = 0L;
@@ -995,7 +995,7 @@ static	inline DWORD	G711_round(DWORD a, DWORD b, DWORD c)
  */
 static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
 {
-    switch (adss->fdwSize) 
+    switch (adss->fdwSize)
     {
     case ACM_STREAMSIZEF_DESTINATION:
 	/* cbDstLength => cbSrcLength */
@@ -1007,7 +1007,7 @@ static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ads
 	}
         else if ((adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ALAW ||
                   adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MULAW) &&
-                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    adss->cbSrcLength = adss->cbDstLength * 2;
 	}
@@ -1018,7 +1018,7 @@ static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ads
         {
 	    adss->cbSrcLength = adss->cbDstLength;
         }
-        else 
+        else
         {
 	    return MMSYSERR_NOTSUPPORTED;
 	}
@@ -1033,7 +1033,7 @@ static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ads
 	}
         else if ((adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_ALAW ||
                   adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MULAW) &&
-                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    adss->cbDstLength = adss->cbSrcLength / 2;
 	}
@@ -1044,14 +1044,14 @@ static	LRESULT G711_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ads
         {
 	    adss->cbDstLength = adss->cbSrcLength;
         }
-        else 
+        else
         {
 	    return MMSYSERR_NOTSUPPORTED;
 	}
 	break;
     default:
 	WARN("Unsupported query %08lx\n", adss->fdwSize);
-	return MMSYSERR_NOTSUPPORTED;	
+	return MMSYSERR_NOTSUPPORTED;
     }
     FIXME("\n");
     return MMSYSERR_NOERROR;
@@ -1066,11 +1066,11 @@ static LRESULT G711_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADE
     AcmG711Data*	aad = (AcmG711Data*)adsi->dwDriver;
     DWORD		nsrc = adsh->cbSrcLength;
     DWORD		ndst = adsh->cbDstLength;
-    
-    if (adsh->fdwConvert & 
+
+    if (adsh->fdwConvert &
 	~(ACM_STREAMCONVERTF_BLOCKALIGN|
 	  ACM_STREAMCONVERTF_END|
-	  ACM_STREAMCONVERTF_START)) 
+	  ACM_STREAMCONVERTF_START))
     {
 	FIXME("Unsupported fdwConvert (%08lx), ignoring it\n", adsh->fdwConvert);
     }
@@ -1079,7 +1079,7 @@ static LRESULT G711_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADE
      * ACM_STREAMCONVERTF_END
      *	no pending data, so do nothing for this flag
      */
-    if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START)) 
+    if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START))
     {
 	G711_Reset(adsi, aad);
     }
@@ -1087,60 +1087,60 @@ static LRESULT G711_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADE
     aad->convert(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
     adsh->cbSrcLengthUsed = nsrc;
     adsh->cbDstLengthUsed = ndst;
-    
+
     return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
  * 			G711_DriverProc			[exported]
  */
-LRESULT CALLBACK	G711_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg, 
+LRESULT CALLBACK	G711_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %04x %08lx %08lx);\n", 
+    TRACE("(%08lx %08lx %04x %08lx %08lx);\n",
 	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
-    
-    switch (wMsg) 
+
+    switch (wMsg)
     {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return G711_drvOpen((LPSTR)dwParam1);
     case DRV_CLOSE:		return G711_drvClose(dwDevID);
-    case DRV_ENABLE:		return 1;	
+    case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
     case DRV_CONFIGURE:		MessageBoxA(0, "MS G711 (a-Law & mu-Law) filter !", "Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-	
+
     case ACMDM_DRIVER_NOTIFY:
 	/* no caching from other ACM drivers is done so far */
 	return MMSYSERR_NOERROR;
-	
+
     case ACMDM_DRIVER_DETAILS:
 	return G711_DriverDetails((PACMDRIVERDETAILSW)dwParam1);
-	
+
     case ACMDM_FORMATTAG_DETAILS:
 	return G711_FormatTagDetails((PACMFORMATTAGDETAILSW)dwParam1, dwParam2);
-	
+
     case ACMDM_FORMAT_DETAILS:
 	return G711_FormatDetails((PACMFORMATDETAILSW)dwParam1, dwParam2);
-	
+
     case ACMDM_FORMAT_SUGGEST:
 	return G711_FormatSuggest((PACMDRVFORMATSUGGEST)dwParam1);
-	
+
     case ACMDM_STREAM_OPEN:
 	return G711_StreamOpen((PACMDRVSTREAMINSTANCE)dwParam1);
-	
+
     case ACMDM_STREAM_CLOSE:
 	return G711_StreamClose((PACMDRVSTREAMINSTANCE)dwParam1);
-	
+
     case ACMDM_STREAM_SIZE:
 	return G711_StreamSize((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMSIZE)dwParam2);
-	
+
     case ACMDM_STREAM_CONVERT:
 	return G711_StreamConvert((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMHEADER)dwParam2);
-	
+
     case ACMDM_HARDWARE_WAVE_CAPS_INPUT:
     case ACMDM_HARDWARE_WAVE_CAPS_OUTPUT:
 	/* this converter is not a hardware driver */
@@ -1154,7 +1154,7 @@ LRESULT CALLBACK	G711_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
     case ACMDM_STREAM_UNPREPARE:
 	/* nothing special to do here... so don't do anything */
 	return MMSYSERR_NOERROR;
-	
+
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }

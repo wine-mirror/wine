@@ -39,7 +39,7 @@
 #include "wineacm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
-    
+
 static PWINE_ACMSTREAM	ACM_GetStream(HACMSTREAM has)
 {
     return (PWINE_ACMSTREAM)has;
@@ -52,16 +52,16 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 {
     PWINE_ACMSTREAM	was;
     MMRESULT		ret;
-		
+
     TRACE("(0x%08x, %ld)\n", has, fdwClose);
-    
+
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
     }
     ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_CLOSE, (DWORD)&was->drvInst, 0);
     if (ret == MMSYSERR_NOERROR) {
 	if (was->hAcmDriver)
-	    acmDriverClose(was->hAcmDriver, 0L);	
+	    acmDriverClose(was->hAcmDriver, 0L);
 	HeapFree(MSACM_hHeap, 0, was);
     }
     TRACE("=> (%d)\n", ret);
@@ -71,7 +71,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
 /***********************************************************************
  *           acmStreamConvert (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 				 DWORD fdwConvert)
 {
     PWINE_ACMSTREAM	was;
@@ -79,7 +79,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
     PACMDRVSTREAMHEADER	padsh;
 
     TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwConvert);
-    
+
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
@@ -100,7 +100,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
 	return MMSYSERR_INVALPARAM;
-    }	
+    }
 
     padsh->fdwConvert = fdwConvert;
 
@@ -115,7 +115,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 /***********************************************************************
  *           acmStreamMessage (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1, 
+MMRESULT WINAPI acmStreamMessage(HACMSTREAM has, UINT uMsg, LPARAM lParam1,
 				 LPARAM lParam2)
 {
     FIXME("(0x%08x, %u, %ld, %ld): stub\n", has, uMsg, lParam1, lParam2);
@@ -135,16 +135,16 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     MMRESULT		ret;
     int			wfxSrcSize;
     int			wfxDstSize;
-    
+
     TRACE("(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
 
-    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n", 
-	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec, 
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec,
 	  pwfxSrc->nBlockAlign, pwfxSrc->wBitsPerSample, pwfxSrc->cbSize);
 
-    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n", 
-	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec, 
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+	  pwfxDst->wFormatTag, pwfxDst->nChannels, pwfxDst->nSamplesPerSec, pwfxDst->nAvgBytesPerSec,
 	  pwfxDst->nBlockAlign, pwfxDst->wBitsPerSample, pwfxDst->cbSize);
 
     if ((fdwOpen & ACM_STREAMOPENF_QUERY) && phas) return MMSYSERR_INVALPARAM;
@@ -154,11 +154,11 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     if (pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) wfxSrcSize += pwfxSrc->cbSize;
     if (pwfxDst->wFormatTag != WAVE_FORMAT_PCM) wfxDstSize += pwfxDst->cbSize;
 
-    was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize + 
+    was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize +
 		    ((pwfltr) ? sizeof(WAVEFILTER) : 0));
     if (was == NULL)
 	return MMSYSERR_NOMEM;
-    
+
     was->drvInst.cbStruct = sizeof(was->drvInst);
     was->drvInst.pwfxSrc = (PWAVEFORMATEX)((LPSTR)was + sizeof(*was));
     memcpy(was->drvInst.pwfxSrc, pwfxSrc, wfxSrcSize);
@@ -170,20 +170,20 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     } else {
 	was->drvInst.pwfltr = NULL;
     }
-    was->drvInst.dwCallback = dwCallback;    
+    was->drvInst.dwCallback = dwCallback;
     was->drvInst.dwInstance = dwInstance;
     was->drvInst.fdwOpen = fdwOpen;
-    was->drvInst.fdwDriver = 0L;  
-    was->drvInst.dwDriver = 0L;     
+    was->drvInst.fdwDriver = 0L;
+    was->drvInst.dwDriver = 0L;
     /* real value will be stored once ACMDM_STREAM_OPEN succeeds */
     was->drvInst.has = 0L;
-    
+
     if (had) {
 	if (!(wad = MSACM_GetDriver(had))) {
 	    ret = MMSYSERR_INVALPARAM;
 	    goto errCleanUp;
 	}
-	
+
 	was->obj.dwType = WINE_ACMOBJ_STREAM;
 	was->obj.pACMDriverID = wad->obj.pACMDriverID;
 	was->pDrv = wad;
@@ -194,10 +194,10 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	    goto errCleanUp;
     } else {
 	PWINE_ACMDRIVERID wadi;
-	
+
 	ret = ACMERR_NOTPOSSIBLE;
 	for (wadi = MSACM_pFirstACMDriverID; wadi; wadi = wadi->pNextACMDriverID) {
-	    if ((wadi->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) || 
+	    if ((wadi->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) ||
 		!MSACM_FindFormatTagInCache(wadi, pwfxSrc->wFormatTag, NULL) ||
 		!MSACM_FindFormatTagInCache(wadi, pwfxDst->wFormatTag, NULL))
 		continue;
@@ -209,7 +209,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 		was->obj.pACMDriverID = wad->obj.pACMDriverID;
 		was->pDrv = wad;
 		was->hAcmDriver = had;
-		
+
 		ret = SendDriverMessage(wad->hDrvr, ACMDM_STREAM_OPEN, (DWORD)&was->drvInst, 0L);
 		TRACE("%s => %08x\n", wadi->pszDriverAlias, ret);
 		if (ret == MMSYSERR_NOERROR) {
@@ -235,7 +235,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	TRACE("=> (%d)\n", ret);
 	return ret;
     }
-errCleanUp:		
+errCleanUp:
     if (phas)
 	*phas = (HACMSTREAM)0;
     HeapFree(MSACM_hHeap, 0, was);
@@ -247,7 +247,7 @@ errCleanUp:
 /***********************************************************************
  *           acmStreamPrepareHeader (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 				       DWORD fdwPrepare)
 {
     PWINE_ACMSTREAM	was;
@@ -255,7 +255,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     PACMDRVSTREAMHEADER	padsh;
 
     TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwPrepare);
-    
+
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
@@ -330,15 +330,15 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
 /***********************************************************************
  *           acmStreamSize (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput, 
+MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 			      LPDWORD pdwOutputBytes, DWORD fdwSize)
 {
     PWINE_ACMSTREAM	was;
     ACMDRVSTREAMSIZE	adss;
     MMRESULT		ret;
-    
+
     TRACE("(0x%08x, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
-    
+
     if ((was = ACM_GetStream(has)) == NULL) {
 	return MMSYSERR_INVALHANDLE;
     }
@@ -347,7 +347,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
     }
 
     *pdwOutputBytes = 0L;
-    
+
     switch (fdwSize & ACM_STREAMSIZEF_QUERYMASK) {
     case ACM_STREAMSIZEF_DESTINATION:
 	adss.cbDstLength = cbInput;
@@ -357,13 +357,13 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 	adss.cbSrcLength = cbInput;
 	adss.cbDstLength = 0;
 	break;
-    default:	
+    default:
 	return MMSYSERR_INVALFLAG;
     }
-    
+
     adss.cbStruct = sizeof(adss);
     adss.fdwSize = fdwSize;
-    ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_SIZE, 
+    ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_SIZE,
 			    (DWORD)&was->drvInst, (DWORD)&adss);
     if (ret == MMSYSERR_NOERROR) {
 	switch (fdwSize & ACM_STREAMSIZEF_QUERYMASK) {
@@ -382,7 +382,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 /***********************************************************************
  *           acmStreamUnprepareHeader (MSACM32.@)
  */
-MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash, 
+MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 					 DWORD fdwUnprepare)
 {
     PWINE_ACMSTREAM	was;
@@ -390,7 +390,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
     PACMDRVSTREAMHEADER	padsh;
 
     TRACE("(0x%08x, %p, %ld)\n", has, pash, fdwUnprepare);
-    
+
     if ((was = ACM_GetStream(has)) == NULL)
 	return MMSYSERR_INVALHANDLE;
     if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
@@ -411,7 +411,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
 	return MMSYSERR_INVALPARAM;
-    }	
+    }
 
     padsh->fdwConvert = fdwUnprepare;
 

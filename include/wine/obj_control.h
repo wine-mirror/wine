@@ -45,7 +45,7 @@ typedef enum tagREADYSTATE
 	READYSTATE_INTERACTIVE  = 3,
 	READYSTATE_COMPLETE = 4
 } READYSTATE;
-																 
+
 typedef struct tagExtentInfo
 {
 	ULONG cb;
@@ -118,7 +118,7 @@ typedef enum tagDVASPECT2
 	DVASPECT_TRANSPARENT = 32
 } DVASPECT2;
 
-typedef enum tagHITRESULT 
+typedef enum tagHITRESULT
 {
 	HITRESULT_OUTSIDE = 0,
 	HITRESULT_TRANSPARENT = 1,
@@ -168,13 +168,13 @@ typedef struct IClassFactory2 IClassFactory2, *LPCLASSFACTORY2;
 
 DEFINE_GUID(IID_IViewObjectEx, 0x00000000, 0x0000, 0x0000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00); /* FIXME need GUID */
 typedef struct IViewObjectEx IViewObjectEx, *LPVIEWOBJECTEX;
- 
+
 DEFINE_GUID(IID_IProvideClassInfo, 0xb196b283, 0xbab4, 0x101a, 0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
 typedef struct IProvideClassInfo IProvideClassInfo, *LPPROVIDECLASSINFO;
- 
+
 DEFINE_GUID(IID_IProvideClassInfo2, 0xa6bc3ac0, 0xdbaa, 0x11ce, 0x9d, 0xe3, 0x00, 0xaa, 0x00, 0x4b, 0xb8, 0x51);
 typedef struct IProvideClassInfo2 IProvideClassInfo2, *LPPROVIDECLASSINFO2;
- 
+
 /*****************************************************************************
  * IOleControl interface
  */
@@ -199,12 +199,12 @@ ICOM_DEFINE(IOleControl,IUnknown)
 #define IOleControl_OnMnemonic(p,a)              ICOM_CALL1(OnMnemonic,p,a)
 #define IOleControl_OnAmbientPropertyChange(p,a) ICOM_CALL1(OnAmbientPropertyChange,p,a)
 #define IOleControl_FreezeEvents(p,a)            ICOM_CALL1(FreezeEvents,p,a)
-				
+
 
 /*****************************************************************************
  * IOleControlSite interface
  */
-#define ICOM_INTERFACE IOleControlSite 
+#define ICOM_INTERFACE IOleControlSite
 #define IOleControlSite_METHODS \
 	ICOM_METHOD (HRESULT,OnControlInfoChanged) \
 	ICOM_METHOD1(HRESULT,LockInPlaceActive, BOOL,fLock) \
@@ -231,8 +231,8 @@ ICOM_DEFINE(IOleControlSite,IUnknown)
 #define IOleControlSite_TranslateAccelerator(p,a,b)  ICOM_CALL1(TranslateAccelerator,p,a,b)
 #define IOleControlSite_OnFocus(p,a)                 ICOM_CALL1(OnFocus,p,a)
 #define IOleControlSite_ShowPropertyFrame(p)         ICOM_CALL1(ShowPropertyFrame,p)
-				
-				
+
+
 /*****************************************************************************
  * IOleInPlaceSiteEx interface
  */
@@ -269,7 +269,7 @@ ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
 #define IOleInPlaceSiteEx_OnInPlaceActivateEx(p,a,b) ICOM_CALL2(OnInPlaceActivateEx,p,a,b)
 #define IOleInPlaceSiteEx_OnInPlaceDeactivateEx(p,a) ICOM_CALL1(OnInPlaceDeactivateEx,p,a)
 #define IOleInPlaceSiteEx_RequestUIActivate(p)       ICOM_CALL (RequestUIActivate,p)
-				 
+
 
 /*****************************************************************************
  * IOleInPlaceSiteWindowless interface
@@ -355,7 +355,7 @@ ICOM_DEFINE(IOleInPlaceObjectWindowless,IOleInPlaceObject)
 /*** IOleInPlaceObjectWindowless methods ***/
 #define IOleInPlaceObjectWindowless_OnWindowMessage(p,a,b,c,d) ICOM_CALL4(OnWindowMessage,p,a,b,c,d)
 #define IOleInPlaceObjectWindowless_GetDropTarget(p,a)         ICOM_CALL1(GetDropTarget,p,a)
-				 
+
 
 /*****************************************************************************
  * IClassFactory2 interface
@@ -430,7 +430,7 @@ ICOM_DEFINE(IViewObjectEx,IViewObject2)
 
 #define ICOM_INTERFACE IProvideClassInfo
 #define IProvideClassInfo_METHODS \
-	ICOM_METHOD1(HRESULT,GetClassInfo, ITypeInfo**,ppTI) 
+	ICOM_METHOD1(HRESULT,GetClassInfo, ITypeInfo**,ppTI)
 #define IProvideClassInfo_IMETHODS \
 	IUnknown_IMETHODS \
 	IProvideClassInfo_METHODS
@@ -445,7 +445,7 @@ ICOM_DEFINE(IProvideClassInfo,IUnknown)
 #define IProvideClassInfo_GetClassInfo(p,a)            ICOM_CALL1(GetClassInfo,p,a)
 
 
-				
+
 /*****************************************************************************
  * IProvideClassInfo2 interface
  */
@@ -463,7 +463,7 @@ ICOM_DEFINE(IProvideClassInfo2,IProvideClassInfo)
 #define IProvideClassInfo2_AddRef(p)               ICOM_CALL (AddRef,p)
 #define IProvideClassInfo2_Release(p)              ICOM_CALL (Release,p)
 /*** IProvideClassInfo methods ***/
-#define IProvideClassInfo2_GetClassInfo(p,a)       ICOM_CALL1(GetClassInfo,p,a) 
+#define IProvideClassInfo2_GetClassInfo(p,a)       ICOM_CALL1(GetClassInfo,p,a)
 /*** IProvideClassInfo2 methods ***/
 #define IProvideClassInfo2_GetGUID(p,a,b)          ICOM_CALL2(GetGUID,p,a,b)
 

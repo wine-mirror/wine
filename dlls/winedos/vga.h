@@ -1,6 +1,6 @@
 /*
  * VGA emulation
- * 
+ *
  * Copyright 1998 Ove KÅven
  *
  * This library is free software; you can redistribute it and/or
@@ -45,13 +45,13 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y);
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count);
 void VGA_PutChar(BYTE ascii);
 void VGA_SetTextAttribute(BYTE attr);
-void VGA_ClearText(unsigned row1, unsigned col1, 
+void VGA_ClearText(unsigned row1, unsigned col1,
                   unsigned row2, unsigned col2,
                   BYTE attr);
-void VGA_ScrollUpText(unsigned row1, unsigned col1, 
+void VGA_ScrollUpText(unsigned row1, unsigned col1,
                      unsigned row2, unsigned col2,
                      unsigned lines, BYTE attr);
-void VGA_ScrollDownText(unsigned row1, unsigned col1, 
+void VGA_ScrollDownText(unsigned row1, unsigned col1,
                        unsigned row2, unsigned col2,
                        unsigned lines, BYTE attr);
 void VGA_GetCharacterAtCursor(BYTE *ascii, BYTE *attr);

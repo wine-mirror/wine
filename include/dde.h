@@ -75,7 +75,7 @@ typedef struct tagDDEPOKE DDEPOKE;
 BOOL WINAPI DdeSetQualityOfService(HWND hwndClient,
 				   CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
 				   PSECURITY_QUALITY_OF_SERVICE pqosPrev);
- 
+
 BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer);
 
 /* lParam packing/unpacking API */

@@ -152,13 +152,13 @@ void TestCreateKeyEx1()
     char keyname[]="regtest1";
 
     lSts = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"SOFTWARE",0,1,&hkeyP);
-    if (lSts != ERROR_SUCCESS) 
+    if (lSts != ERROR_SUCCESS)
       {
 	xERROR(1,lSts);
 	return;
       }
     lSts = RegCreateKeyEx(hkeyP,keyname,0,0,0,0xf003f,0,&hkey,&dwDisp);
-    if (lSts != ERROR_SUCCESS) 
+    if (lSts != ERROR_SUCCESS)
     {
       xERROR(2,lSts);
       RegCloseKey(hkeyP);

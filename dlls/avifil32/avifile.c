@@ -1,4 +1,4 @@
-/*				   
+/*
  * Copyright 1999 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or
@@ -144,14 +144,14 @@ static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LP
 
 static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile* iface) {
 	ICOM_THIS(IAVIFileImpl,iface);
-	
+
 	FIXME("(%p)->AddRef()\n",iface);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile* iface) {
 	ICOM_THIS(IAVIFileImpl,iface);
-	
+
 	FIXME("(%p)->Release()\n",iface);
 	if (!--(This->ref)) {
 		HeapFree(GetProcessHeap(),0,iface);
@@ -253,14 +253,14 @@ static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid
 
 static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream*iface) {
 	ICOM_THIS(IAVIStreamImpl,iface);
-	
+
 	FIXME("(%p)->AddRef()\n",iface);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface) {
 	ICOM_THIS(IAVIStreamImpl,iface);
-	
+
 	FIXME("(%p)->Release()\n",iface);
 	if (!--(This->ref)) {
 		HeapFree(GetProcessHeap(),0,This);
@@ -301,7 +301,7 @@ static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID fo
 	as->lpInputFormat = HeapAlloc(GetProcessHeap(),0,formatsize);
 	memcpy(as->lpInputFormat,format,formatsize);
 	if (as->iscompressing) {
-		int	xsize; 
+		int	xsize;
 		/* Set up the Compressor part */
 		xsize = ICCompressGetFormatSize(as->hic,as->lpInputFormat);
 		as->lpCompressFormat = HeapAlloc(GetProcessHeap(),0,xsize);
@@ -384,7 +384,7 @@ static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,
  */
 HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE iface,PAVISTREAM *ppavi,AVISTREAMINFOA * psi) {
 	AVISTREAMINFOW	psiw;
-	
+
 	/* Only the szName at the end is different */
 	memcpy(&psiw,psi,sizeof(*psi)-sizeof(psi->szName));
         MultiByteToWideChar( CP_ACP, 0, psi->szName, -1,
@@ -481,7 +481,7 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,PAVISTREAM ppsS
 	as->hic = ICOpen(aco->fccType,aco->fccHandler,ICMODE_COMPRESS);
 
 	/* May happen. for instance if the codec is not able to compress */
-	if (!as->hic) 
+	if (!as->hic)
 		return AVIERR_UNSUPPORTED;
 
 	ICGetInfo(as->hic,&(as->icinfo),sizeof(ICINFO));

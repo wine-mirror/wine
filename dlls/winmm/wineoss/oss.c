@@ -1,5 +1,5 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
-/*				   
+/*
  * Wine Driver for Open Sound System
  *
  * Copyright 	1999 Eric Pouech
@@ -33,20 +33,20 @@
 static	struct WINE_OSS* oss = NULL;
 
 /**************************************************************************
- * 				OSS_drvOpen			[internal]	
+ * 				OSS_drvOpen			[internal]
  */
 static	DWORD	OSS_drvOpen(LPSTR str)
 {
     if (oss)
 	return 0;
-    
+
     /* I know, this is ugly, but who cares... */
     oss = (struct WINE_OSS*)1;
     return 1;
 }
 
 /**************************************************************************
- * 				OSS_drvClose			[internal]	
+ * 				OSS_drvClose			[internal]
  */
 static	DWORD	OSS_drvClose(DWORD dwDevID)
 {
@@ -63,17 +63,17 @@ static	DWORD	OSS_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEOSS.1)
  */
-LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 			       DWORD dwParam1, DWORD dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-    
+
     switch(wMsg) {
 #ifdef HAVE_OSS
-    case DRV_LOAD:		OSS_WaveInit(); 
+    case DRV_LOAD:		OSS_WaveInit();
 #ifdef HAVE_OSS_MIDI
-    				OSS_MidiInit(); 
+    				OSS_MidiInit();
 #endif
 				return 1;
     case DRV_FREE:		return 1;

@@ -71,7 +71,7 @@ DEFINE_OLEGUID(CLSID_PSOAInterface, 0x00020424,0,0);
  */
 
 /*****************************************************************
- *  SafeArray defines and structs 
+ *  SafeArray defines and structs
  */
 
 #define FADF_AUTO        ( 0x1 )
@@ -87,18 +87,18 @@ DEFINE_OLEGUID(CLSID_PSOAInterface, 0x00020424,0,0);
 #define FADF_VARIANT     ( 0x800 )
 #define FADF_RESERVED    ( 0xf008 )
 
-/* Undocumented flags */                                                                                  
-#define FADF_CREATEVECTOR ( 0x2000 ) /* set when the safe array is created using SafeArrayCreateVector */ 
+/* Undocumented flags */
+#define FADF_CREATEVECTOR ( 0x2000 ) /* set when the safe array is created using SafeArrayCreateVector */
 
 
-typedef struct  tagSAFEARRAYBOUND 
+typedef struct  tagSAFEARRAYBOUND
 {
   ULONG cElements;                  /* Number of elements in dimension */
   LONG  lLbound;                    /* Lower bound of dimension */
 } SAFEARRAYBOUND;
 
 typedef struct  tagSAFEARRAY
-{ 
+{
   USHORT          cDims;            /* Count of array dimension */
   USHORT          fFeatures;        /* Flags describing the array */
   ULONG           cbElements;       /* Size of each element */
@@ -241,7 +241,7 @@ typedef struct  tagDISPPARAMS
   UINT      cNamedArgs;
 } DISPPARAMS;
 
-typedef struct tagEXCEPINFO 
+typedef struct tagEXCEPINFO
 {
     WORD  wCode;
     WORD  wReserved;
@@ -290,7 +290,7 @@ typedef struct tagTYPEDESC
 	} DUMMYUNIONNAME;
 	VARTYPE vt;
 } TYPEDESC;
- 
+
 typedef struct tagELEMDESC
 {
 	TYPEDESC tdesc;
@@ -658,7 +658,7 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 #define ITypeInfo_ReleaseTypeAttr(p,a)          ICOM_CALL1(ReleaseTypeAttr,p,a)
 #define ITypeInfo_ReleaseFuncDesc(p,a)          ICOM_CALL1(ReleaseFuncDesc,p,a)
 #define ITypeInfo_ReleaseVarDesc(p,a)           ICOM_CALL1(ReleaseVarDesc,p,a)
-				  
+
 
 /*****************************************************************************
  * ITypeInfo2 interface
@@ -696,10 +696,10 @@ ICOM_DEFINE(ITypeInfo,IUnknown)
 #define ITypeInfo2_IMETHODS \
 	IUnknown_IMETHODS \
 	ITypeInfo_METHODS \
-	ITypeInfo2_METHODS 
+	ITypeInfo2_METHODS
 ICOM_DEFINE(ITypeInfo2,ITypeInfo)
 #undef ICOM_INTERFACE
-	
+
 /*** IUnknown methods ***/
 #define ITypeInfo2_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define ITypeInfo2_AddRef(p)                     ICOM_CALL (AddRef,p)
@@ -822,7 +822,7 @@ ICOM_DEFINE(ITypeLib2,ITypeLib)
 #define ICOM_INTERFACE ITypeComp
 #define ITypeComp_METHODS \
 	ICOM_METHOD6(HRESULT,Bind, LPOLESTR,szName, ULONG,lHashVal, WORD,wFlags, ITypeInfo**,ppTInfo, DESCKIND*,pDescKind, BINDPTR*,pBindPtr) \
-	ICOM_METHOD4(HRESULT,BindType, LPOLESTR,szName, ULONG,lHashVal, ITypeInfo**,ppTInfo, ITypeComp**,ppTComp) 
+	ICOM_METHOD4(HRESULT,BindType, LPOLESTR,szName, ULONG,lHashVal, ITypeInfo**,ppTInfo, ITypeComp**,ppTComp)
 #define ITypeComp_IMETHODS \
 	IUnknown_IMETHODS \
 	ITypeComp_METHODS
@@ -836,7 +836,7 @@ ICOM_DEFINE(ITypeComp,IUnknown)
 /*** ITypeComp methods ***/
 #define ITypeComp_Bind(p,a,b,c,d,e,f)           ICOM_CALL6(Bind,p,a,b,c,d,e,f)
 #define ITypeComp_BindType(p,a,b,c,d)           ICOM_CALL4(BindType,p,a,b,c,d)
-				 
+
 /*****************************************************************************
  * IEnumVARIANT interface
  */
@@ -845,7 +845,7 @@ ICOM_DEFINE(ITypeComp,IUnknown)
 	ICOM_METHOD3(HRESULT,Next, ULONG,celt, VARIANT*,rgVar, ULONG*,pCeltFetched) \
 	ICOM_METHOD1(HRESULT,Skip, ULONG,celt) \
 	ICOM_METHOD (HRESULT,Reset) \
-	ICOM_METHOD1(HRESULT,Clone, IEnumVARIANT**,ppEnum) 
+	ICOM_METHOD1(HRESULT,Clone, IEnumVARIANT**,ppEnum)
 #define IEnumVARIANT_IMETHODS \
 	IUnknown_IMETHODS \
 	IEnumVARIANT_METHODS
@@ -861,6 +861,6 @@ ICOM_DEFINE(IEnumVARIANT,IUnknown)
 #define IEnumVARIANT_Skip(p,a)               ICOM_CALL1(Skip,p,a)
 #define IEnumVARIANT_Reset(p)                ICOM_CALL (Reset,p)
 #define IEnumVARIANT_Clone(p,a)              ICOM_CALL1(Clone,p,a)
-				 
+
 #endif /* __WINE_WINE_OBJ_OLEAUT_H */
 

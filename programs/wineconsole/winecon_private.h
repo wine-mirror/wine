@@ -25,7 +25,7 @@
 
 /* this is the configuration stored & loaded into the registry */
 struct config_data {
-    unsigned	cell_width;	/* width in pixels of a character */	
+    unsigned	cell_width;	/* width in pixels of a character */
     unsigned	cell_height;	/* height in pixels of a character */
     int		cursor_size;	/* in % of cell height */
     int		cursor_visible;

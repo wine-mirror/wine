@@ -101,9 +101,9 @@ static void PERQDATA_Release( PERQUEUEDATA *pQData )
 static PERQUEUEDATA * PERQDATA_CreateInstance(void)
 {
     PERQUEUEDATA *pQData;
-    
+
     BOOL16 bIsWin16 = 0;
-    
+
     TRACE_(msg)("()\n");
 
     /* Share a single instance of perQData for all 16 bit tasks */
@@ -137,7 +137,7 @@ static PERQUEUEDATA * PERQDATA_CreateInstance(void)
     /* Save perQData globally for 16 bit tasks */
     if ( bIsWin16 )
         pQDataWin16 = pQData;
-        
+
     return pQData;
 }
 
@@ -331,7 +331,7 @@ void QUEUE_Unlock( MESSAGEQUEUE *queue )
                 CloseHandle( queue->server_queue );
             GlobalFree16( queue->self );
         }
-    
+
         HeapUnlock( GetProcessHeap() );
     }
 }
@@ -378,10 +378,10 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     msgQueue->self = hQueue;
     msgQueue->lockCount = 1;
     msgQueue->magic = QUEUE_MAGIC;
-    
+
     /* Create and initialize our per queue data */
     msgQueue->pQData = bCreatePerQData ? PERQDATA_CreateInstance() : NULL;
-    
+
     return hQueue;
 }
 
@@ -471,7 +471,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
             ERR_(msg)("failed!\n");
             return FALSE;
 	}
-        
+
         /* Link new queue into list */
         queuePtr = QUEUE_Lock( hQueue );
         queuePtr->teb = NtCurrentTeb();
@@ -480,7 +480,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         SetThreadQueue16( 0, hQueue );
         NtCurrentTeb()->queue = hQueue;
         HeapUnlock( GetProcessHeap() );
-        
+
         QUEUE_Unlock( queuePtr );
     }
 
@@ -525,13 +525,13 @@ BOOL WINAPI GetInputState(void)
 /***********************************************************************
  *		GetMessagePos (USER.119)
  *		GetMessagePos (USER32.@)
- * 
+ *
  * The GetMessagePos() function returns a long value representing a
  * cursor position, in screen coordinates, when the last message
  * retrieved by the GetMessage() function occurs. The x-coordinate is
  * in the low-order word of the return value, the y-coordinate is in
  * the high-order word. The application can use the MAKEPOINT()
- * macro to obtain a POINT structure from the return value. 
+ * macro to obtain a POINT structure from the return value.
  *
  * For the current cursor position, use GetCursorPos().
  *
@@ -571,7 +571,7 @@ DWORD WINAPI GetMessagePos(void)
  * CONFORMANCE
  *
  * ECMA-234, Win32
- *  
+ *
  */
 LONG WINAPI GetMessageTime(void)
 {
@@ -608,7 +608,7 @@ LONG WINAPI GetMessageExtraInfo(void)
  * TODO:
  *    1. Reset the Key State (currenly per thread key state is not maintained)
  */
-BOOL WINAPI AttachThreadInput( 
+BOOL WINAPI AttachThreadInput(
     DWORD idAttach,   /* [in] Thread to attach */
     DWORD idAttachTo, /* [in] Thread to attach to */
     BOOL fAttach)   /* [in] Attach or detach */
@@ -627,7 +627,7 @@ BOOL WINAPI AttachThreadInput(
      */
     if ( HOOK_IsHooked( WH_JOURNALRECORD ) )
         goto CLEANUP;
-        
+
     /* Retrieve message queues corresponding to the thread id's */
     pTgtMsgQ = QUEUE_Lock( GetThreadQueue16( idAttach ) );
     pSrcMsgQ = QUEUE_Lock( GetThreadQueue16( idAttachTo ) );
@@ -645,7 +645,7 @@ BOOL WINAPI AttachThreadInput(
         {
             /* First release the target threads perQData */
             PERQDATA_Release( pTgtMsgQ->pQData );
-        
+
             /* Share a reference to the source threads perQDATA */
             PERQDATA_Addref( pSrcMsgQ->pQData );
             pTgtMsgQ->pQData = pSrcMsgQ->pQData;
@@ -658,7 +658,7 @@ BOOL WINAPI AttachThreadInput(
         {
             /* First release the target threads perQData */
             PERQDATA_Release( pTgtMsgQ->pQData );
-        
+
             /* Give the target thread its own private perQDATA once more */
             pTgtMsgQ->pQData = PERQDATA_CreateInstance();
         }
@@ -667,7 +667,7 @@ BOOL WINAPI AttachThreadInput(
     /* TODO: Reset the Key State */
 
     bRet = 1;      /* Success */
-    
+
 CLEANUP:
 
     /* Unlock the queues before returning */
@@ -675,6 +675,6 @@ CLEANUP:
         QUEUE_Unlock( pSrcMsgQ );
     if ( pTgtMsgQ )
         QUEUE_Unlock( pTgtMsgQ );
-    
+
     return bRet;
 }

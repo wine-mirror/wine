@@ -62,7 +62,7 @@ void WINAPI LogApiThk( LPSTR func )
 
 /***********************************************************************
  *           LogApiThkLSF    (KERNEL32.42)
- * 
+ *
  * NOTE: needs to preserve all registers!
  */
 void WINAPI LogApiThkLSF( LPSTR func, CONTEXT86 *context )
@@ -72,7 +72,7 @@ void WINAPI LogApiThkLSF( LPSTR func, CONTEXT86 *context )
 
 /***********************************************************************
  *           LogApiThkSL    (KERNEL32.44)
- * 
+ *
  * NOTE: needs to preserve all registers!
  */
 void WINAPI LogApiThkSL( LPSTR func, CONTEXT86 *context )
@@ -82,7 +82,7 @@ void WINAPI LogApiThkSL( LPSTR func, CONTEXT86 *context )
 
 /***********************************************************************
  *           LogCBThkSL    (KERNEL32.47)
- * 
+ *
  * NOTE: needs to preserve all registers!
  */
 void WINAPI LogCBThkSL( LPSTR func, CONTEXT86 *context )
@@ -92,7 +92,7 @@ void WINAPI LogCBThkSL( LPSTR func, CONTEXT86 *context )
 
 /***********************************************************************
  * Generates a FT_Prolog call.
- *	
+ *
  *  0FB6D1                  movzbl edx,cl
  *  8B1495xxxxxxxx	    mov edx,[4*edx + targetTable]
  *  68xxxxxxxx		    push FT_Prolog
@@ -141,14 +141,14 @@ static void _write_qtthunk(
 /***********************************************************************
  *           _loadthunk
  */
-static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32, 
+static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
                          struct ThunkDataCommon *TD32, DWORD checksum)
 {
     struct ThunkDataCommon *TD16;
     HMODULE hmod;
     int ordinal;
 
-    if ((hmod = LoadLibrary16(module)) <= 32) 
+    if ((hmod = LoadLibrary16(module)) <= 32)
     {
         ERR("(%s, %s, %s): Unable to load '%s', error %d\n",
                    module, func, module32, module, hmod);
@@ -166,7 +166,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     if (TD32 && memcmp(TD16->magic, TD32->magic, 4))
     {
         ERR("(%s, %s, %s): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
-                   module, func, module32, 
+                   module, func, module32,
                    TD16->magic[0], TD16->magic[1], TD16->magic[2], TD16->magic[3],
                    TD32->magic[0], TD32->magic[1], TD32->magic[2], TD32->magic[3]);
         return 0;
@@ -210,7 +210,7 @@ LPVOID WINAPI GetThunkBuff(void)
  *		ThunkConnect32		(KERNEL32.@)
  * Connects a 32bit and a 16bit thunkbuffer.
  */
-UINT WINAPI ThunkConnect32( 
+UINT WINAPI ThunkConnect32(
 	struct ThunkDataCommon *TD,  /* [in/out] thunkbuffer */
 	LPSTR thunkfun16,            /* [in] win16 thunkfunction */
 	LPSTR module16,              /* [in] name of win16 dll */
@@ -236,11 +236,11 @@ UINT WINAPI ThunkConnect32(
     }
     else
     {
-        ERR("Invalid magic %c%c%c%c\n", 
+        ERR("Invalid magic %c%c%c%c\n",
                    TD->magic[0], TD->magic[1], TD->magic[2], TD->magic[3]);
         return 0;
     }
-    
+
     switch (dwReason)
     {
         case DLL_PROCESS_ATTACH:
@@ -270,7 +270,7 @@ UINT WINAPI ThunkConnect32(
                 tdb->next = SL32->data->targetDB;   /* FIXME: not thread-safe! */
                 SL32->data->targetDB = tdb;
 
-                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %08lx\n", 
+                TRACE("Process %08lx allocated TargetDB entry for ThunkDataSL %08lx\n",
                              GetCurrentProcessId(), (DWORD)SL32->data);
             }
             else
@@ -332,7 +332,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
 
 /**********************************************************************
  * 		FT_Prolog			(KERNEL32.@)
- * 
+ *
  * The set of FT_... thunk routines is used instead of QT_Thunk,
  * if structures have to be converted from 32-bit to 16-bit
  * (change of member alignment, conversion of members).
@@ -349,7 +349,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
  *              bits 10..15  number of DWORD arguments
  *
  * Output: A new stackframe is created, and a 64 byte buffer
- *         allocated on the stack. The layout of the stack 
+ *         allocated on the stack. The layout of the stack
  *         on return is as follows:
  *
  *  (ebp+4)  return address to caller of thunk function
@@ -371,7 +371,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
  *  (ebp-64)
  *
  *  ESP is EBP-64 after return.
- *         
+ *
  */
 
 void WINAPI FT_Prolog( CONTEXT86 *context )
@@ -398,7 +398,7 @@ void WINAPI FT_Prolog( CONTEXT86 *context )
 /**********************************************************************
  * 		FT_Thunk			(KERNEL32.@)
  *
- * This routine performs the actual call to 16-bit code, 
+ * This routine performs the actual call to 16-bit code,
  * similar to QT_Thunk. The differences are:
  *  - The call target is taken from the buffer created by FT_Prolog
  *  - Those arguments requested by the thunk code (by setting the
@@ -407,11 +407,11 @@ void WINAPI FT_Prolog( CONTEXT86 *context )
  *    are guaranteed to point to structures copied to the stack
  *    by the thunk code, so we always use the 16-bit stack selector
  *    for those addresses).
- * 
+ *
  *    The bit #i of EBP-20 corresponds here to the DWORD starting at
  *    ESP+4 + 2*i.
- * 
- * FIXME: It is unclear what happens if there are more than 32 WORDs 
+ *
+ * FIXME: It is unclear what happens if there are more than 32 WORDs
  *        of arguments, so that the single DWORD bitmap is no longer
  *        sufficient ...
  */
@@ -464,8 +464,8 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
  *
  * One of the FT_ExitNN functions is called at the end of the thunk code.
  * It removes the stack frame created by FT_Prolog, moves the function
- * return from EBX to EAX (yes, FT_Thunk did use EAX for the return 
- * value, but the thunk code has moved it from EAX to EBX in the 
+ * return from EBX to EAX (yes, FT_Thunk did use EAX for the return
+ * value, but the thunk code has moved it from EAX to EBX in the
  * meantime ... :-), restores the caller's EBX, ESI, and EDI registers,
  * and perform a return to the CALLER of the thunk code (while removing
  * the given number of arguments from the caller's stack).
@@ -568,7 +568,7 @@ void WINAPI FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
 /***********************************************************************
  * 		ThunkInitLS 	(KERNEL32.43)
- * A thunkbuffer link routine 
+ * A thunkbuffer link routine
  * The thunkbuf looks like:
  *
  *	00: DWORD	length		? don't know exactly
@@ -600,14 +600,14 @@ DWORD WINAPI ThunkInitLS(
 
 /***********************************************************************
  * 		Common32ThkLS 	(KERNEL32.45)
- * 
+ *
  * This is another 32->16 thunk, independent of the QT_Thunk/FT_Thunk
- * style thunks. The basic difference is that the parameter conversion 
+ * style thunks. The basic difference is that the parameter conversion
  * is done completely on the *16-bit* side here. Thus we do not call
  * the 16-bit target directly, but call a common entry point instead.
  * This entry function then calls the target according to the target
  * number passed in the DI register.
- * 
+ *
  * Input:  EAX    SEGPTR to the common 16-bit entry point
  *         CX     offset in thunk table (target number * 4)
  *         DX     error return value if execution fails (unclear???)
@@ -620,14 +620,14 @@ DWORD WINAPI ThunkInitLS(
  *   (esp+40)  32-bit arguments
  *     ...
  *   (esp+8)   32 byte of stack space available as buffer
- *   (esp)     8 byte return address for use with 0x66 lret 
- * 
+ *   (esp)     8 byte return address for use with 0x66 lret
+ *
  * The called 16-bit stub uses a 0x66 lret to return to 32-bit code,
  * and uses the EAX register to return a DWORD return value.
- * Thus we need to use a special assembly glue routine 
+ * Thus we need to use a special assembly glue routine
  * (CallRegisterLongProc instead of CallRegisterShortProc).
  *
- * Finally, we return to the caller, popping the arguments off 
+ * Finally, we return to the caller, popping the arguments off
  * the stack.  The number of arguments to be popped is returned
  * in the BL register by the called 16-bit routine.
  *
@@ -667,12 +667,12 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
  * YET Another 32->16 thunk. The difference to Common32ThkLS is that
  * argument processing is done on both the 32-bit and the 16-bit side:
  * The 32-bit side prepares arguments, copying them onto the stack.
- * 
- * When this routine is called, the first word on the stack is the 
+ *
+ * When this routine is called, the first word on the stack is the
  * number of argument bytes prepared by the 32-bit code, and EDX
  * contains the 16-bit target address.
  *
- * The called 16-bit routine is another relaycode, doing further 
+ * The called 16-bit routine is another relaycode, doing further
  * argument processing and then calling the real 16-bit target
  * whose address is stored at [bp-04].
  *
@@ -680,7 +680,7 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
  * After return from the 16-bit relaycode, the arguments need
  * to be copied *back* to the 32-bit stack, since the 32-bit
  * relaycode processes output parameters.
- * 
+ *
  * Note that we copy twice the number of arguments, since some of the
  * 16-bit relaycodes in SYSTHUNK.DLL directly access the original
  * arguments of the caller!
@@ -710,7 +710,7 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
     context->Edx = context16.Edx;
 
     /* Copy modified buffers back to 32-bit stack */
-    memcpy( (LPBYTE)context->Esp, 
+    memcpy( (LPBYTE)context->Esp,
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
 
     context->Esp +=   LOWORD(context16.Esp) -
@@ -770,7 +770,7 @@ LPVOID WINAPI ThunkInitLSF(
 	*(DWORD*)(thunk+0x35) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)90);
 	*(DWORD*)(thunk+0x6D) = (DWORD)GetProcAddress(hkrnl32,(LPSTR)89);
 
-	
+
 	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
 		return 0;
 
@@ -783,21 +783,21 @@ LPVOID WINAPI ThunkInitLSF(
 
 /***********************************************************************
  *		FT_PrologPrime			(KERNEL32.89)
- * 
+ *
  * This function is called from the relay code installed by
- * ThunkInitLSF. It replaces the location from where it was 
+ * ThunkInitLSF. It replaces the location from where it was
  * called by a standard FT_Prolog call stub (which is 'primed'
  * by inserting the correct target table pointer).
  * Finally, it calls that stub.
- * 
+ *
  * Input:  ECX    target number + flags (passed through to FT_Prolog)
- *        (ESP)   offset of location where target table pointer 
+ *        (ESP)   offset of location where target table pointer
  *                is stored, relative to the start of the relay code
  *        (ESP+4) pointer to start of relay code
  *                (this is where the FT_Prolog call stub gets written to)
- * 
+ *
  * Note: The two DWORD arguments get popped off the stack.
- *        
+ *
  */
 void WINAPI FT_PrologPrime( CONTEXT86 *context )
 {
@@ -820,13 +820,13 @@ void WINAPI FT_PrologPrime( CONTEXT86 *context )
 /***********************************************************************
  *		QT_ThunkPrime			(KERNEL32.90)
  *
- * This function corresponds to FT_PrologPrime, but installs a 
+ * This function corresponds to FT_PrologPrime, but installs a
  * call stub for QT_Thunk instead.
  *
  * Input: (EBP-4) target number (passed through to QT_Thunk)
  *         EDX    target table pointer location offset
  *         EAX    start of relay code
- *      
+ *
  */
 void WINAPI QT_ThunkPrime( CONTEXT86 *context )
 {
@@ -925,7 +925,7 @@ DWORD WINAPIV SSCall(
     if(TRACE_ON(thunk))
     {
       DPRINTF("(%ld,0x%08lx,%p,[",nr,flags,fun);
-      for (i=0;i<nr/4;i++) 
+      for (i=0;i<nr/4;i++)
           DPRINTF("0x%08lx,",args[i]);
       DPRINTF("])\n");
     }
@@ -1001,7 +1001,7 @@ void WINAPI W32S_BackTo32( CONTEXT86 *context )
  * Following code is then generated by AllocSLCallback. The code is 16 bit, so
  * the 0x66 prefix switches from word->long registers.
  *
- *	665A		pop	edx 
+ *	665A		pop	edx
  *	6668x arg2 x 	pushl	<arg2>
  *	6652		push	edx
  *	EAx arg1 x	jmpf	<arg1>
@@ -1048,7 +1048,7 @@ FreeSLCallback(
  * 		GetTEBSelectorFS	(KERNEL.475)
  * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
  */
-void WINAPI GetTEBSelectorFS16(void) 
+void WINAPI GetTEBSelectorFS16(void)
 {
     CURRENT_STACK16->fs = wine_get_fs();
 }
@@ -1095,7 +1095,7 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
       This means that SYSTHUNK.DLL itself switches to a 32-bit stack,
       and does a far call to the 32-bit code segment of OLECLI32/OLESVR32.
       Unfortunately, our CallTo/CallFrom mechanism is therefore completely
-      bypassed, which means it will crash the next time the 32-bit OLE 
+      bypassed, which means it will crash the next time the 32-bit OLE
       code thunks down again to 16-bit (this *will* happen!).
 
       The following hack tries to recognize this situation.
@@ -1108,8 +1108,8 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
 
       If we recognize this situation, we try to simulate the actions
       of our CallTo/CallFrom mechanism by copying the 16-bit stack
-      to our 32-bit stack, creating a proper STACK16FRAME and 
-      updating cur_stack. */ 
+      to our 32-bit stack, creating a proper STACK16FRAME and
+      updating cur_stack. */
 
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
@@ -1519,15 +1519,15 @@ void WINAPI SetThunkletCallbackGlue16( FARPROC glueLS, SEGPTR glueSL )
 /***********************************************************************
  *     THUNK_FindThunklet
  */
-THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay, 
-                              DWORD glue, BYTE type ) 
+THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
+                              DWORD glue, BYTE type )
 {
-    THUNKLET *thunk; 
+    THUNKLET *thunk;
 
     for (thunk = ThunkletAnchor; thunk; thunk = thunk->next)
         if (    thunk->type   == type
              && thunk->target == target
-             && thunk->relay  == relay 
+             && thunk->relay  == relay
              && ( type == THUNKLET_TYPE_LS ?
                     ( thunk->glue == glue - (DWORD)&thunk->type )
                   : ( thunk->glue == glue ) ) )
@@ -1539,8 +1539,8 @@ THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay,
 /***********************************************************************
  *     THUNK_AllocLSThunklet
  */
-FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay, 
-                                 FARPROC glue, HTASK16 owner ) 
+FARPROC THUNK_AllocLSThunklet( SEGPTR target, DWORD relay,
+                                 FARPROC glue, HTASK16 owner )
 {
     THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
                                           THUNKLET_TYPE_LS );
@@ -1629,22 +1629,22 @@ BOOL16 WINAPI IsSLThunklet16( THUNKLET *thunk )
 /***********************************************************************
  *     AllocLSThunkletSysthunk             (KERNEL.607)
  */
-FARPROC WINAPI AllocLSThunkletSysthunk16( SEGPTR target, 
+FARPROC WINAPI AllocLSThunkletSysthunk16( SEGPTR target,
                                           FARPROC relay, DWORD dummy )
 {
     if (!ThunkletSysthunkGlueLS) THUNK_Init();
-    return THUNK_AllocLSThunklet( (SEGPTR)relay, (DWORD)target, 
+    return THUNK_AllocLSThunklet( (SEGPTR)relay, (DWORD)target,
                                   ThunkletSysthunkGlueLS, GetCurrentTask() );
 }
 
 /***********************************************************************
  *     AllocSLThunkletSysthunk             (KERNEL.608)
  */
-SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target, 
+SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target,
                                        SEGPTR relay, DWORD dummy )
 {
     if (!ThunkletSysthunkGlueSL) THUNK_Init();
-    return THUNK_AllocSLThunklet( (FARPROC)relay, (DWORD)target, 
+    return THUNK_AllocSLThunklet( (FARPROC)relay, (DWORD)target,
                                   ThunkletSysthunkGlueSL, GetCurrentTask() );
 }
 
@@ -1652,34 +1652,34 @@ SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target,
 /***********************************************************************
  *     AllocLSThunkletCallbackEx           (KERNEL.567)
  */
-FARPROC WINAPI AllocLSThunkletCallbackEx16( SEGPTR target, 
+FARPROC WINAPI AllocLSThunkletCallbackEx16( SEGPTR target,
                                             DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = MapSL( target );
     if ( !thunk ) return NULL;
 
-    if (   IsSLThunklet16( thunk ) && thunk->relay == relay 
+    if (   IsSLThunklet16( thunk ) && thunk->relay == relay
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
         return (FARPROC)thunk->target;
 
-    return THUNK_AllocLSThunklet( target, relay, 
+    return THUNK_AllocLSThunklet( target, relay,
                                   ThunkletCallbackGlueLS, task );
 }
 
 /***********************************************************************
  *     AllocSLThunkletCallbackEx           (KERNEL.568)
  */
-SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target, 
+SEGPTR WINAPI AllocSLThunkletCallbackEx16( FARPROC target,
                                          DWORD relay, HTASK16 task )
 {
     THUNKLET *thunk = (THUNKLET *)target;
     if ( !thunk ) return 0;
 
-    if (   IsLSThunklet( thunk ) && thunk->relay == relay 
+    if (   IsLSThunklet( thunk ) && thunk->relay == relay
         && thunk->glue == (DWORD)ThunkletCallbackGlueLS - (DWORD)&thunk->type )
         return (SEGPTR)thunk->target;
 
-    return THUNK_AllocSLThunklet( target, relay, 
+    return THUNK_AllocSLThunklet( target, relay,
                                   ThunkletCallbackGlueSL, task );
 }
 
@@ -1708,12 +1708,12 @@ SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
 FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 {
     THUNKLET *thunk = MapSL( target );
-    if (   thunk && IsSLThunklet16( thunk ) && thunk->relay == relay 
+    if (   thunk && IsSLThunklet16( thunk ) && thunk->relay == relay
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
         return (FARPROC)thunk->target;
 
-    thunk = THUNK_FindThunklet( (DWORD)target, relay, 
-                                (DWORD)ThunkletCallbackGlueLS, 
+    thunk = THUNK_FindThunklet( (DWORD)target, relay,
+                                (DWORD)ThunkletCallbackGlueLS,
                                 THUNKLET_TYPE_LS );
     return (FARPROC)thunk;
 }
@@ -1725,12 +1725,12 @@ FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 SEGPTR WINAPI FindSLThunkletCallback( FARPROC target, DWORD relay )
 {
     THUNKLET *thunk = (THUNKLET *)target;
-    if (   thunk && IsLSThunklet( thunk ) && thunk->relay == relay 
+    if (   thunk && IsLSThunklet( thunk ) && thunk->relay == relay
         && thunk->glue == (DWORD)ThunkletCallbackGlueLS - (DWORD)&thunk->type )
         return (SEGPTR)thunk->target;
 
-    thunk = THUNK_FindThunklet( (DWORD)target, relay, 
-                                (DWORD)ThunkletCallbackGlueSL, 
+    thunk = THUNK_FindThunklet( (DWORD)target, relay,
+                                (DWORD)ThunkletCallbackGlueSL,
                                 THUNKLET_TYPE_SL );
     return get_segptr( thunk );
 }
@@ -1759,7 +1759,7 @@ static FARPROC *CBClientRelay32[ N_CBC_TOTAL ];
 /***********************************************************************
  *     RegisterCBClient                    (KERNEL.619)
  */
-INT16 WINAPI RegisterCBClient16( INT16 wCBCId, 
+INT16 WINAPI RegisterCBClient16( INT16 wCBCId,
                                  SEGPTR relay16, FARPROC *relay32 )
 {
     /* Search for free Callback ID */
@@ -1783,11 +1783,11 @@ INT16 WINAPI RegisterCBClient16( INT16 wCBCId,
 /***********************************************************************
  *     UnRegisterCBClient                  (KERNEL.622)
  */
-INT16 WINAPI UnRegisterCBClient16( INT16 wCBCId, 
+INT16 WINAPI UnRegisterCBClient16( INT16 wCBCId,
                                    SEGPTR relay16, FARPROC *relay32 )
 {
-    if (    wCBCId >= N_CBC_FIXED && wCBCId < N_CBC_TOTAL 
-         && CBClientRelay16[ wCBCId ] == relay16 
+    if (    wCBCId >= N_CBC_FIXED && wCBCId < N_CBC_TOTAL
+         && CBClientRelay16[ wCBCId ] == relay16
          && CBClientRelay32[ wCBCId ] == relay32 )
     {
         CBClientRelay16[ wCBCId ] = 0;
@@ -1820,7 +1820,7 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     SEGPTR stackSeg = stack16_push( 12 );
     LPWORD stackLin = MapSL( stackSeg );
     SEGPTR glue, *glueTab;
-    
+
     stackLin[3] = BP_reg( context );
     stackLin[2] = SI_reg( context );
     stackLin[1] = DI_reg( context );

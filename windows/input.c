@@ -2,7 +2,7 @@
  * USER Input processing
  *
  * Copyright 1993 Bob Amstadt
- * Copyright 1996 Albrecht Kleine 
+ * Copyright 1996 Albrecht Kleine
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
@@ -599,14 +599,14 @@ HWND WINAPI GetCapture(void)
 /**********************************************************************
  *		GetAsyncKeyState (USER32.@)
  *
- *	Determine if a key is or was pressed.  retval has high-order 
+ *	Determine if a key is or was pressed.  retval has high-order
  * bit set to 1 if currently pressed, low-order bit set to 1 if key has
  * been pressed.
  *
  *	This uses the variable AsyncMouseButtonsStates and
  * AsyncKeyStateTable (set in event.c) which have the mouse button
  * number or key number (whichever is applicable) set to true if the
- * mouse or key had been depressed since the last call to 
+ * mouse or key had been depressed since the last call to
  * GetAsyncKeyState.
  */
 SHORT WINAPI GetAsyncKeyState(INT nKey)
@@ -768,7 +768,7 @@ INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
 /***********************************************************************
  *		GetKeyboardLayout (USER32.@)
  *
- * FIXME: - device handle for keyboard layout defaulted to 
+ * FIXME: - device handle for keyboard layout defaulted to
  *          the language id. This is the way Windows default works.
  *        - the thread identifier (dwLayout) is also ignored.
  */
@@ -886,10 +886,10 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 /***********************************************************************
  *		GetKeyboardLayoutList (USER32.@)
  *
- * FIXME: Supports only the system default language and layout and 
+ * FIXME: Supports only the system default language and layout and
  *          returns only 1 value.
  *
- * Return number of values available if either input parm is 
+ * Return number of values available if either input parm is
  *  0, per MS documentation.
  *
  */
@@ -928,7 +928,7 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 {
     TRACE_(keyboard)("(%s, %d)\n", pwszKLID, Flags);
     ERR_(keyboard)("Only default system keyboard layout supported. Call ignored.\n");
-  return 0; 
+  return 0;
 }
 
 /***********************************************************************
@@ -937,7 +937,7 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
     char buf[9];
-    
+
     WideCharToMultiByte( CP_ACP, 0, pwszKLID, -1, buf, sizeof(buf), NULL, NULL );
     buf[8] = 0;
     return LoadKeyboardLayoutA(buf, Flags);
@@ -948,7 +948,7 @@ typedef struct __TRACKINGLIST {
     TRACKMOUSEEVENT tme;
     POINT pos; /* center of hover rectangle */
     INT iHoverTime; /* elapsed time the cursor has been inside of the hover rect */
-} _TRACKINGLIST; 
+} _TRACKINGLIST;
 
 static _TRACKINGLIST TrackingList[10];
 static int iTrackMax = 0;
@@ -986,8 +986,8 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
         /* see if we are tracking hovering for this hwnd */
         if(TrackingList[i].tme.dwFlags & TME_HOVER) {
             /* add the timer interval to the hovering time */
-            TrackingList[i].iHoverTime+=iTimerInterval;  
-     
+            TrackingList[i].iHoverTime+=iTimerInterval;
+
             /* has the cursor moved outside the rectangle centered around pos? */
             if((abs(pos.x - TrackingList[i].pos.x) > (hoverwidth / 2.0))
               || (abs(pos.y - TrackingList[i].pos.y) > (hoverheight / 2.0)))
@@ -1016,7 +1016,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
             TrackingList[i] = TrackingList[--iTrackMax];
         }
     }
-	
+
     /* stop the timer if the tracking list is empty */
     if(iTrackMax == 0) {
         KillTimer(0, timer);
@@ -1068,24 +1068,24 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
     }
 
     flags = ptme->dwFlags;
-    
+
     /* if HOVER_DEFAULT was specified replace this with the systems current value */
     if(ptme->dwHoverTime == HOVER_DEFAULT)
         SystemParametersInfoA(SPI_GETMOUSEHOVERTIME, 0, &(ptme->dwHoverTime), 0);
 
     GetCursorPos(&pos);
-    hwnd = WindowFromPoint(pos);    
+    hwnd = WindowFromPoint(pos);
 
     if ( flags & TME_CANCEL ) {
         flags &= ~ TME_CANCEL;
         cancel = 1;
     }
-    
+
     if ( flags & TME_HOVER  ) {
         flags &= ~ TME_HOVER;
         hover = 1;
     }
-    
+
     if ( flags & TME_LEAVE ) {
         flags &= ~ TME_LEAVE;
         leave = 1;
@@ -1107,7 +1107,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             *ptme = TrackingList[i].tme;
         else
             ptme->dwFlags = 0;
-    
+
         return TRUE; /* return here, TME_QUERY is retrieving information */
     }
 
@@ -1130,7 +1130,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
                  (TrackingList[i].tme.dwFlags & TME_LEAVE)))
             {
                 TrackingList[i] = TrackingList[--iTrackMax];
-        
+
                 if(iTrackMax == 0) {
                     KillTimer(0, timer);
                     timer = 0;
@@ -1151,16 +1151,16 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
                         TrackingList[i].tme.dwFlags |= TME_HOVER;
                         TrackingList[i].tme.dwHoverTime = ptme->dwHoverTime;
                     }
- 
+
                     if(leave)
                         TrackingList[i].tme.dwFlags |= TME_LEAVE;
 
                     /* reset iHoverTime as per winapi specs */
-                    TrackingList[i].iHoverTime = 0;                  
-  
+                    TrackingList[i].iHoverTime = 0;
+
                     return TRUE;
                 }
-            } 		
+            }
 
             /* if the tracking list is full return FALSE */
             if (iTrackMax == sizeof (TrackingList) / sizeof(*TrackingList)) {

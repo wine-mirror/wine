@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface. 
+ * WCMD - Wine-compatible command line interface.
  *
  * Copyright (C) 1999 - 2001 D A Pickles
  *
@@ -198,11 +198,11 @@ char *whichcmd;
     }
     if ((p = strchr(cmd,'<')) != NULL) *p = '\0';
 
-/*                                                               
- * Strip leading whitespaces, and a '@' if supplied              
- */                                                            
-    whichcmd = WCMD_strtrim_leading_spaces(cmd);               
-    if (whichcmd[0] == '@') whichcmd++;                        
+/*
+ * Strip leading whitespaces, and a '@' if supplied
+ */
+    whichcmd = WCMD_strtrim_leading_spaces(cmd);
+    if (whichcmd[0] == '@') whichcmd++;
 
 /*
  *	Check if the command entered is internal. If it is, pass the rest of the
@@ -210,14 +210,14 @@ char *whichcmd;
  */
 
     count = 0;
-    while (IsCharAlphaNumeric(whichcmd[count])) {              
+    while (IsCharAlphaNumeric(whichcmd[count])) {
       count++;
     }
     for (i=0; i<=WCMD_EXIT; i++) {
       if (CompareString (LOCALE_USER_DEFAULT, NORM_IGNORECASE | SORT_STRINGSORT,
-      	  whichcmd, count, inbuilt[i], -1) == 2) break;        
+      	  whichcmd, count, inbuilt[i], -1) == 2) break;
     }
-    p = WCMD_strtrim_leading_spaces (&whichcmd[count]);       
+    p = WCMD_strtrim_leading_spaces (&whichcmd[count]);
     WCMD_parse (p, quals, param1, param2);
     switch (i) {
 
@@ -253,11 +253,11 @@ char *whichcmd;
       case WCMD_ECHO:
         /* Use the unstripped version of the following data - step over the space */
         /* but only if a parameter follows                                        */
-        if (strlen(&whichcmd[count]) > 0)                                       
-          WCMD_echo(&whichcmd[count+1]);                                        
-        else                                                                    
-          WCMD_echo(&whichcmd[count]);                                          
-        break;                         
+        if (strlen(&whichcmd[count]) > 0)
+          WCMD_echo(&whichcmd[count+1]);
+        else
+          WCMD_echo(&whichcmd[count]);
+        break;
       case WCMD_FOR:
         WCMD_for (p);
         break;
@@ -309,8 +309,8 @@ char *whichcmd;
         WCMD_setshow_time ();
         break;
       case WCMD_TITLE:
-        if (strlen(&whichcmd[count]) > 0)                                       
-          WCMD_title(&whichcmd[count+1]);                                        
+        if (strlen(&whichcmd[count]) > 0)
+          WCMD_title(&whichcmd[count+1]);
         break;
       case WCMD_TYPE:
         WCMD_type ();
@@ -327,7 +327,7 @@ char *whichcmd;
       case WCMD_EXIT:
         ExitProcess (0);
       default:
-        WCMD_run_program (whichcmd);                   
+        WCMD_run_program (whichcmd);
     };
     if (old_stdin) {
       CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
@@ -582,7 +582,7 @@ DWORD count;
   va_end(ap);
 }
 
-/******************************************************************* 
+/*******************************************************************
  * WCMD_output_asis - send output to current standard output device.
  *        without formatting eg. when message contains '%'
  */

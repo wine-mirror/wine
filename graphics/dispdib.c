@@ -1,6 +1,6 @@
 /*
  * DISPDIB.dll
- * 
+ *
  * Copyright 1998 Ove Kåven (with some help from Marcus Meissner)
  *
  * This library is free software; you can redistribute it and/or

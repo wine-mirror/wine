@@ -32,7 +32,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
-  
+
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
 {

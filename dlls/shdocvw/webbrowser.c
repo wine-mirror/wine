@@ -241,7 +241,7 @@ static HRESULT WINAPI WB_get_Busy(LPWEBBROWSER iface, VARIANT *pBool)
  * IWebBrowser virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IWebBrowser) WB_Vtbl = 
+static ICOM_VTABLE(IWebBrowser) WB_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WB_QueryInterface,

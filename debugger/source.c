@@ -156,7 +156,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	      break;
 	    }
 	}
-      
+
     }
 
   if( ol == NULL )
@@ -186,14 +186,14 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	       * Now append the base file name.
 	       */
 	      strcat(tmppath, basename);
-	      
+
 	      status = stat(tmppath, &statbuf);
 	      if( status != -1 )
 		{
 		  break;
 		}
 	    }
-	  
+
 	  if( sl == NULL )
 	    {
 	      char	zbuf[256];
@@ -202,12 +202,12 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	       */
 	      sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
 	      DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath), FALSE, FALSE);
-	      
+
 	      if( tmppath[strlen(tmppath)-1] == '\n' )
 		{
 		  tmppath[strlen(tmppath)-1] = '\0';
 		}
-	      
+
 	      if( tmppath[strlen(tmppath)-1] != '/' )
 		{
 		  strcat(tmppath, "/");
@@ -216,7 +216,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	       * Now append the base file name.
 	       */
 	      strcat(tmppath, basename);
-	      
+
 	      status = stat(tmppath, &statbuf);
 	      if( status == -1 )
 		{
@@ -302,14 +302,14 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	{
 	  return FALSE;
 	}
-      
+
       addr = mmap(0, ol->size, PROT_READ, MAP_PRIVATE, fd, 0);
       if( addr == (char *) -1 )
 	{
 	  return FALSE;
 	}
     }
-  
+
   /*
    * All we need to do is to display the source lines here.
    */
@@ -325,7 +325,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
       memset(&buffer, 0, sizeof(buffer));
       if( ol->linelist[i+1] != ol->linelist[i] )
 	{
-	  memcpy(&buffer, addr + ol->linelist[i], 
+	  memcpy(&buffer, addr + ol->linelist[i],
 		 (ol->linelist[i+1] - ol->linelist[i]) - 1);
 	}
       DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
@@ -351,10 +351,10 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
    * We need to see what source file we need.  Hopefully we only have
    * one specified, otherwise we might as well punt.
    */
-  if( source1 != NULL 
-      && source2 != NULL 
+  if( source1 != NULL
+      && source2 != NULL
       && source1->sourcefile != NULL
-      && source2->sourcefile != NULL 
+      && source2->sourcefile != NULL
       && strcmp(source1->sourcefile, source2->sourcefile) != 0 )
     {
       DEBUG_Printf(DBG_CHN_MESG, "Ambiguous source file specification.\n");
@@ -367,8 +367,8 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
       sourcefile = source1->sourcefile;
     }
 
-  if( sourcefile == NULL 
-      && source2 != NULL 
+  if( sourcefile == NULL
+      && source2 != NULL
       && source2->sourcefile != NULL )
     {
       sourcefile = source2->sourcefile;

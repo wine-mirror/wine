@@ -44,7 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#ifdef HAVE_SYS_IOCTL_H 
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
 #ifdef HAVE_LINUX_JOYSTICK_H
@@ -76,7 +76,7 @@ typedef struct tagWINE_JSTCK {
 static	WINE_JSTCK	JSTCK_Data[MAXJOYSTICK];
 
 /**************************************************************************
- * 				JSTCK_drvGet			[internal]	
+ * 				JSTCK_drvGet			[internal]
  */
 static	WINE_JSTCK*	JSTCK_drvGet(DWORD dwDevID)
 {
@@ -92,7 +92,7 @@ static	WINE_JSTCK*	JSTCK_drvGet(DWORD dwDevID)
 }
 
 /**************************************************************************
- * 				JSTCK_drvOpen			[internal]	
+ * 				JSTCK_drvOpen			[internal]
  */
 static	DWORD	JSTCK_drvOpen(LPSTR str, DWORD dwIntf)
 {
@@ -105,7 +105,7 @@ static	DWORD	JSTCK_drvOpen(LPSTR str, DWORD dwIntf)
 }
 
 /**************************************************************************
- * 				JSTCK_drvClose			[internal]	
+ * 				JSTCK_drvClose			[internal]
  */
 static	DWORD	JSTCK_drvClose(DWORD dwDevID)
 {
@@ -159,7 +159,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	return MMSYSERR_NODRIVER;
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
-    
+
     if ((dev = JSTCK_OpenDevice(jstck)) < 0) return JOYERR_PARMS;
     ioctl(dev, JSIOCGAXES, &nrOfAxes);
     ioctl(dev, JSIOCGBUTTONS, &nrOfButtons);
@@ -249,7 +249,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
     struct js_status 	js;
     int    		dev_stat;
 #endif
-    
+
     if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
 	return MMSYSERR_NODRIVER;
 
@@ -265,7 +265,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 		if (lpInfo->dwFlags & JOY_RETURNX)
 		    lpInfo->dwXpos   = ev.value + 32767;
 		break;
-	    case 1: 
+	    case 1:
 		if (lpInfo->dwFlags & JOY_RETURNY)
 		    lpInfo->dwYpos   = ev.value + 32767;
 		break;
@@ -273,24 +273,24 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 		if (lpInfo->dwFlags & JOY_RETURNZ)
 		    lpInfo->dwZpos   = ev.value + 32767;
 		break;
-	    case 3: 
+	    case 3:
 		if (lpInfo->dwFlags & JOY_RETURNR)
 		    lpInfo->dwRpos   = ev.value + 32767;
-	    case 4: 
+	    case 4:
 		if (lpInfo->dwFlags & JOY_RETURNU)
 		    lpInfo->dwUpos   = ev.value + 32767;
-	    case 5: 
+	    case 5:
 		if (lpInfo->dwFlags & JOY_RETURNV)
 		    lpInfo->dwVpos   = ev.value + 32767;
 		break;
-	    default: 
+	    default:
 		FIXME("Unknown joystick event '%d'\n", ev.number);
 	    }
 	} else if (ev.type == (JS_EVENT_BUTTON | JS_EVENT_INIT)) {
 	    if (lpInfo->dwFlags & JOY_RETURNBUTTONS) {
 		if (ev.value) {
 		    lpInfo->dwButtons |= (1 << ev.number);
-		    /* FIXME: what to do for this field when 
+		    /* FIXME: what to do for this field when
 		     * multiple buttons are depressed ?
 		     */
 		    lpInfo->dwButtonNumber = ev.number + 1;
@@ -321,7 +321,7 @@ static LONG	JSTCK_GetPosEx(DWORD dwDevID, LPJOYINFOEX lpInfo)
 
     close(dev);
 
-    TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, buttons: 0x%04x, flags: 0x%04x\n", 
+    TRACE("x: %ld, y: %ld, z: %ld, r: %ld, u: %ld, v: %ld, buttons: 0x%04x, flags: 0x%04x\n",
 	  lpInfo->dwXpos, lpInfo->dwYpos, lpInfo->dwZpos,
 	  lpInfo->dwRpos, lpInfo->dwUpos, lpInfo->dwVpos,
 	  (unsigned int)lpInfo->dwButtons,
@@ -356,12 +356,12 @@ static LONG	JSTCK_GetPos(DWORD dwDevID, LPJOYINFO lpInfo)
 /**************************************************************************
  * 				DriverProc (JOYSTICK.@)
  */
-LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 				 DWORD dwParam1, DWORD dwParam2)
 {
     /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
     /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-    
+
     switch(wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
@@ -377,7 +377,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case JDD_GETNUMDEVS:	return 1;
     case JDD_GETDEVCAPS:	return JSTCK_GetDevCaps(dwDevID, (LPJOYCAPSA)dwParam1, dwParam2);
     case JDD_GETPOS:		return JSTCK_GetPos(dwDevID, (LPJOYINFO)dwParam1);
-    case JDD_SETCALIBRATION:	
+    case JDD_SETCALIBRATION:
     case JDD_CONFIGCHANGED:	return JOYERR_NOCANDO;
     case JDD_GETPOSEX:		return JSTCK_GetPosEx(dwDevID, (LPJOYINFOEX)dwParam1);
     default:
@@ -390,19 +390,19 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 /**************************************************************************
  * 				DriverProc (JOYSTICK.@)
  */
-LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 				 DWORD dwParam1, DWORD dwParam2)
 {
     /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
     /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-    
+
     switch(wMsg) {
-    case DRV_LOAD:		
-    case DRV_FREE:		
-    case DRV_OPEN:		
-    case DRV_CLOSE:		
-    case DRV_ENABLE:		
-    case DRV_DISABLE:		
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
     case DRV_QUERYCONFIGURE:	return 0;
     case DRV_CONFIGURE:		MessageBoxA(0, "JoyStick MultiMedia Driver !", "JoyStick Driver", MB_OK);	return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;

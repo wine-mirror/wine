@@ -55,7 +55,7 @@ MMRESULT WINAPI acmFilterChooseW(PACMFILTERCHOOSEW pafltrc)
 /***********************************************************************
  *           acmFilterDetailsA (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd, 
+MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd,
 				  DWORD fdwDetails)
 {
     ACMFILTERDETAILSW	afdw;
@@ -64,14 +64,14 @@ MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd,
     memset(&afdw, 0, sizeof(afdw));
     afdw.cbStruct = sizeof(afdw);
     afdw.dwFilterIndex = pafd->dwFilterIndex;
-    afdw.dwFilterTag = pafd->dwFilterTag; 
+    afdw.dwFilterTag = pafd->dwFilterTag;
     afdw.pwfltr = pafd->pwfltr;
     afdw.cbwfltr = pafd->cbwfltr;
 
     mmr = acmFilterDetailsW(had, &afdw, fdwDetails);
     if (mmr == MMSYSERR_NOERROR) {
-	pafd->dwFilterTag = afdw.dwFilterTag; 
-	pafd->fdwSupport = afdw.fdwSupport; 
+	pafd->dwFilterTag = afdw.dwFilterTag;
+	pafd->fdwSupport = afdw.fdwSupport;
         WideCharToMultiByte( CP_ACP, 0, afdw.szFilter, -1, pafd->szFilter,
                              sizeof(pafd->szFilter), NULL, NULL );
     }
@@ -81,7 +81,7 @@ MMRESULT WINAPI acmFilterDetailsA(HACMDRIVER had, PACMFILTERDETAILSA pafd,
 /***********************************************************************
  *           acmFilterDetailsW (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd, 
+MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 				  DWORD fdwDetails)
 {
     MMRESULT			mmr;
@@ -93,7 +93,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     aftd.cbStruct = sizeof(aftd);
 
     if (pafd->cbStruct < sizeof(*pafd)) return MMSYSERR_INVALPARAM;
-	
+
     switch (fdwDetails) {
     case ACM_FILTERDETAILSF_FILTER:
 	if (pafd->dwFilterTag != pafd->pwfltr->dwFilterTag) {
@@ -113,7 +113,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 		    acmDriverClose(had, 0);
 		    if (mmr == MMSYSERR_NOERROR) break;
 		}
-	    }		    
+	    }
 	} else {
 	    mmr = MSACM_Message(had, ACMDM_FILTER_DETAILS, (LPARAM)pafd, fdwDetails);
 	}
@@ -139,29 +139,29 @@ struct MSACM_FilterEnumWtoA_Instance {
 };
 
 static BOOL CALLBACK MSACM_FilterEnumCallbackWtoA(HACMDRIVERID hadid,
-						  PACMFILTERDETAILSW pafdw,  
-						  DWORD dwInstance,             
+						  PACMFILTERDETAILSW pafdw,
+						  DWORD dwInstance,
 						  DWORD fdwSupport)
 {
     struct MSACM_FilterEnumWtoA_Instance* pafei;
 
     pafei = (struct MSACM_FilterEnumWtoA_Instance*)dwInstance;
 
-    pafei->pafda->dwFilterIndex = pafdw->dwFilterIndex; 
-    pafei->pafda->dwFilterTag = pafdw->dwFilterTag; 
-    pafei->pafda->fdwSupport = pafdw->fdwSupport; 
+    pafei->pafda->dwFilterIndex = pafdw->dwFilterIndex;
+    pafei->pafda->dwFilterTag = pafdw->dwFilterTag;
+    pafei->pafda->fdwSupport = pafdw->fdwSupport;
     WideCharToMultiByte( CP_ACP, 0, pafdw->szFilter, -1, pafei->pafda->szFilter,
                          sizeof(pafei->pafda->szFilter), NULL, NULL );
 
-    return (pafei->fnCallback)(hadid, pafei->pafda, 
+    return (pafei->fnCallback)(hadid, pafei->pafda,
 			       pafei->dwInstance, fdwSupport);
 }
 
 /***********************************************************************
  *           acmFilterEnumA (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda, 
-			       ACMFILTERENUMCBA fnCallback, DWORD dwInstance, 
+MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda,
+			       ACMFILTERENUMCBA fnCallback, DWORD dwInstance,
 			       DWORD fdwEnum)
 {
     ACMFILTERDETAILSW		afdw;
@@ -178,13 +178,13 @@ MMRESULT WINAPI acmFilterEnumA(HACMDRIVER had, PACMFILTERDETAILSA pafda,
     afei.dwInstance = dwInstance;
     afei.fnCallback = fnCallback;
 
-    return acmFilterEnumW(had, &afdw, MSACM_FilterEnumCallbackWtoA, 
+    return acmFilterEnumW(had, &afdw, MSACM_FilterEnumCallbackWtoA,
 			  (DWORD)&afei, fdwEnum);
 }
 
-static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had, 
-				   PACMFILTERDETAILSW pafd, 
-				   ACMFILTERENUMCBW fnCallback, DWORD dwInstance,  
+static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
+				   PACMFILTERDETAILSW pafd,
+				   ACMFILTERENUMCBW fnCallback, DWORD dwInstance,
 				   DWORD fdwEnum)
 {
     ACMFILTERTAGDETAILSW	aftd;
@@ -196,19 +196,19 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 	aftd.dwFilterTagIndex = i;
 	if (acmFilterTagDetailsW(had, &aftd, ACM_FILTERTAGDETAILSF_INDEX) != MMSYSERR_NOERROR)
 	    continue;
-	
-	if ((fdwEnum & ACM_FILTERENUMF_DWFILTERTAG) && 
+
+	if ((fdwEnum & ACM_FILTERENUMF_DWFILTERTAG) &&
 	    aftd.dwFilterTag != pafd->pwfltr->dwFilterTag)
 	    continue;
-	
+
 	for (j = 0; j < aftd.cStandardFilters; j++) {
 	    pafd->dwFilterIndex = j;
 	    pafd->dwFilterTag = aftd.dwFilterTag;
-	    if (acmFilterDetailsW(had, pafd, ACM_FILTERDETAILSF_INDEX) != MMSYSERR_NOERROR) 
+	    if (acmFilterDetailsW(had, pafd, ACM_FILTERDETAILSF_INDEX) != MMSYSERR_NOERROR)
 		continue;
-	    
+
 	    if (!(fnCallback)((HACMDRIVERID)padid, pafd, dwInstance, padid->fdwSupport))
-		return FALSE; 
+		return FALSE;
 	}
     }
     return TRUE;
@@ -217,8 +217,8 @@ static BOOL MSACM_FilterEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
 /***********************************************************************
  *           acmFilterEnumW (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd, 
-			       ACMFILTERENUMCBW fnCallback, DWORD dwInstance, 
+MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
+			       ACMFILTERENUMCBW fnCallback, DWORD dwInstance,
 			       DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
@@ -243,10 +243,10 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
     }
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	    /* should check for codec only */
-	    if ((padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) || 
+	    if ((padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) ||
 		acmDriverOpen(&had, (HACMDRIVERID)padid, 0) != MMSYSERR_NOERROR)
 		continue;
-	    ret = MSACM_FilterEnumHelper(padid, had, pafd, 
+	    ret = MSACM_FilterEnumHelper(padid, had, pafd,
 					 fnCallback, dwInstance, fdwEnum);
 	    acmDriverClose(had, 0);
 	    if (!ret) break;
@@ -257,7 +257,7 @@ MMRESULT WINAPI acmFilterEnumW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 /***********************************************************************
  *           acmFilterTagDetailsA (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda, 
+MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
 				     DWORD fdwDetails)
 {
     ACMFILTERTAGDETAILSW	aftdw;
@@ -270,11 +270,11 @@ MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftd
 
     mmr = acmFilterTagDetailsW(had, &aftdw, fdwDetails);
     if (mmr == MMSYSERR_NOERROR) {
-	paftda->dwFilterTag = aftdw.dwFilterTag; 
+	paftda->dwFilterTag = aftdw.dwFilterTag;
 	paftda->dwFilterTagIndex = aftdw.dwFilterTagIndex;
-	paftda->cbFilterSize = aftdw.cbFilterSize; 
-	paftda->fdwSupport = aftdw.fdwSupport; 
-	paftda->cStandardFilters = aftdw.cStandardFilters; 
+	paftda->cbFilterSize = aftdw.cbFilterSize;
+	paftda->fdwSupport = aftdw.fdwSupport;
+	paftda->cStandardFilters = aftdw.cStandardFilters;
         WideCharToMultiByte( CP_ACP, 0, aftdw.szFilterTag, -1, paftda->szFilterTag,
                              sizeof(paftda->szFilterTag), NULL, NULL );
     }
@@ -284,7 +284,7 @@ MMRESULT WINAPI acmFilterTagDetailsA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftd
 /***********************************************************************
  *           acmFilterTagDetailsW (MSACM32.@)
  */
-MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd, 
+MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
 				     DWORD fdwDetails)
 {
     PWINE_ACMDRIVERID	padid;
@@ -327,20 +327,20 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
-		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) && 
+		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
 		    acmDriverOpen(&had, (HACMDRIVERID)padid, 0) == 0) {
 
 		    memset(&tmp, 0, sizeof(tmp));
 		    tmp.cbStruct = sizeof(tmp);
 		    tmp.dwFilterTag = ft;
 
-		    if (MSACM_Message(had, ACMDM_FILTERTAG_DETAILS, 
+		    if (MSACM_Message(had, ACMDM_FILTERTAG_DETAILS,
 				      (LPARAM)&tmp, fdwDetails) == MMSYSERR_NOERROR) {
 			if (mmr == ACMERR_NOTPOSSIBLE ||
 			    paftd->cbFilterSize < tmp.cbFilterSize) {
 			    *paftd = tmp;
 			    mmr = MMSYSERR_NOERROR;
-			} 
+			}
 		    }
 		    acmDriverClose(had, 0);
 		}
@@ -355,7 +355,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	mmr = MMSYSERR_ERROR;
     }
 
-    if (mmr == MMSYSERR_NOERROR && 
+    if (mmr == MMSYSERR_NOERROR &&
 	paftd->dwFilterTag == WAVE_FORMAT_PCM && paftd->szFilterTag[0] == 0)
         MultiByteToWideChar( CP_ACP, 0, "PCM", -1, paftd->szFilterTag,
                              sizeof(paftd->szFilterTag)/sizeof(WCHAR) );
@@ -370,23 +370,23 @@ struct MSACM_FilterTagEnumWtoA_Instance {
 };
 
 static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
-						     PACMFILTERTAGDETAILSW paftdw,  
-						     DWORD dwInstance,             
+						     PACMFILTERTAGDETAILSW paftdw,
+						     DWORD dwInstance,
 						     DWORD fdwSupport)
 {
     struct MSACM_FilterTagEnumWtoA_Instance* paftei;
 
     paftei = (struct MSACM_FilterTagEnumWtoA_Instance*)dwInstance;
 
-    paftei->paftda->dwFilterTagIndex = paftdw->dwFilterTagIndex; 
-    paftei->paftda->dwFilterTag = paftdw->dwFilterTag; 
-    paftei->paftda->cbFilterSize = paftdw->cbFilterSize; 
-    paftei->paftda->fdwSupport = paftdw->fdwSupport; 
-    paftei->paftda->cStandardFilters = paftdw->cStandardFilters; 
+    paftei->paftda->dwFilterTagIndex = paftdw->dwFilterTagIndex;
+    paftei->paftda->dwFilterTag = paftdw->dwFilterTag;
+    paftei->paftda->cbFilterSize = paftdw->cbFilterSize;
+    paftei->paftda->fdwSupport = paftdw->fdwSupport;
+    paftei->paftda->cStandardFilters = paftdw->cStandardFilters;
     WideCharToMultiByte( CP_ACP, 0, paftdw->szFilterTag, -1, paftei->paftda->szFilterTag,
                          sizeof(paftei->paftda->szFilterTag), NULL, NULL );
 
-    return (paftei->fnCallback)(hadid, paftei->paftda, 
+    return (paftei->fnCallback)(hadid, paftei->paftda,
 				paftei->dwInstance, fdwSupport);
 }
 
@@ -394,7 +394,7 @@ static BOOL CALLBACK MSACM_FilterTagEnumCallbackWtoA(HACMDRIVERID hadid,
  *           acmFilterTagEnumA (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
-				  ACMFILTERTAGENUMCBA fnCallback, DWORD dwInstance, 
+				  ACMFILTERTAGENUMCBA fnCallback, DWORD dwInstance,
 				  DWORD fdwEnum)
 {
     ACMFILTERTAGDETAILSW	aftdw;
@@ -409,7 +409,7 @@ MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
     aftei.dwInstance = dwInstance;
     aftei.fnCallback = fnCallback;
 
-    return acmFilterTagEnumW(had, &aftdw, MSACM_FilterTagEnumCallbackWtoA, 
+    return acmFilterTagEnumW(had, &aftdw, MSACM_FilterTagEnumCallbackWtoA,
 			     (DWORD)&aftei, fdwEnum);
 }
 
@@ -417,19 +417,19 @@ MMRESULT WINAPI acmFilterTagEnumA(HACMDRIVER had, PACMFILTERTAGDETAILSA paftda,
  *           acmFilterTagEnumW (MSACM32.@)
  */
 MMRESULT WINAPI acmFilterTagEnumW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
-				  ACMFILTERTAGENUMCBW fnCallback, DWORD dwInstance, 
+				  ACMFILTERTAGENUMCBW fnCallback, DWORD dwInstance,
 				  DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID		padid;
     int				i;
 
     TRACE("(0x%08x, %p, %p, %ld, %ld)\n",
-	  had, paftd, fnCallback, dwInstance, fdwEnum); 
+	  had, paftd, fnCallback, dwInstance, fdwEnum);
 
     if (paftd->cbStruct < sizeof(*paftd)) return MMSYSERR_INVALPARAM;
 
     if (had) FIXME("had != NULL, not supported\n");
-    
+
     for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 	/* should check for codec only */
 	if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&

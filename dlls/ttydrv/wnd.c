@@ -95,7 +95,7 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 	{
 	    TRACE("CBT-hook returned !0\n");
             return FALSE;
-	} 
+	}
     }
 
     if (unicode)
@@ -254,7 +254,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
 
             if( hrgnClip )
             {
-                /* Compute obscured region for the visible rectangle by 
+                /* Compute obscured region for the visible rectangle by
 		 * clipping children, siblings, and ancestors. Note that
 		 * DCE_GetVisRect() returns a rectangle either in client
 		 * or in window coordinates (for DCX_WINDOW request). */
@@ -263,7 +263,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                 {
                     if( flags & DCX_WINDOW )
                     {
-                        /* adjust offsets since child window rectangles are 
+                        /* adjust offsets since child window rectangles are
 			 * in client coordinates */
 
                         xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
@@ -284,7 +284,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                 {
                     if( flags & DCX_WINDOW )
                     {
-                        /* adjust offsets since child window rectangles are 
+                        /* adjust offsets since child window rectangles are
 			 * in client coordinates */
 
                         xoffset = wndPtr->rectClient.left - wndPtr->rectWindow.left;
@@ -301,7 +301,7 @@ static HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
                                       &rect, xoffset, yoffset );
                 }
 
-                /* sibling window rectangles are in client 
+                /* sibling window rectangles are in client
 		 * coordinates of the parent window */
 
                 if (flags & DCX_WINDOW)
@@ -674,7 +674,7 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
 /***********************************************************************
  *              WINPOS_MinMaximize   (internal)
  *
- *Lifted from x11 driver	
+ *Lifted from x11 driver
  */
 static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 {
@@ -703,7 +703,7 @@ static UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
  *              ShowWindow   (TTYDRV.@)
  *
  *Lifted from x11 driver
- *Sets the specified windows' show state.	
+ *Sets the specified windows' show state.
  */
 BOOL TTYDRV_ShowWindow( HWND hwnd, INT cmd )
 {
@@ -722,7 +722,7 @@ BOOL TTYDRV_ShowWindow( HWND hwnd, INT cmd )
     switch(cmd)
     {
         case SW_HIDE:
-            if (!wasVisible) goto END;;
+            if (!wasVisible) goto END;
 	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE |
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;

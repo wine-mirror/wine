@@ -1,6 +1,6 @@
 /*
  * NT exception handling routines
- * 
+ *
  * Copyright 1999 Turchanov Sergey
  * Copyright 1999 Alexandre Julliard
  *
@@ -57,7 +57,7 @@ typedef struct
 extern void SIGNAL_Unblock(void);
 
 void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID, 
+void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
                            PEXCEPTION_RECORD, DWORD, PCONTEXT );
 void WINAPI EXC_NtRaiseException( PEXCEPTION_RECORD, PCONTEXT,
                                   BOOL, PCONTEXT );
@@ -103,7 +103,7 @@ static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
  * rely on Base Pointer (EBP) to have a fixed position related to the exception frame
  */
 static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_FRAME *frame,
-                              CONTEXT *context, EXCEPTION_FRAME **dispatcher, 
+                              CONTEXT *context, EXCEPTION_FRAME **dispatcher,
                               PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler)
 {
     EXC_NESTED_FRAME newframe;
@@ -251,9 +251,9 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind, 
+DEFINE_REGS_ENTRYPOINT_4( RtlUnwind, EXC_RtlUnwind,
                           PEXCEPTION_FRAME, LPVOID, PEXCEPTION_RECORD, DWORD );
-void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
                            PEXCEPTION_RECORD pRecord, DWORD returnEax,
                            CONTEXT *context )
 {
@@ -270,7 +270,7 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
         record.ExceptionCode    = STATUS_UNWIND;
         record.ExceptionFlags   = 0;
         record.ExceptionRecord  = NULL;
-        record.ExceptionAddress = GET_IP(context); 
+        record.ExceptionAddress = GET_IP(context);
         record.NumberParameters = 0;
         pRecord = &record;
     }

@@ -71,8 +71,8 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
         return xPRIMARY_MONITOR;
 
-    if (IsIconic(hWnd) ? 
-            GetWindowPlacement(hWnd, &wp) : 
+    if (IsIconic(hWnd) ?
+            GetWindowPlacement(hWnd, &wp) :
             GetWindowRect(hWnd, &wp.rcNormalPosition)) {
 
         return MonitorFromRect(&wp.rcNormalPosition, dwFlags);
@@ -98,7 +98,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
                  GetSystemMetrics(SM_CYSCREEN) );
         lpMonitorInfo->rcWork = rcWork;
         lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
-	
+
 	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXA))
             strcpy(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
 

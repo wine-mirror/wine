@@ -16,25 +16,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <windows.h>            /* required for all Windows applications */ 
+#include <windows.h>            /* required for all Windows applications */
 #include "globals.h"            /* prototypes specific to this application */
 
 
 int APIENTRY WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance, 
-                     LPSTR     lpCmdLine, 
+                     HINSTANCE hPrevInstance,
+                     LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
     MSG msg;
     HANDLE hAccelTable;
-    
+
     /* Other instances of app running? */
     if (!hPrevInstance)
     {
       /* stuff to be done once */
       if (!InitApplication(hInstance))
       {
-	return FALSE;              /* exit */ 
+	return FALSE;              /* exit */
       }
     }
 
@@ -56,7 +56,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
       if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
         {
             TranslateMessage(&msg);
-            DispatchMessage(&msg); 
+            DispatchMessage(&msg);
         }
     }
 

@@ -52,7 +52,7 @@ static inline int is_string( DWORD type )
  *           RegCreateKeyExA   [ADVAPI32.@]
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
-                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
+                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
                               LPHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
@@ -377,7 +377,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
  *           RegQueryValueExA   [ADVAPI32.@]
  *
  * NOTES:
- * the documentation is wrong: if the buffer is too small it remains untouched 
+ * the documentation is wrong: if the buffer is too small it remains untouched
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )

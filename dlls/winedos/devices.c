@@ -114,7 +114,7 @@ static void WINAPI con_strategy(CONTEXT86*ctx);
 static void WINAPI con_interrupt(CONTEXT86*ctx);
 
 /* devices */
-typedef struct 
+typedef struct
 {
     char name[8];
     WORD attr;
@@ -122,7 +122,7 @@ typedef struct
     RMCBPROC interrupt;
 } WINEDEV;
 
-static WINEDEV devs[] = 
+static WINEDEV devs[] =
 {
   { "NUL     ",
     ATTR_CHAR|ATTR_NUL|ATTR_DEVICE,

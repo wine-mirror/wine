@@ -1,6 +1,6 @@
-/* 
+/*
  * Implementation of VERSION.DLL - File Installer routines
- * 
+ *
  * Copyright 1996,1997 Marcus Meissner
  * Copyright 1997 David Cuthbert
  *
@@ -325,7 +325,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
             if(buf == NULL) {
                WARN("Memory exausted while fetching version info!\n");
                return NULL;
-            }                                                                 
+            }
 	} else {
 	    *vffi = (VS_FIXEDFILEINFO*)(buf+0x14);
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
@@ -392,7 +392,7 @@ DWORD WINAPI VerInstallFileA(
 	    tmplast = strlen(pdest)+1;
 	    attr = GetFileAttributesA(tmpfn);
 	    /* if it exists, it has been copied by the call before.
-	     * we jump over the copy part... 
+	     * we jump over the copy part...
 	     */
 	}
     }
@@ -466,7 +466,7 @@ DWORD WINAPI VerInstallFileA(
 		if (VerQueryValueA(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
 		    VerQueryValueA(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
 		) {
-		    /* irgendwas mit tbuf1 und tbuf2 machen 
+		    /* irgendwas mit tbuf1 und tbuf2 machen
 		     * generiert DIFFLANG|MISMATCH
 		     */
 		}
@@ -493,8 +493,8 @@ DWORD WINAPI VerInstallFileA(
 		LZClose(hfsrc);
 		return xret;
 	    }
-	if ((!(flags & VIFF_DONTDELETEOLD))	&& 
-	    curdir				&& 
+	if ((!(flags & VIFF_DONTDELETEOLD))	&&
+	    curdir				&&
 	    *curdir				&&
 	    lstrcmpiA(curdir,pdest)
 	) {

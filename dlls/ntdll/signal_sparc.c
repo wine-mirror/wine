@@ -1,6 +1,6 @@
 /*
  * Sparc signal handling routines
- * 
+ *
  * Copyright 1999 Ulrich Weigand
  *
  * This library is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.NumberParameters = 2;
     rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
     rec.ExceptionInformation[1] = (DWORD)info->si_addr;
-    
+
     EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
@@ -176,7 +176,7 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
     else
         rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-    
+
     EXC_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
@@ -210,7 +210,7 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
         rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
         break;
     }
-    
+
     save_context( &context, ucontext );
     rec.ExceptionRecord  = NULL;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;

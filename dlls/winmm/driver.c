@@ -45,9 +45,9 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
     unsigned		count = 0;
 
     if (found) *found = NULL;
-    for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem) 
+    for (lpDrv = lpDrvItemList; lpDrv; lpDrv = lpDrv->lpNextItem)
     {
-	if (!(lpDrv->dwFlags & WINE_GDF_16BIT) && lpDrv->d.d32.hModule == hModule) 
+	if (!(lpDrv->dwFlags & WINE_GDF_16BIT) && lpDrv->d.d32.hModule == hModule)
         {
             if (found && !*found) *found = lpDrv;
 	    count++;
@@ -58,11 +58,11 @@ static	unsigned DRIVER_GetNumberOfModuleRefs(HMODULE hModule, WINE_DRIVER** foun
 
 /**************************************************************************
  *				DRIVER_FindFromHDrvr		[internal]
- * 
+ *
  * From a hDrvr being 32 bits, returns the WINE internal structure.
  */
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
-{    
+{
     LPWINE_DRIVER	d = (LPWINE_DRIVER)hDrvr;
 
     if (hDrvr && HeapValidate(GetProcessHeap(), 0, d) && d->dwMagic == WINE_DI_MAGIC) {
@@ -83,7 +83,7 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 {
     int	ret = -1;
-    
+
     switch (wMsg) {
     case DRV_LOAD:
     case DRV_ENABLE:
@@ -92,7 +92,7 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
     case DRV_QUERYCONFIGURE:
     case DRV_REMOVE:
     case DRV_EXITSESSION:
-    case DRV_EXITAPPLICATION:	
+    case DRV_EXITAPPLICATION:
     case DRV_POWER:
     case DRV_CLOSE:	/* should be 0/0 */
     case DRV_OPEN:	/* pass through */
@@ -102,18 +102,18 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	break;
     case DRV_CONFIGURE:
     case DRV_INSTALL:
-	/* lParam1 is a handle to a window (conf) or to a driver (inst) or not used, 
-	 * lParam2 is a pointer to DRVCONFIGINFO 
+	/* lParam1 is a handle to a window (conf) or to a driver (inst) or not used,
+	 * lParam2 is a pointer to DRVCONFIGINFO
 	 */
 	if (*lParam2) {
             LPDRVCONFIGINFO16 dci16 = HeapAlloc( GetProcessHeap(), 0, sizeof(*dci16) );
             LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)(*lParam2);
-	    
+
 	    if (dci16) {
 		LPSTR str1;
-		
+
 		dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
-		
+
 		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
                 {
 		    dci16->lpszDCISectionName = MapLS( str1 );
@@ -155,7 +155,7 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 {
     int	ret = -1;
-    
+
     switch (wMsg) {
     case DRV_LOAD:
     case DRV_ENABLE:
@@ -170,7 +170,7 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
     case DRV_CLOSE:
 	/* lParam1 and lParam2 are not used */
 	break;
-    case DRV_CONFIGURE: 
+    case DRV_CONFIGURE:
     case DRV_INSTALL:
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
 	if (lParam2) {
@@ -196,13 +196,13 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 /**************************************************************************
  *				DRIVER_SendMessage		[internal]
  */
-static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg, 
+static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
 					LPARAM lParam1, LPARAM lParam2)
 {
     if (lpDrv->dwFlags & WINE_GDF_16BIT) {
 	LRESULT		ret;
 	int		map = 0;
-	TRACE("Before sdm16 call hDrv=%04x wMsg=%04x p1=%08lx p2=%08lx\n", 
+	TRACE("Before sdm16 call hDrv=%04x wMsg=%04x p1=%08lx p2=%08lx\n",
 	      lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
 
 	if ((map = DRIVER_MapMsg32To16(msg, &lParam1, &lParam2)) >= 0) {
@@ -214,7 +214,7 @@ static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
 	}
 	return ret;
     }
-    TRACE("Before func32 call proc=%p driverID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx\n", 
+    TRACE("Before func32 call proc=%p driverID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx\n",
 	  lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
     return lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
 }
@@ -228,16 +228,16 @@ LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT msg, LPARAM lParam1,
 {
     LPWINE_DRIVER	lpDrv;
     LRESULT 		retval = 0;
-    
+
     TRACE("(%04x, %04X, %08lX, %08lX)\n", hDriver, msg, lParam1, lParam2);
-    
+
     if ((lpDrv = DRIVER_FindFromHDrvr(hDriver)) != NULL) {
 	retval = DRIVER_SendMessage(lpDrv, msg, lParam1, lParam2);
     } else {
 	WARN("Bad driver handle %u\n", hDriver);
     }
     TRACE("retval = %ld\n", retval);
-    
+
     return retval;
 }
 
@@ -256,7 +256,7 @@ static	BOOL	DRIVER_RemoveFromList(LPWINE_DRIVER lpDrv)
 	    DRIVER_SendMessage(lpDrv, DRV_FREE,    0L, 0L);
 	}
     }
-    
+
     if (lpDrv->lpPrevItem)
 	lpDrv->lpPrevItem->lpNextItem = lpDrv->lpNextItem;
     else
@@ -299,7 +299,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam1, LPARAM lPar
 	LPWINE_DRIVER	lpDrv = lpDrvItemList;	/* find end of list */
 	while (lpDrv->lpNextItem != NULL)
 	    lpDrv = lpDrv->lpNextItem;
-	
+
 	lpDrv->lpNextItem = lpNewDrv;
 	lpNewDrv->lpPrevItem = lpDrv;
     }
@@ -340,7 +340,7 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
     LPCSTR		cause = 0;
 
     TRACE("(%s, %08lX);\n", debugstr_a(fn), lParam2);
-    
+
     if ((ptr = strchr(fn, ' ')) != NULL) {
 	*ptr++ = '\0';
 	while (*ptr == ' ') ptr++;
@@ -360,7 +360,7 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
     lpDrv->d.d32.dwDriverID = 0;
 
     /* Win32 installable drivers must support a two phase opening scheme:
-     * + first open with NULL as lParam2 (session instance), 
+     * + first open with NULL as lParam2 (session instance),
      * + then do a second open with the real non null lParam2)
      */
     if (DRIVER_GetNumberOfModuleRefs(lpDrv->d.d32.hModule, NULL) == 0 && lParam2)
@@ -369,20 +369,20 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
 
         if (!DRIVER_AddToList(lpDrv, (LPARAM)ptr, 0L))
         {
-            cause = "load0 failed"; 
+            cause = "load0 failed";
             goto exit;
         }
         ret = DRIVER_TryOpenDriver32(fn, lParam2);
-        if (!ret) 
+        if (!ret)
         {
             CloseDriver((HDRVR)lpDrv, 0L, 0L);
-            cause = "load1 failed"; 
+            cause = "load1 failed";
             goto exit;
         }
         return ret;
     }
 
-    if (!DRIVER_AddToList(lpDrv, (LPARAM)ptr, lParam2)) 
+    if (!DRIVER_AddToList(lpDrv, (LPARAM)ptr, lParam2))
     {cause = "load failed"; goto exit;}
 
     TRACE("=> %p\n", lpDrv);
@@ -405,7 +405,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2
     LPCSTR		cause = 0;
 
     TRACE("(%s, %08lX);\n", debugstr_a(sn), lParam2);
-    
+
     lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
     if (lpDrv == NULL) {cause = "OOM"; goto exit;}
 
@@ -435,14 +435,14 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2
  * (0,1,DRV_ENABLE,0       ,0)
  * (0,1,DRV_OPEN  ,buf[256],0)
  */
-HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2) 
+HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv = NULL;
     char 		libName[128];
     LPCSTR		lsn = lpSectionName;
 
     TRACE("(%s, %s, 0x%08lx);\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
-    
+
     if (lsn == NULL) {
 	lstrcpynA(libName, lpDriverName, sizeof(libName));
 
@@ -470,7 +470,7 @@ HDRVR WINAPI OpenDriverW(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lPa
     LPSTR 		dn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpDriverName);
     LPSTR 		sn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpSectionName);
     HDRVR		ret = OpenDriverA(dn, sn, lParam);
-    
+
     if (dn) HeapFree(GetProcessHeap(), 0, dn);
     if (sn) HeapFree(GetProcessHeap(), 0, sn);
     return ret;
@@ -485,8 +485,8 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
     LPWINE_DRIVER	lpDrv;
 
     TRACE("(%04x, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
-    
-    if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) 
+
+    if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL)
     {
 	if (lpDrv->dwFlags & WINE_GDF_16BIT)
 	    CloseDriver16(lpDrv->d.d16.hDriver16, lParam1, lParam2);
@@ -553,9 +553,9 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
 {
     LPWINE_DRIVER 	lpDrv;
     HMODULE		hModule = 0;
-    
+
     TRACE("(%04x);\n", hDrvr);
-    
+
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL) {
 	if (!(lpDrv->dwFlags & WINE_GDF_16BIT))
 	    hModule = lpDrv->d.d32.hModule;
@@ -600,7 +600,7 @@ HANDLE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrv)
 /**************************************************************************
  * 				DrvDefDriverProc	[MMSYSTEM.1104]
  */
-LRESULT WINAPI DrvDefDriverProc16(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg, 
+LRESULT WINAPI DrvDefDriverProc16(DWORD dwDriverID, HDRVR16 hDrv, WORD wMsg,
 				  DWORD dwParam1, DWORD dwParam2)
 {
     return DefDriverProc16(dwDriverID, hDrv, wMsg, dwParam1, dwParam2);
@@ -630,7 +630,7 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
 /**************************************************************************
  * 				DriverProc			[MMSYSTEM.6]
  */
-LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg, 
+LRESULT WINAPI DriverProc16(DWORD dwDevID, HDRVR16 hDrv, WORD wMsg,
 			    DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("dwDevID=%08lx hDrv=%04x wMsg=%04x dwParam1=%08lx dwParam2=%08lx\n",

@@ -72,7 +72,7 @@ void X11DRV_XF86DGA2_Init(void)
   if (!TSXDGAQueryExtension(gdi_display, &dga_event, &dga_error)) return;
 
   if (!TSXDGAQueryVersion(gdi_display, &major, &minor)) return;
-  
+
   if (major < 2) return; /* only bother with DGA 2+ */
 
   /* test that it works */

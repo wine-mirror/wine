@@ -43,23 +43,23 @@ CLOCK_GLOBALS Globals;
  */
 
 int CLOCK_MenuCommand (WPARAM wParam)
-{  
+{
 CHAR szApp[MAX_STRING_LEN];
 CHAR szAppRelease[MAX_STRING_LEN];
    switch (wParam) {
 	/* switch to analog */
-     case 0x100: { 
+     case 0x100: {
          Globals.bAnalog = TRUE;
          LANGUAGE_UpdateMenuCheckmarks();
 	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
-	 break;	     
-       } 
+	 break;
+       }
 	/* switch to digital */
      case 0x101: {
          Globals.bAnalog = FALSE;
          LANGUAGE_UpdateMenuCheckmarks();
 	 SendMessage(Globals.hMainWnd, WM_PAINT, 0, 0);
-	 break;	       
+	 break;
        }
 	/* change font */
      case 0x103: {
@@ -67,18 +67,18 @@ CHAR szAppRelease[MAX_STRING_LEN];
          break;
        }
 	/* hide title bar */
-     case 0x105: {     
+     case 0x105: {
          Globals.bWithoutTitle = !Globals.bWithoutTitle;
          LANGUAGE_UpdateWindowCaption();
          LANGUAGE_UpdateMenuCheckmarks();
          break;
-       } 
+       }
 	/* always on top */
      case 0x10D: {
          Globals.bAlwaysOnTop = !Globals.bAlwaysOnTop;
          LANGUAGE_UpdateMenuCheckmarks();
          break;
-       }  
+       }
 	/* show or hide seconds */
      case 0x107: {
          Globals.bSeconds = !Globals.bSeconds;
@@ -113,7 +113,7 @@ CHAR szAppRelease[MAX_STRING_LEN];
        }
      /* Handle languages */
 /*     default:
-         LANGUAGE_DefaultHandle(wParam); 
+         LANGUAGE_DefaultHandle(wParam);
 */
    }
    return 0;
@@ -166,7 +166,7 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_RBUTTONUP: {
 	    printf("WM_RBUTTONUP\n");
             Globals.bWithoutTitle = !Globals.bWithoutTitle;
-            LANGUAGE_UpdateMenuCheckmarks();               
+            LANGUAGE_UpdateMenuCheckmarks();
             LANGUAGE_UpdateWindowCaption();
             UpdateWindow (Globals.hMainWnd);
             break;
@@ -179,7 +179,7 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	        DrawFace(context);
 	        Idle(context);
 	    }
-	       else 
+	       else
             {
                /* do nothing */
             }
@@ -196,11 +196,11 @@ LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             OldSecond.DontRedraw = TRUE;
 	    break;
         }
-	  
+
         case WM_COMMAND: {
             CLOCK_MenuCommand(wParam);
             break;
-        } 
+        }
 
         case WM_DESTROY: {
             printf("WM_DESTROY\n");
@@ -225,7 +225,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     MSG      msg;
     WNDCLASS class;
-    
+
     char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
     char szWinName[]   = "Clock";
 
@@ -236,10 +236,10 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.lpszIcoFile     = "clock.ico";
 
     Globals.hInstance       = hInstance;
-    Globals.hMainIcon       = ExtractIcon(Globals.hInstance, 
+    Globals.hMainIcon       = ExtractIcon(Globals.hInstance,
                                           Globals.lpszIcoFile, 0);
-                                          
-    if (!Globals.hMainIcon) Globals.hMainIcon = 
+
+    if (!Globals.hMainIcon) Globals.hMainIcon =
                                   LoadIcon(0, MAKEINTRESOURCE(DEFAULTICON));
 
     if (!prev){
@@ -260,7 +260,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 0,
         LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
-			
+
     LANGUAGE_LoadMenus();
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
 
@@ -281,6 +281,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     }
 
     /* We will never reach the following statement !   */
-    return 0;    
+    return 0;
 }
 

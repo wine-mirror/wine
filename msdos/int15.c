@@ -77,7 +77,7 @@ void WINAPI INT_Int15Handler( CONTEXT86 *context )
 	{
 	case 0x00: /* Enable-Disable Pointing Device (mouse) */
 	    /* BH = newstate, 00h = disabled 01h = enabled */
-	    switch(BH_reg(context))	    
+	    switch(BH_reg(context))
 	    {
 	        case 0x00:
 	    	    FIXME("Disable Pointing Device - not implemented\n");

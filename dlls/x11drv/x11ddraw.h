@@ -20,9 +20,9 @@
 #ifndef __WINE_X11DDRAW_H
 #define __WINE_X11DDRAW_H
 
-#ifndef __WINE_CONFIG_H 
-# error You must include config.h to use this header 
-#endif 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #include "ddrawi.h"
 

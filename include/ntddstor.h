@@ -131,7 +131,7 @@ typedef enum _STORAGE_MEDIA_TYPE {
     SYQUEST_EZFLYER,
     SYQUEST_SYJET,
     AVATAR_F2,
-    MP2_8mm 
+    MP2_8mm
 } STORAGE_MEDIA_TYPE, *PSTORAGE_MEDIA_TYPE;
 
 #define MEDIA_ERASEABLE         0x00000001
@@ -179,7 +179,7 @@ typedef enum _STORAGE_QUERY_TYPE {
     PropertyStandardQuery = 0,
     PropertyExistsQuery,
     PropertyMaskQuery,
-    PropertyQueryMaxDefined 
+    PropertyQueryMaxDefined
 } STORAGE_QUERY_TYPE, *PSTORAGE_QUERY_TYPE;
 
 typedef enum _STORAGE_PROPERTY_ID {

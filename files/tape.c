@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * TODO: 
+ * TODO:
  *    Everything, all functions are stubs.
  */
 
@@ -39,7 +39,7 @@ BOOL WINAPI BackupRead( HANDLE hFile, LPBYTE lpBuffer, DWORD nNumberOfBytesToRea
   FIXME("(%04x, %p, %ld, %p, %d, %d, %p) stub!\n", hFile, lpBuffer,
     nNumberOfBytesToRead, lpNumberOfBytesRead, bAbort, bProcessSecurity,
     lpContext);
-    
+
   SetLastError( ERROR_NOT_SUPPORTED );
 
   return FALSE;
@@ -58,8 +58,8 @@ BOOL WINAPI BackupSeek( HANDLE hFile, DWORD dwLowBytesToSeek, DWORD dwHighBytesT
 
   SetLastError( ERROR_NOT_SUPPORTED );
 
-  return FALSE;  
-}  
+  return FALSE;
+}
 
 
 /************************************************************************
@@ -128,7 +128,7 @@ DWORD WINAPI GetTapeParameters( HANDLE hDevice, DWORD dwOperation,
 DWORD WINAPI GetTapePosition( HANDLE hDevice, DWORD dwPositionType,
 			LPDWORD lpdwPartition, LPDWORD lpdwOffsetLow,
 			LPDWORD lpdwOffsetHigh )
-{ 
+{
   FIXME("(%04x, %ld, %p, %p, %p) stub!\n", hDevice, dwPositionType,
     lpdwPartition, lpdwOffsetLow, lpdwOffsetHigh);
 
@@ -155,7 +155,7 @@ DWORD WINAPI GetTapeStatus( HANDLE hDevice )
  *		PrepareTape  (KERNEL32.@)
  */
 DWORD WINAPI PrepareTape( HANDLE hDevice,  DWORD dwOperation,  BOOL bImmediate )
-{ 
+{
   FIXME("(%04x, %ld, %d) stub!\n", hDevice, dwOperation, bImmediate);
 
   SetLastError( ERROR_NOT_SUPPORTED );

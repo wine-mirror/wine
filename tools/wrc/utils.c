@@ -315,7 +315,7 @@ string_t *convert_string(const string_t *str, enum str_e type)
 		ret->size     = strlenW(str->str.wstr);
 		ret->str.wstr = xmalloc(sizeof(WCHAR)*(ret->size+1));
 		strcpyW(ret->str.wstr, str->str.wstr);
-	}  
+	}
 	else /* str->type == str_char */
         {
 	        ret->type     = str_char;

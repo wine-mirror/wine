@@ -312,13 +312,13 @@ static void set_library_argv( char **argv )
  * Note that it does NOT necessarily include the file name.
  * Sometimes we don't even have any command line options at all.
  *
- * We must quote and escape characters so that the argv array can be rebuilt 
+ * We must quote and escape characters so that the argv array can be rebuilt
  * from the command line:
  * - spaces and tabs must be quoted
  *   'a b'   -> '"a b"'
  * - quotes must be escaped
  *   '"'     -> '\"'
- * - if '\'s are followed by a '"', they must be doubled and followed by '\"', 
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
  *   resulting in an odd number of '\' followed by a '"'
  *   '\"'    -> '\\\"'
  *   '\\"'   -> '\\\\\"'
@@ -351,7 +351,7 @@ BOOL ENV_BuildCommandLine( char **argv )
                 if (*a==' ' || *a=='\t') {
                     has_space=1;
                 } else if (*a=='"') {
-                    /* doubling of '\' preceeding a '"', 
+                    /* doubling of '\' preceeding a '"',
                      * plus escaping of said '"'
                      */
                     len+=2*bcount+1;
@@ -448,14 +448,14 @@ BOOL ENV_BuildCommandLine( char **argv )
  * whereas Windows NT only returns the full file path plus arguments
  * in case the program has been started with a full path.
  * Win9x seems to have inherited NT behaviour.
- * 
+ *
  * Note that both Start Menu Execute and Explorer start programs with
  * fully specified quoted app file paths, which is why probably the only case
  * where you'll see single file names is in case of direct launch
  * via CreateProcess or WinExec.
  *
  * Perhaps we should take care of Win3.1 programs here (Win32s "feature").
- * 
+ *
  * References: MS KB article q102762.txt (special Win32s handling)
  */
 LPSTR WINAPI GetCommandLineA(void)

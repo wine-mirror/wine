@@ -33,7 +33,7 @@ typedef struct
     DC             *dc;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
     UINT       nextHandle;         /* Next handle number */
-    HFILE      hFile;              /* HFILE for disk based MetaFile */ 
+    HFILE      hFile;              /* HFILE for disk based MetaFile */
 } EMFDRV_PDEVICE;
 
 

@@ -129,11 +129,11 @@ static	int		cu_include_stk_idx = 0;
 static  struct datatype**	cu_vector = NULL;
 static  int 		cu_nrofentries = 0;
 
-static 
-int	
+static
+int
 DEBUG_CreateInclude(const char* file, unsigned long val)
 {
-  if (num_include_def == num_alloc_include_def) 
+  if (num_include_def == num_alloc_include_def)
     {
       num_alloc_include_def += 256;
       include_defs = DBG_realloc(include_defs, sizeof(include_defs[0])*num_alloc_include_def);
@@ -143,35 +143,35 @@ DEBUG_CreateInclude(const char* file, unsigned long val)
   include_defs[num_include_def].value = val;
   include_defs[num_include_def].vector = NULL;
   include_defs[num_include_def].nrofentries = 0;
-  
+
   return num_include_def++;
 }
 
-static 
-int	
+static
+int
 DEBUG_FindInclude(const char* file, unsigned long val)
 {
   int		i;
-  
-  for (i = 0; i < num_include_def; i++) 
+
+  for (i = 0; i < num_include_def; i++)
     {
-      if (val == include_defs[i].value && 
+      if (val == include_defs[i].value &&
 	  strcmp(file, include_defs[i].name) == 0)
 	return i;
     }
   return -1;
 }
 
-static 
+static
 int
 DEBUG_AddInclude(int idx)
 {
   ++cu_include_stk_idx;
-  
+
   /* is this happen, just bump MAX_INCLUDES */
   /* we could also handle this as another dynarray */
   assert(cu_include_stk_idx < MAX_INCLUDES);
-  
+
   cu_include_stack[cu_include_stk_idx] = idx;
   return cu_include_stk_idx;
 }
@@ -193,10 +193,10 @@ void
 DEBUG_FreeIncludes(void)
 {
   int	i;
-  
+
   DEBUG_ResetIncludes();
-  
-  for (i = 0; i < num_include_def; i++) 
+
+  for (i = 0; i < num_include_def; i++)
     {
       DBG_free(include_defs[i].name);
       DBG_free(include_defs[i].vector);
@@ -212,18 +212,18 @@ DEBUG_FreeIncludes(void)
 
 static
 struct datatype**
-DEBUG_FileSubNr2StabEnum(int filenr, int subnr) 
+DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
 {
   struct datatype** ret;
-  
+
   /* DEBUG_Printf(DBG_CHN_MESG, "creating type id for (%d,%d)\n", filenr, subnr); */
-  
+
   /* FIXME: I could perhaps create a dummy include_def for each compilation
    * unit which would allow not to handle those two cases separately
    */
-  if (filenr == 0) 
+  if (filenr == 0)
     {
-      if (cu_nrofentries <= subnr) 
+      if (cu_nrofentries <= subnr)
 	{
 	  cu_vector = DBG_realloc(cu_vector, sizeof(cu_vector[0])*(subnr+1));
 	  memset(cu_vector+cu_nrofentries, 0, sizeof(cu_vector[0])*(subnr+1-cu_nrofentries));
@@ -234,11 +234,11 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
   else
     {
       include_def*	idef;
-      
+
       assert(filenr <= cu_include_stk_idx);
-      
+
       idef = &include_defs[cu_include_stack[filenr]];
-      
+
       if (idef->nrofentries <= subnr)
 	{
 	  idef->vector = DBG_realloc(idef->vector, sizeof(idef->vector[0])*(subnr+1));
@@ -251,7 +251,7 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
   return ret;
 }
 
-static 
+static
 struct datatype**
 DEBUG_ReadTypeEnum(char **x) {
     int filenr,subnr;
@@ -303,7 +303,7 @@ static int DEBUG_PTS_ReadNum(struct ParseTypedefData* ptd, int* v)
     return 0;
 }
 
-static int DEBUG_PTS_ReadTypeReference(struct ParseTypedefData* ptd, 
+static int DEBUG_PTS_ReadTypeReference(struct ParseTypedefData* ptd,
 				       int* filenr, int* subnr)
 {
     if (*ptd->ptr == '(') {
@@ -320,7 +320,7 @@ static int DEBUG_PTS_ReadTypeReference(struct ParseTypedefData* ptd,
     return 0;
 }
 
-static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** dt, 
+static int DEBUG_PTS_ReadRange(struct ParseTypedefData* ptd, struct datatype** dt,
 			       int* lo, int* hi)
 {
     /* type ';' <int> ';' <int> ';' */
@@ -350,7 +350,7 @@ static inline int DEBUG_PTS_ReadAggregate(struct ParseTypedefData* ptd, struct d
      * but don't store results into the struct
      * FIXME: there's a quite ugly memory leak in there...
      */
-	  
+
     /* Now parse the individual elements of the structure/union. */
     while (*ptd->ptr != ';') {
 	/* agg_name : type ',' <int:offset> ',' <int:size> */
@@ -396,7 +396,7 @@ static inline int DEBUG_PTS_ReadArray(struct ParseTypedefData* ptd, struct datat
     struct datatype*	rdt;
 
     /* ar<typeinfo_nodef>;<int>;<int>;<typeinfo> */
-	  
+
     if (*ptd->ptr++ != 'r') return -1;
     /* FIXME: range type is lost, always assume int */
     if (DEBUG_PTS_ReadRange(ptd, &rdt, &lo, &hi) == -1) return -1;
@@ -470,7 +470,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    } else if (!dt1 && !dt2)  {
 		new_dt = NULL;
 	    } else {
-		DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n", 
+		DEBUG_Printf(DBG_CHN_MESG, "Unknown condition %08lx %08lx (%s)\n",
 			     (unsigned long)dt1, (unsigned long)dt2, ptd->ptr);
 		return -1;
 	    }
@@ -502,13 +502,13 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    dt2 = DEBUG_TypeCast(DT_STRUCT, typename);
 	    if (!dt1) {
 		new_dt = DEBUG_NewDataType(DT_STRUCT, typename);
-		/* we need to set it here, because a struct can hold a pointer 
-		 * to itself 
+		/* we need to set it here, because a struct can hold a pointer
+		 * to itself
 		 */
 		*DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = new_dt;
 	    } else {
 		if (DEBUG_GetType(dt1) != DT_STRUCT) {
-		    DEBUG_Printf(DBG_CHN_MESG, 
+		    DEBUG_Printf(DBG_CHN_MESG,
 				 "Forward declaration is not an aggregate\n");
 		    return -1;
 		}
@@ -524,10 +524,10 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    case 's':	case 'u':	lo = DT_STRUCT;	break;
 	    default: return -1;
 	    }
-	    
+
 	    idx = ptd->idx;
 	    if (DEBUG_PTS_ReadID(ptd) == -1) return -1;
-	    new_dt = DEBUG_NewDataType(lo, ptd->buf + idx); 
+	    new_dt = DEBUG_NewDataType(lo, ptd->buf + idx);
 	    ptd->idx = idx;
 	    break;
 	case '-':
@@ -538,7 +538,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
                 enum debug_type_basic basic = DT_BASIC_LAST;
                 switch (lo)
                 {
-                case  1: basic = DT_BASIC_INT; break;      
+                case  1: basic = DT_BASIC_INT; break;
                 case  2: basic = DT_BASIC_CHAR; break;
                 case  3: basic = DT_BASIC_SHORTINT; break;
                 case  4: basic = DT_BASIC_LONGINT; break;
@@ -622,7 +622,7 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
     int				ret = -1;
 
     /* check for already existing definition */
-    
+
     ptd.idx = 0;
     if ((ptd.ptr = strchr(ptr, ':'))) {
 	ptd.ptr++;
@@ -659,7 +659,7 @@ DEBUG_ParseStabType(const char * stab)
    */
   if (*c != '(')
     c++;
-  /* 
+  /*
    * The next is either an integer or a (integer,integer).
    * The DEBUG_ReadTypeEnum takes care that stab_types is large enough.
    */
@@ -667,7 +667,7 @@ DEBUG_ParseStabType(const char * stab)
 }
 
 enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
-				  unsigned int staboff, int stablen, 
+				  unsigned int staboff, int stablen,
 				  unsigned int strtaboff, int strtablen)
 {
   struct name_hash    * curr_func = NULL;
@@ -794,7 +794,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	  new_value.cookie = DV_TARGET;
 
           stab_strcpy(symname, sizeof(symname), ptr);
-          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath, 
+          curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA );
           break;
         case N_PSYM:
@@ -804,7 +804,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, sizeof(symname), ptr);
-              curr_loc = DEBUG_AddLocal( curr_func, 0, 
+              curr_loc = DEBUG_AddLocal( curr_func, 0,
                                          stab_ptr->n_value, 0, 0, symname );
               DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
             }
@@ -813,7 +813,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, sizeof(symname), ptr);
-              curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value + 1, 
+              curr_loc = DEBUG_AddLocal( curr_func, stab_ptr->n_value + 1,
 					 0, 0, 0, symname );
               DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
             }
@@ -822,7 +822,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           if( curr_func != NULL && !in_external_file )
             {
               stab_strcpy(symname, sizeof(symname), ptr);
-              curr_loc = DEBUG_AddLocal( curr_func, 0, 
+              curr_loc = DEBUG_AddLocal( curr_func, 0,
 					 stab_ptr->n_value, 0, 0, symname );
 	      DEBUG_SetLocalSymbolType( curr_loc, DEBUG_ParseStabType(ptr) );
             }
@@ -835,7 +835,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
           if( curr_func != NULL && !in_external_file )
             {
 #ifdef __ELF__
-              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
+              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc,
                                   stab_ptr->n_value);
 #else
 #if 0
@@ -844,7 +844,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
                * a.out, and as a result we would end up attaching the line
                * number to the wrong function.
                */
-              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc, 
+              DEBUG_AddLineNumber(curr_func, stab_ptr->n_desc,
                                   stab_ptr->n_value - curr_func->addr.off);
 #endif
 #endif
@@ -884,7 +884,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 		  curr_func = DEBUG_AddSymbol( symname, &new_value, currpath,
 					       SYM_WINE | SYM_FUNC );
 #endif
-		} 
+		}
 	      else
 		{
 		  /* some GCC seem to use a N_FUN "" to mark the end of a function */
@@ -979,7 +979,7 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
       stabbuff[0] = '\0';
 
 #if 0
-      DEBUG_Printf(DBG_CHN_MESG, "%d %x %s\n", stab_ptr->n_type, 
+      DEBUG_Printf(DBG_CHN_MESG, "%d %x %s\n", stab_ptr->n_type,
 		   (unsigned int) stab_ptr->n_value,
 		   strs + (unsigned int) stab_ptr->n_un.n_name);
 #endif
@@ -1001,8 +1001,8 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, unsigned int load_offset,
  * This is all really quite easy, since we don't have to worry about line
  * numbers or local data variables.
  */
-static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr, 
-				  u_long load_addr, Elf32_Shdr* symtab, 
+static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
+				  u_long load_addr, Elf32_Shdr* symtab,
 				  Elf32_Shdr* strtab)
 {
   char		* curfile = NULL;
@@ -1058,7 +1058,7 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
       new_value.type = NULL;
       new_value.addr.off = load_addr + symp->st_value;
       new_value.cookie = DV_TARGET;
-      flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC) 
+      flags = SYM_WINE | ((ELF32_ST_TYPE(symp->st_info) == STT_FUNC)
 			  ? SYM_FUNC : SYM_DATA);
       if( ELF32_ST_BIND(symp->st_info) == STB_GLOBAL )
 	  curr_sym = DEBUG_AddSymbol( symname, &new_value, NULL, flags );
@@ -1080,9 +1080,9 @@ static int DEBUG_ProcessElfSymtab(DBG_MODULE* module, char* addr,
  * Loads the symbolic information from ELF module stored in 'filename'
  * the module has been loaded at 'load_offset' address, so symbols' address
  * relocation is performed
- * returns 
+ * returns
  *	-1 if the file cannot be found/opened
- *	0 if the file doesn't contain symbolic info (or this info cannot be 
+ *	0 if the file doesn't contain symbolic info (or this info cannot be
  *	read or parsed)
  *	1 on success
  */
@@ -1112,14 +1112,14 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
      * Now open the file, so that we can mmap() it.
      */
     if ((fd = open(module->module_name, O_RDONLY)) == -1) goto leave;
-    
+
     dil = DIL_NOINFO;
     /*
      * Now mmap() the file.
      */
     addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (addr == (char*)0xffffffff) goto leave;
-    
+
     /*
      * Next, we need to find a few of the internal ELF headers within
      * this thing.  We need the main executable header, and the section
@@ -1128,27 +1128,27 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
     ehptr = (Elf32_Ehdr*) addr;
     spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
     shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
-    
+
     stabsect = stabstrsect = -1;
-    
+
     for (i = 0; i < ehptr->e_shnum; i++) {
 	if (strcmp(shstrtab + spnt[i].sh_name, ".stab") == 0)
 	    stabsect = i;
-	
+
 	if (strcmp(shstrtab + spnt[i].sh_name, ".stabstr") == 0)
 	    stabstrsect = i;
     }
-    
+
     if (stabsect == -1 || stabstrsect == -1) {
 	DEBUG_Printf(DBG_CHN_WARN, "no .stab section\n");
 	goto leave;
     }
-    
+
     /*
      * OK, now just parse all of the stabs.
      */
-    if (DEBUG_ParseStabs(addr, 
-			 module->elf_info->elf_addr, 
+    if (DEBUG_ParseStabs(addr,
+			 module->elf_info->elf_addr,
 			 spnt[stabsect].sh_offset,
 			 spnt[stabsect].sh_size,
 			 spnt[stabstrsect].sh_offset,
@@ -1159,36 +1159,36 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
 	DEBUG_Printf(DBG_CHN_WARN, "bad stabs\n");
 	goto leave;
     }
-    
+
     for (i = 0; i < ehptr->e_shnum; i++) {
 	if (   (strcmp(shstrtab + spnt[i].sh_name, ".symtab") == 0)
 	    && (spnt[i].sh_type == SHT_SYMTAB))
 	    DEBUG_ProcessElfSymtab(module, addr, module->elf_info->elf_addr,
 				   spnt + i, spnt + spnt[i].sh_link);
-	
+
 	if (   (strcmp(shstrtab + spnt[i].sh_name, ".dynsym") == 0)
 	    && (spnt[i].sh_type == SHT_DYNSYM))
-	    DEBUG_ProcessElfSymtab(module, addr, module->elf_info->elf_addr, 
+	    DEBUG_ProcessElfSymtab(module, addr, module->elf_info->elf_addr,
 				   spnt + i, spnt + spnt[i].sh_link);
     }
 
  leave:
     if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
     if (fd != -1) close(fd);
-    
+
     return dil;
 }
 
 /*
  * Loads the information for ELF module stored in 'filename'
  * the module has been loaded at 'load_offset' address
- * returns 
+ * returns
  *	-1 if the file cannot be found/opened
- *	0 if the file doesn't contain symbolic info (or this info cannot be 
+ *	0 if the file doesn't contain symbolic info (or this info cannot be
  *	read or parsed)
  *	1 on success
  */
-static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename, 
+static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 					     unsigned int load_offset,
 					     unsigned int* dyn_addr)
 {
@@ -1210,12 +1210,12 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 
     /* check that the file exists, and that the module hasn't been loaded yet */
     if (stat(filename, &statbuf) == -1) goto leave;
-    
+
     /*
      * Now open the file, so that we can mmap() it.
      */
     if ((fd = open(filename, O_RDONLY)) == -1) goto leave;
-    
+
     /*
      * Now mmap() the file.
      */
@@ -1223,7 +1223,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
     if (addr == (char*)0xffffffff) goto leave;
 
     dil = DIL_NOINFO;
-    
+
     /*
      * Next, we need to find a few of the internal ELF headers within
      * this thing.  We need the main executable header, and the section
@@ -1248,7 +1248,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 	if (size < ppnt[i].p_vaddr - delta + ppnt[i].p_memsz)
 	    size = ppnt[i].p_vaddr - delta + ppnt[i].p_memsz;
     }
-    
+
     for (i = 0; i < ehptr->e_shnum; i++) {
 	if (strcmp(shstrtab + spnt[i].sh_name, ".bss") == 0 &&
 	    spnt[i].sh_type == SHT_NOBITS) {
@@ -1260,8 +1260,8 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
 	    if (dyn_addr) *dyn_addr = spnt[i].sh_addr;
 	}
     }
-    
-    module = DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset, 
+
+    module = DEBUG_RegisterELFModule((load_offset == 0) ? ehptr->e_entry : load_offset,
 				     size, filename);
     if (!module) {
 	dil = DIL_ERROR;
@@ -1280,13 +1280,13 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
     if (addr != (char*)0xffffffff) munmap(addr, statbuf.st_size);
     if (fd != -1) close(fd);
     if (module) module->dil = dil;
-    
+
     return dil;
 }
 
-static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename, 
-						     unsigned int load_offset, 
-						     unsigned int* dyn_addr, 
+static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename,
+						     unsigned int load_offset,
+						     unsigned int* dyn_addr,
 						     const char* path)
 {
     enum DbgInfoLoad	dil = DIL_ERROR;
@@ -1313,7 +1313,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFileFromPath(const char * filename,
     return dil;
 }
 
-static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename, 
+static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
 					       unsigned int load_offset,
 					       unsigned int* dyn_addr)
 {
@@ -1335,7 +1335,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfObject(const char* filename,
 
    return dil;
 }
-   
+
 static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 {
     u_long		lm_addr;
@@ -1361,7 +1361,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 	    DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr, NULL);
 	}
     }
-    
+
     return TRUE;
 }
 
@@ -1369,12 +1369,12 @@ static BOOL DEBUG_RescanElf(void)
 {
     struct r_debug        dbg_hdr;
 
-    if (!DEBUG_CurrProcess || 
+    if (!DEBUG_CurrProcess ||
 	!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_CurrProcess->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
        return FALSE;
 
     switch (dbg_hdr.r_state) {
-    case RT_CONSISTENT:	
+    case RT_CONSISTENT:
        DEBUG_WalkList(&dbg_hdr);
        DEBUG_CheckDelayedBP();
        break;
@@ -1393,35 +1393,35 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
     struct r_debug      dbg_hdr;
     enum DbgInfoLoad	dil = DIL_NOINFO;
     unsigned int	dyn_addr;
-    
+
     /*
      * Make sure we can stat and open this file.
      */
     if (exe_name == NULL) goto leave;
     DEBUG_ProcessElfObject(exe_name, 0, &dyn_addr);
-    
+
     do {
 	if (!DEBUG_READ_MEM_VERBOSE((void*)dyn_addr, &dyn, sizeof(dyn)))
 	    goto leave;
 	dyn_addr += sizeof(dyn);
     } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
     if (dyn.d_tag == DT_NULL) goto leave;
-    
+
     /*
      * OK, now dig into the actual tables themselves.
      */
     if (!DEBUG_READ_MEM_VERBOSE((void*)dyn.d_un.d_ptr, &dbg_hdr, sizeof(dbg_hdr)))
 	goto leave;
-    
+
     assert(!DEBUG_CurrProcess->dbg_hdr_addr);
     DEBUG_CurrProcess->dbg_hdr_addr = (u_long)dyn.d_un.d_ptr;
-    
+
     if (dbg_hdr.r_brk) {
 	DBG_VALUE	value;
-	
+
 	DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
 		     (unsigned long)dbg_hdr.r_brk);
-	
+
 	DEBUG_SetBreakpoints(FALSE);
 	value.type = NULL;
 	value.cookie = DV_TARGET;
@@ -1430,9 +1430,9 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 	DEBUG_AddBreakpoint(&value, DEBUG_RescanElf);
 	DEBUG_SetBreakpoints(TRUE);
     }
-    
+
     dil = DEBUG_WalkList(&dbg_hdr);
-    
+
  leave:
     return dil;
 }

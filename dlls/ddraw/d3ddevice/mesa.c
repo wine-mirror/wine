@@ -1,6 +1,6 @@
 /* Direct3D Device
  * Copyright (c) 1998 Lionel ULMER
- *   
+ *
  * This file contains the MESA implementation of all the D3D devices that
  * Wine supports.
  *
@@ -98,7 +98,7 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
 static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
 {
   /* GLint maxlight; */
-  
+
   d1->dwSize  = sizeof(*d1);
   d1->dwFlags = D3DDD_DEVCAPS | D3DDD_BCLIPPING | D3DDD_COLORMODEL | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH
     | D3DDD_LIGHTINGCAPS | D3DDD_LINECAPS | D3DDD_MAXBUFFERSIZE | D3DDD_MAXVERTEXCOUNT | D3DDD_TRANSFORMCAPS | D3DDD_TRICAPS;
@@ -114,7 +114,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
   d1->dlcLightingCaps.dwLightingModel = D3DLIGHTINGMODEL_RGB;
   d1->dlcLightingCaps.dwNumLights = 16; /* glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight; */
   fill_opengl_primcaps(&(d1->dpcLineCaps));
-  fill_opengl_primcaps(&(d1->dpcTriCaps));  
+  fill_opengl_primcaps(&(d1->dpcTriCaps));
   d1->dwDeviceRenderBitDepth  = DDBD_16;
   d1->dwDeviceZBufferBitDepth = DDBD_16;
   d1->dwMaxBufferSize = 0;
@@ -137,10 +137,10 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw) {
   x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
   const char *ext_string;
   Mesa_DeviceCapabilities *devcap;
-  
+
   private->device_capabilities = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(Mesa_DeviceCapabilities));
   devcap = (Mesa_DeviceCapabilities *) private->device_capabilities;
-  
+
   ENTER_GL();
   ext_string = glGetString(GL_EXTENSIONS);
   /* Query for the ColorTable Extension */
@@ -174,7 +174,7 @@ is_OpenGL(
       (!memcmp(&IID_IDirect3DHALDevice,rguid,sizeof(IID_IDirect3DHALDevice))) ||
       /* OpenGL Device */
       (!memcmp(&IID_D3DDEVICE2_OpenGL,rguid,sizeof(IID_D3DDEVICE2_OpenGL)))) {
-    
+
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDevice2Impl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
     odev = (mesa_d3dd_private*)(*device)->private;
@@ -185,7 +185,7 @@ is_OpenGL(
     (*device)->viewport_list = NULL;
     (*device)->current_viewport = NULL;
     (*device)->set_context = set_context;
-    
+
     TRACE("Creating OpenGL device for surface %p\n", surface);
     /* Create the OpenGL context */
 #if COMPILABLE
@@ -203,12 +203,12 @@ is_OpenGL(
       odev->ctx = glXCreateContext(gdi_display, vis,
 				   NULL, GL_TRUE);
     }
-    
+
     if (odev->ctx == NULL)
       ERR("Error in context creation !\n");
     else
       TRACE("Context created (%p)\n", odev->ctx);
-    
+
     /* Now override the surface's Flip method (if in double buffering) */
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;
     {
@@ -230,7 +230,7 @@ is_OpenGL(
     odev->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     odev->view_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
     odev->proj_mat  = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
-    
+
     memcpy(odev->world_mat, id_mat, 16 * sizeof(float));
     memcpy(odev->view_mat , id_mat, 16 * sizeof(float));
     memcpy(odev->proj_mat , id_mat, 16 * sizeof(float));
@@ -244,7 +244,7 @@ is_OpenGL(
     LEAVE_GL();
 
     fill_device_capabilities(d3d->ddraw);
-    
+
     TRACE("OpenGL device created \n");
     return 1;
   }
@@ -260,7 +260,7 @@ static ULONG WINAPI MESA_IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
 {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
-  
+
   if (!--(This->ref)) {
 #if 0  /* broken for now */
     D3DDPRIVATE(This);
@@ -298,7 +298,7 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat = &(sdesc.ddpfPixelFormat);
   pformat->dwSize = sizeof(DDPIXELFORMAT);
   pformat->dwFourCC = 0;
-  
+
   TRACE("Enumerating GL_RGBA unpacked (32)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
   pformat->u1.dwRGBBitCount = 32;
@@ -371,8 +371,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat->u4.dwBBitMask =         0x0000001F;
   pformat->u5.dwRGBAlphaBitMask =  0x00008000;
   if (cb(&sdesc, context) == 0)
-    return DD_OK;  
-  
+    return DD_OK;
+
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
   pformat->u1.dwRGBBitCount = 8;
@@ -382,9 +382,9 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat->u5.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
-  
+
   TRACE("End of enumeration\n");
-  
+
   return DD_OK;
 }
 
@@ -393,7 +393,7 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_EnumTextureFormats(
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   FIXME("(%p)->(%p,%p): stub\n", This, cb, context);
-  
+
   return enum_texture_format_OpenGL(cb, context);
 }
 
@@ -401,12 +401,12 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_BeginScene(
     LPDIRECT3DDEVICE2 iface
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-  
+
   FIXME("(%p)->(): stub\n", This);
-  
+
   /* Here, we should get the DDraw surface and 'copy it' to the
      OpenGL surface.... */
-  
+
   return DD_OK;
 }
 
@@ -416,7 +416,7 @@ HRESULT WINAPI MESA_IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface) {
   FIXME("(%p)->(): stub\n", This);
 
   /* No need to do anything here... */
-  
+
   return DD_OK;
 }
 
@@ -428,10 +428,10 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetRenderState(
   D3DDPRIVATE(This);
 
   TRACE("(%p)->(%d,%ld)\n", This, dwRenderStateType, dwRenderState);
-  
+
   /* Call the render state functions */
   set_render_state(dwRenderStateType, dwRenderState, &(odev->rs));
-  
+
   return DD_OK;
 }
 
@@ -441,11 +441,11 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetLightState(
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   FIXME("(%p)->(%d,%08lx): stub\n", This, dwLightStateType, dwLightState);
-  
+
   switch (dwLightStateType) {
   case D3DLIGHTSTATE_MATERIAL: {  /* 1 */
     IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) dwLightState;
-    
+
     if (mat != NULL) {
       ENTER_GL();
       mat->activate(mat);
@@ -454,10 +454,10 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetLightState(
       TRACE("Zoups !!!\n");
     }
   } break;
-    
+
   case D3DLIGHTSTATE_AMBIENT: {   /* 2 */
     float light[4];
-    
+
     light[0] = ((dwLightState >> 16) & 0xFF) / 255.0;
     light[1] = ((dwLightState >>  8) & 0xFF) / 255.0;
     light[2] = ((dwLightState >>  0) & 0xFF) / 255.0;
@@ -478,7 +478,7 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetLightState(
     TRACE("Unexpected Light State Type\n");
     return DDERR_INVALIDPARAMS;
   }
-  
+
   return DD_OK;
 }
 
@@ -488,12 +488,12 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   D3DDPRIVATE(This);
-  
+
   FIXME("(%p)->(%d,%p): stub\n", This, d3dts, lpmatrix);
-  
+
   ENTER_GL();
-  
-  /* Using a trial and failure approach, I found that the order of 
+
+  /* Using a trial and failure approach, I found that the order of
      Direct3D transformations that works best is :
 
      ScreenCoord = ProjectionMat * ViewMat * WorldMat * ObjectCoord
@@ -504,7 +504,7 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
      If anyone has a good explanation of the three different matrices in
      the SDK online documentation, feel free to point it to me. For example,
      which matrices transform lights ? In OpenGL only the PROJECTION matrix
-     transform the lights, not the MODELVIEW. Using the matrix names, I 
+     transform the lights, not the MODELVIEW. Using the matrix names, I
      supposed that PROJECTION and VIEW (all 'camera' related names) do
      transform lights, but WORLD do not. It may be wrong though... */
 
@@ -530,21 +530,21 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_SetTransform(
     glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf((float *) odev->world_mat);
   } break;
-    
+
   case D3DTRANSFORMSTATE_VIEW: {
     conv_mat(lpmatrix, odev->view_mat);
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf((float *) odev->proj_mat);
     glMultMatrixf((float *) odev->view_mat);
   } break;
-    
+
   case D3DTRANSFORMSTATE_PROJECTION: {
     conv_mat(lpmatrix, odev->proj_mat);
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf((float *) odev->proj_mat);
     glMultMatrixf((float *) odev->view_mat);
   } break;
-    
+
   default:
     break;
   }
@@ -720,16 +720,16 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_DrawPrimitive(
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   D3DDPRIVATE(This);
   int vx_index;
-  
+
   TRACE("(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
   ENTER_GL();
   DRAW_PRIMITIVE(vertcount, vx_index);
   LEAVE_GL();
-    
+
   return D3D_OK;
 }
-      
+
 static HRESULT WINAPI MESA_IDirect3DDevice2Impl_DrawIndexedPrimitive(
     LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
     LPVOID lpvertex, DWORD vertcount, LPWORD lpindexes, DWORD indexcount,
@@ -738,13 +738,13 @@ static HRESULT WINAPI MESA_IDirect3DDevice2Impl_DrawIndexedPrimitive(
   ICOM_THIS(IDirect3DDevice2Impl,iface);
   D3DDPRIVATE(This);
   int vx_index;
-  
+
   TRACE("(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
-  
+
   ENTER_GL();
   DRAW_PRIMITIVE(indexcount, lpindexes[vx_index]);
   LEAVE_GL();
-  
+
   return D3D_OK;
 }
 
@@ -767,7 +767,7 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_CreateExecuteBuffer(
  *				OpenGL-specific VTable
  */
 
-ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable = 
+ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDevice2Impl_QueryInterface,
@@ -784,20 +784,20 @@ ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable =
   MESA_IDirect3DDevice2Impl_BeginScene,
   MESA_IDirect3DDevice2Impl_EndScene,
   IDirect3DDevice2Impl_GetDirect3D,
-  
+
   /*** DrawPrimitive API ***/
   IDirect3DDevice2Impl_SetCurrentViewport,
   IDirect3DDevice2Impl_GetCurrentViewport,
-  
+
   IDirect3DDevice2Impl_SetRenderTarget,
   IDirect3DDevice2Impl_GetRenderTarget,
-  
+
   IDirect3DDevice2Impl_Begin,
   IDirect3DDevice2Impl_BeginIndexed,
   IDirect3DDevice2Impl_Vertex,
   IDirect3DDevice2Impl_Index,
   IDirect3DDevice2Impl_End,
-  
+
   IDirect3DDevice2Impl_GetRenderState,
   MESA_IDirect3DDevice2Impl_SetRenderState,
   IDirect3DDevice2Impl_GetLightState,
@@ -805,10 +805,10 @@ ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable =
   MESA_IDirect3DDevice2Impl_SetTransform,
   IDirect3DDevice2Impl_GetTransform,
   IDirect3DDevice2Impl_MultiplyTransform,
-  
+
   MESA_IDirect3DDevice2Impl_DrawPrimitive,
   MESA_IDirect3DDevice2Impl_DrawIndexedPrimitive,
-  
+
   IDirect3DDevice2Impl_SetClipStatus,
   IDirect3DDevice2Impl_GetClipStatus,
 };
@@ -818,11 +818,11 @@ ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable =
  */
 int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   D3DDEVICEDESC	d1,d2;
-  
+
   TRACE(" Enumerating OpenGL D3D device (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
-  
+
   fill_opengl_caps(&d1, &d2);
-  
+
   return cb((void*)&IID_D3DDEVICE_OpenGL,"WINE Direct3D using OpenGL","direct3d",&d1,&d2,context);
 }
 
@@ -834,7 +834,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     int attributeList[]={ GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
     XVisualInfo *xvis;
 #endif
-       
+
     *device = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DDeviceImpl));
     (*device)->private = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(mesa_d3dd_private));
     odev = (mesa_d3dd_private*)(*device)->private;
@@ -842,14 +842,14 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     ICOM_VTBL(*device) = &OpenGL_vtable_dx3;
     (*device)->d3d = NULL;
     (*device)->surface = surface;
-    
+
     (*device)->viewport_list = NULL;
     (*device)->current_viewport = NULL;
-    
+
     (*device)->set_context = (void*)set_context;
-    
+
     TRACE("OpenGL device created \n");
-    
+
     /* Create the OpenGL context */
     /* First get the correct visual */
     /* if (surface->s.backbuffer == NULL)
@@ -869,7 +869,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 				 NULL,
 				 GL_TRUE);
     TRACE("Context created\n");
-    
+
     /* Now override the surface's Flip method (if in double buffering) */
     surface->s.d3d_device = (void *) odev;
     {
@@ -893,12 +893,12 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
     (*device)->set_context(*device);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
-    
+
     fill_device_capabilities((IDirectDrawImpl *) surface->ddraw_owner);
 
     return 1;
   }
-  
+
   /* This is not the OpenGL UID */
   return DD_OK;
 }
@@ -907,7 +907,7 @@ static ULONG WINAPI MESA_IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
-  
+
   if (!--(This->ref)) {
 #if 0  /* broken for now */
     D3DDPRIVATE(This);
@@ -928,7 +928,7 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_EnumTextureFormats(
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
   TRACE("(%p)->(%p,%p): stub\n", This, lpd3dEnumTextureProc, lpArg);
-  
+
   return enum_texture_format_OpenGL(lpd3dEnumTextureProc, lpArg);
 }
 
@@ -937,12 +937,12 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
   /* OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This; */
-  
+
   FIXME("(%p)->(): stub\n", This);
-  
+
   /* We get the pointer to the surface (should be done on flip) */
   /* odev->zb->pbuf = This->surface->s.surface_desc.u2.lpSurface; */
-  
+
   return DD_OK;
 }
 
@@ -952,18 +952,18 @@ static HRESULT WINAPI MESA_IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface
 static HRESULT WINAPI MESA_IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 {
   ICOM_THIS(IDirect3DDeviceImpl,iface);
-  
+
   FIXME("(%p)->(): stub\n", This);
 
   /* No need to do anything here... */
-  
-  return DD_OK;  
+
+  return DD_OK;
 }
 
 /*******************************************************************************
  *				Direct3DDevice VTable
  */
-ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 = 
+ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDeviceImpl_QueryInterface,

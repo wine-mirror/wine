@@ -35,7 +35,7 @@ BOOL WINAPI SNMPAPI_DllMain(
 	LPVOID lpvReserved)
 {
     TRACE("(%08x,%08lx,%p)\n", hInstDLL, fdwReason, lpvReserved);
-  
+
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         break;
@@ -46,6 +46,6 @@ BOOL WINAPI SNMPAPI_DllMain(
     case DLL_THREAD_DETACH:
         break;
     }
-  
+
     return TRUE;
 }

@@ -61,7 +61,7 @@ HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 
     TRACE("%d %d %06lx\n", style, width, color );
 
-    logpen.lopnStyle = style; 
+    logpen.lopnStyle = style;
     logpen.lopnWidth.x = width;
     logpen.lopnWidth.y = 0;
     logpen.lopnColor = color;
@@ -79,7 +79,7 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 
     TRACE("%d %d %06lx\n", style, width, color );
 
-    logpen.lopnStyle = style; 
+    logpen.lopnStyle = style;
     logpen.lopnWidth.x = width;
     logpen.lopnWidth.y = 0;
     logpen.lopnColor = color;
@@ -142,14 +142,14 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 	    FIXME("Hatches not implemented\n");
 
     if (!(penPtr = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC, &hpen, &pen_funcs ))) return 0;
-    penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK; 
-    
-    /* PS_USERSTYLE workaround */   
+    penPtr->logpen.lopnStyle = style & ~PS_TYPE_MASK;
+
+    /* PS_USERSTYLE workaround */
     if((penPtr->logpen.lopnStyle & PS_STYLE_MASK) == PS_USERSTYLE)
-       penPtr->logpen.lopnStyle = 
+       penPtr->logpen.lopnStyle =
          (penPtr->logpen.lopnStyle & ~PS_STYLE_MASK) | PS_SOLID;
 
-    penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1; 
+    penPtr->logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;
     penPtr->logpen.lopnWidth.y = 0;
     penPtr->logpen.lopnColor = brush->lbColor;
     GDI_ReleaseObj( hpen );

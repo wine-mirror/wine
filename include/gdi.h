@@ -273,7 +273,7 @@ typedef struct tagDC_FUNCS
 #define DC_MEMORY     0x0001   /* It is a memory DC */
 #define DC_SAVED      0x0002   /* It is a saved DC */
 #define DC_DIRTY      0x0004   /* hVisRgn has to be updated */
-#define DC_THUNKHOOK  0x0008   /* DC hook is in the 16-bit code */ 
+#define DC_THUNKHOOK  0x0008   /* DC hook is in the 16-bit code */
 
 #define GDI_HEAP_SIZE 0xffe0
 
@@ -303,7 +303,7 @@ static inline INT WINE_UNUSED GDI_ROUND(FLOAT val)
 static inline BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
-    
+
     /* Check that the viewport-to-world transformation is valid */
     if (!dc->vport2WorldValid)
         return FALSE;
@@ -327,13 +327,13 @@ static inline BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
 static inline BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
-    
+
     /* Perform operation with floating point */
     floatPoint.x=(FLOAT)point->x;
     floatPoint.y=(FLOAT)point->y;
     if (!INTERNAL_DPTOLP_FLOAT(dc, &floatPoint))
         return FALSE;
-    
+
     /* Round to integers */
     point->x = GDI_ROUND(floatPoint.x);
     point->y = GDI_ROUND(floatPoint.y);
@@ -347,7 +347,7 @@ static inline BOOL WINE_UNUSED INTERNAL_DPTOLP(DC *dc, LPPOINT point)
 static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 {
     FLOAT x, y;
-    
+
     /* Perform the transformation */
     x = point->x;
     y = point->y;
@@ -365,12 +365,12 @@ static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
 static inline void WINE_UNUSED INTERNAL_LPTODP(DC *dc, LPPOINT point)
 {
     FLOAT_POINT floatPoint;
-    
+
     /* Perform operation with floating point */
     floatPoint.x=(FLOAT)point->x;
     floatPoint.y=(FLOAT)point->y;
     INTERNAL_LPTODP_FLOAT(dc, &floatPoint);
-    
+
     /* Round to integers */
     point->x = GDI_ROUND(floatPoint.x);
     point->y = GDI_ROUND(floatPoint.y);

@@ -104,7 +104,7 @@ BOOL WINAPI SearchTreeForFile(
   LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer)
 {
   FIXME("(%s, %s, %s): stub\n",
-    debugstr_a(RootPath), debugstr_a(InputPathName), 
+    debugstr_a(RootPath), debugstr_a(InputPathName),
     debugstr_a(OutputPathBuffer)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

@@ -1,4 +1,4 @@
-/* Unit test suite for SHReg* functions 
+/* Unit test suite for SHReg* functions
  *
  * Copyright 2002 Juergen Schmied
  *
@@ -145,7 +145,7 @@ static void test_SHQUeryValueEx(void)
 
 	/*
 	 * string grows during expanding
-	 */	
+	 */
 	strcpy(buf, sEmptyBuffer);
 	dwSize = 6;
 	dwType = -1;

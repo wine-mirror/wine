@@ -116,7 +116,7 @@ static unsigned int type_hash( const char * name )
 
     p = name;
 
-    while (*p) 
+    while (*p)
       {
 	hash = (hash << 4) + *p++;
 
@@ -131,7 +131,7 @@ static unsigned int type_hash( const char * name )
 
 
 static struct datatype *
-DEBUG_InitBasic(int type, char * name, int size, int b_signed, 
+DEBUG_InitBasic(int type, char * name, int size, int b_signed,
 			    char * output_format)
 {
   int hash;
@@ -174,12 +174,12 @@ DEBUG_LookupDataType(enum debug_type xtype, int hash, const char * typename)
     {
       for( dt = type_hash_table[hash]; dt; dt = dt->next )
 	{
-	  if( xtype != dt->type || dt->name == NULL 
+	  if( xtype != dt->type || dt->name == NULL
 	      || dt->name[0] != typename[0])
 	    {
 	      continue;
 	    }
-	  	  
+
 	  if( strcmp(dt->name, typename) == 0 )
 	    {
 	      return dt;
@@ -223,11 +223,11 @@ DEBUG_NewDataType(enum debug_type xtype, const char * typename)
   if( dt == NULL )
     {
       dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
-      
+
       if( dt != NULL )
 	{
 	  memset(dt, 0, sizeof(*dt));
-      
+
 	  dt->type = xtype;
 	  if( typename != NULL )
 	    {
@@ -266,7 +266,7 @@ DEBUG_FindOrMakePointerType(struct datatype * reftype)
 	    {
 	      continue;
 	    }
-	  	  
+
 	  if( dt->un.pointer.pointsto == reftype )
 	    {
 	      return dt;
@@ -277,7 +277,7 @@ DEBUG_FindOrMakePointerType(struct datatype * reftype)
   if( dt == NULL )
     {
       dt = (struct datatype *) DBG_alloc(sizeof(struct datatype));
-      
+
       if( dt != NULL )
 	{
 	  dt->type = DT_POINTER;
@@ -351,33 +351,33 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
    struct en_values * e;
    char * def_format = "0x%x";
    DBG_VALUE value = *_value;
-   
+
    assert(_value->cookie == DV_TARGET || _value->cookie == DV_HOST);
-   
+
    rtn = 0; rtn2 = 0;
    /* FIXME? I don't quite get this...
-    * if this is wrong, value.addr shall be linearized 
+    * if this is wrong, value.addr shall be linearized
     */
-   value.addr.seg = 0; 
+   value.addr.seg = 0;
    assert(value.type != NULL);
-   
+
    switch (value.type->type) {
    case DT_BASIC:
-      
+
       if (value.type->un.basic.basic_size > sizeof(rtn)) {
-	 DEBUG_Printf(DBG_CHN_ERR, "Size too large (%d)\n", 
+	 DEBUG_Printf(DBG_CHN_ERR, "Size too large (%d)\n",
 		      value.type->un.basic.basic_size);
 	 return 0;
       }
       /* FIXME: following code implies i386 byte ordering */
       if (_value->cookie == DV_TARGET) {
-	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn, 
+	 if (!DEBUG_READ_MEM_VERBOSE((void*)value.addr.off, &rtn,
 				     value.type->un.basic.basic_size))
 	    return 0;
       } else {
 	 memcpy(&rtn, (void*)value.addr.off, value.type->un.basic.basic_size);
       }
-      
+
       if (    (value.type->un.basic.b_signed)
 	  && ((value.type->un.basic.basic_size & 3) != 0)
 	  && ((rtn >> (value.type->un.basic.basic_size * 8 - 1)) != 0)) {
@@ -394,12 +394,12 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
       if (value.type->un.basic.output_format != NULL) {
 	 def_format = value.type->un.basic.output_format;
       }
-      
+
       /*
        * Check for single character prints that are out of range.
        */
       if (   value.type->un.basic.basic_size == 1
-	  && strcmp(def_format, "'%c'") == 0 
+	  && strcmp(def_format, "'%c'") == 0
 	  && ((rtn < 0x20) || (rtn > 0x80))) {
 	 def_format = "%d";
       }
@@ -411,16 +411,16 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
       } else {
 	 rtn2 = *(unsigned int*)(value.addr.off);
       }
-      
+
       type2 = value.type->un.pointer.pointsto;
-      
+
       if (!type2) {
 	 def_format = "Internal symbol error: unable to access memory location 0x%08x";
 	 rtn = 0;
 	 break;
       }
-      
-      if (type2->type == DT_BASIC && type2->un.basic.basic_size == 1) {	
+
+      if (type2->type == DT_BASIC && type2->un.basic.basic_size == 1) {
 	 if (_value->cookie == DV_TARGET) {
 	    char ch;
 	    def_format = "\"%S\"";
@@ -461,8 +461,8 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, char** format)
       rtn = 0;
       break;
    }
-   
-   
+
+
    if (format != NULL) {
       *format = def_format;
    }
@@ -594,7 +594,7 @@ DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2)
 }
 
 int
-DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type, 
+DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type,
 		       int offset, int size)
 {
   struct member * m;
@@ -605,7 +605,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
     {
       for(last = dt->un.structure.members; last; last = last->next)
 	{
-	  if(    (last->name[0] == name[0]) 
+	  if(    (last->name[0] == name[0])
 	      && (strcmp(last->name, name) == 0) )
 	    {
 	      return TRUE;
@@ -620,7 +620,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
 	{
 	  return FALSE;
 	}
-      
+
       m->name = DBG_strdup(name);
       m->type = type;
       m->offset = offset;
@@ -653,7 +653,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
 	{
 	  return FALSE;
 	}
-      
+
       e->name = DBG_strdup(name);
       e->value = offset;
       e->next = dt->un.enumeration.members;
@@ -666,7 +666,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
   return TRUE;
 }
 
-struct datatype * 
+struct datatype *
 DEBUG_GetPointerType(struct datatype * dt)
 {
   if( dt->type == DT_POINTER )
@@ -707,7 +707,7 @@ DEBUG_SetArrayParams(struct datatype * dt, int min, int max, struct datatype * d
 }
 
 int
-DEBUG_SetBitfieldParams(struct datatype * dt, int offset, int nbits, 
+DEBUG_SetBitfieldParams(struct datatype * dt, int offset, int nbits,
 			struct datatype * dt2)
 {
   assert(dt->type == DT_BITFIELD);
@@ -736,7 +736,7 @@ int DEBUG_GetObjectSize(struct datatype * dt)
     case DT_ENUM:
       return sizeof(int);
     case DT_ARRAY:
-      return (dt->un.array.end - dt->un.array.start) 
+      return (dt->un.array.end - dt->un.array.start)
 	* DEBUG_GetObjectSize(dt->un.array.basictype);
     case DT_BITFIELD:
       /*
@@ -780,7 +780,7 @@ DEBUG_ArrayIndex(const DBG_VALUE * value, DBG_VALUE * result, int index)
       size = DEBUG_GetObjectSize(value->type->un.array.basictype);
       result->type = value->type->un.array.basictype;
       result->addr.off = value->addr.off + size * (index - value->type->un.array.start);
-  
+
       /* Contents of array must be on same target */
       result->cookie = value->cookie;
     }
@@ -814,7 +814,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       DEBUG_Printf( DBG_CHN_MESG, "Count other than 1 is meaningless in 'print' command\n" );
       return;
     }
-  
+
   if( value->type == NULL )
   {
       /* No type, just print the addr value */
@@ -823,7 +823,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", value->addr.off );
       goto leave;
   }
-  
+
   if( level == 0 )
     {
       DEBUG_nchar = 0;
@@ -897,7 +897,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
           default: assert(0);
           }
           DEBUG_nchar += clen;
-          if (clen != len) 
+          if (clen != len)
           {
               DEBUG_Printf(DBG_CHN_MESG, "...\"");
               goto leave;
@@ -929,7 +929,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       break;
     case DT_FUNC:
       DEBUG_Printf(DBG_CHN_MESG, "Function at ???\n");
-      break; 
+      break;
     default:
       DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%d)\n", value->type->type);
       assert(FALSE);
@@ -986,7 +986,7 @@ DEBUG_DumpTypes(void)
 		      nm++;
 		    }
 		}
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - STRUCT(%s) %d %d %s\n", 
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - STRUCT(%s) %d %d %s\n",
 			   (unsigned long)dt, name, dt->un.structure.size, nm, member_name);
 	      break;
 	    case DT_ARRAY:
@@ -994,11 +994,11 @@ DEBUG_DumpTypes(void)
 			   (unsigned long)dt, name, (unsigned long)dt->un.array.basictype);
 	      break;
 	    case DT_ENUM:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ENUM(%s)\n", 
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - ENUM(%s)\n",
 			   (unsigned long)dt, name);
 	      break;
 	    case DT_BITFIELD:
-	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BITFIELD(%s)\n", 
+	      DEBUG_Printf(DBG_CHN_MESG, "0x%08lx - BITFIELD(%s)\n",
 			   (unsigned long)dt, name);
 	      break;
 	    case DT_FUNC:
@@ -1093,7 +1093,7 @@ int DEBUG_PrintType( const DBG_VALUE *value )
 {
    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
 
-   if (!value->type) 
+   if (!value->type)
    {
       DEBUG_Printf(DBG_CHN_MESG, "Unknown type\n");
       return FALSE;

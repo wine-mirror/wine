@@ -95,7 +95,7 @@ void parse_options(int argc, char **argv)
 	     {
 	       usage();
 	     }
-	     
+
 	   }
 	   else if ( argv[i][1] == 'f')
 	   {
@@ -105,7 +105,7 @@ void parse_options(int argc, char **argv)
 	   {
 	     usage();
 	   }
-	 } 
+	 }
 	 if( i == argc - 1 )
 	 {
 	   g_lpstrInputFile = argv[i];
@@ -123,7 +123,7 @@ int insert_hex (char * infile, FILE * outfile)
 	struct stat	st;
 	LPBYTE p_in_file = NULL;
 
-	if( (fd = open( infile, O_RDONLY))==-1 ) 
+	if( (fd = open( infile, O_RDONLY))==-1 )
 	{
 	  fprintf(stderr, errorOpenFile );
 	  exit(1);
@@ -205,10 +205,10 @@ int convert_to_res ()
         strcat( tmpfile, "-tmp" );
         /* FIXME: should use better tmp name and create with O_EXCL */
 	if( (ftemp = fopen( tmpfile, "w")) == NULL ) goto error_open_file;
-	
+
 	if( (fin = fopen( g_lpstrInputFile, "r")) == NULL || stat(g_lpstrInputFile, &st)) goto error_open_file;
 	tinput = st.st_ctime;
-	
+
 	while ( NULL != fgets(buffer, 255, fin))
 	{
 	  fputs(buffer, ftemp);
@@ -221,7 +221,7 @@ int convert_to_res ()
 	    while ( pos[len] != ' ') len++;
 	    strncpy(infile, pos, len);
 	    infile[len]=0;
-	    
+
 	    if ( (!stat(infile, &st) && st.st_ctime > tinput) || b_force_overwrite)
 	    {
 	      /* write a output file */
@@ -239,7 +239,7 @@ int convert_to_res ()
 	    }
 	  }
 	}
-	
+
         fclose(fin);
 	fclose(ftemp);
 	if (rename(tmpfile, g_lpstrInputFile) == -1)
@@ -248,13 +248,13 @@ int convert_to_res ()
             unlink(tmpfile);
             return 0;
         }
-	return 1;	
+	return 1;
 
 error_open_file:
 	fprintf(stderr, errorOpenFile );
 	return 0;
 
-error_rc_format:	
+error_rc_format:
 	fprintf(stderr, errorRCFormat, line);
 	return 0;
 }
@@ -270,10 +270,10 @@ int convert_to_bin()
 	struct stat	st;
 	int line = 0;
 	time_t	tinput;
-		
+
 	if( (fin = fopen( g_lpstrInputFile, "r")) == NULL || stat(g_lpstrInputFile, &st)) goto error_open_file;
 	tinput = st.st_ctime;
-	
+
 	while ( NULL != fgets(buffer, 255, fin))
 	{
 	  line++;
@@ -285,7 +285,7 @@ int convert_to_bin()
 	    while ( pos[len] != ' ') len++;
 	    strncpy(outfile, pos, len);
 	    outfile[len]=0;
-	    
+
 	    if ( stat(outfile, &st) || st.st_ctime < tinput || b_force_overwrite)
 	    {
 	      /* write a output file */
@@ -312,7 +312,7 @@ int convert_to_bin()
 	          if ( ! isxdigit(buffer[index])) goto error_rc_format;
 		  index += sscanf(&buffer[index], "%02x", &byte);
 		  fputc(byte, fout);
-	        }  
+	        }
 	      }
 	      fclose(fout);
 	    }
@@ -323,15 +323,15 @@ int convert_to_bin()
 end_of_resource: ;
 	  }
 	}
-	
+
         fclose(fin);
-	return 1;	
+	return 1;
 
 error_open_file:
 	fprintf(stderr, errorOpenFile );
 	return 0;
 
-error_rc_format:	
+error_rc_format:
 	fprintf(stderr, errorRCFormat, line);
 	return 0;
 }

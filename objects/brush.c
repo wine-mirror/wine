@@ -267,22 +267,22 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
  *
  *	Create a logical brush which has the pattern specified by the DIB
  *
- *	Function call is for compatibility only.  CreateDIBPatternBrushPt should be used.   
+ *	Function call is for compatibility only.  CreateDIBPatternBrushPt should be used.
  *
  * RETURNS
  *
  *	Handle to a logical brush on success, NULL on failure.
  *
  * BUGS
- *	
+ *
  */
-HBRUSH WINAPI CreateDIBPatternBrush( 
+HBRUSH WINAPI CreateDIBPatternBrush(
 		HGLOBAL hbitmap, /* [in] Global object containg BITMAPINFO structure */
 		UINT coloruse 	 /* [in] Specifies color format, if provided */
 )
 {
     LOGBRUSH logbrush;
-    
+
     TRACE("%04x\n", hbitmap );
 
     logbrush.lbStyle = BS_DIBPATTERN;
@@ -304,16 +304,16 @@ HBRUSH WINAPI CreateDIBPatternBrush(
  *	Handle to a logical brush on success, NULL on failure.
  *
  * BUGS
- *	
+ *
  */
 HBRUSH WINAPI CreateDIBPatternBrushPt(
-		const void* data, /* [in] Pointer to a BITMAPINFO structure followed by more data */ 
+		const void* data, /* [in] Pointer to a BITMAPINFO structure followed by more data */
 		UINT coloruse 	  /* [in] Specifies color format, if provided */
 )
 {
     BITMAPINFO *info=(BITMAPINFO*)data;
     LOGBRUSH logbrush;
-    
+
     TRACE("%p %ldx%ld %dbpp\n", info, info->bmiHeader.biWidth,
 	  info->bmiHeader.biHeight,  info->bmiHeader.biBitCount);
 

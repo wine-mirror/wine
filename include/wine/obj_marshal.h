@@ -1,5 +1,5 @@
 /*
- * Defines the COM interfaces and APIs that allow an interface to 
+ * Defines the COM interfaces and APIs that allow an interface to
  * specify a custom marshaling for its objects.
  *
  * Copyright (C) 1999 Francois Gouget

@@ -20,9 +20,9 @@
 #ifndef __WINE_DGA2_H
 #define __WINE_DGA2_H
 
-#ifndef __WINE_CONFIG_H 
-# error You must include config.h to use this header 
-#endif 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #ifdef HAVE_LIBXXF86DGA2
 #include "ddrawi.h"

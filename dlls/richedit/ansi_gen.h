@@ -12,7 +12,7 @@
  in decimal or 0xyy as hex yy.  Single or double quotes may be used to quote
  characters.*/
 
-int ansi_gen[] = 
+int ansi_gen[] =
 {
   rtfSC_formula 	 ,0x06,
   rtfSC_nobrkhyphen	 ,0x1e,

@@ -84,7 +84,7 @@ static BOOL AddToEnumList(
 	    /*add the new item to the end of the list */
 	    This->mpLast->pNext = pNew;
 	  }
-	 
+
 	  /*update the last item pointer */
 	  This->mpLast = pNew;
 	  TRACE("-- (%p)->(first=%p, last=%p)\n",This,This->mpFirst,This->mpLast);
@@ -104,7 +104,7 @@ static BOOL CreateFolderEnumList(
 	ICOM_THIS(IEnumIDListImpl,iface);
 
 	LPITEMIDLIST	pidl=NULL;
-	WIN32_FIND_DATAA stffile;	
+	WIN32_FIND_DATAA stffile;
 	HANDLE hFile;
 	CHAR  szPath[MAX_PATH];
 
@@ -118,7 +118,7 @@ static BOOL CreateFolderEnumList(
 
 	/*enumerate the folders*/
 	if(dwFlags & SHCONTF_FOLDERS)
-	{ 
+	{
 	  TRACE("-- (%p)-> enumerate SHCONTF_FOLDERS of %s\n",This,debugstr_a(szPath));
 	  hFile = FindFirstFileA(szPath,&stffile);
 	  if ( hFile != INVALID_HANDLE_VALUE )
@@ -159,7 +159,7 @@ static BOOL CreateFolderEnumList(
 	      }
 	    } while( FindNextFileA(hFile,&stffile));
 	    FindClose (hFile);
-	  } 
+	  }
 	}
 	return TRUE;
 }
@@ -181,7 +181,7 @@ static BOOL CreateDesktopEnumList(
 
 	/*enumerate the root folders */
 	if(dwFlags & SHCONTF_FOLDERS)
-	{ 
+	{
 	  /*create the pidl for This item */
 	  pidl = _ILCreateMyComputer();
 	  if(pidl)
@@ -216,7 +216,7 @@ static BOOL CreateDesktopEnumList(
 	/*enumerate the elements in %windir%\desktop */
 	SHGetSpecialFolderPathA(0, szPath, CSIDL_DESKTOPDIRECTORY, FALSE);
 	CreateFolderEnumList( (IEnumIDList*)This, szPath, dwFlags);
-	
+
 	return TRUE;
 }
 
@@ -293,7 +293,7 @@ static BOOL DeleteList(
 	LPENUMLIST  pDelete;
 
 	TRACE("(%p)->()\n",This);
-	
+
 	while(This->mpFirst)
 	{ pDelete = This->mpFirst;
 	  This->mpFirst = pDelete->pNext;
@@ -315,7 +315,7 @@ IEnumIDList * IEnumIDList_Constructor(
 	DWORD dwKind)
 {
 	IEnumIDListImpl*	lpeidl;
-	BOOL			ret = FALSE;	
+	BOOL			ret = FALSE;
 
 	lpeidl = (IEnumIDListImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
 
@@ -374,7 +374,7 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{ *ppvObj = This; 
+	{ *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IEnumIDList))  /*IEnumIDList*/
 	{    *ppvObj = (IEnumIDList*)This;
@@ -385,7 +385,7 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
-	
+
 	TRACE("-- Interface: E_NOINTERFACE\n");
 	return E_NOINTERFACE;
 }
@@ -415,7 +415,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{ TRACE(" destroying IEnumIDList(%p)\n",This);
 	  DeleteList((IEnumIDList*)This);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -423,7 +423,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 	}
 	return This->ref;
 }
-   
+
 /**************************************************************************
  *  IEnumIDList_fnNext
  */
@@ -432,7 +432,7 @@ static HRESULT WINAPI IEnumIDList_fnNext(
 	IEnumIDList * iface,
 	ULONG celt,
 	LPITEMIDLIST * rgelt,
-	ULONG *pceltFetched) 
+	ULONG *pceltFetched)
 {
 	ICOM_THIS(IEnumIDListImpl,iface);
 
@@ -449,7 +449,7 @@ static HRESULT WINAPI IEnumIDList_fnNext(
 	  *pceltFetched = 0;
 
 	*rgelt=0;
-	
+
 	if(celt > 1 && !pceltFetched)
 	{ return E_INVALIDARG;
 	}
@@ -519,7 +519,7 @@ static HRESULT WINAPI IEnumIDList_fnClone(
 /**************************************************************************
  *  IEnumIDList_fnVTable
  */
-static ICOM_VTABLE (IEnumIDList) eidlvt = 
+static ICOM_VTABLE (IEnumIDList) eidlvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IEnumIDList_fnQueryInterface,

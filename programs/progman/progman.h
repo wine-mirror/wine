@@ -62,7 +62,7 @@ typedef struct
   /* pointer to iconANDbits */ /* 16 - 17 */ /* sometimes iconXORbits ?! */
   HLOCAL   hName;              /* 18 - 19 */
   HLOCAL   hCmdLine;           /* 20 - 21 */
-  HLOCAL   hIconFile;          /* 22 - 23 */        
+  HLOCAL   hIconFile;          /* 22 - 23 */
   HLOCAL   hWorkDir;           /* Extension 0x8101 */
   INT      nHotKey;            /* Extension 0x8102 */
   /* Modifier: bit 8... */
@@ -103,7 +103,7 @@ typedef struct
   HLOCAL   hPrograms;          /* 34 ...  */
 
   /**/                        /* Extensions */
-  /* Extension type */         /*  0 -  1 */           
+  /* Extension type */         /*  0 -  1 */
   /* Program number */         /*  2 -  3 */
   /* Size of entry  */         /*  4 -  5 */
   /* Data           */         /*  6 ...  */

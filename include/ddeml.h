@@ -34,7 +34,7 @@ extern "C" {
 #define CP_WINANSI      1004
 #define CP_WINUNICODE   1200
 
-/* DDE synchronisation constants 
+/* DDE synchronisation constants
  */
 
 #define MSGF_DDEMGR 0x8001
@@ -348,7 +348,7 @@ BOOL      WINAPI DdeFreeStringHandle(DWORD,HSZ);
 BOOL      WINAPI DdeFreeDataHandle(HDDEDATA);
 BOOL      WINAPI DdeKeepStringHandle(DWORD,HSZ);
 HDDEDATA  WINAPI DdeClientTransaction(LPBYTE,DWORD,HCONV,HSZ,UINT,UINT,DWORD,LPDWORD);
-BOOL	  WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction); 
+BOOL	  WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction);
 BOOL      WINAPI DdeImpersonateClient(HCONV);
 BOOL      WINAPI DdePostAdvise(DWORD,HSZ,HSZ);
 HDDEDATA  WINAPI DdeAddData(HDDEDATA,LPBYTE,DWORD,DWORD);

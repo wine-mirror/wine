@@ -120,7 +120,7 @@ TW_UINT16 TWAIN_ImageInfoGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             pImageInfo->Planar = TRUE;
             pImageInfo->PixelType = TWPT_RGB;
             pImageInfo->Compression = TWCP_NONE;
-        } 
+        }
         else if (pSource->sane_param.depth == 8)
         {
             /* FIXME: fill the image info structure for 8-bit image */
@@ -193,7 +193,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
     BITMAPINFO bmpInfo;
     VOID *pBits;
     HDC dc;
- 
+
     TRACE("DG_IMAGE/DAT_IMAGENATIVEXFER/MSG_GET\n");
 
     if (!pSource)
@@ -217,7 +217,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             pSource->twCC = TWCC_OPERATIONERROR;
             return TWRC_FAILURE;
         }
-        
+
         status = sane_get_parameters (pSource->deviceHandle, &pSource->sane_param);
         if (status != SANE_STATUS_GOOD)
         {
@@ -247,7 +247,7 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         bmpInfo.bmiColors[0].rgbBlue = 128;
         bmpInfo.bmiColors[0].rgbGreen = 128;
         bmpInfo.bmiColors[0].rgbRed = 128;
-        hDIB = CreateDIBSection ((dc = GetDC(pSource->hwndOwner)), &bmpInfo, 
+        hDIB = CreateDIBSection ((dc = GetDC(pSource->hwndOwner)), &bmpInfo,
                                  DIB_RGB_COLORS, &pBits, 0, 0);
         if (!hDIB)
         {
@@ -255,10 +255,10 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
             pSource->twCC = TWCC_LOWMEMORY;
             return TWRC_FAILURE;
         }
-            
+
         do
         {
-            status = sane_read (pSource->deviceHandle, buffer, 
+            status = sane_read (pSource->deviceHandle, buffer,
                                 sizeof (buffer),  &buff_len);
             if (status == SANE_STATUS_GOOD)
             {
@@ -273,11 +273,11 @@ TW_UINT16 TWAIN_ImageNativeXferGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                 return TWRC_FAILURE;
             }
         } while (status == SANE_STATUS_GOOD);
-        
-        sane_cancel (pSource->deviceHandle); 
+
+        sane_cancel (pSource->deviceHandle);
         ReleaseDC (pSource->hwndOwner, dc);
         *pHandle = hDIB;
-        twRC = TWRC_XFERDONE; 
+        twRC = TWRC_XFERDONE;
         pSource->twCC = TWCC_SUCCESS;
         pSource->currentState = 7;
     }

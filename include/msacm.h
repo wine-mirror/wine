@@ -318,7 +318,7 @@ typedef struct _ACMFILTERCHOOSEA
 
   DWORD         fdwEnum;
   PWAVEFILTER   pwfltrEnum;
-    
+
   HINSTANCE   hInstance;
   LPCSTR        pszTemplateName;
   LPARAM        lCustData;
@@ -344,7 +344,7 @@ typedef struct _ACMFILTERCHOOSEW
 
   DWORD         fdwEnum;
   PWAVEFILTER   pwfltrEnum;
-    
+
   HINSTANCE   hInstance;
   LPCWSTR       pszTemplateName;
   LPARAM        lCustData;
@@ -411,22 +411,22 @@ typedef struct _ACMFORMATCHOOSEA
 {
   DWORD           cbStruct;
   DWORD           fdwStyle;
- 
+
   HWND          hwndOwner;
 
   PWAVEFORMATEX   pwfx;
   DWORD           cbwfx;
   LPCSTR          pszTitle;
-    
+
   CHAR            szFormatTag[ACMFORMATTAGDETAILS_FORMATTAG_CHARS];
-  CHAR            szFormat[ACMFORMATDETAILS_FORMAT_CHARS];    
+  CHAR            szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 
   LPSTR           pszName;
   DWORD           cchName;
 
   DWORD           fdwEnum;
   PWAVEFORMATEX   pwfxEnum;
-    
+
   HINSTANCE     hInstance;
   LPCSTR          pszTemplateName;
   LPARAM          lCustData;
@@ -437,22 +437,22 @@ typedef struct _ACMFORMATCHOOSEW
 {
   DWORD           cbStruct;
   DWORD           fdwStyle;
-    
+
   HWND          hwndOwner;
 
   PWAVEFORMATEX   pwfx;
   DWORD           cbwfx;
   LPCWSTR         pszTitle;
-    
+
   WCHAR           szFormatTag[ACMFORMATTAGDETAILS_FORMATTAG_CHARS];
-  WCHAR           szFormat[ACMFORMATDETAILS_FORMAT_CHARS];    
+  WCHAR           szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 
   LPWSTR          pszName;
   DWORD           cchName;
 
   DWORD           fdwEnum;
   LPWAVEFORMATEX  pwfxEnum;
-    
+
   HINSTANCE     hInstance;
   LPCWSTR         pszTemplateName;
   LPARAM          lCustData;
@@ -643,11 +643,11 @@ MMRESULT WINAPI acmFilterDetailsW(
 #define acmFilterDetails WINELIB_NAME_AW(acmFilterDetails)
 
 MMRESULT WINAPI acmFilterEnumA(
-  HACMDRIVER had, PACMFILTERDETAILSA pafd, 
+  HACMDRIVER had, PACMFILTERDETAILSA pafd,
   ACMFILTERENUMCBA fnCallback, DWORD dwInstance, DWORD fdwEnum
 );
 MMRESULT WINAPI acmFilterEnumW(
-  HACMDRIVER had, PACMFILTERDETAILSW pafd, 
+  HACMDRIVER had, PACMFILTERDETAILSW pafd,
   ACMFILTERENUMCBW fnCallback, DWORD dwInstance, DWORD fdwEnum
 );
 #define acmFilterEnum WINELIB_NAME_AW(acmFilterEnum)
@@ -744,7 +744,7 @@ MMRESULT WINAPI acmStreamReset(
   HACMSTREAM has, DWORD fdwReset
 );
 MMRESULT WINAPI acmStreamSize(
-  HACMSTREAM has, DWORD cbInput, 
+  HACMSTREAM has, DWORD cbInput,
   LPDWORD pdwOutputBytes, DWORD fdwSize
 );
 MMRESULT WINAPI acmStreamUnprepareHeader(

@@ -21,7 +21,7 @@
 
 #include "wine/wingdi16.h" /* wingdi.h needed for COLORREF */
 #include "winuser.h" /* winuser.h needed for MSGBOXCALLBACK */
-                     
+
 #include "pshpack1.h"
 
 typedef struct tagCOMSTAT16
@@ -299,7 +299,7 @@ typedef struct
     BYTE    rgbReserved[16];
 } PAINTSTRUCT16, *LPPAINTSTRUCT16;
 
-typedef struct 
+typedef struct
 {
     HMENU16   hWindowMenu;
     UINT16    idFirstChild;

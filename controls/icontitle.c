@@ -142,10 +142,10 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 	hBrush = GetSysColorBrush(COLOR_ACTIVECAPTION);
 	textColor = GetSysColor(COLOR_CAPTIONTEXT);
     }
-    else 
+    else
     {
         if( GetWindowLongA( hwnd, GWL_STYLE ) & WS_CHILD )
-	{ 
+	{
 	    hBrush = (HBRUSH) GetClassLongA(hwnd, GCL_HBRBACKGROUND);
 	    if( hBrush )
 	    {
@@ -164,7 +164,7 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 	else
 	{
 	    hBrush = GetStockObject( BLACK_BRUSH );
-	    textColor = RGB( 0xFF, 0xFF, 0xFF );    
+	    textColor = RGB( 0xFF, 0xFF, 0xFF );
 	}
     }
 

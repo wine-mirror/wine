@@ -1,4 +1,4 @@
-/* 
+/*
  *   Control
  *   Copyright (C) 1998 by Marcel Baur <mbaur@g26.ethz.ch>
  *
@@ -31,7 +31,7 @@ void launch(const char *what)
   exit(0);
 }
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, CHAR *szParam, INT argc) 
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, CHAR *szParam, INT argc)
 {
 
   char szParams[255];
@@ -69,5 +69,5 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, CHAR *szParam, INT argc)
 
     default: printf("Syntax error.");
   }
-  return 0;  
+  return 0;
 }

@@ -2,7 +2,7 @@
  * Message Logging functions
  *
  * Copyright 1994 Bob Amstadt
- * Copyright 1995 Alex Korobka  
+ * Copyright 1995 Alex Korobka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

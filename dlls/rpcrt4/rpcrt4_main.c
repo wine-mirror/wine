@@ -81,7 +81,7 @@ RPCRT4_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	break;
 
     case DLL_PROCESS_DETACH:
-	break;	    
+	break;
     }
 
     return TRUE;
@@ -187,7 +187,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 	       /* make sure it's not blank */
 	       if (!a[0] && !a[1] && !a[2] && !a[3] && !a[4] && !a[5])
 		   continue;
-						                
+
 	       goto valid_address;
 	    }
 	    /* if we didn't find a valid address, make a random one */
@@ -214,12 +214,12 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 #endif /* HAVE_NET_IF_H */
       has_init = 1;
    }
-   
+
    /* generate time element of GUID */
-   
+
    /* Assume that the gettimeofday() has microsecond granularity */
 #define MAX_ADJUSTMENT 10
-                     
+
    try_again:
    gettimeofday(&tv, 0);
    if ((last.tv_sec == 0) && (last.tv_usec == 0)) {
@@ -240,19 +240,19 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
       adjustment++;
    } else
        adjustment = 0;
-   
+
    clock_reg = tv.tv_usec*10 + adjustment;
    clock_reg += ((unsigned long long) tv.tv_sec)*10000000;
    clock_reg += (((unsigned long long) 0x01B21DD2) << 32) + 0x13814000;
-   
+
    clock_high = clock_reg >> 32;
    clock_low = clock_reg;
    temp_clock_seq = clock_seq | 0x8000;
    temp_clock_mid = (UINT16)clock_high;
    temp_clock_hi_and_version = (clock_high >> 16) | 0x1000;
-   
+
    /* pack the information into the GUID structure */
-   
+
    ((unsigned char*)&Uuid->Data1)[3] = (unsigned char)clock_low;
    clock_low >>= 8;
    ((unsigned char*)&Uuid->Data1)[2] = (unsigned char)clock_low;
@@ -260,28 +260,28 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    ((unsigned char*)&Uuid->Data1)[1] = (unsigned char)clock_low;
    clock_low >>= 8;
    ((unsigned char*)&Uuid->Data1)[0] = (unsigned char)clock_low;
-   
+
    ((unsigned char*)&Uuid->Data2)[1] = (unsigned char)temp_clock_mid;
    temp_clock_mid >>= 8;
    ((unsigned char*)&Uuid->Data2)[0] = (unsigned char)temp_clock_mid;
-   
+
    ((unsigned char*)&Uuid->Data3)[1] = (unsigned char)temp_clock_hi_and_version;
    temp_clock_hi_and_version >>= 8;
    ((unsigned char*)&Uuid->Data3)[0] = (unsigned char)temp_clock_hi_and_version;
-      
+
    ((unsigned char*)Uuid->Data4)[1] = (unsigned char)temp_clock_seq;
    temp_clock_seq >>= 8;
    ((unsigned char*)Uuid->Data4)[0] = (unsigned char)temp_clock_seq;
-   
+
    ((unsigned char*)Uuid->Data4)[2] = a[0];
    ((unsigned char*)Uuid->Data4)[3] = a[1];
    ((unsigned char*)Uuid->Data4)[4] = a[2];
    ((unsigned char*)Uuid->Data4)[5] = a[3];
    ((unsigned char*)Uuid->Data4)[6] = a[4];
    ((unsigned char*)Uuid->Data4)[7] = a[5];
-   
+
    TRACE("%s\n", debugstr_guid(Uuid));
-   
+
    return RPC_S_OK;
 }
 
@@ -365,7 +365,7 @@ HRESULT WINAPI NdrDllRegisterProxy(
   HMODULE hDll,          /* [in] */
   const ProxyFileInfo **pProxyFileList, /* [in] */
   const CLSID *pclsid    /* [in] */
-) 
+)
 {
   FIXME("(%x,%p,%s), stub!\n",hDll,pProxyFileList,debugstr_guid(pclsid));
   return S_OK;
@@ -378,14 +378,14 @@ HRESULT WINAPI NdrDllRegisterProxy(
 RPC_STATUS WINAPI RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
-  
+
   TRACE( "(%s,%u,%s,%p)\n", Protseq, MaxCalls, Endpoint, SecurityDescriptor );
-  
+
   /* This should provide the default behaviour */
   policy.Length        = sizeof( policy );
   policy.EndpointFlags = 0;
   policy.NICFlags      = 0;
-  
+
   return RpcServerUseProtseqEpExA( Protseq, MaxCalls, Endpoint, SecurityDescriptor, &policy );
 }
 
@@ -395,14 +395,14 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR En
 RPC_STATUS WINAPI RpcServerUseProtseqEpW( LPWSTR Protseq, UINT MaxCalls, LPWSTR Endpoint, LPVOID SecurityDescriptor )
 {
   RPC_POLICY policy;
-  
+
   TRACE( "(%s,%u,%s,%p)\n", debugstr_w( Protseq ), MaxCalls, debugstr_w( Endpoint ), SecurityDescriptor );
-  
+
   /* This should provide the default behaviour */
   policy.Length        = sizeof( policy );
   policy.EndpointFlags = 0;
   policy.NICFlags      = 0;
-  
+
   return RpcServerUseProtseqEpExW( Protseq, MaxCalls, Endpoint, SecurityDescriptor, &policy );
 }
 
@@ -414,8 +414,8 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( LPSTR Protseq, UINT MaxCalls, LPSTR 
 {
   FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", Protseq, MaxCalls, Endpoint, SecurityDescriptor,
                                                lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
-  
-  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */			  
+
+  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */
 }
 
 /***********************************************************************
@@ -427,8 +427,8 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
   FIXME( "(%s,%u,%s,%p,{%u,%lu,%lu}): stub\n", debugstr_w( Protseq ), MaxCalls, debugstr_w( Endpoint ),
                                                SecurityDescriptor,
                                                lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
-  
-  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */			  
+
+  return RPC_S_PROTSEQ_NOT_SUPPORTED; /* We don't support anything at this point */
 }
 
 /***********************************************************************
@@ -438,7 +438,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, 
 {
   /* FIXME: Dump UUID using UuidToStringA */
   TRACE( "(%p,%p,%p)\n", IfSpec, MgrTypeUuid, MgrEpv );
-  
+
   return RpcServerRegisterIf2( IfSpec, MgrTypeUuid, MgrEpv, 0, RPC_C_LISTEN_MAX_CALLS_DEFAULT, (UINT)-1, NULL );
 }
 
@@ -450,7 +450,7 @@ RPC_STATUS WINAPI RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid
 {
   /* FIXME: Dump UUID using UuidToStringA */
   TRACE( "(%p,%p,%p,%u,%u,%p)\n", IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, IfCallbackFn );
-  
+
   return RpcServerRegisterIf2( IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, (UINT)-1, IfCallbackFn );
 }
 
@@ -462,7 +462,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
 {
   /* FIXME: Dump UUID using UuidToStringA */
   FIXME( "(%p,%p,%p,%u,%u,%u,%p): stub\n", IfSpec, MgrTypeUuid, MgrEpv, Flags, MaxCalls, MaxRpcSize, IfCallbackFn );
-  
+
   return RPC_S_UNKNOWN_IF; /* I guess this return code is as good as any failure */
 }
 
@@ -474,7 +474,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( LPSTR ServerPrincName, ULONG Authn
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
-  
+
   return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
 }
 
@@ -485,7 +485,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG Auth
                             LPVOID Arg )
 {
   FIXME( "(%s,%lu,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );
-  
+
   return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
 }
 
@@ -495,7 +495,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( LPWSTR ServerPrincName, ULONG Auth
 RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT DontWait )
 {
   FIXME( "(%u,%u,%u): stub\n", MinimumCallThreads, MaxCalls, DontWait );
-  
+
   return RPC_S_NO_PROTSEQS_REGISTERED; /* Since we don't allow registration this seems reasonable */
 }
 
@@ -507,7 +507,7 @@ RPC_STATUS WINAPI RpcStringBindingComposeA( LPSTR ObjUuid, LPSTR Protseq, LPSTR 
 {
   FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", ObjUuid, Protseq, NetworkAddr, Endpoint, Options, StringBinding );
   *StringBinding = NULL;
-  
+
   return RPC_S_INVALID_STRING_UUID; /* Failure */
 }
 
@@ -520,7 +520,7 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( LPWSTR ObjUuid, LPWSTR Protseq, LPWS
   FIXME( "(%s,%s,%s,%s,%s,%p): stub\n", debugstr_w( ObjUuid ), debugstr_w( Protseq ), debugstr_w( NetworkAddr ),
                                         debugstr_w( Endpoint ), debugstr_w( Options ), StringBinding );
   *StringBinding = NULL;
-  
+
   return RPC_S_INVALID_STRING_UUID; /* Failure */
 }
 
@@ -538,10 +538,10 @@ RPC_STATUS WINAPI RpcBindingFree(RPC_BINDING_HANDLE* Binding)
 RPC_STATUS WINAPI RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding )
 {
   FIXME( "(%s,%p): stub\n", StringBinding, Binding );
-  
+
   return RPC_S_INVALID_STRING_BINDING; /* As good as any failure code */
 }
-  
+
 /***********************************************************************
  *		RpcBindingFromStringBindingW (RPCRT4.@)
  */
@@ -565,12 +565,12 @@ HRESULT WINAPI NdrDllCanUnloadNow(CStdPSFactoryBuffer *pPSFactoryBuffer)
  *		NdrDllGetClassObject (RPCRT4.@)
  */
 HRESULT WINAPI NdrDllGetClassObject(
-    REFCLSID rclsid, REFIID riid , LPVOID *ppv, 
+    REFCLSID rclsid, REFIID riid , LPVOID *ppv,
     const ProxyFileInfo **   pProxyFileList,
     const CLSID *            pclsid,
     CStdPSFactoryBuffer *    pPSFactoryBuffer)
 {
-    if(ppv)  
+    if(ppv)
         *ppv = NULL;
     return RPC_S_UNKNOWN_IF;
 }

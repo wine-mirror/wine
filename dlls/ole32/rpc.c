@@ -187,7 +187,7 @@ PIPE_GetFromMID(wine_marshal_id *mid) {
   return NULL;
 }
 
-static HRESULT 
+static HRESULT
 RPC_GetRequest(wine_rpc_request **req) {
     static int reqid = 0xdeadbeef;
     int i;
@@ -538,7 +538,7 @@ HRESULT create_marshalled_proxy(REFCLSID rclsid, REFIID iid, LPVOID *ppv) {
       CloseHandle(hPipe);
       break;
   }
-  if (tries>=MAXTRIES) 
+  if (tries>=MAXTRIES)
       return E_NOINTERFACE;
   hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
   if (hres) return hres;

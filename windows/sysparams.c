@@ -356,7 +356,7 @@ void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
                 SendMessageA(HWND_BROADCAST, WM_SETTINGCHANGE,
                              uiAction, (LPARAM) "");
         }
-        else 
+        else
         {
             /* FIXME notify other wine processes with internal message */
         }
@@ -543,9 +543,9 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     BOOL ret = TRUE;
     unsigned spi_idx = 0;
-    
+
     TRACE("(%u, %u, %p, %u)\n", uiAction, uiParam, pvParam, fWinIni);
-    
+
     switch (uiAction)
     {
     case SPI_GETBEEP:				/*      1 */
@@ -553,12 +553,12 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         if (!spi_loaded[spi_idx])
         {
             char buf[5];
-            
+
             if (SYSPARAMS_Load( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME, buf ))
                 beep_active  = !strcasecmp( "Yes", buf );
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = beep_active;
         break;
 
@@ -595,7 +595,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         ((INT *)pvParam)[1] = mouse_threshold2;
         ((INT *)pvParam)[2] = mouse_speed;
         break;
-        
+
     case SPI_SETMOUSE:                          /*      4 */
     {
         char buf[10];
@@ -656,7 +656,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         if (SYSPARAMS_Save( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME,
                             buf, fWinIni ))
         {
-            if (uiParam > 0) 
+            if (uiParam > 0)
             {
                 border = uiParam;
                 spi_loaded[spi_idx] = TRUE;
@@ -718,7 +718,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             if (!spi_loaded[spi_idx])
             {
                 char buf[10];
-            
+
                 if (SYSPARAMS_Load( SPI_ICONHORIZONTALSPACING_REGKEY,
                                     SPI_ICONHORIZONTALSPACING_VALNAME, buf ))
                 {
@@ -782,7 +782,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             ret = FALSE;
         break;
     }
-        
+
     case SPI_GETSCREENSAVEACTIVE:               /*     16 */
 	*(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
         break;
@@ -799,7 +799,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                         buf, fWinIni );
         break;
     }
-        
+
     case SPI_GETGRIDGRANULARITY:                /*     18 */
         spi_idx = SPI_SETGRIDGRANULARITY_IDX;
         if (!spi_loaded[spi_idx])
@@ -810,7 +810,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                                 SPI_SETGRIDGRANULARITY_VALNAME,
                                 buf ))
                 grid_granularity = atoi( buf );
-            
+
             spi_loaded[spi_idx] = TRUE;
         }
 	*(INT *)pvParam = grid_granularity;
@@ -844,8 +844,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	if ((INT16)uiParam == -1)
 	{
 	    char buffer[256];
-	    GetProfileStringA( "Desktop", "Pattern", 
-			       "170 85 170 85 170 85 170 85", 
+	    GetProfileStringA( "Desktop", "Pattern",
+			       "170 85 170 85 170 85 170 85",
 			       buffer, sizeof(buffer) );
 	    ret = DESKTOP_SetPattern( (LPSTR)buffer );
 	} else
@@ -865,7 +865,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                 int i = atoi( buf );
                 if ( (i >= 0) && (i <= 3)) keyboard_delay = i;
             }
-            
+
             spi_loaded[spi_idx] = TRUE;
         }
 	*(INT *)pvParam = keyboard_delay;
@@ -898,7 +898,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             if (!spi_loaded[spi_idx])
             {
                 char buf[10];
-            
+
                 if (SYSPARAMS_Load( SPI_ICONVERTICALSPACING_REGKEY,
                                     SPI_ICONVERTICALSPACING_VALNAME, buf ))
                 {
@@ -926,7 +926,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             else
                 ret = FALSE;
         }
-        
+
 	break;
 
     case SPI_GETICONTITLEWRAP:                  /*     25 */
@@ -940,7 +940,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                 icon_title_wrap  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = icon_title_wrap;
         break;
 
@@ -961,14 +961,14 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             ret = FALSE;
         break;
     }
-    
+
     case SPI_GETMENUDROPALIGNMENT:              /*     27 */
         spi_idx = SPI_SETMENUDROPALIGNMENT_IDX;
 
         if (!spi_loaded[spi_idx])
         {
             char buf[5];
-            
+
             if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY,
                                 SPI_SETMENUDROPALIGNMENT_VALNAME, buf ))
             {
@@ -976,7 +976,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             }
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 
         *(BOOL *)pvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT );
         break;
@@ -1048,7 +1048,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	SYSPARAMS_GetGUIFont( &lfDefault );
 
 	GetProfileStringA( "Desktop", "IconTitleFaceName",
-			   lfDefault.lfFaceName, 
+			   lfDefault.lfFaceName,
 			   lpLogFont->lfFaceName, LF_FACESIZE );
 	lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "IconTitleSize", 13 );
 	lpLogFont->lfWidth = 0;
@@ -1113,7 +1113,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         /* the action is disabled */
         ret = FALSE;
         break;
-    
+
     case SPI_SETDRAGFULLWINDOWS:                /*     37  WINVER >= 0x0400 */
     {
         char buf[5];
@@ -1143,18 +1143,18 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                 drag_full_windows  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = drag_full_windows;
         break;
 
     case SPI_GETNONCLIENTMETRICS: 		/*     41  WINVER >= 0x400 */
     {
 	LPNONCLIENTMETRICSA lpnm = (LPNONCLIENTMETRICSA)pvParam;
-		
+
 	if (lpnm->cbSize == sizeof(NONCLIENTMETRICSA))
 	{
 	    LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
-	    
+
 	    /* clear the struct, so we have 'sane' members */
 	    memset(
 		(char *)pvParam + sizeof(lpnm->cbSize),
@@ -1180,11 +1180,11 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	    /* menus, FIXME: names of wine.conf entries are bogus */
 
 	    lpnm->iMenuWidth = GetProfileIntA( "Desktop", "MenuWidth", 13 );	/* size of the menu buttons*/
-	    lpnm->iMenuHeight = GetProfileIntA( "Desktop", "MenuHeight", 
+	    lpnm->iMenuHeight = GetProfileIntA( "Desktop", "MenuHeight",
 						(TWEAK_WineLook > WIN31_LOOK) ? 13 : 27 );
 
-	    GetProfileStringA( "Desktop", "MenuFont", 
-			       (TWEAK_WineLook > WIN31_LOOK) ? lpnm->lfCaptionFont.lfFaceName : "System", 
+	    GetProfileStringA( "Desktop", "MenuFont",
+			       (TWEAK_WineLook > WIN31_LOOK) ? lpnm->lfCaptionFont.lfFaceName : "System",
 			       lpLogFont->lfFaceName, LF_FACESIZE );
 
 	    lpLogFont->lfHeight = -GetProfileIntA( "Desktop", "MenuFontSize", 13 );
@@ -1270,7 +1270,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
           SetRect( &work_area, 0, 0,
                    GetSystemMetrics( SM_CXSCREEN ),
                    GetSystemMetrics( SM_CYSCREEN ) );
-          
+
           if (SYSPARAMS_Load( SPI_SETWORKAREA_REGKEY,
                               SPI_SETWORKAREA_VALNAME,
                               buf ))
@@ -1353,7 +1353,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         if (!spi_loaded[spi_idx])
         {
             char buf[10];
-            
+
             if (SYSPARAMS_Load( SPI_SETSHOWSOUNDS_REGKEY,
                                 SPI_SETSHOWSOUNDS_VALNAME, buf ))
             {
@@ -1361,7 +1361,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             }
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 
         *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
         break;
@@ -1466,7 +1466,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
     WINE_SPI_FIXME(SPI_SETSOUNDSENTRY);		/*     65 */
-    
+
     case SPI_GETHIGHCONTRAST:			/*     66  WINVER >= 0x400 */
     {
 	LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)pvParam;
@@ -1496,7 +1496,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                 keyboard_pref  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = keyboard_pref;
         break;
 
@@ -1529,7 +1529,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
                 screen_reader  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = screen_reader;
         break;
 
@@ -1554,7 +1554,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETANIMATION:			/*     72  WINVER >= 0x400 */
     {
 	LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)pvParam;
- 
+
 	/* Tell it "disabled" */
 	if (lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
 	    lpAnimInfo->iMinAnimate = 0; /* Minimise and restore animation is disabled (nonzero == enabled) */
@@ -1580,7 +1580,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_GETPOWEROFFACTIVE);	/*     84  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETLOWPOWERACTIVE);	/*     85  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETPOWEROFFACTIVE);	/*     86  WINVER >= 0x400 */
-    
+
     WINE_SPI_FIXME(SPI_SETCURSORS);		/*     87  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETICONS);		/*     88  WINVER >= 0x400 */
 
@@ -1596,7 +1596,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     WINE_SPI_FIXME(SPI_SETMOUSETRAILS);		/*     93  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_GETMOUSETRAILS);		/*     94  WINVER >= 0x400 */
-	
+
     case SPI_SETSCREENSAVERRUNNING:             /*     97  WINVER >= 0x400 */
         {
         /* SPI_SCREENSAVERRUNNING is an alias for SPI_SETSCREENSAVERRUNNING */
@@ -1632,9 +1632,9 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	*(UINT *)pvParam = 400; /* default for menu dropdowns */
 	break;
     WINE_SPI_FIXME(SPI_SETMOUSEHOVERTIME);	/*    103  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
-              
+
     case SPI_GETWHEELSCROLLLINES:		/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
-	*(UINT *)pvParam = 3; /* default for num scroll lines */  
+	*(UINT *)pvParam = 3; /* default for num scroll lines */
 	break;
 
     WINE_SPI_FIXME(SPI_SETWHEELSCROLLLINES);	/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
@@ -1651,13 +1651,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         if (!spi_loaded[spi_idx])
         {
             char buf[5];
-            
+
             if (SYSPARAMS_Load( SPI_SETSCREENSAVERRUNNING_REGKEY,
                                 SPI_SETSCREENSAVERRUNNING_VALNAME, buf ))
                 screensaver_running  = atoi( buf );
             spi_loaded[spi_idx] = TRUE;
         }
-        
+
 	*(BOOL *)pvParam = screensaver_running;
         break;
 
@@ -1695,7 +1695,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     if (ret)
         SYSPARAMS_NotifyChange( uiAction, fWinIni );
     return ret;
-    
+
 #undef WINE_SPI_FIXME
 #undef WINE_SPI_WARN
 }
@@ -1710,7 +1710,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
     BOOL16 ret;
 
     TRACE("(%u, %u, %p, %u)\n", uAction, uParam, lpvParam, fuWinIni);
-    
+
     switch (uAction)
     {
     case SPI_GETBEEP:				/*      1 */
@@ -1774,7 +1774,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	    ret = SystemParametersInfoA( uAction, uParam, lpvParam, fuWinIni );
 	break;
     }
-    
+
     case SPI_GETWORKAREA:			/*     48  WINVER >= 0x400 */
     {
 	RECT tmp;
@@ -1783,7 +1783,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	    CONV_RECT32TO16( &tmp, (RECT16 *)lpvParam );
 	break;
     }
-	
+
     case SPI_GETMOUSEHOVERWIDTH:		/*     98  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     case SPI_GETMOUSEHOVERHEIGHT:		/*    100  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     case SPI_GETMOUSEHOVERTIME:			/*    102  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
@@ -1811,7 +1811,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     BOOL ret;
 
     TRACE("(%u, %u, %p, %u)\n", uiAction, uiParam, pvParam, fuWinIni);
-    
+
     switch (uiAction)
     {
     case SPI_SETDESKWALLPAPER:			/*     20 */
@@ -1890,7 +1890,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    ret = FALSE;
 	break;
     }
-    
+
     default:
         ret = SystemParametersInfoA( uiAction, uiParam, pvParam, fuWinIni );
         break;

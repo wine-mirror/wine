@@ -1,6 +1,6 @@
 /*
  *  Implementation of IShellBrowser for the File Open common dialog
- * 
+ *
  * Copyright 1999 Francois Boisvert
  * Copyright 1999, 2000 Juergen Schmied
  *
@@ -39,7 +39,7 @@
 /* dialog internal property */
 
 #define FODPROP_SAVEDLG 0x0001  /* File dialog is a Save file dialog */
-#define FODPROP_USEVIEW 0x0002  /* Indicates the user selection must be taken 
+#define FODPROP_USEVIEW 0x0002  /* Indicates the user selection must be taken
 				   from the IShellView */
 
 /***********************************************************************
@@ -49,10 +49,10 @@
 
 typedef struct
 {
-    
+
     LPOPENFILENAMEA ofnInfos;
     struct {
-        IShellBrowser *FOIShellBrowser; 
+        IShellBrowser *FOIShellBrowser;
         IShellFolder *FOIShellFolder;
         IShellView *FOIShellView;
 	IDataObject *FOIDataObject;

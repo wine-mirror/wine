@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 typedef struct {
     LPVOID lpCallback;
-    LPVOID lpContext; 
+    LPVOID lpContext;
 } DirectDrawEnumerateProcData;
 
 /***********************************************************************
@@ -104,7 +104,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
  */
 
 static BOOL CALLBACK DirectDrawEnumerateExProcW(
-    GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
+    GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName,
     LPVOID lpContext, HMONITOR hm)
 {
     INT len;
@@ -143,7 +143,7 @@ HRESULT WINAPI DirectDrawEnumerateExW(
  */
 
 static BOOL CALLBACK DirectDrawEnumerateProcA(
-	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
+	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName,
 	LPVOID lpContext, HMONITOR hm)
 {
     DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
@@ -153,9 +153,9 @@ static BOOL CALLBACK DirectDrawEnumerateProcA(
 }
 
 HRESULT WINAPI DirectDrawEnumerateA(
-  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext) 
+  LPDDENUMCALLBACKA lpCallback, LPVOID lpContext)
 {
-    DirectDrawEnumerateProcData epd;  
+    DirectDrawEnumerateProcData epd;
     epd.lpCallback = (LPVOID) lpCallback;
     epd.lpContext = lpContext;
 
@@ -167,17 +167,17 @@ HRESULT WINAPI DirectDrawEnumerateA(
  */
 
 static BOOL WINAPI DirectDrawEnumerateProcW(
-  GUID *lpGUID, LPWSTR lpDriverDescription, LPWSTR lpDriverName, 
+  GUID *lpGUID, LPWSTR lpDriverDescription, LPWSTR lpDriverName,
   LPVOID lpContext, HMONITOR hm)
 {
     DirectDrawEnumerateProcData *pEPD = (DirectDrawEnumerateProcData*)lpContext;
-  
+
     return ((LPDDENUMCALLBACKW) pEPD->lpCallback)(
 	lpGUID, lpDriverDescription, lpDriverName, pEPD->lpContext);
 }
 
 HRESULT WINAPI DirectDrawEnumerateW(
-  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext) 
+  LPDDENUMCALLBACKW lpCallback, LPVOID lpContext)
 {
     DirectDrawEnumerateProcData epd;
     epd.lpCallback = (LPVOID) lpCallback;
@@ -341,7 +341,7 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_DirectDrawClipper,	DDRAW_CreateDirectDrawClipper }
 };
 
-static HRESULT WINAPI 
+static HRESULT WINAPI
 DDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
     ICOM_THIS(IClassFactoryImpl,iface);
@@ -391,7 +391,7 @@ static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
     return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DDCF_Vtbl = 
+static ICOM_VTABLE(IClassFactory) DDCF_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     DDCF_QueryInterface,

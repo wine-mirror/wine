@@ -183,7 +183,7 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 	    if(logbrush.lbHatch == HS_FDIAGONAL)
 	        break;
 	    /* else fallthrough for HS_DIAGCROSS */
-	    
+
 	case HS_BDIAGONAL:
 	    PSDRV_WriteGSave(physDev);
 	    PSDRV_Clip(physDev, EO);
@@ -222,7 +222,7 @@ BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
 		ret = FALSE;
 	    }
-	    HeapFree(PSDRV_Heap, 0, bits);	
+	    HeapFree(PSDRV_Heap, 0, bits);
 	}
 	break;
 

@@ -167,7 +167,7 @@ static ICOM_VTABLE(IDirect3D) WINE_UNUSED d3dvt = {
  *				IDirect3D2
  */
 HRESULT WINAPI IDirect3D2Impl_QueryInterface(
-    LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {  
+    LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {
     ICOM_THIS(IDirect3D2Impl,iface);
 
     /* FIXME: Not sure if this is correct */
@@ -180,7 +180,7 @@ HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 	IDirect3D2_AddRef(iface);
 
 	TRACE("  Creating IDirectDrawX interface (%p)\n", *obj);
-	
+
 	return S_OK;
     }
     if ( ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) ||
@@ -280,7 +280,7 @@ HRESULT WINAPI IDirect3D2Impl_CreateDevice(
 /* This is for checking the correctness of the prototypes/functions.
  * Do not remove.
  */
-static ICOM_VTABLE(IDirect3D2) WINE_UNUSED d3d2vt = 
+static ICOM_VTABLE(IDirect3D2) WINE_UNUSED d3d2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDirect3D2Impl_QueryInterface,

@@ -81,7 +81,7 @@ typedef struct _ACMFILTERCHOOSE16
 
   DWORD          fdwEnum;
   LPWAVEFILTER   pwfltrEnum;
-    
+
   HINSTANCE16    hInstance;
   LPCSTR         pszTemplateName;
   LPARAM         lCustData;
@@ -114,22 +114,22 @@ typedef struct _ACMFORMATCHOOSE16
 {
   DWORD            cbStruct;
   DWORD            fdwStyle;
-    
+
   HWND16           hwndOwner;
 
   LPWAVEFORMATEX   pwfx;
   DWORD            cbwfx;
   LPCSTR           pszTitle;
-    
+
   CHAR             szFormatTag[ACMFORMATTAGDETAILS_FORMATTAG_CHARS];
-  CHAR             szFormat[ACMFORMATDETAILS_FORMAT_CHARS];    
+  CHAR             szFormat[ACMFORMATDETAILS_FORMAT_CHARS];
 
   LPSTR            pszName;
   DWORD            cchName;
 
   DWORD            fdwEnum;
   LPWAVEFORMATEX   pwfxEnum;
-    
+
   HINSTANCE16      hInstance;
   LPCSTR           pszTemplateName;
   LPARAM           lCustData;
@@ -235,7 +235,7 @@ MMRESULT16 WINAPI acmFormatEnum16(
   ACMFORMATENUMCB16 fnCallback, DWORD dwInstance, DWORD fdwEnum
 );
 MMRESULT16 WINAPI acmFormatSuggest16(
-  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc, 
+  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc,
   LPWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest
 );
 MMRESULT16 WINAPI acmFilterTagDetails16(
@@ -265,7 +265,7 @@ MMRESULT16 WINAPI acmStreamClose16(
   HACMSTREAM16 has, DWORD fdwClose
 );
 MMRESULT16 WINAPI acmStreamSize16(
-  HACMSTREAM16 has, DWORD cbInput, 
+  HACMSTREAM16 has, DWORD cbInput,
   LPDWORD pdwOutputBytes, DWORD fdwSize
 );
 MMRESULT16 WINAPI acmStreamConvert16(
@@ -353,7 +353,7 @@ extern BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID*, DWORD, LPDWORD);
 extern HINSTANCE MSACM_hInstance32;
 
 /* From pcmcnvtr.c */
-LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg, 
+LRESULT CALLBACK	PCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
 				       LPARAM dwParam1, LPARAM dwParam2);
 
 /* Dialog box templates */

@@ -450,7 +450,7 @@ static void *anon_mmap_aligned( void *base, unsigned int size, int prot, int fla
     if ((ptr = wine_anon_mmap( base, view_size, prot, flags )) == (void *)-1)
     {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
-	 * Platform Differences": 
+	 * Platform Differences":
 	 * Windows NT: ERROR_INVALID_PARAMETER
 	 * Windows 95: ERROR_INVALID_ADDRESS.
 	 */
@@ -559,7 +559,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
         MESSAGE(")\n");
         goto error;
     }
-    
+
     /* retrieve the shared sections file */
 
     if (shared_size)
@@ -980,7 +980,7 @@ LPVOID WINAPI VirtualAllocEx(
 /***********************************************************************
  *             VirtualFree   (KERNEL32.@)
  * Release or decommits a region of pages in virtual address space.
- * 
+ *
  * RETURNS
  *	TRUE: Success
  *	FALSE: Failure
@@ -1047,7 +1047,7 @@ BOOL WINAPI VirtualFree(
 /***********************************************************************
  *             VirtualLock   (KERNEL32.@)
  * Locks the specified region of virtual address space
- * 
+ *
  * NOTE
  *	Always returns TRUE
  *
@@ -1433,8 +1433,8 @@ HANDLE WINAPI CreateFileMappingA(
  *             CreateFileMappingW   (KERNEL32.@)
  * See CreateFileMappingA
  */
-HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa, 
-                                  DWORD protect, DWORD size_high,  
+HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
+                                  DWORD protect, DWORD size_high,
                                   DWORD size_low, LPCWSTR name )
 {
     HANDLE ret;

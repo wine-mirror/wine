@@ -35,7 +35,7 @@ typedef void * POBJDIR_INFORMATION;
 /*
  *	Generic object functions
  */
- 
+
 /******************************************************************************
  * NtQueryObject [NTDLL.@]
  * ZwQueryObject [NTDLL.@]
@@ -59,12 +59,12 @@ NTSTATUS WINAPI NtQueryObject(
  *
  * NOTES
  *  only the lowest 4 bit of SecurityObjectInformationClass are used
- *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system privileges) 
+ *  0x7-0xf returns STATUS_ACCESS_DENIED (even running with system privileges)
  *
- * FIXME: we are constructing a fake sid 
+ * FIXME: we are constructing a fake sid
  *  (Administrators:Full, System:Full, Everyone:Read)
  */
-NTSTATUS WINAPI 
+NTSTATUS WINAPI
 NtQuerySecurityObject(
 	IN HANDLE Object,
 	IN SECURITY_INFORMATION RequestedInformation,
@@ -77,7 +77,7 @@ NtQuerySecurityObject(
 	BYTE Buffer[256];
 	PISECURITY_DESCRIPTOR_RELATIVE psd = (PISECURITY_DESCRIPTOR_RELATIVE)Buffer;
 	UINT BufferIndex = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
-	
+
 	FIXME("(0x%08x,0x%08lx,%p,0x%08lx,%p) stub!\n",
 	Object, RequestedInformation, pSecurityDesriptor, Length, ResultLength);
 
@@ -87,7 +87,7 @@ NtQuerySecurityObject(
 
 	ZeroMemory(Buffer, 256);
 	RtlCreateSecurityDescriptor((PSECURITY_DESCRIPTOR)psd, SECURITY_DESCRIPTOR_REVISION);
-	psd->Control = SE_SELF_RELATIVE | 
+	psd->Control = SE_SELF_RELATIVE |
 	  ((RequestedInformation & DACL_SECURITY_INFORMATION) ? SE_DACL_PRESENT:0);
 
 	/* owner: administrator S-1-5-20-220*/
@@ -104,7 +104,7 @@ NtQuerySecurityObject(
 	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
 	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
 	}
-	
+
 	/* group: built in domain S-1-5-12 */
 	if (GROUP_SECURITY_INFORMATION & RequestedInformation)
 	{
@@ -126,7 +126,7 @@ NtQuerySecurityObject(
 	  PACL pacl = (PACL)&(Buffer[BufferIndex]);
 	  PACCESS_ALLOWED_ACE pace;
 	  PSID psid;
-	  	  	  
+
 	  psd->Dacl = BufferIndex;
 
 	  pacl->AclRevision = MIN_ACL_REVISION;
@@ -134,7 +134,7 @@ NtQuerySecurityObject(
 	  pacl->AclSize = BufferIndex; /* storing the start index temporary */
 
 	  BufferIndex += sizeof(ACL);
-	  
+
 	  /* ACE System - full access */
 	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
 	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
@@ -154,7 +154,7 @@ NtQuerySecurityObject(
 	  psid->SubAuthorityCount = 1;
 	  psid->IdentifierAuthority = localSidAuthority;
 	  psid->SubAuthority[0] = SECURITY_LOCAL_SYSTEM_RID;
-	  
+
 	  /* ACE Administrators - full access*/
 	  pace = (PACCESS_ALLOWED_ACE) &(Buffer[BufferIndex]);
 	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
@@ -175,7 +175,7 @@ NtQuerySecurityObject(
 	  psid->IdentifierAuthority = localSidAuthority;
 	  psid->SubAuthority[0] = SECURITY_BUILTIN_DOMAIN_RID;
 	  psid->SubAuthority[1] = DOMAIN_ALIAS_RID_ADMINS;
-	 
+
 	  /* ACE Everyone - read access */
 	  pace = (PACCESS_ALLOWED_ACE)&(Buffer[BufferIndex]);
 	  BufferIndex += sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD);
@@ -277,7 +277,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 	ACCESS_MASK DesiredAccess,
 	POBJECT_ATTRIBUTES ObjectAttributes)
 {
-	FIXME("(%p,0x%08lx,%p): stub\n", 
+	FIXME("(%p,0x%08lx,%p): stub\n",
 	DirectoryHandle, DesiredAccess, ObjectAttributes);
 	dump_ObjectAttributes(ObjectAttributes);
 	return 0;
@@ -290,7 +290,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(
 NTSTATUS WINAPI NtCreateDirectoryObject(
 	PHANDLE DirectoryHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes) 
+	POBJECT_ATTRIBUTES ObjectAttributes)
 {
 	FIXME("(%p,0x%08lx,%p),stub!\n",
 	DirectoryHandle,DesiredAccess,ObjectAttributes);
@@ -330,7 +330,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject(
 /*
  *	Link objects
  */
- 
+
 /******************************************************************************
  *  NtOpenSymbolicLinkObject	[NTDLL.@]
  */

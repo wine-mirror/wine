@@ -74,7 +74,7 @@ static void DEBUG_LocateDebugInfoFile(const char *filename, char *dbg_filename)
     char	  *str2 = DBG_alloc(MAX_PATHNAME_LEN*10);
     const char	  *file;
     char	  *name_part;
-    
+
     file = strrchr(filename, '\\');
     if( file == NULL ) file = filename; else file++;
 
@@ -121,7 +121,7 @@ static void*	DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
 
     if ((*hMap = CreateFileMapping(*hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == 0)
        return NULL;
-    
+
     if ((ret = MapViewOfFile(*hMap, FILE_MAP_READ, 0, g_offset, g_size)) != NULL)
        ret += offset - g_offset;
 
@@ -178,7 +178,7 @@ static const char*	DEBUG_GetCoffName( PIMAGE_SYMBOL coff_sym, const char* coff_s
       {
 	 nampnt = coff_strtab + coff_sym->N.Name.Long;
       }
-   
+
    if( nampnt[0] == '_' )
       nampnt++;
    return nampnt;
@@ -193,7 +193,7 @@ static int DEBUG_AddCoffFile( struct CoffFileSet* coff_files, const char* filena
 	coff_files->nfiles_alloc += 10;
 	coff_files->files = (struct CoffFile *) DBG_realloc(coff_files->files,
 							    coff_files->nfiles_alloc * sizeof(struct CoffFile));
-     }	
+     }
    file = coff_files->files + coff_files->nfiles;
    file->startaddr = 0xffffffff;
    file->endaddr   = 0;
@@ -202,7 +202,7 @@ static int DEBUG_AddCoffFile( struct CoffFileSet* coff_files, const char* filena
    file->linecnt = 0;
    file->entries = NULL;
    file->neps = file->neps_alloc = 0;
-  
+
    return coff_files->nfiles++;
 }
 
@@ -211,8 +211,8 @@ static void DEBUG_AddCoffSymbol( struct CoffFile* coff_file, struct name_hash* s
    if( coff_file->neps + 1 >= coff_file->neps_alloc )
       {
 	 coff_file->neps_alloc += 10;
-	 coff_file->entries = (struct name_hash **) 
-	    DBG_realloc(coff_file->entries, 
+	 coff_file->entries = (struct name_hash **)
+	    DBG_realloc(coff_file->entries,
 			coff_file->neps_alloc * sizeof(struct name_hash *));
       }
    coff_file->entries[coff_file->neps++] = sym;
@@ -246,7 +246,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 
   coff_files.files = NULL;
   coff_files.nfiles = coff_files.nfiles_alloc = 0;
-  
+
   coff = (PIMAGE_COFF_SYMBOLS_HEADER) root;
 
   coff_symbols = (PIMAGE_SYMBOL) ((unsigned int) coff + coff->LvaToFirstSymbol);
@@ -305,7 +305,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 			   aux->Section.NumberOfLinenumbers,
 			   aux->Section.Number,
 			   aux->Section.Selection);
-	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %s %08lx %d %d %d\n", 
+	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %s %08lx %d %d %d\n",
 			   coff_sym->SectionNumber,
 			   DEBUG_GetCoffName( coff_sym, coff_strtab ),
 			   coff_sym->Value,
@@ -337,12 +337,12 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	    {
 	      coff_files.files[curr_file_idx].startaddr = coff_sym->Value;
 	    }
-	  
+
 	  if( coff_files.files[curr_file_idx].endaddr < coff_sym->Value + aux->Section.Length )
 	    {
 	      coff_files.files[curr_file_idx].endaddr = coff_sym->Value + aux->Section.Length;
 	    }
-	  
+
 	  coff_files.files[curr_file_idx].linetab_offset = linetab_indx;
 	  coff_files.files[curr_file_idx].linecnt = aux->Section.NumberOfLinenumbers;
 	  linetab_indx += aux->Section.NumberOfLinenumbers;
@@ -370,9 +370,9 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 #endif
 
 	  /* FIXME: was adding symbol to this_file ??? */
-	  DEBUG_AddCoffSymbol( &coff_files.files[curr_file_idx], 
-			       DEBUG_AddSymbol( nampnt, &new_value, 
-						coff_files.files[curr_file_idx].filename, 
+	  DEBUG_AddCoffSymbol( &coff_files.files[curr_file_idx],
+			       DEBUG_AddSymbol( nampnt, &new_value,
+						coff_files.files[curr_file_idx].filename,
 						SYM_WIN32 | SYM_FUNC ) );
 	  i += naux;
 	  continue;
@@ -392,7 +392,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 #ifdef MORE_DBG
 	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %lx %s\n", i, new_value.addr.off, nampnt);
 
-	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s (sect=%s)\n", 
+	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s (sect=%s)\n",
 		       nampnt, MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].Name);
 #endif
 
@@ -409,7 +409,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 		}
 	    }
 	  if (j < coff_files.nfiles) {
-	     DEBUG_AddCoffSymbol( &coff_files.files[j], 
+	     DEBUG_AddCoffSymbol( &coff_files.files[j],
 				  DEBUG_AddSymbol( nampnt, &new_value, this_file, SYM_WIN32 | SYM_FUNC ) );
 	  } else {
 	     DEBUG_AddSymbol( nampnt, &new_value, NULL, SYM_WIN32 | SYM_FUNC );
@@ -444,7 +444,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  i += naux;
 	  continue;
 	}
-	  
+
       if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
 	  && (naux == 0) )
 	{
@@ -457,7 +457,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	}
 
 #ifdef MORE_DBG
-      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry '%s' %d %d %d\n", 
+      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry '%s' %d %d %d\n",
 		   DEBUG_GetCoffName( coff_sym, coff_strtab ),
 		   coff_sym->StorageClass, coff_sym->SectionNumber, naux);
 #endif
@@ -466,9 +466,9 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
        * For now, skip past the aux entries.
        */
       i += naux;
-      
+
     }
-    
+
   /*
    * OK, we now should have a list of files, and we should have a list
    * of entrypoints.  We need to sort the entrypoints so that we are
@@ -518,10 +518,10 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       * first.
 	       */
 	      DEBUG_GetSymbolAddr(coff_files.files[j].entries[l], &new_value.addr);
-	      DEBUG_AddLineNumber(coff_files.files[j].entries[l], 
+	      DEBUG_AddLineNumber(coff_files.files[j].entries[l],
 				  linepnt->Linenumber,
-				  (unsigned int) module->load_addr 
-				  + linepnt->Type.VirtualAddress 
+				  (unsigned int) module->load_addr
+				  + linepnt->Type.VirtualAddress
 				  - new_value.addr.off);
 	    }
 	}
@@ -1164,7 +1164,7 @@ numeric_leaf( int *value, unsigned short int *leaf )
         *value = type;
     }
     else
-    { 
+    {
         switch ( type )
         {
         case LF_CHAR:
@@ -1275,7 +1275,7 @@ terminate_string( unsigned char *name )
         return symname;
 }
 
-static 
+static
 struct datatype * DEBUG_GetCVType(unsigned int typeno)
 {
     struct datatype * dt = NULL;
@@ -1305,7 +1305,7 @@ DEBUG_AddCVType( unsigned int typeno, struct datatype *dt )
     while ( typeno - 0x1000 >= num_cv_defined_types )
     {
         num_cv_defined_types += 0x100;
-        cv_defined_types = (struct datatype **) 
+        cv_defined_types = (struct datatype **)
             DBG_realloc( cv_defined_types,
 		         num_cv_defined_types * sizeof(struct datatype *) );
 
@@ -1334,12 +1334,12 @@ DEBUG_ClearTypeTable( void )
 static int
 DEBUG_AddCVType_Pointer( unsigned int typeno, unsigned int datatype )
 {
-    struct datatype *dt = 
+    struct datatype *dt =
 	    DEBUG_FindOrMakePointerType( DEBUG_GetCVType( datatype ) );
 
     return DEBUG_AddCVType( typeno, dt );
 }
-  
+
 static int
 DEBUG_AddCVType_Array( unsigned int typeno, char *name,
                        unsigned int elemtype, unsigned int arr_len )
@@ -1351,10 +1351,10 @@ DEBUG_AddCVType_Array( unsigned int typeno, char *name,
 
     DEBUG_SetArrayParams( dt, 0, arr_max, elem );
     return DEBUG_AddCVType( typeno, dt );
-}    
+}
 
 static int
-DEBUG_AddCVType_Bitfield( unsigned int typeno, 
+DEBUG_AddCVType_Bitfield( unsigned int typeno,
                           unsigned int bitoff, unsigned int nbits,
                           unsigned int basetype )
 {
@@ -1364,7 +1364,7 @@ DEBUG_AddCVType_Bitfield( unsigned int typeno,
     DEBUG_SetBitfieldParams( dt, bitoff, nbits, base );
     return DEBUG_AddCVType( typeno, dt );
 }
-  
+
 static int
 DEBUG_AddCVType_EnumFieldList( unsigned int typeno, unsigned char *list, int len )
 {
@@ -1388,7 +1388,7 @@ DEBUG_AddCVType_EnumFieldList( unsigned int typeno, unsigned char *list, int len
             int value, vlen = numeric_leaf( &value, &type->enumerate.value );
             unsigned char *name = (unsigned char *)&type->enumerate.value + vlen;
 
-            DEBUG_AddStructElement( dt, terminate_string( name ), 
+            DEBUG_AddStructElement( dt, terminate_string( name ),
                                         NULL, value, 0 );
 
             ptr += 2 + 2 + vlen + (1 + name[0]);
@@ -1404,7 +1404,7 @@ DEBUG_AddCVType_EnumFieldList( unsigned int typeno, unsigned char *list, int len
 
     return DEBUG_AddCVType( typeno, dt );
 }
-  
+
 static int
 DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int len )
 {
@@ -1477,7 +1477,7 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
             struct datatype *subtype = DEBUG_GetCVType( type->member.type );
             int elem_size = subtype? DEBUG_GetObjectSize( subtype ) : 0;
 
-            DEBUG_AddStructElement( dt, terminate_string( name ), 
+            DEBUG_AddStructElement( dt, terminate_string( name ),
                                         subtype, offset << 3, elem_size << 3 );
 
             ptr += 2 + 2 + 2 + olen + (1 + name[0]);
@@ -1492,7 +1492,7 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
             struct datatype *subtype = DEBUG_GetCVType( type->member32.type );
             int elem_size = subtype? DEBUG_GetObjectSize( subtype ) : 0;
 
-            DEBUG_AddStructElement( dt, terminate_string( name ), 
+            DEBUG_AddStructElement( dt, terminate_string( name ),
                                         subtype, offset << 3, elem_size << 3 );
 
             ptr += 2 + 2 + 4 + olen + (1 + name[0]);
@@ -1533,7 +1533,7 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
             /* FIXME: ignored for now */
             ptr += 2 + 2;
             break;
-        
+
         case LF_VFUNCTAB_32:
             /* FIXME: ignored for now */
             ptr += 2 + 2 + 4;
@@ -1560,7 +1560,7 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
             case 4: case 6: /* (pure) introducing virtual method */
                 ptr += 2 + 2 + 4 + 4 + (1 + type->onemethod32_virt.name[0]);
                 break;
-           
+
             default:
                 ptr += 2 + 2 + 4 + (1 + type->onemethod32.name[0]);
                 break;
@@ -1576,7 +1576,7 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
 
     return DEBUG_AddCVType( typeno, dt );
 }
-  
+
 static int
 DEBUG_AddCVType_Enum( unsigned int typeno, char *name, unsigned int fieldlist )
 {
@@ -1646,12 +1646,12 @@ DEBUG_ParseTypeTable( char *table, int len )
         }
 
         case LF_BITFIELD:
-            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield.bitoff, 
+            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield.bitoff,
                                                         type->bitfield.nbits,
                                                         type->bitfield.type );
             break;
         case LF_BITFIELD_32:
-            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield32.bitoff, 
+            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield32.bitoff,
                                                         type->bitfield32.nbits,
                                                         type->bitfield32.type );
             break;
@@ -1742,7 +1742,7 @@ DEBUG_ParseTypeTable( char *table, int len )
         curr_type++;
         ptr += type->generic.len + 2;
     }
-  
+
     return TRUE;
 }
 
@@ -1819,7 +1819,7 @@ DEBUG_SnarfLinetab(char * linetab,
    * There is one header for each segment, so that we can reach in
    * and pull bits as required.
    */
-  lt_hdr = (struct codeview_linetab_hdr *) 
+  lt_hdr = (struct codeview_linetab_hdr *)
     DBG_alloc((nseg + 1) * sizeof(*lt_hdr));
   if( lt_hdr == NULL )
     {
@@ -1865,7 +1865,7 @@ DEBUG_SnarfLinetab(char * linetab,
 	  lt_hdr[this_seg].segno      = *pnt2.s++;
 	  lt_hdr[this_seg].nline      = *pnt2.s++;
 	  lt_hdr[this_seg].offtab     =  pnt2.ui;
-	  lt_hdr[this_seg].linetab    = (unsigned short *) 
+	  lt_hdr[this_seg].linetab    = (unsigned short *)
 	    (pnt2.ui + lt_hdr[this_seg].nline);
 	}
     }
@@ -2039,7 +2039,7 @@ union codeview_symbol
 
 
 
-static unsigned int 
+static unsigned int
 DEBUG_MapCVOffset( DBG_MODULE *module, unsigned int offset )
 {
     int        nomap = module->msc_info->nomap;
@@ -2060,7 +2060,7 @@ DEBUG_MapCVOffset( DBG_MODULE *module, unsigned int offset )
 static struct name_hash *
 DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
                    int type, unsigned int seg, unsigned int offset,
-                   int size, int cookie, int flags, 
+                   int size, int cookie, int flags,
                    struct codeview_linetab_hdr *linetab )
 {
     int			  nsect = module->msc_info->nsect;
@@ -2074,7 +2074,7 @@ DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
      * Some sanity checks
      */
 
-    if ( !name || !namelen ) 
+    if ( !name || !namelen )
         return NULL;
 
     if ( !seg || seg > nsect )
@@ -2087,7 +2087,7 @@ DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
     value.cookie = cookie;
 
     value.addr.seg = 0;
-    value.addr.off = (unsigned int) module->load_addr + 
+    value.addr.off = (unsigned int) module->load_addr +
         DEBUG_MapCVOffset( module, sectp[seg-1].VirtualAddress + offset );
 
     memcpy( symname, name, namelen );
@@ -2112,8 +2112,8 @@ DEBUG_AddCVSymbol( DBG_MODULE *module, char *name, int namelen,
 
     /*
      * Create Wine symbol record
-     */ 
-    symbol = DEBUG_AddSymbol( symname, &value, 
+     */
+    symbol = DEBUG_AddSymbol( symname, &value,
                               linetab? linetab->sourcefile : NULL, flags );
 
     if ( size )
@@ -2181,7 +2181,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
 	case S_LDATA:
 	case S_PUB:
             DEBUG_AddCVSymbol( module, sym->data.name, sym->data.namelen,
-                               sym->data.symtype, sym->data.seg, 
+                               sym->data.symtype, sym->data.seg,
                                sym->data.offset, 0,
                                DV_TARGET, SYM_WIN32 | SYM_DATA, NULL );
 	    break;
@@ -2189,7 +2189,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
 	case S_LDATA_32:
 	case S_PUB_32:
             DEBUG_AddCVSymbol( module, sym->data32.name, sym->data32.namelen,
-                               sym->data32.symtype, sym->data32.seg, 
+                               sym->data32.symtype, sym->data32.seg,
                                sym->data32.offset, 0,
                                DV_TARGET, SYM_WIN32 | SYM_DATA, NULL );
 	    break;
@@ -2201,7 +2201,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
          */
 	case S_THUNK:
             DEBUG_AddCVSymbol( module, sym->thunk.name, sym->thunk.namelen,
-                               0, sym->thunk.segment, 
+                               0, sym->thunk.segment,
                                sym->thunk.offset, sym->thunk.thunk_len,
                                DV_TARGET, SYM_WIN32 | SYM_FUNC, NULL );
 	    break;
@@ -2214,7 +2214,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
  	    DEBUG_Normalize( curr_func );
 
             curr_func = DEBUG_AddCVSymbol( module, sym->proc.name, sym->proc.namelen,
-                                           sym->proc.proctype, sym->proc.segment, 
+                                           sym->proc.proctype, sym->proc.segment,
                                            sym->proc.offset, sym->proc.proc_len,
                                            DV_TARGET, SYM_WIN32 | SYM_FUNC, linetab );
 
@@ -2225,7 +2225,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
  	    DEBUG_Normalize( curr_func );
 
             curr_func = DEBUG_AddCVSymbol( module, sym->proc32.name, sym->proc32.namelen,
-                                           sym->proc32.proctype, sym->proc32.segment, 
+                                           sym->proc32.proctype, sym->proc32.segment,
                                            sym->proc32.offset, sym->proc32.proc_len,
                                            DV_TARGET, SYM_WIN32 | SYM_FUNC, linetab );
 
@@ -2250,7 +2250,7 @@ DEBUG_SnarfCodeView( DBG_MODULE	*module, LPBYTE root, int offset, int size,
          * These are special, in that they are always followed by an
          * additional length-prefixed string which is *not* included
          * into the symbol length count.  We need to skip it.
-         */ 
+         */
 	case S_PROCREF:
 	case S_DATAREF:
 	case S_LPROCREF:
@@ -2511,7 +2511,7 @@ static void pdb_convert_types_header( PDB_TYPES *types, char *image )
     }
 }
 
-static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols, 
+static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
                                         int *header_size, char *image )
 {
     memset( symbols, 0, sizeof(PDB_SYMBOLS) );
@@ -2542,7 +2542,7 @@ static void pdb_convert_symbols_header( PDB_SYMBOLS *symbols,
     }
 }
 
-static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module, 
+static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
 					      const char *filename, DWORD timestamp )
 {
     enum DbgInfoLoad dil = DIL_ERROR;
@@ -2619,7 +2619,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
     }
 
 
-    /* 
+    /*
      * Check .PDB time stamp
      */
 
@@ -2629,23 +2629,23 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
 		      filename, root->TimeDateStamp, timestamp );
     }
 
-    /* 
+    /*
      * Read type table
      */
 
     DEBUG_ParseTypeTable( types_image + types.type_offset, types.type_size );
-    
+
     /*
      * Read type-server .PDB imports
      */
 
     if ( symbols.pdbimport_size )
-    {   
+    {
         /* FIXME */
         DEBUG_Printf(DBG_CHN_ERR, "-Type server .PDB imports ignored!\n" );
     }
 
-    /* 
+    /*
      * Read global symbol table
      */
 
@@ -2704,10 +2704,10 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
         file_name += strlen(file_name) + 1;
         file = (char *)( (DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3 );
     }
-    
+
     dil = DIL_LOADED;
 
- leave:    
+ leave:
 
     /*
      * Cleanup
@@ -2735,22 +2735,22 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
 #define CODEVIEW_NB09_SIG  ( 'N' | ('B' << 8) | ('0' << 16) | ('9' << 24) )
 #define CODEVIEW_NB10_SIG  ( 'N' | ('B' << 8) | ('1' << 16) | ('0' << 24) )
 #define CODEVIEW_NB11_SIG  ( 'N' | ('B' << 8) | ('1' << 16) | ('1' << 24) )
- 
+
 typedef struct _CODEVIEW_HEADER
 {
     DWORD  dwSignature;
     DWORD  lfoDirectory;
- 
+
 } CODEVIEW_HEADER, *PCODEVIEW_HEADER;
- 
+
 typedef struct _CODEVIEW_PDB_DATA
 {
     DWORD  timestamp;
     DWORD  unknown;
     CHAR   name[ 1 ];
- 
+
 } CODEVIEW_PDB_DATA, *PCODEVIEW_PDB_DATA;
- 
+
 typedef struct _CV_DIRECTORY_HEADER
 {
     WORD   cbDirHeader;
@@ -2758,16 +2758,16 @@ typedef struct _CV_DIRECTORY_HEADER
     DWORD  cDir;
     DWORD  lfoNextDir;
     DWORD  flags;
- 
+
 } CV_DIRECTORY_HEADER, *PCV_DIRECTORY_HEADER;
- 
+
 typedef struct _CV_DIRECTORY_ENTRY
 {
     WORD   subsection;
     WORD   iMod;
     DWORD  lfo;
     DWORD  cb;
- 
+
 } CV_DIRECTORY_ENTRY, *PCV_DIRECTORY_ENTRY;
 
 
@@ -2779,7 +2779,7 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
 {
     PCODEVIEW_HEADER cv = (PCODEVIEW_HEADER)root;
     enum DbgInfoLoad dil = DIL_ERROR;
- 
+
     switch ( cv->dwSignature )
     {
     case CODEVIEW_NB09_SIG:
@@ -2792,16 +2792,16 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
         ent = (PCV_DIRECTORY_ENTRY)((LPBYTE)hdr + hdr->cbDirHeader);
         for ( i = 0; i < hdr->cDir; i++, ent = next )
         {
-            next = (i == hdr->cDir-1)? NULL : 
+            next = (i == hdr->cDir-1)? NULL :
                    (PCV_DIRECTORY_ENTRY)((LPBYTE)ent + hdr->cbDirEntry);
-            prev = (i == 0)? NULL : 
+            prev = (i == 0)? NULL :
                    (PCV_DIRECTORY_ENTRY)((LPBYTE)ent - hdr->cbDirEntry);
 
             if ( ent->subsection == sstAlignSym )
             {
                 /*
                  * Check the next and previous entry.  If either is a
-                 * sstSrcModule, it contains the line number info for 
+                 * sstSrcModule, it contains the line number info for
                  * this file.
                  *
                  * FIXME: This is not a general solution!
@@ -2815,7 +2815,7 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
                 if ( prev && prev->iMod == ent->iMod
                           && prev->subsection == sstSrcModule )
                      linetab = DEBUG_SnarfLinetab( root + prev->lfo, prev->cb );
- 
+
 
                 DEBUG_SnarfCodeView( module, root + ent->lfo, sizeof(DWORD),
                                      ent->cb, linetab );
@@ -2825,7 +2825,7 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
         dil = DIL_LOADED;
         break;
     }
- 
+
     case CODEVIEW_NB10_SIG:
     {
         PCODEVIEW_PDB_DATA pdb = (PCODEVIEW_PDB_DATA)(cv + 1);
@@ -2833,9 +2833,9 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
         dil = DEBUG_ProcessPDBFile( module, pdb->name, pdb->timestamp );
         break;
     }
- 
+
     default:
-        DEBUG_Printf( DBG_CHN_ERR, "Unknown CODEVIEW signature %08lX in module %s\n", 
+        DEBUG_Printf( DBG_CHN_ERR, "Unknown CODEVIEW signature %08lX in module %s\n",
                       cv->dwSignature, module->module_name );
         break;
     }
@@ -2847,9 +2847,9 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
 /*========================================================================
  * Process debug directory.
  */
-static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module, 
+static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module,
 						     LPBYTE file_map,
-						     PIMAGE_DEBUG_DIRECTORY dbg, 
+						     PIMAGE_DEBUG_DIRECTORY dbg,
 						     int nDbg )
 {
     enum DbgInfoLoad dil = DIL_ERROR;
@@ -2916,14 +2916,14 @@ typedef struct _FPO_DATA {
 /*========================================================================
  * Process DBG file.
  */
-static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module, 
+static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
 					      const char *filename, DWORD timestamp )
 {
     enum DbgInfoLoad dil = DIL_ERROR;
     HANDLE hFile = INVALID_HANDLE_VALUE, hMap = 0;
     LPBYTE file_map = NULL;
     PIMAGE_SEPARATE_DEBUG_HEADER hdr;
-    PIMAGE_DEBUG_DIRECTORY dbg; 
+    PIMAGE_DEBUG_DIRECTORY dbg;
     int nDbg;
 
 
@@ -2950,8 +2950,8 @@ static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
     }
 
 
-    dbg = (PIMAGE_DEBUG_DIRECTORY) ( file_map + sizeof(*hdr) 
-		 + hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
+    dbg = (PIMAGE_DEBUG_DIRECTORY) ( file_map + sizeof(*hdr)
+		 + hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER)
 		 + hdr->ExportedNamesSize );
 
     nDbg = hdr->DebugDirectorySize / sizeof(*dbg);
@@ -2968,7 +2968,7 @@ static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
 /*========================================================================
  * Process MSC debug information in PE file.
  */
-enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile, 
+enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
 					     void *_nth, unsigned long nth_ofs )
 {
     enum DbgInfoLoad	   dil = DIL_ERROR;
@@ -2989,7 +2989,7 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
     if ( !extra_info.sectp )
         goto leave;
 
-    if ( !DEBUG_READ_MEM_VERBOSE( (char *)module->load_addr + 
+    if ( !DEBUG_READ_MEM_VERBOSE( (char *)module->load_addr +
 		                  nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 		                  nth->FileHeader.SizeOfOptionalHeader,
                                   extra_info.sectp,
@@ -2999,14 +2999,14 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
     /* Read in debug directory */
 
     nDbg = dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
-    if ( !nDbg ) 
+    if ( !nDbg )
         goto leave;
 
     dbg = (PIMAGE_DEBUG_DIRECTORY) DBG_alloc( nDbg * sizeof(IMAGE_DEBUG_DIRECTORY) );
-    if ( !dbg ) 
+    if ( !dbg )
         goto leave;
 
-    if ( !DEBUG_READ_MEM_VERBOSE( (char *)module->load_addr + dir->VirtualAddress, 
+    if ( !DEBUG_READ_MEM_VERBOSE( (char *)module->load_addr + dir->VirtualAddress,
                                   dbg, nDbg * sizeof(IMAGE_DEBUG_DIRECTORY) ) )
         goto leave;
 
@@ -3025,10 +3025,10 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
 
         PIMAGE_DEBUG_MISC misc = (PIMAGE_DEBUG_MISC)(file_map + dbg->PointerToRawData);
 
-        if ( nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC 
+        if ( nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC
                        || misc->DataType != IMAGE_DEBUG_MISC_EXENAME )
         {
-            DEBUG_Printf( DBG_CHN_ERR, "-Debug info stripped, but no .DBG file in module %s\n", 
+            DEBUG_Printf( DBG_CHN_ERR, "-Debug info stripped, but no .DBG file in module %s\n",
 	                  module->module_name );
             goto leave;
         }
@@ -3048,14 +3048,14 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
         PIMAGE_NT_HEADERS      mpd_nth = (PIMAGE_NT_HEADERS)(file_map + nth_ofs);
         PIMAGE_DATA_DIRECTORY  mpd_dir;
         PIMAGE_DEBUG_DIRECTORY mpd_dbg = NULL;
-            
+
         /* sanity checks */
-        if ( mpd_nth->Signature != IMAGE_NT_SIGNATURE || 
+        if ( mpd_nth->Signature != IMAGE_NT_SIGNATURE ||
              mpd_nth->FileHeader.NumberOfSections != nth->FileHeader.NumberOfSections ||
              !(mpd_nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED ))
             goto leave;
         mpd_dir = mpd_nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
-        
+
         if ((mpd_dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY)) != nDbg)
             goto leave;
 
@@ -3079,7 +3079,7 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
  * look for stabs information in PE header (it's how mingw compiler provides its
  * debugging information), and also wine PE <-> ELF linking through .wsolnk sections
  */
-enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, 
+enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
 					      void* _nth, unsigned long nth_ofs)
 {
     IMAGE_SECTION_HEADER	pe_seg;
@@ -3093,7 +3093,7 @@ enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
 	nth->FileHeader.SizeOfOptionalHeader;
 
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
-      if (!DEBUG_READ_MEM_VERBOSE((void*)((char *)module->load_addr + pe_seg_ofs), 
+      if (!DEBUG_READ_MEM_VERBOSE((void*)((char *)module->load_addr + pe_seg_ofs),
 				  &pe_seg, sizeof(pe_seg)))
 	  continue;
 
@@ -3111,7 +3111,7 @@ enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
 
        if (s1) {
 	  if (DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabs, s1, stabsize) &&
-	      DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabstr, 
+	      DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + stabstr,
 				     s1 + stabsize, stabstrsize)) {
 	     dil = DEBUG_ParseStabs(s1, 0, 0, stabsize, stabsize, stabstrsize);
 	  } else {
@@ -3119,7 +3119,7 @@ enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
 	  }
 	  DBG_free(s1);
        } else {
-	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n", 
+	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n",
 		       stabsize + stabstrsize);
        }
     } else {

@@ -56,17 +56,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 
-static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
-static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
-static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -74,13 +74,13 @@ static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 
 static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context );
 
-static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, 
+static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static BOOL DeviceIo_VCD(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -88,19 +88,19 @@ static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
 
 static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context );
 
-static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode, 
+static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static BOOL DeviceIo_HASP (DWORD dwIoControlCode, 
+static BOOL DeviceIo_HASP (DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -114,11 +114,11 @@ struct VxDInfo
     LPCSTR  name;
     WORD    id;
     DWORD (*vxdcall)(DWORD, CONTEXT86 *);
-    BOOL  (*deviceio)(DWORD, LPVOID, DWORD, 
+    BOOL  (*deviceio)(DWORD, LPVOID, DWORD,
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 };
 
-static const struct VxDInfo VxDList[] = 
+static const struct VxDInfo VxDList[] =
 {
     /* Standard VxD IDs */
     { "VMM",      0x0001, VxDCall_VMM, NULL },
@@ -262,7 +262,7 @@ static const struct VxDInfo VxDList[] =
 #define N_VMM_SERVICE 41
 
 LPCSTR VMM_Service_Name[N_VMM_SERVICE] =
-{ 
+{
     "PageReserve",            /* 0x0000 */
     "PageCommit",             /* 0x0001 */
     "PageDecommit",           /* 0x0002 */
@@ -372,7 +372,7 @@ static DWORD DEVICE_GetClientID( HANDLE handle )
 static const struct VxDInfo *DEVICE_GetInfo( DWORD clientID )
 {
     const struct VxDInfo *info = NULL;
-    
+
     if (clientID & 0x10000)
     {
         for (info = VxDList; info->name; info++)
@@ -390,7 +390,7 @@ static const struct VxDInfo *DEVICE_GetInfo( DWORD clientID )
  * A return value of FALSE indicates that something has gone wrong which
  * GetLastError can decipher.
  */
-BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, 
+BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -418,14 +418,14 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
                 }
                 else if ( info->deviceio )
 		{
-			return info->deviceio( dwIoControlCode, 
-                                        lpvInBuffer, cbInBuffer, 
-                                        lpvOutBuffer, cbOutBuffer, 
+			return info->deviceio( dwIoControlCode,
+                                        lpvInBuffer, cbInBuffer,
+                                        lpvOutBuffer, cbOutBuffer,
                                         lpcbBytesReturned, lpOverlapped );
 		}
 		else
 		{
-			FIXME( "Unimplemented control %ld for VxD device %s\n", 
+			FIXME( "Unimplemented control %ld for VxD device %s\n",
                                dwIoControlCode, info->name ? info->name : "???" );
 			/* FIXME: this is for invalid calls on W98SE,
 			 * but maybe we should use ERROR_CALL_NOT_IMPLEMENTED
@@ -489,7 +489,7 @@ BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode,
 	}
    	return FALSE;
 }
- 
+
 /***********************************************************************
  *           DeviceIo_VTDAPI
  */
@@ -634,7 +634,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
         LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
-        return RegEnumValueA( hkey, iValue, lpszValue, lpcchValue, 
+        return RegEnumValueA( hkey, iValue, lpszValue, lpcchValue,
                               lpReserved, lpdwType, lpbData, lpcbData );
     }
 
@@ -646,7 +646,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
         LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
-        return RegQueryValueExA( hkey, lpszValue, lpReserved, 
+        return RegQueryValueExA( hkey, lpszValue, lpReserved,
                                  lpdwType, lpbData, lpcbData );
     }
 
@@ -658,7 +658,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
         DWORD   dwType     = (DWORD) stack32_pop( context );
         LPBYTE  lpbData    = (LPBYTE)stack32_pop( context );
         DWORD   cbData     = (DWORD) stack32_pop( context );
-        return RegSetValueExA( hkey, lpszValue, dwReserved, 
+        return RegSetValueExA( hkey, lpszValue, dwReserved,
                                dwType, lpbData, cbData );
     }
 
@@ -741,7 +741,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	   address-spaces we now have */
 	if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
 	/* FIXME: Handle flags in some way */
-	address = (LPVOID )(page * psize); 
+	address = (LPVOID )(page * psize);
 	ret = VirtualAlloc ( address, ( npages * psize ), MEM_RESERVE, 0 );
 	TRACE("PageReserve: returning: %08lx\n", (DWORD )ret );
 	if ( ret == NULL )
@@ -765,7 +765,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	TRACE("PageCommit: page: %08lx, npages: %08lx, hpd: %08lx pagerdata: "
 	      "%08lx, flags: %08lx partial stub\n",
 	      page, npages, hpd, pagerdata, flags );
-	
+
 	if ( flags & PC_USER )
 	  if ( flags & PC_WRITEABLE )
 	    virt_perm = PAGE_EXECUTE_READWRITE;
@@ -774,7 +774,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	else
 	  virt_perm = PAGE_NOACCESS;
 
-	address = (LPVOID )(page * psize); 
+	address = (LPVOID )(page * psize);
 	ret = VirtualAlloc ( address, ( npages * psize ), MEM_COMMIT, virt_perm );
 	TRACE("PageCommit: Returning: %08lx\n", (DWORD )ret );
 	return (DWORD )ret;
@@ -792,12 +792,12 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	TRACE("PageDecommit: page: %08lx, npages: %08lx, flags: %08lx partial stub\n",
 	      page, npages, flags );
 	address = (LPVOID )( page * psize );
-	ret = VirtualFree ( address, ( npages * psize ), MEM_DECOMMIT ); 
+	ret = VirtualFree ( address, ( npages * psize ), MEM_DECOMMIT );
 	TRACE("PageDecommit: Returning: %s\n", ret ? "TRUE" : "FALSE" );
 	return ret;
       }
     case 0x000d: /* PageModifyPermissions */
-      {	
+      {
 	DWORD pg_old_perm;
 	DWORD pg_new_perm;
 	DWORD virt_old_perm;
@@ -828,12 +828,12 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	case PAGE_EXECUTE_READWRITE:
 	case PAGE_EXECUTE_WRITECOPY:
 	  pg_old_perm = PC_USER | PC_WRITEABLE;
-	  break; 
+	  break;
 	case PAGE_NOACCESS:
 	default:
 	  pg_old_perm = 0;
 	  break;
-	}	
+	}
 	pg_new_perm = pg_old_perm;
 	pg_new_perm &= permand & ~PC_STATIC;
 	pg_new_perm |= permor  & ~PC_STATIC;
@@ -846,7 +846,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	  else
 	    virt_new_perm |= PAGE_EXECUTE_READ;
 	}
-  
+
 	if ( ! VirtualProtect ( address, ( npages * psize ), virt_new_perm, &virt_old_perm ) ) {
 	  ERR("Can't change page permissions for %08lx\n", (DWORD )address );
 	  return 0xffffffff;
@@ -859,7 +859,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 	BOOL ret;
 	LPVOID hmem = (LPVOID) stack32_pop( context );
 	DWORD flags = (DWORD ) stack32_pop( context );
-	
+
 	TRACE("PageFree: hmem: %08lx, flags: %08lx partial stub\n",
 	      (DWORD )hmem, flags );
 
@@ -872,7 +872,7 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
     case 0x001e: /* GetDemandPageInfo */
       {
 	 DWORD dinfo = (DWORD)stack32_pop( context );
-         DWORD flags = (DWORD)stack32_pop( context );   
+         DWORD flags = (DWORD)stack32_pop( context );
 
 	 /* GetDemandPageInfo is supposed to fill out the struct at
           * "dinfo" with various low-level memory management information.
@@ -903,10 +903,10 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
  * NOTES
  *   These ioctls are used by 'MSNET32.DLL'.
  *
- *   I have been unable to uncover any documentation about the ioctls so 
+ *   I have been unable to uncover any documentation about the ioctls so
  *   the implementation of the cases IFS_IOCTL_21 and IFS_IOCTL_2F are
  *   based on reasonable guesses on information found in the Windows 95 DDK.
- *   
+ *
  */
 
 /*
@@ -920,13 +920,13 @@ static DWORD VxDCall_VMM( DWORD service, CONTEXT86 *context )
 
 struct win32apireq {
 	unsigned long 	ar_proid;
-	unsigned long  	ar_eax;		
-	unsigned long  	ar_ebx;	
-	unsigned long  	ar_ecx;	
-	unsigned long  	ar_edx;	
-	unsigned long  	ar_esi;	
+	unsigned long  	ar_eax;
+	unsigned long  	ar_ebx;
+	unsigned long  	ar_ecx;
+	unsigned long  	ar_edx;
+	unsigned long  	ar_esi;
 	unsigned long  	ar_edi;
-	unsigned long  	ar_ebp;		
+	unsigned long  	ar_ebp;
 	unsigned short 	ar_error;
 	unsigned short  ar_pad;
 };
@@ -1000,8 +1000,8 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 			pIn->ar_proid, pIn->ar_eax, pIn->ar_ebx, pIn->ar_ecx,
 			pIn->ar_edx, pIn->ar_esi, pIn->ar_edi, pIn->ar_ebp,
 			pIn->ar_error, pIn->ar_pad
-		);				
-		
+		);
+
 		win32apieq_2_CONTEXT(pIn,&cxt);
 
 		if(dwIoControlCode==IFS_IOCTL_21)
@@ -1010,9 +1010,9 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 		} else {
 			INT_Int2fHandler(&cxt); /* Call int 2Fh */
 		}
-		
+
 		CONTEXT_2_win32apieq(&cxt,pOut);
-			
+
         retv = TRUE;
 	} break;
 	case IFS_IOCTL_GET_RES:{
@@ -1022,7 +1022,7 @@ static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 	case IFS_IOCTL_GET_NETPRO_NAME_A:{
         FIXME( "Control 'IFS_IOCTL_GET_NETPRO_NAME_A' not implemented\n");
         retv = FALSE;
-	} break;	 
+	} break;
     default:
         FIXME( "Control %ld not implemented\n", dwIoControlCode);
         retv = FALSE;
@@ -1068,11 +1068,11 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
     {
 	DWORD callnum = (DWORD) stack32_pop(context);
         DWORD parm    = (DWORD) stack32_pop(context);
- 
+
         TRACE("Int31/DPMI dispatch(%08lx)\n", callnum);
 
 	AX_reg(context) = callnum;
-        CX_reg(context) = parm;  
+        CX_reg(context) = parm;
 	INT_Int31Handler(context);
 
 	return LOWORD(context->Eax);
@@ -1094,12 +1094,12 @@ static DWORD VxDCall_VWin32( DWORD service, CONTEXT86 *context )
 
   return 0xffffffff;
 }
-                         
+
 
 /***********************************************************************
  *           DeviceIo_VCD
  */
-static BOOL DeviceIo_VCD(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -1125,7 +1125,7 @@ static BOOL DeviceIo_VCD(DWORD dwIoControlCode,
     return retv;
 }
 
- 
+
 /***********************************************************************
  *           DeviceIo_VWin32
  */
@@ -1386,7 +1386,7 @@ static VOID VWIN32_Int13Handler( DIOC_REGISTERS *regs)
     }
 }
 
-static BOOL DeviceIo_VWin32(DWORD dwIoControlCode, 
+static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -1422,7 +1422,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
                "edx=0x%08lx, esi=0x%08lx, edi=0x%08lx \n",
                (dwIoControlCode == VWIN32_DIOC_DOS_IOCTL)? "VWIN32_DIOC_DOS_IOCTL" :
                (dwIoControlCode == VWIN32_DIOC_DOS_INT25)? "VWIN32_DIOC_DOS_INT25" :
-               (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" : 
+               (dwIoControlCode == VWIN32_DIOC_DOS_INT26)? "VWIN32_DIOC_DOS_INT26" :
                (dwIoControlCode == VWIN32_DIOC_DOS_DRIVEINFO)? "VWIN32_DIOC_DOS_DRIVEINFO" :  "???",
                pIn->reg_EAX, pIn->reg_EBX, pIn->reg_ECX,
                pIn->reg_EDX, pIn->reg_ESI, pIn->reg_EDI );
@@ -1461,7 +1461,7 @@ static BOOL DeviceIo_VWin32(DWORD dwIoControlCode,
 }
 
 /* this is the main multimedia device loader */
-static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -1484,7 +1484,7 @@ static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 	return FALSE;
 }
 /* this is used by some Origin games */
-static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode, 
+static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
@@ -1510,7 +1510,7 @@ static BOOL DeviceIo_MONODEBG(DWORD dwIoControlCode,
 	return TRUE;
 }
 /* pccard */
-static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode, 
+static BOOL DeviceIo_PCCARD (DWORD dwIoControlCode,
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,

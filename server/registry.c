@@ -465,7 +465,7 @@ static void free_subkey( struct key *parent, int index )
     key->flags |= KEY_DELETED;
     key->parent = NULL;
     release_object( key );
-    
+
     /* try to shrink the array */
     nb_subkeys = key->nb_subkeys;
     if (nb_subkeys > MIN_SUBKEYS && key->last_subkey < nb_subkeys / 2)
@@ -1062,7 +1062,7 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 {
     struct data_type { const char *tag; int len; int type; int parse_type; };
 
-    static const struct data_type data_types[] = 
+    static const struct data_type data_types[] =
     {                   /* actual type */  /* type to assume for parsing */
         { "\"",        1,   REG_SZ,              REG_SZ },
         { "str:\"",    5,   REG_SZ,              REG_SZ },

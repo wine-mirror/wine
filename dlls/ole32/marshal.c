@@ -540,8 +540,8 @@ release_marshal:
 /***********************************************************************
  *		CoMarshalInterThreadInterfaceInStream	[OLE32.33]
  *
- * Marshal interfaces across threads. We don't have a thread distinction, 
- * meaning most interfaces just work across different threads, the RPC 
+ * Marshal interfaces across threads. We don't have a thread distinction,
+ * meaning most interfaces just work across different threads, the RPC
  * handles it.
  */
 HRESULT WINAPI
@@ -600,7 +600,7 @@ SMCF_CreateInstance(
   if (IsEqualIID(riid,&IID_IMarshal)) {
       StdMarshalImpl	*dm;
       dm=(StdMarshalImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
-      if (!dm) 
+      if (!dm)
 	  return E_FAIL;
       dm->lpvtbl	= &stdmvtbl;
       dm->ref		= 1;

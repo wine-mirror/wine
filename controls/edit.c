@@ -214,7 +214,7 @@ static void	EDIT_MoveWordBackward(HWND hwnd, EDITSTATE *es, BOOL extend);
 static void	EDIT_MoveWordForward(HWND hwnd, EDITSTATE *es, BOOL extend);
 static void	EDIT_PaintLine(HWND hwnd, EDITSTATE *es, HDC hdc, INT line, BOOL rev);
 static INT	EDIT_PaintText(EDITSTATE *es, HDC hdc, INT x, INT y, INT line, INT col, INT count, BOOL rev);
-static void	EDIT_SetCaretPos(HWND hwnd, EDITSTATE *es, INT pos, BOOL after_wrap); 
+static void	EDIT_SetCaretPos(HWND hwnd, EDITSTATE *es, INT pos, BOOL after_wrap);
 static void	EDIT_SetRectNP(HWND hwnd, EDITSTATE *es, LPRECT lprc);
 static void	EDIT_UnlockBuffer(HWND hwnd, EDITSTATE *es, BOOL force);
 static void	EDIT_UpdateScrollInfo(HWND hwnd, EDITSTATE *es);
@@ -357,16 +357,16 @@ static inline void EDIT_WM_Cut(HWND hwnd, EDITSTATE *es)
  *
  * Returns the window version in case Wine emulates a later version
  * of windows then the application expects.
- * 
+ *
  * In a number of cases when windows runs an application that was
  * designed for an earlier windows version, windows reverts
  * to "old" behaviour of that earlier version.
- * 
- * An example is a disabled  edit control that needs to be painted. 
- * Old style behaviour is to send a WM_CTLCOLOREDIT message. This was 
- * changed in Win95, NT4.0 by a WM_CTLCOLORSTATIC message _only_ for 
+ *
+ * An example is a disabled  edit control that needs to be painted.
+ * Old style behaviour is to send a WM_CTLCOLOREDIT message. This was
+ * changed in Win95, NT4.0 by a WM_CTLCOLORSTATIC message _only_ for
  * applications with an expected version 0f 4.0 or higher.
- * 
+ *
  */
 static DWORD get_app_version(void)
 {
@@ -382,7 +382,7 @@ static DWORD get_app_version(void)
         dwEmulatedVersion = MAKELONG( info.dwMinorVersion, info.dwMajorVersion );
         /* FIXME: this may not be 100% correct; see discussion on the
          * wine developer list in Nov 1999 */
-        version = dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion; 
+        version = dwProcVersion < dwEmulatedVersion ? dwProcVersion : dwEmulatedVersion;
     }
     return version;
 }
@@ -1002,8 +1002,8 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		result = EDIT_WM_LButtonUp(hwnd, es);
 		break;
 
-	case WM_MBUTTONDOWN:                        
-  		DPRINTF_EDIT_MSG32("WM_MBUTTONDOWN");    
+	case WM_MBUTTONDOWN:
+  		DPRINTF_EDIT_MSG32("WM_MBUTTONDOWN");
   		result = EDIT_WM_MButtonDown(hwnd);
 		break;
 
@@ -1065,7 +1065,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		DPRINTF_EDIT_MSG32("WM_STYLECHANGED");
                 result = EDIT_WM_StyleChanged (hwnd, es, wParam, (const STYLESTRUCT *)lParam);
                 break;
-               
+
         case WM_STYLECHANGING:
 		DPRINTF_EDIT_MSG32("WM_STYLECHANGING");
                 result = 0; /* See EDIT_WM_StyleChanged */
@@ -1173,11 +1173,11 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 	/* Find starting line. istart must lie inside an existing line or
 	 * at the end of buffer */
 	do {
-		if (istart < current_line->index + current_line->length || 
+		if (istart < current_line->index + current_line->length ||
 				current_line->ending == END_0)
 			break;
-		
-		previous_line = current_line;	
+
+		previous_line = current_line;
 		current_line = current_line->next;
 		line_index++;
 	} while (current_line);
@@ -1208,7 +1208,7 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		{
 			if (!current_line || current_line->index + delta > current_position - es->text)
 			{
-				/* The buffer has been expanded, create a new line and 
+				/* The buffer has been expanded, create a new line and
 				   insert it into the link list */
 				LINEDEF *new_line = HeapAlloc(GetProcessHeap(), 0, sizeof(LINEDEF));
 				new_line->next = previous_line->next;
@@ -1288,15 +1288,15 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 					prev = 1;
 			}
 
-			/* If the first line we are calculating, wrapped before istart, we must 
+			/* If the first line we are calculating, wrapped before istart, we must
 			 * adjust istart in order for this to be reflected in the update region. */
 			if (current_line->index == nstart_index && istart > current_line->index + prev)
 				istart = current_line->index + prev;
 			/* else if we are updating the previous line before the first line we
 			 * are re-calculating and it expanded */
-			else if (current_line == start_line && 
+			else if (current_line == start_line &&
 					current_line->index != nstart_index && orig_net_length < prev)
-			{ 
+			{
 			  /* Line expanded due to an upwards line wrap so we must partially include
 			   * previous line in update region */
 				nstart_line = line_index;
@@ -1361,16 +1361,16 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 	if (hrgn)
 	{
 		HRGN tmphrgn;
-	   /* 
+	   /*
 		* We calculate two rectangles. One for the first line which may have
 		* an indent with respect to the format rect. The other is a format-width
 		* rectangle that spans the rest of the lines that changed or moved.
 		*/
-		rc.top = es->format_rect.top + nstart_line * es->line_height - 
+		rc.top = es->format_rect.top + nstart_line * es->line_height -
 			(es->y_offset * es->line_height); /* Adjust for vertical scrollbar */
 		rc.bottom = rc.top + es->line_height;
-		rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc, 
-					es->text + nstart_index, istart - nstart_index, 
+		rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc,
+					es->text + nstart_index, istart - nstart_index,
 					es->tabs_count, es->tabs)) - es->x_offset; /* Adjust for horz scroll */
 		rc.right = es->format_rect.right;
 		SetRectRgn(hrgn, rc.left, rc.top, rc.right, rc.bottom);
@@ -1378,9 +1378,9 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		rc.top = rc.bottom;
 		rc.left = es->format_rect.left;
 		rc.right = es->format_rect.right;
-	   /* 
-		* If lines were added or removed we must re-paint the remainder of the 
-	    * lines since the remaining lines were either shifted up or down. 
+	   /*
+		* If lines were added or removed we must re-paint the remainder of the
+	    * lines since the remaining lines were either shifted up or down.
 		*/
 		if (line_count < es->line_count) /* We added lines */
 			rc.bottom = es->line_count * es->line_height;
@@ -2083,7 +2083,7 @@ static void EDIT_MovePageUp_ML(HWND hwnd, EDITSTATE *es, BOOL extend)
  *	Move the caret one line up, on a column with the nearest
  *	x coordinate on the screen (might be a different column).
  *
- */ 
+ */
 static void EDIT_MoveUp_ML(HWND hwnd, EDITSTATE *es, BOOL extend)
 {
 	INT s = es->selection_start;
@@ -2533,7 +2533,7 @@ static INT CALLBACK EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT actio
  *	EM_CHARFROMPOS
  *
  *      returns line number (not index) in high-order word of result.
- *      NB : Q137805 is unclear about this. POINT * pointer in lParam apply 
+ *      NB : Q137805 is unclear about this. POINT * pointer in lParam apply
  *      to Richedit, not to the edit control. Original documentation is valid.
  *	FIXME: do the specs mean to return -1 if outside client area or
  *		if outside formatting rectangle ???
@@ -3104,7 +3104,7 @@ static void EDIT_EM_ReplaceSel(HWND hwnd, EDITSTATE *es, BOOL can_undo, LPCWSTR 
 		INT s = min(es->selection_start, es->selection_end);
 
 		hrgn = CreateRectRgn(0, 0, 0, 0);
-		EDIT_BuildLineDefs_ML(hwnd, es, s, s + strl, 
+		EDIT_BuildLineDefs_ML(hwnd, es, s, s + strl,
 				strl - abs(es->selection_end - es->selection_start), hrgn);
 	}
 	else
@@ -3114,7 +3114,7 @@ static void EDIT_EM_ReplaceSel(HWND hwnd, EDITSTATE *es, BOOL can_undo, LPCWSTR 
 	es->flags |= EF_MODIFIED;
 	if (send_update) es->flags |= EF_UPDATE;
 	EDIT_EM_ScrollCaret(hwnd, es);
-	
+
 	/* force scroll info update */
 	EDIT_UpdateScrollInfo(hwnd, es);
 
@@ -3431,7 +3431,7 @@ static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
 /*********************************************************************
  *
  *	EM_SETMARGINS
- * 
+ *
  * EC_USEFONTINFO is used as a left or right value i.e. lParam and not as an
  * action wParam despite what the docs say. EC_USEFONTINFO means one third
  * of the char's width, according to the new docs.
@@ -3521,11 +3521,11 @@ static void EDIT_EM_SetSel(HWND hwnd, EDITSTATE *es, UINT start, UINT end, BOOL 
 	if (end != old_start)
         {
 /*
- * One can also do 
+ * One can also do
  *          ORDER_UINT32(end, old_start);
  *          EDIT_InvalidateText(hwnd, es, start, end);
  *          EDIT_InvalidateText(hwnd, es, old_start, old_end);
- * in place of the following if statement.                          
+ * in place of the following if statement.
  */
             if (old_start > end )
             {
@@ -3723,7 +3723,7 @@ static void EDIT_WM_Char(HWND hwnd, EDITSTATE *es, WCHAR c)
 	case 0x18: /* ^X */
 		SendMessageW(hwnd, WM_CUT, 0, 0);
 		break;
-	
+
 	default:
 		if (!(es->style & ES_READONLY) && (c >= ' ') && (c != 127)) {
 			WCHAR str[2];
@@ -4273,7 +4273,7 @@ static LRESULT EDIT_WM_KeyDown(HWND hwnd, EDITSTATE *es, INT key)
 		DWORD dw = SendMessageW( hwndParent, DM_GETDEFID, 0, 0 );
 		if (HIWORD(dw) == DC_HASDEFID)
 		{
-		    SendMessageW( hwndParent, WM_COMMAND, 
+		    SendMessageW( hwndParent, WM_COMMAND,
 				  MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
  			      (LPARAM)GetDlgItem( hwndParent, LOWORD(dw) ) );
 		}
@@ -4376,8 +4376,8 @@ static LRESULT EDIT_WM_LButtonUp(HWND hwndSelf, EDITSTATE *es)
  *
  */
 static LRESULT EDIT_WM_MButtonDown(HWND hwnd)
-{  
-    SendMessageW(hwnd,WM_PASTE,0,0);  
+{
+    SendMessageW(hwnd,WM_PASTE,0,0);
     return 0;
 }
 
@@ -4507,10 +4507,10 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, DWORD style, HWND hwndParent, BOOL un
 	es->line_count = 1;
 
 	/*
-	 * In Win95 look and feel, the WS_BORDER style is replaced by the 
-	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit 
+	 * In Win95 look and feel, the WS_BORDER style is replaced by the
+	 * WS_EX_CLIENTEDGE style for the edit control. This gives the edit
 	 * control a non client area.  Not always.  This coordinates in some
-         * way with the window creation code in dialog.c  When making 
+         * way with the window creation code in dialog.c  When making
          * modifications please ensure that the code still works for edit
          * controls created directly with style 0x50800000, exStyle 0 (
          * which should have a single pixel border)
@@ -4643,7 +4643,7 @@ static void EDIT_WM_SetFocus(HWND hwnd, EDITSTATE *es)
  *
  *	WM_SETFONT
  *
- * With Win95 look the margins are set to default font value unless 
+ * With Win95 look the margins are set to default font value unless
  * the system font (font == 0) is being set, in which case they are left
  * unchanged.
  *
@@ -4773,7 +4773,7 @@ static void EDIT_WM_Size(HWND hwnd, EDITSTATE *es, UINT action, INT width, INT h
  *
  * It appears that the Windows version of the edit control allows the style
  * (as retrieved by GetWindowLong) to be any value and maintains an internal
- * style variable which will generally be different.  In this function we 
+ * style variable which will generally be different.  In this function we
  * update the internal style based on what changed in the externally visible
  * style.
  *
@@ -4795,7 +4795,7 @@ static LRESULT  EDIT_WM_StyleChanged (HWND hwnd,
                  */
                 style_change_mask = ES_UPPERCASE | ES_LOWERCASE |
                                     ES_NUMBER;
-                if (es->style & ES_MULTILINE) 
+                if (es->style & ES_MULTILINE)
                         style_change_mask |= ES_WANTRETURN;
 
                 new_style = style->styleNew & style_change_mask;
@@ -4809,7 +4809,7 @@ static LRESULT  EDIT_WM_StyleChanged (HWND hwnd,
                 }  else if (new_style & ES_LOWERCASE) {
                         new_style &= ~ES_UPPERCASE;
                 }
-        
+
                 es->style = (es->style & ~style_change_mask) | new_style;
         } else if (GWL_EXSTYLE == which) {
                 ; /* FIXME - what is needed here */

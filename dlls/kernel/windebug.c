@@ -39,7 +39,7 @@ void WINAPI WinNotify16(CONTEXT86 *context)
 		case 0x000E:
 		case 0x0060:	/* do nothing */
 				break;
-		case 0x0062: 
+		case 0x0062:
 				break;
 		case 0x0063:	/* do something complicated */
 				break;
@@ -54,5 +54,5 @@ void WINAPI WinNotify16(CONTEXT86 *context)
 				break;
 		default:
 				break;
-	}	
+	}
 }

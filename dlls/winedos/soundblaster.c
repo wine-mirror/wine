@@ -28,7 +28,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(sblaster);
 
 /* Board Configuration */
-/* FIXME: Should be in a config file */ 
+/* FIXME: Should be in a config file */
 #define SB_IRQ 5
 #define SB_IRQ_PRI 11
 #define SB_DMA 1
@@ -39,15 +39,15 @@ static int SampleRate;
 static int SamplesCount;
 static BYTE DSP_Command[256];  /* Store param numbers in bytes for each command */
 static BYTE DSP_InBuffer[10];  /* Store DSP command bytes parameters from host */
-static int InSize;             /* Nb of bytes in InBuffer */ 
+static int InSize;             /* Nb of bytes in InBuffer */
 static BYTE DSP_OutBuffer[10]; /* Store DSP information bytes to host */
-static int OutSize;            /* Nb of bytes in InBuffer */ 
+static int OutSize;            /* Nb of bytes in InBuffer */
 static int command;            /* Current command */
 static int end_sound_loop = 0;
 static int dma_enable = 0;
 
 /* The maximum size of a dma transfer can be 65536 */
-#define DMATRFSIZE 1024 
+#define DMATRFSIZE 1024
 
 /* DMA can perform 8 or 16-bit transfer */
 static BYTE dma_buffer[DMATRFSIZE*2];
@@ -79,7 +79,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
     DWORD dwbyteswritten2 = 0;
     int size;
 
-    /* FIXME: this loop must be improved */ 
+    /* FIXME: this loop must be improved */
     while(!end_sound_loop)
     {
         Sleep(10);
@@ -212,11 +212,11 @@ void SB_Reset()
     /* Put a garbage value in the output buffer */
     OutSize = 1;
     if (SB_Init())
-        /* All right, let's put the magic value for autodetection */ 
+        /* All right, let's put the magic value for autodetection */
         DSP_OutBuffer[0] = 0xaa;
     else
         /* Something is wrong, put 0 to failed audetection */
-        DSP_OutBuffer[0] = 0x00; 
+        DSP_OutBuffer[0] = 0x00;
 }
 
 /* Find a standard sampling rate for DirectSound */
@@ -254,7 +254,7 @@ void SB_ioport_out( WORD port, BYTE val )
 	   /* Fill the input buffer the command parameters if any */
            DSP_InBuffer[InSize++]=val;
         else {
-	    /* Process command */ 
+	    /* Process command */
             switch(command)
             {
             case 0x10: /* SB */
@@ -304,7 +304,7 @@ void SB_ioport_out( WORD port, BYTE val )
             case 0xE1: /* SB */
                 FIXME("DSP Version - Not Implemented\n");
                 break;
-            case 0xF2: /* SB */ 
+            case 0xF2: /* SB */
                 TRACE("IRQ Request (8-bit)\n");
                 DOSVM_QueueEvent(SB_IRQ,SB_IRQ_PRI,NULL,NULL);
                 break;
@@ -322,7 +322,7 @@ void SB_ioport_out( WORD port, BYTE val )
                     case 0xB:
 		        FIXME("Generic DAC/ADC 8-bit not supported\n");
                         SampleMode = 0;
-                        break;                    
+                        break;
                     case 0xC:
 		        FIXME("Generic DAC/ADC 16-bit not supported\n");
                         SampleMode = 1;
@@ -361,7 +361,7 @@ BYTE SB_ioport_in( WORD port )
       if (OutSize)
           res = DSP_OutBuffer[--OutSize];
       else
-	  /* return the last byte */ 
+	  /* return the last byte */
 	  res = DSP_OutBuffer[0];
       break;
     /* DSP - Write Buffer Status */

@@ -54,7 +54,7 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
  *
  * RETURNS
  *    S_OK 		success
- *    E_OUTOFMEMORY	out of memory 
+ *    E_OUTOFMEMORY	out of memory
  *    MK_E_SYNTAX	not a valid url
  *
  */
@@ -76,7 +76,7 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
  * RETURNS
  *    S_OK 		success
  *    E_INVALIDARG  invalid argument(s)
- *    E_OUTOFMEMORY	out of memory 
+ *    E_OUTOFMEMORY	out of memory
  *
  */
 HRESULT WINAPI RegisterBindStatusCallback(
@@ -100,7 +100,7 @@ HRESULT WINAPI RegisterBindStatusCallback(
         else
             IBindStatusCallback_Release(prev);
     }
-    
+
 	return IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown *)pbsc);
 }
 

@@ -2,7 +2,7 @@
  * X11 keyboard driver
  *
  * Copyright 1993 Bob Amstadt
- * Copyright 1996 Albrecht Kleine 
+ * Copyright 1996 Albrecht Kleine
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
@@ -728,8 +728,8 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
 
     TSXLookupString(e, NULL, 0, &keysym, NULL);
 
-    if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF) 
-	&& (e->state & NumLockMask)) 
+    if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF)
+	&& (e->state & NumLockMask))
         /* Only the Keypad keys 0-9 and . send different keysyms
          * depending on the NumLock state */
         return nonchar_key_vkey[keysym & 0xFF];
@@ -788,8 +788,8 @@ static void KEYBOARD_GenerateMsg( WORD vkey, WORD scan, int Evtype, DWORD event_
 	        send_keyboard_input( vkey, scan, down, event_time );
 	        send_keyboard_input( vkey, scan, up, event_time );
 		*State=FALSE;
-		pKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */ 
-	      } 
+		pKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */
+	      }
 	  }
 	else /* it was OFF */
 	  if (Evtype==KeyPress)
@@ -865,7 +865,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XKeymapEvent *event )
  */
 void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 {
-    char Str[24]; 
+    char Str[24];
     KeySym keysym;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
@@ -894,7 +894,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
        index instead of the modifier mask. The group index is set in bits
        13-14 of the state field in the XKeyEvent structure. So if AltGr is
        pressed, look if the group index is diferent than 0. From XKB
-       extension documentation, the group index should for AltGr should 
+       extension documentation, the group index should for AltGr should
        be 2 (event->state = 0x2000). It's probably better to not assume a
        predefined group index and find it dynamically
 
@@ -908,7 +908,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
 	ksname = TSXKeysymToString(keysym);
 	if (!ksname)
 	  ksname = "No Name";
-	TRACE_(key)("%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
+	TRACE_(key)("%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n",
                     (event->type == KeyPress) ? "KeyPress" : "KeyRelease",
                     keysym, ksname, ascii_chars, Str[0] & 0xff, Str);
     }
@@ -922,7 +922,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
    {
     switch (vkey & 0xff)
     {
-    case VK_NUMLOCK:    
+    case VK_NUMLOCK:
       KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, event->type, event_time );
       break;
     case VK_CAPITAL:
@@ -933,7 +933,7 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     default:
         /* Adjust the NUMLOCK state if it has been changed outside wine */
 	if (!(pKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
-	  { 
+	  {
 	    TRACE("Adjusting NumLock state. \n");
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyPress, event_time );
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, 0x45, KeyRelease, event_time );
@@ -1105,12 +1105,12 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
     for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
     {
         int j;
-        
+
         for (j = 0; j < mmp->max_keypermod; j += 1, kcp += 1)
 	    if (*kcp)
             {
 		int k;
-                
+
 		for (k = 0; k < keysyms_per_keycode; k += 1)
                     if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
 		    {
@@ -1221,7 +1221,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                 }
 
                 vkey = OEMvkey;
-		  
+
                 if (TRACE_ON(keyboard))
                 {
                     TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
@@ -1230,7 +1230,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
                     for (i = 0; i < keysyms_per_keycode; i += 1)
                     {
                         char	*ksname;
-                        
+
                         keysym = TSXLookupKeysym(&e2, i);
                         ksname = TSXKeysymToString(keysym);
                         if (!ksname)
@@ -1286,14 +1286,14 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
 {
         Display *display = thread_display();
 	KeyCode keycode;
-	KeySym keysym;    	
+	KeySym keysym;
 	int i,index;
 	int highbyte=0;
 
 	/* char->keysym (same for ANSI chars) */
 	keysym=(unsigned char) cChar;/* (!) cChar is signed */
 	if (keysym<=27) keysym+=0xFF00;/*special chars : return, backspace...*/
-	
+
 	keycode = TSXKeysymToKeycode(display, keysym);  /* keysym -> keycode */
 	if (!keycode)
 	{ /* It didn't work ... let's try with deadchar code. */
@@ -1302,7 +1302,7 @@ WORD X11DRV_VkKeyScan(CHAR cChar)
 
 	TRACE("VkKeyScan '%c'(%#lx, %lu): got keycode %#.2x\n",
               cChar,keysym,keysym,keycode);
-	
+
 	if (keycode)
 	  {
 	    for (index=-1, i=0; (i<8) && (index<0); i++) /* find shift state */
@@ -1384,7 +1384,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 
 			if ((wCode>=VK_NUMPAD0) && (wCode<=VK_NUMPAD9))
 			  e.keycode = TSXKeysymToKeycode(e.display, wCode-VK_NUMPAD0+XK_KP_0);
-          
+
 			if (wCode==VK_DECIMAL)
 			  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
 
@@ -1397,7 +1397,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 
 			if (TSXLookupString(&e, s, 2, &keysym, NULL))
 			  returnMVK (*s);
-			
+
 			TRACE("returning no ANSI.\n");
 			return 0;
 			}
@@ -1409,7 +1409,7 @@ UINT X11DRV_MapVirtualKey(UINT wCode, UINT wMapType)
 
 		default: /* reserved */
 			WARN("Unknown wMapType %d !\n", wMapType);
-			return 0;	
+			return 0;
 	}
 	return 0;
 }
@@ -1424,7 +1424,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
   int keyi;
   KeySym keys;
   char *name;
-	
+
   scanCode = lParam >> 16;
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
@@ -1468,7 +1468,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
         *lpBuffer = toupper((char)ansi);
           *(lpBuffer+1) = 0;
           return 1;
-        } 
+        }
      else
         return 0;
   }
@@ -1577,7 +1577,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
 #endif
 /* FIXME: I don't know this three.
 	    case XK_dead_iota :
-	        return 'i';	 
+	        return 'i';
 	    case XK_dead_voiced_sound :
 	        return 'v';
 	    case XK_dead_semivoiced_sound :
@@ -1666,7 +1666,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
     if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
         e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
-          
+
     if (virtKey==VK_DECIMAL)
         e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
 
@@ -1715,7 +1715,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             ret = 0;
         }
 
-        /* more areas where X returns characters but Windows does not 
+        /* more areas where X returns characters but Windows does not
            CTRL + number or CTRL + symbol*/
         if (e.state & ControlMask)
         {

@@ -109,14 +109,14 @@ DEBUG_DoDisplay(void)
 	      DEBUG_Printf(DBG_CHN_MESG, " = ");
 	      if( displaypoints[i].format == 'i' )
 		{
-		  DEBUG_ExamineMemory( &value, 
-				       displaypoints[i].count, 
+		  DEBUG_ExamineMemory( &value,
+				       displaypoints[i].count,
 				       displaypoints[i].format);
 		}
 	      else
 		{
-		  DEBUG_Print( &value, 
-			       displaypoints[i].count, 
+		  DEBUG_Print( &value,
+			       displaypoints[i].count,
 			       displaypoints[i].format, 0);
 		}
 	    }
@@ -130,7 +130,7 @@ int
 DEBUG_DelDisplay(int displaynum)
 {
   int i;
-  
+
   if( displaynum >= MAX_DISPLAY || displaynum == 0 || displaynum < -1 )
     {
       DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");

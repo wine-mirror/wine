@@ -70,7 +70,7 @@ typedef struct {
 
 #define PD32_PRINTER_STATUS_READY             1536
 #define PD32_PRINTER_STATUS_PAUSED            1537
-#define PD32_PRINTER_STATUS_ERROR             1538 
+#define PD32_PRINTER_STATUS_ERROR             1538
 #define PD32_PRINTER_STATUS_PENDING_DELETION  1539
 #define PD32_PRINTER_STATUS_PAPER_JAM         1540
 #define PD32_PRINTER_STATUS_PAPER_OUT         1541
@@ -183,7 +183,7 @@ typedef struct {
 } FINDREPLACE16, *LPFINDREPLACE16;
 
 typedef UINT16 (CALLBACK *LPCFHOOKPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
-typedef struct 
+typedef struct
 {
 	DWORD			lStructSize;
 	HWND16			hwndOwner;          /* caller's window handle   */

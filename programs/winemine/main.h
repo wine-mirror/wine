@@ -69,14 +69,14 @@ typedef struct tagBOARD
     RECT mines_rect;
     RECT face_rect;
     RECT timer_rect;
-    RECT counter_rect;    
+    RECT counter_rect;
 
     unsigned width;
     unsigned height;
     POINT pos;
 
     unsigned time;
-    unsigned num_flags;     
+    unsigned num_flags;
     unsigned boxes_left;
     unsigned num_mines;
 
@@ -89,7 +89,7 @@ typedef struct tagBOARD
     DIFFICULTY difficulty;
 
     POINT press;
-    
+
     /* defines for mb */
     #define MB_NONE 0
     #define MB_LEFTDOWN 1
@@ -99,7 +99,7 @@ typedef struct tagBOARD
     #define MB_BOTHDOWN 5
     #define MB_BOTHUP 6
     unsigned mb;
-    
+
     FACE_BMP face_bmp;
     GAME_STATUS status;
     struct BOX_STRUCT

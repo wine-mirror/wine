@@ -155,7 +155,7 @@ VHSTR WINAPI vsmStringFind16(LPCSTR lpszName)
 
 /***********************************************************************
  *		vsmGetStringName (SETUPX.205)
- * 
+ *
  * Pretty correct, I guess
  */
 INT16 WINAPI vsmGetStringName16(VHSTR vhstr, LPSTR lpszBuffer, int cbBuffer)
@@ -206,7 +206,7 @@ RETERR16 VCP_VirtnodeCreate(LPVCPFILESPEC vfsSrc, LPVCPFILESPEC vfsDst, WORD fl,
     while (vn_last < vn_num)
     {
 	if (pvnlist[vn_last] == NULL)
-	    break;	
+	    break;
 	vn_last++;
     }
     heap = GetProcessHeap();
@@ -219,7 +219,7 @@ RETERR16 VCP_VirtnodeCreate(LPVCPFILESPEC vfsSrc, LPVCPFILESPEC vfsDst, WORD fl,
     pvnlist[vn_last] = HeapAlloc(heap, HEAP_ZERO_MEMORY, sizeof(VIRTNODE));
     lpvn = pvnlist[vn_last];
     vn_last++;
-    
+
     lpvn->cbSize = sizeof(VIRTNODE);
 
     if (vfsSrc)
@@ -292,7 +292,7 @@ RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef)
 
 /***********************************************************************
  *		VcpQueueCopy		[SETUPX.13]
- *		
+ *
  * lpExpandVtbl seems to be deprecated.
  * fl are the CNFL_xxx and VNFL_xxx flags.
  * lParam are the VNLP_xxx flags.
@@ -310,7 +310,7 @@ RETERR16 WINAPI VcpQueueCopy16(
     if (!VCP_opened)
 	return ERR_VCP_NOTOPEN;
 
-    TRACE("srcdir: %s, srcfile: %s, dstdir: %s, dstfile: %s\n", 
+    TRACE("srcdir: %s, srcfile: %s, dstdir: %s, dstfile: %s\n",
       lpszSrcDir, lpszSrcFileName, lpszDstDir, lpszDstFileName);
 
     TRACE("ldidSrc == %d, ldidDst == %d\n", ldidSrc, ldidDst);
@@ -354,7 +354,7 @@ RETERR16 WINAPI VcpQueueDelete16(
 
 /***********************************************************************
  *		VcpQueueRename		[SETUPX.204]
- *		
+ *
  */
 RETERR16 WINAPI VcpQueueRename16(
 	LPCSTR lpszSrcFileName, LPCSTR lpszDstFileName,
@@ -478,7 +478,7 @@ RETERR16 VCP_CopyFiles(void)
 	vcp_status.prgFileWrite.dwSoFar++;
 	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
     }
-    
+
     cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
     return res;
 }
@@ -511,7 +511,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
 
     /* FIXME: needs to sort virtnodes in case VCPFL_INSPECIFIEDORDER
      * is not set. This is done by VCP_CALLBACK(VCPM_NODECOMPARE) */
-    
+
     TRACE("#1\n");
     memset(&vcp_status, 0, sizeof(VCPSTATUS));
     /* yes, vcp_status.cbSize is 0 ! */
@@ -524,7 +524,7 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     if (res != OK)
 	return res; /* is this ok ? */
     VCP_CopyFiles();
-    
+
     TRACE("#5\n");
     cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATCLOSEEND, 0, 0, VCP_MsgRef);
     TRACE("#6\n");
@@ -637,7 +637,7 @@ void VCP_UI_RegisterProgressClass(void)
     wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = (HBRUSH)NULL;
     wndClass.lpszClassName = "setupx_progress";
-  
+
     RegisterClassA (&wndClass);
 }
 
@@ -701,7 +701,7 @@ RETERR16 VCP_UI_CopyStart(void)
     if (RegSetValueExA(hKeyConflict, "BackupDirectory", 0, REG_SZ, (LPBYTE)buf, strlen(buf)+1))
 	return VCPN_FAIL;
     RegCloseKey(hKeyConflict);
-    
+
     return VCPN_OK;
 }
 

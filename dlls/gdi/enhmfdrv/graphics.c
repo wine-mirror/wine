@@ -138,7 +138,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     bounds.top    = min(yinterStart, yinterEnd);
     bounds.right  = max(xinterStart, xinterEnd);
     bounds.bottom = max(yinterStart, yinterEnd);
-    
+
     for(i = 0; i <= 8; i++) {
         if(i * M_PI / 2 < angleStart) /* loop until we're past start */
 	    continue;
@@ -148,7 +148,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 	/* the arc touches the rectangle at the start of quadrant i, so adjust
 	   BBox to reflect this. */
 
-	switch(i % 4) { 
+	switch(i % 4) {
 	case 0:
 	    bounds.right = right;
 	    break;
@@ -283,7 +283,7 @@ EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           EMFDRV_RoundRect
  */
-BOOL 
+BOOL
 EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
@@ -343,7 +343,7 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
     emr = HeapAlloc( GetProcessHeap(), 0, size );
     emr->emr.iType = iType;
     emr->emr.nSize = size;
-    
+
     emr->rclBounds.left = emr->rclBounds.right = pt[0].x;
     emr->rclBounds.top = emr->rclBounds.bottom = pt[0].y;
 
@@ -394,7 +394,7 @@ EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
  *
  * Helper for EMFDRV_PolyPoly{line|gon}
  */
-static BOOL 
+static BOOL
 EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys,
 			DWORD iType)
 {
@@ -418,8 +418,8 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 	    pts++;
 	}
     }
-    
-    size = sizeof(EMRPOLYPOLYLINE) + (polys - 1) * sizeof(DWORD) + 
+
+    size = sizeof(EMRPOLYPOLYLINE) + (polys - 1) * sizeof(DWORD) +
       (cptl - 1) * sizeof(POINTL);
 
     emr = HeapAlloc( GetProcessHeap(), 0, size );
@@ -441,7 +441,7 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 /**********************************************************************
  *          EMFDRV_PolyPolyline
  */
-BOOL 
+BOOL
 EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
 {
     return EMFDRV_PolyPolylinegon( dev, pt, (INT *)counts, polys,
@@ -451,7 +451,7 @@ EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD pol
 /**********************************************************************
  *          EMFDRV_PolyPolygon
  */
-BOOL 
+BOOL
 EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys )
 {
     return EMFDRV_PolyPolylinegon( dev, pt, counts, polys, EMR_POLYPOLYGON );
@@ -461,7 +461,7 @@ EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys 
 /**********************************************************************
  *          EMFDRV_ExtFloodFill
  */
-BOOL 
+BOOL
 EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     EMREXTFLOODFILL emr;
@@ -503,7 +503,7 @@ BOOL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
     emr->rclBounds.bottom = ((RGNDATA *)&emr->RgnData)->rdh.rcBound.bottom - 1;
     emr->cbRgnData = rgnsize;
     emr->ihBrush = index;
-    
+
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );
@@ -571,7 +571,7 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
     emr->rclBounds.right  = ((RGNDATA *)&emr->RgnData)->rdh.rcBound.right - 1;
     emr->rclBounds.bottom = ((RGNDATA *)&emr->RgnData)->rdh.rcBound.bottom - 1;
     emr->cbRgnData = rgnsize;
-    
+
     ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
         EMFDRV_UpdateBBox( dev, &emr->rclBounds );

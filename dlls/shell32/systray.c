@@ -222,7 +222,7 @@ BOOL SYSTRAY_ItemInit(SystrayItem *ptrayItem)
 static void SYSTRAY_ItemTerm(SystrayItem *ptrayItem)
 {
   if(ptrayItem->notifyIcon.hIcon)
-     DestroyIcon(ptrayItem->notifyIcon.hIcon);   
+     DestroyIcon(ptrayItem->notifyIcon.hIcon);
   if(ptrayItem->hWndToolTip)
       DestroyWindow(ptrayItem->hWndToolTip);
   if(ptrayItem->hWnd)

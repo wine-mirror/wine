@@ -160,7 +160,7 @@ DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
     const SHL_2_inet_scheme *inet_pro;
 
     if (y->size != 0x18) return E_INVALIDARG;
-    /* FIXME: leading white space generates error of 0x80041001 which 
+    /* FIXME: leading white space generates error of 0x80041001 which
      *        is undefined
      */
     if (*x <= ' ') return 0x80041001;
@@ -628,7 +628,7 @@ HRESULT WINAPI SHLWAPI_13 (
  *
  * Function:
  *    Retrieves IE "AcceptLanguage" value from registry. ASCII mode.
- *  
+ *
  */
 HRESULT WINAPI SHLWAPI_14 (
 	LPSTR langbuf,
@@ -640,12 +640,12 @@ HRESULT WINAPI SHLWAPI_14 (
 	LCID mylcid;
 
 	mystrlen = (*buflen > 6) ? *buflen : 6;
-	mystr = (CHAR*)HeapAlloc(GetProcessHeap(), 
+	mystr = (CHAR*)HeapAlloc(GetProcessHeap(),
 				 HEAP_ZERO_MEMORY, mystrlen);
-	RegOpenKeyA(HKEY_CURRENT_USER, 
-		    "Software\\Microsoft\\Internet Explorer\\International", 
+	RegOpenKeyA(HKEY_CURRENT_USER,
+		    "Software\\Microsoft\\Internet Explorer\\International",
 		    &mykey);
-	if (RegQueryValueExA(mykey, "AcceptLanguage", 
+	if (RegQueryValueExA(mykey, "AcceptLanguage",
 			      0, &mytype, mystr, &mystrlen)) {
 	    /* Did not find value */
 	    mylcid = GetUserDefaultLCID();
@@ -664,12 +664,12 @@ HRESULT WINAPI SHLWAPI_14 (
 	    /* handle returned string */
 	    FIXME("missing code\n");
 	}
-	if (mystrlen > *buflen) 
+	if (mystrlen > *buflen)
 	    lstrcpynA(langbuf, mystr, *buflen);
 	else {
 	    lstrcpyA(langbuf, mystr);
 	    *buflen = lstrlenA(langbuf);
-	}        
+	}
 	RegCloseKey(mykey);
 	HeapFree(GetProcessHeap(), 0, mystr);
 	TRACE("language is %s\n", debugstr_a(langbuf));
@@ -681,7 +681,7 @@ HRESULT WINAPI SHLWAPI_14 (
  *
  * Function:
  *    Retrieves IE "AcceptLanguage" value from registry. UNICODE mode.
- *  
+ *
  */
 HRESULT WINAPI SHLWAPI_15 (
 	LPWSTR langbuf,
@@ -693,12 +693,12 @@ HRESULT WINAPI SHLWAPI_15 (
 	LCID mylcid;
 
 	mystrlen = (*buflen > 6) ? *buflen : 6;
-	mystr = (CHAR*)HeapAlloc(GetProcessHeap(), 
+	mystr = (CHAR*)HeapAlloc(GetProcessHeap(),
 				 HEAP_ZERO_MEMORY, mystrlen);
-	RegOpenKeyA(HKEY_CURRENT_USER, 
-		    "Software\\Microsoft\\Internet Explorer\\International", 
+	RegOpenKeyA(HKEY_CURRENT_USER,
+		    "Software\\Microsoft\\Internet Explorer\\International",
 		    &mykey);
-	if (RegQueryValueExA(mykey, "AcceptLanguage", 
+	if (RegQueryValueExA(mykey, "AcceptLanguage",
 			      0, &mytype, mystr, &mystrlen)) {
 	    /* Did not find value */
 	    mylcid = GetUserDefaultLCID();
@@ -970,7 +970,7 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
  */
 BOOL WINAPI SHLWAPI_36(HMENU h1, UINT ui2, UINT h3, LPCWSTR p4)
 {
-    TRACE("(0x%08x, 0x%08x, 0x%08x, %s): stub\n", 
+    TRACE("(0x%08x, 0x%08x, 0x%08x, %s): stub\n",
 	  h1, ui2, h3, debugstr_w(p4));
     return AppendMenuW(h1, ui2, h3, p4);
 }
@@ -1173,13 +1173,13 @@ DWORD WINAPI SHLWAPI_172 (
 /*************************************************************************
  *      @	[SHLWAPI.174]
  *
- * Seems to do call either IObjectWithSite::SetSite or 
+ * Seems to do call either IObjectWithSite::SetSite or
  *   IPersistMoniker::GetClassID.  But since we do not implement either
  *   of those classes in our headers, we will fake it out.
  */
 DWORD WINAPI SHLWAPI_174(
 	IUnknown *p1,     /* [in]   OLE object                          */
-        LPVOID *p2)       /* [out]  ptr to result of either GetClassID 
+        LPVOID *p2)       /* [out]  ptr to result of either GetClassID
                                     or SetSite call.                    */
 {
     DWORD ret, aa;
@@ -1189,7 +1189,7 @@ DWORD WINAPI SHLWAPI_174(
     /* see if SetSite interface exists for IObjectWithSite object */
     ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id1, (LPVOID *)&p1);
     TRACE("first IU_QI ret=%08lx, p1=%p\n", ret, p1);
-    if (ret) { 
+    if (ret) {
 
 	/* see if GetClassId interface exists for IPersistMoniker object */
 	ret = IUnknown_QueryInterface((IUnknown *)p1, (REFIID)id2, (LPVOID *)&aa);
@@ -1198,14 +1198,14 @@ DWORD WINAPI SHLWAPI_174(
 
 	/* fake a GetClassId call */
 	ret = IOleWindow_GetWindow((IOleWindow *)aa, (HWND*)p2);
-	TRACE("second IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret, 
+	TRACE("second IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret,
 	      *(LPDWORD)p2);
 	IUnknown_Release((IUnknown *)aa);
     }
     else {
 	/* fake a SetSite call */
 	ret = IOleWindow_GetWindow((IOleWindow *)p1, (HWND*)p2);
-	TRACE("first IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret, 
+	TRACE("first IU_QI doing 0x0c ret=%08lx, *p2=%08lx\n", ret,
 	      *(LPDWORD)p2);
 	IUnknown_Release((IUnknown *)p1);
     }
@@ -1244,11 +1244,11 @@ DWORD WINAPI SHLWAPI_176 (
     *z = 0;
     if (!unk) return E_FAIL;
     ret = IUnknown_QueryInterface(unk, &IID_IServiceProvider, &aa);
-    TRACE("did IU_QI retval=%08lx, aa=%p\n", ret, aa); 
+    TRACE("did IU_QI retval=%08lx, aa=%p\n", ret, aa);
     if (ret) return ret;
-    ret = IServiceProvider_QueryService((IServiceProvider *)aa, sid, riid, 
+    ret = IServiceProvider_QueryService((IServiceProvider *)aa, sid, riid,
 					(void **)z);
-    TRACE("did ISP_QS retval=%08lx, *z=%p\n", ret, (LPVOID)*z); 
+    TRACE("did ISP_QS retval=%08lx, *z=%p\n", ret, (LPVOID)*z);
     IUnknown_Release((IUnknown*)aa);
     return ret;
 }
@@ -1385,7 +1385,7 @@ DWORD WINAPI SHLWAPI_215 (
 
 	len_a = lstrlenA(lpStrSrc);
 	ret = MultiByteToWideChar(0, 0, lpStrSrc, len_a, lpwStrDest, len);
-	TRACE("%s %s %d, ret=%d\n", 
+	TRACE("%s %s %d, ret=%d\n",
 	      debugstr_a(lpStrSrc), debugstr_w(lpwStrDest), len, ret);
 	return ret;
 }
@@ -1523,7 +1523,7 @@ HRESULT WINAPI SHLWAPI_219 (
 	if (z) {
 	    xmove = x;
 	    while (xmove->refid) {
-		TRACE("trying (indx %ld) %s\n", xmove->indx, 
+		TRACE("trying (indx %ld) %s\n", xmove->indx,
 		      debugstr_guid(xmove->refid));
 		if (IsEqualIID(riid, xmove->refid)) {
 		    a_vtbl = (IUnknown*)(xmove->indx + (LPBYTE)w);
@@ -1688,8 +1688,8 @@ DWORD WINAPI SHLWAPI_266 (
  *      @	[SHLWAPI.267]
  */
 HRESULT WINAPI SHLWAPI_267 (
-	LPVOID w, 
-	LPVOID x, 
+	LPVOID w,
+	LPVOID x,
 	LPVOID y, /* [???] NOTE: same as 3rd parameter of SHLWAPI_219 */
 	LPVOID z) /* [???] NOTE: same as 4th parameter of SHLWAPI_219 */
 {
@@ -1947,7 +1947,7 @@ BOOL  WINAPI SHLWAPI_351 (
  */
 WORD WINAPI SHLWAPI_352 (
 	LPVOID w,   /* [in] buffer from _351 */
-	LPWSTR x,   /* [in]   value to retrieve - 
+	LPWSTR x,   /* [in]   value to retrieve -
                               converted and passed to VerQueryValueA as #2 */
 	LPVOID y,   /* [out]  ver buffer - passed to VerQueryValueA as #3 */
 	UINT*  z)   /* [in]   ver length - passed to VerQueryValueA as #4 */
@@ -1959,10 +1959,10 @@ WORD WINAPI SHLWAPI_352 (
 /**************************************************************************
  *      @       [SHLWAPI.356]
  *
- *      mbc - this function is undocumented, The parameters are correct and 
- *            the calls to InitializeSecurityDescriptor and 
- *            SetSecurityDescriptorDacl are correct, but apparently some 
- *            apps call this function with all zero parameters. 
+ *      mbc - this function is undocumented, The parameters are correct and
+ *            the calls to InitializeSecurityDescriptor and
+ *            SetSecurityDescriptorDacl are correct, but apparently some
+ *            apps call this function with all zero parameters.
  */
 
 DWORD WINAPI SHLWAPI_356(PACL pDacl, PSECURITY_DESCRIPTOR pSD, LPCSTR *str)
@@ -2042,7 +2042,7 @@ LANGID WINAPI SHLWAPI_376 ()
 /*************************************************************************
  *      @	[SHLWAPI.377]
  *
- * FIXME: Native appears to do DPA_Create and a DPA_InsertPtr for 
+ * FIXME: Native appears to do DPA_Create and a DPA_InsertPtr for
  *        each call here.
  * FIXME: Native shows calls to:
  *  SHRegGetUSValue for "Software\Microsoft\Internet Explorer\International"
@@ -2378,7 +2378,7 @@ DWORD WINAPI SHLWAPI_437 (DWORD functionToCall)
  * NOTES
  * Input HLS values are constrained to the range (0..240).
  */
-VOID WINAPI ColorRGBToHLS(COLORREF drRGB, LPWORD pwHue, 
+VOID WINAPI ColorRGBToHLS(COLORREF drRGB, LPWORD pwHue,
 			  LPWORD wLuminance, LPWORD pwSaturation)
 {
     FIXME("stub\n");

@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * FIXME: In win32 all classes are local. They are registered at 
+ * FIXME: In win32 all classes are local. They are registered at
  *	  program start. Processes CANNOT share classes. (Source: some
  *	  win31->NT migration book)
  *
@@ -312,8 +312,8 @@ void CLASS_FreeModuleClasses( HMODULE16 hModule )
  * NOTES
  *  980805 a local class will be found now if registred with hInst=0
  *  and looed up with a hInst!=0. msmoney does it (jsch)
- *  
- *  Local class registered with a USER instance handle are found as if 
+ *
+ *  Local class registered with a USER instance handle are found as if
  *  they were global classes.
  */
 static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
@@ -342,7 +342,7 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
             }
         }
     }
-    
+
     /* Then search global classes */
 
     for (class = firstClass; (class); class = class->next)
@@ -368,7 +368,7 @@ static CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE hinstance )
         WARN("-- found local Class registred with hInst=0\n");
         return tclass;
     }
-    
+
     TRACE("-- not found\n");
     return 0;
 }
@@ -594,10 +594,10 @@ ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure w
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr,
                    HIWORD(wc->lpszClassName) ? wc->lpszClassName : "" );
-    
+
     iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
     iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
-    
+
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = CopyImage(wc->hIcon, IMAGE_ICON,
 					iSmIconWidth, iSmIconHeight,
@@ -634,7 +634,7 @@ ATOM WINAPI RegisterClassW( const WNDCLASSW* wc )
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
-    
+
     iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
     iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
 
@@ -673,7 +673,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
                    atom, (DWORD)wc->lpfnWndProc, hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
-    
+
     classPtr->hIcon         = wc->hIcon;
     classPtr->hIconSm       = wc->hIconSm;
     classPtr->hCursor       = wc->hCursor;
@@ -707,7 +707,7 @@ ATOM WINAPI RegisterClassExA( const WNDCLASSEXA* wc )
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
-    
+
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = (HICON16)wc->hIconSm;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
@@ -740,7 +740,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
                    atom, (DWORD)wc->lpfnWndProc, wc->hInstance,
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr );
-    
+
     classPtr->hIcon         = (HICON16)wc->hIcon;
     classPtr->hIconSm       = (HICON16)wc->hIconSm;
     classPtr->hCursor       = (HCURSOR16)wc->hCursor;
@@ -1257,9 +1257,9 @@ BOOL WINAPI GetClassInfoExA( HINSTANCE hInstance, LPCSTR name,
     CLASS *classPtr;
 
     TRACE("%x %p %p\n",hInstance, name, wc);
-    
+
     if (!(atom = GlobalFindAtomA( name )) ||
-        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) 
+        !(classPtr = CLASS_FindClassByAtom( atom, hInstance ))
 	/*|| (hInstance != classPtr->hInstance) */ ) return FALSE;
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC)CLASS_GetProc( classPtr, WIN_PROC_32A );
@@ -1288,7 +1288,7 @@ BOOL WINAPI GetClassInfoExW( HINSTANCE hInstance, LPCWSTR name,
     CLASS *classPtr;
 
     TRACE("%x %p %p\n",hInstance, name, wc);
-    
+
     if (!(atom = GlobalFindAtomW( name )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;
@@ -1331,7 +1331,7 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
     CLASS *class = firstClass;
 
     TRACE("%p\n",pClassEntry);
-   
+
     if (!pClassEntry->wNext) return FALSE;
     for (i = 1; (i < pClassEntry->wNext) && class; i++) class = class->next;
     if (!class)

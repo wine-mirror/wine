@@ -58,7 +58,7 @@ typedef struct RunningObjectTableImpl{
     DWORD      runObjTabSize;       /* current table size                            */
     DWORD      runObjTabLastIndx;  /* first free index element in the table.        */
     DWORD      runObjTabRegister; /* registration key of the next registered object */
-    
+
 } RunningObjectTableImpl;
 
 RunningObjectTableImpl* runningObjectTableInstance=0;
@@ -148,7 +148,7 @@ ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
 HRESULT WINAPI RunningObjectTableImpl_Destroy()
 {
     TRACE("()\n");
-    
+
     if (runningObjectTableInstance==NULL)
         return E_INVALIDARG;
 
@@ -181,7 +181,7 @@ ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
         {
             if (( This->runObjTab[i].regTypeObj &  ROTFLAGS_REGISTRATIONKEEPSALIVE) != 0)
                 IUnknown_Release(This->runObjTab[i].pObj);
- 
+
             IMoniker_Release(This->runObjTab[i].pmkObj);
         }
        /*  RunningObjectTable data structure will be not destroyed here ! the destruction will be done only
@@ -241,7 +241,7 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
 
     if (runningObjectTableInstance==NULL)
         return E_POINTER;
-    
+
     RunningObjectTableImpl_Release((IRunningObjectTable*)runningObjectTableInstance);
 
     RunningObjectTableImpl_Destroy();
@@ -282,7 +282,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
     This->runObjTab[This->runObjTabLastIndx].regTypeObj = grfFlags;
     This->runObjTab[This->runObjTabLastIndx].identRegObj = This->runObjTabRegister;
     CoFileTimeNow(&(This->runObjTab[This->runObjTabLastIndx].lastModifObj));
-    
+
     /* gives a registration identifier to the registered object*/
     (*pdwRegister)= This->runObjTabRegister;
 
@@ -293,7 +293,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
     }
     This->runObjTabRegister++;
     This->runObjTabLastIndx++;
-    
+
     if (This->runObjTabLastIndx == This->runObjTabSize){ /* table is full ! so it must be resized */
 
         This->runObjTabSize+=BLOCK_TAB_SIZE; /* newsize table */
@@ -307,7 +307,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
         IUnknown_AddRef(punkObject);
 
     IMoniker_AddRef(pmkObjectName);
-    
+
     return res;
 }
 
@@ -333,11 +333,11 @@ HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
         IUnknown_Release(This->runObjTab[index].pObj);
 
     IMoniker_Release(This->runObjTab[index].pmkObj);
-    
+
     /* remove the object from the table */
     for(j=index; j<This->runObjTabLastIndx-1; j++)
         This->runObjTab[j]= This->runObjTab[j+1];
-    
+
     This->runObjTabLastIndx--;
 
     return S_OK;
@@ -348,7 +348,7 @@ HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
  */
 HRESULT WINAPI RunningObjectTableImpl_IsRunning(  IRunningObjectTable* iface,
                                                   IMoniker *pmkObjectName)  /* Pointer to the moniker of the object whose status is desired */
-{    
+{
     ICOM_THIS(RunningObjectTableImpl,iface);
 
     TRACE("(%p,%p)\n",This,pmkObjectName);
@@ -370,7 +370,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObject(  IRunningObjectTable* iface,
 
     if (ppunkObject==NULL)
         return E_POINTER;
-    
+
     *ppunkObject=0;
 
     /* verify if the object was registered before or not */
@@ -405,7 +405,7 @@ HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
 
     return S_OK;
 }
-    
+
 /***********************************************************************
  *        RunningObjectTable_GetTimeOfLastChange
  */
@@ -423,7 +423,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* i
 
     /* verify if the object was registered before or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,&index)==S_FALSE)
-        return MK_E_UNAVAILABLE;;
+        return MK_E_UNAVAILABLE;
 
     (*pfiletime)= This->runObjTab[index].lastModifObj;
 
@@ -459,7 +459,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
     else
         /* search object identified by a register identifier */
         for(i=0;((i<This->runObjTabLastIndx)&&(This->runObjTab[i].identRegObj!=identReg));i++);
-    
+
     if (i==This->runObjTabLastIndx)  return S_FALSE;
 
     if (indx != NULL)  *indx=i;
@@ -507,7 +507,7 @@ HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
   LRESULT		ret;
 
   ret = IRunnableObject_QueryInterface(This,&IID_IRunnableObject,(LPVOID*)&runable);
-  if (ret) 
+  if (ret)
 	return 0; /* Appears to return no error. */
   ret  = IRunnableObject_Run(runable,NULL);
   IRunnableObject_Release(runable);

@@ -53,7 +53,7 @@ static HINSTANCE hShellOle32 = 0;
 /**************************************************************************
  * InitShellOle
  *
- * 
+ *
  */
 void InitShellOle(void)
 {
@@ -115,7 +115,7 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	HGLOBAL hGlobal;
 	DROPFILES *pDropFiles;
 	int offset;
-	
+
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 
 	/* get the size needed */
@@ -124,7 +124,7 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	SHGetPathFromIDListA(pidlRoot, szRootPath);
 	PathAddBackslashA(szRootPath);
 	rootsize = strlen(szRootPath);
-	
+
 	for (i=0; i<cidl;i++)
 	{
 	  _ILSimpleGetText(apidl[i], szFileName, MAX_PATH);
@@ -143,10 +143,10 @@ HGLOBAL RenderHDROP(LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 
 	offset = pDropFiles->pFiles;
 	strcpy(szFileName, szRootPath);
-	
+
 	for (i=0; i<cidl;i++)
 	{
-	  
+
 	  _ILSimpleGetText(apidl[i], szFileName + rootsize, MAX_PATH - rootsize);
 	  size = strlen(szFileName) + 1;
 	  strcpy(((char*)pDropFiles)+offset, szFileName);
@@ -176,7 +176,7 @@ HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cid
 	}
 
 	/* fill the structure */
-	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);		
+	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, size);
 	if(!hGlobal) return hGlobal;
 	pcida = GlobalLock (hGlobal);
 	pcida->cidl = cidl;
@@ -223,7 +223,7 @@ HGLOBAL RenderFILENAME (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cidl)
 	int len, size = 0;
 	char szTemp[MAX_PATH], *szFileName;
 	HGLOBAL hGlobal;
-	
+
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 
 	/* build name of first file */
@@ -245,7 +245,7 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
 {
 	DWORD * pdwFlag;
 	HGLOBAL hGlobal;
-	
+
 	TRACE("(0x%08lx)\n", dwFlags);
 
 	hGlobal = GlobalAlloc(GHND|GMEM_SHARE, sizeof(DWORD));
@@ -264,7 +264,7 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags)
 BOOL IsDataInClipboard (HWND hwnd)
 {
 	BOOL ret = FALSE;
-	
+
 	if (OpenClipboard(hwnd))
 	{
 	  if (GetOpenClipboardWindow())

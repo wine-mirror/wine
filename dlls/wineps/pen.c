@@ -47,7 +47,7 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 
     PSDRV_CreateColor(physDev, &physDev->pen.color, logpen.lopnColor);
     physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
- 
+
     switch(physDev->pen.style) {
     case PS_DASH:
 	physDev->pen.dash = PEN_dash;
@@ -71,12 +71,12 @@ HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 
     default:
 	physDev->pen.dash = NULL;
-    }	    
+    }
 
     if ((physDev->pen.width > 1) && (physDev->pen.dash != NULL)) {
 	physDev->pen.style = PS_SOLID;
          physDev->pen.dash = NULL;
-    } 
+    }
 
     physDev->pen.set = FALSE;
     return hpen;
@@ -92,11 +92,11 @@ BOOL PSDRV_SetPen(PSDRV_PDEVICE *physDev)
 {
     if (physDev->pen.style != PS_NULL) {
 	PSDRV_WriteSetColor(physDev, &physDev->pen.color);
-	
+
 	if(!physDev->pen.set) {
 	    PSDRV_WriteSetPen(physDev);
 	    physDev->pen.set = TRUE;
-	}    
+	}
     }
 
     return TRUE;

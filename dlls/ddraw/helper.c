@@ -153,7 +153,7 @@ void DDRAW_dump_DDBLT(DWORD flagmask)
 
 void DDRAW_dump_DDSCAPS(const DDSCAPS2 *in)
 {
-    static const flag_info flags[] = 
+    static const flag_info flags[] =
 	{
 	    FE(DDSCAPS_RESERVED1),
 	    FE(DDSCAPS_ALPHA),

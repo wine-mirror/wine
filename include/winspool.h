@@ -2,7 +2,7 @@
  *
  * Copyright 1998 Huw Davies, Andreas Mohr
  *
- * Portions Copyright (c) 1999 Corel Corporation 
+ * Portions Copyright (c) 1999 Corel Corporation
  *                             (Paul Quinn, Albert Den Haan)
  *
  * This library is free software; you can redistribute it and/or
@@ -285,16 +285,16 @@ typedef struct _DRIVER_INFO_2A {
   LPSTR     pName;
   LPSTR     pEnvironment;
   LPSTR     pDriverPath;
-  LPSTR     pDataFile; 
+  LPSTR     pDataFile;
   LPSTR     pConfigFile;
 } DRIVER_INFO_2A, *PDRIVER_INFO_2A, *LPDRIVER_INFO_2A;
 
 typedef struct _DRIVER_INFO_2W {
   DWORD   cVersion;
-  LPWSTR    pName;     
+  LPWSTR    pName;
   LPWSTR    pEnvironment;
   LPWSTR    pDriverPath;
-  LPWSTR    pDataFile; 
+  LPWSTR    pDataFile;
   LPWSTR    pConfigFile;
 } DRIVER_INFO_2W, *PDRIVER_INFO_2W, *LPDRIVER_INFO_2W;
 
@@ -351,7 +351,7 @@ DECL_WINELIB_TYPE_AW(PPRINTER_INFO_1)
 DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_1)
 
 /* FIXME: winspool.h declares some structure members with the name Status.
- * unfortunatly <X11/ICE/ICElib.h> #defines Status to the type 'int' 
+ * unfortunatly <X11/ICE/ICElib.h> #defines Status to the type 'int'
  * therfore the following hack */
 #ifndef Status
 
@@ -410,7 +410,7 @@ DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_2)
 typedef struct _PRINTER_INFO_3 {
   PSECURITY_DESCRIPTOR pSecurityDescriptor;
 } PRINTER_INFO_3, *PPRINTER_INFO_3, *LPPRINTER_INFO_3;
-  
+
 typedef struct _PRINTER_INFO_4A {
   LPSTR     pPrinterName;
   LPSTR     pServerName;
@@ -512,7 +512,7 @@ typedef struct _JOB_INFO_2A {
   DWORD Time;
   DWORD PagesPrinted;
 } JOB_INFO_2A, *PJOB_INFO_2A, *LPJOB_INFO_2A;
-  
+
 typedef struct _JOB_INFO_2W {
   DWORD JobID;
   LPWSTR pPrinterName;
@@ -538,7 +538,7 @@ typedef struct _JOB_INFO_2W {
   DWORD Time;
   DWORD PagesPrinted;
 } JOB_INFO_2W, *PJOB_INFO_2W, *LPJOB_INFO_2W;
-  
+
 DECL_WINELIB_TYPE_AW(JOB_INFO_2)
 DECL_WINELIB_TYPE_AW(PJOB_INFO_2)
 DECL_WINELIB_TYPE_AW(LPJOB_INFO_2)
@@ -765,13 +765,13 @@ typedef struct _PROVIDOR_INFO_1A {
   LPSTR pName;
   LPSTR pEnvironment;
   LPSTR pDLLName;
-} PROVIDOR_INFO_1A, *PPROVIDOR_INFO_1A, *LPPROVIDOR_INFO_1A; 
+} PROVIDOR_INFO_1A, *PPROVIDOR_INFO_1A, *LPPROVIDOR_INFO_1A;
 
 typedef struct _PROVIDOR_INFO_1W {
   LPWSTR pName;
   LPWSTR pEnvironment;
   LPWSTR pDLLName;
-} PROVIDOR_INFO_1W, *PPROVIDOR_INFO_1W, *LPPROVIDOR_INFO_1W; 
+} PROVIDOR_INFO_1W, *PPROVIDOR_INFO_1W, *LPPROVIDOR_INFO_1W;
 
 DECL_WINELIB_TYPE_AW(PROVIDOR_INFO_1)
 DECL_WINELIB_TYPE_AW(PPROVIDOR_INFO_1)
@@ -879,15 +879,15 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter);
 BOOL WINAPI DeletePrinter(HANDLE hPrinter);
 
 BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-			DWORD Command); 
+			DWORD Command);
 BOOL WINAPI SetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-			DWORD Command); 
+			DWORD Command);
 #define SetPrinter WINELIB_NAME_AW(SetPrinter)
 
 BOOL WINAPI GetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-			DWORD cbBuf, LPDWORD pcbNeeded); 
+			DWORD cbBuf, LPDWORD pcbNeeded);
 BOOL WINAPI GetPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
-			DWORD cbBuf, LPDWORD pcbNeeded); 
+			DWORD cbBuf, LPDWORD pcbNeeded);
 #define GetPrinter WINELIB_NAME_AW(GetPrinter)
 
 BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo);
@@ -929,7 +929,7 @@ BOOL WINAPI EnumPrintProcessorsW(LPWSTR pName, LPWSTR pEnvironment,
 #define EnumPrintProcessors WINELIB_NAME_AW(EnumPrintProcessors)
 
 BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR pName, LPSTR pEnvironment,
-					DWORD Level, 
+					DWORD Level,
 					LPBYTE pPrintProcessorInfo,
 					DWORD cbBuf, LPDWORD pcbNeeded);
 
@@ -979,11 +979,11 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
 BOOL WINAPI ScheduleJob(HANDLE hPrinter, DWORD JobID);
 
 LONG WINAPI AdvancedDocumentPropertiesA(HWND hWnd, HANDLE hPrinter,
-					LPSTR pDeviceName, 
+					LPSTR pDeviceName,
 					PDEVMODEA pDevModeOutput,
 					PDEVMODEA pDevModeInput);
 LONG WINAPI AdvancedDocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
-					LPWSTR pDeviceName, 
+					LPWSTR pDeviceName,
 					PDEVMODEW pDevModeOutput,
 					PDEVMODEW pDevModeInput);
 #define AdvancedDocumentProperties WINELIB_NAME_AW(AdvancedDocumentProperties)

@@ -140,7 +140,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
             twCC = TWCC_CAPUNSUPPORTED;
             break;
         case CAP_XFERCOUNT:
-            /* This is a required capability that every source need to 
+            /* This is a required capability that every source need to
                support but we havev't implemented yet. */
             twCC = TWCC_SUCCESS;
             break;
@@ -148,7 +148,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
         case ICAP_IMAGEFILEFORMAT:
         case ICAP_TILES:
             twCC = TWCC_CAPUNSUPPORTED;
-            break; 
+            break;
         case ICAP_XFERMECH:
             twCC = TWAIN_ICAPXferMech (pSource, pCapability, action);
             break;
@@ -161,7 +161,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
             break;
         default:
             twCC = TWRC_FAILURE;
-            
+
     }
 
     return twCC;
@@ -170,7 +170,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
 TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
 {
     pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ONEVALUE));
-    
+
     if (pCapability->hContainer)
     {
         pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
@@ -196,11 +196,11 @@ TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
     else
         return FALSE;
 }
- 
+
 /* ICAP_XFERMECH */
 TW_UINT16 TWAIN_ICAPXferMech (activeDS *pSource, pTW_CAPABILITY pCapability,
                               TW_UINT16 action)
-{ 
+{
     TRACE("ICAP_XFERMECH\n");
 
     switch (action)

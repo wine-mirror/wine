@@ -146,7 +146,7 @@ typedef struct
 
 #include "poppack.h"
 
-/* Index for bios structures stored at f000:e000 */ 
+/* Index for bios structures stored at f000:e000 */
 enum {OFF_VIDEOSTATE,OFF_VIDEOFUNCTIONALITY,OFF_VESAINFO,OFF_VESASTRING,OFF_VESAMODELIST};
 
 extern WORD DOSMEM_AddBiosSysStruct(int,int);
@@ -242,8 +242,8 @@ extern char IO_pp_init(void);
 #define PTR_REAL_TO_LIN(seg,off) \
    ((void*)(((unsigned int)(seg) << 4) + LOWORD(off)))
 
-/* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and 
- *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer 
+/* NOTE: Interrupts might get called from three modes: real mode, 16-bit, and
+ *        (via DeviceIoControl) 32-bit. For automatic conversion of pointer
  *       parameters, interrupt handlers should use CTX_SEG_OFF_TO_LIN with
  *       the contents of a segment register as second and the contents of
  *       a *32-bit* general register as third parameter, e.g.

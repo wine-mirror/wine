@@ -1,6 +1,6 @@
 /*
  * Q&D Uninstaller (main.c)
- * 
+ *
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include <stdio.h>
 #define DEBUG(x...) fprintf(stderr,x)
 #else
-#define DEBUG(x...) 
+#define DEBUG(x...)
 #endif
 
 /* use multi-select listbox */
@@ -93,7 +93,7 @@ void UninstallProgram(void);
 void ListUninstallPrograms(void)
 {
     int i;
-    
+
     if (! FetchUninstallInformation())
         return;
 
@@ -128,7 +128,7 @@ void RemoveSpecificProgram(char *name)
 
 
 int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
-{ 
+{
     MSG msg;
     WNDCLASS wc;
     HWND hWnd;
@@ -165,15 +165,15 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.hbrBackground = (HBRUSH) GetStockObject( LTGRAY_BRUSH );
     wc.lpszMenuName = NULL;
     wc.lpszClassName = appname;
-    
+
     if (!RegisterClass(&wc)) exit(1);
-    hWnd = CreateWindow( appname, appname, 
-        WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
+    hWnd = CreateWindow( appname, appname,
+        WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL_HANDLE, NULL_HANDLE, hInst, NULL );
-    
+
     if (!hWnd) exit(1);
-    
+
     ShowWindow( hWnd, cmdshow );
     UpdateWindow( hWnd );
 
@@ -198,7 +198,7 @@ int FetchUninstallInformation(void)
     char key_app[1024];
     char *p;
 
-    
+
     numentries = 0;
     oldsel = -1;
     if ( RegOpenKeyEx(HKEY_LOCAL_MACHINE, REGSTR_PATH_UNINSTALL,
@@ -207,7 +207,7 @@ int FetchUninstallInformation(void)
 	MessageBox(0, "Uninstall registry key not available (yet), nothing to do !", appname, MB_OK);
 	return 0;
     }
-	
+
     strcpy(key_app, REGSTR_PATH_UNINSTALL);
     strcat(key_app, "\\");
     p = key_app+strlen(REGSTR_PATH_UNINSTALL)+1;
@@ -324,7 +324,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		cxChar * 50 + GetSystemMetrics(SM_CXVSCROLL), cyChar * 20,
 		hWnd, (HMENU) 1,
 		(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
-	
+
 	GetWindowRect(hwndList, &rect);
 	y = by;
 	maxx += (rect.right - rect.left)*1.1;
@@ -402,14 +402,14 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage( 0 );
         return 0;
-    
+
     case WM_COMMAND:
 	if ((HWND)lParam == hwndList)
 	{
 	    if (HIWORD(wParam) == LBN_SELCHANGE)
 	    {
 		int sel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
-		
+
 #ifndef USE_MULTIPLESEL
 		if (oldsel != -1)
 		{
@@ -427,7 +427,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if ((HWND)lParam == button[0].hwnd) /* Uninstall button */
         {
 	    UninstallProgram();
-   
+
 	    InvalidateRect(hWnd, NULL, TRUE);
 	    UpdateWindow(hWnd);
 
@@ -440,6 +440,6 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    PostQuitMessage(0);
 	return 0;
     }
-	
+
     return( DefWindowProc( hWnd, msg, wParam, lParam ));
 }

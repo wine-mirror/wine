@@ -49,7 +49,7 @@ typedef struct
 /******************************************************************************
  *		IUnknown_AddRef	[VTABLE:IUNKNOWN.1]
  */
-static ULONG WINAPI IUnknown_fnAddRef(LPUNKNOWN iface) { 
+static ULONG WINAPI IUnknown_fnAddRef(LPUNKNOWN iface) {
 	ICOM_THIS(IUnknownImpl,iface);
 	TRACE("(%p)->AddRef()\n",This);
 	return ++(This->ref);
@@ -78,12 +78,12 @@ static HRESULT WINAPI IUnknown_fnQueryInterface(LPUNKNOWN iface,REFIID refiid,LP
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
-		return 0; 
+		return 0;
 	}
-	return OLE_E_ENUM_NOMORE; 
+	return OLE_E_ENUM_NOMORE;
 }
 
-static ICOM_VTABLE(IUnknown) uvt = 
+static ICOM_VTABLE(IUnknown) uvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IUnknown_fnQueryInterface,
@@ -129,7 +129,7 @@ HRESULT WINAPI IMalloc16_fnQueryInterface(IMalloc16* iface,REFIID refiid,LPVOID 
 		*obj = This;
 		return 0;
 	}
-	return OLE_E_ENUM_NOMORE; 
+	return OLE_E_ENUM_NOMORE;
 }
 
 /******************************************************************************
@@ -267,7 +267,7 @@ static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVO
 		*obj = This;
 		return S_OK;
 	}
-	return OLE_E_ENUM_NOMORE; 
+	return OLE_E_ENUM_NOMORE;
 }
 
 /******************************************************************************
@@ -343,7 +343,7 @@ static VOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
 	TRACE("(%p)->HeapMinimize()\n",This);
 }
 
-static ICOM_VTABLE(IMalloc) VT_IMalloc32 = 
+static ICOM_VTABLE(IMalloc) VT_IMalloc32 =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IMalloc_fnQueryInterface,

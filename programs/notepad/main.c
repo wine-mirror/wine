@@ -106,11 +106,11 @@ DWORD CalcStringWidth(HDC hDC, DWORD x, DWORD y)
 
     if(y>dwLines)
         return size.cx;
-    if(lpBuffer == NULL) 
+    if(lpBuffer == NULL)
         return size.cx;
     if(lpBuffer[y].lpLine == NULL)
         return size.cx;
-    len = (x<lpBuffer[y].dwWidth) ? 
+    len = (x<lpBuffer[y].dwWidth) ?
            x : lpBuffer[y].dwWidth;
     GetTextExtentPoint(hDC, lpBuffer[y].lpLine, len, &size);
 
@@ -152,10 +152,10 @@ void RenderLine(HDC hDC, DWORD lineno)
     hPrev = SelectObject(hDC, GetStockObject(WHITE_PEN));
     Rectangle(hDC, rect.left, rect.top, rect.right, rect.bottom);
     SelectObject(hDC, hPrev);
-    
+
     if(lpBuffer && lpBuffer[lineno].lpLine)
     {
-        TextOut(hDC, 0, rect.top, lpBuffer[lineno].lpLine, 
+        TextOut(hDC, 0, rect.top, lpBuffer[lineno].lpLine,
                        lpBuffer[lineno].dwWidth);
     }
 }
@@ -176,7 +176,7 @@ void RenderWindow(HDC hDC) {
     }
 }
 
-/* 
+/*
  * Check that correct buffers exist to access line y pos x
  * Only manages memory.
  *
@@ -317,7 +317,7 @@ BOOL DoBackSpace(HDC hDC)
         RenderLine(hDC, dwYpos);
         CalcCaretPos(hDC,dwXpos,dwYpos);
     }
-    else 
+    else
     {
         /* Erase a newline. To do this we join two lines */
         LPSTR src, dest;
@@ -412,7 +412,7 @@ DWORD CreateLine(
     BOOL nomore)
 {
     DWORD i;
-    
+
     if(size == 0)
         return 0;
 
@@ -446,8 +446,8 @@ DWORD CreateLine(
 }
 
 
-/* 
- * This is probably overcomplicated by lpBuffer data structure... 
+/*
+ * This is probably overcomplicated by lpBuffer data structure...
  * Read blocks from the file, then add each line from the
  *  block to the buffer until there is none left. If all
  *  a slab isn't used, try load some more data from the file.
@@ -470,15 +470,15 @@ void LoadBufferFromFile(LPCSTR szFileName)
     bytes_left = 0;
     while(bytes_read)
     {
-        if(!ReadFile(hFile, 
-                     &pTemp[bytes_left], 
-                     size-bytes_left, 
+        if(!ReadFile(hFile,
+                     &pTemp[bytes_left],
+                     size-bytes_left,
                      &bytes_read, NULL))
             break;
         bytes_left+=bytes_read;
 
         /* add strings to buffer */
-        for(i = 0; 
+        for(i = 0;
             (i<size) &&
             (len  = CreateLine(&pTemp[i], bytes_left, !bytes_read));
             i+= len,bytes_left-=len );
@@ -546,7 +546,7 @@ BOOL GotoLeft(HWND hWnd)
         dwXpos--;
         return TRUE;
     }
-    if(GotoUp(hWnd))   
+    if(GotoUp(hWnd))
         return GotoEndOfLine(hWnd);
     return FALSE;
 }
@@ -672,7 +672,7 @@ void ButtonDownToCaretPos(HWND hWnd, WPARAM wParam, LPARAM lParam)
                 caretx--;
         }
     }
-    
+
     /* set the caret's position */
     dwXpos = caretx;
     dwYpos = carety;
@@ -715,7 +715,7 @@ void DoScroll(HWND hWnd, WPARAM wParam, LPARAM lParam)
  */
 
 int NOTEPAD_MenuCommand (WPARAM wParam)
-{  
+{
    switch (wParam) {
      case 0x100:          DIALOG_FileNew(); break;
      case 0x101:         DIALOG_FileOpen(); break;
@@ -744,7 +744,7 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
      case 0x135:      DIALOG_HelpLicense(); break;
      case 0x136:  DIALOG_HelpNoWarranty(); break;
      case 0x137:   DIALOG_HelpAboutWine(); break;
-     
+
 //     default:
 //      LANGUAGE_DefaultHandle(wParam);
    }
@@ -848,7 +848,7 @@ LRESULT WINAPI NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
           DragQueryFile(hDrop, 0, (CHAR *) &szFileName, sizeof(szFileName));
           DragFinish(hDrop);
           DoOpenFile(szFileName);
-          break;        
+          break;
 
        default:
           return DefWindowProc (hWnd, msg, wParam, lParam);
@@ -865,20 +865,20 @@ int AlertFileDoesNotExist(LPSTR szFileName) {
    LoadString(Globals.hInstance, STRING_DOESNOTEXIST, szRessource,
               sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
-   
+
    LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
 
    nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource,
                         MB_ICONEXCLAMATION | MB_YESNO);
-   
+
    return(nResult);
 }
 
 void HandleCommandLine(LPSTR cmdline)
 {
-    
-    while (*cmdline && (*cmdline == ' ' || *cmdline == '-')) 
-    
+
+    while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
+
     {
         CHAR   option;
 
@@ -897,22 +897,22 @@ void HandleCommandLine(LPSTR cmdline)
         }
     }
 
-    if (*cmdline) 
+    if (*cmdline)
     {
         /* file name is passed in the command line */
         char *file_name;
         BOOL file_exists;
         char buf[MAX_PATH];
 
-        if (FileExists(cmdline)) 
+        if (FileExists(cmdline))
         {
             file_exists = TRUE;
             file_name = cmdline;
         }
-        else 
+        else
         {
-            /* try to find file with ".txt" extention */ 
-            if (!strcmp(".txt", cmdline + strlen(cmdline) - strlen(".txt"))) 
+            /* try to find file with ".txt" extention */
+            if (!strcmp(".txt", cmdline + strlen(cmdline) - strlen(".txt")))
             {
                 file_exists = FALSE;
                 file_name = cmdline;
@@ -969,7 +969,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     Globals.hInstance       = hInstance;
 
 #ifndef LCC
-    Globals.hMainIcon       = ExtractIcon(Globals.hInstance, 
+    Globals.hMainIcon       = ExtractIcon(Globals.hInstance,
                                         Globals.lpszIcoFile, 0);
 #endif
     if (!Globals.hMainIcon) {
@@ -1004,9 +1004,9 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     /* Setup windows */
 
 
-    Globals.hMainWnd = CreateWindow (className, winName, 
+    Globals.hMainWnd = CreateWindow (className, winName,
        WS_OVERLAPPEDWINDOW + WS_HSCROLL + WS_VSCROLL,
-       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 
+       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        LoadMenu(Globals.hInstance, STRING_MENU_Xx),
        Globals.hInstance, 0);
 
@@ -1014,8 +1014,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
    LANGUAGE_LoadMenus();
 
-    SetMenu(Globals.hMainWnd, Globals.hMainMenu);               
-                        
+    SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+
     ShowWindow (Globals.hMainWnd, show);
     UpdateWindow (Globals.hMainWnd);
 
@@ -1025,7 +1025,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 
     Globals.nCommdlgFindReplaceMsg = RegisterWindowMessage("commdlg_FindReplace");
     if (Globals.nCommdlgFindReplaceMsg==0) {
-       MessageBox(Globals.hMainWnd, "Could not register commdlg_FindReplace window message", 
+       MessageBox(Globals.hMainWnd, "Could not register commdlg_FindReplace window message",
                   "Error", MB_ICONEXCLAMATION);
     }
 
@@ -1036,14 +1036,14 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     DragAcceptFiles(Globals.hMainWnd, TRUE);
 
     /* now enter mesage loop     */
-    
+
     while (GetMessage (&msg, 0, 0, 0)) {
         if (IsDialogMessage(Globals.hFindReplaceDlg, &msg)!=0) {
           /* Message belongs to FindReplace dialog */
           /* We just let IsDialogMessage handle it */
-        } 
+        }
           else
-        { 
+        {
           /* Message belongs to the Notepad Main Window */
           TranslateMessage (&msg);
           DispatchMessage (&msg);

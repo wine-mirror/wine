@@ -44,7 +44,7 @@ static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
 };
 
   /* Levels of each primary for dithering */
-#define PRIMARY_LEVELS  3  
+#define PRIMARY_LEVELS  3
 #define TOTAL_LEVELS    (PRIMARY_LEVELS*PRIMARY_LEVELS*PRIMARY_LEVELS)
 
  /* Dithering matrix size  */
@@ -142,7 +142,7 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 	}
 	prevColor = color;
     }
-    
+
     pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, screen_depth );
     XPutImage( gdi_display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
@@ -201,7 +201,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         TSXCopyArea( gdi_display, (Pixmap)bmp->physBitmap, physDev->brush.pixmap,
                      BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     }
-    
+
     if (bmp->bitmap.bmBitsPixel > 1)
     {
 	physDev->brush.fillStyle = FillTiled;
@@ -240,7 +240,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 	physDev->brush.pixmap = 0;
     }
     physDev->brush.style = logbrush.lbStyle;
-    
+
     switch(logbrush.lbStyle)
     {
       case BS_NULL:
@@ -251,7 +251,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
         TRACE("BS_SOLID\n" );
 	BRUSH_SelectSolidBrush( physDev, logbrush.lbColor );
 	break;
-	
+
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
 	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( physDev, logbrush.lbColor );
@@ -259,7 +259,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 				 HatchBrushes[logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;
 	break;
-	
+
       case BS_PATTERN:
 	TRACE("BS_PATTERN\n");
 	if (!BRUSH_SelectPatternBrush( physDev, (HBITMAP)logbrush.lbHatch )) return 0;
@@ -276,9 +276,9 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
                                         (WORD)logbrush.lbColor );
 	    BRUSH_SelectPatternBrush( physDev, hBitmap );
 	    DeleteObject( hBitmap );
-	    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );	    
+	    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );
 	}
-	
+
 	break;
     }
     return hbrush;

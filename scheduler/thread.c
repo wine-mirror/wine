@@ -516,11 +516,11 @@ BOOL WINAPI GetThreadPriorityBoost(
 /**********************************************************************
  * SetThreadPriorityBoost [KERNEL32.@]  Sets priority boost for thread.
  *
- * Priority boost is not implemented. Thsi function always returns 
+ * Priority boost is not implemented. Thsi function always returns
  * FALSE and sets last error to ERROR_CALL_NOT_IMPLEMENTED
  *
  * RETURNS
- *    Always returns FALSE to indicate a failure 
+ *    Always returns FALSE to indicate a failure
  */
 BOOL WINAPI SetThreadPriorityBoost(
     HANDLE hthread, /* [in] Handle to thread */
@@ -556,7 +556,7 @@ DWORD WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD dwThreadAffinityMask )
  *    Success: Value of last call to SetThreadIdealProcessor
  *    Failure: -1
  */
-DWORD WINAPI SetThreadIdealProcessor( 
+DWORD WINAPI SetThreadIdealProcessor(
     HANDLE hThread,          /* [in] Specifies the thread of interest */
     DWORD dwIdealProcessor)  /* [in] Specifies the new preferred processor */
 {
@@ -585,7 +585,7 @@ BOOL WINAPI TerminateThread( HANDLE handle,    /* [in] Handle to thread */
  *		GetExitCodeThread (KERNEL32.@)
  *
  * Gets termination status of thread.
- * 
+ *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
@@ -682,7 +682,7 @@ DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI GetThreadTimes( 
+BOOL WINAPI GetThreadTimes(
     HANDLE thread,         /* [in]  Specifies the thread of interest */
     LPFILETIME creationtime, /* [out] When the thread was created */
     LPFILETIME exittime,     /* [out] When the thread was destroyed */
@@ -782,13 +782,13 @@ BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
  *
  * Informs the system that activity is taking place for
  * power management purposes.
- */ 
+ */
 EXECUTION_STATE WINAPI SetThreadExecutionState(EXECUTION_STATE flags)
 {
     static EXECUTION_STATE current =
 	    ES_SYSTEM_REQUIRED|ES_DISPLAY_REQUIRED|ES_USER_PRESENT;
     EXECUTION_STATE old = current;
-    
+
     if (!(current & ES_CONTINUOUS) || (flags & ES_CONTINUOUS))
         current = flags;
     FIXME("(0x%lx): stub, harmless (power management).\n", flags);
@@ -822,14 +822,14 @@ __ASM_GLOBAL_FUNC( GetLastError, ".byte 0x64\n\tmovl 0x60,%eax\n\tret" );
  */
 /* DWORD WINAPI GetCurrentProcessId(void) */
 __ASM_GLOBAL_FUNC( GetCurrentProcessId, ".byte 0x64\n\tmovl 0x20,%eax\n\tret" );
-                   
+
 /***********************************************************************
  *		GetCurrentThreadId (KERNEL.462)
  *		GetCurrentThreadId (KERNEL32.@)
  */
 /* DWORD WINAPI GetCurrentThreadId(void) */
 __ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" );
-                   
+
 #else  /* __i386__ */
 
 /**********************************************************************

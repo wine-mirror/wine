@@ -208,7 +208,7 @@ void WINAPI DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 
   if (!VGA_GetMode(&Height,&Width,NULL)) {
     /* may need to do some coordinate scaling */
-    if (Width) 
+    if (Width)
       SX = 640/Width;
     if (!SX) SX=1;
   }
@@ -270,7 +270,7 @@ void WINAPI DOSVM_Int33Console(MOUSE_EVENT_RECORD *record)
     mask |= 0x20;
   else if(!newMiddleButton && oldMiddleButton)
     mask |= 0x40;
- 
+
   VGA_GetAlphaMode(&Width, &Height);
 
   QueueMouseRelay(640 / Width * record->dwMousePosition.X,

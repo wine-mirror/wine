@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#ifdef HAVE_SYS_IOCTL_H 
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
 #include <time.h>
@@ -268,7 +268,7 @@ BOOL DOSFS_ToDosFCBFormat( LPCSTR name, LPSTR buffer )
     buffer[11] = '\0';
 
     /* at most 3 character of the extension are processed
-     * is something behind this ? 
+     * is something behind this ?
      */
     while (*p == '*' || *p == ' ') p++; /* skip wildcards and spaces */
     return IS_END_OF_NAME(*p);
@@ -326,7 +326,7 @@ static int DOSFS_MatchShort( const char *mask, const char *name )
  * t*t				test1.ta.tornado.txt			*
  * ?est*			test1.txt				*
  * ?est???			test1.txt				-
- * *test1.txt*			test1.txt				* 
+ * *test1.txt*			test1.txt				*
  * h?l?o*t.dat			hellothisisatest.dat			*
  */
 static int DOSFS_MatchLong( const char *mask, const char *name,
@@ -796,8 +796,8 @@ HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSEC
 				return 0;
 			}
 			if (!DuplicateHandle( GetCurrentProcess(), to_dup, GetCurrentProcess(),
-					      &handle, 0, 
-					      sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle, 
+					      &handle, 0,
+					      sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle,
 					      DUPLICATE_SAME_ACCESS ))
 			    handle = 0;
 			return handle;
@@ -841,7 +841,7 @@ static int DOSFS_GetPathDrive( const char **name )
         {
             MESSAGE("Warning: %s not accessible from a configured DOS drive\n", *name );
             /* Assume it really was a DOS name */
-            drive = DRIVE_GetCurrentDrive();            
+            drive = DRIVE_GetCurrentDrive();
         }
     }
     else drive = DRIVE_GetCurrentDrive();
@@ -1007,10 +1007,10 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
  *  observed:
  *  longpath=NULL: LastError=ERROR_INVALID_PARAMETER, ret=0
  *  longpath="" or invalid: LastError=ERROR_BAD_PATHNAME, ret=0
- * 
+ *
  * more observations ( with NT 3.51 (WinDD) ):
  * longpath <= 8.3 -> just copy longpath to shortpath
- * longpath > 8.3  -> 
+ * longpath > 8.3  ->
  *             a) file does not exist -> return 0, LastError = ERROR_FILE_NOT_FOUND
  *             b) file does exist     -> set the short filename.
  * - trailing slashes are reproduced in the short name, even if the
@@ -1067,7 +1067,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
       /* check for path delimiters and reproduce them */
       if ( longpath[lp] == '\\' || longpath[lp] == '/' ) {
-	if (!sp || tmpshortpath[sp-1]!= '\\') 
+	if (!sp || tmpshortpath[sp-1]!= '\\')
         {
 	    /* strip double "\\" */
 	    tmpshortpath[sp] = '\\';
@@ -1078,9 +1078,9 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 	continue;
       }
 
-      tmplen = strcspn ( longpath + lp, "\\/" ); 
+      tmplen = strcspn ( longpath + lp, "\\/" );
       lstrcpynA ( tmpshortpath+sp, longpath + lp, tmplen+1 );
-      
+
       /* Check, if the current element is a valid dos name */
       if ( DOSFS_ValidDOSName ( longpath + lp, !(flags & DRIVE_CASE_SENSITIVE) ) ) {
 	sp += tmplen;
@@ -1106,7 +1106,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
     TRACE("returning %s\n", debugstr_a(shortpath) );
     tmplen = strlen ( tmpshortpath );
     HeapFree ( GetProcessHeap(), 0, tmpshortpath );
-    
+
     return tmplen;
 }
 
@@ -1171,29 +1171,29 @@ DWORD WINAPI GetLongPathNameA( LPCSTR shortpath, LPSTR longpath,
        while ((ss[0]=='\\') && (ss>=longpath)) ss--;
        p=ss;
        while ((ss[0]!='\\') && (ss>=longpath)) ss--;
-       if (ss>=longpath) 
+       if (ss>=longpath)
          {
          /* FIXME: aren't we more paranoid, than needed? */
          while ((ll[0]=='/') && (ll>=full_name.long_name)) ll--;
          while ((ll[0]!='/') && (ll>=full_name.long_name)) ll--;
-         if (ll<full_name.long_name) 
-              { 
+         if (ll<full_name.long_name)
+              {
               ERR("Bad longname! (ss=%s ll=%s)\n This should never happen !\n"
-		  ,ss ,ll ); 
+		  ,ss ,ll );
               return 0;
               }
          }
      }
 
    /* FIXME: fix for names like "C:\\" (ie. with more '\'s) */
-      if (p && p[2]) 
+      if (p && p[2])
         {
 	p+=1;
 	if ((p-longpath)>0) longlen -= (p-longpath);
 	lstrcpynA( p, ll , longlen);
 
         /* Now, change all '/' to '\' */
-        for (r=p; r<(p+longlen); r++ ) 
+        for (r=p; r<(p+longlen); r++ )
           if (r[0]=='/') r[0]='\\';
         return strlen(longpath) - strlen(p) + longlen;
         }
@@ -1232,7 +1232,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath,
  * Implementation of GetFullPathNameA/W.
  *
  * bon@elektron 000331:
- * A test for GetFullPathName with many pathological cases 
+ * A test for GetFullPathName with many pathological cases
  * now gives identical output for Wine and OSR2
  */
 static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
@@ -1348,7 +1348,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     namelen=strlen(full_name.short_name);
     if (!strcmp(full_name.short_name+namelen-3,"\\.."))
 	{
-	  /* one more strange case: "c:\test\test1\.." 
+	  /* one more strange case: "c:\test\test1\.."
 	   return "c:\test" */
 	  *(full_name.short_name+namelen-3)=0;
 	  q = strrchr(full_name.short_name,'\\');
@@ -1361,8 +1361,8 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	full_name.short_name[(namelen--)-1] =0;
     TRACE("got %s\n",full_name.short_name);
 
-    /* If the lpBuffer buffer is too small, the return value is the 
-    size of the buffer, in characters, required to hold the path 
+    /* If the lpBuffer buffer is too small, the return value is the
+    size of the buffer, in characters, required to hold the path
     plus the terminating \0 (tested against win95osr2, bon 001118)
     . */
     ret = strlen(full_name.short_name);
@@ -1388,7 +1388,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 /***********************************************************************
  *           GetFullPathNameA   (KERNEL32.@)
  * NOTES
- *   if the path closed with '\', *lastpart is 0 
+ *   if the path closed with '\', *lastpart is 0
  */
 DWORD WINAPI GetFullPathNameA( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
@@ -1426,7 +1426,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
             while ((p > buffer + 2) && (*p != (WCHAR)'\\')) p--;
             *lastpart = p + 1;
         }
-        else *lastpart = NULL;  
+        else *lastpart = NULL;
     }
     return ret;
 }
@@ -1472,7 +1472,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
         entry->dwReserved0       = 0;
         entry->dwReserved1       = 0;
         DOSFS_ToDosDTAFormat( DRIVE_GetLabel( info->drive ), entry->cFileName );
-        strcpy( entry->cAlternateFileName, entry->cFileName ); 
+        strcpy( entry->cAlternateFileName, entry->cFileName );
         info->cur_pos++;
         TRACE("returning %s (%s) as label\n",
                entry->cFileName, entry->cAlternateFileName);
@@ -1588,7 +1588,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
     if (!(info.dir && info.path == path && info.short_mask == short_mask
                    && info.long_mask == long_mask && info.drive == drive
                    && info.attr == attr && info.cur_pos <= skip))
-    {  
+    {
         /* Not in the cache, open it anew */
         if (info.dir) DOSFS_CloseDir( info.dir );
 
@@ -1638,7 +1638,7 @@ HANDLE WINAPI FindFirstFileExA(
     DOS_FULL_NAME full_name;
     HGLOBAL handle;
     FIND_FIRST_INFO *info;
-    
+
     if ((fSearchOp != FindExSearchNameMatch) || (dwAdditionalFlags != 0))
     {
         FIXME("options not implemented 0x%08x 0x%08lx\n", fSearchOp, dwAdditionalFlags );
@@ -1727,7 +1727,7 @@ HANDLE WINAPI FindFirstFileExW(
     handle = FindFirstFileExA(pathA, fInfoLevelId, _lpFindFileData, fSearchOp, lpSearchFilter, dwAdditionalFlags);
     HeapFree( GetProcessHeap(), 0, pathA );
     if (handle == INVALID_HANDLE_VALUE) return handle;
-    
+
     switch(fInfoLevelId)
     {
       case FindExInfoStandard:
@@ -1769,7 +1769,7 @@ BOOL WINAPI FindNextFileA( HANDLE handle, WIN32_FIND_DATAA *data )
 {
     FIND_FIRST_INFO *info;
 
-    if ((handle == INVALID_HANDLE_VALUE) || 
+    if ((handle == INVALID_HANDLE_VALUE) ||
        !(info = (FIND_FIRST_INFO *)GlobalLock( handle )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
@@ -1863,7 +1863,7 @@ void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
 {
     /* NOTES:
 
-       CONSTANTS: 
+       CONSTANTS:
        The time difference between 1 January 1601, 00:00:00 and
        1 January 1970, 00:00:00 is 369 years, plus the leap years
        from 1604 to 1968, excluding 1700, 1800, 1900.
@@ -1890,7 +1890,7 @@ void DOSFS_UnixTimeToFileTime( time_t unix_time, FILETIME *filetime,
        will run.
 
        DETAILS:
-       
+
        Take care not to remove the casts. I have tested these functions
        (in both versions) for a lot of numbers. I would be interested in
        results on other compilers than GCC.
@@ -2020,7 +2020,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
     else                        a1 += (1 << 16) - 54590 - carry, carry = 1;
 
     a2 -= 27111902 + carry;
-    
+
     /* If a is negative, replace a by (-1-a) */
     negative = (a2 >= ((UINT)1) << 31);
     if (negative)
@@ -2074,7 +2074,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
  *	-1: Overflow occurred or Divisor was 0
  */
 INT WINAPI MulDiv(
-	     INT nMultiplicand, 
+	     INT nMultiplicand,
 	     INT nMultiplier,
 	     INT nDivisor)
 {
@@ -2113,9 +2113,9 @@ INT WINAPI MulDiv(
     if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
 	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
       return ((nMultiplicand * nMultiplier) + (nDivisor/2)) / nDivisor;
- 
+
     return ((nMultiplicand * nMultiplier) - (nDivisor/2)) / nDivisor;
-    
+
 #endif
 }
 
@@ -2182,7 +2182,7 @@ BOOL WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
     utctime = mktime(xtm);
     if(xtm->tm_isdst > 0) utctime-=3600;
     DOSFS_UnixTimeToFileTime( utctime, utcft, remainder );
-    return TRUE; 
+    return TRUE;
 }
 
 
@@ -2211,7 +2211,7 @@ BOOL WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
     if(xtm->tm_isdst > 0) time-=3600;
     DOSFS_UnixTimeToFileTime( 2*unixtime-time, localft, remainder );
 #endif
-    return TRUE; 
+    return TRUE;
 }
 
 
@@ -2232,7 +2232,7 @@ BOOL WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
     syst->wMinute       = xtm->tm_min;
     syst->wSecond       = xtm->tm_sec;
     syst->wMilliseconds	= remainder / 10000;
-    return TRUE; 
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2255,7 +2255,7 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
     /* In theory all that are possible and have been defined.
      * Now just those below, since mirc uses it to check for special files.
      *
-     * (It is more complex, and supports netmounted stuff, and \\.\ stuff, 
+     * (It is more complex, and supports netmounted stuff, and \\.\ stuff,
      *  but currently we just ignore that.)
      */
 #define CHECK(x) (strstr(devname,#x)==devname)
@@ -2318,16 +2318,16 @@ BOOL WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
     xtm.tm_isdst = -1;
 #ifdef HAVE_TIMEGM
     utctime = timegm(&xtm);
-    DOSFS_UnixTimeToFileTime( utctime, ft, 
+    DOSFS_UnixTimeToFileTime( utctime, ft,
 			      syst->wMilliseconds * 10000 );
 #else
     localtim = mktime(&xtm);    /* now we've got local time */
     utc_tm = gmtime(&localtim);
     utctime = mktime(utc_tm);
-    DOSFS_UnixTimeToFileTime( 2*localtim -utctime, ft, 
+    DOSFS_UnixTimeToFileTime( 2*localtim -utctime, ft,
 			      syst->wMilliseconds * 10000 );
 #endif
-    return TRUE; 
+    return TRUE;
 }
 
 /***********************************************************************

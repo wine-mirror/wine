@@ -71,7 +71,7 @@ ICOM_DEFINE(IOleCache,IUnknown)
 #define IOleCache_EnumCache(p,a)             ICOM_CALL1(EnumCache,p,a)
 #define IOleCache_InitCache(p,a)             ICOM_CALL1(InitCache,p,a)
 #define IOleCache_SetData(p,a,b,c)           ICOM_CALL3(SetData,p,a,b,c)
-				 
+
 
 /*****************************************************************************
  * IOleCache2 interface

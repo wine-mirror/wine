@@ -26,7 +26,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /****************************************************************************
- * IShellBrowser is here defined because of a cyclic dependance between 
+ * IShellBrowser is here defined because of a cyclic dependance between
  * IShellBrowser and IShellView
  */
 typedef struct IShellBrowser IShellBrowser, *LPSHELLBROWSER;
@@ -72,10 +72,10 @@ typedef struct IShellView IShellView, *LPSHELLVIEW;
 
 #define FCIDM_SHVIEW_BIGICON	0x7029
 #define FCIDM_SHVIEW_SMALLICON	0x702A
-#define FCIDM_SHVIEW_LISTVIEW	0x702B	
+#define FCIDM_SHVIEW_LISTVIEW	0x702B
 #define FCIDM_SHVIEW_REPORTVIEW	0x702C
 /* 0x7030-0x703f are used by the shellbrowser */
-#define FCIDM_SHVIEW_AUTOARRANGE 0x7031  
+#define FCIDM_SHVIEW_AUTOARRANGE 0x7031
 #define FCIDM_SHVIEW_SNAPTOGRID	0x7032
 
 #define FCIDM_SHVIEW_HELP	0x7041
@@ -120,7 +120,7 @@ typedef struct IShellView IShellView, *LPSHELLVIEW;
 #define FCIDM_STATUS       (FCIDM_BROWSERFIRST + 1)
 
 /* uState values for IShellView::UIActivate */
-typedef enum 
+typedef enum
 { SVUIA_DEACTIVATE       = 0,
   SVUIA_ACTIVATE_NOFOCUS = 1,
   SVUIA_ACTIVATE_FOCUS   = 2,

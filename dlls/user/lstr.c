@@ -612,7 +612,7 @@ DWORD WINAPI FormatMessage16(
 		&&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
 			|| (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
-    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
+    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
         FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
@@ -702,9 +702,9 @@ DWORD WINAPI FormatMessage16(
 			int	ret;
 		        int	sz;
 			LPSTR	b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 100);
-			
+
 			argliststart=args+insertnr-1;
-		       
+
 			/* CMF - This makes a BIG assumption about va_list */
 			while ((ret = vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) || (ret >= sz)) {
 			    sz = (ret == -1 ? sz + 100 : ret + 1);
@@ -712,7 +712,7 @@ DWORD WINAPI FormatMessage16(
 			}
 			for (x=b; *x; x++) ADD_TO_T(*x);
 		    } else {
-		        /* NULL args - copy formatstr 
+		        /* NULL args - copy formatstr
 			 * (probably wrong)
 			 */
 		        while ((lastf<f)&&(*lastf)) {
@@ -762,7 +762,7 @@ DWORD WINAPI FormatMessage16(
         lstrcpynA(lpBuffer,target,nSize);
     HeapFree(GetProcessHeap(),0,target);
     if (from) HeapFree(GetProcessHeap(),0,from);
-    return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
+    return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         strlen(allocstring):
 	strlen(lpBuffer);
 #else

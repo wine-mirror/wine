@@ -77,7 +77,7 @@ typedef struct {
 
 extern	BOOL		MMDRV_Init(void);
 extern	UINT		MMDRV_GetNum(UINT);
-extern	LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags, 
+extern	LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 				    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
 extern	void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
 extern	DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
@@ -218,7 +218,7 @@ extern DWORD 			MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, 
 void		CALLBACK	WINE_mmThreadEntryPoint(DWORD _pmt);
 
 void 				MMSYSTEM_MMTIME16to32(LPMMTIME mmt32, const MMTIME16* mmt16);
-void 				MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32); 
+void 				MMSYSTEM_MMTIME32to16(LPMMTIME16 mmt16, const MMTIME* mmt32);
 
 BOOL				MULTIMEDIA_MciInit(void);
 LPWINE_MM_IDATA			MULTIMEDIA_GetIData(void);

@@ -41,7 +41,7 @@ DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
                                    DWORD cbBuf, LPVOID lpvData )
 {
-    TRACE("(%s, %08lx, %ld, %p)\n", 
+    TRACE("(%s, %08lx, %ld, %p)\n",
                 debugstr_a(lpszFileName), handle, cbBuf, lpvData );
 
     return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
@@ -50,7 +50,7 @@ DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
 /*************************************************************************
  * VerFindFile                             [VER.8]
  */
-DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename, 
+DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
                             LPCSTR lpszWinDir, LPCSTR lpszAppDir,
                             LPSTR lpszCurDir, UINT16 *lpuCurDirLen,
                             LPSTR lpszDestDir, UINT16 *lpuDestDirLen )
@@ -67,14 +67,14 @@ DWORD WINAPI VerFindFile16( UINT16 flags, LPCSTR lpszFilename,
 /*************************************************************************
  * VerInstallFile                          [VER.9]
  */
-DWORD WINAPI VerInstallFile16( UINT16 flags, 
-                               LPCSTR lpszSrcFilename, LPCSTR lpszDestFilename, 
+DWORD WINAPI VerInstallFile16( UINT16 flags,
+                               LPCSTR lpszSrcFilename, LPCSTR lpszDestFilename,
                                LPCSTR lpszSrcDir, LPCSTR lpszDestDir, LPCSTR lpszCurDir,
                                LPSTR lpszTmpFile, UINT16 *lpwTmpFileLen )
 {
     UINT filelen;
-    DWORD retv = VerInstallFileA( flags, lpszSrcFilename, lpszDestFilename, 
-                                    lpszSrcDir, lpszDestDir, lpszCurDir, 
+    DWORD retv = VerInstallFileA( flags, lpszSrcFilename, lpszDestFilename,
+                                    lpszSrcDir, lpszDestDir, lpszCurDir,
                                     lpszTmpFile, &filelen);
 
     *lpwTmpFileLen = (UINT16)filelen;
@@ -92,7 +92,7 @@ DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 /*************************************************************************
  * VerQueryValue                          [VER.11]
  */
-DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock, 
+DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
                               SEGPTR *lpspBuffer, UINT16 *lpcb )
 {
     LPVOID lpvBlock = MapSL( spvBlock );
@@ -100,7 +100,7 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
     UINT buflen;
     DWORD retv;
 
-    TRACE("(%p, %s, %p, %p)\n", 
+    TRACE("(%p, %s, %p, %p)\n",
                 lpvBlock, debugstr_a(lpszSubBlock), lpspBuffer, lpcb );
 
     retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );

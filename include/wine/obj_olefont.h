@@ -66,7 +66,7 @@ typedef TEXTMETRICW TEXTMETRICOLE;
   ICOM_METHOD1(HRESULT, QueryTextMetrics, TEXTMETRICOLE*, ptm) \
   ICOM_METHOD1(HRESULT, AddRefHfont, HFONT, hfont) \
   ICOM_METHOD1(HRESULT, ReleaseHfont, HFONT, hfont) \
-  ICOM_METHOD1(HRESULT, SetHdc, HDC, hdc)     
+  ICOM_METHOD1(HRESULT, SetHdc, HDC, hdc)
 #define IFont_IMETHODS \
 	IUnknown_IMEHTODS \
 	IFont_METHODS
@@ -108,7 +108,7 @@ ICOM_DEFINE(IFont,IUnknown)
  * IFont interface
  */
 #define ICOM_INTERFACE IFontDisp
-#define IFontDisp_METHODS 
+#define IFontDisp_METHODS
 #define IFontDisp_IMETHODS \
   IUnknown_IMETHODS \
 	IFontDisp_METHODS

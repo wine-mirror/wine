@@ -351,7 +351,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
       break;
     case EXPR_TYPE_SYMBOL:
       if( !DEBUG_GetSymbolValue(exp->un.symbol.name, -1, &rtn, FALSE) )
-      {    
+      {
 	  DEBUG_Printf(DBG_CHN_MESG, "%s\n", exp->un.symbol.name);
 	  RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
       }
@@ -474,7 +474,7 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	{
 	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
 	}
-      if( exp1.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) && 
+      if( exp1.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) &&
           exp2.type == DEBUG_GetBasicType(DT_BASIC_CONST_INT) )
 	{
 	  rtn.type = exp1.type;
@@ -643,11 +643,11 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
 	   *		=> exp1 is host, result is target
 	   *	x is a pointer to internal variable x
 	   *	       	=> exp1 is host, result is host
-	   * so we force DV_TARGET, because dereferencing pointers to 
+	   * so we force DV_TARGET, because dereferencing pointers to
 	   * internal variables is very unlikely. a correct fix would be
 	   * rather large.
 	   */
-	  rtn.cookie = DV_TARGET; 
+	  rtn.cookie = DV_TARGET;
 	  rtn.addr.off = (unsigned int) DEBUG_TypeDerefPointer(&exp1, &rtn.type);
 	  if (!rtn.type)
 	    {
@@ -707,7 +707,7 @@ DEBUG_DisplayExpr(const struct expr * exp)
       DEBUG_Printf(DBG_CHN_MESG, "%d", exp->un.u_const.value);
       break;
     case EXPR_TYPE_STRING:
-      DEBUG_Printf(DBG_CHN_MESG, "\"%s\"", exp->un.string.str); 
+      DEBUG_Printf(DBG_CHN_MESG, "\"%s\"", exp->un.string.str);
       break;
     case EXPR_TYPE_SYMBOL:
       DEBUG_Printf(DBG_CHN_MESG, "%s" , exp->un.symbol.name);

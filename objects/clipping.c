@@ -107,12 +107,12 @@ INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
         }
         else
         {
-            FIXME("Unimplemented: hrgn NULL in mode: %d\n", fnMode); 
+            FIXME("Unimplemented: hrgn NULL in mode: %d\n", fnMode);
             GDI_ReleaseObj( hdc );
             return ERROR;
         }
     }
-    else 
+    else
     {
         if (!dc->hClipRgn)
         {
@@ -194,7 +194,7 @@ INT16 WINAPI OffsetVisRgn16( HDC16 hdc, INT16 x, INT16 y )
 {
     INT16 retval;
     DC * dc = DC_GetDCUpdate( hdc );
-    if (!dc) return ERROR;    
+    if (!dc) return ERROR;
     TRACE("%04x %d,%d\n", hdc, x, y );
     retval = OffsetRgn( dc->hVisRgn, x, y );
     CLIPPING_UpdateGCRegion( dc );
@@ -388,7 +388,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     if (!dc) return FALSE;
     if (dc->hGCClipRgn)
     {
-        ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x) + dc->DCOrgX, 
+        ret = PtInRegion( dc->hGCClipRgn, XLPTODP(dc,x) + dc->DCOrgX,
                                            YLPTODP(dc,y) + dc->DCOrgY );
     }
     GDI_ReleaseObj( hdc );
@@ -484,7 +484,7 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
     if (hRgn && (dc = DC_GetDCPtr( hdc )))
     {
       if( dc->hClipRgn )
-      { 
+      {
 	/* this assumes that dc->hClipRgn is in coordinates
 	   relative to the device (not DC origin) */
 
@@ -522,7 +522,7 @@ HRGN16 WINAPI SaveVisRgn16( HDC16 hdc )
         GDI_ReleaseObj( dc->hVisRgn );
         GDI_ReleaseObj( hdc );
         return 0;
-    }  
+    }
     CombineRgn( copy, dc->hVisRgn, 0, RGN_COPY );
     if (!(copyObj = GDI_GetObjPtr( copy, REGION_MAGIC )))
     {

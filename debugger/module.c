@@ -28,10 +28,10 @@
 #include "winuser.h"
 
 /***********************************************************************
- * Creates and links a new module to the current process 
+ * Creates and links a new module to the current process
  *
  */
-DBG_MODULE*	DEBUG_AddModule(const char* name, enum DbgModuleType type, 
+DBG_MODULE*	DEBUG_AddModule(const char* name, enum DbgModuleType type,
 				void* mod_addr, u_long size, HMODULE hmodule)
 {
     DBG_MODULE*	wmod;
@@ -65,10 +65,10 @@ DBG_MODULE*	DEBUG_FindModuleByName(const char* name, enum DbgModuleType type)
 {
      int		i;
      DBG_MODULE**	amod = DEBUG_CurrProcess->modules;
-     
+
      for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	 if ((type == DMT_UNKNOWN || type == amod[i]->type) &&
-	     !strcasecmp(name, amod[i]->module_name)) 
+	     !strcasecmp(name, amod[i]->module_name))
 	     return amod[i];
      }
      return NULL;
@@ -77,7 +77,7 @@ DBG_MODULE*	DEBUG_FindModuleByName(const char* name, enum DbgModuleType type)
 /***********************************************************************
  *	DEBUG_FindModuleByAddr
  *
- * either the addr where module is loaded, or any address inside the 
+ * either the addr where module is loaded, or any address inside the
  * module
  */
 DBG_MODULE*	DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type)
@@ -85,7 +85,7 @@ DBG_MODULE*	DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type)
      int		i;
      DBG_MODULE**	amod = DEBUG_CurrProcess->modules;
      DBG_MODULE*	res = NULL;
-    
+
      for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	 if ((type == DMT_UNKNOWN || type == amod[i]->type) &&
 	     (u_long)addr >= (u_long)amod[i]->load_addr &&
@@ -105,10 +105,10 @@ DBG_MODULE*	DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type)
 {
      int		i;
      DBG_MODULE**	amod = DEBUG_CurrProcess->modules;
-     
+
      for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
-	 if ((type == DMT_UNKNOWN || type == amod[i]->type) && 
-	     handle == amod[i]->handle) 
+	 if ((type == DMT_UNKNOWN || type == amod[i]->type) &&
+	     handle == amod[i]->handle)
 	     return amod[i];
      }
      return NULL;
@@ -120,7 +120,7 @@ DBG_MODULE*	DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type)
 DBG_MODULE*	DEBUG_GetProcessMainModule(DBG_PROCESS* process)
 {
     if (!process || !process->num_modules)	return NULL;
- 
+
     /* main module is the first to be loaded on a given process, so it's the first
      * in the array */
     assert(process->modules[0]->main);
@@ -180,7 +180,7 @@ DBG_MODULE* DEBUG_RegisterNEModule(HMODULE hModule, void* load_addr, u_long size
  * Helper function fo DEBUG_LoadModuleEPs16:
  *	finds the address of a given entry point from a given module
  */
-static BOOL DEBUG_GetEP16(char* moduleAddr, const NE_MODULE* module, 
+static BOOL DEBUG_GetEP16(char* moduleAddr, const NE_MODULE* module,
 			  WORD ordinal, DBG_ADDR* addr)
 {
     void*		idx;
@@ -196,18 +196,18 @@ static BOOL DEBUG_GetEP16(char* moduleAddr, const NE_MODULE* module,
 	if (!DEBUG_READ_MEM_VERBOSE(idx, &bundle, sizeof(bundle)))
 	    return FALSE;
     } while ((ordinal < bundle.first + 1) || (ordinal > bundle.last));
-    
-    if (!DEBUG_READ_MEM_VERBOSE((char*)idx + sizeof(ET_BUNDLE) + 
-				(ordinal - bundle.first - 1) * sizeof(ET_ENTRY), 
+
+    if (!DEBUG_READ_MEM_VERBOSE((char*)idx + sizeof(ET_BUNDLE) +
+				(ordinal - bundle.first - 1) * sizeof(ET_ENTRY),
 				&entry, sizeof(ET_ENTRY)))
 	return FALSE;
-    
+
     addr->seg = entry.segnum;
     addr->off = entry.offs;
-    
+
     if (addr->seg == 0xfe) addr->seg = 0xffff;  /* constant entry */
     else {
-	if (!DEBUG_READ_MEM_VERBOSE(moduleAddr + module->seg_table + 
+	if (!DEBUG_READ_MEM_VERBOSE(moduleAddr + module->seg_table +
 				    sizeof(ste) * (addr->seg - 1),
 				    &ste, sizeof(ste)))
 	    return FALSE;
@@ -235,16 +235,16 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
     value.cookie = DV_TARGET;
     value.addr.seg = 0;
     value.addr.off = 0;
-    
+
     cpnt = moduleAddr + module->name_table;
-    
+
     /* First search the resident names */
-    
+
     /* skip module name */
     if (!DEBUG_READ_MEM_VERBOSE(cpnt, buf, sizeof(buf)) || !buf[0])
 	return;
     cpnt += 1 + buf[0] + sizeof(WORD);
-    
+
     while (DEBUG_READ_MEM_VERBOSE(cpnt, buf, sizeof(buf)) && buf[0]) {
 	sprintf(epname, "%s.%.*s", name, buf[0], &buf[1]);
 	if (DEBUG_GetEP16(moduleAddr, module, *(WORD*)&buf[1 + buf[0]], &value.addr)) {
@@ -252,7 +252,7 @@ static void DEBUG_LoadModule16(HMODULE hModule, NE_MODULE* module, char* moduleA
 	}
 	cpnt += buf[0] + 1 + sizeof(WORD);
     }
-    
+
     /* Now search the non-resident names table */
     if (!module->nrname_handle) return;  /* No non-resident table */
     cpnt = (char *)GlobalLock16(module->nrname_handle);
@@ -286,10 +286,10 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 				 &nth_ofs, sizeof(nth_ofs)) ||
 	 !DEBUG_READ_MEM_VERBOSE((void*)(base + nth_ofs), &pe_header, sizeof(pe_header)))
 	 return;
-     
+
      pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 	 pe_header.FileHeader.SizeOfOptionalHeader;
-     
+
      for (i = 0; i < pe_header.FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
 	 if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
 	     continue;
@@ -304,7 +304,7 @@ void	DEBUG_LoadModule32(const char* name, HANDLE hFile, DWORD base)
 	 if (dil != DIL_LOADED)
 	     dil = DEBUG_RegisterMSCDebugInfo(wmod, hFile, &pe_header, nth_ofs);
 	 if (dil != DIL_LOADED)
-	     dil = DEBUG_RegisterPEDebugInfo(wmod, hFile, &pe_header, nth_ofs); 
+	     dil = DEBUG_RegisterPEDebugInfo(wmod, hFile, &pe_header, nth_ofs);
 	 wmod->dil = dil;
      }
 
@@ -333,14 +333,14 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     value.cookie = DV_TARGET;
     value.addr.seg = 0;
     value.addr.off = 0;
-    
+
     /* Add start of DLL */
     value.addr.off = base;
     if ((prefix = strrchr(wmod->module_name, '\\' ))) prefix++;
     else prefix = wmod->module_name;
 
     DEBUG_AddSymbol(prefix, &value, NULL, SYM_WIN32 | SYM_FUNC);
-    
+
     /* Add entry point */
     snprintf(buffer, sizeof(buffer), "%s.EntryPoint", prefix);
     value.addr.off = base + nth->OptionalHeader.AddressOfEntryPoint;
@@ -349,7 +349,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
     /* Add start of sections */
     pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
 	nth->FileHeader.SizeOfOptionalHeader;
-    
+
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, pe_seg_ofs += sizeof(pe_seg)) {
 	if (!DEBUG_READ_MEM_VERBOSE((void*)(base + pe_seg_ofs), &pe_seg, sizeof(pe_seg)))
 	    continue;
@@ -357,10 +357,10 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 	value.addr.off = base + pe_seg.VirtualAddress;
 	DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
     }
-    
+
     /* Add exported functions */
-    dir_ofs = nth_ofs + 
-	OFFSET_OF(IMAGE_NT_HEADERS, 
+    dir_ofs = nth_ofs +
+	OFFSET_OF(IMAGE_NT_HEADERS,
 		  OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
     if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir_ofs), &dir, sizeof(dir)) && dir.Size) {
 	IMAGE_EXPORT_DIRECTORY 	exports;
@@ -368,18 +368,18 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 	void**			functions = NULL;
 	DWORD*			names = NULL;
 	unsigned int		j;
-	
-	if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir.VirtualAddress), 
+
+	if (DEBUG_READ_MEM_VERBOSE((void*)(base + dir.VirtualAddress),
 				   &exports, sizeof(exports)) &&
-	    
+
 	    ((functions = DBG_alloc(sizeof(functions[0]) * exports.NumberOfFunctions))) &&
 	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfFunctions),
 				   functions, sizeof(functions[0]) * exports.NumberOfFunctions) &&
-	    
+
 	    ((ordinals = DBG_alloc(sizeof(ordinals[0]) * exports.NumberOfNames))) &&
 	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfNameOrdinals),
 				   ordinals, sizeof(ordinals[0]) * exports.NumberOfNames) &&
-	    
+
 	    ((names = DBG_alloc(sizeof(names[0]) * exports.NumberOfNames))) &&
 	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfNames),
 				   names, sizeof(names[0]) * exports.NumberOfNames)) {
@@ -393,7 +393,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 		value.addr.off = base + (DWORD)functions[ordinals[i]];
 		DEBUG_AddSymbol(buffer, &value, NULL, SYM_WIN32 | SYM_FUNC);
 	    }
-	    
+
 	    for (i = 0; i < exports.NumberOfFunctions; i++) {
 		if (!functions[i]) continue;
 		/* Check if we already added it with a name */
@@ -448,7 +448,7 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	    rowcount = 3 + (pfx ? strlen(pfx) : 0);
 	    first = 1;
 	}
-	
+
 	len = strlen(entry.szModule);
 	if ((rowcount + len) > 76) {
 	    DEBUG_Printf(DBG_CHN_MESG, "\n   ");
@@ -456,12 +456,12 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	}
 	DEBUG_Printf(DBG_CHN_MESG, " %s", entry.szModule);
 	rowcount += len + 1;
-	
+
 	DEBUG_LoadModule16(entry.hModule, &module, moduleAddr, entry.szModule);
     } while (ModuleNext16(&entry));
 #endif
-    
-    if (first) DEBUG_Printf(DBG_CHN_MESG, "\n"); 
+
+    if (first) DEBUG_Printf(DBG_CHN_MESG, "\n");
     return first;
 }
 
@@ -470,23 +470,23 @@ void	DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx, const char* filename
     const char*	fmt;
 
     switch (dil) {
-    case DIL_DEFERRED:	
+    case DIL_DEFERRED:
 	fmt = "Deferring debug information loading for %s '%s' (0x%08x)\n";
 	break;
-    case DIL_LOADED:	
-	fmt = "Loaded debug information from %s '%s' (0x%08x)\n"; 	
+    case DIL_LOADED:
+	fmt = "Loaded debug information from %s '%s' (0x%08x)\n";
 	break;
-    case DIL_NOINFO:	
-	fmt = "No debug information in %s '%s' (0x%08x)\n";		
+    case DIL_NOINFO:
+	fmt = "No debug information in %s '%s' (0x%08x)\n";
 	break;
-    case DIL_ERROR:	
-	fmt = "Can't find file for %s '%s' (0x%08x)\n";			
+    case DIL_ERROR:
+	fmt = "Can't find file for %s '%s' (0x%08x)\n";
 	break;
-    default: 
-	DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", dil); 
+    default:
+	DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", dil);
 	return;
     }
-   
+
     DEBUG_Printf(DBG_CHN_MESG, fmt, pfx, filename, load_addr);
 }
 
@@ -496,7 +496,7 @@ static const char*      DEBUG_GetModuleType(enum DbgModuleType type)
     case DMT_NE:    return "NE";
     case DMT_PE:    return "PE";
     case DMT_ELF:   return "ELF";
-    default:        return "???";;
+    default:        return "???";
     }
 }
 
@@ -519,7 +519,7 @@ static const char*      DEBUG_GetDbgInfo(enum DbgInfoLoad dil)
  */
 static int	DEBUG_ModuleCompare(const void* p1, const void* p2)
 {
-    return (*((const DBG_MODULE**)p1))->load_addr - 
+    return (*((const DBG_MODULE**)p1))->load_addr -
 	   (*((const DBG_MODULE**)p2))->load_addr;
 }
 
@@ -528,22 +528,22 @@ static int	DEBUG_ModuleCompare(const void* p1, const void* p2)
  *
  * returns TRUE is wmod_child is contained (inside bounds) of wmod_cntnr
  */
-static inline BOOL DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr, 
+static inline BOOL DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr,
 				     const DBG_MODULE* wmod_child)
 {
     return wmod_cntnr->load_addr < wmod_child->load_addr &&
-	(DWORD)wmod_cntnr->load_addr + wmod_cntnr->size > 
+	(DWORD)wmod_cntnr->load_addr + wmod_cntnr->size >
 	(DWORD)wmod_child->load_addr + wmod_child->size;
 }
 
 static void	DEBUG_InfoShareModule(const DBG_MODULE* module, int ident)
 {
     if (ident) DEBUG_Printf(DBG_CHN_MESG, "  \\-");
-    DEBUG_Printf(DBG_CHN_MESG, "%s\t0x%08lx-%08lx\t%s\n", 
+    DEBUG_Printf(DBG_CHN_MESG, "%s\t0x%08lx-%08lx\t%s\n",
 		 DEBUG_GetModuleType(module->type),
 		 (DWORD)module->load_addr, (DWORD)module->load_addr + module->size,
 		 module->module_name);
-}	
+}
 
 /***********************************************************************
  *           DEBUG_InfoShare
@@ -554,16 +554,16 @@ void DEBUG_InfoShare(void)
 {
     DBG_MODULE**	ref;
     int			i, j;
-    
+
     ref = DBG_alloc(sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
     if (!ref) return;
-    
-    DEBUG_Printf(DBG_CHN_MESG, "Module\tAddress\t\t\tName\t%d modules\n", 
+
+    DEBUG_Printf(DBG_CHN_MESG, "Module\tAddress\t\t\tName\t%d modules\n",
 		 DEBUG_CurrProcess->num_modules);
-    
-    memcpy(ref, DEBUG_CurrProcess->modules, 
+
+    memcpy(ref, DEBUG_CurrProcess->modules,
 	   sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
-    qsort(ref, DEBUG_CurrProcess->num_modules, sizeof(DBG_MODULE*), 
+    qsort(ref, DEBUG_CurrProcess->num_modules, sizeof(DBG_MODULE*),
 	  DEBUG_ModuleCompare);
     for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	switch (ref[i]->type) {
@@ -582,7 +582,7 @@ void DEBUG_InfoShare(void)
 		    DEBUG_IsContainer(ref[j], ref[i]))
 		    break;
 	    }
-	    if (j >= DEBUG_CurrProcess->num_modules) 
+	    if (j >= DEBUG_CurrProcess->num_modules)
 		DEBUG_InfoShareModule(ref[i], 0);
 	    break;
 	default:
@@ -621,21 +621,21 @@ void DEBUG_WalkModules(void)
 {
     DBG_MODULE**	amod;
     int			i;
-    
+
     DEBUG_Printf(DBG_CHN_MESG, "Address\t\t\tModule\tName\n");
-    
+
     amod = DBG_alloc(sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
     if (!amod) return;
-    
-    memcpy(amod, DEBUG_CurrProcess->modules, 
+
+    memcpy(amod, DEBUG_CurrProcess->modules,
 	   sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
-    qsort(amod, DEBUG_CurrProcess->num_modules, sizeof(DBG_MODULE*), 
+    qsort(amod, DEBUG_CurrProcess->num_modules, sizeof(DBG_MODULE*),
 	  DEBUG_ModuleCompare);
     for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	if (amod[i]->type == DMT_ELF)	continue;
- 	
-	DEBUG_Printf(DBG_CHN_MESG, "0x%08lx-%08lx\t(%s)\t%s\n", 
-		     (DWORD)amod[i]->load_addr, 
+
+	DEBUG_Printf(DBG_CHN_MESG, "0x%08lx-%08lx\t(%s)\t%s\n",
+		     (DWORD)amod[i]->load_addr,
 		     (DWORD)amod[i]->load_addr + amod[i]->size,
 		     DEBUG_GetModuleType(amod[i]->type), amod[i]->module_name);
     }

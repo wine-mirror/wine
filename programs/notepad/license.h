@@ -27,7 +27,7 @@ typedef struct
   LPCSTR Warranty, WarrantyCaption;
 } LICENSE;
 
-/* 
+/*
 extern LICENSE WineLicense_Ca;
 extern LICENSE WineLicense_Cz;
 extern LICENSE WineLicense_Da;
@@ -36,7 +36,7 @@ extern LICENSE WineLicense_De;
 
 extern LICENSE WineLicense_En;
 
-/* 
+/*
 extern LICENSE WineLicense_Eo;
 extern LICENSE WineLicense_Es;
 extern LICENSE WineLicense_Fi;

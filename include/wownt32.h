@@ -1,5 +1,5 @@
 /*
- * WOW Generic Thunk API 
+ * WOW Generic Thunk API
  *
  * Copyright (C) 1999 Ulrich Weigand
  *

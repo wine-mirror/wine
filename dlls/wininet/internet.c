@@ -111,7 +111,7 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_THREAD_ATTACH:
 	    {
                 LPWITHREADERROR lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(WITHREADERROR));
-		if (NULL == lpwite) 
+		if (NULL == lpwite)
                     return FALSE;
 
                 TlsSetValue(g_dwTlsErrIndex, (LPVOID)lpwite);
@@ -157,7 +157,7 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, 
+HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent,
 	DWORD dwAccessType, LPCSTR lpszProxy,
     	LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
@@ -236,7 +236,7 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
  *
  * RETURNS
  *    TRUE if connected
- *    if lpdwStatus is not null, return the status (off line, 
+ *    if lpdwStatus is not null, return the status (off line,
  *    modem, lan...) in it.
  *    FALSE if not connected
  */
@@ -388,7 +388,7 @@ lend:
 
     hIC = GET_HWININET_FROM_LPWININETFINDNEXT(lpwh);
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
-    {	
+    {
         INTERNET_ASYNC_RESULT iar;
 
         iar.dwResult = (DWORD)bSuccess;
@@ -453,7 +453,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         case WH_HINIT:
             INTERNET_CloseHandle((LPWININETAPPINFOA) lpwh);
 	    retval = TRUE;
-            break; 
+            break;
 
         case WH_HHTTPSESSION:
 	    HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
@@ -472,7 +472,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         case WH_HFINDNEXT:
             retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTA) lpwh);
             break;
-		
+
         default:
             break;
     }
@@ -527,7 +527,7 @@ BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR 
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags, 
+BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 		LPURL_COMPONENTSA lpUrlComponents)
 {
   /*
@@ -567,7 +567,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     lpszParam = strpbrk(lpszap, ";?");
     if (lpszParam != NULL)
     {
-        if (!SetUrlComponentValue(&lpUrlComponents->lpszExtraInfo, 
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszExtraInfo,
 	     &lpUrlComponents->dwExtraInfoLength, lpszParam+1, strlen(lpszParam+1)))
         {
 	    return FALSE;
@@ -580,7 +580,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
         /* Get scheme first. */
         lpUrlComponents->nScheme = GetInternetScheme(lpszUrl, lpszcp - lpszUrl);
-        if (!SetUrlComponentValue(&lpUrlComponents->lpszScheme, 
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszScheme,
 		    &lpUrlComponents->dwSchemeLength, lpszUrl, lpszcp - lpszUrl))
 	    return FALSE;
 
@@ -618,14 +618,14 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
                 /* [<user>[<:password>]@]<host>[:<port>] */
             /* First find the user and password if they exist */
-			
+
             lpszHost = strchr(lpszcp, '@');
             if (lpszHost == NULL || lpszHost > lpszNetLoc)
                 {
                 /* username and password not specified. */
-		SetUrlComponentValue(&lpUrlComponents->lpszUserName, 
+		SetUrlComponentValue(&lpUrlComponents->lpszUserName,
 			&lpUrlComponents->dwUserNameLength, NULL, 0);
-		SetUrlComponentValue(&lpUrlComponents->lpszPassword, 
+		SetUrlComponentValue(&lpUrlComponents->lpszPassword,
 			&lpUrlComponents->dwPasswordLength, NULL, 0);
                 }
             else /* Parse out username and password */
@@ -639,16 +639,16 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 		       lpszPasswd = lpszcp;
 
 		   lpszcp++;
-                    }        
-		    
-		SetUrlComponentValue(&lpUrlComponents->lpszUserName, 
+                    }
+
+		SetUrlComponentValue(&lpUrlComponents->lpszUserName,
 			&lpUrlComponents->dwUserNameLength, lpszUser, lpszPasswd - lpszUser);
 
                 if (lpszPasswd != lpszHost)
                     lpszPasswd++;
-		SetUrlComponentValue(&lpUrlComponents->lpszPassword, 
-			&lpUrlComponents->dwPasswordLength, 
-			lpszPasswd == lpszHost ? NULL : lpszPasswd, 
+		SetUrlComponentValue(&lpUrlComponents->lpszPassword,
+			&lpUrlComponents->dwPasswordLength,
+			lpszPasswd == lpszHost ? NULL : lpszPasswd,
 			lpszHost - lpszPasswd);
 
 		lpszcp++; /* Advance to beginning of host */
@@ -667,7 +667,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 		lpszcp++;
                 }
 
-            SetUrlComponentValue(&lpUrlComponents->lpszHostName, 
+            SetUrlComponentValue(&lpUrlComponents->lpszHostName,
                &lpUrlComponents->dwHostNameLength, lpszHost, lpszPort - lpszHost);
 
 	    if (lpszPort != lpszNetLoc)
@@ -701,7 +701,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
                 len = strlen(lpszcp);
         }
 
-        if (!SetUrlComponentValue(&lpUrlComponents->lpszUrlPath, 
+        if (!SetUrlComponentValue(&lpUrlComponents->lpszUrlPath,
          &lpUrlComponents->dwUrlPathLength, lpszcp, len))
          return FALSE;
     }
@@ -721,7 +721,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
  *           GetUrlCacheEntryInfoA (WININET.@)
  *
  */
-BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl, 
+BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl,
   LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntry,
   LPDWORD lpCacheEntrySize)
 {
@@ -790,7 +790,7 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
  *           InternetSetStatusCallback (WININET.@)
  *
  * Sets up a callback function which is called as progress is made
- * during an operation. 
+ * during an operation.
  *
  * RETURNS
  *    Previous callback or NULL 	on success
@@ -805,7 +805,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
 
     TRACE("0x%08lx\n", (ULONG)hInternet);
     if (lpwai->hdr.htype != WH_HINIT)
-        return INTERNET_INVALID_STATUS_CALLBACK; 
+        return INTERNET_INVALID_STATUS_CALLBACK;
 
     retVal = lpwai->lpfnStatusCB;
     lpwai->lpfnStatusCB = lpfnIntCB;
@@ -817,7 +817,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(
 /***********************************************************************
  *           InternetWriteFile (WININET.@)
  *
- * Write data to an open internet file 
+ * Write data to an open internet file
  *
  * RETURNS
  *    TRUE  on success
@@ -838,7 +838,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD; 
+            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD;
             break;
 
         case WH_HFILE:
@@ -865,14 +865,14 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 /***********************************************************************
  *           InternetReadFile (WININET.@)
  *
- * Read data from an open internet file 
+ * Read data from an open internet file
  *
  * RETURNS
  *    TRUE  on success
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer, 
+BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 	DWORD dwNumOfBytesToRead, LPDWORD dwNumOfBytesRead)
 {
     BOOL retval = FALSE;
@@ -886,7 +886,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD; 
+            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD;
             break;
 
         case WH_HFILE:
@@ -920,7 +920,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption, 
+BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
     LPWININETHANDLEHEADER lpwhh;
@@ -1032,7 +1032,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName, 
+BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
 		LPSTR lpCookieData, LPDWORD lpdwSize)
 {
     FIXME("(%s,%s,%p), stub!\n",debugstr_a(lpszUrl),debugstr_a(lpszCookieName),
@@ -1097,7 +1097,7 @@ INTERNET_SCHEME GetInternetScheme(LPCSTR lpszScheme, INT nMaxCmp)
  *
  * RETURNS
  *
- *  TRUE on success and FALSE on failure. if a failures then 
+ *  TRUE on success and FALSE on failure. if a failures then
  *   ERROR_NOT_CONNECTED is places into GetLastError
  *
  */
@@ -1114,14 +1114,14 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
   char host[1024];
   int status = -1;
 
-  /* 
+  /*
    * Crack or set the Address
    */
   if (lpszUrl == NULL)
   {
-     /* 
+     /*
       * According to the doc we are supost to use the ip for the next
-      * server in the WnInet internal server database. I have 
+      * server in the WnInet internal server database. I have
       * no idea what that is or how to get it.
       *
       * So someone needs to implement this.
@@ -1136,10 +1136,10 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
      ZeroMemory(&componets,sizeof(URL_COMPONENTSA));
      componets.lpszHostName = (LPSTR)&host;
      componets.dwHostNameLength = 1024;
-     
+
      if (!InternetCrackUrlA(lpszUrl,0,0,&componets))
        goto End;
- 
+
      TRACE("host name : %s\n",componets.lpszHostName);
   }
 
@@ -1155,13 +1155,13 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
   status = system(command);
 
   TRACE("Ping returned a code of %i \n",status);
- 
-  /* Ping return code of 0 indicates success */ 
+
+  /* Ping return code of 0 indicates success */
   if (status == 0)
      rc = TRUE;
 
 End:
- 
+
   if (rc == FALSE)
     SetLastError(ERROR_NOT_CONNECTED);
 
@@ -1172,7 +1172,7 @@ End:
  *	InternetOpenUrlA (WININET.@)
  *
  * Opens an URL
- * 
+ *
  * RETURNS
  *   handle of connection or NULL on failure
  */
@@ -1441,8 +1441,8 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
     {
         InterlockedIncrement(&dwNumIdleThreads);
 
-	if (InterlockedIncrement(&dwNumThreads) > MAX_WORKER_THREADS || 
-	    !(hThread = CreateThread(NULL, 0, 
+	if (InterlockedIncrement(&dwNumThreads) > MAX_WORKER_THREADS ||
+	    !(hThread = CreateThread(NULL, 0,
             (LPTHREAD_START_ROUTINE)INTERNET_WorkerThreadFunc, NULL, 0, &dwTID)))
 	{
             InterlockedDecrement(&dwNumThreads);
@@ -1487,27 +1487,27 @@ VOID INTERNET_ExecuteWork()
 		break;
 
             case FTPSETCURRENTDIRECTORYA:
-		FTP_FtpSetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION, 
+		FTP_FtpSetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION,
 			(LPCSTR)workRequest.LPSZDIRECTORY);
 		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDIRECTORY);
 		break;
 
             case FTPCREATEDIRECTORYA:
-		FTP_FtpCreateDirectoryA((HINTERNET)workRequest.HFTPSESSION, 
+		FTP_FtpCreateDirectoryA((HINTERNET)workRequest.HFTPSESSION,
 			(LPCSTR)workRequest.LPSZDIRECTORY);
 		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZDIRECTORY);
 		break;
 
             case FTPFINDFIRSTFILEA:
-                FTP_FtpFindFirstFileA((HINTERNET)workRequest.HFTPSESSION, 
-			(LPCSTR)workRequest.LPSZSEARCHFILE, 
-	           (LPWIN32_FIND_DATAA)workRequest.LPFINDFILEDATA, workRequest.DWFLAGS, 
+                FTP_FtpFindFirstFileA((HINTERNET)workRequest.HFTPSESSION,
+			(LPCSTR)workRequest.LPSZSEARCHFILE,
+	           (LPWIN32_FIND_DATAA)workRequest.LPFINDFILEDATA, workRequest.DWFLAGS,
 		   workRequest.DWCONTEXT);
 		HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZSEARCHFILE);
 		break;
 
             case FTPGETCURRENTDIRECTORYA:
-                FTP_FtpGetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION, 
+                FTP_FtpGetCurrentDirectoryA((HINTERNET)workRequest.HFTPSESSION,
 			(LPSTR)workRequest.LPSZDIRECTORY, (LPDWORD)workRequest.LPDWDIRECTORY);
 		break;
 
@@ -1558,21 +1558,21 @@ VOID INTERNET_ExecuteWork()
 		break;
 
             case HTTPSENDREQUESTA:
-               HTTP_HttpSendRequestA((HINTERNET)workRequest.HFTPSESSION, 
+               HTTP_HttpSendRequestA((HINTERNET)workRequest.HFTPSESSION,
                        (LPCSTR)workRequest.LPSZHEADER,
-                       workRequest.DWHEADERLENGTH,     
-                       (LPVOID)workRequest.LPOPTIONAL, 
+                       workRequest.DWHEADERLENGTH,
+                       (LPVOID)workRequest.LPOPTIONAL,
                        workRequest.DWOPTIONALLENGTH);
                HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZHEADER);
                break;
 
             case HTTPOPENREQUESTA:
-               HTTP_HttpOpenRequestA((HINTERNET)workRequest.HFTPSESSION, 
+               HTTP_HttpOpenRequestA((HINTERNET)workRequest.HFTPSESSION,
                        (LPCSTR)workRequest.LPSZVERB,
-                       (LPCSTR)workRequest.LPSZOBJECTNAME,     
-                       (LPCSTR)workRequest.LPSZVERSION, 
-                       (LPCSTR)workRequest.LPSZREFERRER, 
-                       (LPCSTR*)workRequest.LPSZACCEPTTYPES, 
+                       (LPCSTR)workRequest.LPSZOBJECTNAME,
+                       (LPCSTR)workRequest.LPSZVERSION,
+                       (LPCSTR)workRequest.LPSZREFERRER,
+                       (LPCSTR*)workRequest.LPSZACCEPTTYPES,
                        workRequest.DWFLAGS,
                        workRequest.DWCONTEXT);
                HeapFree(GetProcessHeap(), 0, (LPVOID)workRequest.LPSZVERB);

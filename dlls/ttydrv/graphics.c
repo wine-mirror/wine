@@ -99,14 +99,14 @@ BOOL TTYDRV_DC_LineTo(TTYDRV_PDEVICE *physDev, INT x, INT y)
   if(row1 > row2) {
     INT tmp = row1;
     row1 = row2;
-    row2 = tmp; 
-  } 
+    row2 = tmp;
+  }
 
   if(col1 > col2) {
     INT tmp = col1;
     col1 = col2;
-    col2 = tmp; 
-  } 
+    col2 = tmp;
+  }
 
   wmove(physDev->window, row1, col1);
   if(col1 == col2) {
@@ -179,7 +179,7 @@ BOOL TTYDRV_DC_PolyPolygon(TTYDRV_PDEVICE *physDev, const POINT* pt, const INT* 
 BOOL TTYDRV_DC_PolyPolyline(TTYDRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines)
 {
   FIXME("(%x, %p, %p, %lu): stub\n", physDev->hdc, pt, counts, polylines);
-  
+
   return TRUE;
 }
 
@@ -205,13 +205,13 @@ BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, 
   if(row1 > row2) {
     INT tmp = row1;
     row1 = row2;
-    row2 = tmp; 
-  } 
+    row2 = tmp;
+  }
   if(col1 > col2) {
     INT tmp = col1;
     col1 = col2;
-    col2 = tmp; 
-  } 
+    col2 = tmp;
+  }
 
   wmove(physDev->window, row1, col1);
   whline(physDev->window, ACS_HLINE, col2-col1);
@@ -246,9 +246,9 @@ BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, 
 BOOL TTYDRV_DC_RoundRect(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			 INT bottom, INT ell_width, INT ell_height)
 {
-  FIXME("(%x, %d, %d, %d, %d, %d, %d): stub\n", 
+  FIXME("(%x, %d, %d, %d, %d, %d, %d): stub\n",
 	physDev->hdc, left, top, right, bottom, ell_width, ell_height);
-  
+
   return TRUE;
 }
 
@@ -344,7 +344,7 @@ BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
   x = XLPTODP(dc, x);
   y = YLPTODP(dc, y);
-  
+
   row = (dc->DCOrgY + y) / physDev->cellHeight;
   col = (dc->DCOrgX + x) / physDev->cellWidth;
   len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
@@ -411,7 +411,7 @@ BOOL TTYDRV_DC_GetTextMetrics(TTYDRV_PDEVICE *physDev, LPTEXTMETRICW lptm)
   lptm->tmDescent = 0;
   lptm->tmInternalLeading = 0;
   lptm->tmExternalLeading = 0;
-  lptm->tmAveCharWidth = physDev->cellWidth; 
+  lptm->tmAveCharWidth = physDev->cellWidth;
   lptm->tmMaxCharWidth = physDev->cellWidth;
   lptm->tmWeight = FW_MEDIUM;
   lptm->tmOverhang = 0;

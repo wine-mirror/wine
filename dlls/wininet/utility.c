@@ -1,4 +1,4 @@
-/* 
+/*
  * Wininet - Utility functions
  *
  * Copyright 1999 Corel Corporation
@@ -52,11 +52,11 @@ time_t ConvertTimeString(LPCSTR asctime)
 
     /* Assert that the string is the expected length */
     if (tmpChar[TIME_STRING_LEN] != '\0')
-    { 
+    {
         tmpChar[TIME_STRING_LEN] = '\0';
         FIXME("\n");
     }
-    
+
     /* Convert a time such as 'Mon, 15 Nov 1999 16:09:35 GMT' into a SYSTEMTIME structure
      * We assume the time is in this format
      * and divide it into easy to swallow chunks
@@ -74,7 +74,7 @@ time_t ConvertTimeString(LPCSTR asctime)
     t.tm_hour = atoi(tmpChar+17);
     t.tm_min = atoi(tmpChar+20);
     t.tm_sec = atoi(tmpChar+23);
-	
+
     /* and month */
     tmpChar2 = tmpChar + 8;
     switch(tmpChar2[2])

@@ -4,7 +4,7 @@
  * Copyright 1993, 1994 Alexandre Julliard
  * Copyright 2002 Bill Medland
  *
- * Contains 
+ * Contains
  *   1.  DrawText functions
  *   2.  GrayString functions
  *   3.  TabbedText functions
@@ -60,13 +60,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
  *     a. If the buffered text to be displayed includes the ampersands then
  *        we will need special measurement and draw functions that will ignore
  *        the ampersands (e.g. by copying to a buffer without the prefix and
- *        then using the normal forms).  This may involve less space but may 
+ *        then using the normal forms).  This may involve less space but may
  *        require more processing.  e.g. since a line containing tabs may
  *        contain several underlined characters either we need to carry around
  *        a list of prefix locations or we may need to locate them several
  *        times.
  *     b. If we actually directly modify the "original text" as we go then we
- *        will need some special "caching" to handle the fact that when we 
+ *        will need some special "caching" to handle the fact that when we
  *        ellipsify the text the ellipsis may modify the next line of text,
  *        which we have not yet processed.  (e.g. ellipsification of a W at the
  *        end of a line will overwrite the W, the \n and the first character of
@@ -117,7 +117,7 @@ typedef struct tag_ellipsis_data
  *   width      [in] The maximum width permitted (in logical coordinates)
  *   size       [out] The dimensions of the text
  *   modstr     [out] The modified form of the string, to be returned to the
- *                    calling program.  It is assumed that the caller has 
+ *                    calling program.  It is assumed that the caller has
  *                    made sufficient space available so we don't need to
  *                    know the size of the space.  This pointer may be NULL if
  *                    the modified string is not required.
@@ -180,7 +180,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  *   width      [in] The maximum width permitted (in logical coordinates)
  *   size       [out] The dimensions of the text
  *   modstr     [out] The modified form of the string, to be returned to the
- *                    calling program.  It is assumed that the caller has 
+ *                    calling program.  It is assumed that the caller has
  *                    made sufficient space available so we don't need to
  *                    know the size of the space.  This pointer may be NULL if
  *                    the modified string is not required.
@@ -251,7 +251,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
         memmove (lastSlash-1, lastSlash, len_trailing * sizeof(WCHAR));
         lastSlash--;
         len_under++;
-        
+
         assert (*len_str);
         (*len_str)--;
     }
@@ -298,7 +298,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  *              known to fit; chars_fit+1 is known not to fit.
  *   chars_used [out] The number of characters of str that have been "used" and
  *              do not need to be included in later text.  For example this will
- *              include any spaces that have been discarded from the start of 
+ *              include any spaces that have been discarded from the start of
  *              the next line.
  *   size       [out] The size of the returned text in logical coordinates
  *
@@ -306,7 +306,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  * increasing with number of characters (i.e. no weird kernings)
  *
  * Algorithm
- * 
+ *
  * Work back from the last character that did fit to either a space or the last
  * character of a word, whichever is met first.
  * If there was one or the first character didn't fit then
@@ -464,7 +464,7 @@ static void TEXT_SkipChars (int *new_count, const WCHAR **new_str,
     *new_str = start_str;
     *new_count = start_count;
 }
-  
+
 /*********************************************************************
  *                      TEXT_Reprefix
  *
@@ -518,7 +518,7 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int ns,
 }
 
 /*********************************************************************
- *  Returns true if and only if the remainder of the line is a single 
+ *  Returns true if and only if the remainder of the line is a single
  *  newline representation or nothing
  */
 
@@ -536,7 +536,7 @@ static int remainder_is_none_or_newline (int num_chars, const WCHAR *str)
 
 /*********************************************************************
  *  Return next line of text from a string.
- * 
+ *
  * hdc - handle to DC.
  * str - string to parse into lines.
  * count - length of str.
@@ -550,13 +550,13 @@ static int remainder_is_none_or_newline (int num_chars, const WCHAR *str)
  *            the return string is built.
  * tabwidth - The width of a tab in logical coordinates
  * pprefix_offset - Here is where we return the offset within dest of the first
- *                  prefixed (underlined) character.  -1 is returned if there 
+ *                  prefixed (underlined) character.  -1 is returned if there
  *                  are none.  Note that there may be more; the calling code
  *                  will need to use TEXT_Reprefix to find any later ones.
  * pellip - Here is where we return the information about any ellipsification
  *          that was carried out.  Note that if tabs are being expanded then
  *          this data will correspond to the last text segment actually
- *          returned in dest; by definition there would not have been any 
+ *          returned in dest; by definition there would not have been any
  *          ellipsification in earlier text segments of the line.
  *
  * Returns pointer to next char in str after end of the line
@@ -678,7 +678,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         /* NB we may end up ellipsifying a word-broken or path_ellipsified
          * string */
         if ((!line_fits && (format & DT_WORD_ELLIPSIS)) ||
-            ((format & DT_END_ELLIPSIS) && 
+            ((format & DT_END_ELLIPSIS) &&
               ((last_line && *count) ||
                (remainder_is_none_or_newline (*count, &str[i]) && !line_fits))))
         {
@@ -750,7 +750,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         }
         /* else it was a Tab and we go around again */
     }
-    
+
     retsize->cx = plen;
     *len = j;
     if (*count)
@@ -803,7 +803,7 @@ static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int of
  * is not quite complete, especially with regard to \0.  We will assume that
  * the returned string could have a length of up to i_count+3 and also have
  * a trailing \0 (which would be 4 more than a not-null-terminated string but
- * 3 more than a null-terminated string).  If this is not so then increase 
+ * 3 more than a null-terminated string).  If this is not so then increase
  * the allowance in DrawTextExA.
  */
 #define MAX_STATIC_BUFFER 1024
@@ -907,12 +907,12 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                     const WCHAR *p;
                     p = str; while (p < str+len && *p != TAB) p++;
                     len_seg = p - str;
-                    if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size)) 
+                    if (len_seg != len && !GetTextExtentPointW(hdc, str, len_seg, &size))
                         return 0;
                 }
                 else
                     len_seg = len;
-                   
+
                 if (!ExtTextOutW( hdc, xseg, y,
                                  ((flags & DT_NOCLIP) ? 0 : ETO_CLIPPED) |
                                  ((flags & DT_RTLREADING) ? ETO_RTLREADING : 0),
@@ -926,7 +926,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                 if (len)
                 {
                     assert ((flags & DT_EXPANDTABS) && *str == TAB);
-                    len--; str++; 
+                    len--; str++;
                     xseg += ((size.cx/tabwidth)+1)*tabwidth;
                     if (prefix_offset != -1)
                     {
@@ -973,7 +973,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 /***********************************************************************
  *           DrawTextExA    (USER32.@)
  *
- * If DT_MODIFYSTRING is specified then there must be room for up to 
+ * If DT_MODIFYSTRING is specified then there must be room for up to
  * 4 extra characters.  We take great care about just how much modified
  * string we return.
  */
@@ -1104,7 +1104,7 @@ static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
  * rethink the strategy once the migration to NT handles is complete.
  * We are going to get a lot of code-duplication once this migration is
  * completed...
- * 
+ *
  */
 static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, INT len,
                             INT x, INT y, INT cx, INT cy, BOOL unicode, BOOL _32bit)
@@ -1363,7 +1363,7 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
 
     acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
     p = HeapAlloc( GetProcessHeap(), 0, acount );
-    if(p == NULL) return 0; /* FIXME: is this the correct return on failure */ 
+    if(p == NULL) return 0; /* FIXME: is this the correct return on failure */
     acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
     ret = TabbedTextOutA( hdc, x, y, p, acount, cTabStops, lpTabPos, nTabOrg );
     HeapFree( GetProcessHeap(), 0, p );

@@ -160,9 +160,9 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
            SetTextColor( hDC, GetSysColor(COLOR_3DFACE));
            SetBkColor( hDC, bk);
 
-           /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT 
+           /* if COLOR_WINDOW happens to be the same as COLOR_3DHILIGHT
             * we better use 0x55aa bitmap brush to make scrollbar's background
-            * look different from the window background. 
+            * look different from the window background.
             */
            if (bk == GetSysColor(COLOR_WINDOW)) {
                return CACHE_GetPattern55AABrush();
@@ -373,9 +373,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_NCRBUTTONUP:
         /*
-         * FIXME : we must NOT send WM_CONTEXTMENU on a WM_NCRBUTTONUP (checked 
-         * in Windows), but what _should_ we do? According to MSDN : 
-         * "If it is appropriate to do so, the system sends the WM_SYSCOMMAND 
+         * FIXME : we must NOT send WM_CONTEXTMENU on a WM_NCRBUTTONUP (checked
+         * in Windows), but what _should_ we do? According to MSDN :
+         * "If it is appropriate to do so, the system sends the WM_SYSCOMMAND
          * message to the window". When is it appropriate?
          */
         break;
@@ -428,7 +428,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	{
 	    PAINTSTRUCT ps;
 	    HDC hdc = BeginPaint( hwnd, &ps );
-	    if( hdc ) 
+	    if( hdc )
 	    {
               HICON hIcon;
 	      if (IsIconic(hwnd) && ((hIcon = GetClassLongW( hwnd, GCL_HICON))) )
@@ -467,7 +467,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    if (ret) return ret;
 	}
 
-	/* Caption clicks are handled by the NC_HandleNCLButtonDown() */ 
+	/* Caption clicks are handled by the NC_HandleNCLButtonDown() */
         return (LOWORD(lParam) >= HTCLIENT) ? MA_ACTIVATE : MA_NOACTIVATE;
 
     case WM_ACTIVATE:
@@ -516,7 +516,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_CTLCOLOR:
 	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
-	
+
     case WM_SETCURSOR:
         if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
 	{
@@ -545,7 +545,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 		iMenuSysKey = 1;
 	      else
 		iMenuSysKey = 0;
-	    
+
 	    iF10Key = 0;
 
 	    if( wParam == VK_F4 )	/* try to close the window */
@@ -554,7 +554,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 if (!(GetClassLongW( top, GCL_STYLE ) & CS_NOCLOSE))
                     PostMessageW( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
 	    }
-	} 
+	}
 	else if( wParam == VK_F10 )
 	        iF10Key = 1;
 	     else
@@ -577,7 +577,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         {
             PostMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0L );
 	    break;
-        } 
+        }
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
         {
 	    if (wParam == VK_TAB || wParam == VK_ESCAPE) break;
@@ -585,7 +585,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 SendMessageW( GetParent(hwnd), msg, wParam, lParam );
 	    else
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wParam );
-        } 
+        }
 	else /* check for Ctrl-Esc */
             if (wParam != VK_ESCAPE) MessageBeep(0);
 	break;
@@ -612,7 +612,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return -1;
 
     case WM_DROPOBJECT:
-	return DRAG_FILE;  
+	return DRAG_FILE;
 
     case WM_QUERYDROPOBJECT:
         return (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
@@ -642,7 +642,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NOTIFYFORMAT:
       if (IsWindowUnicode(hwnd)) return NFR_UNICODE;
       else return NFR_ANSI;
-        
+
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:
 	return 1;
@@ -871,14 +871,14 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 /***********************************************************************
  *		DefWindowProcW (USER32.@) Calls default window message handler
- * 
- * Calls default window procedure for messages not processed 
+ *
+ * Calls default window procedure for messages not processed
  *  by application.
  *
  *  RETURNS
  *     Return value is dependent upon the message.
 */
-LRESULT WINAPI DefWindowProcW( 
+LRESULT WINAPI DefWindowProcW(
     HWND hwnd,      /* [in] window procedure receiving message */
     UINT msg,       /* [in] message identifier */
     WPARAM wParam,  /* [in] first message parameter */

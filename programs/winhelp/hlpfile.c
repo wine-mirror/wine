@@ -289,7 +289,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end)
   UINT      titlesize;
 
   for (pageptr = &hlpfile->first_page; *pageptr; pageptr = &(*pageptr)->next)
-    /* Nothing */; 
+    /* Nothing */;
 
   if (buf + 0x31 > end) {Report("page1"); return(FALSE);};
   title = buf + GET_UINT(buf, 0x10);
@@ -342,7 +342,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end)
 
   for (page = hlpfile->first_page; page->next; page = page->next) /* Nothing */;
   for (paragraphptr = &page->first_paragraph; *paragraphptr;
-       paragraphptr = &(*paragraphptr)->next) /* Nothing */; 
+       paragraphptr = &(*paragraphptr)->next) /* Nothing */;
 
   if (buf + 0x19 > end) {Report("paragraph2"); return(FALSE);};
 
@@ -580,7 +580,7 @@ static BOOL HLPFILE_ReadFileToBuffer(HFILE hFile)
   if (_hread(hFile, file_buffer + 16, size - 16) != size - 16)
     {Report("filesize1"); return(FALSE);};
 
-  if (_hread(hFile, dummy, 1) != 0) Report("filesize2"); 
+  if (_hread(hFile, dummy, 1) != 0) Report("filesize2");
 
   file_buffer[size] = '0';
 

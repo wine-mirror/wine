@@ -70,7 +70,7 @@ static HRESULT WINAPI WBPCI_GetClassInfo(LPPROVIDECLASSINFO iface, LPTYPEINFO *p
  * IProvideClassInfo virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IProvideClassInfo) WBPCI_Vtbl = 
+static ICOM_VTABLE(IProvideClassInfo) WBPCI_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPCI_QueryInterface,
@@ -155,7 +155,7 @@ static HRESULT WINAPI WBPCI2_GetGUID(LPPROVIDECLASSINFO2 iface,
  * IProvideClassInfo virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IProvideClassInfo2) WBPCI2_Vtbl = 
+static ICOM_VTABLE(IProvideClassInfo2) WBPCI2_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBPCI2_QueryInterface,

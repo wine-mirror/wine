@@ -61,7 +61,7 @@
  *
  * infoPtr->nTool is the tool the mouse was on on the last relayed MM
  * or timer expiry or -1 if the mouse was not on a tool.
- * 
+ *
  * infoPtr->nCurrentTool is the tool for which the tip is currently
  * displaying text for or -1 if the tip is not shown.  Actually this
  * will only ever be infoPtr-nTool or -1, so it could be changed to a
@@ -97,7 +97,7 @@ typedef struct
     HINSTANCE hinst;
     LPWSTR      lpszText;
     LPARAM      lParam;
-} TTTOOL_INFO; 
+} TTTOOL_INFO;
 
 
 typedef struct
@@ -285,7 +285,7 @@ TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
     SelectObject (hdc, hOldFont);
     ReleaseDC (hwnd, hdc);
 
-    lpSize->cx = rc.right - rc.left + 4 + 
+    lpSize->cx = rc.right - rc.left + 4 +
 		 infoPtr->rcMargin.left + infoPtr->rcMargin.right;
     lpSize->cy = rc.bottom - rc.top + 4 +
 		 infoPtr->rcMargin.bottom + infoPtr->rcMargin.top;
@@ -367,7 +367,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	else {
 	    rc = toolPtr->rect;
 	    MapWindowPoints (toolPtr->hwnd, (HWND)0, (LPPOINT)&rc, 2);
-	}   
+	}
 	rect.bottom = rc.top - 2;
     	rect.top = rect.bottom - size.cy;
     }
@@ -535,7 +535,7 @@ TOOLTIPS_GetToolFromInfoA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
     for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
 	toolPtr = &infoPtr->tools[nTool];
 
-	if (!(toolPtr->uFlags & TTF_IDISHWND) && 
+	if (!(toolPtr->uFlags & TTF_IDISHWND) &&
 	    (lpToolInfo->hwnd == toolPtr->hwnd) &&
 	    (lpToolInfo->uId == toolPtr->uId))
 	    return nTool;
@@ -562,7 +562,7 @@ TOOLTIPS_GetToolFromInfoW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
     for (nTool = 0; nTool < infoPtr->uNumTools; nTool++) {
 	toolPtr = &infoPtr->tools[nTool];
 
-	if (!(toolPtr->uFlags & TTF_IDISHWND) && 
+	if (!(toolPtr->uFlags & TTF_IDISHWND) &&
 	    (lpToolInfo->hwnd == toolPtr->hwnd) &&
 	    (lpToolInfo->uId == toolPtr->uId))
 	    return nTool;
@@ -738,7 +738,7 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpttsi == NULL) {
 		lpttsi =
 		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc = 
+		lpttsi->wpOrigProc =
 		    (WNDPROC)SetWindowLongA ((HWND)toolPtr->uId,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
 		lpttsi->hwndToolTip = hwnd;
@@ -755,7 +755,7 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpttsi == NULL) {
 		lpttsi =
 		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc = 
+		lpttsi->wpOrigProc =
 		    (WNDPROC)SetWindowLongA (toolPtr->hwnd,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
 		lpttsi->hwndToolTip = hwnd;
@@ -840,7 +840,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpttsi == NULL) {
 		lpttsi =
 		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc = 
+		lpttsi->wpOrigProc =
 		    (WNDPROC)SetWindowLongA ((HWND)toolPtr->uId,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
 		lpttsi->hwndToolTip = hwnd;
@@ -857,7 +857,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    if (lpttsi == NULL) {
 		lpttsi =
 		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc = 
+		lpttsi->wpOrigProc =
 		    (WNDPROC)SetWindowLongA (toolPtr->hwnd,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
 		lpttsi->hwndToolTip = hwnd;
@@ -896,9 +896,9 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* make sure the tooltip has disappeared before deleting it */
     TOOLTIPS_Hide(hwnd, infoPtr);
-    
+
     /* delete text string */
-    toolPtr = &infoPtr->tools[nTool]; 
+    toolPtr = &infoPtr->tools[nTool];
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 	if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
 	     (HIWORD((INT)toolPtr->lpszText) != 0) )
@@ -962,11 +962,11 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->nTool == nTool)
     {
         /* no current tool (0 means first tool) */
-        infoPtr->nTool = -1;    
+        infoPtr->nTool = -1;
     }
-    
+
     infoPtr->uNumTools--;
-    
+
     return 0;
 }
 
@@ -992,10 +992,10 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("tool %d\n", nTool);
 
     /* make sure the tooltip has disappeared before deleting it */
-    TOOLTIPS_Hide(hwnd, infoPtr);    
-    
+    TOOLTIPS_Hide(hwnd, infoPtr);
+
     /* delete text string */
-    toolPtr = &infoPtr->tools[nTool]; 
+    toolPtr = &infoPtr->tools[nTool];
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 	if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
 	     (HIWORD((INT)toolPtr->lpszText) != 0) )
@@ -1059,11 +1059,11 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->nTool == nTool)
     {
         /* no current tool (0 means first tool) */
-        infoPtr->nTool = -1;    
+        infoPtr->nTool = -1;
     }
-    
+
     infoPtr->uNumTools--;
-    
+
     return 0;
 }
 
@@ -2044,7 +2044,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    toolPtr = &infoPtr->tools[i];
 	    if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 		if ( (toolPtr->lpszText != LPSTR_TEXTCALLBACKW) &&
-		     (HIWORD((INT)toolPtr->lpszText) != 0) ) 
+		     (HIWORD((INT)toolPtr->lpszText) != 0) )
 		{
 		    COMCTL32_Free (toolPtr->lpszText);
 		    toolPtr->lpszText = NULL;
@@ -2054,7 +2054,7 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    /* remove subclassing */
         if (toolPtr->uFlags & TTF_SUBCLASS) {
             LPTT_SUBCLASS_INFO lpttsi;
-    
+
             if (toolPtr->uFlags & TTF_IDISHWND) {
                 lpttsi = (LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
                 if (lpttsi) {
@@ -2470,10 +2470,10 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_GETTEXT:
             return TOOLTIPS_OnWMGetText (hwnd, wParam, lParam);
-        
+
         case WM_GETTEXTLENGTH:
             return TOOLTIPS_OnWMGetTextLength (hwnd, wParam, lParam);
- 
+
 
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -2528,7 +2528,7 @@ TOOLTIPS_Register (void)
     wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = TOOLTIPS_CLASSA;
- 
+
     RegisterClassA (&wndClass);
 }
 

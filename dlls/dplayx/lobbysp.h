@@ -442,9 +442,9 @@ typedef struct SP_CALLBACKS
   LPSP_SETPLAYERNAME               SetPlayerName;
   LPSP_SHUTDOWN                    Shutdown;
   LPSP_STARTSESSION                StartSession;
-} SP_CALLBACKS, *LPSP_CALLBACKS;             
+} SP_CALLBACKS, *LPSP_CALLBACKS;
 
-typedef struct SPDATA_INIT 
+typedef struct SPDATA_INIT
 {
   LPSP_CALLBACKS lpCB;
   DWORD          dwSPVersion;

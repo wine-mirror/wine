@@ -45,7 +45,7 @@ BOOL WINAPI BindImageEx(
   DWORD Flags, LPSTR ImageName, LPSTR DllPath, LPSTR SymbolPath,
   PIMAGEHLP_STATUS_ROUTINE StatusRoutine)
 {
-  FIXME("(%ld, %s, %s, %s, %p): stub\n", 
+  FIXME("(%ld, %s, %s, %s, %p): stub\n",
     Flags, debugstr_a(ImageName), debugstr_a(DllPath),
     debugstr_a(SymbolPath), StatusRoutine
   );
@@ -84,7 +84,7 @@ static WORD CalcCheckSum(
  *		CheckSumMappedFile (IMAGEHLP.@)
  */
 PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
-  LPVOID BaseAddress, DWORD FileLength, 
+  LPVOID BaseAddress, DWORD FileLength,
   LPDWORD HeaderSum, LPDWORD CheckSum)
 {
   PIMAGE_NT_HEADERS Header;
@@ -275,8 +275,8 @@ BOOL WINAPI ReBaseImage(
 {
   FIXME(
     "(%s, %s, %d, %d, %d, %ld, %p, %p, %p, %p, %ld): stub\n",
-      debugstr_a(CurrentImageName),debugstr_a(SymbolPath), fReBase, 
-      fRebaseSysfileOk, fGoingDown, CheckImageSize, OldImageSize, 
+      debugstr_a(CurrentImageName),debugstr_a(SymbolPath), fReBase,
+      fRebaseSysfileOk, fGoingDown, CheckImageSize, OldImageSize,
       OldImageBase, NewImageSize, NewImageBase, TimeStamp
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -309,7 +309,7 @@ VOID WINAPI RemoveRelocations(PCHAR ImageName)
  *		SplitSymbols (IMAGEHLP.@)
  */
 BOOL WINAPI SplitSymbols(
-  LPSTR ImageName, LPSTR SymbolsPath, 
+  LPSTR ImageName, LPSTR SymbolsPath,
   LPSTR SymbolFilePath, DWORD Flags)
 {
   FIXME("(%s, %s, %s, %ld): stub\n",

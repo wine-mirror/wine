@@ -21,7 +21,7 @@
  */
 
 #include "config.h"
-#include "wine/port.h" 
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
 	{
             TRACE("NameTable entry: type=%04x id=%04x\n",
                               pTypeInfo->type_id, pNameInfo->id );
-            handle = LoadResource16( pModule->self, 
+            handle = LoadResource16( pModule->self,
 				   (HRSRC16)((int)pNameInfo - (int)pModule) );
             for(p = (WORD*)LockResource16(handle); p && *p; p = (WORD *)((char*)p+*p))
             {
@@ -94,7 +94,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
                 {
                     if (!HIWORD(resId)) continue;
                     if (strcasecmp( resId, (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
-                    
+
                 }
                 else if (HIWORD(resId) || (((DWORD)resId & ~0x8000) != p[2]))
                   continue;
@@ -117,7 +117,7 @@ static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId
  *
  * Find header struct for a particular resource type.
  */
-NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, 
+NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab,
 			 	 NE_TYPEINFO *pTypeInfo, LPCSTR typeId )
 {
     /* start from pTypeInfo */
@@ -186,7 +186,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
     {
         WORD id = LOWORD(resId) | 0x8000;
         for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
-            if (pNameInfo->id == id) 
+            if (pNameInfo->id == id)
 	        return pNameInfo;
     }
     return NULL;
@@ -196,7 +196,7 @@ NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab,
 /***********************************************************************
  *           DefResourceHandler (KERNEL.456)
  *
- * This is the default LoadProc() function. 
+ * This is the default LoadProc() function.
  */
 HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                                         HRSRC16 hRsrc )
@@ -208,7 +208,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 	HGLOBAL16 handle;
 	WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
 	NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-    
+
         if ( hMemObj )
             handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
         else
@@ -217,7 +217,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 	if ( handle )
         {
             /* NOTE: hRsrcMap points to start of built-in resource data */
-            memcpy( GlobalLock16( handle ), 
+            memcpy( GlobalLock16( handle ),
                     (char *)pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
                     pNameInfo->length << sizeShift );
         }
@@ -486,7 +486,7 @@ HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc )
 		pNameInfo = (NE_NAMEINFO *)(((char *)pModule) + hRsrc);
 		break;
 	    }
-	    else 
+	    else
 		break; /* NE_NAMEINFO boundary mismatch */
 	}
 	pTypeInfo = (NE_TYPEINFO *)(((char *)pModule) + d);

@@ -137,7 +137,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     }
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
-	
+
     pModuleTable = NE_MODULE_TABLE( pModule );
 
     hf = NE_OpenFile( pModule );
@@ -261,7 +261,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 NE_MODULE *pTarget = NE_GetPtr( module );
                 if (!pTarget)
                     WARN_(module)("Module not found: %04x, reference %d of module %*.*s\n",
-                             module, rep->target1, 
+                             module, rep->target1,
                              *((BYTE *)pModule + pModule->name_table),
                              *((BYTE *)pModule + pModule->name_table),
                              (char *)pModule + pModule->name_table + 1 );
@@ -277,14 +277,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
                 NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE_(fixup)("%d: %.*s.%d=%04x:%04x %s\n", i + 1, 
+                TRACE_(fixup)("%d: %.*s.%d=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        ordinal, HIWORD(address), LOWORD(address),
                        NE_GetRelocAddrName( rep->address_type, additive ) );
             }
 	    break;
-	    
+
 	  case NE_RELTYPE_NAME:
             module = pModuleTable[rep->target1-1];
             func_name = (char *)pModule + pModule->import_table + rep->target2;
@@ -305,14 +305,14 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (TRACE_ON(fixup))
             {
 	        NE_MODULE *pTarget = NE_GetPtr( module );
-                TRACE_(fixup)("%d: %.*s.%s=%04x:%04x %s\n", i + 1, 
+                TRACE_(fixup)("%d: %.*s.%s=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->name_table),
                        (char *)pTarget + pTarget->name_table + 1,
                        func_name, HIWORD(address), LOWORD(address),
                        NE_GetRelocAddrName( rep->address_type, additive ) );
             }
 	    break;
-	    
+
 	  case NE_RELTYPE_INTERNAL:
 	    if ((rep->target1 & 0xff) == 0xff)
 	    {
@@ -322,8 +322,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	    {
                 address = (FARPROC16)MAKESEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
 	    }
-	    
-	    TRACE_(fixup)("%d: %04x:%04x %s\n", 
+
+	    TRACE_(fixup)("%d: %04x:%04x %s\n",
                    i + 1, HIWORD(address), LOWORD(address),
                    NE_GetRelocAddrName( rep->address_type, additive ) );
 	    break;
@@ -420,7 +420,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 unknown:
     WARN_(fixup)("WARNING: %d: unknown ADDR TYPE %d,  "
          "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
-         i + 1, rep->address_type, rep->relocation_type, 
+         i + 1, rep->address_type, rep->relocation_type,
          rep->offset, rep->target1, rep->target2);
     HeapFree(GetProcessHeap(), 0, reloc_entries);
     return FALSE;
@@ -506,7 +506,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
     if (!pModule->dgroup) return;
 
     if (!(dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg))) return;
-    
+
     pSeg = MapSL( MAKESEGPTR(sel, 0) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
@@ -587,7 +587,7 @@ DWORD WINAPI PatchCodeHandle16(HANDLE16 hSeg)
 /***********************************************************************
  *           NE_GetDLLInitParams
  */
-static VOID NE_GetDLLInitParams( NE_MODULE *pModule, 
+static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
 				 WORD *hInst, WORD *ds, WORD *heap )
 {
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
@@ -669,7 +669,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
 
 
     pModule->cs = 0;  /* Don't initialize it twice */
-    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n", 
+    TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
                  context.SegCs, context.Eip, context.SegDs,
                  LOWORD(context.Edi), LOWORD(context.Ecx) );
     wine_call_to_16_regs_short( &context, 0 );
@@ -679,7 +679,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
 /***********************************************************************
  *           NE_InitializeDLLs
  *
- * Recursively initialize all DLLs (according to the order in which 
+ * Recursively initialize all DLLs (according to the order in which
  * they where loaded).
  */
 void NE_InitializeDLLs( HMODULE16 hModule )
@@ -707,7 +707,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 /***********************************************************************
  *           NE_CallDllEntryPoint
  *
- * Call the DllEntryPoint of DLLs with subsystem >= 4.0 
+ * Call the DllEntryPoint of DLLs with subsystem >= 4.0
  */
 typedef DWORD (WINAPI *WinNEEntryProc)(DWORD,WORD,WORD,WORD,DWORD,WORD);
 
@@ -759,12 +759,12 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 
 /***********************************************************************
  *           NE_DllProcessAttach
- * 
+ *
  * Call the DllEntryPoint of all modules this one (recursively)
  * depends on, according to the order in which they were loaded.
  *
  * Note that --as opposed to the PE module case-- there is no notion
- * of 'module loaded into a process' for NE modules, and hence we 
+ * of 'module loaded into a process' for NE modules, and hence we
  * have no place to store the fact that the DllEntryPoint of a
  * given module was already called on behalf of this process (e.g.
  * due to some earlier LoadLibrary16 call).
@@ -773,7 +773,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
  * appears to behave this way as well ...
  *
  * This routine must only be called with the Win16Lock held.
- * 
+ *
  * FIXME:  We should actually abort loading in case the DllEntryPoint
  *         returns FALSE ...
  *
@@ -791,7 +791,7 @@ static void add_to_init_list( struct ne_init_list *list, NE_MODULE *hModule )
     if ( list->count == list->size )
     {
         int newSize = list->size + 128;
-        NE_MODULE **newModule = HeapReAlloc( GetProcessHeap(), 0, 
+        NE_MODULE **newModule = HeapReAlloc( GetProcessHeap(), 0,
                                              list->module, newSize*sizeof(NE_MODULE *) );
         if ( !newModule )
         {
@@ -876,12 +876,12 @@ void NE_DllProcessAttach( HMODULE16 hModule )
  * This function translates NE segment flags to GlobalAlloc flags
  */
 static WORD NE_Ne2MemFlags(WORD flags)
-{ 
+{
     WORD memflags = 0;
 #if 1
-    if (flags & NE_SEGFLAGS_DISCARDABLE) 
+    if (flags & NE_SEGFLAGS_DISCARDABLE)
       memflags |= GMEM_DISCARDABLE;
-    if (flags & NE_SEGFLAGS_MOVEABLE || 
+    if (flags & NE_SEGFLAGS_MOVEABLE ||
 	( ! (flags & NE_SEGFLAGS_DATA) &&
 	  ! (flags & NE_SEGFLAGS_LOADED) &&
 	  ! (flags & NE_SEGFLAGS_ALLOCATED)
@@ -936,7 +936,7 @@ HINSTANCE16 NE_GetInstance( NE_MODULE *pModule )
         pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
         return pSeg->hSeg;
     }
-}    
+}
 
 /***********************************************************************
  *           NE_CreateSegment

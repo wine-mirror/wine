@@ -243,7 +243,7 @@ static gsCacheEntry *AllocEntry(void)
     assert(glyphsetCache[lastfree].count == -1);
     glyphsetCache[lastfree].count = 1;
     best = lastfree;
-    lastfree = glyphsetCache[lastfree].next;    
+    lastfree = glyphsetCache[lastfree].next;
     assert(best != mru);
     glyphsetCache[best].next = mru;
     mru = best;
@@ -301,7 +301,7 @@ static gsCacheEntry *AllocEntry(void)
   mru = best;
   TRACE("new free cache slot at %d\n", mru);
   return glyphsetCache + mru;
-}    
+}
 
 static gsCacheEntry *GetCacheEntry(LFANDSIZE *plfsz)
 {
@@ -420,7 +420,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 
     if(physDev->xrender->cacheEntry)
         dec_ref_cache(physDev->xrender->cacheEntry);
-    
+
     HeapFree(GetProcessHeap(), 0, physDev->xrender);
     physDev->xrender = NULL;
     return;
@@ -677,7 +677,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    dc->CursPosY = INTERNAL_YDPTOWP( dc, x + xwidth, y - ywidth );
 	}
 	break;
-      
+
     case TA_CENTER:
         x -= xwidth / 2;
 	y += ywidth / 2;
@@ -773,7 +773,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	physDev->xrender->lastTextColor = ~dc->textColor;
 
     }
-    
+
     if(dc->textColor != physDev->xrender->lastTextColor) {
         if(dc->bitsPerPixel != 1) {
 	    /* Map 0 -- 0xff onto 0 -- 0xffff */
@@ -800,7 +800,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
      */
     if((dc->bitsPerPixel == 1) && ((dc->textColor & 0xffffff) == 0))
         render_op = PictOpOutReverse; /* This gives us 'black' text */
-    
+
     for(idx = 0; idx < count; idx++) {
         if(glyphs[idx] >= physDev->xrender->cacheEntry->nrealized ||
 	   physDev->xrender->cacheEntry->realized[glyphs[idx]] == FALSE) {
@@ -814,7 +814,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     wine_tsx11_lock();
     if(!lpDx)
-        pXRenderCompositeString16(gdi_display, render_op, 
+        pXRenderCompositeString16(gdi_display, render_op,
 				   physDev->xrender->tile_pict,
 				   physDev->xrender->pict,
 				   physDev->xrender->cacheEntry->font_format,
@@ -825,7 +825,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     else {
         INT offset = 0, xoff = 0, yoff = 0;
 	for(idx = 0; idx < count; idx++) {
-	    pXRenderCompositeString16(gdi_display, render_op, 
+	    pXRenderCompositeString16(gdi_display, render_op,
 				       physDev->xrender->tile_pict,
 				       physDev->xrender->pict,
 				       physDev->xrender->cacheEntry->font_format,
@@ -845,7 +845,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     physDev->xrender->pict = 0;
     wine_tsx11_unlock();
 
-    if (flags & ETO_CLIPPED) 
+    if (flags & ETO_CLIPPED)
         RestoreVisRgn16( hdc );
 
     X11DRV_UnlockDIBSection( physDev, TRUE );

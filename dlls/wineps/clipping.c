@@ -1,7 +1,7 @@
 /*
  *	PostScript clipping functions
  *
- *	Copyright 1999  Luc Tourangau 
+ *	Copyright 1999  Luc Tourangau
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -62,9 +62,9 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN hrgn )
     {
         RECT *pRect = (RECT *)rgndata->Buffer;
 
-        PSDRV_WriteRectClip(physDev, pRect->left, pRect->top, 
-                            pRect->right - pRect->left, 
-                            pRect->bottom - pRect->top);        
+        PSDRV_WriteRectClip(physDev, pRect->left, pRect->top,
+                            pRect->right - pRect->left,
+                            pRect->bottom - pRect->top);
     }
     else
     {
@@ -79,15 +79,15 @@ VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev, HRGN hrgn )
                                 pRect->left);
             PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 1,
                                 pRect->top);
-            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 2, 
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 2,
                                 pRect->right - pRect->left);
-            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 3, 
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 3,
                                 pRect->bottom - pRect->top);
         }
 
         PSDRV_WriteRectClip2(physDev, szArrayName);
     }
-    
+
     HeapFree( GetProcessHeap(), 0, rgndata );
     return;
 }

@@ -249,8 +249,8 @@ CFStub_Construct(LPRPCSTUBBUFFER *ppv) {
     return S_OK;
 }
 
-/* Since we create proxy buffers and classfactory in a pair, there is 
- * no need for 2 seperate structs. Just put them in one, but remember 
+/* Since we create proxy buffers and classfactory in a pair, there is
+ * no need for 2 seperate structs. Just put them in one, but remember
  * the refcount.
  */
 typedef struct _CFProxy {
@@ -347,7 +347,7 @@ static HRESULT WINAPI CFProxy_CreateInstance(
 
     TRACE("(%p,%s,%p)\n",pUnkOuter,debugstr_guid(riid),ppv);
 
-    /* Send CreateInstance to the remote classfactory. 
+    /* Send CreateInstance to the remote classfactory.
      *
      * Data: Only the 'IID'.
      */
@@ -436,7 +436,7 @@ CFProxy_Construct(LPVOID *ppv,LPVOID *ppProxy) {
 static HRESULT WINAPI
 PSFacBuf_QueryInterface(LPPSFACTORYBUFFER iface, REFIID iid, LPVOID *ppv) {
     if (IsEqualIID(iid,&IID_IPSFactoryBuffer)||IsEqualIID(iid,&IID_IUnknown)) {
-	*ppv = (LPVOID)iface; 
+	*ppv = (LPVOID)iface;
 	/* No ref counting, static class */
 	return S_OK;
     }
@@ -497,7 +497,7 @@ HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
     *ppv = NULL;
     if (IsEqualIID(rclsid,&CLSID_PSFactoryBuffer)) {
 	*ppv = &lppsfac;
-	/* If we create a ps factory, we might need a stub manager later 
+	/* If we create a ps factory, we might need a stub manager later
 	 * anyway
 	 */
 	STUBMGR_Start();

@@ -182,7 +182,7 @@ fail:
 static HRESULT WINAPI
 PSFacBuf_QueryInterface(LPPSFACTORYBUFFER iface, REFIID iid, LPVOID *ppv) {
     if (IsEqualIID(iid,&IID_IPSFactoryBuffer)||IsEqualIID(iid,&IID_IUnknown)) {
-	*ppv = (LPVOID)iface; 
+	*ppv = (LPVOID)iface;
 	/* No ref counting, static class */
 	return S_OK;
     }
@@ -251,7 +251,7 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
 }
 
 /* Determine nr of functions. Since we use the toplevel interface and all
- * inherited ones have lower numbers, we are ok to not to descent into 
+ * inherited ones have lower numbers, we are ok to not to descent into
  * the inheritance tree I think.
  */
 static int _nroffuncs(ITypeInfo *tinfo) {
@@ -498,7 +498,7 @@ unmarshall_param(
 	ITypeInfo_Release(tinfo2);
 	return hres;
     }
-    case VT_VOID: 
+    case VT_VOID:
 	/* Hacky. If we are LPVOID* we apparently have to guess the IID
 	 * for the interface. This sucks pretty badly. */
 	return _unmarshal_interface(buf,&(buf->iid),(LPUNKNOWN*)arg);
@@ -563,7 +563,7 @@ _get_funcdesc(
 }
 
 /* how much space do we use on stack in DWORD steps. */
-static int 
+static int
 _argsize(DWORD vt_type) {
     switch (vt_type) {
     case VT_VARIANT:
@@ -708,7 +708,7 @@ PSFacBuf_CreateProxy(
     int		i, nroffuncs;
     FUNCDESC	*fdesc;
     TMProxyImpl	*proxy;
-    
+
     TRACE("(...%s...)\n",debugstr_guid(riid));
     hres = _get_typeinfo_for_iid(riid,&tinfo);
     if (hres) {
@@ -949,7 +949,7 @@ stubunalloc_param(
 
     switch (tdesc->vt) {
     case VT_BOOL:
-    case VT_I4: 
+    case VT_I4:
 	hres = S_OK;
 	if (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));

@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
  * MSACM DLL entry point
  *
  */
-BOOL WINAPI MSACM_DllEntryPoint(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds, 
+BOOL WINAPI MSACM_DllEntryPoint(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds,
 				WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
     static HANDLE	hndl;
@@ -210,7 +210,7 @@ MMRESULT16 WINAPI acmFormatTagEnum16(
 {
   FIXME("(0x%04x, %p, %p, %ld, %ld): stub\n",
     had, paftd, fnCallback, dwInstance, fdwEnum
-  ); 
+  );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -255,7 +255,7 @@ MMRESULT16 WINAPI acmFormatEnum16(
  * 		acmFormatSuggest (MSACM.45)
  */
 MMRESULT16 WINAPI acmFormatSuggest16(
-  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc, 
+  HACMDRIVER16 had, LPWAVEFORMATEX pwfxSrc,
   LPWAVEFORMATEX pwfxDst, DWORD cbwfxDst, DWORD fdwSuggest)
 {
   FIXME("(0x%04x, %p, %p, %ld, %ld): stub\n",
@@ -358,7 +358,7 @@ MMRESULT16 WINAPI acmStreamClose16(
  * 		acmStreamSize (MSACM.72)
  */
 MMRESULT16 WINAPI acmStreamSize16(
-  HACMSTREAM16 has, DWORD cbInput, 
+  HACMSTREAM16 has, DWORD cbInput,
   LPDWORD pdwOutputBytes, DWORD fdwSize)
 {
   FIXME("(0x%04x, %ld, %p, %ld): stub\n",

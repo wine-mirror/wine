@@ -1,4 +1,4 @@
-/*		
+/*
  * Common controls functions
  *
  * Copyright 1997 Dimitrie O. Paun
@@ -274,7 +274,7 @@ MenuHelp (UINT uMsg, WPARAM wParam, LPARAM lParam, HMENU hMainMenu,
 
 
 /***********************************************************************
- * ShowHideMenuCtl [COMCTL32.3] 
+ * ShowHideMenuCtl [COMCTL32.3]
  *
  * Shows or hides controls and updates the corresponding menu item.
  *
@@ -497,9 +497,9 @@ void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
 HWND WINAPI
 CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
 {
-    return CreateWindowA(STATUSCLASSNAMEA, text, style, 
+    return CreateWindowA(STATUSCLASSNAMEA, text, style,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
-			   CW_USEDEFAULT, CW_USEDEFAULT, 
+			   CW_USEDEFAULT, CW_USEDEFAULT,
 			   parent, wid, 0, 0);
 }
 
@@ -561,7 +561,7 @@ CreateUpDownControl (DWORD style, INT x, INT y, INT cx, INT cy,
     if (hUD) {
 	SendMessageA (hUD, UDM_SETBUDDY, buddy, 0);
 	SendMessageA (hUD, UDM_SETRANGE, 0, MAKELONG(maxVal, minVal));
-	SendMessageA (hUD, UDM_SETPOS, 0, MAKELONG(curVal, 0));     
+	SendMessageA (hUD, UDM_SETPOS, 0, MAKELONG(curVal, 0));
     }
 
     return hUD;
@@ -936,7 +936,7 @@ COMCTL32_DllGetVersion (DLLVERSIONINFO *pdvi)
  */
 HRESULT WINAPI COMCTL32_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
-  FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE", 
+  FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE",
 	debugstr_w(cmdline));
 
   return S_OK;

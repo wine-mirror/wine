@@ -194,7 +194,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
     }
     SERVER_END_REQ;
     if (!num) {WINE_WARN("hmm renderer signaled but no events available\n"); return 1;}
-    
+
     /* FIXME: should do some event compression here (cursor pos, update) */
     /* step 1: keep only last cursor pos event */
     for (i = num - 1; i >= 0; i--)
@@ -232,7 +232,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
             }
         }
     }
-   
+
     WINE_TRACE("Events:");
     for (i = 0; i < num; i++)
     {
@@ -251,7 +251,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 		h = wine_server_call_err( req ) ? 0 : (HANDLE)reply->handle;
 	    }
 	    SERVER_END_REQ;
-	    if (WINE_TRACE_ON(wineconsole)) 
+	    if (WINE_TRACE_ON(wineconsole))
                 WINE_DPRINTF(" active(%d)", (int)h);
 	    if (h)
 	    {
@@ -260,14 +260,14 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_SB_RESIZE_EVENT:
-	    if (data->curcfg.sb_width != evts[i].u.resize.width || 
+	    if (data->curcfg.sb_width != evts[i].u.resize.width ||
 		data->curcfg.sb_height != evts[i].u.resize.height)
 	    {
-		if (WINE_TRACE_ON(wineconsole)) 
+		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" resize(%d,%d)", evts[i].u.resize.width, evts[i].u.resize.height);
 		data->curcfg.sb_width  = evts[i].u.resize.width;
 		data->curcfg.sb_height = evts[i].u.resize.height;
-		
+
 		data->cells = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, data->cells,
 					  data->curcfg.sb_width * data->curcfg.sb_height * sizeof(CHAR_INFO));
 		if (!data->cells) {WINE_ERR("OOM\n"); exit(0);}
@@ -276,28 +276,28 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_UPDATE_EVENT:
-	    if (WINE_TRACE_ON(wineconsole)) 
+	    if (WINE_TRACE_ON(wineconsole))
                 WINE_DPRINTF(" update(%d,%d)", evts[i].u.update.top, evts[i].u.update.bottom);
 	    WINECON_FetchCells(data, evts[i].u.update.top, evts[i].u.update.bottom);
 	    break;
 	case CONSOLE_RENDERER_CURSOR_POS_EVENT:
 	    if (evts[i].u.cursor_pos.x != data->cursor.X || evts[i].u.cursor_pos.y != data->cursor.Y)
-	    {	
+	    {
 		data->cursor.X = evts[i].u.cursor_pos.x;
 		data->cursor.Y = evts[i].u.cursor_pos.y;
 		data->fnPosCursor(data);
-		if (WINE_TRACE_ON(wineconsole)) 
+		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" curs-pos(%d,%d)",evts[i].u.cursor_pos.x, evts[i].u.cursor_pos.y);
 	    }
 	    break;
 	case CONSOLE_RENDERER_CURSOR_GEOM_EVENT:
-	    if (evts[i].u.cursor_geom.size != data->curcfg.cursor_size || 
+	    if (evts[i].u.cursor_geom.size != data->curcfg.cursor_size ||
 		evts[i].u.cursor_geom.visible != data->curcfg.cursor_visible)
 	    {
-		data->fnShapeCursor(data, evts[i].u.cursor_geom.size, 
+		data->fnShapeCursor(data, evts[i].u.cursor_geom.size,
 				    evts[i].u.cursor_geom.visible, FALSE);
-		if (WINE_TRACE_ON(wineconsole)) 
-                    WINE_DPRINTF(" curs-geom(%d,%d)", 
+		if (WINE_TRACE_ON(wineconsole))
+                    WINE_DPRINTF(" curs-geom(%d,%d)",
                                  evts[i].u.cursor_geom.size, evts[i].u.cursor_geom.visible);
 	    }
 	    break;
@@ -306,20 +306,20 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    {
 		data->fnScroll(data, evts[i].u.display.left, TRUE);
 		data->fnPosCursor(data);
-		if (WINE_TRACE_ON(wineconsole)) 
+		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" h-scroll(%d)", evts[i].u.display.left);
 	    }
 	    if (evts[i].u.display.top != data->curcfg.win_pos.Y)
 	    {
 		data->fnScroll(data, evts[i].u.display.top, FALSE);
 		data->fnPosCursor(data);
-		if (WINE_TRACE_ON(wineconsole)) 
+		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" v-scroll(%d)", evts[i].u.display.top);
 	    }
-	    if (evts[i].u.display.width != data->curcfg.win_width || 
+	    if (evts[i].u.display.width != data->curcfg.win_width ||
 		evts[i].u.display.height != data->curcfg.win_height)
 	    {
-		if (WINE_TRACE_ON(wineconsole)) 
+		if (WINE_TRACE_ON(wineconsole))
                     WINE_DPRINTF(" win-size(%d,%d)", evts[i].u.display.width, evts[i].u.display.height);
 		data->curcfg.win_width = evts[i].u.display.width;
 		data->curcfg.win_height = evts[i].u.display.height;
@@ -439,9 +439,9 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
      */
     if (!DuplicateHandle(GetCurrentProcess(), data->hConIn,  GetCurrentProcess(),
 			 &startup.hStdInput, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, TRUE, 0) ||
-	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(), 
+	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
 			 &startup.hStdOutput, GENERIC_READ|GENERIC_WRITE, TRUE, 0) ||
-	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(), 
+	!DuplicateHandle(GetCurrentProcess(), data->hConOut, GetCurrentProcess(),
 			     &startup.hStdError, GENERIC_READ|GENERIC_WRITE, TRUE, 0))
     {
 	WINE_ERR("Can't dup handles\n");
@@ -457,7 +457,7 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPCSTR lpCmdLine)
     while (*ptr && *ptr++ != ' ');
 
     done = *ptr && CreateProcess(NULL, ptr, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
-    
+
     /* we no longer need the handles passed to the child for the console */
     CloseHandle(startup.hStdInput);
     CloseHandle(startup.hStdOutput);

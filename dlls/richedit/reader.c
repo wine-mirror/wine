@@ -66,7 +66,7 @@
 /*
  *  include hard coded charsets
  */
- 
+
 #include "ansi_gen.h"
 #include "ansi_sym.h"
 #include "text_map.h"
@@ -206,10 +206,10 @@ static int	csTop = 0;
 /*
  * Get a char from the charlist. The charlist is used to store characters
  * from the editstream.
- * 
+ *
  */
 
-int 
+int
 _RTFGetChar()
 {
     char myChar;
@@ -270,7 +270,7 @@ RTFStyleElt	*eltList, *ep;
 	RTFFree (inputName);
 	RTFFree (outputName);
 	inputName = outputName = (char *) NULL;
-			
+
 	/* initialize lookup table */
 	LookupInit ();
 
@@ -846,7 +846,7 @@ int	c;
  * the *next* input character.
  */
 
- 
+
 static int
 GetChar ()
 {
@@ -978,11 +978,11 @@ int	csId;
 
 /*
  * Do auto-charset-file reading.
- * will always use the ansi charset no mater what the value  
+ * will always use the ansi charset no mater what the value
  * of the rtfTextBuf is.
  *
  * TODO: add support for other charset in the future.
- * 
+ *
  */
 
 static void
@@ -1009,7 +1009,7 @@ char	buf[rtfBufSiz];
 
 
 /*
- * Convert a CaracterSetMap (caracter_name, caracter) into 
+ * Convert a CaracterSetMap (caracter_name, caracter) into
  * this form : array[caracter_ident] = caracter;
  */
 
@@ -1027,7 +1027,7 @@ int	csId;
 	default:
 		return (0);	/* illegal charset id */
 	case rtfCSGeneral:
-	
+
 		haveGenCharSet = 1;
 		stdCodeArray = genCharCode;
 		for (i = 0; i < charSetSize; i++)
@@ -1040,7 +1040,7 @@ int	csId;
 		    stdCodeArray[ ansi_gen[i+1] ] = ansi_gen[i];
 		}
 		break;
-		
+
 	case rtfCSSymbol:
 
 		haveSymCharSet = 1;
@@ -1053,7 +1053,7 @@ int	csId;
 		for ( i = 0 ; i< sizeof(ansi_sym)/(sizeof(int));i+=2)
 		{
 		    stdCodeArray[ ansi_sym[i+1] ] = ansi_sym[i];
-		}		
+		}
 		break;
 	}
 
@@ -1241,7 +1241,7 @@ char	*fn = "ReadFontTbl";
 		fp->rtfFType = 0;
 		fp->rtfFCodePage = 0;
 
-		while (rtfClass != rtfEOF 
+		while (rtfClass != rtfEOF
 		       && !RTFCheckCM (rtfText, ';')
 		       && !RTFCheckCM (rtfGroup, rtfEndGroup))
 		{
@@ -1302,12 +1302,12 @@ char	*fn = "ReadFontTbl";
 					*bp++ = rtfMajor;
 					(void) RTFGetToken ();
 				}
-				
+
 				/* FIX: in some cases the <fontinfo> isn't finished with a semi-column */
 				if(RTFCheckCM (rtfGroup, rtfEndGroup))
 				{
 				  RTFUngetToken ();
-				}				
+				}
 				*bp = '\0';
 				fp->rtfFName = RTFStrSave (buf);
 				if (fp->rtfFName == (char *) NULL)
@@ -2781,7 +2781,7 @@ int	i;
  *
  *	char *outMap[rtfSC_MaxChar];
  *
- * reinit should be non-zero if outMap should be initialized 
+ * reinit should be non-zero if outMap should be initialized
  * zero otherwise.
  *
  */

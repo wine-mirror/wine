@@ -52,7 +52,7 @@ static void QUERYPERF_Init(void)
     double		cpuMHz;
 
     TRACE("()\n");
-    
+
     if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE ))
     {
 	/* rdtsc is available.  However, in order to use it
@@ -97,7 +97,7 @@ static void QUERYPERF_Init(void)
     QUERYPERF_Initialized = TRUE;
 }
 
-		    
+
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.@)
  */
@@ -140,7 +140,7 @@ BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
 	return TRUE;
     }
 #endif
-    
+
     frequency->s.LowPart	= 1000000;
     frequency->s.HighPart	= 0;
     return TRUE;
@@ -201,7 +201,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 
 /******************************************************************************
  * CreateMailslotW [KERNEL32.@]  Creates a mailslot with specified name
- * 
+ *
  * PARAMS
  *    lpName          [I] Pointer to string for mailslot name
  *    nMaxMessageSize [I] Maximum message size
@@ -215,7 +215,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
                                    DWORD lReadTimeout, LPSECURITY_ATTRIBUTES sa )
 {
-    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName), 
+    FIXME("(%s,%ld,%ld,%p): stub\n", debugstr_w(lpName),
           nMaxMessageSize, lReadTimeout, sa);
     return 1;
 }
@@ -230,7 +230,7 @@ HANDLE WINAPI CreateMailslotW( LPCWSTR lpName, DWORD nMaxMessageSize,
  *    lpNextSize       [O] Address of size of next message
  *    lpMessageCount   [O] Address of number of messages
  *    lpReadTimeout    [O] Address of read time-out
- * 
+ *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
@@ -264,8 +264,8 @@ DWORD WINAPI GetCompressedFileSizeA(
 
 
 /******************************************************************************
- * GetCompressedFileSizeW [KERNEL32.@]  
- * 
+ * GetCompressedFileSizeW [KERNEL32.@]
+ *
  * RETURNS
  *    Success: Low-order doubleword of number of bytes
  *    Failure: 0xffffffff
@@ -280,7 +280,7 @@ DWORD WINAPI GetCompressedFileSizeW(
 
 
 /******************************************************************************
- * SetComputerNameA [KERNEL32.@]  
+ * SetComputerNameA [KERNEL32.@]
  */
 BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
 {
@@ -300,7 +300,7 @@ BOOL WINAPI SetComputerNameA( LPCSTR lpComputerName )
  *
  * PARAMS
  *    lpComputerName [I] Address of new computer name
- * 
+ *
  * RETURNS STD
  */
 BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )

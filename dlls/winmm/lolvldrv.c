@@ -67,7 +67,7 @@ typedef	MMDRV_MapType	(*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpPa
 
 /* each known type of driver has an instance of this structure */
 typedef struct tagWINE_LLTYPE {
-    /* those attributes depend on the specification of the type */    
+    /* those attributes depend on the specification of the type */
     LPSTR		typestr;	/* name (for debugging) */
     BOOL		bSupportMapper;	/* if type is allowed to support mapper */
     MMDRV_MAPFUNC	Map16To32A;	/* those are function pointers to handle */
@@ -158,10 +158,10 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
     if (!(dw = pGetFileVersionInfoSizeA(ofs.szPathName, &h)))	E(("Can't get FVIS\n"));
     if (!(ptr = HeapAlloc(GetProcessHeap(), 0, dw)))		E(("OOM\n"));
     if (!pGetFileVersionInfoA(ofs.szPathName, h, dw, ptr))	E(("Can't get FVI\n"));
-    
+
 #define	A(_x) if (pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\" #_x, &val, &u)) \
                   TRACE(#_x " => %s\n", (LPSTR)val); else TRACE(#_x " @\n")
-    
+
     A(CompanyName);
     A(FileDescription);
     A(FileVersion);
@@ -173,13 +173,13 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
     A(Comments);
     A(LegalTrademarks);
     A(PrivateBuild);
-    A(SpecialBuild); 
+    A(SpecialBuild);
 #undef A
 
     if (!pVerQueryValueA(ptr, "\\StringFileInfo\\040904B0\\ProductName", &val, &u)) E(("Can't get product name\n"));
     lstrcpynA(buf, val, buflen);
 
-#undef E    
+#undef E
     ret = TRUE;
 theEnd:
     HeapFree(GetProcessHeap(), 0, ptr);
@@ -198,10 +198,10 @@ static void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1
     if (!mld->bFrom32 && (mld->dwFlags & DCB_TYPEMASK) == DCB_FUNCTION) {
 	/* 16 bit func, call it */
 	TRACE("Function (16 bit) !\n");
-	MMDRV_CallTo16_word_wwlll((FARPROC16)mld->dwCallback, hDev, uMsg, 
+	MMDRV_CallTo16_word_wwlll((FARPROC16)mld->dwCallback, hDev, uMsg,
 				  mld->dwClientInstance, dwParam1, dwParam2);
     } else {
-	DriverCallback(mld->dwCallback, mld->dwFlags, hDev, uMsg, 
+	DriverCallback(mld->dwCallback, mld->dwFlags, hDev, uMsg,
 		       mld->dwClientInstance, dwParam1, dwParam2);
     }
 }
@@ -282,7 +282,7 @@ static	MMDRV_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWO
 #if 0
     MIXERCAPSA	micA;
     UINT	ret = mixerGetDevCapsA(devid, &micA, sizeof(micA));
-    
+
     if (ret == MMSYSERR_NOERROR) {
 	mixcaps->wMid           = micA.wMid;
 	mixcaps->wPid           = micA.wPid;
@@ -371,9 +371,9 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
     case MIM_CLOSE:
 	/* dwParam1 & dwParam2 are supposed to be 0, nothing to do */
 
-    case MIM_DATA:	
-    case MIM_MOREDATA:	
-    case MIM_ERROR:	
+    case MIM_DATA:
+    case MIM_MOREDATA:
+    case MIM_ERROR:
 	/* dwParam1 & dwParam2 are are data, nothing to do */
 	break;
     case MIM_LONGDATA:
@@ -383,7 +383,7 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	    /* initial map is: 32 => 16 */
 	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
-	    
+
 	    dwParam1 = (DWORD)mh32;
 	    mh32->dwFlags = mh16->dwFlags;
 	    mh32->dwBytesRecorded = mh16->dwBytesRecorded;
@@ -394,13 +394,13 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
 	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
 	    LPMIDIHDR		mh16 = MapSL(segmh16);
-	    
+
 	    dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
 	    mh16->dwBytesRecorded = mh32->dwBytesRecorded;
 	    if (mh16->reserved >= sizeof(MIDIHDR))
 		mh16->dwOffset = mh32->dwOffset;
-	}	
+	}
 	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
 	break;
     /* case MOM_POSITIONCB: */
@@ -429,7 +429,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_SETVOLUME:
 	ret = MMDRV_MAP_OK;
 	break;
-	
+
     case MODM_OPEN:
     case MODM_CLOSE:
     case MODM_GETVOLUME:
@@ -522,7 +522,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_SETVOLUME:
 	ret = MMDRV_MAP_OK;
 	break;
-	
+
     case MODM_OPEN:
     case MODM_CLOSE:
     case MODM_GETVOLUME:
@@ -612,7 +612,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_PREPARE:
 	{
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)*lpParam1;
-	    LPMIDIHDR		mh16; 
+	    LPMIDIHDR		mh16;
 	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
                                     sizeof(LPMIDIHDR) + sizeof(MIDIHDR) + mh32->dwBufferLength);
 
@@ -629,11 +629,11 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* FIXME: nothing on mh32->lpNext */
 		/* could link the mh32->lpNext at this level for memory house keeping */
 		mh16->dwOffset = (*lpParam2 >= sizeof(MIDIHDR)) ? mh32->dwOffset : 0;
-		    
+
 		mh32->lpNext = (LPMIDIHDR)mh16; /* for reuse in unprepare and write */
 		mh32->reserved = *lpParam2;
 
-		TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n", 
+		TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n",
 		      *lpParam1, (DWORD)mh16->lpData,
 		      mh32->dwBufferLength, (DWORD)mh32->lpData);
 		*lpParam2 = sizeof(MIDIHDR);
@@ -652,13 +652,13 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    LPSTR		ptr = (LPSTR)mh16 - sizeof(LPMIDIHDR);
 
 	    assert(*(LPMIDIHDR*)ptr == mh32);
-	    
+
 	    if (wMsg == MODM_LONGDATA)
 		memcpy((LPSTR)mh16 + sizeof(MIDIHDR), mh32->lpData, mh32->dwBufferLength);
 
 	    *lpParam1 = MapLS(mh16);
 	    *lpParam2 = sizeof(MIDIHDR);
-	    TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n", 
+	    TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n",
                   *lpParam1, (DWORD)mh16->lpData, mh32->dwBufferLength, (DWORD)mh32->lpData);
 
 	    /* dwBufferLength can be reduced between prepare & write */
@@ -681,7 +681,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	       DWORD		orig dwUser, which is a pointer to DWORD:driver dwInstance
 	       DWORD		dwUser passed to driver
 	       MIDIOPENDESC16	mod16: openDesc passed to driver
-	       MIDIOPENSTRMID	cIds 
+	       MIDIOPENSTRMID	cIds
 	    */
             ptr = HeapAlloc( GetProcessHeap(), 0,
                              sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD) + sizeof(MIDIOPENDESC16) +
@@ -813,7 +813,7 @@ static void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	    /* initial map is: 32 => 16 */
 	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
-	    
+
 	    dwParam1 = (DWORD)mh32;
 	    mh32->dwFlags = mh16->dwFlags;
 	    mh32->dwOffset = mh16->dwOffset;
@@ -824,12 +824,12 @@ static void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
 	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
 	    LPMIDIHDR		mh16 = MapSL(segmh16);
-	    
+
 	    dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
 	    if (mh16->reserved >= sizeof(MIDIHDR))
 		mh16->dwOffset = mh32->dwOffset;
-	}	
+	}
 	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
 	break;
     /* case MOM_POSITIONCB: */
@@ -978,11 +978,11 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    LPWAVEINCAPS16		wic16 = *(LPWAVEINCAPS16*)((LPSTR)wic32 - sizeof(LPWAVEINCAPS16));
 
 	    wic16->wMid = wic32->wMid;
-	    wic16->wPid = wic32->wPid; 
-	    wic16->vDriverVersion = wic32->vDriverVersion; 
+	    wic16->wPid = wic32->wPid;
+	    wic16->vDriverVersion = wic32->vDriverVersion;
 	    strcpy(wic16->szPname, wic32->szPname);
-	    wic16->dwFormats = wic32->dwFormats; 
-	    wic16->wChannels = wic32->wChannels; 
+	    wic16->dwFormats = wic32->dwFormats;
+	    wic16->wChannels = wic32->wChannels;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)wic32 - sizeof(LPWAVEINCAPS16));
 	    ret = MMDRV_MAP_OK;
 	}
@@ -1073,12 +1073,12 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		wod16->hWave = wod32->hWave;
 		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
-		
+
 		wod16->dwCallback = wod32->dwCallback;
 		wod16->dwInstance = wod32->dwInstance;
 		wod16->uMappedDeviceID = wod32->uMappedDeviceID;
 		wod16->dnDevNode = wod32->dnDevNode;
-		
+
 		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
 		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
@@ -1091,7 +1091,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_PREPARE:
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)*lpParam1;
-	    LPWAVEHDR		wh16; 
+	    LPWAVEHDR		wh16;
 	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
                                     sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
 
@@ -1109,7 +1109,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
+		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
 		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
@@ -1130,8 +1130,8 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
             SEGPTR seg_ptr = MapLS( ptr );
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
-	    
-	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
+
+	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
 		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		  wh32->dwBufferLength, (DWORD)wh32->lpData);
 
@@ -1306,7 +1306,7 @@ static void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	    /* initial map is: 32 => 16 */
 	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
-	    
+
 	    dwParam1 = (DWORD)wh32;
 	    wh32->dwFlags = wh16->dwFlags;
 	    wh32->dwBytesRecorded = wh16->dwBytesRecorded;
@@ -1315,11 +1315,11 @@ static void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
 	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
 	    LPWAVEHDR		wh16 = MapSL(segwh16);
-	    
+
 	    dwParam1 = (DWORD)segwh16;
 	    wh16->dwFlags = wh32->dwFlags;
 	    wh16->dwBytesRecorded = wh32->dwBytesRecorded;
-	}	
+	}
 	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
 	break;
     default:
@@ -1361,7 +1361,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 	FIXME("Shouldn't be used: the corresponding 16 bit functions use the 32 bit interface\n");
 	break;
 
-    case WODM_GETDEVCAPS: 
+    case WODM_GETDEVCAPS:
 	{
             LPWAVEOUTCAPSA		woc32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWAVEOUTCAPS16) + sizeof(WAVEOUTCAPSA));
 	    LPWAVEOUTCAPS16		woc16 = MapSL(*lpParam1);
@@ -1479,19 +1479,19 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_OPEN:
 	FIXME("Shouldn't be used: those 16 bit functions use the 32 bit interface\n");
 	break;
-	
-    case WODM_GETDEVCAPS: 
+
+    case WODM_GETDEVCAPS:
 	{
             LPWAVEOUTCAPSA		woc32 = (LPWAVEOUTCAPSA)(*lpParam1);
 	    LPWAVEOUTCAPS16		woc16 = *(LPWAVEOUTCAPS16*)((LPSTR)woc32 - sizeof(LPWAVEOUTCAPS16));
 
 	    woc16->wMid = woc32->wMid;
-	    woc16->wPid = woc32->wPid; 
-	    woc16->vDriverVersion = woc32->vDriverVersion; 
+	    woc16->wPid = woc32->wPid;
+	    woc16->vDriverVersion = woc32->vDriverVersion;
 	    strcpy(woc16->szPname, woc32->szPname);
-	    woc16->dwFormats = woc32->dwFormats; 
-	    woc16->wChannels = woc32->wChannels; 
-	    woc16->dwSupport = woc32->dwSupport; 
+	    woc16->dwFormats = woc32->dwFormats;
+	    woc16->wChannels = woc32->wChannels;
+	    woc16->dwSupport = woc32->dwSupport;
 	    HeapFree(GetProcessHeap(), 0, (LPSTR)woc32 - sizeof(LPWAVEOUTCAPS16));
 	    ret = MMDRV_MAP_OK;
 	}
@@ -1554,7 +1554,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETVOLUME:
 	ret = MMDRV_MAP_OK;
 	break;
-	
+
     case WODM_GETDEVCAPS:
 	{
             LPWAVEOUTCAPSA woc32 = (LPWAVEOUTCAPSA)*lpParam1;
@@ -1632,12 +1632,12 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		wod16->hWave = wod32->hWave;
 		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
-		
+
 		wod16->dwCallback = wod32->dwCallback;
 		wod16->dwInstance = wod32->dwInstance;
 		wod16->uMappedDeviceID = wod32->uMappedDeviceID;
 		wod16->dnDevNode = wod32->dnDevNode;
-		
+
 		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
 		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
@@ -1650,7 +1650,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_PREPARE:
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)*lpParam1;
-	    LPWAVEHDR		wh16; 
+	    LPWAVEHDR		wh16;
 	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
                                     sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
 
@@ -1668,7 +1668,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
+		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
 		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
@@ -1689,8 +1689,8 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
             SEGPTR seg_ptr = MapLS( ptr );
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
-	    
-	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
+
+	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
 		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		  wh32->dwBufferLength, (DWORD)wh32->lpData);
 
@@ -1743,7 +1743,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_SETVOLUME:
 	ret = MMDRV_MAP_OK;
 	break;
-	
+
     case WODM_GETDEVCAPS:
 	{
 	    LPWAVEOUTCAPS16		woc16 = MapSL(*lpParam1);
@@ -1852,7 +1852,7 @@ static void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	    /* initial map is: 32 => 16 */
 	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
-	    
+
 	    dwParam1 = (DWORD)wh32;
 	    wh32->dwFlags = wh16->dwFlags;
 	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
@@ -1860,10 +1860,10 @@ static void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
 	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
 	    LPWAVEHDR		wh16 = MapSL(segwh16);
-	    
+
 	    dwParam1 = (DWORD)segwh16;
 	    wh16->dwFlags = wh32->dwFlags;
-	}	
+	}
 	/* else { 16 => 16 or 32 => 32, nothing to do, same struct is kept }*/
 	break;
     default:
@@ -1903,7 +1903,7 @@ UINT	MMDRV_GetNum(UINT type)
 /**************************************************************************
  * 				WINE_Message			[internal]
  */
-DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1, 
+DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		      DWORD dwParam2, BOOL bFrom32)
 {
     LPWINE_MM_DRIVER 		lpDrv;
@@ -1913,13 +1913,13 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
     MMDRV_MapType		map;
     int				devID;
 
-    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)!\n", 
-	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg, 
+    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)!\n",
+	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2, bFrom32?'Y':'N');
 
     if (mld->uDeviceID == (UINT16)-1) {
 	if (!llType->bSupportMapper) {
-	    WARN("uDev=-1 requested on non-mappable ll type %s\n", 
+	    WARN("uDev=-1 requested on non-mappable ll type %s\n",
 		 llTypes[mld->type].typestr);
 	    return MMSYSERR_BADDEVICEID;
 	}
@@ -1945,9 +1945,9 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 
     if (lpDrv->bIs32) {
 	assert(part->u.fnMessage32);
-	
+
 	if (bFrom32) {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n", 
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 	    TRACE("=> %lu\n", ret);
@@ -1963,9 +1963,9 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    case MMDRV_MAP_OK:
 	    case MMDRV_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n", 
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, 
+		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
 		if (map == MMDRV_MAP_OKMEM)
@@ -1993,9 +1993,9 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    case MMDRV_MAP_OK:
 	    case MMDRV_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n", 
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-		ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, mld->uDeviceID, 
+		ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, mld->uDeviceID,
 						wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
 		if (map == MMDRV_MAP_OKMEM)
@@ -2008,9 +2008,9 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    }
 	} else {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n", 
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
-            ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, mld->uDeviceID, 
+            ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, mld->uDeviceID,
 					    wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 	    TRACE("=> %lu\n", ret);
 	}
@@ -2021,7 +2021,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 /**************************************************************************
  * 				MMDRV_Alloc			[internal]
  */
-LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags, 
+LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 			    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32)
 {
     LPWINE_MLD	mld;
@@ -2151,7 +2151,7 @@ LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID)
 
     assert(type < MMDRV_MAX);
 
-    if ((UINT)hndl >= llTypes[type].wMaxId && 
+    if ((UINT)hndl >= llTypes[type].wMaxId &&
 	hndl != (UINT16)-1 && hndl != (UINT)-1) {
 	if (hndl & 0x8000) {
 	    hndl &= ~0x8000;
@@ -2181,14 +2181,14 @@ LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType,
 	WINE_MM_DRIVER_PART*	part = &MMDrvs[mld->mmdIndex].parts[dstType];
 	if (part->nIDMin < part->nIDMax)
 	    return MMDRV_GetByID(part->nIDMin, dstType);
-    } 
+    }
     return NULL;
 }
 
 /**************************************************************************
  * 				MMDRV_PhysicalFeatures		[internal]
  */
-UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1, 
+UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 			       DWORD dwParam2)
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
@@ -2250,7 +2250,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 #endif
         count = part->u.fnMessage32(0, wMsg, 0L, 0L, 0L);
     } else if (!lpDrv->bIs32 && part->u.fnMessage16) {
-        ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, 
+        ret = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16,
 					0, DRVM_INIT, 0L, 0L, 0L);
 	TRACE("DRVM_INIT => %08lx\n", ret);
 #if 0
@@ -2258,7 +2258,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 					0, DRVM_ENABLE, 0L, 0L, 0L);
 	TRACE("DRVM_ENABLE => %08lx\n", ret);
 #endif
-        count = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16, 
+        count = MMDRV_CallTo16_word_wwlll((FARPROC16)part->u.fnMessage16,
 					  0, wMsg, 0L, 0L, 0L);
     } else {
 	return FALSE;
@@ -2270,7 +2270,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
     if (lpDrv->bIsMapper) {
 	/* it seems native mappers return 0 devices :-( */
 	if (llTypes[type].nMapper != -1)
-	    ERR("Two mappers for type %s (%d, %s)\n", 
+	    ERR("Two mappers for type %s (%d, %s)\n",
 		llTypes[type].typestr, llTypes[type].nMapper, lpDrv->drvname);
 	if (count > 1)
 	    ERR("Strange: mapper with %d > 1 devices\n", count);
@@ -2283,7 +2283,7 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 	part->nIDMax = llTypes[type].wMaxId;
     }
     TRACE("Setting min=%d max=%d (ttop=%d) for (%s:%s)\n",
-	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId, 
+	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId,
 	  lpDrv->drvname, llTypes[type].typestr);
     /* realloc translation table */
     llTypes[type].lpMlds = (LPWINE_MLD)
@@ -2322,10 +2322,10 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 
     TRACE("('%s', '%s', mapper=%c);\n", drvRegName, drvFileName, bIsMapper ? 'Y' : 'N');
 
-    /* be sure that size of MMDrvs matches the max number of loadable drivers !! 
+    /* be sure that size of MMDrvs matches the max number of loadable drivers !!
      * if not just increase size of MMDrvs */
     assert(MMDrvsHi <= sizeof(MMDrvs)/sizeof(MMDrvs[0]));
-    
+
     for (i = 0; i < MMDrvsHi; i++) {
 	if (!strcmp(drvRegName, MMDrvs[i].drvname)) return FALSE;
     }
@@ -2336,7 +2336,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 	WARN("Couldn't open driver '%s'\n", drvFileName);
 	return FALSE;
     }
-    
+
     d = DRIVER_FindFromHDrvr(lpDrv->hDriver);
     lpDrv->bIs32 = (d->dwFlags & WINE_GDF_16BIT) ? FALSE : TRUE;
 
@@ -2365,20 +2365,20 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 
 	/*
 	 * DESCRIPTION 'wave,aux,mixer:Creative Labs Sound Blaster 16 Driver'
-	 * The beginning of the module description indicates the driver supports 
-	 * waveform, auxiliary, and mixer devices. Use one of the following 
+	 * The beginning of the module description indicates the driver supports
+	 * waveform, auxiliary, and mixer devices. Use one of the following
 	 * device-type names, followed by a colon (:) to indicate the type of
 	 * device your driver supports. If the driver supports more than one
-	 * type of device, separate each device-type name with a comma (,). 
-	 *	
-	 * wave for waveform audio devices 
+	 * type of device, separate each device-type name with a comma (,).
+	 *
+	 * wave for waveform audio devices
 	 * wavemapper for wave mappers
-	 * midi for MIDI audio devices 
+	 * midi for MIDI audio devices
 	 * midimapper for midi mappers
-	 * aux for auxiliary audio devices 
-	 * mixer for mixer devices 
+	 * aux for auxiliary audio devices
+	 * mixer for mixer devices
 	 */
-	
+
 	if (d->d.d16.hDriver16) {
 	    HMODULE16	hMod16 = GetDriverModuleHandle16(d->d.d16.hDriver16);
 
@@ -2422,7 +2422,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
     MMDRV_InitPerType(lpDrv, MMDRV_MIDIOUT, 	MODM_GETNUMDEVS);
     MMDRV_InitPerType(lpDrv, MMDRV_WAVEIN, 	WIDM_GETNUMDEVS);
     MMDRV_InitPerType(lpDrv, MMDRV_WAVEOUT, 	WODM_GETNUMDEVS);
-    /* FIXME: if all those func calls return FALSE, 
+    /* FIXME: if all those func calls return FALSE,
      * then the driver must be unloaded
      */
 

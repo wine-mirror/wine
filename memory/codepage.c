@@ -163,7 +163,7 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
 {
     const union cptable *table = get_codepage_table( codepage );
 
-    if (!table) 
+    if (!table)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;

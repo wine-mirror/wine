@@ -24,7 +24,7 @@
  * that touches a HMETAFILE.
  * For recording of metafiles look in graphics/metafiledrv/
  *
- * Note that (32 bit) HMETAFILEs are GDI objects, while HMETAFILE16s are 
+ * Note that (32 bit) HMETAFILEs are GDI objects, while HMETAFILE16s are
  * global memory handles so these cannot be interchanged.
  *
  * Memory-based metafiles are just stored as a continuous block of memory with
@@ -41,7 +41,7 @@
  * the file (METAHEADERDISK). I've copied this for 16bit compatibility.
  *
  * HDMD - 14/4/1999
- */  
+ */
 
 #include "config.h"
 
@@ -243,7 +243,7 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
     METAHEADER *mh;
     HANDLE hFile;
- 
+
     TRACE("%s\n", lpFilename);
 
     if(!lpFilename)
@@ -268,7 +268,7 @@ HMETAFILE WINAPI GetMetaFileA( LPCSTR lpFilename )
 {
     METAHEADER *mh;
     HANDLE hFile;
- 
+
     TRACE("%s\n", lpFilename);
 
     if(!lpFilename)
@@ -293,7 +293,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 {
     METAHEADER *mh;
     HANDLE hFile;
- 
+
     TRACE("%s\n", debugstr_w(lpFilename));
 
     if(!lpFilename)
@@ -341,7 +341,7 @@ static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
  *         MF_CreateMetaHeaderDisk
  *
  * Take a memory based METAHEADER and change it to a disk based METAHEADER
- * assosiated with filename.  Note: Trashes contents of old one. 
+ * assosiated with filename.  Note: Trashes contents of old one.
  */
 METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCSTR filename)
 {
@@ -367,9 +367,9 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
     HANDLE hFile;
 
     TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
-    
+
     if(!mh) return 0;
-    
+
     if(mh->mtType == METAFILE_DISK)
         mh2 = MF_LoadDiskBasedMetaFile(mh);
     else {
@@ -417,9 +417,9 @@ HMETAFILE WINAPI CopyMetaFileA(
     HANDLE hFile;
 
     TRACE("(%08x,%s)\n", hSrcMetaFile, lpFilename);
-    
+
     if(!mh) return 0;
-    
+
     if(mh->mtType == METAFILE_DISK)
         mh2 = MF_LoadDiskBasedMetaFile(mh);
     else {
@@ -481,14 +481,14 @@ BOOL16 WINAPI IsValidMetaFile16(HMETAFILE16 hmf)
     BOOL16 res=FALSE;
     METAHEADER *mh = MF_GetMetaHeader16(hmf);
     if (mh) {
-        if (mh->mtType == METAFILE_MEMORY || mh->mtType == METAFILE_DISK) 
+        if (mh->mtType == METAFILE_MEMORY || mh->mtType == METAFILE_DISK)
 	    if (mh->mtHeaderSize == MFHEADERSIZE/sizeof(INT16))
 	        if (mh->mtVersion == MFVERSION)
 		    res=TRUE;
 	MF_ReleaseMetaHeader16(hmf);
     }
     TRACE("IsValidMetaFile %x => %d\n",hmf,res);
-    return res;         
+    return res;
 }
 
 
@@ -525,7 +525,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 		    sizeof(HANDLETABLE16) * mh->mtNoObjects);
     if(!ht) return FALSE;
-    
+
     /* loop through metafile playing records */
     offset = mh->mtHeaderSize * 2;
     while (offset < mh->mtSize * 2)
@@ -551,7 +551,7 @@ static BOOL MF_PlayMetaFile( HDC hdc, METAHEADER *mh)
     for(i = 0; i < mh->mtNoObjects; i++)
       if(*(ht->objectHandle + i) != 0)
         DeleteObject(*(ht->objectHandle + i));
-    
+
     /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht );
     if(loaded)
@@ -578,7 +578,7 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
  *  Renders the metafile specified by hmf in the DC specified by
  *  hdc. Returns FALSE on failure, TRUE on success.
  */
-BOOL WINAPI PlayMetaFile( 
+BOOL WINAPI PlayMetaFile(
 			     HDC hdc,      /* [in] handle of DC to render in */
 			     HMETAFILE hmf /* [in] handle of metafile to render */
 )
@@ -624,16 +624,16 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     hFont = GetCurrentObject(hdc, OBJ_FONT);
 
     /* create the handle table */
-    
+
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
 		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
     spht = K32WOWGlobalLock16(hHT);
-   
+
     seg = hmf | 7;
     offset = mh->mtHeaderSize * 2;
-    
+
     /* loop through metafile records */
-    
+
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
@@ -645,7 +645,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 	    result = FALSE;
 	    break;
 	}
-	
+
 
 	offset += (mr->rdSize * 2);
     }
@@ -675,19 +675,19 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
  *  Loop through the metafile records in hmf, calling the user-specified
  *  function for each one, stopping when the user's function returns FALSE
  *  (which is considered to be failure)
- *  or when no records are left (which is considered to be success). 
+ *  or when no records are left (which is considered to be success).
  *
  * RETURNS
  *  TRUE on success, FALSE on failure.
- * 
+ *
  * HISTORY
  *   Niels de carpentier, april 1996
  */
-BOOL WINAPI EnumMetaFile( 
-			     HDC hdc, 
+BOOL WINAPI EnumMetaFile(
+			     HDC hdc,
 			     HMETAFILE hmf,
-			     MFENUMPROC lpEnumFunc, 
-			     LPARAM lpData 
+			     MFENUMPROC lpEnumFunc,
+			     LPARAM lpData
 ) {
     METAHEADER *mhTemp = NULL, *mh = MF_GetMetaHeader(hmf);
     METARECORD *mr;
@@ -713,12 +713,12 @@ BOOL WINAPI EnumMetaFile(
     hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
     hFont = GetCurrentObject(hdc, OBJ_FONT);
 
-    ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+    ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
 			    sizeof(HANDLETABLE) * mh->mtNoObjects);
 
     /* loop through metafile records */
     offset = mh->mtHeaderSize * 2;
-    
+
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
@@ -733,7 +733,7 @@ BOOL WINAPI EnumMetaFile(
 	    result = FALSE;
 	    break;
 	}
-	
+
 	offset += (mr->rdSize * 2);
     }
 
@@ -760,7 +760,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
  *             PlayMetaFileRecord   (GDI.176)
  *
  *   Render a single metafile record specified by *mr in the DC hdc, while
- *   using the handle table *ht, of length nHandles, 
+ *   using the handle table *ht, of length nHandles,
  *   to store metafile objects.
  *
  * BUGS
@@ -771,7 +771,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
  *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
  *
  */
-void WINAPI PlayMetaFileRecord16( 
+void WINAPI PlayMetaFileRecord16(
 	  HDC16 hdc,         /* [in] DC to render metafile into */
 	  HANDLETABLE16 *ht, /* [in] pointer to handle table for metafile objects */
 	  METARECORD *mr,    /* [in] pointer to metafile record to render */
@@ -784,7 +784,7 @@ void WINAPI PlayMetaFileRecord16(
 
     TRACE("(%04x %08lx %08lx %04x) function %04x\n",
 		 hdc,(LONG)ht, (LONG)mr, nHandles, mr->rdFunction);
-    
+
     switch (mr->rdFunction)
     {
     case META_EOF:
@@ -936,7 +936,7 @@ void WINAPI PlayMetaFileRecord16(
     case META_TEXTOUT:
 	s1 = *(mr->rdParm);
 	TextOut16(hdc, *(mr->rdParm + ((s1 + 1) >> 1) + 2),
-                  *(mr->rdParm + ((s1 + 1) >> 1) + 1), 
+                  *(mr->rdParm + ((s1 + 1) >> 1) + 1),
                   (char *)(mr->rdParm + 1), s1);
 	break;
 
@@ -946,7 +946,7 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_POLYPOLYGON:
       PolyPolygon16(hdc, (LPPOINT16)(mr->rdParm + *(mr->rdParm) + 1),
-                    (LPINT16)(mr->rdParm + 1), *(mr->rdParm)); 
+                    (LPINT16)(mr->rdParm + 1), *(mr->rdParm));
       break;
 
     case META_POLYLINE:
@@ -974,11 +974,11 @@ void WINAPI PlayMetaFileRecord16(
 	case BS_PATTERN:
 	    infohdr = (BITMAPINFOHEADER *)(mr->rdParm + 2);
 	    MF_AddHandle(ht, nHandles,
-			 CreatePatternBrush(CreateBitmap(infohdr->biWidth, 
-				      infohdr->biHeight, 
-				      infohdr->biPlanes, 
+			 CreatePatternBrush(CreateBitmap(infohdr->biWidth,
+				      infohdr->biHeight,
+				      infohdr->biPlanes,
 				      infohdr->biBitCount,
-				      (LPSTR)(mr->rdParm + 
+				      (LPSTR)(mr->rdParm +
 				      (sizeof(BITMAPINFOHEADER) / 2) + 4))));
 	    break;
 
@@ -999,24 +999,24 @@ void WINAPI PlayMetaFileRecord16(
 	    break;
 	}
 	break;
-	
+
     case META_CREATEPENINDIRECT:
-	MF_AddHandle(ht, nHandles, 
+	MF_AddHandle(ht, nHandles,
 		     CreatePenIndirect16((LOGPEN16 *)(&(mr->rdParm))));
 	break;
 
     case META_CREATEFONTINDIRECT:
-	MF_AddHandle(ht, nHandles, 
+	MF_AddHandle(ht, nHandles,
 		     CreateFontIndirect16((LOGFONT16 *)(&(mr->rdParm))));
 	break;
 
     case META_CREATEBRUSHINDIRECT:
-	MF_AddHandle(ht, nHandles, 
+	MF_AddHandle(ht, nHandles,
 		     CreateBrushIndirect16((LOGBRUSH16 *)(&(mr->rdParm))));
 	break;
 
     case META_CREATEPALETTE:
-	MF_AddHandle(ht, nHandles, 
+	MF_AddHandle(ht, nHandles,
 		     CreatePalette16((LPLOGPALETTE)mr->rdParm));
 	break;
 
@@ -1044,7 +1044,7 @@ void WINAPI PlayMetaFileRecord16(
     case META_EXTTEXTOUT:
         MF_Play_MetaExtTextOut( hdc, mr );
 	break;
-    
+
     case META_STRETCHDIB:
       {
 	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[11]);
@@ -1058,14 +1058,14 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_DIBSTRETCHBLT:
       {
-	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]); 
+	LPBITMAPINFO info = (LPBITMAPINFO) &(mr->rdParm[10]);
 	LPSTR bits = (LPSTR)info + DIB_BitmapInfoSize( info, mr->rdParm[2] );
 	StretchDIBits16(hdc,mr->rdParm[9],mr->rdParm[8],mr->rdParm[7],
                        mr->rdParm[6],mr->rdParm[5],mr->rdParm[4],
                        mr->rdParm[3],mr->rdParm[2],bits,info,
                        DIB_RGB_COLORS,MAKELONG(mr->rdParm[0],mr->rdParm[1]));
       }
-      break;		  
+      break;
 
     case META_STRETCHBLT:
       {
@@ -1081,7 +1081,7 @@ void WINAPI PlayMetaFileRecord16(
 		    hdcSrc,mr->rdParm[5],mr->rdParm[4],
 		    mr->rdParm[3],mr->rdParm[2],
 		    MAKELONG(mr->rdParm[0],mr->rdParm[1]));
-	DeleteDC(hdcSrc);		    
+	DeleteDC(hdcSrc);
       }
       break;
 
@@ -1098,14 +1098,14 @@ void WINAPI PlayMetaFileRecord16(
                 (INT16)mr->rdParm[4],(INT16)mr->rdParm[3],
                 hdcSrc, (INT16)mr->rdParm[2],(INT16)mr->rdParm[1],
                 MAKELONG(0,mr->rdParm[0]));
-	DeleteDC(hdcSrc);		    
+	DeleteDC(hdcSrc);
       }
       break;
 
     case META_CREATEREGION:
       {
 	HRGN hrgn = CreateRectRgn(0,0,0,0);
- 
+
 	MF_Play_MetaCreateRegion(mr, hrgn);
 	MF_AddHandle(ht, nHandles, hrgn);
       }
@@ -1124,7 +1124,7 @@ void WINAPI PlayMetaFileRecord16(
 
     case META_INVERTREGION:
         InvertRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
-        break; 
+        break;
 
     case META_PAINTREGION:
         PaintRgn16(hdc, *(ht->objectHandle + *(mr->rdParm)));
@@ -1172,8 +1172,8 @@ void WINAPI PlayMetaFileRecord16(
 		          mr->rdParm[6], mr->rdParm[5],
 		          MAKELONG(mr->rdParm[0], mr->rdParm[1]));
 	}
-	break;	
-       
+	break;
+
     case META_SETTEXTCHAREXTRA:
         SetTextCharacterExtra16(hdc, (INT16)*(mr->rdParm));
 	break;
@@ -1227,18 +1227,18 @@ break;
 /******************************************************************
  *         PlayMetaFileRecord   (GDI32.@)
  */
-BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable, 
+BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable,
 				METARECORD *metarecord, UINT handles )
 {
-    HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR, 
+    HANDLETABLE16 * ht = (void *)GlobalAlloc(GPTR,
 					     handles*sizeof(HANDLETABLE16));
     unsigned int i = 0;
     TRACE("(%08x,%p,%p,%d)\n", hdc, handletable, metarecord,
-	  handles); 
-    for (i=0; i<handles; i++)  
+	  handles);
+    for (i=0; i<handles; i++)
         ht->objectHandle[i] =  handletable->objectHandle[i];
     PlayMetaFileRecord16(hdc, ht, metarecord, handles);
-    for (i=0; i<handles; i++) 
+    for (i=0; i<handles; i++)
         handletable->objectHandle[i] = ht->objectHandle[i];
     GlobalFree((HGLOBAL)ht);
     return TRUE;
@@ -1267,8 +1267,8 @@ HGLOBAL16 WINAPI GetMetaFileBits16(
  * problems will occur when it is used. Validity of the memory is not
  * checked. The function is essentially just the identity function.
  */
-HMETAFILE16 WINAPI SetMetaFileBits16( 
-				   HGLOBAL16 hMem 
+HMETAFILE16 WINAPI SetMetaFileBits16(
+				   HGLOBAL16 hMem
 			/* [in] handle to a memory region holding a metafile */
 )
 {
@@ -1290,20 +1290,20 @@ HMETAFILE16 WINAPI SetMetaFileBits16(
 HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
 {
     if( IsValidMetaFile16( hMeta ) )
-        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
+        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0,
 			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
     return (HMETAFILE16)0;
 }
 
 /******************************************************************
  *         SetMetaFileBitsEx    (GDI32.@)
- * 
+ *
  *  Create a metafile from raw data. No checking of the data is performed.
  *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
  */
-HMETAFILE WINAPI SetMetaFileBitsEx( 
+HMETAFILE WINAPI SetMetaFileBitsEx(
      UINT size,         /* [in] size of metafile, in bytes */
-     const BYTE *lpData /* [in] pointer to metafile data */  
+     const BYTE *lpData /* [in] pointer to metafile data */
     )
 {
     METAHEADER *mh = HeapAlloc( GetProcessHeap(), 0, size );
@@ -1314,15 +1314,15 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
 
 /*****************************************************************
  *  GetMetaFileBitsEx     (GDI32.@)  Get raw metafile data
- * 
+ *
  *  Copies the data from metafile _hmf_ into the buffer _buf_.
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
  *  returns number of bytes copied.
  */
-UINT WINAPI GetMetaFileBitsEx( 
+UINT WINAPI GetMetaFileBitsEx(
      HMETAFILE hmf, /* [in] metafile */
-     UINT nSize,    /* [in] size of buf */ 
-     LPVOID buf     /* [out] buffer to receive raw metafile data */  
+     UINT nSize,    /* [in] size of buf */
+     LPVOID buf     /* [out] buffer to receive raw metafile data */
 ) {
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;
@@ -1361,7 +1361,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
 
 /*
  *	The layout of the record looks something like this:
- *	 
+ *
  *	 rdParm	meaning
  *	 0		Always 0?
  *	 1		Always 6?
@@ -1424,7 +1424,7 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
     DeleteObject( hrgn2 );
     return TRUE;
  }
- 
+
 
 /******************************************************************
  *         MF_Play_MetaExtTextOut
@@ -1435,24 +1435,24 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
 static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
 {
     LPINT16 dxx;
-    LPSTR sot; 
+    LPSTR sot;
     DWORD len;
     WORD s1;
 
     s1 = mr->rdParm[2];                              /* String length */
     len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
-      + sizeof(UINT16) +  (mr->rdParm[3] ? sizeof(RECT16) : 0); 
+      + sizeof(UINT16) +  (mr->rdParm[3] ? sizeof(RECT16) : 0);
                                            /* rec len without dx array */
 
     sot = (LPSTR)&mr->rdParm[4];		      /* start_of_text */
     if (mr->rdParm[3])
         sot += sizeof(RECT16);  /* there is a rectangle, so add offset */
-	 
+
     if (mr->rdSize == len / 2)
         dxx = NULL;                      /* determine if array present */
-    else 
+    else
         if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
-	    dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
+	    dxx = (LPINT16)(sot+(((s1+1)>>1)*2));
 	else {
 	    TRACE("%s  len: %ld\n",  sot, mr->rdSize);
 	    WARN(
@@ -1463,11 +1463,11 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
     ExtTextOut16( hdc, mr->rdParm[1],              /* X position */
 		       mr->rdParm[0],              /* Y position */
 	               mr->rdParm[3],              /* options */
-		       mr->rdParm[3] ? (LPRECT16) &mr->rdParm[4]:NULL,  
+		       mr->rdParm[3] ? (LPRECT16) &mr->rdParm[4]:NULL,
                                                    /* rectangle */
 		       sot,			       /* string */
                        s1, dxx);                   /* length, dx array */
-    if (dxx)                      
+    if (dxx)
         TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dxx[0]);
     return TRUE;
 }

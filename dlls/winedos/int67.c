@@ -36,12 +36,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  */
 #define EMS_PAGE_ADDRESS(base,page) (((char*)base) + EMS_PAGE_SIZE * page)
 
-/* 
+/*
  * Maximum number of pages that can be allocated using EMS.
  */
 #define EMS_MAX_PAGES 1024
 
-/* 
+/*
  * Maximum number of EMS handles (allocated blocks).
  */
 #define EMS_MAX_HANDLES 256
@@ -78,24 +78,24 @@ struct {
 } *EMS_record = 0;
 
 /**********************************************************************
- *          EMS_init 
+ *          EMS_init
  *
  * Allocates and initialized page frame and EMS global import record.
  */
 static void EMS_init(void)
 {
   /*
-   * FIXME: Should dynamically allocate upper memory block for EMS frame. 
+   * FIXME: Should dynamically allocate upper memory block for EMS frame.
    */
   ULONG base = 0xd0000;
 
   if(EMS_record)
     return;
 
-  EMS_record = HeapAlloc(GetProcessHeap(), 
-                         HEAP_ZERO_MEMORY, 
+  EMS_record = HeapAlloc(GetProcessHeap(),
+                         HEAP_ZERO_MEMORY,
                          sizeof(*EMS_record));
-  
+
   EMS_record->frame_address = DOSMEM_MapDosToLinear(base);
   EMS_record->frame_selector = base >> 4;
 }
@@ -124,8 +124,8 @@ static void EMS_alloc( CONTEXT86 *context )
       EMS_record->handle[hindex].address = buffer;
       EMS_record->handle[hindex].pages = pages;
       EMS_record->used_pages += pages;
-      
-      DX_reg(context) = hindex; /* handle to allocated memory*/  
+
+      DX_reg(context) = hindex; /* handle to allocated memory*/
       AH_reg(context) = 0;      /* status: ok */
     }
   }
@@ -157,7 +157,7 @@ static void EMS_access_name( CONTEXT86 *context )
     memcpy(EMS_record->handle[hindex].name, ptr, 8);
     AH_reg(context) = 0;
     break;
-    
+
   default:
     INT_BARF(context,0x67);
     break;
@@ -259,7 +259,7 @@ void WINAPI DOSVM_Int67Handler( CONTEXT86 *context )
   case 0x42: /* EMS - GET NUMBER OF PAGES */
     EMS_init();
     /* unallocated 16k pages */
-    BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages; 
+    BX_reg(context) = EMS_MAX_PAGES - EMS_record->used_pages;
     /* total number of 16k pages */
     DX_reg(context) = EMS_MAX_PAGES;
     /* status: ok */

@@ -54,7 +54,7 @@ typedef struct _TEB
     WORD         stack_sel;      /* 1--  0e 16-bit stack selector */
     DWORD        selman_list;    /* 1-n  10 Selector manager list */
     DWORD        user_ptr;       /* 12n  14 User pointer */
-/* end of NT_TIB */  
+/* end of NT_TIB */
     struct _TEB *self;           /* 12-  18 Pointer to this structure */
     WORD         tibflags;       /* 1!n  1c Flags (NT: EnvironmentPointer) */
     WORD         mutex_count;    /* 1-n  1e Win16 mutex count */

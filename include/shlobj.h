@@ -30,7 +30,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /****************************************************************************
-* SHITEMID, ITEMIDLIST, PIDL API 
+* SHITEMID, ITEMIDLIST, PIDL API
 */
 #include "pshpack1.h"
 typedef struct
@@ -194,7 +194,7 @@ typedef struct _SHELLEXECUTEINFOA
         LPCSTR   lpClass;
         HKEY hkeyClass;
         DWORD dwHotKey;
-        union 
+        union
         { HANDLE hIcon;
           HANDLE hMonitor;
         } DUMMYUNIONNAME;
@@ -261,7 +261,7 @@ typedef struct tagBROWSEINFOW {
     BFFCALLBACK   lpfn;
     LPARAM        lParam;
     INT         iImage;
-} BROWSEINFOW, *PBROWSEINFOW, *LPBROWSEINFOW; 
+} BROWSEINFOW, *PBROWSEINFOW, *LPBROWSEINFOW;
 
 #define BROWSEINFO   WINELIB_NAME_AW(BROWSEINFO)
 #define PBROWSEINFO  WINELIB_NAME_AW(PBROWSEINFO)
@@ -274,7 +274,7 @@ typedef struct tagBROWSEINFOW {
 #define BIF_RETURNFSANCESTORS  0x0008
 #define BIF_EDITBOX            0x0010
 #define BIF_VALIDATE           0x0020
- 
+
 #define BIF_BROWSEFORCOMPUTER  0x1000
 #define BIF_BROWSEFORPRINTER   0x2000
 #define BIF_BROWSEINCLUDEFILES 0x4000
@@ -324,7 +324,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW(LPBROWSEINFOW lpbi);
 #define SHDID_NET_RESTOFNET         16
 #define SHDID_NET_OTHER             17
 
-typedef struct _SHDESCRIPTIONID 
+typedef struct _SHDESCRIPTIONID
 {   DWORD   dwDescriptionId;
     CLSID   clsid;
 } SHDESCRIPTIONID, *LPSHDESCRIPTIONID;
@@ -349,7 +349,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND hwndOwner, INT nFolder, LPITEMIDL
 *  we got using SHCreateShellViewEx()), to notify us of the various things that
 *  are happening to the shellview (and ask for things too).
 *
-*  You don't have to support anything here - anything you don't want to 
+*  You don't have to support anything here - anything you don't want to
 *  handle, the shell will do itself if you just return E_NOTIMPL. This parameters
 *  that the shell passes to this function are entirely undocumented.
 *

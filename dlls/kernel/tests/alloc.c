@@ -149,7 +149,7 @@ static void test_Heap(void)
 
 /* Check that HeapDestry works */
    ok(HeapDestroy(heap),"HeapDestroy failed");
-} 
+}
 
 /* The following functions don't have tests, because either I don't know how
    to test them, or they are WinNT only, or require multiple threads.
@@ -292,7 +292,7 @@ static void test_Local(void)
           }
         }
         ok(!error,"LocalAlloc should have zeroed out it's allocated memory");
-        ok(!(error=LocalUnlock(mem2)) && 
+        ok(!(error=LocalUnlock(mem2)) &&
                 (GetLastError()==ERROR_NOT_LOCKED || GetLastError()==NO_ERROR),
            "LocalUnlock Failed.");
       }
@@ -374,7 +374,7 @@ static void test_Virtual(void)
     sysInfo.dwPageSize=0;
     GetSystemInfo(&sysInfo);
     ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size");
-    
+
 /* Chhose a reasonable allocation size */
     memchunk=10*sysInfo.dwPageSize;
 

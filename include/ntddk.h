@@ -31,24 +31,24 @@
 extern "C" {
 #endif
 
-/****************** 
- * asynchronous I/O 
+/******************
+ * asynchronous I/O
  */
 #undef Status	/* conflict with X11-includes*/
 
-typedef struct _IO_STATUS_BLOCK 
+typedef struct _IO_STATUS_BLOCK
 {
 	union {
 	  NTSTATUS Status;
 	  PVOID Pointer;
 	} DUMMYUNIONNAME;
 	ULONG_PTR Information;
-} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;    
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
 typedef VOID (NTAPI *PIO_APC_ROUTINE) ( PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG Reserved );
 
 /*
-	registry 
+	registry
  */
 
  /* key information */
@@ -59,7 +59,7 @@ typedef struct _KEY_BASIC_INFORMATION {
 	WCHAR		Name[1];
 } KEY_BASIC_INFORMATION, *PKEY_BASIC_INFORMATION;
 
-typedef struct _KEY_NODE_INFORMATION 
+typedef struct _KEY_NODE_INFORMATION
 {
 	LARGE_INTEGER	LastWriteTime;
 	ULONG		TitleIndex;
@@ -70,7 +70,7 @@ typedef struct _KEY_NODE_INFORMATION
 /*	Class[1]; */
 } KEY_NODE_INFORMATION, *PKEY_NODE_INFORMATION;
 
-typedef struct _KEY_FULL_INFORMATION 
+typedef struct _KEY_FULL_INFORMATION
 {
 	LARGE_INTEGER	LastWriteTime;
 	ULONG		TitleIndex;
@@ -85,14 +85,14 @@ typedef struct _KEY_FULL_INFORMATION
 	WCHAR		Class[1];
 } KEY_FULL_INFORMATION, *PKEY_FULL_INFORMATION;
 
-typedef enum _KEY_INFORMATION_CLASS 
+typedef enum _KEY_INFORMATION_CLASS
 {
 	KeyBasicInformation,
 	KeyNodeInformation,
 	KeyFullInformation
 } KEY_INFORMATION_CLASS;
 
-typedef struct _KEY_VALUE_ENTRY 
+typedef struct _KEY_VALUE_ENTRY
 {
 	PUNICODE_STRING	ValueName;
 	ULONG		DataLength;
@@ -101,7 +101,7 @@ typedef struct _KEY_VALUE_ENTRY
 } KEY_VALUE_ENTRY, *PKEY_VALUE_ENTRY;
 
 /* value information */
-typedef struct _KEY_VALUE_BASIC_INFORMATION 
+typedef struct _KEY_VALUE_BASIC_INFORMATION
 {
 	ULONG   TitleIndex;
 	ULONG   Type;
@@ -109,7 +109,7 @@ typedef struct _KEY_VALUE_BASIC_INFORMATION
 	WCHAR   Name[1];
 } KEY_VALUE_BASIC_INFORMATION, *PKEY_VALUE_BASIC_INFORMATION;
 
-typedef struct _KEY_VALUE_FULL_INFORMATION 
+typedef struct _KEY_VALUE_FULL_INFORMATION
 {
 	ULONG   TitleIndex;
 	ULONG   Type;
@@ -120,7 +120,7 @@ typedef struct _KEY_VALUE_FULL_INFORMATION
 /*	UCHAR 	Data[1];*/
 } KEY_VALUE_FULL_INFORMATION, *PKEY_VALUE_FULL_INFORMATION;
 
-typedef struct _KEY_VALUE_PARTIAL_INFORMATION 
+typedef struct _KEY_VALUE_PARTIAL_INFORMATION
 {
 	ULONG   TitleIndex;
 	ULONG   Type;
@@ -128,7 +128,7 @@ typedef struct _KEY_VALUE_PARTIAL_INFORMATION
 	UCHAR   Data[1];
 } KEY_VALUE_PARTIAL_INFORMATION, *PKEY_VALUE_PARTIAL_INFORMATION;
 
-typedef enum _KEY_VALUE_INFORMATION_CLASS 
+typedef enum _KEY_VALUE_INFORMATION_CLASS
 {
 	KeyValueBasicInformation,
 	KeyValueFullInformation,
@@ -142,7 +142,7 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
 
 /*	thread information */
 
-typedef enum _THREADINFOCLASS 
+typedef enum _THREADINFOCLASS
 {	ThreadBasicInformation,
 	ThreadTimes,
 	ThreadPriority,
@@ -232,13 +232,13 @@ typedef enum _FSINFOCLASS {
 	FileFsMaximumInformation
 } FS_INFORMATION_CLASS, *PFS_INFORMATION_CLASS;
 
-typedef enum _SECTION_INHERIT 
+typedef enum _SECTION_INHERIT
 {
 	ViewShare = 1,
 	ViewUnmap = 2
 
 } SECTION_INHERIT;
- 
+
 /*	object information */
 
 typedef enum _OBJECT_INFORMATION_CLASS
@@ -440,11 +440,11 @@ typedef struct _SYSTEM_TIME_ADJUSTMENT
 
 } SYSTEM_TIME_ADJUSTMENT, *PSYSTEM_TIME_ADJUSTMENT;
 
-typedef struct _SYSTEM_CONFIGURATION_INFO 
+typedef struct _SYSTEM_CONFIGURATION_INFO
 {
-	union 
+	union
 	{ ULONG	OemId;
-	  struct 
+	  struct
 	  { WORD	ProcessorArchitecture;
 	    WORD	Reserved;
 	  } tag1;
@@ -468,7 +468,7 @@ typedef struct _SYSTEM_CONFIGURATION_INFO
 
 /* parameter ProcessInformationClass */
 
-typedef enum _PROCESSINFOCLASS 
+typedef enum _PROCESSINFOCLASS
 {	ProcessBasicInformation,
 	ProcessQuotaLimits,
 	ProcessIoCounters,
@@ -501,7 +501,7 @@ typedef enum _PROCESSINFOCLASS
 
 /* parameter ProcessInformation (depending on ProcessInformationClass) */
 
-typedef struct _PROCESS_BASIC_INFORMATION 
+typedef struct _PROCESS_BASIC_INFORMATION
 {	DWORD	ExitStatus;
 	DWORD	PebBaseAddress;
 	DWORD	AffinityMask;
@@ -523,7 +523,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
  *	timer
  */
 
-typedef enum _TIMER_TYPE 
+typedef enum _TIMER_TYPE
 {
 	NotificationTimer,
 	SynchronizationTimer
@@ -531,15 +531,15 @@ typedef enum _TIMER_TYPE
 } TIMER_TYPE;
 
 /*	token functions */
- 
+
 NTSTATUS WINAPI NtOpenProcessToken(
 	HANDLE ProcessHandle,
-	DWORD DesiredAccess, 
+	DWORD DesiredAccess,
 	HANDLE *TokenHandle);
-	
+
 NTSTATUS WINAPI NtOpenThreadToken(
 	HANDLE ThreadHandle,
-	DWORD DesiredAccess, 
+	DWORD DesiredAccess,
 	BOOLEAN OpenAsSelf,
 	HANDLE *TokenHandle);
 
@@ -553,7 +553,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 
 NTSTATUS WINAPI NtQueryInformationToken(
 	HANDLE token,
-	DWORD tokeninfoclass, 
+	DWORD tokeninfoclass,
 	LPVOID tokeninfo,
 	DWORD tokeninfolength,
 	LPDWORD retlen );
@@ -568,19 +568,19 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 	DWORD nSubAuthority4, DWORD nSubAuthority5,
 	DWORD nSubAuthority6, DWORD nSubAuthority7,
 	PSID *pSid );
-	
+
 BOOL WINAPI RtlInitializeSid(
 	PSID pSid,
 	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 	BYTE nSubAuthorityCount);
-	
+
 DWORD WINAPI RtlFreeSid(
 	PSID pSid);
 
 BOOL WINAPI RtlEqualSid(
 	PSID pSid1,
 	PSID pSid2 );
-	
+
 DWORD WINAPI RtlLengthRequiredSid(
 	DWORD nrofsubauths);
 
@@ -598,7 +598,7 @@ DWORD WINAPI RtlCopySid(
 	DWORD len,
 	PSID to,
 	PSID from);
-	
+
 BOOL WINAPI RtlValidSid(
 	PSID pSid);
 
@@ -692,7 +692,7 @@ NTSTATUS WINAPI RtlAddAce(
 	DWORD xnrofaces,
 	PACE_HEADER acestart,
 	DWORD acelen);
-	
+
 BOOL WINAPI RtlAddAccessAllowedAce(
 	IN OUT PACL pAcl,
 	IN DWORD dwAceRevision,
@@ -775,25 +775,25 @@ typedef struct _RTL_RWLOCK {
 
 VOID   WINAPI RtlInitializeResource(
 	LPRTL_RWLOCK);
-	
+
 VOID   WINAPI RtlDeleteResource(
 	LPRTL_RWLOCK);
-	
+
 BYTE   WINAPI RtlAcquireResourceExclusive(
 	LPRTL_RWLOCK, BYTE fWait);
-	
+
 BYTE   WINAPI RtlAcquireResourceShared(
 	LPRTL_RWLOCK, BYTE fWait);
-	
+
 VOID   WINAPI RtlReleaseResource(
 	LPRTL_RWLOCK);
-	
+
 VOID   WINAPI RtlDumpResource(
 	LPRTL_RWLOCK);
 
 /*	time functions */
 
-typedef struct _TIME_FIELDS 
+typedef struct _TIME_FIELDS
 {   CSHORT Year;
     CSHORT Month;
     CSHORT Day;
@@ -817,11 +817,11 @@ VOID WINAPI RtlTimeToTimeFields(
 BOOLEAN WINAPI RtlTimeFieldsToTime(
 	PTIME_FIELDS tfTimeFields,
 	PLARGE_INTEGER Time);
-	
+
 VOID WINAPI RtlTimeToElapsedTimeFields(
 	PLARGE_INTEGER liTime,
 	PTIME_FIELDS TimeFields);
-	
+
 void    WINAPI NtQuerySystemTime( LARGE_INTEGER *time );
 
 BOOLEAN WINAPI RtlTimeToSecondsSince1980( const FILETIME *time, LPDWORD res );
@@ -920,8 +920,8 @@ DWORD WINAPI RtlNewSecurityObject(
 
 DWORD WINAPI RtlDeleteSecurityObject(
 	DWORD x1);
-	
-NTSTATUS WINAPI 
+
+NTSTATUS WINAPI
 NtQuerySecurityObject(
 	IN HANDLE Object,
 	IN SECURITY_INFORMATION RequestedInformation,
@@ -1056,7 +1056,7 @@ DWORD WINAPI RtlOpenCurrentUser(
 BOOLEAN WINAPI RtlDosPathNameToNtPathName_U( LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3);
 BOOL WINAPI RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
-NTSTATUS WINAPI 
+NTSTATUS WINAPI
 NtAccessCheck(
 	IN PSECURITY_DESCRIPTOR SecurityDescriptor,
 	IN HANDLE ClientToken,

@@ -32,7 +32,7 @@
 #define HPROVIDER LPVOID
 typedef HPROVIDER *PHPROVIDER;
 
-typedef struct 
+typedef struct
 {
     DWORD  cbStructure;
     HWND   hwndOwner;
@@ -94,7 +94,7 @@ enum NOTIFYTYPE { NotifyAddConnection,
 #define NOTIFY_PRE              0x00
 #define NOTIFY_POST             0x01
 
-typedef struct 
+typedef struct
 {
     DWORD   cbStructure;
     DWORD   dwNotifyStatus;
@@ -103,7 +103,7 @@ typedef struct
 
 } NOTIFYINFO, *LPNOTIFYINFO;
 
-typedef struct 
+typedef struct
 {
     DWORD        cbStructure;
     HWND         hwndOwner;
@@ -121,7 +121,7 @@ typedef struct
 #define CONNECT_CTXT_PROVIDER  0x00000004
 #define CONNECT_CTXT_SINGLE    0x00000008
 
-typedef struct 
+typedef struct
 {
     DWORD  cbStructure;
     LPSTR  lpName;
@@ -131,7 +131,7 @@ typedef struct
 
 } NOTIFYCANCELA, *LPNOTIFYCANCELA;
 
-typedef struct 
+typedef struct
 {
     DWORD                  cbStructure;
     LPSTR                  lpRemoteName;

@@ -42,10 +42,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
 
-/* Locale name to id map. used by EnumSystemLocales, GetLocaleInfoA 
+/* Locale name to id map. used by EnumSystemLocales, GetLocaleInfoA
  * MUST contain all #defines from winnls.h
  * last entry has NULL name, 0 id.
- */ 
+ */
 #define LOCALE_ENTRY(x)	{#x,LOCALE_##x}
 static const struct tagLOCALE_NAME2ID {
     const char	*name;
@@ -368,17 +368,17 @@ LANGID WINAPI GetUserDefaultLangID(void)
         ok:
 		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C"))
                     return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-		
+
 		lang=buf;
-		
+
 		do {
 			next=strchr(lang,':'); if (next) *next++='\0';
 			dialect=strchr(lang,'@'); if (dialect) *dialect++='\0';
 			charset=strchr(lang,'.'); if (charset) *charset++='\0';
 			country=strchr(lang,'_'); if (country) *country++='\0';
-			
+
 			userLCID = NLS_GetLanguageID(lang, country, charset, dialect);
-			
+
 			lang=next;
 		} while (lang && !userLCID);
 
@@ -411,7 +411,7 @@ LCID WINAPI ConvertDefaultLocale (LCID lcid)
 	     return GetUserDefaultLCID();
 	   case LOCALE_NEUTRAL:
 	     return MAKELCID (LANG_NEUTRAL, SUBLANG_NEUTRAL);
-	}  
+	}
 	return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
 }
 
@@ -438,14 +438,14 @@ static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWST
     if(!hrsrc) return 0;
     hmem = LoadResource(hModule, hrsrc);
     if(!hmem) return 0;
-    
+
     p = LockResource(hmem);
     string_num = res_id & 0x000f;
     for(i = 0; i < string_num; i++)
 	p += *p + 1;
-    
+
     TRACE("strlen = %d\n", (int)*p );
-    
+
     if (buffer == NULL) return *p;
     i = min(buflen - 1, *p);
     if (i > 0) {
@@ -464,7 +464,7 @@ static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWST
 /******************************************************************************
  *		GetLocaleInfoA (KERNEL32.@)
  *
- * NOTES 
+ * NOTES
  *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
  *
  *  MS online documentation states that the string returned is NULL terminated
@@ -490,7 +490,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT)
 	{
             lcid = GetSystemDefaultLCID();
-	} 
+	}
 	else if (lcid == LANG_USER_DEFAULT) /*0x800*/
 	{
             lcid = GetUserDefaultLCID();
@@ -511,10 +511,10 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 
         sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
 
-        if ( RegOpenKeyExA( HKEY_CURRENT_USER, acRealKey, 
+        if ( RegOpenKeyExA( HKEY_CURRENT_USER, acRealKey,
                             0, KEY_READ, &hKey) == ERROR_SUCCESS )
         {
-            if ( RegQueryValueExA( hKey, NULL, NULL, NULL, (LPBYTE)acBuffer, 
+            if ( RegQueryValueExA( hKey, NULL, NULL, NULL, (LPBYTE)acBuffer,
                                    &dwBufferSize ) == ERROR_SUCCESS )
             {
                 retString = acBuffer;
@@ -559,7 +559,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 		"and submit patch for inclusion into the next Wine release.\n",
 			retString, LOWORD(lcid));
 	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;			
+	return 0;
     }
 
     /* a FONTSIGNATURE is not a string, just 6 DWORDs  */
@@ -592,7 +592,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
 {	WORD wlen;
 	LPSTR abuf;
-	
+
 	if (len && (! wbuf) )
 	{ SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	  return 0;
@@ -713,7 +713,7 @@ static char *GetLocaleSubkeyName( DWORD lctype )
         pacKey = "sCurrency";
         break;
 
-    /* The following are not listed under MSDN as supported, 
+    /* The following are not listed under MSDN as supported,
      * but seem to be used and also stored in the registry.
      */
 
@@ -749,10 +749,10 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
     if ( (pacKey = GetLocaleSubkeyName(lctype)) )
     {
         sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
-        if ( RegCreateKeyA( HKEY_CURRENT_USER, acRealKey, 
+        if ( RegCreateKeyA( HKEY_CURRENT_USER, acRealKey,
                                &hKey ) == ERROR_SUCCESS )
         {
-            if ( RegSetValueExA( hKey, NULL, 0, REG_SZ, 
+            if ( RegSetValueExA( hKey, NULL, 0, REG_SZ,
                                  data, strlen(data)+1 ) != ERROR_SUCCESS )
             {
                 ERR("SetLocaleInfoA: %s did not work\n", pacKey );
@@ -851,39 +851,39 @@ DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
     return GetLocaleInfoW(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
 }
 
- 
+
 static const unsigned char LCM_Unicode_LUT[] = {
-  6      ,   3, /*   -   1 */  
-  6      ,   4, /*   -   2 */  
-  6      ,   5, /*   -   3 */  
-  6      ,   6, /*   -   4 */  
-  6      ,   7, /*   -   5 */  
-  6      ,   8, /*   -   6 */  
-  6      ,   9, /*   -   7 */  
-  6      ,  10, /*   -   8 */  
-  7      ,   5, /*   -   9 */  
-  7      ,   6, /*   -  10 */  
-  7      ,   7, /*   -  11 */  
-  7      ,   8, /*   -  12 */  
-  7      ,   9, /*   -  13 */  
-  6      ,  11, /*   -  14 */  
-  6      ,  12, /*   -  15 */  
-  6      ,  13, /*   -  16 */  
-  6      ,  14, /*   -  17 */  
-  6      ,  15, /*   -  18 */  
-  6      ,  16, /*   -  19 */  
-  6      ,  17, /*   -  20 */  
-  6      ,  18, /*   -  21 */  
-  6      ,  19, /*   -  22 */  
-  6      ,  20, /*   -  23 */  
-  6      ,  21, /*   -  24 */  
-  6      ,  22, /*   -  25 */  
-  6      ,  23, /*   -  26 */  
-  6      ,  24, /*   -  27 */  
-  6      ,  25, /*   -  28 */  
-  6      ,  26, /*   -  29 */  
-  6      ,  27, /*   -  30 */  
-  6      ,  28, /*   -  31 */  
+  6      ,   3, /*   -   1 */
+  6      ,   4, /*   -   2 */
+  6      ,   5, /*   -   3 */
+  6      ,   6, /*   -   4 */
+  6      ,   7, /*   -   5 */
+  6      ,   8, /*   -   6 */
+  6      ,   9, /*   -   7 */
+  6      ,  10, /*   -   8 */
+  7      ,   5, /*   -   9 */
+  7      ,   6, /*   -  10 */
+  7      ,   7, /*   -  11 */
+  7      ,   8, /*   -  12 */
+  7      ,   9, /*   -  13 */
+  6      ,  11, /*   -  14 */
+  6      ,  12, /*   -  15 */
+  6      ,  13, /*   -  16 */
+  6      ,  14, /*   -  17 */
+  6      ,  15, /*   -  18 */
+  6      ,  16, /*   -  19 */
+  6      ,  17, /*   -  20 */
+  6      ,  18, /*   -  21 */
+  6      ,  19, /*   -  22 */
+  6      ,  20, /*   -  23 */
+  6      ,  21, /*   -  24 */
+  6      ,  22, /*   -  25 */
+  6      ,  23, /*   -  26 */
+  6      ,  24, /*   -  27 */
+  6      ,  25, /*   -  28 */
+  6      ,  26, /*   -  29 */
+  6      ,  27, /*   -  30 */
+  6      ,  28, /*   -  31 */
   7      ,   2, /*   -  32 */
   7      ,  28, /* ! -  33 */
   7      ,  29, /* " -  34 */ /* " */
@@ -1113,7 +1113,7 @@ static const unsigned char LCM_Unicode_LUT_2[] = { 33, 44, 145 };
 
 #define LCM_Diacritic_Start 131
 
-static const unsigned char LCM_Diacritic_LUT[] = { 
+static const unsigned char LCM_Diacritic_LUT[] = {
 123,  /* ƒ - 131 */
   2,  /* „ - 132 */
   2,  /* … - 133 */
@@ -1244,11 +1244,11 @@ static const unsigned char LCM_Diacritic_LUT[] = {
 /******************************************************************************
  * OLE2NLS_isPunctuation [INTERNAL]
  */
-static int OLE2NLS_isPunctuation(unsigned char c) 
+static int OLE2NLS_isPunctuation(unsigned char c)
 {
-  /* "punctuation character" in this context is a character which is 
+  /* "punctuation character" in this context is a character which is
      considered "less important" during word sort comparison.
-     See LCMapString implementation for the precise definition 
+     See LCMapString implementation for the precise definition
      of "less important". */
 
   return (LCM_Unicode_LUT[-2+2*c]==6);
@@ -1257,9 +1257,9 @@ static int OLE2NLS_isPunctuation(unsigned char c)
 /******************************************************************************
  * OLE2NLS_isNonSpacing [INTERNAL]
  */
-static int OLE2NLS_isNonSpacing(unsigned char c) 
+static int OLE2NLS_isNonSpacing(unsigned char c)
 {
-  /* This function is used by LCMapStringA.  Characters 
+  /* This function is used by LCMapStringA.  Characters
      for which it returns true are ignored when mapping a
      string with NORM_IGNORENONSPACE */
   return ((c==136) || (c==170) || (c==186));
@@ -1269,9 +1269,9 @@ static int OLE2NLS_isNonSpacing(unsigned char c)
  * OLE2NLS_isSymbol [INTERNAL]
  * FIXME: handle current locale
  */
-static int OLE2NLS_isSymbol(unsigned char c) 
+static int OLE2NLS_isSymbol(unsigned char c)
 {
-  /* This function is used by LCMapStringA.  Characters 
+  /* This function is used by LCMapStringA.  Characters
      for which it returns true are ignored when mapping a
      string with NORM_IGNORESYMBOLS */
   return ( (c!=0) && !(isalpha(c) || isdigit(c)) );
@@ -1300,20 +1300,20 @@ static int identity(int c)
  *
  * NOTES
  *    If called with scrlen = -1, the function will compute the length
- *      of the 0-terminated string strsrc by itself.      
- * 
- *    If called with dstlen = 0, returns the buffer length that 
+ *      of the 0-terminated string strsrc by itself.
+ *
+ *    If called with dstlen = 0, returns the buffer length that
  *      would be required.
  *
  *    NORM_IGNOREWIDTH means to compare ASCII and wide characters
- *    as if they are equal.  
+ *    as if they are equal.
  *    In the only code page implemented so far, there may not be
  *    wide characters in strings passed to LCMapStringA,
  *    so there is nothing to be done for this flag.
  */
 INT WINAPI LCMapStringA(
-	LCID lcid,      /* [in] locale identifier created with MAKELCID; 
-		                LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are 
+	LCID lcid,      /* [in] locale identifier created with MAKELCID;
+		                LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are
                                 predefined values. */
 	DWORD mapflags, /* [in] flags */
 	LPCSTR srcstr,  /* [in] source buffer */
@@ -1333,7 +1333,7 @@ INT WINAPI LCMapStringA(
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
-  if (srclen == -1) 
+  if (srclen == -1)
     srclen = strlen(srcstr) + 1 ;    /* (include final '\0') */
 
 #define LCMAPSTRINGA_SUPPORTED_FLAGS (LCMAP_UPPERCASE     | \
@@ -1344,7 +1344,7 @@ INT WINAPI LCMapStringA(
                                         SORT_STRINGSORT     | \
                                         NORM_IGNOREWIDTH    | \
                                         NORM_IGNOREKANATYPE)
-  /* FIXME: as long as we don't support Katakana nor Hiragana 
+  /* FIXME: as long as we don't support Katakana nor Hiragana
    * characters, we can support NORM_IGNOREKANATYPE
    */
   if (mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS)
@@ -1364,13 +1364,13 @@ INT WINAPI LCMapStringA(
   if ( !(mapflags & LCMAP_SORTKEY) )
   {
     int i,j;
-    int (*f)(int) = identity; 
+    int (*f)(int) = identity;
     int flag_ignorenonspace = mapflags & NORM_IGNORENONSPACE;
     int flag_ignoresymbols = mapflags & NORM_IGNORESYMBOLS;
 
     if (flag_ignorenonspace || flag_ignoresymbols)
     {
-      /* For some values of mapflags, the length of the resulting 
+      /* For some values of mapflags, the length of the resulting
 	 string is not known at this point.  Windows does map the string
 	 and does not SetLastError ERROR_INSUFFICIENT_BUFFER in
 	 these cases. */
@@ -1389,8 +1389,8 @@ INT WINAPI LCMapStringA(
     else
     {
       if (dstlen==0)
-	return srclen;  
-      if (dstlen<srclen) 
+	return srclen;
+      if (dstlen<srclen)
 	   {
 	     SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	     return 0;
@@ -1431,7 +1431,7 @@ INT WINAPI LCMapStringA(
     {
       int ofs;
       unsigned char source_char = srcstr[i];
-      if (source_char!='\0') 
+      if (source_char!='\0')
       {
 	if (flag_stringsort || !OLE2NLS_isPunctuation(source_char))
 	{
@@ -1442,11 +1442,11 @@ INT WINAPI LCMapStringA(
 	else
 	{
 	  delayed_punctuation_len++;
-	}	  
+	}
       }
-	  
+
       if (isupper(source_char))
-	case_len=unicode_len; 
+	case_len=unicode_len;
 
       ofs = source_char - LCM_Diacritic_Start;
       if ((ofs>=0) && (LCM_Diacritic_LUT[ofs]!=2))
@@ -1454,7 +1454,7 @@ INT WINAPI LCMapStringA(
     }
 
     if (mapflags & NORM_IGNORECASE)
-      case_len=0;                   
+      case_len=0;
     if (mapflags & NORM_IGNORENONSPACE)
       diacritic_len=0;
 
@@ -1465,7 +1465,7 @@ INT WINAPI LCMapStringA(
       +     4                            /* four '\1' separators */
       +     1  ;                         /* terminal '\0' */
     if (dstlen==0)
-      return room;      
+      return room;
     else if (dstlen<room)
     {
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -1481,25 +1481,25 @@ INT WINAPI LCMapStringA(
 #endif
     /* locate each component, write separators */
     diacritic_component = dststr + 2*unicode_len ;
-    *diacritic_component++ = '\1'; 
+    *diacritic_component++ = '\1';
     case_component = diacritic_component + diacritic_len ;
-    *case_component++ = '\1'; 
+    *case_component++ = '\1';
     delayed_punctuation_component = case_component + case_len ;
     *delayed_punctuation_component++ = '\1';
     *delayed_punctuation_component++ = '\1';
 
-    /* read source string char by char, write 
+    /* read source string char by char, write
        corresponding weight in each component. */
     for (i=0,count=0;i<srclen;i++)
     {
       unsigned char source_char=srcstr[i];
-      if (source_char!='\0') 
+      if (source_char!='\0')
       {
 	int type,longcode;
 	type = LCM_Unicode_LUT[-2+2*source_char];
 	longcode = type >> 4;
 	type &= 15;
-	if (!flag_stringsort && OLE2NLS_isPunctuation(source_char)) 
+	if (!flag_stringsort && OLE2NLS_isPunctuation(source_char))
 	{
 	  WORD encrypted_location = (1<<15) + 7 + 4*count;
 	  *delayed_punctuation_component++ = (unsigned char) (encrypted_location>>8);
@@ -1508,14 +1508,14 @@ INT WINAPI LCMapStringA(
 			compatible with numerical comparison */
 
 	  *delayed_punctuation_component++ = type;
-	  *delayed_punctuation_component++ = LCM_Unicode_LUT[-1+2*source_char];  
-                     /* assumption : a punctuation character is never a 
+	  *delayed_punctuation_component++ = LCM_Unicode_LUT[-1+2*source_char];
+                     /* assumption : a punctuation character is never a
 			double or accented letter */
 	}
 	else
 	{
 	  dststr[2*count] = type;
-	  dststr[2*count+1] = LCM_Unicode_LUT[-1+2*source_char];  
+	  dststr[2*count+1] = LCM_Unicode_LUT[-1+2*source_char];
 	  if (longcode)
 	  {
 	    if (count<case_len)
@@ -1524,11 +1524,11 @@ INT WINAPI LCMapStringA(
 	      diacritic_component[count] = 2; /* assumption: a double letter
 						 is never accented */
 	    count++;
-	    
+
 	    dststr[2*count] = type;
-	    dststr[2*count+1] = *(LCM_Unicode_LUT_2 - 1 + longcode); 
-	    /* 16 in the first column of LCM_Unicode_LUT  -->  longcode = 1 
-	       32 in the first column of LCM_Unicode_LUT  -->  longcode = 2 
+	    dststr[2*count+1] = *(LCM_Unicode_LUT_2 - 1 + longcode);
+	    /* 16 in the first column of LCM_Unicode_LUT  -->  longcode = 1
+	       32 in the first column of LCM_Unicode_LUT  -->  longcode = 2
 	       48 in the first column of LCM_Unicode_LUT  -->  longcode = 3 */
 	  }
 
@@ -1547,7 +1547,7 @@ INT WINAPI LCMapStringA(
     return room;
   }
 }
-		     
+
 /*************************************************************************
  *              LCMapStringW                [KERNEL32.@]
  *
@@ -1562,24 +1562,24 @@ INT WINAPI LCMapStringW(
 	INT dstlen)
 {
   int i;
- 
+
   TRACE("(0x%04lx,0x%08lx,%p,%d,%p,%d)\n",
                  lcid, mapflags, srcstr, srclen, dststr, dstlen);
-  
+
   if ( ((dstlen!=0) && (dststr==NULL)) || (srcstr==NULL) )
   {
     ERR("(src=%p,dst=%p): Invalid NULL string\n", srcstr, dststr);
     SetLastError(ERROR_INVALID_PARAMETER);
     return 0;
   }
-  if (srclen==-1) 
+  if (srclen==-1)
     srclen = strlenW(srcstr)+1;
 
   /* FIXME: Both this function and it's companion LCMapStringA()
    * completely ignore the "lcid" parameter.  In place of the "lcid"
    * parameter the application must set the "LC_COLLATE" or "LC_ALL"
    * environment variable prior to invoking this function.  */
-  if (mapflags & LCMAP_SORTKEY) 
+  if (mapflags & LCMAP_SORTKEY)
   {
       /* Possible values of LC_COLLATE. */
       char *lc_collate_default = 0; /* value prior to this function */
@@ -1636,7 +1636,7 @@ INT WINAPI LCMapStringW(
       /* FIXME: Prior to to setting the LC_COLLATE locale category the
        * current value is backed up so it can be restored after the
        * last LC_COLLATE sensitive function returns.
-       * 
+       *
        * Even though the locale is adjusted for a minimum amount of
        * time a race condition exists where other threads may be
        * affected if they invoke LC_COLLATE sensitive functions.  One
@@ -1686,7 +1686,7 @@ INT WINAPI LCMapStringW(
       else if(returned_len > src_native_len)
       {
           src_native[src_native_len - 1] = 0;
-          ERR("wcstombs returned a string (%s) that was longer (%d bytes) " 
+          ERR("wcstombs returned a string (%s) that was longer (%d bytes) "
               "than expected (%d bytes).\n", src_native, returned_len,
               dst_native_len);
 
@@ -1728,11 +1728,11 @@ INT WINAPI LCMapStringW(
        * various tables as it is done in LCMapStringA().  However, I'm
        * not sure what those tables are. */
       returned_len = strxfrm(dst_native, src_native, dst_native_len) + 1;
-      
+
       if(returned_len > dst_native_len)
       {
           dst_native[dst_native_len - 1] = 0;
-          ERR("strxfrm returned a string (%s) that was longer (%d bytes) " 
+          ERR("strxfrm returned a string (%s) that was longer (%d bytes) "
               "than expected (%d bytes).\n", dst_native, returned_len,
               dst_native_len);
 
@@ -1747,7 +1747,7 @@ INT WINAPI LCMapStringW(
           return 0;
       }
       dst_native_len = returned_len;
-      
+
       TRACE("dst_native = %s  dst_native_len = %d\n",
              dst_native, dst_native_len);
 
@@ -1770,7 +1770,7 @@ INT WINAPI LCMapStringW(
 
       /* Restore LC_COLLATE now that the last LC_COLLATE sensitive
        * function has returned. */
-      setlocale(LC_COLLATE, lc_collate_default); 
+      setlocale(LC_COLLATE, lc_collate_default);
 
       if(returned_len == 0)
       {
@@ -1787,7 +1787,7 @@ INT WINAPI LCMapStringW(
       {
           if(returned_len > dstlen)
           {
-              ERR("mbstowcs returned a string that was longer (%d chars) " 
+              ERR("mbstowcs returned a string that was longer (%d chars) "
                   "than the buffer provided (%d chars).\n", returned_len,
                   dstlen);
               SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -1795,7 +1795,7 @@ INT WINAPI LCMapStringW(
               if(src_native) HeapFree(GetProcessHeap(), 0, src_native);
               if(dst_native) HeapFree(GetProcessHeap(), 0, dst_native);
               if(dststr_libc) HeapFree(GetProcessHeap(), 0, dststr_libc);
-              return 0;          
+              return 0;
           }
           dstlen = returned_len;
 
@@ -1823,11 +1823,11 @@ INT WINAPI LCMapStringW(
   }
   else
   {
-    int (*f)(int)=identity; 
+    int (*f)(int)=identity;
 
     if (dstlen==0)
-        return srclen;  
-    if (dstlen<srclen) 
+        return srclen;
+    if (dstlen<srclen)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return 0;
@@ -1878,13 +1878,13 @@ static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
  * Defaults to a word sort, but uses a string sort if
  * SORT_STRINGSORT is set.
  * Calls SetLastError for ERROR_INVALID_FLAGS, ERROR_INVALID_PARAMETER.
- * 
+ *
  * BUGS
  *
  * This implementation ignores the locale
  *
  * FIXME
- * 
+ *
  * Quite inefficient.
  */
 int WINAPI CompareStringA(
@@ -1903,7 +1903,7 @@ int WINAPI CompareStringA(
 	debugstr_an (s1,l1), debugstr_an (s2,l2));
 
   if ( (s1==NULL) || (s2==NULL) )
-  {    
+  {
     ERR("(s1=%s,s2=%s): Invalid NULL string\n",
 	debugstr_an(s1,l1), debugstr_an(s2,l2));
     SetLastError(ERROR_INVALID_PARAMETER);
@@ -1915,7 +1915,7 @@ int WINAPI CompareStringA(
 
   if (l1 == -1) l1 = strlen(s1);
   if (l2 == -1) l2 = strlen(s2);
-  	
+
   mapstring_flags = LCMAP_SORTKEY | fdwStyle ;
   len1 = OLE2NLS_EstimateMappingLength(lcid, mapstring_flags, s1, l1);
   len2 = OLE2NLS_EstimateMappingLength(lcid, mapstring_flags, s2, l2);
@@ -1985,7 +1985,7 @@ int WINAPI CompareStringW(LCID lcid, DWORD fdwStyle,
  * FIXME
  *    If datelen == 0, it should return the reguired string length.
  *
- This function implements stuff for GetDateFormat() and 
+ This function implements stuff for GetDateFormat() and
  GetTimeFormat().
 
   d    single-digit (no leading zero) day (of month)
@@ -2013,7 +2013,7 @@ int WINAPI CompareStringW(LCID lcid, DWORD fdwStyle,
   ''   used to quote literal characters
   ''   (within a quoted string) indicates a literal '
 
- These functions REQUIRE valid locale, date,  and format. 
+ These functions REQUIRE valid locale, date,  and format.
  */
 static INT OLE_GetFormatA(LCID locale,
 			    DWORD flags,
@@ -2031,14 +2031,14 @@ static INT OLE_GetFormatA(LCID locale,
    int buflen;
 
    const char * _dgfmt[] = { "%d", "%02d" };
-   const char ** dgfmt = _dgfmt - 1; 
+   const char ** dgfmt = _dgfmt - 1;
 
    /* report, for debugging */
    TRACE("(0x%lx,0x%lx, 0x%lx, time(y=%d m=%d wd=%d d=%d,h=%d,m=%d,s=%d), fmt=%p \'%s\' , %p, len=%d)\n",
    	 locale, flags, tflags,
 	 xtime->wYear,xtime->wMonth,xtime->wDayOfWeek,xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 _format, _format, date, datelen);
-  
+
    if(datelen == 0) {
      FIXME("datelen = 0, returning 255\n");
      return 255;
@@ -2049,11 +2049,11 @@ static INT OLE_GetFormatA(LCID locale,
    count = 0; inquote = 0; Overflow = 0;
    type = '\0';
    date[0] = buf[0] = '\0';
-      
+
    strcpy(format,_format);
 
    /* alter the formatstring, while it works for all languages now in wine
-   its possible that it fails when the time looks like ss:mm:hh as example*/   
+   its possible that it fails when the time looks like ss:mm:hh as example*/
    if (tflags & (TIME_NOMINUTESORSECONDS))
    { if ((pos = strstr ( format, ":mm")))
      { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
@@ -2064,7 +2064,7 @@ static INT OLE_GetFormatA(LCID locale,
      { memcpy ( pos, pos+3, strlen(format)-(pos-format)-2 );
      }
    }
-   
+
    for (inpos = 0;; inpos++) {
       /* TRACE("STATE inpos=%2d outpos=%2d count=%d inquote=%d type=%c buf,date = %c,%c\n", inpos, outpos, count, inquote, type, buf[inpos], date[outpos]); */
       if (inquote) {
@@ -2100,8 +2100,8 @@ static INT OLE_GetFormatA(LCID locale,
 				   + (xtime->wDayOfWeek+6)%7,
 				   buf, sizeof(buf));
 	       } else if (count == 3) {
-			   GetLocaleInfoA(locale, 
-					    LOCALE_SABBREVDAYNAME1 
+			   GetLocaleInfoA(locale,
+					    LOCALE_SABBREVDAYNAME1
 					    + (xtime->wDayOfWeek+6)%7,
 					    buf, sizeof(buf));
 		      } else {
@@ -2109,7 +2109,7 @@ static INT OLE_GetFormatA(LCID locale,
 	       }
 	    } else if (type == 'M') {
 	       if (count == 3) {
-		  GetLocaleInfoA(locale, 
+		  GetLocaleInfoA(locale,
 				   LOCALE_SABBREVMONTHNAME1
 				   + xtime->wMonth - 1,
 				   buf, sizeof(buf));
@@ -2156,16 +2156,16 @@ static INT OLE_GetFormatA(LCID locale,
                } else if (count == 2) {
                  /* sprintf(buf, "%s", (xtime->wHour < 12) ? "AM" : "PM"); */
                   GetLocaleInfoA(locale,
-                           (xtime->wHour<12) 
+                           (xtime->wHour<12)
                            ? LOCALE_S1159 : LOCALE_S2359,
                            buf, sizeof(buf));
                }
 	    };
 
-	    /* we need to check the next char in the format string 
+	    /* we need to check the next char in the format string
 	       again, no matter what happened */
 	    inpos--;
-	    
+
 	    /* add the contents of buf to the output */
 	    buflen = strlen(buf);
 	    if (outpos + buflen < datelen) {
@@ -2210,7 +2210,7 @@ static INT OLE_GetFormatA(LCID locale,
        return 0;
       }
    }
-   
+
    if (Overflow) {
       SetLastError(ERROR_INSUFFICIENT_BUFFER);
    };
@@ -2220,7 +2220,7 @@ static INT OLE_GetFormatA(LCID locale,
    /* sanity check */
    if (outpos > datelen-1) outpos = datelen-1;
    date[outpos] = '\0';
-   
+
    TRACE("returns string '%s', len %d\n", date, outpos);
    return outpos;
 }
@@ -2254,7 +2254,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 locale, flags, tflags,
 	 xtime->wDay, xtime->wHour, xtime->wMinute, xtime->wSecond,
 	 debugstr_w(format), format, output, outlen);
-   
+
    if(outlen == 0) {
      FIXME("outlen = 0, returning 255\n");
      return 255;
@@ -2266,7 +2266,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    inquote = Overflow = 0;
    /* this is really just a sanity check */
    output[0] = buf[0] = 0;
-   
+
    /* this loop is the core of the function */
    for (inpos = 0; /* we have several break points */ ; inpos++) {
       if (inquote) {
@@ -2286,7 +2286,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	    output[outpos++] = format[inpos]; /* copy input */
 	    if (outpos > outlen) {
 	       Overflow = 1;
-	       output[outpos-1] = 0; 
+	       output[outpos-1] = 0;
 	       break;
 	    }
 	 }
@@ -2385,7 +2385,7 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
             break;
           }
 
-	 /* no matter what happened,  we need to check this next 
+	 /* no matter what happened,  we need to check this next
 	    character the next time we loop through */
 	 inpos--;
 
@@ -2404,8 +2404,8 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 	 count = 0;
 	 type = '\0';
       } else if (format[inpos] == 0) {
-	 /* we can't check for this at the beginning,  because that 
-	 would keep us from printing a format spec that ended the 
+	 /* we can't check for this at the beginning,  because that
+	 would keep us from printing a format spec that ended the
 	 string */
 	 output[outpos] = 0;
 	 break;  /*  NORMAL EXIT  */
@@ -2445,9 +2445,9 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
    output[outpos] = '0';
 
    TRACE(" returning %s\n", debugstr_w(output));
-	
+
    return (!Overflow) ? outlen : 0;
-   
+
 }
 
 
@@ -2475,9 +2475,9 @@ static INT OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
  */
 INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 			      const SYSTEMTIME* xtime,
-			      LPCSTR format, LPSTR date,INT datelen) 
+			      LPCSTR format, LPSTR date,INT datelen)
 {
-   
+
   char format_buf[40];
   LPCSTR thisformat;
   SYSTEMTIME t;
@@ -2489,11 +2489,11 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 
   TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
 	      locale,flags,xtime,format,date,datelen);
-  
+
   if (!locale) {
      locale = LOCALE_SYSTEM_DEFAULT;
      };
-  
+
   if (locale == LOCALE_SYSTEM_DEFAULT) {
      thislocale = GetSystemDefaultLCID();
   } else if (locale == LOCALE_USER_DEFAULT) {
@@ -2514,13 +2514,13 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
 	  SetLastError(ERROR_INVALID_PARAMETER);
 	  return 0;
 	}
-      FileTimeToSystemTime(&ft,&t); 
-     
+      FileTimeToSystemTime(&ft,&t);
+
   };
   thistime = &t;
 
   if (format == NULL) {
-     GetLocaleInfoA(thislocale, ((flags&DATE_LONGDATE) 
+     GetLocaleInfoA(thislocale, ((flags&DATE_LONGDATE)
 				   ? LOCALE_SLONGDATE
 				   : LOCALE_SSHORTDATE),
 		      format_buf, sizeof(format_buf));
@@ -2529,10 +2529,10 @@ INT WINAPI GetDateFormatA(LCID locale,DWORD flags,
      thisformat = format;
   };
 
-  
-  ret = OLE_GetFormatA(thislocale, flags, 0, thistime, thisformat, 
+
+  ret = OLE_GetFormatA(thislocale, flags, 0, thistime, thisformat,
 		       date, datelen);
-  
+
 
    TRACE(
 	       "GetDateFormatA() returning %d, with data=%s\n",
@@ -2555,11 +2555,11 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 {
    unsigned short datearr[] = {'1','9','9','4','-','1','-','1',0};
 
-   FIXME("STUB (should call OLE_GetFormatW)\n");   
+   FIXME("STUB (should call OLE_GetFormatW)\n");
    lstrcpynW(date, datearr, datelen);
    return (  datelen < 9) ? datelen : 9;
-   
-   
+
+
 }
 
 /**************************************************************************
@@ -2568,7 +2568,7 @@ INT WINAPI GetDateFormatW(LCID locale,DWORD flags,
 BOOL WINAPI EnumDateFormatsA(
   DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
 {
-  LCID Loc = GetUserDefaultLCID(); 
+  LCID Loc = GetUserDefaultLCID();
   if(!lpDateFmtEnumProc)
     {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -2594,11 +2594,11 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d. MMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
      }
-   }       
+   }
 
    case 0x0000040c:  /* (Loc,"fr_FR") */
    {
@@ -2616,7 +2616,7 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
      }
@@ -2637,14 +2637,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d MMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
      }
    }
 
-   case 0x00000809:  /* (Loc,"en_UK") */ 
-  {    
+   case 0x00000809:  /* (Loc,"en_UK") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2658,14 +2658,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00000c09:  /* (Loc,"en_AU") */   
-  {    
+   case 0x00000c09:  /* (Loc,"en_AU") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2678,14 +2678,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00001009:  /* (Loc,"en_CA") */ 
-  {    
+   case 0x00001009:  /* (Loc,"en_CA") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2699,14 +2699,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("MMMM d, yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00001409:  /* (Loc,"en_NZ") */ 
-  {    
+   case 0x00001409:  /* (Loc,"en_NZ") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2719,14 +2719,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dddd, d MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00001809:  /* (Loc,"en_IE") */   
-  {    
+   case 0x00001809:  /* (Loc,"en_IE") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2739,14 +2739,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("d MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00001c09:  /* (Loc,"en_ZA") */   
-  {    
+   case 0x00001c09:  /* (Loc,"en_ZA") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2756,14 +2756,14 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dd MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
-   case 0x00002009:  /* (Loc,"en_JM") */  
-  {    
+   case 0x00002009:  /* (Loc,"en_JM") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2776,15 +2776,15 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dd MMMM,yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
   }
 
    case 0x00002809:  /* (Loc,"en_BZ") */
-   case 0x00002c09:  /* (Loc,"en_TT") */  
-  {    
+   case 0x00002c09:  /* (Loc,"en_TT") */
+  {
    switch(dwFlags)
     {
       case DATE_SHORTDATE:
@@ -2794,7 +2794,7 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dddd,dd MMMM yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
@@ -2819,7 +2819,7 @@ BOOL WINAPI EnumDateFormatsA(
         if(!(*lpDateFmtEnumProc)("dd MMMM, yyyy")) return TRUE;
 	return TRUE;
       default:
-	FIXME("Unknown date format (%ld)\n", dwFlags); 
+	FIXME("Unknown date format (%ld)\n", dwFlags);
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
@@ -2844,7 +2844,7 @@ BOOL WINAPI EnumDateFormatsW(
 BOOL WINAPI EnumTimeFormatsA(
   TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
 {
-  LCID Loc = GetUserDefaultLCID(); 
+  LCID Loc = GetUserDefaultLCID();
   if(!lpTimeFmtEnumProc)
     {
       SetLastError(ERROR_INVALID_PARAMETER);
@@ -2852,20 +2852,20 @@ BOOL WINAPI EnumTimeFormatsA(
     }
   if(dwFlags)
     {
-      FIXME("Unknown time format (%ld)\n", dwFlags); 
+      FIXME("Unknown time format (%ld)\n", dwFlags);
     }
 
   switch( Loc )
  {
    case 0x00000407:  /* (Loc,"de_DE") */
    {
-    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE; 
+    if(!(*lpTimeFmtEnumProc)("HH.mm")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("H.mm")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("H.mm'Uhr'")) return TRUE;
     return TRUE;
-   }       
+   }
 
    case 0x0000040c:  /* (Loc,"fr_FR") */
    case 0x00000c0c:  /* (Loc,"fr_CA") */
@@ -2879,9 +2879,9 @@ BOOL WINAPI EnumTimeFormatsA(
    }
 
    case 0x00000809:  /* (Loc,"en_UK") */
-   case 0x00000c09:  /* (Loc,"en_AU") */ 
+   case 0x00000c09:  /* (Loc,"en_AU") */
    case 0x00001409:  /* (Loc,"en_NZ") */
-   case 0x00001809:  /* (Loc,"en_IE") */ 
+   case 0x00001809:  /* (Loc,"en_IE") */
    {
     if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
@@ -2889,16 +2889,16 @@ BOOL WINAPI EnumTimeFormatsA(
     return TRUE;
    }
 
-   case 0x00001c09:  /* (Loc,"en_ZA") */   
+   case 0x00001c09:  /* (Loc,"en_ZA") */
    case 0x00002809:  /* (Loc,"en_BZ") */
-   case 0x00002c09:  /* (Loc,"en_TT") */ 
+   case 0x00002c09:  /* (Loc,"en_TT") */
    {
     if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
-    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE; 
-    return TRUE;  
+    if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
+    return TRUE;
    }
 
-   default:  /* default to US style "en_US" */   
+   default:  /* default to US style "en_US" */
    {
     if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
     if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
@@ -2923,9 +2923,9 @@ BOOL WINAPI EnumTimeFormatsW(
 /**************************************************************************
  *           This function is used just locally !
  *  Description: Inverts a string.
- */ 
+ */
 static void OLE_InvertString(char* string)
-{    
+{
     char    sTmpArray[128];
     INT     counter, i = 0;
 
@@ -2942,12 +2942,12 @@ static void OLE_InvertString(char* string)
  *           This function is used just locally !
  *  Description: Test if the given string (psNumber) is valid or not.
  *               The valid characters are the following:
- *               - Characters '0' through '9'. 
- *               - One decimal point (dot) if the number is a floating-point value. 
- *               - A minus sign in the first character position if the number is 
+ *               - Characters '0' through '9'.
+ *               - One decimal point (dot) if the number is a floating-point value.
+ *               - A minus sign in the first character position if the number is
  *                 a negative value.
  *              If the function succeeds, psBefore/psAfter will point to the string
- *              on the right/left of the decimal symbol. pbNegative indicates if the 
+ *              on the right/left of the decimal symbol. pbNegative indicates if the
  *              number is negative.
  */
 static INT OLE_GetNumberComponents(char* pInput, char* psBefore, char* psAfter, BOOL* pbNegative)
@@ -2961,7 +2961,7 @@ BOOL	bInDecimal = FALSE;
 		*pbNegative = TRUE;
 		pInput++; /* Jump to the next character. */
 	}
-	
+
 	while(*pInput != '\0')
 	{
 		/* Do we have a valid numeric character */
@@ -2993,17 +2993,17 @@ BOOL	bInDecimal = FALSE;
 		}
         pInput++;
 	}
-	
+
 	/* Add an End of Line character to the output buffers */
 	*psBefore = '\0';
 	*psAfter = '\0';
 
-	return 0; 
+	return 0;
 }
 
 /**************************************************************************
  *           This function is used just locally !
- *  Description: A number could be formatted using different numbers 
+ *  Description: A number could be formatted using different numbers
  *               of "digits in group" (example: 4;3;2;0).
  *               The first parameter of this function is an array
  *               containing the rule to be used. Its format is the following:
@@ -3026,16 +3026,16 @@ static INT OLE_GetGrouping(char* sRule, INT index)
     {
         memcpy(sData, sRule+index, 1);
         memcpy(sData+1, "\0", 1);
-        nData = atoi(sData);            
+        nData = atoi(sData);
     }
-        
+
     else
     {
         memcpy(sData, sRule+nRuleSize-1, 1);
         memcpy(sData+1, "\0", 1);
-        nData = atoi(sData);            
+        nData = atoi(sData);
     }
-    
+
     return nData;
 }
 
@@ -3049,11 +3049,11 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     char   sNumberDigits[3], sDecimalSymbol[5], sDigitsInGroup[11], sDigitGroupSymbol[5], sILZero[2];
     INT    nNumberDigits, nNumberDecimal, i, j, nCounter, nStep, nRuleIndex, nGrouping, nDigits, retVal, nLZ;
     char   sNumber[128], sDestination[128], sDigitsAfterDecimal[10], sDigitsBeforeDecimal[128];
-    char   sRule[10], sSemiColumn[]=";", sBuffer[5], sNegNumber[2];    
+    char   sRule[10], sSemiColumn[]=";", sBuffer[5], sNegNumber[2];
     char   *pStr = NULL, *pTmpStr = NULL;
     LCID   systemDefaultLCID;
     BOOL   bNegative = FALSE;
-    enum   Operations 
+    enum   Operations
     {
         USE_PARAMETER,
         USE_LOCALEINFO,
@@ -3084,7 +3084,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     if (lpFormat != NULL)
     {
         if (dwflags == 0)
-            used_operation = USE_PARAMETER; 
+            used_operation = USE_PARAMETER;
     }
     else
     {
@@ -3128,7 +3128,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     }
 
     nNumberDigits = atoi(sNumberDigits);
-    
+
     /* Remove the ";" */
     i=0;
     j = 1;
@@ -3144,9 +3144,9 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     sprintf(sBuffer, "%d", i);
     memcpy(sRule, sBuffer, 1); /* Number of digits in the groups ( used by OLE_GetGrouping() ) */
     memcpy(sRule + j, "\0", 1);
-    
+
     /* First, format the digits before the decimal. */
-    if ((nNumberDecimal>0) && (atoi(sDigitsBeforeDecimal) != 0)) 
+    if ((nNumberDecimal>0) && (atoi(sDigitsBeforeDecimal) != 0))
     {
         /* Working on an inverted string is easier ! */
         OLE_InvertString(sDigitsBeforeDecimal);
@@ -3154,9 +3154,9 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
         nStep = nCounter = i = j = 0;
         nRuleIndex = 1;
         nGrouping = OLE_GetGrouping(sRule, nRuleIndex);
-        
+
         /* Here, we will loop until we reach the end of the string.
-         * An internal counter (j) is used in order to know when to 
+         * An internal counter (j) is used in order to know when to
          * insert the "digit group symbol".
          */
         while (nNumberDecimal > 0)
@@ -3186,7 +3186,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
      {
         nLZ = atoi(sILZero);
         if (nLZ != 0)
-        {        
+        {
             /* Use 0.xxx instead of .xxx */
             memcpy(sDestination, "0", 1);
             memcpy(sDestination+1, "\0", 1);
@@ -3201,29 +3201,29 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     nCounter = nNumberDigits;
     if ( (nDigits>0) && (pStr = strstr (sNumber, ".")) )
     {
-        i = strlen(sNumber) - strlen(pStr) + 1;        
+        i = strlen(sNumber) - strlen(pStr) + 1;
         strncpy ( sDigitsAfterDecimal, sNumber + i, nNumberDigits);
         j = strlen(sDigitsAfterDecimal);
         if (j < nNumberDigits)
-            nCounter = nNumberDigits-j;            
+            nCounter = nNumberDigits-j;
     }
     for (i=0;i<nCounter;i++)
-         memcpy(sDigitsAfterDecimal+i+j, "0", 1);    
-    memcpy(sDigitsAfterDecimal + nNumberDigits, "\0", 1);    
+         memcpy(sDigitsAfterDecimal+i+j, "0", 1);
+    memcpy(sDigitsAfterDecimal + nNumberDigits, "\0", 1);
 
     i = strlen(sDestination);
     j = strlen(sDigitsAfterDecimal);
     /* Finally, construct the resulting formatted string. */
-        
+
     for (nCounter=0; nCounter<i; nCounter++)
         memcpy(sNumber + nCounter, sDestination + nCounter, 1);
-       
+
     memcpy(sNumber + nCounter, sDecimalSymbol, strlen(sDecimalSymbol));
 
     for (i=0; i<j; i++)
         memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), sDigitsAfterDecimal + i, 1);
     memcpy(sNumber + nCounter+i+strlen(sDecimalSymbol), "\0", 1);
-        
+
     /* Is it a negative number */
     if (bNegative == TRUE)
     {
@@ -3231,13 +3231,13 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
         pStr = sDestination;
         pTmpStr = sNumber;
         switch (i)
-        {          
+        {
         case 0:
             *pStr++ = '(';
             while (*sNumber != '\0')
                 *pStr++ =  *pTmpStr++;
-            *pStr++ = ')';                
-            break;  
+            *pStr++ = ')';
+            break;
         case 1:
             *pStr++ = '-';
             while (*pTmpStr != '\0')
@@ -3269,7 +3269,7 @@ INT WINAPI GetNumberFormatA(LCID locale, DWORD dwflags,
     else
         strcpy(sDestination, sNumber);
 
-    /* If cchNumber is zero, then returns the number of bytes or characters 
+    /* If cchNumber is zero, then returns the number of bytes or characters
      * required to hold the formatted number string
      */
     retVal = strlen(sDestination) + 1;
@@ -3309,7 +3309,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     char   *pNumberFormated = sNumberFormated;
     LCID   systemDefaultLCID;
     BOOL   bIsPositive = FALSE, bValidFormat = FALSE;
-    enum   Operations 
+    enum   Operations
     {
         USE_PARAMETER,
         USE_LOCALEINFO,
@@ -3324,7 +3324,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     if (lpFormat != NULL)
     {
         if (dwflags == 0)
-            used_operation = USE_PARAMETER; 
+            used_operation = USE_PARAMETER;
     }
     else
     {
@@ -3337,28 +3337,28 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
     /* Load the fields we need */
     switch(used_operation)
     {
-    case USE_LOCALEINFO:        
+    case USE_LOCALEINFO:
         /* Specific to CURRENCYFMTA */
         GetLocaleInfoA(locale, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
         GetLocaleInfoA(locale, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
         GetLocaleInfoA(locale, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
-        
+
         nPosOrder = atoi(sPosOrder);
         nNegOrder = atoi(sNegOrder);
         break;
-    case USE_PARAMETER:        
+    case USE_PARAMETER:
         /* Specific to CURRENCYFMTA */
         nNegOrder = lpFormat->NegativeOrder;
         nPosOrder = lpFormat->PositiveOrder;
         strcpy(sCurrencySymbol, lpFormat->lpCurrencySymbol);
         break;
     case USE_SYSTEMDEFAULT:
-        systemDefaultLCID = GetSystemDefaultLCID();        
+        systemDefaultLCID = GetSystemDefaultLCID();
         /* Specific to CURRENCYFMTA */
         GetLocaleInfoA(systemDefaultLCID, LOCALE_INEGCURR, sNegOrder, sizeof(sNegOrder));
         GetLocaleInfoA(systemDefaultLCID, LOCALE_ICURRENCY, sPosOrder, sizeof(sPosOrder));
         GetLocaleInfoA(systemDefaultLCID, LOCALE_SCURRENCY, sCurrencySymbol, sizeof(sCurrencySymbol));
-        
+
         nPosOrder = atoi(sPosOrder);
         nNegOrder = atoi(sNegOrder);
         break;
@@ -3366,7 +3366,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    
+
     /* Construct a temporary number format structure */
     if (lpFormat != NULL)
     {
@@ -3390,7 +3390,7 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
         bIsPositive = TRUE;
         retVal = GetNumberFormatA(locale,0,lpvalue,(bValidFormat)?&numberFmt:NULL,pNumberFormated,128);
     }
-        
+
     if (retVal == 0)
         return 0;
 
@@ -3505,14 +3505,14 @@ INT WINAPI GetCurrencyFormatA(LCID locale, DWORD dwflags,
             strcat (pDestination, sCurrencySymbol);
             break;
         case 14:   /* format: ($ 1.1) */
-            strcpy (pDestination, "("); 
+            strcpy (pDestination, "(");
             strcat (pDestination, sCurrencySymbol);
             strcat (pDestination, " ");
             strcat (pDestination, pNumberFormated);
             strcat (pDestination, ")");
             break;
         case 15:   /* format: (1.1 $) */
-            strcpy (pDestination, "("); 
+            strcpy (pDestination, "(");
             strcat (pDestination, pNumberFormated);
             strcat (pDestination, " ");
             strcat (pDestination, sCurrencySymbol);
@@ -3547,17 +3547,17 @@ INT WINAPI GetCurrencyFormatW(LCID locale, DWORD dwflags,
 
 /******************************************************************************
  *		OLE2NLS_CheckLocale	[intern]
- */ 
+ */
 static LCID OLE2NLS_CheckLocale (LCID locale)
 {
-	if (!locale) 
+	if (!locale)
 	{ locale = LOCALE_SYSTEM_DEFAULT;
 	}
-  
-	if (locale == LOCALE_SYSTEM_DEFAULT) 
+
+	if (locale == LOCALE_SYSTEM_DEFAULT)
   	{ return GetSystemDefaultLCID();
-	} 
-	else if (locale == LOCALE_USER_DEFAULT) 
+	}
+	else if (locale == LOCALE_USER_DEFAULT)
 	{ return GetUserDefaultLCID();
 	}
 	else
@@ -3583,13 +3583,13 @@ static LCID OLE2NLS_CheckLocale (LCID locale)
  * tt time marker (AM, PM)
  *
  */
-INT WINAPI 
+INT WINAPI
 GetTimeFormatA(LCID locale,        /* [in]  */
 	       DWORD flags,        /* [in]  */
 	       const SYSTEMTIME* xtime, /* [in]  */
 	       LPCSTR format,      /* [in]  */
 	       LPSTR timestr,      /* [out] */
-	       INT timelen         /* [in]  */) 
+	       INT timelen         /* [in]  */)
 { char format_buf[40];
   LPCSTR thisformat;
   SYSTEMTIME t;
@@ -3597,26 +3597,26 @@ GetTimeFormatA(LCID locale,        /* [in]  */
   LCID thislocale=0;
   DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
   INT ret;
-    
+
   TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
 
   thislocale = OLE2NLS_CheckLocale ( locale );
 
-  if (format == NULL) 
+  if (format == NULL)
   { if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
     { thislocale = GetSystemDefaultLCID();
     }
     GetLocaleInfoA(thislocale, thisflags, format_buf, sizeof(format_buf));
     thisformat = format_buf;
   }
-  else 
+  else
   { thisformat = format;
   }
-  
+
   if (xtime == NULL) /* NULL means use the current local time */
   { GetLocalTime(&t);
     thistime = &t;
-  } 
+  }
   else
   { thistime = xtime;
   /* Check that hour,min and sec is in range */
@@ -3631,13 +3631,13 @@ GetTimeFormatA(LCID locale,        /* [in]  */
  *		GetTimeFormatW	[KERNEL32.@]
  * Makes a Unicode string of the time
  */
-INT WINAPI 
+INT WINAPI
 GetTimeFormatW(LCID locale,        /* [in]  */
 	       DWORD flags,        /* [in]  */
 	       const SYSTEMTIME* xtime, /* [in]  */
 	       LPCWSTR format,     /* [in]  */
 	       LPWSTR timestr,     /* [out] */
-	       INT timelen         /* [in]  */) 
+	       INT timelen         /* [in]  */)
 {	WCHAR format_buf[40];
 	LPCWSTR thisformat;
 	SYSTEMTIME t;
@@ -3645,27 +3645,27 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	LCID thislocale=0;
 	DWORD thisflags=LOCALE_STIMEFORMAT; /* standard timeformat */
 	INT ret;
-	    
+
 	TRACE("GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,
 	xtime,debugstr_w(format),timestr,timelen);
 
 	thislocale = OLE2NLS_CheckLocale ( locale );
 
-	if (format == NULL) 
+	if (format == NULL)
 	{ if (flags & LOCALE_NOUSEROVERRIDE)  /* use system default */
 	  { thislocale = GetSystemDefaultLCID();
 	  }
 	  GetLocaleInfoW(thislocale, thisflags, format_buf, 40);
 	  thisformat = format_buf;
-	}	  
-	else 
+	}
+	else
 	{ thisformat = format;
 	}
- 
+
 	if (xtime == NULL) /* NULL means use the current local time */
 	{ GetLocalTime(&t);
 	  thistime = &t;
-	} 
+	}
 	else
 	{ thistime = xtime;
 	}

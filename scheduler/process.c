@@ -135,7 +135,7 @@ typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
  *
  * FIXME:  Some of the signals aren't sent correctly!
  *
- * The exact meaning of the USER signals is undocumented, but this 
+ * The exact meaning of the USER signals is undocumented, but this
  * should cover the basic idea:
  *
  * USIG_DLL_UNLOAD_WIN16
@@ -195,7 +195,7 @@ typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
  * USIG_FLAGS_GUI
  *     Current process is a (Win32) GUI process.
  *
- * USIG_FLAGS_FEEDBACK 
+ * USIG_FLAGS_FEEDBACK
  *     Current process needs 'feedback' (determined from the STARTUPINFO
  *     flags STARTF_FORCEONFEEDBACK / STARTF_FORCEOFFFEEDBACK).
  *
@@ -397,7 +397,7 @@ static BOOL process_init( char *argv[] )
 
     if (main_create_flags == 0 &&
 	current_startupinfo.hStdInput  == 0 &&
-	current_startupinfo.hStdOutput == 0 && 
+	current_startupinfo.hStdOutput == 0 &&
 	current_startupinfo.hStdError  == 0)
     {
 	/* no parent, and no new console requested, create a simple console with bare handles to
@@ -505,7 +505,7 @@ static void start_process(void)
      *       context of the parent process.  Actually, the USER signal proc
      *       doesn't really care about that, but it *does* require that the
      *       startup parameters are correctly set up, so that GetProcessDword
-     *       works.  Furthermore, before calling the USER signal proc the 
+     *       works.  Furthermore, before calling the USER signal proc the
      *       16-bit stack must be set up, which it is only after TASK_Create
      *       in the case of a 16-bit process. Thus, we send the signal here.
      */
@@ -709,14 +709,14 @@ static char **build_argv( char *cmdline, int reserved )
         } else if (*s=='"') {
             /* '"' */
             if ((bcount & 1)==0) {
-                /* Preceeded by an even number of '\', this is half that 
+                /* Preceeded by an even number of '\', this is half that
                  * number of '\', plus a '"' which we discard.
                  */
                 d-=bcount/2;
                 s++;
                 in_quotes=!in_quotes;
             } else {
-                /* Preceeded by an odd number of '\', this is half that 
+                /* Preceeded by an odd number of '\', this is half that
                  * number of '\' followed by a '"'
                  */
                 d=d-bcount/2-1;
@@ -1305,7 +1305,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return 0;
     }
 
-    switch ( offset ) 
+    switch ( offset )
     {
     case GPD_APP_COMPAT_FLAGS:
         return GetAppCompatFlags16(0);
@@ -1380,7 +1380,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
         return;
     }
 
-    switch ( offset ) 
+    switch ( offset )
     {
     case GPD_APP_COMPAT_FLAGS:
     case GPD_LOAD_DONE_EVENT:
@@ -1400,7 +1400,7 @@ void WINAPI SetProcessDword( DWORD dwProcessID, INT offset, DWORD value )
         break;
 
     case GPD_USERDATA:
-        current_process.process_dword = value; 
+        current_process.process_dword = value;
         break;
 
     default:
@@ -1707,7 +1707,7 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  * GetExitCodeProcess [KERNEL32.@]
  *
  * Gets termination status of specified process
- * 
+ *
  * RETURNS
  *   Success: TRUE
  *   Failure: FALSE
@@ -1824,7 +1824,7 @@ DWORD WINAPI TlsAlloc( void )
  * TlsFree [KERNEL32.@]  Releases a TLS index.
  *
  * Releases a thread local storage index, making it available for reuse
- * 
+ *
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE

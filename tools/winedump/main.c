@@ -64,7 +64,7 @@ static void do_demangle (const char *arg)
 static void do_dump (const char *arg)
 {
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
-    globals.mode = DUMP; 
+    globals.mode = DUMP;
     globals.do_code = 1;
 }
 
@@ -253,7 +253,7 @@ static void parse_options (char *argv[])
 	opt->func (arg);
     else
 	opt->func ("");
-    
+
     ptr++;
   }
 
@@ -364,7 +364,7 @@ int   main (int argc, char *argv[])
 	    output_spec_symbol (&symbol);
 	    output_header_symbol (&symbol);
 	    output_c_symbol (&symbol);
-	    
+
 	    symbol_clear (&symbol);
 	}
 

@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* All we need are a couple constants for EnumProtocols. Once it is 
+/* All we need are a couple constants for EnumProtocols. Once it is
  * moved to ws2_32 we may no longer need it
  */
 #define USE_WS_PREFIX
@@ -196,7 +196,7 @@ static INT WSOCK32_EnterSingleProtocol( INT iProtocol,
   return iAnz;
 }
 
-/* FIXME: EnumProtocols should be moved to winsock2, and this should be 
+/* FIXME: EnumProtocols should be moved to winsock2, and this should be
  * implemented by calling out to WSAEnumProtocols. See:
  * http://support.microsoft.com/support/kb/articles/Q129/3/15.asp
  */

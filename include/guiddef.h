@@ -79,11 +79,11 @@ inline bool operator!=(const GUID& guidOne, const GUID& guidOther)
 {
     return !(guidOne == guidOther);
 }
-#endif 
+#endif
 
 extern const IID GUID_NULL;
 #define IID_NULL            GUID_NULL
 #define CLSID_NULL GUID_NULL
 #define FMTID_NULL          GUID_NULL
-   
+
 #endif /* _GUIDDEF_H_ */

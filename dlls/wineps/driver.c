@@ -1,7 +1,7 @@
 /*
  * Exported functions from the PostScript driver.
  *
- * [Ext]DeviceMode, DeviceCapabilities, AdvancedSetupDialog. 
+ * [Ext]DeviceMode, DeviceCapabilities, AdvancedSetupDialog.
  *
  * Will need ExtTextOut for winword6 (urgh!)
  *
@@ -65,7 +65,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	}
 	if(page) {
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
-	    dm1->dmPublic.u1.s1.dmPaperWidth = page->PaperDimension->x * 
+	    dm1->dmPublic.u1.s1.dmPaperWidth = page->PaperDimension->x *
 								254.0 / 72.0;
 	    dm1->dmPublic.u1.s1.dmPaperLength = page->PaperDimension->y *
 								254.0 / 72.0;
@@ -80,8 +80,8 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	}
     } else if((dm2->dmPublic.dmFields & DM_PAPERLENGTH) &&
        (dm2->dmPublic.dmFields & DM_PAPERWIDTH)) {
-        dm1->dmPublic.u1.s1.dmPaperLength = dm2->dmPublic.u1.s1.dmPaperLength; 
-        dm1->dmPublic.u1.s1.dmPaperWidth = dm2->dmPublic.u1.s1.dmPaperWidth; 
+        dm1->dmPublic.u1.s1.dmPaperLength = dm2->dmPublic.u1.s1.dmPaperLength;
+        dm1->dmPublic.u1.s1.dmPaperWidth = dm2->dmPublic.u1.s1.dmPaperWidth;
 	TRACE("Changing PaperLength|Width to %dx%d\n",
 	      dm2->dmPublic.u1.s1.dmPaperLength,
 	      dm2->dmPublic.u1.s1.dmPaperWidth);
@@ -108,7 +108,7 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 
     if(dm2->dmPublic.dmFields & DM_DEFAULTSOURCE) {
         INPUTSLOT *slot;
-	
+
 	for(slot = pi->ppd->InputSlots; slot; slot = slot->next) {
 	    if(slot->WinBin == dm2->dmPublic.dmDefaultSource)
 	        break;
@@ -191,7 +191,7 @@ BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			       lParam)
 {
   PSDRV_DLGINFO *di;
-  int i, Cursel = 0; 
+  int i, Cursel = 0;
   PAGESIZE *ps;
 
 
@@ -201,7 +201,7 @@ BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     SetWindowLongA(hwnd, DWL_USER, (LONG)di);
 
     for(ps = di->pi->ppd->PageSizes, i = 0; ps; ps = ps->next, i++) {
-      SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i, 
+      SendDlgItemMessageA(hwnd, IDD_PAPERS, LB_INSERTSTRING, i,
 			  (LPARAM)ps->FullName);
       if(di->pi->Devmode->dmPublic.u1.s1.dmPaperSize == ps->WinPage)
 	Cursel = i;
@@ -254,7 +254,7 @@ BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     }
     break;
    }
-   
+
   default:
     return FALSE;
   }
@@ -306,7 +306,7 @@ fwMode);
 						"InitCommonControls");
     pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
 						    "CreatePropertySheetPageW");
-    pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW"); 
+    pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW");
     memset(&psp,0,sizeof(psp));
     dlgdm = HeapAlloc( PSDRV_Heap, 0, sizeof(*dlgdm) );
     memcpy(dlgdm, pi->Devmode, sizeof(*dlgdm));
@@ -327,9 +327,9 @@ fwMode);
     psh.nPages = 1;
     psh.hwndParent = hwnd;
     psh.u3.phpage = hpsp;
-    
+
     pPropertySheet(&psh);
-    
+
   }
   if(fwMode & DM_UPDATE)
     FIXME("Mode DM_UPDATE.  Just do the same as DM_COPY\n");
@@ -444,7 +444,7 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
       INPUTSLOT *slot;
       char *cp = lpszOutput;
       int i = 0;
-      
+
       /* Add an entry corresponding to DMBIN_AUTO, see DC_BINS */
       i++;
       if(lpszOutput != NULL) {
@@ -513,7 +513,7 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
 
       if(lpszOutput == NULL)
 	return -1;
- 
+
       i = 0;
       for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++) {
 	if(ps->PaperDimension->x > ptMax.x)
@@ -534,7 +534,7 @@ DWORD WINAPI PSDRV_DeviceCapabilities16(LPCSTR lpszDevice, LPCSTR lpszPort,
 
       if(lpszOutput == NULL)
 	return -1;
- 
+
       i = 0;
       for(ps = pi->ppd->PageSizes; ps; ps = ps->next, i++) {
 	if(ps->PaperDimension->x > ptMax.x)
@@ -581,7 +581,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 void WINAPI PSDRV_DeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 LPSTR lpszDevice, LPSTR lpszPort)
 {
-    PSDRV_ExtDeviceMode16( hwnd, hDriver, NULL, lpszDevice, lpszPort, NULL, 
+    PSDRV_ExtDeviceMode16( hwnd, hDriver, NULL, lpszDevice, lpszPort, NULL,
 			   NULL, DM_PROMPT );
     return;
 }
@@ -601,9 +601,9 @@ INT PSDRV_ExtDeviceModePropSheet(HWND hwnd, LPSTR lpszDevice, LPSTR lpszPort,
 
     psp->dwSize = sizeof(psp);
     psp->hInstance = 0x1234;
-    
+
     ps->nPages = 1;
-    
+
 }
 
 #endif

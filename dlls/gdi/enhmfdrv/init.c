@@ -223,11 +223,11 @@ int EMFDRV_AddHandleDC( PHYSDEV dev )
 /**********************************************************************
  *          CreateEnhMetaFileA   (GDI32.@)
  */
-HDC WINAPI CreateEnhMetaFileA( 
+HDC WINAPI CreateEnhMetaFileA(
     HDC hdc,           /* [in] optional reference DC */
     LPCSTR filename,   /* [in] optional filename for disk metafiles */
     const RECT *rect,  /* [in] optional bounding rectangle */
-    LPCSTR description /* [in] optional description */ 
+    LPCSTR description /* [in] optional description */
     )
 {
     LPWSTR filenameW = NULL;
@@ -266,7 +266,7 @@ HDC WINAPI CreateEnhMetaFileW(
     HDC           hdc,        /* [in] optional reference DC */
     LPCWSTR       filename,   /* [in] optional filename for disk metafiles */
     const RECT*   rect,       /* [in] optional bounding rectangle */
-    LPCWSTR       description /* [in] optional description */ 
+    LPCWSTR       description /* [in] optional description */
     )
 {
     HDC ret;
@@ -335,7 +335,7 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->emh->offDescription = length ? sizeof(ENHMETAHEADER) : 0;
 
     physDev->emh->nPalEntries = 0; /* I guess this should start at 0 */
-  
+
     /* Size in pixels */
     physDev->emh->szlDevice.cx = GetDeviceCaps( hRefDC, HORZRES );
     physDev->emh->szlDevice.cy = GetDeviceCaps( hRefDC, VERTRES );
@@ -366,7 +366,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     if( !hdc )
       DeleteDC( hRefDC );
-	
+
     return ret;
 }
 

@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *   IEnumFORMATETC implementation
 */
 
-typedef struct 
+typedef struct
 {
     /* IUnknown fields */
     ICOM_VFIELD(IEnumFORMATETC);
@@ -53,7 +53,7 @@ static HRESULT WINAPI IEnumFORMATETC_fnSkip(LPENUMFORMATETC iface, ULONG celt);
 static HRESULT WINAPI IEnumFORMATETC_fnReset(LPENUMFORMATETC iface);
 static HRESULT WINAPI IEnumFORMATETC_fnClone(LPENUMFORMATETC iface, LPENUMFORMATETC* ppenum);
 
-static struct ICOM_VTABLE(IEnumFORMATETC) efvt = 
+static struct ICOM_VTABLE(IEnumFORMATETC) efvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
         IEnumFORMATETC_fnQueryInterface,
@@ -69,7 +69,7 @@ LPENUMFORMATETC IEnumFORMATETC_Constructor(UINT cfmt, const FORMATETC afmt[])
 {
 	IEnumFORMATETCImpl* ef;
 	DWORD size=cfmt * sizeof(FORMATETC);
-	
+
 	ef=(IEnumFORMATETCImpl*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumFORMATETCImpl));
 
 	if(ef)
@@ -101,12 +101,12 @@ static HRESULT WINAPI IEnumFORMATETC_fnQueryInterface(LPENUMFORMATETC iface, REF
 
 	if(IsEqualIID(riid, &IID_IUnknown))
 	{
-	  *ppvObj = This; 
+	  *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IEnumFORMATETC))
 	{
 	  *ppvObj = (IEnumFORMATETC*)This;
-	}   
+	}
 
 	if(*ppvObj)
 	{
@@ -134,7 +134,7 @@ static ULONG WINAPI IEnumFORMATETC_fnRelease(LPENUMFORMATETC iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{
 	  TRACE(" destroying IEnumFORMATETC(%p)\n",This);
 	  if (This->pFmt)
@@ -249,7 +249,7 @@ LPDATAOBJECT IDataObject_Constructor(HWND hwndOwner, LPITEMIDLIST pMyPidl, LPITE
 
 	  shell32_ObjCount++;
 	}
-	
+
 	TRACE("(%p)->(apidl=%p cidl=%u)\n",dto, apidl, cidl);
 	return (LPDATAOBJECT)dto;
 }
@@ -266,16 +266,16 @@ static HRESULT WINAPI IDataObject_fnQueryInterface(LPDATAOBJECT iface, REFIID ri
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
 	{
-	  *ppvObj = This; 
+	  *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IDataObject))  /*IDataObject*/
 	{
 	  *ppvObj = (IDataObject*)This;
-	}   
+	}
 
 	if(*ppvObj)
 	{
-	  IUnknown_AddRef((IUnknown*)*ppvObj);      
+	  IUnknown_AddRef((IUnknown*)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -306,7 +306,7 @@ static ULONG WINAPI IDataObject_fnRelease(LPDATAOBJECT iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{
 	  TRACE(" destroying IDataObject(%p)\n",This);
 	  _ILFreeaPidl(This->apidl, This->cidl);
@@ -324,7 +324,7 @@ static HRESULT WINAPI IDataObject_fnGetData(LPDATAOBJECT iface, LPFORMATETC pfor
 	ICOM_THIS(IDataObjectImpl,iface);
 
 	char	szTemp[256];
-	
+
 	szTemp[0]=0;
 	GetClipboardFormatNameA (pformatetcIn->cfFormat, szTemp, 256);
 	TRACE("(%p)->(%p %p format=%s)\n", This, pformatetcIn, pmedium, szTemp);
@@ -369,9 +369,9 @@ static HRESULT WINAPI IDataObject_fnQueryGetData(LPDATAOBJECT iface, LPFORMATETC
 {
 	ICOM_THIS(IDataObjectImpl,iface);
 	UINT i;
-	
+
 	TRACE("(%p)->(fmt=0x%08x tym=0x%08lx)\n", This, pformatetc->cfFormat, pformatetc->tymed);
-	
+
 	if(!(DVASPECT_CONTENT & pformatetc->dwAspect))
 	  return DV_E_DVASPECT;
 
@@ -415,7 +415,7 @@ static HRESULT WINAPI IDataObject_fnEnumFormatEtc(LPDATAOBJECT iface, DWORD dwDi
 	  *ppenumFormatEtc = IEnumFORMATETC_Constructor(MAX_FORMATS, This->pFormatEtc);
 	  return (*ppenumFormatEtc) ? S_OK : E_FAIL;
 	}
-	
+
 	return E_NOTIMPL;
 }
 
@@ -438,7 +438,7 @@ static HRESULT WINAPI IDataObject_fnEnumDAdvise(LPDATAOBJECT iface, IEnumSTATDAT
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IDataObject) dtovt = 
+static struct ICOM_VTABLE(IDataObject) dtovt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDataObject_fnQueryInterface,

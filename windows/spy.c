@@ -2,7 +2,7 @@
  * Message spying routines
  *
  * Copyright 1994, Bob Amstadt
- *           1995, Alex Korobka  
+ *           1995, Alex Korobka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,8 +41,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",			/* 0x00 */
-    "WM_CREATE",	
-    "WM_DESTROY",    
+    "WM_CREATE",
+    "WM_DESTROY",
     "WM_MOVE",
     "wm_sizewait",
     "WM_SIZE",
@@ -90,38 +90,38 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_CHARTOITEM",
     "WM_SETFONT",		/* 0x30 */
     "WM_GETFONT",
-    "WM_SETHOTKEY", 
-    "WM_GETHOTKEY", 
-    "wm_filesyschange", 
+    "WM_SETHOTKEY",
+    "WM_GETHOTKEY",
+    "wm_filesyschange",
     "wm_isactiveicon",
     "wm_queryparkicon",
     "WM_QUERYDRAGICON",
     "wm_querysavestate",
-    "WM_COMPAREITEM", 
+    "WM_COMPAREITEM",
     "wm_testing",
-    NULL, 
-    "wm_otherwindowcreated", 
-    "wm_otherwindowdestroyed", 
+    NULL,
+    "wm_otherwindowcreated",
+    "wm_otherwindowdestroyed",
     "wm_activateshellwindow",
     NULL,
 
     NULL, 		        /* 0x40 */
-    "wm_compacting", NULL, NULL, 
-    "WM_COMMNOTIFY", NULL, 
+    "wm_compacting", NULL, NULL,
+    "WM_COMMNOTIFY", NULL,
     "WM_WINDOWPOSCHANGING",	/* 0x0046 */
     "WM_WINDOWPOSCHANGED",	/* 0x0047 */
-    "WM_POWER", NULL, 
-    "WM_COPYDATA", 
-    "WM_CANCELJOURNAL", NULL, NULL, 
+    "WM_POWER", NULL,
+    "WM_COPYDATA",
+    "WM_CANCELJOURNAL", NULL, NULL,
     "WM_NOTIFY", NULL,
 
     /* 0x0050 */
     "WM_INPUTLANGCHANGEREQUEST",
-    "WM_INPUTLANGCHANGE", 
-    "WM_TCARD", 
-    "WM_HELP", 
-    "WM_USERCHANGED", 
-    "WM_NOTIFYFORMAT", NULL, NULL, 
+    "WM_INPUTLANGCHANGE",
+    "WM_TCARD",
+    "WM_HELP",
+    "WM_USERCHANGED",
+    "WM_NOTIFYFORMAT", NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0060 */
@@ -130,11 +130,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x0070 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, 
-    "WM_CONTEXTMENU", 
-    "WM_STYLECHANGING", 
-    "WM_STYLECHANGED", 
-    "WM_DISPLAYCHANGE", 
+    NULL, NULL, NULL,
+    "WM_CONTEXTMENU",
+    "WM_STYLECHANGING",
+    "WM_STYLECHANGED",
+    "WM_DISPLAYCHANGE",
     "WM_GETICON",
 
     "WM_SETICON",		/* 0x0080 */
@@ -145,7 +145,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCPAINT",          	/* 0x0085 */
     "WM_NCACTIVATE",       	/* 0x0086 */
     "WM_GETDLGCODE",		/* 0x0087 */
-    "WM_SYNCPAINT", 
+    "WM_SYNCPAINT",
     "WM_SYNCTASK", NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0090 */
@@ -421,10 +421,10 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ENTERMENULOOP",         /* 0x0211 */
     "WM_EXITMENULOOP",          /* 0x0212 */
     "WM_NEXTMENU", 		/* 0x0213 */
-    "WM_SIZING", 
+    "WM_SIZING",
     "WM_CAPTURECHANGED",
     "WM_MOVING", NULL,
-    "WM_POWERBROADCAST", 
+    "WM_POWERBROADCAST",
     "WM_DEVICECHANGE", NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_MDICREATE",             /* 0x0220 */
@@ -438,22 +438,22 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MDIICONARRANGE",        /* 0x0228 */
     "WM_MDIGETACTIVE",          /* 0x0229 */
 
-    "WM_DROPOBJECT", 
-    "WM_QUERYDROPOBJECT", 
+    "WM_DROPOBJECT",
+    "WM_QUERYDROPOBJECT",
     "WM_BEGINDRAG",
     "WM_DRAGLOOP",
     "WM_DRAGSELECT",
     "WM_DRAGMOVE",
-     
+
     /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */
     "WM_ENTERSIZEMOVE",		/* 0x0231 */
     "WM_EXITSIZEMOVE",		/* 0x0232 */
     "WM_DROPFILES", 		/* 0x0233 */
-    "WM_MDIREFRESHMENU", NULL, NULL, NULL, 
+    "WM_MDIREFRESHMENU", NULL, NULL, NULL,
     /* 0x0238*/
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    
+
     /* 0x0240 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -461,7 +461,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     /* 0x0250 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    
+
     /* 0x0260 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -492,18 +492,18 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     "WM_CUT", 			/* 0x0300 */
-    "WM_COPY", 
-    "WM_PASTE", 
-    "WM_CLEAR", 
-    "WM_UNDO", 
-    "WM_RENDERFORMAT", 
-    "WM_RENDERALLFORMATS", 
+    "WM_COPY",
+    "WM_PASTE",
+    "WM_CLEAR",
+    "WM_UNDO",
+    "WM_RENDERFORMAT",
+    "WM_RENDERALLFORMATS",
     "WM_DESTROYCLIPBOARD",
-    "WM_DRAWCLIPBOARD", 
-    "WM_PAINTCLIPBOARD", 
-    "WM_VSCROLLCLIPBOARD", 
-    "WM_SIZECLIPBOARD", 
-    "WM_ASKCBFORMATNAME", 
+    "WM_DRAWCLIPBOARD",
+    "WM_PAINTCLIPBOARD",
+    "WM_VSCROLLCLIPBOARD",
+    "WM_SIZECLIPBOARD",
+    "WM_ASKCBFORMATNAME",
     "WM_CHANGECBCHAIN",
     "WM_HSCROLLCLIPBOARD",
     "WM_QUERYNEWPALETTE",	/* 0x030f*/
@@ -511,10 +511,10 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_PALETTEISCHANGING",
     "WM_PALETTECHANGED",
     "WM_HOTKEY", 		/* 0x0312 */
-	  NULL, NULL, NULL, NULL, 
-    "WM_PRINT", 
-    "WM_PRINTCLIENT", 
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	  NULL, NULL, NULL, NULL,
+    "WM_PRINT",
+    "WM_PRINTCLIENT",
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -570,23 +570,23 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     "WM_COALESCE_LAST",         /* 0x039F */
-    
+
     /* 0x03a0 */
-    "MM_JOY1MOVE", 
-    "MM_JOY2MOVE", 
-    "MM_JOY1ZMOVE", 
-    "MM_JOY2ZMOVE", 
+    "MM_JOY1MOVE",
+    "MM_JOY2MOVE",
+    "MM_JOY1ZMOVE",
+    "MM_JOY2ZMOVE",
                             NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x03b0 */
-    NULL, NULL, NULL, NULL, NULL, 
-    "MM_JOY1BUTTONDOWN", 
-    "MM_JOY2BUTTONDOWN", 
+    NULL, NULL, NULL, NULL, NULL,
+    "MM_JOY1BUTTONDOWN",
+    "MM_JOY2BUTTONDOWN",
     "MM_JOY1BUTTONUP",
     "MM_JOY2BUTTONUP",
     "MM_MCINOTIFY",
-                NULL, 
+                NULL,
     "MM_WOM_OPEN",
     "MM_WOM_CLOSE",
     "MM_WOM_DONE",
@@ -620,7 +620,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_DDE_EXECUTE",	/* 0x3E8 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    
+
     /* 0x03f0 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -1279,41 +1279,41 @@ const USER_MSG   *classmsg;   /* pointer to first USER_MSG for class  */
 /* number. (First method prefered.)                         */
 
 static const USER_MSG rebar_array[] = {
-          USM(RB_INSERTBANDA,          0), 
-          USM(RB_DELETEBAND,           0), 
-          USM(RB_GETBARINFO,           0), 
-          USM(RB_SETBARINFO,           0), 
-          USM(RB_GETBANDINFO,          0), 
-          USM(RB_SETBANDINFOA,         0), 
-          USM(RB_SETPARENT,            0), 
-          USM(RB_HITTEST,              0), 
-          USM(RB_GETRECT,              0), 
-          USM(RB_INSERTBANDW,          0), 
-          USM(RB_SETBANDINFOW,         0), 
-          USM(RB_GETBANDCOUNT,         0), 
-          USM(RB_GETROWCOUNT,          0), 
-          USM(RB_GETROWHEIGHT,         0), 
-          USM(RB_IDTOINDEX,            0), 
-          USM(RB_GETTOOLTIPS,          0), 
-          USM(RB_SETTOOLTIPS,          0),  
-          USM(RB_SETBKCOLOR,           0), 
-          USM(RB_GETBKCOLOR,           0), 
-          USM(RB_SETTEXTCOLOR,         0), 
-          USM(RB_GETTEXTCOLOR,         0), 
-          USM(RB_SIZETORECT,           0), 
-          USM(RB_BEGINDRAG,            0), 
-          USM(RB_ENDDRAG,              0), 
-          USM(RB_DRAGMOVE,             0), 
-          USM(RB_GETBARHEIGHT,         0), 
-          USM(RB_GETBANDINFOW,         0), 
-          USM(RB_GETBANDINFOA,         0), 
-          USM(RB_MINIMIZEBAND,         0), 
-          USM(RB_MAXIMIZEBAND,         0), 
-          USM(RB_GETBANDBORDERS,       0), 
-          USM(RB_SHOWBAND,             0), 
-          USM(RB_SETPALETTE,           0), 
-          USM(RB_GETPALETTE,           0), 
-          USM(RB_MOVEBAND,             0), 
+          USM(RB_INSERTBANDA,          0),
+          USM(RB_DELETEBAND,           0),
+          USM(RB_GETBARINFO,           0),
+          USM(RB_SETBARINFO,           0),
+          USM(RB_GETBANDINFO,          0),
+          USM(RB_SETBANDINFOA,         0),
+          USM(RB_SETPARENT,            0),
+          USM(RB_HITTEST,              0),
+          USM(RB_GETRECT,              0),
+          USM(RB_INSERTBANDW,          0),
+          USM(RB_SETBANDINFOW,         0),
+          USM(RB_GETBANDCOUNT,         0),
+          USM(RB_GETROWCOUNT,          0),
+          USM(RB_GETROWHEIGHT,         0),
+          USM(RB_IDTOINDEX,            0),
+          USM(RB_GETTOOLTIPS,          0),
+          USM(RB_SETTOOLTIPS,          0),
+          USM(RB_SETBKCOLOR,           0),
+          USM(RB_GETBKCOLOR,           0),
+          USM(RB_SETTEXTCOLOR,         0),
+          USM(RB_GETTEXTCOLOR,         0),
+          USM(RB_SIZETORECT,           0),
+          USM(RB_BEGINDRAG,            0),
+          USM(RB_ENDDRAG,              0),
+          USM(RB_DRAGMOVE,             0),
+          USM(RB_GETBARHEIGHT,         0),
+          USM(RB_GETBANDINFOW,         0),
+          USM(RB_GETBANDINFOA,         0),
+          USM(RB_MINIMIZEBAND,         0),
+          USM(RB_MAXIMIZEBAND,         0),
+          USM(RB_GETBANDBORDERS,       0),
+          USM(RB_SHOWBAND,             0),
+          USM(RB_SETPALETTE,           0),
+          USM(RB_GETPALETTE,           0),
+          USM(RB_MOVEBAND,             0),
           {0,0,0} };
 
 static const USER_MSG toolbar_array[] = {
@@ -1323,9 +1323,9 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_HIDEBUTTON            ,0),
           USM(TB_INDETERMINATE         ,0),
           USM(TB_MARKBUTTON	       ,0),
-          USM(TB_ISBUTTONENABLED       ,0), 
-          USM(TB_ISBUTTONCHECKED       ,0), 
-          USM(TB_ISBUTTONPRESSED       ,0), 
+          USM(TB_ISBUTTONENABLED       ,0),
+          USM(TB_ISBUTTONCHECKED       ,0),
+          USM(TB_ISBUTTONPRESSED       ,0),
           USM(TB_ISBUTTONHIDDEN        ,0),
           USM(TB_ISBUTTONINDETERMINATE ,0),
           USM(TB_ISBUTTONHIGHLIGHTED   ,0),
@@ -1340,7 +1340,7 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_COMMANDTOINDEX        ,0),
           USM(TB_SAVERESTOREA          ,0),
           USM(TB_CUSTOMIZE             ,0),
-          USM(TB_ADDSTRINGA            ,0), 
+          USM(TB_ADDSTRINGA            ,0),
           USM(TB_GETITEMRECT           ,0),
           USM(TB_BUTTONSTRUCTSIZE      ,0),
           USM(TB_SETBUTTONSIZE         ,0),
@@ -1387,7 +1387,7 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_GETANCHORHIGHLIGHT    ,0),
           USM(TB_GETBUTTONTEXTW        ,0),
           USM(TB_SAVERESTOREW          ,0),
-          USM(TB_ADDSTRINGW            ,0), 
+          USM(TB_ADDSTRINGW            ,0),
           USM(TB_MAPACCELERATORA       ,0),
           USM(TB_GETINSERTMARK         ,0),
           USM(TB_SETINSERTMARK         ,0),
@@ -1481,12 +1481,12 @@ typedef struct
 /* locate the correct 'value'.                             */
 static const SPY_NOTIFY spnfy_array[] = {
     /*  common        0U       to  0U-99U  */
-    SPNFY(NM_OUTOFMEMORY,        NMHDR), 
-    SPNFY(NM_CLICK,              NMHDR),    
+    SPNFY(NM_OUTOFMEMORY,        NMHDR),
+    SPNFY(NM_CLICK,              NMHDR),
     SPNFY(NM_DBLCLK,             NMHDR),
-    SPNFY(NM_RETURN,             NMHDR),  
+    SPNFY(NM_RETURN,             NMHDR),
     SPNFY(NM_RCLICK,             NMHDR),
-    SPNFY(NM_RDBLCLK,            NMHDR),       
+    SPNFY(NM_RDBLCLK,            NMHDR),
     SPNFY(NM_SETFOCUS,           NMHDR),
     SPNFY(NM_KILLFOCUS,          NMHDR),
     SPNFY(NM_CUSTOMDRAW,         NMCUSTOMDRAW),
@@ -1496,7 +1496,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(NM_RELEASEDCAPTURE,    NMHDR),
     SPNFY(NM_SETCURSOR,          NMMOUSE),
     SPNFY(NM_CHAR,               NMCHAR),
-    SPNFY(NM_TOOLTIPSCREATED,    NMTOOLTIPSCREATED),  
+    SPNFY(NM_TOOLTIPSCREATED,    NMTOOLTIPSCREATED),
     /* Listview       0U-100U  to  0U-199U  */
     SPNFY(LVN_ITEMCHANGING,      NMLISTVIEW),
     SPNFY(LVN_ITEMCHANGED,       NMLISTVIEW),
@@ -1613,7 +1613,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TBN_GETINFOTIPW,       NMTBGETINFOTIPW),
     SPNFY(TBN_GETBUTTONINFOW,    NMTOOLBARW),
     /* Up/Down        0U-721U  to  0U-740U  */
-    SPNFY(UDN_DELTAPOS,          NMHDR),           
+    SPNFY(UDN_DELTAPOS,          NMHDR),
     /* Month Calendar 0U-750U  to  0U-759U  */
     /* ******************* WARNING ***************************** */
     /* The following appear backwards but needs to be this way.  */
@@ -1631,9 +1631,9 @@ static const SPY_NOTIFY spnfy_array[] = {
     /* Thank you MS for your obvious quality control!!           */
     /* ******************* WARNING ***************************** */
     /* Date/Time      0U-760U  to  0U-799U  */
-    /* SPNFY(MCN_SELECT,            NMHDR), */        
-    /* SPNFY(MCN_GETDAYSTATE,       NMHDR), */        
-    /* SPNFY(MCN_SELCHANGE,         NMHDR), */        
+    /* SPNFY(MCN_SELECT,            NMHDR), */
+    /* SPNFY(MCN_GETDAYSTATE,       NMHDR), */
+    /* SPNFY(MCN_SELCHANGE,         NMHDR), */
     /* ******************* WARNING ***************************** */
     /* The following appear backwards but needs to be this way.  */
     /* The reason is that MS (and us) define the MCNs as         */
@@ -1642,20 +1642,20 @@ static const SPY_NOTIFY spnfy_array[] = {
     /*         TBN_FIRST - n                                     */
     /* The only place that this is important is in this list     */
     /* ******************* WARNING ***************************** */
-    SPNFY(DTN_FORMATQUERYW,      NMHDR),      
-    SPNFY(DTN_FORMATW,           NMHDR),      
-    SPNFY(DTN_WMKEYDOWNW,        NMHDR),        
-    SPNFY(DTN_USERSTRINGW,       NMHDR),         
-    SPNFY(MCN_SELECT,            NMHDR),        
-    SPNFY(MCN_GETDAYSTATE,       NMHDR),        
-    SPNFY(MCN_SELCHANGE,         NMHDR),        
-    SPNFY(DTN_CLOSEUP,           NMHDR),      
-    SPNFY(DTN_DROPDOWN,          NMHDR),      
-    SPNFY(DTN_FORMATQUERYA,      NMHDR),       
-    SPNFY(DTN_FORMATA,           NMHDR),      
-    SPNFY(DTN_WMKEYDOWNA,        NMHDR),      
-    SPNFY(DTN_USERSTRINGA,       NMHDR),      
-    SPNFY(DTN_DATETIMECHANGE,    NMHDR),      
+    SPNFY(DTN_FORMATQUERYW,      NMHDR),
+    SPNFY(DTN_FORMATW,           NMHDR),
+    SPNFY(DTN_WMKEYDOWNW,        NMHDR),
+    SPNFY(DTN_USERSTRINGW,       NMHDR),
+    SPNFY(MCN_SELECT,            NMHDR),
+    SPNFY(MCN_GETDAYSTATE,       NMHDR),
+    SPNFY(MCN_SELCHANGE,         NMHDR),
+    SPNFY(DTN_CLOSEUP,           NMHDR),
+    SPNFY(DTN_DROPDOWN,          NMHDR),
+    SPNFY(DTN_FORMATQUERYA,      NMHDR),
+    SPNFY(DTN_FORMATA,           NMHDR),
+    SPNFY(DTN_WMKEYDOWNA,        NMHDR),
+    SPNFY(DTN_USERSTRINGA,       NMHDR),
+    SPNFY(DTN_DATETIMECHANGE,    NMHDR),
     /* ComboBoxEx     0U-800U  to  0U-830U  */
     SPNFY(CBEN_GETDISPINFOA,     NMCOMBOBOXEXA),
     SPNFY(CBEN_INSERTITEM,       NMCOMBOBOXEXA),
@@ -1677,7 +1677,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(RBN_DELETEDBAND,       NMREBAR),
     SPNFY(RBN_CHILDSIZE,         NMREBARCHILDSIZE),
     /* IP Adderss     0U-860U  to  0U-879U  */
-    SPNFY(IPN_FIELDCHANGED,      NMHDR),         
+    SPNFY(IPN_FIELDCHANGED,      NMHDR),
     /* Status bar     0U-880U  to  0U-899U  */
     SPNFY(SBN_SIMPLEMODECHANGE,  NMHDR),
     /* Pager          0U-900U  to  0U-950U  */
@@ -1842,8 +1842,8 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 	       strcmpW(cc_array[i].classname, sp_e->wnd_class) !=0) i++;
 
 	if (!cc_array[i].classname) return;
-	/* TRACE("process class %s, first %p, last %p\n", 
-	      debugstr_w(cc_array[i].classname), cc_array[i].classmsg, 
+	/* TRACE("process class %s, first %p, last %p\n",
+	      debugstr_w(cc_array[i].classname), cc_array[i].classmsg,
 	      cc_array[i].lastmsg); */
 	p = SPY_Bsearch_Msg (cc_array[i].classmsg, cc_array[i].lastmsg,
 			 sp_e->msgnum);
@@ -1857,7 +1857,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 /***********************************************************************
  *           SPY_GetWndName
  *
- *  Sets the value of "wnd_name" and "wnd_class" members of the 
+ *  Sets the value of "wnd_name" and "wnd_class" members of the
  *  instance structure.
  *
  */
@@ -1866,7 +1866,7 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
     DWORD save_error;
     INT len;
 
-    /* save and restore error code over the next call */	
+    /* save and restore error code over the next call */
     save_error = GetLastError();
     GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
     SetLastError(save_error);
@@ -1887,7 +1887,7 @@ void SPY_GetWndName( SPY_INSTANCE *sp_e )
 /***********************************************************************
  *           SPY_GetMsgName
  *
- *  ****  External function  **** 
+ *  ****  External function  ****
  *
  *  Get message name
  */
@@ -2008,7 +2008,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    {
 		LPRECT rc = (LPRECT) sp_e->lParam;
 		if (rc) {
-		    TRACE("lParam rect (%d,%d)-(%d,%d)\n", 
+		    TRACE("lParam rect (%d,%d)-(%d,%d)\n",
 			  rc->left, rc->top, rc->right, rc->bottom);
 		}
 		break;
@@ -2035,7 +2035,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    {
 		LPINT ptmin = (LPINT) sp_e->wParam;
 		LPINT ptmax = (LPINT) sp_e->lParam;
-		if (ptmin && ptmax) 
+		if (ptmin && ptmax)
 		    TRACE("min=%d max=%d\n", *ptmin, *ptmax);
 		else if (ptmin)
 		    TRACE("min=%d max=n/a\n", *ptmin);
@@ -2045,24 +2045,24 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    }
 	case WM_DRAWITEM:
 	    if (!enter) break;
-	    {   
+	    {
 		DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) sp_e->lParam;
-		TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
+		TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
 		      lpdis->CtlType, lpdis->CtlID);
-		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n", 
+		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
 		      lpdis->itemID, lpdis->itemAction, lpdis->itemState);
 		TRACE("hWnd=0x%04x hDC=0x%04x (%d,%d)-(%d,%d) itemData=0x%08lx\n",
-		      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left, 
+		      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
 		      lpdis->rcItem.top, lpdis->rcItem.right,
 		      lpdis->rcItem.bottom, lpdis->itemData);
 	    }
 	    break;
 	case WM_MEASUREITEM:
-	    {   
+	    {
 		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) sp_e->lParam;
-		TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n", 
+		TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
 		      lpmis->CtlType, lpmis->CtlID);
-		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n", 
+		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n",
 		      lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
 		TRACE("itemData=0x%08lx\n", lpmis->itemData);
 	    }
@@ -2070,7 +2070,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	case WM_WINDOWPOSCHANGED:
 	    if (!enter) break;
 	case WM_WINDOWPOSCHANGING:
-	    {   
+	    {
 		WINDOWPOS *lpwp = (WINDOWPOS *)sp_e->lParam;
 		TRACE("WINDOWPOS hwnd=0x%04x, after=0x%04x, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
 		      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
@@ -2080,10 +2080,10 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	case WM_STYLECHANGED:
 	    if (!enter) break;
 	case WM_STYLECHANGING:
-	    {   
+	    {
 		LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
 		TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
-		      ss->styleOld, ss->styleNew); 
+		      ss->styleOld, ss->styleNew);
 	    }
 	    break;
 	case WM_NCCALCSIZE:
@@ -2095,14 +2095,14 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    break;
 	case WM_NOTIFY:
 	    /* if (!enter) break; */
-	    {   
+	    {
 		NMHDR * pnmh = (NMHDR*) sp_e->lParam;
 		UINT *q, dumplen;
 		const SPY_NOTIFY *p;
 		WCHAR from_class[60];
 		DWORD save_error;
 
-		p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array, 
+		p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array,
 					pnmh->code);
 		if (p) {
 		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
@@ -2111,12 +2111,12 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 
 		    /* for CUSTOMDRAW, dump all the data for TOOLBARs */
 		    if (pnmh->code == NM_CUSTOMDRAW) {
-			/* save and restore error code over the next call */	
+			/* save and restore error code over the next call */
 			save_error = GetLastError();
-			GetClassNameW(pnmh->hwndFrom, from_class, 
+			GetClassNameW(pnmh->hwndFrom, from_class,
 				      sizeof(from_class)/sizeof(WCHAR));
 			SetLastError(save_error);
-			if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0) 
+			if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
 			    dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
 		    }
 		    if (dumplen > 0) {
@@ -2133,7 +2133,7 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 		SPY_DumpMem ("MSG lParam", (UINT *)sp_e->lParam, sp_e->data_len);
 	    break;
 	}
-	
+
 }
 /***********************************************************************
  *           SPY_EnterMessage
@@ -2165,7 +2165,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
     case SPY_DISPATCHMESSAGE:
         TRACE("%*s(%08x) %-16s message [%04x] %s dispatched  wp=%08x lp=%08lx\n",
-                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg, 
+                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name, wParam, lParam);
         break;
 
@@ -2194,7 +2194,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 		SPY_DumpStructure(&sp_e, TRUE);
 	    }
         }
-        break;   
+        break;
 
     case SPY_DEFWNDPROC16:
 	if( SPY_ExcludeDWP ) return;
@@ -2262,7 +2262,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
                         indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name, lReturn );
 	SPY_DumpStructure(&sp_e, FALSE);
-        break; 
+        break;
 
     case SPY_RESULT_INVALIDHWND16:
         WARN(" %*s(%04x) %-16s message [%04x] %s HAS INVALID HWND\n",
@@ -2348,7 +2348,7 @@ int SPY_Init(void)
     p--;
     end_spnfy_array = p;
 
-    /* find last good entry in each common control message array 
+    /* find last good entry in each common control message array
      *  and save addr for b-search.
      */
     i = 0;

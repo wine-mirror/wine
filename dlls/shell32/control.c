@@ -36,7 +36,7 @@ typedef struct CPlApplet {
     unsigned		count;		/* number of subprograms */
     HMODULE     	hModule;	/* module of loaded applet */
     APPLET_PROC		proc;		/* entry point address */
-    NEWCPLINFOA		info[1];	/* array of count information. 
+    NEWCPLINFOA		info[1];	/* array of count information.
 					 * dwSize field is 0 if entry is invalid */
 } CPlApplet;
 
@@ -92,9 +92,9 @@ static CPlApplet*	Control_LoadApplet(HWND hWnd, LPCSTR cmd, CPanel* panel)
 	goto theError;
     }
 
-    applet = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, applet, 
+    applet = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, applet,
 			 sizeof(*applet) + (applet->count - 1) * sizeof(NEWCPLINFOA));
-    
+
     for (i = 0; i < applet->count; i++) {
        applet->info[i].dwSize = sizeof(NEWCPLINFOA);
        /* proc is supposed to return a null value upon success for
@@ -113,11 +113,11 @@ static CPlApplet*	Control_LoadApplet(HWND hWnd, LPCSTR cmd, CPanel* panel)
 	       applet->info[i].dwFlags = 0;
 	       applet->info[i].dwHelpContext = 0;
 	       applet->info[i].lData = info.lData;
-	       applet->info[i].hIcon = LoadIconA(applet->hModule, 
+	       applet->info[i].hIcon = LoadIconA(applet->hModule,
 						 MAKEINTRESOURCEA(info.idIcon));
-	       LoadStringA(applet->hModule, info.idName, 
+	       LoadStringA(applet->hModule, info.idName,
 			   applet->info[i].szName, sizeof(applet->info[i].szName));
-	       LoadStringA(applet->hModule, info.idInfo, 
+	       LoadStringA(applet->hModule, info.idInfo,
 			   applet->info[i].szInfo, sizeof(applet->info[i].szInfo));
 	       applet->info[i].szHelpFile[0] = '\0';
 	   }
@@ -154,7 +154,7 @@ static BOOL	Control_Localize(const CPanel* panel, unsigned cx, unsigned cy,
     unsigned	i, x = (XSTEP-XICON)/2, y = 0;
     CPlApplet*	applet;
     RECT	rc;
-    
+
     GetClientRect(panel->hWnd, &rc);
     for (applet = panel->first; applet; applet = applet = applet->next) {
         for (i = 0; i < applet->count; i++) {
@@ -198,7 +198,7 @@ static LRESULT Control_WndProc_Paint(const CPanel* panel, WPARAM wParam)
 	    txtRect.right = x + XSTEP;
 	    txtRect.top = y + YICON;
 	    txtRect.bottom = y + YSTEP;
-	    DrawTextA(hdc, applet->info[i].szName, -1, &txtRect, 
+	    DrawTextA(hdc, applet->info[i].szName, -1, &txtRect,
 		      DT_CENTER | DT_VCENTER);
 	    x += XSTEP;
 	}
@@ -212,7 +212,7 @@ static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
 {
     unsigned	i;
     CPlApplet*	applet;
-    
+
     if (Control_Localize(panel, LOWORD(lParam), HIWORD(lParam), &applet, &i)) {
        if (up) {
 	   if (panel->clkApplet == applet && panel->clkSP == i) {
@@ -226,7 +226,7 @@ static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
     return 0;
 }
 
-static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg, 
+static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 					WPARAM lParam1, LPARAM lParam2)
 {
    CPanel*	panel = (CPanel*)GetWindowLongA(hWnd, 0);
@@ -271,10 +271,10 @@ static void    Control_DoInterface(CPanel* panel, HWND hWnd, HINSTANCE hInst)
 
     if (!RegisterClassA(&wc)) return;
 
-    CreateWindowExA(0, wc.lpszClassName, "Wine Control Panel", 
-		    WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
-		    CW_USEDEFAULT, CW_USEDEFAULT, 
-		    CW_USEDEFAULT, CW_USEDEFAULT, 
+    CreateWindowExA(0, wc.lpszClassName, "Wine Control Panel",
+		    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		    CW_USEDEFAULT, CW_USEDEFAULT,
+		    CW_USEDEFAULT, CW_USEDEFAULT,
 		    hWnd, (HMENU)0, hInst, panel);
     if (!panel->hWnd) return;
     while (GetMessageA(&msg, panel->hWnd, 0, 0)) {
@@ -369,7 +369,7 @@ void WINAPI Control_RunDLL(HWND hWnd, HINSTANCE hInst, LPCSTR cmd, DWORD nCmdSho
 {
     CPanel	panel;
 
-    TRACE("(0x%08x, 0x%08lx, %s, 0x%08lx)\n", 
+    TRACE("(0x%08x, 0x%08lx, %s, 0x%08lx)\n",
 	  hWnd, (DWORD)hInst, debugstr_a(cmd), nCmdShow);
 
     memset(&panel, 0, sizeof(panel));

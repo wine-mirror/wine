@@ -88,7 +88,7 @@ HTASK16 TASK_GetNextTask( HTASK16 hTask )
     TDB* pTask = TASK_GetPtr( hTask );
 
     if (pTask->hNext) return pTask->hNext;
-    return (hFirstTask != hTask) ? hFirstTask : 0; 
+    return (hFirstTask != hTask) ? hFirstTask : 0;
 }
 
 
@@ -470,14 +470,14 @@ HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
  */
 void TASK_ExitTask(void)
 {
-    TDB *pTask; 
+    TDB *pTask;
     DWORD lockCount;
 
     /* Enter the Win16Lock to protect global data structures */
     _EnterWin16Lock();
 
     pTask = TASK_GetCurrent();
-    if ( !pTask ) 
+    if ( !pTask )
     {
         _LeaveWin16Lock();
         return;
@@ -537,7 +537,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
     context->Eax = 0;
     if (!(pTask = TASK_GetCurrent())) return;
 
-    /* Note: we need to trust that BX/CX contain the stack/heap sizes, 
+    /* Note: we need to trust that BX/CX contain the stack/heap sizes,
        as some apps, notably Visual Basic apps, *modify* the heap/stack
        size of the instance data segment before calling InitTask() */
 
@@ -851,8 +851,8 @@ void WINAPI FreeProcInstance16( FARPROC16 func )
 
 /**********************************************************************
  *	    TASK_GetCodeSegment
- * 
- * Helper function for GetCodeHandle/GetCodeInfo: Retrieve the module 
+ *
+ * Helper function for GetCodeHandle/GetCodeInfo: Retrieve the module
  * and logical segment number of a given code segment.
  *
  * 'proc' either *is* already a pair of module handle and segment number,
@@ -865,7 +865,7 @@ void WINAPI FreeProcInstance16( FARPROC16 func )
  *        the function the snoop code will return to ...
  *
  */
-static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule, 
+static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
                                  SEGTABLEENTRY **ppSeg, int *pSegNr )
 {
     NE_MODULE *pModule = NULL;
@@ -882,7 +882,7 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
     }
 
     /* Try thunk or function */
-    else 
+    else
     {
         BYTE *thunk = MapSL( (SEGPTR)proc );
         WORD selector;
@@ -1336,8 +1336,8 @@ void TASK_CallTaskSignalProc( UINT16 uCode, HANDLE16 hTaskOrModule )
     TDB *pTask = TASK_GetCurrent();
     if ( !pTask || !pTask->userhandler ) return;
 
-    TASK_CallTo16_word_wwwww( pTask->userhandler, 
-                              hTaskOrModule, uCode, 0, 
+    TASK_CallTo16_word_wwwww( pTask->userhandler,
+                              hTaskOrModule, uCode, 0,
                               pTask->hInstance, pTask->hQueue );
 }
 

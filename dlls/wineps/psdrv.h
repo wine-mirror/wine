@@ -47,7 +47,7 @@ typedef struct _tagAFMLIGS {
 } AFMLIGS;
 
 typedef struct {
-    int			C;		/* character */  
+    int			C;		/* character */
     LONG     	    	UV;
     float		WX;
     const GLYPHNAME	*N;		/* name */
@@ -299,7 +299,7 @@ typedef struct {
 /*
  *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
  */
- 
+
 extern const INT    PSDRV_AGLGlyphNamesSize;
 extern GLYPHNAME    PSDRV_AGLGlyphNames[];
 
@@ -307,7 +307,7 @@ extern GLYPHNAME    PSDRV_AGLGlyphNames[];
 /*
  *  The AGL encoding vector
  */
- 
+
 extern const INT    	    PSDRV_AGLbyNameSize;    /* sorted by name -     */
 extern const UNICODEGLYPH   PSDRV_AGLbyName[];	    /*  duplicates omitted  */
 
@@ -351,9 +351,9 @@ extern INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev );
 extern BOOL PSDRV_WriteMoveTo(PSDRV_PDEVICE *physDev, INT x, INT y);
 extern BOOL PSDRV_WriteLineTo(PSDRV_PDEVICE *physDev, INT x, INT y);
 extern BOOL PSDRV_WriteStroke(PSDRV_PDEVICE *physDev);
-extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, 
+extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
 			INT height);
-extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, 
+extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
 			INT height);
 extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count);

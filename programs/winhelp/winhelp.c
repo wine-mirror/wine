@@ -288,7 +288,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 
 	  for (button = oldwin->first_button; button; button = button->next)
 	    DestroyWindow(button->hWnd);
-  
+
 	  WINHELP_DeleteWindow(oldwin);
 	  return;
 	}
@@ -384,7 +384,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam,
 	  /* Menu Info */
 	case 0x113:			MACRO_About();          break;
 
-	case 0x114: 
+	case 0x114:
 	  ShellAbout(hWnd, "WINE", "Help", 0);
 	  break;
 
@@ -541,7 +541,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc (HWND hWnd, UINT msg, WPARAM wParam,
 	  new_window_size.cx = old_window_size.cx - old_client_size.cx + new_client_size.cx;
 	  new_window_size.cy = old_window_size.cy - old_client_size.cy + new_client_size.cy;
 
-	  win->hShadowWnd = 
+	  win->hShadowWnd =
 	    CreateWindow(SHADOW_WIN_CLASS_NAME, "", WS_POPUP | WS_VISIBLE,
 			 origin.x + SHADOW_DX, origin.y + SHADOW_DY,
 			 new_window_size.cx, new_window_size.cy,
@@ -847,7 +847,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
       line->rect.left   = space->cx;
       line->rect.right  = space->cx;
 
-      if (**linep) *linep = &(**linep)->next; 
+      if (**linep) *linep = &(**linep)->next;
       **linep = line;
       space->cy = 0;
     }

@@ -1,13 +1,13 @@
 /*
  *  Output sequence map for rtf2text
- * 
+ *
  *  Field 1 is the standard character name.  Field 2 is the output sequence
  *  to produce for that character.
- * 
+ *
  *  The output sequence is simply a string of characters.  If it contains
  *  whitespace, it may be quoted.  If it contains quotes, it may be quoted
  *  with a different quote character.
- * 
+ *
  *  characters in ASCII range (32-127
  */
 

@@ -34,10 +34,10 @@ typedef enum WING_DITHER_TYPE
   WING_DISPERSED_4x4, WING_DISPERSED_8x8, WING_CLUSTERED_4x4
 } WING_DITHER_TYPE;
 
-/* 
+/*
  * WinG DIB bitmaps can be selected into DC and then scribbled upon
- * by GDI functions. They can also be changed directly. This gives us 
- * three choices 
+ * by GDI functions. They can also be changed directly. This gives us
+ * three choices
  *	- use original WinG 16-bit DLL
  *		requires working 16-bit driver interface
  * 	- implement DIB graphics driver from scratch

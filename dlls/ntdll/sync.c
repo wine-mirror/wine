@@ -95,7 +95,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
 	PVOID SemaphoreInformationClass,
 	OUT PVOID SemaphoreInformation,
 	ULONG Length,
-	PULONG ReturnLength) 
+	PULONG ReturnLength)
 {
 	FIXME("(0x%08x,%p,%p,0x%08lx,%p) stub!\n",
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
@@ -124,7 +124,7 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, PULONG previous 
 /*
  *	Events
  */
- 
+
 /**************************************************************************
  * NtCreateEvent (NTDLL.@)
  * ZwCreateEvent (NTDLL.@)

@@ -91,7 +91,7 @@ static HBITMAP DESKTOP_LoadBitmap( HDC hdc, const char *filename )
     _lclose( file );
     fileHeader = (BITMAPFILEHEADER *)buffer;
     bitmapInfo = (BITMAPINFO *)(buffer + sizeof(BITMAPFILEHEADER));
-    
+
       /* Check header content */
     if ((fileHeader->bfType != 0x4d42) || (size < fileHeader->bfSize))
     {

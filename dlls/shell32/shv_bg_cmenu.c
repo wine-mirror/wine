@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /**************************************************************************
 *  IContextMenu Implementation
 */
-typedef struct 
+typedef struct
 {
 	ICOM_VFIELD(IContextMenu);
 	IShellFolder*	pSFParent;
@@ -78,20 +78,20 @@ static HRESULT WINAPI ISVBgCm_fnQueryInterface(IContextMenu *iface, REFIID riid,
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
 	{
-	  *ppvObj = This; 
+	  *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IContextMenu))  /*IContextMenu*/
 	{
 	  *ppvObj = This;
-	}   
+	}
 	else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
 	{
 	  FIXME("-- LPSHELLEXTINIT pointer requested\n");
 	}
 
 	if(*ppvObj)
-	{ 
-	  IUnknown_AddRef((IUnknown*)*ppvObj);      
+	{
+	  IUnknown_AddRef((IUnknown*)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -121,7 +121,7 @@ static ULONG WINAPI ISVBgCm_fnRelease(IContextMenu *iface)
 
 	TRACE("(%p)->()\n",This);
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{
 	  TRACE(" destroying IContextMenu(%p)\n",This);
 
@@ -151,7 +151,7 @@ static HRESULT WINAPI ISVBgCm_fnQueryContextMenu(
 {
 	HMENU	hMyMenu;
 	UINT	idMax;
-	
+
 	ICOM_THIS(BgCmImpl, iface);
 
 	TRACE("(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hMenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
@@ -175,14 +175,14 @@ static void DoNewFolder(
 	ICOM_THIS(BgCmImpl, iface);
 	ISFHelper * psfhlp;
 	char szName[MAX_PATH];
-	
+
 	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
 	if (psfhlp)
 	{
 	  LPITEMIDLIST pidl;
 	  ISFHelper_GetUniqueName(psfhlp, szName, MAX_PATH);
 	  ISFHelper_AddFolder(psfhlp, 0, szName, &pidl);
-          
+
 	  if(psv)
 	  {
 	    /* if we are in a shellview do labeledit */
@@ -191,7 +191,7 @@ static void DoNewFolder(
                     |SVSI_FOCUSED|SVSI_SELECT));
 	  }
 	  SHFree(pidl);
-	  
+
 	  ISFHelper_Release(psfhlp);
 	}
 }
@@ -205,7 +205,7 @@ static BOOL DoPaste(
 	ICOM_THIS(BgCmImpl, iface);
 	BOOL bSuccess = FALSE;
 	IDataObject * pda;
-	
+
 	TRACE("\n");
 
 	if(SUCCEEDED(pOleGetClipboard(&pda)))
@@ -227,9 +227,9 @@ static BOOL DoPaste(
 
 	    LPCIDA lpcida = GlobalLock(medium.u.hGlobal);
 	    TRACE("cida=%p\n", lpcida);
-	    
+
 	    apidl = _ILCopyCidaToaPidl(&pidl, lpcida);
-	    
+
 	    /* bind to the source shellfolder */
 	    SHGetDesktopFolder(&psfDesktop);
 	    if(psfDesktop)
@@ -237,19 +237,19 @@ static BOOL DoPaste(
 	      IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (LPVOID*)&psfFrom);
 	      IShellFolder_Release(psfDesktop);
 	    }
-	    
+
 	    if (psfFrom)
 	    {
 	      /* get source and destination shellfolder */
 	      ISFHelper *psfhlpdst, *psfhlpsrc;
 	      IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlpdst);
 	      IShellFolder_QueryInterface(psfFrom, &IID_ISFHelper, (LPVOID*)&psfhlpsrc);
-   
+
 	      /* do the copy/move */
 	      if (psfhlpdst && psfhlpsrc)
 	      {
 	        ISFHelper_CopyItems(psfhlpdst, psfFrom, lpcida->cidl, apidl);
-		/* FIXME handle move 
+		/* FIXME handle move
 		ISFHelper_DeleteItems(psfhlpsrc, lpcida->cidl, apidl);
 		*/
 	      }
@@ -257,10 +257,10 @@ static BOOL DoPaste(
 	      if(psfhlpsrc) ISFHelper_Release(psfhlpsrc);
 	      IShellFolder_Release(psfFrom);
 	    }
-	    
+
 	    _ILFreeaPidl(apidl, lpcida->cidl);
 	    SHFree(pidl);
-	    
+
 	    /* release the medium*/
 	    pReleaseStgMedium(&medium);
 	  }
@@ -271,7 +271,7 @@ static BOOL DoPaste(
 
 	OpenClipboard(NULL);
 	hMem = GetClipboardData(CF_HDROP);
-	
+
 	if(hMem)
 	{
 	  char * pDropFiles = (char *)GlobalLock(hMem);
@@ -305,7 +305,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	LPSHELLVIEW	lpSV;
 	HWND	hWndSV;
 
-	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
 	/* get the active IShellView */
 	if((lpSB = (LPSHELLBROWSER)SendMessageA(lpcmi->hwnd, CWM_GETISHELLBROWSER,0,0)))
@@ -333,7 +333,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	    else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILSA))
 	    {
 	      if(hWndSV) SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
-	    } 
+	    }
 	    else
 	    {
 	      FIXME("please report: unknown verb %s\n",lpcmi->lpVerb);
@@ -355,7 +355,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 		break;
 	    }
 	  }
-	
+
 	  IShellView_Release(lpSV);	/* QueryActiveShellView does AddRef*/
 	}
 	return NOERROR;
@@ -372,12 +372,12 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	LPUINT lpReserved,
 	LPSTR lpszName,
 	UINT uMaxNameLen)
-{	
+{
 	ICOM_THIS(BgCmImpl, iface);
 
 	TRACE("(%p)->(idcom=%x flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
-	/* test the existence of the menu items, the file dialog enables 
+	/* test the existence of the menu items, the file dialog enables
 	   the buttons according to this */
 	if (uFlags == GCS_VALIDATEA)
 	{
@@ -386,7 +386,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	    if (!strcmp((LPSTR)idCommand, CMDSTR_VIEWLISTA) ||
 	        !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
 	        !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
-	    {	
+	    {
 	      return NOERROR;
 	    }
 	  }
@@ -414,10 +414,10 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 
 /**************************************************************************
 * IContextMenu VTable
-* 
+*
 */
-static struct ICOM_VTABLE(IContextMenu) cmvt = 
-{	
+static struct ICOM_VTABLE(IContextMenu) cmvt =
+{
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISVBgCm_fnQueryInterface,
 	ISVBgCm_fnAddRef,

@@ -1,17 +1,17 @@
 /*
  * RTF ANSI character set (\ansi) Symbol font map
- * 
+ *
  * Field 1 is the standard character name which the character value in
  * field 2 maps onto.  (It doesn't mean "to produce the character in field 1,
  * use the value in field 2.)
- * 
+ *
  * The character value may be given either as a single character (which will be
  * converted to the ASCII value of the character), or in numeric format, either
  * in decimal or 0xyy as hex yy.  Single or double quotes may be used to quote
  * characters.
- * 
+ *
  */
- 
+
 int ansi_sym[] =
 {
   rtfSC_formula        ,0x06,

@@ -168,12 +168,12 @@ typedef DWORD DPID, *LPDPID;
 typedef struct tagDPCAPS
 {
     DWORD dwSize;               /* Size of structure in bytes */
-    DWORD dwFlags;              
-    DWORD dwMaxBufferSize;      
+    DWORD dwFlags;
+    DWORD dwMaxBufferSize;
     DWORD dwMaxQueueSize;       /* Obsolete. */
     DWORD dwMaxPlayers;         /* Maximum players/groups (local + remote) */
     DWORD dwHundredBaud;        /* Bandwidth in 100 bits per second units;
-                                 * i.e. 24 is 2400, 96 is 9600, etc. 
+                                 * i.e. 24 is 2400, 96 is 9600, etc.
                                  */
     DWORD dwLatency;            /* Estimated latency; 0 = unknown */
     DWORD dwMaxLocalPlayers;    /* Maximum # of locally created players */
@@ -186,19 +186,19 @@ typedef struct tagDPCAPS
 
 typedef struct tagDPNAME
 {
-    DWORD   dwSize;             
+    DWORD   dwSize;
     DWORD   dwFlags;            /* Not used must be 0 */
 
     union /*playerShortName */      /* Player's Handle? */
-    {                           
-        LPWSTR  lpszShortName;  
-        LPSTR   lpszShortNameA; 
+    {
+        LPWSTR  lpszShortName;
+        LPSTR   lpszShortNameA;
     } DUMMYUNIONNAME1;
 
     union /*playerLongName */       /* Player's formal/real name */
-    {                         
-        LPWSTR  lpszLongName;  
-        LPSTR   lpszLongNameA;  
+    {
+        LPWSTR  lpszLongName;
+        LPSTR   lpszLongNameA;
     } DUMMYUNIONNAME2;
 
 } DPNAME, *LPDPNAME;
@@ -230,31 +230,31 @@ typedef struct tagDPSESSIONDESC
 
 typedef struct tagDPSESSIONDESC2
 {
-    DWORD   dwSize;             
-    DWORD   dwFlags;           
-    GUID    guidInstance;      
+    DWORD   dwSize;
+    DWORD   dwFlags;
+    GUID    guidInstance;
     GUID    guidApplication;   /* GUID of the DP application, GUID_NULL if
                                 * all applications! */
-                               
-    DWORD   dwMaxPlayers;      
+
+    DWORD   dwMaxPlayers;
     DWORD   dwCurrentPlayers;   /* (read only value) */
 
     union  /* Session name */
-    {                             
-        LPWSTR  lpszSessionName;  
-        LPSTR   lpszSessionNameA; 
+    {
+        LPWSTR  lpszSessionName;
+        LPSTR   lpszSessionNameA;
     } DUMMYUNIONNAME1;
 
     union  /* Optional password */
-    {                           
-        LPWSTR  lpszPassword;   
-        LPSTR   lpszPasswordA;  
+    {
+        LPWSTR  lpszPassword;
+        LPSTR   lpszPasswordA;
     } DUMMYUNIONNAME2;
 
-    DWORD   dwReserved1;       
+    DWORD   dwReserved1;
     DWORD   dwReserved2;
 
-    DWORD   dwUser1;        /* For use by the application */  
+    DWORD   dwUser1;        /* For use by the application */
     DWORD   dwUser2;
     DWORD   dwUser3;
     DWORD   dwUser4;
@@ -279,11 +279,11 @@ typedef const DPSESSIONDESC2* LPCDPSESSIONDESC2;
 
 typedef struct tagDPLCONNECTION
 {
-    DWORD               dwSize;          
-    DWORD               dwFlags;          
-    LPDPSESSIONDESC2    lpSessionDesc;  /* Ptr to session desc to use for connect */  
+    DWORD               dwSize;
+    DWORD               dwFlags;
+    LPDPSESSIONDESC2    lpSessionDesc;  /* Ptr to session desc to use for connect */
     LPDPNAME            lpPlayerName;   /* Ptr to player name structure */
-    GUID                guidSP;         /* GUID of Service Provider to use */ 
+    GUID                guidSP;         /* GUID of Service Provider to use */
     LPVOID              lpAddress;      /* Ptr to Address of Service Provider to use */
     DWORD               dwAddressSize;  /* Size of address data */
 } DPLCONNECTION, *LPDPLCONNECTION;
@@ -366,7 +366,7 @@ typedef BOOL (CALLBACK *LPDPENUMDPCALLBACKA)(
     LPGUID      lpguidSP,
     LPSTR       lpSPName,       /* ptr to str w/ driver description */
     DWORD       dwMajorVersion, /* Major # of driver spec in lpguidSP */
-    DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */ 
+    DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */
     LPVOID      lpContext);     /* User given */
 
 #ifndef __LPCGUID_DEFINED__
@@ -633,7 +633,7 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #define IDirectPlay3_GetPlayerFlags(p,a,b)                 ICOM_CALL2(GetPlayerFlags,p,a,b)
 
 /*****************************************************************************
- * IDirectPlay4 and IDirectPlay4A interface 
+ * IDirectPlay4 and IDirectPlay4A interface
  */
 #define ICOM_INTERFACE IDirectPlay4
 #define IDirectPlay4_METHODS \
@@ -646,7 +646,7 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 
 #define IDirectPlay4_IMETHODS \
     IDirectPlay3_IMETHODS \
-    IDirectPlay4_METHODS 
+    IDirectPlay4_METHODS
 ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #undef ICOM_INTERFACE
 
@@ -732,7 +732,7 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #define DPENUMGROUPS_HIDDEN         0x00001000
 
 
-/* For DirectPlay::CreatePlayer */ 
+/* For DirectPlay::CreatePlayer */
 #define DPPLAYER_SERVERPLAYER  DPENUMPLAYERS_SERVERPLAYER
 #define DPPLAYER_SPECTATOR     DPENUMPLAYERS_SPECTATOR
 #define DPPLAYER_LOCAL         DPENUMPLAYERS_LOCAL
@@ -780,8 +780,8 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #define DPSEND_MAX_PRIORITY  DPSEND_MAX_PRI
 
 
-/* For  DirectPlay::SetGroupData, DirectPlay::SetGroupName, 
- * DirectPlay::SetPlayerData, DirectPlay::SetPlayerName and 
+/* For  DirectPlay::SetGroupData, DirectPlay::SetGroupName,
+ * DirectPlay::SetPlayerData, DirectPlay::SetPlayerName and
  * DirectPlay::SetSessionDesc.
  */
 #define DPSET_REMOTE      0x00000000
@@ -846,7 +846,7 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 /* An async send is done (finished normally, failed or cancelled) */
 #define DPSYS_SENDCOMPLETE          0x010d
 
-/** DirectPlay System Messages **/ 
+/** DirectPlay System Messages **/
 
 #define DPPLAYERTYPE_GROUP   0x00000000
 #define DPPLAYERTYPE_PLAYER  0x00000001
@@ -856,7 +856,7 @@ ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 typedef struct tagDPMSG_GENERIC
 {
    DWORD       dwType; /* Use message type as described above */
-} DPMSG_GENERIC,     *LPDPMSG_GENERIC, 
+} DPMSG_GENERIC,     *LPDPMSG_GENERIC,
   DPMSG_HOST,        *LPDPMSG_HOST,
   DPMSG_SESSIONLOST, *LPDPMSG_SESSIONLOST;
 
@@ -871,9 +871,9 @@ typedef struct tagDPMSG_CREATEPLAYERORGROUP
    DPNAME  dpnName;          /* Name info */
 
    /* dpIdParent and dwFlags are only valid in DirectPlay3 and later. What
-    * does that mean about the message size before? -PH */ 
+    * does that mean about the message size before? -PH */
    DPID   dpIdParent;  /* id of parent group */
-   DWORD  dwFlags;     /* Flags for the player/group */ 
+   DWORD  dwFlags;     /* Flags for the player/group */
 } DPMSG_CREATEPLAYERORGROUP, *LPDPMSG_CREATEPLAYERORGROUP;
 
 typedef struct tagDPMSG_DESTROYPLAYERORGROUP
@@ -899,8 +899,8 @@ typedef struct tagDPMSG_ADDPLAYERTOGROUP
    DWORD  dwType;      /* Use message type as described above */
    DPID   dpIdGroup;   /* Group ID to add player into */
    DPID   dpIdPlayer;  /* ID of player to add */
-} DPMSG_ADDPLAYERTOGROUP,      *LPDPMSG_ADDPLAYERTOGROUP, 
-  DPMSG_DELETEPLAYERFROMGROUP, *LPDPMSG_DELETEPLAYERFROMGROUP; 
+} DPMSG_ADDPLAYERTOGROUP,      *LPDPMSG_ADDPLAYERTOGROUP,
+  DPMSG_DELETEPLAYERFROMGROUP, *LPDPMSG_DELETEPLAYERFROMGROUP;
 
 /* NOTE: DPMSG_ADDGROUPTOGROUP and DPMSG_DELETEGROUPFROMGROUP are the same */
 typedef struct tagDPMSG_ADDGROUPTOGROUP
@@ -914,7 +914,7 @@ typedef struct tagDPMSG_ADDGROUPTOGROUP
 typedef struct tagDPMSG_SETPLAYERORGROUPDATA
 {
    DWORD   dwType;       /* Use message type as described above */
-   DWORD   dwPlayerType; /* Use DPPLAYERTYPE_GROUP or DPPLAYERTYPE_PLAYER */ 
+   DWORD   dwPlayerType; /* Use DPPLAYERTYPE_GROUP or DPPLAYERTYPE_PLAYER */
    DPID    dpId;         /* ID of player/group */
    LPVOID  lpData;       /* Pointer to data */
    DWORD   dwDataSize;   /* Size of data */
@@ -971,14 +971,14 @@ typedef struct
 {
    DWORD    dwType;      /* Use message type as described above */
    DPID     idFrom;      /* ID from */
-   DPID     idTo;        /* ID to */ 
-   DWORD    dwFlags;    
+   DPID     idTo;        /* ID to */
+   DWORD    dwFlags;
    DWORD    dwPriority;
    DWORD    dwTimeout;
    LPVOID   lpvContext;
    DWORD    dwMsgID;
    HRESULT  hr;
-   DWORD    dwSendTime;  /* When sent ? */ 
+   DWORD    dwSendTime;  /* When sent ? */
 } DPMSG_SENDCOMPLETE, *LPDPMSG_SENDCOMPLETE;
 
 

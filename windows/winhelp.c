@@ -83,7 +83,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 	int size,dsize,nlen;
 
 
-	if(!WM_WINHELP) 
+	if(!WM_WINHELP)
 	  {
 	    WM_WINHELP=RegisterWindowMessageA("WM_WINHELP");
 	    if(!WM_WINHELP)

@@ -696,7 +696,7 @@ typedef enum {
   D3DTBLEND_ADD           = 8,
   D3DTBLEND_FORCE_DWORD   = 0x7fffffff
 } D3DTEXTUREBLEND;
- 
+
 typedef enum _D3DTEXTUREADDRESS {
     D3DTADDRESS_WRAP           = 1,
     D3DTADDRESS_MIRROR         = 2,

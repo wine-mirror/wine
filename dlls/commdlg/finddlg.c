@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
 
-struct FRPRIVATE 
+struct FRPRIVATE
 {
     HANDLE16 hDlgTmpl16; /* handle for resource 16 */
     HANDLE16 hResource16; /* handle for allocated resource 16 */
@@ -101,7 +101,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
         DWORD size;
         HGLOBAL16 hGlobal16;
 
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, 
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
                lfr->find ?
                MAKEINTRESOURCEA(FINDDLGORD):MAKEINTRESOURCEA(REPLACEDLGORD),
                RT_DIALOGA)))
@@ -142,7 +142,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
 /***********************************************************************
  *           FINDDLG_FreeResources                                [internal]
  *
- * Free resources allocated 
+ * Free resources allocated
  */
 void FINDDLG_FreeResources(LFRPRIVATE lfr)
 {
@@ -259,15 +259,15 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, LPARAM lParam, LPDWORD lpFlags,
     }
     ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
-}    
+}
 
 
 /***********************************************************************
  *                              FINDDLG_WMCommand               [internal]
  */
-static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, 
+static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 			HWND hwndOwner, LPDWORD lpFlags,
-			LPSTR lpstrFindWhat, WORD wFindWhatLen, 
+			LPSTR lpstrFindWhat, WORD wFindWhatLen,
 			BOOL fUnicode)
 {
     int uFindReplaceMessage = RegisterWindowMessageA( FINDMSGSTRINGA );
@@ -275,17 +275,17 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 
     switch (wParam) {
 	case IDOK:
-	    if (fUnicode) 
+	    if (fUnicode)
 	      GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
 	      else GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
 	    if (IsDlgButtonChecked(hWnd, rad2))
 		*lpFlags |= FR_DOWN;
 		else *lpFlags &= ~FR_DOWN;
 	    if (IsDlgButtonChecked(hWnd, chx1))
-		*lpFlags |= FR_WHOLEWORD; 
+		*lpFlags |= FR_WHOLEWORD;
 		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked(hWnd, chx2))
-		*lpFlags |= FR_MATCHCASE; 
+		*lpFlags |= FR_MATCHCASE;
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_FINDNEXT;
@@ -305,7 +305,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam,
 	    return TRUE;
     }
     return FALSE;
-}    
+}
 
 
 /***********************************************************************
@@ -334,7 +334,7 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
 static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
-		    LPDWORD lpFlags, LPSTR lpstrFindWhat, 
+		    LPDWORD lpFlags, LPSTR lpstrFindWhat,
 		    LPSTR lpstrReplaceWith, BOOL fUnicode)
 {
     SetWindowLongA(hWnd, DWL_USER, lParam);
@@ -344,7 +344,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
      * Replace / ReplaceAll buttons.  Only after typing some text, the buttons should be
      * enabled.
      */
-    if (fUnicode)     
+    if (fUnicode)
     {
 	SetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat);
 	SetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith);
@@ -369,7 +369,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, LPARAM lParam,
     }
     ShowWindow(hWnd, SW_SHOWNORMAL);
     return TRUE;
-}    
+}
 
 
 /***********************************************************************
@@ -396,10 +396,10 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
 	    if (IsDlgButtonChecked(hWnd, chx1))
-		*lpFlags |= FR_WHOLEWORD; 
+		*lpFlags |= FR_WHOLEWORD;
 		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked(hWnd, chx2))
-		*lpFlags |= FR_MATCHCASE; 
+		*lpFlags |= FR_MATCHCASE;
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_FINDNEXT;
@@ -419,15 +419,15 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 		GetDlgItemTextW(hWnd, edt1, (LPWSTR)lpstrFindWhat, wFindWhatLen/2);
 		GetDlgItemTextW(hWnd, edt2, (LPWSTR)lpstrReplaceWith, wReplaceWithLen/2);
 	    }  else
-	    {	
+	    {
 		GetDlgItemTextA(hWnd, edt1, lpstrFindWhat, wFindWhatLen);
 		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
 	    if (IsDlgButtonChecked(hWnd, chx1))
-		*lpFlags |= FR_WHOLEWORD; 
+		*lpFlags |= FR_WHOLEWORD;
 		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked(hWnd, chx2))
-		*lpFlags |= FR_MATCHCASE; 
+		*lpFlags |= FR_MATCHCASE;
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
 	    *lpFlags |= FR_REPLACE;
@@ -445,10 +445,10 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 		GetDlgItemTextA(hWnd, edt2, lpstrReplaceWith, wReplaceWithLen);
 	    }
 	    if (IsDlgButtonChecked(hWnd, chx1))
-		*lpFlags |= FR_WHOLEWORD; 
+		*lpFlags |= FR_WHOLEWORD;
 		else *lpFlags &= ~FR_WHOLEWORD;
 	    if (IsDlgButtonChecked(hWnd, chx2))
-		*lpFlags |= FR_MATCHCASE; 
+		*lpFlags |= FR_MATCHCASE;
 		else *lpFlags &= ~FR_MATCHCASE;
             *lpFlags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
 	    *lpFlags |= FR_REPLACEALL;
@@ -461,7 +461,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam,
 	    return TRUE;
     }
     return FALSE;
-}    
+}
 
 
 /***********************************************************************
@@ -479,7 +479,7 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 		    MapSL(lpfr->lpstrReplaceWith), FALSE);
 	case WM_COMMAND:
 	    lpfr=MapSL(GetWindowLongA(hWnd, DWL_USER));
-	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
+	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
 		    &lpfr->Flags, MapSL(lpfr->lpstrFindWhat),
 		    lpfr->wFindWhatLen, MapSL(lpfr->lpstrReplaceWith),
 		    lpfr->wReplaceWithLen, FALSE);

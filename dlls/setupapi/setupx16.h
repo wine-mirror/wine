@@ -82,7 +82,7 @@ typedef struct {
 
 	VCPPROGRESS	prgFileWrite;
 	VCPPROGRESS	prgByteWrite;
-} VCPDISKINFO, *LPVCPDISKINFO;	
+} VCPDISKINFO, *LPVCPDISKINFO;
 
 typedef struct {
 	LOGDISKID16	ldid;

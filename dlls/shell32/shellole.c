@@ -49,7 +49,7 @@ extern HRESULT IFSFolder_Constructor(
 
 /*************************************************************************
  * SHCoCreateInstance [SHELL32.102]
- * 
+ *
  * NOTES
  *     exported by ordinal
  */
@@ -63,7 +63,7 @@ LRESULT WINAPI SHCoCreateInstance(
 	DWORD	hres;
 	IID	iid;
 	CLSID * myclsid = (CLSID*)clsid;
-	
+
 	if (!clsid)
 	{
 	  if (!aclsid) return REGDB_E_CLASSNOTREG;
@@ -83,7 +83,7 @@ LRESULT WINAPI SHCoCreateInstance(
 	  CoInitialize(NULL);
 	  hres = CoCreateInstance(myclsid, unknownouter, CLSCTX_INPROC_SERVER, refiid, ppv);
 	}
-	
+
 	if(hres!=S_OK)
 	{
 	  ERR("failed (0x%08lx) to create \n\tCLSID:\t%s\n\tIID:\t%s\n",
@@ -103,15 +103,15 @@ HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv
 	LPCLASSFACTORY lpclf;
 
 	TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
-	
+
 	*ppv = NULL;
 
-	if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop)|| 
+	if(IsEqualCLSID(rclsid, &CLSID_ShellDesktop)||
 	   IsEqualCLSID(rclsid, &CLSID_ShellLink))
 	{
 	  lpclf = IClassFactory_Constructor( rclsid );
 
-	  if(lpclf) 
+	  if(lpclf)
 	  {
 	    hres = IClassFactory_QueryInterface(lpclf,iid, ppv);
 	    IClassFactory_Release(lpclf);
@@ -143,7 +143,7 @@ DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id)
 DWORD WINAPI SHCLSIDFromStringW (LPWSTR clsid, CLSID *id)
 {
 	TRACE("(%p(%s) %p)\n", clsid, debugstr_w(clsid), id);
-	return CLSIDFromString(clsid, id); 
+	return CLSIDFromString(clsid, id);
 }
 DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
 {
@@ -162,7 +162,7 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
  * What we are currently doing is not very wrong, since we always use the same
  * heap (ProcessHeap).
  */
-DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) 
+DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal)
 {
 	TRACE("(%p)\n", lpmal);
 	return CoGetMalloc(MEMCTX_TASK, lpmal);
@@ -181,17 +181,17 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder **psf)
 
 	*psf=NULL;
 
-	if (!pdesktopfolder) 
+	if (!pdesktopfolder)
 	{
 	  lpclf = IClassFactory_Constructor(&CLSID_ShellDesktop);
-	  if(lpclf) 
+	  if(lpclf)
 	  {
 	    hres = IClassFactory_CreateInstance(lpclf,NULL,(REFIID)&IID_IShellFolder, (void*)&pdesktopfolder);
 	    IClassFactory_Release(lpclf);
-	  }  
+	  }
 	}
-	
-	if (pdesktopfolder) 
+
+	if (pdesktopfolder)
 	{
 	  /* even if we create the folder, add a ref so the application can´t destroy the folder*/
 	  IShellFolder_AddRef(pdesktopfolder);
@@ -245,20 +245,20 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{ *ppvObj = This; 
+	{ *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
 	{ *ppvObj = (IClassFactory*)This;
-	}   
+	}
 
 	if(*ppvObj)
-	{ IUnknown_AddRef((LPUNKNOWN)*ppvObj);  	
+	{ IUnknown_AddRef((LPUNKNOWN)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
 	TRACE("-- Interface: %s E_NOINTERFACE\n", debugstr_guid(riid));
 	return E_NOINTERFACE;
-}  
+}
 /******************************************************************************
  * IClassFactory_AddRef
  */
@@ -279,7 +279,7 @@ static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	InterlockedDecrement(&shell32_ObjCount);
-	if (!InterlockedDecrement(&This->ref)) 
+	if (!InterlockedDecrement(&This->ref))
 	{
 	  TRACE("-- destroying IClassFactory(%p)\n",This);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -300,7 +300,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnknown,debugstr_guid(riid),ppObject);
 
 	*ppObject = NULL;
-		
+
 	if(pUnknown)
 	{
 	  return(CLASS_E_NOAGGREGATION);
@@ -313,18 +313,18 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(
 	else if (IsEqualCLSID(This->rclsid, &CLSID_ShellLink))
 	{
 	  pObj = (IUnknown *)IShellLink_Constructor(FALSE);
-	} 
+	}
 	else
 	{
 	  ERR("unknown IID requested\n\tIID:\t%s\n",debugstr_guid(riid));
 	  return(E_NOINTERFACE);
 	}
-	
+
 	if (!pObj)
 	{
 	  return(E_OUTOFMEMORY);
 	}
-	 
+
 	hres = IUnknown_QueryInterface(pObj,riid, ppObject);
 	IUnknown_Release(pObj);
 
@@ -342,7 +342,7 @@ static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface, BOOL fLoc
 	return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IClassFactory) clfvt = 
+static ICOM_VTABLE(IClassFactory) clfvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IClassFactory_fnQueryInterface,
@@ -410,20 +410,20 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{ *ppvObj = This; 
+	{ *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
 	{ *ppvObj = (IClassFactory*)This;
-	}   
+	}
 
 	if(*ppvObj)
-	{ IUnknown_AddRef((LPUNKNOWN)*ppvObj);  	
+	{ IUnknown_AddRef((LPUNKNOWN)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
 	TRACE("-- Interface: %s E_NOINTERFACE\n", debugstr_guid(riid));
 	return E_NOINTERFACE;
-}  
+}
 /******************************************************************************
  * IDefClF_fnAddRef
  */
@@ -445,8 +445,8 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 
 	InterlockedDecrement(&shell32_ObjCount);
 
-	if (!InterlockedDecrement(&This->ref)) 
-	{ 
+	if (!InterlockedDecrement(&This->ref))
+	{
 	  if (This->pcRefDll) InterlockedDecrement(This->pcRefDll);
 
 	  TRACE("-- destroying IClassFactory(%p)\n",This);
@@ -466,7 +466,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
 	TRACE("%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnkOuter,debugstr_guid(riid),ppvObject);
 
 	*ppvObject = NULL;
-		
+
 	if(pUnkOuter)
 	  return(CLASS_E_NOAGGREGATION);
 
@@ -490,7 +490,7 @@ static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 	return E_NOTIMPL;
 }
 
-static ICOM_VTABLE(IClassFactory) dclfvt = 
+static ICOM_VTABLE(IClassFactory) dclfvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     IDefClF_fnQueryInterface,
@@ -504,8 +504,8 @@ static ICOM_VTABLE(IClassFactory) dclfvt =
  * SHCreateDefClassObject			[SHELL32.70]
  */
 HRESULT WINAPI SHCreateDefClassObject(
-	REFIID	riid,				
-	LPVOID*	ppv,	
+	REFIID	riid,
+	LPVOID*	ppv,
 	LPFNCREATEINSTANCE lpfnCI,	/* [in] create instance callback entry */
 	LPDWORD	pcRefDll,		/* [in/out] ref count of the dll */
 	REFIID	riidInst)		/* [in] optional interface to the instance */
@@ -532,7 +532,7 @@ HRESULT WINAPI SHCreateDefClassObject(
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 {
 	LONG exstyle;
-  
+
 	if( !IsWindow(hWnd) ) return;
 	exstyle = GetWindowLongA(hWnd,GWL_EXSTYLE);
 	if (b)
@@ -565,7 +565,7 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 
         *p = lpDropFileStruct->pt;
 	bRet = lpDropFileStruct->fNC;
-  
+
 	GlobalUnlock(hDrop);
 	return bRet;
 }
@@ -583,9 +583,9 @@ UINT WINAPI DragQueryFileA(
 	LPSTR lpDrop;
 	UINT i = 0;
 	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
-    
+
 	TRACE("(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
-    
+
 	if(!lpDropFileStruct) goto end;
 
 	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
@@ -593,13 +593,13 @@ UINT WINAPI DragQueryFileA(
 	while (i++ < lFile)
 	{
 	  while (*lpDrop++); /* skip filename */
-	  if (!*lpDrop) 
+	  if (!*lpDrop)
 	  {
-	    i = (lFile == 0xFFFFFFFF) ? i : 0; 
+	    i = (lFile == 0xFFFFFFFF) ? i : 0;
 	    goto end;
 	  }
 	}
-    
+
 	i = strlen(lpDrop);
 	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
@@ -622,9 +622,9 @@ UINT WINAPI DragQueryFileW(
 	LPWSTR lpwDrop;
 	UINT i = 0;
 	DROPFILES *lpDropFileStruct = (DROPFILES *) GlobalLock(hDrop);
-    
+
 	TRACE("(%08x, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
-    
+
 	if(!lpDropFileStruct) goto end;
 
 	lpwDrop = (LPWSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
@@ -633,13 +633,13 @@ UINT WINAPI DragQueryFileW(
 	while (i++ < lFile)
 	{
 	  while (*lpwDrop++); /* skip filename */
-	  if (!*lpwDrop) 
+	  if (!*lpwDrop)
 	  {
-	    i = (lFile == 0xFFFFFFFF) ? i : 0; 
+	    i = (lFile == 0xFFFFFFFF) ? i : 0;
 	    goto end;
 	  }
 	}
-    
+
 	i = strlenW(lpwDrop);
 	i++;
 	if ( !lpszwFile) goto end;   /* needed buffer size */

@@ -86,7 +86,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 
 	    bmSize = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, 1);
 
-	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) + 
+	    size = sizeof(METARECORD) + sizeof(WORD) + sizeof(BITMAPINFO) +
 	      sizeof(RGBQUAD) + bmSize;
 
 	    mr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);

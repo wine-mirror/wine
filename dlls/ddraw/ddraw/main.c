@@ -915,11 +915,11 @@ Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
 	return DD_OK;
 
     /* XXX "It cannot be reset while the process has surfaces or palettes
-     * created." Otherwise the window can be changed??? 
-     * 
+     * created." Otherwise the window can be changed???
+     *
      * This appears to be wrong - comment it out for now.
     if (This->window)
-	return DDERR_HWNDALREADYSET; 
+	return DDERR_HWNDALREADYSET;
     */
 
     if (!(cooplevel & (DDSCL_EXCLUSIVE|DDSCL_NORMAL)))
@@ -965,7 +965,7 @@ Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 {
     short screenX;
     short screenY;
-    
+
     ICOM_THIS(IDirectDrawImpl,iface);
 
     TRACE("(%p)->SetDisplayMode(%ld,%ld)\n",This,dwWidth,dwHeight);
@@ -980,14 +980,14 @@ Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 
     screenX = GetSystemMetrics(SM_CXSCREEN);
     screenY = GetSystemMetrics(SM_CYSCREEN);
-    
+
     This->width = dwWidth;
     This->height = dwHeight;
     This->pitch = lPitch;
     This->pixelformat = *pixelformat;
 
     /* Position the window in the center of the screen - don't center for now */
-    /* MoveWindow(This->window, (screenX-dwWidth)/2, (screenY-dwHeight)/2, 
+    /* MoveWindow(This->window, (screenX-dwWidth)/2, (screenY-dwHeight)/2,
                   dwWidth, dwHeight, TRUE);*/
     MoveWindow(This->window, 0, 0, dwWidth, dwHeight, TRUE);
 
@@ -1208,7 +1208,7 @@ LosePrimarySurface(IDirectDrawImpl *This)
 
 /******************************************************************************
  * Uninitialised DirectDraw functions
- * 
+ *
  * This vtable is used when a DirectDraw object is created with
  * CoCreateInstance. The only usable method is Initialize.
  */

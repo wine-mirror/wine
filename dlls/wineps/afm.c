@@ -97,7 +97,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
 			   sizeof(*newafmle));
     if (newafmle == NULL)
     	return FALSE;
-	
+
     newafmle->afm = afm;
 
     while(family) {
@@ -106,7 +106,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
 	insert = &(family->next);
 	family = family->next;
     }
- 
+
     if(!family) {
         family = HeapAlloc(PSDRV_Heap, HEAP_ZERO_MEMORY,
 			   sizeof(*family));
@@ -137,7 +137,7 @@ BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm, BOOL *p_added)
 	    tmpafmle = tmpafmle->next;
 	}
     }
-    
+
     tmpafmle = family->afmlist;
     while(tmpafmle->next)
         tmpafmle = tmpafmle->next;
@@ -164,15 +164,15 @@ static void PSDRV_DumpFontList(void)
 	for(afmle = family->afmlist; afmle; afmle = afmle->next)
 	{
 	    INT i;
-	    
+
 	    TRACE("\tFontName '%s' (%i glyphs) - '%s' encoding:\n",
 	    	    afmle->afm->FontName, afmle->afm->NumofMetrics,
 		    afmle->afm->EncodingScheme);
-	    
+
 	    /* Uncomment to regenerate font data; see afm2c.c */
-		    
+
 	    /* PSDRV_AFM2C(afmle->afm); */
-	    
+
 	    for (i = 0; i < afmle->afm->NumofMetrics; ++i)
 	    {
 	    	TRACE("\t\tU+%.4lX; C %i; N '%s'\n", afmle->afm->Metrics[i].UV,
@@ -197,12 +197,12 @@ inline static SHORT MeanCharWidth(const AFM *afm)
 {
     float   w = 0.0;
     int     i;
-    
+
     for (i = 0; i < afm->NumofMetrics; ++i)
     	w += afm->Metrics[i].WX;
-	
+
     w /= afm->NumofMetrics;
-    
+
     return (SHORT)(w + 0.5);
 }
 
@@ -216,25 +216,25 @@ static const struct { LONG UV; int weight; } UVweight[27] =
     { 0x0075,  31 }, { 0x0076,  10 }, { 0x0077,  18 }, { 0x0078,   3 },
     { 0x0079,  18 }, { 0x007a,   2 }, { 0x0020, 166 }
 };
- 
+
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
 {
     float   w = 0.0;
     int     i;
-    
+
     for (i = 0; i < 27; ++i)
     {
     	const AFMMETRICS    *afmm;
-	
+
 	afmm = PSDRV_UVMetrics(UVweight[i].UV, afm);
 	if (afmm->UV != UVweight[i].UV)     /* UVMetrics returns first glyph */
 	    return MeanCharWidth(afm);	    /*   in font if UV is missing    */
-	    
+
 	w += afmm->WX * (float)(UVweight[i].weight);
     }
-    
+
     w /= 1000.0;
-    
+
     return (SHORT)(w + 0.5);
 }
 
@@ -243,24 +243,24 @@ SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
  *  AddBuiltinAFMs
  *
  */
- 
+
 static BOOL AddBuiltinAFMs()
 {
     const AFM *const	*afm = PSDRV_BuiltinAFMs;
-    
+
     while (*afm != NULL)
     {
     	BOOL	added;
-    
+
     	if (PSDRV_AddAFMtoList(&PSDRV_AFMFontList, *afm, &added) == FALSE)
 	    return FALSE;
-	    
+
 	if (added == FALSE)
 	    TRACE("Ignoring built-in font %s\n", (*afm)->FontName);
-	    
+
 	++afm;
     }
-    
+
     return TRUE;
 }
 
@@ -276,12 +276,12 @@ static BOOL AddBuiltinAFMs()
  * If this function fails, PSDRV_Init will destroy PSDRV_Heap, so don't worry
  * about freeing all the memory that's been allocated.
  */
- 
+
 BOOL PSDRV_GetFontMetrics(void)
 {
     if (PSDRV_GlyphListInit() != 0)
     	return FALSE;
-	
+
     if (PSDRV_GetType1Metrics() == FALSE)
     	return FALSE;
 
@@ -292,10 +292,10 @@ BOOL PSDRV_GetFontMetrics(void)
 
     if (AddBuiltinAFMs() == FALSE)
     	return FALSE;
-	
+
     PSDRV_IndexGlyphList(); 	    /* Enable fast searching of glyph names */
-    
+
     PSDRV_DumpFontList();
-    
+
     return TRUE;
 }

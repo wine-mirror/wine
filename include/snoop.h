@@ -1,4 +1,4 @@
-/* 
+/*
  * Definitions for inter-dll snooping
  *
  * Copyright 1998 Marcus Meissner

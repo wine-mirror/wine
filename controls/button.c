@@ -225,7 +225,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
             set_button_state( hWnd, get_button_state( hWnd ) | BUTTON_BTNPRESSED );
 	}
 	break;
-	
+
     case WM_LBUTTONDBLCLK:
         if(style & BS_NOTIFY ||
            btn_type == BS_RADIOBUTTON ||
@@ -342,7 +342,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         if ((btn_type == BS_RADIOBUTTON || btn_type == BS_AUTORADIOBUTTON) && (GetCapture() != hWnd) &&
             !(SendMessageW(hWnd, BM_GETCHECK, 0, 0) & BST_CHECKED))
 	{
-            /* The notification is sent when the button (BS_AUTORADIOBUTTON) 
+            /* The notification is sent when the button (BS_AUTORADIOBUTTON)
                is unchecked and the focus was not given by a mouse click. */
             if (btn_type == BS_AUTORADIOBUTTON)
                 SendMessageW( hWnd, BM_SETCHECK, BUTTON_CHECKED, 0 );
@@ -581,7 +581,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
          break;
 
       default:
-      empty_rect:   
+      empty_rect:
          r.right = r.left;
          r.bottom = r.top;
          return (UINT)(LONG)-1;
@@ -732,7 +732,7 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
         SetPixel( hDC, rc.right-1, rc.bottom-1, clr_wnd);
 	InflateRect( &rc, -1, -1 );
     }
-    
+
     if (get_button_type(style) == BS_DEFPUSHBUTTON)
     {
         Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
@@ -845,14 +845,14 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (!hBrush) /* did the app forget to call defwindowproc ? */
         hBrush = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
 
-    if (style & BS_LEFTTEXT) 
+    if (style & BS_LEFTTEXT)
     {
 	/* magic +4 is what CTL3D expects */
 
         rtext.right -= checkBoxWidth + 4;
         rbox.left = rbox.right - checkBoxWidth;
     }
-    else 
+    else
     {
         rtext.left += checkBoxWidth + 4;
         rbox.right = checkBoxWidth;
@@ -860,7 +860,7 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     /* Draw the check-box bitmap */
     if (action == ODA_DRAWENTIRE || action == ODA_SELECT)
-    { 
+    {
 	/* Since WM_ERASEBKGND does nothing, first prepare background */
 	if (action == ODA_SELECT) FillRect( hDC, &rbox, hBrush );
 	else FillRect( hDC, &client, hBrush );
@@ -905,10 +905,10 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
 	    if (style & WS_DISABLED) flags |= DFCS_INACTIVE;
 
-	    /* rbox must have the correct height */ 
+	    /* rbox must have the correct height */
  	    delta = rbox.bottom - rbox.top - checkBoxHeight;
-	    if (delta > 0) 
-	    {  
+	    if (delta > 0)
+	    {
 		int ofs = (abs(delta) / 2);
 		rbox.bottom -= ofs + 1;
 		rbox.top = rbox.bottom - checkBoxHeight;

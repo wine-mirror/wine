@@ -46,7 +46,7 @@ typedef struct proxyhandle
 	char driverLibName[200];	/* ODBC driver SO name */
 	char dmLibName[200];		/* driver manager library name */
 	char ServerName[200];       /* keep server name */
-	char UserName[50];          /* keep username */	
+	char UserName[50];          /* keep username */
 } PROXYHANDLE;
 
 #define    /* 00 */ SQLAPI_INDEX_SQLALLOCCONNECT       0

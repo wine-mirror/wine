@@ -35,7 +35,7 @@ DWORD NS_GetNsMagic( LPVOID lpNSInfo );
 DWORD NS_GetOtherMagic( LPVOID lpNSInfo );
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize );
 
-void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg, 
+void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
                                     LPVOID* lplpReplyData,
                                     LPDWORD lpdwReplySize,
                                     IDirectPlay2Impl* lpDP );
@@ -43,7 +43,7 @@ void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
                                         LPSPINITDATA lpSpData );
-                                        
+
 
 BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo );
 void NS_DeleteSessionCache( LPVOID lpNSInfo );

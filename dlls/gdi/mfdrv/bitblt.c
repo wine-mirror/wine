@@ -73,7 +73,7 @@ BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
       *(mr->rdParm + 5) = yDst;
       *(mr->rdParm + 6) = xDst;
       ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
-    } 
+    }
     else
         ret = FALSE;
     HeapFree( GetProcessHeap(), 0, mr);
@@ -101,15 +101,15 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     BITMAP16  BM;
     METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
     DC *dcSrc = physDevSrc->dc;
-#ifdef STRETCH_VIA_DIB    
+#ifdef STRETCH_VIA_DIB
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
-#endif  
+#endif
     GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
-    len = sizeof(METARECORD) + 10 * sizeof(INT16) 
-            + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD) 
+    len = sizeof(METARECORD) + 10 * sizeof(INT16)
+            + sizeof(BITMAPINFOHEADER) + (nBPP != 24 ? 1 << nBPP: 0) * sizeof(RGBQUAD)
               + ((BM.bmWidth * nBPP + 31) / 32) * 4 * BM.bmHeight;
     if (!(mr = HeapAlloc( GetProcessHeap(), 0, len)))
 	return FALSE;
@@ -146,7 +146,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     TRACE("len = %ld  rop=%lx  \n",len,rop);
     if (GetBitmapBits( dcSrc->hBitmap, BM.bmWidthBytes * BM.bmHeight,
                          mr->rdParm +15))
-#endif    
+#endif
     {
       mr->rdSize = len / sizeof(INT16);
       *(mr->rdParm) = LOWORD(rop);
@@ -160,7 +160,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
       *(mr->rdParm + 8) = yDst;
       *(mr->rdParm + 9) = xDst;
       ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
-    }  
+    }
     else
         ret = FALSE;
     HeapFree( GetProcessHeap(), 0, mr);
@@ -208,7 +208,7 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
     return heightSrc;
 }
 
-	
+
 /***********************************************************************
  *           MFDRV_SetDIBitsToDeivce
  */
@@ -248,4 +248,4 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
     return lines;
 }
 
-	
+

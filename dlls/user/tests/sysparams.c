@@ -360,7 +360,7 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     eq( frame, GetSystemMetrics( SM_CYSIZEFRAME ), "SM_CYSIZEFRAME", "%d" )
 
     /* These tests hang when XFree86 4.0 for Windows is running (tested on
-     *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is 
+     *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
      * running.
      */
     if (!FindWindowA( NULL, "Cygwin/XFree86" ))
@@ -620,8 +620,8 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     BOOL b;
     BOOL curr_val;
 
-    /* These tests hang when XFree86 4.0 for Windows is running (tested on 
-     * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is 
+    /* These tests hang when XFree86 4.0 for Windows is running (tested on
+     * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
      * running.
      */
     if (!FindWindowA( NULL, "Cygwin/XFree86" ))
@@ -835,7 +835,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
 
 static void test_SPI_SETFASTTASKSWITCH( void )         /*     36 */
 {
-    /* Temporarily commented out. 
+    /* Temporarily commented out.
     BOOL old_b;
     BOOL b;
     BOOL res;
@@ -857,7 +857,7 @@ static void test_SPI_SETFASTTASKSWITCH( void )         /*     36 */
     ok( !res, "Must not set" );
 
     SystemParametersInfoA( SPI_GETFASTTASKSWITCH, 0, &b, 0 );
-        
+
     ok( b, "retrieved value is the same as set" );
 
     SystemParametersInfoA( SPI_SETFASTTASKSWITCH, old_b, 0,

@@ -1046,7 +1046,7 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_IME_COMPOSITION          0x010f
 #define WM_IME_KEYLAST              0x010f
 
-#define WM_INITDIALOG       0x0110 
+#define WM_INITDIALOG       0x0110
 #define WM_COMMAND          0x0111
 #define WM_SYSCOMMAND       0x0112
 #define WM_TIMER	    0x0113
@@ -1103,7 +1103,7 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 
 #define WM_MOUSEFIRST       0x0200
 #define WM_MOUSELAST        0x020D
- 
+
 #define WHEEL_DELTA      120
 #define WHEEL_PAGESCROLL  (UINT_MAX)
 #define WM_PARENTNOTIFY     0x0210
@@ -1230,7 +1230,7 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define IDYES               6
 #define IDNO                7
 #define IDCLOSE             8
-#define IDHELP              9      
+#define IDHELP              9
 
 /****** Window classes ******/
 
@@ -1279,7 +1279,7 @@ typedef struct
     BYTE    rgbReserved[32];
 } PAINTSTRUCT, *PPAINTSTRUCT, *LPPAINTSTRUCT;
 
-typedef struct 
+typedef struct
 {
     HMENU   hWindowMenu;
     UINT    idFirstChild;
@@ -1315,7 +1315,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(MDICREATESTRUCT)
 DECL_WINELIB_TYPE_AW(LPMDICREATESTRUCT)
 
-#define MDITILE_VERTICAL     0x0000   
+#define MDITILE_VERTICAL     0x0000
 #define MDITILE_HORIZONTAL   0x0001
 #define MDITILE_SKIPDISABLED 0x0002
 
@@ -1521,7 +1521,7 @@ typedef struct
 #define PRF_ERASEBKGND      0x00000008L
 #define PRF_CHILDREN        0x00000010L
 #define PRF_OWNED           0x00000020L
- 
+
   /* Offsets for GetClassLong() and GetClassWord() */
 #define GCL_MENUNAME        (-8)
 #define GCL_HBRBACKGROUND   (-10)
@@ -1760,7 +1760,7 @@ typedef struct tagMSG
 
 #define POINTSTOPOINT(pt, pts)                          \
         { (pt).x = (LONG)(SHORT)LOWORD(*(LONG*)&pts);   \
-          (pt).y = (LONG)(SHORT)HIWORD(*(LONG*)&pts); }          
+          (pt).y = (LONG)(SHORT)HIWORD(*(LONG*)&pts); }
 
 #define POINTTOPOINTS(pt)      (MAKELONG((short)((pt).x), (short)((pt).y)))
 
@@ -1800,7 +1800,7 @@ typedef struct
 #define TPM_NONOTIFY      0x0080
 #define TPM_RETURNCMD     0x0100
 
-typedef struct 
+typedef struct
 {
     UINT   cbSize;
     RECT   rcExclude;
@@ -1974,7 +1974,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define BST_CHECKED          0x0001
 #define BST_INDETERMINATE    0x0002
 #define BST_PUSHED           0x0004
-#define BST_FOCUS            0x0008      
+#define BST_FOCUS            0x0008
 
 /* Static Control Styles */
 #define SS_LEFT             0x00000000L
@@ -2043,7 +2043,7 @@ typedef struct
 
 typedef const SCROLLINFO *LPCSCROLLINFO;
 
-/* GetScrollInfo() flags */ 
+/* GetScrollInfo() flags */
 #define SIF_RANGE           0x0001
 #define SIF_PAGE            0x0002
 #define SIF_POS             0x0004
@@ -2520,7 +2520,7 @@ typedef struct
 #define MNC_IGNORE 0
 #define MNC_CLOSE 1
 #define MNC_EXECUTE 2
-#define MNC_SELECT 3 
+#define MNC_SELECT 3
 
 /* SystemParametersInfo */
 /* defines below are for all win versions */
@@ -3340,7 +3340,7 @@ typedef struct
 #define VK_NONAME           0xFC
 #define VK_PA1              0xFD
 #define VK_OEM_CLEAR        0xFE
-  
+
   /* Key status flags for mouse events */
 #define MK_LBUTTON	    0x0001
 #define MK_RBUTTON	    0x0002

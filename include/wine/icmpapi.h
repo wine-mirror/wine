@@ -1,7 +1,7 @@
 /*
  * Interface to the ICMP functions.
  *
- * This header is not part of the standard headers, it is usually 
+ * This header is not part of the standard headers, it is usually
  * delivered separately and this is why it is not directly in 'include'.
  *
  * Depends on ipexport.h (there is no include directive in the original)

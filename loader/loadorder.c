@@ -520,28 +520,28 @@ void MODULE_GetLoadOrder( enum loadorder_type loadorder[], const char *path, BOO
 
         if ( ! GetSystemDirectoryA ( sysdir, MAX_PATH ) ) goto done;
 
-	/* Strip path information for 16 bit modules or if the module 
+	/* Strip path information for 16 bit modules or if the module
 	   resides in the system directory */
 	if ( !win32 || !FILE_strncasecmp ( sysdir, path, strlen (sysdir) ) )
 	{
-	
+
 	    cptr = strrchr(path, '\\');
 	    if(!cptr)
 	        name = strrchr(path, '/');
 	    else
 	        name = strrchr(cptr, '/');
-	    
+
 	    if(!name)
 	        name = cptr ? cptr+1 : (char *)path;
 	    else
 	        name++;
-	    
+
 	    if((cptr = strchr(name, ':')) != NULL)	/* Also strip drive if in format 'C:MODULE.DLL' */
 	        name = cptr+1;
 	}
-	else 
+	else
 	  name = (char *)path;
-    
+
 	len = strlen(name);
 	if(len >= sizeof(fname) || len <= 0)
 	{

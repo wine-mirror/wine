@@ -38,7 +38,7 @@
 /* The internal structures (prefixed by WDML) are used as follows:
  * + a WDML_INSTANCE is created for each instance creation (DdeInitialize)
  *      - a popup window (InstanceClass) is created for each instance.
- *      - this window is used to receive all the DDEML events (server registration, 
+ *      - this window is used to receive all the DDEML events (server registration,
  *	  conversation confirmation...). See the WM_WDML_???? messages for details
  * + when registring a server (DdeNameService) a WDML_SERVER is created
  *	- a popup window (ServerNameClass) is created
@@ -53,7 +53,7 @@
  *	- all the exchanges then take place between those two windows
  *	- windows for the conversation exist in two forms (Ansi & Unicode). This
  *	  is only needed when a partner in a conv is not handled by DDEML. The
- *	  type (A/W) of the window is used to handle the ansi <=> unicode 
+ *	  type (A/W) of the window is used to handle the ansi <=> unicode
  *        transformations
  *	- two handles are created for a conversation (on each side). Each handle
  *	  is linked to a structure. To help differentiate those handles, the
@@ -61,7 +61,7 @@
  * + a (warm or link) is represented by two WDML_LINK structures:
  *	- one on client side, the other one on server side
  *	- therefore, two lists of links are kept for each instance
- *	
+ *
  * To help getting back to data, WDML windows store information:
  *	- offset 0: the DDE instance
  *	- offset 4: the current conversation (for ClientConv and ServerConv only)
@@ -69,12 +69,12 @@
  * All the implementation (client & server) makes the assumption that the other side
  * is not always a DDEML partner. However, if it's the case, supplementary services
  * are available (most notably the REGISTER/UNREGISTER and CONNECT_CONFIRM messages
- * to the callback function). To be correct in every situation, all the basic 
+ * to the callback function). To be correct in every situation, all the basic
  * exchanges are made using the 'pure' DDE protocol. A (future !) enhancement would
  * be to provide a new protocol in the case were both partners are handled by DDEML.
  *
  * The StringHandles are in fact stored as local atoms. So an HSZ and a (local) atom
- * can be used interchangably. However, in order to keep track of the allocated HSZ, 
+ * can be used interchangably. However, in order to keep track of the allocated HSZ,
  * and to free them upon instance termination, all HSZ are stored in a link list.
  * When the HSZ need to be passed thru DDE messages, we need to convert them back and
  * forth to global atoms.
@@ -123,7 +123,7 @@ typedef struct tagWDML_XACT {
     LPARAM			lParam; 	/* useful for reusing */
 } WDML_XACT;
 
-typedef struct tagWDML_CONV 
+typedef struct tagWDML_CONV
 {
     struct tagWDML_CONV*	next;		/* to link all the conversations */
     struct tagWDML_INSTANCE*	instance;
@@ -161,7 +161,7 @@ typedef struct tagWDML_INSTANCE
     PFNCALLBACK     		callback;
     DWORD           		CBFflags;
     DWORD           		monitorFlags;
-    DWORD			lastError; 
+    DWORD			lastError;
     HWND			hwndEvent;
     WDML_SERVER*		servers;	/* list of registered servers */
     WDML_CONV*			convs[2];	/* active conversations for this instance (client and server) */
@@ -187,31 +187,31 @@ typedef enum {
 } WDML_QUEUE_STATE;
 
 extern	HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInst, UINT uType, UINT uFmt, HCONV hConv,
-					    HSZ hsz1, HSZ hsz2, HDDEDATA hdata, 
+					    HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
 					    DWORD dwData1, DWORD dwData2);
 extern	HDDEDATA 	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, HCONV hConv,
-					      HSZ hsz1, HSZ hsz2, HDDEDATA hdata, 
+					      HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
 					      DWORD dwData1, DWORD dwData2);
 extern	WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
 extern	void		WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
 extern	WDML_SERVER*	WDML_FindServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
-/* called both in DdeClientTransaction and server side. */		
+/* called both in DdeClientTransaction and server side. */
 extern	UINT		WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 					DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16);
-extern	WDML_CONV* 	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side, 
+extern	WDML_CONV* 	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 				     HSZ hszService, HSZ hszTopic, HWND hwndClient, HWND hwndServer);
 extern	void		WDML_RemoveConv(WDML_CONV* pConv, WDML_SIDE side);
 extern	WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected);
 extern	WDML_CONV*	WDML_GetConvFromWnd(HWND hWnd);
-extern	WDML_CONV*	WDML_FindConv(WDML_INSTANCE* pInstance, WDML_SIDE side, 
-				      HSZ hszService, HSZ hszTopic);	
-extern  BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode, 
+extern	WDML_CONV*	WDML_FindConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
+				      HSZ hszService, HSZ hszTopic);
+extern  BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
 				     BOOL fBusy, BOOL fAck, UINT pmt, LPARAM lParam, UINT oldMsg);
-extern	void		WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
+extern	void		WDML_AddLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 				     UINT wType, HSZ hszItem, UINT wFmt);
-extern	WDML_LINK*	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
+extern	WDML_LINK*	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 				      HSZ hszItem, BOOL use_fmt, UINT uFmt);
-extern	void 		WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side, 
+extern	void 		WDML_RemoveLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 					HSZ hszItem, UINT wFmt);
 extern	void		WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML_SIDE side);
 /* string internals */
@@ -226,14 +226,14 @@ extern	void		WDML_QueueTransaction(WDML_CONV* pConv, WDML_XACT* pXAct);
 extern	BOOL		WDML_UnQueueTransaction(WDML_CONV* pConv, WDML_XACT*  pXAct);
 extern	void		WDML_FreeTransaction(WDML_INSTANCE* pInstance, WDML_XACT* pXAct, BOOL doFreePmt);
 extern	WDML_XACT*	WDML_FindTransaction(WDML_CONV* pConv, DWORD tid);
-extern	HGLOBAL		WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease, 
+extern	HGLOBAL		WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
 					       BOOL fDeferUpd, BOOL dAckReq);
 extern	HDDEDATA	WDML_Global2DataHandle(HGLOBAL hMem, WINE_DDEHEAD* da);
 extern  BOOL            WDML_IsAppOwned(HDDEDATA hDdeData);
 extern	WDML_INSTANCE*	WDML_GetInstance(DWORD InstId);
 extern	WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd);
 /* broadcasting to DDE windows */
-extern	void		WDML_BroadcastDDEWindows(const char* clsName, UINT uMsg, 
+extern	void		WDML_BroadcastDDEWindows(const char* clsName, UINT uMsg,
 						 WPARAM wParam, LPARAM lParam);
 extern	void		WDML_NotifyThreadExit(DWORD tid);
 
@@ -252,7 +252,7 @@ extern const WCHAR 	WDML_szClientConvClassW[]; /* class of window for client sid
 #define WM_WDML_UNREGISTER	(WM_USER + 0x201)
 #define WM_WDML_CONNECT_CONFIRM	(WM_USER + 0x202)
 
-/* parameters for messages: 
+/* parameters for messages:
  *			wParam				lParam
  * Register		atom for service name		atom for service spec
  * Unregister		atom for service name		atom for service spec

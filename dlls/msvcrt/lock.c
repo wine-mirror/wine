@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 typedef struct
 {
-  BOOL             bInit; 
+  BOOL             bInit;
   CRITICAL_SECTION crit;
 } LOCKTABLEENTRY;
 
@@ -39,7 +39,7 @@ static inline void msvcrt_mlock_set_entry_initialized( int locknum, BOOL initial
 static inline void msvcrt_initialize_mlock( int locknum )
 {
   InitializeCriticalSection( &(lock_table[ locknum ].crit) );
-  msvcrt_mlock_set_entry_initialized( locknum, TRUE ); 
+  msvcrt_mlock_set_entry_initialized( locknum, TRUE );
 }
 
 static inline void msvcrt_uninitialize_mlock( int locknum )
@@ -51,7 +51,7 @@ static inline void msvcrt_uninitialize_mlock( int locknum )
 /**********************************************************************
  *     msvcrt_init_mt_locks (internal)
  *
- * Initialize the table lock. All other locks will be initialized 
+ * Initialize the table lock. All other locks will be initialized
  * upon first use.
  *
  */
@@ -68,7 +68,7 @@ void msvcrt_init_mt_locks(void)
   }
 
   /* Initialize our lock table lock */
-  msvcrt_initialize_mlock( _LOCKTAB_LOCK ); 
+  msvcrt_initialize_mlock( _LOCKTAB_LOCK );
 }
 
 /**********************************************************************
@@ -119,7 +119,7 @@ void _lock( int locknum )
     _unlock( _LOCKTAB_LOCK );
   }
 
-  EnterCriticalSection( &(lock_table[ locknum ].crit) ); 
+  EnterCriticalSection( &(lock_table[ locknum ].crit) );
 }
 
 /**********************************************************************

@@ -82,9 +82,9 @@ typedef struct tagPROPBAG2
 	DWORD dwType;
 	VARTYPE vt;
 	CLIPFORMAT cfType;
-	DWORD dwHint; 
-	LPOLESTR pstrName; 
-	CLSID clsid; 
+	DWORD dwHint;
+	LPOLESTR pstrName;
+	CLSID clsid;
 } PROPBAG2;
 
 /*****************************************************************************
@@ -110,10 +110,10 @@ typedef struct IPersistStreamInit IPersistStreamInit,*LPPERSISTSTREAMINIT;
 
 DEFINE_GUID(IID_IPersistMemory, 0xbd1ae5e0L, 0xa6ae, 0x11ce, 0xbd, 0x37, 0x50, 0x42, 0x00, 0xc1, 0x00, 0x00);
 typedef struct IPersistMemory IPersistMemory,*LPPERSISTMEMORY;
- 
+
 DEFINE_GUID(IID_IPersistPropertyBag, 0x37d84f60, 0x42cb, 0x11ce, 0x81, 0x35, 0x00, 0xaa, 0x00, 0x4b, 0xb8, 0x51);
 typedef struct IPersistPropertyBag IPersistPropertyBag,*LPPERSISTPROPERTYBAG;
- 
+
 DEFINE_GUID(IID_IPersistPropertyBag2, 0x22f55881, 0x280b, 0x11d0, 0xa8, 0xa9, 0x00, 0xa0, 0xc9, 0x0c, 0x20, 0x04);
 typedef struct IPersistPropertyBag2 IPersistPropertyBag2,*LPPERSISTPROPERTYBAG2;
 
@@ -122,16 +122,16 @@ typedef struct IErrorLog IErrorLog,*LPERRORLOG;
 
 DEFINE_GUID(IID_IPropertyBag, 0x55272a00L, 0x42cb, 0x11ce, 0x81, 0x35, 0x00, 0xaa, 0x00, 0x4b, 0xb8, 0x51);
 typedef struct IPropertyBag IPropertyBag,*LPPROPERTYBAG;
- 
+
 DEFINE_GUID(IID_IPropertyBag2, 0x22f55882, 0x280b, 0x11d0, 0xa8, 0xa9, 0x00, 0xa0, 0xc9, 0x0c, 0x20, 0x04);
 typedef struct IPropertyBag2 IPropertyBag2,*LPPROPERTYBAG2;
 
 DEFINE_GUID(IID_ISpecifyPropertyPages, 0xb196b28b, 0xbab4, 0x101a, 0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
 typedef struct ISpecifyPropertyPages ISpecifyPropertyPages,*LPSPECIFYPROPERTYPAGES;
- 
+
 DEFINE_GUID(IID_IPerPropertyBrowsing, 0xb196b28b, 0xbab4, 0x101a, 0xb6, 0x9c, 0x00, 0xaa, 0x00, 0x34, 0x1d, 0x07);
 typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
- 
+
 
 /*****************************************************************************
  * IPropertPage interface
@@ -148,7 +148,7 @@ typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
  	ICOM_METHOD (HRESULT,IsPageDirty) \
  	ICOM_METHOD (HRESULT,Apply) \
  	ICOM_METHOD1(HRESULT,Help, LPCOLESTR,pszHelpDir) \
- 	ICOM_METHOD1(HRESULT,TranslateAccelerator, MSG*,pMsg) 
+ 	ICOM_METHOD1(HRESULT,TranslateAccelerator, MSG*,pMsg)
 #define IPropertyPage_IMETHODS \
 	IUnknown_IMETHODS \
 	IPropertyPage_METHODS
@@ -171,7 +171,7 @@ ICOM_DEFINE(IPropertyPage,IUnknown)
 #define IPropertyPage_Apply(p)                  ICOM_CALL (Apply,p)
 #define IPropertyPage_Help(p,a)                 ICOM_CALL1(Help,p,a)
 #define IPropertyPage_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
-				 
+
 
 /*****************************************************************************
  * IPropertPage2 interface
@@ -203,7 +203,7 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 #define IPropertyPage2_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
 /*** IPropertyPage2 methods ***/
 #define IPropertyPage2_EditProperty(p,a)         ICOM_CALL1(EditProperty,p,a)
-				 
+
 
 /*****************************************************************************
  * IPropertPageSite interface
@@ -218,7 +218,7 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 	IUnknown_IMETHODS \
 	IPropertyPageSite_METHODS
 ICOM_DEFINE(IPropertyPageSite,IUnknown)
-#undef ICOM_INTERFACE 
+#undef ICOM_INTERFACE
 
 /*** IUnknown methods ***/
 #define IPropertyPageSite_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
@@ -229,7 +229,7 @@ ICOM_DEFINE(IPropertyPageSite,IUnknown)
 #define IPropertyPageSite_GetLocaleID(p,a)          ICOM_CALL1(GetLocaleID,p,a)
 #define IPropertyPageSite_GetPageContainer(p,a)     ICOM_CALL1(GetPageContainer,p,a)
 #define IPropertyPageSite_TranslateAccelerator(p,a) ICOM_CALL1(TranslateAccelerator,p,a)
-						 
+
 
 /*****************************************************************************
  * IPropertyNotifySink interface
@@ -252,14 +252,14 @@ ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 #define IPropertyNotifySink_OnChanged(p,a)            ICOM_CALL1(OnChanged,p,a)
 #define IPropertyNotifySink_OnRequestEdit(p,a)        ICOM_CALL1(OnRequestEdit,p,a)
 
-				 
+
 /*****************************************************************************
  * IPropertyNotifySink interface
  */
 #define ICOM_INTERFACE ISimpleFrameSite
 #define ISimpleFrameSite_METHODS \
 	ICOM_METHOD6(HRESULT,PreMessageFilter, HWND,hWnd, UINT,msg, WPARAM,wp, LPARAM,lp, LRESULT*,plResult, DWORD*,pwdCookie) \
-	ICOM_METHOD6(HRESULT,PostMessageFilter, HWND,hWnd, UINT,msg, WPARAM,wp, LPARAM,lp, LRESULT*,plResult, DWORD,pwdCookie) 
+	ICOM_METHOD6(HRESULT,PostMessageFilter, HWND,hWnd, UINT,msg, WPARAM,wp, LPARAM,lp, LRESULT*,plResult, DWORD,pwdCookie)
 #define ISimpleFrameSite_IMETHODS \
 	IUnknown_IMETHODS \
 	ISimpleFrameSite_METHODS
@@ -304,7 +304,7 @@ ICOM_DEFINE(IPersistStreamInit,IPersist)
 #define IPersistStreamInit_GetSizeMax(p,a) ICOM_CALL1(GetSizeMax,p,a)
 #define IPersistStreamInit_InitNew(p)      ICOM_CALL (InitNew,p)
 
-				 
+
 /*****************************************************************************
  * IPersistMemory interface
  */
@@ -407,7 +407,7 @@ ICOM_DEFINE(IErrorLog,IUnknown)
 #define IErrorLog_Release(p)            ICOM_CALL (Release,p)
 /*** IErrorLog methods ***/
 #define IErrorLog_AddError(p,a,b)       ICOM_CALL2(GetClassID,p,a,b)
-				 
+
 
 /*****************************************************************************
  * IPropertyBag interface
@@ -464,7 +464,7 @@ ICOM_DEFINE(IPropertyBag2,IUnknown)
  */
 #define ICOM_INTERFACE ISpecifyPropertyPages
 #define ISpecifyPropertyPages_METHODS \
-	ICOM_METHOD1(HRESULT,GetPages, CAUUID*,pPages) 
+	ICOM_METHOD1(HRESULT,GetPages, CAUUID*,pPages)
 #define ISpecifyPropertyPages_IMETHODS \
 	IUnknown_IMETHODS \
 	ISpecifyPropertyPages_METHODS
@@ -477,7 +477,7 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 #define ISpecifyPropertyPages_Release(p)            ICOM_CALL (Release,p)
 /*** ISpecifyPropertyPages methods ***/
 #define ISpecifyPropertyPages_GetPages(p,a)         ICOM_CALL1(GetPages,p,a)
-				  
+
 
 /*****************************************************************************
  * IPerPropertyBrowsing interface
@@ -487,7 +487,7 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 	ICOM_METHOD2(HRESULT,GetDisplayString, DISPID,dispID, BSTR*,pBstr) \
 	ICOM_METHOD2(HRESULT,MapPropertyToPage, DISPID,dispID, CLSID*,pClsid) \
 	ICOM_METHOD3(HRESULT,GetPredefinedStrings, DISPID,dispID, CALPOLESTR*,pCaStringsOut, CADWORD*,pCaCookiesOut) \
-	ICOM_METHOD3(HRESULT,GetPredefinedValue, DISPID,dispID, DWORD,dwCookie, VARIANT*,pVarOut) 
+	ICOM_METHOD3(HRESULT,GetPredefinedValue, DISPID,dispID, DWORD,dwCookie, VARIANT*,pVarOut)
 #define IPerPropertyBrowsing_IMETHODS \
 	IUnknown_IMETHODS \
 	IPerPropertyBrowsing_METHODS

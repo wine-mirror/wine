@@ -97,8 +97,8 @@ extern LONG CALLBACK WDML_CallTo16_long_llllllll(FARPROC16,LONG,LONG,LONG,LONG,L
  *
  *
  */
-HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, 
-                                      HCONV hConv, HSZ hsz1, HSZ hsz2, 
+HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
+                                      HCONV hConv, HSZ hsz1, HSZ hsz2,
                                       HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
 {
     DWORD               d1;
@@ -116,7 +116,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
         d1 = dwData1;
         break;
     }
-    ret = WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, hConv, 
+    ret = WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, hConv,
                                       hsz1, hsz2, hdata, d1, dwData2);
     switch (uType)
     {
@@ -134,7 +134,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
 UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 			      DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes, 
+    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes,
                            FALSE, TRUE);
 }
 
@@ -155,7 +155,7 @@ HCONVLIST WINAPI DdeConnectList16(DWORD idInst, HSZ hszService, HSZ hszTopic,
 {
     CONVCONTEXT	        cc;
     CONVCONTEXT*	pCC = NULL;
-    
+
     if (pCC16)
         map1632_conv_context(pCC = &cc, pCC16);
     return DdeConnectList(idInst, hszService, hszTopic, hConvList, pCC);
@@ -181,7 +181,7 @@ BOOL16 WINAPI DdeDisconnectList16(HCONVLIST hConvList)
 /*****************************************************************
  *		DdeQueryString (DDEML.23)
  */
-DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax, 
+DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax,
                               INT16 codepage)
 {
     return DdeQueryStringA(idInst, hsz, lpsz, cchMax, codepage);
@@ -190,12 +190,12 @@ DWORD WINAPI DdeQueryString16(DWORD idInst, HSZ hsz, LPSTR lpsz, DWORD cchMax,
 /*****************************************************************
  *            DdeConnect   (DDEML.7)
  */
-HCONV WINAPI DdeConnect16(DWORD idInst, HSZ hszService, HSZ hszTopic, 
+HCONV WINAPI DdeConnect16(DWORD idInst, HSZ hszService, HSZ hszTopic,
                           LPCONVCONTEXT16 pCC16)
 {
     CONVCONTEXT	        cc;
     CONVCONTEXT*	pCC = NULL;
-    
+
     if (pCC16)
         map1632_conv_context(pCC = &cc, pCC16);
     return DdeConnect(idInst, hszService, hszTopic, pCC);
@@ -220,8 +220,8 @@ BOOL16 WINAPI DdeSetUserHandle16(HCONV hConv, DWORD id, DWORD hUser)
 /*****************************************************************
  *            DdeCreateDataHandle (DDEML.14)
  */
-HDDEDATA WINAPI DdeCreateDataHandle16(DWORD idInst, LPBYTE pSrc, DWORD cb, 
-                                      DWORD cbOff, HSZ hszItem, UINT16 wFmt, 
+HDDEDATA WINAPI DdeCreateDataHandle16(DWORD idInst, LPBYTE pSrc, DWORD cb,
+                                      DWORD cbOff, HSZ hszItem, UINT16 wFmt,
 				      UINT16 afCmd)
 {
     return DdeCreateDataHandle(idInst, pSrc, cb, cbOff, hszItem, wFmt, afCmd);
@@ -235,8 +235,8 @@ HSZ WINAPI DdeCreateStringHandle16(DWORD idInst, LPCSTR str, INT16 codepage)
     if  (codepage)
     {
         return DdeCreateStringHandleA(idInst, str, codepage);
-    } 
-    else 
+    }
+    else
     {
         TRACE("Default codepage supplied\n");
         return DdeCreateStringHandleA(idInst, str, CP_WINANSI);
@@ -270,8 +270,8 @@ BOOL16 WINAPI DdeKeepStringHandle16(DWORD idInst, HSZ hsz)
 /*****************************************************************
  *            DdeClientTransaction  (DDEML.11)
  */
-HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData, HCONV hConv, 
-                                       HSZ hszItem, UINT16 wFmt, UINT16 wType, 
+HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData, HCONV hConv,
+                                       HSZ hszItem, UINT16 wFmt, UINT16 wType,
                                        DWORD dwTimeout, LPDWORD pdwResult)
 {
     return DdeClientTransaction((LPBYTE)pData, cbData, hConv, hszItem,
@@ -366,7 +366,7 @@ INT16 WINAPI DdeCmpStringHandles16(HSZ hsz1, HSZ hsz2)
  *		DdeQueryConvInfo (DDEML.9)
  *
  */
-UINT16 WINAPI DdeQueryConvInfo16(HCONV hConv, DWORD idTransaction, 
+UINT16 WINAPI DdeQueryConvInfo16(HCONV hConv, DWORD idTransaction,
                                  LPCONVINFO16 lpConvInfo)
 {
     CONVINFO    ci32;

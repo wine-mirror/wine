@@ -136,17 +136,17 @@ REFIID _dbg_ILGetGUIDPointer(LPCITEMIDLIST pidl)
 
 DWORD _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 {
-	DWORD		dwReturn=0; 
+	DWORD		dwReturn=0;
 	LPSTR		szSrc;
 	GUID const * 	riid;
 	char szTemp[MAX_PATH];
-	
+
 	if (!pidl) return 0;
 
 	if (szOut)
 	  *szOut = 0;
 
-	if (_dbg_ILIsDesktop(pidl))					
+	if (_dbg_ILIsDesktop(pidl))
 	{
 	 /* desktop */
 	  if (szOut) strncpy(szOut, "Desktop", uOutSize);
@@ -191,7 +191,7 @@ void pdump (LPCITEMIDLIST pidl)
 	{
 	  MESSAGE ("-------- pidl=%p\n", pidl);
 	  if (pidltemp->mkid.cb)
-	  { 
+	  {
 	    do
 	    {
 	      DWORD dwAttrib = 0;

@@ -131,12 +131,12 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define EM_GETSCROLLPOS         (WM_USER + 221)
 #define EM_SETSCROLLPOS         (WM_USER + 222)
 
-#define EM_SETFONTSIZE          (WM_USER + 223)  
+#define EM_SETFONTSIZE          (WM_USER + 223)
 #define EM_GETZOOM		(WM_USER + 224)
 #define EM_SETZOOM		(WM_USER + 225)
 
 /* New notifications */
-#define EN_MSGFILTER                    0x0700   
+#define EN_MSGFILTER                    0x0700
 #define EN_REQUESTRESIZE                0x0701
 #define EN_SELCHANGE                    0x0702
 #define EN_DROPFILES                    0x0703

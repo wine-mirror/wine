@@ -1,7 +1,7 @@
 /*
  * Win32s Universal Thunk API
  *
- * Copyright 1999 Ulrich Weigand 
+ * Copyright 1999 Ulrich Weigand
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,7 +56,7 @@ typedef struct _UTINFO
     struct _UTINFO    *next;
     HMODULE            hModule;
     HMODULE16          hModule16;
-    
+
     UT16THUNK          ut16;
     UT32THUNK          ut32;
 
@@ -66,9 +66,9 @@ static UTINFO *UT_head; /* head of Universal Thunk list */
 
 typedef DWORD (CALLBACK *UTGLUEPROC)( LPVOID lpBuff, DWORD dwUserDefined );
 
-BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
+BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
                         LPSTR lpszInitName, LPSTR lpszProcName,
-                        FARPROC *ppfn32Thunk, FARPROC pfnUT32CallBack, 
+                        FARPROC *ppfn32Thunk, FARPROC pfnUT32CallBack,
                         LPVOID lpBuff );
 
 VOID WINAPI UTUnRegister( HMODULE hModule );
@@ -102,7 +102,7 @@ DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR *translationLi
 /****************************************************************************
  *		UTGlue32
  */
-static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefined, 
+static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefined,
                               LPVOID translationList[] )
 {
     SEGPTR segBuff, *segptrList = NULL;
@@ -125,7 +125,7 @@ static DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefin
         }
 
         for ( i = 0; i < nList; i++ )
-            segptrList[i] = *(SEGPTR *)translationList[i] 
+            segptrList[i] = *(SEGPTR *)translationList[i]
                           = MapLS( *(LPVOID *)translationList[i] );
     }
 
@@ -227,14 +227,14 @@ static UTINFO *UTFind( HMODULE hModule )
 /****************************************************************************
  *		UTRegister (KERNEL32.@)
  */
-BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL, 
+BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
                         LPSTR lpszInitName, LPSTR lpszProcName,
-                        FARPROC *ppfn32Thunk, FARPROC pfnUT32CallBack, 
+                        FARPROC *ppfn32Thunk, FARPROC pfnUT32CallBack,
                         LPVOID lpBuff )
 {
     UTINFO *ut;
-    HMODULE16 hModule16; 
-    FARPROC16 target16, init16; 
+    HMODULE16 hModule16;
+    FARPROC16 target16, init16;
 
     /* Load 16-bit DLL and get UTProc16 entry point */
 
@@ -279,7 +279,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     /* Return 32-bit thunk */
 
     *ppfn32Thunk = (FARPROC) &ut->ut32;
-    
+
     return TRUE;
 }
 
@@ -300,7 +300,7 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
     }
     RtlReleasePebLock();
 
-    if ( hModule16 ) 
+    if ( hModule16 )
         FreeLibrary16( hModule16 );
 }
 

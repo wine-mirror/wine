@@ -49,7 +49,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(win);
-  
+
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
@@ -241,7 +241,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       XDGAKeyEvent *evt = (XDGAKeyEvent *) event;
 
       TRACE("DGAKeyPress/ReleaseEvent received.\n");
-      
+
       if (evt->type == DGAKeyReleaseEventType)
 	ke.type = KeyRelease;
       else
@@ -270,7 +270,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       hWnd = 0;  /* Not for a registered window */
 
   if ( !hWnd && event->xany.window != root_window
-             && event->type != PropertyNotify 
+             && event->type != PropertyNotify
              && event->type != MappingNotify)
       WARN( "Got event %s for unknown Window %08lx\n",
             event_names[event->type], event->xany.window );
@@ -324,7 +324,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       if (!hWnd) return;
       EVENT_SelectionClear( hWnd, (XSelectionClearEvent*) event );
       break;
-      
+
     case PropertyNotify:
       EVENT_PropertyNotify( (XPropertyEvent *)event );
       break;
@@ -353,7 +353,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       X11DRV_MappingNotify( (XMappingEvent *) event );
       break;
 
-    default:    
+    default:
       WARN("Unprocessed event %s for hwnd %04x\n",
 	   event_names[event->type], hWnd );
       break;
@@ -376,7 +376,7 @@ static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
     bIsDisabled = GetWindowLongA( hWnd, GWL_STYLE ) & WS_DISABLED;
 
     /* If the window has been disabled, revert the X focus back to the last
-     * focus window. This is to disallow the window manager from switching 
+     * focus window. This is to disallow the window manager from switching
      * focus away while the app is in a modal state.
      */
     if (bIsDisabled && glastXFocusWin)
@@ -441,10 +441,10 @@ static BOOL X11DRV_CheckFocus(void)
   HWND   hWnd;
   Window xW;
   int	   state;
-  
+
   TSXGetInputFocus(display, &xW, &state);
     if( xW == None ||
-        TSXFindContext(display, xW, winContext, (char **)&hWnd) ) 
+        TSXFindContext(display, xW, winContext, (char **)&hWnd) )
       return FALSE;
     return TRUE;
 }
@@ -466,7 +466,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
     int xRc;
 
     TRACE("Request for %s\n", TSXGetAtomName(display, target));
-    
+
     /*
      * Count the number of items we wish to expose as selection targets.
      * We include the TARGETS item, and a PIXMAP if we have CF_DIB or CF_BITMAP
@@ -474,7 +474,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
     cTargets = CountClipboardFormats() + 1;
     if ( CLIPBOARD_IsPresent(CF_DIB) ||  CLIPBOARD_IsPresent(CF_BITMAP) )
        cTargets++;
-    
+
     /* Allocate temp buffer */
     targets = (Atom*)HeapAlloc( GetProcessHeap(), 0, cTargets * sizeof(Atom));
     if(targets == NULL) return None;
@@ -500,7 +500,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
             if (!bExists)
             {
                 targets[cTargets++] = prop;
-            
+
                 /* Add PIXMAP prop for bitmaps additionally */
                 if ( (wFormat == CF_DIB || wFormat == CF_BITMAP )
                      && !bHavePixmap )
@@ -525,7 +525,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
             }
         }
     }
-    
+
     /* Update the X property */
     TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
 
@@ -535,7 +535,7 @@ static Atom EVENT_SelectionRequest_TARGETS( Display *display, Window requestor,
                             XA_ATOM, 32, PropModeReplace,
                             (unsigned char *)targets, cTargets);
     TRACE("(Rc=%d)\n", xRc);
-    
+
     HeapFree( GetProcessHeap(), 0, targets );
 
     return rprop;
@@ -596,17 +596,17 @@ static Atom EVENT_SelectionRequest_STRING( Display *display, Window requestor,
     WideCharToMultiByte(text_cp, 0, uni_text, -1, text, size, NULL, NULL);
 
     /* remove carriage returns */
-    
+
     lpstr = (char*)HeapAlloc( GetProcessHeap(), 0, size-- );
     if(lpstr == NULL) return None;
     for(i=0,j=0; i < size && text[i]; i++ )
     {
-        if( text[i] == '\r' && 
+        if( text[i] == '\r' &&
             (text[i+1] == '\n' || text[i+1] == '\0') ) continue;
         lpstr[j++] = text[i];
     }
     lpstr[j]='\0';
-    
+
     /* Update the X property */
     TRACE("\tUpdating property %s...\n", TSXGetAtomName(display, rprop));
     xRc = TSXChangeProperty(display, requestor, rprop,
@@ -637,7 +637,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
     XSetWindowAttributes win_attr;
     XWindowAttributes win_attr_src;
 #endif
-    
+
     /*
      * Map the requested X selection property type atom name to a
      * windows clipboard format ID.
@@ -647,7 +647,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
     TRACE("Request for %s (wFormat=%x %s)\n",
                   itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
     TSXFree(itemFmtName);
-    
+
     hClipData = GetClipboardData(wFormat);
     if ( !hClipData )
     {
@@ -660,17 +660,17 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
     {
         HWND hwnd = GetOpenClipboardWindow();
         HDC hdc = GetDC(hwnd);
-        
+
         /* For convert from packed DIB to Pixmap */
         pixmap = X11DRV_DIB_CreatePixmapFromDIB(hClipData, hdc);
-        
+
         ReleaseDC(hwnd, hdc);
     }
     else if (wFormat == CF_BITMAP)
     {
         HWND hwnd = GetOpenClipboardWindow();
         HDC hdc = GetDC(hwnd);
-        
+
         pixmap = X11DRV_BITMAP_CreatePixmapFromBitmap(hClipData, hdc);
 
         ReleaseDC(hwnd, hdc);
@@ -688,7 +688,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
           TSXGetAtomName(display, target), pixmap);
 
     /* Store the Pixmap handle in the property */
-    xRc = TSXChangeProperty(display, requestor, rprop, target, 
+    xRc = TSXChangeProperty(display, requestor, rprop, target,
                             32, PropModeReplace,
                             (unsigned char *)&pixmap, 1);
     TRACE("(Rc=%d)\n", xRc);
@@ -714,7 +714,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
      */
     X11DRV_CLIPBOARD_RegisterPixmapResource( rprop, pixmap );
 #endif
-    
+
 END:
     return rprop;
 }
@@ -734,7 +734,7 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
     char * itemFmtName;
     int cBytes;
     int xRc;
-    
+
     /*
      * Map the requested X selection property type atom name to a
      * windows clipboard format ID.
@@ -744,21 +744,21 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
     TRACE("Request for %s (wFormat=%x %s)\n",
           itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
     TSXFree(itemFmtName);
-    
+
     hClipData = GetClipboardData(wFormat);
-    
+
     if( hClipData && (lpClipData = GlobalLock(hClipData)) )
     {
         cBytes = GlobalSize(hClipData);
-        
+
         TRACE("\tUpdating property %s, %d bytes...\n",
               TSXGetAtomName(display, rprop), cBytes);
-        
+
         xRc = TSXChangeProperty(display, requestor, rprop,
                                 target, 8, PropModeReplace,
                                 (unsigned char *)lpClipData, cBytes);
         TRACE("(Rc=%d)\n", xRc);
-        
+
         GlobalUnlock(hClipData);
     }
     else
@@ -766,7 +766,7 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
         TRACE("\tCould not retrieve native format!\n");
         rprop = None; /* Fail the request */
     }
-    
+
     return rprop;
 }
 
@@ -793,12 +793,12 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
     Atom*	   targetPropList=NULL;
     unsigned long  cTargetPropList = 0;
 /*  Atom           xAtomPair = TSXInternAtom(display, "ATOM_PAIR", False); */
-    
+
    /* If the specified property is None the requestor is an obsolete client.
     * We support these by using the specified target atom as the reply property.
     */
     rprop = pevent->property;
-    if( rprop == None ) 
+    if( rprop == None )
         rprop = pevent->target;
     if (!rprop)
         goto END;
@@ -827,7 +827,7 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
        if(aformat == 32 /* atype == xAtomPair */ )
        {
           int i;
-          
+
           /* Iterate through the ATOM_PAIR list and execute a SelectionRequest
            * for each (target,property) pair */
 
@@ -841,19 +841,19 @@ static Atom EVENT_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent *
                     i/2, targetName, propName);
               TSXFree(targetName);
               TSXFree(propName);
-              
+
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
               {
                   TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
                   continue;
               }
-              
+
               /* Set up an XSelectionRequestEvent for this (target,property) pair */
               memcpy( &event, pevent, sizeof(XSelectionRequestEvent) );
               event.target = targetPropList[i];
               event.property = targetPropList[i+1];
-                  
+
               /* Fire a SelectionRequest, informing the handler that we are processing
                * a MULTIPLE selection request event.
                */
@@ -906,9 +906,9 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
    * We support these by using the specified target atom as the reply property.
    */
   rprop = event->property;
-  if( rprop == None ) 
+  if( rprop == None )
       rprop = event->target;
-  
+
   if(event->target == xaTargets)  /*  Return a list of all supported targets */
   {
       /* TARGETS selection request */
@@ -945,11 +945,11 @@ static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BO
 END:
   /* close clipboard only if we opened before */
   if(couldOpen) CloseClipboard();
-  
-  if( rprop == None) 
+
+  if( rprop == None)
       TRACE("\tRequest ignored\n");
 
-  /* reply to sender 
+  /* reply to sender
    * SelectionNotify should be sent only at the end of a MULTIPLE request
    */
   if ( !bIsMultiple )
@@ -972,7 +972,7 @@ END:
 static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
   Atom xaClipboard = TSXInternAtom(event->display, "CLIPBOARD", False);
-    
+
   if (event->selection == XA_PRIMARY || event->selection == xaClipboard)
       X11DRV_CLIPBOARD_ReleaseSelection( event->selection, event->window, hWnd );
 }
@@ -993,7 +993,7 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
     {
       TRACE("\tPropertyDelete for atom %s on window %ld\n",
             TSXGetAtomName(event->display, event->atom), (long)event->window);
-      
+
       if (X11DRV_IsSelectionOwner())
           X11DRV_CLIPBOARD_FreeResources( event->atom );
       break;
@@ -1005,7 +1005,7 @@ static void EVENT_PropertyNotify( XPropertyEvent *event )
             TSXGetAtomName(event->display, event->atom), (long)event->window);
       break;
     }
-    
+
     default:
       break;
   }
@@ -1036,18 +1036,18 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
   SEGPTR		spDragInfo = K32WOWGlobalLock16(hDragInfo);
   Window		w_aux_root, w_aux_child;
   WND*                  pWnd;
-  
+
   if( !lpDragInfo || !spDragInfo ) return;
-  
+
   pWnd = WIN_FindWndPtr(hWnd);
-  
+
   TSXQueryPointer( event->display, get_whole_window(pWnd), &w_aux_root, &w_aux_child,
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
-  
+
   lpDragInfo->hScope = hWnd;
   lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
-  
+
   /* find out drop point and drop window */
   if( x < 0 || y < 0 ||
       x > (pWnd->rectWindow.right - pWnd->rectWindow.left) ||
@@ -1059,7 +1059,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
       x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
     }
   WIN_ReleaseWndPtr(pWnd);
-  
+
   GlobalFree16( hDragInfo );
 
     if (!bAccept) return;
@@ -1130,7 +1130,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 /**********************************************************************
  *           EVENT_DropURLs
  *
- * drop items are separated by \n 
+ * drop items are separated by \n
  * each item is prefixed by its mime type
  *
  * event->data.l[3], event->data.l[4] contains drop x,y position
@@ -1171,15 +1171,15 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	INT len = GetShortPathNameA( p+5, NULL, 0 );
 	if (len) drop_len += len + 1;
       }
-      if (next) { 
-	*next = '\n'; 
+      if (next) {
+	*next = '\n';
 	p = next + 1;
 	next = strchr(p, '\n');
       } else {
 	p = NULL;
       }
     }
-    
+
     if( drop_len && drop_len < 65535 ) {
       TSXQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
 		       &x, &y, &u.i, &u.i, &u.i);
@@ -1220,8 +1220,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 	  } else {
 	    WARN("unknown mime type %s\n", p);
 	  }
-	  if (next) { 
-	    *next = '\n'; 
+	  if (next) {
+	    *next = '\n';
 	    p = next + 1;
 	    next = strchr(p, '\n');
 	  } else {
@@ -1234,7 +1234,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
         PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
       }
     }
-    if( p_data ) TSXFree(p_data);  
+    if( p_data ) TSXFree(p_data);
   }
 }
 
@@ -1244,7 +1244,7 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 {
   if (event->message_type != None && event->format == 32) {
-    if ((event->message_type == wmProtocols) && 
+    if ((event->message_type == wmProtocols) &&
 	(((Atom) event->data.l[0]) == wmDeleteWindow))
     {
         /* Ignore the delete window request if the window has been disabled */
@@ -1279,7 +1279,7 @@ static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 			    AnyPropertyType, &u.atom, &u.i,
 			    &u.l, &u.l, &p_data);
       TRACE("message_type=%ld, data=%ld,%ld,%ld,%ld,%ld, msg=%s\n",
-	    event->message_type, event->data.l[0], event->data.l[1], 
+	    event->message_type, event->data.l[0], event->data.l[1],
 	    event->data.l[2], event->data.l[3], event->data.l[4],
 	    p_data);
 #endif

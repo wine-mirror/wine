@@ -181,7 +181,7 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
     GLOBALARENA *pArena;
 
     if (!handle) return TRUE;
-    sel = GlobalHandleToSel16( handle ); 
+    sel = GlobalHandleToSel16( handle );
     if (!VALID_HANDLE(sel))
     	return FALSE;
     pArena = GET_ARENA_PTR(sel);
@@ -199,7 +199,7 @@ BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
     GLOBALARENA *pArena;
 
     if (!handle) return TRUE;
-    sel = GlobalHandleToSel16( handle ); 
+    sel = GlobalHandleToSel16( handle );
     if (!VALID_HANDLE(sel))
     	return FALSE;
     pArena = GET_ARENA_PTR(sel);
@@ -291,7 +291,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     TRACE("%04x %ld flags=%04x\n",
                     handle, size, flags );
     if (!handle) return 0;
-    
+
     if (!VALID_HANDLE(handle)) {
     	WARN("Invalid handle 0x%04x!\n", handle);
     	return 0;
@@ -308,7 +308,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         HeapFree( GetProcessHeap(), 0, (void *)pArena->base );
         pArena->base = 0;
 
-        /* Note: we rely on the fact that SELECTOR_ReallocBlock won't 
+        /* Note: we rely on the fact that SELECTOR_ReallocBlock won't
          * change the selector if we are shrinking the block.
 	 * FIXME: shouldn't we keep selectors until the block is deleted?
 	 */
@@ -377,7 +377,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         return 0;
     }
 
-      /* Fill the new arena block 
+      /* Fill the new arena block
          As we may have used HEAP_REALLOC_IN_PLACE_ONLY, areas may overlap*/
 
     if (pNewArena != pArena) memmove( pNewArena, pArena, sizeof(GLOBALARENA) );
@@ -438,7 +438,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 	    WARN("Invalid handle 0x%04x passed to WIN16_GlobalLock16!\n",handle);
 	    sel = 0;
 	}
-	else if (!GET_ARENA_PTR(handle)->base) 
+	else if (!GET_ARENA_PTR(handle)->base)
             sel = 0;
         else
             GET_ARENA_PTR(handle)->lockCount++;
@@ -462,7 +462,7 @@ SEGPTR WINAPI K32WOWGlobalLock16( HGLOBAL16 hMem )
  *           GlobalLock16   (KERNEL32.25)
  *
  * This is the GlobalLock16() function used by 32-bit code.
- * 
+ *
  * RETURNS
  *	Pointer to first byte of memory block
  *	NULL: Failure
@@ -735,7 +735,7 @@ DWORD WINAPI GlobalDOSAlloc16(
        HMODULE16 hModule = GetModuleHandle16("KERNEL");
        WORD	 wSelector;
        GLOBALARENA *pArena;
-   
+
        wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, hModule, WINE_LDT_FLAGS_DATA );
        pArena = GET_ARENA_PTR(wSelector);
        pArena->flags |= GA_DOSMEM;
@@ -756,7 +756,7 @@ WORD WINAPI GlobalDOSFree16(
 ) {
    DWORD   block = GetSelectorBase(sel);
 
-   if( block && block < 0x100000 ) 
+   if( block && block < 0x100000 )
    {
        LPVOID lpBlock = DOSMEM_MapDosToLinear( block );
        if( DOSMEM_FreeBlock( lpBlock ) )
@@ -976,7 +976,7 @@ BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
     MEMORYSTATUS status;
 
     /*
-     * Not unsurprisingly although the documention says you 
+     * Not unsurprisingly although the documention says you
      * _must_ provide the size in the dwSize field, this function
      * (under Windows) always fills the structure and returns true.
      */
@@ -1007,12 +1007,12 @@ DWORD WINAPI GetFreeMemInfo16(void)
 /*
  * Win32 Global heap functions (GlobalXXX).
  * These functions included in Win32 for compatibility with 16 bit Windows
- * Especially the moveable blocks and handles are oldish. 
+ * Especially the moveable blocks and handles are oldish.
  * But the ability to directly allocate memory with GPTR and LPTR is widely
  * used.
  *
  * The handle stuff looks horrible, but it's implemented almost like Win95
- * does it. 
+ * does it.
  *
  */
 
@@ -1051,9 +1051,9 @@ HGLOBAL WINAPI GlobalAlloc(
       hpflags=HEAP_ZERO_MEMORY;
    else
       hpflags=0;
-   
+
    TRACE("() flags=%04x\n",  flags );
-   
+
    if((flags & GMEM_MOVEABLE)==0) /* POINTER */
    {
       palloc=HeapAlloc(GetProcessHeap(), hpflags, size);
@@ -1079,9 +1079,9 @@ HGLOBAL WINAPI GlobalAlloc(
       pintern->Magic=MAGIC_GLOBAL_USED;
       pintern->Flags=flags>>8;
       pintern->LockCount=0;
-      
+
       /* HeapUnlock(heap); */
-       
+
       return INTERN_TO_HANDLE(pintern);
    }
 }
@@ -1103,7 +1103,7 @@ LPVOID WINAPI GlobalLock(
       return (LPVOID) hmem;
 
    /* HeapLock(GetProcessHeap()); */
-   
+
    pintern=HANDLE_TO_INTERN(hmem);
    if(pintern->Magic==MAGIC_GLOBAL_USED)
    {
@@ -1396,7 +1396,7 @@ DWORD WINAPI GlobalSize(
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
 
-   if(ISPOINTER(hmem)) 
+   if(ISPOINTER(hmem))
    {
       retval=HeapSize(GetProcessHeap(), 0,  (LPVOID) hmem);
    }
@@ -1404,7 +1404,7 @@ DWORD WINAPI GlobalSize(
    {
       /* HeapLock(heap); */
       pintern=HANDLE_TO_INTERN(hmem);
-      
+
       if(pintern->Magic==MAGIC_GLOBAL_USED)
       {
         if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
@@ -1478,7 +1478,7 @@ UINT WINAPI GlobalFlags(
 ) {
    DWORD                retval;
    PGLOBAL32_INTERN     pintern;
-   
+
    if(ISPOINTER(hmem))
    {
       retval=0;
@@ -1488,7 +1488,7 @@ UINT WINAPI GlobalFlags(
       /* HeapLock(GetProcessHeap()); */
       pintern=HANDLE_TO_INTERN(hmem);
       if(pintern->Magic==MAGIC_GLOBAL_USED)
-      {               
+      {
 	 retval=pintern->LockCount + (pintern->Flags<<8);
 	 if(pintern->Pointer==0)
 	    retval|= GMEM_DISCARDED;
@@ -1616,7 +1616,7 @@ VOID WINAPI GlobalMemoryStatus(
 	    lpmem->dwMemoryLoad = 0;
 	}
 	free(tmp);
-	
+
     }
 #endif
     /* FIXME: should do something for other systems */

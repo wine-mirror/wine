@@ -35,11 +35,11 @@ extern "C" {
 
 #define	STRRET_OFFSETA	0x0001
 #define STRRET_OFFSETW	0x0004
-#define STRRET_OFFSET WINELIB_NAME_AW(STRRET_OFFSET) 
+#define STRRET_OFFSET WINELIB_NAME_AW(STRRET_OFFSET)
 
 #define	STRRET_CSTRA	0x0002
 #define STRRET_CSTRW	0x0005
-#define STRRET_CSTR WINELIB_NAME_AW(STRRET_CSTR) 
+#define STRRET_CSTR WINELIB_NAME_AW(STRRET_CSTR)
 
 typedef struct _STRRET
 { UINT uType;		/* STRRET_xxx */
@@ -65,7 +65,7 @@ typedef struct IPersistFolder2 IPersistFolder2, *LPPERSISTFOLDER2;
 DEFINE_GUID(IID_IShellFolder2,  0xB82C5AA8, 0xA41B, 0x11D2, 0xBE, 0x32, 0x0, 0xc0, 0x4F, 0xB9, 0x36, 0x61);
 typedef struct IShellFolder2 IShellFolder2, *LPSHELLFOLDER2;
 
-DEFINE_GUID(IID_IEnumExtraSearch,  0xE700BE1, 0x9DB6, 0x11D1, 0xA1, 0xCE, 0x0, 0xc0, 0x4F, 0xD7, 0x5D, 0x13); 
+DEFINE_GUID(IID_IEnumExtraSearch,  0xE700BE1, 0x9DB6, 0x11D1, 0xA1, 0xCE, 0x0, 0xc0, 0x4F, 0xD7, 0x5D, 0x13);
 typedef struct IEnumExtraSearch IEnumExtraSearch, *LPENUMEXTRASEARCH;
 
 /*****************************************************************************
@@ -107,7 +107,7 @@ ICOM_DEFINE(IEnumExtraSearch,IUnknown)
 #define IEnumIDList_Clone(p,a)			ICOM_CALL1(Clone,p,a)
 
 /*****************************************************************************
- * IShellFolder::GetDisplayNameOf/SetNameOf uFlags 
+ * IShellFolder::GetDisplayNameOf/SetNameOf uFlags
  */
 typedef enum
 {	SHGDN_NORMAL		= 0,		/* default (display purpose) */
@@ -116,7 +116,7 @@ typedef enum
 } SHGNO;
 
 /*****************************************************************************
- * IShellFolder::EnumObjects 
+ * IShellFolder::EnumObjects
  */
 typedef enum tagSHCONTF
 {	SHCONTF_FOLDERS		= 32,	/* for shell browser */
@@ -125,7 +125,7 @@ typedef enum tagSHCONTF
 } SHCONTF;
 
 /*****************************************************************************
- * IShellFolder::GetAttributesOf flags 
+ * IShellFolder::GetAttributesOf flags
  */
 #define SFGAO_CANCOPY		DROPEFFECT_COPY /* Objects can be copied */
 #define SFGAO_CANMOVE		DROPEFFECT_MOVE /* Objects can be moved */
@@ -242,7 +242,7 @@ ICOM_DEFINE(IShellFolder,IUnknown)
 /* IShellFolder2 */
 
 /* GetDefaultColumnState */
-typedef enum 
+typedef enum
 {
 	SHCOLSTATE_TYPE_STR	= 0x00000001,
 	SHCOLSTATE_TYPE_INT	= 0x00000002,
@@ -274,7 +274,7 @@ typedef struct
 	STRRET	str;
 } SHELLDETAILS, *LPSHELLDETAILS;
 
-#define ICOM_INTERFACE IShellFolder2 
+#define ICOM_INTERFACE IShellFolder2
 #define IShellFolder2_METHODS \
     ICOM_METHOD1( HRESULT, GetDefaultSearchGUID, LPGUID, lpguid)\
     ICOM_METHOD1( HRESULT, EnumSearches, LPENUMEXTRASEARCH *, ppEnum) \
@@ -318,7 +318,7 @@ ICOM_DEFINE(IShellFolder2, IShellFolder)
  */
 
 /* ClassID's */
-DEFINE_GUID (CLSID_SFMyComp,0x20D04FE0,0x3AEA,0x1069,0xA2,0xD8,0x08,0x00,0x2B,0x30,0x30,0x9D); 
+DEFINE_GUID (CLSID_SFMyComp,0x20D04FE0,0x3AEA,0x1069,0xA2,0xD8,0x08,0x00,0x2B,0x30,0x30,0x9D);
 DEFINE_GUID (CLSID_SFINet,  0x871C5380,0x42A0,0x1069,0xA2,0xEA,0x08,0x00,0x2B,0x30,0x30,0x9D);
 DEFINE_GUID (CLSID_SFFile,  0xF3364BA0,0x65B9,0x11CE,0xA9,0xBA,0x00,0xAA,0x00,0x4A,0xE8,0x37);
 
@@ -332,7 +332,7 @@ ICOM_DEFINE(IPersistFolder, IPersist)
 #undef ICOM_INTERFACE
 
 /*** IUnknown methods ***/
-#define IPersistFolder_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b) 
+#define IPersistFolder_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistFolder_AddRef(p)		ICOM_CALL (AddRef,p)
 #define IPersistFolder_Release(p)		ICOM_CALL (Release,p)
 /*** IPersist methods ***/
@@ -355,7 +355,7 @@ ICOM_DEFINE(IPersistFolder2, IPersistFolder)
 #undef ICOM_INTERFACE
 
 /*** IUnknown methods ***/
-#define IPersistFolder2_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b) 
+#define IPersistFolder2_QueryInterface(p,a,b)	ICOM_CALL2(QueryInterface,p,a,b)
 #define IPersistFolder2_AddRef(p)		ICOM_CALL (AddRef,p)
 #define IPersistFolder2_Release(p)		ICOM_CALL (Release,p)
 /*** IPersist methods ***/

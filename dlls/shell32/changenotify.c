@@ -62,13 +62,13 @@ void FreeChangeNotifications()
 	ptr = head.next;
 
 	while(ptr != &tail)
-	{ 
+	{
 	  int i;
 	  item = ptr;
 	  ptr = ptr->next;
 
 	  TRACE("item=%p\n", item);
-	  
+
 	  /* free the item */
 	  for (i=0; i<item->cidl;i++) SHFree(item->apidl[i].pidlPath);
 	  SHFree(item->apidl);
@@ -85,7 +85,7 @@ void FreeChangeNotifications()
 static BOOL AddNode(LPNOTIFICATIONLIST item)
 {
 	LPNOTIFICATIONLIST last;
-	
+
 	EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
 	/* get last entry */
@@ -114,13 +114,13 @@ static BOOL DeleteNode(LPNOTIFICATIONLIST item)
 
 	ptr = head.next;
 	while((ptr != &tail) && (ret == FALSE))
-	{ 
+	{
 	  TRACE("ptr=%p\n", ptr);
-	  
+
 	  if (ptr == item)
 	  {
 	    int i;
-	    
+
 	    TRACE("item=%p prev=%p next=%p\n", item, item->prev, item->next);
 
 	    /* remove item from list */
@@ -135,10 +135,10 @@ static BOOL DeleteNode(LPNOTIFICATIONLIST item)
 	  }
 	  ptr = ptr->next;
 	}
-	
+
 	LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 	return ret;
-	
+
 }
 
 /*************************************************************************
@@ -161,7 +161,7 @@ SHChangeNotifyRegister(
 
 	TRACE("(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08x,%p) item=%p\n",
 		hwnd,dwFlags,wEventMask,uMsg,cItems,lpItems,item);
-	
+
 	item->next = NULL;
 	item->prev = NULL;
 	item->cidl = cItems;
@@ -188,7 +188,7 @@ SHChangeNotifyDeregister(
 {
 	TRACE("(0x%08x)\n",hNotify);
 
-	return DeleteNode((LPNOTIFICATIONLIST)hNotify);;
+	return DeleteNode((LPNOTIFICATIONLIST)hNotify);
 }
 
 /*************************************************************************
@@ -211,7 +211,7 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 {
 	LPITEMIDLIST pidl1=(LPITEMIDLIST)dwItem1, pidl2=(LPITEMIDLIST)dwItem2;
 	LPNOTIFICATIONLIST ptr;
-	
+
 	TRACE("(0x%08lx,0x%08x,%p,%p):stub.\n", wEventId,uFlags,dwItem1,dwItem2);
 
 	/* convert paths in IDLists*/
@@ -221,15 +221,15 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	  if (dwItem1) SHILCreateFromPathA((LPCSTR)dwItem1, &pidl1, &dummy);
 	  if (dwItem2) SHILCreateFromPathA((LPCSTR)dwItem2, &pidl2, &dummy);
 	}
-	
+
 	EnterCriticalSection(&SHELL32_ChangenotifyCS);
-	
+
 	/* loop through the list */
 	ptr = head.next;
 	while(ptr != &tail)
 	{
 	  TRACE("trying %p\n", ptr);
-	  
+
 	  if(wEventId & ptr->wEventMask)
 	  {
 	    TRACE("notifying\n");
@@ -237,7 +237,7 @@ void WINAPI SHChangeNotifyW (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	  }
 	  ptr = ptr->next;
 	}
-	
+
 	LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
 	if(uFlags & SHCNF_PATHA)
@@ -254,7 +254,7 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 {
 	LPITEMIDLIST Pidls[2];
 	LPNOTIFICATIONLIST ptr;
-	
+
 	Pidls[0] = (LPITEMIDLIST)dwItem1;
 	Pidls[1] = (LPITEMIDLIST)dwItem2;
 
@@ -267,15 +267,15 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	  if (Pidls[0]) SHILCreateFromPathA((LPCSTR)dwItem1, &Pidls[0], &dummy);
 	  if (Pidls[1]) SHILCreateFromPathA((LPCSTR)dwItem2, &Pidls[1], &dummy);
 	}
-	
+
 	EnterCriticalSection(&SHELL32_ChangenotifyCS);
-	
+
 	/* loop through the list */
 	ptr = head.next;
 	while(ptr != &tail)
 	{
 	  TRACE("trying %p\n", ptr);
-	  
+
 	  if(wEventId & ptr->wEventMask)
 	  {
 	    TRACE("notifying\n");
@@ -283,7 +283,7 @@ void WINAPI SHChangeNotifyA (LONG wEventId, UINT  uFlags, LPCVOID dwItem1, LPCVO
 	  }
 	  ptr = ptr->next;
 	}
-	
+
 	LeaveCriticalSection(&SHELL32_ChangenotifyCS);
 
 	/* if we allocated it, free it */

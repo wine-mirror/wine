@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
 /*****************************************************************
- *	         FOCUS_SwitchFocus 
+ *	         FOCUS_SwitchFocus
  * pMsgQ is the queue whose perQData focus is to be modified
  */
 void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
@@ -112,13 +112,13 @@ HWND WINAPI SetFocus( HWND hwnd )
 
         /* Get the current focus window from the perQ data */
         hWndFocus = PERQDATA_GetFocusWnd( pMsgQ->pQData );
-        
+
         if( hwnd == hWndFocus )
         {
 	    bRet = 1;      /* Success */
 	    goto CLEANUP;  /* Nothing to do */
         }
-        
+
 	/* call hooks */
 	if( HOOK_CallHooksA( WH_CBT, HCBT_SETFOCUS, (WPARAM)hwnd, (LPARAM)hWndFocus) )
 	    goto CLEANUP;
@@ -133,7 +133,7 @@ HWND WINAPI SetFocus( HWND hwnd )
 
         /* Get the current focus window from the perQ data */
         hWndFocus = PERQDATA_GetFocusWnd( pMsgQ->pQData );
-        
+
         /* Change focus and send messages */
         FOCUS_SwitchFocus( pMsgQ, hWndFocus, hwnd );
     }
@@ -150,7 +150,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     }
 
     bRet = 1;      /* Success */
-    
+
 CLEANUP:
 
     /* Unlock the queues before returning */

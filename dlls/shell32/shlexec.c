@@ -44,10 +44,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(exec);
 
 /* this function is supposed to expand the escape sequences found in the registry
  * some diving reported that the following were used:
- * + %1, %2...  seem to report to parameter of index N in ShellExecute pmts 
+ * + %1, %2...  seem to report to parameter of index N in ShellExecute pmts
  + + %*         seem to report to all parameter (or all remaining, ie after removing
- *              the already used %1 %2...) 
- * + %L         seems to be %1 as long filename followed by the 8+3 variation 
+ *              the already used %1 %2...)
+ * + %L         seems to be %1 as long filename followed by the 8+3 variation
  * + %l         unknown
  * + %S         unknown
  * + %I         unknown
@@ -63,19 +63,19 @@ static void argify(char* res, int len, const char* fmt, const char* lpFile)
             switch (*++fmt)
             {
             case '\0':
-            case '%': 
-                *res++ = '%'; 
+            case '%':
+                *res++ = '%';
                 break;
-            case '1': 
+            case '1':
                 if (SearchPathA(NULL, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
                 {
-                    strcpy(res, xlpFile); 
-                    res += strlen(xlpFile); 
+                    strcpy(res, xlpFile);
+                    res += strlen(xlpFile);
                 }
                 else
                 {
-                    strcpy(res, lpFile); 
-                    res += strlen(lpFile); 
+                    strcpy(res, lpFile);
+                    res += strlen(lpFile);
                 }
                 break;
             default: FIXME("Unknown escape sequence %%%c\n", *fmt);
@@ -92,7 +92,7 @@ static void argify(char* res, int len, const char* fmt, const char* lpFile)
  *	SHELL_FindExecutable [Internal]
  *
  * Utility for code sharing between FindExecutable and ShellExecute
- * in: 
+ * in:
  *      lpFile the name of a file
  *      lpOperation the operation on it (open)
  * out:
@@ -116,11 +116,11 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
     char *tok;              /* token pointer */
     int i;                  /* random counter */
     char xlpFile[256] = ""; /* result of SearchPath */
-    
+
     TRACE("%s\n", (lpFile != NULL) ? lpFile : "-");
-    
+
     lpResult[0] = '\0'; /* Start off with an empty return string */
-    
+
     /* trap NULL parameters on entry */
     if ((lpFile == NULL) || (lpResult == NULL) || (lpOperation == NULL))
     {
@@ -128,30 +128,30 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
              lpFile, lpOperation, lpResult);
         return 2; /* File not found. Close enough, I guess. */
     }
-    
+
     if (SearchPathA(NULL, lpFile, ".exe", sizeof(xlpFile), xlpFile, NULL))
     {
         TRACE("SearchPathA returned non-zero\n");
         lpFile = xlpFile;
     }
-    
+
     /* First thing we need is the file's extension */
     extension = strrchr(xlpFile, '.'); /* Assume last "." is the one; */
                                        /* File->Run in progman uses */
                                        /* .\FILE.EXE :( */
     TRACE("xlpFile=%s,extension=%s\n", xlpFile, extension);
-    
+
     if ((extension == NULL) || (extension == &xlpFile[strlen(xlpFile)]))
     {
         WARN("Returning 31 - No association\n");
         return 31; /* no association */
     }
-    
+
     /* Make local copy & lowercase it for reg & 'programs=' lookup */
     lstrcpynA(tmpext, extension, 5);
     CharLowerA(tmpext);
     TRACE("%s file\n", tmpext);
-    
+
     /* Three places to check: */
     /* 1. win.ini, [windows], programs (NB no leading '.') */
     /* 2. Registry, HKEY_CLASS_ROOT\<filetype>\shell\open\command */
@@ -159,7 +159,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
     /* All I know of the order is that registry is checked before */
     /* extensions; however, it'd make sense to check the programs */
     /* section first, so that's what happens here. */
-    
+
     if (key) *key = '\0';
 
     /* See if it's a program - if GetProfileString fails, we skip this
@@ -169,7 +169,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
                           buffer, sizeof(buffer)) > 0)
     {
         for (i = 0;i<strlen(buffer); i++) buffer[i] = tolower(buffer[i]);
-        
+
         tok = strtok(buffer, " \t"); /* ? */
         while (tok!= NULL)
         {
@@ -180,7 +180,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
                  * attached */
                 TRACE("found %s\n", lpResult);
                 return 33;
-                
+
 		/* Greater than 32 to indicate success FIXME According to the
 		 * docs, I should be returning a handle for the
 		 * executable. Does this mean I'm supposed to open the
@@ -189,19 +189,19 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
             tok = strtok(NULL, " \t");
         }
     }
-    
+
     /* Check registry */
     if (RegQueryValueA(HKEY_CLASSES_ROOT, tmpext, filetype,
                        &filetypelen) == ERROR_SUCCESS)
     {
 	filetype[filetypelen] = '\0';
 	TRACE("File type: %s\n", filetype);
-        
+
 	/* Looking for ...buffer\shell\lpOperation\command */
 	strcat(filetype, "\\shell\\");
 	strcat(filetype, lpOperation);
 	strcat(filetype, "\\command");
-	
+
 	if (RegQueryValueA(HKEY_CLASSES_ROOT, filetype, command,
                            &commandlen) == ERROR_SUCCESS)
 	{
@@ -216,12 +216,12 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
              * the exec names.
              * on Win98, it doesn't appear, but I think it does on Win2k
              */
-	    /* Get the parameters needed by the application 
-	       from the associated ddeexec key */ 
+	    /* Get the parameters needed by the application
+	       from the associated ddeexec key */
 	    tmp = strstr(filetype, "command");
 	    tmp[0] = '\0';
 	    strcat(filetype, "ddeexec");
-            
+
 	    if (RegQueryValueA(HKEY_CLASSES_ROOT, filetype, param, &paramlen) == ERROR_SUCCESS)
 	    {
                 strcat(command, " ");
@@ -259,7 +259,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
             }
         }
     }
-    
+
     TRACE("returning %s\n", lpResult);
     return retval;
 }
@@ -269,7 +269,7 @@ static HINSTANCE SHELL_FindExecutable(LPCSTR lpFile, LPCSTR lpOperation,
  *
  * callback for the DDE connection. not really usefull
  */
-static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv, 
+static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
                                 HSZ hsz1, HSZ hsz2,
                                 HDDEDATA hData, DWORD dwData1, DWORD dwData2)
 {
@@ -281,12 +281,12 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
  *
  * ShellExecute helper. Used to do an operation with a DDE connection
  *
- * Handles both the direct connection (try #1), and if it fails, 
+ * Handles both the direct connection (try #1), and if it fails,
  * launching an application and trying (#2) to connect to it
  *
  */
-static unsigned dde_connect(char* key, char* start, char* ddeexec, 
-                            const char* lpFile, 
+static unsigned dde_connect(char* key, char* start, char* ddeexec,
+                            const char* lpFile,
                             int iCmdShow, BOOL is32)
 {
     char*       endkey = key + strlen(key);
@@ -306,22 +306,22 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
         FIXME("default app name NIY %s\n", key);
         return 2;
     }
-    
+
     strcpy(endkey, "\\topic");
     topiclen = sizeof(topic);
     if (RegQueryValueA(HKEY_CLASSES_ROOT, key, topic, &topiclen) != ERROR_SUCCESS)
     {
         strcpy(topic, "System");
     }
-    
+
     if (DdeInitializeA(&ddeInst, dde_cb, APPCMD_CLIENTONLY, 0L) != DMLERR_NO_ERROR)
     {
         return 2;
     }
-    
+
     hszApp = DdeCreateStringHandleA(ddeInst, app, CP_WINANSI);
     hszTopic = DdeCreateStringHandleA(ddeInst, topic, CP_WINANSI);
-    
+
     hConv = DdeConnect(ddeInst, hszApp, hszTopic, NULL);
     exec = ddeexec;
     if (!hConv)
@@ -346,11 +346,11 @@ static unsigned dde_connect(char* key, char* start, char* ddeexec,
             exec = ifexec;
         }
     }
-    
+
     argify(res, sizeof(res), exec, lpFile);
     TRACE("%s %s => %s\n", exec, lpFile, res);
-    
-    ret = (DdeClientTransaction(res, strlen(res) + 1, hConv, 0L, 0, 
+
+    ret = (DdeClientTransaction(res, strlen(res) + 1, hConv, 0L, 0,
                                 XTYP_EXECUTE, 10000, &tid) != DMLERR_NO_ERROR) ? 31 : 32;
     DdeDisconnect(hConv);
  error:
@@ -370,13 +370,13 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, INT iShowCmd, BOOL i
         LPSTR tmp;
         char param[256] = "";
         LONG paramlen = 256;
-                
-        /* Get the parameters needed by the application 
-           from the associated ddeexec key */ 
+
+        /* Get the parameters needed by the application
+           from the associated ddeexec key */
         tmp = strstr(key, "command");
         assert(tmp);
         strcpy(tmp, "ddeexec");
-                
+
         if (RegQueryValueA(HKEY_CLASSES_ROOT, key, param, &paramlen) == ERROR_SUCCESS)
         {
             TRACE("Got ddeexec %s => %s\n", key, param);
@@ -396,48 +396,48 @@ static HINSTANCE execute_from_key(LPSTR key, LPCSTR lpFile, INT iShowCmd, BOOL i
     return retval;
 }
 
-static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile, 
-                               LPCSTR lpParameters, LPCSTR lpDirectory, 
+static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
+                               LPCSTR lpParameters, LPCSTR lpDirectory,
                                INT iShowCmd, BOOL is32)
 {
     HINSTANCE retval = 31;
     char old_dir[1024];
     char cmd[1024];
-    
+
     TRACE("(%04x,'%s','%s','%s','%s',%x)\n",
           hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
-          lpParameters ? lpParameters : "<null>", 
+          lpParameters ? lpParameters : "<null>",
           lpDirectory ? lpDirectory : "<null>", iShowCmd);
-    
+
     if (lpFile == NULL) return 0; /* should not happen */
     if (lpOperation == NULL) /* default is open */
         lpOperation = "open";
-    
+
     if (lpDirectory)
     {
         GetCurrentDirectoryA(sizeof(old_dir), old_dir);
         SetCurrentDirectoryA(lpDirectory);
     }
-    
-    /* First try to execute lpFile with lpParameters directly */ 
+
+    /* First try to execute lpFile with lpParameters directly */
     strcpy(cmd, lpFile);
-    if (lpParameters) 
+    if (lpParameters)
     {
         strcat(cmd, " ");
         strcat(cmd, lpParameters);
     }
-    
+
     retval = (is32) ? WinExec(cmd, iShowCmd) : WinExec16(cmd, iShowCmd);
-    
+
     /* Unable to execute lpFile directly
        Check if we can match an application to lpFile */
     if (retval < 32)
-    { 
+    {
         char lpstrProtocol[256];
 
         cmd[0] = '\0';
         retval = SHELL_FindExecutable(lpFile, lpOperation, cmd, lpstrProtocol);
-        
+
         if (retval > 32)  /* Found */
         {
             TRACE("%s/%s => %s/%s\n", lpFile, lpOperation, cmd, lpstrProtocol);
@@ -450,10 +450,10 @@ static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
         {
             LPSTR lpstrRes;
             INT iSize;
-            
+
             lpstrRes = strchr(lpFile, ':');
             iSize = lpstrRes - lpFile;
-            
+
             TRACE("Got URL: %s\n", lpFile);
             /* Looking for ...protocol\shell\lpOperation\command */
             strncpy(lpstrProtocol, lpFile, iSize);
@@ -461,7 +461,7 @@ static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
             strcat(lpstrProtocol, "\\shell\\");
             strcat(lpstrProtocol, lpOperation);
             strcat(lpstrProtocol, "\\command");
-            
+
             /* Remove File Protocol from lpFile */
             /* In the case file://path/file     */
             if (!strncasecmp(lpFile, "file", iSize))
@@ -469,13 +469,13 @@ static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
                 lpFile += iSize;
                 while (*lpFile == ':') lpFile++;
             }
-            
+
             retval = execute_from_key(lpstrProtocol, lpFile, iShowCmd, is32);
-        }       
+        }
         /* Check if file specified is in the form www.??????.*** */
         else if (!strncasecmp(lpFile, "www", 3))
         {
-            /* if so, append lpFile http:// and call ShellExecute */ 
+            /* if so, append lpFile http:// and call ShellExecute */
             char lpstrTmpFile[256] = "http://" ;
             strcat(lpstrTmpFile, lpFile);
             retval = ShellExecuteA(hWnd, lpOperation, lpstrTmpFile, NULL, NULL, 0);
@@ -490,11 +490,11 @@ static HINSTANCE SHELL_Execute(HWND hWnd, LPCSTR lpOperation, LPCSTR lpFile,
  * FindExecutableA			[SHELL32.@]
  */
 HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResult)
-{ 
+{
     HINSTANCE retval = 31;    /* default - 'No association was found' */
     char old_dir[1024];
-    
-    TRACE("File %s, Dir %s\n", 
+
+    TRACE("File %s, Dir %s\n",
           (lpFile != NULL ? lpFile : "-"), (lpDirectory != NULL ? lpDirectory : "-"));
 
     lpResult[0] = '\0'; /* Start off with an empty return string */
@@ -511,9 +511,9 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
         GetCurrentDirectoryA(sizeof(old_dir), old_dir);
         SetCurrentDirectoryA(lpDirectory);
     }
-    
+
     retval = SHELL_FindExecutable(lpFile, "open", lpResult, NULL);
-    
+
     TRACE("returning %s\n", lpResult);
     if (lpDirectory)
         SetCurrentDirectoryA(old_dir);
@@ -535,15 +535,15 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
 HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
                                    LPCSTR lpFile, LPCSTR lpParameters,
                                    LPCSTR lpDirectory, INT16 iShowCmd )
-{   
-    return (HINSTANCE16)SHELL_Execute(hWnd, lpOperation, lpFile, 
+{
+    return (HINSTANCE16)SHELL_Execute(hWnd, lpOperation, lpFile,
                                       lpParameters, lpDirectory, iShowCmd, FALSE );
 }
 
 /*************************************************************************
  * ShellExecuteA			[SHELL32.290]
  */
-HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile, 
+HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
                                LPCSTR lpParameters,LPCSTR lpDirectory, INT iShowCmd)
 {
     TRACE("\n");
@@ -554,10 +554,10 @@ HINSTANCE WINAPI ShellExecuteA(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
 /*************************************************************************
  * ShellExecuteW			[SHELL32.294]
  * from shellapi.h
- * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, 
- * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);   
+ * WINSHELLAPI HINSTANCE APIENTRY ShellExecuteW(HWND hwnd, LPCWSTR lpOperation,
+ * LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
  */
-HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile, 
+HINSTANCE WINAPI ShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
                                LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
        FIXME(": stub\n");

@@ -57,7 +57,7 @@ static int IO_pp_sort(const void *p1,const  void *p2)
   return ((PPDeviceStruct*)p1)->userbase - ((PPDeviceStruct*)p2)->userbase;
 }
 
-/* IO_pp_init 
+/* IO_pp_init
  *
  * Read the ppdev entries from wine.conf, open the device and check
  * for nescessary IOCTRL
@@ -82,9 +82,9 @@ char IO_pp_init(void)
     {
         DWORD type, count = sizeof(buffer), name_len = sizeof(name);
 
-        if (RegEnumValueA( hkey, idx, name, &name_len, NULL, &type, buffer, &count )!= ERROR_SUCCESS) 
+        if (RegEnumValueA( hkey, idx, name, &name_len, NULL, &type, buffer, &count )!= ERROR_SUCCESS)
 	  break;
-	
+
 	idx++;
 	if(nports >4)
 	  {
@@ -112,7 +112,7 @@ char IO_pp_init(void)
 	    WARN("Rejecting configuration item\n");
 	    continue;
 	  }
-	if (ioctl (fd,PPCLAIM,0)) 
+	if (ioctl (fd,PPCLAIM,0))
 	  {
 	    ERR("PPCLAIM rejected %s\n",buffer);
 	    ERR("Perhaps the device is already in use or non-existant\n");
@@ -141,7 +141,7 @@ char IO_pp_init(void)
 	    ERR("PPUSER IOCTL not available for parport device %s\n",temp);
 	    continue;
 	  }
-	if (ioctl (fd,PPRELEASE,0)) 
+	if (ioctl (fd,PPRELEASE,0))
 	  {
 	    ERR("PPRELEASE rejected %s\n",buffer);
 	    ERR("Perhaps the device is already in use or non-existant\n");
@@ -178,7 +178,7 @@ char IO_pp_init(void)
     if (nports > 1)
       /* sort in accending order for userbase for faster access*/
       qsort (PPDeviceList,PPDeviceNum,sizeof(PPDeviceStruct),IO_pp_sort);
-    
+
     if (nports)
       ret=0;
     for (idx= 0;idx<PPDeviceNum; idx++)
@@ -225,7 +225,7 @@ static int IO_pp_do_access(int idx,int ppctl, DWORD* res)
 int IO_pp_inp(int port, DWORD* res)
 {
     int idx,j=0;
-    
+
     for (idx=0;idx<PPDeviceNum ;idx++)
       {
        j = port - PPDeviceList[idx].userbase;
@@ -261,7 +261,7 @@ int IO_pp_inp(int port, DWORD* res)
 BOOL IO_pp_outp(int port, DWORD* res)
 {
     int idx,j=0;
-    
+
     for (idx=0;idx<PPDeviceNum ;idx++)
       {
        j = port - PPDeviceList[idx].userbase;

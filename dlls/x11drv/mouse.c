@@ -91,7 +91,7 @@ static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
 /***********************************************************************
  *		update_key_state
  *
- * Update the key state with what X provides us 
+ * Update the key state with what X provides us
  */
 static void update_key_state( unsigned int state )
 {
@@ -159,7 +159,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
     {
         XImage *image;
         GC gc;
-        
+
         TRACE("Bitmap %dx%d planes=%d bpp=%d bytesperline=%d\n",
             ptr->nWidth, ptr->nHeight, ptr->bPlanes, ptr->bBitsPerPixel,
             ptr->nWidthBytes);
@@ -174,11 +174,11 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
          *  the mask and the second is the image.
          */
         if (!(pixmapAll = XCreatePixmap( display, root_window,
-                  ptr->nWidth, ptr->nHeight * 2, 1 ))) 
+                  ptr->nWidth, ptr->nHeight * 2, 1 )))
             return 0;
         if (!(image = XCreateImage( display, visual,
                 1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
-                ptr->nHeight * 2, 16, ptr->nWidthBytes/ptr->bBitsPerPixel))) 
+                ptr->nHeight * 2, 16, ptr->nWidthBytes/ptr->bBitsPerPixel)))
         {
             XFreePixmap( display, pixmapAll );
             return 0;
@@ -206,7 +206,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             unsigned char *theMask, *theImage, theChar;
             int     threshold, fgBits, bgBits, bitShifted;
             BYTE    pXorBits[128];   /* Up to 32x32 icons */
-            
+
             switch (ptr->bBitsPerPixel)
             {
             case 24:
@@ -233,7 +233,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
             /* The location of the mask. */
             theMask = (char *)(ptr + 1);
             /* The mask should still be 1 bit per pixel. The color image
-             * should immediately follow the mask. 
+             * should immediately follow the mask.
              */
             theImage = &theMask[ptr->nWidth/8 * ptr->nHeight];
             rfg = gfg = bfg = rbg = gbg = bbg = 0;
@@ -248,7 +248,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
                   ptr->nWidth, ptr->nHeight);
             }
             ymax = (ptr->nHeight > 32) ? 32 : ptr->nHeight;
-            
+
             memset(pXorBits, 0, 128);
             for (y=0; y<ymax; y++)
             {
@@ -325,7 +325,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
                 XDestroyImage( image );
                 return 0;
             }
-            
+
             /* Put the mask. */
             XPutImage( display, pixmapAll, gc, image,
                    0, 0, 0, 0, ptr->nWidth, ptr->nHeight );
@@ -352,7 +352,7 @@ Cursor X11DRV_GetCursor( Display *display, CURSORICONINFO *ptr )
              * compatible between Windows and X11. Under X11, there
              * are only 3 possible color cursor: black, white and
              * masked. So we map the 4th Windows color (invert the
-             * bits on the screen) to black and an additional white bit on 
+             * bits on the screen) to black and an additional white bit on
              * an other place (+1,+1). This require some boolean arithmetic:
              *
              *         Windows          |          X11

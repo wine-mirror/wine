@@ -163,7 +163,7 @@ static void ParseVariable( ORDDEF *odp )
     n_values = 0;
     value_array_size = 25;
     value_array = xmalloc(sizeof(*value_array) * value_array_size);
-    
+
     for (;;)
     {
         token = GetToken(0);
@@ -174,10 +174,10 @@ static void ParseVariable( ORDDEF *odp )
 	if (n_values == value_array_size)
 	{
 	    value_array_size += 25;
-	    value_array = xrealloc(value_array, 
+	    value_array = xrealloc(value_array,
 				   sizeof(*value_array) * value_array_size);
 	}
-	
+
 	if (endptr == NULL || *endptr != '\0')
 	    fatal_error( "Expected number value, got '%s'\n", token );
     }

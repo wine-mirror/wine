@@ -1,4 +1,4 @@
-/*		
+/*
  * Copyright 2001 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
@@ -199,7 +199,7 @@ NETAPI32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 BOOL WINAPI Netbios(PNCB pncb)
 {
-    UCHAR ret = NRC_ILLCMD; 
+    UCHAR ret = NRC_ILLCMD;
 
     TRACE("ncb = %p\n",pncb);
 
@@ -210,7 +210,7 @@ BOOL WINAPI Netbios(PNCB pncb)
     {
     case NCBRESET:
         FIXME("NCBRESET adapter %d\n",pncb->ncb_lana_num);
-        if( (pncb->ncb_lana_num < MAX_LANA ) && 
+        if( (pncb->ncb_lana_num < MAX_LANA ) &&
              NETBIOS_Adapter[pncb->ncb_lana_num].valid)
             ret = NRC_GOODRET;
         else

@@ -123,7 +123,7 @@ BOOL WINAPI RtlEqualSid( PSID pSid1, PSID pSid2 )
 /******************************************************************************
  * RtlEqualPrefixSid	[NTDLL.@]
  */
-BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2) 
+BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 {
     if (!RtlValidSid(pSid1) || !RtlValidSid(pSid2))
         return FALSE;
@@ -141,7 +141,7 @@ BOOL WINAPI RtlEqualPrefixSid (PSID pSid1, PSID pSid2)
 /******************************************************************************
  *  RtlFreeSid		[NTDLL.@]
  */
-DWORD WINAPI RtlFreeSid(PSID pSid) 
+DWORD WINAPI RtlFreeSid(PSID pSid)
 {
 	TRACE("(%p)\n", pSid);
 	RtlFreeHeap( GetProcessHeap(), 0, pSid );
@@ -165,7 +165,7 @@ DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
 DWORD WINAPI RtlLengthSid(PSID pSid)
 {
 	TRACE("sid=%p\n",pSid);
-	if (!pSid) return 0; 
+	if (!pSid) return 0;
 	return RtlLengthRequiredSid(*RtlSubAuthorityCountSid(pSid));
 }
 
@@ -279,9 +279,9 @@ RtlValidSid( PSID pSid )
  * RtlCreateSecurityDescriptor			[NTDLL.@]
  *
  * RETURNS:
- *  0 success, 
+ *  0 success,
  *  STATUS_INVALID_OWNER, STATUS_PRIVILEGE_NOT_HELD, STATUS_NO_INHERITANCE,
- *  STATUS_NO_MEMORY 
+ *  STATUS_NO_MEMORY
  */
 NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 	PSECURITY_DESCRIPTOR lpsd,
@@ -360,7 +360,7 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 	}
 
 	*lpbDaclDefaulted = (( SE_DACL_DEFAULTED & pSecurityDescriptor->Control ) ? 1 : 0);
-	
+
 	return STATUS_SUCCESS;
 }
 
@@ -378,7 +378,7 @@ NTSTATUS WINAPI RtlSetDaclSecurityDescriptor (
 	if (lpsd->Control & SE_SELF_RELATIVE)
 		return STATUS_INVALID_SECURITY_DESCR;
 
-	if (!daclpresent) 
+	if (!daclpresent)
 	{	lpsd->Control &= ~SE_DACL_PRESENT;
 		return TRUE;
 	}
@@ -421,7 +421,7 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 	}
 
 	*lpbSaclDefaulted = (( SE_SACL_DEFAULTED & pSecurityDescriptor->Control ) ? 1 : 0);
-	
+
 	return STATUS_SUCCESS;
 }
 
@@ -532,7 +532,7 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 			*GroupDefaulted = FALSE;
 	}
 	return STATUS_SUCCESS;
-} 
+}
 
 /**************************************************************************
  *                 RtlMakeSelfRelativeSD		[NTDLL.@]
@@ -646,7 +646,7 @@ BOOL WINAPI RtlAddAccessAllowedAce(
 /******************************************************************************
  *  RtlGetAce		[NTDLL.@]
  */
-DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce ) 
+DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
 	FIXME("(%p,%ld,%p),stub!\n",pAcl,dwAceIndex,pAce);
 	return 0;
@@ -659,7 +659,7 @@ DWORD WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 /******************************************************************************
  *  RtlAdjustPrivilege		[NTDLL.@]
  */
-DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
+DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
@@ -678,7 +678,7 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 /******************************************************************************
  *  NtAccessCheck		[NTDLL.@]
  */
-NTSTATUS WINAPI 
+NTSTATUS WINAPI
 NtAccessCheck(
 	IN PSECURITY_DESCRIPTOR SecurityDescriptor,
 	IN HANDLE ClientToken,
@@ -690,7 +690,7 @@ NtAccessCheck(
 	OUT PBOOLEAN AccessStatus)
 {
 	FIXME("(%p, %04x, %08lx, %p, %p, %p, %p, %p), stub\n",
-          SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, 
+          SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
           PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
 	*AccessStatus = TRUE;
 	return STATUS_SUCCESS;
@@ -703,7 +703,7 @@ NTSTATUS WINAPI
 NtSetSecurityObject(
         IN HANDLE Handle,
         IN SECURITY_INFORMATION SecurityInformation,
-        IN PSECURITY_DESCRIPTOR SecurityDescriptor) 
+        IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
 	FIXME("0x%08x 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
 	return STATUS_SUCCESS;
@@ -720,7 +720,7 @@ NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
 {
 	FIXME("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
 	return STATUS_SUCCESS;
-}		
+}
 
 /******************************************************************************
  * RtlConvertSidToUnicodeString (NTDLL.@)

@@ -259,8 +259,8 @@ int _abnormal_termination(void)
 typedef void (*MSVCRT_unwind_function)(const void*);
 
 /*
- * The signatures of the setjmp/longjmp functions do not match that 
- * declared in the setjmp header so they don't follow the regular naming 
+ * The signatures of the setjmp/longjmp functions do not match that
+ * declared in the setjmp header so they don't follow the regular naming
  * convention to avoid conflicts.
  */
 
@@ -382,7 +382,7 @@ DWORD __CxxFrameHandler(PEXCEPTION_RECORD rec, struct __EXCEPTION_FRAME* frame,
 {
     FIXME("(%p,%p,%p,%p):stub?\n",rec,frame,context,dispatch);
 
-    /* Copied from MSVCRT_nested_handler, I hope this is more 
+    /* Copied from MSVCRT_nested_handler, I hope this is more
      * or less the right thing to do
      */
     if (rec->ExceptionFlags & 0x6)

@@ -30,12 +30,12 @@
 #endif
 
 
-/* On Windows winnt.h depends on a few windef.h types and macros and thus 
- * is not self-contained. Furthermore windef.h includes winnt.h so that it 
+/* On Windows winnt.h depends on a few windef.h types and macros and thus
+ * is not self-contained. Furthermore windef.h includes winnt.h so that it
  * would be pointless to try to use winnt.h directly.
- * But for Wine and Winelib I decided to make winnt.h self-contained by 
- * moving these definitions to winnt.h. It makes no difference to Winelib 
- * programs since they are not using winnt.h directly anyway, and it allows 
+ * But for Wine and Winelib I decided to make winnt.h self-contained by
+ * moving these definitions to winnt.h. It makes no difference to Winelib
+ * programs since they are not using winnt.h directly anyway, and it allows
  * us to use winnt.h and get a minimal set of definitions.
  */
 
@@ -327,17 +327,17 @@ typedef WCHAR          *PWSTR,      *LPWSTR;
 typedef const WCHAR    *PCWSTR,     *LPCWSTR;
 
 /* Neutral character and string types */
-/* These are only defined for Winelib, i.e. _not_ defined for 
- * the emulator. The reason is they depend on the UNICODE 
+/* These are only defined for Winelib, i.e. _not_ defined for
+ * the emulator. The reason is they depend on the UNICODE
  * macro which only exists in the user's code.
  */
 #ifndef __WINE__
 # ifdef WINE_UNICODE_REWRITE
 
-/* Use this if your compiler does not provide a 16bit wchar_t type. 
+/* Use this if your compiler does not provide a 16bit wchar_t type.
  * Note that you will need to specify -fwritable-strings or an option
  * to this effect.
- * In C++ both WINE_UNICODE_TEXT('c') and WINE_UNICODE_TEXT("str") are 
+ * In C++ both WINE_UNICODE_TEXT('c') and WINE_UNICODE_TEXT("str") are
  * supported, but only the string form can be supported in C.
  */
 EXTERN_C unsigned short* wine_rewrite_s4tos2(const wchar_t* str4);
@@ -358,12 +358,12 @@ inline WCHAR wine_unicode_text(wchar_t chr4)
 # else  /* WINE_UNICODE_REWRITE */
 
 /* Define WINE_UNICODE_NATIVE if:
- * - your compiler provides a 16bit wchar_t type, e.g. gcc >= 2.96 with 
+ * - your compiler provides a 16bit wchar_t type, e.g. gcc >= 2.96 with
  *   -fshort-wchar option
- * - or if you decide to use the native 32bit Unix wchar_t type. Be aware 
- *   though that the Wine APIs only support 16bit WCHAR characters for 
+ * - or if you decide to use the native 32bit Unix wchar_t type. Be aware
+ *   though that the Wine APIs only support 16bit WCHAR characters for
  *   binary compatibility reasons.
- * - or define nothing at all if you don't use Unicode, and blissfully 
+ * - or define nothing at all if you don't use Unicode, and blissfully
  *   ignore the issue :-)
  */
 #  define WINE_UNICODE_TEXT(string)   L##string
@@ -403,15 +403,15 @@ typedef DWORD		EXECUTION_STATE;
  * Here is the plan to convert Wine to STRICT:
  *
  * Types will be converted one at a time by volunteers who will compile
- * Wine with STRICT turned on. Handles that have not been converted yet 
- * will be declared with DECLARE_OLD_HANDLE. Converted handles are 
+ * Wine with STRICT turned on. Handles that have not been converted yet
+ * will be declared with DECLARE_OLD_HANDLE. Converted handles are
  * declared with DECLARE_HANDLE.
  * See the bug report 90 for more details:
  *    http://wine.codeweavers.com/bugzilla/show_bug.cgi?id=90
  */
 /*
- * when compiling Wine we always treat HANDLE as an UINT. Then when 
- * we're ready we'll remove the '!defined(__WINE__)' (the equivalent 
+ * when compiling Wine we always treat HANDLE as an UINT. Then when
+ * we're ready we'll remove the '!defined(__WINE__)' (the equivalent
  * of converting it from DECLARE_OLD_HANDLE to DECLARE_HANDLE).
  */
 #if defined(STRICT) && !defined(__WINE__)
@@ -604,11 +604,11 @@ typedef struct _FLOATING_SAVE_AREA
 {
     DWORD   ControlWord;
     DWORD   StatusWord;
-    DWORD   TagWord;    
+    DWORD   TagWord;
     DWORD   ErrorOffset;
     DWORD   ErrorSelector;
     DWORD   DataOffset;
-    DWORD   DataSelector;    
+    DWORD   DataSelector;
     BYTE    RegisterArea[SIZE_OF_80387_REGISTERS];
     DWORD   Cr0NpxState;
 } FLOATING_SAVE_AREA, *PFLOATING_SAVE_AREA;
@@ -634,18 +634,18 @@ typedef struct _CONTEXT86
     DWORD   SegGs;
     DWORD   SegFs;
     DWORD   SegEs;
-    DWORD   SegDs;    
+    DWORD   SegDs;
 
     /* These are selected by CONTEXT_INTEGER */
     DWORD   Edi;
     DWORD   Esi;
     DWORD   Ebx;
-    DWORD   Edx;    
+    DWORD   Edx;
     DWORD   Ecx;
     DWORD   Eax;
 
     /* These are selected by CONTEXT_CONTROL */
-    DWORD   Ebp;    
+    DWORD   Ebp;
     DWORD   Eip;
     DWORD   SegCs;
     DWORD   EFlags;
@@ -684,7 +684,7 @@ typedef CONTEXT86 CONTEXT;
 #ifdef _ALPHA_
 
 #define CONTEXT_ALPHA   0x00020000
- 
+
 #define CONTEXT_CONTROL		(CONTEXT_ALPHA | 0x00000001L)
 #define CONTEXT_FLOATING_POINT	(CONTEXT_ALPHA | 0x00000002L)
 #define CONTEXT_INTEGER		(CONTEXT_ALPHA | 0x00000004L)
@@ -999,10 +999,10 @@ typedef struct _STACK_FRAME_HEADER
 
 #ifdef __sparc__
 
-/* 
- * FIXME:  
+/*
+ * FIXME:
  *
- * There is no official CONTEXT structure defined for the SPARC 
+ * There is no official CONTEXT structure defined for the SPARC
  * architecture, so I just made one up.
  *
  * This structure is valid only for 32-bit SPARC architectures,
@@ -1012,8 +1012,8 @@ typedef struct _STACK_FRAME_HEADER
  * the rest of the register window chain is not visible.
  *
  * The layout follows the Solaris 'prgregset_t' structure.
- * 
- */ 
+ *
+ */
 
 #define CONTEXT_SPARC            0x10000000
 
@@ -1234,7 +1234,7 @@ typedef CONTEXT *PCONTEXT;
 #define LANG_SYSTEM_DEFAULT	(MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT))
 #define LANG_USER_DEFAULT	(MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
 #define LOCALE_SYSTEM_DEFAULT	(MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
-#define LOCALE_USER_DEFAULT	(MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT)) 
+#define LOCALE_USER_DEFAULT	(MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT))
 #define LOCALE_NEUTRAL		(MAKELCID(MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL),SORT_DEFAULT))
 
 /* FIXME: are the symbolic names correct for LIDs:  0x17, 0x20, 0x28,
@@ -1544,8 +1544,8 @@ typedef CONTEXT *PCONTEXT;
 #define STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE 0x40000023
 #define STATUS_NO_YIELD_PERFORMED        0x40000024
 #define STATUS_TIMER_RESUME_IGNORED      0x40000025
-	
-#define STATUS_GUARD_PAGE_VIOLATION      0x80000001    
+
+#define STATUS_GUARD_PAGE_VIOLATION      0x80000001
 #define STATUS_DATATYPE_MISALIGNMENT     0x80000002
 #define STATUS_BREAKPOINT                0x80000003
 #define STATUS_SINGLE_STEP               0x80000004
@@ -1707,7 +1707,7 @@ typedef CONTEXT *PCONTEXT;
 #define STATUS_NO_TOKEN                  0xC000007C
 #define STATUS_BAD_INHERITANCE_ACL       0xC000007D
 #define STATUS_RANGE_NOT_LOCKED          0xC000007E
-#define STATUS_DISK_FULL                 0xC000007F 
+#define STATUS_DISK_FULL                 0xC000007F
 #define STATUS_SERVER_DISABLED           0xC0000080
 #define STATUS_SERVER_NOT_DISABLED       0xC0000081
 #define STATUS_TOO_MANY_GUIDS_REQUESTED  0xC0000082
@@ -2216,9 +2216,9 @@ typedef CONTEXT *PCONTEXT;
 
 #define EXCEPTION_CONTINUABLE        0
 #define EXCEPTION_NONCONTINUABLE     EH_NONCONTINUABLE
- 
+
 /*
- * The exception record used by Win32 to give additional information 
+ * The exception record used by Win32 to give additional information
  * about exception to exception handlers.
  */
 
@@ -2239,8 +2239,8 @@ typedef struct __EXCEPTION_RECORD
  * The exception pointers structure passed to exception filters
  * in except() and the UnhandledExceptionFilter().
  */
- 
-typedef struct _EXCEPTION_POINTERS 
+
+typedef struct _EXCEPTION_POINTERS
 {
   PEXCEPTION_RECORD  ExceptionRecord;
   PCONTEXT           ContextRecord;
@@ -2248,8 +2248,8 @@ typedef struct _EXCEPTION_POINTERS
 
 
 /*
- * The exception frame, used for registering exception handlers 
- * Win32 cares only about this, but compilers generally emit 
+ * The exception frame, used for registering exception handlers
+ * Win32 cares only about this, but compilers generally emit
  * larger exception frames for their own use.
  */
 
@@ -2283,7 +2283,7 @@ WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 #define DBG_CONTROL_BREAK           0x40010008
 #define DBG_EXCEPTION_NOT_HANDLED   0x80010001
 
-typedef struct _NT_TIB 
+typedef struct _NT_TIB
 {
 	struct _EXCEPTION_REGISTRATION_RECORD *ExceptionList;
 	PVOID StackBase;
@@ -2357,7 +2357,7 @@ typedef struct _IMAGE_DOS_HEADER {
  * This is the Windows executable (NE) header.
  * the name IMAGE_OS2_HEADER is misleading, but in the SDK this way.
  */
-typedef struct 
+typedef struct
 {
     WORD  ne_magic;             /* 00 NE signature 'NE' */
     BYTE  ne_ver;               /* 02 Linker version number */
@@ -2473,7 +2473,7 @@ typedef struct _IMAGE_VXD_HEADER {
 #define	IMAGE_FILE_MACHINE_R4000	0x166
 #define	IMAGE_FILE_MACHINE_R10000	0x168
 #define	IMAGE_FILE_MACHINE_ALPHA	0x184
-#define	IMAGE_FILE_MACHINE_POWERPC	0x1F0  
+#define	IMAGE_FILE_MACHINE_POWERPC	0x1F0
 
 #define	IMAGE_SIZEOF_FILE_HEADER	20
 
@@ -2621,8 +2621,8 @@ typedef struct _IMAGE_SECTION_HEADER {
 #define IMAGE_SCN_CNT_INITIALIZED_DATA		0x00000040
 #define IMAGE_SCN_CNT_UNINITIALIZED_DATA	0x00000080
 
-#define	IMAGE_SCN_LNK_OTHER			0x00000100 
-#define	IMAGE_SCN_LNK_INFO			0x00000200  
+#define	IMAGE_SCN_LNK_OTHER			0x00000100
+#define	IMAGE_SCN_LNK_INFO			0x00000200
 /* #define	IMAGE_SCN_TYPE_OVER		0x00000400 - Reserved */
 #define	IMAGE_SCN_LNK_REMOVE			0x00000800
 #define	IMAGE_SCN_LNK_COMDAT			0x00001000
@@ -2877,7 +2877,7 @@ typedef struct _IMAGE_IMPORT_DESCRIPTOR {
 	DWORD	ForwarderChain;	/* -1 if no forwarders */
 	DWORD	Name;
 	/* RVA to IAT (if bound this IAT has actual addresses) */
-	PIMAGE_THUNK_DATA FirstThunk;	
+	PIMAGE_THUNK_DATA FirstThunk;
 } IMAGE_IMPORT_DESCRIPTOR,*PIMAGE_IMPORT_DESCRIPTOR;
 
 #define	IMAGE_ORDINAL_FLAG		0x80000000
@@ -3261,7 +3261,7 @@ typedef struct _IMAGE_FUNCTION_ENTRY {
 } IMAGE_FUNCTION_ENTRY, *PIMAGE_FUNCTION_ENTRY;
 
 #define IMAGE_DEBUG_MISC_EXENAME    1
- 
+
 typedef struct _IMAGE_DEBUG_MISC {
     DWORD       DataType;
     DWORD       Length;
@@ -3311,7 +3311,7 @@ typedef struct tagMESSAGE_RESOURCE_DATA {
 
 /*
  * Here follows typedefs for security and tokens.
- */ 
+ */
 
 /*
  * First a constant for the following typdefs.
@@ -3327,17 +3327,17 @@ typedef PVOID PACCESS_TOKEN;
  */
 
 typedef enum _TOKEN_INFORMATION_CLASS {
-  TokenUser = 1, 
-  TokenGroups, 
-  TokenPrivileges, 
-  TokenOwner, 
-  TokenPrimaryGroup, 
-  TokenDefaultDacl, 
-  TokenSource, 
-  TokenType, 
-  TokenImpersonationLevel, 
-  TokenStatistics 
-} TOKEN_INFORMATION_CLASS; 
+  TokenUser = 1,
+  TokenGroups,
+  TokenPrivileges,
+  TokenOwner,
+  TokenPrimaryGroup,
+  TokenDefaultDacl,
+  TokenSource,
+  TokenType,
+  TokenImpersonationLevel,
+  TokenStatistics
+} TOKEN_INFORMATION_CLASS;
 
 #define TOKEN_TOKEN_ADJUST_DEFAULT   0x0080
 #define TOKEN_ADJUST_GROUPS          0x0040
@@ -3401,8 +3401,8 @@ typedef struct _SID {
 #define	SID_RECOMMENDED_SUB_AUTHORITIES	(1)	/* recommended subauths */
 
 
-/* 
- * ACL 
+/*
+ * ACL
  */
 
 #define ACL_REVISION1 1
@@ -3458,19 +3458,19 @@ typedef struct {
     PACL Dacl;
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
-#define SECURITY_DESCRIPTOR_MIN_LENGTH   (sizeof(SECURITY_DESCRIPTOR)) 
+#define SECURITY_DESCRIPTOR_MIN_LENGTH   (sizeof(SECURITY_DESCRIPTOR))
 
 #endif /* _SECURITY_DEFINED */
 
-/* 
+/*
  * SID_AND_ATTRIBUTES
  */
 
 typedef struct _SID_AND_ATTRIBUTES {
-  PSID  Sid; 
-  DWORD Attributes; 
-} SID_AND_ATTRIBUTES ; 
- 
+  PSID  Sid;
+  DWORD Attributes;
+} SID_AND_ATTRIBUTES ;
+
 /* security entities */
 #define SECURITY_NULL_RID			(0x00000000L)
 #define SECURITY_WORLD_RID			(0x00000000L)
@@ -3486,7 +3486,7 @@ typedef struct _SID_AND_ATTRIBUTES {
 
 /* S-1-3 */
 #define SECURITY_CREATOR_SID_AUTHORITY		{0,0,0,0,0,3}
-#define SECURITY_CREATOR_OWNER_RID		(0x00000000L) 
+#define SECURITY_CREATOR_OWNER_RID		(0x00000000L)
 #define SECURITY_CREATOR_GROUP_RID		(0x00000001L)
 #define SECURITY_CREATOR_OWNER_SERVER_RID	(0x00000002L)
 #define SECURITY_CREATOR_GROUP_SERVER_RID	(0x00000003L)
@@ -3495,7 +3495,7 @@ typedef struct _SID_AND_ATTRIBUTES {
 #define SECURITY_NON_UNIQUE_AUTHORITY		{0,0,0,0,0,4}
 
 /* S-1-5 */
-#define SECURITY_NT_AUTHORITY			{0,0,0,0,0,5} 
+#define SECURITY_NT_AUTHORITY			{0,0,0,0,0,5}
 #define SECURITY_DIALUP_RID                     0x00000001L
 #define SECURITY_NETWORK_RID                    0x00000002L
 #define SECURITY_BATCH_RID                      0x00000003L
@@ -3530,17 +3530,17 @@ typedef struct _SID_AND_ATTRIBUTES {
  */
 
 typedef struct _TOKEN_USER {
-  SID_AND_ATTRIBUTES User; 
-} TOKEN_USER; 
+  SID_AND_ATTRIBUTES User;
+} TOKEN_USER;
 
 /*
  * TOKEN_GROUPS
  */
 
 typedef struct _TOKEN_GROUPS  {
-  DWORD GroupCount; 
-  SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY]; 
-} TOKEN_GROUPS; 
+  DWORD GroupCount;
+  SID_AND_ATTRIBUTES Groups[ANYSIZE_ARRAY];
+} TOKEN_GROUPS;
 
 /*
  * LUID_AND_ATTRIBUTES
@@ -3603,63 +3603,63 @@ typedef struct _PRIVILEGE_SET {
  */
 
 typedef struct _TOKEN_PRIVILEGES {
-  DWORD PrivilegeCount; 
-  LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY]; 
-} TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES; 
+  DWORD PrivilegeCount;
+  LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
+} TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
 
 /*
  * TOKEN_OWNER
  */
 
 typedef struct _TOKEN_OWNER {
-  PSID Owner; 
-} TOKEN_OWNER; 
+  PSID Owner;
+} TOKEN_OWNER;
 
 /*
  * TOKEN_PRIMARY_GROUP
  */
 
 typedef struct _TOKEN_PRIMARY_GROUP {
-  PSID PrimaryGroup; 
-} TOKEN_PRIMARY_GROUP; 
+  PSID PrimaryGroup;
+} TOKEN_PRIMARY_GROUP;
 
 
 /*
  * TOKEN_DEFAULT_DACL
  */
 
-typedef struct _TOKEN_DEFAULT_DACL { 
-  PACL DefaultDacl; 
-} TOKEN_DEFAULT_DACL; 
+typedef struct _TOKEN_DEFAULT_DACL {
+  PACL DefaultDacl;
+} TOKEN_DEFAULT_DACL;
 
 /*
  * TOKEN_SOURCEL
  */
 
 typedef struct _TOKEN_SOURCE {
-  char Sourcename[8]; 
-  LUID SourceIdentifier; 
-} TOKEN_SOURCE; 
+  char Sourcename[8];
+  LUID SourceIdentifier;
+} TOKEN_SOURCE;
 
 /*
  * TOKEN_TYPE
  */
 
 typedef enum tagTOKEN_TYPE {
-  TokenPrimary = 1, 
-  TokenImpersonation 
-} TOKEN_TYPE; 
+  TokenPrimary = 1,
+  TokenImpersonation
+} TOKEN_TYPE;
 
 /*
  * SECURITY_IMPERSONATION_LEVEL
  */
 
 typedef enum _SECURITY_IMPERSONATION_LEVEL {
-  SecurityAnonymous, 
-  SecurityIdentification, 
-  SecurityImpersonation, 
-  SecurityDelegation 
-} SECURITY_IMPERSONATION_LEVEL, *PSECURITY_IMPERSONATION_LEVEL; 
+  SecurityAnonymous,
+  SecurityIdentification,
+  SecurityImpersonation,
+  SecurityDelegation
+} SECURITY_IMPERSONATION_LEVEL, *PSECURITY_IMPERSONATION_LEVEL;
 
 
 typedef BOOLEAN SECURITY_CONTEXT_TRACKING_MODE,
@@ -3680,20 +3680,20 @@ typedef struct _SECURITY_QUALITY_OF_SERVICE {
  */
 
 typedef struct _TOKEN_STATISTICS {
-  LUID  TokenId; 
-  LUID  AuthenticationId; 
-  LARGE_INTEGER ExpirationTime; 
-  TOKEN_TYPE    TokenType; 
-  SECURITY_IMPERSONATION_LEVEL ImpersonationLevel; 
-  DWORD DynamicCharged; 
-  DWORD DynamicAvailable; 
-  DWORD GroupCount; 
-  DWORD PrivilegeCount; 
-  LUID  ModifiedId; 
-} TOKEN_STATISTICS; 
+  LUID  TokenId;
+  LUID  AuthenticationId;
+  LARGE_INTEGER ExpirationTime;
+  TOKEN_TYPE    TokenType;
+  SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+  DWORD DynamicCharged;
+  DWORD DynamicAvailable;
+  DWORD GroupCount;
+  DWORD PrivilegeCount;
+  LUID  ModifiedId;
+} TOKEN_STATISTICS;
 
-/* 
- *	ACLs of NT 
+/*
+ *	ACLs of NT
  */
 
 #define	ACL_REVISION	2
@@ -3725,7 +3725,7 @@ typedef struct _ACE_HEADER {
 #define	SUCCESSFUL_ACCESS_ACE_FLAG	0x40
 #define	FAILED_ACCESS_ACE_FLAG		0x80
 
-/* different ACEs depending on AceType 
+/* different ACEs depending on AceType
  * SidStart marks the begin of a SID
  * so the thing finally looks like this:
  * 0: ACE_HEADER
@@ -3830,8 +3830,8 @@ typedef enum tagSID_NAME_USE {
 #define THREAD_DIRECT_IMPERSONATION 0x0200
 #define THREAD_ALL_ACCESS          (STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0x3ff)
 
-#define THREAD_BASE_PRIORITY_LOWRT  15 
-#define THREAD_BASE_PRIORITY_MAX    2 
+#define THREAD_BASE_PRIORITY_LOWRT  15
+#define THREAD_BASE_PRIORITY_MAX    2
 #define THREAD_BASE_PRIORITY_MIN   -2
 #define THREAD_BASE_PRIORITY_IDLE  -15
 
@@ -4027,7 +4027,7 @@ typedef enum tagSID_NAME_USE {
                            SERVICE_DRIVER | SERVICE_INTERACTIVE_PROCESS )
 
 
-typedef enum _CM_SERVICE_NODE_TYPE 
+typedef enum _CM_SERVICE_NODE_TYPE
 {
   DriverType               = SERVICE_KERNEL_DRIVER,
   FileSystemType           = SERVICE_FILE_SYSTEM_DRIVER,
@@ -4037,7 +4037,7 @@ typedef enum _CM_SERVICE_NODE_TYPE
   RecognizerType           = SERVICE_RECOGNIZER_DRIVER
 } SERVICE_NODE_TYPE;
 
-typedef enum _CM_SERVICE_LOAD_TYPE 
+typedef enum _CM_SERVICE_LOAD_TYPE
 {
   BootLoad    = SERVICE_BOOT_START,
   SystemLoad  = SERVICE_SYSTEM_START,
@@ -4046,7 +4046,7 @@ typedef enum _CM_SERVICE_LOAD_TYPE
   DisableLoad = SERVICE_DISABLED
 } SERVICE_LOAD_TYPE;
 
-typedef enum _CM_ERROR_CONTROL_TYPE 
+typedef enum _CM_ERROR_CONTROL_TYPE
 {
   IgnoreError   = SERVICE_ERROR_IGNORE,
   NormalError   = SERVICE_ERROR_NORMAL,
@@ -4064,7 +4064,7 @@ typedef enum _CM_ERROR_CONTROL_TYPE
 
 #include "guiddef.h"
 
-typedef struct _RTL_CRITICAL_SECTION_DEBUG 
+typedef struct _RTL_CRITICAL_SECTION_DEBUG
 {
   WORD   Type;
   WORD   CreatorBackTraceIndex;

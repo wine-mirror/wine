@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
+
 /* NOTE: Methods with the NS_ prefix are name server methods */
 
 #include <string.h>
@@ -60,14 +60,14 @@ struct NSCache
   BOOL bNsIsLocal;
   LPVOID lpLocalAddrHdr;  /* FIXME: Not yet used */
   LPVOID lpRemoteAddrHdr; /* FIXME: Not yet used */
-}; 
+};
 typedef struct NSCache NSCache, *lpNSCache;
 
 /* Function prototypes */
 DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
 
-/* Name Server functions 
- * --------------------- 
+/* Name Server functions
+ * ---------------------
  */
 void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
 {
@@ -117,7 +117,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
   }
 
   /* Add this to the list */
-  lpCacheNode = (lpNSCacheData)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+  lpCacheNode = (lpNSCacheData)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                           sizeof( *lpCacheNode ) );
 
   if( lpCacheNode == NULL )
@@ -129,10 +129,10 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
   lpCacheNode->lpNSAddrHdr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                         dwHdrSize );
   CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
-              
+
 
   lpCacheNode->data = (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
-                                                   HEAP_ZERO_MEMORY, 
+                                                   HEAP_ZERO_MEMORY,
                                                    sizeof( *(lpCacheNode->data) ) );
 
   if( lpCacheNode->data == NULL )
@@ -155,8 +155,8 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                   lpcNSAddrHdr,
 
   lpCache->present = lpCacheNode;
 
-  /* Use this message as an oportunity to weed out any old sessions so 
-   * that we don't enum them again 
+  /* Use this message as an oportunity to weed out any old sessions so
+   * that we don't enum them again
    */
   NS_PruneSessionCache( lpNSInfo );
 }
@@ -214,7 +214,7 @@ void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
                                         LPSPINITDATA lpSpData )
-                                     
+
 {
   DPSP_ENUMSESSIONSDATA data;
   LPDPMSG_ENUMSESSIONSREQUEST lpMsg;
@@ -225,13 +225,13 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   FIXME( ": not all data fields are correct\n" );
 
   data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ); /*FIXME!*/
-  data.lpMessage = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+  data.lpMessage = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                               data.dwMessageSize );
   data.lpISP = lpSpData->lpISP;
   data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) ? TRUE : FALSE;
 
 
-  lpMsg = (LPDPMSG_ENUMSESSIONSREQUEST)(((BYTE*)data.lpMessage)+lpSpData->dwSPHeaderSize); 
+  lpMsg = (LPDPMSG_ENUMSESSIONSREQUEST)(((BYTE*)data.lpMessage)+lpSpData->dwSPHeaderSize);
 
   /* Setup EnumSession reqest message */
   lpMsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
@@ -243,7 +243,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
 
   CopyMemory( &lpMsg->guidApplication, lpcGuid, sizeof( *lpcGuid ) );
 
-  return (lpSpData->lpCB->EnumSessions)( &data ); 
+  return (lpSpData->lpCB->EnumSessions)( &data );
 }
 
 /* Delete a name server node which has been allocated on the heap */
@@ -318,7 +318,7 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
 
   /* FIXME: The pointers could disappear when walking if a prune happens */
 
-  /* Test for end of the list */ 
+  /* Test for end of the list */
   if( lpCache->present == NULL )
   {
     return NULL;
@@ -343,10 +343,10 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
   const DWORD dwPresentTime = timeGetTime();
   const DWORD dwPrunePeriod = DPMSG_WAIT_60_SECS; /* is 60 secs enough? */
 
-  /* This silly little algorithm is based on the fact we keep entries in 
+  /* This silly little algorithm is based on the fact we keep entries in
    * the queue in a time based order. It also assumes that it is not possible
    * to wrap around over yourself (which is not unreasonable).
-   * The if statements verify if the first entry in the queue is less 
+   * The if statements verify if the first entry in the queue is less
    * than dwPrunePeriod old depending on the "clock" roll over.
    */
   for( ;; )
@@ -375,7 +375,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
 }
 
 /* NAME SERVER Message stuff */
-void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg, 
+void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
                                     LPVOID* lplpReplyData,
                                     LPDWORD lpdwReplySize,
                                     IDirectPlay2Impl* lpDP )
@@ -406,15 +406,15 @@ void NS_ReplyToEnumSessionsRequest( LPCVOID lpcMsg,
   *lplpReplyData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                               *lpdwReplySize );
 
-  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)*lplpReplyData + 
+  rmsg = (LPDPMSG_ENUMSESSIONSREPLY)( (BYTE*)*lplpReplyData +
                                              lpDP->dp2->spData.dwSPHeaderSize);
 
-  rmsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG; 
+  rmsg->envelope.dwMagic    = DPMSGMAGIC_DPLAYMSG;
   rmsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREPLY;
   rmsg->envelope.wVersion   = DPMSGVER_DP6;
 
-  CopyMemory( &rmsg->sd, lpDP->dp2->lpSessionDesc, 
-              sizeof( lpDP->dp2->lpSessionDesc->dwSize ) ); 
+  CopyMemory( &rmsg->sd, lpDP->dp2->lpSessionDesc,
+              sizeof( lpDP->dp2->lpSessionDesc->dwSize ) );
   rmsg->dwUnknown = 0x0000005c;
   if( bAnsi )
   {

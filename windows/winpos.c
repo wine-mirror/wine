@@ -122,7 +122,7 @@ void WINPOS_CheckInternalPos( HWND hwnd )
 
     if( lpPos )
     {
-	if( IsWindow(lpPos->hwndIconTitle) ) 
+	if( IsWindow(lpPos->hwndIconTitle) )
 	    DestroyWindow( lpPos->hwndIconTitle );
 	HeapFree( GetProcessHeap(), 0, lpPos );
     }
@@ -823,10 +823,10 @@ BOOL WINAPI BringWindowToTop( HWND hwnd )
  */
 BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
                             BOOL repaint )
-{    
+{
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    TRACE("%04x %d,%d %dx%d %d\n", 
+    TRACE("%04x %d,%d %dx%d %d\n",
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
@@ -840,7 +840,7 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt, const RECT *res
                                                       atomInternalPos );
     if( !lpPos )
     {
-	/* this happens when the window is minimized/maximized 
+	/* this happens when the window is minimized/maximized
 	 * for the first time (rectWindow is not adjusted yet) */
 
 	lpPos = HeapAlloc( GetProcessHeap(), 0, sizeof(INTERNALPOS) );
@@ -852,11 +852,11 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd, POINT pt, const RECT *res
 	*(UINT*)&lpPos->ptIconPos = *(UINT*)&lpPos->ptMaxPos = 0xFFFFFFFF;
     }
 
-    if( wnd->dwStyle & WS_MINIMIZE ) 
+    if( wnd->dwStyle & WS_MINIMIZE )
 	CONV_POINT32TO16( &pt, &lpPos->ptIconPos );
-    else if( wnd->dwStyle & WS_MAXIMIZE ) 
+    else if( wnd->dwStyle & WS_MAXIMIZE )
 	CONV_POINT32TO16( &pt, &lpPos->ptMaxPos );
-    else if( restoreRect ) 
+    else if( restoreRect )
 	CONV_RECT32TO16( restoreRect, &lpPos->rectNormal );
 
     return lpPos;
@@ -1016,7 +1016,7 @@ UINT16 WINAPI GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd,
                                       LPPOINT16 ptIcon )
 {
     WINDOWPLACEMENT16 wndpl;
-    if (GetWindowPlacement16( hwnd, &wndpl )) 
+    if (GetWindowPlacement16( hwnd, &wndpl ))
     {
 	if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
 	if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
@@ -1095,7 +1095,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 	    if( wndpl->flags & WPF_SETMINPOSITION && !EMPTYPOINT(lpPos->ptIconPos))
 		SetWindowPos( hwnd, 0, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
 				0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
-	} 
+	}
 	else if( pWnd->dwStyle & WS_MAXIMIZE )
 	{
 	    if( !EMPTYPOINT(lpPos->ptMaxPos) )
@@ -1288,7 +1288,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     /* if prev wnd is minimized redraw icon title */
     if( IsIconic( hwndPrevActive ) ) WINPOS_RedrawIconTitle(hwndPrevActive);
 
-    /* managed windows will get ConfigureNotify event */  
+    /* managed windows will get ConfigureNotify event */
     if (wndPtr && !(wndPtr->dwStyle & WS_CHILD) && !(wndPtr->dwExStyle & WS_EX_MANAGED))
     {
 	/* check Z-order and bring hWnd to the top */
@@ -1297,9 +1297,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             tmp = GetWindow( tmp, GW_HWNDNEXT );
 
         if( tmp != hWnd )
-	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0, 
+	    SetWindowPos(hWnd, HWND_TOP, 0,0,0,0,
 			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-        if (!IsWindow(hWnd))  
+        if (!IsWindow(hWnd))
 	    goto CLEANUP;
     }
 
@@ -1336,7 +1336,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             }
             HeapFree( GetProcessHeap(), 0, list );
         }
-        
+
 	if (hWnd && !IsWindow(hWnd)) goto CLEANUP;
     }
 
@@ -1367,13 +1367,13 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             HWND hOldFocus = PERQDATA_GetFocusWnd( pNewActiveQueue->pQData );
 
             if ( !hOldFocus || GetAncestor( hOldFocus, GA_ROOT ) != hwndActive )
-                FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus, 
+                FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus,
                                    (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
                                    0 : hwndActive );
         }
 
-        if ( pOldActiveQueue && 
-             ( !pNewActiveQueue || 
+        if ( pOldActiveQueue &&
+             ( !pNewActiveQueue ||
                 pNewActiveQueue->pQData != pOldActiveQueue->pQData ) )
         {
             HWND hOldFocus = PERQDATA_GetFocusWnd( pOldActiveQueue->pQData );
@@ -1391,7 +1391,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     if( IsIconic(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
 
     bRet = (hWnd == hwndActive);  /* Success? */
-    
+
 CLEANUP: /* Unlock the message queues before returning */
 
     if ( pNewActiveQueue )
@@ -1544,7 +1544,7 @@ HDWP WINAPI BeginDeferWindowPos( INT count )
     HDWP handle;
     DWP *pDWP;
 
-    if (count < 0) 
+    if (count < 0)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
@@ -1700,7 +1700,7 @@ HWND WINAPI GetProgmanWindow(void)
  *                |   |   |-> tooltips_class32
  *                |   |
  *                |   |-> SysHeader32
- *                |   
+ *                |
  *                |-> ProxyTarget
  */
 HWND WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
@@ -1714,7 +1714,7 @@ HWND WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
 /***********************************************************************
  *		SetTaskmanWindow (USER32.@)
  * NOTES
- *   hwnd = MSTaskSwWClass 
+ *   hwnd = MSTaskSwWClass
  *          |-> SysTabControl32
  */
 HWND WINAPI SetTaskmanWindow ( HWND hwnd )

@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 /* DG_CONTROL/DAT_IDENTITY/MSG_CLOSEDS */
-TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData) 
+TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
 {
 #ifndef HAVE_SANE
     DSM_twCC = TWCC_NODS;
@@ -73,7 +73,7 @@ TW_UINT16 TWAIN_CloseDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         twRC = TWRC_FAILURE;
         DSM_twCC = TWCC_NODS;
     }
- 
+
     return twRC;
 #endif
 }
@@ -118,7 +118,7 @@ TW_UINT16 TWAIN_IdentityGetDefault (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         twRC = TWRC_FAILURE;
         DSM_twCC = TWCC_NODS;
     }
- 
+
     return twRC;
 #endif
 }
@@ -133,7 +133,7 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_IDENTITY pSourceIdentity;/* = (pTW_IDENTITY) pData;*/
     SANE_Status status;
-    
+
     TRACE ("DG_CONTROL/DAT_IDENTITY/MSG_GETFIRST\n");
 
     status = sane_get_devices (&device_list, SANE_FALSE);
@@ -159,11 +159,11 @@ TW_UINT16 TWAIN_IdentityGetFirst (pTW_IDENTITY pOrigin, TW_MEMREF pData)
     }
     else
     {
-        WARN("sane_get_devices() failed: %s\n", sane_strstatus (status)); 
+        WARN("sane_get_devices() failed: %s\n", sane_strstatus (status));
         twRC = TWRC_FAILURE;
         DSM_twCC = TWCC_NODS;
     }
-   
+
     return twRC;
 #endif
 }
@@ -191,7 +191,7 @@ TW_UINT16 TWAIN_IdentityGetNext (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         DSM_currentDevice ++;
 
         twRC = TWRC_SUCCESS;
-        DSM_twCC = TWCC_SUCCESS; 
+        DSM_twCC = TWCC_SUCCESS;
     }
     else
     {
@@ -279,7 +279,7 @@ TW_UINT16 TWAIN_OpenDS (pTW_IDENTITY pOrigin, TW_MEMREF pData)
         twRC = TWRC_FAILURE;
         DSM_twCC = TWCC_NODS;
     }
- 
+
     return twRC;
 #endif
 }
@@ -361,9 +361,9 @@ TW_UINT16 TWAIN_OpenDSM (pTW_IDENTITY pOrigin, TW_MEMREF pData)
             DSM_initialized = TRUE;
             status = sane_init (&version_code, NULL);
             device_list = NULL;
-            DSM_currentDevice = 0; 
+            DSM_currentDevice = 0;
             DSM_sourceId = 0;
-        }    
+        }
         DSM_parentHWND = *(HWND*)pData;
         DSM_currentState = 3; /* transition to state 3 */
         DSM_twCC = TWCC_SUCCESS;

@@ -1,6 +1,6 @@
-/* 
+/*
  *	UNIX dynamic loader
- * 
+ *
  * Currently only supports stuff using the dl* API.
  *
  * Copyright 1998 Marcus Meissner
@@ -20,11 +20,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * FIXME: 	Small reentrancy problem.
- * IDEA(s):	could be used to split up shell32,comctl32... 
+ * IDEA(s):	could be used to split up shell32,comctl32...
  */
 
 #include "config.h"
-#include "wine/port.h" 
+#include "wine/port.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -70,19 +70,19 @@ static HMODULE ELF_CreateDummyModule( LPCSTR libname, LPCSTR modname )
 	PIMAGE_SECTION_HEADER	sh;
 	HMODULE hmod;
 
-	hmod = (HMODULE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                     sizeof(IMAGE_DOS_HEADER) + 
+	hmod = (HMODULE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     sizeof(IMAGE_DOS_HEADER) +
                                      sizeof(IMAGE_NT_HEADERS) +
                                      sizeof(IMAGE_SECTION_HEADER) + STUBSIZE );
 	dh = (PIMAGE_DOS_HEADER)hmod;
 	dh->e_magic = IMAGE_DOS_SIGNATURE;
 	dh->e_lfanew = sizeof(IMAGE_DOS_HEADER);
 	nth = PE_HEADER(hmod);
-	nth->Signature = IMAGE_NT_SIGNATURE; 
+	nth->Signature = IMAGE_NT_SIGNATURE;
 	nth->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 	nth->FileHeader.NumberOfSections = 1;
 	nth->FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
-	nth->FileHeader.Characteristics = 
+	nth->FileHeader.Characteristics =
 		IMAGE_FILE_RELOCS_STRIPPED|IMAGE_FILE_LINE_NUMS_STRIPPED|
 		IMAGE_FILE_LOCAL_SYMS_STRIPPED|IMAGE_FILE_32BIT_MACHINE|
 		IMAGE_FILE_DLL|IMAGE_FILE_DEBUG_STRIPPED;
@@ -203,7 +203,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
             }
         }
 	if (!fun) {
-		/* Function@nrofargs usually marks a stdcall function 
+		/* Function@nrofargs usually marks a stdcall function
 		 * with nrofargs bytes that are popped at the end
 		 */
             LPCSTR t;
@@ -218,7 +218,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
                 HeapFree( GetProcessHeap(), 0, fn );
             }
 	}
-	/* We sometimes have Win32 dlls implemented using stdcall but UNIX 
+	/* We sometimes have Win32 dlls implemented using stdcall but UNIX
 	 * dlls using cdecl. If we find out the number of args the function
 	 * uses, we remove them from the stack using two small stubs.
 	 */
@@ -238,7 +238,7 @@ static FARPROC ELF_FindExportedFunction( WINE_MODREF *wm, LPCSTR funcName, BOOL 
 		stub->origfun=(DWORD)fun; /* just a marker */
 
 	if (fun && nrofargs) { /* we don't need it for 0 args */
-		/* Selfmodifying entry/return stub for stdcall -> cdecl 
+		/* Selfmodifying entry/return stub for stdcall -> cdecl
 		 * conversion.
 		 *  - Pop returnaddress directly into our return code
 		 * 		popl <into code below>

@@ -59,7 +59,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     switch (*((WORD *)p))
     {
     case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
-    case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
+    case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff;
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
     default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                   ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
@@ -71,7 +71,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
     switch (*((WORD *)p))
     {
     case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
-    case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
+    case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff;
                   *((WORD *)dialog16)++ = *((WORD *)p)++; break;
     default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                   ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
@@ -133,7 +133,7 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         switch (*((WORD *)p))
         {
         case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
-        case 0xffff:  ((WORD *)p)++; 
+        case 0xffff:  ((WORD *)p)++;
                       *((BYTE *)dialog16)++ = (BYTE)*((WORD *)p)++; break;
         default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                       ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
@@ -145,22 +145,22 @@ VOID WINAPI ConvertDialog32To16( LPVOID dialog32, DWORD size, LPVOID dialog16 )
         switch (*((WORD *)p))
         {
         case 0x0000:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0; break;
-        case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff; 
+        case 0xffff:  ((WORD *)p)++; *((BYTE *)dialog16)++ = 0xff;
                       *((WORD *)dialog16)++ = *((WORD *)p)++; break;
         default:      WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)dialog16, 0x7fffffff, NULL,NULL );
                       ((LPSTR)dialog16) += strlen( (LPSTR)dialog16 ) + 1;
                       ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
                       break;
         }
-       
+
         /* Transfer data */
-        data = *((WORD *)p)++; 
+        data = *((WORD *)p)++;
         if (dialogEx)
             *((WORD *)dialog16)++ = data;
         else
             *((BYTE *)dialog16)++ = (BYTE)data;
 
-        if (data) 
+        if (data)
         {
             memcpy( dialog16, p, data );
             (LPSTR)dialog16 += data;
@@ -215,7 +215,7 @@ WORD WINAPI GetDialog32Size16( LPVOID dialog32 )
     }
 
     /* Skip window caption */
-    ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1; 
+    ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 
     /* Skip font info */
     if (style & DS_SETFONT)
@@ -272,9 +272,9 @@ WORD WINAPI GetDialog32Size16( LPVOID dialog32 )
         case 0xffff:  ((WORD *)p) += 2; break;
         default:      ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1; break;
         }
-       
+
         /* Skip data */
-        data = *((WORD *)p)++; 
+        data = *((WORD *)p)++;
         (LPSTR)p += data;
 
         /* Next item */
@@ -309,7 +309,7 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
                 *((WORD *)menu16)++ = *((WORD *)p)++;  /* ID */
             else
                 level++;
-       
+
             WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)menu16, 0x7fffffff, NULL,NULL );
             ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
@@ -322,8 +322,8 @@ VOID WINAPI ConvertMenu32To16( LPVOID menu32, DWORD size, LPVOID menu16 )
             *((DWORD *)menu16)++ = *((DWORD *)p)++;  /* fType */
             *((DWORD *)menu16)++ = *((DWORD *)p)++;  /* fState */
             *((WORD *)menu16)++ = (WORD)*((DWORD *)p)++; /* ID */
-            flags = *((BYTE *)menu16)++ = (BYTE)*((WORD *)p)++;  
-       
+            flags = *((BYTE *)menu16)++ = (BYTE)*((WORD *)p)++;
+
             WideCharToMultiByte( CP_ACP, 0, (LPWSTR)p, -1, (LPSTR)menu16, 0x7fffffff, NULL,NULL );
             ((LPSTR)menu16) += strlen( (LPSTR)menu16 ) + 1;
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
@@ -363,7 +363,7 @@ WORD WINAPI GetMenu32Size16( LPVOID menu32 )
                 ((WORD *)p)++;  /* ID */
             else
                 level++;
-       
+
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 
             if ( flags & MF_END )
@@ -374,8 +374,8 @@ WORD WINAPI GetMenu32Size16( LPVOID menu32 )
             ((DWORD *)p)++; /* fType */
             ((DWORD *)p)++; /* fState */
             ((DWORD *)p)++; /* ID */
-            flags = *((WORD *)p)++; 
-       
+            flags = *((WORD *)p)++;
+
             ((LPWSTR)p) += strlenW( (LPWSTR)p ) + 1;
 
             /* align on DWORD boundary (32-bit only) */
@@ -428,7 +428,7 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
     if (!pModule || !bits || !size) return 0;
 
     handle = GlobalAlloc16( 0, size );
-   
+
     switch (type)
     {
     case RT_MENU16:

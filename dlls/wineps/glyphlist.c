@@ -85,7 +85,7 @@ inline static INT GlyphListInsert(LPCSTR szName, INT index)
     g = HeapAlloc(PSDRV_Heap, 0, sizeof(GLYPHNAME) + strlen(szName) + 1);
     if (g == NULL)
     {
-	ERR("Failed to allocate %i bytes of memory\n", 
+	ERR("Failed to allocate %i bytes of memory\n",
 		sizeof(GLYPHNAME) + strlen(szName) + 1);
 	return -1;
     }
@@ -194,7 +194,7 @@ const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName)
 VOID PSDRV_IndexGlyphList()
 {
     INT i;
-    
+
     if (glyphNamesIndexed == TRUE)
     	return;
 
@@ -205,6 +205,6 @@ VOID PSDRV_IndexGlyphList()
     	glyphList[i]->index = i;
 	TRACE("  glyphList[%i] -> '%s'\n", i, glyphList[i]->sz);
     }
-    
+
     glyphNamesIndexed = TRUE;
 }

@@ -26,7 +26,7 @@
 
 #define VERSION "0.1 (" PACKAGE_STRING ")"
 
-enum { 
+enum {
     SHORTFORMAT = 1,
     LONGFORMAT  = 2,
     UNIXFORMAT  = 4
@@ -69,13 +69,13 @@ int option(int shortopt, char *longopt)
             return SHORTFORMAT;
         case 'u':
             return UNIXFORMAT;
-    } 
+    }
 
     fprintf(stderr, "%s: invalid option ", progname);
     if (longopt)
         fprintf(stderr, "'%s'\n", longopt);
     else
-        fprintf(stderr, "'-%c'\n", shortopt); 
+        fprintf(stderr, "'-%c'\n", shortopt);
     fprintf(stderr, "Try '%s --help' for help\n", progname);
     exit(2);
 }
@@ -112,7 +112,7 @@ int parse_options(char *argv[])
         } else {
             /* short options */
             for (j = 1; argv[i][j]; j++)
-                outputformats |= option(argv[i][j], NULL); 
+                outputformats |= option(argv[i][j], NULL);
         }
 
         /* remove option */

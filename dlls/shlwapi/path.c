@@ -1615,9 +1615,9 @@ static BOOL PathMatchSingleMaskA(LPCSTR name, LPCSTR mask)
  */
 static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
 {
-	while (*name && *mask && *mask!=';') 
+	while (*name && *mask && *mask!=';')
 	{
-	  if (*mask=='*') 
+	  if (*mask=='*')
 	  {
 	    do
 	    {
@@ -1629,7 +1629,7 @@ static BOOL PathMatchSingleMaskW(LPCWSTR name, LPCWSTR mask)
 	  name = CharNextW(name);
 	  mask = CharNextW(mask);
 	}
-	if (!*name) 
+	if (!*name)
 	{
 	  while (*mask=='*') mask++;
 	  if (!*mask || *mask==';') return 1;

@@ -125,7 +125,7 @@ static DWORD NB_NameReq(LPCSTR host, unsigned char *buffer, int len)
     NBR_ADDWORD(&buffer[i],0x0000); i+=2;
 
     i += netbios_name(host,&buffer[i]);
-    
+
     NBR_ADDWORD(&buffer[i],0x0020); i+=2;
     NBR_ADDWORD(&buffer[i],0x0001); i+=2;
 
@@ -415,7 +415,7 @@ static int SMB_Header(unsigned char *buffer, unsigned char command, USHORT tree_
     DWORD id;
 
     /* 0 */
-    SMB_ADDHEADER(buffer,len);  
+    SMB_ADDHEADER(buffer,len);
 
     /* 4 */
     buffer[len++] = command;
@@ -455,7 +455,7 @@ static BOOL SMB_NegotiateProtocol(int fd, USHORT *dialect)
     memset(buffer,0,sizeof buffer);
 
     len = SMB_Header(buffer, SMB_COM_NEGOTIATE, 0, 0);
- 
+
     /* parameters */
     buffer[len++] = 0; /* no parameters */
 
@@ -574,7 +574,7 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
     SMB_ADDWORD(&buffer[len],0); len += 2; /* AndXOffset */
     SMB_ADDWORD(&buffer[len],0); len += 2; /* Flags */
     SMB_ADDWORD(&buffer[len],1); len += 2; /* Password length */
-    
+
     /* SMB command buffer */
     SMB_ADDWORD(&buffer[len],3); len += 2; /* command buffer len */
     buffer[len++] = 0; /* null terminated password */
@@ -585,7 +585,7 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
     else
         return FALSE;
     len += slen+1;
- 
+
     /* name of the service */
     buffer[len++] = 0;
 
@@ -638,21 +638,21 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
 
     /* 0x1c */
     SMB_ADDDWORD(&buffer[len],0);      len += 4; /* initial allocation */
-    SMB_ADDDWORD(&buffer[len],0);      len += 4; 
- 
+    SMB_ADDDWORD(&buffer[len],0);      len += 4;
+
     /* 0x24 */
     SMB_ADDDWORD(&buffer[len],attributes);      len += 4; /* ExtFileAttributes*/
 
     /* 0x28 */
     SMB_ADDDWORD(&buffer[len],sharing);      len += 4; /* ShareAccess */
-    
+
     /* 0x2c */
     ERR("creation = %08lx\n",creation);
     SMB_ADDDWORD(&buffer[len],creation);      len += 4; /* CreateDisposition */
-    
+
     /* 0x30 */
     SMB_ADDDWORD(&buffer[len],creation);      len += 4; /* CreateOptions */
-    
+
     /* 0x34 */
     SMB_ADDDWORD(&buffer[len],0);      len += 4; /* Impersonation */
 
@@ -667,7 +667,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
     else
         return FALSE;
     len += slen+1;
- 
+
     /* name of the file */
     buffer[len++] = 0;
 
@@ -811,7 +811,7 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect, USH
     unsigned char *buffer;
     int len,buf_size,n,i;
 
-    ERR("user %04x tree %04x file %04x count %04x offset %08lx\n",  
+    ERR("user %04x tree %04x file %04x count %04x offset %08lx\n",
         user_id, tree_id, file_id, count, offset);
 
     buf_size = count+0x100;
@@ -865,7 +865,7 @@ static BOOL SMB_Read(int fd, USHORT tree_id, USHORT user_id, USHORT dialect, USH
     *read = n;
 
     HeapFree(GetProcessHeap(),0,buffer);
-    
+
     return TRUE;
 }
 
@@ -1001,7 +1001,7 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
         goto done;
 
 #if 0
-    if(!SMB_NtCreateOpen(fd, tree_id, user_id, dialect, file, 
+    if(!SMB_NtCreateOpen(fd, tree_id, user_id, dialect, file,
                     access, sharing, sa, creation, attributes, template, &file_id ))
     {
         close(fd);
@@ -1009,7 +1009,7 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
         goto done;
     }
 #endif
-    if(!SMB_Open(fd, tree_id, user_id, dialect, file, 
+    if(!SMB_Open(fd, tree_id, user_id, dialect, file,
                     access, sharing, creation, attributes, &file_id ))
     {
         close(fd);
@@ -1023,7 +1023,7 @@ HANDLE WINAPI SMB_CreateFileA( LPCSTR uncname, DWORD access, DWORD sharing,
         ERR("register failed\n");
         close(fd);
     }
- 
+
 done:
     HeapFree(GetProcessHeap(),0,name);
     return handle;

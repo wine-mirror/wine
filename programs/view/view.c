@@ -19,7 +19,7 @@
 #include <windows.h>
 #include "resource.h"
 
-/* 
+/*
 #include <windowsx.h>
    Wine doesn't have windowsx.h, so we use this
 */
@@ -28,7 +28,7 @@
 /* Wine seems to need this */
 #include <commdlg.h>
 
-#include "globals.h"        
+#include "globals.h"
 #include <stdio.h>
 
 BOOL FileIsPlaceable( LPCSTR szFileName );
@@ -44,7 +44,7 @@ BOOL isAldus;
 BOOL FileOpen(HWND hWnd, char *fn)
 {
   OPENFILENAME ofn = { sizeof(OPENFILENAME),
-		       0, 0, NULL, NULL, 0, 0, NULL, 
+		       0, 0, NULL, NULL, 0, 0, NULL,
 		       FN_LENGTH, NULL, 0, NULL, NULL, OFN_CREATEPROMPT |
 		       OFN_SHOWHELP, 0, 0, NULL, 0, NULL };
   ofn.lpstrFilter = "Metafiles\0*.wmf\0";
@@ -61,9 +61,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 {
   switch (uMessage)
     {
-    case WM_PAINT: 
+    case WM_PAINT:
       {
-	PAINTSTRUCT ps; 
+	PAINTSTRUCT ps;
 	BeginPaint(hwnd, &ps);
 	SetMapMode(ps.hdc, MM_ANISOTROPIC);
 	SetViewportExtEx(ps.hdc, width, height, NULL);
@@ -99,7 +99,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	    }
 	  }
 	  break;
-	  
+
 	case IDM_SET_EXT_TO_WIN:
 	  {
 	    RECT r;
@@ -110,7 +110,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	  }
 	  break;
 
-	  
+
 	case IDM_LEFT:
 	  deltax += 100;
 	  InvalidateRect( hwnd, NULL, TRUE );
@@ -155,7 +155,7 @@ BOOL FileIsPlaceable( LPCSTR szFileName )
   if( (hInFile = _lopen( szFileName, OF_READ ) ) == HFILE_ERROR )
     return FALSE;
 
-  if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) ) 
+  if( _lread( hInFile, &apmh, sizeof(APMFILEHEADER) )
       != sizeof(APMFILEHEADER) )
     {
       _lclose( hInFile );
@@ -184,11 +184,11 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   checksum = 0;
   p = (WORD *) &APMHeader;
 
-  for(i=0; i<10; i++) 
+  for(i=0; i<10; i++)
     checksum ^= *p++;
   if (checksum != APMHeader.checksum) {
     char msg[128];
-    sprintf(msg, "Computed checksum %04x != stored checksum %04x\n", 
+    sprintf(msg, "Computed checksum %04x != stored checksum %04x\n",
 	   checksum, APMHeader.checksum);
         MessageBox(hwnd, msg, "Checksum failed", MB_OK);
     return 0;
@@ -207,10 +207,10 @@ HMETAFILE GetPlaceableMetaFile( HWND hwnd, LPCSTR szFileName )
   }
   _lclose(fh);
 
-  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData))) 
+  if (!(hmf = SetMetaFileBitsEx(mfHeader.mtSize*2, lpData)))
     return 0;
 
-  
+
   width = APMHeader.bbox.Right - APMHeader.bbox.Left;
   height = APMHeader.bbox.Bottom - APMHeader.bbox.Top;
 

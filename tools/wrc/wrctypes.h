@@ -59,7 +59,7 @@
 #define WRC_RT_ANIICON		(22)
 #define WRC_RT_HTML		(23)
 #define WRC_RT_DLGINIT          (240)
-#define WRC_RT_TOOLBAR		(241)  
+#define WRC_RT_TOOLBAR		(241)
 
 /* Default class type IDs */
 #define CT_BUTTON	0x80
@@ -571,7 +571,7 @@ typedef struct accelerator {
 /* Toolbar structures */
 typedef struct toolbar_item {
 	struct toolbar_item	*next;
-	struct toolbar_item	*prev;        
+	struct toolbar_item	*prev;
 	int			id;
 } toolbar_item_t;
 

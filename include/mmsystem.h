@@ -25,7 +25,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
@@ -43,7 +43,7 @@ DECLARE_OLD_HANDLE(HMIXEROBJ);
 DECLARE_OLD_HANDLE(HMMIO);
 
 #include "pshpack1.h"
-   
+
 typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 
 #define MAXWAVEDRIVERS	10
@@ -51,11 +51,11 @@ typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 #define MAXAUXDRIVERS	10
 #define MAXMCIDRIVERS	32
 #define MAXMIXERDRIVERS	10
-   
+
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
 #define MAXERRORLENGTH   128    /* max error text length (including NULL) */
 #define MAX_JOYSTICKOEMVXDNAME	260
-   
+
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
 #ifndef _MCIERROR_
@@ -250,7 +250,7 @@ typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DW
 UINT 		WINAPI 	mmsystemGetVersion(void);
 BOOL 		WINAPI	sndPlaySoundA(LPCSTR lpszSound, UINT fuSound);
 BOOL 		WINAPI	sndPlaySoundW(LPCWSTR lpszSound, UINT fuSound);
-#define 		sndPlaySound WINELIB_NAME_AW(sndPlaySound) 
+#define 		sndPlaySound WINELIB_NAME_AW(sndPlaySound)
 BOOL 		WINAPI 	PlaySoundA(LPCSTR pszSound, HMODULE hmod, DWORD fdwSound);
 BOOL 		WINAPI 	PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
 #define 		PlaySound WINELIB_NAME_AW(PlaySound)
@@ -493,8 +493,8 @@ typedef WORD *LPKEYARRAY;
 /* Only on Win95 and up */
 #define MIDI_IO_STATUS	0x00000020L
 
-/* flags for wFlags parm of 
-	midiOutCachePatches(), 
+/* flags for wFlags parm of
+	midiOutCachePatches(),
 	midiOutCacheDrumPatches() */
 #define MIDI_CACHE_ALL      1
 #define MIDI_CACHE_BESTFIT  2
@@ -569,7 +569,7 @@ typedef struct midihdr_tag {
     DWORD	dwFlags;	/* assorted flags (see defines) */
     struct midihdr_tag *lpNext;	/* reserved for driver */
     DWORD	reserved;	/* reserved for driver */
-    DWORD	dwOffset;	/* offset of playback in case of 
+    DWORD	dwOffset;	/* offset of playback in case of
 				 * MIDISTRM buffer */
     DWORD_PTR	dwReserved[8];	/* reserved for driver */
 } MIDIHDR, *LPMIDIHDR;
@@ -594,14 +594,14 @@ typedef struct {
 #define MIDIPROP_TEMPO		0x00000002
 #define MIDIPROP_TIMEDIV	0x00000001
 
-typedef struct {  
-    DWORD dwDeltaTime;	/* Time, in MIDI ticks, between the previous 
+typedef struct {
+    DWORD dwDeltaTime;	/* Time, in MIDI ticks, between the previous
 			 * event and the current event. */
-    DWORD dwStreamID;	/* Reserved; must be zero. */ 
+    DWORD dwStreamID;	/* Reserved; must be zero. */
     DWORD dwEvent;  	/* event => see MEVT_XXX macros */
     DWORD dwParms[1];	/* extra pmts to dwEvent if F_LONG is set */
 } MIDIEVENT, *LPMIDIEVENT;
-          
+
 #define MEVT_EVENTTYPE(x) ((BYTE) (((x)>>24)&0xFF))
 #define MEVT_EVENTPARM(x) ((DWORD) ((x)&0x00FFFFFFL))
 
@@ -655,7 +655,7 @@ UINT		WINAPI	midiInGetID(HMIDIIN,UINT*);
 DWORD		WINAPI	midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
 MMRESULT	WINAPI	midiStreamClose(HMIDISTRM hms);
 MMRESULT	WINAPI	midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
-				       DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen); 
+				       DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen);
 MMRESULT	WINAPI	midiStreamOut(HMIDISTRM hms, LPMIDIHDR lpMidiHdr, UINT cbMidiHdr);
 MMRESULT	WINAPI	midiStreamPause(HMIDISTRM hms);
 MMRESULT	WINAPI	midiStreamPosition(HMIDISTRM hms, LPMMTIME lpmmt, UINT cbmmt);
@@ -2207,6 +2207,6 @@ DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* __WINE_MMSYSTEM_H */

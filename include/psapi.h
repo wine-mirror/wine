@@ -29,16 +29,16 @@ typedef struct _MODULEINFO {
   LPVOID EntryPoint;
 } MODULEINFO, *LPMODULEINFO;
 
-typedef struct _PROCESS_MEMORY_COUNTERS {  
-  DWORD cb;    
+typedef struct _PROCESS_MEMORY_COUNTERS {
+  DWORD cb;
   DWORD PageFaultCount;
   DWORD PeakWorkingSetSize;
   DWORD WorkingSetSize;
   DWORD QuotaPeakPagedPoolUsage;
   DWORD QuotaPagedPoolUsage;
-  DWORD QuotaPeakNonPagedPoolUsage;  
+  DWORD QuotaPeakNonPagedPoolUsage;
   DWORD QuotaNonPagedPoolUsage;
-  DWORD PagefileUsage;    
+  DWORD PagefileUsage;
   DWORD PeakPagefileUsage;
 } PROCESS_MEMORY_COUNTERS;
 typedef PROCESS_MEMORY_COUNTERS *PPROCESS_MEMORY_COUNTERS;

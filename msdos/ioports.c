@@ -138,14 +138,14 @@ static void set_IO_permissions(int val1, int val, char rw)
 {
 	int j;
 	if (val1 != -1) {
-		if (val == -1) val = 0x3ff;		
+		if (val == -1) val = 0x3ff;
 		for (j = val1; j <= val; j++)
-			port_permissions[j] |= rw;		
+			port_permissions[j] |= rw;
 
 		do_direct_port_access = 1;
 
 		val1 = -1;
-	} else if (val != -1) {		
+	} else if (val != -1) {
 		do_direct_port_access = 1;
 
 		port_permissions[val] |= rw;
@@ -171,7 +171,7 @@ static void do_IO_port_init_read_or_write(char* temp, char rw)
 	} else if (!(!strcmp(temp, "*") || *temp == '\0')) {
 		len = strlen(temp);
 		val = -1;
-		val1 = -1;		
+		val1 = -1;
 		for (i = 0; i < len; i++) {
 			switch (temp[i]) {
 			case '0':
@@ -203,7 +203,7 @@ static void do_IO_port_init_read_or_write(char* temp, char rw)
 				}
 			}
 		}
-		set_IO_permissions(val1, val, rw);		
+		set_IO_permissions(val1, val, rw);
 	}
 }
 
@@ -267,7 +267,7 @@ static void IO_port_init(void)
 /**********************************************************************
  *	    IO_inport
  *
- * Note: The size argument has to be handled correctly _externally_ 
+ * Note: The size argument has to be handled correctly _externally_
  * (as we always return a DWORD)
  */
 DWORD IO_inport( int port, int size )
@@ -277,7 +277,7 @@ DWORD IO_inport( int port, int size )
     TRACE("%d-byte value from port 0x%02x\n", size, port );
 
 #ifdef HAVE_PPDEV
-    if (do_pp_port_access == -1) 
+    if (do_pp_port_access == -1)
       do_pp_port_access =IO_pp_init();
     if ((do_pp_port_access == 0 ) && (size == 1))
       if (!IO_pp_inp(port,&res))
@@ -398,7 +398,7 @@ void IO_outport( int port, int size, DWORD value )
                  value, size, port );
 
 #ifdef HAVE_PPDEV
-    if (do_pp_port_access == -1) 
+    if (do_pp_port_access == -1)
       do_pp_port_access = IO_pp_init();
     if ((do_pp_port_access == 0) && (size == 1))
       if (!IO_pp_outp(port,&value))
@@ -469,7 +469,7 @@ void IO_outport( int port, int size, DWORD value )
 	    (tmr_8253[chan].countmax != tmr_8253[chan].oldval))
             set_timer_maxval(chan, tmr_8253[chan].countmax);
     }
-    break;          
+    break;
     case 0x43:
     {
 	BYTE chan = ((BYTE)value & 0xc0) >> 6;

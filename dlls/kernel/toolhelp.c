@@ -35,7 +35,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
 
 
-/* FIXME: to make this work, we have to call back all these registered 
+/* FIXME: to make this work, we have to call back all these registered
  * functions from all over the WINE code. Someone with more knowledge than
  * me please do that. -Marcus
  */
@@ -86,7 +86,7 @@ BOOL16 WINAPI NotifyRegister16( HTASK16 htask, FARPROC16 lpfnCallback,
 BOOL16 WINAPI NotifyUnregister16( HTASK16 htask )
 {
     int	i;
-    
+
     FIXME("(%x), semi-stub.\n", htask );
     if (!htask) htask = GetCurrentTask();
     for (i=nrofnotifys;i--;)
@@ -152,14 +152,14 @@ BOOL16 WINAPI InterruptUnRegister16( HTASK16 task )
 BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
 {
     /* FIXME
-     * In standard mode, dwmsSinceStart = dwmsThisVM 
+     * In standard mode, dwmsSinceStart = dwmsThisVM
      *
      * I tested this, under Windows in enhanced mode, and
      * if you never switch VM (ie start/stop DOS) these
-     * values should be the same as well. 
+     * values should be the same as well.
      *
      * Also, Wine should adjust for the hardware timer
-     * to reduce the amount of error to ~1ms. 
+     * to reduce the amount of error to ~1ms.
      * I can't be bothered, can you?
      */
     pTimerInfo->dwmsSinceStart = pTimerInfo->dwmsThisVM = GetTickCount();
@@ -202,7 +202,7 @@ FARPROC16 WINAPI ToolHelpHook16(FARPROC16 lpfnNotifyHandler)
 /***********************************************************************
  *           CreateToolhelp32Snapshot			(KERNEL32.@)
  */
-HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process ) 
+HANDLE WINAPI CreateToolhelp32Snapshot( DWORD flags, DWORD process )
 {
     HANDLE ret;
 
@@ -402,7 +402,7 @@ BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
  *              GlobalMasterHandle (KERNEL.28)
  *
  *
- * Should return selector and handle of the information structure for 
+ * Should return selector and handle of the information structure for
  * the global heap. selector and handle are stored in the THHOOK as
  * pGlobalHeap and hGlobalHeap.
  * As Wine doesn't have this structure, we return both values as zero

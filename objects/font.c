@@ -76,7 +76,7 @@ typedef struct
   DC                 *dc;
   PHYSDEV             physDev;
 } fontEnum32;
- 
+
 /*
  *  For TranslateCharsetInfo
  */
@@ -107,7 +107,7 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { GB2312_CHARSET, 936, FS(18)},
   { HANGEUL_CHARSET, 949, FS(19)},
   { CHINESEBIG5_CHARSET, 950, FS(20)},
-  { JOHAB_CHARSET, 1361, FS(21)}, 
+  { JOHAB_CHARSET, 1361, FS(21)},
   /* reserved for alternate ANSI and OEM */
   { DEFAULT_CHARSET, 0, FS(0)},
   { DEFAULT_CHARSET, 0, FS(0)},
@@ -493,7 +493,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	    memcpy( &fontPtr->logfont, plf, sizeof(LOGFONTW) );
 
 	    TRACE("(%ld %ld %ld %ld %x) %s %s %s => %04x\n",
-                  plf->lfHeight, plf->lfWidth, 
+                  plf->lfHeight, plf->lfWidth,
                   plf->lfEscapement, plf->lfOrientation,
                   plf->lfPitchAndFamily,
                   debugstr_w(plf->lfFaceName),
@@ -504,7 +504,7 @@ HFONT WINAPI CreateFontIndirectW( const LOGFONTW *plf )
 	      /* this should really depend on whether GM_ADVANCED is set */
 	      fontPtr->logfont.lfOrientation = fontPtr->logfont.lfEscapement;
 	      WARN("orientation angle %f set to "
-                   "escapement angle %f for new font %04x\n", 
+                   "escapement angle %f for new font %04x\n",
                    plf->lfOrientation/10., plf->lfEscapement/10., hFont);
 	    }
 	    GDI_ReleaseObj( hFont );
@@ -539,10 +539,10 @@ HFONT16 WINAPI CreateFont16(INT16 height, INT16 width, INT16 esc, INT16 orient,
     logfont.lfClipPrecision = clippres;
     logfont.lfQuality = quality;
     logfont.lfPitchAndFamily = pitch;
-   
-    if (name) 
+
+    if (name)
 	lstrcpynA(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
-    else 
+    else
 	logfont.lfFaceName[0] = '\0';
 
     return CreateFontIndirect16( &logfont );
@@ -572,10 +572,10 @@ HFONT WINAPI CreateFontA( INT height, INT width, INT esc,
     logfont.lfClipPrecision = clippres;
     logfont.lfQuality = quality;
     logfont.lfPitchAndFamily = pitch;
-   
-    if (name) 
+
+    if (name)
 	lstrcpynA(logfont.lfFaceName,name,sizeof(logfont.lfFaceName));
-    else 
+    else
 	logfont.lfFaceName[0] = '\0';
 
     return CreateFontIndirectA( &logfont );
@@ -605,11 +605,11 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
     logfont.lfClipPrecision = clippres;
     logfont.lfQuality = quality;
     logfont.lfPitchAndFamily = pitch;
-   
-    if (name) 
-	lstrcpynW(logfont.lfFaceName, name, 
+
+    if (name)
+	lstrcpynW(logfont.lfFaceName, name,
 		  sizeof(logfont.lfFaceName) / sizeof(WCHAR));
-    else 
+    else
 	logfont.lfFaceName[0] = '\0';
 
     return CreateFontIndirectW( &logfont );
@@ -721,7 +721,7 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
     INT ret = 1;
     DC *dc;
 
-    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET || 
+    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
 	pfe->lpLogFontParam->lfCharSet == plf->elfLogFont.lfCharSet )
     {
         FONT_EnumLogFontExWTo16(plf, pfe->lpLogFont);
@@ -753,7 +753,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
     DC *dc;
 
     /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
-    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET || 
+    if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
 	pfe->lpLogFontParam->lfCharSet == plf->elfLogFont.lfCharSet )
     {
 	/* convert font metrics */
@@ -828,7 +828,7 @@ INT16 WINAPI EnumFontFamiliesEx16( HDC16 hDC, LPLOGFONT16 plf,
  *		FONT_EnumFontFamiliesEx
  */
 static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
-				    FONTENUMPROCEXW efproc, 
+				    FONTENUMPROCEXW efproc,
 				    LPARAM lParam, DWORD dwUnicode)
 {
     INT ret = 1, ret2;
@@ -873,7 +873,7 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
  *              EnumFontFamiliesExW	(GDI32.@)
  */
 INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
-                                    FONTENUMPROCEXW efproc, 
+                                    FONTENUMPROCEXW efproc,
                                     LPARAM lParam, DWORD dwFlags )
 {
     return  FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, ENUM_UNICODE );
@@ -883,7 +883,7 @@ INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
  *              EnumFontFamiliesExA	(GDI32.@)
  */
 INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
-                                    FONTENUMPROCEXA efproc, 
+                                    FONTENUMPROCEXA efproc,
                                     LPARAM lParam, DWORD dwFlags)
 {
     LOGFONTW lfW;
@@ -1077,7 +1077,7 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
     INT res = GetTextFaceW(hdc, 0, NULL);
     LPWSTR nameW = HeapAlloc( GetProcessHeap(), 0, res * 2 );
     GetTextFaceW( hdc, res, nameW );
-    
+
     if (name)
         res = WideCharToMultiByte( CP_ACP, 0, nameW, -1, name, count,
 				   NULL, NULL);
@@ -1285,7 +1285,7 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
  * - kerning? see below
  *
  * Kerning.  Since kerning would be carried out by the rendering code it should
- * be done by the driver.  However they don't support it yet.  Also I am not 
+ * be done by the driver.  However they don't support it yet.  Also I am not
  * yet persuaded that (certainly under Win95) any kerning is actually done.
  *
  * str: According to MSDN this should be null-terminated.  That is not true; a
@@ -1392,7 +1392,7 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 #define HDPTOLP(y) ((y<0)?					\
 		(-abs((y)*dc->wndExtY/dc->vportExtY)):		\
 		(abs((y)*dc->wndExtY/dc->vportExtY)))
-	
+
     metrics->tmHeight           = HDPTOLP(metrics->tmHeight);
     metrics->tmAscent           = HDPTOLP(metrics->tmAscent);
     metrics->tmDescent          = HDPTOLP(metrics->tmDescent);
@@ -1478,19 +1478,19 @@ UINT WINAPI GetOutlineTextMetricsA(
     needed = sizeof(OUTLINETEXTMETRICA);
     if(lpOTMW->otmpFamilyName)
         needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1, 
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1,
 				      NULL, 0, NULL, NULL);
     if(lpOTMW->otmpFaceName)
         needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1, 
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1,
 				      NULL, 0, NULL, NULL);
     if(lpOTMW->otmpStyleName)
         needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1, 
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1,
 				      NULL, 0, NULL, NULL);
     if(lpOTMW->otmpFullName)
         needed += WideCharToMultiByte(CP_ACP, 0,
-	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1, 
+	   (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1,
 				      NULL, 0, NULL, NULL);
 
     if(!lpOTM) {
@@ -1540,7 +1540,7 @@ UINT WINAPI GetOutlineTextMetricsA(
     if(lpOTMW->otmpFamilyName) {
         lpOTM->otmpFamilyName = (LPSTR)(ptr - (char*)lpOTM);
 	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1, 
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFamilyName), -1,
 				  ptr, left, NULL, NULL);
 	left -= len;
 	ptr += len;
@@ -1550,7 +1550,7 @@ UINT WINAPI GetOutlineTextMetricsA(
     if(lpOTMW->otmpFaceName) {
         lpOTM->otmpFaceName = (LPSTR)(ptr - (char*)lpOTM);
 	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1, 
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFaceName), -1,
 				  ptr, left, NULL, NULL);
 	left -= len;
 	ptr += len;
@@ -1560,7 +1560,7 @@ UINT WINAPI GetOutlineTextMetricsA(
     if(lpOTMW->otmpStyleName) {
         lpOTM->otmpStyleName = (LPSTR)(ptr - (char*)lpOTM);
 	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1, 
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpStyleName), -1,
 				  ptr, left, NULL, NULL);
 	left -= len;
 	ptr += len;
@@ -1570,14 +1570,14 @@ UINT WINAPI GetOutlineTextMetricsA(
     if(lpOTMW->otmpFullName) {
         lpOTM->otmpFullName = (LPSTR)(ptr - (char*)lpOTM);
 	len = WideCharToMultiByte(CP_ACP, 0,
-	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1, 
+	     (WCHAR*)((char*)lpOTMW + (ptrdiff_t)lpOTMW->otmpFullName), -1,
 				  ptr, left, NULL, NULL);
 	left -= len;
     } else
         lpOTM->otmpFullName = 0;
-    
+
     assert(left == 0);
-    
+
     ret = needed;
 
 end:
@@ -1708,7 +1708,7 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
     BOOL ret = TRUE;
 
     if(count <= 0) return FALSE;
-    
+
     str = HeapAlloc(GetProcessHeap(), 0, count);
     for(i = 0; i < count; i++)
 	str[i] = (BYTE)(firstChar + i);
@@ -1733,7 +1733,7 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 
 
 /* FIXME: all following APIs ******************************************/
- 
+
 
 /***********************************************************************
  *           SetMapperFlags    (GDI.349)
@@ -1750,7 +1750,7 @@ DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
 DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
 {
     DC *dc = DC_GetDCPtr( hDC );
-    DWORD ret = 0; 
+    DWORD ret = 0;
     if(!dc) return 0;
     if(dc->funcs->pSetMapperFlags)
         ret = dc->funcs->pSetMapperFlags( dc->physDev, dwFlag );
@@ -1814,7 +1814,7 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
     BOOL ret = TRUE;
 
     if(count <= 0) return FALSE;
-    
+
     str = HeapAlloc(GetProcessHeap(), 0, count);
     for(i = 0; i < count; i++)
 	str[i] = (BYTE)(firstChar + i);
@@ -2012,7 +2012,7 @@ INT16 WINAPI GetKerningPairs16( HDC16 hDC, INT16 cPairs,
     int i;
     FIXME("(%x,%d,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
     if (lpKerningPairs)
-        for (i = 0; i < cPairs; i++) 
+        for (i = 0; i < cPairs; i++)
             lpKerningPairs[i].iKernAmount = 0;
  /* FIXME: Should this function call SetLastError (0)?  This is yet another
   * Microsoft function that can return 0 on success or failure
@@ -2030,7 +2030,7 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
 {
     int i;
     FIXME("(%x,%ld,%p): almost empty stub!\n", hDC, cPairs, lpKerningPairs);
-    for (i = 0; i < cPairs; i++) 
+    for (i = 0; i < cPairs; i++)
         lpKerningPairs[i].iKernAmount = 0;
     return 0;
 }
@@ -2051,7 +2051,7 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
  *
  * Fills a CHARSETINFO structure for a character set, code page, or
  * font. This allows making the correspondance between different labelings
- * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges) 
+ * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges)
  * of the same encoding.
  *
  * Only one codepage will be set in lpCs->fs. If TCI_SRCFONTSIG is used,
@@ -2112,15 +2112,15 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
  *
  * RETURNS
  *
- * success: Number of bytes returned 
+ * success: Number of bytes returned
  * failure: GDI_ERROR
  *
  * NOTES
  *
- * Calls SetLastError()  
+ * Calls SetLastError()
  *
  */
-DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset, 
+DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
     LPVOID buffer, DWORD length)
 {
     DC *dc = DC_GetDCPtr(hdc);
@@ -2274,7 +2274,7 @@ GetCharacterPlacementW(HDC hdc, LPCWSTR lpString, INT uCount,
     {
       int c;
       for (i = 0; i < nSet; i++)
-      { 
+      {
         if (GetCharWidth32W(hdc, lpString[i], lpString[i], &c))
           lpResults->lpDx[i]= c;
       }
@@ -2328,7 +2328,7 @@ BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
        FIXME_(gdi)("GetCharWidthFloatW, stub\n");
        return 0;
 }
- 
+
 
 /***********************************************************************
  *								       *
@@ -2344,8 +2344,8 @@ BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
  * 	   fixup dfPoints if all metrics are identical, otherwise create
  *	   new fontAlias. When soft font support is ready this will
  *	   simply create a new fontResource ('filename' will go into
- *	   the pfr->resource field) with FR_SOFTFONT/FR_SOFTRESOURCE 
- *	   flag set. 
+ *	   the pfr->resource field) with FR_SOFTFONT/FR_SOFTRESOURCE
+ *	   flag set.
  */
 INT16 WINAPI AddFontResource16( LPCSTR filename )
 {

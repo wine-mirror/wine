@@ -1,5 +1,5 @@
 /*
- * LZ Decompression functions 
+ * LZ Decompression functions
  *
  * Copyright 1996 Marcus Meissner
  *
@@ -17,7 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-/* 
+/*
  * FIXME: return values might be wrong
  */
 
@@ -48,7 +48,7 @@ struct lzfileheader {
 	BYTE	magic[8];
 	BYTE	compressiontype;
 	CHAR	lastchar;
-	DWORD	reallength;		
+	DWORD	reallength;
 };
 static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
 
@@ -63,7 +63,7 @@ struct lzstate {
 	BYTE	table[0x1000];	/* the rotating LZ table */
 	UINT	curtabent;	/* CURrent TABle ENTry */
 
-	BYTE	stringlen;	/* length and position of current string */ 
+	BYTE	stringlen;	/* length and position of current string */
 	DWORD	stringpos;	/* from stringtable */
 
 
@@ -103,7 +103,7 @@ _lzget(struct lzstate *lzs,BYTE *b) {
 }
 /* internal function, reads lzheader
  * returns BADINHANDLE for non filedescriptors
- * return 0 for file not compressed using LZ 
+ * return 0 for file not compressed using LZ
  * return UNKNOWNALG for unknown algorithm
  * returns lzfileheader in *head
  */
@@ -114,7 +114,7 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 	if (_llseek(fd,0,SEEK_SET)==-1)
 		return LZERROR_BADINHANDLE;
 
-	/* We can't directly read the lzfileheader struct due to 
+	/* We can't directly read the lzfileheader struct due to
 	 * structure element alignment
 	 */
 	if (_lread(fd,buf,14)<14)
@@ -173,7 +173,7 @@ HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
  * on failure, returns error code <0
  * lzfiledescriptors range from 0x400 to 0x410 (only 16 open files per process)
  *
- * since _llseek uses the same types as libc.lseek, we just use the macros of 
+ * since _llseek uses the same types as libc.lseek, we just use the macros of
  *  libc
  */
 HFILE WINAPI LZInit( HFILE hfSrc )
@@ -194,7 +194,7 @@ HFILE WINAPI LZInit( HFILE hfSrc )
         if (i == MAX_LZSTATES) return LZERROR_GLOBALLOC;
 	lzstates[i] = lzs = HeapAlloc( GetProcessHeap(), 0, sizeof(struct lzstate) );
 	if(lzs == NULL) return LZERROR_GLOBALLOC;
-	
+
 	memset(lzs,'\0',sizeof(*lzs));
 	lzs->realfd	= hfSrc;
 	lzs->lastchar	= head.lastchar;
@@ -209,11 +209,11 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 		lzstates[i] = NULL;
 		return LZERROR_GLOBALLOC;
 	}
-	
+
 	/* Yes, preinitialize with spaces */
 	memset(lzs->table,' ',0x1000);
 	/* Yes, start 16 byte from the END of the table */
-	lzs->curtabent	= 0xff0; 
+	lzs->curtabent	= 0xff0;
 	return 0x400 + i;
 }
 
@@ -298,7 +298,7 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
 			head.lastchar=tolower(head.lastchar);
 		else
 			head.lastchar=toupper(head.lastchar);
-	}	
+	}
 
 	/* now look where to replace the last character */
 	if (NULL!=(t=strchr(s,'.'))) {
@@ -400,11 +400,11 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 		lzs->curtabent	&= 0xFFF;				\
 		lzs->realcurrent++;
 
-	/* if someone has seeked, we have to bring the decompressor 
+	/* if someone has seeked, we have to bring the decompressor
 	 * to that position
 	 */
 	if (lzs->realcurrent!=lzs->realwanted) {
-		/* if the wanted position is before the current position 
+		/* if the wanted position is before the current position
 		 * I see no easy way to unroll ... We have to restart at
 		 * the beginning. *sigh*
 		 */
@@ -531,7 +531,7 @@ LONG WINAPI LZCopy( HFILE src, HFILE dest )
         if (!IS_LZ_HANDLE(src))
 		xread=_lread;
 	else
-		xread=(_readfun)LZRead; 
+		xread=(_readfun)LZRead;
 	len=0;
 	while (1) {
 		ret=xread(src,buf,BUFLEN);

@@ -104,13 +104,13 @@ struct SysMouseAImpl
         GUID                            guid;
 
 	IDirectInputAImpl *dinput;
-	
+
 	/* The current data format and the conversion between internal
 	   and external data formats */
 	LPDIDATAFORMAT			df;
 	DataFormat                     *wine_df;
 	int                             offset_array[5];
-	
+
         /* SysMouseAImpl */
         BYTE                            absolute;
         /* Previous position for relative moves */
@@ -177,7 +177,7 @@ static SysMouseAImpl *alloc_device(REFGUID rguid, ICOM_VTABLE(IDirectInputDevice
     ICOM_VTBL(newDevice) = mvt;
     InitializeCriticalSection(&(newDevice->crit));
     memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
-    
+
     /* Per default, Wine uses its internal data format */
     newDevice->df = &Wine_InternalMouseFormat;
     memcpy(newDevice->offset_array, offset_array, 5 * sizeof(int));
@@ -196,12 +196,12 @@ static HRESULT mousedev_create_device(IDirectInputAImpl *dinput, REFGUID rguid, 
       (IsEqualGUID(&DInput_Wine_Mouse_GUID,rguid))) { /* Wine Mouse */
     if ((riid == NULL) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid))) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, &SysMouseAvt, dinput);
-    
+
       TRACE("Creating a Mouse device (%p)\n", *pdev);
       return DI_OK;
     }else if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, (ICOM_VTABLE(IDirectInputDevice2A) *) &SysMouse7Avt, dinput);
-    
+
       TRACE("Creating a Mouse DInput7A device (%p)\n", *pdev);
       return DI_OK;
     } else
@@ -246,7 +246,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
 	  HeapFree(GetProcessHeap(), 0, This->df->rgodf);
 	  HeapFree(GetProcessHeap(), 0, This->df);
 	}
-	
+
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
 }
@@ -272,7 +272,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
     hwnd = GetDesktopWindow();
   This->win = hwnd;
   This->dwCoopLevel = dwflags;
-  
+
   return 0;
 }
 
@@ -290,7 +290,7 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
 {
   ICOM_THIS(SysMouseAImpl,iface);
   int i;
-  
+
   TRACE("(this=%p,%p)\n",This,df);
 
   TRACE("(df.dwSize=%ld)\n",df->dwSize);
@@ -323,10 +323,10 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
 
   /* Prepare all the data-conversion filters */
   This->wine_df = create_DataFormat(&(Wine_InternalMouseFormat), df, This->offset_array);
-  
+
   return 0;
 }
-  
+
 /* low-level mouse hook */
 static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lparam )
 {
@@ -355,7 +355,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	    This->need_warp = WARP_DONE;
 	    goto end;
 	  }
-	      	  
+
 	  /* Relative mouse input with absolute mouse event : the real fun starts here... */
 	  if ((This->need_warp == WARP_NEEDED) ||
 	      (This->need_warp == WARP_STARTED)) {
@@ -370,7 +370,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->mapped_center.x, hook->time, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
 	    }
-	    
+
 	    if (hook->pt.y != This->mapped_center.y) {
 	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->mapped_center.y, hook->time, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
@@ -380,7 +380,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 
 	This->prevX = hook->pt.x;
 	This->prevY = hook->pt.y;
-	
+
 	if (This->absolute) {
 	  This->m_state.lX = hook->pt.x;
 	  This->m_state.lY = hook->pt.y;
@@ -449,7 +449,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
   ICOM_THIS(SysMouseAImpl,iface);
   RECT	rect;
-  
+
   TRACE("(this=%p)\n",This);
 
   if (This->acquired == 0) {
@@ -486,7 +486,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
       This->mapped_center.x = This->win_centerX;
       This->mapped_center.y = This->win_centerY;
       MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
-      TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+      TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 #ifdef MOUSE_HACK
       This->need_warp = WARP_DONE;
@@ -523,7 +523,7 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
     }
     else
 	ERR("Unacquiring a not-acquired device !!!\n");
-  
+
     return DI_OK;
 }
 
@@ -537,13 +537,13 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
-  
+
   EnterCriticalSection(&(This->crit));
   TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
-  
+
   /* Copy the current mouse state */
   fill_DataFormat(ptr, &(This->m_state), This->wine_df);
-  
+
   /* Initialize the buffer when in relative mode */
   if (This->absolute == 0) {
     This->m_state.lX = 0;
@@ -555,7 +555,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     This->mapped_center.x = This->win_centerX;
     This->mapped_center.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
-    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
     SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 
 #ifdef MOUSE_HACK
@@ -566,11 +566,11 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
   }
 
   LeaveCriticalSection(&(This->crit));
-  
+
   TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
 	This->m_state.lX, This->m_state.lY,
 	This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
-  
+
   return 0;
 }
 
@@ -585,7 +585,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
   DWORD len, nqtail;
-  
+
   EnterCriticalSection(&(This->crit));
   TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
 
@@ -605,7 +605,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     }
 
     if (len)
-    	TRACE("Application retrieving %ld event(s).\n", len); 
+    	TRACE("Application retrieving %ld event(s).\n", len);
 
     *entries = 0;
     nqtail = This->queue_tail;
@@ -632,7 +632,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     This->mapped_center.x = This->win_centerX;
     This->mapped_center.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
-    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y); 
+    TRACE("Warping mouse to %ld - %ld\n", This->mapped_center.x, This->mapped_center.y);
     SetCursorPos( This->mapped_center.x, This->mapped_center.y );
 
 #ifdef MOUSE_HACK
@@ -654,12 +654,12 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
   ICOM_THIS(SysMouseAImpl,iface);
 
   TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-  
+
   if (!HIWORD(rguid)) {
     switch ((DWORD)rguid) {
     case (DWORD) DIPROP_BUFFERSIZE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-      
+
       TRACE("buffersize = %ld\n",pd->dwData);
 
       This->data_queue = (LPDIDEVICEOBJECTDATA)HeapAlloc(GetProcessHeap(),0,
@@ -680,7 +680,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
       break;
     }
   }
-  
+
   return 0;
 }
 
@@ -698,12 +698,12 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
 
   if (TRACE_ON(dinput))
     _dump_DIPROPHEADER(pdiph);
-  
+
   if (!HIWORD(rguid)) {
     switch ((DWORD)rguid) {
     case (DWORD) DIPROP_BUFFERSIZE: {
       LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-      
+
       TRACE(" return buffersize = %d\n",This->queue_len);
       pd->dwData = This->queue_len;
       break;
@@ -721,17 +721,17 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
 	pr->lMin = DIPROPRANGE_NOMIN;
 	pr->lMax = DIPROPRANGE_NOMAX;
       }
-      
+
       break;
     }
-      
+
     default:
       FIXME("Unknown type %ld (%s)\n",(DWORD)rguid,debugstr_guid(rguid));
       break;
     }
   }
-  
-  
+
+
   return DI_OK;
 }
 
@@ -777,7 +777,7 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
     /* DirectX 3.0 */
     FIXME("DirectX 3.0 not supported....\n");
   }
-  
+
   return DI_OK;
 }
 
@@ -793,7 +793,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
 {
   ICOM_THIS(SysMouseAImpl,iface);
   DIDEVICEOBJECTINSTANCEA ddoi;
-  
+
   TRACE("(this=%p,%p,%p,%08lx)\n", This, lpCallback, lpvRef, dwFlags);
   if (TRACE_ON(dinput)) {
     DPRINTF("  - flags = ");
@@ -803,7 +803,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
 
   /* Only the fields till dwFFMaxForce are relevant */
   ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
-    
+
   /* In a mouse, we have : two relative axis and three buttons */
   if ((dwFlags == DIDFT_ALL) ||
       (dwFlags & DIDFT_AXIS)) {
@@ -814,7 +814,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
     strcpy(ddoi.tszName, "X-Axis");
     _dump_OBJECTINSTANCEA(&ddoi);
     if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
-    
+
     /* Y axis */
     ddoi.guidType = GUID_YAxis;
     ddoi.dwOfs = This->offset_array[WINE_MOUSE_Y_POSITION];
@@ -854,7 +854,7 @@ static HRESULT WINAPI SysMouseAImpl_EnumObjects(
 }
 
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt = 
+static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -892,7 +892,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysMouseAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInputDevice7A) SysMouse7Avt = 
+static ICOM_VTABLE(IDirectInputDevice7A) SysMouse7Avt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputDevice2AImpl_QueryInterface,

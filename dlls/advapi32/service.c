@@ -42,7 +42,7 @@ EnumServicesStatusA( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD dwServiceState, LPENUM_SERVICE_STATUSA lpServices,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
+{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
@@ -57,7 +57,7 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
                      DWORD dwServiceState, LPENUM_SERVICE_STATUSW lpServices,
                      DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                      LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
+{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager,
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
@@ -69,14 +69,14 @@ EnumServicesStatusW( SC_HANDLE hSCManager, DWORD dwServiceType,
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
-{	
+{
     LPSERVICE_MAIN_FUNCTIONA fpMain;
     HANDLE wait;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpArgVecW;
     LPSTR  *lpArgVecA;
     int i;
-	
+
     TRACE("(%p)\n", servent);
     wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
     if(wait == 0)
@@ -93,7 +93,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 
     /* Convert the Unicode arg vectors back to ASCII */
     if(dwNumServiceArgs)
-        lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0, 
+        lpArgVecA = (LPSTR*) HeapAlloc( GetProcessHeap(), 0,
                                    dwNumServiceArgs*sizeof(LPSTR) );
     else
         lpArgVecA = NULL;
@@ -102,7 +102,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
         lpArgVecA[i]=HEAP_strdupWtoA(GetProcessHeap(), 0, lpArgVecW[i]);
 
     /* FIXME: should we blindly start all services? */
-    while (servent->lpServiceName) { 
+    while (servent->lpServiceName) {
         TRACE("%s at %p)\n", debugstr_a(servent->lpServiceName),servent);
         fpMain = servent->lpServiceProc;
 
@@ -131,12 +131,12 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
  */
 BOOL WINAPI
 StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
-{	
+{
     LPSERVICE_MAIN_FUNCTIONW fpMain;
     HANDLE wait;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpServiceArgVectors ;
-	
+
     TRACE("(%p)\n", servent);
     wait = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, "ADVAPI32_ServiceStartData");
     if(wait == 0)
@@ -152,7 +152,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
     ReleaseSemaphore(wait, 1, NULL);
 
     /* FIXME: should we blindly start all services? */
-    while (servent->lpServiceName) { 
+    while (servent->lpServiceName) {
         TRACE("%s at %p)\n", debugstr_w(servent->lpServiceName),servent);
         fpMain = servent->lpServiceProc;
 
@@ -172,7 +172,7 @@ SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
 {	FIXME("%s %p\n", lpServiceName, lpfHandler);
-	return 0xcacacafe;	
+	return 0xcacacafe;
 }
 
 /******************************************************************************
@@ -183,10 +183,10 @@ RegisterServiceCtrlHandlerA( LPCSTR lpServiceName,
  *   lpfHandler    []
  */
 SERVICE_STATUS_HANDLE WINAPI
-RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName, 
+RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
 {	FIXME("%s %p\n", debugstr_w(lpServiceName), lpfHandler);
-	return 0xcacacafe;	
+	return 0xcacacafe;
 }
 
 /******************************************************************************
@@ -215,7 +215,7 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 SC_HANDLE WINAPI
 OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
-{   
+{
     LPWSTR lpMachineNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpMachineName);
     LPWSTR lpDatabaseNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpDatabaseName);
     SC_HANDLE ret = OpenSCManagerW(lpMachineNameW,lpDatabaseNameW,
@@ -248,7 +248,7 @@ OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     HKEY hKey;
     LONG r;
 
-    TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName), 
+    TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
           debugstr_w(lpDatabaseName), dwDesiredAccess);
 
     /*
@@ -294,7 +294,7 @@ AllocateLocallyUniqueId( PLUID lpluid )
  * RETURNS STD
  */
 BOOL WINAPI
-ControlService( SC_HANDLE hService, DWORD dwControl, 
+ControlService( SC_HANDLE hService, DWORD dwControl,
                 LPSERVICE_STATUS lpServiceStatus )
 {
     FIXME("(%d,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
@@ -317,7 +317,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
     TRACE("(%x)\n", hSCObject);
 
     RegCloseKey(hSCObject);
-    
+
     return TRUE;
 }
 
@@ -326,7 +326,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
  * OpenServiceA [ADVAPI32.@]
  */
 SC_HANDLE WINAPI
-OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName, 
+OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                 DWORD dwDesiredAccess )
 {
     LPWSTR lpServiceNameW = HEAP_strdupAtoW(GetProcessHeap(),0,lpServiceName);
@@ -387,11 +387,11 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
  */
 SC_HANDLE WINAPI
 CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
-                  LPCWSTR lpDisplayName, DWORD dwDesiredAccess, 
-                  DWORD dwServiceType, DWORD dwStartType, 
+                  LPCWSTR lpDisplayName, DWORD dwDesiredAccess,
+                  DWORD dwServiceType, DWORD dwStartType,
                   DWORD dwErrorControl, LPCWSTR lpBinaryPathName,
-                  LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId, 
-                  LPCWSTR lpDependencies, LPCWSTR lpServiceStartName, 
+                  LPCWSTR lpLoadOrderGroup, LPDWORD lpdwTagId,
+                  LPCWSTR lpDependencies, LPCWSTR lpServiceStartName,
                   LPCWSTR lpPassword )
 {
     FIXME("(%u,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
@@ -404,11 +404,11 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
  */
 SC_HANDLE WINAPI
 CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
-                  LPCSTR lpDisplayName, DWORD dwDesiredAccess, 
-                  DWORD dwServiceType, DWORD dwStartType, 
+                  LPCSTR lpDisplayName, DWORD dwDesiredAccess,
+                  DWORD dwServiceType, DWORD dwStartType,
                   DWORD dwErrorControl, LPCSTR lpBinaryPathName,
-                  LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId, 
-                  LPCSTR lpDependencies, LPCSTR lpServiceStartName, 
+                  LPCSTR lpLoadOrderGroup, LPDWORD lpdwTagId,
+                  LPCSTR lpDependencies, LPCSTR lpServiceStartName,
                   LPCSTR lpPassword )
 {
     HKEY hKey;
@@ -417,7 +417,7 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     TRACE("(%u,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
 
-    r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL, 
+    r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
         return 0;
@@ -439,14 +439,14 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     if (r!=ERROR_SUCCESS)
         return 0;
 
-    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD, 
+    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD,
                            (LPVOID)&dwErrorControl, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
         return 0;
 
     if(lpBinaryPathName)
     {
-        r = RegSetValueExA(hKey, "ImagePath", 0, REG_SZ, 
+        r = RegSetValueExA(hKey, "ImagePath", 0, REG_SZ,
                            lpBinaryPathName,strlen(lpBinaryPathName)+1 );
         if (r!=ERROR_SUCCESS)
             return 0;
@@ -454,28 +454,28 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     if(lpLoadOrderGroup)
     {
-        r = RegSetValueExA(hKey, "Group", 0, REG_SZ, 
+        r = RegSetValueExA(hKey, "Group", 0, REG_SZ,
                            lpLoadOrderGroup, strlen(lpLoadOrderGroup)+1 );
         if (r!=ERROR_SUCCESS)
             return 0;
     }
 
-    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD, 
+    r = RegSetValueExA(hKey, "ErrorControl", 0, REG_DWORD,
                        (LPVOID)&dwErrorControl, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
         return 0;
 
     if(lpDependencies)
     {
-        DWORD len = 0; 
+        DWORD len = 0;
 
         /* determine the length of a double null terminated multi string */
         do {
             len += (strlen(&lpDependencies[len])+1);
-        } while (lpDependencies[len++]); 
-        
+        } while (lpDependencies[len++]);
+
         /* FIXME: this should be unicode */
-        r = RegSetValueExA(hKey, "Dependencies", 0, REG_MULTI_SZ, 
+        r = RegSetValueExA(hKey, "Dependencies", 0, REG_MULTI_SZ,
                            lpDependencies, len );
         if (r!=ERROR_SUCCESS)
             return 0;
@@ -526,7 +526,7 @@ StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     TRACE("(%d,%ld,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 
     if(dwNumServiceArgs)
-        lpwstr = (LPWSTR*) HeapAlloc( GetProcessHeap(), 0, 
+        lpwstr = (LPWSTR*) HeapAlloc( GetProcessHeap(), 0,
                                    dwNumServiceArgs*sizeof(LPWSTR) );
     else
         lpwstr = NULL;
@@ -615,14 +615,14 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
         }
     }
 
-    /* 
+    /*
      * FIXME: lpServiceArgsVectors need to be stored and returned to
      *        the service when it calls StartServiceCtrlDispatcher
      *
      * Chuck these in a global (yuk) so we can pass them to
      * another process - address space separation will break this.
      */
-    
+
     r = WaitForSingleObject(data,INFINITE);
 
     if( r == WAIT_FAILED)
@@ -635,8 +635,8 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     ZeroMemory(&startupinfo,sizeof(STARTUPINFOA));
     startupinfo.cb = sizeof(STARTUPINFOA);
 
-    r = CreateProcessA(path, 
-                   NULL, 
+    r = CreateProcessA(path,
+                   NULL,
                    NULL,  /* process security attribs */
                    NULL,  /* thread security attribs */
                    FALSE, /* inherit handles */
@@ -655,7 +655,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 
     /* docs for StartServiceCtrlDispatcher say this should be 30 sec */
     r = WaitForSingleObject(wait,30000);
-    
+
     ReleaseSemaphore(data, 1, NULL);
 
     if( r == WAIT_FAILED)
@@ -670,7 +670,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
  * PARAMS
  *   hService        []
  *   lpservicestatus []
- *   
+ *
  */
 BOOL WINAPI
 QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )

@@ -47,8 +47,8 @@ struct SysKeyboardAImpl
         GUID                            guid;
 
 	IDirectInputAImpl *dinput;
-	
-	HANDLE	hEvent;	
+
+	HANDLE	hEvent;
         /* SysKeyboardAImpl */
 	int                             acquired;
         int                             buffersize;  /* set in 'SetProperty'         */
@@ -64,10 +64,10 @@ struct SysKeyboardAImpl
         CRITICAL_SECTION                crit;
 };
 
-SysKeyboardAImpl *current; /* Today's acquired device 
+SysKeyboardAImpl *current; /* Today's acquired device
 FIXME: currently this can be only one.
 Maybe this should be a linked list or st.
-I don't know what the rules are for multiple acquired keyboards, 
+I don't know what the rules are for multiple acquired keyboards,
 but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
 */
 
@@ -116,7 +116,7 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
                   current->start++;
                   current->overflow = TRUE;
                 }
-              else 
+              else
                 current->count++;
 
               LeaveCriticalSection(&(current->crit));
@@ -138,13 +138,13 @@ static BOOL keyboarddev_enum_device(DWORD dwDevType, DWORD dwFlags, LPCDIDEVICEI
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
     TRACE("Enumerating the Keyboard device\n");
-    
+
     lpddi->guidInstance = GUID_SysKeyboard;/* DInput's GUID */
     lpddi->guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
     lpddi->dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
     strcpy(lpddi->tszInstanceName, "Keyboard");
     strcpy(lpddi->tszProductName, "Wine Keyboard");
-    
+
     return TRUE;
   }
 
@@ -170,12 +170,12 @@ static HRESULT keyboarddev_create_device(IDirectInputAImpl *dinput, REFGUID rgui
       (IsEqualGUID(&DInput_Wine_Keyboard_GUID,rguid))) { /* Wine Keyboard */
     if ((riid == NULL) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid)) || (IsEqualGUID(&IID_IDirectInputDevice2A,riid))) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, &SysKeyboardAvt, dinput);
-    
+
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
       return DI_OK;
     } else if (IsEqualGUID(&IID_IDirectInputDevice7A,riid)) {
       *pdev=(IDirectInputDeviceA*) alloc_device(rguid, (ICOM_VTABLE(IDirectInputDevice2A) *) &SysKeyboard7Avt, dinput);
-    
+
       TRACE("Creating a Keyboard DInput7A device (%p)\n", *pdev);
       return DI_OK;
     } else
@@ -294,15 +294,15 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface);
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	
+
 	TRACE("(this=%p)\n",This);
-	
+
         if (This->acquired)
           return S_FALSE;
 
         This->acquired = 1;
 
-        if (current != NULL) 
+        if (current != NULL)
           {
             FIXME("Not more than one keyboard can be acquired at the same time.\n");
             SysKeyboardAImpl_Unacquire(iface);
@@ -386,11 +386,11 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     /* DirectX 3.0 */
     FIXME("DirectX 3.0 not supported....\n");
   }
-  
+
   return DI_OK;
 }
 
-static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt = 
+static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -428,7 +428,7 @@ static ICOM_VTABLE(IDirectInputDevice2A) SysKeyboardAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt = 
+static ICOM_VTABLE(IDirectInputDevice7A) SysKeyboard7Avt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputDevice2AImpl_QueryInterface,

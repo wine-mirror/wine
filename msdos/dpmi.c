@@ -93,14 +93,14 @@ DPMI_xalloc(int len) {
 			ret=VirtualAlloc(lastvalloced,len,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
 			if (!ret)
 				lastvalloced = (char *) lastvalloced + 0x10000;
-			/* we failed to allocate one in the first round. 
+			/* we failed to allocate one in the first round.
 			 * try non-linear
 			 */
 			if (!xflag && (lastvalloced<oldlastv)) { /* wrapped */
 				FIXME("failed to allocate lineary growing memory (%d bytes), using non-linear growing...\n",len);
 				xflag++;
 			}
-			/* if we even fail to allocate something in the next 
+			/* if we even fail to allocate something in the next
 			 * round, return NULL
 			 */
 			if ((xflag==1) && (lastvalloced >= oldlastv))
@@ -214,26 +214,26 @@ static void RawModeSwitch( CONTEXT86 *context )
 
       /*
        * After this function returns to relay code, protected mode
-       * 16 bit stack will contain STACK16FRAME and single WORD 
+       * 16 bit stack will contain STACK16FRAME and single WORD
        * (EFlags, see next comment).
        */
-      NtCurrentTeb()->cur_stack = 
-        MAKESEGPTR( context->SegSs, 
+      NtCurrentTeb()->cur_stack =
+        MAKESEGPTR( context->SegSs,
                     context->Esp - sizeof(STACK16FRAME) - sizeof(WORD) );
 
       /*
        * After relay code returns to glue function, protected
        * mode 16 bit stack will contain interrupt return record:
-       * IP, CS and EFlags. Since EFlags is ignored, it won't 
+       * IP, CS and EFlags. Since EFlags is ignored, it won't
        * need to be initialized.
        */
       context->Esp -= 3 * sizeof(WORD);
 
       /*
        * Restore stack frame so that relay code won't be confused.
-       * It should be noted that relay code overwrites IP and CS 
+       * It should be noted that relay code overwrites IP and CS
        * in STACK16FRAME with values taken from current CONTEXT86.
-       * These values are what is returned to glue function 
+       * These values are what is returned to glue function
        * (see previous comment).
        */
       *CURRENT_STACK16 = frame;
@@ -256,7 +256,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     DWORD dw;
     BYTE *ptr;
 
-    if (context->SegCs == DOSMEM_dpmi_sel) { 
+    if (context->SegCs == DOSMEM_dpmi_sel) {
         RawModeSwitch( context );
         return;
     }
@@ -312,7 +312,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 	    	context->Eax = DOSMEM_AllocSelector(BX_reg(context));
                 break;
             }
-            if (entryPoint) 
+            if (entryPoint)
                 context->Eax = LOWORD(GetProcAddress16( GetModuleHandle16( "KERNEL" ),
                                                         (LPCSTR)(ULONG_PTR)entryPoint ));
         }
@@ -585,7 +585,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         FIXME("map real to linear (0x%08lx)\n",MAKELONG(CX_reg(context),BX_reg(context)));
          if(!(ptr=DOSMEM_MapRealToLinear(MAKELONG(CX_reg(context),BX_reg(context)))))
          {
-             AX_reg(context) = 0x8021; 
+             AX_reg(context) = 0x8021;
              SET_CFLAG(context);
          }
          else

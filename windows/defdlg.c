@@ -134,10 +134,10 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
 {
     DWORD dlgcode=0; /* initialize just to avoid a warning */
     if (hwndNew &&
-        !((dlgcode=SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 )) 
+        !((dlgcode=SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 ))
             & (DLGC_UNDEFPUSHBUTTON | DLGC_BUTTON)))
         return FALSE;  /* Destination is not a push button */
-    
+
     if (dlgInfo->idResult)  /* There's already a default pushbutton */
     {
         HWND hwndOld = GetDlgItem( hwndDlg, dlgInfo->idResult );
@@ -251,14 +251,14 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             }
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
-	case WM_GETFONT: 
+	case WM_GETFONT:
 	    return dlgInfo->hUserFont;
 
         case WM_CLOSE:
             PostMessageA( hwnd, WM_COMMAND, IDCANCEL,
                             (LPARAM)GetDlgItem( hwnd, IDCANCEL ) );
             return 0;
-    
+
         case WM_NOTIFYFORMAT:
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
@@ -276,7 +276,7 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
 	 msg == WM_CTLCOLOR || msg == WM_COMPAREITEM ||
          msg == WM_VKEYTOITEM || msg == WM_CHARTOITEM ||
          msg == WM_QUERYDRAGICON || msg == WM_INITDIALOG)
-        return fResult; 
+        return fResult;
 
     return GetWindowLongA( hwnd, DWL_MSGRESULT );
 }

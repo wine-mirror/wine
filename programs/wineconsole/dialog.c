@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wineconsole);
 
 enum WCUSER_ApplyTo {
     /* Prop sheet CFG */
-    WCUSER_ApplyToCursorSize, 
+    WCUSER_ApplyToCursorSize,
     WCUSER_ApplyToHistorySize, WCUSER_ApplyToHistoryMode, WCUSER_ApplyToMenuMask,
     WCUSER_ApplyToEditMode,
     /* Prop sheet FNT */
@@ -38,13 +38,13 @@ enum WCUSER_ApplyTo {
     WCUSER_ApplyToBufferSize, WCUSER_ApplyToWindow
 };
 
-struct dialog_info 
+struct dialog_info
 {
     struct config_data* config;         /* pointer to configuration used for dialog box */
     struct inner_data*	data;	        /* pointer to current winecon info */
     HWND		hDlg;		/* handle to active propsheet */
     int			nFont;		/* number of font size in size LB */
-    struct font_info 
+    struct font_info
     {
         UINT                    height;
         UINT                    weight;
@@ -80,7 +80,7 @@ static void WCUSER_ApplyDefault(struct dialog_info* di, HWND hDlg, enum WCUSER_A
             LOGFONT     lf;
             HFONT       hFont;
 
-            WCUSER_FillLogFont(&lf, di->font[val].faceName, 
+            WCUSER_FillLogFont(&lf, di->font[val].faceName,
                                di->font[val].height, di->font[val].weight);
             hFont = WCUSER_CopyFont(di->config, PRIVATE(di->data)->hWnd, &lf);
             DeleteObject(hFont);
@@ -127,7 +127,7 @@ static void WCUSER_ApplyCurrent(struct dialog_info* di, HWND hDlg, enum WCUSER_A
     case WCUSER_ApplyToFont:
         {
             LOGFONT lf;
-            WCUSER_FillLogFont(&lf, di->font[val].faceName, 
+            WCUSER_FillLogFont(&lf, di->font[val].faceName,
                                di->font[val].height, di->font[val].weight);
             WCUSER_SetFont(di->data, &lf);
         }
@@ -156,8 +156,8 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 {
     struct dialog_info*		di;
     unsigned 			idc;
-    
-    switch (msg) 
+
+    switch (msg)
     {
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
@@ -171,11 +171,11 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	SetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, WINECON_GetHistorySize(di->data->hConIn),  FALSE);
 	if (WINECON_GetHistoryMode(di->data->hConIn))
 	    SendDlgItemMessage(hDlg, IDC_OPT_HIST_DOUBLE, BM_SETCHECK, BST_CHECKED, 0L);
-        SendDlgItemMessage(hDlg, IDC_OPT_CONF_CTRL, BM_SETCHECK, 
+        SendDlgItemMessage(hDlg, IDC_OPT_CONF_CTRL, BM_SETCHECK,
                            (di->config->menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0L);
-        SendDlgItemMessage(hDlg, IDC_OPT_CONF_SHIFT, BM_SETCHECK, 
+        SendDlgItemMessage(hDlg, IDC_OPT_CONF_SHIFT, BM_SETCHECK,
                            (di->config->menu_mask & MK_SHIFT) ? BST_CHECKED : BST_UNCHECKED, 0L);
-        SendDlgItemMessage(hDlg, IDC_OPT_QUICK_EDIT, BM_SETCHECK, 
+        SendDlgItemMessage(hDlg, IDC_OPT_QUICK_EDIT, BM_SETCHECK,
                            (di->config->quick_edit) ? BST_CHECKED : BST_UNCHECKED, 0L);
 	return FALSE; /* because we set the focus */
     case WM_COMMAND:
@@ -188,14 +188,14 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
 
-	switch (nmhdr->code) 
+	switch (nmhdr->code)
 	{
 	case PSN_SETACTIVE:
 	    /* needed in propsheet to keep properly the selected radio button
 	     * otherwise, the focus would be set to the first tab stop in the
 	     * propsheet, which would always activate the first radio button
 	     */
-	    if (IsDlgButtonChecked(hDlg, IDC_OPT_CURSOR_SMALL) == BST_CHECKED) 
+	    if (IsDlgButtonChecked(hDlg, IDC_OPT_CURSOR_SMALL) == BST_CHECKED)
 		idc = IDC_OPT_CURSOR_SMALL;
 	    else if (IsDlgButtonChecked(hDlg, IDC_OPT_CURSOR_MEDIUM) == BST_CHECKED)
 		idc = IDC_OPT_CURSOR_MEDIUM;
@@ -213,7 +213,7 @@ static BOOL WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
  	    val = GetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, &done, FALSE);
 	    if (done) (di->apply)(di, hDlg, WCUSER_ApplyToHistorySize, val);
 
-	    (di->apply)(di, hDlg, WCUSER_ApplyToHistoryMode, 
+	    (di->apply)(di, hDlg, WCUSER_ApplyToHistoryMode,
                         IsDlgButtonChecked(hDlg, IDC_OPT_HIST_DOUBLE) & BST_CHECKED);
 
             val = 0;
@@ -272,13 +272,13 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             int		        size_idx;
             struct dialog_info*	di;
             HFONT	        hFont, hOldFont;
-            
+
             di = (struct dialog_info*)GetWindowLong(GetParent(hWnd), DWL_USER);
             BeginPaint(hWnd, &ps);
 
             font_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
             size_idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_GETCURSEL, 0L, 0L);
-            
+
             hFont = (HFONT)GetWindowLong(hWnd, 0L);
             if (hFont)
             {
@@ -286,12 +286,12 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
                 WCHAR	buf2[256];
                 int	len1, len2;
 
-                len1 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_1, 
+                len1 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_1,
                                   buf1, sizeof(buf1) / sizeof(WCHAR));
                 len2 = LoadString(GetModuleHandle(NULL), IDS_FNT_PREVIEW_2,
                                   buf2, sizeof(buf2) / sizeof(WCHAR));
                 buf1[len1] = buf2[len2] = 0;
-                if (len1) 
+                if (len1)
                 {
                     hOldFont = SelectObject(ps.hdc, hFont);
                     SetBkColor(ps.hdc, WCUSER_ColorMap[GetWindowLong(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)]);
@@ -326,11 +326,11 @@ static LRESULT WINAPI WCUSER_ColorPreviewProc(HWND hWnd, UINT msg, WPARAM wParam
             int             i, step;
             RECT            client, r;
             HBRUSH          hbr;
-            
+
             BeginPaint(hWnd, &ps);
             GetClientRect(hWnd, &client);
             step = client.right / 8;
-            
+
             for (i = 0; i < 16; i++)
             {
                 r.top = (i / 8) * (client.bottom / 2);
@@ -370,7 +370,7 @@ static LRESULT WINAPI WCUSER_ColorPreviewProc(HWND hWnd, UINT msg, WPARAM wParam
         {
             int             i, step;
             RECT            client;
-            
+
             GetClientRect(hWnd, &client);
             step = client.right / 8;
             i = (HIWORD(lParam) >= client.bottom / 2) ? 8 : 0;
@@ -391,7 +391,7 @@ static LRESULT WINAPI WCUSER_ColorPreviewProc(HWND hWnd, UINT msg, WPARAM wParam
  *
  * enumerates all the font names with at least one valid font
  */
-static int CALLBACK font_enum_size2(const LOGFONT* lf, const TEXTMETRIC* tm, 
+static int CALLBACK font_enum_size2(const LOGFONT* lf, const TEXTMETRIC* tm,
 				    DWORD FontType, LPARAM lParam)
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
@@ -405,7 +405,7 @@ static int CALLBACK font_enum_size2(const LOGFONT* lf, const TEXTMETRIC* tm,
     return 1;
 }
 
-static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm, 
+static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
 			      DWORD FontType, LPARAM lParam)
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
@@ -420,10 +420,10 @@ static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
         }
         else
             di->nFont = 1;
-        
+
         if (di->nFont)
 	{
- 	    SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING, 
+ 	    SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_ADDSTRING,
                                0, (LPARAM)lf->lfFaceName);
         }
     }
@@ -436,7 +436,7 @@ static int CALLBACK font_enum(const LOGFONT* lf, const TEXTMETRIC* tm,
  *
  *
  */
-static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm, 
+static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm,
 				   DWORD FontType, LPARAM lParam)
 {
     struct dialog_info*	di = (struct dialog_info*)lParam;
@@ -477,11 +477,11 @@ static int CALLBACK font_enum_size(const LOGFONT* lf, const TEXTMETRIC* tm,
 	 * do the job by hand... get where to insert the new string
 	 */
 	for (idx = 0; idx < di->nFont && tm->tmHeight > di->font[idx].height; idx++);
-        while (idx < di->nFont && 
-               tm->tmHeight == di->font[idx].height && 
+        while (idx < di->nFont &&
+               tm->tmHeight == di->font[idx].height &&
                tm->tmWeight > di->font[idx].weight)
             idx++;
-        if (idx == di->nFont || 
+        if (idx == di->nFont ||
             tm->tmHeight != di->font[idx].height ||
             tm->tmWeight < di->font[idx].weight)
         {
@@ -521,8 +521,8 @@ static BOOL  select_font(struct dialog_info* di)
 
     if (font_idx < 0 || size_idx < 0 || size_idx >= di->nFont)
 	return FALSE;
-    
-    WCUSER_FillLogFont(&lf, di->font[size_idx].faceName, 
+
+    WCUSER_FillLogFont(&lf, di->font[size_idx].faceName,
                        di->font[size_idx].height, di->font[size_idx].weight);
     hFont = WCUSER_CopyFont(&config, PRIVATE(di->data)->hWnd, &lf);
     if (!hFont) return FALSE;
@@ -555,7 +555,7 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
 
     idx = SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETCURSEL, 0L, 0L);
     if (idx < 0) return FALSE;
-    
+
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETTEXT, idx, (LPARAM)lfFaceName);
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_RESETCONTENT, 0L, 0L);
     if (di->font) HeapFree(GetProcessHeap(), 0, di->font);
@@ -596,7 +596,7 @@ static BOOL fill_list_font(struct dialog_info* di)
 {
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_RESETCONTENT, 0L, 0L);
     EnumFontFamilies(PRIVATE(di->data)->hMemDC, NULL, font_enum, (LPARAM)di);
-    if (SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SELECTSTRING, 
+    if (SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SELECTSTRING,
 			   (WPARAM)-1, (LPARAM)di->config->face_name) == LB_ERR)
 	SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_SETCURSEL, 0L, 0L);
     fill_list_size(di, TRUE);
@@ -612,7 +612,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 {
     struct dialog_info*		di;
 
-    switch (msg) 
+    switch (msg)
     {
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
@@ -626,15 +626,15 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
-	switch (LOWORD(wParam)) 
+	switch (LOWORD(wParam))
 	{
-	case IDC_FNT_LIST_FONT:	
+	case IDC_FNT_LIST_FONT:
 	    if (HIWORD(wParam) == LBN_SELCHANGE)
 	    {
 		fill_list_size(di, FALSE);
 	    }
 	    break;
-	case IDC_FNT_LIST_SIZE:	
+	case IDC_FNT_LIST_SIZE:
 	    if (HIWORD(wParam) == LBN_SELCHANGE)
 	    {
 		select_font(di);
@@ -648,7 +648,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
         DWORD   val;
 
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
-	switch (nmhdr->code) 
+	switch (nmhdr->code)
 	{
         case PSN_SETACTIVE:
             di->hDlg = hDlg;
@@ -658,7 +658,7 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 
 	    if (val < di->nFont) (di->apply)(di, hDlg, WCUSER_ApplyToFont, val);
 
-            (di->apply)(di, hDlg, WCUSER_ApplyToAttribute, 
+            (di->apply)(di, hDlg, WCUSER_ApplyToAttribute,
                         (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |
                         GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0));
 
@@ -684,7 +684,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 {
     struct dialog_info*		di;
 
-    switch (msg) 
+    switch (msg)
     {
     case WM_INITDIALOG:
 	di = (struct dialog_info*)((PROPSHEETPAGEA*)lParam)->lParam;
@@ -697,7 +697,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
-	switch (LOWORD(wParam)) 
+	switch (LOWORD(wParam))
 	{
 	}
 	break;
@@ -709,7 +709,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
         BOOL	        st_w, st_h;
 
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
-	switch (nmhdr->code) 
+	switch (nmhdr->code)
 	{
         case PSN_SETACTIVE:
             di->hDlg = hDlg;
@@ -721,10 +721,10 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             {
                 (di->apply)(di, hDlg, WCUSER_ApplyToBufferSize, (DWORD)&sb);
             }
-            
+
             pos.Right  = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st_w, FALSE);
             pos.Bottom = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st_h, FALSE);
-            if (st_w && st_h && 
+            if (st_w && st_h &&
                 (pos.Right != di->config->win_width || pos.Bottom != di->config->win_height))
             {
                 pos.Left = pos.Top = 0;
@@ -821,8 +821,8 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     memset(&psHead, 0, sizeof(psHead));
     psHead.dwSize = sizeof(psHead);
 
-    if (!LoadString(GetModuleHandle(NULL), 
-                    (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT, 
+    if (!LoadString(GetModuleHandle(NULL),
+                    (current) ? IDS_DLG_TIT_CURRENT : IDS_DLG_TIT_DEFAULT,
                     buff, sizeof(buff) / sizeof(buff[0])))
     {
         buff[0] = 'S';
@@ -837,7 +837,7 @@ BOOL WCUSER_GetProperties(struct inner_data* data, BOOL current)
     psHead.nPages = 3;
     psHead.hwndParent = PRIVATE(data)->hWnd;
     psHead.u3.phpage = psPage;
- 
+
     PropertySheet(&psHead);
 
     return TRUE;

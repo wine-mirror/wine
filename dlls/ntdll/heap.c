@@ -172,7 +172,7 @@ void HEAP_Dump( HEAP *heap )
         DWORD freeSize = 0, usedSize = 0, arenaSize = subheap->headerSize;
         DPRINTF( "\n\nSub-heap %08lx: size=%08lx committed=%08lx\n",
 	      (DWORD)subheap, subheap->size, subheap->commitSize );
-	
+
         DPRINTF( "\n Block   Stat   Size    Id\n" );
         ptr = (char*)subheap + subheap->headerSize;
         while (ptr < (char *)subheap + subheap->size)
@@ -529,7 +529,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     /* Create the first free block */
 
-    HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap + subheap->headerSize, 
+    HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap + subheap->headerSize,
                           subheap->size - subheap->headerSize );
 
     return TRUE;
@@ -699,8 +699,8 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     /* Check that next arena is free */
     if (!(pArena->next->size & ARENA_FLAG_FREE) ||
         (pArena->next->magic != ARENA_FREE_MAGIC))
-    { 
-        ERR("Heap %08lx: next arena %08lx invalid for %08lx\n", 
+    {
+        ERR("Heap %08lx: next arena %08lx invalid for %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->next, (DWORD)pArena );
         return FALSE;
     }
@@ -714,10 +714,10 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     /* Check that prev arena is free */
     if (!(pArena->prev->size & ARENA_FLAG_FREE) ||
         (pArena->prev->magic != ARENA_FREE_MAGIC))
-    { 
+    {
 	/* this often means that the prev arena got overwritten
 	 * by a memory write before that prev arena */
-        ERR("Heap %08lx: prev arena %08lx invalid for %08lx\n", 
+        ERR("Heap %08lx: prev arena %08lx invalid for %08lx\n",
                  (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
         return FALSE;
     }
@@ -789,7 +789,7 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
         return FALSE;
     }
     /* Check size flags */
-    if (pArena->size & ARENA_FLAG_FREE) 
+    if (pArena->size & ARENA_FLAG_FREE)
     {
         ERR("Heap %08lx: bad flags %lx for in-use arena %08lx\n",
                  (DWORD)subheap->heap, pArena->size & ~ARENA_SIZE_MASK, (DWORD)pArena );
@@ -823,8 +823,8 @@ static BOOL HEAP_ValidateInUseArena( SUBHEAP *subheap, ARENA_INUSE *pArena, BOOL
         /* Check that prev arena is free */
         if (!(pPrev->size & ARENA_FLAG_FREE) ||
             (pPrev->magic != ARENA_FREE_MAGIC))
-        { 
-            ERR("Heap %08lx: prev arena %08lx invalid for in-use %08lx\n", 
+        {
+            ERR("Heap %08lx: prev arena %08lx invalid for in-use %08lx\n",
                      (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
             return FALSE;
         }
@@ -877,9 +877,9 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
             ((char *)block < (char *)subheap + subheap->headerSize
                               + sizeof(ARENA_INUSE)))
         {
-            if (quiet == NOISY) 
+            if (quiet == NOISY)
                 ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
-            else if (WARN_ON(heap)) 
+            else if (WARN_ON(heap))
                 WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
             ret = FALSE;
         } else

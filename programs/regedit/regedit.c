@@ -84,18 +84,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     REGEDIT_ACTION action = ACTION_UNDEF;
     LPSTR s = lpCmdLine;        /* command line pointer */
     CHAR ch = *s;               /* current character */
-    
+
     setAppName("regedit");
     while (ch && ((ch == '-') || (ch == '/')))
     {
         char chu;
         char ch2;
-        
+
         s++;
         ch = *s;
         ch2 = *(s+1);
         chu = toupper(ch);
-        if (!ch2 || isspace(ch2)) 
+        if (!ch2 || isspace(ch2))
         {
             if (chu == 'S' || chu == 'V')
             {

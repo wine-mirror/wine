@@ -71,7 +71,7 @@ short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf)
 		i++;
 
 	TRACE("---> '%s' \n", &lpFile[i]);
-    
+
 	len = strlen(lpFile+i)+1;
 	if(cbBuf < len)
 		return len;

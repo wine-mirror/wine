@@ -22,7 +22,7 @@
  * 			  extra functions also aid unaligned access, but
  * 			  this is not yet implemented.
  * 25-May-1998 BS	- Added simple unicode -> char conversion for resource
- *			  names in .s and .h files.  
+ *			  names in .s and .h files.
  */
 
 #include "config.h"
@@ -723,7 +723,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 
 			/* FIXME: What is this extra byte doing here? */
 			put_byte(res, 0);
-			
+
 			nctrl++;
 			ctrl = ctrl->next;
 		}
@@ -1742,7 +1742,7 @@ static res_t *toolbar2res(name_id_t *name, toolbar_t *toolbar)
 		put_word(res, 1);		/* Menuheader: Version */
 		put_word(res, toolbar->button_width); /* (in pixels?) */
 		put_word(res, toolbar->button_height); /* (in pixels?) */
-		put_word(res, toolbar->nitems); 
+		put_word(res, toolbar->nitems);
 		put_pad(res);
 		toolbaritem2res(res, toolbar->items);
 		/* Set ResourceSize */

@@ -38,7 +38,7 @@ static ICOM_VTABLE(IDirect3DMaterial) material_vtable;
  */
 static void activate(IDirect3DMaterial2Impl* This) {
   TRACE("Activating material %p\n", This);
-  
+
   ENTER_GL();
   /* First, set the rendering context */
   if (This->use_d3d2)
@@ -63,13 +63,13 @@ static void activate(IDirect3DMaterial2Impl* This) {
   glMaterialfv(GL_FRONT,
 	       GL_EMISSION,
 	       (float *) &(This->mat.u3.emissive));
-  
+
   TRACE("Size  : %ld\n", This->mat.dwSize);
   TRACE("Power : %f\n", This->mat.u4.power);
 
   TRACE("Texture handle : %08lx\n", (DWORD)This->mat.hTexture);
   LEAVE_GL();
-  
+
   return ;
 }
 
@@ -79,7 +79,7 @@ static void activate(IDirect3DMaterial2Impl* This) {
 LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2)
 {
   IDirect3DMaterial2Impl* mat;
-  
+
   mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DMaterial2Impl));
   mat->ref = 1;
   ICOM_VTBL(mat) = &material2_vtable;
@@ -88,14 +88,14 @@ LPDIRECT3DMATERIAL2 d3dmaterial2_create(IDirect3D2Impl* d3d2)
   mat->d3d.d3d2 = d3d2;
 
   mat->activate = activate;
-  
+
   return (LPDIRECT3DMATERIAL2)mat;
 }
 
 LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1)
 {
   IDirect3DMaterial2Impl* mat;
-  
+
   mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DMaterial2Impl));
   mat->ref = 1;
   ICOM_VTBL(mat) = (ICOM_VTABLE(IDirect3DMaterial2)*)&material_vtable;
@@ -104,7 +104,7 @@ LPDIRECT3DMATERIAL d3dmaterial_create(IDirect3DImpl* d3d1)
   mat->d3d.d3d1 = d3d1;
 
   mat->activate = activate;
-  
+
   return (LPDIRECT3DMATERIAL) mat;
 }
 
@@ -117,9 +117,9 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_QueryInterface(LPDIRECT3DMATERIAL2 
 							LPVOID* ppvObj)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
-  
+
   FIXME("(%p)->(%s,%p): stub\n", This, debugstr_guid(riid),ppvObj);
-  
+
   return S_OK;
 }
 
@@ -129,7 +129,7 @@ static ULONG WINAPI IDirect3DMaterial2Impl_AddRef(LPDIRECT3DMATERIAL2 iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
   TRACE("(%p)->()incrementing from %lu.\n", This, This->ref );
-  
+
   return ++(This->ref);
 }
 
@@ -139,12 +139,12 @@ static ULONG WINAPI IDirect3DMaterial2Impl_Release(LPDIRECT3DMATERIAL2 iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
   FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
-  
+
   if (!--(This->ref)) {
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
-  
+
   return This->ref;
 }
 
@@ -161,10 +161,10 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_GetMaterial(LPDIRECT3DMATERIAL2 ifa
   TRACE("(%p)->(%p)\n", This, lpMat);
   if (TRACE_ON(ddraw))
     dump_material(lpMat);
-  
+
   /* Copies the material structure */
   *lpMat = This->mat;
-  
+
   return DD_OK;
 }
 
@@ -175,10 +175,10 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_SetMaterial(LPDIRECT3DMATERIAL2 ifa
   TRACE("(%p)->(%p)\n", This, lpMat);
   if (TRACE_ON(ddraw))
     dump_material(lpMat);
-  
+
   /* Stores the material */
   This->mat = *lpMat;
-  
+
   return DD_OK;
 }
 
@@ -194,9 +194,9 @@ static HRESULT WINAPI IDirect3DMaterial2Impl_GetHandle(LPDIRECT3DMATERIAL2 iface
     This->device.active_device2 = (IDirect3DDevice2Impl*)lpD3DDevice2;
   else
     This->device.active_device1 = (IDirect3DDeviceImpl*)lpD3DDevice2;
-  
+
   *lpMatHandle = (DWORD) This; /* lpD3DDevice2->store_material(This); */
-  
+
   return DD_OK;
 }
 
@@ -207,7 +207,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Reserve(LPDIRECT3DMATERIAL iface)
 
   return DDERR_INVALIDPARAMS;
 }
-						  
+
 static HRESULT WINAPI IDirect3DMaterialImpl_Unreserve(LPDIRECT3DMATERIAL iface)
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
@@ -222,7 +222,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
 {
   ICOM_THIS(IDirect3DMaterial2Impl,iface);
   TRACE("(%p)->(%p)\n", This, lpDirect3D);
-  
+
   return DDERR_ALREADYINITIALIZED;
 }
 
@@ -236,7 +236,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_Initialize(LPDIRECT3DMATERIAL iface,
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirect3DMaterial) material_vtable = 
+static ICOM_VTABLE(IDirect3DMaterial) material_vtable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/
@@ -259,7 +259,7 @@ static ICOM_VTABLE(IDirect3DMaterial) material_vtable =
 /*******************************************************************************
  *				IDirect3DMaterial2 VTable
  */
-static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable = 
+static ICOM_VTABLE(IDirect3DMaterial2) material2_vtable =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   /*** IUnknown methods ***/

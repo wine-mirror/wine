@@ -71,7 +71,7 @@ enum dbg_mode DEBUG_GetSelectorType( WORD sel )
 
     if (IS_VM86_MODE()) return MODE_VM86;
     if (sel == 0) return MODE_32;
-    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le)) 
+    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, sel, &le))
         return le.HighWord.Bits.Default_Big ? MODE_32 : MODE_16;
     /* selector doesn't exist */
     return MODE_INVALID;
@@ -80,7 +80,7 @@ enum dbg_mode DEBUG_GetSelectorType( WORD sel )
 #endif
 }
 #ifdef __i386__
-void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def) 
+void DEBUG_FixAddress( DBG_ADDR *addr, DWORD def)
 {
    if (addr->seg == 0xffffffff) addr->seg = def;
    if (DEBUG_IsSelectorSystem(addr->seg)) addr->seg = 0;
@@ -98,12 +98,12 @@ DWORD DEBUG_ToLinear( const DBG_ADDR *addr )
 {
 #ifdef __i386__
    LDT_ENTRY	le;
-   
+
    if (IS_VM86_MODE()) return (DWORD)(LOWORD(addr->seg) << 4) + addr->off;
 
    if (DEBUG_IsSelectorSystem(addr->seg))
       return addr->off;
-   
+
    if (GetThreadSelectorEntry( DEBUG_CurrThread->handle, addr->seg, &le)) {
       return (le.HighWord.Bits.BaseHi << 24) + (le.HighWord.Bits.BaseMid << 16) + le.BaseLow + addr->off;
    }
@@ -151,7 +151,7 @@ void	DEBUG_InvalLinAddr( void* addr )
  *
  * Read a memory value.
  */
-/* FIXME: this function is now getting closer and closer to 
+/* FIXME: this function is now getting closer and closer to
  * DEBUG_ExprGetValue. They should be merged...
  */
 int DEBUG_ReadMemory( const DBG_VALUE* val )
@@ -171,7 +171,7 @@ int DEBUG_ReadMemory( const DBG_VALUE* val )
        DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
 #endif
        lin = (void*)DEBUG_ToLinear( &addr );
-       
+
        DEBUG_READ_MEM_VERBOSE(lin, &value, os);
     } else {
        if (val->addr.off)
@@ -218,7 +218,7 @@ BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
     assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
 
 #ifdef __i386__
-    DEBUG_FixAddress( &value->addr, 
+    DEBUG_FixAddress( &value->addr,
 		      (fromCode) ? DEBUG_context.SegCs : DEBUG_context.SegDs);
 #endif
 
@@ -303,10 +303,10 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		DEBUG_Printf(DBG_CHN_MESG,"\n"); \
         } \
 	return
-#define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v) 
+#define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v)
 
         case 'x': DO_DUMP(int, 4, " %8.8x");
-	case 'd': DO_DUMP(unsigned int, 4, " %10d");	
+	case 'd': DO_DUMP(unsigned int, 4, " %10d");
 	case 'w': DO_DUMP(unsigned short, 8, " %04x");
         case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
 	case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);

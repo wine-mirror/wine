@@ -119,7 +119,7 @@ static WCHAR*   decodeW(const char* str)
     if (!len--) return NULL;
     ptr = (WCHAR*)grab_memory(len * 2 + 1);
     for (i = 0; i < len; i++)
-        ptr[i] = (decode_char(str[4 * i]) << 12) | 
+        ptr[i] = (decode_char(str[4 * i]) << 12) |
             (decode_char(str[4 * i + 1]) << 8) |
             (decode_char(str[4 * i + 2]) << 4) |
             (decode_char(str[4 * i + 3]) << 0);
@@ -194,33 +194,33 @@ static void     doChild(const char* file)
 
     /* output of startup info (Ansi) */
     GetStartupInfoA(&siA);
-    childPrintf(hFile, 
+    childPrintf(hFile,
                 "[StartupInfoA]\ncb=%08ld\nlpDesktop=%s\nlpTitle=%s\n"
                 "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
                 "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
                 "dwFlags=%lu\nwShowWindow=%u\n"
                 "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
                 siA.cb, encodeA(siA.lpDesktop), encodeA(siA.lpTitle),
-                siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize, 
-                siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute, 
-                siA.dwFlags, siA.wShowWindow, 
+                siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize,
+                siA.dwXCountChars, siA.dwYCountChars, siA.dwFillAttribute,
+                siA.dwFlags, siA.wShowWindow,
                 (DWORD)siA.hStdInput, (DWORD)siA.hStdOutput, (DWORD)siA.hStdError);
 
-    /* since GetStartupInfoW is only implemented in win2k, 
+    /* since GetStartupInfoW is only implemented in win2k,
      * zero out before calling so we can notice the difference
      */
     memset(&siW, 0, sizeof(siW));
     GetStartupInfoW(&siW);
-    childPrintf(hFile, 
+    childPrintf(hFile,
                 "[StartupInfoW]\ncb=%08ld\nlpDesktop=%s\nlpTitle=%s\n"
                 "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
                 "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
                 "dwFlags=%lu\nwShowWindow=%u\n"
                 "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
                 siW.cb, encodeW(siW.lpDesktop), encodeW(siW.lpTitle),
-                siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize, 
-                siW.dwXCountChars, siW.dwYCountChars, siW.dwFillAttribute, 
-                siW.dwFlags, siW.wShowWindow, 
+                siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize,
+                siW.dwXCountChars, siW.dwYCountChars, siW.dwFillAttribute,
+                siW.dwFlags, siW.wShowWindow,
                 (DWORD)siW.hStdInput, (DWORD)siW.hStdOutput, (DWORD)siW.hStdError);
 
     /* Arguments */
@@ -286,7 +286,7 @@ static void     doChild(const char* file)
     if (GetCurrentDirectoryW(sizeof(bufW) / sizeof(bufW[0]), bufW))
         childPrintf(hFile, "CurrDirW=%s\n", encodeW(bufW));
     childPrintf(hFile, "\n");
-    
+
     CloseHandle(hFile);
 }
 
@@ -342,7 +342,7 @@ static int strCmp(const char* s1, const char* s2, BOOL sensitive)
     } while (0)
 
 /* using !expect insures that the test will fail if the sect/key isn't present
- * in result file 
+ * in result file
  */
 #define okChildInt(sect, key, expect) \
     do { \

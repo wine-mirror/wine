@@ -23,14 +23,14 @@
 #include <stdlib.h>
 #include "winbase.h"
 #include "font.h"
-#include "wine/debug.h"     
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 /***********************************************************************
  *		EngineEnumerateFont (GDI.300)
  */
-WORD WINAPI 
+WORD WINAPI
 EngineEnumerateFont16(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
     FIXME("(%s,%p,%lx),stub\n",fontname,proc,data);
@@ -46,7 +46,7 @@ WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
 
     /*	untested, don't know if it works.
 	We seem to access some structure that is located after the
-	FONTINFO. The FONTINFO documentation says that there may 
+	FONTINFO. The FONTINFO documentation says that there may
 	follow some char-width table or font bitmap or vector info.
 	I think it is some kind of font bitmap that begins at offset 0x52,
 	as FONTINFO goes up to 0x51.
@@ -69,7 +69,7 @@ WORD WINAPI EngineDeleteFont16(LPFONTINFO16 lpFontInfo)
 WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform, LPFONTINFO16 lpfontInfo)
 {
     FIXME("(%p,%p,%p),stub\n",lplogFont,lptextxform,lpfontInfo);
-    
+
     return 0;
 }
 
@@ -79,7 +79,7 @@ WORD WINAPI EngineRealizeFont16(LPLOGFONT16 lplogFont, LPTEXTXFORM16 lptextxform
 WORD WINAPI EngineRealizeFontExt16(LONG l1, LONG l2, LONG l3, LONG l4)
 {
     FIXME("(%08lx,%08lx,%08lx,%08lx),stub\n",l1,l2,l3,l4);
-    
+
     return 0;
 }
 
@@ -121,5 +121,5 @@ DWORD WINAPI EngineMakeFontDir(HDC16 hdc, LPFONTDIR16 fontdir, LPCSTR string)
 {
    FIXME(" stub! (always fails)\n");
     return -1; /* error */
-    
+
 }

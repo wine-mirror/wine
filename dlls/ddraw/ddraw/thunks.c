@@ -202,7 +202,7 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
     LPDIRECTDRAWSURFACE7 pSurface7;
     HRESULT hr;
 
-    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok, 
+    /* the LPDDSURFACEDESC -> LPDDSURFACEDESC2 conversion should be ok,
      * since the data layout is the same */
     hr = IDirectDraw7_CreateSurface(COM_INTERFACE_CAST(IDirectDrawImpl,
 						       IDirectDraw,
@@ -387,7 +387,7 @@ EnumSurfacesCallbackThunk(LPDIRECTDRAWSURFACE7 pSurf, LPDDSURFACEDESC2 pDDSD,
 
     /* This coercion is safe, since the IDirectDrawSurface3 vtable has the
      * IDirectDrawSurface vtable layout at the beginning  */
-    return cbcontext->func((LPDIRECTDRAWSURFACE) 
+    return cbcontext->func((LPDIRECTDRAWSURFACE)
                            COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,
 					      IDirectDrawSurface7,
 					      IDirectDrawSurface3, pSurf),

@@ -1,6 +1,6 @@
 /*
  * Defines the COM interfaces and APIs related to structured data storage.
- * 
+ *
  * Depends on 'obj_base.h'.
  *
  * Copyright (C) 1999 Paul Quinn
@@ -90,7 +90,7 @@ typedef struct tagOLEVERB
 	DWORD fuFlags;
 	DWORD grfAttribs;
 } OLEVERB, *LPOLEVERB;
-	
+
 typedef enum tagOLELINKBIND
 {
 	OLELINKBIND_EVENIFCLASSDIFF = 1
@@ -118,12 +118,12 @@ typedef enum tagOLECONTF
 	OLECONTF_OLNYUSER = 8,
 	OLECONTF_ONLYIFRUNNING = 16
 } OLECONTF;
- 
+
 typedef HGLOBAL HOLEMENU;
 typedef LPRECT LPBORDERWIDTHS;
 typedef LPCRECT LPCBORDERWIDTHS;
-	
-	
+
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -267,7 +267,7 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #define IOleInPlaceUIWindow_RequestBorderSpace(p,a)   ICOM_CALL1(RequestBorderSpace,p,a)
 #define IOleInPlaceUIWindow_SetBorderSpace(p,a)       ICOM_CALL1(SetBorderSpace,p,a)
 #define IOleInPlaceUIWindow_SetActiveObject(p,a,b)    ICOM_CALL2(SetActiveObject,p,a,b)
-				  
+
 
 /*****************************************************************************
  * IOleInPlaceFrame interface
@@ -305,7 +305,7 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #define IOleInPlaceFrame_SetStatusText            ICOM_CALL1(SetStatusText,p,a)
 #define IOleInPlaceFrame_EnableModeless           ICOM_CALL1(EnableModeless,p,a)
 #define IOleInPlaceFrame_TranslateAccelerator     ICOM_CALL2(TranslateAccelerator,p,a,b)
-				 
+
 
 /*****************************************************************************
  * IOleInPlaceSite interface
@@ -389,15 +389,15 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
 	IParseDisplayName_METHODS
 ICOM_DEFINE(IParseDisplayName,IUnknown)
 #undef ICOM_INTERFACE
-				
+
 /*** IUnknown methods ***/
 #define IParseDisplayName_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IParseDisplayName_AddRef(p)                  ICOM_CALL (AddRef,p)
 #define IParseDisplayName_Release(p)                 ICOM_CALL (Release,p)
 /*** IParseDisplayName methods ***/
 #define IParseDisplayName_ParseDisplayName(p,a,b,c,d) ICOM_CALL4(ParseDisplayName,p,a,b,c,d)
-				 
-				
+
+
 /*****************************************************************************
  * IOleContainer interface
  */

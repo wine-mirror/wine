@@ -74,7 +74,7 @@ ICOM_DEFINE(IDirectPlaySP,IUnknown)
 #undef ICOM_INTERFACE
 
 
-/* NOTE: The microsoft provided header file doesn't have these access 
+/* NOTE: The microsoft provided header file doesn't have these access
  * functions
  */
 /*** IUnknown methods ***/
@@ -189,7 +189,7 @@ typedef struct tagDPSP_REMOVEPLAYERFROMGROUPDATA
 } DPSP_REMOVEPLAYERFROMGROUPDATA, *LPDPSP_REMOVEPLAYERFROMGROUPDATA;
 
 typedef struct tagDPSP_REPLYDATA
-{      
+{
   LPVOID         lpSPMessageHeader;
   LPVOID         lpMessage;
   DWORD          dwMessageSize;
@@ -331,27 +331,27 @@ typedef struct tagDPSP_SPCALLBACKS
     LPDPSP_SENDEX                SendEx;                /* Optional */
     LPDPSP_SENDTOGROUPEX         SendToGroupEx;         /* Optional */
     LPDPSP_CANCEL                Cancel;                /* Optional */
-    LPDPSP_GETMESSAGEQUEUE       GetMessageQueue;       /* Optional */ 
+    LPDPSP_GETMESSAGEQUEUE       GetMessageQueue;       /* Optional */
 } DPSP_SPCALLBACKS, *LPDPSP_SPCALLBACKS;
 
 typedef struct tagSPINITDATA
 {
-    LPDPSP_SPCALLBACKS  lpCB; 
+    LPDPSP_SPCALLBACKS  lpCB;
     IDirectPlaySP*      lpISP;
     LPWSTR              lpszName;
     LPGUID              lpGuid;
-    DWORD               dwReserved1; 
+    DWORD               dwReserved1;
     DWORD               dwReserved2;
-    DWORD               dwSPHeaderSize;     
+    DWORD               dwSPHeaderSize;
     LPDPADDRESS         lpAddress;
-    DWORD               dwAddressSize;      
-    DWORD               dwSPVersion;        
+    DWORD               dwAddressSize;
+    DWORD               dwSPVersion;
 } SPINITDATA, *LPSPINITDATA;
 
 typedef HRESULT (WINAPI *LPDPSP_SPINIT)(LPSPINITDATA);
 
-/* This variable is exported from the DLL at ordinal 6 to be accessed by the 
- * SP directly 
+/* This variable is exported from the DLL at ordinal 6 to be accessed by the
+ * SP directly
  */
 extern DWORD gdwDPlaySPRefCount;
 

@@ -1,6 +1,6 @@
 /*
  * DOS interrupt 41h handler  -- Windows Kernel Debugger
- * 
+ *
  * Check debugsys.inc from the DDK for docu.
  *
  * Copyright 1998 Ulrich Weigand

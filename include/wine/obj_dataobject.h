@@ -33,7 +33,7 @@ typedef enum tagDATADIR
 	DATADIR_GET = 1,
 	DATADIR_SET = 2
 } DATADIR;
- 
+
 typedef struct DVTARGETDEVICE16 DVTARGETDEVICE16, *LPDVTARGETDEVICE16;
 typedef struct DVTARGETDEVICE DVTARGETDEVICE, *LPDVTARGETDEVICE;
 
@@ -107,7 +107,7 @@ typedef enum tagTYMED
 	TYMED_ENHMF     = 64,
 	TYMED_NULL      = 0
 } TYMED;
-  
+
 typedef struct tagRemSTGMEDIUM
 {
 	DWORD tymed;
@@ -132,7 +132,7 @@ struct STGMEDIUM
         IStorage *pstg;
     } DUMMYUNIONNAME;
     IUnknown *pUnkForRelease;
-};   
+};
 
 typedef enum tagADVF
 {

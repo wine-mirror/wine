@@ -34,7 +34,7 @@
 char GlobalBuffer[BUFFER_SIZE];
 
 // TODO :
-// Unicode versions 
+// Unicode versions
 // EnumTimeFormatsA
 // EnumDateFormatsA
 // LCMapStringA
@@ -58,7 +58,7 @@ char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
 	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 0);
 	cmp = strncmp (buffer, Expected, strlen(Expected));
 	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
-	eq (ret, strlen("Monday") + 1, "GetLocaleInfoA with len=0", "%d");	
+	eq (ret, strlen("Monday") + 1, "GetLocaleInfoA with len=0", "%d");
 
 	strcpy(Expected, "Monxx");
 	memset( buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
@@ -66,7 +66,7 @@ char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE];
 	cmp = strncmp (buffer, Expected, strlen(Expected));
 	ok (cmp == 0, "GetLocaleInfoA got %s instead of %s", buffer, Expected);
 	eq (ret, 0, "GetLocaleInfoA with len = 3", "%d");
-			
+
 	strcpy(Expected, "Monday");
 	memset( buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	ret = GetLocaleInfoA(lcid, LOCALE_SDAYNAME1, buffer, 10);
@@ -107,7 +107,7 @@ LCID lcid;
         }
 
 	strcpy(Expected, "AM 08:56@13");
-	curtime.wHour = 8;  curtime.wMinute = 56; 
+	curtime.wHour = 8;  curtime.wMinute = 56;
 	curtime.wSecond = 13; curtime.wMilliseconds = 22;
 	ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, format, buffer, sizeof(buffer));
 	cmp = strncmp (Expected, buffer, strlen(Expected)+1);
@@ -293,7 +293,7 @@ char Expected[BUFFER_SIZE];
 	ret = EnumTimeFormatsA(EnumTimeFormatsProc, lcid, 0);
 
 	eq (ret, 1, "EnumTimeFormats should return 1", "%d");
-	ok (strncmp (GlobalBuffer, Expected, strlen(Expected)) == 0, 
+	ok (strncmp (GlobalBuffer, Expected, strlen(Expected)) == 0,
 				"EnumTimeFormats failed");
 	ok (ret == 1, "EnumTimeFormats should return 1");
 }
@@ -324,7 +324,7 @@ char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
 	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);
 
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-	
+
 	strcpy(buffer1, "héhé"); strcpy(buffer2, "hèhè");
 	ret = CompareStringA(lcid, NORM_IGNORECASE, buffer1, -1, buffer2, -1);
 	ok (ret== 1, "CompareStringA (st1=%s str2=%s) expected result=1", buffer1, buffer2);

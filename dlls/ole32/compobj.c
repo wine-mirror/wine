@@ -1297,7 +1297,7 @@ end:
  *           CoGetClassObject [COMPOBJ.7]
  *           CoGetClassObject [OLE32.16]
  *
- * FIXME.  If request allows of several options and there is a failure 
+ * FIXME.  If request allows of several options and there is a failure
  *         with one (other than not being registered) do we try the
  *         others or return failure?  (E.g. inprocess is registered but
  *         the DLL is not found but the server version works)
@@ -1382,7 +1382,7 @@ HRESULT WINAPI CoGetClassObject(
 	    return DllGetClassObject(rclsid, iid, ppv);
         }
     }
-    
+
 
     /* Next try out of process */
     if (CLSCTX_LOCAL_SERVER & dwClsContext)

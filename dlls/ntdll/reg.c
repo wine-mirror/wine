@@ -86,7 +86,7 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
  *
  *   OUT	PHANDLE			retkey (returns 0 when failure)
  *   IN		ACCESS_MASK		access
- *   IN		POBJECT_ATTRIBUTES 	attr 
+ *   IN		POBJECT_ATTRIBUTES 	attr
  */
 NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
@@ -248,7 +248,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
  * ZwEnumerateKey [NTDLL.@]
  *
  * NOTES
- *  the name copied into the buffer is NOT 0-terminated 
+ *  the name copied into the buffer is NOT 0-terminated
  */
 NTSTATUS WINAPI NtEnumerateKey( HANDLE handle, ULONG index, KEY_INFORMATION_CLASS info_class,
                                 void *info, DWORD length, DWORD *result_len )
@@ -540,7 +540,7 @@ NTSTATUS WINAPI NtSetInformationKey(
  * ZwSetValueKey [NTDLL.@]
  *
  * NOTES
- *   win95 does not care about count for REG_SZ and finds out the len by itself (js) 
+ *   win95 does not care about count for REG_SZ and finds out the len by itself (js)
  *   NT does definitely care (aj)
  */
 NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG TitleIndex,

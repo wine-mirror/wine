@@ -1,4 +1,4 @@
-/* 
+/*
  *  Clock (winclock.c)
  *
  *  Copyright 1998 by Marcel Baur <mbaur@g26.ethz.ch>
@@ -45,7 +45,7 @@ HandData OldSecond,OldHour,OldMinute;
 int MiddleX(void) {
   int X, diff;
 
-  X    = (Globals.MaxX/2);  
+  X    = (Globals.MaxX/2);
   diff = (Globals.MaxX-Globals.MaxY);
   if (diff>0) { X = (X-(diff/2)); }
   return X;
@@ -53,7 +53,7 @@ int MiddleX(void) {
 
 int MiddleY(void) {
   int Y, diff;
-  
+
   Y    = (Globals.MaxY/2);
   diff = (Globals.MaxX-Globals.MaxY);
   if (diff<0) { Y = Y+(diff/2); }
@@ -63,7 +63,7 @@ int MiddleY(void) {
 void DrawFace(HDC dc)
 {
   int MidX, MidY, t, DiffX, DiffY;
-  
+
   MidX = MiddleX();
   MidY = MiddleY();
   DiffX = (Globals.MaxX-MidX*2)/2;
@@ -119,7 +119,7 @@ BOOL UpdateHourHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
   Sx = MidX; Sy = MidY;
   Ex = MidX+sin(Pos*Pi/6000)*XExt;
   Ey = MidY-cos(Pos*Pi/6000)*YExt;
-  rv = ( Sx!=OldHour.StartX || Ex!=OldHour.EndX || 
+  rv = ( Sx!=OldHour.StartX || Ex!=OldHour.EndX ||
 	 Sy!=OldHour.StartY || Ey!=OldHour.EndY );
   if (Globals.bAnalog && rv)DrawHourHand(dc);
   OldHour.StartX = Sx; OldHour.EndX = Ex;
@@ -152,7 +152,7 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
   BOOL rv;
 
   rv = FALSE;
-  
+
   if (Globals.bSeconds) {
     Sx = MidX; Sy = MidY;
     Ex = MidX+sin(Pos*Pi/3000)*XExt;
@@ -164,7 +164,7 @@ BOOL UpdateSecondHand(HDC dc,int MidX,int MidY,int XExt,int YExt,WORD Pos)
     OldSecond.StartY = Sy; OldSecond.EndY = Ey;
     OldSecond.DontRedraw=FALSE;
   }
-  
+
   return rv;
 }
 
@@ -174,23 +174,23 @@ void DigitalClock(HDC dc) {
   LPSTR time = szTime;
   static short xChar, yChar;
   TEXTMETRIC tm;
-  
+
   SYSTEMTIME st;
   LPSYSTEMTIME lpst = &st;
-  
+
   GetLocalTime(&st);
-  GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, time, 
+  GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, time,
                 MAX_STRING_LEN);
-                
+
   SelectObject(dc,CreatePen(PS_SOLID,1,FaceColor));
   xChar = tm.tmAveCharWidth;
   yChar = tm.tmHeight;
-  
+
   xChar = 100;
   yChar = 100;
-  TextOut (dc, xChar, yChar, szTime, strlen (szTime)); 
+  TextOut (dc, xChar, yChar, szTime, strlen (szTime));
   DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
-              
+
 }
 
 
@@ -231,8 +231,8 @@ void AnalogClock(HDC dc) {
         DrawMinuteHand(dc);
         DrawHourHand(dc);
       }
-  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN))); 
-  
+  DeleteObject(SelectObject(dc,GetStockObject(NULL_PEN)));
+
 }
 
 void Idle(HDC idc)
@@ -250,7 +250,7 @@ void Idle(HDC idc)
   {
     AnalogClock(context);
   }
-  else 
+  else
   {
     DigitalClock(context);
   }

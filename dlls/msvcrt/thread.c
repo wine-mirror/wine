@@ -40,8 +40,8 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 {
     _beginthread_trampoline_t local_trampoline;
 
-    /* Maybe it's just being paranoid, but freeing arg right 
-     * away seems safer. 
+    /* Maybe it's just being paranoid, but freeing arg right
+     * away seems safer.
      */
     memcpy(&local_trampoline,arg,sizeof(local_trampoline));
     MSVCRT_free(arg);
@@ -62,7 +62,7 @@ unsigned long _beginthread(
 
   TRACE("(%p, %d, %p)\n", start_address, stack_size, arglist);
 
-  /* Allocate the trampoline here so that it is still valid when the thread 
+  /* Allocate the trampoline here so that it is still valid when the thread
    * starts... typically after this function has returned.
    * _beginthread_trampoline is responsible for freeing the trampoline
    */

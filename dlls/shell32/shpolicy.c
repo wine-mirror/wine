@@ -23,9 +23,9 @@
  * Editor which came with the Win95 Migration Guide, although
  * there doesn't appear to be an updated Win98 version that
  * would handle the many new policies introduced since then.
- * You could easily write one with the information in 
+ * You could easily write one with the information in
  * this file...
- * 
+ *
  * Up to date as of SHELL32 v4.72 (Win98, Win95 with MSIE 5)
  */
 
@@ -127,7 +127,7 @@ static char strNoRun[] = {"NoRun"};
 
 /* policy data array */
 
-POLICYDATA sh32_policy_table[] = 
+POLICYDATA sh32_policy_table[] =
 {
   {
     0x1,
@@ -476,14 +476,14 @@ POLICYDATA sh32_policy_table[] =
 /*************************************************************************
  * SHRestricted				[SHELL32.100]
  *
- * walks through policy table, queries <app> key, <type> value, returns 
+ * walks through policy table, queries <app> key, <type> value, returns
  * queried (DWORD) value, and caches it between called to SHInitRestricted
  * to prevent unnecessary registry access.
  *
  * NOTES
  *     exported by ordinal
  *
- * REFERENCES: 
+ * REFERENCES:
  *     MS System Policy Editor
  *     98Lite 2.0 (which uses many of these policy keys) http://www.98lite.net/
  *     "The Windows 95 Registry", by John Woram, 1996 MIS: Press
@@ -581,7 +581,7 @@ BOOL WINAPI SHInitRestricted(LPSTR inpRegKey, LPSTR parm2)
 	     /* doesn't match, fail */
 	     return 0;
 	 }
-     }                               
+     }
 
      /* check passed, init all policy cache entries with SHELL_NO_POLICY */
      for (i = 0; i < SHELL_MAX_POLICIES; i++)

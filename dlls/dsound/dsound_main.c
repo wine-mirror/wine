@@ -1,5 +1,5 @@
 /*  			DirectSound
- * 
+ *
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Rob Riggs
  * Copyright 2000-2001 TransGaming Technologies, Inc.
@@ -69,7 +69,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 /* these are eligible for tuning... they must be high on slow machines... */
 /* some stuff may get more responsive with lower values though... */
 #define DS_EMULDRIVER 1 /* some games (Quake 2, UT) refuse to accept
-				emulated dsound devices. set to 0 ! */ 
+				emulated dsound devices. set to 0 ! */
 #define DS_HEL_FRAGS 48 /* HEL only: number of waveOut fragments in primary buffer
 			 * (changing this won't help you) */
 #define DS_HEL_MARGIN 5 /* HEL only: number of waveOut fragments ahead to mix in new buffers
@@ -183,10 +183,10 @@ struct IDirectSound3DListenerImpl
     /* IDirectSound3DListenerImpl fields */
     IDirectSoundBufferImpl* dsb;
     DS3DLISTENER            ds3dl;
-    CRITICAL_SECTION        lock;   
+    CRITICAL_SECTION        lock;
 };
 
-struct IKsPropertySetImpl 
+struct IKsPropertySetImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD(IKsPropertySet);
@@ -288,7 +288,7 @@ static int	ds_hel_queue = DS_HEL_QUEUE;
 static int	ds_snd_queue_max = DS_SND_QUEUE_MAX;
 static int	ds_snd_queue_min = DS_SND_QUEUE_MIN;
 
-/* 
+/*
  * Call the callback provided to DirectSoundEnumerateA.
  */
 
@@ -324,9 +324,9 @@ inline static void setup_dsound_options(void)
 {
     char buffer[MAX_PATH+1];
     HKEY hkey, appkey = 0;
-    
+
     buffer[MAX_PATH]='\0';
-    
+
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\dsound", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
     {
@@ -356,10 +356,10 @@ inline static void setup_dsound_options(void)
 
     /* get options */
 
-    if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH )) 
+    if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH ))
         ds_emuldriver = strcmp(buffer, "N");
 
-    if (!get_config_key( hkey, appkey, "HELmargin", buffer, MAX_PATH )) 
+    if (!get_config_key( hkey, appkey, "HELmargin", buffer, MAX_PATH ))
         ds_hel_margin = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "HELqueue", buffer, MAX_PATH ))
@@ -376,10 +376,10 @@ inline static void setup_dsound_options(void)
 
     if (ds_emuldriver != DS_EMULDRIVER )
 	WARN("ds_emuldriver = %d (default=%d)\n",ds_emuldriver, DS_EMULDRIVER);
-    if (ds_hel_margin != DS_HEL_MARGIN ) 
+    if (ds_hel_margin != DS_HEL_MARGIN )
 	WARN("ds_hel_margin = %d (default=%d)\n",ds_hel_margin, DS_HEL_MARGIN );
     if (ds_hel_queue != DS_HEL_QUEUE )
-    	WARN("ds_hel_queue = %d (default=%d)\n",ds_hel_queue, DS_HEL_QUEUE );          
+    	WARN("ds_hel_queue = %d (default=%d)\n",ds_hel_queue, DS_HEL_QUEUE );
     if (ds_snd_queue_max != DS_SND_QUEUE_MAX)
 	WARN("ds_snd_queue_max = %d (default=%d)\n",ds_snd_queue_max ,DS_SND_QUEUE_MAX);
     if (ds_snd_queue_min != DS_SND_QUEUE_MIN)
@@ -391,7 +391,7 @@ inline static void setup_dsound_options(void)
 
 
 /***************************************************************************
- * DirectSoundEnumerateA [DSOUND.2]  
+ * DirectSoundEnumerateA [DSOUND.2]
  *
  * Enumerate all DirectSound drivers installed in the system
  *
@@ -406,7 +406,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	WAVEOUTCAPSA wcaps;
 	unsigned devs, wod;
 
-	TRACE("lpDSEnumCallback = %p, lpContext = %p\n", 
+	TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
 	      lpDSEnumCallback, lpContext);
 
 	devs = waveOutGetNumDevs();
@@ -422,7 +422,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 }
 
 /***************************************************************************
- * DirectSoundEnumerateW [DSOUND.3]  
+ * DirectSoundEnumerateW [DSOUND.3]
  *
  * Enumerate all DirectSound drivers installed in the system
  *
@@ -431,10 +431,10 @@ HRESULT WINAPI DirectSoundEnumerateA(
  *    Failure: DSERR_INVALIDPARAM
  */
 HRESULT WINAPI DirectSoundEnumerateW(
-	LPDSENUMCALLBACKW lpDSEnumCallback, 
+	LPDSENUMCALLBACKW lpDSEnumCallback,
 	LPVOID lpContext )
 {
-        FIXME("lpDSEnumCallback = %p, lpContext = %p: stub\n", 
+        FIXME("lpDSEnumCallback = %p, lpContext = %p: stub\n",
                 lpDSEnumCallback, lpContext);
 
         return DS_OK;
@@ -803,7 +803,7 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 #endif
 
 #ifdef USE_DSOUND3D
-static ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt = 
+static ICOM_VTABLE(IDirectSound3DBuffer) ds3dbvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
@@ -898,7 +898,7 @@ static int DSOUND_Create3DBuffer(IDirectSoundBufferImpl* dsb)
 			bObuf[i * 2] = temp;
 			bObuf[(i * 2) + 1] = temp;
 		}
-	
+
 	if (wTbuf)
 		free(wTbuf);
 	if (bTbuf)
@@ -920,7 +920,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_QueryInterface(
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
-	
+
 static ULONG WINAPI IDirectSound3DListenerImpl_AddRef(LPDIRECTSOUND3DLISTENER iface)
 {
 	ICOM_THIS(IDirectSound3DListenerImpl,iface);
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound3DListener) ds3dlvt = 
+static ICOM_VTABLE(IDirectSound3DListener) ds3dlvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown methods */
@@ -1156,7 +1156,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	return S_OK;
 }
 
-static ICOM_VTABLE(IDirectSoundNotify) dsnvt = 
+static ICOM_VTABLE(IDirectSoundNotify) dsnvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundNotifyImpl_QueryInterface,
@@ -1363,7 +1363,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
 		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-		   wfex->nAvgBytesPerSec, wfex->nBlockAlign, 
+		   wfex->nAvgBytesPerSec, wfex->nBlockAlign,
 		   wfex->wBitsPerSample, wfex->cbSize);
 
 	primarybuf->wfx.nAvgBytesPerSec =
@@ -1590,7 +1590,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 		HeapFree(GetProcessHeap(),0,This->buffer);
 
 	HeapFree(GetProcessHeap(),0,This);
-	
+
 	if (This == primarybuf)
 		primarybuf = NULL;
 
@@ -1651,7 +1651,7 @@ static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER iface,LPDWORD playpos,LPDWORD writepos
 ) {
-	HRESULT	hres; 
+	HRESULT	hres;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 	if (This->hwbuf) {
@@ -2004,7 +2004,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
   	TRACE("(%p)->(%p)\n",This,caps);
-  
+
 	if (caps == NULL)
 		return DSERR_INVALIDPARAM;
 
@@ -2162,7 +2162,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	return E_FAIL;
 }
 
-static ICOM_VTABLE(IDirectSoundBuffer) dsbvt = 
+static ICOM_VTABLE(IDirectSoundBuffer) dsbvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundBufferImpl_QueryInterface,
@@ -2213,10 +2213,10 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 	HRESULT err = DS_OK;
 
 	TRACE("(%p,%p,%p,%p)\n",This,dsbd,ippdsb,lpunk);
-	
+
 	if ((This == NULL) || (dsbd == NULL) || (ippdsb == NULL))
 		return DSERR_INVALIDPARAM;
-	
+
 	if (TRACE_ON(dsound)) {
 		TRACE("(structsize=%ld)\n",dsbd->dwSize);
 		TRACE("(flags=0x%08lx:\n",dsbd->dwFlags);
@@ -2232,7 +2232,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
 		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
 		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-		   wfex->nAvgBytesPerSec, wfex->nBlockAlign, 
+		   wfex->nAvgBytesPerSec, wfex->nBlockAlign,
 		   wfex->wBitsPerSample, wfex->cbSize);
 
 	if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
@@ -2361,7 +2361,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		*ippdsb = NULL;
 		return err;
 	}
-	
+
 #ifdef USE_DSOUND3D
 	if (dsbd->dwFlags & DSBCAPS_CTRL3D) {
 		IDirectSound3DBufferImpl	*ds3db;
@@ -2520,7 +2520,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 			IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)primarybuf);
 
 		if (This->buffers) {
-			for( i=0;i<This->nrofbuffers;i++)	
+			for( i=0;i<This->nrofbuffers;i++)
 				IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->buffers[i]);
 		}
 
@@ -2574,9 +2574,9 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 		This->listener->ref = 1;
 		ICOM_VTBL(This->listener) = &ds3dlvt;
 		*ppobj = (LPVOID)This->listener;
-		IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);	
+		IDirectSound3DListener_AddRef((LPDIRECTSOUND3DLISTENER)*ppobj);
 
-		This->listener->dsb = NULL; 
+		This->listener->dsb = NULL;
 
 		This->listener->ds3dl.dwSize = sizeof(DS3DLISTENER);
 		This->listener->ds3dl.vPosition.u1.x = 0.0;
@@ -2631,7 +2631,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
 	return DS_OK;
 }
 
-static ICOM_VTABLE(IDirectSound) dsvt = 
+static ICOM_VTABLE(IDirectSound) dsvt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IDirectSoundImpl_QueryInterface,
@@ -2712,7 +2712,7 @@ static inline INT16 cvtU8toS16(BYTE byte)
 static inline BYTE cvtS16toU8(INT16 word)
 {
 	BYTE	b = (word + 32768) >> 8;
-	
+
 	return b;
 }
 
@@ -2759,7 +2759,7 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE
 			*(((INT16 *)obuf) + 1) = fr;
 			return;
 		}
-	}	
+	}
 	if (primarybuf->wfx.nChannels == 1) {
 		fl = (fl + fr) >> 1;
 		if (primarybuf->wfx.wBitsPerSample == 8) {
@@ -2799,7 +2799,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 		}
 		return len;
 	}
-	
+
 	/* Check for same sample rate */
 	if (dsb->freq == primarybuf->wfx.nSamplesPerSec) {
 		TRACE("(%p) Same sample rate %ld = primary %ld\n", dsb,
@@ -2813,7 +2813,7 @@ static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			if (ibp >= (BYTE *)(dsb->buffer + dsb->buflen))
 				ibp = dsb->buffer;	/* wrap */
 		}
-		return (ilen);	
+		return (ilen);
 	}
 
 	/* Mix in different sample rates */
@@ -2850,7 +2850,7 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	INT	i, inc = primarybuf->wfx.wBitsPerSample >> 3;
 	BYTE	*bpc = buf;
 	INT16	*bps = (INT16 *) buf;
-	
+
 	TRACE("(%p) left = %lx, right = %lx\n", dsb,
 		dsb->volpan.dwTotalLeftAmpFactor, dsb->volpan.dwTotalRightAmpFactor);
 	if ((!(dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) || (dsb->volpan.lPan == 0)) &&
@@ -2886,7 +2886,7 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 			/* Very ugly! */
 			FIXME("MixerVol had a nasty error\n");
 		}
-	}		
+	}
 }
 
 #ifdef USE_DSOUND3D
@@ -3015,7 +3015,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	}
 
 	dsb->buf_mixpos += ilen;
-	
+
 	if (dsb->buf_mixpos >= dsb->buflen) {
 		if (!(dsb->playflags & DSBPLAY_LOOPING)) {
 			dsb->state = STATE_STOPPED;
@@ -3309,7 +3309,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BO
 			LeaveCriticalSection(&(dsb->lock));
 		}
 	}
-	
+
 	return maxlen;
 }
 
@@ -3545,7 +3545,7 @@ static void DSOUND_PerformMix(void)
 		if (primarybuf->state == STATE_STARTING) {
 			DSOUND_PrimaryPlay(primarybuf);
 			primarybuf->state = STATE_PLAYING;
-		} 
+		}
 		else if (primarybuf->state == STATE_STOPPING) {
 			DSOUND_PrimaryStop(primarybuf);
 			primarybuf->state = STATE_STOPPED;
@@ -3618,7 +3618,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 	PIDSDRIVER drv = NULL;
 	WAVEOUTCAPSA wcaps;
 	unsigned wod, wodn;
-	HRESULT err = DS_OK;	
+	HRESULT err = DS_OK;
 
 	if (lpGUID)
 		TRACE("(%p,%p,%p)\n",lpGUID,ippDS,pUnkOuter);
@@ -3659,11 +3659,11 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 
 	(*ippDS)->driver	= drv;
 	(*ippDS)->fraglen	= 0;
-	(*ippDS)->priolevel	= DSSCL_NORMAL; 
+	(*ippDS)->priolevel	= DSSCL_NORMAL;
 	(*ippDS)->nrofbuffers	= 0;
 	(*ippDS)->buffers	= NULL;
-	(*ippDS)->primary	= NULL; 
-	(*ippDS)->listener	= NULL; 
+	(*ippDS)->primary	= NULL;
+	(*ippDS)->listener	= NULL;
 
 	(*ippDS)->prebuf	= ds_snd_queue_max;
 
@@ -3695,10 +3695,10 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		err = DSERR_ALLOCATED;
 
 		/* if this device is busy try the next one */
-		while((err == DSERR_ALLOCATED) && 
+		while((err == DSERR_ALLOCATED) &&
 			((*ippDS)->drvdesc.dnDevNode < wodn))
   		{
-		  err = mmErr(waveOutOpen(&((*ippDS)->hwo), 
+		  err = mmErr(waveOutOpen(&((*ippDS)->hwo),
 			(*ippDS)->drvdesc.dnDevNode, &((*ippDS)->wfx),
 			(DWORD)DSOUND_callback, (DWORD)(*ippDS),
 			CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
@@ -3706,7 +3706,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		}
 
                 (*ippDS)->drvdesc.dnDevNode--; /* take away last increment */
-		
+
 	}
 
 	if (drv && (err == DS_OK))
@@ -3845,7 +3845,7 @@ HRESULT WINAPI DirectSoundCaptureEnumerateW(
 {
         FIXME("(%p,%p):stub\n", lpDSEnumCallback, lpContext );
         return DS_OK;
-} 
+}
 
 static HRESULT
 DSOUND_CreateDirectSoundCapture( LPVOID* ppobj )
@@ -3922,7 +3922,7 @@ static HRESULT WINAPI
 IDirectSoundCaptureImpl_CreateCaptureBuffer(
 	LPDIRECTSOUNDCAPTURE iface,
 	LPCDSCBUFFERDESC lpcDSCBufferDesc,
-	LPDIRECTSOUNDCAPTUREBUFFER* lplpDSCaptureBuffer, 
+	LPDIRECTSOUNDCAPTUREBUFFER* lplpDSCaptureBuffer,
 	LPUNKNOWN pUnk )
 {
 	HRESULT hr;
@@ -3975,7 +3975,7 @@ static ICOM_VTABLE(IDirectSoundCapture) dscvt =
         /* IDirectSoundCapture methods */
         IDirectSoundCaptureImpl_CreateCaptureBuffer,
         IDirectSoundCaptureImpl_GetCaps,
-        IDirectSoundCaptureImpl_Initialize 
+        IDirectSoundCaptureImpl_Initialize
 };
 
 static HRESULT
@@ -4081,8 +4081,8 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
 static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_GetFormat(
         LPDIRECTSOUNDCAPTUREBUFFER iface,
-	LPWAVEFORMATEX lpwfxFormat, 
-	DWORD dwSizeAllocated, 
+	LPWAVEFORMATEX lpwfxFormat,
+	DWORD dwSizeAllocated,
 	LPDWORD lpdwSizeWritten )
 {
 	ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
@@ -4107,7 +4107,7 @@ IDirectSoundCaptureBufferImpl_GetStatus(
 static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_Initialize(
         LPDIRECTSOUNDCAPTUREBUFFER iface,
-	LPDIRECTSOUNDCAPTURE lpDSC, 
+	LPDIRECTSOUNDCAPTURE lpDSC,
 	LPCDSCBUFFERDESC lpcDSCBDesc )
 {
 	ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
@@ -4120,12 +4120,12 @@ IDirectSoundCaptureBufferImpl_Initialize(
 static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_Lock(
         LPDIRECTSOUNDCAPTUREBUFFER iface,
-	DWORD dwReadCusor, 
-	DWORD dwReadBytes, 
-	LPVOID* lplpvAudioPtr1, 
-	LPDWORD lpdwAudioBytes1, 
-	LPVOID* lplpvAudioPtr2, 
-	LPDWORD lpdwAudioBytes2, 
+	DWORD dwReadCusor,
+	DWORD dwReadBytes,
+	LPVOID* lplpvAudioPtr1,
+	LPDWORD lpdwAudioBytes1,
+	LPVOID* lplpvAudioPtr2,
+	LPDWORD lpdwAudioBytes2,
 	DWORD dwFlags )
 {
 	ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
@@ -4160,9 +4160,9 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER iface )
 static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_Unlock(
         LPDIRECTSOUNDCAPTUREBUFFER iface,
-	LPVOID lpvAudioPtr1, 
-	DWORD dwAudioBytes1, 
-	LPVOID lpvAudioPtr2, 
+	LPVOID lpvAudioPtr1,
+	DWORD dwAudioBytes1,
+	LPVOID lpvAudioPtr2,
 	DWORD dwAudioBytes2 )
 {
 	ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
@@ -4203,7 +4203,7 @@ typedef struct
     DWORD                       ref;
 } IClassFactoryImpl;
 
-static HRESULT WINAPI 
+static HRESULT WINAPI
 DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 	ICOM_THIS(IClassFactoryImpl,iface);
 

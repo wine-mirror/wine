@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *           NetBIOSCall      (KERNEL.103)
  *           INT_Int5cHandler (WPROCS.192)
  *
- * Also handler for interrupt 5c. 
+ * Also handler for interrupt 5c.
  */
 void WINAPI NetBIOSCall16( CONTEXT86 *context )
 {

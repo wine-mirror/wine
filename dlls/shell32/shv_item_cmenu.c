@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /**************************************************************************
 *  IContextMenu Implementation
 */
-typedef struct 
+typedef struct
 {	ICOM_VFIELD(IContextMenu);
 	DWORD		ref;
 	IShellFolder*	pSFParent;
@@ -115,20 +115,20 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu *iface, REFIID rii
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
 	{
-	  *ppvObj = This; 
+	  *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IContextMenu))  /*IContextMenu*/
 	{
 	  *ppvObj = This;
-	}   
+	}
 	else if(IsEqualIID(riid, &IID_IShellExtInit))  /*IShellExtInit*/
 	{
 	  FIXME("-- LPSHELLEXTINIT pointer requested\n");
 	}
 
 	if(*ppvObj)
-	{ 
-	  IUnknown_AddRef((IUnknown*)*ppvObj); 
+	{
+	  IUnknown_AddRef((IUnknown*)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -160,7 +160,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu *iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{
 	  TRACE(" destroying IContextMenu(%p)\n",This);
 
@@ -169,7 +169,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu *iface)
 
 	  if(This->pidl)
 	    SHFree(This->pidl);
-	  
+
 	  /*make sure the pidl is freed*/
 	  _ILFreeaPidl(This->apidl, This->cidl);
 
@@ -181,7 +181,7 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu *iface)
 
 /**************************************************************************
 *  ICM_InsertItem()
-*/ 
+*/
 void WINAPI _InsertMenuItem (
 	HMENU hmenu,
 	UINT indexMenu,
@@ -276,7 +276,7 @@ static void DoOpenExplore(
 	LPITEMIDLIST	pidlFQ;
 	SHELLEXECUTEINFOA	sei;
 
-	/* Find the first item in the list that is not a value. These commands 
+	/* Find the first item in the list that is not a value. These commands
 	    should never be invoked if there isn't at least one folder item in the list.*/
 
 	for(i = 0; i<This->cidl; i++)
@@ -316,14 +316,14 @@ static void DoRename(
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 
-	TRACE("(%p)->(wnd=%x)\n",This, hwnd);    
+	TRACE("(%p)->(wnd=%x)\n",This, hwnd);
 
 	/* get the active IShellView */
 	if ((lpSB = (LPSHELLBROWSER)SendMessageA(hwnd, CWM_GETISHELLBROWSER,0,0)))
 	{
 	  if(SUCCEEDED(IShellBrowser_QueryActiveShellView(lpSB, &lpSV)))
 	  {
-	    TRACE("(sv=%p)\n",lpSV);    
+	    TRACE("(sv=%p)\n",lpSV);
 	    IShellView_SelectItem(lpSV, This->apidl[0],
               SVSI_DESELECTOTHERS|SVSI_EDIT|SVSI_ENSUREVISIBLE|SVSI_FOCUSED|SVSI_SELECT);
 	    IShellView_Release(lpSV);
@@ -340,7 +340,7 @@ static void DoDelete(IContextMenu *iface)
 {
 	ICOM_THIS(ItemCmImpl, iface);
 	ISFHelper * psfhlp;
-	
+
 	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
 	if (psfhlp)
 	{
@@ -364,7 +364,7 @@ static BOOL DoCopyOrCut(
 	LPSHELLBROWSER	lpSB;
 	LPSHELLVIEW	lpSV;
 	LPDATAOBJECT    lpDo;
-	
+
 	TRACE("(%p)->(wnd=0x%04x,bCut=0x%08x)\n",This, hwnd, bCut);
 
 	if(GetShellOle())
@@ -392,7 +392,7 @@ static BOOL DoCopyOrCut(
 	BOOL bSuccess = FALSE;
 
 	TRACE("(%p)\n", iface);
-	
+
 	if(OpenClipboard(NULL))
 	{
 	  if(EmptyClipboard())
@@ -408,7 +408,7 @@ static BOOL DoCopyOrCut(
 	        HGLOBAL hMem;
 
 		hMem = RenderHDROP(pidl, This->apidl, This->cidl);
-		
+
 		if(SetClipboardData(CF_HDROP, hMem))
 		{
 		  bSuccess = TRUE;
@@ -417,7 +417,7 @@ static BOOL DoCopyOrCut(
 	      }
 	      IPersistFolder2_Release(ppf2);
 	    }
-	    
+
 	  }
 	  CloseClipboard();
 	}
@@ -433,7 +433,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 {
 	ICOM_THIS(ItemCmImpl, iface);
 
-	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);    
+	TRACE("(%p)->(invcom=%p verb=%p wnd=%x)\n",This,lpcmi,lpcmi->lpVerb, lpcmi->hwnd);
 
 	if(LOWORD(lpcmi->lpVerb) > FCIDM_SHVIEWLAST)  return E_INVALIDARG;
 
@@ -447,10 +447,10 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 	    break;
 	  case FCIDM_SHVIEW_RENAME:
 	    DoRename(iface, lpcmi->hwnd);
-	    break;	    
+	    break;
 	  case FCIDM_SHVIEW_DELETE:
 	    DoDelete(iface);
-	    break;	    
+	    break;
 	  case FCIDM_SHVIEW_COPY:
 	    DoCopyOrCut(iface, lpcmi->hwnd, FALSE);
 	    break;
@@ -471,7 +471,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	LPUINT lpReserved,
 	LPSTR lpszName,
 	UINT uMaxNameLen)
-{	
+{
 	ICOM_THIS(ItemCmImpl, iface);
 
 	HRESULT  hr = E_INVALIDARG;
@@ -494,7 +494,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    }
 	    break;
 
-	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This 
+	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This
 	     case, you need to do the lstrcpyW to the pointer passed.*/
 	  case GCS_VERBW:
 	    switch(idCommand)
@@ -532,8 +532,8 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IContextMenu) cmvt = 
-{	
+static struct ICOM_VTABLE(IContextMenu) cmvt =
+{
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	ISvItemCm_fnQueryInterface,
 	ISvItemCm_fnAddRef,

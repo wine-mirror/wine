@@ -53,7 +53,7 @@ typedef enum
 
 typedef struct
 {
-    LONG             getVersion16; 
+    LONG             getVersion16;
     LONG             getVersion32;
     OSVERSIONINFOEXA getVersionEx;
 } VERSION_DATA;
@@ -345,7 +345,7 @@ static void VERSION_Init(void)
  *	VERSION_GetSystemDLLVersion
  *
  * This function tries to figure out if a given (native) dll comes from
- * win95/98 or winnt. Since all values in the OptionalHeader are not a 
+ * win95/98 or winnt. Since all values in the OptionalHeader are not a
  * usable hint, we test if a dll imports the ntdll.
  * This is at least working for all system dlls like comctl32, comdlg32 and
  * shell32.
@@ -362,7 +362,7 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
         {
 	    char * name = (char *)hmod + (unsigned int)pe_imp->Name;
 	    TRACE("%s\n", name);
-	    
+
 	    if (!strncasecmp(name, "ntdll", 5))
 	    {
 	      switch(PE_HEADER(hmod)->OptionalHeader.MajorOperatingSystemVersion) {
@@ -389,8 +389,8 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
  *
  * x.xx/1.00/0.00/3.10	Win32s		(any version ?)
  * 2.39/1.00/0.00/3.10	Win32s		freecell.exe (any version)
- * 2.50/1.00/4.00/4.00	Win32s 1.30	winhlp32.exe	
- * 2.60/3.51/3.51/3.51	NT351SP5	system dlls 
+ * 2.50/1.00/4.00/4.00	Win32s 1.30	winhlp32.exe
+ * 2.60/3.51/3.51/3.51	NT351SP5	system dlls
  * 2.60/3.51/3.51/4.00	NT351SP5	comctl32 dll
  * 2.xx/1.00/0.00/4.00	Win95 		system files
  * x.xx/4.00/0.00/4.00	Win95		most applications
@@ -430,7 +430,7 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	      if (!strncasecmp(wm->modname, special_dlls[i], strlen(special_dlls[i]) ))
 	      {
 	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->module);
-	        if (WinVersion == NB_WINDOWS_VERSIONS) 
+	        if (WinVersion == NB_WINDOWS_VERSIONS)
 	          WinVersion = DllVersion;
 	        else {
 	          if (WinVersion != DllVersion) {
@@ -446,12 +446,12 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	    }
 	  }
 	}
-	
+
 	if(WinVersion != NB_WINDOWS_VERSIONS) return WinVersion;
-	
+
 	/* we are using no external system dlls, look at the exe */
 	ophd = &(PE_HEADER(GetModuleHandleA(NULL))->OptionalHeader);
-	
+
 	TRACE("%02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
 	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
 	    ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
@@ -467,17 +467,17 @@ DWORD VERSION_GetLinkedDllVersion(void)
 	/* the MajorSubsystemVersion is the only usable sign */
 	if (ophd->MajorSubsystemVersion < 4)
 	{
-	  if ( ophd->MajorOperatingSystemVersion == 1 
+	  if ( ophd->MajorOperatingSystemVersion == 1
 	    && ophd->MinorOperatingSystemVersion == 0)
 	  {
 	    return WIN31; /* win32s */
 	  }
-	  
+
 	  if (ophd->Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 	    return NT351; /* FIXME: NT 3.1, not tested */
 	  else
 	    return WIN95;
-	}	
+	}
 
 	return WIN95;
 }

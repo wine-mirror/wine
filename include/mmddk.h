@@ -23,7 +23,7 @@
  *
  *****************************************************************************
  */
-#ifndef __MMDDK_H 
+#ifndef __MMDDK_H
 #define __MMDDK_H
 
 #include "mmsystem.h"
@@ -38,7 +38,7 @@
  */
 #define MAX_MIDIOUTDRV 	(16)
 
-/* ================================== 
+/* ==================================
  *   Multimedia DDK compatible part
  * ================================== */
 
@@ -94,7 +94,7 @@ typedef struct {
 #define WODM_WRITE		 9
 #define WODM_PAUSE		10
 #define WODM_RESTART		11
-#define WODM_RESET		12 
+#define WODM_RESET		12
 #define WODM_GETPOS		13
 #define WODM_GETPITCH		14
 #define WODM_SETPITCH		15
@@ -139,8 +139,8 @@ typedef struct {
 #define MODM_RESET          	9
 #define MODM_GETVOLUME		10
 #define MODM_SETVOLUME		11
-#define MODM_CACHEPATCHES	12      
-#define MODM_CACHEDRUMPATCHES	13     
+#define MODM_CACHEPATCHES	12
+#define MODM_CACHEDRUMPATCHES	13
 
 #define MIDM_INIT		DRVM_INIT
 #define MIDM_GETNUMDEVS  	53
@@ -513,9 +513,9 @@ BOOL16  		WINAPI	mmThreadIsCurrent16(HANDLE16 hndl);
 #define DCB_TYPEMASK		0x0007
 #define DCB_NOSWITCH		0x0008			/* don't switch stacks for callback */
 
-BOOL16			WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
+BOOL16			WINAPI	DriverCallback16(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 						 WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
-BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev, 
+BOOL		 	WINAPI	DriverCallback(DWORD dwCallBack, UINT uFlags, HANDLE hDev,
 					       UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 
 #include "poppack.h"

@@ -1,6 +1,6 @@
 /*
  * i386 signal handling routines
- * 
+ *
  * Copyright 1999 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -179,7 +179,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
 #define ESI_sig(context)     ((context)->tf_esi)
 #define EDI_sig(context)     ((context)->tf_edi)
 #define EBP_sig(context)     ((context)->tf_ebp)
-                            
+
 #define CS_sig(context)      ((context)->tf_cs)
 #define DS_sig(context)      ((context)->tf_ds)
 #define ES_sig(context)      ((context)->tf_es)
@@ -259,13 +259,13 @@ typedef struct
 #define ESI_sig(context)     ((context)->sc_esi)
 #define EDI_sig(context)     ((context)->sc_edi)
 #define EBP_sig(context)     ((context)->sc_ebp)
-                            
+
 #define CS_sig(context)      ((context)->sc_cs)
 #define DS_sig(context)      ((context)->sc_ds)
 #define ES_sig(context)      ((context)->sc_es)
 #define SS_sig(context)      ((context)->sc_ss)
-                            
-/* FS and GS are now in the sigcontext struct of FreeBSD, but not 
+
+/* FS and GS are now in the sigcontext struct of FreeBSD, but not
  * saved by the exception handling. duh.
  * Actually they are in -current (have been for a while), and that
  * patch now finally has been MFC'd to -stable too (Nov 15 1999).
@@ -291,12 +291,12 @@ typedef struct
 
 #ifndef __FreeBSD__
 #define EFL_sig(context)     ((context)->sc_eflags)
-#else                       
+#else
 #define EFL_sig(context)     ((context)->sc_efl)
 /* FreeBSD, see i386/i386/traps.c::trap_pfault va->err kludge  */
 #define CR2_sig(context)     ((context)->sc_err)
 #define TRAP_sig(context)    ((context)->sc_trapno)
-#endif                      
+#endif
 
 #define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
 #define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
@@ -316,17 +316,17 @@ typedef struct
 #define ESI_sig(context)     ((context)->uc_mcontext.gregs[ESI])
 #define EDI_sig(context)     ((context)->uc_mcontext.gregs[EDI])
 #define EBP_sig(context)     ((context)->uc_mcontext.gregs[EBP])
-                            
+
 #define CS_sig(context)      ((context)->uc_mcontext.gregs[CS])
 #define DS_sig(context)      ((context)->uc_mcontext.gregs[DS])
 #define ES_sig(context)      ((context)->uc_mcontext.gregs[ES])
 #define SS_sig(context)      ((context)->uc_mcontext.gregs[SS])
-                            
+
 #define FS_sig(context)      ((context)->uc_mcontext.gregs[FS])
 #define GS_sig(context)      ((context)->uc_mcontext.gregs[GS])
 
 #define EFL_sig(context)     ((context)->uc_mcontext.gregs[EFL])
-                            
+
 #define EIP_sig(context)     ((context)->uc_mcontext.gregs[EIP])
 #ifdef R_ESP
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[R_ESP])
@@ -483,7 +483,7 @@ static void restore_vm86_context( const CONTEXT *context, struct vm86plus_struct
 /***********************************************************************
  *           save_context
  *
- * Set the register values from a sigcontext. 
+ * Set the register values from a sigcontext.
  */
 static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
@@ -594,7 +594,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 /***********************************************************************
  *           save_fpu
  *
- * Set the FPU context from a sigcontext. 
+ * Set the FPU context from a sigcontext.
  */
 inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
@@ -614,7 +614,7 @@ inline static void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 /***********************************************************************
  *           restore_fpu
  *
- * Restore the FPU context to a sigcontext. 
+ * Restore the FPU context to a sigcontext.
  */
 inline static void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {

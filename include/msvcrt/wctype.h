@@ -22,7 +22,7 @@
 #define __WINE_USE_MSVCRT
 
 
-/* FIXME: winnt.h includes 'ctype.h' which includes 'wctype.h'. So we get 
+/* FIXME: winnt.h includes 'ctype.h' which includes 'wctype.h'. So we get
  * there but WCHAR is not defined.
  */
 /* Some systems might have wchar_t, but we really need 16 bit characters */

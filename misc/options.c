@@ -142,7 +142,7 @@ static void do_debugmsg( const char *arg )
 		    s = p + 7;
 		    /* if there are n ':', there are n+1 modules, and we need
                        n+2 slots, last one being for the sentinel (NULL) */
-		    i = 2;	
+		    i = 2;
 		    while((s = strchr(s, ':'))) i++, s++;
 		    *output = malloc(sizeof(char **) * i);
 		    i = 0;

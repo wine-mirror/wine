@@ -242,7 +242,7 @@ static void dump_raw_data(raw_data_t *d)
 
 	for(n = 0; n < d->size; n++)
 	{
-		if((n % 16) == 0) 
+		if((n % 16) == 0)
                 {
 			if(n)
 			{
@@ -579,7 +579,7 @@ static void dump_dialog(dialog_t *dlg)
 		assert(dlg->style != NULL);
 		assert(dlg->style->and_mask == 0);
 		printf("Style: %08lx\n", dlg->style->or_mask);
-		
+
 	}
 	if(dlg->gotexstyle)
 	{
@@ -909,7 +909,7 @@ static void dump_toolbar_items(toolbar_item_t *items)
 	      		printf("   SEPARATOR");
 
 		printf("\n");
-	      
+
 		items = items->next;
 	}
 }

@@ -57,14 +57,14 @@ inline static void cursorto(FILE *of, int np, int cp)
 {
     int ntp = np & 0xfffffff8;
     int ctp = cp & 0xfffffff8;
-    
+
     while (ctp < ntp)
     {
     	fputc('\t', of);
 	ctp += 8;
 	cp = ctp;
     }
-    
+
     while (cp < np)
     {
     	fputc(' ', of);
@@ -75,7 +75,7 @@ inline static void cursorto(FILE *of, int np, int cp)
 static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
 {
     int i;
-    
+
     fputc('/', of);
     for (i = 1; i < 80; ++i)
     	fputc('*', of);
@@ -98,18 +98,18 @@ static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
 static void writeMetrics(FILE *of, const AFM *afm, const char *buffer)
 {
     int i;
-    
+
     fputs("\n\n/*\n *  Glyph metrics\n */\n\n", of);
-    
-    fprintf(of, "static const AFMMETRICS metrics[%i] = \n{\n",
+
+    fprintf(of, "static const AFMMETRICS metrics[%i] =\n{\n",
     	    afm->NumofMetrics);
-	    
+
     for (i = 0; i < afm->NumofMetrics - 1; ++i)
     {
     	fprintf(of, "    { %3i, 0x%.4lx, %4g, GN_%s },\n", afm->Metrics[i].C,
 	    	afm->Metrics[i].UV, afm->Metrics[i].WX, afm->Metrics[i].N->sz);
     }
-    
+
     fprintf(of, "    { %3i, 0x%.4lx, %4g, GN_%s }\n};\n", afm->Metrics[i].C,
     	    afm->Metrics[i].UV, afm->Metrics[i].WX, afm->Metrics[i].N->sz);
 }
@@ -188,30 +188,30 @@ void PSDRV_AFM2C(const AFM *afm)
     char    buffer[256];
     FILE    *of;
     int     i;
-    
+
     strncpy(buffer, afm->FontName, sizeof(buffer) - 3);
     buffer[sizeof(buffer) - 3] = '\0';
-    
+
     for (i = 0; i < strlen(buffer); ++i)
     	if (buffer[i] == '-')
 	    buffer[i] = '_';
-	    
+
     buffer[i] = '.';  buffer[i + 1] = 'c';  buffer[i + 2] = '\0';
 
     MESSAGE("writing '%s'\n", buffer);
-    
+
     of = fopen(buffer, "w");
     if (of == NULL)
     {
     	ERR("error opening '%s' for writing\n", buffer);
 	return;
     }
-    
+
     buffer[i] = '\0';
-    
+
     writeHeader(of, afm, buffer);
     writeMetrics(of, afm, buffer);
     writeAFM(of, afm, buffer);
-    
+
     fclose(of);
 }

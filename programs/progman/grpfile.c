@@ -188,7 +188,7 @@ static HLOCAL GRPFILE_ScanGroup(LPCSTR buffer, INT size,
   lpszName = buffer + GET_USHORT(buffer, 22);
   if (lpszName >= buffer + size) return(0);
 
-  /* unknown bytes 24 - 31 ignored */ 
+  /* unknown bytes 24 - 31 ignored */
   /*
     Unknown bytes should be:
     wLogPixelsX = GET_SHORT(buffer, 24);
@@ -470,14 +470,14 @@ static UINT16 GRPFILE_GetChecksum()
 /***********************************************************************
  *
  *           GRPFILE_WriteWithChecksum
- * 
+ *
  * Looks crazier than it is:
- * 
+ *
  * chksum = 0;
  * chksum = cksum - 1. word;
  * chksum = cksum - 2. word;
  * ...
- * 
+ *
  * if (filelen is even)
  *      great I'm finished
  * else
@@ -488,7 +488,7 @@ static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
 {
 	UINT i;
 	if (GRPFILE_checksum_half_word) {
-		GRPFILE_checksum -= GRPFILE_checksum_last_byte;	
+		GRPFILE_checksum -= GRPFILE_checksum_last_byte;
 	}
 	for (i=0; i < size; i++) {
 		if (GRPFILE_checksum_half_word) {
@@ -498,12 +498,12 @@ static UINT GRPFILE_WriteWithChecksum(HFILE file, LPCSTR str, UINT size)
 		}
 		GRPFILE_checksum_half_word ^= 1;
 	}
-	
+
 	if (GRPFILE_checksum_half_word) {
 		GRPFILE_checksum_last_byte = str[size-1];
 		GRPFILE_checksum += GRPFILE_checksum_last_byte;
 	}
-	
+
 	return _lwrite(file, str, size);
 }
 
@@ -523,9 +523,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   LPCSTR lpszTitle = LocalLock(group->hName);
 
   UINT16 checksum;
-	
+
   GRPFILE_InitChecksum();
-	
+
   /* Calculate offsets */
   NumProg = 0;
   Icons   = 0;
@@ -554,9 +554,9 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
   /* Header */
   buffer[0] = 'P';
   buffer[1] = 'M';
-  buffer[2] = 'C'; 
+  buffer[2] = 'C';
   buffer[3] = 'C';
-	
+
   PUT_SHORT(buffer,  4, 0); /* Checksum zero for now, written later */
   PUT_SHORT(buffer,  6, Extension);
   /* Update group->nCmdShow */
@@ -588,7 +588,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PROGRAM *program = LocalLock(hProgram);
 
       PUT_SHORT(buffer, 0, CurrProg);
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2)) 
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 2))
 	      return FALSE;
 
       GRPFILE_CalculateSizes(program, &CurrProg, &CurrIcon);
@@ -596,7 +596,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
     }
 
   /* Title */
-  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle, 
+  if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, lpszTitle,
 					       lstrlen(lpszTitle) + 1))
     return FALSE;
 
@@ -675,7 +675,7 @@ static BOOL GRPFILE_DoWriteGroupFile(HFILE file, PROGGROUP *group)
       PUT_SHORT(buffer, 4, 0x000a);
       buffer[6] = 'P', buffer[7] = 'M';
       buffer[8] = 'C', buffer[9] = 'C';
-      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10)) 
+      if ((UINT)HFILE_ERROR == GRPFILE_WriteWithChecksum(file, buffer, 10))
 	      return FALSE;
 
       seqnum = 0;

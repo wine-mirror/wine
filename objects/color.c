@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
 
 /***********************************************************************
- * System color space. 
+ * System color space.
  *
  * First 10 and last 10 colors in COLOR_sysPalette are
  * "guarded". RealizePalette changes only the rest of colorcells. For
@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
 PALETTEENTRY *COLOR_sysPal = NULL; /* current system palette */
 
-const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS] = 
+const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS] =
 {
     /* first 10 entries in the system palette */
     /* red  green blue  flags */
@@ -148,7 +148,7 @@ COLORREF COLOR_LookupNearestColor( PALETTEENTRY* palPalEntry, int size, COLORREF
 
   else if( spec_type == 1 ) /* PALETTEINDEX */
   {
-    if( (i = color & 0x0000ffff) >= size ) 
+    if( (i = color & 0x0000ffff) >= size )
       {
 	WARN("RGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
 	color = *(COLORREF*)palPalEntry;

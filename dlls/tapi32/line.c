@@ -44,7 +44,7 @@ DWORD WINAPI lineAddProvider(LPCSTR lpszProviderName, HWND hwndOwner, LPDWORD lp
 {
     FIXME("(%s, %04x, %p): stub.\n", lpszProviderName, hwndOwner, lpdwPermanentProviderID);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineAddToConference (TAPI32.@)
@@ -62,7 +62,7 @@ DWORD WINAPI lineAnswer(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
     FIXME("(%04x, %s, %ld): stub.\n", hCall, lpsUserUserInfo, dwSize);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineBlindTransfer (TAPI32.@)
@@ -71,7 +71,7 @@ DWORD WINAPI lineBlindTransfer(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCoun
 {
     FIXME("(%04x, %s, %08lx): stub.\n", hCall, lpszDestAddress, dwCountryCode);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineClose (TAPI32.@)
@@ -80,7 +80,7 @@ DWORD WINAPI lineClose(HLINE hLine)
 {
     FIXME("(%04x): stub.\n", hLine);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineCompleteCall (TAPI32.@)
@@ -89,7 +89,7 @@ DWORD WINAPI lineCompleteCall(HCALL hCall, LPDWORD lpdwCompletionID, DWORD dwCom
 {
     FIXME("(%04x, %p, %08lx, %08lx): stub.\n", hCall, lpdwCompletionID, dwCompletionMode, dwMessageID);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineCompleteTransfer (TAPI32.@)
@@ -107,7 +107,7 @@ DWORD WINAPI lineConfigDialog(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszDevic
 {
     FIXME("(%08lx, %04x, %s): stub.\n", dwDeviceID, hwndOwner, lpszDeviceClass);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineConfigDialogEdit (TAPI32.@)
@@ -116,7 +116,7 @@ DWORD WINAPI lineConfigDialogEdit(DWORD dwDeviceID, HWND hwndOwner, LPCSTR lpszD
 {
     FIXME("stub.\n");
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineConfigProvider (TAPI32.@)
@@ -143,7 +143,7 @@ DWORD WINAPI lineDevSpecific(HLINE hLine, DWORD dwAddressId, HCALL hCall, LPVOID
 {
     FIXME("(%04x, %08lx, %04x, %p, %ld): stub.\n", hLine, dwAddressId, hCall, lpParams, dwSize);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineDevSpecificFeature (TAPI32.@)
@@ -165,7 +165,7 @@ DWORD WINAPI lineDial(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode)
 
 /***********************************************************************
  *		lineDrop (TAPI32.@)
- */ 
+ */
 DWORD WINAPI lineDrop(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize)
 {
     FIXME("(%04x, %s, %08lx): stub.\n", hCall, lpsUserUserInfo, dwSize);
@@ -183,7 +183,7 @@ DWORD WINAPI lineForward(HLINE hLine, DWORD bAllAddress, DWORD dwAdressID, LPLIN
 
 /***********************************************************************
  *		lineGatherDigits (TAPI32.@)
- */	
+ */
 DWORD WINAPI lineGatherDigits(HCALL hCall, DWORD dwDigitModes, LPSTR lpsDigits, DWORD dwNumDigits, LPCSTR lpszTerminationDigits, DWORD dwFirstDigitTimeout, DWORD dwInterDigitTimeout)
 {
     FIXME("stub.\n");
@@ -206,7 +206,7 @@ DWORD WINAPI lineGenerateTone(HCALL hCall, DWORD dwToneMode, DWORD dwDuration, D
 {
     FIXME("(%04x, %08lx, %ld, %ld, %p): stub.\n", hCall, dwToneMode, dwDuration, dwNumTones, lpTones);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetAddressCaps (TAPI32.@)
@@ -242,7 +242,7 @@ DWORD WINAPI lineGetAppPriority(LPCSTR lpszAppFilename, DWORD dwMediaMode, LPLIN
 {
     FIXME("(%s, %08lx, %p, %08lx, %p, %p): stub.\n", lpszAppFilename, dwMediaMode, lpExtensionID, dwRequestMode, lpExtensionName, lpdwPriority);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetCallInfo (TAPI32.@)
@@ -269,16 +269,16 @@ DWORD WINAPI lineGetConfRelatedCalls(HCALL hCall, LPLINECALLLIST lpCallList)
 {
     FIXME("(%04x, %p): stub.\n", hCall, lpCallList);
     return 0;
-}	
+}
 
 typedef struct tagTAPI_CountryInfo
 {
     DWORD  dwCountryID;
     DWORD  dwCountryCode;
     LPSTR  lpCountryName;
-    LPSTR  lpSameAreaRule; 
-    LPSTR  lpLongDistanceRule; 
-    LPSTR  lpInternationalRule; 
+    LPSTR  lpSameAreaRule;
+    LPSTR  lpLongDistanceRule;
+    LPSTR  lpInternationalRule;
 } TAPI_CountryInfo;
 
 /* FIXME: this should be stored in an ini file... perhaps TAPI.INI */
@@ -306,7 +306,7 @@ DWORD WINAPI lineGetCountry(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTRY
         return LINEERR_INVALPOINTER;
     }
 
-    TRACE("(%08lx, %08lx, %p(%ld)): stub.\n", 
+    TRACE("(%08lx, %08lx, %p(%ld)): stub.\n",
 	  dwCountryID, dwAPIVersion, lpLineCountryList,
 	  lpLineCountryList->dwTotalSize);
 
@@ -408,7 +408,7 @@ DWORD WINAPI lineGetDevCaps(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVers
 {
     FIXME("(%04x, %08lx, %08lx, %08lx, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpLineDevCaps);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetDevConfig (TAPI32.@)
@@ -435,7 +435,7 @@ DWORD WINAPI lineGetIcon(DWORD dwDeviceID, LPCSTR lpszDeviceClass, HICON *lphIco
 {
     FIXME("(%08lx, %s, %p): stub.\n", dwDeviceID, lpszDeviceClass, lphIcon);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetLineDevStatus (TAPI32.@)
@@ -444,7 +444,7 @@ DWORD WINAPI lineGetLineDevStatus(HLINE hLine, LPLINEDEVSTATUS lpLineDevStatus)
 {
     FIXME("(%04x, %p): stub.\n", hLine, lpLineDevStatus);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetNewCalls (TAPI32.@)
@@ -471,7 +471,7 @@ DWORD WINAPI lineGetProviderList(DWORD dwAPIVersion, LPLINEPROVIDERLIST lpProvid
 {
     FIXME("(%08lx, %p): stub.\n", dwAPIVersion, lpProviderList);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetRequest (TAPI32.@)
@@ -480,7 +480,7 @@ DWORD WINAPI lineGetRequest(HLINEAPP hLineApp, DWORD dwRequestMode, LPVOID lpReq
 {
     FIXME("%04x, %08lx, %p): stub.\n", hLineApp, dwRequestMode, lpRequestBuffer);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetStatusMessages (TAPI32.@)
@@ -489,7 +489,7 @@ DWORD WINAPI lineGetStatusMessages(HLINE hLine, LPDWORD lpdwLineStatus, LPDWORD 
 {
     FIXME("(%04x, %p, %p): stub.\n", hLine, lpdwLineStatus, lpdwAddressStates);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineGetTranslateCaps (TAPI32.@)
@@ -507,7 +507,7 @@ DWORD WINAPI lineHandoff(HCALL hCall, LPCSTR lpszFileName, DWORD dwMediaMode)
 {
     FIXME("(%04x, %s, %08lx): stub.\n", hCall, lpszFileName, dwMediaMode);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineHold (TAPI32.@)
@@ -516,7 +516,7 @@ DWORD WINAPI lineHold(HCALL hCall)
 {
     FIXME("(%04x): stub.\n", hCall);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineInitialize (TAPI32.@)
@@ -558,7 +558,7 @@ DWORD WINAPI lineMonitorMedia(HCALL hCall, DWORD dwMediaModes)
 {
     FIXME("(%04x, %08lx): stub.\n", hCall, dwMediaModes);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineMonitorTones (TAPI32.@)
@@ -567,7 +567,7 @@ DWORD WINAPI lineMonitorTones(HCALL hCall, LPLINEMONITORTONE lpToneList, DWORD d
 {
     FIXME("(%04x, %p, %08lx): stub.\n", hCall, lpToneList, dwNumEntries);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineNegotiateAPIVersion (TAPI32.@)
@@ -581,7 +581,7 @@ DWORD WINAPI lineNegotiateAPIVersion(
   LPLINEEXTENSIONID lpExtensionID
 )
 {
-    FIXME("(%04x, %ld, %ld, %ld, %p, %p): stub.\n", hLineApp, dwDeviceID, 
+    FIXME("(%04x, %ld, %ld, %ld, %p, %p): stub.\n", hLineApp, dwDeviceID,
 	  dwAPILowVersion, dwAPIHighVersion, lpdwAPIVersion, lpExtensionID);
     *lpdwAPIVersion = dwAPIHighVersion;
     return 0;
@@ -612,7 +612,7 @@ DWORD WINAPI linePark(HCALL hCall, DWORD dwParkMode, LPCSTR lpszDirAddress, LPVA
 {
     FIXME("(%04x, %08lx, %s, %p): stub.\n", hCall, dwParkMode, lpszDirAddress, lpNonDirAddress);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		linePickup (TAPI32.@)
@@ -621,7 +621,7 @@ DWORD WINAPI linePickup(HLINE hLine, DWORD dwAddressID, LPHCALL lphCall, LPCSTR 
 {
     FIXME("(%04x, %08lx, %p, %s, %s): stub.\n", hLine, dwAddressID, lphCall, lpszDestAddress, lpszGroupID);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		linePrepareAddToConference (TAPI32.@)
@@ -630,7 +630,7 @@ DWORD WINAPI linePrepareAddToConference(HCALL hConfCall, LPHCALL lphConsultCall,
 {
     FIXME("(%04x, %p, %p): stub.\n", hConfCall, lphConsultCall, lpCallParams);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineRedirect (TAPI32.@)
@@ -660,7 +660,7 @@ DWORD WINAPI lineReleaseUserUserInfo(HCALL hCall)
 {
     FIXME("(%04x): stub.\n", hCall);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineRemoveFromConference (TAPI32.@)
@@ -678,7 +678,7 @@ DWORD WINAPI lineRemoveProvider(DWORD dwPermanentProviderID, HWND hwndOwner)
 {
     FIXME("(%08lx, %04x): stub.\n", dwPermanentProviderID, hwndOwner);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineSecureCall (TAPI32.@)
@@ -732,8 +732,8 @@ DWORD WINAPI lineSetCallPrivilege(HCALL hCall, DWORD dwCallPrivilege)
 {
     FIXME("(%04x, %08lx): stub.\n", hCall, dwCallPrivilege);
     return 0;
-}	
-		
+}
+
 /***********************************************************************
  *		lineSetCurrentLocation (TAPI32.@)
  */
@@ -764,7 +764,7 @@ LPLINEMEDIACONTROLDIGIT const lpDigitList,
 DWORD dwDigitNumEntries,
 LPLINEMEDIACONTROLMEDIA const lpMediaList,
 DWORD dwMediaNumEntries,
-LPLINEMEDIACONTROLTONE const lpToneList, 
+LPLINEMEDIACONTROLTONE const lpToneList,
 DWORD dwToneNumEntries,
 LPLINEMEDIACONTROLCALLSTATE const lpCallStateList,
 DWORD dwCallStateNumEntries)
@@ -780,7 +780,7 @@ DWORD WINAPI lineSetMediaMode(HCALL hCall, DWORD dwMediaModes)
 {
     FIXME("(%04x, %08lx): stub.\n", hCall, dwMediaModes);
     return 0;
-}	
+}
 
 /***********************************************************************
  *		lineSetNumRings (TAPI32.@)
@@ -789,8 +789,8 @@ DWORD WINAPI lineSetNumRings(HLINE hLine, DWORD dwAddressID, DWORD dwNumRings)
 {
     FIXME("(%04x, %08lx, %08lx): stub.\n", hLine, dwAddressID, dwNumRings);
     return 0;
-}	
-		
+}
+
 /***********************************************************************
  *		lineSetStatusMessages (TAPI32.@)
  */
@@ -798,8 +798,8 @@ DWORD WINAPI lineSetStatusMessages(HLINE hLine, DWORD dwLineStates, DWORD dwAddr
 {
     FIXME("(%04x, %08lx, %08lx): stub.\n", hLine, dwLineStates, dwAddressStates);
     return 0;
-}	
-		
+}
+
 /***********************************************************************
  *		lineSetTerminal (TAPI32.@)
  */
@@ -807,7 +807,7 @@ DWORD WINAPI lineSetTerminal(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD 
 {
     FIXME("(%04x, %08lx, %04x, %08lx, %08lx, %08lx, %08lx): stub.\n", hLine, dwAddressID, hCall, dwSelect, dwTerminalModes, dwTerminalID, bEnable);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineSetTollList (TAPI32.@)
@@ -816,8 +816,8 @@ DWORD WINAPI lineSetTollList(HLINEAPP hLineApp, DWORD dwDeviceID, LPCSTR lpszAdd
 {
     FIXME("(%04x, %08lx, %s, %08lx): stub.\n", hLineApp, dwDeviceID, lpszAddressIn, dwTollListOption);
     return 0;
-}	
-		
+}
+
 /***********************************************************************
  *		lineSetupConference (TAPI32.@)
  */
@@ -834,7 +834,7 @@ DWORD WINAPI lineSetupTransfer(HCALL hCall, LPHCALL lphConsultCall, LPLINECALLPA
 {
     FIXME("(%04x, %p, %p): stub.\n", hCall, lphConsultCall, lpCallParams);
     return 1;
-}	
+}
 
 /***********************************************************************
  *		lineShutdown (TAPI32.@)

@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static ICOM_VTABLE(IDirectDraw7) User_DirectDraw_VTable;
 
-static const DDDEVICEIDENTIFIER2 user_device = 
+static const DDDEVICEIDENTIFIER2 user_device =
 {
     "display",
     "User (and GDI)",
@@ -48,7 +48,7 @@ static const DDDEVICEIDENTIFIER2 user_device =
     0
 };
 
-static const DDPIXELFORMAT pixelformats[] = 
+static const DDPIXELFORMAT pixelformats[] =
 {
     /* 8bpp paletted */
     { sizeof(DDPIXELFORMAT), DDPF_RGB|DDPF_PALETTEINDEXED8, 0, { 8 } },
@@ -409,7 +409,7 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 #define ROPS { 0, }
 #endif
 
-    static const DDCAPS caps = 
+    static const DDCAPS caps =
     { sizeof(DDCAPS),
       DDCAPS_3D | DDCAPS_GDI | DDCAPS_PALETTE | BLIT_CAPS,
       DDCAPS2_CANMANAGETEXTURE | DDCAPS2_CANRENDERWINDOWED | DDCAPS2_CERTIFIED
@@ -484,7 +484,7 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 #undef ROPS
 
     ICOM_THIS(IDirectDrawImpl, iface);
-	
+
     TRACE("(%p)->(%p,%p)\n",This,pDriverCaps,pHELCaps);
 
     if (pDriverCaps != NULL)

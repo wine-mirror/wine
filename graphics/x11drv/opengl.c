@@ -1,4 +1,4 @@
-/* 
+/*
  * X11DRV OpenGL functions
  *
  * Copyright 2000 Lionel Ulmer
@@ -56,21 +56,21 @@ static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
   TEST_AND_DUMP(ppfd->dwFlags, PFD_SWAP_LAYER_BUFFERS);
 #undef TEST_AND_DUMP
   DPRINTF("\n");
-  
+
   DPRINTF("  - iPixelType : ");
   switch (ppfd->iPixelType) {
   case PFD_TYPE_RGBA: DPRINTF("PFD_TYPE_RGBA"); break;
   case PFD_TYPE_COLORINDEX: DPRINTF("PFD_TYPE_COLORINDEX"); break;
   }
   DPRINTF("\n");
-  
+
   DPRINTF("  - Color   : %d\n", ppfd->cColorBits);
   DPRINTF("  - Alpha   : %d\n", ppfd->cAlphaBits);
   DPRINTF("  - Accum   : %d\n", ppfd->cAccumBits);
   DPRINTF("  - Depth   : %d\n", ppfd->cDepthBits);
   DPRINTF("  - Stencil : %d\n", ppfd->cStencilBits);
   DPRINTF("  - Aux     : %d\n", ppfd->cAuxBuffers);
-  
+
   DPRINTF("  - iLayerType : ");
   switch (ppfd->iLayerType) {
   case PFD_MAIN_PLANE: DPRINTF("PFD_MAIN_PLANE"); break;
@@ -79,7 +79,7 @@ static void dump_PIXELFORMATDESCRIPTOR(PIXELFORMATDESCRIPTOR *ppfd) {
   }
   DPRINTF("\n");
 }
-     
+
 /* X11DRV_ChoosePixelFormat
 
      Equivalent of glXChooseVisual
@@ -90,15 +90,15 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 #define TEST_AND_ADD2(t,a,b) if (t) { att_list[att_pos++] = a; att_list[att_pos++] = b; }
 #define NULL_TEST_AND_ADD2(tv,a,b) att_list[att_pos++] = a; att_list[att_pos++] = ((tv) == 0 ? 0 : b)
 #define ADD2(a,b) att_list[att_pos++] = a; att_list[att_pos++] = b
-  
+
   int att_list[64];
   int att_pos = 0;
   XVisualInfo *vis;
   int i;
-  
+
   if (TRACE_ON(opengl)) {
     TRACE("(%p,%p)\n", physDev, ppfd);
-    
+
     dump_PIXELFORMATDESCRIPTOR((PIXELFORMATDESCRIPTOR *) ppfd);
   }
 
@@ -116,13 +116,13 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 
   NULL_TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, 8);
   /* These flags are not supported yet...
-     
+
      NULL_TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, 8);
      ADD2(GLX_ACCUM_SIZE, ppfd->cAccumBits); */
   ADD2(GLX_STENCIL_SIZE, ppfd->cStencilBits); /* now suported */
   /*   ADD2(GLX_AUX_BUFFERS, ppfd->cAuxBuffers); */
   att_list[att_pos] = None;
-  
+
   ENTER_GL(); {
     /*
        This command cannot be used as we need to use the default visual...
@@ -139,7 +139,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     TRACE("Found visual : %p - returns %d\n", vis, physDev->used_visuals + 1);
   }
   LEAVE_GL();
-  
+
   if (vis == NULL) {
     ERR("No visual found !\n");
     /* Should SetError here... */
@@ -159,7 +159,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     return 0;
   }
   physDev->visuals[physDev->used_visuals++] = vis;
-  
+
   return physDev->used_visuals;
 }
 
@@ -174,14 +174,14 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   XVisualInfo *vis;
   int value;
   int rb,gb,bb,ab;
-  
+
   TRACE("(%p,%d,%d,%p)\n", physDev, iPixelFormat, nBytes, ppfd);
 
   if (ppfd == NULL) {
     /* The application is only querying the number of visuals */
     return MAX_PIXELFORMATS;
   }
-  
+
   if (nBytes < sizeof(PIXELFORMATDESCRIPTOR)) {
     ERR("Wrong structure size !\n");
     /* Should set error */
@@ -194,7 +194,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     /* Should set error */
     return 0;
   }
-      
+
   if (iPixelFormat == physDev->used_visuals + 1) {
     int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
 
@@ -202,7 +202,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     ENTER_GL();
     vis = glXChooseVisual(gdi_display, DefaultScreen(gdi_display), dblBuf);
     LEAVE_GL();
-    
+
     WARN("Uninitialized Visual. Creating standard (%p) !\n", vis);
 
     if (vis == NULL) {
@@ -210,7 +210,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
       /* Should set error */
       return 0;
     }
-    
+
     physDev->visuals[physDev->used_visuals++] = vis;
   }
   vis = physDev->visuals[iPixelFormat - 1];
@@ -218,7 +218,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
   ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
   ppfd->nVersion = 1;
-  
+
   /* These flags are always the same... */
   ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_GENERIC_ACCELERATED;
   /* Now the flags extraced from the Visual */
@@ -263,7 +263,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     ppfd->cAlphaShift = 0;
   }
   /* Accums : to do ... */
-  
+
   /* Depth bits */
   glXGetConfig(gdi_display, vis, GLX_DEPTH_SIZE, &value);
   ppfd->cDepthBits = value;
@@ -271,17 +271,17 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   /* stencil bits */
   glXGetConfig( gdi_display, vis, GLX_STENCIL_SIZE, &value );
   ppfd->cStencilBits = value;
-  
+
   LEAVE_GL();
 
   /* Aux : to do ... */
 
   ppfd->iLayerType = PFD_MAIN_PLANE;
-  
+
   if (TRACE_ON(opengl)) {
     dump_PIXELFORMATDESCRIPTOR(ppfd);
   }
-  
+
   return MAX_PIXELFORMATS;
 }
 
@@ -305,7 +305,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
   physDev->current_pf = iPixelFormat;
-  
+
   return TRUE;
 }
 
@@ -319,7 +319,7 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ENTER_GL();
   glXSwapBuffers(gdi_display, physDev->drawable);
   LEAVE_GL();
-  
+
   return TRUE;
 }
 
@@ -337,13 +337,13 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 			       UINT nBytes,
 			       PIXELFORMATDESCRIPTOR *ppfd) {
   ERR("No OpenGL support compiled in.\n");
-  
+
   return 0;
 }
 
 int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
   ERR("No OpenGL support compiled in.\n");
-  
+
   return 0;
 }
 
@@ -351,13 +351,13 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
   ERR("No OpenGL support compiled in.\n");
-  
+
   return FALSE;
 }
 
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   ERR("No OpenGL support compiled in.\n");
-  
+
   return FALSE;
 }
 

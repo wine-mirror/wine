@@ -1,4 +1,4 @@
-/* 
+/*
  * Definitions for windows network service
  *
  * Copyright 1997 Andreas Mohr
@@ -31,7 +31,7 @@
  * Remote printing
  */
 
-typedef struct 
+typedef struct
 {
     WORD    pqName;
     WORD    pqComment;
@@ -47,7 +47,7 @@ typedef struct
 #define WNPRQ_PENDING   0x3
 #define WNPRQ_PROBLEM   0x4
 
-typedef struct 
+typedef struct
 {
     WORD    pjId;
     WORD    pjUsername;

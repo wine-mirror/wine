@@ -219,7 +219,7 @@ typedef union tagSRB32 {
     SRB_GetDiskInfo	diskinfo;
 } SRB, *PSRB, *LPSRB;
 
-typedef struct tagASPI32BUFF { 
+typedef struct tagASPI32BUFF {
     LPBYTE AB_BufPointer;	/* pointer to buffer */
     DWORD AB_BufLen;		/* length of buffer */
     DWORD AB_ZeroFill;		/* set to 1 if zeroing */

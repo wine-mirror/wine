@@ -263,7 +263,7 @@ typedef struct _FLOWSPEC {
 typedef struct _QUALITYOFSERVICE {
         FLOWSPEC           SendingFlowspec;
         FLOWSPEC           ReceivingFlowspec;
-        WSABUF             ProviderSpecific; 
+        WSABUF             ProviderSpecific;
    } QOS, *LPQOS;
 
 typedef int (CALLBACK *LPCONDITIONPROC)
@@ -291,7 +291,7 @@ typedef void (CALLBACK *LPWSAOVERLAPPED_COMPLETION_ROUTINE)
 /*
  * Winsock Function Typedefs
  *
- * Remember to keep this section in sync with the 
+ * Remember to keep this section in sync with the
  * "Prototypes" section in winsock.h.
  */
 #if WS_API_TYPEDEFS
@@ -351,7 +351,7 @@ typedef SOCKET (WINAPI *LPFN_SOCKET)(int,int,int));
 /*
  * Winsock2 Prototypes
  *
- * Remember to keep this section in sync with the 
+ * Remember to keep this section in sync with the
  * "Winsock2 Function Typedefs" section below.
  */
 #if WS_API_PROTOTYPES
@@ -416,7 +416,7 @@ DWORD WINAPI WSAWaitForMultipleEvents(DWORD,const WSAEVENT*,BOOL,DWORD,BOOL);
 /*
  * Winsock2 Function Typedefs
  *
- * Remember to keep this section in sync with the 
+ * Remember to keep this section in sync with the
  * "Winsock2 Prototypes" section above.
  */
 #if WS_API_TYPEDEFS

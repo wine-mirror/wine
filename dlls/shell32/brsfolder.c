@@ -43,7 +43,7 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 
 	hwndTreeView = GetDlgItem (hwndParent, IDD_TREEVIEW);
 	Shell_GetImageList(NULL, &hImageList);
-	
+
 	TRACE("dlg=%x tree=%x\n", hwndParent, hwndTreeView );
 
 	if (hImageList && hwndTreeView)
@@ -71,7 +71,7 @@ static void InitializeTreeView(HWND hwndParent, LPCITEMIDLIST root)
 	{ TreeView_DeleteAllItems(hwndTreeView);
        	  FillTreeView(lpsf, NULL, TVI_ROOT);
 	}
-	
+
 	if (SUCCEEDED(hr))
 	{ IShellFolder_Release(lpsf);
 	}
@@ -192,32 +192,32 @@ Done:
 }
 
 static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
-{	
+{
 	NMTREEVIEWA	*pnmtv   = (NMTREEVIEWA *)lpnmh;
 	LPTV_ITEMDATA	lptvid;  /* Long pointer to TreeView item data */
 	IShellFolder *	lpsf2=0;
-	
+
 
 	TRACE("%x %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
 
 	switch (pnmtv->hdr.idFrom)
 	{ case IDD_TREEVIEW:
-	    switch (pnmtv->hdr.code)   
+	    switch (pnmtv->hdr.code)
 	    { case TVN_DELETEITEMA: case TVN_DELETEITEMW:
 	        { FIXME("TVN_DELETEITEMA/W\n");
 		  lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
 	          IShellFolder_Release(lptvid->lpsfParent);
-	          SHFree(lptvid->lpi);  
-	          SHFree(lptvid->lpifq);  
-	          SHFree(lptvid);  
+	          SHFree(lptvid->lpi);
+	          SHFree(lptvid->lpifq);
+	          SHFree(lptvid);
 		}
 	        break;
-			
+
 	      case TVN_ITEMEXPANDINGA: case TVN_ITEMEXPANDINGW:
 		{ FIXME("TVN_ITEMEXPANDINGA/W\n");
 		  if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
 	            break;
-		
+
 	          lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
 	          if (SUCCEEDED(IShellFolder_BindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
 	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem );
@@ -282,7 +282,7 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	  case WM_NOTIFY:
 	    MsgNotify( hWnd, (UINT)wParam, (LPNMHDR)lParam);
 	    break;
-	    
+
 	  case WM_COMMAND:
 	    switch (wParam)
 	    { case IDOK:
@@ -332,11 +332,11 @@ static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
  */
 LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 {
-	TRACE("(%p{lpszTitle=%s,owner=%i})\n", 
+	TRACE("(%p{lpszTitle=%s,owner=%i})\n",
 	      lpbi, debugstr_a(lpbi->lpszTitle), lpbi->hwndOwner);
 
 	return (LPITEMIDLIST) DialogBoxParamA( shell32_hInstance,
-					       "SHBRSFORFOLDER_MSGBOX",  
+					       "SHBRSFORFOLDER_MSGBOX",
 					       lpbi->hwndOwner,
 					       BrsFolderDlgProc, (INT)lpbi );
 }

@@ -50,11 +50,11 @@ HRESULT HAL_DirectDraw_create_texture(IDirectDrawImpl* This,
 				      LPDIRECTDRAWSURFACE7* ppSurf,
 				      LPUNKNOWN pOuter,
 				      DWORD dwMipMapLevel);
-                                                                                                 
+
 HRESULT HAL_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
 HRESULT HAL_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
 				   IUnknown* pUnkOuter, BOOL ex);
-                                  
+
 
 HRESULT WINAPI
 HAL_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,

@@ -48,7 +48,7 @@ UINT16 TTYDRV_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
  *		GetKeyNameText (TTYDRV.@)
  */
 INT16 TTYDRV_GetKeyNameText( LONG lParam, LPSTR lpBuffer, INT16 nSize )
-{  
+{
   if(lpBuffer && nSize)
     {
       *lpBuffer = 0;

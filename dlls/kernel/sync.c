@@ -219,7 +219,7 @@ VOID WINAPI VWin32_EventDestroy(HANDLE event)
 }
 
 /***********************************************************************
- *       VWin32_EventWait	(KERNEL.450) 
+ *       VWin32_EventWait	(KERNEL.450)
  */
 VOID WINAPI VWin32_EventWait(HANDLE event)
 {
@@ -712,7 +712,7 @@ BOOL WINAPI GetNamedPipeInfo(
 {
     BOOL ret;
 
-    TRACE("%d %p %p %p %p\n", hNamedPipe, lpFlags, 
+    TRACE("%d %p %p %p %p\n", hNamedPipe, lpFlags,
           lpOutputBufferSize, lpInputBufferSize, lpMaxInstances);
 
     SERVER_START_REQ( get_named_pipe_info )
@@ -741,7 +741,7 @@ BOOL WINAPI GetNamedPipeHandleStateA(
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
-         
+
     return FALSE;
 }
 
@@ -757,7 +757,7 @@ BOOL WINAPI GetNamedPipeHandleStateW(
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
-         
+
     return FALSE;
 }
 

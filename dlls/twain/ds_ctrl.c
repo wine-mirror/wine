@@ -31,9 +31,9 @@ TW_UINT16 TWAIN_CapabilityGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
     TW_UINT16 twRC = TWRC_SUCCESS, twCC = TWCC_SUCCESS;
     pTW_CAPABILITY pCapability = (pTW_CAPABILITY) pData;
     activeDS *pSource = TWAIN_LookupSource (pDest);
-    
+
     TRACE("DG_CONTROL/DAT_CAPABILITY/MSG_GET\n");
-    
+
     if (!pDest)
     {
         twRC = TWRC_FAILURE;
@@ -48,7 +48,7 @@ TW_UINT16 TWAIN_CapabilityGet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
     {
         twCC = TWAIN_SaneCapability (pSource, pCapability, MSG_GET);
         twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
-        pSource->twCC = twCC; 
+        pSource->twCC = twCC;
     }
 
     return twRC;
@@ -79,7 +79,7 @@ TW_UINT16 TWAIN_CapabilityGetCurrent (pTW_IDENTITY pOrigin,
         twCC = TWAIN_SaneCapability (pSource, pCapability, MSG_GETCURRENT);
         twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
         pSource->twCC = twCC;
-    } 
+    }
 
     return twRC;
 }
@@ -154,7 +154,7 @@ TW_UINT16 TWAIN_CapabilityReset (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
 }
 
 /* DG_CONTROL/DAT_CAPABILITY/MSG_SET */
-TW_UINT16 TWAIN_CapabilitySet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, 
+TW_UINT16 TWAIN_CapabilitySet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
                                TW_MEMREF pData)
 {
     TW_UINT16 twRC = TWRC_SUCCESS, twCC = TWCC_SUCCESS;
@@ -175,7 +175,7 @@ TW_UINT16 TWAIN_CapabilitySet (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
     }
     else
     {
-        twCC = TWAIN_SaneCapability (pSource, pCapability, MSG_SET); 
+        twCC = TWAIN_SaneCapability (pSource, pCapability, MSG_SET);
         twRC = (twCC == TWCC_SUCCESS)?TWRC_SUCCESS:TWRC_FAILURE;
         pSource->twCC = twCC;
     }
@@ -566,7 +566,7 @@ TW_UINT16 TWAIN_GetDSStatus (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         /* Reset the condition code */
         pSource->twCC = TWCC_SUCCESS;
     }
- 
+
     return twRC;
 }
 
@@ -606,9 +606,9 @@ TW_UINT16 TWAIN_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     TW_UINT16 twRC = TWRC_SUCCESS;
     pTW_USERINTERFACE pUserInterface = (pTW_USERINTERFACE) pData;
     activeDS *pSource = TWAIN_LookupSource (pDest);
-   
+
     TRACE ("DG_CONTROL/DAT_USERINTERFACE/MSG_ENABLEDS\n");
- 
+
     if (!pSource)
     {
         twRC = TWRC_FAILURE;
@@ -623,7 +623,7 @@ TW_UINT16 TWAIN_EnableDSUserInterface (pTW_IDENTITY pOrigin,
     {
         if (pUserInterface->ShowUI)
         {
-            pSource->currentState = 5; /* Transitions to state 5 */ 
+            pSource->currentState = 5; /* Transitions to state 5 */
             /* FIXME: we should replace xscanimage with our own device UI */
             system ("xscanimage");
             pSource->currentState = 6;
@@ -632,10 +632,10 @@ TW_UINT16 TWAIN_EnableDSUserInterface (pTW_IDENTITY pOrigin,
         else
         {
             /* no UI will be displayed, so source is ready to transfer data */
-            pSource->pendingEvent.TWMessage = MSG_XFERREADY; 
+            pSource->pendingEvent.TWMessage = MSG_XFERREADY;
             pSource->currentState = 6; /* Transitions to state 6 directly */
         }
-        
+
         pSource->hwndOwner = pUserInterface->hParent;
         twRC = TWRC_SUCCESS;
         pSource->twCC = TWCC_SUCCESS;
@@ -669,7 +669,7 @@ TW_UINT16 TWAIN_EnableDSUIOnly (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest,
         system ("xscanimage");
         pSource->currentState = 5;
         twRC = TWRC_SUCCESS;
-        pSource->twCC = TWCC_SUCCESS; 
+        pSource->twCC = TWCC_SUCCESS;
     }
 
     return twRC;

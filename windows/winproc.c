@@ -424,10 +424,10 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
  *
  * 3) timer  -> wp                   	-	SetTimer()
  *
- * Initially, winproc of the window points to the current winproc 
- * thunk of its class. Subclassing prepends a new thunk to the 
- * window winproc chain at the head of the list. Thus, window thunk 
- * list includes class thunks and the latter are preserved when the 
+ * Initially, winproc of the window points to the current winproc
+ * thunk of its class. Subclassing prepends a new thunk to the
+ * window winproc chain at the head of the list. Thus, window thunk
+ * list includes class thunks and the latter are preserved when the
  * window is destroyed.
  *
  */
@@ -476,7 +476,7 @@ BOOL WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
                 break;
             }
         }
-            
+
         /* WPF_CLASS thunk terminates window thunk list */
         if ((*ppPrev)->user != user) break;
         ppPrev = &(*ppPrev)->next;
@@ -568,7 +568,7 @@ inline static BOOL WINPROC_TestLBForStr( HWND hwnd )
  *
  * FIXME:
  *  WM_GETTEXT/WM_SETTEXT and static control with SS_ICON style:
- *  the first four bytes are the handle of the icon 
+ *  the first four bytes are the handle of the icon
  *  when the WM_SETTEXT message has been used to set the icon
  */
 INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plparam )
@@ -603,7 +603,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_NCCREATE:
     case WM_CREATE:
         {
-	    struct s 
+	    struct s
 	    { CREATESTRUCTW cs;		/* new structure */
 	      LPCWSTR lpszName;		/* allocated Name */
 	      LPCWSTR lpszClass;	/* allocated Class */
@@ -743,7 +743,7 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCCREATE:
     case WM_CREATE:
         {
-	    struct s 
+	    struct s
 	    { CREATESTRUCTW cs;		/* new structure */
 	      LPWSTR lpszName;		/* allocated Name */
 	      LPWSTR lpszClass;		/* allocated Class */
@@ -1360,7 +1360,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_SIZECLIPBOARD:
         FIXME_(msg)("message %04x needs translation\n",msg16 );
         return -1;
-    case WM_DDE_INITIATE: 
+    case WM_DDE_INITIATE:
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
@@ -1398,7 +1398,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
 	    switch (flag)
 	    {
 	    case 0:
-		if (hi) 
+		if (hi)
 		{
 		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
 		    hi = 0;
@@ -2144,7 +2144,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_STYLECHANGING:
     case WM_STYLECHANGED:
         return -1;
-    case WM_DDE_INITIATE: 
+    case WM_DDE_INITIATE:
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
@@ -2179,7 +2179,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 	    switch (flag)
 	    {
 	    case 0:
-		if (hi) 
+		if (hi)
 		{
 		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
 		    hi = 0;
@@ -2212,7 +2212,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
  * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
  */
 void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                              MSGPARAM16* p16 ) 
+                              MSGPARAM16* p16 )
 {
     switch(msg)
     {
@@ -2723,7 +2723,7 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
     func = WINPROC_GetProc( (HWINDOWPROC)proc, WIN_PROC_16 );
     return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 #endif
-    
+
     switch(proc->type)
     {
     case WIN_PROC_16:
@@ -2765,9 +2765,9 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
  *
  * CONFORMANCE
  *
- *   ECMA-234, Win32 
+ *   ECMA-234, Win32
  */
-LRESULT WINAPI CallWindowProcA( 
+LRESULT WINAPI CallWindowProcA(
     WNDPROC func,  /* [in] window procedure */
     HWND hwnd,     /* [in] target window */
     UINT msg,      /* [in] message */

@@ -67,7 +67,7 @@ static int DIR_GetPath( const char *keyname, const char *defval,
     PROFILE_GetWineIniString( "wine", keyname, defval, path, sizeof(path) );
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
         (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
-        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) || 
+        (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) ||
         (!(GetLongPathNameA(full_name->short_name, longname, MAX_PATHNAME_LEN))) )
     {
         if (warn)
@@ -168,7 +168,7 @@ int DIR_Init(void)
     {
         TRACE("USERPROFILE= %s\n", longpath );
         SetEnvironmentVariableA( "USERPROFILE", longpath );
-    }	
+    }
 
     TRACE("SYSTEMROOT = %s\n", DIR_Windows.short_name );
     SetEnvironmentVariableA( "SYSTEMROOT", DIR_Windows.short_name );
@@ -409,7 +409,7 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
     if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
     if (mkdir( full_name.long_name, 0777 ) == -1) {
         WARN_(file)("Error '%s' trying to create directory '%s'\n", strerror(errno), full_name.long_name);
-	/* the FILE_SetDosError() generated error codes don't match the 
+	/* the FILE_SetDosError() generated error codes don't match the
 	 * CreateDirectory ones for some errnos */
 	switch (errno) {
 	case EEXIST: SetLastError(ERROR_ALREADY_EXISTS); break;
@@ -534,7 +534,7 @@ static BOOL DIR_SearchSemicolonedPaths(LPCSTR name, DOS_FULL_NAME *full_name, LP
     LPSTR next, buffer = NULL;
     INT len = strlen(name), newlen, currlen = 0;
     BOOL ret = FALSE;
-   
+
     next = pathlist;
     while (!ret && next)
     {
@@ -737,7 +737,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
     /* Try the "App Paths" entry if existing (undocumented ??) */
     if (DIR_TryAppPath(name, full_name))
 	goto done;
-    
+
     /* Try all directories in path */
 
     ret = DIR_TryEnvironmentPath( name, full_name, NULL );
@@ -771,7 +771,7 @@ done:
  *             longer than the length of the buffer, the length of the
  *             filename is returned.
  *    Failure: Zero
- * 
+ *
  * NOTES
  *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
  *    (tested on NT 4.0)
@@ -917,7 +917,7 @@ static BOOL search_alternate_path(LPCSTR dll_path, LPCSTR name, LPCSTR ext,
  *             longer than the length of the buffer, the length of the
  *             filename is returned.
  *    Failure: Zero
- * 
+ *
  * NOTES
  *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
  */

@@ -366,12 +366,12 @@ INT WINAPI GDI_CallDevInstall16( FARPROC16 lpfnDevInstallProc, HWND hWnd,
  *      @ [GDI32.101]
  *
  * This should load the correct driver for lpszDevice and calls this driver's
- * ExtDeviceModePropSheet proc. 
+ * ExtDeviceModePropSheet proc.
  *
- * Note: The driver calls a callback routine for each property sheet page; these 
+ * Note: The driver calls a callback routine for each property sheet page; these
  * pages are supposed to be filled into the structure pointed to by lpPropSheet.
  * The layout of this structure is:
- * 
+ *
  * struct
  * {
  *   DWORD  nPages;

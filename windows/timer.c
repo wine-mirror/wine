@@ -79,7 +79,7 @@ void TIMER_RemoveWindowTimers( HWND hwnd )
     TIMER *pTimer;
 
     EnterCriticalSection( &csTimer );
-    
+
     for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
 	if ((pTimer->hwnd == hwnd) && pTimer->timeout)
             TIMER_ClearTimer( pTimer );
@@ -99,11 +99,11 @@ void TIMER_RemoveQueueTimers( HQUEUE16 hqueue )
     TIMER *pTimer;
 
     EnterCriticalSection( &csTimer );
-    
+
     for (i = NB_TIMERS, pTimer = TimersArray; i > 0; i--, pTimer++)
 	if ((pTimer->hq == hqueue) && pTimer->timeout)
             TIMER_ClearTimer( pTimer );
-    
+
     LeaveCriticalSection( &csTimer );
 }
 
@@ -127,11 +127,11 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     if (!timeout)
       {       /* timeout==0 is a legal argument  UB 990821*/
        WARN("Timeout== 0 not implemented, using timeout=1\n");
-        timeout=1; 
+        timeout=1;
       }
 
     EnterCriticalSection( &csTimer );
-    
+
       /* Check if there's already a timer with the same hwnd and id */
 
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
@@ -145,7 +145,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     if ( i == NB_TIMERS )
     {
           /* Find a free timer */
-    
+
         for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
             if (!pTimer->timeout) break;
 
@@ -158,7 +158,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     }
 
     if (!hwnd) id = i + 1;
-    
+
     if (proc) WINPROC_SetProc( &winproc, proc, type, WIN_PROC_TIMER );
 
     SERVER_START_REQ( set_win_timer )
@@ -181,12 +181,12 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     pTimer->timeout = timeout;
     pTimer->proc    = winproc;
 
-    TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n", 
+    TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n",
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
 
     LeaveCriticalSection( &csTimer );
-    
+
     if (!id) return TRUE;
     else return id;
 }
@@ -199,7 +199,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
 {
     int i;
     TIMER * pTimer;
-    
+
     SERVER_START_REQ( kill_win_timer )
     {
         req->win = hwnd;
@@ -210,9 +210,9 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
     SERVER_END_REQ;
 
     EnterCriticalSection( &csTimer );
-    
+
     /* Find the timer */
-    
+
     for (i = 0, pTimer = TimersArray; i < NB_TIMERS; i++, pTimer++)
 	if ((pTimer->hwnd == hwnd) && (pTimer->id == id) &&
 	    (pTimer->timeout != 0)) break;
@@ -229,9 +229,9 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
     /* Delete the timer */
 
     TIMER_ClearTimer( pTimer );
-    
+
     LeaveCriticalSection( &csTimer );
-    
+
     return TRUE;
 }
 
@@ -292,7 +292,7 @@ BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc )
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                                 TIMERPROC16 proc )
 {
-    TRACE("%04x %d %d %08lx\n", 
+    TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( WIN_Handle32(hwnd), id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, TRUE );
@@ -305,7 +305,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
                                 TIMERPROC proc )
 {
-    TRACE("%04x %d %d %08lx\n", 
+    TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc, WIN_PROC_32A, TRUE );
 }

@@ -102,7 +102,7 @@ extern const FMTID FMTID_UserDefinedProperties;
 typedef struct tagPROPSPEC
 {
     ULONG ulKind;
-    union 
+    union
     {
         PROPID propid;
         LPOLESTR lpwstr;
@@ -179,7 +179,7 @@ ICOM_DEFINE(IEnumSTATPROPSETSTG,IUnknown)
     ICOM_METHOD1(HRESULT,Clone, IEnumSTATPROPSTG**,ppenum)
 #define IEnumSTATPROPSTG_IMETHODS \
 		IUnknown_IMETHODS \
-		IEnumSTATPROPSTG_METHODS 
+		IEnumSTATPROPSTG_METHODS
 ICOM_DEFINE(IEnumSTATPROPSTG,IUnknown)
 #undef ICOM_INTERFACE
 
@@ -356,9 +356,9 @@ struct tagPROPVARIANT
     WORD wReserved1;
     WORD wReserved2;
     WORD wReserved3;
-    union 
+    union
     {
-         /* Empty union arm */ 
+         /* Empty union arm */
         UCHAR bVal;
         short iVal;
         USHORT uiVal;

@@ -66,64 +66,64 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo);
 HRESULT WINAPI
 SafeArrayAllocDescriptor(UINT cDims, struct tagSAFEARRAY **ppsaOut);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayAllocData(struct tagSAFEARRAY *psa);
 
 struct tagSAFEARRAY * WINAPI
 SafeArrayCreate(VARTYPE vt, UINT cDims, struct tagSAFEARRAYBOUND *rgsabound);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayDestroyDescriptor(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayPutElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayGetElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayLock(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayUnlock(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayGetUBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plUbound);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayGetLBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plLbound);
 
-UINT  WINAPI 
+UINT  WINAPI
 SafeArrayGetDim(struct tagSAFEARRAY *psa);
 
-UINT  WINAPI 
+UINT  WINAPI
 SafeArrayGetElemsize(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayAccessData(struct tagSAFEARRAY *psa, void **ppvData);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayUnaccessData(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayPtrOfIndex(struct tagSAFEARRAY *psa, LONG *rgIndices, void **ppvData);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayCopyData(struct tagSAFEARRAY *psaSource, struct tagSAFEARRAY **psaTarget);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayDestroyData(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayDestroy(struct tagSAFEARRAY *psa);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayCopy(struct tagSAFEARRAY *psa, struct tagSAFEARRAY **ppsaOut);
 
 struct tagSAFEARRAY * WINAPI
 SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
 
-HRESULT WINAPI 
+HRESULT WINAPI
 SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);
 
 
@@ -626,7 +626,7 @@ HRESULT WINAPI UnRegisterTypeLib(REFGUID,WORD,WORD,LCID,SYSKIND);
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif 
+#endif
 
 
 #endif /*__WINE_OLEAUTO_H*/

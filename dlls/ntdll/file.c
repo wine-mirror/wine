@@ -47,7 +47,7 @@ NTSTATUS WINAPI NtOpenFile(
 	ULONG OpenOptions)
 {
 	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) stub\n",
-	FileHandle, DesiredAccess, ObjectAttributes, 
+	FileHandle, DesiredAccess, ObjectAttributes,
 	IoStatusBlock, ShareAccess, OpenOptions);
 	dump_ObjectAttributes (ObjectAttributes);
 	return 0;
@@ -84,7 +84,7 @@ NTSTATUS WINAPI NtCreateFile(
 	ULONG CreateDisposition,
 	ULONG CreateOptions,
 	PVOID EaBuffer,
-	ULONG EaLength)  
+	ULONG EaLength)
 {
 	FIXME("(%p,0x%08lx,%p,%p,%p,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p,0x%08lx) stub\n",
 	FileHandle,DesiredAccess,ObjectAttributes,
@@ -178,7 +178,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
 	PIO_STATUS_BLOCK IoStatusBlock,
 	PVOID FsInformation,
         ULONG Length,
-	FS_INFORMATION_CLASS FsInformationClass) 
+	FS_INFORMATION_CLASS FsInformationClass)
 {
 	FIXME("(0x%08x,%p,%p,0x%08lx,0x%08x) stub\n",
 	FileHandle,IoStatusBlock,FsInformation,Length,FsInformationClass);
@@ -237,7 +237,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile(
 {
 	FIXME("(0x%08x 0x%08x %p %p %p %p 0x%08lx 0x%08x 0x%08x %p 0x%08x\n",
 	FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation,
-	Length, FileInformationClass, ReturnSingleEntry, 
+	Length, FileInformationClass, ReturnSingleEntry,
 	debugstr_us(FileName),RestartScan);
 	return 0;
 }
@@ -271,7 +271,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	    len = sizeof( FILE_FS_SIZE_INFORMATION );
 	    break;
 
-	  case FileFsDeviceInformation:	
+	  case FileFsDeviceInformation:
 	    len = sizeof( FILE_FS_DEVICE_INFORMATION );
 	    break;
 	  case FileFsAttributeInformation:
@@ -308,11 +308,11 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile (
 	  case FileFsSizeInformation:
 	    break;
 
-	  case FileFsDeviceInformation:	
+	  case FileFsDeviceInformation:
 	    if (FSInformation)
 	    {
 	      FILE_FS_DEVICE_INFORMATION * DeviceInfo = FSInformation;
-	      DeviceInfo->DeviceType = FILE_DEVICE_DISK; 
+	      DeviceInfo->DeviceType = FILE_DEVICE_DISK;
 	      DeviceInfo->Characteristics = 0;
 	      break;
 	    };

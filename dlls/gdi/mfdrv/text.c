@@ -37,7 +37,7 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
     BOOL ret;
     DWORD len;
     METARECORD *mr;
-   
+
     if (flags && !rect)
 	    WARN("Inconsistent flags and rect\n");
     len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)

@@ -53,7 +53,7 @@ HRESULT WINAPI RegisterActiveObject(
 
 	StringFromGUID2(rcid,guidbuf,39);
 	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
-	if (FAILED(ret)) 
+	if (FAILED(ret))
 		return ret;
 	ret = GetRunningObjectTable(0,&runobtable);
 	if (FAILED(ret)) {
@@ -94,7 +94,7 @@ HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 
 	StringFromGUID2(rcid,guidbuf,39);
 	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
-	if (FAILED(ret)) 
+	if (FAILED(ret))
 		return ret;
 	ret = GetRunningObjectTable(0,&runobtable);
 	if (FAILED(ret)) {
@@ -153,7 +153,7 @@ UINT WINAPI OaBuildVersion()
 /***********************************************************************
  *		DllRegisterServer (OLEAUT32.320)
  */
-HRESULT WINAPI OLEAUT32_DllRegisterServer() { 
+HRESULT WINAPI OLEAUT32_DllRegisterServer() {
     FIXME("stub!\n");
     return S_OK;
 }

@@ -37,10 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(resource);
 
 
 /* Messages...used by FormatMessage32* (KERNEL32.something)
- * 
+ *
  * They can be specified either directly or using a message ID and
  * loading them from the resource.
- * 
+ *
  * The resourcedata has following format:
  * start:
  * 0: DWORD nrofentries
@@ -78,7 +78,7 @@ static INT load_messageA( HMODULE instance, UINT id, WORD lang,
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;
-    
+
     mrd = (PMESSAGE_RESOURCE_DATA)LockResource(hmem);
     mre = NULL;
     mrb = &(mrd->Blocks[0]);
@@ -177,7 +177,7 @@ DWORD WINAPI FormatMessageA(
         &&((dwFlags & FORMAT_MESSAGE_FROM_SYSTEM)
            || (dwFlags & FORMAT_MESSAGE_FROM_HMODULE))) return 0;
 
-    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK) 
+    if (width && width != FORMAT_MESSAGE_MAX_WIDTH_MASK)
         FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
@@ -306,7 +306,7 @@ DWORD WINAPI FormatMessageA(
 
                             HeapFree(GetProcessHeap(),0,b);
                         } else {
-                                /* NULL args - copy formatstr 
+                                /* NULL args - copy formatstr
                                  * (probably wrong)
                                  */
                             while ((lastf<f)&&(*lastf)) {

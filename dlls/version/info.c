@@ -1,6 +1,6 @@
-/* 
+/*
  * Implementation of VERSION.DLL - Version Info access
- * 
+ *
  * Copyright 1996,1997 Marcus Meissner
  * Copyright 1997 David Cuthbert
  * Copyright 1999 Ulrich Weigand
@@ -209,7 +209,7 @@ typedef struct
 /***********************************************************************
  *           ConvertVersionInfo32To16        [internal]
  */
-void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32, 
+void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
                                VS_VERSION_INFO_STRUCT16 *info16 )
 {
     /* Copy data onto local stack to prevent overwrites */
@@ -242,8 +242,8 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
         WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)lpValue, -1,
                              VersionInfo16_Value( info16 ), info16->wValueLength, NULL, NULL );
 
-        TRACE("Copied value from %p to %p: %s\n", lpValue, 
-                    VersionInfo16_Value( info16 ), 
+        TRACE("Copied value from %p to %p: %s\n", lpValue,
+                    VersionInfo16_Value( info16 ),
                     debugstr_a(VersionInfo16_Value( info16 )) );
     }
     else
@@ -251,7 +251,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
         info16->wValueLength = wValueLength;
         memmove( VersionInfo16_Value( info16 ), lpValue, wValueLength );
 
-        TRACE("Copied value from %p to %p: %d bytes\n", lpValue, 
+        TRACE("Copied value from %p to %p: %d bytes\n", lpValue,
                      VersionInfo16_Value( info16 ), wValueLength );
     }
 
@@ -270,7 +270,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     /* Fixup length */
     info16->wLength = (DWORD)child16 - (DWORD)info16;
 
-    TRACE("Finished, length is %d (%p - %p)\n", 
+    TRACE("Finished, length is %d (%p - %p)\n",
                 info16->wLength, info16, child16 );
 }
 
@@ -461,7 +461,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     if (!ret) return 0;
 
     if ( handle ) *handle = offset;
-    
+
     if ( VersionInfoIs16( buf ) )
         vffi = (VS_FIXEDFILEINFO *)VersionInfo16_Value( (VS_VERSION_INFO_STRUCT16 *)buf );
     else
@@ -525,11 +525,11 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
         return FALSE;
 DO_CONVERT:
     if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
-         && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength  
+         && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
          && !VersionInfoIs16( data ) )
     {
         /* convert resource from PE format to NE format */
-        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data, 
+        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data,
                                   (VS_VERSION_INFO_STRUCT16 *)data );
     }
 
@@ -562,7 +562,7 @@ BOOL WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
         retv = FALSE;
 
     else if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
-              && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength 
+              && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
               && VersionInfoIs16( data ) )
     {
         ERR("Cannot access NE resource in %s\n", debugstr_a(fn) );
@@ -577,7 +577,7 @@ END:
 /***********************************************************************
  *           VersionInfo16_FindChild             [internal]
  */
-static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info, 
+static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT16 *info,
                                             LPCSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT16 *child = VersionInfo16_Children( info );
@@ -597,7 +597,7 @@ static VS_VERSION_INFO_STRUCT16 *VersionInfo16_FindChild( VS_VERSION_INFO_STRUCT
 /***********************************************************************
  *           VersionInfo32_FindChild             [internal]
  */
-static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info, 
+static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT32 *info,
                                             LPCWSTR szKey, UINT cbKey )
 {
     VS_VERSION_INFO_STRUCT32 *child = VersionInfo32_Children( info );

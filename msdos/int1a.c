@@ -56,10 +56,10 @@ DWORD INT1A_GetTicksSinceMidnight(void)
 /**********************************************************************
  *	    INT_Int1aHandler (WPROCS.126)
  *
- * Handler for int 1ah 
+ * Handler for int 1ah
  *     0x00 - 0x07 - date and time
  *     0x?? - 0x?? - Microsoft Real Time Compression Interface
- */ 
+ */
 void WINAPI INT_Int1aHandler( CONTEXT86 *context )
 {
     time_t ltime;
@@ -75,11 +75,11 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
             AX_reg(context) = 0;  /* No midnight rollover */
             TRACE("int1a: AH=00 -- ticks=%ld\n", ticks);
             break;
-		
-	case 0x02: 
+
+	case 0x02:
 		ltime = time(NULL);
 		bdtime = localtime(&ltime);
-		
+
 		CX_reg(context) = (BIN_TO_BCD(bdtime->tm_hour)<<8) |
                                    BIN_TO_BCD(bdtime->tm_min);
 		DX_reg(context) = (BIN_TO_BCD(bdtime->tm_sec)<<8);
@@ -96,7 +96,7 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
 		/* setting the time,date or RTC is not allow -EB */
 	case 0x01:
 		/* set system time */
-	case 0x03: 
+	case 0x03:
 		/* set RTC time */
 	case 0x05:
 		/* set RTC date */
@@ -116,7 +116,7 @@ void WINAPI INT_Int1aHandler( CONTEXT86 *context )
                         INT_BARF(context, 0x1a);
                 }
                 break;
-                
+
 	default:
 		INT_BARF( context, 0x1a );
     }

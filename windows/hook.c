@@ -77,7 +77,7 @@ inline static LRESULT call_hook_16( HOOKPROC16 proc, INT id, INT code, WPARAM wp
 {
     LRESULT ret = HOOK_CallTo16_long_wwl( proc, code, wparam, lparam );
     /* Grrr. While the hook procedure is supposed to have an LRESULT return
-       value even in Win16, it seems that for those hook types where the 
+       value even in Win16, it seems that for those hook types where the
        return value is interpreted as BOOL, Windows doesn't actually check
        the HIWORD ...  Some buggy Win16 programs, notably WINFILE, rely on
        that, because they neglect to clear DX ... */
@@ -674,7 +674,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
         data->next = HOOK_systemHooks[id - WH_MINHOOK];
         HOOK_systemHooks[id - WH_MINHOOK] = handle;
     }
-    TRACE("Setting hook %d: ret=%04x [next=%04x]\n", 
+    TRACE("Setting hook %d: ret=%04x [next=%04x]\n",
 			   id, handle, data->next );
 
     return (HHOOK)( handle? MAKELONG( handle, HOOK_MAGIC ) : 0 );
@@ -703,7 +703,7 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
     }
 
     if (data->id == WH_JOURNALPLAYBACK) EnableHardwareInput16(TRUE);
-     
+
     /* Remove it from the linked list */
 
     if (data->ownerQueue)
@@ -794,7 +794,7 @@ BOOL HOOK_IsHooked( INT16 id )
 LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
                           LPARAM lParam )
 {
-    HANDLE16 hook; 
+    HANDLE16 hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -809,7 +809,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
-    HANDLE16 hook; 
+    HANDLE16 hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -824,7 +824,7 @@ LRESULT HOOK_CallHooksA( INT id, INT code, WPARAM wParam,
 LRESULT HOOK_CallHooksW( INT id, INT code, WPARAM wParam,
                            LPARAM lParam )
 {
-    HANDLE16 hook; 
+    HANDLE16 hook;
 
     if (!(hook = HOOK_GetHook( id ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
@@ -1082,7 +1082,7 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
     if (wHaveParamHigh == FALSE)
     {
         lpmsg16_32->wParamHigh = 0;
-        /* WARNING: msg16_32->msg has to be the first variable in the struct */ 
+        /* WARNING: msg16_32->msg has to be the first variable in the struct */
         return CallMsgFilter16(msg16_32, code);
     }
     else

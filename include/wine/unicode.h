@@ -177,7 +177,7 @@ static inline unsigned int strlenW( const WCHAR *str )
 #endif
 }
 
-static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src ) 
+static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
 {
 #if defined(__i386__) && defined(__GNUC__)
     int dummy1, dummy2, dummy3;
@@ -196,7 +196,7 @@ static inline WCHAR *strcpyW( WCHAR *dst, const WCHAR *src )
     return dst;
 }
 
-static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 ) 
+static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return *str1 - *str2;
@@ -228,13 +228,13 @@ static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
     for ( ; *str; str++) if (*str == ch) return (WCHAR *)str;
     return NULL;
 }
- 
+
 static inline WCHAR *strrchrW( const WCHAR *str, WCHAR ch )
 {
     WCHAR *ret = NULL;
     for ( ; *str; str++) if (*str == ch) ret = (WCHAR *)str;
     return ret;
-}               
+}
 
 static inline WCHAR *strlwrW( WCHAR *str )
 {

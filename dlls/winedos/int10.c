@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 
-static void scroll_window(int direction, char lines, char row1, 
+static void scroll_window(int direction, char lines, char row1,
    char col1, char row2, char col2, char attribute);
 
 #define SCROLL_UP 1
@@ -53,13 +53,13 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *	    DOSVM_Int10Handler (WPROCS.116)
  *
  * Handler for int 10h (video).
- * 
+ *
  * NOTE:
  *    Most INT 10 functions for text-mode, CGA, EGA, and VGA cards
  *    are present in this list. (SVGA and XGA are not) That is not
  *    to say that all these functions should be supported, but if
  *    anyone is brain-damaged enough to want to emulate one of these
- *    beasts then this should get you started. 
+ *    beasts then this should get you started.
  *
  * NOTE:
  *    Several common graphical extensions used by Microsoft hook
@@ -68,18 +68,18 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *
  *    MSHERC.COM - More functionality for Hercules cards.
  *    EGA.SYS (also MOUSE.COM) - More for EGA cards.
- *    
+ *
  *    Yes, MS also added this support into their mouse driver. Don't
  *    ask me, I don't work for them.
  *
- * Joseph Pranevich - 9/98 
+ * Joseph Pranevich - 9/98
  *
  *  Jess Haas 2/99
- *	Added support for Vesa. It is not complete but is a start. 
+ *	Added support for Vesa. It is not complete but is a start.
  *	NOTE: Im not sure if i did all this right or if eny of it works.
- *	Currently i dont have a program that uses Vesa that actually gets far 
+ *	Currently i dont have a program that uses Vesa that actually gets far
  *	enough without crashing to do vesa stuff.
- * 
+ *
  *      Added additional vga graphic support - 3/99
  */
 
@@ -97,7 +97,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 	    AL_reg(context) = 0x4f;
 	    AH_reg(context) = 0x00; /* 0x00 = successful 0x01 = failed */
 	    break;
- 
+
 	case 0x01: /* GET SuperVGA MODE INFORMATION */
 	    FIXME("VESA GET SuperVGA Mode Information - Not supported\n");
 	    AL_reg(context) = 0x4f;
@@ -112,7 +112,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 	   BX_reg(context));
                 	VGA_SetAlphaMode(40, 25);
                         data->VideoColumns = 40;
-                	break;                
+                	break;
             	case 0x02:
             	case 0x03:
             	case 0x07:
@@ -127,7 +127,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                     break;
  	        case 0x0E:
                     TRACE("Setting VESA 640x200 16-color mode\n");
-                    VGA_SetMode(640,200,4); 
+                    VGA_SetMode(640,200,4);
                     break;
 	        case 0x10:
                     TRACE("Setting VESA 640x350 16-color mode\n");
@@ -242,7 +242,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             data->VideoMode = BX_reg(context);
             AL_reg(context) = 0x4f;
 	    AH_reg(context) = 0x00;
-	    break;	
+	    break;
 	case 0x03: /* VESA SuperVGA BIOS - GET CURRENT VIDEO MODE */
 		AL_reg(context) = 0x4f;
 		AH_reg(context) = 0x00; /* should probly check if a vesa mode has ben set */
@@ -250,31 +250,31 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
 		break;
 	case 0x04: /* VESA SuperVGA BIOS - SAVE/RESTORE SuperVGA VIDEO STATE */
 		ERR("VESA SAVE/RESTORE Video State - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
 		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x01;  not implemented so just fail */
 		break;
 	case 0x05: /* VESA SuperVGA BIOS - CPU VIDEO MEMORY CONTROL */
 		ERR("VESA CPU VIDEO MEMORY CONTROL\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
 		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x06: /* VESA GET/SET LOGICAL SCAN LINE LENGTH */
 		ERR("VESA GET/SET LOGICAL SCAN LINE LENGTH - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
 		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x07: /* GET/SET DISPLAY START */
 		ERR("VESA GET/SET DISPLAY START - Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
 		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
 	case 0x08: /* GET/SET DAC PALETTE CONTROL */
 		ERR("VESA GET/SET DAC PALETTE CONTROL- Not Implemented\n");
-		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */	
+		/* AL_reg(context) = 0x4f; = supported so not set since not implemented */
 		/* maybe we should do this instead ? */
 		/* AH_reg(context = 0x001; not implemented so just fail */
 		break;
@@ -286,13 +286,13 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                     /* is there?....................(A.C.)       */
                 TRACE("Just report the video not hercules compatible\n");
                 DX_reg(context) = 0xffff;
-                break; 
+                break;
 	case 0xff: /* Turn VESA ON/OFF */
 		/* i dont know what to do */
 		break;
 	default:
 		FIXME("VESA Function (0x%x) - Not Supported\n", AH_reg(context));
-		break;		
+		break;
 	}
     }
     else {
@@ -302,21 +302,21 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     case 0x00: /* SET VIDEO MODE */
         /* Text Modes: */
         /* (mode) (text rows/cols)
-            0x00 - 40x25 
+            0x00 - 40x25
             0x01 - 40x25
             0x02 - 80x25
-            0x03 - 80x25 or 80x43 or 80x50 (assume 80x25) 
+            0x03 - 80x25 or 80x43 or 80x50 (assume 80x25)
             0x07 - 80x25
         */
 
         /* Bit 7 of AH = 0 -> Clean the video memory
                          1 -> Don't clean it
-        */  
+        */
         if (!(AL_reg(context)&0x80)) {
-	    /* FIXME: Do something which cleans the video memory */ 
+	    /* FIXME: Do something which cleans the video memory */
         }
 
-        /* FIXME: Should we keep the bit 7 in the Bios Data memory? */ 
+        /* FIXME: Should we keep the bit 7 in the Bios Data memory? */
         AL_reg(context) &= ~0x80;
 
         switch (AL_reg(context)) {
@@ -327,7 +327,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                    AL_reg(context));
                 VGA_SetAlphaMode(40, 25);
                 data->VideoColumns = 40;
-                break;                
+                break;
             case 0x02:
             case 0x03:
             case 0x07:
@@ -343,7 +343,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 break;
 	    case 0x0E:
                 TRACE("Setting VGA 640x200 16-color mode\n");
-                VGA_SetMode(640,200,4); 
+                VGA_SetMode(640,200,4);
                 break;
 	    case 0x10:
                 TRACE("Setting VGA 640x350 16-color mode\n");
@@ -358,7 +358,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                 VGA_SetMode(320,200,8);
                 break;
             default:
-                FIXME("Set Video Mode (0x%x) - Not Supported\n", 
+                FIXME("Set Video Mode (0x%x) - Not Supported\n",
                    AL_reg(context));
         }
         data->VideoMode = AL_reg(context);
@@ -367,7 +367,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     case 0x01: /* SET CURSOR SHAPE */
         FIXME("Set Cursor Shape - Not Supported\n");
         break;
-    
+
     case 0x02: /* SET CURSOR POSITION */
         /* BH = Page Number */ /* Not supported */
         /* DH = Row */ /* 0 is left */
@@ -381,7 +381,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         else
         {
            VGA_SetCursorPos(DL_reg(context), DH_reg(context));
-           TRACE("Set Cursor Position: %d %d\n", DH_reg(context), 
+           TRACE("Set Cursor Position: %d %d\n", DH_reg(context),
               DL_reg(context));
         }
         break;
@@ -414,8 +414,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* BH = Attribute */
         /* CH,CL = row, col upper-left */
         /* DH,DL = row, col lower-right */
-        scroll_window(SCROLL_UP, AL_reg(context), CH_reg(context), 
-           CL_reg(context), DH_reg(context), DL_reg(context), 
+        scroll_window(SCROLL_UP, AL_reg(context), CH_reg(context),
+           CL_reg(context), DH_reg(context), DL_reg(context),
            BH_reg(context));
         TRACE("Scroll Up Window %d\n", AL_reg(context));
         break;
@@ -425,8 +425,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* BH = Attribute */
         /* CH,CL = row, col upper-left */
         /* DH,DL = row, col lower-right */
-        scroll_window(SCROLL_DOWN, AL_reg(context), CH_reg(context), 
-           CL_reg(context), DH_reg(context), DL_reg(context), 
+        scroll_window(SCROLL_DOWN, AL_reg(context), CH_reg(context),
+           CL_reg(context), DH_reg(context), DL_reg(context),
            BH_reg(context));
         TRACE("Scroll Down Window %d\n", AL_reg(context));
         break;
@@ -449,7 +449,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         break;
 
     case 0x09: /* WRITE CHARACTER AND ATTRIBUTE AT CURSOR POSITION */
-    case 0x0a: /* WRITE CHARACTER ONLY AT CURSOR POSITION */ 
+    case 0x0a: /* WRITE CHARACTER ONLY AT CURSOR POSITION */
        /* AL = Character to display. */
        /* BH = Page Number */ /* We can't write to non-0 pages, yet. */
        /* BL = Attribute / Color */
@@ -474,26 +474,26 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
        }
        break;
 
-    case 0x0b: 
+    case 0x0b:
         switch BH_reg(context) {
         case 0x00: /* SET BACKGROUND/BORDER COLOR */
             /* In text modes, this sets only the border... */
             /* According to the interrupt list and one of my books. */
-            /* Funny though that Beyond Zork seems to indicate that it 
+            /* Funny though that Beyond Zork seems to indicate that it
                also sets up the default background attributes for clears
                and scrolls... */
             /* Bear in mind here that we do not want to change,
                apparantly, the foreground or attribute of the background
                with this call, so we should check first to see what the
                foreground already is... FIXME */
-            FIXME("Set Background/Border Color: %d\n", 
+            FIXME("Set Background/Border Color: %d\n",
                BL_reg(context));
             break;
         case 0x01: /* SET PALETTE */
             FIXME("Set Palette - Not Supported\n");
             break;
         default:
-            FIXME("INT 10 AH = 0x0b BH = 0x%x - Unknown\n", 
+            FIXME("INT 10 AH = 0x0b BH = 0x%x - Unknown\n",
                BH_reg(context));
             break;
         }
@@ -503,12 +503,12 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* Not in graphics mode, can ignore w/o error */
         FIXME("Write Graphics Pixel - Not Supported\n");
         break;
-        
+
     case 0x0d: /* READ GRAPHICS PIXEL */
         /* Not in graphics mode, can ignore w/o error */
         FIXME("Read Graphics Pixel - Not Supported\n");
         break;
-              
+
     case 0x0e: /* TELETYPE OUTPUT */
         TRACE("Teletype Output\n");
         DOSVM_PutChar(AL_reg(context));
@@ -522,7 +522,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         BH_reg(context) = 0; /* Display page 0 */
         break;
 
-    case 0x10: 
+    case 0x10:
         switch AL_reg(context) {
         case 0x00: /* SET SINGLE PALETTE REGISTER - A.C. */
             TRACE("Set Single Palette Register - Reg 0x0%x Value 0x0%x\n",
@@ -532,7 +532,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             break;
         case 0x01: /* SET BORDER (OVERSCAN) */
             /* Text terminals have no overscan */
-	    /* I'm setting it anyway. - A.C.   */	
+	    /* I'm setting it anyway. - A.C.   */
             TRACE("Set Border (Overscan) - Ignored but set.\n");
 	    VGA_SetColor16(16,(int)BH_reg(context));
             break;
@@ -613,7 +613,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             FIXME("Perform Gray-scale summing - Not Supported\n");
             break;
         default:
-            FIXME("INT 10 AH = 0x10 AL = 0x%x - Unknown\n", 
+            FIXME("INT 10 AH = 0x10 AL = 0x%x - Unknown\n",
                AL_reg(context));
             break;
         }
@@ -634,7 +634,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         case 0x02: /* LOAD ROM 8x8 DOUBLE-DOT PATTERNS */
         case 0x12:
             FIXME(
-                "Load ROM 8x8 Double Dot Patterns - Not Supported\n");       
+                "Load ROM 8x8 Double Dot Patterns - Not Supported\n");
             break;
         case 0x03: /* SET BLOCK SPECIFIER */
             FIXME("Set Block Specifier - Not Supported\n");
@@ -663,12 +663,12 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             FIXME("Get Font Information - Not Supported\n");
             break;
         default:
-            FIXME("INT 10 AH = 0x11 AL = 0x%x - Unknown\n", 
+            FIXME("INT 10 AH = 0x11 AL = 0x%x - Unknown\n",
                AL_reg(context));
             break;
         }
         break;
-        
+
     case 0x12: /* ALTERNATE FUNCTION SELECT */
         switch BL_reg(context) {
         case 0x10: /* GET EGA INFO */
@@ -706,7 +706,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             FIXME("Video Address Control - Not Supported\n");
             break;
         default:
-            FIXME("INT 10 AH = 0x11 AL = 0x%x - Unknown\n", 
+            FIXME("INT 10 AH = 0x11 AL = 0x%x - Unknown\n",
                AL_reg(context));
             break;
         }
@@ -716,8 +716,8 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
         /* This one does not imply that string be at cursor. */
         FIXME("Write String - Not Supported\n");
         break;
-                             
-    case 0x1a: 
+
+    case 0x1a:
         switch AL_reg(context) {
         case 0x00: /* GET DISPLAY COMBINATION CODE */
             TRACE("Get Display Combination Code\n");
@@ -729,7 +729,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
             FIXME("Set Display Combination Code - Not Supported\n");
             break;
         default:
-            FIXME("INT 10 AH = 0x1a AL = 0x%x - Unknown\n", 
+            FIXME("INT 10 AH = 0x1a AL = 0x%x - Unknown\n",
                AL_reg(context));
             break;
         }
@@ -755,7 +755,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                     /* is there?....................(A.C.)       */
                 TRACE("Just report the video not hercules compatible\n");
                 DX_reg(context) = 0xffff;
-                break; 
+                break;
     default:
         FIXME("Unknown - 0x%x\n", AH_reg(context));
         INT_BARF( context, 0x10 );
@@ -763,7 +763,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     }
 }
 
-static void scroll_window(int direction, char lines, char row1, 
+static void scroll_window(int direction, char lines, char row1,
    char col1, char row2, char col2, char attribute)
 {
    if (!lines) /* Actually, clear the window */
@@ -779,7 +779,7 @@ static void scroll_window(int direction, char lines, char row1,
        VGA_ScrollDownText(row1, col1, row2, col2, lines, attribute);
    }
 }
-   
+
 
 /**********************************************************************
  *         DOSVM_PutChar

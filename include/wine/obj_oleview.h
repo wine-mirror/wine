@@ -54,7 +54,7 @@ typedef BOOL    (CALLBACK *IVO_ContCallback)(DWORD);
 	ICOM_METHOD4(HRESULT,Freeze, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DWORD*,pdwFreeze) \
 	ICOM_METHOD1(HRESULT,Unfreeze, DWORD,dwFreeze) \
 	ICOM_METHOD3(HRESULT,SetAdvise, DWORD,aspects, DWORD,advf, IAdviseSink*,pAdvSink) \
-	ICOM_METHOD3(HRESULT,GetAdvise, DWORD*,pAspects, DWORD*,pAdvf, IAdviseSink**,ppAdvSink) 
+	ICOM_METHOD3(HRESULT,GetAdvise, DWORD*,pAspects, DWORD*,pAdvf, IAdviseSink**,ppAdvSink)
 #define IViewObject_IMETHODS \
 	IUnknown_IMETHODS \
 	IViewObject_METHODS
@@ -72,7 +72,7 @@ ICOM_DEFINE(IViewObject,IUnknown)
 #define IViewObject_Unfreeze(p,a)                ICOM_CALL1(Unfreeze,p,a)
 #define IViewObject_SetAdvise(p,a,b,c)           ICOM_CALL3(SetAdvise,p,a,b,c)
 #define IViewObject_GetAdvise(p,a,b,c)           ICOM_CALL3(GetAdvise,p,a,b,c)
-				  
+
 
 
 /*****************************************************************************
@@ -80,7 +80,7 @@ ICOM_DEFINE(IViewObject,IUnknown)
  */
 #define ICOM_INTERFACE IViewObject2
 #define IViewObject2_METHODS \
-	ICOM_METHOD4(HRESULT,GetExtent, DWORD,dwDrawAspect, LONG,lindex, DVTARGETDEVICE*,ptd, LPSIZEL,lpsizel) 
+	ICOM_METHOD4(HRESULT,GetExtent, DWORD,dwDrawAspect, LONG,lindex, DVTARGETDEVICE*,ptd, LPSIZEL,lpsizel)
 #define IViewObject2_IMETHODS \
 	IViewObject_IMETHODS \
 	IViewObject2_METHODS

@@ -57,7 +57,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     BOOL		rotated = FALSE;
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
-    BOOL                result = TRUE; 
+    BOOL                result = TRUE;
     DC *dc = physDev->dc;
 
     if(dc->gdiFont)
@@ -242,7 +242,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
             }
         }
     }
-    
+
     /* Draw the text (count > 0 verified) */
     if (!(str2b = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, wstr, count )))
         goto FAIL;
@@ -265,7 +265,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
         pitem = items = HeapAlloc( GetProcessHeap(), 0,
                                    count * sizeof(XTextItem16) );
-	if(items == NULL) goto FAIL; 
+	if(items == NULL) goto FAIL;
         delta = i = 0;
 	if( lpDx ) /* explicit character widths */
 	{
@@ -321,7 +321,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		    pitem->nchars++;
                 } while ((++i < count) && !delta);
 		pitem++;
-            } 
+            }
         }
 
 	X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, gdi_display,
@@ -331,14 +331,14 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
       }
     }
     else /* rotated */
-    {  
+    {
       /* have to render character by character. */
       double offset = 0.0;
       int i;
 
       for (i=0; i<count; i++)
       {
-	int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8) 
+	int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8)
 	  - font->min_char_or_byte2;
 	int x_i = IROUND((double) (dc->DCOrgX + x) + offset *
 			 pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
@@ -370,7 +370,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (lfUnderline)
     {
-	long linePos, lineWidth;       
+	long linePos, lineWidth;
 
 	if (!TSXGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
 	    linePos = descent - 1;
@@ -378,7 +378,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
 	TSXSetLineAttributes( gdi_display, physDev->gc, lineWidth,
-			      LineSolid, CapRound, JoinBevel ); 
+			      LineSolid, CapRound, JoinBevel );
         TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
 		     dc->DCOrgX + x, dc->DCOrgY + y + linePos,
 		     dc->DCOrgX + x + width, dc->DCOrgY + y + linePos );
@@ -391,7 +391,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	if (!TSXGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent * 2 / 3;
 	TSXSetLineAttributes( gdi_display, physDev->gc, lineAscent + lineDescent,
-			    LineSolid, CapRound, JoinBevel ); 
+			    LineSolid, CapRound, JoinBevel );
 	TSXDrawLine( gdi_display, physDev->drawable, physDev->gc,
 		   dc->DCOrgX + x, dc->DCOrgY + y - lineAscent,
 		   dc->DCOrgX + x + width, dc->DCOrgY + y - lineAscent );
@@ -399,11 +399,11 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED) RestoreVisRgn16( dc->hSelf );
     goto END;
-	    
+
 FAIL:
     if(str2b != NULL) HeapFree( GetProcessHeap(), 0, str2b );
     result = FALSE;
-    
+
 END:
     if (dibUpdateFlag) X11DRV_UnlockDIBSection( physDev, TRUE );
     return result;
@@ -438,14 +438,14 @@ BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
 	    float x = 0.0, y = 0.0;
 	    /* FIXME: Deal with *_char_or_byte2 != 0 situations */
 	    for(i = 0; i < count; i++) {
-	        x += pfo->fs->per_char ? 
-	   pfo->fs->per_char[p[i].byte2 - pfo->fs->min_char_or_byte2].attributes : 
+	        x += pfo->fs->per_char ?
+	   pfo->fs->per_char[p[i].byte2 - pfo->fs->min_char_or_byte2].attributes :
 	   pfo->fs->min_bounds.attributes;
 	    }
 	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
 	    TRACE("x = %f y = %f\n", x, y);
 	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
-	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
+	    y *= pfo->lpX11Trans->pixelsize / 1000.0;
 	    size->cx = fabs((x + dc->breakRem + count * dc->charExtra) *
 			    dc->xformVport2World.eM11);
 	    size->cy = fabs(y * dc->xformVport2World.eM22);

@@ -25,7 +25,7 @@
 #include "x11drv.h"
 #include "pshpack1.h"
 
-/* this is a part of the font resource header, should 
+/* this is a part of the font resource header, should
  * make it easier to implement dynamic softfont loading */
 
 typedef struct

@@ -145,7 +145,7 @@ OLESTATUS WINAPI OleCreateLinkFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDO
 /******************************************************************************
  *           OleCreateLinkFromClip	[OLECLI32.11]
  */
-OLESTATUS WINAPI OleCreateLinkFromClip( 
+OLESTATUS WINAPI OleCreateLinkFromClip(
 	LPCSTR name,LPOLECLIENT olecli,LHCLIENTDOC hclientdoc,LPCSTR xname,
 	LPOLEOBJECT *lpoleob,OLEOPT_RENDER render,OLECLIPFORMAT clipformat
 ) {

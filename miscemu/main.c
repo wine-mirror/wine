@@ -62,7 +62,7 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
         }
 
         MESSAGE( "%s: can't exec '%s': ", argv0, GetCommandLineA() );
-        switch (instance) 
+        switch (instance)
         {
         case  2: MESSAGE("file not found\n" ); break;
         case 11: MESSAGE("invalid exe file\n" ); break;

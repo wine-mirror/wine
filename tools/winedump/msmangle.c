@@ -505,7 +505,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
         /* FIXME: P6 = Function pointer, others who knows.. */
         if (isdigit (*iter))
 	{
-	  if (*iter == '6') 
+	  if (*iter == '6')
 	  {
 	      /* FIXME: there are a tons of memory leaks here */
 	      /* FIXME: this is still broken in some cases and it has to be
@@ -531,7 +531,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
 	      ct->expression = str_create(2, ct->expression, ")");
 	      FREE_CT (sub_ct);
 	  }
-	  else 
+	  else
 	      return NULL;
 	}
 	else

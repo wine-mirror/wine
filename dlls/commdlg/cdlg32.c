@@ -89,7 +89,7 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_TlsIndex = 0xffffffff;
 
 		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
-		
+
 		if (!SHELL32_hInstance)
 		{
 			ERR("loading of shell32 failed\n");
@@ -102,9 +102,9 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		GPA(COMDLG32_PIDL_ILGetNext, SHELL32_hInstance, (LPCSTR)153L);
 		GPA(COMDLG32_PIDL_ILClone, SHELL32_hInstance, (LPCSTR)18L);
 		GPA(COMDLG32_PIDL_ILRemoveLastID, SHELL32_hInstance, (LPCSTR)17L);
-		
+
 		/* SHELL */
-		
+
 		GPA(COMDLG32_SHAlloc, SHELL32_hInstance, (LPCSTR)196L);
 		GPA(COMDLG32_SHFree, SHELL32_hInstance, (LPCSTR)195L);
 		/* for the first versions of shell32 SHGetFolderPathA is in SHFOLDER.DLL */
@@ -177,7 +177,7 @@ void COMDLG32_SetCommDlgExtendedError(DWORD err)
  */
 DWORD WINAPI CommDlgExtendedError(void)
 {
-        if (COMDLG32_TlsIndex != 0xffffffff) 
+        if (COMDLG32_TlsIndex != 0xffffffff)
 	  return (DWORD)TlsGetValue(COMDLG32_TlsIndex);
 	else
 	  return 0; /* we never set an error, so there isn't one */

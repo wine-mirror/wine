@@ -288,34 +288,34 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 /*******************************************************************
  *         BuildCallFrom16Func
  *
- * Build a 16-bit-to-Wine callback glue function. 
+ * Build a 16-bit-to-Wine callback glue function.
  *
- * The generated routines are intended to be used as argument conversion 
+ * The generated routines are intended to be used as argument conversion
  * routines to be called by the CallFrom16... core. Thus, the prototypes of
  * the generated routines are (see also CallFrom16):
  *
  *  extern WORD WINAPI PREFIX_CallFrom16_C_word_xxx( FARPROC func, LPBYTE args );
  *  extern LONG WINAPI PREFIX_CallFrom16_C_long_xxx( FARPROC func, LPBYTE args );
- *  extern void WINAPI PREFIX_CallFrom16_C_regs_xxx( FARPROC func, LPBYTE args, 
+ *  extern void WINAPI PREFIX_CallFrom16_C_regs_xxx( FARPROC func, LPBYTE args,
  *                                                   CONTEXT86 *context );
- *  extern void WINAPI PREFIX_CallFrom16_C_intr_xxx( FARPROC func, LPBYTE args, 
+ *  extern void WINAPI PREFIX_CallFrom16_C_intr_xxx( FARPROC func, LPBYTE args,
  *                                                   CONTEXT86 *context );
  *
- * where 'C' is the calling convention ('p' for pascal or 'c' for cdecl), 
- * and each 'x' is an argument  ('w'=word, 's'=signed word, 'l'=long, 
+ * where 'C' is the calling convention ('p' for pascal or 'c' for cdecl),
+ * and each 'x' is an argument  ('w'=word, 's'=signed word, 'l'=long,
  * 'p'=linear pointer, 't'=linear pointer to null-terminated string,
  * 'T'=segmented pointer to null-terminated string).
  *
  * The generated routines fetch the arguments from the 16-bit stack (pointed
- * to by 'args'); the offsets of the single argument values are computed 
+ * to by 'args'); the offsets of the single argument values are computed
  * according to the calling convention and the argument types.  Then, the
  * 32-bit entry point is called with these arguments.
- * 
+ *
  * For register functions, the arguments (if present) are converted just
- * the same as for normal functions, but in addition the CONTEXT86 pointer 
+ * the same as for normal functions, but in addition the CONTEXT86 pointer
  * filled with the current register values is passed to the 32-bit routine.
- * (An 'intr' interrupt handler routine is treated exactly like a register 
- * routine, except that upon return, the flags word pushed onto the stack 
+ * (An 'intr' interrupt handler routine is treated exactly like a register
+ * routine, except that upon return, the flags word pushed onto the stack
  * by the interrupt is removed by the 16-bit call stub.)
  *
  */
@@ -435,18 +435,18 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
 /*******************************************************************
  *         BuildCallTo16Func
  *
- * Build a Wine-to-16-bit callback glue function. 
+ * Build a Wine-to-16-bit callback glue function.
  *
  * Prototypes for the CallTo16 functions:
  *   extern WORD CALLBACK PREFIX_CallTo16_word_xxx( FARPROC16 func, args... );
  *   extern LONG CALLBACK PREFIX_CallTo16_long_xxx( FARPROC16 func, args... );
- * 
+ *
  * These routines are provided solely for convenience; they simply
  * write the arguments onto the 16-bit stack, and call the appropriate
  * wine_call_to_16... core routine.
  *
  * If you have more sophisticated argument conversion requirements than
- * are provided by these routines, you might as well call the core 
+ * are provided by these routines, you might as well call the core
  * routines by yourself.
  *
  */

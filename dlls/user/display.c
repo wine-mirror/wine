@@ -36,7 +36,7 @@ typedef struct tagCURSORINFO
 /***********************************************************************
  *           Inquire			(DISPLAY.101)
  */
-WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo) 
+WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo)
 {
     lpCursorInfo->wXMickeys = 1;
     lpCursorInfo->wYMickeys = 1;

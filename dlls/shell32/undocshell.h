@@ -180,7 +180,7 @@ BOOL WINAPI PickIconDlg(
 	LPDWORD lpdwIconIndex);
 
 /* RunFileDlg flags */
-#define RFF_NOBROWSE       0x01 
+#define RFF_NOBROWSE       0x01
 #define RFF_NODEFAULT      0x02
 #define RFF_CALCDIRECTORY  0x04
 #define RFF_NOLABEL        0x08
@@ -191,7 +191,7 @@ typedef struct
 {
   NMHDR   hdr;
   LPCSTR  lpFile;
-  LPCSTR  lpDirectory; 
+  LPCSTR  lpDirectory;
   int     nShow;
 } NM_RUNFILEDLG, * LPNM_RUNFILEDLG;
 
@@ -213,7 +213,7 @@ void WINAPI ExitWindowsDialog(HWND hwndOwner);
 int  WINAPI RestartDialog(
 	HWND hwndOwner,
 	LPCSTR lpstrReason,
-	UINT uFlags); 
+	UINT uFlags);
 
 BOOL WINAPI GetFileNameFromBrowse(
 	HWND hwndOwner,
@@ -231,7 +231,7 @@ BOOL WINAPI SHFindFiles(
 BOOL WINAPI SHFindComputer(
 	LPCITEMIDLIST pidlRoot,
 	LPCITEMIDLIST pidlSavedSearch);
- 
+
 /* SHObjectProperties flags */
 #define OPF_PRINTERNAME  0x01
 #define OPF_PATHNAME     0x02
@@ -310,11 +310,11 @@ BOOL WINAPI SHUnlockShared(LPVOID pv);
 #define CWM_GETPATH           (WM_USER + 12)
 
 /* CWM_TESTPATH types */
-#define CWTP_ISEQUAL  0 
-#define CWTP_ISCHILD  1 
+#define CWTP_ISEQUAL  0
+#define CWTP_ISCHILD  1
 
 /* CWM_TESTPATH structure */
-typedef struct 
+typedef struct
 {
 	DWORD dwType;
 	ITEMIDLIST idl;
@@ -509,7 +509,7 @@ BOOL WINAPI DAD_DragMove(POINT pt);
 #define DAD_SCROLL_RIGHT 8
 
 /* DAD_AutoScroll sample structure */
-typedef struct 
+typedef struct
 {
 	DWORD  dwCount;
 	DWORD  dwLastTime;
@@ -553,15 +553,15 @@ BOOL WINAPI PathAppendAW(LPVOID lpszPath1, LPCVOID lpszPath2);
 
 LPVOID WINAPI PathCombineAW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile);
 
-LPVOID  WINAPI PathAddBackslashAW(LPVOID path);	
+LPVOID  WINAPI PathAddBackslashAW(LPVOID path);
 
 LPVOID WINAPI PathBuildRootAW(LPVOID lpszPath, int drive);
 
-LPVOID WINAPI PathFindExtensionAW(LPCVOID path); 
+LPVOID WINAPI PathFindExtensionAW(LPCVOID path);
 
-LPVOID WINAPI PathFindFileNameAW(LPCVOID path); 
+LPVOID WINAPI PathFindFileNameAW(LPCVOID path);
 
-LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath,  DWORD void1, DWORD void2); 
+LPVOID WINAPI PathGetExtensionAW(LPCVOID lpszPath,  DWORD void1, DWORD void2);
 
 LPVOID WINAPI PathGetArgsAW(LPVOID lpszPath);
 
@@ -571,7 +571,7 @@ LPVOID WINAPI PathGetShortPathAW(LPVOID lpszPath);
 
 void WINAPI PathRemoveBlanksAW(LPVOID lpszPath);
 
-VOID  WINAPI PathQuoteSpacesAW(LPVOID path);	
+VOID  WINAPI PathQuoteSpacesAW(LPVOID path);
 
 void WINAPI PathUnquoteSpacesAW(LPVOID lpszPath);
 
@@ -590,10 +590,10 @@ BOOL WINAPI PathFileExistsAW(LPCVOID lpszPath);
 BOOL WINAPI PathMatchSpecAW(LPVOID lpszPath, LPVOID lpszSpec);
 
 BOOL WINAPI PathMakeUniqueNameAW(
-	LPVOID lpszBuffer, 
+	LPVOID lpszBuffer,
 	DWORD dwBuffSize,
 	LPCVOID lpszShortName,
-	LPCVOID lpszLongName, 
+	LPCVOID lpszLongName,
 	LPCVOID lpszPathName);
 
 BOOL WINAPI PathYetAnotherMakeUniqueNameA(
@@ -610,10 +610,10 @@ BOOL WINAPI PathYetAnotherMakeUniqueNameA(
 
 DWORD WINAPI PathCleanupSpecAW(LPCVOID lpszPath, LPVOID lpszFile);
 
-BOOL WINAPI PathQualifyA(LPCSTR path);	
-BOOL WINAPI PathQualifyW(LPCWSTR path);	
+BOOL WINAPI PathQualifyA(LPCSTR path);
+BOOL WINAPI PathQualifyW(LPCWSTR path);
 #define PathQualify WINELIB_NAME_AW(PathQualify)
-BOOL  WINAPI PathQualifyAW(LPCVOID path);	
+BOOL  WINAPI PathQualifyAW(LPCVOID path);
 
 
 /* PathResolve flags */
@@ -664,7 +664,7 @@ typedef HRESULT (CALLBACK *LPFNSFVCALLBACK)(
 	LPARAM lParam);
 
 /* SHCreateShellFolderViewEx structure */
-typedef struct 
+typedef struct
 {
   DWORD            dwSize;
   LPSHELLFOLDER    pshf;
@@ -719,7 +719,7 @@ HRESULT WINAPI SHCreateShellFolderViewEx(
 #define SFVCB_ISCHILDOBJECT       0x0026
 
 /* Generic structure used by several messages */
-typedef struct 
+typedef struct
 {
   DWORD          dwReserved;
   DWORD          dwReserved2;
@@ -729,7 +729,7 @@ typedef struct
 typedef const SFVCBINFO * LPCSFVCBINFO;
 
 /* SFVCB_ADDTOMENU structure */
-typedef struct  
+typedef struct
 {
   HMENU  hMenu;
   UINT   indexMenu;
@@ -738,22 +738,22 @@ typedef struct
 } SFVMENUINFO, * LPSFVMENUINFO;
 
 /* SFVCB_GETTOOLBARINFO structure */
-typedef struct 
+typedef struct
 {
   UINT  nButtons;
   UINT  uFlags;
 } SFVTOOLBARINFO, * LPSFVTOOLBARINFO;
 
 /* SFVTOOLBARINFO flags */
-typedef enum 
+typedef enum
 {
   SFVTI_ADDTOEND   = 0,
   SFVTI_ADDTOFRONT = 1,
   SFVTI_OVERWRITE  = 2
-} SFVTIF; 
+} SFVTIF;
 
 /* SFVCB_SELECTIONCHANGED structure */
-typedef struct 
+typedef struct
 {
   UINT           uOldState;
   UINT           uNewState;
@@ -763,7 +763,7 @@ typedef struct
 typedef const SFVSELECTSTATE * LPCSFVSELECTSTATE;
 
 /* SFVCB_COPYHOOKCALLBACK structure */
-typedef struct 
+typedef struct
 {
   HWND    hwnd;
   UINT    wFunc;
@@ -776,7 +776,7 @@ typedef struct
 typedef const SFVCOPYHOOKINFO * LPCSFVCOPYHOOKINFO;
 
 /* SFVCB_GETDETAILSOF structure */
-typedef struct 
+typedef struct
 {
   LPCITEMIDLIST  pidl;
   int            fmt;
@@ -785,9 +785,9 @@ typedef struct
 } SFVCOLUMNINFO, * LPSFVCOLUMNINFO;
 
 int WINAPI SHShellFolderView_Message(
-	HWND hwndCabinet, 
+	HWND hwndCabinet,
 	DWORD dwMessage,
-	DWORD dwParam); 
+	DWORD dwParam);
 
 /* SHShellFolderView_Message messages */
 #define SFVM_REARRANGE          0x0001
@@ -824,7 +824,7 @@ int WINAPI SHShellFolderView_Message(
 #define SHWFF_WAIT    0x04
 
 BOOL WINAPI SHWaitForFileToOpen(
-	LPCITEMIDLIST pidl, 
+	LPCITEMIDLIST pidl,
 	DWORD dwFlags,
 	DWORD dwTimeout);
 
@@ -852,14 +852,14 @@ typedef HRESULT (CALLBACK *LPFNCDCOCALLBACK)(
 	LPVOID *ppvObject);
 
 HRESULT WINAPI SHCreateDefClassObject(
-	REFIID riidFactory, 
+	REFIID riidFactory,
 	LPVOID *ppvFactory,
 	LPFNCDCOCALLBACK lpfnCallback,
-	LPDWORD lpdwUsage, 
+	LPDWORD lpdwUsage,
 	REFIID riidObject);
 
 HRESULT WINAPI SHCoCreateInstance(
-	LPCSTR lpszClsid, 
+	LPCSTR lpszClsid,
 	REFCLSID rClsid,
 	LPUNKNOWN pUnkOuter,
 	REFIID riid,
@@ -873,7 +873,7 @@ void WINAPI SHFreeUnusedLibraries();
 
 HRESULT WINAPI SHCreateLinks(
 	HWND hWnd,
-	LPCSTR lpszDir, 
+	LPCSTR lpszDir,
 	LPDATAOBJECT lpDataObject,
 	UINT uFlags,
 	LPITEMIDLIST *lppidlLinks);
@@ -885,14 +885,14 @@ HRESULT WINAPI SHCreateLinks(
 
 BOOL WINAPI SHGetNewLinkInfoA(
 	LPCSTR pszLinkTo,
-	LPCSTR pszDir, 
+	LPCSTR pszDir,
 	LPSTR pszName,
 	BOOL *pfMustCopy,
 	UINT uFlags);
 
 BOOL WINAPI SHGetNewLinkInfoW(
 	LPCWSTR pszLinkTo,
-	LPCWSTR pszDir, 
+	LPCWSTR pszDir,
 	LPWSTR pszName,
 	BOOL *pfMustCopy,
 	UINT uFlags);

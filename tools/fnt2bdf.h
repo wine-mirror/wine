@@ -28,7 +28,7 @@ enum data_types {dfChar, dfShort, dfLong, dfString};
 #define ERROR_MEMORY	4
 #define ERROR_FILE	5
 
-typedef struct tagFontHeader 
+typedef struct tagFontHeader
 {
     short dfVersion;		/* Version */
     long dfSize;		/* Total File Size */
@@ -41,7 +41,7 @@ typedef struct WinCharStruct
     unsigned int charWidth;
     long charOffset;
 } WinCharS;
- 
+
 typedef struct fntFontStruct
 {
     fnt_hdrS 	 	hdr;

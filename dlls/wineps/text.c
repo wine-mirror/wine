@@ -52,7 +52,7 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         rect = *lprect;
         LPtoDP( physDev->hdc, (POINT *)&rect, 2 );
 	PSDRV_WriteGSave(physDev);
-	PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left, 
+	PSDRV_WriteRectangle(physDev, rect.left, rect.top, rect.right - rect.left,
 			     rect.bottom - rect.top);
 
 	if (flags & ETO_OPAQUE)
@@ -70,12 +70,12 @@ BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	    PSDRV_WriteClip(physDev);
 	}
 
-	bResult = PSDRV_Text(physDev, x, y, str, count, !(bClipped && bOpaque), lpDx); 
+	bResult = PSDRV_Text(physDev, x, y, str, count, !(bClipped && bOpaque), lpDx);
 	PSDRV_WriteGRestore(physDev);
     }
     else
     {
-	bResult = PSDRV_Text(physDev, x, y, str, count, TRUE, lpDx); 
+	bResult = PSDRV_Text(physDev, x, y, str, count, TRUE, lpDx);
     }
 
     return bResult;
@@ -157,13 +157,13 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
 
     memcpy(strbuf, str, count * sizeof(WCHAR));
     *(strbuf + count) = '\0';
-    
+
     if ((GetBkMode( physDev->hdc ) != TRANSPARENT) && bDrawBackground)
     {
 	PSDRV_WriteGSave(physDev);
 	PSDRV_WriteNewPath(physDev);
-	PSDRV_WriteRectangle(physDev, x, y - physDev->font.tm.tmAscent, sz.cx, 
-			     physDev->font.tm.tmAscent + 
+	PSDRV_WriteRectangle(physDev, x, y - physDev->font.tm.tmAscent, sz.cx,
+			     physDev->font.tm.tmAscent +
 			     physDev->font.tm.tmDescent);
 	PSDRV_WriteSetColor(physDev, &physDev->bkColor);
 	PSDRV_WriteFill(physDev);
@@ -171,7 +171,7 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
     }
 
     PSDRV_WriteMoveTo(physDev, x, y);
-    
+
     if(!lpDx)
         PSDRV_WriteGlyphShow(physDev, strbuf, lstrlenW(strbuf));
     else {
@@ -221,8 +221,8 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, LPCWSTR str, UINT c
                 PSDRV_WriteMoveTo(physDev, x, y); /* move to the start */
 
                 /* temporarily rotate the coord system */
-                PSDRV_WriteRotate(physDev, -escapement/10); 
-                
+                PSDRV_WriteRotate(physDev, -escapement/10);
+
                 /* draw the underline relative to the starting point */
                 PSDRV_WriteRRectangle(physDev, 0, (INT)pos, size.cx, (INT)thick);
             }

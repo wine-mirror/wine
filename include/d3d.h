@@ -234,7 +234,7 @@ ICOM_DEFINE(IDirect3D,IUnknown)
     IDirect3D2_METHODS
 ICOM_DEFINE(IDirect3D2,IUnknown)
 #undef ICOM_INTERFACE
-  
+
 /*** IUnknown methods ***/
 #define IDirect3D2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3D2_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -267,7 +267,7 @@ ICOM_DEFINE(IDirect3D2,IUnknown)
     IDirect3D3_METHODS
 ICOM_DEFINE(IDirect3D3,IUnknown)
 #undef ICOM_INTERFACE
-  
+
 /*** IUnknown methods ***/
 #define IDirect3D3_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3D3_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -324,7 +324,7 @@ ICOM_DEFINE(IDirect3D7,IUnknown)
     IDirect3DLight_METHODS
 ICOM_DEFINE(IDirect3DLight,IUnknown)
 #undef ICOM_INTERFACE
-  
+
 /*** IUnknown methods ***/
 #define IDirect3DLight_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IDirect3DLight_AddRef(p)             ICOM_CALL (AddRef,p)
@@ -387,7 +387,7 @@ ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 #define IDirect3DMaterial2_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
 #define IDirect3DMaterial2_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
 #define IDirect3DMaterial2_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
-  
+
 
 /*****************************************************************************
  * IDirect3DMaterial3 interface
@@ -411,7 +411,7 @@ ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
 #define IDirect3DMaterial3_SetMaterial(p,a) ICOM_CALL1(SetMaterial,p,a)
 #define IDirect3DMaterial3_GetMaterial(p,a) ICOM_CALL1(GetMaterial,p,a)
 #define IDirect3DMaterial3_GetHandle(p,a,b) ICOM_CALL2(GetHandle,p,a,b)
-  
+
 
 /*****************************************************************************
  * IDirect3DTexture interface
@@ -983,7 +983,7 @@ ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
 #define IDirect3DVertexBuffer_ProcessVertices(p,a,b,c,d,e,f,g) ICOM_CALL7(ProcessVertices,p,a,b,c,d,e,f,g)
 #define IDirect3DVertexBuffer_GetVertexBufferDesc(p,a)         ICOM_CALL1(GetVertexBufferDesc,p,a)
 #define IDirect3DVertexBuffer_Optimize(p,a,b)                  ICOM_CALL2(Optimize,p,a,b)
-  
+
 /*****************************************************************************
  * IDirect3DVertexBuffer7 interface
  */

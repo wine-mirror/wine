@@ -79,10 +79,10 @@ HRESULT WINAPI UninitializeFlatSB(HWND hwnd)
  *
  *	Returns nonzero if successful, or zero otherwise. If index is WSB_PROP_HSTYLE,
  *	the return is nonzero if InitializeFlatSB has been called for this window, or
- *	zero otherwise. 
+ *	zero otherwise.
  *
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 {
     TRACE("[%04x] propIndex=%d\n", hwnd, propIndex);
@@ -93,7 +93,7 @@ FlatSB_GetScrollProp(HWND hwnd, INT propIndex, LPINT prop)
 /***********************************************************************
  *		FlatSB_SetScrollProp (COMCTL32.36)
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 {
     TRACE("[%04x] index=%u newValue=%d flag=%d\n", hwnd, index, newValue, flag);
@@ -109,7 +109,7 @@ FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
  *	bars on and off without having to write conditional code."
  *
  *	So, if we just call the standard functions until we implement
- *	the flat scroll bar functions, flat scroll bars will show up and 
+ *	the flat scroll bar functions, flat scroll bars will show up and
  *	behave properly, as though they had simply not been setup to
  *	have flat properties.
  *
@@ -120,7 +120,7 @@ FlatSB_SetScrollProp(HWND hwnd, UINT index, INT newValue, BOOL flag)
 /***********************************************************************
  *		FlatSB_EnableScrollBar (COMCTL32.29)
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_EnableScrollBar(HWND hwnd, int nBar, UINT flags)
 {
     return EnableScrollBar(hwnd, nBar, flags);
@@ -129,7 +129,7 @@ FlatSB_EnableScrollBar(HWND hwnd, int nBar, UINT flags)
 /***********************************************************************
  *		FlatSB_ShowScrollBar (COMCTL32.38)
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_ShowScrollBar(HWND hwnd, int nBar, BOOL fShow)
 {
     return ShowScrollBar(hwnd, nBar, fShow);
@@ -138,7 +138,7 @@ FlatSB_ShowScrollBar(HWND hwnd, int nBar, BOOL fShow)
 /***********************************************************************
  *		FlatSB_GetScrollRange (COMCTL32.33)
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_GetScrollRange(HWND hwnd, int nBar, LPINT min, LPINT max)
 {
     return GetScrollRange(hwnd, nBar, min, max);
@@ -147,7 +147,7 @@ FlatSB_GetScrollRange(HWND hwnd, int nBar, LPINT min, LPINT max)
 /***********************************************************************
  *		FlatSB_GetScrollInfo (COMCTL32.30)
  */
-BOOL WINAPI 
+BOOL WINAPI
 FlatSB_GetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info)
 {
     return GetScrollInfo(hwnd, nBar, info);
@@ -156,7 +156,7 @@ FlatSB_GetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info)
 /***********************************************************************
  *		FlatSB_GetScrollPos (COMCTL32.31)
  */
-INT WINAPI 
+INT WINAPI
 FlatSB_GetScrollPos(HWND hwnd, int nBar)
 {
     return GetScrollPos(hwnd, nBar);
@@ -165,7 +165,7 @@ FlatSB_GetScrollPos(HWND hwnd, int nBar)
 /***********************************************************************
  *		FlatSB_SetScrollPos (COMCTL32.35)
  */
-INT WINAPI 
+INT WINAPI
 FlatSB_SetScrollPos(HWND hwnd, int nBar, INT pos, BOOL bRedraw)
 {
     return SetScrollPos(hwnd, nBar, pos, bRedraw);
@@ -174,7 +174,7 @@ FlatSB_SetScrollPos(HWND hwnd, int nBar, INT pos, BOOL bRedraw)
 /***********************************************************************
  *		FlatSB_SetScrollInfo (COMCTL32.34)
  */
-INT WINAPI 
+INT WINAPI
 FlatSB_SetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info, BOOL bRedraw)
 {
     return SetScrollInfo(hwnd, nBar, info, bRedraw);
@@ -183,7 +183,7 @@ FlatSB_SetScrollInfo(HWND hwnd, int nBar, LPSCROLLINFO info, BOOL bRedraw)
 /***********************************************************************
  *		FlatSB_SetScrollRange (COMCTL32.37)
  */
-INT WINAPI 
+INT WINAPI
 FlatSB_SetScrollRange(HWND hwnd, int nBar, INT min, INT max, BOOL bRedraw)
 {
     return SetScrollRange(hwnd, nBar, min, max, bRedraw);
@@ -211,7 +211,7 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (!FlatSB_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
 	return DefWindowProcA( hwnd, uMsg, wParam, lParam );
-    
+
     switch (uMsg)
     {
 	case WM_CREATE:
@@ -243,7 +243,7 @@ FLATSB_Register (void)
     wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszClassName = FLATSB_CLASSA;
- 
+
     RegisterClassA (&wndClass);
 }
 

@@ -97,8 +97,8 @@ DWORD WINAPI phoneGetGain(HPHONE hPhone, DWORD dwHookSwitchDev, LPDWORD lpdwGain
 {
     FIXME("(%04x, %08lx, %p): stub.\n", hPhone, dwHookSwitchDev, lpdwGain);
     return 0;
-}	
-		
+}
+
 /***********************************************************************
  *		phoneGetHookSwitch (TAPI32.@)
  */

@@ -191,7 +191,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	   /* when RLE compression is used, there may be some gaps (ie the DIB doesn't
 	    * contain all the rectangle described in bmiHeader, but only part of it.
 	    * This mean that those undescribed pixels must be left untouched.
-	    * So, we first copy on a memory bitmap the current content of the 
+	    * So, we first copy on a memory bitmap the current content of the
 	    * destination rectangle, blit the DIB bits on top of it - hence leaving
 	    * the gaps untouched -, and blitting the rectangle back.
 	    * This insure that gaps are untouched on the destination rectangle
@@ -202,17 +202,17 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	    * pStretchDIBits function shall be implemented.
 	    * ericP (2000/09/09)
 	    */
-	   hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth, 
+	   hBitmap = CreateCompatibleBitmap(hdc, info->bmiHeader.biWidth,
 					    info->bmiHeader.biHeight);
 	   hOldBitmap = SelectObject( hdcMem, hBitmap );
-	   
+
 	   /* copy existing bitmap from destination dc */
 	   StretchBlt( hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
 		       widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
 		       dwRop );
-	   SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits, 
-		     info, DIB_RGB_COLORS); 
-	   
+	   SetDIBits(hdcMem, hBitmap, 0, info->bmiHeader.biHeight, bits,
+		     info, DIB_RGB_COLORS);
+
 	} else {
 	   hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
 				     bits, info, wUsage );
@@ -222,7 +222,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         /* Origin for DIBitmap may be bottom left (positive biHeight) or top
            left (negative biHeight) */
         StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-		    hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc, 
+		    hdcMem, xSrc, abs(info->bmiHeader.biHeight) - heightSrc - ySrc,
 		    widthSrc, heightSrc, dwRop );
 	SelectObject( hdcMem, hOldBitmap );
 	DeleteDC( hdcMem );
@@ -388,7 +388,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
    NB. RGBQUAD and PALETTEENTRY have different orderings of red, green
    and blue - sigh */
 
-static RGBQUAD EGAColors[16] = { 
+static RGBQUAD EGAColors[16] = {
 /* rgbBlue, rgbGreen, rgbRed, rgbReserverd */
     { 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x80, 0x00 },
@@ -706,7 +706,7 @@ INT WINAPI GetDIBits(
 
                             for( y = 0; y < lines; y++) {
                                 for( x = 0; x < srcwidth; x++, srcbits+=3 )
-                                    *dstbits++ = ((DWORD)*srcbits) & 0x00ffffff; 
+                                    *dstbits++ = ((DWORD)*srcbits) & 0x00ffffff;
                                 dstbits=(LPDWORD)(dbits+=dstwidthb);
                                 srcbits=(sbits+=srcwidthb);
                             }
@@ -748,7 +748,7 @@ INT WINAPI GetDIBits(
             }
         }
     }
-    else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
+    else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) )
     {
 	/* fill in struct members */
 
@@ -758,7 +758,7 @@ INT WINAPI GetDIBits(
 	    info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
 	    info->bmiHeader.biPlanes = 1;
 	    info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
-	    info->bmiHeader.biSizeImage = 
+	    info->bmiHeader.biSizeImage =
                              DIB_GetDIBImageBytes( bmp->bitmap.bmWidth,
 						   bmp->bitmap.bmHeight,
 						   bmp->bitmap.bmBitsPixel );
@@ -828,7 +828,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
             RGBQUAD *rgb = data->bmiColors;
             DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
 
-	    /* Check if the first color of the colormap is black */ 
+	    /* Check if the first color of the colormap is black */
 	    if ((col == RGB(0,0,0)))
             {
                 rgb++;
@@ -836,9 +836,9 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 		/* If the second color is white, create a monochrome bitmap */
                 fColor =  (col != RGB(0xff,0xff,0xff));
             }
-	    /* Note : If the first color of the colormap is white 
-	       followed by black, we have to create a color bitmap. 
-	       If we don't the white will be displayed in black later on!*/ 
+	    /* Note : If the first color of the colormap is white
+	       followed by black, we have to create a color bitmap.
+	       If we don't the white will be displayed in black later on!*/
             else fColor = TRUE;
         }
         else if (data->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
@@ -858,7 +858,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
             RGBQUAD *rgb = data->bmiColors;
             DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
 
-	    /* Check if the first color of the colormap is black */ 
+	    /* Check if the first color of the colormap is black */
 	    if ((col == RGB(0,0,0)))
             {
                 rgb++;
@@ -866,9 +866,9 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 		/* If the second color is white, create a monochrome bitmap */
                 fColor =  (col != RGB(0xff,0xff,0xff));
             }
-	    /* Note : If the first color of the colormap is white 
-	       followed by black, we have to create a color bitmap. 
-	       If we don't the white will be displayed in black later on!*/ 
+	    /* Note : If the first color of the colormap is white
+	       followed by black, we have to create a color bitmap.
+	       If we don't the white will be displayed in black later on!*/
             else fColor = TRUE;
         }
         else
@@ -1003,7 +1003,7 @@ HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
     width = pBmp->bitmap.bmWidth;
     height = pBmp->bitmap.bmHeight;
     depth = pBmp->bitmap.bmBitsPixel;
-                 
+
     /*
      * A packed DIB contains a BITMAPINFO structure followed immediately by
      * an optional color palette and the pixel data.
@@ -1026,7 +1026,7 @@ HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
         WARN("Could not allocate packed DIB!\n");
         goto END;
     }
-    
+
     /* A packed DIB starts with a BITMAPINFOHEADER */
     pPackedDIB = (LPBYTE)GlobalLock(hPackedDIB);
     pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
@@ -1045,7 +1045,7 @@ HGLOBAL DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp)
 
     /* Retrieve the DIB bits from the bitmap and fill in the
      * DIB color table if present */
-    
+
     nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
                              hBmp,                      /* Handle to bitmap */
                              0,                         /* First scan line to set in dest bitmap */

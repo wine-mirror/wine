@@ -1627,7 +1627,7 @@ START_TEST(vartest)
 	float* pFloat = &f;
 	double d = 0;
 	double* pDouble = &d;
-	
+
 	BSTR bstr = NULL;
 	int off, i = 0;
 	int nOlePtrs = 120;
@@ -1696,7 +1696,7 @@ START_TEST(vartest)
 	pOleChar[57] = AtoW( "65536" );
 	pOleChar[58] = AtoW( "4294967295" );
 	pOleChar[59] = AtoW( "4294967296" );
-	
+
 	pOleChar[60] = AtoW( "1 January 99" );
 	pOleChar[61] = AtoW( "December 31, 2078" );
 	pOleChar[62] = AtoW( "January 1, 1900" );
@@ -1857,7 +1857,7 @@ START_TEST(vartest)
 
 	/* unsigned short from ... */
 	trace( "\n\n======== Testing VarUI2FromXXX ========\n");
-	
+
 	ok(DISP_E_OVERFLOW == VarUI2FromI2( -1, pUShort ), XOV);
 	/* ok(S_OK == VarUI2FromI2( 0, NULL ), XOK);
 	 */
@@ -2088,7 +2088,7 @@ START_TEST(vartest)
 		sprintf(msg,"offset %d, expect retval %d",i,strrets_I2[i].retval);
 		ok(strrets_I2[i].retval == *pShort,msg);
 	}
-	
+
 	/* long from ...
 	 */
 	trace( "\n\n======== Testing VarI4FromXXX ========\n");
@@ -2151,7 +2151,7 @@ START_TEST(vartest)
 	ok(-16777216.0 == *pFloat,"should be -16777216.0");
 	ok(S_OK == VarR4FromR8( -16777217.0, pFloat ), XOK);
 	ok(-16777216.0 == *pFloat,"should be -16777216.0");
-	
+
 	ok(S_OK == VarR4FromR8( 16777218e31, pFloat ), XOK);
 	ok(*pFloat == 167772177736353110000000000000000000000.000000,
 		"should be 167772177736353110000000000000000000000.000000");
@@ -2234,7 +2234,7 @@ START_TEST(vartest)
 		sprintf(msg,"offset %d, retval %g ",i,strrets_DATE[i].retval);
 		ok(*pDouble == strrets_DATE[i].retval,msg);
 	}
-#endif	
+#endif
 	/* bool from ...
 	 */
 	trace( "\n\n======== Testing VarBoolFromXXX ========\n");
@@ -2258,7 +2258,7 @@ START_TEST(vartest)
 	ok(VARIANT_TRUE == *pBool, "expected TRUE");
 	ok(S_OK == VarBoolFromUI1( (unsigned char)0xFFFF, pBool ), XOK);
 	ok(VARIANT_TRUE == *pBool, "expected TRUE");
-	
+
 	ok(S_OK == VarBoolFromR8( 0.0, pBool ), XOK);
 	ok(VARIANT_FALSE == *pBool, "expected FALSE");
 	ok(S_OK == VarBoolFromR8( 1.1, pBool ), XOK);
@@ -2276,7 +2276,7 @@ START_TEST(vartest)
 	ok(S_OK == VarBoolFromR8( -0.51, pBool ), XOK);
 	ok(VARIANT_TRUE == *pBool, "expected TRUE");
 
-	
+
 	for( i = 0; i < nOlePtrs; i ++ )
 	{
 	    	char msg[200];

@@ -2,7 +2,7 @@
  * KEYBOARD driver
  *
  * Copyright 1993 Bob Amstadt
- * Copyright 1996 Albrecht Kleine 
+ * Copyright 1996 Albrecht Kleine
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
@@ -55,14 +55,14 @@ static LPBYTE pKeyStateTable;
 /***********************************************************************
  *		Inquire (KEYBOARD.1)
  */
-WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo) 
+WORD WINAPI KEYBOARD_Inquire(LPKBINFO kbInfo)
 {
   kbInfo->Begin_First_Range = 0;
   kbInfo->End_First_Range = 0;
   kbInfo->Begin_Second_Range = 0;
   kbInfo->End_Second_Range = 0;
-  kbInfo->StateSize = 16; 
-  
+  kbInfo->StateSize = 16;
+
   return sizeof(KBINFO);
 }
 
@@ -175,8 +175,8 @@ INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
-                       LPVOID lpChar, UINT16 flags) 
+INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
+                       LPVOID lpChar, UINT16 flags)
 {
     return ToAscii( virtKey, scanCode, lpKeyState, lpChar, flags );
 }

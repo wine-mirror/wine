@@ -99,7 +99,7 @@ char _ResTable[] = "_ResTable";
 /* Variables used for resource sorting */
 res_count_t *rcarray = NULL;	/* Type-level count array */
 int rccount = 0;		/* Nr of entries in the type-level array */
-int n_id_entries = 0;		/* win32 only: Nr of unique ids in the type-level array */ 
+int n_id_entries = 0;		/* win32 only: Nr of unique ids in the type-level array */
 int n_name_entries = 0;		/* win32 only: Nr of unique namess in the type-level array */
 
 static int direntries;		/* win32 only: Total number of unique resources */
@@ -813,7 +813,7 @@ static void write_ne_segment(FILE *fp)
 static void write_rsc_names(FILE *fp)
 {
 	int i, j;
-	
+
 	if(win32)
 	{
 		/* Write the names */
@@ -873,7 +873,7 @@ static void write_rsc_names(FILE *fp)
 			}
 		}
 		/* EndNames */
-		
+
 		/* This is to end the NE resource table */
 		if(create_dir)
 			fprintf(fp, "\t.byte\t0\n");
@@ -932,7 +932,7 @@ void write_s_file(char *outname, resource_t *top)
 
 	if(create_dir)
 		fprintf(fo, ".LResTabEnd:\n");
-	
+
 	if(!indirect_only)
 	{
 		/* Write the resource data */

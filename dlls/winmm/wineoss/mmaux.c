@@ -37,11 +37,11 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
-    
+
 #ifdef HAVE_OSS
 
 #define MIXER_DEV "/dev/mixer"
-    
+
 static int	NumDev = 6;
 
 /*-----------------------------------------------------------------------*/
@@ -66,7 +66,7 @@ static	int	AUXDRV_Init(void)
 static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
 {
     int 	mixer,volume;
-    
+
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
@@ -133,7 +133,7 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
 static DWORD AUX_GetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
     int 	mixer, volume, left, right, cmd;
-    
+
     TRACE("(%04X, %p);\n", wDevID, lpdwVol);
     if (lpdwVol == NULL) return MMSYSERR_NOTENABLED;
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
@@ -189,18 +189,18 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
     int 	mixer;
     int		volume, left, right;
     int		cmd;
-    
+
     TRACE("(%04X, %08lX);\n", wDevID, dwParam);
-    
+
     left   = (LOWORD(dwParam) * 100) >> 16;
     right  = (HIWORD(dwParam) * 100) >> 16;
     volume = (right << 8) | left;
-    
+
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
     }
-    
+
     switch(wDevID) {
     case 0:
 	TRACE("SOUND_MIXER_WRITE_PCM !\n");
@@ -243,10 +243,10 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 /**************************************************************************
  *		auxMessage (WINEOSS.2)
  */
-DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
+DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", 
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
 #ifdef HAVE_OSS

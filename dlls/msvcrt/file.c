@@ -223,7 +223,7 @@ static void msvcrt_alloc_buffer(MSVCRT_FILE* file)
 	if(file->_base) {
 		file->_bufsiz = MSVCRT_BUFSIZ;
 		file->_flag |= MSVCRT__IOMYBUF;
-	} else { 
+	} else {
 		file->_base = (unsigned char *)(&file->_charbuf);
 		/* put here 2 ??? */
 		file->_bufsiz = sizeof(file->_charbuf);
@@ -359,11 +359,11 @@ int _close(int fd)
   if (hand == INVALID_HANDLE_VALUE)
     return -1;
   /* flush stdio buffers */
-  if(MSVCRT_files[fd]) { 
-  	if(MSVCRT_files[fd]->_flag & MSVCRT__IOWRT) 
+  if(MSVCRT_files[fd]) {
+  	if(MSVCRT_files[fd]->_flag & MSVCRT__IOWRT)
 		MSVCRT_fflush(MSVCRT_files[fd]);
 
-  	if(MSVCRT_files[fd]->_flag & MSVCRT__IOMYBUF) 
+  	if(MSVCRT_files[fd]->_flag & MSVCRT__IOMYBUF)
 		MSVCRT_free(MSVCRT_files[fd]->_base);
   }
 
@@ -1105,7 +1105,7 @@ int _read(int fd, void *buf, unsigned int count)
  */
 int _getw(MSVCRT_FILE* file)
 {
-  int i; 
+  int i;
   if (_read(file->_file, &i, sizeof(int)) != 1)
     return MSVCRT_EOF;
   return i;
@@ -1142,9 +1142,9 @@ int _stat(const char* path, struct _stat * buf)
 
   memset(buf,0,sizeof(struct _stat));
 
-  /* FIXME: rdev isnt drive num,despite what the docs say-what is it? 
-     Bon 011120: This FIXME seems incorrect 
-                 Also a letter as first char isn't enough to be classify 
+  /* FIXME: rdev isnt drive num,despite what the docs say-what is it?
+     Bon 011120: This FIXME seems incorrect
+                 Also a letter as first char isn't enough to be classify
 		 as drive letter
   */
   if (isalpha(*path)&& (*(path+1)==':'))
@@ -1411,10 +1411,10 @@ int MSVCRT_ferror(MSVCRT_FILE* file)
  */
 int MSVCRT_fflush(MSVCRT_FILE* file)
 {
-  if(!file) { 
+  if(!file) {
 	_flushall();
 	return 0;
-  } else { 
+  } else {
   	int res=msvcrt_flush_buffer(file);
   	return res;
   }
@@ -1425,10 +1425,10 @@ int MSVCRT_fflush(MSVCRT_FILE* file)
  */
 int MSVCRT_fgetc(MSVCRT_FILE* file)
 {
-  if (file->_cnt>0) { 
+  if (file->_cnt>0) {
 	file->_cnt--;
 	return *(unsigned char *)file->_ptr++;
-  } else { 
+  } else {
 	return _filbuf(file);
   }
 }
@@ -1446,29 +1446,29 @@ int _fgetchar(void)
  */
 int _filbuf(MSVCRT_FILE* file)
 {
-   
+
   /* Allocate buffer if needed */
-  if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF) ) { 
+  if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF) ) {
 	msvcrt_alloc_buffer(file);
   }
-  if(!(file->_flag & MSVCRT__IOREAD)) { 
-	if(file->_flag & MSVCRT__IORW) { 
+  if(!(file->_flag & MSVCRT__IOREAD)) {
+	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOREAD;
-	} else { 
+	} else {
 		return MSVCRT_EOF;
 	}
   }
-  if(file->_flag & MSVCRT__IONBF) { 
+  if(file->_flag & MSVCRT__IONBF) {
 	unsigned char c;
-  	if (_read(file->_file,&c,1) != 1) { 
+  	if (_read(file->_file,&c,1) != 1) {
 		file->_flag |= MSVCRT__IOEOF;
     		return MSVCRT_EOF;
 	}
   	return c;
-  } else { 
+  } else {
 	file->_cnt = _read(file->_file, file->_base, file->_bufsiz);
 	if(file->_cnt<0) file->_cnt = 0;
-	if(!file->_cnt) { 
+	if(!file->_cnt) {
 		file->_flag |= MSVCRT__IOEOF;
 		return MSVCRT_EOF;
 	}
@@ -1523,7 +1523,7 @@ char *MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
  */
 MSVCRT_wint_t MSVCRT_fgetwc(MSVCRT_FILE* file)
 {
-  WCHAR wc; 
+  WCHAR wc;
   if (_read(file->_file, &wc, sizeof(wc)) != sizeof(wc))
     return MSVCRT_WEOF;
   return wc;
@@ -1714,11 +1714,11 @@ MSVCRT_FILE*  _wfsopen(const WCHAR *path, const WCHAR *mode, int share)
  */
 int MSVCRT_fputc(int c, MSVCRT_FILE* file)
 {
-  if(file->_cnt>0) { 
+  if(file->_cnt>0) {
 	*file->_ptr++=c;
 	file->_cnt--;
 	return c;
-  } else { 
+  } else {
 	return _flsbuf(c, file);
   }
 }
@@ -1732,17 +1732,17 @@ int _flsbuf(int c, MSVCRT_FILE* file)
   if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
 	msvcrt_alloc_buffer(file);
   }
-  if(!(file->_flag & MSVCRT__IOWRT)) { 
-	if(file->_flag & MSVCRT__IORW) { 
+  if(!(file->_flag & MSVCRT__IOWRT)) {
+	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOWRT;
-	} else { 
+	} else {
 		return MSVCRT_EOF;
 	}
   }
   if(file->_bufsiz) {
         int res=msvcrt_flush_buffer(file);
 	return res?res : MSVCRT_fputc(c, file);
-  } else { 
+  } else {
 	unsigned char cc=c;
   	return _write(file->_file, &cc, 1) == 1? c : MSVCRT_EOF;
   }
@@ -1764,7 +1764,7 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
   MSVCRT_size_t read=0;
   int pread=0;
   /* first buffered data */
-  if(file->_cnt>0) { 
+  if(file->_cnt>0) {
 	int pcnt= (rcnt>file->_cnt)? file->_cnt:rcnt;
 	memcpy(ptr, file->_ptr, pcnt);
 	file->_cnt -= pcnt;
@@ -1772,10 +1772,10 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
 	read += pcnt ;
 	rcnt -= pcnt ;
 	ptr += pcnt;
-  } else if(!(file->_flag & MSVCRT__IOREAD )) { 
-	if(file->_flag & MSVCRT__IORW) { 
+  } else if(!(file->_flag & MSVCRT__IOREAD )) {
+	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOREAD;
-	} else 
+	} else
 		return 0;
   }
   if(rcnt) pread = _read(file->_file,ptr, rcnt);
@@ -1805,7 +1805,7 @@ MSVCRT_FILE* MSVCRT_freopen(const char *path, const char *mode,MSVCRT_FILE* file
     MSVCRT__set_errno(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 #endif
-    if(MSVCRT_fclose(file)) 
+    if(MSVCRT_fclose(file))
 	return NULL;
     return MSVCRT_fopen(path, mode);
   }
@@ -1857,7 +1857,7 @@ static int char2digit(char c, int base) {
 
 /*********************************************************************
  *		fscanf (MSVCRT.@)
- * Implemented based on 
+ * Implemented based on
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vccore98/html/_crt_format_specification_fields_.2d_.scanf_and_wscanf_functions.asp
  * Extended by C. Scott Ananian <cananian@alumni.princeton.edu> to handle
  * more types of format spec.
@@ -2113,15 +2113,15 @@ int MSVCRT_fscanf(MSVCRT_FILE* file, const char *format, ...)
 int MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
 {
   /* Flush output if needed */
-  if(file->_flag & MSVCRT__IOWRT) 
+  if(file->_flag & MSVCRT__IOWRT)
 	msvcrt_flush_buffer(file);
-  
+
   if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
 	offset -= file->_cnt;
   }
   /* Discard buffered input */
   file->_cnt = 0;
-  file->_ptr = file->_base; 
+  file->_ptr = file->_base;
   /* Reset direction of i/o */
   if(file->_flag & MSVCRT__IORW) {
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
@@ -2136,10 +2136,10 @@ LONG MSVCRT_ftell(MSVCRT_FILE* file)
 {
   int off=0;
   long pos;
-  if(file->_bufsiz)  { 
+  if(file->_bufsiz)  {
 	if( file->_flag & MSVCRT__IOWRT ) {
 		off = file->_ptr - file->_base;
-	} else { 
+	} else {
 		off = -file->_cnt;
 	}
   }
@@ -2157,7 +2157,7 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
   int written = 0;
   if (size == 0)
       return 0;
-  if(file->_cnt) { 
+  if(file->_cnt) {
 	int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
 	memcpy(file->_ptr, ptr, pcnt);
 	file->_cnt -= pcnt;
@@ -2165,16 +2165,16 @@ MSVCRT_size_t MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_size_t n
 	written = pcnt;
 	wrcnt -= pcnt;
 	ptr += pcnt;
-  } else if(!(file->_flag & MSVCRT__IOWRT)) { 
-	if(file->_flag & MSVCRT__IORW) { 
+  } else if(!(file->_flag & MSVCRT__IOWRT)) {
+	if(file->_flag & MSVCRT__IORW) {
 		file->_flag |= MSVCRT__IOWRT;
-	} else 
+	} else
 		return 0;
   }
   if(wrcnt) {
 	/* Flush buffer */
   	int res=msvcrt_flush_buffer(file);
-	if(!res) { 
+	if(!res) {
 		int pwritten = _write(file->_file, ptr, wrcnt);
   		if (pwritten <= 0) pwritten=0;
 		written += pwritten;
@@ -2364,17 +2364,17 @@ int _wrename(const WCHAR *oldpath,const WCHAR *newpath)
 int MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t size)
 {
   /* TODO: Check if file busy */
-  if(file->_bufsiz) { 
+  if(file->_bufsiz) {
 	MSVCRT_free(file->_base);
 	file->_bufsiz = 0;
 	file->_cnt = 0;
   }
-  if(mode == MSVCRT__IOFBF) { 
+  if(mode == MSVCRT__IOFBF) {
 	file->_flag &= ~MSVCRT__IONBF;
   	file->_base = file->_ptr = buf;
-  	if(buf) { 
+  	if(buf) {
 		file->_bufsiz = size;
-	}  
+	}
   } else {
 	file->_flag |= MSVCRT__IONBF;
   }
@@ -2449,7 +2449,7 @@ int MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
 
 /*********************************************************************
  *		vfwprintf (MSVCRT.@)
- * FIXME: 
+ * FIXME:
  * Is final char included in written (then resize is too big) or not
  * (then we must test for equality too)?
  */
@@ -2533,11 +2533,11 @@ int MSVCRT_printf(const char *format, ...)
  */
 int MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
-	if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) { 
+	if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
 		msvcrt_alloc_buffer(file);
 		file->_ptr++;
 	}
-	if(file->_ptr>file->_base) { 
+	if(file->_ptr>file->_base) {
 		file->_ptr--;
 		*file->_ptr=c;
 		file->_cnt++;
@@ -2554,7 +2554,7 @@ MSVCRT_wint_t MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 	WCHAR mwc = wc;
 	char * pp = (char *)&mwc;
 	int i;
-	for(i=sizeof(WCHAR)-1;i>=0;i--) { 
+	for(i=sizeof(WCHAR)-1;i>=0;i--) {
 		if(pp[i] != MSVCRT_ungetc(pp[i],file))
 			return MSVCRT_WEOF;
 	}

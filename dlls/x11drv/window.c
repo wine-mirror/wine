@@ -926,7 +926,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 	{
 	    TRACE("CBT-hook returned !0\n");
             goto failed;
-	} 
+	}
     }
 
 
@@ -1143,7 +1143,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
     /* SetParent additionally needs to make hwnd the topmost window
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
-       WM_WINDOWPOSCHANGED notification messages. 
+       WM_WINDOWPOSCHANGED notification messages.
     */
     SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
                   SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );

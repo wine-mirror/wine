@@ -38,7 +38,7 @@ LPSTR WINAPI GetWin32sDirectory(void)
     strcat(sysdir, "\\WIN32S");
     text = HeapAlloc(GetProcessHeap(), 0, strlen(sysdir)+1);
     strcpy(text, sysdir);
-    return text; 
+    return text;
 }
 
 /***********************************************************************

@@ -73,8 +73,8 @@ typedef void (CALLBACK *USERSIGNALPROC)(HANDLE16, UINT16, UINT16,
                                         HINSTANCE16, HQUEUE16);
 
   /* Task database. See 'Windows Internals' p. 226.
-   * Note that 16-bit OLE 2 libs like to read it directly 
-   * so we have to keep entry offsets as they are. 
+   * Note that 16-bit OLE 2 libs like to read it directly
+   * so we have to keep entry offsets as they are.
    */
 typedef struct _TDB
 {

@@ -44,13 +44,13 @@
  * CodeView headers
  */
 
-typedef struct OMFSignature 
+typedef struct OMFSignature
 {
     char        Signature[4];
     long        filepos;
 } OMFSignature;
 
-typedef struct OMFDirHeader 
+typedef struct OMFDirHeader
 {
     unsigned short  cbDirHeader;
     unsigned short  cbDirEntry;
@@ -59,7 +59,7 @@ typedef struct OMFDirHeader
     unsigned long   flags;
 } OMFDirHeader;
 
-typedef struct OMFDirEntry 
+typedef struct OMFDirEntry
 {
     unsigned short  SubSection;
     unsigned short  iMod;
@@ -72,7 +72,7 @@ typedef struct OMFDirEntry
  * sstModule subsection
  */
 
-typedef struct OMFSegDesc 
+typedef struct OMFSegDesc
 {
     unsigned short  Seg;
     unsigned short  pad;
@@ -84,7 +84,7 @@ typedef struct OMFSegDesc
  * struct out to a file.  If we write the whole struct out, we'll end up
  * with (*OMFSegDesc), not (OMFSegDesc).  See OMFModuleFull.
  */
-typedef struct OMFModule 
+typedef struct OMFModule
 {
     unsigned short  ovlNumber;
     unsigned short  iLib;
@@ -113,7 +113,7 @@ typedef struct OMFModuleFull
 
 /* Header for symbol table.
  */
-typedef struct OMFSymHash 
+typedef struct OMFSymHash
 {
     unsigned short  symhash;
     unsigned short  addrhash;
@@ -124,7 +124,7 @@ typedef struct OMFSymHash
 
 /* Symbol table entry.
  */
-typedef struct DATASYM32 
+typedef struct DATASYM32
 {
     unsigned short  reclen;
     unsigned short  rectyp;

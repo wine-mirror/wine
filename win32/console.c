@@ -90,7 +90,7 @@ static	BOOL	start_console_renderer(void)
     attr.ObjectName               = NULL;
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
-    
+
     NtCreateEvent(&hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE);
     if (!hEvent) return FALSE;
 
@@ -115,10 +115,10 @@ static	BOOL	start_console_renderer(void)
 
     goto the_end;
 
- succeed:    
+ succeed:
     if (WaitForSingleObject(hEvent, INFINITE) != WAIT_OBJECT_0) goto the_end;
     CloseHandle(hEvent);
-    
+
     TRACE("Started wineconsole pid=%08lx tid=%08lx\n", pi.dwProcessId, pi.dwThreadId);
 
     return TRUE;
@@ -143,7 +143,7 @@ BOOL WINAPI AllocConsole(void)
 
     TRACE("()\n");
 
-    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, 
+    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
 			     0, NULL, OPEN_EXISTING, 0, 0 );
 
     if (handle_in != INVALID_HANDLE_VALUE)
@@ -156,18 +156,18 @@ BOOL WINAPI AllocConsole(void)
     if (!start_console_renderer())
 	goto the_end;
 
-    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, 
+    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
 			     0, NULL, OPEN_EXISTING, 0, 0 );
     if (handle_in == INVALID_HANDLE_VALUE) goto the_end;
 
-    handle_out = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 
+    handle_out = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE,
 			     0, NULL, OPEN_EXISTING, 0, 0 );
     if (handle_out == INVALID_HANDLE_VALUE) goto the_end;
 
     if (!DuplicateHandle(GetCurrentProcess(), handle_out, GetCurrentProcess(), &handle_err,
 			 0, TRUE, DUPLICATE_SAME_ACCESS))
 	goto the_end;
-    
+
     /* NT resets the STD_*_HANDLEs on console alloc */
     SetStdHandle(STD_INPUT_HANDLE,  handle_in);
     SetStdHandle(STD_OUTPUT_HANDLE, handle_out);
@@ -269,13 +269,13 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     DWORD	charsread;
     LPWSTR	xbuf = (LPWSTR)lpBuffer;
     DWORD	mode;
-    
+
     TRACE("(%d,%p,%ld,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
-    
+
     if (!GetConsoleMode(hConsoleInput, &mode))
         return FALSE;
-    
+
     if (mode & ENABLE_LINE_INPUT)
     {
 	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
@@ -294,7 +294,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     {
 	INPUT_RECORD 	ir;
 	DWORD 		count;
-	
+
 	/* FIXME: should we read at least 1 char? The SDK does not say */
 	/* wait for at least one available input record (it doesn't mean we'll have
 	 * chars stored in xbuf...
@@ -325,13 +325,13 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
                               DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
     DWORD count;
-	
+
     if (!nLength)
     {
         if (lpNumberOfEventsRead) *lpNumberOfEventsRead = 0;
         return TRUE;
     }
-    
+
     /* loop until we get at least one event */
     for (;;)
     {
@@ -361,7 +361,7 @@ BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
- * 
+ *
  */
 BOOL WINAPI WriteConsoleOutputCharacterW( HANDLE hConsoleOutput, LPCWSTR str, DWORD length,
                                           COORD coord, LPDWORD lpNumCharsWritten )
@@ -427,7 +427,7 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
 
 /******************************************************************************
  *  SetConsoleInputExeNameW	 [KERNEL32.@]
- * 
+ *
  * BUGS
  *   Unimplemented
  */
@@ -441,7 +441,7 @@ BOOL WINAPI SetConsoleInputExeNameW(LPCWSTR name)
 
 /******************************************************************************
  *  SetConsoleInputExeNameA	 [KERNEL32.@]
- * 
+ *
  * BUGS
  *   Unimplemented
  */
@@ -494,9 +494,9 @@ static PHANDLER_ROUTINE handlers[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,CONSOLE_Defa
 BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 {
     int alloc_loop = sizeof(handlers)/sizeof(handlers[0]) - 1;
-    
+
     FIXME("(%p,%i) - no error checking or testing yet\n", func, add);
-    
+
     if (!func)
     {
 	console_ignore_ctrl_c = add;
@@ -565,9 +565,9 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
     if (dwProcessGroupID == GetCurrentProcessId() || dwProcessGroupID == 0)
     {
 	int	i;
-	
+
 	FIXME("Attempt to send event %ld to self groupID, doing locally only\n", dwCtrlEvent);
-	
+
 	/* this is only meaningfull when done locally, otherwise it will have to be done on
 	 * the 'receive' side of the event generation
 	 */
@@ -616,21 +616,21 @@ BOOL WINAPI GenerateConsoleCtrlEvent(DWORD dwCtrlEvent,
  *    Success: Handle to new console screen buffer
  *    Failure: INVALID_HANDLE_VALUE
  */
-HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, 
-					LPSECURITY_ATTRIBUTES sa, DWORD dwFlags, 
+HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode,
+					LPSECURITY_ATTRIBUTES sa, DWORD dwFlags,
 					LPVOID lpScreenBufferData)
 {
     HANDLE	ret = INVALID_HANDLE_VALUE;
-    
-    TRACE("(%ld,%ld,%p,%ld,%p)\n", 
+
+    TRACE("(%ld,%ld,%p,%ld,%p)\n",
 	  dwDesiredAccess, dwShareMode, sa, dwFlags, lpScreenBufferData);
-    
+
     if (dwFlags != CONSOLE_TEXTMODE_BUFFER || lpScreenBufferData != NULL)
     {
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return INVALID_HANDLE_VALUE;
     }
-    
+
     SERVER_START_REQ(create_console_output)
     {
 	req->handle_in = 0;
@@ -640,7 +640,7 @@ HANDLE WINAPI CreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode
 	if (!wine_server_call_err( req )) ret = reply->handle_out;
     }
     SERVER_END_REQ;
-    
+
     return ret;
 }
 
@@ -707,7 +707,7 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
 {
     BOOL ret;
-    
+
     SERVER_START_REQ(get_console_mode)
     {
 	req->handle = hcon;
@@ -733,9 +733,9 @@ BOOL WINAPI GetConsoleMode(HANDLE hcon, LPDWORD mode)
 BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
 {
     BOOL ret;
-    
+
     TRACE("(%x,%lx)\n", hcon, mode);
-    
+
     SERVER_START_REQ(set_console_mode)
     {
 	req->handle = hcon;
@@ -785,7 +785,7 @@ static int write_char(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
  */
 static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
 {
-    SMALL_RECT	src; 
+    SMALL_RECT	src;
     CHAR_INFO	ci;
     COORD	dst;
 
@@ -794,17 +794,17 @@ static int	next_line(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi)
 
     if (csbi->dwCursorPosition.Y < csbi->dwSize.Y) return 1;
 
-    src.Top    = 1; 
-    src.Bottom = csbi->dwSize.Y - 1; 
-    src.Left   = 0; 
-    src.Right  = csbi->dwSize.X - 1; 
-    
-    dst.X      = 0; 
+    src.Top    = 1;
+    src.Bottom = csbi->dwSize.Y - 1;
+    src.Left   = 0;
+    src.Right  = csbi->dwSize.X - 1;
+
+    dst.X      = 0;
     dst.Y      = 0;
-	
+
     ci.Attributes = csbi->wAttributes;
-    ci.Char.UnicodeChar = ' '; 
-    
+    ci.Char.UnicodeChar = ' ';
+
     csbi->dwCursorPosition.Y--;
     if (!ScrollConsoleScreenBufferW(hCon, &src, NULL, dst, &ci))
 	return 0;
@@ -849,7 +849,7 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
         if (blk < len)
         {
             csbi->dwCursorPosition.X = csbi->dwSize.X - 1;
-            /* all remaining chars should be written on last column, 
+            /* all remaining chars should be written on last column,
              * so only overwrite the last column with last char in block
              */
             if (write_char(hCon, ptr + len - 1, 1, &csbi->dwCursorPosition) != 1)
@@ -859,7 +859,7 @@ static int     	write_block(HANDLE hCon, CONSOLE_SCREEN_BUFFER_INFO* csbi,
     }
 
     return 1;
-}   
+}
 
 /***********************************************************************
  *            WriteConsoleW   (KERNEL32.@)
@@ -872,21 +872,21 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     WCHAR*			psz = (WCHAR*)lpBuffer;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     int				k, first = 0;
-    
-    TRACE("%d %s %ld %p %p\n", 
+
+    TRACE("%d %s %ld %p %p\n",
 	  hConsoleOutput, debugstr_wn(lpBuffer, nNumberOfCharsToWrite),
 	  nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved);
-    
+
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
-    
-    if (!GetConsoleMode(hConsoleOutput, &mode) || 
+
+    if (!GetConsoleMode(hConsoleOutput, &mode) ||
 	!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
 	return FALSE;
-    
+
     if (mode & ENABLE_PROCESSED_OUTPUT)
     {
 	int	i;
-	
+
 	for (i = 0; i < nNumberOfCharsToWrite; i++)
 	{
 	    switch (psz[i])
@@ -910,8 +910,8 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 	    case '\t':
 	        {
 		    WCHAR tmp[8] = {' ',' ',' ',' ',' ',' ',' ',' '};
-		    
-		    if (!write_block(hConsoleOutput, &csbi, mode, tmp, 
+
+		    if (!write_block(hConsoleOutput, &csbi, mode, tmp,
 				     ((csbi.dwCursorPosition.X + 8) & ~7) - csbi.dwCursorPosition.X))
 			goto the_end;
 		}
@@ -921,7 +921,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 		break;
  	    case '\a':
 		Beep(400, 300);
- 		break; 
+ 		break;
 	    case '\r':
 		csbi.dwCursorPosition.X = 0;
 		break;
@@ -930,7 +930,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 	    }
 	}
     }
-    
+
     /* write the remaining block (if any) if processed output is enabled, or the
      * entire buffer otherwise
      */
@@ -940,7 +940,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 	    goto the_end;
 	nw += k;
     }
-    
+
  the_end:
     SetConsoleCursorPosition(hConsoleOutput, csbi.dwCursorPosition);
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = nw;
@@ -957,19 +957,19 @@ BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     BOOL	ret;
     LPWSTR	xstring;
     DWORD 	n;
-    
+
     n = MultiByteToWideChar(CP_ACP, 0, lpBuffer, nNumberOfCharsToWrite, NULL, 0);
-    
+
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
     xstring = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
     if (!xstring) return 0;
-    
+
     MultiByteToWideChar(CP_ACP, 0, lpBuffer, nNumberOfCharsToWrite, xstring, n);
-    
+
     ret = WriteConsoleW(hConsoleOutput, xstring, n, lpNumberOfCharsWritten, 0);
-    
+
     HeapFree(GetProcessHeap(), 0, xstring);
-    
+
     return ret;
 }
 
@@ -1012,7 +1012,7 @@ BOOL WINAPI SetConsoleCursorPosition(HANDLE hcon, COORD pos)
     {
 	csbi.srWindow.Left   = min(pos.X, csbi.dwSize.X - w);
 	do_move++;
-    } 
+    }
     else if (pos.X > csbi.srWindow.Right)
     {
 	csbi.srWindow.Left   = max(pos.X, w) - w + 1;
@@ -1163,7 +1163,7 @@ BOOL WINAPI SetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttr)
 
 
 /******************************************************************************
- * SetConsoleScreenBufferSize [KERNEL32.@]  Changes size of console 
+ * SetConsoleScreenBufferSize [KERNEL32.@]  Changes size of console
  *
  * PARAMS
  *    hConsoleOutput [I] Handle to console screen buffer
@@ -1192,18 +1192,18 @@ BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 
 /******************************************************************************
  * ScrollConsoleScreenBufferA [KERNEL32.@]
- * 
+ *
  */
-BOOL WINAPI ScrollConsoleScreenBufferA(HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect, 
-				       LPSMALL_RECT lpClipRect, COORD dwDestOrigin, 
+BOOL WINAPI ScrollConsoleScreenBufferA(HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect,
+				       LPSMALL_RECT lpClipRect, COORD dwDestOrigin,
 				       LPCHAR_INFO lpFill)
 {
     CHAR_INFO	ciw;
-    
+
     ciw.Attributes = lpFill->Attributes;
     MultiByteToWideChar(CP_ACP, 0, &lpFill->Char.AsciiChar, 1, &ciw.Char.UnicodeChar, 1);
-    
-    return ScrollConsoleScreenBufferW(hConsoleOutput, lpScrollRect, lpClipRect, 
+
+    return ScrollConsoleScreenBufferW(hConsoleOutput, lpScrollRect, lpClipRect,
 				      dwDestOrigin, &ciw);
 }
 
@@ -1232,11 +1232,11 @@ static void fill_line_uniform(HANDLE hConsoleOutput, int i, int j, int len, LPCH
 
 /******************************************************************************
  * ScrollConsoleScreenBufferW [KERNEL32.@]
- * 
+ *
  */
 
-BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect, 
-				       LPSMALL_RECT lpClipRect, COORD dwDestOrigin, 
+BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScrollRect,
+				       LPSMALL_RECT lpClipRect, COORD dwDestOrigin,
 				       LPCHAR_INFO lpFill)
 {
     SMALL_RECT			dst;
@@ -1246,20 +1246,20 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     SMALL_RECT			clip;
     CONSOLE_SCREEN_BUFFER_INFO	csbi;
     BOOL			inside;
-	
+
     if (lpClipRect)
-	TRACE("(%d,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", hConsoleOutput, 
+	TRACE("(%d,(%d,%d-%d,%d),(%d,%d-%d,%d),%d-%d,%p)\n", hConsoleOutput,
 	      lpScrollRect->Left, lpScrollRect->Top,
 	      lpScrollRect->Right, lpScrollRect->Bottom,
 	      lpClipRect->Left, lpClipRect->Top,
 	      lpClipRect->Right, lpClipRect->Bottom,
 	      dwDestOrigin.X, dwDestOrigin.Y, lpFill);
     else
-	TRACE("(%d,(%d,%d-%d,%d),(nil),%d-%d,%p)\n", hConsoleOutput, 
+	TRACE("(%d,(%d,%d-%d,%d),(nil),%d-%d,%p)\n", hConsoleOutput,
 	      lpScrollRect->Left, lpScrollRect->Top,
 	      lpScrollRect->Right, lpScrollRect->Bottom,
 	      dwDestOrigin.X, dwDestOrigin.Y, lpFill);
-    
+
     if (!GetConsoleScreenBufferInfo(hConsoleOutput, &csbi))
 	return FALSE;
 
@@ -1268,7 +1268,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     dst.Top = dwDestOrigin.Y;
     dst.Right = dst.Left + (lpScrollRect->Right - lpScrollRect->Left);
     dst.Bottom = dst.Top + (lpScrollRect->Bottom - lpScrollRect->Top);
-    
+
     /* step 2a: compute the final clip rect (optional passed clip and screen buffer limits */
     if (lpClipRect)
     {
@@ -1291,7 +1291,7 @@ BOOL WINAPI ScrollConsoleScreenBufferW(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     if (dst.Top    < clip.Top   ) dst.Top    = clip.Top;
     if (dst.Right  > clip.Right ) dst.Right  = clip.Right;
     if (dst.Bottom > clip.Bottom) dst.Bottom = clip.Bottom;
-    
+
     /* step 3: transfer the bits */
     SERVER_START_REQ(move_console_output)
     {

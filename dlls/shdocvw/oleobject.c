@@ -410,7 +410,7 @@ static HRESULT WINAPI WBOOBJ_SetColorScheme(LPOLEOBJECT iface,
  * IOleObject virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IOleObject) WBOOBJ_Vtbl = 
+static ICOM_VTABLE(IOleObject) WBOOBJ_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOOBJ_QueryInterface,
@@ -528,7 +528,7 @@ static HRESULT WINAPI WBOIPO_ReactivateAndUndo(LPOLEINPLACEOBJECT iface)
  * IOleInPlaceObject virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IOleInPlaceObject) WBOIPO_Vtbl = 
+static ICOM_VTABLE(IOleInPlaceObject) WBOIPO_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOIPO_QueryInterface,
@@ -603,7 +603,7 @@ static HRESULT WINAPI WBOC_FreezeEvents(LPOLECONTROL iface, BOOL bFreeze)
  * IOleControl virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IOleControl) WBOC_Vtbl = 
+static ICOM_VTABLE(IOleControl) WBOC_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBOC_QueryInterface,

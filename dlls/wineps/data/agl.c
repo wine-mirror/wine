@@ -1353,7 +1353,7 @@ GLYPHNAME PSDRV_AGLGlyphNames[1258] =
 
 const INT PSDRV_AGLbyNameSize = 1039;
 
-const UNICODEGLYPH PSDRV_AGLbyName[1039] = 
+const UNICODEGLYPH PSDRV_AGLbyName[1039] =
 {
     { 0x0041, GN_A },			    { 0x00c6, GN_AE },
     { 0x01fc, GN_AEacute },		    { 0xf7e6, GN_AEsmall },
@@ -1884,7 +1884,7 @@ const UNICODEGLYPH PSDRV_AGLbyName[1039] =
 
 const INT PSDRV_AGLbyUVSize = 1051;
 
-const UNICODEGLYPH PSDRV_AGLbyUV[1051] = 
+const UNICODEGLYPH PSDRV_AGLbyUV[1051] =
 {
     { 0x0020, GN_space },		    { 0x0021, GN_exclam },
     { 0x0022, GN_quotedbl },		    { 0x0023, GN_numbersign },

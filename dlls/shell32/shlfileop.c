@@ -36,32 +36,32 @@ BOOL SHELL_WarnItemDelete (int nKindOfDialog, LPCSTR szDir)
 
         if(nKindOfDialog == ASK_DELETE_FILE)
         {
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
 		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
 		szCaption, sizeof(szCaption));
 	}
         else if(nKindOfDialog == ASK_DELETE_FOLDER)
         {
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
 		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION,
 		szCaption, sizeof(szCaption));
         }
         else if(nKindOfDialog == ASK_DELETE_MULTIPLE_ITEM)
         {
-	  LoadStringA(shell32_hInstance, IDS_DELETEMULTIPLE_TEXT, szText, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEMULTIPLE_TEXT, szText,
 		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
 		szCaption, sizeof(szCaption));
         }
 	else {
           FIXME("Called without a valid nKindOfDialog specified!\n");
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText,
 		sizeof(szText));
-	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION,
 		szCaption, sizeof(szCaption));
-	}          
+	}
 
 	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	    szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
@@ -85,10 +85,10 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	strcpy(szTemp, pszDir);
 	PathAddBackslashA(szTemp);
 	strcat(szTemp, "*.*");
-	
+
 	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FOLDER, pszDir))
 	  return FALSE;
-	
+
 	if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(szTemp, &wfd)))
 	{
 	  do
@@ -98,7 +98,7 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	      strcpy(szTemp, pszDir);
 	      PathAddBackslashA(szTemp);
 	      strcat(szTemp, wfd.cFileName);
-	
+
 	      if(FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
 	        SHELL_DeleteDirectoryA(szTemp, FALSE);
 	      else
@@ -121,7 +121,7 @@ BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
 {
 	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FILE, pszFile))
 		return FALSE;
- 
+
         return DeleteFileA(pszFile);
 }
 
@@ -144,7 +144,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path)
 }
 
 /************************************************************************
- *      Win32DeleteFile                         [SHELL32.164]  
+ *      Win32DeleteFile                         [SHELL32.164]
  *
  * Deletes a file.  Also triggers a change notify if one exists.
  *
@@ -152,7 +152,7 @@ DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path)
  * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be
  * ANSI.  Is this Unicode on NT?
  *
- */ 
+ */
 
 BOOL WINAPI Win32DeleteFile(LPSTR fName)
 {
@@ -169,12 +169,12 @@ BOOL WINAPI Win32DeleteFile(LPSTR fName)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)   
+DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
 {
 	LPSTR pFrom = (LPSTR)lpFileOp->pFrom;
 	LPSTR pTo = (LPSTR)lpFileOp->pTo;
 	LPSTR pTempTo;
-        TRACE("flags (0x%04x) : %s%s%s%s%s%s%s%s%s%s%s%s \n", lpFileOp->fFlags, 
+        TRACE("flags (0x%04x) : %s%s%s%s%s%s%s%s%s%s%s%s \n", lpFileOp->fFlags,
                 lpFileOp->fFlags & FOF_MULTIDESTFILES ? "FOF_MULTIDESTFILES " : "",
                 lpFileOp->fFlags & FOF_CONFIRMMOUSE ? "FOF_CONFIRMMOUSE " : "",
                 lpFileOp->fFlags & FOF_SILENT ? "FOF_SILENT " : "",
@@ -203,10 +203,10 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                  * multiple from filenames 1 0 1 0 1 0 1 0
                  *                         ---------------
                  * copy files to dir       1 0 1 1 0 0 1 0
-                 * create dir              0 0 0 0 0 0 1 0 
+                 * create dir              0 0 0 0 0 0 1 0
                  */
                 int multifrom = pFrom[strlen(pFrom) + 1] != '\0';
-                int destisdir = PathIsDirectoryA( pTo ); 
+                int destisdir = PathIsDirectoryA( pTo );
                 int copytodir = 0;
 		TRACE("File Copy:\n");
                 if( destisdir ) {
@@ -290,7 +290,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
  * NOTES
  *     exported by name
  */
-DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)   
+DWORD WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp)
 {
 	FIXME("(%p):stub.\n", lpFileOp);
 	return 1;

@@ -461,19 +461,19 @@ static void X11DRV_GetTextMetricsA_normal( fontObject* pfo, LPTEXTMETRICA pTM )
 			? 1 : pdf->dfUnderline;
 
     pTM->tmOverhang = 0;
-    if( pfo->fo_flags & FO_SYNTH_ITALIC ) 
+    if( pfo->fo_flags & FO_SYNTH_ITALIC )
     {
 	pTM->tmOverhang += pTM->tmHeight/3;
 	pTM->tmItalic = 1;
-    } else 
+    } else
 	pTM->tmItalic = pdf->dfItalic;
 
     pTM->tmWeight = pdf->dfWeight;
-    if( pfo->fo_flags & FO_SYNTH_BOLD ) 
+    if( pfo->fo_flags & FO_SYNTH_BOLD )
     {
-	pTM->tmOverhang++; 
+	pTM->tmOverhang++;
 	pTM->tmWeight += 100;
-    } 
+    }
 
     pTM->tmFirstChar = pdf->dfFirstChar;
     pTM->tmLastChar = pdf->dfLastChar;
@@ -652,19 +652,19 @@ static void X11DRV_GetTextMetricsA_cp932( fontObject* pfo, LPTEXTMETRICA pTM )
 			? 1 : pdf->dfUnderline;
 
     pTM->tmOverhang = 0;
-    if( pfo->fo_flags & FO_SYNTH_ITALIC ) 
+    if( pfo->fo_flags & FO_SYNTH_ITALIC )
     {
 	pTM->tmOverhang += pTM->tmHeight/3;
 	pTM->tmItalic = 1;
-    } else 
+    } else
 	pTM->tmItalic = pdf->dfItalic;
 
     pTM->tmWeight = pdf->dfWeight;
-    if( pfo->fo_flags & FO_SYNTH_BOLD ) 
+    if( pfo->fo_flags & FO_SYNTH_BOLD )
     {
-	pTM->tmOverhang++; 
+	pTM->tmOverhang++;
 	pTM->tmWeight += 100;
-    } 
+    }
 
     pTM->tmFirstChar = pdf_ansi->dfFirstChar;
     pTM->tmLastChar = pdf_ansi->dfLastChar;

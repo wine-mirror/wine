@@ -49,7 +49,7 @@ MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 /***********************************************************************
  *           MFDRV_Arc
  */
-BOOL 
+BOOL
 MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
            INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -102,7 +102,7 @@ MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *           MFDRV_RoundRect
  */
-BOOL 
+BOOL
 MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
                  INT bottom, INT ell_width, INT ell_height )
 {
@@ -117,7 +117,7 @@ COLORREF
 MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return MFDRV_MetaParam4(dev, META_SETPIXEL, x, y,HIWORD(color),
-			    LOWORD(color)); 
+			    LOWORD(color));
 }
 
 
@@ -130,7 +130,7 @@ static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, LPPOINT16 pt, short count)
     DWORD len;
     METARECORD *mr;
 
-    len = sizeof(METARECORD) + (count * 4); 
+    len = sizeof(METARECORD) + (count * 4);
     if (!(mr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len )))
 	return FALSE;
 
@@ -157,7 +157,7 @@ MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
     pt16 = (LPPOINT16)HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
     for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
-    ret = MFDRV_MetaPoly(dev, META_POLYLINE, pt16, count); 
+    ret = MFDRV_MetaPoly(dev, META_POLYLINE, pt16, count);
 
     HeapFree( GetProcessHeap(), 0, pt16 );
     return ret;
@@ -177,7 +177,7 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
     pt16 = (LPPOINT16) HeapAlloc( GetProcessHeap(), 0, sizeof(POINT16)*count );
     if(!pt16) return FALSE;
     for (i=count;i--;) CONV_POINT32TO16(&(pt[i]),&(pt16[i]));
-    ret = MFDRV_MetaPoly(dev, META_POLYGON, pt16, count); 
+    ret = MFDRV_MetaPoly(dev, META_POLYGON, pt16, count);
 
     HeapFree( GetProcessHeap(), 0, pt16 );
     return ret;
@@ -187,7 +187,7 @@ MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 /**********************************************************************
  *          MFDRV_PolyPolygon
  */
-BOOL 
+BOOL
 MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
 {
     int		i,j;
@@ -196,7 +196,7 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
     BOOL	ret;
 
     for (i=0;i<polygons;i++) {
-    	pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0, 
+    	pt16=(LPPOINT16)HeapAlloc( GetProcessHeap(), 0,
 				   sizeof(POINT16) * counts[i] );
 	if(!pt16) return FALSE;
 	for (j=counts[i];j--;) CONV_POINT32TO16(&(curpt[j]),&(pt16[j]));
@@ -213,11 +213,11 @@ MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygon
 /**********************************************************************
  *          MFDRV_ExtFloodFill
  */
-BOOL 
+BOOL
 MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     return MFDRV_MetaParam4(dev,META_FLOODFILL,x,y,HIWORD(color),
-			    LOWORD(color)); 
+			    LOWORD(color));
 }
 
 
@@ -225,7 +225,7 @@ MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
  *         MFDRV_CreateRegion
  *
  * For explanation of the format of the record see MF_Play_MetaCreateRegion in
- * objects/metafile.c 
+ * objects/metafile.c
  */
 static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 {
@@ -283,7 +283,7 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 	}
     }
     len = Param - (WORD *)mr;
-    
+
     mr->rdParm[0] = 0;
     mr->rdParm[1] = 6;
     mr->rdParm[2] = 0x1234;
@@ -297,10 +297,10 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     mr->rdParm[10] = rgndata->rdh.rcBound.bottom;
     mr->rdFunction = META_CREATEREGION;
     mr->rdSize = len / 2;
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );	
+    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     HeapFree( GetProcessHeap(), 0, rgndata );
-    if(!ret) 
+    if(!ret)
     {
         WARN("MFDRV_WriteRecord failed\n");
 	return -1;

@@ -36,7 +36,7 @@ static char psheader[] = /* title llx lly urx ury orientation */
 "%%%%Orientation: %s\n"
 "%%%%EndComments\n";
 
-static char psbeginprolog[] = 
+static char psbeginprolog[] =
 "%%BeginProlog\n";
 
 static char psendprolog[] =
@@ -93,7 +93,7 @@ static char psmoveto[] = /* x, y */
 static char pslineto[] = /* x, y */
 "%d %d lineto\n";
 
-static char psstroke[] = 
+static char psstroke[] =
 "stroke\n";
 
 static char psrectangle[] = /* x, y, width, height, -width */
@@ -167,10 +167,10 @@ static char pseoclip[] =
 "eoclip\n";
 
 static char psrectclip[] =
-"%d %d %d %d rectclip\n"; 
+"%d %d %d %d rectclip\n";
 
 static char psrectclip2[] =
-"%s rectclip\n"; 
+"%s rectclip\n";
 
 static char pshatch[] =
 "hatch\n";
@@ -178,13 +178,13 @@ static char pshatch[] =
 static char psrotate[] = /* ang */
 "%.1f rotate\n";
 
-static char psarrayget[] = 
+static char psarrayget[] =
 "%s %d get\n";
 
-static char psarrayput[] = 
+static char psarrayput[] =
 "%s %d %ld put\n";
 
-static char psarraydef[] = 
+static char psarraydef[] =
 "/%s %d array def\n";
 
 
@@ -212,7 +212,7 @@ INT PSDRV_WriteFeature(HANDLE16 hJob, char *feature, char *value,
     WriteSpool16( hJob, invocation, strlen(invocation) );
 
     WriteSpool16( hJob, psendfeature, strlen(psendfeature) );
-    
+
     HeapFree( PSDRV_Heap, 0, buf );
     return 1;
 }
@@ -234,7 +234,7 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
         WARN("HeapAlloc failed\n");
         return 0;
     }
-    
+
     /* BBox co-ords are in default user co-ord system so urx < ury even in
        landscape mode */
     llx = physDev->ImageableArea.left * 72.0 / physDev->logPixelsX;
@@ -250,9 +250,9 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
 
     /* FIXME should do something better with BBox */
 
-    sprintf(buf, psheader, title, llx, lly, urx, ury, orient);		
+    sprintf(buf, psheader, title, llx, lly, urx, ury, orient);
 
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
+    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
 	                                             strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
@@ -305,7 +305,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 
     sprintf(buf, psfooter, physDev->job.PageNo);
 
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
+    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
 	                                             strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
@@ -319,7 +319,7 @@ INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev )
 
 INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev )
 {
-    if( WriteSpool16( physDev->job.hJob, psendpage, sizeof(psendpage)-1 ) != 
+    if( WriteSpool16( physDev->job.hJob, psendpage, sizeof(psendpage)-1 ) !=
 	                                             sizeof(psendpage)-1 ) {
         WARN("WriteSpool error\n");
 	return 0;
@@ -364,7 +364,7 @@ INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev )
 	    physDev->logPixelsX, physDev->logPixelsY,
 	    xtrans, ytrans, rotation);
 
-    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
+    if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) !=
 	                                             strlen(buf) ) {
         WARN("WriteSpool error\n");
 	HeapFree( PSDRV_Heap, 0, buf );
@@ -399,7 +399,7 @@ BOOL PSDRV_WriteStroke(PSDRV_PDEVICE *physDev)
 
 
 
-BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, 
+BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
 			INT height)
 {
     char buf[100];
@@ -439,15 +439,15 @@ BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev)
         WARN("HeapAlloc failed\n");
         return FALSE;
     }
-    
-    sprintf(buf, pssetfont, physDev->font.afm->FontName, 
+
+    sprintf(buf, pssetfont, physDev->font.afm->FontName,
 		physDev->font.size, -physDev->font.size,
 	        -physDev->font.escapement);
 
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
-}    
+}
 
 BOOL PSDRV_WriteSetColor(PSDRV_PDEVICE *physDev, PSCOLOR *color)
 {
@@ -460,10 +460,10 @@ BOOL PSDRV_WriteSetColor(PSDRV_PDEVICE *physDev, PSCOLOR *color)
 		color->value.rgb.b);
 	return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
-    case PSCOLOR_GRAY:	
+    case PSCOLOR_GRAY:
         sprintf(buf, pssetgray, color->value.gray.i);
 	return PSDRV_WriteSpool(physDev, buf, strlen(buf));
-	
+
     default:
         ERR("Unkonwn colour type %d\n", color->type);
 	break;
@@ -491,24 +491,24 @@ BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count)
 {
     char    buf[128];
     int     i;
-    
+
     for (i = 0; i < count; ++i)
     {
     	LPCSTR	name;
 	int 	l;
-	
+
 	name = PSDRV_UVMetrics(str[i], physDev->font.afm)->N->sz;
 	l = snprintf(buf, sizeof(buf), psglyphshow, name);
-	
+
 	if (l < sizeof(psglyphshow) - 2 || l > sizeof(buf) - 1)
 	{
 	    WARN("Unusable glyph name '%s' - ignoring\n", name);
 	    continue;
 	}
-	
+
 	PSDRV_WriteSpool(physDev, buf, l);
     }
-    
+
     return TRUE;
 }
 
@@ -581,7 +581,7 @@ BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev)
 {
     char buf[] = ">\n] setcolorspace\n";
     return PSDRV_WriteSpool(physDev, buf, sizeof(buf) - 1);
-} 
+}
 
 BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number)
 {
@@ -590,7 +590,7 @@ BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number)
 
     ptr = buf;
     for(i = 0; i < number; i++) {
-        sprintf(ptr, "%02x%02x%02x%c", (int)GetRValue(map[i]), 
+        sprintf(ptr, "%02x%02x%02x%c", (int)GetRValue(map[i]),
 		(int)GetGValue(map[i]), (int)GetBValue(map[i]),
 		((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
 	ptr += 7;
@@ -659,9 +659,9 @@ BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number)
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 3 + 1);
     char *ptr;
     int i;
-    
+
     ptr = buf;
-    
+
     for(i = 0; i < number; i++) {
         sprintf(ptr, "%02x%c", bytes[i],
 		((i & 0xf) == 0xf) || (i == number - 1) ? '\n' : ' ');
@@ -678,9 +678,9 @@ BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number)
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
     char *ptr;
     int i;
-    
+
     ptr = buf;
-    
+
     for(i = 0; i < number; i++) {
         int r, g, b;
 
@@ -707,9 +707,9 @@ BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
     char *ptr;
     int i;
-    
+
     ptr = buf;
-    
+
     for(i = 0; i < number; i++) {
         sprintf(ptr, "%02x%02x%02x%c", bits[i * 3 + 2], bits[i * 3 + 1],
 		bits[i * 3],
@@ -727,9 +727,9 @@ BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number)
     char *buf = HeapAlloc(PSDRV_Heap, 0, number * 7 + 1);
     char *ptr;
     int i;
-    
+
     ptr = buf;
-    
+
     for(i = 0; i < number; i++) {
         sprintf(ptr, "%02x%02x%02x%c", bits[i * 4 + 2], bits[i * 4 + 1],
 		bits[i * 4],

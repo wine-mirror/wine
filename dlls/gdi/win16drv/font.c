@@ -48,9 +48,9 @@ BOOL WIN16DRV_GetTextExtentPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
     str = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, wstr, count, str, len, NULL, NULL );
 
-    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
+    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0,
                               NULL, str, -len,  physDev->FontInfo,
-			      win16drv_SegPtr_DrawMode, 
+			      win16drv_SegPtr_DrawMode,
 			      win16drv_SegPtr_TextXForm, NULL, NULL, 0);
     size->cx = XDSTOLS(dc,LOWORD(dwRet));
     size->cy = YDSTOLS(dc,HIWORD(dwRet));
@@ -109,29 +109,29 @@ HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
     }
 
     nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_FONT,
-                                  &physDev->lf, 0, 0); 
+                                  &physDev->lf, 0, 0);
 
-    if( physDev->FontInfo && 
+    if( physDev->FontInfo &&
 	HeapSize( GetProcessHeap(), 0, physDev->FontInfo ) < nSize )
     {
         HeapFree( GetProcessHeap(), 0, physDev->FontInfo );
 	physDev->FontInfo = NULL;
     }
-    
+
     if( !physDev->FontInfo )
         physDev->FontInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
 
 
     nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,
-                                 &physDev->lf, 
-                                 physDev->FontInfo, 
-                                 win16drv_SegPtr_TextXForm ); 
+                                 &physDev->lf,
+                                 physDev->FontInfo,
+                                 win16drv_SegPtr_TextXForm );
 
-#define fi physDev->FontInfo    
+#define fi physDev->FontInfo
     physDev->tm.tmHeight           = YDSTOLS(dc, fi->dfPixHeight);
     physDev->tm.tmAscent           = YDSTOLS(dc, fi->dfAscent);
     physDev->tm.tmDescent          = physDev->tm.tmHeight -
-					    physDev->tm.tmAscent; 
+					    physDev->tm.tmAscent;
     physDev->tm.tmInternalLeading  = YDSTOLS(dc, fi->dfInternalLeading);
     physDev->tm.tmExternalLeading  = YDSTOLS(dc, fi->dfExternalLeading);
     physDev->tm.tmAveCharWidth     = XDSTOLS(dc, fi->dfAvgWidth);
@@ -176,9 +176,9 @@ BOOL WIN16DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar,
 
     TRACE("%d - %d into %p\n", firstChar, lastChar, buffer );
 
-    wRet = PRTDRV_GetCharWidth( physDev->segptrPDEVICE, buffer, firstChar, 
-				lastChar, physDev->FontInfo, 
-				win16drv_SegPtr_DrawMode, 
+    wRet = PRTDRV_GetCharWidth( physDev->segptrPDEVICE, buffer, firstChar,
+				lastChar, physDev->FontInfo,
+				win16drv_SegPtr_DrawMode,
 				win16drv_SegPtr_TextXForm );
     if( TRACE_ON(win16drv) ){
         for(i = 0; i <= lastChar - firstChar; i++)
@@ -223,8 +223,8 @@ BOOL WIN16DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
 
 /***********************************************************************
  * EnumCallback (GDI.158)
- * 
- * This is the callback function used when EnumDFonts is called. 
+ *
+ * This is the callback function used when EnumDFonts is called.
  * (The printer drivers uses it to pass info on available fonts).
  *
  * lpvClientData is the pointer passed to EnumDFonts, which points to a WEPFC
@@ -233,7 +233,7 @@ BOOL WIN16DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
  */
 WORD WINAPI EnumCallback16(LPENUMLOGFONT16 lpLogFont,
                            LPNEWTEXTMETRIC16 lpTextMetrics,
-                           WORD wFontType, LONG lpClientData) 
+                           WORD wFontType, LONG lpClientData)
 {
     ENUMLOGFONTEXW lfW;
     ENUMLOGFONTEX16 lf16;

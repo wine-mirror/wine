@@ -41,7 +41,7 @@ extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern DWORD errorlevel;
 
-int file_total, dir_total, line_count, page_mode, recurse, wide, bare, 
+int file_total, dir_total, line_count, page_mode, recurse, wide, bare,
     max_width;
 __int64 byte_total;
 
@@ -100,7 +100,7 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
      if (recurse) {
        WCMD_output ("\n\n     Total files listed:\n%8d files%25s bytes\n",
             file_total, WCMD_filesize64 (byte_total));
-       WCMD_output ("%8d directories %18s bytes free\n\n", 
+       WCMD_output ("%8d directories %18s bytes free\n\n",
             dir_total, WCMD_filesize64 (free.QuadPart));
      } else {
        WCMD_output (" %18s bytes free\n\n", WCMD_filesize64 (free.QuadPart));
@@ -117,7 +117,7 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
  * FIXME: Entries sorted by name only. Should we support DIRCMD??
  * FIXME: Assumes 24-line display for the /P qualifier.
  * FIXME: Other command qualifiers not supported.
- * FIXME: DIR /S FILENAME fails if at least one matching file is not found in the top level. 
+ * FIXME: DIR /S FILENAME fails if at least one matching file is not found in the top level.
  */
 
 void WCMD_list_directory (char *search_path, int level) {
@@ -258,7 +258,7 @@ ULARGE_INTEGER byte_count, file_size;
       	     datestring, timestring, (fd+i)->cFileName);
          linesout++;
       } else {
-         if (!((strcmp((fd+i)->cFileName, ".") == 0) || 
+         if (!((strcmp((fd+i)->cFileName, ".") == 0) ||
                (strcmp((fd+i)->cFileName, "..") == 0))) {
             WCMD_output ("%s%s\n", recurse?real_path:"", (fd+i)->cFileName);
             linesout++;

@@ -95,7 +95,7 @@ struct linux_cdrom_generic_command
 
 #endif  /* linux */
 
-/* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom 
+/* FIXME: this is needed because we can't open simultaneously several times /dev/cdrom
  * this should be removed when a proper device interface is implemented
  */
 struct cdrom_cache {
@@ -107,7 +107,7 @@ static struct cdrom_cache cdrom_cache[26];
 /******************************************************************
  *		CDROM_GetIdeInterface
  *
- * Determines the ide interface (the number after the ide), and the 
+ * Determines the ide interface (the number after the ide), and the
  * number of the device on that interface for ide cdroms.
  * Returns false if the info could not be get
  *
@@ -160,7 +160,7 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
  * Initializes registry to contain scsi info about the cdrom in NT.
  * All devices (even not real scsi ones) have this info in NT.
  * TODO: for now it only works for non scsi devices
- * NOTE: programs usually read these registry entries after sending the 
+ * NOTE: programs usually read these registry entries after sending the
  *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
  */
 void CDROM_InitRegistry(int dev)
@@ -325,7 +325,7 @@ static int CDROM_Open(HANDLE hDevice, DWORD clientID)
 static void CDROM_Close(DWORD clientID, int fd)
 {
     int dev = LOWORD(clientID);
-    
+
     if (dev >= 26 || fd != cdrom_cache[dev].fd) FIXME("how come\n");
     if (--cdrom_cache[dev].count == 0)
         close(cdrom_cache[dev].fd);
@@ -390,7 +390,7 @@ static DWORD CDROM_ResetAudio(int dev)
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
-}  
+}
 
 /******************************************************************
  *		CDROM_SetTray
@@ -402,7 +402,7 @@ static DWORD CDROM_SetTray(int dev, BOOL doEject)
 #if defined(linux)
     return CDROM_GetStatusCode(ioctl(dev, doEject ? CDROMEJECT : CDROMCLOSETRAY));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode((ioctl(dev, CDIOCALLOW, NULL)) || 
+    return CDROM_GetStatusCode((ioctl(dev, CDIOCALLOW, NULL)) ||
                                (ioctl(dev, doEject ? CDIOCEJECT : CDIOCCLOSE, NULL)) ||
                                (ioctl(dev, CDIOCPREVENT, NULL)));
 #else
@@ -441,7 +441,7 @@ static DWORD CDROM_ReadTOC(int dev, CDROM_TOC* toc)
     struct cdrom_tocentry	entry;
 
     io = ioctl(dev, CDROMREADTOCHDR, &hdr);
-    if (io == -1) 
+    if (io == -1)
     {
         WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
         goto end;
@@ -483,7 +483,7 @@ end:
     struct cd_toc_entry         toc_buffer;
 
     io = ioctl(dev, CDIOREADTOCHEADER, &hdr);
-    if (io == -1) 
+    if (io == -1)
     {
         WARN("(%d) -- Error occurred (%s)!\n", dev, strerror(errno));
         goto end;
@@ -555,7 +555,7 @@ static DWORD CDROM_GetDiskData(int dev, CDROM_DISK_DATA* data)
  *
  *
  */
-static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt, 
+static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
                                 SUB_Q_CHANNEL_DATA* data)
 {
     DWORD               ret = STATUS_NOT_SUPPORTED;
@@ -580,7 +580,7 @@ static DWORD CDROM_ReadQChannel(int dev, const CDROM_SUB_Q_DATA_FORMAT* fmt,
     case CDROM_AUDIO_INVALID:
 	hdr->AudioStatus = AUDIO_STATUS_NOT_SUPPORTED;
 	break;
-    case CDROM_AUDIO_NO_STATUS: 
+    case CDROM_AUDIO_NO_STATUS:
 	hdr->AudioStatus = AUDIO_STATUS_NO_STATUS;
 	break;
     case CDROM_AUDIO_PLAY:
@@ -901,7 +901,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
 #if defined(linux)
     struct cdrom_volctrl volc;
     int io;
-    
+
     io = ioctl(dev, CDROMVOLREAD, &volc);
     if (io != -1)
     {
@@ -914,7 +914,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     struct  ioc_vol     volc;
     int io;
-    
+
     io = ioctl(dev, CDIOCGETVOL, &volc);
     if (io != -1)
     {
@@ -922,7 +922,7 @@ static DWORD CDROM_GetVolume(int dev, VOLUME_CONTROL* vc)
         vc->PortVolume[1] = volc.vol[1];
         vc->PortVolume[2] = volc.vol[2];
         vc->PortVolume[3] = volc.vol[3];
-    } 
+    }
     return CDROM_GetStatusCode(io);
 #else
     return STATUS_NOT_SUPPORTED;
@@ -943,7 +943,7 @@ static DWORD CDROM_SetVolume(int dev, const VOLUME_CONTROL* vc)
     volc.channel1 = vc->PortVolume[1];
     volc.channel2 = vc->PortVolume[2];
     volc.channel3 = vc->PortVolume[3];
-   
+
     return CDROM_GetStatusCode(ioctl(dev, CDROMVOLCTRL, &volc));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
     struct  ioc_vol     volc;
@@ -978,7 +978,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
     default:    return STATUS_INVALID_PARAMETER;
     }
     if (len < raw->SectorCount * sectSize) return STATUS_BUFFER_TOO_SMALL;
-    /* strangely enough, it seems that sector offsets are always indicated with a size of 2048, 
+    /* strangely enough, it seems that sector offsets are always indicated with a size of 2048,
      * even if a larger size if read...
      */
 #if defined(linux)
@@ -1000,7 +1000,7 @@ static DWORD CDROM_RawRead(int dev, const RAW_READ_INFO* raw, void* buffer, DWOR
             return ret;
         case CDDA:
             /* FIXME: the output doesn't seem 100% correct... in fact output is shifted
-             * between by NT2K box and this... should check on the same drive... 
+             * between by NT2K box and this... should check on the same drive...
              * otherwise, I fear a 2352/2368 mismatch somewhere in one of the drivers
              * (linux/NT).
              * Anyway, that's not critical at all. We're talking of 16/32 bytes, we're
@@ -1198,7 +1198,7 @@ static DWORD CDROM_ScsiPassThrough(int dev, PSCSI_PASS_THROUGH pPacket)
 
 /******************************************************************
  *		CDROM_GetAddress
- * 
+ *
  * implements IOCTL_SCSI_GET_ADDRESS
  */
 static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
@@ -1221,8 +1221,8 @@ static DWORD CDROM_GetAddress(int dev, SCSI_ADDRESS* address)
  *
  *
  */
-BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode, 
-                           LPVOID lpInBuffer, DWORD nInBufferSize, 
+BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
+                           LPVOID lpInBuffer, DWORD nInBufferSize,
                            LPVOID lpOutBuffer, DWORD nOutBufferSize,
                            LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
@@ -1230,8 +1230,8 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     DWORD       error = 0;
     int         dev;
 
-    TRACE("%lx[%c] %lx %lx %ld %lx %ld %lx %lx\n", 
-          (DWORD)hDevice, 'A' + LOWORD(clientID), dwIoControlCode, (DWORD)lpInBuffer, nInBufferSize, 
+    TRACE("%lx[%c] %lx %lx %ld %lx %ld %lx %lx\n",
+          (DWORD)hDevice, 'A' + LOWORD(clientID), dwIoControlCode, (DWORD)lpInBuffer, nInBufferSize,
           (DWORD)lpOutBuffer, nOutBufferSize, (DWORD)lpBytesReturned, (DWORD)lpOverlapped);
 
     if (lpBytesReturned) *lpBytesReturned = 0;
@@ -1283,7 +1283,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     case IOCTL_DISK_MEDIA_REMOVAL:
     case IOCTL_STORAGE_MEDIA_REMOVAL:
     case IOCTL_STORAGE_EJECTION_CONTROL:
-        /* FIXME the last ioctl:s is not the same as the two others... 
+        /* FIXME the last ioctl:s is not the same as the two others...
          * lockcount/owner should be handled */
         sz = 0;
         if (lpOutBuffer != NULL || nOutBufferSize != 0) error = STATUS_INVALID_PARAMETER;
@@ -1332,7 +1332,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
 
     case IOCTL_CDROM_READ_Q_CHANNEL:
         sz = sizeof(SUB_Q_CHANNEL_DATA);
-        if (lpInBuffer == NULL || nInBufferSize < sizeof(CDROM_SUB_Q_DATA_FORMAT)) 
+        if (lpInBuffer == NULL || nInBufferSize < sizeof(CDROM_SUB_Q_DATA_FORMAT))
             error = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) error = STATUS_BUFFER_TOO_SMALL;
         else error = CDROM_ReadQChannel(dev, (const CDROM_SUB_Q_DATA_FORMAT*)lpInBuffer,
@@ -1394,7 +1394,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
         sz = 0;
         if (nInBufferSize < sizeof(RAW_READ_INFO)) error = STATUS_INVALID_PARAMETER;
         else if (lpOutBuffer == NULL) error = STATUS_BUFFER_TOO_SMALL;
-        else error = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer, 
+        else error = CDROM_RawRead(dev, (const RAW_READ_INFO*)lpInBuffer,
                                    lpOutBuffer, nOutBufferSize, &sz);
         break;
     case IOCTL_SCSI_GET_ADDRESS:
@@ -1424,7 +1424,7 @@ BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode
     }
 
     if (lpBytesReturned) *lpBytesReturned = sz;
-    if (error) 
+    if (error)
     {
         SetLastError(error);
         return FALSE;

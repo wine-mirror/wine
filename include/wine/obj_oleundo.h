@@ -32,7 +32,7 @@ extern "C" {
  */
 DEFINE_GUID(IID_IQuickActivate, 0xcf51ed10, 0x62fe, 0x11cf, 0xbf, 0x86, 0x00, 0xa0, 0xc9, 0x03, 0x48, 0x36);
 typedef struct IQuickActivate IQuickActivate,*LPQUICKACTIVATE;
- 
+
 DEFINE_GUID(IID_IPointerInactive, 0x55980ba0, 0x35aa, 0x11cf, 0xb6, 0x71, 0x00, 0xaa, 0x00, 0x4c, 0xd6, 0xd8);
 typedef struct IPointerInactive IPointerInactive,*LPPOINTERINACTIVE;
 
@@ -127,7 +127,7 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
 #define IPointerInactive_METHODS \
 	ICOM_METHOD1(HRESULT,GetActivationPolicy, DWORD*,pdwPolicy) \
 	ICOM_METHOD4(HRESULT,OnInactiveMouseMove, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,grfKeyState) \
-	ICOM_METHOD5(HRESULT,OnInactiveSetCursor, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,dwMouseMsg, BOOL,fSetAlways) 
+	ICOM_METHOD5(HRESULT,OnInactiveSetCursor, LPCRECT,pRectBounds, LONG,x, LONG,y, DWORD,dwMouseMsg, BOOL,fSetAlways)
 #define IPointerInactive_IMETHODS \
 	IUnknown_IMETHODS \
 	IPointerInactive_METHODS
@@ -140,7 +140,7 @@ ICOM_DEFINE(IPointerInactive,IUnknown)
 #define IPointerInactive_Release(p)            ICOM_CALL (Release,p)
 /*** IPointerInactive methods ***/
 #define IPointerInactive_GetActivationPolicy(p,a)         ICOM_CALL1(GetActivationPolicy,p,a)
-#define IPointerInactive_OnInactiveMoveMouse(p,a,b,c,d)   ICOM_CALL4(OnInactiveMoveMouse,p,a,b,c,d) 
+#define IPointerInactive_OnInactiveMoveMouse(p,a,b,c,d)   ICOM_CALL4(OnInactiveMoveMouse,p,a,b,c,d)
 #define IPointerInactive_OnInactiveSetCursor(p,a,b,c,d,e) ICOM_CALL5(OnInactiveSetCursor,p,a,b,d,e)
 
 

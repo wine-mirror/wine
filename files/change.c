@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
  *		FindFirstChangeNotificationA (KERNEL32.@)
  */
 HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtree,
-                                            DWORD dwNotifyFilter ) 
+                                            DWORD dwNotifyFilter )
 {
     HANDLE ret = INVALID_HANDLE_VALUE;
 
@@ -60,7 +60,7 @@ HANDLE WINAPI FindFirstChangeNotificationA( LPCSTR lpPathName, BOOL bWatchSubtre
  */
 HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
                                                 BOOL bWatchSubtree,
-                                                DWORD dwNotifyFilter) 
+                                                DWORD dwNotifyFilter)
 {
     HANDLE ret = INVALID_HANDLE_VALUE;
 
@@ -79,7 +79,7 @@ HANDLE WINAPI FindFirstChangeNotificationW( LPCWSTR lpPathName,
 /****************************************************************************
  *		FindNextChangeNotification (KERNEL32.@)
  */
-BOOL WINAPI FindNextChangeNotification( HANDLE handle ) 
+BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 {
     /* FIXME: do something */
     return TRUE;
@@ -88,7 +88,7 @@ BOOL WINAPI FindNextChangeNotification( HANDLE handle )
 /****************************************************************************
  *		FindCloseChangeNotification (KERNEL32.@)
  */
-BOOL WINAPI FindCloseChangeNotification( HANDLE handle) 
+BOOL WINAPI FindCloseChangeNotification( HANDLE handle)
 {
     return CloseHandle( handle );
 }

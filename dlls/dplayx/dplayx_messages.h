@@ -25,14 +25,14 @@
 
 #include "dplay_global.h"
 
-DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart, 
+DWORD CreateLobbyMessageReceptionThread( HANDLE hNotifyEvent, HANDLE hStart,
                                          HANDLE hDeath, HANDLE hConnRead );
 
 HRESULT DP_MSG_SendRequestPlayerId( IDirectPlay2AImpl* This, DWORD dwFlags,
                                     LPDPID lpdipidAllocatedId );
 HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer );
 
-void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId, 
+void DP_MSG_ReplyReceived( IDirectPlay2AImpl* This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize );
 void DP_MSG_ErrorReceived( IDirectPlay2AImpl* This, WORD wCommandId,
                            LPCVOID lpMsgBody, DWORD dwMsgBodySize );
@@ -55,9 +55,9 @@ void DP_MSG_ToSelf( IDirectPlay2AImpl* This, DPID dpidSelf );
 #define DPMSGCMD_REQUESTNEWPLAYERID   5
 
 #define DPMSGCMD_NEWPLAYERIDREPLY     7
-#define DPMSGCMD_CREATESESSION        8 /* Might be a create nameserver or new player msg */ 
+#define DPMSGCMD_CREATESESSION        8 /* Might be a create nameserver or new player msg */
 #define DPMSGCMD_CREATENEWPLAYER      9
-#define DPMSGCMD_SYSTEMMESSAGE        10 
+#define DPMSGCMD_SYSTEMMESSAGE        10
 #define DPMSGCMD_DELETEPLAYER         11
 #define DPMSGCMD_DELETEGROUP          12
 
@@ -93,7 +93,7 @@ typedef struct tagDPMSG_SENDENVELOPE
 typedef const DPMSG_SENDENVELOPE* LPCDPMSG_SENDENVELOPE;
 
 /* System messages exchanged between players seems to have this
- * payload envelope on top of the basic envelope 
+ * payload envelope on top of the basic envelope
  */
 typedef struct tagDPMSG_SYSMSGENVELOPE
 {
@@ -205,7 +205,7 @@ typedef struct tagDPMSG_FORWARDADDPLAYER
 } DPMSG_FORWARDADDPLAYER, *LPDPMSG_FORWARDADDPLAYER;
 typedef const DPMSG_FORWARDADDPLAYER* LPCDPMSG_FORWARDADDPLAYER;
 
-/* This is an error message that can be received. Not sure if this is 
+/* This is an error message that can be received. Not sure if this is
  * specifically for a forward add player or for all errors
  */
 typedef struct tagDPMSG_FORWARDADDPLAYERNACK

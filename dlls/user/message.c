@@ -1070,7 +1070,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
  * to the memory handle, we keep track (in the server side) of all pairs of handle
  * used (the client passes its value and the content of the memory handle), and
  * the server stored both values (the client, and the local one, created after the
- * content). When a ACK message is generated, the list of pair is searched for a 
+ * content). When a ACK message is generated, the list of pair is searched for a
  * matching pair, so that the client memory handle can be returned.
  */
 struct DDE_pair {
@@ -1202,7 +1202,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
             return FALSE;
         }
         else if (info->msg != WM_DDE_DATA) return FALSE;
-        
+
         lp = uiHi;
         if (uiLo)
         {
@@ -1237,7 +1237,7 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
         req->lparam  = lp;
         req->time    = GetCurrentTime();
         req->timeout = -1;
-        for (i = 0; i < data->count; i++) 
+        for (i = 0; i < data->count; i++)
             wine_server_add_data( req, data->data[i], data->size[i] );
         if ((res = wine_server_call( req )))
         {
@@ -1246,8 +1246,8 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
                 SetLastError( ERROR_INVALID_THREAD_ID );
             else
                 SetLastError( RtlNtStatusToDosError(res) );
-        }   
-        else 
+        }
+        else
             FreeDDElParam(info->msg, info->lparam);
     }
     SERVER_END_REQ;
@@ -1319,7 +1319,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
                 TRACE( "exec: pairing c=%08lx s=%08lx\n", *lparam, (DWORD)hMem );
-                if (!dde_add_pair( *lparam, hMem )) 
+                if (!dde_add_pair( *lparam, hMem ))
                 {
                     GlobalFree( hMem );
                     return FALSE;
@@ -1494,7 +1494,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                                          &info.msg.lParam, &buffer, size ))
 		{
 		    ERR( "invalid packed dde-message %x (%s) hwnd %x wp %x lp %lx size %d\n",
-			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd), 
+			 info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
 			 info.msg.hwnd, info.msg.wParam, info.msg.lParam, size );
 		    /* ignore it */
 		    continue;

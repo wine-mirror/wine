@@ -160,7 +160,7 @@ static const struct option_descr option_table[] =
 
 static void do_output( const char *arg )
 {
-    if ( ( unlink ( arg ) ) == -1 && ( errno != ENOENT ) ) 
+    if ( ( unlink ( arg ) ) == -1 && ( errno != ENOENT ) )
     {
         fprintf ( stderr, "Unable to create output file '%s'\n", arg );
         exit (1);

@@ -401,7 +401,7 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 
 LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
 
-inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags, 
+inline static LRESULT VFWAPI ICDecompressEx(HIC hic, DWORD dwFlags,
 					    LPBITMAPINFOHEADER lpbiSrc, LPVOID lpSrc,
 					    int xSrc, int ySrc, int dxSrc, int dySrc,
 					    LPBITMAPINFOHEADER lpbiDst, LPVOID lpDst,
@@ -501,7 +501,7 @@ inline static LRESULT VFWAPI ICDecompressExQuery(HIC hic, DWORD dwFlags,
 #define ICDrawOpen(fccType, fccHandler, lpbiIn) \
     ICLocate(fccType, fccHandler, lpbiIn, NULL, ICMODE_DRAW)
 
-HANDLE VFWAPI ICImageCompress(HIC hic, UINT uiFlags, LPBITMAPINFO lpbiIn, 
+HANDLE VFWAPI ICImageCompress(HIC hic, UINT uiFlags, LPBITMAPINFO lpbiIn,
 			      LPVOID lpBits, LPBITMAPINFO lpbiOut, LONG lQuality,
 			      LONG* plSize);
 
@@ -625,7 +625,7 @@ DWORD VFWAPIV ICDraw(HIC hic,DWORD dwFlags,LPVOID lpFormat,LPVOID lpData,DWORD c
 
 inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpbiIn,
 						 LPBITMAPINFOHEADER lpbiOut,
-						 int dxSrc, int dySrc, 
+						 int dxSrc, int dySrc,
 						 int dxDst, int dyDst,
 						 HIC hicDecomp)
 {
@@ -819,7 +819,7 @@ typedef struct {
     WORD	wPriority;
     WORD	wLanguage;
     DWORD	dwInitialFrames;
-    DWORD	dwScale;        
+    DWORD	dwScale;
     DWORD	dwRate; /* dwRate / dwScale == samples/second */
     DWORD	dwStart;
     DWORD	dwLength; /* In units above... */
@@ -924,7 +924,7 @@ typedef struct _AVIFILEINFOW {
     DWORD               dwSuggestedBufferSize;
     DWORD               dwWidth;
     DWORD               dwHeight;
-    DWORD               dwScale;        
+    DWORD               dwScale;
     DWORD               dwRate;
     DWORD               dwLength;
     DWORD               dwEditCount;
@@ -938,7 +938,7 @@ typedef struct _AVIFILEINFOA {
     DWORD               dwSuggestedBufferSize;
     DWORD               dwWidth;
     DWORD               dwHeight;
-    DWORD               dwScale;        
+    DWORD               dwScale;
     DWORD               dwRate;
     DWORD               dwLength;
     DWORD               dwEditCount;
@@ -1020,7 +1020,7 @@ ICOM_DEFINE(IAVIStream, IUnknown)
 #define IAVIStream_WriteData(p,a,b,c)     ICOM_CALL3(WriteData,p,a,b,c)
 #define IAVIStream_SetInfo(p,a,b)         ICOM_CALL2(SetInfo,p,a,b)
 
-HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler); 
+HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler);
 
 HRESULT WINAPI AVIStreamCreate(PAVISTREAM*,LONG,LONG,CLSID*);
 HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG size);
@@ -1047,7 +1047,7 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
 #define AVIStreamOpenFromFile WINELIB_NAME_AW(AVIStreamOpenFromFile)
 
 #define AVIStreamFormatSize(pavi, lPos, plSize) \
-    AVIStreamReadFormat(pavi, lPos, NULL, plSize) 
+    AVIStreamReadFormat(pavi, lPos, NULL, plSize)
 
 /*****************************************************************************
  * IAVIFile interface
@@ -1378,7 +1378,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd, HDC hdc, INT dxDst, INT dyDst,
 			 LPBITMAPINFOHEADER lpbi, INT dxSrc, INT dySrc, UINT wFlags);
 
 BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc, INT xDst, INT yDst, INT dxDst, INT dyDst,
-			LPBITMAPINFOHEADER lpbi, LPVOID lpBits,	
+			LPBITMAPINFOHEADER lpbi, LPVOID lpBits,
 			INT xSrc, INT ySrc, INT dxSrc, INT dySrc, UINT wFlags);
 
 /* DrawDibDraw flags */

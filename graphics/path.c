@@ -111,7 +111,7 @@ BOOL WINAPI BeginPath(HDC hdc)
 {
     BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
-   
+
     if(!dc) return FALSE;
 
     if(dc->funcs->pBeginPath)
@@ -150,7 +150,7 @@ BOOL WINAPI EndPath(HDC hdc)
 {
     BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
-   
+
     if(!dc) return FALSE;
 
     if(dc->funcs->pEndPath)
@@ -196,7 +196,7 @@ BOOL WINAPI AbortPath( HDC hdc )
 {
     BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
-   
+
     if(!dc) return FALSE;
 
     if(dc->funcs->pAbortPath)
@@ -220,13 +220,13 @@ BOOL16 WINAPI CloseFigure16(HDC16 hdc)
 /***********************************************************************
  *           CloseFigure    (GDI32.@)
  *
- * FIXME: Check that SetLastError is being called correctly 
+ * FIXME: Check that SetLastError is being called correctly
  */
 BOOL WINAPI CloseFigure(HDC hdc)
 {
     BOOL ret = TRUE;
     DC *dc = DC_GetDCPtr( hdc );
-   
+
     if(!dc) return FALSE;
 
     if(dc->funcs->pCloseFigure)
@@ -277,18 +277,18 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
    INT ret = -1;
    GdiPath *pPath;
    DC *dc = DC_GetDCPtr( hdc );
-   
+
    if(!dc) return -1;
-   
+
    pPath = &dc->path;
-   
+
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
    {
       SetLastError(ERROR_CAN_NOT_COMPLETE);
       goto done;
    }
-   
+
    if(nSize==0)
       ret = pPath->numEntriesUsed;
    else if(nSize<pPath->numEntriesUsed)
@@ -326,8 +326,8 @@ HRGN16 WINAPI PathToRegion16(HDC16 hdc)
 /***********************************************************************
  *           PathToRegion    (GDI32.@)
  *
- * FIXME 
- *   Check that SetLastError is being called correctly 
+ * FIXME
+ *   Check that SetLastError is being called correctly
  *
  * The documentation does not state this explicitly, but a test under Windows
  * shows that the region which is returned should be in device coordinates.
@@ -340,9 +340,9 @@ HRGN WINAPI PathToRegion(HDC hdc)
 
    /* Get pointer to path */
    if(!dc) return -1;
-   
+
     pPath = &dc->path;
-   
+
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed) SetLastError(ERROR_CAN_NOT_COMPLETE);
    else
@@ -374,7 +374,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
       SetLastError(ERROR_CAN_NOT_COMPLETE);
       return FALSE;
    }
-   
+
    /* Construct a region from the path and fill it */
    if(PATH_PathToRegion(pPath, dc->polyFillMode, &hrgn))
    {
@@ -385,14 +385,14 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
        * transform would be easier but would require more overhead, especially
        * now that SaveDC saves the current path.
        */
-       
+
       /* Save the information about the old mapping mode */
       mapMode=GetMapMode(dc->hSelf);
       GetViewportExtEx(dc->hSelf, &ptViewportExt);
       GetViewportOrgEx(dc->hSelf, &ptViewportOrg);
       GetWindowExtEx(dc->hSelf, &ptWindowExt);
       GetWindowOrgEx(dc->hSelf, &ptWindowOrg);
-      
+
       /* Save world transform
        * NB: The Windows documentation on world transforms would lead one to
        * believe that this has to be done only in GM_ADVANCED; however, my
@@ -400,7 +400,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
        * not reset the world transform.
        */
       GetWorldTransform(dc->hSelf, &xform);
-      
+
       /* Set MM_TEXT */
       SetMapMode(dc->hSelf, MM_TEXT);
       SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
@@ -431,20 +431,20 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
  */
 BOOL16 WINAPI FillPath16(HDC16 hdc)
 {
-  return (BOOL16) FillPath((HDC) hdc); 
+  return (BOOL16) FillPath((HDC) hdc);
 }
 
 /***********************************************************************
  *           FillPath    (GDI32.@)
  *
  * FIXME
- *    Check that SetLastError is being called correctly 
+ *    Check that SetLastError is being called correctly
  */
 BOOL WINAPI FillPath(HDC hdc)
 {
     DC *dc = DC_GetDCPtr( hdc );
     BOOL bRet = FALSE;
-   
+
     if(!dc) return FALSE;
 
     if(dc->funcs->pFillPath)
@@ -473,8 +473,8 @@ BOOL16 WINAPI SelectClipPath16(HDC16 hdc, INT16 iMode)
 
 /***********************************************************************
  *           SelectClipPath    (GDI32.@)
- * FIXME 
- *  Check that SetLastError is being called correctly 
+ * FIXME
+ *  Check that SetLastError is being called correctly
  */
 BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 {
@@ -482,7 +482,7 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
    HRGN  hrgnPath;
    BOOL  success = FALSE;
    DC *dc = DC_GetDCPtr( hdc );
-   
+
    if(!dc) return FALSE;
 
    if(dc->funcs->pSelectClipPath)
@@ -490,7 +490,7 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
    else
    {
        pPath = &dc->path;
-   
+
        /* Check that path is closed */
        if(pPath->state!=PATH_Closed)
            SetLastError(ERROR_CAN_NOT_COMPLETE);
@@ -582,7 +582,7 @@ BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
 BOOL PATH_MoveTo(DC *dc)
 {
    GdiPath *pPath = &dc->path;
-   
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       /* FIXME: Do we have to call SetLastError? */
@@ -605,7 +605,7 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
 {
    GdiPath *pPath = &dc->path;
    POINT point, pointCurPos;
-   
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
@@ -615,7 +615,7 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
    point.y=y;
    if(!LPtoDP(dc->hSelf, &point, 1))
       return FALSE;
-   
+
    /* Add a PT_MOVETO if necessary */
    if(pPath->newStroke)
    {
@@ -627,7 +627,7 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
       if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
          return FALSE;
    }
-   
+
    /* Add a PT_LINETO entry */
    return PATH_AddEntry(pPath, &point, PT_LINETO);
 }
@@ -637,7 +637,7 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
  * Should be called when a call to RoundRect is performed on a DC that has
  * an open path. Returns TRUE if successful, else FALSE.
  *
- * FIXME: it adds the same entries to the path as windows does, but there 
+ * FIXME: it adds the same entries to the path as windows does, but there
  * is an error in the bezier drawing code so that there are small pixel-size
  * gaps when the resulting path is drawn by StrokePath()
  */
@@ -646,7 +646,7 @@ BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT e
    GdiPath *pPath = &dc->path;
    POINT corners[2], pointTemp;
    FLOAT_POINT ellCorners[2];
- 
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
@@ -654,11 +654,11 @@ BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT e
    if(!PATH_CheckCorners(dc,corners,x1,y1,x2,y2))
       return FALSE;
 
-   /* Add points to the roundrect path */ 
+   /* Add points to the roundrect path */
    ellCorners[0].x = corners[1].x-ell_width;
-   ellCorners[0].y = corners[0].y; 
-   ellCorners[1].x = corners[1].x; 
-   ellCorners[1].y = corners[0].y+ell_height; 
+   ellCorners[0].y = corners[0].y;
+   ellCorners[1].x = corners[1].x;
+   ellCorners[1].y = corners[0].y+ell_height;
    if(!PATH_DoArcPart(pPath, ellCorners, 0, -M_PI_2, TRUE))
       return FALSE;
    pointTemp.x = corners[0].x+ell_width/2;
@@ -684,8 +684,8 @@ BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT e
    ellCorners[0].x = corners[1].x-ell_width;
    ellCorners[1].x = corners[1].x;
    if(!PATH_DoArcPart(pPath, ellCorners, M_PI_2, 0, FALSE))
-      return FALSE;    
-   
+      return FALSE;
+
    /* Close the roundrect figure */
    if(!CloseFigure(dc->hSelf))
       return FALSE;
@@ -744,14 +744,14 @@ BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2)
 }
 
 /* PATH_Ellipse
- * 
+ *
  * Should be called when a call to Ellipse is performed on a DC that has
  * an open path. This adds four Bezier splines representing the ellipse
  * to the path. Returns TRUE if successful, else FALSE.
  */
 BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
 {
-   return( PATH_Arc(dc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2,0) && 
+   return( PATH_Arc(dc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2,0) &&
            CloseFigure(dc->hSelf) );
 }
 
@@ -777,7 +777,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
 
    /* FIXME: This function should check for all possible error returns */
    /* FIXME: Do we have to respect newStroke? */
-   
+
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
@@ -786,7 +786,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    /* FIXME: Only in GM_COMPATIBLE? */
    if(x1==x2 || y1==y2)
       return TRUE;
-   
+
    /* Convert points to device coordinates */
    corners[0].x=(FLOAT)x1;
    corners[0].y=(FLOAT)y1;
@@ -845,7 +845,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       corners[1].x--;
       corners[1].y--;
    }
-   
+
    /* Add the arc to the path with one Bezier spline per quadrant that the
     * arc spans */
    start=TRUE;
@@ -895,12 +895,12 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    }
    else if(lines==2)
    {
-      centre.x = (corners[0].x+corners[1].x)/2; 
+      centre.x = (corners[0].x+corners[1].x)/2;
       centre.y = (corners[0].y+corners[1].y)/2;
       if(!PATH_AddEntry(pPath, &centre, PT_LINETO | PT_CLOSEFIGURE))
          return FALSE;
    }
-	
+
    return TRUE;
 }
 
@@ -934,7 +934,7 @@ BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
    }
    return TRUE;
 }
-   
+
 BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
@@ -972,7 +972,7 @@ BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
    }
    return TRUE;
 }
-   
+
 BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
    GdiPath     *pPath = &dc->path;
@@ -1073,14 +1073,14 @@ BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
    }
    return TRUE;
 }
-   
+
 /***********************************************************************
  * Internal functions
  */
 
 /* PATH_CheckCorners
  *
- * Helper function for PATH_RoundRect() and PATH_Rectangle() 
+ * Helper function for PATH_RoundRect() and PATH_Rectangle()
  */
 static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2)
 {
@@ -1093,7 +1093,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
    corners[1].y=y2;
    if(!LPtoDP(dc->hSelf, corners, 2))
       return FALSE;
-   
+
    /* Make sure first corner is top left and second corner is bottom right */
    if(corners[0].x>corners[1].x)
    {
@@ -1107,7 +1107,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
       corners[0].y=corners[1].y;
       corners[1].y=temp;
    }
-   
+
    /* In GM_COMPATIBLE, don't include bottom and right edges */
    if(dc->GraphicsMode==GM_COMPATIBLE)
    {
@@ -1129,7 +1129,7 @@ static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
     if(!pts) return FALSE;
 
     for(i = 1; i < no; i++)
-        PATH_AddEntry(pPath, &pts[i], 
+        PATH_AddEntry(pPath, &pts[i],
 	    (i == no-1 && closed) ? PT_LINETO | PT_CLOSEFIGURE : PT_LINETO);
     HeapFree( GetProcessHeap(), 0, pts );
     return TRUE;
@@ -1166,7 +1166,7 @@ static BOOL PATH_FlattenPath(GdiPath *pPath)
     PATH_EmptyPath(&newPath);
     return TRUE;
 }
-	  
+
 /* PATH_PathToRegion
  *
  * Creates a region from the specified path using the specified polygon
@@ -1188,7 +1188,7 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    PATH_FlattenPath(pPath);
 
    /* FIXME: What happens when number of points is zero? */
-   
+
    /* First pass: Find out how many strokes there are in the path */
    /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
    numStrokes=0;
@@ -1197,14 +1197,14 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
          numStrokes++;
 
    /* Allocate memory for number-of-points-in-stroke array */
-   pNumPointsInStroke=(int *)HeapAlloc( GetProcessHeap(), 0, 
+   pNumPointsInStroke=(int *)HeapAlloc( GetProcessHeap(), 0,
 					sizeof(int) * numStrokes );
    if(!pNumPointsInStroke)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;
    }
-   
+
    /* Second pass: remember number of points in each polygon */
    iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
    for(i=0; i<pPath->numEntriesUsed; i++)
@@ -1257,7 +1257,7 @@ static void PATH_EmptyPath(GdiPath *pPath)
 BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
 {
    assert(pPath!=NULL);
-   
+
    /* FIXME: If newStroke is true, perhaps we want to check that we're
     * getting a PT_MOVETO
     */
@@ -1266,7 +1266,7 @@ BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
-   
+
    /* Reserve enough memory for an extra path entry */
    if(!PATH_ReserveEntries(pPath, pPath->numEntriesUsed+1))
       return FALSE;
@@ -1296,7 +1296,7 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
    INT   numEntriesToAllocate;
    POINT *pPointsNew;
    BYTE    *pFlagsNew;
-   
+
    assert(pPath!=NULL);
    assert(numEntries>=0);
 
@@ -1317,11 +1317,11 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
          numEntriesToAllocate=numEntries;
 
       /* Allocate new arrays */
-      pPointsNew=(POINT *)HeapAlloc( GetProcessHeap(), 0, 
+      pPointsNew=(POINT *)HeapAlloc( GetProcessHeap(), 0,
 				     numEntriesToAllocate * sizeof(POINT) );
       if(!pPointsNew)
          return FALSE;
-      pFlagsNew=(BYTE *)HeapAlloc( GetProcessHeap(), 0, 
+      pFlagsNew=(BYTE *)HeapAlloc( GetProcessHeap(), 0,
 				   numEntriesToAllocate * sizeof(BYTE) );
       if(!pFlagsNew)
       {
@@ -1391,7 +1391,7 @@ static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
 	 xNorm[i]=cos(angleStart);
 	 yNorm[i]=sin(angleStart);
       }
-   
+
    /* Add starting point to path if desired */
    if(addMoveTo)
    {
@@ -1465,7 +1465,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pFlattenPath) ret = dc->funcs->pFlattenPath(dc->physDev);
-    else 
+    else
     {
 	GdiPath *pPath = &dc->path;
         if(pPath->state != PATH_Closed)
@@ -1499,7 +1499,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     GetWindowExtEx(dc->hSelf, &szWindowExt);
     GetWindowOrgEx(dc->hSelf, &ptWindowOrg);
     GetWorldTransform(dc->hSelf, &xform);
-      
+
     /* Set MM_TEXT */
     SetMapMode(dc->hSelf, MM_TEXT);
     SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
@@ -1522,7 +1522,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	    break;
 	case PT_BEZIERTO:
 	    TRACE("Got PT_BEZIERTO\n");
-	    if(pPath->pFlags[i+1] != PT_BEZIERTO || 
+	    if(pPath->pFlags[i+1] != PT_BEZIERTO ||
 	       (pPath->pFlags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
 	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
 		ret = FALSE;
@@ -1647,7 +1647,7 @@ BOOL WINAPI WidenPath(HDC hdc)
 {
    DC *dc = DC_GetDCPtr( hdc );
    BOOL ret = FALSE;
-   
+
    if(!dc) return FALSE;
 
    if(dc->funcs->pWidenPath)

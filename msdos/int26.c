@@ -57,7 +57,7 @@ void WINAPI INT_Int26Handler( CONTEXT86 *context )
         begin  = LOWORD(context->Edx);
         length = LOWORD(context->Ecx);
     }
-		
+
     TRACE("int26: abs diskwrite, drive %d, sector %ld, "
                  "count %ld, buffer %p\n",
                  AL_reg(context), begin, length, dataptr );

@@ -57,7 +57,7 @@
 /*
  * Descriptions:
  *
- * (hdr)  IMAGE_SEPARATE_DEBUG_HEADER - .DBG-specific file header; holds info that 
+ * (hdr)  IMAGE_SEPARATE_DEBUG_HEADER - .DBG-specific file header; holds info that
  *        applies to the file as a whole, including # of COFF sections, file offsets, etc.
  * (hdr)  IMAGE_SECTION_HEADER - list of COFF sections copied verbatim from .EXE;
  *        although this directory contains file offsets, these offsets are meaningless
@@ -73,7 +73,7 @@
  * (data) IMAGE_DEBUG_TYPE_CODEVIEW - *** THE GOOD STUFF ***
  *        This block of data contains all the symbol tables, line number info, etc.,
  *        that the Visual C++ debugger needs.
- * (hdr)  OMFDirHeader (CV) - 
+ * (hdr)  OMFDirHeader (CV) -
  * (hdr)  OMFDirEntry (CV) - list of subsections within CodeView debug data section
  */
 
@@ -106,7 +106,7 @@ static int dump_cv_sst_module(OMFDirEntry* omfde)
     printf("    iLib:               %u\n", module->iLib);
     printf("    cSeg:               %u\n", module->cSeg);
     printf("    Style:              %c%c\n", module->Style[0], module->Style[1]);
-    printf("    Name:               %.*s\n", 
+    printf("    Name:               %.*s\n",
 	   *(BYTE*)((char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg),
 	   (char*)(module + 1) + sizeof(OMFSegDesc) * module->cSeg + 1);
 
@@ -217,7 +217,7 @@ static int dump_cv_sst_seg_map(OMFDirEntry* omfde)
 
     segMapDesc = PRD(Offset(segMap + 1), segMap->cSeg * sizeof(OMFSegDesc));
     if (!segMapDesc) {printf("Can't get SegDescr array, aborting\n");return FALSE;}
-    
+
     for (i = 0; i < segMap->cSeg; i++)
     {
 	printf("    SegDescr #%2d\n", i + 1);
@@ -256,7 +256,7 @@ static int dump_cv_sst_src_module(OMFDirEntry* omfde)
 
     /* FIXME: check ptr validity */
     sourceModule = (void*)rawdata;
-    printf ("    Module table: Found %d file(s) and %d segment(s)\n", 
+    printf ("    Module table: Found %d file(s) and %d segment(s)\n",
 	    sourceModule->cFile, sourceModule->cSeg);
     for (i = 0; i < sourceModule->cFile; i++)
     {
@@ -265,16 +265,16 @@ static int dump_cv_sst_src_module(OMFDirEntry* omfde)
     }
 
     /* FIXME: check ptr validity */
-    seg_info_dw = (void*)((char*)(sourceModule + 1) + 
+    seg_info_dw = (void*)((char*)(sourceModule + 1) +
 			  sizeof(unsigned long) * (sourceModule->cFile - 1));
     seg_info_w = (unsigned short*)(&seg_info_dw[sourceModule->cSeg * 2]);
     for (i = 0; i <  sourceModule->cSeg; i++)
     {
 	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, seg index = %u\n",
-		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1], 
+		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1],
 		seg_info_w[i]);
     }
-    ofs = sizeof(OMFSourceModule) + sizeof(unsigned long) * (sourceModule->cFile - 1) + 
+    ofs = sizeof(OMFSourceModule) + sizeof(unsigned long) * (sourceModule->cFile - 1) +
 	sourceModule->cSeg * (2 * sizeof(unsigned long) + sizeof(unsigned short));
     ofs = (ofs + 3) & ~3;
 
@@ -291,12 +291,12 @@ static int dump_cv_sst_src_module(OMFDirEntry* omfde)
      */
     /* FIXME: check ptr validity */
     sourceFile = (void*)(rawdata + ofs);
-    seg_info_dw = (void*)((char*)sourceFile + 2 * sizeof(unsigned short) + 
+    seg_info_dw = (void*)((char*)sourceFile + 2 * sizeof(unsigned short) +
 			  sourceFile->cSeg * sizeof(unsigned long));
 
     ofs += 2 * sizeof(unsigned short) + 3 * sourceFile->cSeg * sizeof(unsigned long);
 
-    printf("    File table: %.*s\n", 
+    printf("    File table: %.*s\n",
 	   *(BYTE*)((char*)sourceModule + ofs), (char*)sourceModule + ofs + 1);
 
     for (i = 0; i < sourceFile->cSeg; i++)
@@ -308,21 +308,21 @@ static int dump_cv_sst_src_module(OMFDirEntry* omfde)
     ofs += *(BYTE*)((char*)sourceModule + ofs) + 1;
     ofs = (ofs + 3) & ~3;
 
-    for (i = 0; i < sourceModule->cSeg; i++) 
+    for (i = 0; i < sourceModule->cSeg; i++)
     {
 	sourceLine = (void*)(rawdata + ofs);
 	seg_info_dw = (void*)((char*)sourceLine + 2 * sizeof(unsigned short));
 	seg_info_w = (void*)(&seg_info_dw[sourceLine->cLnOff]);
-	
+
 	printf ("    Line table #%2d: Found %d line numbers for segment index %d\n",
 		i, sourceLine->cLnOff, sourceLine->Seg);
-	
+
 	for (j = 0; j < sourceLine->cLnOff; j++)
 	{
 	    printf ("      Pair #%2d: offset = [0x%8lx], linenumber = %d\n",
 		    j + 1, seg_info_dw[j], seg_info_w[j]);
 	}
-	ofs += 2 * sizeof(unsigned short) + 
+	ofs += 2 * sizeof(unsigned short) +
 	    sourceLine->cLnOff * (sizeof(unsigned long) + sizeof(unsigned short));
 	ofs = (ofs + 3) & ~3;
     }
@@ -399,7 +399,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     int modulecount = 0, alignsymcount = 0, srcmodulecount = 0, librariescount = 0;
     int globalsymcount = 0, globalpubcount = 0, globaltypescount = 0;
     int segmapcount = 0, fileindexcount = 0, staticsymcount = 0;
-    
+
     cv_base = PRD(base, len);
     if (!cv_base) {printf("Can't get full debug content, aborting\n");return;}
 
@@ -415,12 +415,12 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 	struct {DWORD TimeStamp; DWORD  Dunno; char Name[1];}* pdb_data;
 	pdb_data = (void*)(signature + 1);
 
-	printf("        TimeStamp:            %08lX (%s)\n", 
+	printf("        TimeStamp:            %08lX (%s)\n",
 	       pdb_data->TimeStamp, get_time_str(pdb_data->TimeStamp));
 	printf("        Dunno:                %08lX\n", pdb_data->Dunno);
 	printf("        Filename:             %s\n", pdb_data->Name);
 	return;
-    } 
+    }
 
     if (memcmp(signature->Signature, "NB09", 4) != 0 && memcmp(signature->Signature, "NB11", 4) != 0)
     {
@@ -456,7 +456,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 	case sstSegMap:		segmapcount++;		break;
 	case sstFileIndex:	fileindexcount++;	break;
 	case sstStaticSym:	staticsymcount++;	break;
-	}	
+	}
     }
 
     /* This one has to be > 0

@@ -160,7 +160,7 @@ OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 /******************************************************************************
  * OpenEventLogA [ADVAPI32.@]
  */
-HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source) 
+HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 {
 	FIXME("(%s,%s),stub!\n",uncname,source);
 	return 0xcafe4242;
@@ -204,7 +204,7 @@ BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOf
  */
 BOOL WINAPI
 ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
-                 LPVOID lpBuffer, DWORD nNumberOfBytesToRead, 
+                 LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                  DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
 {
 	FIXME("stub\n");
@@ -269,8 +269,8 @@ BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD d
  *   lpRawData   []
  */
 BOOL WINAPI
-ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, 
-                DWORD dwEventID, PSID lpUserSid, WORD wNumStrings, 
+ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory,
+                DWORD dwEventID, PSID lpUserSid, WORD wNumStrings,
                 DWORD dwDataSize, LPCWSTR *lpStrings, LPVOID lpRawData )
 {
 	FIXME("stub\n");

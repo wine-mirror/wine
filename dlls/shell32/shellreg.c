@@ -97,9 +97,9 @@ HRESULT WINAPI SHRegQueryValueW(
 /*************************************************************************
  * SHRegQueryValueExW	[SHELL32.511] NT4.0
  *
- * FIXME 
+ * FIXME
  *  if the datatype REG_EXPAND_SZ then expand the string and change
- *  *pdwType to REG_SZ. 
+ *  *pdwType to REG_SZ.
  */
 HRESULT WINAPI SHRegQueryValueExW (
 	HKEY hkey,

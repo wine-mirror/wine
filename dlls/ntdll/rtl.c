@@ -1,8 +1,8 @@
 /*
  * NT basis DLL
- * 
+ *
  * This file contains the Rtl* API functions. These should be implementable.
- * 
+ *
  * Copyright 1996-1998 Marcus Meissner
  *		  1999 Alex Korobka
  *
@@ -121,7 +121,7 @@ wait:
     else  /* one or more shared locks are in progress */
 	 if( fWait )
 	     goto wait;
-	 
+
     if( retVal == 1 )
 	rwl->hOwningThreadId = GetCurrentThreadId();
 done:
@@ -148,7 +148,7 @@ start:
 	    retVal = 1;
 	    goto done;
 	}
-	
+
 	if( fWait )
 	{
 	    rwl->uSharedWaiters++;
@@ -158,7 +158,7 @@ start:
 	    goto start;
 	}
     }
-    else 
+    else
     {
 	if( dwWait != WAIT_OBJECT_0 ) /* otherwise RtlReleaseResource() has already done it */
 	    rwl->iNumberActive++;
@@ -189,7 +189,7 @@ wake_exclusive:
 	    }
 	}
     }
-    else 
+    else
     if( rwl->iNumberActive < 0 ) /* have a writer, possibly recursive */
     {
 	if( ++rwl->iNumberActive == 0 )
@@ -219,7 +219,7 @@ void WINAPI RtlDumpResource(LPRTL_RWLOCK rwl)
 {
     if( rwl )
     {
-	MESSAGE("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",  
+	MESSAGE("RtlDumpResource(%p):\n\tactive count = %i\n\twaiting readers = %i\n\twaiting writers = %i\n",
 		rwl, rwl->iNumberActive, rwl->uSharedWaiters, rwl->uExclusiveWaiters );
 	if( rwl->iNumberActive )
 	    MESSAGE("\towner thread = %08x\n", rwl->hOwningThreadId );
@@ -240,7 +240,7 @@ void WINAPIV DbgPrint(LPCSTR fmt, ...)
 
        va_start(args, fmt);
        vsprintf(buf,fmt, args);
-       va_end(args); 
+       va_end(args);
 
 	MESSAGE("DbgPrint says: %s",buf);
 	/* hmm, raise exception? */
@@ -398,7 +398,7 @@ DWORD WINAPI RtlInitializeGenericTable(void)
 
 /******************************************************************************
  *  RtlInitializeBitMap			[NTDLL.@]
- * 
+ *
  */
 NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
 {
@@ -408,7 +408,7 @@ NTSTATUS WINAPI RtlInitializeBitMap(DWORD x1,DWORD x2,DWORD x3)
 
 /******************************************************************************
  *  RtlSetBits				[NTDLL.@]
- * 
+ *
  */
 NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
 {
@@ -418,7 +418,7 @@ NTSTATUS WINAPI RtlSetBits(DWORD x1,DWORD x2,DWORD x3)
 
 /******************************************************************************
  *  RtlFindClearBits			[NTDLL.@]
- * 
+ *
  */
 NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
 {
@@ -428,7 +428,7 @@ NTSTATUS WINAPI RtlFindClearBits(DWORD x1,DWORD x2,DWORD x3)
 
 /******************************************************************************
  *  RtlClearBits			[NTDLL.@]
- * 
+ *
  */
 NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
 {
@@ -437,14 +437,14 @@ NTSTATUS WINAPI RtlClearBits(DWORD x1,DWORD x2,DWORD x3)
 }
 
 /******************************************************************************
- *  RtlCopyMemory   [NTDLL] 
- * 
+ *  RtlCopyMemory   [NTDLL]
+ *
  */
 #undef RtlCopyMemory
 VOID WINAPI RtlCopyMemory( VOID *Destination, CONST VOID *Source, SIZE_T Length )
 {
     memcpy(Destination, Source, Length);
-}	
+}
 
 /******************************************************************************
  *  RtlMoveMemory   [NTDLL.@]

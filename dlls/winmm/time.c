@@ -59,11 +59,11 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 {
     TRACE("before CallBack => lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
 	  lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-	
-    /* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
+
+    /* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called
      * 		during interrupt time,  is allowed to execute very limited number of API calls (like
-     *	    	PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
-     *       guess current implementation via SetTimer has to be improved upon.		
+     *	    	PostMessage), and must reside in DLL (therefore uses stack of active application). So I
+     *       guess current implementation via SetTimer has to be improved upon.
      */
     switch (lpTimer->wFlags & 0x30) {
     case TIME_CALLBACK_FUNCTION:
@@ -80,7 +80,7 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 	PulseEvent((HANDLE)lpTimer->lpFunc);
 	break;
     default:
-	FIXME("Unknown callback type 0x%04x for mmtime callback (%p), ignored.\n", 
+	FIXME("Unknown callback type 0x%04x for mmtime callback (%p), ignored.\n",
 	      lpTimer->wFlags, lpTimer->lpFunc);
 	break;
     }
@@ -101,23 +101,23 @@ static void CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
     while (delta >= MMSYSTIME_MININTERVAL) {
 	delta -= MMSYSTIME_MININTERVAL;
 	iData->mmSysTimeMS += MMSYSTIME_MININTERVAL;
-	
+
 	/* since timeSetEvent() and timeKillEvent() can be called
 	 * from 16 bit code, there are cases where win16 lock is
-	 * locked upon entering timeSetEvent(), and then the mm timer 
+	 * locked upon entering timeSetEvent(), and then the mm timer
 	 * critical section is locked. This function cannot call the
 	 * timer callback with the crit sect locked (because callback
 	 * may need to acquire Win16 lock, thus providing a deadlock
 	 * situation).
 	 * To cope with that, we just copy the WINE_TIMERENTRY struct
 	 * that need to trigger the callback, and call it without the
-	 * mm timer crit sect locked. The bad side of this 
+	 * mm timer crit sect locked. The bad side of this
 	 * implementation is that, in some cases, the callback may be
 	 * invoked *after* a timer has been destroyed...
 	 * EPP 99/07/13
 	 */
 	idx = 0;
-	
+
 	EnterCriticalSection(&iData->cs);
 	for (lpTimer = iData->lpTimerList; lpTimer != NULL; ) {
 	    lpNextTimer = lpTimer->lpNext;
@@ -129,8 +129,8 @@ static void CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
 		if (lpTimer->lpFunc) {
 		    if (idx == iData->nSizeLpTimers) {
 			iData->lpTimers = (LPWINE_TIMERENTRY)
-			    HeapReAlloc(GetProcessHeap(), 0, 
-					iData->lpTimers, 
+			    HeapReAlloc(GetProcessHeap(), 0,
+					iData->lpTimers,
 					++iData->nSizeLpTimers * sizeof(WINE_TIMERENTRY));
 		    }
 		    iData->lpTimers[idx++] = *lpTimer;
@@ -144,7 +144,7 @@ static void CALLBACK TIME_MMSysTimeCallback(LPWINE_MM_IDATA iData)
 	    lpTimer = lpNextTimer;
 	}
 	LeaveCriticalSection(&iData->cs);
-	
+
 	while (idx > 0) {
 	    TIME_TriggerCallBack(&iData->lpTimers[--idx]);
 	}
@@ -283,7 +283,7 @@ static	WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
     for (lpTimer = iData->lpTimerList; lpTimer != NULL; lpTimer = lpTimer->lpNext) {
 	wNewID = max(wNewID, lpTimer->wTimerID);
     }
-    
+
     lpNewTimer->lpNext = iData->lpTimerList;
     iData->lpTimerList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
@@ -304,20 +304,20 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc, 
+    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
 				dwUser, wFlags|WINE_TIMER_IS32);
 }
 
 /**************************************************************************
  * 				timeSetEvent		[MMSYSTEM.602]
  */
-MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc, 
+MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 lpFunc,
 				 DWORD dwUser, UINT16 wFlags)
 {
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc, 
+    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
 				dwUser, wFlags & ~WINE_TIMER_IS32);
 }
 
@@ -339,7 +339,7 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	}
     }
     LeaveCriticalSection(&iData->cs);
-    
+
     if (*lpTimer) {
 	LPWINE_TIMERENTRY	lpTemp = *lpTimer;
 
@@ -393,7 +393,7 @@ MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 {
     TRACE("(%u) !\n", wPeriod);
 
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
 	return TIMERR_NOCANDO;
     return 0;
 }
@@ -405,7 +405,7 @@ MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 {
     TRACE("(%u) !\n", wPeriod);
 
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
 	return TIMERR_NOCANDO;
     return 0;
 }
@@ -417,7 +417,7 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 {
     TRACE("(%u) !\n", wPeriod);
 
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
 	return TIMERR_NOCANDO;
     return 0;
 }
@@ -429,7 +429,7 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 {
     TRACE("(%u) !\n", wPeriod);
 
-    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL)
 	return TIMERR_NOCANDO;
     return 0;
 }

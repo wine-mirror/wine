@@ -19,7 +19,7 @@
  */
 
 #include "config.h"
-#include "wine/port.h" 
+#include "wine/port.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -84,7 +84,7 @@ typedef struct
 } DLG_TEMPLATE;
 
   /* Radio button group */
-typedef struct 
+typedef struct
 {
     UINT firstID;
     UINT lastID;
@@ -141,7 +141,7 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
     if (IsWindowEnabled( hOwner ))
     {
         EnableWindow( hOwner, FALSE );
-        return TRUE;    
+        return TRUE;
     }
     else
         return FALSE;
@@ -166,7 +166,7 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
     pSize->cx = xBaseUnit;
     pSize->cy = yBaseUnit;
 
-    if(!hDC) return FALSE; 
+    if(!hDC) return FALSE;
 
     if(hFont) hFontPrev = SelectFont(hDC, hFont);
     if(!GetTextMetricsA(hDC, &tm)) return FALSE;
@@ -189,7 +189,7 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
 static BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
 {
     HDC  hDC = GetDC(0);
-    BOOL Success = DIALOG_GetCharSizeFromDC( hDC, hFont, pSize );    
+    BOOL Success = DIALOG_GetCharSizeFromDC( hDC, hFont, pSize );
     ReleaseDC(0, hDC);
     return Success;
 }
@@ -262,7 +262,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
         info->className = buffer;
         p++;
     }
-    else 
+    else
     {
 	info->className = p;
 	p += strlen(p) + 1;
@@ -377,7 +377,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
         p += strlenW( (LPCWSTR)p ) + 1;
     }
 
-    TRACE("    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n", 
+    TRACE("    %s %s %d, %d, %d, %d, %d, %08lx, %08lx, %08lx\n",
           debugstr_w( (LPCWSTR)info->className ),
           debugstr_w( (LPCWSTR)info->windowName ),
           info->id, info->x, info->y, info->cx, info->cy,
@@ -492,7 +492,7 @@ static BOOL DIALOG_CreateControls( HWND hwnd, LPCSTR template, const DLG_TEMPLAT
             hwndDefButton = hwndCtrl;
             dlgInfo->idResult = GetWindowLongA( hwndCtrl, GWL_ID );
         }
-    }    
+    }
     TRACE(" END\n" );
     return TRUE;
 }
@@ -790,7 +790,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
             if( !(template.style & DS_ABSALIGN) )
                 ClientToScreen( owner, (POINT *)&rect );
-	    
+
             /* try to fit it into the desktop */
 
             if( (dX = rect.left + rect.right + GetSystemMetrics(SM_CXDLGFRAME)
@@ -872,7 +872,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
             if ((GetFocus() == hwndPreInitFocus) &&
                 (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
             {
-                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE); 
+                dlgInfo->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE);
                 if( dlgInfo->hwndFocus )
                     SetFocus( dlgInfo->hwndFocus );
             }
@@ -1234,7 +1234,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
     /* unblock dialog loop */
-    PostMessageA(hwnd, WM_NULL, 0, 0); 
+    PostMessageA(hwnd, WM_NULL, 0, 0);
     return TRUE;
 }
 
@@ -1396,7 +1396,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
                 return TRUE;
             }
             break;
-            
+
         case VK_RIGHT:
         case VK_DOWN:
         case VK_LEFT:
@@ -1404,7 +1404,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
             if (!(dlgCode & DLGC_WANTARROWS))
             {
                 BOOL fPrevious = (wParam == VK_LEFT || wParam == VK_UP);
-                HWND hwndNext = 
+                HWND hwndNext =
                     GetNextDlgGroupItem (hwndDlg, GetFocus(), fPrevious );
                 SendMessageA( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndNext, 1 );
                 return TRUE;
@@ -1421,7 +1421,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
                 DWORD dw = SendMessageW( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
                 {
-                    SendMessageA( hwndDlg, WM_COMMAND, 
+                    SendMessageA( hwndDlg, WM_COMMAND,
                                     MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
                                     (LPARAM)GetDlgItem(hwndDlg, LOWORD(dw)));
                 }
@@ -1429,7 +1429,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
                 {
                     SendMessageA( hwndDlg, WM_COMMAND, IDOK,
                                     (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
-    
+
                 }
             }
             return TRUE;
@@ -1653,7 +1653,7 @@ UINT WINAPI GetDlgItemInt( HWND hwnd, INT id, BOOL *translated,
     char str[30];
     char * endptr;
     long result = 0;
-    
+
     if (translated) *translated = FALSE;
     if (!SendDlgItemMessageA(hwnd, id, WM_GETTEXT, sizeof(str), (LPARAM)str))
         return 0;
@@ -1698,8 +1698,8 @@ UINT WINAPI IsDlgButtonChecked( HWND hwnd, UINT id )
 
 /***********************************************************************
  *           CheckRB
- * 
- * Callback function used to check/uncheck radio buttons that fall 
+ *
+ * Callback function used to check/uncheck radio buttons that fall
  * within a specific range of IDs.
  */
 static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
@@ -1707,7 +1707,7 @@ static BOOL CALLBACK CheckRB(HWND hwndChild, LPARAM lParam)
     LONG lChildID = GetWindowLongA(hwndChild, GWL_ID);
     RADIOGROUP *lpRadioGroup = (RADIOGROUP *) lParam;
 
-    if ((lChildID >= lpRadioGroup->firstID) && 
+    if ((lChildID >= lpRadioGroup->firstID) &&
         (lChildID <= lpRadioGroup->lastID))
     {
         if (lChildID == lpRadioGroup->checkID)
@@ -1736,8 +1736,8 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
     radioGroup.firstID = min(min(firstID, lastID), checkID);
     radioGroup.lastID = max(max(firstID, lastID), checkID);
     radioGroup.checkID = checkID;
-    
-    return EnumChildWindows(hwndDlg, (WNDENUMPROC)CheckRB, 
+
+    return EnumChildWindows(hwndDlg, (WNDENUMPROC)CheckRB,
                             (LPARAM)&radioGroup);
 }
 
@@ -1840,7 +1840,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
     HWND retWnd = 0;
     HWND hChildFirst = 0;
 
-    if(!hwndCtrl) 
+    if(!hwndCtrl)
     {
         hChildFirst = GetWindow(hwndDlg,GW_CHILD);
         if(fPrevious) hChildFirst = GetWindow(hChildFirst,GW_HWNDLAST);
@@ -1912,7 +1912,7 @@ HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
 {
     hwndDlg = WIN_GetFullHandle( hwndDlg );
     hwndCtrl = WIN_GetFullHandle( hwndCtrl );
-    return DIALOG_GetNextTabItem(hwndDlg,hwndDlg,hwndCtrl,fPrevious); 
+    return DIALOG_GetNextTabItem(hwndDlg,hwndDlg,hwndCtrl,fPrevious);
 }
 
 /**********************************************************************

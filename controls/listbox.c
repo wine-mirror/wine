@@ -253,12 +253,12 @@ static void LISTBOX_UpdateScroll( HWND hwnd, LB_DESCR *descr )
     if (!(descr->style & WS_VSCROLL)) return;
     */
 
-    /*   It is important that we check descr->style, and not wnd->dwStyle, 
-       for WS_VSCROLL, as the former is exactly the one passed in 
-       argument to CreateWindow.  
-         In Windows (and from now on in Wine :) a listbox created 
-       with such a style (no WS_SCROLL) does not update 
-       the scrollbar with listbox-related data, thus letting 
+    /*   It is important that we check descr->style, and not wnd->dwStyle,
+       for WS_VSCROLL, as the former is exactly the one passed in
+       argument to CreateWindow.
+         In Windows (and from now on in Wine :) a listbox created
+       with such a style (no WS_SCROLL) does not update
+       the scrollbar with listbox-related data, thus letting
        the programmer use it for his/her own purposes. */
 
     if (descr->style & LBS_NOREDRAW) return;
@@ -1416,7 +1416,7 @@ static void LISTBOX_MoveCaret( HWND hwnd, LB_DESCR *descr, INT index,
 
     /* Important, repaint needs to be done in this order if
        you want to mimic Windows behavior:
-       1. Remove the focus and paint the item  
+       1. Remove the focus and paint the item
        2. Remove the selection and paint the item(s)
        3. Set the selection and repaint the item(s)
        4. Set the focus to 'index' and repaint the item */
@@ -2089,7 +2089,7 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( HWND hwnd, LB_DESCR *pDescr,
                     nHitTestType = HTHSCROLL;
                 }
             }
-            /* Windows sends this message when a scrollbar is clicked 
+            /* Windows sends this message when a scrollbar is clicked
              */
 
             if(nHitTestType != 0)
@@ -2097,7 +2097,7 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( HWND hwnd, LB_DESCR *pDescr,
                 SendMessageW(hwnd, WM_NCLBUTTONDOWN, nHitTestType,
                     MAKELONG(screenMousePos.x, screenMousePos.y));
             }
-            /* Resume the Capture after scrolling is complete 
+            /* Resume the Capture after scrolling is complete
              */
             if(hWndOldCapture != 0)
             {
@@ -3196,7 +3196,7 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
 /***********************************************************************
  *           ComboLBWndProcA
  *
- *  NOTE: in Windows, winproc address of the ComboLBox is the same 
+ *  NOTE: in Windows, winproc address of the ComboLBox is the same
  *	  as that of the Listbox.
  */
 LRESULT WINAPI ComboLBWndProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )

@@ -145,7 +145,7 @@ void WINAPI OffsetRect16( LPRECT16 rect, INT16 x, INT16 y )
     rect->left   += x;
     rect->right  += x;
     rect->top    += y;
-    rect->bottom += y;    
+    rect->bottom += y;
 }
 
 
@@ -158,7 +158,7 @@ BOOL WINAPI OffsetRect( LPRECT rect, INT x, INT y )
     rect->left   += x;
     rect->right  += x;
     rect->top    += y;
-    rect->bottom += y;    
+    rect->bottom += y;
     return TRUE;
 }
 
@@ -255,7 +255,7 @@ BOOL16 WINAPI UnionRect16( LPRECT16 dest, const RECT16 *src1,
 	    dest->left   = min( src1->left, src2->left );
 	    dest->right  = max( src1->right, src2->right );
 	    dest->top    = min( src1->top, src2->top );
-	    dest->bottom = max( src1->bottom, src2->bottom );	    
+	    dest->bottom = max( src1->bottom, src2->bottom );
 	}
     }
     return TRUE;
@@ -286,7 +286,7 @@ BOOL WINAPI UnionRect( LPRECT dest, const RECT *src1,
 	    dest->left   = min( src1->left, src2->left );
 	    dest->right  = max( src1->right, src2->right );
 	    dest->top    = min( src1->top, src2->top );
-	    dest->bottom = max( src1->bottom, src2->bottom );	    
+	    dest->bottom = max( src1->bottom, src2->bottom );
 	}
     }
     return TRUE;

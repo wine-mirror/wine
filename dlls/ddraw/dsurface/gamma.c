@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static HRESULT WINAPI
 DirectDrawGammaControl_QueryInterface(LPDIRECTDRAWGAMMACONTROL iface, REFIID riid,
-				      LPVOID *ppObj)                        
+				      LPVOID *ppObj)
 {
     TRACE("(%p)->(%s,%p)\n", iface, debugstr_guid(riid), ppObj);
     return E_NOINTERFACE;
@@ -47,13 +47,13 @@ DirectDrawGammaControl_AddRef(LPDIRECTDRAWGAMMACONTROL iface)
 {
     return IDirectDrawSurface7_AddRef(CONVERT(iface));
 }
- 
+
 static ULONG WINAPI
 DirectDrawGammaControl_Release(LPDIRECTDRAWGAMMACONTROL iface)
 {
     return IDirectDrawSurface7_Release(CONVERT(iface));
 }
- 
+
 static HRESULT WINAPI
 DirectDrawGammaControl_GetGammaRamp(LPDIRECTDRAWGAMMACONTROL iface, DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp)
 {

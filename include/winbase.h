@@ -371,9 +371,9 @@ typedef struct
 #define CLRBREAK	9
 
 /* Purge functions for Comm Port */
-#define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the 
+#define PURGE_TXABORT       0x0001  /* Kill the pending/current writes to the
 				       comm port */
-#define PURGE_RXABORT       0x0002  /*Kill the pending/current reads to 
+#define PURGE_RXABORT       0x0002  /*Kill the pending/current reads to
 				     the comm port */
 #define PURGE_TXCLEAR       0x0004  /* Kill the transmit queue if there*/
 #define PURGE_RXCLEAR       0x0008  /* Kill the typeahead buffer if there*/
@@ -395,7 +395,7 @@ typedef struct
 #define	DTR_CONTROL_HANDSHAKE	2
 
 
-#define LMEM_FIXED          0   
+#define LMEM_FIXED          0
 #define LMEM_MOVEABLE       0x0002
 #define LMEM_NOCOMPACT      0x0010
 #define LMEM_NODISCARD      0x0020
@@ -694,10 +694,10 @@ typedef struct _LDT_ENTRY {
 	struct {
 	    BYTE	BaseMid;
 	    BYTE	Flags1;/*Declare as bytes to avoid alignment problems */
-	    BYTE	Flags2; 
+	    BYTE	Flags2;
 	    BYTE	BaseHi;
 	} Bytes;
-	struct {	    
+	struct {
 	    unsigned	BaseMid		: 8;
 	    unsigned	Type		: 5;
 	    unsigned	Dpl		: 2;
@@ -730,7 +730,7 @@ typedef struct _WIN32_FILE_ATTRIBUTES_DATA {
  * This one seems to be a Win32 only definition. It also is defined with
  * WINAPI instead of CALLBACK in the windows headers.
  */
-typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER, 
+typedef DWORD (CALLBACK *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_INTEGER,
                                            LARGE_INTEGER, DWORD, DWORD, HANDLE,
                                            HANDLE, LPVOID);
 
@@ -1363,7 +1363,7 @@ BOOL        WINAPI LookupAccountSidW(LPCWSTR,PSID,LPWSTR,LPDWORD,LPWSTR,LPDWORD,
 #define     LookupAccountSid WINELIB_NAME_AW(LookupAccountSid)
 BOOL        WINAPI LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 BOOL        WINAPI LockFile(HANDLE,DWORD,DWORD,DWORD,DWORD);
-BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);    
+BOOL        WINAPI LockFileEx(HANDLE, DWORD, DWORD, DWORD, DWORD, LPOVERLAPPED);
 BOOL        WINAPI LookupPrivilegeValueA(LPCSTR,LPCSTR,LPVOID);
 BOOL        WINAPI LookupPrivilegeValueW(LPCWSTR,LPCWSTR,LPVOID);
 #define     LookupPrivilegeValue WINELIB_NAME_AW(LookupPrivilegeValue)

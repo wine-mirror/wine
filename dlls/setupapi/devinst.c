@@ -47,9 +47,9 @@ RETERR16 WINAPI DiGetClassDevs16(LPLPDEVICE_INFO16 lplpdi,
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATAA DeviceInterfaceDetailData, 
+      PSP_DEVICE_INTERFACE_DETAIL_DATAA DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
-      PDWORD RequiredSize, 
+      PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData )
 {
     FIXME("\n");
@@ -59,9 +59,9 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
-      PSP_DEVICE_INTERFACE_DETAIL_DATAW DeviceInterfaceDetailData, 
+      PSP_DEVICE_INTERFACE_DETAIL_DATAW DeviceInterfaceDetailData,
       DWORD DeviceInterfaceDetailDataSize,
-      PDWORD RequiredSize, 
+      PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData )
 {
     FIXME("\n");
@@ -70,7 +70,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
 
 BOOL WINAPI SetupDiEnumDeviceInterfaces(
        HDEVINFO DeviceInfoSet,
-       PSP_DEVINFO_DATA DeviceInfoData, 
+       PSP_DEVINFO_DATA DeviceInfoData,
        CONST GUID * InterfaceClassGuid,
        DWORD MemberIndex,
        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
@@ -120,7 +120,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         DWORD   PropertyBufferSize,
         PDWORD  RequiredSize)
 {
-    FIXME("%04lx %p %ld %p %p %ld %p\n", (DWORD)devinfo, DeviceInfoData, 
+    FIXME("%04lx %p %ld %p %p %ld %p\n", (DWORD)devinfo, DeviceInfoData,
         Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
         RequiredSize);
     return FALSE;

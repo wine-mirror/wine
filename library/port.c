@@ -629,8 +629,8 @@ unsigned short* wine_rewrite_s4tos2(const wchar_t* str4 )
         return (unsigned short*)str4;
     }
 
-    /* Note that we can also end up here if the string has a single 
-     * character. In such a case we will convert the string over and 
+    /* Note that we can also end up here if the string has a single
+     * character. In such a case we will convert the string over and
      * over again. But this is harmless.
      */
     str2=s2=(unsigned short*)str4;
@@ -655,7 +655,7 @@ char *ecvt (double number, int  ndigits,  int  *decpt,  int *sign)
 {
     static char buf[40]; /* ought to be enough */
     char *dec;
-    sprintf(buf, "%.*e", ndigits /* FIXME wrong */, number); 
+    sprintf(buf, "%.*e", ndigits /* FIXME wrong */, number);
     *sign = (number < 0);
     dec = strchr(buf, '.');
     *decpt = (dec) ? (int)dec - (int)buf : -1;
@@ -727,8 +727,8 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
 /*
  * As the earlier Sparc processors lack necessary atomic instructions,
  * I'm simply falling back to the library-provided _lwp_mutex routines
- * to ensure mutual exclusion in a way appropriate for the current 
- * architecture.  
+ * to ensure mutual exclusion in a way appropriate for the current
+ * architecture.
  *
  * FIXME:  If we have the compare-and-swap instruction (Sparc v9 and above)
  *         we could use this to speed up the Interlocked operations ...

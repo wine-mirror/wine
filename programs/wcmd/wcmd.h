@@ -1,5 +1,5 @@
 /*
- * WCMD - Wine-compatible command line interface. 
+ * WCMD - Wine-compatible command line interface.
  *
  * Copyright (C) 1999 D A Pickles
  *
@@ -46,7 +46,7 @@ void WCMD_goto (void);
 void WCMD_if (char *);
 void WCMD_move (void);
 void WCMD_output (char *format, ...);
-void WCMD_output_asis (char *message);                   
+void WCMD_output_asis (char *message);
 void WCMD_parse (char *s, char *q, char *p1, char *p2);
 void WCMD_pause (void);
 void WCMD_pipe (char *command);

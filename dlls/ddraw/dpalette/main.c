@@ -194,7 +194,7 @@ static void Main_DirectDrawPalette_Destroy(IDirectDrawPaletteImpl* This)
 
     if (This->private != This+1)
 	HeapFree(GetProcessHeap(), 0, This->private);
-		     
+
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -244,7 +244,7 @@ Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps)
    *lpdwCaps = This->flags;
 
    return DD_OK;
-} 
+}
 
 HRESULT WINAPI
 Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,

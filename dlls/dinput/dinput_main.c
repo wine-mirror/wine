@@ -24,7 +24,7 @@
  *   Playable using keyboard only.
  * - WingCommander Prophecy Demo:
  *   Doesn't get Input Focus.
- * 
+ *
  * - Fallout : works great in X and DGA mode
  *
  * FIXME: The keyboard handling needs to (and will) be merged into keyboard.c
@@ -68,7 +68,7 @@ BOOL WINAPI Init( HINSTANCE inst, DWORD reason, LPVOID reserv)
 }
 
 
-/* register a direct draw driver. We better not use malloc for we are in 
+/* register a direct draw driver. We better not use malloc for we are in
  * the ELF startup initialisation at this point.
  */
 void dinput_register_device(dinput_device *device) {
@@ -108,16 +108,16 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This->ref = 1;
 	  ICOM_VTBL(This) = &ddiavt;
 	  *ppDI = This;
-	  
+
 	  return DI_OK;
 	}
-	
+
 	if (IsEqualGUID(&IID_IDirectInput7A,riid)) {
 	  This = (IDirectInputAImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputAImpl));
 	  This->ref = 1;
 	  ICOM_VTBL(This) = (ICOM_VTABLE(IDirectInputA) *) &ddi7avt;
 	  *ppDI = This;
-	  
+
 	  return DI_OK;
 	}
 
@@ -159,7 +159,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	      return 0;
 	  }
 	}
-	
+
 	return 0;
 }
 
@@ -186,7 +186,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	ICOM_THIS(IDirectInputAImpl,iface);
 	HRESULT ret_value = DIERR_DEVICENOTREG;
 	int i;
-	
+
 	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
 
 	/* Loop on all the devices to see if anyone matches the given GUID */
@@ -231,9 +231,9 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(
 static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface,
 							REFGUID rguid) {
   ICOM_THIS(IDirectInputAImpl,iface);
-  
+
   FIXME("(%p)->(%s): stub\n",This,debugstr_guid(rguid));
-  
+
   return DI_OK;
 }
 
@@ -242,7 +242,7 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							DWORD dwFlags) {
   ICOM_THIS(IDirectInputAImpl,iface);
   FIXME("(%p)->(%08lx,%08lx): stub\n",This, (DWORD) hwndOwner, dwFlags);
-  
+
   return DI_OK;
 }
 
@@ -250,7 +250,7 @@ static HRESULT WINAPI IDirectInput2AImpl_FindDevice(LPDIRECTINPUT2A iface, REFGU
 						    LPCSTR pszName, LPGUID pguidInstance) {
   ICOM_THIS(IDirectInputAImpl,iface);
   FIXME("(%p)->(%s, %s, %p): stub\n", This, debugstr_guid(rguid), pszName, pguidInstance);
-  
+
   return DI_OK;
 }
 
@@ -260,7 +260,7 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
   ICOM_THIS(IDirectInputAImpl,iface);
   HRESULT ret_value = DIERR_DEVICENOTREG;
   int i;
-	
+
   TRACE("(%p)->(%s, %s, %p, %p)\n", This, debugstr_guid(rguid), debugstr_guid(riid), pvOut, lpUnknownOuter);
 
   /* Loop on all the devices to see if anyone matches the given GUID */
@@ -268,11 +268,11 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
     HRESULT ret;
     if ((ret = dinput_devices[i]->create_device(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
       return DI_OK;
-    
+
     if (ret == DIERR_NOINTERFACE)
       ret_value = DIERR_NOINTERFACE;
   }
-  
+
   return ret_value;
 }
 
@@ -282,7 +282,7 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
 # define XCAST(fun)	(void*)
 #endif
 
-static ICOM_VTABLE(IDirectInputA) ddiavt = 
+static ICOM_VTABLE(IDirectInputA) ddiavt =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	XCAST(QueryInterface)IDirectInputAImpl_QueryInterface,
@@ -333,7 +333,7 @@ HRESULT WINAPI DINPUT_DllCanUnloadNow(void)
 HRESULT WINAPI DINPUT_DllGetClassObject(REFCLSID rclsid, REFIID riid,
 					LPVOID *ppv)
 {
-    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid), 
+    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid),
 	  debugstr_guid(riid), ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;

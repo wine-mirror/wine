@@ -61,11 +61,11 @@ BOOL RELAY_Init(void)
       /* Patch the return addresses for CallTo16 routines */
 
     CallTo16_DataSelector = wine_get_ds();
-    CallTo16_RetAddr = 
+    CallTo16_RetAddr =
         MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
-    CALL32_CBClient_RetAddr = 
+    CALL32_CBClient_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
-    CALL32_CBClientEx_RetAddr = 
+    CALL32_CBClientEx_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 #endif
     return TRUE;
@@ -164,7 +164,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR name, WORD 
     max_offset = 0;
     *pOrd = 0;
     bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
-    do 
+    do
     {
         entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	for (i = bundle->first + 1; i <= bundle->last; i++)
@@ -183,7 +183,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR name, WORD 
 
     /* Search for the name in the resident names table */
     /* (built-in modules have no non-resident table)   */
-    
+
     p = (BYTE *)pModule + pModule->name_table;
     while (*p)
     {
@@ -360,7 +360,7 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
  *
  * 'target' contains either the function to call (normal CallTo16)
  * or a pointer to the CONTEXT86 struct (register CallTo16).
- * 'nb_args' is the number of argument bytes on the 16-bit stack; 
+ * 'nb_args' is the number of argument bytes on the 16-bit stack;
  * 'reg_func' specifies whether we have a register CallTo16 or not.
  */
 void RELAY_DebugCallTo16( LPVOID target, int nb_args, BOOL reg_func )

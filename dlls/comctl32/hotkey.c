@@ -365,7 +365,7 @@ HOTKEY_Register (void)
     wndClass.hCursor       = 0;
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = HOTKEY_CLASSA;
- 
+
     RegisterClassA (&wndClass);
 }
 

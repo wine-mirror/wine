@@ -872,7 +872,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
     else
     {
 	/* neither x nor cx are default. Check the y values .
-	 * In the trace we see Outlook and Outlook Express using 
+	 * In the trace we see Outlook and Outlook Express using
 	 * cy set to CW_USEDEFAULT when opening the address book.
 	 */
 	if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
@@ -1912,15 +1912,15 @@ static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
             * code using illegal offset value. Hopefully this is
             * what those programs really expect.
             */
-           if (type == WIN_PROC_16 && 
+           if (type == WIN_PROC_16 &&
                wndPtr->cbWndExtra >= 4 &&
                offset == wndPtr->cbWndExtra - sizeof(WORD))
            {
                INT offset2 = wndPtr->cbWndExtra - sizeof(LONG);
-             
+
                ERR( "- replaced invalid offset %d with %d\n",
                     offset, offset2 );
-           
+
                 retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset2);
                 WIN_ReleasePtr( wndPtr );
                 return retvalue;

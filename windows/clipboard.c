@@ -132,7 +132,7 @@ BOOL CLIPBOARD_IsLocked()
    */
   if ( hClipLock == hTaskCur )
       bIsLocked = FALSE;
-      
+
   else if ( hTaskCur == hTaskClipOwner )
   {
       /* Check if we're currently executing inside a window procedure
@@ -143,7 +143,7 @@ BOOL CLIPBOARD_IsLocked()
        */
 #if 0
       MESSAGEQUEUE *queue = QUEUE_Current();
-      
+
       if ( queue
            && queue->smWaiting
            && queue->smWaiting->msg == WM_RENDERFORMAT
@@ -196,7 +196,7 @@ VOID CALLBACK CLIPBOARD_GlobalFreeProc( HWND hwnd, UINT uMsg, UINT idEvent, DWOR
 void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 {
     if( (lpFormat->wFormatID >= CF_GDIOBJFIRST &&
-	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP 
+	 lpFormat->wFormatID <= CF_GDIOBJLAST) || lpFormat->wFormatID == CF_BITMAP
 	    || lpFormat->wFormatID == CF_PALETTE)
     {
       if (lpFormat->hData32)
@@ -220,9 +220,9 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
           PostMessageA(hWndClipOwner, WM_TIMER,
                        (WPARAM)lpFormat->hDataSrc32, (LPARAM)CLIPBOARD_GlobalFreeProc);
         }
-          
+
 	if (lpFormat->hData16)
-	  /* HMETAFILE16 and HMETAFILE32 are apparently the same thing, 
+	  /* HMETAFILE16 and HMETAFILE32 are apparently the same thing,
 	     and a shallow copy is enough to share a METAFILEPICT
 	     structure between 16bit and 32bit clipboards.  The MetaFile
 	     should of course only be deleted once. */
@@ -234,7 +234,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 	GlobalFree16(lpFormat->hData16);
       }
     }
-    else 
+    else
     {
       if (lpFormat->hData32)
       {
@@ -258,7 +258,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
 	GlobalFree16(lpFormat->hData16);
     }
 
-    lpFormat->wDataPresent = 0; 
+    lpFormat->wDataPresent = 0;
     lpFormat->hData16 = 0;
     lpFormat->hData32 = 0;
     lpFormat->hDataSrc32 = 0;
@@ -272,7 +272,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
  */
 void CLIPBOARD_EmptyCache( BOOL bChange )
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
     while(lpFormat)
     {
@@ -312,16 +312,16 @@ BOOL CLIPBOARD_IsPresent(WORD wFormat)
 BOOL CLIPBOARD_IsCacheRendered()
 {
     LPWINE_CLIPFORMAT lpFormat = ClipFormats;
-    
+
     /* check if all formats were rendered */
     while(lpFormat)
     {
         if( lpFormat->wDataPresent && !lpFormat->hData16 && !lpFormat->hData32 )
             return FALSE;
-        
+
         lpFormat = lpFormat->NextFormat;
     }
-    
+
     return TRUE;
 }
 
@@ -356,7 +356,7 @@ HGLOBAL CLIPBOARD_GlobalDupMem( HGLOBAL hGlobalSrc )
     HGLOBAL hGlobalDest;
     PVOID pGlobalSrc, pGlobalDest;
     DWORD cBytes;
-    
+
     if ( !hGlobalSrc )
       return 0;
 
@@ -369,14 +369,14 @@ HGLOBAL CLIPBOARD_GlobalDupMem( HGLOBAL hGlobalSrc )
                                cBytes );
     if ( !hGlobalDest )
       return 0;
-    
+
     pGlobalSrc = GlobalLock(hGlobalSrc);
     pGlobalDest = GlobalLock(hGlobalDest);
     if ( !pGlobalSrc || !pGlobalDest )
       return 0;
 
     memcpy(pGlobalDest, pGlobalSrc, cBytes);
-        
+
     GlobalUnlock(hGlobalSrc);
     GlobalUnlock(hGlobalDest);
 
@@ -404,7 +404,7 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
    * we must ask the driver to render the data to the clipboard cache.
    */
   TRACE("enter format=%d\n", lpFormat->wFormatID);
-  if ( !USER_Driver.pIsSelectionOwner() 
+  if ( !USER_Driver.pIsSelectionOwner()
        && USER_Driver.pIsClipboardFormatAvailable( lpFormat->wFormatID ) )
   {
     if ( !USER_Driver.pGetClipboardData( lpFormat->wFormatID ) )
@@ -426,7 +426,7 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
     }
     else
     {
-      WARN("\thWndClipOwner (%04x) is lost!\n", 
+      WARN("\thWndClipOwner (%04x) is lost!\n",
 	   hWndClipOwner);
       CLIPBOARD_ReleaseOwner();
       lpFormat->wDataPresent = 0;
@@ -502,10 +502,10 @@ static INT CLIPBOARD_ConvertText(WORD src_fmt, void const *src, INT src_size,
  */
 static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 {
-    LPWINE_CLIPFORMAT lpSource = ClipFormats; 
+    LPWINE_CLIPFORMAT lpSource = ClipFormats;
     LPWINE_CLIPFORMAT lpTarget = NULL;
     BOOL foundData = FALSE;
- 
+
     /* Asked for CF_TEXT */
     if( wFormat == CF_TEXT)
     {
@@ -588,7 +588,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
 	}
     }
     if (!foundData)
-    {   
+    {
         if ((wFormat == CF_TEXT) || (wFormat == CF_OEMTEXT))
         {
             lpSource = &ClipFormats[CF_UNICODETEXT-1];
@@ -608,9 +608,9 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
     if( lpTarget != lpSource && !lpTarget->hData16 && !lpTarget->hData32 )
     {
         INT src_chars, dst_chars, alloc_size;
-        LPCSTR lpstrS; 
+        LPCSTR lpstrS;
         LPSTR  lpstrT;
-    
+
         if (lpSource->hData32)
         {
           lpstrS = (LPSTR)GlobalLock(lpSource->hData32);
@@ -619,7 +619,7 @@ static LPWINE_CLIPFORMAT CLIPBOARD_RenderText( UINT wFormat )
         {
           lpstrS = (LPSTR)GlobalLock16(lpSource->hData16);
         }
-    
+
         if( !lpstrS ) return NULL;
 
 	/* Text always NULL terminated */
@@ -678,12 +678,12 @@ static UINT CLIPBOARD_EnumClipboardFormats( UINT wFormat )
     {
 	/* walk up to the specified format record */
 
-	if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) 
+	if( !(lpFormat = __lookup_format( lpFormat, wFormat )) )
 	    return 0;
 	lpFormat = lpFormat->NextFormat; /* right */
     }
 
-    while(TRUE) 
+    while(TRUE)
     {
 	if (lpFormat == NULL) return 0;
 
@@ -721,7 +721,7 @@ static UINT CLIPBOARD_EnumClipboardFormats( UINT wFormat )
 
 
 /**************************************************************************
- *                WIN32 Clipboard implementation 
+ *                WIN32 Clipboard implementation
  **************************************************************************/
 
 /**************************************************************************
@@ -800,7 +800,7 @@ BOOL WINAPI EmptyClipboard(void)
         WARN("Clipboard not opened by calling task!\n");
         return FALSE;
     }
-    
+
     /* destroy private objects */
 
     if (hWndClipOwner) SendMessageW( hWndClipOwner, WM_DESTROYCLIPBOARD, 0, 0 );
@@ -813,7 +813,7 @@ BOOL WINAPI EmptyClipboard(void)
 
     /* Save the current task */
     hTaskClipOwner = GetCurrentTask();
-    
+
     /* Tell the driver to acquire the selection */
     USER_Driver.pAcquireClipboard();
 
@@ -858,7 +858,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
     /* Pass on the request to the driver */
     USER_Driver.pSetClipboardData(wFormat);
 
-    if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 ) 
+    if ( lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32 )
     {
 	CLIPBOARD_DeleteRecord(lpFormat, TRUE);
 
@@ -950,7 +950,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
         lpFormat->hData32 = CLIPBOARD_GlobalDupMem( hData );
     else
         lpFormat->hData32 = hData;          /* 0 is legal, see WM_RENDERFORMAT */
-    
+
     lpFormat->hData16 = 0;
 
     return lpFormat->hData32;   /* Should we return lpFormat->hDataSrc32 */
@@ -962,7 +962,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
  */
 HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 {
-    LPWINE_CLIPFORMAT lpRender = ClipFormats; 
+    LPWINE_CLIPFORMAT lpRender = ClipFormats;
 
     TRACE("(%04X)\n", wFormat);
 
@@ -982,7 +982,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 	lpRender = __lookup_format( ClipFormats, wFormat );
         if( !lpRender || !CLIPBOARD_RenderFormat(lpRender) ) return 0;
     }
-   
+
     /* Convert between 32 -> 16 bit data, if necessary */
     if( lpRender->hData32 && !lpRender->hData16
         && CLIPBOARD_IsMemoryObject(wFormat) )
@@ -992,7 +992,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 	size = sizeof( METAFILEPICT16 );
       else
           size = GlobalSize(lpRender->hData32);
-      
+
       lpRender->hData16 = GlobalAlloc16(GMEM_ZEROINIT, size);
       if( !lpRender->hData16 )
 	ERR("(%04X) -- not enough memory in 16b heap\n", wFormat);
@@ -1003,14 +1003,14 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
           FIXME("\timplement function CopyMetaFilePict32to16\n");
           FIXME("\tin the appropriate file.\n");
   #ifdef SOMEONE_IMPLEMENTED_ME
-          CopyMetaFilePict32to16( GlobalLock16(lpRender->hData16), 
+          CopyMetaFilePict32to16( GlobalLock16(lpRender->hData16),
                                   GlobalLock(lpRender->hData32) );
   #endif
         }
         else
         {
-          memcpy( GlobalLock16(lpRender->hData16), 
-                  GlobalLock(lpRender->hData32), 
+          memcpy( GlobalLock16(lpRender->hData16),
+                  GlobalLock(lpRender->hData32),
                   size );
         }
 	GlobalUnlock16(lpRender->hData16);
@@ -1018,7 +1018,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
       }
     }
 
-    TRACE("\treturning %04x (type %i)\n", 
+    TRACE("\treturning %04x (type %i)\n",
 			      lpRender->hData16, lpRender->wFormatID);
     return lpRender->hData16;
 }
@@ -1029,7 +1029,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
  */
 HANDLE WINAPI GetClipboardData( UINT wFormat )
 {
-    LPWINE_CLIPFORMAT lpRender = ClipFormats; 
+    LPWINE_CLIPFORMAT lpRender = ClipFormats;
 
     TRACE("(%08X)\n", wFormat);
 
@@ -1049,7 +1049,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 	lpRender = __lookup_format( ClipFormats, wFormat );
         if( !lpRender || !CLIPBOARD_RenderFormat(lpRender) ) return 0;
     }
-   
+
     /* Convert between 16 -> 32 bit data, if necessary */
     if( lpRender->hData16 && !lpRender->hData32
         && CLIPBOARD_IsMemoryObject(wFormat) )
@@ -1066,21 +1066,21 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 	FIXME("\timplement function CopyMetaFilePict16to32\n");
 	FIXME("\tin the appropriate file.\n");
 #ifdef SOMEONE_IMPLEMENTED_ME
-	CopyMetaFilePict16to32( GlobalLock16(lpRender->hData32), 
+	CopyMetaFilePict16to32( GlobalLock16(lpRender->hData32),
 			        GlobalLock(lpRender->hData16) );
 #endif
       }
       else
       {
-	memcpy( GlobalLock(lpRender->hData32), 
-		GlobalLock16(lpRender->hData16), 
+	memcpy( GlobalLock(lpRender->hData32),
+		GlobalLock16(lpRender->hData16),
 		size );
       }
       GlobalUnlock(lpRender->hData32);
       GlobalUnlock16(lpRender->hData16);
     }
 
-    TRACE("\treturning %04x (type %i)\n", 
+    TRACE("\treturning %04x (type %i)\n",
 			      lpRender->hData32, lpRender->wFormatID);
     return lpRender->hData32;
 }
@@ -1101,11 +1101,11 @@ INT16 WINAPI CountClipboardFormats16(void)
 INT WINAPI CountClipboardFormats(void)
 {
     INT FormatCount = 0;
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
     TRACE("()\n");
 
-    while(TRUE) 
+    while(TRUE)
     {
 	if (lpFormat == NULL) break;
 
@@ -1170,8 +1170,8 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
  */
 UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
 {
-    LPWINE_CLIPFORMAT lpNewFormat; 
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
+    LPWINE_CLIPFORMAT lpNewFormat;
+    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
     if (FormatName == NULL) return 0;
 
@@ -1179,14 +1179,14 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
 
     /* walk format chain to see if it's already registered */
 
-    while(TRUE) 
+    while(TRUE)
     {
 	if ( !strcmp(lpFormat->Name,FormatName) )
 	{
 	     lpFormat->wRefCount++;
 	     return lpFormat->wFormatID;
 	}
- 
+
 	if ( lpFormat->NextFormat == NULL ) break;
 
 	lpFormat = lpFormat->NextFormat;
@@ -1221,7 +1221,7 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
 
     /* Pass on the registration request to the driver */
     USER_Driver.pRegisterClipboardFormat( FormatName );
-    
+
     return LastRegFormat++;
 }
 
@@ -1265,7 +1265,7 @@ INT WINAPI GetClipboardFormatNameA( UINT wFormat, LPSTR retStr, INT maxlen )
 
     TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
-    if (lpFormat == NULL || lpFormat->Name == NULL || 
+    if (lpFormat == NULL || lpFormat->Name == NULL ||
 	lpFormat->wFormatID < CF_REGFORMATBASE) return 0;
 
     TRACE("Name='%s' !\n", lpFormat->Name);
@@ -1283,7 +1283,7 @@ INT WINAPI GetClipboardFormatNameW( UINT wFormat, LPWSTR retStr, INT maxlen )
     INT ret;
     LPSTR p = HeapAlloc( GetProcessHeap(), 0, maxlen );
     if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
-    
+
     ret = GetClipboardFormatNameA( wFormat, p, maxlen );
 
     if (maxlen > 0 && !MultiByteToWideChar( CP_ACP, 0, p, -1, retStr, maxlen ))

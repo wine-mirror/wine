@@ -1,7 +1,7 @@
 /*
- * Wine internally cached objects to speedup some things and prevent 
- * infinite duplication of trivial code and data. 
- * 
+ * Wine internally cached objects to speedup some things and prevent
+ * infinite duplication of trivial code and data.
+ *
  * Copyright 1997 Bertho A. Stultiens
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #include "user.h"
 
 static const WORD wPattern55AA[] =
-{ 
+{
     0x5555, 0xaaaa, 0x5555, 0xaaaa,
     0x5555, 0xaaaa, 0x5555, 0xaaaa
 };

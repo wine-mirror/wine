@@ -68,7 +68,7 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
   ICOM_METHOD1(HRESULT,put_KeepOriginalFormat, BOOL,Keep) \
   ICOM_METHOD (HRESULT,PictureChanged) \
   ICOM_METHOD3(HRESULT,SaveAsFile, LPSTREAM,pStream, BOOL,fSaveMemCopy, LONG*,pCbSize) \
-  ICOM_METHOD1(HRESULT,get_Attributes, DWORD*,pDwAttr) 
+  ICOM_METHOD1(HRESULT,get_Attributes, DWORD*,pDwAttr)
 #define IPicture_IMETHODS \
 	IUnknown_IMETHODS \
 	IPicture_METHODS
@@ -100,7 +100,7 @@ ICOM_DEFINE(IPicture,IUnknown)
  * IPictureDisp interface
  */
 #define ICOM_INTERFACE IPictureDisp
-#define IPictureDisp_METHODS 
+#define IPictureDisp_METHODS
 #define IPictureDisp_IMETHODS \
 				IDispatch_IMETHODS \
 				IPictureDisp_METHODS

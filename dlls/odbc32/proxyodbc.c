@@ -1,6 +1,6 @@
 /*
  * Win32 ODBC functions
- * 
+ *
  * Proxy ODBC driver manager.  This manager delegates all ODBC calls to a real ODBC driver manager which is either:
  *  	1) its name is defined in the environment variable LIB_ODBC_DRIVER_MANAGER
  *	2) if LIB_ODBC_DRIVER_MANAGER is not defined, a default library libodbc.so will be used.
@@ -138,7 +138,7 @@ static PROXYHANDLE gProxyHandle = {
   "",
   "",
   ""
-}; 
+};
 
 /* What is the difference between these two (dmHandle cf READY_AND_dmHandle)? When does one use one and when the other? */
 

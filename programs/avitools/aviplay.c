@@ -1,6 +1,6 @@
 /*
  * Very simple AVIPLAYER
- * 
+ *
  * Copyright 1999 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or
@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
+ *
  * Status:
  * 	- plays .avi streams, video only
  *	- requires MicroSoft avifil32.dll and builtin msvfw32.dll.
@@ -25,9 +25,9 @@
  *	- audio support (including synchronization etc)
  *	- replace DirectDraw by a 'normal' window, including dithering, controls
  *	  etc.
- *	
+ *
  * Bugs:
- *	- no time scheduling, video plays too fast using DirectDraw/XF86DGA 
+ *	- no time scheduling, video plays too fast using DirectDraw/XF86DGA
  *	- requires DirectDraw with all disadvantages.
  */
 
@@ -98,7 +98,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 #undef XX
 #undef XXT
 
-    
+
     fnAVIFileInit();
     if (-1==GetFileAttributes(cmdline)) {
     	fprintf(stderr,"Usage: aviplay <avifilename>\n");
@@ -137,7 +137,7 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 	    case streamtypeVIDEO:
 	    	vids = ast;
 		break;
-	    case streamtypeAUDIO: 
+	    case streamtypeAUDIO:
 	    	auds = ast;
 		break;
 	    default:  {
@@ -277,5 +277,5 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
     fprintf(stderr,"%d frames at %g frames/s\n",pos,pos*1.0/(tend-tstart));
     fnAVIFileRelease(avif);
     fnAVIFileExit();
-    return 0;    
+    return 0;
 }

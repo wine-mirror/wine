@@ -61,42 +61,42 @@ static void SetPrimaryDIB(HBITMAP hBmp)
   }
 }
 
-static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
-{ 
+static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
   Display *display = thread_display();
 
   if(message != X11DRV_DD_GrabMessage)
     return CallWindowProcA(X11DRV_DD_GrabOldProcedure, hWnd, message, wParam, lParam);
- 
+
   TRACE("hwnd=%d, grab=%d\n", hWnd, wParam);
 
-  if (wParam) 
-  {  
-    /* find the X11 window that ddraw uses */  
-    Window win = X11DRV_get_whole_window(hWnd);  
-    TRACE("X11 window: %ld\n", win);  
-    if (!win) {  
-      TRACE("host off desktop\n");  
-      win = root_window;  
-    }  
-
-    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);  
-  }  
-  else 
+  if (wParam)
   {
-    TSXUngrabPointer(display, CurrentTime);  
-  } 
+    /* find the X11 window that ddraw uses */
+    Window win = X11DRV_get_whole_window(hWnd);
+    TRACE("X11 window: %ld\n", win);
+    if (!win) {
+      TRACE("host off desktop\n");
+      win = root_window;
+    }
 
-  return 0; 
-} 
+    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
+  }
+  else
+  {
+    TSXUngrabPointer(display, CurrentTime);
+  }
+
+  return 0;
+}
 
 static void GrabPointer(BOOL grab)
 {
-  if(grab) { 
-    Window window = X11DRV_get_whole_window(GetFocus()); 
+  if(grab) {
+    Window window = X11DRV_get_whole_window(GetFocus());
     if(window)
-      XSetInputFocus(thread_display(), window, RevertToParent, CurrentTime); 
-  } 
+      XSetInputFocus(thread_display(), window, RevertToParent, CurrentTime);
+  }
 
   if(!X11DRV_DD_GrabMessage)
     X11DRV_DD_GrabMessage = RegisterWindowMessageA("WINE_X11DRV_GRABPOINTER");

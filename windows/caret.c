@@ -100,7 +100,7 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
     ReleaseDC( Caret.hwnd, hdc );
 }
 
-  
+
 /*****************************************************************
  *               CARET_Callback
  */
@@ -128,7 +128,7 @@ static void CARET_SetTimer(void)
  */
 static void CARET_ResetTimer(void)
 {
-    if (Caret.timerid) 
+    if (Caret.timerid)
     {
 	KillSystemTimer( (HWND)0, Caret.timerid );
 	Caret.timerid = SetSystemTimer( (HWND)0, 0, Caret.timeout,
@@ -142,7 +142,7 @@ static void CARET_ResetTimer(void)
  */
 static void CARET_KillTimer(void)
 {
-    if (Caret.timerid) 
+    if (Caret.timerid)
     {
 	KillSystemTimer( (HWND)0, Caret.timerid );
 	Caret.timerid = 0;
@@ -171,8 +171,8 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
         Caret.height = bmp.bmHeight;
 	bmp.bmBits = NULL;
 	Caret.hBmp = CreateBitmapIndirect(&bmp);
- 
-	if (Caret.hBmp) 
+
+	if (Caret.hBmp)
 	{
 	    /* copy the bitmap */
 	    LPBYTE buf = HeapAlloc(GetProcessHeap(), 0, bmp.bmWidthBytes * bmp.bmHeight);
@@ -201,7 +201,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
 		r.left = r.top = 0;
 		r.right = Caret.width;
 		r.bottom = Caret.height;
-		    
+
 		if ((Caret.hBmp = CreateCompatibleBitmap(hMemDC, Caret.width, Caret.height)))
 		{
 		    HBITMAP hPrevBmp = SelectObject(hMemDC, Caret.hBmp);
@@ -223,7 +223,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
     Caret.timeout = GetProfileIntA( "windows", "CursorBlinkRate", 500 );
     return TRUE;
 }
-   
+
 
 /*****************************************************************
  *		DestroyCaret (USER.164)

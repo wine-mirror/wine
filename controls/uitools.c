@@ -103,9 +103,9 @@ static const signed char LTRBOuterFlat[] = {
 
 static const signed char LTRBInnerFlat[] = {
     -1, -1,              -1,              -1,
-    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,    
-    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,    
-    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,    
+    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,
+    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,
+    -1, COLOR_BTNFACE,     COLOR_BTNFACE,     COLOR_BTNFACE,
 };
 
 /***********************************************************************
@@ -117,7 +117,7 @@ static const signed char LTRBInnerFlat[] = {
  *
  * See also comments with UITOOLS_DrawRectEdge()
  */
-static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc, 
+static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
 				     UINT uType, UINT uFlags)
 {
     POINT Points[4];
@@ -140,7 +140,7 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
     OuterPen = InnerPen = (HPEN)GetStockObject(NULL_PEN);
     SavePen = (HPEN)SelectObject(hdc, InnerPen);
     spx = spy = epx = epy = 0; /* Satisfy the compiler... */
-    
+
     /* Determine the colors of the edges */
     if(uFlags & BF_MONO)
     {
@@ -430,7 +430,7 @@ static BOOL UITOOLS95_DrawDiagEdge(HDC hdc, LPRECT rc,
  */
 
 
-static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc, 
+static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
 				     UINT uType, UINT uFlags)
 {
     signed char LTInnerI, LTOuterI;
@@ -447,7 +447,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
     BOOL retval = !(   ((uType & BDR_INNER) == BDR_INNER
                        || (uType & BDR_OUTER) == BDR_OUTER)
                       && !(uFlags & (BF_FLAT|BF_MONO)) );
-        
+
     /* Init some vars */
     LTInnerPen = LTOuterPen = RBInnerPen = RBOuterPen = (HPEN)GetStockObject(NULL_PEN);
     SavePen = (HPEN)SelectObject(hdc, LTInnerPen);
@@ -470,7 +470,7 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
 	 * otherwise.
 	 *                                          Dennis Björklund, 10 June, 99
 	 */
-	if( TWEAK_WineLook == WIN98_LOOK && LTInnerI != -1 )	  
+	if( TWEAK_WineLook == WIN98_LOOK && LTInnerI != -1 )
             LTInnerI = RBInnerI = COLOR_BTNFACE;
     }
     else if(uFlags & BF_SOFT)
@@ -559,8 +559,8 @@ static BOOL UITOOLS95_DrawRectEdge(HDC hdc, LPRECT rc,
         if(uFlags & BF_BOTTOM) InnerRect.bottom -= add;
 
         if((uFlags & BF_MIDDLE) && retval)
-	{ 
-            FillRect(hdc, &InnerRect, GetSysColorBrush(uFlags & BF_MONO ? 
+	{
+            FillRect(hdc, &InnerRect, GetSysColorBrush(uFlags & BF_MONO ?
 						       COLOR_WINDOW : COLOR_BTNFACE));
 	}
 
@@ -944,8 +944,8 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     {
     case DFCS_CAPTIONCLOSE:
     {
-        /* The "X" is made by drawing a series of lines.  
-         * The number of lines drawn depends on the size 
+        /* The "X" is made by drawing a series of lines.
+         * The number of lines drawn depends on the size
          * of the bounding rect.  e.g. For a 6x5 inside rect,
          * two lines are drawn from top-left to bottom-right,
          * and two lines from top-right to bottom-left.
@@ -1145,7 +1145,7 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
 
     /*
      * This fixes a problem with really tiny "scroll" buttons. In particular
-     * with the updown control. 
+     * with the updown control.
      * Making sure that the arrow is as least 3 pixels wide (or high).
      */
     if (tri == 0)
@@ -1405,7 +1405,7 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
     /* Win95 doesn't support drawing in other mapping modes */
     if(GetMapMode(hdc) != MM_TEXT)
         return FALSE;
-        
+
     switch(uType)
     {
     case DFC_BUTTON:

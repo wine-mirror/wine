@@ -29,7 +29,7 @@
 #include "mesa_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
-    
+
 #define D3DTPRIVATE(x) mesa_d3dt_private *dtpriv = (mesa_d3dt_private*)(x)->private
 
 void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
@@ -40,25 +40,25 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
     _dump_renderstate(dwRenderStateType, dwRenderState);
 
   /* First, all the stipple patterns */
-  if ((dwRenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00) && 
+  if ((dwRenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00) &&
       (dwRenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)) {
     ERR("Unhandled dwRenderStateType stipple %d!\n",dwRenderStateType);
   } else {
     ENTER_GL();
-    
+
     /* All others state variables */
     switch (dwRenderStateType) {
 
     case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
       IDirect3DTexture2Impl* tex = (IDirect3DTexture2Impl*) dwRenderState;
-      
+
       if (tex == NULL) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	TRACE("disabling texturing\n");
       } else {
 	D3DTPRIVATE(tex);
-	
+
 	glEnable(GL_TEXTURE_2D);
 	/* Default parameters */
 	glBindTexture(GL_TEXTURE_2D, dtpriv->tex_name);
@@ -76,14 +76,14 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       else
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
       break;
-      
+
     case D3DRENDERSTATE_ZENABLE:          /*  7 */
       if (dwRenderState)
 	glEnable(GL_DEPTH_TEST);
       else
 	glDisable(GL_DEPTH_TEST);
       break;
-      
+
     case D3DRENDERSTATE_FILLMODE:           /*  8 */
       switch ((D3DFILLMODE) dwRenderState) {
       case D3DFILL_SOLID:
@@ -108,24 +108,24 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	ERR("Unhandled shade mode !\n");
       }
       break;
-      
+
     case D3DRENDERSTATE_ZWRITEENABLE:     /* 14 */
       if (dwRenderState)
 	glDepthMask(GL_TRUE);
       else
 	glDepthMask(GL_FALSE);
       break;
-      
+
     case D3DRENDERSTATE_TEXTUREMAG:         /* 17 */
       switch ((D3DTEXTUREFILTER) dwRenderState) {
       case D3DFILTER_NEAREST:
 	rs->mag = GL_NEAREST;
 	break;
-	
+
       case D3DFILTER_LINEAR:
 	rs->mag = GL_LINEAR;
 	break;
-	
+
       default:
 	ERR("Unhandled texture mag !\n");
       }
@@ -136,16 +136,16 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       case D3DFILTER_NEAREST:
 	rs->min = GL_NEAREST;
 	break;
-	
+
       case D3DFILTER_LINEAR:
 	rs->mag = GL_LINEAR;
 	break;
-	
+
       default:
 	ERR("Unhandled texture min !\n");
       }
       break;
-      
+
     case D3DRENDERSTATE_SRCBLEND:           /* 19 */
       switch ((D3DBLEND) dwRenderState) {
       case D3DBLEND_SRCALPHA:
@@ -155,20 +155,20 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
       default:
 	ERR("Unhandled blend mode !\n");
       }
-      
+
       glBlendFunc(rs->src, rs->dst);
       break;
-      
+
     case D3DRENDERSTATE_DESTBLEND:          /* 20 */
       switch ((D3DBLEND) dwRenderState) {
       case D3DBLEND_INVSRCALPHA:
 	rs->dst = GL_ONE_MINUS_SRC_ALPHA;
 	break;
-	
+
       default:
 	ERR("Unhandled blend mode !\n");
       }
-      
+
       glBlendFunc(rs->src, rs->dst);
       break;
 
@@ -183,28 +183,28 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	ERR("Unhandled texture environment !\n");
       }
       break;
-      
+
     case D3DRENDERSTATE_CULLMODE:           /* 22 */
       switch ((D3DCULL) dwRenderState) {
       case D3DCULL_NONE:
 	glDisable(GL_CULL_FACE);
 	break;
-	
+
       case D3DCULL_CW:
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
 	break;
-	
+
       case D3DCULL_CCW:
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	break;
-	
+
       default:
 	ERR("Unhandled cull mode !\n");
       }
       break;
-      
+
     case D3DRENDERSTATE_ZFUNC:            /* 23 */
       switch ((D3DCMPFUNC) dwRenderState) {
       case D3DCMP_NEVER:
@@ -236,14 +236,14 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	ERR("Unexpected value\n");
       }
       break;
-      
+
     case D3DRENDERSTATE_DITHERENABLE:     /* 26 */
       if (dwRenderState)
 	glEnable(GL_DITHER);
       else
 	glDisable(GL_DITHER);
       break;
-      
+
     case D3DRENDERSTATE_ALPHABLENDENABLE:   /* 27 */
       if (dwRenderState)
 	glEnable(GL_BLEND);
@@ -260,7 +260,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
     case D3DRENDERSTATE_FLUSHBATCH:         /* 50 */
       break;
-      
+
     default:
       ERR("Unhandled dwRenderStateType %d!\n",dwRenderStateType);
       break;

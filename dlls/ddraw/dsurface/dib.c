@@ -455,7 +455,7 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	    break;
 	case SRCCOPY: /* well, we do that below ? */
 	    break;
-	default: 
+	default:
 	    FIXME("Unsupported raster op: %08lx  Pattern: %p\n", lpbltfx->dwROP, lpbltfx->u5.lpDDSPattern);
 	    goto error;
 	}
@@ -623,7 +623,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	else
 	  FIXME(" srcrect: NULL\n");
     }
-    
+
     /* We need to lock the surfaces, or we won't get refreshes when done. */
     sdesc.dwSize = sizeof(sdesc);
     IDirectDrawSurface7_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
@@ -824,7 +824,7 @@ DIB_DirectDrawSurface_Restore(LPDIRECTDRAWSURFACE7 iface)
 /* SetOverlayPosition: generic */
 
 void DIB_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-				       IDirectDrawPaletteImpl* pal) 
+				       IDirectDrawPaletteImpl* pal)
 {
     if (!pal) return;
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)

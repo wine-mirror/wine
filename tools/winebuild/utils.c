@@ -191,15 +191,15 @@ const char *make_c_identifier( const char *str )
  * provides other directives that work consistantly across
  * architectures, but of course we want to work on all arches with or
  * without gas.  Hence this function.
- * 
+ *
  *
  *  Parameters:
  *                alignBoundary  --  the number of bytes to align to.
- *                                   If we're on an architecture where 
+ *                                   If we're on an architecture where
  *                                   the assembler requires a 'number
  *                                   of low-order zero bits' as a
  *                                   .align argument, then this number
- *                                   must be a power of 2.  
+ *                                   must be a power of 2.
  *
  */
 int get_alignment(int alignBoundary)

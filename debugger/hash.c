@@ -60,7 +60,7 @@ struct name_hash
     int		       n_locals;
     int		       locals_alloc;
     WineLocals       * local_vars;
-  
+
     int		       n_lines;
     int		       lines_alloc;
     WineLineNo       * linetab;
@@ -88,7 +88,7 @@ static unsigned int name_hash( const char * name )
 
     p = name;
 
-    while (*p) 
+    while (*p)
       {
 	hash = (hash << 4) + *p++;
 
@@ -170,7 +170,7 @@ DEBUG_ResortSymbols(void)
 	return;
       }
 
-    addr_sorttab = (struct name_hash **) DBG_realloc(addr_sorttab, 
+    addr_sorttab = (struct name_hash **) DBG_realloc(addr_sorttab,
 					 nsym * sizeof(struct name_hash *));
 
     nsym = 0;
@@ -195,7 +195,7 @@ DEBUG_ResortSymbols(void)
  * Add a symbol to the table.
  */
 struct name_hash *
-DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, 
+DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
 		 const char * source, int flags)
 {
     struct name_hash  * new;
@@ -248,7 +248,7 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
      * First see if we already have an entry for this symbol.  If so
      * return it, so we don't end up with duplicates.
      */
-    
+
     new = (struct name_hash *) DBG_alloc(sizeof(struct name_hash));
     new->value = *value;
     new->name = DBG_strdup(name);
@@ -347,7 +347,7 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  *
  * Get the address of a named symbol.
  */
-static int    DEBUG_GSV_Helper(const char* name, const int lineno, 
+static int    DEBUG_GSV_Helper(const char* name, const int lineno,
 			       DBG_VALUE* value, int num, int bp_flag)
 {
    struct name_hash*	nh;
@@ -369,7 +369,7 @@ static int    DEBUG_GSV_Helper(const char* name, const int lineno,
    return i;
 }
 
-BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
+BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
 			   DBG_VALUE *rtn, int bp_flag )
 {
 #define NUMDBGV 10
@@ -382,7 +382,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    if (!num && (name[0] != '_'))
    {
       char buffer[512];
-	
+
       assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
       buffer[0] = '_';
       strcpy(buffer + 1, name);
@@ -390,7 +390,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
    }
 
    /* now get the local symbols if any */
-   if (DEBUG_GetStackSymbolValue(name, &vtmp) && num < NUMDBGV) 
+   if (DEBUG_GetStackSymbolValue(name, &vtmp) && num < NUMDBGV)
    {
       value[num] = vtmp;
       local = num;
@@ -447,7 +447,7 @@ BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
  *
  * Get the address of a named symbol.
  */
-BOOL DEBUG_GetLineNumberAddr( const struct name_hash * nh, const int lineno, 
+BOOL DEBUG_GetLineNumberAddr( const struct name_hash * nh, const int lineno,
 			      DBG_ADDR *addr, int bp_flag )
 {
     int i;
@@ -584,13 +584,13 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
     low = 0;
     high = sorttab_nsym;
     if( addr_sorttab[0]->value.addr.seg > addr->seg
-	|| (   addr_sorttab[0]->value.addr.seg == addr->seg 
+	|| (   addr_sorttab[0]->value.addr.seg == addr->seg
 	    && addr_sorttab[0]->value.addr.off > addr->off) )
       {
 	nearest = NULL;
       }
     else if( addr_sorttab[high - 1]->value.addr.seg < addr->seg
-	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg 
+	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg
 	    && addr_sorttab[high - 1]->value.addr.off < addr->off) )
       {
 	nearest = addr_sorttab[high - 1];
@@ -602,10 +602,10 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 	    mid = (high + low)/2;
 	    if( mid == low )
 	      {
-		/* 
+		/*
 		 * See if there are any other entries that might also
 		 * have the same address, and would also have a line
-		 * number table.  
+		 * number table.
 		 */
 		if( mid > 0 && addr_sorttab[mid]->linetab == NULL )
 		  {
@@ -643,7 +643,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		break;
 	      }
 	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
-		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg 
+		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg
 		    && addr_sorttab[mid]->value.addr.off <= addr->off) )
 	      {
 		low = mid;
@@ -724,7 +724,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
     module = DEBUG_FindModuleByAddr((void*)DEBUG_ToLinear(addr), DMT_UNKNOWN);
     if (module) {
        char*	ptr = strrchr(module->module_name, '/');
-       
+
        if (!ptr++) ptr = module->module_name;
        sprintf( modbuf, " in %s", ptr);
     }
@@ -767,13 +767,13 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
         sourcefile = strrchr( nearest->sourcefile, '/' );
         if (!sourcefile) sourcefile = nearest->sourcefile;
         else sourcefile++;
-	
+
 	if (addr->off == nearest->value.addr.off)
-	  sprintf( name_buffer, "%s%s [%s%s]%s", nearest->name, 
+	  sprintf( name_buffer, "%s%s [%s%s]%s", nearest->name,
 		   arglist, sourcefile, lineinfo, modbuf);
 	else
 	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]%s", nearest->name,
-		   addr->off - nearest->value.addr.off, 
+		   addr->off - nearest->value.addr.off,
 		   arglist, sourcefile, lineinfo, modbuf );
       }
     else
@@ -818,17 +818,17 @@ void DEBUG_ReadSymbolTable( const char* filename )
     value.addr.seg = 0;
     value.addr.off = 0;
     value.cookie = DV_TARGET;
- 
+
     while (1)
     {
         fgets( buffer, sizeof(buffer), symbolfile );
         if (feof(symbolfile)) break;
-		
+
         /* Strip any text after a # sign (i.e. comments) */
         cpnt = buffer;
         while (*cpnt)
             if(*cpnt++ == '#') { *cpnt = 0; break; }
-		
+
         /* Quietly ignore any lines that have just whitespace */
         cpnt = buffer;
         while(*cpnt)
@@ -837,7 +837,7 @@ void DEBUG_ReadSymbolTable( const char* filename )
             cpnt++;
         }
         if (!(*cpnt) || *cpnt == '\n') continue;
-		
+
         if (sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name) == 3)
 	   DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
     }
@@ -846,7 +846,7 @@ void DEBUG_ReadSymbolTable( const char* filename )
 
 
 void
-DEBUG_AddLineNumber( struct name_hash * func, int line_num, 
+DEBUG_AddLineNumber( struct name_hash * func, int line_num,
 		     unsigned long offset )
 {
   if( func == NULL )
@@ -869,7 +869,7 @@ DEBUG_AddLineNumber( struct name_hash * func, int line_num,
 
 
 struct wine_locals *
-DEBUG_AddLocal( struct name_hash * func, int regno, 
+DEBUG_AddLocal( struct name_hash * func, int regno,
 		int offset,
 		int pc_start,
 		int pc_end,
@@ -942,13 +942,13 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
     low = 0;
     high = sorttab_nsym;
     if( addr_sorttab[0]->value.addr.seg > addr->seg
-	|| (   addr_sorttab[0]->value.addr.seg == addr->seg 
+	|| (   addr_sorttab[0]->value.addr.seg == addr->seg
 	    && addr_sorttab[0]->value.addr.off > addr->off) )
       {
 	nearest = NULL;
       }
     else if( addr_sorttab[high - 1]->value.addr.seg < addr->seg
-	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg 
+	|| (   addr_sorttab[high - 1]->value.addr.seg == addr->seg
 	    && addr_sorttab[high - 1]->value.addr.off < addr->off) )
       {
 	nearest = addr_sorttab[high - 1];
@@ -960,10 +960,10 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 	    mid = (high + low)/2;
 	    if( mid == low )
 	      {
-		/* 
+		/*
 		 * See if there are any other entries that might also
 		 * have the same address, and would also have a line
-		 * number table.  
+		 * number table.
 		 */
 		if( mid > 0 && addr_sorttab[mid]->linetab == NULL )
 		  {
@@ -1001,7 +1001,7 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		break;
 	      }
 	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
-		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg 
+		|| (   addr_sorttab[mid]->value.addr.seg == addr->seg
 		    && addr_sorttab[mid]->value.addr.off <= addr->off) )
 	      {
 		low = mid;
@@ -1078,7 +1078,7 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
  * handler can deal with.
  */
 void
-DEBUG_GetFuncInfo( struct list_id * ret, const char * filename, 
+DEBUG_GetFuncInfo( struct list_id * ret, const char * filename,
 		   const char * name)
 {
     char buffer[256];
@@ -1185,14 +1185,14 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_VALUE *value )
        * comes up with RBRAC/LBRAC stabs in particular.
        */
       if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((eip - curr_func->value.addr.off) 
+	  && ((eip - curr_func->value.addr.off)
 	      < curr_func->local_vars[i].pc_start) )
 	{
 	  continue;
 	}
 
       if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((eip - curr_func->value.addr.off) 
+	  && ((eip - curr_func->value.addr.off)
 	      > curr_func->local_vars[i].pc_end) )
 	{
 	  continue;
@@ -1209,11 +1209,11 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_VALUE *value )
 	       * Register variable.  Point to DEBUG_context field.
 	       */
 	      assert(curr_func->local_vars[i].regno - 1 < sizeof(reg_ofs)/sizeof(reg_ofs[0]));
-	      value->addr.off = ((DWORD)&DEBUG_context) + 
+	      value->addr.off = ((DWORD)&DEBUG_context) +
 		 reg_ofs[curr_func->local_vars[i].regno - 1];
 	      value->cookie = DV_HOST;
 	    }
-	  else 
+	  else
 	    {
 	      value->addr.off = ebp + curr_func->local_vars[i].offset;
 	      value->cookie = DV_TARGET;
@@ -1252,19 +1252,19 @@ DEBUG_InfoLocals(void)
        * comes up with RBRAC/LBRAC stabs in particular.
        */
       if(    (curr_func->local_vars[i].pc_start != 0)
-	  && ((eip - curr_func->value.addr.off) 
+	  && ((eip - curr_func->value.addr.off)
 	      < curr_func->local_vars[i].pc_start) )
 	{
 	  continue;
 	}
 
       if(    (curr_func->local_vars[i].pc_end != 0)
-	  && ((eip - curr_func->value.addr.off) 
+	  && ((eip - curr_func->value.addr.off)
 	      > curr_func->local_vars[i].pc_end) )
 	{
 	  continue;
 	}
-      
+
       DEBUG_PrintTypeCast(curr_func->local_vars[i].type);
 
       if( curr_func->local_vars[i].regno != 0 )
@@ -1278,7 +1278,7 @@ DEBUG_InfoLocals(void)
 	}
       else
 	{
-	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset), 
+	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset),
 				 &val, sizeof(val));
 	  DEBUG_Printf(DBG_CHN_MESG, " %s == 0x%8.8x\n",
 		       curr_func->local_vars[i].name, val);

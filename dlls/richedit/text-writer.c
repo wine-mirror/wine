@@ -60,16 +60,16 @@ static CHARLIST charlist = {0, NULL, NULL};
 int RTFToBuffer(char* pBuffer, int nBufferSize);
 int RTFToBuffer(char* pBuffer, int nBufferSize)
 {
-    
-   /* check if the buffer is big enough to hold all characters  */    
+
+   /* check if the buffer is big enough to hold all characters  */
    /* we require one more for the '\0'                          */
-   
-   TRACE("\n");   
+
+   TRACE("\n");
 
    if(nBufferSize < charlist.nCount + 1) {
         return charlist.nCount + CHARLIST_CountChar(&charlist, '\n') + 1;
    }
-  
+
    while(charlist.nCount)
    {
        *pBuffer = CHARLIST_Dequeue(&charlist);
@@ -77,13 +77,13 @@ int RTFToBuffer(char* pBuffer, int nBufferSize)
        {
          *pBuffer = '\r';
          pBuffer++;
-         *pBuffer = '\n'; 
+         *pBuffer = '\n';
        }
        pBuffer++;
    }
    *pBuffer = '\0';
 
-   return 0;    
+   return 0;
 }
 
 
@@ -123,7 +123,7 @@ TextClass ()
 {
 char	buf[rtfBufSiz];
 
-	TRACE("\n");   
+	TRACE("\n");
 
 	if (rtfMinor != rtfSC_nothing)
 		PutStdChar (rtfMinor);
@@ -255,13 +255,13 @@ void SpecialChar ()
 
 void PutStdChar (int stdCode)
 {
-  
+
   char	*oStr = (char *) NULL;
   char	buf[rtfBufSiz];
-  
+
 /*	if (stdCode == rtfSC_nothing)
 		RTFPanic ("Unknown character code, logic error\n");
-*/		
+*/
 	TRACE("\n");
 
 	oStr = outMap[stdCode];

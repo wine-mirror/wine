@@ -227,7 +227,7 @@ int count;
     echo_mode = 0;
     return;
   }
-  WCMD_output_asis (command);    
+  WCMD_output_asis (command);
   WCMD_output (newline);
 
 }
@@ -628,7 +628,7 @@ void WCMD_setshow_env (char *s) {
 LPVOID env;
 char *p;
 int status;
-char buffer[1048];                                                   
+char buffer[1048];
 
   if (strlen(param1) == 0) {
     env = GetEnvironmentStrings ();
@@ -642,22 +642,22 @@ char buffer[1048];
     p = strchr (s, '=');
     if (p == NULL) {
 
-      /* FIXME: Emulate Win98 for now, ie "SET C" looks ONLY for an    
-         environment variable C, whereas on NT it shows ALL variables  
-         starting with C.                                              
-       */                                                            
-      status = GetEnvironmentVariable(s, buffer, sizeof(buffer));    
-      if (status) {                                                  
-        WCMD_output("%s=%s\n", s, buffer);                           
-      } else {                                                       
-        WCMD_output ("Environment variable %s not defined\n", s);    
-      }                                                              
+      /* FIXME: Emulate Win98 for now, ie "SET C" looks ONLY for an
+         environment variable C, whereas on NT it shows ALL variables
+         starting with C.
+       */
+      status = GetEnvironmentVariable(s, buffer, sizeof(buffer));
+      if (status) {
+        WCMD_output("%s=%s\n", s, buffer);
+      } else {
+        WCMD_output ("Environment variable %s not defined\n", s);
+      }
       return;
     }
     *p++ = '\0';
 
-    if (strlen(p) == 0) p = 0x00;                                    
-    status = SetEnvironmentVariable (s, p);   
+    if (strlen(p) == 0) p = 0x00;
+    status = SetEnvironmentVariable (s, p);
     if (!status) WCMD_print_error();
   }
   /* WCMD_output (newline);   @JED*/

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#define INTERNETAPI 
+#define INTERNETAPI
 #define BOOLAPI INTERNETAPI BOOL WINAPI
 
 typedef LPVOID HINTERNET;
@@ -33,62 +33,62 @@ typedef WORD INTERNET_PORT;
 typedef INTERNET_PORT * LPINTERNET_PORT;
 
 
-#define INTERNET_INVALID_PORT_NUMBER    0           
+#define INTERNET_INVALID_PORT_NUMBER    0
 
-#define INTERNET_DEFAULT_FTP_PORT       21          
-#define INTERNET_DEFAULT_GOPHER_PORT    70          
-#define INTERNET_DEFAULT_HTTP_PORT      80          
-#define INTERNET_DEFAULT_HTTPS_PORT     443         
-#define INTERNET_DEFAULT_SOCKS_PORT     1080        
+#define INTERNET_DEFAULT_FTP_PORT       21
+#define INTERNET_DEFAULT_GOPHER_PORT    70
+#define INTERNET_DEFAULT_HTTP_PORT      80
+#define INTERNET_DEFAULT_HTTPS_PORT     443
+#define INTERNET_DEFAULT_SOCKS_PORT     1080
 
 #define INTERNET_MAX_HOST_NAME_LENGTH   256
 #define INTERNET_MAX_USER_NAME_LENGTH   128
 #define INTERNET_MAX_PASSWORD_LENGTH    128
-#define INTERNET_MAX_PORT_NUMBER_LENGTH 5           
-#define INTERNET_MAX_PORT_NUMBER_VALUE  65535       
+#define INTERNET_MAX_PORT_NUMBER_LENGTH 5
+#define INTERNET_MAX_PORT_NUMBER_VALUE  65535
 #define INTERNET_MAX_PATH_LENGTH        2048
-#define INTERNET_MAX_SCHEME_LENGTH      32          
+#define INTERNET_MAX_SCHEME_LENGTH      32
 #define INTERNET_MAX_URL_LENGTH         (INTERNET_MAX_SCHEME_LENGTH + sizeof("://")+ INTERNET_MAX_PATH_LENGTH)
 #define INTERNET_KEEP_ALIVE_UNKNOWN     ((DWORD)-1)
 #define INTERNET_KEEP_ALIVE_ENABLED     1
 #define INTERNET_KEEP_ALIVE_DISABLED    0
-#define INTERNET_REQFLAG_FROM_CACHE     0x00000001  
-#define INTERNET_REQFLAG_ASYNC          0x00000002  
-#define INTERNET_REQFLAG_VIA_PROXY      0x00000004  
-#define INTERNET_REQFLAG_NO_HEADERS     0x00000008  
-#define INTERNET_REQFLAG_PASSIVE        0x00000010  
-#define INTERNET_REQFLAG_CACHE_WRITE_DISABLED 0x00000040  
-#define INTERNET_FLAG_RELOAD            0x80000000  
-#define INTERNET_FLAG_RAW_DATA          0x40000000  
-#define INTERNET_FLAG_EXISTING_CONNECT  0x20000000  
-#define INTERNET_FLAG_ASYNC             0x10000000  
-#define INTERNET_FLAG_PASSIVE           0x08000000  
-#define INTERNET_FLAG_NO_CACHE_WRITE    0x04000000  
+#define INTERNET_REQFLAG_FROM_CACHE     0x00000001
+#define INTERNET_REQFLAG_ASYNC          0x00000002
+#define INTERNET_REQFLAG_VIA_PROXY      0x00000004
+#define INTERNET_REQFLAG_NO_HEADERS     0x00000008
+#define INTERNET_REQFLAG_PASSIVE        0x00000010
+#define INTERNET_REQFLAG_CACHE_WRITE_DISABLED 0x00000040
+#define INTERNET_FLAG_RELOAD            0x80000000
+#define INTERNET_FLAG_RAW_DATA          0x40000000
+#define INTERNET_FLAG_EXISTING_CONNECT  0x20000000
+#define INTERNET_FLAG_ASYNC             0x10000000
+#define INTERNET_FLAG_PASSIVE           0x08000000
+#define INTERNET_FLAG_NO_CACHE_WRITE    0x04000000
 #define INTERNET_FLAG_DONT_CACHE        INTERNET_FLAG_NO_CACHE_WRITE
-#define INTERNET_FLAG_MAKE_PERSISTENT   0x02000000  
-#define INTERNET_FLAG_FROM_CACHE        0x01000000  
+#define INTERNET_FLAG_MAKE_PERSISTENT   0x02000000
+#define INTERNET_FLAG_FROM_CACHE        0x01000000
 #define INTERNET_FLAG_OFFLINE           INTERNET_FLAG_FROM_CACHE
-#define INTERNET_FLAG_SECURE            0x00800000  
-#define INTERNET_FLAG_KEEP_CONNECTION   0x00400000  
-#define INTERNET_FLAG_NO_AUTO_REDIRECT  0x00200000  
-#define INTERNET_FLAG_READ_PREFETCH     0x00100000  
-#define INTERNET_FLAG_NO_COOKIES        0x00080000  
-#define INTERNET_FLAG_NO_AUTH           0x00040000  
-#define INTERNET_FLAG_CACHE_IF_NET_FAIL 0x00010000  
-#define INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP   0x00008000 
-#define INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS  0x00004000 
-#define INTERNET_FLAG_IGNORE_CERT_DATE_INVALID  0x00002000 
-#define INTERNET_FLAG_IGNORE_CERT_CN_INVALID    0x00001000 
-#define INTERNET_FLAG_RESYNCHRONIZE     0x00000800  
-#define INTERNET_FLAG_HYPERLINK         0x00000400  
-#define INTERNET_FLAG_NO_UI             0x00000200  
-#define INTERNET_FLAG_PRAGMA_NOCACHE    0x00000100  
-#define INTERNET_FLAG_CACHE_ASYNC       0x00000080  
-#define INTERNET_FLAG_FORMS_SUBMIT      0x00000040  
-#define INTERNET_FLAG_NEED_FILE         0x00000010  
+#define INTERNET_FLAG_SECURE            0x00800000
+#define INTERNET_FLAG_KEEP_CONNECTION   0x00400000
+#define INTERNET_FLAG_NO_AUTO_REDIRECT  0x00200000
+#define INTERNET_FLAG_READ_PREFETCH     0x00100000
+#define INTERNET_FLAG_NO_COOKIES        0x00080000
+#define INTERNET_FLAG_NO_AUTH           0x00040000
+#define INTERNET_FLAG_CACHE_IF_NET_FAIL 0x00010000
+#define INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP   0x00008000
+#define INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS  0x00004000
+#define INTERNET_FLAG_IGNORE_CERT_DATE_INVALID  0x00002000
+#define INTERNET_FLAG_IGNORE_CERT_CN_INVALID    0x00001000
+#define INTERNET_FLAG_RESYNCHRONIZE     0x00000800
+#define INTERNET_FLAG_HYPERLINK         0x00000400
+#define INTERNET_FLAG_NO_UI             0x00000200
+#define INTERNET_FLAG_PRAGMA_NOCACHE    0x00000100
+#define INTERNET_FLAG_CACHE_ASYNC       0x00000080
+#define INTERNET_FLAG_FORMS_SUBMIT      0x00000040
+#define INTERNET_FLAG_NEED_FILE         0x00000010
 #define INTERNET_FLAG_MUST_CACHE_REQUEST INTERNET_FLAG_NEED_FILE
-#define INTERNET_FLAG_TRANSFER_ASCII    FTP_TRANSFER_TYPE_ASCII     
-#define INTERNET_FLAG_TRANSFER_BINARY   FTP_TRANSFER_TYPE_BINARY    
+#define INTERNET_FLAG_TRANSFER_ASCII    FTP_TRANSFER_TYPE_ASCII
+#define INTERNET_FLAG_TRANSFER_BINARY   FTP_TRANSFER_TYPE_BINARY
 #define SECURITY_INTERNET_MASK  (INTERNET_FLAG_IGNORE_CERT_CN_INVALID|\
 INTERNET_FLAG_IGNORE_CERT_DATE_INVALID|\
 INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS|\
@@ -124,9 +124,9 @@ INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP)
 #define INTERNET_ERROR_MASK_INSERT_CDROM                    0x1
 
 #define INTERNET_OPTIONS_MASK   (~INTERNET_FLAGS_MASK)
-#define WININET_API_FLAG_ASYNC          0x00000001  
-#define WININET_API_FLAG_SYNC           0x00000004  
-#define WININET_API_FLAG_USE_CONTEXT    0x00000008  
+#define WININET_API_FLAG_ASYNC          0x00000001
+#define WININET_API_FLAG_SYNC           0x00000004
+#define WININET_API_FLAG_USE_CONTEXT    0x00000008
 #define INTERNET_NO_CALLBACK            0
 
 typedef enum {
@@ -184,7 +184,7 @@ typedef struct {
 #define ISO_FORCE_DISCONNECTED  0x00000001
 
 typedef struct {
-    DWORD   dwStructSize;       
+    DWORD   dwStructSize;
     LPSTR   lpszScheme;
     DWORD   dwSchemeLength;
     INTERNET_SCHEME nScheme;
@@ -194,29 +194,29 @@ typedef struct {
     LPSTR   lpszUserName;
     DWORD   dwUserNameLength;
     LPSTR   lpszPassword;
-    DWORD   dwPasswordLength;   
-    LPSTR   lpszUrlPath;        
-    DWORD   dwUrlPathLength;    
-    LPSTR   lpszExtraInfo;      
-    DWORD   dwExtraInfoLength;  
+    DWORD   dwPasswordLength;
+    LPSTR   lpszUrlPath;
+    DWORD   dwUrlPathLength;
+    LPSTR   lpszExtraInfo;
+    DWORD   dwExtraInfoLength;
 } URL_COMPONENTSA,* LPURL_COMPONENTSA;
 
 typedef struct {
-    DWORD   dwStructSize;       
-    LPWSTR  lpszScheme;         
-    DWORD   dwSchemeLength;     
-    INTERNET_SCHEME nScheme;    
-    LPWSTR  lpszHostName;       
-    DWORD   dwHostNameLength;   
-    INTERNET_PORT nPort;        
-    LPWSTR  lpszUserName;       
-    DWORD   dwUserNameLength;   
-    LPWSTR  lpszPassword;       
-    DWORD   dwPasswordLength;   
-    LPWSTR  lpszUrlPath;        
-    DWORD   dwUrlPathLength;    
-    LPWSTR  lpszExtraInfo;      
-    DWORD   dwExtraInfoLength;  
+    DWORD   dwStructSize;
+    LPWSTR  lpszScheme;
+    DWORD   dwSchemeLength;
+    INTERNET_SCHEME nScheme;
+    LPWSTR  lpszHostName;
+    DWORD   dwHostNameLength;
+    INTERNET_PORT nPort;
+    LPWSTR  lpszUserName;
+    DWORD   dwUserNameLength;
+    LPWSTR  lpszPassword;
+    DWORD   dwPasswordLength;
+    LPWSTR  lpszUrlPath;
+    DWORD   dwUrlPathLength;
+    LPWSTR  lpszExtraInfo;
+    DWORD   dwExtraInfoLength;
 } URL_COMPONENTSW,* LPURL_COMPONENTSW;
 
 DECL_WINELIB_TYPE_AW(URL_COMPONENTS)
@@ -250,28 +250,28 @@ DECL_WINELIB_TYPE_AW(INTERNET_CERTIFICATE_INFO)
 DECL_WINELIB_TYPE_AW(LPINTERNET_CERTIFICATE_INFO)
 
 typedef struct _INTERNET_BUFFERSA {
-    DWORD dwStructSize;                 
-    struct _INTERNET_BUFFERSA * Next;   
-    LPCSTR   lpcszHeader;               
-    DWORD dwHeadersLength;              
-    DWORD dwHeadersTotal;               
-    LPVOID lpvBuffer;                   
-    DWORD dwBufferLength;               
-    DWORD dwBufferTotal;                
-    DWORD dwOffsetLow;                  
+    DWORD dwStructSize;
+    struct _INTERNET_BUFFERSA * Next;
+    LPCSTR   lpcszHeader;
+    DWORD dwHeadersLength;
+    DWORD dwHeadersTotal;
+    LPVOID lpvBuffer;
+    DWORD dwBufferLength;
+    DWORD dwBufferTotal;
+    DWORD dwOffsetLow;
     DWORD dwOffsetHigh;
 } INTERNET_BUFFERSA,* LPINTERNET_BUFFERSA;
 
 typedef struct _INTERNET_BUFFERSW {
-    DWORD dwStructSize;                 
-    struct _INTERNET_BUFFERSW * Next;   
-    LPCWSTR  lpcszHeader;               
-    DWORD dwHeadersLength;              
-    DWORD dwHeadersTotal;               
-    LPVOID lpvBuffer;                   
-    DWORD dwBufferLength;               
-    DWORD dwBufferTotal;                
-    DWORD dwOffsetLow;                  
+    DWORD dwStructSize;
+    struct _INTERNET_BUFFERSW * Next;
+    LPCWSTR  lpcszHeader;
+    DWORD dwHeadersLength;
+    DWORD dwHeadersTotal;
+    LPVOID lpvBuffer;
+    DWORD dwBufferLength;
+    DWORD dwBufferTotal;
+    DWORD dwOffsetLow;
     DWORD dwOffsetHigh;
 } INTERNET_BUFFERSW,* LPINTERNET_BUFFERSW;
 
@@ -304,22 +304,22 @@ BOOLAPI InternetCombineUrlA(LPCSTR ,LPCSTR ,LPSTR ,LPDWORD ,DWORD);
 BOOLAPI InternetCombineUrlW(LPCWSTR ,LPCWSTR ,LPWSTR ,LPDWORD ,DWORD);
 #define InternetCombineUrl  WINELIB_NAME_AW(InternetCombineUrl)
 
-#define ICU_ESCAPE      0x80000000  
-#define ICU_USERNAME    0x40000000  
-#define ICU_NO_ENCODE   0x20000000  
-#define ICU_DECODE      0x10000000  
-#define ICU_NO_META     0x08000000  
-#define ICU_ENCODE_SPACES_ONLY 0x04000000  
-#define ICU_BROWSER_MODE 0x02000000 
+#define ICU_ESCAPE      0x80000000
+#define ICU_USERNAME    0x40000000
+#define ICU_NO_ENCODE   0x20000000
+#define ICU_DECODE      0x10000000
+#define ICU_NO_META     0x08000000
+#define ICU_ENCODE_SPACES_ONLY 0x04000000
+#define ICU_BROWSER_MODE 0x02000000
 
 INTERNETAPI HINTERNET WINAPI InternetOpenA(LPCSTR ,DWORD ,LPCSTR lpszProxy ,LPCSTR lpszProxyBypass ,DWORD);
 INTERNETAPI HINTERNET WINAPI InternetOpenW(LPCWSTR ,DWORD ,LPCWSTR lpszProxy ,LPCWSTR lpszProxyBypass ,DWORD);
 #define InternetOpen  WINELIB_NAME_AW(InternetOpen)
 
-#define INTERNET_OPEN_TYPE_PRECONFIG                    0   
-#define INTERNET_OPEN_TYPE_DIRECT                       1   
-#define INTERNET_OPEN_TYPE_PROXY                        3   
-#define INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY  4   
+#define INTERNET_OPEN_TYPE_PRECONFIG                    0
+#define INTERNET_OPEN_TYPE_DIRECT                       1
+#define INTERNET_OPEN_TYPE_PROXY                        3
+#define INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY  4
 #define PRE_CONFIG_INTERNET_ACCESS  INTERNET_OPEN_TYPE_PRECONFIG
 #define LOCAL_INTERNET_ACCESS       INTERNET_OPEN_TYPE_DIRECT
 #define CERN_PROXY_INTERNET_ACCESS  INTERNET_OPEN_TYPE_PROXY
@@ -352,7 +352,7 @@ INTERNETAPI HINTERNET WINAPI InternetOpenUrlA(HINTERNET ,LPCSTR ,LPCSTR lpszHead
 INTERNETAPI HINTERNET WINAPI InternetOpenUrlW(HINTERNET ,LPCWSTR ,LPCWSTR lpszHeaders ,DWORD ,DWORD ,DWORD);
 #define InternetOpenUrl  WINELIB_NAME_AW(InternetOpenUrl)
 
-BOOLAPI InternetReadFile( HINTERNET ,LPVOID ,DWORD ,LPDWORD ); 
+BOOLAPI InternetReadFile( HINTERNET ,LPVOID ,DWORD ,LPDWORD );
 INTERNETAPI BOOL WINAPI InternetReadFileExA( HINTERNET ,LPINTERNET_BUFFERSA ,DWORD ,DWORD );
 INTERNETAPI BOOL WINAPI InternetReadFileExW( HINTERNET ,LPINTERNET_BUFFERSW ,DWORD ,DWORD );
 #define InternetReadFileEx  WINELIB_NAME_AW(InternetReadFileEx)
@@ -363,7 +363,7 @@ INTERNETAPI BOOL WINAPI InternetReadFileExW( HINTERNET ,LPINTERNET_BUFFERSW ,DWO
 #define IRF_NO_WAIT     0x00000008
 
 INTERNETAPI DWORD WINAPI InternetSetFilePointer(HINTERNET ,LONG ,PVOID ,DWORD ,DWORD);
-BOOLAPI InternetWriteFile(HINTERNET ,LPCVOID ,DWORD ,LPDWORD); 
+BOOLAPI InternetWriteFile(HINTERNET ,LPCVOID ,DWORD ,LPDWORD);
 BOOLAPI InternetQueryDataAvailable(HINTERNET ,LPDWORD lpdwNumberOfBytesAvailable ,DWORD ,DWORD);
 BOOLAPI InternetFindNextFileA(HINTERNET ,LPVOID);
 BOOLAPI InternetFindNextFileW(HINTERNET ,LPVOID);
@@ -384,8 +384,8 @@ BOOLAPI InternetSetOptionExW(HINTERNET hInternet ,DWORD ,LPVOID ,DWORD ,DWORD);
 BOOLAPI InternetLockRequestFile(HINTERNET ,HANDLE *);
 BOOLAPI InternetUnlockRequestFile(HANDLE);
 
-#define ISO_GLOBAL      0x00000001  
-#define ISO_REGISTRY    0x00000002  
+#define ISO_GLOBAL      0x00000001
+#define ISO_REGISTRY    0x00000002
 
 #define ISO_VALID_FLAGS (ISO_GLOBAL | ISO_REGISTRY)
 #define INTERNET_OPTION_CALLBACK                1
@@ -460,7 +460,7 @@ BOOLAPI InternetUnlockRequestFile(HANDLE);
 #define INTERNET_HANDLE_TYPE_GOPHER_FILE        11
 #define INTERNET_HANDLE_TYPE_GOPHER_FILE_HTML   12
 #define INTERNET_HANDLE_TYPE_HTTP_REQUEST       13
-#define SECURITY_FLAG_SECURE                    0x00000001 
+#define SECURITY_FLAG_SECURE                    0x00000001
 #define SECURITY_FLAG_STRENGTH_WEAK             0x10000000
 #define SECURITY_FLAG_STRENGTH_MEDIUM           0x40000000
 #define SECURITY_FLAG_STRENGTH_STRONG           0x20000000
@@ -518,11 +518,11 @@ INTERNETAPI INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallback(HINTERNET 
 #define INTERNET_STATUS_REDIRECT                110
 #define INTERNET_STATUS_INTERMEDIATE_RESPONSE   120
 #define INTERNET_STATUS_STATE_CHANGE            200
-#define INTERNET_STATE_CONNECTED                0x00000001  
-#define INTERNET_STATE_DISCONNECTED             0x00000002  
-#define INTERNET_STATE_DISCONNECTED_BY_USER     0x00000010  
-#define INTERNET_STATE_IDLE                     0x00000100  
-#define INTERNET_STATE_BUSY                     0x00000200  
+#define INTERNET_STATE_CONNECTED                0x00000001
+#define INTERNET_STATE_DISCONNECTED             0x00000002
+#define INTERNET_STATE_DISCONNECTED_BY_USER     0x00000010
+#define INTERNET_STATE_IDLE                     0x00000100
+#define INTERNET_STATE_BUSY                     0x00000200
 
 #define INTERNET_INVALID_STATUS_CALLBACK        ((INTERNET_STATUS_CALLBACK)(-1L))
 
@@ -593,7 +593,7 @@ BOOLAPI FtpGetCurrentDirectoryW(HINTERNET ,LPWSTR ,LPDWORD);
 
 typedef struct {
     CHAR   DisplayString[MAX_GOPHER_DISPLAY_TEXT + 1];
-    DWORD GopherType;   
+    DWORD GopherType;
     DWORD SizeLow;
     DWORD SizeHigh;
     FILETIME LastModificationTime;
@@ -602,7 +602,7 @@ typedef struct {
 
 typedef struct {
     WCHAR  DisplayString[MAX_GOPHER_DISPLAY_TEXT + 1];
-    DWORD GopherType;   
+    DWORD GopherType;
     DWORD SizeLow;
     DWORD SizeHigh;
     FILETIME LastModificationTime;
@@ -820,8 +820,8 @@ DECL_WINELIB_TYPE_AW(GOPHER_UNKNOWN_ATTRIBUTE_TYPE)
 DECL_WINELIB_TYPE_AW(LPGOPHER_UNKNOWN_ATTRIBUTE_TYPE)
 
 typedef struct {
-    DWORD CategoryId;   
-    DWORD AttributeId;  
+    DWORD CategoryId;
+    DWORD AttributeId;
     union {
         GOPHER_ADMIN_ATTRIBUTE_TYPEA Admin;
         GOPHER_MOD_DATE_ATTRIBUTE_TYPE ModDate;
@@ -844,8 +844,8 @@ typedef struct {
 } GOPHER_ATTRIBUTE_TYPEA, *LPGOPHER_ATTRIBUTE_TYPEA;
 
 typedef struct {
-    DWORD CategoryId;   
-    DWORD AttributeId;  
+    DWORD CategoryId;
+    DWORD AttributeId;
     union {
         GOPHER_ADMIN_ATTRIBUTE_TYPEW Admin;
         GOPHER_MOD_DATE_ATTRIBUTE_TYPE ModDate;
@@ -870,9 +870,9 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(GOPHER_ATTRIBUTE_TYPE)
 DECL_WINELIB_TYPE_AW(LPGOPHER_ATTRIBUTE_TYPE)
 
-#define MAX_GOPHER_CATEGORY_NAME    128     
-#define MAX_GOPHER_ATTRIBUTE_NAME   128     
-#define MIN_GOPHER_ATTRIBUTE_LENGTH 256     
+#define MAX_GOPHER_CATEGORY_NAME    128
+#define MAX_GOPHER_ATTRIBUTE_NAME   128
+#define MIN_GOPHER_ATTRIBUTE_LENGTH 256
 
 #define GOPHER_INFO_CATEGORY        TEXT("+INFO")
 #define GOPHER_ADMIN_CATEGORY       TEXT("+ADMIN")
@@ -976,11 +976,11 @@ BOOLAPI GopherGetAttributeW(HINTERNET ,LPCWSTR ,LPCWSTR lpszAttributeName ,LPBYT
 #define HTTP_QUERY_COST                         15
 #define HTTP_QUERY_LINK                         16
 #define HTTP_QUERY_PRAGMA                       17
-#define HTTP_QUERY_VERSION                      18  
-#define HTTP_QUERY_STATUS_CODE                  19  
-#define HTTP_QUERY_STATUS_TEXT                  20  
-#define HTTP_QUERY_RAW_HEADERS                  21  
-#define HTTP_QUERY_RAW_HEADERS_CRLF             22  
+#define HTTP_QUERY_VERSION                      18
+#define HTTP_QUERY_STATUS_CODE                  19
+#define HTTP_QUERY_STATUS_TEXT                  20
+#define HTTP_QUERY_RAW_HEADERS                  21
+#define HTTP_QUERY_RAW_HEADERS_CRLF             22
 #define HTTP_QUERY_CONNECTION                   23
 #define HTTP_QUERY_ACCEPT                       24
 #define HTTP_QUERY_ACCEPT_CHARSET               25
@@ -1003,7 +1003,7 @@ BOOLAPI GopherGetAttributeW(HINTERNET ,LPCWSTR ,LPCWSTR lpszAttributeName ,LPBYT
 #define HTTP_QUERY_ACCEPT_RANGES                42
 #define HTTP_QUERY_SET_COOKIE                   43
 #define HTTP_QUERY_COOKIE                       44
-#define HTTP_QUERY_REQUEST_METHOD               45  
+#define HTTP_QUERY_REQUEST_METHOD               45
 #define HTTP_QUERY_REFRESH                      46
 #define HTTP_QUERY_CONTENT_DISPOSITION          47
 #define HTTP_QUERY_AGE                          48
@@ -1039,44 +1039,44 @@ BOOLAPI GopherGetAttributeW(HINTERNET ,LPCWSTR ,LPCWSTR lpszAttributeName ,LPBYT
                                                 )
 #define HTTP_QUERY_HEADER_MASK                  (~HTTP_QUERY_MODIFIER_FLAGS_MASK)
 
-#define HTTP_STATUS_CONTINUE            100 
-#define HTTP_STATUS_SWITCH_PROTOCOLS    101 
-#define HTTP_STATUS_OK                  200 
-#define HTTP_STATUS_CREATED             201 
-#define HTTP_STATUS_ACCEPTED            202 
-#define HTTP_STATUS_PARTIAL             203 
-#define HTTP_STATUS_NO_CONTENT          204 
-#define HTTP_STATUS_RESET_CONTENT       205 
-#define HTTP_STATUS_PARTIAL_CONTENT     206 
-#define HTTP_STATUS_AMBIGUOUS           300 
-#define HTTP_STATUS_MOVED               301 
-#define HTTP_STATUS_REDIRECT            302 
-#define HTTP_STATUS_REDIRECT_METHOD     303 
-#define HTTP_STATUS_NOT_MODIFIED        304 
-#define HTTP_STATUS_USE_PROXY           305 
-#define HTTP_STATUS_REDIRECT_KEEP_VERB  307 
-#define HTTP_STATUS_BAD_REQUEST         400 
-#define HTTP_STATUS_DENIED              401 
-#define HTTP_STATUS_PAYMENT_REQ         402 
-#define HTTP_STATUS_FORBIDDEN           403 
-#define HTTP_STATUS_NOT_FOUND           404 
-#define HTTP_STATUS_BAD_METHOD          405 
-#define HTTP_STATUS_NONE_ACCEPTABLE     406 
-#define HTTP_STATUS_PROXY_AUTH_REQ      407 
-#define HTTP_STATUS_REQUEST_TIMEOUT     408 
-#define HTTP_STATUS_CONFLICT            409 
-#define HTTP_STATUS_GONE                410 
-#define HTTP_STATUS_LENGTH_REQUIRED     411 
-#define HTTP_STATUS_PRECOND_FAILED      412 
-#define HTTP_STATUS_REQUEST_TOO_LARGE   413 
-#define HTTP_STATUS_URI_TOO_LONG        414 
-#define HTTP_STATUS_UNSUPPORTED_MEDIA   415 
-#define HTTP_STATUS_SERVER_ERROR        500 
-#define HTTP_STATUS_NOT_SUPPORTED       501 
-#define HTTP_STATUS_BAD_GATEWAY         502 
-#define HTTP_STATUS_SERVICE_UNAVAIL     503 
-#define HTTP_STATUS_GATEWAY_TIMEOUT     504 
-#define HTTP_STATUS_VERSION_NOT_SUP     505 
+#define HTTP_STATUS_CONTINUE            100
+#define HTTP_STATUS_SWITCH_PROTOCOLS    101
+#define HTTP_STATUS_OK                  200
+#define HTTP_STATUS_CREATED             201
+#define HTTP_STATUS_ACCEPTED            202
+#define HTTP_STATUS_PARTIAL             203
+#define HTTP_STATUS_NO_CONTENT          204
+#define HTTP_STATUS_RESET_CONTENT       205
+#define HTTP_STATUS_PARTIAL_CONTENT     206
+#define HTTP_STATUS_AMBIGUOUS           300
+#define HTTP_STATUS_MOVED               301
+#define HTTP_STATUS_REDIRECT            302
+#define HTTP_STATUS_REDIRECT_METHOD     303
+#define HTTP_STATUS_NOT_MODIFIED        304
+#define HTTP_STATUS_USE_PROXY           305
+#define HTTP_STATUS_REDIRECT_KEEP_VERB  307
+#define HTTP_STATUS_BAD_REQUEST         400
+#define HTTP_STATUS_DENIED              401
+#define HTTP_STATUS_PAYMENT_REQ         402
+#define HTTP_STATUS_FORBIDDEN           403
+#define HTTP_STATUS_NOT_FOUND           404
+#define HTTP_STATUS_BAD_METHOD          405
+#define HTTP_STATUS_NONE_ACCEPTABLE     406
+#define HTTP_STATUS_PROXY_AUTH_REQ      407
+#define HTTP_STATUS_REQUEST_TIMEOUT     408
+#define HTTP_STATUS_CONFLICT            409
+#define HTTP_STATUS_GONE                410
+#define HTTP_STATUS_LENGTH_REQUIRED     411
+#define HTTP_STATUS_PRECOND_FAILED      412
+#define HTTP_STATUS_REQUEST_TOO_LARGE   413
+#define HTTP_STATUS_URI_TOO_LONG        414
+#define HTTP_STATUS_UNSUPPORTED_MEDIA   415
+#define HTTP_STATUS_SERVER_ERROR        500
+#define HTTP_STATUS_NOT_SUPPORTED       501
+#define HTTP_STATUS_BAD_GATEWAY         502
+#define HTTP_STATUS_SERVICE_UNAVAIL     503
+#define HTTP_STATUS_GATEWAY_TIMEOUT     504
+#define HTTP_STATUS_VERSION_NOT_SUP     505
 #define HTTP_STATUS_FIRST               HTTP_STATUS_CONTINUE
 #define HTTP_STATUS_LAST                HTTP_STATUS_VERSION_NOT_SUP
 
@@ -1110,12 +1110,12 @@ INTERNETAPI BOOL WINAPI HttpSendRequestExW(HINTERNET ,LPINTERNET_BUFFERSW lpBuff
 	LPINTERNET_BUFFERSW lpBuffersOut ,DWORD ,DWORD);
 #define HttpSendRequestEx  WINELIB_NAME_AW(HttpSendRequestEx)
 
-#define HSR_ASYNC       WININET_API_FLAG_ASYNC          
-#define HSR_SYNC        WININET_API_FLAG_SYNC           
-#define HSR_USE_CONTEXT WININET_API_FLAG_USE_CONTEXT    
-#define HSR_INITIATE    0x00000008                      
-#define HSR_DOWNLOAD    0x00000010                      
-#define HSR_CHUNKED     0x00000020                      
+#define HSR_ASYNC       WININET_API_FLAG_ASYNC
+#define HSR_SYNC        WININET_API_FLAG_SYNC
+#define HSR_USE_CONTEXT WININET_API_FLAG_USE_CONTEXT
+#define HSR_INITIATE    0x00000008
+#define HSR_DOWNLOAD    0x00000010
+#define HSR_CHUNKED     0x00000020
 
 INTERNETAPI BOOL WINAPI HttpEndRequestA(HINTERNET ,LPINTERNET_BUFFERSA lpBuffersOut ,DWORD ,DWORD);
 INTERNETAPI BOOL WINAPI HttpEndRequestW(HINTERNET ,LPINTERNET_BUFFERSW lpBuffersOut ,DWORD ,DWORD);
@@ -1151,10 +1151,10 @@ typedef DWORD (CALLBACK *PFN_AUTH_NOTIFY) (DWORD,DWORD,LPVOID);
 
 typedef struct
 {
-    DWORD            cbStruct;    
-    DWORD            dwOptions;   
-    PFN_AUTH_NOTIFY  pfnNotify;   
-    DWORD            dwContext;   
+    DWORD            cbStruct;
+    DWORD            dwOptions;
+    PFN_AUTH_NOTIFY  pfnNotify;
+    DWORD            dwContext;
 }
 INTERNET_AUTH_NOTIFY_DATA;
 
@@ -1271,43 +1271,43 @@ INTERNETAPI DWORD WINAPI InternetConfirmZoneCrossingW(HWND ,LPWSTR ,LPWSTR ,BOOL
 
 
 typedef struct _INTERNET_CACHE_ENTRY_INFOA {
-    DWORD dwStructSize;         
-    LPSTR lpszSourceUrlName;    
-    LPSTR   lpszLocalFileName;  
-    DWORD CacheEntryType;       
-    DWORD dwUseCount;           
-    DWORD dwHitRate;            
-    DWORD dwSizeLow;            
-    DWORD dwSizeHigh;           
-    FILETIME LastModifiedTime;  
-    FILETIME ExpireTime;        
-    FILETIME LastAccessTime;    
-    FILETIME LastSyncTime;      
-                                
-    LPBYTE lpHeaderInfo;        
-    DWORD dwHeaderInfoSize;     
-    LPSTR lpszFileExtension;  
-    union {                     
+    DWORD dwStructSize;
+    LPSTR lpszSourceUrlName;
+    LPSTR   lpszLocalFileName;
+    DWORD CacheEntryType;
+    DWORD dwUseCount;
+    DWORD dwHitRate;
+    DWORD dwSizeLow;
+    DWORD dwSizeHigh;
+    FILETIME LastModifiedTime;
+    FILETIME ExpireTime;
+    FILETIME LastAccessTime;
+    FILETIME LastSyncTime;
+
+    LPBYTE lpHeaderInfo;
+    DWORD dwHeaderInfoSize;
+    LPSTR lpszFileExtension;
+    union {
       DWORD dwReserved;
       DWORD dwExemptDelta;
     } u;
 } INTERNET_CACHE_ENTRY_INFOA,* LPINTERNET_CACHE_ENTRY_INFOA;
 
 typedef struct _INTERNET_CACHE_ENTRY_INFOW {
-    DWORD dwStructSize;         
-    LPWSTR lpszSourceUrlName;    
-    LPWSTR  lpszLocalFileName;  
-    DWORD CacheEntryType;       
-    DWORD dwUseCount;           
-    DWORD dwHitRate;            
-    DWORD dwSizeLow;            
-    DWORD dwSizeHigh;           
-    FILETIME LastModifiedTime;  
-    FILETIME ExpireTime;        
-    FILETIME LastAccessTime;    
-    FILETIME LastSyncTime;      
-                                
-    LPBYTE lpHeaderInfo;        
+    DWORD dwStructSize;
+    LPWSTR lpszSourceUrlName;
+    LPWSTR  lpszLocalFileName;
+    DWORD CacheEntryType;
+    DWORD dwUseCount;
+    DWORD dwHitRate;
+    DWORD dwSizeLow;
+    DWORD dwSizeHigh;
+    FILETIME LastModifiedTime;
+    FILETIME ExpireTime;
+    FILETIME LastAccessTime;
+    FILETIME LastSyncTime;
+
+    LPBYTE lpHeaderInfo;
     DWORD dwHeaderInfoSize;
     LPWSTR  lpszFileExtension;
     union {
@@ -1441,11 +1441,11 @@ INTERNETAPI BOOL WINAPI InternetSetDialStateW(LPCWSTR ,DWORD ,DWORD);
 #define INTERNET_DIALSTATE_DISCONNECTED     1
 
 BOOLAPI InternetCheckConnectionA(LPCSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
-BOOLAPI InternetCheckConnectionW(LPCWSTR lpszUrl,DWORD dwFlags,DWORD dwReserved); 
+BOOLAPI InternetCheckConnectionW(LPCWSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
 #define InternetCheckConnection WINELIB_NAME_AW(InternetCheckConnection)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif 
+#endif

@@ -31,7 +31,7 @@ typedef struct tagActiveDS
     struct tagActiveDS	*next;			/* next active DS */
     TW_IDENTITY		identity;		/* identity */
     TW_UINT16		currentState;		/* current state */
-    TW_EVENT		pendingEvent;		/* pending event to be sent to 
+    TW_EVENT		pendingEvent;		/* pending event to be sent to
                                                    application */
     TW_UINT16		twCC;			/* condition code */
     HWND		hwndOwner;		/* window handle of the app */
@@ -42,7 +42,7 @@ typedef struct tagActiveDS
 #endif
     /* Capabiblities */
     TW_UINT16		capXferMech;		/* ICAP_XFERMECH */
-} activeDS; 
+} activeDS;
 
 TW_UINT16 DSM_initialized;      /* whether Source Manager is initialized */
 TW_UINT16 DSM_currentState;     /* current state of Source Manager */
@@ -176,7 +176,7 @@ TW_UINT16 TWAIN_XferGroupGet
 TW_UINT16 TWAIN_XferGroupSet
     (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, TW_MEMREF pData);
 
-/* Implementation of operation triplets 
+/* Implementation of operation triplets
  * From Application to Source (Image Information) */
 TW_UINT16 TWAIN_CIEColorGet
     (pTW_IDENTITY pOrigin, pTW_IDENTITY pDest, TW_MEMREF pData);

@@ -117,8 +117,8 @@ extern int PROFILE_GetWineIniBool( char const *section, char const *key_name, in
 extern HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
 /* ntdll/cdrom.c.c */
-extern BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode, 
-                                  LPVOID lpInBuffer, DWORD nInBufferSize, 
+extern BOOL CDROM_DeviceIoControl(DWORD clientID, HANDLE hDevice, DWORD dwIoControlCode,
+                                  LPVOID lpInBuffer, DWORD nInBufferSize,
                                   LPVOID lpOutBuffer, DWORD nOutBufferSize,
                                   LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 

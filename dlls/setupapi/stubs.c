@@ -39,7 +39,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
  *		SetupIterateCabinetW (SETUPAPI.@)
  */
 BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
-                                 PSP_FILE_CALLBACK_W MsgHandler, PVOID Context) 
+                                 PSP_FILE_CALLBACK_W MsgHandler, PVOID Context)
 {
 	FIXME("not implemented (setupapi.dll) \n");
 	return 0;

@@ -1,7 +1,7 @@
 /*
  * Defines the types and macros used by the ICMP API, see icmpapi.h.
  *
- * This header is not part of the standard headers, it is usually 
+ * This header is not part of the standard headers, it is usually
  * delivered separately and this is why it is not directly in 'include'.
  *
  * Copyright (C) 1999 Francois Gouget

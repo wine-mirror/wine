@@ -266,7 +266,7 @@ static BOOL PSDRV_PPDGetInvocationValue(FILE *fp, char *pos, PPDTuple *tuple)
     do {
         end = strchr(start, '"');
 	if(end) {
-	    buf = HeapReAlloc( PSDRV_Heap, 0, buf, 
+	    buf = HeapReAlloc( PSDRV_Heap, 0, buf,
 			       len + (end - start) + 1 );
 	    memcpy(buf + len, start, end - start);
 	    *(buf + len + (end - start)) = '\0';
@@ -457,7 +457,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
 {
     PAGESIZE *page = ppd->PageSizes, *lastpage;
-    
+
     if(!page) {
        page = ppd->PageSizes = HeapAlloc( PSDRV_Heap,
 					    HEAP_ZERO_MEMORY, sizeof(*page) );
@@ -573,7 +573,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	fclose(fp);
 	return NULL;
     }
-    
+
     while( PSDRV_PPDGetNextTuple(fp, &tuple)) {
 
 	if(!strcmp("*NickName", tuple.key)) {
@@ -646,7 +646,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	        page->Name = tuple.option;
 		tuple.option = NULL;
-		
+
 		for(i = 0; PageTrans[i].PSName; i++) {
 		    if(!strcmp(PageTrans[i].PSName, page->Name)) { /* case ? */
 		        page->WinPage = PageTrans[i].WinPage;
@@ -678,7 +678,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	else if(!strcmp("*ImageableArea", tuple.key)) {
 	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
-	    
+
 	    if(!page->Name) {
 	        page->Name = tuple.option;
 		tuple.option = NULL;
@@ -701,7 +701,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 	else if(!strcmp("*PaperDimension", tuple.key)) {
 	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
-	    
+
 	    if(!page->Name) {
 	        page->Name = tuple.option;
 		tuple.option = NULL;
@@ -727,28 +727,28 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	    /* anything else, namely 'any', leaves value at 0 */
 
-	    TRACE("LandscapeOrientation = %d\n", 
+	    TRACE("LandscapeOrientation = %d\n",
 		  ppd->LandscapeOrientation);
 	}
-	
+
 	else if(!strcmp("*UIConstraints", tuple.key)) {
 	    char *start;
 	    CONSTRAINT *con, **insert = &ppd->Constraints;
 
 	    while(*insert)
 	        insert = &((*insert)->next);
-	    
+
 	    con = *insert = HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
 				       sizeof(*con) );
 
 	    start = tuple.value;
-	    
+
 	    con->Feature1 = PSDRV_PPDGetWord(start, &start);
 	    con->Value1 = PSDRV_PPDGetWord(start, &start);
 	    con->Feature2 = PSDRV_PPDGetWord(start, &start);
 	    con->Value2 = PSDRV_PPDGetWord(start, &start);
 	}
-	    
+
 	else if (!strcmp("*InputSlot", tuple.key))
 	{
 
@@ -763,7 +763,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 		    UserBinType++);
 
 	    tuple.option = tuple.opttrans = tuple.value = NULL;
-	}   
+	}
 
 	/*
 	 *  Windows treats "manual feed" as another paper source.  Most PPD
@@ -782,8 +782,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 	if(tuple.option) HeapFree(PSDRV_Heap, 0, tuple.option);
 	if(tuple.value) HeapFree(PSDRV_Heap, 0, tuple.value);
 	if(tuple.opttrans) HeapFree(PSDRV_Heap, 0, tuple.opttrans);
-	if(tuple.valtrans) HeapFree(PSDRV_Heap, 0, tuple.valtrans);    
-	
+	if(tuple.valtrans) HeapFree(PSDRV_Heap, 0, tuple.valtrans);
+
     }
 
 
@@ -797,16 +797,16 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	for(fn = ppd->InstalledFonts; fn; fn = fn->next)
 	    TRACE("'%s'\n", fn->Name);
-	
+
 	for(page = ppd->PageSizes; page; page = page->next) {
 	    TRACE("'%s' aka '%s' (%d) invoked by '%s'\n", page->Name,
 	      page->FullName, page->WinPage, page->InvocationString);
 	    if(page->ImageableArea)
-	        TRACE("Area = %.2f,%.2f - %.2f, %.2f\n", 
+	        TRACE("Area = %.2f,%.2f - %.2f, %.2f\n",
 		      page->ImageableArea->llx, page->ImageableArea->lly,
 		      page->ImageableArea->urx, page->ImageableArea->ury);
 	    if(page->PaperDimension)
-	        TRACE("Dimension = %.2f x %.2f\n", 
+	        TRACE("Dimension = %.2f x %.2f\n",
 		      page->PaperDimension->x, page->PaperDimension->y);
 	}
 
@@ -825,7 +825,7 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	for(slot = ppd->InputSlots; slot; slot = slot->next)
 	    TRACE("INPUTSLOTS '%s' Name '%s' (%d) Invocation '%s'\n",
-		  slot->Name, slot->FullName, slot->WinBin, 
+		  slot->Name, slot->FullName, slot->WinBin,
 		  slot->InvocationString);
     }
 

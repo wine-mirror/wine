@@ -1,7 +1,7 @@
 /*
  * based on Windows Sockets 1.1 specs
  * (ftp.microsoft.com:/Advsys/winsock/spec11/WINSOCK.TXT)
- * 
+ *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * NOTE: If you make any changes to fix a particular app, make sure 
- * they don't break something else like Netscape or telnet and ftp 
+ * NOTE: If you make any changes to fix a particular app, make sure
+ * they don't break something else like Netscape or telnet and ftp
  * clients and servers (www.winsite.com got a lot of those).
  */
 
@@ -188,12 +188,12 @@ typedef struct          /* WSAAsyncSelect() control struct */
   HWND        hWnd;
   UINT        uMsg;
   LONG        lEvent;
-} ws_select_info;  
+} ws_select_info;
 
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
 
-#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs 
+#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs
                                                 that lists the network devices.
                                                 Do we need an #ifdef LINUX for this? */
 
@@ -222,7 +222,7 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(int errnr);
-                                                      
+
 static HANDLE 	_WSHeap = 0;
 
 #define WS_ALLOC(size) \
@@ -495,8 +495,8 @@ static fd_set* fd_set_import( fd_set* fds, void* wsfds, int* highfd, int lfd[], 
 {
     /* translate Winsock fd set into local fd set */
 
-    if( wsfds ) 
-    { 
+    if( wsfds )
+    {
 #define wsfds16	((ws_fd_set16*)wsfds)
 #define wsfds32 ((WS_fd_set*)wsfds)
 	int i, count;
@@ -628,7 +628,7 @@ void __ws_memfree(void* ptr)
 }
 
 
-/* ----------------------------------- API ----- 
+/* ----------------------------------- API -----
  *
  * Init / cleanup / error checking.
  */
@@ -860,8 +860,8 @@ static struct ws_protoent* check_buffer_pe(int size)
 
 /**********************************************************************/
 
-/* Returns the converted address if successful, NULL if it was too small to 
- * start with. Note that the returned pointer may be the original pointer 
+/* Returns the converted address if successful, NULL if it was too small to
+ * start with. Note that the returned pointer may be the original pointer
  * if no conversion is necessary.
  */
 static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
@@ -881,7 +881,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
             uipx=malloc(*uaddrlen);
             uipx->sipx_family=AF_IPX;
             uipx->sipx_port=wsipx->sa_socket;
-            /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node 
+            /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node
              * in one go
              */
             memcpy(&uipx->sipx_network,wsipx->sa_netnum,sizeof(uipx->sipx_network)+sizeof(uipx->sipx_node));
@@ -976,7 +976,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
     return res;
 }
 
-/* to be called to free the memory allocated by ws_sockaddr_ws2u or 
+/* to be called to free the memory allocated by ws_sockaddr_ws2u or
  * ws_sockaddr_alloc
  */
 inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_sockaddr* wsaddr)
@@ -1758,7 +1758,7 @@ INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct WS_sockaddr *name,
 /***********************************************************************
  *		getsockopt		(WS2_32.7)
  */
-INT WINAPI WS_getsockopt(SOCKET s, INT level, 
+INT WINAPI WS_getsockopt(SOCKET s, INT level,
                                   INT optname, char *optval, INT *optlen)
 {
     int fd;
@@ -1869,8 +1869,8 @@ u_short WINAPI WS_ntohs(u_short netshort)
  */
 char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
-  /* use "buffer for dummies" here because some applications have 
-   * propensity to decode addresses in ws_hostent structure without 
+  /* use "buffer for dummies" here because some applications have
+   * propensity to decode addresses in ws_hostent structure without
    * saving them first...
    */
     static char dbuffer[16]; /* Yes, 16: 4*3 digits + 3 '.' + 1 '\0' */
@@ -1925,11 +1925,11 @@ INT WINAPI WSAIoctl (SOCKET s,
             int i, numInt;
             struct ifreq ifInfo;
             char ifName[512];
-            
+
 
             TRACE ("-> SIO_GET_INTERFACE_LIST request\n");
-	    
-            numInt = WSAIOCTL_GetInterfaceCount(); 
+
+            numInt = WSAIOCTL_GetInterfaceCount();
             if (numInt < 0)
             {
                ERR ("Unable to open /proc filesystem to determine number of network interfaces!\n");
@@ -1937,7 +1937,7 @@ INT WINAPI WSAIoctl (SOCKET s,
                WSASetLastError(WSAEINVAL);
                return (SOCKET_ERROR);
             }
-            
+
             for (i=0; i<numInt; i++)
             {
                if (!WSAIOCTL_GetInterfaceName(i, ifName))
@@ -1947,12 +1947,12 @@ INT WINAPI WSAIoctl (SOCKET s,
                   WSASetLastError(WSAEINVAL);
                   return (SOCKET_ERROR);
                }
-               
-               ifInfo.ifr_addr.sa_family = AF_INET; 
-            
+
+               ifInfo.ifr_addr.sa_family = AF_INET;
+
                /* IP Address */
                strcpy (ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFADDR, &ifInfo) < 0) 
+               if (ioctl(fd, SIOCGIFADDR, &ifInfo) < 0)
                {
                   ERR ("Error obtaining IP address\n");
                   close(fd);
@@ -1962,12 +1962,12 @@ INT WINAPI WSAIoctl (SOCKET s,
                else
                {
                   struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
-               
+
                   intArray->iiAddress.AddressIn.sin_family = AF_INET;
                   intArray->iiAddress.AddressIn.sin_port = ipTemp->sin_port;
                   intArray->iiAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
                }
-               
+
                /* Broadcast Address */
                strcpy (ifInfo.ifr_name, ifName);
                if (ioctl(fd, SIOCGIFBRDADDR, &ifInfo) < 0)
@@ -1980,10 +1980,10 @@ INT WINAPI WSAIoctl (SOCKET s,
                else
                {
                   struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_broadaddr;
-               
-                  intArray->iiBroadcastAddress.AddressIn.sin_family = AF_INET; 
+
+                  intArray->iiBroadcastAddress.AddressIn.sin_family = AF_INET;
                   intArray->iiBroadcastAddress.AddressIn.sin_port = ipTemp->sin_port;
-                  intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
+                  intArray->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
                }
 
                /* Subnet Mask */
@@ -2001,29 +2001,29 @@ INT WINAPI WSAIoctl (SOCKET s,
                      (Linux, FreeBSD, Solaris...) */
                   #ifndef ifr_netmask
                     #ifndef ifr_addr
-                       intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+                       intArray->iiNetmask.AddressIn.sin_family = AF_INET;
                        intArray->iiNetmask.AddressIn.sin_port = 0;
-                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = 0; 
+                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = 0;
                        ERR ("Unable to determine Netmask on your platform!\n");
                     #else
                        struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_addr;
-            
-                       intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+
+                       intArray->iiNetmask.AddressIn.sin_family = AF_INET;
                        intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
+                       intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
                     #endif
                   #else
                      struct WS_sockaddr_in *ipTemp = (struct WS_sockaddr_in *)&ifInfo.ifr_netmask;
-            
-                     intArray->iiNetmask.AddressIn.sin_family = AF_INET; 
+
+                     intArray->iiNetmask.AddressIn.sin_family = AF_INET;
                      intArray->iiNetmask.AddressIn.sin_port = ipTemp->sin_port;
-                     intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr; 
+                     intArray->iiNetmask.AddressIn.sin_addr.WS_s_addr = ipTemp->sin_addr.S_un.S_addr;
                   #endif
                }
-               
+
                /* Socket Status Flags */
                strcpy(ifInfo.ifr_name, ifName);
-               if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0) 
+               if (ioctl(fd, SIOCGIFFLAGS, &ifInfo) < 0)
                {
                   ERR ("Error obtaining status flags for socket!\n");
                   close(fd);
@@ -2037,7 +2037,7 @@ INT WINAPI WSAIoctl (SOCKET s,
                }
                intArray++; /* Prepare for another interface */
             }
-            
+
             /* Calculate the size of the array being returned */
             *lpcbBytesReturned = sizeof(INTERFACE_INFO) * numInt;
             break;
@@ -2054,7 +2054,7 @@ INT WINAPI WSAIoctl (SOCKET s,
 
       /* Function executed with no errors */
       close(fd);
-      return (0); 
+      return (0);
    }
    else
    {
@@ -2064,7 +2064,7 @@ INT WINAPI WSAIoctl (SOCKET s,
 }
 
 
-/* 
+/*
   Helper function for WSAIoctl - Get count of the number of interfaces
   by parsing /proc filesystem.
 */
@@ -2073,21 +2073,21 @@ int WSAIOCTL_GetInterfaceCount(void)
    FILE *procfs;
    char buf[512];  /* Size doesn't matter, something big */
    int  intcnt=0;
- 
- 
-   /* Open /proc filesystem file for network devices */ 
+
+
+   /* Open /proc filesystem file for network devices */
    procfs = fopen(PROCFS_NETDEV_FILE, "r");
-   if (!procfs) 
+   if (!procfs)
    {
       /* If we can't open the file, return an error */
       return (-1);
    }
-   
+
    /* Omit first two lines, they are only headers */
-   fgets(buf, sizeof buf, procfs);	
+   fgets(buf, sizeof buf, procfs);
    fgets(buf, sizeof buf, procfs);
 
-   while (fgets(buf, sizeof buf, procfs)) 
+   while (fgets(buf, sizeof buf, procfs))
    {
       /* Each line in the file represents a network interface */
       intcnt++;
@@ -2108,16 +2108,16 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName)
    char buf[512]; /* Size doesn't matter, something big */
    int  i;
 
-   /* Open /proc filesystem file for network devices */ 
+   /* Open /proc filesystem file for network devices */
    procfs = fopen(PROCFS_NETDEV_FILE, "r");
-   if (!procfs) 
+   if (!procfs)
    {
       /* If we can't open the file, return an error */
       return (-1);
    }
-   
+
    /* Omit first two lines, they are only headers */
-   fgets(buf, sizeof(buf), procfs);	
+   fgets(buf, sizeof(buf), procfs);
    fgets(buf, sizeof(buf), procfs);
 
    for (i=0; i<intNumber; i++)
@@ -2127,55 +2127,55 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName)
    }
    fgets(buf, sizeof(buf), procfs); /* This is the line we want */
 
-   
+
    /* Parse out the line, grabbing only the name of the device
-      to the intName variable 
-      
+      to the intName variable
+
       The Line comes in like this: (we only care about the device name)
       lo:   21970 377 0 0 0 0 0 0 21970 377 0 0 0 0 0 0
    */
-   i=0; 
+   i=0;
    while (isspace(buf[i])) /* Skip initial space(s) */
    {
       i++;
    }
 
-   while (buf[i]) 
+   while (buf[i])
    {
       if (isspace(buf[i]))
       {
          break;
       }
-      
+
       if (buf[i] == ':')  /* FIXME: Not sure if this block (alias detection) works properly */
       {
          /* This interface could be an alias... */
          int hold = i;
          char *dotname = intName;
          *intName++ = buf[i++];
-         
+
          while (isdigit(buf[i]))
          {
             *intName++ = buf[i++];
          }
-         
-         if (buf[i] != ':') 
+
+         if (buf[i] != ':')
          {
             /* ... It wasn't, so back up */
             i = hold;
             intName = dotname;
          }
- 
+
          if (buf[i] == '\0')
          {
             fclose(procfs);
             return(FALSE);
          }
-         
+
          i++;
          break;
       }
-      
+
       *intName++ = buf[i++];
    }
    *intName++ = '\0';
@@ -2199,12 +2199,12 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 
     switch( cmd )
     {
-	case WS_FIONREAD:   
-		newcmd=FIONREAD; 
+	case WS_FIONREAD:
+		newcmd=FIONREAD;
 		break;
 
-	case WS_FIONBIO:    
-		newcmd=FIONBIO;  
+	case WS_FIONBIO:
+		newcmd=FIONBIO;
 		if( _get_sock_mask(s) )
 		{
 		    /* AsyncSelect()'ed sockets are always nonblocking */
@@ -2212,9 +2212,9 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 			close(fd);
 			return 0;
 		    }
-		    SetLastError(WSAEINVAL); 
+		    SetLastError(WSAEINVAL);
 		    close(fd);
-		    return SOCKET_ERROR; 
+		    return SOCKET_ERROR;
 		}
 		close(fd);
 		if (*argp)
@@ -2223,24 +2223,24 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 		    _enable_event(s, 0, 0, FD_WINE_NONBLOCKING);
 		return 0;
 
-	case WS_SIOCATMARK: 
-		newcmd=SIOCATMARK; 
+	case WS_SIOCATMARK:
+		newcmd=SIOCATMARK;
 		break;
 
-	case WS__IOW('f',125,u_long): 
+	case WS__IOW('f',125,u_long):
 		WARN("Warning: WS1.1 shouldn't be using async I/O\n");
-		SetLastError(WSAEINVAL); 
+		SetLastError(WSAEINVAL);
 		return SOCKET_ERROR;
-        
+
         case SIOCGIFBRDADDR:
         case SIOCGIFNETMASK:
         case SIOCGIFADDR:
                 /* These don't need any special handling.  They are used by
                    WsControl, and are here to suppress an unecessary warning. */
                 break;
-                   
-        
-	default:	  
+
+
+	default:
 		/* Netscape tries hard to use bogus ioctl 0x667e */
 		WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
     }
@@ -2249,7 +2249,7 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 	close(fd);
 	return 0;
     }
-    SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno()); 
+    SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
     close(fd);
   }
   return SOCKET_ERROR;
@@ -2616,7 +2616,7 @@ INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
 /***********************************************************************
  *		setsockopt		(WS2_32.21)
  */
-int WINAPI WS_setsockopt(SOCKET s, int level, int optname, 
+int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                                   const char *optval, int optlen)
 {
     int fd;
@@ -2817,13 +2817,13 @@ SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
 {
     return (SOCKET16)WS_socket( af, type, protocol );
 }
-    
+
 
 /* ----------------------------------- DNS services
  *
  * IMPORTANT: 16-bit API structures have SEGPTR pointers inside them.
  * Also, we have to use wsock32 stubs to convert structures and
- * error codes from Unix to WSA, hence there is no direct mapping in 
+ * error codes from Unix to WSA, hence there is no direct mapping in
  * the relay32/wsock32.spec.
  */
 
@@ -2843,8 +2843,8 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
     int locerr=ENOBUFS;
     host = NULL;
     extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
-    while(extrabuf) { 
-        int res = gethostbyaddr_r(addr, len, type, 
+    while(extrabuf) {
+        int res = gethostbyaddr_r(addr, len, type,
                                   &hostentry, extrabuf, ebufsize, &host, &locerr);
         if( res != ERANGE) break;
         ebufsize *=2;
@@ -2860,7 +2860,7 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
     {
         if( WS_dup_he(host, dup_flag) )
             retval = he_buffer;
-        else 
+        else
             SetLastError(WSAENOBUFS);
     }
 #ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
@@ -3304,8 +3304,8 @@ WSAEVENT WINAPI WSACreateEvent(void)
 {
     /* Create a manual-reset event, with initial state: unsignealed */
     TRACE("\n");
-    
-    return CreateEventA(NULL, TRUE, FALSE, NULL);    
+
+    return CreateEventA(NULL, TRUE, FALSE, NULL);
 }
 
 /***********************************************************************
@@ -3329,12 +3329,12 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
 {
     SOCKET ret;
 
-   /* 
+   /*
       FIXME: The "advanced" parameters of WSASocketA (lpProtocolInfo,
       g, dwFlags except WSA_FLAG_OVERLAPPED) are ignored.
    */
 
-   TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n", 
+   TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n",
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
     /* check the socket family */
@@ -3423,13 +3423,13 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
 INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 {
   int i = set->fd_count;
-  
+
   TRACE("(%d,%8lx(%i))\n", s,(unsigned long)set, i);
-    
+
   while (i--)
       if (set->fd_array[i] == s) return 1;
   return 0;
-}                                                            
+}
 
 /***********************************************************************
  *      __WSAFDIsSet			(WS2_32.151)
@@ -3452,8 +3452,8 @@ int WINAPI __WSAFDIsSet(SOCKET s, WS_fd_set *set)
 BOOL WINAPI WSAIsBlocking(void)
 {
   /* By default WinSock should set all its sockets to non-blocking mode
-   * and poll in PeekMessage loop when processing "blocking" ones. This 
-   * function is supposed to tell if the program is in this loop. Our 
+   * and poll in PeekMessage loop when processing "blocking" ones. This
+   * function is supposed to tell if the program is in this loop. Our
    * blocking calls are truly blocking so we always return FALSE.
    *
    * Note: It is allowed to call this function without prior WSAStartup().
@@ -3531,14 +3531,14 @@ static int list_size(char** l, int item_size)
 {
   int i,j = 0;
   if(l)
-  { for(i=0;l[i];i++) 
+  { for(i=0;l[i];i++)
 	j += (item_size) ? item_size : strlen(l[i]) + 1;
     j += (i + 1) * sizeof(char*); }
   return j;
 }
 
 static int list_dup(char** l_src, char* ref, char* base, int item_size)
-{ 
+{
    /* base is either either equal to ref or 0 or SEGPTR */
 
    char*		p = ref;
@@ -3561,9 +3561,9 @@ static int hostent_size(struct hostent* p_he)
 {
   int size = 0;
   if( p_he )
-  { size  = sizeof(struct hostent); 
+  { size  = sizeof(struct hostent);
     size += strlen(p_he->h_name) + 1;
-    size += list_size(p_he->h_aliases, 0);  
+    size += list_size(p_he->h_aliases, 0);
     size += list_size(p_he->h_addr_list, p_he->h_length ); }
   return size;
 }
@@ -3574,8 +3574,8 @@ static int hostent_size(struct hostent* p_he)
  */
 static int WS_dup_he(struct hostent* p_he, int flag)
 {
-    /* Convert hostent structure into ws_hostent so that the data fits 
-     * into local_buffer. Internal pointers can be linear, SEGPTR, or 
+    /* Convert hostent structure into ws_hostent so that the data fits
+     * into local_buffer. Internal pointers can be linear, SEGPTR, or
      * relative to local_buffer depending on "flag" value. Returns size
      * of the data copied.
      */
@@ -3606,7 +3606,7 @@ static int WS_dup_he(struct hostent* p_he, int flag)
 
 	if (flag & WS_DUP_SEGPTR) /* Win16 */
 	{
-	    p_to16->h_addrtype = (INT16)p_he->h_addrtype; 
+	    p_to16->h_addrtype = (INT16)p_he->h_addrtype;
 	    p_to16->h_length = (INT16)p_he->h_length;
 	    p_to16->h_name = (SEGPTR)(p_base + (p_name - p_to));
 	    p_to16->h_aliases = (SEGPTR)(p_base + (p_aliases - p_to));
@@ -3615,7 +3615,7 @@ static int WS_dup_he(struct hostent* p_he, int flag)
 	}
 	else /* Win32 */
 	{
-	    p_to32->h_addrtype = p_he->h_addrtype; 
+	    p_to32->h_addrtype = p_he->h_addrtype;
 	    p_to32->h_length = p_he->h_length;
 	    p_to32->h_name = (p_base + (p_name - p_to));
 	    p_to32->h_aliases = (char **)(p_base + (p_aliases - p_to));
@@ -3665,14 +3665,14 @@ static int WS_dup_pe(struct protoent* p_pe, int flag)
 	{
 	    p_to16->p_proto = (INT16)p_pe->p_proto;
 	    p_to16->p_name = (SEGPTR)(p_base) + (p_name - p_to);
-	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to)); 
+	    p_to16->p_aliases = (SEGPTR)((p_base) + (p_aliases - p_to));
 	    size += (sizeof(struct ws_protoent16) - sizeof(struct protoent));
 	}
 	else /* Win32 */
 	{
 	    p_to32->p_proto = p_pe->p_proto;
 	    p_to32->p_name = (p_base) + (p_name - p_to);
-	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to)); 
+	    p_to32->p_aliases = (char **)((p_base) + (p_aliases - p_to));
 	    size += (sizeof(struct WS_protoent) - sizeof(struct protoent));
 	}
     }
@@ -3717,7 +3717,7 @@ static int WS_dup_se(struct servent* p_se, int flag)
 	list_dup(p_se->s_aliases, p, p_base + (p - p_to), 0);
 
 	if (flag & WS_DUP_SEGPTR) /* Win16 */
-	{ 
+	{
 	    p_to16->s_port = (INT16)p_se->s_port;
 	    p_to16->s_name = (SEGPTR)(p_base + (p_name - p_to));
 	    p_to16->s_proto = (SEGPTR)(p_base + (p_proto - p_to));
@@ -3740,7 +3740,7 @@ static int WS_dup_se(struct servent* p_se, int flag)
 
 UINT16 wsaErrno(void)
 {
-    int	loc_errno = errno; 
+    int	loc_errno = errno;
     WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
 
     switch(loc_errno)
@@ -3819,7 +3819,7 @@ UINT16 wsaHerrno(int loc_errno)
 	case HOST_NOT_FOUND:	return WSAHOST_NOT_FOUND;
 	case TRY_AGAIN:		return WSATRY_AGAIN;
 	case NO_RECOVERY:	return WSANO_RECOVERY;
-	case NO_DATA:		return WSANO_DATA; 
+	case NO_DATA:		return WSANO_DATA;
 	case ENOBUFS:		return WSAENOBUFS;
 
 	case 0:			return 0;
@@ -4000,26 +4000,26 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        TRACE("Socket  %u, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
-       
+
        size = sizeof(src_addr);
        cs = WS_accept(s, &src_addr, &size);
-       
+
        if (cs == SOCKET_ERROR) return SOCKET_ERROR;
 
        CallerId.buf = (char *)&src_addr;
-       CallerId.len = sizeof(src_addr);  
+       CallerId.len = sizeof(src_addr);
 
        CallerData.buf = NULL;
-       CallerData.len = (ULONG)NULL;   
+       CallerData.len = (ULONG)NULL;
 
        WS_getsockname(cs, &dst_addr, &size);
 
        CalleeId.buf = (char *)&dst_addr;
-       CalleeId.len = sizeof(dst_addr);  
+       CalleeId.len = sizeof(dst_addr);
 
-       
+
        ret = (*lpfnCondition)(&CallerId, &CallerData, NULL, NULL,
-                       &CalleeId, &CalleeData, &g, dwCallbackData); 
+                       &CalleeId, &CalleeData, &g, dwCallbackData);
 
        switch (ret)
        {

@@ -73,7 +73,7 @@ inline static LPSTR str_dup_upper( LPCSTR str )
 /**************************************************************************
  * 				MCI_GetDriver			[internal]
  */
-LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID) 
+LPWINE_MCIDRIVER	MCI_GetDriver(UINT16 wDevID)
 {
     LPWINE_MCIDRIVER	wmd = 0;
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIData();
@@ -98,10 +98,10 @@ UINT	MCI_GetDriverFromString(LPCSTR lpstrName)
 
     if (!lpstrName)
 	return 0;
-    
+
     if (!lstrcmpiA(lpstrName, "ALL"))
 	return MCI_ALL_DEVICE_ID;
-    
+
     EnterCriticalSection(&iData->cs);
     for (wmd = iData->lpMciDrvs; wmd; wmd = wmd->lpNext) {
 	if (wmd->lpstrElementName && strcmp(wmd->lpstrElementName, lpstrName) == 0) {
@@ -118,7 +118,7 @@ UINT	MCI_GetDriverFromString(LPCSTR lpstrName)
 	}
     }
     LeaveCriticalSection(&iData->cs);
-    
+
     return ret;
 }
 
@@ -128,9 +128,9 @@ UINT	MCI_GetDriverFromString(LPCSTR lpstrName)
 const char* MCI_MessageToString(UINT16 wMsg)
 {
     static char buffer[100];
-    
+
 #define CASE(s) case (s): return #s
-    
+
     switch (wMsg) {
 	CASE(MCI_BREAK);
 	CASE(MCI_CLOSE);
@@ -224,10 +224,10 @@ static	BOOL		MCI_IsCommandTableValid(UINT uTbl)
     int		idx = 0;
     BOOL	inCst = FALSE;
 
-    TRACE("Dumping cmdTbl=%d [hMem=%08x devType=%d]\n", 
+    TRACE("Dumping cmdTbl=%d [hMem=%08x devType=%d]\n",
 	  uTbl, S_MciCmdTable[uTbl].hMem, S_MciCmdTable[uTbl].uDevType);
 
-    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem || !S_MciCmdTable[uTbl].lpTable) 
+    if (uTbl >= MAX_MCICMDTABLE || !S_MciCmdTable[uTbl].hMem || !S_MciCmdTable[uTbl].lpTable)
 	return FALSE;
 
     lmem = S_MciCmdTable[uTbl].lpTable;
@@ -267,7 +267,7 @@ static	BOOL		MCI_DumpCommandTable(UINT uTbl)
     LPCSTR	str;
     DWORD	flg;
     WORD	eid;
-    
+
     if (!MCI_IsCommandTableValid(uTbl)) {
 	ERR("Ooops: %d is not valid\n", uTbl);
 	return FALSE;
@@ -298,11 +298,11 @@ static	UINT		MCI_GetCommandTable(LPWINE_MM_IDATA iData, UINT uDevType)
     UINT	uTbl;
     char	buf[32];
     LPSTR	str = NULL;
-    
+
     /* first look up existing for existing devType */
     for (uTbl = 0; uTbl < MAX_MCICMDTABLE; uTbl++) {
 	if (S_MciCmdTable[uTbl].hMem && S_MciCmdTable[uTbl].uDevType == uDevType)
-	    return uTbl;	
+	    return uTbl;
     }
 
     /* well try to load id */
@@ -322,7 +322,7 @@ static	UINT		MCI_GetCommandTable(LPWINE_MM_IDATA iData, UINT uDevType)
 	if (hMem) {
 	    uTbl = MCI_SetCommandTable(iData, hMem, uDevType);
 	} else {
-	    WARN("No command table found in resource %04x[%s]\n", 
+	    WARN("No command table found in resource %04x[%s]\n",
 		 iData->hWinMM32Instance, str);
 	}
     }
@@ -333,9 +333,9 @@ static	UINT		MCI_GetCommandTable(LPWINE_MM_IDATA iData, UINT uDevType)
 /**************************************************************************
  * 				MCI_SetCommandTable		[internal]
  */
-static	UINT		MCI_SetCommandTable(LPWINE_MM_IDATA iData, HANDLE hMem, 
+static	UINT		MCI_SetCommandTable(LPWINE_MM_IDATA iData, HANDLE hMem,
 					    UINT uDevType)
-{    
+{
     int		        uTbl;
     static	BOOL	bInitDone = FALSE;
 
@@ -454,7 +454,7 @@ static	BOOL	MCI_UnLoadMciDriver(LPWINE_MM_IDATA iData, LPWINE_MCIDRIVER wmd)
 static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
 {
     char	libName[128];
-    
+
     if (!DRIVER_GetLibName(drvTyp, "mci", libName, sizeof(libName)))
 	return FALSE;
 
@@ -487,19 +487,19 @@ static	BOOL	MCI_OpenMciDriver(LPWINE_MCIDRIVER wmd, LPCSTR drvTyp, LPARAM lp)
 /**************************************************************************
  * 				MCI_LoadMciDriver		[internal]
  */
-static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp, 
+static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
 				  LPWINE_MCIDRIVER* lpwmd)
 {
     LPSTR			strDevTyp = str_dup_upper(_strDevTyp);
     LPWINE_MCIDRIVER		wmd = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wmd));
     MCI_OPEN_DRIVER_PARMSA	modp;
     DWORD			dwRet = 0;
-    
+
     if (!wmd || !strDevTyp) {
 	dwRet = MCIERR_OUT_OF_MEMORY;
 	goto errCleanUp;
     }
- 
+
     wmd->lpfnYieldProc = MCI_DefYieldProc;
     wmd->dwYieldData = VK_CANCEL;
     wmd->hCreatorTask = GetCurrentTask();
@@ -511,8 +511,8 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     wmd->lpNext = iData->lpMciDrvs;
     iData->lpMciDrvs = wmd;
 
-    for (modp.wDeviceID = MCI_MAGIC; 
-	 MCI_GetDriver(modp.wDeviceID) != 0; 
+    for (modp.wDeviceID = MCI_MAGIC;
+	 MCI_GetDriver(modp.wDeviceID) != 0;
 	 modp.wDeviceID++);
 
     wmd->wDeviceID = modp.wDeviceID;
@@ -522,7 +522,7 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     TRACE("wDevID=%04X \n", modp.wDeviceID);
 
     modp.lpstrParams = NULL;
-    
+
     if (!MCI_OpenMciDriver(wmd, strDevTyp, (LPARAM)&modp)) {
 	/* silence warning if all is used... some bogus program use commands like
 	 * 'open all'...
@@ -538,7 +538,7 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
 	}
 	goto errCleanUp;
     }
- 
+
     /* FIXME: should also check that module's description is of the form
      * MODULENAME:[MCI] comment
      */
@@ -547,13 +547,13 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     wmd->uSpecificCmdTable = LOWORD(modp.wCustomCommandTable);
     wmd->uTypeCmdTable = MCI_COMMAND_TABLE_NOT_LOADED;
 
-    TRACE("Loaded driver %x (%s), type is %d, cmdTable=%08x\n", 
+    TRACE("Loaded driver %x (%s), type is %d, cmdTable=%08x\n",
 	  wmd->hDriver, strDevTyp, modp.wType, modp.wCustomCommandTable);
-    
+
     wmd->lpstrDeviceType = strDevTyp;
     wmd->wType = modp.wType;
 
-    TRACE("mcidev=%d, uDevTyp=%04X wDeviceID=%04X !\n", 
+    TRACE("mcidev=%d, uDevTyp=%04X wDeviceID=%04X !\n",
 	  modp.wDeviceID, modp.wType, modp.wDeviceID);
     *lpwmd = wmd;
     return 0;
@@ -563,11 +563,11 @@ errCleanUp:
     *lpwmd = 0;
     return dwRet;
 }
-    
+
 /**************************************************************************
  * 			MCI_FinishOpen				[internal]
  */
-static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSA lpParms, 
+static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSA lpParms,
 			       DWORD dwParam)
 {
     if (dwParam & MCI_OPEN_ELEMENT)
@@ -582,7 +582,7 @@ static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSA lpParms,
     }
     lpParms->wDeviceID = wmd->wDeviceID;
 
-    return MCI_SendCommandFrom32(wmd->wDeviceID, MCI_OPEN_DRIVER, dwParam, 
+    return MCI_SendCommandFrom32(wmd->wDeviceID, MCI_OPEN_DRIVER, dwParam,
 				 (DWORD)lpParms);
 }
 
@@ -685,7 +685,7 @@ static	DWORD	MCI_GetString(LPSTR* str, LPSTR* args)
 /**************************************************************************
  * 				MCI_ParseOptArgs		[internal]
  */
-static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd, 
+static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 				 LPSTR args, LPDWORD dwFlags)
 {
     int		len, offset;
@@ -703,7 +703,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 	/* skip any leading white space(s) */
 	while (*args == ' ') args++;
 	TRACE("args='%s' offset=%d\n", args, offset);
-	    
+
 	do { /* loop on options for command table for the requested verb */
 	    str = lmem;
 	    lmem += (len = strlen(lmem)) + 1;
@@ -711,20 +711,20 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 	    eid = *(LPWORD)(lmem + sizeof(DWORD));
 	    lmem += sizeof(DWORD) + sizeof(WORD);
 /* EPP 	    TRACE("\tcmd='%s' inCst=%c eid=%04x\n", str, inCst ? 'Y' : 'N', eid); */
-	    
+
 	    switch (eid) {
-	    case MCI_CONSTANT:		
+	    case MCI_CONSTANT:
 		inCst = TRUE;	cflg = flg;	break;
-	    case MCI_END_CONSTANT:	
+	    case MCI_END_CONSTANT:
 		/* there may be additional integral values after flag in constant */
 		if (inCst && MCI_GetDWord(&(data[offset]), &args)) {
 		    *dwFlags |= cflg;
 		}
-		inCst = FALSE;	cflg = 0;	
+		inCst = FALSE;	cflg = 0;
 		break;
 	    }
 
-	    if (strncasecmp(args, str, len) == 0 && 
+	    if (strncasecmp(args, str, len) == 0 &&
 		(args[len] == 0 || args[len] == ' ')) {
 		/* store good values into data[] */
 		args += len;
@@ -739,7 +739,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		case MCI_CONSTANT: 	/* done above */
 		case MCI_END_CONSTANT:  /* done above */
 		    break;
-		case MCI_FLAG:			
+		case MCI_FLAG:
 		    *dwFlags |= flg;
 		    break;
 		case MCI_INTEGER:
@@ -754,7 +754,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 			}
 		    }
 		    break;
-		case MCI_RECT:			
+		case MCI_RECT:
 		    /* store rect in data (offset...offset+3) */
 		    *dwFlags |= flg;
 		    if (!MCI_GetDWord(&(data[offset+0]), &args) ||
@@ -784,7 +784,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		case MCI_CONSTANT:
 		case MCI_FLAG:			break;
 		case MCI_INTEGER:		if (!inCst) offset++;	break;
-		case MCI_END_CONSTANT:		
+		case MCI_END_CONSTANT:
 		case MCI_STRING:		offset++; break;
 		case MCI_RECT:			offset += 4; break;
 		default:			ERR("oops\n");
@@ -806,47 +806,47 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 /**************************************************************************
  * 				MCI_HandleReturnValues	[internal]
  */
-static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet, 
-				       LPWINE_MCIDRIVER wmd, LPCSTR lpCmd, LPDWORD data, 
+static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
+				       LPWINE_MCIDRIVER wmd, LPCSTR lpCmd, LPDWORD data,
 				       LPSTR lpstrRet, UINT uRetLen)
 {
     if (lpstrRet) {
 	switch (MCI_GetReturnType(lpCmd)) {
 	case 0: /* nothing to return */
 	    break;
-	case MCI_INTEGER:	
+	case MCI_INTEGER:
 	    switch (dwRet & 0xFFFF0000ul) {
 	    case 0:
 	    case MCI_INTEGER_RETURNED:
 		snprintf(lpstrRet, uRetLen, "%ld", data[1]);
 		break;
 	    case MCI_RESOURCE_RETURNED:
-		/* return string which ID is HIWORD(data[1]), 
+		/* return string which ID is HIWORD(data[1]),
 		 * string is loaded from mmsystem.dll */
-		LoadStringA(iData->hWinMM32Instance, HIWORD(data[1]), 
+		LoadStringA(iData->hWinMM32Instance, HIWORD(data[1]),
 			    lpstrRet, uRetLen);
 		break;
 	    case MCI_RESOURCE_RETURNED|MCI_RESOURCE_DRIVER:
-		/* return string which ID is HIWORD(data[1]), 
+		/* return string which ID is HIWORD(data[1]),
 		 * string is loaded from driver */
 		/* FIXME: this is wrong for a 16 bit handle */
-		LoadStringA(GetDriverModuleHandle(wmd->hDriver), 
+		LoadStringA(GetDriverModuleHandle(wmd->hDriver),
 			    HIWORD(data[1]), lpstrRet, uRetLen);
 		break;
 	    case MCI_COLONIZED3_RETURN:
-		snprintf(lpstrRet, uRetLen, "%d:%d:%d", 
-			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])), 
+		snprintf(lpstrRet, uRetLen, "%d:%d:%d",
+			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])),
 			 LOBYTE(HIWORD(data[1])));
 		break;
 	    case MCI_COLONIZED4_RETURN:
-		snprintf(lpstrRet, uRetLen, "%d:%d:%d:%d", 
-			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])), 
+		snprintf(lpstrRet, uRetLen, "%d:%d:%d:%d",
+			 LOBYTE(LOWORD(data[1])), HIBYTE(LOWORD(data[1])),
 			 LOBYTE(HIWORD(data[1])), HIBYTE(HIWORD(data[1])));
 		break;
 	    default:	ERR("Ooops (%04X)\n", HIWORD(dwRet));
 	    }
 	    break;
-	case MCI_STRING:	
+	case MCI_STRING:
 	    switch (dwRet & 0xFFFF0000ul) {
 	    case 0:
 		/* nothing to do data[1] == lpstrRet */
@@ -860,11 +860,11 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
 		break;
 	    }
 	    break;
-	case MCI_RECT:	
-	    if (dwRet & 0xFFFF0000ul)	
+	case MCI_RECT:
+	    if (dwRet & 0xFFFF0000ul)
 		WARN("Oooch. MCI_STRING and HIWORD(dwRet)=%04x\n", HIWORD(dwRet));
-	    snprintf(lpstrRet, uRetLen, "%ld %ld %ld %ld", 
-		       data[1], data[2], data[3], data[4]);	
+	    snprintf(lpstrRet, uRetLen, "%ld %ld %ld %ld",
+		       data[1], data[2], data[3], data[4]);
 	    break;
 	default:		ERR("oops\n");
 	}
@@ -875,7 +875,7 @@ static	DWORD	MCI_HandleReturnValues(LPWINE_MM_IDATA iData, DWORD dwRet,
 /**************************************************************************
  * 				mciSendStringA		[WINMM.@]
  */
-DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet, 
+DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 			    UINT uRetLen, HWND hwndCallback)
 {
     LPSTR		verb, dev, args;
@@ -918,7 +918,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	LPSTR	devType, tmp;
 
 	if ((devType = strchr(dev, '!')) != NULL) {
-	    *devType++ = '\0';	    
+	    *devType++ = '\0';
 	    tmp = devType; devType = dev; dev = tmp;
 
 	    dwFlags |= MCI_OPEN_TYPE;
@@ -974,10 +974,10 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	/* auto open */
 	char	buf[128];
 	sprintf(buf, "open %s wait", dev);
-	
+
 	if ((dwRet = mciSendStringA(buf, NULL, 0, 0)) != 0)
 	    goto errCleanUp;
-	
+
 	wmd = MCI_GetDriver(mciGetDeviceIDA(dev));
 	if (!wmd) {
 	    /* FIXME: memory leak, MCI driver is not closed */
@@ -1038,7 +1038,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 
 #define	STR_OF(_x) (IsBadReadPtr((char*)_x,1)?"?":(char*)(_x))
     TRACE("[%d, %s, %08lx, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
-	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags, 
+	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
 	  data[0], STR_OF(data[0]), data[1], STR_OF(data[1]),
 	  data[2], STR_OF(data[2]), data[3], STR_OF(data[3]),
 	  data[4], STR_OF(data[4]), data[5], STR_OF(data[5]));
@@ -1064,7 +1064,7 @@ errCleanUp:
 /**************************************************************************
  * 				mciSendStringW			[WINMM.@]
  */
-DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet, 
+DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
 			    UINT uRetLen, HWND hwndCallback)
 {
     LPSTR 	lpstrCommand;
@@ -1083,7 +1083,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
 /**************************************************************************
  * 				mciSendString			[MMSYSTEM.702]
  */
-DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet, 
+DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrRet,
 			     UINT16 uRetLen, HWND16 hwndCallback)
 {
     return mciSendStringA(lpstrCommand, lpstrRet, uRetLen, hwndCallback);
@@ -1105,7 +1105,7 @@ DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
 	if (!mciGetErrorStringA(ret, strRet, sizeof(strRet))) {
 	    sprintf(strRet, "Unknown MCI error (%ld)", ret);
 	}
-	MessageBoxA(0, strRet, "Error in mciExecute()", MB_OK); 
+	MessageBoxA(0, strRet, "Error in mciExecute()", MB_OK);
     }
     /* FIXME: what shall I return ? */
     return 0;
@@ -1156,7 +1156,7 @@ BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
 
     return MCI_DeleteCommandTable(uTable);
 }
- 
+
 /**************************************************************************
  *                    	mciLoadCommandResource  		[WINMM.@]
  *
@@ -1232,8 +1232,8 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
      */
     switch (wMsg) {
 	/* case MCI_CAPTURE */
-    case MCI_CLOSE:		
-    case MCI_CLOSE_DRIVER:	
+    case MCI_CLOSE:
+    case MCI_CLOSE_DRIVER:
     case MCI_CONFIGURE:
     case MCI_COPY:
     case MCI_CUE:
@@ -1245,20 +1245,20 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	/* case MCI_MARK: */
 	/* case MCI_MONITOR: */
     case MCI_PASTE:
-    case MCI_PAUSE:		
-    case MCI_PLAY:		
+    case MCI_PAUSE:
+    case MCI_PLAY:
     case MCI_PUT:
     case MCI_REALIZE:
-    case MCI_RECORD:		
-    case MCI_RESUME:		
-    case MCI_SEEK:		
+    case MCI_RECORD:
+    case MCI_RESUME:
+    case MCI_SEEK:
     case MCI_SET:
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
     case MCI_SPIN:
     case MCI_STATUS:		/* FIXME: is wrong for digital video */
     case MCI_STEP:
-    case MCI_STOP:		
+    case MCI_STOP:
 	/* case MCI_UNDO: */
     case MCI_UNFREEZE:
     case MCI_UPDATE:
@@ -1266,8 +1266,8 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	*lParam = (DWORD)MapSL(*lParam);
 	return MCI_MAP_OK;
     case MCI_WINDOW:
-	/* in fact, I would also need the dwFlags... to see 
-	 * which members of lParam are effectively used 
+	/* in fact, I would also need the dwFlags... to see
+	 * which members of lParam are effectively used
 	 */
 	*lParam = (DWORD)MapSL(*lParam);
 	FIXME("Current mapping may be wrong\n");
@@ -1306,7 +1306,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
             LPMCI_INFO_PARMSA	mip32a = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_INFO_PARMSA));
 	    LPMCI_INFO_PARMS16	mip16  = MapSL(*lParam);
 
-	    /* FIXME this is wrong if device is of type 
+	    /* FIXME this is wrong if device is of type
 	     * MCI_DEVTYPE_DIGITAL_VIDEO, some members are not mapped
 	     */
 	    if (mip32a) {
@@ -1320,7 +1320,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	}
 	return MCI_MAP_OKMEM;
     case MCI_OPEN:
-    case MCI_OPEN_DRIVER:	
+    case MCI_OPEN_DRIVER:
 	{
             LPMCI_OPEN_PARMSA	mop32a = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMCI_OPEN_PARMS16) + sizeof(MCI_OPEN_PARMSA) + 2 * sizeof(DWORD));
 	    LPMCI_OPEN_PARMS16	mop16  = MapSL(*lParam);
@@ -1336,9 +1336,9 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 		/* copy extended information if any...
 		 * FIXME: this may seg fault if initial structure does not contain them and
 		 * the reads after msip16 fail under LDT limits...
-		 * NOTE: this should be split in two. First pass, while calling MCI_OPEN, and 
+		 * NOTE: this should be split in two. First pass, while calling MCI_OPEN, and
 		 * should not take care of extended parameters, and should be used by MCI_Open
-		 * to fetch uDevType. When, this is known, the mapping for sending the 
+		 * to fetch uDevType. When, this is known, the mapping for sending the
 		 * MCI_OPEN_DRIVER shall be done depending on uDevType.
 		 */
 		memcpy(mop32a + 1, mop16 + 1, 2 * sizeof(DWORD));
@@ -1395,7 +1395,7 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
     switch (wMsg) {
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:
-    case MCI_CLOSE_DRIVER:	
+    case MCI_CLOSE_DRIVER:
     case MCI_CONFIGURE:
     case MCI_COPY:
     case MCI_CUE:
@@ -1407,20 +1407,20 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 	/* case MCI_MARK: */
 	/* case MCI_MONITOR: */
     case MCI_PASTE:
-    case MCI_PAUSE:		
-    case MCI_PLAY:		
+    case MCI_PAUSE:
+    case MCI_PLAY:
     case MCI_PUT:
     case MCI_REALIZE:
-    case MCI_RECORD:		
-    case MCI_RESUME:		
-    case MCI_SEEK:		
+    case MCI_RECORD:
+    case MCI_RESUME:
+    case MCI_SEEK:
     case MCI_SET:
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
     case MCI_SPIN:
-    case MCI_STATUS:		
+    case MCI_STATUS:
     case MCI_STEP:
-    case MCI_STOP:		
+    case MCI_STOP:
 	/* case MCI_UNDO: */
     case MCI_UNFREEZE:
     case MCI_UPDATE:
@@ -1438,11 +1438,11 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 	HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
 	return MCI_MAP_OK;
     case MCI_OPEN:
-    case MCI_OPEN_DRIVER:	
+    case MCI_OPEN_DRIVER:
 	if (lParam) {
             LPMCI_OPEN_PARMSA	mop32a = (LPMCI_OPEN_PARMSA)lParam;
 	    LPMCI_OPEN_PARMS16	mop16  = *(LPMCI_OPEN_PARMS16*)((char*)mop32a - sizeof(LPMCI_OPEN_PARMS16));
-	    
+
 	    mop16->wDeviceID = mop32a->wDeviceID;
 	    if (!HeapFree(GetProcessHeap(), 0, (LPVOID)(lParam - sizeof(LPMCI_OPEN_PARMS16))))
 		FIXME("bad free line=%d\n", __LINE__);
@@ -1474,7 +1474,7 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
  * 0001 squeeze   signed 4 bytes to 2 bytes     *( LPINT16)D = ( INT16)*( LPINT16)S; D += 2;     S += 4
  * 0010 squeeze unsigned 4 bytes to 2 bytes     *(LPUINT16)D = (UINT16)*(LPUINT16)S; D += 2;     S += 4
  * 0100
- * 0101 
+ * 0101
  * 0110 zero 4 bytes                            *(DWORD)D = 0                        D += 4;     S += 4
  * 0111 copy string                             *(LPSTR*)D = seg dup(*(LPSTR*)S)     D += 4;     S += 4
  * 1xxx copy xxx + 1 bytes                      memcpy(D, S, xxx + 1);               D += xxx+1; S += xxx+1
@@ -1483,8 +1483,8 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 /**************************************************************************
  * 			MCI_MsgMapper32To16_Create		[internal]
  *
- * Helper for MCI_MapMsg32ATo16. 
- * Maps the 32 bit pointer (*ptr), of size bytes, to an allocated 16 bit 
+ * Helper for MCI_MapMsg32ATo16.
+ * Maps the 32 bit pointer (*ptr), of size bytes, to an allocated 16 bit
  * segmented pointer.
  * map contains a list of action to be performed for the mapping (see list
  * above)
@@ -1507,7 +1507,7 @@ static	MCI_MapType	MCI_MsgMapper32To16_Create(void** ptr, int size16, DWORD map,
 	p16 = lp;
 	*ptr = (void*)MapLS(lp);
     }
-    
+
     if (map == 0) {
 	memcpy(p16, p32, size16);
     } else {
@@ -1563,7 +1563,7 @@ static	MCI_MapType	MCI_MsgMapper32To16_Create(void** ptr, int size16, DWORD map,
 /**************************************************************************
  * 			MCI_MsgMapper32To16_Destroy		[internal]
  *
- * Helper for MCI_UnMapMsg32ATo16. 
+ * Helper for MCI_UnMapMsg32ATo16.
  */
 static	MCI_MapType	MCI_MsgMapper32To16_Destroy(void* ptr, int size16, DWORD map, BOOLEAN kept)
 {
@@ -1656,9 +1656,9 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	break;
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:
-    case MCI_CLOSE_DRIVER:	
+    case MCI_CLOSE_DRIVER:
     case MCI_CONFIGURE:
-	size = sizeof(MCI_GENERIC_PARMS);	
+	size = sizeof(MCI_GENERIC_PARMS);
 	break;
 	/* case MCI_COPY: */
     case MCI_CUE:
@@ -1693,7 +1693,7 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	{
             LPMCI_INFO_PARMSA	mip32a = (LPMCI_INFO_PARMSA)(*lParam);
 	    LPMCI_INFO_PARMS16	mip16;
-	    
+
 	    switch (uDevType) {
 	    case MCI_DEVTYPE_DIGITAL_VIDEO:	size = sizeof(MCI_DGV_INFO_PARMS16);	break;
 	    default:				size = sizeof(MCI_INFO_PARMS16);	break;
@@ -1716,7 +1716,7 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	/* case MCI_MARK: */
 	/* case MCI_MONITOR: */
     case MCI_OPEN:
-    case MCI_OPEN_DRIVER:	
+    case MCI_OPEN_DRIVER:
 	{
             LPMCI_OPEN_PARMSA	mop32a = (LPMCI_OPEN_PARMSA)(*lParam);
             char* ptr = HeapAlloc( GetProcessHeap(), 0,
@@ -1758,9 +1758,9 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 		/* copy extended information if any...
 		 * FIXME: this may seg fault if initial structure does not contain them and
 		 * the reads after msip16 fail under LDT limits...
-		 * NOTE: this should be split in two. First pass, while calling MCI_OPEN, and 
+		 * NOTE: this should be split in two. First pass, while calling MCI_OPEN, and
 		 * should not take care of extended parameters, and should be used by MCI_Open
-		 * to fetch uDevType. When, this is known, the mapping for sending the 
+		 * to fetch uDevType. When, this is known, the mapping for sending the
 		 * MCI_OPEN_DRIVER shall be done depending on uDevType.
 		 */
 		memcpy(mop16 + 1, mop32a + 1, 2 * sizeof(DWORD));
@@ -1794,7 +1794,7 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	default:			size = sizeof(MCI_RECORD_PARMS);	break;
 	}
 	break;
-    case MCI_RESUME:		
+    case MCI_RESUME:
 	size = sizeof(MCI_GENERIC_PARMS);
 	break;
     case MCI_SEEK:
@@ -1808,13 +1808,13 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	case MCI_DEVTYPE_DIGITAL_VIDEO:	size = sizeof(MCI_DGV_SET_PARMS);	break;
 	case MCI_DEVTYPE_VCR:		/*size = sizeof(MCI_VCR_SET_PARMS);	break;*/FIXME("NIY vcr\n");	return MCI_MAP_NOMEM;
 	case MCI_DEVTYPE_SEQUENCER:	size = sizeof(MCI_SEQ_SET_PARMS);	break;
-        /* FIXME: normally the 16 and 32 bit structures are byte by byte aligned, 
+        /* FIXME: normally the 16 and 32 bit structures are byte by byte aligned,
 	 * so not doing anything should work...
 	 */
 	case MCI_DEVTYPE_WAVEFORM_AUDIO:size = sizeof(MCI_WAVE_SET_PARMS);	break;
 	default:			size = sizeof(MCI_SET_PARMS);		break;
 	}
-	break;	
+	break;
     case MCI_SETAUDIO:
 	switch (uDevType) {
 	case MCI_DEVTYPE_DIGITAL_VIDEO:	size = sizeof(MCI_DGV_SETAUDIO_PARMS16);map = 0x0000077FF;	break;
@@ -1825,13 +1825,13 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
     case MCI_SPIN:
-	size = sizeof(MCI_SET_PARMS);		
+	size = sizeof(MCI_SET_PARMS);
 	break;
     case MCI_STATUS:
 	keep = TRUE;
 	switch (uDevType) {
 	/* FIXME:
-	 * don't know if buffer for value is the one passed through lpstrDevice 
+	 * don't know if buffer for value is the one passed through lpstrDevice
 	 * or is provided by MCI driver.
 	 * Assuming solution 2: provided by MCI driver, so zeroing on entry
 	 */
@@ -1847,9 +1847,9 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	case MCI_DEVTYPE_VIDEODISC:	size = sizeof(MCI_VD_STEP_PARMS);	break;
 	default:			size = sizeof(MCI_GENERIC_PARMS);	break;
 	}
-	break;	
-    case MCI_STOP:		
-	size = sizeof(MCI_SET_PARMS);		
+	break;
+    case MCI_STOP:
+	size = sizeof(MCI_SET_PARMS);
 	break;
     case MCI_SYSINFO:
 	{
@@ -1954,12 +1954,12 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
     case MCI_BREAK:
         break;
 	/* case MCI_CAPTURE */
-    case MCI_CLOSE:	
-    case MCI_CLOSE_DRIVER:	
+    case MCI_CLOSE:
+    case MCI_CLOSE_DRIVER:
     case MCI_CONFIGURE:
 	break;
 	/* case MCI_COPY: */
-    case MCI_CUE:	
+    case MCI_CUE:
 	break;
 	/* case MCI_CUT: */
     case MCI_DELETE:
@@ -1983,7 +1983,7 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 	/* case MCI_MARK: */
 	/* case MCI_MONITOR: */
     case MCI_OPEN:
-    case MCI_OPEN_DRIVER:	
+    case MCI_OPEN_DRIVER:
 	if (lParam) {
             LPMCI_OPEN_PARMS16	mop16  = (LPMCI_OPEN_PARMS16)MapSL(lParam);
 	    LPMCI_OPEN_PARMSA	mop32a = *(LPMCI_OPEN_PARMSA*)((char*)mop16 - sizeof(LPMCI_OPEN_PARMSA));
@@ -2001,7 +2001,7 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 	/* case MCI_PASTE:*/
     case MCI_PAUSE:
 	break;
-    case MCI_PLAY:		
+    case MCI_PLAY:
 	break;
     case MCI_PUT:
 	break;
@@ -2028,7 +2028,7 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
     case MCI_STATUS:
 	kept = TRUE;
 	switch (uDevType) {
-	case MCI_DEVTYPE_DIGITAL_VIDEO:	
+	case MCI_DEVTYPE_DIGITAL_VIDEO:
 	if (lParam) {
             LPMCI_DGV_STATUS_PARMS16	mdsp16  = (LPMCI_DGV_STATUS_PARMS16)MapSL(lParam);
 	    LPMCI_DGV_STATUS_PARMSA	mdsp32a = *(LPMCI_DGV_STATUS_PARMSA*)((char*)mdsp16 - sizeof(LPMCI_DGV_STATUS_PARMSA));
@@ -2137,7 +2137,7 @@ DWORD MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 	    dwRet = SendDriverMessage(wmd->hDriver, wMsg, dwParam1, dwParam2);
 	} else {
 	    MCI_MapType	res;
-		
+
 	    switch (res = MCI_MapMsg32ATo16(wmd->wType, wMsg, dwParam1, &dwParam2)) {
 	    case MCI_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
@@ -2172,7 +2172,7 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 
 	if (wmd->bIs32) {
 	    MCI_MapType		res;
-	    
+
 	    switch (res = MCI_MapMsg16To32A(wmd->wType, wMsg, &dwParam2)) {
 	    case MCI_MAP_MSGERROR:
 		TRACE("Not handled yet (%s)\n", MCI_MessageToString(wMsg));
@@ -2202,7 +2202,7 @@ DWORD MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwPa
 static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 {
     char			strDevTyp[128];
-    DWORD 			dwRet; 
+    DWORD 			dwRet;
     LPWINE_MCIDRIVER		wmd = NULL;
     LPWINE_MM_IDATA		iData = MULTIMEDIA_GetIData();
 
@@ -2254,7 +2254,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 		/* FIXME: not a good idea to write in user supplied buffer */
 		lpParms->lpstrElementName = ptr;
 	    }
-		
+
 	}
 	TRACE("devType='%s' !\n", strDevTyp);
     }
@@ -2274,8 +2274,8 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	}
 
 	/* type, if given as a parameter, supersedes file extension */
-	if (!strDevTyp[0] && 
-	    MCI_GetDevTypeFromFileName(lpParms->lpstrElementName, 
+	if (!strDevTyp[0] &&
+	    MCI_GetDevTypeFromFileName(lpParms->lpstrElementName,
 				       strDevTyp, sizeof(strDevTyp))) {
 	    if (GetDriveTypeA(lpParms->lpstrElementName) != DRIVE_CDROM) {
 		dwRet = MCIERR_EXTENSION_NOT_FOUND;
@@ -2285,7 +2285,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 	    strcpy(strDevTyp, "CDAUDIO");
 	}
     }
-    
+
     if (strDevTyp[0] == 0) {
 	FIXME("Couldn't load driver\n");
 	dwRet = MCIERR_INVALID_DEVICE_NAME;
@@ -2315,7 +2315,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSA lpParms)
 
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify16(lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
-    
+
     return 0;
 errCleanUp:
     if (wmd) MCI_UnLoadMciDriver(iData, wmd);
@@ -2340,7 +2340,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 	LPWINE_MCIDRIVER	next;
 
 	EnterCriticalSection(&iData->cs);
-	/* FIXME: shall I notify once after all is done, or for 
+	/* FIXME: shall I notify once after all is done, or for
 	 * each of the open drivers ? if the latest, which notif
 	 * to return when only one fails ?
 	 */
@@ -2348,7 +2348,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 	    next = wmd->lpNext;
 	    MCI_Close(wmd->wDeviceID, dwParam, lpParms);
 	    wmd = next;
-	}	
+	}
 	LeaveCriticalSection(&iData->cs);
 	return 0;
     }
@@ -2364,7 +2364,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify16(lpParms->dwCallback, wDevID,
 			  (dwRet == 0) ? MCI_NOTIFY_SUCCESSFUL : MCI_NOTIFY_FAILURE);
-    
+
     return dwRet;
 }
 
@@ -2381,7 +2381,7 @@ DWORD	MCI_WriteString(LPSTR lpDstStr, DWORD dstSize, LPCSTR lpSrcStr)
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
 	    strcpy(lpDstStr, lpSrcStr);
-	}	
+	}
     } else {
 	*lpDstStr = 0;
     }
@@ -2399,15 +2399,15 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParm
 
     if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
 
-    TRACE("(%08x, %08lX, %08lX[num=%ld, wDevTyp=%u])\n", 
+    TRACE("(%08x, %08lX, %08lX[num=%ld, wDevTyp=%u])\n",
 	  uDevID, dwFlags, (DWORD)lpParms, lpParms->dwNumber, lpParms->wDeviceType);
-    
+
     switch (dwFlags & ~MCI_SYSINFO_OPEN) {
     case MCI_SYSINFO_QUANTITY:
 	{
 	    DWORD	cnt = 0;
-	    
-	    if (lpParms->wDeviceType < MCI_DEVTYPE_FIRST || 
+
+	    if (lpParms->wDeviceType < MCI_DEVTYPE_FIRST ||
 		lpParms->wDeviceType > MCI_DEVTYPE_LAST) {
 		if (dwFlags & MCI_SYSINFO_OPEN) {
 		    TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers\n");
@@ -2422,7 +2422,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParm
 		}
 	    } else {
 		if (dwFlags & MCI_SYSINFO_OPEN) {
-		    TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %u\n", 
+		    TRACE("MCI_SYSINFO_QUANTITY: # of open MCI drivers of type %u\n",
 			  lpParms->wDeviceType);
 		    EnterCriticalSection(&iData->cs);
 		    for (wmd = iData->lpMciDrvs; wmd; wmd = wmd->lpNext) {
@@ -2431,7 +2431,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParm
 		    }
 		    LeaveCriticalSection(&iData->cs);
 		} else {
-		    TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %u\n", 
+		    TRACE("MCI_SYSINFO_QUANTITY: # of installed MCI drivers of type %u\n",
 			  lpParms->wDeviceType);
 		    FIXME("Don't know how to get # of MCI devices of a given type\n");
 		    cnt = 1;
@@ -2445,7 +2445,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParm
     case MCI_SYSINFO_INSTALLNAME:
 	TRACE("MCI_SYSINFO_INSTALLNAME \n");
 	if ((wmd = MCI_GetDriver(uDevID))) {
-	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize, 
+	    ret = MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize,
 				  wmd->lpstrDeviceType);
 	} else {
 	    *lpParms->lpstrReturn = 0;
@@ -2482,7 +2482,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSA lpParm
 static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
 {
     DWORD	dwRet = 0;
-    
+
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
 
     if (dwFlags & MCI_NOTIFY)
@@ -2491,11 +2491,11 @@ static	DWORD MCI_Break(UINT wDevID, DWORD dwFlags, LPMCI_BREAK_PARMS lpParms)
 
     return dwRet;
 }
-    
+
 /**************************************************************************
  * 			MCI_SendCommand				[internal]
  */
-DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, 
+DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
 			DWORD dwParam2, BOOL bFrom32)
 {
     DWORD		dwRet = MCIERR_UNRECOGNIZED_COMMAND;
@@ -2570,7 +2570,7 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
 	    dwRet = (bFrom32) ?
 		MCI_SendCommandFrom32(wDevID, wMsg, dwParam1, dwParam2) :
 		MCI_SendCommandFrom16(wDevID, wMsg, dwParam1, dwParam2);
-	}	    
+	}
 	break;
     }
     return dwRet;
@@ -2579,13 +2579,13 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
 /**************************************************************************
  * 				MCI_CleanUp			[internal]
  *
- * Some MCI commands need to be cleaned-up (when not called from 
+ * Some MCI commands need to be cleaned-up (when not called from
  * mciSendString), because MCI drivers return extra information for string
  * transformation. This function gets rid of them.
  */
 LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 {
-    if (LOWORD(dwRet)) 
+    if (LOWORD(dwRet))
 	return LOWORD(dwRet);
 
     switch (wMsg) {
@@ -2605,10 +2605,10 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 		lmgp = (LPMCI_GETDEVCAPS_PARMS)(bIs32 ? (void*)dwParam2 : MapSL(dwParam2));
 		TRACE("Changing %08lx to %08lx\n", lmgp->dwReturn, (DWORD)LOWORD(lmgp->dwReturn));
 		lmgp->dwReturn = LOWORD(lmgp->dwReturn);
-	    } 
+	    }
 	    break;
 	default:
-	    FIXME("Unsupported value for hiword (%04x) returned by DriverProc(%s)\n", 
+	    FIXME("Unsupported value for hiword (%04x) returned by DriverProc(%s)\n",
 		  HIWORD(dwRet), MCI_MessageToString(wMsg));
 	}
 	break;
@@ -2631,7 +2631,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 	    }
 	    break;
 	default:
-	    FIXME("Unsupported value for hiword (%04x) returned by DriverProc(%s)\n", 
+	    FIXME("Unsupported value for hiword (%04x) returned by DriverProc(%s)\n",
 		  HIWORD(dwRet), MCI_MessageToString(wMsg));
 	}
 	break;
@@ -2642,12 +2642,12 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2, BOOL bIs32)
 	    /* nothing to do */
 	    break;
 	default:
-	    FIXME("Unsupported value for hiword (%04x)\n", HIWORD(dwRet));	
+	    FIXME("Unsupported value for hiword (%04x)\n", HIWORD(dwRet));
 	}
 	break;
     default:
 	if (HIWORD(dwRet)) {
-	    FIXME("Got non null hiword for dwRet=0x%08lx for command %s\n", 
+	    FIXME("Got non null hiword for dwRet=0x%08lx for command %s\n",
 		  dwRet, MCI_MessageToString(wMsg));
 	}
 	break;
@@ -2681,7 +2681,7 @@ BOOL MULTIMEDIA_MciInit(void)
 	!(err = RegOpenKeyA(hWineConf, "options", &hkey))) {
 	err = RegQueryValueExA(hkey, "mci", 0, &type, MCI_lpInstallNames, &count);
 	RegCloseKey(hkey);
-	
+
     }
     if (!err) {
 	TRACE("Wine => '%s' \n", ptr1);

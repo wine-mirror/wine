@@ -71,7 +71,7 @@ static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
 	if (strcasecmp(((LPSIC_ENTRY)p1)->sSourceFile,((LPSIC_ENTRY)p2)->sSourceFile))
 	  return 1;
 
-	return 0;  
+	return 0;
 }
 /*****************************************************************************
  * SIC_IconAppend			[internal]
@@ -92,7 +92,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
         strcpy( lpsice->sSourceFile, path );
 
 	lpsice->dwSourceIndex = dwSourceIndex;
-	
+
 	EnterCriticalSection(&SHELL32_SicCS);
 
 	index = pDPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
@@ -115,7 +115,7 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	}
 
 	LeaveCriticalSection(&SHELL32_SicCS);
-	return ret;	
+	return ret;
 }
 /****************************************************************************
  * SIC_LoadIcon				[internal]
@@ -127,15 +127,15 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 {	HICON	hiconLarge=0;
 	HICON	hiconSmall=0;
 
-        PrivateExtractIconsA( sSourceFile, dwSourceIndex, 32, 32, &hiconLarge, 0, 1, 0 ); 
-        PrivateExtractIconsA( sSourceFile, dwSourceIndex, 16, 16, &hiconSmall, 0, 1, 0 ); 
+        PrivateExtractIconsA( sSourceFile, dwSourceIndex, 32, 32, &hiconLarge, 0, 1, 0 );
+        PrivateExtractIconsA( sSourceFile, dwSourceIndex, 16, 16, &hiconSmall, 0, 1, 0 );
 
 	if ( !hiconLarge ||  !hiconSmall)
 	{
 	  WARN("failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
 	  return -1;
 	}
-	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		
+	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);
 }
 /*****************************************************************************
  * SIC_GetIconIndex			[internal]
@@ -151,12 +151,12 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 {	SIC_ENTRY sice;
 	INT ret, index = INVALID_INDEX;
-		
+
 	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
 	sice.sSourceFile = PathFindFileNameA(sSourceFile);
 	sice.dwSourceIndex = dwSourceIndex;
-	
+
 	EnterCriticalSection(&SHELL32_SicCS);
 
 	if (NULL != pDPA_GetPtr (sic_hdpa, 0))
@@ -199,13 +199,13 @@ static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOO
 	if (bSmallIcon)
 	  return ImageList_GetIcon(ShellSmallIconList, index, ILD_NORMAL);
 	return ImageList_GetIcon(ShellBigIconList, index, ILD_NORMAL);
-	
+
 }
 /*****************************************************************************
  * SIC_Initialize			[internal]
  *
  * NOTES
- *  hack to load the resources from the shell32.dll under a different dll name 
+ *  hack to load the resources from the shell32.dll under a different dll name
  *  will be removed when the resource-compiler is ready
  */
 BOOL SIC_Initialize(void)
@@ -217,9 +217,9 @@ BOOL SIC_Initialize(void)
 
 	if (sic_hdpa)	/* already initialized?*/
 	  return TRUE;
-	  
+
 	sic_hdpa = pDPA_Create(16);
-	
+
 	if (!sic_hdpa)
 	{
 	  return(FALSE);
@@ -266,7 +266,7 @@ void SIC_Destroy(void)
 	{
 	  for (i=0; i < pDPA_GetPtrCount(sic_hdpa); ++i)
 	  {
-	    lpsice = pDPA_GetPtr(sic_hdpa, i); 
+	    lpsice = pDPA_GetPtr(sic_hdpa, i);
 	    SHFree(lpsice);
 	  }
 	  pDPA_Destroy(sic_hdpa);
@@ -312,13 +312,13 @@ BOOL PidlToSicIndex (
 	BOOL bBigIcon,
 	UINT uFlags,
 	UINT * pIndex)
-{	
+{
 	IExtractIconA	*ei;
 	char		szIconFile[MAX_PATH];	/* file containing the icon */
 	INT		iSourceIndex;		/* index or resID(negated) in this file */
 	BOOL		ret = FALSE;
 	UINT		dwFlags = 0;
-	
+
 	TRACE("sf=%p pidl=%p %s\n", sh, pidl, bBigIcon?"Big":"Small");
 
 	if (SUCCEEDED (IShellFolder_GetUIObjectOf(sh, 0, 1, &pidl, &IID_IExtractIconA, 0, (void **)&ei)))
@@ -342,7 +342,7 @@ BOOL PidlToSicIndex (
  * SHMapPIDLToSystemImageListIndex	[SHELL32.77]
  *
  * PARAMETERS
- *	sh	[IN]		pointer to an instance of IShellFolder 
+ *	sh	[IN]		pointer to an instance of IShellFolder
  *	pidl	[IN]
  *	pIndex	[OUT][OPTIONAL]	SIC index for big icon
  *
@@ -356,7 +356,7 @@ int WINAPI SHMapPIDLToSystemImageListIndex(
 
 	TRACE("(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
 	pdump(pidl);
-	
+
 	if (pIndex)
 	  PidlToSicIndex ( sh, pidl, 1, 0, pIndex);
 	PidlToSicIndex ( sh, pidl, 0, 0, &Index);
@@ -367,16 +367,16 @@ int WINAPI SHMapPIDLToSystemImageListIndex(
  * Shell_GetCachedImageIndex		[SHELL32.72]
  *
  */
-INT WINAPI Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateDoc) 
+INT WINAPI Shell_GetCachedImageIndexA(LPCSTR szPath, INT nIndex, BOOL bSimulateDoc)
 {
 	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_a(szPath), nIndex, bSimulateDoc);
 	return SIC_GetIconIndex(szPath, nIndex);
 }
 
-INT WINAPI Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulateDoc) 
+INT WINAPI Shell_GetCachedImageIndexW(LPCWSTR szPath, INT nIndex, BOOL bSimulateDoc)
 {	INT ret;
 	LPSTR sTemp = HEAP_strdupWtoA (GetProcessHeap(),0,szPath);
-	
+
 	WARN("(%s,%08x,%08x) semi-stub.\n",debugstr_w(szPath), nIndex, bSimulateDoc);
 
 	ret = SIC_GetIconIndex(sTemp, nIndex);
@@ -401,13 +401,13 @@ HICON WINAPI ExtractIconExAW ( LPCVOID lpszFile, INT nIconIndex, HICON * phiconL
 /*************************************************************************
  * ExtractIconExA			[SHELL32.@]
  * RETURNS
- *  0 no icon found 
+ *  0 no icon found
  *  1 file is not valid
  *  HICON handle of a icon (phiconLarge/Small == NULL)
  */
 HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	HICON ret=0;
-	
+
 	TRACE("file=%s idx=%i %p %p num=%i\n", lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons );
 
 	if (nIconIndex==-1)	/* Number of icons requested */
@@ -417,14 +417,14 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
         {
           ret = PrivateExtractIconsA( lpszFile, nIconIndex, 32, 32, phiconLarge, 0, nIcons, 0 );
 	  if ( nIcons==1)
-	  { ret = phiconLarge[0];	    
+	  { ret = phiconLarge[0];
 	  }
 	}
 
 	/* if no pointers given and one icon expected, return the handle directly*/
 	if (!phiconLarge && !phiconSmall && nIcons==1 )
 	  phiconSmall = &ret;
-	
+
 	if (phiconSmall)
         {
           ret = PrivateExtractIconsA( lpszFile, nIconIndex, 16, 16, phiconSmall, 0, nIcons, 0 );
@@ -441,7 +441,7 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
 HICON WINAPI ExtractIconExW ( LPCWSTR lpszFile, INT nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT nIcons )
 {	LPSTR sFile;
 	DWORD ret;
-	
+
 	TRACE("file=%s idx=%i %p %p num=%i\n", debugstr_w(lpszFile), nIconIndex, phiconLarge, phiconSmall, nIcons );
 
 	sFile = HEAP_strdupWtoA (GetProcessHeap(),0,lpszFile);

@@ -59,10 +59,10 @@ typedef __uint64 ULONGLONG, *PULONGLONG;
 #endif
 
 typedef enum tagDVASPECT
-{ 
+{
        DVASPECT_CONTENT   = 1,
        DVASPECT_THUMBNAIL = 2,
-       DVASPECT_ICON      = 4,   
+       DVASPECT_ICON      = 4,
        DVASPECT_DOCPRINT  = 8
 } DVASPECT;
 
@@ -76,7 +76,7 @@ typedef enum tagSTGC
 } STGC;
 
 typedef enum tagSTGMOVE
-{   
+{
 	STGMOVE_MOVE = 0,
 	STGMOVE_COPY = 1,
 	STGMOVE_SHALLOWCOPY = 2
@@ -256,7 +256,7 @@ typedef struct _SID {
 } SID,*PSID;
 
 /*
- * ACL 
+ * ACL
  */
 
 typedef struct _ACL {

@@ -156,7 +156,7 @@ static BYTE *GetCurrentDTA( CONTEXT86 *context )
     TDB *pTask = TASK_GetCurrent();
 
     /* FIXME: This assumes DTA was set correctly! */
-    return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta), 
+    return (BYTE *)CTX_SEG_OFF_TO_LIN( context, SELECTOROF(pTask->dta),
                                                 (DWORD)OFFSETOF(pTask->dta) );
 }
 
@@ -198,7 +198,7 @@ void CreateBPB(int drive, BYTE *data, BOOL16 limited)
 		    data[0x21] = 7;
 		    setword(&data[0x22], 2);
 		}
-	}	
+	}
 }
 
 static int INT21_GetFreeDiskSpace( CONTEXT86 *context )
@@ -260,7 +260,7 @@ static int FillInDrivePB( int drive )
                 heap->dpb.free_search = 0;
                 heap->dpb.free_clusters = 0xFFFF;    /* unknown */
 				return 1;
-		}	
+		}
 
 		return 0;
 }
@@ -286,7 +286,7 @@ static void ioctlGetDeviceInfo( CONTEXT86 *context )
     const DOS_DEVICE *dev;
 
     TRACE("(%d)\n", BX_reg(context));
-    
+
     RESET_CFLAG(context);
 
     /* DOS device ? */
@@ -298,7 +298,7 @@ static void ioctlGetDeviceInfo( CONTEXT86 *context )
 
     /* it seems to be a file */
     curr_drive = DRIVE_GetCurrentDrive();
-    DX_reg(context) = 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0); 
+    DX_reg(context) = 0x0140 + curr_drive + ((curr_drive > 1) ? 0x0800 : 0);
     /* no floppy */
     /* bits 0-5 are current drive
      * bit 6 - file has NOT been written..FIXME: correct?
@@ -326,7 +326,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
             return FALSE;
 	}
 
-	switch (CL_reg(context)) 
+	switch (CL_reg(context))
 	{
 		case 0x4a: /* lock logical volume */
 			TRACE("lock logical volume (%d) level %d mode %d\n",drive,BH_reg(context),DX_reg(context));
@@ -337,7 +337,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 			memset(dataptr, 0, 0x20); /* DOS 6.22 uses 0x20 bytes */
 			dataptr[0] = 0x04;
 			dataptr[6] = 0; /* media type */
-			if (drive > 1) 
+			if (drive > 1)
 			{
 				dataptr[1] = 0x05; /* fixed disk */
 				setword(&dataptr[2], 0x01); /* non removable */
@@ -357,7 +357,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 		case 0x61: /* read logical device track */
 			{
 				BYTE drive = BL_reg(context) ?
-						BL_reg(context) : DRIVE_GetCurrentDrive(); 
+						BL_reg(context) : DRIVE_GetCurrentDrive();
 				WORD head   = *(WORD *)dataptr+1;
 				WORD cyl    = *(WORD *)dataptr+3;
 				WORD sect   = *(WORD *)dataptr+5;
@@ -378,7 +378,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 			}
 			break;
 		case 0x66:/*  get disk serial number */
-			{	
+			{
 				char	label[12],fsname[9],path[4];
 				DWORD	serial;
 
@@ -399,7 +399,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 
 		case 0x6f:
 			memset(dataptr+1, '\0', dataptr[0]-1);
-			dataptr[1] = dataptr[0]; 
+			dataptr[1] = dataptr[0];
 			dataptr[2] = 0x07; /* protected mode driver; no eject; no notification */
 			dataptr[3] = 0xFF; /* no physical drive */
 			break;
@@ -473,7 +473,7 @@ static void INT21_GetSystemTime( CONTEXT86 *context )
 
 /* Many calls translate a drive argument like this:
    drive number (00h = default, 01h = A:, etc)
-   */  
+   */
 static char drivestring[]="default";
 
 char *INT21_DriveName(int drive)
@@ -538,10 +538,10 @@ static BOOL INT21_ExtendedOpenCreateFile(CONTEXT86 *context )
 	  SET_CFLAG(context);
 	  WARN("extended open/create: failed because file exists \n");
       }
-      else if ((action & 0x07) == 2) 
+      else if ((action & 0x07) == 2)
       {
 	/* Truncate it, but first check if opened for write */
-	if ((BL_reg(context) & 0x0007)== 0) 
+	if ((BL_reg(context) & 0x0007)== 0)
 	{
             _lclose16( AX_reg(context) );
             WARN("extended open/create: failed, trunc on ro file\n");
@@ -573,7 +573,7 @@ static BOOL INT21_ExtendedOpenCreateFile(CONTEXT86 *context )
 		}
 		uReturnCX = 0x3;
 	}
-      } 
+      }
       else uReturnCX = 0x1;
 
       CX_reg(context) = uReturnCX;
@@ -708,7 +708,7 @@ static BOOL INT21_CreateTempFile( CONTEXT86 *context )
     char *name = CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx );
     char *p = name + strlen(name);
 
-    /* despite what Ralf Brown says, some programs seem to call without 
+    /* despite what Ralf Brown says, some programs seem to call without
      * ending backslash (DOS accepts that, so we accept it too) */
     if ((p == name) || (p[-1] != '\\')) *p++ = '\\';
 
@@ -727,7 +727,7 @@ static BOOL INT21_CreateTempFile( CONTEXT86 *context )
 }
 
 
-static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context ) 
+static BOOL INT21_GetCurrentDirectory( CONTEXT86 *context )
 {
     int drive = DOS_GET_DRIVE( DL_reg(context) );
     char *ptr = (char *)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi );
@@ -762,13 +762,13 @@ static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     int drive = DOS_GET_DRIVE( BL_reg(context) );
-	
+
     if (!DRIVE_IsValid(drive))
     {
         SetLastError( ERROR_INVALID_DRIVE );
         return 0;
     }
-    
+
     *(WORD *)dataptr = 0;
     *(DWORD *)(dataptr + 2) = DRIVE_GetSerialNumber( drive );
     memcpy( dataptr + 6, DRIVE_GetLabel( drive ), 11 );
@@ -936,7 +936,7 @@ static void fLock( CONTEXT86 * context )
 	  SET_CFLAG(context);
 	  return;
      }
-} 
+}
 
 static BOOL
 INT21_networkfunc (CONTEXT86 *context)
@@ -1131,7 +1131,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     }
     RESET_CFLAG(context);  /* Not sure if this is a good idea */
 
-    switch(AH_reg(context)) 
+    switch(AH_reg(context))
     {
     case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
     case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
@@ -1144,7 +1144,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x0b: /* GET STDIN STATUS */
     case 0x0f: /* OPEN FILE USING FCB */
     case 0x10: /* CLOSE FILE USING FCB */
-    case 0x14: /* SEQUENTIAL READ FROM FCB FILE */		
+    case 0x14: /* SEQUENTIAL READ FROM FCB FILE */
     case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
     case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
     case 0x21: /* READ RANDOM RECORD FROM FCB FILE */
@@ -1181,10 +1181,10 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
     case 0x0a: /* BUFFERED INPUT */
       {
-	char *buffer = ((char *)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, 
+	char *buffer = ((char *)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
 						   context->Edx ));
 	int res;
-	
+
 	TRACE("BUFFERED INPUT (size=%d)\n",buffer[0]);
 	if (buffer[1])
 	  TRACE("Handle old chars in buffer!\n");
@@ -1207,7 +1207,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x6b: /* NULL FUNCTION */
         AL_reg(context) = 0;
         break;
-	
+
     case 0x5c: /* "FLOCK" - RECORD LOCKING */
         fLock(context);
         break;
@@ -1224,7 +1224,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         break;
 
     case 0x11: /* FIND FIRST MATCHING FILE USING FCB */
-	TRACE("FIND FIRST MATCHING FILE USING FCB %p\n", 
+	TRACE("FIND FIRST MATCHING FILE USING FCB %p\n",
 	      CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx));
         if (!INT21_FindFirstFCB(context))
         {
@@ -1240,7 +1240,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x13: /* DELETE FILE USING FCB */
         DeleteFileFCB(context);
         break;
-            
+
     case 0x17: /* RENAME FILE USING FCB */
         RenameFileFCB(context);
         break;
@@ -1261,7 +1261,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         DL_reg(context) = 0;
         if (!INT21_GetDriveAllocInfo(context)) AX_reg(context) = 0xffff;
         break;
-	
+
     case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
         if (!INT21_GetDriveAllocInfo(context)) AX_reg(context) = 0xffff;
         break;
@@ -1269,7 +1269,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x1f: /* GET DRIVE PARAMETER BLOCK FOR DEFAULT DRIVE */
         GetDrivePB(context, DRIVE_GetCurrentDrive());
         break;
-		
+
     case 0x25: /* SET INTERRUPT VECTOR */
         INT_SetPMHandler( AL_reg(context), (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context)));
         break;
@@ -1307,7 +1307,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             BX_reg(context) = OFFSETOF( pTask->dta );
         }
         break;
-            
+
     case 0x30: /* GET DOS VERSION */
         TRACE("GET DOS VERSION %s requested\n",
 	      (AL_reg(context) == 0x00)?"OEM number":"version flag");
@@ -1345,8 +1345,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		TRACE("SET CURRENT EXTENDED BREAK STATE\n");
                 INT21_ReadConfigSys();
 		DOSCONF_config.brk_flag = (DL_reg(context) > 0);
-		break;		
-		
+		break;
+
 	      case 0x02: /* GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE*/
 		TRACE("GET AND SET EXTENDED CONTROL-BREAK CHECKING STATE\n");
                 INT21_ReadConfigSys();
@@ -1368,7 +1368,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		DL_reg(context) = 3;
 		/* c: is Wine's bootdrive (a: is 1)*/
 		break;
-				
+
 	      case 0x06: /* GET TRUE VERSION NUMBER */
 		TRACE("GET TRUE VERSION NUMBER\n");
 		BX_reg(context) = (HIWORD(GetVersion16() >> 8)) |
@@ -1378,10 +1378,10 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
 	      default:
                 INT_BARF( context, 0x21 );
-		break;			
+		break;
         }
-        break;	
-	    
+        break;
+
     case 0x34: /* GET ADDRESS OF INDOS FLAG */
         TRACE("GET ADDRESS OF INDOS FLAG\n");
         if (!heap) INT21_CreateHeap();
@@ -1404,7 +1404,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         if (!INT21_GetFreeDiskSpace(context)) AX_reg(context) = 0xffff;
         break;
 
-    case 0x37: 
+    case 0x37:
       {
 	unsigned char switchchar='/';
 	switch (AL_reg(context))
@@ -1454,7 +1454,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		}
 	}
         break;
-	
+
     case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
         TRACE("RMDIR %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -1467,7 +1467,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
         bSetDOSExtendedError = !INT21_ChangeDir(context);
         break;
-	
+
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
         TRACE("CREAT flag 0x%02x %s\n",CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -1546,7 +1546,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         switch (AL_reg(context))
         {
         case 0x00:
-            TRACE("GET FILE ATTRIBUTES for %s\n", 
+            TRACE("GET FILE ATTRIBUTES for %s\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
             AX_reg(context) = (WORD)GetFileAttributesA(
                                           CTX_SEG_OFF_TO_LIN(context, context->SegDs,
@@ -1558,8 +1558,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0x01:
             TRACE("SET FILE ATTRIBUTES 0x%02x for %s\n", CX_reg(context),
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-            bSetDOSExtendedError = 
-		(!SetFileAttributesA( CTX_SEG_OFF_TO_LIN(context, context->SegDs, 
+            bSetDOSExtendedError =
+		(!SetFileAttributesA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,
 							   context->Edx),
                                        			   CX_reg(context) ));
             break;
@@ -1568,7 +1568,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
         }
         break;
-	
+
     case 0x44: /* IOCTL */
         switch (AL_reg(context))
         {
@@ -1619,7 +1619,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 
         case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
             TRACE("IOCTL - CHECK IF BLOCK DEVICE REMOTE for drive %s\n",
-		 INT21_DriveName( BL_reg(context))); 
+		 INT21_DriveName( BL_reg(context)));
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
             case DRIVE_UNKNOWN:
@@ -1660,7 +1660,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    {
 	    int drive;
             TRACE("IOCTL - SET LOGICAL DRIVE MAP for drive %s\n",
-		  INT21_DriveName( BL_reg(context))); 
+		  INT21_DriveName( BL_reg(context)));
 	    drive = DOS_GET_DRIVE ( BL_reg(context) );
 	    if ( ! DRIVE_SetLogicalMapping ( drive, drive+1 ) )
 	    {
@@ -1673,7 +1673,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0xe0:  /* Sun PC-NFS API */
             /* not installed */
             break;
-	
+
 	case 0x52:  /* DR-DOS version */
             /* This is not DR-DOS */
 
@@ -1683,7 +1683,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             SET_CFLAG(context);       /* Error */
             SetLastError( ERROR_INVALID_FUNCTION );
             break;
-                
+
         default:
             INT_BARF( context, 0x21 );
             break;
@@ -1719,7 +1719,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x48: /* ALLOCATE MEMORY */
         TRACE("ALLOCATE MEMORY for %d paragraphs\n", BX_reg(context));
         {
-            LPVOID *mem; 
+            LPVOID *mem;
 	    if (ISV86(context))
 	      {
 		mem= DOSMEM_GetBlock((DWORD)BX_reg(context)<<4,NULL);
@@ -1836,7 +1836,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         TRACE("RENAME %s to %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi));
-        bSetDOSExtendedError = 
+        bSetDOSExtendedError =
 		(!MoveFileA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
 			       CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi)));
         break;
@@ -1863,7 +1863,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		      BX_reg(context));
                 DosDateTimeToFileTime( DX_reg(context), CX_reg(context),
                                        &filetime );
-                bSetDOSExtendedError = 
+                bSetDOSExtendedError =
 			(!SetFileTime( DosFileHandleToWin32Handle(BX_reg(context)),
                                       NULL, NULL, &filetime ));
             }
@@ -1897,7 +1897,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x5b: /* CREATE NEW FILE */
         TRACE("CREATE NEW FILE 0x%02x for %s\n", CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = ((AX_reg(context) = 
+        bSetDOSExtendedError = ((AX_reg(context) =
                _lcreat16_uniq( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
                                CX_reg(context) )) == (WORD)HFILE_ERROR16);
         break;
@@ -1931,7 +1931,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             {
                 SetLastError( ERROR_INVALID_DRIVE );
 		bSetDOSExtendedError = TRUE;
-            } 
+            }
             break;
 
         default:
@@ -2000,10 +2000,10 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                 while (len--) { *ptr = toupper(*ptr); ptr++; }
             }
             break;
-        case 0x22:            
+        case 0x22:
             TRACE("\tConvert ASCIIZ string to uppercase\n");
             _strupr( (LPSTR)CTX_SEG_OFF_TO_LIN(context,context->SegDs,context->Edx) );
-            break;    
+            break;
 	default:
 	    TRACE("\tunimplemented function %d\n",AL_reg(context));
             INT_BARF( context, 0x21 );
@@ -2019,8 +2019,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    TRACE("GET GLOBAL CODE PAGE TABLE\n");
             DX_reg(context) = BX_reg(context) = CodePage;
             RESET_CFLAG(context);
-            break;			
-        case 0x02: 
+            break;
+        case 0x02:
 	    TRACE("SET GLOBAL CODE PAGE TABLE active page %d system page %d\n",
 		  BX_reg(context),DX_reg(context));
             CodePage = BX_reg(context);
@@ -2039,8 +2039,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x6a: /* COMMIT FILE */
         TRACE("FFLUSH/COMMIT handle %d\n",BX_reg(context));
         bSetDOSExtendedError = (!FlushFileBuffers( DosFileHandleToWin32Handle(BX_reg(context)) ));
-        break;		
-	
+        break;
+
     case 0x69: /* DISK SERIAL NUMBER */
         switch (AL_reg(context))
         {
@@ -2059,13 +2059,13 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             break;
         }
         break;
-    
+
     case 0x6C: /* Extended Open/Create*/
         TRACE("EXTENDED OPEN/CREATE %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edi));
         bSetDOSExtendedError = INT21_ExtendedOpenCreateFile(context);
         break;
-	
+
     case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
 	if ((GetVersion()&0xC0000004)!=0xC0000004) {
 	    /* not supported on anything but Win95 */
@@ -2078,7 +2078,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0x39:  /* Create directory */
 	    TRACE("LONG FILENAME - MAKE DIRECTORY %s\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
-            bSetDOSExtendedError = (!CreateDirectoryA( 
+            bSetDOSExtendedError = (!CreateDirectoryA(
 					CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
                                                   context->Edx ), NULL));
 	    /* FIXME: CreateDirectory's LastErrors will clash with the ones
@@ -2100,7 +2100,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         case 0x3a:  /* Remove directory */
 	    TRACE("LONG FILENAME - REMOVE DIRECTORY %s\n",
 		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
-            bSetDOSExtendedError = (!RemoveDirectoryA( 
+            bSetDOSExtendedError = (!RemoveDirectoryA(
 					CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
                                                         context->Edx )));
             break;
@@ -2118,7 +2118,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             break;
         case 0x01:
             TRACE("\tset attributes 0x%04x\n",CX_reg(context));
-            bSetDOSExtendedError = (!SetFileAttributesA( 
+            bSetDOSExtendedError = (!SetFileAttributesA(
 				  	CTX_SEG_OFF_TO_LIN(context, context->SegDs,
                                                            context->Edx),
                                         CX_reg(context)  ) );
@@ -2181,7 +2181,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		  BX_reg(context));
             bSetDOSExtendedError = (!FindClose16( BX_reg(context) ));
             break;
-        case 0x60:  
+        case 0x60:
 	  switch(CL_reg(context))
 	  {
 	    case 0x01:  /* Get short filename or path */
@@ -2212,15 +2212,15 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	  break;
         case 0x6c:  /* Create or open file */
             TRACE("LONG FILENAME - CREATE OR OPEN FILE %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi)); 
+		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Esi));
 	  /* translate Dos 7 action to Dos 6 action */
 	    bSetDOSExtendedError = INT21_ExtendedOpenCreateFile(context);
 	    break;
 
         case 0x3b:  /* Change directory */
             TRACE("LONG FILENAME - CHANGE DIRECTORY %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx)); 
-	    if (!SetCurrentDirectoryA(CTX_SEG_OFF_TO_LIN(context, 
+		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
+	    if (!SetCurrentDirectoryA(CTX_SEG_OFF_TO_LIN(context,
 	    					context->SegDs,
 				        	context->Edx
 					))
@@ -2231,8 +2231,8 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    break;
         case 0x41:  /* Delete file */
             TRACE("LONG FILENAME - DELETE FILE %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx)); 
-	    if (!DeleteFileA(CTX_SEG_OFF_TO_LIN(context, 
+		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
+	    if (!DeleteFileA(CTX_SEG_OFF_TO_LIN(context,
 	    				context->SegDs,
 					context->Edx)
 	    )) {
@@ -2310,7 +2310,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 					edpb->edpb_flags = 0;
 					edpb->next_edpb = 0;
 					edpb->free_cluster = edpb->free_cluster2 = 0;
-					
+
 					/* determine free disk space */
 				    *root += DOS_GET_DRIVE( DX_reg(context) );
 				    GetDiskFreeSpaceA( root, &cluster_sectors, &sector_bytes,
@@ -2326,9 +2326,9 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 					edpb->max_cluster = total_clusters;
 					edpb->fat_clusters = 32;	/* made-up value */
 					edpb->root_cluster = 0;
-				
+
 					RESET_CFLAG(context);	/* clear carry */
-					AX_reg(context) = 0;	
+					AX_reg(context) = 0;
 				}
 				else
 				{
@@ -2346,7 +2346,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 			AL_reg(context) = 0;
 			break;
 		}
-		
+
 		break;
 
 
@@ -2361,14 +2361,14 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     } /* END OF SWITCH */
 
     if( bSetDOSExtendedError )		/* set general error condition */
-    {   
+    {
 	AX_reg(context) = GetLastError();
 	SET_CFLAG(context);
     }
 
     if ((context->EFlags & 0x0001))
         TRACE("failed, error %ld\n", GetLastError() );
- 
+
     TRACE("returning: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",
                  AX_reg(context), BX_reg(context), CX_reg(context),

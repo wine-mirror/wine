@@ -22,9 +22,9 @@
 #ifndef __WINE_X11DRV_H
 #define __WINE_X11DRV_H
 
-#ifndef __WINE_CONFIG_H 
-# error You must include config.h to use this header 
-#endif 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -147,9 +147,9 @@ extern COLORREF X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y);
 extern BOOL X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn );
 extern BOOL X11DRV_Polyline( X11DRV_PDEVICE *physDev,const POINT* pt,INT count);
 extern BOOL X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count );
-extern BOOL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, 
+extern BOOL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt,
 				  const INT* counts, UINT polygons);
-extern BOOL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, 
+extern BOOL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt,
 				  const DWORD* counts, DWORD polylines);
 
 extern COLORREF X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color );
@@ -172,7 +172,7 @@ extern BOOL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 /* OpenGL / X11 driver functions */
 extern int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 		                      const PIXELFORMATDESCRIPTOR *pppfd);
-extern int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev, 
+extern int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 		                        int iPixelFormat, UINT nBytes,
 					PIXELFORMATDESCRIPTOR *ppfd);
 extern int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev);

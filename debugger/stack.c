@@ -70,7 +70,7 @@ void DEBUG_InfoStack(void)
 {
 #ifdef __i386__
     DBG_VALUE	value;
-    
+
     value.type = NULL;
     value.cookie = DV_TARGET;
     value.addr.seg = DEBUG_context.SegSs;
@@ -109,8 +109,8 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, enum 
     if (noisy)
         frames[theframe].frame = DEBUG_PrintAddressAndArgs( code, mode, stack->off, TRUE );
     else
-      DEBUG_FindNearestSymbol( code, TRUE, 
-			       &frames[theframe].frame.sym, stack->off, 
+      DEBUG_FindNearestSymbol( code, TRUE,
+			       &frames[theframe].frame.sym, stack->off,
 			       &frames[theframe].frame.list);
     frames[theframe].ss = stack->seg;
     frames[theframe].ebp = stack->off;
@@ -126,9 +126,9 @@ static BOOL DEBUG_Frame16(DBG_THREAD* thread, DBG_ADDR *addr, unsigned int *cs, 
     FRAME16 		frame;
     void*		p = (void*)DEBUG_ToLinear(addr);
     DBG_ADDR		code;
-    
+
     if (!p) return FALSE;
-    
+
     if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
         if (noisy) DEBUG_InvalAddr(addr);
 	return FALSE;
@@ -141,7 +141,7 @@ static BOOL DEBUG_Frame16(DBG_THREAD* thread, DBG_ADDR *addr, unsigned int *cs, 
 	 * but check whether it could be anyway */
         if (((frame.cs&7)==7) && (frame.cs != *cs)) {
 	    LDT_ENTRY	le;
-	 
+
 	    if (GetThreadSelectorEntry( thread->handle, frame.cs, &le) &&
 		(le.HighWord.Bits.Type & 0x08)) { /* code segment */
 	        /* it is very uncommon to push a code segment cs as
@@ -164,9 +164,9 @@ static BOOL DEBUG_Frame32(DBG_ADDR *addr, unsigned int *cs, int frameno, int noi
     void*		p = (void*)DEBUG_ToLinear(addr);
     DBG_ADDR		code;
     DWORD		old_bp = addr->off;
-    
+
     if (!p) return FALSE;
-    
+
     if (!DEBUG_READ_MEM(p, &frame, sizeof(frame))) {
        if (noisy) DEBUG_InvalAddr(addr);
        return FALSE;
@@ -204,7 +204,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
     int 		copy_nframe = 0;
     int			copy_curr_frame = 0;
     struct bt_info* 	copy_frames = NULL;
-    
+
     if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Backtrace:\n" );
 
     if (tid == DEBUG_CurrTid)
@@ -284,8 +284,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	return;
     }
 
-    /* cur_switch holds address of curr_stack's field in TEB in debuggee 
-     * address space 
+    /* cur_switch holds address of curr_stack's field in TEB in debuggee
+     * address space
      */
     cur_switch = (DWORD)thread->teb + OFFSET_OF(TEB, cur_stack);
     if (!DEBUG_READ_MEM((void*)cur_switch, &next_switch, sizeof(next_switch))) {
@@ -295,7 +295,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 
     if (is16) {
         if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 				     (unsigned long)(STACK32FRAME*)next_switch );
 	    return;
 	}
@@ -306,9 +306,9 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
         tmp.seg = SELECTOROF(next_switch);
 	tmp.off = OFFSETOF(next_switch);
 	p = DEBUG_ToLinear(&tmp);
-	
+
 	if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 				     (unsigned long)(STACK16FRAME*)p );
 	    return;
 	}
@@ -320,7 +320,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
         sw_addr.seg = (DWORD)-1;
 	sw_addr.off = (DWORD)-1;
     }
-    
+
     for (ok = TRUE; ok;) {
         if ((frames[frameno].ss == sw_addr.seg) &&
             sw_addr.off && (frames[frameno].ebp >= sw_addr.off))
@@ -328,65 +328,65 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	   /* 16<->32 switch...
 	    * yes, I know this is confusing, it gave me a headache too */
 	   if (is16) {
-	      
+
 	       if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 					   (unsigned long)(STACK32FRAME*)next_switch );
 		  return;
 	       }
 
 	       code.seg  = 0;
 	       code.off  = frame32.retaddr;
-	       
+
 	       cs = 0;
 	       addr.seg = 0;
 	       addr.off = frame32.ebp;
 	       DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_32, noisy, NULL );
-	       
+
 	       next_switch = cur_switch;
 	       tmp.seg = SELECTOROF(next_switch);
 	       tmp.off = OFFSETOF(next_switch);
 	       p = DEBUG_ToLinear(&tmp);
-	       
+
 	       if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 					    (unsigned long)(STACK16FRAME*)p );
 		   return;
 	       }
 	       cur_switch = (DWORD)frame16.frame32;
 	       sw_addr.seg = 0;
 	       sw_addr.off = cur_switch;
-	       
+
 	       is16 = FALSE;
 	   } else {
 	      tmp.seg = SELECTOROF(next_switch);
 	      tmp.off = OFFSETOF(next_switch);
 	      p = DEBUG_ToLinear(&tmp);
-	      
+
 	      if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
 		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 					   (unsigned long)(STACK16FRAME*)p );
 		  return;
 	      }
-	      
+
 	      code.seg  = frame16.cs;
 	      code.off  = frame16.ip;
-	      
+
 	      cs = frame16.cs;
 	      addr.seg = SELECTOROF(next_switch);
 	      addr.off = frame16.bp;
 	      DEBUG_ForceFrame( &addr, &code, ++frameno, MODE_16, noisy, NULL );
-	      
+
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n", 
+		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
 					  (unsigned long)(STACK32FRAME*)next_switch );
 		 return;
 	      }
 	      cur_switch = (DWORD)frame32.frame16;
 	      sw_addr.seg = SELECTOROF(cur_switch);
 	      sw_addr.off = OFFSETOF(cur_switch);
-	      
+
 	      is16 = TRUE;
 	   }
 	   if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear(&sw_addr), &ch, sizeof(ch))) {

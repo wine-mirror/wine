@@ -40,7 +40,7 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     BOOL bRet = 1;
     RECT16	 clipRect;
     RECT16 	 opaqueRect;
-    RECT16 	*lpOpaqueRect = NULL; 
+    RECT16 	*lpOpaqueRect = NULL;
     WORD wOptions = 0;
     DWORD len;
     INT16 width;
@@ -59,7 +59,7 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     clipRect.left = 0;
     clipRect.top = 0;
-        
+
     clipRect.right = physDev->DevCaps.horzRes;
     clipRect.bottom = physDev->DevCaps.vertRes;
     if (lprect) {
@@ -69,7 +69,7 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 	opaqueRect.bottom = lprect->bottom;
 	lpOpaqueRect = &opaqueRect;
     }
-        
+
     TRACE("textalign = %d\n", dc->textAlign);
 
     if (dc->textAlign & TA_UPDATECP) {
@@ -80,8 +80,8 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     x = XLPTODP( dc, x );
     y = YLPTODP( dc, y );
 
-    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-			      NULL, str, -len,  physDev->FontInfo, 
+    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0,
+			      NULL, str, -len,  physDev->FontInfo,
 			      win16drv_SegPtr_DrawMode,
 			      win16drv_SegPtr_TextXForm,
 			      NULL, NULL, 0);
@@ -111,12 +111,12 @@ BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 	break;
     case TA_BASELINE:
         y -= physDev->FontInfo->dfAscent;
-	break;    
+	break;
     }
 
-    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 
+    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE,
 			      x, y, &clipRect, str, (WORD)len,
-			      physDev->FontInfo, win16drv_SegPtr_DrawMode, 
+			      physDev->FontInfo, win16drv_SegPtr_DrawMode,
 			      win16drv_SegPtr_TextXForm, NULL, lpOpaqueRect,
 			      wOptions);
 

@@ -47,14 +47,14 @@ PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 /***********************************************************************
  *           MSACM_DumpCache
  */
-static	void MSACM_DumpCache(PWINE_ACMDRIVERID padid) 
+static	void MSACM_DumpCache(PWINE_ACMDRIVERID padid)
 {
     unsigned 	i;
 
     TRACE("cFilterTags=%lu cFormatTags=%lu fdwSupport=%08lx\n",
 	  padid->cFilterTags, padid->cFormatTags, padid->fdwSupport);
     for (i = 0; i < padid->cache->cFormatTags; i++) {
-	TRACE("\tdwFormatTag=%lu cbwfx=%lu\n", 
+	TRACE("\tdwFormatTag=%lu cbwfx=%lu\n",
 	      padid->aFormatTag[i].dwFormatTag, padid->aFormatTag[i].cbwfx);
     }
 }
@@ -62,7 +62,7 @@ static	void MSACM_DumpCache(PWINE_ACMDRIVERID padid)
 
 /***********************************************************************
  *           MSACM_FindFormatTagInCache 		[internal]
- * 
+ *
  *	Returns TRUE is the format tag fmtTag is present in the cache.
  *	If so, idx is set to its index.
  */
@@ -82,7 +82,7 @@ BOOL MSACM_FindFormatTagInCache(WINE_ACMDRIVERID* padid, DWORD fmtTag, LPDWORD i
 /***********************************************************************
  *           MSACM_FillCache
  */
-static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid) 
+static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
 {
     HACMDRIVER		        had = 0;
     int			        ntag;
@@ -98,7 +98,7 @@ static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
 	goto errCleanUp;
 
     if (add.cFormatTags > 0) {
-	padid->aFormatTag = HeapAlloc(MSACM_hHeap, HEAP_ZERO_MEMORY, 
+	padid->aFormatTag = HeapAlloc(MSACM_hHeap, HEAP_ZERO_MEMORY,
 				      add.cFormatTags * sizeof(padid->aFormatTag[0]));
 	if (!padid->aFormatTag) goto errCleanUp;
     }
@@ -108,7 +108,7 @@ static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
     padid->fdwSupport  = add.fdwSupport;
 
     aftd.cbStruct = sizeof(aftd);
- 
+
     for (ntag = 0; ntag < add.cFormatTags; ntag++) {
 	aftd.dwFormatTagIndex = ntag;
 	if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS, (LPARAM)&aftd, ACM_FORMATTAGDETAILSF_INDEX)) {
@@ -216,8 +216,8 @@ static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 	goto errCleanUp;
     if (RegSetValueExA(hKey, "fdwSupport", 0, REG_DWORD, (void*)&padid->fdwSupport, sizeof(DWORD)))
 	goto errCleanUp;
-    if (RegSetValueExA(hKey, "aFormatTagCache", 0, REG_BINARY, 
-		       (void*)padid->aFormatTag, 
+    if (RegSetValueExA(hKey, "aFormatTagCache", 0, REG_BINARY,
+		       (void*)padid->aFormatTag,
 		       padid->cFormatTags * sizeof(padid->aFormatTag[0])))
 	goto errCleanUp;
     HeapFree(MSACM_hHeap, 0, key);
@@ -229,11 +229,11 @@ static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 }
 
 /***********************************************************************
- *           MSACM_RegisterDriver() 
+ *           MSACM_RegisterDriver()
  */
 PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 				       HINSTANCE hinstModule)
-{ 
+{
     PWINE_ACMDRIVERID	padid;
 
     TRACE("('%s', '%s', 0x%08x)\n", pszDriverAlias, pszFileName, hinstModule);
@@ -254,7 +254,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
         strcpy( padid->pszFileName, pszFileName );
     }
     padid->hInstModule = hinstModule;
-	
+
     padid->pACMDriverList = NULL;
     padid->pNextACMDriverID = NULL;
     padid->pPrevACMDriverID = MSACM_pLastACMDriverID;
@@ -273,24 +273,24 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 }
 
 /***********************************************************************
- *           MSACM_RegisterAllDrivers() 
+ *           MSACM_RegisterAllDrivers()
  */
 void MSACM_RegisterAllDrivers(void)
 {
     LPSTR pszBuffer;
     DWORD dwBufferLength;
 
-    /* FIXME 
+    /* FIXME
      *  What if the user edits system.ini while the program is running?
      *  Does Windows handle that?
      */
     if (MSACM_pFirstACMDriverID)
 	return;
-    
+
     /* FIXME: Does not work! How do I determine the section length? */
     dwBufferLength = 1024;
 /* EPP 	GetPrivateProfileSectionA("drivers32", NULL, 0, "system.ini"); */
-    
+
     pszBuffer = (LPSTR) HeapAlloc(MSACM_hHeap, 0, dwBufferLength);
     if (GetPrivateProfileSectionA("drivers32", pszBuffer, dwBufferLength, "system.ini")) {
 	char* s = pszBuffer;
@@ -303,11 +303,11 @@ void MSACM_RegisterAllDrivers(void)
 		    MSACM_RegisterDriver(s, s2 + 1, 0);
 		    *s2 = '=';
 		}
-	    }  
+	    }
 	    s += strlen(s) + 1; /* Either next char or \0 */
 	}
     }
-    
+
     HeapFree(MSACM_hHeap, 0, pszBuffer);
 
     MSACM_RegisterDriver("msacm32.dll", "msacm32.dll", 0);
@@ -319,10 +319,10 @@ void MSACM_RegisterAllDrivers(void)
 PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 {
     PWINE_ACMDRIVERID pNextACMDriverID;
-    
+
     while (p->pACMDriverList)
 	acmDriverClose((HACMDRIVER) p->pACMDriverList, 0);
-    
+
     if (p->pszDriverAlias)
 	HeapFree(MSACM_hHeap, 0, p->pszDriverAlias);
     if (p->pszFileName)
@@ -338,11 +338,11 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 	p->pPrevACMDriverID->pNextACMDriverID = p->pNextACMDriverID;
     if (p->pNextACMDriverID)
 	p->pNextACMDriverID->pPrevACMDriverID = p->pPrevACMDriverID;
-    
+
     pNextACMDriverID = p->pNextACMDriverID;
-    
+
     HeapFree(MSACM_hHeap, 0, p);
-    
+
     return pNextACMDriverID;
 }
 
@@ -351,7 +351,7 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
  */
 void MSACM_UnregisterAllDrivers(void)
 {
-    PWINE_ACMDRIVERID p = MSACM_pFirstACMDriverID; 
+    PWINE_ACMDRIVERID p = MSACM_pFirstACMDriverID;
 
     while (p) {
 	MSACM_WriteCache(p);
@@ -373,7 +373,7 @@ PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type)
 }
 
 /***********************************************************************
- *           MSACM_GetDriverID() 
+ *           MSACM_GetDriverID()
  */
 PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID)
 {

@@ -47,7 +47,7 @@ typedef struct
 } BITMAP16, *LPBITMAP16;
 
 typedef struct
-{ 
+{
     UINT16     lbStyle;
     COLORREF   lbColor;
     INT16      lbHatch;
@@ -86,7 +86,7 @@ typedef struct
   BYTE       elfScript[LF_FACESIZE];
 } ENUMLOGFONTEX16, *LPENUMLOGFONTEX16;
 
-typedef struct 
+typedef struct
 {
     INT16  txfHeight;
     INT16  txfWidth;
@@ -259,7 +259,7 @@ typedef struct
 
 typedef struct
 {
-    UINT16   lopnStyle; 
+    UINT16   lopnStyle;
     POINT16  lopnWidth;
     COLORREF lopnColor;
 } LOGPEN16, *LPLOGPEN16;
@@ -308,7 +308,7 @@ typedef struct {
 
 typedef INT16 (CALLBACK *MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,
                                        INT16,LPARAM);
-typedef struct 
+typedef struct
 {
     INT16    cbSize;
     SEGPTR   lpszDocName;

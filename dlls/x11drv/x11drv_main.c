@@ -152,7 +152,7 @@ static void unlock_tsx11(void)
 /***********************************************************************
  *		get_server_startup
  *
- * Get the server startup time 
+ * Get the server startup time
  * Won't be exact, but should be sufficient
  */
 static void get_server_startup(void)
@@ -260,7 +260,7 @@ static void setup_options(void)
  *		setup_opengl_visual
  *
  * Setup the default visual used for OpenGL and Direct3D, and the desktop
- * window (if it exists).  If OpenGL isn't available, the visual is simply 
+ * window (if it exists).  If OpenGL isn't available, the visual is simply
  * set to the default visual for the display
  */
 #ifdef HAVE_OPENGL
@@ -268,11 +268,11 @@ static void setup_opengl_visual( Display *display )
 {
     int err_base, evt_base;
 
-    /* In order to support OpenGL or D3D, we require a double-buffered 
+    /* In order to support OpenGL or D3D, we require a double-buffered
      * visual */
     if (glXQueryExtension(display, &err_base, &evt_base) == True) {
 	  int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-	
+
 	  ENTER_GL();
 	  desktop_vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
 	  LEAVE_GL();
@@ -284,7 +284,7 @@ static void setup_opengl_visual( Display *display )
       screen_depth = desktop_vi->depth;
     }
 }
-#endif /* HAVE_OPENGL */    
+#endif /* HAVE_OPENGL */
 
 /***********************************************************************
  *           X11DRV process initialisation routine

@@ -131,5 +131,5 @@ BOOL16 WINAPI RegisterNLSInfoChanged16(LPVOID lpNewNLSInfo) /* [???] FIXME */
 	}
 
 	return FALSE; /* ptr not set */
-} 
+}
 

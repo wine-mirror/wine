@@ -38,9 +38,9 @@ LONG WINAPI RawExtTextOut16(void) { FIXME("stub (no prototype)\n"); return 0; }
 /***********************************************************************
  *		RawGetTextExtent   (GDI.532)
  */
-LONG WINAPI RawGetTextExtent16(HDC16 hdc, LPCSTR lpszString, INT16 cbString ) { 
-      FIXME("(%04hx, %p, %hd): stub\n", hdc, lpszString, cbString); 
-      return 0; 
+LONG WINAPI RawGetTextExtent16(HDC16 hdc, LPCSTR lpszString, INT16 cbString ) {
+      FIXME("(%04hx, %p, %hd): stub\n", hdc, lpszString, cbString);
+      return 0;
 }
 
 /***********************************************************************

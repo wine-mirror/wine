@@ -136,7 +136,7 @@ int UnregisterDll(char* strDll)
     return 0;
 }
 
-int InstallDll(BOOL install, char *strDll, WCHAR *command_line) 
+int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
 {
     HRESULT hr;
     DLLINSTALL pfInstall;
@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
     BOOL            DllFound = FALSE;
     WCHAR*          wsCommandLine = NULL;
     WCHAR           EmptyLine[1] = {0};
-    
+
 
     for(i = 1; i < argc; i++)
     {
@@ -180,9 +180,9 @@ int main(int argc, char* argv[])
         else if (!strnicmp(argv[i], "/i", strlen("/i")))
         {
             CHAR* command_line = argv[i] + strlen("/i");
-            
+
             CallInstall = TRUE;
-            if (command_line[0] == ':' && command_line[1]) 
+            if (command_line[0] == ':' && command_line[1])
             {
                 int len = strlen(command_line);
 
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
                     wsCommandLine = EmptyLine;
                 }
             }
-            else 
+            else
             {
                 wsCommandLine = EmptyLine;
             }
@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
                 else
                     res = RegisterDll(DllName);
             }
-            
+
             if (res)
                 return res;
 
@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
             {
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
             }
-            
+
             return res;
         }
     }

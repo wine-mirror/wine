@@ -1,4 +1,4 @@
-/*		
+/*
  * This DLL contains the user interface for the serial driver.
  *    a dialog box to configure the specified COMM port
  *    an interface to the control panel (??)
@@ -80,7 +80,7 @@ SERIALUI_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  * EnumPropPages (SERIALUI.2)
  *
  * Called by the device manager to add prop sheets in Control Panel ???
- * Pointed to in Win98 registry by 
+ * Pointed to in Win98 registry by
  * \System\CurrentControlSet\Services\Class\ports\0000\EnumPropPages =
  *  "serialui.dll,EnumPropPages"
  */
@@ -119,7 +119,7 @@ static PARAM2STRDATA SERIALUI_Baud2StrData[]={
 };
 static PARAM2STR SERIALUI_Baud2Str={ SERIALUI_TABLESIZE(SERIALUI_Baud2StrData),SERIALUI_Baud2StrData };
 
-static PARAM2STRDATA SERIALUI_Parity2StrData[]={ 
+static PARAM2STRDATA SERIALUI_Parity2StrData[]={
   {NOPARITY,"None"}, {ODDPARITY,"Odd"}, {EVENPARITY,"Even"}, {MARKPARITY,"Mark"},
   {SPACEPARITY,"Space"}
 };
@@ -288,10 +288,10 @@ static void SERIALUI_DialogInfoToDCB(HWND hDlg, SERIALUI_DialogInfo *info)
     SERIALUI_GetConfItems( hDlg, IDC_PARITY, &SERIALUI_Parity2Str, &dwParity);
     SERIALUI_GetConfItems( hDlg, IDC_DATA, &SERIALUI_Data2Str, &dwByteSize);
     SERIALUI_GetConfItems( hDlg, IDC_FLOW, &SERIALUI_Flow2Str, &dwFlowControl );
- 
+
     TRACE("baud=%ld stop=%ld parity=%ld data=%ld flow=%ld\n",
           dwBaudRate, dwStopBits, dwParity, dwByteSize, dwFlowControl);
-    
+
     lpdcb->BaudRate = dwBaudRate;
     lpdcb->StopBits = dwStopBits;
     lpdcb->Parity   = dwParity;
@@ -375,7 +375,7 @@ BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         case ID_GETDEFAULT:
             {
                 DWORD r,dwConfSize = sizeof (COMMCONFIG);
-                r = GetDefaultCommConfigA(info->lpszDevice, 
+                r = GetDefaultCommConfigA(info->lpszDevice,
                           info->lpCommConfig, &dwConfSize);
                 if(!r)
                     MessageBoxA(hWnd,"Failed","GetDefaultCommConfig",MB_OK);
@@ -386,7 +386,7 @@ BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
             {
                 DWORD r;
                 SERIALUI_DialogInfoToDCB(hWnd,info);
-                r = SetDefaultCommConfigA(info->lpszDevice, 
+                r = SetDefaultCommConfigA(info->lpszDevice,
                           info->lpCommConfig, sizeof (COMMCONFIG));
                 if(!r)
                     MessageBoxA(hWnd,"Failed","GetDefaultCommConfig",MB_OK);
@@ -406,8 +406,8 @@ BOOL WINAPI SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
  * Used by Win9x KERNEL to show a dialog for configuring a COMM port.
  */
 BOOL WINAPI SERIALUI_CommConfigDialog(
-	LPCSTR lpszName, 
-	HWND hWndParent, 
+	LPCSTR lpszName,
+	HWND hWndParent,
 	LPCOMMCONFIG lpCommConfig
 ) {
     SERIALUI_DialogInfo info;
@@ -422,7 +422,7 @@ BOOL WINAPI SERIALUI_CommConfigDialog(
 
     return DialogBoxParamA(SERIALUI_hModule,
                            MAKEINTRESOURCEA(IDD_SERIALUICONFIG),
-                           hWndParent, 
+                           hWndParent,
                            (DLGPROC) SERIALUI_ConfigDialogProc,
                            (LPARAM)&info);
 }
@@ -438,7 +438,7 @@ static LPCSTR lpszDCB     = "DCB";
  *        the comm port name.
  */
 BOOL WINAPI SERIALUI_SetDefaultCommConfig(
-	LPCSTR lpszDevice, 
+	LPCSTR lpszDevice,
 	LPCOMMCONFIG lpCommConfig,
 	DWORD dwSize
 ) {
@@ -482,7 +482,7 @@ BOOL WINAPI SERIALUI_SetDefaultCommConfig(
  *        the comm port name.
  */
 BOOL WINAPI SERIALUI_GetDefaultCommConfig(
-	LPCSTR lpszDevice, 
+	LPCSTR lpszDevice,
 	LPCOMMCONFIG lpCommConfig,
 	LPDWORD lpdwSize
 ) {
@@ -522,13 +522,13 @@ BOOL WINAPI SERIALUI_GetDefaultCommConfig(
             r = 1;
         if ((r==ERROR_SUCCESS) && (dwSize != sizeof(DCB)))
             r = 1;
-           
+
         RegCloseKey(hKeyPort);
     }
     else
     {
         /* FIXME: default to a hardcoded commconfig */
-        
+
         lpCommConfig->dcb.DCBlength = sizeof(DCB);
         lpCommConfig->dcb.BaudRate = 9600;
         lpCommConfig->dcb.fBinary = TRUE;

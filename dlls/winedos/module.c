@@ -122,7 +122,7 @@ static void MZ_FillPSP( LPVOID lpPSP, LPBYTE cmdline, int length )
   /* command.com does not skip over multiple spaces */
 
   if(length > 126) {
-    ERR("Command line truncated! (length %d > maximum length 126)\n", 
+    ERR("Command line truncated! (length %d > maximum length 126)\n",
        length);
     length = 126;
   }
@@ -224,7 +224,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 
  SetFilePointer(hFile,0,NULL,FILE_BEGIN);
  if (   !ReadFile(hFile,&mz_header,sizeof(mz_header),&len,NULL)
-     || len != sizeof(mz_header) 
+     || len != sizeof(mz_header)
      || mz_header.e_magic != IMAGE_DOS_SIGNATURE) {
   char *p = strrchr( filename, '.' );
   if (!p || strcasecmp( p, ".com" ))  /* check for .COM extension */
@@ -478,7 +478,7 @@ static void MZ_Launch(void)
   pTask->flags |= TDBF_WINOLDAP;
 
   _LeaveWin16Lock();
-  
+
   ResumeThread(dosvm_thread);
   rv = DOSVM_Loop(dosvm_thread);
 

@@ -19,7 +19,7 @@
  *
  * NOTES:
  *
- * The errorinfo is a per-thread object. The reference is stored in the 
+ * The errorinfo is a per-thread object. The reference is stored in the
  * TEB at offset 0xf80
  */
 
@@ -47,7 +47,7 @@ static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
     DWORD* newBuffer;
     WCHAR* stringBuffer;
     DWORD len;
-    
+
     if (in == NULL)
 	return NULL;
     /*
@@ -106,7 +106,7 @@ static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
 static VOID WINAPI ERRORINFO_SysFreeString(BSTR in)
 {
     DWORD* bufferPointer;
-    
+
     /* NULL is a valid parameter */
     if(!in) return;
 
@@ -132,7 +132,7 @@ typedef struct ErrorInfoImpl
 	ICOM_VTABLE(ICreateErrorInfo)	*lpvtcei;
 	ICOM_VTABLE(ISupportErrorInfo)	*lpvtsei;
 	DWORD				ref;
-	
+
 	GUID m_Guid;
 	BSTR bstrSource;
 	BSTR bstrDescription;
@@ -147,14 +147,14 @@ static ICOM_VTABLE(ISupportErrorInfo)	ISupportErrorInfoImpl_VTable;
 /*
  converts a objectpointer to This
  */
-#define _IErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtei))) 
-#define _ICOM_THIS_From_IErrorInfo(class, name) class* This = (class*)(((char*)name)-_IErrorInfo_Offset); 
+#define _IErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtei)))
+#define _ICOM_THIS_From_IErrorInfo(class, name) class* This = (class*)(((char*)name)-_IErrorInfo_Offset);
 
-#define _ICreateErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtcei))) 
-#define _ICOM_THIS_From_ICreateErrorInfo(class, name) class* This = (class*)(((char*)name)-_ICreateErrorInfo_Offset); 
+#define _ICreateErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtcei)))
+#define _ICOM_THIS_From_ICreateErrorInfo(class, name) class* This = (class*)(((char*)name)-_ICreateErrorInfo_Offset);
 
-#define _ISupportErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtsei))) 
-#define _ICOM_THIS_From_ISupportErrorInfo(class, name) class* This = (class*)(((char*)name)-_ISupportErrorInfo_Offset); 
+#define _ISupportErrorInfo_Offset ((int)(&(((ErrorInfoImpl*)0)->lpvtsei)))
+#define _ICOM_THIS_From_ISupportErrorInfo(class, name) class* This = (class*)(((char*)name)-_ISupportErrorInfo_Offset);
 
 /*
  converts This to a objectpointer
@@ -193,7 +193,7 @@ static HRESULT WINAPI IErrorInfoImpl_QueryInterface(
 
 	if(IsEqualIID(riid, &IID_IErrorInfo))
 	{
-	  *ppvoid = _IErrorInfo_(This); 
+	  *ppvoid = _IErrorInfo_(This);
 	}
 	else if(IsEqualIID(riid, &IID_ICreateErrorInfo))
 	{
@@ -239,7 +239,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 
 static HRESULT WINAPI IErrorInfoImpl_GetGUID(
 	IErrorInfo* iface,
-	GUID * pGUID) 
+	GUID * pGUID)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
@@ -270,7 +270,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetDescription(
 	if (pBstrDescription == NULL)
 	    return E_INVALIDARG;
 	*pBstrDescription = ERRORINFO_SysAllocString(This->bstrDescription);
-	
+
 	return S_OK;
 }
 
@@ -284,7 +284,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(
 	if (pBstrHelpFile == NULL)
 	    return E_INVALIDARG;
 	*pBstrHelpFile = ERRORINFO_SysAllocString(This->bstrHelpFile);
-	
+
 	return S_OK;
 }
 
@@ -297,7 +297,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetHelpContext(
 	if (pdwHelpContext == NULL)
 	    return E_INVALIDARG;
 	*pdwHelpContext = This->m_dwHelpContext;
-	
+
 	return S_OK;
 }
 
@@ -307,7 +307,7 @@ static ICOM_VTABLE(IErrorInfo) IErrorInfoImpl_VTable =
   IErrorInfoImpl_QueryInterface,
   IErrorInfoImpl_AddRef,
   IErrorInfoImpl_Release,
- 
+
   IErrorInfoImpl_GetGUID,
   IErrorInfoImpl_GetSource,
   IErrorInfoImpl_GetDescription,
@@ -362,7 +362,7 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetSource(
 	if (This->bstrSource != NULL)
 	    ERRORINFO_SysFreeString(This->bstrSource);
 	This->bstrSource = ERRORINFO_SysAllocString(szSource);
-	
+
 	return S_OK;
 }
 
@@ -375,7 +375,7 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetDescription(
 	if (This->bstrDescription != NULL)
 	    ERRORINFO_SysFreeString(This->bstrDescription);
 	This->bstrDescription = ERRORINFO_SysAllocString(szDescription);
-	
+
 	return S_OK;
 }
 
@@ -399,7 +399,7 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpContext(
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
 	TRACE("(%p)\n",This);
 	This->m_dwHelpContext = dwHelpContext;
-	
+
 	return S_OK;
 }
 
@@ -424,7 +424,7 @@ static HRESULT WINAPI ISupportErrorInfoImpl_QueryInterface(
 {
 	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
 	TRACE("(%p)\n", This);
-	
+
 	return IErrorInfo_QueryInterface(_IErrorInfo_(This), riid, ppvoid);
 }
 
@@ -474,7 +474,7 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
 	TRACE("(%p): stub:\n", pperrinfo);
 	if(! pperrinfo ) return E_INVALIDARG;
 	if(!(pei=IErrorInfoImpl_Constructor()))return E_OUTOFMEMORY;
-	
+
 	res = IErrorInfo_QueryInterface(pei, &IID_ICreateErrorInfo, (LPVOID*)pperrinfo);
 	IErrorInfo_Release(pei);
 	return res;

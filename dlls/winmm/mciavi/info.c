@@ -27,12 +27,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
 /**************************************************************************
- * 				MCIAVI_ConvertFrameToTimeFormat	[internal]	
+ * 				MCIAVI_ConvertFrameToTimeFormat	[internal]
  */
 DWORD 	MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRet)
 {
     DWORD	   ret = 0;
-    
+
     switch (wma->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
         ret = (val * wma->mah.dwMicroSecPerFrame) / 1000;
@@ -49,12 +49,12 @@ DWORD 	MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRe
 }
 
 /**************************************************************************
- * 				MCIAVI_ConvertTimeFormatToFrame	[internal]	
+ * 				MCIAVI_ConvertTimeFormatToFrame	[internal]
  */
 DWORD 	MCIAVI_ConvertTimeFormatToFrame(WINE_MCIAVI* wma, DWORD val)
 {
     DWORD	ret = 0;
-    
+
     switch (wma->dwMciTimeFormat) {
     case MCI_FORMAT_MILLISECONDS:
 	ret = (val * 1000) / wma->mah.dwMicroSecPerFrame;
@@ -76,12 +76,12 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret;
-    
+
     TRACE("(%04x, %08lX, %p)\n", wDevID, dwFlags, lpParms);
-    
+
     if (lpParms == NULL) 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
-    
+
     if (dwFlags & MCI_GETDEVCAPS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_GETDEVCAPS_DEVICE_TYPE:
@@ -148,13 +148,13 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
     LPSTR		str = 0;
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
-    
+
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
 	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL) return MCIERR_INVALID_DEVICE_ID;
-    
+
     TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
-    
+
     switch (dwFlags) {
     case MCI_INFO_PRODUCT:
 	str = "Wine's AVI player";
@@ -184,10 +184,10 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
 DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
-    
+
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
-    
+
     if (dwFlags & MCI_SET_TIME_FORMAT) {
 	switch (lpParms->dwTimeFormat) {
 	case MCI_FORMAT_MILLISECONDS:
@@ -203,7 +203,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	    return MCIERR_BAD_TIME_FORMAT;
 	}
     }
-    
+
     if (dwFlags & MCI_SET_DOOR_OPEN) {
 	TRACE("No support for door open !\n");
 	return MCIERR_UNSUPPORTED_FUNCTION;
@@ -214,9 +214,9 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
     }
     if (dwFlags & MCI_SET_ON) {
 	char	buffer[256];
-	
+
 	strcpy(buffer, "MCI_SET_ON:");
-	
+
 	if (dwFlags & MCI_SET_VIDEO) {
 	    strncat(buffer, " video", sizeof(buffer));
 	    wma->dwSet |= 4;
@@ -246,10 +246,10 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	}
 	FIXME("%s\n", buffer);
     }
-    
+
     if (dwFlags & MCI_SET_OFF) {
 	char	buffer[256];
-	
+
 	strcpy(buffer, "MCI_SET_OFF:");
 	if (dwFlags & MCI_SET_VIDEO) {
 	    strncat(buffer, " video", sizeof(buffer));
@@ -282,9 +282,9 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
     }
     if (dwFlags & MCI_DGV_SET_FILEFORMAT) {
 	LPSTR	str = "save";
-	if (dwFlags & MCI_DGV_SET_STILL)	
+	if (dwFlags & MCI_DGV_SET_STILL)
 	    str = "capture";
-	
+
 	switch (lpParms->dwFileFormat) {
 	case MCI_DGV_FF_AVI: 	FIXME("Setting file format (%s) to 'AVI'\n", str); 	break;
 	case MCI_DGV_FF_AVSS: 	FIXME("Setting file format (%s) to 'AVSS'\n", str);	break;
@@ -297,11 +297,11 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 	default:		FIXME("Setting unknown file format (%s): %ld\n", str, lpParms->dwFileFormat);
 	}
     }
-    
+
     if (dwFlags & MCI_DGV_SET_SPEED) {
 	FIXME("Setting speed to %ld\n", lpParms->dwSpeed);
     }
-    
+
     return 0;
 }
 
@@ -312,10 +312,10 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
-    
+
     if (lpParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
     if (wma == NULL)		return MCIERR_INVALID_DEVICE_ID;
-    
+
     if (dwFlags & MCI_STATUS_ITEM) {
 	switch (lpParms->dwItem) {
 	case MCI_STATUS_CURRENT_TRACK:
@@ -351,10 +351,10 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 		return MCIERR_UNSUPPORTED_FUNCTION;
 	    }
 	    /* only one track in file is currently handled, so don't take care of MCI_TRACK flag */
-	    lpParms->dwReturn = MCIAVI_ConvertFrameToTimeFormat(wma, 
+	    lpParms->dwReturn = MCIAVI_ConvertFrameToTimeFormat(wma,
 							     (dwFlags & MCI_STATUS_START) ? 0 : wma->dwCurrVideoFrame,
 							     &ret);
-	    TRACE("MCI_STATUS_POSITION %s => %lu\n", 
+	    TRACE("MCI_STATUS_POSITION %s => %lu\n",
 		  (dwFlags & MCI_STATUS_START) ? "start" : "current", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_READY:
@@ -447,7 +447,7 @@ DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpPar
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback),
 			wma->openParms.wDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
-    
+
     return ret;
 }
 

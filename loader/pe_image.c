@@ -1,4 +1,4 @@
-/* 
+/*
  *  Copyright	1994	Eric Youndale & Erik Bos
  *  Copyright	1995	Martin von Löwis
  *  Copyright   1996-98 Marcus Meissner
@@ -23,12 +23,12 @@
 /* Notes:
  * Before you start changing something in this file be aware of the following:
  *
- * - There are several functions called recursively. In a very subtle and 
+ * - There are several functions called recursively. In a very subtle and
  *   obscure way. DLLs can reference each other recursively etc.
  * - If you want to enhance, speed up or clean up something in here, think
  *   twice WHY it is implemented in that strange way. There is usually a reason.
  *   Though sometimes it might just be lazyness ;)
- * - In PE_MapImage, right before PE_fixup_imports() all external and internal 
+ * - In PE_MapImage, right before PE_fixup_imports() all external and internal
  *   state MUST be correct since this function can be called with the SAME image
  *   AGAIN. (Thats recursion for you.) That means MODREF.module and
  *   NE_MODULE.module32.
@@ -82,7 +82,7 @@ static IMAGE_IMPORT_DESCRIPTOR *get_imports( HMODULE hmod )
 #define AdjustPtr(ptr,delta) ((char *)(ptr) + (delta))
 
 void dump_exports( HMODULE hModule )
-{ 
+{
   char		*Module;
   int		i, j;
   WORD		*ordinal;
@@ -98,7 +98,7 @@ void dump_exports( HMODULE hModule )
 
   Module = (char*)RVA(pe_exports->Name);
   TRACE("*******EXPORT DATA*******\n");
-  TRACE("Module name is %s, %ld functions, %ld names\n", 
+  TRACE("Module name is %s, %ld functions, %ld names\n",
         Module, pe_exports->NumberOfFunctions, pe_exports->NumberOfNames);
 
   ordinal = RVA(pe_exports->AddressOfNameOrdinals);
@@ -128,13 +128,13 @@ void dump_exports( HMODULE hModule )
 
 /* Look up the specified function or ordinal in the export list:
  * If it is a string:
- * 	- look up the name in the name list. 
+ * 	- look up the name in the name list.
  *	- look up the ordinal with that index.
  *	- use the ordinal as offset into the functionlist
  * If it is an ordinal:
  *	- use ordinal-pe_export->Base as offset into the function list
  */
-static FARPROC PE_FindExportedFunction( 
+static FARPROC PE_FindExportedFunction(
 	WINE_MODREF *wm,	/* [in] WINE modreference */
 	LPCSTR funcName,	/* [in] function name */
         BOOL snoop )
@@ -287,10 +287,10 @@ DWORD PE_fixup_imports( WINE_MODREF *wm )
     wm->nDeps = i;
     wm->deps  = HeapAlloc( GetProcessHeap(), 0, i*sizeof(WINE_MODREF *) );
 
-    /* load the imported modules. They are automatically 
+    /* load the imported modules. They are automatically
      * added to the modref list of the process.
      */
- 
+
     for (i = 0, pe_imp = imports; pe_imp->Name ; pe_imp++) {
     	WINE_MODREF		*wmImp;
 	IMAGE_IMPORT_BY_NAME	*pe_name;
@@ -465,8 +465,8 @@ static int do_relocations( char *base, const IMAGE_NT_HEADERS *nt, const char *f
 /**********************************************************************
  *			PE_LoadImage
  * Load one PE format DLL/EXE into memory
- * 
- * Unluckily we can't just mmap the sections where we want them, for 
+ *
+ * Unluckily we can't just mmap the sections where we want them, for
  * (at least) Linux does only support offsets which are page-aligned.
  *
  * BUT we have to map the whole image anyway, for Win32 programs sometimes
@@ -629,7 +629,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
     }
     wm->hDummyMod = hModule16;
 
-    if ( builtin ) 
+    if ( builtin )
     {
         NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule16 );
         pModule->flags |= NE_FFLAGS_BUILTIN;
@@ -702,7 +702,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 }
 
 /******************************************************************************
- * The PE Library Loader frontend. 
+ * The PE Library Loader frontend.
  * FIXME: handle the flags.
  */
 WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
@@ -710,11 +710,11 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 	HMODULE		hModule32;
 	WINE_MODREF	*wm;
 	HANDLE		hFile;
-       
+
 	hFile = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
                              NULL, OPEN_EXISTING, 0, 0 );
 	if ( hFile == INVALID_HANDLE_VALUE ) return NULL;
-	
+
 	/* Load PE module */
 	hModule32 = PE_LoadImage( hFile, name, flags );
 	if (!hModule32)
@@ -792,7 +792,7 @@ void PE_InitTls( void )
 	LPVOID			mem;
 	PIMAGE_TLS_DIRECTORY	pdir;
         int delta;
-	
+
 	for (wm = MODULE_modref_list;wm;wm=wm->next) {
 		peh = PE_HEADER(wm->module);
 		delta = wm->module - peh->OptionalHeader.ImageBase;
@@ -800,8 +800,8 @@ void PE_InitTls( void )
 			continue;
 		pdir = (LPVOID)(wm->module + peh->OptionalHeader.
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
-		
-		
+
+
 		if ( wm->tlsindex == -1 ) {
 			LPDWORD xaddr;
 			wm->tlsindex = TlsAlloc();
@@ -815,7 +815,7 @@ void PE_InitTls( void )
 		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
 		memcpy(mem,_fixup_address(&(peh->OptionalHeader),delta,(LPVOID)pdir->StartAddressOfRawData),datasize);
 		if (pdir->AddressOfCallBacks) {
-		     PIMAGE_TLS_CALLBACK *cbs; 
+		     PIMAGE_TLS_CALLBACK *cbs;
 
 		     cbs = _fixup_address(&(peh->OptionalHeader),delta,pdir->AddressOfCallBacks);
 		     if (*cbs)

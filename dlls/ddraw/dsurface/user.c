@@ -210,7 +210,7 @@ void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
 }
 
 void User_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-					IDirectDrawPaletteImpl* pal) 
+					IDirectDrawPaletteImpl* pal)
 {
     USER_PRIV_VAR(priv, This);
 

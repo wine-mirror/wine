@@ -180,7 +180,7 @@ MSVCRT_size_t _mbstrlen(const char* str)
     MSVCRT_size_t len = 0;
     while(*str)
     {
-      /* FIXME: According to the documentation we are supposed to test for 
+      /* FIXME: According to the documentation we are supposed to test for
        * multi-byte character validity. Whatever that means
        */
       str += MSVCRT_isleadbyte(*str) ? 2 : 1;
@@ -247,7 +247,7 @@ unsigned char* _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_si
     }
     if (*src && n && !MSVCRT_isleadbyte(*src))
     {
-      /* If the last character is a multi-byte character then 
+      /* If the last character is a multi-byte character then
        * we cannot copy it since we have only one byte left
        */
       *dst++ = *src;

@@ -282,7 +282,7 @@ int DRIVE_Init(void)
         else WARN("%s: not defined\n", name );
     }
 
-    if (!count) 
+    if (!count)
     {
         MESSAGE("Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */
@@ -528,7 +528,7 @@ static WORD CDROM_Data_FindBestVoldesc(int fd)
 /***********************************************************************
  *           DRIVE_ReadSuperblock
  *
- * NOTE 
+ * NOTE
  *      DRIVE_SetLabel and DRIVE_SetSerialNumber use this in order
  * to check, that they are writing on a FAT filesystem !
  */
@@ -568,12 +568,12 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
             break;
     }
 
-    if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs)) 
+    if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs))
     {
         ret = -4;
         goto the_end;
     }
-    if (read(fd,buff,DRIVE_SUPER)!=DRIVE_SUPER) 
+    if (read(fd,buff,DRIVE_SUPER)!=DRIVE_SUPER)
     {
         ret = -2;
         goto the_end;
@@ -625,24 +625,24 @@ int DRIVE_WriteSuperblockEntry (int drive, off_t ofs, size_t len, char * buff)
 {
     int fd;
 
-    if ((fd=open(DOSDrives[drive].device,O_WRONLY))==-1) 
+    if ((fd=open(DOSDrives[drive].device,O_WRONLY))==-1)
     {
         ERR("Cannot open the device %s (for writing)\n",
-            DOSDrives[drive].device); 
+            DOSDrives[drive].device);
         return -1;
     }
     if (lseek(fd,ofs,SEEK_SET)!=ofs)
     {
         ERR("lseek failed on device %s !\n",
-            DOSDrives[drive].device); 
+            DOSDrives[drive].device);
         close(fd);
         return -2;
     }
-    if (write(fd,buff,len)!=len) 
+    if (write(fd,buff,len)!=len)
     {
         close(fd);
         ERR("Cannot write on %s !\n",
-            DOSDrives[drive].device); 
+            DOSDrives[drive].device);
         return -3;
     }
     return close (fd);
@@ -673,18 +673,18 @@ DWORD CDROM_Data_GetLabel(int drive, char *label)
     WORD offs = CDROM_Data_FindBestVoldesc(dev);
     WCHAR label_read[LABEL_LEN]; /* Unicode possible, too */
     DWORD unicode_id = 0;
- 
+
     if (offs)
     {
         if ((lseek(dev, offs+0x58, SEEK_SET) == offs+0x58)
         &&  (read(dev, &unicode_id, 3) == 3))
         {
             int ver = (unicode_id & 0xff0000) >> 16;
- 
+
             if ((lseek(dev, offs+0x28, SEEK_SET) != offs+0x28)
             ||  (read(dev, &label_read, LABEL_LEN) != LABEL_LEN))
                 goto failure;
- 
+
             close(dev);
             if ((LOWORD(unicode_id) == 0x2f25) /* Unicode ID */
             &&  ((ver == 0x40) || (ver == 0x43) || (ver == 0x45)))
@@ -758,7 +758,7 @@ const char * DRIVE_GetLabel( int drive )
     if (!DRIVE_IsValid( drive )) return NULL;
     if (DOSDrives[drive].type == DRIVE_CDROM)
     {
-	read = CDROM_GetLabel(drive, DOSDrives[drive].label_read); 
+	read = CDROM_GetLabel(drive, DOSDrives[drive].label_read);
     }
     else
     if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
@@ -812,11 +812,11 @@ static DWORD CDROM_Audio_GetSerial(HANDLE h)
     dwStart = FRAME_OF_TOC(toc, toc.FirstTrack);
 
     for (i = 0; i <= toc.LastTrack - toc.FirstTrack; i++) {
-        serial += (toc.TrackData[i].Address[0] << 16) | 
+        serial += (toc.TrackData[i].Address[0] << 16) |
             (toc.TrackData[i].Address[1] << 8) | toc.TrackData[i].Address[2];
     }
     dwEnd = FRAME_OF_TOC(toc, toc.LastTrack + 1);
- 
+
     if (toc.LastTrack - toc.FirstTrack + 1 < 3)
         serial += wMagic + (dwEnd - dwStart);
 
@@ -835,7 +835,7 @@ static DWORD CDROM_Data_GetSerial(int drive)
         unsigned char p[4];
     } serial;
     BYTE b0 = 0, b1 = 1, b2 = 2, b3 = 3;
- 
+
 
     if (dev == -1) return 0;
     offs = CDROM_Data_FindBestVoldesc(dev);
@@ -846,7 +846,7 @@ static DWORD CDROM_Data_GetSerial(int drive)
         BYTE buf[2048];
         OSVERSIONINFOA ovi;
         int i;
- 
+
         lseek(dev, offs, SEEK_SET);
         read(dev, buf, 2048);
         /*
@@ -872,7 +872,7 @@ static DWORD CDROM_Data_GetSerial(int drive)
     close(dev);
     return serial.val;
 }
-        
+
 /**************************************************************************
  *				CDROM_GetSerial			[internal]
  */
@@ -900,7 +900,7 @@ static DWORD CDROM_GetSerial(int drive)
     case 0:
         break;
     }
-    
+
     if (serial)
         TRACE("CD serial number is %04x-%04x.\n", HIWORD(serial), LOWORD(serial));
 
@@ -918,7 +918,7 @@ DWORD DRIVE_GetSerialNumber( int drive )
     char buff[DRIVE_SUPER];
 
     if (!DRIVE_IsValid( drive )) return 0;
-    
+
     if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
     {
 	switch(DOSDrives[drive].type)
@@ -939,7 +939,7 @@ DWORD DRIVE_GetSerialNumber( int drive )
             FIXME("Serial number reading from file system on drive %c: not supported yet.\n", drive+'A');
 	}
     }
-		
+
     return (serial) ? serial : DOSDrives[drive].serial_conf;
 }
 
@@ -957,7 +957,7 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
     {
         if ((DOSDrives[drive].type != DRIVE_REMOVABLE) &&
             (DOSDrives[drive].type != DRIVE_FIXED)) return 0;
-        /* check, if the drive has a FAT filesystem */ 
+        /* check, if the drive has a FAT filesystem */
         if (DRIVE_ReadSuperblock(drive, buff)) return 0;
         if (DRIVE_WriteSuperblockEntry(drive, 0x27, 4, (char *) &serial)) return 0;
         return 1;
@@ -1023,7 +1023,7 @@ int DRIVE_Chdir( int drive, const char *path )
     DOSDrives[drive].dos_cwd  = heap_strdup( full_name.short_name + 3 );
     DOSDrives[drive].unix_cwd = heap_strdup( unix_cwd );
 
-    if (pTask && (pTask->curdrive & 0x80) && 
+    if (pTask && (pTask->curdrive & 0x80) &&
         ((pTask->curdrive & ~0x80) == drive))
     {
         lstrcpynA( pTask->curdir, full_name.short_name + 2,
@@ -1072,9 +1072,9 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
 {
  /* If new_drive is already valid, do nothing and return 0
     otherwise, copy DOSDrives[existing_drive] to DOSDrives[new_drive] */
-  
+
     DOSDRIVE *old, *new;
-    
+
     old = DOSDrives + existing_drive;
     new = DOSDrives + new_drive;
 
@@ -1185,7 +1185,7 @@ int DRIVE_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
 /***********************************************************************
  *           DRIVE_GetFreeSpace
  */
-static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size, 
+static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 			       PULARGE_INTEGER available )
 {
     struct statfs info;
@@ -1229,7 +1229,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
  *       DRIVE_GetCurrentDirectory
  * Returns "X:\\path\\etc\\".
  *
- * Despite the API description, return required length including the 
+ * Despite the API description, return required length including the
  * terminating null when buffer too small. This is the real behaviour.
 */
 
@@ -1293,7 +1293,7 @@ BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
  * Fails if expression resulting from current drive's dir and "root"
  * is not a root dir of the target drive.
  *
- * UNDOC: setting some LPDWORDs to NULL is perfectly possible 
+ * UNDOC: setting some LPDWORDs to NULL is perfectly possible
  * if the corresponding info is unneeded.
  *
  * FIXME: needs to support UNC names from Win95 OSR2 on.
@@ -1491,7 +1491,7 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
 
 /***********************************************************************
  *           GetDriveType   (KERNEL.136)
- * This function returns the type of a drive in Win16. 
+ * This function returns the type of a drive in Win16.
  * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
  * remote drive API. The return value DRIVE_REMOTE for CD-ROMs has been
  * verified on Win 3.11 and Windows 95. Some programs rely on it, so don't
@@ -1818,7 +1818,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
 BOOL WINAPI SetVolumeLabelA( LPCSTR root, LPCSTR volname )
 {
     int drive;
-    
+
     /* FIXME, SetLastErrors missing */
 
     if (!root) drive = DRIVE_GetCurrentDrive();

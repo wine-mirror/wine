@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 #include "winnls.h"
 #include "winerror.h"
@@ -116,7 +116,7 @@ HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMI
 
 /*************************************************************************
  * StrRetToStrN				[SHELL32.96]
- * 
+ *
  * converts a STRRET to a normal string
  *
  * NOTES
@@ -164,12 +164,12 @@ BOOL WINAPI StrToOleStrAW (LPWSTR lpWideCharStr, LPCVOID lpString)
  *  lpMulti, nMulti, nWide [IN]
  *  lpWide [OUT]
  */
-BOOL WINAPI StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr) 
+BOOL WINAPI StrToOleStrNA (LPWSTR lpWide, INT nWide, LPCSTR lpStrA, INT nStr)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_an(lpStrA,nStr), nStr);
 	return MultiByteToWideChar (0, 0, lpStrA, nStr, lpWide, nWide);
 }
-BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr) 
+BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpWide, nWide, debugstr_wn(lpStrW, nStr), nStr);
 
@@ -179,7 +179,7 @@ BOOL WINAPI StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr)
 	return 0;
 }
 
-BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr) 
+BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr)
 {
 	if (SHELL_OsIsUnicode())
 	  return StrToOleStrNW (lpWide, nWide, lpStr, nStr);
@@ -189,13 +189,13 @@ BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr)
 /*************************************************************************
  * OleStrToStrN					[SHELL32.78]
  */
-BOOL WINAPI OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle) 
+BOOL WINAPI OleStrToStrNA (LPSTR lpStr, INT nStr, LPCWSTR lpOle, INT nOle)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpStr, nStr, debugstr_wn(lpOle,nOle), nOle);
 	return WideCharToMultiByte (0, 0, lpOle, nOle, lpStr, nStr, NULL, NULL);
 }
 
-BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle) 
+BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle)
 {
 	TRACE("(%p, %x, %s, %x)\n", lpwStr, nwStr, debugstr_wn(lpOle,nOle), nOle);
 
@@ -205,7 +205,7 @@ BOOL WINAPI OleStrToStrNW (LPWSTR lpwStr, INT nwStr, LPCWSTR lpOle, INT nOle)
 	return 0;
 }
 
-BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn) 
+BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn)
 {
 	if (SHELL_OsIsUnicode())
 	  return OleStrToStrNW (lpOut, nOut, lpIn, nIn);

@@ -151,8 +151,8 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
 /***********************************************************************
  *           ArcTo    (GDI32.@)
  */
-BOOL WINAPI ArcTo( HDC hdc, 
-                     INT left,   INT top, 
+BOOL WINAPI ArcTo( HDC hdc,
+                     INT left,   INT top,
                      INT right,  INT bottom,
                      INT xstart, INT ystart,
                      INT xend,   INT yend )
@@ -169,7 +169,7 @@ BOOL WINAPI ArcTo( HDC hdc,
         return result;
     }
     GDI_ReleaseObj( hdc );
-    /* 
+    /*
      * Else emulate it.
      * According to the documentation, a line is drawn from the current
      * position to the starting point of the arc.
@@ -212,7 +212,7 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
     if (!dc) return FALSE;
 
     if(PATH_IsPathOpen(dc->path))
-        ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,2); 
+        ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,2);
     else if(dc->funcs->pPie)
         ret = dc->funcs->pPie(dc->physDev,left,top,right,bottom,xstart,ystart,xend,yend);
 
@@ -302,7 +302,7 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
     BOOL ret = FALSE;
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
-    {  
+    {
     if(PATH_IsPathOpen(dc->path))
             ret = PATH_Rectangle(dc, left, top, right, bottom);
         else if (dc->funcs->pRectangle)
@@ -434,13 +434,13 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const LPPIXELFORMATDESCRIPTOR ppfd )
     DC * dc = DC_GetDCPtr( hdc );
 
     TRACE("(%08x,%p)\n",hdc,ppfd);
-  
+
     if (!dc) return 0;
 
     if (!dc->funcs->pChoosePixelFormat) FIXME(" :stub\n");
     else ret = dc->funcs->pChoosePixelFormat(dc->physDev,ppfd);
 
-    GDI_ReleaseObj( hdc );  
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -469,7 +469,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
     if (!dc->funcs->pSetPixelFormat) FIXME(" :stub\n");
     else bRet = dc->funcs->pSetPixelFormat(dc->physDev,iPixelFormat,ppfd);
 
-    GDI_ReleaseObj( hdc );  
+    GDI_ReleaseObj( hdc );
     return bRet;
 }
 
@@ -497,7 +497,7 @@ INT WINAPI GetPixelFormat( HDC hdc )
     if (!dc->funcs->pGetPixelFormat) FIXME(" :stub\n");
     else ret = dc->funcs->pGetPixelFormat(dc->physDev);
 
-    GDI_ReleaseObj( hdc );  
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -535,7 +535,7 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
     }
     else ret = dc->funcs->pDescribePixelFormat(dc->physDev,iPixelFormat,nBytes,ppfd);
 
-    GDI_ReleaseObj( hdc );  
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -565,7 +565,7 @@ BOOL WINAPI SwapBuffers( HDC hdc )
     }
     else bRet = dc->funcs->pSwapBuffers(dc->physDev);
 
-    GDI_ReleaseObj( hdc );  
+    GDI_ReleaseObj( hdc );
     return bRet;
 }
 
@@ -603,7 +603,7 @@ BOOL16 WINAPI FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
     return FillRgn( hdc, hrgn, hbrush );
 }
 
-    
+
 /***********************************************************************
  *           FillRgn    (GDI32.@)
  */
@@ -829,7 +829,7 @@ BOOL16 WINAPI PolyPolygon16( HDC16 hdc, const POINT16* pt, const INT16* counts,
 	return FALSE;
     }
     for (i=polygons;i--;) counts32[i]=counts[i];
-   
+
     ret = PolyPolygon(hdc,pt32,counts32,polygons);
     HeapFree( GetProcessHeap(), 0, counts32 );
     HeapFree( GetProcessHeap(), 0, pt32 );
@@ -981,7 +981,7 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 	    HeapFree( GetProcessHeap(), 0, Pts );
 	}
     }
- 
+
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -1035,12 +1035,12 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     BOOL result;
     DC *dc;
 
-    if( (signed int)dwRadius < 0 ) 
+    if( (signed int)dwRadius < 0 )
 	return FALSE;
 
     dc = DC_GetDCUpdate( hdc );
-    if(!dc) return FALSE; 
-    
+    if(!dc) return FALSE;
+
     if(dc->funcs->pAngleArc)
     {
         result = dc->funcs->pAngleArc( dc->physDev, x, y, dwRadius, eStartAngle, eSweepAngle );
@@ -1049,27 +1049,27 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
         return result;
     }
     GDI_ReleaseObj( hdc );
- 
+
     /* AngleArc always works counterclockwise */
     arcdir = GetArcDirection( hdc );
-    SetArcDirection( hdc, AD_COUNTERCLOCKWISE ); 
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE );
 
     x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
     y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
     x2 = x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
     y2 = x - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
- 
+
     LineTo( hdc, x1, y1 );
     if( eSweepAngle >= 0 )
-        result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius, 
+        result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
 		      x1, y1, x2, y2 );
     else
-	result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius, 
+	result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
 		      x2, y2, x1, y1 );
- 
+
     if( result ) MoveToEx( hdc, x2, y2, NULL );
     SetArcDirection( hdc, arcdir );
-    return result; 
+    return result;
 }
 
 /***********************************************************************
@@ -1084,7 +1084,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     int i;
 
     dc = DC_GetDCUpdate( hdc );
-    if(!dc) return FALSE; 
+    if(!dc) return FALSE;
 
     if(dc->funcs->pPolyDraw)
     {
@@ -1114,7 +1114,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     {
 	if( lpbTypes[i] == PT_MOVETO )
 	{
-	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL ); 				
+	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL );
 	    lastmove.x = dc->CursPosX;
 	    lastmove.y = dc->CursPosY;
 	}
@@ -1125,24 +1125,24 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	    PolyBezierTo( hdc, &lppt[i], 3 );
 	    i += 2;
 	}
-	else 
-	    return FALSE; 
+	else
+	    return FALSE;
 
 	if( lpbTypes[i] & PT_CLOSEFIGURE )
 	{
 	    if( PATH_IsPathOpen( dc->path ) )
 		CloseFigure( hdc );
-	    else 
+	    else
 		LineTo( hdc, lastmove.x, lastmove.y );
 	}
     }
 
-    return TRUE; 
+    return TRUE;
 }
 
 /******************************************************************
- * 
- *   *Very* simple bezier drawing code, 
+ *
+ *   *Very* simple bezier drawing code,
  *
  *   It uses a recursive algorithm to divide the curve in a series
  *   of straight line segements. Not ideal but for me sufficient.
@@ -1152,7 +1152,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
  *   7 July 1998 Rein Klazes
  */
 
- /* 
+ /*
   * some macro definitions for bezier drawing
   *
   * to avoid trucation errors the coordinates are
@@ -1161,12 +1161,12 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
   * and avoiding floating point arithmatic
   * 4 bits should allow 27 bits coordinates which I saw
   * somewere in the win32 doc's
-  * 
+  *
   */
 
 #define BEZIERSHIFTBITS 4
 #define BEZIERSHIFTUP(x)    ((x)<<BEZIERSHIFTBITS)
-#define BEZIERPIXEL        BEZIERSHIFTUP(1)    
+#define BEZIERPIXEL        BEZIERSHIFTUP(1)
 #define BEZIERSHIFTDOWN(x)  (((x)+(1<<(BEZIERSHIFTBITS-1)))>>BEZIERSHIFTBITS)
 /* maximum depth of recursion */
 #define BEZIERMAXDEPTH  8
@@ -1175,14 +1175,14 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 /* enough for one curve */
 #define BEZIER_INITBUFSIZE    (150)
 
-/* calculate Bezier average, in this case the middle 
+/* calculate Bezier average, in this case the middle
  * correctly rounded...
  * */
 
 #define BEZIERMIDDLE(Mid, P1, P2) \
     (Mid).x=((P1).x+(P2).x + 1)/2;\
     (Mid).y=((P1).y+(P2).y + 1)/2;
-    
+
 /**********************************************************
 * BezierCheck helper function to check
 * that recursion can be terminated
@@ -1192,7 +1192,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 *       returns true if the recusion can be terminated
 */
 static BOOL BezierCheck( int level, POINT *Points)
-{ 
+{
     INT dx, dy;
     dx=Points[3].x-Points[0].x;
     dy=Points[3].y-Points[0].y;
@@ -1244,7 +1244,7 @@ static BOOL BezierCheck( int level, POINT *Points)
             return TRUE;
     }
 }
-    
+
 /* Helper for GDI_Bezier.
  * Just handles one Bezier, so Points should point to four POINTs
  */
@@ -1286,7 +1286,7 @@ static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
 }
 
 
-    
+
 /***********************************************************************
  *           GDI_Bezier   [INTERNAL]
  *   Calculate line segments that approximate -what microsoft calls- a bezier
@@ -1301,7 +1301,7 @@ static void GDI_InternalBezier( POINT *Points, POINT **PtsOut, INT *dwOut,
  *  count   [I] Number of Points.  Must be 3n+1.
  *  nPtsOut [O] Will contain no of points that have been produced (i.e. no. of
  *              lines+1).
- *   
+ *
  *  RETURNS
  *
  *  Ptr to an array of POINTs that contain the lines that approximinate the

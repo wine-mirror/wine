@@ -1,4 +1,4 @@
-/* 
+/*
  * Convenience functions to handle use of external debugger.
  *
  * Copyright 1999 Kevin Holbrook
@@ -104,7 +104,7 @@ void DEBUG_ExternalDebugger(void)
     const char *dbg_external;
     const char *dbg_wine_location;
     const char *dbg_no_xterm;
-    char pid_string[DBG_BUFF_SIZE];    
+    char pid_string[DBG_BUFF_SIZE];
 
 
     /* check settings in environment for debugger to use */
@@ -134,15 +134,15 @@ void DEBUG_ExternalDebugger(void)
     if (dbg_no_xterm)
       status = execlp(dbg_external, dbg_external, dbg_wine_location, pid_string, NULL);
     else
-      status = execlp("xterm", "xterm", "-e", dbg_external, dbg_wine_location, pid_string, NULL); 
+      status = execlp("xterm", "xterm", "-e", dbg_external, dbg_wine_location, pid_string, NULL);
 
     if (status == -1)
     {
       if (dbg_no_xterm)
-        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"%s %s %s\" (%s)\n", 
+        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"%s %s %s\" (%s)\n",
                 dbg_external, dbg_wine_location, pid_string, strerror(errno));
       else
-        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"xterm -e %s %s %s\" (%s)\n", 
+        fprintf(stderr, "DEBUG_ExternalDebugger failed to execute \"xterm -e %s %s %s\" (%s)\n",
                 dbg_external, dbg_wine_location, pid_string, strerror(errno));
     }
 
@@ -154,7 +154,7 @@ void DEBUG_ExternalDebugger(void)
   }
   else
     fprintf(stderr, "DEBUG_ExternalDebugger failed.\n");
-  
+
 }
 
 

@@ -58,10 +58,10 @@ extern "C" {
  */
 
 #ifndef __WINE_USE_MSVCRT
-/* Get the u_xxx types from the Unix headers. They will do and doing it 
- * this way will avoid redefinitions. But on FreeBSD we may get macros 
- * and prototypes for htonl & co. This means the functions will not be 
- * called because of the macros. So this should not harm us too much unless 
+/* Get the u_xxx types from the Unix headers. They will do and doing it
+ * this way will avoid redefinitions. But on FreeBSD we may get macros
+ * and prototypes for htonl & co. This means the functions will not be
+ * called because of the macros. So this should not harm us too much unless
  * we try to define our own prototypes (different calling convention).
  */
 # include <sys/types.h>
@@ -69,7 +69,7 @@ extern "C" {
 #  define WS_DEFINE_HTONL
 # endif /* htonl */
 #else
-/* Since we are using the MSVCRT headers, we must define the u_xxx 
+/* Since we are using the MSVCRT headers, we must define the u_xxx
  * types ourselves.
  */
 typedef unsigned char u_char;
@@ -350,14 +350,14 @@ typedef struct WS(linger)
  */
 
 #if !defined(USE_WS_PREFIX) && !defined(__WINE_USE_MSVCRT)
-/* We are not using the WS_ prefix and not using the MSVCRT either so we 
+/* We are not using the WS_ prefix and not using the MSVCRT either so we
  * risk getting conflicts for everything related to select.
  */
 # ifdef FD_CLR
-/* Too late, the Unix version of stdlib.h was included before winsock.h. 
- * This means select and all the related stuff is already defined and we 
+/* Too late, the Unix version of stdlib.h was included before winsock.h.
+ * This means select and all the related stuff is already defined and we
  * cannot override types and function prototypes.
- * All we can do is disable all these symbols so that they are not used 
+ * All we can do is disable all these symbols so that they are not used
  * inadvertantly.
  */
 #  undef FD_SETSIZE
@@ -374,8 +374,8 @@ typedef struct WS(linger)
 #  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 # else
-/* stdlib.h has not been included yet so it's not too late. Include it now 
- * making sure that none of the select symbols is affected. Then we can 
+/* stdlib.h has not been included yet so it's not too late. Include it now
+ * making sure that none of the select symbols is affected. Then we can
  * define them with our own values.
  */
 #  define fd_set unix_fd_set
@@ -449,7 +449,7 @@ typedef struct WS(timeval)
     if (((cast*)(set))->fd_count < FD_SETSIZE) \
         ((cast*)(set))->fd_array[((cast*)(set))->fd_count++]=(fd); \
 } while(0)
-/* This version checks if the filedesc is already in the list, and appends it 
+/* This version checks if the filedesc is already in the list, and appends it
  * only if it's not the case
  */
 #define __WS_FD_SET2(fd, set, cast) do { \
@@ -486,8 +486,8 @@ typedef struct WS(timeval)
 #endif /* WS_DEFINE_SELECT */
 
 
-/* 
- * Internet address (old style... should be updated) 
+/*
+ * Internet address (old style... should be updated)
  */
 
 #ifndef USE_WS_PREFIX
@@ -879,7 +879,7 @@ typedef struct WS(WSAData)
 /*
  * Prototypes
  *
- * Remember to keep this section in sync with the 
+ * Remember to keep this section in sync with the
  * "Winsock Function Typedefs" section in winsock2.h.
  */
 #if !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES

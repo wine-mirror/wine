@@ -28,7 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-HINSTANCE shlwapi_hInstance = 0; 
+HINSTANCE shlwapi_hInstance = 0;
 HMODULE SHLWAPI_hshell32 = 0;
 HMODULE SHLWAPI_hwinmm = 0;
 HMODULE SHLWAPI_hcomdlg32 = 0;

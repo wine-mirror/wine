@@ -1,7 +1,7 @@
-/* 
+/*
  * DPLAYX.DLL LibMain
  *
- * Copyright 1999,2000 - Peter Hunnisett 
+ * Copyright 1999,2000 - Peter Hunnisett
  *
  * contact <hunnise@nortelnetworks.com>
  *
@@ -35,20 +35,20 @@ BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
 
   TRACE( "(%u,0x%08lx,%p)\n", hinstDLL, fdwReason, lpvReserved );
 
-  switch ( fdwReason ) 
+  switch ( fdwReason )
   {
     case DLL_PROCESS_ATTACH:
-        /* First instance perform construction of global processor data */ 
+        /* First instance perform construction of global processor data */
         return DPLAYX_ConstructData();
 
     case DLL_PROCESS_DETACH:
         /* Last instance performs destruction of global processor data */
-        return DPLAYX_DestructData(); 
+        return DPLAYX_DestructData();
 
     case DLL_THREAD_ATTACH: /* Do nothing */
     case DLL_THREAD_DETACH: /* Do nothing */
       break;
-    default:                
+    default:
       break;
 
   }
@@ -63,12 +63,12 @@ HRESULT WINAPI DPLAYX_DllCanUnloadNow(void)
 {
   HRESULT hr = ( gdwDPlaySPRefCount > 0 ) ? S_FALSE : S_OK;
 
-  /* FIXME: Should I be putting a check in for class factory objects 
+  /* FIXME: Should I be putting a check in for class factory objects
    *        as well
    */
 
   TRACE( ": returning 0x%08lx\n", hr );
- 
+
   return hr;
 }
 

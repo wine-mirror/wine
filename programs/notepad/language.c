@@ -33,12 +33,12 @@ void LANGUAGE_UpdateWindowCaption(void) {
       Notepad - (untitled)      if no file is open
       Notepad - [filename]      if a file is given
   */
-  
+
   CHAR szCaption[MAX_STRING_LEN];
   CHAR szUntitled[MAX_STRING_LEN];
 
   LoadString(Globals.hInstance, STRING_NOTEPAD, szCaption, sizeof(szCaption));
-  
+
   if (strlen(Globals.szFileName)>0) {
       lstrcat(szCaption, " - [");
       lstrcat(szCaption, Globals.szFileName);
@@ -50,9 +50,9 @@ void LANGUAGE_UpdateWindowCaption(void) {
       lstrcat(szCaption, " - ");
       lstrcat(szCaption, szUntitled);
   }
-    
+
   SetWindowText(Globals.hMainWnd, szCaption);
-  
+
 }
 
 
@@ -75,7 +75,7 @@ VOID LANGUAGE_LoadMenus(VOID)
 
   /* Set frame caption */
   LANGUAGE_UpdateWindowCaption();
-  
+
   /* Change Resource names */
 //  lstrcpyn(STRING_MENU_Xx      + sizeof(STRING_MENU_Xx)      - 3, lang, 3);
 //  lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);

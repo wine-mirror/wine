@@ -22,7 +22,7 @@
  * DO NOT use this definitions outside the shell32.dll !
  *
  * The contents of a pidl should never used from a application
- * directly. 
+ * directly.
  *
  * Undocumented:
  * MS says: the abID of SHITEMID should be treated as binary data and not
@@ -30,13 +30,13 @@
  * Word95 interprets the contents of abID (Filesize/Date) so we have to go
  * for binary compatibility here.
  */
- 
+
 #ifndef __WINE_PIDL_H
 #define __WINE_PIDL_H
 
 #include "shlobj.h"
 
-/* 
+/*
 * the pidl does cache fileattributes to speed up SHGetAttributes when
 * displaying a big number of files.
 *
@@ -62,7 +62,7 @@
 *	workgroup	0x41		network (3)
 *	computer	0x42		network (4)
 *	whole network	0x47		network (5)
-*	MSITStore	0x61		htmlhlp (7)	
+*	MSITStore	0x61		htmlhlp (7)
 *	history/favorites 0xb1		file
 *	share		0xc3		network (6)
 *
@@ -72,7 +72,7 @@
 * (2) IID_MyComputer = 20D04FE0L-3AEA-1069-A2D8-08002B30309D
 * (3) two strings	"workgroup" "microsoft network"
 * (4) one string	"\\sirius"
-* (5) one string	"whole network" 
+* (5) one string	"whole network"
 * (6) one string	"\\sirius\c"
 * (7) contains string   "mk:@MSITStore:C:\path\file.chm::/path/filename.htm"
 *		GUID	871C5380-42A0-1069-A2EA-08002B30309D
@@ -111,16 +111,16 @@ typedef struct tagPIDLDATA
 	    DWORD dwUnknown;		/*21*/
 	    /* the drive seems to be 25 bytes every time */
 	  } drive;
-	  struct 
+	  struct
 	  { BYTE dummy;			/*01 is 0x00 for files or dirs */
 	    DWORD dwFileSize;		/*02*/
 	    WORD uFileDate;		/*06*/
 	    WORD uFileTime;		/*08*/
 	    WORD uFileAttribs;		/*10*/
 	    CHAR szNames[1];		/*12*/
-	    /* Here are comming two strings. The first is the long name. 
+	    /* Here are comming two strings. The first is the long name.
 	    The second the dos name when needed or just 0x00 */
-	  } file, folder, generic; 
+	  } file, folder, generic;
 	  struct
 	  { WORD dummy;		/*01*/
 	    CHAR szNames[1];	/*03*/
@@ -183,8 +183,8 @@ LPSTR		_ILGetTextPointer	(LPCITEMIDLIST);
 LPSTR		_ILGetSTextPointer	(LPCITEMIDLIST);
 REFIID		_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
 
-/* 
- * debug helper 
+/*
+ * debug helper
  */
 void	pdump	(LPCITEMIDLIST pidl);
 BOOL	pcheck	(LPCITEMIDLIST pidl);

@@ -44,7 +44,7 @@ extern WORD CALLBACK GDI_CallTo16_word_ll(GOBJENUMPROC16,LONG,LONG);
 /* ### stop build ### */
 
 /***********************************************************************
- *          GDI stock objects 
+ *          GDI stock objects
  */
 
 static const LOGBRUSH WhiteBrush = { BS_SOLID, RGB(255,255,255), 0 };
@@ -688,7 +688,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     case METAFILE_DC_MAGIC:
     case ENHMETAFILE_MAGIC:
     case ENHMETAFILE_DC_MAGIC:
-    case BITMAP_MAGIC:   
+    case BITMAP_MAGIC:
         if (!(obj = alloc_large_heap( size, handle ))) goto error;
         break;
     default:
@@ -734,7 +734,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
     assert( new_handle == handle );  /* moveable handle cannot change */
     return LOCAL_Lock( GDI_HeapSel, handle );
 }
- 
+
 
 /***********************************************************************
  *           GDI_FreeObject
@@ -983,16 +983,16 @@ DWORD WINAPI GetObjectType( HANDLE handle )
     TRACE("%08x\n", handle );
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
-    
+
     switch(GDIMAGIC(ptr->wMagic))
     {
       case PEN_MAGIC:
 	  result = OBJ_PEN;
 	  break;
-      case BRUSH_MAGIC: 
+      case BRUSH_MAGIC:
 	  result = OBJ_BRUSH;
 	  break;
-      case BITMAP_MAGIC: 
+      case BITMAP_MAGIC:
 	  result = OBJ_BITMAP;
 	  break;
       case FONT_MAGIC:
@@ -1038,7 +1038,7 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
     HANDLE ret = 0;
     DC * dc = DC_GetDCPtr( hdc );
 
-    if (dc) 
+    if (dc)
     {
     switch (type) {
 	case OBJ_PEN:	 ret = dc->hPen; break;
@@ -1134,7 +1134,7 @@ RGB(0x80,0x80,0x00), RGB(0x00,0x00,0x80),
 RGB(0x80,0x00,0x80), RGB(0x00,0x80,0x80),
 RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
 };
-    
+
 /***********************************************************************
  *           EnumObjects    (GDI.71)
  */
@@ -1266,7 +1266,7 @@ INT WINAPI EnumObjects( HDC hdc, INT nObjType,
 
 /***********************************************************************
  *           IsGDIObject    (GDI.462)
- * 
+ *
  * returns type of object if valid (W95 system programming secrets p. 264-5)
  */
 BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle )
@@ -1418,7 +1418,7 @@ WORD WINAPI GdiFreeResources16( DWORD reserve )
  *           MulDiv   (GDI.128)
  */
 INT16 WINAPI MulDiv16(
-	     INT16 nMultiplicand, 
+	     INT16 nMultiplicand,
 	     INT16 nMultiplier,
 	     INT16 nDivisor)
 {
@@ -1430,7 +1430,7 @@ INT16 WINAPI MulDiv16(
       nMultiplicand = - nMultiplicand;
       nDivisor = -nDivisor;
     }
-    /* If the result is positive, we "add" to round. else, 
+    /* If the result is positive, we "add" to round. else,
      * we subtract to round. */
     if ( ( (nMultiplicand <  0) && (nMultiplier <  0) ) ||
 	 ( (nMultiplicand >= 0) && (nMultiplier >= 0) ) )
@@ -1495,4 +1495,4 @@ BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
         FIXME("SetColorAdjustment, stub\n");
         return 0;
 }
- 
+

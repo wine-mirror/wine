@@ -161,7 +161,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
  *
  *    Not supported on Win9x - returns NULL and calls SetLastError.
  */
-HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags, 
+HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
                                 BOOL fInherit, DWORD dwDesiredAccess )
 {
     FIXME("(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
@@ -175,7 +175,7 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
 /******************************************************************************
  *		SetUserObjectInformationA   (USER32.@)
  */
-BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex, 
+BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
 				       LPVOID pvInfo, DWORD nLength )
 {
     FIXME("(%x,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
@@ -209,7 +209,7 @@ HRESULT WINAPI DeregisterShellHookWindow ( DWORD u )
 {
     FIXME("0x%08lx stub\n",u);
     return 0;
-	
+
 }
 
 

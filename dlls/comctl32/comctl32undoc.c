@@ -273,7 +273,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	    break;
 	}
 	nResult = (pfnCompare)(*pWork1, *pWork2, lParam);
-	TRACE("compare result=%d, dpa1.cnt=%d, dpa2.cnt=%d\n", 
+	TRACE("compare result=%d, dpa1.cnt=%d, dpa2.cnt=%d\n",
 	      nResult, nIndex, nCount);
 
 	if (nResult == 0)
@@ -522,7 +522,7 @@ VOID MRU_SaveChanged( LPWINEMRULIST mp )
      */
 
     /* open the sub key */
-    if ((err = RegOpenKeyExW( mp->extview.hKey, mp->extview.lpszSubKey, 
+    if ((err = RegOpenKeyExW( mp->extview.hKey, mp->extview.lpszSubKey,
 			      0, KEY_WRITE, &newkey))) {
 	/* not present - what to do ??? */
 	ERR("Can not open key, error=%d, attempting to create\n",
@@ -542,7 +542,7 @@ VOID MRU_SaveChanged( LPWINEMRULIST mp )
     }
     if (mp->wineFlags & WMRUF_CHANGED) {
 	mp->wineFlags &= ~WMRUF_CHANGED;
-	err = RegSetValueExA(newkey, "MRUList", 0, REG_SZ, 
+	err = RegSetValueExA(newkey, "MRUList", 0, REG_SZ,
 			     mp->realMRU, strlen(mp->realMRU) + 1);
 	if (err) {
 	    ERR("error saving MRUList, err=%d\n", err);
@@ -555,8 +555,8 @@ VOID MRU_SaveChanged( LPWINEMRULIST mp )
 	if (witem->itemFlag & WMRUIF_CHANGED) {
 	    witem->itemFlag &= ~WMRUIF_CHANGED;
 	    realname[0] = 'a' + i;
-	    err = RegSetValueExW(newkey, realname, 0, 
-				 (mp->extview.dwFlags & MRUF_BINARY_LIST) ? 
+	    err = RegSetValueExW(newkey, realname, 0,
+				 (mp->extview.dwFlags & MRUF_BINARY_LIST) ?
 				 REG_BINARY : REG_SZ,
 				 &witem->datastart, witem->size);
 	    if (err) {
@@ -601,7 +601,7 @@ FreeMRUList (HANDLE hMRUList)
 
 /**************************************************************************
  *                  FindMRUData [COMCTL32.169]
- * 
+ *
  * Searches binary list for item that matches lpData of length cbData.
  * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
  * corresponding to item's reg. name will be stored in it ('a' -> 0).
@@ -636,7 +636,7 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
 
     for(i=0; i<mp->cursize; i++) {
 	if (mp->extview.dwFlags & MRUF_BINARY_LIST) {
-	    if (!mp->extview.lpfnCompare(lpData, &mp->array[i]->datastart, 
+	    if (!mp->extview.lpfnCompare(lpData, &mp->array[i]->datastart,
 					 cbData))
 		break;
 	}
@@ -678,7 +678,7 @@ FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum)
 
 /**************************************************************************
  *              AddMRUData [COMCTL32.167]
- * 
+ *
  * Add item to MRU binary list.  If item already exists in list then it is
  * simply moved up to the top of the list and not added again.  If list is
  * full then the least recently used item is removed to make room.
@@ -718,7 +718,7 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
     }
 
     /* Allocate space for new item and move in the data */
-    mp->array[replace] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(cbData + 
+    mp->array[replace] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(cbData +
 							       sizeof(WINEMRUITEM));
     witem->itemFlag |= WMRUIF_CHANGED;
     witem->size = cbData;
@@ -730,7 +730,7 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 	mp->realMRU[i] = mp->realMRU[i-1];
     }
     mp->realMRU[0] = replace + 'a';
-    TRACE("(%08x, %p, %ld) adding data, /%c/ now most current\n", 
+    TRACE("(%08x, %p, %ld) adding data, /%c/ now most current\n",
 	  hList, lpData, cbData, replace+'a');
     ret = replace;
 
@@ -744,7 +744,7 @@ AddMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData)
 
 /**************************************************************************
  *              AddMRUStringW [COMCTL32.401]
- * 
+ *
  * Add item to MRU string list.  If item already exists in list them it is
  * simply moved up to the top of the list and not added again.  If list is
  * full then the least recently used item is removed to make room.
@@ -807,7 +807,7 @@ FindMRUStringW (HANDLE hList, LPCWSTR lpszString, LPINT lpRegNum)
 
 /**************************************************************************
  *                  FindMRUStringA [COMCTL32.155]
- * 
+ *
  * Searches string list for item that matches lpszString.
  * Returns position in list order 0 -> MRU and if lpRegNum != NULL then value
  * corresponding to item's reg. name will be stored in it ('a' -> 0).
@@ -858,10 +858,10 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 					sizeof(LPVOID));
 
     /* open the sub key */
-    if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey, 
+    if ((err = RegCreateKeyExW( mp->extview.hKey, mp->extview.lpszSubKey,
 			        0,
 				emptyW,
-				REG_OPTION_NON_VOLATILE, 
+				REG_OPTION_NON_VOLATILE,
 				KEY_READ | KEY_WRITE,
                                 0,
 				&newkey,
@@ -877,7 +877,7 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
     /* get values from key 'MRUList' */
     if (newkey) {
 	datasize = mp->extview.nMaxItems + 1;
-	if((err=RegQueryValueExA( newkey, "MRUList", 0, &type, mp->realMRU, 
+	if((err=RegQueryValueExA( newkey, "MRUList", 0, &type, mp->realMRU,
 				  &datasize))) {
 	    /* not present - set size to 1 (will become 0 later) */
 	    datasize = 1;
@@ -897,10 +897,10 @@ HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
 		/* not present - what to do ??? */
 		ERR("Key %s not found 1\n", debugstr_w(realname));
 	    }
-	    mp->array[i] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(datasize + 
+	    mp->array[i] = witem = (LPWINEMRUITEM)COMCTL32_Alloc(datasize +
 								 sizeof(WINEMRUITEM));
 	    witem->size = datasize;
-	    if(RegQueryValueExW( newkey, realname, 0, &type, 
+	    if(RegQueryValueExW( newkey, realname, 0, &type,
 				 &witem->datastart, &datasize)) {
 		/* not present - what to do ??? */
 		ERR("Key %s not found 2\n", debugstr_w(realname));
@@ -939,7 +939,7 @@ CreateMRUListLazyW (LPCREATEMRULISTW lpcml, DWORD dwParam2, DWORD dwParam3, DWOR
     strcpyW((LPWSTR)mp->extview.lpszSubKey, lpcml->lpszSubKey);
     mp->isUnicode = TRUE;
 
-    return CreateMRUListLazy_common(mp);   
+    return CreateMRUListLazy_common(mp);
 }
 
 /**************************************************************************
@@ -1008,7 +1008,7 @@ CreateMRUListA (LPCREATEMRULISTA lpcml)
  *    string lists specifies full length of string.  Enumerating past the end
  *    of list returns -1.
  *    If lpBuffer == NULL or nItemPos is -ve return value is no. of items in
- *    the list. 
+ *    the list.
  */
 INT WINAPI EnumMRUListW(HANDLE hList, INT nItemPos, LPVOID lpBuffer,
 DWORD nBufferSize)
@@ -1023,16 +1023,16 @@ DWORD nBufferSize)
     desired -= 'a';
     TRACE("nItemPos=%d, desired=%d\n", nItemPos, desired);
     witem = mp->array[desired];
-    datasize = min( witem->size, nBufferSize ); 
+    datasize = min( witem->size, nBufferSize );
     memcpy( lpBuffer, &witem->datastart, datasize);
-    TRACE("(%08x, %d, %p, %ld): returning len=%d\n", 
+    TRACE("(%08x, %d, %p, %ld): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
 
 /**************************************************************************
  *                EnumMRUListA [COMCTL32.154]
- * 
+ *
  */
 INT WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer,
 DWORD nBufferSize)
@@ -1049,7 +1049,7 @@ DWORD nBufferSize)
     TRACE("nItemPos=%d, desired=%d\n", nItemPos, desired);
     witem = mp->array[desired];
     if(mp->extview.dwFlags & MRUF_BINARY_LIST) {
-        datasize = min( witem->size, nBufferSize ); 
+        datasize = min( witem->size, nBufferSize );
 	memcpy( lpBuffer, &witem->datastart, datasize);
     } else {
         lenA = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1,
@@ -1058,11 +1058,11 @@ DWORD nBufferSize)
 	WideCharToMultiByte(CP_ACP, 0, (LPWSTR)&witem->datastart, -1,
 			    lpBuffer, datasize, NULL, NULL);
     }
-    TRACE("(%08x, %d, %p, %ld): returning len=%d\n", 
+    TRACE("(%08x, %d, %p, %ld): returning len=%d\n",
 	  hList, nItemPos, lpBuffer, nBufferSize, datasize);
     return datasize;
 }
-  
+
 
 /**************************************************************************
  * Str_GetPtrA [COMCTL32.233]
@@ -1118,7 +1118,7 @@ BOOL WINAPI
 Str_SetPtrA (LPSTR *lppDest, LPCSTR lpSrc)
 {
     TRACE("(%p %p)\n", lppDest, lpSrc);
- 
+
     if (lpSrc) {
 	LPSTR ptr = COMCTL32_ReAlloc (*lppDest, strlen (lpSrc) + 1);
 	if (!ptr)
@@ -1191,7 +1191,7 @@ BOOL WINAPI
 Str_SetPtrW (LPWSTR *lppDest, LPCWSTR lpSrc)
 {
     TRACE("(%p %p)\n", lppDest, lpSrc);
- 
+
     if (lpSrc) {
 	INT len = strlenW (lpSrc) + 1;
 	LPWSTR ptr = COMCTL32_ReAlloc (*lppDest, len * sizeof(WCHAR));
@@ -1363,7 +1363,7 @@ DSA_Destroy (const HDSA hdsa)
 
 
 /**************************************************************************
- * DSA_GetItem [COMCTL32.322] 
+ * DSA_GetItem [COMCTL32.322]
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1381,7 +1381,7 @@ DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
     LPVOID pSrc;
 
     TRACE("(%p %d %p)\n", hdsa, nIndex, pDest);
-    
+
     if (!hdsa)
 	return FALSE;
     if ((nIndex < 0) || (nIndex >= hdsa->nItemCount))
@@ -1395,7 +1395,7 @@ DSA_GetItem (const HDSA hdsa, INT nIndex, LPVOID pDest)
 
 
 /**************************************************************************
- * DSA_GetItemPtr [COMCTL32.323] 
+ * DSA_GetItemPtr [COMCTL32.323]
  *
  * Retrieves a pointer to the specified item.
  *
@@ -1421,7 +1421,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
 	return NULL;
 
     pSrc = (char *) hdsa->pData + (hdsa->nItemSize * nIndex);
-    
+
     TRACE("-- ret=%p\n", pSrc);
 
     return pSrc;
@@ -1429,7 +1429,7 @@ DSA_GetItemPtr (const HDSA hdsa, INT nIndex)
 
 
 /**************************************************************************
- * DSA_SetItem [COMCTL32.325] 
+ * DSA_SetItem [COMCTL32.325]
  *
  * Sets the contents of an item in the array.
  *
@@ -1448,12 +1448,12 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
     INT  nSize, nNewItems;
     LPVOID pDest, lpTemp;
-    
+
     TRACE("(%p %d %p)\n", hdsa, nIndex, pSrc);
 
     if ((!hdsa) || nIndex < 0)
 	return FALSE;
-      
+
     if (hdsa->nItemCount <= nIndex) {
 	/* within the old array */
 	if (hdsa->nMaxCount > nIndex) {
@@ -1473,7 +1473,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	    hdsa->nMaxCount = nNewItems;
 	    hdsa->nItemCount = nIndex + 1;
 	    hdsa->pData = lpTemp;
-	}    
+	}
     }
 
     /* put the new entry in */
@@ -1487,7 +1487,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
 
 /**************************************************************************
- * DSA_InsertItem [COMCTL32.324] 
+ * DSA_InsertItem [COMCTL32.324]
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1504,7 +1504,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 {
     INT   nNewItems, nSize;
     LPVOID  lpTemp, lpDest;
-    
+
     TRACE("(%p %d %p)\n", hdsa, nIndex, pSrc);
 
     if ((!hdsa) || nIndex < 0)
@@ -1524,7 +1524,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	    return -1;
 
 	hdsa->nMaxCount = nNewItems;
-	hdsa->pData = lpTemp;         
+	hdsa->pData = lpTemp;
     }
 
     /* do we need to move elements ? */
@@ -1549,7 +1549,7 @@ DSA_InsertItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 
 
 /**************************************************************************
- * DSA_DeleteItem [COMCTL32.326] 
+ * DSA_DeleteItem [COMCTL32.326]
  *
  * PARAMS
  *     hdsa   [I] pointer to the array control structure
@@ -1565,7 +1565,7 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 {
     LPVOID lpDest,lpSrc;
     INT  nSize;
-    
+
     TRACE("(%p %d)\n", hdsa, nIndex);
 
     if (!hdsa)
@@ -1582,9 +1582,9 @@ DSA_DeleteItem (const HDSA hdsa, INT nIndex)
 	       lpDest, lpSrc, nSize);
 	memmove (lpDest, lpSrc, nSize);
     }
-    
+
     hdsa->nItemCount--;
-    
+
     /* free memory ? */
     if ((hdsa->nMaxCount - hdsa->nItemCount) >= hdsa->nGrow) {
 	nSize = hdsa->nItemSize * hdsa->nItemCount;
@@ -1619,7 +1619,7 @@ DSA_DeleteAllItems (const HDSA hdsa)
 {
     TRACE("(%p)\n", hdsa);
 
-    if (!hdsa) 
+    if (!hdsa)
 	return FALSE;
     if (hdsa->pData && (!COMCTL32_Free (hdsa->pData)))
 	return FALSE;
@@ -1949,12 +1949,12 @@ BOOL WINAPI
 DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 {
     LPVOID *lpTemp;
-    
+
     TRACE("(%p %d %p)\n", hdpa, i, p);
 
     if ((!hdpa) || i < 0)
 	return FALSE;
-      
+
     if (hdpa->nItemCount <= i) {
 	/* within the old array */
 	if (hdpa->nMaxCount > i) {
@@ -1973,8 +1973,8 @@ DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 		return FALSE;
 
 	    hdpa->nItemCount = nNewItems;
-	    hdpa->ptrs = lpTemp;        
-	}    
+	    hdpa->ptrs = lpTemp;
+	}
     }
 
     /* put the new entry in */
@@ -2003,7 +2003,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
 {
     LPVOID *lpDest, *lpSrc, lpTemp = NULL;
     INT  nSize;
-    
+
     TRACE("(%p %d)\n", hdpa, i);
 
     if ((!hdpa) || i < 0 || i >= hdpa->nItemCount)
@@ -2020,9 +2020,9 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
 	       lpDest, lpSrc, nSize);
 	memmove (lpDest, lpSrc, nSize);
     }
-    
+
     hdpa->nItemCount --;
-    
+
     /* free memory ?*/
     if ((hdpa->nMaxCount - hdpa->nItemCount) >= hdpa->nGrow) {
 	INT nNewItems = max(hdpa->nGrow * 2, hdpa->nItemCount);
@@ -2033,7 +2033,7 @@ DPA_DeletePtr (const HDPA hdpa, INT i)
 	    return NULL;
 
 	hdpa->nMaxCount = nNewItems;
-	hdpa->ptrs = (LPVOID*)lpDest;         
+	hdpa->ptrs = (LPVOID*)lpDest;
     }
 
     return lpTemp;
@@ -2058,7 +2058,7 @@ DPA_DeleteAllPtrs (const HDPA hdpa)
 {
     TRACE("(%p)\n", hdpa);
 
-    if (!hdpa) 
+    if (!hdpa)
 	return FALSE;
 
     if (hdpa->ptrs && (!HeapFree (hdpa->hHeap, 0, hdpa->ptrs)))
@@ -2097,7 +2097,7 @@ DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
     LPVOID t;
 
     TRACE("l=%i r=%i\n", l, r);
- 
+
     if (l==r)    /* one element is always sorted */
         return;
     if (r<l)     /* oops, got it in the wrong order */
@@ -2110,7 +2110,7 @@ DPA_QuickSort (LPVOID *lpPtrs, INT l, INT r,
     DPA_QuickSort(lpPtrs, m+1, r, pfnCompare, lParam);
 
     /* join the two sides */
-    while( (l<=m) && (m<r) ) 
+    while( (l<=m) && (m<r) )
     {
         if(pfnCompare(lpPtrs[l],lpPtrs[m+1],lParam)>0)
         {
@@ -2228,7 +2228,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
 	INT  nIndex;
 
 	TRACE("linear search\n");
-	
+
 	nIndex = (nStart == -1)? 0 : nStart;
 	lpPtr = hdpa->ptrs;
 	for (; nIndex < hdpa->nItemCount; nIndex++) {
@@ -2493,7 +2493,7 @@ COMCTL32_StrToIntW (LPWSTR lpString)
  * PARAMS
  *     hdpa     [I] handle to the dynamic pointer array
  *     enumProc [I]
- *     lParam   [I] 
+ *     lParam   [I]
  *
  * RETURNS
  *     none
@@ -2674,7 +2674,7 @@ LPSTR WINAPI COMCTL32_StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
         if (*lpStart != LOBYTE(wMatch)) continue;
         if (dbcs && lpStart[1] != HIBYTE(wMatch)) continue;
         lpGotIt = lpStart;
-    }    
+    }
     return (LPSTR)lpGotIt;
 }
 
@@ -2728,7 +2728,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
   for(; (*lpLoop != 0); lpLoop++)
     if( strchrW(lpSet, *(WORD*)lpLoop))
       return (INT)(lpLoop-lpStr);
-  
+
   return (INT)(lpLoop-lpStr);
 }
 

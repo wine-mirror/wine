@@ -1,6 +1,6 @@
 /*
  * RASAPI32
- * 
+ *
  * Copyright 1998 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD lpcb, LPDWORD lpcConne
 	FIXME("(%p,%p,%p),stub!\n",rca,lpcb,lpcConnections);
 	FIXME("RAS support is not implemented ! Configure program to use LAN connection/winsock instead !\n");
 	*lpcConnections = 0; /* no RAS connections available */
-	
+
 	return 0;
 }
 
@@ -40,8 +40,8 @@ DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD lpcb, LPDWORD lpcConne
  *                 RasEnumEntriesA		        	[RASAPI32.546]
  */
 DWORD WINAPI RasEnumEntriesA( LPCSTR Reserved, LPCSTR lpszPhoneBook,
-        LPRASENTRYNAMEA lpRasEntryName, 
-        LPDWORD lpcb, LPDWORD lpcEntries) 
+        LPRASENTRYNAMEA lpRasEntryName,
+        LPDWORD lpcb, LPDWORD lpcEntries)
 {
 	FIXME("(%p,%s,%p,%p,%p),stub!\n",Reserved,debugstr_a(lpszPhoneBook),
             lpRasEntryName,lpcb,lpcEntries);
@@ -54,7 +54,7 @@ DWORD WINAPI RasEnumEntriesA( LPCSTR Reserved, LPCSTR lpszPhoneBook,
  */
 DWORD WINAPI RasGetEntryDialParamsA( LPCSTR lpszPhoneBook,
         LPRASDIALPARAMSA lpRasDialParams,
-        LPBOOL lpfPassword) 
+        LPBOOL lpfPassword)
 {
 	FIXME("(%s,%p,%p),stub!\n",debugstr_a(lpszPhoneBook),
             lpRasDialParams,lpfPassword);

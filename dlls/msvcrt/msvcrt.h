@@ -53,7 +53,7 @@ void   MSVCRT__set_errno(int);
 char*  msvcrt_strndup(const char*,unsigned int);
 LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
 
-/* FIXME: This should be declared in new.h but it's not an extern "C" so 
+/* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */
 int    MSVCRT__set_new_mode(int mode);

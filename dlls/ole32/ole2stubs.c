@@ -49,7 +49,7 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
     return E_NOTIMPL;
 }
 
- 
+
 /***********************************************************************
  *               WriteFmtUserTypeStg (OLE32.160)
  */
@@ -94,7 +94,7 @@ HRESULT WINAPI OleCreate(
 {
   HRESULT hres, hres1;
   IUnknown * pUnk = NULL;
-    
+
   FIXME("\n\t%s\n\t%s stub!\n", debugstr_guid(rclsid), debugstr_guid(riid));
 
   if (SUCCEEDED((hres = CoCreateInstance(rclsid, 0, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&pUnk))))
@@ -211,7 +211,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
  *           OleRegEnumFormatEtc    [OLE32.119]
  */
 HRESULT     WINAPI OleRegEnumFormatEtc (
-  REFCLSID clsid, 
+  REFCLSID clsid,
   DWORD    dwDirection,
   LPENUMFORMATETC* ppenumFormatetc)
 {

@@ -50,8 +50,8 @@ static HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER li
 static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag);
 static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm);
 
-static ICOM_VTABLE(IStream) stvt = 
-{	
+static ICOM_VTABLE(IStream) stvt =
+{
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IStream_fnQueryInterface,
 	IStream_fnAddRef,
@@ -67,10 +67,10 @@ static ICOM_VTABLE(IStream) stvt =
 	IStream_fnUnlockRegion,
 	IStream_fnStat,
 	IStream_fnClone
-	
+
 };
 
-typedef struct 
+typedef struct
 {	ICOM_VTABLE(IStream)	*lpvtst;
 	DWORD		ref;
 	LPBYTE		pImage;
@@ -90,7 +90,7 @@ HRESULT CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm)
 	OFSTRUCT	ofs;
 	HFILE		hFile = OpenFile( pszFilename, &ofs, OF_READ );
 	HRESULT		ret = E_FAIL;
-	
+
 	fstr = (ISHFileStream*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ISHFileStream));
 	fstr->lpvtst=&stvt;
 	fstr->ref = 1;
@@ -112,7 +112,7 @@ HRESULT CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm)
 
 	ret = S_OK;
 	goto end_1;
-	
+
 end_3:	CloseHandle(fstr->hMapping);
 end_2:	HeapFree(GetProcessHeap(), 0, fstr);
 	fstr = NULL;
@@ -140,8 +140,8 @@ static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVO
 	}
 
 	if(*ppvObj)
-	{ 
-	  IStream_AddRef((IStream*)*ppvObj);      
+	{
+	  IStream_AddRef((IStream*)*ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -173,7 +173,7 @@ static ULONG WINAPI IStream_fnRelease(IStream *iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{ TRACE(" destroying SHFileStream (%p)\n",This);
 
 	  UnmapViewOfFile(This->pImage);
@@ -190,9 +190,9 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG
 	ICOM_THIS(ISHFileStream, iface);
 
 	DWORD dwBytesToRead, dwBytesLeft;
-	
+
 	TRACE("(%p)->(%p,0x%08lx,%p)\n",This, pv, cb, pcbRead);
-	
+
 	if ( !pv )
 	  return STG_E_INVALIDPOINTER;
 
@@ -200,11 +200,11 @@ static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG
 
 	if ( 0 >= dwBytesLeft )						/* end of buffer */
 	  return S_FALSE;
-	
+
 	dwBytesToRead = ( cb > dwBytesLeft) ? dwBytesLeft : cb;
 
 	memmove ( pv, (This->pImage) + (This->dwPos), dwBytesToRead);
-	
+
 	This->dwPos += dwBytesToRead;					/* adjust pointer */
 
 	if (pcbRead)

@@ -83,7 +83,7 @@ typedef struct _RPC_IF_ID
 typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, LPVOID Context );
 typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)();
 
-typedef struct _RPC_POLICY 
+typedef struct _RPC_POLICY
 {
   UINT  Length;
   ULONG EndpointFlags;
@@ -120,11 +120,11 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv );
-  
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                          UINT Flags, UINT MaxCalls, RPC_IF_CALLBACK_FN* IfCallbackFn );
-			 
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                         UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn );

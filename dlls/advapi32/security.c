@@ -65,7 +65,7 @@ static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
  * RETURNS STD
  */
 BOOL WINAPI
-OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess, 
+OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
                   HANDLE *TokenHandle )
 {
 	CallWin32ToNt(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
@@ -81,7 +81,7 @@ OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
  *   thandle       []
  */
 BOOL WINAPI
-OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess, 
+OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
 		 BOOL OpenAsSelf, HANDLE *TokenHandle)
 {
 	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
@@ -192,7 +192,7 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                           PSID *pSid )
 {
 	CallWin32ToNt (RtlAllocateAndInitializeSid(
-		pIdentifierAuthority, nSubAuthorityCount, 
+		pIdentifierAuthority, nSubAuthorityCount,
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5, nSubAuthority6, nSubAuthority7,
 		pSid ));
@@ -207,7 +207,7 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 PVOID WINAPI
 FreeSid( PSID pSid )
 {
-    	RtlFreeSid(pSid); 
+    	RtlFreeSid(pSid);
 	return NULL; /* is documented like this */
 }
 
@@ -253,7 +253,7 @@ EqualSid( PSID pSid1, PSID pSid2 )
 /******************************************************************************
  * EqualPrefixSid [ADVAPI32.@]
  */
-BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2) 
+BOOL WINAPI EqualPrefixSid (PSID pSid1, PSID pSid2)
 {
 	return RtlEqualPrefixSid(pSid1, pSid2);
 }
@@ -338,7 +338,7 @@ GetLengthSid (PSID pSid)
 	######	SECURITY DESCRIPTOR FUNCTIONS	######
 	##############################################
 */
-	
+
 /******************************************************************************
  * InitializeSecurityDescriptor [ADVAPI32.@]
  *
@@ -379,7 +379,7 @@ GetSecurityDescriptorOwner( SECURITY_DESCRIPTOR *pDescr, PSID *pOwner,
  *
  * PARAMS
  */
-BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor, 
+BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor,
 				   PSID pOwner, BOOL bOwnerDefaulted)
 {
 	CallWin32ToNt (RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
@@ -393,7 +393,7 @@ BOOL WINAPI GetSecurityDescriptorGroup(
 	LPBOOL GroupDefaulted)
 {
 	CallWin32ToNt (RtlGetGroupSecurityDescriptor(SecurityDescriptor, Group, (PBOOLEAN)GroupDefaulted));
-}	
+}
 /******************************************************************************
  * SetSecurityDescriptorGroup [ADVAPI32.@]
  */
@@ -426,12 +426,12 @@ BOOL WINAPI GetSecurityDescriptorDacl(
 {
 	CallWin32ToNt (RtlGetDaclSecurityDescriptor(pSecurityDescriptor, (PBOOLEAN)lpbDaclPresent,
 					       pDacl, (PBOOLEAN)lpbDaclDefaulted));
-}	
+}
 
 /******************************************************************************
  *  SetSecurityDescriptorDacl			[ADVAPI32.@]
  */
-BOOL WINAPI 
+BOOL WINAPI
 SetSecurityDescriptorDacl (
 	PSECURITY_DESCRIPTOR lpsd,
 	BOOL daclpresent,
@@ -451,7 +451,7 @@ BOOL WINAPI GetSecurityDescriptorSacl(
 {
 	CallWin32ToNt (RtlGetSaclSecurityDescriptor(lpsd,
 	   (PBOOLEAN)lpbSaclPresent, pSacl, (PBOOLEAN)lpbSaclDefaulted));
-}	
+}
 
 /**************************************************************************
  * SetSecurityDescriptorSacl			[ADVAPI32.@]
@@ -489,7 +489,7 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
 		 PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
 {
 	CallWin32ToNt (RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
-}		
+}
 
 /*	##############################
 	######	ACL FUNCTIONS	######
@@ -526,7 +526,7 @@ DWORD WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 BOOL WINAPI
 LookupPrivilegeValueW( LPCWSTR lpSystemName, LPCWSTR lpName, LPVOID lpLuid )
 {
-    FIXME("(%s,%s,%p): stub\n",debugstr_w(lpSystemName), 
+    FIXME("(%s,%s,%p): stub\n",debugstr_w(lpSystemName),
         debugstr_w(lpName), lpLuid);
     return TRUE;
 }
@@ -555,7 +555,7 @@ LookupPrivilegeValueA( LPCSTR lpSystemName, LPCSTR lpName, LPVOID lpLuid )
  * privileges
  */
 BOOL WINAPI
-GetFileSecurityA( LPCSTR lpFileName, 
+GetFileSecurityA( LPCSTR lpFileName,
                     SECURITY_INFORMATION RequestedInformation,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
@@ -579,12 +579,12 @@ GetFileSecurityA( LPCSTR lpFileName,
  *   lpnLengthNeeded      []
  */
 BOOL WINAPI
-GetFileSecurityW( LPCWSTR lpFileName, 
+GetFileSecurityW( LPCWSTR lpFileName,
                     SECURITY_INFORMATION RequestedInformation,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor,
                     DWORD nLength, LPDWORD lpnLengthNeeded )
 {
-  FIXME("(%s) : stub\n", debugstr_w(lpFileName) ); 
+  FIXME("(%s) : stub\n", debugstr_w(lpFileName) );
   return TRUE;
 }
 
@@ -686,11 +686,11 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
  *   pSecurityDescriptor  []
  */
 BOOL WINAPI
-SetFileSecurityW( LPCWSTR lpFileName, 
+SetFileSecurityW( LPCWSTR lpFileName,
                     SECURITY_INFORMATION RequestedInformation,
                     PSECURITY_DESCRIPTOR pSecurityDescriptor )
 {
-  FIXME("(%s) : stub\n", debugstr_w(lpFileName) ); 
+  FIXME("(%s) : stub\n", debugstr_w(lpFileName) );
   return TRUE;
 }
 
@@ -752,7 +752,7 @@ LsaOpenPolicy(
  * LsaQueryInformationPolicy [ADVAPI32.@]
  */
 NTSTATUS WINAPI
-LsaQueryInformationPolicy( 
+LsaQueryInformationPolicy(
 	IN LSA_HANDLE PolicyHandle,
         IN POLICY_INFORMATION_CLASS InformationClass,
 	OUT PVOID *Buffer)
@@ -778,7 +778,7 @@ LsaQueryInformationPolicy(
 		SID sid;
 	      };
 	      SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-		
+
 	      struct di * xdi = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(xdi));
 	      RtlInitUnicodeString(&(xdi->ppdi.Name), HEAP_strdupAtoW(GetProcessHeap(),0,"DOMAIN"));
 	      xdi->ppdi.Sid = &(xdi->sid);
@@ -789,8 +789,8 @@ LsaQueryInformationPolicy(
 	      *Buffer = xdi;
 	    }
 	    break;
-	  case 	PolicyAuditLogInformation:	
-	  case 	PolicyPdAccountInformation:	
+	  case 	PolicyAuditLogInformation:
+	  case 	PolicyPdAccountInformation:
 	  case 	PolicyLsaServerRoleInformation:
 	  case 	PolicyReplicaSourceInformation:
 	  case 	PolicyDefaultQuotaInformation:
@@ -803,8 +803,8 @@ LsaQueryInformationPolicy(
 	      return FALSE;
 	    }
 	}
-	return TRUE; 
-}			  
+	return TRUE;
+}
 
 /******************************************************************************
  * LsaLookupSids [ADVAPI32.@]
@@ -816,13 +816,13 @@ typedef struct
 	LONG DomainIndex;
 } LSA_TRANSLATED_NAME, *PLSA_TRANSLATED_NAME;
 
-typedef struct 
+typedef struct
 {
 	LSA_UNICODE_STRING Name;
 	PSID Sid;
 } LSA_TRUST_INFORMATION, *PLSA_TRUST_INFORMATION;
 
-typedef struct 
+typedef struct
 {
 	ULONG Entries;
 	PLSA_TRUST_INFORMATION Domains;
@@ -977,7 +977,7 @@ BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivileges, LPBOOL pfResult)
 {
 	FIXME("stub %d %p %p\n", ClientToken, RequiredPrivileges, pfResult);
-	if (pfResult) 
+	if (pfResult)
 		*pfResult=TRUE;
         return TRUE;
 }

@@ -186,7 +186,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
   BOOL ret = TRUE;
 
   TRACE("(%p)\n", hglrc);
-  
+
   ENTER_GL();
   /* A game (Half Life not to name it) deletes twice the same context,
    * so make sure it is valid first */
@@ -202,7 +202,7 @@ BOOL WINAPI wglDeleteContext(HGLRC hglrc)
     ret = FALSE;
   }
   LEAVE_GL();
-  
+
   return ret;
 }
 
@@ -234,7 +234,7 @@ HGLRC WINAPI wglGetCurrentContext(void) {
   LEAVE_GL();
 
   TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
-  
+
   return ret;
 }
 
@@ -246,7 +246,7 @@ HDC WINAPI wglGetCurrentDC(void) {
   Wine_GLContext *ret;
 
   TRACE("()\n");
-  
+
   ENTER_GL();
   gl_ctx = glXGetCurrentContext();
   ret = get_context_from_GLXContext(gl_ctx);
@@ -319,9 +319,9 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     if ((local_func = glXGetProcAddressARB(ext_ret->glx_name)) == NULL) {
       char buf[256];
       void *ret = NULL;
-      
+
       /* Remove the 3 last letters (EXT, ARB, ...).
-	 
+
 	 I know that some extensions have more than 3 letters (MESA, NV,
 	 INTEL, ...), but this is only a stop-gap measure to fix buggy
 	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
@@ -330,19 +330,19 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
       strncpy(buf, ext_ret->glx_name, strlen(ext_ret->glx_name) - 3);
       buf[strlen(ext_ret->glx_name) - 3] = '\0';
       TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
-      
+
       ret = GetProcAddress(hm, buf);
       if (ret != NULL) {
 	TRACE(" found function in main OpenGL library (%p) !\n", ret);
       } else {
 	WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, ext_ret->glx_name);
-      }	
-      
+      }
+
       return ret;
     } else {
       TRACE(" returning function  (%p)\n", ext_ret->func);
       *(ext_ret->func_ptr) = local_func;
-      
+
       return ext_ret->func;
     }
   }
@@ -356,7 +356,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
   BOOL ret;
 
   TRACE("(%08x,%p)\n", hdc, hglrc);
-  
+
   ENTER_GL();
   if (hglrc == NULL) {
       ret = glXMakeCurrent(default_display, None, NULL);
@@ -406,7 +406,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
 			  HGLRC hglrc2) {
   Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
   Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
-  
+
   TRACE("(%p, %p)\n", org, dest);
 
   if (dest->ctx != NULL) {
@@ -426,7 +426,7 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
     LEAVE_GL();
     TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
   }
-  
+
   return TRUE;
 }
 
@@ -458,7 +458,7 @@ BOOL WINAPI wglUseFontBitmapsA(HDC hdc,
   LEAVE_GL();
   return TRUE;
 }
- 
+
 /***********************************************************************
  *		wglUseFontOutlinesA (OPENGL32.@)
  */
@@ -507,16 +507,16 @@ static BOOL process_attach(void)
 
   /* Try to get the visual from the Root Window.  We can't use the standard (presumably
      double buffered) X11DRV visual with the Root Window, since we don't know if the Root
-     Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal 
-     with mismatched visuals.  Note that the Root Window visual may not be double 
+     Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal
+     with mismatched visuals.  Note that the Root Window visual may not be double
      buffered, so apps actually attempting to render this way may flicker */
   if (XGetWindowAttributes( default_display, root, &win_attr ))
   {
-    rootVisual = win_attr.visual; 
+    rootVisual = win_attr.visual;
   }
   else
   {
-    /* Get the default visual, since we can't seem to get the attributes from the 
+    /* Get the default visual, since we can't seem to get the attributes from the
        Root Window.  Let's hope that the Root Window Visual matches the DefaultVisual */
     rootVisual = DefaultVisual( default_display, DefaultScreen(default_display) );
   }

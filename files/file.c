@@ -829,7 +829,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
         *        Linux and Windows privileges. Under Linux only the owner of
         *        the file is allowed to change file attributes. Under Windows,
         *        applications expect that if you can write to a file, you can also
-        *        change its attributes (see GENERIC_WRITE). We could try to be 
+        *        change its attributes (see GENERIC_WRITE). We could try to be
         *        clever here but that would break multi-user installations where
         *        users share read-only DLLs. This is because some installers like
         *        to change attributes of already installed DLLs.
@@ -923,7 +923,7 @@ static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
     p = buffer + strlen(buffer);
 
     /* add a \, if there isn't one and path is more than just the drive letter ... */
-    if ( !((strlen(buffer) == 2) && (buffer[1] == ':')) 
+    if ( !((strlen(buffer) == 2) && (buffer[1] == ':'))
 	&& ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
 
     if (isWin16) *p++ = '~';
@@ -1038,7 +1038,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     char *p;
 
     if (!ofs) return HFILE_ERROR;
-    
+
     TRACE("%s %s %s %s%s%s%s%s%s%s%s%s\n",name,
 	  ((mode & 0x3 )==OF_READ)?"OF_READ":
 	  ((mode & 0x3 )==OF_WRITE)?"OF_WRITE":
@@ -1058,7 +1058,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
 	  ((mode & OF_EXIST )==OF_EXIST)?"OF_EXIST ":"",
 	  ((mode & OF_REOPEN )==OF_REOPEN)?"OF_REOPEN ":""
 	  );
-      
+
 
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
@@ -1072,7 +1072,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     TRACE("%s %04x\n", name, mode );
 
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
-       Are there any cases where getting the path here is wrong? 
+       Are there any cases where getting the path here is wrong?
        Uwe Bonnes 1997 Apr 2 */
     if (!GetFullPathNameA( name, sizeof(ofs->szPathName),
 			     ofs->szPathName, NULL )) goto error;
@@ -1125,7 +1125,7 @@ found:
                  sizeof(ofs->szPathName) );
 
     if (mode & OF_SHARE_EXCLUSIVE)
-      /* Some InstallShield version uses OF_SHARE_EXCLUSIVE 
+      /* Some InstallShield version uses OF_SHARE_EXCLUSIVE
 	 on the file <tempdir>/_ins0432._mp to determine how
 	 far installation has proceeded.
 	 _ins0432._mp is an executable and while running the
@@ -1197,7 +1197,7 @@ not_found:  /* We get here if the file does not exist */
 
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();
-    WARN("(%s): return = HFILE_ERROR error= %d\n", 
+    WARN("(%s): return = HFILE_ERROR error= %d\n",
 		  name,ofs->nErrCode );
     return HFILE_ERROR;
 }
@@ -1391,7 +1391,7 @@ HFILE WINAPI _lclose( HFILE hFile )
  *
  * BUGS
  *
- * Currently only works for WaitCommEvent, ReadFile, WriteFile 
+ * Currently only works for WaitCommEvent, ReadFile, WriteFile
  *   with communications ports.
  *
  */
@@ -1507,7 +1507,7 @@ async_end:
  *              FILE_ReadFileEx                (INTERNAL)
  */
 static BOOL FILE_ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
-			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED overlapped,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
                          HANDLE hEvent)
 {
@@ -1565,7 +1565,7 @@ error:
  *              ReadFileEx                (KERNEL32.@)
  */
 BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
-			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED overlapped,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     overlapped->InternalHigh = 0;
@@ -1600,7 +1600,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     int unix_handle, result, flags;
     enum fd_type type;
 
-    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead, 
+    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead,
           bytesRead, overlapped );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
@@ -1618,10 +1618,10 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        
+
         close(unix_handle);
         overlapped->InternalHigh = 0;
-        
+
         if(!FILE_ReadFileEx(hFile, buffer, bytesToRead, overlapped, NULL, overlapped->hEvent))
             return FALSE;
 
@@ -1649,7 +1649,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     default:
 	/* normal unix files */
 	if (unix_handle == -1)
-	    return FALSE;    
+	    return FALSE;
 	if (overlapped)
 	{
 	    close(unix_handle);
@@ -1787,11 +1787,11 @@ error:
  *              WriteFileEx                (KERNEL32.@)
  */
 BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
-			 LPOVERLAPPED overlapped, 
+			 LPOVERLAPPED overlapped,
 			 LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 {
     overlapped->InternalHigh = 0;
- 
+
     return FILE_WriteFileEx(hFile, buffer, bytesToWrite, overlapped, lpCompletionRoutine, INVALID_HANDLE_VALUE);
 }
 
@@ -1804,7 +1804,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     int unix_handle, result, flags;
     enum fd_type type;
 
-    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite, 
+    TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite,
           bytesWritten, overlapped );
 
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
@@ -1842,7 +1842,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     switch(type)
     {
     case FD_TYPE_CONSOLE:
-	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite, 
+	TRACE("%d %s %ld %p %p\n", hFile, debugstr_an(buffer, bytesToWrite), bytesToWrite,
 	      bytesWritten, overlapped );
 	return WriteConsoleA(hFile, buffer, bytesToWrite, bytesWritten, NULL);
     default:
@@ -1867,7 +1867,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     return TRUE;
 }
 
-  
+
 /***********************************************************************
  *           _hread (KERNEL.349)
  */
@@ -2060,11 +2060,11 @@ LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
  *           _hwrite   (KERNEL32.@)
  *
  *	experimentation yields that _lwrite:
- *		o truncates the file at the current position with 
+ *		o truncates the file at the current position with
  *		  a 0 len write
  *		o returns 0 on a 0 length write
  *		o works with console handles
- *		
+ *
  */
 LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 {
@@ -2323,7 +2323,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     /* FIXME: <Gerhard W. Gruber>sparhawk@gmx.at
        In case of W9x and lesser this function should return 120 (ERROR_CALL_NOT_IMPLEMENTED)
        to be really compatible. Most programs wont have any problems though. In case
-       you encounter one, this is what you should return here. I don't know what's up 
+       you encounter one, this is what you should return here. I don't know what's up
        with NT 3.5. Is this function available there or not?
        Does anybody really care about 3.5? :)
     */
@@ -2377,7 +2377,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
         if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
         {
             /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-               Perhaps we should queue these command and execute it 
+               Perhaps we should queue these command and execute it
                when exiting... What about using on_exit(2)
             */
             FIXME("Please move existing file '%s' to file '%s' when Wine has finished\n",
@@ -2420,13 +2420,13 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     {
         if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
         {
-            if (flag & MOVEFILE_COPY_ALLOWED) {  
+            if (flag & MOVEFILE_COPY_ALLOWED) {
                 WARN("Illegal flag\n");
                 SetLastError( ERROR_GEN_FAILURE );
                 return FALSE;
             }
             /* FIXME: (bon@elektron.ikp.physik.th-darmstadt.de 970706)
-               Perhaps we should queue these command and execute it 
+               Perhaps we should queue these command and execute it
                when exiting... What about using on_exit(2)
             */
             FIXME("Please delete file '%s' when Wine has finished\n", fn1);
@@ -2951,12 +2951,12 @@ BOOL WINAPI GetFileAttributesExA(
 {
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
-    
+
     if (lpFileName == NULL) return FALSE;
     if (lpFileInformation == NULL) return FALSE;
 
     if (fInfoLevelId == GetFileExInfoStandard) {
-	LPWIN32_FILE_ATTRIBUTE_DATA lpFad = 
+	LPWIN32_FILE_ATTRIBUTE_DATA lpFad =
 	    (LPWIN32_FILE_ATTRIBUTE_DATA) lpFileInformation;
 	if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name )) return FALSE;
 	if (!FILE_Stat( full_name.long_name, &info )) return FALSE;
@@ -2985,7 +2985,7 @@ BOOL WINAPI GetFileAttributesExW(
 	LPVOID lpFileInformation)
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
-    BOOL res = 
+    BOOL res =
 	GetFileAttributesExA( nameA, fInfoLevelId, lpFileInformation);
     HeapFree( GetProcessHeap(), 0, nameA );
     return res;

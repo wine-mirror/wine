@@ -1,5 +1,5 @@
 /* Definitions for the VERsion infolibrary (VER.DLL)
- * 
+ *
  * Copyright 1996 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or

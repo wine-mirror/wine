@@ -121,7 +121,7 @@ PVOID WINAPI ImageDirectoryEntryToData(
  */
 PLOADED_IMAGE WINAPI ImageLoad(LPSTR DllName, LPSTR DllPath)
 {
-  PLOADED_IMAGE pLoadedImage = 
+  PLOADED_IMAGE pLoadedImage =
     HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
   return pLoadedImage;
 }
@@ -175,8 +175,8 @@ BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 
   pFind=&pLoadedImage->Links;
   pCurrent=&IMAGEHLP_pFirstLoadedImage->Links;
-  while((pCurrent != pFind) && 
-    (pCurrent != NULL)) 
+  while((pCurrent != pFind) &&
+    (pCurrent != NULL))
       pCurrent = pCurrent->Flink;
   if(!pCurrent)
     {

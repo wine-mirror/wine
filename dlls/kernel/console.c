@@ -333,7 +333,7 @@ BOOL WINAPI WriteConsoleOutputCharacterA( HANDLE hConsoleOutput, LPCSTR str, DWO
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
- * 
+ *
  */
 BOOL WINAPI WriteConsoleOutputAttribute( HANDLE hConsoleOutput, CONST WORD *attr, DWORD length,
                                          COORD coord, LPDWORD lpNumAttrsWritten )
@@ -468,7 +468,7 @@ BOOL WINAPI FillConsoleOutputAttribute( HANDLE hConsoleOutput, WORD attr, DWORD 
 
 /******************************************************************************
  * ReadConsoleOutputCharacterA [KERNEL32.@]
- * 
+ *
  */
 BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, LPSTR lpstr, DWORD count,
                                         COORD coord, LPDWORD read_count)
@@ -492,7 +492,7 @@ BOOL WINAPI ReadConsoleOutputCharacterA(HANDLE hConsoleOutput, LPSTR lpstr, DWOR
 
 /******************************************************************************
  * ReadConsoleOutputCharacterW [KERNEL32.@]
- * 
+ *
  */
 BOOL WINAPI ReadConsoleOutputCharacterW( HANDLE hConsoleOutput, LPWSTR buffer, DWORD count,
                                          COORD coord, LPDWORD read_count )
@@ -550,7 +550,7 @@ BOOL WINAPI ReadConsoleOutputAttribute(HANDLE hConsoleOutput, LPWORD lpAttribute
 
 /******************************************************************************
  *  ReadConsoleOutputA [KERNEL32.@]
- * 
+ *
  */
 BOOL WINAPI ReadConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD size,
                                 COORD coord, LPSMALL_RECT region )
@@ -573,7 +573,7 @@ BOOL WINAPI ReadConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COO
 
 /******************************************************************************
  *  ReadConsoleOutputW [KERNEL32.@]
- * 
+ *
  * NOTE: The NT4 (sp5) kernel crashes on me if size is (0,0). I don't
  * think we need to be *that* compatible.  -- AJ
  */

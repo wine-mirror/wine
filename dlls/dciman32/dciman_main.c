@@ -1,7 +1,7 @@
-/* 
+/*
  * Implementation of DCIMAN32 - DCI Manager
  * "Device Context Interface" ?
- * 
+ *
  * Copyright 2000 Marcus Meissner
  *
  * This library is free software; you can redistribute it and/or

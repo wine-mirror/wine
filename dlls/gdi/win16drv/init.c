@@ -210,7 +210,7 @@ void InitTextXForm(LPTEXTXFORM16 lpTextXForm)
     lpTextXForm->txfWeight 	= 0x0190;
     lpTextXForm->txfItalic 	= 0x00;
     lpTextXForm->txfUnderline 	= 0x00;
-    lpTextXForm->txfStrikeOut 	= 0x00; 
+    lpTextXForm->txfStrikeOut 	= 0x00;
     lpTextXForm->txfOutPrecision = 0x02;
     lpTextXForm->txfClipPrecision = 0x01;
     lpTextXForm->txfAccelerator = 0x0001;
@@ -220,18 +220,18 @@ void InitTextXForm(LPTEXTXFORM16 lpTextXForm)
 
 void InitDrawMode(LPDRAWMODE lpDrawMode)
 {
-    lpDrawMode->Rop2		= 0x000d;       
-    lpDrawMode->bkMode		= 0x0001;     
-    lpDrawMode->bkColor		= 0x3fffffff;    
-    lpDrawMode->TextColor	= 0x20000000;  
+    lpDrawMode->Rop2		= 0x000d;
+    lpDrawMode->bkMode		= 0x0001;
+    lpDrawMode->bkColor		= 0x3fffffff;
+    lpDrawMode->TextColor	= 0x20000000;
     lpDrawMode->TBreakExtra	= 0x0000;
-    lpDrawMode->BreakExtra	= 0x0000; 
-    lpDrawMode->BreakErr	= 0x0000;   
-    lpDrawMode->BreakRem	= 0x0000;   
-    lpDrawMode->BreakCount	= 0x0000; 
-    lpDrawMode->CharExtra	= 0x0000;  
-    lpDrawMode->LbkColor	= 0x00ffffff;   
-    lpDrawMode->LTextColor	= 0x00000000;     
+    lpDrawMode->BreakExtra	= 0x0000;
+    lpDrawMode->BreakErr	= 0x0000;
+    lpDrawMode->BreakRem	= 0x0000;
+    lpDrawMode->BreakCount	= 0x0000;
+    lpDrawMode->CharExtra	= 0x0000;
+    lpDrawMode->LbkColor	= 0x00ffffff;
+    lpDrawMode->LTextColor	= 0x00000000;
     lpDrawMode->ICMCXform       = 0; /* ? */
     lpDrawMode->StretchBltMode  = STRETCH_ANDSCANS;
     lpDrawMode->eMiterLimit     = 1;
@@ -269,13 +269,13 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     if(!output) output = "LPT1:";
 
     /* Get GDIINFO which is the same as a DeviceCaps structure */
-    wRet = PRTDRV_Enable(&physDev->DevCaps, GETGDIINFO, device, driver, output,NULL); 
+    wRet = PRTDRV_Enable(&physDev->DevCaps, GETGDIINFO, device, driver, output,NULL);
 
     /* Add this to the DC */
     dc->bitsPerPixel = physDev->DevCaps.bitsPixel;
-    
+
     TRACE("Got devcaps width %d height %d bits %d planes %d\n",
-	  physDev->DevCaps.horzRes, physDev->DevCaps.vertRes, 
+	  physDev->DevCaps.horzRes, physDev->DevCaps.vertRes,
 	  physDev->DevCaps.bitsPixel, physDev->DevCaps.planes);
 
     /* Now we allocate enough memory for the PDEVICE structure */
@@ -286,30 +286,30 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
     physDev->segptrPDEVICE = K32WOWGlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
-    *((BYTE *)MapSL(physDev->segptrPDEVICE)+0) = 'N'; 
-    *((BYTE *)MapSL(physDev->segptrPDEVICE)+1) = 'B'; 
+    *((BYTE *)MapSL(physDev->segptrPDEVICE)+0) = 'N';
+    *((BYTE *)MapSL(physDev->segptrPDEVICE)+1) = 'B';
 
     /* Set up the header */
-    pPDH = (PDEVICE_HEADER *)((BYTE*)MapSL(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
+    pPDH = (PDEVICE_HEADER *)((BYTE*)MapSL(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER));
     pPDH->pLPD = pLPD;
-    
+
     TRACE("PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
-    
+
     /* Now get the printer driver to initialise this data */
-    wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL); 
+    wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL);
 
     physDev->FontInfo = NULL;
     physDev->BrushInfo = NULL;
     physDev->PenInfo = NULL;
     win16drv_SegPtr_TextXForm = K32WOWGlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
     win16drv_TextXFormP = MapSL(win16drv_SegPtr_TextXForm);
-    
+
     InitTextXForm(win16drv_TextXFormP);
 
     /* TTD Lots more to do here */
     win16drv_SegPtr_DrawMode = K32WOWGlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
     win16drv_DrawModeP = MapSL(win16drv_SegPtr_DrawMode);
-    
+
     InitDrawMode(win16drv_DrawModeP);
 
     return TRUE;
@@ -317,7 +317,7 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
 BOOL WIN16DRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD rop )
 {
-  
+
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
     BOOL bRet = 0;
 
@@ -372,7 +372,7 @@ static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in
 		- After every write to printer port or spool file
 		- Several times when no more disk space
 		- Before every metafile record when GDI does banding
-		*/ 
+		*/
 
        /* Call Control with hdc as lpInData */
 	    HDC16 *seghdc = SEGPTR_NEW(HDC16);
@@ -413,7 +413,7 @@ static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in
 	      char *cp = SEGPTR_ALLOC(cbInput + 1);
 	      memcpy(cp, MapSL(lpInData), cbInput);
 	      cp[cbInput] = '\0';
-	    
+
 	      nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
 				    SEGPTR_GET(cp), lpOutData);
 	      SEGPTR_FREE(cp);
@@ -437,7 +437,7 @@ static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in
 	}
     }
     else
-	WARN("Escape(nEscape = %04x) - ???\n", nEscape);      
+	WARN("Escape(nEscape = %04x) - ???\n", nEscape);
     return nRet;
 #endif
     /* FIXME: should convert args to SEGPTR and redo all the above */

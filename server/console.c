@@ -63,7 +63,7 @@ static void console_input_events_dump( struct object *obj, int verbose );
 static void console_input_events_destroy( struct object *obj );
 static int  console_input_events_signaled( struct object *obj, struct thread *thread );
 
-struct console_input_events 
+struct console_input_events
 {
     struct object         obj;         /* object header */
     int			  num_alloc;   /* number of allocated events */
@@ -138,7 +138,7 @@ static void console_input_events_dump( struct object *obj, int verbose )
 {
     struct console_input_events *evts = (struct console_input_events *)obj;
     assert( obj->ops == &console_input_events_ops );
-    fprintf( stderr, "Console input events: %d/%d events\n", 
+    fprintf( stderr, "Console input events: %d/%d events\n",
 	     evts->num_used, evts->num_alloc );
 }
 
@@ -159,7 +159,7 @@ static int console_input_events_signaled( struct object *obj, struct thread *thr
 }
 
 /* add an event to the console's renderer events list */
-static void console_input_events_append( struct console_input_events* evts, 
+static void console_input_events_append( struct console_input_events* evts,
 					 struct console_renderer_event* evt)
 {
     /* to be done even when the renderer generates the events ? */
@@ -504,7 +504,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
     {
 	struct screen_buffer *screen_buffer;
 
-	screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->active_sb, 
+	screen_buffer = (struct screen_buffer *)get_handle_obj( current->process, req->active_sb,
 								GENERIC_READ, &screen_buffer_ops );
 	if (!screen_buffer || screen_buffer->input != console)
 	{
@@ -540,7 +540,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
     {
 	console->history_mode = req->history_mode;
     }
-    if ((req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) && 
+    if ((req->mask & SET_CONSOLE_INPUT_INFO_HISTORY_SIZE) &&
 	console->history_size != req->history_size)
     {
 	WCHAR**	mem = NULL;
@@ -554,7 +554,7 @@ static int set_console_input_info( const struct set_console_input_info_request *
 	    memset( mem, 0, req->history_size * sizeof(WCHAR*) );
 	}
 
-	delta = (console->history_index > req->history_size) ? 
+	delta = (console->history_index > req->history_size) ?
 	    (console->history_index - req->history_size) : 0;
 
 	for (i = delta; i < console->history_index; i++)
@@ -642,7 +642,7 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 	    set_error( STATUS_INVALID_PARAMETER );
 	    return 0;
 	}
-        if (screen_buffer->cursor_size != req->cursor_size || 
+        if (screen_buffer->cursor_size != req->cursor_size ||
 	    screen_buffer->cursor_visible != req->cursor_visible)
 	{
 	    screen_buffer->cursor_size    = req->cursor_size;
@@ -655,7 +655,7 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_CURSOR_POS)
     {
-	if (req->cursor_x < 0 || req->cursor_x >= screen_buffer->width || 
+	if (req->cursor_x < 0 || req->cursor_x >= screen_buffer->width ||
 	    req->cursor_y < 0 || req->cursor_y >= screen_buffer->height)
 	{
 	    set_error( STATUS_INVALID_PARAMETER );
@@ -681,7 +681,7 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 	evt.u.resize.height = req->height;
 	console_input_events_append( screen_buffer->input->evt, &evt );
 
-	if (screen_buffer == screen_buffer->input->active && 
+	if (screen_buffer == screen_buffer->input->active &&
 	    screen_buffer->input->mode & ENABLE_WINDOW_INPUT)
 	{
 	    INPUT_RECORD	ir;
@@ -697,9 +697,9 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW)
     {
-	if (req->win_left < 0 || req->win_left > req->win_right || 
+	if (req->win_left < 0 || req->win_left > req->win_right ||
 	    req->win_right >= screen_buffer->width ||
-	    req->win_top < 0  || req->win_top > req->win_bottom || 
+	    req->win_top < 0  || req->win_top > req->win_bottom ||
 	    req->win_bottom >= screen_buffer->height)
 	{
 	    set_error( STATUS_INVALID_PARAMETER );
@@ -773,7 +773,7 @@ static void console_input_append_hist( struct console_input* console, const WCHA
     else
     {
 	free( console->history[0]) ;
-	memmove( &console->history[0], &console->history[1], 
+	memmove( &console->history[0], &console->history[1],
 		 (console->history_size - 1) * sizeof(WCHAR*) );
 	console->history[console->history_size - 1] = ptr;
     }
@@ -798,7 +798,7 @@ static void console_input_dump( struct object *obj, int verbose )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    fprintf( stderr, "Console input active=%p evt=%p\n", 
+    fprintf( stderr, "Console input active=%p evt=%p\n",
 	     console->active, console->evt );
 }
 
@@ -1080,7 +1080,7 @@ static void scroll_console_output( obj_handle_t handle, int xsrc, int ysrc, int 
 
 	for (j = 0; j < h; j++)
 	{
-	    /* we use memmove here because when psrc and pdst are the same, 
+	    /* we use memmove here because when psrc and pdst are the same,
 	     * copies are done on the same row, so the dst and src blocks
 	     * can overlap */
 	    memmove( pdst, psrc, w * sizeof(*pdst) );
@@ -1287,7 +1287,7 @@ DECL_HANDLER(create_console_output)
     screen_buffer = create_console_output( console );
     if (screen_buffer)
     {
-        /* FIXME: should store sharing and test it when opening the CONOUT$ device 
+        /* FIXME: should store sharing and test it when opening the CONOUT$ device
          * see file.c on how this could be done */
         reply->handle_out = alloc_handle( current->process, screen_buffer,
                                           req->access, req->inherit );
@@ -1382,6 +1382,6 @@ DECL_HANDLER(fill_console_output)
 /* move a rect of data in a screen buffer */
 DECL_HANDLER(move_console_output)
 {
-    scroll_console_output( req->handle, req->x_src, req->y_src, req->x_dst, req->y_dst, 
+    scroll_console_output( req->handle, req->x_src, req->y_src, req->x_dst, req->y_dst,
 			   req->w, req->h );
 }

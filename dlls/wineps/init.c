@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static PSDRV_DEVMODEA DefaultDevmode = 
+static PSDRV_DEVMODEA DefaultDevmode =
 {
   { /* dmPublic */
 /* dmDeviceName */	"Wine PostScript Driver",
@@ -45,8 +45,8 @@ static PSDRV_DEVMODEA DefaultDevmode =
 /* dmDriverVersion */	0x001,
 /* dmSize */		sizeof(DEVMODEA),
 /* dmDriverExtra */	0,
-/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE | 
-			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR | 
+/* dmFields */		DM_ORIENTATION | DM_PAPERSIZE | DM_SCALE |
+			DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR |
 			DM_DUPLEX | DM_YRESOLUTION | DM_TTOPTION,
    { /* u1 */
      { /* s1 */
@@ -85,7 +85,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
     /* dummy */ 0
   },
   { /* dmDrvPrivate */
-    /* numInstalledOptions */ 0 
+    /* numInstalledOptions */ 0
   }
 };
 
@@ -106,7 +106,7 @@ static LOGFONTA DefaultLogFont = {
 BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE("(0x%4x, 0x%08lx, %p)\n", hinst, reason, reserved);
-   
+
     switch(reason) {
 
 	case DLL_PROCESS_ATTACH:
@@ -133,7 +133,7 @@ BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 	    HeapDestroy( PSDRV_Heap );
             break;
     }
- 
+
     return TRUE;
 }
 
@@ -142,7 +142,7 @@ static void PSDRV_UpdateDevCaps( PSDRV_PDEVICE *physDev )
 {
     PAGESIZE *page;
     INT width = 0, height = 0;
-    
+
     if(physDev->Devmode->dmPublic.dmFields & DM_PAPERSIZE) {
         for(page = physDev->pi->ppd->PageSizes; page; page = page->next) {
 	    if(page->WinPage == physDev->Devmode->dmPublic.u1.s1.dmPaperSize)
@@ -244,7 +244,7 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         device = physDev->Devmode->dmPublic.dmDeviceName;
     }
     pi = PSDRV_FindPrinterInfo(device);
-        
+
     TRACE("(%s %s %s %p)\n", driver, device, output, initData);
 
     if(!pi) return FALSE;
@@ -269,7 +269,7 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         HeapFree( PSDRV_Heap, 0, physDev );
 	return FALSE;
     }
-    
+
     memcpy( physDev->Devmode, pi->Devmode, sizeof(PSDRV_DEVMODEA) );
 
     physDev->logPixelsX = physDev->pi->ppd->DefaultResolution;
@@ -430,7 +430,7 @@ INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
 /**********************************************************************
  *		PSDRV_FindPrinterInfo
  */
-PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name) 
+PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 {
     static PRINTERINFO *PSDRV_PrinterList;
     DWORD type = REG_BINARY, needed, res, dwPaperSize;
@@ -444,11 +444,11 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     HKEY hkey;
 
     TRACE("'%s'\n", name);
-    
+
     /*
      *	If this loop completes, last will point to the 'next' element of the
      *	final PRINTERINFO in the list
-     */    
+     */
     for( ; pi; last = &pi->next, pi = pi->next)
         if(!strcmp(pi->FriendlyName, name))
 	    return pi;
@@ -461,14 +461,14 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     strcpy( pi->FriendlyName, name );
 
     /* Use Get|SetPrinterDataExA instead? */
-    
+
     res = DrvGetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE, &type,
 			    NULL, 0, &needed );
 
     if(res == ERROR_INVALID_PRINTER_NAME || needed != sizeof(DefaultDevmode)) {
         pi->Devmode = HeapAlloc( PSDRV_Heap, 0, sizeof(DefaultDevmode) );
 	if (pi->Devmode == NULL)
-	    goto cleanup;	    
+	    goto cleanup;
 	memcpy(pi->Devmode, &DefaultDevmode, sizeof(DefaultDevmode) );
 	strcpy(pi->Devmode->dmPublic.dmDeviceName,name);
 	DrvSetPrinterData16((LPSTR)name, (LPSTR)INT_PD_DEFAULT_DEVMODE,

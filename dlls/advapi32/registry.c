@@ -76,7 +76,7 @@ inline static int is_version_nt(void)
  * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
-                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
+                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
                               LPHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
@@ -105,7 +105,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
  * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
-                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
+                              DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
                               LPHKEY retkey, LPDWORD dispos )
 {
     OBJECT_ATTRIBUTES attr;
@@ -442,9 +442,9 @@ DWORD WINAPI RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
  *    security   [O] Buffer for security descriptor length
  *    modif      [O] Modification time
  *
- * - win95 allows class to be valid and class_len to be NULL 
+ * - win95 allows class to be valid and class_len to be NULL
  * - winnt returns ERROR_INVALID_PARAMETER if class is valid and class_len is NULL
- * - both allow class to be NULL and class_len to be NULL 
+ * - both allow class to be NULL and class_len to be NULL
  * (it's hard to test validity, so test !NULL instead)
  */
 DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPDWORD reserved,
@@ -652,7 +652,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
  *    Failure: Error code
  *
  * NOTES
- *   win95 does not care about count for REG_SZ and finds out the len by itself (js) 
+ *   win95 does not care about count for REG_SZ and finds out the len by itself (js)
  *   NT does definitely care (aj)
  */
 DWORD WINAPI RegSetValueExW( HKEY hkey, LPCWSTR name, DWORD reserved,
@@ -780,7 +780,7 @@ DWORD WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWOR
  *                        not required.
  *    count     [I/O] Address of data buffer size
  *
- * RETURNS 
+ * RETURNS
  *    ERROR_SUCCESS:   Success
  *    ERROR_MORE_DATA: !!! if the specified buffer is not big enough to hold the data
  * 		       buffer is left untouched. The MS-documentation is wrong (js) !!!
@@ -850,7 +850,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
  *           RegQueryValueExA   [ADVAPI32.@]
  *
  * NOTES:
- * the documentation is wrong: if the buffer is too small it remains untouched 
+ * the documentation is wrong: if the buffer is too small it remains untouched
  */
 DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
                                LPBYTE data, LPDWORD count )
@@ -1441,7 +1441,7 @@ LONG WINAPI RegUnLoadKeyA( HKEY hkey, LPCSTR lpSubKey )
 LONG WINAPI RegReplaceKeyW( HKEY hkey, LPCWSTR lpSubKey, LPCWSTR lpNewFile,
                               LPCWSTR lpOldFile )
 {
-    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey), 
+    FIXME("(%x,%s,%s,%s): stub\n", hkey, debugstr_w(lpSubKey),
           debugstr_w(lpNewFile),debugstr_w(lpOldFile));
     return ERROR_SUCCESS;
 }
@@ -1560,7 +1560,7 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
  *    hHey          [I] Predefined registry handle
  *    phkResult     [I] Address of buffer for remote registry handle
  */
-LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey, 
+LONG WINAPI RegConnectRegistryW( LPCWSTR lpMachineName, HKEY hKey,
                                    LPHKEY phkResult )
 {
     TRACE("(%s,%x,%p): stub\n",debugstr_w(lpMachineName),hKey,phkResult);
@@ -1597,7 +1597,7 @@ LONG WINAPI RegConnectRegistryA( LPCSTR machine, HKEY hkey, LPHKEY reskey )
  *    hEvent          [I] Handle of signaled event
  *    fAsync          [I] Flag for asynchronous reporting
  */
-LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree, 
+LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
                                      DWORD fdwNotifyFilter, HANDLE hEvent,
                                      BOOL fAsync )
 {

@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win32);
  */
 HRESULT WINAPI URLMON_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
-  FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE", 
+  FIXME("(%s, %s): stub\n", bInstall?"TRUE":"FALSE",
 	debugstr_w(cmdline));
 
   return S_OK;
@@ -53,7 +53,7 @@ HRESULT WINAPI URLMON_DllCanUnloadNow(void)
 HRESULT WINAPI URLMON_DllGetClassObject(REFCLSID rclsid, REFIID riid,
 					LPVOID *ppv)
 {
-    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid), 
+    FIXME("(%p, %p, %p): stub\n", debugstr_guid(rclsid),
 	  debugstr_guid(riid), ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
@@ -96,7 +96,7 @@ HRESULT WINAPI URLMON_DllUnregisterServer(void)
  					long nosee)
 {
     FIXME("(%#lx, %p, %#lx, %#lx): stub\n", lost, splat, time, nosee);
-    
+
     return S_OK;
 }
 

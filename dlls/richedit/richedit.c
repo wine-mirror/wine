@@ -2,7 +2,7 @@
  * RichEdit32  functions
  *
  * This module is a simple wrapper for the edit controls.
- * At the point, it is good only for application who use the RICHEDIT 
+ * At the point, it is good only for application who use the RICHEDIT
  * control to display RTF text.
  *
  * Copyright 2000 by Jean-Claude Batista
@@ -21,7 +21,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
+
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
@@ -68,7 +68,7 @@ HANDLE RICHED32_hHeap = (HANDLE)NULL;
 BOOL WINAPI
 RICHED32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    TRACE("\n"); 
+    TRACE("\n");
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
@@ -91,7 +91,7 @@ RICHED32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /* Support routines for window procedure */
    INT RICHEDIT_GetTextRange(HWND hwnd,TEXTRANGEA *tr);
    INT RICHEDIT_GetSelText(HWND hwnd,LPSTR lpstrBuffer);
- 
+
 
 /*
  *
@@ -104,7 +104,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 {
     int RTFToBuffer(char* pBuffer, int nBufferSize);
     LONG newstyle = 0;
-    LONG style = 0;  
+    LONG style = 0;
 
     static HWND hwndEdit;
     static HWND hwndParent;
@@ -114,14 +114,14 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     CHARRANGE *cr;
     TRACE("previous hwndEdit: 0x%x hwndParent 0x%x\n",hwndEdit,hwndParent);
     hwndEdit = GetWindow(hwnd,GW_CHILD);
-    TRACE("uMsg: 0x%x hwnd: 0x%x hwndEdit: 0x%x\n",uMsg,hwnd,hwndEdit); 
-   
+    TRACE("uMsg: 0x%x hwnd: 0x%x hwndEdit: 0x%x\n",uMsg,hwnd,hwndEdit);
+
     switch (uMsg)
     {
- 
-    case WM_CREATE :           
+
+    case WM_CREATE :
 	    DPRINTF_EDIT_MSG32("WM_CREATE");
-	             
+
 	    /* remove SCROLLBARS from the current window style */
 	    hwndParent = ((LPCREATESTRUCTA) lParam)->hwndParent;
 
@@ -136,21 +136,21 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    style, 0, 0, 0, 0,
                                    hwnd, (HMENU) ID_EDIT,
                                    ((LPCREATESTRUCTA) lParam)->hInstance, NULL) ;
-    TRACE("hwndEdit: 0x%x hwnd: 0x%x\n",hwndEdit,hwnd);	
-	
-	    SetWindowLongA(hwnd,GWL_STYLE, newstyle); 		   
+    TRACE("hwndEdit: 0x%x hwnd: 0x%x\n",hwndEdit,hwnd);
+
+	    SetWindowLongA(hwnd,GWL_STYLE, newstyle);
             return 0 ;
-          
+
     case WM_SETFOCUS :
-	    DPRINTF_EDIT_MSG32("WM_SETFOCUS");            
+	    DPRINTF_EDIT_MSG32("WM_SETFOCUS");
             SetFocus (hwndEdit) ;
             return 0 ;
 
-    case WM_SIZE :             
+    case WM_SIZE :
             DPRINTF_EDIT_MSG32("WM_SIZE");
             MoveWindow (hwndEdit, 0, 0, LOWORD (lParam), HIWORD (lParam), TRUE) ;
             return 0 ;
-          
+
     case WM_COMMAND :
         DPRINTF_EDIT_MSG32("WM_COMMAND");
 	switch(HIWORD(wParam)) {
@@ -160,28 +160,28 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 		case EN_SETFOCUS:
 		case EN_UPDATE:
 		case EN_VSCROLL:
-			return SendMessageA(hwndParent, WM_COMMAND, 
+			return SendMessageA(hwndParent, WM_COMMAND,
 				wParam, (LPARAM)(hwnd));
-		
+
 		case EN_ERRSPACE:
 		case EN_MAXTEXT:
 			MessageBoxA (hwnd, "RichEdit control out of space.",
                                   "ERROR", MB_OK | MB_ICONSTOP) ;
 			return 0 ;
 		}
-     
-    case EM_STREAMIN:                           
+
+    case EM_STREAMIN:
             DPRINTF_EDIT_MSG32("EM_STREAMIN");
-            
+
 	    /* setup the RTF parser */
 	    RTFSetEditStream(( EDITSTREAM*)lParam);
 	    WriterInit();
 	    RTFInit ();
-	    BeginFile();	    
+	    BeginFile();
 
 	    /* do the parsing */
 	    RTFRead ();
-            
+
 	    rtfBufferSize = RTFToBuffer(NULL, 0);
 	    rtfBuffer = HeapAlloc(RICHED32_hHeap, 0,rtfBufferSize*sizeof(char));
 	    if(rtfBuffer)
@@ -192,8 +192,8 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 	    }
 	    else
 		WARN("Not enough memory for a allocating rtfBuffer\n");
-		
-            return 0;   
+
+            return 0;
 
 /* Messages specific to Richedit controls */
 
@@ -598,7 +598,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
      case EM_UNDO:
             DPRINTF_EDIT_MSG32("EM_UNDO Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
- 
+
      case WM_STYLECHANGING:
             DPRINTF_EDIT_MSG32("WM_STYLECHANGING Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
@@ -627,7 +627,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
             DPRINTF_EDIT_MSG32("WM_PASTE Passed to edit control");
 	    return SendMessageA( hwndEdit, uMsg, wParam, lParam);
 
-    /* Messages passed to default handler. */ 
+    /* Messages passed to default handler. */
     case WM_NCPAINT:
         DPRINTF_EDIT_MSG32("WM_NCPAINT Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
@@ -643,7 +643,7 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     case WM_DESTROY:
         DPRINTF_EDIT_MSG32("WM_DESTROY Passed to default");
         return DefWindowProcA( hwnd,uMsg,wParam,lParam);
-    case WM_CHILDACTIVATE:	       
+    case WM_CHILDACTIVATE:
 	DPRINTF_EDIT_MSG32("WM_CHILDACTIVATE Passed to default");
 	return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 
@@ -723,7 +723,7 @@ RICHED32_DllGetVersion (DLLVERSIONINFO *pdvi)
     TRACE("\n");
 
     if (pdvi->cbSize != sizeof(DLLVERSIONINFO)) {
- 
+
 	return E_INVALIDARG;
     }
 
@@ -738,7 +738,7 @@ RICHED32_DllGetVersion (DLLVERSIONINFO *pdvi)
 /***
  * DESCRIPTION:
  * Registers the window class.
- * 
+ *
  * PARAMETER(S):
  * None
  *
@@ -747,7 +747,7 @@ RICHED32_DllGetVersion (DLLVERSIONINFO *pdvi)
  */
 VOID RICHED32_Register(void)
 {
-    WNDCLASSA wndClass; 
+    WNDCLASSA wndClass;
 
     TRACE("\n");
 
@@ -766,7 +766,7 @@ VOID RICHED32_Register(void)
 /***
  * DESCRIPTION:
  * Unregisters the window class.
- * 
+ *
  * PARAMETER(S):
  * None
  *
@@ -794,13 +794,13 @@ INT RICHEDIT_GetTextRange(HWND hwnd,TEXTRANGEA *tr)
 
     if (text_size > tr->chrg.cpMin)
     {
-       range_size = (text_size> tr->chrg.cpMax) ? (tr->chrg.cpMax - tr->chrg.cpMin) : (text_size - tr->chrg.cpMin);    
+       range_size = (text_size> tr->chrg.cpMax) ? (tr->chrg.cpMax - tr->chrg.cpMin) : (text_size - tr->chrg.cpMin);
        TRACE("EditText: %.30s ...\n",text+tr->chrg.cpMin);
        memcpy(tr->lpstrText,text+tr->chrg.cpMin,range_size);
     }
     else range_size = 0;
     HeapFree(GetProcessHeap(), 0, text);
-    
+
     return range_size;
 }
 

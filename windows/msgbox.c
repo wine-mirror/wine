@@ -127,7 +127,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
          */
 	break;
     }
-    
+
     /* Position everything */
     GetWindowRect(hwnd, &rect);
     borheight = rect.bottom - rect.top;
@@ -135,18 +135,18 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     GetClientRect(hwnd, &rect);
     borheight -= rect.bottom - rect.top;
     borwidth  -= rect.right - rect.left;
-    
+
     /* Get the icon height */
     GetWindowRect(GetDlgItem(hwnd, MSGBOX_IDICON), &rect);
     MapWindowPoints(0, hwnd, (LPPOINT)&rect, 2);
     iheight = rect.bottom - rect.top;
     ileft = rect.left;
     iwidth = rect.right - ileft;
-    
+
     hdc = GetDC(hwnd);
     if (hFont)
 	hPrevFont = SelectObject(hdc, hFont);
-    
+
     /* Get the number of visible buttons and their size */
     bh = bw = 1; /* Minimum button sizes */
     for (buttons = 0, i = 1; i < 8; i++)
@@ -172,7 +172,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     bh = bh * 2;
     bw = bw * 2;
     bspace = bw/3; /* Space between buttons */
-    
+
     /* Get the text size */
     GetClientRect(GetDlgItem(hwnd, MSGBOX_IDTEXT), &rect);
     rect.top = rect.left = rect.bottom = 0;
@@ -182,15 +182,15 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     tleft = 2 * ileft + iwidth;
     twidth = max((bw + bspace) * buttons + bspace - tleft, rect.right);
     theight = rect.bottom;
-    
+
     if (hFont)
 	SelectObject(hdc, hPrevFont);
     ReleaseDC(hItem, hdc);
-    
+
     tiheight = 16 + max(iheight, theight);
     wwidth  = tleft + twidth + ileft + borwidth;
     wheight = 8 + tiheight + bh + borheight;
-    
+
     /* Resize the window */
     SetWindowPos(hwnd, 0, 0, 0, wwidth, wheight,
 		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
@@ -198,11 +198,11 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Position the icon */
     SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
 		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
+
     /* Position the text */
     SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDTEXT), 0, tleft, (tiheight - theight) / 2, twidth, theight,
 		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
+
     /* Position the buttons */
     bpos = (wwidth - (bw + bspace) * buttons + bspace) / 2;
     for (buttons = i = 0; i < 7; i++) {
@@ -234,7 +234,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     }
     if (lpmb->dwStyle & MB_APPLMODAL)
 	FIXME("app modal msgbox ! Not modal yet.\n");
-    
+
     return hFont;
 }
 
@@ -246,13 +246,13 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
  */
 static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
-{  
+{
   static HFONT hFont;
   switch(message) {
    case WM_INITDIALOG:
     hFont = MSGBOX_OnInit(hwnd, (LPMSGBOXPARAMSA)lParam);
     return 0;
-    
+
    case WM_COMMAND:
     switch (wParam)
     {
@@ -318,7 +318,7 @@ INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
     LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
     INT ret;
-    
+
     WARN("Messagebox\n");
 
     ret = MessageBoxA( hwnd, textA, titleA, type );

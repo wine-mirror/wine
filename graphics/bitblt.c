@@ -112,7 +112,7 @@ BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
                             INT widthDst, INT heightDst,
                             HDC hdcSrc, INT xSrc, INT ySrc,
-                            INT widthSrc, INT heightSrc, 
+                            INT widthSrc, INT heightSrc,
 			DWORD rop )
 {
     BOOL ret = FALSE;
@@ -176,7 +176,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
              hbmMask,xMask,yMask,dwRop);
     return 1;
 }
-  
+
 /*********************************************************************
  *      PlgBlt [GDI32.@]
  *
@@ -188,4 +188,4 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
     FIXME("PlgBlt, stub\n");
         return 1;
 }
- 
+

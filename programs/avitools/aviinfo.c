@@ -62,7 +62,7 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 	XXT(AVIStreamInfo);
 #undef XX
 #undef XXT
-    
+
     fnAVIFileInit();
     if (-1==GetFileAttributes(cmdline)) {
     	fprintf(stderr,"Usage: aviinfo <avifilename>\n");
@@ -139,7 +139,7 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 	    case streamtypeVIDEO:
 	    	vids = ast;
 		break;
-	    case streamtypeAUDIO: 
+	    case streamtypeAUDIO:
 	    	auds = ast;
 		break;
 	    default:  {
@@ -154,5 +154,5 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
     }
     fnAVIFileRelease(avif);
     fnAVIFileExit();
-    return 0;    
+    return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Defines a minimum set of macros create GUID's to keep the size 
+ * Defines a minimum set of macros create GUID's to keep the size
  * small
  *
  * This file should be included into "only GUID definition *.h" like

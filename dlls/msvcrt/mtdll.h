@@ -42,7 +42,7 @@ void _lock( int locknum );
 #define _OUTPUT_LOCK    5
 #define _CSCANF_LOCK    6
 #define _CPRINTF_LOCK   7
-#define _CONIO_LOCK     8 
+#define _CONIO_LOCK     8
 #define _HEAP_LOCK      9
 #define _BHEAP_LOCK          10 /* No longer used? */
 #define _TIME_LOCK      11
@@ -50,7 +50,7 @@ void _lock( int locknum );
 #define _EXIT_LOCK1     13
 #define _EXIT_LOCK2          14 /* No longer used? */
 #define _THREADDATA_LOCK     15 /* No longer used? */
-#define _POPEN_LOCK     16   
+#define _POPEN_LOCK     16
 #define _LOCKTAB_LOCK   17
 #define _OSFHND_LOCK    18
 #define _SETLOCALE_LOCK 19

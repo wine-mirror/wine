@@ -54,7 +54,7 @@ LPSTR __cdecl _strupr( LPSTR str )
 /*********************************************************************
  *                  _strlwr   (NTDLL.@)
  *
- * convert a string in place to lowercase 
+ * convert a string in place to lowercase
  */
 LPSTR __cdecl _strlwr( LPSTR str )
 {

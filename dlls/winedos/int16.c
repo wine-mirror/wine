@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  * Handler for int 16h (keyboard)
  *
  * NOTE:
- * 
+ *
  *    KEYB.COM (DOS >3.2) adds functions to this interrupt, they are
  *    not currently listed here.
  */

@@ -238,7 +238,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 /*
  * FIXME
  *           DestroyIcon32( STATIC_SetIcon( wndPtr, 0 ) );
- * 
+ *
  * We don't want to do this yet because DestroyIcon32 is broken. If the icon
  * had already been loaded by the application the last thing we want to do is
  * GlobalFree16 the handle.
@@ -292,7 +292,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
             STATIC_SetIcon(hwnd, hIcon, style);
 	    break;
 	}
-        case SS_BITMAP: 
+        case SS_BITMAP:
 	{
 	    HBITMAP hBitmap;
 	    if(unicode)
@@ -485,7 +485,7 @@ static void STATIC_PaintRectfn( HWND hwnd, HDC hdc, DWORD style )
     HBRUSH hBrush;
 
     GetClientRect( hwnd, &rc);
-    
+
     switch (style & SS_TYPEMASK)
     {
     case SS_BLACKRECT:

@@ -35,7 +35,7 @@
  */
 
 #include "config.h"
- 
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -535,7 +535,7 @@ static int SizeOfVariantData( VARIANT* parg )
 }
 /******************************************************************************
  *	   StringDupAtoBstr		[INTERNAL]
- * 
+ *
  */
 static BSTR StringDupAtoBstr( char* strIn )
 {
@@ -562,7 +562,7 @@ static double round( double d )
      */
    nSign = (d >= 0.0) ? 1 : -1;
     d = fabs( d );
-    
+
 	/* Remove the decimals.
 	 */
    integerValue = floor( d );
@@ -629,7 +629,7 @@ static void RemoveCharacterFromString( LPSTR str, LPSTR strOfCharToRemove )
 		pNewString = strdup( str );
 		str[0] = '\0';
 		strToken = strtok( pNewString, strOfCharToRemove );
-		while( strToken != NULL ) { 
+		while( strToken != NULL ) {
 			strcat( str, strToken );
 			strToken = strtok( NULL, strOfCharToRemove );
 		}
@@ -670,7 +670,7 @@ static BOOL IsValidRealString( LPSTR strRealString )
 	LPSTR strToken = NULL;
 	int nTokens = 0;
 	LPSTR pChar = NULL;
-	
+
 	/* Check if we have a valid argument
 	 */
 	if( strRealString == NULL )
@@ -683,9 +683,9 @@ static BOOL IsValidRealString( LPSTR strRealString )
 		/* Make sure we only have ONE token in the string.
 		 */
 		strToken = strtok( strRealString, " " );
-		while( strToken != NULL ) { 
-			nTokens++;		
-			strToken = strtok( NULL, " " );	
+		while( strToken != NULL ) {
+			nTokens++;
+			strToken = strtok( NULL, " " );
 		}
 
 		if( nTokens != 1 )
@@ -777,7 +777,7 @@ static BOOL IsValidRealString( LPSTR strRealString )
 		case '6':
 		case '7':
 		case '8':
-		case '9': 
+		case '9':
 			if( bFirstDigitsProcessed == FALSE )
 			{
 				if( bDecimalPointProcessed ||
@@ -823,7 +823,7 @@ static BOOL IsValidRealString( LPSTR strRealString )
 			break;
 		/* If DecimalPoint...
 		 */
-		case '.': 
+		case '.':
 			if( bDecimalPointProcessed ||
 				bSecondDigitsProcessed ||
 				bExponentProcessed ||
@@ -893,14 +893,14 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	unsigned short vtFrom = 0;
 	vtFrom = V_VT(ps) & VT_TYPEMASK;
 
-	
+
 	/* Note: Since "long" and "int" values both have 4 bytes and are
 	 * both signed integers "int" will be treated as "long" in the
 	 * following code.
 	 * The same goes for their unsigned versions.
 	 */
 
-	/* Trivial Case: If the coercion is from two types that are 
+	/* Trivial Case: If the coercion is from two types that are
 	 * identical then we can blindly copy from one argument to another.*/
 	if ((vt==vtFrom))
 	{
@@ -1243,7 +1243,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			break;
 		}
 		break;
-		
+
 	case( VT_R4 ):
 		switch( vtFrom )
 		{
@@ -1606,7 +1606,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 		FIXME("Coercion from %d to %d\n", vtFrom, vt );
 		break;
 	}
-	
+
 	return res;
 }
 
@@ -1652,13 +1652,13 @@ static HRESULT WINAPI ValidateVariantType( VARTYPE vt )
 		{
 			res = DISP_E_BADVARTYPE;
 		}
-			
+
     }
     else
     {
         res = ValidateVtRange( vt );
     }
-		
+
 	return res;
 }
 
@@ -1685,13 +1685,13 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
 		{
 			res = DISP_E_BADVARTYPE;
 		}
-			
+
     }
     else
     {
         res = ValidateVtRange( vt );
     }
-		
+
 	return res;
 }
 
@@ -1766,7 +1766,7 @@ HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 	}
       }
     }
-	
+
     /*
      * Empty all the fields and mark the type as empty.
      */
@@ -1796,7 +1796,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
   if( pvargDest != pvargSrc && res == S_OK )
   {
     res = VariantClear( pvargDest );
-		
+
     if( res == S_OK )
     {
       if( V_VT(pvargSrc) & VT_BYREF )
@@ -1850,9 +1850,9 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 	      break;
 	  }
 	}
-	
+
 	V_VT(pvargDest) = V_VT(pvargSrc);
-      }      
+      }
     }
   }
 
@@ -1876,7 +1876,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 
   if( res != S_OK )
     return res;
-  
+
   if( V_VT(pvargSrc) & VT_BYREF )
   {
     VARIANTARG varg;
@@ -1927,7 +1927,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 		 * this API dereferences the inner Variants to only one depth.
 		 * If the inner Variant itself contains an
 		 * other inner variant the E_INVALIDARG error is
-		 * returned. 
+		 * returned.
 		 */
 		if( pvargSrc->n1.n2.wReserved1 & PROCESSING_INNER_VARIANT )
 		{
@@ -1944,7 +1944,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 		   * that will be passed to the VariantCopyInd function.
 		   */
 		  (V_UNION(pvargSrc,pvarVal))->n1.n2.wReserved1 |= PROCESSING_INNER_VARIANT;
-		  
+
 		  /* Dereference the inner variant.
 		   */
 		  res = VariantCopyInd( pvargDest, V_UNION(pvargSrc,pvarVal) );
@@ -2007,7 +2007,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	HRESULT res = S_OK;
 	VARIANTARG varg;
 	VariantInit( &varg );
-	
+
 	TRACE("(%p, %p, %ld, %u, %u) vt=%d\n", pvargDest, pvargSrc, lcid, wFlags, vt, V_VT(pvargSrc));
 
 	/* validate our source argument.
@@ -2052,7 +2052,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 				 */
 				VariantClear( &Variant );
 			}
-	
+
 		}
 		else
 		{
@@ -2064,7 +2064,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	/* this should not fail.
 	 */
 	VariantClear( &varg );
-	
+
 	/* set the type of the destination
 	 */
 	if ( res == S_OK )
@@ -2091,7 +2091,7 @@ HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
 	}
 
 	*pbOut = (BYTE) sIn;
-	
+
 	return S_OK;
 }
 
@@ -2110,7 +2110,7 @@ HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
 	}
 
 	*pbOut = (BYTE) lIn;
-	
+
 	return S_OK;
 }
 
@@ -2131,7 +2131,7 @@ HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
 	}
 
 	*pbOut = (BYTE) fltIn;
-	
+
 	return S_OK;
 }
 
@@ -2260,7 +2260,7 @@ HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbO
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-	
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0 , pNewString );
@@ -2284,9 +2284,9 @@ HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbO
  */
 HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > UI1_MAX || t < UI1_MIN) return DISP_E_OVERFLOW;
-   
+
    *pbOut = (BYTE)t;
    return S_OK;
 }
@@ -2299,7 +2299,7 @@ HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
 	TRACE("( 0x%08x, %p ), stub\n", bIn, psOut );
 
 	*psOut = (short) bIn;
-	
+
 	return S_OK;
 }
 
@@ -2318,7 +2318,7 @@ HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
 	}
 
 	*psOut = (short) lIn;
-	
+
 	return S_OK;
 }
 
@@ -2466,7 +2466,7 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-	
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -2490,9 +2490,9 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
  */
 HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > I2_MAX || t < I2_MIN) return DISP_E_OVERFLOW;
-   
+
    *psOut = (SHORT)t;
    return S_OK;
 }
@@ -2659,7 +2659,7 @@ HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOu
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-	
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -2683,9 +2683,9 @@ HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOu
  */
 HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > I4_MAX || t < I4_MIN) return DISP_E_OVERFLOW;
-   
+
    *plOut = (LONG)t;
    return S_OK;
 }
@@ -2834,7 +2834,7 @@ HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfl
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-	
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -2857,7 +2857,7 @@ HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfl
  */
 HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
    *pfltOut = (FLOAT)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    return S_OK;
 }
 
@@ -2991,7 +2991,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-	
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -3007,7 +3007,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
  */
 HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
    *pdblOut = (double)((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    return S_OK;
 }
 
@@ -3096,16 +3096,16 @@ HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
  * of space and/or tab characters, which are ignored.
  *
  * The formats for the date part are has follows:
- * mm/[dd/][yy]yy 
+ * mm/[dd/][yy]yy
  * [dd/]mm/[yy]yy
- * [yy]yy/mm/dd 
+ * [yy]yy/mm/dd
  * January dd[,] [yy]yy
  * dd January [yy]yy
  * [yy]yy January dd
  * Whitespace can be inserted anywhere between these tokens.
  *
  * The formats for the date and time string are has follows.
- * date[whitespace][time] 
+ * date[whitespace][time]
  * [time][whitespace]date
  *
  * These are the only characters allowed in a string representing a date and time:
@@ -3214,7 +3214,7 @@ HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
 	sprintf( pBuffer, "%d", bVal );
 
 	*pbstrOut =  StringDupAtoBstr( pBuffer );
-	
+
 	return S_OK;
 }
 
@@ -3277,7 +3277,7 @@ HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) 
 	return E_NOTIMPL;
 }
 
- 
+
 /******************************************************************************
  *		VarBstrFromDate		[OLEAUT32.114]
  *
@@ -3504,7 +3504,7 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 	}
 
 	HeapFree( GetProcessHeap(), 0, pNewString );
-	
+
 	return ret;
 }
 
@@ -3551,7 +3551,7 @@ HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
       if (cyIn.s.Hi || cyIn.s.Lo) *pboolOut = -1;
       else *pboolOut = 0;
-      
+
       return S_OK;
 }
 
@@ -3684,7 +3684,7 @@ HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOu
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-  
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -3754,9 +3754,9 @@ HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > CHAR_MAX || t < CHAR_MIN) return DISP_E_OVERFLOW;
-   
+
    *pcOut = (CHAR)t;
    return S_OK;
 }
@@ -3883,7 +3883,7 @@ HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* p
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-  
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -3964,7 +3964,7 @@ HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pu
 	/* Convert the valid string to a floating point number.
 	 */
 	dValue = atof( pNewString );
-  
+
 	/* We don't need the string anymore so free it.
 	 */
 	HeapFree( GetProcessHeap(), 0, pNewString );
@@ -3988,11 +3988,11 @@ HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pu
  */
 HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > UI2_MAX || t < UI2_MIN) return DISP_E_OVERFLOW;
-      
+
    *pusOut = (USHORT)t;
-   
+
    return S_OK;
 }
 
@@ -4136,7 +4136,7 @@ HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromCy(CY cyIn, ULONG* pulOut) {
    double t = round((((double)cyIn.s.Hi * 4294967296.0) + (double)cyIn.s.Lo) / 10000);
-   
+
    if (t > UI4_MAX || t < UI4_MIN) return DISP_E_OVERFLOW;
 
    *pulOut = (ULONG)t;
@@ -4176,7 +4176,7 @@ HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut) {
       pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
       pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
       if (lIn < 0) pcyOut->s.Hi--;
-   
+
       return S_OK;
 }
 
@@ -4189,7 +4189,7 @@ HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut) {
    pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
    if (fltIn < 0) pcyOut->s.Hi--;
-   
+
    return S_OK;
 }
 
@@ -4227,7 +4227,7 @@ HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut
 	return E_NOTIMPL;
 }
 
- 
+
 /**********************************************************************
  *              VarCyFromBool [OLEAUT32.106]
  * Convert boolean to currency
@@ -4236,7 +4236,7 @@ HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut) {
    if (boolIn < 0) pcyOut->s.Hi = -1;
    else pcyOut->s.Hi = 0;
    pcyOut->s.Lo = (ULONG)boolIn * (ULONG)10000;
-   
+
    return S_OK;
 }
 
@@ -4248,7 +4248,7 @@ HRESULT WINAPI VarCyFromI1(signed char cIn, CY* pcyOut) {
    if (cIn < 0) pcyOut->s.Hi = -1;
    else pcyOut->s.Hi = 0;
    pcyOut->s.Lo = (ULONG)cIn * (ULONG)10000;
-   
+
    return S_OK;
 }
 
@@ -4259,7 +4259,7 @@ HRESULT WINAPI VarCyFromI1(signed char cIn, CY* pcyOut) {
 HRESULT WINAPI VarCyFromUI2(USHORT usIn, CY* pcyOut) {
    pcyOut->s.Hi = 0;
    pcyOut->s.Lo = (ULONG)usIn * (ULONG)10000;
-   
+
    return S_OK;
 }
 
@@ -4271,7 +4271,7 @@ HRESULT WINAPI VarCyFromUI4(ULONG ulIn, CY* pcyOut) {
    double t = (double)ulIn * (double)10000;
    pcyOut->s.Hi = (LONG)(t / (double)4294967296.0);
    pcyOut->s.Lo = (ULONG)fmod(t, (double)4294967296.0);
-      
+
    return S_OK;
 }
 
@@ -4287,11 +4287,11 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
     struct tm t;
 
     TRACE("( 0x%x, 0x%x, %p ), stub\n", wDosDate, wDosTime, pvtime );
-    
+
     t.tm_sec = (wDosTime & 0x001f) * 2;
     t.tm_min = (wDosTime & 0x07e0) >> 5;
     t.tm_hour = (wDosTime & 0xf800) >> 11;
-    
+
     t.tm_mday = (wDosDate & 0x001f);
     t.tm_mon = (wDosDate & 0x01e0) >> 5;
     t.tm_year = ((wDosDate & 0xfe00) >> 9) + 1980;
@@ -4625,7 +4625,7 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
 /**********************************************************************
  *              VarBstrCmp [OLEAUT32.440]
  *
- * flags can be: 
+ * flags can be:
  *   NORM_IGNORECASE, NORM_IGNORENONSPACE, NORM_IGNORESYMBOLS
  *   NORM_IGNORESTRINGWIDTH, NORM_IGNOREKANATYPE, NORM_IGNOREKASHIDA
  *

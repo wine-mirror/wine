@@ -1,4 +1,4 @@
-/* 
+/*
  *   Control
  *   Copyright (C) 1998 by Marcel Baur <mbaur@g26.ethz.ch>
  *

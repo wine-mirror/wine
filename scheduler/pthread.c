@@ -89,8 +89,8 @@ void PTHREAD_init_done(void)
 extern pid_t LIBC_FORK(void);
 
 #define LIBC_SIGACTION __sigaction
-extern int LIBC_SIGACTION(int signum, 
-                         const struct sigaction *act, 
+extern int LIBC_SIGACTION(int signum,
+                         const struct sigaction *act,
                          struct sigaction *oldact);
 
 /* NOTE: This is a truly extremely incredibly ugly hack!
@@ -98,7 +98,7 @@ extern int LIBC_SIGACTION(int signum,
 
 /* assume that pthread_mutex_t has room for at least one pointer,
  * and hope that the users of pthread_mutex_t considers it opaque
- * (never checks what's in it) 
+ * (never checks what's in it)
  * also: assume that static initializer sets pointer to NULL
  */
 typedef struct {
@@ -129,11 +129,11 @@ void __pthread_initialize(void)
 struct pthread_thread_init {
 	 void* (*start_routine)(void*);
 	 void* arg;
-}; 
+};
 
 static DWORD CALLBACK pthread_thread_start(LPVOID data)
 {
-  struct pthread_thread_init init = *(struct pthread_thread_init*)data; 
+  struct pthread_thread_init init = *(struct pthread_thread_init*)data;
   HeapFree(GetProcessHeap(),0,data);
   return (DWORD)init.start_routine(init.arg);
 }
@@ -142,10 +142,10 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
         (*start_routine)(void *), void* arg)
 {
   HANDLE hThread;
-  struct pthread_thread_init* idata = HeapAlloc(GetProcessHeap(), 0, 
+  struct pthread_thread_init* idata = HeapAlloc(GetProcessHeap(), 0,
 		sizeof(struct pthread_thread_init));
 
-  idata->start_routine = start_routine; 
+  idata->start_routine = start_routine;
   idata->arg = arg;
   hThread = CreateThread(NULL, 0, pthread_thread_start, idata, 0, thread);
 
@@ -156,29 +156,29 @@ int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
     HeapFree(GetProcessHeap(),0,idata); /* free idata struct on failure */
     return EAGAIN;
   }
- 
+
   return 0;
 }
- 
+
 int pthread_cancel(pthread_t thread)
 {
   HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
-    
+
   if(!TerminateThread(hThread, 0))
   {
     CloseHandle(hThread);
     return EINVAL;      /* return error */
   }
- 
+
   CloseHandle(hThread);
- 
+
   return 0;             /* return success */
-}   
+}
 
 int pthread_join(pthread_t thread, void **value_ptr)
 {
   HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
- 
+
   WaitForSingleObject(hThread, INFINITE);
   if(!GetExitCodeThread(hThread, (LPDWORD)value_ptr))
   {
@@ -188,7 +188,7 @@ int pthread_join(pthread_t thread, void **value_ptr)
 
   CloseHandle(hThread);
   return 0;
-}   
+}
 
 /*FIXME: not sure what to do with this one... */
 int pthread_detach(pthread_t thread)
@@ -211,7 +211,7 @@ int pthread_attr_setscope(pthread_attr_t *attr, int scope)
   P_OUTPUT("FIXME:pthread_attr_setscope\n");
   return 0; /* return success */
 }
-  
+
 /* FIXME: no win32 equivalent for schedule param */
 int pthread_attr_setschedparam(pthread_attr_t *attr,
     const struct sched_param *param)
@@ -318,7 +318,7 @@ static void mutex_real_init( pthread_mutex_t *mutex )
 int __pthread_mutex_lock(pthread_mutex_t *mutex)
 {
   if (!init_done) return 0;
-  if (!((wine_mutex)mutex)->critsect) 
+  if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
   EnterCriticalSection(((wine_mutex)mutex)->critsect);
@@ -329,7 +329,7 @@ strong_alias(__pthread_mutex_lock, pthread_mutex_lock);
 int __pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
   if (!init_done) return 0;
-  if (!((wine_mutex)mutex)->critsect) 
+  if (!((wine_mutex)mutex)->critsect)
     mutex_real_init( mutex );
 
   if (!TryEnterCriticalSection(((wine_mutex)mutex)->critsect)) {

@@ -87,9 +87,9 @@ HRESULT WINAPI DispInvoke(
 /******************************************************************************
  *		DispGetIDsOfNames (OLEAUT32.29)
  *
- * Convert a set of names to dispids, based on information 
+ * Convert a set of names to dispids, based on information
  * contained in object's type library.
- * 
+ *
  * NOTES
  * 		- Defers to ITypeInfo::GetIDsOfNames()
  *

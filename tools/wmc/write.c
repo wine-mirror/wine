@@ -443,7 +443,7 @@ static void write_rcinline(FILE *fp)
 
 	for(lbp = lanblockhead; lbp; lbp = lbp->next)
 	{
-		unsigned offs = 4 * (lbp->nblk * 3 + 1); 
+		unsigned offs = 4 * (lbp->nblk * 3 + 1);
 		fprintf(fp, "\n1 MESSAGETABLE\n");
 		fprintf(fp, "LANGUAGE 0x%x, 0x%x\n", lbp->lan & 0x3ff, lbp->lan >> 10);
 		fprintf(fp, "{\n");

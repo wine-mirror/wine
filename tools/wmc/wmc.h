@@ -33,7 +33,7 @@
 #define WMC_RELEASEDATE		"(12-Jun-2000)"
 
 #define WMC_STRINGIZE(a)	#a
-#define WMC_VERSIONIZE(a,b,c)	WMC_STRINGIZE(a) "." WMC_STRINGIZE(b) "." WMC_STRINGIZE(c)  
+#define WMC_VERSIONIZE(a,b,c)	WMC_STRINGIZE(a) "." WMC_STRINGIZE(b) "." WMC_STRINGIZE(c)
 #define WMC_VERSION		WMC_VERSIONIZE(WMC_MAJOR_VERSION, WMC_MINOR_VERSION, WMC_MICRO_VERSION)
 #define WMC_FULLVERSION 	WMC_VERSION " " WMC_RELEASEDATE
 
@@ -62,7 +62,7 @@ extern int rcinline;
 extern char *output_name;
 extern char *input_name;
 extern char *header_name;
-extern char *cmdline;			
+extern char *cmdline;
 extern time_t now;
 
 extern int line_number;

@@ -162,7 +162,7 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
     if (SysColorPens[index])
     {
         SYSCOLOR_MakeObjectSystem(SysColorPens[index], FALSE);
-	DeleteObject( SysColorPens[index] ); 
+	DeleteObject( SysColorPens[index] );
     }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
     SYSCOLOR_MakeObjectSystem(SysColorPens[index], TRUE);
@@ -193,7 +193,7 @@ void SYSCOLOR_Init(void)
       {
 	DWORD dwDataSize = sizeof(buffer);
 	if (!(RegQueryValueExA(hKey,(LPSTR)p[i*2], 0, 0, buffer, &dwDataSize)))
-	  if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) 
+	  if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3)
 	    bOk = TRUE;
       }
 
@@ -203,13 +203,13 @@ void SYSCOLOR_Init(void)
 	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) == 3)
 	  bOk = TRUE;
       }
-      
+
       /* last chance, take the default */
       if (!bOk)
       { int iNumColors = sscanf( p[i*2+1], " %d %d %d", &r, &g, &b );
 	assert (iNumColors==3);
       }
-      
+
       SYSCOLOR_SetColor( i, RGB(r,g,b) );
     }
     if (!bNoReg)
@@ -290,7 +290,7 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
  *		SetSysColorsTemp (USER32.@)
  *
  * UNDOCUMENTED !!
- * 
+ *
  * Called by W98SE desk.cpl Control Panel Applet:
  * handle = SetSysColorsTemp(ptr, ptr, nCount);     ("set" call)
  * result = SetSysColorsTemp(NULL, NULL, handle);   ("restore" call)

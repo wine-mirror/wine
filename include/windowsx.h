@@ -17,7 +17,7 @@
 
 #ifndef _INC_WINDOWSX
 #define _INC_WINDOWSX
-	
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -239,7 +239,7 @@ extern "C" {
 	((int)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(data)))
 
 #define ComboBox_AddString(hwndCtl, lpsz) \
-	((int)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))    
+	((int)SendMessage((hwndCtl), CB_ADDSTRING, 0L, (LPARAM)(LPCTSTR)(lpsz)))
 
 #define ComboBox_DeleteString(hwndCtl, index) \
 	((int)SendMessage((hwndCtl), CB_DELETESTRING, (WPARAM)(int)(index), 0L))
@@ -254,7 +254,7 @@ extern "C" {
 	((int)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(data)))
 
 #define ComboBox_FindString(hwndCtl, indexStart, lpszFind) \
-	((int)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind))) 
+	((int)SendMessage((hwndCtl), CB_FINDSTRING, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
 
 #define ComboBox_FindStringExact(hwndCtl, indexStart, lpszFind) \
 	((int)SendMessage((hwndCtl), CB_FINDSTRINGEXACT, (WPARAM)(int)(indexStart), (LPARAM)(LPCTSTR)(lpszFind)))
@@ -1384,7 +1384,7 @@ extern "C" {
 #define FORWARD_WM_DRAWITEM(hwnd, lpDrawItem, fn) \
         (void)(fn)((hwnd), WM_DRAWITEM, (WPARAM)(((const DRAWITEMSTRUCT *)lpDrawItem)->CtlID), (LPARAM)(const DRAWITEMSTRUCT *)(lpDrawItem))
 
-				 				 
+
 /****** C runtime porting macros ****************************************/
 
 #define _ncalloc    calloc
@@ -1432,6 +1432,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-				
+
 #endif
 

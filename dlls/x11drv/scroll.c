@@ -69,7 +69,7 @@ static BOOL fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
 
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
- * 
+ *
  * Only the hrgnUpdate is returned in device coordinates.
  * rcUpdate must be returned in logical coordinates to comply with win API.
  * FIXME: the doc explicitly states the opposite, to be checked
@@ -141,7 +141,7 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
 /*************************************************************************
  *		ScrollWindowEx   (X11DRV.@)
  *
- * Note: contrary to what the doc says, pixels that are scrolled from the 
+ * Note: contrary to what the doc says, pixels that are scrolled from the
  *      outside of clipRect to the inside are NOT painted.
  */
 INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,

@@ -59,7 +59,7 @@ BOOL WINAPI DOSVM_inport( int port, int size, DWORD *res )
     case 0xC6:
     case 0xC8:
     case 0xCA:
-    case 0xCC:    
+    case 0xCC:
     case 0xCE:
     case 0x87:
     case 0x83:
@@ -98,7 +98,7 @@ BOOL WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0x20:
         DOSVM_PIC_ioport_out( port, (BYTE)value );
         break;
-    case 0x226:	
+    case 0x226:
     case 0x22c:
         SB_ioport_out( port, (BYTE)value );
         break;
@@ -120,7 +120,7 @@ BOOL WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0xC6:
     case 0xC8:
     case 0xCA:
-    case 0xCC:    
+    case 0xCC:
     case 0xCE:
     case 0x87:
     case 0x83:

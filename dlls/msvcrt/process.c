@@ -215,7 +215,7 @@ int _cwait(int *status, int pid, int action)
 /*********************************************************************
  *		_execl (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execl(const char* name, const char* arg0, ...)
@@ -237,7 +237,7 @@ int _execl(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execlp (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execlp(const char* name, const char* arg0, ...)
@@ -262,7 +262,7 @@ int _execlp(const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_execv (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execv(const char* name, char* const* argv)
@@ -273,7 +273,7 @@ int _execv(const char* name, char* const* argv)
 /*********************************************************************
  *		_execve (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execve(const char* name, char* const* argv, const char* const* envv)
@@ -284,7 +284,7 @@ int _execve(const char* name, char* const* argv, const char* const* envv)
 /*********************************************************************
  *		_execvpe (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execvpe(const char* name, char* const* argv, const char* const* envv)
@@ -299,7 +299,7 @@ int _execvpe(const char* name, char* const* argv, const char* const* envv)
 /*********************************************************************
  *		_execvp (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _execvp(const char* name, char* const* argv)
@@ -310,7 +310,7 @@ int _execvp(const char* name, char* const* argv)
 /*********************************************************************
  *		_spawnl (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnl(int flags, const char* name, const char* arg0, ...)
@@ -332,7 +332,7 @@ int _spawnl(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnlp (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnlp(int flags, const char* name, const char* arg0, ...)
@@ -357,7 +357,7 @@ int _spawnlp(int flags, const char* name, const char* arg0, ...)
 /*********************************************************************
  *		_spawnve (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnve(int flags, const char* name, const char* const* argv,
@@ -385,7 +385,7 @@ int _spawnve(int flags, const char* name, const char* const* argv,
 /*********************************************************************
  *		_spawnv (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnv(int flags, const char* name, const char* const* argv)
@@ -396,7 +396,7 @@ int _spawnv(int flags, const char* name, const char* const* argv)
 /*********************************************************************
  *		_spawnvpe (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnvpe(int flags, const char* name, const char* const* argv,
@@ -410,7 +410,7 @@ int _spawnvpe(int flags, const char* name, const char* const* argv,
 /*********************************************************************
  *		_spawnvp (MSVCRT.@)
  *
- * Like on Windows, this function does not handle arguments with spaces 
+ * Like on Windows, this function does not handle arguments with spaces
  * or double-quotes.
  */
 int _spawnvp(int flags, const char* name, const char* const* argv)

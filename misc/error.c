@@ -1,5 +1,5 @@
 /*
- * Log internal errors 
+ * Log internal errors
  *
  * Copyright 1997 Andrew Taylor
  *
@@ -199,7 +199,7 @@ static const struct {
 /***********************************************************************
 *	GetErrorString (internal)
 */
-static const char *GetErrorString(UINT16 uErr) 
+static const char *GetErrorString(UINT16 uErr)
 {
   static char buffer[80];
   unsigned int n;
@@ -270,7 +270,7 @@ void WINAPI HandleParamError( CONTEXT86 *context )
 	UINT16 uErr = LOWORD(context->Ebx);
         FARPROC16 lpfn = (FARPROC16)MAKESEGPTR( context->SegCs, context->Eip );
         LPVOID lpvParam = (LPVOID)MAKELONG( LOWORD(context->Eax), LOWORD(context->Ecx) );
-	
+
 	LogParamError16( uErr, lpfn, lpvParam );
 
 	if (!(uErr & ERR_WARNING))

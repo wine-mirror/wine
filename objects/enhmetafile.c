@@ -1,7 +1,7 @@
 /*
  * Enhanced metafile functions
  * Copyright 1998 Douglas Ridgway
- *           1999 Huw D M Davies 
+ *           1999 Huw D M Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,17 @@
  *
  * NOTES:
  *
- * The enhanced format consists of the following elements: 
+ * The enhanced format consists of the following elements:
  *
- *    A header 
- *    A table of handles to GDI objects 
- *    An array of metafile records 
- *    A private palette 
+ *    A header
+ *    A table of handles to GDI objects
+ *    An array of metafile records
+ *    A private palette
  *
- * 
- *  The standard format consists of a header and an array of metafile records. 
  *
- */ 
+ *  The standard format consists of a header and an array of metafile records.
+ *
+ */
 
 #include "config.h"
 #include "wine/port.h"
@@ -112,7 +112,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
 {
     ENHMETAHEADER *emh;
     HANDLE hMapping;
-    
+
     hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
     emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
     CloseHandle( hMapping );
@@ -134,7 +134,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HANDLE hFile )
  *
  *
  */
-HENHMETAFILE WINAPI GetEnhMetaFileA( 
+HENHMETAFILE WINAPI GetEnhMetaFileA(
 	     LPCSTR lpszMetaFile  /* [in] filename of enhanced metafile */
     )
 {
@@ -156,7 +156,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
  *          GetEnhMetaFileW  (GDI32.@)
  */
 HENHMETAFILE WINAPI GetEnhMetaFileW(
-             LPCWSTR lpszMetaFile)  /* [in] filename of enhanced metafile */ 
+             LPCWSTR lpszMetaFile)  /* [in] filename of enhanced metafile */
 {
     HENHMETAFILE hmf;
     HANDLE hFile;
@@ -176,13 +176,13 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
  *        GetEnhMetaFileHeader  (GDI32.@)
  *
  *  If buf is NULL, returns the size of buffer required.
- *  Otherwise, copy up to bufsize bytes of enhanced metafile header into 
+ *  Otherwise, copy up to bufsize bytes of enhanced metafile header into
  *  buf.
  */
-UINT WINAPI GetEnhMetaFileHeader( 
+UINT WINAPI GetEnhMetaFileHeader(
        HENHMETAFILE hmf,   /* [in] enhanced metafile */
        UINT bufsize,       /* [in] size of buffer */
-       LPENHMETAHEADER buf /* [out] buffer */ 
+       LPENHMETAHEADER buf /* [out] buffer */
     )
 {
     LPENHMETAHEADER emh;
@@ -201,9 +201,9 @@ UINT WINAPI GetEnhMetaFileHeader(
 /*****************************************************************************
  *          GetEnhMetaFileDescriptionA  (GDI32.@)
  */
-UINT WINAPI GetEnhMetaFileDescriptionA( 
+UINT WINAPI GetEnhMetaFileDescriptionA(
        HENHMETAFILE hmf, /* [in] enhanced metafile */
-       UINT size,        /* [in] size of buf */ 
+       UINT size,        /* [in] size of buf */
        LPSTR buf         /* [out] buffer to receive description */
     )
 {
@@ -226,15 +226,15 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
 /*****************************************************************************
  *          GetEnhMetaFileDescriptionW  (GDI32.@)
  *
- *  Copies the description string of an enhanced metafile into a buffer 
+ *  Copies the description string of an enhanced metafile into a buffer
  *  _buf_.
  *
  *  If _buf_ is NULL, returns size of _buf_ required. Otherwise, returns
  *  number of characters copied.
  */
-UINT WINAPI GetEnhMetaFileDescriptionW( 
+UINT WINAPI GetEnhMetaFileDescriptionW(
        HENHMETAFILE hmf, /* [in] enhanced metafile */
-       UINT size,        /* [in] size of buf */ 
+       UINT size,        /* [in] size of buf */
        LPWSTR buf        /* [out] buffer to receive description */
     )
 {
@@ -265,10 +265,10 @@ HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
  *
  */
 UINT WINAPI GetEnhMetaFileBits(
-    HENHMETAFILE hmf, 
-    UINT bufsize, 
-    LPBYTE buf  
-) 
+    HENHMETAFILE hmf,
+    UINT bufsize,
+    LPBYTE buf
+)
 {
     LPENHMETAHEADER emh = EMF_GetEnhMetaHeader( hmf );
     UINT size;
@@ -294,23 +294,23 @@ UINT WINAPI GetEnhMetaFileBits(
  *    Many unimplemented records.
  *    No error handling on record play failures (ie checking return codes)
  */
-BOOL WINAPI PlayEnhMetaFileRecord( 
+BOOL WINAPI PlayEnhMetaFileRecord(
      HDC hdc,                   /* [in] device context in which to render EMF record */
      LPHANDLETABLE handletable, /* [in] array of handles to be used in rendering record */
      const ENHMETARECORD *mr,   /* [in] EMF record to render */
      UINT handles               /* [in] size of handle array */
-     ) 
+     )
 {
   int type;
   TRACE(
-	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n", 
+	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n",
 	  hdc, handletable, mr, handles);
   if (!mr) return FALSE;
 
   type = mr->iType;
 
   TRACE(" type=%d\n", type);
-  switch(type) 
+  switch(type)
     {
     case EMR_HEADER:
       break;
@@ -322,7 +322,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         /* In an enhanced metafile, there can be both public and private GDI comments */
         GdiComment( hdc, lpGdiComment->cbData, lpGdiComment->Data );
         break;
-      } 
+      }
     case EMR_SETMAPMODE:
       {
 	PEMRSETMAPMODE pSetMapMode = (PEMRSETMAPMODE) mr;
@@ -451,7 +451,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATEPEN:
       {
 	PEMRCREATEPEN pCreatePen = (PEMRCREATEPEN) mr;
-	(handletable->objectHandle)[pCreatePen->ihPen] = 
+	(handletable->objectHandle)[pCreatePen->ihPen] =
 	  CreatePenIndirect(&pCreatePen->lopn);
 	break;
       }
@@ -466,22 +466,22 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	if(pPen->offBmi || pPen->offBits)
 	  FIXME("EMR_EXTCREATEPEN: Need to copy brush bitmap\n");
 
-	(handletable->objectHandle)[pPen->ihPen] = 
-	  ExtCreatePen(pPen->elp.elpPenStyle, pPen->elp.elpWidth, &lb, 
+	(handletable->objectHandle)[pPen->ihPen] =
+	  ExtCreatePen(pPen->elp.elpPenStyle, pPen->elp.elpWidth, &lb,
 		       pPen->elp.elpNumEntries, pPen->elp.elpStyleEntry);
 	break;
       }
     case EMR_CREATEBRUSHINDIRECT:
       {
 	PEMRCREATEBRUSHINDIRECT pBrush = (PEMRCREATEBRUSHINDIRECT) mr;
-	(handletable->objectHandle)[pBrush->ihBrush] = 
+	(handletable->objectHandle)[pBrush->ihBrush] =
 	  CreateBrushIndirect(&pBrush->lb);
 	break;
       }
     case EMR_EXTCREATEFONTINDIRECTW:
       {
 	PEMREXTCREATEFONTINDIRECTW pFont = (PEMREXTCREATEFONTINDIRECTW) mr;
-	(handletable->objectHandle)[pFont->ihFont] = 
+	(handletable->objectHandle)[pFont->ihFont] =
 	  CreateFontIndirectW(&pFont->elfw.elfLogFont);
 	break;
       }
@@ -667,7 +667,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	PEMRCREATEPALETTE lpCreatePal = (PEMRCREATEPALETTE)mr;
 
-	(handletable->objectHandle)[ lpCreatePal->ihPal ] = 
+	(handletable->objectHandle)[ lpCreatePal->ihPal ] =
 		CreatePalette( &lpCreatePal->lgpl );
 
 	break;
@@ -717,7 +717,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_POLYBEZIER:
       {
-        PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr; 
+        PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr;
         PolyBezier(hdc, (const LPPOINT)lpPolyBez->aptl, (UINT)lpPolyBez->cptl);
         break;
       }
@@ -733,7 +733,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRPOLYLINE lpPolyLine = (PEMRPOLYLINE)mr;
         Polyline(hdc, (const LPPOINT)lpPolyLine->aptl, (UINT)lpPolyLine->cptl);
-        break; 
+        break;
       }
 
     case EMR_POLYBEZIERTO:
@@ -741,7 +741,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         PEMRPOLYBEZIERTO lpPolyBezierTo = (PEMRPOLYBEZIERTO)mr;
         PolyBezierTo( hdc, (const LPPOINT)lpPolyBezierTo->aptl,
 		      (UINT)lpPolyBezierTo->cptl );
-        break; 
+        break;
       }
 
     case EMR_POLYLINETO:
@@ -758,9 +758,9 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* NB Points at pPolyPolyline->aPolyCounts + pPolyPolyline->nPolys */
 
         PolyPolyline(hdc, (LPPOINT)(pPolyPolyline->aPolyCounts +
-				    pPolyPolyline->nPolys), 
-		     pPolyPolyline->aPolyCounts, 
-		     pPolyPolyline->nPolys ); 
+				    pPolyPolyline->nPolys),
+		     pPolyPolyline->aPolyCounts,
+		     pPolyPolyline->nPolys );
 
         break;
       }
@@ -781,21 +781,21 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRSETBRUSHORGEX lpSetBrushOrgEx = (PEMRSETBRUSHORGEX)mr;
 
-        SetBrushOrgEx( hdc, 
-                       (INT)lpSetBrushOrgEx->ptlOrigin.x, 
-                       (INT)lpSetBrushOrgEx->ptlOrigin.y, 
+        SetBrushOrgEx( hdc,
+                       (INT)lpSetBrushOrgEx->ptlOrigin.x,
+                       (INT)lpSetBrushOrgEx->ptlOrigin.y,
                        NULL );
 
         break;
       }
- 
+
     case EMR_SETPIXELV:
       {
         PEMRSETPIXELV lpSetPixelV = (PEMRSETPIXELV)mr;
 
-        SetPixelV( hdc, 
-                   (INT)lpSetPixelV->ptlPixel.x, 
-                   (INT)lpSetPixelV->ptlPixel.y, 
+        SetPixelV( hdc,
+                   (INT)lpSetPixelV->ptlPixel.x,
+                   (INT)lpSetPixelV->ptlPixel.y,
                    lpSetPixelV->crColor );
 
         break;
@@ -804,7 +804,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_SETMAPPERFLAGS:
       {
         PEMRSETMAPPERFLAGS lpSetMapperFlags = (PEMRSETMAPPERFLAGS)mr;
-   
+
         SetMapperFlags( hdc, lpSetMapperFlags->dwFlags );
 
         break;
@@ -812,7 +812,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_SETCOLORADJUSTMENT:
       {
-        PEMRSETCOLORADJUSTMENT lpSetColorAdjust = (PEMRSETCOLORADJUSTMENT)mr; 
+        PEMRSETCOLORADJUSTMENT lpSetColorAdjust = (PEMRSETCOLORADJUSTMENT)mr;
 
         SetColorAdjustment( hdc, &lpSetColorAdjust->ColorAdjustment );
 
@@ -823,21 +823,21 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMROFFSETCLIPRGN lpOffsetClipRgn = (PEMROFFSETCLIPRGN)mr;
 
-        OffsetClipRgn( hdc, 
+        OffsetClipRgn( hdc,
                        (INT)lpOffsetClipRgn->ptlOffset.x,
                        (INT)lpOffsetClipRgn->ptlOffset.y );
 
         break;
-      } 
+      }
 
     case EMR_EXCLUDECLIPRECT:
       {
         PEMREXCLUDECLIPRECT lpExcludeClipRect = (PEMREXCLUDECLIPRECT)mr;
 
-        ExcludeClipRect( hdc, 
-                         lpExcludeClipRect->rclClip.left, 
-                         lpExcludeClipRect->rclClip.top, 
-                         lpExcludeClipRect->rclClip.right, 
+        ExcludeClipRect( hdc,
+                         lpExcludeClipRect->rclClip.left,
+                         lpExcludeClipRect->rclClip.top,
+                         lpExcludeClipRect->rclClip.right,
                          lpExcludeClipRect->rclClip.bottom  );
 
          break;
@@ -847,16 +847,16 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRSCALEVIEWPORTEXTEX lpScaleViewportExtEx = (PEMRSCALEVIEWPORTEXTEX)mr;
 
-        ScaleViewportExtEx( hdc, 
+        ScaleViewportExtEx( hdc,
                             lpScaleViewportExtEx->xNum,
                             lpScaleViewportExtEx->xDenom,
                             lpScaleViewportExtEx->yNum,
                             lpScaleViewportExtEx->yDenom,
                             NULL );
-     
+
         break;
       }
- 
+
     case EMR_SCALEWINDOWEXTEX:
       {
         PEMRSCALEWINDOWEXTEX lpScaleWindowExtEx = (PEMRSCALEWINDOWEXTEX)mr;
@@ -865,7 +865,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
                           lpScaleWindowExtEx->xNum,
                           lpScaleWindowExtEx->xDenom,
                           lpScaleWindowExtEx->yNum,
-                          lpScaleWindowExtEx->yDenom, 
+                          lpScaleWindowExtEx->yDenom,
                           NULL );
 
         break;
@@ -883,21 +883,21 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_ANGLEARC:
       {
-        PEMRANGLEARC lpAngleArc = (PEMRANGLEARC)mr; 
+        PEMRANGLEARC lpAngleArc = (PEMRANGLEARC)mr;
 
-        AngleArc( hdc, 
+        AngleArc( hdc,
                  (INT)lpAngleArc->ptlCenter.x, (INT)lpAngleArc->ptlCenter.y,
-                 lpAngleArc->nRadius, lpAngleArc->eStartAngle, 
+                 lpAngleArc->nRadius, lpAngleArc->eStartAngle,
                  lpAngleArc->eSweepAngle );
 
         break;
       }
- 
-    case EMR_ROUNDRECT: 
+
+    case EMR_ROUNDRECT:
       {
         PEMRROUNDRECT lpRoundRect = (PEMRROUNDRECT)mr;
 
-        RoundRect( hdc, 
+        RoundRect( hdc,
                    lpRoundRect->rclBox.left,
                    lpRoundRect->rclBox.top,
                    lpRoundRect->rclBox.right,
@@ -905,24 +905,24 @@ BOOL WINAPI PlayEnhMetaFileRecord(
                    lpRoundRect->szlCorner.cx,
                    lpRoundRect->szlCorner.cy );
 
-        break; 
+        break;
       }
 
     case EMR_ARC:
       {
         PEMRARC lpArc = (PEMRARC)mr;
 
-        Arc( hdc,  
+        Arc( hdc,
              (INT)lpArc->rclBox.left,
              (INT)lpArc->rclBox.top,
              (INT)lpArc->rclBox.right,
              (INT)lpArc->rclBox.bottom,
-             (INT)lpArc->ptlStart.x, 
+             (INT)lpArc->ptlStart.x,
              (INT)lpArc->ptlStart.y,
              (INT)lpArc->ptlEnd.x,
              (INT)lpArc->ptlEnd.y );
 
-        break;  
+        break;
       }
 
     case EMR_CHORD:
@@ -959,7 +959,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
        break;
       }
 
-    case EMR_ARCTO: 
+    case EMR_ARCTO:
       {
         PEMRARC lpArcTo = (PEMRARC)mr;
 
@@ -980,7 +980,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMREXTFLOODFILL lpExtFloodFill = (PEMREXTFLOODFILL)mr;
 
-        ExtFloodFill( hdc, 
+        ExtFloodFill( hdc,
                       (INT)lpExtFloodFill->ptlStart.x,
                       (INT)lpExtFloodFill->ptlStart.y,
                       lpExtFloodFill->crColor,
@@ -992,13 +992,13 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYDRAW:
       {
         PEMRPOLYDRAW lpPolyDraw = (PEMRPOLYDRAW)mr;
-        PolyDraw( hdc, 
+        PolyDraw( hdc,
                   (const LPPOINT)lpPolyDraw->aptl,
                   lpPolyDraw->abTypes,
                   (INT)lpPolyDraw->cptl );
- 
+
         break;
-      } 
+      }
 
     case EMR_SETARCDIRECTION:
       {
@@ -1012,7 +1012,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         PEMRSETMITERLIMIT lpSetMiterLimit = (PEMRSETMITERLIMIT)mr;
         SetMiterLimit( hdc, lpSetMiterLimit->eMiterLimit, NULL );
         break;
-      } 
+      }
 
     case EMR_BEGINPATH:
       {
@@ -1020,7 +1020,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         break;
       }
 
-    case EMR_ENDPATH: 
+    case EMR_ENDPATH:
       {
         EndPath( hdc );
         break;
@@ -1055,7 +1055,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_FLATTENPATH:
       {
-        FlattenPath( hdc ); 
+        FlattenPath( hdc );
         break;
       }
 
@@ -1071,7 +1071,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         SelectClipPath( hdc, (INT)lpSelectClipPath->iMode );
         break;
       }
- 
+
     case EMR_ABORTPATH:
       {
         AbortPath( hdc );
@@ -1081,15 +1081,15 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATECOLORSPACE:
       {
         PEMRCREATECOLORSPACE lpCreateColorSpace = (PEMRCREATECOLORSPACE)mr;
-        (handletable->objectHandle)[lpCreateColorSpace->ihCS] = 
-           CreateColorSpaceA( &lpCreateColorSpace->lcs ); 
+        (handletable->objectHandle)[lpCreateColorSpace->ihCS] =
+           CreateColorSpaceA( &lpCreateColorSpace->lcs );
         break;
       }
 
     case EMR_SETCOLORSPACE:
       {
-        PEMRSETCOLORSPACE lpSetColorSpace = (PEMRSETCOLORSPACE)mr; 
-        SetColorSpace( hdc, 
+        PEMRSETCOLORSPACE lpSetColorSpace = (PEMRSETCOLORSPACE)mr;
+        SetColorSpace( hdc,
                        (handletable->objectHandle)[lpSetColorSpace->ihCS] );
         break;
       }
@@ -1098,7 +1098,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
         PEMRDELETECOLORSPACE lpDeleteColorSpace = (PEMRDELETECOLORSPACE)mr;
         DeleteColorSpace( (handletable->objectHandle)[lpDeleteColorSpace->ihCS] );
-        break; 
+        break;
       }
 
     case EMR_SETICMMODE:
@@ -1108,26 +1108,26 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         break;
       }
 
-    case EMR_PIXELFORMAT: 
+    case EMR_PIXELFORMAT:
       {
         INT iPixelFormat;
         PEMRPIXELFORMAT lpPixelFormat = (PEMRPIXELFORMAT)mr;
 
         iPixelFormat = ChoosePixelFormat( hdc, &lpPixelFormat->pfd );
-        SetPixelFormat( hdc, iPixelFormat, &lpPixelFormat->pfd ); 
-         
+        SetPixelFormat( hdc, iPixelFormat, &lpPixelFormat->pfd );
+
         break;
       }
 
-    case EMR_SETPALETTEENTRIES:  
+    case EMR_SETPALETTEENTRIES:
       {
         PEMRSETPALETTEENTRIES lpSetPaletteEntries = (PEMRSETPALETTEENTRIES)mr;
 
         SetPaletteEntries( (handletable->objectHandle)[lpSetPaletteEntries->ihPal],
                            (UINT)lpSetPaletteEntries->iStart,
                            (UINT)lpSetPaletteEntries->cEntries,
-                           lpSetPaletteEntries->aPalEntries ); 
-                           
+                           lpSetPaletteEntries->aPalEntries );
+
         break;
       }
 
@@ -1146,22 +1146,22 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         PEMRCREATEDIBPATTERNBRUSHPT lpCreate = (PEMRCREATEDIBPATTERNBRUSHPT)mr;
 
         /* This is a BITMAPINFO struct followed directly by bitmap bits */
-        LPVOID lpPackedStruct = HeapAlloc( GetProcessHeap(), 
-                                           0, 
+        LPVOID lpPackedStruct = HeapAlloc( GetProcessHeap(),
+                                           0,
                                            lpCreate->cbBmi + lpCreate->cbBits );
         /* Now pack this structure */
-        memcpy( lpPackedStruct, 
+        memcpy( lpPackedStruct,
                 ((BYTE*)lpCreate) + lpCreate->offBmi,
-                lpCreate->cbBmi ); 
+                lpCreate->cbBmi );
         memcpy( ((BYTE*)lpPackedStruct) + lpCreate->cbBmi,
                 ((BYTE*)lpCreate) + lpCreate->offBits,
                 lpCreate->cbBits );
 
-        (handletable->objectHandle)[lpCreate->ihBrush] = 
+        (handletable->objectHandle)[lpCreate->ihBrush] =
            CreateDIBPatternBrushPt( lpPackedStruct,
-                                    (UINT)lpCreate->iUsage ); 
+                                    (UINT)lpCreate->iUsage );
 
-        break; 
+        break;
       }
 
     case EMR_CREATEMONOBRUSH:
@@ -1490,7 +1490,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_GLSRECORD:
     case EMR_GLSBOUNDEDRECORD:
     default:
-      /* From docs: If PlayEnhMetaFileRecord doesn't recognize a 
+      /* From docs: If PlayEnhMetaFileRecord doesn't recognize a
                     record then ignore and return TRUE. */
       FIXME("type %d is unimplemented\n", type);
       break;
@@ -1505,7 +1505,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
  *
  *  Walk an enhanced metafile, calling a user-specified function _EnhMetaFunc_
  *  for each
- *  record. Returns when either every record has been used or 
+ *  record. Returns when either every record has been used or
  *  when _EnhMetaFunc_ returns FALSE.
  *
  *
@@ -1516,10 +1516,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
  * BUGS
  *   Ignores rect.
  */
-BOOL WINAPI EnumEnhMetaFile( 
+BOOL WINAPI EnumEnhMetaFile(
      HDC hdc,                /* [in] device context to pass to _EnhMetaFunc_ */
      HENHMETAFILE hmf,       /* [in] EMF to walk */
-     ENHMFENUMPROC callback, /* [in] callback function */ 
+     ENHMFENUMPROC callback, /* [in] callback function */
      LPVOID data,            /* [in] optional data for callback function */
      const RECT *lpRect      /* [in] bounding rectangle for rendered metafile */
     )
@@ -1633,7 +1633,7 @@ static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
 {
     return PlayEnhMetaFileRecord(hdc, ht, emr, handles);
 }
-						
+
 /**************************************************************************
  *    PlayEnhMetaFile  (GDI32.@)
  *
@@ -1641,7 +1641,7 @@ static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
  *    in device context hdc.
  *
  */
-BOOL WINAPI PlayEnhMetaFile( 
+BOOL WINAPI PlayEnhMetaFile(
        HDC hdc,           /* [in] DC to render into */
        HENHMETAFILE hmf,  /* [in] metafile to render */
        const RECT *lpRect /* [in] rectangle to place metafile inside */
@@ -1664,10 +1664,10 @@ BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf)
 /*****************************************************************************
  *  CopyEnhMetaFileA (GDI32.@)  Duplicate an enhanced metafile
  *
- *   
+ *
  */
 HENHMETAFILE WINAPI CopyEnhMetaFileA(
-    HENHMETAFILE hmfSrc, 
+    HENHMETAFILE hmfSrc,
     LPCSTR file)
 {
     ENHMETAHEADER *emrSrc = EMF_GetEnhMetaHeader( hmfSrc ), *emrDst;
@@ -1697,10 +1697,10 @@ typedef struct tagEMF_PaletteCopy
    LPPALETTEENTRY lpPe;
 } EMF_PaletteCopy;
 
-/***************************************************************  
+/***************************************************************
  * Find the EMR_EOF record and then use it to find the
- * palette entries for this enhanced metafile. 
- * The lpData is actually a pointer to a EMF_PaletteCopy struct  
+ * palette entries for this enhanced metafile.
+ * The lpData is actually a pointer to a EMF_PaletteCopy struct
  * which contains the max number of elements to copy and where
  * to copy them to.
  *
@@ -1712,7 +1712,7 @@ INT CALLBACK cbEnhPaletteCopy( HDC a,
                                INT c,
                                LPVOID lpData )
 {
- 
+
   if ( lpEMR->iType == EMR_EOF )
   {
     PEMREOF lpEof = (PEMREOF)lpEMR;
@@ -1721,25 +1721,25 @@ INT CALLBACK cbEnhPaletteCopy( HDC a,
 
     TRACE( "copying 0x%08lx palettes\n", dwNumPalToCopy );
 
-    memcpy( (LPVOID)info->lpPe, 
-            (LPVOID)(((LPSTR)lpEof) + lpEof->offPalEntries), 
+    memcpy( (LPVOID)info->lpPe,
+            (LPVOID)(((LPSTR)lpEof) + lpEof->offPalEntries),
             sizeof( *(info->lpPe) ) * dwNumPalToCopy );
 
     /* Update the passed data as a return code */
     info->lpPe     = NULL; /* Palettes were copied! */
-    info->cEntries = (UINT)dwNumPalToCopy;  
+    info->cEntries = (UINT)dwNumPalToCopy;
 
     return FALSE; /* That's all we need */
   }
-  
+
   return TRUE;
 }
 
 /*****************************************************************************
- *  GetEnhMetaFilePaletteEntries (GDI32.@)  
- * 
- *  Copy the palette and report size  
- * 
+ *  GetEnhMetaFilePaletteEntries (GDI32.@)
+ *
+ *  Copy the palette and report size
+ *
  *  BUGS: Error codes (SetLastError) are not set on failures
  */
 UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
@@ -1747,9 +1747,9 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 					  LPPALETTEENTRY lpPe )
 {
   ENHMETAHEADER* enhHeader = EMF_GetEnhMetaHeader( hEmf );
-  EMF_PaletteCopy infoForCallBack; 
+  EMF_PaletteCopy infoForCallBack;
 
-  TRACE( "(%04x,%d,%p)\n", hEmf, cEntries, lpPe ); 
+  TRACE( "(%04x,%d,%p)\n", hEmf, cEntries, lpPe );
 
   /* First check if there are any palettes associated with
      this metafile. */
@@ -1760,9 +1760,9 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 
   /* Copy cEntries worth of PALETTEENTRY structs into the buffer */
   infoForCallBack.cEntries = cEntries;
-  infoForCallBack.lpPe     = lpPe; 
+  infoForCallBack.lpPe     = lpPe;
 
-  if ( !EnumEnhMetaFile( 0, hEmf, cbEnhPaletteCopy, 
+  if ( !EnumEnhMetaFile( 0, hEmf, cbEnhPaletteCopy,
                          &infoForCallBack, NULL ) )
       return GDI_ERROR;
 
@@ -1779,7 +1779,7 @@ UINT WINAPI GetEnhMetaFilePaletteEntries( HENHMETAFILE hEmf,
 
 /******************************************************************
  *         SetWinMetaFileBits   (GDI32.@)
- *      
+ *
  *         Translate from old style to new style.
  *
  * BUGS: - This doesn't take the DC and scaling into account
@@ -1790,7 +1790,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST BYTE *lpbBuffer,
 					   HDC hdcRef,
 					   CONST METAFILEPICT *lpmfp
-					   ) 
+					   )
 {
      HENHMETAFILE    hMf;
      LPVOID          lpNewEnhMetaFileBuffer = NULL;
@@ -1802,15 +1802,15 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
      /* 1. Get the header - skip over this and get straight to the records  */
 
      uNewEnhMetaFileBufferSize = sizeof( ENHMETAHEADER );
-     lpNewEnhMetaFileBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+     lpNewEnhMetaFileBuffer = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                          uNewEnhMetaFileBufferSize );
 
      if( lpNewEnhMetaFileBuffer == NULL )
      {
-       goto error; 
+       goto error;
      }
 
-     /* Fill in the header record */ 
+     /* Fill in the header record */
      {
        LPENHMETAHEADER lpNewEnhMetaFileHeader = (LPENHMETAHEADER)lpNewEnhMetaFileBuffer;
 
@@ -1840,7 +1840,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
         lpNewEnhMetaFileHeader->nHandles = 0; /* No handles yet */
         lpNewEnhMetaFileHeader->nRecords = 0;
-        
+
         /* I am pretty sure this starts at 0 and grows as entries are added */
         lpNewEnhMetaFileHeader->nPalEntries = 0;
 
@@ -1858,13 +1858,13 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
        /* cbPixelFormat
           offPixelFormat,
           bOpenGL */
-     } 
+     }
 
-     (char*)lpbBuffer += ((METAHEADER*)lpbBuffer)->mtHeaderSize * 2; /* Point past the header - FIXME: metafile quirk? */ 
+     (char*)lpbBuffer += ((METAHEADER*)lpbBuffer)->mtHeaderSize * 2; /* Point past the header - FIXME: metafile quirk? */
 
      /* 2. Enum over individual records and convert them to the new type of records */
      while( !bFoundEOF )
-     { 
+     {
 
         LPMETARECORD lpMetaRecord = (LPMETARECORD)lpbBuffer;
 
@@ -1882,18 +1882,18 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
         switch( lpMetaRecord->rdFunction )
         {
-          case META_EOF:  
-          { 
+          case META_EOF:
+          {
              PEMREOF lpRecord;
              size_t uRecord = sizeof(*lpRecord);
 
              EMF_ReAllocAndAdjustPointers(PEMREOF,uRecord);
-              
+
              /* Fill the new record - FIXME: This is not right */
-             lpRecord->emr.iType = EMR_EOF; 
+             lpRecord->emr.iType = EMR_EOF;
              lpRecord->emr.nSize = sizeof( *lpRecord );
              lpRecord->nPalEntries = 0;     /* FIXME */
-             lpRecord->offPalEntries = 0;   /* FIXME */ 
+             lpRecord->offPalEntries = 0;   /* FIXME */
              lpRecord->nSizeLast = 0;       /* FIXME */
 
              /* No more records after this one */
@@ -1904,7 +1904,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
           }
 
           case META_SETMAPMODE:
-          {  
+          {
              PEMRSETMAPMODE lpRecord;
              size_t uRecord = sizeof(*lpRecord);
 
@@ -1919,7 +1919,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
           }
 
           case META_DELETEOBJECT: /* Select and Delete structures are the same */
-          case META_SELECTOBJECT: 
+          case META_SELECTOBJECT:
           {
             PEMRDELETEOBJECT lpRecord;
             size_t uRecord = sizeof(*lpRecord);
@@ -1943,7 +1943,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
           case META_POLYGON: /* This is just plain busted. I don't know what I'm doing */
           {
-             PEMRPOLYGON16 lpRecord; /* FIXME: Should it be a poly or poly16? */  
+             PEMRPOLYGON16 lpRecord; /* FIXME: Should it be a poly or poly16? */
              size_t uRecord = sizeof(*lpRecord);
 
              EMF_ReAllocAndAdjustPointers(PEMRPOLYGON16,uRecord);
@@ -1977,7 +1977,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
              lpRecord->emr.nSize = sizeof( *lpRecord );
 
              lpRecord->iMode = lpMetaRecord->rdParm[0];
-             
+
              break;
           }
 
@@ -2032,10 +2032,10 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
              lpRecord->emr.nSize = sizeof( *lpRecord );
 
              lpRecord->ihBrush    = ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles;
-             lpRecord->lb.lbStyle = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbStyle; 
-             lpRecord->lb.lbColor = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbColor; 
-             lpRecord->lb.lbHatch = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbHatch; 
-             
+             lpRecord->lb.lbStyle = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbStyle;
+             lpRecord->lb.lbColor = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbColor;
+             lpRecord->lb.lbHatch = ((LPLOGBRUSH16)lpMetaRecord->rdParm)->lbHatch;
+
              ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nHandles += 1; /* New handle */
 
              break;
@@ -2116,7 +2116,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
           case META_TEXTOUT:
           case META_POLYPOLYGON:
           case META_POLYLINE:
-          case META_RESTOREDC:  
+          case META_RESTOREDC:
           case META_CHORD:
           case META_CREATEPATTERNBRUSH:
           case META_CREATEPENINDIRECT:
@@ -2156,7 +2156,7 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
           case META_ENDDOC:
           case META_CREATEBRUSH:
           case META_CREATEBITMAPINDIRECT:
-          case META_CREATEBITMAP:    
+          case META_CREATEBITMAP:
           /* Fall through to unimplemented */
           default:
           {
@@ -2167,16 +2167,16 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
        }
 
        /* Move to the next record */
-       (char*)lpbBuffer += ((LPMETARECORD)lpbBuffer)->rdSize * 2; /* FIXME: Seem to be doing this in metafile.c */ 
+       (char*)lpbBuffer += ((LPMETARECORD)lpbBuffer)->rdSize * 2; /* FIXME: Seem to be doing this in metafile.c */
 
 #undef ReAllocAndAdjustPointers
-     } 
+     }
 
      /* We know the last of the header information now */
      ((LPENHMETAHEADER)lpNewEnhMetaFileBuffer)->nBytes = uNewEnhMetaFileBufferSize;
 
      /* Create the enhanced metafile */
-     hMf = SetEnhMetaFileBits( uNewEnhMetaFileBufferSize, (const BYTE*)lpNewEnhMetaFileBuffer ); 
+     hMf = SetEnhMetaFileBits( uNewEnhMetaFileBufferSize, (const BYTE*)lpNewEnhMetaFileBuffer );
 
      if( !hMf )
        ERR( "Problem creating metafile. Did the conversion fail somewhere?\n" );
@@ -2185,9 +2185,9 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 
 error:
      /* Free the data associated with our copy since it's been copied */
-     HeapFree( GetProcessHeap(), 0, lpNewEnhMetaFileBuffer ); 
+     HeapFree( GetProcessHeap(), 0, lpNewEnhMetaFileBuffer );
 
-     return 0;  
+     return 0;
 }
 
 

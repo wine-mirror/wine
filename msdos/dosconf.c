@@ -1,7 +1,7 @@
 /*
  * DOS CONFIG.SYS parser
  *
- * Copyright 1998 Andreas Mohr 
+ * Copyright 1998 Andreas Mohr
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,7 +54,7 @@ static int DOSCONF_Stacks(char **confline);
 static int DOSCONF_Buffers(char **confline);
 static void DOSCONF_Parse(char *menuname);
 
-DOSCONF DOSCONF_config = 
+DOSCONF DOSCONF_config =
 {
     'E',  /* lastdrive */
     0,    /* brk_flag */
@@ -97,7 +97,7 @@ static const TAG_ENTRY tag_entries[] =
     { "FCBS", DOSCONF_Fcbs },
     { "BREAK", DOSCONF_Break },
     { "FILES", DOSCONF_Files },
-    { "SHELL", DOSCONF_Shell },    
+    { "SHELL", DOSCONF_Shell },
     { "STACKS", DOSCONF_Stacks },
     { "BUFFERS", DOSCONF_Buffers },
     { "COUNTRY", DOSCONF_Country },
@@ -116,16 +116,16 @@ static int menu_skip = 0;				/* the current menu gets skipped */
 static void DOSCONF_skip(char **pconfline)
 {
     char *p;
-    
+
     p = *pconfline;
     while ( (*p == ' ') || (*p == '\t') ) p++;
     *pconfline = p;
 }
-		
+
 static int DOSCONF_JumpToEntry(char **pconfline, char separator)
 {
     char *p;
-    
+
     p = *pconfline;
     while ( (*p != separator) && (*p != '\0') ) p++;
 
@@ -364,7 +364,7 @@ static int DOSCONF_Include(char **confline)
 {
     fpos_t oldpos;
     char *temp;
-    
+
     *confline += 7; /* strlen("INCLUDE") */
     if (!(DOSCONF_JumpToEntry(confline, '='))) return 0;
     fgetpos(cfg_fd, &oldpos);
@@ -383,7 +383,7 @@ static void DOSCONF_Parse(char *menuname)
    char confline[256];
    char *p, *trail;
    int i;
-    
+
     if (menuname != NULL) /* we need to jump to a certain sub menu */
     {
 	while (fgets(confline, 255, cfg_fd))

@@ -80,7 +80,7 @@ static HRESULT WINAPI WBQA_GetContentExtent(LPQUICKACTIVATE iface, LPSIZEL pSize
  * IQuickActivate virtual function table for IE Web Browser component
  */
 
-static ICOM_VTABLE(IQuickActivate) WBQA_Vtbl = 
+static ICOM_VTABLE(IQuickActivate) WBQA_Vtbl =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     WBQA_QueryInterface,

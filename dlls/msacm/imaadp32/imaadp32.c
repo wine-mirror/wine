@@ -52,9 +52,9 @@ static	DWORD	ADPCM_drvClose(DWORD dwDevID)
     return 1;
 }
 
-typedef struct tagAcmAdpcmData 
+typedef struct tagAcmAdpcmData
 {
-    void (*convert)(PACMDRVSTREAMINSTANCE adsi, 
+    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
 		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
     /* IMA encoding only */
     BYTE	stepIndexL;
@@ -65,14 +65,14 @@ typedef struct tagAcmAdpcmData
 /* table to list all supported formats... those are the basic ones. this
  * also helps given a unique index to each of the supported formats
  */
-typedef	struct 
+typedef	struct
 {
     int		nChannels;
     int		nBits;
     int		rate;
 } Format;
 
-static Format PCM_Formats[] = 
+static Format PCM_Formats[] =
 {
     {1,  8,  8000}, {2,  8,  8000}, {1, 16,  8000}, {2, 16,  8000},
     {1,  8, 11025}, {2,  8, 11025}, {1, 16, 11025}, {2, 16, 11025},
@@ -80,9 +80,9 @@ static Format PCM_Formats[] =
     {1,  8, 44100}, {2,  8, 44100}, {1, 16, 44100}, {2, 16, 44100},
 };
 
-static Format ADPCM_Formats[] = 
+static Format ADPCM_Formats[] =
 {
-    {1,  4,  8000}, {2,	4,  8000},  {1,  4, 11025}, {2,	 4, 11025}, 
+    {1,  4,  8000}, {2,	4,  8000},  {1,  4, 11025}, {2,	 4, 11025},
     {1,  4, 22050}, {2,	4, 22050},  {1,  4, 44100}, {2,	 4, 44100},
 };
 
@@ -96,8 +96,8 @@ static	DWORD	ADPCM_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
     int 	i, hi;
     Format*	fmts;
-    
-    switch (wfx->wFormatTag) 
+
+    switch (wfx->wFormatTag)
     {
     case WAVE_FORMAT_PCM:
 	hi = NUM_PCM_FORMATS;
@@ -110,15 +110,15 @@ static	DWORD	ADPCM_GetFormatIndex(LPWAVEFORMATEX wfx)
     default:
 	return 0xFFFFFFFF;
     }
-    
-    for (i = 0; i < hi; i++) 
+
+    for (i = 0; i < hi; i++)
     {
 	if (wfx->nChannels == fmts[i].nChannels &&
 	    wfx->nSamplesPerSec == fmts[i].rate &&
 	    wfx->wBitsPerSample == fmts[i].nBits)
 	    return i;
     }
-    
+
     return 0xFFFFFFFF;
 }
 
@@ -145,7 +145,7 @@ static inline void  W16(unsigned char* dst, short s)
 
 /* IMA (or DVI) APDCM codec routines */
 
-static const unsigned IMA_StepTable[89] = 
+static const unsigned IMA_StepTable[89] =
 {
     7, 8, 9, 10, 11, 12, 13, 14,
     16, 17, 19, 21, 23, 25, 28, 31,
@@ -161,10 +161,10 @@ static const unsigned IMA_StepTable[89] =
     32767
 };
 
-static const int IMA_IndexTable[16] = 
+static const int IMA_IndexTable[16] =
 {
     -1, -1, -1, -1, 2, 4, 6, 8,
-    -1, -1, -1, -1, 2, 4, 6, 8 
+    -1, -1, -1, -1, 2, 4, 6, 8
 };
 
 static inline void clamp_step_index(int* stepIndex)
@@ -183,9 +183,9 @@ static inline void process_nibble(unsigned char code, int* stepIndex, int* sampl
 {
     unsigned step;
     int diff;
-    
+
     code &= 0x0F;
-    
+
     step = IMA_StepTable[*stepIndex];
     diff = step >> 3;
     if (code & 1) diff += step >> 2;
@@ -204,38 +204,38 @@ static inline unsigned char generate_nibble(int in, int* stepIndex, int* sample)
     unsigned step;
     unsigned char code;
 
-    if (diff < 0) 
+    if (diff < 0)
     {
         diff = -diff;
-        code = 8; 
+        code = 8;
     }
-    else 
+    else
     {
         code = 0;
     }
-	    
+
     step = IMA_StepTable[*stepIndex];
     effdiff = (step >> 3);
-    if (diff >= step) 
+    if (diff >= step)
     {
         code |= 4;
         diff -= step;
         effdiff += step;
     }
     step >>= 1;
-    if (diff >= step) 
+    if (diff >= step)
     {
         code |= 2;
         diff -= step;
         effdiff += step;
     }
     step >>= 1;
-    if (diff >= step) 
+    if (diff >= step)
     {
         code |= 1;
         effdiff += step;
     }
-    if (code & 8)       *sample -= effdiff; 
+    if (code & 8)       *sample -= effdiff;
     else                *sample += effdiff;
     clamp_sample(sample);
     *stepIndex += IMA_IndexTable[code];
@@ -243,8 +243,8 @@ static inline unsigned char generate_nibble(int in, int* stepIndex, int* sample)
     return code;
 }
 
-static	void cvtSSima16K(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD nsrc, 
+static	void cvtSSima16K(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD nsrc,
                          unsigned char* dst, LPDWORD ndst)
 {
     int         i;
@@ -256,30 +256,30 @@ static	void cvtSSima16K(PACMDRVSTREAMINSTANCE adsi,
      * it's the min of the number of entire blocks in source buffer and the number
      * of entire blocks in destination buffer
      */
-    DWORD	nblock = min(*nsrc / adsi->pwfxSrc->nBlockAlign, 
+    DWORD	nblock = min(*nsrc / adsi->pwfxSrc->nBlockAlign,
                              *ndst / (nsamp_blk * 2 * 2));
-    
+
     *nsrc = nblock * adsi->pwfxSrc->nBlockAlign;
     *ndst = nblock * (nsamp_blk * 2 * 2);
-    
+
     nsamp_blk--; /* remove the sample in block header */
-    for (; nblock > 0; nblock--) 
+    for (; nblock > 0; nblock--)
     {
         const unsigned char* in_src = src;
-        
+
 	/* handle headers first */
 	sampleL = R16(src);
 	stepIndexL = (unsigned)*(src + 2);
         clamp_step_index(&stepIndexL);
 	src += 4;
 	W16(dst, sampleL);	dst += 2;
-        
+
 	sampleR = R16(src);
 	stepIndexR = (unsigned)*(src + 2);
         clamp_step_index(&stepIndexR);
 	src += 4;
 	W16(dst, sampleR);	dst += 2;
-        
+
 	for (nsamp = nsamp_blk; nsamp > 0; nsamp -= 8)
         {
             for (i = 0; i < 4; i++)
@@ -303,8 +303,8 @@ static	void cvtSSima16K(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static	void cvtMMima16K(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD nsrc, 
+static	void cvtMMima16K(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD nsrc,
                          unsigned char* dst, LPDWORD ndst)
 {
     int	 	sample;
@@ -315,24 +315,24 @@ static	void cvtMMima16K(PACMDRVSTREAMINSTANCE adsi,
      * it's the min of the number of entire blocks in source buffer and the number
      * of entire blocks in destination buffer
      */
-    DWORD	nblock = min(*nsrc / adsi->pwfxSrc->nBlockAlign, 
+    DWORD	nblock = min(*nsrc / adsi->pwfxSrc->nBlockAlign,
                              *ndst / (nsamp_blk * 2));
-    
+
     *nsrc = nblock * adsi->pwfxSrc->nBlockAlign;
     *ndst = nblock * nsamp_blk * 2;
-    
+
     nsamp_blk--; /* remove the sample in block header */
-    for (; nblock > 0; nblock--) 
+    for (; nblock > 0; nblock--)
     {
         const unsigned char*    in_src = src;
-        
+
 	/* handle header first */
 	sample = R16(src);
 	stepIndex = (unsigned)*(src + 2);
         clamp_step_index(&stepIndex);
 	src += 4;
 	W16(dst, sample);	dst += 2;
-        
+
 	for (nsamp = nsamp_blk; nsamp > 0; nsamp -= 2)
         {
             process_nibble(*src >> 4, &stepIndex, &sample);
@@ -345,8 +345,8 @@ static	void cvtMMima16K(PACMDRVSTREAMINSTANCE adsi,
     }
 }
 
-static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD nsrc, 
+static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD nsrc,
                          unsigned char* dst, LPDWORD ndst)
 {
     int		stepIndexL, stepIndexR;
@@ -359,7 +359,7 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
      * of entire blocks in destination buffer
      */
     DWORD	nblock = min(*nsrc / (nsamp_blk * 2 * 2),
-                             *ndst / adsi->pwfxDst->nBlockAlign); 
+                             *ndst / adsi->pwfxDst->nBlockAlign);
 
     *nsrc = nblock * (nsamp_blk * 2 * 2);
     *ndst = nblock * adsi->pwfxDst->nBlockAlign;
@@ -383,22 +383,22 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
 	W16(dst, sampleR); dst += 2;
 	*dst = (unsigned char)(unsigned)stepIndexR;
 	dst += 2;
-	
+
 	for (nsamp = nsamp_blk; nsamp > 0; nsamp -= 8)
         {
             for (i = 0; i < 4; i++)
             {
-                code1 = generate_nibble(R16(src + (2 * i + 0) * 2 + 0), 
+                code1 = generate_nibble(R16(src + (2 * i + 0) * 2 + 0),
                                         &stepIndexL, &sampleL);
-                code2 = generate_nibble(R16(src + (2 * i + 1) * 2 + 0), 
+                code2 = generate_nibble(R16(src + (2 * i + 1) * 2 + 0),
                                         &stepIndexL, &sampleL);
                 *dst++ = (code1 << 4) | code2;
             }
             for (i = 0; i < 4; i++)
             {
-                code1 = generate_nibble(R16(src + (2 * i + 0) * 2 + 1), 
+                code1 = generate_nibble(R16(src + (2 * i + 0) * 2 + 1),
                                         &stepIndexR, &sampleR);
-                code2 = generate_nibble(R16(src + (2 * i + 1) * 2 + 1), 
+                code2 = generate_nibble(R16(src + (2 * i + 1) * 2 + 1),
                                         &stepIndexR, &sampleR);
                 *dst++ = (code1 << 4) | code2;
             }
@@ -410,8 +410,8 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
     ((AcmAdpcmData*)adsi->dwDriver)->stepIndexR = stepIndexR;
 }
 
-static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi, 
-                         const unsigned char* src, LPDWORD nsrc, 
+static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi,
+                         const unsigned char* src, LPDWORD nsrc,
                          unsigned char* dst, LPDWORD ndst)
 {
     int		stepIndex;
@@ -424,8 +424,8 @@ static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi,
      * of entire blocks in destination buffer
      */
     DWORD	nblock = min(*nsrc / (nsamp_blk * 2),
-                             *ndst / adsi->pwfxDst->nBlockAlign); 
-          
+                             *ndst / adsi->pwfxDst->nBlockAlign);
+
     *nsrc = nblock * (nsamp_blk * 2);
     *ndst = nblock * adsi->pwfxDst->nBlockAlign;
 
@@ -449,7 +449,7 @@ static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi,
 	W16(dst, sample); dst += 2;
 	*dst = (unsigned char)(unsigned)stepIndex;
 	dst += 2;
-	
+
 	for (nsamp = nsamp_blk; nsamp > 0; nsamp -= 2)
         {
             code1 = generate_nibble(R16(src), &stepIndex, &sample);
@@ -488,7 +488,7 @@ static	LRESULT ADPCM_DriverDetails(PACMDRIVERDETAILSW add)
     MultiByteToWideChar( CP_ACP, 0, "Refer to LICENSE file", -1,
                          add->szLicensing, sizeof(add->szLicensing)/sizeof(WCHAR) );
     add->szFeatures[0] = 0;
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -500,21 +500,21 @@ static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
     static WCHAR szPcm[]={'P','C','M',0};
     static WCHAR szImaAdPcm[]={'I','M','A',' ','A','d','P','C','M',0};
-    
-    switch (dwQuery) 
+
+    switch (dwQuery)
     {
     case ACM_FORMATTAGDETAILSF_INDEX:
 	if (aftd->dwFormatTagIndex >= 2) return ACMERR_NOTPOSSIBLE;
 	break;
     case ACM_FORMATTAGDETAILSF_LARGESTSIZE:
-	if (aftd->dwFormatTag == WAVE_FORMAT_UNKNOWN) 
+	if (aftd->dwFormatTag == WAVE_FORMAT_UNKNOWN)
         {
             aftd->dwFormatTagIndex = 1; /* WAVE_FORMAT_IMA_ADPCM is bigger than PCM */
 	    break;
 	}
 	/* fall thru */
-    case ACM_FORMATTAGDETAILSF_FORMATTAG: 
-	switch (aftd->dwFormatTag) 
+    case ACM_FORMATTAGDETAILSF_FORMATTAG:
+	switch (aftd->dwFormatTag)
         {
 	case WAVE_FORMAT_PCM:		aftd->dwFormatTagIndex = 0; break;
 	case WAVE_FORMAT_IMA_ADPCM:     aftd->dwFormatTagIndex = 1; break;
@@ -525,9 +525,9 @@ static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 	WARN("Unsupported query %08lx\n", dwQuery);
 	return MMSYSERR_NOTSUPPORTED;
     }
-    
+
     aftd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
-    switch (aftd->dwFormatTagIndex) 
+    switch (aftd->dwFormatTagIndex)
     {
     case 0:
 	aftd->dwFormatTag = WAVE_FORMAT_PCM;
@@ -551,14 +551,14 @@ static	LRESULT	ADPCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
  */
 static	LRESULT	ADPCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
-    switch (dwQuery) 
+    switch (dwQuery)
     {
     case ACM_FORMATDETAILSF_FORMAT:
 	if (ADPCM_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
 	break;
     case ACM_FORMATDETAILSF_INDEX:
 	afd->pwfx->wFormatTag = afd->dwFormatTag;
-	switch (afd->dwFormatTag) 
+	switch (afd->dwFormatTag)
         {
 	case WAVE_FORMAT_PCM:
 	    if (afd->dwFormatIndex >= NUM_PCM_FORMATS) return ACMERR_NOTPOSSIBLE;
@@ -566,11 +566,11 @@ static	LRESULT	ADPCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	    afd->pwfx->nSamplesPerSec = PCM_Formats[afd->dwFormatIndex].rate;
 	    afd->pwfx->wBitsPerSample = PCM_Formats[afd->dwFormatIndex].nBits;
 	    /* native MSACM uses a PCMWAVEFORMAT structure, so cbSize is not accessible
-	     * afd->pwfx->cbSize = 0; 
+	     * afd->pwfx->cbSize = 0;
 	     */
-	    afd->pwfx->nBlockAlign = 
+	    afd->pwfx->nBlockAlign =
 		(afd->pwfx->nChannels * afd->pwfx->wBitsPerSample) / 8;
-	    afd->pwfx->nAvgBytesPerSec = 
+	    afd->pwfx->nAvgBytesPerSec =
 		afd->pwfx->nSamplesPerSec * afd->pwfx->nBlockAlign;
 	    break;
 	case WAVE_FORMAT_IMA_ADPCM:
@@ -594,11 +594,11 @@ static	LRESULT	ADPCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 	break;
     default:
 	WARN("Unsupported query %08lx\n", dwQuery);
-	return MMSYSERR_NOTSUPPORTED;	
+	return MMSYSERR_NOTSUPPORTED;
     }
     afd->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
     afd->szFormat[0] = 0; /* let MSACM format this for us... */
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -620,21 +620,21 @@ static	LRESULT	ADPCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
     if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_NSAMPLESPERSEC))
         adfs->pwfxDst->nSamplesPerSec = adfs->pwfxSrc->nSamplesPerSec;
 
-    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WBITSPERSAMPLE)) 
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WBITSPERSAMPLE))
     {
-	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM) 
+	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM)
             adfs->pwfxDst->wBitsPerSample = 4;
         else
             adfs->pwfxDst->wBitsPerSample = 16;
     }
-    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)) 
+    if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG))
     {
-	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM) 
+	if (adfs->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM)
             adfs->pwfxDst->wFormatTag = WAVE_FORMAT_IMA_ADPCM;
         else
             adfs->pwfxDst->wFormatTag = WAVE_FORMAT_PCM;
     }
-        
+
     /* check if result is ok */
     if (ADPCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
 
@@ -679,25 +679,25 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
     unsigned            nspb;
 
     assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
-    
+
     if (ADPCM_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
 	ADPCM_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
 	return ACMERR_NOTPOSSIBLE;
-    
+
     aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmAdpcmData));
     if (aad == 0) return MMSYSERR_NOMEM;
-    
+
     adsi->dwDriver = (DWORD)aad;
-    
+
     if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
 	goto theEnd;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_IMA_ADPCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
     {
-	/* resampling or mono <=> stereo not available 
+	/* resampling or mono <=> stereo not available
          * ADPCM algo only define 16 bit per sample output
          */
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
@@ -717,19 +717,19 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
             goto theEnd;
 
 	/* adpcm decoding... */
-	if (adsi->pwfxDst->wBitsPerSample == 16 && adsi->pwfxDst->nChannels == 2) 
+	if (adsi->pwfxDst->wBitsPerSample == 16 && adsi->pwfxDst->nChannels == 2)
 	    aad->convert = cvtSSima16K;
-	if (adsi->pwfxDst->wBitsPerSample == 16 && adsi->pwfxDst->nChannels == 1) 
+	if (adsi->pwfxDst->wBitsPerSample == 16 && adsi->pwfxDst->nChannels == 1)
 	    aad->convert = cvtMMima16K;
     }
     else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM) 
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM)
     {
 	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
             adsi->pwfxSrc->wBitsPerSample != 16)
 	    goto theEnd;
-        
+
         nspb = ((LPIMAADPCMWAVEFORMAT)adsi->pwfxDst)->wSamplesPerBlock;
         FIXME("spb=%u\n", nspb);
 
@@ -742,16 +742,16 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
             goto theEnd;
 
 	/* adpcm coding... */
-	if (adsi->pwfxSrc->wBitsPerSample == 16 && adsi->pwfxSrc->nChannels == 2) 
+	if (adsi->pwfxSrc->wBitsPerSample == 16 && adsi->pwfxSrc->nChannels == 2)
 	    aad->convert = cvtSS16imaK;
-	if (adsi->pwfxSrc->wBitsPerSample == 16 && adsi->pwfxSrc->nChannels == 1) 
+	if (adsi->pwfxSrc->wBitsPerSample == 16 && adsi->pwfxSrc->nChannels == 1)
 	    aad->convert = cvtMM16imaK;
     }
     else goto theEnd;
     ADPCM_Reset(adsi, aad);
 
     return MMSYSERR_NOERROR;
-    
+
  theEnd:
     HeapFree(GetProcessHeap(), 0, aad);
     adsi->dwDriver = 0L;
@@ -785,23 +785,23 @@ static	inline DWORD	ADPCM_round(DWORD a, DWORD b, DWORD c)
  */
 static	LRESULT ADPCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
 {
-    switch (adss->fdwSize) 
+    switch (adss->fdwSize)
     {
     case ACM_STREAMSIZEF_DESTINATION:
 	/* cbDstLength => cbSrcLength */
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM) 
+	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM)
         {
 	    /* don't take block overhead into account, doesn't matter too much */
 	    adss->cbSrcLength = adss->cbDstLength * 4;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_IMA_ADPCM &&
-                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    FIXME("misses the block header overhead\n");
 	    adss->cbSrcLength = 256 + adss->cbDstLength / 4;
 	}
-        else 
+        else
         {
 	    return MMSYSERR_NOTSUPPORTED;
 	}
@@ -809,25 +809,25 @@ static	LRESULT ADPCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
     case ACM_STREAMSIZEF_SOURCE:
 	/* cbSrcLength => cbDstLength */
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM) 
+	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_IMA_ADPCM)
         {
 	    FIXME("misses the block header overhead\n");
 	    adss->cbDstLength = 256 + adss->cbSrcLength / 4;
-	} 
+	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_IMA_ADPCM &&
-                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM) 
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
 	    /* don't take block overhead into account, doesn't matter too much */
 	    adss->cbDstLength = adss->cbSrcLength * 4;
 	}
-        else 
+        else
         {
 	    return MMSYSERR_NOTSUPPORTED;
 	}
 	break;
     default:
 	WARN("Unsupported query %08lx\n", adss->fdwSize);
-	return MMSYSERR_NOTSUPPORTED;	
+	return MMSYSERR_NOTSUPPORTED;
     }
     return MMSYSERR_NOERROR;
 }
@@ -841,11 +841,11 @@ static LRESULT ADPCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
     AcmAdpcmData*	aad = (AcmAdpcmData*)adsi->dwDriver;
     DWORD		nsrc = adsh->cbSrcLength;
     DWORD		ndst = adsh->cbDstLength;
-    
-    if (adsh->fdwConvert & 
+
+    if (adsh->fdwConvert &
 	~(ACM_STREAMCONVERTF_BLOCKALIGN|
 	  ACM_STREAMCONVERTF_END|
-	  ACM_STREAMCONVERTF_START)) 
+	  ACM_STREAMCONVERTF_START))
     {
 	FIXME("Unsupported fdwConvert (%08lx), ignoring it\n", adsh->fdwConvert);
     }
@@ -854,7 +854,7 @@ static LRESULT ADPCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
      * ACM_STREAMCONVERTF_END
      *	no pending data, so do nothing for this flag
      */
-    if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START)) 
+    if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START))
     {
 	ADPCM_Reset(adsi, aad);
     }
@@ -862,60 +862,60 @@ static LRESULT ADPCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
     aad->convert(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
     adsh->cbSrcLengthUsed = nsrc;
     adsh->cbDstLengthUsed = ndst;
-    
+
     return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
  * 			ADPCM_DriverProc			[exported]
  */
-LRESULT CALLBACK	ADPCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg, 
+LRESULT CALLBACK	ADPCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
 					 LPARAM dwParam1, LPARAM dwParam2)
 {
-    TRACE("(%08lx %08lx %04x %08lx %08lx);\n", 
+    TRACE("(%08lx %08lx %04x %08lx %08lx);\n",
 	  dwDevID, (DWORD)hDriv, wMsg, dwParam1, dwParam2);
-    
-    switch (wMsg) 
+
+    switch (wMsg)
     {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return ADPCM_drvOpen((LPSTR)dwParam1);
     case DRV_CLOSE:		return ADPCM_drvClose(dwDevID);
-    case DRV_ENABLE:		return 1;	
+    case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
     case DRV_QUERYCONFIGURE:	return 1;
     case DRV_CONFIGURE:		MessageBoxA(0, "MSACM IMA ADPCM filter !", "Wine Driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-	
+
     case ACMDM_DRIVER_NOTIFY:
 	/* no caching from other ACM drivers is done so far */
 	return MMSYSERR_NOERROR;
-	
+
     case ACMDM_DRIVER_DETAILS:
 	return ADPCM_DriverDetails((PACMDRIVERDETAILSW)dwParam1);
-	
+
     case ACMDM_FORMATTAG_DETAILS:
 	return ADPCM_FormatTagDetails((PACMFORMATTAGDETAILSW)dwParam1, dwParam2);
-	
+
     case ACMDM_FORMAT_DETAILS:
 	return ADPCM_FormatDetails((PACMFORMATDETAILSW)dwParam1, dwParam2);
-	
+
     case ACMDM_FORMAT_SUGGEST:
 	return ADPCM_FormatSuggest((PACMDRVFORMATSUGGEST)dwParam1);
-	
+
     case ACMDM_STREAM_OPEN:
 	return ADPCM_StreamOpen((PACMDRVSTREAMINSTANCE)dwParam1);
-	
+
     case ACMDM_STREAM_CLOSE:
 	return ADPCM_StreamClose((PACMDRVSTREAMINSTANCE)dwParam1);
-	
+
     case ACMDM_STREAM_SIZE:
 	return ADPCM_StreamSize((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMSIZE)dwParam2);
-	
+
     case ACMDM_STREAM_CONVERT:
 	return ADPCM_StreamConvert((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMHEADER)dwParam2);
-	
+
     case ACMDM_HARDWARE_WAVE_CAPS_INPUT:
     case ACMDM_HARDWARE_WAVE_CAPS_OUTPUT:
 	/* this converter is not a hardware driver */
@@ -929,7 +929,7 @@ LRESULT CALLBACK	ADPCM_DriverProc(DWORD dwDevID, HDRVR hDriv, UINT wMsg,
     case ACMDM_STREAM_UNPREPARE:
 	/* nothing special to do here... so don't do anything */
 	return MMSYSERR_NOERROR;
-	
+
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }

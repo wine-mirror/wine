@@ -139,7 +139,7 @@ HPALETTE WINAPI CreatePalette(
     PALETTEOBJ * palettePtr;
     HPALETTE hpalette;
     int size;
-    
+
     if (!palette) return 0;
     TRACE("entries=%i\n", palette->palNumEntries);
 
@@ -148,7 +148,7 @@ HPALETTE WINAPI CreatePalette(
     if (!(palettePtr = GDI_AllocObject( size + sizeof(int*) +sizeof(GDIOBJHDR),
                                         PALETTE_MAGIC, &hpalette, &palette_funcs ))) return 0;
     memcpy( &palettePtr->logpalette, palette, size );
-    PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry, 
+    PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry,
 			  palettePtr->logpalette.palNumEntries);
     palettePtr->mapping = NULL;
     GDI_ReleaseObj( hpalette );
@@ -171,7 +171,7 @@ HPALETTE16 WINAPI CreateHalftonePalette16(
     return CreateHalftonePalette(hdc);
 }
 
-	
+
 /***********************************************************************
  * CreateHalftonePalette [GDI32.@]  Creates a halftone palette
  *
@@ -219,7 +219,7 @@ HPALETTE WINAPI CreateHalftonePalette(
         Palette.aEntries[i].peGreen=(i==2)?0x80:(i==3)?0x80:(i==6)?0x80:0;
         Palette.aEntries[i].peBlue=(i>3)?0x80:0;
     }
-    
+
     for (i=7;  i <= 12; i++)
     {
         switch(i)
@@ -239,7 +239,7 @@ HPALETTE WINAPI CreateHalftonePalette(
                 Palette.aEntries[i].peGreen=0xca;
                 Palette.aEntries[i].peBlue=0xf0;
                 break;
-            case 10:    
+            case 10:
                 Palette.aEntries[i].peRed=0xff;
                 Palette.aEntries[i].peGreen=0xfb;
                 Palette.aEntries[i].peBlue=0xf0;
@@ -294,13 +294,13 @@ UINT WINAPI GetPaletteEntries(
     UINT numEntries;
 
     TRACE("hpal = %04x, count=%i\n", hpalette, count );
-        
+
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
-    
+
     /* NOTE: not documented but test show this to be the case */
     if (count == 0)
-    {   
+    {
         int rc = palPtr->logpalette.palNumEntries;
 	    GDI_ReleaseObj( hpalette );
         return rc;
@@ -309,8 +309,8 @@ UINT WINAPI GetPaletteEntries(
     numEntries = palPtr->logpalette.palNumEntries;
     if (start+count > numEntries) count = numEntries - start;
     if (entries)
-    { 
-      if (start >= numEntries) 
+    {
+      if (start >= numEntries)
       {
 	GDI_ReleaseObj( hpalette );
 	return 0;
@@ -359,7 +359,7 @@ UINT WINAPI SetPaletteEntries(
     if (!palPtr) return 0;
 
     numEntries = palPtr->logpalette.palNumEntries;
-    if (start >= numEntries) 
+    if (start >= numEntries)
     {
       GDI_ReleaseObj( hpalette );
       return 0;
@@ -367,7 +367,7 @@ UINT WINAPI SetPaletteEntries(
     if (start+count > numEntries) count = numEntries - start;
     memcpy( &palPtr->logpalette.palPalEntry[start], entries,
 	    count * sizeof(PALETTEENTRY) );
-    PALETTE_ValidateFlags(palPtr->logpalette.palPalEntry, 
+    PALETTE_ValidateFlags(palPtr->logpalette.palPalEntry,
 			  palPtr->logpalette.palNumEntries);
     HeapFree( GetProcessHeap(), 0, palPtr->mapping );
     palPtr->mapping = NULL;
@@ -411,14 +411,14 @@ BOOL WINAPI ResizePalette(
 	      				sizeof(int*) + sizeof(GDIOBJHDR);
     size += sizeof(int*) + sizeof(GDIOBJHDR);
     mapping = palPtr->mapping;
-    
+
     if (!(palPtr = GDI_ReallocObject( size, hPal, palPtr ))) return FALSE;
 
-    if( mapping ) 
+    if( mapping )
     {
-        int *newMap = (int*) HeapReAlloc(GetProcessHeap(), 0, 
+        int *newMap = (int*) HeapReAlloc(GetProcessHeap(), 0,
                                     mapping, cEntries * sizeof(int) );
-	if(newMap == NULL) 
+	if(newMap == NULL)
         {
             ERR("Can not resize mapping -- out of memory!\n");
             GDI_ReleaseObj( hPal );
@@ -427,12 +427,12 @@ BOOL WINAPI ResizePalette(
         palPtr->mapping = newMap;
     }
 
-    if( cEntries > cPrevEnt ) 
+    if( cEntries > cPrevEnt )
     {
 	if( mapping )
 	    memset(palPtr->mapping + cPrevEnt, 0, (cEntries - cPrevEnt)*sizeof(int));
 	memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
-        PALETTE_ValidateFlags((PALETTEENTRY*)((BYTE*)palPtr + prevsize), 
+        PALETTE_ValidateFlags((PALETTEENTRY*)((BYTE*)palPtr + prevsize),
 						     cEntries - cPrevEnt );
     }
     palPtr->logpalette.palNumEntries = cEntries;
@@ -611,7 +611,7 @@ UINT WINAPI GetNearestPaletteIndex(
 
     if( palObj )
     {
-      index = COLOR_PaletteLookupPixel(palObj->logpalette.palPalEntry, 
+      index = COLOR_PaletteLookupPixel(palObj->logpalette.palPalEntry,
 				       palObj->logpalette.palNumEntries,
 				       NULL, color, FALSE );
 
@@ -731,7 +731,7 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
     prev = dc->hPalette;
     dc->hPalette = hpal;
     GDI_ReleaseObj( hdc );
-    if (!wBkg) hPrimaryPalette = hpal; 
+    if (!wBkg) hPrimaryPalette = hpal;
     return prev;
 }
 
@@ -748,7 +748,7 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
     if (!dc) return 0;
 
     TRACE("%04x...\n", hdc );
-    
+
     if(dc->hPalette != hLastRealizedPalette )
     {
 	if( dc->hPalette == GetStockObject( DEFAULT_PALETTE )) {
@@ -814,7 +814,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
     DC *dc = DC_GetDCPtr( hDC );
-    if (dc) 
+    if (dc)
     {
       BOOL bRet = dc->hPalette == hPrimaryPalette;
       GDI_ReleaseObj( hDC );
@@ -951,9 +951,9 @@ BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
     /* behavior 1: if lpszFilename is NULL, return size of string and no error */
     if ((DWORD)lpszFilename == (DWORD)0x00000000)
  	return TRUE;
-    
+
     /* behavior 2: if buffer size too small, return size of string and error */
-    if (callerLen < strlen(WINEICM)) 
+    if (callerLen < strlen(WINEICM))
     {
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
 	return FALSE;

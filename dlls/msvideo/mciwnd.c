@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Eric Pouech 
+ * Copyright 2000 Eric Pouech
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
 {
    DWORD	wndStyle;
    MCIWndInfo*	mwi;
-   
+
    TRACE("%x %x %lx %s\n", hwndParent, hInstance, dwStyle, szFile);
 
    MCIWndRegisterClass(hInstance);
@@ -99,12 +99,12 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
    wndStyle = ((hwndParent) ? (WS_CHILD|WS_BORDER) : WS_OVERLAPPEDWINDOW) |
               WS_VISIBLE | (dwStyle & 0xFFFF0000);
 
-   if (CreateWindowExA(0, "MCIWndClass", NULL, wndStyle, 
-		       CW_USEDEFAULT, CW_USEDEFAULT, 
-		       CW_USEDEFAULT, CW_USEDEFAULT, 
+   if (CreateWindowExA(0, "MCIWndClass", NULL, wndStyle,
+		       CW_USEDEFAULT, CW_USEDEFAULT,
+		       CW_USEDEFAULT, CW_USEDEFAULT,
 		       hwndParent, (HMENU)0, hInstance, mwi))
       return mwi->hWnd;
-   
+
    if(mwi->lpName) HeapFree(GetProcessHeap(), 0, mwi->lpName);
    HeapFree(GetProcessHeap(), 0, mwi);
    return 0;
@@ -126,7 +126,7 @@ HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
 static DWORD MCIWND_GetStatus(MCIWndInfo* mwi)
 {
    MCI_DGV_STATUS_PARMSA	mdsp;
-   
+
    memset(&mdsp, 0, sizeof(mdsp));
    mdsp.dwItem = MCI_STATUS_MODE;
    if (mciSendCommandA(mwi->mci, MCI_STATUS, MCI_WAIT|MCI_STATUS_ITEM, (DWORD)&mdsp))
@@ -142,7 +142,7 @@ static DWORD MCIWND_GetStatus(MCIWndInfo* mwi)
 static DWORD MCIWND_Get(MCIWndInfo* mwi, DWORD what)
 {
    MCI_DGV_STATUS_PARMSA	mdsp;
-      
+
    memset(&mdsp, 0, sizeof(mdsp));
    mdsp.dwItem = what;
    if (mciSendCommandA(mwi->mci, MCI_STATUS, MCI_WAIT|MCI_STATUS_ITEM, (DWORD)&mdsp))
@@ -216,7 +216,7 @@ static void MCIWND_Create(HWND hWnd, LPCREATESTRUCTA cs)
       return;
    }
    mwi->mci = mdopn.wDeviceID;
-  
+
    /* grab AVI window size */
    memset(&mdrct, 0, sizeof(mdrct));
    mmr = mciSendCommandA(mwi->mci,  MCI_WHERE, MCI_DGV_WHERE_DESTINATION, (LPARAM)&mdrct);
@@ -228,17 +228,17 @@ static void MCIWND_Create(HWND hWnd, LPCREATESTRUCTA cs)
    cy = mdrct.rc.bottom - mdrct.rc.top;
 
    AdjustWindowRect(&mdrct.rc, GetWindowLongA(hWnd, GWL_STYLE), FALSE);
-   SetWindowPos(hWnd, 0, 0, 0, mdrct.rc.right - mdrct.rc.left, 
+   SetWindowPos(hWnd, 0, 0, 0, mdrct.rc.right - mdrct.rc.left,
 		mdrct.rc.bottom - mdrct.rc.top + 32, SWP_NOMOVE|SWP_NOZORDER);
 
    /* adding the other elements: play/stop button, menu button, status */
-   hChld = CreateWindowExA(0, "BUTTON", "Play", WS_CHILD|WS_VISIBLE, 0, cy, 32, 32, 
+   hChld = CreateWindowExA(0, "BUTTON", "Play", WS_CHILD|WS_VISIBLE, 0, cy, 32, 32,
 			   hWnd, (HMENU)CTL_PLAYSTOP, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
    TRACE("Get Button1: %04x\n", hChld);
-   hChld = CreateWindowExA(0, "BUTTON", "Menu", WS_CHILD|WS_VISIBLE, 32, cy, 32, 32, 
+   hChld = CreateWindowExA(0, "BUTTON", "Menu", WS_CHILD|WS_VISIBLE, 32, cy, 32, 32,
 			   hWnd, (HMENU)CTL_MENU, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
    TRACE("Get Button2: %04x\n", hChld);
-   hChld = CreateWindowExA(0, TRACKBAR_CLASSA, "", WS_CHILD|WS_VISIBLE, 64, cy, cx - 64, 32, 
+   hChld = CreateWindowExA(0, TRACKBAR_CLASSA, "", WS_CHILD|WS_VISIBLE, 64, cy, cx - 64, 32,
 			   hWnd, (HMENU)CTL_TRACKBAR, GetWindowLongA(hWnd, GWL_HINSTANCE), 0L);
    TRACE("Get status: %04x\n", hChld);
    SendMessageA(hChld, TBM_SETRANGEMIN, 0L, 0L);

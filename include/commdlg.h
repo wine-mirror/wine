@@ -45,7 +45,7 @@ extern "C" {
 #define OFN_SHAREAWARE               0x00004000
 #define OFN_NOREADONLYRETURN         0x00008000
 #define OFN_NOTESTFILECREATE         0x00010000
-#define OFN_NONETWORKBUTTON          0x00020000 
+#define OFN_NONETWORKBUTTON          0x00020000
 #define OFN_NOLONGNAMES              0x00040000
 #define OFN_EXPLORER                 0x00080000
 #define OFN_NODEREFERENCELINKS       0x00100000
@@ -65,7 +65,7 @@ extern "C" {
 
 #define SAVE_DIALOG  1
 #define OPEN_DIALOG  2
-    
+
 typedef UINT (CALLBACK *LPOFNHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
 
 typedef struct {
@@ -133,7 +133,7 @@ typedef struct
 
 DECL_WINELIB_TYPE_AW(OFNOTIFY)
 DECL_WINELIB_TYPE_AW(LPOFNOTIFY)
- 
+
 typedef UINT (CALLBACK *LPCCHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
 
 typedef struct {
@@ -205,10 +205,10 @@ typedef struct {
         LPFRHOOKPROC    lpfnHook;
 	LPCWSTR		lpTemplateName;
 } FINDREPLACEW, *LPFINDREPLACEW;
-	
+
 DECL_WINELIB_TYPE_AW(FINDREPLACE)
 DECL_WINELIB_TYPE_AW(LPFINDREPLACE)
-	
+
 #define FR_DOWN                         0x00000001
 #define FR_WHOLEWORD                    0x00000002
 #define FR_MATCHCASE                    0x00000004
@@ -231,42 +231,42 @@ typedef UINT (CALLBACK *LPCFHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
 
 typedef struct
 {
-	UINT  	lStructSize; 
-	HWND 		hwndOwner; 
-	HDC  		hDC; 
-	LPLOGFONTA    lpLogFont; 
-	INT		iPointSize; 
-	DWORD		Flags; 
-	COLORREF	rgbColors; 
-	LPARAM		lCustData; 
-	LPCFHOOKPROC 	lpfnHook; 
-	LPCSTR		lpTemplateName; 
-	HINSTANCE	hInstance; 
-	LPSTR		lpszStyle; 
-	WORD		nFontType; 
-	WORD	___MISSING_ALIGNMENT__; 
-	INT   	nSizeMin; 
-	INT		nSizeMax; 
+	UINT  	lStructSize;
+	HWND 		hwndOwner;
+	HDC  		hDC;
+	LPLOGFONTA    lpLogFont;
+	INT		iPointSize;
+	DWORD		Flags;
+	COLORREF	rgbColors;
+	LPARAM		lCustData;
+	LPCFHOOKPROC 	lpfnHook;
+	LPCSTR		lpTemplateName;
+	HINSTANCE	hInstance;
+	LPSTR		lpszStyle;
+	WORD		nFontType;
+	WORD	___MISSING_ALIGNMENT__;
+	INT   	nSizeMin;
+	INT		nSizeMax;
 } CHOOSEFONTA, *LPCHOOSEFONTA;
 
 typedef struct
 {
-	UINT  	lStructSize; 
-	HWND 		hwndOwner; 
-	HDC  		hDC; 
-	LPLOGFONTW    lpLogFont; 
-	INT		iPointSize; 
-	DWORD		Flags; 
-	COLORREF	rgbColors; 
-	LPARAM		lCustData; 
-	LPCFHOOKPROC 	lpfnHook; 
-	LPCWSTR		lpTemplateName; 
-	HINSTANCE	hInstance; 
-	LPWSTR		lpszStyle; 
-	WORD		nFontType; 
-	WORD	___MISSING_ALIGNMENT__; 
-	INT   	nSizeMin; 
-	INT		nSizeMax; 
+	UINT  	lStructSize;
+	HWND 		hwndOwner;
+	HDC  		hDC;
+	LPLOGFONTW    lpLogFont;
+	INT		iPointSize;
+	DWORD		Flags;
+	COLORREF	rgbColors;
+	LPARAM		lCustData;
+	LPCFHOOKPROC 	lpfnHook;
+	LPCWSTR		lpTemplateName;
+	HINSTANCE	hInstance;
+	LPWSTR		lpszStyle;
+	WORD		nFontType;
+	WORD	___MISSING_ALIGNMENT__;
+	INT   	nSizeMin;
+	INT		nSizeMax;
 } CHOOSEFONTW, *LPCHOOSEFONTW;
 
 DECL_WINELIB_TYPE_AW(CHOOSEFONT)
@@ -627,7 +627,7 @@ BOOL  WINAPI ChooseFontA(LPCHOOSEFONTA);
 BOOL  WINAPI ChooseFontW(LPCHOOSEFONTW);
 #define ChooseFont WINELIB_NAME_AW(ChooseFont)
 
-void COMDLG32_SetCommDlgExtendedError(DWORD err); 
+void COMDLG32_SetCommDlgExtendedError(DWORD err);
 
 
 #include "poppack.h"

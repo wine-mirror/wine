@@ -31,7 +31,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wnet);
 
 /*
- * Remote printing 
+ * Remote printing
  */
 
 /**************************************************************************
@@ -112,7 +112,7 @@ WORD WINAPI WNetSetJobCopies16( LPSTR szQueue, WORD wJobId, WORD nCopies )
  */
 WORD WINAPI WNetWatchQueue16( HWND16 hWnd, LPSTR szLocal, LPSTR szUser, WORD nQueue )
 {
-    FIXME( "(%04x, %s, %s, %d): stub\n", 
+    FIXME( "(%04x, %s, %s, %d): stub\n",
            hWnd, debugstr_a(szLocal), debugstr_a(szUser), nQueue );
     return WN16_NET_ERROR;
 }
@@ -129,10 +129,10 @@ WORD WINAPI WNetUnwatchQueue16( LPSTR szQueue )
 /**************************************************************************
  *              WNetLockQueueData       [USER.510]
  */
-WORD WINAPI WNetLockQueueData16( LPSTR szQueue, LPSTR szUser, 
+WORD WINAPI WNetLockQueueData16( LPSTR szQueue, LPSTR szUser,
                                  LPQUEUESTRUCT16 *lplpQueueStruct )
 {
-    FIXME( "(%s, %s, %p): stub\n", 
+    FIXME( "(%s, %s, %p): stub\n",
            debugstr_a(szQueue), debugstr_a(szUser), lplpQueueStruct );
     return WN16_NET_ERROR;
 }
@@ -153,14 +153,14 @@ WORD WINAPI WNetUnlockQueueData16( LPSTR szQueue )
 
 /********************************************************************
  *  WNetAddConnection [USER.517]  Directs a local device to net
- * 
+ *
  * Redirects a local device (either a disk drive or printer port)
  * to a shared device on a remote server.
  */
 WORD WINAPI WNetAddConnection16( LPSTR lpNetPath, LPSTR lpPassWord,
                                  LPSTR lpLocalName )
-{	
-    FIXME( "(%s, %p, %s): stub\n", 
+{
+    FIXME( "(%s, %p, %s): stub\n",
            debugstr_a(lpNetPath), lpPassWord, debugstr_a(lpLocalName) );
     return WN16_NET_ERROR;
 }
@@ -177,7 +177,7 @@ WORD WINAPI WNetCancelConnection16( LPSTR lpName, BOOL16 bForce )
 /********************************************************************
  * WNetGetConnection [USER.512] reverse-resolves a local device
  */
-WORD WINAPI WNetGetConnection16( LPSTR lpLocalName, 
+WORD WINAPI WNetGetConnection16( LPSTR lpLocalName,
                                  LPSTR lpRemoteName, UINT16 *cbRemoteName )
 {
     char label[32];
@@ -224,13 +224,13 @@ WORD WINAPI WNetRestoreConnection16( HWND16 hwndOwner, LPSTR lpszDevice )
  */
 WORD WINAPI WNetGetCaps16( WORD capability )
 {
-    switch (capability) 
+    switch (capability)
     {
     case WNNC16_SPEC_VERSION:
         return 0x30a; /* WfW 3.11 (and apparently other 3.1x) */
 
     case WNNC16_NET_TYPE:
-        /* hi byte = network type, 
+        /* hi byte = network type,
            lo byte = network vendor (Netware = 0x03) [15 types] */
         return WNNC16_NET_MultiNet | WNNC16_SUBNET_WinWorkgroups;
 
@@ -278,7 +278,7 @@ WORD WINAPI WNetGetCaps16( WORD capability )
         return   WNNC16_ERR_GetError | WNNC16_ERR_GetErrorText;
 
     case WNNC16_PRINTMGREXT:
-        /* returns the Print Manager version in major and 
+        /* returns the Print Manager version in major and
            minor format if Print Manager functions are available */
         return 0x30e; /* printman version of WfW 3.11 */
 
@@ -409,7 +409,7 @@ WORD WINAPI WNetGetDirectoryType16( LPSTR lpName, LPINT16 lpType )
 
     *lpType = (type == DRIVE_REMOTE)? WNDT_NETWORK : WNDT_NORMAL;
 
-    TRACE( "%s is %s\n", debugstr_a(lpName), 
+    TRACE( "%s is %s\n", debugstr_a(lpName),
            (*lpType == WNDT_NETWORK)? "WNDT_NETWORK" : "WNDT_NORMAL" );
     return WN16_SUCCESS;
 }

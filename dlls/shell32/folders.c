@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *   IExtractIconA implementation
 */
 
-typedef struct 
+typedef struct
 {	ICOM_VFIELD(IExtractIconA);
 	DWORD	ref;
 	ICOM_VTABLE(IPersistFile)*	lpvtblPersistFile;
@@ -84,7 +84,7 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface( IExtractIconA * iface, REF
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))		/*IUnknown*/
-	{ *ppvObj = This; 
+	{ *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IPersistFile))	/*IExtractIcon*/
 	{    *ppvObj = (IPersistFile*)&(This->lpvtblPersistFile);
@@ -94,7 +94,7 @@ static HRESULT WINAPI IExtractIconA_fnQueryInterface( IExtractIconA * iface, REF
 	}
 
 	if(*ppvObj)
-	{ IExtractIconA_AddRef((IExtractIconA*) *ppvObj);  	
+	{ IExtractIconA_AddRef((IExtractIconA*) *ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -126,7 +126,7 @@ static ULONG WINAPI IExtractIconA_fnRelease(IExtractIconA * iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{ TRACE(" destroying IExtractIcon(%p)\n",This);
 	  SHFree(This->pidl);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -153,7 +153,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	DWORD	dwNr;
 	GUID const * riid;
 	LPITEMIDLIST	pSimplePidl = ILFindLastID(This->pidl);
-			
+
 	TRACE("(%p) (flags=%u %p %u %p %p)\n", This, uFlags, szIconFile, cchMax, piIndex, pwFlags);
 
 	if (pwFlags)
@@ -167,7 +167,7 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 
 	/* my computer and other shell extensions */
 	else if ( (riid = _ILGetGUIDPointer(pSimplePidl)) )
-	{ 
+	{
 	  char xriid[50];
           sprintf( xriid, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                    riid->Data1, riid->Data2, riid->Data3,
@@ -254,8 +254,8 @@ static HRESULT WINAPI IExtractIconA_fnExtract(IExtractIconA * iface, LPCSTR pszF
 	return S_OK;
 }
 
-static struct ICOM_VTABLE(IExtractIconA) eivt = 
-{	
+static struct ICOM_VTABLE(IExtractIconA) eivt =
+{
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IExtractIconA_fnQueryInterface,
 	IExtractIconA_fnAddRef,

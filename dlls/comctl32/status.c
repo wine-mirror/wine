@@ -124,7 +124,7 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
 }
 
 
-static void 
+static void
 STATUSBAR_DrawPart (HDC hdc, const STATUSWINDOWPART *part, const STATUSWINDOWINFO *infoPtr, int itemID)
 {
     RECT r = part->bound;
@@ -137,7 +137,7 @@ STATUSBAR_DrawPart (HDC hdc, const STATUSWINDOWPART *part, const STATUSWINDOWINF
         border = 0;
 
     DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
-	
+
     if (part->style & SBT_OWNERDRAW)
 	{
 	    DRAWITEMSTRUCT dis;
@@ -150,14 +150,14 @@ STATUSBAR_DrawPart (HDC hdc, const STATUSWINDOWPART *part, const STATUSWINDOWINF
 	    dis.itemData = (INT)part->text;
 	    SendMessageW (GetParent (infoPtr->Self), WM_DRAWITEM,
 		    (WPARAM)dis.CtlID, (LPARAM)&dis);
-    } 
+    }
     else
 	{
 	    if (part->hIcon)
 		{
 	        INT cy = r.bottom - r.top;
 
-	        r.left += 2; 
+	        r.left += 2;
 	        DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
 	        r.left += cy;
 		}
@@ -586,7 +586,7 @@ STATUSBAR_SetParts (STATUSWINDOWINFO *infoPtr, INT count, LPINT parts)
 	if (i==oldNumParts) /* Unchanged? no need to redraw! */
 	    return TRUE;
     }
-    
+
     for (i = 0; i < infoPtr->numParts; i++)
 	infoPtr->parts[i].x = parts[i];
 
@@ -625,13 +625,13 @@ STATUSBAR_SetParts (STATUSWINDOWINFO *infoPtr, INT count, LPINT parts)
 
 
 static BOOL
-STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style, 
+STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
 		    LPCWSTR text, BOOL isW)
 {
     STATUSWINDOWPART *part=NULL;
     BOOL changed = FALSE;
 
-    if (style & SBT_OWNERDRAW) {    
+    if (style & SBT_OWNERDRAW) {
          TRACE("part %d, text %x\n",nPart,text);
     }
     else TRACE("part %d, text %s\n", nPart, debugstr_t(text, isW));
@@ -678,7 +678,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
 		return TRUE;
 	    }
 	} else {
-	    if (!changed && !part->text) 
+	    if (!changed && !part->text)
 		return TRUE;
 	}
 
@@ -898,7 +898,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
 
 	    SendMessageW (lpCreate->hwndParent, WM_NOTIFY,
 			    (WPARAM)nmttc.hdr.idFrom, (LPARAM)&nmttc);
-	} 
+	}
     }
 
     if (!(dwStyle & CCS_NORESIZE)) { /* don't resize wnd if it doesn't want it ! */
@@ -911,7 +911,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
     }
 
     return 0;
-    
+
 create_fail:
     TRACE("    failed!\n");
     if (infoPtr) STATUSBAR_WMDestroy(infoPtr);
@@ -1049,13 +1049,13 @@ STATUSBAR_WMSize (STATUSWINDOWINFO *infoPtr, WORD flags)
 	return FALSE;
     }
     if (GetWindowLongW(infoPtr->Self, GWL_STYLE) & CCS_NORESIZE) return FALSE;
-    
+
     /* width and height don't apply */
     GetClientRect (GetParent(infoPtr->Self), &parent_rect);
     width = parent_rect.right - parent_rect.left;
     x = parent_rect.left;
     y = parent_rect.bottom - infoPtr->height;
-    MoveWindow (infoPtr->Self, parent_rect.left, 
+    MoveWindow (infoPtr->Self, parent_rect.left,
 		parent_rect.bottom - infoPtr->height,
 		width, infoPtr->height, TRUE);
     STATUSBAR_SetPartBounds (infoPtr);
@@ -1063,7 +1063,7 @@ STATUSBAR_WMSize (STATUSWINDOWINFO *infoPtr, WORD flags)
 }
 
 
-static LRESULT 
+static LRESULT
 STATUSBAR_NotifyFormat (STATUSWINDOWINFO *infoPtr, HWND from, INT cmd)
 {
     if (cmd == NF_REQUERY) {
@@ -1144,7 +1144,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case SB_SETMINHEIGHT:
 	    return STATUSBAR_SetMinHeight (infoPtr, (INT)wParam);
 
-	case SB_SETPARTS:	
+	case SB_SETPARTS:
 	    return STATUSBAR_SetParts (infoPtr, (INT)wParam, (LPINT)lParam);
 
 	case SB_SETTEXTA:
@@ -1202,7 +1202,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_NOTIFYFORMAT:
 	    return STATUSBAR_NotifyFormat(infoPtr, (HWND)wParam, (INT)lParam);
-	    
+
 	case WM_PAINT:
 	    return STATUSBAR_WMPaint (infoPtr, (HDC)wParam);
 
@@ -1251,7 +1251,7 @@ STATUS_Register (void)
     wndClass.hCursor       = LoadCursorW (0, IDC_ARROWW);
     wndClass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
     wndClass.lpszClassName = STATUSCLASSNAMEW;
- 
+
     RegisterClassW (&wndClass);
 }
 

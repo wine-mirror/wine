@@ -64,7 +64,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, LPCSTR lpTableName)
  * 00:	BYTE	type		type of accelerator
  * 01:	BYTE	pad		(to WORD boundary)
  * 02:	WORD	event
- * 04:	WORD	IDval		
+ * 04:	WORD	IDval
  * 06:	WORD	pad		(to DWORD boundary)
  */
 HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
@@ -237,14 +237,14 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
 /*********************************************************************
  *                    CreateAcceleratorTableW   (USER32.@)
  *
- * 
+ *
  */
 HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
 {
   HACCEL	hAccel;
   LPACCEL16	accel;
   int		i;
-  char		ckey;  
+  char		ckey;
 
   /* Do parameter checking just in case someone's trying to be
      funny. */
@@ -277,8 +277,8 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
          if(!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &ckey, 1, &accel[i].key, 1))
             WARN_(accel)("Error converting ASCII accelerator table to Unicode");
        }
-       else 
-         accel[i].key = lpaccel[i].key; 
+       else
+         accel[i].key = lpaccel[i].key;
        accel[i].cmd = lpaccel[i].cmd;
   }
 
@@ -303,9 +303,9 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
  */
 BOOL WINAPI DestroyAcceleratorTable( HACCEL handle )
 {
-    return !GlobalFree16(handle); 
+    return !GlobalFree16(handle);
 }
-  
+
 /**********************************************************************
  *     LoadString   (USER.176)
  */
@@ -325,14 +325,14 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     if (!hrsrc) return 0;
     hmem = LoadResource16( instance, hrsrc );
     if (!hmem) return 0;
-    
+
     p = LockResource16(hmem);
     string_num = resource_id & 0x000f;
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
-    
+
     TRACE("strlen = %d\n", (int)*p );
-    
+
     if (buffer == NULL) return *p;
     i = min(buflen - 1, *p);
     if (i > 0) {
@@ -368,21 +368,21 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
     TRACE("instance = %04x, id = %04x, buffer = %08x, length = %d\n",
           instance, (int)resource_id, (int) buffer, buflen);
 
-    /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out 
+    /* Use bits 4 - 19 (incremented by 1) as resourceid, mask out
      * 20 - 31. */
     hrsrc = FindResourceW( instance, (LPCWSTR)(((resource_id>>4)&0xffff)+1),
                              RT_STRINGW );
     if (!hrsrc) return 0;
     hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;
-    
+
     p = LockResource(hmem);
     string_num = resource_id & 0x000f;
     for (i = 0; i < string_num; i++)
 	p += *p + 1;
-    
+
     TRACE("strlen = %d\n", (int)*p );
-    
+
     if (buffer == NULL) return *p;
     i = min(buflen - 1, *p);
     if (i > 0) {
@@ -416,7 +416,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
 
     if(buffer == NULL) /* asked size of string */
 	return LoadStringW(instance, resource_id, NULL, 0);
-    
+
     wbuf = HeapAlloc(GetProcessHeap(), 0, buflen * sizeof(WCHAR));
     if(!wbuf)
 	return 0;

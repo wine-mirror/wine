@@ -51,19 +51,19 @@ struct tagTZ_INFO
 
 static const struct tagTZ_INFO TZ_INFO[] =
 {
-   {"MHT", 
+   {"MHT",
     {'D','a','t','e','l','i','n','e',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
     -720, 0},
-   {"SST", 
+   {"SST",
     {'S','a','m','o','a',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
     660, 0},
    {"HST",
     {'H','a','w','a','i','i','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
     600, 0},
-   {"AKDT", 
+   {"AKDT",
     {'A','l','a','s','k','a','n',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
     480, 1},
-   {"PDT", 
+   {"PDT",
     {'P','a','c','i','f','i','c',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e','\0'},
     420, 1},
    {"MST",
@@ -258,7 +258,7 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
    if (!strftime (psTZName, 7, "%Z", ptm))
       return (NULL);
 
-   for (i=0; i<(sizeof(TZ_INFO) / sizeof(struct tagTZ_INFO)); i++) 
+   for (i=0; i<(sizeof(TZ_INFO) / sizeof(struct tagTZ_INFO)); i++)
    {
       if ( strcmp(TZ_INFO[i].psTZFromUnix, psTZName) == 0 &&
            TZ_INFO[i].bias == bias &&
@@ -334,7 +334,7 @@ BOOL WINAPI SetLocalTime(
     ERR("Cannot set time to %d/%d/%d %d:%d:%d Time adjustment %ld %s\n",
             systime->wYear, systime->wMonth, systime->wDay, systime->wHour,
             systime->wMinute, systime->wSecond,
-            sec-oldsec, err == -1 ? "No Permission" : 
+            sec-oldsec, err == -1 ? "No Permission" :
                 sec==(time_t)-1 ? "" : "is too large." );
     return FALSE;
 }
@@ -535,7 +535,7 @@ VOID WINAPI GetSystemTimeAsFileTime(
  *
  *      Differences to UnixTimeToFileTime:
  *          1) Divided by CLK_TCK
- *          2) Time is relative. There is no 'starting date', so there is 
+ *          2) Time is relative. There is no 'starting date', so there is
  *             no need in offset correction, like in UnixTimeToFileTime
  */
 static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
@@ -589,7 +589,7 @@ int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
     int ret;
     LPWSTR lpCalDataW = NULL;
 
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n", 
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n",
 	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
     /* FIXME: Should verify if Locale is allowable in ANSI, as per MSDN */
 
@@ -611,8 +611,8 @@ int WINAPI GetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType,
  */
 int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
 			    LPWSTR lpCalData, int cchData, LPDWORD lpValue)
-{	
-    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n", 
+{
+    FIXME("(%08lx,%08lx,%08lx,%p,%d,%p): quarter-stub\n",
 	  Locale, Calendar, CalType, lpCalData, cchData, lpValue);
 
     if (CalType & CAL_NOUSEROVERRIDE)
@@ -746,7 +746,7 @@ int WINAPI GetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType,
  */
 int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR lpCalData)
 {
-    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", 
+    FIXME("(%08lx,%08lx,%08lx,%s): stub\n",
 	  Locale, Calendar, CalType, debugstr_a(lpCalData));
     return 0;
 }
@@ -757,7 +757,7 @@ int WINAPI	SetCalendarInfoA(LCID Locale, CALID Calendar, CALTYPE CalType, LPCSTR
  */
 int WINAPI	SetCalendarInfoW(LCID Locale, CALID Calendar, CALTYPE CalType, LPCWSTR lpCalData)
 {
-    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", 
+    FIXME("(%08lx,%08lx,%08lx,%s): stub\n",
 	  Locale, Calendar, CalType, debugstr_w(lpCalData));
     return 0;
 }

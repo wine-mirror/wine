@@ -78,15 +78,15 @@ int return_data_value(enum data_types dtype, void * pChr)
 int   ret_val = 0;
 
     switch(dtype) {
-        case (dfChar): 
+        case (dfChar):
             ret_val = (int) *(unsigned char *)pChr;
             break;
-            
-        case(dfShort): 
+
+        case(dfShort):
             ret_val = *(unsigned char *)pChr;
             ret_val += (*((unsigned char *)pChr + 1) << 8);
             break;
-            
+
         case(dfLong): {
             int  i;
 
@@ -97,7 +97,7 @@ int   ret_val = 0;
             }
 		case(dfString):
 			break;
-        } 
+        }
     return ret_val;
 }
 
@@ -108,7 +108,7 @@ char*   lpChar;
 
   if( !g_lpstrFileName )
   {
-    if( !l_nameoffset || 
+    if( !l_nameoffset ||
          l_nameoffset > return_data_value(dfLong, &cpe_font_struct->hdr.dfSize) + 1 )
          return ERROR_DATA;
     lpChar =  (char*)(file_buffer + l_nameoffset);
@@ -117,7 +117,7 @@ char*   lpChar;
 
   strcpy( name, lpChar );
 
-  while( (lpChar = strchr( name, ' ')) ) 
+  while( (lpChar = strchr( name, ' ')) )
          *lpChar = '-';
 
   /* construct a filename from the font typeface, slant, weight, and size */
@@ -136,7 +136,7 @@ char*   lpChar;
 
 int parse_fnt_data(unsigned char* file_buffer, int length)
 {
-  fnt_fontS	cpe_font_struct; 
+  fnt_fontS	cpe_font_struct;
   int     	ic=0, t;
 
   memcpy((char *) &cpe_font_struct.hdr, file_buffer, sizeof(fnt_hdrS));
@@ -149,11 +149,11 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
   t = return_data_value(dfLong, &cpe_font_struct.hdr.dfSize);
   if( t > length ) return ERROR_SIZE;
   else
-  {    	
+  {
     /* set up the charWidth/charOffset  structure pairs (dfCharTable)... */
 
     int l_fchar = return_data_value(dfChar, &cpe_font_struct.hdr.fi.dfFirstChar),
-	l_lchar = return_data_value(dfChar, &cpe_font_struct.hdr.fi.dfLastChar); 
+	l_lchar = return_data_value(dfChar, &cpe_font_struct.hdr.fi.dfLastChar);
     int l_len   = l_lchar - l_fchar + 1;
     int l_ptr = sizeof(fnt_hdrS);
 
@@ -163,7 +163,7 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 
     /* malloc size = (# chars) * sizeof(WinCharS) */
 
-    if((cpe_font_struct.dfCharTable = (WinCharS *) calloc(sizeof(WinCharS), l_len)) == NULL) 
+    if((cpe_font_struct.dfCharTable = (WinCharS *) calloc(sizeof(WinCharS), l_len)) == NULL)
 	return ERROR_MEMORY;
 
     /* NOW, convert them all to UNIX (lton) notation... */
@@ -174,12 +174,12 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 
 
 	if( return_data_value(dfShort, &cpe_font_struct.hdr.dfVersion) == 0x200) {
-	    cpe_font_struct.dfCharTable[ic].charOffset = 
+	    cpe_font_struct.dfCharTable[ic].charOffset =
 			return_data_value(dfShort, &file_buffer[l_ptr]);
 	    l_ptr += 2;	/* bump by sizeof(long) */
 	    }
 	else { 	/*  Windows Version 3.0 type font */
-	    cpe_font_struct.dfCharTable[ic].charOffset = 
+	    cpe_font_struct.dfCharTable[ic].charOffset =
 			return_data_value(dfLong, &file_buffer[l_ptr]);
 	    l_ptr += 4;	/* bump by sizeof(long) */
 	    }
@@ -194,18 +194,18 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
   FILE*   fp;
   int	  ic;
-  int	  l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar), 
-	  l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar); 
+  int	  l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar),
+	  l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar);
 
   int     l_len = l_lchar-l_fchar + 1,
-	  l_hgt = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfPixHeight); 
+	  l_hgt = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfPixHeight);
   int	  l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
   char    l_filename[256];
 
     if( (ic = make_bdf_filename(l_filename, cpe_font_struct, file_buffer)) )
 	return ic;
 
-    if((fp = fopen(l_filename, "w")) == (FILE *) 0)   
+    if((fp = fopen(l_filename, "w")) == (FILE *) 0)
     {
       fprintf(stderr, "Couldn't open \"%s\" for output.\n", l_filename);
       return ERROR_FILE;
@@ -220,19 +220,19 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 	int rowidx, l_span,		/* how many char-cols wide is char? */
 	    l_idx = cpe_font_struct->dfCharTable[ic].charOffset;
 
-	l_span = (int) (cpe_font_struct->dfCharTable[ic].charWidth-1)/8; 
+	l_span = (int) (cpe_font_struct->dfCharTable[ic].charWidth-1)/8;
 
 	fprintf(fp, "STARTCHAR %d  \n", ic);
 	fprintf(fp, "ENCODING %d\n",   l_fchar);
-	fprintf(fp, "SWIDTH    %d    %d \n", 
-		cpe_font_struct->dfCharTable[ic].charWidth*1000, 
+	fprintf(fp, "SWIDTH    %d    %d \n",
+		cpe_font_struct->dfCharTable[ic].charWidth*1000,
 		0);
 
-	fprintf(fp, "DWIDTH    %d    %d \n", 
+	fprintf(fp, "DWIDTH    %d    %d \n",
 		cpe_font_struct->dfCharTable[ic].charWidth, 0);
 
 	fprintf(fp, "BBX  %d  %d  %d   %d\n",
-		cpe_font_struct->dfCharTable[ic].charWidth, l_hgt, 0, 
+		cpe_font_struct->dfCharTable[ic].charWidth, l_hgt, 0,
 		l_ascent - l_hgt);
 
 	fprintf(fp, "BITMAP\n");
@@ -243,10 +243,10 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 		    fprintf(fp, "%02X\n", (int) file_buffer[l_idx+rowidx]);
 		    break;
 		    }
-		
+
 		case(1):	/* 8-15 pixels wide font */
 		    {
-		    fprintf(fp, "%02X%02X", 
+		    fprintf(fp, "%02X%02X",
 			(int) file_buffer[l_idx+rowidx], file_buffer[l_idx+l_hgt+rowidx]);
 		    fprintf(fp, "\n");
 		    break;
@@ -254,7 +254,7 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 
 		case(2):	/* 16-23 pixels wide font */
 		    {
-		    fprintf(fp, "%02X%02X%02X", 
+		    fprintf(fp, "%02X%02X%02X",
 			file_buffer[l_idx+rowidx],
 		        file_buffer[l_idx+l_hgt+rowidx],
 		        file_buffer[l_idx+(2*l_hgt)+rowidx]);
@@ -264,7 +264,7 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 
 		case(3):	/* 24-31 pixels wide font */
 		    {
-		    fprintf(fp, "%02X%02X%02X%02X", 
+		    fprintf(fp, "%02X%02X%02X%02X",
 			file_buffer[l_idx+rowidx],
 			file_buffer[l_idx+l_hgt+rowidx],
 			file_buffer[l_idx+(2*l_hgt)+rowidx],
@@ -301,7 +301,7 @@ return 0;
 
 int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
-int	l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar), 
+int	l_fchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfFirstChar),
 	l_lchar = return_data_value(dfChar, &cpe_font_struct->hdr.fi.dfLastChar);
 int     l_len = l_lchar - l_fchar + 1;
 long	l_nameoffset = return_data_value(dfLong, &cpe_font_struct->hdr.fi.dfFace);
@@ -312,14 +312,14 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
 
     /* Compose font name */
 
-    if( l_nameoffset && 
+    if( l_nameoffset &&
 	l_nameoffset < return_data_value(dfLong, &cpe_font_struct->hdr.dfSize) )
     {
       int     dpi, point_size;
       char*   lpFace = (char*)(file_buffer + l_nameoffset), *lpChar;
       short   tmWeight = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfWeight);
 
-      while((lpChar = strchr(lpFace, '-')) ) 
+      while((lpChar = strchr(lpFace, '-')) )
 	    *lpChar = ' ';
 
       fprintf(fs, "FONT -windows-%s-", lpFace );
@@ -351,7 +351,7 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
       point_size = 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints );
       dpi = (l_cellheight * 720) / point_size;
 
-      fprintf(fs, "%d-%d-%d-%d-",l_cellheight, point_size, 
+      fprintf(fs, "%d-%d-%d-%d-",l_cellheight, point_size,
             return_data_value (dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
             return_data_value (dfShort, &cpe_font_struct->hdr.fi.dfVertRes));
 
@@ -359,7 +359,7 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
 
       if( return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPixWidth) ) fputs("c-", fs);
       else fputs("p-", fs);
-	
+
       /* average width */
 
       fprintf( fs, "%d-", 10 * return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAvgWidth) );
@@ -379,20 +379,20 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
 	case ARABIC_CHARSET: 	fputs("microsoft-cp1256\n", fs); break;
 	case BALTIC_CHARSET: 	fputs("microsoft-cp1257\n", fs); break;
 	case RUSSIAN_CHARSET: 	fputs("microsoft-cp1251\n", fs); break;
-	case EE_CHARSET: 	fputs("microsoft-cp1250\n", fs); break; 
+	case EE_CHARSET: 	fputs("microsoft-cp1250\n", fs); break;
 	case SYMBOL_CHARSET: 	fputs("microsoft-symbol\n", fs); break;
 	case SHIFTJIS_CHARSET: 	fputs("jisx0208.1983-0\n", fs); break;
 	case DEFAULT_CHARSET:	fputs("iso8859-1\n", fs); break;
 
 	default:
-	case OEM_CHARSET: 
-		    fputs("Undefined charset, use -c option.\n", stderr); 
-		    return ERROR_DATA; 
+	case OEM_CHARSET:
+		    fputs("Undefined charset, use -c option.\n", stderr);
+		    return ERROR_DATA;
       }
     }
     else return ERROR_DATA;
 
-    fprintf(fs, "SIZE  %d  %d   %d\n",  
+    fprintf(fs, "SIZE  %d  %d   %d\n",
         return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfPoints ),
 	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfHorizRes),
 	return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfVertRes));   /* dfVertRes[2] */
@@ -439,10 +439,10 @@ void parse_options(int argc, char **argv)
 	   if( argv[i][0] != '-' ||
 	       strlen(argv[i]) != 2 ) break;
 
-	   if( argv[i][1] == 'c' ) 
+	   if( argv[i][1] == 'c' )
 	       g_lpstrCharSet = argv[i+1];
-	   else 
-	   if( argv[i][1] == 'f' ) 
+	   else
+	   if( argv[i][1] == 'f' )
 	       g_lpstrFileName = argv[i+1];
 	   else
 	   if( argv[i][1] == 't' )
@@ -454,7 +454,7 @@ void parse_options(int argc, char **argv)
 	   usage();
 
 	   i++;
-	 } 
+	 }
 	 if( i == argc - 1 )
 	 {
 	   g_lpstrInputFile = argv[i];
@@ -462,7 +462,7 @@ void parse_options(int argc, char **argv)
 	 }
     default: usage();
   }
-    
+
 }
 
 /* read file data and return file type */
@@ -476,7 +476,7 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 
   lseek( fd, 0, SEEK_SET );
 
-  if( read(fd, &mz_header, sizeof(mz_header)) != sizeof(mz_header) ) 
+  if( read(fd, &mz_header, sizeof(mz_header)) != sizeof(mz_header) )
       return FILE_ERROR;
 
   s = return_data_value(dfShort, &mz_header.e_magic);
@@ -494,7 +494,7 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
     if( s == IMAGE_NT_SIGNATURE)
     {
        fprintf( stderr, "Do not know how to handle 32-bit Windows DLLs.\n");
-       return FILE_ERROR; 
+       return FILE_ERROR;
     }
     else if ( s != IMAGE_OS2_SIGNATURE) return FILE_ERROR;
 
@@ -515,7 +515,7 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 
     if( size != fsize ) return FILE_ERROR;
     offset  = 0;
-    retval = FILE_FNT; 
+    retval = FILE_FNT;
   }
   else return FILE_ERROR;
 
@@ -540,7 +540,7 @@ int main(int argc, char **argv)
 
   parse_options( argc, argv);
 
-  if( (fd = open( g_lpstrInputFile, O_RDONLY)) ) 
+  if( (fd = open( g_lpstrInputFile, O_RDONLY)) )
   {
     int    i;
     struct stat file_stat;
@@ -557,7 +557,7 @@ int main(int argc, char **argv)
 	       NE_TYPEINFO* pTInfo = (NE_TYPEINFO*)(lpdata + 2);
 	       NE_NAMEINFO* pFontStorage = NULL;
 
-	       while( (i = return_data_value(dfShort, &pTInfo->type_id)) ) 
+	       while( (i = return_data_value(dfShort, &pTInfo->type_id)) )
 	       {
 		  j = return_data_value(dfShort, &pTInfo->count);
 		  if( i == NE_RSCTYPE_FONT )
@@ -580,7 +580,7 @@ int main(int argc, char **argv)
 		 {
 		    length = return_data_value(dfShort, &pFontStorage->length) << size_shift;
 		    offset = return_data_value(dfShort, &pFontStorage->offset) << size_shift;
-		    
+
 		    if( !(lpfont = (unsigned char*) realloc( lpfont, length )) )
 		    {
 			fprintf(stderr, errorMemory );

@@ -42,7 +42,7 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     int serialports = 0;
     int x;
 
-/* borrowed from Ralph Brown's interrupt lists 
+/* borrowed from Ralph Brown's interrupt lists
 
 		    bits 15-14: number of parallel devices
 		    bit     13: [Conv] Internal modem
@@ -62,7 +62,7 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
 		    bit      0: =1 if diskette available for boot
 */
 /*  Currently the only of these bits correctly set are:
-		bits 15-14 		} Added by William Owen Smith, 
+		bits 15-14 		} Added by William Owen Smith,
 		bits 11-9		} wos@dcs.warwick.ac.uk
 		bits 7-6
 		bit  2			(always set)
@@ -71,7 +71,7 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
     if (GetDriveTypeA("A:\\") == DRIVE_REMOVABLE) diskdrives++;
     if (GetDriveTypeA("B:\\") == DRIVE_REMOVABLE) diskdrives++;
     if (diskdrives) diskdrives--;
-	
+
     for (x=0; x < 9; x++)
     {
         char temp[16],name[16];
@@ -90,7 +90,7 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
         serialports=7;
     if (parallelports > 3)		/* 2 bits -- maximum value = 3 */
         parallelports=3;
-    
-    AX_reg(context) = (diskdrives << 6) | (serialports << 9) | 
+
+    AX_reg(context) = (diskdrives << 6) | (serialports << 9) |
                       (parallelports << 14) | 0x02;
 }

@@ -722,7 +722,7 @@ static void handle_ani_icon(riff_tag_t *rtp, enum res_e type, int isswapped)
 static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 {
 	riff_tag_t *rtp = lst+1;	/* Skip the "LIST" tag */
-	
+
 	while((char *)rtp < (char *)lst + lst->size + sizeof(*lst))
 	{
 		if(!memcmp(rtp->tag, info, sizeof(info)))
@@ -998,7 +998,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 						yyerror("Message 0x%08lx is unicode (block %d), but has odd length (%d)", id, (int)i, mep->length);
 					for(n = 0; n < l; n++)
 						wp[n] = BYTESWAP_WORD(wp[n]);
-						
+
 				}
 				next_mep = (msgtab_entry_t *)(((char *)mep) + mep->length);
 				mep->length = BYTESWAP_WORD(mep->length);
@@ -1051,7 +1051,7 @@ messagetable_t *new_messagetable(raw_data_t *rd, int *memopt)
 						yyerror("Message 0x%08lx is unicode (block %d), but has odd length (%d)", id, (int)i, mep->length);
 					for(n = 0; n < l; n++)
 						wp[n] = BYTESWAP_WORD(wp[n]);
-						
+
 				}
 				mep = (msgtab_entry_t *)(((char *)mep) + mep->length);
 			}

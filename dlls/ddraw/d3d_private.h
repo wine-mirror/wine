@@ -108,7 +108,7 @@ extern HRESULT WINAPI IDirect3DImpl_FindDevice(
     LPDIRECT3D iface, LPD3DFINDDEVICESEARCH lpfinddevsrc,
     LPD3DFINDDEVICERESULT lpfinddevrst)
 ;
-extern HRESULT WINAPI IDirect3D2Impl_QueryInterface(LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj);  
+extern HRESULT WINAPI IDirect3D2Impl_QueryInterface(LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj);
 extern ULONG WINAPI IDirect3D2Impl_AddRef(LPDIRECT3D2 iface);
 extern ULONG WINAPI IDirect3D2Impl_Release(LPDIRECT3D2 iface);
 extern HRESULT WINAPI IDirect3D2Impl_EnumDevices(
@@ -144,7 +144,7 @@ struct IDirect3DLightImpl
         IDirect3D2Impl* d3d2;
     } d3d;
     int                 type;
-  
+
     D3DLIGHT2           light;
 
     /* Chained list used for adding / removing from viewports */
@@ -153,7 +153,7 @@ struct IDirect3DLightImpl
     /* Activation function */
     void (*activate)(IDirect3DLightImpl*);
     int                 is_active;
-  
+
     LPVOID		private;
 };
 
@@ -250,13 +250,13 @@ struct IDirect3DViewport2Impl
 
   /* Activation function */
   void (*activate)(IDirect3DViewport2Impl*);
-  
+
   /* Field used to chain viewports together */
   IDirect3DViewport2Impl*	next;
 
   /* Lights list */
   IDirect3DLightImpl*		lights;
-  
+
   LPVOID			private;
 };
 

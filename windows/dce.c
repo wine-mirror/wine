@@ -19,9 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- * Note: Visible regions of CS_OWNDC/CS_CLASSDC window DCs 
- * have to be updated dynamically. 
- * 
+ * Note: Visible regions of CS_OWNDC/CS_CLASSDC window DCs
+ * have to be updated dynamically.
+ *
  * Internal DCX flags:
  *
  * DCX_DCEEMPTY    - dce is uninitialized
@@ -57,16 +57,16 @@ static INT DCE_ReleaseDC( DCE* );
 static void DCE_DumpCache(void)
 {
     DCE *dce;
-    
+
     USER_Lock();
     dce = firstDCE;
-    
+
     DPRINTF("DCE:\n");
     while( dce )
     {
 	DPRINTF("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
-	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags, 
-	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned", 
+	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags,
+	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned",
 	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
 	dce = dce->next;
     }
@@ -82,7 +82,7 @@ static void DCE_DumpCache(void)
 DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
     DCE * dce;
-    
+
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(DCE) ))) return NULL;
     if (!(dce->hDC = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
     {
@@ -110,7 +110,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 	SetHookFlags16(dce->hDC,DCHF_INVALIDATEVISRGN);
     }
     else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
-    
+
     USER_Lock();
     dce->next = firstDCE;
     firstDCE = dce;
@@ -180,10 +180,10 @@ void DCE_FreeWindowDCE( HWND hwnd )
 	    {
 		if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
-                    /* FIXME: AFAICS we are doing the right thing here so 
-                     * this should be a WARN. But this is best left as an ERR 
-                     * because the 'application error' is likely to come from 
-                     * another part of Wine (i.e. it's our fault after all). 
+                    /* FIXME: AFAICS we are doing the right thing here so
+                     * this should be a WARN. But this is best left as an ERR
+                     * because the 'application error' is likely to come from
+                     * another part of Wine (i.e. it's our fault after all).
                      * We should change this to WARN when Wine is more stable
                      * (for 1.0?).
                      */
@@ -244,7 +244,7 @@ static INT DCE_ReleaseDC( DCE* dce )
         dce->DCXflags &= ~DCX_DCEBUSY;
 	if (dce->DCXflags & DCX_DCEDIRTY)
 	{
-	    /* don't keep around invalidated entries 
+	    /* don't keep around invalidated entries
 	     * because SetDCState() disables hVisRgn updates
 	     * by removing dirty bit. */
 
@@ -277,7 +277,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 	TRACE("scope hwnd = %04x, (%i,%i - %i,%i)\n",
 		     hwndScope, pRectUpdate->left,pRectUpdate->top,
 		     pRectUpdate->right,pRectUpdate->bottom);
-	if(TRACE_ON(dc)) 
+	if(TRACE_ON(dc))
 	  DCE_DumpCache();
 
  	/* walk all DCEs and fixup non-empty entries */
@@ -328,7 +328,7 @@ BOOL DCE_InvalidateDCE(HWND hwnd, const RECT* pRectUpdate)
 
 /***********************************************************************
  *           DCE_ExcludeRgn
- * 
+ *
  *  Translate given region from the wnd client to the DC coordinates
  *  and add it to the clipping region.
  */
@@ -371,7 +371,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     BOOL	bUpdateClipOrigin = FALSE;
     HWND parent, full;
 
-    TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n", 
+    TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n",
           hwnd, hrgnClip, (unsigned)flags);
 
     if (!hwnd) hwnd = GetDesktopWindow();
@@ -425,7 +425,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     /* find a suitable DCE */
 
-    dcxFlags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | 
+    dcxFlags = flags & (DCX_PARENTCLIP | DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 		        DCX_CACHE | DCX_WINDOW);
 
     if (flags & DCX_CACHE)
@@ -453,9 +453,9 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
 		{
-		    TRACE("\tfound valid %08x dce [%04x], flags %08x\n", 
+		    TRACE("\tfound valid %08x dce [%04x], flags %08x\n",
 					(unsigned)dce, hwnd, (unsigned)dcxFlags );
-		    bUpdateVisRgn = FALSE; 
+		    bUpdateVisRgn = FALSE;
 		    bUpdateClipOrigin = TRUE;
 		    break;
 		}
@@ -463,14 +463,14 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	}
 
 	if (!dce) dce = (dceEmpty) ? dceEmpty : dceUnused;
-        
+
         /* if there's no dce empty or unused, allocate a new one */
         if (!dce)
         {
             dce = DCE_AllocDCE( 0, DCE_CACHE_DC );
         }
     }
-    else 
+    else
     {
         dce = wndPtr->dce;
         if (dce && dce->hwndCurrent == hwnd)
@@ -545,8 +545,8 @@ HDC WINAPI GetWindowDC( HWND hwnd )
  *	1: Success
  *	0: Failure
  */
-INT WINAPI ReleaseDC( 
-             HWND hwnd /* [in] Handle of window - ignored */, 
+INT WINAPI ReleaseDC(
+             HWND hwnd /* [in] Handle of window - ignored */,
              HDC hdc   /* [in] Handle of device context */
 ) {
     DCE * dce;
@@ -554,12 +554,12 @@ INT WINAPI ReleaseDC(
 
     USER_Lock();
     dce = firstDCE;
-    
+
     TRACE("%04x %04x\n", hwnd, hdc );
-        
+
     while (dce && (dce->hDC != hdc)) dce = dce->next;
 
-    if ( dce ) 
+    if ( dce )
 	if ( dce->DCXflags & DCX_DCEBUSY )
             nRet = DCE_ReleaseDC( dce );
 
@@ -571,7 +571,7 @@ INT WINAPI ReleaseDC(
 /***********************************************************************
  *		DCHook (USER.362)
  *
- * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..  
+ * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..
  */
 BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
@@ -637,12 +637,12 @@ HWND WINAPI WindowFromDC( HDC hDC )
 
     USER_Lock();
     dce = firstDCE;
-    
+
     while (dce && (dce->hDC != hDC)) dce = dce->next;
 
     hwnd = dce ? dce->hwndCurrent : 0;
     USER_Unlock();
-    
+
     return hwnd;
 }
 

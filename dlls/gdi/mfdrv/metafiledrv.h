@@ -33,7 +33,7 @@ typedef struct
     DC          *dc;
     METAHEADER  *mh;           /* Pointer to metafile header */
     UINT       nextHandle;     /* Next handle number */
-    HFILE      hFile;          /* HFILE for disk based MetaFile */ 
+    HFILE      hFile;          /* HFILE for disk based MetaFile */
 } METAFILEDRV_PDEVICE;
 
 

@@ -2,8 +2,8 @@
  * ICMP
  *
  * Francois Gouget, 1999, based on the work of
- *   RW Hall, 1999, based on public domain code PING.C by Mike Muus (1983) 
- *   and later works (c) 1989 Regents of Univ. of California - see copyright 
+ *   RW Hall, 1999, based on public domain code PING.C by Mike Muus (1983)
+ *   and later works (c) 1989 Regents of Univ. of California - see copyright
  *   notice at end of source-code.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,9 @@
  * - Systems like FreeBSD don't seem to support the IP_TTL option and maybe others.
  *   But using IP_HDRINCL and building the IP header by hand might work.
  * - Not all IP options are supported.
- * - Are ICMP handles real handles, i.e. inheritable and all? There might be some 
+ * - Are ICMP handles real handles, i.e. inheritable and all? There might be some
  *   more work to do here, including server side stuff with synchronization.
- * - Is it correct to use malloc for the internal buffer, for allocating the 
+ * - Is it correct to use malloc for the internal buffer, for allocating the
  *   handle's structure?
  * - This API should probably be thread safe. Is it really?
  * - Using the winsock functions has not been tested.
@@ -86,9 +86,9 @@
 #define u_int16_t  WORD
 #define u_int32_t  DWORD
 
-/* These are BSD headers. We use these here because they are needed on 
- * libc5 Linux systems. On other platforms they are usually simply more 
- * complete than the native stuff, and cause less portability problems 
+/* These are BSD headers. We use these here because they are needed on
+ * libc5 Linux systems. On other platforms they are usually simply more
+ * complete than the native stuff, and cause less portability problems
  * so we use them anyway.
  */
 #include "ip.h"
@@ -140,7 +140,7 @@ typedef struct {
 #define IP_OPTS_DEFAULT     1
 #define IP_OPTS_CUSTOM      2
 
-/* The sequence number is unique process wide, so that all threads 
+/* The sequence number is unique process wide, so that all threads
  * have a distinct sequence number.
  */
 static LONG icmp_sequence=0;
@@ -456,7 +456,7 @@ DWORD WINAPI IcmpSendEcho(
 			ier->Status=IP_REQ_TIMED_OUT;
 		    }
                 }
-	    }                
+	    }
 	}
 
         if (ier->Status==IP_REQ_TIMED_OUT) {

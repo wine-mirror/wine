@@ -208,7 +208,7 @@ BOOL IP_FindInf(HINF16 hInf, WORD *ret)
 	}
     return FALSE;
 }
-	
+
 
 LPCSTR IP_GetFileName(HINF16 hInf)
 {

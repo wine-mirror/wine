@@ -69,7 +69,7 @@ struct CCPRIVATE
  LPCHOOSECOLOR16 lpcc16; /* save the 16 bits pointer */
  int nextuserdef;     /* next free place in user defined color array */
  HDC hdcMem;        /* color graph used for BitBlt() */
- HBITMAP hbmMem;    /* color graph bitmap */    
+ HBITMAP hbmMem;    /* color graph bitmap */
  RECT fullsize;     /* original dialog window size */
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
  RECT old3angle;    /* last position of l-marker */
@@ -459,7 +459,7 @@ static void CC_PaintTriangle( HWND hDlg, int y)
  int oben;
  RECT rect;
  HWND hwnd = GetDlgItem(hDlg, 0x2be);
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA( hDlg, DWL_USER); 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA( hDlg, DWL_USER);
 
  if (IsWindowVisible( GetDlgItem(hDlg, 0x2c6)))   /* if full size */
  {
@@ -497,7 +497,7 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
  HDC hDC;
  int w = GetDialogBaseUnits();
  HWND hwnd = GetDlgItem(hDlg, 0x2c6);
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA( hDlg, DWL_USER ); 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA( hDlg, DWL_USER );
  RECT rect;
  POINT point, p;
  HPEN hPen;
@@ -519,11 +519,11 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
    lpp->oldcross.left   = point.x - w - 1;
    lpp->oldcross.right  = point.x + w + 1;
    lpp->oldcross.top    = point.y - w - 1;
-   lpp->oldcross.bottom = point.y + w + 1; 
+   lpp->oldcross.bottom = point.y + w + 1;
 
-   MoveToEx(hDC, point.x - w, point.y, &p); 
+   MoveToEx(hDC, point.x - w, point.y, &p);
    LineTo(hDC, point.x + w, point.y);
-   MoveToEx(hDC, point.x, point.y - w, &p); 
+   MoveToEx(hDC, point.x, point.y - w, &p);
    LineTo(hDC, point.x, point.y + w);
    DeleteObject( SelectObject(hDC, hPen)) ;
    ReleaseDC(hwnd, hDC);
@@ -538,11 +538,11 @@ static void CC_PaintCross( HWND hDlg, int x, int y)
 /***********************************************************************
  *                    CC_PrepareColorGraph                    [internal]
  */
-static void CC_PrepareColorGraph( HWND hDlg )    
+static void CC_PrepareColorGraph( HWND hDlg )
 {
  int sdif, hdif, xdif, ydif, r, g, b, hue, sat;
  HWND hwnd = GetDlgItem(hDlg, 0x2c6);
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);  
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
  HBRUSH hbrush;
  HDC hdc ;
  RECT rect, client;
@@ -585,7 +585,7 @@ static void CC_PrepareColorGraph( HWND hDlg )
 static void CC_PaintColorGraph( HWND hDlg )
 {
  HWND hwnd = GetDlgItem( hDlg, 0x2c6 );
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
  HDC  hDC;
  RECT rect;
  if (IsWindowVisible(hwnd))   /* if full size */
@@ -645,7 +645,7 @@ static void CC_PaintLumBar( HWND hDlg, int hue, int sat )
 static void CC_EditSetRGB( HWND hDlg, COLORREF cr )
 {
  char buffer[10];
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
  int r = GetRValue(cr);
  int g = GetGValue(cr);
  int b = GetBValue(cr);
@@ -690,8 +690,8 @@ static void CC_EditSetHSL( HWND hDlg, int h, int s, int l )
 static void CC_SwitchToFullSize( HWND hDlg, COLORREF result, LPRECT lprect )
 {
  int i;
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
- 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
+
  EnableWindow( GetDlgItem(hDlg, 0x2cf), FALSE);
  CC_PrepareColorGraph(hDlg);
  for (i = 0x2bf; i < 0x2c5; i++)
@@ -738,7 +738,7 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
  FillRect(hdc, &rect, GetClassLongA(hwnd, GCL_HBRBACKGROUND));
  for ( j = 0; j < rows; j++ )
  {
-  for ( i = 0; i < cols; i++ ) 
+  for ( i = 0; i < cols; i++ )
   {
    hBrush = CreateSolidBrush(predefcolors[j][i]);
    if (hBrush)
@@ -759,7 +759,7 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 }
 /***********************************************************************
  *                             CC_PaintUserColorArray         [internal]
- *               Paint the 16 user-selected colors 
+ *               Paint the 16 user-selected colors
  */
 static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpcr )
 {
@@ -777,7 +777,7 @@ static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpc
  k = rect.left;
 
  hdc = GetDC(hwnd);
- if (hdc) 
+ if (hdc)
  {
   FillRect(hdc, &rect, GetClassLongA(hwnd, GCL_HBRBACKGROUND) );
   for (j = 0; j < rows; j++)
@@ -786,7 +786,7 @@ static void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpc
    {
     hBrush = CreateSolidBrush(lpcr[i+j*cols]);
     if (hBrush)
-    { 
+    {
      hBrush = SelectObject(hdc, hBrush) ;
      Rectangle(hdc, rect.left, rect.top,
                   rect.left + dx - DISTANCE, rect.top + dy - DISTANCE);
@@ -821,15 +821,15 @@ static BOOL CC_HookCallChk( LPCHOOSECOLORW lpcc )
 /***********************************************************************
  *                              CC_WMInitDialog                  [internal]
  */
-static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 ) 
+static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
 {
    int i, res;
    int r, g, b;
    HWND hwnd;
    RECT rect;
    POINT point;
-   LCCPRIV lpp; 
-   
+   LCCPRIV lpp;
+
    TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
    lpp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct CCPRIVATE) );
    if (b16)
@@ -845,7 +845,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
            return FALSE;
        }
        ch32->lStructSize = sizeof(CHOOSECOLORW);
-       ch32->hwndOwner = ch16->hwndOwner; 
+       ch32->hwndOwner = ch16->hwndOwner;
        ch32->hInstance = ch16->hInstance;
        ch32->lpCustColors = MapSL(ch16->lpCustColors);
        ch32->lpfnHook = (LPCCHOOKPROC) ch16->lpfnHook; /* only used as flag */
@@ -859,7 +859,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
       EndDialog (hDlg, 0) ;
       return FALSE;
    }
-   SetWindowLongA(hDlg, DWL_USER, (LONG)lpp); 
+   SetWindowLongA(hDlg, DWL_USER, (LONG)lpp);
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
       ShowWindow( GetDlgItem(hDlg,0x40e), SW_HIDE);
@@ -869,7 +869,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
    cpos = MAKELONG(5,7); /* init */
    if (lpp->lpcc->Flags & CC_RGBINIT)
    {
-     for (i = 0; i < 6; i++) 
+     for (i = 0; i < 6; i++)
        for (j = 0; j < 8; j++)
         if (predefcolors[i][j] == lpp->lpcc->rgbResult)
         {
@@ -921,7 +921,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
       else
           res = CallWindowProcA( (WNDPROC)lpp->lpcc->lpfnHook, hDlg, WM_INITDIALOG, wParam, lParam);
    }
-   
+
    /* Set the initial values of the color chooser dialog */
    r = GetRValue(lpp->lpcc->rgbResult);
    g = GetGValue(lpp->lpcc->rgbResult);
@@ -950,13 +950,13 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
 /***********************************************************************
  *                              CC_WMCommand                  [internal]
  */
-static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, HWND hwndCtl ) 
+static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notifyCode, HWND hwndCtl )
 {
     int  r, g, b, i, xx;
     UINT cokmsg;
     HDC hdc;
     COLORREF *cr;
-    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
     TRACE("CC_WMCommand wParam=%x lParam=%lx\n", wParam, lParam);
     switch (wParam)
     {
@@ -989,7 +989,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   }
 			 }
 		 break;
-		 
+
 	  case 0x2bf:  /* edit notify HSL */
 	  case 0x2c0:
 	  case 0x2c1:
@@ -1016,7 +1016,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 			   }
 			 }
 	       break;
-	       
+
           case 0x2cf:
                CC_SwitchToFullSize(hDlg, lpp->lpcc->rgbResult, &lpp->fullsize);
 	       SetFocus( GetDlgItem(hDlg, 0x2bf));
@@ -1089,7 +1089,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
                 }
 		EndDialog(hDlg, 1) ;
 		return TRUE ;
-	
+
 	  case IDCANCEL :
 		EndDialog(hDlg, 0) ;
 		return TRUE ;
@@ -1101,11 +1101,11 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
 /***********************************************************************
  *                              CC_WMPaint                    [internal]
  */
-static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam ) 
+static LRESULT CC_WMPaint( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
     HDC hdc;
     PAINTSTRUCT ps;
-    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+    LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
 
     hdc = BeginPaint(hDlg, &ps);
     /* we have to paint dialog children except text and buttons */
@@ -1134,7 +1134,7 @@ static LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
        ReleaseCapture();
        CC_PaintCross(hDlg, lpp->h, lpp->s);
        return 1;
-   } 
+   }
    return 0;
 }
 
@@ -1142,15 +1142,15 @@ static LRESULT CC_WMLButtonUp( HWND hDlg, WPARAM wParam, LPARAM lParam )
 /***********************************************************************
  *                              CC_WMMouseMove              [internal]
  */
-static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam ) 
+static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 {
-   LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+   LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
    int r, g, b;
 
    if (lpp->capturedGraph)
    {
       int *ptrh = NULL, *ptrs = &lpp->l;
-      if (lpp->capturedGraph == 0x2c6) 
+      if (lpp->capturedGraph == 0x2c6)
       {
           ptrh = &lpp->h;
           ptrs = &lpp->s;
@@ -1179,9 +1179,9 @@ static LRESULT CC_WMMouseMove( HWND hDlg, LPARAM lParam )
 /***********************************************************************
  *                              CC_WMLButtonDown              [internal]
  */
-static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam ) 
+static LRESULT CC_WMLButtonDown( HWND hDlg, WPARAM wParam, LPARAM lParam )
 {
-   LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+   LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
    int r, g, b, i;
    i = 0;
 
@@ -1263,15 +1263,15 @@ static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
 	  case WM_INITDIALOG:
 	                return CC_WMInitDialog(hDlg, wParam, lParam, FALSE);
 	  case WM_NCDESTROY:
-	                DeleteDC(lpp->hdcMem); 
-	                DeleteObject(lpp->hbmMem); 
+	                DeleteDC(lpp->hdcMem);
+	                DeleteObject(lpp->hbmMem);
                         HeapFree(GetProcessHeap(), 0, lpp);
 	                SetWindowLongA(hDlg, DWL_USER, 0L); /* we don't need it anymore */
 	                break;
 	  case WM_COMMAND:
 	                if (CC_WMCommand( hDlg, wParam, lParam, HIWORD(wParam), (HWND) lParam))
 	                   return TRUE;
-	                break;     
+	                break;
 	  case WM_PAINT:
 	                if ( CC_WMPaint(hDlg, wParam, lParam))
 	                   return TRUE;
@@ -1291,7 +1291,7 @@ static LRESULT WINAPI ColorDlgProc( HWND hDlg, UINT message,
 	  case WM_LBUTTONDOWN:/* FIXME: ClipCursor on  (if in color graph)*/
 	                if (CC_WMLButtonDown(hDlg, wParam, lParam))
 	                   return TRUE;
-	                break;     
+	                break;
 	}
      return FALSE ;
 }
@@ -1303,7 +1303,7 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
                             WPARAM16 wParam, LONG lParam )
 {
  int res;
- LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER); 
+ LCCPRIV lpp = (LCCPRIV)GetWindowLongA(hDlg, DWL_USER);
  if (message != WM_INITDIALOG)
  {
   if (!lpp)
@@ -1325,8 +1325,8 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 	  case WM_INITDIALOG:
 	                return CC_WMInitDialog(hDlg, wParam, lParam, TRUE);
 	  case WM_NCDESTROY:
-	                DeleteDC(lpp->hdcMem); 
-	                DeleteObject(lpp->hbmMem); 
+	                DeleteDC(lpp->hdcMem);
+	                DeleteObject(lpp->hbmMem);
                         HeapFree(GetProcessHeap(), 0, lpp->lpcc);
                         HeapFree(GetProcessHeap(), 0, lpp);
 	                SetWindowLongA(hDlg, DWL_USER, 0L); /* we don't need it anymore */
@@ -1334,7 +1334,7 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 	  case WM_COMMAND:
 	                if (CC_WMCommand(hDlg, wParam, lParam, HIWORD(lParam), (HWND)LOWORD(lParam)))
 	                   return TRUE;
-	                break;     
+	                break;
 	  case WM_PAINT:
 	                if (CC_WMPaint(hDlg, wParam, lParam))
 	                   return TRUE;
@@ -1354,7 +1354,7 @@ LRESULT WINAPI ColorDlgProc16( HWND16 hDlg, UINT16 message,
 	  case WM_LBUTTONDOWN:/* FIXME: ClipCursor on  (if in color graph)*/
 	                if (CC_WMLButtonDown(hDlg, wParam, lParam))
 	                   return TRUE;
-	                break;     
+	                break;
 	}
      return FALSE ;
 }
@@ -1372,9 +1372,9 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     BOOL16 bRet = FALSE;
     LPCVOID template;
     FARPROC16 ptr;
- 
+
     TRACE("ChooseColor\n");
-    if (!lpChCol) return FALSE;    
+    if (!lpChCol) return FALSE;
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
         hDlgTmpl16 = lpChCol->hInstance;
@@ -1420,7 +1420,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
             return FALSE;
         }
         template = GlobalLock16(hGlobal16);
-        if (!template) 
+        if (!template)
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
             ERR("global lock failure for %x handle\n", hDlgTmpl16);
@@ -1456,7 +1456,7 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
     LPCVOID template;
 
     TRACE("ChooseColor\n");
-    if (!lpChCol) return FALSE;    
+    if (!lpChCol) return FALSE;
 
     if (lpChCol->Flags & CC_ENABLETEMPLATEHANDLE)
     {

@@ -68,7 +68,7 @@ DEFINE_GUID(GUID_XSIZE,
             0x66504308,0xBE0F,0x101A,0x8B,0xBB,0x00,0xAA,0x00,0x30,0x0C,0xAB);
 DEFINE_GUID(GUID_YSIZE,
             0x66504309,0xBE0F,0x101A,0x8B,0xBB,0x00,0xAA,0x00,0x30,0x0C,0xAB);
- 
+
 typedef struct tagOCPFIPARAMS
 {
 	ULONG cbStructSize;
@@ -154,18 +154,18 @@ HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon);
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams);
 
 HRESULT WINAPI OleCreatePropertyFrame(
-	HWND hwndOwner, UINT x, UINT y, 
-	LPCOLESTR lpszCaption, ULONG cObjects, LPUNKNOWN* ppUnk, 
-	ULONG cPages, LPCLSID pPageClsID, LCID lcid, DWORD dwReserved, 
+	HWND hwndOwner, UINT x, UINT y,
+	LPCOLESTR lpszCaption, ULONG cObjects, LPUNKNOWN* ppUnk,
+	ULONG cPages, LPCLSID pPageClsID, LCID lcid, DWORD dwReserved,
 	LPVOID pvReserved );
 
-HRESULT WINAPI OleLoadPicture(	LPSTREAM lpstream, LONG lSize, BOOL fRunmode, 
+HRESULT WINAPI OleLoadPicture(	LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 		REFIID reed, LPVOID *lplpvObj );
 
-HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid, 
+HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid,
 		BOOL fOwn, LPVOID * lplpvObj );
 
-HRESULT WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid, 
+HRESULT WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid,
 		LPVOID* lplpvObj);
 
 HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
@@ -253,7 +253,7 @@ HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
 #define	DISPID_PICT_WIDTH	4
 #define	DISPID_PICT_HEIGHT	5
 #define	DISPID_PICT_RENDER	6
- 
+
 /* Reflected Window Message IDs */
 #define OCM__BASE           (WM_USER+0x1c00)
 #define OCM_COMMAND         (OCM__BASE + WM_COMMAND)

@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 struct HGLOBALLockBytesImpl
 {
   /*
-   * Needs to be the first item in the stuct 
+   * Needs to be the first item in the stuct
    * since we want to cast this in an ILockBytes pointer
    */
   ICOM_VFIELD(ILockBytes);
@@ -205,7 +205,7 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
 {
   HGLOBALLockBytesImpl* newLockBytes;
   newLockBytes = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALLockBytesImpl));
- 
+
   if (newLockBytes!=0)
   {
     /*
@@ -213,7 +213,7 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
      */
     ICOM_VTBL(newLockBytes) = &HGLOBALLockBytesImpl_Vtbl;
     newLockBytes->ref    = 0;
-  
+
     /*
      * Initialize the support.
      */
@@ -311,7 +311,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
    */
   HGLOBALLockBytesImpl_AddRef(iface);
 
-  return S_OK;;
+  return S_OK;
 }
 
 /******************************************************************************
@@ -415,7 +415,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_ReadAt(
   /*
    * The function returns S_OK if the specified number of bytes were read
    * or the end of the array was reached.
-   * It returns STG_E_READFAULT if the number of bytes to read does not equal 
+   * It returns STG_E_READFAULT if the number of bytes to read does not equal
    * the number of bytes actually read.
    */
   if(*pcbRead == cb)
@@ -520,7 +520,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
    */
   if (libNewSize.s.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
- 
+
   if (This->byteArraySize.s.LowPart == libNewSize.s.LowPart)
     return S_OK;
 
@@ -535,7 +535,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
     return STG_E_MEDIUMFULL;
 
   This->byteArraySize.s.LowPart = libNewSize.s.LowPart;
- 
+
   return S_OK;
 }
 

@@ -36,7 +36,7 @@ typedef struct tagCONNECTDATA
 				  IUnknown *pUnk;
 					  DWORD dwCookie;
 } CONNECTDATA, *LPCONNECTDATA;
- 
+
 /*****************************************************************************
  * Predeclare the interfaces
  */
@@ -151,7 +151,7 @@ ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #define IEnumConnectionPoints_Skip(p,a)                  ICOM_CALL1(Skip,p,a)
 #define IEnumConnectionPoints_Reset(p)                   ICOM_CALL (Reset,p)
 #define IEnumConnectionPoints_Clone(p,a)                 ICOM_CALL1(Clone,p,a)
-				
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

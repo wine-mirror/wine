@@ -96,7 +96,7 @@ static void add_paint_count( HWND hwnd, int incr )
  *           WIN_HaveToDelayNCPAINT
  *
  * Currently, in the Wine painting mechanism, the WM_NCPAINT message
- * is generated as soon as a region intersecting the non-client area 
+ * is generated as soon as a region intersecting the non-client area
  * of a window is invalidated.
  *
  * This technique will work fine for all windows whose parents
@@ -108,7 +108,7 @@ static void add_paint_count( HWND hwnd, int incr )
  * non-client area.
  *
  * This method looks at the current state of a window to determine
- * if the sending of the WM_NCPAINT message should be delayed until 
+ * if the sending of the WM_NCPAINT message should be delayed until
  * the BeginPaint call.
  *
  * PARAMS:
@@ -118,12 +118,12 @@ static void add_paint_count( HWND hwnd, int incr )
  *              function. This is a shortcut for the cases when
  *              we already know when to avoid scanning all the
  *              parents of a window. If you already know that this
- *              window's NCPAINT should be delayed, set the 
- *              UNC_DELAY_NCPAINT flag for this parameter. 
+ *              window's NCPAINT should be delayed, set the
+ *              UNC_DELAY_NCPAINT flag for this parameter.
  *
  *              This shortcut behavior is implemented in the
  *              RDW_Paint() method.
- * 
+ *
  */
 static BOOL WIN_HaveToDelayNCPAINT( HWND hwnd, UINT uncFlags)
 {
@@ -145,7 +145,7 @@ static BOOL WIN_HaveToDelayNCPAINT( HWND hwnd, UINT uncFlags)
   /*
    * Scan all the parents of this window to find a window
    * that doesn't have the WS_CLIPCHILDREN style and that
-   * has an invalid region. 
+   * has an invalid region.
    */
   while ((hwnd = GetAncestor( hwnd, GA_PARENT )))
   {
@@ -171,7 +171,7 @@ static BOOL WIN_HaveToDelayNCPAINT( HWND hwnd, UINT uncFlags)
  *  NOTE: UNC_REGION is mainly for the RDW_Paint() chunk that sends WM_ERASEBKGND message.
  *	  The trick is that when the returned region handle may be different from hRgn.
  *	  In this case the old hRgn must be considered gone. BUT, if the returned value
- *	  is 1 then the hRgn is preserved and RDW_Paint() will have to get 
+ *	  is 1 then the hRgn is preserved and RDW_Paint() will have to get
  *	  a DC without extra clipping region.
  */
 static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
@@ -180,7 +180,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
     HRGN  hClip = 0;
     HRGN  hrgnRet = 0;
 
-    TRACE_(nonclient)("hwnd %04x [%04x] hrgn %04x, unc %04x, ncf %i\n", 
+    TRACE_(nonclient)("hwnd %04x [%04x] hrgn %04x, unc %04x, ncf %i\n",
                       wnd->hwndSelf, wnd->hrgnUpdate, hRgn, uncFlags, wnd->flags & WIN_NEEDS_NCPAINT);
 
     /* desktop window doesn't have a nonclient area */
@@ -189,7 +189,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
         wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	if( wnd->hrgnUpdate > 1 )
 	    hrgnRet = REGION_CropRgn( hRgn, wnd->hrgnUpdate, NULL, NULL );
-	else 
+	else
 	{
 	    hrgnRet = wnd->hrgnUpdate;
 	}
@@ -200,21 +200,21 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
         !(wnd->flags & WIN_NCACTIVATED) )
     {
 	wnd->flags |= WIN_NCACTIVATED;
-	uncFlags |= UNC_ENTIRE; 
+	uncFlags |= UNC_ENTIRE;
     }
 
     /*
-     * If the window's non-client area needs to be painted, 
+     * If the window's non-client area needs to be painted,
      */
     if ( ( wnd->flags & WIN_NEEDS_NCPAINT ) &&
 	 !WIN_HaveToDelayNCPAINT(wnd->hwndSelf, uncFlags) )
     {
 	    RECT r2, r3;
 
-	    wnd->flags &= ~WIN_NEEDS_NCPAINT;  
+	    wnd->flags &= ~WIN_NEEDS_NCPAINT;
 	    GETCLIENTRECTW( wnd, r );
 
-	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %04x\n", 
+	    TRACE_(nonclient)( "\tclient box (%i,%i-%i,%i), hrgnUpdate %04x\n",
 				r.left, r.top, r.right, r.bottom, wnd->hrgnUpdate );
 	    if( wnd->hrgnUpdate > 1 )
 	    {
@@ -222,7 +222,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 
 		GetRgnBox( wnd->hrgnUpdate, &r2 );
 		UnionRect( &r3, &r2, &r );
-		if( r3.left != r.left || r3.top != r.top || 
+		if( r3.left != r.left || r3.top != r.top ||
 		    r3.right != r.right || r3.bottom != r.bottom ) /* it does */
 		{
 		    /* crop hrgnUpdate, save old one in hClip - the only
@@ -238,7 +238,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 		    GetRgnBox( wnd->hrgnUpdate, &r3 );
 		    if( IsRectEmpty( &r3 ) )
 		    {
-			/* delete the update region since all invalid 
+			/* delete the update region since all invalid
 			 * parts were in the nonclient area */
 
 			DeleteObject( wnd->hrgnUpdate );
@@ -252,7 +252,7 @@ static HRGN WIN_UpdateNCRgn(WND* wnd, HRGN hRgn, UINT uncFlags )
 
 		if(!hClip && wnd->hrgnUpdate ) goto copyrgn;
 	    }
-	    else 
+	    else
 	    if( wnd->hrgnUpdate == 1 )/* entire window */
 	    {
 		if( uncFlags & UNC_UPDATE ) wnd->hrgnUpdate = CreateRectRgnIndirect( &r );
@@ -271,7 +271,7 @@ copyrgn:
 	else
 	if( wnd->hrgnUpdate == 1 && (uncFlags & UNC_UPDATE) )
 	{
-	    GETCLIENTRECTW( wnd, r ); 
+	    GETCLIENTRECTW( wnd, r );
 	    wnd->hrgnUpdate = CreateRectRgnIndirect( &r );
 	    if( uncFlags & UNC_REGION ) hrgnRet = 1;
 	}
@@ -311,7 +311,7 @@ copyrgn:
 
 
 /***********************************************************************
- * 		RDW_ValidateParent [RDW_UpdateRgns() helper] 
+ * 		RDW_ValidateParent [RDW_UpdateRgns() helper]
  *
  *  Validate the portions of parents that are covered by a validated child
  *  wndPtr = child
@@ -369,7 +369,7 @@ static void RDW_ValidateParent(WND *wndChild)
 }
 
 /***********************************************************************
- * 		RDW_UpdateRgns [RedrawWindow() helper] 
+ * 		RDW_UpdateRgns [RedrawWindow() helper]
  *
  *  Walks the window tree and adds/removes parts of the hRgn to/from update
  *  regions of windows that overlap it. Also, manages internal paint flags.
@@ -379,7 +379,7 @@ static void RDW_ValidateParent(WND *wndChild)
  */
 static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecursLevel )
 {
-    /* 
+    /*
      * Called only when one of the following is set:
      * (RDW_INVALIDATE | RDW_VALIDATE | RDW_INTERNALPAINT | RDW_NOINTERNALPAINT)
      */
@@ -406,8 +406,8 @@ static void RDW_UpdateRgns( WND* wndPtr, HRGN hRgn, UINT flags, BOOL firstRecurs
 			CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hRgn, RGN_OR );
 			/* fall through */
 		case 0:
-			wndPtr->hrgnUpdate = REGION_CropRgn( wndPtr->hrgnUpdate, 
-							     wndPtr->hrgnUpdate ? wndPtr->hrgnUpdate : hRgn, 
+			wndPtr->hrgnUpdate = REGION_CropRgn( wndPtr->hrgnUpdate,
+							     wndPtr->hrgnUpdate ? wndPtr->hrgnUpdate : hRgn,
 							     &r, NULL );
 			if( !bHadOne )
 			{
@@ -577,7 +577,7 @@ end:
 static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 {
 /* NOTE: wndPtr is locked by caller.
- * 
+ *
  * FIXME: Windows uses WM_SYNCPAINT to cut down the number of intertask
  * SendMessage() calls. This is a comment inside DefWindowProc() source
  * from 16-bit SDK:
@@ -616,10 +616,10 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 	UINT dcx = DCX_INTERSECTRGN | DCX_USESTYLE | DCX_KEEPCLIPRGN | DCX_WINDOWPAINT | DCX_CACHE;
 	HRGN hrgnRet;
 
-	hrgnRet = WIN_UpdateNCRgn(wndPtr, 
-				  hrgn, 
-				  UNC_REGION | UNC_CHECK | 
-				  ((ex & RDW_EX_DELAY_NCPAINT) ? UNC_DELAY_NCPAINT : 0) ); 
+	hrgnRet = WIN_UpdateNCRgn(wndPtr,
+				  hrgn,
+				  UNC_REGION | UNC_CHECK |
+				  ((ex & RDW_EX_DELAY_NCPAINT) ? UNC_DELAY_NCPAINT : 0) );
 
         if( hrgnRet )
 	{
@@ -627,9 +627,9 @@ static HRGN RDW_Paint( WND* wndPtr, HRGN hrgn, UINT flags, UINT ex )
 	    if( wndPtr->flags & WIN_NEEDS_ERASEBKGND )
 	    {
 		if( bIcon ) dcx |= DCX_WINDOW;
-		else 
+		else
 		if( hrgnRet )
-		    OffsetRgn( hrgnRet, wndPtr->rectWindow.left - wndPtr->rectClient.left, 
+		    OffsetRgn( hrgnRet, wndPtr->rectWindow.left - wndPtr->rectClient.left,
 			                wndPtr->rectWindow.top  - wndPtr->rectClient.top);
 		else
 		    dcx &= ~DCX_INTERSECTRGN;
@@ -704,7 +704,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	    else
 		SetRectEmpty( &r );
 	    TRACE( "%04x (%04x) %s %d,%d-%d,%d %04x flags=%04x\n",
-			hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left, 
+			hwnd, wndPtr->hrgnUpdate, rectUpdate ? "rect" : "NULL", r.left,
 			r.top, r.right, r.bottom, hrgnUpdate, flags );
 	}
     }
@@ -736,8 +736,8 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	{
 	    if( wndPtr->hrgnUpdate )
 	        hRgn = REGION_CropRgn( 0, hrgnUpdate, NULL, &pt );
-	    else 
-		wndPtr->hrgnUpdate = REGION_CropRgn( 0, hrgnUpdate, &r, &pt ); 
+	    else
+		wndPtr->hrgnUpdate = REGION_CropRgn( 0, hrgnUpdate, &r, &pt );
 	}
 	else if( rectUpdate )
 	{
@@ -782,7 +782,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rectUpdate,
 	}
 	else /* entire window or client depending on RDW_FRAME */
         {
-	    if( flags & RDW_FRAME ) 
+	    if( flags & RDW_FRAME )
 		hRgn = 1;
 	    else
 	    {
@@ -888,7 +888,7 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 	    GetClientRect( hwnd, rect );
 	    if (erase) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_ERASENOW | RDW_NOCHILDREN );
 	}
-	else 
+	else
 	    SetRectEmpty( rect );
     }
     retvalue = (wndPtr->hrgnUpdate >= 1);
@@ -953,7 +953,7 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 	if( wndPtr->hrgnUpdate > 1 )
 	{
 	    CombineRgn(hrgn, wndPtr->hrgnUpdate, 0, RGN_COPY);
-	    OffsetRgn(hrgn, wndPtr->rectWindow.left - wndPtr->rectClient.left, 
+	    OffsetRgn(hrgn, wndPtr->rectWindow.left - wndPtr->rectClient.left,
 			    wndPtr->rectWindow.top - wndPtr->rectClient.top );
 	}
 
@@ -963,7 +963,7 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
 	DeleteObject( hrgn );
         WIN_ReleaseWndPtr(wndPtr);
 	return ret;
-    } 
+    }
     WIN_ReleaseWndPtr(wndPtr);
     return GetClipBox( hdc, &rect );
 }
@@ -1028,7 +1028,7 @@ void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 BOOL WINAPI InvertRect( HDC hdc, const RECT *rect )
 {
     return PatBlt( hdc, rect->left, rect->top,
-		     rect->right - rect->left, rect->bottom - rect->top, 
+		     rect->right - rect->left, rect->bottom - rect->top,
 		     DSTINVERT );
 }
 
@@ -1043,7 +1043,7 @@ INT WINAPI FrameRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
 
     if ( (r.right <= r.left) || (r.bottom <= r.top) ) return 0;
     if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
-    
+
     PatBlt( hdc, r.left, r.top, 1,
 	      r.bottom - r.top, PATCOPY );
     PatBlt( hdc, r.right - 1, r.top, 1,
@@ -1135,7 +1135,7 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
     BOOL retval;
     INT cx = rc->right - rc->left;
     INT cy = rc->bottom - rc->top;
-    
+
     switch(opcode)
     {
     case DST_TEXT:
@@ -1152,7 +1152,7 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
         memdc = CreateCompatibleDC(hdc);
         if(!memdc) return FALSE;
         hbmsave = (HBITMAP)SelectObject(memdc, (HBITMAP)lp);
-        if(!hbmsave) 
+        if(!hbmsave)
         {
             DeleteDC(memdc);
             return FALSE;
@@ -1161,7 +1161,7 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
         SelectObject(memdc, hbmsave);
         DeleteDC(memdc);
         return retval;
-            
+
     case DST_COMPLEX:
         if(func) {
 	    BOOL bRet;
@@ -1220,14 +1220,14 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
                 retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
             if(!retval) return FALSE;
             break;
-            
+
         case DST_ICON:
             ici = (CURSORICONINFO *)GlobalLock16((HGLOBAL16)lp);
             if(!ici) return FALSE;
             s.cx = ici->nWidth;
             s.cy = ici->nHeight;
             GlobalUnlock16((HGLOBAL16)lp);
-            break;            
+            break;
 
         case DST_BITMAP:
 	    if(!GetObjectA((HBITMAP)lp, sizeof(bm), &bm))
@@ -1235,11 +1235,11 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
             s.cx = bm.bmWidth;
             s.cy = bm.bmHeight;
             break;
-            
+
         case DST_COMPLEX: /* cx and cy must be set in this mode */
             return FALSE;
 	}
-	            
+
         if(!cx) cx = s.cx;
         if(!cy) cy = s.cy;
     }
@@ -1267,7 +1267,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
     hbm = (HBITMAP)NULL; hbmsave = (HBITMAP)NULL;
     memdc = (HDC)NULL; hbsave = (HBRUSH)NULL;
     retval = FALSE; /* assume failure */
-    
+
     /* From here on we must use "goto cleanup" when something goes wrong */
     hbm     = CreateBitmap(cx, cy, 1, 1, NULL);
     if(!hbm) goto cleanup;
@@ -1290,7 +1290,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
     tmp = PAINTING_DrawStateJam(memdc, opcode, func, lp, len, &rc, dtflags, unicode);
     if(hfsave) SelectObject(memdc, hfsave);
     if(!tmp) goto cleanup;
-    
+
     /* This state cause the image to be dithered */
     if(flags & DSS_UNION)
     {
@@ -1329,12 +1329,12 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
     }
 
     hbsave = (HBRUSH)SelectObject(hdc, hbr);
-    
+
     if(!BitBlt(hdc, x, y, cx, cy, memdc, 0, 0, 0x00B8074A)) goto cleanup;
-    
+
     retval = TRUE; /* We succeeded */
-    
-cleanup:    
+
+cleanup:
     SetTextColor(hdc, fg);
     SetBkColor(hdc, bg);
 

@@ -1,6 +1,6 @@
 /*
  * NT basis DLL
- * 
+ *
  * This file contains the Nt* API functions of NTDLL.DLL.
  * In the original ntdll.dll they all seem to just call int 0x2e (down to the NTOSKRNL)
  *
@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 /*
  *	Timer object
  */
- 
+
 /**************************************************************************
  *		NtCreateTimer				[NTDLL.@]
  *		ZwCreateTimer				[NTDLL.@]
@@ -73,7 +73,7 @@ NTSTATUS WINAPI NtSetTimer(
 /******************************************************************************
  * NtQueryTimerResolution [NTDLL.@]
  */
-NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3) 
+NTSTATUS WINAPI NtQueryTimerResolution(DWORD x1,DWORD x2,DWORD x3)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx), stub!\n",x1,x2,x3);
 	return 1;
@@ -171,7 +171,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
  */
 NTSTATUS WINAPI NtResumeThread(
 	IN HANDLE ThreadHandle,
-	IN PULONG SuspendCount) 
+	IN PULONG SuspendCount)
 {
 	FIXME("(0x%08x,%p),stub!\n",
 	ThreadHandle,SuspendCount);
@@ -269,8 +269,8 @@ NTSTATUS WINAPI NtDuplicateToken(
  */
 NTSTATUS WINAPI NtOpenProcessToken(
 	HANDLE ProcessHandle,
-	DWORD DesiredAccess, 
-	HANDLE *TokenHandle) 
+	DWORD DesiredAccess,
+	HANDLE *TokenHandle)
 {
 	FIXME("(0x%08x,0x%08lx,%p): stub\n",
 	ProcessHandle,DesiredAccess, TokenHandle);
@@ -284,9 +284,9 @@ NTSTATUS WINAPI NtOpenProcessToken(
  */
 NTSTATUS WINAPI NtOpenThreadToken(
 	HANDLE ThreadHandle,
-	DWORD DesiredAccess, 
+	DWORD DesiredAccess,
 	BOOLEAN OpenAsSelf,
-	HANDLE *TokenHandle) 
+	HANDLE *TokenHandle)
 {
 	FIXME("(0x%08x,0x%08lx,0x%08x,%p): stub\n",
 	ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
@@ -325,10 +325,10 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 */
 NTSTATUS WINAPI NtQueryInformationToken(
 	HANDLE token,
-	DWORD tokeninfoclass, 
+	DWORD tokeninfoclass,
 	LPVOID tokeninfo,
 	DWORD tokeninfolength,
-	LPDWORD retlen ) 
+	LPDWORD retlen )
 {
     unsigned int len = 0;
 
@@ -416,7 +416,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 /*
  *	Section
  */
- 
+
 /******************************************************************************
  *  NtCreateSection	[NTDLL.@]
  *  ZwCreateSection	[NTDLL.@]
@@ -480,7 +480,7 @@ NTSTATUS WINAPI NtQuerySection(
  *  ZeroBits		Number of high order address bits that must be zero
  *  CommitSize		Size in bytes of the initially committed section of the view
  *  SectionOffset	Offset in bytes from the beginning of the section to the beginning of the view
- *  ViewSize		Desired length of map (or zero to map all) on entry 
+ *  ViewSize		Desired length of map (or zero to map all) on entry
  			Actual length mapped on exit
  *  InheritDisposition	Specified how the view is to be shared with
  *			child processes
@@ -513,7 +513,7 @@ NTSTATUS WINAPI NtMapViewOfSection(
  *  NtCreatePort		[NTDLL.@]
  *  ZwCreatePort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5) 
+NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5);
 	return 0;
@@ -523,7 +523,7 @@ NTSTATUS WINAPI NtCreatePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
  *  NtConnectPort		[NTDLL.@]
  *  ZwConnectPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
+NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8)
 {
 	FIXME("(0x%08lx,%s,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
 	x1,debugstr_w(uni->Buffer),x3,x4,x5,x6,x7,x8);
@@ -534,7 +534,7 @@ NTSTATUS WINAPI NtConnectPort(DWORD x1,PUNICODE_STRING uni,DWORD x3,DWORD x4,DWO
  *  NtListenPort		[NTDLL.@]
  *  ZwListenPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2) 
+NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2)
 {
 	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
 	return 0;
@@ -544,7 +544,7 @@ NTSTATUS WINAPI NtListenPort(DWORD x1,DWORD x2)
  *  NtAcceptConnectPort	[NTDLL.@]
  *  ZwAcceptConnectPort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) 
+NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6);
 	return 0;
@@ -554,7 +554,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5
  *  NtCompleteConnectPort	[NTDLL.@]
  *  ZwCompleteConnectPort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1) 
+NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1)
 {
 	FIXME("(0x%08lx),stub!\n",x1);
 	return 0;
@@ -564,7 +564,7 @@ NTSTATUS WINAPI NtCompleteConnectPort(DWORD x1)
  *  NtRegisterThreadTerminatePort	[NTDLL.@]
  *  ZwRegisterThreadTerminatePort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1) 
+NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1)
 {
 	FIXME("(0x%08lx),stub!\n",x1);
 	return 0;
@@ -574,7 +574,7 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(DWORD x1)
  *  NtRequestWaitReplyPort		[NTDLL.@]
  *  ZwRequestWaitReplyPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3) 
+NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3);
 	return 0;
@@ -584,7 +584,7 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(DWORD x1,DWORD x2,DWORD x3)
  *  NtReplyWaitReceivePort	[NTDLL.@]
  *  ZwReplyWaitReceivePort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4) 
+NTSTATUS WINAPI NtReplyWaitReceivePort(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
@@ -608,7 +608,7 @@ NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
  */
 NTSTATUS WINAPI NtQueryPerformanceCounter(
 	IN PLARGE_INTEGER Counter,
-	IN PLARGE_INTEGER Frequency) 
+	IN PLARGE_INTEGER Frequency)
 {
 	FIXME("(%p, 0%p) stub\n",
 	Counter, Frequency);
@@ -619,7 +619,7 @@ NTSTATUS WINAPI NtQueryPerformanceCounter(
  *  NtCreateMailslotFile	[NTDLL.@]
  *  ZwCreateMailslotFile	[NTDLL.@]
  */
-NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8) 
+NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6,DWORD x7,DWORD x8)
 {
 	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4,x5,x6,x7,x8);
 	return 0;
@@ -634,7 +634,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x
  *	SystemTimeAdjustmentInformation	SYSTEM_TIME_ADJUSTMENT
  *	SystemCacheInformation		SYSTEM_CACHE_INFORMATION
  *	SystemConfigurationInformation	CONFIGURATION_INFORMATION
- *	observed (class/len): 
+ *	observed (class/len):
  *		0x0/0x2c
  *		0x12/0x18
  *		0x2/0x138
@@ -692,7 +692,7 @@ NTSTATUS WINAPI NtCreatePagingFile(
 
 /******************************************************************************
  *  NtDisplayString				[NTDLL.@]
- * 
+ *
  * writes a string to the nt-textmode screen eg. during startup
  */
 NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
@@ -710,7 +710,7 @@ NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
 
 /******************************************************************************
  *  NtPowerInformation				[NTDLL.@]
- * 
+ *
  */
 NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
 {

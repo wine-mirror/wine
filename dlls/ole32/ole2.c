@@ -4,7 +4,7 @@
  *
  *	Copyright 1995	Martin von Loewis
  *      Copyright 1999  Francis Beaudet
- *      Copyright 1999  Noel Borthwick 
+ *      Copyright 1999  Noel Borthwick
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 /******************************************************************************
- * These are static/global variables and internal data structures that the 
+ * These are static/global variables and internal data structures that the
  * OLE module uses to maintain it's state.
  */
 typedef struct tagDropTargetNode
@@ -111,7 +111,7 @@ static const char OLEDD_DRAGTRACKERCLASS[] = "WineDragDropTracker32";
 static DropTargetNode* targetListHead = NULL;
 
 /******************************************************************************
- * These are the prototypes of miscelaneous utility methods 
+ * These are the prototypes of miscelaneous utility methods
  */
 static void OLEUTL_ReadRegistryDWORDValue(HKEY regKey, DWORD* pdwValue);
 
@@ -146,9 +146,9 @@ static DropTargetNode* OLEDD_ExtractDropTarget(
 static DropTargetNode* OLEDD_FindDropTarget(
                          HWND hwndOfTarget);
 static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(
-			 HWND   hwnd, 
+			 HWND   hwnd,
 			 UINT   uMsg,
-			 WPARAM wParam, 
+			 WPARAM wParam,
 			 LPARAM   lParam);
 static void OLEDD_TrackMouseMove(
                          TrackerWindowInfo* trackerInfo,
@@ -187,11 +187,11 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
   hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
   /*
-   * If the CoInitializeEx call failed, the OLE libraries can't be 
+   * If the CoInitializeEx call failed, the OLE libraries can't be
    * initialized.
    */
   if (FAILED(hr))
-    return hr;    
+    return hr;
 
   /*
    * Then, it has to initialize the OLE specific modules.
@@ -203,7 +203,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
    */
   if (OLE_moduleLockCount==0)
   {
-    /* 
+    /*
      * Initialize the libraries.
      */
     TRACE("() - Initializing the OLE libraries\n");
@@ -227,7 +227,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
   /*
    * Then, we increase the lock count on the OLE module.
    */
-  OLE_moduleLockCount++;  
+  OLE_moduleLockCount++;
 
   return hr;
 }
@@ -276,13 +276,13 @@ void WINAPI OleUninitialize(void)
      * Drag and Drop
      */
     OLEDD_UnInitialize();
-    
+
     /*
      * OLE shared menu
      */
     OLEMenu_UnInitialize();
   }
-  
+
   /*
    * Then, uninitialize the COM libraries.
    */
@@ -327,7 +327,7 @@ HRESULT WINAPI RegisterDragDrop16(
  */
 HRESULT WINAPI RegisterDragDrop(
 	HWND hwnd,
-	LPDROPTARGET pDropTarget) 
+	LPDROPTARGET pDropTarget)
 {
   DropTargetNode* dropTargetInfo;
 
@@ -359,7 +359,7 @@ HRESULT WINAPI RegisterDragDrop(
    */
   dropTargetInfo->dropTarget  = pDropTarget;
   IDropTarget_AddRef(dropTargetInfo->dropTarget);
-  
+
   OLEDD_InsertDropTarget(dropTargetInfo);
 
 	return S_OK;
@@ -401,7 +401,7 @@ HRESULT WINAPI RevokeDragDrop(
    * references
    */
   IDropTarget_Release(dropTargetInfo->dropTarget);
-  HeapFree(GetProcessHeap(), 0, dropTargetInfo);  
+  HeapFree(GetProcessHeap(), 0, dropTargetInfo);
 
 	return S_OK;
 }
@@ -414,8 +414,8 @@ HRESULT WINAPI RevokeDragDrop(
  * not too bad since this is the case for many objects because of the
  * way they are registered.
  */
-HRESULT WINAPI OleRegGetUserType( 
-	REFCLSID clsid, 
+HRESULT WINAPI OleRegGetUserType(
+	REFCLSID clsid,
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
@@ -499,7 +499,7 @@ HRESULT WINAPI OleRegGetUserType(
 
   RegCloseKey(clsidKey);
 
-  
+
   if (hres!=ERROR_SUCCESS)
   {
     CoTaskMemFree(*pszUserType);
@@ -566,7 +566,7 @@ HRESULT WINAPI DoDragDrop (
      */
     while (!trackerInfo.trackingDone && GetMessageA(&msg, 0, 0, 0) )
     {
-      if ( (msg.message >= WM_KEYFIRST) && 
+      if ( (msg.message >= WM_KEYFIRST) &&
 	   (msg.message <= WM_KEYLAST) )
       {
 	/*
@@ -583,7 +583,7 @@ HRESULT WINAPI DoDragDrop (
 
 	/*
 	 * Notify the drop source.
-	 */       
+	 */
 	OLEDD_TrackStateChange(&trackerInfo,
 			       msg.pt,
 			       OLEDD_GetButtonState());
@@ -664,7 +664,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
 		       "MiscStatus",
 		       &miscStatusKey);
 
-  
+
   if (result != ERROR_SUCCESS)
   {
     RegCloseKey(clsidKey);
@@ -684,7 +684,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   result = RegOpenKeyA(miscStatusKey,
 		       keyName,
 		       &aspectKey);
-  
+
   if (result == ERROR_SUCCESS)
   {
     OLEUTL_ReadRegistryDWORDValue(aspectKey, pdwStatus);
@@ -704,7 +704,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
  *              OleSetContainedObject        [OLE32.128]
  */
 HRESULT WINAPI OleSetContainedObject(
-  LPUNKNOWN pUnknown, 
+  LPUNKNOWN pUnknown,
   BOOL      fContained)
 {
   IRunnableObject* runnable = NULL;
@@ -732,9 +732,9 @@ HRESULT WINAPI OleSetContainedObject(
  *              OleLoad        [OLE32.112]
  */
 HRESULT WINAPI OleLoad(
-  LPSTORAGE       pStg, 
-  REFIID          riid, 
-  LPOLECLIENTSITE pClientSite, 
+  LPSTORAGE       pStg,
+  REFIID          riid,
+  LPOLECLIENTSITE pClientSite,
   LPVOID*         ppvObj)
 {
   IPersistStorage* persistStorage = NULL;
@@ -743,7 +743,7 @@ HRESULT WINAPI OleLoad(
   HRESULT          hres;
 
   TRACE("(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
-  
+
   /*
    * TODO, Conversion ... OleDoAutoConvert
    */
@@ -792,7 +792,7 @@ HRESULT WINAPI OleLoad(
 				   &IID_IPersistStorage,
 				   (void**)&persistStorage);
 
-  if (SUCCEEDED(hres)) 
+  if (SUCCEEDED(hres))
   {
     IPersistStorage_Load(persistStorage, pStg);
 
@@ -847,7 +847,7 @@ HRESULT WINAPI OleSave(
     IStorage_Commit(pStg,
 		    STGC_DEFAULT);
   }
-  
+
   return hres;
 }
 
@@ -855,7 +855,7 @@ HRESULT WINAPI OleSave(
 /******************************************************************************
  *              OleLockRunning        [OLE32.114]
  */
-HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses) 
+HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses)
 {
   IRunnableObject* runnable = NULL;
   HRESULT          hres;
@@ -920,7 +920,7 @@ BOOL OLEMenu_InstallHooks( DWORD tid )
 
   pHookItem->tid = tid;
   pHookItem->hHeap = GetProcessHeap();
-  
+
   /* Install a thread scope message hook for WH_GETMESSAGE */
   pHookItem->GetMsg_hHook = SetWindowsHookExA( WH_GETMESSAGE, OLEMenu_GetMsgProc,
                                                0, GetCurrentThreadId() );
@@ -936,9 +936,9 @@ BOOL OLEMenu_InstallHooks( DWORD tid )
   /* Insert the hook table entry */
   pHookItem->next = hook_list;
   hook_list = pHookItem;
-  
+
   return TRUE;
-  
+
 CLEANUP:
   /* Unhook any hooks */
   if ( pHookItem->GetMsg_hHook )
@@ -947,7 +947,7 @@ CLEANUP:
     UnhookWindowsHookEx( pHookItem->CallWndProc_hHook );
   /* Release the hook table entry */
   HeapFree(pHookItem->hHeap, 0, pHookItem );
-  
+
   return FALSE;
 }
 
@@ -1012,7 +1012,7 @@ OleMenuHookItem * OLEMenu_IsHookInstalled( DWORD tid )
     if ( tid == pHookItem->tid )
       return pHookItem;
   }
-  
+
   return NULL;
 }
 
@@ -1033,7 +1033,7 @@ static BOOL OLEMenu_FindMainMenuIndex( HMENU hMainMenu, HMENU hPopupMenu, UINT *
   for (i = 0; i < nItems; i++)
   {
     HMENU hsubmenu;
-      
+
     /*  Is the current item a submenu? */
     if ( (hsubmenu = GetSubMenu(hMainMenu, i)) )
     {
@@ -1080,7 +1080,7 @@ BOOL OLEMenu_SetIsServerMenu( HMENU hmenu, OleMenuDescriptor *pOleMenuDescriptor
   /* Find the menu item index in the shared OLE menu that this item belongs to */
   if ( !OLEMenu_FindMainMenuIndex( pOleMenuDescriptor->hmenuCombined, hmenu,  &nPos ) )
     return FALSE;
-  
+
   /* The group widths array has counts for the number of elements
    * in the groups File, Edit, Container, Object, Window, Help.
    * The Edit, Object & Help groups belong to the server object
@@ -1113,13 +1113,13 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
   OleMenuDescriptor *pOleMenuDescriptor = NULL;
   OleMenuHookItem *pHookItem = NULL;
   WORD fuFlags;
-  
+
   TRACE("%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
 
   /* Check if we're being asked to process the message */
   if ( HC_ACTION != code )
     goto NEXTHOOK;
-      
+
   /* Retrieve the current message being dispatched from lParam */
   pMsg = (LPCWPSTRUCT)lParam;
 
@@ -1149,14 +1149,14 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
                   pMsg->message, pMsg->wParam, pMsg->lParam );
       goto NEXTHOOK;
     }
-    
+
     case WM_INITMENUPOPUP:
     {
       /* Save the state for whether this is a server owned menu */
       OLEMenu_SetIsServerMenu( (HMENU)pMsg->wParam, pOleMenuDescriptor );
       break;
     }
-    
+
     case WM_MENUSELECT:
     {
       fuFlags = HIWORD(pMsg->wParam);  /* Get flags */
@@ -1169,7 +1169,7 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
 
       break;
     }
-    
+
     case WM_DRAWITEM:
     {
       LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT) pMsg->lParam;
@@ -1189,11 +1189,11 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
     SendMessageA( pOleMenuDescriptor->hwndActiveObject,
                   pMsg->message, pMsg->wParam, pMsg->lParam );
   }
-    
+
 NEXTHOOK:
   if ( pOleMenuDescriptor )
     GlobalUnlock( hOleMenu );
-  
+
   /* Lookup the hook item for the current thread */
   if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId() ) ) )
   {
@@ -1201,7 +1201,7 @@ NEXTHOOK:
     WARN("could not retrieve hHook for current thread!\n" );
     return 0;
   }
-  
+
   /* Pass on the message to the next hooker */
   return CallNextHookEx( pHookItem->CallWndProc_hHook, code, wParam, lParam );
 }
@@ -1218,13 +1218,13 @@ LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
   OleMenuDescriptor *pOleMenuDescriptor = NULL;
   OleMenuHookItem *pHookItem = NULL;
   WORD wCode;
-  
+
   TRACE("%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
 
   /* Check if we're being asked to process a  messages */
   if ( HC_ACTION != code )
     goto NEXTHOOK;
-      
+
   /* Retrieve the current message being dispatched from lParam */
   pMsg = (LPMSG)lParam;
 
@@ -1263,11 +1263,11 @@ LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
      * dispatch it to the embedded objects window. */
     pMsg->hwnd = pOleMenuDescriptor->hwndActiveObject;
   }
-    
+
 NEXTHOOK:
   if ( pOleMenuDescriptor )
     GlobalUnlock( hOleMenu );
-  
+
   /* Lookup the hook item for the current thread */
   if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId() ) ) )
   {
@@ -1275,7 +1275,7 @@ NEXTHOOK:
     WARN("could not retrieve hHook for current thread!\n" );
     return FALSE;
   }
-  
+
   /* Pass on the message to the next hooker */
   return CallNextHookEx( pHookItem->GetMsg_hHook, code, wParam, lParam );
 }
@@ -1313,11 +1313,11 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(
   /* Initialize menu group widths and hmenu */
   for ( i = 0; i < 6; i++ )
     pOleMenuDescriptor->mgw.width[i] = lpMenuWidths->width[i];
-  
+
   pOleMenuDescriptor->hmenuCombined = hmenuCombined;
   pOleMenuDescriptor->bIsServerItem = FALSE;
   GlobalUnlock( hOleMenu );
-      
+
   return hOleMenu;
 }
 
@@ -1339,7 +1339,7 @@ HRESULT WINAPI OleDestroyMenuDescriptor(
  * FIXME: The lpFrame and lpActiveObject parameters are currently ignored
  * OLE should install context sensitive help F1 filtering for the app when
  * these are non null.
- * 
+ *
  * PARAMS:
  *     hOleMenu         Handle to composite menu descriptor
  *     hwndFrame        Handle to containers frame window
@@ -1387,7 +1387,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
      * without first calling it with a null hOleMenu to uninstall */
     if ( OLEMenu_IsHookInstalled( GetCurrentThreadId() ) )
   return E_FAIL;
-        
+
     /* Get the menu descriptor */
     pOleMenuDescriptor = (OleMenuDescriptor *) GlobalLock( hOleMenu );
     if ( !pOleMenuDescriptor )
@@ -1399,7 +1399,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
 
     GlobalUnlock( hOleMenu );
     pOleMenuDescriptor = NULL;
-    
+
     /* Add a menu descriptor windows property to the frame window */
     SetPropA( hwndFrame, "PROP_OLEMenuDescriptor", hOleMenu );
 
@@ -1412,11 +1412,11 @@ HRESULT WINAPI OleSetMenuDescriptor(
     /* Uninstall the hooks */
     if ( !OLEMenu_UnInstallHooks( GetCurrentThreadId() ) )
       return E_FAIL;
-    
+
     /* Remove the menu descriptor property from the frame window */
     RemovePropA( hwndFrame, "PROP_OLEMenuDescriptor" );
   }
-      
+
   return S_OK;
 }
 
@@ -1484,7 +1484,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
 		}
 	    }
 	}
-    }	
+    }
 
     WARN_(accel)("couldn't translate accelerator key\n");
     return FALSE;
@@ -1504,7 +1504,7 @@ void WINAPI ReleaseStgMedium(
   {
     case TYMED_HGLOBAL:
     {
-      if ( (pmedium->pUnkForRelease==0) && 
+      if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hGlobal!=0) )
 	GlobalFree(pmedium->u.hGlobal);
 
@@ -1519,7 +1519,7 @@ void WINAPI ReleaseStgMedium(
 	{
 	  DeleteFileW(pmedium->u.lpszFileName);
 	}
-	
+
 	CoTaskMemFree(pmedium->u.lpszFileName);
       }
 
@@ -1548,7 +1548,7 @@ void WINAPI ReleaseStgMedium(
     }
     case TYMED_GDI:
     {
-      if ( (pmedium->pUnkForRelease==0) && 
+      if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hGlobal!=0) )
 	DeleteObject(pmedium->u.hGlobal);
 
@@ -1557,7 +1557,7 @@ void WINAPI ReleaseStgMedium(
     }
     case TYMED_MFPICT:
     {
-      if ( (pmedium->pUnkForRelease==0) && 
+      if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hMetaFilePict!=0) )
       {
 	LPMETAFILEPICT pMP = GlobalLock(pmedium->u.hGlobal);
@@ -1571,7 +1571,7 @@ void WINAPI ReleaseStgMedium(
     }
     case TYMED_ENHMF:
     {
-      if ( (pmedium->pUnkForRelease==0) && 
+      if ( (pmedium->pUnkForRelease==0) &&
 	   (pmedium->u.hEnhMetaFile!=0) )
       {
 	DeleteEnhMetaFile(pmedium->u.hEnhMetaFile);
@@ -1612,7 +1612,7 @@ static void OLEDD_Initialize()
     wndClass.hCursor       = 0;
     wndClass.hbrBackground = 0;
     wndClass.lpszClassName = OLEDD_DRAGTRACKERCLASS;
- 
+
     RegisterClassA (&wndClass);
 }
 
@@ -1678,7 +1678,7 @@ static void OLEDD_InsertDropTarget(DropTargetNode* nodeToAdd)
 
   /*
    * If we get here, we have found a spot for our item. The parentNodeLink
-   * pointer points to the pointer that we have to modify. 
+   * pointer points to the pointer that we have to modify.
    * The curNode should be NULL. We just have to establish the link and Voila!
    */
   assert(curNode==NULL);
@@ -1725,7 +1725,7 @@ static DropTargetNode* OLEDD_ExtractDropTarget(HWND hwndOfTarget)
     else
     {
       /*
-       * The item was found in the list. Detach it from it's parent and 
+       * The item was found in the list. Detach it from it's parent and
        * re-insert it's kids in the tree.
        */
       assert(parentNodeLink!=NULL);
@@ -1815,9 +1815,9 @@ static DropTargetNode* OLEDD_FindDropTarget(HWND hwndOfTarget)
  * of this behavior.
  */
 static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
-			 HWND   hwnd, 
+			 HWND   hwnd,
 			 UINT   uMsg,
-			 WPARAM wParam, 
+			 WPARAM wParam,
 			 LPARAM   lParam)
 {
   switch (uMsg)
@@ -1826,9 +1826,9 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     {
       LPCREATESTRUCTA createStruct = (LPCREATESTRUCTA)lParam;
 
-      SetWindowLongA(hwnd, 0, (LONG)createStruct->lpCreateParams); 
+      SetWindowLongA(hwnd, 0, (LONG)createStruct->lpCreateParams);
 
-      
+
       break;
     }
     case WM_MOUSEMOVE:
@@ -1923,11 +1923,11 @@ static void OLEDD_TrackMouseMove(
    * If we are hovering over the same target as before, send the
    * DragOver notification
    */
-  if ( (trackerInfo->curDragTarget != 0) && 
+  if ( (trackerInfo->curDragTarget != 0) &&
        (trackerInfo->curDragTargetHWND==hwndNewTarget) )
   {
     POINTL  mousePosParam;
-    
+
     /*
      * The documentation tells me that the coordinate should be in the target
      * window's coordinate space. However, the tests I made tell me the
@@ -1935,7 +1935,7 @@ static void OLEDD_TrackMouseMove(
      */
     mousePosParam.x = mousePos.x;
     mousePosParam.y = mousePos.y;
-    
+
     IDropTarget_DragOver(trackerInfo->curDragTarget,
 			 keyState,
 			 mousePosParam,
@@ -1944,7 +1944,7 @@ static void OLEDD_TrackMouseMove(
   else
   {
     DropTargetNode* newDropTargetNode = 0;
-    
+
     /*
      * If we changed window, we have to notify our old target and check for
      * the new one.
@@ -1953,7 +1953,7 @@ static void OLEDD_TrackMouseMove(
     {
       IDropTarget_DragLeave(trackerInfo->curDragTarget);
     }
-    
+
     /*
      * Make sure we're hovering over a window.
      */
@@ -1970,14 +1970,14 @@ static void OLEDD_TrackMouseMove(
 
       trackerInfo->curDragTargetHWND = hwndNewTarget;
       trackerInfo->curDragTarget     = newDropTargetNode ? newDropTargetNode->dropTarget : 0;
-      
+
       /*
        * If there is, notify it that we just dragged-in
        */
       if (trackerInfo->curDragTarget!=0)
       {
 	POINTL  mousePosParam;
-	
+
 	/*
 	 * The documentation tells me that the coordinate should be in the target
 	 * window's coordinate space. However, the tests I made tell me the
@@ -1985,7 +1985,7 @@ static void OLEDD_TrackMouseMove(
 	 */
 	mousePosParam.x = mousePos.x;
 	mousePosParam.y = mousePos.y;
-	
+
 	IDropTarget_DragEnter(trackerInfo->curDragTarget,
 			      trackerInfo->dataObject,
 			      keyState,
@@ -2004,8 +2004,8 @@ static void OLEDD_TrackMouseMove(
   }
 
   /*
-   * Now that we have done that, we have to tell the source to give 
-   * us feedback on the work being done by the target.  If we don't 
+   * Now that we have done that, we have to tell the source to give
+   * us feedback on the work being done by the target.  If we don't
    * have a target, simulate no effect.
    */
   if (trackerInfo->curDragTarget==0)
@@ -2040,7 +2040,7 @@ static void OLEDD_TrackMouseMove(
     {
       SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(0)));
     }
-  }  
+  }
 }
 
 /***
@@ -2069,9 +2069,9 @@ static void OLEDD_TrackStateChange(
    */
   trackerInfo->returnValue = IDropSource_QueryContinueDrag(
 			       trackerInfo->dropSource,
-			       trackerInfo->escPressed, 
+			       trackerInfo->escPressed,
 			       keyState);
-  
+
   /*
    * All the return valued will stop the operation except the S_OK
    * return value.
@@ -2084,13 +2084,13 @@ static void OLEDD_TrackStateChange(
     trackerInfo->trackingDone = TRUE;
 
     /*
-     * Release the mouse in case the drop target decides to show a popup 
+     * Release the mouse in case the drop target decides to show a popup
      * or a menu or something.
      */
     ReleaseCapture();
-    
+
     /*
-     * If we end-up over a target, drop the object in the target or 
+     * If we end-up over a target, drop the object in the target or
      * inform the target that the operation was cancelled.
      */
     if (trackerInfo->curDragTarget!=0)
@@ -2098,21 +2098,21 @@ static void OLEDD_TrackStateChange(
       switch (trackerInfo->returnValue)
       {
 	/*
-	 * If the source wants us to complete the operation, we tell 
+	 * If the source wants us to complete the operation, we tell
 	 * the drop target that we just dropped the object in it.
 	 */
         case DRAGDROP_S_DROP:
 	{
 	  POINTL  mousePosParam;
-	
+
 	  /*
-	   * The documentation tells me that the coordinate should be 
+	   * The documentation tells me that the coordinate should be
 	   * in the target window's coordinate space. However, the tests
 	   * I made tell me the coordinates should be in screen coordinates.
 	   */
 	  mousePosParam.x = mousePos.x;
 	  mousePosParam.y = mousePos.y;
-	  
+
 	  IDropTarget_Drop(trackerInfo->curDragTarget,
 			   trackerInfo->dataObject,
 			   keyState,
@@ -2121,9 +2121,9 @@ static void OLEDD_TrackStateChange(
 	  break;
 	}
 	/*
-	 * If the source told us that we should cancel, fool the drop 
+	 * If the source told us that we should cancel, fool the drop
 	 * target by telling it that the mouse left it's window.
-	 * Also set the drop effect to "NONE" in case the application 
+	 * Also set the drop effect to "NONE" in case the application
 	 * ignores the result of DoDragDrop.
 	 */
         case DRAGDROP_S_CANCEL:
@@ -2176,13 +2176,13 @@ static DWORD OLEDD_GetButtonState()
  *
  * params:
  *     regKey   - Key to read the default value from
- *     pdwValue - Pointer to the location where the DWORD 
+ *     pdwValue - Pointer to the location where the DWORD
  *                value is returned. This value is not modified
  *                if the value is not found.
  */
 
 static void OLEUTL_ReadRegistryDWORDValue(
-  HKEY   regKey, 
+  HKEY   regKey,
   DWORD* pdwValue)
 {
   char  buffer[20];

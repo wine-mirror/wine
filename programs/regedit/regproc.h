@@ -20,7 +20,7 @@
 /******************************************************************************
  * Defines and consts
  */
-#define KEY_MAX_LEN             1024 
+#define KEY_MAX_LEN             1024
 
 /* Return values */
 #define SUCCESS               0
@@ -44,7 +44,7 @@ CHAR *getAppName();
 
 void processRegLines(FILE *in, CommandAPI command);
 
-/* 
+/*
  * Generic prototypes
  */
 char*   getToken(char** str, const char* delims);
@@ -60,13 +60,13 @@ LPSTR   getArg(LPSTR arg);
 HRESULT openKey(LPSTR stdInput);
 void    closeKey();
 
-/* 
+/*
  * api setValue prototypes
  */
 void    processSetValue(LPSTR cmdline);
 HRESULT setValue(LPSTR val_name, LPSTR val_data);
 
-/* 
+/*
  * api queryValue prototypes
  */
 void    processQueryValue(LPSTR cmdline);

@@ -295,7 +295,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	SNOOP16_RETURNENTRY	*ret = (SNOOP16_RETURNENTRY*)((char *) MapSL( MAKESEGPTR(context->SegCs,LOWORD(context->Eip)) )-5);
 
 	/* We haven't found out the nrofargs yet. If we called a cdecl
-	 * function it is too late anyway and we can just set '0' (which 
+	 * function it is too late anyway and we can just set '0' (which
 	 * will be the difference between orig and current SP
 	 * If pascal -> everything ok.
 	 */
@@ -311,7 +311,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 		max = ret->dll->funs[ret->ordinal].nrofargs;
 		if (max>16)
 			max=16;
-		if (max<0) 
+		if (max<0)
 			max=0;
 
 		for (i=max;i--;)

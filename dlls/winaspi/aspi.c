@@ -41,7 +41,7 @@ HKEY_DYN_DATA
 
 #include <stdio.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_IOCTL_H 
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
 #include <fcntl.h>
@@ -321,7 +321,7 @@ SCSI_LinuxSetTimeout( int fd, int timeout )
 		WARN("Could not set timeout ! (%s)\n", strerror(errno));
 	}
 	return retval;
-	
+
 }
 
 /* This function takes care of the write/read to the linux sg device.
@@ -354,7 +354,7 @@ SCSI_LinuxDeviceIo( int fd,
 		*lpcbBytesReturned = 0;
 		return FALSE;
 	}
-	
+
 	TRACE("Reading reply from Linux sg device\n");
 	*lpcbBytesReturned = read( fd, lpOutBuffer, cbOutBuffer );
 	if( *lpcbBytesReturned != cbOutBuffer )
@@ -504,7 +504,7 @@ SCSI_MapHCtoController()
 		RegCloseKey(hkeyScsi);
 		return;
 	}
-	
+
 	for( i=0; cbIdStr = sizeof(idstr), (error=RegEnumValueA( hkeyScsi, i, idstr, &cbIdStr, NULL, &type, NULL, NULL )) == ERROR_SUCCESS; i++ )
 	{
 	        if(idstr[0] == '\0') continue; /* skip the default value */
@@ -598,7 +598,7 @@ SCSI_GetProcinfo()
 	/* Check whether user has generic scsi devices at all */
 	if (!(SCSI_Linux_CheckDevices()))
 	    return;
-	
+
 	procfile = fopen( procname, "r" );
 	if( !procfile )
 	{

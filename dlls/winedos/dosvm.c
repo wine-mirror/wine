@@ -211,7 +211,7 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     } else {
       TRACE("new event queued (time=%ld)\n", GetTickCount());
     }
-    
+
     /* Wake up DOSVM_Wait so that it can serve pending events. */
     SetEvent(event_notifier);
 
@@ -655,7 +655,7 @@ static const INTPROC real_mode_handlers[] =
     /* 30 */ 0, DOSVM_Int31Handler, 0, DOSVM_Int33Handler, 0, 0, 0, 0,
     /* 38 */ 0, 0, 0, 0, 0, 0, 0, 0,
     /* 40 */ 0, 0, 0, 0, 0, 0, 0, 0,
-    /* 48 */ 0, 0, 0, 0, 0, 0, 0, 0, 
+    /* 48 */ 0, 0, 0, 0, 0, 0, 0, 0,
     /* 50 */ 0, 0, 0, 0, 0, 0, 0, 0,
     /* 58 */ 0, 0, 0, 0, 0, 0, 0, 0,
     /* 60 */ 0, 0, 0, 0, 0, 0, 0, DOSVM_Int67Handler

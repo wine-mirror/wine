@@ -212,7 +212,7 @@ void DC_InitDC( DC* dc )
 static BOOL DC_InvertXform( const XFORM *xformSrc, XFORM *xformDest )
 {
     FLOAT determinant;
-    
+
     determinant = xformSrc->eM11*xformSrc->eM22 -
         xformSrc->eM12*xformSrc->eM21;
     if (determinant > -1e-12 && determinant < 1e-12)
@@ -245,7 +245,7 @@ void DC_UpdateXforms( DC *dc )
 {
     XFORM xformWnd2Vport;
     FLOAT scaleX, scaleY;
-    
+
     /* Construct a transformation to do the window-to-viewport conversion */
     scaleX = (FLOAT)dc->vportExtX / (FLOAT)dc->wndExtX;
     scaleY = (FLOAT)dc->vportExtY / (FLOAT)dc->wndExtY;
@@ -275,7 +275,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ handle;
-    
+
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (!(newdc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &handle, &dc_funcs )))
     {
@@ -285,12 +285,12 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     TRACE("(%04x): returning %04x\n", hdc, handle );
 
     newdc->flags            = dc->flags | DC_SAVED;
-    newdc->hPen             = dc->hPen;       
-    newdc->hBrush           = dc->hBrush;     
-    newdc->hFont            = dc->hFont;      
-    newdc->hBitmap          = dc->hBitmap;    
+    newdc->hPen             = dc->hPen;
+    newdc->hBrush           = dc->hBrush;
+    newdc->hFont            = dc->hFont;
+    newdc->hBitmap          = dc->hBitmap;
     newdc->hDevice          = dc->hDevice;
-    newdc->hPalette         = dc->hPalette;   
+    newdc->hPalette         = dc->hPalette;
     newdc->totalExtent      = dc->totalExtent;
     newdc->bitsPerPixel     = dc->bitsPerPixel;
     newdc->ROPmode          = dc->ROPmode;
@@ -335,7 +335,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     newdc->saveLevel = 0;
 
     PATH_InitGdiPath( &newdc->path );
-    
+
     newdc->pAbortProc = NULL;
     newdc->hookThunk  = NULL;
     newdc->hookProc   = 0;
@@ -538,7 +538,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     }
 
     if (level == -1) level = dc->saveLevel;
-    if ((level < 1) 
+    if ((level < 1)
             /* This pair of checks disagrees with MSDN "Platform SDK:
                Windows GDI" July 2000 which says all negative values
                for level will be interpreted as an instance relative
@@ -549,7 +549,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
         GDI_ReleaseObj( hdc );
         return FALSE;
     }
-    
+
     success=TRUE;
     while (dc->saveLevel >= level)
     {
@@ -558,7 +558,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 	{
 	  GDI_ReleaseObj( hdc );
 	  return FALSE;
-	}	
+	}
 	dc->header.hNext = dcs->header.hNext;
 	if (--dc->saveLevel < level)
 	{
@@ -646,7 +646,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
  */
 HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
                           const DEVMODEW *initData )
-{ 
+{
     LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
     LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
     LPSTR outputA = HEAP_strdupWtoA( GetProcessHeap(), 0, output );
@@ -811,7 +811,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         PATH_DestroyGdiPath(&dcs->path);
         GDI_FreeObject( hdcs, dcs );
     }
-    
+
     if (!(dc->flags & DC_SAVED))
     {
 	SelectObject( hdc, GetStockObject(BLACK_PEN) );
@@ -1017,7 +1017,7 @@ DWORD WINAPI GetDCOrg16( HDC16 hdc )
 {
     POINT	pt;
     if( GetDCOrgEx( hdc, &pt) )
-  	return MAKELONG( (WORD)pt.x, (WORD)pt.y );    
+  	return MAKELONG( (WORD)pt.x, (WORD)pt.y );
     return 0;
 }
 
@@ -1215,7 +1215,7 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
     const XFORM *xform2 )
 {
     XFORM xformTemp;
-    
+
     /* Check for illegal parameters */
     if (!xformResult || !xform1 || !xform2)
         return FALSE;
@@ -1387,7 +1387,7 @@ HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 HCOLORSPACE WINAPI CreateColorSpaceA( LPLOGCOLORSPACEA lpLogColorSpace )
 {
   FIXME( "stub\n" );
-  return 0; 
+  return 0;
 }
 
 /***********************************************************************
@@ -1405,7 +1405,7 @@ HCOLORSPACE WINAPI CreateColorSpaceW( LPLOGCOLORSPACEW lpLogColorSpace )
 BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
 {
   FIXME( "stub\n" );
-  
+
   return TRUE;
 }
 
@@ -1435,7 +1435,7 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
     FIXME("(): stub\n");
     return DCB_RESET;   /* bounding rectangle always empty */
 }
- 
+
 /***********************************************************************
  *           SetBoundsRect    (GDI.193)
  */

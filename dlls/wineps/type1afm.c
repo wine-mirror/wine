@@ -24,7 +24,7 @@
  *  	descriptions for how they indicate non-fatal errors.
  *
  */
- 
+
 #include "config.h"
 
 #include <string.h>
@@ -71,7 +71,7 @@ static BOOL ReadLine(FILE *file, CHAR buffer[], INT bufsize, INT *p_result)
 {
      CHAR   *cp;
      INT    i;
-     
+
      if (fgets(buffer, bufsize, file) == NULL)
      {
      	if (feof(file) == 0)	    	    	    	/* EOF or error? */
@@ -79,22 +79,22 @@ static BOOL ReadLine(FILE *file, CHAR buffer[], INT bufsize, INT *p_result)
 	    ERR("%s\n", strerror(errno));
     	    return FALSE;
 	}
-	
+
 	*p_result = EOF;
 	return TRUE;
     }
-    
+
     cp = strchr(buffer, '\n');
     if (cp == NULL)
     {
     	i = strlen(buffer);
-	
+
 	if (i == bufsize - 1)	    /* max possible; was line truncated? */
 	{
 	    do
 	    	i = fgetc(file);    	    	/* find the newline or EOF */
 	    while (i != '\n' && i != EOF);
-	    
+
 	    if (i == EOF)
 	    {
 	    	if (feof(file) == 0)	    	    	/* EOF or error? */
@@ -102,10 +102,10 @@ static BOOL ReadLine(FILE *file, CHAR buffer[], INT bufsize, INT *p_result)
 		    ERR("%s\n", strerror(errno));
 		    return FALSE;
 		}
-		
+
 		WARN("No newline at EOF\n");
 	    }
-	    
+
 	    *p_result = INT_MIN;
 	    return TRUE;
 	}
@@ -116,12 +116,12 @@ static BOOL ReadLine(FILE *file, CHAR buffer[], INT bufsize, INT *p_result)
 	    	*p_result = EOF;
 		return TRUE;
 	    }
-	    
+
 	    WARN("No newline at EOF\n");
 	    cp = buffer + i;	/* points to \0 where \n should have been */
 	}
     }
-    
+
     do
     {
     	*cp = '\0'; 	    	    	    	/* trim trailing whitespace */
@@ -130,7 +130,7 @@ static BOOL ReadLine(FILE *file, CHAR buffer[], INT bufsize, INT *p_result)
 	--cp;
     }
     while (isspace(*cp));
-    
+
     *p_result = strlen(buffer);
     return TRUE;
 }
@@ -150,19 +150,19 @@ static BOOL FindLine(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key)
 {
     INT     len = strlen(key);
     LONG    start = ftell(file);
-    
+
     do
     {
 	INT 	result;
 	BOOL	ok;
-	
+
 	ok = ReadLine(file, buffer, bufsize, &result);
 	if (ok == FALSE)
 	    return FALSE;
-	    
+
 	if (result > 0 && strncmp(buffer, key, len) == 0)
 	    return TRUE;
-	    
+
 	if (result == EOF)
 	{
 	    rewind(file);
@@ -173,7 +173,7 @@ static BOOL FindLine(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key)
 	}
     }
     while (ftell(file) != start);
-    
+
     WARN("Couldn't find line '%s...' in AFM file\n", key);
     buffer[0] = '\0';
     return TRUE;
@@ -191,7 +191,7 @@ inline static BOOL DoubleToFloat(float *p_f, double d)
 {
     if (d > (double)FLT_MAX || d < -(double)FLT_MAX)
     	return FALSE;
-	
+
     *p_f = (float)d;
     return TRUE;
 }
@@ -224,26 +224,26 @@ static BOOL ReadFloat(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key,
 
     if (FindLine(file, buffer, bufsize, key) == FALSE)
     	return FALSE;
-	
+
     if (buffer[0] == '\0')  	    /* line not found */
     {
     	*p_found = FALSE;
 	*p_ret = 0.0;
 	return TRUE;
     }
-    
+
     cp = buffer + strlen(key);	    	    	    /* first char after key */
     errno = 0;
     d = strtod(cp, &end_ptr);
-    
+
     if (end_ptr == cp || errno != 0 || DoubleToFloat(p_ret, d) == FALSE)
     {
-    	WARN("Error parsing line '%s'\n", buffer); 
+    	WARN("Error parsing line '%s'\n", buffer);
     	*p_found = FALSE;
 	*p_ret = 0.0;
 	return TRUE;
     }
-    
+
     *p_found = TRUE;
     return TRUE;
 }
@@ -266,9 +266,9 @@ static BOOL ReadInt(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key,
     	*p_ret = 0;
     	return retval;
     }
-    
+
     f = Round(f);
-    
+
     if (f > (FLOAT)INT_MAX || f < (FLOAT)INT_MIN)
     {
     	WARN("Error parsing line '%s'\n", buffer);
@@ -276,7 +276,7 @@ static BOOL ReadInt(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key,
 	*p_found = FALSE;
 	return TRUE;
     }
-    
+
     *p_ret = (INT)f;
     return TRUE;
 }
@@ -295,27 +295,27 @@ static BOOL ReadString(FILE *file, CHAR buffer[], INT bufsize, LPCSTR key,
 
     if (FindLine(file, buffer, bufsize, key) == FALSE)
     	return FALSE;
-	
+
     if (buffer[0] == '\0')
     {
     	*p_str = NULL;
 	return TRUE;
     }
-    
+
     cp = buffer + strlen(key);	    	    	    /* first char after key */
     if (*cp == '\0')
     {
     	*p_str = NULL;
 	return TRUE;
     }
-    
+
     while (isspace(*cp))    	    	/* find first non-whitespace char */
     	++cp;
-    
+
     *p_str = HeapAlloc(PSDRV_Heap, 0, strlen(cp) + 1);
     if (*p_str == NULL)
     	return FALSE;
-	
+
     strcpy(*p_str, cp);
     return TRUE;
 }
@@ -334,15 +334,15 @@ static BOOL ReadBBox(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 
     if (FindLine(file, buffer, bufsize, "FontBBox") == FALSE)
     	return FALSE;
-	
+
     if (buffer[0] == '\0')
     {
     	*p_found = FALSE;
 	return TRUE;
     }
-    
+
     errno = 0;
-    
+
     cp = buffer + sizeof("FontBBox");
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0 ||
@@ -354,22 +354,22 @@ static BOOL ReadBBox(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     if (end_ptr == cp || errno != 0 ||
     	    DoubleToFloat(&(afm->FontBBox.lly), d) == FALSE)
     	goto parse_error;
-	
+
     cp = end_ptr;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0
     	    || DoubleToFloat(&(afm->FontBBox.urx), d) == FALSE)
     	goto parse_error;
-	
+
     cp = end_ptr;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0
     	    || DoubleToFloat(&(afm->FontBBox.ury), d) == FALSE)
     	goto parse_error;
-	
+
     *p_found = TRUE;
     return TRUE;
-    
+
     parse_error:
     	WARN("Error parsing line '%s'\n", buffer);
 	*p_found = FALSE;
@@ -400,14 +400,14 @@ static const struct { LPCSTR keyword; INT weight; } afm_weights[] =
     { "SUPER" ,     	FW_BOLD },
     { NULL, 	    	0 }
 };
- 
+
 static BOOL ReadWeight(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	BOOL *p_found)
 {
     LPSTR   sz;
     CHAR    *cp;
     INT     i;
-    
+
     if (ReadString(file, buffer, bufsize, "Weight", &sz) == FALSE)
     	return FALSE;
 
@@ -416,10 +416,10 @@ static BOOL ReadWeight(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	*p_found = FALSE;
 	return TRUE;
     }
-	
+
     for (cp = sz; *cp != '\0'; ++cp)
     	*cp = toupper(*cp);
-	
+
     for (i = 0; afm_weights[i].keyword != NULL; ++i)
     {
     	if (strstr(sz, afm_weights[i].keyword) != NULL)
@@ -430,9 +430,9 @@ static BOOL ReadWeight(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	    return TRUE;
 	}
     }
-    
+
     WARN("Unknown weight '%s'; treating as Roman\n", sz);
-    
+
     afm->Weight = FW_NORMAL;
     *p_found = TRUE;
     HeapFree(PSDRV_Heap, 0, sz);
@@ -447,10 +447,10 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	BOOL *p_found)
 {
     LPSTR   sz;
-    
+
     if (ReadString(file, buffer, bufsize, "IsFixedPitch", &sz) == FALSE)
     	return FALSE;
-	
+
     if (sz == NULL)
     {
     	*p_found = FALSE;
@@ -464,7 +464,7 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	HeapFree(PSDRV_Heap, 0, sz);
 	return TRUE;
     }
-    
+
     if (strcasecmp(sz, "true") == 0)
     {
     	afm->IsFixedPitch = TRUE;
@@ -472,9 +472,9 @@ static BOOL ReadFixedPitch(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	HeapFree(PSDRV_Heap, 0, sz);
 	return TRUE;
     }
-    
+
     WARN("Can't parse line '%s'\n", buffer);
-    
+
     *p_found = FALSE;
     HeapFree(PSDRV_Heap, 0, sz);
     return TRUE;
@@ -496,61 +496,61 @@ static BOOL ReadFontMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM **p_afm)
     *p_afm = afm = HeapAlloc(PSDRV_Heap, 0, sizeof(*afm));
     if (afm == NULL)
     	return FALSE;
-	
+
     retval = ReadWeight(file, buffer, bufsize, afm, &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFloat(file, buffer, bufsize, "ItalicAngle",
     	    &(afm->ItalicAngle), &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFixedPitch(file, buffer, bufsize, afm, &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadBBox(file, buffer, bufsize, afm, &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFloat(file, buffer, bufsize, "UnderlinePosition",
     	    &(afm->UnderlinePosition), &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFloat(file, buffer, bufsize, "UnderlineThickness",
     	    &(afm->UnderlineThickness), &found);
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFloat(file, buffer, bufsize, "Ascender",    	/* optional */
     	    &(afm->Ascender), &found);
     if (retval == FALSE)
     	goto cleanup_afm;
-	
+
     retval = ReadFloat(file, buffer, bufsize, "Descender",   	/* optional */
     	    &(afm->Descender), &found);
     if (retval == FALSE)
     	goto cleanup_afm;
-	
+
     afm->WinMetrics.usUnitsPerEm = 1000;
     afm->WinMetrics.sTypoAscender = (SHORT)Round(afm->Ascender);
     afm->WinMetrics.sTypoDescender = (SHORT)Round(afm->Descender);
-    
+
     if (afm->WinMetrics.sTypoAscender == 0)
     	afm->WinMetrics.sTypoAscender = (SHORT)Round(afm->FontBBox.ury);
-	
+
     if (afm->WinMetrics.sTypoDescender == 0)
     	afm->WinMetrics.sTypoDescender = (SHORT)Round(afm->FontBBox.lly);
-	
+
     afm->WinMetrics.sTypoLineGap = 1200 -
     	    (afm->WinMetrics.sTypoAscender - afm->WinMetrics.sTypoDescender);
     if (afm->WinMetrics.sTypoLineGap < 0)
     	afm->WinMetrics.sTypoLineGap = 0;
-	
+
     return TRUE;
-	
+
     cleanup_afm:    	    	    	/* handle fatal or non-fatal errors */
     	HeapFree(PSDRV_Heap, 0, afm);
 	*p_afm = NULL;
@@ -572,13 +572,13 @@ static BOOL ParseC(LPSTR sz, OLD_AFMMETRICS *metrics)
     CHAR    *cp, *end_ptr;
 
     cp = sz + 1;
-    
+
     if (*cp == 'H')
     {
     	base = 16;
 	++cp;
     }
-    
+
     errno = 0;
     l = strtol(cp, &end_ptr, base);
     if (end_ptr == cp || errno != 0 || l > INT_MAX || l < INT_MIN)
@@ -586,7 +586,7 @@ static BOOL ParseC(LPSTR sz, OLD_AFMMETRICS *metrics)
     	WARN("Error parsing character code '%s'\n", sz);
 	return TRUE;
     }
-    
+
     metrics->C = (INT)l;
     return TRUE;
 }
@@ -606,39 +606,39 @@ static BOOL ParseW(LPSTR sz, OLD_AFMMETRICS *metrics)
     double  d;
 
     cp = sz + 1;
-    
+
     if (*cp == '0')
     	++cp;
-	
+
     if (*cp == 'X')
     {
     	vector = FALSE;
 	++cp;
     }
-    
+
     if (!isspace(*cp))
     	goto parse_error;
-	
+
     errno = 0;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0 ||
     	    DoubleToFloat(&(metrics->WX), d) == FALSE)
     	goto parse_error;
-	
+
     if (vector == FALSE)
     	return TRUE;
-	
+
     /*	Make sure that Y component of vector is zero */
-	
+
     d = strtod(cp, &end_ptr);	    	    	    	    /* errno == 0 */
     if (end_ptr == cp || errno != 0 || d != 0.0)
     {
     	metrics->WX = FLT_MAX;
     	goto parse_error;
     }
-	
+
     return TRUE;
-	
+
     parse_error:
     	WARN("Error parsing character width '%s'\n", sz);
 	return TRUE;
@@ -657,21 +657,21 @@ static BOOL ParseB(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    *cp, *end_ptr;
     double  d;
-    
+
     errno = 0;
-    
+
     cp = sz + 1;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0 ||
     	    DoubleToFloat(&(metrics->B.llx), d) == FALSE)
 	goto parse_error;
-	
+
     cp = end_ptr;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0 ||
     	    DoubleToFloat(&(metrics->B.lly), d) == FALSE)
 	goto parse_error;
-	
+
     cp = end_ptr;
     d = strtod(cp, &end_ptr);
     if (end_ptr == cp || errno != 0 ||
@@ -685,7 +685,7 @@ static BOOL ParseB(LPSTR sz, OLD_AFMMETRICS *metrics)
 	goto parse_error;
 
     return TRUE;
-    
+
     parse_error:
     	WARN("Error parsing glyph bounding box '%s'\n", sz);
 	return TRUE;
@@ -702,30 +702,30 @@ static BOOL ParseB(LPSTR sz, OLD_AFMMETRICS *metrics)
 static BOOL ParseN(LPSTR sz, OLD_AFMMETRICS *metrics)
 {
     CHAR    save, *cp, *end_ptr;
-    
+
     cp = sz + 1;
-    
+
     while (isspace(*cp))
     	++cp;
-	
+
     end_ptr = cp;
-    
+
     while (*end_ptr != '\0' && !isspace(*end_ptr))
     	++end_ptr;
-	
+
     if (end_ptr == cp)
     {
     	WARN("Error parsing glyph name '%s'\n", sz);
 	return TRUE;
     }
-	
+
     save = *end_ptr;
     *end_ptr = '\0';
-    
+
     metrics->N = PSDRV_GlyphName(cp);
     if (metrics->N == NULL)
     	return FALSE;
-	
+
     *end_ptr = save;
     return TRUE;
 }
@@ -746,47 +746,47 @@ static const OLD_AFMMETRICS badmetrics =
     { FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX }, 	    /* B */
     NULL    	    	    	    	    	    /* L */
 };
- 
+
 static BOOL ParseCharMetrics(LPSTR buffer, INT len, OLD_AFMMETRICS *metrics)
 {
     CHAR    *cp = buffer;
 
     *metrics = badmetrics;
-    
+
     while (*cp != '\0')
     {
     	while (isspace(*cp))
 	    ++cp;
-	    
+
 	switch(*cp)
 	{
 	    case 'C':	if (ParseC(cp, metrics) == FALSE)
 	    	    	    return FALSE;
 	    	    	break;
-			
+
 	    case 'W':	if (ParseW(cp, metrics) == FALSE)
 	    	    	    return FALSE;
 	    	    	break;
-			
+
 	    case 'N':	if (ParseN(cp, metrics) == FALSE)
 	    	    	    return FALSE;
 	    	    	break;
-			
+
 	    case 'B':	if (ParseB(cp, metrics) == FALSE)
 	    	    	    return FALSE;
 	    	    	break;
 	}
-	
+
 	cp = strchr(cp, ';');
 	if (cp == NULL)
 	{
 	    WARN("No terminating semicolon\n");
 	    break;
 	}
-	
+
 	++cp;
     }
-    
+
     if (metrics->C == INT_MAX || metrics->WX == FLT_MAX || metrics->N == NULL ||
     	    metrics->B.ury == FLT_MAX)
     {
@@ -814,17 +814,17 @@ static int cmpUV(const void *a, const void *b)
 {
     return (int)(*((const LONG *)a) - *((const LONG *)b));
 }
- 
+
 inline static BOOL IsWinANSI(LONG uv)
 {
     if ((0x0020 <= uv && uv <= 0x007e) || (0x00a0 <= uv && uv <= 0x00ff) ||
     	    (0x2018 <= uv && uv <= 0x201a) || (0x201c <= uv && uv <= 0x201e) ||
 	    (0x2020 <= uv && uv <= 0x2022))
     	return TRUE;
-	
+
     if (bsearch(&uv, ansiChars, 21, sizeof(INT), cmpUV) != NULL)
     	return TRUE;
-	
+
     return FALSE;
 }
 
@@ -846,11 +846,11 @@ static int UnicodeGlyphByNameIndex(const void *a, const void *b)
     return ((const UNICODEGLYPH *)a)->name->index -
     	    ((const UNICODEGLYPH *)b)->name->index;
 }
- 
+
 static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 {
     INT     i;
-    
+
     if (strcmp(afm->EncodingScheme, "FontSpecific") == 0)
     {
     	for (i = 0; i < afm->NumofMetrics; ++i)
@@ -865,18 +865,18 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 		metrics[i].UV = -1L;
 	    }
 	}
-	
+
 	afm->WinMetrics.sAscender = (SHORT)Round(afm->FontBBox.ury);
 	afm->WinMetrics.sDescender = (SHORT)Round(afm->FontBBox.lly);
     }
     else    	    	    	    	    	/* non-FontSpecific encoding */
     {
     	UNICODEGLYPH	ug, *p_ug;
-	
+
 	PSDRV_IndexGlyphList();     	/* for fast searching of glyph names */
-	
+
 	afm->WinMetrics.sAscender = afm->WinMetrics.sDescender = 0;
-	
+
 	for (i = 0; i < afm->NumofMetrics; ++i)
 	{
 	    ug.name = metrics[i].N;
@@ -890,12 +890,12 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 	    else
 	    {
 	    	metrics[i].UV = p_ug->UV;
-		
+
 		if (IsWinANSI(p_ug->UV))
 		{
 		    SHORT   ury = (SHORT)Round(metrics[i].B.ury);
 		    SHORT   lly = (SHORT)Round(metrics[i].B.lly);
-		    
+
 		    if (ury > afm->WinMetrics.sAscender)
 		    	afm->WinMetrics.sAscender = ury;
 		    if (lly < afm->WinMetrics.sDescender)
@@ -903,18 +903,18 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 		}
 	    }
 	}
-	
+
 	if (afm->WinMetrics.sAscender == 0)
 	    afm->WinMetrics.sAscender = (SHORT)Round(afm->FontBBox.ury);
 	if (afm->WinMetrics.sDescender == 0)
 	    afm->WinMetrics.sDescender = (SHORT)Round(afm->FontBBox.lly);
     }
-    
+
     afm->WinMetrics.sLineGap =
     	    1150 - (afm->WinMetrics.sAscender - afm->WinMetrics.sDescender);
     if (afm->WinMetrics.sLineGap < 0)
     	afm->WinMetrics.sLineGap = 0;
-    
+
     afm->WinMetrics.usWinAscent = (afm->WinMetrics.sAscender > 0) ?
     	    afm->WinMetrics.sAscender : 0;
     afm->WinMetrics.usWinDescent = (afm->WinMetrics.sDescender < 0) ?
@@ -930,8 +930,8 @@ static VOID Unicodify(AFM *afm, OLD_AFMMETRICS *metrics)
 static int OldAFMMetricsByUV(const void *a, const void *b)
 {
     return ((const OLD_AFMMETRICS *)a)->UV - ((const OLD_AFMMETRICS *)b)->UV;
-} 
- 
+}
+
 static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	AFMMETRICS **p_metrics)
 {
@@ -939,7 +939,7 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     OLD_AFMMETRICS  *old_metrics, *encoded_metrics;
     AFMMETRICS	    *metrics;
     INT     	    i, len;
-    
+
     retval = ReadInt(file, buffer, bufsize, "StartCharMetrics",
     	    &(afm->NumofMetrics), &found);
     if (retval == FALSE || found == FALSE)
@@ -947,55 +947,55 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
     	*p_metrics = NULL;
 	return retval;
     }
-    
+
     old_metrics = HeapAlloc(PSDRV_Heap, 0,
     	    afm->NumofMetrics * sizeof(*old_metrics));
     if (old_metrics == NULL)
     	return FALSE;
-	
+
     for (i = 0; i < afm->NumofMetrics; ++i)
     {
     	retval = ReadLine(file, buffer, bufsize, &len);
     	if (retval == FALSE)
 	    goto cleanup_old_metrics;
-	
+
 	if(len > 0)
 	{
 	    retval = ParseCharMetrics(buffer, len, old_metrics + i);
 	    if (retval == FALSE || old_metrics[i].C == INT_MAX)
 	    	goto cleanup_old_metrics;
-		
+
 	    continue;
 	}
-	
+
 	switch (len)
 	{
 	    case 0: 	    --i;
 		    	    continue;
-				
+
 	    case INT_MIN:   WARN("Ignoring long line '%32s...'\n", buffer);
 			    goto cleanup_old_metrics;	    /* retval == TRUE */
-				
+
 	    case EOF:	    WARN("Unexpected EOF\n");
 	    	    	    goto cleanup_old_metrics;  	    /* retval == TRUE */
 	}
     }
-    
+
     Unicodify(afm, old_metrics);    /* wait until glyph names have been read */
-	    
+
     qsort(old_metrics, afm->NumofMetrics, sizeof(*old_metrics),
     	    OldAFMMetricsByUV);
-    
+
     for (i = 0; old_metrics[i].UV == -1; ++i);      /* count unencoded glyphs */
-    
+
     afm->NumofMetrics -= i;
     encoded_metrics = old_metrics + i;
-    
+
     afm->Metrics = *p_metrics = metrics = HeapAlloc(PSDRV_Heap, 0,
     	    afm->NumofMetrics * sizeof(*metrics));
     if (afm->Metrics == NULL)
     	goto cleanup_old_metrics;   	    	    	    /* retval == TRUE */
-	
+
     for (i = 0; i < afm->NumofMetrics; ++i, ++metrics, ++encoded_metrics)
     {
     	metrics->C = encoded_metrics->C;
@@ -1003,13 +1003,13 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
 	metrics->WX = encoded_metrics->WX;
 	metrics->N = encoded_metrics->N;
     }
-    
+
     HeapFree(PSDRV_Heap, 0, old_metrics);
-    
+
     afm->WinMetrics.sAvgCharWidth = PSDRV_CalcAvgCharWidth(afm);
-    
+
     return TRUE;
-    
+
     cleanup_old_metrics:    	    	/* handle fatal or non-fatal errors */
     	HeapFree(PSDRV_Heap, 0, old_metrics);
 	*p_metrics = NULL;
@@ -1020,7 +1020,7 @@ static BOOL ReadCharMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM *afm,
  *  BuildAFM
  *
  *  Builds the AFM for a PostScript font and adds it to the driver font list.
- *  Returns FALSE only on an unexpected error (memory allocation or I/O error).	
+ *  Returns FALSE only on an unexpected error (memory allocation or I/O error).
  *
  */
 static BOOL BuildAFM(FILE *file)
@@ -1030,46 +1030,46 @@ static BOOL BuildAFM(FILE *file)
     AFMMETRICS	*metrics;
     LPSTR   	font_name, full_name, family_name, encoding_scheme;
     BOOL    	retval, added;
-    
+
     retval = ReadFontMetrics(file, buffer, sizeof(buffer), &afm);
     if (retval == FALSE || afm == NULL)
     	return retval;
-	
+
     retval = ReadString(file, buffer, sizeof(buffer), "FontName", &font_name);
     if (retval == FALSE || font_name == NULL)
     	goto cleanup_afm;
-	
+
     retval = ReadString(file, buffer, sizeof(buffer), "FullName", &full_name);
     if (retval == FALSE || full_name == NULL)
     	goto cleanup_font_name;
-	
+
     retval = ReadString(file, buffer, sizeof(buffer), "FamilyName",
     	    &family_name);
     if (retval == FALSE || family_name == NULL)
     	goto cleanup_full_name;
-	
+
     retval = ReadString(file, buffer, sizeof(buffer), "EncodingScheme",
     	    &encoding_scheme);
     if (retval == FALSE || encoding_scheme == NULL)
     	goto cleanup_family_name;
-    
+
     afm->FontName = font_name;
     afm->FullName = full_name;
     afm->FamilyName = family_name;
     afm->EncodingScheme = encoding_scheme;
-	
+
     retval = ReadCharMetrics(file, buffer, sizeof(buffer), afm, &metrics);
     if (retval == FALSE || metrics == FALSE)
     	goto cleanup_encoding_scheme;
-	
+
     retval = PSDRV_AddAFMtoList(&PSDRV_AFMFontList, afm, &added);
     if (retval == FALSE || added == FALSE)
     	goto cleanup_encoding_scheme;
-	
+
     return TRUE;
-    
+
     /* clean up after fatal or non-fatal errors */
-    
+
     cleanup_encoding_scheme:
     	HeapFree(PSDRV_Heap, 0, encoding_scheme);
     cleanup_family_name:
@@ -1080,7 +1080,7 @@ static BOOL BuildAFM(FILE *file)
     	HeapFree(PSDRV_Heap, 0, font_name);
     cleanup_afm:
     	HeapFree(PSDRV_Heap, 0, afm);
-	
+
     return retval;
 }
 
@@ -1097,16 +1097,16 @@ static BOOL ReadAFMFile(LPCSTR filename)
     BOOL    retval;
 
     TRACE("%s\n", filename);
-    
+
     f = fopen(filename, "r");
     if (f == NULL)
     {
     	WARN("%s: %s\n", filename, strerror(errno));
 	return TRUE;
     }
-    
+
     retval = BuildAFM(f);
-    
+
     fclose(f);
     return retval;
 }
@@ -1122,36 +1122,36 @@ static BOOL ReadAFMDir(LPCSTR dirname)
     struct dirent   *dent;
     DIR     	    *dir;
     CHAR    	    filename[256];
-    
+
     dir = opendir(dirname);
     if (dir == NULL)
     {
     	WARN("%s: %s\n", dirname, strerror(errno));
 	return TRUE;
     }
-    
+
     while ((dent = readdir(dir)) != NULL)
     {
     	CHAR	*file_extension = strchr(dent->d_name, '.');
 	int 	fn_len;
-	
+
 	if (file_extension == NULL || strcasecmp(file_extension, ".afm") != 0)
 	    continue;
-	    
+
 	fn_len = snprintf(filename, 256, "%s/%s", dirname, dent->d_name);
 	if (fn_len < 0 || fn_len > sizeof(filename) - 1)
 	{
 	    WARN("Path '%s/%s' is too long\n", dirname, dent->d_name);
 	    continue;
 	}
-	
+
 	if (ReadAFMFile(filename) == FALSE)
 	{
 	    closedir(dir);
 	    return FALSE;
 	}
     }
-    
+
     closedir(dir);
     return TRUE;
 }
@@ -1173,32 +1173,32 @@ BOOL PSDRV_GetType1Metrics(void)
     INT     i = 0;
     HKEY    hkey;
     DWORD   type, name_len, value_len;
-    
+
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
     	    "Software\\Wine\\Wine\\Config\\afmdirs",
 	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
 	return TRUE;
-	
+
     name_len = sizeof(name_buf);
     value_len = sizeof(value_buf);
-    
+
     while (RegEnumValueA(hkey, i++, name_buf, &name_len, NULL, &type, value_buf,
     	    &value_len) == ERROR_SUCCESS)
     {
     	value_buf[sizeof(value_buf) - 1] = '\0';
-	
+
 	if (ReadAFMDir(value_buf) == FALSE)
 	{
 	    RegCloseKey(hkey);
 	    return FALSE;
 	}
-	
+
 	/* initialize lengths for new iteration */
-	
+
 	name_len = sizeof(name_buf);
 	value_len = sizeof(value_buf);
     }
-    
+
     RegCloseKey(hkey);
     return TRUE;
 }

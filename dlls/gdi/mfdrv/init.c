@@ -149,7 +149,7 @@ static DC *MFDRV_AllocMetaFile(void)
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    
+
     if (!(dc = DC_AllocDC( &MFDRV_Funcs ))) return NULL;
     dc->header.wMagic = METAFILE_DC_MAGIC;
 
@@ -209,7 +209,7 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
  * RETURNS
  *  A handle to the metafile DC if successful, NULL on failure.
  */
-HDC16 WINAPI CreateMetaFile16( 
+HDC16 WINAPI CreateMetaFile16(
 			      LPCSTR filename /* [in] Filename of disk metafile */
 )
 {
@@ -222,7 +222,7 @@ HDC16 WINAPI CreateMetaFile16(
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
-    
+
     if (filename)  /* disk based metafile */
     {
         physDev->mh->mtType = METAFILE_DISK;
@@ -243,7 +243,7 @@ HDC16 WINAPI CreateMetaFile16(
     }
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
-	
+
     TRACE("returning %04x\n", dc->hSelf);
     ret = dc->hSelf;
     GDI_ReleaseObj( dc->hSelf );
@@ -253,7 +253,7 @@ HDC16 WINAPI CreateMetaFile16(
 /**********************************************************************
  *	     CreateMetaFileA   (GDI32.@)
  */
-HDC WINAPI CreateMetaFileA( 
+HDC WINAPI CreateMetaFileA(
 			      LPCSTR filename /* [in] Filename of disk metafile */
 )
 {
@@ -284,11 +284,11 @@ HDC WINAPI CreateMetaFileW(LPCWSTR filename)
 /**********************************************************************
  *          MFDRV_CloseMetaFile
  */
-static DC *MFDRV_CloseMetaFile( HDC hdc ) 
+static DC *MFDRV_CloseMetaFile( HDC hdc )
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    
+
     TRACE("(%04x)\n", hdc );
 
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
@@ -302,7 +302,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     {
         MFDRV_DeleteDC( dc->physDev );
 	return 0;
-    }	
+    }
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
@@ -328,7 +328,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
  *	     CloseMetaFile     (GDI.126)
  *	     CloseMetaFile16   (GDI32.@)
  */
-HMETAFILE16 WINAPI CloseMetaFile16( 
+HMETAFILE16 WINAPI CloseMetaFile16(
 				   HDC16 hdc /* [in] Metafile DC to close */
 )
 {
@@ -356,7 +356,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
  * RETURNS
  *  Handle of newly created metafile on success, NULL on failure.
  */
-HMETAFILE WINAPI CloseMetaFile( 
+HMETAFILE WINAPI CloseMetaFile(
 				   HDC hdc /* [in] Metafile DC to close */
 )
 {
@@ -420,7 +420,7 @@ BOOL MFDRV_MetaParam0(PHYSDEV dev, short func)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 3;
     mr->rdFunction = func;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
@@ -434,7 +434,7 @@ BOOL MFDRV_MetaParam1(PHYSDEV dev, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 4;
     mr->rdFunction = func;
     *(mr->rdParm) = param1;
@@ -449,7 +449,7 @@ BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 5;
     mr->rdFunction = func;
     *(mr->rdParm) = param2;
@@ -462,12 +462,12 @@ BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2)
  *         MFDRV_MetaParam4
  */
 
-BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2,
 		      short param3, short param4)
 {
     char buffer[14];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 7;
     mr->rdFunction = func;
     *(mr->rdParm) = param4;
@@ -482,12 +482,12 @@ BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2,
  *         MFDRV_MetaParam6
  */
 
-BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2,
 		      short param3, short param4, short param5, short param6)
 {
     char buffer[18];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 9;
     mr->rdFunction = func;
     *(mr->rdParm) = param6;
@@ -503,13 +503,13 @@ BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2,
 /******************************************************************
  *         MFDRV_MetaParam8
  */
-BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
 		      short param3, short param4, short param5,
 		      short param6, short param7, short param8)
 {
     char buffer[22];
     METARECORD *mr = (METARECORD *)&buffer;
-    
+
     mr->rdSize = 11;
     mr->rdFunction = func;
     *(mr->rdParm) = param8;

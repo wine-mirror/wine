@@ -1,4 +1,4 @@
-/* 
+/*
  * Wininet - Http Implementation
  *
  * Copyright 1999 Corel Corporation
@@ -66,9 +66,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 
 BOOL HTTP_OpenConnection(LPWININETHTTPREQA lpwhr);
-int HTTP_WriteDataToStream(LPWININETHTTPREQA lpwhr, 
+int HTTP_WriteDataToStream(LPWININETHTTPREQA lpwhr,
 	void *Buffer, int BytesToWrite);
-int HTTP_ReadDataFromStream(LPWININETHTTPREQA lpwhr, 
+int HTTP_ReadDataFromStream(LPWININETHTTPREQA lpwhr,
 	void *Buffer, int BytesToRead);
 BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQA lpwhr);
 BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWORD dwModifier);
@@ -95,7 +95,7 @@ inline static LPSTR HTTP_strdup( LPCSTR str )
  *    FALSE on failure
  *
  */
-BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest, 
+BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 	LPCSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     LPSTR lpszStart;
@@ -154,7 +154,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
  */
 HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
-	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
+	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext)
 {
     LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) hHttpSession;
@@ -188,7 +188,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     }
     else
     {
-	return HTTP_HttpOpenRequestA(hHttpSession, lpszVerb, lpszObjectName, 
+	return HTTP_HttpOpenRequestA(hHttpSession, lpszVerb, lpszObjectName,
 		lpszVersion, lpszReferrer, lpszAcceptTypes, dwFlags, dwContext);
     }
 }
@@ -206,7 +206,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
  */
 HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
-	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
+	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext)
 {
     LPWININETHTTPSESSIONA lpwhs = (LPWININETHTTPSESSIONA) hHttpSession;
@@ -290,7 +290,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
-	       
+
         iar.dwResult = (DWORD)lpwhr;
         iar.dwError = lpwhr ? ERROR_SUCCESS : INTERNET_GetLastError();
         hIC->lpfnStatusCB(hHttpSession, dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
@@ -314,10 +314,10 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
-    LPHTTPHEADERA lphttpHdr = NULL; 
+    LPHTTPHEADERA lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
     LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
-		
+
     TRACE("(0x%08lx)--> %ld\n", dwInfoLevel, dwInfoLevel);
 
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
@@ -352,7 +352,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
                if ((~lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->pCustHeaders[i].lpszField &&
 		   lpwhr->pCustHeaders[i].lpszValue)
 	       {
-                  size += strlen(lpwhr->pCustHeaders[i].lpszField) + 
+                  size += strlen(lpwhr->pCustHeaders[i].lpszField) +
                        strlen(lpwhr->pCustHeaders[i].lpszValue) + delim + 2;
 	       }
            }
@@ -360,10 +360,10 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
            /* Calculate the length of stadard request headers */
            for (i = 0; i <= HTTP_QUERY_MAX; i++)
            {
-              if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->StdHeaders[i].lpszField && 
+              if ((~lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST) && lpwhr->StdHeaders[i].lpszField &&
                    lpwhr->StdHeaders[i].lpszValue)
               {
-                 size += strlen(lpwhr->StdHeaders[i].lpszField) + 
+                 size += strlen(lpwhr->StdHeaders[i].lpszField) +
                     strlen(lpwhr->StdHeaders[i].lpszValue) + delim + 2;
               }
            }
@@ -396,7 +396,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 						lpwhr->pCustHeaders[i].lpszField &&
 						lpwhr->pCustHeaders[i].lpszValue)
                 {
-                   cnt += sprintf(lpBuffer + cnt, "%s: %s%s", 
+                   cnt += sprintf(lpBuffer + cnt, "%s: %s%s",
                     lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue,
 					index == HTTP_QUERY_RAW_HEADERS_CRLF ? "\r\n" : "\0");
                 }
@@ -409,7 +409,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	        goto lend;
         }
 	else if (index >= 0 && index <= HTTP_QUERY_MAX && lpwhr->StdHeaders[index].lpszValue)
-	{ 
+	{
 	    lphttpHdr = &lpwhr->StdHeaders[index];
 	}
 	else
@@ -417,10 +417,10 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
     }
 
     /* Ensure header satisifies requested attributes */
-    if ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) && 
+    if ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
 	    (~lphttpHdr->wFlags & HDR_ISREQUEST))
 	goto lend;
-     
+
     /* coalesce value to reuqested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER)
     {
@@ -432,7 +432,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
         time_t tmpTime;
         struct tm tmpTM;
         SYSTEMTIME *STHook;
-	     
+
         tmpTime = ConvertTimeString(lphttpHdr->lpszValue);
 
         tmpTM = *gmtime(&tmpTime);
@@ -476,7 +476,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 
         strncpy(lpBuffer, lphttpHdr->lpszValue, len);
         *lpdwBufferLength = len;
-        bSuccess = TRUE; 
+        bSuccess = TRUE;
     }
 
 lend:
@@ -513,7 +513,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
  */
 BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
-{	
+{
     LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hHttpRequest;
     LPWININETHTTPSESSIONA lpwhs = NULL;
     LPWININETAPPINFOA hIC = NULL;
@@ -555,7 +555,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     }
     else
     {
-	return HTTP_HttpSendRequestA(hHttpRequest, lpszHeaders, 
+	return HTTP_HttpSendRequestA(hHttpRequest, lpszHeaders,
 		dwHeaderLength, lpOptional, dwOptionalLength);
     }
 }
@@ -630,7 +630,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     }
 
     /* Calculate length of request string */
-    requestStringLen = 
+    requestStringLen =
         strlen(lpwhr->lpszVerb) +
         strlen(lpwhr->lpszPath) +
         (lpwhr->lpszHostName ? (strlen(HTTPHOSTHEADER) + strlen(lpwhr->lpszHostName)) : 0) +
@@ -640,7 +640,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     /* Add length of passed headers */
     if (lpszHeaders)
     {
-        headerLength = -1 == dwHeaderLength ?  strlen(lpszHeaders) : dwHeaderLength; 
+        headerLength = -1 == dwHeaderLength ?  strlen(lpszHeaders) : dwHeaderLength;
         requestStringLen += headerLength +  2; /* \r\n */
     }
 
@@ -649,7 +649,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     {
 	    if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
 	    {
-            requestStringLen += strlen(lpwhr->pCustHeaders[i].lpszField) + 
+            requestStringLen += strlen(lpwhr->pCustHeaders[i].lpszField) +
                 strlen(lpwhr->pCustHeaders[i].lpszValue) + 4; /*: \r\n */
 	    }
     }
@@ -659,7 +659,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     {
        if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
        {
-          requestStringLen += strlen(lpwhr->StdHeaders[i].lpszField) + 
+          requestStringLen += strlen(lpwhr->StdHeaders[i].lpszField) +
              strlen(lpwhr->StdHeaders[i].lpszValue) + 4; /*: \r\n */
        }
     }
@@ -684,7 +684,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     {
        if (lpwhr->StdHeaders[i].wFlags & HDR_ISREQUEST)
        {
-           cnt += sprintf(requestString + cnt, "\r\n%s: %s", 
+           cnt += sprintf(requestString + cnt, "\r\n%s: %s",
                lpwhr->StdHeaders[i].lpszField, lpwhr->StdHeaders[i].lpszValue);
        }
     }
@@ -694,7 +694,7 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     {
        if (lpwhr->pCustHeaders[i].wFlags & HDR_ISREQUEST)
        {
-           cnt += sprintf(requestString + cnt, "\r\n%s: %s", 
+           cnt += sprintf(requestString + cnt, "\r\n%s: %s",
                lpwhr->pCustHeaders[i].lpszField, lpwhr->pCustHeaders[i].lpszValue);
        }
     }
@@ -735,7 +735,7 @@ lend:
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC  && hIC->lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
-	       
+
         iar.dwResult = (DWORD)bSuccess;
         iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
         hIC->lpfnStatusCB(hHttpRequest, lpwhr->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
@@ -757,7 +757,7 @@ lend:
  *   NULL on failure
  *
  */
-HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName, 
+HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
 	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
 {
@@ -829,7 +829,7 @@ lerror:
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
-	       
+
         iar.dwResult = (DWORD)lpwhs;
         iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_REQUEST_COMPLETE,
@@ -913,7 +913,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQA lpwhr)
     if (lpwhr->nSocketFD == -1)
         goto lend;
 
-    /* 
+    /*
      * We should first receive 'HTTP/1.x nnn' where nnn is the status code.
      */
     if (!INTERNET_GetNextLine(lpwhr->nSocketFD, buffer, &buflen))
@@ -921,7 +921,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQA lpwhr)
 
     if (strncmp(buffer, "HTTP", 4) != 0)
         goto lend;
-	
+
     buffer[12]='\0';
     HTTP_ProcessHeader(lpwhr, "Status", buffer+9, (HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE));
 
@@ -971,7 +971,7 @@ INT stripSpaces(LPCSTR lpszSrc, LPSTR lpszStart, INT *len)
 
     while (*lpszSrc == ' ' && *lpszSrc != '\0')
 	lpszSrc++;
-	
+
     lpsztmp = lpszSrc;
     while(*lpsztmp != '\0')
     {
@@ -1126,12 +1126,12 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 	    return index >= 0;
 	}
     }
- 
+
     if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
 	lphttpHdr->wFlags |= HDR_ISREQUEST;
     else
         lphttpHdr->wFlags &= ~HDR_ISREQUEST;
-  
+
     if (!lphttpHdr->lpszValue && (dwModifier & (HTTP_ADDHDR_FLAG_ADD|HTTP_ADDHDR_FLAG_ADD_IF_NEW)))
     {
         INT slen;
@@ -1156,9 +1156,9 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
             INTERNET_SetLastError(ERROR_OUTOFMEMORY);
         }
     }
-    else if (lphttpHdr->lpszValue) 
+    else if (lphttpHdr->lpszValue)
     {
-        if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE) 
+        if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE)
         {
             LPSTR lpsztmp;
             INT len;
@@ -1211,7 +1211,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
             lpsztmp = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  lphttpHdr->lpszValue, len+1);
             if (lpsztmp)
             {
-		/* FIXME: Increment lphttpHdr->wCount. Perhaps lpszValue should be an array */ 
+		/* FIXME: Increment lphttpHdr->wCount. Perhaps lpszValue should be an array */
                 if (ch > 0)
                 {
                     lphttpHdr->lpszValue[origlen] = ch;

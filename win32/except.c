@@ -23,15 +23,15 @@
  *  __try{...}__except(..){....}  and
  *  __try{...}__finally{...}
  *  statements is simply not documented by Microsoft. There could be different
- *  reasons for this: 
- *  One reason could be that they try to hide the fact that exception 
- *  handling in Win32 looks almost the same as in OS/2 2.x.  
+ *  reasons for this:
+ *  One reason could be that they try to hide the fact that exception
+ *  handling in Win32 looks almost the same as in OS/2 2.x.
  *  Another reason could be that Microsoft does not want others to write
- *  binary compatible implementations of the Win32 API (like us).  
+ *  binary compatible implementations of the Win32 API (like us).
  *
- *  Whatever the reason, THIS SUCKS!! Ensuring portability or future 
- *  compatibility may be valid reasons to keep some things undocumented. 
- *  But exception handling is so basic to Win32 that it should be 
+ *  Whatever the reason, THIS SUCKS!! Ensuring portability or future
+ *  compatibility may be valid reasons to keep some things undocumented.
+ *  But exception handling is so basic to Win32 that it should be
  *  documented!
  *
  */
@@ -64,8 +64,8 @@ void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD
 {
     EXCEPTION_RECORD record;
 
-    /* Compose an exception record */ 
-    
+    /* Compose an exception record */
+
     record.ExceptionCode    = code;
     record.ExceptionFlags   = flags & EH_NONCONTINUABLE;
     record.ExceptionRecord  = NULL;
@@ -219,7 +219,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 
     MESSAGE("wine: Unhandled exception, starting debugger...\n");
 
-    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
+    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", &hDbgConf)) {
        DWORD 	type;
        DWORD 	count;
@@ -345,11 +345,11 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	    }
 	    return ret;
 	}
-	
+
 	/* someone beat us here... */
 	CloseHandle( hEvent );
     }
-	
+
     /* and wait for the winner to have actually created the debugger */
     WaitForSingleObject( hRunOnce, INFINITE );
     /* in fact, here, we only know that someone has tried to start the debugger,
@@ -373,9 +373,9 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	status = send_debug_event( epointers->ExceptionRecord, FALSE, epointers->ContextRecord );
 	switch (status)
 	{
-	case DBG_CONTINUE: 
+	case DBG_CONTINUE:
 	    return EXCEPTION_CONTINUE_EXECUTION;
-	case DBG_EXCEPTION_NOT_HANDLED: 
+	case DBG_EXCEPTION_NOT_HANDLED:
 	    TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
 	    break; /* not reached */
 	case 0: /* no debugger is present */
@@ -387,7 +387,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	    /* second try, the debugger isn't present... */
 	    if (loop == 1) return EXCEPTION_EXECUTE_HANDLER;
 	    break;
-	default: 	
+	default:
 	    FIXME("Unsupported yet debug continue value %d (please report)\n", status);
 	    return EXCEPTION_EXECUTE_HANDLER;
 	}
@@ -399,14 +399,14 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	    DWORD ret = top_filter( epointers );
 	    if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
 	}
-	
+
 	/* FIXME: Should check the current error mode */
-	
+
 	if (!start_debugger_atomic( epointers ))
 	    return EXCEPTION_EXECUTE_HANDLER;
 	/* now that we should have a debugger attached, try to resend event */
-    }	
-	
+    }
+
     return EXCEPTION_EXECUTE_HANDLER;
 }
 

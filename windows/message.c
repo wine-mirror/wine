@@ -202,7 +202,7 @@ static void MSG_SendParentNotify( HWND hwnd, WORD event, WORD idChild, POINT pt 
 /***********************************************************************
  *          MSG_JournalPlayBackMsg
  *
- * Get an EVENTMSG struct via call JOURNALPLAYBACK hook function 
+ * Get an EVENTMSG struct via call JOURNALPLAYBACK hook function
  */
 void MSG_JournalPlayBackMsg(void)
 {
@@ -916,8 +916,8 @@ static const struct accent_char accent_chars[] =
 	 * different places :-( ), if you use turkish uncomment these and
 	 * comment out the lines in iso-8859-2 and iso-8859-3 sections
 	 * FIXME: should be dynamic according to chosen language
-	 *	  if/when Wine has turkish support.  
-	 */ 
+	 *	  if/when Wine has turkish support.
+	 */
 /*  collision whith G( from iso-8859-3 !!!   */
 /*  {'(', 'G', '\320'},  {'(', 'g', '\360'}, */	/* breve */
 /*  collision whith S, from iso-8859-2 !!! */
@@ -1079,7 +1079,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
  * parameter of the WM_TIMER message is not NULL, the lParam parameter
  * points to the function that is called instead of the window
  * procedure.
- *  
+ *
  * The message must be valid.
  *
  * RETURNS
@@ -1088,7 +1088,7 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
  *
  * CONFORMANCE
  *
- *   ECMA-234, Win32 
+ *   ECMA-234, Win32
  *
  */
 LONG WINAPI DispatchMessageW( const MSG* msg )

@@ -1,5 +1,5 @@
 /******************************************************************************
- * 
+ *
  * Common definitions (resource ids and global variables)
  *
  * Copyright 1999 Thuy Nguyen
@@ -93,7 +93,7 @@ extern HBRUSH  COMCTL32_hPattern55AABrush;
 /* DragList icon */
 #define IDI_DRAGARROW                   150
 
-typedef struct 
+typedef struct
 {
     COLORREF clrBtnHighlight;       /* COLOR_BTNHIGHLIGHT                  */
     COLORREF clrBtnShadow;          /* COLOR_BTNSHADOW                     */
@@ -121,7 +121,7 @@ VOID COMCTL32_RefreshSysColors(void);
 INT  Str_GetPtrWtoA (LPCWSTR lpSrc, LPSTR lpDest, INT nMaxLen);
 BOOL Str_SetPtrAtoW (LPWSTR *lppDest, LPCSTR lpSrc);
 
-#define COMCTL32_VERSION_MINOR 0 
+#define COMCTL32_VERSION_MINOR 0
 #define WINE_FILEVERSION 5, COMCTL32_VERSION_MINOR, 0, 0
 #define WINE_FILEVERSIONSTR "5.00"
 

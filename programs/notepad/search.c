@@ -24,22 +24,22 @@
  */
 
 #include <windows.h>
- 
+
  #define CHARSETSIZE 255
-  
+
  int delta[CHARSETSIZE];
- 
+
  /* rightmostpos: return rightmost position of ch in szSP (or -1) */
  int rightmostpos(char ch, LPSTR szSP, int nSPLen) {
     int i = nSPLen;
     while ((i>0) & (szSP[i]!=ch)) i--;
     return(i);
  }
- 
+
  /* setup_delta: setup delta1 cache */
  void setup_delta(LPSTR szSP, int nSPLen) {
     int i;
-    
+
     for (i=0; i<CHARSETSIZE; i++) {
        delta[i] = nSPLen;
     }
@@ -52,7 +52,7 @@
  int bm_search(LPSTR szBuf, int nBufLen, LPSTR szSP, int nSPLen) {
     int i = nSPLen;
     int j = nSPLen;
-    
+
     do {
        if ((szBuf[i] = szSP[j])) {
          i--; j--;
@@ -66,4 +66,4 @@
     } while (j>0 && i<=nBufLen);
     return(i+1);
  }
- 
+

@@ -32,7 +32,7 @@
 #define REG_VAL_BUF_SIZE        4096
 
 /* Delimiters used to parse the "value" to query queryValue*/
-#define QUERY_VALUE_MAX_ARGS  1 
+#define QUERY_VALUE_MAX_ARGS  1
 
 /* maximal number of characters in hexadecimal data line,
    not including '\' character */
@@ -184,7 +184,7 @@ DWORD convertHexToDWord(char *str, BYTE *buf)
 }
 
 /******************************************************************************
- * Converts a hex buffer into a hex comma separated values 
+ * Converts a hex buffer into a hex comma separated values
  */
 char* convertHexToHexCSV(BYTE *buf, ULONG bufLen)
 {
@@ -207,7 +207,7 @@ char* convertHexToHexCSV(BYTE *buf, ULONG bufLen)
     sprintf(res, "%02x", (unsigned int)*&bCur);
     strcat(str, res);
     strcat(str, ",");
-  }                                   
+  }
 
   /* Get rid of the last comma */
   str[strlen(str)-1] = '\0';
@@ -267,14 +267,14 @@ DWORD convertHexCSVToHex(char *str, BYTE *buf, ULONG bufLen)
     s+=3;
     strPos+=3;
     byteCount++;
-  }                                   
+  }
 
   return byteCount;
 }
 
 /******************************************************************************
- * This function returns the HKEY associated with the data type encoded in the 
- * value.  It modifies the input parameter (key value) in order to skip this 
+ * This function returns the HKEY associated with the data type encoded in the
+ * value.  It modifies the input parameter (key value) in order to skip this
  * "now useless" data type information.
  *
  * Note: Updated based on the algorithm used in 'server/registry.c'
@@ -324,7 +324,7 @@ DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
 }
 
 /******************************************************************************
- * Returns an allocated buffer with a cleaned copy (removed the surrounding 
+ * Returns an allocated buffer with a cleaned copy (removed the surrounding
  * dbl quotes) of the passed value.
  */
 LPSTR getArg( LPSTR arg)
@@ -338,7 +338,7 @@ LPSTR getArg( LPSTR arg)
   /*
    * Get rid of surrounding quotes
    */
-  len = strlen(arg); 
+  len = strlen(arg);
 
   if( arg[len-1] == '\"' ) arg[len-1] = '\0';
   if( arg[0]     == '\"' ) arg++;
@@ -385,7 +385,7 @@ void REGPROC_unescape_string(LPSTR str)
 }
 
 /******************************************************************************
- * Sets the value with name val_name to the data in val_data for the currently 
+ * Sets the value with name val_name to the data in val_data for the currently
  * opened key.
  *
  * Parameters:
@@ -417,7 +417,7 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
     dwLen++;
     REGPROC_unescape_string(val_data);
     lpbData = val_data;
-  } 
+  }
   else if (dwParseType == REG_DWORD)  /* Convert the dword types */
   {
     dwLen   = convertHexToDWord(val_data, convert);
@@ -430,7 +430,7 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
   }
 
   hRes = RegSetValueEx(
-          currentKeyHandle, 
+          currentKeyHandle,
           val_name,
           0,                  /* Reserved */
           dwDataType,
@@ -446,11 +446,11 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
  */
 HRESULT openKey( LPSTR stdInput)
 {
-  DWORD   dwDisp;  
+  DWORD   dwDisp;
   HRESULT hRes;
 
   /* Sanity checks */
-  if (stdInput == NULL) 
+  if (stdInput == NULL)
     return ERROR_INVALID_PARAMETER;
 
   /* Get the registry class */
@@ -462,8 +462,8 @@ HRESULT openKey( LPSTR stdInput)
   currentKeyName = getRegKeyName(stdInput); /* Sets global variable */
   if (currentKeyName == NULL)
     return ERROR_INVALID_PARAMETER;
-    
-  hRes = RegCreateKeyEx( 
+
+  hRes = RegCreateKeyEx(
           currentKeyClass,          /* Class     */
           currentKeyName,           /* Sub Key   */
           0,                        /* MUST BE 0 */
@@ -486,11 +486,11 @@ HRESULT openKey( LPSTR stdInput)
  * Extracts from [HKEY\some\key\path] or HKEY\some\key\path types of line
  * the key name (what starts after the first '\')
  */
-LPSTR getRegKeyName(LPSTR lpLine) 
+LPSTR getRegKeyName(LPSTR lpLine)
 {
   LPSTR keyNameBeg;
   char  lpLineCopy[KEY_MAX_LEN];
-  
+
   if (lpLine == NULL)
     return NULL;
 
@@ -520,14 +520,14 @@ LPSTR getRegKeyName(LPSTR lpLine)
  * Extracts from [HKEY\some\key\path] or HKEY\some\key\path types of line
  * the key class (what ends before the first '\')
  */
-HKEY getRegClass(LPSTR lpClass) 
+HKEY getRegClass(LPSTR lpClass)
 {
   LPSTR classNameEnd;
   LPSTR classNameBeg;
   int i;
-  
+
   char  lpClassCopy[KEY_MAX_LEN];
-  
+
   if (lpClass == NULL)
     return (HKEY)ERROR_INVALID_PARAMETER;
 
@@ -550,7 +550,7 @@ HKEY getRegClass(LPSTR lpClass)
       classNameBeg = lpClassCopy;
   }
 
-  for (i = 0; i < REG_CLASS_NUMBER; i++) 
+  for (i = 0; i < REG_CLASS_NUMBER; i++)
   {
       if (!strcmp(classNameBeg, reg_class_names[i]))
       {
@@ -565,7 +565,7 @@ HKEY getRegClass(LPSTR lpClass)
  */
 void closeKey()
 {
-  RegCloseKey(currentKeyHandle); 
+  RegCloseKey(currentKeyHandle);
 
   HeapFree(GetProcessHeap(), 0, currentKeyName); /* Allocated by getKeyName */
 
@@ -577,113 +577,113 @@ void closeKey()
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the setValue type of action.  It 
- * receives the currently read line and dispatch the work depending on the 
+ * This funtion is the main entry point to the setValue type of action.  It
+ * receives the currently read line and dispatch the work depending on the
  * context.
  */
 void doSetValue(LPSTR stdInput)
 {
-  /* 
-   * We encoutered the end of the file, make sure we 
+  /*
+   * We encoutered the end of the file, make sure we
    * close the opened key and exit
-   */ 
-  if (stdInput == NULL)             
+   */
+  if (stdInput == NULL)
   {
-    if (bTheKeyIsOpen != FALSE) 
-      closeKey();                    
+    if (bTheKeyIsOpen != FALSE)
+      closeKey();
 
     return;
   }
-    
+
   if      ( stdInput[0] == '[')      /* We are reading a new key */
   {
-    if ( bTheKeyIsOpen != FALSE )      
+    if ( bTheKeyIsOpen != FALSE )
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
       printf ("%s: doSetValue failed to open key %s\n", getAppName(), stdInput);
   }
-  else if( ( bTheKeyIsOpen ) && 
+  else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
             ( stdInput[0] == '\"'))) /* reading a new value=data pair */
   {
     processSetValue(stdInput);
   }
   else                               /* since we are assuming that the */
-  {                                  /* file format is valid we must   */ 
+  {                                  /* file format is valid we must   */
     if ( bTheKeyIsOpen )             /* be reading a blank line which  */
-      closeKey();                    /* indicate end of this key processing */ 
+      closeKey();                    /* indicate end of this key processing */
   }
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the queryValue type of action.  It 
- * receives the currently read line and dispatch the work depending on the 
+ * This funtion is the main entry point to the queryValue type of action.  It
+ * receives the currently read line and dispatch the work depending on the
  * context.
  */
-void doQueryValue(LPSTR stdInput) { 
-  /* 
-   * We encoutered the end of the file, make sure we 
+void doQueryValue(LPSTR stdInput) {
+  /*
+   * We encoutered the end of the file, make sure we
    * close the opened key and exit
-   */ 
-  if (stdInput == NULL)             
+   */
+  if (stdInput == NULL)
   {
-    if (bTheKeyIsOpen != FALSE) 
-      closeKey();                    
+    if (bTheKeyIsOpen != FALSE)
+      closeKey();
 
     return;
   }
-    
+
   if      ( stdInput[0] == '[')      /* We are reading a new key */
   {
-    if ( bTheKeyIsOpen != FALSE )      
+    if ( bTheKeyIsOpen != FALSE )
       closeKey();                    /* Close the previous key before */
 
     if ( openKey(stdInput) != ERROR_SUCCESS )
       printf ("%s: doSetValue failed to open key %s\n", getAppName(), stdInput);
   }
-  else if( ( bTheKeyIsOpen ) && 
+  else if( ( bTheKeyIsOpen ) &&
            (( stdInput[0] == '@') || /* reading a default @=data pair */
             ( stdInput[0] == '\"'))) /* reading a new value=data pair */
   {
     processQueryValue(stdInput);
   }
   else                               /* since we are assuming that the */
-  {                                  /* file format is valid we must   */ 
+  {                                  /* file format is valid we must   */
     if ( bTheKeyIsOpen )             /* be reading a blank line which  */
-      closeKey();                    /* indicate end of this key processing */ 
+      closeKey();                    /* indicate end of this key processing */
   }
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the deletetValue type of action.  It 
- * receives the currently read line and dispatch the work depending on the 
+ * This funtion is the main entry point to the deletetValue type of action.  It
+ * receives the currently read line and dispatch the work depending on the
  * context.
  */
-void doDeleteValue(LPSTR line) { 
+void doDeleteValue(LPSTR line) {
   printf ("%s: deleteValue not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the deleteKey type of action.  It 
- * receives the currently read line and dispatch the work depending on the 
+ * This funtion is the main entry point to the deleteKey type of action.  It
+ * receives the currently read line and dispatch the work depending on the
  * context.
  */
-void doDeleteKey(LPSTR line)   { 
+void doDeleteKey(LPSTR line)   {
   printf ("%s: deleteKey not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the createKey type of action.  It 
- * receives the currently read line and dispatch the work depending on the 
+ * This funtion is the main entry point to the createKey type of action.  It
+ * receives the currently read line and dispatch the work depending on the
  * context.
  */
-void doCreateKey(LPSTR line)   { 
+void doCreateKey(LPSTR line)   {
   printf ("%s: createKey not yet implemented\n", getAppName());
 }
 
 /******************************************************************************
- * This function is a wrapper for the setValue function.  It prepares the 
+ * This function is a wrapper for the setValue function.  It prepares the
  * land and clean the area once completed.
  * Note: this function modifies the line parameter.
  *
@@ -733,7 +733,7 @@ void processSetValue(LPSTR line)
       }
 
   }
-  else 
+  else
   {
       printf("Warning! uncrecognized line:\n%s\n", line);
       return;
@@ -747,12 +747,12 @@ void processSetValue(LPSTR line)
     printf("%s: ERROR Key %s not created. Value: %s, Data: %s\n",
            getAppName(),
            currentKeyName,
-           val_name, 
+           val_name,
            val_data);
 }
 
 /******************************************************************************
- * This function is a wrapper for the queryValue function.  It prepares the 
+ * This function is a wrapper for the queryValue function.  It prepares the
  * land and clean the area once completed.
  */
 void processQueryValue(LPSTR cmdline)
@@ -774,7 +774,7 @@ void processQueryValue(LPSTR cmdline)
   for (counter=0; counter<QUERY_VALUE_MAX_ARGS; counter++)
     argv[counter]=NULL;
 
-  while( (token = getToken(&cmdline, queryValueDelim[argCounter])) != NULL ) 
+  while( (token = getToken(&cmdline, queryValueDelim[argCounter])) != NULL )
   {
     argv[argCounter++] = getArg(token);
 
@@ -786,18 +786,18 @@ void processQueryValue(LPSTR cmdline)
   if ( argv[0] == NULL )
     return; /* SHOULD NOT HAPPEN */
   else
-    keyValue = argv[0]; 
+    keyValue = argv[0];
 
-  if( (keyValue[0] == '@') && (strlen(keyValue) == 1) ) 
+  if( (keyValue[0] == '@') && (strlen(keyValue) == 1) )
   {
     LONG  lLen  = KEY_MAX_LEN;
     CHAR*  lpsData=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,KEY_MAX_LEN);
-    /* 
+    /*
      * We need to query the key default value
      */
     hRes = RegQueryValue(
-             currentKeyHandle, 
-             currentKeyName, 
+             currentKeyHandle,
+             currentKeyName,
              (LPBYTE)lpsData,
              &lLen);
 
@@ -813,20 +813,20 @@ void processQueryValue(LPSTR cmdline)
       lpsRes[lLen-1]='\0';
     }
   }
-  else 
+  else
   {
     DWORD  dwLen  = KEY_MAX_LEN;
     BYTE*  lpbData=HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,KEY_MAX_LEN);
     DWORD  dwType;
-    /* 
+    /*
      * We need to query a specific value for the key
      */
     hRes = RegQueryValueEx(
-             currentKeyHandle, 
-             keyValue, 
-             0, 
-             &dwType, 
-             (LPBYTE)lpbData, 
+             currentKeyHandle,
+             keyValue,
+             0,
+             &dwType,
+             (LPBYTE)lpbData,
              &dwLen);
 
     if (hRes==ERROR_MORE_DATA) {
@@ -836,7 +836,7 @@ void processQueryValue(LPSTR cmdline)
 
     if (hRes == ERROR_SUCCESS)
     {
-      /* 
+      /*
        * Convert the returned data to a displayable format
        */
       switch ( dwType )
@@ -859,27 +859,27 @@ void processQueryValue(LPSTR cmdline)
           lpsRes = convertHexToHexCSV(lpbData, dwLen);
           break;
         }
-      } 
+      }
     }
 
     HeapFree(GetProcessHeap(), 0, lpbData);
   }
- 
- 
-  if ( hRes == ERROR_SUCCESS ) 
+
+
+  if ( hRes == ERROR_SUCCESS )
     printf(
       "%s: Value \"%s\" = \"%s\" in key [%s]\n",
       getAppName(),
-      keyValue, 
+      keyValue,
       lpsRes,
       currentKeyName);
 
   else
     printf("%s: ERROR Value \"%s\" not found. for key \"%s\"\n",
       getAppName(),
-      keyValue, 
+      keyValue,
       currentKeyName);
-    
+
   /*
    * Do some cleanup
    */
@@ -909,7 +909,7 @@ void readLine(FILE *in, LPSTR *pLine, ULONG *pLineSize)
     {
         LPSTR readRes   = "";       /* result of the last read */
         ULONG curLen    = 0;        /* length of a read string */
-        while ( readRes ) 
+        while ( readRes )
         {
             if (strchr(*pLine, '\n'))
             {
@@ -944,7 +944,7 @@ void processRegLines(FILE *in, CommandAPI command)
     ULONG lineSize       = REG_VAL_BUF_SIZE;
     ULONG nextLineSize   = REG_VAL_BUF_SIZE;
 
-    line = HeapAlloc(GetProcessHeap(), 0, lineSize); 
+    line = HeapAlloc(GetProcessHeap(), 0, lineSize);
     nextLine = HeapAlloc(GetProcessHeap(), 0, nextLineSize);
 
     if (!line || !nextLine)
@@ -957,10 +957,10 @@ void processRegLines(FILE *in, CommandAPI command)
     while (!feof(in))
     {
         ULONG curLen;
-        
+
         readLine(in, &line, &lineSize);
         curLen = strlen(line);
-        
+
         if ( curLen )
         {
             if( line[0] == '#' )    /* this is a comment */
@@ -983,9 +983,9 @@ void processRegLines(FILE *in, CommandAPI command)
     }
     command(NULL);
 
-#if 0 
-    /* 
-     * Save the registry only if it was modified 
+#if 0
+    /*
+     * Save the registry only if it was modified
      */
     if ( commandSaveRegistry[cmdIndex] )
         SHELL_SaveRegistry();
@@ -995,15 +995,15 @@ void processRegLines(FILE *in, CommandAPI command)
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the registerDLL action.  It 
+ * This funtion is the main entry point to the registerDLL action.  It
  * receives the currently read line, then loads and registers the requested DLLs
  */
-void doRegisterDLL(LPSTR stdInput) { 
+void doRegisterDLL(LPSTR stdInput) {
   HMODULE theLib = 0;
   UINT retVal = 0;
 
   /* Check for valid input */
-  if (stdInput == NULL)             
+  if (stdInput == NULL)
     return;
 
   /* Load and register the library, then free it */
@@ -1019,26 +1019,26 @@ void doRegisterDLL(LPSTR stdInput) {
 
     if (retVal != S_OK)
       printf("%s: DLLRegisterServer error 0x%x in '%s'.\n",
-             getAppName(), retVal, stdInput);      
+             getAppName(), retVal, stdInput);
 
     FreeLibrary(theLib);
   }
   else
   {
-    printf("%s: Could not load DLL '%s'.\n", getAppName(), stdInput); 
+    printf("%s: Could not load DLL '%s'.\n", getAppName(), stdInput);
   }
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the unregisterDLL action.  It 
+ * This funtion is the main entry point to the unregisterDLL action.  It
  * receives the currently read line, then loads and unregisters the requested DLLs
  */
-void doUnregisterDLL(LPSTR stdInput) { 
+void doUnregisterDLL(LPSTR stdInput) {
   HMODULE theLib = 0;
   UINT retVal = 0;
 
   /* Check for valid input */
-  if (stdInput == NULL)             
+  if (stdInput == NULL)
     return;
 
   /* Load and unregister the library, then free it */
@@ -1222,7 +1222,7 @@ void export_hkey(FILE *file, HKEY key,
             } else {
                 fputs("@=", file);
             }
-            
+
             switch (value_type)
             {
             case REG_SZ:
@@ -1270,7 +1270,7 @@ void export_hkey(FILE *file, HKEY key,
             }
         }
     }
-    
+
     /*fputs("\n", file);*/
 
     i = 0;
@@ -1397,7 +1397,7 @@ void export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 
         /* export all registry classes */
         file = REGPROC_open_export_file(file_name);
-        for (i = 0; i < REG_CLASS_NUMBER; i++) 
+        for (i = 0; i < REG_CLASS_NUMBER; i++)
         {
             strcpy(reg_key_name_buf, reg_class_names[i]);
             export_hkey(file, reg_class_keys[i],
@@ -1416,7 +1416,7 @@ void export_registry_key(CHAR *file_name, CHAR *reg_key_name)
 }
 
 /******************************************************************************
- * Recursive function which removes the registry key with all subkeys. 
+ * Recursive function which removes the registry key with all subkeys.
  */
 void delete_branch(HKEY key,
                    CHAR **reg_key_name_buf, DWORD *reg_key_name_len)

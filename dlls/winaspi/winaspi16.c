@@ -379,7 +379,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
       {
 	SEGPTR spPRB = MapLS(lpPRB);
 
-	ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, spPRB);	
+	ASPI_CallTo16_long_l(lpPRB->SRB_PostProc, spPRB);
 	UnMapLS(spPRB);
 	break;
       }
@@ -393,7 +393,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
   free(sg_hd);
   ASPI_DebugPrintResult(lpPRB, mode);
   return SS_COMP;
-  
+
 error_exit:
   if (error_code == EBUSY) {
       lpPRB->SRB_Status = SS_ASPI_IS_BUSY;
@@ -498,7 +498,7 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 #ifdef linux
     return ASPI_SendASPICommand(segptr_srb, ASPI_WIN16);
 #else
-    return 0; 
+    return 0;
 #endif
 }
 

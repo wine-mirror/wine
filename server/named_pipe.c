@@ -409,7 +409,7 @@ DECL_HANDLER(wait_named_pipe)
             set_error(STATUS_SUCCESS);
             if( (partner = find_partner(pipe,ps_wait_open)) )
             {
-                /* this should use notify_waiter, 
+                /* this should use notify_waiter,
                    but no pipe_user object exists now... */
                 thread_queue_apc(current,NULL,req->func,
                     APC_ASYNC,1,2,req->overlapped,STATUS_SUCCESS);

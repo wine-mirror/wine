@@ -1,6 +1,6 @@
 /*
  * TWAIN32 functions
- * 
+ *
  * Copyright 2000 Shi Quan He <shiquan@cyberdude.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ TW_UINT16 TWAIN_SourceManagerHandler (
                     twRC = TWRC_FAILURE;
                     DSM_twCC = TWCC_BADPROTOCOL;
                     WARN("unrecognized operation triplet\n");
-            } 
+            }
             break;
 
         case DAT_STATUS:
@@ -527,7 +527,7 @@ TW_UINT16 TWAIN_ImageGroupHandler (
                     break;
                 case MSG_SET:
                     twRC = TWAIN_Palette8Set (pOrigin, pDest, pData);
-                    break; 
+                    break;
                 default:
                     twRC = TWRC_FAILURE;
                     DSM_twCC = TWCC_BADPROTOCOL;
@@ -591,7 +591,7 @@ TW_UINT16 TWAIN_AudioGroupHandler (
             twRC = TWRC_FAILURE;
             break;
     }
-  
+
     return twRC;
 }
 
@@ -607,7 +607,7 @@ DSM_Entry (pTW_IDENTITY pOrigin,
     TW_UINT16 twRC = TWRC_SUCCESS;  /* Return Code */
 
     TRACE("(DG=%ld DAT=%d MSG=%d)\n", DG, DAT, MSG);
-    
+
     switch (DG)
     {
         case DG_CONTROL:
@@ -627,7 +627,7 @@ DSM_Entry (pTW_IDENTITY pOrigin,
     return twRC;
 }
 
-/* A helper function that looks up a destination identity in the active 
+/* A helper function that looks up a destination identity in the active
    source list */
 activeDS *TWAIN_LookupSource (pTW_IDENTITY pDest)
 {

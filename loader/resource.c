@@ -68,7 +68,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
     /* On first call, initialize HRSRC map */
     if ( !map )
     {
-        if ( !(map = (HRSRC_MAP *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+        if ( !(map = (HRSRC_MAP *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                              sizeof(HRSRC_MAP) ) ) )
         {
             ERR("Cannot allocate HRSRC map\n" );
@@ -85,9 +85,9 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
     /* If no space left, grow table */
     if ( map->nUsed == map->nAlloc )
     {
-        if ( !(newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                                    map->elem, 
-                                                    (map->nAlloc + HRSRC_MAP_BLOCKSIZE) 
+        if ( !(newElem = (HRSRC_ELEM *)HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                                    map->elem,
+                                                    (map->nAlloc + HRSRC_MAP_BLOCKSIZE)
                                                     * sizeof(HRSRC_ELEM) ) ))
         {
             ERR("Cannot grow HRSRC map\n" );
@@ -137,11 +137,11 @@ static WINE_EXCEPTION_FILTER(page_fault)
 }
 
 static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
-				LPCSTR name, WORD lang, 
+				LPCSTR name, WORD lang,
 				BOOL bUnicode, BOOL bRet16 )
 {
     HRSRC hRsrc = 0;
-    
+
     TRACE("(%08x, %08x%s, %08x%s, %04x, %s, %s)\n",
 	  hModule,
 	  (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
@@ -159,7 +159,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
         {
 	    /* 16-bit NE module */
 	    LPSTR typeStr, nameStr;
-	    
+
 	    if ( HIWORD( type ) && bUnicode )
 		typeStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)type );
 	    else
@@ -168,14 +168,14 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 		nameStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)name );
 	    else
 		nameStr = (LPSTR)name;
-	    
+
 	    hRsrc = NE_FindResource( pModule, nameStr, typeStr );
-	    
-	    if ( HIWORD( type ) && bUnicode ) 
+
+	    if ( HIWORD( type ) && bUnicode )
 		HeapFree( GetProcessHeap(), 0, typeStr );
-	    if ( HIWORD( name ) && bUnicode ) 
+	    if ( HIWORD( name ) && bUnicode )
 		HeapFree( GetProcessHeap(), 0, nameStr );
-	    
+
 	    /* If we need to return 32-bit HRSRC, no conversion is necessary,
 	       we simply use the 16-bit HRSRC as 32-bit HRSRC */
         }
@@ -185,7 +185,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
             hRsrc = RES_FindResource2( pModule->module32, type, name, lang, bUnicode, FALSE );
             /* If we need to return 16-bit HRSRC, perform conversion */
             if ( bRet16 )
-                hRsrc = MapHRsrc32To16( pModule, hRsrc, 
+                hRsrc = MapHRsrc32To16( pModule, hRsrc,
                                         HIWORD( type )? 0 : LOWORD( type ) );
         }
     }
@@ -193,7 +193,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
     {
         /* 32-bit PE module */
         LPWSTR typeStr, nameStr;
-	    
+
         if ( HIWORD( type ) && !bUnicode )
             typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
         else
@@ -211,10 +211,10 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
 	    hRsrc = PE_FindResourceW( hModule, nameStr, typeStr );
 	else
 	    hRsrc = PE_FindResourceExW( hModule, nameStr, typeStr, lang );
-	    
-        if ( HIWORD( type ) && !bUnicode ) 
+
+        if ( HIWORD( type ) && !bUnicode )
             HeapFree( GetProcessHeap(), 0, typeStr );
-        if ( HIWORD( name ) && !bUnicode ) 
+        if ( HIWORD( name ) && !bUnicode )
             HeapFree( GetProcessHeap(), 0, nameStr );
     }
     return hRsrc;
@@ -225,7 +225,7 @@ static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
  */
 
 static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
-                               LPCSTR name, WORD lang, 
+                               LPCSTR name, WORD lang,
                                BOOL bUnicode, BOOL bRet16 )
 {
     HRSRC hRsrc;
@@ -341,27 +341,27 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
  */
 HRSRC WINAPI FindResourceA( HMODULE hModule, LPCSTR name, LPCSTR type )
 {
-    return RES_FindResource( hModule, type, name, 
+    return RES_FindResource( hModule, type, name,
                     MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, FALSE );
 }
 
 /**********************************************************************
  *	    FindResourceExA  (KERNEL32.@)
  */
-HRSRC WINAPI FindResourceExA( HMODULE hModule, 
+HRSRC WINAPI FindResourceExA( HMODULE hModule,
                                LPCSTR type, LPCSTR name, WORD lang )
 {
-    return RES_FindResource( hModule, type, name, 
+    return RES_FindResource( hModule, type, name,
                              lang, FALSE, FALSE );
 }
 
 /**********************************************************************
  *	    FindResourceExW  (KERNEL32.@)
  */
-HRSRC WINAPI FindResourceExW( HMODULE hModule, 
+HRSRC WINAPI FindResourceExW( HMODULE hModule,
                               LPCWSTR type, LPCWSTR name, WORD lang )
 {
-    return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
+    return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name,
                              lang, TRUE, FALSE );
 }
 
@@ -370,7 +370,7 @@ HRSRC WINAPI FindResourceExW( HMODULE hModule,
  */
 HRSRC WINAPI FindResourceW(HINSTANCE hModule, LPCWSTR name, LPCWSTR type)
 {
-    return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name, 
+    return RES_FindResource( hModule, (LPCSTR)type, (LPCSTR)name,
                     MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), TRUE, FALSE );
 }
 

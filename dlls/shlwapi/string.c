@@ -19,7 +19,7 @@
  */
 
 #include <ctype.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -268,7 +268,7 @@ LPSTR WINAPI StrDupA (LPCSTR lpSrc)
 {
 	int len = strlen(lpSrc);
 	LPSTR lpDest = (LPSTR) LocalAlloc(LMEM_FIXED, len+1);
-	
+
 	TRACE("%s\n", lpSrc);
 
 	if (lpDest) strcpy(lpDest, lpSrc);
@@ -282,7 +282,7 @@ LPWSTR WINAPI StrDupW (LPCWSTR lpSrc)
 {
 	int len = strlenW(lpSrc);
 	LPWSTR lpDest = (LPWSTR) LocalAlloc(LMEM_FIXED, sizeof(WCHAR) * (len+1));
-	
+
 	TRACE("%s\n", debugstr_w(lpSrc));
 
 	if (lpDest) strcpyW(lpDest, lpSrc);
@@ -308,9 +308,9 @@ int WINAPI StrCSpnA (LPCSTR lpStr, LPCSTR lpSet)
 	      pos = j;
 	    }
 	  }
-	}      
+	}
 	TRACE("-- %u\n", pos);
-	return pos;	
+	return pos;
 }
 
 /*************************************************************************
@@ -332,9 +332,9 @@ int WINAPI StrCSpnW (LPCWSTR lpStr, LPCWSTR lpSet)
 	      pos = j;
 	    }
 	  }
-	}      
+	}
 	TRACE("-- %u\n", pos);
-	return pos;	
+	return pos;
 }
 
 /**************************************************************************
@@ -355,7 +355,7 @@ LPSTR WINAPI StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
         if (*lpStart != LOBYTE(wMatch)) continue;
         if (dbcs && lpStart[1] != HIBYTE(wMatch)) continue;
         lpGotIt = lpStart;
-    }    
+    }
     return (LPSTR)lpGotIt;
 }
 
@@ -403,7 +403,7 @@ LPSTR WINAPI StrRChrIA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
 	} else {
 	    if (toupper(*lpStart) == toupper(wMatch)) lpGotIt = lpStart;
 	}
-    }    
+    }
     return (LPSTR)lpGotIt;
 }
 
@@ -465,7 +465,7 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
 
 /*************************************************************************
  * StrRetToBufA					[SHLWAPI.@]
- * 
+ *
  * converts a STRRET to a normal string
  *
  * NOTES
@@ -510,7 +510,7 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, D
 
 /*************************************************************************
  * StrRetToBufW					[SHLWAPI.@]
- * 
+ *
  * converts a STRRET to a normal string
  *
  * NOTES
@@ -577,7 +577,7 @@ LPSTR WINAPI StrFormatByteSizeA ( DWORD dw, LPSTR pszBuf, UINT cchBuf )
 	{ sprintf (buf,"%3.1f GB", (FLOAT)dw/1073741824L);
 	}
 	lstrcpynA (pszBuf, buf, cchBuf);
-	return pszBuf;	
+	return pszBuf;
 }
 
 /*************************************************************************

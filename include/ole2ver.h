@@ -31,7 +31,7 @@
  * Win98 SE original files:
  * COMPOBJ: CoBuildVersion 23/700
  * OLE2: OleBuildVersion -> COMPOBJ.CoBuildVersion
- * OLE32: CoBuildVersion and Ole~ 23/824 
+ * OLE32: CoBuildVersion and Ole~ 23/824
  *
  * We probably should reorganize the OLE version stuff, i.e.
  * use different values for every *BuildVersion function and Win version.

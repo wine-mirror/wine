@@ -39,13 +39,13 @@ extern unsigned int CONSOLE_GetNumHistoryEntries(void);
 
 struct WCEL_Context;
 
-typedef struct 
+typedef struct
 {
     WCHAR			val;		/* vk or unicode char */
     void			(*func)(struct WCEL_Context* ctx);
 } KeyEntry;
 
-typedef struct 
+typedef struct
 {
     DWORD			keyState;	/* keyState (from INPUT_RECORD) to match */
     BOOL			chkChar;	/* check vk or char */
@@ -73,9 +73,9 @@ typedef struct WCEL_Context {
 static void WCEL_Dump(WCEL_Context* ctx, const char* pfx)
 {
     MESSAGE("%s: [line=%s[alloc=%u] ofs=%u len=%u start=(%d,%d) mask=%c%c\n"
-	    "\t\thist=(size=%u pos=%u curr=%s)\n", 
-	    pfx, debugstr_w(ctx->line), ctx->alloc, ctx->ofs, ctx->len, 
-	    ctx->csbi.dwCursorPosition.X, ctx->csbi.dwCursorPosition.Y, 
+	    "\t\thist=(size=%u pos=%u curr=%s)\n",
+	    pfx, debugstr_w(ctx->line), ctx->alloc, ctx->ofs, ctx->len,
+	    ctx->csbi.dwCursorPosition.X, ctx->csbi.dwCursorPosition.Y,
 	    ctx->done ? 'D' : 'd', ctx->error ? 'E' : 'e',
 	    ctx->histSize, ctx->histPos, debugstr_w(ctx->histCurr));
 }
@@ -91,13 +91,13 @@ static BOOL WCEL_Get(WCEL_Context* ctx, INPUT_RECORD* ir)
 {
     DWORD		retv;
 
-    for (;;) 
+    for (;;)
     {
 	/* data available ? */
 	if (ReadConsoleInputW(ctx->hConIn, ir, 1, &retv) && retv == 1)
 	    return TRUE;
 	/* then wait... */
-	switch (WaitForSingleObject(ctx->hConIn, INFINITE)) 
+	switch (WaitForSingleObject(ctx->hConIn, INFINITE))
 	{
 	case WAIT_OBJECT_0:
 	    break;
@@ -201,7 +201,7 @@ static void WCEL_InsertChar(WCEL_Context* ctx, WCHAR c)
     WCHAR	buffer[2];
 
     /* do not insert 0..31 control characters */
-    if (c < ' ') 
+    if (c < ' ')
     {
 	if (c != '\t') return;
     }
@@ -248,7 +248,7 @@ static WCHAR* WCEL_GetHistory(WCEL_Context* ctx, int idx)
 {
     WCHAR*	ptr;
 
-    if (idx == ctx->histSize - 1) 
+    if (idx == ctx->histSize - 1)
     {
 	ptr = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(ctx->histCurr) + 1) * sizeof(WCHAR));
 	lstrcpyW(ptr, ctx->histCurr);
@@ -256,7 +256,7 @@ static WCHAR* WCEL_GetHistory(WCEL_Context* ctx, int idx)
     else
     {
 	int	len = CONSOLE_GetHistory(idx, NULL, 0);
-	
+
 	if ((ptr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
 	{
 	    CONSOLE_GetHistory(idx, ptr, len);
@@ -314,7 +314,7 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
        else ctx->histPos = (ctx->histSize-1);
 
        len = lstrlenW(data) + 1;
-       if ((len >= ctx->ofs) && 
+       if ((len >= ctx->ofs) &&
            (memcmp(ctx->line, data, ctx->ofs * sizeof(WCHAR)) == 0)) {
 
            /* need to clean also the screen if new string is shorter than old one */
@@ -332,7 +332,7 @@ static void    WCEL_FindPrevInHist(WCEL_Context* ctx)
            }
        }
     } while (ctx->histPos != startPos);
-    
+
     return;
 }
 
@@ -389,7 +389,7 @@ static void WCEL_SetMark(WCEL_Context* ctx)
 }
 
 static void WCEL_ExchangeMark(WCEL_Context* ctx)
-{   
+{
     unsigned tmp;
 
     if (ctx->mark > ctx->len) return;
@@ -441,7 +441,7 @@ static void WCEL_LowerCaseWord(WCEL_Context* ctx)
 	int	i;
 	for (i = ctx->ofs; i <= new_ofs; i++)
 	    ctx->line[i] = tolowerW(ctx->line[i]);
-	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1, 
+	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1,
 				     WCEL_GetCoord(ctx, ctx->ofs), NULL);
 	ctx->ofs = new_ofs;
     }
@@ -455,7 +455,7 @@ static void WCEL_UpperCaseWord(WCEL_Context* ctx)
 	int	i;
 	for (i = ctx->ofs; i <= new_ofs; i++)
 	    ctx->line[i] = toupperW(ctx->line[i]);
-	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1, 
+	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1,
 				     WCEL_GetCoord(ctx, ctx->ofs), NULL);
 	ctx->ofs = new_ofs;
     }
@@ -467,11 +467,11 @@ static void WCEL_CapitalizeWord(WCEL_Context* ctx)
     if (new_ofs != ctx->ofs)
     {
 	int	i;
-	
+
 	ctx->line[ctx->ofs] = toupperW(ctx->line[ctx->ofs]);
 	for (i = ctx->ofs + 1; i <= new_ofs; i++)
 	    ctx->line[i] = tolowerW(ctx->line[i]);
-	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1, 
+	WriteConsoleOutputCharacterW(ctx->hConOut, &ctx->line[ctx->ofs], new_ofs - ctx->ofs + 1,
 				     WCEL_GetCoord(ctx, ctx->ofs), NULL);
 	ctx->ofs = new_ofs;
     }
@@ -569,7 +569,7 @@ static void WCEL_MoveToLastHist(WCEL_Context* ctx)
  * ====================================================================*/
 
 #define CTRL(x)	((x) - '@')
-static KeyEntry StdKeyMap[] = 
+static KeyEntry StdKeyMap[] =
 {
     {/*BACK*/0x08,	WCEL_DeletePrevChar 	},
     {/*RETURN*/0x0d,	WCEL_Done		},
@@ -577,14 +577,14 @@ static KeyEntry StdKeyMap[] =
     {	0,		NULL			}
 };
 
-static KeyEntry Win32ExtraStdKeyMap[] = 
+static KeyEntry Win32ExtraStdKeyMap[] =
 {
     {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
     {	0,		NULL			}
 };
 
 
-static	KeyEntry EmacsKeyMapCtrl[] = 
+static	KeyEntry EmacsKeyMapCtrl[] =
 {
     {	CTRL('@'),	WCEL_SetMark		},
     {	CTRL('A'),	WCEL_MoveToBeg		},
@@ -616,7 +616,7 @@ static	KeyEntry EmacsKeyMapCtrl[] =
     {	0,		NULL			}
 };
 
-static KeyEntry EmacsKeyMapAlt[] = 
+static KeyEntry EmacsKeyMapAlt[] =
 {
     {/*DEL*/127,	WCEL_DeleteLeftWord	},
     {	'<',		WCEL_MoveToFirstHist	},
@@ -633,7 +633,7 @@ static KeyEntry EmacsKeyMapAlt[] =
     {	0,		NULL			}
 };
 
-static KeyEntry EmacsKeyMapExtended[] = 
+static KeyEntry EmacsKeyMapExtended[] =
 {
     {/*RETURN*/  0x0d,	WCEL_Done },
     {/*VK_PRIOR*/0x21, 	WCEL_MoveToPrevHist	},
@@ -645,7 +645,7 @@ static KeyEntry EmacsKeyMapExtended[] =
     {	0,		NULL 			}
 };
 
-static KeyMap	EmacsKeyMap[] = 
+static KeyMap	EmacsKeyMap[] =
 {
     {0x00000000, 1, StdKeyMap},
     {0x00000001, 1, EmacsKeyMapAlt},	/* left  alt  */
@@ -656,7 +656,7 @@ static KeyMap	EmacsKeyMap[] =
     {0,		 0, 0}
 };
 
-static	KeyEntry Win32KeyMapExtended[] = 
+static	KeyEntry Win32KeyMapExtended[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveLeft 		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight		},
@@ -668,7 +668,7 @@ static	KeyEntry Win32KeyMapExtended[] =
     {	0,		NULL 			}
 };
 
-static	KeyEntry Win32KeyMapCtrlExtended[] = 
+static	KeyEntry Win32KeyMapCtrlExtended[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveToLeftWord 	},
     {/*VK_RIGHT*/0x27,	WCEL_MoveToRightWord	},
@@ -676,7 +676,7 @@ static	KeyEntry Win32KeyMapCtrlExtended[] =
     {	0,		NULL 			}
 };
 
-KeyMap	Win32KeyMap[] = 
+KeyMap	Win32KeyMap[] =
 {
     {0x00000000, 1, StdKeyMap},
     {0x00000000, 0, Win32ExtraStdKeyMap},
@@ -706,7 +706,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
     memset(&ctx, 0, sizeof(ctx));
     ctx.hConIn = hConsoleIn;
     WCEL_HistoryInit(&ctx);
-    if ((ctx.hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, 
+    if ((ctx.hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
 				    OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE ||
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))
 	return NULL;
@@ -720,7 +720,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
 /* EPP     WCEL_Dump(&ctx, "init"); */
 
     while (!ctx.done && !ctx.error && WCEL_Get(&ctx, &ir))
-    {	
+    {
 	if (ir.EventType != KEY_EVENT || !ir.Event.KeyEvent.bKeyDown) continue;
 	TRACE("key%s repeatCount=%u, keyCode=%02x scanCode=%02x char=%02x keyState=%08lx\n",
 	      ir.Event.KeyEvent.bKeyDown ? "Down" : "Up  ", ir.Event.KeyEvent.wRepeatCount,
@@ -734,7 +734,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
 
 	func = NULL;
 	for (km = (use_emacs) ? EmacsKeyMap : Win32KeyMap; km->entries != NULL; km++)
-	{	
+	{
 	    if (km->keyState != ks)
 		continue;
 	    if (km->chkChar)
@@ -765,7 +765,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
 	if (ctx.ofs != ofs)
 	    SetConsoleCursorPosition(ctx.hConOut, WCEL_GetCoord(&ctx, ctx.ofs));
     }
-    if (ctx.error) 
+    if (ctx.error)
     {
 	HeapFree(GetProcessHeap(), 0, ctx.line);
 	ctx.line = NULL;

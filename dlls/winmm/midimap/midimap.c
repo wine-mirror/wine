@@ -1,5 +1,5 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
-/*				   
+/*
  * Wine Midi mapper driver
  *
  * Copyright 	1999, 2000, 2001 Eric Pouech
@@ -62,7 +62,7 @@
  * "Channels"="<bitMask>"
  * (the default value of this key also refers to the name of the device).
  *
- * this defines, for each midiOut device (identified by its index in <idxDevice>), which 
+ * this defines, for each midiOut device (identified by its index in <idxDevice>), which
  * channels have to be mapped onto it. The <bitMask> defines the channels (from 0 to 15)
  * will be mapped (mapping occurs for channel <ch> if bit <ch> is set in <bitMask>
  *
@@ -77,7 +77,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
-typedef struct tagMIDIOUTPORT 
+typedef struct tagMIDIOUTPORT
 {
     char		name[MAXPNAMELEN];
     int			loaded;
@@ -87,7 +87,7 @@ typedef struct tagMIDIOUTPORT
     unsigned int	aChn[16];
 } MIDIOUTPORT;
 
-typedef	struct tagMIDIMAPDATA 
+typedef	struct tagMIDIMAPDATA
 {
     struct tagMIDIMAPDATA*	self;
     MIDIOUTPORT*	ChannelMap[16];
@@ -106,14 +106,14 @@ static	BOOL	MIDIMAP_IsBadData(MIDIMAPDATA* mm)
 
 static BOOL	MIDIMAP_FindPort(const char* name, unsigned* dev)
 {
-    for (*dev = 0; *dev < numMidiOutPorts; (*dev)++) 
+    for (*dev = 0; *dev < numMidiOutPorts; (*dev)++)
     {
 	TRACE("%s\n", midiOutPorts[*dev].name);
 	if (strcmp(midiOutPorts[*dev].name, name) == 0)
 	    return TRUE;
     }
     /* try the form #nnn */
-    if (*name == '#' && isdigit(name[1])) 
+    if (*name == '#' && isdigit(name[1]))
     {
 	*dev = atoi(name + 1);
 	if (*dev < numMidiOutPorts)
@@ -126,7 +126,7 @@ static BOOL	MIDIMAP_LoadSettingsDefault(MIDIMAPDATA* mom, const char* port)
 {
     unsigned i, dev = 0;
 
-    if (port != NULL && !MIDIMAP_FindPort(port, &dev)) 
+    if (port != NULL && !MIDIMAP_FindPort(port, &dev))
     {
 	ERR("Registry glitch: couldn't find midi out (%s)\n", port);
 	dev = 0;
@@ -150,19 +150,19 @@ static BOOL	MIDIMAP_LoadSettingsScheme(MIDIMAPDATA* mom, const char* scheme)
 
     for (i = 0; i < 16; i++)	mom->ChannelMap[i] = NULL;
 
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, 
-		    "System\\CurrentControlSet\\Control\\MediaProperties\\PrivateProperties\\Midi\\Schemes", 
-		    &hSchemesKey)) 
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE,
+		    "System\\CurrentControlSet\\Control\\MediaProperties\\PrivateProperties\\Midi\\Schemes",
+		    &hSchemesKey))
     {
 	return FALSE;
     }
-    if (RegOpenKeyA(hSchemesKey, scheme, &hKey)) 
+    if (RegOpenKeyA(hSchemesKey, scheme, &hKey))
     {
 	RegCloseKey(hSchemesKey);
 	return FALSE;
     }
 
-    for (idx = 0; !RegEnumKeyA(hKey, idx, buffer, sizeof(buffer)); idx++) 
+    for (idx = 0; !RegEnumKeyA(hKey, idx, buffer, sizeof(buffer)); idx++)
     {
 	if (RegOpenKeyA(hKey, buffer, &hPortKey)) continue;
 
@@ -175,11 +175,11 @@ static BOOL	MIDIMAP_LoadSettingsScheme(MIDIMAPDATA* mom, const char* scheme)
 	if (RegQueryValueExA(hPortKey, "Channels", 0, &type, (void*)&mask, &size))
 	    continue;
 
-	for (i = 0; i < 16; i++) 
+	for (i = 0; i < 16; i++)
 	{
-	    if (mask & (1 << i)) 
+	    if (mask & (1 << i))
 	    {
-		if (mom->ChannelMap[i]) 
+		if (mom->ChannelMap[i])
 		    ERR("Quirks in registry, channel %u is mapped twice\n", i);
 		mom->ChannelMap[i] = &midiOutPorts[dev];
 	    }
@@ -188,7 +188,7 @@ static BOOL	MIDIMAP_LoadSettingsScheme(MIDIMAPDATA* mom, const char* scheme)
 
     RegCloseKey(hSchemesKey);
     RegCloseKey(hKey);
-    
+
     return TRUE;
 }
 
@@ -197,39 +197,39 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
     HKEY 	hKey;
     BOOL	ret;
 
-    if (RegOpenKeyA(HKEY_CURRENT_USER, 
-		    "Software\\Microsoft\\Windows\\CurrentVersion\\Multimedia\\MIDIMap", &hKey)) 
+    if (RegOpenKeyA(HKEY_CURRENT_USER,
+		    "Software\\Microsoft\\Windows\\CurrentVersion\\Multimedia\\MIDIMap", &hKey))
     {
 	ret = MIDIMAP_LoadSettingsDefault(mom, NULL);
     }
-    else 
+    else
     {
 	DWORD	type, size, out;
 	char	buffer[256];
-    
+
 	ret = 2;
 	size = sizeof(out);
-	if (!RegQueryValueExA(hKey, "UseScheme", 0, &type, (void*)&out, &size) && out) 
+	if (!RegQueryValueExA(hKey, "UseScheme", 0, &type, (void*)&out, &size) && out)
 	{
 	    size = sizeof(buffer);
-	    if (!RegQueryValueExA(hKey, "CurrentScheme", 0, &type, buffer, &size)) 
+	    if (!RegQueryValueExA(hKey, "CurrentScheme", 0, &type, buffer, &size))
 	    {
 		if (!(ret = MIDIMAP_LoadSettingsScheme(mom, buffer)))
 		    ret = MIDIMAP_LoadSettingsDefault(mom, NULL);
 	    }
-	    else 
+	    else
 	    {
 		ERR("Wrong registry: UseScheme is active, but no CurrentScheme found\n");
 	    }
 	}
-	if (ret == 2) 
+	if (ret == 2)
 	{
 	    size = sizeof(buffer);
-	    if (!RegQueryValueExA(hKey, "CurrentInstrument", 0, &type, buffer, &size) && *buffer) 
+	    if (!RegQueryValueExA(hKey, "CurrentInstrument", 0, &type, buffer, &size) && *buffer)
 	    {
 		ret = MIDIMAP_LoadSettingsDefault(mom, buffer);
 	    }
-	    else 
+	    else
 	    {
 		ret = MIDIMAP_LoadSettingsDefault(mom, NULL);
 	    }
@@ -237,13 +237,13 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
     }
     RegCloseKey(hKey);
 
-    if (ret && TRACE_ON(msacm)) 
+    if (ret && TRACE_ON(msacm))
     {
 	unsigned	i;
 
-	for (i = 0; i < 16; i++) 
+	for (i = 0; i < 16; i++)
 	{
-	    TRACE("chnMap[% 2d] => %d\n", 
+	    TRACE("chnMap[% 2d] => %d\n",
 		  i, mom->ChannelMap[i] ? mom->ChannelMap[i]->uDevID : -1);
 	}
     }
@@ -258,7 +258,7 @@ static	DWORD	modOpen(LPDWORD lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 
     if (!mom) return MMSYSERR_NOMEM;
 
-    if (MIDIMAP_LoadSettings(mom)) 
+    if (MIDIMAP_LoadSettings(mom))
     {
 	*lpdwUser = (DWORD)mom;
 	mom->self = mom;
@@ -276,13 +276,13 @@ static	DWORD	modClose(MIDIMAPDATA* mom)
 
     if (MIDIMAP_IsBadData(mom)) 	return MMSYSERR_ERROR;
 
-    for (i = 0; i < 16; i++) 
+    for (i = 0; i < 16; i++)
     {
 	DWORD	t;
-	if (mom->ChannelMap[i] && mom->ChannelMap[i]->loaded > 0) 
+	if (mom->ChannelMap[i] && mom->ChannelMap[i]->loaded > 0)
 	{
 	    t = midiOutClose(mom->ChannelMap[i]->hMidi);
-	    if (t == MMSYSERR_NOERROR) 
+	    if (t == MMSYSERR_NOERROR)
 	    {
 		mom->ChannelMap[i]->loaded = 0;
 		mom->ChannelMap[i]->hMidi = 0;
@@ -306,9 +306,9 @@ static	DWORD	modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD dwParam2)
 	return MMSYSERR_ERROR;
 
     mh = *lpMidiHdr;
-    for (chn = 0; chn < 16; chn++) 
+    for (chn = 0; chn < 16; chn++)
     {
-	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0) 
+	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0)
 	{
 	    mh.dwFlags = 0;
 	    midiOutPrepareHeader(mom->ChannelMap[chn]->hMidi, &mh, sizeof(mh));
@@ -331,7 +331,7 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
 
     if (!mom->ChannelMap[chn]) return MMSYSERR_NOERROR;
 
-    switch (lb & 0xF0) 
+    switch (lb & 0xF0)
     {
     case 0x80:
     case 0x90:
@@ -340,7 +340,7 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
     case 0xC0:
     case 0xD0:
     case 0xE0:
-	if (mom->ChannelMap[chn]->loaded == 0) 
+	if (mom->ChannelMap[chn]->loaded == 0)
 	{
 	    if (midiOutOpen(&mom->ChannelMap[chn]->hMidi, mom->ChannelMap[chn]->uDevID,
 			    0L, 0L, CALLBACK_NULL) == MMSYSERR_NOERROR)
@@ -348,17 +348,17 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
 	    else
 		mom->ChannelMap[chn]->loaded = -1;
 	    /* FIXME: should load here the IDF midi data... and allow channel and
-	     * patch mappings 
+	     * patch mappings
 	     */
 	}
-	if (mom->ChannelMap[chn]->loaded > 0) 
+	if (mom->ChannelMap[chn]->loaded > 0)
 	{
 	    /* change channel */
 	    dwParam &= ~0x0F;
 	    dwParam |= mom->ChannelMap[chn]->aChn[chn];
 
 	    if ((LOBYTE(LOWORD(dwParam)) & 0xF0) == 0xC0 /* program change */ &&
-		mom->ChannelMap[chn]->lpbPatch) 
+		mom->ChannelMap[chn]->lpbPatch)
 	    {
 		BYTE patch = HIBYTE(LOWORD(dwParam));
 
@@ -370,7 +370,7 @@ static	DWORD	modData(MIDIMAPDATA* mom, DWORD dwParam)
 	}
 	break;
     case 0xF0:
-	for (chn = 0; chn < 16; chn++) 
+	for (chn = 0; chn < 16; chn++)
 	{
 	    if (mom->ChannelMap[chn]->loaded > 0)
 		ret = midiOutShortMsg(mom->ChannelMap[chn]->hMidi, dwParam);
@@ -426,9 +426,9 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
     if (MIDIMAP_IsBadData(mom))
 	return MMSYSERR_ERROR;
 
-    for (chn = 0; chn < 16; chn++) 
+    for (chn = 0; chn < 16; chn++)
     {
-	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0) 
+	if (mom->ChannelMap[chn] && mom->ChannelMap[chn]->loaded > 0)
 	{
 	    ret = midiOutReset(mom->ChannelMap[chn]->hMidi);
 	    if (ret != MMSYSERR_NOERROR) break;
@@ -440,13 +440,13 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
 /**************************************************************************
  * 				modMessage (MIDIMAP.@)
  */
-DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
+DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 				DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    
-    switch (wMsg) 
+
+    switch (wMsg)
     {
     case DRVM_INIT:
     case DRVM_EXIT:
@@ -479,7 +479,7 @@ DWORD WINAPI MIDIMAP_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
  *======================================================================*/
 
 /**************************************************************************
- * 				MIDIMAP_drvOpen			[internal]	
+ * 				MIDIMAP_drvOpen			[internal]
  */
 static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 {
@@ -488,13 +488,13 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 
     if (midiOutPorts)
 	return 0;
-    
+
     numMidiOutPorts = midiOutGetNumDevs();
-    midiOutPorts = HeapAlloc(GetProcessHeap(), 0, 
+    midiOutPorts = HeapAlloc(GetProcessHeap(), 0,
 			     numMidiOutPorts * sizeof(MIDIOUTPORT));
-    for (dev = 0; dev < numMidiOutPorts; dev++) 
+    for (dev = 0; dev < numMidiOutPorts; dev++)
     {
-	if (midiOutGetDevCapsA((HMIDIOUT)dev, &moc, sizeof(moc)) == 0L) 
+	if (midiOutGetDevCapsA((HMIDIOUT)dev, &moc, sizeof(moc)) == 0L)
 	{
 	    strcpy(midiOutPorts[dev].name, moc.szPname);
 	    midiOutPorts[dev].loaded = 0;
@@ -504,7 +504,7 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 	    for (i = 0; i < 16; i++)
 		midiOutPorts[dev].aChn[i] = i;
 	}
-	else 
+	else
 	{
 	    midiOutPorts[dev].loaded = -1;
 	}
@@ -514,11 +514,11 @@ static	DWORD	MIDIMAP_drvOpen(LPSTR str)
 }
 
 /**************************************************************************
- * 				MIDIMAP_drvClose		[internal]	
+ * 				MIDIMAP_drvClose		[internal]
  */
 static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
 {
-    if (midiOutPorts) 
+    if (midiOutPorts)
     {
 	HeapFree(GetProcessHeap(), 0, midiOutPorts);
 	midiOutPorts = NULL;
@@ -530,13 +530,13 @@ static	DWORD	MIDIMAP_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (MIDIMAP.@)
  */
-LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+LONG CALLBACK	MIDIMAP_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 				   DWORD dwParam1, DWORD dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-    
-    switch (wMsg) 
+
+    switch (wMsg)
     {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;

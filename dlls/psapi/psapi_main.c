@@ -69,7 +69,7 @@ BOOL WINAPI EnumDeviceDrivers(
     *lpcbNeeded = 0;
 
   return TRUE;
-}    
+}
 
 
 /***********************************************************************

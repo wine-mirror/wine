@@ -192,7 +192,7 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
  */
 WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 {
-    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback ) 
+    if ( !timer || timer > NB_SYS_TIMERS || !SYS_Timers[timer-1].callback )
         return timer;  /* Error */
     SYS_Timers[timer-1].callback = NULL;
     if (!--SYS_NbTimers) SYSTEM_StopTicks();

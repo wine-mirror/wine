@@ -50,7 +50,7 @@ typedef struct
   BOOL    bAlwaysOnTop;
   BOOL    bWithoutTitle;
   BOOL    bSeconds;
-  BOOL    bDate;  
+  BOOL    bDate;
 
   int     MaxX;
   int     MaxY;
@@ -67,11 +67,11 @@ VOID MAIN_FileChooseFont(VOID);
 extern CHAR STRING_MENU_Xx[];
 
    #define STRINGID(id) (0x##id + Globals.wStringTableOffset)
-   
+
 #else  /* RC_INVOKED */
 
    #define STRINGID(id) id
-   
+
 #endif
 
 /* string table index */

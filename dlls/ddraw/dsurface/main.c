@@ -480,7 +480,7 @@ Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
 
 	/* MSDN: "The method fails if the specified [override] surface is not
 	 * a member of the flipping chain." */
-	
+
 	/* Verify that override is on this flip chain. We assume that
 	 * surf is the head of the flipping chain, because it's the front
 	 * buffer. */
@@ -575,8 +575,8 @@ Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
 	    if (found != NULL)
             {
                 FIXME("More than one attached surface matches requested caps.  What should we do here?\n");
-                /* Previous code returned 'DDERR_NOTFOUND'.  That appears not 
-                   to be correct, given what 3DMark expects from MipMapped surfaces. 
+                /* Previous code returned 'DDERR_NOTFOUND'.  That appears not
+                   to be correct, given what 3DMark expects from MipMapped surfaces.
                    We shall just continue instead. */
             }
 
@@ -846,12 +846,12 @@ Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
     TRACE("(%p)->(%p)\n",This,pDDSD);
-    if ((pDDSD->dwSize < sizeof(DDSURFACEDESC)) || 
+    if ((pDDSD->dwSize < sizeof(DDSURFACEDESC)) ||
     	(pDDSD->dwSize > sizeof(DDSURFACEDESC2))) {
 	ERR("Impossible/Strange struct size %ld.\n",pDDSD->dwSize);
 	return DDERR_GENERIC;
     }
-	
+
     DD_STRUCT_COPY_BYSIZE(pDDSD,&This->surface_desc);
     return DD_OK;
 }
@@ -920,7 +920,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
        }
 
 	This->lock_update(This, prect, flags);
-       
+
 	pDDSD->lpSurface = (char *)This->surface_desc.lpSurface
 	    + prect->top * This->surface_desc.u1.lPitch
 	    + prect->left * GET_BPP(This->surface_desc);

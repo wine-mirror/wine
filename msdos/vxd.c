@@ -104,7 +104,7 @@ void WINAPI VXD_PageFile( CONTEXT86 *context )
     case 0x01: /* get swap file info */
 	TRACE("VxD PageFile: returning swap file info\n");
 	AX_reg(context) = 0x00; /* paging disabled */
-	context->Ecx = 0;   /* maximum size of paging file */	
+	context->Ecx = 0;   /* maximum size of paging file */
 	/* FIXME: do I touch DS:SI or DS:DI? */
 	RESET_CFLAG(context);
 	break;
@@ -230,7 +230,7 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
 	AX_reg(context) = 0x000B; /* invalid function number */
 	SET_CFLAG(context);
 	break;
-    }	
+    }
 }
 
 /***********************************************************************
@@ -487,20 +487,20 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
  *
  * This is an implementation of the services of the Win32s VxD.
  * Since official documentation of these does not seem to be available,
- * certain arguments of some of the services remain unclear.  
+ * certain arguments of some of the services remain unclear.
  *
- * FIXME: The following services are currently unimplemented: 
+ * FIXME: The following services are currently unimplemented:
  *        Exception handling      (0x01, 0x1C)
  *        Debugger support        (0x0C, 0x14, 0x17)
  *        Low-level memory access (0x02, 0x03, 0x0A, 0x0B)
  *        Memory Statistics       (0x1B)
- *        
+ *
  *
  * We have a specific problem running Win32s on Linux (and probably also
  * the other x86 unixes), since Win32s tries to allocate its main 'flat
  * code/data segment' selectors with a base of 0xffff0000 (and limit 4GB).
- * The rationale for this seems to be that they want one the one hand to 
- * be able to leave the Win 3.1 memory (starting with the main DOS memory) 
+ * The rationale for this seems to be that they want one the one hand to
+ * be able to leave the Win 3.1 memory (starting with the main DOS memory)
  * at linear address 0, but want at other hand to have offset 0 of the
  * flat data/code segment point to an unmapped page (to catch NULL pointer
  * accesses). Hence they allocate the flat segments with a base of 0xffff0000
@@ -532,7 +532,7 @@ void WINAPI VXD_APM ( CONTEXT86 *context )
  *
  * The offset is set the first time any application calls the GetVersion()
  * service of the Win32s VxD. (Note that the offset is never reset.)
- * 
+ *
  */
 
 void WINAPI VXD_Win32s( CONTEXT86 *context )
@@ -552,25 +552,25 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *
          *          EDX: Debugging Flags
          *
-         *          EDI: Error Flag 
+         *          EDI: Error Flag
          *               0 if OK,
          *               1 if VMCPD VxD not found
          */
 
         TRACE("GetVersion()\n");
-        
+
 	context->Eax = VXD_WinVersion() | (200 << 16);
         context->Ebx = 0;
         context->Ecx = 0;
         context->Edx = 0;
         context->Edi = 0;
 
-        /* 
+        /*
          * If this is the first time we are called for this process,
          * hack the memory image of WIN32S16 so that it doesn't try
          * to access the GDT directly ...
          *
-         * The first code segment of WIN32S16 (version 1.30) contains 
+         * The first code segment of WIN32S16 (version 1.30) contains
          * an unexported function somewhere between the exported functions
          * SetFS and StackLinearToSegmented that tries to find a selector
          * in the LDT that maps to the memory image of the LDT itself.
@@ -615,7 +615,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             SEGPTR func1 = (SEGPTR)GetProcAddress16(hModule, "SetFS");
             SEGPTR func2 = (SEGPTR)GetProcAddress16(hModule, "StackLinearToSegmented");
 
-            if (   hModule && func1 && func2 
+            if (   hModule && func1 && func2
                 && SELECTOROF(func1) == SELECTOROF(func2))
             {
                 BYTE *start = MapSL(func1);
@@ -634,7 +634,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                 {
                     TRACE("PERF130 hack: "
                                "Replacing byte %02X at offset %04X:%04X\n",
-                               *(retv+1), SELECTOROF(func1), 
+                               *(retv+1), SELECTOROF(func1),
                                           OFFSETOF(func1) + retv+1-start);
 
                     *(retv+1) = (BYTE)0xCB;
@@ -642,7 +642,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             }
         }
 
-        /* 
+        /*
          * Mark process as Win32s, so that subsequent DPMI calls
          * will perform the W32S_APP2WINE/W32S_WINE2APP address shift.
          */
@@ -657,7 +657,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *          ECX: LoWord: Flat Code Selector
          *               HiWord: Flat Data Selector
          *
-         *          EDX: Flat address of W32SKRNL Exception Handler 
+         *          EDX: Flat address of W32SKRNL Exception Handler
          *               (this is equal to W32S_BackTo32 + 0x40)
          *
          *          ESI: SEGPTR KERNEL.HASGPHANDLER
@@ -667,7 +667,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: 0 if OK
          */
 
-        TRACE("[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n", 
+        TRACE("[0001] EBX=%lx ECX=%lx EDX=%lx ESI=%lx EDI=%lx\n",
                    context->Ebx, context->Ecx, context->Edx,
                    context->Esi, context->Edi);
 
@@ -690,7 +690,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  EAX: Size of area changed
          */
 
-        TRACE("[0002] EBX=%lx ECX=%lx EDX=%lx\n", 
+        TRACE("[0002] EBX=%lx ECX=%lx EDX=%lx\n",
                    context->Ebx, context->Ecx, context->Edx);
 
         /* FIXME */
@@ -747,14 +747,14 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             DWORD  relocDelta;
         };
 
-        /* 
-         * Note: This function should set up a demand-paged memory image 
+        /*
+         * Note: This function should set up a demand-paged memory image
          *       of the given module. Since mmap does not allow file offsets
          *       not aligned at 1024 bytes, we simply load the image fully
          *       into memory.
          */
 
-        struct Win32sModule *moduleTable = 
+        struct Win32sModule *moduleTable =
                             (struct Win32sModule *)W32S_APP2WINE(context->Edx);
         struct Win32sModule *module = moduleTable + context->Ecx;
 
@@ -767,8 +767,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         TRACE("MapModule: Loading %s\n", module->pathName);
 
-        for (i = 0; 
-             !error && i < nt_header->FileHeader.NumberOfSections; 
+        for (i = 0;
+             !error && i < nt_header->FileHeader.NumberOfSections;
              i++, pe_seg++)
             if(!(pe_seg->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA))
             {
@@ -777,14 +777,14 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                 LPBYTE addr = module->baseAddr + pe_seg->VirtualAddress;
 
                 TRACE("MapModule: "
-                           "Section %d at %08lx from %08lx len %08lx\n", 
+                           "Section %d at %08lx from %08lx len %08lx\n",
                            i, (DWORD)addr, off, len);
 
                 if (   _llseek(image, off, SEEK_SET) != off
                     || _lread(image, addr, len) != len)
                     error = TRUE;
             }
-        
+
         _lclose(image);
 
         if (error)
@@ -805,7 +805,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                 WORD *TypeOffset = (WORD *)(r + 1);
                 int count = (r->SizeOfBlock - sizeof(*r)) / sizeof(*TypeOffset);
 
-                TRACE("MapModule: %d relocations for page %08lx\n", 
+                TRACE("MapModule: %d relocations for page %08lx\n",
                            count, (DWORD)page);
 
                 for(i = 0; i < count; i++)
@@ -814,7 +814,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
                     int type   = TypeOffset[i] >> 12;
                     switch(type)
                     {
-                    case IMAGE_REL_BASED_ABSOLUTE: 
+                    case IMAGE_REL_BASED_ABSOLUTE:
                         break;
                     case IMAGE_REL_BASED_HIGH:
                         *(WORD *)(page+offset) += HIWORD(module->relocDelta);
@@ -843,11 +843,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
     case 0x0005: /* UnMap Module */
         /*
-         * Input:   EDX: Flat address of module image 
+         * Input:   EDX: Flat address of module image
          *
          * Output:  EAX: 1 if OK
          */
-        
+
         TRACE("UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(context->Edx));
 
         /* As we didn't map anything, there's nothing to unmap ... */
@@ -857,11 +857,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0006: /* VirtualAlloc */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv     [out] Flat base address of allocated region
          *   LPVOID base     [in]  Flat address of region to reserve/commit
          *   DWORD  size     [in]  Size of region
@@ -879,7 +879,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  prot   = stack[4];
         DWORD  result;
 
-        TRACE("VirtualAlloc(%lx, %lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualAlloc(%lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
@@ -907,11 +907,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0007: /* VirtualFree */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv     [out] TRUE if success, FALSE if failure
          *   LPVOID base     [in]  Flat address of region
          *   DWORD  size     [in]  Size of region
@@ -927,7 +927,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  type   = stack[3];
         DWORD  result;
 
-        TRACE("VirtualFree(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualFree(%lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -943,11 +943,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0008: /* VirtualProtect */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv     [out] TRUE if success, FALSE if failure
          *   LPVOID base     [in]  Flat address of region
          *   DWORD  size     [in]  Size of region
@@ -965,7 +965,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4]);
         DWORD  result;
 
-        TRACE("VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size, new_prot, (DWORD)old_prot);
 
         result = VirtualProtect(base, size, new_prot, old_prot);
@@ -981,11 +981,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0009: /* VirtualQuery */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv                     [out] Nr. bytes returned
          *   LPVOID base                     [in]  Flat address of region
          *   LPMEMORY_BASIC_INFORMATION info [out] Info buffer
@@ -997,12 +997,12 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD *stack  = (DWORD *)W32S_APP2WINE(context->Edx);
         DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0]);
         LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1]);
-        LPMEMORY_BASIC_INFORMATION info = 
+        LPMEMORY_BASIC_INFORMATION info =
                         (LPMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2]);
         DWORD  len    = stack[3];
         DWORD  result;
 
-        TRACE("VirtualQuery(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualQuery(%lx, %lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, (DWORD)info, len);
 
         result = VirtualQuery(base, info, len);
@@ -1062,9 +1062,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x000D: /* NtCreateSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   HANDLE32 *retv      [out] Handle of Section created
          *   DWORD  flags1       [in]  (?? unknown ??)
          *   DWORD  atom         [in]  Name of Section to create
@@ -1098,9 +1098,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         {
             TRACE("NtCreateSection: name=%s\n", atom? name : NULL);
 
-            result = CreateFileMappingA(hFile, NULL, protect, 
-                                          size? size->s.HighPart : 0, 
-                                          size? size->s.LowPart  : 0, 
+            result = CreateFileMappingA(hFile, NULL, protect,
+                                          size? size->s.HighPart : 0,
+                                          size? size->s.LowPart  : 0,
                                           atom? name : NULL);
         }
 
@@ -1120,9 +1120,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x000E: /* NtOpenSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   HANDLE32 *retv  [out] Handle of Section opened
          *   DWORD  protect  [in]  Access protection
          *   DWORD  atom     [in]  Name of Section to create
@@ -1138,7 +1138,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         HANDLE result = INVALID_HANDLE_VALUE;
         char name[128];
 
-        TRACE("NtOpenSection(%lx, %lx, %lx)\n", 
+        TRACE("NtOpenSection(%lx, %lx, %lx)\n",
                    (DWORD)retv, protect, atom);
 
         if (atom && GlobalGetAtomNameA(atom, name, sizeof(name)))
@@ -1164,9 +1164,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x000F: /* NtCloseSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   HANDLE32 handle  [in]  Handle of Section to close
          *   DWORD *id        [out] Unique ID  (?? unclear ??)
          *
@@ -1188,9 +1188,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0010: /* NtDupSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   HANDLE32 handle  [in]  Handle of Section to duplicate
          *
          * Output:  EAX: NtStatus
@@ -1201,7 +1201,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         HANDLE new_handle;
 
         TRACE("NtDupSection(%lx)\n", (DWORD)handle);
- 
+
         DuplicateHandle( GetCurrentProcess(), handle,
                          GetCurrentProcess(), &new_handle,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
@@ -1211,9 +1211,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0011: /* NtMapViewOfSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   HANDLE32 SectionHandle       [in]     Section to be mapped
          *   DWORD    ProcessHandle       [in]     Process to be mapped into
          *   DWORD *  BaseAddress         [in/out] Address to be mapped at
@@ -1257,16 +1257,16 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
         TRACE("NtMapViewOfSection"
                    "(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)\n",
-                   (DWORD)SectionHandle, ProcessHandle, (DWORD)BaseAddress, 
+                   (DWORD)SectionHandle, ProcessHandle, (DWORD)BaseAddress,
                    ZeroBits, CommitSize, (DWORD)SectionOffset, (DWORD)ViewSize,
                    InheritDisposition, AllocationType, Protect);
         TRACE("NtMapViewOfSection: "
-                   "base=%lx, offset=%lx, size=%lx, access=%lx\n", 
-                   (DWORD)address, SectionOffset? SectionOffset->s.LowPart : 0, 
+                   "base=%lx, offset=%lx, size=%lx, access=%lx\n",
+                   (DWORD)address, SectionOffset? SectionOffset->s.LowPart : 0,
                    ViewSize? *ViewSize : 0, access);
 
-        result = (DWORD)MapViewOfFileEx(SectionHandle, access, 
-                            SectionOffset? SectionOffset->s.HighPart : 0, 
+        result = (DWORD)MapViewOfFileEx(SectionHandle, access,
+                            SectionOffset? SectionOffset->s.HighPart : 0,
                             SectionOffset? SectionOffset->s.LowPart  : 0,
                             ViewSize? *ViewSize : 0, address);
 
@@ -1284,9 +1284,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0012: /* NtUnmapViewOfSection */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD  ProcessHandle  [in]  Process (defining address space)
          *   LPBYTE BaseAddress    [in]  Base address of view to be unmapped
          *
@@ -1297,7 +1297,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  ProcessHandle  = stack[0]; /* ignored */
         LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1]);
 
-        TRACE("NtUnmapViewOfSection(%lx, %lx)\n", 
+        TRACE("NtUnmapViewOfSection(%lx, %lx)\n",
                    ProcessHandle, (DWORD)BaseAddress);
 
         UnmapViewOfFile(BaseAddress);
@@ -1308,9 +1308,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0013: /* NtFlushVirtualMemory */
-        /* 
+        /*
          * Input:   EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD   ProcessHandle  [in]  Process (defining address space)
          *   LPBYTE *BaseAddress    [in?] Base address of range to be flushed
          *   DWORD  *ViewSize       [in?] Number of bytes to be flushed
@@ -1324,14 +1324,14 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD *BaseAddress    = (DWORD *)W32S_APP2WINE(stack[1]);
         DWORD *ViewSize       = (DWORD *)W32S_APP2WINE(stack[2]);
         DWORD *unknown        = (DWORD *)W32S_APP2WINE(stack[3]);
-        
+
         LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress) : 0);
         DWORD  size    = ViewSize? *ViewSize : 0;
 
-        TRACE("NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n", 
-                   ProcessHandle, (DWORD)BaseAddress, (DWORD)ViewSize, 
+        TRACE("NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n",
+                   ProcessHandle, (DWORD)BaseAddress, (DWORD)ViewSize,
                    (DWORD)unknown);
-        TRACE("NtFlushVirtualMemory: base=%lx, size=%lx\n", 
+        TRACE("NtFlushVirtualMemory: base=%lx, size=%lx\n",
                    (DWORD)address, size);
 
         FlushViewOfFile(address, size);
@@ -1352,7 +1352,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        FIXME("[0014] ECX=%lx EDX=%lx\n", 
+        FIXME("[0014] ECX=%lx EDX=%lx\n",
                    context->Ecx, context->Edx);
 
         /* FIXME */
@@ -1385,7 +1385,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *                  HiWord: Paragraph of Win32s VxD PSP (DOSMEM)
          *     Output: None
          */
- 
+
         if (context->Ebx == 0)
             context->Edx = 0x80;
         else
@@ -1406,7 +1406,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          * Output:  None
          */
 
-        FIXME("[0017] EBX=%lx CX=%x\n", 
+        FIXME("[0017] EBX=%lx CX=%x\n",
                    context->Ebx, CX_reg(context));
 
         /* FIXME */
@@ -1414,11 +1414,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0018: /* VirtualLock */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv     [out] TRUE if success, FALSE if failure
          *   LPVOID base     [in]  Flat address of range to lock
          *   DWORD  size     [in]  Size of range
@@ -1432,7 +1432,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualLock(%lx, %lx, %lx)\n", 
+        TRACE("VirtualLock(%lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualLock(base, size);
@@ -1448,11 +1448,11 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x0019: /* VirtualUnlock */
-        /* 
+        /*
          * Input:   ECX: Current Process
          *
          *          EDX: Flat address of arguments on stack
-         * 
+         *
          *   DWORD *retv     [out] TRUE if success, FALSE if failure
          *   LPVOID base     [in]  Flat address of range to unlock
          *   DWORD  size     [in]  Size of range
@@ -1466,7 +1466,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  size   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualUnlock(%lx, %lx, %lx)\n", 
+        TRACE("VirtualUnlock(%lx, %lx, %lx)\n",
                    (DWORD)retv, (DWORD)base, size);
 
         result = VirtualUnlock(base, size);
@@ -1490,10 +1490,10 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          */
 
         TRACE("KGetSystemInfo()\n");
-        
+
         /*
-         * Note: Win32s reserves 0GB - 2GB for Win 3.1 and uses 2GB - 4GB as 
-         *       sparse memory arena. We do it the other way around, since 
+         * Note: Win32s reserves 0GB - 2GB for Win 3.1 and uses 2GB - 4GB as
+         *       sparse memory arena. We do it the other way around, since
          *       we have to reserve 3GB - 4GB for Linux, and thus use
          *       0GB - 3GB as sparse memory arena.
          *
@@ -1523,7 +1523,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             DWORD SparseFree;         /* Free size of sparse arena (bytes ?) */
         };
 
-        struct Win32sMemoryInfo *info = 
+        struct Win32sMemoryInfo *info =
                        (struct Win32sMemoryInfo *)W32S_APP2WINE(context->Esi);
 
         FIXME("KGlobalMemStat(%lx)\n", (DWORD)info);
@@ -1547,9 +1547,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x001D: /* VirtualAlloc called from 16-bit code */
-        /* 
+        /*
          * Input:   EDX: Segmented address of arguments on stack
-         * 
+         *
          *   LPVOID base     [in]  Flat address of region to reserve/commit
          *   DWORD  size     [in]  Size of region
          *   DWORD  type     [in]  Type of allocation
@@ -1566,7 +1566,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  prot   = stack[3];
         DWORD  result;
 
-        TRACE("VirtualAlloc16(%lx, %lx, %lx, %lx)\n", 
+        TRACE("VirtualAlloc16(%lx, %lx, %lx, %lx)\n",
                    (DWORD)base, size, type, prot);
 
         if (type & 0x80000000)
@@ -1589,9 +1589,9 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
 
 
     case 0x001E: /* VirtualFree called from 16-bit code */
-        /* 
+        /*
          * Input:   EDX: Segmented address of arguments on stack
-         * 
+         *
          *   LPVOID base     [in]  Flat address of region
          *   DWORD  size     [in]  Size of region
          *   DWORD  type     [in]  Type of operation
@@ -1606,7 +1606,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         DWORD  type   = stack[2];
         DWORD  result;
 
-        TRACE("VirtualFree16(%lx, %lx, %lx)\n", 
+        TRACE("VirtualFree16(%lx, %lx, %lx)\n",
                    (DWORD)base, size, type);
 
         result = VirtualFree(base, size, type);
@@ -1633,7 +1633,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
     {
         DWORD *ptr = (DWORD *)W32S_APP2WINE(context->Ecx);
         BOOL set = context->Edx;
-        
+
         TRACE("FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
 
         if (set)

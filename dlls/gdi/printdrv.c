@@ -1,6 +1,6 @@
-/* 
+/*
  * Implementation of some printer driver bits
- * 
+ *
  * Copyright 1996 John Harvey
  * Copyright 1998 Huw Davies
  * Copyright 1998 Andreas Mohr
@@ -80,7 +80,7 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
  * StartDoc calls the STARTDOC Escape with the input data pointing to DocName
  * and the output data (which is used as a second input parameter).pointing at
  * the whole docinfo structure.  This seems to be an undocumented feature of
- * the STARTDOC Escape. 
+ * the STARTDOC Escape.
  *
  * Note: we now do it the other way, with the STARTDOC Escape calling StartDoc.
  */
@@ -101,7 +101,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 
 /*************************************************************************
  *                  StartDocW [GDI32.@]
- * 
+ *
  */
 INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 {
@@ -109,7 +109,7 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
     INT ret;
 
     docA.cbSize = doc->cbSize;
-    docA.lpszDocName = doc->lpszDocName ? 
+    docA.lpszDocName = doc->lpszDocName ?
       HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszDocName ) : NULL;
     docA.lpszOutput = doc->lpszOutput ?
       HEAP_strdupWtoA( GetProcessHeap(), 0, doc->lpszOutput ) : NULL;
@@ -312,7 +312,7 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 /*
  * The following function should implement a queing system
  */
-struct hpq 
+struct hpq
 {
     struct hpq 	*next;
     int		 tag;
@@ -325,7 +325,7 @@ static struct hpq *hpqueue;
  *           CreatePQ   (GDI.230)
  *
  */
-HPQ16 WINAPI CreatePQ16(INT16 size) 
+HPQ16 WINAPI CreatePQ16(INT16 size)
 {
 #if 0
     HGLOBAL16 hpq = 0;
@@ -353,7 +353,7 @@ HPQ16 WINAPI CreatePQ16(INT16 size)
  *           DeletePQ   (GDI.235)
  *
  */
-INT16 WINAPI DeletePQ16(HPQ16 hPQ) 
+INT16 WINAPI DeletePQ16(HPQ16 hPQ)
 {
     return GlobalFree16((HGLOBAL16)hPQ);
 }
@@ -362,15 +362,15 @@ INT16 WINAPI DeletePQ16(HPQ16 hPQ)
  *           ExtractPQ   (GDI.232)
  *
  */
-INT16 WINAPI ExtractPQ16(HPQ16 hPQ) 
-{ 
+INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
+{
     struct hpq *queue, *prev, *current, *currentPrev;
     int key = 0, tag = -1;
     currentPrev = prev = NULL;
     queue = current = hpqueue;
     if (current)
         key = current->key;
-    
+
     while (current)
     {
         currentPrev = current;
@@ -387,15 +387,15 @@ INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
     if (queue)
     {
         tag = queue->tag;
-        
+
         if (prev)
             prev->next = queue->next;
         else
             hpqueue = queue->next;
         HeapFree(GetProcessHeap(), 0, queue);
     }
-    
-    TRACE("%x got tag %d key %d\n", hPQ, tag, key); 
+
+    TRACE("%x got tag %d key %d\n", hPQ, tag, key);
 
     return tag;
 }
@@ -404,7 +404,7 @@ INT16 WINAPI ExtractPQ16(HPQ16 hPQ)
  *           InsertPQ   (GDI.233)
  *
  */
-INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key) 
+INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key)
 {
     struct hpq *queueItem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hpq));
     if(queueItem == NULL) {
@@ -415,7 +415,7 @@ INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key)
     hpqueue = queueItem;
     queueItem->key = key;
     queueItem->tag = tag;
-    
+
     FIXME("(%x %d %d): stub???\n", hPQ, tag, key);
     return TRUE;
 }
@@ -424,9 +424,9 @@ INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key)
  *           MinPQ   (GDI.231)
  *
  */
-INT16 WINAPI MinPQ16(HPQ16 hPQ) 
+INT16 WINAPI MinPQ16(HPQ16 hPQ)
 {
-    FIXME("(%x): stub\n", hPQ); 
+    FIXME("(%x): stub\n", hPQ);
     return 0;
 }
 
@@ -434,16 +434,16 @@ INT16 WINAPI MinPQ16(HPQ16 hPQ)
  *           SizePQ   (GDI.234)
  *
  */
-INT16 WINAPI SizePQ16(HPQ16 hPQ, INT16 sizechange) 
-{  
-    FIXME("(%x %d): stub\n", hPQ, sizechange); 
-    return -1; 
+INT16 WINAPI SizePQ16(HPQ16 hPQ, INT16 sizechange)
+{
+    FIXME("(%x %d): stub\n", hPQ, sizechange);
+    return -1;
 }
 
 
 
-/* 
- * The following functions implement part of the spooling process to 
+/*
+ * The following functions implement part of the spooling process to
  * print manager.  I would like to see wine have a version of print managers
  * that used LPR/LPD.  For simplicity print jobs will be sent to a file for
  * now.
@@ -522,7 +522,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
             close (fds[1]);
             system(psCmdP);
             exit(0);
-            
+
         }
         close (fds[0]);
         fd = fds[1];
@@ -542,7 +542,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 
         if ((fd = open(buffer, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
         {
-            ERR("Failed to create spool file '%s' ('%s'). (error %s)\n", 
+            ERR("Failed to create spool file '%s' ('%s'). (error %s)\n",
                 buffer, psCmdP, strerror(errno));
         }
     }
@@ -593,7 +593,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
                 WARN("Memory exausted!\n");
                 return hHandle;
             }
-            
+
             hHandle = 1;
 
 	    pPrintJob->pszOutput = HeapAlloc(GetProcessHeap(), 0, strlen(lpOutput)+1);
@@ -606,8 +606,8 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 	    pPrintJob->hDC = hDC;
 	    pPrintJob->fd = fd;
 	    pPrintJob->nIndex = 0;
-	    pPrintJob->hHandle = hHandle; 
-	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob; 
+	    pPrintJob->hHandle = hHandle;
+	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob;
 	}
     }
     TRACE("return %04x\n", hHandle);
@@ -710,7 +710,7 @@ INT16 WINAPI DeleteJob16(HPJOB16 hJob, INT16 nNotUsed)
     return nRet;
 }
 
-/* 
+/*
  * The following two function would allow a page to be sent to the printer
  * when it has been processed.  For simplicity they havn't been implemented.
  * This means a whole job has to be processed before it is sent to the printer.
@@ -872,7 +872,7 @@ DWORD WINAPI DrvGetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
 	    RegSetValueExA(hkey2, lpProfile, 0, REG_DWORD, (LPBYTE)&SetData, 4); /* no result returned */
 	}
     }
-	
+
 failed:
     if (hkey2) RegCloseKey(hkey2);
     if (hkey) RegCloseKey(hkey);
@@ -916,9 +916,9 @@ DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
 
     if (((DWORD)lpProfile == INT_PD_DEFAULT_DEVMODE) || (HIWORD(lpProfile) &&
     (!strcmp(lpProfile, DefaultDevMode)))) {
-	if ( RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey) 
+	if ( RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)
 	     != ERROR_SUCCESS ||
-	     RegSetValueExA(hkey, DefaultDevMode, 0, REG_BINARY, 
+	     RegSetValueExA(hkey, DefaultDevMode, 0, REG_BINARY,
 			      lpPrinterData, dwSize) != ERROR_SUCCESS )
 	        res = ERROR_INVALID_PRINTER_NAME;
     }
@@ -929,7 +929,7 @@ DWORD WINAPI DrvSetPrinterData16(LPSTR lpPrinter, LPSTR lpProfile,
 	if( (res = RegOpenKeyA(HKEY_LOCAL_MACHINE, RegStr_Printer, &hkey)) ==
 	    ERROR_SUCCESS ) {
 
-	    if (!lpPrinterData) 
+	    if (!lpPrinterData)
 	        res = RegDeleteValueA(hkey, lpProfile);
 	    else
                 res = RegSetValueExA(hkey, lpProfile, 0, lpType,

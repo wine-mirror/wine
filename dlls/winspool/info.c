@@ -1,6 +1,6 @@
-/* 
+/*
  * WINSPOOL functions
- * 
+ *
  * Copyright 1996 John Harvey
  * Copyright 1998 Andreas Mohr
  * Copyright 1999 Klaas van Gend
@@ -76,7 +76,7 @@ static WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
 static WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
 static WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
 static WCHAR NameW[] = {'N','a','m','e',0};
-static WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0}; 
+static WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static WCHAR PortW[] = {'P','o','r','t',0};
 static WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
 				   's','s','o','r',0};
@@ -94,7 +94,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode);
-static void 
+static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     char qbuf[200];
 
@@ -195,15 +195,15 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
 	isps = TRUE;
     }
     /* 2. Check if this is a remote printer. These usually are postscript
-     *    capable 
+     *    capable
      */
     if (strstr(pent,":rm")) {
 	isps = TRUE;
 	TRACE("%s is remote, assuming postscript.\n",name);
     }
-    /* 3. Check if we have an input filter program. If we have one, it 
+    /* 3. Check if we have an input filter program. If we have one, it
      *    most likely is one capable of converting postscript.
-     *    (Could probably check for occurrence of 'gs' or 'ghostscript' 
+     *    (Could probably check for occurrence of 'gs' or 'ghostscript'
      *     in the if file itself.)
      */
     if (strstr(pent,":if=/")) {
@@ -332,7 +332,7 @@ WINSPOOL_LoadSystemPrinters() {
 #endif
 
     /* Check for [ppd] section in config file before parsing /etc/printcap */
-    
+
     if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd",
     	    &hkPPD) == ERROR_SUCCESS)
     {
@@ -704,7 +704,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
     if(fMode == 0 && ret > 0)
         ret += (CCHDEVICENAME + CCHFORMNAME);
     HeapFree(GetProcessHeap(),0,pDevModeInputA);
-    HeapFree(GetProcessHeap(),0,pDeviceNameA);    
+    HeapFree(GetProcessHeap(),0,pDeviceNameA);
     return ret;
 }
 
@@ -857,7 +857,7 @@ SetPrinterW(
  *    WritePrinter  [WINSPOOL.@]
  */
 BOOL WINAPI
-WritePrinter( 
+WritePrinter(
   HANDLE  hPrinter,
   LPVOID  pBuf,
   DWORD   cbBuf,
@@ -916,7 +916,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
  *
  * RETURNS:
  *    the opened hkey on success
- *    NULL on error 
+ *    NULL on error
  */
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
 {   HKEY  retval;
@@ -943,7 +943,7 @@ static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
              case VER_PLATFORM_WIN32_NT:
                   p = "Windows NT x86";
                   break;
-             default: 
+             default:
                   p = "Windows 4.0";
                   break;
         }
@@ -980,7 +980,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     LONG size;
 
     TRACE("(%s,%ld,%p)\n", debugstr_w(pName), Level, pPrinter);
-    
+
     if(pName != NULL) {
         ERR("pName = %s - unsupported\n", debugstr_w(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
@@ -1022,7 +1022,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	RegCloseKey(hkeyPrinters);
 	return 0;
     }
-    if(RegOpenKeyW(hkeyDrivers, pi->pDriverName, &hkeyDriver) != 
+    if(RegOpenKeyW(hkeyDrivers, pi->pDriverName, &hkeyDriver) !=
        ERROR_SUCCESS) {
         WARN("Can't find driver %s\n", debugstr_w(pi->pDriverName));
 	RegCloseKey(hkeyPrinters);
@@ -1195,7 +1195,7 @@ BOOL WINAPI DeletePrinter(HANDLE hPrinter)
         SetLastError(ERROR_PRINTER_NOT_FOUND); /* ?? */
 	RegCloseKey(hkeyPrinters);
 	return 0;
-    }    
+    }
 
     ClosePrinter(hPrinter);
     return TRUE;
@@ -1240,7 +1240,7 @@ BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
     FIXME("(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pFormName,
-         Level,pForm,cbBuf,pcbNeeded); 
+         Level,pForm,cbBuf,pcbNeeded);
     return FALSE;
 }
 
@@ -1307,7 +1307,7 @@ BOOL WINAPI ResetPrinterW(HANDLE hPrinter, LPPRINTER_DEFAULTSW pDefault)
  *    WINSPOOL_GetDWORDFromReg
  *
  * Return DWORD associated with ValueName from hkey.
- */ 
+ */
 static DWORD WINSPOOL_GetDWORDFromReg(HKEY hkey, LPCSTR ValueName)
 {
     DWORD sz = sizeof(DWORD), type, value = 0;
@@ -1332,7 +1332,7 @@ static DWORD WINSPOOL_GetDWORDFromReg(HKEY hkey, LPCSTR ValueName)
  * Get ValueName from hkey storing result in ptr.  buflen is space left in ptr
  * String is stored either as unicode or ascii.
  * Bit of a hack here to get the ValueName if we want ascii.
- */ 
+ */
 static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
 				      DWORD buflen, DWORD *needed,
 				      BOOL unicode)
@@ -1437,7 +1437,7 @@ static void WINSPOOL_GetDefaultDevMode(
  *
  * Get ValueName from hkey storing result in ptr.  buflen is space left in ptr
  * DevMode is stored either as unicode or ascii.
- */ 
+ */
 static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
 				       LPBYTE ptr,
 				       DWORD buflen, DWORD *needed,
@@ -1609,7 +1609,7 @@ static BOOL WINSPOOL_GetPrinter_2(HKEY hkeyPrinter, PRINTER_INFO_2W *pi2,
 	*pcbNeeded += size;
     }
     if(pi2) {
-        pi2->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes"); 
+        pi2->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
         pi2->Priority = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Priority");
         pi2->DefaultPriority = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
 							"Default Priority");
@@ -1649,7 +1649,7 @@ static BOOL WINSPOOL_GetPrinter_4(HKEY hkeyPrinter, PRINTER_INFO_4W *pi4,
 	*pcbNeeded += size;
     }
     if(pi4) {
-        pi4->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes"); 
+        pi4->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
     }
 
     if(!space && pi4) /* zero out pi4 if we can't completely fill buf */
@@ -1694,11 +1694,11 @@ static BOOL WINSPOOL_GetPrinter_5(HKEY hkeyPrinter, PRINTER_INFO_5W *pi5,
 	*pcbNeeded += size;
     }
     if(pi5) {
-        pi5->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes"); 
+        pi5->Attributes = WINSPOOL_GetDWORDFromReg(hkeyPrinter, "Attributes");
         pi5->DeviceNotSelectedTimeout = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
-								"dnsTimeout"); 
+								"dnsTimeout");
         pi5->TransmissionRetryTimeout = WINSPOOL_GetDWORDFromReg(hkeyPrinter,
-								 "txTimeout"); 
+								 "txTimeout");
     }
 
     if(!space && pi5) /* zero out pi5 if we can't completely fill buf */
@@ -1759,11 +1759,11 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 	needed += size;
 	break;
       }
-      
+
     case 4:
       {
 	PRINTER_INFO_4W *pi4 = (PRINTER_INFO_4W *)pPrinter;
-	
+
         size = sizeof(PRINTER_INFO_4W);
 	if(size <= cbBuf) {
 	    ptr = pPrinter + size;
@@ -1877,7 +1877,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
         ERR("Can't create Printers key\n");
 	return FALSE;
     }
-  
+
     if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &number, NULL, NULL,
 			NULL, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
         RegCloseKey(hkeyPrinters);
@@ -1911,7 +1911,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
     pi = (used <= cbBuf) ? lpbPrinters : NULL;
 
     for(i = 0; i < number; i++) {
-        if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) != 
+        if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) !=
 	   ERROR_SUCCESS) {
 	    ERR("Can't enum key number %ld\n", i);
 	    RegCloseKey(hkeyPrinters);
@@ -1972,7 +1972,7 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
 	return FALSE;
     }
     if(lpdwReturned)
-        *lpdwReturned = number;  
+        *lpdwReturned = number;
     SetLastError(ERROR_SUCCESS);
     return TRUE;
 }
@@ -1987,31 +1987,31 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
  * RETURNS:
  *
  *    If level is set to 1:
- *      Not implemented yet! 
+ *      Not implemented yet!
  *      Returns TRUE with an empty list.
  *
  *    If level is set to 2:
  *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL.
- *      Returns an array of PRINTER_INFO_2 data structures in the 
- *      lpbPrinters buffer. Note that according to MSDN also an 
+ *      Returns an array of PRINTER_INFO_2 data structures in the
+ *      lpbPrinters buffer. Note that according to MSDN also an
  *      OpenPrinter should be performed on every remote printer.
  *
  *    If level is set to 4 (officially WinNT only):
  *		Possible flags: PRINTER_ENUM_CONNECTIONS, PRINTER_ENUM_LOCAL.
  *      Fast: Only the registry is queried to retrieve printer names,
  *      no connection to the driver is made.
- *      Returns an array of PRINTER_INFO_4 data structures in the 
+ *      Returns an array of PRINTER_INFO_4 data structures in the
  *      lpbPrinters buffer.
  *
  *    If level is set to 5 (officially WinNT4/Win9x only):
  *      Fast: Only the registry is queried to retrieve printer names,
  *      no connection to the driver is made.
- *      Returns an array of PRINTER_INFO_5 data structures in the 
+ *      Returns an array of PRINTER_INFO_5 data structures in the
  *      lpbPrinters buffer.
  *
  *    If level set to 3 or 6+:
  *	    returns zero (failure!)
- *      
+ *
  *    Returns nonzero (TRUE) on success, or zero on failure, use GetLastError
  *    for information.
  *
@@ -2019,8 +2019,8 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
  *    - Only PRINTER_ENUM_LOCAL and PRINTER_ENUM_NAME are implemented.
  *    - Only levels 2, 4 and 5 are implemented at the moment.
  *    - 16-bit printer drivers are not enumerated.
- *    - Returned amount of bytes used/needed does not match the real Windoze 
- *      implementation (as in this implementation, all strings are part 
+ *    - Returned amount of bytes used/needed does not match the real Windoze
+ *      implementation (as in this implementation, all strings are part
  *      of the buffer, whereas Win32 keeps them somewhere else)
  *    - At level 2, EnumPrinters should also call OpenPrinter for remote printers.
  *
@@ -2241,7 +2241,7 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
     DWORD ret, type, size, needed = 0;
     LPBYTE ptr = NULL;
     HKEY hkeyPrinter, hkeyPrinters, hkeyDrivers;
-    
+
     TRACE("(%d,%s,%ld,%p,%ld,%p)\n",hPrinter,debugstr_w(pEnvironment),
 	  Level,pDriverInfo,cbBuf, pcbNeeded);
 
@@ -2336,7 +2336,7 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
  *          GetPrinterDriverW  [WINSPOOL.@]
  */
 BOOL WINAPI GetPrinterDriverW(HANDLE hPrinter, LPWSTR pEnvironment,
-                                  DWORD Level, LPBYTE pDriverInfo, 
+                                  DWORD Level, LPBYTE pDriverInfo,
                                   DWORD cbBuf, LPDWORD pcbNeeded)
 {
     return WINSPOOL_GetPrinterDriver(hPrinter, pEnvironment, Level,
@@ -2366,7 +2366,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
     }
     if(Level != 1)  /* win95 ignores this so we just carry on */
         WARN("Level = %ld - assuming 1\n", Level);
-    
+
     /* FIXME should read from registry */
     needed = GetSystemDirectoryA(pDriverDirectory, cbBuf);
     needed++;
@@ -2428,7 +2428,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return FALSE;
     }
-    
+
     if(level == 3)
         di3 = *(DRIVER_INFO_3A *)pDriverInfo;
     else {
@@ -2471,7 +2471,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 		   0);
     RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, di3.pDataFile, 0);
     RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, di3.pDriverPath, 0);
-    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPSTR)&di3.cVersion, 
+    RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPSTR)&di3.cVersion,
 		   sizeof(DWORD));
     RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, di3.pDefaultDataType, 0);
     RegSetValueExA(hkeyName, "Dependent Files", 0, REG_MULTI_SZ,
@@ -2486,7 +2486,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 /*****************************************************************************
  *          AddPrinterDriverW  [WINSPOOL.@]
  */
-BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level, 
+BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
 				   LPBYTE pDriverInfo)
 {
     FIXME("(%s,%ld,%p): stub\n",debugstr_w(printerName),
@@ -2500,7 +2500,7 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
  *
  *     Displays a dialog to set the properties of the printer.
  *
- * RETURNS 
+ * RETURNS
  *     nonzero on success or zero on failure
  *
  * BUGS
@@ -2546,7 +2546,7 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
 /*****************************************************************************
  *          WINSPOOL_EnumPrinterDrivers [internal]
  *
- *    Delivers information about all printer drivers installed on the 
+ *    Delivers information about all printer drivers installed on the
  *    localhost or a given server
  *
  * RETURNS
@@ -3229,7 +3229,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 	ret = GetLastError ();
 	ERR ("HeapFree failed with code %li\n", ret);
 	return ret;
-    }	
+    }
 
     if (*pnEnumValues == 0)	/* empty key */
 	return ERROR_SUCCESS;

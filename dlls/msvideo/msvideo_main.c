@@ -1,6 +1,6 @@
 /*
  * Copyright 1998 Marcus Meissner
- * Copyright 2000 Bradley Baetz 
+ * Copyright 2000 Bradley Baetz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -180,7 +180,7 @@ BOOL16 VFWAPI ICInfo16(
 	ret = ICInfo(fccType,fccHandler,(ICINFO*)lParam);
 
 	MSVIDEO_UnmapMsg16To32(ICM_GETINFO,lpv,&lParam,&size);
-	
+
 	return ret;
 }
 
@@ -201,7 +201,7 @@ HIC VFWAPI ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 
 	sprintf(codecname,"%s.%s",type,handler);
 
-	/* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the 
+	/* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
 	 * same layout as ICOPEN
 	 */
 	icopen.fccType		= fccType;
@@ -253,12 +253,12 @@ HIC MSVIDEO_OpenFunc(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHa
 		return 0;
 	whic = GlobalLock16(hic);
 	whic->driverproc = lpfnHandler;
-	
+
 	whic->private = bFrom32;
-	
+
 	/* Now try opening/loading the driver. Taken from DRIVER_AddToList */
 	/* What if the function is used more than once? */
-	
+
 	if (MSVIDEO_SendMessage(hic,DRV_LOAD,0L,0L,bFrom32) != DRV_SUCCESS) {
 		WARN("DRV_LOAD failed for hic 0x%08lx\n",(DWORD)hic);
 		GlobalFree16(hic);
@@ -346,7 +346,7 @@ HIC VFWAPI ICLocate(
 
 	switch (wMode) {
 	case ICMODE_FASTCOMPRESS:
-	case ICMODE_COMPRESS: 
+	case ICMODE_COMPRESS:
 		querymsg = ICM_COMPRESS_QUERY;
 		break;
 	case ICMODE_FASTDECOMPRESS:
@@ -374,7 +374,7 @@ HIC VFWAPI ICLocate(
 
 	/* Now try each driver in turn. 32 bit codecs only. */
 	/* FIXME: Move this to an init routine? */
-	
+
 	pszBuffer = (LPSTR)HeapAlloc(GetProcessHeap(),0,1024);
 	if (GetPrivateProfileSectionA("drivers32",pszBuffer,1024,"system.ini")) {
 		char* s = pszBuffer;
@@ -397,7 +397,7 @@ HIC VFWAPI ICLocate(
 		}
 	}
 	HeapFree(GetProcessHeap(),0,pszBuffer);
-	
+
 	if (fccType==streamtypeVIDEO) {
 		hic = ICLocate(ICTYPE_VIDEO,fccHandler,lpbiIn,lpbiOut,wMode);
 		if (hic)
@@ -424,7 +424,7 @@ HIC VFWAPI ICGetDisplayFormat(
 	HIC hic,LPBITMAPINFOHEADER lpbiIn,LPBITMAPINFOHEADER lpbiOut,
 	INT depth,INT dx,INT dy)
 {
-	HIC	tmphic = hic; 
+	HIC	tmphic = hic;
 
 	FIXME("(0x%08lx,%p,%p,%d,%d,%d),stub!\n",(DWORD)hic,lpbiIn,lpbiOut,depth,dx,dy);
 	if (!tmphic) {
@@ -461,7 +461,7 @@ HIC VFWAPI ICGetDisplayFormat(
 	}
 	if (lpbiIn->biBitCount == 8)
 		depth = 8;
-	
+
 	TRACE("=> 0x%08lx\n",(DWORD)tmphic);
 	return tmphic;
 errout:
@@ -583,7 +583,7 @@ DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiFo
         ICDECOMPRESS icd;
         SEGPTR segptr;
 	DWORD ret;
-	
+
 	TRACE("(0x%08lx,%ld,%p,%p,%p,%p)\n",(DWORD)hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
         icd.dwFlags = dwFlags;
@@ -607,7 +607,7 @@ LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) {
 	ICDECOMPRESSEX *icdx = HeapAlloc(GetProcessHeap(),0,sizeof(ICDECOMPRESSEX));
 	ICDECOMPRESSEX16 *icdx16 = MapSL(*lParam);
 	ret = icdx16;
-	
+
 	COPY(icdx,dwFlags);
 	COPYPTR(icdx,lpbiSrc);
 	COPYPTR(icdx,lpSrc);
@@ -621,14 +621,14 @@ LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) {
 	COPY(icdx,ySrc);
 	COPY(icdx,dxSrc);
 	COPY(icdx,dySrc);
-	
+
 	*lParam = (DWORD)(icdx);
 	return ret;
 }
 
 LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	LPVOID ret = 0;
-	
+
 	TRACE("Mapping %d\n",msg);
 
 	switch (msg) {
@@ -698,7 +698,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			COPY(icc,dwQuality);
 			COPYPTR(icc,lpbiPrev);
 			COPYPTR(icc,lpPrev);
-			
+
 			*lParam1 = (DWORD)(icc);
 			*lParam2 = sizeof(ICCOMPRESS);
 		}
@@ -707,17 +707,17 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 		{
 			ICDECOMPRESS *icd = HeapAlloc(GetProcessHeap(),0,sizeof(ICDECOMPRESS));
 			ICDECOMPRESS *icd16; /* Same structure except for the pointers */
-			
+
 			icd16 = MapSL(*lParam1);
 			ret = icd16;
-			
+
 			COPY(icd,dwFlags);
 			COPYPTR(icd,lpbiInput);
 			COPYPTR(icd,lpInput);
 			COPYPTR(icd,lpbiOutput);
 			COPYPTR(icd,lpOutput);
 			COPY(icd,ckid);
-			
+
 			*lParam1 = (DWORD)(icd);
 			*lParam2 = sizeof(ICDECOMPRESS);
 		}
@@ -746,7 +746,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 		 addr[1] = MSVIDEO_MapICDEX16To32(lParam2);
 		 else
 		 addr[1] = 0;
-		 
+
 		 ret = addr;
 		 }
 		 break;*/
@@ -785,7 +785,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 		{
 			ICDRAWSUGGEST *icds = HeapAlloc(GetProcessHeap(),0,sizeof(ICDRAWSUGGEST));
 			ICDRAWSUGGEST16 *icds16 = MapSL(*lParam1);
-			
+
 			ret = icds16;
 
 			COPY(icds,dwFlags);
@@ -878,7 +878,7 @@ void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPDWORD lP
 	default:
 		ERR("Unmapping unmapped msg %d\n",msg);
 	}
-#undef UNCOPY		
+#undef UNCOPY
 }
 
 LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL bFrom32) {
@@ -971,7 +971,7 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 			goto out;
 		}
 	}
-	
+
 	if (whic->driverproc) {
 		if (bDrv32) {
 			ret = whic->driverproc(whic->hdrv,hic,msg,lParam1,lParam2);
@@ -984,10 +984,10 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 
 	if (data16)
 		MSVIDEO_UnmapMsg16To32(msg,data16,&lParam1,&lParam2);
- 
+
  out:
 	GlobalUnlock16(hic);
-	
+
 	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
 }
@@ -1019,7 +1019,7 @@ LRESULT VFWAPIV ICMessage16(void) {
 	UINT16 i;
 
 	VA_LIST16 valist;
-	
+
 	VA_START16(valist);
 	hic = VA_ARG16(valist, HIC16);
 	msg = VA_ARG16(valist, UINT16);
@@ -1032,7 +1032,7 @@ LRESULT VFWAPIV ICMessage16(void) {
 	for(i=0;i<cb/sizeof(WORD);i++) {
 		lpData[i] = VA_ARG16(valist, WORD);
 	}
-		
+
 	VA_END16(valist);
         segData = MapLS( lpData );
         ret = ICSendMessage16(hic, msg, segData, (DWORD)cb);
@@ -1062,7 +1062,7 @@ DWORD VFWAPIV ICDrawBegin(
 	DWORD              dwRate,  /* [in] frames/second = (dwRate/dwScale) */
 	DWORD              dwScale) /* [in] */
 {
-	
+
 	ICDRAWBEGIN	icdb;
 
 	TRACE("(0x%08lx,%ld,0x%08lx,0x%08lx,0x%08lx,%u,%u,%u,%u,%p,%u,%u,%u,%u,%ld,%ld)\n",
@@ -1162,8 +1162,8 @@ DWORD VFWAPIV ICDraw16(
 	DWORD dwFlags,
 	LPVOID lpFormat, /* [???] NOTE: SEGPTR */
 	LPVOID lpData,   /* [???] NOTE: SEGPTR */
-	DWORD cbData, 
-	LONG lTime) 
+	DWORD cbData,
+	LONG lTime)
 {
         DWORD ret;
         ICDRAW icd;

@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *	     PSDRV_CmpColor
  *
  * Return TRUE if col1 == col2
- */ 
+ */
 BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
 {
     if(col1->type != col2->type)
@@ -55,7 +55,7 @@ BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2)
  *	     PSDRV_CopyColor
  *
  * Copies col2 into col1. Return FALSE on error.
- */ 
+ */
 BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
 {
 

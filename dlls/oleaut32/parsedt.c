@@ -65,10 +65,10 @@ static const char * const months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 static const char * const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
-/* those three vars are useless, and not even initialized, so 
+/* those three vars are useless, and not even initialized, so
  * I'd rather remove them all (EPP)
  */
-int	DateStyle; 
+int	DateStyle;
 bool	EuroDates;
 int	CTimeZone;
 

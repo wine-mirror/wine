@@ -31,7 +31,7 @@ BOOL InitApplication(HINSTANCE hInstance)
   WNDCLASSEX wc;
 
   /* Load the application name and description strings */
-  
+
   LoadString(hInstance, IDS_APPNAME, szAppName, sizeof(szAppName));
   LoadString(hInstance, IDS_DESCRIPTION, szTitle, sizeof(szTitle));
 
@@ -41,7 +41,7 @@ BOOL InitApplication(HINSTANCE hInstance)
   wc.cbSize = sizeof(WNDCLASSEX);
 
   /* Load small icon image */
-  wc.hIconSm = LoadImage(hInstance,		
+  wc.hIconSm = LoadImage(hInstance,
 			 MAKEINTRESOURCEA(IDI_APPICON),
 			 IMAGE_ICON,
 			 16, 16,
@@ -73,7 +73,7 @@ BOOL InitApplication(HINSTANCE hInstance)
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-    HWND hwnd; 
+    HWND hwnd;
 
     /* Save the instance handle in a global variable for later use */
     hInst = hInstance;
@@ -86,9 +86,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
                         CW_USEDEFAULT, 0,    /* size */
                         NULL,                /* Overlapped has no parent */
                         NULL,                /* Use the window class menu */
-                        hInstance,           
-                        NULL);               
-    
+                        hInstance,
+                        NULL);
+
     if (!hwnd)
         return FALSE;
 

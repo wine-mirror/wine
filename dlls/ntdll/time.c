@@ -1,10 +1,10 @@
 /*
  * Conversion between Time and TimeFields
  *
- * RtlTimeToTimeFields, RtlTimeFieldsToTime and defines are taken from ReactOS and 
- * adapted to wine with special permissions of the author  
+ * RtlTimeToTimeFields, RtlTimeFieldsToTime and defines are taken from ReactOS and
+ * adapted to wine with special permissions of the author
  * Rex Jolliff (rex@lvcablemodem.com)
- * 
+ *
  * Copyright 1999 Juergen Schmied
  *
  * This library is free software; you can redistribute it and/or
@@ -100,11 +100,11 @@ VOID WINAPI RtlTimeToTimeFields(
 
 	/* Adjust the values for GMT and leap seconds */
 	SecondsInDay += (GMTOffset - LeapSecondCorrections);
-	while (SecondsInDay < 0) 
+	while (SecondsInDay < 0)
 	{ SecondsInDay += SECSPERDAY;
 	  Days--;
 	}
-	while (SecondsInDay >= SECSPERDAY) 
+	while (SecondsInDay >= SECSPERDAY)
 	{ SecondsInDay -= SECSPERDAY;
 	  Days++;
 	}

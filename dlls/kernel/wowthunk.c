@@ -1,7 +1,7 @@
 /*
  * Win32 WOW Generic Thunk API
  *
- * Copyright 1999 Ulrich Weigand 
+ * Copyright 1999 Ulrich Weigand
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,8 +29,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
 
 /*
- * These are the 16-bit side WOW routines.  They reside in wownt16.h 
- * in the SDK; since we don't support Win16 source code anyway, I've 
+ * These are the 16-bit side WOW routines.  They reside in wownt16.h
+ * in the SDK; since we don't support Win16 source code anyway, I've
  * placed them here for compilation with Wine ...
  */
 
@@ -55,7 +55,7 @@ DWORD WINAPI CallProcEx32W16(VOID);
  */
 BOOL WINAPI K32WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
 {
-    return GetThreadSelectorEntry( GetCurrentThread(), 
+    return GetThreadSelectorEntry( GetCurrentThread(),
                                    segptr >> 16, ldtent );
 }
 
@@ -77,15 +77,15 @@ LPVOID WINAPI K32WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode 
  */
 LPVOID WINAPI K32WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 {
-    /* 
+    /*
      * Hmmm. According to the docu, we should call:
      *
      *          GlobalFix16( SELECTOROF(vp) );
      *
      * But this is unnecessary under Wine, as we never move global
-     * memory segments in linear memory anyway. 
+     * memory segments in linear memory anyway.
      *
-     * (I'm not so sure what we are *supposed* to do if 
+     * (I'm not so sure what we are *supposed* to do if
      *  fProtectedMode is TRUE, anyway ...)
      */
 
@@ -145,7 +145,7 @@ DWORD WINAPI K32WOWGlobalAllocLock16( WORD wFlags, DWORD cb, WORD *phMem )
  */
 DWORD WINAPI K32WOWGlobalLockSize16( WORD hMem, PDWORD pcb )
 {
-    if ( pcb ) 
+    if ( pcb )
         *pcb = GlobalSize16( (HGLOBAL16)hMem );
 
     return K32WOWGlobalLock16( hMem );
@@ -169,7 +169,7 @@ WORD WINAPI K32WOWGlobalUnlockFree16( DWORD vpMem )
 VOID WINAPI K32WOWYield16( void )
 {
     /*
-     * This does the right thing for both Win16 and Win32 tasks.  
+     * This does the right thing for both Win16 and Win32 tasks.
      * More or less, at least :-/
      */
     Yield16();
@@ -182,7 +182,7 @@ VOID WINAPI K32WOWDirectedYield16( WORD htask16 )
 {
     /*
      * Argh.  Our scheduler doesn't like DirectedYield by Win32
-     * tasks at all.  So we do hope that this routine is indeed 
+     * tasks at all.  So we do hope that this routine is indeed
      * only ever called by Win16 tasks that have thunked up ...
      */
     DirectedYield16( (HTASK16)htask16 );
@@ -263,16 +263,16 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
     /*
      * Arguments must be prepared in the correct order by the caller
      * (both for PASCAL and CDECL calling convention), so we simply
-     * copy them to the 16-bit stack ... 
+     * copy them to the 16-bit stack ...
      */
     memcpy( (LPBYTE)CURRENT_STACK16 - cbArgs, (LPBYTE)pArgs, cbArgs );
 
 
     /*
      * Actually, we should take care whether the called routine cleans up
-     * its stack or not.  Fortunately, our wine_call_to_16 core doesn't rely on 
-     * the callee to do so; after the routine has returned, the 16-bit 
-     * stack pointer is always reset to the position it had before. 
+     * its stack or not.  Fortunately, our wine_call_to_16 core doesn't rely on
+     * the callee to do so; after the routine has returned, the 16-bit
+     * stack pointer is always reset to the position it had before.
      */
 
     ret = wine_call_to_16_long( (FARPROC16)vpfn16, cbArgs );
@@ -290,7 +290,7 @@ DWORD WINAPI K32WOWCallback16( DWORD vpfn16, DWORD dwParam )
 {
     DWORD ret;
 
-    if ( !K32WOWCallback16Ex( vpfn16, WCB16_PASCAL, 
+    if ( !K32WOWCallback16Ex( vpfn16, WCB16_PASCAL,
                            sizeof(DWORD), &dwParam, &ret ) )
         ret = 0L;
 
@@ -317,7 +317,7 @@ DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags )
 {
     HMODULE hModule;
-    DOS_FULL_NAME full_name; 
+    DOS_FULL_NAME full_name;
     DWORD mutex_count;
 
     /* if the file can not be found, call LoadLibraryExA anyway, since it might be
@@ -468,7 +468,7 @@ DWORD WINAPI CallProc32W16( void )
 /**********************************************************************
  *           _CallProcEx32W         (KERNEL.518)
  *
- * DWORD CallProcEx32W( DWORD cParams, DWORD fAddressConvert, 
+ * DWORD CallProcEx32W( DWORD cParams, DWORD fAddressConvert,
  *                      DWORD lpProcAddress, DWORD p1, ... );
  */
 DWORD WINAPI CallProcEx32W16( void )
@@ -483,7 +483,7 @@ DWORD WINAPI CallProcEx32W16( void )
  * FIXME!!!
  *
  */
-DWORD WINAPI WOW16Call(WORD x,WORD y,WORD z) 
+DWORD WINAPI WOW16Call(WORD x,WORD y,WORD z)
 {
         int     i;
         DWORD   calladdr;

@@ -1,6 +1,6 @@
 /*
  * Character List
- * 
+ *
  * Copyright (c) 2000 by Jean-Claude Batista
  *
  * This library is free software; you can redistribute it and/or

@@ -40,13 +40,13 @@ static int sysMetrics[SM_WINE_CMETRICS+1];
  *
  * Convert a a dimension value that was obtained from the registry.  These are
  * quoted as being "twips" values if negative and pixels if positive.
- * See for example 
+ * See for example
  *   MSDN Library - April 2001 -> Resource Kits ->
  *       Windows 2000 Resource Kit Reference ->
  *       Technical Reference to the Windows 2000 Registry ->
  *       HKEY_CURRENT_USE -> Control Panel -> Desktop -> WindowMetrics
  *
- * This is written as a function to prevent repeated evaluation of the 
+ * This is written as a function to prevent repeated evaluation of the
  * argument.
  */
 inline static int RegistryTwips2Pixels(int x)
@@ -107,9 +107,9 @@ static int SYSMETRICS_GetRegistryMetric (
  * SM_CYMENU           x-1      x	Already fixed
  * SM_CYFULLSCREEN     x-1      x
  * SM_CXFRAME                           Fixed July 6, 2001 - Bill Medland
- * 
+ *
  * (collides with TWEAK_WineLook sometimes,
- * so changing anything might be difficult) 
+ * so changing anything might be difficult)
  *
  * Starting at Win95 there are now a large number or Registry entries in the
  * [WindowMetrics] section that are probably relevant here.
@@ -231,7 +231,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYMINIMIZED] = 24;
 
     /* FIXME: How do I calculate these? */
-    sysMetrics[SM_CXMAXTRACK] = 
+    sysMetrics[SM_CXMAXTRACK] =
 	sysMetrics[SM_CXSCREEN] + 4 + 2 * sysMetrics[SM_CXFRAME];
     sysMetrics[SM_CYMAXTRACK] =
 	sysMetrics[SM_CYSCREEN] + 4 + 2 * sysMetrics[SM_CYFRAME];

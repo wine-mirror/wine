@@ -35,7 +35,7 @@
  * It might be necessary to store a pointer to the system message queue
  * as well since windows 9x maintains per thread system message queues
  */
-typedef struct tagPERQUEUEDATA      
+typedef struct tagPERQUEUEDATA
 {
   HWND    hWndFocus;              /* Focus window */
   HWND    hWndActive;             /* Active window */
@@ -66,7 +66,7 @@ typedef struct tagMESSAGEQUEUE
   HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
 
   PERQUEUEDATA *pQData;             /* pointer to (shared) PERQUEUEDATA structure */
-  
+
 } MESSAGEQUEUE;
 
 

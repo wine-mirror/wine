@@ -1,6 +1,6 @@
 /*
  * WineMine (dialog.c)
- * 
+ *
  * Copyright 2000 Joshua Thielen <jt85296@ltu.edu>
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ BOOL CALLBACK CustomDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam 
         SetDlgItemInt( hDlg, IDC_EDITCOLS, p_board->cols, FALSE );
         SetDlgItemInt( hDlg, IDC_EDITMINES, p_board->mines, FALSE );
         return TRUE;
-    
+
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:
@@ -45,13 +45,13 @@ BOOL CALLBACK CustomDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam 
             CheckLevel( p_board );
             EndDialog( hDlg, 0 );
             return TRUE;
-        
+
         case IDCANCEL:
             EndDialog( hDlg, 0 );
             return TRUE;
         }
         break;
-    }     
+    }
     return FALSE;
 }
 
@@ -65,22 +65,22 @@ BOOL CALLBACK CongratsDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
         SetDlgItemText( hDlg, IDC_EDITNAME,
                 p_board->best_name[p_board->difficulty] );
         return TRUE;
-    
+
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:
-            GetDlgItemText( hDlg, IDC_EDITNAME, 
+            GetDlgItemText( hDlg, IDC_EDITNAME,
                 p_board->best_name[p_board->difficulty],
                 sizeof( p_board->best_name[p_board->difficulty] ) );
             EndDialog( hDlg, 0 );
             return TRUE;
-    
+
         case IDCANCEL:
             EndDialog( hDlg, 0 );
             return TRUE;
         }
         break;
-    }     
+    }
     return FALSE;
 }
 
@@ -96,12 +96,12 @@ BOOL CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
         /* set best names */
         for( i = 0; i < 3; i++ )
             SetDlgItemText( hDlg, (IDC_NAME1) + i, p_board->best_name[i] );
-    
+
     	/* set best times */
         for( i = 0; i < 3; i++ )
             SetDlgItemInt( hDlg, (IDC_TIME1) + i, p_board->best_time[i], FALSE );
         return TRUE;
-    
+
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:
@@ -109,7 +109,7 @@ BOOL CALLBACK TimesDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
             return TRUE;
         }
         break;
-    }     
+    }
     return FALSE;
 }
 
@@ -118,7 +118,7 @@ BOOL CALLBACK AboutDlgProc( HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
     switch( uMsg ) {
     case WM_INITDIALOG:
         return TRUE;
-    
+
     case WM_COMMAND:
         switch( LOWORD( wParam ) ) {
         case IDOK:

@@ -320,7 +320,7 @@ void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab
 
             memcpy(tail,&txt[key->string_off],key->length);
             tail[key->length]='\0';
-            /* all toplevel entries AND the entries in the 
+            /* all toplevel entries AND the entries in the
              * toplevel subdirectory belong to \SOFTWARE\Classes
              */
             if (!level && !strcmp(tail,".classes")) {
@@ -350,7 +350,7 @@ void _w31_dumptree(unsigned short idx,unsigned char *txt,struct _w31_tabent *tab
 /******************************************************************************
  * _w31_loadreg [Internal]
  */
-void _w31_loadreg(void) 
+void _w31_loadreg(void)
 {
     HFILE hf;
     struct _w31_header	head;
@@ -382,7 +382,7 @@ void _w31_loadreg(void)
     /* read and dump index table */
     tab = _xmalloc(len);
     if (len!=_lread(hf,tab,len)) {
-        ERR("couldn't read %d bytes.\n",len); 
+        ERR("couldn't read %d bytes.\n",len);
         free(tab);
         _lclose(hf);
         return;
@@ -391,14 +391,14 @@ void _w31_loadreg(void)
     /* read text */
     txt = _xmalloc(head.textsize);
     if (-1==_llseek(hf,head.textoff,SEEK_SET)) {
-        ERR("couldn't seek to textblock.\n"); 
+        ERR("couldn't seek to textblock.\n");
         free(tab);
         free(txt);
         _lclose(hf);
         return;
     }
     if (head.textsize!=_lread(hf,txt,head.textsize)) {
-        ERR("textblock too short (%d instead of %ld).\n",len,head.textsize); 
+        ERR("textblock too short (%d instead of %ld).\n",len,head.textsize);
         free(tab);
         free(txt);
         _lclose(hf);
@@ -406,7 +406,7 @@ void _w31_loadreg(void)
     }
 
     if (!GetFileInformationByHandle(hf,&hfinfo)) {
-        ERR("GetFileInformationByHandle failed?.\n"); 
+        ERR("GetFileInformationByHandle failed?.\n");
         free(tab);
         free(txt);
         _lclose(hf);
@@ -466,8 +466,8 @@ typedef struct {
  * The "hash"-value is a value representing the key's name. Windows will not
  * search for the name, but for a matching hash-value. if it finds one, it
  * will compare the actual string info, otherwise continue with the next key.
- * To calculate the hash initialize a D-Word with 0 and add all ASCII-values 
- * of the string which are smaller than 0x80 (128) to this D-Word.   
+ * To calculate the hash initialize a D-Word with 0 and add all ASCII-values
+ * of the string which are smaller than 0x80 (128) to this D-Word.
  *
  * If you want to modify key names, also modify the hash-values, since they
  * cannot be found again (although they would be displayed in REGEDIT)
@@ -664,7 +664,7 @@ static int _w95_dump_dke(LPSTR key_name,_w95creg *creg,_w95rgkn *rgkn,_w95dke *d
             }
         }
 
-        /* write the key path (something like [Software\\Microsoft\\..]) only if: 
+        /* write the key path (something like [Software\\Microsoft\\..]) only if:
            1) key has some values
            2) key has no values and no subkeys
         */
@@ -739,7 +739,7 @@ typedef struct {
     DWORD	uk6;		/* 0x20 */
     DWORD	RootKeyBlock;	/* 0x24 */
     DWORD	BlockSize;	/* 0x28 */
-    DWORD   uk7[116];	
+    DWORD   uk7[116];
     DWORD	Checksum; /* at offset 0x1FC */
 } nt_regf;
 
@@ -883,17 +883,17 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level);
  * this structure contains the hash of a keyname and points to all
  * subkeys
  *
- * exception: if the id is 'il' there are no hash values and every 
+ * exception: if the id is 'il' there are no hash values and every
  * dword is a offset
  */
 static int _nt_dump_lf(LPSTR key_name, char *base, int subkeys, nt_lf *lf, FILE *f, int level)
 {
     int i;
-    
+
     if (lf->id == NT_REG_HASH_BLOCK_ID) {
         if (subkeys != lf->nr_keys) goto error1;
-    
-        for (i=0; i<lf->nr_keys; i++) 
+
+        for (i=0; i<lf->nr_keys; i++)
             if (!_nt_dump_nk(key_name, base, (nt_nk*)(base+lf->hash_rec[i].off_nk+4), f, level)) goto error;
     } else if (lf->id == NT_REG_NOHASH_BLOCK_ID) {
         nt_li * li = (nt_li*)lf;
@@ -966,7 +966,7 @@ static int _nt_dump_nk(LPSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
         if (strcmp(new_key_name,"") != 0) strcat(new_key_name,"\\");
         strncat(new_key_name,nk->name,nk->name_len);
 
-        /* write the key path (something like [Software\\Microsoft\\..]) only if: 
+        /* write the key path (something like [Software\\Microsoft\\..]) only if:
            1) key has some values
            2) key has no values and no subkeys
         */
@@ -1067,7 +1067,7 @@ static void _init_registry_saving( HKEY hkey_users_default )
 
 /******************************************************************************
  * _allocate_default_keys [Internal]
- * Registry initialisation, allocates some default keys. 
+ * Registry initialisation, allocates some default keys.
  */
 static void _allocate_default_keys(void) {
 	HKEY	hkey;

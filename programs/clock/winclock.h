@@ -1,4 +1,4 @@
-/* 
+/*
  *  Clock (winclock.h)
  *
  *  Copyright 1998 by Marcel Baur <mbaur@g26.ethz.ch>
@@ -22,7 +22,7 @@
  */
 
  #include <windows.h>
- 
+
 typedef struct
 {
   int StartX,StartY,EndX,EndY;

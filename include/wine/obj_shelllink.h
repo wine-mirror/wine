@@ -34,18 +34,18 @@ typedef struct IShellLinkA IShellLinkA,*LPSHELLLINK;
 typedef struct IShellLinkW IShellLinkW,*LPSHELLLINKW;
 
 /*****************************************************************************
- * 
+ *
  */
-typedef enum 
+typedef enum
 {	SLR_NO_UI	= 0x0001,
 	SLR_ANY_MATCH	= 0x0002,
 	SLR_UPDATE	= 0x0004
 } SLR_FLAGS;
 
 /*****************************************************************************
- * GetPath fFlags 
+ * GetPath fFlags
  */
-typedef enum 
+typedef enum
 {	SLGP_SHORTPATH		= 0x0001,
 	SLGP_UNCPRIORITY	= 0x0002
 } SLGP_FLAGS;

@@ -86,7 +86,7 @@ void LoadBufferFromFile(LPCSTR lpFileName);
 /* Resource names */
 extern CHAR STRING_MENU_Xx[];
 extern CHAR STRING_PAGESETUP_Xx[];
-   
+
 #else  /* RC_INVOKED */
-   
+
 #endif

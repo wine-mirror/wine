@@ -38,7 +38,7 @@ static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD heigh
 	    /* gcc generates slightly inefficient code for the the copy/lookup,
 	     * it generates one excess memory access (to pal) per pixel. Since
 	     * we know that pal is not modified by the memory write we can
-	     * put it into a register and reduce the number of memory accesses 
+	     * put it into a register and reduce the number of memory accesses
 	     * from 4 to 3 pp. There are two xor eax,eax to avoid pipeline
 	     * stalls. (This is not guaranteed to be the fastest method.)
 	     */

@@ -38,7 +38,7 @@
  *
  * NOTES:
  *
- *    The Wine Clipboard Server is a standalone XLib application whose 
+ *    The Wine Clipboard Server is a standalone XLib application whose
  * purpose is to manage the X selection when Wine exits.
  * The server itself is started automatically with the appropriate
  * selection masks, whenever Wine exits after acquiring the PRIMARY and/or
@@ -138,7 +138,7 @@ char __debug_msg_enabled[DEBUG_CLASS_COUNT] = {1, 1, 0, 0};
 #define C_TRACE          8
 
 /*
- * Global variables 
+ * Global variables
  */
 
 static Display *g_display = NULL;
@@ -154,7 +154,7 @@ static char _CLIPBOARD[] = "CLIPBOARD";        /* CLIPBOARD atom name */
 static int  g_selectionToAcquire = 0;          /* Masks for the selection to be acquired */
 static int  g_selectionAcquired = 0;           /* Contains the current selection masks */
 static int  g_clearAllSelections = 0;          /* If TRUE *all* selections are lost on SelectionClear */
-    
+
 /* Selection cache */
 typedef struct tag_CACHEENTRY
 {
@@ -185,7 +185,7 @@ static const char * const event_names[] =
 
 
 /*
- * Prototypes 
+ * Prototypes
  */
 
 int RunAsDaemon( void );
@@ -213,12 +213,12 @@ int main(int argc, char **argv)
     if ( RunAsDaemon() == -1 )
     {
        ERR("could not run as daemon\n");
-       exit(1); 
+       exit(1);
     }
 
     if ( !Init(argc, argv) )
         exit(0);
-    
+
     /* Acquire the selection after retrieving all clipboard data
      * owned by the current selection owner. If we were unable to
      * Acquire any selection, terminate right away.
@@ -227,12 +227,12 @@ int main(int argc, char **argv)
         TerminateServer(0);
 
     TRACE("Clipboard server running...\n");
-    
+
     /* Start an X event loop */
     while (1)
     {
         XNextEvent(g_display, &event);
-        
+
         EVENT_ProcessEvent( &event );
     }
 }
@@ -283,9 +283,9 @@ BOOL Init(int argc, char **argv)
     XClassHint *class_hints = NULL;
     XTextProperty windowName;
     char *display_name = NULL;
-    
+
     progname = argv[0];
-    
+
     if (!(size_hints = XAllocSizeHints()))
     {
         ERR(g_szOutOfMemory);
@@ -301,39 +301,39 @@ BOOL Init(int argc, char **argv)
         ERR(g_szOutOfMemory);
         return 0;
     }
-    
+
     /* connect to X server */
     if ( (g_display=XOpenDisplay(display_name)) == NULL )
     {
         ERR( "cannot connect to X server %s\n", XDisplayName(display_name));
         return 0;
     }
-    
+
     /* get screen size from display structure macro */
     screen_num = DefaultScreen(g_display);
     display_width = DisplayWidth(g_display, screen_num);
     display_height = DisplayHeight(g_display, screen_num);
-    
+
     /* size window with enough room for text */
     width = display_width/3, height = display_height/4;
-    
+
     /* create opaque window */
     g_win = XCreateSimpleWindow(g_display, RootWindow(g_display,screen_num),
                     0, 0, width, height, border_width, BlackPixel(g_display,
                     screen_num), WhitePixel(g_display,screen_num));
-    
-    
+
+
     /* Set size hints for window manager.  The window manager may
      * override these settings. */
-    
+
     /* x, y, width, and height hints are now taken from
      * the actual settings of the window when mapped. Note
      * that PPosition and PSize must be specified anyway. */
-    
+
     size_hints->flags = PPosition | PSize | PMinSize;
     size_hints->min_width = 300;
     size_hints->min_height = 200;
-    
+
     /* These calls store window_name into XTextProperty structures
      * and sets the other fields properly. */
     if (XStringListToTextProperty(&window_name, 1, &windowName) == 0)
@@ -341,25 +341,25 @@ BOOL Init(int argc, char **argv)
        ERR( "structure allocation for windowName failed.\n");
        TerminateServer(-1);
     }
-            
+
     wm_hints->initial_state = NormalState;
     wm_hints->input = True;
     wm_hints->flags = StateHint | InputHint;
-    
+
     class_hints->res_name = progname;
     class_hints->res_class = "WineClipSrv";
 
-    XSetWMProperties(g_display, g_win, &windowName, NULL, 
-                    argv, argc, size_hints, wm_hints, 
+    XSetWMProperties(g_display, g_win, &windowName, NULL,
+                    argv, argc, size_hints, wm_hints,
                     class_hints);
 
     /* Select event types wanted */
-    XSelectInput(g_display, g_win, ExposureMask | KeyPressMask | 
+    XSelectInput(g_display, g_win, ExposureMask | KeyPressMask |
                     ButtonPressMask | StructureNotifyMask | PropertyChangeMask );
-    
+
     /* create GC for text and drawing */
     getGC(g_win, &g_gc);
-    
+
     /* Display window */
     /* XMapWindow(g_display, g_win); */
 
@@ -375,17 +375,17 @@ BOOL Init(int argc, char **argv)
     if (argc > 2)
     {
         int dbgClasses = atoi(argv[2]);
-        
+
         __SET_DEBUGGING(__DBCL_FIXME, dbgClasses & C_FIXME);
         __SET_DEBUGGING(__DBCL_ERR, dbgClasses & C_ERR);
         __SET_DEBUGGING(__DBCL_WARN, dbgClasses & C_WARN);
         __SET_DEBUGGING(__DBCL_TRACE, dbgClasses & C_TRACE);
     }
-        
+
     /* Set the "ClearSelections" state from the command line argument */
     if (argc > 3)
         g_clearAllSelections = atoi(argv[3]);
-    
+
     return TRUE;
 }
 
@@ -396,7 +396,7 @@ BOOL Init(int argc, char **argv)
 void TerminateServer( int ret )
 {
     TRACE("Terminating Wine clipboard server...\n");
-    
+
     /* Free Primary and Clipboard selection caches */
     EmptyCache(g_pPrimaryCache, g_cPrimaryTargets);
     EmptyCache(g_pClipboardCache, g_cClipboardTargets);
@@ -414,7 +414,7 @@ void TerminateServer( int ret )
 /**************************************************************************
  *		AcquireSelection()
  *
- * Acquire the selection after retrieving all clipboard data owned by 
+ * Acquire the selection after retrieving all clipboard data owned by
  * the current selection owner.
  */
 int AcquireSelection()
@@ -446,12 +446,12 @@ int AcquireSelection()
         /* Acquire the PRIMARY selection */
         while (XGetSelectionOwner(g_display,XA_PRIMARY) != g_win)
             XSetSelectionOwner(g_display, XA_PRIMARY, g_win, CurrentTime);
-        
+
         g_selectionAcquired |= S_PRIMARY;
     }
     else
         TRACE("No PRIMARY targets - ownership not acquired.\n");
-    
+
     if (g_cClipboardTargets)
     {
         /* Acquire the CLIPBOARD selection */
@@ -530,7 +530,7 @@ int CacheDataFormats( Atom SelectionSrc, PCACHEENTRY *ppCache )
 
     TRACE("Requesting TARGETS selection for '%s' (owner=%08x)...\n",
           XGetAtomName(g_display, SelectionSrc), (unsigned)ownerSelection );
-          
+
     XConvertSelection(g_display, SelectionSrc, aTargets,
                     XInternAtom(g_display, "SELECTION_DATA", False),
                     g_win, CurrentTime);
@@ -568,14 +568,14 @@ int CacheDataFormats( Atom SelectionSrc, PCACHEENTRY *ppCache )
 
           /* Allocate the selection cache */
           *ppCache = (PCACHEENTRY)calloc(cSelectionTargets, sizeof(CACHEENTRY));
-          
+
           /* Cache these formats in the selection cache */
           for (i = 0; i < cSelectionTargets; i++)
           {
               char *itemFmtName = XGetAtomName(g_display, targetList[i]);
-          
+
               TRACE("\tAtom# %d: '%s'\n", i, itemFmtName);
-              
+
               /* Populate the cache entry */
               if (!FillCacheEntry( SelectionSrc, targetList[i], &((*ppCache)[i])))
                   ERR("Failed to fill cache entry!\n");
@@ -587,7 +587,7 @@ int CacheDataFormats( Atom SelectionSrc, PCACHEENTRY *ppCache )
        /* Free the list of targets */
        XFree(targetList);
     }
-    
+
     return cSelectionTargets;
 }
 
@@ -627,13 +627,13 @@ BOOL FillCacheEntry( Atom SelectionSrc, Atom target, PCACHEENTRY pCacheEntry )
     w = xe.xselection.requestor;
     prop = xe.xselection.property;
     reqType = xe.xselection.target;
-    
+
     if(prop == None)
     {
         TRACE("\tOwner failed to convert selection!\n");
         return bRet;
     }
-       
+
     TRACE("\tretrieving property %s from window %ld into %s\n",
           XGetAtomName(g_display,reqType), (long)w, XGetAtomName(g_display,prop) );
 
@@ -653,10 +653,10 @@ BOOL FillCacheEntry( Atom SelectionSrc, Atom target, PCACHEENTRY pCacheEntry )
        XFree(val);
        val = NULL;
     }
-    
+
     TRACE("\tretrieving %ld bytes...\n", itemSize * aformat/8);
     lRequestLength = (itemSize * aformat/8)/4  + 1;
-    
+
     /*
      * Retrieve the actual property in the required X format.
      */
@@ -669,7 +669,7 @@ BOOL FillCacheEntry( Atom SelectionSrc, Atom target, PCACHEENTRY pCacheEntry )
 
     TRACE("\tType %s,Format %d,nitems %ld,remain %ld,value %s\n",
           atype ? XGetAtomName(g_display,atype) : NULL, aformat,nitems,remain,val);
-    
+
     if (remain)
     {
         WARN("\tCouldn't read entire property- selection may be too large! Remain=%ld\n", remain);
@@ -699,7 +699,7 @@ END:
     /* Delete the property on the window now that we are done
      * This will send a PropertyNotify event to the selection owner. */
     XDeleteProperty(g_display,w,prop);
-    
+
     return TRUE;
 }
 
@@ -732,7 +732,7 @@ BOOL LookupCacheItem( Atom selection, Atom target, PCACHEENTRY *ppCacheEntry )
         return FALSE;
 
     *ppCacheEntry = NULL;
-    
+
     /* Look for the target item in the cache */
     for (i = 0; i < nCachetargets; i++)
     {
@@ -755,7 +755,7 @@ BOOL LookupCacheItem( Atom selection, Atom target, PCACHEENTRY *ppCacheEntry )
 void EmptyCache(PCACHEENTRY pCache, int nItems)
 {
     int i;
-    
+
     if (!pCache)
         return;
 
@@ -768,10 +768,10 @@ void EmptyCache(PCACHEENTRY pCache, int nItems)
             if (pCache[i].target == XA_PIXMAP || pCache[i].target == XA_BITMAP)
             {
                 Pixmap *pPixmap = (Pixmap *)pCache[i].pData;
-                
+
                 TRACE("Freeing %s (handle=%ld)...\n",
                       XGetAtomName(g_display, pCache[i].target), *pPixmap);
-                
+
                 XFreePixmap(g_display, *pPixmap);
 
                 /* Free the cached data item (allocated by us) */
@@ -781,7 +781,7 @@ void EmptyCache(PCACHEENTRY pCache, int nItems)
             {
                 TRACE("Freeing %s (%p)...\n",
                       XGetAtomName(g_display, pCache[i].target), pCache[i].pData);
-            
+
                 /* Free the cached data item (allocated by X) */
                 XFree(pCache[i].pData);
             }
@@ -803,7 +803,7 @@ void EVENT_ProcessEvent( XEvent *event )
   /*
   TRACE(" event %s for Window %08lx\n", event_names[event->type], event->xany.window );
   */
-    
+
   switch (event->type)
   {
       case Expose:
@@ -814,10 +814,10 @@ void EVENT_ProcessEvent( XEvent *event )
           /* Output something */
           TextOut(g_win, g_gc, "Click here to terminate");
           break;
-          
+
       case ConfigureNotify:
           break;
-          
+
       case ButtonPress:
               /* fall into KeyPress (no break) */
       case KeyPress:
@@ -827,11 +827,11 @@ void EVENT_ProcessEvent( XEvent *event )
       case SelectionRequest:
           EVENT_SelectionRequest( (XSelectionRequestEvent *)event, FALSE );
           break;
-  
+
       case SelectionClear:
           EVENT_SelectionClear( (XSelectionClearEvent*)event );
           break;
-        
+
       case PropertyNotify:
 #if 0
           EVENT_PropertyNotify( (XPropertyEvent *)event );
@@ -840,7 +840,7 @@ void EVENT_ProcessEvent( XEvent *event )
 
       default: /* ignore all other events */
           break;
-          
+
   } /* end switch */
 
 }
@@ -867,12 +867,12 @@ Atom EVENT_SelectionRequest_MULTIPLE( XSelectionRequestEvent *pevent )
     Atom*	   targetPropList=NULL;
     unsigned long  cTargetPropList = 0;
 /*  Atom           xAtomPair = XInternAtom(g_display, "ATOM_PAIR", False); */
-    
+
    /* If the specified property is None the requestor is an obsolete client.
     * We support these by using the specified target atom as the reply property.
     */
     rprop = pevent->property;
-    if( rprop == None ) 
+    if( rprop == None )
         rprop = pevent->target;
     if (!rprop)
         goto END;
@@ -900,7 +900,7 @@ Atom EVENT_SelectionRequest_MULTIPLE( XSelectionRequestEvent *pevent )
        if(aformat == 32 /* atype == xAtomPair */ )
        {
           int i;
-          
+
           /* Iterate through the ATOM_PAIR list and execute a SelectionRequest
            * for each (target,property) pair */
 
@@ -913,19 +913,19 @@ Atom EVENT_SelectionRequest_MULTIPLE( XSelectionRequestEvent *pevent )
               TRACE("MULTIPLE(%d): Target='%s' Prop='%s'\n", i/2, targetName, propName);
               XFree(targetName);
               XFree(propName);
-              
+
               /* We must have a non "None" property to service a MULTIPLE target atom */
               if ( !targetPropList[i+1] )
               {
                   TRACE("\tMULTIPLE(%d): Skipping target with empty property!\n", i);
                   continue;
               }
-              
+
               /* Set up an XSelectionRequestEvent for this (target,property) pair */
               memcpy( &event, pevent, sizeof(XSelectionRequestEvent) );
               event.target = targetPropList[i];
               event.property = targetPropList[i+1];
-                  
+
               /* Fire a SelectionRequest, informing the handler that we are processing
                * a MULTIPLE selection request event.
                */
@@ -963,7 +963,7 @@ void EVENT_SelectionRequest( XSelectionRequestEvent *event, BOOL bIsMultiple )
    * We support these by using the specified target atom as the reply property.
    */
   rprop = event->property;
-  if( rprop == None ) 
+  if( rprop == None )
       rprop = event->target;
 
   TRACE("Request for %s in selection %s\n",
@@ -988,7 +988,7 @@ void EVENT_SelectionRequest( XSelectionRequestEvent *event, BOOL bIsMultiple )
   TRACE("\tUpdating property %s...\n", XGetAtomName(g_display, rprop));
 
   /* If we have a request for a pixmap, return a duplicate */
-  
+
   if(event->target == XA_PIXMAP || event->target == XA_BITMAP)
   {
     Pixmap *pPixmap = (Pixmap *)pCacheEntry->pData;
@@ -997,16 +997,16 @@ void EVENT_SelectionRequest( XSelectionRequestEvent *event, BOOL bIsMultiple )
   }
   else
     pData = pCacheEntry->pData;
-  
+
   XChangeProperty(g_display, request, rprop,
                     pCacheEntry->type, pCacheEntry->nFormat, PropModeReplace,
                     (unsigned char *)pData, pCacheEntry->nElements);
 
 END:
-  if( rprop == None) 
+  if( rprop == None)
       TRACE("\tRequest ignored\n");
 
-  /* reply to sender 
+  /* reply to sender
    * SelectionNotify should be sent only at the end of a MULTIPLE request
    */
   if ( !bIsMultiple )
@@ -1032,7 +1032,7 @@ END:
 void EVENT_SelectionClear( XSelectionClearEvent *event )
 {
   Atom xaClipboard = XInternAtom(g_display, _CLIPBOARD, False);
-    
+
   TRACE("()\n");
 
   /* If we're losing the CLIPBOARD selection, or if the preferences in .winerc
@@ -1042,21 +1042,21 @@ void EVENT_SelectionClear( XSelectionClearEvent *event )
   if ( g_clearAllSelections || (event->selection == xaClipboard) )
   {
       TRACE("Lost CLIPBOARD (+PRIMARY) selection\n");
-      
+
       /* We really lost CLIPBOARD but want to voluntarily lose PRIMARY */
       if ( (event->selection == xaClipboard)
            && (g_selectionAcquired & S_PRIMARY) )
       {
           XSetSelectionOwner(g_display, XA_PRIMARY, None, CurrentTime);
       }
-      
+
       /* We really lost PRIMARY but want to voluntarily lose CLIPBOARD  */
       if ( (event->selection == XA_PRIMARY)
            && (g_selectionAcquired & S_CLIPBOARD) )
       {
           XSetSelectionOwner(g_display, xaClipboard, None, CurrentTime);
       }
-      
+
       g_selectionAcquired = S_NOSELECTION;   /* Clear the selection masks */
   }
   else if (event->selection == XA_PRIMARY)
@@ -1087,7 +1087,7 @@ void EVENT_PropertyNotify( XPropertyEvent *event )
     {
       TRACE("\tPropertyDelete for atom %s on window %ld\n",
                     XGetAtomName(event->display, event->atom), (long)event->window);
-      
+
       /* FreeResources( event->atom ); */
       break;
     }
@@ -1098,7 +1098,7 @@ void EVENT_PropertyNotify( XPropertyEvent *event )
                     XGetAtomName(event->display, event->atom), (long)event->window);
       break;
     }
-    
+
     default:
       break;
   }
@@ -1117,7 +1117,7 @@ Pixmap DuplicatePixmap(Pixmap pixmap)
     unsigned int depth, width, height;
 
     TRACE("\t() Pixmap=%ld\n", (long)pixmap);
-          
+
     /* Get the Pixmap dimensions and bit depth */
     if ( 0 == XGetGeometry(g_display, pixmap, &root, &x, &y, &width, &height,
                              &border_width, &depth) )
@@ -1125,15 +1125,15 @@ Pixmap DuplicatePixmap(Pixmap pixmap)
 
     TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
           width, height, depth);
-    
+
     newPixmap = XCreatePixmap(g_display, g_win, width, height, depth);
-        
+
     xi = XGetImage(g_display, pixmap, 0, 0, width, height, AllPlanes, XYPixmap);
 
     XPutImage(g_display, newPixmap, g_gc, xi, 0, 0, 0, 0, width, height);
 
     XDestroyImage(xi);
-    
+
     TRACE("\t() New Pixmap=%ld\n", (long)newPixmap);
     return newPixmap;
 }
@@ -1157,12 +1157,12 @@ void getGC(Window win, GC *gc)
 	/* Create default Graphics Context */
 	*gc = XCreateGC(g_display, win, valuemask, &values);
 
-	/* specify black foreground since default window background is 
+	/* specify black foreground since default window background is
 	 * white and default foreground is undefined. */
 	XSetForeground(g_display, *gc, BlackPixel(g_display,screen_num));
 
 	/* set line attributes */
-	XSetLineAttributes(g_display, *gc, line_width, line_style, 
+	XSetLineAttributes(g_display, *gc, line_width, line_style,
 			cap_style, join_style);
 
 	/* set dashes */
@@ -1181,6 +1181,6 @@ void TextOut(Window win, GC gc, char *pStr)
 	x_offset = 2;
 
 	/* output text, centered on each line */
-	XDrawString(g_display, win, gc, x_offset, y_offset, pStr, 
+	XDrawString(g_display, win, gc, x_offset, y_offset, pStr,
 			strlen(pStr));
 }

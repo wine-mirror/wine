@@ -89,6 +89,6 @@ LRESULT	(VFWAPI	*fnICSendMessage)(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
 		ICConfigure(hic,0);
 	fnICClose(hic);
     }
-    return 0;    
+    return 0;
 }
 

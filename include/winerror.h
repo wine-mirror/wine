@@ -1494,7 +1494,7 @@ extern int WIN32_LastError;
 #define E_POINTER                                          0x80004003L
 #define E_ABORT                                            0x80004004L
 #define E_FAIL                                             0x80004005L
-/* FIXME: E_UNSPEC is not a standard value but it is used by 
+/* FIXME: E_UNSPEC is not a standard value but it is used by
  * FileMoniker, IOleLink and DoDragDrop as a return value.
  */
 #define E_UNSPEC                                           E_FAIL

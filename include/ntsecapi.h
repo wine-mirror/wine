@@ -33,7 +33,7 @@ typedef PVOID LSA_HANDLE, *PLSA_HANDLE;
 
 NTSTATUS WINAPI LsaOpenPolicy(PLSA_UNICODE_STRING,PLSA_OBJECT_ATTRIBUTES,ACCESS_MASK,PLSA_HANDLE);
 
-typedef enum 
+typedef enum
 {
 	PolicyAuditLogInformation = 1,
 	PolicyAuditEventsInformation,

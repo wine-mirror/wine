@@ -36,7 +36,7 @@ extern PALETTEENTRY *COLOR_sysPal;
 
 static int palette_size = 256;  /* FIXME */
 
-extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS]; 
+extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS];
 
 /***********************************************************************
  *	     TTYDRV_PALETTE_Initialize
@@ -68,15 +68,15 @@ BOOL TTYDRV_PALETTE_Initialize(void)
 
     if((src->peRed + src->peGreen + src->peBlue) <= 0xB0) {
       dst->peRed = 0;
-      dst->peGreen = 0;  
+      dst->peGreen = 0;
       dst->peBlue = 0;
       dst->peFlags = PC_SYS_USED;
     } else {
-      dst->peRed = 255;  
-      dst->peGreen= 255;  
+      dst->peRed = 255;
+      dst->peGreen= 255;
       dst->peBlue = 255;
       dst->peFlags = PC_SYS_USED;
-    }    
+    }
   }
 
   return TRUE;

@@ -34,7 +34,7 @@
  * A program that wants to monitor the modem status line (RLSD/DCD) may
  * poll the modem status register in the commMask structure. I update the bit
  * in GetCommError, waiting for an implementation of communication events.
- * 
+ *
  * July 6, 1998. Fixes and comments by Valentijn Sessink
  *                                     <vsessink@ic.uva.nl> [V]
  *
@@ -187,7 +187,7 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
         else strcpy(temp,device);
 
 	last=temp[strlen(temp)-1];
-	ptr = strtok(temp, ", "); 
+	ptr = strtok(temp, ", ");
 
         /* DOS/Windows only compares the first two numbers
 	 * and assigns an appropriate baud rate.
@@ -219,7 +219,7 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 		WARN("Unknown baudrate indicator %d !\n", rate);
 		return FALSE;
 	}
-			
+
         lpdcb->BaudRate = rate;
 	TRACE("baudrate (%ld)\n", lpdcb->BaudRate);
 
@@ -233,25 +233,25 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 	case 'N':
 		lpdcb->Parity = NOPARITY;
 		lpdcb->fParity = FALSE;
-		break;			
+		break;
 	case 'E':
 		lpdcb->Parity = EVENPARITY;
-		break;			
+		break;
 	case 'M':
 		lpdcb->Parity = MARKPARITY;
-		break;			
+		break;
 	case 'O':
 		lpdcb->Parity = ODDPARITY;
-		break;		
+		break;
         case 'S':
                 lpdcb->Parity = SPACEPARITY;
-                break;	
+                break;
 	default:
 		WARN("Unknown parity `%c'!\n", *ptr);
 		return FALSE;
 	}
 
-	ptr = strtok(NULL, ", "); 
+	ptr = strtok(NULL, ", ");
        	TRACE("charsize (%c)\n", *ptr);
 	lpdcb->ByteSize = *ptr - '0';
 
@@ -260,14 +260,14 @@ BOOL WINAPI COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 	switch (*ptr) {
 	case '1':
 		lpdcb->StopBits = ONESTOPBIT;
-		break;			
+		break;
 	case '2':
 		lpdcb->StopBits = TWOSTOPBITS;
-		break;			
+		break;
 	default:
 		WARN("Unknown # of stopbits `%c'!\n", *ptr);
 		return FALSE;
-	}	
+	}
 
 	if (last == 'x') {
 		lpdcb->fInX		= TRUE;
@@ -352,7 +352,7 @@ BOOL WINAPI BuildCommDCBAndTimeoutsA(
 
 		return COMM_BuildOldCommDCB(device,lpdcb);
 	}
-	ptr=strtok(temp," "); 
+	ptr=strtok(temp," ");
 	while (ptr) {
 		DWORD	flag,x;
 
@@ -498,14 +498,14 @@ static BOOL COMM_GetCommError(HANDLE handle, LPDWORD lperror)
  *
  * BUGS
  *
- *  Only TIOCSBRK and TIOCCBRK are supported. 
+ *  Only TIOCSBRK and TIOCCBRK are supported.
  */
 BOOL WINAPI SetCommBreak(
     HANDLE handle) /* [in] The communictions device to suspend. */
 {
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
- 
+
 	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
 	        TRACE("FILE_GetUnixHandle failed\n");
@@ -538,14 +538,14 @@ BOOL WINAPI SetCommBreak(
  *
  * BUGS
  *
- *  Only TIOCSBRK and TIOCCBRK are supported. 
+ *  Only TIOCSBRK and TIOCCBRK are supported.
  */
 BOOL WINAPI ClearCommBreak(
     HANDLE handle) /* [in] The halted communication device whose character transmission is to be resumed. */
 {
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
- 
+
 	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
 	if(fd<0) {
 	        TRACE("FILE_GetUnixHandle failed\n");
@@ -601,7 +601,7 @@ BOOL WINAPI EscapeCommFunction(
 	switch (nFunction) {
 		case RESETDEV:
 		        TRACE("\n");
-			break;					
+			break;
 
 		case CLRDTR:
 		        TRACE("CLRDTR\n");
@@ -618,7 +618,7 @@ BOOL WINAPI EscapeCommFunction(
 			result= COMM_WhackModem(fd, ~TIOCM_RTS, 0);
 			break;
 #endif
-	
+
 		case SETDTR:
 		        TRACE("SETDTR\n");
 #ifdef TIOCM_DTR
@@ -659,17 +659,17 @@ BOOL WINAPI EscapeCommFunction(
 			break;
 #endif
 		default:
-			WARN("(handle=%d,nFunction=%d): Unknown function\n", 
+			WARN("(handle=%d,nFunction=%d): Unknown function\n",
 			handle, nFunction);
-			break;				
+			break;
 	}
-	
+
 	if (!direct)
 	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
 		close(fd);
 		COMM_SetCommError(handle,CE_IOE);
-		return FALSE;	
-	  } else 
+		return FALSE;
+	  } else
 	        result= TRUE;
 	else
 	  {
@@ -745,13 +745,13 @@ BOOL WINAPI ClearCommError(
     int fd;
 
     fd=FILE_GetUnixHandle( handle, GENERIC_READ );
-    if(0>fd) 
+    if(0>fd)
     {
 	FIXME("no handle %d found\n",handle);
         return FALSE;
     }
 
-    if (lpStat) 
+    if (lpStat)
     {
 	lpStat->status = 0;
 
@@ -808,7 +808,7 @@ BOOL WINAPI SetupComm(
     }
     close(fd);
     return TRUE;
-} 
+}
 
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.@)
@@ -934,58 +934,58 @@ BOOL WINAPI SetCommState(
 		case 110:
 		case CBR_110:
 			port.c_cflag |= B110;
-			break;		
+			break;
 		case 300:
 		case CBR_300:
 			port.c_cflag |= B300;
-			break;		
+			break;
 		case 600:
 		case CBR_600:
 			port.c_cflag |= B600;
-			break;		
+			break;
 		case 1200:
 		case CBR_1200:
 			port.c_cflag |= B1200;
-			break;		
+			break;
 		case 2400:
 		case CBR_2400:
 			port.c_cflag |= B2400;
-			break;		
+			break;
 		case 4800:
 		case CBR_4800:
 			port.c_cflag |= B4800;
-			break;		
+			break;
 		case 9600:
 		case CBR_9600:
 			port.c_cflag |= B9600;
-			break;		
+			break;
 		case 19200:
 		case CBR_19200:
 			port.c_cflag |= B19200;
-			break;		
+			break;
 		case 38400:
 		case CBR_38400:
 			port.c_cflag |= B38400;
-			break;		
+			break;
 #ifdef B57600
 		case 57600:
 			port.c_cflag |= B57600;
-			break;		
+			break;
 #endif
 #ifdef B115200
 		case 115200:
 			port.c_cflag |= B115200;
-			break;		
+			break;
 #endif
 #ifdef B230400
 		case 230400:
 			port.c_cflag |= B230400;
-			break;		
+			break;
 #endif
 #ifdef B460800
 		case 460800:
 			port.c_cflag |= B460800;
-			break;		
+			break;
 #endif
        	        default:
 #if defined (HAVE_LINUX_SERIAL_H) && defined (TIOCSSERIAL)
@@ -1009,8 +1009,8 @@ BOOL WINAPI SetCommState(
  			}
  			break;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
- 			
-			
+
+
                         COMM_SetCommError(handle,IE_BAUDRATE);
 			close( fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
@@ -1144,7 +1144,7 @@ BOOL WINAPI SetCommState(
 			ERR("Parity\n");
                         return FALSE;
         }
-	
+
 
 	port.c_cflag &= ~CSIZE;
 	switch (bytesize) {
@@ -1166,7 +1166,7 @@ BOOL WINAPI SetCommState(
 			ERR("ByteSize\n");
 			return FALSE;
 	}
-        
+
 	switch (stopbits) {
 		case ONESTOPBIT:
 				port.c_cflag &= ~CSTOPB;
@@ -1184,13 +1184,13 @@ BOOL WINAPI SetCommState(
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
 		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
-	) 
+	)
 	  {
 	    port.c_cflag |= CRTSCTS;
 	    TRACE("CRTSCTS\n");
 	  }
-#endif	
-	
+#endif
+
 	if (lpdcb->fDtrControl == DTR_CONTROL_HANDSHAKE)
 	  {
              WARN("DSR/DTR flow control not supported\n");
@@ -1227,7 +1227,7 @@ BOOL WINAPI SetCommState(
  * RETURNS
  *
  *  True on success, false if the communication device handle is bad etc
- *  
+ *
  * BUGS
  *
  *  XonChar and XoffChar are not set.
@@ -1242,7 +1242,7 @@ BOOL WINAPI GetCommState(
      TRACE("handle %d, ptr %p\n", handle, lpdcb);
 
      fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-     if (fd < 0) 
+     if (fd < 0)
        {
 	 ERR("FILE_GetUnixHandle failed\n");
 	 return FALSE;
@@ -1292,22 +1292,22 @@ BOOL WINAPI GetCommState(
 #ifdef B57600
 		case B57600:
 			lpdcb->BaudRate = 57600;
-			break;		
+			break;
 #endif
 #ifdef B115200
 		case B115200:
 			lpdcb->BaudRate = 115200;
-			break;		
+			break;
 #endif
 #ifdef B230400
                 case B230400:
 			lpdcb->BaudRate = 230400;
-			break;		
+			break;
 #endif
 #ifdef B460800
                 case B460800:
 			lpdcb->BaudRate = 460800;
-			break;		
+			break;
 #endif
 	        default:
 		        ERR("unknown speed %x \n",speed);
@@ -1328,8 +1328,8 @@ BOOL WINAPI GetCommState(
 			break;
 	        default:
 		        ERR("unknown size %x \n",port.c_cflag & CSIZE);
-	}	
-	
+	}
+
         if(port.c_iflag & INPCK)
             lpdcb->fParity = TRUE;
         else
@@ -1347,14 +1347,14 @@ BOOL WINAPI GetCommState(
 			lpdcb->Parity = EVENPARITY;
 			break;
 		case (PARENB | PARODD):
-			lpdcb->Parity = ODDPARITY;		
+			lpdcb->Parity = ODDPARITY;
 			break;
 #ifdef CMSPAR
 		case (PARENB | CMSPAR):
-			lpdcb->Parity = MARKPARITY;		
+			lpdcb->Parity = MARKPARITY;
 			break;
                 case (PARENB | PARODD | CMSPAR):
-			lpdcb->Parity = SPACEPARITY;		
+			lpdcb->Parity = SPACEPARITY;
 			break;
 #endif
 	}
@@ -1379,7 +1379,7 @@ BOOL WINAPI GetCommState(
 	if (port.c_cflag & CRTSCTS) {
 		lpdcb->fRtsControl = RTS_CONTROL_HANDSHAKE;
 		lpdcb->fOutxCtsFlow = 1;
-	} else 
+	} else
 #endif
 	{
 		lpdcb->fRtsControl = RTS_CONTROL_ENABLE;
@@ -1395,8 +1395,8 @@ BOOL WINAPI GetCommState(
 	else
 		lpdcb->fOutX = 0;
 /*
-	lpdcb->XonChar = 
-	lpdcb->XoffChar = 
+	lpdcb->XonChar =
+	lpdcb->XoffChar =
  */
 	lpdcb->XonLim = 10;
 	lpdcb->XoffLim = 10;
@@ -1404,7 +1404,7 @@ BOOL WINAPI GetCommState(
         COMM_SetCommError(handle,0);
 
         TRACE("OK\n");
- 
+
 	TRACE("bytesize %d baudrate %ld fParity %d Parity %d stopbits %d\n",
 	      lpdcb->ByteSize,lpdcb->BaudRate,lpdcb->fParity, lpdcb->Parity,
 	      (lpdcb->StopBits == ONESTOPBIT)?1:
@@ -1414,13 +1414,13 @@ BOOL WINAPI GetCommState(
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
 		lpdcb->fRtsControl == RTS_CONTROL_HANDSHAKE
-		) 
+		)
 	  TRACE("CRTSCTS\n");
         else
-	
+
 	  TRACE("~CRTSCTS\n");
-	
-#endif	
+
+#endif
 	return TRUE;
 }
 
@@ -1506,7 +1506,7 @@ BOOL WINAPI GetCommTimeouts(
  *
  * Sets the timeouts used when reading and writing data to/from COMM ports.
  *
- * ReadIntervalTimeout 
+ * ReadIntervalTimeout
  *     - converted and passes to linux kernel as c_cc[VTIME]
  * ReadTotalTimeoutMultiplier, ReadTotalTimeoutConstant
  *     - used in ReadFile to calculate GetOverlappedResult's timeout
@@ -1601,7 +1601,7 @@ BOOL WINAPI GetCommModemStatus(
     LPDWORD lpModemStat) /* [out] The control register bits. */
 {
 	int fd,mstat, result=FALSE;
-	
+
 	*lpModemStat=0;
 #ifdef TIOCMGET
 	fd = FILE_GetUnixHandle( hFile, GENERIC_READ );
@@ -1657,7 +1657,7 @@ static void COMM_WaitCommEventService(async_private *ovp)
 
     /* FIXME: detect other events */
     *commio->buffer = EV_RXCHAR;
- 
+
     lpOverlapped->Internal = STATUS_SUCCESS;
 }
 
@@ -1761,11 +1761,11 @@ BOOL WINAPI WaitCommEvent(
 
     return ret;
 }
-  
+
 /***********************************************************************
  *           GetCommProperties   (KERNEL32.@)
  *
- * This function fills in a structure with the capabilities of the 
+ * This function fills in a structure with the capabilities of the
  * communications port driver.
  *
  * RETURNS
@@ -1796,13 +1796,13 @@ BOOL WINAPI GetCommProperties(
     lpCommProp->dwMaxBaud           = BAUD_115200;
     lpCommProp->dwProvSubType       = PST_RS232;
     lpCommProp->dwProvCapabilities  = PCF_DTRDSR | PCF_PARITY_CHECK | PCF_RTSCTS ;
-    lpCommProp->dwSettableParams    = SP_BAUD | SP_DATABITS | SP_HANDSHAKING | 
+    lpCommProp->dwSettableParams    = SP_BAUD | SP_DATABITS | SP_HANDSHAKING |
                                       SP_PARITY | SP_PARITY_CHECK | SP_STOPBITS ;
     lpCommProp->dwSettableBaud      = BAUD_075 | BAUD_110 | BAUD_134_5 | BAUD_150 |
                 BAUD_300 | BAUD_600 | BAUD_1200 | BAUD_1800 | BAUD_2400 | BAUD_4800 |
                 BAUD_9600 | BAUD_19200 | BAUD_38400 | BAUD_57600 | BAUD_115200 ;
     lpCommProp->wSettableData       = DATABITS_5 | DATABITS_6 | DATABITS_7 | DATABITS_8 ;
-    lpCommProp->wSettableStopParity = STOPBITS_10 | STOPBITS_15 | STOPBITS_20 | 
+    lpCommProp->wSettableStopParity = STOPBITS_10 | STOPBITS_15 | STOPBITS_20 |
                 PARITY_NONE | PARITY_ODD |PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
     lpCommProp->dwCurrentTxQueue    = lpCommProp->dwMaxTxQueue;
     lpCommProp->dwCurrentRxQueue    = lpCommProp->dwMaxRxQueue;
@@ -1816,12 +1816,12 @@ BOOL WINAPI GetCommProperties(
  * SetDefaultCommConfig is implemented in a DLL (usually SERIALUI.DLL).
  * This is dependent on the type of COMM port, but since it is doubtful
  * anybody will get around to implementing support for fancy serial
- * ports in WINE, this is hardcoded for the time being.  The name of 
- * this DLL should be stored in and read from the system registry in 
+ * ports in WINE, this is hardcoded for the time being.  The name of
+ * this DLL should be stored in and read from the system registry in
  * the hive HKEY_LOCAL_MACHINE, key
  * System\\CurrentControlSet\\Services\\Class\\Ports\\????
  * where ???? is the port number... that is determined by PNP
- * The DLL should be loaded when the COMM port is opened, and closed 
+ * The DLL should be loaded when the COMM port is opened, and closed
  * when the COMM port is closed. - MJM 20 June 2000
  ***********************************************************************/
 static CHAR lpszSerialUI[] = "serialui.dll";
@@ -1909,7 +1909,7 @@ BOOL WINAPI GetCommConfig(
     HANDLE       hFile,        /* [in] The communications device. */
     LPCOMMCONFIG lpCommConfig, /* [out] The communications configuration of the device (if it fits). */
     LPDWORD      lpdwSize)     /* [in/out] Initially the size of the configuration buffer/structure,
-                                  afterwards the number of bytes copied to the buffer or 
+                                  afterwards the number of bytes copied to the buffer or
                                   the needed size of the buffer. */
 {
     BOOL r;
@@ -1921,7 +1921,7 @@ BOOL WINAPI GetCommConfig(
 
     r = *lpdwSize < sizeof(COMMCONFIG);
     *lpdwSize = sizeof(COMMCONFIG);
-    if(!r)   
+    if(!r)
         return FALSE;
 
     lpCommConfig->dwSize = sizeof(COMMCONFIG);

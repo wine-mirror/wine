@@ -45,11 +45,11 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
   TTYDRV_PDEVICE *physDev;
 
   TRACE("(%p, %s, %s, %s, %p)\n",
-    dc, debugstr_a(driver), debugstr_a(device), 
+    dc, debugstr_a(driver), debugstr_a(device),
     debugstr_a(output), initData);
 
   dc->physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			  sizeof(TTYDRV_PDEVICE));  
+			  sizeof(TTYDRV_PDEVICE));
   if(!dc->physDev) {
     ERR("Can't allocate physDev\n");
     return FALSE;

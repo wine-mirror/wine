@@ -21,9 +21,9 @@
 #ifndef __WINE_TTYDRV_H
 #define __WINE_TTYDRV_H
 
-#ifndef __WINE_CONFIG_H 
-# error You must include config.h to use this header 
-#endif 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
 
 #undef ERR
 #ifdef HAVE_NCURSES_H

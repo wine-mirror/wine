@@ -64,7 +64,7 @@ BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
 
 /*************************************************************************
  *		ScrollDC (USER32.@)
- * 
+ *
  *   Only the hrgnUpdate is return in device coordinate.
  *   rcUpdate must be returned in logical coordinate to comply with win API.
  *

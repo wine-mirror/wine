@@ -163,7 +163,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
 /***********************************************************************
  *           GetBitmapBits   (X11DRV.@)
- * 
+ *
  * RETURNS
  *    Success: Number of bytes copied
  *    Failure: 0
@@ -322,9 +322,9 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
         GDI_ReleaseObj( hbitmap );
         return 0;
     }
-    
+
     /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
-    
+
     startline = bits;
 
     switch (bmp->bitmap.bmBitsPixel)
@@ -388,7 +388,7 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
             startline += bmp->bitmap.bmWidthBytes;
         }
         break;
-    case 32: 
+    case 32:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
@@ -451,7 +451,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
 
     TRACE("\tPixmap properties: width=%d, height=%d, depth=%d\n",
           width, height, depth);
-    
+
     /*
      * Create an HBITMAP with the same dimensions and BPP as the pixmap,
      * and make it a container for the pixmap passed.
@@ -459,7 +459,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
     hBmp = CreateBitmap( width, height, 1, depth, NULL );
 
     pBmp = (BITMAPOBJ *)GDI_GetObjPtr( hBmp, BITMAP_MAGIC );
-    
+
     pBmp->funcs = X11DRV_DC_Funcs;
     pBmp->physBitmap = (void *)pixmap;
     GDI_ReleaseObj( hBmp );
@@ -493,7 +493,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
     /* Get the bitmap dimensions */
     width = pBmp->bitmap.bmWidth;
     height = pBmp->bitmap.bmHeight;
-                 
+
     hBmpCopy = CopyImage(hBmp, IMAGE_BITMAP, width, height, LR_CREATEDIBSECTION);
 
     /* We can now get rid of the HBITMAP wrapper we created earlier.
@@ -501,13 +501,13 @@ HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
      */
     if (!bDeletePixmap)
     {
-        /* Manually clear the bitmap internals to prevent the Pixmap 
+        /* Manually clear the bitmap internals to prevent the Pixmap
          * from being deleted by DeleteObject.
          */
         pBmp->physBitmap = NULL;
         pBmp->funcs = NULL;
     }
-    DeleteObject(hBmp);  
+    DeleteObject(hBmp);
 
 END:
     TRACE("\tReturning HBITMAP %x\n", hBmpCopy);

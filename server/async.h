@@ -26,7 +26,7 @@
 
 struct async_queue;
 
-struct async 
+struct async
 {
     struct object       *obj;
     struct thread       *thread;
@@ -49,11 +49,11 @@ void destroy_async_queue( struct async_queue *q );
 void async_notify(struct async *async, int status);
 struct async *find_async(struct async_queue *q, struct thread *thread, void *overlapped);
 void async_insert(struct async_queue *q, struct async *async);
-struct async *create_async(struct object *obj, struct thread *thread, 
+struct async *create_async(struct object *obj, struct thread *thread,
                            void *overlapped);
 void async_add_timeout(struct async *async, int timeout);
-static inline void init_async_queue(struct async_queue *q) 
-{ 
+static inline void init_async_queue(struct async_queue *q)
+{
     q->head = q->tail = NULL;
 }
 

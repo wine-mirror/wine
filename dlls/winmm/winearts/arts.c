@@ -1,5 +1,5 @@
 /* -*- tab-width: 8; c-basic-offset: 4 -*- */
-/*				   
+/*
  * Wine Driver for aRts Sound Server
  *   http://www.arts-project.org
  *
@@ -34,20 +34,20 @@
 static		int arts = 0;
 
 /**************************************************************************
- * 				ARTS_drvOpen			[internal]	
+ * 				ARTS_drvOpen			[internal]
  */
 static	DWORD	ARTS_drvOpen(LPSTR str)
 {
     if (arts)
 	return 0;
-    
+
     /* I know, this is ugly, but who cares... */
     arts = 1;
     return 1;
 }
 
 /**************************************************************************
- * 				ARTS_drvClose			[internal]	
+ * 				ARTS_drvClose			[internal]
  */
 static	DWORD	ARTS_drvClose(DWORD dwDevID)
 {
@@ -63,16 +63,16 @@ static	DWORD	ARTS_drvClose(DWORD dwDevID)
 /**************************************************************************
  * 				DriverProc (WINEARTS.@)
  */
-LONG CALLBACK	ARTS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg, 
+LONG CALLBACK	ARTS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 			       DWORD dwParam1, DWORD dwParam2)
 {
 /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-    
+
     switch(wMsg) {
 #ifdef HAVE_ARTS
     case DRV_LOAD:		ARTS_WaveInit();
-/*    				ARTS_MidiInit(); FIXME: no midi 
+/*    				ARTS_MidiInit(); FIXME: no midi
 support in artsc so we don't have any in the arts driver */
 				return 1;
     case DRV_FREE:	        return ARTS_WaveClose();

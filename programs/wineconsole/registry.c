@@ -56,63 +56,63 @@ BOOL WINECON_RegLoad(struct config_data* cfg)
     if (RegOpenKey(HKEY_CURRENT_USER, wszConsole, &hConKey)) hConKey = 0;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszCursorSize, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszCursorSize, 0, &type, (char*)&val, &count))
         val = 25;
     cfg->cursor_size = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszCursorVisible, 0, &type, (char*)&val, &count))
         val = 1;
     cfg->cursor_visible = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszExitOnDie, 0, &type, (char*)&val, &count))
         val = 1;
     cfg->exit_on_die = val;
 
-    count = sizeof(cfg->face_name); 
+    count = sizeof(cfg->face_name);
     if (!hConKey || RegQueryValueEx(hConKey, wszFaceName, 0, &type, (char*)&cfg->face_name, &count))
         cfg->face_name[0] = 0;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszFontSize, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszFontSize, 0, &type, (char*)&val, &count))
         val = 0x000C0008;
     cfg->cell_height = HIWORD(val);
     cfg->cell_width  = LOWORD(val);
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszFontWeight, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszFontWeight, 0, &type, (char*)&val, &count))
         val = 0;
     cfg->font_weight = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszHistoryBufferSize, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszHistoryBufferSize, 0, &type, (char*)&val, &count))
         val = 0;
     cfg->history_size = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszMenuMask, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszMenuMask, 0, &type, (char*)&val, &count))
         val = 0;
     cfg->menu_mask = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszQuickEdit, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszQuickEdit, 0, &type, (char*)&val, &count))
         val = 0;
     cfg->quick_edit = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count))
         val = 0x00190050;
     cfg->sb_height = HIWORD(val);
     cfg->sb_width  = LOWORD(val);
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszScreenColors, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszScreenColors, 0, &type, (char*)&val, &count))
         val = 0x000F;
     cfg->def_attr = val;
 
     count = sizeof(val);
-    if (!hConKey || RegQueryValueEx(hConKey, wszWindowSize, 0, &type, (char*)&val, &count)) 
+    if (!hConKey || RegQueryValueEx(hConKey, wszWindowSize, 0, &type, (char*)&val, &count))
         val = 0x00190050;
     cfg->win_height = HIWORD(val);
     cfg->win_width  = LOWORD(val);
@@ -133,12 +133,12 @@ BOOL WINECON_RegSave(const struct config_data* cfg)
     HKEY        hConKey;
     DWORD       val;
 
-    if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey)) 
+    if (RegCreateKey(HKEY_CURRENT_USER, wszConsole, &hConKey))
     {
         WINE_ERR("Can't open registry for saving\n");
         return FALSE;
     }
-   
+
     val = cfg->cursor_size;
     RegSetValueEx(hConKey, wszCursorSize, 0, REG_DWORD, (char*)&val, sizeof(val));
 

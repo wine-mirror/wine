@@ -93,7 +93,7 @@ UINT WINAPI ImmEnumRegisterWordA(
   LPCSTR lpszRegister, LPVOID lpData)
 {
   FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
-    hKL, lpfnEnumProc, 
+    hKL, lpfnEnumProc,
     debugstr_a(lpszReading), dwStyle,
     debugstr_a(lpszRegister), lpData
   );
@@ -110,7 +110,7 @@ UINT WINAPI ImmEnumRegisterWordW(
   LPCWSTR lpszRegister, LPVOID lpData)
 {
   FIXME("(0x%08x, %p, %s, %ld, %s, %p): stub\n",
-    hKL, lpfnEnumProc, 
+    hKL, lpfnEnumProc,
     debugstr_w(lpszReading), dwStyle,
     debugstr_w(lpszRegister), lpData
   );
@@ -122,7 +122,7 @@ UINT WINAPI ImmEnumRegisterWordW(
  *		ImmEscapeA (IMM32.@)
  */
 LRESULT WINAPI ImmEscapeA(
-  HKL hKL, HIMC hIMC, 
+  HKL hKL, HIMC hIMC,
   UINT uEscape, LPVOID lpData)
 {
   FIXME("(0x%08x, 0x%08x, %d, %p): stub\n",
@@ -150,7 +150,7 @@ LRESULT WINAPI ImmEscapeW(
  *		ImmGetCandidateListA (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListA(
-  HIMC hIMC, DWORD deIndex, 
+  HIMC hIMC, DWORD deIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
   FIXME("(0x%08x, %ld, %p, %ld): stub\n",
@@ -187,7 +187,7 @@ DWORD WINAPI ImmGetCandidateListCountW(
  *		ImmGetCandidateListW (IMM32.@)
  */
 DWORD WINAPI ImmGetCandidateListW(
-  HIMC hIMC, DWORD deIndex, 
+  HIMC hIMC, DWORD deIndex,
   LPCANDIDATELIST lpCandList, DWORD dwBufLen)
 {
   FIXME("(0x%08x, %ld, %p, %ld): stub\n",
@@ -255,7 +255,7 @@ LONG WINAPI ImmGetCompositionStringA(
  *		ImmGetCompositionStringW (IMM32.@)
  */
 LONG WINAPI ImmGetCompositionStringW(
-  HIMC hIMC, DWORD dwIndex, 
+  HIMC hIMC, DWORD dwIndex,
   LPVOID lpBuf, DWORD dwBufLen)
 {
   OSVERSIONINFOA version;
@@ -642,8 +642,8 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
  *		ImmSetCompositionStringA (IMM32.@)
  */
 BOOL WINAPI ImmSetCompositionStringA(
-  HIMC hIMC, DWORD dwIndex, 
-  LPCVOID lpComp, DWORD dwCompLen, 
+  HIMC hIMC, DWORD dwIndex,
+  LPCVOID lpComp, DWORD dwCompLen,
   LPCVOID lpRead, DWORD dwReadLen)
 {
   FIXME("(0x%08x, %ld, %p, %ld, %p, %ld): stub\n",

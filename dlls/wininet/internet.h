@@ -209,11 +209,11 @@ typedef struct WORKREQ
 
 time_t ConvertTimeString(LPCSTR asctime);
 
-HINTERNET FTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName, 
+HINTERNET FTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
 	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
 
-HINTERNET HTTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName, 
+HINTERNET HTTP_Connect(HINTERNET hInterent, LPCSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
 	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext);
 
@@ -236,13 +236,13 @@ BOOLAPI FTP_FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory);
 BOOLAPI FTP_FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory);
 INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
     LPCSTR lpszSearchFile, LPWIN32_FIND_DATAA lpFindFileData, DWORD dwFlags, DWORD dwContext);
-BOOLAPI FTP_FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory, 
+BOOLAPI FTP_FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory);
 BOOL FTP_ConvertFileProp(LPFILEPROPERTIESA lpafp, LPWIN32_FIND_DATAA lpFindFileData);
 BOOL FTP_FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDest);
 BOOL FTP_FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory);
 BOOL FTP_FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName);
-HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession, LPCSTR lpszFileName, 
+HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession, LPCSTR lpszFileName,
 	DWORD fdwAccess, DWORD dwFlags, DWORD dwContext);
 BOOLAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
@@ -252,7 +252,7 @@ BOOLAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength);
 INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
 	LPCSTR lpszVerb, LPCSTR lpszObjectName, LPCSTR lpszVersion,
-	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes, 
+	LPCSTR lpszReferrer , LPCSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD dwContext);
 void HTTP_CloseHTTPSessionHandle(LPWININETHTTPSESSIONA lpwhs);
 void HTTP_CloseHTTPRequestHandle(LPWININETHTTPREQA lpwhr);

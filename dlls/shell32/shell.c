@@ -125,25 +125,25 @@ UINT16 WINAPI DragQueryFile16(
 {
  	LPSTR lpDrop;
 	UINT i = 0;
-	LPDROPFILESTRUCT16 lpDropFileStruct = (LPDROPFILESTRUCT16) GlobalLock16(hDrop); 
-   
+	LPDROPFILESTRUCT16 lpDropFileStruct = (LPDROPFILESTRUCT16) GlobalLock16(hDrop);
+
 	TRACE("(%04x, %x, %p, %u)\n", hDrop,wFile,lpszFile,wLength);
-    
+
 	if(!lpDropFileStruct) goto end;
-    
+
 	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->wSize;
 	wFile = (wFile==0xffff) ? 0xffffffff : wFile;
 
 	while (i++ < wFile)
 	{
 	  while (*lpDrop++); /* skip filename */
-	  if (!*lpDrop) 
+	  if (!*lpDrop)
 	  {
-	    i = (wFile == 0xFFFFFFFF) ? i : 0; 
+	    i = (wFile == 0xFFFFFFFF) ? i : 0;
 	    goto end;
 	  }
 	}
-    
+
 	i = strlen(lpDrop);
 	i++;
 	if (!lpszFile ) goto end;   /* needed buffer size */
@@ -169,14 +169,14 @@ void WINAPI DragFinish16(HDROP16 h)
  */
 BOOL16 WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p)
 {
-  LPDROPFILESTRUCT16 lpDropFileStruct;  
+  LPDROPFILESTRUCT16 lpDropFileStruct;
   BOOL16           bRet;
   TRACE("\n");
   lpDropFileStruct = (LPDROPFILESTRUCT16) GlobalLock16(hDrop);
-  
+
   memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT16));
   bRet = lpDropFileStruct->fInNonClientArea;
-  
+
   GlobalUnlock16(hDrop);
   return bRet;
 }
@@ -220,7 +220,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
     OFSTRUCT ofs;
     HFILE hFile;
 
-	TRACE("(%04x,file %s,start %d,extract %d\n", 
+	TRACE("(%04x,file %s,start %d,extract %d\n",
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
 	if( !n )
@@ -322,7 +322,7 @@ HICON16 WINAPI ExtractIconEx16(
 
 /*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]
- * 
+ *
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
@@ -345,13 +345,13 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
 	    if( uRet > 32 && tempPath[0] )
 	    { strcpy(lpIconPath,tempPath);
 	      hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
-	      if( hIcon > 2 ) 
+	      if( hIcon > 2 )
 	        return hIcon;
 	    }
 	    else hIcon = 0;
 	  }
 
-	  if( hIcon == 1 ) 
+	  if( hIcon == 1 )
 	    *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
 	  else
 	    *lpiIcon = 6;   /* generic icon - found nothing */
@@ -364,7 +364,7 @@ HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst, LPSTR lpIconPath, LPWO
 
 /*************************************************************************
  *				ExtractAssociatedIconA (SHELL32.@)
- * 
+ *
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
@@ -375,7 +375,7 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
 
 /*************************************************************************
  *				ExtractAssociatedIconExA (SHELL32.@)
- * 
+ *
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
@@ -387,7 +387,7 @@ HICON WINAPI ExtractAssociatedIconExA(DWORD d1, DWORD d2, DWORD d3, DWORD d4)
 
 /*************************************************************************
  *				ExtractAssociatedIconExW (SHELL32.@)
- * 
+ *
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
@@ -407,9 +407,9 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
 
   TRACE("\n");
 
-  l = strlen(entry); 
+  l = strlen(entry);
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
-  { if( strncasecmp(lpEnv, entry, l) ) 
+  { if( strncasecmp(lpEnv, entry, l) )
       continue;
 	if( !*(lpEnv+l) )
 	    return (lpEnv + l); 		/* empty entry */
@@ -425,11 +425,11 @@ SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
 { SEGPTR  spEnv;
   LPSTR lpEnv,lpString;
   TRACE("\n");
-    
+
   spEnv = GetDOSEnvironment16();
 
   lpEnv = MapSL(spEnv);
-  lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
+  lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL;
 
     if( lpString )		/*  offset should be small enough */
 	return spEnv + (lpString - lpEnv);
@@ -463,7 +463,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
 	  if( *lpend == '%' && lpend - lpstr > 1 )	/* found key */
 	    {
 	       LPSTR lpKey;
-	      *lpend = '\0';  
+	      *lpend = '\0';
 	       lpKey = SHELL_FindString(lpEnv, lpstr+1);
 	       if( lpKey )				/* found key value */
 		 {
@@ -485,7 +485,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
 	  else break;					/* back off and whine */
 
 	  continue;
-       } 
+       }
 
      *lpbstr++ = *lpstr++;
    }
@@ -516,7 +516,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
  */
 LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
-    TRACE("%i, %04x, %08x\n", code, wParam, 
+    TRACE("%i, %04x, %08x\n", code, wParam,
 						      (unsigned)lParam );
     if( SHELL_hHook && SHELL_hWnd )
     {
@@ -536,24 +536,24 @@ LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
  *				RegisterShellHook	[SHELL.102]
  */
 BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
-{ 
+{
     TRACE("%04x [%u]\n", hWnd, uAction );
 
     switch( uAction )
-    { 
+    {
     case 2:  /* register hWnd as a shell window */
         if( !SHELL_hHook )
-        { 
+        {
             HMODULE16 hShell = GetModuleHandle16( "SHELL" );
             HOOKPROC16 hookProc = (HOOKPROC16)GetProcAddress16( hShell, (LPCSTR)103 );
             SHELL_hHook = SetWindowsHookEx16( WH_SHELL, hookProc, hShell, 0 );
             if ( SHELL_hHook )
-            { 
+            {
                 uMsgWndCreated = RegisterWindowMessageA( lpstrMsgWndCreated );
                 uMsgWndDestroyed = RegisterWindowMessageA( lpstrMsgWndDestroyed );
                 uMsgShellActivate = RegisterWindowMessageA( lpstrMsgShellActivate );
-            } 
-            else 
+            }
+            else
                 WARN("-- unable to install ShellHookProc()!\n");
         }
 

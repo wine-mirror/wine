@@ -19,9 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* NOTE: Methods that begin with DPLAYX_ are used for dealing with 
+/* NOTE: Methods that begin with DPLAYX_ are used for dealing with
  *       dplayx.dll data which is accessible from all processes.
- */ 
+ */
 
 #include <string.h>
 #include "wine/debug.h"
@@ -57,7 +57,7 @@ static LPVOID lpSharedStaticData = NULL;
                                   TRACE( "DPLAYX Semaphore released\n" ) /* FIXME: Is this correct? */
 
 
-/* HACK for simple global data right now */ 
+/* HACK for simple global data right now */
 #define dwStaticSharedSize (128 * 1024) /* 128 KBytes */
 #define dwDynamicSharedSize (512 * 1024) /* 512 KBytes */
 #define dwTotalSharedSize  ( dwStaticSharedSize + dwDynamicSharedSize )
@@ -70,7 +70,7 @@ static LPVOID lpSharedStaticData = NULL;
 #define dwBlockSize 512
 #define dwMaxBlock  (dwDynamicSharedSize/dwBlockSize)
 
-typedef struct 
+typedef struct
 {
   DWORD used;
   DWORD data[dwBlockSize-sizeof(DWORD)];
@@ -88,11 +88,11 @@ void DPLAYX_PrivHeapFree( LPVOID addr )
   if( addr == NULL )
   {
     return;
-  } 
+  }
 
   lpAddrStart = addr - sizeof(DWORD); /* Find block header */
   dwBlockUsed =  ((BYTE*)lpAddrStart - (BYTE*)lpMemArea)/dwBlockSize;
-  
+
   lpMemArea[ dwBlockUsed ].used = 0;
 }
 
@@ -107,11 +107,11 @@ LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
   {
     FIXME( "Size exceeded. Request of 0x%08lx\n", size );
     size = dwBlockSize - sizeof(DWORD);
-  } 
+  }
 
   /* Find blank area */
-  uBlockUsed = 0; 
-  while( ( lpMemArea[ uBlockUsed ].used != 0 ) && ( uBlockUsed <= dwMaxBlock ) ) { uBlockUsed++; } 
+  uBlockUsed = 0;
+  while( ( lpMemArea[ uBlockUsed ].used != 0 ) && ( uBlockUsed <= dwMaxBlock ) ) { uBlockUsed++; }
 
   if( uBlockUsed <= dwMaxBlock )
   {
@@ -124,7 +124,7 @@ LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
     ERR( "No free block found\n" );
     return NULL;
   }
-  
+
   if( flags & HEAP_ZERO_MEMORY )
   {
     ZeroMemory( lpvArea, size );
@@ -145,7 +145,7 @@ LPSTR DPLAYX_strdupA( DWORD flags, LPCSTR str )
 
 LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str );
 LPWSTR DPLAYX_strdupW( DWORD flags, LPCWSTR str )
-{                   
+{
   INT len = strlenW(str) + 1;
   LPWSTR p = DPLAYX_PrivHeapAlloc( flags, len * sizeof(WCHAR) );
   if(p) {
@@ -159,7 +159,7 @@ enum { numSupportedLobbies = 32, numSupportedSessions = 32 };
 typedef struct tagDPLAYX_LOBBYDATA
 {
   /* Points to lpConn + block of contiguous extra memory for dynamic parts
-   * of the struct directly following 
+   * of the struct directly following
    */
   LPDPLCONNECTION lpConn;
 
@@ -177,14 +177,14 @@ typedef struct tagDPLAYX_LOBBYDATA
   /* Sundries */
   BOOL bWaitForConnectionSettings;
   DWORD dwLobbyMsgThreadId;
-  
+
 
 } DPLAYX_LOBBYDATA, *LPDPLAYX_LOBBYDATA;
 
 static DPLAYX_LOBBYDATA* lobbyData = NULL;
 /* static DPLAYX_LOBBYDATA lobbyData[ numSupportedLobbies ]; */
 
-static DPSESSIONDESC2* sessionData = NULL; 
+static DPSESSIONDESC2* sessionData = NULL;
 /* static DPSESSIONDESC2* sessionData[ numSupportedSessions ]; */
 
 /* Function prototypes */
@@ -199,10 +199,10 @@ BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
 
 
 
-/*************************************************************************** 
- * Called to initialize the global data. This will only be used on the 
- * loading of the dll 
- ***************************************************************************/ 
+/***************************************************************************
+ * Called to initialize the global data. This will only be used on the
+ * loading of the dll
+ ***************************************************************************/
 BOOL DPLAYX_ConstructData(void)
 {
   SECURITY_ATTRIBUTES s_attrib;
@@ -218,7 +218,7 @@ BOOL DPLAYX_ConstructData(void)
   s_attrib.lpSecurityDescriptor = NULL;
   s_attrib.nLength              = sizeof(s_attrib);
 
-  hDplayxSema = CreateSemaphoreA( &s_attrib, 1, 1, lpszDplayxSemaName ); 
+  hDplayxSema = CreateSemaphoreA( &s_attrib, 1, 1, lpszDplayxSemaName );
 
   /* First instance creates the semaphore. Others just use it */
   if( GetLastError() == ERROR_SUCCESS )
@@ -241,13 +241,13 @@ BOOL DPLAYX_ConstructData(void)
   SetLastError( ERROR_SUCCESS );
 
   DPLAYX_AquireSemaphore();
- 
+
   hDplayxSharedMem = CreateFileMappingA( INVALID_HANDLE_VALUE,
                                          &s_attrib,
                                          PAGE_READWRITE | SEC_COMMIT,
-                                         0, 
+                                         0,
                                          dwTotalSharedSize,
-                                         lpszDplayxFileMapping ); 
+                                         lpszDplayxFileMapping );
 
   if( GetLastError() == ERROR_SUCCESS )
   {
@@ -263,13 +263,13 @@ BOOL DPLAYX_ConstructData(void)
     return FALSE;
   }
 
-  lpSharedStaticData = MapViewOfFileEx( hDplayxSharedMem, 
-                                        FILE_MAP_WRITE, 
+  lpSharedStaticData = MapViewOfFileEx( hDplayxSharedMem,
+                                        FILE_MAP_WRITE,
                                         0, 0, 0, lpDesiredMemoryMapStart );
 
   if( lpSharedStaticData == NULL )
   {
-    ERR( ": unable to map static data into process memory space (%ld)\n", 
+    ERR( ": unable to map static data into process memory space (%ld)\n",
          GetLastError() );
     return FALSE;
   }
@@ -307,7 +307,7 @@ BOOL DPLAYX_ConstructData(void)
 
     TRACE( "Initializing shared memory\n" );
 
-    /* Set all lobbies to be "empty" */ 
+    /* Set all lobbies to be "empty" */
     for( i=0; i < numSupportedLobbies; i++ )
     {
       DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
@@ -325,19 +325,19 @@ BOOL DPLAYX_ConstructData(void)
     /* Just for fun sync the whole data area */
     FlushViewOfFile( lpSharedStaticData, dwTotalSharedSize );
   }
-  
+
   DPLAYX_ReleaseSemaphore();
 
   /* Everything was created correctly. Signal the lobby client that
    * we started up correctly
    */
   if( DPLAYX_GetThisLobbyHandles( &hInformOnStart, NULL, NULL, FALSE ) &&
-      hInformOnStart 
+      hInformOnStart
     )
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnStart );
-    TRACE( "Signalling lobby app start event %u %s\n", 
+    TRACE( "Signalling lobby app start event %u %s\n",
              hInformOnStart, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -347,10 +347,10 @@ BOOL DPLAYX_ConstructData(void)
   return TRUE;
 }
 
-/*************************************************************************** 
- * Called to destroy all global data. This will only be used on the 
- * unloading of the dll 
- ***************************************************************************/ 
+/***************************************************************************
+ * Called to destroy all global data. This will only be used on the
+ * unloading of the dll
+ ***************************************************************************/
 BOOL DPLAYX_DestructData(void)
 {
   HANDLE hInformOnDeath;
@@ -359,12 +359,12 @@ BOOL DPLAYX_DestructData(void)
 
   /* If required, inform that this app is dying */
   if( DPLAYX_GetThisLobbyHandles( NULL, &hInformOnDeath, NULL, FALSE ) &&
-      hInformOnDeath 
+      hInformOnDeath
     )
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnDeath );
-    TRACE( "Signalling lobby app death event %u %s\n", 
+    TRACE( "Signalling lobby app death event %u %s\n",
              hInformOnDeath, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -375,7 +375,7 @@ BOOL DPLAYX_DestructData(void)
 
   /* Delete the semaphore */
   CloseHandle( hDplayxSema );
- 
+
   /* Delete shared memory file mapping */
   UnmapViewOfFile( lpSharedStaticData );
   CloseHandle( hDplayxSharedMem );
@@ -389,7 +389,7 @@ void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
   ZeroMemory( lpData, sizeof( *lpData ) );
 }
 
-/* NOTE: This must be called with the semaphore aquired. 
+/* NOTE: This must be called with the semaphore aquired.
  * TRUE/FALSE with a pointer to it's data returned. Pointer data is
  * is only valid if TRUE is returned.
  */
@@ -409,7 +409,7 @@ BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplData )
   {
     if( lobbyData[ i ].dwAppID == dwAppID )
     {
-      /* This process is lobbied */ 
+      /* This process is lobbied */
       TRACE( "Found 0x%08lx @ %u\n", dwAppID, i );
       *lplpDplData = &lobbyData[ i ];
       return TRUE;
@@ -428,7 +428,7 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
   if( dwAppID == 0 )
   {
     return FALSE;
-  } 
+  }
 
   DPLAYX_AquireSemaphore();
 
@@ -445,7 +445,7 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
       lobbyData[ i ].dwAppLaunchedFromID  = GetCurrentProcessId();
 
       /* FIXME: Where is the best place for this? In interface or here? */
-      lobbyData[ i ].hInformOnAppStart = 0; 
+      lobbyData[ i ].hInformOnAppStart = 0;
       lobbyData[ i ].hInformOnAppDeath = 0;
       lobbyData[ i ].hInformOnSettingRead = 0;
 
@@ -461,7 +461,7 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
 }
 
 /* I'm not sure when I'm going to need this, but here it is */
-BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID ) 
+BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID )
 {
   UINT i;
 
@@ -515,7 +515,7 @@ BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
   return TRUE;
 }
 
-BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart, 
+BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
                                  LPHANDLE lphDeath,
                                  LPHANDLE lphConnRead,
                                  BOOL     bClearSetHandles )
@@ -535,7 +535,7 @@ BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
     if( lpLData->hInformOnAppStart == 0 )
     {
       DPLAYX_ReleaseSemaphore();
-      return FALSE; 
+      return FALSE;
     }
 
     *lphStart = lpLData->hInformOnAppStart;
@@ -580,7 +580,7 @@ BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
       lpLData->hInformOnSettingRead = 0;
     }
   }
- 
+
   DPLAYX_ReleaseSemaphore();
 
   return TRUE;
@@ -609,7 +609,7 @@ HRESULT DPLAYX_GetConnectionSettingsA
   dwRequiredDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
 
   /* Do they want to know the required buffer size or is the provided buffer
-   * big enough? 
+   * big enough?
    */
   if ( ( lpData == NULL ) ||
        ( *lpdwDataSize < dwRequiredDataSize )
@@ -628,12 +628,12 @@ HRESULT DPLAYX_GetConnectionSettingsA
 
   /* They have gotten the information - signal the event if required */
   if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
-      hInformOnSettingRead 
+      hInformOnSettingRead
     )
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %u %s\n", 
+    TRACE( "Signalling setting read event %u %s\n",
              hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -664,7 +664,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     {
       strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->u1.lpszSessionNameA );
       dest->lpSessionDesc->u1.lpszSessionNameA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace +=  
+      lpStartOfFreeSpace +=
         strlen( (LPSTR)dest->lpSessionDesc->u1.lpszSessionNameA ) + 1;
     }
 
@@ -672,7 +672,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     {
       strcpy( (LPSTR)lpStartOfFreeSpace, src->lpSessionDesc->u2.lpszPasswordA );
       dest->lpSessionDesc->u2.lpszPasswordA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace += 
+      lpStartOfFreeSpace +=
         strlen( (LPSTR)dest->lpSessionDesc->u2.lpszPasswordA ) + 1;
     }
   }
@@ -688,7 +688,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     {
       strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->u1.lpszShortNameA );
       dest->lpPlayerName->u1.lpszShortNameA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace +=  
+      lpStartOfFreeSpace +=
         strlen( (LPSTR)dest->lpPlayerName->u1.lpszShortNameA ) + 1;
     }
 
@@ -696,7 +696,7 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     {
       strcpy( (LPSTR)lpStartOfFreeSpace, src->lpPlayerName->u2.lpszLongNameA );
       dest->lpPlayerName->u2.lpszLongNameA = (LPSTR)lpStartOfFreeSpace;
-      lpStartOfFreeSpace +=  
+      lpStartOfFreeSpace +=
         strlen( (LPSTR)dest->lpPlayerName->u2.lpszLongName ) + 1 ;
     }
 
@@ -731,7 +731,7 @@ HRESULT DPLAYX_GetConnectionSettingsW
   dwRequiredDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
 
   /* Do they want to know the required buffer size or is the provided buffer
-   * big enough? 
+   * big enough?
    */
   if ( ( lpData == NULL ) ||
        ( *lpdwDataSize < dwRequiredDataSize )
@@ -750,12 +750,12 @@ HRESULT DPLAYX_GetConnectionSettingsW
 
   /* They have gotten the information - signal the event if required */
   if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
-      hInformOnSettingRead 
+      hInformOnSettingRead
     )
   {
     BOOL bSuccess;
     bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %u %s\n", 
+    TRACE( "Signalling setting read event %u %s\n",
              hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
@@ -779,7 +779,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
   {
     dest->lpSessionDesc = (LPDPSESSIONDESC2)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPSESSIONDESC2 );
-    CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) ); 
+    CopyMemory( dest->lpSessionDesc, src->lpSessionDesc, sizeof( DPSESSIONDESC2 ) );
 
     /* Session names may or may not exist */
     if( src->lpSessionDesc->u1.lpszSessionName )
@@ -805,7 +805,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
     dest->lpPlayerName = (LPDPNAME)lpStartOfFreeSpace;
     lpStartOfFreeSpace += sizeof( DPNAME );
     CopyMemory( dest->lpPlayerName, src->lpPlayerName, sizeof( DPNAME ) );
-   
+
     if( src->lpPlayerName->u1.lpszShortName )
     {
       strcpyW( (LPWSTR)lpStartOfFreeSpace, src->lpPlayerName->u1.lpszShortName );
@@ -828,7 +828,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
   if( src->lpAddress )
   {
     dest->lpAddress = (LPVOID)lpStartOfFreeSpace;
-    CopyMemory( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );  
+    CopyMemory( lpStartOfFreeSpace, src->lpAddress, src->dwAddressSize );
     /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
   }
 
@@ -836,7 +836,7 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src )
 
 /* Store the structure into the shared data structre. Ensure that allocs for
  * variable length strings come from the shared data structure.
- * FIXME: We need to free information as well 
+ * FIXME: We need to free information as well
  */
 HRESULT DPLAYX_SetConnectionSettingsA
 ( DWORD dwFlags,
@@ -885,7 +885,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
   /* Free the existing memory */
   DPLAYX_PrivHeapFree( lpDplData->lpConn );
 
-  lpDplData->lpConn = DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY, 
+  lpDplData->lpConn = DPLAYX_PrivHeapAlloc( HEAP_ZERO_MEMORY,
                                             DPLAYX_SizeOfLobbyDataA( lpConn ) );
 
   DPLAYX_CopyConnStructA( lpDplData->lpConn, lpConn );
@@ -900,7 +900,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
 
 /* Store the structure into the shared data structre. Ensure that allocs for
  * variable length strings come from the shared data structure.
- * FIXME: We need to free information as well 
+ * FIXME: We need to free information as well
  */
 HRESULT DPLAYX_SetConnectionSettingsW
 ( DWORD dwFlags,
@@ -969,7 +969,7 @@ DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpConn )
     {
       dwTotalSize += strlen( lpConn->lpSessionDesc->u1.lpszSessionNameA ) + 1;
     }
- 
+
     if( lpConn->lpSessionDesc->u2.lpszPasswordA )
     {
       dwTotalSize += strlen( lpConn->lpSessionDesc->u2.lpszPasswordA ) + 1;
@@ -1052,8 +1052,8 @@ DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpConn )
 
 LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateSessionDesc2A( LPCDPSESSIONDESC2 lpSessionSrc )
 {
-   LPDPSESSIONDESC2 lpSessionDest = 
-     (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(), 
+   LPDPSESSIONDESC2 lpSessionDest =
+     (LPDPSESSIONDESC2)HeapAlloc( GetProcessHeap(),
                                   HEAP_ZERO_MEMORY, sizeof( *lpSessionSrc ) );
    DPLAYX_CopyIntoSessionDesc2A( lpSessionDest, lpSessionSrc );
 
@@ -1090,10 +1090,10 @@ LPDPSESSIONDESC2 DPLAYX_CopyAndAllocateLocalSession( UINT* index )
   {
     if( sessionData[(*index)].dwSize != 0 )
     {
-      return DPLAYX_CopyAndAllocateSessionDesc2A( &sessionData[(*index)++] ); 
+      return DPLAYX_CopyAndAllocateSessionDesc2A( &sessionData[(*index)++] );
     }
   }
- 
+
   /* No more sessions */
   return NULL;
 }
@@ -1119,14 +1119,14 @@ void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )
   UINT i;
 
   /* FIXME: Is this an error if it exists already? */
- 
+
   /* Crude/wrong implementation for now. Just always add to first empty spot */
   for( i=0; i < numSupportedSessions; i++ )
   {
     /* Is this one empty? */
     if( sessionData[i].dwSize == 0 )
     {
-      DPLAYX_CopyIntoSessionDesc2A( &sessionData[i], lpsd );  
+      DPLAYX_CopyIntoSessionDesc2A( &sessionData[i], lpsd );
       break;
     }
   }
@@ -1138,7 +1138,7 @@ BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait )
   LPDPLAYX_LOBBYDATA lpLobbyData;
 
   DPLAYX_AquireSemaphore();
-  
+
   if( !DPLAYX_IsAppIdLobbied( 0, &lpLobbyData ) )
   {
     DPLAYX_ReleaseSemaphore();
@@ -1164,9 +1164,9 @@ BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void)
     if( ( lobbyData[ i ].dwAppID != 0 ) &&            /* lobby initialized */
         ( lobbyData[ i ].bWaitForConnectionSettings ) /* Waiting */
       )
-    { 
+    {
       bFound = TRUE;
-      break; 
+      break;
     }
   }
 
@@ -1194,7 +1194,7 @@ BOOL DPLAYX_SetLobbyMsgThreadId( DWORD dwAppId, DWORD dwThreadId )
   return TRUE;
 }
 
-/* NOTE: This is potentially not thread safe. You are not guaranteed to end up 
+/* NOTE: This is potentially not thread safe. You are not guaranteed to end up
          with the correct string printed in the case where the HRESULT is not
          known. You'll just get the last hr passed in printed. This can change
          over time if this method is used alot :) */
@@ -1204,135 +1204,135 @@ LPCSTR DPLAYX_HresultToString(HRESULT hr)
 
   switch (hr)
   {
-    case DP_OK:  
+    case DP_OK:
       return "DP_OK";
-    case DPERR_ALREADYINITIALIZED: 
+    case DPERR_ALREADYINITIALIZED:
       return "DPERR_ALREADYINITIALIZED";
-    case DPERR_ACCESSDENIED: 
+    case DPERR_ACCESSDENIED:
       return "DPERR_ACCESSDENIED";
-    case DPERR_ACTIVEPLAYERS: 
+    case DPERR_ACTIVEPLAYERS:
       return "DPERR_ACTIVEPLAYERS";
-    case DPERR_BUFFERTOOSMALL: 
+    case DPERR_BUFFERTOOSMALL:
       return "DPERR_BUFFERTOOSMALL";
-    case DPERR_CANTADDPLAYER: 
+    case DPERR_CANTADDPLAYER:
       return "DPERR_CANTADDPLAYER";
-    case DPERR_CANTCREATEGROUP: 
+    case DPERR_CANTCREATEGROUP:
       return "DPERR_CANTCREATEGROUP";
-    case DPERR_CANTCREATEPLAYER: 
+    case DPERR_CANTCREATEPLAYER:
       return "DPERR_CANTCREATEPLAYER";
-    case DPERR_CANTCREATESESSION: 
+    case DPERR_CANTCREATESESSION:
       return "DPERR_CANTCREATESESSION";
-    case DPERR_CAPSNOTAVAILABLEYET: 
+    case DPERR_CAPSNOTAVAILABLEYET:
       return "DPERR_CAPSNOTAVAILABLEYET";
-    case DPERR_EXCEPTION: 
+    case DPERR_EXCEPTION:
       return "DPERR_EXCEPTION";
-    case DPERR_GENERIC: 
+    case DPERR_GENERIC:
       return "DPERR_GENERIC";
-    case DPERR_INVALIDFLAGS: 
+    case DPERR_INVALIDFLAGS:
       return "DPERR_INVALIDFLAGS";
-    case DPERR_INVALIDOBJECT: 
+    case DPERR_INVALIDOBJECT:
       return "DPERR_INVALIDOBJECT";
-    case DPERR_INVALIDPARAMS: 
+    case DPERR_INVALIDPARAMS:
       return "DPERR_INVALIDPARAMS";
-    case DPERR_INVALIDPLAYER: 
+    case DPERR_INVALIDPLAYER:
       return "DPERR_INVALIDPLAYER";
-    case DPERR_INVALIDGROUP: 
+    case DPERR_INVALIDGROUP:
       return "DPERR_INVALIDGROUP";
-    case DPERR_NOCAPS: 
+    case DPERR_NOCAPS:
       return "DPERR_NOCAPS";
-    case DPERR_NOCONNECTION: 
+    case DPERR_NOCONNECTION:
       return "DPERR_NOCONNECTION";
-    case DPERR_OUTOFMEMORY: 
+    case DPERR_OUTOFMEMORY:
       return "DPERR_OUTOFMEMORY";
-    case DPERR_NOMESSAGES: 
+    case DPERR_NOMESSAGES:
       return "DPERR_NOMESSAGES";
-    case DPERR_NONAMESERVERFOUND: 
+    case DPERR_NONAMESERVERFOUND:
       return "DPERR_NONAMESERVERFOUND";
-    case DPERR_NOPLAYERS: 
+    case DPERR_NOPLAYERS:
       return "DPERR_NOPLAYERS";
-    case DPERR_NOSESSIONS: 
+    case DPERR_NOSESSIONS:
       return "DPERR_NOSESSIONS";
-    case DPERR_PENDING: 
+    case DPERR_PENDING:
       return "DPERR_PENDING";
-    case DPERR_SENDTOOBIG: 
+    case DPERR_SENDTOOBIG:
       return "DPERR_SENDTOOBIG";
-    case DPERR_TIMEOUT: 
+    case DPERR_TIMEOUT:
       return "DPERR_TIMEOUT";
-    case DPERR_UNAVAILABLE: 
+    case DPERR_UNAVAILABLE:
       return "DPERR_UNAVAILABLE";
-    case DPERR_UNSUPPORTED: 
+    case DPERR_UNSUPPORTED:
       return "DPERR_UNSUPPORTED";
-    case DPERR_BUSY: 
+    case DPERR_BUSY:
       return "DPERR_BUSY";
-    case DPERR_USERCANCEL: 
+    case DPERR_USERCANCEL:
       return "DPERR_USERCANCEL";
-    case DPERR_NOINTERFACE: 
+    case DPERR_NOINTERFACE:
       return "DPERR_NOINTERFACE";
-    case DPERR_CANNOTCREATESERVER: 
+    case DPERR_CANNOTCREATESERVER:
       return "DPERR_CANNOTCREATESERVER";
-    case DPERR_PLAYERLOST: 
+    case DPERR_PLAYERLOST:
       return "DPERR_PLAYERLOST";
-    case DPERR_SESSIONLOST: 
+    case DPERR_SESSIONLOST:
       return "DPERR_SESSIONLOST";
-    case DPERR_UNINITIALIZED: 
+    case DPERR_UNINITIALIZED:
       return "DPERR_UNINITIALIZED";
-    case DPERR_NONEWPLAYERS: 
+    case DPERR_NONEWPLAYERS:
       return "DPERR_NONEWPLAYERS";
-    case DPERR_INVALIDPASSWORD: 
+    case DPERR_INVALIDPASSWORD:
       return "DPERR_INVALIDPASSWORD";
-    case DPERR_CONNECTING: 
+    case DPERR_CONNECTING:
       return "DPERR_CONNECTING";
-    case DPERR_CONNECTIONLOST: 
+    case DPERR_CONNECTIONLOST:
       return "DPERR_CONNECTIONLOST";
     case DPERR_UNKNOWNMESSAGE:
       return "DPERR_UNKNOWNMESSAGE";
-    case DPERR_CANCELFAILED: 
+    case DPERR_CANCELFAILED:
       return "DPERR_CANCELFAILED";
-    case DPERR_INVALIDPRIORITY: 
+    case DPERR_INVALIDPRIORITY:
       return "DPERR_INVALIDPRIORITY";
-    case DPERR_NOTHANDLED: 
+    case DPERR_NOTHANDLED:
       return "DPERR_NOTHANDLED";
-    case DPERR_CANCELLED: 
+    case DPERR_CANCELLED:
       return "DPERR_CANCELLED";
-    case DPERR_ABORTED: 
+    case DPERR_ABORTED:
       return "DPERR_ABORTED";
-    case DPERR_BUFFERTOOLARGE: 
+    case DPERR_BUFFERTOOLARGE:
       return "DPERR_BUFFERTOOLARGE";
-    case DPERR_CANTCREATEPROCESS: 
+    case DPERR_CANTCREATEPROCESS:
       return "DPERR_CANTCREATEPROCESS";
-    case DPERR_APPNOTSTARTED: 
+    case DPERR_APPNOTSTARTED:
       return "DPERR_APPNOTSTARTED";
-    case DPERR_INVALIDINTERFACE: 
+    case DPERR_INVALIDINTERFACE:
       return "DPERR_INVALIDINTERFACE";
-    case DPERR_NOSERVICEPROVIDER: 
+    case DPERR_NOSERVICEPROVIDER:
       return "DPERR_NOSERVICEPROVIDER";
-    case DPERR_UNKNOWNAPPLICATION: 
+    case DPERR_UNKNOWNAPPLICATION:
       return "DPERR_UNKNOWNAPPLICATION";
-    case DPERR_NOTLOBBIED: 
+    case DPERR_NOTLOBBIED:
       return "DPERR_NOTLOBBIED";
-    case DPERR_SERVICEPROVIDERLOADED: 
+    case DPERR_SERVICEPROVIDERLOADED:
       return "DPERR_SERVICEPROVIDERLOADED";
-    case DPERR_ALREADYREGISTERED: 
+    case DPERR_ALREADYREGISTERED:
       return "DPERR_ALREADYREGISTERED";
-    case DPERR_NOTREGISTERED: 
+    case DPERR_NOTREGISTERED:
       return "DPERR_NOTREGISTERED";
-    case DPERR_AUTHENTICATIONFAILED: 
+    case DPERR_AUTHENTICATIONFAILED:
       return "DPERR_AUTHENTICATIONFAILED";
-    case DPERR_CANTLOADSSPI: 
+    case DPERR_CANTLOADSSPI:
       return "DPERR_CANTLOADSSPI";
-    case DPERR_ENCRYPTIONFAILED: 
+    case DPERR_ENCRYPTIONFAILED:
       return "DPERR_ENCRYPTIONFAILED";
-    case DPERR_SIGNFAILED: 
+    case DPERR_SIGNFAILED:
       return "DPERR_SIGNFAILED";
-    case DPERR_CANTLOADSECURITYPACKAGE: 
+    case DPERR_CANTLOADSECURITYPACKAGE:
       return "DPERR_CANTLOADSECURITYPACKAGE";
-    case DPERR_ENCRYPTIONNOTSUPPORTED: 
+    case DPERR_ENCRYPTIONNOTSUPPORTED:
       return "DPERR_ENCRYPTIONNOTSUPPORTED";
-    case DPERR_CANTLOADCAPI: 
+    case DPERR_CANTLOADCAPI:
       return "DPERR_CANTLOADCAPI";
-    case DPERR_NOTLOGGEDIN: 
+    case DPERR_NOTLOGGEDIN:
       return "DPERR_NOTLOGGEDIN";
-    case DPERR_LOGONDENIED: 
+    case DPERR_LOGONDENIED:
       return "DPERR_LOGONDENIED";
     default:
       /* For errors not in the list, return HRESULT as a string

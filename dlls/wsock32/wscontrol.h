@@ -30,8 +30,8 @@
 
 typedef unsigned char uchar; /* This doesn't seem to be in any standard headers */
 
-#define WSCTL_SUCCESS        0         
-#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs 
+#define WSCTL_SUCCESS        0
+#define PROCFS_NETDEV_FILE   "/proc/net/dev" /* Points to the file in the /proc fs
                                                 that lists the network devices.
                                                 Do we need an #ifdef LINUX for this? */
 #define PROCFS_ROUTE_FILE    "/proc/net/route" /* Points to the file in the /proc fs
@@ -66,14 +66,14 @@ int WSCNTL_GetRouteTable(int numRoutes, wscntl_routeentry *routeTable); /* get t
 
 
 /* Structure of an entity ID */
-typedef struct TDIEntityID 
+typedef struct TDIEntityID
 {
    unsigned long tei_entity;
    unsigned long tei_instance;
 } TDIEntityID;
 
 /* Structure of an object ID */
-typedef struct TDIObjectID 
+typedef struct TDIObjectID
 {
    TDIEntityID   toi_entity;
    unsigned long toi_class;
@@ -81,7 +81,7 @@ typedef struct TDIObjectID
    unsigned long toi_id;
 } TDIObjectID;
 
-typedef struct IPSNMPInfo 
+typedef struct IPSNMPInfo
 {
    unsigned long  ipsi_forwarding;
    unsigned long  ipsi_defaultttl;
@@ -108,7 +108,7 @@ typedef struct IPSNMPInfo
    unsigned long  ipsi_numroutes;
 } IPSNMPInfo;
 
-typedef struct IPAddrEntry 
+typedef struct IPAddrEntry
 {
    unsigned long  iae_addr;
    unsigned long  iae_index;
@@ -127,7 +127,7 @@ typedef struct IPAddrEntry
 
 #define	MAX_PHYSADDR_SIZE    8
 #define	MAX_IFDESCR_LEN      256
-typedef struct IFEntry 
+typedef struct IFEntry
 {
    unsigned long if_index;
    unsigned long if_type;
@@ -155,7 +155,7 @@ typedef struct IFEntry
 } IFEntry;
 
 
-/* FIXME: real name and definition of this struct that contains 
+/* FIXME: real name and definition of this struct that contains
  * an IP route table entry is unknown */
 typedef struct IPRouteEntry {
    unsigned long ire_addr;

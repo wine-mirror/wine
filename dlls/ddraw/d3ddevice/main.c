@@ -1,6 +1,6 @@
 /* Direct3D Device
  * Copyright (c) 1998 Lionel ULMER
- *   
+ *
  * This file contains all the common stuff for D3D devices.
  *
  * This library is free software; you can redistribute it and/or
@@ -379,12 +379,12 @@ HRESULT WINAPI IDirect3DDevice2Impl_DrawPrimitive(
     LPVOID lpvertex, DWORD vertcount, DWORD dwFlags
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
-  
+
   TRACE("(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
   return D3D_OK;
 }
-    
+
 HRESULT WINAPI IDirect3DDevice2Impl_DrawIndexedPrimitive(
     LPDIRECT3DDEVICE2 iface, D3DPRIMITIVETYPE d3dp, D3DVERTEXTYPE d3dv,
     LPVOID lpvertex, DWORD vertcount, LPWORD lpindexes, DWORD indexcount,
@@ -670,7 +670,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
     FIXME("(%p)->(): stub\n", This);
-    return DD_OK;  
+    return DD_OK;
 }
 
 HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
@@ -685,7 +685,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
 /*******************************************************************************
  *				Direct3DDevice VTable
  */
-static ICOM_VTABLE(IDirect3DDevice) WINE_UNUSED d3d_d3ddevice_vtbl = 
+static ICOM_VTABLE(IDirect3DDevice) WINE_UNUSED d3d_d3ddevice_vtbl =
 {
   ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
   IDirect3DDeviceImpl_QueryInterface,

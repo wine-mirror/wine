@@ -36,15 +36,15 @@ static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
 
 int AlertIDS(UINT ids_message, UINT ids_caption, WORD type) {
   /*
-   * Given some ids strings, this acts as a language-aware wrapper for 
+   * Given some ids strings, this acts as a language-aware wrapper for
    * "MessageBox"
    */
    CHAR szMessage[MAX_STRING_LEN];
    CHAR szCaption[MAX_STRING_LEN];
-   
+
    LoadString(Globals.hInstance, ids_message, szMessage, sizeof(szMessage));
    LoadString(Globals.hInstance, ids_caption, szCaption, sizeof(szCaption));
-   
+
    return (MessageBox(Globals.hMainWnd, szMessage, szCaption, type));
 }
 
@@ -57,7 +57,7 @@ void AlertFileNotFound(LPSTR szFileName) {
    /* Load and format szMessage */
    LoadString(Globals.hInstance, STRING_NOTFOUND, szRessource, sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
-   
+
    /* Load szCaption */
    LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
 
@@ -76,7 +76,7 @@ int AlertFileNotSaved(LPSTR szFileName) {
 
    LoadString(Globals.hInstance, STRING_NOTSAVED, szRessource, sizeof(szRessource));
    wsprintf(szMessage, szRessource, szFileName);
-   
+
    /* Load Caption */
 
    LoadString(Globals.hInstance, STRING_ERROR,  szRessource, sizeof(szRessource));
@@ -89,7 +89,7 @@ int AlertFileNotSaved(LPSTR szFileName) {
 
 VOID AlertOutOfMemory(void) {
    int nResult;
-   
+
    nResult = AlertIDS(STRING_OUT_OF_MEMORY, STRING_ERROR, MB_ICONEXCLAMATION);
    PostQuitMessage(1);
 }
@@ -102,9 +102,9 @@ BOOL FileExists(LPCSTR szFilename) {
  */
    WIN32_FIND_DATA entry;
    HANDLE hFile;
-   
+
    hFile = FindFirstFile(szFilename, &entry);
-   
+
    return (hFile!=INVALID_HANDLE_VALUE);
 }
 
@@ -120,7 +120,7 @@ BOOL DoCloseFile(void) {
 /*               FALSE - User cancelled close by selecting "Cancel" */
 
     int nResult;
-   
+
     if (strlen(Globals.szFileName)>0) {
         /* prompt user to save changes */
         nResult = AlertFileNotSaved(Globals.szFileName);
@@ -132,12 +132,12 @@ BOOL DoCloseFile(void) {
 
             case IDCANCEL:  return(FALSE);
                             break;
-                      
+
             default:        return(FALSE);
                             break;
         } /* switch */
     } /* if */
-  
+
     /* Forget file name  */
     lstrcpy(Globals.szFileName, "");
     LANGUAGE_UpdateWindowCaption();
@@ -211,12 +211,12 @@ VOID DIALOG_FileOpen(VOID)
         openfilename.lpTemplateName    = 0;
 
         if (GetOpenFileName(&openfilename)) {
-                
+
                 if (FileExists(openfilename.lpstrFile))
                     DoOpenFile(openfilename.lpstrFile);
-                else 
+                else
                     AlertFileNotFound(openfilename.lpstrFile);
-                    
+
         }
 }
 
@@ -234,7 +234,7 @@ VOID DIALOG_FileSaveAs(VOID)
         CHAR szDir[MAX_PATHNAME_LEN];
         CHAR szDefaultExt[4];
         CHAR szzFilter[2 * MAX_STRING_LEN + 100];
-       
+
         LPSTR p = szzFilter;
 
         lstrcpy(szDefaultExt, "txt");
@@ -356,7 +356,7 @@ VOID DIALOG_FilePrint(VOID)
         if (TRUE) {
              /* Remove "Print Selection" if there is no selection */
              bFlags = bFlags + PD_NOSELECTION;
-        } 
+        }
 
         printer.Flags                 = bFlags;
 /*
@@ -414,7 +414,7 @@ VOID DIALOG_FilePrint(VOID)
                        AlertOutOfMemory();
                        break;
                default:
-                       MessageBox(Globals.hMainWnd, "Default", "Print", MB_ICONEXCLAMATION); 
+                       MessageBox(Globals.hMainWnd, "Default", "Print", MB_ICONEXCLAMATION);
             } /* switch */
             nResult = EndDoc(hContext);
             assert(nResult>=0);
@@ -454,7 +454,7 @@ VOID DIALOG_FilePrinterSetup(VOID)
         printer.lpSetupTemplateName  = 0;
         printer.hPrintTemplate       = 0;
         printer.hSetupTemplate       = 0;
-        
+
         if (PrintDlg(&printer)) {
             /* do nothing */
         };
@@ -538,7 +538,7 @@ VOID DIALOG_EditTimeDate(VOID)
     LPSYSTEMTIME lpst = &st;
     CHAR         szDate[MAX_STRING_LEN];
     LPSTR        date = szDate;
-    
+
     GetLocalTime(&st);
     GetDateFormat(LOCALE_USER_DEFAULT, LOCALE_SLONGDATE, lpst, NULL, date, MAX_STRING_LEN);
     GetTimeFormat(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, lpst, NULL, date, MAX_STRING_LEN);
@@ -548,7 +548,7 @@ VOID DIALOG_EditTimeDate(VOID)
 VOID DIALOG_EditWrap(VOID)
 {
         Globals.bWrapLongLines = !Globals.bWrapLongLines;
-        CheckMenuItem(Globals.hEditMenu, 0x119, MF_BYCOMMAND | 
+        CheckMenuItem(Globals.hEditMenu, 0x119, MF_BYCOMMAND |
         (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
 }
 

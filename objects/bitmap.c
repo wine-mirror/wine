@@ -93,7 +93,7 @@ HBITMAP16 WINAPI CreateUserBitmap16( INT16 width, INT16 height, UINT16 planes,
 /***********************************************************************
  *           CreateUserDiscardableBitmap    (GDI.409)
  */
-HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy, 
+HBITMAP16 WINAPI CreateUserDiscardableBitmap16( WORD dummy,
                                                 INT16 width, INT16 height )
 {
     HDC hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
@@ -215,9 +215,9 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 	      width, height );
     } else {
         /* MS doc says if width or height is 0, return 1-by-1 pixel, monochrome bitmap */
-        if (!width || !height) 
+        if (!width || !height)
 	   hbmpRet = CreateBitmap( 1, 1, 1, 1, NULL );
-	else 
+	else
 	   hbmpRet = CreateBitmap( width, height, 1, dc->bitsPerPixel, NULL );
 
         if (!BITMAP_SetOwnerDC( hbmpRet, dc ))
@@ -268,7 +268,7 @@ LONG WINAPI GetBitmapBits16( HBITMAP16 hbitmap, LONG count, LPVOID buffer )
 
 /***********************************************************************
  * GetBitmapBits [GDI32.@]  Copies bitmap bits of bitmap to buffer
- * 
+ *
  * RETURNS
  *    Success: Number of bytes copied
  *    Failure: 0
@@ -280,9 +280,9 @@ LONG WINAPI GetBitmapBits(
 {
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     LONG height, ret;
-    
+
     if (!bmp) return 0;
-    
+
     /* If the bits vector is null, the function should return the read size */
     if(bits == NULL)
     {
@@ -361,7 +361,7 @@ LONG WINAPI SetBitmapBits(
 {
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     LONG height, ret;
-    
+
     if ((!bmp) || (!bits))
 	return 0;
 
@@ -609,7 +609,7 @@ static INT BITMAP_GetObject16( HGDIOBJ handle, void *obj, INT count, LPVOID buff
 	return count;
     }
 }
-    
+
 
 /***********************************************************************
  *           BITMAP_GetObject
@@ -639,7 +639,7 @@ static INT BITMAP_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer
 	return count;
     }
 }
-    
+
 
 /***********************************************************************
  *           CreateDiscardableBitmap    (GDI.156)

@@ -64,10 +64,10 @@ DWORD WINAPI WNetOpenEnumW( DWORD dwScope, DWORD dwType, DWORD dwUsage,
 /*********************************************************************
  * WNetEnumResourceA [MPR.@]
  */
-DWORD WINAPI WNetEnumResourceA( HANDLE hEnum, LPDWORD lpcCount, 
+DWORD WINAPI WNetEnumResourceA( HANDLE hEnum, LPDWORD lpcCount,
                                 LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%04X, %p, %p, %p): stub\n", 
+    FIXME( "(%04X, %p, %p, %p): stub\n",
 	    hEnum, lpcCount, lpBuffer, lpBufferSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -77,10 +77,10 @@ DWORD WINAPI WNetEnumResourceA( HANDLE hEnum, LPDWORD lpcCount,
 /*********************************************************************
  * WNetEnumResourceW [MPR.@]
  */
-DWORD WINAPI WNetEnumResourceW( HANDLE hEnum, LPDWORD lpcCount, 
+DWORD WINAPI WNetEnumResourceW( HANDLE hEnum, LPDWORD lpcCount,
                                 LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%04X, %p, %p, %p): stub\n", 
+    FIXME( "(%04X, %p, %p, %p): stub\n",
 	    hEnum, lpcCount, lpBuffer, lpBufferSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -101,8 +101,8 @@ DWORD WINAPI WNetCloseEnum( HANDLE hEnum )
 /*********************************************************************
  * WNetGetResourceInformationA [MPR.@]
  */
-DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource, 
-                                          LPVOID lpBuffer, LPDWORD cbBuffer, 
+DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
+                                          LPVOID lpBuffer, LPDWORD cbBuffer,
                                           LPSTR *lplpSystem )
 {
     FIXME( "(%p, %p, %p, %p): stub\n",
@@ -115,8 +115,8 @@ DWORD WINAPI WNetGetResourceInformationA( LPNETRESOURCEA lpNetResource,
 /*********************************************************************
  * WNetGetResourceInformationW [MPR.@]
  */
-DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource, 
-                                          LPVOID lpBuffer, LPDWORD cbBuffer, 
+DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource,
+                                          LPVOID lpBuffer, LPDWORD cbBuffer,
                                           LPWSTR *lplpSystem )
 {
     FIXME( "(%p, %p, %p, %p): stub\n",
@@ -132,7 +132,7 @@ DWORD WINAPI WNetGetResourceInformationW( LPNETRESOURCEW lpNetResource,
 DWORD WINAPI WNetGetResourceParentA( LPNETRESOURCEA lpNetResource,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%p, %p, %p): stub\n", 
+    FIXME( "(%p, %p, %p): stub\n",
            lpNetResource, lpBuffer, lpBufferSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -145,7 +145,7 @@ DWORD WINAPI WNetGetResourceParentA( LPNETRESOURCEA lpNetResource,
 DWORD WINAPI WNetGetResourceParentW( LPNETRESOURCEW lpNetResource,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%p, %p, %p): stub\n", 
+    FIXME( "(%p, %p, %p): stub\n",
            lpNetResource, lpBuffer, lpBufferSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -164,7 +164,7 @@ DWORD WINAPI WNetGetResourceParentW( LPNETRESOURCEW lpNetResource,
 DWORD WINAPI WNetAddConnectionA( LPCSTR lpRemoteName, LPCSTR lpPassword,
                                  LPCSTR lpLocalName )
 {
-    FIXME( "(%s, %p, %s): stub\n", 
+    FIXME( "(%s, %p, %s): stub\n",
            debugstr_a(lpRemoteName), lpPassword, debugstr_a(lpLocalName) );
 
     SetLastError(WN_NO_NETWORK);
@@ -177,7 +177,7 @@ DWORD WINAPI WNetAddConnectionA( LPCSTR lpRemoteName, LPCSTR lpPassword,
 DWORD WINAPI WNetAddConnectionW( LPCWSTR lpRemoteName, LPCWSTR lpPassword,
                                  LPCWSTR lpLocalName )
 {
-    FIXME( "(%s, %p, %s): stub\n", 
+    FIXME( "(%s, %p, %s): stub\n",
            debugstr_w(lpRemoteName), lpPassword, debugstr_w(lpLocalName) );
 
     SetLastError(WN_NO_NETWORK);
@@ -188,10 +188,10 @@ DWORD WINAPI WNetAddConnectionW( LPCWSTR lpRemoteName, LPCWSTR lpPassword,
  *  WNetAddConnection2A [MPR.@]
  */
 DWORD WINAPI WNetAddConnection2A( LPNETRESOURCEA lpNetResource,
-                                  LPCSTR lpPassword, LPCSTR lpUserID, 
+                                  LPCSTR lpPassword, LPCSTR lpUserID,
                                   DWORD dwFlags )
 {
-    FIXME( "(%p, %p, %s, 0x%08lX): stub\n", 
+    FIXME( "(%p, %p, %s, 0x%08lX): stub\n",
            lpNetResource, lpPassword, debugstr_a(lpUserID), dwFlags );
 
     SetLastError(WN_NO_NETWORK);
@@ -202,10 +202,10 @@ DWORD WINAPI WNetAddConnection2A( LPNETRESOURCEA lpNetResource,
  * WNetAddConnection2W [MPR.@]
  */
 DWORD WINAPI WNetAddConnection2W( LPNETRESOURCEW lpNetResource,
-                                  LPCWSTR lpPassword, LPCWSTR lpUserID, 
+                                  LPCWSTR lpPassword, LPCWSTR lpUserID,
                                   DWORD dwFlags )
 {
-    FIXME( "(%p, %p, %s, 0x%08lX): stub\n", 
+    FIXME( "(%p, %p, %s, 0x%08lX): stub\n",
            lpNetResource, lpPassword, debugstr_w(lpUserID), dwFlags );
 
     SetLastError(WN_NO_NETWORK);
@@ -216,10 +216,10 @@ DWORD WINAPI WNetAddConnection2W( LPNETRESOURCEW lpNetResource,
  * WNetAddConnection3A [MPR.@]
  */
 DWORD WINAPI WNetAddConnection3A( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
-                                  LPCSTR lpPassword, LPCSTR lpUserID, 
+                                  LPCSTR lpPassword, LPCSTR lpUserID,
                                   DWORD dwFlags )
 {
-    FIXME( "(%04x, %p, %p, %s, 0x%08lX), stub\n", 
+    FIXME( "(%04x, %p, %p, %s, 0x%08lX), stub\n",
            hwndOwner, lpNetResource, lpPassword, debugstr_a(lpUserID), dwFlags );
 
     SetLastError(WN_NO_NETWORK);
@@ -230,25 +230,25 @@ DWORD WINAPI WNetAddConnection3A( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
  * WNetAddConnection3W [MPR.@]
  */
 DWORD WINAPI WNetAddConnection3W( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
-                                  LPCWSTR lpPassword, LPCWSTR lpUserID, 
+                                  LPCWSTR lpPassword, LPCWSTR lpUserID,
                                   DWORD dwFlags )
 {
-    FIXME( "(%04x, %p, %p, %s, 0x%08lX), stub\n", 
+    FIXME( "(%04x, %p, %p, %s, 0x%08lX), stub\n",
            hwndOwner, lpNetResource, lpPassword, debugstr_w(lpUserID), dwFlags );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
-} 
+}
 
 /*****************************************************************
  *  WNetUseConnectionA [MPR.@]
  */
 DWORD WINAPI WNetUseConnectionA( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
                                  LPCSTR lpPassword, LPCSTR lpUserID, DWORD dwFlags,
-                                 LPSTR lpAccessName, LPDWORD lpBufferSize, 
+                                 LPSTR lpAccessName, LPDWORD lpBufferSize,
                                  LPDWORD lpResult )
 {
-    FIXME( "(%04x, %p, %p, %s, 0x%08lX, %s, %p, %p), stub\n", 
+    FIXME( "(%04x, %p, %p, %s, 0x%08lX, %s, %p, %p), stub\n",
            hwndOwner, lpNetResource, lpPassword, debugstr_a(lpUserID), dwFlags,
            debugstr_a(lpAccessName), lpBufferSize, lpResult );
 
@@ -264,7 +264,7 @@ DWORD WINAPI WNetUseConnectionW( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
                                  LPWSTR lpAccessName, LPDWORD lpBufferSize,
                                  LPDWORD lpResult )
 {
-    FIXME( "(%04x, %p, %p, %s, 0x%08lX, %s, %p, %p), stub\n", 
+    FIXME( "(%04x, %p, %p, %s, 0x%08lX, %s, %p, %p), stub\n",
            hwndOwner, lpNetResource, lpPassword, debugstr_w(lpUserID), dwFlags,
            debugstr_w(lpAccessName), lpBufferSize, lpResult );
 
@@ -285,7 +285,7 @@ DWORD WINAPI WNetCancelConnectionA( LPCSTR lpName, BOOL fForce )
 /*********************************************************************
  *  WNetCancelConnectionW [MPR.@]
  */
-DWORD WINAPI WNetCancelConnectionW( LPCWSTR lpName, BOOL fForce ) 
+DWORD WINAPI WNetCancelConnectionW( LPCWSTR lpName, BOOL fForce )
 {
     FIXME( "(%s, %d), stub\n", debugstr_w(lpName), fForce );
 
@@ -295,7 +295,7 @@ DWORD WINAPI WNetCancelConnectionW( LPCWSTR lpName, BOOL fForce )
 /*********************************************************************
  *  WNetCancelConnection2A [MPR.@]
  */
-DWORD WINAPI WNetCancelConnection2A( LPCSTR lpName, DWORD dwFlags, BOOL fForce ) 
+DWORD WINAPI WNetCancelConnection2A( LPCSTR lpName, DWORD dwFlags, BOOL fForce )
 {
     FIXME( "(%s, %08lX, %d), stub\n", debugstr_a(lpName), dwFlags, fForce );
 
@@ -305,7 +305,7 @@ DWORD WINAPI WNetCancelConnection2A( LPCSTR lpName, DWORD dwFlags, BOOL fForce )
 /*********************************************************************
  *  WNetCancelConnection2W [MPR.@]
  */
-DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce ) 
+DWORD WINAPI WNetCancelConnection2W( LPCWSTR lpName, DWORD dwFlags, BOOL fForce )
 {
     FIXME( "(%s, %08lX, %d), stub\n", debugstr_w(lpName), dwFlags, fForce );
 
@@ -341,10 +341,10 @@ DWORD WINAPI WNetRestoreConnectionW( HWND hwndOwner, LPWSTR lpszDevice )
  * - WN_BAD_LOCALNAME     lpLocalName makes no sense
  * - WN_NOT_CONNECTED     drive is a local drive
  * - WN_MORE_DATA         buffer isn't big enough
- * - WN_SUCCESS           success (net path in buffer)  
+ * - WN_SUCCESS           success (net path in buffer)
  *
  */
-DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName, 
+DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
                                  LPSTR lpRemoteName, LPDWORD lpBufferSize )
 {
     char label[40];
@@ -380,7 +380,7 @@ DWORD WINAPI WNetGetConnectionA( LPCSTR lpLocalName,
 /**************************************************************************
  * WNetGetConnectionW [MPR.@]
  */
-DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName, 
+DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName,
                                  LPWSTR lpRemoteName, LPDWORD lpBufferSize )
 {
     CHAR  buf[200];
@@ -407,7 +407,7 @@ DWORD WINAPI WNetGetConnectionW( LPCWSTR lpLocalName,
 /**************************************************************************
  * WNetSetConnectionA [MPR.@]
  */
-DWORD WINAPI WNetSetConnectionA( LPCSTR lpName, DWORD dwProperty, 
+DWORD WINAPI WNetSetConnectionA( LPCSTR lpName, DWORD dwProperty,
                                  LPVOID pvValue )
 {
     FIXME( "(%s, %08lX, %p): stub\n", debugstr_a(lpName), dwProperty, pvValue );
@@ -419,7 +419,7 @@ DWORD WINAPI WNetSetConnectionA( LPCSTR lpName, DWORD dwProperty,
 /**************************************************************************
  * WNetSetConnectionW [MPR.@]
  */
-DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty, 
+DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty,
                                  LPVOID pvValue )
 {
     FIXME( "(%s, %08lX, %p): stub\n", debugstr_w(lpName), dwProperty, pvValue );
@@ -431,10 +431,10 @@ DWORD WINAPI WNetSetConnectionW( LPCWSTR lpName, DWORD dwProperty,
 /*****************************************************************
  * WNetGetUniversalNameA [MPR.@]
  */
-DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel, 
+DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%s, 0x%08lX, %p, %p): stub\n", 
+    FIXME( "(%s, 0x%08lX, %p, %p): stub\n",
            debugstr_a(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
 
     SetLastError(WN_NO_NETWORK);
@@ -444,10 +444,10 @@ DWORD WINAPI WNetGetUniversalNameA ( LPCSTR lpLocalPath, DWORD dwInfoLevel,
 /*****************************************************************
  * WNetGetUniversalNameW [MPR.@]
  */
-DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel, 
+DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
                                      LPVOID lpBuffer, LPDWORD lpBufferSize )
 {
-    FIXME( "(%s, 0x%08lX, %p, %p): stub\n", 
+    FIXME( "(%s, 0x%08lX, %p, %p): stub\n",
            debugstr_w(lpLocalPath), dwInfoLevel, lpBuffer, lpBufferSize);
 
     SetLastError(WN_NO_NETWORK);
@@ -474,9 +474,9 @@ DWORD WINAPI WNetGetUserA( LPCSTR lpName, LPSTR lpUserID, LPDWORD lpBufferSize )
 /*****************************************************************
  * WNetGetUserW [MPR.@]
  */
-DWORD WINAPI WNetGetUserW( LPCWSTR lpName, LPWSTR lpUserID, LPDWORD lpBufferSize ) 
+DWORD WINAPI WNetGetUserW( LPCWSTR lpName, LPWSTR lpUserID, LPDWORD lpBufferSize )
 {
-    FIXME( "(%s, %p, %p): mostly stub\n", 
+    FIXME( "(%s, %p, %p): mostly stub\n",
            debugstr_w(lpName), lpUserID, lpBufferSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -485,9 +485,9 @@ DWORD WINAPI WNetGetUserW( LPCWSTR lpName, LPWSTR lpUserID, LPDWORD lpBufferSize
 
 /*********************************************************************
  * WNetConnectionDialog [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetConnectionDialog( HWND hwnd, DWORD dwType )
-{ 
+{
     FIXME( "(%04x, %08lX): stub\n", hwnd, dwType );
 
     SetLastError(WN_NO_NETWORK);
@@ -498,7 +498,7 @@ DWORD WINAPI WNetConnectionDialog( HWND hwnd, DWORD dwType )
  * WNetConnectionDialog1A [MPR.@]
  */
 DWORD WINAPI WNetConnectionDialog1A( LPCONNECTDLGSTRUCTA lpConnDlgStruct )
-{ 
+{
     FIXME( "(%p): stub\n", lpConnDlgStruct );
 
     SetLastError(WN_NO_NETWORK);
@@ -507,9 +507,9 @@ DWORD WINAPI WNetConnectionDialog1A( LPCONNECTDLGSTRUCTA lpConnDlgStruct )
 
 /*********************************************************************
  * WNetConnectionDialog1W [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetConnectionDialog1W( LPCONNECTDLGSTRUCTW lpConnDlgStruct )
-{ 
+{
     FIXME( "(%p): stub\n", lpConnDlgStruct );
 
     SetLastError(WN_NO_NETWORK);
@@ -518,9 +518,9 @@ DWORD WINAPI WNetConnectionDialog1W( LPCONNECTDLGSTRUCTW lpConnDlgStruct )
 
 /*********************************************************************
  * WNetDisconnectDialog [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetDisconnectDialog( HWND hwnd, DWORD dwType )
-{ 
+{
     FIXME( "(%04x, %08lX): stub\n", hwnd, dwType );
 
     SetLastError(WN_NO_NETWORK);
@@ -529,9 +529,9 @@ DWORD WINAPI WNetDisconnectDialog( HWND hwnd, DWORD dwType )
 
 /*********************************************************************
  * WNetDisconnectDialog1A [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetDisconnectDialog1A( LPDISCDLGSTRUCTA lpConnDlgStruct )
-{ 
+{
     FIXME( "(%p): stub\n", lpConnDlgStruct );
 
     SetLastError(WN_NO_NETWORK);
@@ -540,9 +540,9 @@ DWORD WINAPI WNetDisconnectDialog1A( LPDISCDLGSTRUCTA lpConnDlgStruct )
 
 /*********************************************************************
  * WNetDisconnectDialog1W [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetDisconnectDialog1W( LPDISCDLGSTRUCTW lpConnDlgStruct )
-{ 
+{
     FIXME( "(%p): stub\n", lpConnDlgStruct );
 
     SetLastError(WN_NO_NETWORK);
@@ -551,12 +551,12 @@ DWORD WINAPI WNetDisconnectDialog1W( LPDISCDLGSTRUCTW lpConnDlgStruct )
 
 /*********************************************************************
  * WNetGetLastErrorA [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetGetLastErrorA( LPDWORD lpError,
                                 LPSTR lpErrorBuf, DWORD nErrorBufSize,
                                 LPSTR lpNameBuf, DWORD nNameBufSize )
 {
-    FIXME( "(%p, %p, %ld, %p, %ld): stub\n", 
+    FIXME( "(%p, %p, %ld, %p, %ld): stub\n",
            lpError, lpErrorBuf, nErrorBufSize, lpNameBuf, nNameBufSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -565,12 +565,12 @@ DWORD WINAPI WNetGetLastErrorA( LPDWORD lpError,
 
 /*********************************************************************
  * WNetGetLastErrorW [MPR.@]
- */ 
+ */
 DWORD WINAPI WNetGetLastErrorW( LPDWORD lpError,
                                 LPWSTR lpErrorBuf, DWORD nErrorBufSize,
                          LPWSTR lpNameBuf, DWORD nNameBufSize )
 {
-    FIXME( "(%p, %p, %ld, %p, %ld): stub\n", 
+    FIXME( "(%p, %p, %ld, %p, %ld): stub\n",
            lpError, lpErrorBuf, nErrorBufSize, lpNameBuf, nNameBufSize );
 
     SetLastError(WN_NO_NETWORK);
@@ -579,8 +579,8 @@ DWORD WINAPI WNetGetLastErrorW( LPDWORD lpError,
 
 /*********************************************************************
  * WNetGetNetworkInformationA [MPR.@]
- */ 
-DWORD WINAPI WNetGetNetworkInformationA( LPCSTR lpProvider, 
+ */
+DWORD WINAPI WNetGetNetworkInformationA( LPCSTR lpProvider,
                                          LPNETINFOSTRUCT lpNetInfoStruct )
 {
     FIXME( "(%s, %p): stub\n", debugstr_a(lpProvider), lpNetInfoStruct );
@@ -591,8 +591,8 @@ DWORD WINAPI WNetGetNetworkInformationA( LPCSTR lpProvider,
 
 /*********************************************************************
  * WNetGetNetworkInformationW [MPR.@]
- */ 
-DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider, 
+ */
+DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider,
                                          LPNETINFOSTRUCT lpNetInfoStruct )
 {
     FIXME( "(%s, %p): stub\n", debugstr_w(lpProvider), lpNetInfoStruct );
@@ -604,7 +604,7 @@ DWORD WINAPI WNetGetNetworkInformationW( LPCWSTR lpProvider,
 /*****************************************************************
  *  WNetGetProviderNameA [MPR.@]
  */
-DWORD WINAPI WNetGetProviderNameA( DWORD dwNetType, 
+DWORD WINAPI WNetGetProviderNameA( DWORD dwNetType,
                                    LPSTR lpProvider, LPDWORD lpBufferSize )
 {
     FIXME( "(%ld, %p, %p): stub\n", dwNetType, lpProvider, lpBufferSize );
@@ -617,7 +617,7 @@ DWORD WINAPI WNetGetProviderNameA( DWORD dwNetType,
  *  WNetGetProviderNameW [MPR.@]
  */
 DWORD WINAPI WNetGetProviderNameW( DWORD dwNetType,
-                                   LPWSTR lpProvider, LPDWORD lpBufferSize ) 
+                                   LPWSTR lpProvider, LPDWORD lpBufferSize )
 {
     FIXME( "(%ld, %p, %p): stub\n", dwNetType, lpProvider, lpBufferSize );
 

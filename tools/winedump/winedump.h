@@ -124,7 +124,7 @@ typedef struct __globals
 
   /* Option arguments: dump mode */
   const char *dumpsect;    /* -j */
-    
+
   /* internal options */
   int   do_ordinals;
 } _globals;

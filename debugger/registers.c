@@ -84,7 +84,7 @@ char *DEBUG_Flags( DWORD flag, char *buf )
 /***********************************************************************
  *           DEBUG_InfoRegisters
  *
- * Display registers information. 
+ * Display registers information.
  */
 void DEBUG_InfoRegisters(void)
 {
@@ -113,11 +113,11 @@ void DEBUG_InfoRegisters(void)
     {
         char flag[33];
 
-        DEBUG_Printf( DBG_CHN_MESG, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n", 
+        DEBUG_Printf( DBG_CHN_MESG, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
 		      DEBUG_context.Eip, DEBUG_context.Esp,
 		      DEBUG_context.Ebp, DEBUG_context.EFlags,
 		      DEBUG_Flags(DEBUG_context.EFlags, flag));
-	DEBUG_Printf( DBG_CHN_MESG, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n", 
+	DEBUG_Printf( DBG_CHN_MESG, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
 		      DEBUG_context.Eax, DEBUG_context.Ebx,
 		      DEBUG_context.Ecx, DEBUG_context.Edx );
 	DEBUG_Printf( DBG_CHN_MESG, " ESI:%08lx EDI:%08lx\n",

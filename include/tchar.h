@@ -220,9 +220,9 @@ DECL_WINELIB_TYPE_AW(_TCHAR)
 typedef UCHAR  _TUCHARA;
 typedef WCHAR _TUCHARW;
 DECL_WINELIB_TYPE_AW(_TUCHAR)
-	 
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-				 
+
 #endif /* __WINE_TCHAR_H */

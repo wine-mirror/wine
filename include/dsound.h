@@ -35,7 +35,7 @@ DEFINE_GUID(CLSID_DirectSound,		0x47d4d946, 0x62e8, 0x11cf, 0x93, 0xbc, 0x44, 0x
 DEFINE_GUID(IID_IDirectSound,		0x279AFA83,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSound IDirectSound,*LPDIRECTSOUND;
 
-DEFINE_GUID(IID_IDirectSoundBuffer,	0x279AFA85,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60); 
+DEFINE_GUID(IID_IDirectSoundBuffer,	0x279AFA85,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSoundBuffer IDirectSoundBuffer,*LPDIRECTSOUNDBUFFER,**LPLPDIRECTSOUNDBUFFER;
 
 DEFINE_GUID(IID_IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
@@ -44,7 +44,7 @@ typedef struct IDirectSoundNotify IDirectSoundNotify,*LPDIRECTSOUNDNOTIFY;
 DEFINE_GUID(IID_IDirectSound3DListener,	0x279AFA84,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSound3DListener IDirectSound3DListener,*LPDIRECTSOUND3DLISTENER;
 
-DEFINE_GUID(IID_IDirectSound3DBuffer,	0x279AFA86,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60); 
+DEFINE_GUID(IID_IDirectSound3DBuffer,	0x279AFA86,0x4981,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60);
 typedef struct IDirectSound3DBuffer IDirectSound3DBuffer,*LPDIRECTSOUND3DBUFFER;
 
 DEFINE_GUID(IID_IDirectSoundCapture,	0xB0210781,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
@@ -52,7 +52,7 @@ typedef struct IDirectSoundCapture IDirectSoundCapture,*LPDIRECTSOUNDCAPTURE;
 
 DEFINE_GUID(IID_IDirectSoundCaptureBuffer,0xB0210782,0x89CD,0x11D0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
 typedef struct IDirectSoundCaptureBuffer IDirectSoundCaptureBuffer,*LPDIRECTSOUNDCAPTUREBUFFER;
-  
+
 DEFINE_GUID(DSDEVID_WinePlayback, 0x40316A1D,0x605B,0xD611,0x87,0xC6,0x00,0x80,0xAD,0x00,0x02,0xFE);
 
 DEFINE_GUID(IID_IKsPropertySet,		0x31EFAC30,0x515C,0x11D0,0xA9,0xAA,0x00,0xAA,0x00,0x61,0xBE,0x93);
@@ -233,7 +233,7 @@ typedef const DSCBCAPS *LPCDSCBCAPS;
 #ifndef __LPCGUID_DEFINED__
 #define __LPCGUID_DEFINED__
 typedef const GUID *LPCGUID;
-#endif 
+#endif
 
 typedef LPVOID* LPLPVOID;
 
@@ -353,8 +353,8 @@ ICOM_DEFINE(IDirectSoundCapture,IUnknown)
 #undef ICOM_INTERFACE
 
 #define IDirectSoundCapture_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundCapture_AddRef(p)                    ICOM_CALL (AddRef,p) 
-#define IDirectSoundCapture_Release(p)                   ICOM_CALL (Release,p) 
+#define IDirectSoundCapture_AddRef(p)                    ICOM_CALL (AddRef,p)
+#define IDirectSoundCapture_Release(p)                   ICOM_CALL (Release,p)
 #define IDirectSoundCapture_CreateCaptureBuffer(p,a,b,c) ICOM_CALL3(CreateCaptureBuffer,p,a,b,c)
 #define IDirectSoundCapture_GetCaps(p,a)                 ICOM_CALL (GetCaps,p,a)
 #define IDirectSoundCapture_Initialize(p,a)              ICOM_CALL (Initialize,p,a)
@@ -372,7 +372,7 @@ ICOM_DEFINE(IDirectSoundCapture,IUnknown)
     ICOM_METHOD7(HRESULT,Lock,                DWORD,dwReadCusor, DWORD,dwReadBytes, LPVOID*,lplpvAudioPtr1, LPDWORD,lpdwAudioBytes1, LPVOID*,lplpvAudioPtr2, LPDWORD,lpdwAudioBytes2, DWORD,dwFlags) \
     ICOM_METHOD1(HRESULT,Start,               DWORD,dwFlags) \
     ICOM_METHOD (HRESULT,Stop) \
-    ICOM_METHOD4(HRESULT,Unlock,              LPVOID,lpvAudioPtr1, DWORD,dwAudioBytes1, LPVOID,lpvAudioPtr2, DWORD,dwAudioBytes2)               
+    ICOM_METHOD4(HRESULT,Unlock,              LPVOID,lpvAudioPtr1, DWORD,dwAudioBytes1, LPVOID,lpvAudioPtr2, DWORD,dwAudioBytes2)
 
 #define IDirectSoundCaptureBuffer_IMETHODS \
     IUnknown_IMETHODS \
@@ -381,14 +381,14 @@ ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
 #undef ICOM_INTERFACE
 
 #define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
-#define IDirectSoundCaptureBuffer_AddRef(p)                 ICOM_CALL (AddRef,p) 
-#define IDirectSoundCaptureBuffer_Release(p)                ICOM_CALL (Release,p) 
+#define IDirectSoundCaptureBuffer_AddRef(p)                 ICOM_CALL (AddRef,p)
+#define IDirectSoundCaptureBuffer_Release(p)                ICOM_CALL (Release,p)
 #define IDirectSoundCaptureBuffer_GetCurrentPosition(p,a,b) ICOM_CALL2(GetCurrentPosition,p,a,b)
-#define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        ICOM_CALL3(GetFormat,p,a,b,c) 
-#define IDirectSoundCaptureBuffer_GetStatus(p,a)            ICOM_CALL1(GetStatus,p,a) 
-#define IDirectSoundCaptureBuffer_Initialize(p,a,b)         ICOM_CALL2(Initialize,p,a,b) 
+#define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        ICOM_CALL3(GetFormat,p,a,b,c)
+#define IDirectSoundCaptureBuffer_GetStatus(p,a)            ICOM_CALL1(GetStatus,p,a)
+#define IDirectSoundCaptureBuffer_Initialize(p,a,b)         ICOM_CALL2(Initialize,p,a,b)
 #define IDirectSoundCaptureBuffer_Lock(p,a,b,c,d,e,f,g)     ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
-#define IDirectSoundCaptureBuffer_Start(p,a)                ICOM_CALL1(Start,p,a) 
+#define IDirectSoundCaptureBuffer_Start(p,a)                ICOM_CALL1(Start,p,a)
 #define IDirectSoundCaptureBuffer_Stop(p)                   ICOM_CALL (Stop,p)
 #define IDirectSoundCaptureBuffer_Unlock(p,a,b,c,d)         ICOM_CALL4(Unlock,p,a,b,c,d)
 
@@ -459,7 +459,7 @@ typedef struct _DS3DLISTENER {
 } DS3DLISTENER, *LPDS3DLISTENER;
 
 typedef const DS3DLISTENER *LPCDS3DLISTENER;
-	
+
 #define ICOM_INTERFACE IDirectSound3DListener
 #define IDirectSound3DListener_METHODS \
     ICOM_METHOD1(HRESULT,GetAllParameters,  LPDS3DLISTENER,lpListener) \

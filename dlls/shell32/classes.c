@@ -1,5 +1,5 @@
 /*
- *	file type mapping 
+ *	file type mapping
  *	(HKEY_CLASSES_ROOT - Stuff)
  *
  * Copyright 1998, 1999, 2000 Juergen Schmied
@@ -50,7 +50,7 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 	  strcpy(szTemp, ".");
 
 	lstrcpynA(szTemp+((bPrependDot)?1:0), szExtension, MAX_EXTENSION_LENGTH);
-	
+
 	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,szTemp,0,0x02000000,&hkey))
 	{ return FALSE;
 	}
@@ -58,7 +58,7 @@ BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL 
 	if (RegQueryValueA(hkey,NULL,szFileType,&len))
 	{ RegCloseKey(hkey);
 	  return FALSE;
-	}	
+	}
 
 	RegCloseKey(hkey);
 
@@ -72,7 +72,7 @@ BOOL HCR_GetExecuteCommand ( LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD 
 	char	sTemp[MAX_PATH];
 	DWORD	dwType;
 	BOOL	ret = FALSE;
-	
+
 	TRACE("%s %s\n",szClass, szVerb );
 
 	sprintf(sTemp, "%s\\shell\\%s\\command",szClass, szVerb);
@@ -125,7 +125,7 @@ BOOL HCR_GetDefaultIcon (LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr)
                *dwNr=0; /* sometimes the icon number is missing */
 	    ParseFieldA (szDest, 1, szDest, len);
 	    ret = TRUE;
-	  }	
+	  }
 	  RegCloseKey(hkey);
 	}
 	TRACE("-- %s %li\n", szDest, *dwNr );
@@ -161,7 +161,7 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 	}
 
 	if (!ret || !szDest[0])
-	{ 
+	{
 	  if(IsEqualIID(riid, &CLSID_ShellDesktop))
 	  {
 	    if (LoadStringA(shell32_hInstance, IDS_DESKTOP, szDest, buflen))
@@ -171,7 +171,7 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 	  {
 	    if(LoadStringA(shell32_hInstance, IDS_MYCOMPUTER, szDest, buflen))
 	      ret = TRUE;
-	  }	
+	  }
 	}
 
 	TRACE("-- %s\n", szDest);
@@ -201,7 +201,7 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 
 	if (!szDest) return FALSE;
 	*szDest = SFGAO_FOLDER|SFGAO_FILESYSTEM;
-	
+
 	strcat (xriid, "\\ShellFolder");
 
 	if (RegOpenKeyExA(HKEY_CLASSES_ROOT,xriid,0,KEY_READ,&hkey))
@@ -224,7 +224,7 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 	return TRUE;
 }
 
-typedef struct 
+typedef struct
 {	ICOM_VFIELD(IQueryAssociations);
 	DWORD	ref;
 } IQueryAssociationsImpl;
@@ -262,7 +262,7 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
 
 	if(IsEqualIID(riid, &IID_IUnknown))		/*IUnknown*/
 	{
-	  *ppvObj = This; 
+	  *ppvObj = This;
 	}
 	else if(IsEqualIID(riid, &IID_IQueryAssociations))	/*IExtractIcon*/
 	{
@@ -271,7 +271,7 @@ static HRESULT WINAPI IQueryAssociations_fnQueryInterface(
 
 	if(*ppvObj)
 	{
-	  IQueryAssociations_AddRef((IQueryAssociations*) *ppvObj);  	
+	  IQueryAssociations_AddRef((IQueryAssociations*) *ppvObj);
 	  TRACE("-- Interface: (%p)->(%p)\n",ppvObj,*ppvObj);
 	  return S_OK;
 	}
@@ -303,7 +303,7 @@ static ULONG WINAPI IQueryAssociations_fnRelease(IQueryAssociations * iface)
 
 	shell32_ObjCount--;
 
-	if (!--(This->ref)) 
+	if (!--(This->ref))
 	{
 	  TRACE(" destroying IExtractIcon(%p)\n",This);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -364,14 +364,14 @@ static HRESULT WINAPI IQueryAssociations_fnGetEnum(
 	return E_NOTIMPL;
 }
 
-static struct ICOM_VTABLE(IQueryAssociations) qavt = 
-{	
+static struct ICOM_VTABLE(IQueryAssociations) qavt =
+{
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	IQueryAssociations_fnQueryInterface,
 	IQueryAssociations_fnAddRef,
 	IQueryAssociations_fnRelease,
 	IQueryAssociations_fnInit,
-	IQueryAssociations_fnGetString,	
+	IQueryAssociations_fnGetString,
 	IQueryAssociations_fnGetKey,
 	IQueryAssociations_fnGetData,
 	IQueryAssociations_fnGetEnum

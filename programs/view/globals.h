@@ -17,8 +17,8 @@
  */
 
 /* for SMALL_RECT */
-#include "wincon.h" 
-#include "resource.h" 
+#include "wincon.h"
+#include "resource.h"
 
 /*  Add global function prototypes here */
 

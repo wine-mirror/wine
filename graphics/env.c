@@ -1,4 +1,4 @@
-/* 
+/*
  * Driver Environment functions
  *
  * Note: This has NOTHING to do with the task/process environment!
@@ -41,7 +41,7 @@ static ENVTABLE EnvTable[20];
 static ENVTABLE *SearchEnvTable(ATOM atom)
 {
     INT16 i;
-    
+
     for (i = 19; i >= 0; i--) {
       if (EnvTable[i].atom == atom)
 	return &EnvTable[i];
@@ -55,7 +55,7 @@ static ATOM GDI_GetNullPortAtom(void)
     if (!NullPortAtom)
     {
         char NullPort[256];
-        
+
         GetProfileStringA( "windows", "nullport", "none",
                              NullPort, sizeof(NullPort) );
         NullPortAtom = AddAtomA( NullPort );
@@ -113,7 +113,7 @@ INT16 WINAPI GetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nMaxSi
  */
 INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nCount)
 {
-    ATOM atom; 
+    ATOM atom;
     BOOL16 nullport = FALSE;
     LPSTR p;
     ENVTABLE *env;

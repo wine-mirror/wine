@@ -296,7 +296,7 @@ VOID PROGRAM_DeleteProgram(HLOCAL hProgram, BOOL bUpdateGrpFile)
     ((PROGRAM*)LocalLock(program->hPrior))->hNext = program->hNext;
   else
     ((PROGGROUP*)LocalLock(program->hGroup))->hPrograms = program->hNext;
-	
+
   if (program->hNext)
     ((PROGRAM*)LocalLock(program->hNext))->hPrior = program->hPrior;
 

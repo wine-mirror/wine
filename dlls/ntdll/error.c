@@ -1,6 +1,6 @@
 /*
  * NTDLL error handling
- * 
+ *
  * Copyright 2000 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or

@@ -39,9 +39,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 #include "cdlg.h"
 
 #define BUFFILE 512
-#define BUFFILEALLOC 512 * sizeof(WCHAR)   
+#define BUFFILEALLOC 512 * sizeof(WCHAR)
 
-struct FSPRIVATE 
+struct FSPRIVATE
 {
     HWND hwnd; /* file dialog window handle */
     BOOL hook; /* TRUE if the dialog is hooked */
@@ -64,7 +64,7 @@ struct FSPRIVATE
 #define LFS16 1
 #define LFS32A 2
 #define LFS32W 3
- 
+
 static const WCHAR FILE_star[] = {'*','.','*', 0};
 static const WCHAR FILE_bslash[] = {'\\', 0};
 static const WCHAR FILE_specc[] = {'%','c',':', 0};
@@ -117,7 +117,7 @@ static BOOL FileDlg_Init(void)
         hHDisk   = LoadImageA( inst, "HDISK", IMAGE_ICON, 16, 16, LR_SHARED );
         hCDRom   = LoadImageA( inst, "CDROM", IMAGE_ICON, 16, 16, LR_SHARED );
         hNet     = LoadImageA( inst, "NETWORK", IMAGE_ICON, 16, 16, LR_SHARED );
-	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
+	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 ||
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{
 	    ERR("Error loading icons !\n");
@@ -174,7 +174,7 @@ BOOL Get32BitsTemplate(LFSPRIVATE lfs)
 	}
     } else { /* get it from internal Wine resource */
 	HANDLE hResInfo;
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, 
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
              lfs->open? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -229,7 +229,7 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
         LPCVOID template32;
         DWORD size;
 
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, 
+	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32,
                lfs->open ? "OPEN_FILE":"SAVE_FILE", RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -376,7 +376,7 @@ static LPWSTR FILEDLG_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
   int n, i;
   i = 0;
   if (cfptr)
-    for ( ;(n = lstrlenW(cfptr)) != 0; i++) 
+    for ( ;(n = lstrlenW(cfptr)) != 0; i++)
       {
 	cfptr += n + 1;
 	if (i == index)
@@ -384,7 +384,7 @@ static LPWSTR FILEDLG_GetFileType(LPWSTR cfptr, LPWSTR fptr, WORD index)
 	cfptr += lstrlenW(cfptr) + 1;
       }
   if (fptr)
-    for ( ;(n = lstrlenW(fptr)) != 0; i++) 
+    for ( ;(n = lstrlenW(fptr)) != 0; i++)
       {
 	fptr += n + 1;
 	if (i == index)
@@ -407,7 +407,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
         if (!(str = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC))) return FALSE;
-	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID,
                       (LPARAM)str);
 
 	if ((lpdis->itemState & ODS_SELECTED) && !savedlg)
@@ -438,7 +438,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
     {
         if (!(str = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
             return FALSE;
-	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+	SendMessageW(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID,
                       (LPARAM)str);
 
 	if (lpdis->itemState & ODS_SELECTED)
@@ -467,7 +467,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
         char root[] = "a:";
         if (!(str = HeapAlloc(GetProcessHeap(), 0, BUFFILEALLOC)))
             return FALSE;
-	SendMessageW(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID, 
+	SendMessageW(lpdis->hwndItem, CB_GETLBTEXT, lpdis->itemID,
                       (LPARAM)str);
         root[0] += str[2] - 'a';
         switch(GetDriveTypeA(root))
@@ -502,10 +502,10 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,
 /***********************************************************************
  *                              FILEDLG_WMMeasureItem           [internal]
  */
-static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam) 
+static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     LPMEASUREITEMSTRUCT lpmeasure;
-    
+
     lpmeasure = (LPMEASUREITEMSTRUCT)lParam;
     lpmeasure->itemHeight = fldrHeight;
     return TRUE;
@@ -514,10 +514,10 @@ static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_WMMeasureItem16         [internal]
  */
-static LONG FILEDLG_WMMeasureItem16(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
+static LONG FILEDLG_WMMeasureItem16(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPMEASUREITEMSTRUCT16 lpmeasure;
-    
+
     lpmeasure = MapSL(lParam);
     lpmeasure->itemHeight = fldrHeight;
     return TRUE;
@@ -583,10 +583,10 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   /* set default filter */
   if (ofn->nFilterIndex == 0 && ofn->lpstrCustomFilter == NULL)
   	ofn->nFilterIndex = 1;
-  SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);    
+  SendDlgItemMessageW(hWnd, cmb1, CB_SETCURSEL, ofn->nFilterIndex - 1, 0);
   lstrcpynW(tmpstr, FILEDLG_GetFileType(ofn->lpstrCustomFilter,
 	     (LPWSTR)ofn->lpstrFilter, ofn->nFilterIndex - 1),BUFFILE);
-  TRACE("nFilterIndex = %ld, SetText of edt1 to %s\n", 
+  TRACE("nFilterIndex = %ld, SetText of edt1 to %s\n",
   			ofn->nFilterIndex, debugstr_w(tmpstr));
   SetDlgItemTextW( hWnd, edt1, tmpstr );
   /* get drive list */
@@ -597,7 +597,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
    * the OPENFILENAME structure).  For example under 2000/XP any path in the
    * lpstrFile overrides the lpstrInitialDir, but not under 95/98/ME
    */
-  if (ofn->lpstrInitialDir != NULL) 
+  if (ofn->lpstrInitialDir != NULL)
     {
       int len;
       lstrcpynW(tmpstr, ofn->lpstrInitialDir, 511);
@@ -638,7 +638,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 /***********************************************************************
  *                              FILEDLG_UpdateResult            [internal]
- *      update the displayed file name (with path) 
+ *      update the displayed file name (with path)
  */
 void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
 {
@@ -695,13 +695,13 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
 
 /***********************************************************************
  *                              FILEDLG_UpdateFileTitle         [internal]
- *      update the displayed file name (without path) 
+ *      update the displayed file name (without path)
  */
 void FILEDLG_UpdateFileTitle(LFSPRIVATE lfs)
 {
   LONG lRet;
   LPOPENFILENAMEW ofnW = lfs->ofnW;
-  if (ofnW->lpstrFileTitle != NULL) 
+  if (ofnW->lpstrFileTitle != NULL)
   {
     lRet = SendDlgItemMessageW(lfs->hwnd, lst1, LB_GETCURSEL, 0, 0);
     SendDlgItemMessageW(lfs->hwnd, lst1, LB_GETTEXT, lRet,
@@ -907,7 +907,7 @@ static LRESULT FILEDLG_Validate( LFSPRIVATE lfs, LPWSTR path, UINT control, INT 
     {
         lRet = (BOOL)FILEDLG_CallWindowProc(lfs, lfs->fileokstring,
                   0, lfs->lParam );
-        if (lRet)       
+        if (lRet)
         {
             *ofnW = ofnsav; /* restore old state */
             return FALSE;
@@ -945,7 +945,7 @@ static LRESULT FILEDLG_DiskChange( LFSPRIVATE lfs )
     SendDlgItemMessageW(hWnd, cmb2, CB_GETLBTEXT, lRet,
                          (LPARAM)pstr);
     wsprintfW(diskname, FILE_specc, pstr[2]);
-    HeapFree(GetProcessHeap(), 0, pstr);    
+    HeapFree(GetProcessHeap(), 0, pstr);
 
     return FILEDLG_Validate( lfs, diskname, cmb2, lRet, TRUE );
 }
@@ -977,7 +977,7 @@ static LRESULT FILEDLG_FileTypeChange( LFSPRIVATE lfs )
  *                              FILEDLG_WMCommand               [internal]
  */
 static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
-       UINT control, LFSPRIVATE lfs ) 
+       UINT control, LFSPRIVATE lfs )
 {
     switch (control)
     {
@@ -1000,7 +1000,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, LPARAM lParam, UINT notification,
         break;
 
         case cmb1: /* file type drop list */
-        if (notification == CBN_SELCHANGE) 
+        if (notification == CBN_SELCHANGE)
             return FILEDLG_FileTypeChange( lfs );
         break;
 
@@ -1117,7 +1117,7 @@ void FILEDLG_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open
         ofnW->lpstrInitialDir = HEAP_strdupAtoW(GetProcessHeap(),0,ofnA->lpstrInitialDir);
     if (ofnA->lpstrTitle)
         str = ofnA->lpstrTitle;
-    else 
+    else
         /* Allocates default title (FIXME : get it from resource) */
         str = open ? defaultopen:defaultsave;
     ofnW->lpstrTitle = HEAP_strdupAtoW(GetProcessHeap(),0, str);
@@ -1174,7 +1174,7 @@ void FILEDLG_MapOfnStruct16(LPOPENFILENAME16 ofn16, LPOPENFILENAMEW ofnW, BOOL o
 
 /************************************************************************
  *                              FILEDLG_DestroyPrivate            [internal]
- *      destroys the private object 
+ *      destroys the private object
  */
 void FILEDLG_DestroyPrivate(LFSPRIVATE lfs)
 {
@@ -1209,7 +1209,7 @@ void FILEDLG_DestroyPrivate(LFSPRIVATE lfs)
 
 /************************************************************************
  *                              FILEDLG_AllocPrivate            [internal]
- *      allocate a private object to hold 32 bits Unicode 
+ *      allocate a private object to hold 32 bits Unicode
  *      structure that will be used throughtout the calls, while
  *      keeping available the original structures and a few variables
  *      On entry : type = dialog procedure type (16,32A,32W)
@@ -1264,7 +1264,7 @@ LFSPRIVATE FILEDLG_AllocPrivate(LPARAM lParam, int type, UINT dlgType)
             if (lfs->ofnA)
                 FILEDLG_MapOfnStructA(lfs->ofnA, lfs->ofnW, lfs->open);
         }
-        else 
+        else
             ret = NULL;
     }
     if (lfs->ofn16)
@@ -1283,7 +1283,7 @@ LFSPRIVATE FILEDLG_AllocPrivate(LPARAM lParam, int type, UINT dlgType)
  *
  * Creates a win31 style dialog box for the user to select a file to open/save.
  */
-BOOL WINAPI GetFileName31A( 
+BOOL WINAPI GetFileName31A(
                            LPOPENFILENAMEA lpofn, /* addess of structure with data*/
                            UINT dlgType /* type dialogue : open/save */
                           )
@@ -1298,7 +1298,7 @@ BOOL WINAPI GetFileName31A(
     if (lfs)
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
-        bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner, 
+        bRet = DialogBoxIndirectParamA( hInst, lfs->template, lpofn->hwndOwner,
              (DLGPROC) FileOpenDlgProc, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
@@ -1313,7 +1313,7 @@ BOOL WINAPI GetFileName31A(
  *
  * Creates a win31 style dialog box for the user to select a file to open/save
  */
-BOOL WINAPI GetFileName31W( 
+BOOL WINAPI GetFileName31W(
                            LPOPENFILENAMEW lpofn, /* addess of structure with data*/
                            UINT dlgType /* type dialogue : open/save */
                           )
@@ -1328,7 +1328,7 @@ BOOL WINAPI GetFileName31W(
     if (lfs)
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
-        bRet = DialogBoxIndirectParamW( hInst, lfs->template, lpofn->hwndOwner, 
+        bRet = DialogBoxIndirectParamW( hInst, lfs->template, lpofn->hwndOwner,
              (DLGPROC) FileOpenDlgProc, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
@@ -1345,15 +1345,15 @@ BOOL WINAPI GetFileName31W(
  */
 LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
-{  
+{
     LFSPRIVATE lfs = (LFSPRIVATE)GetPropA(hWnd,OFN_PROP);
     DRAWITEMSTRUCT dis;
- 
+
     TRACE("msg=%x wparam=%x lParam=%lx\n", wMsg, wParam, lParam);
     if ((wMsg != WM_INITDIALOG) && lfs && lfs->hook)
         {
             LRESULT lRet = (BOOL16)FILEDLG_CallWindowProc(lfs, wMsg, wParam, lParam);
-            if (lRet)   
+            if (lRet)
                 return lRet;         /* else continue message processing */
         }
     switch (wMsg)
@@ -1402,16 +1402,16 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
   {
    LRESULT  lRet;
    lRet = (BOOL16)FILEDLG_CallWindowProc(lfs, wMsg, wParam, lParam);
-   if (lRet)   
+   if (lRet)
     return lRet;         /* else continue message processing */
-  }             
+  }
   switch (wMsg) {
    case WM_INITDIALOG:
       return FILEDLG_WMInitDialog(hWnd, wParam, lParam);
-      
+
    case WM_MEASUREITEM:
       return FILEDLG_WMMeasureItem16(hWnd, wParam, lParam);
-    
+
    case WM_DRAWITEM:
       FILEDLG_MapDrawItemStruct(MapSL(lParam), &dis);
       return FILEDLG_WMDrawItem(hWnd, wParam, lParam, TRUE, &dis);
@@ -1419,7 +1419,7 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
    case WM_COMMAND:
       return FILEDLG_WMCommand(hWnd, lParam, HIWORD(lParam), wParam, lfs);
   }
-  
+
   /*
   case WM_CTLCOLOR:
    SetBkColor((HDC16)wParam, 0x00C0C0C0);
@@ -1433,14 +1433,14 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
      return hGRAYBrush;
    }
    return FALSE;
-   
+
    */
   return FALSE;
 }
 
 /***********************************************************************
  *           FileOpenDlgProc                                    [internal]
- *      Used for open and save, in fact.   
+ *      Used for open and save, in fact.
  */
 static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
                                       WPARAM wParam, LPARAM lParam)
@@ -1452,7 +1452,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
         {
             LRESULT lRet;
             lRet  = (BOOL)FILEDLG_CallWindowProc(lfs, wMsg, wParam, lParam);
-            if (lRet)   
+            if (lRet)
                 return lRet;         /* else continue message processing */
         }
     switch (wMsg)
@@ -1486,7 +1486,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
     return FALSE;
 }
 
-/* ------------------ APIs ---------------------- */ 
+/* ------------------ APIs ---------------------- */
 
 /***********************************************************************
  *           GetOpenFileName   (COMMDLG.1)
@@ -1500,7 +1500,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
  * BUGS
  *    unknown, there are some FIXME's left.
  */
-BOOL16 WINAPI GetOpenFileName16( 
+BOOL16 WINAPI GetOpenFileName16(
 				SEGPTR ofn /* [in/out] address of structure with data*/
 				)
 {
@@ -1517,7 +1517,7 @@ BOOL16 WINAPI GetOpenFileName16(
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 6);
-        bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner, 
+        bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
              (DLGPROC16) ptr, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);
     }
@@ -1538,7 +1538,7 @@ BOOL16 WINAPI GetOpenFileName16(
  * BUGS
  *    unknown. There are some FIXME's left.
  */
-BOOL16 WINAPI GetSaveFileName16( 
+BOOL16 WINAPI GetSaveFileName16(
 				SEGPTR ofn /* [in/out] addess of structure with data*/
 				)
 {
@@ -1555,10 +1555,10 @@ BOOL16 WINAPI GetSaveFileName16(
     {
         hInst = GetWindowLongA( lpofn->hwndOwner, GWL_HINSTANCE );
         ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (LPCSTR) 7);
-        bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner, 
+        bRet = DialogBoxIndirectParam16( hInst, lfs->hDlgTmpl16, lpofn->hwndOwner,
              (DLGPROC16) ptr, (DWORD) lfs);
         FILEDLG_DestroyPrivate(lfs);
-    } 
+    }
 
     TRACE("return lpstrFile='%s' !\n", (char *)MapSL(lpofn->lpstrFile));
     return bRet;
@@ -1650,7 +1650,7 @@ BOOL WINAPI GetSaveFileNameA(
     if (newlook)
     {
         return GetFileDialog95A(ofn, SAVE_DIALOG);
-    } 
+    }
     else
     {
         return GetFileName31A(ofn, SAVE_DIALOG);
@@ -1681,7 +1681,7 @@ BOOL WINAPI GetSaveFileNameW(
     if (newlook)
     {
         return GetFileDialog95W(ofn, SAVE_DIALOG);
-    } 
+    }
     else
     {
         return GetFileName31W(ofn, SAVE_DIALOG);

@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /*************************************************************************
  * PickIconDlg					[SHELL32.62]
- * 
+ *
  */
 BOOL WINAPI PickIconDlg(
 	HWND hwndOwner,

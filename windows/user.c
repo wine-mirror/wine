@@ -2,7 +2,7 @@
  * Misc. USER functions
  *
  * Copyright 1993 Robert J. Amstadt
- *	     1996 Alex Korobka 
+ *	     1996 Alex Korobka
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -166,7 +166,7 @@ void WINAPI FinalUserInit16( void )
  *		SignalProc32 (USER.391)
  *		UserSignalProc (USER32.@)
  *
- * For comments about the meaning of uCode and dwFlags 
+ * For comments about the meaning of uCode and dwFlags
  * see PROCESS_CallUserSignalProc.
  *
  */
@@ -278,7 +278,7 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
   MESSAGE("\tflags=");_dump_CDS_flags(flags);MESSAGE("\n");
   if (devmode==NULL)
     FIXME_(system)("   devmode=NULL (return to default mode)\n");
-  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP)) 
+  else if ( (devmode->dmBitsPerPel != GetSystemMetrics(SM_WINE_BPP))
 	    || (devmode->dmPelsHeight != GetSystemMetrics(SM_CYSCREEN))
 	    || (devmode->dmPelsWidth != GetSystemMetrics(SM_CXSCREEN)) )
 
@@ -290,9 +290,9 @@ LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
       FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
     if (devmode->dmFields & DM_PELSHEIGHT)
       FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
-    FIXME_(system)(" (Putting X in this mode beforehand might help)\n"); 
+    FIXME_(system)(" (Putting X in this mode beforehand might help)\n");
     /* we don't, but the program ... does not need to know */
-    return DISP_CHANGE_SUCCESSFUL; 
+    return DISP_CHANGE_SUCCESSFUL;
   }
   return DISP_CHANGE_SUCCESSFUL;
 }
@@ -309,7 +309,7 @@ LONG WINAPI ChangeDisplaySettings16( LPDEVMODEA devmode, DWORD flags )
 /***********************************************************************
  *		ChangeDisplaySettingsExA (USER32.@)
  */
-LONG WINAPI ChangeDisplaySettingsExA( 
+LONG WINAPI ChangeDisplaySettingsExA(
 	LPCSTR devname, LPDEVMODEA devmode, HWND hwnd, DWORD flags,
 	LPARAM lparam
 ) {
@@ -329,9 +329,9 @@ LONG WINAPI ChangeDisplaySettingsExA(
       FIXME_(system)("   width=%ld\n",devmode->dmPelsWidth);
     if (devmode->dmFields & DM_PELSHEIGHT)
       FIXME_(system)("   height=%ld\n",devmode->dmPelsHeight);
-    FIXME_(system)(" (Putting X in this mode beforehand might help)\n"); 
+    FIXME_(system)(" (Putting X in this mode beforehand might help)\n");
     /* we don't, but the program ... does not need to know */
-    return DISP_CHANGE_SUCCESSFUL; 
+    return DISP_CHANGE_SUCCESSFUL;
   }
   return DISP_CHANGE_SUCCESSFUL;
 }
@@ -415,7 +415,7 @@ BOOL16 WINAPI EnumDisplaySettings16(
  *		EnumDisplaySettingsExA (USER32.@)
  */
 BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
-				   LPDEVMODEA lpDevMode, DWORD dwFlags) 
+				   LPDEVMODEA lpDevMode, DWORD dwFlags)
 {
         TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
 		       debugstr_a(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
@@ -427,7 +427,7 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
  *		EnumDisplaySettingsExW (USER32.@)
  */
 BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
-				   LPDEVMODEW lpDevMode, DWORD dwFlags) 
+				   LPDEVMODEW lpDevMode, DWORD dwFlags)
 {
 	TRACE_(system)("(%s,%lu,%p,%08lx): stub\n",
 			debugstr_w(lpszDeviceName), iModeNum, lpDevMode, dwFlags);
@@ -500,7 +500,7 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
     case USUD_LOCALHEAP:
         return USER_HeapSel;
     case USUD_FIRSTCLASS:
-        FIXME_(local)("return a pointer to the first window class.\n"); 
+        FIXME_(local)("return a pointer to the first window class.\n");
         return (DWORD)-1;
     default:
         WARN_(local)("wReqType %04x (unknown)", wReqType);

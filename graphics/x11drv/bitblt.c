@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 #define OP_ARGS(src,dst)  (((src) << 2) | (dst))
 
 #define OP_SRC(opcode)    ((opcode) >> 6)
-#define OP_DST(opcode)    (((opcode) >> 4) & 3) 
+#define OP_DST(opcode)    (((opcode) >> 4) & 3)
 #define OP_SRCDST(opcode) ((opcode) >> 4)
 #define OP_ROP(opcode)    ((opcode) & 0x0f)
 
@@ -786,7 +786,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                 ysrc += yinc;
                 ydst++;
             }
-        }        
+        }
     }
     else  /* Shrinking */
     {
@@ -838,7 +838,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
             else if (((ydst + yinc) >> 16 == ydst >> 16) &&
                      (ysrc < visRectSrc->bottom-1))
                 continue;  /* Restart loop for next overlapping row */
-        
+
             /* Store the destination row */
             pixel = rowDst + visRectDst->right - 1;
             y = (ydst >> 16) - visRectDst->top;
@@ -848,7 +848,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
                 memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
                         widthDst*sizeof(int) );
         }
-    }        
+    }
     HeapFree( GetProcessHeap(), 0, rowSrc );
 }
 
@@ -935,7 +935,7 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
                 /* MSDN says if StretchBlt must convert a bitmap from monochrome
                    to color or vice versa, the forground and background color of
                    the device context are used.  In fact, it also applies to the
-                   case when it is converted from mono to mono. */ 
+                   case when it is converted from mono to mono. */
                 XSetBackground( gdi_display, gc, physDevDst->textPixel );
                 XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
                 XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
@@ -1136,9 +1136,9 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
     rect.bottom = ySrc + heightSrc;
     if (widthSrc < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
-    /* Apparently the clipping and visible regions are only for output, 
+    /* Apparently the clipping and visible regions are only for output,
        so just check against totalExtent here to avoid BadMatch errors */
-    if (!IntersectRect( visRectSrc, &rect, &dcSrc->totalExtent )) 
+    if (!IntersectRect( visRectSrc, &rect, &dcSrc->totalExtent ))
         return FALSE;
 
       /* Intersect the rectangles */
@@ -1323,7 +1323,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
                 XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
             }
             XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                            visRectDst.left, visRectDst.top, width, height ); 
+                            visRectDst.left, visRectDst.top, width, height );
             wine_tsx11_unlock();
             return TRUE;
         }

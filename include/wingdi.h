@@ -124,7 +124,7 @@ typedef struct tagCOLORADJUSTMENT
 #define ILLUMINANT_MAX_INDEX        ILLUMINANT_F2
 
 #define ILLUMINANT_TUNGSTEN         ILLUMINANT_A
-#define ILLUMINANT_DAYLIGHT         ILLUMINANT_C 
+#define ILLUMINANT_DAYLIGHT         ILLUMINANT_C
 #define ILLUMINANT_FLUORESCENT      ILLUMINANT_F2
 #define ILLUMINANT_NTSC             ILLUMINANT_C
 
@@ -405,7 +405,7 @@ DECL_WINELIB_TYPE_AW(LOGCOLORSPACE)
 #define WHITEONBLACK         2
 #define COLORONCOLOR	     3
 #define HALFTONE             4
-#define MAXSTRETCHBLTMODE    4 
+#define MAXSTRETCHBLTMODE    4
 
 #define STRETCH_ANDSCANS     BLACKONWHITE
 #define STRETCH_ORSCANS      WHITEONBLACK
@@ -468,7 +468,7 @@ typedef struct
   /* Brushes */
 
 typedef struct
-{ 
+{
     UINT     lbStyle;
     COLORREF   lbColor;
     INT      lbHatch;
@@ -592,7 +592,7 @@ DECL_WINELIB_TYPE_AW(LPENUMLOGFONTEX)
  *        for which the font provides glyphs.
  *
  * fsCsb  64-bit bitmap. The low 32 bits map the Windows codepages for
- *        which the font provides glyphs. The high 32 bits are for 
+ *        which the font provides glyphs. The high 32 bits are for
  *        non Windows codepages.
  */
 typedef struct
@@ -601,7 +601,7 @@ typedef struct
   DWORD fsCsb[2];
 } FONTSIGNATURE, *PFONTSIGNATURE, *LPFONTSIGNATURE;
 
-typedef struct 
+typedef struct
 {
   UINT	ciCharset; /* character set */
   UINT	ciACP; /* ANSI code page */
@@ -626,7 +626,7 @@ typedef struct
 #define MWT_LEFTMULTIPLY  2
 #define MWT_RIGHTMULTIPLY 3
 #define MWT_MIN           MWT_IDENTITY
-#define MWT_MAX           MWT_RIGHTMULTIPLY      
+#define MWT_MAX           MWT_RIGHTMULTIPLY
 
 /* Object Definitions for EnumObjects() */
 #define OBJ_PEN             1
@@ -1239,7 +1239,7 @@ typedef struct
 #define GGO_GRAY4_BITMAP    5
 #define GGO_GRAY8_BITMAP    6
 #define GGO_GLYPH_INDEX     0x80
- 
+
 typedef struct
 {
     WORD    fract;
@@ -1365,7 +1365,7 @@ typedef struct
 
 #define TT_PRIM_LINE    1
 #define TT_PRIM_QSPLINE 2
-#define TT_POLYGON_TYPE 24 
+#define TT_POLYGON_TYPE 24
 
 /* Get/SetSystemPaletteUse() values */
 #define SYSPAL_ERROR    0
@@ -1383,7 +1383,7 @@ typedef struct tagPALETTEENTRY
 #define PC_NOCOLLAPSE   0x04
 
 typedef struct tagLOGPALETTE
-{ 
+{
     WORD           palVersion;
     WORD           palNumEntries;
     PALETTEENTRY   palPalEntry[1];
@@ -1393,7 +1393,7 @@ typedef struct tagLOGPALETTE
 
 typedef struct
 {
-    UINT     lopnStyle; 
+    UINT     lopnStyle;
     POINT    lopnWidth;
     COLORREF lopnColor;
 } LOGPEN, *LPLOGPEN;
@@ -1769,7 +1769,7 @@ typedef struct
 #define DIB_PAL_COLORS   1
 #define CBM_INIT         4
 
-typedef struct 
+typedef struct
 {
 	BITMAP		dsBm;
 	BITMAPINFOHEADER	dsBmih;
@@ -1931,20 +1931,20 @@ typedef INT (CALLBACK *MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,
 /* note that ENHMETAHEADER is just a particular kind of ENHMETARECORD,
    ie. the header is just the first record in the metafile */
 typedef struct {
-    DWORD iType; 
-    DWORD nSize; 
-    RECTL rclBounds; 
-    RECTL rclFrame; 
-    DWORD dSignature; 
-    DWORD nVersion; 
-    DWORD nBytes; 
-    DWORD nRecords; 
-    WORD  nHandles; 
-    WORD  sReserved; 
-    DWORD nDescription; 
-    DWORD offDescription; 
-    DWORD nPalEntries; 
-    SIZEL szlDevice; 
+    DWORD iType;
+    DWORD nSize;
+    RECTL rclBounds;
+    RECTL rclFrame;
+    DWORD dSignature;
+    DWORD nVersion;
+    DWORD nBytes;
+    DWORD nRecords;
+    WORD  nHandles;
+    WORD  sReserved;
+    DWORD nDescription;
+    DWORD offDescription;
+    DWORD nPalEntries;
+    SIZEL szlDevice;
     SIZEL szlMillimeters;
 
     /* Fields for winver >= win95 */
@@ -1952,16 +1952,16 @@ typedef struct {
     DWORD offPixelFormat;
     DWORD bOpenGL;
 
-    /* Fields for winver >= win98 */ 
+    /* Fields for winver >= win98 */
     SIZEL szlMicrometers;
 
-} ENHMETAHEADER, *PENHMETAHEADER, *LPENHMETAHEADER; 
+} ENHMETAHEADER, *PENHMETAHEADER, *LPENHMETAHEADER;
 
 typedef struct {
-    DWORD iType; 
-    DWORD nSize; 
-    DWORD dParm[1]; 
-} ENHMETARECORD, *LPENHMETARECORD; 
+    DWORD iType;
+    DWORD nSize;
+    DWORD dParm[1];
+} ENHMETARECORD, *LPENHMETARECORD;
 
 typedef struct {
     DWORD iType;
@@ -2270,7 +2270,7 @@ typedef struct {
     DWORD    iUsageMask;
     DWORD    offBmiMask;
     DWORD    cbBmiMask;
-    DWORD    offBitsMask; 
+    DWORD    offBitsMask;
     DWORD    cbBitsMask;
 } EMRPLGBLT, *PEMRPLGBLT;
 
@@ -2291,7 +2291,7 @@ typedef struct {
     DWORD  cptl;
     POINTL aptl[1];
     BYTE   abTypes[1];
-} EMRPOLYDRAW, *PEMRPOLYDRAW; 
+} EMRPOLYDRAW, *PEMRPOLYDRAW;
 
 typedef struct {
     EMR     emr;
@@ -2475,8 +2475,8 @@ typedef struct {
 } EMRSTRETCHDIBITS, *PEMRSTRETCHDIBITS;
 
 typedef struct {
-    EMR                   emr; 
-    PIXELFORMATDESCRIPTOR pfd; 
+    EMR                   emr;
+    PIXELFORMATDESCRIPTOR pfd;
 } EMRPIXELFORMAT, *PEMRPIXELFORMAT;
 
 typedef struct tagEMRGLSRECORD {
@@ -2490,9 +2490,9 @@ typedef struct {
   RECTL rclBounds;
   DWORD cbData;
   BYTE  Data[1];
-} EMRGLSBOUNDEDRECORD, *PEMRGLSBOUNDEDRECORD; 
+} EMRGLSBOUNDEDRECORD, *PEMRGLSBOUNDEDRECORD;
 
-typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, LPHANDLETABLE, 
+typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, LPHANDLETABLE,
 					  LPENHMETARECORD, INT, LPVOID);
 
 #define EMR_HEADER	1
@@ -2931,7 +2931,7 @@ DECL_WINELIB_TYPE_AW(LPDEVMODE)
 #define DMDITHER_GRAYSCALE      5
 #define DMDITHER_USER           256
 
-typedef struct 
+typedef struct
 {
     INT    cbSize;
     LPCSTR   lpszDocName;
@@ -2940,7 +2940,7 @@ typedef struct
     DWORD    fwType;
 } DOCINFOA, *LPDOCINFOA;
 
-typedef struct 
+typedef struct
 {
     INT    cbSize;
     LPCWSTR  lpszDocName;
@@ -2984,7 +2984,7 @@ typedef struct {
     DWORD	StateFlags;
     CHAR	DeviceID[128];
     CHAR	DeviceKey[128];
-} DISPLAY_DEVICEA,*PDISPLAY_DEVICEA,*LPDISPLAY_DEVICEA;      
+} DISPLAY_DEVICEA,*PDISPLAY_DEVICEA,*LPDISPLAY_DEVICEA;
 
 typedef struct {
     DWORD	cb;
@@ -2993,7 +2993,7 @@ typedef struct {
     DWORD	StateFlags;
     WCHAR	DeviceID[128];
     WCHAR	DeviceKey[128];
-} DISPLAY_DEVICEW,*PDISPLAY_DEVICEW,*LPDISPLAY_DEVICEW;      
+} DISPLAY_DEVICEW,*PDISPLAY_DEVICEW,*LPDISPLAY_DEVICEW;
 DECL_WINELIB_TYPE_AW(DISPLAY_DEVICE)
 DECL_WINELIB_TYPE_AW(PDISPLAY_DEVICE)
 DECL_WINELIB_TYPE_AW(LPDISPLAY_DEVICE)
@@ -3055,7 +3055,7 @@ BOOL        WINAPI AlphaBlend(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCT
 BOOL        WINAPI AngleArc(HDC, INT, INT, DWORD, FLOAT, FLOAT);
 BOOL        WINAPI AnimatePalette(HPALETTE,UINT,UINT,const PALETTEENTRY*);
 BOOL        WINAPI Arc(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
-BOOL        WINAPI ArcTo(HDC, INT, INT, INT, INT, INT, INT, INT, INT); 
+BOOL        WINAPI ArcTo(HDC, INT, INT, INT, INT, INT, INT, INT, INT);
 BOOL        WINAPI BeginPath(HDC);
 BOOL        WINAPI BitBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,DWORD);
 INT         WINAPI ChoosePixelFormat(HDC,const LPPIXELFORMATDESCRIPTOR);

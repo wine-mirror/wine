@@ -736,7 +736,7 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
  */
 static void
 x_SMapLS_IP_EBP_x(CONTEXT86 *context,int argoff) {
-    DWORD	val,ptr; 
+    DWORD	val,ptr;
 
     val =*(DWORD*)(context->Ebp + argoff);
     if (val<0x10000) {
@@ -875,7 +875,7 @@ void WINAPI SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context
 /**********************************************************************
  * 		AllocMappedBuffer	(KERNEL32.38)
  *
- * This is a undocumented KERNEL32 function that 
+ * This is a undocumented KERNEL32 function that
  * SMapLS's a GlobalAlloc'ed buffer.
  *
  * Input:   EDI register: size of buffer to allocate

@@ -2,15 +2,15 @@
  *
  * BigBlockFile
  *
- * This is the implementation of a file that consists of blocks of 
+ * This is the implementation of a file that consists of blocks of
  * a predetermined size.
- * This class is used in the Compound File implementation of the 
- * IStorage and IStream interfaces. It provides the functionality 
- * to read and write any blocks in the file as well as setting and 
+ * This class is used in the Compound File implementation of the
+ * IStorage and IStream interfaces. It provides the functionality
+ * to read and write any blocks in the file as well as setting and
  * obtaining the size of the file.
  * The blocks are indexed sequentially from the start of the file
  * starting with -1.
- * 
+ *
  * TODO:
  * - Support for a transacted mode
  *
@@ -72,7 +72,7 @@ typedef struct
 
 /***
  * This structure identifies the paged that are mapped
- * from the file and their position in memory. It is 
+ * from the file and their position in memory. It is
  * also used to hold a reference count to those pages.
  *
  * page_index identifies which PAGE_SIZE chunk from the
@@ -105,7 +105,7 @@ static void      BIGBLOCKFILE_RemapAllMappedPages(LPBIGBLOCKFILE This);
 static void*     BIGBLOCKFILE_GetBigBlockPointer(LPBIGBLOCKFILE This,
                                                  ULONG          index,
                                                  DWORD          desired_access);
-static MappedPage* BIGBLOCKFILE_GetPageFromPointer(LPBIGBLOCKFILE This, 
+static MappedPage* BIGBLOCKFILE_GetPageFromPointer(LPBIGBLOCKFILE This,
 						   void*         pBlock);
 static MappedPage* BIGBLOCKFILE_CreatePage(LPBIGBLOCKFILE This,
 					   ULONG page_index);
@@ -153,7 +153,7 @@ static inline void BIGBLOCKFILE_Zero(BlockBits *bb)
 /******************************************************************************
  *      BIGBLOCKFILE_Construct
  *
- * Construct a big block file. Create the file mapping object. 
+ * Construct a big block file. Create the file mapping object.
  * Create the read only mapped pages list, the writable mapped page list
  * and the blocks in use list.
  */
@@ -326,7 +326,7 @@ void* BIGBLOCKFILE_GetROBigBlock(
 
   /*
    * validate the block index
-   * 
+   *
    */
   if (This->blocksize * (index + 1)
       > ROUND_UP(This->filesize.s.LowPart, This->blocksize))
@@ -396,7 +396,7 @@ void BIGBLOCKFILE_ReleaseBigBlock(LPBIGBLOCKFILE This, void *pBlock)
  *      BIGBLOCKFILE_SetSize
  *
  * Sets the size of the file.
- * 
+ *
  */
 void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
 {
@@ -408,7 +408,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
    * unmap all views, must be done before call to SetEndFile
    */
   BIGBLOCKFILE_UnmapAllMappedPages(This);
-  
+
   if (This->fileBased)
   {
     char buf[10];
@@ -426,7 +426,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
      * to that dir: crash.
      *
      * The problem is that the SetFilePointer-SetEndOfFile combo below
-     * doesn't always succeed. The file is not grown. It seems like the 
+     * doesn't always succeed. The file is not grown. It seems like the
      * operation is cached. By doing the WriteFile, the file is actually
      * grown on disk.
      * This hack is only needed when saving to smbfs.
@@ -435,7 +435,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
     SetFilePointer(This->hfile, newSize.s.LowPart, NULL, FILE_BEGIN);
     WriteFile(This->hfile, buf, 10, NULL, NULL);
     /*
-     * END HACK 
+     * END HACK
      */
 
     /*
@@ -443,14 +443,14 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
      */
     SetFilePointer(This->hfile, newSize.s.LowPart, NULL, FILE_BEGIN);
     SetEndOfFile(This->hfile);
-  
+
     /*
      * re-create the file mapping object
      */
     This->hfilemap = CreateFileMappingA(This->hfile,
                                         NULL,
                                         This->flProtect,
-                                        0, 0, 
+                                        0, 0,
                                         NULL);
   }
   else
@@ -479,7 +479,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
  *      BIGBLOCKFILE_GetSize
  *
  * Returns the size of the file.
- * 
+ *
  */
 ULARGE_INTEGER BIGBLOCKFILE_GetSize(LPBIGBLOCKFILE This)
 {
@@ -522,8 +522,8 @@ static BOOL BIGBLOCKFILE_AccessCheck(MappedPage *page, ULONG block_index,
  * Returns a pointer to the specified block.
  */
 static void* BIGBLOCKFILE_GetBigBlockPointer(
-  LPBIGBLOCKFILE This, 
-  ULONG          block_index, 
+  LPBIGBLOCKFILE This,
+  ULONG          block_index,
   DWORD          desired_access)
 {
     DWORD page_index = block_index / BLOCKS_PER_PAGE;

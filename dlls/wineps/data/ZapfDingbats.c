@@ -17,7 +17,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[188] = 
+static const AFMMETRICS metrics[188] =
 {
     {  32, 0xf020,  278, GN_space },
     {  33, 0xf021,  974, GN_a1 },

@@ -83,12 +83,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         /* FIXME: buffers are not flushed */
 
         /*
-         * If AL is not one of 0x01, 0x06, 0x07, 0x08, or 0x0a, 
+         * If AL is not one of 0x01, 0x06, 0x07, 0x08, or 0x0a,
          * the buffer is flushed but no input is attempted.
          */
         if(al != 0x01 && al != 0x06 && al != 0x07 && al != 0x08 && al != 0x0a)
             return;
-      
+
         AH_reg(context) = al;
     }
 

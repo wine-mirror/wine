@@ -161,17 +161,17 @@ static void DOSMEM_FillIsrTable(void)
 {
     SEGPTR *isr = (SEGPTR*)DOSMEM_sysmem;
     int x;
- 
+
     for (x=0; x<256; x++) isr[x]=MAKESEGPTR(VM_STUB_SEGMENT,x*4);
-} 
+}
 
 static void DOSMEM_MakeIsrStubs(void)
 {
     DWORD *stub = (DWORD*)(DOSMEM_dosmem + (VM_STUB_SEGMENT << 4));
     int x;
- 
+
     for (x=0; x<256; x++) stub[x]=VM_STUB(x);
-} 
+}
 
 /***********************************************************************
  *           DOSMEM_InitDPMI
@@ -243,16 +243,16 @@ BYTE * DOSMEM_BiosSys()
 }
 
 /* Add a structure in the BiosSys area (with size and index) and
-   return its offset */ 
+   return its offset */
 WORD DOSMEM_AddBiosSysStruct(int size,int index)
 {
   int Offset = CurrentStructOffset;
-  StructOffset[index]= CurrentStructOffset;     
+  StructOffset[index]= CurrentStructOffset;
   CurrentStructOffset += size;
   return Offset;
 }
 
-/* Return the offset of a structure specified by the index */ 
+/* Return the offset of a structure specified by the index */
 WORD DOSMEM_GetBiosSysStructOffset(int index)
 {
   return StructOffset[index];
@@ -344,7 +344,7 @@ static void DOSMEM_FillBiosSegments(void)
     pVidFunc->SavePointerFlags    = 0x3f;
 
                                     /* FIXME: always real mode ? */
-    pVidState->StaticFuncTable    = (0xf000<<16)+DOSMEM_GetBiosSysStructOffset(OFF_VIDEOFUNCTIONALITY);                                     
+    pVidState->StaticFuncTable    = (0xf000<<16)+DOSMEM_GetBiosSysStructOffset(OFF_VIDEOFUNCTIONALITY);
     pVidState->VideoMode          = pBiosData->VideoMode; /* needs updates! */
     pVidState->NumberColumns      = pBiosData->VideoColumns; /* needs updates! */
     pVidState->RegenBufLen        = 0;
@@ -432,7 +432,7 @@ static void DOSMEM_InitErrorTable()
         /* FIXME - There is still something wrong... */
 
         /* FIXME - Find hex values for opcodes...
-           
+
            (On call, AX contains message number
                      DI contains 'offset' (??)
             Resturn, ES:DI points to counted string )
@@ -445,9 +445,9 @@ static void DOSMEM_InitErrorTable()
            RET
 
         */
-           
-        const int	code = 4;	
-        const int	buffer = 80; 
+
+        const int	code = 4;
+        const int	buffer = 80;
         const int 	SIZE_TO_ALLOCATE = code + buffer;
 
         /* FIXME - Complete rewrite of the table system to save */
@@ -456,8 +456,8 @@ static void DOSMEM_InitErrorTable()
         /* as a special case and programs will use the alternate */
         /* interface (a farcall returned with INT 24 (AX = 0x122e, DL = */
         /* 0x08) which lets us have a smaller memory footprint anyway. */
- 
- 	x = GlobalDOSAlloc16(SIZE_TO_ALLOCATE);  
+
+ 	x = GlobalDOSAlloc16(SIZE_TO_ALLOCATE);
 
 	DOSMEM_ErrorCall = MAKELONG(0,(x>>16));
         DOSMEM_ErrorBuffer = DOSMEM_ErrorCall + code;
@@ -466,7 +466,7 @@ static void DOSMEM_InitErrorTable()
 
         memset(call, 0, SIZE_TO_ALLOCATE);
 #endif
-        /* FIXME - Copy assembly into buffer here */        
+        /* FIXME - Copy assembly into buffer here */
 }
 
 /***********************************************************************
@@ -490,7 +490,7 @@ static void DOSMEM_InitMemory(void)
 
     dm = NEXT_BLOCK(root_block);
     dm->size = DM_BLOCK_TERMINAL;
-    root_block->size |= DM_BLOCK_FREE 
+    root_block->size |= DM_BLOCK_FREE
 #ifdef __DOSMEM_DEBUG__
 		     | DM_BLOCK_DEBUG
 #endif
@@ -623,7 +623,7 @@ LPVOID DOSMEM_GetBlock(UINT size, UINT16* pseg)
 #ifdef __DOSMEM_DEBUG_
    dosmem_entry *prev = NULL;
 #endif
- 
+
    if( size > info_block->free ) return NULL;
    dm = DOSMEM_RootBlock();
 
@@ -659,10 +659,10 @@ LPVOID DOSMEM_GetBlock(UINT size, UINT16* pseg)
 
 	           dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
 			         	      sizeof(dosmem_entry));
-	           next = (dosmem_entry*)(((char*)dm) + 
+	           next = (dosmem_entry*)(((char*)dm) +
 	 		   sizeof(dosmem_entry) + dm->size);
-	           next->size = (blocksize - (dm->size + 
-			   sizeof(dosmem_entry))) | DM_BLOCK_FREE 
+	           next->size = (blocksize - (dm->size +
+			   sizeof(dosmem_entry))) | DM_BLOCK_FREE
 #ifdef __DOSMEM_DEBUG__
 					          | DM_BLOCK_DEBUG
 #endif
@@ -753,10 +753,10 @@ LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* pseg)
 
 	             dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
 			         	        sizeof(dosmem_entry));
-	             next = (dosmem_entry*)(((char*)dm) + 
+	             next = (dosmem_entry*)(((char*)dm) +
 	 		     sizeof(dosmem_entry) + dm->size);
-	             next->size = (blocksize - (dm->size + 
-			     sizeof(dosmem_entry))) | DM_BLOCK_FREE 
+	             next->size = (blocksize - (dm->size +
+			     sizeof(dosmem_entry))) | DM_BLOCK_FREE
 						    ;
 	         } else dm->size &= DM_BLOCK_MASK;
 
@@ -785,10 +785,10 @@ LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* pseg)
 
 			 dm->size = (((orgsize + 0xf + sizeof(dosmem_entry)) & ~0xf) -
 						       sizeof(dosmem_entry));
-			 next = (dosmem_entry*)(((char*)dm) + 
+			 next = (dosmem_entry*)(((char*)dm) +
 				 sizeof(dosmem_entry) + dm->size);
-			 next->size = (blocksize - (dm->size + 
-				 sizeof(dosmem_entry))) | DM_BLOCK_FREE 
+			 next->size = (blocksize - (dm->size +
+				 sizeof(dosmem_entry))) | DM_BLOCK_FREE
 							;
 		     } else dm->size &= DM_BLOCK_MASK;
 		 }
@@ -806,7 +806,7 @@ UINT DOSMEM_Available(void)
 {
    UINT  	 blocksize, available = 0;
    dosmem_entry *dm;
-   
+
    dm = DOSMEM_RootBlock();
 
    while (dm && dm->size != DM_BLOCK_TERMINAL)

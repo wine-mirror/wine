@@ -54,7 +54,7 @@ typedef struct IDirectPlayLobby3 IDirectPlayLobby3A, *LPDIRECTPLAYLOBBY3A;
  * DirectPlayLobby Property GUIDs used in lobby messages
  */
 
-/* DPLPROPERTY_MessagesSupported {762CCDA1-D916-11d0-BA39-00C04FD7ED67}. 
+/* DPLPROPERTY_MessagesSupported {762CCDA1-D916-11d0-BA39-00C04FD7ED67}.
  * Purpose: Request if the lobby supports standard (?).
  * Response: Answer is a BOOL. TRUE if supports the standard (?) and FALSE otherwise. Of course, it might not respond at all.
  */
@@ -62,7 +62,7 @@ DEFINE_GUID(DPLPROPERTY_MessagesSupported, 0x762ccda1, 0xd916, 0x11d0, 0xba, 0x3
 
 /* DPLPROPERTY_LobbyGuid {F56920A0-D218-11d0-BA39-00C04FD7ED67}.
  * Purpose: Request the GUID that identifies the lobby version that the application is communicating with.
- * Response: The GUID which identifies the lobby version 
+ * Response: The GUID which identifies the lobby version
  */
 DEFINE_GUID(DPLPROPERTY_LobbyGuid, 0xf56920a0, 0xd218, 0x11d0, 0xba, 0x39, 0x0, 0xc0, 0x4f, 0xd7, 0xed, 0x67);
 
@@ -199,8 +199,8 @@ typedef struct tagDPLMSG_NEWSESSIONHOST
  * EnumAddresses function is used to parse the address data chunks.
  */
 
-/* DPAID_TotalSize {1318F560-912C-11d0-9DAA-00A0C90A43CB} 
- * Chunk purpose: Chunk is a DWORD containing the size of the entire DPADDRESS struct 
+/* DPAID_TotalSize {1318F560-912C-11d0-9DAA-00A0C90A43CB}
+ * Chunk purpose: Chunk is a DWORD containing the size of the entire DPADDRESS struct
  */
 DEFINE_GUID(DPAID_TotalSize, 0x1318f560, 0x912c, 0x11d0, 0x9d, 0xaa, 0x0, 0xa0, 0xc9, 0xa, 0x43, 0xcb);
 
@@ -216,7 +216,7 @@ DEFINE_GUID(DPAID_LobbyProvider, 0x59b95640, 0x9667, 0x11d0, 0xa7, 0x7d, 0x0, 0x
 
 /* DPAID_Phone  {78EC89A0-E0AF-11cf-9C4E-00A0C905425E} -- ANSI
  * DPAID_PhoneW {BA5A7A70-9DBF-11d0-9CC1-00A0C905425E} -- UNICODE
- * Chunk purpose: Chunk is a phone number in ANSI or UNICODE format 
+ * Chunk purpose: Chunk is a phone number in ANSI or UNICODE format
  */
 DEFINE_GUID(DPAID_Phone, 0x78ec89a0, 0xe0af, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
 DEFINE_GUID(DPAID_PhoneW, 0xba5a7a70, 0x9dbf, 0x11d0, 0x9c, 0xc1, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
@@ -255,7 +255,7 @@ typedef struct tagDPADDRESS
 
 
 /* Used for specification of a communication port. Baud rate, stop bits and
- * parity bits can be found in winbase.h. These are flow control constants only. 
+ * parity bits can be found in winbase.h. These are flow control constants only.
  */
 #define DPCPA_NOFLOW        0           /* no flow control */
 #define DPCPA_XONXOFFFLOW   1           /* software flow control */
@@ -274,18 +274,18 @@ typedef struct tagDPCOMPORTADDRESS
 
 
 
-/**************************************************************************** 
+/****************************************************************************
  * Miscellaneous
  */
 
 typedef struct tagDPLAPPINFO
 {
-    DWORD       dwSize;            
-    GUID        guidApplication;   
+    DWORD       dwSize;
+    GUID        guidApplication;
 
-    union 
+    union
     {
-        LPSTR   lpszAppNameA;      
+        LPSTR   lpszAppNameA;
         LPWSTR  lpszAppName;
     } DUMMYUNIONNAME;
 

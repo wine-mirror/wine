@@ -20,7 +20,7 @@ void WINAPI INT_Int2aHandler( CONTEXT86 *context )
     {
     case 0x00:                             /* NETWORK INSTALLATION CHECK */
         break;
-		
+
     default:
 	INT_BARF( context, 0x2a );
     }

@@ -33,7 +33,7 @@ DECLARE_HANDLE(HDROP);
  * DragObject
  */
 
-typedef struct _DRAGINFOA 
+typedef struct _DRAGINFOA
 {	UINT uSize;
 	POINT pt;
 	BOOL fNC;
@@ -41,7 +41,7 @@ typedef struct _DRAGINFOA
 	DWORD grfKeyState;
 } DRAGINFOA, * LPDRAGINFOA;
 
-typedef struct _DRAGINFOW 
+typedef struct _DRAGINFOW
 {	UINT uSize;
 	POINT pt;
 	BOOL fNC;
@@ -96,7 +96,7 @@ BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 #define ABE_RIGHT		2
 #define ABE_BOTTOM		3
 
-typedef struct _AppBarData 
+typedef struct _AppBarData
 {	DWORD	cbSize;
 	HWND	hWnd;
 	UINT	uCallbackMessage;
@@ -131,7 +131,7 @@ UINT    WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
 #define SHGFI_SELECTED          0x000010000     /* show icon in selected state */
 #define SHGFI_ATTR_SPECIFIED    0x000020000     /* get only specified attributes */
 
-typedef struct tagSHFILEINFOA 
+typedef struct tagSHFILEINFOA
 {	HICON	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
 	DWORD	dwAttributes;		/* SFGAO_ flags */
@@ -139,7 +139,7 @@ typedef struct tagSHFILEINFOA
 	CHAR	szTypeName[80];		/* type name */
 } SHFILEINFOA;
 
-typedef struct tagSHFILEINFOW 
+typedef struct tagSHFILEINFOW
 {	HICON	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
 	DWORD	dwAttributes;		/* SFGAO_ flags */
@@ -167,21 +167,21 @@ DWORD	WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
 
 #define FOF_MULTIDESTFILES         0x0001
 #define FOF_CONFIRMMOUSE           0x0002
-#define FOF_SILENT                 0x0004  
+#define FOF_SILENT                 0x0004
 #define FOF_RENAMEONCOLLISION      0x0008
-#define FOF_NOCONFIRMATION         0x0010  
-#define FOF_WANTMAPPINGHANDLE      0x0020  
+#define FOF_NOCONFIRMATION         0x0010
+#define FOF_WANTMAPPINGHANDLE      0x0020
 #define FOF_ALLOWUNDO              0x0040
-#define FOF_FILESONLY              0x0080  
-#define FOF_SIMPLEPROGRESS         0x0100  
-#define FOF_NOCONFIRMMKDIR         0x0200  
-#define FOF_NOERRORUI              0x0400  
+#define FOF_FILESONLY              0x0080
+#define FOF_SIMPLEPROGRESS         0x0100
+#define FOF_NOCONFIRMMKDIR         0x0200
+#define FOF_NOERRORUI              0x0400
 
 typedef WORD FILEOP_FLAGS;
 
-#define PO_DELETE       0x0013  
-#define PO_RENAME       0x0014  
-#define PO_PORTCHANGE   0x0020  
+#define PO_DELETE       0x0013
+#define PO_RENAME       0x0014
+#define PO_PORTCHANGE   0x0020
 
 typedef WORD PRINTEROP_FLAGS;
 
@@ -210,7 +210,7 @@ typedef struct _SHFILEOPSTRUCTW
 #define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
 #define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
 
-DWORD	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);  
+DWORD	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);
 DWORD	WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
 #define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
 

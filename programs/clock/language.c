@@ -30,9 +30,9 @@ CHAR STRING_MENU_Xx[]      = "MENU_Xx";
 VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
 
     if(Globals.bAnalog == TRUE) {
-    
+
         /* analog clock */
-        
+
         CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
                        MF_BYCOMMAND | MF_CHECKED);
         CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
@@ -40,20 +40,20 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
         EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
                        MF_BYCOMMAND | MF_GRAYED);
     }
-        else 
+        else
     {
-    
+
         /* digital clock */
-        
+
         CheckMenuItem(Globals.hPropertiesMenu, 0x100, \
                        MF_BYCOMMAND | MF_UNCHECKED);
         CheckMenuItem(Globals.hPropertiesMenu, 0x101, \
                        MF_BYCOMMAND | MF_CHECKED);
         EnableMenuItem(Globals.hPropertiesMenu, 0x103, \
                        MF_BYCOMMAND);
-                       
+
     }
-    
+
     CheckMenuItem(Globals.hPropertiesMenu, 0x105, MF_BYCOMMAND | \
                  (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(Globals.hSystemMenu, 0x10D, MF_BYCOMMAND | \
@@ -68,9 +68,9 @@ VOID LANGUAGE_UpdateWindowCaption(VOID) {
 
   CHAR szCaption[MAX_STRING_LEN];
   CHAR szDate[MAX_STRING_LEN];
-  
+
   LPSTR date = szDate;
-  
+
   SYSTEMTIME st;
   LPSYSTEMTIME lpst = &st;
 
@@ -110,7 +110,7 @@ VOID LANGUAGE_LoadMenus(VOID)
   /* specific for Clock: */
 
   LANGUAGE_UpdateMenuCheckmarks();
-  LANGUAGE_UpdateWindowCaption();   
+  LANGUAGE_UpdateWindowCaption();
 
   Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
 

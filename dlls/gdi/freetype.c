@@ -244,7 +244,7 @@ static BOOL AddFontFileToList(char *file)
     StyleW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, StyleW, len);
 
-    
+
     for(insertface = &family->FirstFace; *insertface;
 	insertface = &(*insertface)->next) {
         if(!strcmpW((*insertface)->StyleName, StyleW)) {
@@ -337,7 +337,7 @@ static void split_subst_info(NameCs *nc, LPSTR str)
     nc->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, nc->name, len);
 }
-  
+
 static void LoadSubstList(void)
 {
     FontSubst *psub, **ppsub;
@@ -491,7 +491,7 @@ BOOL WineEngInit(void)
 	   <= 2.0.3 has FT_Sqrt64 */
 	  goto sym_not_found;
       }
-	
+
     if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
 	wine_dlclose(ft_handle, NULL, 0);
@@ -685,7 +685,7 @@ static LONG load_VDMX(GdiFont font, LONG height)
     TRACE("numRecs = %d numRatios = %d\n", numRecs, numRatios);
     for(i = 0; i < numRatios; i++) {
 	Ratios ratio;
-	
+
 	offset = (3 * 2) + (i * sizeof(Ratios));
 	WineEngGetFontData(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
 	offset = -1;
@@ -695,12 +695,12 @@ static LONG load_VDMX(GdiFont font, LONG height)
 	if(ratio.bCharSet != 1)
 	    continue;
 
-	if((ratio.xRatio == 0 && 
+	if((ratio.xRatio == 0 &&
 	    ratio.yStartRatio == 0 &&
 	    ratio.yEndRatio == 0) ||
-	   (devXRatio == ratio.xRatio && 
+	   (devXRatio == ratio.xRatio &&
 	    devYRatio >= ratio.yStartRatio &&
-	    devYRatio <= ratio.yEndRatio)) 
+	    devYRatio <= ratio.yEndRatio))
 	    {
 		offset = (3 * 2) + (numRatios * 4) + (i * 2);
 		WineEngGetFontData(font, MS_VDMX_TAG, offset, tmp, 2);
@@ -767,10 +767,10 @@ static LONG load_VDMX(GdiFont font, LONG height)
 	    for(i = 0; i < recs; i++) {
 		USHORT yPelHeight;
 		yPelHeight = GET_BE_WORD(&vTable[i * 6]);
-		
+
 		if(yPelHeight > ppem)
 		    break; /* failed */
-		
+
 		if(yPelHeight == ppem) {
 		    font->yMax = GET_BE_WORD(&vTable[(i * 6) + 2]);
 		    font->yMin = GET_BE_WORD(&vTable[(i * 6) + 4]);
@@ -930,7 +930,7 @@ static void DumpGdiFontList(void)
     for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
 	FONTOBJ *font = GDI_GetObjPtr(gdiFont->hfont, FONT_MAGIC);
 	LOGFONTW *plf = &font->logfont;
-	TRACE("gdiFont=%p  hfont=%x (%s)\n", 
+	TRACE("gdiFont=%p  hfont=%x (%s)\n",
 	       gdiFont, gdiFont->hfont, debugstr_w(plf->lfFaceName));
 	GDI_ReleaseObj(gdiFont->hfont);
     }
@@ -950,14 +950,14 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     TRACE("destroying hfont=%x\n", handle);
     if(TRACE_ON(font))
 	DumpGdiFontList();
-    
+
     for(gdiFont = GdiFontList; gdiFont; gdiFont = gdiFont->next) {
 	if(gdiFont->hfont == handle) {
 	    if(gdiPrev)
 		gdiPrev->next = gdiFont->next;
 	    else
 		GdiFontList = gdiFont->next;
-	    
+
 	    free_font(gdiFont);
 	    return TRUE;
 	}
@@ -1106,7 +1106,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc,
 		        csi.ciCharset = DEFAULT_CHARSET;
 		    if(i == 31) csi.ciCharset = SYMBOL_CHARSET;
 		    if(csi.ciCharset != DEFAULT_CHARSET) {
-		        elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = 
+		        elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet =
 			  csi.ciCharset;
 			  if(ElfScriptsW[i])
 			      strcpyW(elf.elfScript, ElfScriptsW[i]);
@@ -1219,7 +1219,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
     font->gm[glyph_index].bbx = (right - left) >> 6;
 
     if(font->orientation == 0) {
-	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;;
+	top = (ft_face->glyph->metrics.horiBearingY + 63) & -64;
 	bottom = (ft_face->glyph->metrics.horiBearingY -
 		  ft_face->glyph->metrics.height) & -64;
 	lpgm->gmCellIncX = font->gm[glyph_index].adv;
@@ -1271,7 +1271,7 @@ DWORD WineEngGetGlyphOutline(GdiFont font, UINT glyph, UINT format,
 
     if(format == GGO_METRICS)
         return 1; /* FIXME */
-    
+
     if(ft_face->glyph->format != ft_glyph_format_outline) {
         FIXME("loaded a bitmap\n");
 	return GDI_ERROR;
@@ -1437,7 +1437,7 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
     FT_Fixed x_scale, y_scale;
 
     TRACE("font=%p, ptm=%p\n", font, ptm);
-    
+
     x_scale = ft_face->size->metrics.x_scale;
     y_scale = ft_face->size->metrics.y_scale;
 
@@ -1554,7 +1554,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     TRACE("font=%p\n", font);
 
     needed = sizeof(*potm);
-    
+
     lenfam = MultiByteToWideChar(CP_ACP, 0, ft_face->family_name, -1, NULL, 0)
       * sizeof(WCHAR);
     family_nameW = HeapAlloc(GetProcessHeap(), 0, lenfam);
@@ -1610,7 +1610,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     potm->otmSize = needed;
 
     WineEngGetTextMetrics(font, &potm->otmTextMetrics);
-    
+
     potm->otmFiller = 0;
     memcpy(&potm->otmPanoseNumber, pOS2->panose, PANOSE_COUNT);
     potm->otmfsSelection = pOS2->fsSelection;
@@ -1659,7 +1659,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
         strcatW((WCHAR*)cp, spaceW);
 	strcatW((WCHAR*)cp, style_nameW);
 	cp += lenfam + lensty;
-    } else 
+    } else
         cp += lenfam;
     potm->otmpFullName = (LPSTR)(cp - (char*)potm);
     strcpyW((WCHAR*)cp, family_nameW);
@@ -1714,7 +1714,7 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
     size->cx = 0;
     WineEngGetTextMetrics(font, &tm);
     size->cy = tm.tmHeight;
- 
+
    for(idx = 0; idx < count; idx++) {
         WineEngGetGlyphOutline(font, wstr[idx], GGO_METRICS, &gm, 0, NULL,
 			       NULL);
@@ -1741,7 +1741,7 @@ BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
     size->cx = 0;
     WineEngGetTextMetrics(font, &tm);
     size->cy = tm.tmHeight;
- 
+
    for(idx = 0; idx < count; idx++) {
         WineEngGetGlyphOutline(font, indices[idx],
 			       GGO_METRICS | GGO_GLYPH_INDEX, &gm, 0, NULL,

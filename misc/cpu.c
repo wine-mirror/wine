@@ -49,11 +49,11 @@ static BYTE PF[64] = {0,};
  *							Identifier (CPU x86)
  * Note that there is a hierarchy for every processor installed, so this
  * supports multiprocessor systems. This is done like Win95 does it, I think.
- *							
+ *
  * It also creates a cached flag array for IsProcessorFeaturePresent().
  *
  * No NULL ptr check for LPSYSTEM_INFO in Win9x.
- * 
+ *
  * RETURNS
  *	nothing, really
  */
@@ -157,7 +157,7 @@ VOID WINAPI GetSystemInfo(
 		}
 		/* old 2.0 method */
 		if (!strncasecmp(line, "cpu",strlen("cpu"))) {
-			if (	isdigit (value[0]) && value[1] == '8' && 
+			if (	isdigit (value[0]) && value[1] == '8' &&
 				value[2] == '6' && value[3] == 0
 			) {
 				switch (value[0] - '0') {

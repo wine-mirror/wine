@@ -19,7 +19,7 @@
  */
 
 #include "config.h"
-#include "wine/port.h" 
+#include "wine/port.h"
 
 #include <assert.h>
 #include <fcntl.h>
@@ -174,7 +174,7 @@ void NE_DumpModule( HMODULE16 hModule )
       /* Dump the entry table */
     DPRINTF( "---\n" );
     DPRINTF( "Entry table:\n" );
-    bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);    
+    bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
     do {
 	entry = (ET_ENTRY *)((BYTE *)bundle+6);
 	DPRINTF( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
@@ -476,7 +476,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
              /* resident names table */
            ne_header.ne_modtab - ne_header.ne_restab +
              /* module ref table */
-           ne_header.ne_cmod * sizeof(WORD) + 
+           ne_header.ne_cmod * sizeof(WORD) +
              /* imported names table */
            ne_header.ne_enttab - ne_header.ne_imptab +
              /* entry table length */
@@ -570,7 +570,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
         pModule->res_table = pData - (BYTE *)pModule;
         if (!READ(mz_header.e_lfanew + ne_header.ne_rsrctab,
                   ne_header.ne_restab - ne_header.ne_rsrctab,
-                  pData )) 
+                  pData ))
             return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.ne_restab - ne_header.ne_rsrctab;
 	NE_InitResourceHandler( hModule );
@@ -612,7 +612,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE hFile, LPCSTR path )
     /* Get the imported names table */
 
     pModule->import_table = pData - (BYTE *)pModule;
-    if (!READ( mz_header.e_lfanew + ne_header.ne_imptab, 
+    if (!READ( mz_header.e_lfanew + ne_header.ne_imptab,
                ne_header.ne_enttab - ne_header.ne_imptab,
                pData ))
     {
@@ -862,17 +862,17 @@ static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 /**********************************************************************
  *	    NE_LoadModule
  *
- * Load first instance of NE module. (Note: caller is responsible for 
+ * Load first instance of NE module. (Note: caller is responsible for
  * ensuring the module isn't already loaded!)
  *
- * If the module turns out to be an executable module, only a 
+ * If the module turns out to be an executable module, only a
  * handle to a module stub is returned; this needs to be initialized
  * by calling NE_DoLoadModule later, in the context of the newly
  * created process.
  *
  * If lib_only is TRUE, however, the module is perforce treated
  * like a DLL module, even if it is an executable module.
- * 
+ *
  */
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
 {
@@ -1083,8 +1083,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
      *  At this point, we need to create a new process.
      *
      *  pModule points either to an already loaded module, whose refcount
-     *  has already been incremented (to avoid having the module vanish 
-     *  in the meantime), or else to a stub module which contains only header 
+     *  has already been incremented (to avoid having the module vanish
+     *  in the meantime), or else to a stub module which contains only header
      *  information.
      */
     params = (LOADPARAMS16 *)paramBlock;
@@ -1285,7 +1285,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
         else
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */
     }
-    
+
 
     /* Clear magic number just in case */
 
@@ -1377,7 +1377,7 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if ( !pModule ) return 0;
 
-    /* 
+    /*
      * For built-in modules, fake the expected version the module should
      * have according to the Windows version emulated by Wine
      */
@@ -1387,7 +1387,7 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
         versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
 
         if ( GetVersionExA( &versionInfo ) )
-            pModule->expected_version =   
+            pModule->expected_version =
                      (versionInfo.dwMajorVersion & 0xff) << 8
                    | (versionInfo.dwMinorVersion & 0xff);
     }
@@ -1546,7 +1546,7 @@ HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 
     /* If the extension of 'name' is '.EXE' and the base filename of 'name'
      * matches the base filename of the module filename of some 32-bit module:
-     * Return the corresponding 16-bit dummy module handle. 
+     * Return the corresponding 16-bit dummy module handle.
      */
     if (len >= 4 && !FILE_strcasecmp(name+len-4, ".EXE"))
     {

@@ -181,9 +181,9 @@ static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
 
 static
 HRESULT WINAPI DPLSP_QueryInterface
-( LPDPLOBBYSP iface, 
+( LPDPLOBBYSP iface,
   REFIID riid,
-  LPVOID* ppvObj 
+  LPVOID* ppvObj
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -219,7 +219,7 @@ HRESULT WINAPI DPLSP_QueryInterface
   return S_OK;
 }
 
-static 
+static
 ULONG WINAPI DPLSP_AddRef
 ( LPDPLOBBYSP iface )
 {
@@ -263,10 +263,10 @@ ULONG WINAPI DPLSP_Release
   return ulInterfaceRefCount;
 }
 
-static 
+static
 HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_ADDREMOTEGROUPTOGROUP argtg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_ADDREMOTEGROUPTOGROUP argtg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -274,10 +274,10 @@ HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup
   return DP_OK;
 }
 
-static 
+static
 HRESULT WINAPI IDPLobbySPImpl_AddPlayerToGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_ADDREMOTEPLAYERTOGROUP arptg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_ADDREMOTEPLAYERTOGROUP arptg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -285,10 +285,10 @@ HRESULT WINAPI IDPLobbySPImpl_AddPlayerToGroup
   return DP_OK;
 }
 
-static 
+static
 HRESULT WINAPI IDPLobbySPImpl_CreateGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_CREATEREMOTEGROUP crg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_CREATEREMOTEGROUP crg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -296,10 +296,10 @@ HRESULT WINAPI IDPLobbySPImpl_CreateGroup
   return DP_OK;
 }
 
-static 
+static
 HRESULT WINAPI IDPLobbySPImpl_CreateGroupInGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_CREATEREMOTEGROUPINGROUP crgig 
+( LPDPLOBBYSP iface,
+  LPSPDATA_CREATEREMOTEGROUPINGROUP crgig
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -309,8 +309,8 @@ HRESULT WINAPI IDPLobbySPImpl_CreateGroupInGroup
 
 static
 HRESULT WINAPI IDPLobbySPImpl_DeleteGroupFromGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_DELETEREMOTEGROUPFROMGROUP drgfg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_DELETEREMOTEGROUPFROMGROUP drgfg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -320,8 +320,8 @@ HRESULT WINAPI IDPLobbySPImpl_DeleteGroupFromGroup
 
 static
 HRESULT WINAPI IDPLobbySPImpl_DeletePlayerFromGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_DELETEREMOTEPLAYERFROMGROUP drpfg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_DELETEREMOTEPLAYERFROMGROUP drpfg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -331,8 +331,8 @@ HRESULT WINAPI IDPLobbySPImpl_DeletePlayerFromGroup
 
 static
 HRESULT WINAPI IDPLobbySPImpl_DestroyGroup
-( LPDPLOBBYSP iface, 
-  LPSPDATA_DESTROYREMOTEGROUP drg 
+( LPDPLOBBYSP iface,
+  LPSPDATA_DESTROYREMOTEGROUP drg
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -342,8 +342,8 @@ HRESULT WINAPI IDPLobbySPImpl_DestroyGroup
 
 static
 HRESULT WINAPI IDPLobbySPImpl_EnumSessionsResponse
-( LPDPLOBBYSP iface, 
-  LPSPDATA_ENUMSESSIONSRESPONSE er 
+( LPDPLOBBYSP iface,
+  LPSPDATA_ENUMSESSIONSRESPONSE er
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -353,8 +353,8 @@ HRESULT WINAPI IDPLobbySPImpl_EnumSessionsResponse
 
 static
 HRESULT WINAPI IDPLobbySPImpl_GetSPDataPointer
-( LPDPLOBBYSP iface, 
-  LPVOID* lplpData 
+( LPDPLOBBYSP iface,
+  LPVOID* lplpData
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -364,8 +364,8 @@ HRESULT WINAPI IDPLobbySPImpl_GetSPDataPointer
 
 static
 HRESULT WINAPI IDPLobbySPImpl_HandleMessage
-( LPDPLOBBYSP iface, 
-  LPSPDATA_HANDLEMESSAGE hm 
+( LPDPLOBBYSP iface,
+  LPSPDATA_HANDLEMESSAGE hm
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -375,8 +375,8 @@ HRESULT WINAPI IDPLobbySPImpl_HandleMessage
 
 static
 HRESULT WINAPI IDPLobbySPImpl_SendChatMessage
-( LPDPLOBBYSP iface, 
-  LPSPDATA_CHATMESSAGE cm 
+( LPDPLOBBYSP iface,
+  LPSPDATA_CHATMESSAGE cm
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -386,8 +386,8 @@ HRESULT WINAPI IDPLobbySPImpl_SendChatMessage
 
 static
 HRESULT WINAPI IDPLobbySPImpl_SetGroupName
-( LPDPLOBBYSP iface, 
-  LPSPDATA_SETREMOTEGROUPNAME srgn 
+( LPDPLOBBYSP iface,
+  LPSPDATA_SETREMOTEGROUPNAME srgn
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -397,8 +397,8 @@ HRESULT WINAPI IDPLobbySPImpl_SetGroupName
 
 static
 HRESULT WINAPI IDPLobbySPImpl_SetPlayerName
-( LPDPLOBBYSP iface, 
-  LPSPDATA_SETREMOTEPLAYERNAME srpn 
+( LPDPLOBBYSP iface,
+  LPSPDATA_SETREMOTEPLAYERNAME srpn
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -408,8 +408,8 @@ HRESULT WINAPI IDPLobbySPImpl_SetPlayerName
 
 static
 HRESULT WINAPI IDPLobbySPImpl_SetSessionDesc
-( LPDPLOBBYSP iface, 
-  LPSPDATA_SETSESSIONDESC ssd 
+( LPDPLOBBYSP iface,
+  LPSPDATA_SETSESSIONDESC ssd
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -419,8 +419,8 @@ HRESULT WINAPI IDPLobbySPImpl_SetSessionDesc
 
 static
 HRESULT WINAPI IDPLobbySPImpl_SetSPDataPointer
-( LPDPLOBBYSP iface, 
-  LPVOID lpData 
+( LPDPLOBBYSP iface,
+  LPVOID lpData
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -430,8 +430,8 @@ HRESULT WINAPI IDPLobbySPImpl_SetSPDataPointer
 
 static
 HRESULT WINAPI IDPLobbySPImpl_StartSession
-( LPDPLOBBYSP iface, 
-  LPSPDATA_STARTSESSIONCOMMAND ssc 
+( LPDPLOBBYSP iface,
+  LPSPDATA_STARTSESSIONCOMMAND ssc
 )
 {
   ICOM_THIS(IDPLobbySPImpl,iface);
@@ -459,8 +459,8 @@ static struct ICOM_VTABLE(IDPLobbySP) dpLobbySPVT =
   IDPLobbySPImpl_GetSPDataPointer,
   IDPLobbySPImpl_HandleMessage,
   IDPLobbySPImpl_SendChatMessage,
-  IDPLobbySPImpl_SetGroupName, 
-  IDPLobbySPImpl_SetPlayerName, 
+  IDPLobbySPImpl_SetGroupName,
+  IDPLobbySPImpl_SetPlayerName,
   IDPLobbySPImpl_SetSessionDesc,
   IDPLobbySPImpl_SetSPDataPointer,
   IDPLobbySPImpl_StartSession

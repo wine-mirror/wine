@@ -314,7 +314,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
     if ( !(base = VirtualAlloc( NULL, totSize, MEM_RESERVE, PAGE_READWRITE )) )
         return 0;
 
-    if ( !VirtualAlloc( base, segSize + HTABLE_PAGESIZE, 
+    if ( !VirtualAlloc( base, segSize + HTABLE_PAGESIZE,
                         MEM_COMMIT, PAGE_READWRITE ) )
     {
         VirtualFree( base, 0, MEM_RELEASE );
@@ -329,7 +329,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
 
 
     /* Set up header and handle table */
-    
+
     header = (LOCAL32HEADER *)(base + segSize);
     header->base    = base;
     header->limit   = HTABLE_PAGESIZE-1;
@@ -348,8 +348,8 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
 
 
     /* Set up selector table */
-  
-    nrBlocks      = (totSize + 0x7fff) >> 15; 
+
+    nrBlocks      = (totSize + 0x7fff) >> 15;
     selectorTable = (LPWORD) HeapAlloc( header->heap,  0, nrBlocks * 2 );
     selectorEven  = SELECTOR_AllocBlock( base, totSize, WINE_LDT_FLAGS_DATA );
     selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, WINE_LDT_FLAGS_DATA );
@@ -384,7 +384,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
         GLOBAL_MoveBlock( segment, base, totSize );
         HeapFree( GetProcessHeap(), 0, oldBase );
     }
-    
+
     return (HANDLE)header;
 }
 
@@ -409,7 +409,7 @@ static LPDWORD Local32_SearchHandle( LOCAL32HEADER *header, DWORD addr )
 /***********************************************************************
  *           Local32_ToHandle
  */
-static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type, 
+static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
                               DWORD addr, LPDWORD *handle, LPBYTE *ptr )
 {
     *handle = NULL;
@@ -428,8 +428,8 @@ static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
             break;
 
         case 0:     /* handle */
-            if (    addr >= sizeof(LOCAL32HEADER) 
-                 && addr <  header->limit && !(addr & 3) 
+            if (    addr >= sizeof(LOCAL32HEADER)
+                 && addr <  header->limit && !(addr & 3)
                  && *(LPDWORD)((LPBYTE)header + addr) >= HTABLE_SIZE )
             {
                 *handle = (LPDWORD)((LPBYTE)header + addr);
@@ -452,7 +452,7 @@ static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
 /***********************************************************************
  *           Local32_FromHandle
  */
-static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type, 
+static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
                                 DWORD *addr, LPDWORD handle, LPBYTE ptr )
 {
     switch (type)
@@ -462,7 +462,7 @@ static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type,
         {
             WORD *selTable = (LPWORD)(header->base + header->selectorTableOffset);
             DWORD offset   = (LPBYTE)ptr - header->base;
-            *addr = MAKELONG( offset & 0x7fff, selTable[offset >> 15] ); 
+            *addr = MAKELONG( offset & 0x7fff, selTable[offset >> 15] );
         }
         break;
 
@@ -488,7 +488,7 @@ DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
     DWORD addr;
 
     /* Allocate memory */
-    ptr = HeapAlloc( header->heap, 
+    ptr = HeapAlloc( header->heap,
                      (flags & LMEM_MOVEABLE)? HEAP_ZERO_MEMORY : 0, size );
     if (!ptr) return 0;
 
@@ -512,24 +512,24 @@ DWORD WINAPI Local32Alloc16( HANDLE heap, DWORD size, INT16 type, DWORD flags )
         /* If virgin page, initialize it */
         if (header->freeListFirst[page] == 0xffff)
         {
-            if ( !VirtualAlloc( (LPBYTE)header + (page << 12), 
+            if ( !VirtualAlloc( (LPBYTE)header + (page << 12),
                                 0x1000, MEM_COMMIT, PAGE_READWRITE ) )
             {
                 WARN("Cannot grow handle table!\n" );
                 HeapFree( header->heap, 0, ptr );
                 return 0;
             }
-            
+
             header->limit += HTABLE_PAGESIZE;
 
             header->freeListFirst[page] = 0;
             header->freeListLast[page]  = HTABLE_PAGESIZE - 4;
             header->freeListSize[page]  = HTABLE_PAGESIZE / 4;
-           
+
             for (i = 0; i < HTABLE_PAGESIZE; i += 4)
                 *(DWORD *)((LPBYTE)header + i) = i+4;
 
-            if (page < HTABLE_NPAGES-1) 
+            if (page < HTABLE_NPAGES-1)
                 header->freeListFirst[page+1] = 0xffff;
         }
 
@@ -573,8 +573,8 @@ DWORD WINAPI Local32ReAlloc16( HANDLE heap, DWORD addr, INT16 type,
     if (!handle) return FALSE;
 
     /* Reallocate memory block */
-    ptr = HeapReAlloc( header->heap, 
-                       (flags & LMEM_MOVEABLE)? HEAP_ZERO_MEMORY : 0, 
+    ptr = HeapReAlloc( header->heap,
+                       (flags & LMEM_MOVEABLE)? HEAP_ZERO_MEMORY : 0,
                        ptr, size );
     if (!ptr) return 0;
 
@@ -620,7 +620,7 @@ BOOL WINAPI Local32Free16( HANDLE heap, DWORD addr, INT16 type )
         /* Shrink handle table when possible */
         while (page > 0 && header->freeListSize[page] == HTABLE_PAGESIZE / 4)
         {
-            if ( VirtualFree( (LPBYTE)header + 
+            if ( VirtualFree( (LPBYTE)header +
                               (header->limit & ~(HTABLE_PAGESIZE-1)),
                               HTABLE_PAGESIZE, MEM_DECOMMIT ) )
                 break;
@@ -694,8 +694,8 @@ WORD WINAPI Local32GetSegment16( HANDLE heap )
 static LOCAL32HEADER *Local32_GetHeap( HGLOBAL16 handle )
 {
     WORD selector = GlobalHandleToSel16( handle );
-    DWORD base  = GetSelectorBase( selector ); 
-    DWORD limit = GetSelectorLimit16( selector ); 
+    DWORD base  = GetSelectorBase( selector );
+    DWORD limit = GetSelectorLimit16( selector );
 
     /* Hmmm. This is a somewhat stupid heuristic, but Windows 95 does
        it this way ... */

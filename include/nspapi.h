@@ -47,7 +47,7 @@ extern "C" {
 /*
  * structures
  */
-typedef  struct _PROTOCOL_INFOA 
+typedef  struct _PROTOCOL_INFOA
 {
          DWORD   dwServiceFlags;
          INT     iAddressFamily;
@@ -59,7 +59,7 @@ typedef  struct _PROTOCOL_INFOA
          LPSTR   lpProtocol;
 } PROTOCOL_INFOA;
 
-typedef  struct _PROTOCOL_INFOW 
+typedef  struct _PROTOCOL_INFOW
 {
          DWORD   dwServiceFlags;
          INT     iAddressFamily;

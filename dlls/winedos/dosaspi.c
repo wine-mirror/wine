@@ -73,7 +73,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
  * Offset of SRB Pointer		<- SP+4
  * Segment of return address		<- SP+2
  * Offset of return address		<- SP+0
- */ 
+ */
 		/* FIXME: I am about 99% sure what is here is correct,
 		 * but this code has never been tested (and probably
 		 * won't be either until someone finds a DOS program
@@ -99,7 +99,7 @@ DOSASPI_PostProc( SRB_ExecSCSICmd *lpPRB )
 	} /* if ((SRB_Flags&SRB_POSTING) && SRB_PostProc) */
 }
 
-static 
+static
 DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 {
 	PSRB_ExecSCSICmd lpPRB;

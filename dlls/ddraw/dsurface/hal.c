@@ -107,7 +107,7 @@ HAL_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
 
     /* the driver may want to dereference these pointers */
     This->local.lpSurfMore = &This->more;
-    This->local.lpGbl = &This->global;   
+    This->local.lpGbl = &This->global;
     This->gmore = &This->global_more;
 
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) {
@@ -229,7 +229,7 @@ HRESULT HAL_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This)
 }
 
 void HAL_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
-				       IDirectDrawPaletteImpl* pal) 
+				       IDirectDrawPaletteImpl* pal)
 {
     LPDDRAWI_DIRECTDRAW_GBL dd_gbl = This->more.lpDD_lcl->lpGbl;
     DDHAL_SETPALETTEDATA data;

@@ -80,8 +80,8 @@ typedef struct
 
 /*
  * We make addr = 4n + 2 and set *((WORD *)addr - 1) = &addr like Windows does
- * in case something actually relies on this.   
- * Note that if the architecture does not allow unaligned accesses, we make 
+ * in case something actually relies on this.
+ * Note that if the architecture does not allow unaligned accesses, we make
  * addr = 4n + 4 to avoid returning unaligned pointers from LocalAlloc etc.
  *
  * An unused handle has lock = flags = 0xff. In windows addr is that of next
@@ -188,7 +188,7 @@ static void LOCAL_MakeBlockFree( char *baseptr, WORD block )
     pArena = ARENA_PTR( baseptr, block );
     pArena->prev = (pArena->prev & ~3) | LOCAL_ARENA_FREE;
     pArena->size = pArena->next - block;
-    
+
       /* Find the next free block (last block is always free) */
 
     next = pArena->next;
@@ -292,7 +292,7 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
     LOCALHEAPINFO *pInfo;
     WORD arena;
 
-    /* FIXME - the test should be done when calling the function! 
+    /* FIXME - the test should be done when calling the function!
                plus is not clear that we should print this info
                only when TRACE_ON is on! */
     if(!TRACE_ON(local)) return;
@@ -378,7 +378,7 @@ BOOL16 WINAPI LocalInit16( HANDLE16 selector, WORD start, WORD end )
         }
     }
 
-    if (start == 0) 
+    if (start == 0)
     {
         /* start == 0 means: put the local heap at the end of the segment */
 
@@ -490,7 +490,7 @@ static BOOL16 LOCAL_GrowHeap( HANDLE16 ds )
     WORD freeArena, lastArena;
     LOCALARENA *pArena, *pLastArena;
     char *ptr;
-    
+
     hseg = GlobalHandle16( ds );
     /* maybe mem allocated by Virtual*() ? */
     if (!hseg) return FALSE;
@@ -513,7 +513,7 @@ static BOOL16 LOCAL_GrowHeap( HANDLE16 ds )
     freeArena = pHeapInfo->last;
     pHeapInfo->last = lastArena;
     pHeapInfo->minsize += end - oldsize;
-    
+
       /* grow the old last block */
     pArena = ARENA_PTR( ptr, freeArena );
     pArena->size      = lastArena - freeArena;
@@ -528,7 +528,7 @@ static BOOL16 LOCAL_GrowHeap( HANDLE16 ds )
     pLastArena->size      = LALIGN(sizeof(LOCALARENA));
     pLastArena->free_prev = freeArena;
     pLastArena->free_next = lastArena;  /* this one */
-    
+
     /* If block before freeArena is also free then merge them */
     if((ARENA_PTR(ptr, (pArena->prev & ~3))->prev & 3) == LOCAL_ARENA_FREE)
     {
@@ -678,7 +678,7 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
     LOCALARENA *pArena;
     WORD arena;
     WORD freespace = 0;
-    
+
     if (!(pInfo = LOCAL_GetHeap( ds )))
     {
         ERR("Local heap not found\n" );
@@ -774,7 +774,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                     memcpy((char *)pFinalArena + ARENA_HEADER_SIZE,
                            (char *)pMoveArena + ARENA_HEADER_SIZE,
                            movesize - ARENA_HEADER_SIZE );
-                    /* Free the old location */  
+                    /* Free the old location */
                     LOCAL_FreeArena(ds, movearena);
 		    if (pInfo->notify)
 		        LOCAL_CallTo16_word_www(pInfo->notify, LN_MOVE,
@@ -1080,14 +1080,14 @@ static void LOCAL_FreeHandleEntry( HANDLE16 ds, HLOCAL16 handle )
 
     pEntry->addr = 0;  /* just in case */
     pEntry->lock = 0xff;
-    pEntry->flags = 0xff; 
+    pEntry->flags = 0xff;
     /* Now check if all entries in this table are free */
 
     table = *pTable;
     pEntry = (LOCALHANDLEENTRY *)(ptr + table + sizeof(WORD));
     count = *(WORD *)(ptr + table);
     for (i = count; i > 0; i--, pEntry++) if (pEntry->lock != 0xff) return;
-    
+
     /* Remove the table from the linked list and free it */
 
     TRACE("(%04x): freeing table %04x\n",
@@ -1107,7 +1107,7 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
 
     TRACE("%04x ds=%04x\n", handle, ds );
-    
+
     if (!handle) { WARN("Handle is 0.\n" ); return 0; }
     if (HANDLE_FIXED( handle ))
     {
@@ -1140,7 +1140,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 {
     char *ptr;
     HLOCAL16 handle;
-    
+
     TRACE("%04x %d ds=%04x\n", flags, size, ds );
 
     if(size > 0 && size <= 4) size = 5;
@@ -1211,7 +1211,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     TRACE("%04x %d %04x ds=%04x\n",
                    handle, size, flags, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
-    
+
     if (HANDLE_FIXED( handle ))
 	blockhandle = handle;
     else
@@ -1407,7 +1407,7 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
         if (pEntry->lock < 0xfe) pEntry->lock++;
         handle = pEntry->addr;
     }
-    TRACE("%04x returning %04x\n", 
+    TRACE("%04x returning %04x\n",
 		   old_handle, handle );
     return handle;
 }
@@ -1456,7 +1456,7 @@ WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
     TRACE("%04x ds=%04x\n", handle, ds );
 
     if (!handle) return 0;
-    if (HANDLE_MOVEABLE( handle )) 
+    if (HANDLE_MOVEABLE( handle ))
     {
         handle = *(WORD *)(ptr + handle);
         if (!handle) return 0;
@@ -1547,7 +1547,7 @@ WORD LOCAL_CountFree( HANDLE16 ds )
  * Implementation of LocalHandle().
  */
 HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
-{ 
+{
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
     WORD table;
@@ -1639,7 +1639,7 @@ UINT16 WINAPI LocalSize16( HLOCAL16 handle )
  *           LocalHandle   (KERNEL.11)
  */
 HLOCAL16 WINAPI LocalHandle16( WORD addr )
-{ 
+{
     return LOCAL_Handle( CURRENT_DS, addr );
 }
 

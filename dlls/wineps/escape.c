@@ -139,7 +139,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	    return 0;
 	}
 
-    case SETCHARSET: 
+    case SETCHARSET:
       /* Undocumented escape used by winword6.
 	 Switches between ANSI and a special charset.
 	 If *lpInData == 1 we require that
@@ -151,7 +151,7 @@ INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID i
 	 0x96 is endash
 	 0x97 is emdash
 	 0xa0 is non break space - yeah right.
-	 
+
 	 If *lpInData == 0 we get ANSI.
 	 Since there's nothing else there, let's just make these the default
 	 anyway and see what happens...
@@ -234,7 +234,7 @@ INT PSDRV_StartPage( PSDRV_PDEVICE *physDev )
     return 1;
 }
 
-	
+
 /************************************************************************
  *           PSDRV_EndPage
  */

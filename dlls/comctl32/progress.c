@@ -1,4 +1,4 @@
-/*		
+/*
  * Progress control
  *
  * Copyright 1997, 2002 Dimitrie O. Paun
@@ -44,7 +44,7 @@ typedef struct
 
 #define UNKNOWN_PARAM(msg, wParam, lParam) WARN(       \
    "Unknown parameter(s) for message " #msg            \
-   "(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
+   "(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
 
 /***********************************************************************
  * PROGRESS_EraseBackground
@@ -103,14 +103,14 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     /* compute extent of progress bar */
     if (dwStyle & PBS_VERTICAL) {
-        rightBar  = rect.bottom - 
+        rightBar  = rect.bottom -
                     MulDiv (infoPtr->CurVal - infoPtr->MinVal,
 	                    rect.bottom - rect.top,
 	                    infoPtr->MaxVal - infoPtr->MinVal);
         ledWidth  = MulDiv (rect.right - rect.left, 2, 3);
         rightMost = rect.top;
     } else {
-        rightBar = rect.left + 
+        rightBar = rect.left +
                    MulDiv (infoPtr->CurVal - infoPtr->MinVal,
 	                   rect.right - rect.left,
 	                   infoPtr->MaxVal - infoPtr->MinVal);
@@ -120,14 +120,14 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 
     /* now draw the bar */
     if (dwStyle & PBS_SMOOTH) {
-        if (dwStyle & PBS_VERTICAL) 
+        if (dwStyle & PBS_VERTICAL)
 	    rect.top = rightBar;
-        else 
+        else
 	    rect.right = rightBar;
         FillRect(hdc, &rect, hbrBar);
     } else {
         if (dwStyle & PBS_VERTICAL) {
-            while(rect.bottom > rightBar) { 
+            while(rect.bottom > rightBar) {
                 rect.top = rect.bottom - ledWidth;
                 if (rect.top < rightMost)
                     rect.top = rightMost;
@@ -135,7 +135,7 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
                 rect.bottom = rect.top - LED_GAP;
             }
         } else {
-            while(rect.left < rightBar) { 
+            while(rect.left < rightBar) {
                 rect.right = rect.left + ledWidth;
                 if (rect.right > rightMost)
                     rect.right = rightMost;
@@ -200,7 +200,7 @@ static DWORD PROGRESS_SetRange (PROGRESS_INFO *infoPtr, int low, int high)
 
     /* if nothing changes, simply return */
     if(infoPtr->MinVal == low && infoPtr->MaxVal == high) return res;
-    
+
     infoPtr->MinVal = low;
     infoPtr->MaxVal = high;
     PROGRESS_CoercePos(infoPtr);
@@ -210,7 +210,7 @@ static DWORD PROGRESS_SetRange (PROGRESS_INFO *infoPtr, int low, int high)
 /***********************************************************************
  *           ProgressWindowProc
  */
-static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message, 
+static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
                                   WPARAM wParam, LPARAM lParam)
 {
     PROGRESS_INFO *infoPtr;
@@ -220,7 +220,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     infoPtr = (PROGRESS_INFO *)GetWindowLongW(hwnd, 0);
 
     if (!infoPtr && message != WM_CREATE)
-        return DefWindowProcW( hwnd, message, wParam, lParam ); 
+        return DefWindowProcW( hwnd, message, wParam, lParam );
 
     switch(message) {
     case WM_CREATE:
@@ -240,9 +240,9 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
         /* initialize the info struct */
         infoPtr->Self = hwnd;
-        infoPtr->MinVal = 0; 
+        infoPtr->MinVal = 0;
         infoPtr->MaxVal = 100;
-        infoPtr->CurVal = 0; 
+        infoPtr->CurVal = 0;
         infoPtr->Step = 10;
         infoPtr->ColorBar = CLR_DEFAULT;
         infoPtr->ColorBk = CLR_DEFAULT;
@@ -250,7 +250,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         TRACE("Progress Ctrl creation, hwnd=%04x\n", hwnd);
         return 0;
     }
-    
+
     case WM_DESTROY:
         TRACE("Progress Ctrl destruction, hwnd=%04x\n", hwnd);
         COMCTL32_Free (infoPtr);
@@ -260,7 +260,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case WM_ERASEBKGND:
 	PROGRESS_EraseBackground(infoPtr, wParam);
         return TRUE;
-	
+
     case WM_GETFONT:
         return (LRESULT)infoPtr->Font;
 
@@ -269,7 +269,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case WM_PAINT:
         return PROGRESS_Paint (infoPtr, (HDC)wParam);
-    
+
     case PBM_DELTAPOS:
     {
 	INT oldVal;
@@ -301,7 +301,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         }
         return oldVal;
     }
-      
+
     case PBM_SETRANGE:
         if (wParam) UNKNOWN_PARAM(PBM_SETRANGE, wParam, lParam);
         return PROGRESS_SetRange (infoPtr, (int)LOWORD(lParam), (int)HIWORD(lParam));
@@ -319,7 +319,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     {
 	INT oldVal;
         if (wParam || lParam) UNKNOWN_PARAM(PBM_STEPIT, wParam, lParam);
-        oldVal = infoPtr->CurVal;   
+        oldVal = infoPtr->CurVal;
         infoPtr->CurVal += infoPtr->Step;
         if(infoPtr->CurVal > infoPtr->MaxVal)
 	    infoPtr->CurVal = infoPtr->MinVal;
@@ -335,7 +335,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case PBM_SETRANGE32:
         return PROGRESS_SetRange (infoPtr, (int)wParam, (int)lParam);
-    
+
     case PBM_GETRANGE:
         if (lParam) {
             ((PPBRANGE)lParam)->iLow = infoPtr->MinVal;
@@ -359,11 +359,11 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
 
-    default: 
-        if (message >= WM_USER) 
+    default:
+        if (message >= WM_USER)
 	    ERR("unknown msg %04x wp=%04x lp=%08lx\n", message, wParam, lParam );
-        return DefWindowProcW( hwnd, message, wParam, lParam ); 
-    } 
+        return DefWindowProcW( hwnd, message, wParam, lParam );
+    }
 }
 
 

@@ -1169,7 +1169,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     switch(cmd)
     {
         case SW_HIDE:
-            if (!wasVisible) goto END;;
+            if (!wasVisible) goto END;
 	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE |
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;

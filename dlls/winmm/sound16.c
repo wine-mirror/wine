@@ -67,7 +67,7 @@ INT16 WINAPI SetVoiceNote16(INT16 nVoice, INT16 nValue, INT16 nLength,
 INT16 WINAPI SetVoiceAccent16(INT16 nVoice, INT16 nTempo, INT16 nVolume,
                               INT16 nMode, INT16 nPitch)
 {
-  FIXME("(%d,%d,%d,%d,%d): stub\n", nVoice, nTempo, 
+  FIXME("(%d,%d,%d,%d,%d): stub\n", nVoice, nTempo,
 	nVolume, nMode, nPitch);
   return 0;
 }

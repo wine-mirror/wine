@@ -58,7 +58,7 @@ typedef struct _PROPSHEETPAGEA
     DWORD              dwSize;
     DWORD              dwFlags;
     HINSTANCE        hInstance;
-    union 
+    union
     {
         LPCSTR           pszTemplate;
         LPCDLGTEMPLATEA  pResource;
@@ -84,7 +84,7 @@ typedef struct _PROPSHEETPAGEW
     DWORD               dwSize;
     DWORD               dwFlags;
     HINSTANCE         hInstance;
-    union 
+    union
     {
         LPCWSTR          pszTemplate;
         LPCDLGTEMPLATEW  pResource;
@@ -200,13 +200,13 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage);
  * Property sheet support (UNICODE-Winelib)
  */
 
-DECL_WINELIB_TYPE_AW(PROPSHEETPAGE) 
-DECL_WINELIB_TYPE_AW(LPPROPSHEETPAGE) 
-DECL_WINELIB_TYPE_AW(LPCPROPSHEETPAGE) 
-DECL_WINELIB_TYPE_AW(PROPSHEETHEADER) 
-DECL_WINELIB_TYPE_AW(LPPROPSHEETHEADER) 
-DECL_WINELIB_TYPE_AW(LPCPROPSHEETHEADER) 
-DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK) 
+DECL_WINELIB_TYPE_AW(PROPSHEETPAGE)
+DECL_WINELIB_TYPE_AW(LPPROPSHEETPAGE)
+DECL_WINELIB_TYPE_AW(LPCPROPSHEETPAGE)
+DECL_WINELIB_TYPE_AW(PROPSHEETHEADER)
+DECL_WINELIB_TYPE_AW(LPPROPSHEETHEADER)
+DECL_WINELIB_TYPE_AW(LPCPROPSHEETHEADER)
+DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 
 
 /*
@@ -247,7 +247,7 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 #define PSH_WIZARDCONTEXTHELP   0x00001000
 
      /*
-      * for below IE 5 
+      * for below IE 5
       * PSH_WIZARD97            0x00002000
       */
 #define PSH_WATERMARK           0x00008000
@@ -272,7 +272,7 @@ typedef struct _PSHNOTIFY
    NMHDR hdr;
    LPARAM lParam;
 } PSHNOTIFY, *LPPSHNOTIFY;
- 
+
 #define PSN_FIRST               (0U-200U)
 #define PSN_LAST                (0U-299U)
 
@@ -293,7 +293,7 @@ typedef struct _PSHNOTIFY
 #define PSNRET_NOERROR              0
 #define PSNRET_INVALID              1
 #define PSNRET_INVALID_NOCHANGEPAGE 2
- 
+
 
 #define PSM_SETCURSEL           (WM_USER + 101)
 #define PSM_REMOVEPAGE          (WM_USER + 102)
@@ -359,58 +359,58 @@ typedef struct _PSHNOTIFY
 
 #define PropSheet_SetCurSel(hDlg, hpage, index) \
 	SendMessageA(hDlg, PSM_SETCURSEL, (WPARAM)index, (LPARAM)hpage)
-	 
+
 #define PropSheet_RemovePage(hDlg, index, hpage) \
 	SNDMSG(hDlg, PSM_REMOVEPAGE, index, (LPARAM)hpage)
-	 
+
 #define PropSheet_AddPage(hDlg, hpage) \
 	SNDMSG(hDlg, PSM_ADDPAGE, 0, (LPARAM)hpage)
-	 
+
 #define PropSheet_Changed(hDlg, hwnd) \
 	SNDMSG(hDlg, PSM_CHANGED, (WPARAM)hwnd, 0L)
-	 
+
 #define PropSheet_RestartWindows(hDlg) \
 	SNDMSG(hDlg, PSM_RESTARTWINDOWS, 0, 0L)
-	 
+
 #define PropSheet_RebootSystem(hDlg) \
 	SNDMSG(hDlg, PSM_REBOOTSYSTEM, 0, 0L)
-	 
+
 #define PropSheet_CancelToClose(hDlg) \
 	PostMessage(hDlg, PSM_CANCELTOCLOSE, 0, 0L)
-	 
+
 #define PropSheet_QuerySiblings(hDlg, wParam, lParam) \
 	SNDMSG(hDlg, PSM_QUERYSIBLINGS, wParam, lParam)
-	 
+
 #define PropSheet_UnChanged(hDlg, hwnd) \
 	SNDMSG(hDlg, PSM_UNCHANGED, (WPARAM)hwnd, 0L)
-	 
+
 #define PropSheet_Apply(hDlg) \
 	SNDMSG(hDlg, PSM_APPLY, 0, 0L)
-	  
+
 #define PropSheet_SetTitle(hDlg, wStyle, lpszText)\
 	SNDMSG(hDlg, PSM_SETTITLE, wStyle, (LPARAM)(LPCTSTR)lpszText)
-	 
+
 #define PropSheet_SetWizButtons(hDlg, dwFlags) \
 	PostMessage(hDlg, PSM_SETWIZBUTTONS, 0, (LPARAM)dwFlags)
-	 
+
 #define PropSheet_PressButton(hDlg, iButton) \
 	PostMessage(hDlg, PSM_PRESSBUTTON, (WPARAM)iButton, 0)
-	 
+
 #define PropSheet_SetCurSelByID(hDlg, id) \
 	SNDMSG(hDlg, PSM_SETCURSELID, 0, (LPARAM)id)
 
 #define PropSheet_SetFinishText(hDlg, lpszText) \
 	SNDMSG(hDlg, PSM_SETFINISHTEXT, 0, (LPARAM)lpszText)
-	 
+
 #define PropSheet_GetTabControl(hDlg) \
 	(HWND)SNDMSG(hDlg, PSM_GETTABCONTROL, 0, 0)
-	 
+
 #define PropSheet_IsDialogMessage(hDlg, pMsg) \
 	(BOOL)SNDMSG(hDlg, PSM_ISDIALOGMESSAGE, 0, (LPARAM)pMsg)
-	 
+
 #define PropSheet_GetCurrentPageHwnd(hDlg) \
 	(HWND)SNDMSG(hDlg, PSM_GETCURRENTPAGEHWND, 0, 0L)
-	 
+
 
 #ifdef __cplusplus
 }

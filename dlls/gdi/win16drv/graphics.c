@@ -41,7 +41,7 @@ WIN16DRV_LineTo( PHYSDEV dev, INT x, INT y )
     points[1].x = dc->DCOrgX + XLPTODP( dc, x );
     points[1].y = dc->DCOrgY + YLPTODP( dc, y );
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
-                         OS_POLYLINE, 2, points, 
+                         OS_POLYLINE, 2, points,
                          physDev->PenInfo,
                          NULL,
                          win16drv_SegPtr_DrawMode, dc->hClipRgn);
@@ -73,7 +73,7 @@ WIN16DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     points[1].x = XLPTODP(dc, right);
     points[1].y = YLPTODP(dc, bottom);
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
-                           OS_RECTANGLE, 2, points, 
+                           OS_RECTANGLE, 2, points,
                            physDev->PenInfo,
 			   physDev->BrushInfo,
 			   win16drv_SegPtr_DrawMode, dc->hClipRgn);
@@ -100,8 +100,8 @@ WIN16DRV_Polygon(PHYSDEV dev, const POINT* pt, INT count )
         count++; /* Ensure polygon is closed */
 
     points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
-    if(points == NULL) return FALSE;    
- 
+    if(points == NULL) return FALSE;
+
     for (i = 0; i < count - 1; i++)
     {
       points[i].x = XLPTODP( dc, pt[i].x );
@@ -110,7 +110,7 @@ WIN16DRV_Polygon(PHYSDEV dev, const POINT* pt, INT count )
     points[count-1].x = points[0].x;
     points[count-1].y = points[0].y;
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
-                         OS_WINDPOLYGON, count, points, 
+                         OS_WINDPOLYGON, count, points,
                          physDev->PenInfo,
                          physDev->BrushInfo,
                          win16drv_SegPtr_DrawMode, dc->hClipRgn);
@@ -135,14 +135,14 @@ WIN16DRV_Polyline(PHYSDEV dev, const POINT* pt, INT count )
 
     points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
     if(points == NULL) return FALSE;
- 
+
     for (i = 0; i < count; i++)
     {
       points[i].x = XLPTODP( dc, pt[i].x );
       points[i].y = YLPTODP( dc, pt[i].y );
     }
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
-                         OS_POLYLINE, count, points, 
+                         OS_POLYLINE, count, points,
                          physDev->PenInfo,
                          NULL,
                          win16drv_SegPtr_DrawMode, dc->hClipRgn);
@@ -172,7 +172,7 @@ WIN16DRV_Ellipse(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     points[1].y = YLPTODP(dc, bottom);
 
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
-                         OS_ELLIPSE, 2, points, 
+                         OS_ELLIPSE, 2, points,
                          physDev->PenInfo,
                          physDev->BrushInfo,
                          win16drv_SegPtr_DrawMode, dc->hClipRgn);

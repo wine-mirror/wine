@@ -1,6 +1,6 @@
 /*
  * TAPI definitions
- * 
+ *
  * Copyright (c) 1999 Andreas Mohr
  *
  * This library is free software; you can redistribute it and/or
@@ -359,7 +359,7 @@ typedef struct lineforwardlist_tag {
     DWORD dwNumEntries;
     LINEFORWARD ForwardList[1];
 } LINEFORWARDLIST, *LPLINEFORWARDLIST;
-    
+
 typedef struct linegeneratetone_tag {
     DWORD dwFrequency;
     DWORD dwCadenceOn;

@@ -141,7 +141,7 @@ STORAGE_get_next_big_blocknr(HFILE hf,int blocknr) {
 	struct	storage_header	sth;
 
 	READ_HEADER;
-	
+
 	assert(blocknr>>7<sth.num_of_bbd_blocks);
 	if (sth.bbd_list[blocknr>>7]==0xffffffff)
 		return -5;
@@ -161,7 +161,7 @@ STORAGE_get_nth_next_big_blocknr(HFILE hf,int blocknr,int nr) {
 	struct storage_header sth;
 
 	READ_HEADER;
-	
+
 	assert(blocknr>=0);
 	while (nr--) {
 		assert((blocknr>>7)<sth.num_of_bbd_blocks);
@@ -397,7 +397,7 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 /******************************************************************************
  * STORAGE_init_storage [INTERNAL]
  */
-static BOOL 
+static BOOL
 STORAGE_init_storage(HFILE hf) {
 	BYTE	block[BIGSIZE];
 	LPDWORD	bbs;
@@ -503,7 +503,7 @@ STORAGE_set_small_chain(HFILE hf,int blocknr,INT type) {
 /******************************************************************************
  *		STORAGE_get_free_big_blocknr	[Internal]
  */
-static int 
+static int
 STORAGE_get_free_big_blocknr(HFILE hf) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
@@ -529,8 +529,8 @@ STORAGE_get_free_big_blocknr(HFILE hf) {
 		bigblocknr = sth.bbd_list[++curblock];
 	}
 	bigblocknr = curblock*128;
-	/* since we have marked all blocks from 0 up to curblock*128-1 
-	 * the next free one is curblock*128, where we happily put our 
+	/* since we have marked all blocks from 0 up to curblock*128-1
+	 * the next free one is curblock*128, where we happily put our
 	 * next large block depot.
 	 */
 	memset(block,0xff,sizeof(block));
@@ -539,7 +539,7 @@ STORAGE_get_free_big_blocknr(HFILE hf) {
 	assert(STORAGE_put_big_block(hf,bigblocknr,block));
 
 	/* if we had a bbd block already (mostlikely) we need
-	 * to link the new one into the chain 
+	 * to link the new one into the chain
 	 */
 	if (lastbigblocknr!=-1)
 		assert(STORAGE_set_big_chain(hf,lastbigblocknr,bigblocknr));
@@ -550,7 +550,7 @@ STORAGE_get_free_big_blocknr(HFILE hf) {
 
 	/* Set the end of the chain for the bigblockdepots */
 	assert(STORAGE_set_big_chain(hf,bigblocknr,STORAGE_CHAINENTRY_ENDOFCHAIN));
-	/* add 1, for the first entry is used for the additional big block 
+	/* add 1, for the first entry is used for the additional big block
 	 * depot. (means we already used bigblocknr) */
 	memset(block,0x42,sizeof(block));
 	/* allocate this block (filled with 0x42) */
@@ -562,7 +562,7 @@ STORAGE_get_free_big_blocknr(HFILE hf) {
 /******************************************************************************
  *		STORAGE_get_free_small_blocknr	[Internal]
  */
-static int 
+static int
 STORAGE_get_free_small_blocknr(HFILE hf) {
 	BYTE	block[BIGSIZE];
 	LPINT	sbd = (LPINT)block;
@@ -658,7 +658,7 @@ STORAGE_get_free_pps_entry(HFILE hf) {
 	while (blocknr>=0) {
 		if (!STORAGE_get_big_block(hf,blocknr,block))
 			return -1;
-		for (i=0;i<4;i++) 
+		for (i=0;i<4;i++)
 			if (stde[i].pps_sizeofname==0) /* free */
 				return curblock*4+i;
 		lastblocknr = blocknr;
@@ -670,7 +670,7 @@ STORAGE_get_free_pps_entry(HFILE hf) {
 	/* sth invalidated */
 	if (blocknr<0)
 		return -1;
-	
+
 	if (!STORAGE_set_big_chain(hf,lastblocknr,blocknr))
 		return -1;
 	if (!STORAGE_set_big_chain(hf,blocknr,STORAGE_CHAINENTRY_ENDOFCHAIN))
@@ -708,7 +708,7 @@ HRESULT WINAPI IStream16_fnQueryInterface(
 		return 0;
 	}
 	return OLE_E_ENUM_NOMORE;
-	
+
 }
 
 /******************************************************************************
@@ -809,7 +809,7 @@ HRESULT WINAPI IStream16_fnRead(
 			   WARN("small block read failed!!!\n");
 				return E_FAIL;
 			}
-			cc = cb; 
+			cc = cb;
 			if (cc>SMALLSIZE-(This->offset.s.LowPart&(SMALLSIZE-1)))
 				cc=SMALLSIZE-(This->offset.s.LowPart&(SMALLSIZE-1));
 			memcpy((LPBYTE)pv,block+(This->offset.s.LowPart&(SMALLSIZE-1)),cc);
@@ -829,7 +829,7 @@ HRESULT WINAPI IStream16_fnRead(
 				WARN("big block read failed!!!\n");
 				return E_FAIL;
 			}
-			cc = cb; 
+			cc = cb;
 			if (cc>BIGSIZE-(This->offset.s.LowPart&(BIGSIZE-1)))
 				cc=BIGSIZE-(This->offset.s.LowPart&(BIGSIZE-1));
 			memcpy((LPBYTE)pv,block+(This->offset.s.LowPart&(BIGSIZE-1)),cc);
@@ -881,7 +881,7 @@ HRESULT WINAPI IStream16_fnWrite(
 				if (!STORAGE_set_big_chain(hf,blocknr,STORAGE_CHAINENTRY_ENDOFCHAIN))
 					return E_FAIL;
 			} else {
-				/* Migrate large blocks to small blocks 
+				/* Migrate large blocks to small blocks
 				 * (we just migrate newsize bytes)
 				 */
 				LPBYTE	curdata,data = HeapAlloc(GetProcessHeap(),0,newsize+BIGSIZE);
@@ -1190,7 +1190,7 @@ HRESULT WINAPI IStream_fnQueryInterface(
 		return 0;
 	}
 	return OLE_E_ENUM_NOMORE;
-	
+
 }
 
 /******************************************************************************
@@ -1660,8 +1660,8 @@ HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 /******************************************************************************
  * StgIsStorageFile [OLE32.146]
  */
-HRESULT WINAPI 
-StgIsStorageFile(LPCOLESTR fn) 
+HRESULT WINAPI
+StgIsStorageFile(LPCOLESTR fn)
 {
     HRESULT ret;
     DWORD len = WideCharToMultiByte( CP_ACP, 0, fn, -1, NULL, 0, NULL, NULL );
@@ -1712,7 +1712,7 @@ HRESULT WINAPI StgOpenStorage16(
 		return E_FAIL;
 	}
 	return S_OK;
-	
+
 }
 
 

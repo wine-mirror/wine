@@ -32,7 +32,7 @@ extern "C" {
  * Types
  */
 
-typedef PVOID DIGEST_HANDLE; 
+typedef PVOID DIGEST_HANDLE;
 
 /***********************************************************************
  * Enums/Defines
@@ -161,7 +161,7 @@ typedef struct _LOADED_IMAGE {
 
 typedef struct _WIN_CERTIFICATE {
   DWORD dwLength;
-  WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */ 
+  WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */
   WORD  wCertificateType;            /*  WIN_CERT_TYPE_xxx */
   BYTE  bCertificate[ANYSIZE_ARRAY];
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
@@ -182,7 +182,7 @@ typedef struct _IMAGE_DEBUG_INFORMATION {
   DWORD        CheckSum;
   DWORD        ImageBase;
   DWORD        SizeOfImage;
-  
+
   DWORD NumberOfSections;
   PIMAGE_SECTION_HEADER Sections;
 
@@ -305,12 +305,12 @@ typedef BOOL (CALLBACK *PSYM_ENUMMODULES_CALLBACK)(
 );
 
 typedef BOOL (CALLBACK *PSYM_ENUMSYMBOLS_CALLBACK)(
-  LPSTR SymbolName, ULONG SymbolAddress, ULONG SymbolSize, 
+  LPSTR SymbolName, ULONG SymbolAddress, ULONG SymbolSize,
   PVOID UserContext
 );
 
 typedef BOOL (CALLBACK *PENUMLOADED_MODULES_CALLBACK)(
-  LPSTR ModuleName, ULONG ModuleBase, ULONG ModuleSize, 
+  LPSTR ModuleName, ULONG ModuleBase, ULONG ModuleSize,
   PVOID UserContext
 );
 
@@ -351,7 +351,7 @@ BOOL WINAPI BindImageEx(
   PIMAGEHLP_STATUS_ROUTINE StatusRoutine
 );
 PIMAGE_NT_HEADERS WINAPI CheckSumMappedFile(
-  LPVOID BaseAddress, DWORD FileLength, 
+  LPVOID BaseAddress, DWORD FileLength,
   LPDWORD HeaderSum, LPDWORD CheckSum
 );
 BOOL WINAPI EnumerateLoadedModules(
@@ -366,7 +366,7 @@ HANDLE WINAPI FindExecutableImage(
   LPSTR FileName, LPSTR SymbolPath, LPSTR ImageFilePath
 );
 BOOL WINAPI GetImageConfigInformation(
-  PLOADED_IMAGE LoadedImage, 
+  PLOADED_IMAGE LoadedImage,
   PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation
 );
 DWORD WINAPI GetImageUnusedHeaderBytes(
@@ -418,7 +418,7 @@ BOOL WINAPI ImageUnload(
   PLOADED_IMAGE LoadedImage
 );
 PAPI_VERSION WINAPI ImagehlpApiVersion(
-  void 
+  void
 );
 PAPI_VERSION WINAPI ImagehlpApiVersionEx(
   PAPI_VERSION AppVersion
@@ -460,7 +460,7 @@ BOOL WINAPI SetImageConfigInformation(
   PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation
 );
 BOOL WINAPI SplitSymbols(
-  LPSTR ImageName, LPSTR SymbolsPath, 
+  LPSTR ImageName, LPSTR SymbolsPath,
   LPSTR SymbolFilePath, DWORD Flags
 );
 BOOL WINAPI StackWalk(

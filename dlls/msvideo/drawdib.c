@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2000 Bradley Baetz
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ BOOL16 VFWAPI DrawDibClose16(HDRAWDIB16 hdd) {
 BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 	BOOL ret = TRUE;
 	WINE_HDD *whdd = GlobalLock16(hdd);
-	
+
 	TRACE("(0x%08lx)\n",(DWORD)hdd);
 
 	whdd->hpal = 0; /* Do not free this */
@@ -127,7 +127,7 @@ BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd) {
 
 	if (whdd->hDib)
 		DeleteObject(whdd->hDib);
-	
+
 	if (whdd->hic) {
 		ICDecompressEnd(whdd->hic);
 		ICClose(whdd->hic);
@@ -164,9 +164,9 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 		hdd,(DWORD)hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
 	);
 	TRACE("lpbi: %ld,%ld/%ld,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld\n",
-		  lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes, 
-		  lpbi->biBitCount, lpbi->biCompression, lpbi->biSizeImage, 
-		  lpbi->biXPelsPerMeter, lpbi->biYPelsPerMeter, lpbi->biClrUsed, 
+		  lpbi->biSize, lpbi->biWidth, lpbi->biHeight, lpbi->biPlanes,
+		  lpbi->biBitCount, lpbi->biCompression, lpbi->biSizeImage,
+		  lpbi->biXPelsPerMeter, lpbi->biYPelsPerMeter, lpbi->biClrUsed,
 		  lpbi->biClrImportant);
 
 	if (wFlags & ~(DDF_BUFFER))
@@ -222,7 +222,7 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
 
 	if (ret) {
 		/*whdd->lpvbuf = HeapAlloc(GetProcessHeap(),0,whdd->lpbiOut->biSizeImage);*/
-		
+
 		whdd->hMemDC = CreateCompatibleDC(hdc);
 		TRACE("Creating: %ld,%p\n",whdd->lpbiOut->biSize,whdd->lpvbits);
 		whdd->hDib = CreateDIBSection(whdd->hMemDC,(BITMAPINFO *)whdd->lpbiOut,DIB_RGB_COLORS,&(whdd->lpvbits),0,0);
@@ -288,7 +288,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 		  hdd,(DWORD)hdc,xDst,yDst,dxDst,dyDst,lpbi,lpBits,xSrc,ySrc,dxSrc,dySrc,(DWORD)wFlags
 	);
 
-	if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | 
+	if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME |
 				   DDF_UPDATE | DDF_DONTDRAW))
 		FIXME("wFlags == 0x%08lx not handled\n",(DWORD)wFlags);
 
@@ -321,16 +321,16 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 
 		if (lpbi->biCompression) {
 		    DWORD flags = 0;
-		
+
 			TRACE("Compression == 0x%08lx\n",lpbi->biCompression);
-		
+
 			if (wFlags & DDF_NOTKEYFRAME)
 			    flags |= ICDECOMPRESS_NOTKEYFRAME;
-		
+
 			ICDecompress(whdd->hic,flags,lpbi,lpBits,whdd->lpbiOut,whdd->lpvbits);
 		} else {
 		    memcpy(whdd->lpvbits,lpBits,lpbi->biSizeImage);
-		}	
+		}
 	}
 	if (!(wFlags & DDF_DONTDRAW) && whdd->hpal)
 	    SelectPalette(hdc,whdd->hpal,FALSE);
@@ -345,7 +345,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 /**********************************************************************
  *		DrawDibDraw		[MSVIDEO.106]
  */
-BOOL16 VFWAPI DrawDibDraw16(HDRAWDIB16 hdd,             
+BOOL16 VFWAPI DrawDibDraw16(HDRAWDIB16 hdd,
 						  HDC16 hdc,
 						  INT16 xDst,
 						  INT16 yDst,
@@ -401,7 +401,7 @@ BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal) {
 
 	whdd = GlobalLock16(hdd);
 	whdd->hpal = hpal;
-	
+
 	if (whdd->begun) {
 		SelectPalette(whdd->hdc,hpal,0);
 		RealizePalette(whdd->hdc);
@@ -448,20 +448,20 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground) {
 	UINT ret = 0;
 
 	FIXME("(%d,0x%08lx,%d), stub\n",hdd,(DWORD)hdc,fBackground);
-	
+
 	whdd = GlobalLock16(hdd);
 
 	if (!whdd || !(whdd->begun)) {
 		ret = 0;
 		goto out;
 	}
-	
+
 	if (!whdd->hpal)
 		whdd->hpal = CreateHalftonePalette(hdc);
 
 	oldPal = SelectPalette(hdc,whdd->hpal,fBackground);
 	ret = RealizePalette(hdc);
-	
+
  out:
 	GlobalUnlock16(hdd);
 

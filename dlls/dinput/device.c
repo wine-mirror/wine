@@ -125,19 +125,19 @@ void fill_DataFormat(void *out, void *in, DataFormat *df) {
 		df->dt[i].offset_out, df->dt[i].offset_in, *((char *) (in_c + df->dt[i].offset_in)));
 	  *((char *) (out_c + df->dt[i].offset_out)) = *((char *) (in_c + df->dt[i].offset_in));
 	  break;
-	
+
 	case 2:
 	  TRACE("Copying (s) to %d from %d (value %d)\n",
 		df->dt[i].offset_out, df->dt[i].offset_in, *((short *) (in_c + df->dt[i].offset_in)));
 	  *((short *) (out_c + df->dt[i].offset_out)) = *((short *) (in_c + df->dt[i].offset_in));
 	  break;
-	
+
 	case 4:
 	  TRACE("Copying (i) to %d from %d (value %d)\n",
 		df->dt[i].offset_out, df->dt[i].offset_in, *((int *) (in_c + df->dt[i].offset_in)));
 	  *((int *) (out_c + df->dt[i].offset_out)) = *((int *) (in_c + df->dt[i].offset_in));
 	  break;
-	
+
 	default:
 	  memcpy((out_c + df->dt[i].offset_out), (in_c + df->dt[i].offset_in), df->dt[i].size);
 	}
@@ -148,19 +148,19 @@ void fill_DataFormat(void *out, void *in, DataFormat *df) {
 		df->dt[i].offset_out, df->dt[i].value);
 	  *((char *) (out_c + df->dt[i].offset_out)) = (char) df->dt[i].value;
 	  break;
-	
+
 	case 2:
 	  TRACE("Copying (s) to %d default value %d\n",
 		df->dt[i].offset_out, df->dt[i].value);
 	  *((short *) (out_c + df->dt[i].offset_out)) = (short) df->dt[i].value;
 	  break;
-	
+
 	case 4:
 	  TRACE("Copying (i) to %d default value %d\n",
 		df->dt[i].offset_out, df->dt[i].value);
 	  *((int *) (out_c + df->dt[i].offset_out)) = (int) df->dt[i].value;
 	  break;
-	
+
 	default:
 	  memset((out_c + df->dt[i].offset_out), df->dt[i].size, 0);
 	}
@@ -176,40 +176,40 @@ DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_f
   int same = 1;
   int *done;
   int index = 0;
-  
+
   ret = (DataFormat *) HeapAlloc(GetProcessHeap(), 0, sizeof(DataFormat));
-  
+
   done = (int *) HeapAlloc(GetProcessHeap(), 0, sizeof(int) * asked_format->dwNumObjs);
   memset(done, 0, sizeof(int) * asked_format->dwNumObjs);
 
   dt = (DataTransform *) HeapAlloc(GetProcessHeap(), 0, asked_format->dwNumObjs * sizeof(DataTransform));
 
   TRACE("Creating DataTransform : \n");
-  
+
   for (i = 0; i < wine_format->dwNumObjs; i++) {
     offset[i] = -1;
-    
+
     for (j = 0; j < asked_format->dwNumObjs; j++) {
       if (done[j] == 1)
 	continue;
-      
+
       if (((asked_format->rgodf[j].pguid == NULL) || (IsEqualGUID(wine_format->rgodf[i].pguid, asked_format->rgodf[j].pguid)))
 	  &&
 	  (wine_format->rgodf[i].dwType & asked_format->rgodf[j].dwType)) {
 
 	done[j] = 1;
 
-	TRACE("Matching : \n"); 
+	TRACE("Matching : \n");
 	TRACE("   - Asked (%d) : %s - Ofs = %3ld - (Type = 0x%02x | Instance = %04x)\n",
-	      j, debugstr_guid(asked_format->rgodf[j].pguid), 
+	      j, debugstr_guid(asked_format->rgodf[j].pguid),
 	      asked_format->rgodf[j].dwOfs,
 	      DIDFT_GETTYPE(asked_format->rgodf[j].dwType), DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType));
-	
+
 	TRACE("   - Wine  (%d) : %s - Ofs = %3ld - (Type = 0x%02x | Instance = %04x)\n",
-	      j, debugstr_guid(wine_format->rgodf[i].pguid), 
+	      j, debugstr_guid(wine_format->rgodf[i].pguid),
 	      wine_format->rgodf[i].dwOfs,
 	      DIDFT_GETTYPE(wine_format->rgodf[i].dwType), DIDFT_GETINSTANCE(wine_format->rgodf[i].dwType));
-	
+
 	if (wine_format->rgodf[i].dwType & DIDFT_BUTTON)
 	  dt[index].size = sizeof(BYTE);
 	else
@@ -218,7 +218,7 @@ DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_f
 	dt[index].offset_out = asked_format->rgodf[j].dwOfs;
 	dt[index].value = 0;
 	index++;
-	
+
 	if (wine_format->rgodf[i].dwOfs != asked_format->rgodf[j].dwOfs)
 	  same = 0;
 
@@ -235,11 +235,11 @@ DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_f
   for (j = 0; j < asked_format->dwNumObjs; j++) {
     if (done[j] == 0) {
       TRACE(" - Asked (%d) : %s - Ofs = %3ld - (Type = 0x%02x | Instance = %04x)\n",
-	    j, debugstr_guid(asked_format->rgodf[j].pguid), 
+	    j, debugstr_guid(asked_format->rgodf[j].pguid),
 	    asked_format->rgodf[j].dwOfs,
 	    DIDFT_GETTYPE(asked_format->rgodf[j].dwType), DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType));
 
-      
+
       if (asked_format->rgodf[j].dwType & DIDFT_BUTTON)
 	dt[index].size = sizeof(BYTE);
       else
@@ -261,7 +261,7 @@ DataFormat *create_DataFormat(DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_f
   } else {
     ret->dt = dt;
   }
-  
+
   HeapFree(GetProcessHeap(), 0, done);
 
   return ret;
@@ -278,13 +278,13 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
   ICOM_THIS(IDirectInputDevice2AImpl,iface);
 
   TRACE("(this=%p,%p)\n",This,df);
-  
+
   TRACE("df.dwSize=%ld\n",df->dwSize);
   TRACE("(df.dwObjsize=%ld)\n",df->dwObjSize);
   TRACE("(df.dwFlags=0x%08lx)\n",df->dwFlags);
   TRACE("(df.dwDataSize=%ld)\n",df->dwDataSize);
   TRACE("(df.dwNumObjs=%ld)\n",df->dwNumObjs);
-  
+
   for (i=0;i<df->dwNumObjs;i++) {
     TRACE("df.rgodf[%d].guid %s\n",i,debugstr_guid(df->rgodf[i].pguid));
     TRACE("df.rgodf[%d].dwOfs %ld\n",i,df->rgodf[i].dwOfs);
@@ -367,10 +367,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 	  _dump_EnumObjects_flags(dwFlags);
 	  DPRINTF("\n");
 	}
-	
+
 	return DI_OK;
 }
-	
+
 HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 	LPDIRECTINPUTDEVICE2A iface,
 	REFGUID rguid,
@@ -378,10 +378,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
 {
 	FIXME("(this=%p,%s,%p): stub!\n",
 	      iface, debugstr_guid(rguid), pdiph);
-	
+
 	if (TRACE_ON(dinput))
 	  _dump_DIPROPHEADER(pdiph);
-	
+
 	return DI_OK;
 }
 
@@ -393,20 +393,20 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 {
 	FIXME("(this=%p,%p,%ld,0x%08lx): stub!\n",
 	      iface, pdidoi, dwObj, dwHow);
-	
+
 	return DI_OK;
 }
-	
+
 HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIDEVICEINSTANCEA pdidi)
 {
 	FIXME("(this=%p,%p): stub!\n",
 	      iface, pdidi);
-	
+
 	return DI_OK;
 }
-	
+
 HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 	LPDIRECTINPUTDEVICE2A iface,
 	HWND hwndOwner,
@@ -414,10 +414,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel(
 {
   FIXME("(this=%p,0x%08x,0x%08lx): stub!\n",
 	iface, hwndOwner, dwFlags);
-	
+
 	return DI_OK;
 }
-	
+
 HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	LPDIRECTINPUTDEVICE2A iface,
 	HINSTANCE hinst,
@@ -428,7 +428,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Initialize(
 	      iface, hinst, dwVersion, debugstr_guid(rguid));
 	return DI_OK;
 }
-	
+
 /******************************************************************************
  *	IDirectInputDevice2A
  */
@@ -453,7 +453,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
 {
 	FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
 	      iface, lpCallback, lpvRef, dwFlags);
-	
+
 	if (lpCallback)
 		lpCallback(NULL, lpvRef);
 	return DI_OK;
@@ -525,7 +525,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendDeviceData(
 {
 	FIXME("(this=%p,0x%08lx,%p,%p,0x%08lx): stub!\n",
 	      iface, cbObjectData, rgdod, pdwInOut, dwFlags);
-	
+
 	return DI_OK;
 }
 
@@ -547,6 +547,6 @@ HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE7A 
 							  DWORD dwFlags)
 {
   FIXME("(%p)->(%s,%08lx,%p,%08lx): stub !\n", iface, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
-  
+
   return DI_OK;
 }

@@ -965,7 +965,7 @@ typedef struct _DDSURFACEDESC
 		DWORD	dwMipMapCount;/* 18:number of mip-map levels requested*/
 		DWORD	dwZBufferBitDepth;/*18: depth of Z buffer requested*/
 		DWORD	dwRefreshRate;/* 18:refresh rate (used when display mode is described)*/
-	} DUMMYUNIONNAME2;		
+	} DUMMYUNIONNAME2;
 	DWORD	dwAlphaBitDepth;/* 1C:depth of alpha buffer requested*/
 	DWORD	dwReserved;	/* 20:reserved*/
 	LPVOID	lpSurface;	/* 24:pointer to the associated surface memory*/
@@ -1006,7 +1006,7 @@ typedef struct _DDSURFACEDESC2
 
 	union {
 		DDPIXELFORMAT	ddpfPixelFormat;/* 48: pixel format description of the surface*/
-		DWORD 		dwFVF;	/* 48: vertex format description of vertex buffers */	
+		DWORD 		dwFVF;	/* 48: vertex format description of vertex buffers */
 	} DUMMYUNIONNAME4;
 	DDSCAPS2	ddsCaps;  /* 68: DDraw surface caps */
 	DWORD		dwTextureStage; /* 78: stage in multitexture cascade */
@@ -1320,7 +1320,7 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 /*****************************************************************************
  * IDirectDraw2 interface
  */
-/* Note: IDirectDraw2 cannot derive from IDirectDraw because the number of 
+/* Note: IDirectDraw2 cannot derive from IDirectDraw because the number of
  * arguments of SetDisplayMode has changed !
  */
 #define ICOM_INTERFACE IDirectDraw2
@@ -1622,7 +1622,7 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 /*****************************************************************************
  * IDirectDrawSurface2 interface
  */
-/* Cannot inherit from IDirectDrawSurface because the LPDIRECTDRAWSURFACE parameters 
+/* Cannot inherit from IDirectDrawSurface because the LPDIRECTDRAWSURFACE parameters
  * have been converted to LPDIRECTDRAWSURFACE2.
  */
 #define ICOM_INTERFACE IDirectDrawSurface2
@@ -1717,7 +1717,7 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 /*****************************************************************************
  * IDirectDrawSurface3 interface
  */
-/* Cannot inherit from IDirectDrawSurface2 because the LPDIRECTDRAWSURFACE2 parameters 
+/* Cannot inherit from IDirectDrawSurface2 because the LPDIRECTDRAWSURFACE2 parameters
  * have been converted to LPDIRECTDRAWSURFACE3.
  */
 #define ICOM_INTERFACE IDirectDrawSurface3

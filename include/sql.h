@@ -638,7 +638,7 @@ SQLRETURN WINAPI   SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 SQLRETURN WINAPI   SQLGetEnvAttr(SQLHENV EnvironmentHandle,
            SQLINTEGER Attribute, SQLPOINTER Value,
            SQLINTEGER BufferLength, SQLINTEGER *StringLength);
-#endif 
+#endif
 
 SQLRETURN WINAPI   SQLGetFunctions(SQLHDBC ConnectionHandle,
            SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported);
@@ -743,4 +743,4 @@ SQLRETURN WINAPI   SQLTransact(SQLHENV EnvironmentHandle,
 #ifdef __cplusplus
 }
 #endif
-#endif	
+#endif

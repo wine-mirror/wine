@@ -60,7 +60,7 @@ typedef struct {
     HIC			hic;
     LPBITMAPINFOHEADER	outbih;
     LPVOID		indata;
-    LPVOID		outdata;   
+    LPVOID		outdata;
     HBITMAP  	    	hbmFrame;
     /* data for playing the audio part */
     HANDLE		hWave;

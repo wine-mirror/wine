@@ -73,7 +73,7 @@ static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
 {
     WINE_MODREF	*wm;
 
-    if (!hmod) 
+    if (!hmod)
     	return exe_modref;
 
     if (!HIWORD(hmod)) {
@@ -137,7 +137,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 {
     BOOL retv = TRUE;
 
-    static LPCSTR typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH", 
+    static LPCSTR typeName[] = { "PROCESS_DETACH", "PROCESS_ATTACH",
                                  "THREAD_ATTACH", "THREAD_DETACH" };
     assert( wm );
 
@@ -160,14 +160,14 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
 
 /*************************************************************************
  *		MODULE_DllProcessAttach
- * 
+ *
  * Send the process attach notification to all DLLs the given module
  * depends on (recursively). This is somewhat complicated due to the fact that
  *
  * - we have to respect the module dependencies, i.e. modules implicitly
  *   referenced by another module have to be initialized before the module
  *   itself can be initialized
- * 
+ *
  * - the initialization routine of a DLL can itself call LoadLibrary,
  *   thereby introducing a whole new set of dependencies (even involving
  *   the 'old' modules) at any time during the whole process
@@ -178,7 +178,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
  *
  * Furthermore, we need to rearrange the main WINE_MODREF list to allow
  * the process *detach* notifications to be sent in the correct order.
- * This must not only take into account module dependencies, but also 
+ * This must not only take into account module dependencies, but also
  * 'hidden' dependencies created by modules calling LoadLibrary in their
  * attach notification routine.
  *
@@ -247,8 +247,8 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
 
 /*************************************************************************
  *		MODULE_DllProcessDetach
- * 
- * Send DLL process detach notifications.  See the comment about calling 
+ *
+ * Send DLL process detach notifications.  See the comment about calling
  * sequence at MODULE_DllProcessAttach.  Unless the bForceDetach flag
  * is set, only DLLs with zero refcount are notified.
  */
@@ -283,7 +283,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 
 /*************************************************************************
  *		MODULE_DllThreadAttach
- * 
+ *
  * Send DLL thread attach notifications. These are sent in the
  * reverse sequence of process detach notification.
  *
@@ -319,7 +319,7 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
 
 /*************************************************************************
  *		MODULE_DllThreadDetach
- * 
+ *
  * Send DLL thread detach notifications. These are sent in the
  * same sequence as process detach notification.
  *
@@ -399,7 +399,7 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
                     + strlen(filename) + 1;
     size = sizeof(NE_MODULE) +
                  /* loaded file info */
-                 ((of_size + 3) & ~3) + 
+                 ((of_size + 3) & ~3) +
                  /* segment table: DS,CS */
                  2 * sizeof(SEGTABLEENTRY) +
                  /* name table */
@@ -826,7 +826,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
       else /* yes, even valid with trailing '"' missing */
 	  name_end = lpCmdLine+strlen(lpCmdLine);
     }
-    else 
+    else
     {
       name_beg = lpCmdLine;
       args = strchr( lpCmdLine, ' ' );
@@ -934,7 +934,7 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 /**********************************************************************
  *	    LoadModule    (KERNEL32.@)
  */
-HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock ) 
+HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
 {
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     PROCESS_INFORMATION info;
@@ -967,7 +967,7 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
         startup.dwFlags = STARTF_USESHOWWINDOW;
         startup.wShowWindow = params->lpCmdShow[1];
     }
-    
+
     if (CreateProcessA( filename, cmdline, NULL, NULL, FALSE, 0,
                         params->lpEnvAddress, NULL, &startup, &info ))
     {
@@ -1028,7 +1028,7 @@ HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
  * by checking if exe version >= 4.0.
  * (SDK docu doesn't mention this)
  */
-DWORD WINAPI GetModuleFileNameA( 
+DWORD WINAPI GetModuleFileNameA(
 	HMODULE hModule,	/* [in] module handle (32bit) */
 	LPSTR lpFileName,	/* [out] filenamebuffer */
         DWORD size )		/* [in] size of filenamebuffer */
@@ -1044,8 +1044,8 @@ DWORD WINAPI GetModuleFileNameA(
     RtlLeaveCriticalSection( &loader_section );
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
-}                   
- 
+}
+
 
 /***********************************************************************
  *              GetModuleFileNameW      (KERNEL32.@)
@@ -1134,7 +1134,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
  *
  * helper for MODULE_LoadLibraryExA.  Allocate space to hold the directory
  * portion of the provided name and put the name in it.
- * 
+ *
  */
 static LPCSTR allocate_lib_dir(LPCSTR libname)
 {
@@ -1172,9 +1172,9 @@ static LPCSTR allocate_lib_dir(LPCSTR libname)
  *
  * libdir is used to support LOAD_WITH_ALTERED_SEARCH_PATH during the recursion
  *        on this function.  When first called from LoadLibraryExA it will be
- *        NULL but thereafter it may point to a buffer containing the path 
- *        portion of the library name.  Note that the recursion all occurs 
- *        within a Critical section (see LoadLibraryExA) so the use of a 
+ *        NULL but thereafter it may point to a buffer containing the path
+ *        portion of the library name.  Note that the recursion all occurs
+ *        within a Critical section (see LoadLibraryExA) so the use of a
  *        static is acceptable.
  *        (We have to use a static variable at some point anyway, to pass the
  *        information from BUILTIN32_dlopen through dlopen and the builtin's
@@ -1215,16 +1215,16 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	/* build the modules filename */
         if (!found)
 	{
-	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) ) 
+	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) )
   	        goto error;
 
 	    /* if the library name contains a path and can not be found,
-	     * return an error. 
+	     * return an error.
 	     * exception: if the path is the system directory, proceed,
 	     * so that modules which are not PE modules can be loaded.
 	     * If the library name does not contain a path and can not
 	     * be found, assume the system directory is meant */
-	    
+
 	    if ( ! FILE_strncasecmp ( filename, libname, strlen ( filename ) ))
 	        strcpy ( filename, libname );
 	    else
@@ -1233,7 +1233,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                 strcat ( filename, "\\" );
                 strcat ( filename, libname );
 	    }
-      
+
 	    /* if the filename doesn't have an extension, append .DLL */
 	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
 	        strcat( filename, ".dll" );
@@ -1245,7 +1245,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	    LPSTR	fn = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
 	    if (fn)
 	    {
-	    	/* since the default loading mechanism uses a more detailed algorithm 
+	    	/* since the default loading mechanism uses a more detailed algorithm
 		 * than SearchPath (like using PATH, which can even be modified between
 		 * two attempts of loading the same DLL), the look-up above (with
 		 * SearchPath) can have put the file in system directory, whereas it
@@ -1627,7 +1627,7 @@ FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 /***********************************************************************
  *           MODULE_GetProcAddress   		(internal)
  */
-FARPROC MODULE_GetProcAddress( 
+FARPROC MODULE_GetProcAddress(
 	HMODULE hModule, 	/* [in] current module handle */
 	LPCSTR function,	/* [in] function to be looked up */
 	BOOL snoop )
@@ -1671,7 +1671,7 @@ SEGPTR WINAPI HasGPHandler16( SEGPTR address )
     int gpOrdinal;
     SEGPTR gpPtr;
     GPHANDLERDEF *gpHandler;
-   
+
     if (    (hModule = FarGetOwner16( SELECTOROF(address) )) != 0
          && (gpOrdinal = NE_GetOrdinal( hModule, "__GP" )) != 0
          && (gpPtr = (SEGPTR)NE_GetEntryPointEx( hModule, gpOrdinal, FALSE )) != 0

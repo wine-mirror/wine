@@ -48,14 +48,14 @@ extern HDPA		sic_hdpa;
 */
 extern void	(WINAPI *pDLLInitComctl)(LPVOID);
 
-extern LPVOID	(WINAPI *pCOMCTL32_Alloc) (INT);  
-extern BOOL	(WINAPI *pCOMCTL32_Free) (LPVOID);  
+extern LPVOID	(WINAPI *pCOMCTL32_Alloc) (INT);
+extern BOOL	(WINAPI *pCOMCTL32_Free) (LPVOID);
 
-extern HDPA	(WINAPI *pDPA_Create) (INT);  
-extern INT	(WINAPI *pDPA_InsertPtr) (const HDPA, INT, LPVOID); 
-extern BOOL	(WINAPI *pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-extern LPVOID	(WINAPI *pDPA_GetPtr) (const HDPA, INT);   
-extern BOOL	(WINAPI *pDPA_Destroy) (const HDPA); 
+extern HDPA	(WINAPI *pDPA_Create) (INT);
+extern INT	(WINAPI *pDPA_InsertPtr) (const HDPA, INT, LPVOID);
+extern BOOL	(WINAPI *pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM);
+extern LPVOID	(WINAPI *pDPA_GetPtr) (const HDPA, INT);
+extern BOOL	(WINAPI *pDPA_Destroy) (const HDPA);
 extern INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 extern LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
 extern HANDLE   (WINAPI *pCreateMRUListA) (LPVOID lpcml);
@@ -63,7 +63,7 @@ extern DWORD    (WINAPI *pFreeMRUListA) (HANDLE hMRUList);
 extern INT      (WINAPI *pAddMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData);
 extern INT      (WINAPI *pFindMRUData) (HANDLE hList, LPCVOID lpData, DWORD cbData, LPINT lpRegNum);
 extern INT      (WINAPI *pEnumMRUListA) (HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
-#define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))   
+#define pDPA_GetPtrCount(hdpa)  (*(INT*)(hdpa))
 
 /* ole2 */
 /*
@@ -113,7 +113,7 @@ IShellFolder * ISF_Desktop_Constructor(void);
 LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD,DWORD);
 
 LPEXTRACTICONA	IExtractIconA_Constructor(LPITEMIDLIST);
-HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);	
+HRESULT		CreateStreamOnFile (LPCSTR pszFilename, IStream ** ppstm);
 
 /* FIXME: rename the functions when the shell32.dll has it's own exports namespace */
 HRESULT WINAPI  SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
@@ -154,7 +154,7 @@ HRESULT (WINAPI *pOleInitialize)(LPVOID reserved);
 void    (WINAPI *pOleUninitialize)(void);
 HRESULT (WINAPI *pRegisterDragDrop)(HWND hwnd, IDropTarget* pDropTarget);
 HRESULT (WINAPI *pRevokeDragDrop)(HWND hwnd);
-HRESULT (WINAPI *pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*); 
+HRESULT (WINAPI *pDoDragDrop)(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 void 	(WINAPI *pReleaseStgMedium)(STGMEDIUM* pmedium);
 HRESULT (WINAPI *pOleSetClipboard)(IDataObject* pDataObj);
 HRESULT (WINAPI *pOleGetClipboard)(IDataObject** ppDataObj);

@@ -60,7 +60,7 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 #endif
 
 #ifndef __WINE__
-/* These macros are msdev's way of defining COM objects. 
+/* These macros are msdev's way of defining COM objects.
  * They are provided here for use by Winelib developpers.
  */
 #define FARSTRUCT

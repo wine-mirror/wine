@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mpr);
 
- /* 
+ /*
   * FIXME: The following routines should use a private heap ...
   */
 

@@ -43,13 +43,13 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y);
 static HBITMAP hbitmapClose;
 
 static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
-		      0x55, 0x50,  
+		      0x55, 0x50,
 		      0xAA, 0xA0,
-		      0x55, 0x50,  
+		      0x55, 0x50,
 		      0xAA, 0xA0,
-		      0x55, 0x50,  
+		      0x55, 0x50,
 		      0xAA, 0xA0,
-		      0x55, 0x50,  
+		      0x55, 0x50,
 		      0xAA, 0xA0,
 		      0x55, 0x50};
 
@@ -159,7 +159,7 @@ NC_AdjustRectOuter95 (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
     int adjust;
     if(style & WS_ICONIC) return;
 
-    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == 
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
         WS_EX_STATICEDGE)
     {
         adjust = 1; /* for the outer frame always present */
@@ -173,7 +173,7 @@ NC_AdjustRectOuter95 (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
     if (style & WS_THICKFRAME)
         adjust +=  ( GetSystemMetrics (SM_CXFRAME)
                    - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
-    if ((style & (WS_BORDER|WS_DLGFRAME)) || 
+    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
         (exStyle & WS_EX_DLGMODALFRAME))
         adjust++; /* The other border */
 
@@ -677,9 +677,9 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT pt )
 	    return HTMENU;
     }
 
-    /* Has to return HTNOWHERE if nothing was found  
+    /* Has to return HTNOWHERE if nothing was found
        Could happen when a window has a customized non client area */
-    return HTNOWHERE;  
+    return HTNOWHERE;
 }
 
 
@@ -823,7 +823,7 @@ static LONG NC_DoNCHitTest95 (WND *wndPtr, POINT pt )
 	    return HTMENU;
     }
 
-    /* Has to return HTNOWHERE if nothing was found  
+    /* Has to return HTNOWHERE if nothing was found
        Could happen when a window has a customized non client area */
     return HTNOWHERE;
 }
@@ -1084,7 +1084,7 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
     if (dlgFrame)
     {
 	InflateRect( rect, -width, -height );
-    } 
+    }
     else
     {
         INT decYOff = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXSIZE) - 1;
@@ -1142,7 +1142,7 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
  *        you LIKE thick borders in Win95/NT4.0 -- I've been working with
  *        them lately, but just to get this code right).  Even so, it doesn't
  *        appear to be so.  It's being worked on...
- * 
+ *
  *   Revision history
  *        06-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
  *             Original implementation (based on NC_DrawFrame)
@@ -1232,7 +1232,7 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
     {
 	if (!(hbitmapClose = LoadBitmapA( 0, MAKEINTRESOURCEA(OBM_OLD_CLOSE) ))) return;
     }
-    
+
     if (GetWindowLongA( hwnd, GWL_EXSTYLE) & WS_EX_DLGMODALFRAME)
     {
         HBRUSH hbrushOld = SelectObject(hdc, GetSysColorBrush(COLOR_WINDOW) );
@@ -1330,7 +1330,7 @@ static void  NC_DrawCaption95(
 	    r.left += GetSystemMetrics(SM_CYCAPTION) - 1;
     }
 
-    if (style & WS_SYSMENU) 
+    if (style & WS_SYSMENU)
     {
 	UINT state;
 
@@ -1339,7 +1339,7 @@ static void  NC_DrawCaption95(
 	state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
 
 	/* Draw a grayed close button if disabled and a normal one if SC_CLOSE is not there */
-	NC_DrawCloseButton95 (hwnd, hdc, FALSE, 
+	NC_DrawCloseButton95 (hwnd, hdc, FALSE,
 			      ((((state & MF_DISABLED) || (state & MF_GRAYED))) && (state != 0xFFFFFFFF)));
 	r.right -= GetSystemMetrics(SM_CYCAPTION) - 1;
 
@@ -1350,7 +1350,7 @@ static void  NC_DrawCaption95(
 
 	    NC_DrawMaxButton95( hwnd, hdc, FALSE, (!(style & WS_MAXIMIZEBOX)));
 	    r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
-	    
+
 	    NC_DrawMinButton95( hwnd, hdc, FALSE,  (!(style & WS_MINIMIZEBOX)));
 	    r.right -= GetSystemMetrics(SM_CXSIZE) + 1;
 	}
@@ -1397,7 +1397,7 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
     has_menu = HAS_MENU(wndPtr);
     dwStyle = wndPtr->dwStyle;
-    dwExStyle = wndPtr->dwExStyle;    
+    dwExStyle = wndPtr->dwExStyle;
     flags = wndPtr->flags;
     rectClient = wndPtr->rectClient;
     rectWindow = wndPtr->rectWindow;
@@ -1475,7 +1475,7 @@ static void NC_DoNCPaint( HWND hwnd, HRGN clip, BOOL suppress_menupaint )
 	  r.top++;
 	}
         FillRect( hdc, &r, GetSysColorBrush(COLOR_SCROLLBAR) );
-    }    
+    }
 
     ReleaseDC( hwnd, hdc );
 }
@@ -1522,7 +1522,7 @@ static void  NC_DoNCPaint95(
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
     has_menu = HAS_MENU(wndPtr);
     dwStyle = wndPtr->dwStyle;
-    dwExStyle = wndPtr->dwExStyle;    
+    dwExStyle = wndPtr->dwExStyle;
     flags = wndPtr->flags;
     rectClient = wndPtr->rectClient;
     rectWindow = wndPtr->rectWindow;
@@ -1599,7 +1599,7 @@ static void  NC_DoNCPaint95(
     {
 	RECT r = rect;
 	r.bottom = rect.top + GetSystemMetrics(SM_CYMENU);
-	
+
 	TRACE("Calling DrawMenuBar with rect (%d, %d)-(%d, %d)\n",
               r.left, r.top, r.right, r.bottom);
 
@@ -1626,7 +1626,7 @@ static void  NC_DoNCPaint95(
         r.left = r.right - GetSystemMetrics(SM_CXVSCROLL) + 1;
         r.top  = r.bottom - GetSystemMetrics(SM_CYHSCROLL) + 1;
         FillRect( hdc, &r,  GetSysColorBrush(COLOR_SCROLLBAR) );
-    }    
+    }
 
     ReleaseDC( hwnd, hdc );
 }
@@ -1725,7 +1725,7 @@ LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENSA ) );
 
     case HTTOPLEFT:
-    case HTBOTTOMRIGHT:	
+    case HTBOTTOMRIGHT:
 	return (LONG)SetCursor( LoadCursorA( 0, IDC_SIZENWSEA ) );
 
     case HTTOPRIGHT:
@@ -1793,7 +1793,7 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 
 	/* Check if the sysmenu item for minimize is there  */
 	state = GetMenuState(hSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
-	
+
 	paintButton = &NC_DrawMinButton95;
     }
     else
@@ -1804,7 +1804,7 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
 
 	/* Check if the sysmenu item for maximize is there  */
 	state = GetMenuState(hSysMenu, SC_MAXIMIZE, MF_BYCOMMAND);
-	
+
 	paintButton = &NC_DrawMaxButton95;
     }
 
@@ -1841,7 +1841,7 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
     if ((!pressed) || (state == 0xFFFFFFFF))
 	return;
 
-    if (wParam == HTMINBUTTON) 
+    if (wParam == HTMINBUTTON)
         SendMessageA( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
         SendMessageA( hwnd, WM_SYSCOMMAND,
@@ -1895,7 +1895,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 
     if (!pressed) return;
 
-    if (wParam == HTMINBUTTON) 
+    if (wParam == HTMINBUTTON)
         SendMessageA( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, MAKELONG(msg.pt.x,msg.pt.y) );
     else
         SendMessageA( hwnd, WM_SYSCOMMAND,
@@ -1921,7 +1921,7 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
 	return;
 
     state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
-	    
+
     /* If the item close of the sysmenu is disabled or not there do nothing */
     if((state & MF_DISABLED) || (state & MF_GRAYED) || (state == 0xFFFFFFFF))
 	return;
@@ -2037,14 +2037,14 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	if (TWEAK_WineLook == WIN31_LOOK)
 	    NC_TrackMinMaxBox( hwnd, wParam );
 	else
-	    NC_TrackMinMaxBox95( hwnd, wParam );	    
+	    NC_TrackMinMaxBox95( hwnd, wParam );
 	break;
 
     case HTCLOSE:
 	if (TWEAK_WineLook >= WIN95_LOOK)
 	    NC_TrackCloseButton95 (hwnd, wParam);
 	break;
-	
+
     case HTLEFT:
     case HTRIGHT:
     case HTTOP:
@@ -2079,7 +2079,7 @@ LONG NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
         SendMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, lParam );
         return 0;
-    } 
+    }
 
     switch(wParam)  /* Hit test */
     {
@@ -2127,7 +2127,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_MINIMIZE:
         if (hwnd == GetForegroundWindow())
             ShowOwnedPopups(hwnd,FALSE);
-	ShowWindow( hwnd, SW_MINIMIZE ); 
+	ShowWindow( hwnd, SW_MINIMIZE );
 	break;
 
     case SC_MAXIMIZE:
@@ -2169,7 +2169,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 	break;
 
     case SC_TASKLIST:
-	WinExec( "taskman.exe", SW_SHOWNORMAL ); 
+	WinExec( "taskman.exe", SW_SHOWNORMAL );
 	break;
 
     case SC_SCREENSAVE:
@@ -2183,11 +2183,11 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
                 FreeLibrary( hmodule );
             }
         }
-	else 
+	else
 	  if (wParam == SC_PUTMARK)
             TRACE_(shell)("Mark requested by user\n");
 	break;
-  
+
     case SC_HOTKEY:
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
@@ -2212,21 +2212,21 @@ BOOL NC_DrawGrayButton(HDC hdc, int x, int y)
     HBRUSH hOldBrush;
 
     hMaskBmp = CreateBitmap (12, 10, 1, 1, lpGrayMask);
-    
+
     if(hMaskBmp == 0)
 	return FALSE;
-    
+
     SelectObject (hdcMask, hMaskBmp);
-    
+
     /* Draw the grayed bitmap using the mask */
     hOldBrush = SelectObject (hdc, RGB(128, 128, 128));
     BitBlt (hdc, x, y, 12, 10,
 	    hdcMask, 0, 0, 0xB8074A);
-    
+
     /* Clean up */
     SelectObject (hdc, hOldBrush);
     DeleteObject(hMaskBmp);
     DeleteDC (hdcMask);
-    
+
     return TRUE;
 }

@@ -3,7 +3,7 @@
  *
  * Undocumented:
  * word95 gets a IContextMenu Interface and calls HandleMenuMsg()
- * which should only a member of IContextMenu2. 
+ * which should only a member of IContextMenu2.
  *
  * Copyright (C) 1999 Juergen Schmied
  *
@@ -79,7 +79,7 @@ static const WCHAR CMDSTR_VIEWDETAILSW[] = {'V','i','e','w','D','e','t','a','i',
 #define CMIC_MASK_PTINVOKE      0x20000000
 
 /*NOTE: When SEE_MASK_HMONITOR is set, hIcon is treated as hMonitor */
-typedef struct tagCMINVOKECOMMANDINFO 
+typedef struct tagCMINVOKECOMMANDINFO
 {	DWORD cbSize;        /* sizeof(CMINVOKECOMMANDINFO) */
 	DWORD fMask;         /* any combination of CMIC_MASK_* */
 	HWND hwnd;         /* might be NULL (indicating no owner window) */
@@ -92,7 +92,7 @@ typedef struct tagCMINVOKECOMMANDINFO
 	HANDLE hIcon;
 } CMINVOKECOMMANDINFO,  *LPCMINVOKECOMMANDINFO;
 
-typedef struct tagCMInvokeCommandInfoEx 
+typedef struct tagCMInvokeCommandInfoEx
 {	DWORD cbSize;        /* must be sizeof(CMINVOKECOMMANDINFOEX) */
 	DWORD fMask;         /* any combination of CMIC_MASK_* */
 	HWND hwnd;         /* might be NULL (indicating no owner window) */

@@ -21,7 +21,7 @@
 
 
 /* function prototypes */
- 
+
 VOID WineLicense(HWND hWnd);
 VOID WineWarranty(HWND hWnd);
 
@@ -37,7 +37,7 @@ typedef struct
 
 /* external references */
 
-/* 
+/*
 extern LICENSE WineLicense_Ca;
 extern LICENSE WineLicense_Cz;
 extern LICENSE WineLicense_Da;

@@ -54,7 +54,7 @@ HRESULT WINAPI DirectDrawCreateClipper(
 
     ICOM_INIT_INTERFACE(This, IDirectDrawClipper, DDRAW_Clipper_VTable);
     This->ref = 1;
-    This->hWnd = 0; 
+    This->hWnd = 0;
     This->ddraw_owner = NULL;
 
     *lplpDDClipper = ICOM_INTERFACE(This, IDirectDrawClipper);
@@ -87,7 +87,7 @@ HRESULT WINAPI Main_DirectDrawClipper_SetHwnd(
     TRACE("(%p)->SetHwnd(0x%08lx,0x%08lx)\n",This,dwFlags,(DWORD)hWnd);
     if( dwFlags ) {
 	FIXME("dwFlags = 0x%08lx, not supported.\n",dwFlags);
-	return DDERR_INVALIDPARAMS; 
+	return DDERR_INVALIDPARAMS;
     }
 
     This->hWnd = hWnd;
@@ -170,7 +170,7 @@ HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(
     ICOM_THIS(IDirectDrawClipperImpl,iface);
     FIXME("(%p)->(%p),stub!\n",This,hWndPtr);
 
-    *hWndPtr = This->hWnd; 
+    *hWndPtr = This->hWnd;
 
     return DD_OK;
 }

@@ -788,8 +788,8 @@ typedef struct DIFILEEFFECT {
   CHAR        szFriendlyName[MAX_PATH];
 } DIFILEEFFECT, *LPDIFILEEFFECT;
 
-typedef const DIFILEEFFECT *LPCDIFILEEFFECT;                                            
-typedef BOOL (CALLBACK *LPDIENUMEFFECTSINFILECALLBACK)(LPCDIFILEEFFECT , LPVOID); 
+typedef const DIFILEEFFECT *LPCDIFILEEFFECT;
+typedef BOOL (CALLBACK *LPDIENUMEFFECTSINFILECALLBACK)(LPCDIFILEEFFECT , LPVOID);
 
 
 /*****************************************************************************
@@ -1092,7 +1092,7 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 	/*** IDirectInput7A methods ***/
 #define IDirectInput7A_CreateDeviceEx(p,a,b,c,d) ICOM_CALL4(CreateDeviceEx,p,a,b,c,d)
 
-/* Export functions */ 
+/* Export functions */
 
 #ifdef __cplusplus
 extern "C" {

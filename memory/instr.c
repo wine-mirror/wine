@@ -64,7 +64,7 @@ inline static void *get_stack( CONTEXT86 *context )
  * Try to replace an invalid selector by a valid one.
  * The only selector where it is allowed to do "mov ax,40;mov es,ax"
  * is the so called 'bimodal' selector 0x40, which points to the BIOS
- * data segment. Used by (at least) Borland products (and programs compiled 
+ * data segment. Used by (at least) Borland products (and programs compiled
  * using Borland products).
  *
  * See Undocumented Windows, Chapter 5, __0040.
@@ -74,7 +74,7 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
     extern char Call16_Start, Call16_End;
 
     if (IS_SELECTOR_SYSTEM(context->SegCs))
-        if (    (char *)context->Eip >= &Call16_Start 
+        if (    (char *)context->Eip >= &Call16_Start
              && (char *)context->Eip <  &Call16_End   )
         {
             /* Saved selector may have become invalid when the relay code */
@@ -604,7 +604,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                       if (long_addr) context->Edi += step;
                       else ADD_LOWORD(context->Edi,step);
                   }
-                  
+
 		  switch (typ)
                   {
 		    case 0x6c:
@@ -682,7 +682,7 @@ BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
                 return TRUE;
             }
             break;  /* Unable to emulate it */
-            
+
         case 0xcd: /* int <XX> */
             if (long_op)
             {

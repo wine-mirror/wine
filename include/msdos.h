@@ -126,7 +126,7 @@ typedef struct _DOS_LISTOFLISTS
 #define setword(a,b)	do { *(BYTE*)(a)	  = (b) & 0xff; \
                              *((BYTE*)((a)+1)) = ((b)>>8) & 0xff;\
                         } while(0)
-			
+
 
 /* dos file attributes */
 

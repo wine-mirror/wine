@@ -75,9 +75,9 @@ static void* BSTR_GetAddr(BSTR16 in)
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 {
 	BSTR16 out;
-    
+
 	if (!in) return 0;
-    
+
 	out = BSTR_AllocBytes(strlen(in)+1);
 	if (!out) return 0;
 	strcpy(BSTR_GetAddr(out),in);
@@ -94,7 +94,7 @@ BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 BSTR WINAPI SysAllocString(LPCOLESTR in)
 {
     if (!in) return 0;
-    
+
     /* Delegate this to the SysAllocStringLen32 method. */
     return SysAllocStringLen(in, lstrlenW(in));
 }
@@ -118,13 +118,13 @@ INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
     /*
      * Sanity check
      */
-    if (old==NULL) 
+    if (old==NULL)
       return 0;
 
     /*
      * Make sure we free the old string.
      */
-    if (*old!=NULL)      
+    if (*old!=NULL)
       SysFreeString(*old);
 
     /*
@@ -165,7 +165,7 @@ BSTR16 WINAPI SysAllocStringLen16(const char *in, int len)
  * section, he describes the DWORD value placed *before* the BSTR data type.
  * he describes it as a "DWORD count of characters". By experimenting with
  * a windows application, this count seems to be a DWORD count of bytes in
- * the string. Meaning that the count is double the number of wide 
+ * the string. Meaning that the count is double the number of wide
  * characters in the string.
  */
 BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
@@ -236,7 +236,7 @@ int WINAPI SysReAllocStringLen16(BSTR16 *old,const char *in,int len)
 	return 1;
 }
 
- 
+
 /******************************************************************************
  *             SysReAllocStringLen   [OLEAUT32.5]
  */
@@ -245,13 +245,13 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
     /*
      * Sanity check
      */
-    if (old==NULL) 
+    if (old==NULL)
       return 0;
 
     /*
      * Make sure we free the old string.
      */
-    if (*old!=NULL)      
+    if (*old!=NULL)
       SysFreeString(*old);
 
     /*
@@ -276,7 +276,7 @@ void WINAPI SysFreeString16(BSTR16 in)
 void WINAPI SysFreeString(BSTR in)
 {
     DWORD* bufferPointer;
-    
+
     /* NULL is a valid parameter */
     if(!in) return;
 
@@ -317,7 +317,7 @@ int WINAPI SysStringLen(BSTR str)
 
      if (!str) return 0;
     /*
-     * The length of the string (in bytes) is contained in a DWORD placed 
+     * The length of the string (in bytes) is contained in a DWORD placed
      * just before the BSTR pointer
      */
     bufferPointer = (DWORD*)str;
@@ -341,7 +341,7 @@ int WINAPI SysStringByteLen(BSTR str)
 
      if (!str) return 0;
     /*
-     * The length of the string (in bytes) is contained in a DWORD placed 
+     * The length of the string (in bytes) is contained in a DWORD placed
      * just before the BSTR pointer
      */
     bufferPointer = (DWORD*)str;
@@ -418,7 +418,7 @@ HRESULT WINAPI RegisterActiveObject16(
  *
  * Converts an OLE_COLOR to a COLORREF.
  * See the documentation for conversion rules.
- * pColorRef can be NULL. In that case the user only wants to test the 
+ * pColorRef can be NULL. In that case the user only wants to test the
  * conversion.
  */
 HRESULT WINAPI OleTranslateColor(

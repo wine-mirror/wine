@@ -66,7 +66,7 @@ typedef struct {
          for wine.  It is not very pretty, but it sure beats duplicating this
          function lots of times
 */
-static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename, 
+static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
                          CHAR *shortstr, SLpassfail *passfail, CHAR *errstr) {
   CHAR tmpstr[MAX_PATH],
        fullpath[MAX_PATH],      /*full path to the file (not short/long) */
@@ -119,7 +119,7 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
          "%s: GetFullPathNameA returned '%s' instead of '%s'",
          errstr,tmpstr,fullpath);
     }
-  } else { 
+  } else {
     ok(lstrcmpiA(strptr,filename)==0,
        "%s: GetFullPathNameA returned '%s' instead of '%s'",
        errstr,strptr,filename);
@@ -136,7 +136,7 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
     passfail->shortlen=len;
     passfail->shorterror=GetLastError();
   }
-/* Test GetLongPathNameA functionality 
+/* Test GetLongPathNameA functionality
    We test both conversion from GetFullPathNameA and from GetShortPathNameA
 */
   if(pGetLongPathNameA) {
@@ -144,7 +144,7 @@ static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
       SetLastError(0);
       len=pGetLongPathNameA(shortstr,tmpstr,MAX_PATH);
       if(passfail==NULL) {
-        ok(len, 
+        ok(len,
           "%s: GetLongPathNameA failed during Short->Long conversion", errstr);
         ok(lstrcmpiA(fullpathlong,tmpstr)==0,
            "%s: GetLongPathNameA returned '%s' instead of '%s'",
@@ -186,7 +186,7 @@ static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
   ext=len; fil=len; done=0; error=0;
 /* walk backwards over path looking for '.' or '\\' seperators */
   for(i=len-1;(i>=0) && (!done);i--) {
-    if(path[i]=='.') 
+    if(path[i]=='.')
       if(ext!=len) error=1; else ext=i;
     else if(path[i]=='\\') {
       if(i==len-1) {
@@ -229,7 +229,7 @@ static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
    characters in the filename.
      'valid' indicates whether this would be an allowed filename
      'todo' indictaes that wine doesn't get this right yet.
-   NOTE: We always call this routine with a non-existant filename, so 
+   NOTE: We always call this routine with a non-existant filename, so
          Get(Short|Long)PathNameA should never pass, but GetFullPathNameA
          should.
 */
@@ -317,7 +317,7 @@ static void test_setdir(CHAR *olddir,CHAR *newdir,
 /* else thest that it fails correctly */
     chklen=lstrlenA(olddir);
     ok(val==0,
-       "%s: SetCurrentDirectoryA passed when it should have failed",errstr); 
+       "%s: SetCurrentDirectoryA passed when it should have failed",errstr);
     ok(len==chklen,
        "%s: SetCurrentDirectory changed the directrory, though it failed",
        errstr);
@@ -351,7 +351,7 @@ static void test_InitPathA(CHAR *newdir)
          "GetTempPathA should not have modified the buffer");
     }
   }
-/* Test GetTmpFileNameA 
+/* Test GetTmpFileNameA
    The only test we do here is whether GetTempFileNameA passes or not.
    We do not thoroughly test this function yet (specifically, whether
    it behaves correctly when 'unique' is non zero)
@@ -363,7 +363,7 @@ static void test_InitPathA(CHAR *newdir)
      lstrcmpiA(newdir+(lstrlenA(newdir)-lstrlenA(tmpstr1)),tmpstr1)==0,
      "GetTempPath returned '%s' which doesn't match '%s' or '%s'",
      newdir,tmpstr,tmpstr1);
- 
+
 /* Do some CreateDirectoryA tests */
 /* It would be nice to do test the SECURITY_ATTRIBUTES, but I don't
    really understand how they work.
@@ -422,13 +422,13 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
   ok(len1==len+1, "GetCurrentDirectoryA returned %d instead of %d",len1,len+1);
   ok(lstrcmpiA(tmpstr,"aaaaaaa")==0,
      "GetCurrentDirectoryA should not have modified the buffer");
-/* SetCurrentDirectoryA shouldn't care whether the string has a 
+/* SetCurrentDirectoryA shouldn't care whether the string has a
    trailing '\\' or not
 */
   sprintf(tmpstr,"%s\\",newdir);
   test_setdir(origdir,tmpstr,newdir,1,"check 1");
   test_setdir(origdir,newdir,NULL,1,"check 2");
-/* Set the directory to the working area.  We just tested that this works, 
+/* Set the directory to the working area.  We just tested that this works,
    so why check it again.
 */
   SetCurrentDirectoryA(newdir);
@@ -569,7 +569,7 @@ static void test_PathNameA(CHAR *curdir)
   test_ValidPathA(curdir,NONDIR_SHORT,SHORTFILE,tmpstr,&passfail,"test9");
   todo_wine {
     ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-    ok(passfail.shorterror==ERROR_PATH_NOT_FOUND || 
+    ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
        passfail.shorterror==ERROR_FILE_NOT_FOUND,
        "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
         passfail.shorterror);
@@ -584,7 +584,7 @@ static void test_PathNameA(CHAR *curdir)
 /* Now try a 8.3 directory, long file name */
   test_ValidPathA(curdir,NONDIR_SHORT,LONGFILE,tmpstr,&passfail,"test10");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND || 
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
@@ -598,7 +598,7 @@ static void test_PathNameA(CHAR *curdir)
 /* Next is a long directory, 8.3 file */
   test_ValidPathA(curdir,NONDIR_LONG,SHORTFILE,tmpstr,&passfail,"test11");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND || 
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);
@@ -612,7 +612,7 @@ static void test_PathNameA(CHAR *curdir)
 /*Lastly a long directory, long file */
   test_ValidPathA(curdir,NONDIR_LONG,LONGFILE,tmpstr,&passfail,"test12");
   ok(passfail.shortlen==0,"GetShortPathNameA passed when it shouldn't have");
-  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND || 
+  ok(passfail.shorterror==ERROR_PATH_NOT_FOUND ||
      passfail.shorterror==ERROR_FILE_NOT_FOUND,
      "GetShortPathA returned %d and not 'ERROR_PATH_NOT_FOUND'",
       passfail.shorterror);

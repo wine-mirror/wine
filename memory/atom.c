@@ -66,7 +66,7 @@ typedef struct
     WORD        size;
     HANDLE16    entries[1];
 } ATOMTABLE;
-		
+
 static WORD ATOM_UserDS = 0;  /* USER data segment */
 
 /***********************************************************************
@@ -120,7 +120,7 @@ static WORD ATOM_Hash(
     WORD i, hash = 0;
 
     TRACE("%x, %s, %x\n", entries, str, len);
-    
+
     for (i = 0; i < len; i++) hash ^= toupper(str[i]) + i;
     return hash % entries;
 }
@@ -200,14 +200,14 @@ WORD WINAPI InitAtomTable16( WORD entries )
     HANDLE16 handle;
     ATOMTABLE *table;
 
-      /* We consider the first table to be initialized as the global table. 
-       * This works, as USER (both built-in and native) is the first one to 
-       * register ... 
+      /* We consider the first table to be initialized as the global table.
+       * This works, as USER (both built-in and native) is the first one to
+       * register ...
        */
 
     if (!ATOM_UserDS)
     {
-        ATOM_UserDS = CURRENT_DS; 
+        ATOM_UserDS = CURRENT_DS;
         /* return dummy local handle */
         return LocalAlloc16( LMEM_FIXED, 1 );
     }
@@ -262,7 +262,7 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     if (ATOM_IsIntAtomA( str, &iatom )) return iatom;
 
     TRACE("%s\n",debugstr_a(buffer));
-    
+
     /* Make a copy of the string to be sure it doesn't move in linear memory. */
     lstrcpynA( buffer, str, sizeof(buffer) );
 
@@ -275,7 +275,7 @@ ATOM WINAPI AddAtom16( LPCSTR str )
     while (entry)
     {
 	entryPtr = ATOM_MakePtr( entry );
-	if ((entryPtr->length == len) && 
+	if ((entryPtr->length == len) &&
 	    (!strncasecmp( entryPtr->str, buffer, len )))
 	{
 	    entryPtr->refCount++;
@@ -329,7 +329,7 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
     {
 	ATOMENTRY * prevEntryPtr = ATOM_MakePtr( *prevEntry );
 	prevEntry = &prevEntryPtr->next;
-    }    
+    }
     if (!*prevEntry) return atom;
 
     /* Delete atom */
@@ -337,7 +337,7 @@ ATOM WINAPI DeleteAtom16( ATOM atom )
     {
 	*prevEntry = entryPtr->next;
         LocalFree16( entry );
-    }    
+    }
     return 0;
 }
 
@@ -364,7 +364,7 @@ ATOM WINAPI FindAtom16( LPCSTR str )
     while (entry)
     {
 	ATOMENTRY * entryPtr = ATOM_MakePtr( entry );
-	if ((entryPtr->length == len) && 
+	if ((entryPtr->length == len) &&
 	    (!strncasecmp( entryPtr->str, str, len )))
         {
             TRACE("-- found %x\n", entry);
@@ -390,9 +390,9 @@ UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
     char text[8];
 
     if (CURRENT_DS == ATOM_UserDS) return GlobalGetAtomNameA( atom, buffer, count );
-    
+
     TRACE("%x\n",atom);
-    
+
     if (!count) return 0;
     if (atom < MAXINTATOM)
     {
@@ -573,7 +573,7 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
  */
 ATOM WINAPI DeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    return ATOM_DeleteAtom( atom, TRUE ); 
+    return ATOM_DeleteAtom( atom, TRUE );
 }
 
 

@@ -1,6 +1,6 @@
-/* 
+/*
  * Implementation of VERSION.DLL - Resource Access routines
- * 
+ *
  * Copyright 1996,1997 Marcus Meissner
  * Copyright 1997 David Cuthbert
  * Copyright 1999 Ulrich Weigand
@@ -177,18 +177,18 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     DWORD resTabSize;
     int count;
 
-    /* Read in NE header */ 
+    /* Read in NE header */
     nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
     if ( sizeof(nehd) != LZRead( lzfd, &nehd, sizeof(nehd) ) ) return 0;
 
-    resTabSize = nehd.ne_restab - nehd.ne_rsrctab; 
+    resTabSize = nehd.ne_restab - nehd.ne_rsrctab;
     if ( !resTabSize )
     {
         TRACE("No resources in NE dll\n" );
         return FALSE;
     }
 
-    /* Read in resource table */ 
+    /* Read in resource table */
     resTab = HeapAlloc( GetProcessHeap(), 0, resTabSize );
     if ( !resTab ) return FALSE;
 
@@ -292,8 +292,8 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Read in section table */
-    nSections = pehd.FileHeader.NumberOfSections; 
-    sections = HeapAlloc( GetProcessHeap(), 0, 
+    nSections = pehd.FileHeader.NumberOfSections;
+    sections = HeapAlloc( GetProcessHeap(), 0,
                           nSections * sizeof(IMAGE_SECTION_HEADER) );
     if ( !sections ) return FALSE;
 
@@ -324,9 +324,9 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Read in resource section */
-    resSectionSize = sections[i].SizeOfRawData; 
+    resSectionSize = sections[i].SizeOfRawData;
     resSection = HeapAlloc( GetProcessHeap(), 0, resSectionSize );
-    if ( !resSection ) 
+    if ( !resSection )
     {
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -397,7 +397,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
     DWORD reslen;
 
     TRACE("(%s,type=0x%lx,id=0x%lx,off=%p)\n",
-                debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
+                debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
                 lpszResId );
 
     lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
@@ -406,12 +406,12 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
     switch ( read_xx_header( lzfd ) )
     {
     case IMAGE_OS2_SIGNATURE:
-        retv = find_ne_resource( lzfd, lpszResType, lpszResId, 
+        retv = find_ne_resource( lzfd, lpszResType, lpszResId,
                                  &reslen, lpdwFileOffset );
         break;
 
     case IMAGE_NT_SIGNATURE:
-        retv = find_pe_resource( lzfd, lpszResType, lpszResId, 
+        retv = find_pe_resource( lzfd, lpszResType, lpszResId,
                                  &reslen, lpdwFileOffset );
         break;
     }
@@ -434,7 +434,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
     DWORD reslen = dwResLen;
 
     TRACE("(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,data=%p)\n",
-		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
+		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId,
                 dwFileOffset, dwResLen, lpvData );
 
     lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
@@ -442,20 +442,20 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
 
     if ( !dwFileOffset )
     {
-        switch ( read_xx_header( lzfd ) ) 
+        switch ( read_xx_header( lzfd ) )
         {
         case IMAGE_OS2_SIGNATURE:
-            retv = find_ne_resource( lzfd, lpszResType, lpszResId, 
+            retv = find_ne_resource( lzfd, lpszResType, lpszResId,
                                      &reslen, &dwFileOffset );
             break;
 
         case IMAGE_NT_SIGNATURE:
-            retv = find_pe_resource( lzfd, lpszResType, lpszResId, 
+            retv = find_pe_resource( lzfd, lpszResType, lpszResId,
                                      &reslen, &dwFileOffset );
             break;
         }
 
-        if ( !retv ) 
+        if ( !retv )
         {
             LZClose( lzfd );
             return 0;

@@ -1,7 +1,7 @@
 /*
  * Defines miscellaneous COM interfaces and APIs defined in objidl.h.
- * These did not really fit into the other categories, whould have 
- * required their own specific category or are too rarely used to be 
+ * These did not really fit into the other categories, whould have
+ * required their own specific category or are too rarely used to be
  * put in 'obj_base.h'.
  *
  * Copyright (C) the Wine project
@@ -188,9 +188,9 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
 /* FIXME: unimplemented */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
 
-HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid, 
+HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid,
 				  LPUNKNOWN     pUnkOuter,
-				  DWORD         dwClsContext, 
+				  DWORD         dwClsContext,
 				  COSERVERINFO* pServerInfo,
 				  ULONG         cmq,
 				  MULTI_QI*     pResults);

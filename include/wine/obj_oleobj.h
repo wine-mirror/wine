@@ -1,6 +1,6 @@
 /*
  * Defines IOleObject COM and other oleidl.h interfaces
- * 
+ *
  * Depends on 'obj_base.h'.
  *
  * Copyright (C) 1999 Paul Quinn
@@ -44,7 +44,7 @@ typedef struct tagOBJECTDESCRIPTOR
 	DWORD dwFullUserTypeName;
 	DWORD dwSrcOfCopy;
 } OBJECTDESCRIPTOR, *LPOBJECTDESCRIPTOR;
-	
+
 typedef enum tagOLEMISC
 {
 	OLEMISC_RECOMPOSEONRESIZE = 0x1,
@@ -88,7 +88,7 @@ typedef struct IOleAdviseHolder IOleAdviseHolder, *LPOLEADVISEHOLDER;
 
 DEFINE_OLEGUID(IID_IEnumOLEVERB,  0x00000104L, 0, 0);
 typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
-  
+
 /*****************************************************************************
  * IOleObject interface
  */
@@ -120,7 +120,7 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 	IOleObject_METHODS
 ICOM_DEFINE(IOleObject,IUnknown)
 #undef ICOM_INTERFACE
-				 
+
 /*** IUnknown methods ***/
 #define IOleObject_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
 #define IOleObject_AddRef(p)                  ICOM_CALL (AddRef,p)
@@ -147,7 +147,7 @@ ICOM_DEFINE(IOleObject,IUnknown)
 #define IOleObject_EnumAdvise(p,a,b)        ICOM_CALL1(EnumAdvise,p,a)
 #define IOleObject_GetMiscStatus(p,a,b)     ICOM_CALL2(GetMiscStatus,p,a,b)
 #define IOleObject_SetColorScheme(p,a,b)    ICOM_CALL1(SetColorScheme,p,a)
-				 
+
 
 /*****************************************************************************
  * IOleAdviseHolder interface
@@ -177,7 +177,7 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #define IOleAdviseHolder_SendOnRename(p,a)          ICOM_CALL1(SendOnRename,p,a)
 #define IOleAdviseHolder_SendOnSave(p)              ICOM_CALL (SendOnSave,p)
 #define IOleAdviseHolder_SendOnClose(p)             ICOM_CALL (SendOnClose,p)
-				 
+
 
 /*****************************************************************************
  *  IEnumOLEVERB interface
@@ -207,6 +207,6 @@ ICOM_DEFINE(IEnumOLEVERB,IUnknown)
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
-				  
+
 #endif /* __WINE_WINE_OBJ_OLEOBJ_H */
 

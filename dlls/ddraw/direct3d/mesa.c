@@ -148,7 +148,7 @@ static HRESULT WINAPI MESA_IDirect3DImpl_FindDevice(
     return D3D_OK;
 }
 
-ICOM_VTABLE(IDirect3D) mesa_d3dvt = 
+ICOM_VTABLE(IDirect3D) mesa_d3dvt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     MESA_IDirect3DImpl_QueryInterface,
@@ -166,7 +166,7 @@ ICOM_VTABLE(IDirect3D) mesa_d3dvt =
  *				IDirect3D2
  */
 static HRESULT WINAPI MESA_IDirect3D2Impl_QueryInterface(
-    LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {  
+    LPDIRECT3D2 iface,REFIID refiid,LPVOID *obj) {
     ICOM_THIS(IDirect3D2Impl,iface);
 
     /* FIXME: Not sure if this is correct */
@@ -179,7 +179,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_QueryInterface(
 	IDirect3D2_AddRef(iface);
 
 	TRACE("  Creating IDirectDrawX interface (%p)\n", *obj);
-	
+
 	return S_OK;
     }
     if ( ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) ||
@@ -292,7 +292,7 @@ static HRESULT WINAPI MESA_IDirect3D2Impl_CreateDevice(
     return DDERR_INVALIDPARAMS;
 }
 
-ICOM_VTABLE(IDirect3D2) mesa_d3d2vt = 
+ICOM_VTABLE(IDirect3D2) mesa_d3d2vt =
 {
     ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     MESA_IDirect3D2Impl_QueryInterface,
@@ -405,7 +405,7 @@ HRESULT create_direct3d3(LPVOID *obj,IDirectDrawImpl* ddraw) {
     *obj = (LPUNKNOWN)d3d;
 
     TRACE("  Creating IDirect3D3 interface (%p)\n", *obj);
-    
+
     return S_OK;
 }
 

@@ -23,8 +23,8 @@
 #include "lobbysp.h"
 #include "dplayx_queue.h"
 
-extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, 
-                                LPCVOID lpAddress, DWORD dwAddressSize, 
+extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
+                                LPCVOID lpAddress, DWORD dwAddressSize,
                                 LPVOID lpContext );
 
 extern DWORD DP_CalcSessionDescSize( LPCDPSESSIONDESC2 lpSessDesc, BOOL bAnsi );
@@ -65,7 +65,7 @@ typedef struct tagDP_MSG_REPLY_STRUCT
 
 typedef struct tagDP_MSG_REPLY_STRUCT_LIST
 {
-  DPQ_ENTRY(tagDP_MSG_REPLY_STRUCT_LIST) replysExpected; 
+  DPQ_ENTRY(tagDP_MSG_REPLY_STRUCT_LIST) replysExpected;
   DP_MSG_REPLY_STRUCT replyExpected;
 } DP_MSG_REPLY_STRUCT_LIST, *LPDP_MSG_REPLY_STRUCT_LIST;
 
@@ -239,7 +239,7 @@ extern ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
 
 HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
                           DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
-                          WORD wCommandId, WORD wVersion, 
+                          WORD wCommandId, WORD wVersion,
                           LPVOID* lplpReply, LPDWORD lpdwMsgSize );
 
 /* DP SP external interfaces into DirectPlay */

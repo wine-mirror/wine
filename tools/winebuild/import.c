@@ -600,8 +600,8 @@ static int output_delayed_imports( FILE *outfile )
     }
     fprintf( outfile, "  }\n};\n\n" );
 
-    /* check if there's some stub defined. if so, exception struct 
-     *  is already defined, so don't emit it twice 
+    /* check if there's some stub defined. if so, exception struct
+     *  is already defined, so don't emit it twice
      */
     for (i = 0; i < nb_entry_points; i++) if (EntryPoints[i]->type == TYPE_STUB) break;
 

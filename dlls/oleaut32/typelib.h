@@ -49,7 +49,7 @@
 /*
  * structure of the typelib type2 header
  * it is at the beginning of a type lib file
- *  
+ *
  */
 typedef struct tagMSFT_Header {
 /*0x00*/INT magic1;       /* 0x5446534D "MSFT" */
@@ -191,8 +191,8 @@ typedef struct {
 */
 } MSFT_FuncRecord;
 
-/* after this may follow an array with default value pointers if the 
- * appropriate bit in the FKCCIC field has been set: 
+/* after this may follow an array with default value pointers if the
+ * appropriate bit in the FKCCIC field has been set:
  * INT   oDefautlValue[nrargs];
  */
 
@@ -357,7 +357,7 @@ typedef struct {
 	WORD res1a;	      /* 0xffff */
 	WORD name_offs;	      /* offset to name in name table */
 	WORD more_bytes;      /* if this is non-zero we get this many
-				 bytes before the next element, which seem 
+				 bytes before the next element, which seem
 				 to reference the docstring of the type ? */
 	WORD res20;	      /* 0xffff */
 	DWORD helpcontext;
@@ -456,7 +456,7 @@ typedef struct {
 			   middle 6 bits */
 	WORD rettype;	/* return type VT_?? or offset to ret type */
 	WORD vtblpos;	/* position in vtbl? */
-	WORD funcflags; /* present if magic == 0x6c */ 
+	WORD funcflags; /* present if magic == 0x6c */
 /* Param list starts, repeat next two as required */
 #if 0
 	WORD  name;	/* offset to 2nd letter of name */
