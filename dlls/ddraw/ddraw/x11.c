@@ -1128,19 +1128,22 @@ HRESULT WINAPI Xlib_IDirectDraw2Impl_GetFourCCCodes(
   ICOM_THIS(IDirectDraw2Impl,iface);
   DDPRIVATE(This);
   XvImageFormatValues *fo;
-  int array_size = *lpNumCodes;
-
+  int num_codes;
+  
   TRACE("(%p,%p,%p) - %ld slots available\n",This, lpNumCodes, lpCodes, *lpNumCodes);
   
-  fo = TSXvListImageFormats(display, ddpriv->port_id, lpNumCodes);
-  if (fo == NULL) *lpNumCodes = 0; /* I am not sure if X is clean in this case... */
+  fo = TSXvListImageFormats(display, ddpriv->port_id, &num_codes);
   if (lpCodes != NULL) {
     /* Fill in the FourCC table */
     int i;
-    for (i = 0; i < array_size; i++) lpCodes[i] = fo[i].id;
+    for (i = 0; i < *lpNumCodes; i++) lpCodes[i] = fo[i].id;
   }
-  if (fo)
+  if (fo) {
+    *lpNumCodes = num_codes;
     TSXFree(fo);
+  } else {
+    *lpNumCodes = 0; /* Not sure if X fills this variable in the error case */
+  }
   
   return DD_OK;
 #else
