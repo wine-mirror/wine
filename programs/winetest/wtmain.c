@@ -79,6 +79,13 @@ static tls_data* get_tls_data(void)
     return data;
 }
 
+static void exit_process( int code )
+{
+    fflush( stderr );
+    ExitProcess( code );
+}
+
+
 /*
  * Checks condition.
  * Parameters:
@@ -231,7 +238,7 @@ static int run_test( const char *name )
     if (!(test = find_test( name )))
     {
         fprintf( stderr, "Fatal: test '%s' does not exist.\n", name );
-        ExitProcess(1);
+        exit_process(1);
     }
     successes = failures = todo_successes = todo_failures = 0;
     tls_index=TlsAlloc();
@@ -250,6 +257,18 @@ static int run_test( const char *name )
 }
 
 
+/* Display usage and exit */
+static void usage( const char *argv0 )
+{
+    const struct test *test;
+
+    fprintf( stderr, "Usage: %s test_name\n", argv0 );
+    fprintf( stderr, "\nValid test names:\n" );
+    for (test = winetest_testlist; test->name; test++) fprintf( stderr, "    %s\n", test->name );
+    exit_process(1);
+}
+
+
 /* main function */
 int main( int argc, char **argv )
 {
@@ -262,10 +281,7 @@ int main( int argc, char **argv )
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
     if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) winetest_report_success = \
                 atoi(p);
-    if (!argv[1])
-    {
-        fprintf( stderr, "Usage: %s test_name\n", argv[0] );
-        ExitProcess(1);
-    }
-    ExitProcess( run_test(argv[1]) );
+    if (!argv[1]) usage( argv[0] );
+
+    return run_test(argv[1]);
 }
