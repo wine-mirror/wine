@@ -35,7 +35,7 @@ type win32
  32 stdcall joyGetThreshold(long ptr) joyGetThreshold32
  33 stub joyReleaseCapture
  34 stub joySetCapture
- 35 stub joySetThreshold
+ 35 stdcall joySetThreshold(long long) joySetThreshold32
  36 stub mciDriverNotify
  37 stub mciDriverYield
  38 stub mciExecute

@@ -23,6 +23,8 @@ extern const struct resource * const sysres_Ko_Table[];
 extern const struct resource * const sysres_Hu_Table[];
 extern const struct resource * const sysres_Pl_Table[];
 extern const struct resource * const sysres_Po_Table[];
+extern const struct resource * const sysres_Sw_Table[];
+extern const struct resource * const sysres_Ca_Table[];
 
 static const struct resource * const * SYSRES_Resources[] =
 {
@@ -39,7 +41,9 @@ static const struct resource * const * SYSRES_Resources[] =
     sysres_Ko_Table,  /* LANG_Ko */
     sysres_Hu_Table,  /* LANG_Hu */
     sysres_Pl_Table,  /* LANG_Pl */
-    sysres_Po_Table   /* LANG_Po */
+    sysres_Po_Table,  /* LANG_Po */
+    sysres_Sw_Table,  /* LANG_Sw */
+    sysres_Ca_Table   /* LANG_Ca */
 };
 
 

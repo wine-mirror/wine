@@ -5,6 +5,7 @@
  */
 
 #include <string.h>
+#include "tsx11defs.h"
 #include "x11drv.h"
 #include "color.h"
 #include "bitmap.h"
@@ -108,6 +109,8 @@ static DeviceCaps X11DRV_DevCaps = {
  */
 BOOL32 X11DRV_Init(void)
 {
+    if (!TSX11_Init()) return FALSE;
+
     /* FIXME: colormap management should be merged with the X11DRV */
 
     if( !COLOR_Init() ) return FALSE;
@@ -173,7 +176,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap,
                                                       BITMAP_MAGIC );
         physDev->drawable  = bmp->pixmap;
-        physDev->gc        = XCreateGC( display, physDev->drawable, 0, NULL );
+        physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         dc->w.hVisRgn      = CreateRectRgn32( 0, 0, bmp->bitmap.bmWidth,
                                               bmp->bitmap.bmHeight );
@@ -182,19 +185,19 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     else
     {
         physDev->drawable  = rootWindow;
-        physDev->gc        = XCreateGC( display, physDev->drawable, 0, NULL );
+        physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
         dc->w.bitsPerPixel = screenDepth;
         dc->w.hVisRgn      = CreateRectRgn32( 0, 0, screenWidth, screenHeight);
     }
 
     if (!dc->w.hVisRgn)
     {
-        XFreeGC( display, physDev->gc );
+        TSXFreeGC( display, physDev->gc );
         return FALSE;
     }
 
-    XSetGraphicsExposures( display, physDev->gc, False );
-    XSetSubwindowMode( display, physDev->gc, IncludeInferiors );
+    TSXSetGraphicsExposures( display, physDev->gc, False );
+    TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
 
     return TRUE;
 }
@@ -206,7 +209,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 static BOOL32 X11DRV_DeleteDC( DC *dc )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    XFreeGC( display, physDev->gc );
+    TSXFreeGC( display, physDev->gc );
     return TRUE;
 }
 

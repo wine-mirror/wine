@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 #include <malloc.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <string.h>
 #include "dc.h"
 #include "debug.h"
@@ -296,32 +296,32 @@ void  TWEAK_DrawReliefRect95(
 	/* Draw the top/left lines first */
 	prevpen = SelectObject32(hdc, TWEAK_PenE095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->right - 1, rect->top);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->left, rect->bottom - 1);
 
 	SelectObject32(hdc, TWEAK_PenFF95);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->right - 2, rect->top + 1);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->left + 1, rect->bottom - 2);
 
 
 	/* Now the bottom/right lines */
 	SelectObject32(hdc, TWEAK_Pen0095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
 		  rect->bottom - 1, rect->right - 1, rect->bottom - 1);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
 		  rect->top, rect->right - 1, rect->bottom - 1);
 
 	SelectObject32(hdc, TWEAK_Pen8095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->bottom - 2, rect->right - 2, rect->bottom - 2);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 2,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 2,
 		  rect->top + 1, rect->right - 2, rect->bottom - 2);
 	
 	SelectObject32(hdc, prevpen);
@@ -365,32 +365,32 @@ void  TWEAK_DrawRevReliefRect95(
 	/* Draw the top/left lines first */
 	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->right - 1, rect->top);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left, rect->top,
 		  rect->left, rect->bottom - 1);
 
 	SelectObject32(hdc, TWEAK_Pen0095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->right - 2, rect->top + 1);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->top + 1, rect->left + 1, rect->bottom - 2);
 
 
 	/* Now the bottom/right lines */
 	SelectObject32(hdc, TWEAK_PenFF95);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left,
 		  rect->bottom - 1, rect->right - 1, rect->bottom - 1);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 1,
 		  rect->top, rect->right - 1, rect->bottom - 1);
 
 	SelectObject32(hdc, TWEAK_PenE095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->left + 1,
 		  rect->bottom - 2, rect->right - 2, rect->bottom - 2);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 2,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, rect->right - 2,
 		  rect->top + 1, rect->right - 2, rect->bottom - 2);
 	
 	SelectObject32(hdc, prevpen);
@@ -436,13 +436,13 @@ void  TWEAK_DrawMenuSeparatorHoriz95(
 	/* Draw the top line */
 	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc - 1, xc2,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc - 1, xc2,
 		  yc - 1);
 
 	/* And the bottom line */
 	SelectObject32(hdc, TWEAK_PenFF95);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc, xc2, yc);
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc1, yc, xc2, yc);
 
 	SelectObject32(hdc, prevpen);
     }
@@ -484,13 +484,13 @@ void  TWEAK_DrawMenuSeparatorVert95(
 	/* Draw the top line */
 	prevpen = SelectObject32(hdc, TWEAK_Pen8095);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc, yc1, xc,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc, yc1, xc,
 		  yc2);
 
 	/* And the bottom line */
 	SelectObject32(hdc, TWEAK_PenFF95);
 	DC_SetupGCForPen(dc);
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc + 1, yc1, xc + 1,
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, xc + 1, yc1, xc + 1,
 		  yc2);
 
 	SelectObject32(hdc, prevpen);

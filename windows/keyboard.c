@@ -12,9 +12,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <X11/keysym.h>
-#include <X11/Xlib.h>
-#include <X11/Xresource.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xresource.h"
+#include "ts_xutil.h"
 #include <X11/Xatom.h>
 
 #include "windows.h"
@@ -107,7 +107,7 @@ static const int modifier_key[] =
 /*
  * Table for vkey to scancode translation - 5/29/97 chrisf@america.com 
  */
-static const BYTE vkey2scode[512] = {
+const BYTE vkey2scode[512] = {
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x0e,0x0f,0x00,0x00,0x00,0x1c,0x00,0x00,
   0x2a,0x1d,0x38,0x00,0x3a,0x00,0x00,0x00, 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,
   0x39,0x49,0x51,0x4f,0x47,0x4b,0x48,0x4d, 0x50,0x00,0x00,0x00,0x00,0x52,0x53,0x00,
@@ -147,7 +147,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
 {
     KeySym keysym;
 
-    XLookupString(e, NULL, 0, &keysym, NULL);
+    TSXLookupString(e, NULL, 0, &keysym, NULL);
 
     if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (e->state & NumLockMask)) 
         /* Only the Keypad keys 0-9 and . send different keysyms
@@ -170,13 +170,13 @@ BOOL32 KEYBOARD_Init(void)
     XKeyEvent e2;
     WORD vkey, OEMvkey;
 
-    XDisplayKeycodes(display, &min_keycode, &max_keycode);
-    ksp = XGetKeyboardMapping(display, min_keycode,
+    TSXDisplayKeycodes(display, &min_keycode, &max_keycode);
+    ksp = TSXGetKeyboardMapping(display, min_keycode,
                               max_keycode + 1 - min_keycode, &keysyms_per_keycode);
     /* We are only interested in keysyms_per_keycode.
        There is no need to hold a local copy of the keysyms table */
-    XFree(ksp);
-    mmp = XGetModifierMapping(display);
+    TSXFree(ksp);
+    mmp = TSXGetModifierMapping(display);
     kcp = mmp->modifiermap;
     for (i = 0; i < 8; i += 1) /* There are 8 modifier keys */
     {
@@ -188,19 +188,19 @@ BOOL32 KEYBOARD_Init(void)
 		int k;
                 
 		for (k = 0; k < keysyms_per_keycode; k += 1)
-                    if (XKeycodeToKeysym(display, *kcp, k) == XK_Mode_switch)
+                    if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Mode_switch)
 		    {
                         AltGrMask = 1 << i;
                         dprintf_key(stddeb, "AltGrMask is %x\n", AltGrMask);
 		    }
-                    else if (XKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
+                    else if (TSXKeycodeToKeysym(display, *kcp, k) == XK_Num_Lock)
 		    {
                         NumLockMask = 1 << i;
                         dprintf_key(stddeb, "NumLockMask is %x\n", NumLockMask);
 		    }
             }
     }
-    XFreeModifiermap(mmp);
+    TSXFreeModifiermap(mmp);
 
     /* Now build two conversion arrays :
      * keycode -> vkey + extended
@@ -212,7 +212,7 @@ BOOL32 KEYBOARD_Init(void)
     OEMvkey = 0xb9; /* first OEM virtual key available is ba */
     for (e2.keycode=min_keycode; e2.keycode<=max_keycode; e2.keycode++)
     {
-        XLookupString(&e2, NULL, 0, &keysym, NULL);
+        TSXLookupString(&e2, NULL, 0, &keysym, NULL);
         vkey = 0;
         if (keysym)  /* otherwise, keycode not used */
         {
@@ -263,7 +263,7 @@ BOOL32 KEYBOARD_Init(void)
             }
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
             {
-                keysym = XLookupKeysym(&e2, i);
+                keysym = TSXLookupKeysym(&e2, i);
                 if ((keysym >= VK_0 && keysym <= VK_9)
                     || (keysym >= VK_A && keysym <= VK_Z)
                     || keysym == VK_SPACE)
@@ -291,8 +291,8 @@ BOOL32 KEYBOARD_Init(void)
                     {
                         char	*ksname;
                         
-                        keysym = XLookupKeysym(&e2, i);
-                        ksname = XKeysymToString(keysym);
+                        keysym = TSXLookupKeysym(&e2, i);
+                        ksname = TSXKeysymToString(keysym);
                         if (!ksname)
 			    ksname = "NoSymbol";
                         fprintf(stddeb, "%lX (%s) ", keysym, ksname);
@@ -366,7 +366,7 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     KEYLP keylp;
     static BOOL32 force_extended = FALSE; /* hack for AltGr translation */
 
-    int ascii_chars = XLookupString(event, Str, 1, &keysym, &cs);
+    int ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
 
     INT32 event_x = pWnd->rectWindow.left + event->x;
     INT32 event_y = pWnd->rectWindow.top + event->y;
@@ -376,10 +376,10 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     if (keysym == XK_Mode_switch)
 	{
 	dprintf_key(stddeb, "Alt Gr key event received\n");
-	event->keycode = XKeysymToKeycode(event->display, XK_Control_L);
+	event->keycode = TSXKeysymToKeycode(event->display, XK_Control_L);
 	dprintf_key(stddeb, "Control_L is keycode 0x%x\n", event->keycode);
 	KEYBOARD_HandleEvent( pWnd, event );
-	event->keycode = XKeysymToKeycode(event->display, XK_Alt_L);
+	event->keycode = TSXKeysymToKeycode(event->display, XK_Alt_L);
 	dprintf_key(stddeb, "Alt_L is keycode 0x%x\n", event->keycode);
 	force_extended = TRUE;
 	KEYBOARD_HandleEvent( pWnd, event );
@@ -392,7 +392,7 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	{
 	char	*ksname;
 
-	ksname = XKeysymToString(keysym);
+	ksname = TSXKeysymToString(keysym);
 	if (!ksname)
 	    ksname = "No Name";
 	fprintf(stddeb, "%s : keysym=%lX (%s), ascii chars=%u / %X / '%s'\n", 
@@ -817,10 +817,10 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	keysym=(unsigned char) cChar;/* (!) cChar is signed */
 	if (keysym<=27) keysym+=0xFF00;/*special chars : return, backspace...*/
 	
-	keycode = XKeysymToKeycode(display, keysym);  /* keysym -> keycode */
+	keycode = TSXKeysymToKeycode(display, keysym);  /* keysym -> keycode */
 	if (!keycode)
 	{ /* It didn't work ... let's try with deadchar code. */
-	  keycode = XKeysymToKeycode(display, keysym | 0xFE00);
+	  keycode = TSXKeysymToKeycode(display, keysym | 0xFE00);
 	}
 
 	dprintf_keyboard(stddeb,"VkKeyScan '%c'(%#lx, %lu) : got keycode %#.2x ",
@@ -829,7 +829,7 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	if (keycode)
 	  {
 	    for (index=-1, i=0; (i<8) && (index<0); i++) /* find shift state */
-	      if (XKeycodeToKeysym(display,keycode,i)==keysym) index=i;
+	      if (TSXKeycodeToKeysym(display,keycode,i)==keysym) index=i;
 	    switch (index) {
 	    case -1 :
 	      fprintf(stderr,"Keysym %lx not found while parsing the keycode table\n",keysym); break;
@@ -947,7 +947,7 @@ UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 			e.display = display;
 			e.state = 0; /* unshifted */
 			e.keycode = MapVirtualKey16( wCode, 0);
-			if (!XLookupString(&e, s , 2 , &keysym, NULL))
+			if (!TSXLookupString(&e, s , 2 , &keysym, NULL))
 			  returnMVK (*s);
 			
 			return 0;
@@ -1065,9 +1065,9 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
     if ((!e.keycode) && (lpKeyState[VK_NUMLOCK] & 0x01)) 
       {
 	if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
-	  e.keycode = XKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
+	  e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
 	if (virtKey==VK_DECIMAL)
-	  e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
+	  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
       }
     if (!e.keycode)
       {
@@ -1089,7 +1089,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 	e.state |= NumLockMask;
     dprintf_key(stddeb, "ToAscii(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
-    ret = XLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
+    ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
     if (ret == 0)
 	{
 	BYTE dead_char = 0;
@@ -1189,7 +1189,7 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 	    {
 	    char	*ksname;
 
-	    ksname = XKeysymToString(keysym);
+	    ksname = TSXKeysymToString(keysym);
 	    if (!ksname)
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)

@@ -10,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "ldt.h"
+#include "thread.h"
 
 #pragma pack(1)
 
@@ -46,11 +47,9 @@ typedef struct
 
 #pragma pack(4)
 
-  /* Saved 16-bit stack for current process (Win16 only) */
-extern DWORD IF1632_Saved16_ss_sp;
-
-#define CURRENT_STACK16 ((STACK16FRAME *)PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp))
-#define CURRENT_DS      (CURRENT_STACK16->ds)
+#define THREAD_STACK16(thdb) ((STACK16FRAME*)PTR_SEG_TO_LIN((thdb)->cur_stack))
+#define CURRENT_STACK16      (THREAD_STACK16(THREAD_Current()))
+#define CURRENT_DS           (CURRENT_STACK16->ds)
 
 /* varargs lists on the 16-bit stack */
 
@@ -64,15 +63,19 @@ typedef void *VA_LIST16;
      *((type *)(void *)((char *)(list) - __VA_ROUNDED16(type))))
 #define VA_END16(list) ((void)0)
 
-/* Push bytes on the 16-bit stack; return a segptr to the first pushed byte */
-#define STACK16_PUSH(size) \
- (memmove((char*)CURRENT_STACK16-(size),CURRENT_STACK16,sizeof(STACK16FRAME)),\
-  IF1632_Saved16_ss_sp -= (size), \
-  (SEGPTR)(IF1632_Saved16_ss_sp + sizeof(STACK16FRAME)))
+/* Push bytes on the 16-bit stack of a thread;
+ * return a segptr to the first pushed byte
+ */
+#define STACK16_PUSH(thdb,size) \
+ (memmove((char*)THREAD_STACK16(thdb)-(size),THREAD_STACK16(thdb), \
+          sizeof(STACK16FRAME)), \
+  (thdb)->cur_stack -= (size), \
+  (SEGPTR)((thdb)->cur_stack + sizeof(STACK16FRAME)))
 
-/* Pop bytes from the 16-bit stack */
-#define STACK16_POP(size) \
- (memmove((char*)CURRENT_STACK16+(size),CURRENT_STACK16,sizeof(STACK16FRAME)),\
-  IF1632_Saved16_ss_sp += (size))
+/* Pop bytes from the 16-bit stack of a thread */
+#define STACK16_POP(thdb,size) \
+ (memmove((char*)THREAD_STACK16(thdb)+(size),THREAD_STACK16(thdb), \
+          sizeof(STACK16FRAME)), \
+  (thdb)->cur_stack += (size))
 
 #endif /* __WINE_STACKFRAME_H */

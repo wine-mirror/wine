@@ -11,6 +11,8 @@
 #include "windows.h"
 #include "winnt.h"
 
+static BYTE PF[64] = {0,};
+
 /***********************************************************************
  * 			GetSystemInfo            	[KERNELL32.404]
  */
@@ -23,6 +25,7 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 		memcpy(si,&cachedsi,sizeof(*si));
 		return;
 	}
+	memset(PF,0,sizeof(PF));
 
 	/* choose sensible defaults ...
 	 * FIXME: perhaps overrideable with precompiler flags?
@@ -43,43 +46,87 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 	cache = 1; /* even if there is no more info, we now have a cacheentry */
 	memcpy(si,&cachedsi,sizeof(*si));
 
+	/* hmm, reasonable processor feature defaults? */
+
 #ifdef linux
 	{
-	char line[200],info[200],value[200],junk[200];
+	char line[200];
 	FILE *f = fopen ("/proc/cpuinfo", "r");
 
 	if (!f)
 		return;
 	while (fgets(line,200,f)!=NULL) {
-		if (sscanf(line,"%s%[ \t:]%s",info,junk,value)!=3)
+		char	*s,*value;
+
+		/* NOTE: the ':' is the only character we can rely on */
+		if (!(value = strchr(line,':')))
 			continue;
-		if (!lstrncmpi32A(line, "cpu",3)) {
-			if (	isdigit (value[0]) && value[1] == '8' && 
-				value[2] == '6' && value[3] == 0
-			) {
+		/* terminate the valuename */
+		*value++ = '\0';
+		/* skip any leading spaces */
+		while (*value==' ') value++;
+		if ((s=strchr(value,'\n')))
+			*s='\0';
+
+		/* 2.1 method */
+		if (!lstrncmpi32A(line, "cpu family",strlen("cpu family"))) {
+			if (isdigit (value[0])) {
 				switch (value[0] - '0') {
-				case 3:
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+				case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
 					cachedsi.wProcessorLevel= 3;
 					break;
-				case 4:
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
 					cachedsi.wProcessorLevel= 4;
 					break;
-				case 5:
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
 					break;
-				case 6: /* FIXME does the PPro have a special type? */
-					cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
 					cachedsi.wProcessorLevel= 5;
 					break;
 				default:
 					break;
 				}
 			}
+			continue;
 		}
-		if (!lstrncmpi32A(info,"processor",9)) {
+		/* old 2.0 method */
+		if (!lstrncmpi32A(line, "cpu",strlen("cpu"))) {
+			if (	isdigit (value[0]) && value[1] == '8' && 
+				value[2] == '6' && value[3] == 0
+			) {
+				switch (value[0] - '0') {
+				case 3: cachedsi.dwProcessorType = PROCESSOR_INTEL_386;
+					cachedsi.wProcessorLevel= 3;
+					break;
+				case 4: cachedsi.dwProcessorType = PROCESSOR_INTEL_486;
+					cachedsi.wProcessorLevel= 4;
+					break;
+				case 5: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+					cachedsi.wProcessorLevel= 5;
+					break;
+				case 6: cachedsi.dwProcessorType = PROCESSOR_INTEL_PENTIUM;
+					cachedsi.wProcessorLevel= 5;
+					break;
+				default:
+					break;
+				}
+			}
+			continue;
+		}
+		if (!lstrncmpi32A(line,"fdiv_bug",strlen("fdiv_bug"))) {
+			if (!lstrncmpi32A(value,"yes",3))
+				PF[PF_FLOATING_POINT_PRECISION_ERRATA] = TRUE;
+
+			continue;
+		}
+		if (!lstrncmpi32A(line,"fpu",strlen("fpu"))) {
+			if (!lstrncmpi32A(value,"no",2))
+				PF[PF_FLOATING_POINT_EMULATED] = TRUE;
+
+			continue;
+		}
+		if (!lstrncmpi32A(line,"processor",strlen("processor"))) {
 			/* processor number counts up...*/
 			int	x;
 
@@ -87,11 +134,18 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 				if (x+1>cachedsi.dwNumberOfProcessors)
 					cachedsi.dwNumberOfProcessors=x+1;
 		}
-		if (!lstrncmpi32A(info,"stepping",8)) {
+		if (!lstrncmpi32A(line,"stepping",strlen("stepping"))) {
 			int	x;
 
 			if (sscanf(value,"%d",&x))
 				cachedsi.wProcessorRevision = x;
+		}
+		if (!lstrncmpi32A(line,"flags",strlen("flags"))) {
+			if (strstr(value,"cx8"))
+				PF[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+			if (strstr(value,"mmx"))
+				PF[PF_MMX_INSTRUCTIONS_AVAILABLE] = TRUE;
+
 		}
 	}
 	fclose (f);
@@ -105,48 +159,15 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 }
 
 /***********************************************************************
- *          CPU_TestProcessorFeature
- */
-static BOOL32 CPU_TestProcessorFeature(const char* query_info, const char* query_value)
-{
-    BOOL32 flag=FALSE;
-#ifdef linux
-    char line[200],info[200],value[200],junk[200];
-    FILE *f = fopen ("/proc/cpuinfo", "r");
-    
-    if (!f)
-      return 0;
-    while (fgets(line,200,f)!=NULL) {
-      if (sscanf(line,"%s%[ \t:]%s",info,junk,value)!=3)
-	continue;
-      if (strcmp(info,query_info)==0)
-	flag = strstr(value,query_value)!=NULL;
-    }
-    fclose (f);
-#else  /* linux */
-    /* FIXME: how do we do this on other systems? */
-#endif  /* linux */
-    return flag;
-}
-
-/***********************************************************************
  * 			IsProcessorFeaturePresent	[KERNELL32.880]
  */
 BOOL32 WINAPI IsProcessorFeaturePresent (DWORD feature)
 {
   SYSTEM_INFO si;
-  GetSystemInfo (&si);
-  switch (feature)
-    {
-    case PF_FLOATING_POINT_PRECISION_ERRATA: 
-      return si.wProcessorLevel == 5;
-    case PF_FLOATING_POINT_EMULATED:
-      return CPU_TestProcessorFeature("fpu","no"); break;
-    case PF_COMPARE_EXCHANGE_DOUBLE:
-      return si.wProcessorLevel >= 5;
-    case PF_MMX_INSTRUCTIONS_AVAILABLE:
-      return CPU_TestProcessorFeature("flags","mmx"); break;
-    default:
-      return FALSE;
-    }
+  GetSystemInfo (&si); /* to ensure the information is loaded and cached */
+
+  if (feature < 64)
+    return PF[feature];
+  else
+    return FALSE;
 }

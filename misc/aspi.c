@@ -384,8 +384,7 @@ error_exit:
  *             GetASPISupportInfo16   (WINASPI.1)
  */
 
-WORD
-GetASPISupportInfo16()
+WORD WINAPI GetASPISupportInfo16()
 {
 #ifdef linux
     dprintf_aspi(stddeb, "GETASPISupportInfo\n");
@@ -403,8 +402,7 @@ GetASPISupportInfo16()
  *             SendASPICommand16   (WINASPI.2)
  */
 
-WORD
-SendASPICommand16(SEGPTR segptr_srb)
+WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 {
 #ifdef linux
   LPSRB16 lpSRB = PTR_SEG_TO_LIN(segptr_srb);
@@ -428,5 +426,18 @@ SendASPICommand16(SEGPTR segptr_srb)
   return SS_INVALID_SRB;
 #else
   return SS_INVALID_SRB;
+#endif
+}
+
+/***********************************************************************
+ *             GetASPIDLLVersion   (WINASPI.4)
+ */
+
+DWORD WINAPI GetASPIDLLVersion()
+{
+#ifdef linux
+	return (DWORD)2;
+#else
+	return (DWORD)0;
 #endif
 }

@@ -14,7 +14,28 @@
  *           WinNotify       (WINDEBUG.1)
  *  written without _any_ docu
  */
-DWORD WinNotify() {
-	fprintf(stderr, "WinNotify(): stub !\n");
-	return NULL;
+void WinNotify(CONTEXT *context)
+{
+	fprintf(stderr, "WinNotify(AX=%04x): stub !\n", AX_reg(context));
+	switch (AX_reg(context))
+	{
+		case 0x000D:
+		case 0x000E:	/* __asm__("pushl $0x0\n\t"); ??? */
+				break;
+		case 0x0060:	/* do nothing */
+				break;
+		case 0x0063:	/* do something complicated */
+				break;
+		case 0x0064:	/* do something complicated */
+				break;
+		case 0x0065:	/* do something complicated */
+				break;
+		case 0x0050:	/* do something complicated, now just return error */
+				SET_CFLAG(context);
+				break;
+		case 0x0052:	/* do something complicated */
+				break;
+		default:
+				break;
+	}	
 }

@@ -131,6 +131,11 @@ typedef struct
     INT32         DCOrgY;
     INT32         CursPosX;          /* Current position */
     INT32         CursPosY;
+    INT32         ArcDirection;
+    BOOL32        UseWorldXform;     /* Should we use the world transform? */
+                                     /* (i.e. is it not equal to the       */
+				     /* identity transformation?)          */
+    XFORM         WorldXform;        /* World transform */
 } WIN_DC_INFO;
 
 typedef X11DRV_PDEVICE X_DC_INFO;  /* Temporary */
@@ -286,6 +291,16 @@ typedef struct tagDC_FUNCS
 #define YLPTODP(dc,y) \
     (((y)-(dc)->wndOrgY) * (dc)->vportExtY / (dc)->wndExtY+(dc)->vportOrgY)
 
+  /* Device <-> logical size conversion */
+
+#define XDSTOLS(dc,x) \
+    ((x) * (dc)->wndExtX / (dc)->vportExtX)
+#define YDSTOLS(dc,y) \
+    ((y) * (dc)->wndExtY / (dc)->vportExtY)
+#define XLSTODS(dc,x) \
+    ((x) * (dc)->vportExtX / (dc)->wndExtX)
+#define YLSTODS(dc,y) \
+    ((y) * (dc)->vportExtY / (dc)->wndExtY)
 
   /* GDI local heap */
 

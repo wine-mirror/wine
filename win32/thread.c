@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
 #include "windows.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -128,13 +126,4 @@ LONG WINAPI InterlockedExchange(LPLONG target, LONG value)
 	/* ResumeAllThreadsAndProcesses() */
 	return ret;
 #endif	
-}
-
-/************************************************************************
-*           ReinitializeCriticalSection			[KERNEL32]	*
-************************************************************************/
-
-void WINAPI ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit)
-{
-   /* hmm ?????? */	
 }

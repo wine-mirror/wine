@@ -10,14 +10,29 @@
  * FIXME: This file is full of race conditions and unlocked variable access
  * from two threads. But we usually don't need to bother.
  *
+ * Tested with a Soundblaster clone and a Gravis UltraSound Classic.
+ *
+ * Status:
+ * - Wing Commander 4/W95:
+ *   The intromovie plays without problems. Nearly lipsynchron.
+ * - DiscWorld 2
+ *   The sound works, but noticeable chunks are left out (from the sound and
+ *   the animation). Don't know why yet.
+ * - Diablo:
+ *   Sound works, but slows down the movieplayer.
+ * - XvT: 
+ *   Doesn't sound yet.
+ * - Monkey Island 3:
+ *   The background sound of the startscreen works ;)
+ * - WingCommander Prophecy Demo:
+ *   Sound works for the intromovie.
  */
 
 #include <stdio.h>
 #include <assert.h>
 #include <sys/types.h>
-#include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/fcntl.h>
-#include <sys/signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,15 +41,26 @@
 #include "interfaces.h"
 #include "mmsystem.h"
 #include "dsound.h"
+#include "thread.h"
+#include "stddebug.h"
+#include "debug.h"
 
 #ifdef HAVE_OSS
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
-static int audiofd = 0;
+
+static int audiofd = -1;
+static int current_buffered_frags = 4;
 static LPDIRECTSOUND	dsound = NULL;
+
+static short playbuf[2048];
+
 #endif
 
 HRESULT WINAPI DirectSoundEnumerate32A(LPDSENUMCALLBACK32A enumcb,LPVOID context) {
+#ifdef HAVE_OSS
+	enumcb(NULL,"WINE DirectSound using Open Sound System","sound",context);
+#endif
 	return 0;
 }
 
@@ -64,72 +90,100 @@ static void _dump_DSBCAPS(DWORD xmask) {
 			fprintf(stderr,"%s ",flags[i].name);
 }
 
+/*******************************************************************************
+ *		IDirectSoundNotify
+ */
+static HRESULT WINAPI IDirectSoundNotify_QueryInterface(
+	LPDIRECTSOUNDNOTIFY this,REFIID riid,LPVOID *ppobj
+) {
+	char xbuf[50];
+
+	StringFromCLSID(riid,xbuf);
+	fprintf(stderr,"IDirectSound(%p)->QueryInterface(%s,%p)\n",this,xbuf,ppobj);
+	return E_FAIL;
+}
+
+static ULONG WINAPI IDirectSoundNotify_AddRef(LPDIRECTSOUNDNOTIFY this) {
+	return ++(this->ref);
+}
+
+static ULONG WINAPI IDirectSoundNotify_Release(LPDIRECTSOUNDNOTIFY this) {
+	this->ref--;
+	if (!this->ref) {
+		this->dsb->lpvtbl->fnRelease(this->dsb);
+		HeapFree(GetProcessHeap(),0,this);
+		return 0;
+	}
+	return this->ref;
+}
+
+static int _sort_notifies(const void *a,const void *b) {
+	LPDSBPOSITIONNOTIFY	na = (LPDSBPOSITIONNOTIFY)a;
+	LPDSBPOSITIONNOTIFY	nb = (LPDSBPOSITIONNOTIFY)b;
+
+	return na->dwOffset-nb->dwOffset;
+}
+
+static HRESULT WINAPI IDirectSoundNotify_SetNotificationPositions(
+	LPDIRECTSOUNDNOTIFY this,DWORD howmuch,LPCDSBPOSITIONNOTIFY notify
+) {
+	int	i;
+
+	fprintf(stderr,"IDirectSoundNotify(%p)->SetNotificationPositions(0x%08lx,%p),stub!\n",this,howmuch,notify);
+	for (i=0;i<howmuch;i++)
+		fprintf(stderr,"	notify at %ld to 0x%08lx\n",notify[i].dwOffset,notify[i].hEventNotify);
+	this->dsb->notifies = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,this->dsb->notifies,(this->dsb->nrofnotifies+howmuch)*sizeof(DSBPOSITIONNOTIFY));
+	memcpy(	this->dsb->notifies+this->dsb->nrofnotifies,
+		notify,
+		howmuch*sizeof(DSBPOSITIONNOTIFY)
+	);
+	this->dsb->nrofnotifies+=howmuch;
+	qsort(this->dsb->notifies,this->dsb->nrofnotifies,sizeof(DSBPOSITIONNOTIFY),_sort_notifies);
+	for (i=0;i<this->dsb->nrofnotifies;i++)
+		fprintf(stderr,"	notify at %ld to 0x%08lx\n",this->dsb->notifies[i].dwOffset,this->dsb->notifies[i].hEventNotify);
+	return 0;
+}
+
+IDirectSoundNotify_VTable dsnvt = {
+	IDirectSoundNotify_QueryInterface,
+	IDirectSoundNotify_AddRef,
+	IDirectSoundNotify_Release,
+	IDirectSoundNotify_SetNotificationPositions,
+};
+
+/*******************************************************************************
+ *		IDirectSoundBuffer
+ */
 static HRESULT WINAPI IDirectSoundBuffer_SetFormat(
 	LPDIRECTSOUNDBUFFER this,LPWAVEFORMATEX wfex
 ) {
-	int	xx,channels,speed,format,nformat;
 
-	fprintf(stderr,"IDirectSoundBuffer(%p)->SetFormat(%p),stub!\n",this,wfex);
 	memcpy(&(this->wfx),wfex,sizeof(this->wfx));
-	fprintf(stderr,"	[formattag=0x%04x,",wfex->wFormatTag);
-	fprintf(stderr,"chans=%d,",wfex->nChannels);
-	fprintf(stderr,"samplerate=%ld,",wfex->nSamplesPerSec);
-	fprintf(stderr,"bytespersec=%ld,",wfex->nAvgBytesPerSec);
-	fprintf(stderr,"blockalign=%d,",wfex->nBlockAlign);
-	fprintf(stderr,"bitspersamp=%d,",wfex->wBitsPerSample);
-	fprintf(stderr,"cbSize=%d]\n",wfex->cbSize);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->SetFormat(%p),stub!\n",this,wfex);
+	dprintf_dsound(stderr,"	[formattag=0x%04x,",wfex->wFormatTag);
+	dprintf_dsound(stderr,"chans=%d,",wfex->nChannels);
+	dprintf_dsound(stderr,"samplerate=%ld,",wfex->nSamplesPerSec);
+	dprintf_dsound(stderr,"bytespersec=%ld,",wfex->nAvgBytesPerSec);
+	dprintf_dsound(stderr,"blockalign=%d,",wfex->nBlockAlign);
+	dprintf_dsound(stderr,"bitspersamp=%d,",wfex->wBitsPerSample);
+	dprintf_dsound(stderr,"cbSize=%d]\n",wfex->cbSize);
 
-	switch (wfex->wFormatTag) {
-	default:
-		fprintf(stderr,"unknown WAVE_FORMAT tag %d\n",wfex->wFormatTag);
-		return DSERR_BADFORMAT;
-	case WAVE_FORMAT_PCM:
-		format = AFMT_S16_LE;
-		break;
-	}
-	if (-1==ioctl(audiofd,SNDCTL_DSP_GETFMTS,&xx)) {
-		perror("ioctl SNDCTL_DSP_GETFMTS");
-		return DSERR_BADFORMAT;
-	}
-	if ((xx&format)!=format) {/* format unsupported */
-		fprintf(stderr,"SNDCTL_DSP_GETFMTS: format not supported\n"); 
-		return DSERR_BADFORMAT;
-	}
-	nformat = format;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFMT,&nformat)) {
-		perror("ioctl SNDCTL_DSP_SETFMT");
-		return DSERR_BADFORMAT;
-	}
-	if (nformat!=format) {/* didn't work */
-		fprintf(stderr,"SNDCTL_DSP_GETFMTS: format not set\n"); 
-		return DSERR_BADFORMAT;
-	}
-
-	channels = wfex->nChannels-1;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_STEREO,&channels)) {
-		perror("ioctl SNDCTL_DSP_STEREO");
-		return DSERR_BADFORMAT;
-	}
-	speed = wfex->nSamplesPerSec;
-	if (-1==ioctl(audiofd,SNDCTL_DSP_SPEED,&speed)) {
-		perror("ioctl SNDCTL_DSP_SPEED");
-		return DSERR_BADFORMAT;
-	}
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_SetVolume(
 	LPDIRECTSOUNDBUFFER this,LONG vol
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->SetVolume(%08lx),stub!\n",this,vol);
+	fprintf(stderr,"IDirectSoundBuffer(%p)->SetVolume(%ld),stub!\n",this,vol);
+	this->volume = vol;
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_GetVolume(
 	LPDIRECTSOUNDBUFFER this,LPLONG vol
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->GetVolume(%p),stub!\n",this,vol);
-	*vol = 100;
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetVolume(%p),stub!\n",this,vol);
+	*vol = this->volume;
 	return 0;
 }
 
@@ -143,17 +197,19 @@ static HRESULT WINAPI IDirectSoundBuffer_SetFrequency(
 static HRESULT WINAPI IDirectSoundBuffer_Play(
 	LPDIRECTSOUNDBUFFER this,DWORD reserved1,DWORD reserved2,DWORD flags
 ) {
-
-	fprintf(stderr,"IDirectSoundBuffer(%p)->Play(%08lx,%08lx,%08lx),stub!\n",
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->Play(%08lx,%08lx,%08lx),stub!\n",
 		this,reserved1,reserved2,flags
 	);
+	this->playpos = 0;
+	this->playflags = flags;
 	this->playing = 1;
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_Stop(LPDIRECTSOUNDBUFFER this) {
-	/*fprintf(stderr,"IDirectSoundBuffer(%p)->Stop()\n",this);*/
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->Stop()\n",this);
 	this->playing = 0;
+	this->writepos = 0; /* hmm */
 	return 0;
 }
 
@@ -165,7 +221,6 @@ static DWORD WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER this) {
 
 	if (--this->ref)
 		return this->ref;
-	fprintf(stderr,"	-> IDirectSoundBuffer(%p) freed.\n",this);
 	for (i=0;i<this->dsound->nrofbuffers;i++)
 		if (this->dsound->buffers[i] == this)
 			break;
@@ -186,28 +241,28 @@ static DWORD WINAPI IDirectSoundBuffer_Release(LPDIRECTSOUNDBUFFER this) {
 static HRESULT WINAPI IDirectSoundBuffer_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER this,LPDWORD playpos,LPDWORD writepos
 ) {
-/*	fprintf(stderr,"IDirectSoundBuffer(%p)->GetCurrentPosition(%p,%p),stub!\n",this,playpos,writepos);*/
-
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetCurrentPosition(%p,%p),stub!\n",this,playpos,writepos);
 	if (playpos) *playpos = this->playpos;
-	this->writepos = (this->playpos+512) % this->buflen;
-	if (writepos) *writepos = this->writepos; /* hmm */
+	if (writepos) *writepos = this->writepos;
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_GetStatus(
 	LPDIRECTSOUNDBUFFER this,LPDWORD status
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->GetStatus(%p),stub!\n",this,status);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetStatus(%p)\n",this,status);
+	*status = 0;
 	if (this->playing)
-		*status = DSBSTATUS_PLAYING;
-	*status |= DSBSTATUS_LOOPING; /* FIXME */
+		*status |= DSBSTATUS_PLAYING;
+	if (this->playflags & DSBPLAY_LOOPING)
+		*status |= DSBSTATUS_LOOPING;
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_GetFormat(
 	LPDIRECTSOUNDBUFFER this,LPWAVEFORMATEX lpwf,DWORD wfsize,LPDWORD wfwritten
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->GetFormat(%p,0x%08lx,%p),stub!\n",this,lpwf,wfsize,wfwritten);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetFormat(%p,%ld,%p)\n",this,lpwf,wfsize,wfwritten);
 	if (wfsize>sizeof(this->wfx)) wfsize = sizeof(this->wfx);
 	memcpy(lpwf,&(this->wfx),wfsize);
 	if (wfwritten) *wfwritten = wfsize;
@@ -218,8 +273,7 @@ static HRESULT WINAPI IDirectSoundBuffer_Lock(
 	LPDIRECTSOUNDBUFFER this,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
 
-/*
-	fprintf(stderr,"IDirectSoundBuffer(%p)->Lock(%ld,%ld,%p,%p,%p,%p,0x%08lx),stub!\n",
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->Lock(%ld,%ld,%p,%p,%p,%p,0x%08lx)\n",
 		this,
 		writecursor,
 		writebytes,
@@ -229,17 +283,18 @@ static HRESULT WINAPI IDirectSoundBuffer_Lock(
 		audiobytes2,
 		flags
 	);
-*/
 	if (flags & DSBLOCK_FROMWRITECURSOR)
 		writecursor = this->writepos;
-
-	if (writecursor+writebytes < this->buflen) {
+	assert(audiobytes1!=audiobytes2);
+	assert(lplpaudioptr1!=lplpaudioptr2);
+	if (writecursor+writebytes <= this->buflen) {
 		*(LPBYTE*)lplpaudioptr1 = this->buffer+writecursor;
 		*audiobytes1 = writebytes;
 		if (lplpaudioptr2)
 			*(LPBYTE*)lplpaudioptr2 = NULL;
 		if (audiobytes2)
 			*audiobytes2 = 0;
+		dprintf_dsound(stderr,"->%ld.0\n",writebytes);
 	} else {
 		*(LPBYTE*)lplpaudioptr1 = this->buffer+writecursor;
 		*audiobytes1 = this->buflen-writecursor;
@@ -247,6 +302,7 @@ static HRESULT WINAPI IDirectSoundBuffer_Lock(
 			*(LPBYTE*)lplpaudioptr2 = this->buffer;
 		if (audiobytes2)
 			*audiobytes2 = writebytes-(this->buflen-writecursor);
+		dprintf_dsound(stderr,"->%ld.%ld\n",*audiobytes1,audiobytes2?*audiobytes2:0);
 	}
 	this->writepos=(writecursor+writebytes)%this->buflen;
 	return 0;
@@ -255,7 +311,7 @@ static HRESULT WINAPI IDirectSoundBuffer_Lock(
 static HRESULT WINAPI IDirectSoundBuffer_SetCurrentPosition(
 	LPDIRECTSOUNDBUFFER this,DWORD newpos
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->SetCurrentPosition(%ld)\n",this,newpos);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->SetCurrentPosition(%ld)\n",this,newpos);
 	this->playpos = newpos;
 	return 0;
 }
@@ -263,33 +319,89 @@ static HRESULT WINAPI IDirectSoundBuffer_SetCurrentPosition(
 static HRESULT WINAPI IDirectSoundBuffer_SetPan(
 	LPDIRECTSOUNDBUFFER this,LONG newpan
 ) {
-	fprintf(stderr,"IDirectSoundBuffer(%p)->SetPan(%ld),stub!\n",this,newpan);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->SetPan(%ld),stub!\n",this,newpan);
+	this->pan = newpan;
+	return 0;
+}
+
+static HRESULT WINAPI IDirectSoundBuffer_GetPan(
+	LPDIRECTSOUNDBUFFER this,LPLONG pan
+) {
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetPan(%p),stub!\n",this,pan);
+	*pan = this->pan;
 	return 0;
 }
 
 static HRESULT WINAPI IDirectSoundBuffer_Unlock(
 	LPDIRECTSOUNDBUFFER this,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
-	struct count_info	ci;
-/*
-	fprintf(stderr,"IDirectSoundBuffer(%p)->Unlock(%p,%ld,%p,%ld),stub!\n",this,p1,x1,p2,x2);
- */
- 	fprintf(stderr,"u%ld.%ld,",x1,x2);
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->Unlock(%p,%ld,%p,%ld)\n",
+		this,p1,x1,p2,x2
+	);
 	return 0;
 }
 
+static HRESULT WINAPI IDirectSoundBuffer_GetFrequency(
+	LPDIRECTSOUNDBUFFER this,LPDWORD freq
+) {
+	dprintf_dsound(stderr,"IDirectSoundBuffer(%p)->GetFrequency(%p)\n",
+		this,freq
+	);
+	*freq = this->wfx.nSamplesPerSec;
+	return 0;
+}
+
+static HRESULT WINAPI IDirectSoundBuffer_Initialize(
+	LPDIRECTSOUNDBUFFER this,LPDIRECTSOUND dsound,LPDSBUFFERDESC dbsd
+) {
+	fprintf(stderr,"IDirectSoundBuffer(%p)->Initialize(%p,%p),stub!\n",this,dsound,dbsd);
+	return DSERR_ALREADYINITIALIZED;
+}
+
+static HRESULT WINAPI IDirectSoundBuffer_GetCaps(
+	LPDIRECTSOUNDBUFFER this,LPDSBCAPS caps
+) {
+	caps->dwSize = sizeof(*caps);
+	caps->dwFlags = DSBCAPS_PRIMARYBUFFER|DSBCAPS_STATIC|DSBCAPS_CTRLALL|DSBCAPS_LOCSOFTWARE;
+	caps->dwBufferBytes = 0;
+	caps->dwUnlockTransferRate = 0;
+	caps->dwPlayCpuOverhead = 0;
+	return DS_OK;
+}
+
+static HRESULT WINAPI IDirectSoundBuffer_QueryInterface(
+	LPDIRECTSOUNDBUFFER this,REFIID riid,LPVOID *ppobj
+) {
+	char	xbuf[50];
+
+	if (!memcmp(&IID_IDirectSoundNotify,riid,sizeof(*riid))) {
+		IDirectSoundNotify	*dsn;
+
+		dsn = (LPDIRECTSOUNDNOTIFY)HeapAlloc(GetProcessHeap(),0,sizeof(*dsn));
+		dsn->ref = 1;
+		dsn->dsb = this;
+		this->lpvtbl->fnAddRef(this);
+		dsn->lpvtbl = &dsnvt;
+		*ppobj = (LPVOID)dsn;
+		return 0;
+	}
+	StringFromCLSID(riid,xbuf);
+	fprintf(stderr,"IDirectSoundBuffer(%p)->QueryInterface(%s,%p)\n",this,xbuf,ppobj);
+	return E_FAIL;
+}
+
 static struct tagLPDIRECTSOUNDBUFFER_VTABLE dsbvt = {
-	(void *)1,
+	IDirectSoundBuffer_QueryInterface,
 	IDirectSoundBuffer_AddRef,
 	IDirectSoundBuffer_Release,
-	(void *)4,
+	IDirectSoundBuffer_GetCaps,
 	IDirectSoundBuffer_GetCurrentPosition,
 	IDirectSoundBuffer_GetFormat,
 	IDirectSoundBuffer_GetVolume,
-	(void *)8,
-        (void *)9,
+	IDirectSoundBuffer_GetPan,
+        IDirectSoundBuffer_GetFrequency,
 	IDirectSoundBuffer_GetStatus,
-	(void *)11,
+	IDirectSoundBuffer_Initialize,
 	IDirectSoundBuffer_Lock,
 	IDirectSoundBuffer_Play,
 	IDirectSoundBuffer_SetCurrentPosition,
@@ -301,12 +413,14 @@ static struct tagLPDIRECTSOUNDBUFFER_VTABLE dsbvt = {
 	IDirectSoundBuffer_Unlock
 };
 
-
+/*******************************************************************************
+ *		IDirectSound
+ */
 
 static HRESULT WINAPI IDirectSound_SetCooperativeLevel(
 	LPDIRECTSOUND this,HWND32 hwnd,DWORD level
 ) {
-	fprintf(stderr,"IDirectSound(%p)->SetCooperativeLevel(%08lx,%ld),stub!\n",
+	dprintf_dsound(stderr,"IDirectSound(%p)->SetCooperativeLevel(%08lx,%ld)\n",
 		this,(DWORD)hwnd,level
 	);
 	return 0;
@@ -316,13 +430,15 @@ static HRESULT WINAPI IDirectSound_SetCooperativeLevel(
 static HRESULT WINAPI IDirectSound_CreateSoundBuffer(
 	LPDIRECTSOUND this,LPDSBUFFERDESC dsbd,LPLPDIRECTSOUNDBUFFER ppdsb,LPUNKNOWN lpunk
 ) {
-	fprintf(stderr,"IDirectSound(%p)->CreateSoundBuffer(%p,%p,%p),stub!\n",this,dsbd,ppdsb,lpunk);
-	fprintf(stderr,"[size=%ld,",dsbd->dwSize);
-	fprintf(stderr,"flags = 0x%08lx,",dsbd->dwFlags);
-	_dump_DSBCAPS(dsbd->dwFlags);
-	fprintf(stderr,"bufferbytes = %ld,",dsbd->dwBufferBytes);
-	fprintf(stderr,"lpwfxFormat = %p]\n",dsbd->lpwfxFormat);
-	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBuffer));
+	if (debugging_dsound) {
+		fprintf(stderr,"IDirectSound(%p)->CreateSoundBuffer(%p,%p,%p),stub!\n",this,dsbd,ppdsb,lpunk);
+		fprintf(stderr,"[size=%ld,",dsbd->dwSize);
+		fprintf(stderr,"flags = 0x%08lx,",dsbd->dwFlags);
+		_dump_DSBCAPS(dsbd->dwFlags);
+		fprintf(stderr,"bufferbytes = %ld,",dsbd->dwBufferBytes);
+		fprintf(stderr,"lpwfxFormat = %p]\n",dsbd->lpwfxFormat);
+	}
+	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBuffer));
 	(*ppdsb)->ref =1;
 	(*ppdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,dsbd->dwBufferBytes);
 	(*ppdsb)->buflen = dsbd->dwBufferBytes;
@@ -331,6 +447,7 @@ static HRESULT WINAPI IDirectSound_CreateSoundBuffer(
 	(*ppdsb)->lpvtbl = &dsbvt;
 	(*ppdsb)->dsound = this;
 	(*ppdsb)->playing = 0;
+	memcpy(&((*ppdsb)->dsbd),dsbd,sizeof(*dsbd));
 
 	/* register buffer */
 	this->buffers = (LPDIRECTSOUNDBUFFER*)HeapReAlloc(GetProcessHeap(),0,this->buffers,sizeof(LPDIRECTSOUNDBUFFER)*(this->nrofbuffers+1));
@@ -347,9 +464,10 @@ static HRESULT WINAPI IDirectSound_DuplicateSoundBuffer(
 ) {
 	fprintf(stderr,"IDirectSound(%p)->DuplicateSoundBuffer(%p,%p),stub!\n",this,pdsb,ppdsb);
 
-	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSoundBuffer));
+	*ppdsb = (LPDIRECTSOUNDBUFFER)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundBuffer));
 	(*ppdsb)->ref =1;
 	(*ppdsb)->buffer = (LPBYTE)HeapAlloc(GetProcessHeap(),0,pdsb->buflen);
+	memcpy((*ppdsb)->buffer,pdsb->buffer,pdsb->buflen);
 	(*ppdsb)->buflen = pdsb->buflen;
 	(*ppdsb)->playpos = 0;
 	(*ppdsb)->writepos = 0;
@@ -365,9 +483,17 @@ static HRESULT WINAPI IDirectSound_DuplicateSoundBuffer(
 }
 
 
-static HRESULT WINAPI IDirectSound_GetCaps(LPDIRECTSOUND this,LPDSCAPS dscaps) {
-	fprintf(stderr,"IDirectSound(%p)->GetCaps(%p),stub!\n",this,dscaps);
-	fprintf(stderr,"	flags = 0x%08lx\n",dscaps->dwFlags);
+static HRESULT WINAPI IDirectSound_GetCaps(LPDIRECTSOUND this,LPDSCAPS caps) {
+	fprintf(stderr,"IDirectSound(%p)->GetCaps(%p),stub!\n",this,caps);
+	fprintf(stderr,"	flags = 0x%08lx\n",caps->dwFlags);
+
+	caps->dwSize = sizeof(*caps);
+	caps->dwFlags = DSCAPS_PRIMARYSTEREO|DSCAPS_PRIMARY16BIT|DSCAPS_EMULDRIVER|DSCAPS_SECONDARYSTEREO|DSCAPS_SECONDARY16BIT;
+	/* FIXME: query OSS */
+	caps->dwMinSecondarySampleRate = 22050;
+	caps->dwMaxSecondarySampleRate = 48000;
+	caps->dwPrimaryBuffers = 1;
+	/* FIXME: set the rest... hmm */
 	return 0;
 }
 
@@ -378,15 +504,32 @@ static ULONG WINAPI IDirectSound_AddRef(LPDIRECTSOUND this) {
 static ULONG WINAPI IDirectSound_Release(LPDIRECTSOUND this) {
 	if (!--(this->ref)) {
 		HeapFree(GetProcessHeap(),0,this);
-		fprintf(stderr,"	IDIrectSound(%p) freed!\n",this);
 		dsound = NULL;
+		close(audiofd);audiofd = -1;
 		return 0;
 	}
 	return this->ref;
 }
 
+static HRESULT WINAPI IDirectSound_SetSpeakerConfig(
+	LPDIRECTSOUND this,DWORD config
+) {
+	fprintf(stderr,"IDirectSound(%p)->SetSpeakerConfig(0x%08lx)\n",this,config);
+	return 0;
+}
+
+static HRESULT WINAPI IDirectSound_QueryInterface(
+	LPDIRECTSOUND this,REFIID riid,LPVOID *ppobj
+) {
+	char xbuf[50];
+
+	StringFromCLSID(riid,xbuf);
+	fprintf(stderr,"IDirectSound(%p)->QueryInterface(%s,%p)\n",this,xbuf,ppobj);
+	return E_FAIL;
+}
+
 static struct tagLPDIRECTSOUND_VTABLE dsvt = {
-	(void *)1,
+	IDirectSound_QueryInterface,
 	IDirectSound_AddRef,
 	IDirectSound_Release,
 	IDirectSound_CreateSoundBuffer,
@@ -395,68 +538,228 @@ static struct tagLPDIRECTSOUND_VTABLE dsvt = {
 	IDirectSound_SetCooperativeLevel,
 	(void *)8,
         (void *)9,
-        (void *)10,
+        IDirectSound_SetSpeakerConfig,
         (void *)11
 };
 
-void
-DSOUND_thread(void) {
-	int	res,i,j,curleft,playing;
-	short	buf[512];
+static int
+DSOUND_setformat(LPWAVEFORMATEX wfex) {
+	int	xx,channels,speed,format,nformat;
 
+	switch (wfex->wFormatTag) {
+	default:
+		fprintf(stderr,"unknown WAVE_FORMAT tag %d\n",wfex->wFormatTag);
+		return DSERR_BADFORMAT;
+	case WAVE_FORMAT_PCM:
+		format = AFMT_S16_LE;
+		break;
+	}
+	if (-1==ioctl(audiofd,SNDCTL_DSP_GETFMTS,&xx)) {
+		perror("ioctl SNDCTL_DSP_GETFMTS");
+		return -1;
+	}
+	if ((xx&format)!=format) {/* format unsupported */
+		fprintf(stderr,"SNDCTL_DSP_GETFMTS: format not supported\n"); 
+		return -1;
+	}
+	nformat = format;
+	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFMT,&nformat)) {
+		perror("ioctl SNDCTL_DSP_SETFMT");
+		return -1;
+	}
+	if (nformat!=format) {/* didn't work */
+		fprintf(stderr,"SNDCTL_DSP_GETFMTS: format not set\n"); 
+		return -1;
+	}
+
+	channels = wfex->nChannels-1;
+	if (-1==ioctl(audiofd,SNDCTL_DSP_STEREO,&channels)) {
+		perror("ioctl SNDCTL_DSP_STEREO");
+		return -1;
+	}
+	speed = wfex->nSamplesPerSec;
+	if (-1==ioctl(audiofd,SNDCTL_DSP_SPEED,&speed)) {
+		perror("ioctl SNDCTL_DSP_SPEED");
+		return -1;
+	}
+	return 0;
+}
+
+static LPDSBPOSITIONNOTIFY
+DSOUND_nextevent(IDirectSoundBuffer *dsb) {
+	int	i;
+
+	if (dsb->nrofnotifies) {
+		for (i=0;i<dsb->nrofnotifies;i++) {
+			if (dsb->playpos<dsb->notifies[i].dwOffset)
+				break;
+		}
+		if (i==dsb->nrofnotifies)
+			i=0;
+		return dsb->notifies+i;
+	}
+	return NULL;
+}
+
+#define CHECK_EVENT							\
+	if (nextevent && (dsb->playpos == nextevent->dwOffset)) {	\
+		SetEvent(nextevent->hEventNotify);			\
+		fprintf(stderr,"signalled event %d\n",nextevent->hEventNotify);\
+		nextevent = DSOUND_nextevent(dsb);			\
+	}
+		
+
+static void 
+DSOUND_MixInBuffer(IDirectSoundBuffer *dsb) {
+	int	i,j,buflen = dsb->buflen;
+	LPDSBPOSITIONNOTIFY	nextevent;
+
+	if (dsb->wfx.nSamplesPerSec != dsound->wfx.nSamplesPerSec) {
+		fprintf(stderr,"mixing in buffer of different frequency, argh!\n");
+	}
+	nextevent = DSOUND_nextevent(dsb);
+
+	if (dsb->wfx.wBitsPerSample == 8) {
+		unsigned char	*xbuf = (unsigned char*)(dsb->buffer);
+		if (dsb->wfx.nChannels == 1) {
+			for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
+				dsb->playpos=(dsb->playpos+1)%buflen;
+				if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
+					dsb->playing = 0;
+					dsb->playpos = buflen;
+					return;
+				}
+				/* FIXME: pan,volume */
+				playbuf[(j<<1)  ]+=xbuf[dsb->playpos]<<8;
+				playbuf[(j<<1)+1]+=xbuf[dsb->playpos]<<8;
+				CHECK_EVENT
+			}
+		} else {
+			for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0]);j++) {
+				dsb->playpos=(dsb->playpos+1)%buflen;
+				if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
+					dsb->playing = 0;
+					dsb->playpos = buflen;
+					return;
+				}
+				/* FIXME: pan,volume */
+				playbuf[j]+=xbuf[dsb->playpos]<<8;
+				CHECK_EVENT
+			}
+		}
+	} else { /* 16 */
+		short	*xbuf = (short*)(dsb->buffer);
+		if (dsb->wfx.nChannels == 1) {
+			for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0])/2;j++) {
+				dsb->playpos=(dsb->playpos+2)%buflen;
+				if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
+					dsb->playing = 0;
+					dsb->playpos = buflen;
+					return;
+				}
+				/* FIXME: pan,volume */
+				playbuf[(j<<1)  ]+=xbuf[dsb->playpos>>1];
+				playbuf[(j<<1)+1]+=xbuf[dsb->playpos>>1];
+				CHECK_EVENT
+			}
+		} else {
+			for (j=0;j<sizeof(playbuf)/sizeof(playbuf[0]);j++) {
+				dsb->playpos=(dsb->playpos+2)%buflen;
+				if (!dsb->playpos && !(dsb->playflags&DSBPLAY_LOOPING)) {
+					dsb->playing = 0;
+					dsb->playpos = buflen;
+					return;
+				}
+				/* FIXME: pan,volume */
+				playbuf[j]+=xbuf[dsb->playpos>>1];
+				CHECK_EVENT
+			}
+		}
+	}
+}
+
+static DWORD
+DSOUND_thread(LPVOID arg) {
+	int	fragsdiff,res,i,curleft,playing;
+	struct audio_buf_info	abi;
+
+	fprintf(stderr,"dsound is at pid %d\n",getpid());
+	ioctl(audiofd,SNDCTL_DSP_GETOSPACE,&abi);
+	fragsdiff = abi.fragstotal-abi.fragments;
 	while (1) {
 		if (!dsound) {
-			fprintf(stderr,"DSOUND thread killed\n");
-			kill(getpid(),SIGTERM);
-			return;
+			fprintf(stderr,"DSOUND thread giving up.\n");
+			ExitThread(0);
 		}
+		/* RACE: dsound could be deleted */
 		dsound->lpvtbl->fnAddRef(dsound);
-		memset(buf,0,sizeof(buf));
-		/* FIXME: assumes 16 bit and same format on all buffers
-		 * which must not be the case
-		 */
+		if (!dsound->nrofbuffers) {
+			/* no soundbuffer yet... wait. */
+			Sleep(1000);
+			continue;
+		}
+		memset(playbuf,0,sizeof(playbuf));
+		/* empty in memory soundbuffers */
+		while (1) {
+			ioctl(audiofd,SNDCTL_DSP_GETOSPACE,&abi);
+			if (abi.fragstotal-abi.fragments<=fragsdiff+current_buffered_frags)
+				break;
+			Sleep(1);
+		}
 		playing = 0;
+		dsound->lpvtbl->fnAddRef(dsound); 
 		for (i=dsound->nrofbuffers;i--;) {
+			IDirectSoundBuffer	*dsb = dsound->buffers[i];
 
-			dsound->buffers[i]->lpvtbl->fnAddRef(dsound->buffers[i]);
-			if (	dsound->buffers[i]->buflen &&
-				dsound->buffers[i]->playing
-			) {
-				int	playpos = dsound->buffers[i]->playpos/sizeof(short);
-				int	buflen = dsound->buffers[i]->buflen/sizeof(short);
-				short	*xbuf = (short*)(dsound->buffers[i]->buffer);
-
-				playing++;
-				dsound->buffers[i]->playpos = (sizeof(buf)+(playpos<<1))%(buflen<<1);
-				for (j=0;j<sizeof(buf)/sizeof(short);j++)
-					buf[j]+=xbuf[(j+playpos)%buflen];
+			dsb->lpvtbl->fnAddRef(dsb);
+			if (dsb->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER) {
+				if (memcmp(&dsound->wfx,&(dsb->wfx),sizeof(dsound->wfx))) {
+					DSOUND_setformat(&(dsb->wfx));
+					memcpy(&dsound->wfx,&(dsb->wfx),sizeof(dsb->wfx));
+				}
 			}
-			dsound->buffers[i]->lpvtbl->fnRelease(dsound->buffers[i]);
+			dsb->lpvtbl->fnRelease(dsb);
+		}
+		for (i=dsound->nrofbuffers;i--;) {
+			IDirectSoundBuffer	*dsb = dsound->buffers[i];
+
+			dsb->lpvtbl->fnAddRef(dsb);
+			if (dsb->buflen && dsb->playing) {
+				playing++;
+				DSOUND_MixInBuffer(dsb);
+			}
+			dsb->lpvtbl->fnRelease(dsb);
 		}
 		dsound->lpvtbl->fnRelease(dsound);
+
 		/*fputc('0'+playing,stderr);*/
 		curleft = 0;
-		while (curleft < sizeof(buf)) {
-			res = write(audiofd,(LPBYTE)buf+curleft,sizeof(buf)-curleft);
+		ioctl(audiofd,SNDCTL_DSP_GETOSPACE,&abi);
+		if ((abi.fragstotal-abi.fragments)<=1+fragsdiff) {
+			current_buffered_frags++;
+		} else if ((abi.fragstotal-abi.fragments)>2+fragsdiff) {
+			current_buffered_frags--;
+		}
+		while (curleft < sizeof(playbuf)) {
+			res = write(audiofd,(LPBYTE)playbuf+curleft,sizeof(playbuf)-curleft);
 			if (res==-1) {
 				perror("write audiofd");
-				fprintf(stderr,"buf is %p, curleft is %d\n",buf,curleft);
-				kill(getpid(),SIGTERM);
+				ExitThread(0);
 				break;
 			}
 			curleft+=res;
 		}
 	}
+	ExitThread(0);
 }
 
 #endif /* HAVE_OSS */
 
 HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter ) {
+	if (lpGUID)
+		fprintf(stderr,"DirectSoundCreate(%p,%p,%p)\n",lpGUID,ppDS,pUnkOuter);
 #ifdef HAVE_OSS
-	int	xx;
-
-	fprintf(stderr,"DirectSoundCreate(%p,%p,%p)\n",lpGUID,ppDS,pUnkOuter);
-	if (audiofd)
+	if (audiofd>=0)
 		return DSERR_ALLOCATED;
 	audiofd = open("/dev/audio",O_WRONLY);
 	if (audiofd==-1) {
@@ -464,33 +767,37 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
 		audiofd=0;
 		return DSERR_NODRIVER;
 	}
-	/* make it nonblocking */
-	if (-1==ioctl(audiofd,SNDCTL_DSP_NONBLOCK,NULL)) {
-		perror("ioctl SNDCTL_DSP_NONBLOCK");
-		close(audiofd);
-		audiofd=0;
-		return DSERR_NODRIVER;
-	}
-	if (-1==ioctl(audiofd,SNDCTL_DSP_GETCAPS,&xx)) {
-		perror("ioctl SNDCTL_DSP_GETCAPS");
-		close(audiofd);
-		audiofd=0;
-		return DSERR_NODRIVER;
-	}
-	fprintf(stderr,"SNDCTL_DSP_GETCAPS returned %x\n",xx);
+	/*
+	xx=0x0004000c;
+	if (-1==ioctl(audiofd,SNDCTL_DSP_SETFRAGMENT,&xx))
+		perror("ioctl SETFRAGMENT");
+	*/
+
 	*ppDS = (LPDIRECTSOUND)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectSound));
 	(*ppDS)->ref		= 1;
 	(*ppDS)->lpvtbl		= &dsvt;
 	(*ppDS)->buffers	= NULL;
 	(*ppDS)->nrofbuffers	= 0;
 
+	(*ppDS)->wfx.wFormatTag		= 1;
+	(*ppDS)->wfx.nChannels		= 2;
+	(*ppDS)->wfx.nSamplesPerSec	= 22050;
+	(*ppDS)->wfx.nAvgBytesPerSec	= 44100;
+	(*ppDS)->wfx.nBlockAlign	= 2;
+	(*ppDS)->wfx.wBitsPerSample	= 8;
+
+	DSOUND_setformat(&((*ppDS)->wfx));
+
 	if (!dsound) {
+		HANDLE32	hnd;
+		DWORD		xid;
+
 		dsound = (*ppDS);
-/*		THREAD_CreateSysThread(0,DSOUND_thread); FIXME */
+		hnd = CreateThread(NULL,NULL,DSOUND_thread,0,0,&xid);
 	}
 	return 0;
 #else
 	MessageBox32A(0,"DirectSound needs the Open Sound System Driver, which has not been found by ./configure.","WINE DirectSound",MB_OK|MB_ICONSTOP);
-	return DSERR_NODRIVER; /* check */
+	return DSERR_NODRIVER;
 #endif
 }

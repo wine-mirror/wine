@@ -93,10 +93,12 @@
 #undef DEBUG_CURSOR
 #undef DEBUG_DC
 #undef DEBUG_DDE
+#undef DEBUG_DDRAW
 #undef DEBUG_DIALOG
 #undef DEBUG_DLL
 #undef DEBUG_DOSFS
 #undef DEBUG_DRIVER
+#undef DEBUG_DSOUND
 #undef DEBUG_EDIT
 #undef DEBUG_EVENT
 #undef DEBUG_EXEC
@@ -160,6 +162,7 @@
 #undef DEBUG_WIN16DRV
 #undef DEBUG_WIN32
 #undef DEBUG_WINSOCK
+#undef DEBUG_X11
 #endif
 
 #ifdef DEBUG_ALL
@@ -180,10 +183,12 @@
 #define DEBUG_CURSOR
 #define DEBUG_DC
 #define DEBUG_DDE
+#define DEBUG_DDRAW
 #define DEBUG_DIALOG
 #define DEBUG_DLL
 #define DEBUG_DOSFS
 #define DEBUG_DRIVER
+#define DEBUG_DSOUND
 #define DEBUG_EDIT
 #define DEBUG_EVENT
 #define DEBUG_EXEC
@@ -247,4 +252,5 @@
 #define DEBUG_WIN16DRV
 #define DEBUG_WIN32
 #define DEBUG_WINSOCK
+#define DEBUG_X11
 #endif

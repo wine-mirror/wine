@@ -1,13 +1,16 @@
 /* Sample winestub.c file for compiling programs with libwine.so. */
 
 #include <string.h>
+#include <stdio.h>
 #include "windows.h"
 #include "xmalloc.h"
 
 /* Stub needed for linking with Winelib */
 /* FIXME: this should not be necessary */
-HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force ) { return 0; }
-
+HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force ) { 
+	fprintf(stderr,"BUILTIN_LoadModule(%s,%d) called in a library!\n",name,force);
+	return 0;
+}
 
 extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
 extern int MAIN_WinelibInit(void);

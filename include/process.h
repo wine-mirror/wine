@@ -98,6 +98,11 @@ typedef struct _PDB32
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
 } PDB32;
 
+/* PDB <-> Process id conversion macros */
+#define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)
+#define PROCESS_ID_TO_PDB(id)  ((PDB32 *)((id) ^ PROCESS_OBFUSCATOR))
+#define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
+
 /* scheduler/process.c */
 extern PDB32 *PROCESS_Current(void);
 extern PDB32 *PROCESS_IdToPDB( DWORD id );

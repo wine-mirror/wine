@@ -5,7 +5,9 @@
  */
 
 #include "windows.h"
+#include "ole.h"
 #include "ole2.h"
+#include "interfaces.h"
 #include "heap.h"
 #include "ldt.h"
 #include "stddebug.h"
@@ -91,4 +93,18 @@ void WINAPI SysFreeString(BSTR in)
 int WINAPI SysStringLen(BSTR str)
 {
 	return strlen(BSTR_GetAddr(str));
+}
+
+OLESTATUS WINAPI CreateDispTypeInfo(INTERFACEDATA * pidata,LCID lcid,LPVOID/*ITypeInfo*/ * * pptinfo) {
+	fprintf(stderr,"CreateDispTypeInfo(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	return 0;
+}
+
+OLESTATUS WINAPI RegisterActiveObject(
+	IUnknown * punk,REFCLSID rclsid,DWORD dwFlags, DWORD * pdwRegister
+) {
+	char	buf[80];
+	StringFromCLSID(rclsid,buf);
+	fprintf(stderr,"RegisterActiveObject(%p,%s,0x%08lx,%p),stub\n",punk,buf,dwFlags,pdwRegister);
+	return 0;
 }

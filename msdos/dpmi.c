@@ -427,6 +427,15 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         }
         break;
 
+    case 0x0304:  /* Free Real Mode Callback Address */
+	{
+	    fprintf(stdnimp,
+		    "FreeRMCB: callback address: %04x:%04x\n",
+		    CX_reg(context), DX_reg(context));
+	    SET_CFLAG(context);
+	}
+	break;
+
     case 0x0400:  /* Get DPMI version */
     	{
 	    SYSTEM_INFO si;

@@ -18,6 +18,7 @@
 #include "neexe.h"
 #include "selectors.h"
 #include "stackframe.h"
+#include "thread.h"
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"
@@ -162,6 +163,10 @@ static int debugging = 1;
 
   /* Offset of register relative to the start of the CONTEXT struct */
 #define CONTEXTOFFSET(reg)  STRUCTOFFSET(CONTEXT,reg)
+
+  /* Offset of the stack pointer relative to %fs:(0) */
+#define STACKOFFSET (STRUCTOFFSET(THDB,cur_stack) - STRUCTOFFSET(THDB,teb))
+
 
 static void *xmalloc (size_t size)
 {
@@ -1535,7 +1540,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     fprintf( outfile, "\tpushl %%ebx\n" );
 
-    /* Restore 32-bit ds and es */
+    /* Restore 32-bit segment registers */
 
     fprintf( outfile, "\tmovw $0x%04x,%%bx\n", Data_Selector );
 #ifdef __svr4__
@@ -1546,18 +1551,19 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
+    fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
 
-    /* Get the 32-bit stack pointer */
+    /* Get the 32-bit stack pointer from the TEB */
 
-    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebx\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%ebx\n", STACKOFFSET );
 
     /* Save the 16-bit stack */
 
 #ifdef __svr4__
     fprintf( outfile,"\tdata16\n");
 #endif
-    fprintf( outfile, "\tmovw %%ss," PREFIX "IF1632_Saved16_ss_sp+2\n" );
-    fprintf( outfile, "\tmovw %%sp," PREFIX "IF1632_Saved16_ss_sp\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw %%ss,(%d)\n", STACKOFFSET + 2 );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw %%sp,(%d)\n", STACKOFFSET );
 
     /* Transfer the arguments */
 
@@ -1633,9 +1639,10 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
-    fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
-    fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp,%%sp\n" );
-    fprintf( outfile, "\tpopl " PREFIX "CALLTO16_Saved32_esp\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2 );
+    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+    fprintf( outfile, "\tmovw %%fs," PREFIX "CALLTO16_Current_fs\n" );
 
     if (reg_func)
     {
@@ -1673,7 +1680,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tincl %%esp\n" );
         fprintf( outfile, "\tpopl %%edx\n" );      /* Remove cs and ds */
         fprintf( outfile, "\tmovw %%dx,%%ds\n" );  /* and restore ds */
-        fprintf( outfile, "\t.byte 0x66\n\tpopl %%es\n" );       /* Restore es */
+        fprintf( outfile, "\t.byte 0x66\n\tpopl %%es\n" );    /* Restore es */
 
         if (short_ret) fprintf( outfile, "\tpopl %%edx\n" );  /* Restore edx */
         else
@@ -1793,23 +1800,25 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tpopl %%eax\n" );
     }
 
-    /* Save the 32-bit stack */
+    /* Save the 32-bit stack and %fs */
 
-    fprintf( outfile, "\tpushl " PREFIX "IF1632_Saved16_ss_sp\n" );
-    fprintf( outfile, "\tmovl %%esp," PREFIX "CALLTO16_Saved32_esp\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tmovl %%ebp,%%ebx\n" );
+    fprintf( outfile, "\tmovl %%esp,%%edx\n" );
+    fprintf( outfile, "\tmovw %%fs," PREFIX "CALLTO16_Current_fs\n" );
 
     if (reg_func)
     {
         /* Switch to the 16-bit stack, saving the current %%esp, */
         /* and adding the specified offset to the new sp */
-        fprintf( outfile, "\tmovzwl " PREFIX "IF1632_Saved16_ss_sp,%%eax\n" );
+        fprintf( outfile, "\t.byte 0x64\n\tmovzwl (%d),%%eax\n", STACKOFFSET );
         fprintf( outfile, "\tsubl 12(%%ebx),%%eax\n" ); /* Get the offset */
 #ifdef __svr4__
         fprintf( outfile,"\tdata16\n");
 #endif
-        fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
         fprintf( outfile, "\tmovl %%eax,%%esp\n" );
+        fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
         /* Get the registers. ebx is handled later on. */
 
@@ -1828,13 +1837,13 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 	 * With lreg suffix, we push 16:32 address (0x66 lret, for KERNEL32_45)
 	 */
 	if (reg_func == 1)
-	    fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_regs\n" );
+	    fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_long\n" );
 	else 
 	{
 	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_regs+2\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_long+2\n" );
 	    fprintf( outfile, "\tpushw $0\n" );
-	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_regs\n" );
+	    fprintf( outfile, "\tpushw " PREFIX "CALLTO16_RetAddr_long\n" );
 	}
 
         /* Push the called routine address */
@@ -1857,8 +1866,9 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 #ifdef __svr4__
         fprintf( outfile,"\tdata16\n");
 #endif
-        fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp+2,%%ss\n" );
-        fprintf( outfile, "\tmovw " PREFIX "IF1632_Saved16_ss_sp,%%sp\n" );
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
+        fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
+        fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
         /* Make %bp point to the previous stackframe (built by CallFrom16) */
         fprintf( outfile, "\tmovzwl %%sp,%%ebp\n" );
@@ -1916,18 +1926,13 @@ static void BuildRet16Func( FILE *outfile )
 {
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_long\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_regs\n" );
 
     fprintf( outfile, PREFIX "CALLTO16_Ret_word:\n" );
     fprintf( outfile, "\txorl %%edx,%%edx\n" );
 
-    /* Remove the arguments just in case */
-
-    fprintf( outfile, PREFIX "CALLTO16_Ret_long:\n" );
-
     /* Put return value into %eax */
 
-    fprintf( outfile, PREFIX "CALLTO16_Ret_regs:\n" );
+    fprintf( outfile, PREFIX "CALLTO16_Ret_long:\n" );
     fprintf( outfile, "\tshll $16,%%edx\n" );
     fprintf( outfile, "\tmovw %%ax,%%dx\n" );
     fprintf( outfile, "\tmovl %%edx,%%eax\n" );
@@ -1943,6 +1948,7 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%es\n" );
+    fprintf( outfile, "\tmovw " PREFIX "CALLTO16_Current_fs,%%fs\n" );
 
     /* Restore the 32-bit stack */
 
@@ -1950,8 +1956,8 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%bx,%%ss\n" );
-    fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%esp\n" );
-    fprintf( outfile, "\tpopl " PREFIX "IF1632_Saved16_ss_sp\n" );
+    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
+    fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
     /* Restore the 32-bit registers */
 
@@ -1970,12 +1976,10 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.data\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_long\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_regs\n" );
-    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Saved32_esp\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Current_fs\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_word:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_long:\t.long 0\n" );
-    fprintf( outfile, PREFIX "CALLTO16_RetAddr_regs:\t.long 0\n" );
-    fprintf( outfile, PREFIX "CALLTO16_Saved32_esp:\t.long 0\n" );
+    fprintf( outfile, PREFIX "CALLTO16_Current_fs:\t.long 0\n" );
     fprintf( outfile, "\t.text\n" );
 }
 

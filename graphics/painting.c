@@ -7,8 +7,8 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include <X11/Intrinsic.h>
 #ifndef PI
 #define PI M_PI
@@ -117,6 +117,11 @@ BOOL32 WINAPI Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
 {
     DC * dc = DC_GetDCPtr( hdc );
   
+    if(dc && PATH_IsPathOpen(dc->w.path))
+        if(!PATH_Arc(hdc, left, top, right, bottom, xstart, ystart, xend,
+	   yend))
+	   return FALSE;
+    
     return dc && dc->funcs->pArc &&
     	   dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
 }
@@ -533,7 +538,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     dc->u.x.pen.pixel = (1 << screenDepth) - 1;
 
     if (DC_SetupGCForPen( dc ))
-	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
 

@@ -306,15 +306,25 @@ file	user.exe
 #306 BEAR306
 308 pascal   DefDlgProc(word word word long) DefDlgProc16
 309 pascal16 GetClipCursor(ptr) GetClipCursor16
+#310 ContScroll
+#312 SendMessage2
+#313 PostMessage2
 314 pascal16 SignalProc(word word word word word) USER_SignalProc
+#315 XCStoDS
+#316 CompUpdateRect
+#317 CompUpdateRgn
+#318 GetWC2
 319 pascal16 ScrollWindowEx(word s_word s_word ptr ptr word ptr word) ScrollWindowEx16
 320 stub SysErrorBox
-321 stub SetEventHook
+321 pascal   SetEventHook(segptr) SetEventHook
 322 stub WinOldAppHackOMatic
 323 stub GetMessage2
 324 pascal16 FillWindow(word word word word) FillWindow
 325 pascal16 PaintRect(word word word word ptr) PaintRect
 326 pascal16 GetControlBrush(word word word) GetControlBrush
+#327 KillTimer2
+#328 SetTimer2
+#330 SetGetKbdState
 331 pascal16 EnableHardwareInput(word) EnableHardwareInput
 332 pascal16 UserYield() UserYield
 333 pascal16 IsUserIdle() IsUserIdle
@@ -322,8 +332,11 @@ file	user.exe
 335 pascal16 GetInputState() GetInputState16
 336 pascal16 LoadCursorIconHandler(word word word) LoadCursorIconHandler
 337 pascal   GetMouseEventProc() GetMouseEventProc
+#340 WinFarFrame
 #341 _FFFE_FARFRAME
 343 stub GetFilePortName
+#354 TabTheTextOutForWimps
+#355 BroadcastMessage
 356 pascal16 LoadDIBCursorHandler(word word word) LoadDIBCursorHandler
 357 pascal16 LoadDIBIconHandler(word word word) LoadDIBIconHandler
 358 pascal16 IsMenu(word) IsMenu16

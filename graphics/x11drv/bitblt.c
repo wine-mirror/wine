@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <X11/Intrinsic.h>
 #include "bitmap.h"
 #include "callback.h"
@@ -596,14 +596,14 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT32 row,
     {
         if (COLOR_PixelToPalette && (depthDst != 1))
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = COLOR_PixelToPalette[XGetPixel( image, i, row )];
+                *pdata-- = COLOR_PixelToPalette[TSXGetPixel( image, i, row )];
             else for (i = 0; i < width; i++)
-                *pdata++ = COLOR_PixelToPalette[XGetPixel( image, i, row )];
+                *pdata++ = COLOR_PixelToPalette[TSXGetPixel( image, i, row )];
         else
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = XGetPixel( image, i, row );
+                *pdata-- = TSXGetPixel( image, i, row );
             else for (i = 0; i < width; i++)
-                *pdata++ = XGetPixel( image, i, row );
+                *pdata++ = TSXGetPixel( image, i, row );
     }
     else
     {
@@ -615,16 +615,16 @@ static void BITBLT_GetRow( XImage *image, int *pdata, INT32 row,
                 bg = COLOR_PixelToPalette[bg];
             }
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = XGetPixel( image, i, row ) ? bg : fg;
+                *pdata-- = TSXGetPixel( image, i, row ) ? bg : fg;
             else for (i = 0; i < width; i++)
-                *pdata++ = XGetPixel( image, i, row ) ? bg : fg;
+                *pdata++ = TSXGetPixel( image, i, row ) ? bg : fg;
         }
         else  /* color -> monochrome */
         {
             if (swap) for (i = 0; i < width; i++)
-                *pdata-- = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
+                *pdata-- = (TSXGetPixel( image, i, row ) == bg) ? 1 : 0;
             else for (i = 0; i < width; i++)
-                *pdata++ = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
+                *pdata++ = (TSXGetPixel( image, i, row ) == bg) ? 1 : 0;
         }
     }
 }
@@ -720,7 +720,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
             pixel = rowDst + visRectDst->right - 1;
             y = ydst - visRectDst->top;
             for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
-                XPutPixel( dstImage, x, y, *pixel-- );
+                TSXPutPixel( dstImage, x, y, *pixel-- );
             if (mode != STRETCH_DELETESCANS)
                 memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
                         widthDst*sizeof(int) );
@@ -794,7 +794,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
             pixel = rowDst + visRectDst->right - 1;
             y = (ydst >> 16) - visRectDst->top;
             for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
-                XPutPixel( dstImage, x, y, *pixel-- );
+                TSXPutPixel( dstImage, x, y, *pixel-- );
             if (mode != STRETCH_DELETESCANS)
                 memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
                         widthDst*sizeof(int) );
@@ -831,7 +831,7 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
     OffsetRect32( &rectDst, -xDst, -yDst );
 
     /* FIXME: avoid BadMatch errors */
-    imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+    imageSrc = TSXGetImage( display, dcSrc->u.x.drawable,
                           visRectSrc->left, visRectSrc->top,
                           visRectSrc->right - visRectSrc->left,
                           visRectSrc->bottom - visRectSrc->top,
@@ -843,10 +843,10 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                          dcDst->w.textPixel, dcDst->w.bitsPerPixel != 1 ?
                            dcDst->w.backgroundPixel : dcSrc->w.backgroundPixel,
                          dcDst->w.stretchBltMode );
-    XPutImage( display, pixmap, gc, imageDst, 0, 0, 0, 0,
+    TSXPutImage( display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
-    XDestroyImage( imageSrc );
-    XDestroyImage( imageDst );
+    TSXDestroyImage( imageSrc );
+    TSXDestroyImage( imageDst );
 }
 
 
@@ -869,31 +869,31 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         if (!COLOR_PixelToPalette ||
             (dcDst->w.bitsPerPixel == 1))  /* monochrome -> monochrome */
         {
-            XCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
+            TSXCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
                        visRectSrc->left, visRectSrc->top, width, height, 0, 0);
         }
         else  /* color -> color */
         {
             if (dcSrc->w.flags & DC_MEMORY)
-                imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+                imageSrc = TSXGetImage( display, dcSrc->u.x.drawable,
                                       visRectSrc->left, visRectSrc->top,
                                       width, height, AllPlanes, ZPixmap );
             else
             {
                 /* Make sure we don't get a BadMatch error */
-                XCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
+                TSXCopyArea( display, dcSrc->u.x.drawable, pixmap, gc,
                            visRectSrc->left, visRectSrc->top,
                            width, height, 0, 0);
-                imageSrc = XGetImage( display, pixmap, 0, 0, width, height,
+                imageSrc = TSXGetImage( display, pixmap, 0, 0, width, height,
                                       AllPlanes, ZPixmap );
             }
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
-                    XPutPixel(imageSrc, x, y,
-                              COLOR_PixelToPalette[XGetPixel(imageSrc, x, y)]);
-            XPutImage( display, pixmap, gc, imageSrc,
+                    TSXPutPixel(imageSrc, x, y,
+                              COLOR_PixelToPalette[TSXGetPixel(imageSrc, x, y)]);
+            TSXPutImage( display, pixmap, gc, imageSrc,
                        0, 0, 0, 0, width, height );
-            XDestroyImage( imageSrc );
+            TSXDestroyImage( imageSrc );
         }
     }
     else
@@ -902,35 +902,35 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         {
             if (COLOR_PixelToPalette)
             {
-                XSetBackground( display, gc, 
+                TSXSetBackground( display, gc, 
                                COLOR_PixelToPalette[dcDst->w.textPixel] );
-                XSetForeground( display, gc,
+                TSXSetForeground( display, gc,
                                COLOR_PixelToPalette[dcDst->w.backgroundPixel]);
             }
             else
             {
-                XSetBackground( display, gc, dcDst->w.textPixel );
-                XSetForeground( display, gc, dcDst->w.backgroundPixel );
+                TSXSetBackground( display, gc, dcDst->w.textPixel );
+                TSXSetForeground( display, gc, dcDst->w.backgroundPixel );
             }
-            XCopyPlane( display, dcSrc->u.x.drawable, pixmap, gc,
+            TSXCopyPlane( display, dcSrc->u.x.drawable, pixmap, gc,
                         visRectSrc->left, visRectSrc->top,
                         width, height, 0, 0, 1 );
         }
         else  /* color -> monochrome */
         {
             /* FIXME: avoid BadMatch error */
-            imageSrc = XGetImage( display, dcSrc->u.x.drawable,
+            imageSrc = TSXGetImage( display, dcSrc->u.x.drawable,
                                   visRectSrc->left, visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
             XCREATEIMAGE( imageDst, width, height, dcDst->w.bitsPerPixel );
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
-                    XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
+                    TSXPutPixel(imageDst, x, y, (TSXGetPixel(imageSrc,x,y) ==
                                                dcSrc->w.backgroundPixel) );
-            XPutImage( display, pixmap, gc, imageDst,
+            TSXPutImage( display, pixmap, gc, imageDst,
                        0, 0, 0, 0, width, height );
-            XDestroyImage( imageSrc );
-            XDestroyImage( imageDst );
+            TSXDestroyImage( imageSrc );
+            TSXDestroyImage( imageDst );
         }
     }
 }
@@ -950,7 +950,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
     if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1) ||
 	(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
-        XCopyArea( display, dc->u.x.drawable, pixmap, gc,
+        TSXCopyArea( display, dc->u.x.drawable, pixmap, gc,
                    visRectDst->left, visRectDst->top, width, height, 0, 0 );
     }
     else
@@ -959,23 +959,23 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
         XImage *image;
 
         if (dc->w.flags & DC_MEMORY)
-            image = XGetImage( display, dc->u.x.drawable,
+            image = TSXGetImage( display, dc->u.x.drawable,
                                visRectDst->left, visRectDst->top,
                                width, height, AllPlanes, ZPixmap );
         else
         {
             /* Make sure we don't get a BadMatch error */
-            XCopyArea( display, dc->u.x.drawable, pixmap, gc,
+            TSXCopyArea( display, dc->u.x.drawable, pixmap, gc,
                        visRectDst->left, visRectDst->top, width, height, 0, 0);
-            image = XGetImage( display, pixmap, 0, 0, width, height,
+            image = TSXGetImage( display, pixmap, 0, 0, width, height,
                                AllPlanes, ZPixmap );
         }
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++)
-                XPutPixel( image, x, y,
-                           COLOR_PixelToPalette[XGetPixel( image, x, y )]);
-        XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, width, height );
-	XDestroyImage( image );
+                TSXPutPixel( image, x, y,
+                           COLOR_PixelToPalette[TSXGetPixel( image, x, y )]);
+        TSXPutImage( display, pixmap, gc, image, 0, 0, 0, 0, width, height );
+	TSXDestroyImage( image );
     }
 }
 
@@ -996,23 +996,23 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT32 *visRectDst)
     if (!COLOR_PaletteToPixel || (dc->w.bitsPerPixel == 1) || 
         (COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
-        XCopyArea( display, pixmap, dc->u.x.drawable, gc, 0, 0,
+        TSXCopyArea( display, pixmap, dc->u.x.drawable, gc, 0, 0,
                    width, height, visRectDst->left, visRectDst->top );
     }
     else
     {
         register INT32 x, y;
-        XImage *image = XGetImage( display, pixmap, 0, 0, width, height,
+        XImage *image = TSXGetImage( display, pixmap, 0, 0, width, height,
                                    AllPlanes, ZPixmap );
         for (y = 0; y < height; y++)
             for (x = 0; x < width; x++)
             {
-                XPutPixel( image, x, y,
-                           COLOR_PaletteToPixel[XGetPixel( image, x, y )]);
+                TSXPutPixel( image, x, y,
+                           COLOR_PaletteToPixel[TSXGetPixel( image, x, y )]);
             }
-        XPutImage( display, dc->u.x.drawable, gc, image, 0, 0,
+        TSXPutImage( display, dc->u.x.drawable, gc, image, 0, 0,
                    visRectDst->left, visRectDst->top, width, height );
-        XDestroyImage( image );
+        TSXDestroyImage( image );
     }
 }
 
@@ -1171,14 +1171,14 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     {
     case BLACKNESS:  /* 0x00 */
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
-            XSetFunction( display, dcDst->u.x.gc, GXclear );
+            TSXSetFunction( display, dcDst->u.x.gc, GXclear );
         else
         {
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetForeground( display, dcDst->u.x.gc, COLOR_PaletteToPixel[0] );
-            XSetFillStyle( display, dcDst->u.x.gc, FillSolid );
+            TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+            TSXSetForeground( display, dcDst->u.x.gc, COLOR_PaletteToPixel[0] );
+            TSXSetFillStyle( display, dcDst->u.x.gc, FillSolid );
         }
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
 
@@ -1186,10 +1186,10 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel ||
             !Options.perfectGraphics)
         {
-            XSetFunction( display, dcDst->u.x.gc, GXinvert );
+            TSXSetFunction( display, dcDst->u.x.gc, GXinvert );
 
             if( COLOR_GetSystemPaletteFlags() & (COLOR_PRIVATE | COLOR_VIRTUAL) )
-                XSetFunction( display, dcDst->u.x.gc, GXinvert);
+                TSXSetFunction( display, dcDst->u.x.gc, GXinvert);
             else
             {
                 /* Xor is much better when we do not have full colormap.   */
@@ -1197,11 +1197,11 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                 /* and white. */
                 Pixel xor_pix = (WhitePixelOfScreen(screen) ^
                                  BlackPixelOfScreen(screen));
-                XSetFunction( display, dcDst->u.x.gc, GXxor );
-                XSetForeground( display, dcDst->u.x.gc, xor_pix);
-                XSetFillStyle( display, dcDst->u.x.gc, FillSolid ); 
+                TSXSetFunction( display, dcDst->u.x.gc, GXxor );
+                TSXSetForeground( display, dcDst->u.x.gc, xor_pix);
+                TSXSetFillStyle( display, dcDst->u.x.gc, FillSolid ); 
             }
-            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+            TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                             visRectDst.left, visRectDst.top, width, height ); 
             return TRUE;
         }
@@ -1211,8 +1211,8 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 	if (Options.perfectGraphics) break;
         if (DC_SetupGCForBrush( dcDst ))
         {
-            XSetFunction( display, dcDst->u.x.gc, GXxor );
-            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+            TSXSetFunction( display, dcDst->u.x.gc, GXxor );
+            TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
 			    visRectDst.left, visRectDst.top, width, height );
         }
         return TRUE;
@@ -1221,8 +1221,8 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 	if (Options.perfectGraphics) break;
 	if (DC_SetupGCForBrush( dcDst ))
 	{
-	    XSetFunction( display, dcDst->u.x.gc, GXequiv );
-	    XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+	    TSXSetFunction( display, dcDst->u.x.gc, GXequiv );
+	    TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
 			    visRectDst.left, visRectDst.top, width, height );
 	}
 	return TRUE;
@@ -1230,58 +1230,58 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
         {
-            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-	    XCopyArea( display, dcSrc->u.x.drawable,
+            TSXSetGraphicsExposures( display, dcDst->u.x.gc, True );
+            TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+	    TSXCopyArea( display, dcSrc->u.x.drawable,
                        dcDst->u.x.drawable, dcDst->u.x.gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
+            TSXSetGraphicsExposures( display, dcDst->u.x.gc, False );
             return TRUE;
         }
         if (dcSrc->w.bitsPerPixel == 1)
         {
-            XSetBackground( display, dcDst->u.x.gc, dcDst->w.textPixel );
-            XSetForeground( display, dcDst->u.x.gc, dcDst->w.backgroundPixel );
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, True );
-	    XCopyPlane( display, dcSrc->u.x.drawable,
+            TSXSetBackground( display, dcDst->u.x.gc, dcDst->w.textPixel );
+            TSXSetForeground( display, dcDst->u.x.gc, dcDst->w.backgroundPixel );
+            TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+            TSXSetGraphicsExposures( display, dcDst->u.x.gc, True );
+	    TSXCopyPlane( display, dcSrc->u.x.drawable,
                         dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
-            XSetGraphicsExposures( display, dcDst->u.x.gc, False );
+            TSXSetGraphicsExposures( display, dcDst->u.x.gc, False );
             return TRUE;
         }
         break;
 
     case PATCOPY:  /* 0xf0 */
         if (!DC_SetupGCForBrush( dcDst )) return TRUE;
-        XSetFunction( display, dcDst->u.x.gc, GXcopy );
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+        TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
 
     case WHITENESS:  /* 0xff */
         if ((dcDst->w.bitsPerPixel == 1) || !COLOR_PaletteToPixel)
-            XSetFunction( display, dcDst->u.x.gc, GXset );
+            TSXSetFunction( display, dcDst->u.x.gc, GXset );
         else
         {
-            XSetFunction( display, dcDst->u.x.gc, GXcopy );
-            XSetForeground( display, dcDst->u.x.gc, 
+            TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+            TSXSetForeground( display, dcDst->u.x.gc, 
                             COLOR_PaletteToPixel[COLOR_GetSystemPaletteSize() - 1]);
-            XSetFillStyle( display, dcDst->u.x.gc, FillSolid );
+            TSXSetFillStyle( display, dcDst->u.x.gc, FillSolid );
         }
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+        TSXFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                         visRectDst.left, visRectDst.top, width, height );
         return TRUE;
     }
 
-    tmpGC = XCreateGC( display, dcDst->u.x.drawable, 0, NULL );
-    pixmaps[DST] = XCreatePixmap( display, rootWindow, width, height,
+    tmpGC = TSXCreateGC( display, dcDst->u.x.drawable, 0, NULL );
+    pixmaps[DST] = TSXCreatePixmap( display, rootWindow, width, height,
                                   dcDst->w.bitsPerPixel );
     if (useSrc)
     {
-        pixmaps[SRC] = XCreatePixmap( display, rootWindow, width, height,
+        pixmaps[SRC] = TSXCreatePixmap( display, rootWindow, width, height,
                                       dcDst->w.bitsPerPixel );
         if (fStretch)
             BITBLT_GetSrcAreaStretch( dcSrc, dcDst, pixmaps[SRC], tmpGC,
@@ -1300,13 +1300,13 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     for (opcode = BITBLT_Opcodes[(rop >> 16) & 0xff]; *opcode; opcode++)
     {
         if (OP_DST(*opcode) == DST) destUsed = TRUE;
-        XSetFunction( display, tmpGC, OP_ROP(*opcode) );
+        TSXSetFunction( display, tmpGC, OP_ROP(*opcode) );
         switch(OP_SRCDST(*opcode))
         {
         case OP_ARGS(DST,TMP):
         case OP_ARGS(SRC,TMP):
             if (!pixmaps[TMP])
-                pixmaps[TMP] = XCreatePixmap( display, rootWindow,
+                pixmaps[TMP] = TSXCreatePixmap( display, rootWindow,
                                               width, height,
                                               dcDst->w.bitsPerPixel );
             /* fall through */
@@ -1314,32 +1314,32 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
         case OP_ARGS(SRC,DST):
         case OP_ARGS(TMP,SRC):
         case OP_ARGS(TMP,DST):
-            XCopyArea( display, pixmaps[OP_SRC(*opcode)],
+            TSXCopyArea( display, pixmaps[OP_SRC(*opcode)],
                        pixmaps[OP_DST(*opcode)], tmpGC,
                        0, 0, width, height, 0, 0 );
             break;
 
         case OP_ARGS(PAT,TMP):
             if (!pixmaps[TMP] && !fNullBrush)
-                pixmaps[TMP] = XCreatePixmap( display, rootWindow,
+                pixmaps[TMP] = TSXCreatePixmap( display, rootWindow,
                                               width, height,
                                               dcDst->w.bitsPerPixel );
             /* fall through */
         case OP_ARGS(PAT,DST):
         case OP_ARGS(PAT,SRC):
             if (!fNullBrush)
-                XFillRectangle( display, pixmaps[OP_DST(*opcode)],
+                TSXFillRectangle( display, pixmaps[OP_DST(*opcode)],
                                 tmpGC, 0, 0, width, height );
             break;
         }
     }
-    XSetFunction( display, dcDst->u.x.gc, GXcopy );
+    TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
     BITBLT_PutDstArea( dcDst, pixmaps[destUsed ? DST : SRC],
                        dcDst->u.x.gc, &visRectDst );
-    XFreePixmap( display, pixmaps[DST] );
-    if (pixmaps[SRC]) XFreePixmap( display, pixmaps[SRC] );
-    if (pixmaps[TMP]) XFreePixmap( display, pixmaps[TMP] );
-    XFreeGC( display, tmpGC );
+    TSXFreePixmap( display, pixmaps[DST] );
+    if (pixmaps[SRC]) TSXFreePixmap( display, pixmaps[SRC] );
+    if (pixmaps[TMP]) TSXFreePixmap( display, pixmaps[TMP] );
+    TSXFreeGC( display, tmpGC );
     return TRUE;
 }
 

@@ -7,7 +7,7 @@
 #ifndef __WINE_WIN_H
 #define __WINE_WIN_H
 
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 
 #include "ldt.h"
 #include "class.h"

@@ -56,7 +56,7 @@ static int MF_AddHandleDC( DC *dc )
 
 
 /******************************************************************
- *         GetMetafile16   (GDI.124)
+ *         GetMetaFile16   (GDI.124)
  */
 HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
@@ -65,9 +65,14 @@ HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 
 
 /******************************************************************
- *         GetMetafile32A   (GDI32.197)
+ *         GetMetaFile32A   (GDI32.197)
+ *
+ *  Read a metafile from a file. Returns handle to a disk-based metafile.
  */
-HMETAFILE32 WINAPI GetMetaFile32A( LPCSTR lpFilename )
+HMETAFILE32 WINAPI GetMetaFile32A( 
+				  LPCSTR lpFilename 
+		      /* pointer to string containing filename to read */
+)
 {
   HMETAFILE16 hmf;
   METAHEADER *mh;
@@ -136,7 +141,7 @@ HMETAFILE32 WINAPI GetMetaFile32A( LPCSTR lpFilename )
 
 
 /******************************************************************
- *         GetMetafile32W   (GDI32.199)
+ *         GetMetaFile32W   (GDI32.199)
  */
 HMETAFILE32 WINAPI GetMetaFile32W( LPCWSTR lpFilename )
 {
@@ -159,8 +164,25 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
 
 /******************************************************************
  *         CopyMetaFile32A   (GDI32.23)
+ *
+ *  Copies the metafile corresponding to hSrcMetaFile to either
+ *  a disk file, if a filename is given, or to a new memory based
+ *  metafile, if lpFileName is NULL.
+ *
+ * RETURNS
+ *
+ *  Handle to metafile copy on success, NULL on failure.
+ *
+ * BUGS
+ *
+ *  Copying to disk returns NULL even if successful.
  */
-HMETAFILE32 WINAPI CopyMetaFile32A(HMETAFILE32 hSrcMetaFile, LPCSTR lpFilename)
+HMETAFILE32 WINAPI CopyMetaFile32A(
+				   HMETAFILE32 hSrcMetaFile, 
+				   /* handle of metafile to copy */
+				   LPCSTR lpFilename
+				   /* filename if copying to a file */
+)
 {
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
@@ -214,7 +236,17 @@ HMETAFILE32 WINAPI CopyMetaFile32W( HMETAFILE32 hSrcMetaFile,
 
 /******************************************************************
  *         IsValidMetaFile   (GDI.410)
- *         (This is not exactly what windows does, see "Undoc Win")
+ *
+ *  Attempts to check if a given metafile is correctly formatted.
+ *  Currently, the only things verified are several properties of the
+ *  header.
+ *
+ * RETURNS
+ *  TRUE if hmf passes some tests for being a valid metafile, FALSE otherwise.
+ *
+ * BUGS
+ *  This is not exactly what windows does, see _Undocumented_Windows_
+ *  for details.
  */
 
 BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
@@ -235,6 +267,7 @@ BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
 
 /******************************************************************
  *         PlayMetaFile16   (GDI.123)
+ *
  */
 BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
@@ -243,8 +276,14 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 
 /******************************************************************
  *         PlayMetaFile32   (GDI32.265)
+ *
+ *  Renders the metafile specified by hmf in the DC specified by
+ *  hdc. Returns FALSE on failure, TRUE on success.
  */
-BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
+BOOL32 WINAPI PlayMetaFile32( 
+			     HDC32 hdc, /* handle of DC to render in */
+			     HMETAFILE32 hmf /* handle of metafile to render */
+)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -303,10 +342,24 @@ BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 
 /******************************************************************
  *            EnumMetaFile16   (GDI.175)
- *                                    Niels de carpentier, april 1996
+ *
+ *  Loop through the metafile records in hmf, calling the user-specified
+ *  function for each one, stopping when the user's function returns FALSE
+ *  (which is considered to be failure)
+ *  or when no records are left (which is considered to be success). 
+ *
+ * RETURNS
+ *  TRUE on success, FALSE on failure.
+ * 
+ * HISTORY
+ *   Niels de carpentier, april 1996
  */
-BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
-                              MFENUMPROC16 lpEnumFunc, LPARAM lpData )
+BOOL16 WINAPI EnumMetaFile16( 
+			     HDC16 hdc, 
+			     HMETAFILE16 hmf,
+			     MFENUMPROC16 lpEnumFunc, 
+			     LPARAM lpData 
+)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -319,6 +372,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     HBRUSH32 hBrush;
     HFONT32 hFont;
     DC *dc;
+    BOOL16 result = TRUE;
     
     dprintf_metafile(stddeb,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
 		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
@@ -345,8 +399,11 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
 	mr = (METARECORD *)((char *)mh + offset);
         if (!lpEnumFunc( hdc, (HANDLETABLE16 *)spht,
                          (METARECORD *)((UINT32)spRecord + offset),
-                         mh->mtNoObjects, (LONG)lpData))
-	    break;
+                         mh->mtNoObjects, (LONG)lpData)) {
+	  result = FALSE;
+	  break;
+	}
+	
 
 	offset += (mr->rdSize * 2);
     }
@@ -365,16 +422,37 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     /* free handle table */
     GlobalFree16(hHT);
 
-    return TRUE;
+    return result;
 }
 
 static BOOL32 MF_Meta_CreateRegion( METARECORD *mr, HRGN32 hrgn );
 
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
+ *
+ *   Render a single metafile record specified by *mr in the DC hdc, while
+ *   using the handle table *ht, of length nHandles, 
+ *   to store metafile objects.
+ *
+ * BUGS
+ *  The following metafile records are unimplemented:
+ *
+ *  FRAMEREGION, DRAWTEXT, SETDIBTODEV, ANIMATEPALETTE, SETPALENTRIES,
+ *  RESIZEPALETTE, EXTFLOODFILL, RESETDC, STARTDOC, STARTPAGE, ENDPAGE,
+ *  ABORTDOC, ENDDOC, CREATEBRUSH, CREATEBITMAPINDIRECT, and CREATEBITMAP.
+ *
  */
-void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
-                                  UINT16 nHandles )
+
+void WINAPI PlayMetaFileRecord16( 
+				 HDC16 hdc, 
+				 /* DC to render metafile into */
+				 HANDLETABLE16 *ht, 
+				 /* pointer to handle table for metafile objects */
+				 METARECORD *mr, 
+				 /* pointer to metafile record to render */
+				 UINT16 nHandles 
+				 /* size of handle table */
+)
 {
     short s1;
     HANDLE16 hndl;
@@ -820,22 +898,30 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 /******************************************************************
  *         GetMetaFileBits   (GDI.159)
  *
- * Trade in a meta file object handle for a handle to the meta file memory
+ * Trade in a metafile object handle for a handle to the metafile memory.
+ *
  */
 
-HGLOBAL16 WINAPI GetMetaFileBits(HMETAFILE16 hmf)
+HGLOBAL16 WINAPI GetMetaFileBits(
+				 HMETAFILE16 hmf /* metafile handle */
+				 )
 {
     dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hmf);
-
     return hmf;
 }
 
 /******************************************************************
  *         SetMetaFileBits   (GDI.160)
  *
- * Trade in a meta file memory handle for a handle to a meta file object
+ * Trade in a metafile memory handle for a handle to a metafile object.
+ * The memory region should hold a proper metafile, otherwise
+ * problems will occur when it is used. Validity of the memory is not
+ * checked. The function is essentially just the identity function.
  */
-HMETAFILE16 WINAPI SetMetaFileBits( HGLOBAL16 hMem )
+HMETAFILE16 WINAPI SetMetaFileBits( 
+				   HGLOBAL16 hMem 
+			/* handle to a memory region holding a metafile */
+)
 {
     dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hMem);
 
@@ -844,6 +930,13 @@ HMETAFILE16 WINAPI SetMetaFileBits( HGLOBAL16 hMem )
 
 /******************************************************************
  *         SetMetaFileBitsBetter   (GDI.196)
+ *
+ * Trade in a metafile memory handle for a handle to a metafile object,
+ * making a cursory check (using IsValidMetaFile()) that the memory
+ * handle points to a valid metafile.
+ *
+ * RETURNS
+ *  Handle to a metafile on success, NULL on failure..
  */
 HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
 {

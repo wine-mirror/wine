@@ -45,6 +45,8 @@ extern const BUILTIN32_DESCRIPTOR COMDLG32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR CRTDLL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DCIMAN32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DDRAW_Descriptor;
+extern const BUILTIN32_DESCRIPTOR DINPUT_Descriptor;
+extern const BUILTIN32_DESCRIPTOR DPLAY_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
@@ -73,6 +75,8 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &CRTDLL_Descriptor,   NULL, TRUE  },
     { &DCIMAN32_Descriptor, NULL, TRUE  },
     { &DDRAW_Descriptor,    NULL, TRUE  },
+    { &DINPUT_Descriptor,   NULL, TRUE  },
+    { &DPLAY_Descriptor,    NULL, TRUE  },
     { &DSOUND_Descriptor,   NULL, TRUE  },
     { &GDI32_Descriptor,    NULL, TRUE  },
     { &KERNEL32_Descriptor, NULL, TRUE  },

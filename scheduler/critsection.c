@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/sem.h>
 #include "windows.h"
 #include "winerror.h"
@@ -226,6 +227,16 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
     /* Nothing to do: a critical section is always global */
+}
+
+
+/***********************************************************************
+ *           ReinitializeCriticalSection   (KERNEL32.581)
+ */
+void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
+{
+    DeleteCriticalSection( crit );
+    InitializeCriticalSection( crit );
 }
 
 

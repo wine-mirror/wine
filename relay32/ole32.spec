@@ -7,14 +7,14 @@ type	win32
   4 stdcall CoBuildVersion() CoBuildVersion
   5 stub CoCreateFreeThreadedMarshaler
   6 stub CoCreateGuid
-  7 stub CoCreateInstance
+  7 stdcall CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance
   8 stdcall CoDisconnectObject(ptr long) CoDisconnectObject
-  9 stub CoDosDateTimeToFileTime
- 10 stub CoFileTimeNow
- 11 stub CoFileTimeToDosDateTime
+  9 stdcall CoDosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
+ 10 stdcall CoFileTimeNow(ptr) CoFileTimeNow
+ 11 stdcall CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
  12 stub CoFreeAllLibraries
  13 stub CoFreeLibrary
- 14 stub CoFreeUnusedLibraries
+ 14 stdcall CoFreeUnusedLibraries() CoFreeUnusedLibraries
  15 stub CoGetCallerTID
  16 stub CoGetClassObject
  17 stub CoGetCurrentLogicalThreadId
@@ -38,7 +38,7 @@ type	win32
  35 stub CoQueryReleaseObject
  36 stub CoRegisterClassObject
  37 stub CoRegisterMallocSpy
- 38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter
+ 38 stdcall CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter32
  39 stub CoReleaseMarshalData
  40 stub CoRevokeClassObject
  41 stub CoRevokeMallocSpy

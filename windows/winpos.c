@@ -5,8 +5,8 @@
  *                       1995, 1996 Alex Korobka
  */
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include <X11/Xatom.h>
 #include "sysmetrics.h"
 #include "heap.h"
@@ -956,6 +956,8 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
                          WINPOS_GetMinMaxInfo( wndPtr, &size, &pt, NULL, NULL);
                          CONV_POINT32TO16( &pt, &lpPos->ptMaxPos );
 			 wndPtr->dwStyle |= WS_MAXIMIZE;
+			 SetRect16( lpRect, lpPos->ptMaxPos.x, lpPos->ptMaxPos.y, size.x, size.y );
+			 break;
 		     }
 		 } 
 		 else 
@@ -1337,7 +1339,7 @@ static void WINPOS_ForceXWindowRaise( WND* pWnd )
     winChanges.stack_mode = Above;
     while (pWnd)
     {
-        if (pWnd->window) XReconfigureWMWindow( display, pWnd->window, 0,
+        if (pWnd->window) TSXReconfigureWMWindow( display, pWnd->window, 0,
                                                 CWStackMode, &winChanges );
         wndPrev = WIN_GetDesktop()->child;
         if (wndPrev == pWnd) break;
@@ -1952,9 +1954,9 @@ static Window WINPOS_FindDeskTopXWindow( WND *wndPtr )
         window = wndPtr->window;
         for (;;)
         {
-            XQueryTree( display, window, &root, &parent,
+            TSXQueryTree( display, window, &root, &parent,
                         &children, &nchildren );
-            XFree( children );
+            TSXFree( children );
             if (parent == root)
                 return window;
             window = parent;
@@ -1984,19 +1986,19 @@ static void WINPOS_SetXWindowPos( const WINDOWPOS32 *winpos )
         if ((wndPtr->flags & WIN_MANAGED) &&
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
         {
-            XSizeHints *size_hints = XAllocSizeHints();
+            XSizeHints *size_hints = TSXAllocSizeHints();
 
             if (size_hints)
             {
                 long supplied_return;
 
-                XGetWMSizeHints( display, wndPtr->window, size_hints,
+                TSXGetWMSizeHints( display, wndPtr->window, size_hints,
                                  &supplied_return, XA_WM_NORMAL_HINTS);
                 size_hints->min_width = size_hints->max_width = winpos->cx;
                 size_hints->min_height = size_hints->max_height = winpos->cy;
-                XSetWMSizeHints( display, wndPtr->window, size_hints,
+                TSXSetWMSizeHints( display, wndPtr->window, size_hints,
                                  XA_WM_NORMAL_HINTS );
-                XFree(size_hints);
+                TSXFree(size_hints);
             }
         }
     }
@@ -2022,13 +2024,13 @@ static void WINPOS_SetXWindowPos( const WINDOWPOS32 *winpos )
 
 	    /* for stupid window managers (i.e. all of them) */
 
-	    XRestackWindows(display, stack, 2); 
+	    TSXRestackWindows(display, stack, 2); 
 	    changeMask &= ~CWStackMode;
 	}
     }
     if (!changeMask) return;
 
-    XReconfigureWMWindow( display, wndPtr->window, 0, changeMask, &winChanges );
+    TSXReconfigureWMWindow( display, wndPtr->window, 0, changeMask, &winChanges );
 }
 
 
@@ -2216,7 +2218,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         RECT32 rect;
 
         UnionRect32(&rect, &newWindowRect, &wndPtr->rectWindow);
-	DCE_InvalidateDCE(wndPtr->parent, &rect);
+	DCE_InvalidateDCE(wndPtr, &rect);
     }
 
     /* change geometry */
@@ -2234,10 +2236,10 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	/* postpone geometry change */
 
 	if( !(flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW)) )
-	  {
+	{
               WINPOS_SetXWindowPos( &winpos );
 	      winpos.hwndInsertAfter = tempInsertAfter;
-	  }
+	}
 	else  uFlags |= SMC_SETXPOS;
 
         wndPtr->rectWindow = newWindowRect;
@@ -2323,13 +2325,13 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
               WINPOS_SetXWindowPos( &winpos );
               winpos.hwndInsertAfter = tempInsertAfter;
 	    }
-            XMapWindow( display, wndPtr->window );
+            TSXMapWindow( display, wndPtr->window );
 
 	    /* If focus was set to an unmapped window, reset X focus now */
 	    focus = curr = GetFocus32();
-	    while (curr != NULL) {
+	    while (curr) {
 		if (curr == hwnd) {
-		    SetFocus32( NULL );
+		    SetFocus32( 0 );
 		    SetFocus32( focus );
 		    break;
 		}
@@ -2349,7 +2351,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 	wndPtr->dwStyle &= ~WS_VISIBLE;
         if (wndPtr->window)
         {
-            XUnmapWindow( display, wndPtr->window );
+            TSXUnmapWindow( display, wndPtr->window );
 	    if( uFlags & SMC_SETXPOS )
 	    {
               WINPOS_SetXWindowPos( &winpos );
@@ -2390,13 +2392,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         EVENT_DummyMotionNotify(); /* Simulate a mouse event to set the cursor */
 
     if (!(flags & SWP_DEFERERASE) && !(uFlags & SMC_NOPARENTERASE) )
-    {
-        PAINT_RedrawWindow( wndPtr->parent->hwndSelf,
-              (wndPtr->flags & WIN_SAVEUNDER_OVERRIDE) ? &oldWindowRect : NULL,
-              0, RDW_ALLCHILDREN | RDW_ERASENOW |
-                            ((wndPtr->flags & WIN_SAVEUNDER_OVERRIDE) ? RDW_INVALIDATE : 0), 0 );
-        wndPtr->flags &= ~WIN_SAVEUNDER_OVERRIDE;
-    }
+        PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_ALLCHILDREN | RDW_ERASENOW, 0 );
     else if( wndPtr->parent == WIN_GetDesktop() && wndPtr->parent->flags & WIN_NEEDS_ERASEBKGND )
 	PAINT_RedrawWindow( wndPtr->parent->hwndSelf, NULL, 0, RDW_NOCHILDREN | RDW_ERASENOW, 0 );
 
@@ -2405,9 +2401,8 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     dprintf_win(stddeb,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
 
     if ( ((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
-	!(winpos.flags & SWP_NOSENDCHANGING))
-        SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGED,
-                        0, (LPARAM)&winpos );
+	 !(winpos.flags & SWP_NOSENDCHANGING))
+        SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
 
     return TRUE;
 }

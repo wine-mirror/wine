@@ -4,10 +4,24 @@
  * Copyright 1998 Alexandre Julliard
  */
 
+#define NO_REENTRANT_X11
+
+#ifdef NO_REENTRANT_X11
+/* Get pointers to the static errno and h_errno variables used by Xlib. This
+   must be done before including <errno.h> makes the variables invisible.  */
+extern int errno;
+static int *perrno = &errno;
+extern int h_errno;
+static int *ph_errno = &h_errno;
+#endif
+
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include "thread.h"
+#ifdef NO_REENTRANT_X11
+#include "tsx11defs.h"
+#endif
 
 #ifdef __linux__
 # ifdef HAVE_SCHED_H
@@ -35,6 +49,12 @@ int *__errno_location()
 {
     static int static_errno;
     THDB *thdb = THREAD_Current();
+#ifdef NO_REENTRANT_X11
+    /* Use static libc errno while running in Xlib. */
+    if (TSX11_SectionPtr &&
+        (TSX11_SectionPtr->OwningThread == THDB_TO_THREAD_ID(thdb)))
+        return perrno;
+#endif
     if (!thdb) return &static_errno;
     return &thdb->thread_errno;
 }
@@ -48,6 +68,12 @@ int *__h_errno_location()
 {
     static int static_h_errno;
     THDB *thdb = THREAD_Current();
+#ifdef NO_REENTRANT_X11
+    /* Use static libc h_errno while running in Xlib. */
+    if (TSX11_SectionPtr &&
+        (TSX11_SectionPtr->OwningThread == THDB_TO_THREAD_ID(thdb)))
+        return ph_errno;
+#endif
     if (!thdb) return &static_h_errno;
     return &thdb->thread_h_errno;
 }

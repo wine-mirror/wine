@@ -1418,7 +1418,7 @@ HMODULE32 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
                                        DWORD flags )
 {
     fprintf(stderr,"LoadLibraryEx32W(%s,%d,%08lx)\n",libname,hf,flags);
-    return LoadLibraryEx32A(libname,hf,flags);
+    return LoadLibraryEx32A(libname, hf,flags);
 }
 
 /***********************************************************************
@@ -1428,13 +1428,13 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 {
     HMODULE32 hmod;
     
-    hmod = PE_LoadLibraryEx32A(libname,hfile,flags);
+    hmod = PE_LoadLibraryEx32A(libname,PROCESS_Current(),hfile,flags);
     if (hmod <= 32) {
 	char buffer[256];
 
 	strcpy( buffer, libname );
 	strcat( buffer, ".dll" );
-	hmod = PE_LoadLibraryEx32A(buffer,hfile,flags);
+	hmod = PE_LoadLibraryEx32A(buffer,PROCESS_Current(),hfile,flags);
     }
     /* initialize all DLLs, which haven't been initialized yet. */
     PE_InitializeDLLs( PROCESS_Current(), DLL_PROCESS_ATTACH, NULL);

@@ -54,5 +54,64 @@ typedef struct tagCONSOLE_SCREEN_BUFFER_INFO
     COORD       dwMaximumWindowSize;
 } CONSOLE_SCREEN_BUFFER_INFO,*LPCONSOLE_SCREEN_BUFFER_INFO;
 
+typedef struct tagCHAR_INFO
+{
+    union
+	{
+	WCHAR UnicodeChar;
+	CHAR AsciiChar;
+	} Char;
+    WORD	Attributes;
+} CHAR_INFO,*LPCHAR_INFO;
+
+typedef struct tagKEY_EVENT_RECORD
+{
+    BOOL32	bKeyDown;
+    WORD	wRepeatCount;
+    WORD	wVirtualKeyCode;
+    WORD	wVirtualScanCode;
+    union
+	{
+	WCHAR UniCodeChar;
+	CHAR AsciiChar;
+	} uChar;
+    DWORD	dwControlKeyState;
+} KEY_EVENT_RECORD,*LPKEY_EVENT_RECORD;
+
+typedef struct tagMOUSE_EVENT_RECORD
+{
+    COORD	dwMousePosition;
+    DWORD	dwButtonState;
+    DWORD	dwControlKeyState;
+    DWORD	dwEventFlags;
+} MOUSE_EVENT_RECORD,*LPMOUSE_EVENT_RECORD;
+
+typedef struct tagWINDOW_BUFFER_SIZE_RECORD
+{
+    COORD	dwSize;
+} WINDOW_BUFFER_SIZE_RECORD,*LPWINDOW_BUFFER_SIZE_RECORD;
+
+typedef struct tagMENU_EVENT_RECORD
+{
+    UINT32	dwCommandId; /* perhaps UINT16 ??? */
+} MENU_EVENT_RECORD,*LPMENU_EVENT_RECORD;
+
+typedef struct tagFOCUS_EVENT_RECORD
+{
+    BOOL32      bSetFocus; /* perhaps BOOL16 ??? */
+} FOCUS_EVENT_RECORD,*LPFOCUS_EVENT_RECORD;
+
+typedef struct tagINPUT_RECORD
+{
+    WORD		EventType;
+    union
+	{
+	KEY_EVENT_RECORD KeyEvent;
+	MOUSE_EVENT_RECORD MouseEvent;
+	WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+	MENU_EVENT_RECORD MenuEvent;
+	FOCUS_EVENT_RECORD FocusEvent;
+	} Event;
+} INPUT_RECORD,*LPINPUT_RECORD;
 
 #endif  /* __WINE_WINCON_H */

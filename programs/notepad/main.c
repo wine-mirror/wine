@@ -85,7 +85,11 @@ int NOTEPAD_MenuCommand (WPARAM wParam)
      case NP_EDIT_PASTE:        break;
      case NP_EDIT_DELETE:       break;
      case NP_EDIT_TIMEDATE:     break;
-     case NP_EDIT_WRAP:         break;
+     case NP_EDIT_WRAP:         
+        Globals.bWrapLongLines = !Globals.bWrapLongLines;
+	CheckMenuItem(Globals.hEditMenu, NP_EDIT_WRAP, MF_BYCOMMAND | 
+                (Globals.bWrapLongLines ? MF_CHECKED : MF_UNCHECKED));
+        break;
 
      case NP_SEARCH_SEARCH:     break;
      case NP_SEARCH_NEXT:       break;

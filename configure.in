@@ -58,8 +58,8 @@ dnl **** Check for Open Sound System ****
 AC_CACHE_CHECK("for Open Sound System",
 	ac_cv_c_opensoundsystem,
 	AC_TRY_COMPILE([#include <sys/soundcard.h>],[
-/* check for open sound system and one of the SNDCTL_ defines to be sure */
-#if !defined(OPEN_SOUND_SYSTEM) || !defined(SNDCTL_DSP_STEREO)
+/* check for one of the Open Sound System specific SNDCTL_ defines */
+#if !defined(SNDCTL_DSP_STEREO)
 #error No open sound system
 #endif
 ],ac_cv_c_opensoundsystem="yes",ac_cv_c_opensoundsystem="no"))
@@ -72,7 +72,8 @@ fi
 dnl **** Check for union semun ****
 
 AC_CACHE_CHECK("for union semun", ac_cv_c_union_semun,
- AC_TRY_COMPILE([#include <sys/sem.h>],[union semun foo],
+ AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/sem.h>],[union semun foo],
                 ac_cv_c_union_semun="yes", ac_cv_c_union_semun="no"))
 if test "$ac_cv_c_union_semun" = "yes"
 then
@@ -207,6 +208,7 @@ relay32/Makefile
 resources/Makefile
 scheduler/Makefile
 tools/Makefile
+tsx11/Makefile
 win32/Makefile
 windows/Makefile ])
 

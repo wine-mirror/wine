@@ -798,15 +798,10 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
     int i, j;
     IMAGE_SECTION_HEADER *pe_seg;
     IMAGE_EXPORT_DIRECTORY *exports;
-    IMAGE_DATA_DIRECTORY *debug_dir;
+    IMAGE_DATA_DIRECTORY *dir;
     WORD *ordinals;
     void **functions;
     const char **names;
-
-    PE_MODREF *pem = PROCESS_Current()->modref_list;
-    while (pem && (pem->module != hModule)) pem = pem->next;
-    if (!pem) return;
-    exports = pem->pe_export;
 
     addr.seg = 0;
     addr.type = NULL;
@@ -835,7 +830,10 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
 
     /* Add exported functions */
 
-    if (!exports) return;
+    dir = &PE_HEADER(hModule)->OptionalHeader.
+                                   DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+    if (!dir->Size) return;
+    exports   = (IMAGE_EXPORT_DIRECTORY *)RVA( dir->VirtualAddress );
     ordinals  = (WORD *)RVA( exports->AddressOfNameOrdinals );
     names     = (const char **)RVA( exports->AddressOfNames );
     functions = (void **)RVA( exports->AddressOfFunctions );
@@ -860,10 +858,9 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
         DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
     }
 
-    debug_dir = &PE_HEADER(hModule)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
-    if (debug_dir->Size)
-        DEBUG_RegisterDebugInfo( hModule, name,
-                                 debug_dir->VirtualAddress, debug_dir->Size );
+    dir = &PE_HEADER(hModule)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
+    if (dir->Size)
+        DEBUG_RegisterDebugInfo(hModule, name, dir->VirtualAddress, dir->Size);
 #undef RVA
 }
 

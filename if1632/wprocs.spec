@@ -48,7 +48,7 @@ type	win16
 129 register INT_Int1dHandler(word) BUILTIN_DefaultIntHandler
 130 register INT_Int1eHandler(word) BUILTIN_DefaultIntHandler
 131 register INT_Int1fHandler(word) BUILTIN_DefaultIntHandler
-132 register INT_Int20Handler(word) BUILTIN_DefaultIntHandler
+132 register INT_Int20Handler(word) INT_Int20Handler
 133 register INT_Int21Handler(word) DOS3Call
 134 register INT_Int22Handler(word) BUILTIN_DefaultIntHandler
 135 register INT_Int23Handler(word) BUILTIN_DefaultIntHandler

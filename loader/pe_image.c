@@ -26,6 +26,7 @@
 #include "neexe.h"
 #include "peexe.h"
 #include "process.h"
+#include "thread.h"
 #include "pe_image.h"
 #include "module.h"
 #include "global.h"
@@ -166,8 +167,7 @@ FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
 	return NULL;
 }
 
-void 
-fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
+DWORD fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     int	fixup_failed		= 0;
@@ -205,7 +205,7 @@ fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
  	char *name = (char *) RVA(pe_imp->Name);
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	res = PE_LoadLibraryEx32A( name, 0, 0 );
+	res = PE_LoadLibraryEx32A( name, process, 0, 0 );
 	if (res <= (HMODULE32) 32) {
 	    char *p, buffer[1024];
 
@@ -214,11 +214,11 @@ fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    res = PE_LoadLibraryEx32A( buffer, 0, 0 );
+	    res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
 	}
 	if (res <= (HMODULE32) 32) {
 	    fprintf (stderr, "Module %s not found\n", name);
-	    exit (0);
+	    return res;
 	}
 	res = MODULE_HANDLEtoHMODULE32(res);
 	xpem = pem->next;
@@ -328,7 +328,8 @@ fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 	}
 	pe_imp++;
     }
-    if (fixup_failed) exit(1);
+    if (fixup_failed) return 22;
+    return 0;
 }
 
 static int calc_vma_size( HMODULE32 hModule )
@@ -629,10 +630,6 @@ static HMODULE32 PE_MapImage( HMODULE32 hModule, PDB32 *process,
 		dprintf_win32(stdnimp,"Global Pointer (MIPS) ignored\n");
 
 	if(nt_header->OptionalHeader.DataDirectory
-		[IMAGE_DIRECTORY_ENTRY_TLS].Size)
-		 fprintf(stdnimp,"Thread local storage ignored\n");
-
-	if(nt_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
 		dprintf_win32(stdnimp,"Load Configuration directory ignored\n");
 
@@ -652,7 +649,28 @@ static HMODULE32 PE_MapImage( HMODULE32 hModule, PDB32 *process,
 
 	if(pem->pe_reloc)	do_relocations(pem);
 	if(pem->pe_export)	dump_exports(pem->module);
-	if(pem->pe_import)	fixup_imports(process,pem,hModule);
+	if(pem->pe_import)	{
+		if (fixup_imports(process,pem,hModule)) {
+			PE_MODREF	**xpem;
+
+			/* remove entry from modref chain */
+			xpem = &(process->modref_list);
+			while (*xpem) {
+				if (*xpem==pem) {
+					*xpem = pem->next;
+					break;
+				}
+				xpem = &((*xpem)->next);
+			}
+			/* FIXME: there are several more dangling references
+			 * left. Including dlls loaded by this dll before the
+			 * failed one. Unrolling is rather difficult with the
+			 * current structure and we can leave it them lying
+			 * around with no problems, so we don't care
+			 */
+			return 0;
+		}
+	}
   		
 	if (pem->pe_export)
 		modname = (char*)RVA(pem->pe_export->Name);
@@ -678,9 +696,11 @@ HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
  * FIXME: handle the flags.
  *        internal module handling should be made better here (and in builtin.c)
  */
-HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
+HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, PDB32 *process,
+                               HFILE32 hFile, DWORD flags)
+{
 	OFSTRUCT	ofs;
-	HMODULE32	hModule;
+	HMODULE32	hModule,ret;
 	NE_MODULE	*pModule;
 	PE_MODREF	*pem;
 
@@ -690,14 +710,13 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		if (!HIWORD(hModule)) /* internal (or bad) */
 			return hModule;
 		/* check if this module is already mapped */
-		pem 	= PROCESS_Current()->modref_list;
+		pem 	= process->modref_list;
 		while (pem) {
 			if (pem->module == hModule) return hModule;
 			pem = pem->next;
 		}
 		pModule = MODULE_GetPtr(hModule);
 		if (pModule->flags & NE_FFLAGS_BUILTIN) {
-			PDB32	*process = PROCESS_Current();
 			IMAGE_DOS_HEADER	*dh;
 			IMAGE_NT_HEADERS	*nh;
 			IMAGE_SECTION_HEADER	*sh;
@@ -720,13 +739,13 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 	} else {
 
 		/* try to load builtin, enabled modules first */
-		if ((hModule = BUILTIN_LoadModule( name, FALSE )))
+		if ((hModule = BUILTIN32_LoadModule( name, FALSE )))
                     return MODULE_HANDLEtoHMODULE32( hModule );
 
 		/* try to open the specified file */
 		if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
 			/* Now try the built-in even if disabled */
-			if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
+			if ((hModule = BUILTIN32_LoadModule( name, TRUE ))) {
 				fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
                                 return MODULE_HANDLEtoHMODULE32( hModule );
 			}
@@ -743,9 +762,13 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		if (pModule->module32 < 32) return 21;
 	}
 	/* recurse */
-	pModule->module32 = PE_MapImage( pModule->module32, PROCESS_Current(),
-                                         &ofs,flags);
-	return pModule->module32;
+	ret = PE_MapImage( pModule->module32, process, &ofs,flags);
+	if (!ret) {
+		/* should free this module and the already referenced ones */
+		return 0;
+	}
+	pModule->module32 = ret;
+	return ret;
 }
 
 /*****************************************************************************
@@ -756,10 +779,11 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
 {
     HMODULE16 hModule16;
-    HMODULE32 hModule32;
+    HMODULE32 hModule32, ret;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
-
+    THDB *thdb = THREAD_Current();
+    
     if ((hModule16 = MODULE_CreateDummyModule( ofs )) < 32) return hModule16;
     pModule = (NE_MODULE *)GlobalLock16( hModule16 );
     pModule->flags = NE_FFLAGS_WIN32;
@@ -771,12 +795,21 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
     hInstance = MODULE_CreateInstance( hModule16, params );
     if (!(PE_HEADER(hModule32)->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
-        TASK_CreateTask( hModule16, hInstance, 0,
-                         params->hEnvironment,
-                         (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                         *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
+        HTASK16 hTask = TASK_CreateTask( hModule16, hInstance, 0,
+                                         params->hEnvironment,
+                                      (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
+                               *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
+        TDB *pTask = (TDB *)GlobalLock16( hTask );
+        thdb = pTask->thdb;
     }
-    pModule->module32 = PE_MapImage( hModule32, PROCESS_Current(), ofs, 0 );
+    if (!(ret = PE_MapImage( hModule32, thdb->process, ofs, 0 )))
+    {
+     	/* FIXME: should destroy the task created ... */
+        return 0;
+    }
+    pModule->module32 = ret;
+    /* yuck. but there is no other good place to do that... */
+    PE_InitTls( thdb );
     return hInstance;
 }
 
@@ -840,14 +873,15 @@ void PE_InitializeDLLs(PDB32 *process,DWORD type,LPVOID lpReserved) {
 	}
 }
 
-void PE_InitTls(PDB32 *pdb)
+void PE_InitTls(THDB *thdb)
 {
 	/* FIXME: tls callbacks ??? */
 	PE_MODREF		*pem;
 	IMAGE_NT_HEADERS	*peh;
-	DWORD			size,datasize,index;
+	DWORD			size,datasize;
 	LPVOID			mem;
 	LPIMAGE_TLS_DIRECTORY	pdir;
+	PDB32			*pdb = thdb->process;
 
 	pem = pdb->modref_list;
 	while (pem) {
@@ -858,13 +892,18 @@ void PE_InitTls(PDB32 *pdb)
 		}
 		pdir = (LPVOID)(pem->module + peh->OptionalHeader.
 			DataDirectory[IMAGE_FILE_THREAD_LOCAL_STORAGE].VirtualAddress);
-		index	= TlsAlloc();
+		
+		if (!(pem->flags & PE_MODREF_TLS_ALLOCED)) {
+			pem->tlsindex = TlsAlloc();
+			*(pdir->AddressOfIndex)=pem->tlsindex;   
+		}
+		pem->flags |= PE_MODREF_TLS_ALLOCED;
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
 		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
 		memcpy(mem,(LPVOID) pdir->StartAddressOfRawData, datasize);
-		TlsSetValue(index,mem);
-		*(pdir->AddressOfIndex)=index;   
+		/* don't use TlsSetValue, we are in the wrong thread */
+		thdb->tls_array[pem->tlsindex] = mem;
 		pem=pem->next;
 	}
 }

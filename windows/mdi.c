@@ -1603,26 +1603,26 @@ void WINAPI ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
     INT32 newPos = -1;
     INT32 curPos, length, minPos, maxPos, shift;
 
- if( !wndPtr ) return;
+    if( !wndPtr ) return;
 
- if( uMsg == WM_HSCROLL )
-   {
-     GetScrollRange32(hWnd,SB_HORZ,&minPos,&maxPos);
-     curPos = GetScrollPos32(hWnd,SB_HORZ);
-     length = (wndPtr->rectClient.right - wndPtr->rectClient.left)/2;
-     shift = SYSMETRICS_CYHSCROLL;
-   }
- else if( uMsg == WM_VSCROLL )
-	{
-	  GetScrollRange32(hWnd,SB_VERT,&minPos,&maxPos);
-	  curPos = GetScrollPos32(hWnd,SB_VERT);
-	  length = (wndPtr->rectClient.bottom - wndPtr->rectClient.top)/2;
-	  shift = SYSMETRICS_CXVSCROLL;
-	}
-      else return;
+    if( uMsg == WM_HSCROLL )
+    {
+	GetScrollRange32(hWnd,SB_HORZ,&minPos,&maxPos);
+	curPos = GetScrollPos32(hWnd,SB_HORZ);
+	length = (wndPtr->rectClient.right - wndPtr->rectClient.left)/2;
+	shift = SYSMETRICS_CYHSCROLL;
+    }
+    else if( uMsg == WM_VSCROLL )
+    {
+	GetScrollRange32(hWnd,SB_VERT,&minPos,&maxPos);
+	curPos = GetScrollPos32(hWnd,SB_VERT);
+	length = (wndPtr->rectClient.bottom - wndPtr->rectClient.top)/2;
+	shift = SYSMETRICS_CXVSCROLL;
+    }
+    else return;
 
- switch( wParam )
-   {
+    switch( wParam )
+    {
 	case SB_LINEUP:	
 		        newPos = curPos - shift;
 			break;
@@ -1652,20 +1652,21 @@ void WINAPI ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
 	case SB_ENDSCROLL:
 			CalcChildScroll(hWnd,(uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ);
 			return;
-   }
+    }
 
- if( newPos > maxPos )
-     newPos = maxPos;
- else if( newPos < minPos )
-	  newPos = minPos;
+    if( newPos > maxPos )
+	newPos = maxPos;
+    else 
+	if( newPos < minPos )
+	    newPos = minPos;
 
- SetScrollPos32(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
+    SetScrollPos32(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
 
- if( uMsg == WM_VSCROLL )
-     ScrollWindowEx32(hWnd ,0 ,curPos - newPos, NULL, NULL, 0, NULL, 
+    if( uMsg == WM_VSCROLL )
+	ScrollWindowEx32(hWnd ,0 ,curPos - newPos, NULL, NULL, 0, NULL, 
 			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
- else
-     ScrollWindowEx32(hWnd ,curPos - newPos, 0, NULL, NULL, 0, NULL,
+    else
+	ScrollWindowEx32(hWnd ,curPos - newPos, 0, NULL, NULL, 0, NULL,
 			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
 }
 

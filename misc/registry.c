@@ -925,9 +925,9 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  *      0x20 ... offset_of_RGDB_part: Disk Key Entry structures
  *
  *   Disk Key Entry Structure:
- *	00: DWORD	- unknown
- *	04: DWORD	- unknown
- *	08: DWORD	- unknown, but usually 0xFFFFFFFF on win95 systems
+ *	00: DWORD	- Free entry indicator(?)
+ *	04: DWORD	- Hash = sum of bytes of keyname
+ *	08: DWORD	- Root key indicator? unknown, but usually 0xFFFFFFFF on win95 systems
  *	0C: DWORD	- disk address of PreviousLevel Key.
  *	10: DWORD	- disk address of Next Sublevel Key.
  *	14: DWORD	- disk address of Next Key (on same level).
@@ -938,15 +938,15 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  * of the referenced key. Don't ask me why, or even if I got this correct
  * from staring at 1kg of hexdumps. (DKEP)
  *
- * The number of the entry is the low byte of the Low Significant Part ored
- * with 0x100 * (low byte of the High Significant part)
- * (C expression : nr = (nrLS & 0xFF) | ((nrHS &0xFF)<<8))
+ * The High significant part of the structure seems to equal the number
+ * of the RGDB section. The low significant part is a unique ID within
+ * that RGDB section
  *
  * There are two minor corrections to the position of that structure.
  * 1. If the address is xxx014 or xxx018 it will be aligned to xxx01c AND 
  *    the DKE reread from there.
  * 2. If the address is xxxFFx it will be aligned to (xxx+1)000.
- * (FIXME: slightly better explanation needed here)
+ * CPS - I have not experienced the above phenomenon in my registry files
  *
  * RGDB_section:
  * 	00:		"RGDB"	- magic
@@ -1003,149 +1003,38 @@ struct 	_w95key {
 	char			*name;
 	int			nrofvals;
 	struct	_w95keyvalue	*values;
-	unsigned long		dkeaddr;
-	unsigned long 		x1;
-	unsigned long 		x2;
-	unsigned long 		x3;
-	unsigned long 		xx1;
 	struct _w95key		*prevlvl;
 	struct _w95key		*nextsub;
 	struct _w95key		*next;
 };
 
-/* fast lookup table dkeaddr->nr */
-struct 	_w95nr2da {
-	unsigned long		dkeaddr;
-	unsigned long		nr;
-	struct _w95key		*key;
+
+struct _w95_info {
+  char *rgknbuffer;
+  int  rgknsize;
+  char *rgdbbuffer;
+  int  rgdbsize;
+  int  depth;
+  int  lastmodified;
 };
 
+LPWSTR strcvtA2W(LPCSTR src, int nchars)
 
-static void
-_w95_walk_tree(LPKEYSTRUCT lpkey,struct _w95key *key) {
-	int		i;
-	LPKEYSTRUCT	lpxkey;
-	LPWSTR		name;
+{
+   LPWSTR dest = xmalloc (2 * nchars + 2);
 
-	while (key) {
-		if (key->name == NULL) {
-			fprintf(stderr,"_w95_walk_tree:Please report: key with dkeaddr %lx not loaded, skipping hierarchy\n",
-				key->dkeaddr
-			);
-			return;
-		}
-		lpxkey=_find_or_add_key(lpkey,strdupA2W(key->name));
-
-		if (key->nrofvals<0) {
-			/* shouldn't happen */
-			fprintf(stderr,"key %s already processed!\n",key->name);
-			key = key->next;
-			continue;
-		}
-		for (i=0;i<key->nrofvals;i++) {
-			LPBYTE	data;
-			int	len;
-
-			name = strdupA2W(key->values[i].name);
-			if (!*name) {
-				free(name);
-				name = NULL;
-			}
-			free(key->values[i].name);
-
-			len	= key->values[i].datalen;
-			data	= key->values[i].data;
-			if ((1<<key->values[i].type) & UNICONVMASK) {
-				data = (BYTE*)strdupA2W(data);
-				len  = lstrlen32W((LPWSTR)data)*2+2;
-				free(key->values[i].data);
-			}
-			_find_or_add_value(
-				lpxkey,
-				name,
-				key->values[i].type,
-				data,
-				len,
-				key->values[i].lastmodified
-			);
-		}
-		if (key->values) {
-			free(key->values);
-			key->values = NULL;
-		}
-		key->nrofvals=-key->nrofvals-1;
-		_w95_walk_tree(lpxkey,key->nextsub);
-		key=key->next;
-	}
+   lstrcpynAtoW(dest,src, nchars);
+   dest[nchars] = 0;
+   return dest;
 }
 
-/* small helper function to adjust address offset (dkeaddrs) */
-static unsigned long
-_w95_adj_da(unsigned long dkeaddr) {
-	if ((dkeaddr&0xFFF)<0x018) {
-		int	diff;
+static LPKEYSTRUCT _w95_processKey ( LPKEYSTRUCT lpkey, 
+                                   int nrLS, int nrMS, struct _w95_info *info )
 
-		diff=0x1C-(dkeaddr&0xFFF);
-		return dkeaddr+diff;
-	}
-	if (((dkeaddr+0x1C)&0xFFF)<0x1C) {
-		/* readjust to 0x000,
-		 * but ONLY if we are >0x1000 already
-		 */
-		if (dkeaddr & ~0xFFF)
-			return dkeaddr & ~0xFFF;
-	}
-	return dkeaddr;
-}
-
-static int
-_w95dkecomp(struct _w95nr2da *a,struct _w95nr2da *b){return a->dkeaddr-b->dkeaddr;}
-
-static struct _w95key*
-_w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key *keys) {
-int	i;
-int left, right;
-
-	if (dkeaddr == 0xFFFFFFFF)
-		return NULL;
-	if (dkeaddr<0x20)
-		return NULL;
-	dkeaddr=_w95_adj_da(dkeaddr+0x1c);
-	left=0;
-	right=n-1;
-	while(left<=right)
-	{
-		i=(left+right)/2;
-
-		if(nr2da[i].dkeaddr == dkeaddr)
-			return nr2da[i].key;
-		else if(nr2da[i].dkeaddr < dkeaddr)
-			left=i+1;
-		else
-			right=i-1;
-	}
-	/* 0x3C happens often, just report unusual values */
-	if (dkeaddr!=0x3c)
-		dprintf_reg(stddeb,"search hasn't found dkeaddr %lx?\n",dkeaddr);
-	return NULL;
-}
-
-static void
-_w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
-	/* Disk Key Entry structure (RGKN part) */
-	struct	dke {
-		unsigned long		x1;
-		unsigned long		x2;
-		unsigned long		x3;/*usually 0xFFFFFFFF */
-		unsigned long		prevlvl;
-		unsigned long		nextsub;
-		unsigned long		next;
-		unsigned short		nrLS;
-		unsigned short		nrMS;
-	};
-	/* Disk Key Header structure (RGDB part) */
-	struct	dkh {
-		unsigned long		nextkeyoff; 
+{
+  /* Disk Key Header structure (RGDB part) */
+  struct	dkh {
+                unsigned long		nextkeyoff; 
 		unsigned short		nrLS;
 		unsigned short		nrMS;
 		unsigned long		bytesused;
@@ -1163,15 +1052,145 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		unsigned short		valdatalen;
 		/* valname, valdata */
 	};
-    struct  _w95nr2da   *nr2da;
 
+	
+	struct	dkh dkh;
+	int	bytesread = 0;
+	char    *rgdbdata = info->rgdbbuffer;
+	int     nbytes = info->rgdbsize;
+	char    *curdata = rgdbdata;
+	char    *end = rgdbdata + nbytes;
+	int     off_next_rgdb;
+	char    *next = rgdbdata;
+	int     nrgdb, i;
+	LPKEYSTRUCT	lpxkey;
+	
+	do {
+	  curdata = next;
+	  if (strncmp(curdata, "RGDB", 4)) return (NULL);
+	    
+	  memcpy(&off_next_rgdb,curdata+4,4);
+	  next = curdata + off_next_rgdb;
+	  nrgdb = (int) *((short *)curdata + 7);
+
+	} while (nrgdb != nrMS && (next < end));
+
+	/* curdata now points to the start of the right RGDB section */
+	curdata += 0x20;
+
+#define XREAD(whereto,len) \
+	if ((curdata + len) <end) {\
+		memcpy(whereto,curdata,len);\
+		curdata+=len;\
+		bytesread+=len;\
+	}
+
+	do {
+	  XREAD(&dkh, sizeof (dkh));
+	  if (dkh.nrLS == nrLS) break;
+
+	  curdata += dkh.nextkeyoff - sizeof(dkh);
+	} while (curdata < next);
+
+	if (dkh.nrLS != nrLS) return (NULL);
+
+	if (nrgdb != dkh.nrMS) {
+	  return (NULL);
+	}
+
+	lpxkey=_find_or_add_key(lpkey,strcvtA2W(curdata, dkh.keynamelen));
+	curdata += dkh.keynamelen;
+
+	for (i=0;i< dkh.values; i++) {
+	  struct dkv dkv;
+	  LPBYTE data;
+	  int len;
+	  LPWSTR name;
+
+	  XREAD(&dkv,sizeof(dkv));
+
+	  name = strcvtA2W(curdata, dkv.valnamelen);
+	  curdata += dkv.valnamelen;
+
+	  if ((1 << dkv.type) & UNICONVMASK) {
+	    data = (LPBYTE) strcvtA2W(curdata, dkv.valdatalen);
+	    len = dkv.valdatalen + 1;
+	  } else {
+	    /* I don't think we want to NULL terminate all data */
+	    data = xmalloc(dkv.valdatalen);
+	    memcpy (data, curdata, dkv.valdatalen);
+	    len = dkv.valdatalen;
+	  }
+
+	  curdata += dkv.valdatalen;
+	  
+	  _find_or_add_value(
+			     lpxkey,
+			     name,
+			     dkv.type,
+			     data,
+			     len,
+			     info->lastmodified
+			     );
+
+	}
+
+	return (lpxkey);
+}
+
+static void
+_w95_walkrgkn(LPKEYSTRUCT prevkey, char *off, struct _w95_info *info)
+
+{
+  /* Disk Key Entry structure (RGKN part) */
+  struct	dke {
+    unsigned long		x1;
+    unsigned long		x2;
+    unsigned long		x3;/*usually 0xFFFFFFFF */
+    unsigned long		prevlvl;
+    unsigned long		nextsub;
+    unsigned long		next;
+    unsigned short		nrLS;
+    unsigned short		nrMS;
+  } *dke = (struct dke *)off;
+  LPKEYSTRUCT  lpxkey;
+
+  if (dke == NULL) {
+    dke = (struct dke *) ((char *)info->rgknbuffer);
+  }
+
+  lpxkey = _w95_processKey(prevkey, dke->nrLS, dke->nrMS, info);
+  /* XXX <-- This is a hack*/
+  if (!lpxkey) {
+    lpxkey = prevkey;
+  }
+
+  if (dke->nextsub != -1 && 
+      ((dke->nextsub - 0x20) < info->rgknsize) 
+      && (dke->nextsub > 0x20)) {
+    
+    _w95_walkrgkn(lpxkey, 
+		  info->rgknbuffer + dke->nextsub - 0x20, 
+		  info);
+  }
+  
+  if (dke->next != -1 && 
+      ((dke->next - 0x20) < info->rgknsize) && 
+      (dke->next > 0x20)) {
+    _w95_walkrgkn(prevkey,  
+		  info->rgknbuffer + dke->next - 0x20,
+		  info);
+  }
+
+  return;
+}
+
+static void
+_w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	HFILE32		hfd;
-	int		lastmodified;
 	char		magic[5];
-	unsigned long	nr,pos,i,j,where,version,rgdbsection,end,off_next_rgdb;
-	struct	_w95key	*keys,*key;
-	int		nrofdkes;
-	unsigned char	*data,*curdata,*nextrgdb;
+	unsigned long	where,version,rgdbsection,end;
+	struct          _w95_info info;
 	OFSTRUCT	ofs;
 	BY_HANDLE_FILE_INFORMATION hfdinfo;
 
@@ -1205,232 +1224,31 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	where	= 0x40;
 	end	= rgdbsection;
 
-	/* I removed the '+100' that was here. The adjustments to dkeaddr   */
-	/* imply alignments to the data in 'data' which would mean it is    */
-	/* larger than the number of dke entries it holds therefore nrofdkes*/
-	/* would be equal to or larger than it needs to be without the need */
-	/* for the +100 - kc                                                */
-	nrofdkes = (end-where)/sizeof(struct dke);
-
-	data = (char*)xmalloc(end-where);
-	if ((end-where)!=_lread32(hfd,data,end-where))
+	info.rgknsize = end - where;
+	info.rgknbuffer = (char*)xmalloc(info.rgknsize);
+	if (info.rgknsize != _lread32(hfd,info.rgknbuffer,info.rgknsize))
 		return;
-	curdata = data;
 
-	keys = (struct _w95key*)xmalloc(nrofdkes * sizeof(struct _w95key));
-	memset(keys,'\0',nrofdkes*sizeof(struct _w95key));
-    nr2da= (struct _w95nr2da*)xmalloc(nrofdkes * sizeof(struct _w95nr2da));
-    memset(nr2da,'\0',nrofdkes*sizeof(struct _w95nr2da));
-
-#if DEBUG_W95_LOADREG
-	dprintf_reg(stddeb,"nrofdkes = %d\n", nrofdkes);
-#endif
-	for (i=0;i<nrofdkes;i++) {
-		struct	dke	dke;
-		unsigned long 	dkeaddr;
-
-		pos=curdata-data+0x40;
-		memcpy(&dke,curdata,sizeof(dke));
-		curdata+=sizeof(dke);
-		nr = dke.nrLS + (dke.nrMS<<8);
-#if DEBUG_W95_LOADREG
-		dprintf_reg(stddeb,"%ld: nr = %ld, nrMS:nrLS = %04X:%X\n",
-					i,nr,dke.nrMS,dke.nrLS);
-#endif
-		dkeaddr=pos-4;
-		if ((dkeaddr&0xFFF)<0x018) {
-			int	diff;
-
-			diff=0x1C-(dkeaddr&0xFFF);
-			dkeaddr+=diff;
-			curdata+=diff-sizeof(dke);
-			memcpy(&dke,curdata,sizeof(dke));
-			nr = dke.nrLS + (dke.nrMS<<8);
-#if DEBUG_W95_LOADREG
-			dprintf_reg(stddeb,"> nr = %lu, nrMS:nrLS = %04X:%X\n",
-						nr,dke.nrMS,dke.nrLS);
-#endif
-			curdata+=sizeof(dke);
-		}
-		if (((dkeaddr+0x1C)&0xFFF)<0x1C) {
-			/* readjust to 0x000,
-			 * but ONLY if we are >0x1000 already
-			 */
-			if (dkeaddr & ~0xFFF)
-				dkeaddr &= ~0xFFF;
-		}
-		/* For the time being we will assume that all values of */
-		/* nr are valid unless the following condition is true. */
-		/* This value is obtained when dke.nrLS and dke.nrMS are*/
-		/* both FFFF as dke.nrMS is only shifted by 8 before the*/
-		/* add and not 16. -kc                                  */
-		if (nr==0x0100FEFF)
-			continue;
-		for (j = 0; j < i; ++j) {
-			if (nr2da[j].nr == nr)
-				break;
-		}
-		if (j < i) {
-			key = nr2da[j].key;
-			if (key && key->dkeaddr) {
-				int	x;
-
-				for (x=sizeof(dke);x--;)
-					if (((char*)&dke)[x])
-						break;
-				if (x==-1)
-					break;	/* finished reading if we got only 0 */
-				if (nr) {
-					if ((dke.next!=(long)key->next) ||
-						(dke.nextsub!=(long)key->nextsub) ||
-						(dke.prevlvl!=(long)key->prevlvl) 
-					)
-						dprintf_reg(stddeb,"key doubled? nr=%lu,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,key->dkeaddr,dkeaddr);
-				}
-				continue;
-			}
-		}
-#if DEBUG_W95_LOADREG
-		dprintf_reg(stddeb,"- nr=%lu,dkeaddr=%lx\n",nr,dkeaddr);
-#endif
-		nr2da[i].nr = nr;
-		nr2da[i].dkeaddr = dkeaddr;
-		nr2da[i].key = &keys[i];
-
-		keys[i].dkeaddr = dkeaddr;
-		keys[i].x1 = dke.x1;
-		keys[i].x2 = dke.x2;
-		keys[i].x3 = dke.x3;
-		keys[i].prevlvl= (struct _w95key*)dke.prevlvl;
-		keys[i].nextsub= (struct _w95key*)dke.nextsub;
-		keys[i].next 	= (struct _w95key*)dke.next;
-	}
-	free(data);
-
-	nrofdkes = i;	/* This is the real number of dke entries */
-#if DEBUG_W95_LOADREG
-	dprintf_reg(stddeb,"nrofdkes = %d\n", nrofdkes);
-#endif
-
-	qsort(nr2da,nrofdkes,sizeof(nr2da[0]),
-              (int(*)(const void *,const void *))_w95dkecomp);
-
-	/* STEP 2: keydata & values */
 	if (!GetFileInformationByHandle(hfd,&hfdinfo))
 		return;
+
 	end = hfdinfo.nFileSizeLow;
-	lastmodified = DOSFS_FileTimeToUnixTime(&hfdinfo.ftLastWriteTime,NULL);
+	info.lastmodified = DOSFS_FileTimeToUnixTime(&hfdinfo.ftLastWriteTime,NULL);
 
 	if (-1==_llseek32(hfd,rgdbsection,SEEK_SET))
 		return;
-	data = (char*)xmalloc(end-rgdbsection);
-	if ((end-rgdbsection)!=_lread32(hfd,data,end-rgdbsection))
+
+	info.rgdbbuffer = (char*)xmalloc(end-rgdbsection);
+	info.rgdbsize = end - rgdbsection;
+
+	if (info.rgdbsize !=_lread32(hfd,info.rgdbbuffer,info.rgdbsize))
 		return;
 	_lclose32(hfd);
-	curdata = data;
-	memcpy(magic,curdata,4);
-	memcpy(&off_next_rgdb,curdata+4,4);
-	nextrgdb = curdata+off_next_rgdb;
-	if (strcmp(magic,"RGDB")) {
-		dprintf_reg(stddeb,"third IFF header not RGDB, but %s\n",magic);
-		return;
-	}
 
-	curdata=data+0x20;
-	while (1) {
-		struct	dkh dkh;
-		int		bytesread;
-		struct	_w95key	xkey;	/* Used inside second main loop */
+	_w95_walkrgkn(lpkey, NULL, &info);
 
-		bytesread = 0;
-		if (curdata>=nextrgdb) {
-			curdata = nextrgdb;
-			if (!strncmp(curdata,"RGDB",4)) {
-				memcpy(&off_next_rgdb,curdata+4,4);
-				nextrgdb = curdata+off_next_rgdb;
-				curdata+=0x20;
-			} else {
-				dprintf_reg(stddeb,"at end of RGDB section, but no next header (%x of %lx). Breaking.\n",curdata-data,end-rgdbsection);
-				break;
-			}
-		}
-#define XREAD(whereto,len) \
-	if ((curdata-data+len)<end) {\
-		memcpy(whereto,curdata,len);\
-		curdata+=len;\
-		bytesread+=len;\
-	}
-
-		XREAD(&dkh,sizeof(dkh));
-		nr = dkh.nrLS + (dkh.nrMS<<8);
-		if (dkh.nrLS == 0xFFFF) {
-				/* skip over key using nextkeyoff */
- 				curdata+=dkh.nextkeyoff-sizeof(struct dkh);
-				continue;
-		} 
-		for (i = 0; i < nrofdkes; ++i) {
-			if (nr2da[i].nr == nr && nr2da[i].dkeaddr) {
-				key = nr2da[i].key;
-				break;
-			}
-		}
-		if (i >= nrofdkes) {
-			/* Move the next statement to just before the previous for */
-			/* loop to prevent the compiler from issuing a warning -kc */
-			key = &xkey;
-			memset(key,'\0',sizeof(xkey));
-			dprintf_reg(stddeb,"haven't found nr %lu.\n",nr);
-		} else {
-			if (!key->dkeaddr)
-				dprintf_reg(stddeb,"key with nr=%lu has no dkeaddr?\n",nr);
-		}
-		key->nrofvals	= dkh.values;
-		key->name	= (char*)xmalloc(dkh.keynamelen+1);
-		key->xx1	= dkh.xx1;
-		XREAD(key->name,dkh.keynamelen);
-		key->name[dkh.keynamelen]=0;
-		if (key->nrofvals) {
-			key->values = (struct _w95keyvalue*)xmalloc(
-				sizeof(struct _w95keyvalue)*key->nrofvals
-			);
-			for (i=0;i<key->nrofvals;i++) {
-				struct	dkv	dkv;
-
-				XREAD(&dkv,sizeof(dkv));
-				key->values[i].type = dkv.type;
-				key->values[i].name = (char*)xmalloc(
-					dkv.valnamelen+1
-				);
-				key->values[i].datalen = dkv.valdatalen;
-				key->values[i].data = (unsigned char*)xmalloc(
-					dkv.valdatalen+1
-				);
-				key->values[i].x1   = dkv.x1;
-				XREAD(key->values[i].name,dkv.valnamelen);
-				XREAD(key->values[i].data,dkv.valdatalen);
-				key->values[i].data[dkv.valdatalen]=0;
-				key->values[i].name[dkv.valnamelen]=0;
-				key->values[i].lastmodified=lastmodified;
-			}
-		}
-		if (bytesread != dkh.nextkeyoff) {
-			if (dkh.bytesused != bytesread)
-				dprintf_reg(stddeb,
-					"read has difference in read bytes (%d) and nextoffset (%lu) (bytesused=%lu)\n",bytesread,dkh.nextkeyoff,
-					dkh.bytesused
-				);
-			curdata += dkh.nextkeyoff-bytesread;
-		}
-		key->prevlvl	= _w95dkelookup((long)key->prevlvl,nrofdkes,nr2da,keys);
-		key->nextsub	= _w95dkelookup((long)key->nextsub,nrofdkes,nr2da,keys);
-		key->next	= _w95dkelookup((long)key->next,nrofdkes,nr2da,keys);
-		if (!bytesread)
-			break;
-	}
-	free(data);
-	_w95_walk_tree(lpkey,keys);
-	free(nr2da);
-	free(keys);
+	free (info.rgdbbuffer);
+	free (info.rgknbuffer);
 }
 
 /* WINDOWS 31 REGISTRY LOADER, supplied by Tor Sjøwall, tor@sn.no */

@@ -2,6 +2,7 @@
  * Windows Device Context initialisation functions
  *
  * Copyright 1996 John Harvey
+ *           1998 Huw Davies
  */
 
 #include <stdlib.h>
@@ -12,7 +13,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include "windows.h"
-#include "module.h"
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
@@ -20,6 +20,7 @@
 #include "color.h"
 #include "font.h"
 #include "callback.h"
+#include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -54,8 +55,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_CreateDC,               /* pCreateDC */
     NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
-    NULL,                            /* pEllipse */
-    NULL,                            /* pEnumDeviceFonts */
+    WIN16DRV_Ellipse,                /* pEllipse */
+    WIN16DRV_EnumDeviceFonts,        /* pEnumDeviceFonts */
     WIN16DRV_Escape,                 /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
@@ -77,9 +78,9 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
     WIN16DRV_Polygon,                /* pPolygon */
-    NULL,                            /* pPolyline */
+    WIN16DRV_Polyline,               /* pPolyline */
     NULL,                            /* pRealizePalette */
-    WIN16DRV_Rectangle,                            /* pRectangle */
+    WIN16DRV_Rectangle,              /* pRectangle */
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
@@ -159,74 +160,15 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
     lpDrawMode->LTextColor	= 0x00000000;     
 }
 
-/*
- * EnumCallback (GDI.158)
- * 
- * This is the callback function used when EnumDFonts is called. 
- * (The printer drivers uses it to pass info on available fonts).
- *
- * lpvClientData is the pointer passed to EnumDFonts, which points to a WEPFC
- * structure (WEPFC = WINE_ENUM_PRINTER_FONT_CALLBACK).  This structure 
- * contains infomation on how to store the data passed .
- *
- * There are two modes:
- * 	1) Just count the number of fonts available.
- * 	2) Store all font data passed.
- */
-WORD WINAPI WineEnumDFontCallback(LPLOGFONT16 lpLogFont,
-                                  LPTEXTMETRIC16 lpTextMetrics,
-                                  WORD wFontType, LONG lpvClientData) 
-{
-    int wRet = 0;
-    WEPFC *pWEPFC = (WEPFC *)lpvClientData; 
-    
-    /* Make sure we have the right structure */
-    if (pWEPFC != NULL )
-    {
-        dprintf_win16drv(stddeb, "mode is 0x%x\n",pWEPFC->nMode);
-        
-	switch (pWEPFC->nMode)
-	{
-	    /* Count how many fonts */
-	  case 1:
-	    pWEPFC->nCount++;
-	    break;
-
-	    /* Store the fonts in the printer driver structure */
-	  case 2:
-	  {
-	      PRINTER_FONTS_INFO *pPFI;
-                  
-	      dprintf_win16drv(stddeb, "WineEnumDFontCallback: Found %s %x\n", 
-		     lpLogFont->lfFaceName, wFontType);
-	      
-	      pPFI = &pWEPFC->pLPD->paPrinterFonts[pWEPFC->nCount];
-	      memcpy(&(pPFI->lf), lpLogFont, sizeof(LOGFONT16));
-	      memcpy(&(pPFI->tm), lpTextMetrics, sizeof(TEXTMETRIC16));	      
-	      pWEPFC->nCount++;
-              
-	  }
-	    break;
-	}
-	wRet = 1;
-    }
-    dprintf_win16drv(stddeb, "WineEnumDFontCallback: returnd %d\n", wRet);
-    return wRet;
-}
-
 BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
                           const DEVMODE16* initData )
 {
     LOADED_PRINTER_DRIVER *pLPD;
     WORD wRet;
     DeviceCaps *printerDevCaps;
-    FARPROC16 pfnCallback;
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
-    int numFonts;
-    /* Realizing fonts */
-    int nSize;
     char printerEnabled[20];
     PROFILE_GetWineIniString( "wine", "printer", "off",
                              printerEnabled, sizeof(printerEnabled) );
@@ -290,93 +232,14 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     /* Now get the printer driver to initialise this data */
     wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL); 
 
-    /* Now enumerate the fonts supported by the printer driver*/
-    /* GDI.158 is EnumCallback, which is called by the 16bit printer driver */
-    /* passing information on the available fonts */
-    if (pLPD->paPrinterFonts == NULL)
-    {
-	pfnCallback = MODULE_GetEntryPoint( GetModuleHandle16("GDI"), 158 );
-        
-	if (pfnCallback != NULL)
-	{
-	    WEPFC wepfc;
-	    
-	    wepfc.nMode = 1;
-	    wepfc.nCount = 0;
-	    wepfc.pLPD = pLPD;
-	    
-	    /* First count the number of fonts */
-            
-	    PRTDRV_EnumDFonts(physDev->segptrPDEVICE, NULL, pfnCallback, 
-			      (void *)&wepfc);
-	    
-	    /* Allocate a buffer to store all of the fonts */
-	    pLPD->nPrinterFonts = wepfc.nCount;
-            dprintf_win16drv(stddeb, "Got %d fonts\n",wepfc.nCount);
-            
-	    if (wepfc.nCount > 0)
-	    {
-
-		pLPD->paPrinterFonts = malloc(sizeof(PRINTER_FONTS_INFO) * wepfc.nCount);
-		
-		/* Now get all of the fonts */
-		wepfc.nMode = 2;
-		wepfc.nCount = 0;
-		PRTDRV_EnumDFonts(physDev->segptrPDEVICE, NULL, pfnCallback, 
-				  (void *)&wepfc);
-                numFonts = wepfc.nCount;
-	    }
-            else
-            {
-                /* If the number of fonts returned are zero we can not continue */
-                fprintf( stderr, "No fonts? Aborting CreateDC...\n");
-                return FALSE;
-            }
-	}
-    }
-		
-    /* Select the first font into the DC */
-    /* Set up the logfont */
-    memcpy(&physDev->lf, 
-	   &pLPD->paPrinterFonts[0].lf, 
-	   sizeof(LOGFONT16));
-
-    /* Set up the textmetrics */
-    memcpy(&physDev->tm, 
-	   &pLPD->paPrinterFonts[0].tm, 
-	   sizeof(TEXTMETRIC16));
-
+    physDev->FontInfo = NULL;
+    physDev->BrushInfo = NULL;
+    physDev->PenInfo = NULL;
     win16drv_SegPtr_TextXForm = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
     win16drv_TextXFormP = PTR_SEG_TO_LIN(win16drv_SegPtr_TextXForm);
     
     InitTextXForm(win16drv_TextXFormP);
-#ifdef SUPPORT_REALIZED_FONTS
-    /* TTD should calculate this */
-    
-    /* First get the size of the realized font */
-    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,
-				 &pLPD->paPrinterFonts[0], NULL, 
-				 0);
-    
-    physDev->segptrFontInfo = WIN16_GlobalLock16(GlobalAlloc16(GHND, nSize));
-    /* Realize the font */
-    PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,
-			 &pLPD->paPrinterFonts[0], 
-			 (LPVOID)physDev->segptrFontInfo, 
-			 win16drv_SegPtr_TextXForm);
-    /* Quick look at structure */
-    if (physDev->segptrFontInfo)
-    {  
-	FONTINFO16 *p = (FONTINFO16 *)PTR_SEG_TO_LIN(physDev->segptrFontInfo);
 
-	dprintf_win16drv(stddeb, "T:%d VR:%d HR:%d, F:%d L:%d\n",
-	       p->dfType,
-	       p->dfVertRes, p->dfHorizRes,
-	       p->dfFirstCHAR, p->dfLastCHAR
-	       );
-    }
-
-#endif
     /* TTD Lots more to do here */
     win16drv_SegPtr_DrawMode = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
     win16drv_DrawModeP = PTR_SEG_TO_LIN(win16drv_SegPtr_DrawMode);
@@ -393,8 +256,8 @@ BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     BOOL32 bRet = 0;
 
-    bRet = PRTDRV_StretchBlt( physDev->segptrPDEVICE, left, top, width, height, NULL, 0, 0, width, height,
-                       PATCOPY, physDev->segptrBrushInfo, win16drv_SegPtr_DrawMode, NULL);
+    bRet = PRTDRV_StretchBlt( physDev->segptrPDEVICE, left, top, width, height, (SEGPTR)NULL, 0, 0, width, height,
+                       PATCOPY, physDev->BrushInfo, win16drv_SegPtr_DrawMode, NULL);
 
     return bRet;
 }
@@ -416,6 +279,10 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 	  case ENABLEPAIRKERNING:
 	    fprintf(stderr,"Escape: ENABLEPAIRKERNING ignored.\n");
             nRet = 1;
+	    break;
+	  case GETPAIRKERNTABLE:
+	    fprintf(stderr,"Escape: GETPAIRKERNTABLE ignored.\n");
+            nRet = 0;
 	    break;
           case SETABORTPROC:
 	    printf("Escape: SetAbortProc ignored should be stored in dc somewhere\n");
@@ -439,7 +306,7 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 
               textData->nSize = cbInput;
               textData->lpindata = lpInData;
-              textData->lpFont = physDev->segptrFontInfo;
+              textData->lpFont = SEGPTR_GET( physDev->FontInfo );
               textData->lpXForm = win16drv_SegPtr_TextXForm;
               textData->lpDrawMode = win16drv_SegPtr_DrawMode;
               nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,

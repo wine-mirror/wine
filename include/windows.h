@@ -305,6 +305,12 @@ DECL_WINELIB_TYPE(MINMAXINFO);
 #define RDW_FRAME            0x0400
 #define RDW_NOFRAME          0x0800
 
+/* debug flags */
+#define DBGFILL_ALLOC  0xfd
+#define DBGFILL_FREE   0xfb
+#define DBGFILL_BUFFER 0xf9
+#define DBGFILL_STACK  0xf7
+
   /* WM_WINDOWPOSCHANGING/CHANGED struct */
 typedef struct
 {
@@ -1168,16 +1174,16 @@ typedef struct
     CHAR  dfUnderline;
     CHAR  dfStrikeOut;
     INT16 dfWeight;
-    CHAR  dfCHARSet;
+    CHAR  dfCharSet;
     INT16 dfPixWidth;
     INT16 dfPixHeight;
     CHAR  dfPitchAndFamily;
     INT16 dfAvgWidth;
     INT16 dfMaxWidth;
-    CHAR  dfFirstCHAR;
-    CHAR  dfLastCHAR;
-    CHAR  dfDefaultCHAR;
-    CHAR  dfBreakCHAR;
+    CHAR  dfFirstChar;
+    CHAR  dfLastChar;
+    CHAR  dfDefaultChar;
+    CHAR  dfBreakChar;
     INT16 dfWidthBytes;
     LONG  dfDevice;
     LONG  dfFace;
@@ -1658,6 +1664,10 @@ DECL_WINELIB_TYPE(LPLOGPEN);
 #define GM_COMPATIBLE     1
 #define GM_ADVANCED       2
 #define GM_LAST           2
+
+  /* Arc direction modes */
+#define AD_COUNTERCLOCKWISE 1
+#define AD_CLOCKWISE        2
 
   /* Map modes */
 #define MM_TEXT		  1
@@ -5466,6 +5476,31 @@ typedef struct
 DECL_WINELIB_TYPE_AW(MSGBOXPARAMS);
 DECL_WINELIB_TYPE_AW(LPMSGBOXPARAMS);
 
+/* for WOWHandle{16,32} */
+typedef enum _WOW_HANDLE_TYPE { /* WOW */
+    WOW_TYPE_HWND,
+    WOW_TYPE_HMENU,
+    WOW_TYPE_HDWP,
+    WOW_TYPE_HDROP,
+    WOW_TYPE_HDC,
+    WOW_TYPE_HFONT,
+    WOW_TYPE_HMETAFILE,
+    WOW_TYPE_HRGN,
+    WOW_TYPE_HBITMAP,
+    WOW_TYPE_HBRUSH,
+    WOW_TYPE_HPALETTE,
+    WOW_TYPE_HPEN,
+    WOW_TYPE_HACCEL,
+    WOW_TYPE_HTASK,
+    WOW_TYPE_FULLHWND
+} WOW_HANDLE_TYPE;
+
+/* WOWCallback16Ex defines */
+#define WCB16_MAX_CBARGS	16
+/* ... dwFlags */
+#define WCB16_PASCAL		0x0
+#define WCB16_CDECL		0x1
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -5545,6 +5580,7 @@ DWORD       WINAPI GetWinFlags(void);
 DWORD       WINAPI GlobalDOSAlloc(DWORD);
 WORD        WINAPI GlobalDOSFree(WORD);
 void        WINAPI GlobalFreeAll(HGLOBAL16);
+DWORD       WINAPI GlobalHandleNoRIP(WORD);
 HGLOBAL16   WINAPI GlobalLRUNewest(HGLOBAL16);
 HGLOBAL16   WINAPI GlobalLRUOldest(HGLOBAL16);
 VOID        WINAPI GlobalNotify(FARPROC16);
@@ -5657,6 +5693,7 @@ HANDLE32    WINAPI CreateMutex32W(LPSECURITY_ATTRIBUTES,BOOL32,LPCWSTR);
 HANDLE32    WINAPI CreateSemaphore32A(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCSTR);
 HANDLE32    WINAPI CreateSemaphore32W(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCWSTR);
 #define     CreateSemaphore WINELIB_NAME_AW(CreateSemaphore)
+HANDLE32    WINAPI CreateThread(LPSECURITY_ATTRIBUTES,DWORD,LPTHREAD_START_ROUTINE,LPVOID,DWORD,LPDWORD);
 BOOL32      WINAPI DestroyAcceleratorTable(HACCEL32);
 BOOL32      WINAPI DisableThreadLibraryCalls(HMODULE32);
 BOOL32      WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
@@ -5738,6 +5775,7 @@ DWORD       WINAPI GetFileType(HFILE32);
 DWORD       WINAPI GetFullPathName32A(LPCSTR,DWORD,LPSTR,LPSTR*);
 DWORD       WINAPI GetFullPathName32W(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 #define     GetFullPathName WINELIB_NAME_AW(GetFullPathName)
+INT32       WINAPI GetGraphicsMode(HDC32);
 DWORD       WINAPI GetLargestConsoleWindowSize(HANDLE32);
 VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 DWORD       WINAPI GetLogicalDrives(void);
@@ -5776,6 +5814,7 @@ BOOL32      WINAPI GetUserName32A(LPSTR,LPDWORD);
 BOOL32      WINAPI GetUserName32W(LPWSTR,LPDWORD);
 #define     GetUserName WINELIB_NAME_AW(GetUserName)
 DWORD       WINAPI GetWindowThreadProcessId(HWND32,LPDWORD);
+BOOL32      WINAPI GetWorldTransform(HDC32,LPXFORM);
 VOID        WINAPI GlobalMemoryStatus(LPMEMORYSTATUS);
 LPVOID      WINAPI HeapAlloc(HANDLE32,DWORD,DWORD);
 DWORD       WINAPI HeapCompact(HANDLE32,DWORD);
@@ -5877,6 +5916,7 @@ VOID        WINAPI SetFileApisToOEM(void);
 DWORD       WINAPI SetFilePointer(HFILE32,LONG,LPLONG,DWORD);
 BOOL32      WINAPI SetFileTime(HFILE32,const FILETIME*,const FILETIME*,
                                const FILETIME*);
+INT32       WINAPI SetGraphicsMode(HDC32,INT32);
 VOID        WINAPI SetLastErrorEx(DWORD,DWORD);
 BOOL32      WINAPI SetMenuItemInfo32A(HMENU32,UINT32,BOOL32,const MENUITEMINFO32A*);
 BOOL32      WINAPI SetMenuItemInfo32W(HMENU32,UINT32,BOOL32,const MENUITEMINFO32W*);
@@ -5887,6 +5927,7 @@ BOOL32      WINAPI SetSystemPowerState(BOOL32,BOOL32);
 BOOL32      WINAPI SetSystemTime(const SYSTEMTIME*);
 BOOL32      WINAPI SetThreadPriority(HANDLE32,INT32);
 BOOL32      WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
+BOOL32      WINAPI SetWorldTransform(HDC32,const XFORM*);
 VOID        WINAPI Sleep(DWORD);
 BOOL32      WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 BOOL32      WINAPI TrackPopupMenuEx(HMENU32,UINT32,INT32,INT32,HWND32,
@@ -5910,11 +5951,15 @@ DWORD       WINAPI WaitForMultipleObjects(DWORD,const HANDLE32*,BOOL32,DWORD);
 DWORD       WINAPI WaitForMultipleObjectsEx(DWORD,const HANDLE32*,BOOL32,DWORD,BOOL32);
 DWORD       WINAPI WaitForSingleObject(HANDLE32,DWORD);
 DWORD       WINAPI WaitForSingleObjectEx(HANDLE32,DWORD,BOOL32);
+SEGPTR      WINAPI WOWGlobalAllocLock16(DWORD,DWORD,HGLOBAL16*);
+DWORD       WINAPI WOWCallback16(FARPROC16,DWORD);
+BOOL32      WINAPI WOWCallback16Ex(FARPROC16,DWORD,DWORD,LPVOID,LPDWORD);
+HANDLE32    WINAPI WOWHandle32(WORD,WOW_HANDLE_TYPE);
+WORD        WINAPI WOWHandle16(HANDLE32,WOW_HANDLE_TYPE);
 BOOL32      WINAPI WriteConsole32A(HANDLE32,LPCVOID,DWORD,LPDWORD,LPVOID);
 BOOL32      WINAPI WriteConsole32W(HANDLE32,LPCVOID,DWORD,LPDWORD,LPVOID);
 #define     WriteConsole WINELIB_NAME_AW(WriteConsole)
 BOOL32      WINAPI WriteFile(HFILE32,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
-
 
 /* Declarations for functions that are the same in Win16 and Win32 */
 
@@ -6634,6 +6679,9 @@ HWND32      WINAPI GetActiveWindow32(void);
 DWORD       WINAPI GetAppCompatFlags16(HTASK16);
 DWORD       WINAPI GetAppCompatFlags32(HTASK32);
 #define     GetAppCompatFlags WINELIB_NAME(GetAppCompatFlags)
+INT16       WINAPI GetArcDirection16(HDC16);
+INT32       WINAPI GetArcDirection32(HDC32);
+#define     GetArcDirection WINELIB_NAME(GetArcDirection)
 WORD        WINAPI GetAsyncKeyState16(INT16);
 WORD        WINAPI GetAsyncKeyState32(INT32);
 #define     GetAsyncKeyState WINELIB_NAME(GetAsyncKeyState)
@@ -7314,6 +7362,10 @@ HICON16     WINAPI LoadIcon16(HINSTANCE16,SEGPTR);
 HICON32     WINAPI LoadIcon32A(HINSTANCE32,LPCSTR);
 HICON32     WINAPI LoadIcon32W(HINSTANCE32,LPCWSTR);
 #define     LoadIcon WINELIB_NAME_AW(LoadIcon)
+HANDLE16    WINAPI LoadImage16(HINSTANCE16,LPCSTR,UINT16,INT16,INT16,UINT16);
+HANDLE32    WINAPI LoadImage32A(HINSTANCE32,LPCSTR,UINT32,INT32,INT32,UINT32);
+HANDLE32    WINAPI LoadImage32W(HINSTANCE32,LPCWSTR,UINT32,INT32,INT32,UINT32);
+#define     LoadImage WINELIB_NAME_AW(LoadImage)
 HINSTANCE16 WINAPI LoadLibrary16(LPCSTR);
 HMODULE32   WINAPI LoadLibrary32A(LPCSTR);
 HMODULE32   WINAPI LoadLibrary32W(LPCWSTR);
@@ -7697,6 +7749,9 @@ LRESULT     WINAPI SendMessageTimeout32W(HWND32,UINT32,WPARAM32,LPARAM,UINT32,
 HWND16      WINAPI SetActiveWindow16(HWND16);
 HWND32      WINAPI SetActiveWindow32(HWND32);
 #define     SetActiveWindow WINELIB_NAME(SetActiveWindow)
+INT16       WINAPI SetArcDirection16(HDC16,INT16);
+INT32       WINAPI SetArcDirection32(HDC32,INT32);
+#define     SetArcDirection WINELIB_NAME(SetArcDirection)
 LONG        WINAPI SetBitmapBits16(HBITMAP16,LONG,LPCVOID);
 LONG        WINAPI SetBitmapBits32(HBITMAP32,LONG,LPCVOID);
 #define     SetBitmapBits WINELIB_NAME(SetBitmapBits)

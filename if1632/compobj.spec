@@ -5,7 +5,7 @@ type	win16
 2 pascal CoInitialize(long) CoInitialize
 3 pascal CoUninitialize() CoUnitialize
 4 pascal CoGetMalloc(long ptr) CoGetMalloc
-5 stub COREGISTERCLASSOBJECT
+5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject
 6 stub COREVOKECLASSOBJECT
 7 stub COGETCLASSOBJECT
 8 stub COMARSHALINTERFACE
@@ -13,11 +13,11 @@ type	win16
 10 stub COLOADLIBRARY
 11 stub COFREELIBRARY
 12 stub COFREEALLLIBRARIES
-13 stub COCREATEINSTANCE
+13 pascal CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance
 14 stub STRINGFROMIID
 15 pascal CoDisconnectObject(ptr long) CoDisconnectObject
 16 stub CORELEASEMARSHALDATA
-17 stub COFREEUNUSEDLIBRARIES
+17 pascal16 COFREEUNUSEDLIBRARIES() CoFreeUnusedLibraries
 18 pascal16 IsEqualGUID(ptr ptr) IsEqualGUID
 19 pascal StringFromCLSID(ptr ptr) StringFromCLSID
 20 pascal CLSIDFromString(str ptr) CLSIDFromString
@@ -27,11 +27,11 @@ type	win16
 24 stub ISVALIDIID
 25 stub RESULTFROMSCODE
 26 stub GETSCODE
-27 stub COREGISTERMESSAGEFILTER
+27 pascal CoRegisterMessageFilter(ptr ptr) CoRegisterMessageFilter16
 28 stub COISHANDLERCONNECTED
 #29 WEP
-30 stub COFILETIMETODOSDATETIME
-31 stub CODOSDATETIMETOFILETIME
+30 pascal CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
+31 pascal CoDosDateTimeToFileTime(word word ptr) DosDateTimeToFileTime
 32 stub COMARSHALHRESULT
 33 stub COUNMARSHALHRESULT
 34 stub COGETCURRENTPROCESS
@@ -61,7 +61,7 @@ type	win16
 58 stub _IID_IDFRESERVED2
 59 stub _IID_IDFRESERVED3
 60 stub _IID_IMESSAGEFILTER
-61 stub CLSIDFROMPROGID
+61 pascal CLSIDFromProgID(str ptr) CLSIDFromProgID
 62 stub PROGIDFROMCLSID
 63 stub COLOCKOBJECTEXTERNAL
 64 stub _CLSID_STDMARSHAL
@@ -81,7 +81,7 @@ type	win16
 79 stub CLSIDFROMOLE1CLASS
 80 stub COOPENCLASSKEY
 81 stub GUIDFROMSTRING
-82 stub COFILETIMENOW
+82 pascal CoFileTimeNow(ptr) CoFileTimeNow
 83 stub REMALLOCOID
 84 stub REMFREEOID
 85 stub REMCREATEREMOTEHANDLER
@@ -93,7 +93,7 @@ type	win16
 91 stub LRPCREVOKEMONITOR
 92 stub LRPCGETTHREADWINDOW
 93 stub TIMERCALLBACKPROC
-94 stub LOOKUPETASK
+94 pascal LookupETask(ptr ptr) LookupETask
 95 stub SETETASK
 96 stub LRPCFREEMONITORDATA
 97 stub REMLOOKUPSHUNK
@@ -143,3 +143,7 @@ type	win16
 160 stub CORUNMODALLOOP
 161 stub COHANDLEINCOMINGCALL
 162 stub COSETACKSTATE
+
+201 pascal CALLOBJECTINWOW(ptr ptr) CallObjectInWOW
+204 stub COMPOBJ_204
+207 stub COMPOBJ_207

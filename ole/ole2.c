@@ -49,7 +49,7 @@ HRESULT WINAPI OleFlushClipboard()
 /***********************************************************************
  *           CoRegisterMessageFilter   [OLE32.38]
  */
-HRESULT CoRegisterMessageFilter(
+HRESULT WINAPI CoRegisterMessageFilter32(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
     LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
 ) {

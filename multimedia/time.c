@@ -34,6 +34,7 @@ typedef struct tagTIMERENTRY {
     UINT32	wCurTime;
     UINT32	iswin32;
     struct tagTIMERENTRY *Next;
+    DWORD	triggertime;
 } TIMERENTRY, *LPTIMERENTRY;
 
 static LPTIMERENTRY lpTimerList = NULL;
@@ -42,9 +43,51 @@ static LPTIMERENTRY lpTimerList = NULL;
  * FIXME
  * is this the minimum resolution ? 
  */
-#define MMSYSTIME_MININTERVAL (33)
+/*#define MMSYSTIME_MININTERVAL (33)*/
+#define MMSYSTIME_MININTERVAL (31)
 #define MMSYSTIME_MAXINTERVAL (65535)
 
+
+/**************************************************************************
+ *           check_MMtimers
+ */
+static VOID check_MMtimers()
+{
+    LPTIMERENTRY lpTimer = lpTimerList;
+    DWORD	curtick = GetTickCount();
+
+    while (lpTimer != NULL) {
+    	if (lpTimer->triggertime <= curtick) {
+	    lpTimer->wCurTime = lpTimer->wDelay;
+
+	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // before CallBack16 !\n");
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // hInstance=%04X !\n", lpTimer->hInstance);
+
+
+/*        - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
+ *          during interrupt time,  is allowed to execute very limited number of API calls (like
+ *	    PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
+ *          guess current implementation via SetTimer has to be improved upon.		
+ */
+ 		if (lpTimer->iswin32)
+			lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
+		else
+			Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
+						    lpTimer->wTimerID,0,
+						    lpTimer->dwUser,0,0
+			);
+
+		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
+	    }
+	    if (lpTimer->wFlags & TIME_ONESHOT)
+		timeKillEvent32(lpTimer->wTimerID);
+	}
+	lpTimer = lpTimer->Next;
+    }
+}
 
 /**************************************************************************
  *           TIME_MMSysTimeCallback
@@ -170,6 +213,7 @@ MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
     lpTimerList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
     lpNewTimer->wCurTime = wDelay;
+    lpNewTimer->triggertime = wDelay+GetTickCount();
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = (FARPROC16) lpFunc;
@@ -210,6 +254,7 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
     lpNewTimer->wTimerID = wNewID + 1;
     lpNewTimer->wCurTime = wDelay;
     lpNewTimer->wDelay = wDelay;
+    lpNewTimer->triggertime = wDelay+GetTickCount();
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = (FARPROC16) lpFunc;
     lpNewTimer->iswin32 = 0;
@@ -334,7 +379,11 @@ DWORD WINAPI timeGetTime()
 	StartMMTime();
     newtick = GetTickCount();
     mmSysTimeMS.u.ms+=newtick-lasttick; /* FIXME: faked timer */
+    if (newtick!=lasttick)
+    	check_MMtimers();
     lasttick = newtick;
     dprintf_mmtime(stddeb, "timeGetTime() // Time = %ld\n",mmSysTimeMS.u.ms);
+
+
     return mmSysTimeMS.u.ms;
 }

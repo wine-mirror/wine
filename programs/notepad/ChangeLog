@@ -1,3 +1,7 @@
+Sun Jan 18 23:05:04 1998  Karl Backström <karl_b@geocities.com>
+	* [Sw.rc]
+	Added/updated Swedish language support.
+
 Tue Dec 23 23:35:04 1997  Marcel Baur <mbaur@g26.ethz.ch>
        * Fixed lots of bugs w/ resources in *.rc
        * moved [notepad.c] into [main.c]

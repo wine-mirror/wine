@@ -475,8 +475,8 @@ typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 
 /* ws_... struct conversion flags */
 
-#define WS_DUP_LINEAR		0x0000
-#define WS_DUP_NATIVE           0x0001		/* native structure format (not ws_..) */
+#define WS_DUP_LINEAR		0x0001
+#define WS_DUP_NATIVE           0x0000		/* not used anymore */
 #define WS_DUP_OFFSET           0x0002		/* internal pointers are offsets */
 #define WS_DUP_SEGPTR           0x0004		/* internal pointers are SEGPTRs */
 						/* by default, internal pointers are linear */
@@ -537,7 +537,7 @@ typedef struct	__ws	/* socket */
   ws_select_op*	psop;
 } ws_socket;
 
-#define WS_MAX_SOCKETS_PER_THREAD       16
+#define WS_MAX_SOCKETS_PER_PROCESS      16
 #define WS_MAX_UDP_DATAGRAM             1024
 
 #define WSI_BLOCKINGCALL	0x00000001	/* per-thread info flags */
@@ -556,7 +556,7 @@ typedef struct _WSINFO
   char*			buffer;			/* allocated from SEGPTR heap */
   char*			dbuffer;		/* buffer for dummies (32 bytes) */
 
-  ws_socket		sock[WS_MAX_SOCKETS_PER_THREAD];
+  ws_socket		sock[WS_MAX_SOCKETS_PER_PROCESS];
   DWORD			blocking_hook;
   HTASK16               tid;    		/* owning task id - process might be better */
 } WSINFO, *LPWSINFO;
@@ -579,7 +579,7 @@ int  WINSOCK_cancel_async_op(ws_async_op* p_aop);
 
 void WINSOCK_cancel_task_aops(HTASK16, void (*__memfree)(void*) );
 
-BOOL32 WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set io_set[3] );
+BOOL32 WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set pending_set[3], fd_set master_set[3] );
 void   WINSOCK_Shutdown(void);
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);

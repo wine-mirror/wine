@@ -1,0 +1,49 @@
+/*
+ * Help Viewer
+ *
+ * Copyright 1996 Ulrich Schmid
+ * Swedish language by Karl Backström <karl_b@geocities.com>
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Sw
+#define LANGUAGE_NUMBER              1d
+
+/* Menu */
+
+#define MENU_FILE                    "&Arkiv"
+#define MENU_FILE_OPEN               "&Öppna..."
+#define MENU_FILE_PRINT              "&Skriv ut"
+#define MENU_FILE_PRINTER_SETUP      "Skrivar &inställningar..."
+#define MENU_FILE_EXIT               "&Avsluta"
+
+#define MENU_EDIT                    "&Redigera"
+#define MENU_EDIT_COPY_DIALOG        "&Kopiera..."
+#define MENU_EDIT_ANNOTATE           "&Annmärk..."
+
+#define MENU_BOOKMARK                "&Bokmärke"
+#define MENU_BOOKMARK_DEFINE         "&Defingera..."
+
+#define MENU_HELP                    "&Hjälp"
+#define MENU_HELP_ON_HELP            "Användningen &av hjälp"
+#define MENU_HELP_ON_TOP             "Alltid &överst"
+#define MENU_HELP_INFO               "&Information..."
+#define MENU_HELP_ABOUT_WINE         "&Om WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE Hjälp"
+#define STRING_ERROR                 "FEL"
+#define STRING_WARNING               "VARNING"
+#define STRING_INFO                  "Information"
+#define STRING_NOT_IMPLEMENTED       "Ej implementererat"
+#define STRING_HLPFILE_ERROR_s       "FEL vid läsning av hjälp filen `%s'"
+#define STRING_CONTENTS              "&Innehåll"
+#define STRING_SEARCH                "&Sök"
+#define STRING_BACK                  "&Tillbaka"
+#define STRING_HISTORY               "&Översikt"
+#define STRING_ALL_FILES             "Alla filer (*.*)"
+#define STRING_HELP_FILES_HLP        "Hjälp filer (*.hlp)"
+
+#include "Xx.rc"

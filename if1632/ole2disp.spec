@@ -31,11 +31,11 @@ type	win16
 28 stub DISPGETPARAM
 29 stub DISPGETIDSOFNAMES
 30 stub DISPINVOKE
-31 stub CREATEDISPTYPEINFO
+31 pascal CreateDispTypeInfo(ptr long ptr) CreateDispTypeInfo
 32 stub CREATESTDDISPATCH
 33 stub _IID_IDISPATCH
 34 stub _IID_IENUMVARIANT
-35 stub REGISTERACTIVEOBJECT
+35 pascal RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject
 36 stub REVOKEACTIVEOBJECT
 37 stub GETACTIVEOBJECT
 38 stub SAFEARRAYALLOCDESCRIPTOR

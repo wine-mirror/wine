@@ -29,6 +29,14 @@ extern "C" {
 #define OFN_NOREADONLYRETURN         0x00008000
 #define OFN_NOTESTFILECREATE         0x00010000
 
+/*      OFN_?                        0x00020000 */
+
+#define OFN_NOLONGNAMES              0x00040000
+#define OFN_EXPLORER                 0x00080000
+#define OFN_NODEREFERENCELINKS       0x00100000
+#define OFN_LONGNAMES                0x00200000
+
+/* WINE internal flags */
 #define OFN_UNICODE		     0x40000000	/*to differ between 32W/A hook*/
 #define OFN_WINE32		     0x80000000	/* comdlg32 */
 

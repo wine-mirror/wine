@@ -30,6 +30,10 @@ General:
 	- You can find information about most of the Win32 API calls
           on the www.microsoft.com (go to 'search').
 
+ * A lot of the extensions to the GDI that were introduced with Win32 are
+   not supported at all or only in a very rudimentary way. (World transforms,
+   arc direction, GM_ADVANCED to name but a few)
+
 Miscellaneous:
 
  * 16-bit Eudora 1.5.2 goes into recursion trying to display
@@ -63,8 +67,6 @@ Miscellaneous:
 
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
-
- * X11DRV_PaintRgn doesn't respect mapping modes
 
 Where to look in source files:
 

@@ -7,7 +7,7 @@
 #ifndef __WINE_CURSORICON_H
 #define __WINE_CURSORICON_H
 
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include "windows.h"
 
 #pragma pack(1)

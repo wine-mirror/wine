@@ -16,7 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <X11/Xatom.h>
 #include "heap.h"
 #include "options.h"
@@ -543,7 +543,7 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32* pIL
     BOOL32 bHaveCapHeight = (pFI->dfCharSet == ANSI_CHARSET && 'X' >= min && 'X' <= max );
 
     if( pEL ) *pEL = 0;
-    if( XGetFontProperty(x_fs, XA_CAP_HEIGHT, &height) == False )
+    if( TSXGetFontProperty(x_fs, XA_CAP_HEIGHT, &height) == False )
     {
 	if( x_fs->per_char )
 	    if( bHaveCapHeight )
@@ -1322,7 +1322,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   res = XFONT_GetPointResolution( pDevCaps );
       
-  x_pattern = XListFonts(display, "*", MAX_FONT_FAMILIES * 16, &x_count );
+  x_pattern = TSXListFonts(display, "*", MAX_FONT_FAMILIES * 16, &x_count );
 
   dprintf_font(stddeb,"Font Mapper: initializing %i fonts [LPY=%i, XDR=%i, DR=%i]\n", 
 				    x_count, pDevCaps->logPixelsY, DefResolution, res);
@@ -1433,12 +1433,12 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 	}
 	else lpstr = typeface;
 
-	if( (x_fs = XLoadQueryFont(display, lpstr)) )
+	if( (x_fs = TSXLoadQueryFont(display, lpstr)) )
 	{
 	   fi->df.dfHorizRes = fi->df.dfVertRes = res;
 
 	   XFONT_SetFontMetric( fi, fr, x_fs );
-           XFreeFont( display, x_fs );
+           TSXFreeFont( display, x_fs );
 
 #ifdef DEBUG_FONT_INIT
 	   dprintf_font(stddeb,"\t[% 2ipt] '%s'\n", fi->df.dfPoints, typeface );
@@ -1464,15 +1464,15 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   }
 
   if( fi ) HeapFree(SystemHeap, 0, fi);
-  XFreeFontNames(x_pattern);
+  TSXFreeFontNames(x_pattern);
 
   /* check if we're dealing with X11 R6 server */
 
   lstrcpy32A(buffer, "-*-*-*-*-normal-*-[12 0 0 12]-*-72-*-*-*-iso8859-1");
-  if( (x_fs = XLoadQueryFont(display, buffer)) )
+  if( (x_fs = TSXLoadQueryFont(display, buffer)) )
   {
        XTextCaps |= TC_SF_X_YINDEP;
-       XFreeFont(display, x_fs);
+       TSXFreeFont(display, x_fs);
   }
 
   XFONT_WindowsNames( buffer );
@@ -1622,8 +1622,6 @@ static UINT32 XFONT_Match( fontMatch* pfm )
    }
    else if( !(pfi->fi_flags & FI_NORMAL) ) penalty++;
 
-   if( pfi->lfd_resolution != DefResolution ) penalty++;
-
    if( plf->lfWeight != FW_DONTCARE )
    {
        penalty += abs(plf->lfWeight - pfi->df.dfWeight) / 40;
@@ -1638,6 +1636,9 @@ static UINT32 XFONT_Match( fontMatch* pfm )
 
    if( plf->lfUnderline ) pfm->flags |= FO_SYNTH_UNDERLINE;
    if( plf->lfStrikeOut ) pfm->flags |= FO_SYNTH_STRIKEOUT;
+
+   if( penalty && pfi->lfd_resolution != DefResolution ) 
+       penalty++;
 
    dprintf_font(stddeb,"-> %i\n", penalty );
 
@@ -1875,7 +1876,7 @@ static fontObject* XFONT_GetCacheEntry()
 	    else fontMRU = (INT16)fontCache[j].lru;
 
 	    /* FIXME: lpXForm, lpPixmap */
-	    XFreeFont( display, fontCache[j].fs );
+	    TSXFreeFont( display, fontCache[j].fs );
 
 	    memset( fontCache + j, 0, sizeof(fontObject) );
 	    return (fontCache + j);
@@ -1957,7 +1958,7 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 		do
 		{
 		    LFD_ComposeLFD( pfo, fm.height, lpLFD, uRelaxLevel++ );
-		    if( (pfo->fs = XLoadQueryFont( display, lpLFD )) ) break;
+		    if( (pfo->fs = TSXLoadQueryFont( display, lpLFD )) ) break;
 		} while( uRelaxLevel );
 
 		if( XFONT_GetLeading( &pfo->fi->df, pfo->fs, &i, NULL ) )
@@ -2118,6 +2119,9 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 }
 
 
+static char* test_string = "Abc Def Ghi Jkl Mno Pqr Stu Vwx Yz";
+
+
 /***********************************************************************
  *           X11DRV_GetTextExtentPoint
  */
@@ -2130,10 +2134,11 @@ BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 	int dir, ascent, descent;
 	XCharStruct info;
 
-	XTextExtents( pfs, str, count, &dir, &ascent, &descent, &info );
+	TSXTextExtents( pfs, str, count, &dir, &ascent, &descent, &info );
 	size->cx = abs((info.width + dc->w.breakRem + count * dc->w.charExtra)
 						* dc->wndExtX / dc->vportExtX);
 	size->cy = abs((pfs->ascent + pfs->descent) * dc->wndExtY / dc->vportExtY);
+
 	return TRUE;
     }
     return FALSE;
@@ -2149,6 +2154,7 @@ BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
     {
 	fontObject* pfo = __PFONT(dc->u.x.font);
 	XFONT_GetTextMetric( pfo, metrics );
+
 	return TRUE;
     }
     return FALSE;
@@ -2187,6 +2193,7 @@ BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
 		*buffer++ = MAX(cs->width, 0 );
 	    }
 	}
+
 	return TRUE;
     }
     return FALSE;

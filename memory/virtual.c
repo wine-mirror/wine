@@ -281,9 +281,11 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
  */
 static void VIRTUAL_GetWin32Prot( BYTE vprot, DWORD *protect, DWORD *state )
 {
-    *protect = VIRTUAL_Win32Flags[vprot & 0x0f];
-    if (vprot & VPROT_GUARD) *protect |= PAGE_GUARD;
-    if (vprot & VPROT_NOCACHE) *protect |= PAGE_NOCACHE;
+    if (protect) {
+    	*protect = VIRTUAL_Win32Flags[vprot & 0x0f];
+    	if (vprot & VPROT_GUARD) *protect |= PAGE_GUARD;
+    	if (vprot & VPROT_NOCACHE) *protect |= PAGE_NOCACHE;
+    }
 
     if (state) *state = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
 }

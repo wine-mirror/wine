@@ -95,12 +95,6 @@ enum {
     TOTAL_PRINTER_DRIVER_FUNCTIONS /* insert functions before here */
 };
 
-typedef struct PRINTER_FONTS_INFO
-{
-    LOGFONT16		lf;			/* LogFont infomation */
-    TEXTMETRIC16	tm;			/* Text metrics infomation */
-} PRINTER_FONTS_INFO;
-
 typedef struct
 {
     LPSTR 	szDriver;		/* Driver name eg EPSON */
@@ -108,8 +102,6 @@ typedef struct
     WORD	ds_reg;			/* DS of driver */
     FARPROC16 	fn[TOTAL_PRINTER_DRIVER_FUNCTIONS];	/* Printer functions */
     int		nUsageCount;		/* Usage count, unload == 0 */
-    int		nPrinterFonts;		/* Number of printer fonts */
-    PRINTER_FONTS_INFO *paPrinterFonts; /* array of printer fonts */
     int		nIndex;			/* Index in global driver array */
 } LOADED_PRINTER_DRIVER;
 
@@ -143,10 +135,8 @@ typedef struct DRAWMODE
 
 typedef struct WINE_ENUM_PRINTER_FONT_CALLBACK
 {
-    DWORD	magic;			/* magic number */
-    int 	nMode;			/* Mode 0=count, 1=store */
-    int 	nCount;			/* Callback count */
-    LOADED_PRINTER_DRIVER *pLPD;    	/* Printer driver info */
+    int (*proc)(LPENUMLOGFONT16, LPNEWTEXTMETRIC16, UINT16, LPARAM);
+    LPARAM lp;
 } WEPFC;
 
 #define DRVOBJ_PEN 	1       
@@ -160,9 +150,9 @@ typedef struct
     SEGPTR		segptrPDEVICE;	/* PDEVICE used by 16 bit printer drivers */
     LOGFONT16		lf;		/* Current font details */
     TEXTMETRIC16	tm;		/* Current font metrics */
-    SEGPTR		segptrFontInfo; /* Current font realized by printer driver */
-    SEGPTR		segptrBrushInfo; /* Current brush realized by printer driver */
-    SEGPTR		segptrPenInfo;   /* Current pen realized by printer driver */
+    LPFONTINFO16       	FontInfo;       /* Current font realized by printer driver */
+    LPLOGBRUSH16	BrushInfo;      /* Current brush realized by printer driver */
+    LPLOGPEN16		PenInfo;        /* Current pen realized by printer driver */
 } WIN16DRV_PDEVICE;
 
 /*
@@ -183,10 +173,33 @@ extern DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 extern BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle, FARPROC16 lpfn, LPVOID lpb);
 extern DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 			       RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
-			       SEGPTR lpFontInfo,SEGPTR lpDrawMode, 
+			       LPFONTINFO16 lpFontInfo, SEGPTR lpDrawMode, 
 			       SEGPTR lpTextXForm, SHORT *lpCharWidths,
 			       RECT16 *     lpOpaqueRect, WORD wOptions);
 
+extern WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
+			  WORD 	 wStyle, 
+			  WORD 	 wCount,
+			  POINT16       *points, 
+			  LPLOGPEN16 	 lpPen,
+			  LPLOGBRUSH16	 lpBrush,
+			  SEGPTR	 lpDrawMode,
+			  HRGN32 	 hClipRgn);
+
+DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
+                        WORD wDestX, WORD wDestY,
+                        WORD wDestXext, WORD wDestYext, 
+                        LPPDEVICE lpSrcDev,
+                        WORD wSrcX, WORD wSrcY,
+                        WORD wSrcXext, WORD wSrcYext, 
+                        DWORD Rop3,
+                        LPLOGBRUSH16 lpBrush,
+                        SEGPTR lpDrawMode,
+                        RECT16 *lpClipRect);
+
+extern WORD PRTDRV_GetCharWidth(LPPDEVICE lpDestDev, LPINT32 lpBuffer, 
+		      WORD wFirstChar, WORD wLastChar, LPFONTINFO16 lpFontInfo,
+		      SEGPTR lpDrawMode, SEGPTR lpTextXForm );
 
 /* Wine driver functions */
 
@@ -203,11 +216,14 @@ extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 extern BOOL32 WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y );
 extern BOOL32 WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt);
 extern BOOL32 WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count );
+extern BOOL32 WIN16DRV_Polyline(DC *dc, LPPOINT32 pt, INT32 count );
 extern BOOL32 WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
                                INT32 width, INT32 height, DWORD rop );
-
+extern BOOL32 WIN16DRV_Ellipse(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
+extern BOOL32 WIN16DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf, 
+				        DEVICEFONTENUMPROC proc, LPARAM lp );
 
 
 /*

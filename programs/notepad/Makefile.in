@@ -8,7 +8,7 @@ PROGRAMS  = notepad
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 
-LANGUAGES   = En De
+LANGUAGES   = En De Sw
 LICENSELANG = En
 
 MOSTSRCS = \

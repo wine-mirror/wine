@@ -299,3 +299,15 @@ BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
     if (result) USER_ExitWindows();
     return FALSE;
 }
+
+
+/***********************************************************************
+ *           SetEventHook   (USER.321)
+ *
+ *	Used by Turbo Debugger for Windows
+ */
+FARPROC16 SetEventHook(FARPROC16 lpfnEventHook)
+{
+	fprintf(stderr, "SetEventHook(lpfnEventHook = %08x): stub !\n", (UINT32)lpfnEventHook);
+	return NULL;
+}

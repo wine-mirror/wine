@@ -1,11 +1,12 @@
 /*
  * Graphics paths (BeginPath, EndPath etc.)
  *
- * Copyright 1997 Martin Boehme
+ * Copyright 1997, 1998 Martin Boehme
  */
 
 #include <assert.h>
 #include <malloc.h>
+#include <math.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -64,6 +65,22 @@ static void   PATH_EmptyPath(GdiPath *pPath);
 static BOOL32 PATH_AddEntry(GdiPath *pPath, POINT32 point, BYTE flags);
 static BOOL32 PATH_ReserveEntries(GdiPath *pPath, INT32 numEntries);
 static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath);
+static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
+   double angleStart, double angleEnd, BOOL32 addMoveTo);
+static void PATH_ScaleNormalizedPoint(POINT32 corners[], double x, double y,
+   POINT32 *pPoint);
+static void PATH_NormalizePoint(POINT32 corners[], const POINT32 *pPoint,
+   double *pX, double *pY);
+
+
+/***********************************************************************
+ *           BeginPath16    (GDI.512)
+ */
+BOOL16 WINAPI BeginPath16(HDC16 hdc)
+{
+   return (BOOL16)BeginPath32((HDC32)hdc);
+}
+
 
 /***********************************************************************
  *           BeginPath32    (GDI32.9)
@@ -91,6 +108,15 @@ BOOL32 WINAPI BeginPath32(HDC32 hdc)
    pPath->state=PATH_Open;
    
    return TRUE;
+}
+
+
+/***********************************************************************
+ *           EndPath16    (GDI.514)
+ */
+BOOL16 WINAPI EndPath16(HDC16 hdc)
+{
+   return (BOOL16)EndPath32((HDC32)hdc);
 }
 
 
@@ -123,6 +149,15 @@ BOOL32 WINAPI EndPath32(HDC32 hdc)
 
 
 /***********************************************************************
+ *           AbortPath16    (GDI.511)
+ */
+BOOL16 WINAPI AbortPath16(HDC16 hdc)
+{
+   return (BOOL16)AbortPath32((HDC32)hdc);
+}
+
+
+/***********************************************************************
  *           AbortPath32    (GDI32.1)
  */
 BOOL32 WINAPI AbortPath32(HDC32 hdc)
@@ -141,6 +176,15 @@ BOOL32 WINAPI AbortPath32(HDC32 hdc)
    PATH_EmptyPath(pPath);
 
    return TRUE;
+}
+
+
+/***********************************************************************
+ *           CloseFigure16    (GDI.513)
+ */
+BOOL16 WINAPI CloseFigure16(HDC16 hdc)
+{
+   return (BOOL16)CloseFigure32((HDC32)hdc);
 }
 
 
@@ -178,13 +222,25 @@ BOOL32 WINAPI CloseFigure32(HDC32 hdc)
 
 
 /***********************************************************************
+ *           GetPath16    (GDI.517)
+ */
+INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
+   INT16 nSize)
+{
+   /* FIXME: Not implemented */
+   fprintf(stdnimp, "GetPath16: Unimplemented stub\n");
+
+   return 0;
+}
+
+
+/***********************************************************************
  *           GetPath32    (GDI32.210)
  */
 INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
    INT32 nSize)
 {
    GdiPath *pPath;
-   BOOL32  temp_flag;
    
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -213,10 +269,12 @@ INT32 WINAPI GetPath32(HDC32 hdc, LPPOINT32 pPoints, LPBYTE pTypes,
       memcpy(pTypes, pPath->pFlags, sizeof(BYTE)*pPath->numEntriesUsed);
 
       /* Convert the points to logical coordinates */
-      temp_flag=DPtoLP32(hdc, pPoints, pPath->numEntriesUsed);
-
-      /* Since hdc is valid, conversion should never fail */
-      assert(temp_flag);
+      if(!DPtoLP32(hdc, pPoints, pPath->numEntriesUsed))
+      {
+	 /* FIXME: Is this the correct value? */
+         SetLastError(ERROR_CAN_NOT_COMPLETE);
+         return -1;
+      }
       
       return pPath->numEntriesUsed;
    }
@@ -266,8 +324,9 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 /* FIXME: Check that SetLastError is being called correctly */
 {
    GdiPath *pPath;
-   INT32   mapMode;
+   INT32   mapMode, graphicsMode;
    POINT32 ptViewportExt, ptViewportOrg, ptWindowExt, ptWindowOrg;
+   XFORM   xform;
    HRGN32  hrgn;
    
    /* Get pointer to path */
@@ -290,6 +349,9 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
       /* Since PaintRgn interprets the region as being in logical coordinates
        * but the points we store for the path are already in device
        * coordinates, we have to set the mapping mode to MM_TEXT temporarily.
+       * Using SaveDC to save information about the mapping mode / world
+       * transform would be easier but would require more overhead, especially
+       * now that SaveDC saves the current path.
        */
        
       /* Save the information about the old mapping mode */
@@ -299,13 +361,14 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
       GetWindowExtEx32(hdc, &ptWindowExt);
       GetWindowOrgEx32(hdc, &ptWindowOrg);
       
-      /* FIXME: Once world transforms become available, we will have to do
-       * a GetWorldTransform, too (along with a SetWorldTransform later on).
-       * Moral: Perhaps I should have used SaveDC right away. The reason why
-       * I didn't is that I wanted to avoid the overhead of a full SaveDC
-       * (especially since SaveDC now saves the current path as well).
+      /* Save world transform
+       * NB: The Windows documentation on world transforms would lead one to
+       * believe that this has to be done only in GM_ADVANCED; however, my
+       * tests show that resetting the graphics mode to GM_COMPATIBLE does
+       * not reset the world transform.
        */
-
+      GetWorldTransform(hdc, &xform);
+      
       /* Set MM_TEXT */
       SetMapMode32(hdc, MM_TEXT);
       
@@ -318,6 +381,12 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
       SetViewportOrgEx32(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
       SetWindowExtEx32(hdc, ptWindowExt.x, ptWindowExt.y, NULL);
       SetWindowOrgEx32(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
+
+      /* Go to GM_ADVANCED temporarily to restore the world transform */
+      graphicsMode=GetGraphicsMode(hdc);
+      SetGraphicsMode(hdc, GM_ADVANCED);
+      SetWorldTransform(hdc, &xform);
+      SetGraphicsMode(hdc, graphicsMode);
 
       /* Empty the path */
       PATH_EmptyPath(pPath);
@@ -335,12 +404,12 @@ BOOL32 WINAPI FillPath32(HDC32 hdc)
 /***********************************************************************
  *           SelectClipPath32    (GDI32.296)
  */
-BOOL32 WINAPI SelectClipPath32(HDC32 hdc, int iMode)
+BOOL32 WINAPI SelectClipPath32(HDC32 hdc, INT32 iMode)
 /* FIXME: Check that SetLastError is being called correctly */
 {
    GdiPath *pPath;
    HRGN32  hrgnPath, hrgnClip;
-   BOOL32  success = FALSE;
+   BOOL32  success;
    
    /* Get pointer to path */
    if(!PATH_GetPathFromHDC(hdc, &pPath))
@@ -360,7 +429,9 @@ BOOL32 WINAPI SelectClipPath32(HDC32 hdc, int iMode)
    if(PATH_PathToRegion(pPath, GetPolyFillMode32(hdc), &hrgnPath))
    {
       hrgnClip=CreateRectRgn32(0, 0, 0, 0);
-      if(hrgnClip!=NULL)
+      if(hrgnClip==NULL)
+         success=FALSE;
+      else
       {
          success=(GetClipRgn32(hdc, hrgnClip)!=-1) &&
 	    (CombineRgn32(hrgnClip, hrgnClip, hrgnPath, iMode)!=ERROR) &&
@@ -510,6 +581,152 @@ BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y)
    return PATH_AddEntry(pPath, point, PT_LINETO);
 }
 
+/* PATH_Ellipse
+ * 
+ * Should be called when a call to Ellipse is performed on a DC that has
+ * an open path. This adds four Bezier splines representing the ellipse
+ * to the path. Returns TRUE if successful, else FALSE.
+ */
+BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2)
+{
+   return PATH_Arc(hdc, x1, y1, x2, y2, x1, 0, x1, 0);
+}
+
+/* PATH_Arc
+ *
+ * Should be called when a call to Arc is performed on a DC that has
+ * an open path. This adds up to five Bezier splines representing the arc
+ * to the path. Returns TRUE if successful, else FALSE.
+ */
+BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
+   INT32 xStart, INT32 yStart, INT32 xEnd, INT32 yEnd)
+{
+   GdiPath *pPath;
+   double  angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
+           /* Initialize angleEndQuadrant to silence gcc's warning */
+   double  x, y;
+   POINT32 corners[2], pointStart, pointEnd;
+   BOOL32  start, end;
+   INT32   temp;
+
+   /* FIXME: This function should check for all possible error returns */
+   
+   /* Get pointer to path */
+   if(!PATH_GetPathFromHDC(hdc, &pPath))
+      return FALSE;
+   
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   /* Check for zero height / width */
+   /* FIXME: Should we do this before or after LPtoDP? */
+   if(x1==x2 || y1==y2)
+      return TRUE;
+   
+   /* In GM_COMPATIBLE, don't include bottom and right edges */
+   if(GetGraphicsMode(hdc)==GM_COMPATIBLE)
+   {
+      /* FIXME: Should we do this before or after LPtoDP? */
+      x2--;
+      y2--;
+   }
+
+   /* Convert points to device coordinates */
+   corners[0].x=x1;
+   corners[0].y=y1;
+   corners[1].x=x2;
+   corners[1].y=y2;
+   pointStart.x=xStart;
+   pointStart.y=yStart;
+   pointEnd.x=xEnd;
+   pointEnd.y=yEnd;
+   if(!LPtoDP32(hdc, corners, 2) || !LPtoDP32(hdc, &pointStart, 1) ||
+      !LPtoDP32(hdc, &pointEnd, 1))
+      return FALSE;
+
+   /* Make sure first corner is top left and right corner is bottom right */
+   /* FIXME: Should we do this before or after LPtoDP? */
+   if(corners[0].x>corners[1].x)
+   {
+      temp=corners[0].x;
+      corners[0].x=corners[1].x;
+      corners[1].x=temp;
+   }
+   if(corners[0].y>corners[1].y)
+   {
+      temp=corners[0].y;
+      corners[0].y=corners[1].y;
+      corners[1].y=temp;
+   }
+
+   /* Compute start and end angle */
+   PATH_NormalizePoint(corners, &pointStart, &x, &y);
+   angleStart=atan2(y, x);
+   PATH_NormalizePoint(corners, &pointEnd, &x, &y);
+   angleEnd=atan2(y, x);
+
+   /* Make sure the end angle is "on the right side" of the start angle */
+   if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+   {
+      if(angleEnd<=angleStart)
+      {
+         angleEnd+=2*M_PI;
+	 assert(angleEnd>=angleStart);
+      }
+   }
+   else
+   {
+      if(angleEnd>=angleStart)
+      {
+         angleEnd-=2*M_PI;
+	 assert(angleEnd<=angleStart);
+      }
+   }
+
+   /* Add the arc to the path with one Bezier spline per quadrant that the
+    * arc spans */
+   start=TRUE;
+   end=FALSE;
+   do
+   {
+      /* Determine the start and end angles for this quadrant */
+      if(start)
+      {
+         angleStartQuadrant=angleStart;
+	 if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+	    angleEndQuadrant=(floor(angleStart/M_PI_2)+1.0)*M_PI_2;
+	 else
+	    angleEndQuadrant=(ceil(angleStart/M_PI_2)-1.0)*M_PI_2;
+      }
+      else
+      {
+	 angleStartQuadrant=angleEndQuadrant;
+	 if(GetArcDirection32(hdc)==AD_CLOCKWISE)
+	    angleEndQuadrant+=M_PI_2;
+	 else
+	    angleEndQuadrant-=M_PI_2;
+      }
+
+      /* Have we reached the last part of the arc? */
+      if((GetArcDirection32(hdc)==AD_CLOCKWISE &&
+         angleEnd<=angleEndQuadrant) ||
+	 (GetArcDirection32(hdc)==AD_COUNTERCLOCKWISE &&
+	 angleEnd>=angleEndQuadrant))
+      {
+	 /* Adjust the end angle for this quadrant */
+         angleEndQuadrant=angleEnd;
+	 end=TRUE;
+      }
+
+      /* Add the Bezier spline to the path */
+      PATH_DoArcPart(pPath, corners, angleStartQuadrant, angleEndQuadrant,
+         start);
+      start=FALSE;
+   }  while(!end);
+
+   return TRUE;
+}
 
 /***********************************************************************
  * Internal functions
@@ -701,4 +918,86 @@ static BOOL32 PATH_GetPathFromHDC(HDC32 hdc, GdiPath **ppPath)
    }
    else
       return FALSE;
+}
+
+/* PATH_DoArcPart
+ *
+ * Creates a Bezier spline that corresponds to part of an arc and appends the
+ * corresponding points to the path. The start and end angles are passed in
+ * "angleStart" and "angleEnd"; these angles should span a quarter circle
+ * at most. If "addMoveTo" is true, a PT_MOVETO entry for the first control
+ * point is added to the path; otherwise, it is assumed that the current
+ * position is equal to the first control point.
+ */
+static BOOL32 PATH_DoArcPart(GdiPath *pPath, POINT32 corners[],
+   double angleStart, double angleEnd, BOOL32 addMoveTo)
+{
+   double  halfAngle, a;
+   double  xNorm[4], yNorm[4];
+   POINT32 point;
+   int     i;
+
+   assert(fabs(angleEnd-angleStart)<=M_PI_2);
+
+   /* FIXME: Is there an easier way of computing this? */
+
+   /* Compute control points */
+   halfAngle=(angleEnd-angleStart)/2.0;
+   a=4.0/3.0*(1-cos(halfAngle))/sin(halfAngle);
+   xNorm[0]=cos(angleStart);
+   yNorm[0]=sin(angleStart);
+   xNorm[1]=xNorm[0] - a*yNorm[0];
+   yNorm[1]=yNorm[0] + a*xNorm[0];
+   xNorm[3]=cos(angleEnd);
+   yNorm[3]=sin(angleEnd);
+   xNorm[2]=xNorm[3] + a*yNorm[3];
+   yNorm[2]=yNorm[3] - a*xNorm[3];
+   
+   /* Add starting point to path if desired */
+   if(addMoveTo)
+   {
+      PATH_ScaleNormalizedPoint(corners, xNorm[0], yNorm[0], &point);
+      if(!PATH_AddEntry(pPath, point, PT_MOVETO))
+         return FALSE;
+   }
+
+   /* Add remaining control points */
+   for(i=1; i<4; i++)
+   {
+      PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &point);
+      if(!PATH_AddEntry(pPath, point, PT_BEZIERTO))
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
+/* PATH_ScaleNormalizedPoint
+ *
+ * Scales a normalized point (x, y) with respect to the box whose corners are
+ * passed in "corners". The point is stored in "*pPoint". The normalized
+ * coordinates (-1.0, -1.0) correspond to corners[0], the coordinates
+ * (1.0, 1.0) correspond to corners[1].
+ */
+static void PATH_ScaleNormalizedPoint(POINT32 corners[], double x, double y,
+   POINT32 *pPoint)
+{
+   pPoint->x=(INT32)floor( (double)corners[0].x +
+      (double)(corners[1].x-corners[0].x)*0.5*(x+1.0) );
+   pPoint->y=(INT32)floor( (double)corners[0].y +
+      (double)(corners[1].y-corners[0].y)*0.5*(y+1.0) );
+}
+
+/* PATH_NormalizePoint
+ *
+ * Normalizes a point with respect to the box whose corners are passed in
+ * "corners". The normalized coordinates are stored in "*pX" and "*pY".
+ */
+static void PATH_NormalizePoint(POINT32 corners[], const POINT32 *pPoint,
+   double *pX, double *pY)
+{
+   *pX=(double)(pPoint->x-corners[0].x)/(double)(corners[1].x-corners[0].x) *
+      2.0 - 1.0;
+   *pY=(double)(pPoint->y-corners[0].y)/(double)(corners[1].y-corners[0].y) *
+      2.0 - 1.0;
 }

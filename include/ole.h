@@ -7,9 +7,14 @@
 
 #include "windows.h"
 
+typedef CHAR	OLE_CHAR,OLECHAR;
 typedef LPCSTR	OLE_LPCSTR;
 typedef LPSTR	LPOLESTR;
 typedef LPCSTR	LPCOLESTR;
+
+typedef unsigned short VARTYPE;
+typedef LONG DISPID;
+
 
 /* object types */
 #define OT_LINK		1
@@ -259,5 +264,40 @@ OLESTATUS WINAPI OleRenameClientDoc(LHCLIENTDOC,LPCSTR);
 OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC);
 OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC);
 OLESTATUS WINAPI OleRevokeServer(LHSERVER);
+
+typedef enum tagCALLCONV {
+    CC_CDECL		= 1,
+    CC_MSCPASCAL	= CC_CDECL + 1,
+    CC_PASCAL		= CC_MSCPASCAL,
+    CC_MACPASCAL	= CC_PASCAL + 1,
+    CC_STDCALL		= CC_MACPASCAL + 1,
+    CC_RESERVED		= CC_STDCALL + 1,
+    CC_SYSCALL		= CC_RESERVED + 1,
+    CC_MPWCDECL		= CC_SYSCALL + 1,
+    CC_MPWPASCAL	= CC_MPWCDECL + 1,
+    CC_MAX 		= CC_MPWPASCAL + 1
+} CALLCONV;
+
+typedef struct tagPARAMDATA {
+    OLECHAR * szName;    /* parameter name */
+    VARTYPE vt;         /* parameter type */
+} PARAMDATA, * LPPARAMDATA;
+
+typedef struct tagMETHODDATA {
+    OLECHAR * szName;    /* method name */
+    PARAMDATA * ppdata;  /* pointer to an array of PARAMDATAs */
+    DISPID dispid;      /* method ID */
+    UINT16 iMeth;         /* method index */
+    CALLCONV cc;        /* calling convention */
+    UINT16 cArgs;         /* count of arguments */
+    WORD wFlags;        /* same wFlags as on IDispatch::Invoke() */
+    VARTYPE vtReturn;
+} METHODDATA, * LPMETHODDATA;
+
+typedef struct tagINTERFACEDATA {
+    METHODDATA * pmethdata;  /* pointer to an array of METHODDATAs */
+    UINT16 cMembers;      /* count of members */
+} INTERFACEDATA, * LPINTERFACEDATA;
+
 
 #endif  /* __WINE_OLE_H */

@@ -7,8 +7,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include <X11/Intrinsic.h>
 #include "graphics.h"
 #include "color.h"
@@ -48,7 +48,7 @@ BOOL32 GRAPH_DrawLines( HDC32 hdc, LPPOINT32 pXY, INT32 N, HPEN32 hPen )
 		 l[i].y1 = pXY[j].y + dc->w.DCOrgY;
 		 l[i].y2 = pXY[j + 1].y + dc->w.DCOrgY;
 	    }
-	    XDrawSegments( display, dc->u.x.drawable, dc->u.x.gc, l, N );
+	    TSXDrawSegments( display, dc->u.x.drawable, dc->u.x.gc, l, N );
 	    bRet = TRUE;
 	}
 	if( hPrevPen ) SelectObject32( hdc, hPrevPen );
@@ -76,12 +76,12 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 
     xdest += dc->w.DCOrgX; ydest += dc->w.DCOrgY;
 
-    XSetFunction( display, dc->u.x.gc, GXcopy );
+    TSXSetFunction( display, dc->u.x.gc, GXcopy );
     if (bmp->bitmap.bmBitsPixel == 1)
     {
-        XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-        XSetBackground( display, dc->u.x.gc, dc->w.textPixel );
-        XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+        TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+        TSXSetBackground( display, dc->u.x.gc, dc->w.textPixel );
+        TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
                     xsrc, ysrc, width, height, xdest, ydest, 1 );
     }
     else if (bmp->bitmap.bmBitsPixel == dc->w.bitsPerPixel)
@@ -92,19 +92,19 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 
 	    if( COLOR_GetMonoPlane(&plane) )
 	    {
-		XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-		XSetBackground( display, dc->u.x.gc, dc->w.textPixel );
+		TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+		TSXSetBackground( display, dc->u.x.gc, dc->w.textPixel );
 	    }
 	    else
 	    {
-		XSetForeground( display, dc->u.x.gc, dc->w.textPixel );
-		XSetBackground( display, dc->u.x.gc, dc->w.backgroundPixel );
+		TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
+		TSXSetBackground( display, dc->u.x.gc, dc->w.backgroundPixel );
 	    }
-	    XCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
+	    TSXCopyPlane( display, bmp->pixmap, dc->u.x.drawable, dc->u.x.gc,
 			xsrc, ysrc, width, height, xdest, ydest, plane );
 	}
 	else 
-	    XCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
+	    TSXCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
 		       dc->u.x.gc, xsrc, ysrc, width, height, xdest, ydest );
     }
     else 
@@ -169,12 +169,12 @@ void  GRAPH_DrawGenericReliefRect(
     {
          INT32	i;
 
-	 XSetFunction( display, dc->u.x.gc, GXcopy );
+	 TSXSetFunction( display, dc->u.x.gc, GXcopy );
          for (i = 0; i < highlight_size; i++)
          {
-	      XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	      TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 					r.left + i, r.top, 1, h - i );
-	      XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	      TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 					r.left, r.top + i, w - i, 1 );
          }
     }
@@ -184,12 +184,12 @@ void  GRAPH_DrawGenericReliefRect(
     {
 	 INT32	i;
 
-	 XSetFunction( display, dc->u.x.gc, GXcopy );
+	 TSXSetFunction( display, dc->u.x.gc, GXcopy );
          for (i = 0; i < shadow_size; i++)
          {
-	      XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	      TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 			      r.right - i - 1, r.top + i, 1, h - i );
-	      XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	      TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 			      r.left + i, r.bottom - i - 1, w - i, 1 );
          }
     }
@@ -213,7 +213,7 @@ void GRAPH_DrawRectangle( HDC32 hdc, INT32 x, INT32 y,
 
 	if( hPen ) hPrevPen = SelectObject32( hdc, hPen );
 	if( DC_SetupGCForPen( dc ) )
-	    XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc, 
 			    x + dc->w.DCOrgX, y + dc->w.DCOrgY, w - 1, h - 1);
 	if( hPrevPen ) SelectObject32( hdc, hPrevPen );
     }
@@ -233,10 +233,10 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
        if ( !(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hMonoBitmap, BITMAP_MAGIC)) 
 	   || bmp->bitmap.bmBitsPixel != 1 ) return FALSE;
 	  
-       XSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX + x, dc->w.DCOrgY + y);
+       TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX + x, dc->w.DCOrgY + y);
     }
 
-    XSetClipMask( display, dc->u.x.gc, (bmp) ? bmp->pixmap : None );
+    TSXSetClipMask( display, dc->u.x.gc, (bmp) ? bmp->pixmap : None );
 
     GDI_HEAP_UNLOCK( hMonoBitmap );
     return TRUE;

@@ -1,0 +1,20 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = tsx11
+
+C_SRCS = \
+	ts_xshm.c \
+	ts_xlib.c \
+	ts_xresource.c \
+	ts_xutil.c \
+	ts_xpm.c \
+	tsx11defs.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

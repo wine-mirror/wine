@@ -5,8 +5,9 @@
 #ifndef __WINE_X11DRV_H
 #define __WINE_X11DRV_H
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
+#include "tsx11defs.h"
 
 #include "windows.h"
 

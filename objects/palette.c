@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 
 #include "gdi.h"
 #include "color.h"

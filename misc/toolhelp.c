@@ -28,6 +28,8 @@ static struct notify
 
 static int nrofnotifys = 0;
 
+static FARPROC16 HookNotify = NULL;
+
 BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
                               WORD wFlags )
 {
@@ -84,4 +86,17 @@ BOOL16 WINAPI StackTraceFirst(STACKTRACEENTRY *ste, HTASK16 Task)
 BOOL16 WINAPI StackTraceNext(STACKTRACEENTRY *ste)
 {
     return TRUE;
+}
+
+/***********************************************************************
+ *           ToolHelpHook                             (KERNEL.341)
+ *	see "Undocumented Windows"
+ */
+FARPROC16 WINAPI ToolHelpHook(FARPROC16 lpfnNotifyHandler)
+{
+FARPROC16 tmp;
+	tmp = HookNotify;
+	HookNotify = lpfnNotifyHandler;
+	/* just return previously installed notification function */
+	return tmp;
 }

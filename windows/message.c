@@ -449,7 +449,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     joySendMessages();
 
     /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && XPending(display))
+    if (!sysMsgQueue->msgCount && TSXPending(display))
         EVENT_WaitNetEvent( FALSE, FALSE );
 
     for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)

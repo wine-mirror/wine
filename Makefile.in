@@ -40,8 +40,10 @@ LIBSUBDIRS = \
 	multimedia \
 	objects \
 	ole \
+	relay32 \
 	resources \
 	scheduler \
+	tsx11 \
 	win32 \
 	windows
 
@@ -49,8 +51,7 @@ EMUSUBDIRS = \
 	debugger \
 	graphics/win16drv \
 	if1632 \
-	miscemu \
-	relay32
+	miscemu
 
 PROGSUBDIRS = libtest programs
 
@@ -83,8 +84,10 @@ LIBOBJS = \
 	multimedia/multimedia.o \
 	objects/objects.o \
 	ole/ole.o \
+	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
+	tsx11/tsx11.o \
 	win32/win32.o \
 	windows/windows.o
 
@@ -92,8 +95,7 @@ EMUOBJS = \
 	debugger/debugger.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
-	miscemu/miscemu.o \
-	relay32/relay32.o
+	miscemu/miscemu.o
 
 all: $(MAIN_TARGET)
 

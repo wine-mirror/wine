@@ -505,7 +505,7 @@ DWORD WINAPI GetRegionData(HRGN32 hrgn, DWORD count, LPRGNDATA rgndata)
     if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
     {
         GDI_HEAP_UNLOCK( hrgn );
-        return size;
+        return size + sizeof(RGNDATAHEADER);
     }
 
     rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);

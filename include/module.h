@@ -129,7 +129,7 @@ extern FARPROC16 MODULE_GetEntryPoint( HMODULE32 hModule, WORD ordinal );
 extern BOOL16 MODULE_SetEntryPoint( HMODULE32 hModule, WORD ordinal,
                                     WORD offset );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
-extern FARPROC16 WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
+extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
 
 /* builtin.c */
 extern BOOL32 BUILTIN_Init(void);
@@ -146,5 +146,8 @@ extern BOOL32 NE_LoadAllSegments( NE_MODULE *pModule );
 extern BOOL32 NE_LoadDLLs( NE_MODULE *pModule );
 extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
+
+/* relay32/builtin.c */
+extern HMODULE32 BUILTIN32_LoadModule( LPCSTR name, BOOL32 force );
 
 #endif  /* __WINE_MODULE_H */

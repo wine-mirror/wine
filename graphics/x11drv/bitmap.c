@@ -6,8 +6,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include "gdi.h"
 #include "callback.h"
 #include "dc.h"
@@ -27,20 +27,20 @@ BOOL32 X11DRV_BITMAP_Init(void)
     
       /* Create the necessary GCs */
     
-    if ((tmpPixmap = XCreatePixmap( display, rootWindow, 1, 1, 1 )))
+    if ((tmpPixmap = TSXCreatePixmap( display, rootWindow, 1, 1, 1 )))
     {
-	BITMAP_monoGC = XCreateGC( display, tmpPixmap, 0, NULL );
-	XSetGraphicsExposures( display, BITMAP_monoGC, False );
-	XFreePixmap( display, tmpPixmap );
+	BITMAP_monoGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
+	TSXSetGraphicsExposures( display, BITMAP_monoGC, False );
+	TSXFreePixmap( display, tmpPixmap );
     }
 
     if (screenDepth != 1)
     {
-	if ((tmpPixmap = XCreatePixmap(display, rootWindow, 1,1,screenDepth)))
+	if ((tmpPixmap = TSXCreatePixmap(display, rootWindow, 1,1,screenDepth)))
 	{
-	    BITMAP_colorGC = XCreateGC( display, tmpPixmap, 0, NULL );
-	    XSetGraphicsExposures( display, BITMAP_colorGC, False );
-	    XFreePixmap( display, tmpPixmap );
+	    BITMAP_colorGC = TSXCreateGC( display, tmpPixmap, 0, NULL );
+	    TSXSetGraphicsExposures( display, BITMAP_colorGC, False );
+	    TSXFreePixmap( display, tmpPixmap );
 	}
     }
     return TRUE;
@@ -74,8 +74,8 @@ HBITMAP32 X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP32 hbitmap,
 
     if (dc->w.bitsPerPixel != bmp->bitmap.bmBitsPixel)
     {
-	XFreeGC( display, dc->u.x.gc );
-	dc->u.x.gc = XCreateGC( display, dc->u.x.drawable, 0, NULL );
+	TSXFreeGC( display, dc->u.x.gc );
+	dc->u.x.gc = TSXCreateGC( display, dc->u.x.drawable, 0, NULL );
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }

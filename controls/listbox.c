@@ -2566,6 +2566,11 @@ LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
 		     }
 		     return LISTBOX_HandleKeyDown( wnd, descr, wParam );
 
+		case WM_NCDESTROY:
+		     if( CB_GETTYPE(lphc) != CBS_SIMPLE )
+			 lphc->hWndLBox = 0;
+		     /* fall through */
+
 	        default:
 		     return ListBoxWndProc( hwnd, msg, wParam, lParam );
 	    }

@@ -9,8 +9,6 @@
  */
 
 #include <stdio.h>
-#include <X11/Xlib.h>
-
 #include "win.h"
 #include "queue.h"
 #include "gdi.h"

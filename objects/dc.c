@@ -14,6 +14,7 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
+#include "winerror.h"
 #include "x11font.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
@@ -136,6 +137,14 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->DCOrgY          = 0;
     win_dc_info->CursPosX        = 0;
     win_dc_info->CursPosY        = 0;
+    win_dc_info->ArcDirection    = AD_COUNTERCLOCKWISE;
+    win_dc_info->UseWorldXform   = FALSE;
+    win_dc_info->WorldXform.eM11 = 1.0f;
+    win_dc_info->WorldXform.eM12 = 0.0f;
+    win_dc_info->WorldXform.eM21 = 0.0f;
+    win_dc_info->WorldXform.eM22 = 1.0f;
+    win_dc_info->WorldXform.eDx  = 0.0f;
+    win_dc_info->WorldXform.eDy  = 0.0f;
 
     PATH_InitGdiPath(&win_dc_info->path);
 }
@@ -267,15 +276,15 @@ BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
         {
             register int x, y;
             XImage *image;
-            pixmap = XCreatePixmap( display, rootWindow, 8, 8, screenDepth );
-            image = XGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
+            pixmap = TSXCreatePixmap( display, rootWindow, 8, 8, screenDepth );
+            image = TSXGetImage( display, dc->u.x.brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
                 for (x = 0; x < 8; x++)
-                    XPutPixel( image, x, y,
-                               COLOR_PixelToPalette[XGetPixel( image, x, y)] );
-            XPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
-            XDestroyImage( image );
+                    TSXPutPixel( image, x, y,
+                               COLOR_PixelToPalette[TSXGetPixel( image, x, y)] );
+            TSXPutImage( display, pixmap, gc, image, 0, 0, 0, 0, 8, 8 );
+            TSXDestroyImage( image );
             val.tile = pixmap;
         }
         else val.tile = dc->u.x.brush.pixmap;
@@ -289,11 +298,11 @@ BOOL32 DC_SetupGCForPatBlt( DC * dc, GC gc, BOOL32 fMapColors )
     val.ts_x_origin = dc->w.DCOrgX + dc->w.brushOrgX;
     val.ts_y_origin = dc->w.DCOrgY + dc->w.brushOrgY;
     val.fill_rule = (dc->w.polyFillMode==WINDING) ? WindingRule : EvenOddRule;
-    XChangeGC( display, gc, 
+    TSXChangeGC( display, gc, 
 	       GCFunction | GCForeground | GCBackground | GCFillStyle |
 	       GCFillRule | GCTileStipXOrigin | GCTileStipYOrigin | mask,
 	       &val );
-    if (pixmap) XFreePixmap( display, pixmap );
+    if (pixmap) TSXFreePixmap( display, pixmap );
     return TRUE;
 }
 
@@ -351,7 +360,7 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     val.fill_style = FillSolid;
     if ((dc->u.x.pen.style!=PS_SOLID) && (dc->u.x.pen.style!=PS_INSIDEFRAME))
     {
-	XSetDashes( display, dc->u.x.gc, 0,
+	TSXSetDashes( display, dc->u.x.gc, 0,
 		    dc->u.x.pen.dashes, dc->u.x.pen.dash_len );
 	val.line_style = (dc->w.backgroundMode == OPAQUE) ?
 	                      LineDoubleDash : LineOnOffDash;
@@ -384,7 +393,7 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     default:
 	val.join_style = JoinRound;
     }
-    XChangeGC( display, dc->u.x.gc, 
+    TSXChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
     return TRUE;
@@ -413,7 +422,7 @@ BOOL32 DC_SetupGCForText( DC * dc )
 	val.fill_style = FillSolid;
 	val.font       = xfs->fid;
 
-	XChangeGC( display, dc->u.x.gc,
+	TSXChangeGC( display, dc->u.x.gc,
 		   GCFunction | GCForeground | GCBackground | GCFillStyle |
 		   GCFont, &val );
 	return TRUE;
@@ -470,10 +479,14 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->w.breakExtra      = dc->w.breakExtra;
     newdc->w.breakRem        = dc->w.breakRem;
     newdc->w.MapMode         = dc->w.MapMode;
+    newdc->w.GraphicsMode    = dc->w.GraphicsMode;
     newdc->w.DCOrgX          = dc->w.DCOrgX;
     newdc->w.DCOrgY          = dc->w.DCOrgY;
     newdc->w.CursPosX        = dc->w.CursPosX;
     newdc->w.CursPosY        = dc->w.CursPosY;
+    newdc->w.ArcDirection    = dc->w.ArcDirection;
+    newdc->w.UseWorldXform   = dc->w.UseWorldXform;
+    newdc->w.WorldXform      = dc->w.WorldXform;
     newdc->wndOrgX           = dc->wndOrgX;
     newdc->wndOrgY           = dc->wndOrgY;
     newdc->wndExtX           = dc->wndExtX;
@@ -547,10 +560,14 @@ void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
     dc->w.breakExtra      = dcs->w.breakExtra;
     dc->w.breakRem        = dcs->w.breakRem;
     dc->w.MapMode         = dcs->w.MapMode;
+    dc->w.GraphicsMode    = dcs->w.GraphicsMode;
     dc->w.DCOrgX          = dcs->w.DCOrgX;
     dc->w.DCOrgY          = dcs->w.DCOrgY;
     dc->w.CursPosX        = dcs->w.CursPosX;
     dc->w.CursPosY        = dcs->w.CursPosY;
+    dc->w.ArcDirection    = dcs->w.ArcDirection;
+    dc->w.UseWorldXform   = dcs->w.UseWorldXform;
+    dc->w.WorldXform      = dcs->w.WorldXform;
 
     dc->wndOrgX           = dcs->wndOrgX;
     dc->wndOrgY           = dcs->wndOrgY;
@@ -1061,7 +1078,7 @@ BOOL32 WINAPI GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
        Window root;
        int w, h, border, depth;
        /* FIXME: this is not correct for managed windows */
-       XGetGeometry( display, dc->u.x.drawable, &root,
+       TSXGetGeometry( display, dc->u.x.drawable, &root,
                     &lpp->x, &lpp->y, &w, &h, &border, &depth );
     }
     else lpp->x = lpp->y = 0;
@@ -1117,6 +1134,13 @@ INT32 WINAPI SetGraphicsMode( HDC32 hdc, INT32 mode )
 {
     INT32 ret;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
+    /* One would think that setting the graphics mode to GM_COMPATIBLE
+     * would also reset the world transformation matrix to the unity
+     * matrix. However, in Windows, this is not the case. This doesn't
+     * make a lot of sense to me, but that's the way it is.
+     */
+    
     if (!dc) return 0;
     if ((mode <= 0) || (mode > GM_LAST)) return 0;
     ret = dc->w.GraphicsMode;
@@ -1126,12 +1150,113 @@ INT32 WINAPI SetGraphicsMode( HDC32 hdc, INT32 mode )
 
 
 /***********************************************************************
+ *           GetArcDirection16    (GDI.524)
+ */
+INT16 WINAPI GetArcDirection16( HDC16 hdc )
+{
+    return GetArcDirection32( (HDC32)hdc );
+}
+
+
+/***********************************************************************
+ *           GetArcDirection32    (GDI32.141)
+ */
+INT32 WINAPI GetArcDirection32( HDC32 hdc )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    
+    if (!dc)
+        return 0;
+
+    return dc->w.ArcDirection;
+}
+
+
+/***********************************************************************
+ *           SetArcDirection16    (GDI.525)
+ */
+INT16 WINAPI SetArcDirection16( HDC16 hdc, INT16 nDirection )
+{
+    return SetArcDirection32( (HDC32)hdc, (INT32)nDirection );
+}
+
+
+/***********************************************************************
+ *           SetArcDirection32    (GDI32.302)
+ */
+INT32 WINAPI SetArcDirection32( HDC32 hdc, INT32 nDirection )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    INT32 nOldDirection;
+    
+    if (!dc)
+        return 0;
+
+    if (nDirection!=AD_COUNTERCLOCKWISE && nDirection!=AD_CLOCKWISE)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+
+    nOldDirection = dc->w.ArcDirection;
+    dc->w.ArcDirection = nDirection;
+
+    return nOldDirection;
+}
+
+
+/***********************************************************************
  *           GetWorldTransform    (GDI32.244)
  */
 BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
+/* FIXME: Check that SetLastError is being called correctly */
 {
-    fprintf( stdnimp, "GetWorldTransform: empty stub\n" );
-    return FALSE;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    
+    if (!dc)
+        /* FIXME: Call SetLastError? */
+        return FALSE;
+    if (!xform)
+        /* FIXME: Call SetLastError? */
+	return FALSE;
+
+    *xform = dc->w.WorldXform;
+    
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           SetWorldTransform    (GDI32.346)
+ */
+BOOL32 WINAPI SetWorldTransform( HDC32 hdc, const XFORM *xform )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    
+    if (!dc)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    if (!xform)
+	return FALSE;
+    
+    /* Check that graphics mode is GM_ADVANCED */
+    if (dc->w.GraphicsMode!=GM_ADVANCED)
+       return FALSE;
+
+    dc->w.WorldXform = *xform;
+
+    /* We only have to use the new world transform if it's not the
+     * identity transformation
+     */
+    dc->w.UseWorldXform=
+       (xform->eM11!=1.0f || xform->eM12!=0.0f ||
+        xform->eM21!=0.0f || xform->eM22!=1.0f ||
+        xform->eDx!=0.0f  || xform->eDy!=0.0f);
+    
+    return TRUE;
 }
 
 

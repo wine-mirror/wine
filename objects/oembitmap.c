@@ -7,9 +7,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/xpm.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
+#include "ts_xpm.h"
 #include "gdi.h"
 #include "bitmap.h"
 #include "callback.h"
@@ -330,14 +330,14 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     int err;
 
     attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
-                                          XpmAttributesSize() );
+                                          TSXpmAttributesSize() );
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
     attrs->colormap     = COLOR_GetColormap();
     attrs->depth        = descr->color ? screenDepth : 1;
     attrs->colorsymbols = (attrs->depth > 1) ? OBM_Colors : OBM_BlackAndWhite;
     attrs->numsymbols   = (attrs->depth > 1) ? NB_COLOR_SYMBOLS : 2;
         
-    err = XpmCreatePixmapFromData( display, rootWindow, descr->data,
+    err = TSXpmCreatePixmapFromData( display, rootWindow, descr->data,
                                    &pixmap, &pixmask, attrs );
 
     if (err != XpmSuccess)
@@ -355,8 +355,8 @@ static BOOL32 OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     HeapFree( GetProcessHeap(), 0, attrs );
     if (!descr->bitmap)
     {
-        if (pixmap) XFreePixmap( display, pixmap );
-        if (pixmask) XFreePixmap( display, pixmask );
+        if (pixmap) TSXFreePixmap( display, pixmap );
+        if (pixmask) TSXFreePixmap( display, pixmask );
         if (descr->bitmap) GDI_FreeObject( descr->bitmap );
         if (descr->need_mask && descr->mask) GDI_FreeObject( descr->mask );
         return FALSE;
@@ -456,23 +456,23 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
     {
           /* Invert the mask */
 
-        XSetFunction( display, BITMAP_monoGC, GXinvert );
-        XFillRectangle( display, bmpAnd->pixmap, BITMAP_monoGC, 0, 0,
+        TSXSetFunction( display, BITMAP_monoGC, GXinvert );
+        TSXFillRectangle( display, bmpAnd->pixmap, BITMAP_monoGC, 0, 0,
                         bmpAnd->bitmap.bmWidth, bmpAnd->bitmap.bmHeight );
-        XSetFunction( display, BITMAP_monoGC, GXcopy );
+        TSXSetFunction( display, BITMAP_monoGC, GXcopy );
 
           /* Set the masked pixels to black */
 
         if (bmpXor->bitmap.bmBitsPixel != 1)
         {
-            XSetForeground( display, BITMAP_colorGC,
+            TSXSetForeground( display, BITMAP_colorGC,
                             COLOR_ToPhysical( NULL, RGB(0,0,0) ));
-            XSetBackground( display, BITMAP_colorGC, 0 );
-            XSetFunction( display, BITMAP_colorGC, GXor );
-            XCopyPlane(display, bmpAnd->pixmap, bmpXor->pixmap, BITMAP_colorGC,
+            TSXSetBackground( display, BITMAP_colorGC, 0 );
+            TSXSetFunction( display, BITMAP_colorGC, GXor );
+            TSXCopyPlane(display, bmpAnd->pixmap, bmpXor->pixmap, BITMAP_colorGC,
                        0, 0, bmpXor->bitmap.bmWidth, bmpXor->bitmap.bmHeight,
                        0, 0, 1 );
-            XSetFunction( display, BITMAP_colorGC, GXcopy );
+            TSXSetFunction( display, BITMAP_colorGC, GXcopy );
         }
     }
 

@@ -4,6 +4,10 @@
  * 
  * (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  *
+ * NOTE: If you make any changes to fix a particular app, make sure 
+ * they don't break something else like Netscape or telnet and ftp 
+ * clients and servers (www.winsite.com got a lot of those).
+ *
  */
  
 #include <stdio.h>
@@ -26,6 +30,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
@@ -82,8 +87,8 @@ static int           _px_sock_ops[] =
          SO_LINGER, SO_OOBINLINE, SO_SNDBUF, SO_RCVBUF, SO_ERROR, SO_TYPE,
 	 SO_LINGER };
 
-static int _check_ws(LPWSINFO pwsi, ws_socket* pws);
-static int _check_buffer(LPWSINFO pwsi, int size);
+static int   _check_ws(LPWSINFO pwsi, ws_socket* pws);
+static char* _check_buffer(LPWSINFO pwsi, int size);
 
 extern void EVENT_AddIO( int fd, unsigned flag );
 extern void EVENT_DeleteIO( int fd, unsigned flag );
@@ -147,6 +152,23 @@ static ws_socket* wsi_alloc_socket(LPWSINFO pwsi, int fd)
     return NULL;
 }
 
+static int wsi_strtolo(LPWSINFO pwsi, const char* name, const char* opt)
+{
+    /* Stuff a lowercase copy of the string into the local buffer */
+
+    int i = strlen(name) + 2;
+    char* p = _check_buffer(pwsi, i + ((opt)?strlen(opt):0));
+
+    if( p )
+    {
+	do *p++ = tolower(*name); while(*name++);
+	i = (p - (char*)(pwsi->buffer));
+	if( opt ) do *p++ = tolower(*opt); while(*opt++);
+	return i;
+    }
+    return 0;
+}
+
 static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* highfd, BOOL32 b32 )
 {
     /* translate Winsock fd set into local fd set */
@@ -159,7 +181,8 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
 	int i, count;
 
 	FD_ZERO(fds);
-	count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+	count = b32 ? wsfds32->fd_count : wsfds16->fd_count;
+
 	for( i = 0; i < count; i++ )
 	{
 	     pws = (b32) ? (ws_socket*)WS_HANDLE2PTR(wsfds32->fd_array[i])
@@ -170,10 +193,6 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
 		    FD_SET(pws->fd, fds);
 	     }
 	}
-	if (b32)
-	     wsfds32->fd_count = 0;
-	else
-	     wsfds16->fd_count = 0;
 #undef wsfds32
 #undef wsfds16
 	return fds;
@@ -208,20 +227,22 @@ static int fd_set_export( LPWSINFO pwsi, fd_set* fds, fd_set* exceptfds, void* w
 	{
 	    ws_socket *pws = (b32) ? (ws_socket*)WS_HANDLE2PTR(wsfds32->fd_array[i])
 				   : (ws_socket*)WS_HANDLE2PTR(wsfds16->fd_array[i]);
-	    int fd = pws->fd;
-
-	    if( _check_ws(pwsi, pws) && FD_ISSET(fd, fds) )
+	    if( _check_ws(pwsi, pws) )
 	    {
-		if ( exceptfds && sock_error_p(fd) )
+		int fd = pws->fd;
+
+		if( FD_ISSET(fd, fds) )
 		{
-		    FD_SET(fd, exceptfds);
-		    num_err++;
+		    if ( exceptfds && sock_error_p(fd) )
+		    {
+			FD_SET(fd, exceptfds);
+			num_err++;
+		    }
+		    else if( b32 )
+			     wsfds32->fd_array[j++] = wsfds32->fd_array[i];
+			 else
+			     wsfds16->fd_array[j++] = wsfds16->fd_array[i];
 		}
-		else
-		    if( b32 )
-			wsfds32->fd_array[j++] = wsfds32->fd_array[i];
-		    else
-			wsfds16->fd_array[j++] = wsfds16->fd_array[i];
 	    }
 	}
 
@@ -278,7 +299,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
                         #else
                                 "Unknown",
                         #endif
-			   WS_MAX_SOCKETS_PER_THREAD,
+			   WS_MAX_SOCKETS_PER_PROCESS,
 			   WS_MAX_UDP_DATAGRAM, (SEGPTR)NULL };
     HTASK16             tid = GetCurrentTask();
     LPWSINFO            pwsi;
@@ -314,12 +335,12 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 	{
 	    int i = 0;
 	    pwsi->tid = tid;
-	    for( i = 0; i < WS_MAX_SOCKETS_PER_THREAD; i++ )
+	    for( i = 0; i < WS_MAX_SOCKETS_PER_PROCESS; i++ )
 	    {
 		pwsi->sock[i].fd = -1; 
 		pwsi->sock[i].flags = i + 1; 
 	    }
-	    pwsi->sock[WS_MAX_SOCKETS_PER_THREAD - 1].flags = -1;
+	    pwsi->sock[WS_MAX_SOCKETS_PER_PROCESS - 1].flags = -1;
 	}
 	else return WSASYSNOTREADY;
 
@@ -400,7 +421,7 @@ INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, LPWSINFO pwsi )
  *	  dprintf_winsock(stddeb,"\thave %i outstanding async ops!\n", pwsi->num_async_rq );
  */
 
-    for(i = 0, j = 0, n = 0; i < WS_MAX_SOCKETS_PER_THREAD; i++)
+    for(i = 0, j = 0, n = 0; i < WS_MAX_SOCKETS_PER_PROCESS; i++)
 	if( pwsi->sock[i].fd != -1 )
 	{
 	    if( pwsi->sock[i].psop )
@@ -485,13 +506,13 @@ int _check_ws(LPWSINFO pwsi, ws_socket* pws)
     return 0;
 }
 
-int _check_buffer(LPWSINFO pwsi, int size)
+char* _check_buffer(LPWSINFO pwsi, int size)
 {
-    if( pwsi->buffer && pwsi->buflen >= size ) return 1;
+    if( pwsi->buffer && pwsi->buflen >= size ) return pwsi->buffer;
     else SEGPTR_FREE(pwsi->buffer);
 
     pwsi->buffer = (char*)SEGPTR_ALLOC((pwsi->buflen = size)); 
-    return (pwsi->buffer != NULL);
+    return pwsi->buffer;
 }
 
 /* ----------------------------------- i/o APIs */
@@ -558,9 +579,9 @@ INT32 WINAPI WINSOCK_bind32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 
     dprintf_winsock(stddeb, "WS_BIND(%08x): socket %04x, ptr %8x, length %d\n", 
 			   (unsigned)pwsi, s, (int) name, namelen);
-/* #if DEBUG_SOCKADDR */
+#if DEBUG_SOCKADDR
     dump_sockaddr(name);
-/* #endif */
+#endif
 
     if ( _check_ws(pwsi, pws) )
       if ( namelen >= sizeof(*name) ) 
@@ -936,7 +957,7 @@ INT32 WINAPI WINSOCK_listen32(SOCKET32 s, INT32 backlog)
 		if( !(fd_flags & O_NONBLOCK) ) pws->flags |= WS_FD_ACCEPT;
 	    }
 	    pws->flags |= WS_FD_LISTENING;
-	    pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECTED); /* just in case */
+	    pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_CONNECTED); /* just in case */
 	    return 0;
 	}
 	pwsi->err = wsaErrno();
@@ -1065,42 +1086,44 @@ static INT32 __ws_select( BOOL32 b32, void *ws_readfds, void *ws_writefds, void 
 	p_write = fd_set_import(&writefds, pwsi, ws_writefds, &highfd, b32);
 	p_except = fd_set_import(&exceptfds, pwsi, ws_exceptfds, &highfd, b32);
 
-	if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeout)) >= 0 )
+	if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeout)) > 0 )
 	{
-	    if( highfd )
-	    {
-		fd_set_export(pwsi, &readfds, p_except, ws_readfds, b32);
-		fd_set_export(pwsi, &writefds, p_except, ws_writefds, b32);
+	    fd_set_export(pwsi, &readfds, p_except, ws_readfds, b32);
+	    fd_set_export(pwsi, &writefds, p_except, ws_writefds, b32);
 
-		if (p_except && ws_exceptfds)
-		{
+	    if (p_except && ws_exceptfds)
+	    {
 #define wsfds16 ((ws_fd_set16*)ws_exceptfds)
 #define wsfds32 ((ws_fd_set32*)ws_exceptfds)
-		    int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
+		int i, j, count = (b32) ? wsfds32->fd_count : wsfds16->fd_count;
 
-		    for (i = j = 0; i < count; i++)
+		for (i = j = 0; i < count; i++)
+		{
+		    ws_socket *pws = (b32) ? (ws_socket *)WS_HANDLE2PTR(wsfds32->fd_array[i])
+					   : (ws_socket *)WS_HANDLE2PTR(wsfds16->fd_array[i]);
+		    if( _check_ws(pwsi, pws) && FD_ISSET(pws->fd, &exceptfds) )
 		    {
-			ws_socket *pws = (b32) ? (ws_socket *)WS_HANDLE2PTR(wsfds32->fd_array[i])
-					       : (ws_socket *)WS_HANDLE2PTR(wsfds16->fd_array[i]);
-			if( _check_ws(pwsi, pws) && FD_ISSET(pws->fd, &exceptfds) )
-			{
-			    if( b32 )
+			if( b32 )
 				wsfds32->fd_array[j++] = wsfds32->fd_array[i];
-			    else
+			else
 				wsfds16->fd_array[j++] = wsfds16->fd_array[i];
-			}
 		    }
-		    if( b32 )
-			wsfds32->fd_count = j;
-		    else
-			wsfds16->fd_count = j;
+		}
+		if( b32 )
+		    wsfds32->fd_count = j;
+		else
+		    wsfds16->fd_count = j;
 #undef wsfds32
 #undef wsfds16
-		}
 	    }
 	    return highfd; 
 	}
-        pwsi->err = wsaErrno();
+	if( ws_readfds ) ((ws_fd_set32*)ws_readfds)->fd_count = 0;
+	if( ws_writefds ) ((ws_fd_set32*)ws_writefds)->fd_count = 0;
+	if( ws_exceptfds ) ((ws_fd_set32*)ws_exceptfds)->fd_count = 0;
+
+        if( highfd == 0 ) return 0;
+	pwsi->err = wsaErrno();
     } 
     return SOCKET_ERROR;
 }
@@ -1253,15 +1276,24 @@ INT32 WINAPI WINSOCK_shutdown32(SOCKET32 s, INT32 how)
 			if( pws->flags & (WS_FD_READ | WS_FD_CLOSE) )
 			    EVENT_DeleteIO( pws->fd, EVENT_IO_READ );
 			pws->flags &= ~(WS_FD_READ | WS_FD_CLOSE);
+#ifdef SHUT_RD
+			how = SHUT_RD;
+#endif
 			break;
 
 		case 1: /* drop sends */
 			if( pws->flags & WS_FD_WRITE )
 			    EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
 			pws->flags &= ~WS_FD_WRITE;
+#ifdef SHUT_WR
+			how = SHUT_WR;
+#endif
 			break;
 
 		case 2: /* drop all */
+#ifdef SHUT_RDWR
+			how = SHUT_RDWR;
+#endif
 		default:
 			WSAAsyncSelect32( s, 0, 0, 0 );
 			break;
@@ -1342,9 +1374,13 @@ SOCKET32 WINAPI WINSOCK_socket32(INT32 af, INT32 type, INT32 protocol)
     {
         ws_socket*      pnew = wsi_alloc_socket(pwsi, sock);
 
-	dprintf_winsock(stddeb,"\tcreated %04x (handle %i)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
+	dprintf_winsock(stddeb,"\tcreated %i (handle %04x)\n", sock, (UINT16)WS_PTR2HANDLE(pnew));
 
-        if( pnew ) return (SOCKET16)WS_PTR2HANDLE(pnew);
+        if( pnew ) 
+	{
+	    pnew->flags |= WS_FD_INACTIVE;
+	    return (SOCKET16)WS_PTR2HANDLE(pnew);
+	}
 	
         close(sock);
         pwsi->err = WSAENOBUFS;
@@ -1375,7 +1411,8 @@ SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
  *
  * IMPORTANT: 16-bit API structures have SEGPTR pointers inside them.
  * Also, we have to use wsock32 stubs to convert structures and
- * error codes from Unix to WSA, hence no direct mapping in if1632/wsock32.spec.
+ * error codes from Unix to WSA, hence there is no direct mapping in 
+ * the relay32/wsock32.spec.
  */
 
 static char*	NULL_STRING = "NULL";
@@ -1530,11 +1567,15 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
     if( pwsi )
     {
 	struct servent*     serv;
-	if( (serv = getservbyname(name, proto)) != NULL )
-	    if( WS_dup_se(pwsi, serv, dup_flag) )
-		return (struct WIN_servent*)(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	int i = wsi_strtolo( pwsi, name, proto );
+
+	if( i )
+	    if( (serv = getservbyname(pwsi->buffer, pwsi->buffer + i)) != NULL )
+		if( WS_dup_se(pwsi, serv, dup_flag) )
+		    return (struct WIN_servent*)(pwsi->buffer);
+		else pwsi->err = WSAENOBUFS;
+	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	else pwsi->err = WSAENOBUFS;
     }
     return NULL;
 }
@@ -1566,11 +1607,15 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
     if( pwsi )
     {
 	struct servent*     serv;
-	if( (serv = getservbyport(port, proto)) != NULL )
-	    if( WS_dup_se(pwsi, serv, dup_flag) )
-		return (struct WIN_servent*)(pwsi->buffer);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	int i = wsi_strtolo( pwsi, proto, NULL );
+
+	if( i )
+	    if( (serv = getservbyport(port, pwsi->buffer)) != NULL )
+		if( WS_dup_se(pwsi, serv, dup_flag) )
+		    return (struct WIN_servent*)(pwsi->buffer);
+		else pwsi->err = WSAENOBUFS;
+	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	else pwsi->err = WSAENOBUFS;
     }
     return NULL;
 }
@@ -1781,8 +1826,13 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
                    (unsigned)pwsi, hWnd, uMsg, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
 
   if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            proto, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME );
+  {
+      int i = wsi_strtolo( pwsi, name, proto );
+
+      if( i )
+          return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, pwsi->buffer, 0,
+                    pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME );
+  }
   return 0;
 }
 
@@ -1797,8 +1847,13 @@ HANDLE32 WINAPI WSAAsyncGetServByName32(HWND32 hWnd, UINT32 uMsg, LPCSTR name,
   dprintf_winsock(stddeb, "WS_AsyncGetServByName32(%08x): hwnd %04x, msg %08x, name %s, proto %s\n",
            (unsigned)pwsi, (HWND16)hWnd, uMsg, (name)?name:NULL_STRING, (proto)?proto:NULL_STRING );
   if( pwsi )
-    return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, name, 0,
-                            proto, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME | WSMSG_ASYNC_WIN32);
+  {
+      int i = wsi_strtolo( pwsi, name, proto );
+
+      if( i )
+          return __WSAsyncDBQuery(pwsi, hWnd, uMsg, 0, pwsi->buffer, 0,
+                 pwsi->buffer + i, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYNAME | WSMSG_ASYNC_WIN32);
+  }
   return 0;
 }
 
@@ -1815,8 +1870,13 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
                            (unsigned)pwsi, hWnd, uMsg, port, (proto)?proto:NULL_STRING );
 
   if( pwsi )
-      return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, proto, 0,
-                              NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT );
+  {
+      int i = wsi_strtolo( pwsi, proto, NULL );
+
+      if( i )
+	  return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, pwsi->buffer, 0,
+		NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT );
+  }
   return 0;
 }
 
@@ -1832,8 +1892,13 @@ HANDLE32 WINAPI WSAAsyncGetServByPort32(HWND32 hWnd, UINT32 uMsg, INT32 port,
                            (unsigned)pwsi, (HWND16)hWnd, uMsg, port, (proto)?proto:NULL_STRING );
 
   if( pwsi )
-      return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, proto, 0,
-             NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT | WSMSG_ASYNC_WIN32);
+  {
+      int i = wsi_strtolo( pwsi, proto, NULL );
+
+      if( i )
+	  return __WSAsyncDBQuery(pwsi, hWnd, uMsg, port, pwsi->buffer, 0,
+		 NULL, (void*)sbuf, buflen, WSMSG_ASYNC_SERVBYPORT | WSMSG_ASYNC_WIN32);
+  }
   return 0;
 }
 
@@ -1875,10 +1940,12 @@ INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 
 static ws_select_op* __ws_select_list = NULL;
 
-BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
+BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, 
+			 fd_set pending_set[3], fd_set event_set[3] )
 {
     /* This function is called by the event dispatcher
-     * with io_set containing the result of select() */
+     * with the pending_set[] containing the result of select() and
+     * the event_set[] containing all fd that are being watched */
 
     ws_select_op*	psop = __ws_select_list;
     BOOL32		bPost = FALSE;
@@ -1894,9 +1961,9 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 	int		r, w, e;
 
 	w = 0;
-	if( (r = FD_ISSET( fd, &io_set[EVENT_IO_READ] )) ||
-	    (w = FD_ISSET( fd, &io_set[EVENT_IO_WRITE] )) ||
-	    (e = FD_ISSET( fd, &io_set[EVENT_IO_EXCEPT] )) )
+	if( (r = FD_ISSET( fd, &pending_set[EVENT_IO_READ] )) ||
+	    (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] )) ||
+	    (e = FD_ISSET( fd, &pending_set[EVENT_IO_EXCEPT] )) )
 	{
 	    /* This code removes WS_FD flags on one-shot events (WS_FD_CLOSE, 
 	     * WS_FD_CONNECT), otherwise it clears descriptors in the io_set.
@@ -1918,10 +1985,10 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 		/* WS_FD_ACCEPT is valid only if the socket is in the
 		 * listening state */
 
-		FD_CLR( fd, &io_set[EVENT_IO_WRITE] );
+		FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
 		if( r )
 		{
-		    FD_CLR( fd, &io_set[EVENT_IO_READ] ); /* reenabled by the next accept() */
+		    FD_CLR( fd, &event_set[EVENT_IO_READ] ); /* reenabled by the next accept() */
 		    dwEvent = WSAMAKESELECTREPLY( WS_FD_ACCEPT, 0 );
 		    bPost = TRUE;
 		} 
@@ -1931,22 +1998,27 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 	    {
 		/* connecting socket */
 
-		if( w || (w = FD_ISSET( fd, &io_set[EVENT_IO_WRITE] )) )
+		if( w || (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] )) )
 		{
-		    /* ready to write means that socket is connected */
+		    /* ready to write means that socket is connected 
+		     *
+		     * FIXME: Netscape calls AsyncSelect( s, ... WS_FD_CONNECT .. )
+		     * right after s = socket() and somehow "s" becomes writeable 
+		     * before it goes through connect()!?!?
+		     */
 
 		    psop->pws->flags |= WS_FD_CONNECTED;
 		    psop->pws->flags &= ~(WS_FD_CONNECT | WS_FD_INACTIVE);
 		    dwEvent = WSAMAKESELECTREPLY( WS_FD_CONNECT, 0 );
 
 		    if( flags & (WS_FD_READ | WS_FD_CLOSE))
-			FD_SET( fd, &io_set[EVENT_IO_READ] );
+			FD_SET( fd, &event_set[EVENT_IO_READ] );
 		    else 
-			FD_CLR( fd, &io_set[EVENT_IO_READ] );
+			FD_CLR( fd, &event_set[EVENT_IO_READ] );
 		    if( flags & WS_FD_WRITE ) 
-			FD_SET( fd, &io_set[EVENT_IO_WRITE] );
+			FD_SET( fd, &event_set[EVENT_IO_WRITE] );
 		    else 
-			FD_CLR( fd, &io_set[EVENT_IO_WRITE] );
+			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
 		    bPost = TRUE;
 		}
 		else if( r )
@@ -1959,16 +2031,14 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 			bPost = TRUE;
 		    }
 		}
-		/* otherwise bPost stays FALSE */
+		/* otherwise bPost stays FALSE, should probably clear event_set  */
 	    }
 	    else 
 	    {
-		/* connected socket --
-		 * removed WS_FD_OOB code for now.
-		 */
+		/* connected socket, no WS_FD_OOB code for now. */
 
 		if( flags & WS_FD_WRITE &&
-		   (w || (w = FD_ISSET( fd, &io_set[EVENT_IO_WRITE] ))) )
+		   (w || (w = FD_ISSET( fd, &pending_set[EVENT_IO_WRITE] ))) )
 		{
 		    /* this will be reenabled when send() or sendto() fail with
 		     * WSAEWOULDBLOCK */
@@ -1978,7 +2048,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 		    {
 			dprintf_winsock(stddeb, "\t    hwnd %04x - %04x, %08x\n",
                                 psop->hWnd, psop->uMsg, (unsigned)MAKELONG(WS_FD_WRITE, 0) );
-			FD_CLR( fd, &io_set[EVENT_IO_WRITE] );
+			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
 			num_posted++;
 		    }
 		}
@@ -2000,7 +2070,7 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 		    {
 			/* got pending data, will be reenabled by recv() or recvfrom() */
 
-			FD_CLR( fd, &io_set[EVENT_IO_READ] );
+			FD_CLR( fd, &event_set[EVENT_IO_READ] );
 			dwEvent = WSAMAKESELECTREPLY( WS_FD_READ, 0 );
 		    }
 		    else
@@ -2028,8 +2098,8 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 			/* this is it, this socket is closed */
 
 			psop->pws->flags &= ~(WS_FD_READ | WS_FD_CLOSE | WS_FD_WRITE);
-			FD_CLR( fd, &io_set[EVENT_IO_READ] );
-			FD_CLR( fd, &io_set[EVENT_IO_WRITE] );
+			FD_CLR( fd, &event_set[EVENT_IO_READ] );
+			FD_CLR( fd, &event_set[EVENT_IO_WRITE] );
 
 			if( *max_fd == (fd + 1) ) (*max_fd)--;
 		    }
@@ -2107,7 +2177,7 @@ INT32 WINAPI WSAAsyncSelect32(SOCKET32 s, HWND32 hWnd, UINT32 uMsg, UINT32 lEven
 		psop->uMsg = uMsg;
 
 		pws->psop = psop;
-		pws->flags |= (0x0000FFFF &lEvent);
+		pws->flags |= (0x0000FFFF & lEvent);
 		getsockopt(pws->fd, SOL_SOCKET, SO_TYPE, &sock_type, &bytes);
 		if( sock_type == SOCK_RAW ) pws->flags |= WS_FD_RAW;
 
@@ -2143,7 +2213,7 @@ INT16 WINAPI __WSAFDIsSet16(SOCKET16 s, ws_fd_set16 *set)
 {
   int i = set->fd_count;
   
-  dprintf_winsock(stddeb, "__WSAFDIsSet16(%d,%8lx)\n", s,(unsigned long)set);
+  dprintf_winsock(stddeb, "__WSAFDIsSet16(%d,%8lx(%i))\n", s,(unsigned long)set, i);
     
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -2157,7 +2227,7 @@ INT32 WINAPI __WSAFDIsSet32(SOCKET32 s, ws_fd_set32 *set)
 {
   int i = set->fd_count;
 
-  dprintf_winsock(stddeb, "__WSAFDIsSet32(%d,%8lx)\n", s,(unsigned long)set);
+  dprintf_winsock(stddeb, "__WSAFDIsSet32(%d,%8lx(%i))\n", s,(unsigned long)set, i);
 
   while (i--)
       if (set->fd_array[i] == s) return 1;
@@ -2171,7 +2241,7 @@ BOOL32 WINAPI WSAIsBlocking(void)
 {
   /* By default WinSock should set all its sockets to non-blocking mode
    * and poll in PeekMessage loop when processing "blocking" ones. This 
-   * function is supposed to tell if program is in this loop. Our 
+   * function is supposed to tell if the program is in this loop. Our 
    * blocking calls are truly blocking so we always return FALSE.
    *
    * Note: It is allowed to call this function without prior WSAStartup().
@@ -2332,7 +2402,7 @@ void WINAPI WS_s_perror(LPCSTR message)
  *
  * TODO: Merge WS_dup_..() stuff into one function that
  * would operate with a generic structure containing internal
- * pointers (via some sort of a template).
+ * pointers (via a template of some kind).
  */
 
 static int list_size(char** l, int item_size)
@@ -2378,7 +2448,7 @@ static int hostent_size(struct hostent* p_he)
 
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag)
 {
-   /* Duplicate hostent structure and flatten data (with its pointers)
+   /* Convert hostent structure into ws_hostent so that the data fits 
     * into pwsi->buffer. Internal pointers can be linear, SEGPTR, or 
     * relative to pwsi->buffer depending on "flag" value. Returns size
     * of the data copied (also in the pwsi->buflen).
@@ -2479,7 +2549,7 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
      p = pwsi->buffer;
      p_base = (flag & WS_DUP_OFFSET) ? NULL 
 				     : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
-     p += (flag & WS_DUP_NATIVE)? sizeof(struct servent) : sizeof(struct ws_servent);
+     p += sizeof(struct ws_servent);
      p_name = p;
      strcpy(p, p_se->s_name); p += strlen(p) + 1;
      p_proto = p;

@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include "gdi.h"
 #include "callback.h"
 #include "dc.h"
@@ -42,7 +42,7 @@ struct XPutImage_descr
 
 static int XPutImage_wrapper( const struct XPutImage_descr *descr )
 {
-    return XPutImage( display, descr->bmp->pixmap, BITMAP_GC(descr->bmp),
+    return TSXPutImage( display, descr->bmp->pixmap, BITMAP_GC(descr->bmp),
                       descr->image, 0, 0, 0, 0, descr->width, descr->height );
 }
 
@@ -168,7 +168,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmpObjPtr->bitmap.bmBits = NULL;
 
       /* Create the pixmap */
-    bmpObjPtr->pixmap = XCreatePixmap(display, rootWindow, width, height, bpp);
+    bmpObjPtr->pixmap = TSXCreatePixmap(display, rootWindow, width, height, bpp);
     if (!bmpObjPtr->pixmap)
     {
 	GDI_HEAP_FREE( hbitmap );
@@ -235,7 +235,7 @@ HBITMAP32 WINAPI CreateBitmapIndirect32( const BITMAP32 * bmp )
  */
 XImage *BITMAP_GetXImage( const BITMAPOBJ *bmp )
 {
-    return XGetImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
+    return TSXGetImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
                       bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
 }
 
@@ -304,7 +304,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
             {
                 if ((w%8) == 0)
                     *tbuf = 0;
-                *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
+                *tbuf |= TSXGetPixel(image,w,h)<<(7-(w&7));
                 if ((w&7) == 7) ++tbuf;
             }
             tbuf += pad;
@@ -315,8 +315,8 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-                if (!(w & 1)) *tbuf = XGetPixel( image, w, h) << 4;
-	    	else *tbuf++ |= XGetPixel( image, w, h) & 0x0f;
+                if (!(w & 1)) *tbuf = TSXGetPixel( image, w, h) << 4;
+	    	else *tbuf++ |= TSXGetPixel( image, w, h) & 0x0f;
             }
             tbuf += pad;
         }
@@ -325,7 +325,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
         for (h=0;h<height;h++)
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
-                *tbuf++ = XGetPixel(image,w,h);
+                *tbuf++ = TSXGetPixel(image,w,h);
             tbuf += pad;
         }
         break;
@@ -335,7 +335,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-	    	long pixel = XGetPixel(image,w,h);
+	    	long pixel = TSXGetPixel(image,w,h);
 
 		*tbuf++ = pixel & 0xff;
 		*tbuf++ = (pixel>>8) & 0xff;
@@ -347,7 +347,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-	    	long pixel = XGetPixel(image,w,h);
+	    	long pixel = TSXGetPixel(image,w,h);
 
 		*tbuf++ = pixel & 0xff;
 		*tbuf++ = (pixel>> 8) & 0xff;
@@ -356,7 +356,7 @@ LONG WINAPI GetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
             tbuf += pad;
 	}
     }
-    XDestroyImage( image );
+    TSXDestroyImage( image );
     GDI_HEAP_UNLOCK( hbitmap );
     return height * bmp->bitmap.bmWidthBytes;
 }
@@ -411,7 +411,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
 
     widthbytes	= DIB_GetXImageWidthBytes(bmp->bitmap.bmWidth,bmp->bitmap.bmBitsPixel);
     tmpbuffer	= (LPBYTE)xmalloc(widthbytes*height);
-    image = XCreateImage( display, DefaultVisualOfScreen(screen),
+    image = TSXCreateImage( display, DefaultVisualOfScreen(screen),
 		  bmp->bitmap.bmBitsPixel, ZPixmap, 0, tmpbuffer,
 		  bmp->bitmap.bmWidth,height,32,widthbytes
     );
@@ -425,7 +425,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-                XPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
+                TSXPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
                 if ((w&7) == 7)
                     sbuf++;
             }
@@ -437,8 +437,8 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-                if (!(w & 1)) XPutPixel( image, w, h, *sbuf >> 4 );
-                else XPutPixel( image, w, h, *sbuf++ & 0xf );
+                if (!(w & 1)) TSXPutPixel( image, w, h, *sbuf >> 4 );
+                else TSXPutPixel( image, w, h, *sbuf++ & 0xf );
             }
             sbuf += pad;
         }
@@ -447,7 +447,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
         for (h=0;h<height;h++)
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
-                XPutPixel(image,w,h,*sbuf++);
+                TSXPutPixel(image,w,h,*sbuf++);
             sbuf += pad;
         }
         break;
@@ -457,7 +457,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-                XPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
+                TSXPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
                 sbuf+=2;
             }
         }
@@ -467,7 +467,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
         {
             for (w=0;w<bmp->bitmap.bmWidth;w++)
             {
-                XPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
+                TSXPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
                 sbuf += 3;
             }
             sbuf += pad;
@@ -481,7 +481,7 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     descr.height = height;
     CALL_LARGE_STACK( XPutImage_wrapper, &descr );
 
-    XDestroyImage( image ); /* frees tmpbuffer too */
+    TSXDestroyImage( image ); /* frees tmpbuffer too */
     GDI_HEAP_UNLOCK( hbitmap );
     return height * bmp->bitmap.bmWidthBytes;
 }
@@ -510,7 +510,7 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
 	
 }
 /**********************************************************************
- *	    LoadImageA    (USER32.364)
+ *	    LoadImage32A    (USER32.364)
  * FIXME: implementation still lacks nearly all features, see LR_*
  * defines in windows.h
  */
@@ -699,10 +699,10 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
 {
 #ifdef PRELIMINARY_WING16_SUPPORT
     if( bmp->bitmap.bmBits )
- 	XShmDetach( display, (XShmSegmentInfo*)bmp->bitmap.bmBits );
+ 	TSXShmDetach( display, (XShmSegmentInfo*)bmp->bitmap.bmBits );
 #endif
 
-    XFreePixmap( display, bmp->pixmap );
+    TSXFreePixmap( display, bmp->pixmap );
 #ifdef PRELIMINARY_WING16_SUPPORT
     if( bmp->bitmap.bmBits )
     {

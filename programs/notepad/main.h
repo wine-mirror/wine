@@ -30,6 +30,7 @@ typedef struct
   LPCSTR  lpszIcoFile;
   LPCSTR  lpszLanguage;
   UINT    wStringTableOffset;
+  BOOL    bWrapLongLines;
 } NOTEPAD_GLOBALS;
 
 extern NOTEPAD_GLOBALS Globals;

@@ -184,6 +184,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->context.SegFs   = thdb->teb_sel;
     thdb->context.Eip     = (DWORD)start_addr;
     thdb->context.Esp     = (DWORD)thdb->teb.stack_top;
+    PE_InitTls( thdb );
     return thdb;
 
 error:
@@ -314,7 +315,11 @@ void WINAPI ExitThread( DWORD code )
     while (thdb->mutex_list) MUTEX_Abandon( thdb->mutex_list );
 
     /* FIXME: should free the stack somehow */
+#if 0
+    /* FIXME: We cannot do this; once the current thread is destroyed,
+       synchronization primitives do not work properly. */
     K32OBJ_DecCount( &thdb->header );
+#endif
     /* Completely unlock the system lock just in case */
     count = SYSTEM_LOCK_COUNT();
     while (count--) SYSTEM_UNLOCK();

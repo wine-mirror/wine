@@ -40,6 +40,7 @@ typedef struct
     char     *root;      /* root dir in Unix format without trailing / */
     char     *dos_cwd;   /* cwd in DOS format without leading or trailing \ */
     char     *unix_cwd;  /* cwd in Unix format without leading or trailing / */
+    char     *device;    /* raw device path */
     char      label[12]; /* drive label */
     DWORD     serial;    /* drive serial number */
     DRIVETYPE type;      /* drive type */
@@ -126,7 +127,7 @@ int DRIVE_Init(void)
     int i, len, count = 0;
     char name[] = "Drive A";
     char path[MAX_PATHNAME_LEN];
-    char buffer[20];
+    char buffer[80];
     struct stat drive_stat_buffer;
     char *p;
     DOSDRIVE *drive;
@@ -157,6 +158,7 @@ int DRIVE_Init(void)
             drive->dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
             drive->unix_cwd = HEAP_strdupA( SystemHeap, 0, "" );
             drive->type     = DRIVE_GetDriveType( name );
+            drive->device   = NULL;
             drive->flags    = 0;
             drive->dev      = drive_stat_buffer.st_dev;
             drive->ino      = drive_stat_buffer.st_ino;
@@ -179,6 +181,12 @@ int DRIVE_Init(void)
             PROFILE_GetWineIniString( name, "Filesystem", "unix",
                                       buffer, sizeof(buffer) );
             drive->flags = DRIVE_GetFSFlags( name, buffer );
+
+            /* Get the device */
+            PROFILE_GetWineIniString( name, "Device", "",
+                                      buffer, sizeof(buffer) );
+            if (buffer[0])
+                drive->device = HEAP_strdupA( SystemHeap, 0, buffer );
 
             /* Make the first hard disk the current drive */
             if ((DRIVE_CurDrive == -1) && (drive->type == TYPE_HD))
@@ -549,6 +557,17 @@ int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive )
     return 1;
 }
 
+
+/***********************************************************************
+ *           DRIVE_OpenDevice
+ *
+ * Open the drive raw device and return a Unix fd (or -1 on error).
+ */
+int DRIVE_OpenDevice( int drive, int flags )
+{
+    if (!DRIVE_IsValid( drive )) return NULL;
+    return open( DOSDrives[drive].device, flags );
+}
 
 
 /***********************************************************************

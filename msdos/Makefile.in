@@ -14,6 +14,7 @@ C_SRCS = \
 	int13.c \
 	int15.c \
 	int1a.c \
+	int20.c \
 	int21.c \
 	int25.c \
 	int26.c \

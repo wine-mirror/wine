@@ -12,7 +12,7 @@
 
 #ifdef PRELIMINARY_WING16_SUPPORT
 /* FIXME: this doesn't belong here */
-#include <X11/extensions/XShm.h>
+#include "ts_xshm.h"
 
 typedef struct
 {
@@ -38,12 +38,13 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
   (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
 #define BITMAP_WIDTH_BYTES(width,bpp) \
-    (((bpp) == 24) ? (width) * 4 : ((width) * (bpp) + 15) / 16 * 2)
+    (((bpp) == 24) ? (width) * 4 : ( ((bpp) == 15) ? (width) * 2 : \
+				    ((width) * (bpp) + 15) / 16 * 2 ))
 
 #define XCREATEIMAGE(image,width,height,bpp) \
 { \
     int width_bytes = DIB_GetXImageWidthBytes( (width), (bpp) ); \
-    (image) = XCreateImage(display, DefaultVisualOfScreen(screen), \
+    (image) = TSXCreateImage(display, DefaultVisualOfScreen(screen), \
                            (bpp), ZPixmap, 0, xmalloc( (height)*width_bytes ),\
                            (width), (height), 32, width_bytes ); \
 }

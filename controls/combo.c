@@ -362,10 +362,9 @@ static void CBPaintButton(LPHEADCOMBO lphc, HDC16 hdc)
     UINT32 	x, y;
     BOOL32 	bBool;
 
-    if( lphc->wState & CBF_NOREDRAW )
-        return;
+    if( lphc->wState & CBF_NOREDRAW ) return;
 
-    hPrevBrush=(HBRUSH32)SelectObject32(hdc,GetSysColorBrush32(COLOR_BTNFACE));
+    hPrevBrush = (HBRUSH32)SelectObject32(hdc, GetSysColorBrush32(COLOR_BTNFACE));
     CONV_RECT16TO32( &lphc->RectButton, &r );
 
     Rectangle32(hdc, r.left, r.top, r.right, r.bottom );
@@ -403,8 +402,7 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC16 hdc)
    INT32	id, size = 0;
    LPSTR	pText = NULL;
 
-   if( lphc->wState & CBF_NOREDRAW )
-        return;
+   if( lphc->wState & CBF_NOREDRAW ) return;
 
    /* follow Windows combobox that sends a bunch of text 
     * inquiries to its listbox while processing WM_PAINT. */
@@ -537,9 +535,9 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC16 hParamDC)
 	  /* paint text field */
 
 	  GRAPH_DrawRectangle( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
-			       lphc->RectEdit.right - lphc->RectEdit.left, 
-			       lphc->RectButton.bottom - lphc->RectButton.top,
-			       GetSysColorPen32(COLOR_WINDOWFRAME) ); 
+				    lphc->RectEdit.right - lphc->RectEdit.left, 
+				    lphc->RectButton.bottom - lphc->RectButton.top,
+				    GetSysColorPen32(COLOR_WINDOWFRAME) ); 
 	  CBPaintText( lphc, hDC );
       }
       if( hPrevBrush ) SelectObject32( hDC, hPrevBrush );
@@ -679,13 +677,12 @@ static void CBDropDown( LPHEADCOMBO lphc )
    SetWindowPos32( lphc->hWndLBox, HWND_TOP, rect.left, rect.top, 
 		 rect.right - rect.left, rect.bottom - rect.top, 
 		 SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOREDRAW);
+
    if( !(lphc->wState & CBF_NOREDRAW) )
-   {
        if( pRect )
            RedrawWindow16( lphc->self->hwndSelf, pRect, 0, RDW_INVALIDATE | 
 			   RDW_ERASE | RDW_UPDATENOW | RDW_NOCHILDREN );
-       ShowWindow32( lphc->hWndLBox, SW_SHOWNA );
-   }
+   ShowWindow32( lphc->hWndLBox, SW_SHOWNA );
 }
 
 /***********************************************************************
@@ -953,7 +950,7 @@ static LRESULT COMBO_ItemOp32( LPHEADCOMBO lphc, UINT32 msg,
 	     break;
    }
 
-  return SendMessage32A( lphc->owner, msg, lphc->self->wIDmenu, lParam );
+   return SendMessage32A( lphc->owner, msg, lphc->self->wIDmenu, lParam );
 }
 
 /***********************************************************************
@@ -961,41 +958,42 @@ static LRESULT COMBO_ItemOp32( LPHEADCOMBO lphc, UINT32 msg,
  */
 static LRESULT COMBO_GetText( LPHEADCOMBO lphc, UINT32 N, LPSTR lpText)
 {
-   INT32	idx;
-
    if( lphc->wState & CBF_EDIT )
        return SendMessage32A( lphc->hWndEdit, WM_GETTEXT, 
 			     (WPARAM32)N, (LPARAM)lpText );     
 
    /* get it from the listbox */
 
-   idx = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
-   if( idx != LB_ERR )
+   if( lphc->hWndLBox )
    {
-       LPSTR        lpBuffer;
-       INT32	    length = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32,
-					    (WPARAM32)idx, 0 );
-
-       /* 'length' is without the terminating character */
-       if( length >= N )
-	   lpBuffer = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1 );
-       else 
-	   lpBuffer = lpText;
-
-       if( lpBuffer )
+       INT32 idx = SendMessage32A( lphc->hWndLBox, LB_GETCURSEL32, 0, 0 );
+       if( idx != LB_ERR )
        {
-	   INT32    n = SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, 
-				       (WPARAM32)idx, (LPARAM)lpText );
+           LPSTR	lpBuffer;
+           INT32	length = SendMessage32A( lphc->hWndLBox, LB_GETTEXTLEN32,
+					        (WPARAM32)idx, 0 );
 
-	   /* truncate if buffer is too short */
+           /* 'length' is without the terminating character */
+           if( length >= N )
+	       lpBuffer = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1 );
+           else 
+	       lpBuffer = lpText;
 
-	   if( length >= N )
-	   {
-	       if( n != LB_ERR ) memcpy( lpText, lpBuffer, (N>n) ? n+1 : N-1 );
-	       lpText[N - 1] = '\0';
-	       HeapFree( GetProcessHeap(), 0, lpBuffer );
+           if( lpBuffer )
+           {
+	       INT32    n = SendMessage32A( lphc->hWndLBox, LB_GETTEXT32, 
+					   (WPARAM32)idx, (LPARAM)lpText );
+
+	       /* truncate if buffer is too short */
+
+	       if( length >= N )
+	       {
+	           if( n != LB_ERR ) memcpy( lpText, lpBuffer, (N>n) ? n+1 : N-1 );
+	           lpText[N - 1] = '\0';
+	           HeapFree( GetProcessHeap(), 0, lpBuffer );
+	       }
+	       return (LRESULT)n;
 	   }
-	   return (LRESULT)n;
        }
    }
    return 0;
@@ -1044,6 +1042,7 @@ static void CBResetPos( LPHEADCOMBO lphc, LPRECT16 lbRect, BOOL32 bRedraw )
                        lphc->RectEdit.bottom - lphc->RectEdit.top,
                        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
        lphc->wState &= ~CBF_NORESIZE;
+
        if( bRedraw && !(lphc->wState & CBF_NOREDRAW) )
            RedrawWindow32( lphc->self->hwndSelf, NULL, 0,
                            RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
@@ -1352,7 +1351,7 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 		if( lphc->wState & CBF_EDIT )
 		    SendMessage32A( lphc->hWndEdit, message, wParam, lParam );
 		SendMessage32A( lphc->hWndLBox, message, wParam, lParam );
-		break;
+		return 0;
 		
 	case WM_SYSKEYDOWN:
 		if( KEYDATA_ALT & HIWORD(lParam) )

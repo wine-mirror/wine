@@ -43,7 +43,7 @@ type	win16
 40 stub RMEMCPY
 41 stub INITRESLOADER
 42 stub FREESELECTOROFFSET
-43 stub STACKLINEARTOSEGMENTED
+43 pascal StackLinearToSegmented(word word) StackLinearToSegmented
 44 stub GETMODULEFILENAME32S
 45 stub FAPILOG16
 46 stub ALLOCCALLBACK
@@ -56,3 +56,4 @@ type	win16
 53 stub FINDGLOBALHANDLE
 
 #54-289 exist, but function names blanked out
+143 equate win32s16_143  0x100

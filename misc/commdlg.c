@@ -3224,3 +3224,11 @@ BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 
 GET_XXX_FILENAME(GetOpenFileName)
 GET_XXX_FILENAME(GetSaveFileName)
+
+/***********************************************************************
+ *           ChooseFontA   (COMDLG32.3)
+ */
+DWORD WINAPI ChooseFont32A(CHOOSEFONT pChoosefont)
+{
+	return NULL;
+}

@@ -712,14 +712,9 @@ DWORD WINAPI GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
     if (!wndPtr) return 0;
     htask=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
     tdb = (TDB*)GlobalLock16(htask);
-    if (!tdb) return 0;
-    if (tdb->thdb) {
-    	if (process)
-		*process = (DWORD)tdb->thdb->process;
-	return (DWORD)tdb->thdb;
-    }
-    return 0;
-
+    if (!tdb || !tdb->thdb) return 0;
+    if (process) *process = PDB_TO_PROCESS_ID( tdb->thdb->process );
+    return THDB_TO_THREAD_ID( tdb->thdb );
 }
 
 

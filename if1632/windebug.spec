@@ -3,4 +3,4 @@ type	win16
 
   1 stub     WINDEBUG
   2 stub     WEP
-  3 pascal   WinNotify() WinNotify
+  3 register WinNotify() WinNotify

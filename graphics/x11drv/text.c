@@ -5,7 +5,7 @@
  */
 
 #include <stdlib.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <X11/Xatom.h>
 #include "windows.h"
 #include "dc.h"
@@ -94,8 +94,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
     if (flags & ETO_OPAQUE)
     {
-        XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-        XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+        TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                         dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
                         rect.right-rect.left, rect.bottom-rect.top );
     }
@@ -111,7 +111,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
     else
     {
-	XTextExtents( font, str, count, &dir, &ascent, &descent, &info );
+	TSXTextExtents( font, str, count, &dir, &ascent, &descent, &info );
         info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
     }
 
@@ -166,8 +166,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                 (y-font->ascent < rect.top) ||
                 (y+font->descent >= rect.bottom))
             {
-                XSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
-                XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
+                TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                                 dc->w.DCOrgX + x,
                                 dc->w.DCOrgY + y - font->ascent,
                                 info.width,
@@ -178,10 +178,10 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     
     /* Draw the text (count > 0 verified) */
 
-    XSetForeground( display, dc->u.x.gc, dc->w.textPixel );
+    TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
     {
-        XDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
+        TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
                      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
     }
     else  /* Now the fun begins... */
@@ -214,7 +214,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 		do
 		{
 		    delta += (lpDx[i] * dc->vportExtX + extra) / dc->wndExtX
-					    - XTextWidth( font, str + i, 1);
+					    - TSXTextWidth( font, str + i, 1);
 		    pitem->nchars++;
 		} while ((++i < count) && !delta);
 		pitem++;
@@ -240,7 +240,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
             } 
         }
 
-        XDrawText( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXDrawText( display, dc->u.x.drawable, dc->u.x.gc,
                    dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
     }
@@ -251,27 +251,27 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     {
 	long linePos, lineWidth;       
 
-	if (!XGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
+	if (!TSXGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
 	    linePos = font->descent-1;
-	if (!XGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
+	if (!TSXGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
-	XSetLineAttributes( display, dc->u.x.gc, lineWidth,
+	TSXSetLineAttributes( display, dc->u.x.gc, lineWidth,
 			    LineSolid, CapRound, JoinBevel ); 
-        XDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y + linePos );
     }
     if (lfStrikeOut)
     {
 	long lineAscent, lineDescent;
-	if (!XGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
+	if (!TSXGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
 	    lineAscent = font->ascent / 2;
-	if (!XGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
+	if (!TSXGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent * 2 / 3;
-	XSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
+	TSXSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
-	XDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }

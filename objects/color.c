@@ -6,7 +6,7 @@
  */
 
 #include <stdlib.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <stdio.h>
 #include <string.h>
 #include "windows.h"
@@ -237,7 +237,7 @@ static void COLOR_FillDefaultColors(void)
 			    COLOR_sysPal[idx].peGreen << 8,
 			    COLOR_sysPal[idx].peGreen << 8,
 			    (DoRed | DoGreen | DoBlue) };
-	   XStoreColor(display, cSpace.colorMap, &color);
+	   TSXStoreColor(display, cSpace.colorMap, &color);
 	 }
 
 	 idx = COLOR_freeList[idx];
@@ -258,11 +258,11 @@ static void COLOR_FillDefaultColors(void)
 	{
 	  xc.pixel = i;
 
-	  XQueryColor(display, cSpace.colorMap, &xc);
+	  TSXQueryColor(display, cSpace.colorMap, &xc);
 	  r = xc.red>>8; g = xc.green>>8; b = xc.blue>>8;
 
 	  if( xc.pixel < 256 && COLOR_CheckSysColor(RGB(r, g, b)) &&
-	      XAllocColor(display, cSpace.colorMap, &xc) )
+	      TSXAllocColor(display, cSpace.colorMap, &xc) )
 	  {
 	     COLOR_PixelToPalette[xc.pixel] = idx;
 	     COLOR_PaletteToPixel[idx] = xc.pixel;
@@ -313,7 +313,7 @@ static BOOL32 COLOR_BuildPrivateMap(CSPACE* cs)
 
        color.flags = DoRed | DoGreen | DoBlue;
        color.pixel = i;
-       XStoreColor(display, cs->colorMap, &color);
+       TSXStoreColor(display, cs->colorMap, &color);
 
        /* Set EGA mapping if color is from the first or last eight */
 
@@ -359,7 +359,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
         color.blue  = __sysPalTemplate[i].peBlue * 65535 / 255;
         color.flags = DoRed | DoGreen | DoBlue;
 
-        if (!XAllocColor( display, cSpace.colorMap, &color ))
+        if (!TSXAllocColor( display, cSpace.colorMap, &color ))
         { 
 	     XColor	best, c;
 	     
@@ -388,7 +388,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	     best.pixel = best.red = best.green = best.blue = 0;
 	     for( c.pixel = 0, diff = 0x7fffffff; c.pixel < max; c.pixel += step )
 	     {
-		XQueryColor(display, cSpace.colorMap, &c);
+		TSXQueryColor(display, cSpace.colorMap, &c);
 		r = (c.red - color.red)>>8; 
 		g = (c.green - color.green)>>8; 
 		b = (c.blue - color.blue)>>8;
@@ -396,7 +396,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 		if( r < diff ) { best = c; diff = r; }
 	     }
 
-	     if( XAllocColor(display, cSpace.colorMap, &best) )
+	     if( TSXAllocColor(display, cSpace.colorMap, &best) )
 		 color.pixel = best.pixel;
 	     else color.pixel = (i < NB_RESERVED_COLORS/2)? bp : wp;
         }
@@ -424,7 +424,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
 	/* comment this out if you want to debug palette init */
 
-	XGrabServer(display);
+	TSXGrabServer(display);
 
 	/* let's become the first client that actually follows 
 	 * X guidelines and does binary search...
@@ -435,12 +435,12 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;
 
-             if( !XAllocColorCells(display, cs->colorMap, False,
+             if( !TSXAllocColorCells(display, cs->colorMap, False,
                                    plane_masks, 0, pixDynMapping, c_val) )
                  c_max = c_val - 1;
              else
                {
-                 XFreeColors(display, cs->colorMap, pixDynMapping, c_val, 0);
+                 TSXFreeColors(display, cs->colorMap, pixDynMapping, c_val, 0);
                  c_min = c_val;
                }
           }
@@ -451,7 +451,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 
 	if( c_min > 0 )
-	  if( !XAllocColorCells(display, cs->colorMap, False,
+	  if( !TSXAllocColorCells(display, cs->colorMap, False,
                                 plane_masks, 0, pixDynMapping, c_min) )
 	    {
 	      fprintf(stderr,"Inexplicable failure during colorcell allocation.\n");
@@ -460,7 +460,7 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
 
         cs->size = c_min + NB_RESERVED_COLORS;
 
-	XUngrabServer(display);
+	TSXUngrabServer(display);
 
 	dprintf_palette(stddeb,"adjusted size %i colorcells\n", cs->size);
      }
@@ -595,7 +595,7 @@ BOOL32 COLOR_Init(void)
 	{
 	    XSetWindowAttributes win_attr;
 
-	    cSpace.colorMap = XCreateColormap( display, rootWindow,
+	    cSpace.colorMap = TSXCreateColormap( display, rootWindow,
 						 visual, AllocAll );
 	    if (cSpace.colorMap)
 	    {
@@ -608,7 +608,7 @@ BOOL32 COLOR_Init(void)
 	        if( rootWindow != DefaultRootWindow(display) )
 	        {
 		    win_attr.colormap = cSpace.colorMap;
-		    XChangeWindowAttributes( display, rootWindow,
+		    TSXChangeWindowAttributes( display, rootWindow,
 					 CWColormap, &win_attr );
 		}
 		break;
@@ -630,17 +630,17 @@ BOOL32 COLOR_Init(void)
 	/* FIXME: hack to detect XFree32 XF_VGA16 ... We just have
 	 * depths 1 and 4
 	 */
-	depths=XListDepths(display,DefaultScreen(display),&nrofdepths);
+	depths=TSXListDepths(display,DefaultScreen(display),&nrofdepths);
 	if ((nrofdepths==2) && ((depths[0]==4) || depths[1]==4)) {
 	    cSpace.monoPlane = 1;
 	    for( white = cSpace.size - 1; !(white & 1); white >>= 1 )
 	        cSpace.monoPlane++;
     	    cSpace.flags = (white & mask) ? COLOR_WHITESET : 0;
 	    cSpace.colorMap = DefaultColormapOfScreen( screen );
-	    XFree(depths);
+	    TSXFree(depths);
 	    break;
 	}
-	XFree(depths);
+	TSXFree(depths);
         cSpace.colorMap = DefaultColormapOfScreen( screen );
         cSpace.flags |= COLOR_FIXED;
         COLOR_Computeshifts(visual->red_mask, &COLOR_Redshift, &COLOR_Redmax);
@@ -678,7 +678,7 @@ BOOL32 COLOR_Init(void)
 void COLOR_Cleanup(void)
 {
   if( COLOR_gapFilled )
-      XFreeColors(display, cSpace.colorMap, 
+      TSXFreeColors(display, cSpace.colorMap, 
 		  (unsigned long*)(COLOR_PaletteToPixel + COLOR_gapStart), 
 		  COLOR_gapFilled, 0);
 }
@@ -842,7 +842,7 @@ COLORREF COLOR_ToLogical(int pixel)
 		   ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
 
     color.pixel = pixel;
-    XQueryColor(display, cSpace.colorMap, &color);
+    TSXQueryColor(display, cSpace.colorMap, &color);
     return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
 }
 
@@ -1048,7 +1048,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 map
                     color.green = palPtr->logpalette.palPalEntry[uStart].peGreen << 8;
                     color.blue = palPtr->logpalette.palPalEntry[uStart].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
-                    XStoreColor(display, cSpace.colorMap, &color);
+                    TSXStoreColor(display, cSpace.colorMap, &color);
 
                     COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[uStart];
                     COLOR_sysPal[index].peFlags = flag;

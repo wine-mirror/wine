@@ -173,6 +173,9 @@ static void DCE_DeleteClipRgn( DCE* dce )
 	    DeleteObject32( dce->hClipRgn );
 
     dce->hClipRgn = 0;
+
+    dprintf_dc(stddeb,"\trestoring VisRgn\n");
+
     RestoreVisRgn(dce->hDC);
 }
 
@@ -213,12 +216,12 @@ static INT32 DCE_ReleaseDC( DCE* dce )
  *   DCE_InvalidateDCE
  *
  * It is called from SetWindowPos() - we have to mark as dirty all busy
- * DCE's for windows whose client rect intersects with specified update 
- * rectangle. wndScope is the immediate parent of the window(s) that 
- * was(were) moved and(or) resized.
+ * DCE's for windows that have pWnd->parent as an ansector and whose client 
+ * rect intersects with specified update rectangle. 
  */
-BOOL32 DCE_InvalidateDCE(WND* wndScope, const RECT32* pRectUpdate)
+BOOL32 DCE_InvalidateDCE(WND* pWnd, const RECT32* pRectUpdate)
 {
+    WND* wndScope = pWnd->parent;
     BOOL32 bRet = FALSE;
 
     if( wndScope )
@@ -257,7 +260,9 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, const RECT32* pRectUpdate)
 
 			    OffsetRect32( &wndRect, xoffset - wndCurrent->rectClient.left, 
 						    yoffset - wndCurrent->rectClient.top);
-			    if (IntersectRect32( &wndRect, &wndRect, pRectUpdate ))
+
+			    if (pWnd == wndCurrent ||
+				IntersectRect32( &wndRect, &wndRect, pRectUpdate ))
 			    { 
 				if( !(dce->DCXflags & DCX_DCEBUSY) )
 				{
@@ -505,7 +510,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
         dc->w.DCOrgX = 0;
         dc->w.DCOrgY = 0;
         dc->u.x.drawable = rootWindow;
-        XSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
+        TSXSetSubwindowMode( display, dc->u.x.gc, IncludeInferiors );
     }
     else
     {
@@ -535,7 +540,7 @@ static void DCE_SetDrawable( WND *wndPtr, DC *dc, WORD flags, BOOL32 bSetClipOri
 	 */
 
 	if( bSetClipOrigin )
-	    XSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
+	    TSXSetClipOrigin( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY );
     }
 }
 /***********************************************************************
@@ -760,27 +765,6 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 						      SYSMETRICS_CYSCREEN );
 	    else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
 
-
-	if( wndPtr->parent && wndPtr->window )
-	{
-	    /* Problem - X doesn't discard save under buffers when
-	     * the old data is invalidated by the new graphics output.
-	     *
-	     * FIXME: Instead of overriding we should try to discard
-	     *        save_unders by calling XSetWindowAttributes().
-	     *        And we should do it for the child window GetDCEx() 
-	     *	      calls as well. */
-
-            WND*    wnd = wndPtr->parent->child;
-	    RECT32  rect;
-	
-	    for( ; wnd && (wnd != wndPtr); wnd = wnd->next ) {
-		if( wnd->class->style & CS_SAVEBITS && 
-		    wnd->dwStyle & WS_VISIBLE &&
-		    IntersectRect32(&rect, &wndPtr->rectClient, &wnd->rectClient) )
-                    wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
-	    }
-	}
 	dc->w.flags &= ~DC_DIRTY;
 	dce->DCXflags &= ~DCX_DCEDIRTY;
 	SelectVisRgn( hdc, hrgnVisible );

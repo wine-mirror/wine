@@ -361,6 +361,8 @@ BOOL32 BUILTIN_ParseDLLOptions( const char *str )
         {
             if (!lstrncmpi32A( str, dll->descr->name, (int)(p - str) ))
             {
+	        if (dll->descr->name[(int)(p-str)])  /* only partial match */
+			continue;
                 if (str[-1] == '-')
                 {
                     if (dll->flags & DLL_FLAG_ALWAYS_USED) return FALSE;

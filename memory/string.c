@@ -80,6 +80,7 @@ LPSTR WINAPI lstrcat32A( LPSTR dst, LPCSTR src )
 {
     dprintf_string(stddeb,"strcat: Append %s to %s\n",
 		   debugstr_a (src), debugstr_a (dst));
+    /* Windows does not check for NULL pointers here, so we don't either */
     strcat( dst, src );
     return dst;
 }
@@ -93,6 +94,7 @@ LPWSTR WINAPI lstrcat32W( LPWSTR dst, LPCWSTR src )
     register LPWSTR p = dst;
     dprintf_string(stddeb,"strcat: Append L%s to L%s\n",
 		   debugstr_w (src), debugstr_w (dst));
+    /* Windows does not check for NULL pointers here, so we don't either */
     while (*p) p++;
     while ((*p++ = *src++));
     return dst;
@@ -255,7 +257,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 {
     dprintf_string(stddeb,"strcpy %s\n", debugstr_a (src));
-    if (!src || !dst) return NULL;
+    /* Windows does not check for NULL pointers here, so we don't either */
     strcpy( dst, src );
     return dst;
 }
@@ -268,6 +270,7 @@ LPWSTR WINAPI lstrcpy32W( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
     dprintf_string(stddeb,"strcpy L%s\n", debugstr_w (src));
+    /* Windows does not check for NULL pointers here, so we don't either */
     while ((*p++ = *src++));
     return dst;
 }
@@ -291,6 +294,7 @@ LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
     LPSTR p = dst;
     dprintf_string(stddeb,"strcpyn %s for %d chars\n",
 		   debugstr_an (src,n), n);
+    /* Windows does not check for NULL pointers here, so we don't either */
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -305,6 +309,7 @@ LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
     LPWSTR p = dst;
     dprintf_string(stddeb,"strcpyn L%s for %d chars\n",
 		   debugstr_wn (src,n), n);
+    /* Windows does not check for NULL pointers here, so we don't either */
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;

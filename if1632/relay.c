@@ -34,10 +34,9 @@ BOOL32 RELAY_Init(void)
       /* Allocate the code selector for CallTo16 routines */
 
     extern void CALLTO16_Start(), CALLTO16_End();
-    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long(), CALLTO16_Ret_regs();
+    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
     extern DWORD CALLTO16_RetAddr_word;
     extern DWORD CALLTO16_RetAddr_long;
-    extern DWORD CALLTO16_RetAddr_regs;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
                                    (int)CALLTO16_End - (int)CALLTO16_Start,
@@ -49,8 +48,6 @@ BOOL32 RELAY_Init(void)
     CALLTO16_RetAddr_word=MAKELONG( (int)CALLTO16_Ret_word-(int)CALLTO16_Start,
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
-                                    codesel );
-    CALLTO16_RetAddr_regs=MAKELONG( (int)CALLTO16_Ret_regs-(int)CALLTO16_Start,
                                     codesel );
 
     /* Create built-in modules */
@@ -238,12 +235,15 @@ void RELAY_Unimplemented16(void)
  */
 void RELAY_DebugCallTo16( int* stack, int nb_args )
 {
+    THDB *thdb;
+
     if (!debugging_relay) return;
+    thdb = THREAD_Current();
 
     if (nb_args == -1)  /* Register function */
     {
         CONTEXT *context = (CONTEXT *)stack[0];
-        WORD *stack16 = (WORD *)CURRENT_STACK16;
+        WORD *stack16 = (WORD *)THREAD_STACK16(thdb);
         printf( "CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
         nb_args = stack[1] / sizeof(WORD);
@@ -258,7 +258,7 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     {
         printf( "CallTo16(func=%04x:%04x,ds=%04x",
                 HIWORD(stack[0]), LOWORD(stack[0]),
-                SELECTOROF(IF1632_Saved16_ss_sp) );
+                SELECTOROF(thdb->cur_stack) );
         stack++;
         while (nb_args--) printf( ",0x%04x", *stack++ );
         printf( ")\n" );
@@ -277,7 +277,6 @@ void WINAPI Catch( CONTEXT *context )
     VA_LIST16 valist;
     SEGPTR buf;
     LPCATCHBUF lpbuf;
-    STACK16FRAME *pFrame = CURRENT_STACK16;
 
     VA_START16( valist );
     buf   = VA_ARG16( valist, SEGPTR );
@@ -302,13 +301,13 @@ void WINAPI Catch( CONTEXT *context )
 
     lpbuf[0] = IP_reg(context);
     lpbuf[1] = CS_reg(context);
-    lpbuf[2] = LOWORD(pFrame->frame32);
+    lpbuf[2] = SP_reg(context);
     lpbuf[3] = BP_reg(context);
     lpbuf[4] = SI_reg(context);
     lpbuf[5] = DI_reg(context);
     lpbuf[6] = DS_reg(context);
-    lpbuf[7] = OFFSETOF(IF1632_Saved16_ss_sp);
-    lpbuf[8] = HIWORD(pFrame->frame32);
+    lpbuf[7] = 0;
+    lpbuf[8] = SS_reg(context);
     AX_reg(context) = 0;  /* Return 0 */
 }
 
@@ -325,6 +324,8 @@ void WINAPI Throw( CONTEXT *context )
     SEGPTR buf;
     LPCATCHBUF lpbuf;
     STACK16FRAME *pFrame;
+    STACK32FRAME *frame32;
+    THDB *thdb = THREAD_Current();
 
     VA_START16( valist );
     AX_reg(context) = VA_ARG16( valist, WORD );  /* retval */
@@ -332,10 +333,17 @@ void WINAPI Throw( CONTEXT *context )
     lpbuf  = (LPCATCHBUF)PTR_SEG_TO_LIN( buf );
     VA_END16( valist );
 
-    IF1632_Saved16_ss_sp = MAKELONG( lpbuf[7] - sizeof(WORD),
-                                     HIWORD(IF1632_Saved16_ss_sp) );
-    pFrame = CURRENT_STACK16;
-    pFrame->frame32 = MAKELONG( lpbuf[2], lpbuf[8] );
+    /* Find the frame32 corresponding to the frame16 we are jumping to */
+    frame32 = THREAD_STACK16( thdb )->frame32;
+    while (frame32 && frame32->frame16)
+    {
+        if (OFFSETOF(frame32->frame16) > lpbuf[2]) break;
+        frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
+    }
+
+    thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( lpbuf[8], lpbuf[2]-sizeof(WORD) );
+    pFrame = THREAD_STACK16( thdb );
+    pFrame->frame32 = frame32;
     IP_reg(context) = lpbuf[0];
     CS_reg(context) = lpbuf[1];
     BP_reg(context) = lpbuf[3];
@@ -373,7 +381,7 @@ static DWORD RELAY_CallProc32W(int Ex)
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
         proc32      = VA_ARG16( valist, FARPROC32 );
-	fprintf(stderr,"CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
+	dprintf_relay(stddeb,"CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
 	for (i=0;i<nrofargs;i++) {
@@ -381,15 +389,15 @@ static DWORD RELAY_CallProc32W(int Ex)
                 {
                     SEGPTR ptr = VA_ARG16( valist, SEGPTR );
                     args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(ptr);
-                    fprintf(stderr,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
+                    dprintf_relay(stddeb,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
 		}
                 else
                 {
                     args[nrofargs-i-1] = VA_ARG16( valist, DWORD );
-                    fprintf(stderr,"%ld,",args[nrofargs-i-1]);
+                    dprintf_relay(stddeb,"%ld,",args[nrofargs-i-1]);
 		}
 	}
-	fprintf(stderr,"]) - ");
+	dprintf_relay(stddeb,"]) - ");
         VA_END16( valist );
 
 	switch (nrofargs) {
@@ -424,9 +432,10 @@ static DWORD RELAY_CallProc32W(int Ex)
 		break;
 	}
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
-        if (!Ex) STACK16_POP( (3 + nrofargs) * sizeof(DWORD) );
+        if (!Ex) STACK16_POP( THREAD_Current(),
+                              (3 + nrofargs) * sizeof(DWORD) );
 
-	fprintf(stderr,"returns %08lx\n",ret);
+	dprintf_relay(stddeb,"returns %08lx\n",ret);
 	HeapFree( GetProcessHeap(), 0, args );
 	return ret;
 }

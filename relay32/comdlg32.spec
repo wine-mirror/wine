@@ -4,7 +4,7 @@ type	win32
  0 stub ArrowBtnWndProc
  1 stub ChooseColorA
  2 stub ChooseColorW
- 3 stub ChooseFontA
+ 3 stdcall ChooseFontA(ptr) ChooseFont32A
  4 stub ChooseFontW
  5 stdcall CommDlgExtendedError() CommDlgExtendedError
  6 stub FindTextA

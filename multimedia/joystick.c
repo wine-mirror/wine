@@ -19,6 +19,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/errno.h>
 #include "windows.h"
 #include "ldt.h"
 #include "user.h"
@@ -27,14 +28,16 @@
 #include "stddebug.h"
 #include "debug.h"
 
-static int count_use[4] = {0, 0, 0, 0};
+#define MAXJOYDRIVERS	4
+
+static int count_use[MAXJOYDRIVERS] = {0, 0, 0, 0};
 static int dev_stat;
 static int joy_nr_open = 0;
 static BOOL16 joyCaptured = FALSE;
-static HWND16 CaptureWnd[2] = {0, 0};
-static int joy_dev[2] = {-1, -1};
-static JOYINFO16 joyCapData[2];
-static unsigned int joy_threshold[2] = {0, 0};
+static HWND16 CaptureWnd[MAXJOYDRIVERS] = {0, 0};
+static int joy_dev[MAXJOYDRIVERS] = {-1, -1,-1,-1};
+static JOYINFO16 joyCapData[MAXJOYDRIVERS];
+static unsigned int joy_threshold[MAXJOYDRIVERS] = {0, 0, 0, 0};
 
 struct js_status
 {
@@ -49,15 +52,16 @@ struct js_status
  */
 BOOL16 joyOpenDriver(WORD wID)
 {
-	char dev_name[] = "/dev/jsx";
+	char dev_name[] = "/dev/js%d";
+	char	buf[20];
 
 	if (joy_dev[wID] >= 0) return TRUE;
-        dev_name[strlen(dev_name)-1]=(char) wID+0x30;
-        if ((joy_dev[wID] = open(dev_name, O_RDONLY)) >= 0) {
+        sprintf(buf,dev_name,wID);
+        if ((joy_dev[wID] = open(buf, O_RDONLY)) >= 0) {
 		joy_nr_open++;
 		return TRUE;
-	}
-	else return FALSE;
+	} else
+		return FALSE;
 }
 
 /**************************************************************************
@@ -81,18 +85,18 @@ void joySendMessages(void)
         struct js_status js;
 
 	if (joy_nr_open)
-	for (joy=0; joy < 4; joy++) 
-	if (joy_dev[joy] >= 0) {
-		if (count_use[joy] > 250) {
-			joyCloseDriver(joy);
-			count_use[joy] = 0;
-		}
-		count_use[joy]++;
-	}
-	else return;
+	for (joy=0; joy < MAXJOYDRIVERS; joy++) 
+		if (joy_dev[joy] >= 0) {
+			if (count_use[joy] > 250) {
+				joyCloseDriver(joy);
+				count_use[joy] = 0;
+			}
+			count_use[joy]++;
+		} else
+			return;
         if (joyCaptured == FALSE) return;
 	dprintf_mmsys(stddeb, "JoySendMessages()\n");
-        for (joy=0; joy < 4; joy++) {
+        for (joy=0; joy < MAXJOYDRIVERS; joy++) {
 		if (joyOpenDriver(joy) == FALSE) continue;
                 dev_stat = read(joy_dev[joy], &js, sizeof(js));
                 if (dev_stat == sizeof(js)) {
@@ -135,7 +139,7 @@ UINT16 WINAPI joyGetNumDevs16(void)
     UINT16 joy_cnt = 0;
 
     dprintf_mmsys(stddeb, "JoyGetNumDevs: ");
-    for (joy=0; joy<4; joy++)
+    for (joy=0; joy<MAXJOYDRIVERS; joy++)
 	if (joyOpenDriver(joy) == TRUE) {		
 		joyCloseDriver(joy);
 		joy_cnt++;
@@ -325,7 +329,7 @@ MMRESULT32 WINAPI joyGetThreshold32(UINT32 wID, LPUINT32 lpThreshold)
 MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 {
     dprintf_mmsys(stderr, "JoyGetThreshold(%04X, %p);\n", wID, lpThreshold);
-    if (wID > 3) return JOYERR_PARMS;
+    if (wID >= MAXJOYDRIVERS) return JOYERR_PARMS;
     *lpThreshold = joy_threshold[wID];
     return JOYERR_NOERROR;
 }

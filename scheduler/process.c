@@ -21,11 +21,6 @@
 #define HTABLE_SIZE  0x30  /* Handle table initial size */
 #define HTABLE_INC   0x10  /* Handle table increment */
 
-/* PDB <-> Process id conversion macros */
-#define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)
-#define PROCESS_ID_TO_PDB(id)  ((PDB32 *)((id) ^ PROCESS_OBFUSCATOR))
-#define PDB_TO_PROCESS_ID(pdb) ((DWORD)(pdb) ^ PROCESS_OBFUSCATOR)
-
 static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
 static BOOL32 PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
 static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id );

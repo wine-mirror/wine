@@ -163,17 +163,18 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 {
     CONTEXT context16;
     DWORD argsize;
+    THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
 
     CS_reg(&context16)  = HIWORD(EDX_reg(context));
     IP_reg(&context16)  = LOWORD(EDX_reg(context));
-    EBP_reg(&context16) = OFFSETOF(IF1632_Saved16_ss_sp)
+    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = EBP_reg(context)-ESP_reg(context)-0x44;
 
-    memcpy( ((LPBYTE)CURRENT_STACK16)-argsize,
+    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
             (LPBYTE)ESP_reg(context)+4, argsize );
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
@@ -181,7 +182,7 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 
 
 /**********************************************************************
- *           WOWCallback16 (KERNEL32.62)
+ *           WOWCallback16 (KERNEL32.62)(WOW32.2)
  */
 DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 {
@@ -190,6 +191,16 @@ DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 	ret =  Callbacks->CallWOWCallbackProc(fproc,arg);
 	dprintf_thunk(stddeb,"... returns %ld\n",ret);
 	return ret;
+}
+
+/**********************************************************************
+ *           WOWCallback16Ex (KERNEL32.55)(WOW32.3)
+ */
+BOOL32 WINAPI WOWCallback16Ex(
+	FARPROC16 vpfn16,DWORD dwFlags,DWORD cbArgs,LPVOID pArgs,
+	LPDWORD pdwRetCode
+) {
+	return Callbacks->CallWOWCallback16Ex(vpfn16,dwFlags,cbArgs,pArgs,pdwRetCode);
 }
 
 /***********************************************************************
@@ -263,7 +274,8 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 {
 	CONTEXT	context16;
 	LPBYTE	curstack;
-	DWORD	ret,stacksize;
+        DWORD ret,stacksize;
+	THDB *thdb = THREAD_Current();
 
 	dprintf_thunk(stddeb,"KERNEL32_45(%%eax=0x%08lx(%%cx=0x%04lx,%%edx=0x%08lx))\n",
 		(DWORD)EAX_reg(context),(DWORD)CX_reg(context),(DWORD)EDX_reg(context)
@@ -277,10 +289,10 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 	CS_reg(&context16)	 = HIWORD(EAX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EAX_reg(context));
 
-	curstack = PTR_SEG_TO_LIN(STACK16_PUSH(stacksize));
-	memcpy(curstack-stacksize,(LPBYTE)ESP_reg(context),stacksize);
+	curstack = PTR_SEG_TO_LIN(STACK16_PUSH( thdb, stacksize ));
+	memcpy(curstack - stacksize,(LPBYTE)ESP_reg(context),stacksize);
 	ret = Callbacks->CallRegisterLongProc(&context16,0);
-	STACK16_POP(stacksize);
+	STACK16_POP( thdb, stacksize );
 
 	dprintf_thunk(stddeb,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
@@ -298,6 +310,7 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
 	CONTEXT	context16;
 	LPBYTE	curstack;
 	DWORD	ret,stacksize;
+	THDB *thdb = THREAD_Current();
 
 	dprintf_thunk(stddeb,"_KERNEL32_40(EDX=0x%08lx)\n",
 		EDX_reg(context)
@@ -311,10 +324,10 @@ VOID WINAPI _KERNEL32_40(CONTEXT *context)
 	CS_reg(&context16)	 = HIWORD(EDX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EDX_reg(context));
 
-	curstack = PTR_SEG_TO_LIN(STACK16_PUSH(stacksize));
+	curstack = PTR_SEG_TO_LIN(STACK16_PUSH( thdb, stacksize ));
 	memcpy(curstack-stacksize,(LPBYTE)ESP_reg(context),stacksize);
 	ret = Callbacks->CallRegisterShortProc(&context16,0);
-	STACK16_POP(stacksize);
+	STACK16_POP( thdb, stacksize );
 
 	dprintf_thunk(stddeb,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
@@ -593,7 +606,7 @@ _KERNEL_358(DWORD x) {
 		return x;
 
 	sel = SELECTOR_AllocBlock( PTR_SEG_TO_LIN(x) , 0xffff, SEGMENT_CODE, FALSE, FALSE );
-	return (sel<<16)|(0x0000);
+	return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
 }
 
 /**********************************************************************
@@ -603,14 +616,10 @@ _KERNEL_358(DWORD x) {
  */
 VOID WINAPI
 _KERNEL_359(DWORD x) {
-	DWORD	savedsssp;
-
 	fprintf(stderr,"_KERNEL_359(0x%08lx),stub\n",x);
 	if ((HIWORD(x) & 7)!=7)
 		return;
-	savedsssp = IF1632_Saved16_ss_sp;IF1632_Saved16_ss_sp = 0;
 	SELECTOR_FreeBlock(x>>16,1);
-	IF1632_Saved16_ss_sp = savedsssp;
 	return;
 }
 
@@ -660,4 +669,9 @@ BOOL16 WINAPI KERNEL_431(LPSTR fn,WORD x) {
 	}
 	_lclose32(hf);
 	return (xmagic == IMAGE_NT_SIGNATURE);
+}
+
+HANDLE32 WINAPI WOWHandle32(WORD handle,WOW_HANDLE_TYPE type) {
+	fprintf(stderr,"WOWHandle32(0x%04x,%d)\n",handle,type);
+	return (HANDLE32)handle;
 }

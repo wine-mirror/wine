@@ -8,7 +8,7 @@ PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 
-LANGUAGES   = En Da De Fr Fi Ko Hu It Va
+LANGUAGES   = En Da De Fr Fi Ko Hu It Va Sw
 
 MOSTSRCS = \
 	winhelp.c \

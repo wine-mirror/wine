@@ -1,0 +1,227 @@
+#!/usr/bin/perl -w
+
+# Create threads safe wrappers around X11 calls.
+#
+# Copyright 1998 Kristian Nielsen.
+#
+
+# FIXME: This does not do full C prototype parsing, but relies on
+# knowledge on how the X11 include files are formatted. It will
+# probably need to be modified for new include files. It also fails
+# for certain prototypes (notably those with function pointer
+# arguments or results), so these must be added manually. And it
+# relies on a fixed location of X11 includes (/usr/X11R6/include/).
+#
+# This program expects to be run from Wine's main directory.
+
+$X11_include_dir = "/usr/X11R6/include";
+$outdir = "tsx11";
+$wantfile = "$outdir/X11_calls";
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm");
+
+# First read list of wanted function names.
+
+open(WANT, $wantfile) || die "open";
+while(<WANT>) {
+    next if /^\s*\#/;		# Skip comment lines.
+    next if /^\s*$/;		# Skip empty lines.
+    if(/^\s*([a-zA-Z0-9_]+)\s*$/) {
+	$want{$1} = 1;
+    } else {
+	die "syntax error in file '$wantfile', in line '$_'";
+    }
+}
+close(WANT);
+
+foreach $name (@dolist) {
+
+    $ucname = uc $name;
+    $lcname = lc $name;
+
+    $outfile = "/ts_$lcname";
+    open(OUTC, ">$outdir/$outfile.c") || die "open";
+    open(OUTH, ">include/$outfile.h") || die "open";
+
+    $x11_incl = "";
+    $extensions_dir = "";
+    if($name eq "Xutil" || $name eq "Xresource" || $name eq "XShm") {
+	$x11_incl = "#include <X11/Xlib.h>\n";
+	# For Xutil, we need X11/Xresource.h for XUniqueContext().
+	$x11_incl .= "#include <X11/Xresource.h>\n" if $name eq "Xutil";
+    }
+    if($name eq "XShm") {
+	$extensions_dir = "extensions/";
+    }
+
+    print OUTH <<END;
+/*
+ * Thread safe wrappers around $name calls.
+ * Always include this file instead of <X11/$name.h>.
+ * This file was generated automatically by tools/make_X11wrappers
+ *
+ * Copyright 1998 Kristian Nielsen
+ */
+
+#ifndef __WINE_TS$ucname\_H
+#define __WINE_TS$ucname\_H
+
+$x11_incl#include <X11/$extensions_dir$name.h>
+
+END
+
+    print OUTC <<END;
+/*
+ * Thread safe wrappers around $name calls.
+ * This file was generated automatically by tools/make_X11wrappers
+ *
+ * Copyright 1998 Kristian Nielsen
+ */
+
+$x11_incl#include <X11/$extensions_dir$name.h>
+#include "tsx11defs.h"
+#include "stddebug.h"
+#include "debug.h"
+END
+
+    if($name eq "xpm") {	# Handle as special case.
+	output_fn("XpmCreatePixmapFromData", "int",
+		  "Display *, Drawable, char **, Pixmap *, Pixmap *, XpmAttributes *",
+		  "Display *a0, Drawable a1, char **a2, Pixmap *a3, Pixmap *a4, XpmAttributes *a5",
+		  "a0, a1, a2, a3, a4, a5");
+	output_fn("XpmAttributesSize", "int", "void", "void", "");
+    } elsif($name eq "XShm") {
+	output_fn("XShmQueryExtension", "Bool",
+		  "Display *", "Display *a0", "a0");
+	output_fn("XShmPixmapFormat", "int",
+		  "Display *", "Display *a0", "a0");
+	output_fn("XShmDetach", Status,
+		  "Display *, XShmSegmentInfo *",
+		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
+	output_fn("XShmAttach", Status,
+		  "Display *, XShmSegmentInfo *",
+		  "Display *a0, XShmSegmentInfo *a1", "a0, a1");
+    } else {
+	open(IN, "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | gcc -L$X11_include_dir -E - | grep -v '^[ \t]*\$'|") || die "open";
+
+      PROTO: while(<IN>) {
+	  if(m'extern\s+([^()]*)\b([a-zA-Z0-9_]+)\s*\(') {
+	      $result_type = $1;
+	      $fn_name = $2;
+	      $result_type = "int" if $result_type =~ /^\s*$/;
+	      @args = ();
+	      while(<IN>) {
+		  last if m'\)\s*;';
+		  # Give up on vararg functions and function pointer args.
+		  if(m'\.\.\.|\(\*\)') {
+		      undef $fn_name;
+		      last;
+		  }
+		  if(m'\s*([^,]*[^, \t])\s*(,?\n)') {
+		      $args[$#args+1] = $1;
+		  }
+	      }
+	      # Skip if vararg, function pointer arg, or not needed.
+	      next unless $fn_name;
+	      next unless $want{$fn_name} && $want{$fn_name} == 1;
+
+	      # Special case for no arguments (which is specified as "void").
+	      if($#args == 0 && $args[0] eq "void") {
+		  @args = ();
+	      }
+	      $proto = "";
+	      $formals = "";
+	      $actuals = "";
+	      for($i = 0; $i <= $#args; $i++) {
+		  $comma = $i < $#args ? ", " : "";
+		  $proto .= "$args[$i]$comma";
+		  $formals .= "$args[$i] a$i$comma";
+		  $actuals .= "a$i$comma";
+	      }
+	      $proto = $formals = "void" if $#args == -1;
+	      output_fn($fn_name, $result_type, $proto, $formals, $actuals);
+	  }
+      }
+    }
+
+    if($name eq "Xlib") {
+	raw_output_fn("XSynchronize", "int (*r)(Display *)",
+		  "int (*TSXSynchronize(Display *, Bool))(Display *)",
+		  "int (*TSXSynchronize(Display *a0, Bool a1))(Display *)",
+		  "a0, a1");
+	print OUTC "\nextern void _XInitImageFuncPtrs(XImage *);\n";
+	output_fn("_XInitImageFuncPtrs", "void", "XImage *", "XImage *a0", "a0");
+    } elsif($name eq "Xutil") {
+	output_fn("XDestroyImage", "int",
+		  "struct _XImage *", "struct _XImage *a0", "a0");
+	output_fn("XGetPixel", "unsigned long",
+		  "struct _XImage *, int, int",
+		  "struct _XImage *a0, int a1, int a2",
+		  "a0, a1, a2");
+	output_fn("XPutPixel", "int",
+		  "struct _XImage *, int, int, unsigned long",
+		  "struct _XImage *a0, int a1, int a2, unsigned long a3",
+		  "a0, a1, a2, a3");
+	output_fn("XSubImage", "struct _XImage *",
+		  "struct _XImage *, int, int, unsigned int, unsigned int",
+		  "struct _XImage *a0, int a1, int a2, unsigned int a3, unsigned int a4",
+		  "a0, a1, a2, a3, a4");
+	output_fn("XAddPixel", "int",
+		  "struct _XImage *, long",
+		  "struct _XImage *a0, long a1", "a0, a1");
+	output_fn("XUniqueContext", "XContext", "void", "void", "");
+    }
+
+    print OUTH <<END;
+
+#endif /* __WINE_TS$ucname\_H */
+END
+
+}
+
+foreach $i (keys %want) {
+    if($want{$i} == 1) {
+	print "Unresolved: $i\n";
+    }
+}
+
+
+sub output_fn {
+    # Example call:
+    # output_fn("main", "int", "int, char **", "int a0, char **a1", "a0, a1")
+    #
+
+    my ($fn_name, $result_type, $protos, $formals, $actuals) = @_;
+
+    return raw_output_fn($fn_name,
+			 $result_type =~ /^\s*void\s*$/ ? "" : "$result_type r",
+			 "$result_type TS$fn_name($protos)",
+			 "$result_type TS$fn_name($formals)",
+			 $actuals);
+}
+
+sub raw_output_fn {
+    # Example call:
+    # output_fn("main", "int r", "int main(int, char **)", "int main(int a0, char **a1)", "a0, a1")
+    #
+
+    my ($fn_name, $resultdecl, $protodecl, $defdecl, $actuals) = @_;
+
+    return undef unless $want{$fn_name} && $want{$fn_name} == 1;
+
+    print OUTC "\n$defdecl\n";
+    print OUTH "extern $protodecl;\n";
+#    print OUTH "#define $fn_name TS$fn_name\n";
+    print OUTC "{\n";
+    print OUTC "  $resultdecl;\n" if $resultdecl;
+    print OUTC "  dprintf_x11(stddeb, \"Call $fn_name\\n\");\n";
+    print OUTC "  X11_LOCK();\n";
+    print OUTC "  ";
+    print OUTC "r = " if $resultdecl;
+    print OUTC "$fn_name($actuals);\n";
+    print OUTC "  X11_UNLOCK();\n";
+    print OUTC "  dprintf_x11(stddeb, \"Ret $fn_name\\n\");\n";
+    print OUTC "  return r;\n" if $resultdecl;
+    print OUTC "}\n";
+    $want{$fn_name} = 2;
+    return 1;
+}

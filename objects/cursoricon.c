@@ -981,12 +981,12 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         static const char data[] = { 0 };
 
         bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = XCreateBitmapFromData( display, rootWindow, data, 1, 1 );
+        pixmapBits = TSXCreateBitmapFromData( display, rootWindow, data, 1, 1 );
         if (pixmapBits)
         {
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
+            cursor = TSXCreatePixmapCursor( display, pixmapBits, pixmapBits,
                                           &bg, &bg, 0, 0 );
-            XFreePixmap( display, pixmapBits );
+            TSXFreePixmap( display, pixmapBits );
         }
     }
     else  /* Create the X cursor from the bits */
@@ -1008,30 +1008,29 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
 	 *	 as the Windows cursor data). Perhaps use a more generic
 	 *	 algorithm here.
 	 */
-        pixmapAll = XCreatePixmap( display, rootWindow,
+        pixmapAll = TSXCreatePixmap( display, rootWindow,
                                    ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = XCreateImage( display, DefaultVisualOfScreen(screen),
+        image = TSXCreateImage( display, DefaultVisualOfScreen(screen),
                               1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
                               ptr->nHeight * 2, 16, ptr->nWidthBytes);
         if (image)
         {
-            extern void _XInitImageFuncPtrs( XImage* );
             image->byte_order = MSBFirst;
             image->bitmap_bit_order = MSBFirst;
             image->bitmap_unit = 16;
-            _XInitImageFuncPtrs(image);
+            TS_XInitImageFuncPtrs(image);
             if (pixmapAll)
-                XPutImage( display, pixmapAll, BITMAP_monoGC, image,
+                TSXPutImage( display, pixmapAll, BITMAP_monoGC, image,
                            0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
             image->data = NULL;
-            XDestroyImage( image );
+            TSXDestroyImage( image );
         }
 
         /* Now create the 2 pixmaps for bits and mask */
 
-        pixmapBits = XCreatePixmap( display, rootWindow,
+        pixmapBits = TSXCreatePixmap( display, rootWindow,
                                     ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = XCreatePixmap( display, rootWindow,
+        pixmapMask = TSXCreatePixmap( display, rootWindow,
                                     ptr->nWidth, ptr->nHeight, 1 );
 
         /* Make sure everything went OK so far */
@@ -1060,39 +1059,39 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
              * I don't know if it's correct per the X spec, but maybe
              * we ought to take advantage of it.  -- AJ
              */
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            TSXCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            TSXCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXandReverse );
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+            TSXSetFunction( display, BITMAP_monoGC, GXandReverse );
+            TSXCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXorReverse );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+            TSXSetFunction( display, BITMAP_monoGC, GXorReverse );
+            TSXCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
                        0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXcopy );
+            TSXSetFunction( display, BITMAP_monoGC, GXcopy );
             fg.red = fg.green = fg.blue = 0xffff;
             bg.red = bg.green = bg.blue = 0x0000;
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
+            cursor = TSXCreatePixmapCursor( display, pixmapBits, pixmapMask,
                                 &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
         }
 
         /* Now free everything */
 
-        if (pixmapAll) XFreePixmap( display, pixmapAll );
-        if (pixmapBits) XFreePixmap( display, pixmapBits );
-        if (pixmapMask) XFreePixmap( display, pixmapMask );
+        if (pixmapAll) TSXFreePixmap( display, pixmapAll );
+        if (pixmapBits) TSXFreePixmap( display, pixmapBits );
+        if (pixmapMask) TSXFreePixmap( display, pixmapMask );
         GlobalUnlock16( hCursor );
     }
 
     if (cursor == None) return FALSE;
-    if (CURSORICON_XCursor != None) XFreeCursor( display, CURSORICON_XCursor );
+    if (CURSORICON_XCursor != None) TSXFreeCursor( display, CURSORICON_XCursor );
     CURSORICON_XCursor = cursor;
 
     if (rootWindow != DefaultRootWindow(display))
     {
         /* Set the cursor on the desktop window */
-        XDefineCursor( display, rootWindow, cursor );
+        TSXDefineCursor( display, rootWindow, cursor );
     }
     else
     {
@@ -1101,7 +1100,7 @@ static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );
-            if (win) XDefineCursor( display, win, cursor );
+            if (win) TSXDefineCursor( display, win, cursor );
             hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
         }
     }
@@ -1151,7 +1150,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
 BOOL32 WINAPI SetCursorPos32( INT32 x, INT32 y )
 {
     dprintf_cursor( stddeb, "SetCursorPos: x=%d y=%d\n", x, y );
-    XWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
+    TSXWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
     return TRUE;
 }
 
@@ -1237,7 +1236,7 @@ void WINAPI GetCursorPos16( POINT16 *pt )
     unsigned int mousebut;
 
     if (!pt) return;
-    if (!XQueryPointer( display, rootWindow, &root, &child,
+    if (!TSXQueryPointer( display, rootWindow, &root, &child,
 		        &rootX, &rootY, &childX, &childY, &mousebut ))
 	pt->x = pt->y = 0;
     else

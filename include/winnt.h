@@ -25,10 +25,13 @@
 #define HEAP_WINE_CODESEG               0x02000000  /* Not a Win32 flag */
 
 /* Processor feature flags.  */
-#define PF_FLOATING_POINT_PRECISION_ERRATA    0
-#define PF_FLOATING_POINT_EMULATED            1
-#define PF_COMPARE_EXCHANGE_DOUBLE            2
-#define PF_MMX_INSTRUCTIONS_AVAILABLE         3
+#define PF_FLOATING_POINT_PRECISION_ERRATA	0
+#define PF_FLOATING_POINT_EMULATED		1
+#define PF_COMPARE_EXCHANGE_DOUBLE		2
+#define PF_MMX_INSTRUCTIONS_AVAILABLE		3
+#define PF_PPC_MOVEMEM_64BIT_OK			4
+#define PF_ALPHA_BYTE_INSTRUCTIONS		5
+
 
 /* The Win32 register context */
 

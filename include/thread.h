@@ -50,7 +50,7 @@ typedef struct _THDB
     struct _PDB32 *process;        /*  08 Process owning this thread */
     K32OBJ        *event;          /*  0c Thread event */
     TEB            teb;            /*  10 Thread exception block */
-    struct _PDB32 *process2;       /*  40 Same as offset 08 (?) */
+    DWORD          cur_stack;      /*  40 Current stack (was: process2) */
     DWORD          flags;          /*  44 Flags */
     DWORD          exit_code;      /*  48 Termination status */
     WORD           teb_sel;        /*  4c Selector to TEB */

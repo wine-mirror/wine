@@ -595,6 +595,10 @@ static BOOL32 INT21_CreateTempFile( CONTEXT *context )
     char *name = PTR_SEG_OFF_TO_LIN( DS_reg(context), DX_reg(context) );
     char *p = name + strlen(name);
 
+    /* despite what Ralf Brown says, some programs seem to call without 
+     * ending backslash (DOS accepts that, so we accept it too) */
+    if ((p == name) || (p[-1] != '\\')) *p++ = '\\';
+
     for (;;)
     {
         sprintf( p, "wine%04x.%03d", (int)getpid(), counter );
@@ -1271,6 +1275,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             AX_reg(context) = ER_NoMoreFiles;
             SET_CFLAG(context);
         }
+        else AX_reg(context) = 0;  /* OK */
         break;
 
     case 0x51: /* GET PSP ADDRESS */
@@ -1610,3 +1615,8 @@ void WINAPI DOS3Call( CONTEXT *context )
                  EFL_reg(context));
 }
 
+FARPROC16 WINAPI GetSetKernelDOSProc(FARPROC16 DosProc)
+{
+	fprintf(stderr, "GetSetKernelDOSProc(DosProc: %08x);\n", (UINT32)DosProc);
+	return NULL;
+}

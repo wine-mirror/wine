@@ -96,7 +96,7 @@ struct known_typedef
 
 #define NR_STAB_HASH 521
 
-struct known_typedef * ktd_head[NR_STAB_HASH];
+struct known_typedef * ktd_head[NR_STAB_HASH] = {NULL,};
 
 static unsigned int stab_hash( const char * name )
 {

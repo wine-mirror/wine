@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <X11/Xlib.h>
+#include "ts_xlib.h"
 #include <X11/Xatom.h>
 #include "windows.h"
 #include "win.h"
@@ -112,8 +112,8 @@ static void CLIPBOARD_CheckSelection(WND* pWnd)
 
 	if( selectionWindow != None )
 	{
-	    XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
-	    if( XGetSelectionOwner(display, XA_PRIMARY) != selectionWindow )
+	    TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
+	    if( TSXGetSelectionOwner(display, XA_PRIMARY) != selectionWindow )
 		selectionWindow = None;
 	}
     }
@@ -206,13 +206,13 @@ static BOOL32 CLIPBOARD_RequestXSelection()
    * CLIPBOARD_ReadSelection() will be invoked 
    * from the SelectionNotify event handler */
 
-    XConvertSelection(display,XA_PRIMARY,XA_STRING,
-                      XInternAtom(display,"PRIMARY_TEXT",False),
+    TSXConvertSelection(display,XA_PRIMARY,XA_STRING,
+                      TSXInternAtom(display,"PRIMARY_TEXT",False),
                       WIN_GetXWindow(hWnd),CurrentTime);
 
   /* wait until SelectionNotify is processed 
    *
-   * FIXME: Use XCheckTypedWindowEvent() instead ( same in the 
+   * FIXME: Use TSXCheckTypedWindowEvent() instead ( same in the 
    *	    CLIPBOARD_CheckSelection() ). 
    */
 
@@ -350,7 +350,7 @@ BOOL32 WINAPI EmptyClipboard32(void)
 	dprintf_clipboard(stddeb, "\tgiving up selection (spw = %08x)\n", 
 				 	(unsigned)selectionPrevWindow);
 
-	XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
+	TSXSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
     }
     return TRUE;
 }
@@ -401,8 +401,8 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 	(wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
     {
 	owner = WIN_GetXWindow( hWndClipWindow ? hWndClipWindow : AnyPopup32() );
-	XSetSelectionOwner(display,XA_PRIMARY,owner,CurrentTime);
-	if( XGetSelectionOwner(display,XA_PRIMARY) == owner )
+	TSXSetSelectionOwner(display,XA_PRIMARY,owner,CurrentTime);
+	if( TSXGetSelectionOwner(display,XA_PRIMARY) == owner )
 	{
 	    selectionAcquired = True;
 	    selectionWindow = owner;
@@ -911,17 +911,17 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	unsigned long 	nitems,remain;
 	unsigned char*	val=NULL;
 
-        dprintf_clipboard(stddeb,"\tgot property %s\n",XGetAtomName(display,prop));
+        dprintf_clipboard(stddeb,"\tgot property %s\n",TSXGetAtomName(display,prop));
 
         /* TODO: Properties longer than 64K */
 
-	if(XGetWindowProperty(display,w,prop,0,0x3FFF,True,XA_STRING,
+	if(TSXGetWindowProperty(display,w,prop,0,0x3FFF,True,XA_STRING,
 	    &atype, &aformat, &nitems, &remain, &val) != Success)
 	    dprintf_clipboard(stddeb,"\tcouldn't read property\n");
 	else
 	{
            dprintf_clipboard(stddeb,"\tType %s,Format %d,nitems %ld,value %s\n",
-		             XGetAtomName(display,atype),aformat,nitems,val);
+		             TSXGetAtomName(display,atype),aformat,nitems,val);
 
 	   if(atype == XA_STRING && aformat == 8)
 	   {
@@ -945,7 +945,7 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
 	        else hText = 0;
 	      }
 	   }
-	   XFree(val);
+	   TSXFree(val);
 	}
    }
 
@@ -995,9 +995,9 @@ void CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
 	}
 	else if( w == selectionPrevWindow )
 	{
-	    w = XGetSelectionOwner(display, XA_PRIMARY);
+	    w = TSXGetSelectionOwner(display, XA_PRIMARY);
 	    if( w == None )
-		XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
+		TSXSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
 	}
 
     selectionPrevWindow = None;

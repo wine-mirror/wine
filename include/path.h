@@ -1,7 +1,7 @@
 /*
  * Graphics paths (BeginPath, EndPath etc.)
  *
- * Copyright 1997 Martin Boehme
+ * Copyright 1997, 1998 Martin Boehme
  */
 
 #ifndef __WINE_PATH_H
@@ -39,7 +39,12 @@ extern void   PATH_InitGdiPath(GdiPath *pPath);
 extern void   PATH_DestroyGdiPath(GdiPath *pPath);
 extern BOOL32 PATH_AssignGdiPath(GdiPath *pPathDest,
    const GdiPath *pPathSrc);
+
 extern BOOL32 PATH_MoveTo(HDC32 hdc);
 extern BOOL32 PATH_LineTo(HDC32 hdc, INT32 x, INT32 y);
+extern BOOL32 PATH_Ellipse(HDC32 hdc, INT32 x1, INT32 y1,
+   INT32 x2, INT32 y2);
+extern BOOL32 PATH_Arc(HDC32 hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2,
+   INT32 xStart, INT32 yStart, INT32 xEnd, INT32 yEnd);
 
 #endif /* __WINE_PATH_H */

@@ -8,32 +8,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "drive.h"
-
-#define WN_SUCCESS       			0x0000
-#define WN_NOT_SUPPORTED 			0x0001
-#define WN_NET_ERROR     			0x0002
-#define WN_MORE_DATA     			0x0003
-#define WN_BAD_POINTER   			0x0004
-#define WN_BAD_VALUE     			0x0005
-#define WN_BAD_PASSWORD  			0x0006
-#define WN_ACCESS_DENIED 			0x0007
-#define WN_FUNCTION_BUSY 			0x0008
-#define WN_WINDOWS_ERROR 			0x0009
-#define WN_BAD_USER      			0x000A
-#define WN_OUT_OF_MEMORY 			0x000B
-#define WN_CANCEL        			0x000C
-#define WN_CONTINUE      			0x000D
-#define WN_NOT_CONNECTED 			0x0030
-#define WN_OPEN_FILES    			0x0031
-#define WN_BAD_NETNAME   			0x0032
-#define WN_BAD_LOCALNAME 			0x0033
-#define WN_ALREADY_CONNECTED		0x0034
-#define WN_DEVICE_ERROR     		0x0035
-#define WN_CONNECTION_CLOSED		0x0036
-#define WN_NO_NETWORK				ERROR_NO_NETWORK
-
-
-typedef LPVOID	LPNETRESOURCE16;
+#include "wnet.h"
 
 /**************************************************************************
  *              WNetErrorText       [USER.499]
@@ -192,7 +167,70 @@ int WINAPI WNetGetConnection16(LPCSTR lpLocalName,
  */
 int WINAPI WNetGetCaps(WORD capability)
 {
-	return 0;
+	switch (capability) {
+		case WNNC_SPEC_VERSION:
+		{
+			return 0x30a; /* WfW 3.11 (and apparently other 3.1x) */
+		}
+		case WNNC_NET_TYPE:
+		/* hi byte = network type, lo byte = network vendor (Netware = 0x03) [15 types] */
+		return WNNC_NET_MultiNet | WNNC_SUBNET_WinWorkgroups;
+
+		case WNNC_DRIVER_VERSION:
+		/* driver version of vendor */
+		return 0x100; /* WfW 3.11 */
+
+		case WNNC_USER:
+		/* 1 = WNetGetUser is supported */
+		return 1;
+
+		case WNNC_CONNECTION:
+		/* returns mask of the supported connection functions */
+		return	WNNC_CON_AddConnection|WNNC_CON_CancelConnection
+			|WNNC_CON_GetConnections/*|WNNC_CON_AutoConnect*/
+			|WNNC_CON_BrowseDialog|WNNC_CON_RestoreConnection;
+
+		case WNNC_PRINTING:
+		/* returns mask of the supported printing functions */
+		return	WNNC_PRT_OpenJob|WNNC_PRT_CloseJob|WNNC_PRT_HoldJob
+			|WNNC_PRT_ReleaseJob|WNNC_PRT_CancelJob
+			|WNNC_PRT_SetJobCopies|WNNC_PRT_WatchQueue
+			|WNNC_PRT_UnwatchQueue|WNNC_PRT_LockQueueData
+			|WNNC_PRT_UnlockQueueData|WNNC_PRT_AbortJob
+			|WNNC_PRT_WriteJob;
+
+		case WNNC_DIALOG:
+		/* returns mask of the supported dialog functions */
+		return	WNNC_DLG_DeviceMode|WNNC_DLG_BrowseDialog
+			|WNNC_DLG_ConnectDialog|WNNC_DLG_DisconnectDialog
+			|WNNC_DLG_ViewQueueDialog|WNNC_DLG_PropertyDialog
+			|WNNC_DLG_ConnectionDialog
+			/*|WNNC_DLG_PrinterConnectDialog
+			|WNNC_DLG_SharesDialog|WNNC_DLG_ShareAsDialog*/;
+
+		case WNNC_ADMIN:
+		/* returns mask of the supported administration functions */
+		/* not sure if long file names is a good idea */
+		return	WNNC_ADM_GetDirectoryType|WNNC_ADM_DirectoryNotify
+			|WNNC_ADM_LongNames/*|WNNC_ADM_SetDefaultDrive*/;
+
+		case WNNC_ERROR:
+		/* returns mask of the supported error functions */
+		return	WNNC_ERR_GetError|WNNC_ERR_GetErrorText;
+
+		case WNNC_PRINTMGREXT:
+		/* returns the Print Manager version in major and minor format if Print Manager functions are available */
+		return 0x30e; /* printman version of WfW 3.11 */
+
+		case 0xffff:
+		/* Win 3.11 returns HMODULE of network driver here
+		FIXME: what should we return ?
+		logonoff.exe needs it, msmail crashes with wrong value */
+		return 0;
+
+	default:
+		return 0;
+	}
 }
 
 /**************************************************************************

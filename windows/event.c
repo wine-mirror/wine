@@ -15,9 +15,9 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <X11/keysym.h>
-#include <X11/Xlib.h>
-#include <X11/Xresource.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xresource.h"
+#include "ts_xutil.h"
 #include <X11/Xatom.h>
 
 #include "windows.h"
@@ -109,7 +109,7 @@ static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 
 extern void FOCUS_SetXFocus( HWND32 );
 extern BOOL16 DRAG_QueryUpdate( HWND16, SEGPTR, BOOL32 );
-extern BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] );
+extern BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set p[3], fd_set e[3] );
 
 /***********************************************************************
  *           EVENT_Init
@@ -151,7 +151,7 @@ void EVENT_ProcessEvent( XEvent *event )
 {
     WND *pWnd;
     
-    if (XFindContext( display, event->xany.window, winContext,
+    if (TSXFindContext( display, event->xany.window, winContext,
                       (char **)&pWnd ) != 0)
         return;  /* Not for a registered window */
 
@@ -186,7 +186,7 @@ void EVENT_ProcessEvent( XEvent *event )
 	 */
         if (InputEnabled)
 	{
-            while (XCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
+            while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
                                           MotionNotify, event));    
             EVENT_MotionNotify( pWnd, (XMotionEvent*)event );
 	}
@@ -264,18 +264,18 @@ void EVENT_ProcessEvent( XEvent *event )
 void EVENT_RegisterWindow( WND *pWnd )
 {
     if (wmProtocols == None)
-        wmProtocols = XInternAtom( display, "WM_PROTOCOLS", True );
+        wmProtocols = TSXInternAtom( display, "WM_PROTOCOLS", True );
     if (wmDeleteWindow == None)
-        wmDeleteWindow = XInternAtom( display, "WM_DELETE_WINDOW", True );
+        wmDeleteWindow = TSXInternAtom( display, "WM_DELETE_WINDOW", True );
     if( dndProtocol == None )
-	dndProtocol = XInternAtom( display, "DndProtocol" , False );
+	dndProtocol = TSXInternAtom( display, "DndProtocol" , False );
     if( dndSelection == None )
-	dndSelection = XInternAtom( display, "DndSelection" , False );
+	dndSelection = TSXInternAtom( display, "DndSelection" , False );
 
-    XSetWMProtocols( display, pWnd->window, &wmDeleteWindow, 1 );
+    TSXSetWMProtocols( display, pWnd->window, &wmDeleteWindow, 1 );
 
-    if (!winContext) winContext = XUniqueContext();
-    XSaveContext( display, pWnd->window, winContext, (char *)pWnd );
+    if (!winContext) winContext = TSXUniqueContext();
+    TSXSaveContext( display, pWnd->window, winContext, (char *)pWnd );
 }
 
 /***********************************************************************
@@ -285,9 +285,9 @@ void EVENT_DestroyWindow( WND *pWnd )
 {
    XEvent xe;
 
-   XDeleteContext( display, pWnd->window, winContext );
-   XDestroyWindow( display, pWnd->window );
-   while( XCheckWindowEvent(display, pWnd->window, NoEventMask, &xe) );
+   TSXDeleteContext( display, pWnd->window, winContext );
+   TSXDestroyWindow( display, pWnd->window );
+   while( TSXCheckWindowEvent(display, pWnd->window, NoEventMask, &xe) );
 }
 
 
@@ -320,18 +320,19 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 {
     XEvent event;
     LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
+    int pending = TSXPending(display);
 
     /* Wait for an event or a timeout. If maxWait is -1, we have no timeout;
      * in this case, we fall through directly to the XNextEvent loop.
      */
 
-    if ((maxWait != -1) && !XPending(display))
+    if ((maxWait != -1) && !pending)
     {
 	int num_pending;
         struct timeval timeout;
-	fd_set read_set = __event_io_set[EVENT_IO_READ];
-	fd_set write_set = __event_io_set[EVENT_IO_WRITE];
-	fd_set except_set = __event_io_set[EVENT_IO_EXCEPT];
+	fd_set io_set[3];
+
+	memcpy( io_set, __event_io_set, sizeof(io_set) );
 
 	timeout.tv_usec = (maxWait % 1000) * 1000;
 	timeout.tv_sec = maxWait / 1000;
@@ -347,7 +348,9 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	}
 	stop_wait_op = STOP_WAIT_X;
 	/* The code up to the next "stop_wait_op = CONT" must be reentrant */
-	num_pending = select( __event_max_fd, &read_set, NULL, NULL, &timeout );
+	num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ], 
+					      &io_set[EVENT_IO_WRITE], 
+					      &io_set[EVENT_IO_EXCEPT], &timeout );
 	if ( num_pending == 0 )
         {
 	    stop_wait_op = CONT;
@@ -356,8 +359,9 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	}
         else stop_wait_op = CONT;
 #else  /* CONFIG_IPC */
-	num_pending = select( __event_max_fd, 
-			&read_set, &write_set, &except_set, &timeout );
+	num_pending = select( __event_max_fd, &io_set[EVENT_IO_READ],
+					      &io_set[EVENT_IO_WRITE],
+					      &io_set[EVENT_IO_EXCEPT], &timeout );
 	if ( num_pending == 0)
         {
             /* Timeout or error */
@@ -368,14 +372,22 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 
 	/*  Winsock asynchronous services */
 
-	if( FD_ISSET( __event_x_connection, &read_set) ) 
+	if( FD_ISSET( __event_x_connection, &io_set[EVENT_IO_READ]) ) 
 	{
 	    num_pending--;
 	    if( num_pending )
-		WINSOCK_HandleIO( &__event_max_fd, num_pending, __event_io_set );
+		WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
 	}
 	else /* no X events */
-	    return WINSOCK_HandleIO( &__event_max_fd, num_pending, __event_io_set );
+	    return WINSOCK_HandleIO( &__event_max_fd, num_pending, io_set, __event_io_set );
+    }
+    else if(!pending)
+    {				/* Wait for X11 input. */
+	fd_set set;
+
+	FD_ZERO(&set);
+	FD_SET(__event_x_connection, &set);
+	select(__event_x_connection + 1, &set, 0, 0, 0 );
     }
 
     /* Process current X event (and possibly others that occurred in the meantime) */
@@ -391,14 +403,14 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
         }
 #endif  /* CONFIG_IPC */
 
-	XNextEvent( display, &event );
+	TSXNextEvent( display, &event );
 
         if( peek )
         {
 	  WND*		pWnd;
 	  MESSAGEQUEUE* pQ;
 
-          if (XFindContext( display, ((XAnyEvent *)&event)->window, winContext,
+          if (TSXFindContext( display, ((XAnyEvent *)&event)->window, winContext,
                             (char **)&pWnd ) || (event.type == NoExpose))
               continue;
 
@@ -420,14 +432,14 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
             {
               pQ->flags |= QUEUE_FLAG_XEVENT;
               PostEvent(pQ->hTask);
-	      XPutBackEvent(display, &event);
+	      TSXPutBackEvent(display, &event);
               break;
 	    }
           }
         }
         else EVENT_ProcessEvent( &event );
     }
-    while (XPending( display ));
+    while (TSXPending( display ));
     return TRUE;
 }
 
@@ -441,10 +453,10 @@ void EVENT_Synchronize()
 {
     XEvent event;
 
-    XSync( display, False );
-    while (XPending( display ))
+    TSXSync( display, False );
+    while (TSXPending( display ))
     {
-	XNextEvent( display, &event );
+	TSXNextEvent( display, &event );
 	EVENT_ProcessEvent( &event );
     }    
 }
@@ -453,6 +465,7 @@ void EVENT_Synchronize()
  *           EVENT_QueryZOrder
  *
  * Try to synchronize internal z-order with the window manager's.
+ * Probably a futile endeavor.
  */
 static BOOL32 __check_query_condition( WND** pWndA, WND** pWndB )
 {
@@ -478,10 +491,10 @@ static Window __get_common_ancestor( Window A, Window B,
 
     do
     {
-        if( *children ) XFree( *children );
-        XQueryTree( display, A, &root, &A, children, total );
-        XQueryTree( display, B, &root, &B, &childrenB, &totalB );
-        if( childrenB ) XFree( childrenB );
+        if( *children ) TSXFree( *children );
+        TSXQueryTree( display, A, &root, &A, children, total );
+        TSXQueryTree( display, B, &root, &B, &childrenB, &totalB );
+        if( childrenB ) TSXFree( childrenB );
     } while( A != B && A && B );
     return ( A && B ) ? A : 0 ;
 }
@@ -494,8 +507,8 @@ static Window __get_top_decoration( Window w, Window ancestor )
     do
     {
         w = parent;
-        XQueryTree( display, w, &root, &parent, &children, &total );
-        if( children ) XFree( children );
+        TSXQueryTree( display, w, &root, &parent, &children, &total );
+        if( children ) TSXFree( children );
     } while( parent && parent != ancestor );
     dprintf_event( stddeb, "\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
     return ( parent ) ? w : 0 ;
@@ -547,7 +560,7 @@ static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
             WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
         }
     }
-    if( children ) XFree( children );
+    if( children ) TSXFree( children );
     return bRet;
 }
 
@@ -646,7 +659,7 @@ void EVENT_DummyMotionNotify(void)
     int rootX, rootY, winX, winY;
     unsigned int state;
 
-    if (XQueryPointer( display, rootWindow, &root, &child,
+    if (TSXQueryPointer( display, rootWindow, &root, &child,
                        &rootX, &rootY, &winX, &winY, &state ))
     {
         hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( state ), 0L,
@@ -742,9 +755,9 @@ BOOL32 EVENT_CheckFocus(void)
     Window xW;
     int	   state;
 
-    XGetInputFocus(display, &xW, &state);
+    TSXGetInputFocus(display, &xW, &state);
     if( xW == None ||
-        XFindContext(display, xW, winContext, (char **)&pWnd) ) 
+        TSXFindContext(display, xW, winContext, (char **)&pWnd) ) 
         return FALSE;
     return TRUE;
 }
@@ -763,7 +776,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
     int xpos, ypos;
     unsigned int width, height, border, depth, nb_children;
 
-    if (!XGetGeometry( display, win, &root, px, py, pwidth, pheight,
+    if (!TSXGetGeometry( display, win, &root, px, py, pwidth, pheight,
                        &border, &depth )) return;
     if (win == rootWindow)
     {
@@ -773,12 +786,12 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
 
     for (;;)
     {
-        if (!XQueryTree(display, win, &root, &parent, &children, &nb_children))
+        if (!TSXQueryTree(display, win, &root, &parent, &children, &nb_children))
             return;
-        XFree( children );
+        TSXFree( children );
         if (parent == rootWindow) break;
         win = parent;
-        if (!XGetGeometry( display, win, &root, &xpos, &ypos,
+        if (!TSXGetGeometry( display, win, &root, &xpos, &ypos,
                            &width, &height, &border, &depth )) return;
         *px += xpos;
         *py += ypos;
@@ -907,7 +920,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	    }
 	    lpstr[j]='\0';
 
-	    XChangeProperty(display, request, rprop, 
+	    TSXChangeProperty(display, request, rprop, 
 			    XA_STRING, 8, PropModeReplace, 
 			    lpstr, j);
 	    HeapFree( GetProcessHeap(), 0, lpstr );
@@ -919,7 +932,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
     }
 
     if(rprop == None) 
-       dprintf_event(stddeb,"Request for %s ignored\n", XGetAtomName(display,event->target));
+       dprintf_event(stddeb,"Request for %s ignored\n", TSXGetAtomName(display,event->target));
 
     result.type = SelectionNotify;
     result.display = display;
@@ -928,7 +941,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
     result.property = rprop;
     result.target = event->target;
     result.time = event->time;
-    XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
+    TSXSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
 }
 
 
@@ -987,7 +1000,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 	  
           if( !lpDragInfo || !spDragInfo ) return;
 
-	  XQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
+	  TSXQueryPointer( display, pWnd->window, &w_aux_root, &w_aux_child, 
 		 &x, &y, &u.pt_aux.x, &u.pt_aux.y, (unsigned int*)&aux_long);
 
           lpDragInfo->hScope = pWnd->hwndSelf;
@@ -1008,7 +1021,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 
 	  if( bAccept )
 	  {
-	      XGetWindowProperty( display, DefaultRootWindow(display),
+	      TSXGetWindowProperty( display, DefaultRootWindow(display),
 			      dndSelection, 0, 65535, FALSE,
                               AnyPropertyType, &u.atom_aux, &u.pt_aux.y,
 		             &data_length, &aux_long, &p_data);
@@ -1069,7 +1082,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 		  }
 	        }
 	      }
-	      if( p_data ) XFree(p_data);  
+	      if( p_data ) TSXFree(p_data);  
 
 	  } /* WS_EX_ACCEPTFILES */
        } /* dndProtocol */
@@ -1089,7 +1102,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
   {
    if( !Options.managed && rootWindow == DefaultRootWindow(display) &&
      (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus32() )
-      XInstallColormap( display, COLOR_GetColormap() );
+      TSXInstallColormap( display, COLOR_GetColormap() );
   }
  */ 
 
@@ -1119,7 +1132,7 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 
     if (!hwnd)
     {
-        XUngrabPointer(display, CurrentTime );
+        TSXUngrabPointer(display, CurrentTime );
         captureWnd = NULL; captureHT = 0; 
     }
     else if ((win = WIN_GetXWindow( hwnd )))
@@ -1127,7 +1140,7 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 	WND* wndPtr = WIN_FindWndPtr( hwnd );
 
         if ( wndPtr && 
-	     (XGrabPointer(display, win, False, 
+	     (TSXGrabPointer(display, win, False, 
 			   ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                            GrabModeAsync, GrabModeAsync,
                            None, None, CurrentTime ) == GrabSuccess) )
@@ -1231,11 +1244,11 @@ void WINAPI Mouse_Event( CONTEXT *context )
     if (AX_reg(context) & ME_MOVE)
     {
         /* We have to actually move the cursor */
-        XWarpPointer( display, rootWindow, None, 0, 0, 0, 0,
+        TSXWarpPointer( display, rootWindow, None, 0, 0, 0, 0,
                       (short)BX_reg(context), (short)CX_reg(context) );
         return;
     }
-    if (!XQueryPointer( display, rootWindow, &root, &child,
+    if (!TSXQueryPointer( display, rootWindow, &root, &child,
                         &rootX, &rootY, &winX, &winY, &state )) return;
     if (AX_reg(context) & ME_LDOWN)
         hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ),

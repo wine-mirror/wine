@@ -69,15 +69,16 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         STACK16FRAME *stack16Top;
         DWORD oldstack;
  	WORD oldselector, newselector;
+        THDB *thdb = THREAD_Current();
         HFILE32 hf = FILE_DupUnixHandle( fd );
 
  	selfloadheader = (SELFLOADHEADER *)
  		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
- 	oldstack = IF1632_Saved16_ss_sp;
+ 	oldstack = thdb->cur_stack;
  	oldselector = pSeg->selector;
- 	IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+ 	thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                  0xff00 - sizeof(*stack16Top));
-        stack16Top = CURRENT_STACK16;
+        stack16Top = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
         stack16Top->frame32 = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
         stack16Top->entry_point = 0;
@@ -107,7 +108,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	  }
  	} 
  	
- 	IF1632_Saved16_ss_sp = oldstack;
+ 	thdb->cur_stack = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
       read(fd, mem, size);
@@ -368,6 +369,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
         SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
+        THDB *thdb = THREAD_Current();
         HMODULE16 hselfload = GetModuleHandle16("WPROCS");
         DWORD oldstack;
         WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
@@ -382,10 +384,10 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
         pModule->self_loading_sel = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
-        oldstack = IF1632_Saved16_ss_sp;
-        IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+        oldstack = thdb->cur_stack;
+        thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                 0xff00 - sizeof(*stack16Top) );
-        stack16Top = CURRENT_STACK16;
+        stack16Top = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
         stack16Top->frame32 = 0;
         stack16Top->ebp = 0;
         stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
@@ -401,7 +403,7 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         _lclose32(hf);
         /* some BootApp procs overwrite the selector of dgroup */
         pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
-        IF1632_Saved16_ss_sp = oldstack;
+        thdb->cur_stack = oldstack;
         for (i = 2; i <= pModule->seg_count; i++)
             if (!NE_LoadSegment( pModule, i )) return FALSE;
     }
@@ -622,7 +624,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
 
     CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
     EIP_reg(&context) = pModule->ip;
-    EBP_reg(&context) = OFFSETOF(IF1632_Saved16_ss_sp)
+    EBP_reg(&context) = OFFSETOF(THREAD_Current()->cur_stack)
                           + (WORD)&((STACK16FRAME*)0)->bp;
     EDI_reg(&context) = DS_reg(&context) ? DS_reg(&context) : hModule;
 

@@ -57,13 +57,35 @@ BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL32 WINAPI DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
+    FLOAT determinant=1.0, x, y;
+    
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
+    if (dc->w.UseWorldXform)
+    {
+        determinant = dc->w.WorldXform.eM11*dc->w.WorldXform.eM22 -
+            dc->w.WorldXform.eM12*dc->w.WorldXform.eM21;
+        if (determinant > -1e-12 && determinant < 1e-12)
+            return FALSE;
+    }
+
     while (count--)
     {
-	points->x = XDPTOLP( dc, points->x );
-	points->y = YDPTOLP( dc, points->y );
+	if (dc->w.UseWorldXform)
+	{
+            x = (FLOAT)points->x - dc->w.WorldXform.eDx;
+	    y = (FLOAT)points->y - dc->w.WorldXform.eDy;
+	    points->x = (INT32)( (x*dc->w.WorldXform.eM22 -
+	       y*dc->w.WorldXform.eM21) / determinant );
+	    points->y = (INT32)( (-x*dc->w.WorldXform.eM12 +
+	       y*dc->w.WorldXform.eM11) / determinant );
+	}
+	else
+	{
+	    points->x = XLPTODP( dc, points->x );
+	    points->y = YLPTODP( dc, points->y );
+	}
         points++;
     }
     return TRUE;
@@ -93,13 +115,30 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 BOOL32 WINAPI LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
+    FLOAT x, y;
+
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
     while (count--)
     {
-	points->x = XLPTODP( dc, points->x );
-	points->y = YLPTODP( dc, points->y );
+	if (dc->w.UseWorldXform)
+	{
+	    x = (FLOAT)points->x * dc->w.WorldXform.eM11 +
+	    	(FLOAT)points->y * dc->w.WorldXform.eM21 +
+		dc->w.WorldXform.eDx;
+	    y = (FLOAT)points->x * dc->w.WorldXform.eM12 +
+	        (FLOAT)points->y * dc->w.WorldXform.eM22 +
+		dc->w.WorldXform.eDy;
+	    points->x = XDPTOLP( dc, (INT32)x );
+	    points->y = YDPTOLP( dc, (INT32)y );
+	    
+	}
+	else
+	{
+	    points->x = XDPTOLP( dc, points->x );
+	    points->y = YDPTOLP( dc, points->y );
+	}
         points++;
     }
     return TRUE;

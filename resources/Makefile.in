@@ -7,6 +7,7 @@ MODULE    = resources
 RCFLAGS   = -w32
 
 RC_SRCS = \
+	sysres_Ca.rc \
 	sysres_Cz.rc \
 	sysres_Da.rc \
 	sysres_De.rc \
@@ -20,7 +21,8 @@ RC_SRCS = \
 	sysres_Ko.rc \
 	sysres_No.rc \
 	sysres_Pl.rc \
-	sysres_Po.rc
+	sysres_Po.rc \
+	sysres_Sw.rc
 
 C_SRCS = sysres.c
 

@@ -9,8 +9,8 @@
 #include <float.h>
 #endif
 #include <stdlib.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xutil.h"
 #include <X11/Intrinsic.h>
 #ifndef PI
 #define PI M_PI
@@ -56,7 +56,7 @@ BOOL32
 X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
 {
     if (DC_SetupGCForPen( dc ))
-	XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
+	TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX ),
 		  dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY ),
 		  dc->w.DCOrgX + XLPTODP( dc, x ),
@@ -109,8 +109,8 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 
     if ((lines > 0) && DC_SetupGCForBrush( dc ))
     {
-        XSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
-        XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+        TSXSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
+        TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                  right-left-1, bottom-top-1, istart_angle, idiff_angle );
     }
@@ -118,7 +118,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
       /* Draw arc and lines */
 
     if (!DC_SetupGCForPen( dc )) return TRUE;
-    XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
     if (!lines) return TRUE;
@@ -133,7 +133,7 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 	points[1].x = dc->w.DCOrgX + xcenter;
 	points[1].y = dc->w.DCOrgY + ycenter;
     }
-    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
 	        points, lines+1, CoordModeOrigin );
     return TRUE;
 }
@@ -200,11 +200,11 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
     }
 
     if (DC_SetupGCForBrush( dc ))
-	XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
     if (DC_SetupGCForPen( dc ))
-	XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 		  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		  right-left-1, bottom-top-1, 0, 360*64 );
     return TRUE;
@@ -229,7 +229,7 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     if ((left == right) || (top == bottom))
     {
 	if (DC_SetupGCForPen( dc ))
-	    XDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
+	    TSXDrawLine(display, dc->u.x.drawable, dc->u.x.gc, 
 		  dc->w.DCOrgX + left,
 		  dc->w.DCOrgY + top,
 		  dc->w.DCOrgX + right,
@@ -252,13 +252,13 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
     if ((right > left + width) && (bottom > top + width))
     {
         if (DC_SetupGCForBrush( dc ))
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left + (width + 1) / 2,
                             dc->w.DCOrgY + top + (width + 1) / 2,
                             right-left-width-1, bottom-top-width-1);
     }
     if (DC_SetupGCForPen( dc ))
-	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 		        right-left-1, bottom-top-1 );
     return TRUE;
@@ -292,34 +292,34 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     {
         if (ell_width && ell_height)
         {
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width, ell_height, 90 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
                       ell_width, ell_height, 180 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width,
                       dc->w.DCOrgY + bottom - ell_height,
                       ell_width, ell_height, 270 * 64, 90 * 64 );
-            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
                       ell_width, ell_height, 0, 90 * 64 );
         }
         if (ell_width < right - left)
         {
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left + ell_width / 2,
                             dc->w.DCOrgY + top,
                             right - left - ell_width, ell_height / 2 );
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left + ell_width / 2,
                             dc->w.DCOrgY + bottom - (ell_height+1) / 2,
                             right - left - ell_width, (ell_height+1) / 2 );
         }
         if  (ell_height < bottom - top)
         {
-            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                             dc->w.DCOrgX + left,
                             dc->w.DCOrgY + top + ell_height / 2,
                             right - left, bottom - top - ell_height );
@@ -329,28 +329,28 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     {
         if (ell_width && ell_height)
         {
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + top,
                       ell_width, ell_height, 90 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
                       ell_width, ell_height, 180 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width,
                       dc->w.DCOrgY + bottom - ell_height,
                       ell_width, ell_height, 270 * 64, 90 * 64 );
-            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+            TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
                       dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
                       ell_width, ell_height, 0, 90 * 64 );
 	}
         if (ell_width < right - left)
         {
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
                        dc->w.DCOrgX + left + ell_width / 2,
                        dc->w.DCOrgY + top,
                        dc->w.DCOrgX + right - ell_width / 2,
                        dc->w.DCOrgY + top );
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
                        dc->w.DCOrgX + left + ell_width / 2,
                        dc->w.DCOrgY + bottom,
                        dc->w.DCOrgX + right - ell_width / 2,
@@ -358,12 +358,12 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
         }
         if (ell_height < bottom - top)
         {
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
                        dc->w.DCOrgX + right,
                        dc->w.DCOrgY + top + ell_height / 2,
                        dc->w.DCOrgX + right,
                        dc->w.DCOrgY + bottom - ell_height / 2 );
-            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+            TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
                        dc->w.DCOrgX + left,
                        dc->w.DCOrgY + top + ell_height / 2,
                        dc->w.DCOrgX + left,
@@ -386,9 +386,9 @@ X11DRV_SetPixel( DC *dc, INT32 x, INT32 y, COLORREF color )
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     pixel = COLOR_ToPhysical( dc, color );
     
-    XSetForeground( display, dc->u.x.gc, pixel );
-    XSetFunction( display, dc->u.x.gc, GXcopy );
-    XDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
+    TSXSetForeground( display, dc->u.x.gc, pixel );
+    TSXSetFunction( display, dc->u.x.gc, GXcopy );
+    TSXDrawPoint( display, dc->u.x.drawable, dc->u.x.gc, x, y );
 
     /* inefficient but simple... */
 
@@ -410,21 +410,21 @@ X11DRV_GetPixel( DC *dc, INT32 x, INT32 y )
     y = dc->w.DCOrgY + YLPTODP( dc, y );
     if (dc->w.flags & DC_MEMORY)
     {
-        image = XGetImage( display, dc->u.x.drawable, x, y, 1, 1,
+        image = TSXGetImage( display, dc->u.x.drawable, x, y, 1, 1,
                            AllPlanes, ZPixmap );
     }
     else
     {
         /* If we are reading from the screen, use a temporary copy */
         /* to avoid a BadMatch error */
-        if (!pixmap) pixmap = XCreatePixmap( display, rootWindow,
+        if (!pixmap) pixmap = TSXCreatePixmap( display, rootWindow,
                                              1, 1, dc->w.bitsPerPixel );
-        XCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
+        TSXCopyArea( display, dc->u.x.drawable, pixmap, BITMAP_colorGC,
                    x, y, 1, 1, 0, 0 );
-        image = XGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
+        image = TSXGetImage( display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
     }
-    pixel = XGetPixel( image, 0, 0 );
-    XDestroyImage( image );
+    pixel = TSXGetPixel( image, 0, 0 );
+    TSXDestroyImage( image );
     
     return COLOR_ToLogical(pixel);
 }
@@ -461,7 +461,7 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
 
     GetRgnBox32( dc->w.hGCClipRgn, &box );
     if (DC_SetupGCForBrush( dc ))
-	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + box.left, dc->w.DCOrgY + box.top,
 		        box.right-box.left, box.bottom-box.top );
 
@@ -481,7 +481,7 @@ X11DRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
 
     if (DC_SetupGCForPen( dc ))
 	for (i = 0; i < count-1; i ++)
-	    XDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
+	    TSXDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
 		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
 		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
 		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
@@ -508,11 +508,11 @@ X11DRV_Polygon( DC *dc, LPPOINT32 pt, INT32 count )
     points[count] = points[0];
 
     if (DC_SetupGCForBrush( dc ))
-	XFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXFillPolygon( display, dc->u.x.drawable, dc->u.x.gc,
 		     points, count+1, Complex, CoordModeOrigin);
 
     if (DC_SetupGCForPen ( dc ))
-	XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+	TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
 		   points, count+1, CoordModeOrigin );
 
     free( points );
@@ -555,7 +555,7 @@ X11DRV_PolyPolygon( DC *dc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
 		pt++;
 	    }
 	    points[j] = points[0];
-	    XDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+	    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
 		        points, j + 1, CoordModeOrigin );
 	}
 	free( points );
@@ -579,8 +579,8 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
     int left, right;
 
 #define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
-                        (XGetPixel(image,x,y) != pixel) : \
-                        (XGetPixel(image,x,y) == pixel))
+                        (TSXGetPixel(image,x,y) != pixel) : \
+                        (TSXGetPixel(image,x,y) == pixel))
 
     if (!TO_FLOOD(x,y)) return;
 
@@ -589,15 +589,15 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
     left = right = x;
     while ((left > 0) && TO_FLOOD( left-1, y )) left--;
     while ((right < image->width) && TO_FLOOD( right, y )) right++;
-    XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+    TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                     xOrg + left, yOrg + y, right-left, 1 );
 
       /* Set the pixels of this line so we don't fill it again */
 
     for (x = left; x < right; x++)
     {
-        if (fillType == FLOODFILLBORDER) XPutPixel( image, x, y, pixel );
-        else XPutPixel( image, x, y, ~pixel );
+        if (fillType == FLOODFILLBORDER) TSXPutPixel( image, x, y, pixel );
+        else TSXPutPixel( image, x, y, ~pixel );
     }
 
       /* Fill the line above */
@@ -656,7 +656,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
 
     if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
-    if (!(image = XGetImage( display, dc->u.x.drawable,
+    if (!(image = TSXGetImage( display, dc->u.x.drawable,
                              dc->w.DCOrgX + rect.left,
                              dc->w.DCOrgY + rect.top,
                              rect.right - rect.left,
@@ -666,7 +666,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
     if (DC_SetupGCForBrush( dc ))
     {
           /* ROP mode is always GXcopy for flood-fill */
-        XSetFunction( display, dc->u.x.gc, GXcopy );
+        TSXSetFunction( display, dc->u.x.gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
                                  XLPTODP(dc,params->x) - rect.left,
                                  YLPTODP(dc,params->y) - rect.top,
@@ -676,7 +676,7 @@ static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
                                  params->fillType );
     }
 
-    XDestroyImage( image );
+    TSXDestroyImage( image );
     return TRUE;
 }
 

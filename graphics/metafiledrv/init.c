@@ -135,9 +135,17 @@ static BOOL32 MFDRV_DeleteDC( DC *dc )
 
 
 /**********************************************************************
- *	     CreateMetafile16   (GDI.125)
+ *	     CreateMetaFile16   (GDI.125)
+ *
+ *  Create a new DC and associate it with a metafile. Pass a filename
+ *  to create a disk-based metafile, NULL to create a memory metafile.
+ *
+ * RETURNS
+ *  A handle to the metafile DC if successful, NULL on failure.
  */
-HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
+HDC16 WINAPI CreateMetaFile16( 
+			      LPCSTR filename /* Filename of disk metafile */
+)
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
@@ -174,9 +182,17 @@ HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
 
 
 /******************************************************************
- *	     CloseMetafile16   (GDI.126)
+ *	     CloseMetaFile16   (GDI.126)
+ *
+ *  Stop recording graphics operations in metafile associated with
+ *  hdc and retrieve metafile.
+ *
+ * RETURNS
+ *  Handle of newly created metafile on success, NULL on failure.
  */
-HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
+HMETAFILE16 WINAPI CloseMetaFile16( 
+				   HDC16 hdc /* Metafile DC to close */
+)
 {
     DC *dc;
     HMETAFILE16 hmf;
@@ -228,9 +244,16 @@ HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
 
 
 /******************************************************************
- *	     DeleteMetafile16   (GDI.127)
+ *	     DeleteMetaFile16   (GDI.127)
+ *
+ *  Delete a memory-based metafile.
+ *
  */
-BOOL16 WINAPI DeleteMetaFile16( HMETAFILE16 hmf )
+BOOL16 WINAPI DeleteMetaFile16( 
+			       HMETAFILE16 hmf 
+			       /* Handle of memory metafile to delete */
+)
 {
     return !GlobalFree16( hmf );
 }
+

@@ -64,8 +64,8 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
     wndPtr->text = HEAP_strdupA( SystemHeap, 0, text );
     if (wndPtr->window)
     {
-	XStoreName( display, wndPtr->window, wndPtr->text );
-	XSetIconName( display, wndPtr->window, wndPtr->text );
+	TSXStoreName( display, wndPtr->window, wndPtr->text );
+	TSXSetIconName( display, wndPtr->window, wndPtr->text );
     }
 }
 
@@ -78,7 +78,7 @@ HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
 {
     if( ctlType == CTLCOLOR_SCROLLBAR)
     {
-        HBRUSH32 hb = GetSysColorBrush32(COLOR_SCROLLBAR);
+	HBRUSH32 hb = GetSysColorBrush32(COLOR_SCROLLBAR);
 	SetBkColor32( hDC, RGB(255, 255, 255) );
 	SetTextColor32( hDC, RGB(0, 0, 0) );
 	UnrealizeObject32( hb );
@@ -98,12 +98,14 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
 {
     BOOL32 bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
+dprintf_win(stddeb,"SetRedraw: %04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+
     if( wParam )
     {
 	if( !bVisible )
 	{
 	    wndPtr->dwStyle |= WS_VISIBLE;
-	    DCE_InvalidateDCE( wndPtr->parent, &wndPtr->rectWindow );
+	    DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
 	}
     }
     else if( bVisible )
@@ -112,7 +114,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
 	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
 
 	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, wParam, 0 );
-	DCE_InvalidateDCE( wndPtr->parent, &wndPtr->rectWindow );
+	DCE_InvalidateDCE( wndPtr, &wndPtr->rectWindow );
 	wndPtr->dwStyle &= ~WS_VISIBLE;
     }
 }

@@ -38,6 +38,8 @@ typedef struct
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
     VOID (CALLBACK *CallSystemTimerProc)( FARPROC16 );
     DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
+    BOOL32 (CALLBACK *CallWOWCallback16Ex)( FARPROC16, DWORD, DWORD, LPVOID, 
+                                            LPDWORD );
     LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
     /* Following are the graphics driver callbacks */
     WORD (CALLBACK *CallDrvControlProc)( FARPROC16, SEGPTR, WORD,
@@ -60,6 +62,8 @@ typedef struct
                                              SEGPTR, SEGPTR, INT16, SEGPTR,
                                              SEGPTR, SEGPTR, SEGPTR, SEGPTR,
                                              WORD );
+    WORD (CALLBACK *CallDrvGetCharWidthProc)( FARPROC16, SEGPTR, SEGPTR, WORD,
+					      WORD, SEGPTR, SEGPTR, SEGPTR );
 } CALLBACKS_TABLE;
 
 extern const CALLBACKS_TABLE *Callbacks;

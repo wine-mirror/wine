@@ -1544,10 +1544,21 @@ static const char *_mciCommandToString(UINT16 wMsg)
 DWORD WINAPI mciSendCommand32A(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1,
                             DWORD dwParam2)
 {
-	fprintf(stderr,"mciSendCommand32A(%08x,%08x,%08lx,%08lx),stub!\n",
-		wDevID,wMsg,dwParam1,dwParam2
+    fprintf(stderr,"mciSendCommand32A(%08x,%s,%08lx,%08lx),stub!\n",
+	    wDevID,_mciCommandToString(wMsg),dwParam1,dwParam2
+    );
+    switch (wMsg) {
+    case MCI_OPEN: {
+    	LPMCI_OPEN_PARMS32A	lpmop = (LPMCI_OPEN_PARMS32A)dwParam2;
+    	fprintf(stderr,"	MCI_OPEN(%s,%s,%s)\n",
+		(dwParam1&MCI_OPEN_TYPE)   ?lpmop->lpstrDeviceType:"<null>",
+		(dwParam1&MCI_OPEN_ELEMENT)?lpmop->lpstrElementName:"<null>",
+		(dwParam1&MCI_OPEN_ALIAS)  ?lpmop->lpstrAlias:"<null>"
 	);
-	return 0; /* ok */
+	break;
+    }
+    }
+    return 0x1; /* !ok */
 }
 /**************************************************************************
  * 				mciSendCommand			[MMSYSTEM.701]

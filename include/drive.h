@@ -44,5 +44,6 @@ extern int DRIVE_Chdir( int drive, const char *path );
 extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );
 extern int DRIVE_SetLogicalMapping ( int existing_drive, int new_drive );
+extern int DRIVE_OpenDevice( int drive, int flags );
 
 #endif  /* __WINE_DRIVE_H */

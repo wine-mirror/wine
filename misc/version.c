@@ -264,3 +264,35 @@ BOOL16 WINAPI SetWinDebugInfo(WINDEBUGINFO *lpwdi)
     /* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
     return 0;
 }
+
+
+/***********************************************************************
+ *           DebugFillBuffer                    (KERNEL.329)
+ *
+ * TODO:
+ * Should fill lpBuffer only if DBO_BUFFERFILL has been set by SetWinDebugInfo()
+ */
+void WINAPI DebugFillBuffer(LPSTR lpBuffer, WORD wBytes)
+{
+	memset(lpBuffer, DBGFILL_BUFFER, wBytes);
+}
+
+/***********************************************************************
+ *           DiagQuery                          (KERNEL.339)
+ *
+ * returns TRUE if Win called with "/b" (bootlog.txt)
+ */
+BOOL16 WINAPI DiagQuery()
+{
+	/* perhaps implement a Wine "/b" command line flag sometime ? */
+	return FALSE;
+}
+
+/***********************************************************************
+ *           DiagOutput                         (KERNEL.340)
+ *
+ * writes a debug string into <windir>\bootlog.txt
+ */
+void WINAPI DiagOutput()
+{
+}

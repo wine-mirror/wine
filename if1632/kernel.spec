@@ -74,17 +74,18 @@ file	krnl386.exe
 74  pascal16 OpenFile(str ptr word) OpenFile16
 75  stub OpenPathName
 76  stub DeletePathName
-77 stub KERNEL_77		#RESERVED1
-78 stub KERNEL_78 		#RESERVED2
-#79 RESERVED3
-#80 RESERVED4
+# Reserved*: old Win 2.x functions now moved to USER (Win 3.0+)
+77  pascal Reserved1(segptr) AnsiNext16
+78  pascal Reserved2(segptr segptr) AnsiPrev16
+79  pascal Reserved3(segstr) AnsiUpper16
+80  pascal Reserved4(segstr) AnsiLower16
 81  pascal16 _lclose(word) _lclose16
 82  pascal16 _lread(word segptr word) WIN16_lread
 83  pascal16 _lcreat(str word) _lcreat16
 84  pascal   _llseek(word long word) _llseek16
 85  pascal16 _lopen(str word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
-87  pascal16 RESERVED5(str str) lstrcmp16
+87  pascal16 Reserved5(str str) lstrcmp16
 88  pascal   lstrcpy(segptr str) lstrcpy16
 89  pascal   lstrcat(segstr str) lstrcat16
 90  pascal16 lstrlen(str) lstrlen16
@@ -120,7 +121,7 @@ file	krnl386.exe
 120 stub UndefDynLink
 121 pascal16 LocalShrink(word word) LocalShrink16
 122 pascal16 IsTaskLocked() IsTaskLocked
-123 stub KbdRst
+123 return KbdRst 0 0
 124 return EnableKernel 0 0
 125 return DisableKernel 0 0
 126 stub MemoryFreed
@@ -157,7 +158,7 @@ file	krnl386.exe
 156 return LimitEMSPages 4 0
 157 return GetCurPID 4 0
 158 return IsWinOldApTask 2 0
-159 stub GlobalHandleNoRIP
+159 pascal GlobalHandleNoRIP(word) GlobalHandleNoRIP
 160 stub EMSCopy
 161 pascal16 LocalCountFree() LocalCountFree
 162 pascal16 LocalHeapSize() LocalHeapSize
@@ -237,10 +238,10 @@ file	krnl386.exe
 262 stub KERNEL_262
 263 stub KERNEL_263
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
-311 stub GetSetKernelDosProc
+311 pascal GetSetKernelDOSProc(ptr) GetSetKernelDOSProc
 314 stub DebugDefineSegment
 315 pascal16 WriteOutProfiles() WriteOutProfiles
-316 stub GetFreeMemInfo
+316 pascal GetFreeMemInfo() GetFreeMemInfo
 318 stub FatalExitHook
 319 stub FlushCachedFileHandle
 320 pascal16 IsTask(word) IsTask
@@ -251,16 +252,16 @@ file	krnl386.exe
 326 return IsRomFile 2 0
 327 stub KERNEL_327
 328 stub _DebugOutput
-#329 K329
+329 pascal16 K329(str word) DebugFillBuffer
 #332 stub THHOOK
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr16
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr16
 337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr16
 338 stub HasGPHandler
-339 stub DiagQuery
-340 stub DiagOutput
-341 stub ToolHelpHook
+339 pascal16 DiagQuery() DiagQuery
+340 pascal16 DiagOutput() DiagOutput
+341 pascal ToolHelpHook(ptr) ToolHelpHook
 342 stub __GP
 343 stub RegisterWinOldApHook
 344 stub GetWinOldApHooks

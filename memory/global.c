@@ -482,6 +482,18 @@ DWORD WINAPI GlobalHandle16( WORD sel )
     return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
 }
 
+/***********************************************************************
+ *           GlobalHandleNoRIP   (KERNEL.159)
+ */
+DWORD WINAPI GlobalHandleNoRIP( WORD sel )
+{
+    int i;
+    for (i = globalArenaSize-1 ; i>=0 ; i--) {
+        if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == sel)
+		return MAKELONG( GET_ARENA_PTR(sel)->handle, GlobalHandleToSel(sel) );
+    }
+    return 0;
+}
 
 /***********************************************************************
  *           GlobalFlags16   (KERNEL.22)
@@ -832,6 +844,16 @@ BOOL16 WINAPI MemManInfo( MEMMANINFO *info )
     return TRUE;
 }
 
+/***********************************************************************
+ *           GetFreeMemInfo   (KERNEL.316)
+ */
+DWORD WINAPI GetFreeMemInfo(void)
+{
+    MEMMANINFO info;
+    MemManInfo( &info );
+    return MAKELONG( info.dwTotalLinearSpace, info.dwMaxPagesAvailable );
+}
+
 /*
  * Win32 Global heap functions (GlobalXXX).
  * These functions included in Win32 for compatibility with 16 bit Windows
@@ -970,7 +992,10 @@ BOOL32 WINAPI GlobalUnlock32(HGLOBAL32 hmem)
  */
 HGLOBAL32 WINAPI GlobalHandle32(LPCVOID pmem)
 {
-    HGLOBAL32 handle = POINTER_TO_HANDLE(pmem);
+    HGLOBAL32 handle;
+
+    if (!HEAP_IsInsideHeap( GetProcessHeap(), 0, pmem )) goto error;
+    handle = POINTER_TO_HANDLE(pmem);
     if (HEAP_IsInsideHeap( GetProcessHeap(), 0, (LPCVOID)handle ))
     {
         if (HANDLE_TO_INTERN(handle)->Magic == MAGIC_GLOBAL_USED)
@@ -980,6 +1005,7 @@ HGLOBAL32 WINAPI GlobalHandle32(LPCVOID pmem)
     if (HeapValidate( GetProcessHeap(), 0, pmem ))
         return (HGLOBAL32)pmem;  /* valid fixed block */
 
+error:
     SetLastError( ERROR_INVALID_HANDLE );
     return 0;
 }

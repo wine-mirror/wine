@@ -166,11 +166,11 @@ file	gdi.exe
 196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter
 201 stub DMBITBLT
 202 stub DMCOLORINFO
-206 stub DMENUMDFONTS
+206 pascal16 dmEnumDFonts(ptr str ptr ptr) dmEnumDFonts
 207 stub DMENUMOBJ
 208 stub DMOUTPUT
 209 stub DMPIXEL
-210 stub DMREALIZEOBJECT
+210 pascal16 dmRealizeObject(ptr word ptr ptr segptr) dmRealizeObject
 211 stub DMSTRBLT
 212 stub DMSCANLR
 213 stub BRUTE
@@ -332,21 +332,21 @@ file	gdi.exe
 505 stub SetEnhMetafileBits
 506 stub SetMetaRgn
 508 stub ExtSelectClipRgn
-511 stub AbortPath
-512 stub BeginPath
-513 stub CloseFigure
-514 stub EndPath
+511 pascal16 AbortPath(word) AbortPath16
+512 pascal16 BeginPath(word) BeginPath16
+513 pascal16 CloseFigure(word) CloseFigure16
+514 pascal16 EndPath(word) EndPath16
 515 stub FillPath
 516 stub FlattenPath
-517 stub GetPath
+517 pascal16 GetPath(word ptr ptr word) GetPath16
 518 stub PathToRegion
 519 stub SelectClipPath
 520 stub StrokeAndFillPath
 521 stub StrokePath
 522 stub WidenPath
 523 stub ExtCreatePen
-524 stub GetArcDirection
-525 stub SetArcDirection
+524 pascal16 GetArcDirection(word) GetArcDirection16
+525 pascal16 SetArcDirection(word word) SetArcDirection16
 526 stub GetMiterLimit
 527 stub SetMiterLimit
 528 stub GDIParametersInfo

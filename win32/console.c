@@ -32,6 +32,19 @@ BOOL32 WINAPI SetConsoleCtrlHandler(HANDLER_ROUTINE * func,  BOOL32 a)
 }
 
 /***********************************************************************
+ *           CreateConsoleScreenBuffer   (KERNEL32.151)
+ */
+HANDLE32 WINAPI CreateConsoleScreenBuffer( DWORD dwDesiredAccess,
+                                           DWORD dwShareMode,
+                                           LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+                                           DWORD dwFlags,
+                                           LPVOID lpScreenBufferData)
+{
+	fprintf(stderr, "CreateConsoleScreenBuffer(): stub !\n");
+	return INVALID_HANDLE_VALUE32;
+}
+
+/***********************************************************************
  *           GetConsoleScreenBufferInfo   (KERNEL32.190)
  */
 BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
@@ -49,6 +62,15 @@ BOOL32 WINAPI GetConsoleScreenBufferInfo( HANDLE32 hConsoleOutput,
     csbi->dwMaximumWindowSize.x = 80;
     csbi->dwMaximumWindowSize.y = 24;
     return TRUE;
+}
+
+/***********************************************************************
+ *           SetConsoleActiveScreenBuffer   (KERNEL32.623)
+ */
+BOOL32 WINAPI SetConsoleActiveScreenBuffer(HANDLE32 hConsoleOutput)
+{
+	fprintf(stderr, "SetConsoleActiveScreenBuffer(): stub !\n");
+	return 0;
 }
 
 /***********************************************************************
@@ -114,7 +136,7 @@ DWORD WINAPI GetConsoleTitle32W(LPWSTR title,DWORD size)
 }
 
 /***********************************************************************
- *            WriteConsoleA   (KERNEL32.567)
+ *            WriteConsoleA   (KERNEL32.729)
  */
 BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
                                LPCVOID lpBuffer,
@@ -126,6 +148,18 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
                                        (int)nNumberOfCharsToWrite,
                                        (LPSTR)lpBuffer );
     return TRUE;
+}
+
+/***********************************************************************
+ *            WriteConsoleOutputA   (KERNEL32.732)
+ */
+BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput,
+                                     LPCHAR_INFO lpBuffer,
+                                     COORD dwBufferSize,
+                                     COORD dwBufferCoord,
+                                     LPSMALL_RECT lpWriteRegion)
+{
+	return FALSE;
 }
 
 /***********************************************************************
@@ -240,16 +274,14 @@ BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
  *            PeekConsoleInputA   (KERNEL32.550)
  */
 BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
-                                  LPDWORD pirBuffer,
+                                  LPINPUT_RECORD pirBuffer,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
-/* FIXME: pirBuffer should be a pointer to an INPUT_RECORD structure
-   -Karl Garrison (12/01/97) */
 {
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning NULL\n");
+    fprintf(stderr,"PeekConsoleInput32A: STUB returning TRUE\n");
 	return TRUE;
 }
 
@@ -257,16 +289,14 @@ BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
  *            PeekConsoleInputW   (KERNEL32.551)
  */
 BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
-                                  LPDWORD pirBuffer,
+                                  LPINPUT_RECORD pirBuffer,
                                   DWORD cInRecords,
                                   LPDWORD lpcRead)
-/* FIXME: pirBuffer should be a pointer to an INPUT_RECORD structure
-   -Karl Garrison (12/01/97) */
 {
     pirBuffer = NULL;
     cInRecords = 0;
     *lpcRead = 0;
-    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning NULL\n");
+    fprintf(stderr,"PeekConsoleInput32W: STUB returning TRUE\n");
     return TRUE;
 }
 
@@ -276,7 +306,7 @@ BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
 BOOL32 WINAPI GetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
 {
   cinfo[0] = 10; /* 10% of character box is cursor.  */
-  cinfo[1] = TRUE;  /* Cursur is visible.  */
+  cinfo[1] = TRUE;  /* Cursor is visible.  */
   fprintf (stdnimp, "GetConsoleCursorInfo32 -- STUB!\n");
   return TRUE;
 }

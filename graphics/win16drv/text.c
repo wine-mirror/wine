@@ -2,6 +2,7 @@
  * win16 driver text functions
  *
  * Copyright 1996 John Harvey
+ *           1998 Huw Davies
  */
 
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #include "dc.h"
 #include "gdi.h"
 #include "stddebug.h"
-/* #define DEBUG_WIN16DRV */
 #include "debug.h"
 
 /***********************************************************************
@@ -27,32 +27,19 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     RECT16 	*lpOpaqueRect = NULL; 
     WORD wOptions = 0;
     WORD wCount = count;
-
-    static BOOL32 bInit = FALSE;
-    
-
+    INT16 width;
 
     if (count == 0)
       return FALSE;
 
-    dprintf_win16drv(stddeb, "WIN16DRV_ExtTextOut: %04x %d %d %x %p %*s %p\n", dc->hSelf, x, y, 
-	   flags,  lprect, count > 0 ? count : 8, str, lpDx);
+    dprintf_win16drv(stddeb, "WIN16DRV_ExtTextOut: %04x %d %d %x %p %*s %p\n",
+	   dc->hSelf, x, y, flags,  lprect, count > 0 ? count : 8, str, lpDx);
 
-
-    if (bInit == FALSE)
-    {
-	DWORD dwRet;
-
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-				  NULL, " ", 
-				  -1,  physDev->segptrFontInfo, win16drv_SegPtr_DrawMode, 
-				  win16drv_SegPtr_TextXForm, NULL, NULL, 0);
-	bInit = TRUE;
-    }
 
     if (dc != NULL)   
     {
 	DWORD dwRet;
+
 	clipRect.left = 0;
 	clipRect.top = 0;
         
@@ -68,39 +55,65 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
             
         }
         
-#ifdef NOTDEF
-    {
-        RECT16 rcPageSize;
-	FONTINFO16 *p = (FONTINFO16 *)PTR_SEG_TO_LIN(physDev->segptrFontInfo);
-        rcPageSize.left = 0;
-        rcPageSize.right = 0x3c0;
-        
-        rcPageSize.top = 0;
-        rcPageSize.bottom = 0x630;
-        
+	dprintf_win16drv(stddeb, "textalign = %d\n", dc->w.textAlign);
 
+	if (dc->w.textAlign & TA_UPDATECP)
+	{
+	    x = dc->w.CursPosX;
+	    y = dc->w.CursPosY;
+	}
 
+	x = XLPTODP( dc, x );
+	y = YLPTODP( dc, y );
 
-        if(y < rcPageSize.top  ||  y + p->dfPixHeight > rcPageSize.bottom)
-        {
-            printf("Failed 1 y %d top %d y +height %d bottom %d\n",
-                   y, rcPageSize.top  ,  y + p->dfPixHeight , rcPageSize.bottom);
-        }
-        
+	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
+		 NULL, str, -count,  physDev->FontInfo, 
+		 win16drv_SegPtr_DrawMode, win16drv_SegPtr_TextXForm,
+		 NULL, NULL, 0);
 
-        if(x >= rcPageSize.right  ||
-            x + wCount * p->dfPixWidth < rcPageSize.left)
-        {
-            printf("Faile 2\n");
-        }
-        
-    }
-#endif        
+	width = LOWORD(dwRet);
 
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, XLPTODP(dc,x), YLPTODP(dc,y), 
-				  &clipRect, str, 
-				  wCount,  physDev->segptrFontInfo, win16drv_SegPtr_DrawMode, 
-				  win16drv_SegPtr_TextXForm, NULL, lpOpaqueRect, wOptions);
+	switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
+	{
+	case TA_LEFT:
+ 	    if (dc->w.textAlign & TA_UPDATECP)
+	        dc->w.CursPosX = XDPTOLP( dc, x + width );
+	    break;
+	case TA_RIGHT:
+	     x -= width;
+	     if (dc->w.textAlign & TA_UPDATECP)
+	         dc->w.CursPosX = XDPTOLP( dc, x );
+	     break;
+	case TA_CENTER:
+	    x -= width / 2;
+	    break;
+	}
+
+	switch( dc->w.textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
+	{
+	case TA_TOP:
+	    break;
+	case TA_BOTTOM:
+	    y -= physDev->FontInfo->dfPixHeight;
+	    break;
+	case TA_BASELINE:
+	    y -= physDev->FontInfo->dfAscent;
+	    break;    
+	}
+
+	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 
+	      x, y, &clipRect, str, wCount,
+	      physDev->FontInfo, win16drv_SegPtr_DrawMode, 
+	      win16drv_SegPtr_TextXForm, NULL, lpOpaqueRect, wOptions);
     }
     return bRet;
 }
+
+
+
+
+
+
+
+
+

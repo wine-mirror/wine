@@ -122,15 +122,15 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 		int dr = ((r + d) / MATRIX_SIZE_2) / 256;
 		int dg = ((g + d) / MATRIX_SIZE_2) / 256;
 		int db = ((b + d) / MATRIX_SIZE_2) / 256;
-		XPutPixel( ditherImage, x, y, PIXEL_VALUE(dr,dg,db) );
+		TSXPutPixel( ditherImage, x, y, PIXEL_VALUE(dr,dg,db) );
 	    }
 	}
 	prevColor = color;
     }
     
-    pixmap = XCreatePixmap( display, rootWindow,
+    pixmap = TSXCreatePixmap( display, rootWindow,
 			    MATRIX_SIZE, MATRIX_SIZE, screenDepth );
-    XPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
+    TSXPutImage( display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
 	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     return pixmap;
 }
@@ -168,16 +168,16 @@ static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
     if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
-        dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow, 8, 8, 1 );
+        dc->u.x.brush.pixmap = TSXCreatePixmap( display, rootWindow, 8, 8, 1 );
         /* FIXME: should probably convert to monochrome instead */
-        XCopyPlane( display, bmp->pixmap, dc->u.x.brush.pixmap,
+        TSXCopyPlane( display, bmp->pixmap, dc->u.x.brush.pixmap,
                     BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
     }
     else
     {
-        dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow,
+        dc->u.x.brush.pixmap = TSXCreatePixmap( display, rootWindow,
                                               8, 8, bmp->bitmap.bmBitsPixel );
-        XCopyArea( display, bmp->pixmap, dc->u.x.brush.pixmap,
+        TSXCopyArea( display, bmp->pixmap, dc->u.x.brush.pixmap,
                    BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
     }
     
@@ -234,7 +234,7 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
 
     if (dc->u.x.brush.pixmap)
     {
-	XFreePixmap( display, dc->u.x.brush.pixmap );
+	TSXFreePixmap( display, dc->u.x.brush.pixmap );
 	dc->u.x.brush.pixmap = 0;
     }
     dc->u.x.brush.style = brush->logbrush.lbStyle;
@@ -253,7 +253,7 @@ HBRUSH32 X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush )
       case BS_HATCHED:
 	dprintf_gdi( stddeb, "BS_HATCHED\n" );
 	dc->u.x.brush.pixel = COLOR_ToPhysical( dc, brush->logbrush.lbColor );
-	dc->u.x.brush.pixmap = XCreateBitmapFromData( display, rootWindow,
+	dc->u.x.brush.pixmap = TSXCreateBitmapFromData( display, rootWindow,
 				 HatchBrushes[brush->logbrush.lbHatch], 8, 8 );
 	dc->u.x.brush.fillStyle = FillStippled;
 	break;

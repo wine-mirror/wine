@@ -34,20 +34,20 @@ void FOCUS_SetXFocus( HWND32 hwnd )
     if (!hwnd)	/* If setting the focus to 0, uninstall the colormap */
     {
 	if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-	    XUninstallColormap( display, COLOR_GetColormap() );
+	    TSXUninstallColormap( display, COLOR_GetColormap() );
 	return;
     }
 
       /* Set X focus and install colormap */
 
     if (!(win = WIN_GetXWindow( hwnd ))) return;
-    if (!XGetWindowAttributes( display, win, &win_attr ) ||
+    if (!TSXGetWindowAttributes( display, win, &win_attr ) ||
         (win_attr.map_state != IsViewable))
         return;  /* If window is not viewable, don't change anything */
 
-    XSetInputFocus( display, win, RevertToParent, CurrentTime );
+    TSXSetInputFocus( display, win, RevertToParent, CurrentTime );
     if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
-        XInstallColormap( display, COLOR_GetColormap() );
+        TSXInstallColormap( display, COLOR_GetColormap() );
 
     EVENT_Synchronize();
 }

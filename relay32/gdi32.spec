@@ -145,7 +145,7 @@ type	win32
 138 stub GdiSetAttrs
 139 stdcall GdiSetBatchLimit(long) GdiSetBatchLimit
 140 stub GdiSetServerAttr
-141 stub GetArcDirection
+141 stdcall GetArcDirection(long) GetArcDirection32
 142 stub GetAspectRatioFilterEx
 143 stdcall GetBitmapBits(long long ptr) GetBitmapBits32
 144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
@@ -306,7 +306,7 @@ type	win32
 299 stdcall SelectObject(long long) SelectObject32
 300 stdcall SelectPalette(long long long) SelectPalette32
 301 stub SetAbortProc
-302 stub SetArcDirection
+302 stdcall SetArcDirection(long long) SetArcDirection32
 303 stdcall SetBitmapBits(long long ptr) SetBitmapBits32
 304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 305 stdcall SetBkColor(long long) SetBkColor32
@@ -351,7 +351,7 @@ type	win32
 343 stub SetWinMetaFileBits
 344 stdcall SetWindowExtEx(long long long ptr) SetWindowExtEx32
 345 stdcall SetWindowOrgEx(long long long ptr) SetWindowOrgEx32
-346 stub SetWorldTransform
+346 stdcall SetWorldTransform(long ptr) SetWorldTransform
 347 stub StartDocA
 348 stub StartDocW
 349 stub StartPage

@@ -20,7 +20,11 @@ struct pe_modref {
 #define PE_MODREF_PROCESS_ATTACHED	0x00000001
 #define PE_MODREF_NO_DLL_CALLS		0x00000002
 #define PE_MODREF_RELOCS_DONE		0x00000004
+#define PE_MODREF_TLS_ALLOCED		0x00000008
+	int				tlsindex;
 };
+
+struct _PDB32;
 
 typedef struct pe_modref PE_MODREF;
 
@@ -35,11 +39,13 @@ extern BOOL32 PE_EnumResourceLanguages32A(HMODULE32,LPCSTR,LPCSTR,ENUMRESLANGPRO
 extern BOOL32 PE_EnumResourceLanguages32W(HMODULE32,LPCWSTR,LPCWSTR,ENUMRESLANGPROC32W,LONG);
 extern HRSRC32 PE_FindResourceEx32W(HINSTANCE32,LPCWSTR,LPCWSTR,WORD);
 extern DWORD PE_SizeofResource32(HINSTANCE32,HRSRC32);
-extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,HFILE32,DWORD);
+extern HMODULE32 PE_LoadLibraryEx32A(LPCSTR,struct _PDB32*,HFILE32,DWORD);
 extern HGLOBAL32 PE_LoadResource32(HINSTANCE32,HRSRC32);
 
 struct _PDB32; /* forward definition */
+struct _THDB; /* forward definition */
 extern void PE_InitializeDLLs(struct _PDB32*,DWORD,LPVOID);
+extern void PE_InitTls(struct _THDB*);
 
 extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY,LPCWSTR,DWORD,BOOL32);
 

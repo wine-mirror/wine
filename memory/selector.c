@@ -633,7 +633,6 @@ void WINAPI SUnMapLS_IP_EBP_40(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,4
 LPVOID WINAPI WOWGetVDMPointer(DWORD vp,DWORD nrofbytes,BOOL32 protected)
 {
     /* FIXME: add size check too */
-    fprintf(stdnimp,"WOWGetVDMPointer(%08lx,%ld,%d)\n",vp,nrofbytes,protected);
     if (protected)
 	return PTR_SEG_TO_LIN(vp);
     else
@@ -655,7 +654,6 @@ LPVOID WINAPI GetVDMPointer32W(DWORD vp,DWORD mode)
 LPVOID WINAPI WOWGetVDMPointerFix(DWORD vp,DWORD nrofbytes,BOOL32 protected)
 {
     /* FIXME: fix heapsegment */
-    fprintf(stdnimp,"WOWGetVDMPointerFix(%08lx,%ld,%d)\n",vp,nrofbytes,protected);
     return WOWGetVDMPointer(vp,nrofbytes,protected);
 }
 
@@ -664,7 +662,6 @@ LPVOID WINAPI WOWGetVDMPointerFix(DWORD vp,DWORD nrofbytes,BOOL32 protected)
  */
 void WINAPI WOWGetVDMPointerUnfix(DWORD vp)
 {
-    fprintf(stdnimp,"WOWGetVDMPointerUnfix(%08lx), STUB\n",vp);
     /* FIXME: unfix heapsegment */
 }
 

@@ -337,20 +337,23 @@ HANDLE16 __WSAsyncDBQuery(LPWSINFO pwsi, HWND32 hWnd, UINT32 uMsg, INT32 type, L
 
 	    WINSOCK_link_async_op( async_ctl.ws_aop );
 
+	    EVENT_AddIO( async_ctl.ws_aop->fd[0], EVENT_IO_READ );
+	    pwsi->num_async_rq++;
+
 	    async_ctl.ws_aop->pid = fork();
 	    if( async_ctl.ws_aop->pid )
 	    {
+		dprintf_winsock(stddeb, "\tasync_op = %04x (child %i)\n", 
+				handle, async_ctl.ws_aop->pid);
+
 		close(async_ctl.ws_aop->fd[1]);  /* write endpoint */
-		dprintf_winsock(stddeb, "\tasync_op = %04x (child %i)\n",
-					handle, async_ctl.ws_aop->pid);
 		if( async_ctl.ws_aop->pid > 0 )
-		{
-		    EVENT_AddIO( async_ctl.ws_aop->fd[0], EVENT_IO_READ );
-		    pwsi->num_async_rq++;
 		    return __ws_gethandle(async_ctl.ws_aop);
-		}
 
 		/* fork() failed */
+
+	        pwsi->num_async_rq--;
+		EVENT_DeleteIO( async_ctl.ws_aop->fd[0], EVENT_IO_READ );
 		close(async_ctl.ws_aop->fd[0]);
 		pwsi->err = WSAEWOULDBLOCK;
 	    }
@@ -518,7 +521,7 @@ void WS_do_async_getserv(LPWSINFO pwsi, unsigned flag )
  * NOTE: It is possible to exploit the fact that fork() doesn't 
  * change the buffer address by storing fixed up pointers right 
  * in the handler. However, this will get in the way if we ever 
- * get to implementing DNS helper daemon a-la Netscape.
+ * get around to implementing DNS helper daemon a-la Netscape.
  */
 
 void fixup_wshe(struct ws_hostent* p_wshe, void* base)

@@ -231,7 +231,7 @@ static BOOL32 DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
      dprintf_msg(stddeb,"DDE_DoOneMessage: "
 		 "Trying to get acknowledgment from msg queue=%d\n",
 		 proc->msg);
-     Yield();			/* force task switch, and */
+     Yield16();			/* force task switch, and */
 				/* acknowledgment sending */
      if (get_ack()) {
 	return TRUE;

@@ -802,7 +802,7 @@ static DWORD SHELL_GetResourceTable(HFILE32 hFile,LPBYTE *retptr)
 	return IMAGE_NT_SIGNATURE;
   if (*(WORD*)magic == IMAGE_OS2_SIGNATURE) {
   	IMAGE_OS2_HEADER	ne_header;
-  	LPBYTE			pTypeInfo = NULL;
+  	LPBYTE			pTypeInfo = (LPBYTE)-1;
 
   	if (_lread32(hFile,&ne_header,sizeof(ne_header))!=sizeof(ne_header))
 		return 0;

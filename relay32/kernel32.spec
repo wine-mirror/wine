@@ -44,9 +44,9 @@ type	win32
 
 # WOW calls
  54 stdcall WOWCallback16(long long) WOWCallback16
- 55 stub WOWCallback16Ex
+ 55 stdcall WOWCallback16Ex(ptr long long ptr ptr) WOWCallback16Ex
  56 stdcall WOWGetVDMPointer(long long long) WOWGetVDMPointer
- 57 stub WOWHandle32
+ 57 stdcall WOWHandle32(long long) WOWHandle32
  58 stub WOWHandle16
  59 stdcall WOWGlobalAlloc16(long long) GlobalAlloc16
  60 stdcall WOWGlobalLock16(long) WIN16_GlobalLock16
@@ -139,7 +139,7 @@ type	win32
 148 stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
 149 stdcall CopyFileA(str str long) CopyFile32A
 150 stdcall CopyFileW(wstr wstr long) CopyFile32W
-151 stub CreateConsoleScreenBuffer
+151 stdcall CreateConsoleScreenBuffer(long long ptr long ptr) CreateConsoleScreenBuffer
 152 stdcall CreateDirectoryA(str ptr) CreateDirectory32A
 153 stdcall CreateDirectoryExA(str str ptr) CreateDirectoryEx32A
 154 stdcall CreateDirectoryExW(wstr wstr ptr) CreateDirectoryEx32W
@@ -611,7 +611,7 @@ type	win32
 620 stdcall SetCommTimeouts(long ptr) SetCommTimeouts
 621 stub SetComputerNameA
 622 stub SetComputerNameW
-623 stub SetConsoleActiveScreenBuffer
+623 stdcall SetConsoleActiveScreenBuffer(long) SetConsoleActiveScreenBuffer
 624 stub SetConsoleCP
 625 stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
 626 stdcall SetConsoleCursorInfo(long ptr) SetConsoleCursorInfo32
@@ -720,7 +720,7 @@ type	win32
 729 stdcall WriteConsoleA(long ptr long ptr ptr) WriteConsole32A
 730 stub WriteConsoleInputA
 731 stub WriteConsoleInputW
-732 stub WriteConsoleOutputA
+732 stdcall WriteConsoleOutputA(long ptr long long ptr) WriteConsoleOutput32A
 733 stub WriteConsoleOutputAttribute
 734 stub WriteConsoleOutputCharacterA
 735 stub WriteConsoleOutputCharacterW

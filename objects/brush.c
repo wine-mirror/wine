@@ -102,7 +102,7 @@ HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
       GDI_HEAP_UNLOCK( hbitmap );
       return 0;
     }
-    XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
+    TSXCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
 	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
     GDI_HEAP_UNLOCK( hbitmap );
     GDI_HEAP_UNLOCK( logbrush.lbHatch );

@@ -4,22 +4,24 @@
  *	Copyright 1995	Martin von Loewis
  */
 
-/*	At the moment, these are only empty stubs.
- */
 #define INITGUID
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "ole.h"
 #include "ole2.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "file.h"
 #include "compobj.h"
 #include "interfaces.h"
 #include "shlobj.h"
 #include "ddraw.h"
 #include "dsound.h"
+#include "dinput.h"
+#include "d3d.h"
 
 DWORD currentMalloc=0;
 
@@ -155,9 +157,8 @@ OLESTATUS WINAPI CLSIDFromString(const LPCSTR idstr, CLSID *id)
 }
 
 /***********************************************************************
- *           CLSIDFromString [COMPOBJ.19]
+ *           StringFromCLSID [COMPOBJ.19]
  */
-
 OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
 {
   static const char *hex = "0123456789ABCDEF";
@@ -187,3 +188,98 @@ OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
   return OLE_OK;
 }
 
+/***********************************************************************
+ *           CLSIDFromProgID [COMPOBJ.61]
+ */
+
+OLESTATUS WINAPI CLSIDFromProgID(LPCSTR progid,LPCLSID riid)
+{
+	char	*buf,buf2[80];
+	DWORD	buf2len;
+	HRESULT	err;
+	HKEY	xhkey;
+
+	buf = HeapAlloc(GetProcessHeap(),0,strlen(progid)+8);
+	sprintf(buf,"%s\\CLSID",progid);
+	if ((err=RegOpenKey32A(HKEY_CLASSES_ROOT,buf,&xhkey))) {
+		HeapFree(GetProcessHeap(),0,buf);
+		return OLE_ERROR_GENERIC;
+	}
+	HeapFree(GetProcessHeap(),0,buf);
+	buf2len = sizeof(buf2);
+	if ((err=RegQueryValue32A(xhkey,NULL,buf2,&buf2len))) {
+		RegCloseKey(xhkey);
+		return OLE_ERROR_GENERIC;
+	}
+	RegCloseKey(xhkey);
+	return CLSIDFromString(buf2,riid);
+}
+
+OLESTATUS WINAPI LookupETask(LPVOID p1,LPVOID p2) {
+	fprintf(stderr,"LookupETask(%p,%p),stub!\n",p1,p2);
+	return 0;
+}
+
+OLESTATUS WINAPI CallObjectInWOW(LPVOID p1,LPVOID p2) {
+	fprintf(stderr,"CallObjectInWOW(%p,%p),stub!\n",p1,p2);
+	return 0;
+}
+
+/***********************************************************************
+ *		CoRegisterClassObject [COMPOBJ.5]
+ */
+OLESTATUS WINAPI CoRegisterClassObject(
+	REFCLSID rclsid, LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,
+	LPDWORD lpdwRegister
+) {
+	char	buf[80];
+
+	StringFromCLSID(rclsid,buf);
+
+	fprintf(stderr,"CoRegisterClassObject(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
+		buf,pUnk,dwClsContext,flags,lpdwRegister
+	);
+	return 0;
+}
+
+/***********************************************************************
+ *		CoRegisterClassObject [COMPOBJ.27]
+ */
+OLESTATUS WINAPI CoRegisterMessageFilter16(
+	LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter
+) {
+	fprintf(stderr,"CoRegisterMessageFilter(%p,%p),stub!\n",
+		lpMessageFilter,lplpMessageFilter
+	);
+	return 0;
+}
+
+/***********************************************************************
+ *           CoCreateInstance [COMPOBJ.13, OLE32.7]
+ */
+HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
+				DWORD dwClsContext, REFIID riid, LPVOID *ppv)
+{
+	fprintf(stderr, "CoCreateInstance(): stub !\n");
+	*ppv = NULL;
+	return S_OK;
+}
+
+/***********************************************************************
+ *           CoFreeUnusedLibraries [COMPOBJ.17]
+ */
+void WINAPI CoFreeUnusedLibraries()
+{
+	fprintf(stderr, "CoFreeUnusedLibraries(): stub !\n");
+}
+
+/***********************************************************************
+ *           CoFileTimeNow [COMPOBJ.82, OLE32.10]
+ *
+ *	stores the current system time in lpFileTime
+ */
+HRESULT WINAPI CoFileTimeNow(FILETIME *lpFileTime)
+{
+	DOSFS_UnixTimeToFileTime(time(NULL), lpFileTime, 0);
+	return S_OK;
+}

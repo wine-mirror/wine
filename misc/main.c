@@ -13,9 +13,9 @@
 #ifdef MALLOC_DEBUGGING
 #include <malloc.h>
 #endif
-#include <X11/Xlib.h>
-#include <X11/Xresource.h>
-#include <X11/Xutil.h>
+#include "ts_xlib.h"
+#include "ts_xresource.h"
+#include "ts_xutil.h"
 #include <X11/Xlocale.h>
 #include <X11/cursorfont.h>
 #include "winsock.h"
@@ -52,6 +52,8 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Hu",0x0436},	/* LANG_Hu */
     {"Pl",0x0415},      /* LANG_Pl */
     {"Po",0x0416},      /* LANG_Po */
+    {"Sw",0x0417},      /* LANG_Sw */
+    {"Ca",     0},      /* LANG_Ca */ /* FIXME languageid */
     {NULL,0}
 };
 
@@ -129,7 +131,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -failreadonly   Read only files may not be opened in write mode\n" \
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po,Sw,Ca)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -191,7 +193,7 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
     strcat( buff_instance, name );
     strcpy( buff_class, WINE_CLASS );
     strcat( buff_class, name );
-    retval = XrmGetResource( db, buff_instance, buff_class, &dummy, value );
+    retval = TSXrmGetResource( db, buff_instance, buff_class, &dummy, value );
     free( buff_instance );
     free( buff_class );
     return retval;
@@ -300,7 +302,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 {
     char *display_name = NULL;
     XrmValue value;
-    XrmDatabase db = XrmGetFileDatabase(WINE_APP_DEFAULTS);
+    XrmDatabase db = TSXrmGetFileDatabase(WINE_APP_DEFAULTS);
     int i;
     char *xrm_string;
 
@@ -323,7 +325,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     if (display_name == NULL &&
 	MAIN_GetResource( db, ".display", &value )) display_name = value.addr;
 
-    if (!(display = XOpenDisplay( display_name )))
+    if (!(display = TSXOpenDisplay( display_name )))
     {
 	fprintf( stderr, "%s: Can't open display: %s\n",
 		 argv[0], display_name ? display_name : "(none specified)" );
@@ -331,14 +333,14 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     }
 
       /* Merge file and screen databases */
-    if ((xrm_string = XResourceManagerString( display )) != NULL)
+    if ((xrm_string = TSXResourceManagerString( display )) != NULL)
     {
-        XrmDatabase display_db = XrmGetStringDatabase( xrm_string );
-        XrmMergeDatabases( display_db, &db );
+        XrmDatabase display_db = TSXrmGetStringDatabase( xrm_string );
+        TSXrmMergeDatabases( display_db, &db );
     }
 
       /* Parse command line */
-    XrmParseCommand( &db, optionsTable, NB_OPTIONS,
+    TSXrmParseCommand( &db, optionsTable, NB_OPTIONS,
 		     Options.programName, argc, argv );
 
       /* Get all options */
@@ -430,7 +432,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     XTextProperty window_name;
     Atom XA_WM_DELETE_WINDOW;
 
-    flags = XParseGeometry( Options.desktopGeometry, &x, &y, &width, &height );
+    flags = TSXParseGeometry( Options.desktopGeometry, &x, &y, &width, &height );
     screenWidth  = width;
     screenHeight = height;
 
@@ -439,18 +441,18 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
 	                 PointerMotionMask | ButtonPressMask |
 			 ButtonReleaseMask | EnterWindowMask;
-    win_attr.cursor = XCreateFontCursor( display, XC_top_left_arrow );
+    win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
 
-    rootWindow = XCreateWindow( display, DefaultRootWindow(display),
+    rootWindow = TSXCreateWindow( display, DefaultRootWindow(display),
 			        x, y, width, height, 0,
 			        CopyFromParent, InputOutput, CopyFromParent,
 			        CWEventMask | CWCursor, &win_attr );
 
       /* Set window manager properties */
 
-    size_hints  = XAllocSizeHints();
-    wm_hints    = XAllocWMHints();
-    class_hints = XAllocClassHint();
+    size_hints  = TSXAllocSizeHints();
+    wm_hints    = TSXAllocWMHints();
+    class_hints = TSXAllocClassHint();
     if (!size_hints || !wm_hints || !class_hints)
     {
         fprintf( stderr, "Not enough memory for window manager hints.\n" );
@@ -469,18 +471,18 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     class_hints->res_name = argv[0];
     class_hints->res_class = "Wine";
 
-    XStringListToTextProperty( &name, 1, &window_name );
-    XSetWMProperties( display, rootWindow, &window_name, &window_name,
+    TSXStringListToTextProperty( &name, 1, &window_name );
+    TSXSetWMProperties( display, rootWindow, &window_name, &window_name,
                       argv, argc, size_hints, wm_hints, class_hints );
-    XA_WM_DELETE_WINDOW = XInternAtom( display, "WM_DELETE_WINDOW", False );
-    XSetWMProtocols( display, rootWindow, &XA_WM_DELETE_WINDOW, 1 );
-    XFree( size_hints );
-    XFree( wm_hints );
-    XFree( class_hints );
+    XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
+    TSXSetWMProtocols( display, rootWindow, &XA_WM_DELETE_WINDOW, 1 );
+    TSXFree( size_hints );
+    TSXFree( wm_hints );
+    TSXFree( class_hints );
 
       /* Map window */
 
-    XMapWindow( display, rootWindow );
+    TSXMapWindow( display, rootWindow );
 }
 
 
@@ -491,7 +493,7 @@ XKeyboardState keyboard_state;
  */
 static void MAIN_SaveSetup(void)
 {
-    XGetKeyboardControl(display, &keyboard_state);
+    TSXGetKeyboardControl(display, &keyboard_state);
 }
 
 /***********************************************************************
@@ -507,7 +509,7 @@ static void MAIN_RestoreSetup(void)
     keyboard_value.bell_duration	= keyboard_state.bell_duration;
     keyboard_value.auto_repeat_mode	= keyboard_state.global_auto_repeat;
 
-    XChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
+    TSXChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent | 
     	KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
 }
 
@@ -554,7 +556,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     gettimeofday( &tv, NULL);
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 
-    XrmInitialize();
+    TSXrmInitialize();
 
     putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
 
@@ -572,10 +574,10 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     screenHeight = HeightOfScreen( screen );
     if (screenDepth)  /* -depth option specified */
     {
-	depth_list = XListDepths(display,DefaultScreen(display),&depth_count);
+	depth_list = TSXListDepths(display,DefaultScreen(display),&depth_count);
 	for (i = 0; i < depth_count; i++)
 	    if (depth_list[i] == screenDepth) break;
-	XFree( depth_list );
+	TSXFree( depth_list );
 	if (i >= depth_count)
 	{
 	    fprintf( stderr, "%s: Depth %d not supported on this screen.\n",
@@ -584,7 +586,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 	}
     }
     else screenDepth  = DefaultDepthOfScreen( screen );
-    if (Options.synchronous) XSynchronize( display, True );
+    if (Options.synchronous) TSXSynchronize( display, True );
     if (Options.desktopGeometry) MAIN_CreateDesktop( *argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
@@ -608,7 +610,7 @@ void WINAPI MessageBeep16( UINT16 i )
  */
 BOOL32 WINAPI MessageBeep32( UINT32 i )
 {
-    XBell( display, 0 );
+    TSXBell( display, 0 );
     return TRUE;
 }
 
@@ -619,7 +621,7 @@ BOOL32 WINAPI MessageBeep32( UINT32 i )
 BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
     /* dwFreq and dwDur are ignored by Win95 */
-    XBell(display, 0);
+    TSXBell(display, 0);
     return TRUE;
 }
 
@@ -643,7 +645,7 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 
 	switch (uAction) {
 	case SPI_GETBEEP:
-		XGetKeyboardControl(display, &keyboard_state);
+		TSXGetKeyboardControl(display, &keyboard_state);
 		if (keyboard_state.bell_percent == 0)
 			*(BOOL32 *) lpvParam = FALSE;
 		else
@@ -690,7 +692,7 @@ BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 
 	case SPI_GETSCREENSAVETIMEOUT:
 	/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
-		XGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+		TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
 		*(INT32 *) lpvParam = timeout * 1000;
 		break;
 
@@ -779,7 +781,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	switch (uAction)
         {
 		case SPI_GETBEEP:
-			XGetKeyboardControl(display, &keyboard_state);
+			TSXGetKeyboardControl(display, &keyboard_state);
 			if (keyboard_state.bell_percent == 0)
 				*(BOOL16 *) lpvParam = FALSE;
 			else
@@ -833,7 +835,7 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 
 		case SPI_GETSCREENSAVETIMEOUT:
 			/* FIXME GetProfileInt( "windows", "ScreenSaveTimeout", 300 ); */
-			XGetScreenSaver(display, &timeout, &temp,&temp,&temp);
+			TSXGetScreenSaver(display, &timeout, &temp,&temp,&temp);
 			*(INT16 *) lpvParam = timeout * 1000;
 			break;
 
@@ -858,19 +860,19 @@ BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 				keyboard_value.bell_percent = -1;
 			else
 				keyboard_value.bell_percent = 0;			
-   			XChangeKeyboardControl(display, KBBellPercent, 
+   			TSXChangeKeyboardControl(display, KBBellPercent, 
    							&keyboard_value);
 			break;
 
 		case SPI_SETSCREENSAVEACTIVE:
 			if (uParam == TRUE)
-				XActivateScreenSaver(display);
+				TSXActivateScreenSaver(display);
 			else
-				XResetScreenSaver(display);
+				TSXResetScreenSaver(display);
 			break;
 
 		case SPI_SETSCREENSAVETIMEOUT:
-			XSetScreenSaver(display, uParam, 60, DefaultBlanking, 
+			TSXSetScreenSaver(display, uParam, 60, DefaultBlanking, 
 							DefaultExposures);
 			break;
 

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 RCFLAGS   = -w16 -h
-PROGRAMS  = expand hello hello2 hello3 hello4 new rolex
+PROGRAMS  = expand hello hello2 hello3 hello4 hello5 new rolex
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
 C_SRCS = \
@@ -13,6 +13,7 @@ C_SRCS = \
 	hello2.c \
 	hello3.c \
 	hello4.c \
+	hello5.c \
 	new.c \
 	rolex.c
 
@@ -41,6 +42,9 @@ hello3: hello3res.o hello3.o
 
 hello4: hello4.o
 	$(CC) -o hello4 hello4.o $(LDOPTIONS) $(ALL_LIBS)
+
+hello5: hello5.o
+	$(CC) -o hello5 hello5.o $(LDOPTIONS) $(ALL_LIBS)
 
 new: new.o
 	$(CC) -o new new.o $(LDOPTIONS) $(ALL_LIBS)

@@ -4,8 +4,8 @@
  * Started by Robert Pouliot <krynos@clic.net>
  */
 
-#include <X11/Xlib.h>
-#include <X11/extensions/XShm.h>
+#include "ts_xlib.h"
+#include "ts_xshm.h"
 #include <sys/types.h>
 #include <sys/ipc.h>
 #ifndef __EMX__
@@ -48,10 +48,10 @@ static void __initWinG(void)
 {
   if( __WinGOK < 0 )
   {
-    Status s = XShmQueryExtension(display);
+    Status s = TSXShmQueryExtension(display);
     if( s )
     {
-      int i = XShmPixmapFormat(display);
+      int i = TSXShmPixmapFormat(display);
       if( i == ZPixmap && screenDepth == 8 ) 
       {
         __WinGOK = True;
@@ -157,7 +157,7 @@ HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
                         sel = SELECTOR_AllocBlock( p->si.shmaddr, bytes,
                                                    SEGMENT_DATA, FALSE, FALSE);
                         if (sel) p->bits = PTR_SEG_OFF_TO_SEGPTR(sel,0);
-			else XFreePixmap( display, bmpObjPtr->pixmap );
+			else TSXFreePixmap( display, bmpObjPtr->pixmap );
 		    }
 		    if( !sel )
 		    {
@@ -278,8 +278,8 @@ BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
     widDest = widDest * dcDst->vportExtX / dcDst->wndExtX;
     heiDest = heiDest * dcDst->vportExtY / dcDst->wndExtY;
 
-    XSetFunction( display, dcDst->u.x.gc, GXcopy );
-    XCopyArea( display, dcSrc->u.x.drawable,
+    TSXSetFunction( display, dcDst->u.x.gc, GXcopy );
+    TSXCopyArea( display, dcSrc->u.x.drawable,
                dcDst->u.x.drawable, dcDst->u.x.gc,
                xSrc, ySrc, widDest, heiDest, xDest, yDest );
     return TRUE;

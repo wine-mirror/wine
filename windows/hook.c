@@ -99,6 +99,7 @@ static void HOOK_Map16To32Common(INT32 id, INT32 code, WPARAM32 *pwParam,
             else WINPROC_MapMsg16To32W( lpcwp16->message, lpcwp16->wParam, 
                                         &lpcwp32->message, &lpcwp32->wParam,
                                         &lpcwp32->lParam );
+	    *plParam = (LPARAM)lpcwp32;
 	    break;
 	}
 

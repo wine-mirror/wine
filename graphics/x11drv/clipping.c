@@ -15,7 +15,7 @@
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
  *           Copy RECT32s to a temporary buffer of XRectangles and call
- *           XSetClipRectangles().
+ *           TSXSetClipRectangles().
  *
  *           Could write using GetRegionData but this would be slower.
  */
@@ -54,7 +54,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     else
         pXrect = NULL;
 
-    XSetClipRectangles( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY, 
+    TSXSetClipRectangles( display, dc->u.x.gc, dc->w.DCOrgX, dc->w.DCOrgY, 
                 pXrect, obj->rgn->numRects, YXBanded );
 
     if(pXrect)

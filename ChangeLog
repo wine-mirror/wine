@@ -1,4 +1,183 @@
 ----------------------------------------------------------------------
+Sun Feb  1 13:24:54 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [files/drive.c]
+	Added Device= parameter to drive configuration.
+
+	* [if1632/relay.c]
+	Throw() and Catch() now use the correct CATCHBUF layout (untested).
+
+	* [tools/build.c] [include/stackframe.h] [loader/task.c]
+	Moved 16-bit stack pointer into thread database.
+	Save current %fs while running 16-bit code.
+
+Fri Jan 30 09:25:49 1998  Martin Boehme  <boehme@informatik.mu-luebeck.de>
+
+	* [graphics/mapping.c]
+	Made DPtoLP32 and LPtoDP32 respect world transforms.
+
+	* [graphics/path.c] [graphics/painting.c] [if1632/gdi.spec]
+	  [include/path.h]
+	More path support.
+
+	* [include/gdi.h] [include/windows.h] [objects/dc.c]
+	  [relay/gdi32.spec]
+	Support for Get/SetArcDirection and Get/SetWorldTransform
+
+	* [windows/hook.c]
+	Fixed a bug in HOOK_Map16To32Common.
+
+Thu Jan 29 23:43:18 1998  Douglas Ridgway <ridgway@taiga.gmcl.com>
+
+	* [graphics/metafiledrv/init.c] [objects/metafile.c]
+	Documentation for metafile related API calls. Fixed a bug to avoid
+	documenting it.
+
+	* [include/windows.h]
+	Declaration for LoadImage.
+
+Thu Jan 29 21:44:45 1998  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [graphics/win16drv/*]
+	Changes to printing code to enable use of printer fonts with the
+	win3.1 postscript driver. Remember to add printer=on to [wine]
+	section of wine.conf . You will also need to disable truetype
+	fonts from control panel. Winword 6.0 and Write seem to be happy
+	with this...
+
+	* [include/bitmap.h]
+	Fix Widthbytes for 15bpp displays.
+
+Tue Jan 27 20:54:08 1998  Kristian Nielsen <kristian.nielsen@risoe.dk>
+
+	* [tsx11/*] [include/ts*] [tools/make_X11wrappers]
+	Implemented thread-safe X11 wrappers.
+
+Tue Jan 27 13:54:09 1998  Constantine Sapuntzakis  <csapuntz@tma-1.lcs.mit.edu>
+
+	* [windows/queue.c]
+	Forgot to convert thdb to thread_id.
+
+	* [misc/registry.c]
+	Sped up Windows 95 registry reading. Changed code to traverse
+	registry as a tree rather than read in all possible keys
+	(including dead ones). 
+
+Tue Jan 27 12:46:09 1998  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [loader/pe_image.c][Makefile.in][scheduler/thread.c]
+	  [libtest/hello5.c]
+	Don't exit() on failed to load referenced dlls.
+	Fixed static tls allocation for multiple threads.
+	WINELIB should now be able to load PE dlls. A sample
+	winelib program, that dynamically loads a internal dll
+	is included.
+
+	* [graphics/ddraw.c][include/ddraw.h][include/d3d.h]
+	Cleaned up and enhanced further. Added several DirectX5
+	interface definitions and DirectSurface3 implementation.
+	Stubs for D3D (NOT coming soon, just there so it fails safely).
+
+	* [multimedia/dsound.c][include/dsound.h]
+	Actually works now for a lot of cases. Some DirectX5 stuff
+	added. Still lacking several features.
+
+	* [windows/dinput.c][include/dinput.h]
+	Started implementing DirectInput. Doesn't work yet, don't 
+	know why.
+
+	* [if1632/thunk.c][misc/callbacks.c]
+	  [win32/kernel.c][include/callbacks.h]
+	Added WOWCallback16Ex, WOWHandle32.
+
+	* [misc/cpu.c]
+	Fixed GetSystemInfo, IsProcessorFeaturePresent.
+
+	* [multimedia/joystick.c][multimedia/time.c]
+	Several fixes. Small hack to get timerevents in timeGetTime() loops.
+
+Tue Jan 20 11:26:27 1998  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [configure.in]
+	Fixed check for union semun on FreeBSD systems.
+
+Sun Jan 18 23:05:04 1998  Karl Backström <karl_b@geocities.com>
+
+	* [misc/ole2nls.c] [programs/progman/Sw.rc] [programs/winhelp/Sw.rc]
+	  [resources/sysres_Sw.rc]
+	Added/updated Swedish language support.
+
+Sun Jan 18 18:49:01 1998  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [misc/winsock.c] [misc/winsock_dns.c] [windows/event.c]
+	  [windows/win.c] [windows/dce.c] [windows/winpos.c]
+	Bug fixes.
+
+Sun Jan 18 12:45:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [msdos/int25.c] [msdos/int26.c]
+        Implemented "native" absolute disk read/write access.
+
+	* [msdos/int13.c] [msdos/ioports.c]
+	Enhanced GET DRIVE PARAMETERS (int13 AH=08).
+
+	* [graphics/win16drv/prtdrv.c] [if1632/gdi.spec]
+	Fixed typos, implemented dmEnumDFonts,
+	Started implementation of dmRealizeObject.
+
+	* [if1632/compobj.spec] [ole/compobj.c] [relay32/ole32.spec]
+	Stubs CoCreateInstance, CoFreeUnusedLibraries, implemented
+	CoFileTimeNow.
+
+	* [if1632/kernel.spec] [include/windows.h] [memory/global.c]
+	  [memory/string.c] [misc/kernel.c] [misc/Makefile.in]
+	  [misc/toolhelp.c] [msdos/int21.c]
+	Implemented GlobalHandleNoRIP, GetFreeMemInfo, DebugFillBuffer, 
+	stubs GetSetKernelDOSProc, DiagQuery, DiagOutput, ToolHelpHook
+	(Undocumented Windows).
+
+	* [if1632/user.spec] [if1632/win32s16.spec] [misc/win32s16.c]
+	Misc stubs.
+
+	* [if1632/winaspi.spec] [misc/aspi.c]
+	Implemented GetASPIDLLVersion.
+
+	* [if1632/wprocs.spec] [msdos/int20.c] [msdos/Makefile.in]
+	Added handler for Int 0x20 (terminate program, _very_ old-fashioned).
+
+	* [misc/w32scomb.c]
+	Implemented Get16DLLAddress() partially
+	(big thanks to Marcus and Alexandre).
+
+	* [relay32/Makefile.in] [relay32/builtin32.c] [relay32/dplay.spec]
+	Added built-in DPLAY.DLL.
+
+	* [relay32/winmm.spec] [multimedia/joystick.c]
+	Added joySetThreshold.
+
+	* [misc/windebug.c]
+	Added WinNotify.
+
+	* [win32/console.c]
+	Stubs CreateConsoleScreenBuffer, SetConsoleActiveScreenBuffer,
+	WriteConsoleOutput32A.
+
+	* [windows/user.c]
+	Stub SetEventHook.
+
+Sat Jan 17 19:30:35 1998  Matthew Toseland  <Paul.Toseland@btinternet.com>
+
+	* [windows/painting.c]
+	Fixed broken restore-to-maximized.
+
+Mon Jan 12 21:25:32 1998  Perceval - Marc Huguet Puig <mhp@tinet.fut.es>
+
+	* [documentation/wine.man] [include/options.h]
+	  [misc/main.c] [ole/ole2nls.c] [resources/sysres.c]
+	  [resources/sysres_Ca.rc] [resources/Makefile.in]
+	Added language catalan. (Afegit l'idioma català).
+
+----------------------------------------------------------------------
 Sun Jan 18 17:05:58 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [include/stackframe.h] [tools/build.c]
