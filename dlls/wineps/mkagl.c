@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
