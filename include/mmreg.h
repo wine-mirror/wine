@@ -358,8 +358,7 @@ typedef struct csimaadpcmwaveformat_tag {
 typedef CSIMAADPCMWAVEFORMAT *PCSIMAADPCMWAVEFORMAT,
 	*NPCSIMAADPCMWAVEFORMAT, *LPCSIMAADPCMWAVEFORMAT;
 
-typedef struct
-{
+typedef struct mpeg1waveformat_tag {
 	WAVEFORMATEX	wfx;
 	WORD		fwHeadLayer;
 	DWORD		dwHeadBitrate;
@@ -385,8 +384,7 @@ typedef struct
 #define	ACM_MPEG_PROTECTIONBIT	0x0008
 #define	ACM_MPEG_ID_MPEG1	0x0010
 
-typedef struct
-{
+typedef struct mpeglayer3waveformat_tag {
 	WAVEFORMATEX	wfx;
 	WORD		wID;
 	DWORD		fdwFlags;
@@ -404,5 +402,59 @@ typedef struct
 #define MPEGLAYER3_FLAG_PADDING_ISO	0x00000000
 #define MPEGLAYER3_FLAG_PADDING_ON	0x00000001
 #define MPEGLAYER3_FLAG_PADDING_OFF	0x00000002
+
+#ifdef GUID_DEFINED
+
+#ifndef _WAVEFORMATEXTENSIBLE_
+#define _WAVEFORMATEXTENSIBLE_
+typedef struct {
+    WAVEFORMATEX    Format;
+    union {
+        WORD        wValidBitsPerSample;
+        WORD        wSamplesPerBlock;
+        WORD        wReserved;
+    } Samples;
+    DWORD           dwChannelMask;
+    GUID            SubFormat;
+} WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
+#endif /* _WAVEFORMATEXTENSIBLE_ */
+
+#endif /* GUID_DEFINED */
+
+typedef WAVEFORMATEXTENSIBLE    WAVEFORMATPCMEX;
+typedef WAVEFORMATPCMEX*        PWAVEFORMATPCMEX;
+typedef WAVEFORMATPCMEX*        NPWAVEFORMATPCMEX;
+typedef WAVEFORMATPCMEX*        LPWAVEFORMATPCMEX;
+
+typedef WAVEFORMATEXTENSIBLE    WAVEFORMATIEEEFLOATEX;
+typedef WAVEFORMATIEEEFLOATEX*  PWAVEFORMATIEEEFLOATEX;
+typedef WAVEFORMATIEEEFLOATEX*  NPWAVEFORMATIEEEFLOATEX;
+typedef WAVEFORMATIEEEFLOATEX*  LPWAVEFORMATIEEEFLOATEX;
+
+#ifndef _SPEAKER_POSITIONS_
+#define _SPEAKER_POSITIONS_
+
+#define SPEAKER_FRONT_LEFT              0x00000001
+#define SPEAKER_FRONT_RIGHT             0x00000002
+#define SPEAKER_FRONT_CENTER            0x00000004
+#define SPEAKER_LOW_FREQUENCY           0x00000008
+#define SPEAKER_BACK_LEFT               0x00000010
+#define SPEAKER_BACK_RIGHT              0x00000020
+#define SPEAKER_FRONT_LEFT_OF_CENTER    0x00000040
+#define SPEAKER_FRONT_RIGHT_OF_CENTER   0x00000080
+#define SPEAKER_BACK_CENTER             0x00000100
+#define SPEAKER_SIDE_LEFT               0x00000200
+#define SPEAKER_SIDE_RIGHT              0x00000400
+#define SPEAKER_TOP_CENTER              0x00000800
+#define SPEAKER_TOP_FRONT_LEFT          0x00001000
+#define SPEAKER_TOP_FRONT_CENTER        0x00002000
+#define SPEAKER_TOP_FRONT_RIGHT         0x00004000
+#define SPEAKER_TOP_BACK_LEFT           0x00008000
+#define SPEAKER_TOP_BACK_CENTER         0x00010000
+#define SPEAKER_TOP_BACK_RIGHT          0x00020000
+#define SPEAKER_RESERVED                0x7FFC0000
+#define SPEAKER_ALL                     0x80000000
+
+#endif /* _SPEAKER_POSITIONS_ */
 
 #endif /* __WINE_MMREG_H */
