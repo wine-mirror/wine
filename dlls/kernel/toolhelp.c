@@ -423,3 +423,13 @@ DWORD WINAPI GlobalMasterHandle16(void)
     FIXME(": stub\n");
     return 0;
 }
+
+/************************************************************************
+ *              Heap32ListFirst (KERNEL.@)
+ *
+ */
+BOOL WINAPI Heap32ListFirst(HANDLE hSnapshot, LPHEAPLIST32 lphl)
+{
+    FIXME(": stub\n");
+    return FALSE;
+}

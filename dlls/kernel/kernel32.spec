@@ -541,7 +541,7 @@
 @ stdcall GlobalUnlock(long)
 @ stdcall GlobalWire(long)
 @ stub Heap32First
-@ stub Heap32ListFirst
+@ stdcall Heap32ListFirst(long ptr)
 @ stub Heap32ListNext
 @ stub Heap32Next
 @ stdcall HeapAlloc(long long long) ntdll.RtlAllocateHeap
