@@ -581,3 +581,12 @@ struct MSVCRT_lconv *MSVCRT_localeconv(void) {
   X(n_sign_posn);
   return &xlconv;
 }
+
+/*********************************************************************
+ *		_Gettnames (MSVCRT.@)
+ */
+void *_Gettnames(void)
+{
+  FIXME("(void), stub!\n");
+  return NULL;
+}

@@ -762,5 +762,5 @@
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ varargs wscanf(wstr) MSVCRT_wscanf
-@ stub _Gettnames
+@ cdecl _Gettnames() _Gettnames
 @ stub __lc_collate_cp
