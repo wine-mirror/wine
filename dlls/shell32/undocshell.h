@@ -119,23 +119,9 @@ LPITEMIDLIST WINAPI ILCreateFromPathAW(LPCVOID path);
 /*
 	string functions
 */
-HRESULT WINAPI StrRetToStrNA (
-	LPVOID dest,
-	DWORD len,
-	LPSTRRET src,
-	const ITEMIDLIST *pidl);
-
-HRESULT WINAPI StrRetToStrNW (
-	LPVOID dest,
-	DWORD len,
-	LPSTRRET src,
-	const ITEMIDLIST *pidl);
-
-HRESULT WINAPI StrRetToStrNAW (
-	LPVOID dest,
-	DWORD len,
-	LPSTRRET src,
-	const ITEMIDLIST *pidl);
+BOOL WINAPI StrRetToStrNA(LPSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
+BOOL WINAPI StrRetToStrNW(LPWSTR,DWORD,LPSTRRET,const ITEMIDLIST*);
+BOOL WINAPI StrRetToStrNAW(LPVOID,DWORD,LPSTRRET,const ITEMIDLIST*);
 
 
 /****************************************************************************
