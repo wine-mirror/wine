@@ -2851,7 +2851,7 @@ int MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, va_list valist)
    * Return the number of bytes that would have been written
    * The code below handles both cases
    */
-  while ((written = vsnprintf(mem, resize, format, valist)) == -1 ||
+  while ((written = MSVCRT_vsnprintf(mem, resize, format, valist)) == -1 ||
           written > resize)
   {
     resize = (written == -1 ? resize * 2 : written + 1);

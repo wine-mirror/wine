@@ -576,6 +576,7 @@ double         MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
 MSVCRT_time_t  MSVCRT_time(MSVCRT_time_t*);
 void *         MSVCRT___p__daylight(void);
 MSVCRT_FILE*   MSVCRT__fdopen(int, const char *);
+int            MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, va_list valist);
 
 #ifndef __WINE_MSVCRT_TEST
 int            _write(int,const void*,unsigned int);
