@@ -342,10 +342,12 @@ struct get_process_info_reply
 {
     struct reply_header __header;
     process_id_t pid;
+    process_id_t ppid;
     int          exit_code;
     int          priority;
     int          process_affinity;
     int          system_affinity;
+    void*        peb;
 };
 
 
@@ -3572,6 +3574,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 142
+#define SERVER_PROTOCOL_VERSION 143
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

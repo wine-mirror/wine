@@ -79,6 +79,27 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 
     switch (ProcessInformationClass) 
     {
+    case ProcessBasicInformation:
+        if (ProcessInformationLength == sizeof(PROCESS_BASIC_INFORMATION))
+        {
+            SERVER_START_REQ(get_process_info)
+            {
+                req->handle = ProcessHandle;
+                if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                {
+                    PROCESS_BASIC_INFORMATION* pbi = (PROCESS_BASIC_INFORMATION*)ProcessInformation;
+                    pbi->ExitStatus = reply->exit_code;
+                    pbi->PebBaseAddress = (DWORD)reply->peb;
+                    pbi->AffinityMask = reply->process_affinity;
+                    pbi->BasePriority = reply->priority;
+                    pbi->UniqueProcessId = reply->pid;
+                    pbi->InheritedFromUniqueProcessId = reply->ppid;
+                }
+            }
+            SERVER_END_REQ;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
     case ProcessIoCounters:
         if (ProcessInformationLength == sizeof(IO_COUNTERS))
         {
@@ -92,7 +113,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
          * set it to 0 aka "no debugger" to satisfy copy protections */
         if (ProcessInformationLength == 4)
         {
-            memset(ProcessInformation, 0 ,ProcessInformationLength);
+            memset(ProcessInformation, 0, ProcessInformationLength);
             len = 4;
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;

@@ -537,10 +537,12 @@ static void dump_get_process_info_request( const struct get_process_info_request
 static void dump_get_process_info_reply( const struct get_process_info_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
+    fprintf( stderr, " ppid=%04x,", req->ppid );
     fprintf( stderr, " exit_code=%d,", req->exit_code );
     fprintf( stderr, " priority=%d,", req->priority );
     fprintf( stderr, " process_affinity=%d,", req->process_affinity );
-    fprintf( stderr, " system_affinity=%d", req->system_affinity );
+    fprintf( stderr, " system_affinity=%d,", req->system_affinity );
+    fprintf( stderr, " peb=%p", req->peb );
 }
 
 static void dump_set_process_info_request( const struct set_process_info_request *req )

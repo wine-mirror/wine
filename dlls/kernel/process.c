@@ -2079,15 +2079,18 @@ BOOL WINAPI GetExitCodeProcess(
     HANDLE hProcess,    /* [in] handle to the process */
     LPDWORD lpExitCode) /* [out] address to receive termination status */
 {
-    BOOL ret;
-    SERVER_START_REQ( get_process_info )
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+
+    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
+                                       sizeof(pbi), NULL);
+    if (status == STATUS_SUCCESS)
     {
-        req->handle = hProcess;
-        ret = !wine_server_call_err( req );
-        if (ret && lpExitCode) *lpExitCode = reply->exit_code;
+        if (lpExitCode) *lpExitCode = pbi.ExitStatus;
+        return TRUE;
     }
-    SERVER_END_REQ;
-    return ret;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
 }
 
 
@@ -2357,16 +2360,16 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 /*********************************************************************
  *           MapProcessHandle   (KERNEL.483)
  */
-DWORD WINAPI MapProcessHandle( HANDLE handle )
+DWORD WINAPI MapProcessHandle( HANDLE hProcess )
 {
-    DWORD ret = 0;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = handle;
-        if (!wine_server_call_err( req )) ret = reply->pid;
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+
+    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
+                                       sizeof(pbi), NULL);
+    if (status == STATUS_SUCCESS) return pbi.UniqueProcessId;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return 0;
 }
 
 
@@ -2530,16 +2533,16 @@ BOOL WINAPI SetPriorityClass( HANDLE hprocess, DWORD priorityclass )
 /***********************************************************************
  *           GetPriorityClass   (KERNEL32.@)
  */
-DWORD WINAPI GetPriorityClass(HANDLE hprocess)
+DWORD WINAPI GetPriorityClass(HANDLE hProcess)
 {
-    DWORD ret = 0;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = hprocess;
-        if (!wine_server_call_err( req )) ret = reply->priority;
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+
+    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi,
+                                       sizeof(pbi), NULL);
+    if (status == STATUS_SUCCESS) return pbi.BasePriority;
+    SetLastError( RtlNtStatusToDosError(status) );
+    return 0;
 }
 
 

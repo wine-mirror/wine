@@ -1043,10 +1043,12 @@ DECL_HANDLER(get_process_info)
     if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
     {
         reply->pid              = get_process_id( process );
+        reply->ppid             = process->parent ? get_process_id( process->parent ) : 0;
         reply->exit_code        = process->exit_code;
         reply->priority         = process->priority;
         reply->process_affinity = process->affinity;
         reply->system_affinity  = 1;
+        reply->peb              = process->peb;
         release_object( process );
     }
 }
