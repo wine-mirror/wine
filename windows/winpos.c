@@ -1375,7 +1375,9 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
     else
     {
         /* We can't activate a child window */
-        if (wndPtr->dwStyle & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        if ((wndPtr->dwStyle & WS_CHILD) &&
+            !(wndPtr->dwExStyle & WS_EX_MDICHILD))
+            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	if (!(swp & MINMAX_NOSWP))
 	    SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top, 
 					  newPos.right, newPos.bottom, LOWORD(swp) );

@@ -606,6 +606,7 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND hWndChild )
       if( clientInfo->hwndChildMaximized != hWndChild ) {
         if( hWndChild ) {
 		  clientInfo->hwndActiveChild = hWndChild;
+		  clientInfo->hwndChildMaximized = hWndChild;
 		  ShowWindow( hWndChild, SW_SHOWMAXIMIZED);
 	} else
 		ShowWindow( clientInfo->hwndActiveChild, SW_SHOWNORMAL );
