@@ -30,6 +30,7 @@
 /* Add your language specific defines here */
 #include "winmm_En.rc"
 #include "winmm_Fr.rc"
+#include "winmm_It.rc"
 #include "winmm_Nl.rc"
 #include "winmm_Pt.rc"
 #include "winmm_Es.rc"
