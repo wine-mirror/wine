@@ -829,3 +829,90 @@ void start_apartment_listener_thread()
         CreateThread(NULL, 0, apartment_listener_thread, apt, 0, &apt->listenertid);
     }
 }
+
+struct local_server_params
+{
+    CLSID clsid;
+    IStream *stream;
+};
+
+static DWORD WINAPI local_server_thread(LPVOID param)
+{
+    struct local_server_params * lsp = (struct local_server_params *)param;
+    HANDLE		hPipe;
+    char 		pipefn[200];
+    HRESULT		hres;
+    IStream		*pStm = lsp->stream;
+    STATSTG		ststg;
+    unsigned char	*buffer;
+    int 		buflen;
+    LARGE_INTEGER	seekto;
+    ULARGE_INTEGER	newpos;
+    ULONG		res;
+
+    TRACE("Starting threader for %s.\n",debugstr_guid(&lsp->clsid));
+
+    strcpy(pipefn,PIPEPREF);
+    WINE_StringFromCLSID(&lsp->clsid,pipefn+strlen(PIPEPREF));
+
+    HeapFree(GetProcessHeap(), 0, lsp);
+
+    hPipe = CreateNamedPipeA( pipefn, PIPE_ACCESS_DUPLEX,
+               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
+               4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL );
+    if (hPipe == INVALID_HANDLE_VALUE) {
+        FIXME("pipe creation failed for %s, le is %ld\n",pipefn,GetLastError());
+        return 1;
+    }
+    while (1) {
+        if (!ConnectNamedPipe(hPipe,NULL)) {
+            ERR("Failure during ConnectNamedPipe %ld, ABORT!\n",GetLastError());
+            break;
+        }
+
+        TRACE("marshalling IClassFactory to client\n");
+        
+        hres = IStream_Stat(pStm,&ststg,0);
+        if (hres) return hres;
+
+        buflen = ststg.cbSize.u.LowPart;
+        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
+        seekto.u.LowPart = 0;
+        seekto.u.HighPart = 0;
+        hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+        if (hres) {
+            FIXME("IStream_Seek failed, %lx\n",hres);
+            return hres;
+        }
+        
+        hres = IStream_Read(pStm,buffer,buflen,&res);
+        if (hres) {
+            FIXME("Stream Read failed, %lx\n",hres);
+            return hres;
+        }
+        
+        IStream_Release(pStm);
+
+        WriteFile(hPipe,buffer,buflen,&res,NULL);
+        FlushFileBuffers(hPipe);
+        DisconnectNamedPipe(hPipe);
+
+        TRACE("done marshalling IClassFactory\n");
+    }
+    CloseHandle(hPipe);
+    return 0;
+}
+
+void RPC_StartLocalServer(REFCLSID clsid, IStream *stream)
+{
+    DWORD tid;
+    HANDLE thread;
+    struct local_server_params *lsp = HeapAlloc(GetProcessHeap(), 0, sizeof(*lsp));
+
+    lsp->clsid = *clsid;
+    lsp->stream = stream;
+
+    thread = CreateThread(NULL, 0, local_server_thread, lsp, 0, &tid);
+    CloseHandle(thread);
+    /* FIXME: failure handling */
+}

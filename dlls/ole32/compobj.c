@@ -101,8 +101,7 @@ typedef struct tagRegisteredClass
   DWORD     runContext;
   DWORD     connectFlags;
   DWORD     dwCookie;
-  HANDLE    hThread; /* only for localserver */
-  APARTMENT *apt;    /* owning apartment */
+  LPSTREAM  pMarshaledData; /* FIXME: only really need to store OXID and IPID */
   struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
@@ -1101,116 +1100,12 @@ end:
   return hr;
 }
 
-static DWORD WINAPI
-_LocalServerThread(LPVOID param) {
-    HANDLE		hPipe;
-    char 		pipefn[200];
-    RegisteredClass *newClass = (RegisteredClass*)param;
-    HRESULT		hres;
-    IStream		*pStm;
-    STATSTG		ststg;
-    unsigned char	*buffer;
-    int 		buflen;
-    IClassFactory	*classfac;
-    LARGE_INTEGER	seekto;
-    ULARGE_INTEGER	newpos;
-    ULONG		res;
-
-    TRACE("Starting classfactory server thread for %s.\n",debugstr_guid(&newClass->classIdentifier));
-
-    /* we need to enter the apartment of the thread which registered
-     * the class object to perform the next stage
-     */
-
-    assert( newClass->apt );
-    NtCurrentTeb()->ReservedForOle = newClass->apt;
-
-    strcpy(pipefn,PIPEPREF);
-    WINE_StringFromCLSID(&newClass->classIdentifier,pipefn+strlen(PIPEPREF));
-
-    hPipe = CreateNamedPipeA( pipefn, PIPE_ACCESS_DUPLEX,
-               PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
-               4096, 4096, NMPWAIT_USE_DEFAULT_WAIT, NULL );
-    if (hPipe == INVALID_HANDLE_VALUE) {
-        FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
-        return 1;
-    }
-    while (1) {
-        if (!ConnectNamedPipe(hPipe,NULL)) {
-            ERR("Failure during ConnectNamedPipe %lx, ABORT!\n",GetLastError());
-            break;
-        }
-
-        TRACE("marshalling IClassFactory to client\n");
-        
-        hres = IUnknown_QueryInterface(newClass->classObject,&IID_IClassFactory,(LPVOID*)&classfac);
-        if (hres) return hres;
-
-        hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
-        if (hres) {
-            FIXME("Failed to create stream on hglobal.\n");
-            return hres;
-        }
-        hres = CoMarshalInterface(pStm,&IID_IClassFactory,(LPVOID)classfac,0,NULL,0);
-        if (hres) {
-            FIXME("CoMarshalInterface failed, %lx!\n",hres);
-            return hres;
-        }
-
-        IUnknown_Release(classfac); /* is this right? */
-
-        hres = IStream_Stat(pStm,&ststg,0);
-        if (hres) return hres;
-
-        buflen = ststg.cbSize.u.LowPart;
-        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
-        seekto.u.LowPart = 0;
-        seekto.u.HighPart = 0;
-        hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
-        if (hres) {
-            FIXME("IStream_Seek failed, %lx\n",hres);
-            return hres;
-        }
-        
-        hres = IStream_Read(pStm,buffer,buflen,&res);
-        if (hres) {
-            FIXME("Stream Read failed, %lx\n",hres);
-            return hres;
-        }
-        
-        IStream_Release(pStm);
-
-        WriteFile(hPipe,buffer,buflen,&res,NULL);
-        FlushFileBuffers(hPipe);
-        DisconnectNamedPipe(hPipe);
-
-        TRACE("done marshalling IClassFactory\n");
-    }
-    CloseHandle(hPipe);
-    return 0;
-}
-
 /******************************************************************************
  *		CoRegisterClassObject	[OLE32.@]
  * 
- * This method will register the class object for a given class
- * ID. Servers housed in EXE files use this method instead of
- * exporting DllGetClassObject to allow other code to connect to their
- * objects.
- *
- * When a class object (an object which implements IClassFactory) is
- * registered in this way, a new thread is started which listens for
- * connections on a named pipe specific to the registered CLSID. When
- * something else connects to it, it writes out the marshalled
- * IClassFactory interface to the pipe. The code on the other end uses
- * this buffer to unmarshal the class factory, and can then call
- * methods on it.
- *
- * In Windows, such objects are registered with the RPC endpoint
- * mapper, not with a unique named pipe.
- *
- * MSDN claims that multiple interface registrations are legal, but we
- * can't do that with our current implementation.
+ * Registers the class object for a given class ID. Servers housed in EXE
+ * files use this method instead of exporting DllGetClassObject to allow
+ * other code to connect to their objects.
  *
  * RETURNS
  *   S_OK on success, 
@@ -1219,6 +1114,10 @@ _LocalServerThread(LPVOID param) {
  *
  * SEE ALSO
  *   CoRevokeClassObject, CoGetClassObject
+ *
+ * BUGS
+ *  MSDN claims that multiple interface registrations are legal, but we
+ *  can't do that with our current implementation.
  */
 HRESULT WINAPI CoRegisterClassObject(
         REFCLSID rclsid,       /* [in] CLSID of the object to register */
@@ -1264,10 +1163,9 @@ HRESULT WINAPI CoRegisterClassObject(
   newClass->classIdentifier = *rclsid;
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
-  newClass->apt             = COM_CurrentApt();
   /*
    * Use the address of the chain node as the cookie since we are sure it's
-   * unique.
+   * unique. FIXME: not on 64-bit platforms.
    */
   newClass->dwCookie        = (DWORD)newClass;
   newClass->nextClass       = firstRegisteredClass;
@@ -1285,10 +1183,30 @@ HRESULT WINAPI CoRegisterClassObject(
   *lpdwRegister = newClass->dwCookie;
 
   if (dwClsContext & CLSCTX_LOCAL_SERVER) {
-      DWORD tid;
+      IClassFactory *classfac;
 
-      start_apartment_listener_thread();
-      newClass->hThread = CreateThread(NULL,0,_LocalServerThread,newClass,0,&tid);
+      hr = IUnknown_QueryInterface(newClass->classObject, &IID_IClassFactory, 
+                                   (LPVOID*)&classfac);
+      if (hr) return hr;
+
+      hr = CreateStreamOnHGlobal(0, TRUE, &newClass->pMarshaledData);
+      if (hr) {
+          FIXME("Failed to create stream on hglobal, %lx\n", hr);
+          IUnknown_Release(classfac);
+          return hr;
+      }
+      hr = CoMarshalInterface(newClass->pMarshaledData, &IID_IClassFactory,
+                              (LPVOID)classfac, MSHCTX_LOCAL, NULL,
+                              MSHLFLAGS_TABLESTRONG);
+      if (hr) {
+          FIXME("CoMarshalInterface failed, %lx!\n",hr);
+          IUnknown_Release(classfac);
+          return hr;
+      }
+
+      IUnknown_Release(classfac);
+
+      RPC_StartLocalServer(&newClass->classIdentifier, newClass->pMarshaledData);
   }
   return S_OK;
 }
@@ -1333,6 +1251,15 @@ HRESULT WINAPI CoRevokeClassObject(
        * Release the reference to the class object.
        */
       IUnknown_Release(curClass->classObject);
+
+      if (curClass->pMarshaledData)
+      {
+        LARGE_INTEGER zero;
+        memset(&zero, 0, sizeof(zero));
+        /* FIXME: stop local server thread */
+        IStream_Seek(curClass->pMarshaledData, zero, SEEK_SET, NULL);
+        CoReleaseMarshalData(curClass->pMarshaledData);
+      }
 
       /*
        * Free the memory used by the chain node.
