@@ -4,6 +4,21 @@
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  */
 
+
+/*
+  FIXME: This hack is fixing a problem in WsControl.  When we call socket(),
+         it is supposed to call into ws2_32's WSOCK32_socket.
+         The problem is that socket() is predefined in a linux system header that 
+         we are including, which is different from the WINE definition.
+         (cdecl vs. stdapi)  The result is stack corruption.
+
+         The correct answer to this problem is to make winsock.h not dependent 
+         on system headers, that way all of our functions are defined consistently.
+         Until that happens we need this hack.
+*/
+#define socket  linux_socket
+/* */
+
 #include "config.h"
 
 #include <sys/types.h>
@@ -24,6 +39,14 @@
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
+
+
+/* FIXME: The rest of the socket() cdecl<->stdapi stack corruption problem
+          discussed above. */
+#undef socket
+extern SOCKET WINAPI socket(INT af, INT type, INT protocol);
+/* */
+
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 
@@ -158,7 +181,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                      IFEntry *IntInfo = (IFEntry *) pResponseInfo;
                      char ifName[512];
                      struct ifreq ifInfo;
-                     int sock;
+                     SOCKET sock;
 
                      
                      if (!WSCNTL_GetInterfaceName(pcommand->toi_entity.tei_instance, ifName))
@@ -186,7 +209,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         if (ioctlsocket(sock, SIOCGIFHWADDR, (ULONG*)&ifInfo) < 0)
                         {
                            ERR ("Error obtaining MAC Address!\n");
-                           close(sock);
+                           closesocket(sock);
                            return (-1);
                         }
                         else
@@ -199,7 +222,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                         if (ioctlsocket(sock, SIOCGENADDR, (ULONG*)&ifInfo) < 0)
                         {
                            ERR ("Error obtaining MAC Address!\n");
-                           close(sock);
+                           closesocket(sock);
                            return (-1);
                         }
                         else
@@ -223,7 +246,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                            &IntInfo->if_inoctets, &IntInfo->if_outoctets)) < 0)
                      {
                         ERR ("Error obtaining transmit/receive stats for the network interface!\n");
-                        close(sock);
+                        closesocket(sock);
                         return (-1);
                      }
                      
@@ -233,7 +256,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
 	             IntInfo->if_speed = 1000000; /* Speed of interface (bits per second?) */
                      /************************************************************************/
 
-                     close(sock);
+                     closesocket(sock);
                      *pcbResponseInfoLen = sizeof (IFEntry) + IntInfo->if_descrlen; 
                   }
                   else if (pcommand->toi_entity.tei_entity == CL_NL_ENTITY) 
@@ -312,7 +335,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                IPAddrEntry *baseIPInfo = (IPAddrEntry *) pResponseInfo;
                char ifName[512];
                struct ifreq ifInfo;
-               int sock;
+               SOCKET sock;
 
                if (*pcbResponseInfoLen < sizeof(IPAddrEntry))
                {
@@ -342,7 +365,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                /* IP Address */
                strcpy (ifInfo.ifr_name, ifName);
 	       ifInfo.ifr_addr.sa_family = AF_INET;
-	       if (ioctl(sock, SIOCGIFADDR, &ifInfo) < 0) 
+	       if (ioctlsocket(sock, SIOCGIFADDR, (ULONG*)&ifInfo) < 0) 
                {
                   baseIPInfo->iae_addr = 0x0;
                }
@@ -354,7 +377,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
                
                /* Broadcast Address */
                strcpy (ifInfo.ifr_name, ifName);
-	       if (ioctl(sock, SIOCGIFBRDADDR, &ifInfo) < 0)
+	       if (ioctlsocket(sock, SIOCGIFBRDADDR, (ULONG *)&ifInfo) < 0)
                {
                   baseIPInfo->iae_bcastaddr = 0x0;
                }
@@ -366,7 +389,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
 
                /* Subnet Mask */
 	       strcpy(ifInfo.ifr_name, ifName);
-	       if (ioctl(sock, SIOCGIFNETMASK, &ifInfo) < 0)
+	       if (ioctlsocket(sock, SIOCGIFNETMASK, (ULONG *)&ifInfo) < 0)
                {
                   baseIPInfo->iae_mask = 0x0;
 	       }
@@ -396,7 +419,7 @@ DWORD WINAPI WsControl(DWORD protocoll,
              
                /* Calculate size of out buffer */
                *pcbResponseInfoLen = sizeof(IPAddrEntry);
-               close(sock);
+               closesocket(sock);
                break;
             }
 

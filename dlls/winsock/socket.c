@@ -1625,7 +1625,15 @@ INT WINAPI WSOCK32_ioctlsocket(SOCKET s, LONG cmd, ULONG *argp)
 		WARN("Warning: WS1.1 shouldn't be using async I/O\n");
 		SetLastError(WSAEINVAL); 
 		return SOCKET_ERROR;
-
+        
+        case SIOCGIFBRDADDR:
+        case SIOCGIFNETMASK:
+        case SIOCGIFADDR:
+                /* These don't need any special handling.  They are used by
+                   WsControl, and are here to suppress an unecessary warning. */
+                break;
+                   
+        
 	default:	  
 		/* Netscape tries hard to use bogus ioctl 0x667e */
 		WARN("\tunknown WS_IOCTL cmd (%08lx)\n", cmd);
