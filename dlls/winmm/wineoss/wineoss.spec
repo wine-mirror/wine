@@ -2,6 +2,8 @@ name wineoss
 file wineoss.drv
 type win32
 
+import winmm.dll
+
   1 stdcall DriverProc(long long long long long) OSS_DriverProc
   2 stdcall auxMessage(long long long long long) OSS_auxMessage
   3 stdcall mixMessage(long long long long long) OSS_mixMessage

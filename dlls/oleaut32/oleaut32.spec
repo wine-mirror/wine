@@ -1,6 +1,8 @@
 name oleaut32
 type win32
 
+import ole32.dll
+
 1 stub DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString
 3 stdcall SysReAllocString(ptr wstr) SysReAllocString

@@ -3,6 +3,10 @@ type	win32
 init	COMDLG32_DllEntryPoint
 rsrc	comdlg32
 
+import	shell32.dll
+import	comctl32.dll
+import	winspool.dll
+
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA
  2 stdcall ChooseColorW(ptr) ChooseColorW

@@ -1,6 +1,9 @@
 name olecli32
 type win32
 
+import ole32.dll
+import olesvr32.dll
+
    1 stub WEP
    2 stub OleDelete
    3 stdcall OleSaveToStream(ptr ptr) OleSaveToStream

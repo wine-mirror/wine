@@ -3,6 +3,9 @@ type	win32
 init	Shell32LibMain
 rsrc	shell32
 
+import	ole32.dll
+import	comctl32.dll
+
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 
 #  win95 and winNT dlls import shell32.dll by ordinal)

@@ -1,6 +1,8 @@
 name	avifil32
 type	win32
 
+import	msvfw32.dll
+
 @ stub    AVIBuildFilter
 @ stub    AVIBuildFilterA
 @ stub    AVIBuildFilterW

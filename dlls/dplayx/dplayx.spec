@@ -2,6 +2,8 @@ name dplayx
 type win32
 init DPLAYX_LibMain
 
+import ole32.dll
+
   1 stdcall DirectPlayCreate(ptr ptr ptr) DirectPlayCreate
   2 stdcall DirectPlayEnumerateA(ptr ptr) DirectPlayEnumerateA
   3 stdcall DirectPlayEnumerateW(ptr ptr) DirectPlayEnumerateW

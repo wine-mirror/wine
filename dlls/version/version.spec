@@ -2,6 +2,7 @@ name version
 type win32
 
 import kernel32.dll
+import lz32.dll
 
 @ stdcall GetFileVersionInfoA(str long long ptr) GetFileVersionInfoA
 @ stdcall GetFileVersionInfoSizeA(str ptr) GetFileVersionInfoSizeA

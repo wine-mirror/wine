@@ -1,6 +1,8 @@
 name    urlmon
 type    win32
 
+import	ole32.dll
+
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW
 @ stub AsyncGetClassBits
