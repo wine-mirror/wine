@@ -697,6 +697,16 @@ BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
 }
 
 /***********************************************************************
+ *           SetProcessPriorityBoost    (KERNEL32)
+ */
+BOOL32 WINAPI SetProcessPriorityBoost(HANDLE32 hprocess,BOOL32 disableboost)
+{
+    FIXME(process,"(%d,%d): stub\n",hprocess,disableboost);
+    /* Say we can do it. I doubt the program will notice that we don't. */
+    return TRUE;
+}
+
+/***********************************************************************
  *           ReadProcessMemory    		(KERNEL32)
  * FIXME: check this, if we ever run win32 binaries in different addressspaces
  *	  ... and add a sizecheck
@@ -853,4 +863,3 @@ void PROCESS_ResumeOtherThreads(void)
 
     SYSTEM_UNLOCK();
 }
-

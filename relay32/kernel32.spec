@@ -510,8 +510,8 @@ type	win32
 493 stdcall LCMapStringW(long long wstr long ptr long) LCMapString32W
 494 stdcall LeaveCriticalSection(ptr) LeaveCriticalSection
 495 stdcall LoadLibraryA(str) LoadLibrary32A
-496 stdcall LoadLibraryExA(str long long) LoadLibraryEx32A
-497 stub LoadLibraryExW
+496 stdcall LoadLibraryExA( str long long) LoadLibraryEx32A
+497 stdcall LoadLibraryExW(wstr long long) LoadLibraryEx32W
 498 stdcall LoadLibraryW(wstr) LoadLibrary32W
 499 stdcall LoadModule(str ptr) LoadModule32
 500 stdcall LoadResource(long long) LoadResource32
@@ -905,7 +905,7 @@ type	win32
 888 stub SetConsoleInputExeNameA
 889 stub SetConsoleInputExeNameW
 890 stub SetProcessAffinityMask
-891 stub SetProcessPriorityBoost
+891 stdcall SetProcessPriorityBoost(long long) SetProcessPriorityBoost
 892 stub SetThreadIdealProcessor
 893 stub SetThreadPriorityBoost
 894 stub SetWaitableTimer
