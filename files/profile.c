@@ -846,8 +846,11 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
     if(!buffer) return 0;
 
     if (!def_val) def_val = "";
-    if (key_name && key_name[0])
+    if (key_name)
     {
+	if (!key_name[0])
+            /* Win95 returns 0 on keyname "". Tested with Likse32 bon 000227 */
+            return 0;
         key = PROFILE_Find( &CurProfile->section, section, key_name, FALSE, FALSE);
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
                            len, FALSE );
@@ -855,12 +858,15 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
-    if (key_name && !(key_name[0]))
-      /* Win95 returns 0 on keyname "". Tested with Likse32 bon 000227 */
-      return 0;
+    /* no "else" here ! */
     if (section && section[0])
-        return PROFILE_GetSection(CurProfile->section, section, buffer, len,
+    {
+        PROFILE_GetSection(CurProfile->section, section, buffer, len,
 				FALSE, FALSE);
+	if (!buffer[0]) /* no luck -> def_val */
+	    PROFILE_CopyEntry(buffer, def_val, len, FALSE);
+	return strlen(buffer);
+    }
     buffer[0] = '\0';
     return 0;
 }
