@@ -2732,14 +2732,14 @@ then
     WINE_DLL_ROOT="/lib:/lib/dlls:/usr/lib:/usr/lib/dlls:/usr/local/lib:/usr/local/lib/dlls"
   fi
 fi
-AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.so],[
-  AC_MSG_ERROR([Could not find the Wine dlls (libntdll.so)])
+AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.dll.so],[
+  AC_MSG_ERROR([Could not find the Wine dlls (libntdll.dll.so)])
 ],[$WINE_DLL_ROOT])
 
-AC_PATH_LIBRARY(WINE_DLL_ROOT,[-lntdll],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
-  AC_MSG_ERROR([Could not link with the Wine dlls (libntdll.so)])
+AC_PATH_LIBRARY(WINE_DLL_ROOT,[-lntdll.dll],[$WINE_LIBRARY_PATH -lwine -lwine_unicode],[
+  AC_MSG_ERROR([Could not link with the Wine dlls (libntdll.dll.so)])
 ],[$WINE_DLL_ROOT])
-WINE_DLL_PATH="-L$WINE_DLL_ROOT"
+WINE_DLL_PATH="-L$WINE_DLL_ROOT/wine"
 
 if test -n "$LD_PATH"
 then
