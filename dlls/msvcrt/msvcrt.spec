@@ -403,7 +403,7 @@
 @ cdecl _pclose (ptr) MSVCRT__pclose
 @ extern _pctype MSVCRT__pctype
 @ extern _pgmptr MSVCRT__pgmptr
-@ stub _pipe #(ptr long long)
+@ cdecl _pipe (ptr long long)
 @ cdecl _popen (str str) MSVCRT__popen
 @ cdecl _purecall()
 @ cdecl _putch(long)

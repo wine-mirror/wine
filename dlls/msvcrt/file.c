@@ -60,8 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define WX_APPEND         0x20
 #define WX_TEXT           0x80
 
-/* FIXME: Make this dynamic */
-#define MSVCRT_MAX_FILES 257
+#define MSVCRT_MAX_FILES 2048
 
 static struct {
     HANDLE              handle;
@@ -73,8 +72,7 @@ MSVCRT_FILE MSVCRT__iob[3];
 static int MSVCRT_fdstart = 3; /* first unallocated fd */
 static int MSVCRT_fdend = 3; /* highest allocated fd */
 
-/* FIXME: make this dynamic */
-static MSVCRT_FILE* MSVCRT_fstreams[1024];
+static MSVCRT_FILE* MSVCRT_fstreams[2048];
 static int   MSVCRT_stream_idx;
 
 /* INTERNAL: process umask */
@@ -156,12 +154,9 @@ static void msvcrt_free_fd(int fd)
   }
 }
 
-/* INTERNAL: Allocate an fd slot from a Win32 HANDLE */
-static int msvcrt_alloc_fd(HANDLE hand, int flag)
+/* INTERNAL: Allocate an fd slot from a Win32 HANDLE, starting from fd */
+static int msvcrt_alloc_fd_from(HANDLE hand, int flag, int fd)
 {
-  int fd = MSVCRT_fdstart;
-
-  TRACE(":handle (%p) allocating fd (%d)\n",hand,fd);
   if (fd >= MSVCRT_MAX_FILES)
   {
     WARN(":files exhausted!\n");
@@ -171,12 +166,16 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
   MSVCRT_fdesc[fd].wxflag = WX_OPEN | (flag & (WX_DONTINHERIT | WX_APPEND | WX_TEXT));
 
   /* locate next free slot */
-  if (fd == MSVCRT_fdend)
-    MSVCRT_fdstart = ++MSVCRT_fdend;
+  if (fd == MSVCRT_fdstart && fd == MSVCRT_fdend)
+    MSVCRT_fdstart = MSVCRT_fdend + 1;
   else
     while (MSVCRT_fdstart < MSVCRT_fdend &&
-	  MSVCRT_fdesc[MSVCRT_fdstart].handle != INVALID_HANDLE_VALUE)
+     MSVCRT_fdesc[MSVCRT_fdstart].handle != INVALID_HANDLE_VALUE)
       MSVCRT_fdstart++;
+  /* update last fd in use */
+  if (fd >= MSVCRT_fdend)
+    MSVCRT_fdend = fd + 1;
+  TRACE("fdstart is %d, fdend is %d\n", MSVCRT_fdstart, MSVCRT_fdend);
 
   switch (fd)
   {
@@ -186,6 +185,13 @@ static int msvcrt_alloc_fd(HANDLE hand, int flag)
   }
 
   return fd;
+}
+
+/* INTERNAL: Allocate an fd slot from a Win32 HANDLE */
+static int msvcrt_alloc_fd(HANDLE hand, int flag)
+{
+  TRACE(":handle (%p) allocating fd (%d)\n",hand,MSVCRT_fdstart);
+  return msvcrt_alloc_fd_from(hand, flag, MSVCRT_fdstart);
 }
 
 /* INTERNAL: Allocate a FILE* for an fd slot
@@ -499,24 +505,6 @@ int _chsize(int fd, long size)
 }
 
 /*********************************************************************
- *		_dup (MSVCRT.@)
- */
-int _dup(int od)
-{
-    FIXME("(od=%d): stub\n", od);
-    return -1;
-}
-
-/*********************************************************************
- *		_dup2 (MSVCRT.@)
- */
-int _dup2(int od, int nd)
-{
-    FIXME("(od=%d, nd=%d): stub\n", od, nd);
-    return -1;
-}
-
-/*********************************************************************
  *		_unlink (MSVCRT.@)
  */
 int _unlink(const char *path)
@@ -633,6 +621,68 @@ int _commit(int fd)
   }
   TRACE(":ok\n");
   return 0;
+}
+
+/*********************************************************************
+ *		_dup2 (MSVCRT.@)
+ * NOTES
+ * MSDN isn't clear on this point, but the remarks for _pipe,
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt__pipe.asp
+ * indicate file descriptors duplicated with _dup and _dup2 are always
+ * inheritable.
+ */
+int _dup2(int od, int nd)
+{
+  int ret;
+
+  TRACE("(od=%d, nd=%d)\n", od, nd);
+  if (nd < MSVCRT_MAX_FILES && msvcrt_is_valid_fd(od))
+  {
+    HANDLE handle;
+
+    if (DuplicateHandle(GetCurrentProcess(), MSVCRT_fdesc[od].handle,
+     GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS))
+    {
+      int wxflag = MSVCRT_fdesc[od].wxflag & ~MSVCRT__O_NOINHERIT;
+
+      if (msvcrt_is_valid_fd(nd))
+        _close(nd);
+      ret = msvcrt_alloc_fd_from(handle, wxflag, nd);
+      if (ret == -1)
+      {
+        CloseHandle(handle);
+        *MSVCRT__errno() = MSVCRT_EMFILE;
+      }
+      else
+      {
+        /* _dup2 returns 0, not nd, on success */
+        ret = 0;
+      }
+    }
+    else
+    {
+      ret = -1;
+      msvcrt_set_errno(GetLastError());
+    }
+  }
+  else
+  {
+    *MSVCRT__errno() = MSVCRT_EBADF;
+    ret = -1;
+  }
+  return ret;
+}
+
+/*********************************************************************
+ *		_dup (MSVCRT.@)
+ */
+int _dup(int od)
+{
+  int fd = MSVCRT_fdstart;
+
+  if (_dup2(od, fd) == 0)
+    return fd;
+  return -1;
 }
 
 /*********************************************************************
@@ -1186,6 +1236,59 @@ static unsigned split_oflags(unsigned oflags)
         ERR(":unsupported oflags 0x%04x\n",oflags);
 
     return wxflags;
+}
+
+/*********************************************************************
+ *              _pipe (MSVCRT.@)
+ */
+int _pipe(int *pfds, unsigned int psize, int textmode)
+{
+  int ret = -1;
+  SECURITY_ATTRIBUTES sa;
+  HANDLE readHandle, writeHandle;
+
+  if (!pfds)
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return -1;
+  }
+
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.bInheritHandle = !(textmode & MSVCRT__O_NOINHERIT);
+  sa.lpSecurityDescriptor = NULL;
+  if (CreatePipe(&readHandle, &writeHandle, &sa, psize))
+  {
+    unsigned int wxflags = split_oflags(textmode);
+    int fd;
+
+    fd = msvcrt_alloc_fd(readHandle, wxflags);
+    if (fd != -1)
+    {
+      pfds[0] = fd;
+      fd = msvcrt_alloc_fd(writeHandle, wxflags);
+      if (fd != -1)
+      {
+        pfds[1] = fd;
+        ret = 0;
+      }
+      else
+      {
+        _close(pfds[0]);
+        CloseHandle(writeHandle);
+        *MSVCRT__errno() = MSVCRT_EMFILE;
+      }
+    }
+    else
+    {
+      CloseHandle(readHandle);
+      CloseHandle(writeHandle);
+      *MSVCRT__errno() = MSVCRT_EMFILE;
+    }
+  }
+  else
+    msvcrt_set_errno(GetLastError());
+
+  return ret;
 }
 
 /*********************************************************************
