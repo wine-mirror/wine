@@ -5,6 +5,7 @@
  * Copyright 1996 Albrecht Kleine
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "win.h"
@@ -333,15 +334,46 @@ static void FILEDLG_StripEditControl(HWND16 hwnd)
  */
 static BOOL32 FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 {
-    int len;
-    char str[512];
+    char 		buffer[512];
+	 char*  		str = buffer;
+    int 			drive;
+    HWND32 		hlb;
 
-    lstrcpyn32A( str, newPath, 512 );
-    len = strlen(str);
-    GetDlgItemText32A( hWnd, edt1, str + len, sizeof(str) - len );
-    if (!DlgDirList32A( hWnd, str, lst1, 0, 0x0000 )) return FALSE;
-    strcpy( str, "*.*" );
-    return DlgDirList32A( hWnd, str, lst2, stc1, 0x8010 );
+    lstrcpyn32A(buffer, newPath, sizeof(buffer));
+
+    if (str[0] && (str[1] == ':')) {
+        drive = toupper(str[0]) - 'A';
+        str += 2;
+        if (!DRIVE_SetCurrentDrive(drive)) 
+			  return FALSE;
+    } else {
+		 drive = DRIVE_GetCurrentDrive();
+	 }
+
+    if (str[0] && !DRIVE_Chdir(drive, str)) {
+		 return FALSE;
+    }
+
+    GetDlgItemText32A(hWnd, edt1, buffer, sizeof(buffer));
+    if ((hlb = GetDlgItem32(hWnd, lst1)) != 0) {
+		 char*	scptr; /* ptr on semi-colon */
+		 char*	filter = buffer;
+
+		 TRACE(commdlg, "Using filter %s\n", filter);
+		 SendMessage32A(hlb, LB_RESETCONTENT32, 0, 0);
+		 while (filter) {
+			 scptr = strchr(filter, ';');
+			 if (scptr)	*scptr = 0;
+			 TRACE(commdlg, "Using file spec %s\n", filter);
+			 if (SendMessage32A(hlb, LB_DIR32, 0, (LPARAM)filter) == LB_ERR)
+				 return FALSE;
+			 if (scptr) *scptr = ';';
+			 filter = (scptr) ? (scptr + 1) : 0;
+		 }
+	 }
+
+    strcpy(buffer, "*.*");
+    return DlgDirList32A(hWnd, buffer, lst2, stc1, 0x8010);
 }
 
 /***********************************************************************
