@@ -908,7 +908,7 @@ void WINAPI UnMapLS( SEGPTR sptr )
     /* check if ptr is inside segptr heap */
     EnterCriticalSection( &segptrHeap->critSection );
     subheap = HEAP_FindSubHeap( segptrHeap, PTR_SEG_TO_LIN(sptr) );
-    if (subheap->selector != SELECTOROF(sptr)) subheap = NULL;
+    if ((subheap) && (subheap->selector != SELECTOROF(sptr))) subheap = NULL;
     LeaveCriticalSection( &segptrHeap->critSection );
     /* if not inside heap, free the selector */
     if (!subheap) FreeSelector16( SELECTOROF(sptr) );
