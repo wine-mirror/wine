@@ -1858,7 +1858,7 @@ TOOLTIPS_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nResult = (INT) SendMessageA (GetParent (hwnd), WM_NOTIFYFORMAT,
 				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
     if (nResult == NFR_ANSI)
-	FIXME (tooltips, " -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
+	TRACE (tooltips, " -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
     else if (nResult == NFR_UNICODE)
 	FIXME (tooltips, " -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
     else
@@ -2011,7 +2011,54 @@ TOOLTIPS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     return 0;
 }
+/******************************************************************
+ * TOOLTIPS_OnWMGetTextLength
+ *
+ * This function is called when the tooltip receive a
+ * WM_GETTEXTLENGTH message.
+ * wParam : not used
+ * lParam : not used
+ *
+ * returns the length, in characters, of the tip text
+ ******************************************************************/
+static LRESULT
+TOOLTIPS_OnWMGetTextLength(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    return lstrlenW(infoPtr->szTipText);
+}
+/******************************************************************
+ * TOOLTIPS_OnWMGetText
+ *
+ * This function is called when the tooltip receive a
+ * WM_GETTEXT message.
+ * wParam : specifies the maximum number of characters to be copied
+ * lParam : is the pointer to the buffer that will receive
+ *          the tip text
+ *
+ * returns the number of characters copied
+ ******************************************************************/
+static LRESULT
+TOOLTIPS_OnWMGetText (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    INT length;
 
+    if(!infoPtr || !(infoPtr->szTipText))
+        return 0;
+
+    length = lstrlenW(infoPtr->szTipText);
+    /* When wParam is smaller than the lenght of the tip text
+       copy wParam characters of the tip text and return wParam */
+    if(wParam < length)
+    {
+        lstrcpynWtoA((LPSTR)lParam, infoPtr->szTipText,(UINT)wParam);
+        return wParam;
+    }
+    lstrcpyWtoA((LPSTR)lParam, infoPtr->szTipText);
+    return length;
+
+}
 
 static LRESULT
 TOOLTIPS_Timer (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2251,6 +2298,13 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_GETFONT:
 	    return TOOLTIPS_GetFont (hwnd, wParam, lParam);
+
+        case WM_GETTEXT:
+            return TOOLTIPS_OnWMGetText (hwnd, wParam, lParam);
+        
+        case WM_GETTEXTLENGTH:
+            return TOOLTIPS_OnWMGetTextLength (hwnd, wParam, lParam);
+ 
 
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
