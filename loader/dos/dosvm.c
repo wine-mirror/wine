@@ -192,26 +192,11 @@ int DOSVM_Enter( PCONTEXT context )
   ERR(module,"No task is currently active!\n");
   return -1;
  }
- if (!pModule->lpDosTask) {
-  /* no VM86 (dosmod) task is currently running, start one */
-  if ((lpDosTask = calloc(1, sizeof(DOSTASK))) == NULL)
-    return 0;
-  lpDosTask->hModule=pModule->self;
-  stat=MZ_InitMemory(lpDosTask,pModule);
-  if (stat>=32) stat=MZ_InitTask(lpDosTask);
-  if (stat<32) {
-   free(lpDosTask);
-   return -1;
-  }
-  pModule->lpDosTask = lpDosTask;
-  pModule->dos_image = lpDosTask->img;
-  /* Note: we're leaving it running after this, in case we need it again,
-     as this minimizes the overhead of starting it up every time...
-     it will be killed automatically when the current task terminates */
- } else lpDosTask=pModule->lpDosTask;
-
- /* allocate standard DOS handles */
- FILE_InitProcessDosHandles(); 
+ if (!(lpDosTask=pModule->lpDosTask)) {
+  /* MZ_CreateProcess or MZ_AllocDPMITask should have been called first */
+  ERR(module,"dosmod has not been initialized!");
+  return -1;
+ }
 
  if (context) {
 #define CP(x,y) VM86.regs.x = y##_reg(context)
@@ -219,6 +204,9 @@ int DOSVM_Enter( PCONTEXT context )
 #undef CP
  } else {
 /* initial setup */
+  /* allocate standard DOS handles */
+  FILE_InitProcessDosHandles(); 
+  /* registers */
   memset(&VM86,0,sizeof(VM86));
   VM86.regs.cs=lpDosTask->init_cs;
   VM86.regs.eip=lpDosTask->init_ip;
