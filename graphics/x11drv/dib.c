@@ -137,6 +137,10 @@ int *X11DRV_DIB_GenColorMap( DC *dc, int *colorMapping,
 
     if (coloruse == DIB_RGB_COLORS)
     {
+	int max = 1 << depth;
+
+	if (end > max) end = max;
+
         if (quads)
         {
             RGBQUAD * rgb = (RGBQUAD *)colorPtr;
