@@ -429,6 +429,8 @@ typedef struct
 #define OIC_ERROR           OIC_HAND
 #define OIC_INFORMATION     OIC_NOTE
 
+#ifndef NOCOLOR
+
 #define COLOR_SCROLLBAR		    0
 #define COLOR_BACKGROUND	    1
 #define COLOR_ACTIVECAPTION	    2
@@ -475,6 +477,11 @@ typedef struct
 #define CTLCOLOR_DLG                4
 #define CTLCOLOR_SCROLLBAR          5
 #define CTLCOLOR_STATIC             6
+
+COLORREF    WINAPI GetSysColor(INT);
+BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
+
+#endif /* NOCOLOR */
 
 /* Edit control messages */
 #define EM_GETSEL                0x00b0
@@ -3587,7 +3594,6 @@ INT       WINAPI GetScrollPos(HWND,INT);
 BOOL      WINAPI GetScrollRange(HWND,INT,LPINT,LPINT);
 HWND      WINAPI GetShellWindow(void);
 HMENU     WINAPI GetSubMenu(HMENU,INT);
-COLORREF    WINAPI GetSysColor(INT);
 HBRUSH    WINAPI GetSysColorBrush(INT);
 #define     GetSysModalWindow() ((HWND)0)
 HMENU     WINAPI GetSystemMenu(HWND,BOOL);
@@ -3810,7 +3816,6 @@ BOOL      WINAPI SetRectEmpty(LPRECT);
 INT       WINAPI SetScrollInfo(HWND,INT,const SCROLLINFO*,BOOL);
 INT       WINAPI SetScrollPos(HWND,INT,INT,BOOL);
 BOOL      WINAPI SetScrollRange(HWND,INT,INT,INT,BOOL);
-BOOL      WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define     SetSysModalWindow(hwnd) ((HWND)0)
 BOOL      WINAPI SetSystemCursor(HCURSOR,DWORD);
 BOOL      WINAPI SetSystemMenu(HWND,HMENU);
