@@ -105,9 +105,6 @@ HWINSTA WINAPI GetProcessWindowStation(void)
 /******************************************************************************
  * GetThreadDesktop [USER32.@]  Returns handle to desktop
  *
- * NOTES
- *    Docs say the return value is HDESK
- *
  * PARAMS
  *    dwThreadId [I] Thread identifier
  *
@@ -115,10 +112,10 @@ HWINSTA WINAPI GetProcessWindowStation(void)
  *    Success: Handle to desktop associated with specified thread
  *    Failure: NULL
  */
-DWORD WINAPI GetThreadDesktop( DWORD dwThreadId )
+HDESK WINAPI GetThreadDesktop( DWORD dwThreadId )
 {
     FIXME("(%lx): stub\n",dwThreadId);
-    return 1;
+    return (HDESK)1;
 }
 
 
@@ -186,12 +183,9 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
 /******************************************************************************
  * OpenDesktopA [USER32.@]
  *
- * NOTES
- *    Return type should be HDESK
- *
  *    Not supported on Win9x - returns NULL and calls SetLastError.
  */
-HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
+HDESK WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
                                 BOOL fInherit, DWORD dwDesiredAccess )
 {
     FIXME("(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
