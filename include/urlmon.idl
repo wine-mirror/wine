@@ -563,6 +563,102 @@ interface IInternetSession : IUnknown
         [in] DWORD dwReserved);
 }
 
+/*****************************************************************************
+ * IInternetSecurityMgrSite interface
+ */
+[
+    local,
+    object,
+    uuid(79eac9ed-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IInternetSecurityMgrSite : IUnknown
+{
+    HRESULT GetWindow(
+        [out] HWND *phwnd);
+
+    HRESULT EnableModeless(
+        [in] BOOL fEnable);
+};
+
+
+/*****************************************************************************
+ * IInternetSecurityManager interface
+ */
+cpp_quote("#define SID_SInternetSecurityManager IID_IInternetSecurityManager")
+
+[
+    object,
+    uuid(79eac9ee-baf9-11ce-8c82-00aa004ba90b),
+    pointer_default(unique)
+]
+interface IInternetSecurityManager : IUnknown
+{
+    HRESULT SetSecuritySite(
+        [in, unique] IInternetSecurityMgrSite *pSite);
+
+    HRESULT GetSecuritySite(
+        [out] IInternetSecurityMgrSite **ppSite);
+
+    HRESULT MapUrlToZone(
+        [in] LPCWSTR pwszUrl,
+        [out] DWORD *pdwZone,
+        [in] DWORD dwFlags);
+
+cpp_quote("#define MAX_SIZE_SECURITY_ID 512")
+
+    HRESULT GetSecurityId(
+        [in] LPCWSTR pwszUrl,
+        [out, size_is(*pcbSecurityId)] BYTE *pbSecurityId,
+        [in, out] DWORD *pcbSecurityId,
+        [in] DWORD dwReserved);
+
+
+    typedef enum {
+        PUAF_DEFAULT                = 0x00,
+        PUAF_NOUI                   = 0x01,
+        PUAF_ISFILE                 = 0x02,
+        PUAF_WARN_IF_DENIED         = 0x04,
+        PUAF_FORCEUI_FOREGROUND     = 0x08,
+        PUAF_CHECK_TIPS             = 0x10
+    } PUAF;
+
+    HRESULT ProcessUrlAction(
+        [in] LPCWSTR pwszUrl,
+        [in] DWORD dwAction,
+        [out, size_is(cbPolicy)] BYTE *pPolicy,
+        [in] DWORD cbPolicy,
+        [in] BYTE *pContext,
+        [in] DWORD cbContext,
+        [in] DWORD dwFlags,
+        [in] DWORD dwReserved);
+
+    HRESULT QueryCustomPolicy(
+        [in] LPCWSTR pwszUrl,
+        [in] REFGUID guidKey,
+        [out, size_is(*pcbPolicy)] BYTE **ppPolicy,
+        [out] DWORD *pcbPolicy,
+        [in] BYTE *pContext,
+        [in] DWORD cbContext,
+        [in] DWORD dwReserved);
+
+    typedef enum {
+        SZM_CREATE = 0x0,
+        SZM_DELETE = 0x1
+    } SZM_FLAGS;
+
+    HRESULT SetZoneMapping(
+        [in] DWORD dwZone,
+        [in] LPCWSTR lpszPattern,
+        [in] DWORD dwFlags);
+
+    HRESULT GetZoneMappings(
+        [in] DWORD dwZone,
+        [out] IEnumString **ppenumString,
+        [in] DWORD dwFlags);
+};
+cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")
+
 cpp_quote("DEFINE_GUID(IID_IAsyncMoniker, 0x79EAC9D3, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);")
 cpp_quote("DEFINE_GUID(CLSID_StdURLMoniker, 0x79EAC9E0, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);")
 

@@ -1061,18 +1061,6 @@ HRESULT WINAPI CoInternetQueryInfo(LPCWSTR pwzUrl, QUERYOPTION QueryOption,
   return S_OK;
 }
 
-/***********************************************************************
- *           CoInternetCreateSecurityManager (URLMON.@)
- *
- */
-typedef void *IInternetSecurityManager;
-HRESULT CoInternetCreateSecurityManager( IServiceProvider *pSP,
-    IInternetSecurityManager **ppSM, DWORD dwReserved )
-{
-  FIXME("%p %ld\n", pSP, dwReserved );
-  return E_NOTIMPL;
-}
-
 static BOOL URLMON_IsBinary(LPVOID pBuffer, DWORD cbSize)
 {
     unsigned int i, binarycount = 0;

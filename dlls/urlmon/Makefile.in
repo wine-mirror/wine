@@ -8,6 +8,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	regsvr.c \
+	sec_mgr.c \
 	umon.c \
 	urlmon_main.c
 
