@@ -37,6 +37,7 @@ extern int receive_fd( struct process *process );
 extern int send_client_fd( struct process *process, int fd, handle_t handle );
 extern void read_request( struct thread *thread );
 extern void send_reply( struct thread *thread, union generic_request *request );
+extern unsigned int get_tick_count(void);
 extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );

@@ -1239,21 +1239,24 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                 continue;
             }
             break;
-        case MSG_POSTED:
-            goto got_one;
         case MSG_HARDWARE_RAW:
             if (!MSG_process_raw_hardware_message( &info.msg, extra_info,
                                                    hwnd, first, last, flags & GET_MSG_REMOVE ))
                 continue;
             /* fall through */
         case MSG_HARDWARE_COOKED:
-            if (!MSG_process_cooked_hardware_message( &info.msg, flags & GET_MSG_REMOVE ))
+            if (!MSG_process_cooked_hardware_message( &info.msg, extra_info,
+                                                      flags & GET_MSG_REMOVE ))
             {
                 flags |= GET_MSG_REMOVE_LAST;
                 continue;
             }
+            queue->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+            /* fall through */
+        case MSG_POSTED:
             queue->GetMessageExtraInfoVal = extra_info;
-            goto got_one;
+            *msg = info.msg;
+            return TRUE;
         }
 
         /* if we get here, we have a sent message; call the window procedure */
@@ -1266,10 +1269,6 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 
         if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
     }
-
- got_one:
-    *msg = info.msg;
-    return TRUE;
 }
 
 
@@ -1898,7 +1897,8 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     if ((queue = QUEUE_Current()))
     {
         queue->GetMessageTimeVal = msg.time;
-        queue->GetMessagePosVal  = MAKELONG( msg.pt.x, msg.pt.y );
+        msg.pt.x = LOWORD( queue->GetMessagePosVal );
+        msg.pt.y = HIWORD( queue->GetMessagePosVal );
     }
 
     HOOK_CallHooksW( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg );

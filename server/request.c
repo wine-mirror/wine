@@ -71,6 +71,7 @@ static const struct object_ops master_socket_ops =
 
 struct thread *current = NULL;  /* thread handling the current request */
 unsigned int global_error = 0;  /* global error code for when no thread is current */
+unsigned int server_start_ticks = 0;  /* tick count offset from server startup */
 
 static struct master_socket *master_socket;  /* the master socket object */
 
@@ -316,6 +317,14 @@ int send_client_fd( struct process *process, int fd, handle_t handle )
     return -1;
 }
 
+/* get current tick count to return to client */
+unsigned int get_tick_count(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return (t.tv_sec * 1000) + (t.tv_usec / 1000) - server_start_ticks;
+}
+
 static void master_socket_dump( struct object *obj, int verbose )
 {
     struct master_socket *sock = (struct master_socket *)obj;
@@ -459,6 +468,9 @@ void open_master_socket(void)
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &myiovec;
     msghdr.msg_iovlen  = 1;
+
+    /* init startup ticks */
+    server_start_ticks = get_tick_count();
 
     /* go in the background */
     switch(fork())

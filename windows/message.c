@@ -438,7 +438,7 @@ static BOOL process_raw_mouse_message( MSG *msg, ULONG_PTR extra_info )
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_cooked_mouse_message( MSG *msg, BOOL remove )
+static BOOL process_cooked_mouse_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
 {
     INT hittest = HTCLIENT;
     UINT raw_message = msg->message;
@@ -464,14 +464,14 @@ static BOOL process_cooked_mouse_message( MSG *msg, BOOL remove )
         hook.pt           = msg->pt;
         hook.hwnd         = msg->hwnd;
         hook.wHitTestCode = hittest;
-        hook.dwExtraInfo  = 0;
+        hook.dwExtraInfo  = extra_info;
         if (HOOK_CallHooksA( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE,
                              msg->message, (LPARAM)&hook ))
         {
             hook.pt           = msg->pt;
             hook.hwnd         = msg->hwnd;
             hook.wHitTestCode = hittest;
-            hook.dwExtraInfo  = 0;
+            hook.dwExtraInfo  = extra_info;
             HOOK_CallHooksA( WH_CBT, HCBT_CLICKSKIPPED, msg->message, (LPARAM)&hook );
             return FALSE;
         }
@@ -582,13 +582,13 @@ BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-BOOL MSG_process_cooked_hardware_message( MSG *msg, BOOL remove )
+BOOL MSG_process_cooked_hardware_message( MSG *msg, ULONG_PTR extra_info, BOOL remove )
 {
     if (is_keyboard_message( msg->message ))
         return process_cooked_keyboard_message( msg, remove );
 
     if (is_mouse_message( msg->message ))
-        return process_cooked_mouse_message( msg, remove );
+        return process_cooked_mouse_message( msg, extra_info, remove );
 
     ERR( "unknown message type %x\n", msg->message );
     return FALSE;

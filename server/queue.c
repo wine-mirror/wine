@@ -908,7 +908,7 @@ DECL_HANDLER(get_message)
         req->lparam = 0;
         req->x      = 0;
         req->y      = 0;
-        req->time   = 0;
+        req->time   = get_tick_count();
         req->info   = 0;
         return;
     }
@@ -924,7 +924,7 @@ DECL_HANDLER(get_message)
         req->lparam = timer->lparam;
         req->x      = 0;
         req->y      = 0;
-        req->time   = 0;
+        req->time   = get_tick_count();
         req->info   = 0;
         return;
     }
