@@ -357,7 +357,13 @@ static LONG X11DRV_SetBitmapBits(BITMAPOBJ *bmp, void *bits, LONG count)
     EnterCriticalSection( &X11DRV_CritSection );
     image = XCreateImage( display, X11DRV_GetVisual(), bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
                           bmp->bitmap.bmWidth, height, 32, 0 );
-    image->data = (LPBYTE)xmalloc(image->bytes_per_line * height);
+    if (!(image->data = (LPBYTE)malloc(image->bytes_per_line * height)))
+    {
+        WARN("No memory to create image data.\n");
+        XDestroyImage( image );
+        LeaveCriticalSection( &X11DRV_CritSection );
+        return 0;
+    }
     
     /* copy 16 bit padded image buffer with real bitsperpixel to XImage */
     

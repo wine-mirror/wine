@@ -4,11 +4,12 @@
  * Copyright 1999 Patrik Stridvall
  */
 
+#include <stdlib.h>
+
 #include "color.h"
 #include "debugtools.h"
 #include "palette.h"
 #include "ttydrv.h"
-#include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(ttydrv)
 
@@ -35,7 +36,11 @@ BOOL TTYDRV_PALETTE_Initialize(void)
 
   TTYDRV_DC_DevCaps.sizePalette = 256;
 
-  COLOR_sysPal = (PALETTEENTRY *) xmalloc(sizeof(PALETTEENTRY) * TTYDRV_DC_DevCaps.sizePalette);
+  COLOR_sysPal = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * TTYDRV_DC_DevCaps.sizePalette);
+  if(COLOR_sysPal == NULL) {
+    WARN("No memory to create system palette!");
+    return FALSE;
+  }
 
   for(i=0; i < TTYDRV_DC_DevCaps.sizePalette; i++ ) {
     const PALETTEENTRY *src;

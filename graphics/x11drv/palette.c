@@ -20,7 +20,6 @@
 #include "options.h"
 #include "palette.h"
 #include "windef.h"
-#include "xmalloc.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(palette);
@@ -253,7 +252,10 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap(void)
     XColor color;
     int i; 
 
-    COLOR_sysPal = (PALETTEENTRY*)xmalloc(sizeof(PALETTEENTRY)*X11DRV_DevCaps.sizePalette);
+    if((COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*X11DRV_DevCaps.sizePalette)) == NULL) {
+        WARN("Can not allocate system palette\n");
+        return FALSE;
+    }
 
     TRACE("Building private map - %i palette entries\n", X11DRV_DevCaps.sizePalette);
 
@@ -402,7 +404,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
 	 * X guidelines and does binary search...
 	 */
 
-	pixDynMapping = (unsigned long*)xmalloc(sizeof(long)*X11DRV_DevCaps.sizePalette);
+	if((pixDynMapping = (unsigned long*)HeapAlloc(GetProcessHeap(), 0, sizeof(long)*X11DRV_DevCaps.sizePalette)) == NULL) {
+	    WARN("Out of memory while building system palette.\n");
+	    return FALSE;
+        }
         while( c_max - c_min > 0 )
           {
              c_val = (c_max + c_min)/2 + (c_max + c_min)%2;
@@ -519,7 +524,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap(void)
           X11DRV_PALETTE_XPixelToPalette[X11DRV_PALETTE_PaletteToXPixel[i]] = i;
    }
 
-   if( pixDynMapping ) free(pixDynMapping);
+   if( pixDynMapping ) HeapFree(GetProcessHeap(), 0, pixDynMapping);
 
    return TRUE;
 }
