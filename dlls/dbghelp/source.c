@@ -96,7 +96,7 @@ const char* source_get(const struct module* module, unsigned idx)
  */
 BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, LPSTR Mask,
                                PSYM_ENUMSOURCFILES_CALLBACK cbSrcFiles,
-                               void* UserContext)
+                               PVOID UserContext)
 {
     struct process*     pcs;
     struct module*      module;

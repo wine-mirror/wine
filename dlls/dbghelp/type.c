@@ -361,7 +361,7 @@ struct symt_typedef* symt_new_typedef(struct module* module, struct symt* ref,
  */
 BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
                          PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback,
-                         void* UserContext)
+                         PVOID UserContext)
 {
     struct process*     pcs;
     struct module*      module;

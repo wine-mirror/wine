@@ -28,7 +28,7 @@
 @ stdcall SymCleanup(long)
 @ stdcall SymEnumSourceFiles(ptr long long str ptr ptr)
 @ stub SymEnumSym
-@ stdcall SymEnumSymbols(long long str ptr ptr)
+@ stdcall SymEnumSymbols(ptr long long str ptr ptr)
 @ stdcall SymEnumTypes(ptr long long ptr ptr)
 @ stdcall SymEnumerateModules(long ptr ptr)
 @ stub SymEnumerateModules64

@@ -191,7 +191,7 @@ BOOL WINAPI SearchTreeForFile(LPSTR root, LPSTR file, LPSTR buffer)
  *
  */
 BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
-                        LPSTR buffer, PENUMDIRTREE_CALLBACK cb, void* user)
+                        LPSTR buffer, PENUMDIRTREE_CALLBACK cb, PVOID user)
 {
     TRACE("(%p %s %s %p %p %p)\n", hProcess, root, file, buffer, cb, user);
 
