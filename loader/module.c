@@ -722,7 +722,7 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
     DOS_FULL_NAME full_name;
     const char *unixfilename = filename;
     const char *argv[256], **argptr;
-    char *p = NULL;
+    char *cmdline = NULL;
     BOOL iconic = FALSE;
 
     /* Get Unix file name and iconic flag */
@@ -737,7 +737,8 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
     argptr = argv;
     if ( !useWine )
     {
-        p = strdup(lpCmdLine);
+        char *p;
+        p = cmdline = strdup(lpCmdLine);
         if (strchr(filename, '/') || strchr(filename, ':') || strchr(filename, '\\'))
         {
             if ( DOSFS_GetFullName( filename, TRUE, &full_name ) )
@@ -782,7 +783,7 @@ static BOOL MODULE_CreateUnixProcess( LPCSTR filename, LPCSTR lpCmdLine,
     memset( lpProcessInfo, '\0', sizeof( *lpProcessInfo ) );
     lpProcessInfo->hProcess = INVALID_HANDLE_VALUE;
     lpProcessInfo->hThread  = INVALID_HANDLE_VALUE;
-    if (p) free(p);
+    if (cmdline) free(cmdline);
 
     SetLastError( ERROR_SUCCESS );
     return TRUE;
