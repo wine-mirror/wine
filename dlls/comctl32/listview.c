@@ -272,6 +272,8 @@ typedef struct tagLISTVIEW_INFO
   DWORD dwHoverTime;
   HWND hwndToolTip;
 
+  DWORD cditemmode;             /* Keep the custom draw flags for an item/row */
+
   DWORD lastKeyPressTimestamp;
   WPARAM charCode;
   INT nSearchParamLength;
@@ -3526,7 +3528,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     UINT uFormat, uView = infoPtr->dwStyle & LVS_TYPEMASK;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     WCHAR szCallback[] = { '(', 'c', 'a', 'l', 'l', 'b', 'a', 'c', 'k', ')', 0 };
-    DWORD cditemmode = CDRF_DODEFAULT;
+    DWORD cdsubitemmode = CDRF_DODEFAULT;
     RECT* lprcFocus, rcSelect, rcBox, rcState, rcIcon, rcLabel;
     NMLVCUSTOMDRAW nmlvcd;
     HIMAGELIST himl;
@@ -3566,9 +3568,11 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     /* fill in the custom draw structure */
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
 
+    if (nSubItem > 0) cdmode = infoPtr->cditemmode;
     if (cdmode & CDRF_NOTIFYITEMDRAW)
-        cditemmode = notify_prepaint (infoPtr, hdc, &nmlvcd);
-    if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
+        cdsubitemmode = notify_prepaint ( infoPtr, hdc, &nmlvcd);
+    if (nSubItem == 0) infoPtr->cditemmode = cdsubitemmode;
+    if (cdsubitemmode & CDRF_SKIPDEFAULT) goto postpaint;
 
     /* in full row select, subitems, will just use main item's colors */
     if (nSubItem && uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
@@ -3631,7 +3635,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     DrawTextW(hdc, lvItem.pszText, -1, &rcLabel, uFormat);
 
 postpaint:
-    if (cditemmode & CDRF_NOTIFYPOSTPAINT)
+    if (cdsubitemmode & CDRF_NOTIFYPOSTPAINT)
         notify_postpaint(infoPtr, &nmlvcd);
     return TRUE;
 }
@@ -3841,6 +3845,8 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     oldClrTextBk = infoPtr->clrTextBk;
     oldClrText   = infoPtr->clrText;
    
+    infoPtr->cditemmode = CDRF_DODEFAULT;
+
     GetClientRect(infoPtr->hwndSelf, &rcClient);
     customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, 0);
     cdmode = notify_prepaint(infoPtr, hdc, &nmlvcd);
