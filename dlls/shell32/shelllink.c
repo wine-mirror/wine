@@ -19,7 +19,7 @@
  *
  * NOTES
  *   Nearly complete informations about the binary formats 
- *   of .lnk files avaiable at http://www.wotsit.org
+ *   of .lnk files available at http://www.wotsit.org
  *
  */
 
@@ -53,6 +53,7 @@
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"
+#include "shlwapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -66,8 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 #define SCF_WORKDIR 0x10
 #define SCF_ARGS 0x20
 #define SCF_CUSTOMICON 0x40
-#define SCF_UNC 0x80
-#define SCF_UNICODE 0x1000
+#define SCF_UNICODE 0x80
 
 #include "pshpack1.h"
 
@@ -128,7 +128,7 @@ typedef struct
 	ICOM_VTABLE(IPersistFile)*	lpvtblPersistFile;
 	ICOM_VTABLE(IPersistStream)*	lpvtblPersistStream;
 
-	/* data structures according to the informations in the lnk */
+	/* data structures according to the informations in the link */
 	LPITEMIDLIST	pPidl;
 	WORD		wHotKey;
 	SYSTEMTIME	time1;
@@ -800,6 +800,134 @@ HRESULT WINAPI IShellLink_Constructor (
 	}
 
 	return S_OK;
+}
+
+
+static BOOL SHELL_ExistsFileW(LPCWSTR path)
+{
+    HANDLE hfile = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+
+    if (hfile != INVALID_HANDLE_VALUE) {
+	CloseHandle(hfile);
+	return TRUE;
+    } else
+        return FALSE;
+}
+
+/**************************************************************************
+ *  SHELL_ShellLink_UpdatePath
+ *	update absolute path in sPath using relative path in sPathRel
+ */
+static HRESULT SHELL_ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath)
+{
+    if (!path || !psPath)
+	return E_INVALIDARG;
+
+    if (!*psPath && sPathRel) {
+	WCHAR buffer[2*MAX_PATH], abs_path[2*MAX_PATH];
+
+	/* first try if [directory of link file] + [relative path] finds an existing file */
+	LPCWSTR src = path;
+	LPWSTR last_slash = NULL;
+	LPWSTR dest = buffer;
+	LPWSTR final;
+
+	/* copy path without file name to buffer */
+	while(*src) {
+	    if (*src=='/' || *src=='\\')
+		last_slash = dest;
+
+	    *dest++ = *src++;
+	}
+
+	lstrcpyW(last_slash? last_slash+1: buffer, sPathRel);
+
+	*abs_path = '\0';
+
+	if (SHELL_ExistsFileW(buffer)) {
+	    if (!GetFullPathNameW(buffer, MAX_PATH, abs_path, &final))
+		lstrcpyW(abs_path, buffer);
+	} else {
+	    /* try if [working directory] + [relative path] finds an existing file */
+	    if (sWorkDir) {
+		lstrcpyW(buffer, sWorkDir);
+		lstrcpyW(PathAddBackslashW(buffer), sPathRel);
+
+		if (SHELL_ExistsFileW(buffer))
+		    if (!GetFullPathNameW(buffer, MAX_PATH, abs_path, &final))
+			lstrcpyW(abs_path, buffer);
+	    }
+	}
+
+	/* FIXME: This is even not enough - not all shell links can be resolved using this algorithm. */
+	if (!*abs_path)
+	    lstrcpyW(abs_path, sPathRel);
+
+	*psPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(abs_path)+1)*sizeof(WCHAR));
+	if (!*psPath)
+	    return E_OUTOFMEMORY;
+
+	lstrcpyW(*psPath, abs_path);
+    }
+
+    return S_OK;
+}
+
+/**************************************************************************
+ *	  IShellLink_ConstructFromFile
+ */
+HRESULT WINAPI IShellLink_ConstructFromFile (
+	IUnknown* pUnkOuter,
+	REFIID riid,
+	LPCITEMIDLIST pidl,
+	LPVOID* ppv
+)
+{
+    IShellLinkW* psl;
+
+    HRESULT hr = IShellLink_Constructor(NULL, riid, (LPVOID*)&psl);
+
+    if (SUCCEEDED(hr)) {
+	IPersistFile* ppf;
+
+	*ppv = NULL;
+
+	hr = IShellLinkW_QueryInterface(psl, &IID_IPersistFile, (LPVOID*)&ppf);
+
+	if (SUCCEEDED(hr)) {
+	    WCHAR path[MAX_PATH];
+
+	    if (SHGetPathFromIDListW(pidl, path)) {
+		hr = IPersistFile_Load(ppf, path, 0);
+
+		if (SUCCEEDED(hr)) {
+		    *ppv = (IUnknown*) psl;
+
+		    /*
+			The following code is here, not in IPersistStream_fnLoad() because
+			to be able to convert the relative path into the absolute path,
+			we need to know the path of the shell link file.
+		    */
+		    if (IsEqualIID(riid, &IID_IShellLinkW)) {
+			_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, psl);
+
+			hr = SHELL_ShellLink_UpdatePath(This->sPathRel, path, This->sWorkDir, &This->sPath);
+		    } else {
+			ICOM_THIS(IShellLinkImpl, psl);
+
+			hr = SHELL_ShellLink_UpdatePath(This->sPathRel, path, This->sWorkDir, &This->sPath);
+		    }
+		}
+	    }
+
+	    IPersistFile_Release(ppf);
+	}
+
+	if (!*ppv)
+	    IShellLinkW_Release(psl);
+    }
+
+    return hr;
 }
 
 /**************************************************************************

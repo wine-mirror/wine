@@ -409,6 +409,11 @@ ISF_MyComputer_fnGetUIObjectOf (IShellFolder2 * iface,
 	    hr = S_OK;
 	} else if (IsEqualIID (riid, &IID_IDropTarget) && (cidl >= 1)) {
 	    hr = IShellFolder_QueryInterface (iface, &IID_IDropTarget, (LPVOID *) & pObj);
+	} else if ((IsEqualIID(riid,&IID_IShellLinkW) || IsEqualIID(riid,&IID_IShellLinkA))
+				&& (cidl == 1)) {
+	    pidl = ILCombine (This->pidlRoot, apidl[0]);
+	    hr = IShellLink_ConstructFromFile(NULL, riid, pidl, (LPVOID*)&pObj);
+	    SHFree (pidl);
 	} else {
 	    hr = E_NOINTERFACE;
 	}
