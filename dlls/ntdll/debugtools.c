@@ -303,13 +303,18 @@ static int NTDLL_dbg_vprintf( const char *format, va_list args )
 static int NTDLL_dbg_vlog( unsigned int cls, const char *channel,
                            const char *function, const char *format, va_list args )
 {
-    static const char *classes[] = { "fixme", "err", "warn", "trace" };
+    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
+    struct debug_info *info = get_info();
     int ret = 0;
 
-    if (TRACE_ON(tid))
-        ret = wine_dbg_printf( "%04lx:", NtCurrentTeb()->tid );
-    if (cls < sizeof(classes)/sizeof(classes[0]))
-        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+    /* only print header if we are at the beginning of the line */
+    if (info->out_pos == info->output || info->out_pos[-1] == '\n')
+    {
+        if (TRACE_ON(tid))
+            ret = wine_dbg_printf( "%04lx:", NtCurrentTeb()->tid );
+        if (cls < sizeof(classes)/sizeof(classes[0]))
+            ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, function );
+    }
     if (format)
         ret += NTDLL_dbg_vprintf( format, args );
     return ret;
