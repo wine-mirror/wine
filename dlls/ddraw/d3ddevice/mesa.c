@@ -4204,10 +4204,10 @@ d3ddevice_init_at_startup(void *gl_handle)
     }
     
     /* Then, query all extensions */
-    glXExtensions = glXQueryExtensionsString(display, DefaultScreen(display));
+    glXExtensions = glXQueryExtensionsString(display, DefaultScreen(display)); /* Note: not used right now but will for PBuffers */
     glExtensions = (const char *) glGetString(GL_EXTENSIONS);
     glVersion = (const char *) glGetString(GL_VERSION);
-    if ((glXExtensions != NULL) && (gl_handle != NULL) && (strstr(glXExtensions, "GLX_ARB_get_proc_address"))) {
+    if (gl_handle != NULL) {
 	pglXGetProcAddressARB = wine_dlsym(gl_handle, "glXGetProcAddressARB", NULL, 0);
     }
     
