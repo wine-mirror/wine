@@ -821,7 +821,7 @@ static int fork_and_exec( const char *filename, char *cmdline,
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
     if (!(pid = fork()))  /* child */
     {
-        char **argv = build_argv( cmdline, filename ? 0 : 2 );
+        char **argv = build_argv( cmdline, filename ? 0 : 1 );
         char **envp = build_envp( env, extra_env );
         close( fd[0] );
 
@@ -829,11 +829,7 @@ static int fork_and_exec( const char *filename, char *cmdline,
 
         if (argv && envp)
         {
-            if (!filename)
-            {
-                argv[1] = "--";
-                exec_wine_binary( argv, envp );
-            }
+            if (!filename) exec_wine_binary( argv, envp );
             else execve( filename, argv, envp );
         }
         err = errno;
