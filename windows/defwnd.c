@@ -19,6 +19,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
+#include "wine/server.h"
 #include "imm.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -71,13 +72,23 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
     if (!text) text = "";
     count = MultiByteToWideChar( CP_ACP, 0, text, -1, NULL, 0 );
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return;
-    if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
-    if ((wndPtr->text = textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
-        MultiByteToWideChar( CP_ACP, 0, text, -1, wndPtr->text, count );
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
+    if ((textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
+    {
+        if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
+        wndPtr->text = textW;
+        MultiByteToWideChar( CP_ACP, 0, text, -1, textW, count );
+        SERVER_START_VAR_REQ( set_window_text, (count-1) * sizeof(WCHAR) )
+        {
+            req->handle = hwnd;
+            memcpy( server_data_ptr(req), textW, (count-1) * sizeof(WCHAR) );
+            SERVER_CALL();
+        }
+        SERVER_END_VAR_REQ;
+    }
     else
         ERR("Not enough memory for window text\n");
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, textW );
 }
@@ -99,7 +110,16 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
     if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
-	strcpyW( wndPtr->text, text );
+    {
+        strcpyW( wndPtr->text, text );
+        SERVER_START_VAR_REQ( set_window_text, (count-1) * sizeof(WCHAR) )
+        {
+            req->handle = hwnd;
+            memcpy( server_data_ptr(req), wndPtr->text, (count-1) * sizeof(WCHAR) );
+            SERVER_CALL();
+        }
+        SERVER_END_VAR_REQ;
+    }
     else
         ERR("Not enough memory for window text\n");
     text = wndPtr->text;

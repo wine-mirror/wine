@@ -1456,12 +1456,6 @@ static void dump_get_msg_queue_reply( const struct get_msg_queue_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_inc_queue_paint_count_request( const struct inc_queue_paint_count_request *req )
-{
-    fprintf( stderr, " id=%p,", req->id );
-    fprintf( stderr, " incr=%d", req->incr );
-}
-
 static void dump_set_queue_mask_request( const struct set_queue_mask_request *req )
 {
     fprintf( stderr, " wake_mask=%08x,", req->wake_mask );
@@ -1832,6 +1826,30 @@ static void dump_get_window_rectangles_reply( const struct get_window_rectangles
     dump_rectangle( req, &req->client );
 }
 
+static void dump_get_window_text_request( const struct get_window_text_request *req )
+{
+    fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_get_window_text_reply( const struct get_window_text_request *req )
+{
+    fprintf( stderr, " text=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_set_window_text_request( const struct set_window_text_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " text=" );
+    cur_pos += dump_varargs_unicode_str( req );
+}
+
+static void dump_inc_window_paint_count_request( const struct inc_window_paint_count_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " incr=%d", req->incr );
+}
+
 static void dump_get_windows_offset_request( const struct get_windows_offset_request *req )
 {
     fprintf( stderr, " from=%08x,", req->from );
@@ -1988,7 +2006,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_request,
     (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
-    (dump_func)dump_inc_queue_paint_count_request,
     (dump_func)dump_set_queue_mask_request,
     (dump_func)dump_get_queue_status_request,
     (dump_func)dump_wait_input_idle_request,
@@ -2019,6 +2036,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_tree_request,
     (dump_func)dump_set_window_rectangles_request,
     (dump_func)dump_get_window_rectangles_request,
+    (dump_func)dump_get_window_text_request,
+    (dump_func)dump_set_window_text_request,
+    (dump_func)dump_inc_window_paint_count_request,
     (dump_func)dump_get_windows_offset_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
@@ -2129,7 +2149,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_reply,
     (dump_func)0,
     (dump_func)dump_get_msg_queue_reply,
-    (dump_func)0,
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_wait_input_idle_reply,
@@ -2160,6 +2179,9 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_tree_reply,
     (dump_func)0,
     (dump_func)dump_get_window_rectangles_reply,
+    (dump_func)dump_get_window_text_reply,
+    (dump_func)0,
+    (dump_func)0,
     (dump_func)dump_get_windows_offset_reply,
     (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
@@ -2270,7 +2292,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_atom_name",
     "init_atom_table",
     "get_msg_queue",
-    "inc_queue_paint_count",
     "set_queue_mask",
     "get_queue_status",
     "wait_input_idle",
@@ -2301,6 +2322,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_tree",
     "set_window_rectangles",
     "get_window_rectangles",
+    "get_window_text",
+    "set_window_text",
+    "inc_window_paint_count",
     "get_windows_offset",
     "set_window_property",
     "remove_window_property",

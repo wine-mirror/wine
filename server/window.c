@@ -11,6 +11,7 @@
 #include "thread.h"
 #include "process.h"
 #include "user.h"
+#include "unicode.h"
 
 /* a window property */
 struct property
@@ -47,6 +48,8 @@ struct window
     unsigned int     id;              /* window id */
     void*            instance;        /* creator instance */
     void*            user_data;       /* user-specific data */
+    WCHAR           *text;            /* window caption text */
+    int              paint_count;     /* count of pending paints for this window */
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
@@ -244,10 +247,12 @@ static void destroy_window( struct window *win )
             if (ptr->owner == win) ptr->owner = NULL;
     }
 
-    if (win->thread->queue) queue_cleanup_window( win->thread, win->handle );
+    if (win->paint_count) inc_queue_paint_count( win->thread, -win->paint_count );
+    queue_cleanup_window( win->thread, win->handle );
     free_user_handle( win->handle );
     destroy_properties( win );
     unlink_window( win );
+    if (win->text) free( win->text );
     memset( win, 0x55, sizeof(*win) );
     free( win );
 }
@@ -275,6 +280,8 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->id             = 0;
     win->instance       = NULL;
     win->user_data      = NULL;
+    win->text           = NULL;
+    win->paint_count    = 0;
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
@@ -559,6 +566,57 @@ DECL_HANDLER(get_window_rectangles)
     {
         req->window = win->window_rect;
         req->client = win->client_rect;
+    }
+}
+
+
+/* get the window text */
+DECL_HANDLER(get_window_text)
+{
+    struct window *win = get_window( req->handle );
+    size_t len = 0;
+
+    if (win && win->text)
+    {
+        len = strlenW( win->text ) * sizeof(WCHAR);
+        if (len > get_req_data_size(req)) len = get_req_data_size(req);
+        memcpy( get_req_data(req), win->text, len );
+    }
+    set_req_data_size( req, len );
+}
+
+
+/* set the window text */
+DECL_HANDLER(set_window_text)
+{
+    struct window *win = get_window( req->handle );
+
+    if (win)
+    {
+        WCHAR *text = NULL;
+        size_t len = get_req_data_size(req) / sizeof(WCHAR);
+        if (len)
+        {
+            if (!(text = mem_alloc( (len+1) * sizeof(WCHAR) ))) return;
+            memcpy( text, get_req_data(req), len * sizeof(WCHAR) );
+            text[len] = 0;
+        }
+        if (win->text) free( win->text );
+        win->text = text;
+    }
+}
+
+
+/* increment the window paint count */
+DECL_HANDLER(inc_window_paint_count)
+{
+    struct window *win = get_window( req->handle );
+
+    if (win)
+    {
+        int old = win->paint_count;
+        if ((win->paint_count += req->incr) < 0) win->paint_count = 0;
+        inc_queue_paint_count( win->thread, win->paint_count - old );
     }
 }
 

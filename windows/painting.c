@@ -50,10 +50,10 @@ DECLARE_DEBUG_CHANNEL(nonclient);
  */
 static void add_paint_count( HWND hwnd, int incr )
 {
-    SERVER_START_REQ( inc_queue_paint_count )
+    SERVER_START_REQ( inc_window_paint_count )
     {
-        req->id   = (void *)GetWindowThreadProcessId( hwnd, NULL );
-        req->incr = incr;
+        req->handle = hwnd;
+        req->incr   = incr;
         SERVER_CALL();
     }
     SERVER_END_REQ;

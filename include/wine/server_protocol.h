@@ -1325,15 +1325,6 @@ struct get_msg_queue_request
 
 
 
-struct inc_queue_paint_count_request
-{
-    struct request_header __header;
-    void*           id;
-    int             incr;
-};
-
-
-
 struct set_queue_mask_request
 {
     struct request_header __header;
@@ -1721,6 +1712,33 @@ struct get_window_rectangles_request
 
 
 
+struct get_window_text_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    /* VARARG(text,unicode_str); */
+};
+
+
+
+struct set_window_text_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    /* VARARG(text,unicode_str); */
+};
+
+
+
+struct inc_window_paint_count_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    int             incr;
+};
+
+
+
 struct get_windows_offset_request
 {
     struct request_header __header;
@@ -1875,7 +1893,6 @@ enum request
     REQ_get_atom_name,
     REQ_init_atom_table,
     REQ_get_msg_queue,
-    REQ_inc_queue_paint_count,
     REQ_set_queue_mask,
     REQ_get_queue_status,
     REQ_wait_input_idle,
@@ -1906,6 +1923,9 @@ enum request
     REQ_get_window_tree,
     REQ_set_window_rectangles,
     REQ_get_window_rectangles,
+    REQ_get_window_text,
+    REQ_set_window_text,
+    REQ_inc_window_paint_count,
     REQ_get_windows_offset,
     REQ_set_window_property,
     REQ_remove_window_property,
@@ -2020,7 +2040,6 @@ union generic_request
     struct get_atom_name_request get_atom_name;
     struct init_atom_table_request init_atom_table;
     struct get_msg_queue_request get_msg_queue;
-    struct inc_queue_paint_count_request inc_queue_paint_count;
     struct set_queue_mask_request set_queue_mask;
     struct get_queue_status_request get_queue_status;
     struct wait_input_idle_request wait_input_idle;
@@ -2051,6 +2070,9 @@ union generic_request
     struct get_window_tree_request get_window_tree;
     struct set_window_rectangles_request set_window_rectangles;
     struct get_window_rectangles_request get_window_rectangles;
+    struct get_window_text_request get_window_text;
+    struct set_window_text_request set_window_text;
+    struct inc_window_paint_count_request inc_window_paint_count;
     struct get_windows_offset_request get_windows_offset;
     struct set_window_property_request set_window_property;
     struct remove_window_property_request remove_window_property;
@@ -2058,6 +2080,6 @@ union generic_request
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 63
+#define SERVER_PROTOCOL_VERSION 64
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

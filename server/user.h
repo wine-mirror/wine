@@ -11,6 +11,7 @@
 
 struct thread;
 struct window;
+struct msg_queue;
 
 enum user_object
 {
@@ -28,6 +29,7 @@ extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 
 /* queue functions */
 
+extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 
 /* window functions */

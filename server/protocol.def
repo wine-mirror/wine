@@ -1188,13 +1188,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @END
 
 
-/* Increment the message queue paint count */
-@REQ(inc_queue_paint_count)
-    void*           id;        /* thread id */
-    int             incr;      /* increment (can be negative) */
-@END
-
-
 /* Set the current message queue wakeup mask */
 @REQ(set_queue_mask)
     unsigned int wake_mask;    /* wakeup bits mask */
@@ -1539,6 +1532,28 @@ enum message_type
 @REPLY
     rectangle_t    window;        /* window rectangle */
     rectangle_t    client;        /* client rectangle */
+@END
+
+
+/* Get the window text */
+@REQ(get_window_text)
+    user_handle_t  handle;        /* handle to the window */
+@REPLY
+    VARARG(text,unicode_str);     /* window text */
+@END
+
+
+/* Set the window text */
+@REQ(set_window_text)
+    user_handle_t  handle;        /* handle to the window */
+    VARARG(text,unicode_str);     /* window text */
+@END
+
+
+/* Increment the window paint count */
+@REQ(inc_window_paint_count)
+    user_handle_t  handle;        /* handle to the window */
+    int             incr;         /* increment (can be negative) */
 @END
 
 

@@ -175,7 +175,7 @@ inline static int get_hardware_msg_bit( struct message *msg )
 }
 
 /* get the current thread queue, creating it if needed */
-inline struct msg_queue *get_current_queue(void)
+inline static struct msg_queue *get_current_queue(void)
 {
     struct msg_queue *queue = current->queue;
     if (!queue) queue = create_msg_queue( current );
@@ -598,6 +598,23 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     return timer;
 }
 
+
+/* increment (or decrement if 'incr' is negative) the queue paint count */
+void inc_queue_paint_count( struct thread *thread, int incr )
+{
+    struct msg_queue *queue = thread->queue;
+
+    assert( queue );
+
+    if ((queue->paint_count += incr) < 0) queue->paint_count = 0;
+
+    if (queue->paint_count)
+        set_queue_bits( queue, QS_PAINT );
+    else
+        clear_queue_bits( queue, QS_PAINT );
+}
+
+
 /* remove all messages and timers belonging to a certain window */
 void queue_cleanup_window( struct thread *thread, user_handle_t win )
 {
@@ -641,30 +658,6 @@ DECL_HANDLER(get_msg_queue)
 
     req->handle = 0;
     if (queue) req->handle = alloc_handle( current->process, queue, SYNCHRONIZE, 0 );
-}
-
-
-/* increment the message queue paint count */
-DECL_HANDLER(inc_queue_paint_count)
-{
-    struct msg_queue *queue;
-    struct thread *thread = get_thread_from_id( req->id );
-
-    if (!thread) return;
-
-    if ((queue = thread->queue))
-    {
-        if ((queue->paint_count += req->incr) < 0) queue->paint_count = 0;
-
-        if (queue->paint_count)
-            set_queue_bits( queue, QS_PAINT );
-        else
-            clear_queue_bits( queue, QS_PAINT );
-    }
-    else set_error( STATUS_INVALID_PARAMETER );
-
-    release_object( thread );
-
 }
 
 

@@ -168,7 +168,6 @@ DECL_HANDLER(find_atom);
 DECL_HANDLER(get_atom_name);
 DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
-DECL_HANDLER(inc_queue_paint_count);
 DECL_HANDLER(set_queue_mask);
 DECL_HANDLER(get_queue_status);
 DECL_HANDLER(wait_input_idle);
@@ -199,6 +198,9 @@ DECL_HANDLER(get_window_children);
 DECL_HANDLER(get_window_tree);
 DECL_HANDLER(set_window_rectangles);
 DECL_HANDLER(get_window_rectangles);
+DECL_HANDLER(get_window_text);
+DECL_HANDLER(set_window_text);
+DECL_HANDLER(inc_window_paint_count);
 DECL_HANDLER(get_windows_offset);
 DECL_HANDLER(set_window_property);
 DECL_HANDLER(remove_window_property);
@@ -312,7 +314,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_atom_name,
     (req_handler)req_init_atom_table,
     (req_handler)req_get_msg_queue,
-    (req_handler)req_inc_queue_paint_count,
     (req_handler)req_set_queue_mask,
     (req_handler)req_get_queue_status,
     (req_handler)req_wait_input_idle,
@@ -343,6 +344,9 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_window_tree,
     (req_handler)req_set_window_rectangles,
     (req_handler)req_get_window_rectangles,
+    (req_handler)req_get_window_text,
+    (req_handler)req_set_window_text,
+    (req_handler)req_inc_window_paint_count,
     (req_handler)req_get_windows_offset,
     (req_handler)req_set_window_property,
     (req_handler)req_remove_window_property,

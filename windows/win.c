@@ -187,6 +187,30 @@ static void send_parent_notify( HWND hwnd, UINT msg )
 }
 
 
+/*******************************************************************
+ *		get_server_window_text
+ *
+ * Retrieve the window text from the server.
+ */
+static void get_server_window_text( HWND hwnd, LPWSTR text, INT count )
+{
+    size_t len = (count - 1) * sizeof(WCHAR);
+    len = min( len, REQUEST_MAX_VAR_SIZE );
+    SERVER_START_VAR_REQ( get_window_text, len )
+    {
+        req->handle = hwnd;
+        if (!SERVER_CALL_ERR())
+        {
+            len = server_data_size(req);
+            memcpy( text, server_data_ptr(req), len );
+        }
+        else len = 0;
+    }
+    SERVER_END_VAR_REQ;
+    text[len / sizeof(WCHAR)] = 0;
+}
+
+
 /***********************************************************************
  *           WIN_GetPtr
  *
@@ -2240,20 +2264,41 @@ LONG WINAPI SetWindowLongW(
  */
 INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
 {
-    return (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount,
-                                  (LPARAM)lpString );
+    WCHAR *buffer;
+
+    if (WIN_IsCurrentProcess( hwnd ))
+        return (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+
+    /* when window belongs to other process, don't send a message */
+    if (nMaxCount <= 0) return 0;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, nMaxCount * sizeof(WCHAR) ))) return 0;
+    get_server_window_text( hwnd, buffer, nMaxCount );
+    if (!WideCharToMultiByte( CP_ACP, 0, buffer, -1, lpString, nMaxCount, NULL, NULL ))
+        lpString[nMaxCount-1] = 0;
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return strlen(lpString);
 }
+
 
 /*******************************************************************
  *		InternalGetWindowText (USER32.@)
  */
 INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
 {
-    WND *win = WIN_FindWndPtr( hwnd );
-    if (!win) return 0;
-    if (win->text) lstrcpynW( lpString, win->text, nMaxCount );
-    else lpString[0] = 0;
-    WIN_ReleaseWndPtr( win );
+    WND *win;
+
+    if (nMaxCount <= 0) return 0;
+    if (!(win = WIN_GetPtr( hwnd ))) return 0;
+    if (win != WND_OTHER_PROCESS)
+    {
+        if (win->text) lstrcpynW( lpString, win->text, nMaxCount );
+        else lpString[0] = 0;
+        WIN_ReleasePtr( win );
+    }
+    else
+    {
+        get_server_window_text( hwnd, lpString, nMaxCount );
+    }
     return strlenW(lpString);
 }
 
@@ -2263,8 +2308,13 @@ INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
  */
 INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 {
-    return (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount,
-                                  (LPARAM)lpString );
+    if (WIN_IsCurrentProcess( hwnd ))
+        return (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+
+    /* when window belongs to other process, don't send a message */
+    if (nMaxCount <= 0) return 0;
+    get_server_window_text( hwnd, lpString, nMaxCount );
+    return strlenW(lpString);
 }
 
 
@@ -2274,6 +2324,12 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
  */
 BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {
+    if (!WIN_IsCurrentProcess( hwnd ))
+    {
+        FIXME( "cannot set text %s of other process window %x\n", debugstr_a(lpString), hwnd );
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
     return (BOOL)SendMessageA( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
@@ -2283,6 +2339,12 @@ BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
  */
 BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
 {
+    if (!WIN_IsCurrentProcess( hwnd ))
+    {
+        FIXME( "cannot set text %s of other process window %x\n", debugstr_w(lpString), hwnd );
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
     return (BOOL)SendMessageW( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 

@@ -7,6 +7,8 @@
 #ifndef __WINE_SERVER_UNICODE_H
 #define __WINE_SERVER_UNICODE_H
 
+#include <stdio.h>
+
 #include "windef.h"
 #include "wine/unicode.h"
 #include "object.h"
