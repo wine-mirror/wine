@@ -289,7 +289,7 @@ DWORD WINAPI RegEnumKeyExW( HKEY hkey, DWORD index, LPWSTR name, LPDWORD name_le
 
         if (ft) *ft = *(FILETIME *)&info->LastWriteTime;
 
-        if (len >= *name_len || (class_len && (cls_len >= *class_len)))
+        if (len >= *name_len || (class && class_len && (cls_len >= *class_len)))
             status = STATUS_BUFFER_OVERFLOW;
         else
         {
@@ -352,7 +352,7 @@ DWORD WINAPI RegEnumKeyExA( HKEY hkey, DWORD index, LPSTR name, LPDWORD name_len
                                    info->ClassLength );
         if (ft) *ft = *(FILETIME *)&info->LastWriteTime;
 
-        if (len >= *name_len || (class_len && (cls_len >= *class_len)))
+        if (len >= *name_len || (class && class_len && (cls_len >= *class_len)))
             status = STATUS_BUFFER_OVERFLOW;
         else
         {
