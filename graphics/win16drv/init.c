@@ -146,16 +146,36 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
 };
 
 
-/* FIXME: this no longer works */
-#if 0
 /**********************************************************************
  *	     WIN16DRV_Init
  */
-BOOL WIN16DRV_Init(void)
+const DC_FUNCTIONS *WIN16DRV_Init(void)
 {
-    return DRIVER_RegisterDriver( NULL /* generic driver */, &WIN16DRV_Funcs );
+    static int enabled = -1;
+
+    if (enabled == -1)
+    {
+        char printerEnabled[20];
+        HKEY hkey;
+
+        /* default value */
+        strcpy( printerEnabled, "off" );
+        if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\wine", &hkey))
+        {
+            DWORD type, count = sizeof(printerEnabled);
+            RegQueryValueExA(hkey, "printer", 0, &type, printerEnabled, &count);
+            RegCloseKey(hkey);
+        }
+        enabled = !strcasecmp( printerEnabled, "on" );
+        if (!enabled)
+        {
+            MESSAGE("Printing disabled in wine.conf or .winerc file\n");
+            MESSAGE("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
+        }
+    }
+
+    return enabled ? &WIN16DRV_Funcs : NULL;
 }
-#endif
 
 /* Tempory functions, for initialising structures */
 /* These values should be calculated, not hardcoded */
@@ -203,24 +223,6 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
-    char printerEnabled[20];
-    HKEY hkey;
-
-    /* default value */
-    strcpy(printerEnabled, "off");
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\wine", &hkey))
-    {
-	DWORD type, count = sizeof(printerEnabled);
-	RegQueryValueExA(hkey, "printer", 0, &type, printerEnabled, &count);
-	RegCloseKey(hkey);
-    }
-
-    if (strcasecmp(printerEnabled,"on"))
-    {
-        MESSAGE("Printing disabled in wine.conf or .winerc file\n");
-        MESSAGE("Use \"printer=on\" in the \"[wine]\" section to enable it.\n");
-        return FALSE;
-    }
 
     TRACE("In creatdc for (%s,%s,%s) initData 0x%p\n",
 	  driver, device, output, initData);

@@ -10,6 +10,7 @@
 #include "ntddk.h"
 
 #include "gdi.h"
+#include "win16drv.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver);
@@ -25,6 +26,7 @@ struct graphics_driver
 
 static struct graphics_driver *first_driver;
 static struct graphics_driver *display_driver;
+static const DC_FUNCTIONS *win16_driver;
 
 
 /**********************************************************************
@@ -230,8 +232,9 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
 
     if (!(module = LoadLibraryA( name )))
     {
+        if (!win16_driver) win16_driver = WIN16DRV_Init();
         RtlReleasePebLock();
-        return NULL;
+        return win16_driver;
     }
 
     if (!(driver = create_driver( module )))
@@ -257,10 +260,13 @@ const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
     struct graphics_driver *driver;
 
     RtlAcquirePebLock();
-    for (driver = first_driver; driver; driver = driver->next)
-        if (&driver->funcs == funcs) break;
-    if (!driver) ERR( "driver not found, trouble ahead\n" );
-    driver->count++;
+    if (funcs != win16_driver)
+    {
+        for (driver = first_driver; driver; driver = driver->next)
+            if (&driver->funcs == funcs) break;
+        if (!driver) ERR( "driver not found, trouble ahead\n" );
+        driver->count++;
+    }
     RtlReleasePebLock();
     return funcs;
 }
@@ -276,6 +282,8 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
     struct graphics_driver *driver;
 
     RtlAcquirePebLock();
+
+    if (funcs == win16_driver) goto done;
 
     for (driver = first_driver; driver; driver = driver->next)
         if (&driver->funcs == funcs) break;
