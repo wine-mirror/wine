@@ -72,18 +72,18 @@ BOOL WINECON_RegLoad(struct config_data* cfg)
 
     count = sizeof(val);
     if (!hConKey || RegQueryValueEx(hConKey, wszScreenBufferSize, 0, &type, (char*)&val, &count)) 
-        val = 0x000C0008;
+        val = 0x00190050;
     cfg->sb_height = HIWORD(val);
     cfg->sb_width  = LOWORD(val);
 
     count = sizeof(val);
     if (!hConKey || RegQueryValueEx(hConKey, wszScreenColors, 0, &type, (char*)&val, &count)) 
-        val = 0x0007;
+        val = 0x000F;
     cfg->def_attr = val;
 
     count = sizeof(val);
     if (!hConKey || RegQueryValueEx(hConKey, wszWindowSize, 0, &type, (char*)&val, &count)) 
-        val = 0x000C0008;
+        val = 0x00190050;
     cfg->win_height = HIWORD(val);
     cfg->win_width  = LOWORD(val);
 

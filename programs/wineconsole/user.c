@@ -1030,7 +1030,7 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
 
     WNDCLASS		wndclass;
 
-    data->private = HeapAlloc(GetProcessHeap(), 0, sizeof(struct inner_data_user));
+    data->private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct inner_data_user));
     if (!data->private) return FALSE;
 
     data->fnMainLoop = WCUSER_MainLoop;

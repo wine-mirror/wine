@@ -307,7 +307,7 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->hSynchro)		CloseHandle(data->hSynchro);
     if (data->cells)		HeapFree(GetProcessHeap(), 0, data->cells);
-    data->fnDeleteBackend(data);
+    if (data->fnDeleteBackend)  data->fnDeleteBackend(data);
     HeapFree(GetProcessHeap(), 0, data);
 }
 

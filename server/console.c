@@ -116,7 +116,7 @@ static const struct object_ops screen_buffer_ops =
 
 static struct screen_buffer *screen_buffer_list;
 
-static const char_info_t empty_char_info = { ' ', 0x00f0 };  /* white on black space */
+static const char_info_t empty_char_info = { ' ', 0x000f };  /* white on black space */
 
 /* dumps the renderer events of a console */
 static void console_input_events_dump( struct object *obj, int verbose )
@@ -227,7 +227,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->max_height     = 25;
     screen_buffer->cursor_x       = 0;
     screen_buffer->cursor_y       = 0;
-    screen_buffer->attr           = 0xF0;
+    screen_buffer->attr           = 0x0F;
     screen_buffer->win.left       = 0;
     screen_buffer->win.right      = screen_buffer->max_width - 1;
     screen_buffer->win.top        = 0;

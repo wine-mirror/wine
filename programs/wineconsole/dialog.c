@@ -521,8 +521,8 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	di->hDlg = hDlg;
 	SetWindowLong(hDlg, DWL_USER, (DWORD)di);
 	fill_list_font(di);
-        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0, di->config->def_attr & 0x0F);
-        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, (di->config->def_attr >> 4) & 0x0F);
+        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0, (di->config->def_attr >> 4) & 0x0F);
+        SetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0, di->config->def_attr & 0x0F);
 	break;
     case WM_COMMAND:
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
@@ -559,8 +559,8 @@ static BOOL WINAPI WCUSER_FontDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM
 	    if (val < di->nFont) (di->apply)(di, hDlg, WCUSER_ApplyToFont, val);
 
             (di->apply)(di, hDlg, WCUSER_ApplyToAttribute, 
-                        GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) | 
-                        (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0) << 4));
+                        (GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_BK), 0) << 4) |
+                        GetWindowLong(GetDlgItem(hDlg, IDC_FNT_COLOR_FG), 0));
 
             SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	    return TRUE;
