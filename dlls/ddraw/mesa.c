@@ -135,10 +135,18 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        break;
 
 	    case D3DRENDERSTATE_ZENABLE:          /*  7 */
-	        if (dwRenderState)
+	        /* To investigate : in OpenGL, if we disable the depth test, the Z buffer will NOT be
+		   updated either.. No idea about what happens in D3D.
+		   
+		   Maybe replacing the Z function by ALWAYS would be a better idea. */
+	        if (dwRenderState == D3DZB_TRUE)
 		    glEnable(GL_DEPTH_TEST);
-		else
+		else if (dwRenderState == D3DZB_FALSE)
 		    glDisable(GL_DEPTH_TEST);
+		else {
+		    glEnable(GL_DEPTH_TEST);
+		    WARN(" w-buffering not supported.\n");
+		}
 	        break;
 
 	    case D3DRENDERSTATE_FILLMODE:           /*  8 */

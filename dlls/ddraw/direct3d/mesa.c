@@ -133,7 +133,8 @@ create_device_helper(IDirect3DImpl *This,
     if ((iid == NULL) ||
 	(IsEqualGUID(&IID_D3DDEVICE_OpenGL, iid)) ||
 	(IsEqualGUID(&IID_IDirect3DHALDevice, iid)) ||
-	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid))) {
+	(IsEqualGUID(&IID_IDirect3DTnLHalDevice, iid)) ||
+	(IsEqualGUID(&IID_IDirect3DRefDevice, iid))) {
         switch (interface) {
 	    case 1:
 		*obj = ICOM_INTERFACE(lpd3ddev, IDirect3DDevice);

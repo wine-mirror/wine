@@ -272,12 +272,22 @@ static void fill_device_capabilities(IDirectDrawImpl* ddraw)
 HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context)
 {
     D3DDEVICEDESC d1, d2;
-
+    HRESULT ret_value;
+    
     fill_opengl_caps(&d1);
     d2 = d1;
 
+    TRACE(" enumerating OpenGL D3DDevice interface using reference IID (IID %s).\n", debugstr_guid(&IID_IDirect3DRefDevice));
+    ret_value = cb((LPIID) &IID_IDirect3DRefDevice, "WINE Reference Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
+    if (ret_value != D3DENUMRET_OK)
+        return ret_value;
+
     TRACE(" enumerating OpenGL D3DDevice interface (IID %s).\n", debugstr_guid(&IID_D3DDEVICE_OpenGL));
-    return cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
+    ret_value = cb((LPIID) &IID_D3DDEVICE_OpenGL, "WINE Direct3DX using OpenGL", "direct3d", &d1, &d2, context);
+    if (ret_value != D3DENUMRET_OK)
+        return ret_value;
+    
+    return D3DENUMRET_OK;
 }
 
 HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context)
@@ -479,8 +489,9 @@ d3ddevice_find(IDirect3DImpl *d3d,
     }
     if (lpD3DDFS->dwFlags & D3DFDS_GUID) {
         TRACE(" trying to match guid %s.\n", debugstr_guid(&(lpD3DDFS->guid)));
-	if ((IsEqualGUID( &IID_D3DDEVICE_OpenGL, &(lpD3DDFS->guid)) == 0) &&
-	    (IsEqualGUID(&IID_IDirect3DHALDevice, &(lpD3DDFS->guid)) == 0)) {
+	if ((IsEqualGUID(&IID_D3DDEVICE_OpenGL, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID(&IID_IDirect3DHALDevice, &(lpD3DDFS->guid)) == 0) &&
+	    (IsEqualGUID(&IID_IDirect3DRefDevice, &(lpD3DDFS->guid)) == 0)) {
 	    TRACE(" no match for this GUID.\n");
 	    return DDERR_INVALIDPARAMS;
 	}
