@@ -287,9 +287,58 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
         /* function removes the current property.    */
         next = prop->next;
 
-        TRACE("  Callback: handle=%08x str='%s'\n",
-                      prop->handle, prop->string );
+        /* SDK docu seems to suggest that EnumProps16 does not retrieve
+	 * the string in case of an atom handle, in contrast to Win32 */
+
+        TRACE("  Callback: handle=%08x str=%s\n",
+              prop->handle, debugstr_a(prop->string) );
         ret = func( hwnd, SEGPTR_GET(prop->string), prop->handle );
+        if (!ret) break;
+    }
+    WIN_ReleaseWndPtr(pWnd);
+    return ret;
+}
+
+
+#define MAX_ATOM_LEN              255
+static INT PROPS_EnumPropsA( HWND hwnd, PROPENUMPROCA func, LPARAM lParam, BOOL ex )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT ret = -1;
+    char atomStr[MAX_ATOM_LEN+1];
+    char *pStr;
+
+    TRACE("%04x %08x %08lx%s\n",
+                  hwnd, (UINT)func, lParam, ex ? " [Ex]" : "" );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        if (!HIWORD(prop->string))
+        { /* get "real" string the atom points to.
+	   * This seems to be done for Win32 only */
+            if (!(GlobalGetAtomNameA((ATOM)LOWORD(prop->string), atomStr, MAX_ATOM_LEN+1)))
+            {
+                ERR("huh ? Atom %04x not an atom ??\n",
+                    (ATOM)LOWORD(prop->string));
+                atomStr[0] = '\0';
+            }
+            pStr = atomStr;
+        }
+        else
+            pStr = prop->string;
+
+        TRACE("  Callback: handle=%08x str='%s'\n",
+            prop->handle, prop->string );
+
+        if (ex) /* EnumPropsEx has an additional lParam !! */
+            ret = func( hwnd, pStr, prop->handle, lParam );
+        else
+            ret = func( hwnd, pStr, prop->handle );
         if (!ret) break;
     }
     WIN_ReleaseWndPtr(pWnd);
@@ -302,16 +351,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
  */
 INT WINAPI EnumPropsA( HWND hwnd, PROPENUMPROCA func )
 {
-    return EnumPropsExA( hwnd, (PROPENUMPROCEXA)func, 0 );
-}
-
-
-/***********************************************************************
- *		EnumPropsW (USER32.@)
- */
-INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
-{
-    return EnumPropsExW( hwnd, (PROPENUMPROCEXW)func, 0 );
+    return PROPS_EnumPropsA(hwnd, func, 0, FALSE);
 }
 
 
@@ -320,12 +360,21 @@ INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
  */
 INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
 {
+    return PROPS_EnumPropsA(hwnd, (PROPENUMPROCA)func, lParam, TRUE);
+}
+
+
+static INT PROPS_EnumPropsW( HWND hwnd, PROPENUMPROCW func, LPARAM lParam, BOOL ex )
+{
     PROPERTY *prop, *next;
     WND *pWnd;
     INT ret = -1;
+    char atomStr[MAX_ATOM_LEN+1];
+    char *pStr;
+    LPWSTR strW;
 
-    TRACE("%04x %08x %08lx\n",
-                  hwnd, (UINT)func, lParam );
+    TRACE("%04x %08x %08lx%s\n",
+                  hwnd, (UINT)func, lParam, ex ? " [Ex]" : "" );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -333,9 +382,30 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
         /* function removes the current property.    */
         next = prop->next;
 
+        if (!HIWORD(prop->string))
+        { /* get "real" string the atom points to.
+	   * This seems to be done for Win32 only */
+            if (!(GlobalGetAtomNameA((ATOM)LOWORD(prop->string), atomStr, MAX_ATOM_LEN+1)))
+            {
+                ERR("huh ? Atom %04x not an atom ??\n",
+                    (ATOM)LOWORD(prop->string));
+                atomStr[0] = '\0';
+            }
+            pStr = atomStr;
+        }
+        else
+            pStr = prop->string;
+
         TRACE("  Callback: handle=%08x str='%s'\n",
-                      prop->handle, prop->string );
-        ret = func( hwnd, prop->string, prop->handle, lParam );
+            prop->handle, prop->string );
+
+        strW = HEAP_strdupAtoW( GetProcessHeap(), 0, pStr );
+
+        if (ex) /* EnumPropsEx has an additional lParam !! */
+            ret = func( hwnd, strW, prop->handle, lParam );
+        else
+            ret = func( hwnd, strW, prop->handle );
+        HeapFree( GetProcessHeap(), 0, strW );
         if (!ret) break;
     }
     WIN_ReleaseWndPtr(pWnd);
@@ -344,36 +414,17 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
 
 
 /***********************************************************************
+ *		EnumPropsW (USER32.@)
+ */
+INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
+{
+    return PROPS_EnumPropsW(hwnd, func, 0, FALSE);
+}
+
+/***********************************************************************
  *		EnumPropsExW (USER32.@)
  */
 INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
 {
-    PROPERTY *prop, *next;
-    WND *pWnd;
-    INT ret = -1;
-
-    TRACE("%04x %08x %08lx\n",
-                  hwnd, (UINT)func, lParam );
-    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
-    for (prop = pWnd->pProp; (prop); prop = next)
-    {
-        /* Already get the next in case the callback */
-        /* function removes the current property.    */
-        next = prop->next;
-
-        TRACE("  Callback: handle=%08x str='%s'\n",
-                      prop->handle, prop->string );
-        if (HIWORD(prop->string))
-        {
-            LPWSTR str = HEAP_strdupAtoW( GetProcessHeap(), 0, prop->string );
-            ret = func( hwnd, str, prop->handle, lParam );
-            HeapFree( GetProcessHeap(), 0, str );
-        }
-        else
-            ret = func( hwnd, (LPCWSTR)(UINT)LOWORD( prop->string ),
-                        prop->handle, lParam );
-        if (!ret) break;
-    }
-    WIN_ReleaseWndPtr(pWnd);
-    return ret;
+    return PROPS_EnumPropsW(hwnd, (PROPENUMPROCW)func, 0, TRUE);
 }
