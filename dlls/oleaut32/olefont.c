@@ -1197,8 +1197,9 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   UINT*     puArgErr)
 {
   _ICOM_THIS_From_IDispatch(IFont, iface);
-  FIXME("(%p):Stub\n", this);
-
+  FIXME("%p->(%ld,%s,%lx,%x):Stub\n", this,dispIdMember,debugstr_guid(riid),lcid,
+    wFlags
+  );
   return E_NOTIMPL;
 }
 

@@ -2075,8 +2075,8 @@ HRESULT WINAPI StorageImpl_SetElementTimes(
   const FILETIME  *patime,  /* [in] */ 
   const FILETIME  *pmtime)  /* [in] */ 
 {
-  FIXME("not implemented!\n");
-  return E_NOTIMPL;
+  FIXME("(%s,...), stub!\n",debugstr_w(pwcsName));
+  return S_OK;
 }
 
 /******************************************************************************
@@ -5625,11 +5625,10 @@ HRESULT WINAPI StgOpenStorageOnILockBytes(
  *
  *
  */
-HRESULT WINAPI StgSetTimes(WCHAR * str, FILETIME * a, FILETIME * b, FILETIME *c )
+HRESULT WINAPI StgSetTimes(OLECHAR *str, FILETIME *a, FILETIME *b, FILETIME *c )
 {
- 
-  FIXME("(%p, %p, %p, %p),stub!\n", str, a, b, c);
-  return FALSE;
+  FIXME("(%s, %p, %p, %p),stub!\n", debugstr_w(str), a, b, c);
+  return S_OK;
 }
 
 /******************************************************************************
