@@ -688,9 +688,11 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         if (hFont)
         {
             SIZE charSize;
-            DIALOG_GetCharSize(hFont,&charSize); 
-            xUnit = charSize.cx;
-            yUnit = charSize.cy;
+            if (DIALOG_GetCharSize(hFont,&charSize))
+            {
+                xUnit = charSize.cx;
+                yUnit = charSize.cy;
+            }
         }
 	TRACE("units = %d,%d\n", xUnit, yUnit );
     }
