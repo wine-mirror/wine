@@ -899,6 +899,7 @@ static BOOL MDI_AugmentFrameMenu( MDICLIENTINFO* ci, WND *frame,
  */
 static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
 {
+    MENUITEMINFOA menuInfo;
     INT nItems = GetMenuItemCount(frameWnd->wIDmenu) - 1;
     UINT iId = GetMenuItemID(frameWnd->wIDmenu,nItems) ;
 
@@ -907,8 +908,26 @@ static BOOL MDI_RestoreFrameMenu( WND *frameWnd, HWND hChild )
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0; 
 
-    /* app button */
+    /*
+     * Remove the system menu, If that menu is the icon of the window
+     * as it is in win95, we have to delete the bitmap.
+     */
+    menuInfo.cbSize = sizeof(MENUITEMINFOA);
+    menuInfo.fMask  = MIIM_DATA | MIIM_TYPE;
+
+    GetMenuItemInfoA(frameWnd->wIDmenu, 
+		     0, 
+		     TRUE,
+		     &menuInfo);
+
     RemoveMenu(frameWnd->wIDmenu,0,MF_BYPOSITION);
+
+    if ( (menuInfo.fType & MFT_BITMAP)           &&
+	 (LOWORD(menuInfo.dwTypeData)!=0)        &&
+	 (LOWORD(menuInfo.dwTypeData)!=hBmpClose) )
+    {
+      DeleteObject((HBITMAP)LOWORD(menuInfo.dwTypeData));
+    }
 
     if(TWEAK_WineLook > WIN31_LOOK)
     {
