@@ -1543,7 +1543,7 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 	    if( SCROLL_ShowScrollBar( hwnd, nBar, TRUE, TRUE ) )
 		return retVal; /* SetWindowPos() already did the painting */
 
-	if( bRedraw && (action & SA_SSI_REFRESH))
+	if( bRedraw )
 	    SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
 	else if( action & SA_SSI_REPAINT_ARROWS )
 	    SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, FALSE );
