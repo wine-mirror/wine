@@ -160,9 +160,9 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
         int i = 0;
 
         while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0)) {
-            TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
             i++;
         }
+        TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
         return i;
     } else {
         FIXME("Adapter not primary display\n");
@@ -190,8 +190,12 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
         {
             pMode->Width        = DevModeW.dmPelsWidth;
             pMode->Height       = DevModeW.dmPelsHeight;
+            bpp                 = DevModeW.dmBitsPerPel;
             pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-	    bpp                 = DevModeW.dmBitsPerPel;
+            if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
+            {
+                pMode->RefreshRate = DevModeW.dmDisplayFrequency;
+            }
         }
         else
         {
@@ -229,16 +233,18 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
     }
 
     if (Adapter == 0) { /* Display */
-        HDC hdc;
         int bpp = 0;
+        DEVMODEW DevModeW;
 
-        pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
-        pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
-        pMode->RefreshRate  = 85; /*FIXME: How to identify? */
-
-        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        DeleteDC(hdc);
+        EnumDisplaySettingsExW(NULL, (DWORD)-1, &DevModeW, 0);
+        pMode->Width        = DevModeW.dmPelsWidth;
+        pMode->Height       = DevModeW.dmPelsHeight;
+        bpp                 = DevModeW.dmBitsPerPel;
+        pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+        if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
+        {
+            pMode->RefreshRate = DevModeW.dmDisplayFrequency;
+        }
 
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
@@ -621,7 +627,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
         TRACE("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", pCaps->MaxUserClipPlanes);
 
         glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-        pCaps->MaxActiveLights = min(MAX_ACTIVE_LIGHTS, gl_max);
+        pCaps->MaxActiveLights = gl_max;
         TRACE("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
 
 #if defined(GL_ARB_vertex_blend)
@@ -716,7 +722,7 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     TRACE("ClipPlanes support - num Planes=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-    This->gl_info.max_lights = min(MAX_ACTIVE_LIGHTS, gl_max);
+    This->gl_info.max_lights = gl_max;
     TRACE("Lights support - max lights=%d\n", gl_max);
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
@@ -1151,7 +1157,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     object->proj_valid = 0;
     object->view_ident = 1;
     object->last_was_rhw = 0;
-
+    glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
     TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
     return D3D_OK;
 }

@@ -321,9 +321,31 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
 	object->Changed.texture_state[j][SavedVertexStates_T[i]] = TRUE;
       }
     }
-    for (i = 0; i < GL_LIMITS(lights); i++) {
-      object->Changed.lightEnable[i] = TRUE;
-      object->Changed.lights[i] = TRUE;
+
+    /* Duplicate light chain */
+    {
+        PLIGHTINFOEL *src = NULL;
+        PLIGHTINFOEL *dst = NULL;
+        PLIGHTINFOEL *newEl = NULL;
+
+        src = This->StateBlock->lights;
+        object->lights = NULL;
+        
+        while (src) {
+            newEl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
+            if (newEl == NULL) return D3DERR_OUTOFVIDEOMEMORY;
+            memcpy(newEl, src, sizeof(PLIGHTINFOEL));
+            newEl->prev = dst;
+            newEl->changed = TRUE;
+            newEl->enabledChanged = TRUE;
+            if (dst == NULL) {
+                object->lights = newEl;
+            } else {
+                dst->next = newEl;
+            }
+            dst = newEl;
+            src = src->next;
+        }
     }
     
   } else {
@@ -337,7 +359,16 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
 
 /** yakkk temporary waiting for Release */
 HRESULT WINAPI IDirect3DDeviceImpl_DeleteStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* pSB) {
+  PLIGHTINFOEL *tmp;
+
   TRACE("(%p) : freeing StateBlock %p\n", This, pSB);
+  tmp = pSB->lights;
+  if (tmp) tmp = tmp->next;
+  while (tmp != NULL) {
+      HeapFree(GetProcessHeap(), 0, (void *)(tmp->prev));
+      tmp = tmp->next;
+  }
+  if (tmp) HeapFree(GetProcessHeap(), 0, (void *)tmp);
   HeapFree(GetProcessHeap(), 0, (void *)pSB);
   return D3D_OK;
 }
@@ -397,12 +428,13 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL || pSB->blockType == D3DSBT_VERTEXSTATE) {
 
-        for (i = 0; i < GL_LIMITS(lights); i++) {
-
-            if (pSB->Set.lightEnable[i] && pSB->Changed.lightEnable[i])
-                IDirect3DDevice8Impl_LightEnable(iface, i, pSB->lightEnable[i]);
-            if (pSB->Set.lights[i] && pSB->Changed.lights[i])
-                IDirect3DDevice8Impl_SetLight(iface, i, &pSB->lights[i]);
+        PLIGHTINFOEL *toDo = pSB->lights;
+        while (toDo != NULL) {
+            if (toDo->changed) 
+                  IDirect3DDevice8Impl_SetLight(iface, toDo->OriginalIndex, &toDo->OriginalParms);
+            if (toDo->enabledChanged) 
+                  IDirect3DDevice8Impl_LightEnable(iface, toDo->OriginalIndex, toDo->lightEnabled);
+            toDo = toDo->next;
         }
 
         if (pSB->Set.vertexShader && pSB->Changed.vertexShader)
@@ -514,6 +546,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
 HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This, IDirect3DStateBlockImpl* updateBlock) {
     LPDIRECT3DDEVICE8 iface = (LPDIRECT3DDEVICE8) This;
+    PLIGHTINFOEL     *tmp;
 
     TRACE("(%p) : Updating state block %p ------------------v \n", This, updateBlock);
 
@@ -521,14 +554,18 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
     if (updateBlock->blockType != D3DSBT_RECORDED) {
         IDirect3DStateBlockImpl* tmpBlock;
         IDirect3DDeviceImpl_CreateStateBlock(This, updateBlock->blockType, &tmpBlock);
-        memcpy(updateBlock, tmpBlock, sizeof(IDirect3DStateBlockImpl));
-        IDirect3DDeviceImpl_DeleteStateBlock(This, tmpBlock);
 
-        /* FIXME: This will record states of new lights! May need to have and save set_lights
-           across this action */
+        /* Note just swap the light chains over so when deleting, the old one goes */
+        tmp = updateBlock->lights;
+        memcpy(updateBlock, tmpBlock, sizeof(IDirect3DStateBlockImpl));
+        tmpBlock->lights = tmp;
+
+        /* Delete the temporary one (which points to the old light chain though */
+        IDirect3DDeviceImpl_DeleteStateBlock(This, tmpBlock);
 
     } else {
         int i, j;
+        PLIGHTINFOEL *src;
 
         /* Recorded => Only update 'changed' values */
         if (updateBlock->Set.vertexShader && updateBlock->VertexShader != This->StateBlock->VertexShader) {
@@ -538,23 +575,42 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
 
         /* TODO: Vertex Shader Constants */
 
-        for (i = 0; i < GL_LIMITS(lights); i++) {
-          if (updateBlock->Set.lightEnable[i] && This->StateBlock->lightEnable[i] != updateBlock->lightEnable[i]) {
-              TRACE("Updating light enable for light %d to %d\n", i, This->StateBlock->lightEnable[i]);
-              updateBlock->lightEnable[i] = This->StateBlock->lightEnable[i];
-          }
+        /* Lights... For a recorded state block, we just had a chain of actions to perform,
+             so we need to walk that chain and update any actions which differ */
+        src = updateBlock->lights;
+        while (src != NULL) {
+            PLIGHTINFOEL *realLight = NULL;
+            
+            /* Locate the light in the live lights */
+            realLight = This->StateBlock->lights;
+            while (realLight != NULL && realLight->OriginalIndex != src->OriginalIndex) realLight = realLight->next;
 
-          if (updateBlock->Set.lights[i] && memcmp(&This->StateBlock->lights[i], 
-                                                   &updateBlock->lights[i], 
-                                                   sizeof(D3DLIGHT8)) != 0) {
-              TRACE("Updating lights for light %d\n", i);
-              memcpy(&updateBlock->lights[i], &This->StateBlock->lights[i], sizeof(D3DLIGHT8));
-          }
+            if (realLight == NULL) {
+                FIXME("A captured light no longer exists...?\n");
+            } else {
+
+                /* If 'changed' then its a SetLight command. Rather than comparing to see
+                     if the OriginalParms have changed and then copy them (twice through
+                     memory) just do the copy                                              */
+                if (src->changed) {
+                    TRACE("Updating lights for light %ld\n", src->OriginalIndex);
+                    memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(PLIGHTINFOEL));
+                }
+
+                /* If 'enabledChanged' then its a LightEnable command */
+                if (src->enabledChanged) {
+                    TRACE("Updating lightEnabled for light %ld\n", src->OriginalIndex);
+                    src->lightEnabled = realLight->lightEnabled;
+                }
+
+            }
+
+            src = src->next;
         }
+        
 
         if (updateBlock->Set.pixelShader && updateBlock->PixelShader != This->StateBlock->PixelShader) {
             TRACE("Updating pixel shader to %ld\n", This->StateBlock->PixelShader);
-            updateBlock->lights[i] = This->StateBlock->lights[i];
 	    IDirect3DDevice8Impl_SetVertexShader(iface, updateBlock->PixelShader);
         }
 

@@ -67,7 +67,6 @@ extern int num_lock;
 /* Device caps */
 #define MAX_PALETTES      256
 #define MAX_STREAMS       16
-#define MAX_ACTIVE_LIGHTS 8
 #define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
 
@@ -174,6 +173,27 @@ typedef struct PSHADEROUTPUTDATA8 {
   D3DSHADERVECTOR oDepth;
 } PSHADEROUTPUTDATA8;
 
+/* 
+ * Private definitions for internal use only
+ */
+typedef struct PLIGHTINFOEL PLIGHTINFOEL;
+struct PLIGHTINFOEL {
+    D3DLIGHT8 OriginalParms;
+    DWORD     OriginalIndex;
+    LONG      glIndex;
+    BOOL      lightEnabled;
+    BOOL      changed;
+    BOOL      enabledChanged;
+
+    /* Converted parms to speed up swapping lights */
+    float                         lightPosn[4];
+    float                         lightDirn[4];
+    float                         exponent;
+    float                         cutoff;
+
+    PLIGHTINFOEL *next;
+    PLIGHTINFOEL *prev;
+};
 
 /*
  * Macros
@@ -326,10 +346,6 @@ struct IDirect3DDevice8Impl
     IDirect3DStateBlockImpl      *StateBlock;
     IDirect3DStateBlockImpl      *UpdateStateBlock;
 
-    /* Other required values */
-    float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
-    float                         lightDirn[MAX_ACTIVE_LIGHTS][4];
-
     /* palettes texture management */
     PALETTEENTRY                  palettes[MAX_PALETTES][256];
     UINT                          currentPalette;
@@ -354,6 +370,7 @@ struct IDirect3DDevice8Impl
     Window                        win;
     GLXContext                    render_ctx;
     Drawable                      drawable;
+    GLint                         maxConcurrentLights;
 
     /* OpenGL Extension related */
 
@@ -1015,9 +1032,7 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3D
 /*   Note: Very long winded but I do not believe gl Lists will  */
 /*   resolve everything we need, so doing it manually for now   */
 typedef struct SAVEDSTATES {
-        BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
         BOOL                      Indices;
-        BOOL                      lights[MAX_ACTIVE_LIGHTS];
         BOOL                      material;
         BOOL                      stream_source[MAX_STREAMS];
         BOOL                      textures[8];
@@ -1059,9 +1074,6 @@ struct  IDirect3DStateBlockImpl {
   SAVEDSTATES               Changed;
   SAVEDSTATES               Set;
   
-  /* Light Enable */
-  BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
-  
   /* ClipPlane */
   double                    clipplane[MAX_CLIPPLANES][4];
   
@@ -1081,7 +1093,7 @@ struct  IDirect3DStateBlockImpl {
   DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
   
   /* Lights */
-  D3DLIGHT8                 lights[MAX_ACTIVE_LIGHTS];
+  PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
   
   /* Material */
   D3DMATERIAL8              material;
@@ -1320,5 +1332,14 @@ extern LONG primCounter;
 
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
 #define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%ld, type:%ld)\n", sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType);
+
+#define DUMP_LIGHT_CHAIN()                    \
+{                                             \
+  PLIGHTINFOEL *el = This->StateBlock->lights;\
+  while (el) {                                \
+    TRACE("Light %p (glIndex %ld, d3dIndex %ld, enabled %d)\n", el, el->glIndex, el->OriginalIndex, el->lightEnabled);\
+    el = el->next;                            \
+  }                                           \
+}
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

@@ -144,6 +144,95 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
     TRACE("-----------------------> Updated the texture at stage %ld to have new texture state information\n", Stage);
 }
 
+/* Convert the D3DLIGHT8 properties into equivalent gl lights */
+void setup_light(LPDIRECT3DDEVICE8 iface, LONG Index, PLIGHTINFOEL *lightInfo) {
+
+    float quad_att;
+    float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+    /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
+
+    /* Diffuse: */
+    colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
+    colRGBA[1] = lightInfo->OriginalParms.Diffuse.g;
+    colRGBA[2] = lightInfo->OriginalParms.Diffuse.b;
+    colRGBA[3] = lightInfo->OriginalParms.Diffuse.a;
+    glLightfv(GL_LIGHT0+Index, GL_DIFFUSE, colRGBA);
+    checkGLcall("glLightfv");
+
+    /* Specular */
+    colRGBA[0] = lightInfo->OriginalParms.Specular.r;
+    colRGBA[1] = lightInfo->OriginalParms.Specular.g;
+    colRGBA[2] = lightInfo->OriginalParms.Specular.b;
+    colRGBA[3] = lightInfo->OriginalParms.Specular.a;
+    glLightfv(GL_LIGHT0+Index, GL_SPECULAR, colRGBA);
+    checkGLcall("glLightfv");
+
+    /* Ambient */
+    colRGBA[0] = lightInfo->OriginalParms.Ambient.r;
+    colRGBA[1] = lightInfo->OriginalParms.Ambient.g;
+    colRGBA[2] = lightInfo->OriginalParms.Ambient.b;
+    colRGBA[3] = lightInfo->OriginalParms.Ambient.a;
+    glLightfv(GL_LIGHT0+Index, GL_AMBIENT, colRGBA);
+    checkGLcall("glLightfv");
+
+    /* Attenuation - Are these right? guessing... */
+    glLightf(GL_LIGHT0+Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+    checkGLcall("glLightf");
+    glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+    checkGLcall("glLightf");
+
+    quad_att = 1.4/(lightInfo->OriginalParms.Range*lightInfo->OriginalParms.Range);
+    if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+    glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, quad_att);
+    checkGLcall("glLightf");
+
+    switch (lightInfo->OriginalParms.Type) {
+    case D3DLIGHT_POINT:
+        /* Position */
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
+        checkGLcall("glLightfv");
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+        checkGLcall("glLightf");
+        /* FIXME: Range */
+        break;
+
+    case D3DLIGHT_SPOT:
+        /* Position */
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
+        checkGLcall("glLightfv");
+        /* Direction */
+        glLightfv(GL_LIGHT0+Index, GL_SPOT_DIRECTION, &lightInfo->lightDirn[0]);
+        checkGLcall("glLightfv");
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, lightInfo->exponent);
+        checkGLcall("glLightf");
+        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+        checkGLcall("glLightf");
+        /* FIXME: Range */
+        break;
+
+    case D3DLIGHT_DIRECTIONAL:
+        /* Direction */
+        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]); /* Note gl uses w position of 0 for direction! */
+        checkGLcall("glLightfv");
+        glLightf(GL_LIGHT0+Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+        checkGLcall("glLightf");
+        glLightf(GL_LIGHT0+Index, GL_SPOT_EXPONENT, 0.0f);
+        checkGLcall("glLightf");
+        break;
+
+    default:
+        FIXME("Unrecognized light type %d\n", lightInfo->OriginalParms.Type);
+    }
+
+    /* Restore the modelview matrix */
+    glPopMatrix();
+}
+
 /* Setup this textures matrix */
 static void set_texture_matrix(float *smat, DWORD flags)
 {
@@ -407,7 +496,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
         frames++;
         /* every 1.5 seconds */
         if (time - prev_time > 1500) {
-            TRACE_(fps)("@@@ %.2ffps\n", 1000.0*frames/(time - prev_time));
+            TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
             prev_time = time;
             frames = 0;
         }
@@ -1411,6 +1500,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
         }
 
     } else if (d3dts == D3DTS_VIEW) { /* handle the VIEW matrice */
+
+        PLIGHTINFOEL *lightChain = NULL;
         float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
         This->modelview_valid = FALSE;
         This->view_ident = !memcmp(lpmatrix, identity, 16*sizeof(float));
@@ -1427,11 +1518,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
          */
 
         /* Reset lights */
-        for (k = 0; k < GL_LIMITS(lights); k++) {
-            glLightfv(GL_LIGHT0 + k, GL_POSITION, This->lightPosn[k]);
+        lightChain = This->StateBlock->lights;
+        while (lightChain && lightChain->glIndex != -1) {
+            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_POSITION, lightChain->lightPosn);
             checkGLcall("glLightfv posn");
-            glLightfv(GL_LIGHT0 + k, GL_SPOT_DIRECTION, This->lightDirn[k]);
+            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_SPOT_DIRECTION, lightChain->lightDirn);
             checkGLcall("glLightfv dirn");
+            lightChain = lightChain->next;
         }
         /* Reset Clipping Planes if clipping is enabled */
         for (k = 0; k < GL_LIMITS(clipplanes); k++) {
@@ -1586,19 +1679,84 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetMaterial(LPDIRECT3DDEVICE8 iface, D3DMA
     return D3D_OK;
 }
 
+/* Note lights are real special cases. Although the device caps state only eg. 8 are supported,
+   you can reference any indexes you want as long as that number max are enabled are any
+   one point in time! Therefore since the indexes can be anything, we need a linked list of them.
+   However, this causes stateblock problems. When capturing the state block, I duplicate the list,
+   but when recording, just build a chain pretty much of commands to be replayed.                  */
+   
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD Index, CONST D3DLIGHT8* pLight) {
-    float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
     float rho;
-    float quad_att;
+    PLIGHTINFOEL *object, *temp;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
 
-    if (Index >= GL_LIMITS(lights)) {
-        TRACE("Cannot handle more lights than device supports\n");
-        return D3DERR_INVALIDCALL;
+    /* If recording state block, just add to end of lights chain */
+    if (This->isRecordingState) {
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
+        if (NULL == object) {
+            return D3DERR_OUTOFVIDEOMEMORY;
+        }
+        memcpy(&object->OriginalParms, pLight, sizeof(D3DLIGHT8));
+        object->OriginalIndex = Index;
+        object->glIndex = -1;
+        object->changed = TRUE;
+
+        /* Add to the END of the chain of lights changes to be replayed */
+        if (This->UpdateStateBlock->lights == NULL) {
+            This->UpdateStateBlock->lights = object;
+        } else {
+            temp = This->UpdateStateBlock->lights;
+            while (temp->next != NULL) temp=temp->next;
+            temp->next = object;
+        }
+        TRACE("Recording... not performing anything more\n");
+        return D3D_OK;
     }
 
+    /* Ok, not recording any longer so do real work */
+    object = This->StateBlock->lights;
+    while (object != NULL && object->OriginalIndex != Index) object = object->next;
+
+    /* If we didnt find it in the list of lights, time to add it */
+    if (object == NULL) {
+        PLIGHTINFOEL *insertAt,*prevPos;
+
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
+        if (NULL == object) {
+            return D3DERR_OUTOFVIDEOMEMORY;
+        }
+        object->OriginalIndex = Index;
+        object->glIndex = -1;
+
+        /* Add it to the front of list with the idea that lights will be changed as needed 
+           BUT after any lights currently assigned GL indexes                             */
+        insertAt = This->StateBlock->lights;
+        prevPos  = NULL;
+        while (insertAt != NULL && insertAt->glIndex != -1) {
+            prevPos  = insertAt;
+            insertAt = insertAt->next;
+        }
+
+        if (insertAt == NULL && prevPos == NULL) { /* Start of list */
+            This->StateBlock->lights = object;
+        } else if (insertAt == NULL) { /* End of list */
+            prevPos->next = object;
+            object->prev = prevPos;
+        } else { /* Middle of chain */
+            if (prevPos == NULL) {
+                This->StateBlock->lights = object;
+            } else {
+                prevPos->next = object;
+            }
+            object->prev = prevPos;
+            object->next = insertAt;
+            insertAt->prev = object;
+        }
+    }
+
+    /* Initialze the object */
     TRACE("Light %ld setting to type %d, Diffuse(%f,%f,%f,%f), Specular(%f,%f,%f,%f), Ambient(%f,%f,%f,%f)\n", Index, pLight->Type,
           pLight->Diffuse.r, pLight->Diffuse.g, pLight->Diffuse.b, pLight->Diffuse.a,
           pLight->Specular.r, pLight->Specular.g, pLight->Specular.b, pLight->Specular.a,
@@ -1607,90 +1765,32 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
           pLight->Direction.x, pLight->Direction.y, pLight->Direction.z);
     TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n", pLight->Range, pLight->Falloff, pLight->Theta, pLight->Phi);
 
-    This->UpdateStateBlock->Changed.lights[Index] = TRUE;
-    This->UpdateStateBlock->Set.lights[Index] = TRUE;
-    memcpy(&This->UpdateStateBlock->lights[Index], pLight, sizeof(D3DLIGHT8));
-
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        return D3D_OK;
-    }
-
-    ENTER_GL();
-
-    /* Diffuse: */
-    colRGBA[0] = pLight->Diffuse.r;
-    colRGBA[1] = pLight->Diffuse.g;
-    colRGBA[2] = pLight->Diffuse.b;
-    colRGBA[3] = pLight->Diffuse.a;
-    glLightfv(GL_LIGHT0+Index, GL_DIFFUSE, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Specular */
-    colRGBA[0] = pLight->Specular.r;
-    colRGBA[1] = pLight->Specular.g;
-    colRGBA[2] = pLight->Specular.b;
-    colRGBA[3] = pLight->Specular.a;
-    glLightfv(GL_LIGHT0+Index, GL_SPECULAR, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Ambient */
-    colRGBA[0] = pLight->Ambient.r;
-    colRGBA[1] = pLight->Ambient.g;
-    colRGBA[2] = pLight->Ambient.b;
-    colRGBA[3] = pLight->Ambient.a;
-    glLightfv(GL_LIGHT0+Index, GL_AMBIENT, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
-
-    /* Attenuation - Are these right? guessing... */
-    glLightf(GL_LIGHT0+Index, GL_CONSTANT_ATTENUATION,  pLight->Attenuation0);
-    checkGLcall("glLightf");
-    glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    pLight->Attenuation1);
-    checkGLcall("glLightf");
-
-    quad_att = 1.4/(pLight->Range*pLight->Range);
-    if (quad_att < pLight->Attenuation2) quad_att = pLight->Attenuation2;
-    glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, quad_att);
-    checkGLcall("glLightf");
+    /* Save away the information */
+    memcpy(&object->OriginalParms, pLight, sizeof(D3DLIGHT8));
 
     switch (pLight->Type) {
     case D3DLIGHT_POINT:
         /* Position */
-        This->lightPosn[Index][0] = pLight->Position.x;
-        This->lightPosn[Index][1] = pLight->Position.y;
-        This->lightPosn[Index][2] = pLight->Position.z;
-        This->lightPosn[Index][3] = 1.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]);
-        checkGLcall("glLightfv");
-
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, 180);
-        checkGLcall("glLightf");
-
+        object->lightPosn[0] = pLight->Position.x;
+        object->lightPosn[1] = pLight->Position.y;
+        object->lightPosn[2] = pLight->Position.z;
+        object->lightPosn[3] = 1.0f;
+        object->cutoff = 180.0f;
         /* FIXME: Range */
         break;
 
     case D3DLIGHT_SPOT:
         /* Position */
-        This->lightPosn[Index][0] = pLight->Position.x;
-        This->lightPosn[Index][1] = pLight->Position.y;
-        This->lightPosn[Index][2] = pLight->Position.z;
-        This->lightPosn[Index][3] = 1.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]);
-        checkGLcall("glLightfv");
+        object->lightPosn[0] = pLight->Position.x;
+        object->lightPosn[1] = pLight->Position.y;
+        object->lightPosn[2] = pLight->Position.z;
+        object->lightPosn[3] = 1.0;
 
         /* Direction */
-        This->lightDirn[Index][0] = pLight->Direction.x;
-        This->lightDirn[Index][1] = pLight->Direction.y;
-        This->lightDirn[Index][2] = pLight->Direction.z;
-        This->lightDirn[Index][3] = 1.0;
-        glLightfv(GL_LIGHT0+Index, GL_SPOT_DIRECTION, &This->lightDirn[Index][0]);
-        checkGLcall("glLightfv");
+        object->lightDirn[0] = pLight->Direction.x;
+        object->lightDirn[1] = pLight->Direction.y;
+        object->lightDirn[2] = pLight->Direction.z;
+        object->lightDirn[3] = 1.0;
 
         /*
          * opengl-ish and d3d-ish spot lights use too different models for the
@@ -1705,89 +1805,293 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
             rho = pLight->Theta + (pLight->Phi - pLight->Theta)/(2*pLight->Falloff);
         }
         if (rho < 0.0001) rho = 0.0001f;
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, -0.3/log(cos(rho/2)));
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, pLight->Phi*90/M_PI);
+        object->exponent = -0.3/log(cos(rho/2));
+        object->cutoff = pLight->Phi*90/M_PI;
 
         /* FIXME: Range */
         break;
+
     case D3DLIGHT_DIRECTIONAL:
         /* Direction */
-        This->lightPosn[Index][0] = -pLight->Direction.x;
-        This->lightPosn[Index][1] = -pLight->Direction.y;
-        This->lightPosn[Index][2] = -pLight->Direction.z;
-        This->lightPosn[Index][3] = 0.0;
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &This->lightPosn[Index][0]); /* Note gl uses w position of 0 for direction! */
-        checkGLcall("glLightfv");
-
-        glLightf(GL_LIGHT0+Index, GL_SPOT_CUTOFF, 180.0f);
-        glLightf(GL_LIGHT0+Index, GL_SPOT_EXPONENT, 0.0f);
-
-
+        object->lightPosn[0] = -pLight->Direction.x;
+        object->lightPosn[1] = -pLight->Direction.y;
+        object->lightPosn[2] = -pLight->Direction.z;
+        object->lightPosn[3] = 0.0;
+        object->exponent     = 0.0f;
+        object->cutoff       = 180.0f;
         break;
+
     default:
         FIXME("Unrecognized light type %d\n", pLight->Type);
     }
 
-    /* Restore the modelview matrix */
-    glPopMatrix();
-
-    LEAVE_GL();
+    /* Update the live definitions if the light is currently assigned a glIndex */
+    if (object->glIndex != -1) {
+        setup_light(iface, object->glIndex, object);
+    }
+    DUMP_LIGHT_CHAIN();
 
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD Index,D3DLIGHT8* pLight) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
+    PLIGHTINFOEL *lightInfo = NULL;
+    ICOM_THIS(IDirect3DDevice8Impl,iface); 
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
     
-    if (Index >= GL_LIMITS(lights)) {
-        TRACE("Cannot handle more lights than device supports\n");
+    /* Locate the light in the live lights */
+    lightInfo = This->StateBlock->lights;
+    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+
+    if (lightInfo == NULL) {
+        TRACE("Light information requested but light not defined\n");
         return D3DERR_INVALIDCALL;
     }
 
-    memcpy(pLight, &This->StateBlock->lights[Index], sizeof(D3DLIGHT8));
+    memcpy(pLight, &lightInfo->OriginalParms, sizeof(D3DLIGHT8));
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL Enable) {
+    PLIGHTINFOEL *lightInfo = NULL;
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), enable? %d\n", This, Index, Enable);
 
-    if (Index >= GL_LIMITS(lights)) {
-        TRACE("Cannot handle more lights than device supports\n");
-        return D3DERR_INVALIDCALL;
-    }
-
-    This->UpdateStateBlock->Changed.lightEnable[Index] = TRUE;
-    This->UpdateStateBlock->Set.lightEnable[Index] = TRUE;
-    This->UpdateStateBlock->lightEnable[Index] = Enable;
-
-    /* Handle recording of state blocks */
+    /* If recording state block, just add to end of lights chain with changedEnable set to true */
     if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
+        lightInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
+        if (NULL == lightInfo) {
+            return D3DERR_OUTOFVIDEOMEMORY;
+        }
+        lightInfo->OriginalIndex = Index;
+        lightInfo->glIndex = -1;
+        lightInfo->enabledChanged = TRUE;
+
+        /* Add to the END of the chain of lights changes to be replayed */
+        if (This->UpdateStateBlock->lights == NULL) {
+            This->UpdateStateBlock->lights = lightInfo;
+        } else {
+            PLIGHTINFOEL *temp = This->UpdateStateBlock->lights;
+            while (temp->next != NULL) temp=temp->next;
+            temp->next = lightInfo;
+        }
+        TRACE("Recording... not performing anything more\n");
         return D3D_OK;
     }
-    
-    ENTER_GL();
-    if (Enable) {
-        glEnable(GL_LIGHT0 + Index);
-        checkGLcall("glEnable GL_LIGHT0+Index");
-    } else {
-        glDisable(GL_LIGHT0 + Index);
-        checkGLcall("glDisable GL_LIGHT0+Index");
-    }
-    LEAVE_GL();
 
+    /* Not recording... So, locate the light in the live lights */
+    lightInfo = This->StateBlock->lights;
+    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+
+    /* Special case - enabling an undefined light creates one with a strict set of parms! */
+    if (lightInfo == NULL) {
+        D3DLIGHT8 lightParms;
+        /* Warning - untested code :-) Prob safe to change fixme to a trace but
+             wait until someone confirms it seems to work!                     */
+        FIXME("Light enabled requested but light not defined, so defining one!\n"); 
+        lightParms.Type = D3DLIGHT_DIRECTIONAL;
+        lightParms.Diffuse.r = 1.0;
+        lightParms.Diffuse.g = 1.0;
+        lightParms.Diffuse.b = 1.0;
+        lightParms.Diffuse.a = 0.0;
+        lightParms.Specular.r = 0.0;
+        lightParms.Specular.g = 0.0;
+        lightParms.Specular.b = 0.0;
+        lightParms.Specular.a = 0.0;
+        lightParms.Ambient.r = 0.0;
+        lightParms.Ambient.g = 0.0;
+        lightParms.Ambient.b = 0.0;
+        lightParms.Ambient.a = 0.0;
+        lightParms.Position.x = 0.0;
+        lightParms.Position.y = 0.0;
+        lightParms.Position.z = 0.0;
+        lightParms.Direction.x = 0.0;
+        lightParms.Direction.y = 0.0;
+        lightParms.Direction.z = 1.0;
+        lightParms.Range = 0.0;
+        lightParms.Falloff = 0.0;
+        lightParms.Attenuation0 = 0.0;
+        lightParms.Attenuation1 = 0.0;
+        lightParms.Attenuation2 = 0.0;
+        lightParms.Theta = 0.0;
+        lightParms.Phi = 0.0;
+        IDirect3DDevice8Impl_SetLight(iface, Index, &lightParms);
+
+        /* Search for it again! Should be fairly quick as near head of list */
+        lightInfo = This->StateBlock->lights;
+        while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+        if (lightInfo == NULL) {
+            FIXME("Adding default lights has failed dismally\n");
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
+    /* OK, we now have a light... */
+    if (Enable == FALSE) {
+
+        /* If we are disabling it, check it was enabled, and
+           still only do something if it has assigned a glIndex (which it should have!)   */
+        if ((lightInfo->lightEnabled == TRUE) && (lightInfo->glIndex != -1)) {
+            TRACE("Disabling light set up at gl idx %ld\n", lightInfo->glIndex);
+            ENTER_GL();
+            glDisable(GL_LIGHT0 + lightInfo->glIndex);
+            checkGLcall("glDisable GL_LIGHT0+Index");
+            LEAVE_GL();
+        } else {
+            TRACE("Nothing to do as light was not enabled\n");
+        }
+        lightInfo->lightEnabled = FALSE;
+    } else {
+
+        /* We are enabling it. If it is enabled, its really simple */
+        if (lightInfo->lightEnabled == TRUE) {
+            /* nop */
+            TRACE("Nothing to do as light was enabled\n");
+
+        /* If it already has a glIndex, its still simple */
+        } else if (lightInfo->glIndex != -1) {
+            TRACE("Reusing light as already set up at gl idx %ld\n", lightInfo->glIndex);
+            lightInfo->lightEnabled = TRUE;
+            ENTER_GL();
+            glEnable(GL_LIGHT0 + lightInfo->glIndex);
+            checkGLcall("glEnable GL_LIGHT0+Index already setup");
+            LEAVE_GL();
+
+        /* Otherwise got to find space - lights are ordered gl indexes first */
+        } else {
+            PLIGHTINFOEL *bsf  = NULL;
+            PLIGHTINFOEL *pos  = This->StateBlock->lights;
+            PLIGHTINFOEL *prev = NULL;
+            int           Index= 0;
+            int           glIndex = -1;
+
+            /* Try to minimize changes as much as possible */
+            while (pos != NULL && pos->glIndex != -1 && Index < This->maxConcurrentLights) {
+
+                /* Try to remember which index can be replaced if necessary */
+                if (bsf==NULL && pos->lightEnabled == FALSE) {
+                    /* Found a light we can replace, save as best replacement */
+                    bsf = pos;
+                }
+
+                /* Step to next space */
+                prev = pos;
+                pos = pos->next;
+                Index ++;
+            }
+
+            /* If we have too many active lights, fail the call */
+            if ((Index == This->maxConcurrentLights) && (bsf == NULL)) {
+                FIXME("Program requests too many concurrent lights\n");
+                return D3DERR_INVALIDCALL;
+
+            /* If we have allocated all lights, but not all are enabled,
+               reuse one which is not enabled                           */
+            } else if (Index == This->maxConcurrentLights) {
+                /* use bsf - Simply swap the new light and the BSF one */
+                PLIGHTINFOEL *bsfNext = bsf->next;
+                PLIGHTINFOEL *bsfPrev = bsf->prev;
+
+                /* Sort out ends */
+                if (lightInfo->next != NULL) lightInfo->next->prev = bsf;
+                if (bsf->prev != NULL) {
+                    bsf->prev->next = lightInfo;
+                } else {
+                    This->StateBlock->lights = lightInfo;
+                }
+
+                /* If not side by side, lots of chains to update */
+                if (bsf->next != lightInfo) {
+                    lightInfo->prev->next = bsf;
+                    bsf->next->prev = lightInfo;
+                    bsf->next       = lightInfo->next;
+                    bsf->prev       = lightInfo->prev;
+                    lightInfo->next = bsfNext;
+                    lightInfo->prev = bsfPrev;
+
+                } else {
+                    /* Simple swaps */
+                    bsf->prev = lightInfo;
+                    bsf->next = lightInfo->next;
+                    lightInfo->next = bsf;
+                    lightInfo->prev = bsfPrev;
+                }
+
+
+                /* Update states */
+                glIndex = bsf->glIndex;
+                bsf->glIndex = -1;
+                lightInfo->glIndex = glIndex;
+                lightInfo->lightEnabled = TRUE;
+
+                /* Finally set up the light in gl itself */
+                TRACE("Replacing light which was set up at gl idx %ld\n", lightInfo->glIndex);
+                ENTER_GL();
+                setup_light(iface, glIndex, lightInfo);
+                glEnable(GL_LIGHT0 + glIndex);
+                checkGLcall("glEnable GL_LIGHT0 new setup");
+                LEAVE_GL();
+
+            /* If we reached the end of the allocated lights, with space in the
+               gl lights, setup a new light                                     */
+            } else if (pos->glIndex == -1) {
+
+                /* We reached the end of the allocated gl lights, so already 
+                    know the index of the next one!                          */
+                glIndex = Index;
+                lightInfo->glIndex = glIndex;
+                lightInfo->lightEnabled = TRUE;
+
+                /* In an ideal world, its already in the right place */
+                if (lightInfo->prev == NULL || lightInfo->prev->glIndex!=-1) {
+                   /* No need to move it */
+                } else {
+                    /* Remove this light from the list */
+                    lightInfo->prev->next = lightInfo->next;
+                    if (lightInfo->next != NULL) {
+                        lightInfo->next->prev = lightInfo->prev;
+                    }
+
+                    /* Add in at appropriate place (inbetween prev and pos) */
+                    lightInfo->prev = prev;
+                    lightInfo->next = pos;
+                    if (prev == NULL) {
+                        This->StateBlock->lights = lightInfo;
+                    } else {
+                        prev->next = lightInfo;
+                    }
+                    if (pos != NULL) {
+                        pos->prev = lightInfo;
+                    }
+                }
+
+                /* Finally set up the light in gl itself */
+                TRACE("Defining new light at gl idx %ld\n", lightInfo->glIndex);
+                ENTER_GL();
+                setup_light(iface, glIndex, lightInfo);
+                glEnable(GL_LIGHT0 + glIndex);
+                checkGLcall("glEnable GL_LIGHT0 new setup");
+                LEAVE_GL();
+                
+            }
+        }
+    }
+    DUMP_LIGHT_CHAIN();
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DWORD Index,BOOL* pEnable) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    TRACE("(%p) : for idx(%ld)\n", This, Index);
 
-    if (Index >= GL_LIMITS(lights)) {
-        TRACE("Cannot handle more lights than device supports\n");
+    PLIGHTINFOEL *lightInfo = NULL;
+    ICOM_THIS(IDirect3DDevice8Impl,iface); 
+    TRACE("(%p) : for idx(%ld)\n", This, Index);
+    
+    /* Locate the light in the live lights */
+    lightInfo = This->StateBlock->lights;
+    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+
+    if (lightInfo == NULL) {
+        TRACE("Light enabled state requested but light not defined\n");
         return D3DERR_INVALIDCALL;
     }
-
-    *pEnable = This->StateBlock->lightEnable[Index];
+    *pEnable = lightInfo->lightEnabled;
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWORD Index,CONST float* pPlane) {
