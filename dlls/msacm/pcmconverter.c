@@ -56,6 +56,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
  */
 static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
 {
+    TRACE("(%p, %p)\n", str, adod);
+
     return (adod == NULL) ||
 	(adod->fccType == ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC &&
 	 adod->fccComp == ACMDRIVERDETAILS_FCCCOMP_UNDEFINED);
@@ -66,6 +68,8 @@ static	DWORD	PCM_drvOpen(LPCSTR str, PACMDRVOPENDESCW adod)
  */
 static	DWORD	PCM_drvClose(DWORD dwDevID)
 {
+    TRACE("(%ld)\n", dwDevID);
+
     return 1;
 }
 
@@ -117,6 +121,7 @@ static	struct {
 static DWORD PCM_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
     int i;
+    TRACE("(%p)\n", wfx);
 
     for (i = 0; i < NUM_PCM_FORMATS; i++) {
 	if (wfx->nChannels == PCM_Formats[i].nChannels &&
@@ -219,26 +224,32 @@ static inline unsigned char M8(unsigned char a, unsigned char b)
 
 static	void cvtMM88K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
     memcpy(dst, src, ns);
 }
 
 static	void cvtSS88K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
     memcpy(dst, src, ns * 2);
 }
 
 static	void cvtMM1616K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
     memcpy(dst, src, ns * 2);
 }
 
 static	void cvtSS1616K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
     memcpy(dst, src, ns * 4);
 }
 
 static	void cvtMS88K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	*dst++ = *src;
 	*dst++ = *src++;
@@ -248,6 +259,7 @@ static	void cvtMS88K(const unsigned char* src, int ns, unsigned char* dst)
 static	void cvtMS816K(const unsigned char* src, int ns, unsigned char* dst)
 {
     short	v;
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
 
     while (ns--) {
 	v = C816(*src++);
@@ -259,6 +271,7 @@ static	void cvtMS816K(const unsigned char* src, int ns, unsigned char* dst)
 static	void cvtMS168K(const unsigned char* src, int ns, unsigned char* dst)
 {
     unsigned char v;
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
 
     while (ns--) {
 	v = C168(R16(src));		src += 2;
@@ -270,6 +283,7 @@ static	void cvtMS168K(const unsigned char* src, int ns, unsigned char* dst)
 static	void cvtMS1616K(const unsigned char* src, int ns, unsigned char* dst)
 {
     short	v;
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
 
     while (ns--) {
 	v = R16(src);		src += 2;
@@ -280,6 +294,8 @@ static	void cvtMS1616K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtSM88K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	*dst++ = M8(src[0], src[1]);
 	src += 2;
@@ -289,6 +305,7 @@ static	void cvtSM88K(const unsigned char* src, int ns, unsigned char* dst)
 static	void cvtSM816K(const unsigned char* src, int ns, unsigned char* dst)
 {
     short	v;
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
 
     while (ns--) {
 	v = M16(C816(src[0]), C816(src[1]));
@@ -299,6 +316,8 @@ static	void cvtSM816K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtSM168K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	*dst++ = C168(M16(R16(src), R16(src + 2)));
 	src += 4;
@@ -307,6 +326,8 @@ static	void cvtSM168K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtSM1616K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	W16(dst, M16(R16(src),R16(src+2)));	dst += 2;
 	src += 4;
@@ -315,6 +336,8 @@ static	void cvtSM1616K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtMM816K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	W16(dst, C816(*src++));		dst += 2;
     }
@@ -322,6 +345,8 @@ static	void cvtMM816K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtSS816K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	W16(dst, C816(*src++));	dst += 2;
 	W16(dst, C816(*src++));	dst += 2;
@@ -330,6 +355,8 @@ static	void cvtSS816K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtMM168K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	*dst++ = C168(R16(src));	src += 2;
     }
@@ -337,6 +364,8 @@ static	void cvtMM168K(const unsigned char* src, int ns, unsigned char* dst)
 
 static	void cvtSS168K(const unsigned char* src, int ns, unsigned char* dst)
 {
+    TRACE("(%p, %d, %p)\n", src, ns, dst);
+
     while (ns--) {
 	*dst++ = C168(R16(src));	src += 2;
 	*dst++ = C168(R16(src));	src += 2;
@@ -366,6 +395,7 @@ static	void cvtSS88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 		      unsigned char* dst, LPDWORD ndst)
 {
     double     		r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -395,6 +425,7 @@ static	void cvtSM88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 		      unsigned char* dst, LPDWORD ndst)
 {
     double   	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -405,7 +436,10 @@ static	void cvtSM88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	*dst++ = I(M8(apd->last[0].b, apd->last[1].b), M8(src[0], src[1]), r);
+        if (*nsrc)	/* don't go off end of data */
+            *dst++ = I(M8(apd->last[0].b, apd->last[1].b), M8(src[0], src[1]), r);
+        else
+            *dst++ = M8(apd->last[0].b, apd->last[1].b);
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -415,6 +449,7 @@ static	void cvtMS88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 		      unsigned char* dst, LPDWORD ndst)
 {
     double	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -424,7 +459,10 @@ static	void cvtMS88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	dst[0] = dst[1] = I(apd->last[0].b, src[0], r);
+        if (*nsrc)	/* don't go off end of data */
+            dst[0] = dst[1] = I(apd->last[0].b, src[0], r);
+        else
+            dst[0] = dst[1] = apd->last[0].b;
 	dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
@@ -435,6 +473,7 @@ static	void cvtMM88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 		      unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -444,7 +483,10 @@ static	void cvtMM88C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	*dst++ = I(apd->last[0].b, src[0], r);
+        if (*nsrc)	/* don't go off end of data */
+            *dst++ = I(apd->last[0].b, src[0], r);
+        else
+            *dst++ = apd->last[0].b;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -454,6 +496,7 @@ static	void cvtSS816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 		       unsigned char* dst, LPDWORD ndst)
 {
     double	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -464,8 +507,16 @@ static	void cvtSS816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	W16(dst, I(C816(apd->last[0].b), C816(src[0]), r));	dst += 2;
-	W16(dst, I(C816(apd->last[1].b), C816(src[1]), r));	dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+            W16(dst, I(C816(apd->last[0].b), C816(src[0]), r));
+        else
+            W16(dst, C816(apd->last[0].b));
+        dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+	    W16(dst, I(C816(apd->last[1].b), C816(src[1]), r));
+        else
+	    W16(dst, C816(apd->last[1].b));
+        dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -475,6 +526,7 @@ static	void cvtSM816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -485,8 +537,11 @@ static	void cvtSM816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	W16(dst, I(M16(C816(apd->last[0].b), C816(apd->last[1].b)),
-		    M16(C816(src[0]), C816(src[1])), r));
+        if (*nsrc)	/* don't go off end of data */
+            W16(dst, I(M16(C816(apd->last[0].b), C816(apd->last[1].b)),
+                       M16(C816(src[0]), C816(src[1])), r));
+        else
+            W16(dst, M16(C816(apd->last[0].b), C816(apd->last[1].b)));
 	dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
@@ -498,6 +553,7 @@ static	void cvtMS816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 {
     double     	r;
     short	v;
+    TRACE("(%p, %p, %p->(%ld), %p, %p->(%ld))\n", apd, src, nsrc, *nsrc, dst, ndst, *ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -507,7 +563,10 @@ static	void cvtMS816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	v = I(C816(apd->last[0].b), C816(src[0]), r);
+        if (*nsrc)	/* don't go off end of data */
+	    v = I(C816(apd->last[0].b), C816(src[0]), r);
+        else
+            v = C816(apd->last[0].b);
 	W16(dst, v);		dst += 2;
 	W16(dst, v);		dst += 2;
 	apd->dstPos += apd->dstIncr;
@@ -519,6 +578,7 @@ static	void cvtMM816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -528,7 +588,10 @@ static	void cvtMM816C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	W16(dst, I(C816(apd->last[0].b), C816(src[0]), r));
+        if (*nsrc)	/* don't go off end of data */
+	    W16(dst, I(C816(apd->last[0].b), C816(src[0]), r));
+        else
+            W16(dst, C816(apd->last[0].b));
 	dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
@@ -539,6 +602,7 @@ static	void cvtSS168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -549,8 +613,13 @@ static	void cvtSS168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	*dst++ = C168(I(apd->last[0].s, R16(src)  , r));
-	*dst++ = C168(I(apd->last[1].s, R16(src+2), r));
+        if (*nsrc) {	/* don't go off end of data */
+	    *dst++ = C168(I(apd->last[0].s, R16(src)  , r));
+	    *dst++ = C168(I(apd->last[1].s, R16(src+2), r));
+        } else {
+	    *dst++ = C168(apd->last[0].s);
+	    *dst++ = C168(apd->last[1].s);
+        }
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -560,6 +629,7 @@ static	void cvtSM168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -570,8 +640,11 @@ static	void cvtSM168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	*dst++ = C168(I(M16(apd->last[0].s, apd->last[1].s),
-			M16(R16(src), R16(src + 2)), r));
+        if (*nsrc)	/* don't go off end of data */
+	    *dst++ = C168(I(M16(apd->last[0].s, apd->last[1].s),
+			    M16(R16(src), R16(src + 2)), r));
+        else
+	    *dst++ = C168(M16(apd->last[0].s, apd->last[1].s));
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -582,6 +655,7 @@ static	void cvtMS168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -591,7 +665,11 @@ static	void cvtMS168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	dst[0] = dst[1] = C168(I(apd->last[0].s, R16(src), r));	dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+	    dst[0] = dst[1] = C168(I(apd->last[0].s, R16(src), r));
+        else
+	    dst[0] = dst[1] = C168(apd->last[0].s);
+        dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -602,6 +680,7 @@ static	void cvtMM168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -611,7 +690,10 @@ static	void cvtMM168C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	*dst++ = C168(I(apd->last[0].s, R16(src), r));
+        if (*nsrc)	/* don't go off end of data */
+	    *dst++ = C168(I(apd->last[0].s, R16(src), r));
+        else
+	    *dst++ = C168(apd->last[0].s);
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -621,6 +703,7 @@ static	void cvtSS1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -631,8 +714,16 @@ static	void cvtSS1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	W16(dst, I(apd->last[0].s, R16(src)  , r));	dst += 2;
-	W16(dst, I(apd->last[1].s, R16(src+2), r));	dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+	    W16(dst, I(apd->last[0].s, R16(src), r));
+        else
+	    W16(dst, apd->last[0].s);
+        dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+	    W16(dst, I(apd->last[1].s, R16(src+2), r));
+        else
+	    W16(dst, apd->last[1].s);
+        dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -642,6 +733,7 @@ static	void cvtSM1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -652,8 +744,11 @@ static	void cvtSM1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
- 	W16(dst, I(M16(apd->last[0].s, apd->last[1].s),
- 		   M16(R16(src), R16(src+2)), r));
+        if (*nsrc)	/* don't go off end of data */
+            W16(dst, I(M16(apd->last[0].s, apd->last[1].s),
+ 		       M16(R16(src), R16(src+2)), r));
+        else
+            W16(dst, M16(apd->last[0].s, apd->last[1].s));
  	dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
@@ -665,6 +760,7 @@ static	void cvtMS1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 {
     double     	r;
     short	v;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -674,7 +770,10 @@ static	void cvtMS1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	v = I(apd->last[0].s, R16(src), r);
+        if (*nsrc)	/* don't go off end of data */
+	    v = I(apd->last[0].s, R16(src), r);
+        else
+	    v = apd->last[0].s;
 	W16(dst, v);		dst += 2;
 	W16(dst, v);		dst += 2;
 	apd->dstPos += apd->dstIncr;
@@ -686,6 +785,7 @@ static	void cvtMM1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 			unsigned char* dst, LPDWORD ndst)
 {
     double     	r;
+    TRACE("(%p, %p, %p, %p, %p)\n", apd, src, nsrc, dst, ndst);
 
     while (*nsrc != 0 && *ndst != 0) {
 	while ((r = (double)apd->srcPos - apd->dstPos) <= 0) {
@@ -695,7 +795,11 @@ static	void cvtMM1616C(AcmPcmData* apd, const unsigned char* src, LPDWORD nsrc,
 	    (*nsrc)--;
 	}
 	/* now do the interpolation */
-	W16(dst, I(apd->last[0].s, R16(src), r));	dst += 2;
+        if (*nsrc)	/* don't go off end of data */
+	    W16(dst, I(apd->last[0].s, R16(src), r));
+        else
+	    W16(dst, apd->last[0].s);
+        dst += 2;
 	apd->dstPos += apd->dstIncr;
 	(*ndst)--;
     }
@@ -716,6 +820,8 @@ static	void (*PCM_ConvertChangeRate[16])(AcmPcmData* apd,
  */
 static	LRESULT PCM_DriverDetails(PACMDRIVERDETAILSW add)
 {
+    TRACE("(%p)\n", add);
+
     add->fccType = ACMDRIVERDETAILS_FCCTYPE_AUDIOCODEC;
     add->fccComp = ACMDRIVERDETAILS_FCCCOMP_UNDEFINED;
     add->wMid = 0xFF;
@@ -745,17 +851,27 @@ static	LRESULT PCM_DriverDetails(PACMDRIVERDETAILSW add)
  */
 static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
 {
+    TRACE("(%p, %08lx)\n", aftd, dwQuery);
+
     switch (dwQuery) {
     case ACM_FORMATTAGDETAILSF_INDEX:
-	if (aftd->dwFormatTagIndex != 0) return ACMERR_NOTPOSSIBLE;
+	if (aftd->dwFormatTagIndex != 0) {
+            WARN("not possible\n");
+            return ACMERR_NOTPOSSIBLE;
+        }
 	break;
     case ACM_FORMATTAGDETAILSF_FORMATTAG:
-	if (aftd->dwFormatTag != WAVE_FORMAT_PCM) return ACMERR_NOTPOSSIBLE;
+	if (aftd->dwFormatTag != WAVE_FORMAT_PCM) {
+            WARN("not possible\n");
+            return ACMERR_NOTPOSSIBLE;
+        }
 	break;
     case ACM_FORMATTAGDETAILSF_LARGESTSIZE:
 	if (aftd->dwFormatTag != WAVE_FORMAT_UNKNOWN &&
-	    aftd->dwFormatTag != WAVE_FORMAT_PCM)
+	    aftd->dwFormatTag != WAVE_FORMAT_PCM) {
+            WARN("not possible\n");
 	    return ACMERR_NOTPOSSIBLE;
+        }
 	break;
     default:
 	WARN("Unsupported query %08lx\n", dwQuery);
@@ -778,9 +894,14 @@ static	LRESULT	PCM_FormatTagDetails(PACMFORMATTAGDETAILSW aftd, DWORD dwQuery)
  */
 static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
 {
+    TRACE("(%p, %08lx)\n", afd, dwQuery);
+
     switch (dwQuery) {
     case ACM_FORMATDETAILSF_FORMAT:
-	if (PCM_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+	if (PCM_GetFormatIndex(afd->pwfx) == 0xFFFFFFFF) {
+            return ACMERR_NOTPOSSIBLE;
+            WARN("not possible\n");
+        }
 	break;
     case ACM_FORMATDETAILSF_INDEX:
 	assert(afd->dwFormatIndex < NUM_PCM_FORMATS);
@@ -815,10 +936,15 @@ static	LRESULT	PCM_FormatDetails(PACMFORMATDETAILSW afd, DWORD dwQuery)
  */
 static	LRESULT	PCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
 {
+    TRACE("(%p)\n", adfs);
+
     /* some tests ... */
     if (adfs->cbwfxSrc < sizeof(PCMWAVEFORMAT) ||
 	adfs->cbwfxDst < sizeof(PCMWAVEFORMAT) ||
-	PCM_GetFormatIndex(adfs->pwfxSrc) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+	PCM_GetFormatIndex(adfs->pwfxSrc) == 0xFFFFFFFF) {
+            WARN("not possible\n");
+            return ACMERR_NOTPOSSIBLE;
+       }
 
     /* is no suggestion for destination, then copy source value */
     if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_NCHANNELS)) {
@@ -831,11 +957,17 @@ static	LRESULT	PCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
 	adfs->pwfxDst->wBitsPerSample = adfs->pwfxSrc->wBitsPerSample;
     }
     if (!(adfs->fdwSuggest & ACM_FORMATSUGGESTF_WFORMATTAG)) {
-	if (adfs->pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) return ACMERR_NOTPOSSIBLE;
+	if (adfs->pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) {
+            WARN("not possible\n");
+            return ACMERR_NOTPOSSIBLE;
+       }
 	adfs->pwfxDst->wFormatTag = adfs->pwfxSrc->wFormatTag;
     }
     /* check if result is ok */
-    if (PCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) return ACMERR_NOTPOSSIBLE;
+    if (PCM_GetFormatIndex(adfs->pwfxDst) == 0xFFFFFFFF) {
+        WARN("not possible\n");
+        return ACMERR_NOTPOSSIBLE;
+    }
 
     /* recompute other values */
     adfs->pwfxDst->nBlockAlign = (adfs->pwfxDst->nChannels * adfs->pwfxDst->wBitsPerSample) / 8;
@@ -850,6 +982,8 @@ static	LRESULT	PCM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
  */
 static	void	PCM_Reset(AcmPcmData* apd, int srcNumBits)
 {
+    TRACE("(%p, %d)\n", apd, srcNumBits);
+
     apd->srcPos = 0;
     apd->dstPos = 0;
     /* initialize with neutral value */
@@ -871,14 +1005,21 @@ static	LRESULT	PCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
     AcmPcmData*	apd;
     int		idx = 0;
 
+    TRACE("(%p)\n", adsi);
+
     assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
 
     if (PCM_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
-	PCM_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
+	PCM_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF) {
+        WARN("not possible\n");
 	return ACMERR_NOTPOSSIBLE;
+    }
 
     apd = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmPcmData));
-    if (apd == 0) return MMSYSERR_NOMEM;
+    if (apd == 0) {
+        WARN("no memory\n");
+        return MMSYSERR_NOMEM;
+    }
 
     adsi->dwDriver = (DWORD)apd;
     adsi->fdwDriver = 0;
@@ -907,6 +1048,8 @@ static	LRESULT	PCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
  */
 static	LRESULT	PCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
 {
+    TRACE("(%p)\n", adsi);
+
     HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
     return MMSYSERR_NOERROR;
 }
@@ -930,6 +1073,8 @@ static	LRESULT PCM_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss
 {
     DWORD	srcMask = ~(adsi->pwfxSrc->nBlockAlign - 1);
     DWORD	dstMask = ~(adsi->pwfxDst->nBlockAlign - 1);
+
+    TRACE("(%p, %p)\n", adsi, adss);
 
     switch (adss->fdwSize) {
     case ACM_STREAMSIZEF_DESTINATION:
@@ -960,6 +1105,17 @@ static LRESULT PCM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER
     AcmPcmData*	apd = (AcmPcmData*)adsi->dwDriver;
     DWORD	nsrc = NUM_OF(adsh->cbSrcLength, adsi->pwfxSrc->nBlockAlign);
     DWORD	ndst = NUM_OF(adsh->cbDstLength, adsi->pwfxDst->nBlockAlign);
+
+    TRACE("(%p, %p)\n", adsi, adsh);
+
+    TRACE("nsrc=%ld,adsh->cbSrcLength=%ld\n", nsrc, adsh->cbSrcLength);
+    TRACE("ndst=%ld,adsh->cbDstLength=%ld\n", ndst, adsh->cbDstLength);
+    TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+          adsi->pwfxSrc->wFormatTag, adsi->pwfxSrc->nChannels, adsi->pwfxSrc->nSamplesPerSec, adsi->pwfxSrc->nAvgBytesPerSec,
+          adsi->pwfxSrc->nBlockAlign, adsi->pwfxSrc->wBitsPerSample, adsi->pwfxSrc->cbSize);
+    TRACE("dst [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
+          adsi->pwfxDst->wFormatTag, adsi->pwfxDst->nChannels, adsi->pwfxDst->nSamplesPerSec, adsi->pwfxDst->nAvgBytesPerSec,
+          adsi->pwfxDst->nBlockAlign, adsi->pwfxDst->wBitsPerSample, adsi->pwfxDst->cbSize);
 
     if (adsh->fdwConvert &
 	~(ACM_STREAMCONVERTF_BLOCKALIGN|

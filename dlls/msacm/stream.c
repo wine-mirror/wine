@@ -44,6 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
 static PWINE_ACMSTREAM	ACM_GetStream(HACMSTREAM has)
 {
+    TRACE("(%p)\n", has);
+
     return (PWINE_ACMSTREAM)has;
 }
 
@@ -58,6 +60,7 @@ MMRESULT WINAPI acmStreamClose(HACMSTREAM has, DWORD fdwClose)
     TRACE("(%p, %ld)\n", has, fdwClose);
 
     if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
     }
     ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_CLOSE, (DWORD)&was->drvInst, 0);
@@ -82,13 +85,18 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 
     TRACE("(%p, %p, %ld)\n", has, pash, fdwConvert);
 
-    if ((was = ACM_GetStream(has)) == NULL)
+    if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
-    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
+    }
+    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
-
-    if (!(pash->fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED))
+    }
+    if (!(pash->fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED)) {
+        WARN("unprepared header\n");
 	return ACMERR_UNPREPARED;
+    }
 
     /* Note: the ACMSTREAMHEADER and ACMDRVSTREAMHEADER structs are of same
      * size. some fields are private to msacm internals, and are exposed
@@ -101,6 +109,7 @@ MMRESULT WINAPI acmStreamConvert(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->cbPreparedSrcLength < padsh->cbSrcLength ||
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
     }
 
@@ -137,9 +146,26 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     MMRESULT		ret;
     int			wfxSrcSize;
     int			wfxDstSize;
+    WAVEFORMATEX	wfxSrc, wfxDst;
 
     TRACE("(%p, %p, %p, %p, %p, %ld, %ld, %ld)\n",
 	  phas, had, pwfxSrc, pwfxDst, pwfltr, dwCallback, dwInstance, fdwOpen);
+
+    /* NOTE: pwfxSrc and/or pwfxDst can point to a structure smaller than
+     * WAVEFORMATEX so don't use them directly when not sure */
+    if (pwfxSrc->wFormatTag == WAVE_FORMAT_PCM) {
+        memcpy(&wfxSrc, pwfxSrc, sizeof(PCMWAVEFORMAT));
+        wfxSrc.wBitsPerSample = pwfxSrc->wBitsPerSample;
+        wfxSrc.cbSize = 0;
+        pwfxSrc = &wfxSrc;
+    }
+
+    if (pwfxDst->wFormatTag == WAVE_FORMAT_PCM) {
+        memcpy(&wfxDst, pwfxDst, sizeof(PCMWAVEFORMAT));
+        wfxDst.wBitsPerSample = pwfxDst->wBitsPerSample;
+        wfxDst.cbSize = 0;
+        pwfxDst = &wfxDst;
+    }
 
     TRACE("src [wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u]\n",
 	  pwfxSrc->wFormatTag, pwfxSrc->nChannels, pwfxSrc->nSamplesPerSec, pwfxSrc->nAvgBytesPerSec,
@@ -155,7 +181,10 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
      */
     if (fdwOpen & ACM_STREAMOPENF_QUERY) phas = NULL;
 
-    if (pwfltr && (pwfxSrc->wFormatTag != pwfxDst->wFormatTag)) return MMSYSERR_INVALPARAM;
+    if (pwfltr && (pwfxSrc->wFormatTag != pwfxDst->wFormatTag)) {
+        WARN("invalid parameter\n");
+        return MMSYSERR_INVALPARAM;
+    }
 
     wfxSrcSize = wfxDstSize = sizeof(WAVEFORMATEX);
     if (pwfxSrc->wFormatTag != WAVE_FORMAT_PCM) wfxSrcSize += pwfxSrc->cbSize;
@@ -163,8 +192,10 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 
     was = HeapAlloc(MSACM_hHeap, 0, sizeof(*was) + wfxSrcSize + wfxDstSize +
 		    ((pwfltr) ? sizeof(WAVEFILTER) : 0));
-    if (was == NULL)
+    if (was == NULL) {
+        WARN("no memory\n");
 	return MMSYSERR_NOMEM;
+    }
 
     was->drvInst.cbStruct = sizeof(was->drvInst);
     was->drvInst.pwfxSrc = (PWAVEFORMATEX)((LPSTR)was + sizeof(*was));
@@ -263,10 +294,14 @@ MMRESULT WINAPI acmStreamPrepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 
     TRACE("(%p, %p, %ld)\n", has, pash, fdwPrepare);
 
-    if ((was = ACM_GetStream(has)) == NULL)
+    if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
-    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
+    }
+    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
+    }
     if (fdwPrepare)
 	ret = MMSYSERR_INVALFLAG;
 
@@ -324,8 +359,10 @@ MMRESULT WINAPI acmStreamReset(HACMSTREAM has, DWORD fdwReset)
     TRACE("(%p, %ld)\n", has, fdwReset);
 
     if (fdwReset) {
+        WARN("invalid flag\n");
 	ret = MMSYSERR_INVALFLAG;
     } else if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
     } else if (was->drvInst.fdwOpen & ACM_STREAMOPENF_ASYNC) {
 	ret = SendDriverMessage(was->pDrv->hDrvr, ACMDM_STREAM_RESET, (DWORD)&was->drvInst, 0);
@@ -347,9 +384,11 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
     TRACE("(%p, %ld, %p, %ld)\n", has, cbInput, pdwOutputBytes, fdwSize);
 
     if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
     }
     if ((fdwSize & ~ACM_STREAMSIZEF_QUERYMASK) != 0) {
+        WARN("invalid flag\n");
 	return MMSYSERR_INVALFLAG;
     }
 
@@ -365,6 +404,7 @@ MMRESULT WINAPI acmStreamSize(HACMSTREAM has, DWORD cbInput,
 	adss.cbDstLength = 0;
 	break;
     default:
+        WARN("invalid flag\n");
 	return MMSYSERR_INVALFLAG;
     }
 
@@ -398,13 +438,18 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 
     TRACE("(%p, %p, %ld)\n", has, pash, fdwUnprepare);
 
-    if ((was = ACM_GetStream(has)) == NULL)
+    if ((was = ACM_GetStream(has)) == NULL) {
+        WARN("invalid handle\n");
 	return MMSYSERR_INVALHANDLE;
-    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER))
+    }
+    if (!pash || pash->cbStruct < sizeof(ACMSTREAMHEADER)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
-
-    if (!(pash->fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED))
+    }
+    if (!(pash->fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED)) {
+        WARN("unprepared header\n");
 	return ACMERR_UNPREPARED;
+    }
 
     /* Note: the ACMSTREAMHEADER and ACMDRVSTREAMHEADER structs are of same
      * size. some fields are private to msacm internals, and are exposed
@@ -417,6 +462,7 @@ MMRESULT WINAPI acmStreamUnprepareHeader(HACMSTREAM has, PACMSTREAMHEADER pash,
 	padsh->cbPreparedSrcLength < padsh->cbSrcLength ||
 	padsh->pbPreparedDst != padsh->pbDst ||
 	padsh->cbPreparedDstLength < padsh->cbDstLength) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
     }
 
