@@ -88,4 +88,9 @@ extern char* PROFILE_GetStringItem( char* );
 extern void VERSION_ParseWinVersion( const char *arg );
 extern void VERSION_ParseDosVersion( const char *arg );
 
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
 #endif  /* __WINE_OPTIONS_H */

@@ -13,6 +13,7 @@
 #include "ts_xutil.h"
 
 #include "winbase.h"
+#include "winreg.h"
 
 #include "callback.h"
 #include "clipboard.h"
@@ -24,6 +25,7 @@
 #include "win.h"
 #include "x11drv.h"
 
+DEFAULT_DEBUG_CHANNEL(x11drv);
 
 static USER_DRIVER user_driver =
 {
@@ -76,6 +78,65 @@ static int error_handler(Display *display, XErrorEvent *error_evt)
 }
 
 
+/***********************************************************************
+ *		setup_options
+ *
+ * Setup the x11drv options.
+ */
+static void setup_options(void)
+{
+    char buffer[256];
+    HKEY hkey;
+    DWORD type, count;
+
+    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
+                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+    {
+        ERR("Cannot create config registry key\n" );
+        ExitProcess(1);
+    }
+
+    /* --display option */
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "display", 0, &type, buffer, &count ))
+    {
+        if (Options.display)
+        {
+            if (strcmp( buffer, Options.display ))
+                MESSAGE( "%s: warning: --display option ignored, using '%s'\n", argv0, buffer );
+        }
+        else if ((Options.display = getenv( "DISPLAY" )))
+        {
+            if (strcmp( buffer, Options.display ))
+                MESSAGE( "%s: warning: $DISPLAY variable ignored, using '%s'\n", argv0, buffer );
+        }
+        Options.display = strdup(buffer);
+    }
+    else
+    {
+        if (!Options.display && !(Options.display = getenv( "DISPLAY" )))
+        {
+            MESSAGE( "%s: no display specified\n", argv0 );
+            ExitProcess(1);
+        }
+        RegSetValueExA( hkey, "display", 0, REG_SZ, Options.display, strlen(Options.display)+1 );
+    }
+
+    /* --managed option */
+
+    if (!Options.managed)
+    {
+        count = sizeof(buffer);
+        if (!RegQueryValueExA( hkey, "managed", 0, &type, buffer, &count ))
+            Options.managed = IS_OPTION_TRUE( buffer[0] );
+    }
+    else RegSetValueExA( hkey, "managed", 0, REG_SZ, "y", 2 );
+
+    RegCloseKey( hkey );
+}
+
+   
 /***********************************************************************
  *		create_desktop
  *
@@ -135,7 +196,7 @@ static void create_desktop( const char *geometry )
 
     TSXStringListToTextProperty( &name, 1, &window_name );
     TSXSetWMProperties( display, root_window, &window_name, &window_name,
-                        Options.argv, Options.argc, size_hints, wm_hints, class_hints );
+                        NULL, 0, size_hints, wm_hints, class_hints );
     XA_WM_DELETE_WINDOW = TSXInternAtom( display, "WM_DELETE_WINDOW", False );
     TSXSetWMProtocols( display, root_window, &XA_WM_DELETE_WINDOW, 1 );
     TSXFree( size_hints );
@@ -162,12 +223,13 @@ static void process_attach(void)
     CLIPBOARD_Driver = &X11DRV_CLIPBOARD_Driver;
     WND_Driver       = &X11DRV_WND_Driver;
 
+    setup_options();
+
     /* Open display */
-  
+
     if (!(display = TSXOpenDisplay( Options.display )))
     {
-        MESSAGE( "%s: Can't open display: %s\n",
-                 argv0, Options.display ? Options.display : "(none specified)" );
+        MESSAGE( "%s: Can't open display: %s\n", argv0, Options.display );
         ExitProcess(1);
     }
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
