@@ -59,6 +59,8 @@ void NE_DumpModule( HMODULE16 hModule )
     BYTE *pstr;
     WORD *pword;
     NE_MODULE *pModule;
+    ET_BUNDLE *bundle;
+    ET_ENTRY *entry;
 
     if (!(pModule = NE_GetPtr( hModule )))
     {
@@ -143,39 +145,21 @@ void NE_DumpModule( HMODULE16 hModule )
       /* Dump the entry table */
     DUMP( "---\n" );
     DUMP( "Entry table:\n" );
-    pstr = (char *)pModule + pModule->entry_table;
-    ordinal = 1;
-    while (*pstr)
-    {
-        DUMP( "Bundle %d-%d: %02x\n", ordinal, ordinal + *pstr - 1, pstr[1]);
-        if (!pstr[1])
+    bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);    
+    do {
+	entry = (ET_ENTRY *)((BYTE *)bundle+6);
+	DUMP( "Bundle %d-%d: %02x\n", bundle->first, bundle->last, entry->type);
+	ordinal = bundle->first;
+	while (ordinal < bundle->last)
         {
-            ordinal += *pstr;
-            pstr += 2;
-        }
-        else if ((BYTE)pstr[1] == 0xff)  /* moveable */
-        {
-            i = *pstr;
-            pstr += 2;
-            while (i--)
-            {
-                DUMP( "%d: %02x:%04x (moveable)\n",
-		      ordinal++, pstr[3], *(WORD *)(pstr + 4) );
-                pstr += 6;
-            }
-        }
-        else  /* fixed */
-        {
-            i = *pstr;
-            pstr += 2;
-            while (i--)
-            {
-                DUMP( "%d: %04x (fixed)\n",
-		      ordinal++, *(WORD *)(pstr + 1) );
-                pstr += 3;
-            }
-        }
+	    if (entry->type == 0xff)
+		DUMP("%d: %02x:%04x (moveable)\n", ordinal++, entry->segnum, entry->offs);
+	    else
+		DUMP("%d: %02x:%04x (fixed)\n", ordinal++, entry->segnum, entry->offs);
+	    entry++;
     }
+    } while ( (bundle->next)
+	   && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
 
     /* Dump the non-resident names table */
     DUMP( "---\n" );
@@ -305,42 +289,28 @@ FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
 {
     NE_MODULE *pModule;
-    WORD curOrdinal = 1;
-    BYTE *p;
-    WORD sel, offset;
+    WORD sel, offset, i;
+
+    ET_ENTRY *entry;
+    ET_BUNDLE *bundle;
 
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
-    p = (BYTE *)pModule + pModule->entry_table;
-    while (*p && (curOrdinal + *p <= ordinal))
+    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
+    while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
     {
-          /* Skipping this bundle */
-        curOrdinal += *p;
-        switch(p[1])
-        {
-            case 0:    p += 2; break;  /* unused */
-            case 0xff: p += 2 + *p * 6; break;  /* moveable */
-            default:   p += 2 + *p * 3; break;  /* fixed */
-        }
-    }
-    if (!*p) return 0;
-
-    switch(p[1])
-    {
-        case 0:  /* unused */
+	if (!(bundle->next))
             return 0;
-        case 0xff:  /* moveable */
-            p += 2 + 6 * (ordinal - curOrdinal);
-            sel = p[3];
-            offset = *(WORD *)(p + 4);
-            break;
-        default:  /* fixed */
-            sel = p[1];
-            p += 2 + 3 * (ordinal - curOrdinal);
-            offset = *(WORD *)(p + 1);
-            break;
+	bundle = (ET_BUNDLE *)((BYTE *)pModule + bundle->next);
     }
+
+    entry = (ET_ENTRY *)((BYTE *)bundle+6);
+    for (i=0; i < (ordinal - bundle->first - 1); i++)
+	entry++;
+
+    sel = entry->segnum;
+    offset = entry->offs;
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = GlobalHandleToSel16(NE_SEG_TABLE(pModule)[sel-1].hSeg);
@@ -362,39 +332,26 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
 BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
 {
     NE_MODULE *pModule;
-    WORD curOrdinal = 1;
-    BYTE *p;
+    ET_ENTRY *entry;
+    ET_BUNDLE *bundle;
+    int i;
 
     if (!(pModule = NE_GetPtr( hModule ))) return FALSE;
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
-    p = (BYTE *)pModule + pModule->entry_table;
-    while (*p && (curOrdinal + *p <= ordinal))
-    {
-          /* Skipping this bundle */
-        curOrdinal += *p;
-        switch(p[1])
+    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
+    while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
         {
-            case 0:    p += 2; break;  /* unused */
-            case 0xff: p += 2 + *p * 6; break;  /* moveable */
-            default:   p += 2 + *p * 3; break;  /* fixed */
-        }
+	bundle = (ET_BUNDLE *)((BYTE *)pModule + bundle->next);
+	if (!(bundle->next))
+	    return 0;
     }
-    if (!*p) return FALSE;
 
-    switch(p[1])
-    {
-        case 0:  /* unused */
-            return FALSE;
-        case 0xff:  /* moveable */
-            p += 2 + 6 * (ordinal - curOrdinal);
-            *(WORD *)(p + 4) = offset;
-            break;
-        default:  /* fixed */
-            p += 2 + 3 * (ordinal - curOrdinal);
-            *(WORD *)(p + 1) = offset;
-            break;
-    }
+    entry = (ET_ENTRY *)((BYTE *)bundle+6);
+    for (i=0; i < (ordinal - bundle->first - 1); i++)
+	entry++;
+
+    entry->offs = offset;
     return TRUE;
 }
 
@@ -436,9 +393,11 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     int size;
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    BYTE *pData;
+    BYTE *pData, *pTempEntryTable;
     char *buffer, *fastload = NULL;
     int fastload_offset = 0, fastload_length = 0;
+    ET_ENTRY *entry;
+    ET_BUNDLE *bundle, *oldbundle;
 
   /* Read a block from either the file or the fast-load area. */
 #define READ(offset,size,buffer) \
@@ -480,6 +439,9 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
            ne_header.entry_tab_offset - ne_header.iname_tab_offset +
              /* entry table length */
            ne_header.entry_tab_length +
+	     /* entry table extra conversion space */
+	   sizeof(ET_BUNDLE) +
+	   2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6) +
              /* loaded file info */
            sizeof(OFSTRUCT)-sizeof(ofs->szPathName)+strlen(ofs->szPathName)+1;
 
@@ -537,7 +499,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
              buffer ))
         {
             HeapFree( SystemHeap, 0, buffer );
-            if (fastload) HeapFree( SystemHeap, 0, fastload );
+            if (fastload)
+		HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
@@ -551,7 +514,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     }
     else
     {
-        if (fastload) HeapFree( SystemHeap, 0, fastload );
+        if (fastload)
+	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -576,7 +540,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
                ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
                pData ))
     {
-        if (fastload) HeapFree( SystemHeap, 0, fastload );
+        if (fastload)
+	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
@@ -591,7 +556,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
                   ne_header.n_mod_ref_tab * sizeof(WORD),
                   pData ))
         {
-            if (fastload) HeapFree( SystemHeap, 0, fastload );
+            if (fastload)
+		HeapFree( SystemHeap, 0, fastload );
             GlobalFree16( hModule );
             return (HMODULE16)11;  /* invalid exe */
         }
@@ -606,24 +572,101 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
                ne_header.entry_tab_offset - ne_header.iname_tab_offset,
                pData ))
     {
-        if (fastload) HeapFree( SystemHeap, 0, fastload );
+        if (fastload)
+	    HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
     pData += ne_header.entry_tab_offset - ne_header.iname_tab_offset;
 
-    /* Get the entry table */
+    /* Load entry table, convert it to the optimized version used by Windows */
 
+    if ((pTempEntryTable = HeapAlloc( SystemHeap, 0, ne_header.entry_tab_length)) != NULL)
+    {
+        BYTE nr_entries, type, *s;
+
+	TRACE(module, "Converting entry table.\n");
     pModule->entry_table = (int)pData - (int)pModule;
     if (!READ( mz_header.e_lfanew + ne_header.entry_tab_offset,
-               ne_header.entry_tab_length,
-               pData ))
+                ne_header.entry_tab_length, pTempEntryTable ))
     {
-        if (fastload) HeapFree( SystemHeap, 0, fastload );
+            HeapFree( SystemHeap, 0, pTempEntryTable );
+            if (fastload)
+		HeapFree( SystemHeap, 0, fastload );
         GlobalFree16( hModule );
         return (HMODULE16)11;  /* invalid exe */
     }
-    pData += ne_header.entry_tab_length;
+
+        s = pTempEntryTable;
+        TRACE(module, "entry table: offs %04x, len %04x, entries %d\n", ne_header.entry_tab_offset, ne_header.entry_tab_length, *s);
+
+	bundle = (ET_BUNDLE *)pData;
+        TRACE(module, "first bundle: %p\n", bundle);
+	memset(bundle, 0, sizeof(ET_BUNDLE)); /* in case no entry table exists */
+	entry = (ET_ENTRY *)((BYTE *)bundle+6);
+
+	while ((nr_entries = *s++))
+        {
+	    if ((type = *s++))
+            {
+		bundle->last += nr_entries;
+                if (type == 0xff)
+                while (nr_entries--)
+                {
+                    entry->type   = type;
+                    entry->flags  = *s++;
+                    s += 2;
+                    entry->segnum = *s++;
+                    entry->offs   = *(WORD *)s; s += 2;
+		    /*TRACE(module, "entry: %p, type: %d, flags: %d, segnum: %d, offs: %04x\n", entry, entry->type, entry->flags, entry->segnum, entry->offs);*/
+		    entry++;
+		}
+                else
+                while (nr_entries--)
+                {
+                    entry->type   = type;
+                    entry->flags  = *s++;
+                    entry->segnum = type;
+                    entry->offs   = *(WORD *)s; s += 2;
+		    /*TRACE(module, "entry: %p, type: %d, flags: %d, segnum: %d, offs: %04x\n", entry, entry->type, entry->flags, entry->segnum, entry->offs);*/
+		    entry++;
+		}
+	    }
+            else
+            {
+                if (bundle->first == bundle->last)
+                {
+                    bundle->first += nr_entries;
+                    bundle->last += nr_entries;
+                }
+                else
+                {
+		    oldbundle = bundle;
+		    oldbundle->next = ((int)entry - (int)pModule);
+                    bundle = (ET_BUNDLE *)entry;
+                    TRACE(module, "new bundle: %p\n", bundle);
+                    bundle->first = bundle->last =
+                        oldbundle->last + nr_entries;
+                    bundle->next = 0;
+                    (BYTE *)entry += sizeof(ET_BUNDLE);
+                }
+            }
+        }
+	HeapFree( SystemHeap, 0, pTempEntryTable );
+    }
+    else
+    {
+        if (fastload)
+	    HeapFree( SystemHeap, 0, fastload );
+        GlobalFree16( hModule );
+        return (HMODULE16)11;  /* invalid exe */
+    }
+
+    pData += ne_header.entry_tab_length + sizeof(ET_BUNDLE) +
+	     2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6);
+
+    if ((DWORD)entry > (DWORD)pData)
+       ERR(module, "converted entry table bigger than reserved space !!!\nentry: %p, pData: %p. Please report !\n", entry, pData);
 
     /* Store the filename information */
 
@@ -636,7 +679,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     /* Free the fast-load area */
 
 #undef READ
-    if (fastload) HeapFree( SystemHeap, 0, fastload );
+    if (fastload)
+	HeapFree( SystemHeap, 0, fastload );
 
     /* Get the non-resident names table */
 
@@ -792,7 +836,7 @@ static HINSTANCE16 NE_LoadFileModule( HFILE16 hFile, OFSTRUCT *ofs,
 
     pModule->count = 1;
 
-    /* Call initialization rountines for all loaded DLLs. Note that
+    /* Call initialization routines for all loaded DLLs. Note that
      * when we load implicitly linked DLLs this will be done by InitTask().
      */
 

@@ -266,53 +266,33 @@ HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force )
 LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
 {
     static char buffer[80];
-    WORD ordinal, i, max_offset;
+    WORD i, max_offset;
     register BYTE *p;
     NE_MODULE *pModule;
+    ET_BUNDLE *bundle;
+    ET_ENTRY *entry;
 
     if (!(pModule = NE_GetPtr( FarGetOwner16( GlobalHandle16(cs) ))))
         return NULL;
 
-    /* Search for the ordinal */
-
-    p = (BYTE *)pModule + pModule->entry_table;
     max_offset = 0;
-    ordinal = 1;
     *pOrd = 0;
-    while (*p)
-    {
-        switch(p[1])
-        {
-        case 0:    /* unused */
-            ordinal += *p;
-            p += 2;
-            break;
-        case 1:    /* code segment */
-            i = *p;
-            p += 2;
-            while (i-- > 0)
+    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
+    entry = (ET_ENTRY *)((BYTE *)bundle+6);
+    do {
+	for (i = bundle->first + 1; i < bundle->last; i++)
             {
-                p++;
-                if ((*(WORD *)p <= ip) && (*(WORD *)p >= max_offset))
+	    if ((entry->offs <= ip)
+	    && (entry->type == 1) /* code segment ? */
+	    && (entry->offs >= max_offset))
                 {
-                    max_offset = *(WORD *)p;
-                    *pOrd = ordinal;
-                }
-                p += 2;
-                ordinal++;
-            }
-            break;
-        case 0xff: /* moveable (should not happen in built-in modules) */
-            TRACE( relay, "Built-in module has moveable entry\n" );
-            ordinal += *p;
-            p += 2 + *p * 6;
-            break;
-        default:   /* other segment */
-            ordinal += *p;
-            p += 2 + *p * 3;
-            break;
+		max_offset = entry->offs;
+		*pOrd = i;
         }
+	    entry++;
     }
+    } while ( (bundle->next)
+	   && (bundle = (ET_BUNDLE *)((BYTE *)pModule+bundle->next)));
 
     /* Search for the name in the resident names table */
     /* (built-in modules have no non-resident table)   */

@@ -56,6 +56,20 @@ typedef struct _NE_MODULE
 } NE_MODULE;
 
 
+typedef struct {
+    BYTE type;
+    BYTE flags;
+    BYTE segnum;
+    WORD offs WINE_PACKED;
+} ET_ENTRY;
+
+typedef struct {
+    WORD first; /* ordinal */
+    WORD last; /* ordinal */
+    WORD next; /* bundle */
+} ET_BUNDLE;
+
+
   /* In-memory segment table */
 typedef struct
 {

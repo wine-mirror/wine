@@ -796,8 +796,10 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
     OFSTRUCT *pFileInfo;
-    BYTE *pstr, *bundle;
+    BYTE *pstr;
     WORD *pword;
+    ET_BUNDLE *bundle = 0;
+    ET_ENTRY *entry = 0;
 
     /*   Module layout:
      * NE_MODULE       Module
@@ -911,7 +913,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
       /* Entry table */
 
     pModule->entry_table = (int)pstr - (int)pModule;
-    bundle = NULL;
     odp = OrdinalDefinitions + 1;
     for (i = 1; i <= Limit; i++, odp++)
     {
@@ -943,24 +944,25 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
             break;
         }
 
-          /* create a new bundle if necessary */
-        if (!bundle || (bundle[0] >= 254) || (bundle[1] != selector))
+	if (!bundle)
         {
-            bundle = pstr;
-            bundle[0] = 0;
-            bundle[1] = selector;
-            pstr += 2;
+	    bundle = (ET_BUNDLE *)pstr;
+	    bundle->first = 0;
+	    pstr += sizeof(ET_BUNDLE);
         }
 
-        (*bundle)++;
-        if (selector != 0)
-        {
-            *pstr++ = 1;
-            *(WORD *)pstr = odp->offset;
-            pstr += sizeof(WORD);
-        }
+	/* FIXME: is this really correct ?? */
+	entry = (ET_ENTRY *)pstr;
+	entry->type = selector;
+	entry->flags = 3; /* exported & public data */
+	entry->segnum = selector;
+	entry->offs = odp->offset;
+	pstr += sizeof(ET_ENTRY);
+
     }
     *pstr++ = 0;
+    bundle->last = i;
+    bundle->next = 0;
 
       /* Dump the module content */
 

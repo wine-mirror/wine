@@ -88,7 +88,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     mem = GlobalLock16(pSeg->hSeg);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1)
     {
- 	/* Implement self loading segments */
+ 	/* Implement self-loading segments */
  	SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
         DWORD oldstack;
@@ -396,7 +396,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
     {
         HFILE hf;
         HFILE16 hFile16;
-        /* Handle self loading modules */
+        /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
         THDB *thdb = THREAD_Current();
@@ -413,7 +413,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
         selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
-        pModule->self_loading_sel = GlobalHandleToSel16(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
+        pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
         oldstack = thdb->cur_stack;
         thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                 0xff00 - sizeof(*stack16Top) );
@@ -453,18 +453,103 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 
 
 /***********************************************************************
+ *           NE_FixupSegmentPrologs
+ *
+ * Fixup exported functions prologs of one segment
+ */
+void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
+{
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    ET_BUNDLE *bundle;
+    ET_ENTRY *entry;
+    WORD dgroup, num_entries, sel = SEL(pSegTable[segnum-1].hSeg);
+    BYTE *pSeg, *pFunc;
+
+    TRACE(module, "(%d);\n", segnum);
+
+    if (pSegTable[segnum-1].flags & NE_SEGFLAGS_DATA)
+{
+	pSegTable[segnum-1].flags |= NE_SEGFLAGS_LOADED;
+	return;
+    }
+    if (!(dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg)))
+	return;
+
+    pSeg = PTR_SEG_OFF_TO_LIN(sel, 0);
+
+    bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
+
+    do {
+	TRACE(module, "num_entries: %d, bundle: %p, next: %04x, pSeg: %p\n", bundle->last - bundle->first, bundle, bundle->next, pSeg);
+	if (!(num_entries = bundle->last - bundle->first))
+	    return;
+	entry = (ET_ENTRY *)((BYTE *)bundle+6);
+	while (num_entries--)
+    {
+	    /*TRACE(module, "entry: %p, entry->segnum: %d, entry->offs: %04x\n", entry, entry->segnum, entry->offs);*/
+	    if (entry->segnum == segnum)
+        {
+		pFunc = ((BYTE *)pSeg+entry->offs);
+		TRACE(module, "pFunc: %p, *(DWORD *)pFunc: %08lx, num_entries: %d\n", pFunc, *(DWORD *)pFunc, num_entries);
+		if (*(pFunc+2) == 0x90)
+        {
+		    if (*(WORD *)pFunc == 0x581e) /* push ds, pop ax */
+		    {
+			TRACE(module, "patch %04x:%04x -> mov ax, ds\n", sel, entry->offs);
+			*(WORD *)pFunc = 0xd88c; /* mov ax, ds */
+        }
+
+		    if (*(WORD *)pFunc == 0xd88c)
+                        {
+			if ((entry->flags & 2)) /* public data ? */
+                        {
+			    TRACE(module, "patch %04x:%04x -> mov ax, dgroup [%04x]\n", sel, entry->offs, dgroup);
+			    *pFunc = 0xb8; /* mov ax, */
+			    *(WORD *)(pFunc+1) = dgroup;
+                    }
+                    else
+			if ((pModule->flags & NE_FFLAGS_MULTIPLEDATA)
+			&& (entry->flags & 1)) /* exported ? */
+                    {
+			    TRACE(module, "patch %04x:%04x -> nop, nop\n", sel, entry->offs);
+			    *(WORD *)pFunc = 0x9090; /* nop, nop */
+			}
+                    }
+		}
+            }
+	    entry++;
+	}
+    } while ( (bundle->next)
+	 && (bundle = ((ET_BUNDLE *)((BYTE *)pModule + bundle->next))) );
+}
+
+
+/***********************************************************************
  *           PatchCodeHandle
  *
  * Needed for self-loading modules.
  */
-
-/* It does nothing */
-DWORD WINAPI PatchCodeHandle16(HANDLE16 hSel)
+DWORD WINAPI PatchCodeHandle16(HANDLE16 hSeg)
 {
-    FIXME(module,"(%04x): stub.\n",hSel);
-    return (DWORD)NULL;
-}
+    WORD segnum;
+    WORD sel = SEL(hSeg);
+    NE_MODULE *pModule = NE_GetPtr(FarGetOwner16(sel));
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE(pModule);
 
+    TRACE(module, "(%04x);\n", hSeg);
+
+    /* find the segment number of the module that belongs to hSeg */
+    for (segnum = 1; segnum <= pModule->seg_count; segnum++)
+    {
+	if (SEL(pSegTable[segnum-1].hSeg) == sel)
+	{
+	    NE_FixupSegmentPrologs(pModule, segnum);
+	    break;
+        }
+    }
+
+    return MAKELONG(hSeg, sel);
+}
 
 /***********************************************************************
  *           NE_FixupPrologs
@@ -473,91 +558,15 @@ DWORD WINAPI PatchCodeHandle16(HANDLE16 hSel)
  */
 void NE_FixupPrologs( NE_MODULE *pModule )
 {
-    SEGTABLEENTRY *pSegTable;
-    WORD dgroup = 0;
-    WORD sel;
-    BYTE *p, *fixup_ptr, count;
-    dbg_decl_str(module, 512);
-
-    pSegTable = NE_SEG_TABLE(pModule);
-    if (pModule->flags & NE_FFLAGS_SINGLEDATA)
-        dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg);
+    WORD segnum;
 
     TRACE(module, "(%04x)\n", pModule->self );
-    p = (BYTE *)pModule + pModule->entry_table;
-    while (*p)
-    {
-        if (p[1] == 0)  /* Unused entry */
-        {
-            p += 2;  /* Skip it */
-            continue;
-        }
-        if (p[1] == 0xfe)  /* Constant entry */
-        {
-            p += 2 + *p * 3;  /* Skip it */
-            continue;
-        }
 
-        /* Now fixup the entries of this bundle */
-        count = *p;
-        sel = p[1];
-        p += 2;
-        while (count-- > 0)
-        {
-	    dbg_reset_str(module);
-            dsprintf(module,"Flags: %04x, sel %02x ", *p, sel);
-            /* According to the output generated by TDUMP, the flags mean:
-             * 0x0001 function is exported
-	     * 0x0002 Single data (seems to occur only in DLLs)
-	     */
-	    if (sel == 0xff) { /* moveable */
-		dsprintf(module, "(%02x) o %04x", p[3], *(WORD *)(p+4) );
-		fixup_ptr = (char *)GET_SEL_BASE(SEL(pSegTable[p[3]-1].hSeg)) + *(WORD *)(p + 4);
-	    } else { /* fixed */
-		dsprintf(module, "offset %04x", *(WORD *)(p+1) );
-		fixup_ptr = (char *)GET_SEL_BASE(SEL(pSegTable[sel-1].hSeg)) + 
-		  *(WORD *)(p + 1);
-	    }
-	    TRACE(module, "%s Signature: %02x %02x %02x,ff %x\n",
-			    dbg_str(module), fixup_ptr[0], fixup_ptr[1], 
-			    fixup_ptr[2], pModule->flags );
-            if (*p & 0x0001)
-            {
-                /* Verify the signature */
-                if (((fixup_ptr[0] == 0x1e && fixup_ptr[1] == 0x58)
-                     || (fixup_ptr[0] == 0x8c && fixup_ptr[1] == 0xd8))
-                    && fixup_ptr[2] == 0x90)
-                {
-                    if (*p & 0x0002)
-                    {
-			if (pModule->flags & NE_FFLAGS_MULTIPLEDATA)
-                        {
-			    /* can this happen? */
-			    ERR(fixup, "FixupPrologs got confused\n" );
-			}
-                        else if (pModule->flags & NE_FFLAGS_SINGLEDATA)
-                        {
-                            *fixup_ptr = 0xb8;	/* MOV AX, */
-                            *(WORD *)(fixup_ptr+1) = dgroup;
-                        }
-                    }
-                    else
-                    {
-			if (pModule->flags & NE_FFLAGS_MULTIPLEDATA) {
-			    fixup_ptr[0] = 0x90; /* non-library: NOPs */
-			    fixup_ptr[1] = 0x90;
-			    fixup_ptr[2] = 0x90;
-			}
-                    }
-                } else {
-		    WARN(fixup, "Unknown signature\n" );
-		}
-            }
-	    else
-	      TRACE(module,"\n");
-            p += (sel == 0xff) ? 6 : 3;  
-        }
-    }
+    if (pModule->flags & NE_FFLAGS_SELFLOAD)
+	NE_FixupSegmentPrologs(pModule, 1);
+    else
+    for (segnum=1; segnum <= pModule->seg_count; segnum++)
+	NE_FixupSegmentPrologs(pModule, segnum);
 }
 
 /***********************************************************************
@@ -797,23 +806,30 @@ static WORD NE_Ne2MemFlags(WORD flags)
 
 /***********************************************************************
  *           NE_AllocateSegment (WPROCS.26)
+ *
+ * MyAlloc() function for self-loading apps.
  */
 DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
 {
     WORD size = wSize << wElem;
-    HANDLE16 hMem = GlobalAlloc16( NE_Ne2MemFlags(wFlags), size);
+    HANDLE16 hMem = 0;
 
-    /* not data == code */
-    if (	(wFlags & NE_SEGFLAGS_EXECUTEONLY) ||
-    		!(wFlags & NE_SEGFLAGS_DATA)
-    ) {
-        WORD hSel = GlobalHandleToSel16(hMem);
+    if (wSize || (wFlags & NE_SEGFLAGS_MOVEABLE))
+        hMem = GlobalAlloc16( NE_Ne2MemFlags(wFlags), size);
+
+    if ( ((wFlags & 0x7) != 0x1) && /* DATA */
+         ((wFlags & 0x7) != 0x7) ) /* DATA|ALLOCATED|LOADED */
+    {
+        WORD hSel = SEL(hMem);
         WORD access = SelectorAccessRights16(hSel,0,0);
 
 	access |= 2<<2; /* SEGMENT_CODE */
 	SelectorAccessRights16(hSel,1,access);
     }
-    return MAKELONG( hMem, GlobalHandleToSel16(hMem) );
+    if (size)
+	return MAKELONG( hMem, SEL(hMem) );
+    else
+	return MAKELONG( 0, hMem );
 }
 
 
@@ -823,12 +839,17 @@ DWORD WINAPI NE_AllocateSegment( WORD wFlags, WORD wSize, WORD wElem )
 BOOL NE_CreateSegments( NE_MODULE *pModule )
 {
     SEGTABLEENTRY *pSegment;
-    int i, minsize;
+    int i, minsize, seg_count;
 
     assert( !(pModule->flags & NE_FFLAGS_WIN32) );
 
     pSegment = NE_SEG_TABLE( pModule );
-    for (i = 1; i <= pModule->seg_count; i++, pSegment++)
+
+    if (pModule->flags & NE_FFLAGS_SELFLOAD)
+        seg_count = 1;
+    else
+        seg_count = pModule->seg_count;
+    for (i = 1; i <= seg_count; i++, pSegment++)
     {
         minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
         if (i == pModule->ss) minsize += pModule->stack_size;
