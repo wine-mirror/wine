@@ -1014,6 +1014,13 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
   }
   
   if (rdst) {
+    if ((rdst->top < 0) ||
+        (rdst->left < 0) ||
+        (rdst->bottom < 0) ||
+        (rdst->right < 0)) {
+      ERR(" Negative values in LPRECT !!!\n");
+      goto release;
+    }
     memcpy(&xdst,rdst,sizeof(xdst));
   } else {
     xdst.top	= 0;
@@ -1023,6 +1030,13 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
   }
   
   if (rsrc) {
+    if ((rsrc->top < 0) ||
+        (rsrc->left < 0) ||
+        (rsrc->bottom < 0) ||
+        (rsrc->right < 0)) {
+      ERR(" Negative values in LPRECT !!!\n");
+      goto release;
+    }
     memcpy(&xsrc,rsrc,sizeof(xsrc));
   } else {
     if (src) {
@@ -1204,6 +1218,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
     FIXME("\tUnsupported flags: ");
     _dump_DDBLT(dwFlags);
   }
+  release:
   
   IDirectDrawSurface4_Unlock(iface,ddesc.u1.lpSurface);
   if (src) IDirectDrawSurface4_Unlock(src,sdesc.u1.lpSurface);
