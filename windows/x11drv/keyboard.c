@@ -273,6 +273,9 @@ static unsigned kbd_layout=0; /* index into above table of layouts */
                    keypad / and keypad ENTER (SDK 3.1 Vol.3 p 138) */
                 /* FIXME should we set extended bit for NumLock ? My
                  * Windows does ... DF */
+                /* Yes, to distinguish based on scan codes, also
+                   for PrtScn key ... GA */
+
 static const int special_key_vkey[] =
 {
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
@@ -303,7 +306,7 @@ static const int misc_key_vkey[] =
 };
 static const int misc_key_scan[] =
 {
-    /*?*/ 0, 0x37, /*?*/ 0, 0x152, 0, 0, 0, 0,                  /* FF60 */
+    /*?*/ 0, 0x137, /*?*/ 0, 0x152, 0, 0, 0, 0,                 /* FF60 */
     /*?*/ 0, /*?*/ 0, 0x38                                      /* FF68 */
 };
 
@@ -324,7 +327,7 @@ static const int keypad_key_vkey[] =
 };
 static const int keypad_key_scan[] =
 {
-    0x138, 0x45,                                                /* FF7E */
+    0x138, 0x145,                                               /* FF7E */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
     0, 0, 0, 0, 0, 0x11C, 0, 0,                                 /* FF88 */
     0, 0, 0, 0, 0, 0x47, 0x4B, 0x48,                            /* FF90 */
@@ -1043,6 +1046,9 @@ UINT16 X11DRV_KEYBOARD_MapVirtualKey(UINT16 wCode, UINT16 wMapType)
 INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
   int vkey, ansi, scanCode;
+  KeyCode keyc;
+  KeySym keys;
+  char *name;
 	
   scanCode = lParam >> 16;
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
@@ -1074,8 +1080,14 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
   TRACE_(keyboard)("scan 0x%04x, vkey 0x%04x, ANSI 0x%04x\n",
           scanCode, vkey, ansi);
 
-  if ( ((vkey >= 0x30) && (vkey <= 0x39)) ||
-      ( (vkey >= 0x41) && (vkey <= 0x5a)) ) /* Windows VK_* are ANSI codes */
+  /* first get the name of the "regular" keys which is the Upper case
+     value of the keycap imprint.                                     */
+  if ( ((ansi >= 0x21) && (ansi <= 0x7e)) &&
+       (scanCode != 0x137) &&   /* PrtScn   */
+       (scanCode != 0x135) &&   /* numpad / */
+       (scanCode != 0x37 ) &&   /* numpad * */
+       (scanCode != 0x4a ) &&   /* numpad - */
+       (scanCode != 0x4e ) )    /* numpad + */
       {
         if ((nSize >= 2) && lpBuffer)
 	{
@@ -1087,10 +1099,37 @@ INT16 X11DRV_KEYBOARD_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT16 nSize)
         return 0;
   }
 
-  /* use vkey values to construct names */
+  /* FIXME: horrible hack to fix function keys. Windows reports scancode
+            without "extended-key" flag. However Wine generates scancode
+            *with* "extended-key" flag. Seems to occur *only* for the
+            function keys. Soooo.. We will leave the table alone and
+            fudge the lookup here till the other part is found and fixed!!! */
 
-  FIXME_(keyboard)("(%08lx,%p,%d): unsupported key\n",lParam,lpBuffer,nSize);
+  if ( ((scanCode >= 0x13b) && (scanCode <= 0x144)) ||
+       (scanCode == 0x157) || (scanCode == 0x158))
+    scanCode &= 0xff;   /* remove "extended-key" flag for Fx keys */
 
+  /* let's do scancode -> keycode -> keysym -> String */
+
+  for (keyc=min_keycode; keyc<=max_keycode; keyc++)
+      if ((keyc2scan[keyc]) == scanCode)
+         break;
+  if (keyc <= max_keycode)
+  {
+      keys = TSXKeycodeToKeysym(display, keyc, 0);
+      name = TSXKeysymToString(keys);
+      TRACE_(keyboard)("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
+             scanCode, keyc, (int)keys, name);
+      if (lpBuffer && nSize && name)
+      {
+          strncpy(lpBuffer, name, nSize);
+          return 1;
+      }
+  }
+
+  /* Finally issue FIXME for unknown keys   */
+
+  FIXME_(keyboard)("(%08lx,%p,%d): unsupported key, vkey=%04x, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
   if (lpBuffer && nSize)
     *lpBuffer = 0;
   return 0;
