@@ -857,6 +857,7 @@ AC_CHECK_FUNCS(\
 	_lwp_create \
 	_pclose \
 	_popen \
+	_snprintf \
 	_stricmp \
 	_strnicmp \
 	chsize \
@@ -887,6 +888,7 @@ AC_CHECK_FUNCS(\
 	sendmsg \
 	settimeofday \
 	sigaltstack \
+	snprintf \
 	statfs \
 	strcasecmp \
 	strerror \

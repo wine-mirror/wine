@@ -10288,11 +10288,14 @@ fi
 
 
 
+
+
 for ac_func in \
 	__libc_fork \
 	_lwp_create \
 	_pclose \
 	_popen \
+	_snprintf \
 	_stricmp \
 	_strnicmp \
 	chsize \
@@ -10323,6 +10326,7 @@ for ac_func in \
 	sendmsg \
 	settimeofday \
 	sigaltstack \
+	snprintf \
 	statfs \
 	strcasecmp \
 	strerror \

@@ -116,6 +116,10 @@ struct statfs;
 #define pclose _pclose
 #endif
 
+#if !defined(HAVE_SNPRINTF) && defined(HAVE__SNPRINTF)
+#define snprintf _snprintf
+#endif
+
 #ifndef S_ISLNK
 # define S_ISLNK(mod) (0)
 #endif /* S_ISLNK */

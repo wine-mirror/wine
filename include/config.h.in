@@ -380,6 +380,9 @@
 /* Define to 1 if the system has the type `size_t'. */
 #undef HAVE_SIZE_T
 
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
 /* Define if struct sockaddr contains sa_len */
 #undef HAVE_SOCKADDR_SA_LEN
 
@@ -583,6 +586,9 @@
 
 /* Define to 1 if you have the `_popen' function. */
 #undef HAVE__POPEN
+
+/* Define to 1 if you have the `_snprintf' function. */
+#undef HAVE__SNPRINTF
 
 /* Define to 1 if you have the `_stricmp' function. */
 #undef HAVE__STRICMP
