@@ -64,7 +64,7 @@ static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count )
         if (*count < len) ret = ERROR_MORE_DATA;
         else memcpy( data, src, len );
     }
-    *count = len;
+    if (count) *count = len;
     return ret;
 }
 
@@ -87,7 +87,7 @@ static DWORD copy_data_WtoA( void *data, const void *src, DWORD len, DWORD *coun
         if (*count < len) ret = ERROR_MORE_DATA;
         else memcpy( data, src, len );
     }
-    *count = len;
+    if (count) *count = len;
     return ret;
 }
 
@@ -728,7 +728,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_w(name), reserved, type, data, count, count ? *count : 0 );
 
-    if (!count || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
     if ((ret = copy_nameW( req->name, name )) != ERROR_SUCCESS) return ret;
@@ -756,7 +756,7 @@ DWORD WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD
     TRACE("(0x%x,%s,%p,%p,%p,%p=%ld)\n",
           hkey, debugstr_a(name), reserved, type, data, count, count ? *count : 0 );
 
-    if (!count || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
     if ((ret = copy_nameAtoW( req->name, name )) != ERROR_SUCCESS) return ret;
@@ -847,7 +847,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
           hkey, index, value, val_count, reserved, type, data, count );
 
     /* NT only checks count, not val_count */
-    if (!count || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
     req->index = index;
@@ -876,7 +876,7 @@ DWORD WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_cou
           hkey, index, value, val_count, reserved, type, data, count );
 
     /* NT only checks count, not val_count */
-    if (!count || reserved) return ERROR_INVALID_PARAMETER;
+    if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
 
     req->hkey = hkey;
     req->index = index;
