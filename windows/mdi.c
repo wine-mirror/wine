@@ -1840,21 +1840,22 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
  */
 BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
-    WND* clientWnd = WIN_FindWndPtr( hwndClient);
 
-    if( clientWnd && (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN))
+    if( IsWindow(hwndClient) && (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN))
     {
 	MDICLIENTINFO	*ci = NULL;
-	WND*		wnd;
+	HWND		wnd;
+        WND             *clientWnd = WIN_FindWndPtr(hwndClient);
 
 	ci = (MDICLIENTINFO*) clientWnd->wExtra;
+        wnd = ci->hwndActiveChild;
+
         WIN_ReleaseWndPtr(clientWnd);
-	wnd = WIN_FindWndPtr(ci->hwndActiveChild);
-	if( wnd && !(wnd->dwStyle & WS_DISABLED) )
+
+        if( IsWindow(wnd) && !(GetWindowLongA(wnd,GWL_STYLE) & WS_DISABLED) )
 	{
 	    WPARAM16	wParam = 0;
 
-            WIN_ReleaseWndPtr(wnd);
 	    /* translate if the Ctrl key is down and Alt not. */
   
 	    if( (GetKeyState(VK_CONTROL) & 0x8000) && 
@@ -1880,9 +1881,7 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 	        return 1;
 	    }
 	}
-        WIN_ReleaseWndPtr(wnd);
     }
-    WIN_ReleaseWndPtr(clientWnd);
     return 0; /* failure */
 }
 
