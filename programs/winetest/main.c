@@ -411,7 +411,7 @@ run_tests (char *logname, const char *tag, const char *url)
     char *strres, *eol, *nextline;
     DWORD strsize;
 
-    SetErrorMode (SEM_NOGPFAULTERRORBOX);
+    SetErrorMode (SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
     if (!logname) {
         logname = tempnam (0, "res");

@@ -140,9 +140,9 @@ send_file (const char *name)
     filesize = ftell (f);
     if (filesize > 1024*1024) {
         report (R_WARNING,
-                "File too big (%d > 1 MB), copy and submit manually",
-                filesize);
-        goto abort2;
+                "File too big (%.1f MB > 1 MB); submitting partial report.",
+                filesize/1024.0/1024);
+        filesize = 1024*1024;
     }
     fseek (f, 0, SEEK_SET);
 
@@ -159,7 +159,14 @@ send_file (const char *name)
 
     report (R_STATUS, "Sending %u bytes of data", filesize);
     report (R_PROGRESS, 2, filesize);
-    while ((bytes_read = fread (buffer, 1, BUFLEN / 2, f))) {
+    total = 0;
+    while (total < filesize && (bytes_read = fread (buffer, 1, BUFLEN/2, f))) {
+        if ((signed)bytes_read == -1) {
+            report (R_WARNING, "Error reading log file: %d", errno);
+            goto abort2;
+        }
+        total += bytes_read;
+        if (total > filesize) bytes_read -= total - filesize;
         if (send_buf (s, buffer, bytes_read)) {
             report (R_WARNING, "Error sending body: %d, %d",
                     errno, WSAGetLastError ());
