@@ -204,10 +204,12 @@ void WINAPI _InsertMenuItem (
 	mii.fType = fType;
 	InsertMenuItemA( hmenu, indexMenu, fByPosition, &mii);
 }
+
 /**************************************************************************
 * ISvItemCm_fnQueryContextMenu()
+* FIXME: load menu MENU_SHV_FILE out of resources instead if creating
+*		 each menu item by calling _InsertMenuItem()
 */
-
 static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 	IContextMenu2 *iface,
 	HMENU hmenu,
@@ -220,25 +222,27 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 
 	TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
-	if(!(CMF_DEFAULTONLY & uFlags))
+	if (idCmdFirst != 0)
+	  FIXME("We should use idCmdFirst=%d and idCmdLast=%d for command ids\n", idCmdFirst, idCmdLast);
+
+	if(!(CMF_DEFAULTONLY & uFlags) && This->cidl>0)
 	{
-	  if(uFlags & CMF_EXPLORE)
+	  if(!(uFlags & CMF_EXPLORE))
+	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Select", MFS_ENABLED);
+
+	  if(This->bAllValues)
 	  {
-	    if(This->bAllValues)
-	    {
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Open", MFS_ENABLED);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED|MFS_DEFAULT);
-	    }
-	    else
-	    {
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED|MFS_DEFAULT);
-	      _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Open", MFS_ENABLED);
-	    }
+	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Open", MFS_ENABLED);
+	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED);
 	  }
 	  else
 	  {
-	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Select", MFS_ENABLED|MFS_DEFAULT);
+	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_EXPLORE, MFT_STRING, "&Explore", MFS_ENABLED);
+	    _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_OPEN, MFT_STRING, "&Open", MFS_ENABLED);
 	  }
+
+	  SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
+
 	  _InsertMenuItem(hmenu, indexMenu++, TRUE, 0, MFT_SEPARATOR, NULL, 0);
 	  _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_COPY, MFT_STRING, "&Copy", MFS_ENABLED);
 	  _InsertMenuItem(hmenu, indexMenu++, TRUE, FCIDM_SHVIEW_CUT, MFT_STRING, "&Cut", MFS_ENABLED);
