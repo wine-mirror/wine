@@ -1694,10 +1694,13 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
     if (nBar == SB_CTL)
         ret = SendMessageW(hwnd, SBM_SETRANGE, minVal, maxVal);
     else
+    {
         ret = SCROLL_SetScrollRange(hwnd, nBar, minVal, maxVal);
+        ShowScrollBar(hwnd, nBar, minVal != maxVal);
+    }
 
     if (bRedraw)
-        SCROLL_RefreshScrollBar( hwnd, SB_CTL, TRUE, TRUE );
+        SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
     return ret;
 }
 
