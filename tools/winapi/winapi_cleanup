@@ -1,0 +1,109 @@
+#! /usr/bin/perl -w
+
+# Copyright 2002 Patrik Stridvall
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use strict;
+
+BEGIN {
+    $0 =~ m%^(.*?/?tools)/winapi/winapi_cleanup$%;
+    require "$1/winapi/setup.pm";
+}
+
+use config qw($current_dir $wine_dir);
+use output qw($output);
+use winapi_extract_options qw($options);
+
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
+########################################################################
+# edit_file
+
+sub edit_file {
+    my $filename = shift;
+    my $function = shift;
+
+    open(IN, "< $filename") || die "Can't open file '$filename'";
+    open(OUT, "> $filename.tmp") || die "Can't open file '$filename.tmp'";
+
+    my $result = &$function(\*IN, \*OUT, @_);
+
+    close(IN);
+    close(OUT);
+
+    if($result) {
+        unlink($filename);
+        rename("$filename.tmp", $filename);
+    } else {
+        unlink("$filename.tmp");
+    }
+
+    return $result;
+}
+
+########################################################################
+# cleanup_file
+
+sub cleanup_file {
+    local *IN = shift;
+    local *OUT = shift;
+
+    my $modified = 0;
+
+    while (<IN>) {
+	chomp;
+	if(s/(.*?)\s+$/$1/) {
+	    $modified = 1;
+	}
+
+	print OUT "$_\n";
+    }
+
+    return $modified;
+}
+
+########################################################################
+# main
+
+my @h_files = $options->h_files;
+my @c_files = $options->c_files;
+
+my $progress_output;
+my $progress_current = 0;
+my $progress_max = scalar(@h_files) + scalar(@c_files);
+
+foreach my $file (@h_files) {
+    $progress_current++;
+    $output->progress("$file (file $progress_current of $progress_max)");
+
+    if (edit_file($file, \&cleanup_file, @_)) {
+	$output->write("$file: modified\n");
+    }
+}
+
+foreach my $file (@c_files) {
+    $progress_current++;
+    $output->progress("$file (file $progress_current of $progress_max)");
+
+    if (edit_file($file, \&cleanup_file, @_)) {
+	$output->write("$file: modified\n");
+    }
+}

@@ -11,6 +11,7 @@ install::
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/make_filter
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_check
+	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_cleanup
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_extract
 	$(INSTALL_SCRIPT) $(SRCDIR)/trampoline $(bindir)/winapi_fixup
 
