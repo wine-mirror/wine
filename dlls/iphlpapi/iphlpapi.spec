@@ -1,11 +1,11 @@
 @ stdcall AddIPAddress( long long long ptr ptr )
 @ stub AllocateAndGetArpEntTableFromStack
-@ stub AllocateAndGetIfTableFromStack
-@ stub AllocateAndGetIpAddrTableFromStack
-@ stub AllocateAndGetIpForwardTableFromStack
-@ stub AllocateAndGetIpNetTableFromStack
-@ stub AllocateAndGetTcpTableFromStack
-@ stub AllocateAndGetUdpTableFromStack
+@ stdcall AllocateAndGetIfTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetIpAddrTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetIpForwardTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetIpNetTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetTcpTableFromStack( ptr long long long )
+@ stdcall AllocateAndGetUdpTableFromStack( ptr long long long )
 @ stdcall CreateIpForwardEntry( ptr )
 @ stdcall CreateIpNetEntry( ptr )
 @ stdcall CreateProxyArpEntry( long long long )
