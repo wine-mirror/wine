@@ -103,6 +103,13 @@ static void build_dll_path(void)
     }
 }
 
+/* check if a given file can be opened */
+inline static int file_exists( const char *name )
+{
+    int fd = open( name, O_RDONLY );
+    if (fd != -1) close( fd );
+    return (fd != -1);
+}
 
 /* open a library for a given dll, searching in the dll path
  * 'name' must be the Windows dll name (e.g. "kernel32.dll") */
@@ -128,6 +135,11 @@ static void *dlopen_dll( const char *name, char *error, int errorsize )
         p = buffer + dll_path_maxlen - len;
         memcpy( p, dll_paths[i], len );
         if ((ret = wine_dlopen( p, RTLD_NOW, error, errorsize ))) break;
+        if (file_exists( p ))  /* exists but cannot be loaded, return the error */
+        {
+            free( buffer );
+            return NULL;
+        }
     }
 
     /* now try the default dlopen search path */
