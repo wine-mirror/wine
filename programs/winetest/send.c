@@ -91,14 +91,15 @@ send_file (const char *name)
 {
     SOCKET s;
     FILE *f;
-    unsigned char buffer[8192];
+#define BUFLEN 8192
+    unsigned char *buffer;
     size_t bytes_read, total, filesize;
     char *str;
     int ret;
 
     /* RFC 2068 */
 #define SEP "-"
-    const char head[] = "POST /~wferi/cgi-bin/winetests.cgi HTTP/1.0\r\n"
+    const char head[] = "POST /~wferi/cgi-bin/winetest.cgi HTTP/1.0\r\n"
         "Host: afavant\r\n"
         "User-Agent: Winetests Shell\r\n"
         "Content-Type: multipart/form-data; boundary=" SEP "\r\n"
@@ -111,6 +112,7 @@ send_file (const char *name)
         "Upload File\r\n"
         "--" SEP "--\r\n";
 
+    buffer = xmalloc (BUFLEN + 1);
     s = open_http ("157.181.170.47");
     if (s == INVALID_SOCKET) {
         report (R_WARNING, "Can't open network connection: %d",
@@ -145,8 +147,8 @@ send_file (const char *name)
     }
 
     report (R_STATUS, "Sending %u bytes of data", filesize);
-    report (R_PROGRESS, filesize);
-    while ((bytes_read = fread (buffer, 1, sizeof buffer / 8, f))) {
+    report (R_PROGRESS, 2, filesize);
+    while ((bytes_read = fread (buffer, 1, BUFLEN / 8, f))) {
         if (send_buf (s, buffer, bytes_read)) {
             report (R_WARNING, "Error sending body: %d, %d",
                     errno, WSAGetLastError ());
@@ -164,15 +166,14 @@ send_file (const char *name)
     report (R_DELTA, 0, "Network transfer: Done");
 
     total = 0;
-    while ((bytes_read = recv (s, buffer + total,
-                               sizeof buffer - total, 0))) {
+    while ((bytes_read = recv (s, buffer+total, BUFLEN-total, 0))) {
         if ((signed)bytes_read == SOCKET_ERROR) {
             report (R_WARNING, "Error receiving reply: %d, %d",
                     errno, WSAGetLastError ());
             goto abort1;
         }
         total += bytes_read;
-        if (total == sizeof buffer) {
+        if (total == BUFLEN) {
             report (R_WARNING, "Buffer overflow");
             goto abort1;
         }
@@ -187,11 +188,20 @@ send_file (const char *name)
                    name, filesize);
     ret = memcmp (str, buffer + total - bytes_read, bytes_read);
     free (str);
-    return ret!=0;
+    if (ret) {
+        buffer[total] = 0;
+        str = strstr (buffer, "\r\n\r\n");
+        if (str) buffer = str + 4;
+        report (R_ERROR, "Can't submit logfile '%s'. "
+                "Server response: %s", name, buffer);
+    }
+    free (buffer);
+    return ret;
 
  abort2:
     fclose (f);
  abort1:
     close_http (s);
+    free (buffer);
     return 1;
 }

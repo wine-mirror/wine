@@ -39,7 +39,7 @@ double progressScale;
 
 /* Progress group counter for the gui* functions.
  */
-int progressGroup = -1;
+int progressGroup;
 
 char *
 renderString (va_list ap)
@@ -90,7 +90,7 @@ guiStatus (va_list ap)
     return 0;
 }
 
-/* report (R_PROGRESS, steps) */
+/* report (R_PROGRESS, barnum, steps) */
 int
 textProgress (va_list ap)
 {
@@ -102,16 +102,18 @@ textProgress (va_list ap)
 int
 guiProgress (va_list ap)
 {
-    unsigned int max = va_arg (ap, int);
-    HWND pb = GetDlgItem (dialog, IDC_PB0 + ++progressGroup * 2);
+    unsigned int max;
+    HWND pb;
 
-    progressMax = max;
+    progressGroup = va_arg (ap, int);
+    progressMax = max = va_arg (ap, int);
     progressCurr = 0;
     if (max > 0xffff) {
         progressScale = (double)0xffff / max;
         max = 0xffff;
     }
     else progressScale = 1;
+    pb = GetDlgItem (dialog, IDC_PB0 + progressGroup * 2);
     SendMessage (pb, PBM_SETRANGE, 0, MAKELPARAM (0, max));
     SendMessage (pb, PBM_SETSTEP, (WPARAM)1, 0);
     return 0;

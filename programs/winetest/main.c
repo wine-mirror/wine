@@ -311,7 +311,7 @@ run_tests (char *logname, const char *tag)
     wine_tests = xmalloc (nr_of_files * sizeof wine_tests[0]);
 
     report (R_STATUS, "Extracting tests");
-    report (R_PROGRESS, nr_of_files);
+    report (R_PROGRESS, 0, nr_of_files);
     for (i = 0; i < nr_of_files; i++) {
         get_subtests (tempdir, wine_tests+i, i+1);
         nr_of_tests += wine_tests[i].subtest_count;
@@ -319,7 +319,7 @@ run_tests (char *logname, const char *tag)
     report (R_DELTA, 0, "Extracting: Done");
 
     report (R_STATUS, "Running tests");
-    report (R_PROGRESS, nr_of_tests);
+    report (R_PROGRESS, 1, nr_of_tests);
     for (i = 0; i < nr_of_files; i++) {
         struct wine_test *test = wine_tests + i;
         int j;
@@ -385,8 +385,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
                 submit = strtok (NULL, " ");
                 if (tag)
                     report (R_WARNING, "ignoring tag for submit");
-                if (send_file (submit))
-                    report (R_ERROR, "can't submit file %s", submit);
+                send_file (submit);
                 break;
             case 'o':
                 logname = strtok (NULL, " ");
@@ -411,12 +410,10 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     if (!logname && !submit) {
         report (R_STATUS, "Starting up");
         logname = run_tests (NULL, tag);
-        if (report (R_ASK, MB_YESNO,
-                    "Do you want to submit the test results?") == IDYES)
-            if (send_file (logname))
-                report (R_FATAL, "Can't submit logfile '%s'", logname);
-        if (remove (logname))
-            report (R_WARNING, "Can't remove logfile: %d.", errno);
+        if (report (R_ASK, MB_YESNO, "Do you want to submit the "
+                    "test results?") == IDYES)
+            if (!send_file (logname) && remove (logname))
+                report (R_WARNING, "Can't remove logfile: %d.", errno);
         free (logname);
         report (R_STATUS, "Finished");
     }
