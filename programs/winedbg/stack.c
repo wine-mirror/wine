@@ -188,6 +188,13 @@ void stack_backtrace(DWORD tid, BOOL noisy)
     memory_get_current_frame(&sf.AddrFrame);
     memory_get_current_pc(&sf.AddrPC);
 
+    /* don't confuse StackWalk by passing in inconsistent addresses */
+    if ((sf.AddrPC.Mode == AddrModeFlat) && (sf.AddrFrame.Mode != AddrModeFlat))
+    {
+        sf.AddrFrame.Offset = (DWORD)memory_to_linear_addr(&sf.AddrFrame);
+        sf.AddrFrame.Mode = AddrModeFlat;
+    }
+
     if (noisy) dbg_printf("Backtrace:\n");
     while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
                      thread->handle, &sf, &dbg_context, NULL, SymFunctionTableAccess,

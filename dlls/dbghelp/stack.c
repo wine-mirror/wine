@@ -113,6 +113,13 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     {
         THREAD_BASIC_INFORMATION info;
 
+        if ((frame->AddrPC.Mode == AddrModeFlat) &&
+            (frame->AddrFrame.Mode != AddrModeFlat))
+        {
+            WARN("Bad AddrPC.Mode / AddrFrame.Mode combination\n");
+            goto done_err;
+        }
+
         /* Init done */
         curr_mode = (frame->AddrPC.Mode == AddrModeFlat) ? 
             stm_32bit : stm_16bit;
