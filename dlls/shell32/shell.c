@@ -503,7 +503,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	if( !n )
 	  return 0;
 
-	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ );
+	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ|OF_EXIST );
 
 	hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
 	RetPtr = (HICON16*)GlobalLock16(hRet);
