@@ -746,6 +746,10 @@ enum fd_type
     unsigned int cstate;        /* status bits to clear */
 @END
 
+@REQ(set_socket_deferred)
+    handle_t     handle;        /* handle to the socket */
+    handle_t     deferred;      /* handle to the socket for which accept() is deferred */
+@END
 
 /* Allocate a console (only used by a console renderer) */
 @REQ(alloc_console)

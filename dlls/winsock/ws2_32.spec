@@ -42,7 +42,7 @@ debug_channels (winsock)
 27  stub     WSAAddressToStringA
 28  stub     WSAAddressToStringW
 29  stdcall  WSACloseEvent(long) WSACloseEvent
-30  stub     WSAConnect
+30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr) WSAConnect
 31  stdcall  WSACreateEvent ()  WSACreateEvent
 32  stub     WSADuplicateSocketA
 33  stub     WSADuplicateSocketW

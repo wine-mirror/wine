@@ -943,6 +943,12 @@ static void dump_enable_socket_event_request( const struct enable_socket_event_r
     fprintf( stderr, " cstate=%08x", req->cstate );
 }
 
+static void dump_set_socket_deferred_request( const struct set_socket_deferred_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " deferred=%d", req->deferred );
+}
+
 static void dump_alloc_console_request( const struct alloc_console_request *req )
 {
     fprintf( stderr, " access=%08x,", req->access );
@@ -2215,6 +2221,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_socket_event_request,
     (dump_func)dump_get_socket_event_request,
     (dump_func)dump_enable_socket_event_request,
+    (dump_func)dump_set_socket_deferred_request,
     (dump_func)dump_alloc_console_request,
     (dump_func)dump_free_console_request,
     (dump_func)dump_get_console_renderer_events_request,
@@ -2371,6 +2378,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_accept_socket_reply,
     (dump_func)0,
     (dump_func)dump_get_socket_event_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_alloc_console_reply,
     (dump_func)0,
@@ -2529,6 +2537,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_socket_event",
     "get_socket_event",
     "enable_socket_event",
+    "set_socket_deferred",
     "alloc_console",
     "free_console",
     "get_console_renderer_events",

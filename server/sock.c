@@ -72,6 +72,7 @@ struct sock
     unsigned int        message;     /* message to send */
     unsigned int        wparam;      /* message wparam (socket handle) */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
+    struct sock*        deferred;    /* socket that waits for a deferred accept */
     struct async_queue  read_q;      /* Queue for asynchronous reads */
     struct async_queue  write_q;     /* Queue for asynchronous writes */
 };
@@ -361,6 +362,9 @@ static void sock_destroy( struct object *obj )
 
     /* FIXME: special socket shutdown stuff? */
 
+    if ( sock->deferred )
+        release_object ( sock->deferred );
+
     if ( sock->flags & WSA_FLAG_OVERLAPPED )
     {
         destroy_async_queue ( &sock->read_q );
@@ -394,13 +398,14 @@ static struct object *create_socket( int family, int type, int protocol, unsigne
     sock->window  = 0;
     sock->message = 0;
     sock->wparam  = 0;
-    sock_reselect( sock );
-    clear_error();
+    sock->deferred = NULL;
     if (sock->flags & WSA_FLAG_OVERLAPPED)
     {
         init_async_queue (&sock->read_q);
         init_async_queue (&sock->write_q);
     }
+    sock_reselect( sock );
+    clear_error();
     return &sock->obj;
 }
 
@@ -417,44 +422,51 @@ static struct sock *accept_socket( handle_t handle )
                                       GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
     if (!sock)
     	return NULL;
-    /* Try to accept(2). We can't be safe that this an already connected socket 
-     * or that accept() is allowed on it. In those cases we will get -1/errno
-     * return.
-     */
-    slen = sizeof(saddr);
-    acceptfd = accept(sock->obj.fd,&saddr,&slen);
-    if (acceptfd==-1) {
-    	sock_set_error();
-        release_object( sock );
-	return NULL;
-    }
-    if (!(acceptsock = alloc_object( &sock_ops, -1 )))
-    {
-        release_object( sock );
-        return NULL;
-    }
 
-    /* newly created socket gets the same properties of the listening socket */
-    fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
-    acceptsock->obj.fd = acceptfd;
-    acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
-    if (sock->state & FD_WINE_NONBLOCKING)
-        acceptsock->state |= FD_WINE_NONBLOCKING;
-    acceptsock->mask    = sock->mask;
-    acceptsock->hmask   = 0;
-    acceptsock->pmask   = 0;
-    acceptsock->event   = NULL;
-    acceptsock->window  = sock->window;
-    acceptsock->message = sock->message;
-    acceptsock->wparam  = 0;
-    if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
-    acceptsock->flags = sock->flags;
-    if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
-    {
-	init_async_queue ( &acceptsock->read_q );
-	init_async_queue ( &acceptsock->write_q );
-    }
+    if ( sock->deferred ) {
+        acceptsock = sock->deferred;
+        sock->deferred = NULL;
+    } else {
 
+        /* Try to accept(2). We can't be safe that this an already connected socket
+         * or that accept() is allowed on it. In those cases we will get -1/errno
+         * return.
+         */
+        slen = sizeof(saddr);
+        acceptfd = accept(sock->obj.fd,&saddr,&slen);
+        if (acceptfd==-1) {
+            sock_set_error();
+            release_object( sock );
+            return NULL;
+        }
+        if (!(acceptsock = alloc_object( &sock_ops, -1 )))
+        {
+            release_object( sock );
+            return NULL;
+        }
+
+        /* newly created socket gets the same properties of the listening socket */
+        fcntl(acceptfd, F_SETFL, O_NONBLOCK); /* make socket nonblocking */
+        acceptsock->obj.fd = acceptfd;
+        acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+        if (sock->state & FD_WINE_NONBLOCKING)
+            acceptsock->state |= FD_WINE_NONBLOCKING;
+        acceptsock->mask    = sock->mask;
+        acceptsock->hmask   = 0;
+        acceptsock->pmask   = 0;
+        acceptsock->event   = NULL;
+        acceptsock->window  = sock->window;
+        acceptsock->message = sock->message;
+        acceptsock->wparam  = 0;
+        if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
+        acceptsock->flags = sock->flags;
+        acceptsock->deferred = 0;
+        if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
+        {
+            init_async_queue ( &acceptsock->read_q );
+            init_async_queue ( &acceptsock->write_q );
+        }
+    }
     clear_error();
     sock->pmask &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
@@ -645,4 +657,27 @@ DECL_HANDLER(enable_socket_event)
     sock->state &= ~req->cstate;
     sock_reselect( sock );
     release_object( &sock->obj );
+}
+
+DECL_HANDLER(set_socket_deferred)
+{
+    struct sock *sock, *acceptsock;
+
+    sock=(struct sock*)get_handle_obj( current->process,req->handle,
+                                       GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
+    if ( !sock )
+    {
+        set_error ( WSAENOTSOCK );
+        return;
+    }
+    acceptsock = (struct sock*)get_handle_obj( current->process,req->deferred,
+                                               GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops );
+    if ( !acceptsock )
+    {
+        release_object ( sock );
+        set_error ( WSAENOTSOCK );
+        return;
+    }
+    sock->deferred = acceptsock;
+    release_object ( sock );
 }

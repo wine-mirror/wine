@@ -152,6 +152,7 @@ DECL_HANDLER(accept_socket);
 DECL_HANDLER(set_socket_event);
 DECL_HANDLER(get_socket_event);
 DECL_HANDLER(enable_socket_event);
+DECL_HANDLER(set_socket_deferred);
 DECL_HANDLER(alloc_console);
 DECL_HANDLER(free_console);
 DECL_HANDLER(get_console_renderer_events);
@@ -312,6 +313,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_socket_event,
     (req_handler)req_get_socket_event,
     (req_handler)req_enable_socket_event,
+    (req_handler)req_set_socket_deferred,
     (req_handler)req_alloc_console,
     (req_handler)req_free_console,
     (req_handler)req_get_console_renderer_events,

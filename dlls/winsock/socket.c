@@ -1139,6 +1139,19 @@ INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct WS_sockaddr *name, INT16 namel
 }
 
 /***********************************************************************
+ *              WSAConnect             (WS2_32.30)
+ */
+int WINAPI WSAConnect ( SOCKET s, const struct WS_sockaddr* name, int namelen,
+                        LPWSABUF lpCallerData, LPWSABUF lpCalleeData,
+                        LPQOS lpSQOS, LPQOS lpGQOS )
+{
+    if ( lpCallerData || lpCalleeData || lpSQOS || lpGQOS )
+        FIXME ("unsupported parameters!\n");
+    return WS_connect ( s, name, namelen );
+}
+
+
+/***********************************************************************
  *		getpeername		(WS2_32.5)
  */
 int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
@@ -3419,7 +3432,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        SOCKET cs;
        SOCKADDR src_addr, dst_addr;
 
-       TRACE("Socket  %ui, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackD ata %ld\n",
+       TRACE("Socket  %u, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
        
@@ -3450,7 +3463,17 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                                addr = memcpy(addr, &src_addr, (*addrlen > size) ?  size : *addrlen );
                        return cs;
                case CF_DEFER:
-                       SetLastError(WSATRY_AGAIN);
+                       SERVER_START_REQ ( set_socket_deferred )
+                       {
+                           req->handle = s;
+                           req->deferred = cs;
+                           if ( !wine_server_call_err ( req ) )
+                           {
+                               SetLastError ( WSATRY_AGAIN );
+                               CloseHandle ( cs );
+                           }
+                       }
+                       SERVER_END_REQ;
                        return SOCKET_ERROR;
                case CF_REJECT:
                        WS_closesocket(cs);
