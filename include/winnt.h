@@ -1676,6 +1676,12 @@ extern inline struct _TEB * WINAPI NtCurrentTeb(void)
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
 
+#ifdef NONAMELESSUNION
+#define GetCurrentFiber()  (((NT_TIB *)NtCurrentTeb())->u.FiberData)
+#else
+#define GetCurrentFiber()  (((NT_TIB *)NtCurrentTeb())->FiberData)
+#endif
+#define GetFiberData()     (*(void **)GetCurrentFiber())
 
 /*
  * File formats definitions

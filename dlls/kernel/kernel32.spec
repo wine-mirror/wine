@@ -182,7 +182,9 @@
 @ stdcall ConnectNamedPipe(long ptr) ConnectNamedPipe
 @ stdcall ContinueDebugEvent(long long long) ContinueDebugEvent
 @ stdcall ConvertDefaultLocale (long) ConvertDefaultLocale
-@ stub ConvertThreadToFiber
+@ stdcall ConvertFiberToThread() ConvertFiberToThread
+@ stdcall ConvertThreadToFiber(ptr) ConvertThreadToFiber
+@ stdcall ConvertThreadToFiberEx(ptr long) ConvertThreadToFiberEx
 @ stdcall ConvertToGlobalHandle(long) ConvertToGlobalHandle
 @ stdcall CopyFileA(str str long) CopyFileA
 @ stdcall CopyFileW(wstr wstr long) CopyFileW
@@ -983,10 +985,11 @@
 @ stdcall CancelWaitableTimer(long) CancelWaitableTimer
 @ stdcall CopyFileExA (str str ptr ptr ptr long) CopyFileExA
 @ stdcall CopyFileExW (wstr wstr ptr ptr ptr long) CopyFileExW
-@ stub CreateFiber
+@ stdcall CreateFiber(long ptr ptr) CreateFiber
+@ stdcall CreateFiberEx(long long long ptr ptr) CreateFiberEx
 @ stdcall CreateWaitableTimerA(ptr long str) CreateWaitableTimerA
 @ stdcall CreateWaitableTimerW(ptr long wstr) CreateWaitableTimerW
-@ stub DeleteFiber
+@ stdcall DeleteFiber(ptr) DeleteFiber
 @ stub DuplicateConsoleHandle
 @ stdcall FindFirstFileExA(str long ptr long ptr long)FindFirstFileExA
 @ stdcall FindFirstFileExW(wstr long ptr long ptr long)FindFirstFileExW
@@ -1018,7 +1021,7 @@
 @ stdcall SetThreadPriorityBoost(long long) SetThreadPriorityBoost
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long) SetWaitableTimer
 @ stub SignalObjectAndWait
-@ stub SwitchToFiber
+@ stdcall SwitchToFiber(ptr) SwitchToFiber
 @ stdcall SwitchToThread() SwitchToThread
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
 @ stdcall VirtualAllocEx(long ptr long long long) VirtualAllocEx

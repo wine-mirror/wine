@@ -59,6 +59,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/relay32/snoop.c \
 	$(TOPOBJDIR)/scheduler/client.c \
 	$(TOPOBJDIR)/scheduler/critsection.c \
+	$(TOPOBJDIR)/scheduler/fiber.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/pipe.c \
 	$(TOPOBJDIR)/scheduler/process.c \

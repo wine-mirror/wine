@@ -29,6 +29,7 @@ struct __EXCEPTION_FRAME;
 struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;
 struct server_buffer_info;
+struct fiber_data;
 
 /* Thread exception block
 
@@ -52,7 +53,7 @@ typedef struct _TEB
     void        *stack_low;      /* 12-  08 Stack low-water mark */
     HTASK16      htask16;        /* 1--  0c Win16 task handle */
     WORD         stack_sel;      /* 1--  0e 16-bit stack selector */
-    DWORD        selman_list;    /* 1-n  10 Selector manager list */
+    struct fiber_data *fiber;    /* -2-  10 Current fiber data (Win95: selector manager list) */
     DWORD        user_ptr;       /* 12n  14 User pointer */
 /* end of NT_TIB */
     struct _TEB *self;           /* 12-  18 Pointer to this structure */
@@ -73,8 +74,8 @@ typedef struct _TEB
     void       (*startup)(void); /* --3  48 Thread startup routine */
     int          thread_errno;   /* --3  4c Per-thread errno (was: ring0_thread) */
     int          thread_h_errno; /* --3  50 Per-thread h_errno (was: ptr to tdbx structure) */
-    void        *stack_base;     /* 1--  54 Base of the stack */
-    void        *signal_stack;   /* --3  58 Signal stack (was: exit_stack) */
+    void        *signal_stack;   /* --3  54 Signal stack (was: stack_base) */
+    void        *exit_stack;     /* 1-n  58 Exit stack */
     void        *emu_data;       /* --n  5c Related to 80387 emulation */
     DWORD        last_error;     /* 1--  60 Last error code */
     HANDLE       debug_cb;       /* 1-n  64 Debugger context block */
@@ -121,7 +122,7 @@ typedef struct _TEB
     DWORD        pad6[624];                  /* --n 238 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
-    DWORD        pad7;                       /* --n e0c */
+    void        *stack_base;                 /* -2- e0c Base of the stack */
     LPVOID       tls_array[64];              /* -2- e10 Thread local storage */
     DWORD        pad8[3];                    /* --n f10 */
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */

@@ -1178,9 +1178,14 @@ BOOL        WINAPI CopyFileExW(LPCWSTR, LPCWSTR, LPPROGRESS_ROUTINE, LPVOID, LPB
 #define     CopyFileEx WINELIB_NAME_AW(CopyFileEx)
 BOOL        WINAPI CopySid(DWORD,PSID,PSID);
 INT         WINAPI CompareFileTime(const FILETIME*,const FILETIME*);
+BOOL        WINAPI ConvertFiberToThread(void);
+LPVOID      WINAPI ConvertThreadToFiber(LPVOID);
+LPVOID      WINAPI ConvertThreadToFiberEx(LPVOID,DWORD);
 HANDLE      WINAPI CreateEventA(LPSECURITY_ATTRIBUTES,BOOL,BOOL,LPCSTR);
 HANDLE      WINAPI CreateEventW(LPSECURITY_ATTRIBUTES,BOOL,BOOL,LPCWSTR);
 #define     CreateEvent WINELIB_NAME_AW(CreateEvent)
+LPVOID      WINAPI CreateFiber(SIZE_T,LPFIBER_START_ROUTINE,LPVOID);
+LPVOID      WINAPI CreateFiberEx(SIZE_T,SIZE_T,DWORD,LPFIBER_START_ROUTINE,LPVOID);
 HANDLE      WINAPI CreateFileA(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 HANDLE      WINAPI CreateFileW(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
 #define     CreateFile WINELIB_NAME_AW(CreateFile)
@@ -1217,6 +1222,7 @@ BOOL        WINAPI DebugActiveProcessStop(DWORD);
 void        WINAPI DebugBreak(void);
 BOOL        WINAPI DebugBreakProcess(HANDLE);
 BOOL        WINAPI DebugSetProcessKillOnExit(BOOL);
+void        WINAPI DeleteFiber(LPVOID);
 BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
 BOOL        WINAPI DeleteTimerQueueTimer(HANDLE,HANDLE,HANDLE);
 BOOL        WINAPI DeregisterEventSource(HANDLE);
@@ -1501,6 +1507,7 @@ DWORD       WINAPI SignalObjectAndWait(HANDLE,HANDLE,DWORD,BOOL);
 VOID        WINAPI Sleep(DWORD);
 DWORD       WINAPI SleepEx(DWORD,BOOL);
 DWORD       WINAPI SuspendThread(HANDLE);
+void        WINAPI SwitchToFiber(LPVOID);
 BOOL        WINAPI SwitchToThread(void);
 BOOL        WINAPI SystemTimeToFileTime(const SYSTEMTIME*,LPFILETIME);
 DWORD       WINAPI TlsAlloc(void);
