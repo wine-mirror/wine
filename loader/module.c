@@ -1420,6 +1420,13 @@ static void MODULE_FlushModrefs(void)
                     TRACE_(loaddll)("Unloaded module '%s' : %s\n", wm->filename,
                                     wm->dlhandle ? "builtin" : "native" );
 
+                SERVER_START_REQ( unload_dll )
+                {
+                    req->base = (void *)wm->module;
+                    wine_server_call( req );
+                }
+                SERVER_END_REQ;
+
                 if (wm->dlhandle) wine_dll_unload( wm->dlhandle );
                 else UnmapViewOfFile( (LPVOID)wm->module );
                 FreeLibrary16(wm->hDummyMod);
@@ -1515,12 +1522,6 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
     if ( free_lib_count <= 1 )
     {
         MODULE_DllProcessDetach( FALSE, NULL );
-        SERVER_START_REQ( unload_dll )
-        {
-            req->base = (void *)wm->module;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
         MODULE_FlushModrefs();
     }
 
