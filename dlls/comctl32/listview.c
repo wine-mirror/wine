@@ -4770,31 +4770,32 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     LRESULT lret;
     LONG lStyle;
 
-    // set column width only if in report mode
+    /* set column width only if in report mode */
     lStyle = GetWindowLongA(hwnd, GWL_STYLE);
     if ((lStyle & LVS_TYPEMASK) != LVS_REPORT)
 	return (FALSE);
 
-    // make sure we can get the listview info
+    /* make sure we can get the listview info */
     if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0)))
 	return (FALSE);  
-    if (!infoPtr->hwndHeader) // make sure we have a header
+    if (!infoPtr->hwndHeader) /* make sure we have a header */
 	return (FALSE);	
 	
-    // FIXME: currently ignoring LVSCW_AUTOSIZE (-1) and
-    // LVSCV_AUTOSIZE_USEHEADER (-2)
+    /* FIXME: currently ignoring LVSCW_AUTOSIZE (-1) and
+	  * LVSCV_AUTOSIZE_USEHEADER (-2)
+	  */
     if (cx < 0) 
 	return (FALSE);
 	
     hdi.mask = HDI_WIDTH;
     hdi.cxy = cx;
 
-    // call header to update the column change
+    /* call header to update the column change */
     lret = Header_SetItemA(infoPtr->hwndHeader, (WPARAM)iCol, (LPARAM)&hdi);
 
     infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
 
-    InvalidateRect(hwnd, NULL, TRUE); // force redraw of the listview
+    InvalidateRect(hwnd, NULL, TRUE); /* force redraw of the listview */
 
     return lret;
 }
@@ -5122,7 +5123,7 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
     
     nCount = GETITEMCOUNT(infoPtr);
-    // if there are 0 or 1 items, there is no need to sort
+    /* if there are 0 or 1 items, there is no need to sort */
     if (nCount > 1)
     {
 	sortList = DPA_Create(nCount);
@@ -5130,7 +5131,7 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 	infoPtr->pfnCompare = (PFNLVCOMPARE)lParam;
 	infoPtr->lParamSort = (LPARAM)wParam;
 	
-	// append pointers one by one to sortList
+	/* append pointers one by one to sortList */
 	for (i = 0; i < nCount; i++)
 	{
 	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)))
@@ -5138,10 +5139,10 @@ static LRESULT LISTVIEW_SortItems(HWND hwnd, WPARAM wParam, LPARAM lParam)
 		    DPA_InsertPtr(sortList, nCount + 1, lpItem);
 	}
 
-	// sort the sortList
+	/* sort the sortList */
 	DPA_Sort(sortList, LISTVIEW_CallBackCompare, hwnd);
 
-	// copy the pointers back
+	/* copy the pointers back */
 	for (i = 0; i < nCount; i++)
 	{
 	    if ((hdpaSubItems = (HDPA) DPA_GetPtr(infoPtr->hdpaItems, i)) &&

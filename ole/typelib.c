@@ -163,7 +163,7 @@ HRESULT WINAPI LoadTypeLib(
     
     p=HEAP_strdupWtoA(GetProcessHeap(),0,szFile);
     res= TLB_ReadTypeLib(p, pptLib);
-    //XXX need to free p ??
+    /* XXX need to free p ?? */
 
     TRACE( typelib, " returns %ld\n",res);
 
@@ -1963,9 +1963,9 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo( LPTYPEINFO iface,
                 pRefType->reference != hRefType; pRefType=pRefType->next)
             ;
         if(!pRefType)
-            return TYPE_E_ELEMENTNOTFOUND; //FIXME : correct?
+            return TYPE_E_ELEMENTNOTFOUND; /* FIXME : correct? */
         pTypeLib=pRefType->pImpTLInfo->pImpTypeLib;
-        if(pTypeLib) //  typelib already loaded
+        if(pTypeLib) /* typelib already loaded */
             result=pTypeLib->lpvtbl->fnGetTypeInfoOfGuid(
                     (LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
         else{
