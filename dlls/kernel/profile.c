@@ -246,22 +246,6 @@ static void PROFILE_Free( PROFILESECTION *section )
     }
 }
 
-/* look for the requested character up to the specified memory location,
- * returning NULL if not found */
-static inline const WCHAR* PROFILE_memchrW( const WCHAR *mem_start, const WCHAR *mem_end, WCHAR ch)
-{
-    for ( ; mem_start < mem_end; mem_start++) if (*mem_start == ch) return mem_start;
-    return NULL;
-}
-
-/* look for the requested character from the specified end memory location,
- * down to another memory location, returning NULL if not found */
-static inline const WCHAR* PROFILE_memrchrW( const WCHAR *mem_start, const WCHAR *mem_end, WCHAR ch )
-{
-    for ( ; mem_end >= mem_start; mem_end--) if (*mem_end == ch) return mem_end;
-    return NULL;
-}
-
 /* returns 1 if a character white space else 0 */
 static inline int PROFILE_isspaceW(WCHAR c)
 {
@@ -298,7 +282,7 @@ static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len
 
 static const WCHAR * PROFILE_GetLine(const WCHAR * szStart, const WCHAR * szEnd)
 {
-    return PROFILE_memchrW(szStart, szEnd, '\n');
+    return memchrW(szStart, '\n', szEnd - szStart);
 }
 
 /***********************************************************************
@@ -417,7 +401,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         if (*szLineStart == '[')  /* section start */
         {
             const WCHAR * szSectionEnd;
-            if (!(szSectionEnd = PROFILE_memrchrW( szLineStart, szLineEnd, ']' )))
+            if (!(szSectionEnd = memrchrW( szLineStart, ']', szLineEnd - szLineStart )))
             {
                 WARN("Invalid section header at line %d: %s\n",
                     line, debugstr_wn(szLineStart, (int)(szLineEnd - szLineStart)) );
@@ -453,7 +437,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 
         /* get rid of white space after the name and before the start
          * of the value */
-        if ((szNameEnd = szValueStart = PROFILE_memchrW( szLineStart, szLineEnd, '=' )) != NULL)
+        if ((szNameEnd = szValueStart = memchrW( szLineStart, '=', szLineEnd - szLineStart )) != NULL)
         {
             szNameEnd = szValueStart - 1;
             while ((szNameEnd > szLineStart) && PROFILE_isspaceW(*szNameEnd)) szNameEnd--;

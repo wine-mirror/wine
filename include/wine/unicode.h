@@ -287,6 +287,20 @@ static inline WCHAR *struprW( WCHAR *str )
     return ret;
 }
 
+static inline WCHAR *memchrW( const WCHAR *ptr, WCHAR ch, size_t n )
+{
+    const WCHAR *end;
+    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) return (WCHAR *)ptr;
+    return NULL;
+}
+
+static inline WCHAR *memrchrW( const WCHAR *ptr, WCHAR ch, size_t n )
+{
+    const WCHAR *end, *ret = NULL;
+    for (end = ptr + n; ptr < end; ptr++) if (*ptr == ch) ret = ptr;
+    return (WCHAR *)ret;
+}
+
 static inline long int atolW( const WCHAR *str )
 {
     return strtolW( str, (WCHAR **)0, 10 );
