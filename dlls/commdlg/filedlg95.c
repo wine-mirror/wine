@@ -1402,12 +1402,12 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
   if(fodInfos->unicode)
   {
      LPOPENFILENAMEW ofn = (LPOPENFILENAMEW) fodInfos->ofnInfos;
-     ofn->lpstrFile = '\0';
+     ofn->lpstrFile[0] = '\0';
   }
   else
   {
      LPOPENFILENAMEA ofn = fodInfos->ofnInfos;
-     ofn->lpstrFile = '\0';
+     ofn->lpstrFile[0] = '\0';
   }
 
   SHGetPathFromIDListW( fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathSpec );
@@ -1450,6 +1450,13 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
   }
 
   nSizePath = strlenW(lpstrPathSpec) + 1;
+  if ( !(fodInfos->ofnInfos->Flags & OFN_EXPLORER) )
+  {
+    /* For "oldstyle" dialog the components have to
+       be spearated by blanks (not '\0'!) and short
+       filenames have to be used! */
+    FIXME("Components have to be separated by blanks");
+  }
   if(fodInfos->unicode)
   {
     LPOPENFILENAMEW ofn = (LPOPENFILENAMEW) fodInfos->ofnInfos;
@@ -1460,13 +1467,20 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
   {
     LPOPENFILENAMEA ofn = fodInfos->ofnInfos;
 
-    WideCharToMultiByte(CP_ACP, 0, lpstrPathSpec, -1,
-          ofn->lpstrFile, ofn->nMaxFile, NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed,
-          &ofn->lpstrFile[nSizePath], ofn->nMaxFile - nSizePath, NULL, NULL);
+    if (ofn->lpstrFile != NULL)
+    {
+      WideCharToMultiByte(CP_ACP, 0, lpstrPathSpec, -1,
+			  ofn->lpstrFile, ofn->nMaxFile, NULL, NULL);
+      if (ofn->nMaxFile > nSizePath)
+      {
+	WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed,
+			    ofn->lpstrFile + nSizePath,
+			    ofn->nMaxFile - nSizePath, NULL, NULL);
+      }
+    }
   }
 
-  fodInfos->ofnInfos->nFileOffset = nSizePath;
+  fodInfos->ofnInfos->nFileOffset = nSizePath + 1;
   fodInfos->ofnInfos->nFileExtension = 0;
 
   /* clean and exit */
