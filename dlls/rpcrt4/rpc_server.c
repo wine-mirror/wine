@@ -54,6 +54,16 @@ typedef struct _RpcPacket
   void* buf;
 } RpcPacket;
 
+typedef struct _RpcObjTypeMap
+{
+  /* FIXME: a hash table would be better. */
+  struct _RpcObjTypeMap *next;
+  UUID Object;
+  UUID Type;
+} RpcObjTypeMap;
+
+static RpcObjTypeMap *RpcObjTypeMaps;
+
 static RpcServerProtseq* protseqs;
 static RpcServerInterface* ifs;
 
@@ -94,13 +104,37 @@ static HANDLE server_sem;
 
 static DWORD worker_count, worker_free, worker_tls;
 
+static UUID uuid_nil;
+
+inline static RpcObjTypeMap *LookupObjTypeMap(UUID *ObjUuid)
+{
+  RpcObjTypeMap *rslt = RpcObjTypeMaps;
+  RPC_STATUS dummy;
+
+  while (rslt) {
+    if (! UuidCompare(ObjUuid, &rslt->Object, &dummy)) break;
+    rslt = rslt->next;
+  }
+
+  return rslt;
+}
+
+inline static UUID *LookupObjType(UUID *ObjUuid)
+{
+  RpcObjTypeMap *map = LookupObjTypeMap(ObjUuid);
+  if (map)
+    return &map->Type;
+  else
+    return &uuid_nil;
+}
+
 static RpcServerInterface* RPCRT4_find_interface(UUID* object, UUID* if_id)
 {
   UUID* MgrType = NULL;
   RpcServerInterface* cif = NULL;
   RPC_STATUS status;
 
-  /* FIXME: object -> MgrType */
+  MgrType = LookupObjType(object);
   EnterCriticalSection(&server_cs);
   cif = ifs;
   while (cif) {
@@ -168,6 +202,8 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
   if (sif) {
     TRACE("packet received for interface %s\n", debugstr_guid(&hdr->if_id));
     msg.RpcInterfaceInformation = sif->If;
+    /* copy the endpoint vector from sif to msg so that midl-generated code will use it */
+    msg.ManagerEpv = sif->MgrEpv;
     /* create temporary binding for dispatch */
     RPCRT4_MakeBinding(&pbind, conn);
     RPCRT4_SetBindingObject(pbind, &hdr->object);
@@ -703,11 +739,13 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
 
   sif = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerInterface));
   sif->If           = If;
-  if (MgrTypeUuid)
+  if (MgrTypeUuid) {
     memcpy(&sif->MgrTypeUuid, MgrTypeUuid, sizeof(UUID));
-  else
+    sif->MgrEpv       = MgrEpv;
+  } else {
     memset(&sif->MgrTypeUuid, 0, sizeof(UUID));
-  sif->MgrEpv       = MgrEpv;
+    sif->MgrEpv       = If->DefaultManagerEpv;
+  }
   sif->Flags        = Flags;
   sif->MaxCalls     = MaxCalls;
   sif->MaxRpcSize   = MaxRpcSize;
@@ -744,6 +782,70 @@ RPC_STATUS WINAPI RpcServerUnregisterIfEx( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUu
 {
   FIXME("(IfSpec == (RPC_IF_HANDLE)^%p, MgrTypeUuid == %s, RundownContextHandles == %d): stub\n",
     IfSpec, debugstr_guid(MgrTypeUuid), RundownContextHandles);
+
+  return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcObjectSetType (RPCRT4.@)
+ *
+ * PARAMS
+ *   ObjUuid  [I] "Object" UUID
+ *   TypeUuid [I] "Type" UUID
+ *
+ * RETURNS
+ *   RPC_S_OK                 The call succeeded
+ *   RPC_S_INVALID_OBJECT     The provided object (nil) is not valid
+ *   RPC_S_ALREADY_REGISTERED The provided object is already registered
+ *
+ * Maps "Object" UUIDs to "Type" UUID's.  Passing the nil UUID as the type
+ * resets the mapping for the specified object UUID to nil (the default).
+ * The nil object is always associated with the nil type and cannot be
+ * reassigned.  Servers can support multiple implementations on the same
+ * interface by registering different end-point vectors for the different
+ * types.  There's no need to call this if a server only supports the nil
+ * type, as is typical.
+ */
+RPC_STATUS WINAPI RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid )
+{
+  RpcObjTypeMap *map = RpcObjTypeMaps, *prev = NULL;
+  RPC_STATUS dummy;
+
+  TRACE("(ObjUUID == %s, TypeUuid == %s).\n", debugstr_guid(ObjUuid), debugstr_guid(TypeUuid));
+  if ((! ObjUuid) || UuidIsNil(ObjUuid, &dummy)) {
+    /* nil uuid cannot be remapped */
+    return RPC_S_INVALID_OBJECT;
+  }
+
+  /* find the mapping for this object if there is one ... */
+  while (map) {
+    if (! UuidCompare(ObjUuid, &map->Object, &dummy)) break;
+    prev = map;
+    map = map->next;
+  }
+  if ((! TypeUuid) || UuidIsNil(TypeUuid, &dummy)) {
+    /* ... and drop it from the list */
+    if (map) {
+      if (prev) 
+        prev->next = map->next;
+      else
+        RpcObjTypeMaps = map->next;
+      HeapFree(GetProcessHeap(), 0, map);
+    }
+  } else {
+    /* ... , fail if we found it ... */
+    if (map)
+      return RPC_S_ALREADY_REGISTERED;
+    /* ... otherwise create a new one and add it in. */
+    map = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcObjTypeMap));
+    memcpy(&map->Object, ObjUuid, sizeof(UUID));
+    memcpy(&map->Type, TypeUuid, sizeof(UUID));
+    map->next = NULL;
+    if (prev)
+      prev->next = map; /* prev is the last map in the linklist */
+    else
+      RpcObjTypeMaps = map;
+  }
 
   return RPC_S_OK;
 }

@@ -114,6 +114,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingReset( RPC_BINDING_HANDLE Binding );
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingSetObject( RPC_BINDING_HANDLE Binding, UUID* ObjectUuid );
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcBindingFromStringBindingA( LPSTR StringBinding, RPC_BINDING_HANDLE* Binding );

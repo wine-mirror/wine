@@ -106,7 +106,7 @@
 @ stub RpcNsBindingInqEntryNameW
 @ stub RpcObjectInqType
 @ stub RpcObjectSetInqFn
-@ stub RpcObjectSetType
+@ stdcall RpcObjectSetType(ptr ptr)
 @ stub RpcProtseqVectorFreeA
 @ stub RpcProtseqVectorFreeW
 @ stdcall RpcRaiseException(long)
