@@ -554,7 +554,7 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
         HeapFree(GetProcessHeap(),0,tmp);
     }
 
-    TRACE("(%p %lx %lx %s)\n",gUIHandler, gUIFilter, log_type,
+    TRACE("(%p %lx %lx %s)\n",gUIHandlerA, gUIFilter, log_type,
                              debugstr_w(message));
 
     /* convert it to ASCII */
@@ -564,9 +564,9 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType,
     WideCharToMultiByte( CP_ACP, 0, message, -1,
                          msg, len, NULL, NULL );
 
-    if (gUIHandler && (gUIFilter & log_type))
+    if (gUIHandlerA && (gUIFilter & log_type))
     {
-        rc = gUIHandler(gUIContext,eMessageType,msg);
+        rc = gUIHandlerA(gUIContext,eMessageType,msg);
     }
 
     if ((!rc) && (gszLogFile[0]) && !((eMessageType & 0xff000000) ==

@@ -338,7 +338,8 @@ BOOL decode_base85_guid(LPCWSTR,GUID*);
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
 extern HWND gUIhwnd;
-extern INSTALLUI_HANDLERA gUIHandler;
+extern INSTALLUI_HANDLERA gUIHandlerA;
+extern INSTALLUI_HANDLERW gUIHandlerW;
 extern DWORD gUIFilter;
 extern LPVOID gUIContext;
 extern WCHAR gszLogFile[MAX_PATH];

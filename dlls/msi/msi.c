@@ -67,12 +67,12 @@ static const WCHAR szComponents[] = {
 'C','o','m','p','o','n','e','n','t','s',0 };
 
 /* the UI level */
-INSTALLUILEVEL gUILevel;
-HWND           gUIhwnd;
-INSTALLUI_HANDLERA gUIHandler;
-INSTALLUI_HANDLERW gUIHandlerW;
-DWORD gUIFilter;
-LPVOID gUIContext;
+INSTALLUILEVEL gUILevel = INSTALLUILEVEL_BASIC;
+HWND           gUIhwnd = 0;
+INSTALLUI_HANDLERA gUIHandlerA = NULL;
+INSTALLUI_HANDLERW gUIHandlerW = NULL;
+DWORD gUIFilter = 0;
+LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
 
 /*
@@ -1012,10 +1012,10 @@ INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
 INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler, 
                                   DWORD dwMessageFilter, LPVOID pvContext)
 {
-    INSTALLUI_HANDLERA prev = gUIHandler;
+    INSTALLUI_HANDLERA prev = gUIHandlerA;
 
     TRACE("%p %lx %p\n",puiHandler, dwMessageFilter,pvContext);
-    gUIHandler = puiHandler;
+    gUIHandlerA = puiHandler;
     gUIFilter = dwMessageFilter;
     gUIContext = pvContext;
 
@@ -1729,15 +1729,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
-
-        /* UI Initialization */
-        gUILevel = INSTALLUILEVEL_BASIC;
-        gUIhwnd = 0;
-        gUIHandler = NULL;
-        gUIFilter = 0;
-        gUIContext = NULL;
-        gszLogFile[0]=0;
-
         break;
     case DLL_PROCESS_DETACH:
         /* FIXME: Cleanup */
