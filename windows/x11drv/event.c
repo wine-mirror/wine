@@ -85,23 +85,23 @@ static const char * const event_names[] =
 static void EVENT_ProcessEvent( XEvent *event );
 
   /* Event handlers */
-static void EVENT_Key( WND *pWnd, XKeyEvent *event );
-static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event );
-static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event );
-static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event );
-static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event );
-static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event );
-static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
-static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
-static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event );
-static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
-static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
-static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
-static void EVENT_MapNotify( WND* wnd, XMapEvent *event );
-static void EVENT_UnmapNotify( WND* wnd, XUnmapEvent *event );
+static void EVENT_Key( HWND hWnd, XKeyEvent *event );
+static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event );
+static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event );
+static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event );
+static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event );
+static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event );
+static void EVENT_Expose( HWND hWnd, XExposeEvent *event );
+static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event );
+static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event );
+static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event);
+static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event);
+static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event );
+static void EVENT_MapNotify( HWND pWnd, XMapEvent *event );
+static void EVENT_UnmapNotify( HWND pWnd, XUnmapEvent *event );
 
 /* Usable only with OLVWM - compile option perhaps?
-static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
+static void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event );
 */
 
 static void EVENT_GetGeometry( Window win, int *px, int *py,
@@ -385,6 +385,7 @@ void X11DRV_EVENT_Synchronize()
 static void EVENT_ProcessEvent( XEvent *event )
 {
   WND *pWnd;
+  HWND hWnd;
 
   switch (event->type)
   {
@@ -419,28 +420,38 @@ static void EVENT_ProcessEvent( XEvent *event )
       pWnd = NULL;  /* Not for a registered window */
     }
   }
+
   WIN_LockWndPtr(pWnd);
   
+  if(!pWnd)
+      hWnd = 0;
+  else
+      hWnd = pWnd->hwndSelf;
+  
+      
   if ( !pWnd && event->xany.window != X11DRV_GetXRootWindow() )
       ERR( event, "Got event %s for unknown Window %08lx\n",
            event_names[event->type], event->xany.window );
   else
       TRACE( event, "Got event %s for hwnd %04x\n",
-	     event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
+	     event_names[event->type], hWnd );
+
+  WIN_ReleaseWndPtr(pWnd);
+
   
   switch(event->type)
     {
     case KeyPress:
     case KeyRelease:
-      EVENT_Key( pWnd, (XKeyEvent*)event );
+      EVENT_Key( hWnd, (XKeyEvent*)event );
       break;
       
     case ButtonPress:
-      EVENT_ButtonPress( pWnd, (XButtonEvent*)event );
+      EVENT_ButtonPress( hWnd, (XButtonEvent*)event );
       break;
       
     case ButtonRelease:
-      EVENT_ButtonRelease( pWnd, (XButtonEvent*)event );
+      EVENT_ButtonRelease( hWnd, (XButtonEvent*)event );
       break;
       
     case MotionNotify:
@@ -454,50 +465,50 @@ static void EVENT_ProcessEvent( XEvent *event )
       */
       while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
 				      MotionNotify, event));    
-      EVENT_MotionNotify( pWnd, (XMotionEvent*)event );
+      EVENT_MotionNotify( hWnd, (XMotionEvent*)event );
       break;
       
     case FocusIn:
-      if (!pWnd) return;
-      EVENT_FocusIn( pWnd, (XFocusChangeEvent*)event );
+      if (!hWnd) return;
+      EVENT_FocusIn( hWnd, (XFocusChangeEvent*)event );
       break;
       
     case FocusOut:
-      if (!pWnd) return;
-      EVENT_FocusOut( pWnd, (XFocusChangeEvent*)event );
+      if (!hWnd) return;
+      EVENT_FocusOut( hWnd, (XFocusChangeEvent*)event );
       break;
       
     case Expose:
-      EVENT_Expose( pWnd, (XExposeEvent *)event );
+      EVENT_Expose( hWnd, (XExposeEvent *)event );
       break;
       
     case GraphicsExpose:
-      EVENT_GraphicsExpose( pWnd, (XGraphicsExposeEvent *)event );
+      EVENT_GraphicsExpose( hWnd, (XGraphicsExposeEvent *)event );
       break;
       
     case ConfigureNotify:
-      if (!pWnd) return;
-      EVENT_ConfigureNotify( pWnd, (XConfigureEvent*)event );
+      if (!hWnd) return;
+      EVENT_ConfigureNotify( hWnd, (XConfigureEvent*)event );
       break;
 
     case SelectionRequest:
-      if (!pWnd) return;
-      EVENT_SelectionRequest( pWnd, (XSelectionRequestEvent *)event );
+      if (!hWnd) return;
+      EVENT_SelectionRequest( hWnd, (XSelectionRequestEvent *)event );
       break;
 
     case SelectionClear:
-      if (!pWnd) return;
-      EVENT_SelectionClear( pWnd, (XSelectionClearEvent*) event );
+      if (!hWnd) return;
+      EVENT_SelectionClear( hWnd, (XSelectionClearEvent*) event );
       break;
       
     case ClientMessage:
-      if (!pWnd) return;
-      EVENT_ClientMessage( pWnd, (XClientMessageEvent *) event );
+      if (!hWnd) return;
+      EVENT_ClientMessage( hWnd, (XClientMessageEvent *) event );
       break;
 
 #if 0
     case EnterNotify:
-      EVENT_EnterNotify( pWnd, (XCrossingEvent *) event );
+      EVENT_EnterNotify( hWnd, (XCrossingEvent *) event );
       break;
 #endif
 
@@ -505,21 +516,20 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
       
     case MapNotify:
-      if (!pWnd) return;
-      EVENT_MapNotify( pWnd, (XMapEvent *)event );
+      if (!hWnd) return;
+      EVENT_MapNotify( hWnd, (XMapEvent *)event );
       break;
 
     case UnmapNotify:
-      if (!pWnd) return;
-      EVENT_UnmapNotify( pWnd, (XUnmapEvent *)event );
+      if (!hWnd) return;
+      EVENT_UnmapNotify( hWnd, (XUnmapEvent *)event );
       break;
 
     default:    
       WARN(event, "Unprocessed event %s for hwnd %04x\n",
-	   event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
+	   event_names[event->type], hWnd );
       break;
     }
-  WIN_ReleaseWndPtr(pWnd);
 }
 
 /***********************************************************************
@@ -587,10 +597,11 @@ static unsigned __td_lookup( Window w, Window* list, unsigned max )
   return i;
 }
 
-static BOOL EVENT_QueryZOrder( WND* pWndCheck )
+static BOOL EVENT_QueryZOrder( HWND hWndCheck)
 {
   BOOL      bRet = FALSE;
   HWND      hwndInsertAfter = HWND_TOP;
+  WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
   WND      *pDesktop = WIN_GetDesktop();
   WND      *pWnd, *pWndZ = WIN_LockWndPtr(pDesktop->child);
   Window      w, parent, *children = NULL;
@@ -598,6 +609,7 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
   
   if( !__check_query_condition(&pWndZ, &pWnd) )
   {
+      WIN_ReleaseWndPtr(pWndCheck);
       WIN_ReleaseWndPtr(pDesktop->child);
       WIN_ReleaseDesktop();
       return TRUE;
@@ -650,9 +662,9 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
   if( children ) TSXFree( children );
   WIN_ReleaseWndPtr(pWnd);
   WIN_ReleaseWndPtr(pWndZ);
+  WIN_ReleaseWndPtr(pWndCheck);
   return bRet;
 }
-
 
 /***********************************************************************
  *           EVENT_XStateToKeyState
@@ -698,17 +710,19 @@ BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
 /***********************************************************************
  *           EVENT_Expose
  */
-static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
+static void EVENT_Expose( HWND hWnd, XExposeEvent *event )
 {
   RECT rect;
 
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   /* Make position relative to client area instead of window */
   rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
   rect.top    = event->y - (pWnd? (pWnd->rectClient.top - pWnd->rectWindow.top) : 0);
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
+  WIN_ReleaseWndPtr(pWnd);
  
-  Callout.RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+  Callout.RedrawWindow( hWnd, &rect, 0,
                           RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
                           (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -720,9 +734,10 @@ static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
  * This is needed when scrolling area is partially obscured
  * by non-Wine X window.
  */
-static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
+static void EVENT_GraphicsExpose( HWND hWnd, XGraphicsExposeEvent *event )
 {
   RECT rect;
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   
   /* Make position relative to client area instead of window */
   rect.left   = event->x - (pWnd? (pWnd->rectClient.left - pWnd->rectWindow.left) : 0);
@@ -730,7 +745,9 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
   rect.right  = rect.left + event->width;
   rect.bottom = rect.top + event->height;
   
-  Callout.RedrawWindow( pWnd? pWnd->hwndSelf : 0, &rect, 0,
+  WIN_ReleaseWndPtr(pWnd);
+  
+  Callout.RedrawWindow( hWnd, &rect, 0,
                           RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
                           (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -741,25 +758,30 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
  *
  * Handle a X key event
  */
-static void EVENT_Key( WND *pWnd, XKeyEvent *event )
+static void EVENT_Key( HWND hWnd, XKeyEvent *event )
 {
+    WND *pWnd = WIN_FindWndPtr(hWnd);
   X11DRV_KEYBOARD_HandleEvent( pWnd, event );
+    WIN_ReleaseWndPtr(pWnd);
+
 }
 
 
 /***********************************************************************
  *           EVENT_MotionNotify
  */
-static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
+static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
 {
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+  WIN_ReleaseWndPtr(pWnd);
 
   MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
 		   xOffset + event->x, yOffset + event->y,
 		   EVENT_XStateToKeyState( event->state ), 
 		   event->time - MSG_WineStartTicks,
-		   pWnd? pWnd->hwndSelf : 0 );
+		   hWnd);
 }
 
 
@@ -783,16 +805,19 @@ void X11DRV_EVENT_DummyMotionNotify(void)
 /***********************************************************************
  *           EVENT_ButtonPress
  */
-static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
+static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
 {
   static WORD statusCodes[NB_BUTTONS] = 
   { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN };
   int buttonNum = event->button - 1;
   
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
   WORD keystate;
   
+  WIN_ReleaseWndPtr(pWnd);
+
   if (buttonNum >= NB_BUTTONS) return;
   
   /*
@@ -821,22 +846,24 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
 		   xOffset + event->x, yOffset + event->y,
 		   keystate, 
 		   event->time - MSG_WineStartTicks,
-		   pWnd? pWnd->hwndSelf : 0 );
+		   hWnd);
 }
 
 
 /***********************************************************************
  *           EVENT_ButtonRelease
  */
-static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
+static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
 {
   static WORD statusCodes[NB_BUTTONS] = 
   { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTUP };
   int buttonNum = event->button - 1;
-  
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
   WORD keystate;
+  
+  WIN_ReleaseWndPtr(pWnd);
   
   if (buttonNum >= NB_BUTTONS) return;    
   
@@ -866,28 +893,26 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 		   xOffset + event->x, yOffset + event->y,
 		   keystate, 
 		   event->time - MSG_WineStartTicks,
-		   pWnd? pWnd->hwndSelf : 0 );
+		   hWnd);
 }
 
 
 /**********************************************************************
  *              EVENT_FocusIn
  */
-static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
+static void EVENT_FocusIn( HWND hWnd, XFocusChangeEvent *event )
 {
-  if (Options.managed) EVENT_QueryZOrder( pWnd );
+  if (Options.managed) EVENT_QueryZOrder( hWnd );
   
   if (event->detail != NotifyPointer)
     { 
-      HWND	hwnd = pWnd->hwndSelf;
-
-      if (hwnd != GetActiveWindow()) 
+      if (hWnd != GetActiveWindow())
         {
-	  WINPOS_ChangeActiveWindow( hwnd, FALSE );
+	  WINPOS_ChangeActiveWindow( hWnd, FALSE );
 	  X11DRV_KEYBOARD_UpdateState();
         }
-      if ((hwnd != GetFocus()) && !IsChild( hwnd, GetFocus()))
-            SetFocus( hwnd );
+      if ((hWnd != GetFocus()) && !IsChild( hWnd, GetFocus()))
+            SetFocus( hWnd );
     }
 }
 
@@ -897,18 +922,16 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
  *
  * Note: only top-level override-redirect windows get FocusOut events.
  */
-static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event )
+static void EVENT_FocusOut( HWND hWnd, XFocusChangeEvent *event )
 {
     if (event->detail != NotifyPointer)
     {
-        HWND	hwnd = pWnd->hwndSelf;
-
-        if (hwnd == GetActiveWindow()) 
+        if (hWnd == GetActiveWindow())
 	{
-	    SendMessageA( hwnd, WM_CANCELMODE, 0, 0 );
+	    SendMessageA( hWnd, WM_CANCELMODE, 0, 0 );
 	    WINPOS_ChangeActiveWindow( 0, FALSE );
 	}
-        if ((hwnd == GetFocus()) || IsChild( hwnd, GetFocus()))
+        if ((hWnd == GetFocus()) || IsChild( hWnd, GetFocus()))
 	    SetFocus( 0 );
     }
 }
@@ -971,7 +994,7 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
  * The ConfigureNotify event is only selected on top-level windows
  * when the -managed flag is used.
  */
-static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
+static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
 {
   WINDOWPOS winpos;
   RECT newWindowRect, newClientRect;
@@ -980,6 +1003,7 @@ static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
   int x, y;
   unsigned int width, height;
   
+  WND *pWnd = WIN_FindWndPtr(hWnd);
   assert (pWnd->flags & WIN_MANAGED);
   
   /* We don't rely on the event geometry info, because it is relative
@@ -993,7 +1017,7 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
 
   /* Fill WINDOWPOS struct */
   winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
-  winpos.hwnd = pWnd->hwndSelf;
+  winpos.hwnd = hWnd;
   winpos.x = x;
   winpos.y = y;
   winpos.cx = width;
@@ -1015,7 +1039,11 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
   /* Send WM_WINDOWPOSCHANGING */
   SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
 
-  if (!IsWindow( winpos.hwnd )) return;
+  if (!IsWindow( winpos.hwnd ))
+  {
+      WIN_ReleaseWndPtr(pWnd);
+      return;
+  }
   
   /* Calculate new position and size */
   newWindowRect.left = x;
@@ -1027,7 +1055,11 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
 			 &pWnd->rectWindow, &pWnd->rectClient,
 			 &winpos, &newClientRect );
   
-  if (!IsWindow( winpos.hwnd )) return;
+  if (!IsWindow( winpos.hwnd ))
+  {
+      WIN_ReleaseWndPtr(pWnd);
+      return;
+  }
   
   oldWindowRect = pWnd->rectWindow;
   oldClientRect = pWnd->rectClient;
@@ -1043,6 +1075,8 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
       RedrawWindow( winpos.hwnd, NULL, 0, RDW_FRAME | RDW_ALLCHILDREN |
                                           RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
 
+  WIN_ReleaseWndPtr(pWnd);
+
   SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
   
   if (!IsWindow( winpos.hwnd )) return;
@@ -1051,14 +1085,14 @@ TRACE(win, "%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf,
       WIN_UnlinkWindow( winpos.hwnd );
       WIN_LinkWindow( winpos.hwnd, HWND_BOTTOM);
     }
-  else EVENT_QueryZOrder( pWnd );	/* try to outsmart window manager */
+  else EVENT_QueryZOrder( hWnd );	/* try to outsmart window manager */
 }
 
 
 /***********************************************************************
  *           EVENT_SelectionRequest
  */
-static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
+static void EVENT_SelectionRequest( HWND hWnd, XSelectionRequestEvent *event )
 {
   XSelectionEvent result;
   Atom 	    rprop = None;
@@ -1084,7 +1118,7 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
       {
 	  /* open to make sure that clipboard is available */
 
-	  BOOL couldOpen = OpenClipboard( pWnd->hwndSelf );
+	  BOOL couldOpen = OpenClipboard( hWnd );
 	  char* lpstr = 0;
 	  
 	  hText = GetClipboardData16(CF_TEXT);
@@ -1131,10 +1165,10 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 /***********************************************************************
  *           EVENT_SelectionClear
  */
-static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
+static void EVENT_SelectionClear( HWND hWnd, XSelectionClearEvent *event )
 {
   if (event->selection != XA_PRIMARY) return;
-  X11DRV_CLIPBOARD_ReleaseSelection( event->window, pWnd->hwndSelf ); 
+  X11DRV_CLIPBOARD_ReleaseSelection( event->window, hWnd );
 }
 
 
@@ -1143,7 +1177,7 @@ static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
  *
  * don't know if it still works (last Changlog is from 96/11/04)
  */
-static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
+static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 {
   unsigned long		data_length;
   unsigned long		aux_long;
@@ -1163,14 +1197,17 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
   SEGPTR		spDragInfo = (SEGPTR) WIN16_GlobalLock16(hDragInfo);
   Window		w_aux_root, w_aux_child;
   WND*			pDropWnd;
+  WND*                  pWnd;
   
   if( !lpDragInfo || !spDragInfo ) return;
+  
+  pWnd = WIN_FindWndPtr(hWnd);
   
   TSXQueryPointer( display, X11DRV_WND_GetXWindow(pWnd), &w_aux_root, &w_aux_child, 
                    &x, &y, (int *) &u.pt_aux.x, (int *) &u.pt_aux.y,
                    (unsigned int*)&aux_long);
   
-  lpDragInfo->hScope = pWnd->hwndSelf;
+  lpDragInfo->hScope = hWnd;
   lpDragInfo->pt.x = (INT16)x; lpDragInfo->pt.y = (INT16)y;
   
   /* find out drop point and drop window */
@@ -1180,10 +1217,12 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
     {   bAccept = pWnd->dwExStyle & WS_EX_ACCEPTFILES; x = y = 0; }
   else
     {
-      bAccept = DRAG_QueryUpdate( pWnd->hwndSelf, spDragInfo, TRUE );
+      bAccept = DRAG_QueryUpdate( hWnd, spDragInfo, TRUE );
       x = lpDragInfo->pt.x; y = lpDragInfo->pt.y;
     }
   pDropWnd = WIN_FindWndPtr( lpDragInfo->hScope );
+  WIN_ReleaseWndPtr(pWnd);
+  
   GlobalFree16( hDragInfo );
   
   if( bAccept )
@@ -1244,7 +1283,7 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
 		      p += strlen(p) + 1;
 		    }
 		  *p_drop = '\0';
-		  PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
+		  PostMessage16( hWnd, WM_DROPFILES,
 				 (WPARAM16)hDrop, 0L );
 		}
 	    }
@@ -1264,9 +1303,10 @@ static void EVENT_DropFromOffiX( WND *pWnd, XClientMessageEvent *event )
  *
  * event->data.l[3], event->data.l[4] contains drop x,y position
  */
-static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
+static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 {
   WND           *pDropWnd;
+  WND           *pWnd;
   unsigned long	data_length;
   unsigned long	aux_long, drop_len = 0;
   unsigned char	*p_data = NULL; /* property data */
@@ -1283,10 +1323,15 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
     HDROP     h32;
   } hDrop;
 
+  pWnd = WIN_FindWndPtr(hWnd);
   drop32 = pWnd->flags & WIN_ISWIN32;
 
   if (!(pWnd->dwExStyle & WS_EX_ACCEPTFILES))
+  {
+    WIN_ReleaseWndPtr(pWnd);
     return;
+  }
+  WIN_ReleaseWndPtr(pWnd);
 
   TSXGetWindowProperty( display, DefaultRootWindow(display),
 			dndSelection, 0, 65535, FALSE,
@@ -1318,7 +1363,8 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
     if( drop_len && drop_len < 65535 ) {
       TSXQueryPointer( display, X11DRV_GetXRootWindow(), &u.w_aux, &u.w_aux, 
 		       &x, &y, &u.i, &u.i, &u.i);
-      pDropWnd = WIN_FindWndPtr( pWnd->hwndSelf );
+
+      pDropWnd = WIN_FindWndPtr( hWnd );
       
       if (drop32) {
 	LPDROPFILESTRUCT        lpDrop;
@@ -1389,11 +1435,11 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
 	   * PostMessage16 and WPARAM32 would be truncated to WPARAM16
 	   */
 	  GlobalUnlock(hDrop.h32);
-	  SendMessageA( pWnd->hwndSelf, WM_DROPFILES,
+	  SendMessageA( hWnd, WM_DROPFILES,
 			  (WPARAM)hDrop.h32, 0L );
 	} else {
 	  GlobalUnlock16(hDrop.h16);
-	  PostMessage16( pWnd->hwndSelf, WM_DROPFILES,
+	  PostMessage16( hWnd, WM_DROPFILES,
 			 (WPARAM16)hDrop.h16, 0L );
 	}
       }
@@ -1406,18 +1452,18 @@ static void EVENT_DropURLs( WND *pWnd, XClientMessageEvent *event )
 /**********************************************************************
  *           EVENT_ClientMessage
  */
-static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
+static void EVENT_ClientMessage( HWND hWnd, XClientMessageEvent *event )
 {
   if (event->message_type != None && event->format == 32) {
     if ((event->message_type == wmProtocols) && 
 	(((Atom) event->data.l[0]) == wmDeleteWindow))
-      SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
+      SendMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
     else if ( event->message_type == dndProtocol &&
 	      (event->data.l[0] == DndFile || event->data.l[0] == DndFiles) )
-      EVENT_DropFromOffiX(pWnd, event);
+      EVENT_DropFromOffiX(hWnd, event);
     else if ( event->message_type == dndProtocol &&
 	      event->data.l[0] == DndURL )
-      EVENT_DropURLs(pWnd, event);
+      EVENT_DropURLs(hWnd, event);
     else {
 #if 0
       /* enable this if you want to see the message */
@@ -1448,7 +1494,7 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
  * self-managed mode with private colormap
  */
 #if 0
-void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
+void EVENT_EnterNotify( HWND hWnd, XCrossingEvent *event )
 {
   if( !Options.managed && X11DRV_GetXRootWindow() == DefaultRootWindow(display) &&
       (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
@@ -1459,15 +1505,16 @@ void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
 /**********************************************************************
  *		EVENT_MapNotify
  */
-void EVENT_MapNotify( WND* wnd, XMapEvent *event )
+void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
 {
   HWND hwndFocus = GetFocus();
   WND *wndFocus = WIN_FindWndPtr(hwndFocus);
+  WND *pWnd = WIN_FindWndPtr(hWnd);
+  if (pWnd->flags & WIN_MANAGED)
+      pWnd->dwStyle &= ~WS_MINIMIZE;
+  WIN_ReleaseWndPtr(pWnd);
 
-  if (wnd->flags & WIN_MANAGED)
-      wnd->dwStyle &= ~WS_MINIMIZE;
-
-  if (hwndFocus && IsChild( wnd->hwndSelf, hwndFocus ))
+  if (hwndFocus && IsChild( hWnd, hwndFocus ))
       X11DRV_WND_SetFocus(wndFocus);
 
   WIN_ReleaseWndPtr(wndFocus);
@@ -1479,13 +1526,15 @@ void EVENT_MapNotify( WND* wnd, XMapEvent *event )
 /**********************************************************************
  *              EVENT_MapNotify
  */
-void EVENT_UnmapNotify( WND* wnd, XUnmapEvent *event )
+void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
 {
-  if (wnd->flags & WIN_MANAGED) 
+  WND *pWnd = WIN_FindWndPtr(hWnd);
+  if (pWnd->flags & WIN_MANAGED)
   {
       EndMenu();
-      wnd->dwStyle |= WS_MINIMIZE;
+      pWnd->dwStyle |= WS_MINIMIZE;
   }
+  WIN_ReleaseWndPtr(pWnd);
 }
 
 
