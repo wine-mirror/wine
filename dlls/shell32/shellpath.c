@@ -336,7 +336,7 @@ static BOOL PathIsExeW (LPCWSTR lpszPath)
 	
 	TRACE("path=%s\n",debugstr_w(lpszPath));
 
-	for(i=0; lpszExtensions[i]; i++)
+	for(i=0; lpszExtensions[i][0]; i++)
 	  if (!strcmpiW(lpszExtension,lpszExtensions[i])) return TRUE;
 	  
 	return FALSE;
