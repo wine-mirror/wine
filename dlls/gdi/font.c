@@ -1935,7 +1935,17 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
     UINT c;
 
     if(!(fuFormat & GGO_GLYPH_INDEX)) {
-        p = FONT_mbtowc(hdc, (char*)&uChar, 1, NULL, NULL);
+        int len;
+        char mbchs[2];
+        if(uChar > 0xff) { /* but, 2 bytes character only */
+            len = 2;
+            mbchs[0] = (uChar & 0xff00) >> 8;
+            mbchs[1] = (uChar & 0xff);
+        } else {
+            len = 1;
+            mbchs[0] = (uChar & 0xff);
+        }
+        p = FONT_mbtowc(hdc, mbchs, len, NULL, NULL);
 	c = p[0];
     } else
         c = uChar;
