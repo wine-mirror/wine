@@ -140,8 +140,6 @@ extern "C" {
 /* Standard data types. These are the same for emulator and library. */
 
 typedef void            VOID;
-typedef short           INT16;
-typedef unsigned short  UINT16;
 typedef int             INT;
 typedef unsigned int    UINT;
 typedef unsigned short  WORD;
@@ -155,7 +153,6 @@ typedef char            CHAR;
 typedef unsigned char   UCHAR;
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 typedef unsigned short  WCHAR;
-typedef unsigned short  BOOL16;
 typedef int             BOOL;
 typedef double          DATE;
 typedef double          DOUBLE;
@@ -170,18 +167,15 @@ typedef double          ULONGLONG;
  * they exist as void*. If there is a size difference between UINT and
  * void* then things get ugly.  */
 #ifdef STRICT
-typedef UINT16          HANDLE16;
 typedef VOID*           HANDLE;
 #else
-typedef UINT16          HANDLE16;
 typedef UINT            HANDLE;
 #endif
 
-typedef HANDLE16       *LPHANDLE16;
+
 typedef HANDLE         *LPHANDLE;
 
 /* Integer types. These are the same for emulator and library. */
-typedef UINT16          WPARAM16;
 typedef UINT            WPARAM;
 typedef LONG            LPARAM;
 typedef LONG            HRESULT;
@@ -222,8 +216,6 @@ typedef DWORD          *LPDWORD;
 typedef LONG           *LPLONG;
 typedef VOID           *LPVOID;
 typedef const VOID     *LPCVOID;
-typedef INT16          *LPINT16;
-typedef UINT16         *LPUINT16;
 typedef INT            *PINT;
 typedef INT            *LPINT;
 typedef UINT           *PUINT;
@@ -245,19 +237,11 @@ typedef void* SEGPTR;
 
 #ifdef STRICT
 #define DECLARE_HANDLE(a) \
-	typedef HANDLE16 a##16; \
-	typedef a##16 *P##a##16; \
-	typedef a##16 *NP##a##16; \
-	typedef a##16 *LP##a##16; \
 	typedef struct a##__ { int unused; } *a; \
 	typedef a *P##a; \
 	typedef a *LP##a
 #else /*STRICT*/
 #define DECLARE_HANDLE(a) \
-	typedef HANDLE16 a##16; \
-	typedef a##16 *P##a##16; \
-	typedef a##16 *NP##a##16; \
-	typedef a##16 *LP##a##16; \
 	typedef HANDLE a; \
 	typedef a *P##a; \
 	typedef a *LP##a
@@ -312,11 +296,7 @@ DECLARE_HANDLE(HRASCONN);
 
 /* Handle types that must remain interchangeable even with strict on */
 
-typedef HINSTANCE16 HMODULE16;
 typedef HINSTANCE HMODULE;
-typedef HANDLE16 HGDIOBJ16;
-typedef HANDLE16 HGLOBAL16;
-typedef HANDLE16 HLOCAL16;
 typedef HANDLE HGDIOBJ;
 typedef HANDLE HGLOBAL;
 typedef HANDLE HLOCAL;
@@ -326,23 +306,15 @@ typedef HANDLE HLOCAL;
 typedef BOOL    (CALLBACK* DATEFMT_ENUMPROCA)(LPSTR);
 typedef BOOL    (CALLBACK* DATEFMT_ENUMPROCW)(LPWSTR);
 DECL_WINELIB_TYPE_AW(DATEFMT_ENUMPROC)
-typedef BOOL16  (CALLBACK *DLGPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef BOOL    (CALLBACK *DLGPROC)(HWND,UINT,WPARAM,LPARAM);
-typedef LRESULT (CALLBACK *DRIVERPROC16)(DWORD,HDRVR16,UINT16,LPARAM,LPARAM);
 typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
-typedef INT16   (CALLBACK *EDITWORDBREAKPROC16)(LPSTR,INT16,INT16,INT16);
 typedef INT     (CALLBACK *EDITWORDBREAKPROCA)(LPSTR,INT,INT,INT);
 typedef INT     (CALLBACK *EDITWORDBREAKPROCW)(LPWSTR,INT,INT,INT);
 DECL_WINELIB_TYPE_AW(EDITWORDBREAKPROC)
-typedef LRESULT (CALLBACK *FARPROC16)();
 typedef LRESULT (CALLBACK *FARPROC)();
-typedef INT16   (CALLBACK *PROC16)();
 typedef INT     (CALLBACK *PROC)();
-typedef BOOL16  (CALLBACK *GRAYSTRINGPROC16)(HDC16,LPARAM,INT16);
 typedef BOOL    (CALLBACK *GRAYSTRINGPROC)(HDC,LPARAM,INT);
-typedef LRESULT (CALLBACK *HOOKPROC16)(INT16,WPARAM16,LPARAM);
 typedef LRESULT (CALLBACK *HOOKPROC)(INT,WPARAM,LPARAM);
-typedef BOOL16  (CALLBACK *PROPENUMPROC16)(HWND16,SEGPTR,HANDLE16);
 typedef BOOL    (CALLBACK *PROPENUMPROCA)(HWND,LPCSTR,HANDLE);
 typedef BOOL    (CALLBACK *PROPENUMPROCW)(HWND,LPCWSTR,HANDLE);
 DECL_WINELIB_TYPE_AW(PROPENUMPROC)
@@ -352,12 +324,15 @@ DECL_WINELIB_TYPE_AW(PROPENUMPROCEX)
 typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCA)(LPSTR);
 typedef BOOL    (CALLBACK* TIMEFMT_ENUMPROCW)(LPWSTR);
 DECL_WINELIB_TYPE_AW(TIMEFMT_ENUMPROC)
-typedef VOID    (CALLBACK *TIMERPROC16)(HWND16,UINT16,UINT16,DWORD);
 typedef VOID    (CALLBACK *TIMERPROC)(HWND,UINT,UINT,DWORD);
-typedef LRESULT (CALLBACK *WNDENUMPROC16)(HWND16,LPARAM);
 typedef LRESULT (CALLBACK *WNDENUMPROC)(HWND,LPARAM);
-typedef LRESULT (CALLBACK *WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
+
+/*----------------------------------------------------------------------------
+** FIXME:  Better isolate Wine's reliance on the xxx16 type definitions.
+**         For now, we just isolate them to make the situation clear.
+**--------------------------------------------------------------------------*/
+#include "wine/windef16.h"
 
 /* Define some empty macros for compatibility with Windows code. */
 
@@ -472,13 +447,6 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 #define HFILE_ERROR     ((HFILE)-1)
 
 /* The SIZE structure */
-
-typedef struct
-{
-    INT16  cx;
-    INT16  cy;
-} SIZE16, *PSIZE16, *LPSIZE16;
-
 typedef struct tagSIZE
 {
     INT  cx;
@@ -494,13 +462,6 @@ typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
             ((s16)->cx = (INT16)(s32)->cx, (s16)->cy = (INT16)(s32)->cy)
 
 /* The POINT structure */
-
-typedef struct
-{
-    INT16  x;
-    INT16  y;
-} POINT16, *PPOINT16, *LPPOINT16;
-
 typedef struct tagPOINT
 {
     LONG  x;
@@ -533,15 +494,6 @@ typedef struct tagPOINTS
 
 
 /* The RECT structure */
-
-typedef struct
-{
-    INT16  left;
-    INT16  top;
-    INT16  right;
-    INT16  bottom;
-} RECT16, *LPRECT16;
-
 typedef struct tagRECT
 {
     INT  left;
