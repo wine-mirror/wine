@@ -639,10 +639,12 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
     UINT comboID = (lppd->Flags & PD_PRINTSETUP) ? cmb1 : cmb4;
 
     /* load Collate ICONs */
+    /* We load these with LoadImage becasue they are not a standard
+       size and we don't want them rescaled */
     PrintStructures->hCollateIcon =
-      LoadIconA(COMDLG32_hInstance, "PD32_COLLATE");
+      LoadImageA(COMDLG32_hInstance, "PD32_COLLATE", IMAGE_ICON, 0, 0, 0);
     PrintStructures->hNoCollateIcon = 
-      LoadIconA(COMDLG32_hInstance, "PD32_NOCOLLATE");
+      LoadImageA(COMDLG32_hInstance, "PD32_NOCOLLATE", IMAGE_ICON, 0, 0, 0);
     if(PrintStructures->hCollateIcon == 0 ||
        PrintStructures->hNoCollateIcon == 0) {
         ERR("no icon in resourcefile\n");
