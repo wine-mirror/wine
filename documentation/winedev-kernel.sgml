@@ -238,7 +238,7 @@ if (res != ERROR_SUCCESS) return res;
 	    thread. On recent versions of Linux the __thread keyword
 	    provides a convenient interface to this functionality - a
 	    more portable API is exposed in the pthread
-	    library. However, these facilities is not used by Wine,
+	    library. However, these facilities are not used by Wine,
 	    rather, we implement Win32 TLS entirely ourselves.
 	  </para>
 	</sect3>
@@ -295,13 +295,13 @@ if (res != ERROR_SUCCESS) return res;
 
 	  <para>
 	    Let's start with a bit of history. Back in the dark ages
-	    when Wines threading support was first implemented a
+	    when Wine's threading support was first implemented a
 	    problem was faced - Windows had much more capable
 	    threading APIs than Linux did. This presented a problem -
 	    Wine works either by reimplementing an API entirely or by
 	    mapping it onto the underlying systems equivalent. How
 	    could Win32 threading be implemented using a library which
-	    did not have all the neeed features? The answer, of
+	    did not have all the needed features? The answer, of
 	    course, was that it couldn't be.
 	  </para>
 
@@ -338,14 +338,14 @@ if (res != ERROR_SUCCESS) return res;
 	  </para>
 
 	  <para>
-	    The solution was simple yet ingenius: Wine would provide
+	    The solution was simple yet ingenious: Wine would provide
 	    its own implementation of the pthread library
 	    <emphasis>inside</emphasis> its own binary. Due to the
-	    semantics of ELF symbol scoping, this would cause Wines
-	    own implementations to override any implementation loaded
+	    semantics of ELF symbol scoping, this would cause Wine's
+	    own implementation to override any implementation loaded
 	    later on (like the real libpthread.so). Therefore, any
 	    calls to the pthread APIs in external libraries would be
-	    linked to Wines instead of the systems pthreads library,
+	    linked to Wine's instead of the system's pthreads library,
 	    and Wine implemented pthreads by using the standard
 	    Windows threading APIs it in turn implemented itself.
 	  </para>
@@ -366,7 +366,7 @@ if (res != ERROR_SUCCESS) return res;
 	  <para>
 	    The fake pthread implementation can be found in
 	    <filename>loader/kthread.c</filename>, which is used to
-	    produce to wine-kthread binary. In contrast,
+	    produce the wine-kthread binary. In contrast,
 	    loader/pthread.c produces the wine-pthread binary which is
 	    used on newer NPTL systems.
 	  </para>
