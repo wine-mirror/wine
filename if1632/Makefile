@@ -16,7 +16,7 @@ if1632.o: $(OBJS)
 	$(LD) -r -o if1632.o $(OBJS)
 
 clean:
-	rm -f *.o *~ *.s dll_* *.a
+	rm -f *.o *~ *.s dll_* *.a *#
 
 dll_kernel.S dll_kernel_tab.c: ../tools/build kernel.spec
 	../tools/build kernel.spec

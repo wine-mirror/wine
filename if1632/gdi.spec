@@ -131,6 +131,7 @@ length	490
 346 pascal SetTextAlign(word word) SetTextAlign(1 2)
 348 pascal Chord(word s_word s_word s_word s_word s_word s_word s_word s_word)
 	   Chord(1 2 3 4 5 6 7 8 9)
+350 pascal GetCharWidth(word word word ptr) GetCharWidth(1 2 3 4)
 360 pascal CreatePalette(ptr) CreatePalette(1)
 363 pascal GetPaletteEntries(word word word ptr) GetPaletteEntries(1 2 3 4)
 364 pascal SetPaletteEntries(word word word ptr) SetPaletteEntries(1 2 3 4)

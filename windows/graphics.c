@@ -365,3 +365,79 @@ BOOL FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
     SelectObject( hdc, prevBrush );
     return retval;
 }
+
+
+/***********************************************************************
+ *           DrawFocusRect    (GDI.466)
+ */
+void DrawFocusRect( HDC hdc, LPRECT rc )
+{
+    HPEN hPen, hOldPen;
+    int oldDrawMode, oldBkMode;
+    int left, top, right, bottom;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return;
+
+    left   = XLPTODP( dc, rc->left );
+    top    = YLPTODP( dc, rc->top );
+    right  = XLPTODP( dc, rc->right );
+    bottom = YLPTODP( dc, rc->bottom );
+    
+    hPen = CreatePen(PS_DOT, 1, GetSysColor(COLOR_WINDOWTEXT)); 
+    hOldPen = (HPEN)SelectObject(hdc, (HANDLE)hPen);
+/*    oldDrawMode = SetROP2(hdc, R2_XORPEN);  */
+    oldBkMode = SetBkMode(hdc, TRANSPARENT);
+
+    if (DC_SetupGCForPen( dc ))
+	XDrawRectangle( XT_display, dc->u.x.drawable, dc->u.x.gc,
+		        left, top, right-left-1, bottom-top-1 );
+
+    SetBkMode(hdc, oldBkMode);
+/*    SetROP2(hdc, oldDrawMode);  */
+    SelectObject(hdc, (HANDLE)hOldPen);
+    DeleteObject((HANDLE)hPen);
+}
+
+
+/**********************************************************************
+ *          Line  (Not a MSWin Call)
+ */
+void Line(HDC hDC, int X1, int Y1, int X2, int Y2)
+{
+MoveTo(hDC, X1, Y1);
+LineTo(hDC, X2, Y2);
+}
+
+
+/**********************************************************************
+ *          DrawReliefRect  (Not a MSWin Call)
+ */
+ void DrawReliefRect(HDC hDC, RECT rect, int ThickNess, int Mode)
+{
+HPEN   hWHITEPen;
+HPEN   hDKGRAYPen;
+HPEN   hOldPen;
+int    OldColor;
+rect.right--;  rect.bottom--;
+hDKGRAYPen = CreatePen(PS_SOLID, 1, 0x00808080L);
+hWHITEPen = GetStockObject(WHITE_PEN);
+hOldPen = SelectObject(hDC, hWHITEPen);
+while(ThickNess > 0) {
+    if (Mode == 0)
+	SelectObject(hDC, hWHITEPen);
+    else
+	SelectObject(hDC, hDKGRAYPen);
+    Line(hDC, rect.left, rect.top, rect.right, rect.top);
+    Line(hDC, rect.left, rect.top, rect.left, rect.bottom + 1);
+    if (Mode == 0)
+	SelectObject(hDC, hDKGRAYPen);
+    else
+	SelectObject(hDC, hWHITEPen);
+    Line(hDC, rect.right, rect.bottom, rect.left, rect.bottom);
+    Line(hDC, rect.right, rect.bottom, rect.right, rect.top - 1);
+    InflateRect(&rect, -1, -1);
+    ThickNess--;
+    }
+SelectObject(hDC, hOldPen);
+DeleteObject(hDKGRAYPen);
+}

@@ -104,6 +104,7 @@ CALLBACK_MakeProcInstance(void *func, int instance)
     tp->thunk[4] = 0xd8;
     tp->thunk[5] = 0xea;
     memcpy(&tp->thunk[6], &func, 4);
+    tp->used = 1;
 
     return tp->thunk;
 }
@@ -141,9 +142,6 @@ LONG CallWindowProc( FARPROC func, HWND hwnd, WORD message,
 	PushOn16( CALLBACK_SIZE_WORD, message );
 	PushOn16( CALLBACK_SIZE_WORD, wParam );
 	PushOn16( CALLBACK_SIZE_LONG, lParam );
-
-	printf("%8.8x(%4.4x, %4.4x, %4.4x, %8.8x)\n", func, hwnd, message, wParam, lParam);
-
 	return CallTo16((unsigned int) func, 
 			FindDataSegmentForCode((unsigned long) func));   
     }

@@ -1,0 +1,23 @@
+;**********************************************************************
+;*               Copyright (c) 1991 by TRG ELECTRONIK                 *
+;**********************************************************************
+
+
+NAME         WineTest
+DESCRIPTION  'Drink Inventry Controler'
+STUB         'WINSTUB.EXE'
+CODE         PRELOAD MOVEABLE DISCARDABLE
+DATA         PRELOAD MOVEABLE MULTIPLE
+EXETYPE      WINDOWS
+SEGMENTS
+       DRINK_TEXT  PRELOAD MOVEABLE DISCARDABLE
+
+HEAPSIZE     20000
+STACKSIZE    8192
+
+EXPORTS      WndProc             @1
+             About_Proc          @3
+
+
+
+

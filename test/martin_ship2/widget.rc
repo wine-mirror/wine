@@ -1,0 +1,78 @@
+/**********************************************************************
+ *               Copyright (c) 1991 by TRG ELECTRONIK                 *
+ *                                                                    *
+ *                            widget.RC                               *
+ * 		          widget RESSOURCES               	      *
+ *                                                                    *
+ **********************************************************************/
+
+#include <\BC\INCLUDE\WINDOWS.H>
+#include "widget.H"
+
+#define TABGRP      WS_TABSTOP | WS_GROUP
+#define LBSTYLES    WS_VSCROLL | WS_BORDER | WS_VISIBLE | LBS_SORT | TABGRP
+#define HSCROLL     WS_VISIBLE | SBS_HORZ | SBS_TOPALIGN    | TABGRP
+#define VSCROLL     WS_VISIBLE | SBS_VERT | SBS_LEFTALIGN   | TABGRP
+#define BLACKRECT   SS_BLACKRECT  | WS_VISIBLE | WS_GROUP
+#define WHITEFRAME  SS_WHITEFRAME | WS_VISIBLE | WS_GROUP
+
+
+ICON_1  ICON widget.ICO
+ICON_2  ICON widget.IC2
+ICON_3  ICON widget.IC3
+
+MENU_1 MENU
+BEGIN
+  POPUP "&File"
+  BEGIN
+    MENUITEM "&New",           MID_NEW
+    MENUITEM "&Open",          MID_OPEN
+    MENUITEM "&Save",          MID_SAVE
+    MENUITEM "Save &As",       MID_SAVEAS
+    MENUITEM SEPARATOR
+    MENUITEM "&Quit!",         MID_QUIT
+  END
+END
+
+
+
+
+ABOUT_Dlg DIALOG 100, 100, 154,  75
+STYLE WS_POPUP | WS_DLGFRAME
+BEGIN
+  ICON  "widget"                    -1,                                                       9,  23,   0,   0
+  ICON  "DKICON2"                    -1,                                                      30,  23,   0,   0
+  ICON  "DKICON3"                    -1,                                                      50,  23,   0,   0
+  CTEXT "About widget Inventory Controler"     -1,  0, 14,154, 8
+  CTEXT "Version 0.50"                        -1, 30, 34, 94, 8
+  CTEXT "Copyright © 1991, TRG Electronik"  -1,  0, 47,154, 9
+  DEFPUSHBUTTON "Ok"                        IDOK, 61, 59, 32, 14, WS_GROUP
+END
+
+
+LTEXTOK_Dlg DIALOG 100, 100, 300, 120
+STYLE  WS_POPUP | WS_DLGFRAME
+BEGIN
+  LTEXT "",                            IDDTXT1,   20, 15,118, 12
+  LTEXT "",                            IDDTXT2,   20, 30,118, 25
+  LTEXT "",                            IDDTXT3,   20, 45,118, 35
+  LTEXT "",                            IDDTXT3,   20, 60,118, 35
+  DEFPUSHBUTTON "OK",                  IDOK,     150, 85, 40, 14, TABGRP
+END
+
+
+STRINGTABLE
+BEGIN
+IDDSTR1,    "Wine Test Program"
+IDDSTR2,    ""
+IDDSTR3,    ""
+IDDSTR4,    ""
+IDDSTR5,    ""
+IDDSTR6,    ""
+IDDSTR7,    ""
+IDDSTR8,    ""
+IDDSTR9,    ""
+IDDSTR10,   ""
+END
+
+

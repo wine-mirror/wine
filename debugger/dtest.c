@@ -56,25 +56,16 @@ main(){
 	char * pnt;
 #ifdef linux
 	segv_act.sa_handler = (__sighandler_t) win_fault;
-	/* Point to the top of the stack, minus 4 just in case, and make
-	   it aligned  */
 	sigaction(SIGSEGV, &segv_act, NULL);
 #endif
 #ifdef __NetBSD__
-        struct sigstack ss;
         sigset_t sig_mask;
         
-        ss.ss_sp = (char *) (((unsigned int)(cstack + sizeof(cstack) - 4)) & ~3);
-        ss.ss_onstack = 0;
-        if (sigstack(&ss, NULL) < 0) {
-                perror("sigstack");
-                exit(1);
-        }
         sigemptyset(&sig_mask);
         segv_act.sa_handler = (__sighandler_t) win_fault;
-	segv_act.sa_flags = SA_ONSTACK;
+	segv_act.sa_flags = 0;
         segv_act.sa_mask = sig_mask;
-	if (sigaction(SIGBUS, &segv_act, NULL) < 0) {
+	if (sigaction(SIGSEGV, &segv_act, NULL) < 0) {
                 perror("sigaction");
                 exit(1);
         }

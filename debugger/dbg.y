@@ -115,7 +115,7 @@ wine_debug(int * regs)
 	yyin = stdin;
 	regval = regs;
 
-	/* This only works for linux - NetBSD will need something different here. */
+#ifdef linux        
 	if((SC_CS & 7) != 7) {
 		dbg_mask = 0xffffffff;
 		dbg_mode = 32;
@@ -123,6 +123,16 @@ wine_debug(int * regs)
 		dbg_mask = 0xffff;
 		dbg_mode = 16;
 	};
+#endif
+#ifdef __NetBSD__
+	if(SC_CS == 0x1f) {
+		dbg_mask = 0xffffffff;
+		dbg_mode = 32;
+	} else {
+		dbg_mask = 0xffff;
+		dbg_mode = 16;
+	};
+#endif
 
 	/* This is intended to read the entry points from the Windows image, and
 	   insert them in the hash table.  It does not work yet, so it is commented out. */

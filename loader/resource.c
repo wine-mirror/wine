@@ -211,6 +211,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     if (read(ResourceFd, &size_shift, sizeof(size_shift)) != 
 	sizeof(size_shift))
     {
+    	printf("FindResourceByName (%s) bad block size !\n", resource_name);
 	return -1;
     }
     
@@ -223,6 +224,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	if (read(ResourceFd, &typeinfo, sizeof(typeinfo)) !=
 	    sizeof(typeinfo))
 	{
+	    printf("FindResourceByName (%s) bad typeinfo size !\n", resource_name);
 	    return -1;
 	}
 	if (typeinfo.type_id == type_id || type_id == -1)
@@ -232,6 +234,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
 		    sizeof(nameinfo))
 		{
+		    printf("FindResourceByName (%s) bad nameinfo size !\n", resource_name);
 		    return -1;
 		}
 
@@ -245,7 +248,6 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 		read(ResourceFd, name, nbytes);
 		lseek(ResourceFd, old_pos, SEEK_SET);
 		name[nbytes] = '\0';
-
 		if (strcasecmp(name, resource_name) == 0)
 		{
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
@@ -254,6 +256,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 	    }
 	}
     }
+    printf("FindResourceByName (%s) typeinfo.type_id = 0 !\n", resource_name);
     
     return -1;
 }
@@ -373,7 +376,6 @@ RSC_LoadResource(int instance, char *rsc_name, int type, int *image_size_ret)
     image_size = nameinfo.length << size_shift;
     if (image_size_ret != NULL)
 	*image_size_ret = image_size;
-    
     hmem = GlobalAlloc(GMEM_MOVEABLE, image_size);
     image = GlobalLock(hmem);
     if (image == NULL || read(ResourceFd, image, image_size) != image_size)
@@ -443,6 +445,7 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 {
     HBITMAP hbitmap;
     HANDLE rsc_mem;
+    GDIOBJHDR * ptr;
     HDC hdc;
     long *lp;
     int image_size;
@@ -462,7 +465,6 @@ LoadBitmap(HANDLE instance, LPSTR bmp_name)
 	GlobalFree(rsc_mem);
 	return 0;
     }
-
     if (*lp == sizeof(BITMAPCOREHEADER))
 	hbitmap = ConvertCoreBitmap( hdc, (BITMAPCOREHEADER *) lp );
     else if (*lp == sizeof(BITMAPINFOHEADER))

@@ -48,22 +48,15 @@ extern Colormap COLOR_WinColormap;
 
 void SYSCOLOR_Init()
 {
-    Colormap map;
     XColor color;
     int i;
 
-    if ((map == COLOR_WinColormap) == CopyFromParent)
-	map = DefaultColormapOfScreen(XT_screen);
-
     for (i = 0; i < NUM_SYS_COLORS; i++)
     {
-	if (XParseColor(XT_display, map, DefSysColors[i], &color))
+	if (XParseColor(XT_display, COLOR_WinColormap, DefSysColors[i], &color))
 	{
-	    if (XAllocColor(XT_display, map, &color))
-	    {
-		SysColors[i] = RGB(color.red >> 8, color.green >> 8,
-				                    color.blue >> 8);
-	    }
+	    SysColors[i] = RGB(color.red >> 8, color.green >> 8,
+			       color.blue >> 8);
 	}
     }
 }
@@ -88,28 +81,11 @@ COLORREF GetSysColor(short nIndex)
 
 void SetSysColors(int nChanges, LPINT lpSysColor, COLORREF *lpColorValues)
 {
-    Colormap map;
-    XColor color;
-    char colorStr[8];
     int i;
-
-    if ((map == COLOR_WinColormap) == CopyFromParent)
-	map = DefaultColormapOfScreen(XT_screen);
 
     for (i = 0; i < nChanges; i++)
     {
-	sprintf(colorStr, "#%2.2x%2.2x%2.2x", GetRValue(lpColorValues[i]),
-		GetGValue(lpColorValues[i]), GetBValue(lpColorValues[i]));
-
-	if (XParseColor(XT_display, map, colorStr, &color))
-	{
-	    if (XAllocColor(XT_display, map, &color))
-	    {
-		SysColors[lpSysColor[i]] = RGB(color.red >> 8, 
-						color.green >> 8,
-						color.blue >> 8);
-	    }
-	}
+	SysColors[lpSysColor[i]] = lpColorValues[i];
     }
 
     /* Send WM_SYSCOLORCHANGE message to all windows */

@@ -7,23 +7,22 @@
 
 struct
 {
-        long    style;
-        char    *text;
+	long    style;
+	char    *text;
 }
 button[] =
 {
-        BS_PUSHBUTTON,          "PUSHBUTTON",
-        BS_DEFPUSHBUTTON,       "DEFPUSHBUTTON",
-/*        BS_CHECKBOX,            "CHECKBOX",
-        BS_AUTOCHECKBOX,        "AUTOCHECKBOX",
-        BS_RADIOBUTTON,         "RADIOBUTTON",
-        BS_3STATE,              "3STATE",
-        BS_AUTO3STATE,          "AUTO3STATE",
-        BS_GROUPBOX,            "GROUPBOX",
-        BS_USERBUTTON,          "USERBUTTON",
-        BS_AUTORADIOBUTTON,     "AUTORADIOBUTTON",
-        BS_PUSHBOX,             "PUSHBOX"
-*/};
+	BS_PUSHBUTTON,          "PUSHBUTTON",
+	BS_DEFPUSHBUTTON,       "DEFPUSHBUTTON",
+	BS_CHECKBOX,            "CHECKBOX",
+	BS_AUTOCHECKBOX,        "AUTOCHECKBOX",
+	BS_RADIOBUTTON,         "RADIOBUTTON",
+	BS_3STATE,              "3STATE",
+	BS_AUTO3STATE,          "AUTO3STATE",
+	BS_GROUPBOX,            "GROUPBOX",
+	BS_USERBUTTON,          "USERBUTTON",
+	BS_AUTORADIOBUTTON,     "AUTORADIOBUTTON"
+};
 
 #define NUM (sizeof button / sizeof button[0])
 
@@ -72,18 +71,18 @@ int PASCAL WinMain(HANDLE hInstance, HANDLE hPrevInstance,
 
 long FAR PASCAL _export WndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 {
-        static char szPrm[]    = "wParam      LOWORD(lParam)  HIWORD(lParam)",
-                    szTop[]    = "Control ID  Window Handle   Notification",
-                    szUnd[]    = "__________  _____________   ____________",
-                    szFormat[] = " %5u          %4X          %5u",
-                    szBuffer[50];
-        static HWND hwndButton[NUM];
-        static RECT rect;
-        static int  cxChar, cyChar;
+	static char szPrm[]    = "wParam      LOWORD(lParam)  HIWORD(lParam)",
+		    szTop[]    = "Control ID  Window Handle   Notification",
+		    szUnd[]    = "__________  _____________   ____________",
+		    szFormat[] = " %5u          %4X          %5u",
+		    szBuffer[50];
+	static HWND hwndButton[NUM];
+	static RECT rect;
+	static int  cxChar, cyChar;
 	HDC         hdc;
 	PAINTSTRUCT ps;
-        int         i;
-        TEXTMETRIC  tm;
+	int         i;
+	TEXTMETRIC  tm;
 
 	switch (message)
 	{

@@ -39,6 +39,10 @@ struct mz_header_s *CurrentMZHeader;
 struct ne_header_s *CurrentNEHeader;
 int CurrentNEFile;
 
+static char *dllExtensions[] = { "dll", "exe", NULL };
+static char *exeExtensions[] = { "exe", NULL };
+static char *WinePath = NULL;
+
 /**********************************************************************
  *					DebugPrintString
  */
@@ -215,39 +219,23 @@ LoadImage(char * filename,  char * modulename)
      */
     for(i=0; i<wpnt->ne_header->n_mod_ref_tab; i++){
       char buff[14];
-      char buff2[14];
+      char buff2[256];
       int  fd, j;
       GetModuleName(wpnt, i + 1, buff);
       
       if(FindDLLTable(buff)) continue;  /* This module already loaded */
 
-      /* The next trick is to convert the case, and add the .dll
-       * extension if required to find the actual library.  We may want
-       * to use a search path at some point as well. */
-
-      /*  First try  the straight name */
-       strcpy(buff2, buff);
-      if(fd = open(buff2, O_RDONLY)  >= 0) {
-	close(fd);
-	LoadImage(buff2, buff);
-	continue;
-      };
-
-      /* OK, that did not work,  try making it lower-case, and add the .dll
-	 extension */
-
-      for(j=0;  j<strlen(buff2);  j++)  
-	if(buff2[j] >= 'A' && buff2[j] <= 'Z')  buff2[j] |= 0x20;
-      strcat(buff2, ".dll");
-      
-      if(fd = open(buff2, O_RDONLY)  >= 0) {
-	close(fd);
-	LoadImage(buff2, buff);
-	continue;
-      };
+      if (FindFileInPath(buff2, sizeof(buff2), 
+			 buff, dllExtensions, WinePath) != NULL &&
+	  (fd = open(buff2, O_RDONLY)) >= 0)
+      {
+	  close(fd);
+	  LoadImage(buff2, buff);
+	  continue;
+      }
 
       fprintf(stderr,"Unable to load:%s\n",  buff);
-    };
+    }
 }
 
 
@@ -257,6 +245,8 @@ LoadImage(char * filename,  char * modulename)
 _WinMain(int argc, char **argv)
 {
 	int segment;
+	char *p;
+	char exe_path[256];
 #ifdef WINESTAT
 	char * cp;
 #endif
@@ -273,8 +263,21 @@ _WinMain(int argc, char **argv)
 		fprintf(stderr, "usage: %s FILENAME\n", argv[0]);
 		exit(1);
 	}
+
+	p = getenv("WINEPATH");
+	WinePath = malloc(256 + strlen(p));
+	getcwd(WinePath, 256);
+	strcat(WinePath, ";");
+	strcat(WinePath, p);
+
+	if (FindFileInPath(exe_path, 256, argv[1], exeExtensions, WinePath)
+	    == NULL)
+	{
+	    fprintf(stderr, "Could not find file '%s'\n", argv[1]);
+	    exit(1);
+	}
 	
-	LoadImage(argv[1], NULL);
+	LoadImage(exe_path, NULL);
 	
 	if(ran_out) exit(1);
 #ifdef DEBUG

@@ -20,7 +20,6 @@ extern int i386_set_ldt(int, union descriptor *, int);
 struct segment_descriptor *
 make_sd(unsigned base, unsigned limit, int contents, int read_exec_only, int seg32, int inpgs)
 {
-#if 1
         static long d[2];
 
         d[0] = ((base & 0x0000ffff) << 16) |
@@ -34,24 +33,7 @@ make_sd(unsigned base, unsigned limit, int contents, int read_exec_only, int seg
                                                         (inpgs << 23) |
                                                                 0xf000;
         
-        printf("%x %x\n", d[1], d[0]);
-        
         return ((struct segment_descriptor *)d);
-#else        
-        static struct segment_descriptor d;
-
-        d.sd_lolimit = limit & 0x0000ffff;
-        d.sd_lobase  = base & 0x00ffffff;
-        d.sd_type    = contents & 0x01f;
-        d.sd_dpl     = SEL_UPL & 0x3;
-        d.sd_p       = 1;
-        d.sd_hilimit = (limit & 0x00ff0000) >> 16;
-        d.sd_xx      = 0;
-        d.sd_def32   = seg32?1:0;
-        d.sd_gran    = inpgs?1:0;
-        d.sd_hibase  = (base & 0xff000000) >> 24;
-        return ((struct segment_descriptor *)&d);
-#endif
 }
 #endif
         
@@ -88,7 +70,7 @@ set_ldt_entry(int entry, unsigned long base, unsigned int limit,
     struct segment_descriptor *sd;
     int ret;
     
-#ifdef DEBUG
+#ifdef DEBUG_LDT
     printf("set_ldt_entry: entry=%x base=%x limit=%x%s %s-bit contents=%d %s\n",
            entry, base, limit, limit_in_pages_flag?"-pages":"",
            seg_32bit_flag?"32":"16",

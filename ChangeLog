@@ -1,3 +1,205 @@
+Mon Nov  1 14:40:21 1993  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [if1632/user.spec]
+	Removed some duplicate entries.
+
+	* [include/dialog.h] [windows/dialog.c]
+	Implemented dialog units and fonts.
+	Added preliminary loading of dialog resources.
+	Preliminary implementation of DialogBox().
+	Implemented Get/SetDlgItem* functions.
+
+	* [windows/win.c]
+	Implemented WM_PARENTNOTIFY message.
+	Implemented CreateWindowEx() and GetWindow().
+	Completed DestroyWindow().
+
+Mon Nov  1 18:19:34 1993  Erik Bos
+
+	* [loader/signal.c]
+	Added support for int 0x11 & 0x12.
+
+        * [loader/int21.c]
+	Improved function handling.
+
+Sun Oct 31 12:38:09 1993  David Metcalfe <david@prism.demon.co.uk>
+
+	* [objects/font.c]
+	Implemented GetCharWidth().
+
+Wed Oct 27 09:56:06 1993  John Brezak <brezak@ch.hp.com>
+
+	* [Makefile]
+        Use GNU malloc.
+
+	* [include/int21.h include/wine.h]
+        Change sc_eflags to sc_efl .
+
+	* [include/wine.h]
+        Fix misplaced #endif
+        Include <signal.h> for NetBSD
+
+	* [loader/int21.c]
+        Don't include <sys/vfs.h> in NetBSD
+        Do include <sys/mount.h> in NetBSD
+        Cleanup some lint.
+
+Mon Oct 26 17:59:01 1993  Erik Bos
+
+        * [include/int21.h]
+        Added.
+
+        * [loader/int21.c]
+        Added support for many dos ints.
+
+        * [misc/file.c] [include/files.h]
+        Moved OPEN_MAX and DosDriveStruct to files.h.
+
+Sun Oct 24 13:36:50 1993  David Metcalfe <david@prism.demon.co.uk>
+
+	* [controls/button.c]
+	Implemented CHECKBOX, AUTOCHECKBOX, 3STATE, AUTO3STATE,
+	RADIOBUTTON, AUTORADIOBUTTON, GROUPBOX controls, together with
+	a preliminary USERBUTTON control.
+
+	* [objects/text.c]
+	Corrected bugs in TEXT_NextLine() and added handling of prefix
+	character.
+
+	* [controls/button.c]
+	Disabled focus handling by commenting out SetFocus() calls until
+	serious bug can be found.
+
+Oct  20, 93 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/listbox.c]
+	Listbox control window
+		Painting cleanup, new messages processed.
+
+	* [controls/scroll.c]
+	Scroll bar control window
+		Painting cleanup.
+
+	* [controls/combo.c]
+	Combo box control window
+		Painting cleanup.
+
+Tue Oct 12 17:50:11 1993  julliard@di.epfl.ch (Alexandre Julliard)
+
+	* [objects/color.c] [objects/palette.c] [windows/syscolor.c]
+	Better support for the private color map.
+	Using a private map is now the default.
+
+	* [windows/win.c]
+	Bug fix.
+
+	* [include/dialog.h] [windows/dialog.c]
+	Implemented CreateDialog*() and IsDialogMessage().
+
+	* [misc/xt.c] [windows/defwnd.c]
+	Moved DefWindowProc() to defwnd.c.
+	Added WM_NCCREATE, WM_NCDESTROY and WM_CTLCOLOR handling.
+
+	* [windows/defdlg.c]
+	Started the implementation of DefDlgProc().
+
+	* [windows/win.c]
+	Added WM_NCCREATE and WM_NCDESTROY messages.
+	Implemented IsChild().
+
+Tue Oct 12 17:50:20 1993  David Metcalfe <david@prism.demon.co.uk>
+
+	* [windows/focus.c]
+	Implemented GetFocus() and SetFocus().
+
+	* [windows/event.c]
+	Added processing of FocusIn and FocusOut events.
+
+	* [windows/graphics.c]
+	Added DrawFocusRect().
+
+Sat Oct  9 14:36:57 1993  Erik Bos
+
+	* [loader/int1a.c]
+	Added more function handling.
+
+Wed Oct  6 12:21:22 1993  Erik Bos
+
+	* [loader/signal.c]
+	Split signal.c into int1a.c, int21.c and signal.c.
+
+Tue Oct  5 22:12:40 1993  David Metcalfe
+
+	* [controls/static.c] [control/widgets.c]
+	Static control class.
+
+	* [objects/text.c]
+	Added processing of additional DT_ flags to DrawText().
+
+	* [windows/win.c] [misc/xt.c]
+	Added SetWindowText() and WM_SETTEXT processing.
+
+Tue Oct  5 22:12:40 1993  Martin Ayotte
+
+	* [controls/listbox.c]
+	Listbox control window
+
+	* [controls/scroll.c]
+	Scroll bar control window
+
+	* [controls/combo.c]
+	Combo box control window
+
+	* [include/combo.h]
+	Combo box definitions
+
+	* [include/listbox.h]
+	Listbox definitions
+
+	* [include/scroll.h]
+	Scroll bar definitions
+
+Sat Oct  2 09:35:54 1993  Bob Amstadt  (bob at pooh)
+
+	* [if1632/callback.c]
+	Fixed bug in MakeProcInstance().
+
+	* [debugger/info.c]
+	Changed x/w and x/b to display in hex.
+
+	* [debugger/i386-pinsn.c]
+	Added code to properly unassemble 16-bit indexing.
+
+Fri Oct  1 08:29:05 1993  Bob Amstadt  (bob at pooh)
+
+	* [loader/files.c] [misc/profile.c]
+	System initialization file is now called "wine.ini" and can
+	be located in the current directory, the user's home directory,
+	or any directories specified in the WINEPATH environment variable.
+
+	* [tools/build.c] [if1632/call.S] [include/regfunc.h]
+	Changed register function stack to match sigcontext structure.
+
+Thu Sep 30 22:30:21 1993  Bob Amstadt  (bob at pooh)
+
+	* [loader/files.c]
+	Created function to search a path for files to load.
+
+	* [loader/wine.c]
+	Modified exe and dll file loading to search through path
+	specified by the environment variable WINEPATH.
+
+Thu Sep 30 22:30:21 1993  Eric Youngdale
+
+	* [loader/signal.c]
+	Bug fix.
+
+Thu Sep 30 22:30:21 1993  John Brezak
+
+	* [debugger/dbg.y] [debugger/debug.l] [debugger/dtest.c] 
+	  [debugger/obstack.h]
+	Updates to allow debugger to function under NetBSD.
+
 Tue Sep 28 19:59:21 1993  David Metcalfe
 
 	* [windows/win.c]

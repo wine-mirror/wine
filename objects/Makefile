@@ -9,7 +9,7 @@ objects.o: $(OBJS)
 	$(LD) -r -o objects.o $(OBJS)
 
 clean:
-	rm -f *.o *~ *.s dll_* *.a
+	rm -f *.o *~ *.s dll_* *.a *#
 
 depend:
 	$(CC) $(CFLAGS) -M *.c > .depend

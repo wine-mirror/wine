@@ -667,6 +667,35 @@ main(int argc, char **argv)
 		fprintf(fp, "_%s_Ordinal_%d:\n", UpperDLLName, i);
 		fprintf(fp, "\tandl\t$0x0000ffff,%%esp\n");
 		fprintf(fp, "\tandl\t$0x0000ffff,%%ebp\n");
+		fprintf(fp, "\tpushl\t$0\n");			/* cr2     */
+		fprintf(fp, "\tpushl\t$0\n");			/* oldmask */
+		fprintf(fp, "\tpushl\t$0\n");			/* i387    */
+		fprintf(fp, "\tpushw\t$0\n");			/* __ssh   */
+		fprintf(fp, "\tpushw\t%%ss\n");			/* ss      */
+		fprintf(fp, "\tpushl\t%%esp\n");		/* esp     */
+		fprintf(fp, "\tpushfl\n");			/* eflags  */
+		fprintf(fp, "\tpushw\t$0\n");			/* __csh   */
+		fprintf(fp, "\tpushw\t%%cs\n");			/* cs      */
+		fprintf(fp, "\tpushl\t$0\n");			/* eip     */
+		fprintf(fp, "\tpushl\t$0\n");			/* err     */
+		fprintf(fp, "\tpushl\t$0\n");			/* trapno  */
+		fprintf(fp, "\tpushal\n");			/* AX, ... */
+		fprintf(fp, "\tpushw\t$0\n");			/* __dsh   */
+		fprintf(fp, "\tpushw\t%%ds\n");			/* ds      */
+		fprintf(fp, "\tpushw\t$0\n");			/* __esh   */
+		fprintf(fp, "\tpushw\t%%es\n");			/* es      */
+		fprintf(fp, "\tpushw\t$0\n");			/* __fsh   */
+		fprintf(fp, "\tpushw\t%%fs\n");			/* fs      */
+		fprintf(fp, "\tpushw\t$0\n");			/* __gsh   */
+		fprintf(fp, "\tpushw\t%%gs\n");			/* gs      */
+		fprintf(fp, "\tmovl\t%%ebp,%%eax\n");
+		fprintf(fp, "\tmovw\t%%esp,%%ebp\n");
+		fprintf(fp, "\tpushl\t88(%%ebp)\n");
+		fprintf(fp, "\tmovl\t%%eax,%%ebp\n");
+		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
+		fprintf(fp, "\tpushw\t$92\n");
+		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+#if 0
 		fprintf(fp, "\tpushw\t%%ax\n");
 		fprintf(fp, "\tpushw\t%%cx\n");
 		fprintf(fp, "\tpushw\t%%dx\n");
@@ -684,6 +713,7 @@ main(int argc, char **argv)
 		fprintf(fp, "\tmovl\t$%d,%%eax\n", i);
 		fprintf(fp, "\tpushw\t$24\n");
 		fprintf(fp, "\tjmp\t_%s_Dispatch\n\n", UpperDLLName);
+#endif
 		break;
 
 	      case FUNCTYPE_PASCAL:

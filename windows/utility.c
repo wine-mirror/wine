@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include "windows.h"
 
@@ -269,6 +270,21 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 	}
 	return result;
 };
+
+
+/**************************************************************************
+ *                wsprintf        [USER.420]
+ */
+int wsprintf(LPSTR lpOutput, LPSTR lpFormat, ...)
+{
+va_list  valist;
+int      ArgCnt;
+va_start(valist, lpFormat);
+ArgCnt = vsprintf(lpOutput, lpFormat, valist);
+va_end(valist);
+return (ArgCnt);
+}
+
 
 /*	wvsprintf() is an implementation of vsprintf(). This
  *	implementation converts the arguments to 32-bit integers and

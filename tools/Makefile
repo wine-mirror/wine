@@ -4,7 +4,7 @@ build: build.c
 	cc $(CFLAGS) -o build build.c
 
 clean:
-	rm -f *.o *~ build
+	rm -f *.o *~ build *#
 
 depend:
 	$(CC) $(CFLAGS) -M *.c > .depend

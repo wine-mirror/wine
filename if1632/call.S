@@ -102,7 +102,7 @@ _CallToInit16:
 	movl	%esp,%eax
 	movl	%eax,%ebp
 #if 1
-	movw	$ UDATASEL,%ax
+	movw	$UDATASEL,%ax
 	movw	%ax,%fs
 	movw	%ax,%gs
 #endif	
@@ -124,7 +124,7 @@ _CallToInit16:
 	 * GDT usage.
 	 */
 	pushl	%eax
-	movw	$ UDATASEL,%ax
+	movw	$UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
@@ -204,7 +204,7 @@ _CallTo16:
 	 * GDT usage.
 	 */
 	pushl	%eax
-	movw	$ UDATASEL,%ax
+	movw	$UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%fs
@@ -259,7 +259,7 @@ _CallTo32:
 	 * Restore segment registers.
 	 */
 	pushl	%eax
-	movw	$ UDATASEL,%ax
+	movw	$UDATASEL,%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	popl	%eax
@@ -359,21 +359,23 @@ _ReturnFromRegisterFunc:
 	 * the return address, the saved registers, and the return 
 	 * address again.
 	 */
-	popw	%ax	/* Throw away the number of arguments */
-	popl	%eax	/* Throw away first copy of return address */
+	add	$6,%esp		/* argument count, return address */
+	popw	%gs
+	add	$2,%esp
+	popw	%fs
+	add	$2,%esp
 	popw	%es
+	add	$2,%esp
 	popw	%ds
-	popw	%di
-	popw	%si
-	popw	%bp
-	popw	%ax	/* Throw away pushed stack pointer */
-	popw	%bx
-	popw	%dx
-	popw	%cx
-	popw	%ax
+	add	$2,%esp
+	popal
+	add	$16,%esp	/* trapno, err, eip, cs */
+	popfl
+	add	$20,%esp	/* esp, ss, i387, oldmask, cr2 */
 
 	/*
 	 * Return to original caller.
 	 */
 	.byte	0x66
 	lret
+

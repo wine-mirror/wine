@@ -24,6 +24,7 @@ extern char * readline(char *);
 static char * make_symbol(char *);
 void flush_symbols();
 static int syntax_error;
+extern int yylval;
 %}
 
 DIGIT	[0-9]

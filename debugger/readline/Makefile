@@ -49,7 +49,7 @@ shar:		$(SHARFILES)
 	shar $(SHARFILES) >shar
 
 clean:
-	rm -f *.[oa] testit foo core tags lint lint.all a.out shar
+	rm -f *.[oa] testit foo core tags lint lint.all a.out shar *# *~
 
 lint:		testit
 	lint -a -b -u -x $(DEFS) $(SOURCES) testit.c >lint.all

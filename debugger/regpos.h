@@ -25,9 +25,32 @@
 #define  RN_CR2			21
 #endif
 
+#ifdef __NetBSD__
+/* Register numbers */
+#define  RN_ESP			2
+#define  RN_EBP			3
+#define  RN_ESP_AT_SIGNAL	4
+#define  RN_EIP			5
+#define  RN_EFLAGS		6
+#define  RN_ES			7
+#define  RN_DS			8
+#define  RN_CS			9
+#define  RN_SS			10
+#define  RN_EDI  		11
+#define  RN_ESI			12
+#define  RN_EBX			13
+#define  RN_EDX			14
+#define  RN_ECX			15
+#define  RN_EAX			16
+/* NetBSD doesn't context switch gs or fs */
+#define  SC_GS			0x27
+#define  SC_FS			0x27
+#endif
 
+#ifdef linux
 #define  SC_GS			regval[RN_GS]
 #define  SC_FS			regval[RN_FS]
+#endif
 #define  SC_ES			regval[RN_ES]
 #define  SC_DS			regval[RN_DS]
 #define  SC_EDI(dbg_mask)  	(regval[RN_EDI] & dbg_mask)

@@ -33,7 +33,6 @@ BOOL PALETTE_Init()
 {
     int i, size;
     XColor color;
-    Colormap map;
     HPALETTE hpalette;
     LOGPALETTE * palPtr;
 
@@ -44,13 +43,10 @@ BOOL PALETTE_Init()
     palPtr->palNumEntries = size;
     memset( palPtr->palPalEntry, 0xff, size*sizeof(PALETTEENTRY) );
 
-    if ((map = COLOR_WinColormap) == CopyFromParent)
-	map = DefaultColormapOfScreen( XT_screen );
-
     for (i = 0; i < size; i++)
     {
 	color.pixel = i;
-	XQueryColor( XT_display, map, &color );
+	XQueryColor( XT_display, COLOR_WinColormap, &color );
 	palPtr->palPalEntry[i].peRed   = color.red >> 8;
 	palPtr->palPalEntry[i].peGreen = color.green >> 8;
 	palPtr->palPalEntry[i].peBlue  = color.blue >> 8;
@@ -136,7 +132,8 @@ WORD GetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
     palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
     if (!palPtr) return 0;
 
-    if (COLOR_WinColormap && (hpalette == STOCK_DEFAULT_PALETTE))
+    if ((COLOR_WinColormap != DefaultColormapOfScreen(XT_screen)) &&
+	(hpalette == STOCK_DEFAULT_PALETTE))
     {
 	if ((color & 0xffffff) == 0) return 0;  /* Entry 0 is black */
 	if ((color & 0xffffff) == 0xffffff)     /* Max entry is white */

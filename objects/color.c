@@ -19,6 +19,7 @@ extern Screen * XT_screen;
  * We try to use a private color map if possible, because Windows programs
  * assume that palette(0) == Black and palette(max-1) == White.
  */
+#define USE_PRIVATE_MAP
 
 Colormap COLOR_WinColormap = 0;
 
@@ -71,10 +72,38 @@ static int COLOR_FillDefaultMap()
  *
  * Fill the private colormap.
  */
+#ifdef USE_PRIVATE_MAP
+
 static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
 {
     XColor color;
     int i;
+
+      /* Fill the whole map with a range of colors */
+
+    if ((1 << depth) > NB_SYS_COLORS)
+    {
+	int red_incr, green_incr, blue_incr;
+	int r, g, b;
+	
+	blue_incr  = 0x10000 >> (depth / 3);
+	red_incr   = 0x10000 >> ((depth + 1) / 3);
+	green_incr = 0x10000 >> ((depth + 2) / 3);
+
+	for (i = 0, r = red_incr - 1; r < 0x10000; r += red_incr)
+	    for (g = green_incr - 1; g < 0x10000; g += green_incr)
+		for (b = blue_incr - 1; b < 0x10000; b += blue_incr)
+		{
+		    if (i >= size) break;
+		    color.pixel = i++;
+		    color.red   = r;
+		    color.green = g;
+		    color.blue  = b;
+		    XStoreColor( XT_display, map, &color );
+		}
+    }
+    
+      /* Store the system palette colors */
 
     for (i = 0; i < NB_SYS_COLORS; i++)
     {
@@ -86,7 +115,7 @@ static BOOL COLOR_BuildMap( Colormap map, int depth, int size )
     }
     return TRUE;
 }
-
+#endif  /* USE_PRIVATE_MAP */
 
 /***********************************************************************
  *           COLOR_Init
@@ -117,7 +146,7 @@ BOOL COLOR_Init()
       case StaticColor:
       case TrueColor:
 	COLOR_FillDefaultMap();
-	COLOR_WinColormap = CopyFromParent;
+	COLOR_WinColormap = DefaultColormapOfScreen( XT_screen );	
 	break;	
     }
     return TRUE;

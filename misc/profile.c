@@ -10,8 +10,9 @@ static char Copyright [] = "Copyright (C) 1993 Miguel de Icaza";
 #include <stdio.h>
 #include <string.h>
 #include "windows.h"
+#include "wine.h"
 
-#define INIFILE "win.ini"
+#define INIFILE	GetSystemIniFilename()
 #define STRSIZE 255
 #define xmalloc(x) malloc(x)
 #define overflow (next == &CharBuffer [STRSIZE-1])
@@ -298,25 +299,3 @@ void sync_profiles ()
 {
     dump_profile (Base);
 }
-
-#ifdef DUMBTEST
-main ()
-{
-    char r [100], app [100], key [100], valor [100];
-    
-    while (1){
-	printf ("Dame, Aplicacion, llave\n");
-	gets (app);
-	if (!app [0]){
-	    sync_profiles ();
-	    return;
-	}
-	gets (key);
-	gets (valor);
-	GetProfileString (app, key, "1No_Encontrado", r, sizeof (r));
-	printf ("(%d)\n", GetProfileInt (app, key, 5));
-	printf ("%s\n", r);
-	WriteProfileString (app, key, valor);
-    }
-}
-#endif

@@ -140,10 +140,10 @@ void examine_memory(int addr, int count, char format){
 		wdump = (unsigned short int *) addr;
 		for(i=0; i<count; i++) 
 		{
-			fprintf(stderr," %d", *wdump++);
+			fprintf(stderr," %x", *wdump++);
 			if ((i % 10) == 7) {
 				fprintf(stderr,"\n");
-				print_address((unsigned int) dump, stderr);
+				print_address((unsigned int) wdump, stderr);
 				fprintf(stderr,":  ");
 			};
 		}
@@ -172,10 +172,10 @@ void examine_memory(int addr, int count, char format){
 		pnt = (char *) addr;
 		for(i=0; i<count; i++) 
 		{
-			fprintf(stderr," %d", *pnt++);
+			fprintf(stderr," %w", *pnt++);
 			if ((i % 32) == 7) {
 				fprintf(stderr,"\n");
-				print_address((unsigned int) dump, stderr);
+				print_address((unsigned int) pnt, stderr);
 				fprintf(stderr,":  ");
 			};
 		}

@@ -30,5 +30,8 @@ extern struct segment_descriptor_s *GetNextSegment(unsigned int flags,
 extern struct mz_header_s *CurrentMZHeader;
 extern struct ne_header_s *CurrentNEHeader;
 extern int CurrentNEFile;
+extern do_int1A(struct sigcontext_struct * context);
+extern do_int21(struct sigcontext_struct * context);
 
 #endif /* PROTOTYPES_H */
+

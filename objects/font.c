@@ -330,3 +330,38 @@ BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           GetCharWidth    (GDI.350)
+ */
+BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT lpBuffer)
+{
+    int i, j;
+    XFontStruct *xfont;
+    XCharStruct *charPtr;
+    int default_width;
+
+    DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
+    if (!dc) return FALSE;
+    xfont = dc->u.x.font.fstruct;
+    
+    /* fixed font? */
+    if (xfont->per_char == NULL)
+    {
+	for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
+	    *(lpBuffer + j) = xfont->max_bounds.width;
+	return TRUE;
+    }
+
+    charPtr = xfont->per_char;
+    default_width = (charPtr + xfont->default_char)->width;
+	
+    for (i = wFirstChar, j = 0; i <= wLastChar; i++, j++)
+    {
+	if (i < xfont->min_char_or_byte2 || i > xfont->max_char_or_byte2)
+	    *(lpBuffer + j) = default_width;
+	else
+	    *(lpBuffer + j) = charPtr->width;
+    }
+    return TRUE;
+}

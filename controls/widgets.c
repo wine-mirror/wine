@@ -8,21 +8,32 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 
 #include "windows.h"
 #include "win.h"
+#include "dialog.h"
 
 
 LONG ButtonWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG WIDGETS_StaticWndProc( HWND hwnd, WORD message,
+LONG StaticWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam );
+
+LONG SCROLLBAR_ScrollBarWndProc( HWND hwnd, WORD message,
+				   WORD wParam, LONG lParam );
+LONG LISTBOX_ListBoxWndProc( HWND hwnd, WORD message,
+				   WORD wParam, LONG lParam );
+LONG COMBOBOX_ComboBoxWndProc( HWND hwnd, WORD message,
 				   WORD wParam, LONG lParam );
 
-#define NB_BUILTIN_CLASSES  2
 
-static WNDCLASS WIDGETS_BuiltinClasses[NB_BUILTIN_CLASSES] =
+static WNDCLASS WIDGETS_BuiltinClasses[] =
 {
-    { 0, (LONG(*)())ButtonWndProc, 0, 0, 0, 0, 0, 0, NULL, "BUTTON" },
-    { 0, (LONG(*)())WIDGETS_StaticWndProc, 0, 0, 0, 0, 0, 0, NULL, "STATIC" }
+    { 0, (LONG(*)())ButtonWndProc, 0, 2, 0, 0, 0, 0, NULL, "BUTTON" },
+    { 0, (LONG(*)())StaticWndProc, 0, 0, 0, 0, 0, 0, NULL, "STATIC" },
+    { 0, (LONG(*)())SCROLLBAR_ScrollBarWndProc, 0, 8, 0, 0, 0, 0, NULL, "SCROLLBAR" },
+    { 0, (LONG(*)())LISTBOX_ListBoxWndProc, 0, 8, 0, 0, 0, 0, NULL, "LISTBOX" },
+    { 0, (LONG(*)())COMBOBOX_ComboBoxWndProc, 0, 8, 0, 0, 0, 0, NULL, "COMBOBOX" },
+    { 0, (LONG(*)())DefDlgProc, 0, DLGWINDOWEXTRA, 0, 0, 0, 0, NULL, DIALOG_CLASS_NAME }
 };
 
-static FARPROC WndProc32[NB_BUILTIN_CLASSES];
+#define NB_BUILTIN_CLASSES \
+         (sizeof(WIDGETS_BuiltinClasses)/sizeof(WIDGETS_BuiltinClasses[0]))
 
 
 /***********************************************************************
@@ -33,56 +44,9 @@ static FARPROC WndProc32[NB_BUILTIN_CLASSES];
 BOOL WIDGETS_Init()
 {
     int i;
-    WNDCLASS * pClass = WIDGETS_BuiltinClasses;
-        
-    for (i = 0; i < NB_BUILTIN_CLASSES; i++, pClass++)
+    for (i = 0; i < NB_BUILTIN_CLASSES; i++)
     {
-	if (!RegisterClass(pClass)) return FALSE;
+	if (!RegisterClass(&WIDGETS_BuiltinClasses[i])) return FALSE;
     }
     return TRUE;
-}
-
-
-/**********************************************************************
- *	     WIDGETS_Call32WndProc
- *
- * Call the window procedure of a built-in class.
- */
-LONG WIDGETS_Call32WndProc( FARPROC func, HWND hwnd, WORD message,
-			    WORD wParam, LONG lParam )
-{
-    unsigned int i = (unsigned int) func;
-    if (!i || (i > NB_BUILTIN_CLASSES)) return 0;    
-    return (*WndProc32[i-1])( hwnd, message, wParam, lParam );
-}
-
-
-/***********************************************************************
- *           WIDGETS_StaticWndProc
- */
-static LONG WIDGETS_StaticWndProc( HWND hwnd, WORD message,
-				   WORD wParam, LONG lParam )
-{    
-    switch(message)
-    {
-    case WM_CREATE:
-	return 0;
-	
-    case WM_PAINT:
-	{
-	    HDC hdc;
-	    PAINTSTRUCT ps;
-	    RECT rect;
-	
-	    hdc = BeginPaint( hwnd, &ps );
-	    GetClientRect( hwnd, &rect );
-	    DrawText(hdc, "Static", -1, &rect,
-		     DT_SINGLELINE | DT_CENTER | DT_VCENTER );
-	    EndPaint( hwnd, &ps );
-	    return 0;
-	}
-	
-    default:
-	return DefWindowProc( hwnd, message, wParam, lParam );
-    }
 }

@@ -1467,6 +1467,57 @@ OP_E (bytemode)
     }
   
   append_prefix ();
+
+  if (bytemode == w_mode || (bytemode == v_mode && !dflag))
+  {
+      if (mod == 0 && rm == 6)
+      {
+	  sprintf(scratchbuf, "%04.4x", get16());
+	  oappend(scratchbuf);
+	  return 0;
+      }
+      
+      disp = 0;
+      if (mod == 1)
+	  disp = *(char *)codep++;
+      else if (mod == 2)
+	  disp = get16();
+      if (disp != 0)
+      {
+	  sprintf(scratchbuf, "0x%x", disp);
+	  oappend(scratchbuf);
+      }
+
+      switch (rm)
+      {
+	case 0:
+	  oappend("(%bx,%si)");
+	  break;
+	case 1:
+	  oappend("(%bx,%di)");
+	  break;
+	case 2:
+	  oappend("(%bp,%si)");
+	  break;
+	case 3:
+	  oappend("(%bp,%di)");
+	  break;
+	case 4:
+	  oappend("(%si)");
+	  break;
+	case 5:
+	  oappend("(%di)");
+	  break;
+	case 6:
+	  oappend("(%bp)");
+	  break;
+	case 7:
+	  oappend("(%bx)");
+	  break;
+      }	  
+      return 0;
+  }
+  
   if (rm == 4)
     {
       havesib = 1;

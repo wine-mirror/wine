@@ -71,7 +71,7 @@ KERNEL_WaitEvent(int task)
 int
 KERNEL_GetModuleFileName(int module, char *filename, int bytes)
 {
-#ifdef RELAY_DEBUG
+#ifdef DEBUG_RELAY
     printf("GetModuleFileName: module %d, filename %x, bytes %d\n", 
 	    module, filename, bytes);
 #endif

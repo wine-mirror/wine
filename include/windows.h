@@ -5,12 +5,68 @@
 
 #ifndef _WINARGS
 
+typedef unsigned short UINT;
 typedef unsigned short WORD;
 typedef unsigned long DWORD;
 #ifndef _WINMAIN
 typedef unsigned short BOOL;
 typedef unsigned char BYTE;
 #endif
+typedef long LONG;
+typedef UINT WPARAM;
+typedef LONG LPARAM;
+typedef LONG LRESULT;
+typedef WORD HANDLE;
+#define DECLARE_HANDLE(a) typedef HANDLE a;
+
+DECLARE_HANDLE(HTASK);
+DECLARE_HANDLE(HDRVR);
+DECLARE_HANDLE(HWND);
+DECLARE_HANDLE(HDC);
+DECLARE_HANDLE(HCLASS);
+DECLARE_HANDLE(HCURSOR);
+DECLARE_HANDLE(HFONT);
+DECLARE_HANDLE(HPEN);
+DECLARE_HANDLE(HRGN);
+DECLARE_HANDLE(HPALETTE);
+DECLARE_HANDLE(HICON);
+DECLARE_HANDLE(HINSTANCE);
+DECLARE_HANDLE(HMENU);
+DECLARE_HANDLE(HBITMAP);
+DECLARE_HANDLE(HBRUSH);
+DECLARE_HANDLE(LOCALHANDLE);
+
+typedef char *LPSTR;
+typedef const char *LPCSTR;
+typedef char *NPSTR;
+typedef short *LPINT;
+typedef void *LPVOID;
+typedef long (*FARPROC)();
+typedef int CATCHBUF[9];
+typedef int *LPCATCHBUF;
+
+#define TRUE 1
+#define FALSE 0
+#define CW_USEDEFAULT ((short)0x8000)
+#define FAR
+#define NEAR
+#define PASCAL
+#define VOID                void
+#define WINAPI              PASCAL
+#define CALLBACK            PASCAL
+#ifndef NULL
+#define NULL (void *)0
+#endif
+
+#define LOBYTE(w)           ((BYTE)(w))
+#define HIBYTE(w)           ((BYTE)((UINT)(w) >> 8))
+
+#define LOWORD(l)           ((WORD)(l))
+#define HIWORD(l)           ((WORD)((DWORD)(l) >> 16))
+
+#define MAKELONG(low, high) ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+
+/*
 typedef long LONG;
 typedef WORD HANDLE;
 typedef HANDLE HWND;
@@ -44,6 +100,7 @@ typedef int *LPCATCHBUF;
 #ifndef NULL
 #define NULL (void *)0
 #endif
+*/
 
 #define MAKELPARAM(low, high) ((LONG)(((WORD)(low)) | \
 			      (((DWORD)((WORD)(high))) << 16)))
@@ -132,6 +189,46 @@ typedef struct {
 #define DWL_MSGRESULT	    0
 #define DWL_DLGPROC	    4
 #define DWL_USER	    8
+
+  /* GetWindow() constants */
+#define GW_HWNDFIRST	0
+#define GW_HWNDLAST	1
+#define GW_HWNDNEXT	2
+#define GW_HWNDPREV	3
+#define GW_OWNER	4
+#define GW_CHILD	5
+
+  /* Dialogs */
+
+  /* cbWndExtra bytes for dialog class */
+#define DLGWINDOWEXTRA      30
+
+  /* Dialog styles */
+#define DS_ABSALIGN         0x001
+#define DS_SYSMODAL         0x002
+#define DS_LOCALEDIT        0x020
+#define DS_SETFONT          0x040
+#define DS_MODALFRAME       0x080
+#define DS_NOIDLEMSG        0x100
+
+  /* Dialog messages */
+#define DM_GETDEFID         (WM_USER+0)
+#define DM_SETDEFID         (WM_USER+1)
+
+#define DC_HASDEFID         0x534b
+
+  /* WM_GETDLGCODE values */
+#define DLGC_WANTARROWS      0x0001
+#define DLGC_WANTTAB         0x0002
+#define DLGC_WANTALLKEYS     0x0004
+#define DLGC_WANTMESSAGE     0x0004
+#define DLGC_HASSETSEL       0x0008
+#define DLGC_DEFPUSHBUTTON   0x0010
+#define DLGC_UNDEFPUSHBUTTON 0x0020
+#define DLGC_RADIOBUTTON     0x0040
+#define DLGC_WANTCHARS       0x0080
+#define DLGC_STATIC          0x0100
+#define DLGC_BUTTON          0x2000
 
 
 typedef struct { short x, y; } POINT;
@@ -787,6 +884,11 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 	WM_DELETEITEM, WM_VKEYTOITEM,
 	WM_CHARTOITEM, WM_SETFONT, WM_GETFONT };
 
+#define WM_NCCREATE         0x0081
+#define WM_NCDESTROY        0x0082
+
+#define WM_GETDLGCODE	    0x0087
+
   /* Keyboard messages */
 #define WM_KEYDOWN          0x0100
 #define WM_KEYUP            0x0101
@@ -798,10 +900,15 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_SYSDEADCHAR      0x0107
 #define WM_KEYFIRST         WM_KEYDOWN
 #define WM_KEYLAST          0x0108
- 
+
+#define WM_INITDIALOG       0x0110 
 #define WM_COMMAND          0x0111
 #define WM_TIMER	    0x0113
 #define WM_SYSTIMER	    0x0118
+
+  /* scroll messages */
+#define WM_HSCROLL          0x0114
+#define WM_VSCROLL          0x0115
 
   /* Mouse messages */
 #define WM_MOUSEMOVE	    0x0200
@@ -816,6 +923,13 @@ enum { WM_NULL, WM_CREATE, WM_DESTROY, WM_MOVE, WM_UNUSED0, WM_SIZE, WM_ACTIVATE
 #define WM_MBUTTONDBLCLK    0x0209
 #define WM_MOUSEFIRST	    WM_MOUSEMOVE
 #define WM_MOUSELAST	    WM_MBUTTONDBLCLK
+
+#define WM_PARENTNOTIFY     0x0210
+
+  /* misc messages */
+#define WM_NULL             0x0000
+#define WM_USER             0x0400
+
 
   /* Key status flags for mouse events */
 #define MK_LBUTTON	    0x0001
@@ -850,6 +964,30 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define SIZE_MAXIMIZED       2
 #define SIZE_MAXSHOW         3
 #define SIZE_MAXHIDE         4
+
+/* SetWindowPos() and WINDOWPOS flags */
+#define SWP_NOSIZE          0x0001
+#define SWP_NOMOVE          0x0002
+#define SWP_NOZORDER        0x0004
+#define SWP_NOREDRAW        0x0008
+#define SWP_NOACTIVATE      0x0010
+#define SWP_FRAMECHANGED    0x0020  /* The frame changed: send WM_NCCALCSIZE */
+#define SWP_SHOWWINDOW      0x0040
+#define SWP_HIDEWINDOW      0x0080
+#define SWP_NOCOPYBITS      0x0100
+#define SWP_NOOWNERZORDER   0x0200  /* Don't do owner Z ordering */
+
+#define SWP_DRAWFRAME       SWP_FRAMECHANGED
+#define SWP_NOREPOSITION    SWP_NOOWNERZORDER
+
+#define SWP_NOSENDCHANGING  0x0400
+#define SWP_DEFERERASE      0x2000
+
+/* SetWindowPos() hwndInsertAfter field values */
+#define HWND_TOP            ((HWND)0)
+#define HWND_BOTTOM         ((HWND)1)
+#define HWND_TOPMOST        ((HWND)-1)
+#define HWND_NOTOPMOST      ((HWND)-2)
 
 
 #define MF_INSERT 0
@@ -934,6 +1072,13 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define WS_CHILDWINDOW (WS_CHILD)
 #define WS_TILEDWINDOW (WS_OVERLAPPEDWINDOW)
 
+/* Window extended styles */
+#define WS_EX_DLGMODALFRAME    0x00000001L
+#define WS_EX_NOPARENTNOTIFY   0x00000004L
+#define WS_EX_TOPMOST          0x00000008L
+#define WS_EX_ACCEPTFILES      0x00000010L
+#define WS_EX_TRANSPARENT      0x00000020L
+
 /* Button control styles */
 #define BS_PUSHBUTTON          0x00000000L
 #define BS_DEFPUSHBUTTON       0x00000001L
@@ -948,16 +1093,310 @@ enum { SW_HIDE, SW_SHOWNORMAL, SW_NORMAL, SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED,
 #define BS_OWNERDRAW           0x0000000BL
 #define BS_LEFTTEXT            0x00000020L
 
+/* Button control messages */
+#define BM_GETCHECK            (WM_USER+0)
+#define BM_SETCHECK            (WM_USER+1)
+#define BM_GETSTATE            (WM_USER+2)
+#define BM_SETSTATE            (WM_USER+3)
+#define BM_SETSTYLE            (WM_USER+4)
+
 /* Button notification codes */
 #define BN_CLICKED             0
 #define BN_PAINT               1
 #define BN_HILITE              2
-#define BN_UNLITE              3
+#define BN_UNHILITE            3
 #define BN_DISABLE             4
 #define BN_DOUBLECLICKED       5
 
+/* Static Control Styles */
+#define SS_LEFT             0x00000000L
+#define SS_CENTER           0x00000001L
+#define SS_RIGHT            0x00000002L
+#define SS_ICON             0x00000003L
+#define SS_BLACKRECT        0x00000004L
+#define SS_GRAYRECT         0x00000005L
+#define SS_WHITERECT        0x00000006L
+#define SS_BLACKFRAME       0x00000007L
+#define SS_GRAYFRAME        0x00000008L
+#define SS_WHITEFRAME       0x00000009L
+#define SS_SIMPLE           0x0000000BL
+#define SS_LEFTNOWORDWRAP   0x0000000CL
+#define SS_NOPREFIX         0x00000080L
 
-#define GMEM_MOVEABLE	0x0002
+/* Static Control Mesages */
+#define STM_SETICON         (WM_USER+0)
+#define STM_GETICON         (WM_USER+1)
+
+/* WM_H/VSCROLL commands */
+#define SB_LINEUP           0
+#define SB_LINELEFT         0
+#define SB_LINEDOWN         1
+#define SB_LINERIGHT        1
+#define SB_PAGEUP           2
+#define SB_PAGELEFT         2
+#define SB_PAGEDOWN         3
+#define SB_PAGERIGHT        3
+#define SB_THUMBPOSITION    4
+#define SB_THUMBTRACK       5
+#define SB_TOP              6
+#define SB_LEFT             6
+#define SB_BOTTOM           7
+#define SB_RIGHT            7
+#define SB_ENDSCROLL        8
+
+/* Scroll bar selection constants */
+#define SB_HORZ             0
+#define SB_VERT             1
+#define SB_CTL              2
+#define SB_BOTH             3
+
+/* Scrollbar styles */
+#define SBS_HORZ                    0x0000L
+#define SBS_VERT                    0x0001L
+#define SBS_TOPALIGN                0x0002L
+#define SBS_LEFTALIGN               0x0002L
+#define SBS_BOTTOMALIGN             0x0004L
+#define SBS_RIGHTALIGN              0x0004L
+#define SBS_SIZEBOXTOPLEFTALIGN     0x0002L
+#define SBS_SIZEBOXBOTTOMRIGHTALIGN 0x0004L
+#define SBS_SIZEBOX                 0x0008L
+
+/* EnableScrollBar() flags */
+#define ESB_ENABLE_BOTH     0x0000
+#define ESB_DISABLE_BOTH    0x0003
+
+#define ESB_DISABLE_LEFT    0x0001
+#define ESB_DISABLE_RIGHT   0x0002
+
+#define ESB_DISABLE_UP      0x0001
+#define ESB_DISABLE_DOWN    0x0002
+
+#define ESB_DISABLE_LTUP    ESB_DISABLE_LEFT
+#define ESB_DISABLE_RTDN    ESB_DISABLE_RIGHT
+
+/* Listbox styles */
+#define LBS_NOTIFY            0x0001L
+#define LBS_SORT              0x0002L
+#define LBS_NOREDRAW          0x0004L
+#define LBS_MULTIPLESEL       0x0008L
+#define LBS_OWNERDRAWFIXED    0x0010L
+#define LBS_OWNERDRAWVARIABLE 0x0020L
+#define LBS_HASSTRINGS        0x0040L
+#define LBS_USETABSTOPS       0x0080L
+#define LBS_NOINTEGRALHEIGHT  0x0100L
+#define LBS_MULTICOLUMN       0x0200L
+#define LBS_WANTKEYBOARDINPUT 0x0400L
+#define LBS_EXTENDEDSEL       0x0800L
+#define LBS_DISABLENOSCROLL   0x1000L
+#define LBS_STANDARD          (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
+
+/* Listbox messages */
+#define LB_ADDSTRING           (WM_USER+1)
+#define LB_INSERTSTRING        (WM_USER+2)
+#define LB_DELETESTRING        (WM_USER+3)
+#define LB_RESETCONTENT        (WM_USER+5)
+#define LB_SETSEL              (WM_USER+6)
+#define LB_SETCURSEL           (WM_USER+7)
+#define LB_GETSEL              (WM_USER+8)
+#define LB_GETCURSEL           (WM_USER+9)
+#define LB_GETTEXT             (WM_USER+10)
+#define LB_GETTEXTLEN          (WM_USER+11)
+#define LB_GETCOUNT            (WM_USER+12)
+#define LB_SELECTSTRING        (WM_USER+13)
+#define LB_DIR                 (WM_USER+14)
+#define LB_GETTOPINDEX         (WM_USER+15)
+#define LB_FINDSTRING          (WM_USER+16)
+#define LB_GETSELCOUNT         (WM_USER+17)
+#define LB_GETSELITEMS         (WM_USER+18)
+#define LB_SETTABSTOPS         (WM_USER+19)
+#define LB_GETHORIZONTALEXTENT (WM_USER+20)
+#define LB_SETHORIZONTALEXTENT (WM_USER+21)
+#define LB_SETCOLUMNWIDTH      (WM_USER+22)
+#define LB_SETTOPINDEX         (WM_USER+24)
+#define LB_GETITEMRECT         (WM_USER+25)
+#define LB_GETITEMDATA         (WM_USER+26)
+#define LB_SETITEMDATA         (WM_USER+27)
+#define LB_SELITEMRANGE        (WM_USER+28)
+#define LB_SETCARETINDEX       (WM_USER+31)
+#define LB_GETCARETINDEX       (WM_USER+32)
+#define LB_SETITEMHEIGHT       (WM_USER+33)
+#define LB_GETITEMHEIGHT       (WM_USER+34)
+#define LB_FINDSTRINGEXACT     (WM_USER+35)
+
+/* Listbox notification codes */
+#define LBN_ERRSPACE        (-2)
+#define LBN_SELCHANGE       1
+#define LBN_DBLCLK          2
+#define LBN_SELCANCEL       3
+#define LBN_SETFOCUS        4
+#define LBN_KILLFOCUS       5
+
+/* Listbox notification messages */
+#define WM_VKEYTOITEM       0x002E
+#define WM_CHARTOITEM       0x002F
+
+/* Listbox message return values */
+#define LB_OKAY             0
+#define LB_ERR              (-1)
+#define LB_ERRSPACE         (-2)
+
+#define LB_CTLCODE          0L
+
+/* Combo box styles */
+#define CBS_SIMPLE            0x0001L
+#define CBS_DROPDOWN          0x0002L
+#define CBS_DROPDOWNLIST      0x0003L
+#define CBS_OWNERDRAWFIXED    0x0010L
+#define CBS_OWNERDRAWVARIABLE 0x0020L
+#define CBS_AUTOHSCROLL       0x0040L
+#define CBS_OEMCONVERT        0x0080L
+#define CBS_SORT              0x0100L
+#define CBS_HASSTRINGS        0x0200L
+#define CBS_NOINTEGRALHEIGHT  0x0400L
+#define CBS_DISABLENOSCROLL   0x0800L
+
+/* Combo box messages */
+#define CB_GETEDITSEL            (WM_USER+0)
+#define CB_LIMITTEXT             (WM_USER+1)
+#define CB_SETEDITSEL            (WM_USER+2)
+#define CB_ADDSTRING             (WM_USER+3)
+#define CB_DELETESTRING          (WM_USER+4)
+#define CB_DIR                   (WM_USER+5)
+#define CB_GETCOUNT              (WM_USER+6)
+#define CB_GETCURSEL             (WM_USER+7)
+#define CB_GETLBTEXT             (WM_USER+8)
+#define CB_GETLBTEXTLEN          (WM_USER+9)
+#define CB_INSERTSTRING          (WM_USER+10)
+#define CB_RESETCONTENT          (WM_USER+11)
+#define CB_FINDSTRING            (WM_USER+12)
+#define CB_SELECTSTRING          (WM_USER+13)
+#define CB_SETCURSEL             (WM_USER+14)
+#define CB_SHOWDROPDOWN          (WM_USER+15)
+#define CB_GETITEMDATA           (WM_USER+16)
+#define CB_SETITEMDATA           (WM_USER+17)
+#define CB_GETDROPPEDCONTROLRECT (WM_USER+18)
+#define CB_SETITEMHEIGHT         (WM_USER+19)
+#define CB_GETITEMHEIGHT         (WM_USER+20)
+#define CB_SETEXTENDEDUI         (WM_USER+21)
+#define CB_GETEXTENDEDUI         (WM_USER+22)
+#define CB_GETDROPPEDSTATE       (WM_USER+23)
+#define CB_FINDSTRINGEXACT       (WM_USER+24)
+
+/* Combo box notification codes */
+#define CBN_ERRSPACE        (-1)
+#define CBN_SELCHANGE       1
+#define CBN_DBLCLK          2
+#define CBN_SETFOCUS        3
+#define CBN_KILLFOCUS       4
+#define CBN_EDITCHANGE      5
+#define CBN_EDITUPDATE      6
+#define CBN_DROPDOWN        7
+#define CBN_CLOSEUP         8
+#define CBN_SELENDOK        9
+#define CBN_SELENDCANCEL    10
+
+/* Combo box message return values */
+#define CB_OKAY             0
+#define CB_ERR              (-1)
+#define CB_ERRSPACE         (-2)
+
+
+/* Owner draw control types */
+#define ODT_MENU        1
+#define ODT_LISTBOX     2
+#define ODT_COMBOBOX    3
+#define ODT_BUTTON      4
+
+/* Owner draw actions */
+#define ODA_DRAWENTIRE  0x0001
+#define ODA_SELECT      0x0002
+#define ODA_FOCUS       0x0004
+
+/* Owner draw state */
+#define ODS_SELECTED    0x0001
+#define ODS_GRAYED      0x0002
+#define ODS_DISABLED    0x0004
+#define ODS_CHECKED     0x0008
+#define ODS_FOCUS       0x0010
+
+#define WM_DRAWITEM         0x002B
+
+typedef struct tagDRAWITEMSTRUCT
+{
+    UINT        CtlType;
+    UINT        CtlID;
+    UINT        itemID;
+    UINT        itemAction;
+    UINT        itemState;
+    HWND        hwndItem;
+    HDC         hDC;
+    RECT        rcItem;
+    DWORD       itemData;
+} DRAWITEMSTRUCT;
+typedef DRAWITEMSTRUCT NEAR* PDRAWITEMSTRUCT;
+typedef DRAWITEMSTRUCT FAR* LPDRAWITEMSTRUCT;
+
+#define WM_MEASUREITEM      0x002C
+
+typedef struct tagMEASUREITEMSTRUCT
+{
+    UINT        CtlType;
+    UINT        CtlID;
+    UINT        itemID;
+    UINT        itemWidth;
+    UINT        itemHeight;
+    DWORD       itemData;
+} MEASUREITEMSTRUCT;
+typedef MEASUREITEMSTRUCT NEAR* PMEASUREITEMSTRUCT;
+typedef MEASUREITEMSTRUCT FAR* LPMEASUREITEMSTRUCT;
+
+#define WM_DELETEITEM       0x002D
+
+typedef struct tagDELETEITEMSTRUCT
+{
+    UINT       CtlType;
+    UINT       CtlID;
+    UINT       itemID;
+    HWND       hwndItem;
+    DWORD      itemData;
+} DELETEITEMSTRUCT;
+typedef DELETEITEMSTRUCT NEAR* PDELETEITEMSTRUCT;
+typedef DELETEITEMSTRUCT FAR* LPDELETEITEMSTRUCT;
+
+#define WM_COMPAREITEM      0x0039
+
+typedef struct tagCOMPAREITEMSTRUCT
+{
+    UINT        CtlType;
+    UINT        CtlID;
+    HWND        hwndItem;
+    UINT        itemID1;
+    DWORD       itemData1;
+    UINT        itemID2;
+    DWORD       itemData2;
+} COMPAREITEMSTRUCT;
+typedef COMPAREITEMSTRUCT NEAR* PCOMPAREITEMSTRUCT;
+typedef COMPAREITEMSTRUCT FAR* LPCOMPAREITEMSTRUCT;
+
+  
+#define LMEM_MOVEABLE   0x0002
+
+#define GMEM_FIXED          0x0000
+#define GMEM_MOVEABLE       0x0002
+#define GMEM_NOCOMPACT      0x0010
+#define GMEM_NODISCARD      0x0020
+#define GMEM_ZEROINIT       0x0040
+#define GMEM_MODIFY         0x0080
+#define GMEM_DISCARDABLE    0x0100
+#define GMEM_NOT_BANKED     0x1000
+#define GMEM_SHARE          0x2000
+#define GMEM_DDESHARE       0x2000
+#define GMEM_NOTIFY         0x4000
+#define GMEM_LOWER          GMEM_NOT_BANKED
+
+#define GHND                (GMEM_MOVEABLE | GMEM_ZEROINIT)
+#define GPTR                (GMEM_FIXED | GMEM_ZEROINIT)
+
 
 #define F(ret,name) ret name(void);
 #define Fa(ret,name,t1,a1) ret name(t1 a1);
@@ -991,6 +1430,7 @@ F(BOOL,CloseClipboard)
 F(BOOL,EmptyClipboard)
 F(BOOL,InSendMessage)
 F(DWORD,GetCurrentTime)
+F(DWORD,GetDialogBaseUnits)
 F(DWORD,GetTickCount)
 F(HANDLE,GetCurrentTask)
 F(HMENU,CreatePopupMenu)
@@ -1020,7 +1460,6 @@ F(int,ProfInsChk)
 F(int,StartSound)
 F(int,StopSound)
 F(int,SyncAllVoices)
-F(long,GetDialogBaseUnits)
 F(void,CloseSound)
 F(void,DebugBreak)
 F(void,DestroyCaret)
@@ -1043,7 +1482,7 @@ Fa(void,PostQuitMessage,int,a)
 Fa(BOOL,SetMessageQueue,int,a)
 Fa(int,_lclose,int,a)
 Fb(int,_lopen,LPSTR,a,int,b)
-Fa(int,lstrlen,LPSTR,a)
+Fa(int,lstrlen,LPCSTR,a)
 Fa(LONG,DispatchMessage,LPMSG,msg)
 Fa(void,UpdateWindow,HWND,a)
 Fa(ATOM,AddAtom,LPSTR,a)
@@ -1230,11 +1669,11 @@ Fb(BOOL,ExitWindows,DWORD,dwReserved,WORD,wReturnCode)
 Fb(BOOL,GetBitmapDimensionEx,HBITMAP,a,LPSIZE,b)
 Fb(BOOL,ShowWindow,HWND,a,int,b) 
 Fb(HDC,BeginPaint,HWND,a,LPPAINTSTRUCT,b) 
-Fb(LPSTR,lstrcat,LPSTR,a,LPSTR,b )
-Fb(LPSTR,lstrcpy,LPSTR,a,LPSTR,b )
+Fb(LPSTR,lstrcat,LPSTR,a,LPCSTR,b )
+Fb(LPSTR,lstrcpy,LPSTR,a,LPCSTR,b )
 Fb(int,_lcreat,LPSTR,a,int,b)
-Fb(int,lstrcmp,LPSTR,a,LPSTR,b )
-Fb(int,lstrcmpi,LPSTR,a,LPSTR,b )
+Fb(int,lstrcmp,LPCSTR,a,LPCSTR,b )
+Fb(int,lstrcmpi,LPCSTR,a,LPCSTR,b )
 Fb(void,EndPaint,HWND,a,LPPAINTSTRUCT,b)
 Fb(void,GetClientRect,HWND,a,LPRECT,b)
 Fb(void,SetDCState,HDC,a,HDC,b)
@@ -1291,7 +1730,7 @@ Fb(HMENU,GetSystemMenu,HWND,a,BOOL,b)
 Fb(HMENU,LoadMenu,HANDLE,a,LPSTR,b)
 Fb(HWND,ChildWindowFromPoint,HWND,a,POINT,b)
 Fb(HWND,FindWindow,LPSTR,a,LPSTR,b)
-Fb(HWND,GetDlgItem,HWND,a,int,b)
+Fb(HWND,GetDlgItem,HWND,a,WORD,b)
 Fb(HWND,GetNextWindow,HWND,a,WORD,b)
 Fb(HWND,GetWindow,HWND,a,WORD,b)
 Fb(BOOL,GetCurrentPositionEx,HDC,a,LPPOINT,b)
@@ -1315,7 +1754,7 @@ Fb(WORD,GetSystemDirectory,LPSTR,a,WORD,b)
 Fb(WORD,GetSystemPaletteUse,HDC,a,WORD,b)
 Fb(WORD,GetWindowWord,HWND,a,short,b)
 Fb(WORD,GetWindowsDirectory,LPSTR,a,WORD,b)
-Fb(WORD,IsDlgButtonChecked,HWND,a,int,b)
+Fb(WORD,IsDlgButtonChecked,HWND,a,WORD,b)
 Fb(WORD,LocalShrink,HANDLE,a,WORD,b)
 Fb(WORD,MapVirtualKey,WORD,a,WORD,b)
 Fb(WORD,SetSystemPaletteUse,HDC,a,WORD,b)
@@ -1349,7 +1788,7 @@ Fb(int,UngetCommChar,int,a,char,b)
 Fb(short,SetTextCharacterExtra,HDC,a,short,b)
 Fb(void,ClientToScreen,HWND,a,LPPOINT,b)
 Fb(void,DrawFocusRect,HDC,a,LPRECT,b)
-Fb(void,EndDialog,HWND,a,int,b)
+Fb(void,EndDialog,HWND,a,short,b)
 Fb(void,GetCodeInfo,FARPROC,lpProc,LPVOID,lpSegInfo)
 Fb(void,GetWindowRect,HWND,a,LPRECT,b)
 Fb(void,InvertRect,HDC,a,LPRECT,b)
@@ -1457,13 +1896,13 @@ Fc(int,wvsprintf,LPSTR,a,LPSTR,b,LPSTR,c)
 Fc(short,SetTextJustification,HDC,a,short,b,short,c)
 Fc(void,AdjustWindowRect,LPRECT,a,DWORD,b,BOOL,c)
 Fc(void,AnsiToOemBuff,LPSTR,a,LPSTR,b,int,c)
-Fc(void,CheckDlgButton,HWND,a,int,b,WORD,c)
+Fc(void,CheckDlgButton,HWND,a,WORD,b,WORD,c)
 Fc(void,InflateRect,LPRECT,a,short,b,short,c)
 Fc(void,InvalidateRect,HWND,a,LPRECT,b,BOOL,c)
 Fc(void,InvalidateRgn,HWND,a,HRGN,b,BOOL,c)
 Fc(void,OemToAnsiBuff,LPSTR,a,LPSTR,b,int,c)
 Fc(void,OffsetRect,LPRECT,a,short,b,short,c)
-Fc(void,SetDlgItemText,HWND,a,int,b,LPSTR,c)
+Fc(void,SetDlgItemText,HWND,a,WORD,b,LPSTR,c)
 Fc(void,SetSysColors,int,a,LPINT,b,COLORREF*,c)
 Fc(void,ShowScrollBar,HWND,a,WORD,b,BOOL,c)
 Fc(void,SwitchStackTo,WORD,a,WORD,b,WORD,c)
@@ -1490,12 +1929,12 @@ Fd(HDC,CreateIC,LPSTR,a,LPSTR,b,LPSTR,c,LPSTR,d)
 Fd(HRGN,CreateEllipticRgn,short,a,short,b,short,c,short,d)
 Fd(HRGN,CreatePolyPolygonRgn,LPPOINT,a,LPINT,b,short,c,short,d)
 Fd(HRGN,CreateRectRgn,short,a,short,b,short,c,short,d)
-Fd(HWND,CreateDialog,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d)
-Fd(HWND,CreateDialogIndirect,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d)
+Fd(HWND,CreateDialog,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d)
+Fd(HWND,CreateDialogIndirect,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d)
 Fd(LONG,DefDlgProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefMDIChildProc,HWND,a,WORD,b,WORD,c,LONG,d)
 Fd(LONG,DefWindowProc,HWND,a,WORD,b,WORD,c,LONG,d)
-Fd(WORD,GetDlgItemInt,HWND,a,int,b,BOOL FAR*,c,BOOL,d)
+Fd(WORD,GetDlgItemInt,HWND,a,WORD,b,BOOL FAR*,c,BOOL,d)
 Fd(WORD,GetPaletteEntries,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
 Fd(WORD,GetPrivateProfileInt,LPSTR,a,LPSTR,b,short,c,LPSTR,d)
 Fd(WORD,GetSystemPaletteEntries,HDC,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
@@ -1508,11 +1947,11 @@ Fd(BOOL,SetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(BOOL,OffsetViewportOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(BOOL,OffsetWindowOrgEx,HDC,a,short,b,short,c,LPPOINT,d)
 Fd(int,CombineRgn,HRGN,a,HRGN,b,HRGN,c,short,d)
-Fd(int,DialogBox,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d)
+Fd(int,DialogBox,HINSTANCE,a,LPCSTR,b,HWND,c,FARPROC,d)
 Fd(int,DialogBoxIndirect,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d)
 Fd(int,EnumFonts,HDC,a,LPSTR,b,FARPROC,c,LPSTR,d)
 Fd(int,EnumObjects,HDC,a,int,b,FARPROC,c,LPSTR,d)
-Fd(int,GetDlgItemText,HWND,a,int,b,LPSTR,c,int,d)
+Fd(int,GetDlgItemText,HWND,a,WORD,b,LPSTR,c,WORD,d)
 Fd(int,GetTempFileName,BYTE,a,LPSTR,b,WORD,c,LPSTR,d)
 Fd(int,LoadString,HANDLE,a,WORD,b,LPSTR,c,int,d)
 Fd(int,MessageBox,HWND,a,LPSTR,b,LPSTR,c,WORD,d)
@@ -1520,12 +1959,12 @@ Fd(int,SetScrollPos,HWND,a,int,b,int,c,BOOL,d)
 Fd(int,SetVoiceNote,int,a,int,b,int,c,int,d)
 Fd(void,AdjustWindowRectEx,LPRECT,a,LONG,b,BOOL,c,DWORD,d)
 Fd(void,AnimatePalette,HPALETTE,a,WORD,b,WORD,c,LPPALETTEENTRY,d)
-Fd(void,CheckRadioButton,HWND,a,int,b,int,c,int,d)
+Fd(void,CheckRadioButton,HWND,a,WORD,b,WORD,c,WORD,d)
 Fd(void,CreateCaret,HWND,a,HBITMAP,b,int,c,int,d)
 Fd(void,FillWindow,HWND,a,HWND,b,HDC,c,HBRUSH,d)
 Fd(void,GetScrollRange,HWND,a,int,b,LPINT,c,LPINT,d)
 Fd(void,PlayMetaFileRecord,HDC,a,LPHANDLETABLE,b,LPMETARECORD,c,WORD,d)
-Fd(void,SetDlgItemInt,HWND,a,int,b,WORD,c,BOOL,d)
+Fd(void,SetDlgItemInt,HWND,a,WORD,b,WORD,c,BOOL,d)
 Fe(BOOL,Rectangle,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom)
 Fe(int,DrawText,HDC,a,LPSTR,str,int,c,LPRECT,d,WORD,flag)
 Fe(BOOL,PeekMessage,LPMSG,a,HWND,b,WORD,c,WORD,d,WORD,e)
@@ -1542,10 +1981,10 @@ Fe(DWORD,GetTabbedTextExtent,HDC,a,LPSTR,b,int,c,int,d,LPINT,e)
 Fe(DWORD,ScaleViewportExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(DWORD,ScaleWindowExt,HDC,a,short,b,short,c,short,d,short,e)
 Fe(HBITMAP,CreateBitmap,short,a,short,b,BYTE,c,BYTE,d,LPSTR,e)
-Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
-Fe(HWND,CreateDialogParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
+Fe(HWND,CreateDialogIndirectParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LPARAM,e)
+Fe(HWND,CreateDialogParam,HANDLE,a,LPCSTR,b,HWND,c,FARPROC,d,LPARAM,e)
 Fe(LONG,DefFrameProc,HWND,a,HWND,b,WORD,c,WORD,d,LONG,e)
-Fe(LONG,SendDlgItemMessage,HWND,a,int,b,WORD,c,WORD,d,LONG,e)
+Fe(LONG,SendDlgItemMessage,HWND,a,WORD,b,WORD,c,WORD,d,LONG,e)
 Fe(int,DialogBoxIndirectParam,HANDLE,a,HANDLE,b,HWND,c,FARPROC,d,LONG,e)
 Fe(int,DialogBoxParam,HANDLE,a,LPSTR,b,HWND,c,FARPROC,d,LONG,e)
 Fe(int,DlgDirList,HWND,a,LPSTR,b,int,c,int,d,WORD,e)
@@ -1579,7 +2018,7 @@ Fg(HCURSOR,CreateCursor,HANDLE,a,int,b,int,c,int,d,int,e,LPSTR,f,LPSTR,g)
 Fg(HICON,CreateIcon,HANDLE,a,int,b,int,c,BYTE,d,BYTE,e,LPSTR,f,LPSTR,g)
 Fg(int,GetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
-Fg(void,SetWindowPos,HWND,a,HWND,b,int,c,int,d,int,e,int,f,WORD,g)
+Fg(void,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
 Fh(BOOL,ExtTextOut,HDC,a,int,b,int,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
 Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
 Fh(LONG,TabbedTextOut,HDC,a,int,b,int,c,LPSTR,d,int,e,int,f,LPINT,g,int,h)

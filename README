@@ -18,14 +18,41 @@ in the file "bsdmake.patch".  This release requires NetBSD-current.
 All:
 
 To build Wine, first do a "make depend" and then a "make".  The
-executable "wine" will be built.
+executable "wine" will be built.  "wine" will load and run Windows'
+executables.  You must specify the entire path to the executable,
+have the executable in the current directory, or specify a load
+path with environment variable WINEPATH.
 
-Grab a copy of Windows sol.exe (Solitaire) and run it with the command:
+For example, to run Windows' solitaire:
 
-	wine sol.exe
+	export WINEPATH=/dos/windows;/dos/windows/system
+	wine sol
 
 Have a nice game of solitaire, but be careful.  Emulation isn't perfect.
 So, occassionally it will crash.
+
+WHAT'S NEW with version 0.4.7: (see ChangeLog for details)
+	- More dialog box functions
+	- More DOS interrupts
+	- NetBSD compatibility patches
+
+WHAT'S NEW with version 0.4.5: (see ChangeLog for details)
+	- Bug fixes
+	- focus routines
+	- dialog box functions
+	- improvements to control windows
+
+WHAT'S NEW with version 0.4.4: (see ChangeLog for details)
+	- Bug fixes
+	- New static control class
+	- Preliminary listbox, combobox and scrollbar controls
+	- System initialization file is now called "wine.ini", and
+	  may be located in the user's current directory, the
+	  user's home directory or any directory specified by
+	  the WINEPATH environment variable.
+	- The loader now searches the directories specified by the
+	  WINEPATH environment variable for programs and DLLs.
+	- Internal debugger now works on 386BSD.
 
 WHAT'S NEW with version 0.4.3: (see ChangeLog for details)
 	- Bug fixes

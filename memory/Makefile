@@ -8,7 +8,7 @@ memory.o: $(OBJS)
 	$(LD) -r -o memory.o $(OBJS)
 
 clean:
-	rm -f *.o *~ *.s dll_* *.a
+	rm -f *.o *~ *.s dll_* *.a *#
 
 depend:
 	$(CC) $(CFLAGS) -M *.c > .depend

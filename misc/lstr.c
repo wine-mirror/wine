@@ -12,9 +12,6 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 #include "windows.h"
 
 
-#define LPCSTR LPSTR  /* I think this should be const char **/
-typedef  unsigned short UINT;
-
   /* Funny to divide them between user and kernel. */
 
 /* KERNEL.89 */
@@ -113,7 +110,7 @@ UINT AnsiLowerBuff(LPSTR str,UINT len)
 }
 
 /* AnsiNext USER.472 */
-LPSTR AnsiNext(LPCSTR current)
+LPSTR AnsiNext(LPSTR current)
 {
   return (*current)?current+1:current;
 }

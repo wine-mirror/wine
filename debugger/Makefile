@@ -1,6 +1,10 @@
-CFLAGS=-g -I../include # -DUSE_READLINE
+CFLAGS=-g -I../include -DUSE_READLINE
 LIBS= readline/libedit.a
 OBJS=dbg.tab.o hash.o lex.yy.o info.o i386-pinsn.o
+#YACC=bison -v -d
+YACC=yacc -b dbg -d
+#LEX=flex
+LEX=lex
 
 debugger.o: ${OBJS} readline/libedit.a
 	(cd readline; make)
@@ -18,10 +22,10 @@ lex.yy.o: lex.yy.c
 
 
 lex.yy.c: debug.l
-	flex -I debug.l
+	${LEX} -I debug.l
 
 dbg.tab.c dbg.tab.h: dbg.y
-	bison -v -d  dbg.y
+	${YACC} dbg.y
 
 dtest: dtest.o debugger.o
 	gcc -o dtest dtest.o debugger.o
@@ -29,3 +33,7 @@ dtest: dtest.o debugger.o
 clean:
 	rm -f *.o main dbg.tab.* lex.yy.* *.output *~ *# dtest
 	(cd readline; make clean)
+
+depend: dbg.tab.c dbg.tab.h lex.yy.c
+	$(CC) $(CFLAGS) -M *.c > .depend
+

@@ -1,6 +1,6 @@
 ######################################################################
 # These variables are inherited by the sub-makefiles
-DEBUGOPTS=
+DEBUGOPTS=-DDEBUG_RESOURCE
 COPTS=-O2 -m486
 INCLUDE_DIR=include
 LDFLAGS=
@@ -18,7 +18,7 @@ all: $(TARGET)
 dummy:
 
 clean:
-	rm -f *~ *.o
+	rm -f *~ *.o *#
 	@for i in tools $(SUBDIRS); do (cd $$i && $(MAKE) clean) || exit; done
 
 $(TARGET): dummy

@@ -17,6 +17,159 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include "win.h"
 #include "gdi.h"
 
+#define TAB     9
+#define LF     10
+#define CR     13
+#define SPACE  32
+#define PREFIX 38
+
+static int tabstop = 8;
+static int tabwidth;
+static int spacewidth;
+static int prefix_offset;
+
+
+static char *TEXT_NextLine(HDC hdc, char *str, int *count, char *dest, 
+			   int *len, int width, WORD format)
+{
+    /* Return next line of text from a string.
+     * 
+     * hdc - handle to DC.
+     * str - string to parse into lines.
+     * count - length of str.
+     * dest - destination in which to return line.
+     * len - length of resultant line in dest in chars.
+     * width - maximum width of line in pixels.
+     * format - format type passed to DrawText.
+     *
+     * Returns pointer to next char in str after end of the line
+     * or NULL if end of str reached.
+     */
+
+    int i = 0, j = 0, k;
+    int plen = 0;
+    int numspaces;
+    SIZE size;
+    int lasttab = 0;
+    int wb_i = 0, wb_j = 0, wb_count;
+
+    while (*count)
+    {
+	switch (str[i])
+	{
+	case CR:
+	case LF:
+	    if (!(format & DT_SINGLELINE))
+	    {
+		i++;
+		if (str[i] == CR || str[i] == LF)
+		    i++;
+		*len = j;
+		return (&str[i]);
+	    }
+	    dest[j++] = str[i++];
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    {
+		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		    return NULL;
+		plen += size.cx;
+	    }
+	    break;
+
+	case PREFIX:
+	    if (!(format & DT_NOPREFIX))
+	    {
+		prefix_offset = j + 1;
+		i++;
+	    }
+	    else
+	    {
+		dest[j++] = str[i++];
+		if (!(format & DT_NOCLIP))
+		{
+		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+			return NULL;
+		    plen += size.cx;
+		}
+	    }
+	    break;
+
+	case TAB:
+	    if (format & DT_EXPANDTABS)
+	    {
+		wb_i = ++i;
+		wb_j = j;
+		wb_count = *count;
+
+		if (!GetTextExtentPoint(hdc, &dest[lasttab], j - lasttab,
+					                         &size))
+		    return NULL;
+
+		numspaces = (tabwidth - size.cx) / spacewidth;
+		for (k = 0; k < numspaces; k++)
+		    dest[j++] = SPACE;
+		plen += tabwidth - size.cx;
+		lasttab = wb_j + numspaces;
+	    }
+	    else
+	    {
+		dest[j++] = str[i++];
+		if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+		{
+		    if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+			return NULL;
+		    plen += size.cx;
+		}
+	    }
+	    break;
+
+	case SPACE:
+	    dest[j++] = str[i++];
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    {
+		wb_i = i;
+		wb_j = j - 1;
+		wb_count = *count;
+		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		    return NULL;
+		plen += size.cx;
+	    }
+	    break;
+
+	default:
+	    dest[j++] = str[i++];
+	    if (!(format & DT_NOCLIP) || !(format & DT_NOPREFIX))
+	    {
+		if (!GetTextExtentPoint(hdc, &dest[j-1], 1, &size))
+		    return NULL;
+		plen += size.cx;
+	    }
+	}
+
+	(*count)--;
+	if (!(format & DT_NOCLIP) || (format & DT_WORDBREAK))
+	{
+	    if (plen > width)
+	    {
+		if (format & DT_WORDBREAK)
+		{
+		    *len = wb_j;
+		    *count = wb_count;
+		    return (&str[wb_i]);
+		}
+		else
+		{
+		    *len = j;
+		    return (&str[i]);
+		}
+	    }
+	}
+    }
+    
+    *len = j;
+    return NULL;
+}
+
 
 /***********************************************************************
  *           DrawText    (USER.85)
@@ -24,17 +177,77 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 int DrawText( HDC hdc, LPSTR str, int count, LPRECT rect, WORD flags )
 {
     SIZE size;
+    char *strPtr;
+    static char line[1024];
+    int len, lh, prefix_x, prefix_len;
+    TEXTMETRIC tm;
     int x = rect->left, y = rect->top;
+    int width = rect->right - rect->left;
+
     if (count == -1) count = strlen(str);
+    strPtr = str;
 
-    if (!GetTextExtentPoint( hdc, str, count, &size )) return 0;
-    
-    if (flags & DT_CENTER) x = (rect->left + rect->right - size.cx) / 2;
-    else if (flags & DT_RIGHT) x = rect->right - size.cx;
-    if (flags & DT_VCENTER) y = (rect->top + rect->bottom - size.cy) / 2;
-    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
+    GetTextMetrics(hdc, &tm);
+    if (flags & DT_EXTERNALLEADING)
+	lh = tm.tmHeight + tm.tmExternalLeading;
+    else
+	lh = tm.tmHeight;
 
-    if (!TextOut( hdc, x, y, str, count )) return 0;
+    if (flags & DT_TABSTOP)
+	tabstop = flags >> 8;
+
+    if (flags & DT_EXPANDTABS)
+    {
+	GetTextExtentPoint(hdc, " ", 1, &size);
+	spacewidth = size.cx;
+	GetTextExtentPoint(hdc, "o", 1, &size);
+	tabwidth = size.cx * tabstop;
+    }
+
+    do
+    {
+	prefix_offset = -1;
+	strPtr = TEXT_NextLine(hdc, strPtr, &count, line, &len, width, flags);
+
+	if (prefix_offset != -1)
+	{
+	    GetTextExtentPoint(hdc, line, prefix_offset - 1, &size);
+	    prefix_x = size.cx;
+	    GetTextExtentPoint(hdc, line + prefix_offset, 1, &size);
+	    prefix_len = size.cx;
+	}
+
+	if (!GetTextExtentPoint(hdc, line, len, &size)) return 0;
+	if (flags & DT_CENTER) x = (rect->left + rect->right -
+				    size.cx) / 2;
+	else if (flags & DT_RIGHT) x = rect->right - size.cx;
+
+	if (flags & DT_SINGLELINE)
+	{
+	    if (flags & DT_VCENTER) y = (rect->top + rect->bottom - 
+					 size.cy) / 2;
+	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
+	}
+
+	if (!TextOut(hdc, x, y, line, len)) return 0;
+	if (prefix_offset != -1)
+	{
+	    MoveTo(hdc, x + prefix_x, y + size.cy);
+	    LineTo(hdc, x + prefix_x + prefix_len, y + size.cy);
+	}
+
+	if (strPtr)
+	{
+	    y += lh;
+	    if (!(flags & DT_NOCLIP))
+	    {
+		if (y > rect->bottom - lh)
+		    break;
+	    }
+	}
+    }
+    while (strPtr);
+
     return 1;
 }
 

@@ -25,9 +25,12 @@ static void EVENT_key();
 static void EVENT_mouse_motion();
 static void EVENT_mouse_button();
 static void EVENT_structure();
+static void EVENT_focus_change();
 
   /* State variables */
 static HWND captureWnd = 0;
+
+extern HWND hWndFocus;
 
 /***********************************************************************
  *           EVENT_AddHandlers
@@ -46,6 +49,8 @@ void EVENT_AddHandlers( Widget w, int hwnd )
 		      EVENT_mouse_button, (XtPointer)hwnd );
     XtAddEventHandler(w, StructureNotifyMask, FALSE,
 		      EVENT_structure, (XtPointer)hwnd );
+    XtAddEventHandler(w, FocusChangeMask, FALSE,
+		      EVENT_focus_change, (XtPointer)hwnd );
 }
 
 
@@ -66,6 +71,8 @@ void EVENT_RemoveHandlers( Widget w, int hwnd )
 			 EVENT_mouse_button, (XtPointer)hwnd );
     XtRemoveEventHandler(w, StructureNotifyMask, FALSE,
 			 EVENT_structure, (XtPointer)hwnd );
+    XtRemoveEventHandler(w, FocusChangeMask, FALSE,
+			 EVENT_focus_change, (XtPointer)hwnd );
 }
 
 
@@ -115,10 +122,18 @@ static void EVENT_key( Widget w, int hwnd, XKeyEvent *event,
 		       Boolean *cont_dispatch )
 {
     MSG msg;
-    
+
+    char Str[24]; 
+    XComposeStatus cs; 
+    KeySym key;
+    int count = XLookupString(event, Str, 1, &key, &cs);
+    Str[count] = '\0';
+#ifdef DEBUG_KEY
+    printf("WM_KEY??? : count=%u / %X / '%s'\n",count, Str[0], Str);
+#endif    
     msg.hwnd    = hwnd;
     msg.message = (event->type == KeyRelease) ? WM_KEYUP : WM_KEYDOWN;
-    msg.wParam  = 0;
+    msg.wParam  = Str[0];
     msg.lParam  = (event->x & 0xffff) | (event->y << 16);
     msg.time = event->time;
     msg.pt.x = event->x & 0xffff;
@@ -230,6 +245,47 @@ static void EVENT_structure( Widget w, int hwnd, XEvent *event,
 	
     }    
 }
+
+
+/**********************************************************************
+ *              EVENT_focus_change
+ *
+ * Handle an X FocusChange event
+ */
+static void EVENT_focus_change( Widget w, int hwnd, XEvent *event, 
+			       Boolean *cont_dispatch )
+{
+    MSG msg;
+    
+    msg.hwnd = hwnd;
+    msg.time = GetTickCount();
+    msg.pt.x = 0;
+    msg.pt.y = 0;
+
+    switch(event->type)
+    {
+      case FocusIn:
+	{
+	    msg.message = WM_SETFOCUS;
+	    msg.wParam = hwnd;
+	    hWndFocus = hwnd;
+
+	}
+	break;
+	
+      case FocusOut:
+	{
+	    if (hWndFocus)
+	    {
+		msg.message = WM_KILLFOCUS;
+		msg.wParam = hwnd;
+		hWndFocus = 0;
+	    }
+	}
+    }    
+    MSG_AddMsg( &msg );
+}
+
 
 /**********************************************************************
  *		SetCapture 	(USER.18)

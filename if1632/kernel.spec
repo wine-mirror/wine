@@ -44,7 +44,7 @@ length	415
 86  pascal _lwrite(word ptr word) KERNEL__lwrite(1 2 3)
 88  pascal lstrcpy(ptr ptr) lstrcpy(1 2)
 89  pascal lstrcat(ptr ptr) lstrcat(1 2)
-90  pascal lstrlen(ptr) lstrcpy(1)
+90  pascal lstrlen(ptr) lstrlen(1)
 91  register InitTask(word word word word word
 		      word word word word word) 
 	     KERNEL_InitTask()
@@ -66,6 +66,7 @@ length	415
 154 return GlobalNotify 4 0
 163 pascal GlobalLRUOldest(word) ReturnArg(1)
 164 pascal GlobalLRUNewest(word) ReturnArg(1)
+166 pascal WinExec(ptr word) WinExec(1 2)
 178 equate __WINFLAGS 0x413
 184 return GlobalDOSAlloc 4 0
 185 return GlobalDOSFree 2 0

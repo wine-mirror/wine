@@ -50,7 +50,10 @@ USER_InitApp(int hInstance)
     DCE_Init();
     
       /* Initialize built-in window classes */
-    WIDGETS_Init();
+    if (!WIDGETS_Init()) return 0;
+
+      /* Initialize dialog manager */
+    if (!DIALOG_Init()) return 0;
     
       /* Create task message queue */
     if (!SetMessageQueue( DEFAULT_MSG_QUEUE_SIZE )) return 0;
