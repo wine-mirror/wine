@@ -437,6 +437,16 @@ static char* debug_getbuf()
     return buffers[index++ % DEBUG_BUFFERS];
 }
 
+static inline char* debugrange(const RANGE* lprng)
+{
+    if (lprng) 
+    {
+	char* buf = debug_getbuf();
+	snprintf(buf, DEBUG_BUFFER_SIZE, "(%d, %d)", lprng->lower, lprng->upper);
+    	return buf;
+    } else return "(null)";
+}
+
 static inline char* debugpoint(const POINT* lppt)
 {
     if (lppt) 
@@ -911,7 +921,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	if (upper < lower) return TRUE;
 	i->range.lower = lower;
 	i->range.upper = upper;
-	TRACE("    report=[%d,%d]\n", lower, upper);
+	TRACE("    report=%s\n", debugrange(&i->range));
     }
     else
     {
@@ -935,7 +945,7 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
 	    item_range.lower = nCol * nPerCol + nFirstRow;
 	    if(item_range.lower >= infoPtr->nItemCount) break;
 	    item_range.upper = min(nCol * nPerCol + nLastRow, infoPtr->nItemCount - 1);
-	    TRACE("   list=[%d,%d]\n", item_range.lower, item_range.upper);
+	    TRACE("   list=%s\n", debugrange(&item_range));
 	    ranges_add(i->ranges, item_range);
 	}
     }
@@ -2180,10 +2190,7 @@ static void ranges_dump(RANGES ranges)
     INT i;
 
     for (i = 0; i < ranges->hdpa->nItemCount; i++)
-    {
-    	RANGE *selection = DPA_GetPtr(ranges->hdpa, i);
-    	TRACE("   [%d - %d]\n", selection->lower, selection->upper);
-    }
+    	TRACE("   %s\n", debugrange(DPA_GetPtr(ranges->hdpa, i)));
 }
 
 static inline BOOL ranges_contain(RANGES ranges, INT nItem)
@@ -2235,7 +2242,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
     RANGE srchrgn;
     INT index;
 
-    TRACE("range=(%i - %i)\n", range.lower, range.upper);
+    TRACE("(%s)\n", debugrange(&range));
     if (TRACE_ON(listview)) ranges_dump(ranges);
 
     /* try find overlapping regions first */
@@ -2268,14 +2275,12 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
 	if (!chkrgn) return FALSE;
-	TRACE("Merge with index %i (%d - %d)\n",
-	      index, chkrgn->lower, chkrgn->upper);
+	TRACE("Merge with %s @%d\n", debugrange(chkrgn), index);
 
 	chkrgn->lower = min(range.lower, chkrgn->lower);
 	chkrgn->upper = max(range.upper, chkrgn->upper);
 	
-	TRACE("New range %i (%d - %d)\n",
-	      index, chkrgn->lower, chkrgn->upper);
+	TRACE("New range %s @%d\n", debugrange(chkrgn), index);
 
         /* merge now common anges */
 	fromindex = 0;
@@ -2315,7 +2320,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
     BOOL done = FALSE;
     INT index;
 
-    TRACE("range: (%d - %d)\n", range.lower, range.upper);
+    TRACE("(%s)\n", debugrange(&range));
     
     remrgn = range;
     do 
@@ -2326,8 +2331,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	chkrgn = DPA_GetPtr(ranges->hdpa, index);
 	if (!chkrgn) return FALSE;
 	
-        TRACE("Matches range index %i (%d - %d)\n", 
-	      index, chkrgn->lower, chkrgn->upper);
+        TRACE("Matches range %s @%d\n", debugrange(chkrgn), index); 
 
 	/* case 1: Same range */
 	if ( (chkrgn->upper == remrgn.upper) &&
