@@ -1031,6 +1031,7 @@ BOOL WINAPI VirtualProtectEx(
  *
  * RETURNS
  *	Number of bytes returned in information buffer
+ *	or 0 if addr is >= 0xc0000000 (kernel space).
  */
 DWORD WINAPI VirtualQuery(
              LPCVOID addr,                    /* [in]  Address of region */
@@ -1038,9 +1039,13 @@ DWORD WINAPI VirtualQuery(
              DWORD len                        /* [in]  Size of buffer */
 ) {
     FILE_VIEW *view;
-    UINT base = ROUND_ADDR( addr );
+    UINT base;
     UINT alloc_base = 0;
     UINT size = 0;
+
+    if (addr >= (void*)0xc0000000) return 0;
+
+    base = ROUND_ADDR( addr );
 
     /* Find the view containing the address */
 
