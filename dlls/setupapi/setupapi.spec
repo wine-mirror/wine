@@ -1,6 +1,7 @@
 name setupapi
 type win32
 
+import advapi32.dll
 import kernel32.dll
 
 # almost all functions are commented out for now. Ordinals are from setupapi.dll 4.0

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "crtdll.h"
@@ -114,7 +115,7 @@ LPWSTR __cdecl CRTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
  */
 INT __cdecl CRTDLL_wctomb( LPSTR dst, WCHAR ch )
 {
-    return WideCharToMultiByte( CP_ACP, 0, ch, 1, dst, 6, NULL, NULL );
+    return WideCharToMultiByte( CP_ACP, 0, &ch, 1, dst, 6, NULL, NULL );
 }
 
 /*********************************************************************

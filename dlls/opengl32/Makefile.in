@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = opengl32
 SOVERSION = 1.0
-IMPORTS   = x11drv
+IMPORTS   = x11drv kernel32
 
 C_SRCS = \
 	wgl.c \

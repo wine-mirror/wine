@@ -4,6 +4,7 @@ init SHLWAPI_LibMain
 
 import advapi32
 import user32
+import gdi32
 import kernel32
 
 1   stdcall @(ptr ptr) SHLWAPI_1
@@ -614,7 +615,7 @@ import kernel32
 @ stdcall StrCSpnW (wstr wstr) StrCSpnW
 @ stdcall StrCatBuffA (str str long) StrCatBuffA
 @ stdcall StrCatBuffW (wstr wstr long) StrCatBuffW
-@ stub    StrCatW
+@ stdcall StrCatW (ptr wstr) StrCatW
 @ stdcall StrChrA (str long) StrChrA
 @ stub    StrChrIA
 @ stub    StrChrIW
@@ -626,7 +627,7 @@ import kernel32
 @ stdcall StrCmpNW (wstr wstr long) StrCmpNW
 @ stdcall StrCmpW (wstr wstr) lstrcmpW
 @ stdcall StrCpyNW (ptr wstr long) lstrcpynW
-@ stdcall StrCpyW (ptr wstr) lstrcpyW
+@ stdcall StrCpyW (ptr wstr) StrCpyW
 @ stdcall StrDupA (str) StrDupA
 @ stdcall StrDupW (wstr) StrDupW
 @ stdcall StrFormatByteSizeA(long str long) StrFormatByteSizeA

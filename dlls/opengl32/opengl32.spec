@@ -1,8 +1,9 @@
-
 name opengl32
 type win32
 init OpenGL32_Init
+
 import x11drv
+import kernel32
 
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext

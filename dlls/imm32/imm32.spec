@@ -1,6 +1,8 @@
 name	imm32
 type	win32
 
+import	kernel32.dll
+
 @ stdcall ImmAssociateContext(long long) ImmAssociateContext
 @ stdcall ImmConfigureIMEA(long long long ptr) ImmConfigureIMEA
 @ stdcall ImmConfigureIMEW(long long long ptr) ImmConfigureIMEW

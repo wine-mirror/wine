@@ -100,6 +100,7 @@ typedef VOID (*new_handler_type)(VOID);
 static new_handler_type new_handler;
 
 CRTDLL_FILE * __cdecl CRTDLL__fdopen(INT handle, LPCSTR mode);
+INT __cdecl CRTDLL_fgetc( CRTDLL_FILE *file );
 
 /*********************************************************************
  *                  CRTDLL_MainInit  (CRTDLL.init)
@@ -114,6 +115,24 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		CRTDLL__fdopen(2,"w");
 	}
 	return TRUE;
+}
+
+/*********************************************************************
+ *                  malloc        (CRTDLL.427)
+ */
+VOID* __cdecl CRTDLL_malloc(DWORD size)
+{
+    return HeapAlloc(GetProcessHeap(),0,size);
+}
+
+/*********************************************************************
+ *                  _strdup          (CRTDLL.285)
+ */
+LPSTR __cdecl CRTDLL__strdup(LPCSTR ptr)
+{
+    LPSTR ret = CRTDLL_malloc(strlen(ptr)+1);
+    if (ret) strcpy( ret, ptr );
+    return ret;
 }
 
 /*********************************************************************
@@ -134,8 +153,7 @@ LPSTR * __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 	if (CRTDLL_acmdln_dll != NULL)
 		HeapFree(GetProcessHeap(), 0, CRTDLL_acmdln_dll);
 
-	CRTDLL_acmdln_dll = cmdline = HEAP_strdupA( GetProcessHeap(), 0,
-                                                    GetCommandLineA() );
+	CRTDLL_acmdln_dll = cmdline = CRTDLL__strdup( GetCommandLineA() );
  	TRACE("got '%s'\n", cmdline);
 
 	version	= GetVersion();
@@ -166,8 +184,7 @@ LPSTR * __cdecl CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,
 		                             sizeof(char*)*(xargc+1));
 		if (strlen(cmdline+afterlastspace))
 		{
-		    xargv[xargc] = HEAP_strdupA( GetProcessHeap(), 0,
-                                                       cmdline+afterlastspace);
+		    xargv[xargc] = CRTDLL__strdup(cmdline+afterlastspace);
 		    xargc++;
                     if (!last_arg) /* need to seek to the next arg ? */
 		    {
@@ -866,15 +883,6 @@ INT __cdecl CRTDLL_rand()
 
 
 /*********************************************************************
- *                  putchar       (CRTDLL.442)
- */
-void __cdecl CRTDLL_putchar( INT x )
-{
-    putchar(x);
-}
-
-
-/*********************************************************************
  *                  fputc       (CRTDLL.374)
  */
 INT __cdecl CRTDLL_fputc( INT c, CRTDLL_FILE *file )
@@ -884,6 +892,15 @@ INT __cdecl CRTDLL_fputc( INT c, CRTDLL_FILE *file )
     TRACE("%c to file %p\n",c,file);
     if (!WriteFile( file->handle, &ch, 1, &res, NULL )) return -1;
     return c;
+}
+
+
+/*********************************************************************
+ *                  putchar       (CRTDLL.442)
+ */
+void __cdecl CRTDLL_putchar( INT x )
+{
+    CRTDLL_fputc( x, CRTDLL_stdout );
 }
 
 
@@ -905,7 +922,7 @@ INT __cdecl CRTDLL_fputs( LPCSTR s, CRTDLL_FILE *file )
 INT __cdecl CRTDLL_puts(LPCSTR s)
 {
     TRACE("%s \n",s);
-    return puts(s);
+    return CRTDLL_fputs(s, CRTDLL_stdout);
 }
 
 
@@ -981,7 +998,7 @@ LPSTR __cdecl CRTDLL_gets(LPSTR buf)
      * windows95's ftp.exe.
      */
 
-    for(cc = fgetc(stdin); cc != EOF && cc != '\n'; cc = fgetc(stdin))
+    for(cc = CRTDLL_fgetc(CRTDLL_stdin); cc != EOF && cc != '\n'; cc = CRTDLL_fgetc(CRTDLL_stdin))
 	if(cc != '\r') *buf++ = (char)cc;
 
     *buf = '\0';
@@ -1099,14 +1116,6 @@ VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
 }
 
 /*********************************************************************
- *                  malloc        (CRTDLL.427)
- */
-VOID* __cdecl CRTDLL_malloc(DWORD size)
-{
-    return HeapAlloc(GetProcessHeap(),0,size);
-}
-
-/*********************************************************************
  *                  new           (CRTDLL.001)
  */
 VOID* __cdecl CRTDLL_new(DWORD size)
@@ -1157,14 +1166,6 @@ VOID __cdecl CRTDLL_free(LPVOID ptr)
 VOID __cdecl CRTDLL_delete(VOID* ptr)
 {
     HeapFree(GetProcessHeap(),0,ptr);
-}
-
-/*********************************************************************
- *                  _strdup          (CRTDLL.285)
- */
-LPSTR __cdecl CRTDLL__strdup(LPCSTR ptr)
-{
-    return HEAP_strdupA(GetProcessHeap(),0,ptr);
 }
 
 /*********************************************************************
@@ -1659,7 +1660,27 @@ LPINT __cdecl CRTDLL__errno()
 	static	int crtdllerrno;
 	
 	/* FIXME: we should set the error at the failing function call time */
-	crtdllerrno = LastErrorToErrno(GetLastError());
+
+        switch(GetLastError())
+        {
+        case ERROR_ACCESS_DENIED:        crtdllerrno = EPERM; break;
+        case ERROR_FILE_NOT_FOUND:       crtdllerrno = ENOENT; break;
+        case ERROR_INVALID_PARAMETER:    crtdllerrno = EINVAL; break;
+        case ERROR_IO_DEVICE:            crtdllerrno = EIO; break;
+        case ERROR_BAD_FORMAT:           crtdllerrno = ENOEXEC; break;
+        case ERROR_INVALID_HANDLE:       crtdllerrno = EBADF; break;
+        case ERROR_OUTOFMEMORY:          crtdllerrno = ENOMEM; break;
+        case ERROR_BUSY:                 crtdllerrno = EBUSY; break;
+        case ERROR_FILE_EXISTS:          crtdllerrno = EEXIST; break;
+        case ERROR_BAD_DEVICE:           crtdllerrno = ENODEV; break;
+        case ERROR_TOO_MANY_OPEN_FILES:  crtdllerrno = EMFILE; break;
+        case ERROR_DISK_FULL:            crtdllerrno = ENOSPC; break;
+        case ERROR_SEEK_ON_DEVICE:       crtdllerrno = ESPIPE; break;
+        case ERROR_BROKEN_PIPE:          crtdllerrno = EPIPE; break;
+        case ERROR_POSSIBLE_DEADLOCK:    crtdllerrno = EDEADLK; break;
+        case ERROR_FILENAME_EXCED_RANGE: crtdllerrno = ENAMETOOLONG; break;
+        case ERROR_DIR_NOT_EMPTY:        crtdllerrno = ENOTEMPTY; break;
+        }
 	return &crtdllerrno;
 }
 

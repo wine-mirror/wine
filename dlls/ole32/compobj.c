@@ -21,7 +21,6 @@
 #include "wownt32.h"
 #include "ole2ver.h"
 #include "debugtools.h"
-#include "file.h"
 #include "heap.h"
 #include "ldt.h"
 #include "winreg.h"
@@ -1492,11 +1491,10 @@ void WINAPI CoFreeUnusedLibraries(void)
  * RETURNS
  *	the current system time in lpFileTime
  */
-HRESULT WINAPI CoFileTimeNow(
-	FILETIME *lpFileTime	/* [out] the current time */
-) {
-	DOSFS_UnixTimeToFileTime(time(NULL), lpFileTime, 0);
-	return S_OK;
+HRESULT WINAPI CoFileTimeNow( FILETIME *lpFileTime ) /* [out] the current time */
+{
+    GetSystemTimeAsFileTime( lpFileTime );
+    return S_OK;
 }
 
 /***********************************************************************

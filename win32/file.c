@@ -27,9 +27,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(file)
-
-DWORD ErrnoToLastError(int errno_num);
+DEFAULT_DEBUG_CHANNEL(file);
 
 /***********************************************************************
  *              ReadFileEx                (KERNEL32.)
@@ -74,7 +72,7 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     }
     if(stat(full_name.long_name,&buf)==-1)
     {
-        SetLastError(ErrnoToLastError(errno));
+        FILE_SetDosError();
         return FALSE;
     }
     if (attributes & FILE_ATTRIBUTE_READONLY)
@@ -100,8 +98,8 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
 	      lpFileName,attributes);
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
+        FILE_SetDosError();
         MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions !\n", full_name.long_name);
-        SetLastError(ErrnoToLastError(errno));
         return FALSE;
     }
     return TRUE;

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <pwd.h>
 
 #include "winbase.h"
 #include "windef.h"
@@ -25,11 +26,9 @@ GetUserNameA( LPSTR lpszName, LPDWORD lpSize )
   size_t len;
   char *name;
 
-  name=getlogin();
-#if 0
-  /* FIXME: should use getpwuid() here */
-  if (!name) name=cuserid(NULL);
-#endif
+  struct passwd *pwd = getpwuid( getuid() );
+  if (!pwd) return 0;
+  name = pwd->pw_name;
   len = name ? strlen(name) : 0;
   if (!len || !lpSize || len > *lpSize) {
     if (lpszName) *lpszName = 0;

@@ -526,9 +526,9 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     if (!(st->st_mode & S_IWUSR))
         info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
-    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftCreationTime, 0 );
-    DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftLastWriteTime, 0 );
-    DOSFS_UnixTimeToFileTime( st->st_atime, &info->ftLastAccessTime, 0 );
+    RtlSecondsSince1970ToTime( st->st_mtime, &info->ftCreationTime );
+    RtlSecondsSince1970ToTime( st->st_mtime, &info->ftLastWriteTime );
+    RtlSecondsSince1970ToTime( st->st_atime, &info->ftLastAccessTime );
 
     info->dwVolumeSerialNumber = 0;  /* FIXME */
     info->nFileSizeHigh = 0;
@@ -571,9 +571,9 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
     if (!info) return 0;
     req->handle = hFile;
     if (server_call( REQ_GET_FILE_INFO )) return 0;
-    DOSFS_UnixTimeToFileTime( req->write_time, &info->ftCreationTime, 0 );
-    DOSFS_UnixTimeToFileTime( req->write_time, &info->ftLastWriteTime, 0 );
-    DOSFS_UnixTimeToFileTime( req->access_time, &info->ftLastAccessTime, 0 );
+    RtlSecondsSince1970ToTime( req->write_time, &info->ftCreationTime );
+    RtlSecondsSince1970ToTime( req->write_time, &info->ftLastWriteTime );
+    RtlSecondsSince1970ToTime( req->access_time, &info->ftLastAccessTime );
     info->dwFileAttributes     = req->attr;
     info->dwVolumeSerialNumber = req->serial;
     info->nFileSizeHigh        = req->size_high;

@@ -25,6 +25,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
+#include "wine/unicode.h"
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
@@ -966,7 +967,7 @@ DWORD WINAPI GetShortPathNameA( LPCSTR longpath, LPSTR shortpath,
 
       /* Check if the file exists and use the existing file name */
       if ( DOSFS_GetFullName ( tmpshortpath, TRUE, &full_name ) ) {
-	lstrcpyA ( tmpshortpath+sp, strrchr ( full_name.short_name, '\\' ) + 1 );
+	strcpy( tmpshortpath+sp, strrchr ( full_name.short_name, '\\' ) + 1 );
 	sp += strlen ( tmpshortpath+sp );
 	lp += tmplen;
 	continue;
@@ -1266,7 +1267,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
     HeapFree( GetProcessHeap(), 0, nameA );
     if (ret && (ret<=len) && buffer && lastpart)
     {
-        LPWSTR p = buffer + lstrlenW(buffer);
+        LPWSTR p = buffer + strlenW(buffer);
         if (*p != (WCHAR)'\\')
         {
             while ((p > buffer + 2) && (*p != (WCHAR)'\\')) p--;
@@ -1295,9 +1296,9 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
     {
         if (info->cur_pos) return 0;
         entry->dwFileAttributes  = FILE_ATTRIBUTE_LABEL;
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftCreationTime, 0 );
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastAccessTime, 0 );
-        DOSFS_UnixTimeToFileTime( (time_t)0, &entry->ftLastWriteTime, 0 );
+        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftCreationTime );
+        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftLastAccessTime );
+        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftLastWriteTime );
         entry->nFileSizeHigh     = 0;
         entry->nFileSizeLow      = 0;
         entry->dwReserved0       = 0;
@@ -1932,7 +1933,7 @@ BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
     newtm.tm_mday = (fatdate & 0x1f);
     newtm.tm_mon  = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
-    DOSFS_UnixTimeToFileTime( mktime( &newtm ), ft, 0 );
+    RtlSecondsSince1970ToTime( mktime( &newtm ), ft );
     return TRUE;
 }
 
