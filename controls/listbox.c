@@ -233,7 +233,8 @@ static LRESULT LISTBOX_SetTopItem( WND *wnd, LB_DESCR *descr, INT32 index,
     {
         INT32 diff = (descr->top_item - index) / descr->page_size * descr->column_width;
         if (scroll && (abs(diff) < descr->width))
-            ScrollWindow32( wnd->hwndSelf, diff, 0, NULL, NULL );
+            ScrollWindowEx32( wnd->hwndSelf, diff, 0, NULL, NULL, 0, NULL, 
+				SW_INVALIDATE | SW_ERASE );
         else
             scroll = FALSE;
     }
@@ -259,7 +260,8 @@ static LRESULT LISTBOX_SetTopItem( WND *wnd, LB_DESCR *descr, INT32 index,
             diff = (descr->top_item - index) * descr->item_height;
 
         if (abs(diff) < descr->height)
-            ScrollWindow32( wnd->hwndSelf, 0, diff, NULL, NULL );
+            ScrollWindowEx32( wnd->hwndSelf, 0, diff, NULL, NULL, 0, NULL,
+					SW_INVALIDATE | SW_ERASE );
         else
             scroll = FALSE;
     }
@@ -1006,7 +1008,8 @@ static void LISTBOX_SetHorizontalPos( WND *wnd, LB_DESCR *descr, INT32 pos )
     descr->horz_pos = pos;
     LISTBOX_UpdateScroll( wnd, descr );
     if (abs(diff) < descr->width)
-        ScrollWindow32( wnd->hwndSelf, diff, 0, NULL, NULL );
+        ScrollWindowEx32( wnd->hwndSelf, diff, 0, NULL, NULL, 0, NULL,
+			SW_INVALIDATE | SW_ERASE );
     else
         InvalidateRect32( wnd->hwndSelf, NULL, TRUE );
 }
@@ -2019,6 +2022,8 @@ static BOOL32 LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
 
     *(LB_DESCR **)wnd->wExtra = descr;
 
+/*    if (wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) descr->style &= ~LBS_NOTIFY;
+ */
     if (descr->style & LBS_EXTENDEDSEL) descr->style |= LBS_MULTIPLESEL;
     if (descr->style & LBS_MULTICOLUMN) descr->style &= ~LBS_OWNERDRAWVARIABLE;
     if (descr->style & LBS_OWNERDRAWVARIABLE) descr->style |= LBS_NOINTEGRALHEIGHT;
@@ -2066,7 +2071,8 @@ static BOOL32 LISTBOX_Destroy( WND *wnd, LB_DESCR *descr )
 /***********************************************************************
  *           ListBoxWndProc
  */
-LRESULT ListBoxWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
+                               WPARAM32 wParam, LPARAM lParam )
 {
     LRESULT ret;
     LB_DESCR *descr;
@@ -2491,7 +2497,8 @@ LRESULT COMBO_Directory( LPHEADCOMBO lphc, UINT32 attrib, LPSTR dir, BOOL32 bLon
  *  NOTE: in Windows, winproc address of the ComboLBox is the same 
  *	  as that of the Listbox.
  */
-LRESULT ComboLBWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
+                               WPARAM32 wParam, LPARAM lParam )
 {
     LRESULT lRet = 0;
     WND *wnd = WIN_FindWndPtr( hwnd );

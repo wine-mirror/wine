@@ -9,7 +9,7 @@
 
 #include "winnt.h"
 #include "selectors.h"
-#include "sigcontext.h"
+#include "sig_context.h"
 #include "pe_image.h"
 
 #define STEP_FLAG 0x100 /* single step flag */

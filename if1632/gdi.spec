@@ -314,7 +314,7 @@ file	gdi.exe
              ScaleViewportExtEx16
 485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
              ScaleWindowExtEx16
-486 stub GETASPECTRATIOFILTEREX
+486 pascal16 GetAspectRatioFilterEx(word ptr) GetAspectRatioFilterEx16
 489 stub CreateDIBSection
 490 stub CloseEnhMetafile
 491 stub CopyEnhMetafile

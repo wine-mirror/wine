@@ -26,25 +26,25 @@
 /* Funny to divide them between user and kernel. */
 
 /* IsCharAlpha USER 433 */
-BOOL16 IsCharAlpha16(CHAR ch)
+BOOL16 WINAPI IsCharAlpha16(CHAR ch)
 {
   return isalpha(ch);   /* This is probably not right for NLS */
 }
 
 /* IsCharAlphanumeric USER 434 */
-BOOL16 IsCharAlphanumeric16(CHAR ch)
+BOOL16 WINAPI IsCharAlphaNumeric16(CHAR ch)
 {
     return isalnum(ch);
 }
 
 /* IsCharUpper USER 435 */
-BOOL16 IsCharUpper16(CHAR ch)
+BOOL16 WINAPI IsCharUpper16(CHAR ch)
 {
   return isupper(ch);
 }
 
 /* IsCharLower USER 436 */
-BOOL16 IsCharLower16(CHAR ch)
+BOOL16 WINAPI IsCharLower16(CHAR ch)
 {
   return islower(ch);
 }
@@ -52,7 +52,7 @@ BOOL16 IsCharLower16(CHAR ch)
 /***********************************************************************
  *           AnsiUpper16   (USER.431)
  */
-SEGPTR AnsiUpper16( SEGPTR strOrChar )
+SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
 {
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
@@ -71,7 +71,7 @@ SEGPTR AnsiUpper16( SEGPTR strOrChar )
 /***********************************************************************
  *           AnsiUpperBuff16   (USER.437)
  */
-UINT16 AnsiUpperBuff16( LPSTR str, UINT16 len )
+UINT16 WINAPI AnsiUpperBuff16( LPSTR str, UINT16 len )
 {
     UINT32 count = len ? len : 65536;
     for (; count; count--, str++) *str = toupper(*str);
@@ -81,7 +81,7 @@ UINT16 AnsiUpperBuff16( LPSTR str, UINT16 len )
 /***********************************************************************
  *           AnsiLower16   (USER.432)
  */
-SEGPTR AnsiLower16( SEGPTR strOrChar )
+SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
 {
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
@@ -100,7 +100,7 @@ SEGPTR AnsiLower16( SEGPTR strOrChar )
 /***********************************************************************
  *           AnsiLowerBuff16   (USER.438)
  */
-UINT16 AnsiLowerBuff16( LPSTR str, UINT16 len )
+UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
 {
     UINT32 count = len ? len : 65536;
     for (; count; count--, str++) *str = tolower(*str);
@@ -111,7 +111,7 @@ UINT16 AnsiLowerBuff16( LPSTR str, UINT16 len )
 /***********************************************************************
  *           AnsiNext16   (USER.472)
  */
-SEGPTR AnsiNext16(SEGPTR current)
+SEGPTR WINAPI AnsiNext16(SEGPTR current)
 {
     return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
 }
@@ -120,7 +120,7 @@ SEGPTR AnsiNext16(SEGPTR current)
 /***********************************************************************
  *           AnsiPrev16   (USER.473)
  */
-SEGPTR AnsiPrev16( SEGPTR start, SEGPTR current )
+SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 {
     return (current == start) ? start : current - 1;
 }
@@ -129,7 +129,7 @@ SEGPTR AnsiPrev16( SEGPTR start, SEGPTR current )
 /***********************************************************************
  *           OutputDebugString16   (KERNEL.115)
  */
-void OutputDebugString16( LPCSTR str )
+void WINAPI OutputDebugString16( LPCSTR str )
 {
     char *module;
     char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+1 );
@@ -147,7 +147,7 @@ void OutputDebugString16( LPCSTR str )
 /***********************************************************************
  *           OutputDebugString32A   (KERNEL32
  */
-void OutputDebugString32A( LPCSTR str )
+void WINAPI OutputDebugString32A( LPCSTR str )
 {
     OutputDebugString16( str );
 }
@@ -157,7 +157,7 @@ void OutputDebugString32A( LPCSTR str )
 /***********************************************************************
  *           OutputDebugString32W   (KERNEL32
  */
-void OutputDebugString32W( LPCWSTR str )
+void WINAPI OutputDebugString32W( LPCWSTR str )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     OutputDebugString32A( p );
@@ -169,7 +169,7 @@ void OutputDebugString32W( LPCWSTR str )
 /***********************************************************************
  *           CharNext32A   (USER32.28)
  */
-LPSTR CharNext32A( LPCSTR ptr )
+LPSTR WINAPI CharNext32A( LPCSTR ptr )
 {
     if (!*ptr) return (LPSTR)ptr;
     if (IsDBCSLeadByte32( *ptr )) return (LPSTR)(ptr + 2);
@@ -180,7 +180,7 @@ LPSTR CharNext32A( LPCSTR ptr )
 /***********************************************************************
  *           CharNextEx32A   (USER32.29)
  */
-LPSTR CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
+LPSTR WINAPI CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
 {
     if (!*ptr) return (LPSTR)ptr;
     if (IsDBCSLeadByteEx( codepage, *ptr )) return (LPSTR)(ptr + 2);
@@ -191,7 +191,7 @@ LPSTR CharNextEx32A( WORD codepage, LPCSTR ptr, DWORD flags )
 /***********************************************************************
  *           CharNextExW   (USER32.30)
  */
-LPWSTR CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
+LPWSTR WINAPI CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
 {
     /* FIXME: add DBCS / codepage stuff */
     if (*x) return (LPWSTR)(x+1);
@@ -201,7 +201,7 @@ LPWSTR CharNextEx32W(WORD codepage,LPCWSTR x,DWORD flags)
 /***********************************************************************
  *           CharNextW   (USER32.31)
  */
-LPWSTR CharNext32W(LPCWSTR x)
+LPWSTR WINAPI CharNext32W(LPCWSTR x)
 {
     if (*x) return (LPWSTR)(x+1);
     else return (LPWSTR)x;
@@ -210,7 +210,7 @@ LPWSTR CharNext32W(LPCWSTR x)
 /***********************************************************************
  *           CharPrev32A   (USER32.32)
  */
-LPSTR CharPrev32A( LPCSTR start, LPCSTR ptr )
+LPSTR WINAPI CharPrev32A( LPCSTR start, LPCSTR ptr )
 {
     while (*start && (start < ptr))
     {
@@ -225,7 +225,7 @@ LPSTR CharPrev32A( LPCSTR start, LPCSTR ptr )
 /***********************************************************************
  *           CharPrevEx32A   (USER32.33)
  */
-LPSTR CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
+LPSTR WINAPI CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
 {
     while (*start && (start < ptr))
     {
@@ -240,7 +240,7 @@ LPSTR CharPrevEx32A( WORD codepage, LPCSTR start, LPCSTR ptr, DWORD flags )
 /***********************************************************************
  *           CharPrevExW   (USER32.34)
  */
-LPWSTR CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
+LPWSTR WINAPI CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
 {
     /* FIXME: add DBCS / codepage stuff */
     if (x>start) return (LPWSTR)(x-1);
@@ -250,7 +250,7 @@ LPWSTR CharPrevEx32W(WORD codepage,LPCWSTR start,LPCWSTR x,DWORD flags)
 /***********************************************************************
  *           CharPrevW   (USER32.35)
  */
-LPWSTR CharPrev32W(LPCWSTR start,LPCWSTR x)
+LPWSTR WINAPI CharPrev32W(LPCWSTR start,LPCWSTR x)
 {
     if (x>start) return (LPWSTR)(x-1);
     else return (LPWSTR)x;
@@ -260,7 +260,7 @@ LPWSTR CharPrev32W(LPCWSTR start,LPCWSTR x)
  *           CharLowerA   (USER32.24)
  * FIXME: handle current locale
  */
-LPSTR CharLower32A(LPSTR x)
+LPSTR WINAPI CharLower32A(LPSTR x)
 {
     LPSTR	s;
 
@@ -281,7 +281,7 @@ LPSTR CharLower32A(LPSTR x)
  *           CharLowerBuffA   (USER32.25)
  * FIXME: handle current locale
  */
-DWORD CharLowerBuff32A(LPSTR x,DWORD buflen)
+DWORD WINAPI CharLowerBuff32A(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -298,7 +298,7 @@ DWORD CharLowerBuff32A(LPSTR x,DWORD buflen)
  *           CharLowerBuffW   (USER32.26)
  * FIXME: handle current locale
  */
-DWORD CharLowerBuff32W(LPWSTR x,DWORD buflen)
+DWORD WINAPI CharLowerBuff32W(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -315,7 +315,7 @@ DWORD CharLowerBuff32W(LPWSTR x,DWORD buflen)
  *           CharLowerW   (USER32.27)
  * FIXME: handle current locale
  */
-LPWSTR CharLower32W(LPWSTR x)
+LPWSTR WINAPI CharLower32W(LPWSTR x)
 {
     if (HIWORD(x))
     {
@@ -334,7 +334,7 @@ LPWSTR CharLower32W(LPWSTR x)
  *           CharUpper32A   (USER32.40)
  * FIXME: handle current locale
  */
-LPSTR CharUpper32A(LPSTR x)
+LPSTR WINAPI CharUpper32A(LPSTR x)
 {
     if (HIWORD(x))
     {
@@ -353,7 +353,7 @@ LPSTR CharUpper32A(LPSTR x)
  *           CharUpperBuffA   (USER32.41)
  * FIXME: handle current locale
  */
-DWORD CharUpperBuff32A(LPSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuff32A(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -370,7 +370,7 @@ DWORD CharUpperBuff32A(LPSTR x,DWORD buflen)
  *           CharUpperBuffW   (USER32.42)
  * FIXME: handle current locale
  */
-DWORD CharUpperBuff32W(LPWSTR x,DWORD buflen)
+DWORD WINAPI CharUpperBuff32W(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
@@ -387,7 +387,7 @@ DWORD CharUpperBuff32W(LPWSTR x,DWORD buflen)
  *           CharUpperW   (USER32.43)
  * FIXME: handle current locale
  */
-LPWSTR CharUpper32W(LPWSTR x)
+LPWSTR WINAPI CharUpper32W(LPWSTR x)
 {
     if (HIWORD(x))
     {
@@ -406,7 +406,7 @@ LPWSTR CharUpper32W(LPWSTR x)
  *           IsCharAlphaA   (USER32.330)
  * FIXME: handle current locale
  */
-BOOL32 IsCharAlpha32A(CHAR x)
+BOOL32 WINAPI IsCharAlpha32A(CHAR x)
 {
     return isalpha(x);
 }
@@ -415,7 +415,7 @@ BOOL32 IsCharAlpha32A(CHAR x)
  *           IsCharAlphaNumericA   (USER32.331)
  * FIXME: handle current locale
  */
-BOOL32 IsCharAlphaNumeric32A(CHAR x)
+BOOL32 WINAPI IsCharAlphaNumeric32A(CHAR x)
 {
     return isalnum(x);
 }
@@ -424,7 +424,7 @@ BOOL32 IsCharAlphaNumeric32A(CHAR x)
  *           IsCharAlphaNumericW   (USER32.332)
  * FIXME: handle current locale
  */
-BOOL32 IsCharAlphaNumeric32W(WCHAR x)
+BOOL32 WINAPI IsCharAlphaNumeric32W(WCHAR x)
 {
     return isalnum(x);
 }
@@ -433,7 +433,7 @@ BOOL32 IsCharAlphaNumeric32W(WCHAR x)
  *           IsCharAlphaW   (USER32.333)
  * FIXME: handle current locale
  */
-BOOL32 IsCharAlpha32W(WCHAR x)
+BOOL32 WINAPI IsCharAlpha32W(WCHAR x)
 {
     return isalpha(x);
 }
@@ -442,7 +442,7 @@ BOOL32 IsCharAlpha32W(WCHAR x)
  *           IsCharLower32A   (USER32.334)
  * FIXME: handle current locale
  */
-BOOL32 IsCharLower32A(CHAR x)
+BOOL32 WINAPI IsCharLower32A(CHAR x)
 {
     return islower(x);
 }
@@ -451,7 +451,7 @@ BOOL32 IsCharLower32A(CHAR x)
  *           IsCharLower32W   (USER32.335)
  * FIXME: handle current locale
  */
-BOOL32 IsCharLower32W(WCHAR x)
+BOOL32 WINAPI IsCharLower32W(WCHAR x)
 {
     return islower(x);
 }
@@ -460,7 +460,7 @@ BOOL32 IsCharLower32W(WCHAR x)
  *           IsCharUpper32A   (USER32.336)
  * FIXME: handle current locale
  */
-BOOL32 IsCharUpper32A(CHAR x)
+BOOL32 WINAPI IsCharUpper32A(CHAR x)
 {
     return isupper(x);
 }
@@ -469,7 +469,7 @@ BOOL32 IsCharUpper32A(CHAR x)
  *           IsCharUpper32W   (USER32.337)
  * FIXME: handle current locale
  */
-BOOL32 IsCharUpper32W(WCHAR x)
+BOOL32 WINAPI IsCharUpper32W(WCHAR x)
 {
     return isupper(x);
 }
@@ -478,8 +478,7 @@ BOOL32 IsCharUpper32W(WCHAR x)
  *           FormatMessageA   (KERNEL32.138) Library Version
  * FIXME: missing wrap,FROM_SYSTEM message-loading,
  */
-DWORD
-FormatMessage32A(
+DWORD WINAPI FormatMessage32A(
 	DWORD	dwFlags,
 	LPCVOID	lpSource,
 	DWORD	dwMessageId,
@@ -647,8 +646,8 @@ FormatMessage32A(
 /***********************************************************************
  *           FormatMessageA   (KERNEL32.138) Emulator Version
  */
-DWORD
-WIN32_FormatMessage32A(DWORD *args) {
+DWORD WINAPI WIN32_FormatMessage32A(DWORD *args)
+{
 	DWORD	dwFlags		= args[0];
 	LPCVOID	lpSource	= (LPCVOID)args[1];
 	DWORD	dwMessageId	= args[2];
@@ -682,8 +681,7 @@ WIN32_FormatMessage32A(DWORD *args) {
 	);
 }
 
-DWORD
-FormatMessage32W(
+DWORD WINAPI FormatMessage32W(
 	DWORD	dwFlags,
 	LPCVOID	lpSource,
 	DWORD	dwMessageId,
@@ -851,10 +849,10 @@ FormatMessage32W(
 #undef ADD_TO_T
 
 /***********************************************************************
- *           FormatMessageA   (KERNEL32.138) Emulator Version
+ *           FormatMessageW   (KERNEL32.138) Emulator Version
  */
-DWORD
-WIN32_FormatMessage32W(DWORD *args) {
+DWORD WINAPI WIN32_FormatMessage32W(DWORD *args)
+{
 	DWORD	dwFlags		= args[0];
 	LPCVOID	lpSource	= (LPCVOID)args[1];
 	DWORD	dwMessageId	= args[2];

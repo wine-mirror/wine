@@ -143,6 +143,8 @@ static LRESULT WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
 static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
                                       WPARAM32 wParam, LPARAM lParam )
 {
+/*  dprintf_relay( stddeb, "CallTo32(wndproc=%p,hwnd=%08x,msg=%08x,wp=%08x,lp=%08lx)\n",
+                   proc, hwnd, msg, wParam, lParam ); */
     return proc( hwnd, msg, wParam, lParam );
 }
 
@@ -1843,8 +1845,8 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
 /**********************************************************************
  *	     CallWindowProc16    (USER.122)
  */
-LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
-                          WPARAM16 wParam, LPARAM lParam )
+LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
+                                 WPARAM16 wParam, LPARAM lParam )
 {
     LRESULT result;
     WND *wndPtr;
@@ -1899,8 +1901,8 @@ LRESULT CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
 /**********************************************************************
  *	     CallWindowProc32A    (USER32.17)
  */
-LRESULT CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
-                           WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
+                                  WPARAM32 wParam, LPARAM lParam )
 {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 
@@ -1936,8 +1938,8 @@ LRESULT CallWindowProc32A( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
 /**********************************************************************
  *	     CallWindowProc32W    (USER32.18)
  */
-LRESULT CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
-                           WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI CallWindowProc32W( WNDPROC32 func, HWND32 hwnd, UINT32 msg,
+                                  WPARAM32 wParam, LPARAM lParam )
 {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 

@@ -20,7 +20,7 @@ base	2
 11 stub MakeDragList
 12 stub LBItemFromPt
 13 stub DrawInsert
-14 stub CreateUpDownControl
+14 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
 15 stdcall InitCommonControls() InitCommonControls
 16 stub CreateStatusWindow
 17 stub CreateStatusWindowW

@@ -185,7 +185,8 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
 /***********************************************************************
  *           IconTitleWndProc
  */
-LRESULT IconTitleWndProc( HWND32 hWnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI IconTitleWndProc( HWND32 hWnd, UINT32 msg,
+                                 WPARAM32 wParam, LPARAM lParam )
 {
     WND *wnd = WIN_FindWndPtr( hWnd );
 

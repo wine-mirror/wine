@@ -131,8 +131,8 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND32 hwnd, HDC32 hdc,
  *
  * Window procedure for the desktop window.
  */
-LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
-                        WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
+                               WPARAM32 wParam, LPARAM lParam )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
@@ -169,7 +169,7 @@ LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
 /***********************************************************************
  *           SetDeskPattern   (USER.279)
  */
-BOOL16 SetDeskPattern(void)
+BOOL16 WINAPI SetDeskPattern(void)
 {
     char buffer[100];
     GetProfileString32A( "desktop", "Pattern", "(None)", buffer, 100 );
@@ -180,7 +180,7 @@ BOOL16 SetDeskPattern(void)
 /***********************************************************************
  *           SetDeskWallPaper16   (USER.285)
  */
-BOOL16 SetDeskWallPaper16( LPCSTR filename )
+BOOL16 WINAPI SetDeskWallPaper16( LPCSTR filename )
 {
     return SetDeskWallPaper32( filename );
 }
@@ -191,7 +191,7 @@ BOOL16 SetDeskWallPaper16( LPCSTR filename )
  *
  * FIXME: is there a unicode version?
  */
-BOOL32 SetDeskWallPaper32( LPCSTR filename )
+BOOL32 WINAPI SetDeskWallPaper32( LPCSTR filename )
 {
     HBITMAP32 hbitmap;
     HDC32 hdc;

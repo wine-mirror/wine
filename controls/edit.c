@@ -148,7 +148,8 @@ static __inline__ void		EDIT_WM_Cut(WND *wnd, EDITSTATE *es);
 /*
  *	This is the only exported function
  */
-LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam);
+LRESULT WINAPI EditWndProc( HWND32 hwnd, UINT32 msg,
+                            WPARAM32 wParam, LPARAM lParam );
 /*
  *	Helper functions only valid for one type of control
  */
@@ -297,7 +298,8 @@ static __inline__ void EDIT_WM_Cut(WND *wnd, EDITSTATE *es)
  *	names).
  *
  */
-LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI EditWndProc( HWND32 hwnd, UINT32 msg,
+                            WPARAM32 wParam, LPARAM lParam )
 {
 	WND *wnd = WIN_FindWndPtr(hwnd);
 	EDITSTATE *es = *(EDITSTATE **)((wnd)->wExtra);

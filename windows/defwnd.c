@@ -359,8 +359,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 /***********************************************************************
  *           DefWindowProc16   (USER.107)
  */
-LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
-                         LPARAM lParam )
+LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+                                LPARAM lParam )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
@@ -426,8 +426,8 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 /***********************************************************************
  *           DefWindowProc32A   (USER32.125)
  */
-LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                          LPARAM lParam )
+LRESULT WINAPI DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                                 LPARAM lParam )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
@@ -487,8 +487,8 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 /***********************************************************************
  *           DefWindowProc32W   (USER32.126)
  */
-LRESULT DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                          LPARAM lParam )
+LRESULT WINAPI DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                                 LPARAM lParam )
 {
     LRESULT result;
 

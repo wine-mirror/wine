@@ -50,13 +50,17 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 {
     HICON16 prevIcon;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
+    CURSORICONINFO *info = hicon?(CURSORICONINFO *) GlobalLock16( hicon ):NULL;
 
     if ((wndPtr->dwStyle & 0x0f) != SS_ICON) return 0;
+    if (hicon && !info) {
+	fprintf(stderr,"STATIC_SetIcon: huh? hicon!=0, but info=0???\n");
+    	return 0;
+    }
     prevIcon = infoPtr->hIcon;
     infoPtr->hIcon = hicon;
     if (hicon)
     {
-        CURSORICONINFO *info = (CURSORICONINFO *) GlobalLock16( hicon );
         SetWindowPos32( wndPtr->hwndSelf, 0, 0, 0, info->nWidth, info->nHeight,
                         SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock16( hicon );
@@ -95,8 +99,8 @@ static HICON16 STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
 /***********************************************************************
  *           StaticWndProc
  */
-LRESULT StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
-                       LPARAM lParam )
+LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
+                              LPARAM lParam )
 {
     LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);

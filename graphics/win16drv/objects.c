@@ -24,11 +24,12 @@ extern HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
 
 
 /***********************************************************************
- *           X11DRV_SelectObject
+ *           WIN16DRV_SelectObject
  */
 HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    HGDIOBJ32 ret = 0;
 
     if (!ptr) return 0;
     dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", dc->hSelf, handle );
@@ -37,17 +38,17 @@ HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
     {
     case PEN_MAGIC:
         fprintf(stderr, "WIN16DRV_SelectObject for PEN not implemented\n");
-        return 0;
     case BRUSH_MAGIC:
         fprintf(stderr, "WIN16DRV_SelectObject for BRUSH not implemented\n");
-        return 0;
     case BITMAP_MAGIC:
         fprintf(stderr, "WIN16DRV_SelectObject for BITMAP not implemented\n");
-        return 0;
     case FONT_MAGIC:
-        return WIN16DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
+        ret = WIN16DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
+	break;
     case REGION_MAGIC:
-	  return (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	break;
     }
-    return 0;
+    GDI_HEAP_UNLOCK( handle );
+    return ret;
 }

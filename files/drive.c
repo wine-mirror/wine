@@ -538,9 +538,9 @@ static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
 /***********************************************************************
  *           GetDiskFreeSpace16   (KERNEL.422)
  */
-BOOL16 GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
-                           LPDWORD sector_bytes, LPDWORD free_clusters,
-                           LPDWORD total_clusters )
+BOOL16 WINAPI GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
+                                  LPDWORD sector_bytes, LPDWORD free_clusters,
+                                  LPDWORD total_clusters )
 {
     return GetDiskFreeSpace32A( root, cluster_sectors, sector_bytes,
                                 free_clusters, total_clusters );
@@ -550,9 +550,9 @@ BOOL16 GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDiskFreeSpace32A   (KERNEL32.206)
  */
-BOOL32 GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
-                            LPDWORD sector_bytes, LPDWORD free_clusters,
-                            LPDWORD total_clusters )
+BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
+                                   LPDWORD sector_bytes, LPDWORD free_clusters,
+                                   LPDWORD total_clusters )
 {
     int	drive;
     DWORD size,available;
@@ -583,9 +583,9 @@ BOOL32 GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDiskFreeSpace32W   (KERNEL32.207)
  */
-BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
-                            LPDWORD sector_bytes, LPDWORD free_clusters,
-                            LPDWORD total_clusters )
+BOOL32 WINAPI GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
+                                   LPDWORD sector_bytes, LPDWORD free_clusters,
+                                   LPDWORD total_clusters )
 {
     LPSTR xroot;
     BOOL32 ret;
@@ -601,7 +601,7 @@ BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
 /***********************************************************************
  *           GetDriveType16   (KERNEL.136)
  */
-UINT16 GetDriveType16( UINT16 drive )
+UINT16 WINAPI GetDriveType16( UINT16 drive )
 {
     dprintf_dosfs( stddeb, "GetDriveType16(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
@@ -619,7 +619,7 @@ UINT16 GetDriveType16( UINT16 drive )
 /***********************************************************************
  *           GetDriveType32A   (KERNEL32.208)
  */
-UINT32 GetDriveType32A( LPCSTR root )
+UINT32 WINAPI GetDriveType32A( LPCSTR root )
 {
     dprintf_dosfs( stddeb, "GetDriveType32A(%s)\n", root );
     if (root[1] != ':')
@@ -642,7 +642,7 @@ UINT32 GetDriveType32A( LPCSTR root )
 /***********************************************************************
  *           GetDriveType32W   (KERNEL32.209)
  */
-UINT32 GetDriveType32W( LPCWSTR root )
+UINT32 WINAPI GetDriveType32W( LPCWSTR root )
 {
     LPSTR xpath = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
     UINT32 ret = GetDriveType32A( xpath );
@@ -654,7 +654,7 @@ UINT32 GetDriveType32W( LPCWSTR root )
 /***********************************************************************
  *           GetCurrentDirectory16   (KERNEL.411)
  */
-UINT16 GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
+UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 {
     return (UINT16)GetCurrentDirectory32A( buflen, buf );
 }
@@ -665,7 +665,7 @@ UINT16 GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
  *
  * Returns "X:\\path\\etc\\".
  */
-UINT32 GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
+UINT32 WINAPI GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
 {
     char *pref = "A:\\";
     const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
@@ -684,7 +684,7 @@ UINT32 GetCurrentDirectory32A( UINT32 buflen, LPSTR buf )
 /***********************************************************************
  *           GetCurrentDirectory32W   (KERNEL32.197)
  */
-UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
+UINT32 WINAPI GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
 {
     LPSTR xpath = HeapAlloc( GetProcessHeap(), 0, buflen+1 );
     UINT32 ret = GetCurrentDirectory32A( buflen, xpath );
@@ -697,7 +697,7 @@ UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
 /***********************************************************************
  *           SetCurrentDirectory   (KERNEL.412)
  */
-BOOL16 SetCurrentDirectory16( LPCSTR dir )
+BOOL16 WINAPI SetCurrentDirectory16( LPCSTR dir )
 {
     return SetCurrentDirectory32A( dir );
 }
@@ -706,7 +706,7 @@ BOOL16 SetCurrentDirectory16( LPCSTR dir )
 /***********************************************************************
  *           SetCurrentDirectory32A   (KERNEL32.479)
  */
-BOOL32 SetCurrentDirectory32A( LPCSTR dir )
+BOOL32 WINAPI SetCurrentDirectory32A( LPCSTR dir )
 {
     int drive = DRIVE_GetCurrentDrive();
 
@@ -730,7 +730,7 @@ BOOL32 SetCurrentDirectory32A( LPCSTR dir )
 /***********************************************************************
  *           SetCurrentDirectory32W   (KERNEL32.480)
  */
-BOOL32 SetCurrentDirectory32W( LPCWSTR dirW )
+BOOL32 WINAPI SetCurrentDirectory32W( LPCWSTR dirW )
 {
     LPSTR dir = HEAP_strdupWtoA( GetProcessHeap(), 0, dirW );
     BOOL32 res = SetCurrentDirectory32A( dir );
@@ -742,7 +742,7 @@ BOOL32 SetCurrentDirectory32W( LPCWSTR dirW )
 /***********************************************************************
  *           GetLogicalDriveStrings32A   (KERNEL32.231)
  */
-UINT32 GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
+UINT32 WINAPI GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
 {
     int drive, count;
 
@@ -768,7 +768,7 @@ UINT32 GetLogicalDriveStrings32A( UINT32 len, LPSTR buffer )
 /***********************************************************************
  *           GetLogicalDriveStrings32W   (KERNEL32.232)
  */
-UINT32 GetLogicalDriveStrings32W( UINT32 len, LPWSTR buffer )
+UINT32 WINAPI GetLogicalDriveStrings32W( UINT32 len, LPWSTR buffer )
 {
     int drive, count;
 
@@ -794,7 +794,7 @@ UINT32 GetLogicalDriveStrings32W( UINT32 len, LPWSTR buffer )
 /***********************************************************************
  *           GetLogicalDrives   (KERNEL32.233)
  */
-DWORD GetLogicalDrives(void)
+DWORD WINAPI GetLogicalDrives(void)
 {
     DWORD ret = 0;
     int drive;
@@ -808,9 +808,10 @@ DWORD GetLogicalDrives(void)
 /***********************************************************************
  *           GetVolumeInformation32A   (KERNEL32.309)
  */
-BOOL32 GetVolumeInformation32A( LPCSTR root, LPSTR label, DWORD label_len,
-                                DWORD *serial, DWORD *filename_len,
-                                DWORD *flags, LPSTR fsname, DWORD fsname_len )
+BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
+                                       DWORD label_len, DWORD *serial,
+                                       DWORD *filename_len, DWORD *flags,
+                                       LPSTR fsname, DWORD fsname_len )
 {
     int drive;
 
@@ -843,9 +844,10 @@ BOOL32 GetVolumeInformation32A( LPCSTR root, LPSTR label, DWORD label_len,
 /***********************************************************************
  *           GetVolumeInformation32W   (KERNEL32.310)
  */
-BOOL32 GetVolumeInformation32W( LPCWSTR root, LPWSTR label, DWORD label_len,
-                                DWORD *serial, DWORD *filename_len,
-                                DWORD *flags, LPWSTR fsname, DWORD fsname_len)
+BOOL32 WINAPI GetVolumeInformation32W( LPCWSTR root, LPWSTR label,
+                                       DWORD label_len, DWORD *serial,
+                                       DWORD *filename_len, DWORD *flags,
+                                       LPWSTR fsname, DWORD fsname_len )
 {
     LPSTR xroot    = HEAP_strdupWtoA( GetProcessHeap(), 0, root );
     LPSTR xvolname = label ? HeapAlloc(GetProcessHeap(),0,label_len) : NULL;

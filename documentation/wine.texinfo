@@ -45,12 +45,14 @@ the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
 FIXME: UNIX and POSIX trademarks. @*
-DOS @*
 X11 @*
-MS-Windows, Windows-NT, Windows 95 are registered trademarks of
-Microsoft Corp. Postscript is a registered trademark of Adobe Systems
-Inc. All other product names mentioned herein are the trademarks of
-their respective owners.
+Microsoft, Windows, MS-Windows, Windows-NT, Windows 95, and MS-DOS are
+registered trademarks of Microsoft Corporation.
+NT is a trademark of Northern Telecom Limited.
+C++Builder is a trademark of Borland International, Inc.
+Postscript is a registered trademark of Adobe Systems Inc.
+Other trademarks are the property of their respective owners, which may
+be registered in certain jurisdictions.
 @end ifinfo
 
 @c begin chapters on right pages
@@ -60,7 +62,7 @@ their respective owners.
 @sp 10
 
 @center @titlefont{The Wine Reference Manual}
-@center Edition 0.0.2, 21 July 1997
+@center Edition 0.0.3, 14 August 1997
 
 
 @c The following two commands start the copyright page.
@@ -81,10 +83,14 @@ the section entitled ``License, Warranty, and Authors of Wine''.
 
 @sp 4
 FIXME: UNIX and POSIX trademarks. @*
-MS-Windows, Windows-NT, Windows 95 are registered trademarks of
-Microsoft Corp. Postscript is a registered trademark of Adobe Systems
-Inc. All other product names mentioned herein are the trademarks of
-their respective owners.
+X11 @*
+Microsoft, Windows, MS-Windows, Windows-NT, Windows 95, and MS-DOS are
+registered trademarks of Microsoft Corporation.
+NT is a trademark of Northern Telecom Limited.
+C++Builder is a trademark of Borland International, Inc.
+Postscript is a registered trademark of Adobe Systems Inc.
+Other trademarks are the property of their respective owners, which may
+be registered in certain jurisdictions.
 @end titlepage
 
 
@@ -95,12 +101,12 @@ their respective owners.
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualversion
-0.0.2
+0.0.3
 @end macro
 
 @c Edit this macro manually in the above parts of the document
 @macro winemanualdate
-21 July 1997
+14 August 1997
 @end macro
 
 @c Edit this macro manually into the TeX titlepage
@@ -133,6 +139,11 @@ WIN16
 @c FIXME: automatical trademark reference
 @macro WINNT
 Windows NT
+@end macro
+
+@c FIXME: automatical trademark reference
+@macro WINNT40
+Windows NT 4.0
 @end macro
 
 @c FIXME: automatical trademark reference
@@ -409,12 +420,12 @@ You should consult the files @file{README}, @file{ANNOUNCE},
 @file{RELEASE-NOTES}, @file{BUGS}, @file{LICENSE}, and @file{WARRANTY},
 in the root directory of the Wine distribution.
 
-The Wine FAQ, available from
-@url{ftp://ftp.asgardpro.com/wine/dave/Wine.FAQ},
-@url{ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/Wine.FAQ},
-@url{ftp://rtfm.mit.edu/pub/usenet-by-group/comp.emulators.ms-windows.wine/WINE_(WINdows_Emulator)_Frequently_Asked_Questions},
-@url{ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/Wine.FAQ},
-@url{http://www.asgardpro.com/wine/index.html},
+The Wine FAQ, available from @*
+@url{ftp://ftp.asgardpro.com/wine/dave/Wine.FAQ}, @*
+@url{ftp://tsx-11.mit.edu/pub/linux/ALPHA/Wine/Wine.FAQ}, @*
+@url{ftp://rtfm.mit.edu/pub/usenet-by-group/comp.emulators.ms-windows.wine/WINE_(WINdows_Emulator)_Frequently_Asked_Questions}, @*
+@url{ftp://sunsite.unc.edu/pub/Linux/ALPHA/wine/Wine.FAQ}, @*
+@url{http://www.asgardpro.com/wine/index.html}, @*
 gives answer to a lot of questions.
 
 The Wine USENET newsgroup is interesting for developers. It discusses technical
@@ -702,8 +713,10 @@ This is not present in the @mswindows{} API. (Wine value: 0x0008).
 The file is a directory. (Wine value: 0x0010).
 @end defvr
 @defvr_cw32 FILE_ATTRIBUTE_ARCHIVE
-The file is an archive file. All non-directory files are reported by Wine 
-to have this attribute. (Wine value: 0x0020).
+The file is an archive file. Currently, all non-directory files are
+reported by Wine to have this attribute. This attribute is normally set
+by @mswindows{} to indicate that a file is to be archived; when the file
+is archived, the flag is cleared. (Wine value: 0x0020).
 @end defvr
 @defvr_cw32 FILE_ATTRIBUTE_NORMAL
 The file does not have any other attributes set. This value must be used
@@ -948,7 +961,21 @@ variable by specifying its name or its ordinal. Although reference by
 name is the common usage, some program parts (notably DLL's themselves)
 sometimes refer to DLL entries by ordinal. Therefore, the ordinals
 cannot be chosen arbitrarily.
-@* FIXME: is that correct?
+
+Regular programs that are compiled and linked against @mswindows{} DLL's
+will import DLL functions by name. This is therefore the default
+behaviour. Most DLL functions will be imported by name in all cases.
+Apparently, the @WIN32{} DLL's even show some difference in the mapping
+of functions and ordinals on @WINNT{} and @WIN95{}. For most DLL
+functions, the ordinal number will not matter.
+
+There are some exceptions to that. Notable the KERNEL32 ordinals below
+100 are (presently) unnamed and undocumented functions which can only be
+imported by ordinal. These functions are called by some @mswindows{}
+programs. Also the @file{shell32.dll} functions are reported to be
+imported by ordinal in some other DLL's.
+
+@xref{Getting information on the API}, for sources of further information.
 
 @node Spec file header, Variable entry points, Ordinals, The spec files
 @subsubsection The header of a @file{.spec}-file
@@ -1034,7 +1061,8 @@ A @WIN16{} function that returns a 32 bit value.
 @item register
 A function using CPU registers to pass arguments.
 @item stdcall
-A normal @WIN32{} function.
+A normal @WIN32{} function. @xref{Investigating the undocumented API},
+for an explanation of the stdcall calling convention.
 @item cdecl
 A @WIN32{} function using the C calling conventions. (This is presently
 only used for the built-in functions of the C runtime system).
@@ -1097,6 +1125,9 @@ the called function will be passed a pointer to the first arg; in
 See the @code{wsprintf}* functions in @file{user.spec} and 
 @file{user32.spec} for an example.
 
+Sometimes it is not known how many arguments an undocumented DLL
+function takes. @xref{Getting information on the API}, for some hints on
+how to proceed in such a case.
 
 @node Special entries, , Function entry points, The spec files
 @subsubsection Special entries of @file{.spec}-files
@@ -1132,8 +1163,10 @@ should do nothing but return a value.
 
 @var{ORDINAL} is replaced by the ordinal number corresponding to the
 function. @var{ARGLENGTH} is the number of bytes that need to be removed
-from the stack before returning to the caller. @var{RETVALUE} is the
-return value which will be passed back to the caller.
+from the stack before returning to the caller. @xref{Investigating the
+undocumented API}, for an explanation of the stdcall calling convention.
+@var{RETVALUE} is the return value which will be passed back to the
+caller.
 
 @strong{Extern ordinals}
 
@@ -1182,6 +1215,10 @@ If you are new to Wine and want to support this project, here are
 some suggestions. 
 
 @menu
+* Getting information on the API::      Official and unofficial sources
+                                        of information on the @WIN32{} API.
+* Investigating the undocumented API::  You can find out some API
+                                        information on your own.
 * Implementing an API type::            How to implement a data type
                                         of the API (a checklist).
 * Implementing an API function::        How to implement one function
@@ -1198,9 +1235,268 @@ some suggestions.
 @xref{Debugging}, for advice on how to debug Wine.
 @xref{Applying patches}, for instructions on applying patches.
 
-FIXME: what is most urgently needed
 
-@node Implementing an API type, Implementing an API function, , The Wine Project
+@node Getting information on the API, Investigating the undocumented API, , The Wine Project
+@section Official and unofficial documentation on the @mswindows{} API
+@cindex documentation of API functions
+@cindex undocumented API functions
+
+
+@strong{Official documentation}
+
+For documentation on @WIN32{} API functions, you might try one of these
+sources:
+
+@itemize @bullet
+
+@item
+There is a free online version of the MSDN library (including
+documentation for the @WIN32{} API) on
+@url{http://www.microsoft.com/msdn/}.
+
+@item 
+The @WINNT{} DDK gives information about some kernel (``executive'')
+routines. Some of the function documentation might also apply to user
+accessible DLL's.
+@end itemize
+
+@strong{Unofficial documentation}
+
+Not all of the @WIN32{} API is well documented. Some functions are
+obscured, and undocumented. @xref{Ordinals}, for information about
+undocumented functions imported by ordinal. Getting to know what these
+functions do can be tiresome and tedious. Here is a quote from a
+news posting concerning two books that might help:
+@c From: vischne@ibm.net-nospam (root)
+@c Subject: Re: Functions
+@c Newsgroups: comp.emulators.ms-windows.wine
+@c Date: 24 Jul 97 16:45:11 GMT
+@c Organization: The Light
+@c NNTP-Posting-Host: 129.37.246.203
+@c Message-ID: <33d78697.0@news3.ibm.net>
+
+@quotation
+Well actually, there are at least _two_ books that address these problems.
+One is by Matt Pietrek, ``Windows 95 System Programming Secrets'', which
+gives some auxiliary programs for helping ferret out the information, and
+the other is by Shulman, ``Undocumented Windows 95''.
+@end quotation
+
+@xref{Ordinals}, for some notes on undocumented kernel functions.
+
+@itemize @bullet
+
+@item
+@cindex book on undocumented API features by Pietrik
+``Windows 95 System Programming Secrets'' @*
+by Matt Pietrek @*
+Book & Disk Edition @*
+Paperback, 778 pages @*
+Published by IDG Books Worldwide @*
+Publication date: November 1, 1995 @*
+Dimensions (in inches): 9.25 x 7.42 x 2.06 @*
+ISBN: 1568843186 @*
+
+@item
+@cindex book on undocumented API features by Schulman
+``Undocumented Windows; A Programmers Guide
+to Reserved Microsoft Windows API Functions'' @*
+by Andrew Schulman @*
+Paperback, 715 pages @*
+Published by Addison-Wesley Pub Co @*
+Publication date: February 1, 1994 @*
+Dimensions (in inches): 9.11 x 7.37 x 1.53 @*
+ISBN: 0201608340  @*
+
+@item
+More books on these topics (including Schulman and Pietrik): @*
+@url{http://www.sonic.net/~undoc/bookstore.html}
+
+@item
+More details about calling undocumented functions can be found at
+@url{http://ftp.uni-mannheim.de/info/OReilly/windows/win95.update/dirty.html}.
+
+@item
+In 1993 Dr. Dobbs Journal published a column called ``Undocumented
+Corner''.
+@item
+You might want to check out BYTE from December 1983 as well.
+@* FIXME: is that to be taken seriously?
+@item
+And you might try to find out something on your own. @xref{Investigating
+the undocumented API}, for details.
+@end itemize
+
+But, all in all, @url{news:comp.emulators.ms-windows.wine} says
+@c From: dacut@henry.ece.cmu.edu (David A. Cuthbert)
+@c Subject: Re: Getting Internet Explorer to work
+@c Newsgroups: comp.emulators.ms-windows.wine
+@c Date: 24 Jul 1997 03:10:30 GMT
+@c Organization: Electrical & Computer Engineering, Carnegie Mellon University
+@c Reply-To: henry.ece.cmu.edu!dacut
+@c Message-ID: <5r6h36$86c@fs7.ece.cmu.edu>
+@c NNTP-Posting-Host: henry.ece.cmu.edu
+
+@quotation
+Unfortunately, short of getting something like NuMega's SoftIce, I
+don't think there's a ``good'' reference on the mystery <100 ordinals in
+KERNEL32.DLL.
+@end quotation
+
+
+@node Investigating the undocumented API, Implementing an API type, Getting information on the API, The Wine Project
+@section Investigating the undocumented API
+@cindex undocumented API investigation
+@cindex parameters of undocumented API functions
+@cindex stdcall calling convention
+@cindex C calling convention
+@cindex API function parameters investigation
+@cindex stack handling under stdcall calling
+
+Besides reading the documentation in @ref{Getting information on the API},
+you can find out some properties of API functions on your own.
+
+Sometimes it is not known how many arguments an undocumented DLL
+function takes. Here is a text from a news posting that gives some
+hints on how you might proceed in this case.
+
+@c The following text is closely quoted from:
+@c From: dacut@henry.ece.cmu.edu (David A. Cuthbert)
+@c Subject: Win32 stub functions (Claus Fischer, please read)
+@c Newsgroups: comp.emulators.ms-windows.wine
+@c Date: 7 Aug 1997 22:33:09 GMT
+@c Organization: Electrical & Computer Engineering, Carnegie Mellon University
+@c Reply-To: henry.ece.cmu.edu!dacut
+@c Message-ID: <5sdif5$qt3@fs7.ece.cmu.edu>
+
+The problem with implementing stubs for @WIN32{} functions is that it is
+not sufficient to return a default value (usually 0) and leave the
+stack the way we found it. For most @WIN32{} functions -- those that use
+the @dfn{stdcall} calling convention -- the arguments sent to the function
+are removed from the stack.
+
+Some background:  On the i386 class of machines, stack entries are
+usually dword (4 bytes) in size, little-endian.  The stack grows
+downward in memory.  The stack pointer, maintained in the @samp{esp}
+register, points to the last valid entry; thus, the operation of
+pushing a value onto the stack involves decrementing @samp{esp} and then
+moving the value into the memory pointed to by esp (i.e., @code{push p}
+in assembly resembles @code{*(--esp) = p;} in C).  Removing (popping)
+values off the stack is the reverse (i.e., @code{pop p} corresponds to
+@code{p = *(esp++);}).
+
+In the @dfn{stdcall} calling convention, arguments are pushed onto the
+stack right-to-left.  For example, the C call
+
+@example
+    myfunction(40, 20, 70, 30);
+@end example
+
+is expressed in Intel assembly as:
+
+@example
+    push 30
+    push 70
+    push 20
+    push 40
+    call myfunction
+@end example
+
+In addition, the called function is responsible for removing the
+arguments off the stack.  Thus, before the call to myfunction, the
+stack would look like:
+
+@example
+             [local variable or temporary]
+             [local variable or temporary]
+              30
+              70
+              20
+    esp ->    40
+@end example
+
+After the call returns, it should look like:
+
+@example
+             [local variable or temporary]
+    esp ->   [local variable or temporary]
+@end example
+
+To restore the stack to this state, the called function must know how
+many arguments to remove (which is the number of arguments it takes).
+This is a problem if the function is undocumented.
+
+One way to attempt to document the number of arguments each function
+takes is to create a wrapper around that function that detects the
+stack offset.  @file{WinRelay} (see below) was written to create such
+wrappers. Essentially, each wrapper assumes that the function will take
+a large number of arguments (by default, 64 in @file{WinRelay}).  The
+wrapper copies each of these arguments into its stack, calls the actual
+function, and then calculates the number of arguments by checking esp
+before and after the call.
+
+@cindex bsod (blue screen of death)
+@cindex blue screen of death
+The main problem with this scheme is that the function must actually
+be called from another program.  Many of these functions are seldom
+used.  An attempt was made to aggressively query each function in a
+given library (@file{ntdll.dll}) by passing 64 arguments, all 0, to each
+function.  Unfortunately, @WINNT40{} quickly goes to a blue screen
+of death (@dfn{bsod}), even if the program is run from a
+non-administrator account.
+
+Another method that has been much more successful is to attempt to
+figure out how many arguments each function is removing from the
+stack.  This instruction, @code{ret hhll} (where @samp{hhll} is the
+number of bytes to remove, i.e. the number of arguments times 4), contains
+the bytes @samp{0xc2 ll hh} in memory.  It is a reasonable assumption
+that few, if any, functions take more than 16 arguments; therefore,
+@samp{hh} is 0x0 and @samp{ll} is less than 0x40.  This utility,
+@file{MakeSpec} (see below), simply queries the address of a function
+and looks for the first occurrence of the bytes @samp{0xc2 ll 0x0},
+where @math{@samp{ll} <= 0x40}.
+
+Of course, this is not without errors. @code{ret 00ll} is not the only
+instruction that can have the byte sequence @samp{0xc2 ll 0x0}; for
+example, @code{push 0x000040c2} has the byte sequence
+@samp{0x68 0xc2 0x40 0x0 0x0}, which matches the above.  Properly, the
+utility should look for this sequence only on an instruction boundary;
+unfortunately, finding instruction boundaries on an i386 requires
+implementing a full disassemble -- quite a daunting task.  Besides,
+the probability of having such a byte sequence that is not the actual
+return instruction is fairly low.
+
+Much more troublesome is the non-linear flow of a function.  For
+example, consider the following two functions:
+
+@example
+    somefunction1:
+        jmp  somefunction1_impl
+
+    somefunction2:
+        ret  0004
+
+    somefunction1_impl:
+        ret  0008
+@end example
+
+@file{MakeSpec} would incorrectly list both @code{somefunction1} and
+@code{somefunction2} as taking only a single argument, whereas
+@code{somefunction1} really takes two arguments.
+
+With these limitations in mind, it is possible to implement more stubs
+in Wine and, eventually, the functions themselves.
+
+@c end of quote
+
+The program @file{WinRelay} can be downloaded from
+@url{http://www.ece.cmu.edu/afs/ece/usr/dacut/www/src},
+and @file{MakeSpec} will be available from the same location. You can
+compile them with Borland's C++Builder; you should not optimize when
+compiling (@file{WinRelay} needs the stack frames).
+
+
+@node Implementing an API type, Implementing an API function, Investigating the undocumented API, The Wine Project
 @section Implementing an API type
 
 Here is a checklist that should help you writing your first API type. It
@@ -1277,6 +1573,11 @@ declared in Wine. Otherwise, start with the data types.
 @item
 Find out how the function should be named in Wine and in the DLL's.
 @xref{API function and type naming}, for details.
+
+@item
+Find out what the function should do. This may be tricky for
+undocumented functions. @xref{Getting information on the API}, for some
+hints.
 
 @item
 Find out where the function should go:

@@ -111,7 +111,7 @@ void JoySendMessages(void)
 /**************************************************************************
  * 				JoyGetNumDevs		[MMSYSTEM.101]
  */
-WORD JoyGetNumDevs(void)
+WORD WINAPI JoyGetNumDevs(void)
 {
 int joy;
 WORD joy_cnt = 0;
@@ -130,7 +130,7 @@ WORD joy_cnt = 0;
 /**************************************************************************
  * 				JoyGetDevCaps		[MMSYSTEM.102]
  */
-WORD JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
+WORD WINAPI JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
 {
     dprintf_mmsys(stderr, "JoyGetDevCaps(%04X, %p, %d);\n",
             wID, lpCaps, wSize);
@@ -138,7 +138,7 @@ WORD JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
     if (JoyOpenDriver(wID) == TRUE) {
         lpCaps->wMid = MM_MICROSOFT;
         lpCaps->wPid = MM_PC_JOYSTICK;
-        strcpy(lpCaps->szPname, "WineJoy\0"); /* joystick product name */
+        strcpy(lpCaps->szPname, "WineJoy"); /* joystick product name */
         lpCaps->wXmin = 0; /* FIXME */
         lpCaps->wXmax = 0xffff;
         lpCaps->wYmin = 0;
@@ -159,7 +159,7 @@ WORD JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
 /**************************************************************************
  * 				JoyGetPos	       	[MMSYSTEM.103]
  */
-WORD JoyGetPos(WORD wID, LPJOYINFO lpInfo)
+WORD WINAPI JoyGetPos(WORD wID, LPJOYINFO lpInfo)
 {
         struct js_status js;
 
@@ -184,7 +184,7 @@ WORD JoyGetPos(WORD wID, LPJOYINFO lpInfo)
 /**************************************************************************
  * 				JoyGetThreshold		[MMSYSTEM.104]
  */
-WORD JoyGetThreshold(WORD wID, LPWORD lpThreshold)
+WORD WINAPI JoyGetThreshold(WORD wID, LPWORD lpThreshold)
 {
     dprintf_mmsys(stderr, "JoyGetThreshold(%04X, %p);\n", wID, lpThreshold);
     if (wID > 3) return JOYERR_PARMS;
@@ -195,7 +195,7 @@ WORD JoyGetThreshold(WORD wID, LPWORD lpThreshold)
 /**************************************************************************
  * 				JoyReleaseCapture	[MMSYSTEM.105]
  */
-WORD JoyReleaseCapture(WORD wID)
+WORD WINAPI JoyReleaseCapture(WORD wID)
 {
     dprintf_mmsys(stderr, "JoyReleaseCapture(%04X);\n", wID);
     JoyCaptured = FALSE;
@@ -208,7 +208,7 @@ WORD JoyReleaseCapture(WORD wID)
 /**************************************************************************
  * 				JoySetCapture		[MMSYSTEM.106]
  */
-WORD JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL16 bChanged)
+WORD WINAPI JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL16 bChanged)
 {
 
     dprintf_mmsys(stderr, "JoySetCapture(%04X, %04X, %d, %d);\n",
@@ -227,7 +227,7 @@ WORD JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL16 bChanged)
 /**************************************************************************
  * 				JoySetThreshold		[MMSYSTEM.107]
  */
-WORD JoySetThreshold(WORD wID, WORD wThreshold)
+WORD WINAPI JoySetThreshold(WORD wID, WORD wThreshold)
 {
     dprintf_mmsys(stderr, "JoySetThreshold(%04X, %d);\n", wID, wThreshold);
 
@@ -239,7 +239,7 @@ WORD JoySetThreshold(WORD wID, WORD wThreshold)
 /**************************************************************************
  * 				JoySetCalibration	[MMSYSTEM.109]
  */
-WORD JoySetCalibration(WORD wID)
+WORD WINAPI JoySetCalibration(WORD wID)
 {
     fprintf(stderr, "EMPTY STUB !!! JoySetCalibration(%04X);\n", wID);
     return JOYERR_NOCANDO;

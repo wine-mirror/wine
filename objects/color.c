@@ -857,6 +857,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     WORD 		 index = 0;
     HPALETTE16		 hPal = (dc)? dc->w.hPalette: STOCK_DEFAULT_PALETTE;
     unsigned char	 spec_type = color >> 24;
+    PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
     if ( cSpace.flags & COLOR_FIXED )
     {
@@ -866,7 +867,6 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
 	unsigned 	long red, green, blue;
 	unsigned 	idx = 0;
-	PALETTEOBJ * 	palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
 	switch(spec_type)
         {
@@ -876,7 +876,11 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 					    palPtr->logpalette.palNumEntries,
 					    NULL, color, FALSE);
 
-            if( palPtr->mapping ) return palPtr->mapping[idx];
+            if( palPtr->mapping )
+	    {
+	        GDI_HEAP_UNLOCK( hPal );
+		return palPtr->mapping[idx];
+	    }
 
 	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
 	    break;
@@ -886,11 +890,15 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
             if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
                 fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
+		GDI_HEAP_UNLOCK( hPal );
                 return 0;
             }
 
-            if( palPtr->mapping ) return palPtr->mapping[idx];
-
+            if( palPtr->mapping ) 
+	    {
+		GDI_HEAP_UNLOCK( hPal );
+		return palPtr->mapping[idx];
+	    }
 	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
 	    break;
 
@@ -900,8 +908,12 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
 	  case 0: /* RGB */
 	    if( dc && (dc->w.bitsPerPixel == 1) )
+	    {
+		GDI_HEAP_UNLOCK( hPal );
 		return (((color >> 16) & 0xff) +
 			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+	    }
+
 	}
 
         red = GetRValue(color); green = GetGValue(color); blue = GetBValue(color);
@@ -909,6 +921,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	if (COLOR_Graymax)
         {
 	    /* grayscale only; return scaled value */
+	    GDI_HEAP_UNLOCK( hPal );
             return ( (red * 30 + green * 69 + blue * 11) * COLOR_Graymax) / 25500;
 	}
 	else
@@ -918,12 +931,12 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
             if (COLOR_Greenmax != 255) green = (green * COLOR_Greenmax) / 255;
 	    if (COLOR_Bluemax != 255) blue = (blue * COLOR_Bluemax) / 255;
 
+	    GDI_HEAP_UNLOCK( hPal );
 	    return (red << COLOR_Redshift) | (green << COLOR_Greenshift) | (blue << COLOR_Blueshift);
         }
     }
     else 
     {
-	PALETTEOBJ* palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC);
 
 	/* palPtr can be NULL when DC is being destroyed */
 
@@ -939,8 +952,11 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
        	    case 0:  /* RGB */
 		if( dc && (dc->w.bitsPerPixel == 1) )
+		{
+		    GDI_HEAP_UNLOCK( hPal );
 		    return (((color >> 16) & 0xff) +
 			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+		}
 
 	    	index = COLOR_PaletteLookupPixel( COLOR_sysPal, 256, 
 						  COLOR_PaletteToPixel, color, FALSE);
@@ -968,6 +984,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	}
     }
 
+    GDI_HEAP_UNLOCK( hPal );
     return index;
 }
 
@@ -977,12 +994,11 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
  * Set the color-mapping table for selected palette. 
  * Return number of entries which mapping has changed.
  */
-int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
+int COLOR_SetMapping( PALETTEOBJ* palPtr, UINT32 uStart, UINT32 uNum, BOOL32 mapOnly )
 {
-    int  i, index;
     char flag;
     int  prevMapping = (palPtr->mapping) ? 1 : 0;
-    int  iRemapped = 0;
+    int  index, iRemapped = 0;
 
     /* reset dynamic system palette entries */
 
@@ -994,15 +1010,15 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
     palPtr->mapping = (int*)xrealloc(palPtr->mapping, sizeof(int)*
                                      palPtr->logpalette.palNumEntries);
 
-    for( i = 0; i < palPtr->logpalette.palNumEntries; i++ )
+    for( uNum += uStart; uStart < uNum; uStart++ )
     {
         index = -1;
         flag = PC_SYS_USED;
 
-        switch( palPtr->logpalette.palPalEntry[i].peFlags & 0x07 )
+        switch( palPtr->logpalette.palPalEntry[uStart].peFlags & 0x07 )
         {
 	case PC_EXPLICIT:   /* palette entries are indices into system palette */
-            index = *(WORD*)(palPtr->logpalette.palPalEntry + i);
+            index = *(WORD*)(palPtr->logpalette.palPalEntry + uStart);
             if( index > 255 || (index >= COLOR_gapStart && index <= COLOR_gapEnd) ) 
             {
                 fprintf(stderr,"PC_EXPLICIT: idx %d out of system palette, assuming black.\n", index); 
@@ -1016,7 +1032,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
             /* fall through */
 	default:	    /* try to collapse identical colors */
             index = COLOR_PaletteLookupExactIndex(COLOR_sysPal, 256,  
-                             *(COLORREF*)(palPtr->logpalette.palPalEntry + i));
+                             *(COLORREF*)(palPtr->logpalette.palPalEntry + uStart));
             /* fall through */
 	case PC_NOCOLLAPSE: 
             if( index < 0 )
@@ -1028,13 +1044,13 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
                     COLOR_firstFree = COLOR_freeList[index];
 
                     color.pixel = (COLOR_PaletteToPixel) ? COLOR_PaletteToPixel[index] : index;
-                    color.red = palPtr->logpalette.palPalEntry[i].peRed << 8;
-                    color.green = palPtr->logpalette.palPalEntry[i].peGreen << 8;
-                    color.blue = palPtr->logpalette.palPalEntry[i].peBlue << 8;
+                    color.red = palPtr->logpalette.palPalEntry[uStart].peRed << 8;
+                    color.green = palPtr->logpalette.palPalEntry[uStart].peGreen << 8;
+                    color.blue = palPtr->logpalette.palPalEntry[uStart].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
                     XStoreColor(display, cSpace.colorMap, &color);
 
-                    COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[i];
+                    COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[uStart];
                     COLOR_sysPal[index].peFlags = flag;
 		    COLOR_freeList[index] = 0;
 
@@ -1044,27 +1060,28 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL32 mapOnly )
                 else if ( cSpace.flags & COLOR_VIRTUAL ) 
                 {
                     index = COLOR_ToPhysical( NULL, 0x00ffffff &
-                             *(COLORREF*)(palPtr->logpalette.palPalEntry + i));
+                             *(COLORREF*)(palPtr->logpalette.palPalEntry + uStart));
                     break;     
                 }
 
                 /* we have to map to existing entry in the system palette */
 
                 index = COLOR_PaletteLookupPixel(COLOR_sysPal, 256, NULL, 
-                       *(COLORREF*)(palPtr->logpalette.palPalEntry + i), TRUE);
+                       *(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), TRUE);
             }
-	    palPtr->logpalette.palPalEntry[i].peFlags |= PC_SYS_USED;
+	    palPtr->logpalette.palPalEntry[uStart].peFlags |= PC_SYS_USED;
 
             if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
             break;
         }
 
-        if( !prevMapping || palPtr->mapping[i] != index ) iRemapped++;
-        palPtr->mapping[i] = index;
+        if( !prevMapping || palPtr->mapping[uStart] != index ) iRemapped++;
+        palPtr->mapping[uStart] = index;
 
-        dprintf_palette(stddeb,"\tentry %i (%lx) -> pixel %i\n", i, 
-				*(COLORREF*)(palPtr->logpalette.palPalEntry + i), index);
+        dprintf_palette(stddeb,"\tentry %i (%lx) -> pixel %i\n", uStart, 
+				*(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), index);
 	
     }
     return iRemapped;
 }
+

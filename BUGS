@@ -42,9 +42,6 @@ Miscellaneous:
 
  * "Cursor XXXX has more than 1 bpp!"
 
- * 32-bit Freecell segfaults when started from the Progman (looks like
-   a problem with cards.dll).
-
  * Margins in edit controls are too wide.
 
  * SGI window manager treats Wine windows as topmost.

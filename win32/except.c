@@ -45,6 +45,24 @@
 #define TEB_EXCEPTION_FRAME(pcontext) \
     ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
 
+/*******************************************************************
+ *         _local_unwind2  (CRTDLL)
+ */
+void WINAPI CRTDLL__local_unwind2(PEXCEPTION_FRAME endframe,DWORD nr,
+                                  PCONTEXT pcontext)
+{
+	fprintf(stderr,"CRTDLL__local_unwind2(%p,%ld)\n",endframe,nr);
+	return;
+}
+
+/*******************************************************************
+ *         _global_unwind2  (CRTDLL)
+ */
+void WINAPI CRTDLL__global_unwind2(PEXCEPTION_FRAME endframe,PCONTEXT pcontext)
+{
+	RtlUnwind(endframe,NULL/*should point to the return;*/,NULL,0,pcontext);
+	return;
+}
 
 /*******************************************************************
  *         RtlUnwind  (KERNEL32.443)
@@ -52,9 +70,9 @@
  *  This function is undocumented. This is the general idea of 
  *  RtlUnwind, though. Note that error handling is not yet implemented.
  */
-void RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
-                PEXCEPTION_RECORD pRecord, DWORD returnEax,
-                PCONTEXT pcontext /* Wine additional parameter */ )
+void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+                       PEXCEPTION_RECORD pRecord, DWORD returnEax,
+                       PCONTEXT pcontext /* Wine additional parameter */ )
 {   
    EXCEPTION_RECORD record;
    DWORD            dispatch;
@@ -94,9 +112,13 @@ void RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
        dprintf_win32(stddeb,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
   
-       if (retval == ExceptionCollidedUnwind)
+       if (	(retval == ExceptionCollidedUnwind) &&
+           	(TEB_EXCEPTION_FRAME(pcontext) != (LPVOID)dispatch)
+       )
            TEB_EXCEPTION_FRAME(pcontext) = (LPVOID)dispatch;
-       else if (TEB_EXCEPTION_FRAME(pcontext) != pEndFrame)
+       else if (	(TEB_EXCEPTION_FRAME(pcontext) != pEndFrame) &&
+           		(TEB_EXCEPTION_FRAME(pcontext) != TEB_EXCEPTION_FRAME(pcontext)->Prev)
+       )
            TEB_EXCEPTION_FRAME(pcontext) = TEB_EXCEPTION_FRAME(pcontext)->Prev;
        else
           break;  
@@ -107,11 +129,11 @@ void RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
 /*******************************************************************
  *         RaiseException  (KERNEL32.418)
  */
-void RaiseException(DWORD dwExceptionCode,
-		    DWORD dwExceptionFlags,
-		    DWORD cArguments,
-		    const LPDWORD lpArguments,
-		    PCONTEXT pcontext /* Wine additional parameter */ )
+void WINAPI RaiseException(DWORD dwExceptionCode,
+                           DWORD dwExceptionFlags,
+                           DWORD cArguments,
+                           const LPDWORD lpArguments,
+                           PCONTEXT pcontext /* Wine additional parameter */ )
 {
     PEXCEPTION_FRAME    pframe; 
     EXCEPTION_RECORD    record;
@@ -162,7 +184,7 @@ void RaiseException(DWORD dwExceptionCode,
 /*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.537)
  */
-DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
+DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
     char message[80];
 
@@ -187,7 +209,7 @@ DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 /*************************************************************
  *            SetUnhandledExceptionFilter   (KERNEL32.516)
  */
-LPTOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI SetUnhandledExceptionFilter(
                                           LPTOP_LEVEL_EXCEPTION_FILTER filter )
 {
     LPTOP_LEVEL_EXCEPTION_FILTER old = pCurrentProcess->top_filter;

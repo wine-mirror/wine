@@ -10,17 +10,22 @@
 #include "wintypes.h"
 #include "winnt.h"
 
-extern
-int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
+extern int (*IF1632_CallLargeStack)( int (*func)(), void *arg );
+
+#define CALL_LARGE_STACK(func,arg) \
+    (IF1632_CallLargeStack ? \
+     IF1632_CallLargeStack( (int(*)())(func), (void *)(arg) ) : \
+     ((int(*)())(func))((void *)arg))
 
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/callto16.S */
 
 #ifndef WINELIB
 
-extern void CallTo16_regs_     ( const CONTEXT *context );
+extern LONG CallTo16_regs_     ( const CONTEXT *context );
 extern WORD CallTo16_word_     ( FARPROC16 );
 extern WORD CallTo16_word_w    ( FARPROC16, WORD );
+extern LONG CallTo16_long_l    ( FARPROC16, LONG );
 extern WORD CallTo16_word_ww   ( FARPROC16, WORD, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC16, WORD, LONG );
 extern WORD CallTo16_word_ll   ( FARPROC16, LONG, LONG );
@@ -67,6 +72,14 @@ extern LONG CallTo32_2( FARPROC32, DWORD, DWORD );
 extern LONG CallTo32_3( FARPROC32, DWORD, DWORD, DWORD );
 extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
 extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_6( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_7( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_8( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_9( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_10( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_11( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_12( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_13( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD );
 
 #define CallTaskStart32( func ) \
     CallTo32_0( func )

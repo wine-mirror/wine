@@ -46,12 +46,24 @@ struct kernel_sigaction
 static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
                                       struct kernel_sigaction *old )
 {
+#ifdef __PIC__
+    __asm__ __volatile__( "pushl %%ebx\n\t"
+                          "movl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "popl %%ebx"
+                          : "=a" (sig)
+                          : "0" (SYS_sigaction),
+                            "g" (sig),
+                            "c" (new),
+                            "d" (old) );
+#else
     __asm__ __volatile__( "int $0x80"
                           : "=a" (sig)
                           : "0" (SYS_sigaction),
                             "b" (sig),
                             "c" (new),
                             "d" (old) );
+#endif  /* __PIC__ */
     if (sig>=0)
         return 0;
     errno = -sig;
@@ -62,15 +74,7 @@ static __inline__ int wine_sigaction( int sig, struct kernel_sigaction *new,
 
 /* Signal stack */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-# define SIGNAL_STACK_SIZE  MINSIGSTKSZ
-#elif defined (__svr4__) || defined(_SCO_DS)
-# define SIGNAL_STACK_SIZE  SIGSTKSZ
-#else
-# define SIGNAL_STACK_SIZE  4096
-#endif
-
-static char SIGNAL_Stack[SIGNAL_STACK_SIZE];
+static char SIGNAL_Stack[16384];
 
 
 /**********************************************************************
@@ -102,7 +106,8 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 
     struct kernel_sigaction sig_act;
     sig_act.sa_handler = func;
-    sig_act.sa_flags = SA_RESTART | (flags) ? SA_NOMASK : 0;
+    sig_act.sa_flags   = SA_RESTART | (flags) ? SA_NOMASK : 0;
+    sig_act.sa_mask    = 0;
     /* Point to the top of the stack, minus 4 just in case, and make
        it aligned  */
     sig_act.sa_restorer = 
@@ -112,10 +117,8 @@ void SIGNAL_SetHandler( int sig, void (*func)(), int flags )
 #else  /* linux && __i386__ */
 
     struct sigaction sig_act;
-    sigset_t sig_mask;
-    sigemptyset(&sig_mask);
     sig_act.sa_handler = func;
-    sig_act.sa_mask = sig_mask;
+    sigemptyset( &sig_act.sa_mask );
 
 # if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     sig_act.sa_flags = SA_ONSTACK;
@@ -179,7 +182,6 @@ void SIGNAL_MaskAsyncEvents( BOOL32 flag )
 #ifdef SIGIO
   sigaddset(&set, SIGIO);
 #endif
-  sigaddset(&set, SIGUSR1);
 #ifdef CONFIG_IPC
   sigaddset(&set, SIGUSR2);
 #endif

@@ -1,4 +1,129 @@
 ----------------------------------------------------------------------
+Sat Aug 23 00:05:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [if1632/kernel.spec] [if1632/mmsystem.spec]
+	Added some stubs.
+
+	* [include/neexe.h] [loader/module.c]
+	Added warning for OS/2 executables.
+
+	* [multimedia/midi.c]
+	Shortened MIDIOUT driver version string to be less than 31 chars.
+
+	* [objects/gdiobj.c]
+	Fixed DeleteObject32() to react properly when called with stock object.
+
+Fri Aug 22 18:03:26 1997  Dimitrie O. Paun <dimi@cs.toronto.edu>
+
+	* [controls/updown.c] [include/updown.h]
+	First attempt at implementiong the UpDown class.
+
+	* [controls/widgets.c]
+	Added the UpDown class to be initialized by InitCommonControls().
+
+Wed Aug 20 18:01:33 1997  Doug Ridgway <ridgway@routh.UCSD.EDU>
+
+	* [graphics/*] [objects/*] [include/gdi.h]
+	Made all GDI objects (except DCs) moveable.
+
+Mon Aug 18 03:25:30 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/event.c] [misc/winsock.c] [misc/winsock_dns.c]
+	Removed IPC communication to speed up winsock services
+	(tested only with 16-bit netscape 3.03).
+
+	* [graphics/x11drv/xfont.c] [documentation/fonts]
+	Miscellaneous improvements. Updated docs.
+
+Sun Aug 17 20:39:55 1997  Ingo Schneider <schneidi@informatik.tu-muenchen.de>
+
+	* [misc/comm.c]
+	A couple of bug fixes.
+
+Sun Aug 17 19:29:22 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [debugger/dbg.y]
+	Display next instruction after stepi/nexti.
+
+	* [if1632/relay.c] [include/callback.h] [tools/build.c]
+	Replaced CallTo32_LargeStack with the CALL_LARGE_STACK macro for
+	better Winelib support.
+
+	* [include/sigcontext.h]
+	Renamed to sig_context.h to avoid conflicts with libc.
+
+	* [*/*]
+	All API functions are now prefixed with WINAPI in prevision of
+	future Winelib integration.
+
+	* [loader/signal.c] [memory/ldt.c]
+	Fixed assembly code to be -fPIC compatible.
+
+Thu Aug 14 14:38:15 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/crtdll.spec][win32/except.c]
+	_global_unwind, _local_unwind stub added.
+
+	* [objects/dib.c]	
+	Don't read memory you don't even need for the target bitmap (fixes
+	one 'lazy' program).
+
+	* [if1632/relay.c][if1632/thunk.c][if1632/kernel32.spec]
+	  [win32/ordinals.c][memory/selector.c][memory/global.c]
+	  [include/callback.h]
+	Added/moved some more win95 ordinal stuff. Implemented QT_Thunk
+	(not 100% correct yet) and some friends.
+
+	* [loader/pe_image.c]
+	Add possibility to break at the DLL entrypoint.
+
+	* [controls/static.c][misc/commdlg.c][scheduler/thread.c]
+	Misc bugfixes and additions.
+
+	* [misc/registry.c]
+	The registry seems to be case-preserving but case-insensitive.
+
+	* [memory/global.c]	
+	Adapted to new /proc/meminfo format.
+
+	* [objects/font.c][graphics/x11drv/xfont.c]
+	FONT_SelectObject and GetTextMetrics* get passed ranges in logical
+ 	and not device points (thanks to Marion Reyzl for pointing this
+ 	out).
+
+	* [windows/caret.c]
+	Use the windows own DC if present (The caret coordinates are
+	logical coordinates based on it). Fixes another AMIPRO problem.
+
+Wed Aug  6 18:22:22 1997  Morten Welinder  <terra@diku.dk>
+
+	* [controls/menu.c]
+	General clean-up and Win32 work: split item_flags into fType and
+	fState; split item_id into wID and hSubMenu.  Improved
+	debug-printing.  Implemented InsertMenuItem32[AW],
+	SetMenuDefaultItem32, and SetMenuItemInfo32[AW].  Fixed
+	GetMenuItemInfo32[AW].
+
+	* [if1632/user32.spec]
+	Define above new functions.
+
+	* [include/windows.h]
+	Define MF_DEFAULT and MF_RIGHTJUSTIFY.  Prototype above functions.
+
+	* [include/menu.h]
+	Don't prototype now-static MENU_InitSysMenuPopup.
+
+	* [include/comm.h]
+	Reduce MAX_PORTS to 9 (which the profile code can handle).
+
+Tue Aug  5 20:16:22 1997  Victor Schneider <vischne@ibm.net>
+
+	* [library/winestub.c] [libtest/expand.c]
+	These patches let people porting Windows apps compile them using
+	the same conventions regarding global _argc and _argv as those on
+	Windows C/C++ compilers.
+
+----------------------------------------------------------------------
 Sun Aug  3 14:03:43 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [documentation/Makefile.in]

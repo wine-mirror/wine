@@ -150,14 +150,14 @@ static POINT16 WINPOS_FindIconPos( WND* wndPtr, POINT16 pt )
 /***********************************************************************
  *           ArrangeIconicWindows16   (USER.170)
  */
-UINT16 ArrangeIconicWindows16( HWND16 parent) 
+UINT16 WINAPI ArrangeIconicWindows16( HWND16 parent) 
 {
     return ArrangeIconicWindows32(parent);
 }
 /***********************************************************************
  *           ArrangeIconicWindows32   (USER32.6)
  */
-UINT32 ArrangeIconicWindows32( HWND32 parent )
+UINT32 WINAPI ArrangeIconicWindows32( HWND32 parent )
 {
     RECT32 rectParent;
     HWND32 hwndChild;
@@ -196,7 +196,7 @@ UINT32 ArrangeIconicWindows32( HWND32 parent )
 /***********************************************************************
  *             SwitchToThisWindow16   (USER.172)
  */
-void SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
+void WINAPI SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
 {
     SwitchToThisWindow32( hwnd, restore );
 }
@@ -205,7 +205,7 @@ void SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
 /***********************************************************************
  *             SwitchToThisWindow32   (USER32.538)
  */
-void SwitchToThisWindow32( HWND32 hwnd, BOOL32 restore )
+void WINAPI SwitchToThisWindow32( HWND32 hwnd, BOOL32 restore )
 {
     ShowWindow32( hwnd, restore ? SW_RESTORE : SW_SHOWMINIMIZED );
 }
@@ -214,7 +214,7 @@ void SwitchToThisWindow32( HWND32 hwnd, BOOL32 restore )
 /***********************************************************************
  *           GetWindowRect16   (USER.32)
  */
-void GetWindowRect16( HWND16 hwnd, LPRECT16 rect ) 
+void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd ); 
     if (!wndPtr) return;
@@ -228,7 +228,7 @@ void GetWindowRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           GetWindowRect32   (USER.32)
  */
-void GetWindowRect32( HWND32 hwnd, LPRECT32 rect ) 
+void WINAPI GetWindowRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd ); 
     if (!wndPtr) return;
@@ -242,7 +242,7 @@ void GetWindowRect32( HWND32 hwnd, LPRECT32 rect )
 /***********************************************************************
  *           GetClientRect16   (USER.33)
  */
-void GetClientRect16( HWND16 hwnd, LPRECT16 rect ) 
+void WINAPI GetClientRect16( HWND16 hwnd, LPRECT16 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -258,7 +258,7 @@ void GetClientRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           GetClientRect32   (USER32.219)
  */
-void GetClientRect32( HWND32 hwnd, LPRECT32 rect ) 
+void WINAPI GetClientRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -274,7 +274,7 @@ void GetClientRect32( HWND32 hwnd, LPRECT32 rect )
 /*******************************************************************
  *         ClientToScreen16   (USER.28)
  */
-BOOL16 ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
+BOOL16 WINAPI ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
 {
     MapWindowPoints16( hwnd, 0, lppnt, 1 );
     return TRUE;
@@ -284,7 +284,7 @@ BOOL16 ClientToScreen16( HWND16 hwnd, LPPOINT16 lppnt )
 /*******************************************************************
  *         ClientToScreen32   (USER32.51)
  */
-BOOL32 ClientToScreen32( HWND32 hwnd, LPPOINT32 lppnt )
+BOOL32 WINAPI ClientToScreen32( HWND32 hwnd, LPPOINT32 lppnt )
 {
     MapWindowPoints32( hwnd, 0, lppnt, 1 );
     return TRUE;
@@ -294,7 +294,7 @@ BOOL32 ClientToScreen32( HWND32 hwnd, LPPOINT32 lppnt )
 /*******************************************************************
  *         ScreenToClient16   (USER.29)
  */
-void ScreenToClient16( HWND16 hwnd, LPPOINT16 lppnt )
+void WINAPI ScreenToClient16( HWND16 hwnd, LPPOINT16 lppnt )
 {
     MapWindowPoints16( 0, hwnd, lppnt, 1 );
 }
@@ -303,7 +303,7 @@ void ScreenToClient16( HWND16 hwnd, LPPOINT16 lppnt )
 /*******************************************************************
  *         ScreenToClient32   (USER32.446)
  */
-void ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
+void WINAPI ScreenToClient32( HWND32 hwnd, LPPOINT32 lppnt )
 {
     MapWindowPoints32( 0, hwnd, lppnt, 1 );
 }
@@ -388,7 +388,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 /*******************************************************************
  *         WindowFromPoint16   (USER.30)
  */
-HWND16  WindowFromPoint16( POINT16 pt )
+HWND16 WINAPI WindowFromPoint16( POINT16 pt )
 {
     WND *pWnd;
     WINPOS_WindowFromPoint( WIN_GetDesktop(), pt, &pWnd );
@@ -399,7 +399,7 @@ HWND16  WindowFromPoint16( POINT16 pt )
 /*******************************************************************
  *         WindowFromPoint32   (USER32.581)
  */
-HWND32 WindowFromPoint32( POINT32 pt )
+HWND32 WINAPI WindowFromPoint32( POINT32 pt )
 {
     WND *pWnd;
     POINT16 pt16;
@@ -412,7 +412,7 @@ HWND32 WindowFromPoint32( POINT32 pt )
 /*******************************************************************
  *         ChildWindowFromPoint16   (USER.191)
  */
-HWND16 ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
+HWND16 WINAPI ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 {
     POINT32 pt32;
     CONV_POINT16TO32( &pt, &pt32 );
@@ -423,7 +423,7 @@ HWND16 ChildWindowFromPoint16( HWND16 hwndParent, POINT16 pt )
 /*******************************************************************
  *         ChildWindowFromPoint32   (USER32.48)
  */
-HWND32 ChildWindowFromPoint32( HWND32 hwndParent, POINT32 pt )
+HWND32 WINAPI ChildWindowFromPoint32( HWND32 hwndParent, POINT32 pt )
 {
     /* pt is in the client coordinates */
 
@@ -500,8 +500,8 @@ static void WINPOS_GetWinOffset( HWND32 hwndFrom, HWND32 hwndTo,
 /*******************************************************************
  *         MapWindowPoints16   (USER.258)
  */
-void MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
-                        LPPOINT16 lppt, UINT16 count )
+void WINAPI MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
+                               LPPOINT16 lppt, UINT16 count )
 {
     POINT32 offset;
 
@@ -518,8 +518,8 @@ void MapWindowPoints16( HWND16 hwndFrom, HWND16 hwndTo,
 /*******************************************************************
  *         MapWindowPoints32   (USER32.385)
  */
-void MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
-                        LPPOINT32 lppt, UINT32 count )
+void WINAPI MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
+                               LPPOINT32 lppt, UINT32 count )
 {
     POINT32 offset;
 
@@ -536,14 +536,16 @@ void MapWindowPoints32( HWND32 hwndFrom, HWND32 hwndTo,
 /***********************************************************************
  *           IsIconic16   (USER.31)
  */
-BOOL16 IsIconic16(HWND16 hWnd)
+BOOL16 WINAPI IsIconic16(HWND16 hWnd)
 {
     return IsIconic32(hWnd);
 }
+
+
 /***********************************************************************
  *           IsIconic32   (USER32.344)
  */
-BOOL32 IsIconic32(HWND32 hWnd)
+BOOL32 WINAPI IsIconic32(HWND32 hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) return FALSE;
@@ -554,14 +556,16 @@ BOOL32 IsIconic32(HWND32 hWnd)
 /***********************************************************************
  *           IsZoomed   (USER.272)
  */
-BOOL16 IsZoomed16(HWND16 hWnd)
+BOOL16 WINAPI IsZoomed16(HWND16 hWnd)
 {
     return IsZoomed32(hWnd);
 }
+
+
 /***********************************************************************
  *           IsZoomed   (USER32.351)
  */
-BOOL32 IsZoomed32(HWND32 hWnd)
+BOOL32 WINAPI IsZoomed32(HWND32 hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (wndPtr == NULL) return FALSE;
@@ -572,7 +576,7 @@ BOOL32 IsZoomed32(HWND32 hWnd)
 /*******************************************************************
  *         GetActiveWindow    (USER.60)
  */
-HWND16 GetActiveWindow16(void)
+HWND16 WINAPI GetActiveWindow16(void)
 {
     return (HWND16)hwndActive;
 }
@@ -580,7 +584,7 @@ HWND16 GetActiveWindow16(void)
 /*******************************************************************
  *         GetActiveWindow    (USER32.204)
  */
-HWND32 GetActiveWindow32(void)
+HWND32 WINAPI GetActiveWindow32(void)
 {
     return (HWND32)hwndActive;
 }
@@ -591,22 +595,25 @@ HWND32 GetActiveWindow32(void)
  */
 static BOOL32 WINPOS_CanActivate(WND* pWnd)
 {
- return (pWnd) ? ((!(pWnd->dwStyle & WS_DISABLED) &&
-                     pWnd->dwStyle & WS_VISIBLE ) ? TRUE : FALSE) : FALSE;
+    if( pWnd && ((pWnd->dwStyle & (WS_DISABLED | WS_VISIBLE | WS_CHILD)) 
+	== WS_VISIBLE) ) return TRUE;
+    return FALSE;
 }
 
 
 /*******************************************************************
- *         SetActiveWindow    (USER.59)
+ *         SetActiveWindow16    (USER.59)
  */
-HWND16 SetActiveWindow16( HWND16 hwnd )
+HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
 {
     return SetActiveWindow32(hwnd);
 }
+
+
 /*******************************************************************
- *         SetActiveWindow    (USER.59)
+ *         SetActiveWindow32    (USER32.462)
  */
-HWND32 SetActiveWindow32( HWND32 hwnd )
+HWND32 WINAPI SetActiveWindow32( HWND32 hwnd )
 {
     HWND32 prev = hwndActive;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -619,35 +626,39 @@ HWND32 SetActiveWindow32( HWND32 hwnd )
 
 
 /***********************************************************************
- *           BringWindowToTop   (USER.45)
+ *           BringWindowToTop16   (USER.45)
  */
-BOOL16 BringWindowToTop16( HWND16 hwnd )
+BOOL16 WINAPI BringWindowToTop16( HWND16 hwnd )
 {
     return BringWindowToTop32(hwnd);
 }
+
+
 /***********************************************************************
- *           BringWindowToTop   (USER32.10)
+ *           BringWindowToTop32   (USER32.10)
  */
-BOOL32 BringWindowToTop32( HWND32 hwnd )
+BOOL32 WINAPI BringWindowToTop32( HWND32 hwnd )
 {
     return SetWindowPos32( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE );
 }
 
 
 /***********************************************************************
- *           MoveWindow   (USER.56)
+ *           MoveWindow16   (USER.56)
  */
-BOOL16 MoveWindow16(
-	HWND16 hwnd, INT16 x, INT16 y, INT16 cx, INT16 cy, BOOL16 repaint
-) {
+BOOL16 WINAPI MoveWindow16( HWND16 hwnd, INT16 x, INT16 y, INT16 cx, INT16 cy,
+                            BOOL16 repaint )
+{
     return MoveWindow32(hwnd,x,y,cx,cy,repaint);
 }
+
+
 /***********************************************************************
- *           MoveWindow   (USER32.398)
+ *           MoveWindow32   (USER32.398)
  */
-BOOL32 MoveWindow32(
-	HWND32 hwnd, INT32 x, INT32 y, INT32 cx, INT32 cy, BOOL32 repaint
-) {    
+BOOL32 WINAPI MoveWindow32( HWND32 hwnd, INT32 x, INT32 y, INT32 cx, INT32 cy,
+                            BOOL32 repaint )
+{    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
     dprintf_win(stddeb, "MoveWindow: %04x %d,%d %dx%d %d\n", 
@@ -900,16 +911,18 @@ UINT16 WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 }
 
 /***********************************************************************
- *           ShowWindow   (USER.42)
+ *           ShowWindow16   (USER.42)
  */
-BOOL16 ShowWindow16( HWND16 hwnd, INT16 cmd ) 
+BOOL16 WINAPI ShowWindow16( HWND16 hwnd, INT16 cmd ) 
 {    
     return ShowWindow32(hwnd,cmd);
 }
+
+
 /***********************************************************************
- *           ShowWindow   (USER.42)
+ *           ShowWindow32   (USER.42)
  */
-BOOL32 ShowWindow32( HWND32 hwnd, INT32 cmd ) 
+BOOL32 WINAPI ShowWindow32( HWND32 hwnd, INT32 cmd ) 
 {    
     WND* 	wndPtr = WIN_FindWndPtr( hwnd );
     BOOL32 	wasVisible, showFlag;
@@ -1019,7 +1032,8 @@ BOOL32 ShowWindow32( HWND32 hwnd, INT32 cmd )
 /***********************************************************************
  *           GetInternalWindowPos16   (USER.460)
  */
-UINT16 GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd, LPPOINT16 ptIcon)
+UINT16 WINAPI GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd,
+                                      LPPOINT16 ptIcon )
 {
     WINDOWPLACEMENT16 wndpl;
     if (GetWindowPlacement16( hwnd, &wndpl )) 
@@ -1035,7 +1049,8 @@ UINT16 GetInternalWindowPos16( HWND16 hwnd, LPRECT16 rectWnd, LPPOINT16 ptIcon)
 /***********************************************************************
  *           GetInternalWindowPos32   (USER32.244)
  */
-UINT32 GetInternalWindowPos32( HWND32 hwnd, LPRECT32 rectWnd, LPPOINT32 ptIcon)
+UINT32 WINAPI GetInternalWindowPos32( HWND32 hwnd, LPRECT32 rectWnd,
+                                      LPPOINT32 ptIcon )
 {
     WINDOWPLACEMENT32 wndpl;
     if (GetWindowPlacement32( hwnd, &wndpl ))
@@ -1050,7 +1065,7 @@ UINT32 GetInternalWindowPos32( HWND32 hwnd, LPRECT32 rectWnd, LPPOINT32 ptIcon)
 /***********************************************************************
  *           GetWindowPlacement16   (USER.370)
  */
-BOOL16 GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
+BOOL16 WINAPI GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
 {
     WND *pWnd = WIN_FindWndPtr( hwnd );
     if( pWnd )
@@ -1079,7 +1094,7 @@ BOOL16 GetWindowPlacement16( HWND16 hwnd, WINDOWPLACEMENT16 *wndpl )
 /***********************************************************************
  *           GetWindowPlacement32   (USER32.306)
  */
-BOOL32 GetWindowPlacement32( HWND32 hwnd, WINDOWPLACEMENT32 *pwpl32 )
+BOOL32 WINAPI GetWindowPlacement32( HWND32 hwnd, WINDOWPLACEMENT32 *pwpl32 )
 {
     if( pwpl32 )
     {
@@ -1152,15 +1167,16 @@ static BOOL32 WINPOS_SetPlacement( HWND32 hwnd, const WINDOWPLACEMENT16 *wndpl,
 /***********************************************************************
  *           SetWindowPlacement16   (USER.371)
  */
-BOOL16 SetWindowPlacement16( HWND16 hwnd, const WINDOWPLACEMENT16 *wndpl )
+BOOL16 WINAPI SetWindowPlacement16(HWND16 hwnd, const WINDOWPLACEMENT16 *wndpl)
 {
-    return WINPOS_SetPlacement( hwnd, wndpl, PLACE_MIN | PLACE_MAX | PLACE_RECT );
+    return WINPOS_SetPlacement( hwnd, wndpl,
+                                PLACE_MIN | PLACE_MAX | PLACE_RECT );
 }
 
 /***********************************************************************
  *           SetWindowPlacement32   (USER32.518)
  */
-BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *pwpl32 )
+BOOL32 WINAPI SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *pwpl32 )
 {
     if( pwpl32 )
     {
@@ -1180,8 +1196,8 @@ BOOL32 SetWindowPlacement32( HWND32 hwnd, const WINDOWPLACEMENT32 *pwpl32 )
 /***********************************************************************
  *           SetInternalWindowPos16   (USER.461)
  */
-void SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd,
-                             LPRECT16 rect, LPPOINT16 pt )
+void WINAPI SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd,
+                                    LPRECT16 rect, LPPOINT16 pt )
 {
     if( IsWindow16(hwnd) )
     {
@@ -1211,8 +1227,8 @@ void SetInternalWindowPos16( HWND16 hwnd, UINT16 showCmd,
 /***********************************************************************
  *           SetInternalWindowPos32   (USER32.482)
  */
-void SetInternalWindowPos32( HWND32 hwnd, UINT32 showCmd,
-                             LPRECT32 rect, LPPOINT32 pt )
+void WINAPI SetInternalWindowPos32( HWND32 hwnd, UINT32 showCmd,
+                                    LPRECT32 rect, LPPOINT32 pt )
 {
     if( IsWindow32(hwnd) )
     {
@@ -1270,7 +1286,9 @@ static void WINPOS_ForceXWindowRaise( WND* pWnd )
 /*******************************************************************
  *	   WINPOS_SetActiveWindow
  *
- * back-end to SetActiveWindow
+ * SetActiveWindow() back-end. This is the only function that
+ * can assign active status to a window. It must be called only
+ * for the top level windows.
  */
 BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 {
@@ -1282,10 +1300,9 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     /* paranoid checks */
     if( hWnd == GetDesktopWindow32() || hWnd == hwndActive ) return 0;
 
-/* if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
-	return 0;
-        */
-
+/*  if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
+ *	return 0;
+ */
     wndPtr = WIN_FindWndPtr(hWnd);
     hOldActiveQueue = (pActiveQueue)?pActiveQueue->self : 0;
 
@@ -1432,7 +1449,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 /*******************************************************************
  *         WINPOS_ActivateOtherWindow
  *
- * DestroyWindow() helper. pWnd must be a top-level window.
+ *  Activates window other than pWnd.
  */
 BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
 {
@@ -1446,29 +1463,27 @@ BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
     ( hwndActive || QUEUE_IsExitingQueue(pWnd->hmemTaskQ)) )
       return 0;
 
-  if( pWnd->dwStyle & WS_POPUP &&
-      WINPOS_CanActivate( pWnd->owner ) ) pWndTo = pWnd->owner;
-  else
+  if( !(pWnd->dwStyle & WS_POPUP) || !(pWnd->owner) ||
+      !WINPOS_CanActivate((pWndTo = WIN_GetTopParentPtr(pWnd->owner))) ) 
   {
-    WND* pWndPtr = pWnd;
+      WND* pWndPtr = WIN_GetTopParentPtr(pWnd);
 
-    pWndTo = WIN_FindWndPtr(hwndPrevActive);
+      pWndTo = WIN_FindWndPtr(hwndPrevActive);
 
-    while( !WINPOS_CanActivate(pWndTo) ) 
-    {
-      /* by now owned windows should've been taken care of */
+      while( !WINPOS_CanActivate(pWndTo) ) 
+      {
+	 /* by now owned windows should've been taken care of */
 
-      pWndTo = pWndPtr->next;
-      pWndPtr = pWndTo;
-      if( !pWndTo ) return 0;
-    }
+	  pWndTo = pWndPtr->next;
+	  pWndPtr = pWndTo;
+	  if( !pWndTo ) break;
+      }
   }
 
-  bRet = WINPOS_SetActiveWindow( pWndTo->hwndSelf, FALSE, TRUE );
+  bRet = WINPOS_SetActiveWindow( pWndTo ? pWndTo->hwndSelf : 0, FALSE, TRUE );
 
   /* switch desktop queue to current active */
-  if( pWndTo->parent == WIN_GetDesktop())
-      WIN_GetDesktop()->hmemTaskQ = pWndTo->hmemTaskQ;
+  if( pWndTo ) WIN_GetDesktop()->hmemTaskQ = pWndTo->hmemTaskQ;
 
   hwndPrevActive = 0;
   return bRet;  
@@ -1951,8 +1966,8 @@ static void WINPOS_SetXWindowPos( const WINDOWPOS32 *winpos )
 /***********************************************************************
  *           SetWindowPos   (USER.232)
  */
-BOOL16 SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter, INT16 x, INT16 y,
-                       INT16 cx, INT16 cy, WORD flags )
+BOOL16 WINAPI SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter,
+                              INT16 x, INT16 y, INT16 cx, INT16 cy, WORD flags)
 {
     return SetWindowPos32(hwnd,(INT32)(INT16)hwndInsertAfter,x,y,cx,cy,flags);
 }
@@ -1960,8 +1975,8 @@ BOOL16 SetWindowPos16( HWND16 hwnd, HWND16 hwndInsertAfter, INT16 x, INT16 y,
 /***********************************************************************
  *           SetWindowPos   (USER32.519)
  */
-BOOL32 SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter, INT32 x, INT32 y,
-                       INT32 cx, INT32 cy, WORD flags )
+BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
+                              INT32 x, INT32 y, INT32 cx, INT32 cy, WORD flags)
 {
     WINDOWPOS32 winpos;
     WND *	wndPtr;
@@ -2273,17 +2288,7 @@ BOOL32 SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter, INT32 x, INT32 y,
 	if (hwnd == CARET_GetHwnd()) DestroyCaret32();
 
 	if (winpos.hwnd == hwndActive)
-	{
-	      /* Activate previously active window if possible */
-	    HWND32 newActive = hwndPrevActive;
-	    if (!IsWindow32(newActive) || (newActive == winpos.hwnd))
-	    {
-		newActive = GetTopWindow32( GetDesktopWindow32() );
-		if (newActive == winpos.hwnd)
-                    newActive = wndPtr->next ? wndPtr->next->hwndSelf : 0;
-	    }	    
-	    WINPOS_ChangeActiveWindow( newActive, FALSE );
-	}
+	    WINPOS_ActivateOtherWindow( wndPtr );
     }
 
       /* Activate the window */
@@ -2325,7 +2330,7 @@ BOOL32 SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter, INT32 x, INT32 y,
 /***********************************************************************
  *           BeginDeferWindowPos16   (USER.259)
  */
-HDWP16 BeginDeferWindowPos16( INT16 count )
+HDWP16 WINAPI BeginDeferWindowPos16( INT16 count )
 {
     return BeginDeferWindowPos32( count );
 }
@@ -2334,7 +2339,7 @@ HDWP16 BeginDeferWindowPos16( INT16 count )
 /***********************************************************************
  *           BeginDeferWindowPos32   (USER32.8)
  */
-HDWP32 BeginDeferWindowPos32( INT32 count )
+HDWP32 WINAPI BeginDeferWindowPos32( INT32 count )
 {
     HDWP32 handle;
     DWP *pDWP;
@@ -2355,8 +2360,9 @@ HDWP32 BeginDeferWindowPos32( INT32 count )
 /***********************************************************************
  *           DeferWindowPos16   (USER.260)
  */
-HDWP16 DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
-                         INT16 x, INT16 y, INT16 cx, INT16 cy, UINT16 flags )
+HDWP16 WINAPI DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
+                                INT16 x, INT16 y, INT16 cx, INT16 cy,
+                                UINT16 flags )
 {
     return DeferWindowPos32( hdwp, hwnd, (INT32)(INT16)hwndAfter,
                              x, y, cx, cy, flags );
@@ -2366,8 +2372,9 @@ HDWP16 DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
 /***********************************************************************
  *           DeferWindowPos32   (USER32.127)
  */
-HDWP32 DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
-                         INT32 x, INT32 y, INT32 cx, INT32 cy, UINT32 flags )
+HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
+                                INT32 x, INT32 y, INT32 cx, INT32 cy,
+                                UINT32 flags )
 {
     DWP *pDWP;
     int i;
@@ -2439,7 +2446,7 @@ HDWP32 DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
 /***********************************************************************
  *           EndDeferWindowPos16   (USER.261)
  */
-BOOL16 EndDeferWindowPos16( HDWP16 hdwp )
+BOOL16 WINAPI EndDeferWindowPos16( HDWP16 hdwp )
 {
     return EndDeferWindowPos32( hdwp );
 }
@@ -2448,7 +2455,7 @@ BOOL16 EndDeferWindowPos16( HDWP16 hdwp )
 /***********************************************************************
  *           EndDeferWindowPos32   (USER32.172)
  */
-BOOL32 EndDeferWindowPos32( HDWP32 hdwp )
+BOOL32 WINAPI EndDeferWindowPos32( HDWP32 hdwp )
 {
     DWP *pDWP;
     WINDOWPOS32 *winpos;
@@ -2471,7 +2478,7 @@ BOOL32 EndDeferWindowPos32( HDWP32 hdwp )
 /***********************************************************************
  *           TileChildWindows   (USER.199)
  */
-void TileChildWindows( HWND16 parent, WORD action )
+void WINAPI TileChildWindows( HWND16 parent, WORD action )
 {
     printf("STUB TileChildWindows(%04x, %d)\n", parent, action);
 }
@@ -2479,7 +2486,7 @@ void TileChildWindows( HWND16 parent, WORD action )
 /***********************************************************************
  *           CascageChildWindows   (USER.198)
  */
-void CascadeChildWindows( HWND16 parent, WORD action )
+void WINAPI CascadeChildWindows( HWND16 parent, WORD action )
 {
     printf("STUB CascadeChildWindows(%04x, %d)\n", parent, action);
 }

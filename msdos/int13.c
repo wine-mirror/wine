@@ -15,7 +15,7 @@
  *
  * Handler for int 13h (disk I/O).
  */
-void INT_Int13Handler( CONTEXT *context )
+void WINAPI INT_Int13Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

@@ -8,7 +8,7 @@
 #include "windows.h"
 #include "ldt.h"
 #include "miscemu.h"
-#include "sigcontext.h"
+#include "sig_context.h"
 
 
 #define STACK_sig(context) \

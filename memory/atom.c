@@ -263,7 +263,7 @@ static UINT32 ATOM_GetAtomName( WORD selector, ATOM atom,
 /***********************************************************************
  *           InitAtomTable16   (KERNEL.68)
  */
-WORD InitAtomTable16( WORD entries )
+WORD WINAPI InitAtomTable16( WORD entries )
 {
     return ATOM_InitTable( CURRENT_DS, entries );
 }
@@ -272,7 +272,7 @@ WORD InitAtomTable16( WORD entries )
 /***********************************************************************
  *           GetAtomHandle   (KERNEL.73)
  */
-HANDLE16 GetAtomHandle( ATOM atom )
+HANDLE16 WINAPI GetAtomHandle( ATOM atom )
 {
     if (atom < MIN_STR_ATOM) return 0;
     return ATOMTOHANDLE( atom );
@@ -282,7 +282,7 @@ HANDLE16 GetAtomHandle( ATOM atom )
 /***********************************************************************
  *           AddAtom16   (KERNEL.70)
  */
-ATOM AddAtom16( SEGPTR str )
+ATOM WINAPI AddAtom16( SEGPTR str )
 {
     ATOM atom;
     HANDLE16 ds = CURRENT_DS;
@@ -304,7 +304,7 @@ ATOM AddAtom16( SEGPTR str )
 /***********************************************************************
  *           AddAtom32A   (KERNEL32.0)
  */
-ATOM AddAtom32A( LPCSTR str )
+ATOM WINAPI AddAtom32A( LPCSTR str )
 {
     return GlobalAddAtom32A( str );  /* FIXME */
 }
@@ -313,7 +313,7 @@ ATOM AddAtom32A( LPCSTR str )
 /***********************************************************************
  *           AddAtom32W   (KERNEL32.1)
  */
-ATOM AddAtom32W( LPCWSTR str )
+ATOM WINAPI AddAtom32W( LPCWSTR str )
 {
     return GlobalAddAtom32W( str );  /* FIXME */
 }
@@ -322,7 +322,7 @@ ATOM AddAtom32W( LPCWSTR str )
 /***********************************************************************
  *           DeleteAtom16   (KERNEL.71)
  */
-ATOM DeleteAtom16( ATOM atom )
+ATOM WINAPI DeleteAtom16( ATOM atom )
 {
     return ATOM_DeleteAtom( CURRENT_DS, atom );
 }
@@ -331,7 +331,7 @@ ATOM DeleteAtom16( ATOM atom )
 /***********************************************************************
  *           DeleteAtom32   (KERNEL32.69)
  */
-ATOM DeleteAtom32( ATOM atom )
+ATOM WINAPI DeleteAtom32( ATOM atom )
 {
     return GlobalDeleteAtom( atom );  /* FIXME */
 }
@@ -340,7 +340,7 @@ ATOM DeleteAtom32( ATOM atom )
 /***********************************************************************
  *           FindAtom16   (KERNEL.69)
  */
-ATOM FindAtom16( SEGPTR str )
+ATOM WINAPI FindAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_FindAtom( CURRENT_DS, (LPCSTR)PTR_SEG_TO_LIN(str) );
@@ -350,7 +350,7 @@ ATOM FindAtom16( SEGPTR str )
 /***********************************************************************
  *           FindAtom32A   (KERNEL32.117)
  */
-ATOM FindAtom32A( LPCSTR str )
+ATOM WINAPI FindAtom32A( LPCSTR str )
 {
     return GlobalFindAtom32A( str );  /* FIXME */
 }
@@ -359,7 +359,7 @@ ATOM FindAtom32A( LPCSTR str )
 /***********************************************************************
  *           FindAtom32W   (KERNEL32.118)
  */
-ATOM FindAtom32W( LPCWSTR str )
+ATOM WINAPI FindAtom32W( LPCWSTR str )
 {
     return GlobalFindAtom32W( str );  /* FIXME */
 }
@@ -368,7 +368,7 @@ ATOM FindAtom32W( LPCWSTR str )
 /***********************************************************************
  *           GetAtomName16   (KERNEL.72)
  */
-UINT16 GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
+UINT16 WINAPI GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 {
     return (UINT16)ATOM_GetAtomName( CURRENT_DS, atom, buffer, count );
 }
@@ -377,7 +377,7 @@ UINT16 GetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 /***********************************************************************
  *           GetAtomName32A   (KERNEL32.149)
  */
-UINT32 GetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
+UINT32 WINAPI GetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
 {
     return GlobalGetAtomName32A( atom, buffer, count );  /* FIXME */
 }
@@ -386,7 +386,7 @@ UINT32 GetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
 /***********************************************************************
  *           GetAtomName32W   (KERNEL32.150)
  */
-UINT32 GetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
+UINT32 WINAPI GetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {
     return GlobalGetAtomName32W( atom, buffer, count );  /* FIXME */
 }
@@ -395,7 +395,7 @@ UINT32 GetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 /***********************************************************************
  *           GlobalAddAtom16   (USER.268)
  */
-ATOM GlobalAddAtom16( SEGPTR str )
+ATOM WINAPI GlobalAddAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
@@ -408,7 +408,7 @@ ATOM GlobalAddAtom16( SEGPTR str )
 /***********************************************************************
  *           GlobalAddAtom32A   (KERNEL32.313)
  */
-ATOM GlobalAddAtom32A( LPCSTR str )
+ATOM WINAPI GlobalAddAtom32A( LPCSTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_AddAtom( USER_HeapSel, str );
@@ -418,7 +418,7 @@ ATOM GlobalAddAtom32A( LPCSTR str )
 /***********************************************************************
  *           GlobalAddAtom32W   (KERNEL32.314)
  */
-ATOM GlobalAddAtom32W( LPCWSTR str )
+ATOM WINAPI GlobalAddAtom32W( LPCWSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
@@ -430,7 +430,7 @@ ATOM GlobalAddAtom32W( LPCWSTR str )
 /***********************************************************************
  *           GlobalDeleteAtom   (USER.269) (KERNEL32.317)
  */
-ATOM GlobalDeleteAtom( ATOM atom )
+ATOM WINAPI GlobalDeleteAtom( ATOM atom )
 {
 #ifdef CONFIG_IPC
     if (Options.ipc) return DDE_GlobalDeleteAtom( atom );
@@ -442,7 +442,7 @@ ATOM GlobalDeleteAtom( ATOM atom )
 /***********************************************************************
  *           GlobalFindAtom16   (USER.270)
  */
-ATOM GlobalFindAtom16( SEGPTR str )
+ATOM WINAPI GlobalFindAtom16( SEGPTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
 #ifdef CONFIG_IPC
@@ -455,7 +455,7 @@ ATOM GlobalFindAtom16( SEGPTR str )
 /***********************************************************************
  *           GlobalFindAtom32A   (KERNEL32.318)
  */
-ATOM GlobalFindAtom32A( LPCSTR str )
+ATOM WINAPI GlobalFindAtom32A( LPCSTR str )
 {
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
     return ATOM_FindAtom( USER_HeapSel, str );
@@ -465,7 +465,7 @@ ATOM GlobalFindAtom32A( LPCSTR str )
 /***********************************************************************
  *           GlobalFindAtom32W   (KERNEL32.319)
  */
-ATOM GlobalFindAtom32W( LPCWSTR str )
+ATOM WINAPI GlobalFindAtom32W( LPCWSTR str )
 {
     char buffer[MAX_ATOM_LEN+1];
     if (!HIWORD(str)) return (ATOM)LOWORD(str);  /* Integer atom */
@@ -477,7 +477,7 @@ ATOM GlobalFindAtom32W( LPCWSTR str )
 /***********************************************************************
  *           GlobalGetAtomName16   (USER.271)
  */
-UINT16 GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
+UINT16 WINAPI GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 {
 #ifdef CONFIG_IPC
     if (Options.ipc) return DDE_GlobalGetAtomName( atom, buffer, count );
@@ -489,7 +489,7 @@ UINT16 GlobalGetAtomName16( ATOM atom, LPSTR buffer, INT16 count )
 /***********************************************************************
  *           GlobalGetAtomName32A   (KERNEL32.323)
  */
-UINT32 GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
+UINT32 WINAPI GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
 {
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }
@@ -497,7 +497,7 @@ UINT32 GlobalGetAtomName32A( ATOM atom, LPSTR buffer, INT32 count )
 /***********************************************************************
  *           GlobalGetAtomName32W   (KERNEL32.324)
  */
-UINT32 GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
+UINT32 WINAPI GlobalGetAtomName32W( ATOM atom, LPWSTR buffer, INT32 count )
 {
     char tmp[MAX_ATOM_LEN+1];
     ATOM_GetAtomName( USER_HeapSel, atom, tmp, sizeof(tmp) );

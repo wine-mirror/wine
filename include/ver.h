@@ -127,15 +127,6 @@ typedef struct tagVS_FIXEDFILEINFO {
 	DWORD   dwFileDateLS;
 } VS_FIXEDFILEINFO;
 
-/* following two aren't in version.dll */
-DWORD
-GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off);
-
-DWORD
-GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
-		DWORD off,DWORD reslen,LPVOID data
-);
-
 
 /* 20 GETFILEVERSIONINFORAW */
 

@@ -54,6 +54,7 @@ HANDLE32 SegptrHeap = 0;
  */
 int MAIN_Init(void)
 {
+    extern BOOL32 EVENT_Init(void);
     extern BOOL32 RELAY_Init(void);
     extern BOOL32 WIN16DRV_Init(void);
     extern BOOL32 VIRTUAL_Init(void);
@@ -76,6 +77,9 @@ int MAIN_Init(void)
 
       /* Initialize signal handling */
     if (!SIGNAL_Init()) return 0;
+
+      /* Initialize event handling */
+    if (!EVENT_Init()) return 0;
 
 #ifdef WINELIB
     /* Create USER and GDI heap */

@@ -8,23 +8,23 @@
 #include "stddebug.h"
 #include "debug.h"
 
-BOOL32 IsValidSid (LPSID pSid);
-BOOL32 EqualSid (LPSID pSid1, LPSID pSid2);
-BOOL32 EqualPrefixSid (LPSID pSid1, LPSID pSid2);
-DWORD GetSidLengthRequired (BYTE nSubAuthorityCount);
-BOOL32 AllocateAndInitializeSid (LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2, DWORD nSubAuthority3,    DWORD nSubAuthority4, DWORD nSubAuthority5, DWORD nSubAuthority6, DWORD nSubAuthority7, LPSID *pSid);
-VOID *FreeSid(LPSID pSid);
-BOOL32 InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount);
-LPSID_IDENTIFIER_AUTHORITY GetSidIdentifierAuthority (LPSID pSid);
-DWORD *GetSidSubAuthority (LPSID pSid, DWORD nSubAuthority);
-BYTE *GetSidSubAuthorityCount (LPSID pSid);
-DWORD GetLengthSid (LPSID pSid);
-BOOL32 CopySid (DWORD nDestinationSidLength, LPSID pDestinationSid, LPSID pSourceSid);
+BOOL32 WINAPI IsValidSid (LPSID pSid);
+BOOL32 WINAPI EqualSid (LPSID pSid1, LPSID pSid2);
+BOOL32 WINAPI EqualPrefixSid (LPSID pSid1, LPSID pSid2);
+DWORD  WINAPI GetSidLengthRequired (BYTE nSubAuthorityCount);
+BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount, DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2, DWORD nSubAuthority3,    DWORD nSubAuthority4, DWORD nSubAuthority5, DWORD nSubAuthority6, DWORD nSubAuthority7, LPSID *pSid);
+VOID*  WINAPI FreeSid(LPSID pSid);
+BOOL32 WINAPI InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount);
+LPSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority(LPSID pSid);
+DWORD* WINAPI GetSidSubAuthority(LPSID pSid, DWORD nSubAuthority);
+BYTE*  WINAPI GetSidSubAuthorityCount(LPSID pSid);
+DWORD  WINAPI GetLengthSid(LPSID pSid);
+BOOL32 WINAPI CopySid(DWORD nDestinationSidLength, LPSID pDestinationSid, LPSID pSourceSid);
 
 /***********************************************************************
  *           IsValidSid  (ADVAPI.80)
  */
-BOOL32 IsValidSid (LPSID pSid) {
+BOOL32 WINAPI IsValidSid (LPSID pSid) {
     if (!pSid || pSid->Revision != SID_REVISION)
         return FALSE;
 
@@ -34,7 +34,7 @@ BOOL32 IsValidSid (LPSID pSid) {
 /***********************************************************************
  *           EqualSid  (ADVAPI.40)
  */
-BOOL32 EqualSid (LPSID pSid1, LPSID pSid2) {
+BOOL32 WINAPI EqualSid (LPSID pSid1, LPSID pSid2) {
     if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
         return FALSE;
 
@@ -50,7 +50,7 @@ BOOL32 EqualSid (LPSID pSid1, LPSID pSid2) {
 /***********************************************************************
  *           EqualPrefixSid  (ADVAPI.39)
  */
-BOOL32 EqualPrefixSid (LPSID pSid1, LPSID pSid2) {
+BOOL32 WINAPI EqualPrefixSid (LPSID pSid1, LPSID pSid2) {
     if (!IsValidSid(pSid1) || !IsValidSid(pSid2))
         return FALSE;
 
@@ -67,14 +67,14 @@ BOOL32 EqualPrefixSid (LPSID pSid1, LPSID pSid2) {
 /***********************************************************************
  *           GetSidLengthRequired  (ADVAPI.63)
  */
-DWORD GetSidLengthRequired (BYTE nSubAuthorityCount) {
+DWORD WINAPI GetSidLengthRequired (BYTE nSubAuthorityCount) {
     return sizeof (SID) + (nSubAuthorityCount - 1 * sizeof (DWORD));
 }
 
 /***********************************************************************
  *           AllocateAndInitializeSid  (ADVAPI.11)
  */
-BOOL32 AllocateAndInitializeSid (LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+BOOL32 WINAPI AllocateAndInitializeSid(LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
     BYTE nSubAuthorityCount,
     DWORD nSubAuthority0, DWORD nSubAuthority1,
     DWORD nSubAuthority2, DWORD nSubAuthority3,
@@ -112,7 +112,7 @@ BOOL32 AllocateAndInitializeSid (LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority
 /***********************************************************************
  *           FreeSid  (ADVAPI.42)
  */
-VOID *FreeSid(LPSID pSid) {
+VOID* WINAPI FreeSid(LPSID pSid) {
     free(pSid);
     return NULL;
 }
@@ -120,8 +120,9 @@ VOID *FreeSid(LPSID pSid) {
 /***********************************************************************
  *           InitializeSid  (ADVAPI.74)
  */
-BOOL32 InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-                    BYTE nSubAuthorityCount) {
+BOOL32 WINAPI InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
+                    BYTE nSubAuthorityCount)
+{
     int i;
 
     pSid->Revision = SID_REVISION;
@@ -139,36 +140,41 @@ BOOL32 InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthorit
 /***********************************************************************
  *           GetSidIdentifierAuthority  (ADVAPI.62)
  */
-LPSID_IDENTIFIER_AUTHORITY GetSidIdentifierAuthority (LPSID pSid) {
+LPSID_IDENTIFIER_AUTHORITY WINAPI GetSidIdentifierAuthority (LPSID pSid)
+{
     return &pSid->IdentifierAuthority;
 }
 
 /***********************************************************************
  *           GetSidSubAuthority  (ADVAPI.64)
  */
-DWORD *GetSidSubAuthority (LPSID pSid, DWORD nSubAuthority) {
+DWORD * WINAPI GetSidSubAuthority (LPSID pSid, DWORD nSubAuthority)
+{
     return &pSid->SubAuthority[nSubAuthority];
 }
 
 /***********************************************************************
  *           GetSidSubAuthorityCount  (ADVAPI.65)
  */
-BYTE *GetSidSubAuthorityCount (LPSID pSid) {
+BYTE * WINAPI GetSidSubAuthorityCount (LPSID pSid)
+{
     return &pSid->SubAuthorityCount;
 }
 
 /***********************************************************************
  *           GetLengthSid  (ADVAPI.48)
  */
-DWORD GetLengthSid (LPSID pSid) {
+DWORD WINAPI GetLengthSid (LPSID pSid)
+{
     return GetSidLengthRequired(*GetSidSubAuthorityCount(pSid));
 }
 
 /***********************************************************************
  *           CopySid  (ADVAPI.24)
  */
-BOOL32 CopySid (DWORD nDestinationSidLength, LPSID pDestinationSid,
-              LPSID pSourceSid) {
+BOOL32 WINAPI CopySid (DWORD nDestinationSidLength, LPSID pDestinationSid,
+                       LPSID pSourceSid)
+{
 
     if (!IsValidSid(pSourceSid))
         return FALSE;

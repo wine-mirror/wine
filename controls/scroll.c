@@ -756,8 +756,8 @@ void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar, UINT32 msg, POINT32 pt)
 /***********************************************************************
  *           ScrollBarWndProc
  */
-LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                          LPARAM lParam )
+LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                                 LPARAM lParam )
 {
     switch(message)
     {
@@ -893,8 +893,8 @@ LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 /*************************************************************************
  *           SetScrollInfo16   (USER.475)
  */
-INT16 SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
-                       BOOL16 bRedraw )
+INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
+                              BOOL16 bRedraw )
 {
     return (INT16)SetScrollInfo32( hwnd, nBar, info, bRedraw );
 }
@@ -903,8 +903,8 @@ INT16 SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
 /*************************************************************************
  *           SetScrollInfo32   (USER32.500)
  */
-INT32 SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
-                       BOOL32 bRedraw )
+INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
+                              BOOL32 bRedraw )
 {
     SCROLLBAR_INFO *infoPtr;
     UINT32 new_flags;
@@ -1007,7 +1007,7 @@ INT32 SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
 /*************************************************************************
  *           GetScrollInfo16   (USER.476)
  */
-BOOL16 GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
+BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 {
     return GetScrollInfo32( hwnd, nBar, info );
 }
@@ -1016,7 +1016,7 @@ BOOL16 GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
 /*************************************************************************
  *           GetScrollInfo32   (USER32.283)
  */
-BOOL32 GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
+BOOL32 WINAPI GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1041,7 +1041,8 @@ BOOL32 GetScrollInfo32( HWND32 hwnd, INT32 nBar, LPSCROLLINFO info )
 /*************************************************************************
  *           SetScrollPos16   (USER.62)
  */
-INT16 SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos, BOOL16 bRedraw )
+INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
+                             BOOL16 bRedraw )
 {
     return (INT16)SetScrollPos32( hwnd, nBar, nPos, bRedraw );
 }
@@ -1050,7 +1051,8 @@ INT16 SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos, BOOL16 bRedraw )
 /*************************************************************************
  *           SetScrollPos32   (USER32.501)
  */
-INT32 SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos, BOOL32 bRedraw )
+INT32 WINAPI SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos,
+                             BOOL32 bRedraw )
 {
     SCROLLINFO info;
     SCROLLBAR_INFO *infoPtr;
@@ -1069,7 +1071,7 @@ INT32 SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos, BOOL32 bRedraw )
 /*************************************************************************
  *           GetScrollPos16   (USER.63)
  */
-INT16 GetScrollPos16( HWND16 hwnd, INT16 nBar )
+INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
 {
     return (INT16)GetScrollPos32( hwnd, nBar );
 }
@@ -1078,7 +1080,7 @@ INT16 GetScrollPos16( HWND16 hwnd, INT16 nBar )
 /*************************************************************************
  *           GetScrollPos32   (USER32.284)
  */
-INT32 GetScrollPos32( HWND32 hwnd, INT32 nBar )
+INT32 WINAPI GetScrollPos32( HWND32 hwnd, INT32 nBar )
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1090,8 +1092,8 @@ INT32 GetScrollPos32( HWND32 hwnd, INT32 nBar )
 /*************************************************************************
  *           SetScrollRange16   (USER.64)
  */
-void SetScrollRange16( HWND16 hwnd, INT16 nBar, INT16 MinVal, INT16 MaxVal,
-                       BOOL16 bRedraw )
+void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
+                              INT16 MinVal, INT16 MaxVal, BOOL16 bRedraw )
 {
     /* Invalid range -> range is set to (0,0) */
     if ((INT32)MaxVal - (INT32)MinVal > 0x7fff) MinVal = MaxVal = 0;
@@ -1102,8 +1104,8 @@ void SetScrollRange16( HWND16 hwnd, INT16 nBar, INT16 MinVal, INT16 MaxVal,
 /*************************************************************************
  *           SetScrollRange32   (USER32.502)
  */
-BOOL32 SetScrollRange32( HWND32 hwnd, INT32 nBar, INT32 MinVal, INT32 MaxVal,
-                         BOOL32 bRedraw )
+BOOL32 WINAPI SetScrollRange32( HWND32 hwnd, INT32 nBar,
+                                INT32 MinVal, INT32 MaxVal, BOOL32 bRedraw )
 {
     SCROLLINFO info;
 
@@ -1153,7 +1155,8 @@ DWORD SCROLL_SetNCSbState(WND* wndPtr, int vMin, int vMax, int vPos,
 /*************************************************************************
  *           GetScrollRange16   (USER.65)
  */
-BOOL16 GetScrollRange16( HWND16 hwnd, INT16 nBar, LPINT16 lpMin, LPINT16 lpMax)
+BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
+                                LPINT16 lpMin, LPINT16 lpMax)
 {
     INT32 min, max;
     BOOL16 ret = GetScrollRange32( hwnd, nBar, &min, &max );
@@ -1166,7 +1169,8 @@ BOOL16 GetScrollRange16( HWND16 hwnd, INT16 nBar, LPINT16 lpMin, LPINT16 lpMax)
 /*************************************************************************
  *           GetScrollRange32   (USER32.285)
  */
-BOOL32 GetScrollRange32( HWND32 hwnd, INT32 nBar, LPINT32 lpMin, LPINT32 lpMax)
+BOOL32 WINAPI GetScrollRange32( HWND32 hwnd, INT32 nBar,
+                                LPINT32 lpMin, LPINT32 lpMax)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1185,7 +1189,7 @@ BOOL32 GetScrollRange32( HWND32 hwnd, INT32 nBar, LPINT32 lpMin, LPINT32 lpMax)
 /*************************************************************************
  *           ShowScrollBar16   (USER.267)
  */
-void ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
+void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 {
     ShowScrollBar32( hwnd, nBar, fShow );
 }
@@ -1194,7 +1198,7 @@ void ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
 /*************************************************************************
  *           ShowScrollBar32   (USER32.531)
  */
-BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
+BOOL32 WINAPI ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -1261,7 +1265,7 @@ BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
 /*************************************************************************
  *           EnableScrollBar16   (USER.482)
  */
-BOOL16 EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
+BOOL16 WINAPI EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 {
     return EnableScrollBar32( hwnd, nBar, flags );
 }
@@ -1270,7 +1274,7 @@ BOOL16 EnableScrollBar16( HWND16 hwnd, INT16 nBar, UINT16 flags )
 /*************************************************************************
  *           EnableScrollBar32   (USER32.170)
  */
-BOOL32 EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
+BOOL32 WINAPI EnableScrollBar32( HWND32 hwnd, INT32 nBar, UINT32 flags )
 {
     SCROLLBAR_INFO *infoPtr;
 

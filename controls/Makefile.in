@@ -16,6 +16,7 @@ C_SRCS = \
 	scroll.c \
 	static.c \
 	status.c \
+	updown.c \
 	widgets.c
 
 all: $(MODULE).o

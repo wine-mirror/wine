@@ -33,8 +33,8 @@ static int TranslateAccessFlags(DWORD access_flags);
 /***********************************************************************
  *             WriteFile               (KERNEL32.578)
  */
-BOOL32 WriteFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
-                 LPDWORD numberOfBytesWritten, LPOVERLAPPED lpOverlapped)
+BOOL32 WINAPI WriteFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
+                        LPDWORD numberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
     LONG	res;
 
@@ -51,8 +51,8 @@ BOOL32 WriteFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numberOfBytesToWrite,
 /***********************************************************************
  *              ReadFile                (KERNEL32.428)
  */
-BOOL32 ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
-                LPDWORD numread, LPOVERLAPPED lpOverlapped)
+BOOL32 WINAPI ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
+                       LPDWORD numread, LPOVERLAPPED lpOverlapped)
 {
     int actual_read;
 
@@ -74,9 +74,9 @@ BOOL32 ReadFile(HFILE32 hFile, LPVOID lpBuffer, DWORD numtoread,
  * Doesn't support character devices, pipes, template files, or a
  * lot of the 'attributes' flags yet.
  */
-HFILE32 CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
-                      LPSECURITY_ATTRIBUTES security, DWORD creation,
-                      DWORD attributes, HANDLE32 template)
+HFILE32 WINAPI CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
+                             LPSECURITY_ATTRIBUTES security, DWORD creation,
+                             DWORD attributes, HANDLE32 template)
 {
     int access_flags, create_flags;
 
@@ -115,9 +115,9 @@ HFILE32 CreateFile32A(LPCSTR filename, DWORD access, DWORD sharing,
 /*************************************************************************
  *              CreateFile32W              (KERNEL32.48)
  */
-HFILE32 CreateFile32W(LPCWSTR filename, DWORD access, DWORD sharing,
-                      LPSECURITY_ATTRIBUTES security, DWORD creation,
-                      DWORD attributes, HANDLE32 template)
+HFILE32 WINAPI CreateFile32W(LPCWSTR filename, DWORD access, DWORD sharing,
+                             LPSECURITY_ATTRIBUTES security, DWORD creation,
+                             DWORD attributes, HANDLE32 template)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     HFILE32 res = CreateFile32A( afn, access, sharing, security, creation,
@@ -182,7 +182,7 @@ static int TranslateCreationFlags(DWORD create_flags)
 /**************************************************************************
  *              SetFileAttributes16	(KERNEL.421)
  */
-BOOL16 SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
+BOOL16 WINAPI SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 {
     return SetFileAttributes32A( lpFileName, attributes );
 }
@@ -191,7 +191,7 @@ BOOL16 SetFileAttributes16( LPCSTR lpFileName, DWORD attributes )
 /**************************************************************************
  *              SetFileAttributes32A	(KERNEL32.490)
  */
-BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
+BOOL32 WINAPI SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
 {
     struct stat buf;
     DOS_FULL_NAME full_name;
@@ -221,10 +221,11 @@ BOOL32 SetFileAttributes32A(LPCSTR lpFileName, DWORD attributes)
     return TRUE;
 }
 
+
 /**************************************************************************
  *              SetFileAttributes32W	(KERNEL32.491)
  */
-BOOL32 SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
+BOOL32 WINAPI SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
 {
     LPSTR afn = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFileName );
     BOOL32 res = SetFileAttributes32A( afn, attributes );
@@ -232,17 +233,29 @@ BOOL32 SetFileAttributes32W(LPCWSTR lpFileName, DWORD attributes)
     return res;
 }
 
-VOID SetFileApisToOEM()
+
+/**************************************************************************
+ *              SetFileApisToOEM   (KERNEL32.645)
+ */
+VOID WINAPI SetFileApisToOEM(void)
 {
     fprintf(stdnimp,"SetFileApisToOEM(),stub!\n");
 }
 
-VOID SetFileApisToANSI()
+
+/**************************************************************************
+ *              SetFileApisToANSI   (KERNEL32.644)
+ */
+VOID WINAPI SetFileApisToANSI(void)
 {
     fprintf(stdnimp,"SetFileApisToANSI(),stub!\n");
 }
 
-BOOL32 AreFileApisANSI()
+
+/**************************************************************************
+ *              AreFileApisANSI   (KERNEL32.105)
+ */
+BOOL32 WINAPI AreFileApisANSI(void)
 {
     fprintf(stdnimp,"AreFileApisANSI(),stub!\n");
     return TRUE;

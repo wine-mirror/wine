@@ -19,8 +19,8 @@ typedef struct
     UINT32  flags;    /* EnableScrollBar flags */
 } SCROLLBAR_INFO;
 
-extern LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam,
-                                 LPARAM lParam );
+extern LRESULT WINAPI ScrollBarWndProc( HWND32 hwnd, UINT32 uMsg,
+                                        WPARAM32 wParam, LPARAM lParam );
 extern void SCROLL_DrawScrollBar( HWND32 hwnd, HDC32 hdc, INT32 nBar,
                                   BOOL32 arrows );
 extern void SCROLL_HandleScrollEvent( HWND32 hwnd, INT32 nBar,

@@ -16,15 +16,16 @@
 /***********************************************************************
  *           CreateBrushIndirect16    (GDI.50)
  */
-HBRUSH16 CreateBrushIndirect16( const LOGBRUSH16 * brush )
+HBRUSH16 WINAPI CreateBrushIndirect16( const LOGBRUSH16 * brush )
 {
     BRUSHOBJ * brushPtr;
     HBRUSH16 hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
     if (!hbrush) return 0;
-    brushPtr = (BRUSHOBJ *) GDI_HEAP_LIN_ADDR( hbrush );
+    brushPtr = (BRUSHOBJ *) GDI_HEAP_LOCK( hbrush );
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
+    GDI_HEAP_UNLOCK( hbrush );
     return hbrush;
 }
 
@@ -32,15 +33,16 @@ HBRUSH16 CreateBrushIndirect16( const LOGBRUSH16 * brush )
 /***********************************************************************
  *           CreateBrushIndirect32    (GDI32.27)
  */
-HBRUSH32 CreateBrushIndirect32( const LOGBRUSH32 * brush )
+HBRUSH32 WINAPI CreateBrushIndirect32( const LOGBRUSH32 * brush )
 {
     BRUSHOBJ * brushPtr;
     HBRUSH32 hbrush = GDI_AllocObject( sizeof(BRUSHOBJ), BRUSH_MAGIC );
     if (!hbrush) return 0;
-    brushPtr = (BRUSHOBJ *) GDI_HEAP_LIN_ADDR( hbrush );
+    brushPtr = (BRUSHOBJ *) GDI_HEAP_LOCK( hbrush );
     brushPtr->logbrush.lbStyle = brush->lbStyle;
     brushPtr->logbrush.lbColor = brush->lbColor;
     brushPtr->logbrush.lbHatch = brush->lbHatch;
+    GDI_HEAP_UNLOCK( hbrush );
     return hbrush;
 }
 
@@ -48,7 +50,7 @@ HBRUSH32 CreateBrushIndirect32( const LOGBRUSH32 * brush )
 /***********************************************************************
  *           CreateHatchBrush16    (GDI.58)
  */
-HBRUSH16 CreateHatchBrush16( INT16 style, COLORREF color )
+HBRUSH16 WINAPI CreateHatchBrush16( INT16 style, COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
     dprintf_gdi(stddeb, "CreateHatchBrush16: %d %06lx\n", style, color );
@@ -60,7 +62,7 @@ HBRUSH16 CreateHatchBrush16( INT16 style, COLORREF color )
 /***********************************************************************
  *           CreateHatchBrush32    (GDI32.48)
  */
-HBRUSH32 CreateHatchBrush32( INT32 style, COLORREF color )
+HBRUSH32 WINAPI CreateHatchBrush32( INT32 style, COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_HATCHED, color, style };
     dprintf_gdi(stddeb, "CreateHatchBrush32: %d %06lx\n", style, color );
@@ -72,7 +74,7 @@ HBRUSH32 CreateHatchBrush32( INT32 style, COLORREF color )
 /***********************************************************************
  *           CreatePatternBrush16    (GDI.60)
  */
-HBRUSH16 CreatePatternBrush16( HBITMAP16 hbitmap )
+HBRUSH16 WINAPI CreatePatternBrush16( HBITMAP16 hbitmap )
 {
     return (HBRUSH16)CreatePatternBrush32( hbitmap );
 }
@@ -81,7 +83,7 @@ HBRUSH16 CreatePatternBrush16( HBITMAP16 hbitmap )
 /***********************************************************************
  *           CreatePatternBrush32    (GDI32.54)
  */
-HBRUSH32 CreatePatternBrush32( HBITMAP32 hbitmap )
+HBRUSH32 WINAPI CreatePatternBrush32( HBITMAP32 hbitmap )
 {
     LOGBRUSH32 logbrush = { BS_PATTERN, 0, 0 };
     BITMAPOBJ *bmp, *newbmp;
@@ -95,9 +97,15 @@ HBRUSH32 CreatePatternBrush32( HBITMAP32 hbitmap )
     logbrush.lbHatch = (INT32)CreateBitmapIndirect16( &bmp->bitmap );
     newbmp = (BITMAPOBJ *) GDI_GetObjPtr( (HGDIOBJ32)logbrush.lbHatch,
                                           BITMAP_MAGIC );
-    if (!newbmp) return 0;
+    if (!newbmp) 
+    {
+      GDI_HEAP_UNLOCK( hbitmap );
+      return 0;
+    }
     XCopyArea( display, bmp->pixmap, newbmp->pixmap, BITMAP_GC(bmp),
 	       0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
+    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_HEAP_UNLOCK( logbrush.lbHatch );
     return CreateBrushIndirect32( &logbrush );
 }
 
@@ -105,7 +113,7 @@ HBRUSH32 CreatePatternBrush32( HBITMAP32 hbitmap )
 /***********************************************************************
  *           CreateDIBPatternBrush16    (GDI.445)
  */
-HBRUSH16 CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
+HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 {
     LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
@@ -140,7 +148,7 @@ HBRUSH16 CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
 /***********************************************************************
  *           CreateDIBPatternBrush32    (GDI32.34)
  */
-HBRUSH32 CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
+HBRUSH32 WINAPI CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
 {
     LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO *info, *newInfo;
@@ -175,7 +183,7 @@ HBRUSH32 CreateDIBPatternBrush32( HGLOBAL32 hbitmap, UINT32 coloruse )
 /***********************************************************************
  *           CreateSolidBrush    (GDI.66)
  */
-HBRUSH16 CreateSolidBrush16( COLORREF color )
+HBRUSH16 WINAPI CreateSolidBrush16( COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
     dprintf_gdi(stddeb, "CreateSolidBrush16: %06lx\n", color );
@@ -186,7 +194,7 @@ HBRUSH16 CreateSolidBrush16( COLORREF color )
 /***********************************************************************
  *           CreateSolidBrush32    (GDI32.64)
  */
-HBRUSH32 CreateSolidBrush32( COLORREF color )
+HBRUSH32 WINAPI CreateSolidBrush32( COLORREF color )
 {
     LOGBRUSH32 logbrush = { BS_SOLID, color, 0 };
     dprintf_gdi(stddeb, "CreateSolidBrush32: %06lx\n", color );
@@ -197,7 +205,7 @@ HBRUSH32 CreateSolidBrush32( COLORREF color )
 /***********************************************************************
  *           SetBrushOrg    (GDI.148)
  */
-DWORD SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -212,7 +220,7 @@ DWORD SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetBrushOrgEx    (GDI32.308)
  */
-BOOL32 SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
+BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
 
@@ -231,7 +239,7 @@ BOOL32 SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 /***********************************************************************
  *           GetSysColorBrush16    (USER.281)
  */
-HBRUSH16 GetSysColorBrush16( INT16 index )
+HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
 {
     fprintf( stderr, "Unimplemented stub: GetSysColorBrush16(%d)\n", index );
     return GetStockObject32(LTGRAY_BRUSH);
@@ -241,7 +249,7 @@ HBRUSH16 GetSysColorBrush16( INT16 index )
 /***********************************************************************
  *           GetSysColorBrush32    (USER32.289)
  */
-HBRUSH32 GetSysColorBrush32( INT32 index)
+HBRUSH32 WINAPI GetSysColorBrush32( INT32 index)
 {
     fprintf( stderr, "Unimplemented stub: GetSysColorBrush32(%d)\n", index );
     return GetStockObject32(LTGRAY_BRUSH);

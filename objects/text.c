@@ -182,8 +182,8 @@ static const char *TEXT_NextLine( HDC16 hdc, const char *str, int *count,
 /***********************************************************************
  *           DrawText16    (USER.85)
  */
-INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
-                  LPRECT16 rect, UINT16 flags )
+INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
+                         LPRECT16 rect, UINT16 flags )
 {
     SIZE16 size;
     const char *strPtr;
@@ -285,8 +285,8 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
 /***********************************************************************
  *           DrawText32A    (USER32.163)
  */
-INT32 DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
-                   LPRECT32 rect, UINT32 flags )
+INT32 WINAPI DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
+                          LPRECT32 rect, UINT32 flags )
 {
     RECT16 rect16;
     INT16 ret;
@@ -303,8 +303,8 @@ INT32 DrawText32A( HDC32 hdc, LPCSTR str, INT32 count,
 /***********************************************************************
  *           DrawText32W    (USER32.166)
  */
-INT32 DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
-                   LPRECT32 rect, UINT32 flags )
+INT32 WINAPI DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
+                          LPRECT32 rect, UINT32 flags )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     INT32 ret = DrawText32A( hdc, p, count, rect, flags );
@@ -316,9 +316,9 @@ INT32 DrawText32W( HDC32 hdc, LPCWSTR str, INT32 count,
 /***********************************************************************
  *           ExtTextOut16    (GDI.351)
  */
-BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
-                     const RECT16 *lprect, LPCSTR str, UINT16 count,
-                     const INT16 *lpDx )
+BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
+                            const RECT16 *lprect, LPCSTR str, UINT16 count,
+                            const INT16 *lpDx )
 {
     BOOL32	ret;
     int		i;
@@ -338,9 +338,9 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 /***********************************************************************
  *           ExtTextOut32A    (GDI32.98)
  */
-BOOL32 ExtTextOut32A( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
-                      const RECT32 *lprect, LPCSTR str, UINT32 count,
-                      const INT32 *lpDx )
+BOOL32 WINAPI ExtTextOut32A( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
+                             const RECT32 *lprect, LPCSTR str, UINT32 count,
+                             const INT32 *lpDx )
 {
     DC * dc = DC_GetDCPtr( hdc );
     return dc && dc->funcs->pExtTextOut && 
@@ -351,9 +351,9 @@ BOOL32 ExtTextOut32A( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
 /***********************************************************************
  *           ExtTextOut32W    (GDI32.99)
  */
-BOOL32 ExtTextOut32W( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
-                      const RECT32 *lprect, LPCWSTR str, UINT32 count,
-                      const INT32 *lpDx )
+BOOL32 WINAPI ExtTextOut32W( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
+                             const RECT32 *lprect, LPCWSTR str, UINT32 count,
+                             const INT32 *lpDx )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, str );
     INT32 ret = ExtTextOut32A( hdc, x, y, flags, lprect, p, count, lpDx );
@@ -365,7 +365,7 @@ BOOL32 ExtTextOut32W( HDC32 hdc, INT32 x, INT32 y, UINT32 flags,
 /***********************************************************************
  *           TextOut16    (GDI.33)
  */
-BOOL16 TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
+BOOL16 WINAPI TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
 {
     return ExtTextOut16( hdc, x, y, 0, NULL, str, count, NULL );
 }
@@ -374,7 +374,7 @@ BOOL16 TextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR str, INT16 count )
 /***********************************************************************
  *           TextOut32A    (GDI32.355)
  */
-BOOL32 TextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR str, INT32 count )
+BOOL32 WINAPI TextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR str, INT32 count )
 {
     return ExtTextOut32A( hdc, x, y, 0, NULL, str, count, NULL );
 }
@@ -383,7 +383,7 @@ BOOL32 TextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR str, INT32 count )
 /***********************************************************************
  *           TextOut32W    (GDI32.356)
  */
-BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
+BOOL32 WINAPI TextOut32W(HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count)
 {
     return ExtTextOut32W( hdc, x, y, 0, NULL, str, count, NULL );
 }
@@ -392,9 +392,9 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 /***********************************************************************
  *           GrayString16   (USER.185)
  */
-BOOL16 GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
-                     LPARAM lParam, INT16 cch, INT16 x, INT16 y,
-                     INT16 cx, INT16 cy )
+BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
+                            LPARAM lParam, INT16 cch, INT16 x, INT16 y,
+                            INT16 cx, INT16 cy )
 {
     BOOL16 ret;
     COLORREF current_color;
@@ -411,9 +411,9 @@ BOOL16 GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
 /***********************************************************************
  *           GrayString32A   (USER32.314)
  */
-BOOL32 GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
-                      LPARAM lParam, INT32 cch, INT32 x, INT32 y,
-                      INT32 cx, INT32 cy )
+BOOL32 WINAPI GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
+                             LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                             INT32 cx, INT32 cy )
 {
     BOOL32 ret;
     COLORREF current_color;
@@ -430,9 +430,9 @@ BOOL32 GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
 /***********************************************************************
  *           GrayString32W   (USER32.315)
  */
-BOOL32 GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
-                      LPARAM lParam, INT32 cch, INT32 x, INT32 y,
-                      INT32 cx, INT32 cy )
+BOOL32 WINAPI GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
+                             LPARAM lParam, INT32 cch, INT32 x, INT32 y,
+                             INT32 cx, INT32 cy )
 {
     BOOL32 ret;
     COLORREF current_color;
@@ -523,8 +523,9 @@ LONG TEXT_TabbedTextOut( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
 /***********************************************************************
  *           TabbedTextOut16    (USER.196)
  */
-LONG TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr, INT16 count, 
-                      INT16 cTabStops, const INT16 *lpTabPos, INT16 nTabOrg )
+LONG WINAPI TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr,
+                             INT16 count, INT16 cTabStops,
+                             const INT16 *lpTabPos, INT16 nTabOrg )
 {
     dprintf_text( stddeb, "TabbedTextOut16: %04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
@@ -536,8 +537,9 @@ LONG TabbedTextOut16( HDC16 hdc, INT16 x, INT16 y, LPCSTR lpstr, INT16 count,
 /***********************************************************************
  *           TabbedTextOut32A    (USER32.541)
  */
-LONG TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr, INT32 count, 
-                       INT32 cTabStops, const INT32 *lpTabPos, INT32 nTabOrg )
+LONG WINAPI TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr,
+                              INT32 count, INT32 cTabStops,
+                              const INT32 *lpTabPos, INT32 nTabOrg )
 {
     dprintf_text( stddeb, "TabbedTextOut32A: %04x %d,%d '%.*s' %d\n",
                   hdc, x, y, count, lpstr, count );
@@ -549,8 +551,9 @@ LONG TabbedTextOut32A( HDC32 hdc, INT32 x, INT32 y, LPCSTR lpstr, INT32 count,
 /***********************************************************************
  *           TabbedTextOut32W    (USER32.542)
  */
-LONG TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count, 
-                       INT32 cTabStops, const INT32 *lpTabPos, INT32 nTabOrg )
+LONG WINAPI TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str,
+                              INT32 count, INT32 cTabStops,
+                              const INT32 *lpTabPos, INT32 nTabOrg )
 {
     LONG ret;
     LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
@@ -565,8 +568,8 @@ LONG TabbedTextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count,
 /***********************************************************************
  *           GetTabbedTextExtent16    (USER.197)
  */
-DWORD GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count, 
-                             INT16 cTabStops, const INT16 *lpTabPos )
+DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count, 
+                                    INT16 cTabStops, const INT16 *lpTabPos )
 {
     dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
@@ -578,8 +581,8 @@ DWORD GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 /***********************************************************************
  *           GetTabbedTextExtent32A    (USER32.292)
  */
-DWORD GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count, 
-                              INT32 cTabStops, const INT32 *lpTabPos )
+DWORD WINAPI GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count, 
+                                     INT32 cTabStops, const INT32 *lpTabPos )
 {
     dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%.*s' %d\n",
                   hdc, count, lpstr, count );
@@ -591,8 +594,8 @@ DWORD GetTabbedTextExtent32A( HDC32 hdc, LPCSTR lpstr, INT32 count,
 /***********************************************************************
  *           GetTabbedTextExtent32W    (USER32.293)
  */
-DWORD GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count, 
-                              INT32 cTabStops, const INT32 *lpTabPos )
+DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count, 
+                                     INT32 cTabStops, const INT32 *lpTabPos )
 {
     LONG ret;
     LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
@@ -605,11 +608,13 @@ DWORD GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
 /***********************************************************************
  *           GetTextCharset    (USER32.226) (USER.612)
  */
-INT32 GetTextCharset32(HDC32 hdc) {
+INT32 WINAPI GetTextCharset32(HDC32 hdc)
+{
     fprintf(stdnimp,"GetTextCharset(0x%x)\n",hdc);
     return DEFAULT_CHARSET; /* FIXME */
 }
 
-INT16 GetTextCharset16(HDC16 hdc) {
+INT16 WINAPI GetTextCharset16(HDC16 hdc)
+{
     return GetTextCharset32(hdc);
 }

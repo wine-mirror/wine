@@ -284,6 +284,7 @@ float CRTDLL_atof(LPCSTR x)
  */
 INT32 CRTDLL_atoi(LPCSTR x)
 {
+    if (!x) return 0;
     return atoi(x);
 }
 
@@ -293,6 +294,7 @@ INT32 CRTDLL_atoi(LPCSTR x)
  */
 LONG CRTDLL_atol(LPCSTR x)
 {
+    if (!x) return 0;
     return atol(x);
 }
 
@@ -498,7 +500,7 @@ float CRTDLL_sinh(float x)
 /*********************************************************************
  *                  sqrt          (CRTDLL.459)
  */
-float CRTDLL_sqrt(float x)
+double CRTDLL_sqrt(double x)
 {
     return sqrt(x);
 }

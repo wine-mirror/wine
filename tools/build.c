@@ -1327,13 +1327,11 @@ static int BuildSpecFile( FILE *outfile, char *specname )
  * functions that need a large stack, like X bitmaps functions.
  *
  * The generated function has the following prototype:
- *   int CallTo32_LargeStack( int (*func)(), int nbargs, ... )
+ *   int CALLTO32_LargeStack( int (*func)(), void *arg );
  *
  * Stack layout:
  *   ...     ...
- * (ebp+20)  arg2
- * (ebp+16)  arg1
- * (ebp+12)  nbargs
+ * (ebp+12)  arg
  * (ebp+8)   func
  * (ebp+4)   ret addr
  * (ebp)     ebp
@@ -1344,21 +1342,15 @@ static void BuildCall32LargeStack( FILE *outfile )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CallTo32_LargeStack:F1\",36,0,0," PREFIX "CallTo32_LargeStack\n");
+    fprintf( outfile, ".stabs \"CALLTO32_LargeStack:F1\",36,0,0," PREFIX "CALLTO32_LargeStack\n");
 #endif
-    fprintf( outfile, "\t.globl " PREFIX "CallTo32_LargeStack\n" );
-    fprintf( outfile, PREFIX "CallTo32_LargeStack:\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO32_LargeStack\n" );
+    fprintf( outfile, PREFIX "CALLTO32_LargeStack:\n" );
     
     /* Entry code */
 
     fprintf( outfile, "\tpushl %%ebp\n" );
     fprintf( outfile, "\tmovl %%esp,%%ebp\n" );
-
-    /* Save registers */
-
-    fprintf( outfile, "\tpushl %%ecx\n" );
-    fprintf( outfile, "\tpushl %%esi\n" );
-    fprintf( outfile, "\tpushl %%edi\n" );
 
     /* Retrieve the original 32-bit stack pointer and switch to it if any */
 
@@ -1368,33 +1360,14 @@ static void BuildCall32LargeStack( FILE *outfile )
     fprintf( outfile, "\tmovl %%eax,%%esp\n" );
     fprintf( outfile, "no_orig_esp:\n" );
 
-    /* Transfer the arguments */
+    /* Transfer the argument and call the function */
 
-    fprintf( outfile, "\tmovl 12(%%ebp),%%ecx\n" );
-    fprintf( outfile, "\torl %%ecx,%%ecx\n" );
-    fprintf( outfile, "\tje no_args\n" );
-    fprintf( outfile, "\tleal 16(%%ebp),%%esi\n" );
-    fprintf( outfile, "\tshll $2,%%ecx\n" );
-    fprintf( outfile, "\tsubl %%ecx,%%esp\n" );
-    fprintf( outfile, "\tmovl %%esp,%%edi\n" );
-    fprintf( outfile, "\tshrl $2,%%ecx\n" );
-    fprintf( outfile, "\tcld\n" );
-    fprintf( outfile, "\trep; movsl\n" );
-    fprintf( outfile, "no_args:\n" );
-
-    /* Call the function */
-
+    fprintf( outfile, "\tpushl 12(%%ebp)\n" );
     fprintf( outfile, "\tcall 8(%%ebp)\n" );
-
-    /* Switch back to the normal stack */
-
-    fprintf( outfile, "\tleal -12(%%ebp),%%esp\n" );
 
     /* Restore registers and return */
 
-    fprintf( outfile, "\tpopl %%edi\n" );
-    fprintf( outfile, "\tpopl %%esi\n" );
-    fprintf( outfile, "\tpopl %%ecx\n" );
+    fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
     fprintf( outfile, "\tret\n" );
 }
@@ -2197,6 +2170,19 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
     fprintf( outfile, "\t.globl " PREFIX "CallFrom32_%s\n", profile );
     fprintf( outfile, PREFIX "CallFrom32_%s:\n", profile );
 
+#if 0
+    fprintf( outfile, "\tleal 8(%%esp),%%ebp\n" );
+    fprintf( outfile, "\tpushl $%d\n",  /* Nb args */
+             reg_func ? args | 0x80000000 : args);
+    fprintf( outfile, "\tpushl %%ebp\n" );
+    fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom32\n" );
+    fprintf( outfile, "\tadd $8, %%esp\n" );
+    fprintf( outfile, "\tpopl  %%eax\n" );
+    fprintf( outfile, "\tpopl  %%eax\n" );
+    fprintf( outfile, "\tpopl  %%ebp\n" );
+    fprintf( outfile, "\tjmp %%eax\n" );
+#endif
+
     /* Entry code */
 
     fprintf( outfile, "\tleal 8(%%esp),%%ebp\n" );
@@ -2373,10 +2359,6 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
     fprintf( outfile, "Code_Start:\n\n" );
 #endif
 
-    /* Build the 32-bit large stack callback */
-
-    BuildCall32LargeStack( outfile );
-
     /* Build the callback functions */
 
     for (i = 2; i < argc; i++) BuildCallFrom16Func( outfile, argv[i] );
@@ -2537,6 +2519,10 @@ static int BuildCallTo32( FILE *outfile, char * outname,
     fprintf( outfile, "\t.align 4\n" );
     fprintf( outfile, "Code_Start:\n\n" );
 #endif
+
+    /* Build the 32-bit large stack callback */
+
+    BuildCall32LargeStack( outfile );
 
     /* Build the callback functions */
 

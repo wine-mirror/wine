@@ -11,7 +11,6 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
-#include "options.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
@@ -27,7 +26,7 @@ void do_mscdex( CONTEXT *context );
  *
  * Handler for int 2fh (multiplex).
  */
-void INT_Int2fHandler( CONTEXT *context )
+void WINAPI INT_Int2fHandler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {
@@ -76,13 +75,15 @@ static void do_int2f_16( CONTEXT *context )
     switch(AL_reg(context))
     {
     case 0x00:  /* Windows enhanced mode installation check */
-        AX_reg(context) = (Options.mode == MODE_ENHANCED) ? WINVERSION : 0;
+        AX_reg(context) = (GetWinFlags() & WF_ENHANCED) ?
+                                                  LOWORD(GetVersion16()) : 0;
         break;
 	
     case 0x0a:  /* Get Windows version and type */
         AX_reg(context) = 0;
-        BX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
-        CX_reg(context) = (Options.mode == MODE_ENHANCED) ? 3 : 2;
+        BX_reg(context) = (LOWORD(GetVersion16()) << 8) |
+                          (LOWORD(GetVersion16()) >> 8);
+        CX_reg(context) = (GetWinFlags() & WF_ENHANCED) ? 3 : 2;
         break;
 
     case 0x80:  /* Release time-slice */

@@ -21,7 +21,7 @@
 /***********************************************************************
  *              GetModuleHandle         (KERNEL32.237)
  */
-HMODULE32 WIN32_GetModuleHandleA(char *module)
+HMODULE32 WINAPI WIN32_GetModuleHandleA(char *module)
 {
     HMODULE32 hModule;
 
@@ -37,7 +37,7 @@ all calls to e.g. CreateWindowEx. */
     return hModule;
 }
 
-HMODULE32 WIN32_GetModuleHandleW(LPCWSTR module)
+HMODULE32 WINAPI WIN32_GetModuleHandleW(LPCWSTR module)
 {
     HMODULE32 hModule;
     LPSTR modulea = HEAP_strdupWtoA( GetProcessHeap(), 0, module );
@@ -50,7 +50,7 @@ HMODULE32 WIN32_GetModuleHandleW(LPCWSTR module)
 /***********************************************************************
  *              GetStartupInfoA         (KERNEL32.273)
  */
-VOID GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
+VOID WINAPI GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
 {
     lpStartupInfo->cb = sizeof(STARTUPINFO32A);
     lpStartupInfo->lpReserved = "<Reserved>";
@@ -67,7 +67,7 @@ VOID GetStartupInfo32A(LPSTARTUPINFO32A lpStartupInfo)
 /***********************************************************************
  *              GetStartupInfoW         (KERNEL32.274)
  */
-VOID GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
+VOID WINAPI GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
 {
     lpStartupInfo->cb = sizeof(STARTUPINFO32W);
     lpStartupInfo->lpReserved = HEAP_strdupAtoW(GetProcessHeap(),0,"<Reserved>");
@@ -84,8 +84,8 @@ VOID GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
 /***********************************************************************
  *              GetComputerNameA         (KERNEL32.165)
  */
-BOOL32
-GetComputerName32A(LPSTR name,LPDWORD size) {
+BOOL32 WINAPI GetComputerName32A(LPSTR name,LPDWORD size)
+{
 	if (-1==gethostname(name,*size))
 		return FALSE;
 	*size = lstrlen32A(name);
@@ -95,8 +95,8 @@ GetComputerName32A(LPSTR name,LPDWORD size) {
 /***********************************************************************
  *              GetComputerNameW         (KERNEL32.166)
  */
-BOOL32
-GetComputerName32W(LPWSTR name,LPDWORD size) {
+BOOL32 WINAPI GetComputerName32W(LPWSTR name,LPDWORD size)
+{
 	LPSTR	nameA = (LPSTR)xmalloc(*size);
 
 	if (!GetComputerName32A(nameA,size)) {
@@ -112,7 +112,7 @@ GetComputerName32W(LPWSTR name,LPDWORD size) {
 /***********************************************************************
  *           GetUserNameA   [ADVAPI32.67]
  */
-BOOL32 GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
+BOOL32 WINAPI GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
 {
   size_t len;
   char *name;
@@ -131,7 +131,7 @@ BOOL32 GetUserName32A(LPSTR lpszName, LPDWORD lpSize)
 /***********************************************************************
  *           GetUserNameW   [ADVAPI32.68]
  */
-BOOL32 GetUserName32W(LPWSTR lpszName, LPDWORD lpSize)
+BOOL32 WINAPI GetUserName32W(LPWSTR lpszName, LPDWORD lpSize)
 {
 	LPSTR name = (LPSTR)xmalloc(*lpSize);
 	DWORD	size = *lpSize;

@@ -391,7 +391,7 @@ base	1
 0379 stub GdiWinWatchOpen
 0380 stub GetGlyphOutlineWow
 0381 stub GetTextCharsetInfo
-0382 stub TranslateCharsetInfo
+0382 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharSetInfo
 0383 stub UpdateICMRegKeyA
 0384 stub UpdateICMRegKeyW
 0385 stub gdiPlaySpoolStream

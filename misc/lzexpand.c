@@ -118,7 +118,7 @@ static INT32 read_header(HFILE32 fd,struct lzfileheader *head)
 /***********************************************************************
  *           LZStart16   (LZEXPAND.7)
  */
-INT16 LZStart16(void)
+INT16 WINAPI LZStart16(void)
 {
     dprintf_file(stddeb,"LZStart16(void)\n");
     return 1;
@@ -128,7 +128,7 @@ INT16 LZStart16(void)
 /***********************************************************************
  *           LZStart32   (LZ32.6)
  */
-INT32 LZStart32(void)
+INT32 WINAPI LZStart32(void)
 {
     dprintf_file(stddeb,"LZStart32(void)\n");
     return 1;
@@ -138,7 +138,7 @@ INT32 LZStart32(void)
 /***********************************************************************
  *           LZInit16   (LZEXPAND.3)
  */
-HFILE16 LZInit16( HFILE16 hfSrc )
+HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
     return LZInit32( hfSrc );
 }
@@ -156,7 +156,7 @@ HFILE16 LZInit16( HFILE16 hfSrc )
  * since _llseek uses the same types as libc.lseek, we just use the macros of 
  *  libc
  */
-HFILE32 LZInit32( HFILE32 hfSrc )
+HFILE32 WINAPI LZInit32( HFILE32 hfSrc )
 {
 
 	struct	lzfileheader	head;
@@ -193,7 +193,7 @@ HFILE32 LZInit32( HFILE32 hfSrc )
 /***********************************************************************
  *           LZDone   (LZEXPAND.9) (LZ32.8)
  */
-void LZDone(void)
+void WINAPI LZDone(void)
 {
     dprintf_file(stddeb,"LZDone()\n");
 }
@@ -202,7 +202,7 @@ void LZDone(void)
 /***********************************************************************
  *           GetExpandedName16   (LZEXPAND.10)
  */
-INT16 GetExpandedName16( LPCSTR in, LPSTR out )
+INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
 {
     return (INT16)GetExpandedName32A( in, out );
 }
@@ -219,7 +219,7 @@ INT16 GetExpandedName16( LPCSTR in, LPSTR out )
  * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
  */
 
-INT32 GetExpandedName32A( LPCSTR in, LPSTR out )
+INT32 WINAPI GetExpandedName32A( LPCSTR in, LPSTR out )
 {
 	struct lzfileheader	head;
 	HFILE32		fd;
@@ -289,7 +289,7 @@ INT32 GetExpandedName32A( LPCSTR in, LPSTR out )
 /***********************************************************************
  *           GetExpandedName32W   (LZ32.11)
  */
-INT32 GetExpandedName32W( LPCWSTR in, LPWSTR out )
+INT32 WINAPI GetExpandedName32W( LPCWSTR in, LPWSTR out )
 {
 	char	*xin,*xout;
 	INT32	ret;
@@ -307,7 +307,7 @@ INT32 GetExpandedName32W( LPCWSTR in, LPWSTR out )
 /***********************************************************************
  *           LZRead16   (LZEXPAND.5)
  */
-INT16 LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
+INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
     return LZRead32(fd,buf,toread);
 }
@@ -316,7 +316,7 @@ INT16 LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 /***********************************************************************
  *           LZRead32   (LZ32.4)
  */
-INT32 LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
+INT32 WINAPI LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 {
 	int	i,howmuch;
 	BYTE	b,*buf;
@@ -412,7 +412,7 @@ INT32 LZRead32( HFILE32 fd, LPVOID vbuf, UINT32 toread )
 /***********************************************************************
  *           LZSeek16   (LZEXPAND.4)
  */
-LONG LZSeek16( HFILE16 fd, LONG off, INT16 type )
+LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
     return LZSeek32( fd, off, type );
 }
@@ -421,7 +421,7 @@ LONG LZSeek16( HFILE16 fd, LONG off, INT16 type )
 /***********************************************************************
  *           LZSeek32   (LZ32.3)
  */
-LONG LZSeek32( HFILE32 fd, LONG off, INT32 type )
+LONG WINAPI LZSeek32( HFILE32 fd, LONG off, INT32 type )
 {
 	int	i;
 	struct	lzstate	*lzs;
@@ -459,7 +459,7 @@ LONG LZSeek32( HFILE32 fd, LONG off, INT32 type )
 /***********************************************************************
  *           LZCopy16   (LZEXPAND.1)
  */
-LONG LZCopy16( HFILE16 src, HFILE16 dest )
+LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
     return LZCopy32( src, dest );
 }
@@ -472,7 +472,7 @@ LONG LZCopy16( HFILE16 src, HFILE16 dest )
  * if src is a LZ compressed file, it will be uncompressed.
  * will return the number of bytes written to dest or errors.
  */
-LONG LZCopy32( HFILE32 src, HFILE32 dest )
+LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 {
 	int	i,ret,wret;
 	LONG	len;
@@ -530,7 +530,7 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 /***********************************************************************
  *           LZOpenFile16   (LZEXPAND.2)
  */
-HFILE16 LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
+HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
     return LZOpenFile32A( fn, ofs, mode );
 }
@@ -541,7 +541,7 @@ HFILE16 LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
  *
  * Opens a file. If not compressed, open it as a normal file.
  */
-HFILE32 LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+HFILE32 WINAPI LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 {
 	HFILE32	fd,cfd;
 
@@ -568,7 +568,7 @@ HFILE32 LZOpenFile32A( LPCSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 /***********************************************************************
  *           LZOpenFile32W   (LZ32.10)
  */
-HFILE32 LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
+HFILE32 WINAPI LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 {
 	LPSTR	xfn;
 	LPWSTR	yfn;
@@ -590,7 +590,7 @@ HFILE32 LZOpenFile32W( LPCWSTR fn, LPOFSTRUCT ofs, UINT32 mode )
 /***********************************************************************
  *           LZClose16   (LZEXPAND.6)
  */
-void LZClose16( HFILE16 fd )
+void WINAPI LZClose16( HFILE16 fd )
 {
     return LZClose32( fd );
 }
@@ -599,7 +599,7 @@ void LZClose16( HFILE16 fd )
 /***********************************************************************
  *           LZClose32   (LZ32.5)
  */
-void LZClose32( HFILE32 fd )
+void WINAPI LZClose32( HFILE32 fd )
 {
 	int	i;
 
@@ -622,7 +622,7 @@ void LZClose32( HFILE32 fd )
 /***********************************************************************
  *           CopyLZFile16   (LZEXPAND.8)
  */
-LONG CopyLZFile16( HFILE16 src, HFILE16 dest )
+LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
 {
     dprintf_file(stddeb,"CopyLZFile16(%d,%d)\n",src,dest);
     return LZCopy32(src,dest);
@@ -635,7 +635,7 @@ LONG CopyLZFile16( HFILE16 src, HFILE16 dest )
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.
  */
-LONG CopyLZFile32( HFILE32 src, HFILE32 dest )
+LONG WINAPI CopyLZFile32( HFILE32 src, HFILE32 dest )
 {
     dprintf_file(stddeb,"CopyLZFile32(%d,%d)\n",src,dest);
     return LZCopy32(src,dest);

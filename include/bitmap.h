@@ -53,6 +53,7 @@ extern BOOL32 BITMAP_Init(void);
 extern INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
 extern INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
+extern XImage *BITMAP_GetXImage( const BITMAPOBJ *bmp );
 
   /* objects/dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth );

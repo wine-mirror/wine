@@ -17,7 +17,7 @@
 extern void	  COLOR_Cleanup(void);
 extern COLORREF	  COLOR_ToLogical(int pixel);
 extern int 	  COLOR_ToPhysical( DC *dc, COLORREF color );
-extern int 	  COLOR_SetMapping( PALETTEOBJ* pal, BOOL32 mapOnly );
+extern int 	  COLOR_SetMapping( PALETTEOBJ* pal, UINT32 uStart, UINT32 uNum, BOOL32 mapOnly );
 extern BOOL32 	  COLOR_IsSolid( COLORREF color );
 extern Colormap	  COLOR_GetColormap();
 extern UINT16	  COLOR_GetSystemPaletteSize();

@@ -42,8 +42,8 @@ extern UINT16 MMSYSTEM_FirstDevID(void);
 extern UINT16 MMSYSTEM_NextDevID(UINT16 wDevID);
 extern BOOL32 MMSYSTEM_DevIDValid(UINT16 wDevID);
 
-LONG DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-		      DWORD dwParam1, DWORD dwParam2);
+LONG WINAPI DrvDefDriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
+                             DWORD dwParam1, DWORD dwParam2);
 
 LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 		     DWORD dwParam1, DWORD dwParam2);
@@ -2107,8 +2107,8 @@ struct	_MCISTR_cmdtable {
 /* FIXME: "all" is a valid devicetype and we should access all devices if
  * it is used. (imagine "close all"). Not implemented yet.
  */
-DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
-	UINT16 uReturnLength, HWND16 hwndCallback)
+DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
+                            UINT16 uReturnLength, HWND16 hwndCallback)
 {
 	char	*cmd,*dev,*args,**keywords,*filename;
 	WORD	uDevTyp=0,wDevID=0;

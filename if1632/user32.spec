@@ -165,7 +165,7 @@ base	1
 0158 stdcall DrawIcon(long long long long) DrawIcon32
 0159 stub DrawIconEx
 0160 stdcall DrawMenuBar(long) DrawMenuBar32
-0161 stub DrawStateA
+0161 stdcall DrawStateA(long long ptr long long long long long long long) DrawState32A
 0162 stub DrawStateW
 0163 stdcall DrawTextA(long ptr long ptr long) DrawText32A
 0164 stub DrawTextExA
@@ -253,7 +253,7 @@ base	1
 0246 stdcall GetKeyNameTextA(long ptr long) GetKeyNameText32A
 0247 stdcall GetKeyNameTextW(long ptr long) GetKeyNameText32W
 0248 stdcall GetKeyState(long) GetKeyState32
-0249 stub GetKeyboardLayout
+0249 stdcall GetKeyboardLayout(long) GetKeyboardLayout
 0250 stub GetKeyboardLayoutList
 0251 stub GetKeyboardLayoutNameA
 0252 stub GetKeyboardLayoutNameW
@@ -326,8 +326,8 @@ base	1
 0319 stdcall InSendMessage() InSendMessage32
 0320 stdcall InflateRect(ptr long long) InflateRect32
 0321 stdcall InsertMenuA(long long long long ptr) InsertMenu32A
-0322 stub InsertMenuItemA
-0323 stub InsertMenuItemW
+0322 stdcall InsertMenuItemA(long long long ptr) InsertMenuItem32A
+0323 stdcall InsertMenuItemW(long long long ptr) InsertMenuItem32W
 0324 stdcall InsertMenuW(long long long long ptr) InsertMenu32W
 0325 stub InternalGetWindowText
 0326 stdcall IntersectRect(ptr ptr ptr) IntersectRect32
@@ -492,10 +492,10 @@ base	1
 0485 stub SetLogonNotifyWindow
 0486 stdcall SetMenu(long long) SetMenu32
 0487 stub SetMenuContextHelpId
-0488 stub SetMenuDefaultItem
+0488 stdcall SetMenuDefaultItem(long long long) SetMenuDefaultItem32
 0489 stdcall SetMenuItemBitmaps(long long long long long) SetMenuItemBitmaps32
-0490 stub SetMenuItemInfoA
-0491 stub SetMenuItemInfoW
+0490 stdcall SetMenuItemInfoA(long long long ptr) SetMenuItemInfo32A
+0491 stdcall SetMenuItemInfoW(long long long ptr) SetMenuItemInfo32W
 0492 stub SetMessageExtraInfo
 0493 stdcall SetMessageQueue(long) SetMessageQueue32
 0494 stdcall SetParent(long long) SetParent32

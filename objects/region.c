@@ -27,7 +27,7 @@ BOOL32 REGION_DeleteObject( HRGN32 hrgn, RGNOBJ * obj )
 /***********************************************************************
  *           OffsetRgn16    (GDI.101)
  */
-INT16 OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
+INT16 WINAPI OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
 {
     return OffsetRgn32( hrgn, x, y );
 }
@@ -36,13 +36,18 @@ INT16 OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
 /***********************************************************************
  *           OffsetRgn32   (GDI32.256)
  */
-INT32 OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
+INT32 WINAPI OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (!obj) return ERROR;
     dprintf_region(stddeb, "OffsetRgn: %04x %d,%d\n", hrgn, x, y );
-    if (!obj->xrgn) return NULLREGION;
+    if (!obj->xrgn) 
+    {
+      GDI_HEAP_UNLOCK( hrgn );
+      return NULLREGION;
+    }
     XOffsetRegion( obj->xrgn, x, y );
+    GDI_HEAP_UNLOCK( hrgn );
     return COMPLEXREGION;
 }
 
@@ -50,7 +55,7 @@ INT32 OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 /***********************************************************************
  *           GetRgnBox16    (GDI.134)
  */
-INT16 GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
+INT16 WINAPI GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
     if (!obj) return ERROR;
@@ -58,12 +63,14 @@ INT16 GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
     if (!obj->xrgn)
     {
         SetRectEmpty16( rect );
+	GDI_HEAP_UNLOCK( hrgn );
         return NULLREGION;
     }
     else
     {
         XRectangle xrect;
         XClipBox( obj->xrgn, &xrect );
+	GDI_HEAP_UNLOCK(hrgn);
         SetRect16( rect, xrect.x, xrect.y,
                    xrect.x + xrect.width, xrect.y + xrect.height);
         return COMPLEXREGION;
@@ -74,7 +81,7 @@ INT16 GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
 /***********************************************************************
  *           GetRgnBox32    (GDI32.219)
  */
-INT32 GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
+INT32 WINAPI GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
 {
     RECT16 r;
     INT16 ret = GetRgnBox16( hrgn, &r );
@@ -86,7 +93,7 @@ INT32 GetRgnBox32( HRGN32 hrgn, LPRECT32 rect )
 /***********************************************************************
  *           CreateRectRgn16    (GDI.64)
  */
-HRGN16 CreateRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
+HRGN16 WINAPI CreateRectRgn16(INT16 left, INT16 top, INT16 right, INT16 bottom)
 {
     return (HRGN16)CreateRectRgn32( left, top, right, bottom );
 }
@@ -95,13 +102,13 @@ HRGN16 CreateRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
 /***********************************************************************
  *           CreateRectRgn32   (GDI32.59)
  */
-HRGN32 CreateRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
+HRGN32 WINAPI CreateRectRgn32(INT32 left, INT32 top, INT32 right, INT32 bottom)
 {
     HRGN32 hrgn;
     RGNOBJ *obj;
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
     if ((right > left) && (bottom > top))
     {
 	XRectangle rect = { left, top, right - left, bottom - top };
@@ -115,6 +122,7 @@ HRGN32 CreateRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
     else obj->xrgn = 0;
     dprintf_region( stddeb, "CreateRectRgn(%d,%d-%d,%d): returning %04x\n",
                     left, top, right, bottom, hrgn );
+    GDI_HEAP_UNLOCK( hrgn );
     return hrgn;
 }
 
@@ -122,7 +130,7 @@ HRGN32 CreateRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
 /***********************************************************************
  *           CreateRectRgnIndirect16    (GDI.65)
  */
-HRGN16 CreateRectRgnIndirect16( const RECT16* rect )
+HRGN16 WINAPI CreateRectRgnIndirect16( const RECT16* rect )
 {
     return CreateRectRgn32( rect->left, rect->top, rect->right, rect->bottom );
 }
@@ -131,7 +139,7 @@ HRGN16 CreateRectRgnIndirect16( const RECT16* rect )
 /***********************************************************************
  *           CreateRectRgnIndirect32    (GDI32.60)
  */
-HRGN32 CreateRectRgnIndirect32( const RECT32* rect )
+HRGN32 WINAPI CreateRectRgnIndirect32( const RECT32* rect )
 {
     return CreateRectRgn32( rect->left, rect->top, rect->right, rect->bottom );
 }
@@ -140,8 +148,8 @@ HRGN32 CreateRectRgnIndirect32( const RECT32* rect )
 /***********************************************************************
  *           SetRectRgn16    (GDI.172)
  */
-VOID SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
-                   INT16 right, INT16 bottom )
+VOID WINAPI SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
+                          INT16 right, INT16 bottom )
 {
     SetRectRgn32( hrgn, left, top, right, bottom );
 }
@@ -150,8 +158,8 @@ VOID SetRectRgn16( HRGN16 hrgn, INT16 left, INT16 top,
 /***********************************************************************
  *           SetRectRgn32    (GDI32.332)
  */
-VOID SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
-                   INT32 right, INT32 bottom )
+VOID WINAPI SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
+                          INT32 right, INT32 bottom )
 {
     RGNOBJ * obj;
 
@@ -167,14 +175,16 @@ VOID SetRectRgn32( HRGN32 hrgn, INT32 left, INT32 top,
             XUnionRectWithRegion( &rect, obj->xrgn, obj->xrgn );
     }
     else obj->xrgn = 0;
+    GDI_HEAP_UNLOCK( hrgn );
 }
 
 
 /***********************************************************************
  *           CreateRoundRectRgn16    (GDI.444)
  */
-HRGN16 CreateRoundRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom,
-                             INT16 ellipse_width, INT16 ellipse_height )
+HRGN16 WINAPI CreateRoundRectRgn16( INT16 left, INT16 top,
+                                    INT16 right, INT16 bottom,
+                                    INT16 ellipse_width, INT16 ellipse_height )
 {
     return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
                                          ellipse_width, ellipse_height );
@@ -184,8 +194,9 @@ HRGN16 CreateRoundRectRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom,
 /***********************************************************************
  *           CreateRoundRectRgn32    (GDI32.61)
  */
-HRGN32 CreateRoundRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom,
-                             INT32 ellipse_width, INT32 ellipse_height )
+HRGN32 WINAPI CreateRoundRectRgn32( INT32 left, INT32 top,
+                                    INT32 right, INT32 bottom,
+                                    INT32 ellipse_width, INT32 ellipse_height )
 {
     RGNOBJ * obj;
     HRGN32 hrgn;
@@ -201,7 +212,7 @@ HRGN32 CreateRoundRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom,
       /* Create region */
 
     if (!(hrgn = GDI_AllocObject( sizeof(RGNOBJ), REGION_MAGIC ))) return 0;
-    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
     obj->xrgn = XCreateRegion();
     dprintf_region(stddeb,"CreateRoundRectRgn(%d,%d-%d,%d %dx%d): return=%04x\n",
                left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
@@ -273,6 +284,7 @@ HRGN32 CreateRoundRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom,
         rect.height = bottom - top + 1;
         XUnionRectWithRegion( &rect, obj->xrgn, obj->xrgn );
     }
+    GDI_HEAP_UNLOCK( hrgn );
     return hrgn;
 }
 
@@ -280,7 +292,8 @@ HRGN32 CreateRoundRectRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           CreateEllipticRgn16    (GDI.54)
  */
-HRGN16 CreateEllipticRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
+HRGN16 WINAPI CreateEllipticRgn16( INT16 left, INT16 top,
+                                   INT16 right, INT16 bottom )
 {
     return (HRGN16)CreateRoundRectRgn32( left, top, right, bottom,
                                          right-left, bottom-top );
@@ -290,7 +303,8 @@ HRGN16 CreateEllipticRgn16( INT16 left, INT16 top, INT16 right, INT16 bottom )
 /***********************************************************************
  *           CreateEllipticRgn32    (GDI32.39)
  */
-HRGN32 CreateEllipticRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
+HRGN32 WINAPI CreateEllipticRgn32( INT32 left, INT32 top,
+                                   INT32 right, INT32 bottom )
 {
     return CreateRoundRectRgn32( left, top, right, bottom,
                                  right-left, bottom-top );
@@ -300,7 +314,7 @@ HRGN32 CreateEllipticRgn32( INT32 left, INT32 top, INT32 right, INT32 bottom )
 /***********************************************************************
  *           CreateEllipticRgnIndirect16    (GDI.55)
  */
-HRGN16 CreateEllipticRgnIndirect16( const RECT16 *rect )
+HRGN16 WINAPI CreateEllipticRgnIndirect16( const RECT16 *rect )
 {
     return CreateRoundRectRgn32( rect->left, rect->top, rect->right,
                                  rect->bottom, rect->right - rect->left,
@@ -311,7 +325,7 @@ HRGN16 CreateEllipticRgnIndirect16( const RECT16 *rect )
 /***********************************************************************
  *           CreateEllipticRgnIndirect32    (GDI32.40)
  */
-HRGN32 CreateEllipticRgnIndirect32( const RECT32 *rect )
+HRGN32 WINAPI CreateEllipticRgnIndirect32( const RECT32 *rect )
 {
     return CreateRoundRectRgn32( rect->left, rect->top, rect->right,
                                  rect->bottom, rect->right - rect->left,
@@ -322,7 +336,8 @@ HRGN32 CreateEllipticRgnIndirect32( const RECT32 *rect )
 /***********************************************************************
  *           CreatePolygonRgn16    (GDI.63)
  */
-HRGN16 CreatePolygonRgn16( const POINT16 * points, INT16 count, INT16 mode )
+HRGN16 WINAPI CreatePolygonRgn16( const POINT16 * points, INT16 count,
+                                  INT16 mode )
 {
     return CreatePolyPolygonRgn16( points, &count, 1, mode );
 }
@@ -331,8 +346,9 @@ HRGN16 CreatePolygonRgn16( const POINT16 * points, INT16 count, INT16 mode )
 /***********************************************************************
  *           CreatePolyPolygonRgn16    (GDI.451)
  */
-HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
-                               INT16 nbpolygons, INT16 mode )
+HRGN16 WINAPI CreatePolyPolygonRgn16( const POINT16 * points,
+                                      const INT16 * count,
+                                      INT16 nbpolygons, INT16 mode )
 {
     int		i,nrofpts;
     LPINT32	count32;
@@ -360,7 +376,8 @@ HRGN16 CreatePolyPolygonRgn16( const POINT16 * points, const INT16 * count,
 /***********************************************************************
  *           CreatePolygonRgn32    (GDI32.58)
  */
-HRGN32 CreatePolygonRgn32( const POINT32 *points, INT32 count, INT32 mode )
+HRGN32 WINAPI CreatePolygonRgn32( const POINT32 *points, INT32 count,
+                                  INT32 mode )
 {
     return CreatePolyPolygonRgn32( points, &count, 1, mode );
 }
@@ -369,8 +386,9 @@ HRGN32 CreatePolygonRgn32( const POINT32 *points, INT32 count, INT32 mode )
 /***********************************************************************
  *           CreatePolyPolygonRgn32    (GDI32.57)
  */
-HRGN32 CreatePolyPolygonRgn32( const POINT32 * points, const INT32 * count,
-                               INT32 nbpolygons, INT32 mode )
+HRGN32 WINAPI CreatePolyPolygonRgn32( const POINT32 * points,
+                                      const INT32 * count,
+                                      INT32 nbpolygons, INT32 mode )
 {
     RGNOBJ * obj;
     HRGN32 hrgn;
@@ -395,7 +413,7 @@ HRGN32 CreatePolyPolygonRgn32( const POINT32 * points, const INT32 * count,
 	HeapFree( GetProcessHeap(), 0, xpoints );
 	return 0;
     }
-    obj = (RGNOBJ *) GDI_HEAP_LIN_ADDR( hrgn );
+    obj = (RGNOBJ *) GDI_HEAP_LOCK( hrgn );
     obj->xrgn = 0;
     dprintf_region(stddeb, "CreatePolyPolygonRgn: %d polygons, returning %04x\n",
                    nbpolygons, hrgn );
@@ -430,6 +448,7 @@ HRGN32 CreatePolyPolygonRgn32( const POINT32 * points, const INT32 * count,
     }
 
     HeapFree( GetProcessHeap(), 0, xpoints );
+    GDI_HEAP_UNLOCK( hrgn );
     return hrgn;
 }
 
@@ -437,7 +456,7 @@ HRGN32 CreatePolyPolygonRgn32( const POINT32 * points, const INT32 * count,
 /***********************************************************************
  *           PtInRegion16    (GDI.161)
  */
-BOOL16 PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
+BOOL16 WINAPI PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
 {
     return PtInRegion32( hrgn, x, y );
 }
@@ -446,50 +465,59 @@ BOOL16 PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
 /***********************************************************************
  *           PtInRegion32    (GDI32.278)
  */
-BOOL32 PtInRegion32( HRGN32 hrgn, INT32 x, INT32 y )
+BOOL32 WINAPI PtInRegion32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj;
+    BOOL32 result;
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) return FALSE;
-    return XPointInRegion( obj->xrgn, x, y );
+    if (!obj->xrgn) result = FALSE;
+    else result = XPointInRegion( obj->xrgn, x, y );
+    GDI_HEAP_UNLOCK( hrgn );
+    return result;
 }
 
 
 /***********************************************************************
  *           RectInRegion16    (GDI.181)
  */
-BOOL16 RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
+BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 {
     RGNOBJ * obj;
-    
+    BOOL16 result;
+
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) return FALSE;
-    return (XRectInRegion( obj->xrgn, rect->left, rect->top,
+    if (!obj->xrgn) result = FALSE;
+    else result = (XRectInRegion( obj->xrgn, rect->left, rect->top,
                            rect->right-rect->left,
                            rect->bottom-rect->top ) != RectangleOut);
+    GDI_HEAP_UNLOCK( hrgn );
+    return result;
 }
 
 
 /***********************************************************************
  *           RectInRegion32    (GDI32.281)
  */
-BOOL32 RectInRegion32( HRGN32 hrgn, const RECT32 *rect )
+BOOL32 WINAPI RectInRegion32( HRGN32 hrgn, const RECT32 *rect )
 {
     RGNOBJ * obj;
+    BOOL32 result;
     
     if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) return FALSE;
-    return (XRectInRegion( obj->xrgn, rect->left, rect->top,
+    if (!obj->xrgn) result = FALSE;
+    else result = (XRectInRegion( obj->xrgn, rect->left, rect->top,
                            rect->right-rect->left,
                            rect->bottom-rect->top ) != RectangleOut);
+    GDI_HEAP_UNLOCK( hrgn );
+    return result;
 }
 
 
 /***********************************************************************
  *           EqualRgn16    (GDI.72)
  */
-BOOL16 EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
+BOOL16 WINAPI EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
 {
     return EqualRgn32( rgn1, rgn2 );
 }
@@ -498,13 +526,22 @@ BOOL16 EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
 /***********************************************************************
  *           EqualRgn32    (GDI32.90)
  */
-BOOL32 EqualRgn32( HRGN32 rgn1, HRGN32 rgn2 )
+BOOL32 WINAPI EqualRgn32( HRGN32 rgn1, HRGN32 rgn2 )
 {
     RGNOBJ *obj1, *obj2;
+    BOOL32 result;
+
     if (!(obj1 = (RGNOBJ *) GDI_GetObjPtr( rgn1, REGION_MAGIC ))) return FALSE;
-    if (!(obj2 = (RGNOBJ *) GDI_GetObjPtr( rgn2, REGION_MAGIC ))) return FALSE;
-    if (!obj1->xrgn || !obj2->xrgn) return (!obj1->xrgn && !obj2->xrgn);
-    return XEqualRegion( obj1->xrgn, obj2->xrgn );
+    if (!(obj2 = (RGNOBJ *) GDI_GetObjPtr( rgn2, REGION_MAGIC ))) 
+    {
+      GDI_HEAP_UNLOCK( rgn1 );
+      return FALSE;
+    }
+    if (!obj1->xrgn || !obj2->xrgn) result = (!obj1->xrgn && !obj2->xrgn);
+    else result = XEqualRegion( obj1->xrgn, obj2->xrgn );
+    GDI_HEAP_UNLOCK( rgn1 );
+    GDI_HEAP_UNLOCK( rgn2 );
+    return result;
 }
 
 
@@ -558,6 +595,7 @@ BOOL32 REGION_UnionRectWithRgn( HRGN32 hRgn, const RECT32 *rc )
     else
       ret = COMPLEXREGION;
     XUnionRectWithRegion( &rect, rgnObj->xrgn, rgnObj->xrgn );
+    GDI_HEAP_UNLOCK( hRgn );
   }
   return ret;
 }
@@ -575,13 +613,20 @@ BOOL32 REGION_FrameRgn( HRGN32 hDest, HRGN32 hSrc, INT32 x, INT32 y )
 
     destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
     srcObj  = (RGNOBJ*) GDI_GetObjPtr( hSrc, REGION_MAGIC );
-    if (!srcObj->xrgn) return FALSE;
+    if (!srcObj->xrgn) 
+    {
+      GDI_HEAP_UNLOCK( hDest );
+      GDI_HEAP_UNLOCK( hSrc );
+      return FALSE;
+    }
     REGION_CopyRegion( srcObj, destObj );
     XShrinkRegion( destObj->xrgn, -x, -y );
     result = XCreateRegion();
     XSubtractRegion( destObj->xrgn, srcObj->xrgn, result );
     XDestroyRegion( destObj->xrgn );
     destObj->xrgn = result;
+    GDI_HEAP_UNLOCK( hDest );
+    GDI_HEAP_UNLOCK( hSrc );
     return TRUE;
 }
 
@@ -589,7 +634,7 @@ BOOL32 REGION_FrameRgn( HRGN32 hDest, HRGN32 hSrc, INT32 x, INT32 y )
 /***********************************************************************
  *           CombineRgn16    (GDI.451)
  */
-INT16 CombineRgn16( HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode )
+INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
 {
     return (INT16)CombineRgn32( hDest, hSrc1, hSrc2, mode );
 }
@@ -600,10 +645,11 @@ INT16 CombineRgn16( HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode )
  *
  * Note: The behavior is correct even if src and dest regions are the same.
  */
-INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
+INT32 WINAPI CombineRgn32(HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode)
 {
     RGNOBJ *destObj, *src1Obj, *src2Obj;
     Region destrgn;
+    INT32 result;
 
     dprintf_region(stddeb, "CombineRgn: %04x,%04x -> %04x mode=%x\n", 
 		   hSrc1, hSrc2, hDest, mode );
@@ -611,12 +657,24 @@ INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
     if (!(destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC )))
 	return ERROR;
     if (!(src1Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc1, REGION_MAGIC )))
+    {
+        GDI_HEAP_UNLOCK( hDest );
 	return ERROR;
-    if (mode == RGN_COPY) return REGION_CopyRegion( src1Obj, destObj );
+    }
+    if (mode == RGN_COPY) 
+    {
+       result = REGION_CopyRegion( src1Obj, destObj );
+       GDI_HEAP_UNLOCK( hDest );
+       GDI_HEAP_UNLOCK( hSrc1 );
+       return result;
+    }
 
     if (!(src2Obj = (RGNOBJ *) GDI_GetObjPtr( hSrc2, REGION_MAGIC )))
-        return ERROR;
-
+    {
+       GDI_HEAP_UNLOCK( hDest );
+       GDI_HEAP_UNLOCK( hSrc1 );
+       return ERROR;
+    }
       /* Some optimizations for null regions */
 
     if (!src1Obj->xrgn || !src2Obj->xrgn)
@@ -625,26 +683,48 @@ INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
         {
         case RGN_DIFF:
             if (src1Obj->xrgn)
-                return REGION_CopyRegion( src1Obj, destObj );
+	    {
+                result = REGION_CopyRegion( src1Obj, destObj );
+		GDI_HEAP_UNLOCK( hDest );
+		GDI_HEAP_UNLOCK( hSrc1 );
+		GDI_HEAP_UNLOCK( hSrc2 );
+		return result;
+	    }
             /* else fall through */
         case RGN_AND:
             if (destObj->xrgn) XDestroyRegion( destObj->xrgn );
 	    destObj->xrgn = 0;
+	    GDI_HEAP_UNLOCK( hDest );
+	    GDI_HEAP_UNLOCK( hSrc1 );
+	    GDI_HEAP_UNLOCK( hSrc2 );
 	    return NULLREGION;
         case RGN_OR:
         case RGN_XOR:
             if (src1Obj->xrgn)
-                return REGION_CopyRegion( src1Obj, destObj );
+                result = REGION_CopyRegion( src1Obj, destObj );
             else
-                return REGION_CopyRegion( src2Obj, destObj );
+                result = REGION_CopyRegion( src2Obj, destObj );
+	    GDI_HEAP_UNLOCK( hDest );
+	    GDI_HEAP_UNLOCK( hSrc1 );
+	    GDI_HEAP_UNLOCK( hSrc2 );
+	    return result;
 	default:
+	    GDI_HEAP_UNLOCK( hDest );
+	    GDI_HEAP_UNLOCK( hSrc1 );
+	    GDI_HEAP_UNLOCK( hSrc2 );
 	    return ERROR;
         }
     }
 
       /* Perform the operation with the two X regions */
 
-    if (!(destrgn = XCreateRegion())) return ERROR;
+    if (!(destrgn = XCreateRegion()))
+    {
+      GDI_HEAP_UNLOCK( hDest );
+      GDI_HEAP_UNLOCK( hSrc1 );
+      GDI_HEAP_UNLOCK( hSrc2 );
+      return ERROR;
+    }
     switch(mode)
     {
     case RGN_AND:
@@ -661,6 +741,9 @@ INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
         break;
     default:
         XDestroyRegion( destrgn );
+	GDI_HEAP_UNLOCK( hDest );
+	GDI_HEAP_UNLOCK( hSrc1 );
+	GDI_HEAP_UNLOCK( hSrc2 );
         return ERROR;
     }
     if (destObj->xrgn) XDestroyRegion( destObj->xrgn );
@@ -669,7 +752,13 @@ INT32 CombineRgn32( HRGN32 hDest, HRGN32 hSrc1, HRGN32 hSrc2, INT32 mode )
     {
         XDestroyRegion( destObj->xrgn );
         destObj->xrgn = 0;
+	GDI_HEAP_UNLOCK( hDest );
+	GDI_HEAP_UNLOCK( hSrc1 );
+	GDI_HEAP_UNLOCK( hSrc2 );
         return NULLREGION;
     }
+    GDI_HEAP_UNLOCK( hDest );
+    GDI_HEAP_UNLOCK( hSrc1 );
+    GDI_HEAP_UNLOCK( hSrc2 );
     return COMPLEXREGION;
 }

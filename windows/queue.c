@@ -668,7 +668,7 @@ void QUEUE_DecTimerCount( HQUEUE16 hQueue )
 /***********************************************************************
  *           PostQuitMessage16   (USER.6)
  */
-void PostQuitMessage16( INT16 exitCode )
+void WINAPI PostQuitMessage16( INT16 exitCode )
 {
     PostQuitMessage32( exitCode );
 }
@@ -677,7 +677,7 @@ void PostQuitMessage16( INT16 exitCode )
 /***********************************************************************
  *           PostQuitMessage32   (USER32.420)
  */
-void PostQuitMessage32( INT32 exitCode )
+void WINAPI PostQuitMessage32( INT32 exitCode )
 {
     MESSAGEQUEUE *queue;
 
@@ -690,7 +690,7 @@ void PostQuitMessage32( INT32 exitCode )
 /***********************************************************************
  *           GetWindowTask16   (USER.224)
  */
-HTASK16 GetWindowTask16( HWND16 hwnd )
+HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -701,7 +701,7 @@ HTASK16 GetWindowTask16( HWND16 hwnd )
 /***********************************************************************
  *           GetWindowThreadProcessId   (USER32.312)
  */
-DWORD GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
+DWORD WINAPI GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
 {
     HTASK16 htask;
     TDB	*tdb;
@@ -725,7 +725,7 @@ DWORD GetWindowThreadProcessId( HWND32 hwnd, LPDWORD process )
 /***********************************************************************
  *           SetMessageQueue16   (USER.266)
  */
-BOOL16 SetMessageQueue16( INT16 size )
+BOOL16 WINAPI SetMessageQueue16( INT16 size )
 {
     return SetMessageQueue32( size );
 }
@@ -734,7 +734,7 @@ BOOL16 SetMessageQueue16( INT16 size )
 /***********************************************************************
  *           SetMessageQueue32   (USER32.493)
  */
-BOOL32 SetMessageQueue32( INT32 size )
+BOOL32 WINAPI SetMessageQueue32( INT32 size )
 {
     HQUEUE16 hQueue, hNewQueue;
     MESSAGEQUEUE *queuePtr;
@@ -781,7 +781,7 @@ BOOL32 SetMessageQueue32( INT32 size )
 /***********************************************************************
  *           GetQueueStatus16   (USER.334)
  */
-DWORD GetQueueStatus16( UINT16 flags )
+DWORD WINAPI GetQueueStatus16( UINT16 flags )
 {
     MESSAGEQUEUE *queue;
     DWORD ret;
@@ -796,7 +796,7 @@ DWORD GetQueueStatus16( UINT16 flags )
 /***********************************************************************
  *           GetInputState16   (USER.335)
  */
-BOOL16 GetInputState16(void)
+BOOL16 WINAPI GetInputState16(void)
 {
     return GetInputState32();
 }
@@ -805,7 +805,7 @@ BOOL16 GetInputState16(void)
 /***********************************************************************
  *           GetInputState32   (USER32.243)
  */
-BOOL32 GetInputState32(void)
+BOOL32 WINAPI GetInputState32(void)
 {
     MESSAGEQUEUE *queue;
 
@@ -818,7 +818,7 @@ BOOL32 GetInputState32(void)
 /***********************************************************************
  *           GetMessagePos   (USER.119) (USER32.271)
  */
-DWORD GetMessagePos(void)
+DWORD WINAPI GetMessagePos(void)
 {
     MESSAGEQUEUE *queue;
 
@@ -830,7 +830,7 @@ DWORD GetMessagePos(void)
 /***********************************************************************
  *           GetMessageTime   (USER.120) (USER32.272)
  */
-LONG GetMessageTime(void)
+LONG WINAPI GetMessageTime(void)
 {
     MESSAGEQUEUE *queue;
 
@@ -842,7 +842,7 @@ LONG GetMessageTime(void)
 /***********************************************************************
  *           GetMessageExtraInfo   (USER.288) (USER32.270)
  */
-LONG GetMessageExtraInfo(void)
+LONG WINAPI GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
 

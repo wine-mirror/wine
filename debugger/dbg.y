@@ -504,8 +504,10 @@ static void DEBUG_Main( int signal )
 	    DEBUG_SilentBackTrace();
 	}
 
-	if( signal != SIGTRAP )
-	  {
+	if ((signal != SIGTRAP) ||
+            (dbg_exec_mode == EXEC_STEPI_OVER) ||
+            (dbg_exec_mode == EXEC_STEPI_INSTR))
+        {
 	    /* Show where we crashed */
 	    curr_frame = 0;
 	    DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
@@ -515,7 +517,7 @@ static void DEBUG_Main( int signal )
 		DEBUG_Disasm( &addr, TRUE );
 		fprintf(stderr,"\n");
 	      }
-	  }
+        }
 
         ret_ok = 0;
         do

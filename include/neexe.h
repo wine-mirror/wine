@@ -37,6 +37,7 @@ typedef struct
 #define	IMAGE_DOS_SIGNATURE	0x5A4D		/* MZ */
 #define	IMAGE_OS2_SIGNATURE	0x454E		/* NE */
 #define	IMAGE_OS2_SIGNATURE_LE	0x454C		/* LE */
+#define	IMAGE_OS2_SIGNATURE_LX  0x584C          /* LX */
 #define	IMAGE_VXD_SIGNATURE	0x454C		/* LE */
 #define	IMAGE_NT_SIGNATURE	0x00004550	/* PE00 */
 

@@ -550,7 +550,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
  */
 
 /* It does nothing */
-void PatchCodeHandle(HANDLE16 hSel)
+void WINAPI PatchCodeHandle(HANDLE16 hSel)
 {
 }
 #endif /* WINELIB */

@@ -57,7 +57,6 @@
 #define FS_CASE_IS_PRESERVED            FILE_CASE_PRESERVED_NAMES
 #define FS_UNICODE_STORED_ON_DISK       FILE_UNICODE_ON_DISK
 
-/*WINAPI int  SetErrorMode(int);*/
 
 #define STATUS_SUCCESS                   0x00000000
 #define STATUS_WAIT_0                    0x00000000    
@@ -156,19 +155,17 @@ DECL_WINELIB_TYPE_AW(OSVERSIONINFO);
 #define VER_PLATFORM_WIN32_NT           2
 
 /*DWORD WINAPI GetVersion( void );*/
-BOOL32 GetVersionEx32A(OSVERSIONINFO32A*);
-BOOL32 GetVersionEx32W(OSVERSIONINFO32W*);
+BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A*);
+BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W*);
 #define GetVersionEx WINELIB_NAME_AW(GetVersionEx)
 
 /*int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);*/
 
-HACCEL32 LoadAcceleratorsA(   HINSTANCE32, const char *);
-
-void     DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
-void     EnterCriticalSection(CRITICAL_SECTION *lpCrit);
-void     InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
-void     LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
-HANDLE32 OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
-int      TerminateProcess(HANDLE32 h, int ret);
+void      WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
+void      WINAPI EnterCriticalSection(CRITICAL_SECTION *lpCrit);
+void      WINAPI InitializeCriticalSection(CRITICAL_SECTION *lpCrit);
+void      WINAPI LeaveCriticalSection(CRITICAL_SECTION *lpCrit);
+HANDLE32  WINAPI OpenProcess(DWORD access, BOOL32 inherit, DWORD id);
+int       WINAPI TerminateProcess(HANDLE32 h, int ret);
 
 #endif  /* __WINE_WINBASE_H */

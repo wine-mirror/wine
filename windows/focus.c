@@ -81,7 +81,7 @@ void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
 /*****************************************************************
  *               SetFocus16   (USER.22)
  */
-HWND16 SetFocus16( HWND16 hwnd )
+HWND16 WINAPI SetFocus16( HWND16 hwnd )
 {
     return (HWND16)SetFocus32( hwnd );
 }
@@ -90,7 +90,7 @@ HWND16 SetFocus16( HWND16 hwnd )
 /*****************************************************************
  *               SetFocus32   (USER32.480)
  */
-HWND32 SetFocus32( HWND32 hwnd )
+HWND32 WINAPI SetFocus32( HWND32 hwnd )
 {
     HWND32 hWndPrevFocus, hwndTop = hwnd;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -137,7 +137,7 @@ HWND32 SetFocus32( HWND32 hwnd )
 /*****************************************************************
  *               GetFocus16   (USER.23)
  */
-HWND16 GetFocus16(void)
+HWND16 WINAPI GetFocus16(void)
 {
     return (HWND16)hwndFocus;
 }
@@ -146,7 +146,7 @@ HWND16 GetFocus16(void)
 /*****************************************************************
  *               GetFocus32   (USER32.239)
  */
-HWND32 GetFocus32(void)
+HWND32 WINAPI GetFocus32(void)
 {
     return hwndFocus;
 }

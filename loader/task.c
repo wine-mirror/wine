@@ -40,8 +40,9 @@
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
 
-extern void USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
-extern void PE_InitTls( PE_MODULE *module );
+extern INT32 WINSOCK_DeleteTaskWSI( TDB* pTask, struct _WSINFO* pwsi );
+extern void  USER_AppExit( HTASK16, HINSTANCE16, HQUEUE16 );
+extern void  PE_InitTls( PE_MODULE *module );
 
   /* Saved 16-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved16_ss_sp = 0;
@@ -50,7 +51,10 @@ DWORD IF1632_Saved16_ss_sp = 0;
 DWORD IF1632_Saved32_esp = 0;
 
   /* Original Unix stack */
-DWORD IF1632_Original32_esp;
+DWORD IF1632_Original32_esp = 0;
+
+  /* Pointer to function to switch to a larger stack */
+int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
 static HTASK16 hFirstTask = 0;
 static HTASK16 hCurrentTask = 0;
@@ -685,6 +689,16 @@ void TASK_KillCurrentTask( INT16 exitCode )
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
     if (!pTask) USER_ExitWindows();  /* No current task yet */
 
+    dprintf_task(stddeb, "Killing task %04x\n", hCurrentTask );
+
+    /* Clean up sockets */
+
+    if( pTask->pwsi ) 
+    {
+	dprintf_task(stddeb, "\tremoving socket table\n");
+	WINSOCK_DeleteTaskWSI( pTask, pTask->pwsi );
+    }
+
     /* Perform USER cleanup */
 
     USER_AppExit( hCurrentTask, pTask->hInstance, pTask->hQueue );
@@ -698,7 +712,7 @@ void TASK_KillCurrentTask( INT16 exitCode )
 
     if (nTaskCount <= 1)
     {
-        dprintf_task( stddeb, "Killing the last task, exiting\n" );
+        dprintf_task( stddeb, "\nthis is the last task, exiting\n" );
         USER_ExitWindows();
     }
 
@@ -767,7 +781,7 @@ void TASK_Reschedule(void)
 
     /* extract hardware events only! */
 
-    if (!hTask) EVENT_WaitXEvent( FALSE, TRUE );
+    if (!hTask) EVENT_WaitNetEvent( FALSE, TRUE );
 
     while (!hTask)
     {
@@ -788,7 +802,7 @@ void TASK_Reschedule(void)
 
         /* No task found, wait for some events to come in */
 
-        EVENT_WaitXEvent( TRUE, TRUE );
+        EVENT_WaitNetEvent( TRUE, TRUE );
     }
 
     if (hTask == hCurrentTask) 
@@ -845,7 +859,7 @@ void TASK_YieldToSystem(TDB* pTask)
 	    !(pQ->wakeBits & (QS_SENDMESSAGE | QS_SMRESULT)) )
     {
       pQ->flags &= ~QUEUE_FLAG_XEVENT;
-      EVENT_WaitXEvent( FALSE, FALSE );
+      EVENT_WaitNetEvent( FALSE, FALSE );
     }
   }
 }
@@ -854,7 +868,7 @@ void TASK_YieldToSystem(TDB* pTask)
 /***********************************************************************
  *           InitTask  (KERNEL.91)
  */
-void InitTask( CONTEXT *context )
+void WINAPI InitTask( CONTEXT *context )
 {
     TDB *pTask;
     NE_MODULE *pModule;
@@ -912,7 +926,7 @@ void InitTask( CONTEXT *context )
 /***********************************************************************
  *           WaitEvent  (KERNEL.30)
  */
-BOOL16 WaitEvent( HTASK16 hTask )
+BOOL16 WINAPI WaitEvent( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -935,7 +949,7 @@ BOOL16 WaitEvent( HTASK16 hTask )
 /***********************************************************************
  *           PostEvent  (KERNEL.31)
  */
-void PostEvent( HTASK16 hTask )
+void WINAPI PostEvent( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -948,7 +962,7 @@ void PostEvent( HTASK16 hTask )
 /***********************************************************************
  *           SetPriority  (KERNEL.32)
  */
-void SetPriority( HTASK16 hTask, INT16 delta )
+void WINAPI SetPriority( HTASK16 hTask, INT16 delta )
 {
     TDB *pTask;
     INT16 newpriority;
@@ -969,7 +983,7 @@ void SetPriority( HTASK16 hTask, INT16 delta )
 /***********************************************************************
  *           LockCurrentTask  (KERNEL.33)
  */
-HTASK16 LockCurrentTask( BOOL16 bLock )
+HTASK16 WINAPI LockCurrentTask( BOOL16 bLock )
 {
     if (bLock) hLockedTask = hCurrentTask;
     else hLockedTask = 0;
@@ -980,7 +994,7 @@ HTASK16 LockCurrentTask( BOOL16 bLock )
 /***********************************************************************
  *           IsTaskLocked  (KERNEL.122)
  */
-HTASK16 IsTaskLocked(void)
+HTASK16 WINAPI IsTaskLocked(void)
 {
     return hLockedTask;
 }
@@ -989,7 +1003,7 @@ HTASK16 IsTaskLocked(void)
 /***********************************************************************
  *           OldYield  (KERNEL.117)
  */
-void OldYield(void)
+void WINAPI OldYield(void)
 {
     TDB *pCurTask;
 
@@ -1003,7 +1017,7 @@ void OldYield(void)
 /***********************************************************************
  *           DirectedYield  (KERNEL.150)
  */
-void DirectedYield( HTASK16 hTask )
+void WINAPI DirectedYield( HTASK16 hTask )
 {
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     pCurTask->hYieldTo = hTask;
@@ -1014,7 +1028,7 @@ void DirectedYield( HTASK16 hTask )
 /***********************************************************************
  *           UserYield  (USER.332)
  */
-void UserYield(void)
+void WINAPI UserYield(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
@@ -1033,7 +1047,7 @@ void UserYield(void)
 /***********************************************************************
  *           Yield  (KERNEL.29)
  */
-void Yield(void)
+void WINAPI Yield(void)
 {
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     if (pCurTask) pCurTask->hYieldTo = 0;
@@ -1045,7 +1059,7 @@ void Yield(void)
 /***********************************************************************
  *           MakeProcInstance16  (KERNEL.51)
  */
-FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
+FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 {
     BYTE *thunk;
     SEGPTR thunkaddr;
@@ -1070,7 +1084,7 @@ FARPROC16 MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 /***********************************************************************
  *           FreeProcInstance16  (KERNEL.52)
  */
-void FreeProcInstance16( FARPROC16 func )
+void WINAPI FreeProcInstance16( FARPROC16 func )
 {
     dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (DWORD)func );
     if (!__winelib) TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
@@ -1080,7 +1094,7 @@ void FreeProcInstance16( FARPROC16 func )
 /**********************************************************************
  *	    GetCodeHandle    (KERNEL.93)
  */
-HANDLE16 GetCodeHandle( FARPROC16 proc )
+HANDLE16 WINAPI GetCodeHandle( FARPROC16 proc )
 {
     HANDLE16 handle;
     BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
@@ -1103,7 +1117,7 @@ HANDLE16 GetCodeHandle( FARPROC16 proc )
 /***********************************************************************
  *           SetTaskQueue  (KERNEL.34)
  */
-HQUEUE16 SetTaskQueue( HTASK16 hTask, HQUEUE16 hQueue )
+HQUEUE16 WINAPI SetTaskQueue( HTASK16 hTask, HQUEUE16 hQueue )
 {
     HQUEUE16 hPrev;
     TDB *pTask;
@@ -1123,7 +1137,7 @@ HQUEUE16 SetTaskQueue( HTASK16 hTask, HQUEUE16 hQueue )
 /***********************************************************************
  *           GetTaskQueue  (KERNEL.35)
  */
-HQUEUE16 GetTaskQueue( HTASK16 hTask )
+HQUEUE16 WINAPI GetTaskQueue( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -1136,7 +1150,7 @@ HQUEUE16 GetTaskQueue( HTASK16 hTask )
 /***********************************************************************
  *           SwitchStackTo   (KERNEL.108)
  */
-void SwitchStackTo( WORD seg, WORD ptr, WORD top )
+void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 {
     TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
@@ -1177,7 +1191,7 @@ void SwitchStackTo( WORD seg, WORD ptr, WORD top )
  * to make sure all registers are preserved, but we don't use them in any
  * way, so we don't need a CONTEXT* argument.
  */
-void SwitchStackBack(void)
+void WINAPI SwitchStackBack(void)
 {
     TDB *pTask;
     STACK16FRAME *oldFrame, *newFrame;
@@ -1216,7 +1230,7 @@ void SwitchStackBack(void)
 /***********************************************************************
  *           GetTaskQueueDS  (KERNEL.118)
  */
-void GetTaskQueueDS( CONTEXT *context )
+void WINAPI GetTaskQueueDS( CONTEXT *context )
 {
     DS_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
@@ -1225,7 +1239,7 @@ void GetTaskQueueDS( CONTEXT *context )
 /***********************************************************************
  *           GetTaskQueueES  (KERNEL.119)
  */
-void GetTaskQueueES( CONTEXT *context )
+void WINAPI GetTaskQueueES( CONTEXT *context )
 {
     ES_reg(context) = GlobalHandleToSel( GetTaskQueue(0) );
 }
@@ -1234,12 +1248,12 @@ void GetTaskQueueES( CONTEXT *context )
 /***********************************************************************
  *           GetCurrentTask   (KERNEL.36)
  */
-HTASK16 GetCurrentTask(void)
+HTASK16 WINAPI GetCurrentTask(void)
 {
     return hCurrentTask;
 }
 
-DWORD WIN16_GetCurrentTask(void)
+DWORD WINAPI WIN16_GetCurrentTask(void)
 {
     /* This is the version used by relay code; the first task is */
     /* returned in the high word of the result */
@@ -1250,7 +1264,7 @@ DWORD WIN16_GetCurrentTask(void)
 /***********************************************************************
  *           GetCurrentPDB   (KERNEL.37)
  */
-HANDLE16 GetCurrentPDB(void)
+HANDLE16 WINAPI GetCurrentPDB(void)
 {
     TDB *pTask;
 
@@ -1262,7 +1276,7 @@ HANDLE16 GetCurrentPDB(void)
 /***********************************************************************
  *           GetInstanceData   (KERNEL.54)
  */
-INT16 GetInstanceData( HINSTANCE16 instance, WORD buffer, INT16 len )
+INT16 WINAPI GetInstanceData( HINSTANCE16 instance, WORD buffer, INT16 len )
 {
     char *ptr = (char *)GlobalLock16( instance );
     if (!ptr || !len) return 0;
@@ -1275,7 +1289,7 @@ INT16 GetInstanceData( HINSTANCE16 instance, WORD buffer, INT16 len )
 /***********************************************************************
  *           GetExeVersion   (KERNEL.105)
  */
-WORD GetExeVersion(void)
+WORD WINAPI GetExeVersion(void)
 {
     TDB *pTask;
 
@@ -1287,7 +1301,7 @@ WORD GetExeVersion(void)
 /***********************************************************************
  *           SetErrorMode16   (KERNEL.107)
  */
-UINT16 SetErrorMode16( UINT16 mode )
+UINT16 WINAPI SetErrorMode16( UINT16 mode )
 {
     TDB *pTask;
     UINT16 oldMode;
@@ -1303,7 +1317,7 @@ UINT16 SetErrorMode16( UINT16 mode )
 /***********************************************************************
  *           SetErrorMode32   (KERNEL32.486)
  */
-UINT32 SetErrorMode32( UINT32 mode )
+UINT32 WINAPI SetErrorMode32( UINT32 mode )
 {
     return SetErrorMode16( (UINT16)mode );
 }
@@ -1312,7 +1326,7 @@ UINT32 SetErrorMode32( UINT32 mode )
 /***********************************************************************
  *           GetDOSEnvironment   (KERNEL.131)
  */
-SEGPTR GetDOSEnvironment(void)
+SEGPTR WINAPI GetDOSEnvironment(void)
 {
     TDB *pTask;
 
@@ -1324,7 +1338,7 @@ SEGPTR GetDOSEnvironment(void)
 /***********************************************************************
  *           GetNumTasks   (KERNEL.152)
  */
-UINT16 GetNumTasks(void)
+UINT16 WINAPI GetNumTasks(void)
 {
     return nTaskCount;
 }
@@ -1336,7 +1350,7 @@ UINT16 GetNumTasks(void)
  * Note: this function apparently returns a DWORD with LOWORD == HIWORD.
  * I don't think we need to bother with this.
  */
-HINSTANCE16 GetTaskDS(void)
+HINSTANCE16 WINAPI GetTaskDS(void)
 {
     TDB *pTask;
 
@@ -1348,7 +1362,7 @@ HINSTANCE16 GetTaskDS(void)
 /***********************************************************************
  *           IsTask   (KERNEL.320)
  */
-BOOL16 IsTask( HTASK16 hTask )
+BOOL16 WINAPI IsTask( HTASK16 hTask )
 {
     TDB *pTask;
 
@@ -1361,7 +1375,7 @@ BOOL16 IsTask( HTASK16 hTask )
 /***********************************************************************
  *           SetTaskSignalProc   (KERNEL.38)
  */
-FARPROC16 SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
+FARPROC16 WINAPI SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
     TDB *pTask;
     FARPROC16 oldProc;
@@ -1377,8 +1391,8 @@ FARPROC16 SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 /***********************************************************************
  *           SetSigHandler   (KERNEL.140)
  */
-WORD SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
-                    UINT16 *oldmode, UINT16 newmode, UINT16 flag )
+WORD WINAPI SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
+                           UINT16 *oldmode, UINT16 newmode, UINT16 flag )
 {
     fprintf(stdnimp,"SetSigHandler(%p,%p,%p,%d,%d), unimplemented.\n",
             newhandler,oldhandler,oldmode,newmode,flag );
@@ -1402,7 +1416,7 @@ WORD SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
 /***********************************************************************
  *           GlobalNotify   (KERNEL.154)
  */
-VOID GlobalNotify( FARPROC16 proc )
+VOID WINAPI GlobalNotify( FARPROC16 proc )
 {
     TDB *pTask;
 
@@ -1414,7 +1428,7 @@ VOID GlobalNotify( FARPROC16 proc )
 /***********************************************************************
  *           GetExePtr   (KERNEL.133)
  */
-HMODULE16 GetExePtr( HANDLE16 handle )
+HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
 {
     char *ptr;
     HTASK16 hTask;
@@ -1454,7 +1468,7 @@ HMODULE16 GetExePtr( HANDLE16 handle )
 /***********************************************************************
  *           TaskFirst   (TOOLHELP.63)
  */
-BOOL16 TaskFirst( TASKENTRY *lpte )
+BOOL16 WINAPI TaskFirst( TASKENTRY *lpte )
 {
     lpte->hNext = hFirstTask;
     return TaskNext( lpte );
@@ -1464,7 +1478,7 @@ BOOL16 TaskFirst( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskNext   (TOOLHELP.64)
  */
-BOOL16 TaskNext( TASKENTRY *lpte )
+BOOL16 WINAPI TaskNext( TASKENTRY *lpte )
 {
     TDB *pTask;
     INSTANCEDATA *pInstData;
@@ -1496,7 +1510,7 @@ BOOL16 TaskNext( TASKENTRY *lpte )
 /***********************************************************************
  *           TaskFindHandle   (TOOLHELP.65)
  */
-BOOL16 TaskFindHandle( TASKENTRY *lpte, HTASK16 hTask )
+BOOL16 WINAPI TaskFindHandle( TASKENTRY *lpte, HTASK16 hTask )
 {
     lpte->hNext = hTask;
     return TaskNext( lpte );
@@ -1506,7 +1520,7 @@ BOOL16 TaskFindHandle( TASKENTRY *lpte, HTASK16 hTask )
 /***********************************************************************
  *           GetAppCompatFlags16   (KERNEL.354)
  */
-DWORD GetAppCompatFlags16( HTASK16 hTask )
+DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
 {
     return GetAppCompatFlags32( hTask );
 }
@@ -1515,7 +1529,7 @@ DWORD GetAppCompatFlags16( HTASK16 hTask )
 /***********************************************************************
  *           GetAppCompatFlags32   (USER32.205)
  */
-DWORD GetAppCompatFlags32( HTASK32 hTask )
+DWORD WINAPI GetAppCompatFlags32( HTASK32 hTask )
 {
     TDB *pTask;
 

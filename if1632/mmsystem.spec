@@ -42,6 +42,7 @@ type	win16
 305    pascal  MIDIINCLOSE(word) midiInClose
 306    pascal  MIDIINPREPAREHEADER(word segptr word) midiInPrepareHeader
 307    pascal  MIDIINUNPREPAREHEADER(word segptr word) midiInUnprepareHeader
+308    pascal  MIDIINADDBUFFER(word segptr word) midiInAddBuffer
 309    pascal  MIDIINSTART(word) midiInStart
 310    pascal  MIDIINSTOP(word) midiInStop
 311    pascal  MIDIINRESET(word) midiInReset

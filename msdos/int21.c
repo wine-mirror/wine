@@ -95,14 +95,14 @@ static BOOL32 INT21_CreateHeap(void)
     return TRUE;
 }
 
-BYTE *GetCurrentDTA(void)
+static BYTE *GetCurrentDTA(void)
 {
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     return (BYTE *)PTR_SEG_TO_LIN( pTask->dta );
 }
 
 
-void ChopOffWhiteSpace(char *string)
+static void ChopOffWhiteSpace(char *string)
 {
 	int length;
 
@@ -324,7 +324,7 @@ static BOOL32 INT21_CreateFile( CONTEXT *context )
 }
 
 
-void OpenExistingFile( CONTEXT *context )
+static void OpenExistingFile( CONTEXT *context )
 {
     AX_reg(context) = _lopen16( PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
                               AL_reg(context) );
@@ -880,7 +880,7 @@ extern void LOCAL_PrintHeap (WORD ds);
 /***********************************************************************
  *           DOS3Call  (KERNEL.102)
  */
-void DOS3Call( CONTEXT *context )
+void WINAPI DOS3Call( CONTEXT *context )
 {
     BOOL32	bSetDOSExtendedError = FALSE;
 
@@ -1044,7 +1044,7 @@ void DOS3Call( CONTEXT *context )
         break;
             
     case 0x30: /* GET DOS VERSION */
-        AX_reg(context) = DOSVERSION;
+        AX_reg(context) = HIWORD(GetVersion16());
         BX_reg(context) = 0x0012;     /* 0x123456 is Wine's serial # */
         CX_reg(context) = 0x3456;
         break;
@@ -1077,7 +1077,7 @@ void DOS3Call( CONTEXT *context )
 		break;
 				
 	      case 0x06: /* GET TRUE VERSION NUMBER */
-		BX_reg(context) = DOSVERSION;
+		BX_reg(context) = HIWORD(GetVersion16());
 		DX_reg(context) = 0x00;
 		break;
 

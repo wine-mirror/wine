@@ -273,14 +273,21 @@ extern WORD GDI_HeapSel;
 
 #define GDI_HEAP_ALLOC(size) \
             LOCAL_Alloc( GDI_HeapSel, LMEM_FIXED, (size) )
+#define GDI_HEAP_ALLOC_MOVEABLE(size) \
+            LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, (size) )
 #define GDI_HEAP_REALLOC(handle,size) \
             LOCAL_ReAlloc( GDI_HeapSel, (handle), (size), LMEM_FIXED )
 #define GDI_HEAP_FREE(handle) \
             LOCAL_Free( GDI_HeapSel, (handle) )
-#define GDI_HEAP_LIN_ADDR(handle)  \
-         ((handle) ? PTR_SEG_OFF_TO_LIN(GDI_HeapSel, (handle)) : NULL)
-#define GDI_HEAP_SEG_ADDR(handle)  \
-         ((handle) ? PTR_SEG_OFF_TO_SEGPTR(GDI_HeapSel, (handle)) : (SEGPTR)0)
+
+#define GDI_HEAP_LOCK(handle) \
+            LOCAL_Lock( GDI_HeapSel, (handle) )
+#define GDI_HEAP_LOCK_SEGPTR(handle) \
+            LOCAL_LockSegptr( GDI_HeapSel, (handle) )
+#define GDI_HEAP_UNLOCK(handle) \
+    ((((HGDIOBJ16)(handle) >= FIRST_STOCK_HANDLE) && \
+      ((HGDIOBJ16)(handle)<=LAST_STOCK_HANDLE)) ? \
+      0 : LOCAL_Unlock( GDI_HeapSel, (handle) ))
 
 extern BOOL32 GDI_Init(void);
 extern HGDIOBJ16 GDI_AllocObject( WORD, WORD );

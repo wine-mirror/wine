@@ -12,7 +12,7 @@
 /***********************************************************************
  *           GetWin32sInfo   (W32SYS.12)
  */
-WORD GetWin32sInfo( LPWIN32SINFO lpInfo)
+WORD WINAPI GetWin32sInfo( LPWIN32SINFO lpInfo)
 {
     lpInfo->bMajor = 1;
     lpInfo->bMinor = 3;

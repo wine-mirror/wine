@@ -108,7 +108,7 @@ static const int modifier_key[] =
 /*
  * Table for vkey to scancode translation - 5/29/97 chrisf@america.com 
  */
-static BYTE vkey2scode[512] = {
+static const BYTE vkey2scode[512] = {
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, 0x0e,0x0f,0x00,0x00,0x00,0x1c,0x00,0x00,
   0x2a,0x1d,0x38,0x00,0x3a,0x00,0x00,0x00, 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,
   0x39,0x49,0x51,0x4f,0x47,0x4b,0x48,0x4d, 0x50,0x00,0x00,0x00,0x00,0x52,0x53,0x00,
@@ -482,7 +482,7 @@ void KEYBOARD_HandleEvent( XKeyEvent *event )
 /**********************************************************************
  *		GetKeyState			[USER.106]
  */
-WORD GetKeyState16(INT16 vkey)
+WORD WINAPI GetKeyState16(INT16 vkey)
 {
     return GetKeyState32(vkey);
 }
@@ -493,7 +493,7 @@ WORD GetKeyState16(INT16 vkey)
  * keyboard-input message.  This function retrieves the state of the key
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 390)
  */
-WORD GetKeyState32(INT32 vkey)
+WORD WINAPI GetKeyState32(INT32 vkey)
 {
     INT32 retval;
 
@@ -524,7 +524,7 @@ WORD GetKeyState32(INT32 vkey)
  * keyboard-input message.  This function retrieves the state of the keyboard
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
  */
-VOID GetKeyboardState(LPBYTE lpKeyState)
+VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
 {
     dprintf_key(stddeb, "GetKeyboardState()\n");
     if (lpKeyState != NULL) {
@@ -538,7 +538,7 @@ VOID GetKeyboardState(LPBYTE lpKeyState)
 /**********************************************************************
  *      SetKeyboardState            [USER.223][USER32.483]
  */
-VOID SetKeyboardState(LPBYTE lpKeyState)
+VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
 {
     dprintf_key(stddeb, "SetKeyboardState()\n");
     if (lpKeyState != NULL) {
@@ -562,7 +562,7 @@ VOID SetKeyboardState(LPBYTE lpKeyState)
  * mouse or key had been depressed since the last call to 
  * GetAsyncKeyState.
  */
-WORD GetAsyncKeyState32(INT32 nKey)
+WORD WINAPI GetAsyncKeyState32(INT32 nKey)
 {
     short retval;	
 
@@ -595,7 +595,7 @@ WORD GetAsyncKeyState32(INT32 nKey)
 /**********************************************************************
  *            GetAsyncKeyState        (USER.249)
  */
-WORD GetAsyncKeyState16(INT16 nKey)
+WORD WINAPI GetAsyncKeyState16(INT16 nKey)
 {
     return GetAsyncKeyState32(nKey);
 }
@@ -607,7 +607,7 @@ WORD GetAsyncKeyState16(INT16 nKey)
  *
  * FIXME: should send some WM_INITMENU or/and WM_INITMENUPOPUP  -messages
  */
-INT32 TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
+INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
 {
     MSG16	msg16;
 
@@ -615,7 +615,7 @@ INT32 TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
     return TranslateAccelerator16(hWnd,hAccel,&msg16);
 }
 	
-INT16 TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
+INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
 {
     ACCELHEADER	*lpAccelTbl;
     int 	i;
@@ -755,7 +755,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 /******************************************************************************
  *    	OemKeyScan			[KEYBOARD.128][USER32.400]
  */
-DWORD OemKeyScan(WORD wOemChar)
+DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
     dprintf_keyboard(stddeb,"*OemKeyScan (%d)\n",wOemChar);
 
@@ -780,7 +780,7 @@ DWORD OemKeyScan(WORD wOemChar)
  * VkKeyScan '`'(0x60, 96) ... got keycode 00 ... returning 00
  */
 
-WORD VkKeyScan32A(CHAR cChar)
+WORD WINAPI VkKeyScan32A(CHAR cChar)
 {
 	KeyCode keycode;
 	KeySym keysym;    	
@@ -827,7 +827,7 @@ WORD VkKeyScan32A(CHAR cChar)
 /******************************************************************************
  *    	VkKeyScan			[KEYBOARD.129]
  */
-WORD VkKeyScan16(CHAR cChar)
+WORD WINAPI VkKeyScan16(CHAR cChar)
 {
 	return VkKeyScan32A(cChar);
 }
@@ -835,7 +835,7 @@ WORD VkKeyScan16(CHAR cChar)
 /******************************************************************************
  *    	VkKeyScanW			[USER32.575]
  */
-WORD VkKeyScan32W(WCHAR cChar)
+WORD WINAPI VkKeyScan32W(WCHAR cChar)
 {
 	return VkKeyScan32A((CHAR)cChar); /* FIXME: check unicode */
 }
@@ -843,7 +843,7 @@ WORD VkKeyScan32W(WCHAR cChar)
 /******************************************************************************
  *    	GetKeyboardType			[KEYBOARD.130]
  */
-INT16 GetKeyboardType16(INT16 nTypeFlag)
+INT16 WINAPI GetKeyboardType16(INT16 nTypeFlag)
 {
   return GetKeyboardType32(nTypeFlag);
 }
@@ -851,7 +851,7 @@ INT16 GetKeyboardType16(INT16 nTypeFlag)
 /******************************************************************************
  *    	GetKeyboardType			[USER32.254]
  */
-INT32 GetKeyboardType32(INT32 nTypeFlag)
+INT32 WINAPI GetKeyboardType32(INT32 nTypeFlag)
 {
   dprintf_keyboard(stddeb,"GetKeyboardType(%d)\n",nTypeFlag);
   switch(nTypeFlag)
@@ -875,22 +875,24 @@ INT32 GetKeyboardType32(INT32 nTypeFlag)
 /******************************************************************************
  *    	MapVirtualKeyA			[USER32.382]
  */
-UINT32 MapVirtualKey32A(UINT32 code, UINT32 maptype) {
-	return MapVirtualKey16(code,maptype);
+UINT32 WINAPI MapVirtualKey32A(UINT32 code, UINT32 maptype)
+{
+    return MapVirtualKey16(code,maptype);
 }
 
 /******************************************************************************
  *    	MapVirtualKeyA			[USER32.384]
  */
-UINT32 MapVirtualKey32W(UINT32 code, UINT32 maptype) {
-	return MapVirtualKey16(code,maptype);
+UINT32 WINAPI MapVirtualKey32W(UINT32 code, UINT32 maptype)
+{
+    return MapVirtualKey16(code,maptype);
 }
 
 /******************************************************************************
  *    	MapVirtualKeyA			[KEYBOARD.131]
  * MapVirtualKey translates keycodes from one format to another
  */
-UINT16 MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
+UINT16 WINAPI MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 {
 #define returnMVK(value) { dprintf_keyboard(stddeb,"returning 0x%x.\n",value); return value; }
 
@@ -936,7 +938,7 @@ UINT16 MapVirtualKey16(UINT16 wCode, UINT16 wMapType)
 /****************************************************************************
  *	GetKBCodePage16   (KEYBOARD.132)
  */
-INT16 GetKBCodePage16(void)
+INT16 WINAPI GetKBCodePage16(void)
 {
     dprintf_keyboard(stddeb,"GetKBCodePage()\n");
     return 850;
@@ -946,7 +948,7 @@ INT16 GetKBCodePage16(void)
 /****************************************************************************
  *	GetKBCodePage32   (USER32.245)
  */
-UINT32 GetKBCodePage32(void)
+UINT32 WINAPI GetKBCodePage32(void)
 {
     dprintf_keyboard(stddeb,"GetKbCodePage()\n");
     return 850;
@@ -956,7 +958,7 @@ UINT32 GetKBCodePage32(void)
 /****************************************************************************
  *	GetKeyNameText32W   (USER32.247)
  */
-INT32 GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
+INT32 WINAPI GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
 {
 	LPSTR buf = xmalloc(nSize);
 	int	res = GetKeyNameText32A(lParam,buf,nSize);
@@ -969,7 +971,7 @@ INT32 GetKeyNameText32W(LONG lParam, LPWSTR lpBuffer, INT32 nSize)
 /****************************************************************************
  *	GetKeyNameText32A   (USER32.246)
  */
-INT32 GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
+INT32 WINAPI GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
 {
 	return GetKeyNameText16(lParam,lpBuffer,nSize);
 }
@@ -977,7 +979,7 @@ INT32 GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
 /****************************************************************************
  *	GetKeyNameText16   (KEYBOARD.133)
  */
-INT16 GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
+INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 {
   /*	int i; */
 	
@@ -1002,8 +1004,8 @@ INT16 GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)
 /****************************************************************************
  *	ToAscii   (KEYBOARD.4)
  */
-INT16 ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
-	LPVOID lpChar, UINT16 flags) 
+INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState, 
+                       LPVOID lpChar, UINT16 flags) 
 {
     return ToAscii32(virtKey,scanCode,lpKeyState,lpChar,flags);
 }
@@ -1011,10 +1013,9 @@ INT16 ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
 /****************************************************************************
  *	ToAscii   (USER32.545)
  */
-INT32 ToAscii32(
-	UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
-	LPWORD lpChar,UINT32 flags
-) {
+INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
+                        LPWORD lpChar,UINT32 flags )
+{
     XKeyEvent e;
     KeySym keysym;
     static XComposeStatus cs;
@@ -1178,3 +1179,14 @@ INT32 ToAscii32(
 		ret, *(char*)lpChar);
     return ret;
 }
+
+
+/***********************************************************************
+ *           GetKeyboardLayout			(USER32.249)
+ */
+/*HKL*/ HANDLE32 WINAPI GetKeyboardLayout(DWORD dwLayout)
+{
+	fprintf(stderr,"GetKeyboardLayout(%ld),STUB!\n",dwLayout);
+	return 0;
+}
+

@@ -10,8 +10,7 @@
 #include <string.h>
 #include "windows.h"
 
-VOID
-GetSystemInfo(LPSYSTEM_INFO si)
+VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 {
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;

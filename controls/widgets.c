@@ -12,6 +12,7 @@
 #include "static.h"
 #include "status.h"
 #include "scroll.h"
+#include "updown.h"
 #include "desktop.h"
 #include "mdi.h"
 #include "gdi.h"
@@ -20,18 +21,18 @@
 
 /* Window procedures */
 
-extern LRESULT EditWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                            LPARAM lParam );
-extern LRESULT ComboWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                             LPARAM lParam );
-extern LRESULT ComboLBWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                               LPARAM lParam );
-extern LRESULT ListBoxWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                               LPARAM lParam );
-extern LRESULT PopupMenuWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-                                 LPARAM lParam );
-extern LRESULT IconTitleWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
-				 LPARAM lParam );
+extern LRESULT WINAPI EditWndProc( HWND32 hwnd, UINT32 msg,
+                                   WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 msg,
+                                    WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI ComboLBWndProc( HWND32 hwnd, UINT32 msg,
+                                      WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
+                                      WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI PopupMenuWndProc( HWND32 hwnd, UINT32 msg,
+                                        WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI IconTitleWndProc( HWND32 hwnd, UINT32 msg,
+                                        WPARAM32 wParam, LPARAM lParam );
 
 /* Win16 class info */
 
@@ -102,6 +103,8 @@ static WNDCLASS32A WIDGETS_CommonControls32[] =
 {
     { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, StatusWindowProc, 0,
       sizeof(STATUSWINDOWINFO), 0, 0, 0, 0, 0, STATUSCLASSNAME32A },
+    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, UpDownWindowProc, 0,
+      sizeof(UPDOWN_INFO), 0, 0, 0, 0, 0, UPDOWN_CLASS32A }
 };
 
 #define NB_COMMON_CONTROLS32 \
@@ -160,7 +163,7 @@ BOOL32 WIDGETS_Init(void)
 /***********************************************************************
  *           InitCommonControls   (COMCTL32.15)
  */
-void InitCommonControls(void)
+void WINAPI InitCommonControls(void)
 {
     int i;
     char name[30];

@@ -28,7 +28,7 @@ extern void QUEUE_FlushMessages(HQUEUE16);
 /***********************************************************************
  *           GetFreeSystemResources   (USER.284)
  */
-WORD GetFreeSystemResources( WORD resType )
+WORD WINAPI GetFreeSystemResources( WORD resType )
 {
     int userPercent, gdiPercent;
 
@@ -63,7 +63,7 @@ WORD GetFreeSystemResources( WORD resType )
 /***********************************************************************
  *           SystemHeapInfo   (TOOLHELP.71)
  */
-BOOL16 SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
+BOOL16 WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 {
     pHeapInfo->wUserFreePercent = GetFreeSystemResources( GFSR_USERRESOURCES );
     pHeapInfo->wGDIFreePercent  = GetFreeSystemResources( GFSR_GDIRESOURCES );
@@ -76,7 +76,7 @@ BOOL16 SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 /***********************************************************************
  *           TimerCount   (TOOLHELP.80)
  */
-BOOL16 TimerCount( TIMERINFO *pTimerInfo )
+BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo )
 {
     /* FIXME
      * In standard mode, dwmsSinceStart = dwmsThisVM 
@@ -97,7 +97,7 @@ BOOL16 TimerCount( TIMERINFO *pTimerInfo )
 /**********************************************************************
  *           InitApp   (USER.5)
  */
-INT16 InitApp( HINSTANCE16 hInstance )
+INT16 WINAPI InitApp( HINSTANCE16 hInstance )
 {
     int queueSize;
 
@@ -162,7 +162,7 @@ void USER_ExitWindows(void)
 /***********************************************************************
  *           ExitWindows16   (USER.7)
  */
-BOOL16 ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
+BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
 {
     return ExitWindowsEx( EWX_LOGOFF, 0xffffffff );
 }
@@ -171,7 +171,7 @@ BOOL16 ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
 /***********************************************************************
  *           ExitWindowsExec16   (USER.246)
  */
-BOOL16 ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
+BOOL16 WINAPI ExitWindowsExec16( LPCSTR lpszExe, LPCSTR lpszParams )
 {
 fprintf(stdnimp, "ExitWindowsExec() : Should run the following in DOS-mode :\n\t\"%s %s\"\n",
 	lpszExe, lpszParams);
@@ -182,7 +182,7 @@ fprintf(stdnimp, "ExitWindowsExec() : Should run the following in DOS-mode :\n\t
 /***********************************************************************
  *           ExitWindowsEx   (USER32.195)
  */
-BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
+BOOL32 WINAPI ExitWindowsEx( UINT32 flags, DWORD reserved )
 {
     int i;
     BOOL32 result;

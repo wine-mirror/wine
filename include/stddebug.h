@@ -150,6 +150,7 @@
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
 #undef DEBUG_TWEAK
+#undef DEBUG_UPDOWN
 #undef DEBUG_VER
 #undef DEBUG_VIRTUAL
 #undef DEBUG_VXD
@@ -234,6 +235,7 @@
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
 #define DEBUG_TWEAK
+#define DEBUG_UPDOWN
 #define DEBUG_VER
 #define DEBUG_VIRTUAL
 #define DEBUG_VXD

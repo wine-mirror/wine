@@ -2,7 +2,7 @@
 How To Convert Windows Fonts
 ============================
 
-If you have access to Windows installation you should use 
+If you have access to a Windows installation you should use 
 fnt2bdf utility (found in the 'tools)' directory to convert
 bitmap fonts (VGASYS.FON, SSERIFE.FON, and SERIFE.FON) into 
 the format that X Window System can recognize. 
@@ -21,18 +21,21 @@ Step 4. Run 'mkfontdir' for the directory you copied fonts to.
 	If you are already in X you should run 'xset fp rehash' 
         to make X server aware of the new fonts.
 
-Step 5. Edit wine.conf file to remove aliases for the fonts 
+Step 5. Edit WINE.CONF file to remove aliases for the fonts 
 	you've just installed.
 
-Wine can get by without these fonts but 'the look and feel'
-will be quite different. Also, some applications try to load
-their custom fonts on the fly (WinWord 6.0) and since Wine does
+WINE can get by without these fonts but 'the look and feel'
+may be quite different. Also, some applications try to load
+their custom fonts on the fly (WinWord 6.0) and since WINE does
 not implement this yet it instead prints out something like;
 
-STUB: AddFontResource( somefile.FON )
+STUB: AddFontResource( SOMEFILE.FON )
 
 You can convert this file too. Note that .FON file may not hold 
-any bitmap fonts and fnt2bdf will fail if this is the case.
+any bitmap fonts and fnt2bdf will fail if this is the case. Also
+note that although the above message will not disappear WINE will
+work around the problem by using the font you extracted from the
+SOMEFILE.FON.
 
 What to do with TrueType fonts? There are several commercial
 font tools that can convert them to the Type1 format but the 
@@ -44,53 +47,75 @@ However, there is a possibility of the native TrueType support
 via FreeType renderer in the future (hint, hint :-)
 
 
-WINE.CONF And Font Mapper
-=========================
+How To Add Font Aliases To WINE.CONF
+====================================
 
 Many Windows applications assume that fonts included in original Windows 3.1 
-distribution (Arial, Times New Roman, MS Sans Serif, etc.) are always present. 
-In order to make font mapper choose a closely related font you can add aliases
-to the [fonts] section.
+distribution are always present. By default Wine creates a number of aliases
+that map them on the existing X fonts:
+
+Windows font		...is mapped to...	X font
+
+"MS Sans Serif"			->		"-adobe-helvetica-"
+"MS Serif"			->		"-bitstream-charter-"
+"Times New Roman"		->		"-adobe-times-"
+"Arial"				->		"-adobe-helvetica-"
+
+There is no default alias for the "System" font. Also, no aliases are 
+created for the fonts that applications install at runtime. The recommended 
+way to deal with this problem is to convert the missing font (see above). 
+If it proves impossible, like in the case with TrueType fonts, you can force 
+the font mapper to choose a closely related X font by adding an alias to the 
+[fonts] section. Make sure that the X font actually exists (with xfontsel
+tool).
 
 AliasN = [Windows font], [X font] <, optional "mask X font" flag>
 
 Example:
 
-Alias0 = System, --international-, mask
-Alias1 = Arial, -adobe-helvetica-
-Alias2 = Times New Roman, -adobe-times-
+Alias0 = System, --international-, subst
+Alias1 = ...
 ...
 
 Comments:
-    There must be no gaps in the sequence {0, ..., N} otherwise all aliases
+*   There must be no gaps in the sequence {0, ..., N} otherwise all aliases
     after the first gap won't be read.
 
-    Usually font mapper translates X font names into font names visible to
+*   Usually font mapper translates X font names into font names visible to
     Windows programs in the following fashion:
 
-    X font			Converted name
+    X font		...will show up as...		Extracted name
 
-    -adobe-helvetica-...	"Helvetica"
-    -adobe-utopia-...		"Utopia"
-    -misc-fixed-...		"Fixed"
+    --international-...		->			"International"
+    -adobe-helvetica-...	->			"Helvetica"
+    -adobe-utopia-...		->			"Utopia"
+    -misc-fixed-...		->			"Fixed"
     -...
-    -sony-fixed-...		"Sony Fixed"  (already have "Fixed")
+    -sony-fixed-...		->			"Sony Fixed" 
     -...
 
-    Only converted names appear in the font selection dialogs. However, 
-    if there is an alias with the "mask" flag set converted name will be 
-    replaced by this alias.
+    Note that since -misc-fixed- and -sony-fixed- are different fonts
+    Wine modified the second extracted name to make sure Windows programs
+    can distinguish them because only extracted names appear in the font 
+    selection dialogs. 
+ 
+*   "Masking" alias replaces the original extracted name so that in the 
+    example case we will have the following mapping:
 
-    --international-		"System"
+    --international-		->			"System"
 
-    Nonmasking aliases are translated only when program asks for a font
-    with the name that matches an alias.
+    "Nonmasking" aliases are transparent to the user and they do not 
+    replace extracted names.
 
-    If you do not have an access to Windows fonts mentioned in the first 
-    paragraph you should try to substitute them with similar X fonts.
+    Wine discards an alias when it sees that the native X font is
+    available.
+
+*   If you do not have access to Windows fonts mentioned in the first 
+    paragraph you should try to substitute the "System" font with 
+    nonmasking alias. 'xfontsel' will show you the fonts available to
+    X.
 
     Alias.. = System, ...bold font without serifs
-    Alias.. = MS Sans Serif, ...helvetica-like font
 
 Also, some Windows applications request fonts without specifying the 
 typeface name of the font. Font table starts with Arial in most Windows 
@@ -106,19 +131,44 @@ Comments:
     It is better to have a scalable font family (bolds and italics included) 
     as the default choice because mapper checks all available fonts until 
     requested height and other attributes match perfectly or the end of the 
-    font table is reached.
+    font table is reached. Typical X installations have scalable fonts in
+    the ../fonts/Type1 and ../fonts/Speedo directories.
 
 
-Cached Font Metrics
-===================
+How To Manage Cached Font Metrics
+=================================
 
 WINE stores detailed information about available fonts in the ~/.wine/.cachedmetrics
 file. You can copy it elsewhere and add this entry to the [fonts] section 
-in the WINE.CONF:
+in your WINE.CONF:
 
 FontMetrics = <file with metrics>
 
 If WINE detects changes in the X font configuration it will rebuild font
 metrics from scratch and then it will overwrite ~/.wine/.cachedmetrics with 
 the new information. This process can take a while.
+
+
+Too Small Or Too Large Fonts
+============================
+
+Windows programs may ask WINE to render a font with the height specified
+in points. However, point-to-pixel ratio depends on the real physical size 
+of your display (15", 17", etc...). X tries to provide an estimate of that 
+but it can be quite different from the actual size. You can change this
+ratio by adding the following entry to the [fonts] section:
+
+Resolution = <integer value>
+
+In general, higher numbers give you larger fonts. Try to experiment with
+values in the 60 - 120 range. 96 is a good starting point.
+
+
+"FONT_Init: failed to load ..." Messages On Startup
+===================================================
+
+The most likely cause is a broken fonts.dir file in one of your font
+directories. You need to rerun 'mkfontdir' to rebuild this file. Read
+its manpage for more information.
+
 

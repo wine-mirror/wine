@@ -15,7 +15,7 @@
 /***********************************************************************
  *           CreatePen16    (GDI.61)
  */
-HPEN16 CreatePen16( INT16 style, INT16 width, COLORREF color )
+HPEN16 WINAPI CreatePen16( INT16 style, INT16 width, COLORREF color )
 {
     LOGPEN32 logpen = { style, { width, 0 }, color };
     dprintf_gdi(stddeb, "CreatePen16: %d %d %06lx\n", style, width, color );
@@ -26,7 +26,7 @@ HPEN16 CreatePen16( INT16 style, INT16 width, COLORREF color )
 /***********************************************************************
  *           CreatePen32    (GDI32.55)
  */
-HPEN32 CreatePen32( INT32 style, INT32 width, COLORREF color )
+HPEN32 WINAPI CreatePen32( INT32 style, INT32 width, COLORREF color )
 {
     LOGPEN32 logpen = { style, { width, 0 }, color };
     dprintf_gdi(stddeb, "CreatePen32: %d %d %06lx\n", style, width, color );
@@ -37,7 +37,7 @@ HPEN32 CreatePen32( INT32 style, INT32 width, COLORREF color )
 /***********************************************************************
  *           CreatePenIndirect16    (GDI.62)
  */
-HPEN16 CreatePenIndirect16( const LOGPEN16 * pen )
+HPEN16 WINAPI CreatePenIndirect16( const LOGPEN16 * pen )
 {
     PENOBJ * penPtr;
     HPEN16 hpen;
@@ -45,10 +45,11 @@ HPEN16 CreatePenIndirect16( const LOGPEN16 * pen )
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
     if (!hpen) return 0;
-    penPtr = (PENOBJ *)GDI_HEAP_LIN_ADDR( hpen );
+    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnColor = pen->lopnColor;
     CONV_POINT16TO32( &pen->lopnWidth, &penPtr->logpen.lopnWidth );
+    GDI_HEAP_UNLOCK( hpen );
     return hpen;
 }
 
@@ -56,7 +57,7 @@ HPEN16 CreatePenIndirect16( const LOGPEN16 * pen )
 /***********************************************************************
  *           CreatePenIndirect32    (GDI32.56)
  */
-HPEN32 CreatePenIndirect32( const LOGPEN32 * pen )
+HPEN32 WINAPI CreatePenIndirect32( const LOGPEN32 * pen )
 {
     PENOBJ * penPtr;
     HPEN32 hpen;
@@ -64,10 +65,11 @@ HPEN32 CreatePenIndirect32( const LOGPEN32 * pen )
     if (pen->lopnStyle > PS_INSIDEFRAME) return 0;
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
     if (!hpen) return 0;
-    penPtr = (PENOBJ *)GDI_HEAP_LIN_ADDR( hpen );
+    penPtr = (PENOBJ *)GDI_HEAP_LOCK( hpen );
     penPtr->logpen.lopnStyle = pen->lopnStyle;
     penPtr->logpen.lopnWidth = pen->lopnWidth;
     penPtr->logpen.lopnColor = pen->lopnColor;
+    GDI_HEAP_UNLOCK( hpen );
     return hpen;
 }
 

@@ -179,6 +179,7 @@ static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
 	dc->u.x.brush.fillStyle = FillOpaqueStippled;
 	dc->u.x.brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
     }
+    GDI_HEAP_UNLOCK( hbitmap );
     return TRUE;
 }
 

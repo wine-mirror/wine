@@ -1341,6 +1341,34 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
     return TRUE;
 }
 
+struct StretchBlt_params
+{
+    DC   *dcDst;
+    INT32 xDst;
+    INT32 yDst;
+    INT32 widthDst;
+    INT32 heightDst;
+    DC   *dcSrc;
+    INT32 xSrc;
+    INT32 ySrc;
+    INT32 widthSrc;
+    INT32 heightSrc;
+    DWORD rop;
+};
+
+/***********************************************************************
+ *           BITBLT_DoStretchBlt
+ *
+ * Wrapper function for BITBLT_InternalStretchBlt
+ * to use with CALL_LARGE_STACK.
+ */
+static int BITBLT_DoStretchBlt( const struct StretchBlt_params *p )
+{
+    return (int)BITBLT_InternalStretchBlt( p->dcDst, p->xDst, p->yDst,
+                                           p->widthDst, p->heightDst,
+                                           p->dcSrc, p->xSrc, p->ySrc,
+                                           p->widthSrc, p->heightSrc, p->rop );
+}
 
 /***********************************************************************
  *           X11DRV_PatBlt
@@ -1348,9 +1376,9 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 BOOL32 X11DRV_PatBlt( DC *dc, INT32 left, INT32 top,
                       INT32 width, INT32 height, DWORD rop )
 {
-    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
-                                 dc, left, top, width, height,
-                                 NULL, 0, 0, 0, 0, rop );
+    struct StretchBlt_params params = { dc, left, top, width, height,
+                                        NULL, 0, 0, 0, 0, rop };
+    return (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
 }
 
 
@@ -1361,9 +1389,9 @@ BOOL32 X11DRV_BitBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                       INT32 width, INT32 height, DC *dcSrc,
                       INT32 xSrc, INT32 ySrc, DWORD rop )
 {
-    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
-                                dcDst, xDst, yDst, width, height,
-                                dcSrc, xSrc, ySrc, width, height, rop );
+    struct StretchBlt_params params = { dcDst, xDst, yDst, width, height,
+                                        dcSrc, xSrc, ySrc, width, height, rop};
+    return (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
 }
 
 
@@ -1375,7 +1403,8 @@ BOOL32 X11DRV_StretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
                           DC *dcSrc, INT32 xSrc, INT32 ySrc,
                           INT32 widthSrc, INT32 heightSrc, DWORD rop )
 {
-    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
-                                dcDst, xDst, yDst, widthDst, heightDst,
-                                dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
+    struct StretchBlt_params params = { dcDst, xDst, yDst, widthDst, heightDst,
+                                        dcSrc, xSrc, ySrc, widthSrc, heightSrc,
+                                        rop };
+    return (BOOL32)CALL_LARGE_STACK( BITBLT_DoStretchBlt, &params );
 }

@@ -100,7 +100,7 @@ static void SYSTEM_StopTicks(void)
  * Note: the function always takes 2 WORD arguments, contrary to what
  *       "Undocumented Windows" says.
   */
-DWORD InquireSystem( WORD code, WORD arg )
+DWORD WINAPI InquireSystem( WORD code, WORD arg )
 {
     WORD drivetype;
 
@@ -125,7 +125,7 @@ DWORD InquireSystem( WORD code, WORD arg )
 /***********************************************************************
  *           CreateSystemTimer   (SYSTEM.2)
  */
-WORD CreateSystemTimer( WORD rate, FARPROC16 callback )
+WORD WINAPI CreateSystemTimer( WORD rate, FARPROC16 callback )
 {
     int i;
 
@@ -150,7 +150,7 @@ WORD CreateSystemTimer( WORD rate, FARPROC16 callback )
  *
  * Note: do not confuse this function with USER.182
  */
-WORD SYSTEM_KillSystemTimer( WORD timer )
+WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
 {
     if (!timer || (timer > NB_SYS_TIMERS)) return timer;  /* Error */
     SYS_Timers[timer-1].callback = NULL;
@@ -162,7 +162,7 @@ WORD SYSTEM_KillSystemTimer( WORD timer )
 /***********************************************************************
  *           EnableSystemTimers   (SYSTEM.4)
  */
-void EnableSystemTimers(void)
+void WINAPI EnableSystemTimers(void)
 {
     SYS_TimersDisabled = FALSE;
     if (SYS_NbTimers) SYSTEM_StartTicks();
@@ -172,7 +172,7 @@ void EnableSystemTimers(void)
 /***********************************************************************
  *           DisableSystemTimers   (SYSTEM.5)
  */
-void DisableSystemTimers(void)
+void WINAPI DisableSystemTimers(void)
 {
     SYS_TimersDisabled = TRUE;
     if (SYS_NbTimers) SYSTEM_StopTicks();

@@ -17,6 +17,7 @@ base	1
   39 stdcall DragAcceptFiles(long long) DragAcceptFiles
   40 stub DragFinish
   42 stub DragQueryFile
+  47 stub SHELL32_47
   48 stub DragQueryFileA
   51 stub DragQueryFileAorW
   52 stub DragQueryFileW
@@ -31,9 +32,15 @@ base	1
  136 stub ExtractIconExA
  146 stub ExtractIconResInfoA
  148 stub ExtractIconResInfoW
+ 154 stub SHELL32_154
+ 155 stub SHELL32_155
+ 156 stub SHELL32_156
+ 158 stub SHELL32_158
  178 stub ExtractIconW
  180 stub ExtractVersionResource16W
- 184 stub FindExecutableA
+ 182 stub SHELL32_182
+ 183 stub SHELL32_183
+ 184 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A
  185 stub FindExecutableW
  186 return FreeIconList 4 0
  187 stub InternalExtractIconListA

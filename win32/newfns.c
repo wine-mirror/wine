@@ -16,8 +16,8 @@ at a later date. */
 /****************************************************************************
  *		QueryPerformanceCounter (KERNEL32.415)
  */
-BOOL32
-QueryPerformanceCounter(LPLARGE_INTEGER counter) {
+BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
+{
 	/* FIXME: don't know what are good values */
 	counter->LowPart	= 1;
 	counter->HighPart	= 0;
@@ -28,8 +28,8 @@ QueryPerformanceCounter(LPLARGE_INTEGER counter) {
  *		DisableThreadLibraryCalls (KERNEL32.74)
  * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
  */
-BOOL32
-DisableThreadLibraryCalls(HMODULE32 hModule) {
+BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
+{
     fprintf(stdnimp, "DisableThreadLibraryCalls Stub called!\n");
     return TRUE;
 }

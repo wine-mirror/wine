@@ -18,8 +18,31 @@
 
 extern void CLIPPING_UpdateGCRegion(DC* );
 
-static int	bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
-static int	ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
+static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
+static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
+
+
+/* This structure holds the arguments for DIB_SetImageBits() */
+typedef struct
+{
+    DC               *dc;
+    LPCVOID           bits;
+    DWORD             lines;
+    DWORD             infoWidth;
+    WORD              depth;
+    WORD              infoBpp;
+    const BITMAPINFO *info;
+    WORD              coloruse;
+    Drawable          drawable;
+    GC                gc;
+    int               xSrc;
+    int               ySrc;
+    int               xDest;
+    int               yDest;
+    int               width;
+    int               height;
+} DIB_SETIMAGEBITS_DESCR;
+
 
 /***********************************************************************
  *           DIB_Init
@@ -152,7 +175,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
  * for a 24-bit deep bitmap.
  */
 static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
-                               BITMAPINFO *info )
+                               const BITMAPINFO *info )
 {
     int i, colors;
     BOOL32 isInfo;
@@ -217,18 +240,20 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
  *
  * SetDIBits for a 1-bit deep DIB.
  */
-static void DIB_SetImageBits_1( DWORD lines, BYTE *bits, DWORD width,
+static void DIB_SetImageBits_1( DWORD lines, const BYTE *srcbits,
+                                DWORD srcwidth, DWORD dstwidth,
                                 int *colors, XImage *bmpImage )
 {
     DWORD i, x;
-    BYTE pad, pix;
+    BYTE pix;
+    const BYTE *bits = srcbits;
 
-    if (!(width & 31)) pad = 0;
-    else pad = ((32 - (width & 31)) + 7) / 8;
+    /* 32 bit aligned */
+    DWORD linebytes = ((srcwidth + 31) & ~31) / 8;
 
     while (lines--)
     {
-	for (i = width/8, x = 0; (i > 0); i--)
+	for (i = dstwidth/8, x = 0; (i > 0); i--)
 	{
 	    pix = *bits++;
 	    XPutPixel( bmpImage, x++, lines, colors[pix >> 7] );
@@ -241,7 +266,7 @@ static void DIB_SetImageBits_1( DWORD lines, BYTE *bits, DWORD width,
 	    XPutPixel( bmpImage, x++, lines, colors[pix & 1] );
 	}
 	pix = *bits;
-	switch(width & 7)
+	switch(dstwidth & 7)
 	{
 	case 7: XPutPixel( bmpImage, x++, lines, colors[pix >> 7] ); pix <<= 1;
 	case 6: XPutPixel( bmpImage, x++, lines, colors[pix >> 7] ); pix <<= 1;
@@ -251,7 +276,8 @@ static void DIB_SetImageBits_1( DWORD lines, BYTE *bits, DWORD width,
 	case 2: XPutPixel( bmpImage, x++, lines, colors[pix >> 7] ); pix <<= 1;
 	case 1: XPutPixel( bmpImage, x++, lines, colors[pix >> 7] );
 	}
-	bits += pad;
+	srcbits += linebytes;
+	bits	 = srcbits;
     }
 }
 
@@ -261,25 +287,27 @@ static void DIB_SetImageBits_1( DWORD lines, BYTE *bits, DWORD width,
  *
  * SetDIBits for a 4-bit deep DIB.
  */
-static void DIB_SetImageBits_4( DWORD lines, BYTE *bits, DWORD width,
+static void DIB_SetImageBits_4( DWORD lines, const BYTE *srcbits,
+                                DWORD srcwidth, DWORD dstwidth,
                                 int *colors, XImage *bmpImage )
 {
     DWORD i, x;
-    BYTE pad;
-
-    if (!(width & 7)) pad = 0;
-    else pad = ((8 - (width & 7)) + 1) / 2;
+    const BYTE *bits = srcbits;
+  
+    /* 32 bit aligned */
+    DWORD linebytes = ((srcwidth+7)&~7)/2;
 
     while (lines--)
     {
-	for (i = width/2, x = 0; i > 0; i--)
+	for (i = srcwidth/2, x = 0; i > 0; i--)
 	{
 	    BYTE pix = *bits++;
 	    XPutPixel( bmpImage, x++, lines, colors[pix >> 4] );
 	    XPutPixel( bmpImage, x++, lines, colors[pix & 0x0f] );
 	}
-	if (width & 1) XPutPixel( bmpImage, x, lines, colors[*bits >> 4] );
-	bits += pad;
+        if (srcwidth & 1) XPutPixel( bmpImage, x, lines, colors[*bits >> 4] );
+        srcbits += linebytes;
+        bits	 = srcbits;
     }
 }
 
@@ -295,11 +323,11 @@ static void DIB_SetImageBits_4( DWORD lines, BYTE *bits, DWORD width,
  *
  * SetDIBits for a 4-bit deep compressed DIB.
  */
-static void DIB_SetImageBits_RLE4( DWORD lines, BYTE *bits, DWORD width,
-                                   int *colors, XImage *bmpImage )
+static void DIB_SetImageBits_RLE4( DWORD lines, const BYTE *bits, DWORD width,
+                                DWORD dstwidth, int *colors, XImage *bmpImage )
 {
 	int x = 0, c, length;
-	BYTE *begin = bits;
+	const BYTE *begin = bits;
 
         lines--;
 	while ((int)lines >= 0)
@@ -355,17 +383,22 @@ static void DIB_SetImageBits_RLE4( DWORD lines, BYTE *bits, DWORD width,
  *
  * SetDIBits for an 8-bit deep DIB.
  */
-static void DIB_SetImageBits_8( DWORD lines, BYTE *bits, DWORD width,
+static void DIB_SetImageBits_8( DWORD lines, const BYTE *srcbits,
+                                DWORD srcwidth, DWORD dstwidth,
                                 int *colors, XImage *bmpImage )
 {
     DWORD x;
-    BYTE pad = (4 - (width & 3)) & 3;
+    const BYTE *bits = srcbits;
+
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth + 3) & ~3;
 
     while (lines--)
     {
-	for (x = 0; x < width; x++)
+	for (x = 0; x < dstwidth; x++)
 	    XPutPixel( bmpImage, x, lines, colors[*bits++] );
-	bits += pad;
+        srcbits += linebytes;
+        bits     = srcbits;
     }
 }
 
@@ -400,12 +433,12 @@ enum Rle8_EscapeCodes
   RleDelta	= 2		/* Delta */
 };
   
-static void DIB_SetImageBits_RLE8( DWORD lines, BYTE *bits, DWORD width,
-                                   int *colors, XImage *bmpImage )
+static void DIB_SetImageBits_RLE8( DWORD lines, const BYTE *bits, DWORD width,
+                                DWORD dstwidth, int *colors, XImage *bmpImage )
 {
     int x;			/* X-positon on each line.  Increases. */
     int line;			/* Line #.  Starts at lines-1, decreases */
-    BYTE *pIn = bits;		/* Pointer to current position in bits */
+    const BYTE *pIn = bits;     /* Pointer to current position in bits */
     BYTE length;		/* The length pf a run */
     BYTE color_index;		/* index into colors[] as read from bits */
     BYTE escape_code;		/* See enum Rle8_EscapeCodes.*/
@@ -553,21 +586,25 @@ static void DIB_SetImageBits_RLE8( DWORD lines, BYTE *bits, DWORD width,
  *
  * SetDIBits for a 24-bit deep DIB.
  */
-static void DIB_SetImageBits_24( DWORD lines, BYTE *bits, DWORD width,
+static void DIB_SetImageBits_24( DWORD lines, const BYTE *srcbits,
+                                 DWORD srcwidth, DWORD dstwidth,
 				 DC *dc, XImage *bmpImage )
 {
     DWORD x;
-    BYTE pad = (4 - ((width*3) & 3)) & 3;
+    const BYTE *bits = srcbits;
+  
+    /* align to 32 bit */
+    DWORD linebytes = (srcwidth * 3 + 3) & ~3;
 
     /* "bits" order is reversed for some reason */
 
     while (lines--)
     {
-	for (x = 0; x < width; x++, bits += 3)
+	for (x = 0; x < dstwidth; x++, bits += 3)
 	    XPutPixel( bmpImage, x, lines, 
 		       COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])) );
 
-	bits += pad;
+        bits = (srcbits += linebytes);
     }
 }
 
@@ -578,70 +615,68 @@ static void DIB_SetImageBits_24( DWORD lines, BYTE *bits, DWORD width,
  * Transfer the bits to an X image.
  * Helper function for SetDIBits() and SetDIBitsToDevice().
  */
-static int DIB_SetImageBits( DC *dc, DWORD lines, WORD depth, LPSTR bits,
-                             DWORD infoWidth, WORD infoBpp,
-                             BITMAPINFO *info, WORD coloruse,
-			     Drawable drawable, GC gc, int xSrc, int ySrc,
-			     int xDest, int yDest, int width, int height )
+static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
 {
     int *colorMapping;
     XImage *bmpImage;
     DWORD compression = 0;
 
-    if (info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
-        compression = info->bmiHeader.biCompression;
+    if (descr->info->bmiHeader.biSize == sizeof(BITMAPINFOHEADER))
+        compression = descr->info->bmiHeader.biCompression;
 
       /* Build the color mapping table */
 
-    if (infoBpp > 8) {
-	    	colorMapping = NULL;
-    } else {
-        if (!(colorMapping = DIB_BuildColorMap( dc, coloruse, depth, info )))
-            return 0;
-    }
+    if (descr->infoBpp > 8) colorMapping = NULL;
+    else if (!(colorMapping = DIB_BuildColorMap( descr->dc, descr->coloruse,
+                                                 descr->depth, descr->info )))
+        return 0;
 
-    if( dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(dc);
+    if( descr->dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(descr->dc);
 
       /* Transfer the pixels */
-    XCREATEIMAGE(bmpImage, infoWidth, lines, depth );
+    XCREATEIMAGE(bmpImage, descr->infoWidth, descr->lines, descr->depth );
 
-    switch(infoBpp)
+    switch(descr->infoBpp)
     {
     case 1:
-	DIB_SetImageBits_1( lines, bits, infoWidth,
-			    colorMapping, bmpImage );
+	DIB_SetImageBits_1( descr->lines, descr->bits, descr->infoWidth,
+			    descr->width, colorMapping, bmpImage );
 	break;
     case 4:
-	if (compression) DIB_SetImageBits_RLE4( lines, bits, infoWidth,
+	if (compression) DIB_SetImageBits_RLE4( descr->lines, descr->bits,
+                                                descr->infoWidth, descr->width,
                                                 colorMapping, bmpImage );
-	else DIB_SetImageBits_4( lines, bits, infoWidth,
-                                 colorMapping, bmpImage );
+	else DIB_SetImageBits_4( descr->lines, descr->bits, descr->infoWidth,
+                                 descr->width, colorMapping, bmpImage );
 	break;
     case 8:
-	if (compression) DIB_SetImageBits_RLE8( lines, bits, infoWidth,
+	if (compression) DIB_SetImageBits_RLE8( descr->lines, descr->bits,
+                                                descr->infoWidth, descr->width,
                                                 colorMapping, bmpImage );
-	else DIB_SetImageBits_8( lines, bits, infoWidth,
-                                 colorMapping, bmpImage );
+	else DIB_SetImageBits_8( descr->lines, descr->bits, descr->infoWidth,
+                                 descr->width, colorMapping, bmpImage );
 	break;
     case 24:
-	DIB_SetImageBits_24( lines, bits, infoWidth, dc, bmpImage );
+	DIB_SetImageBits_24( descr->lines, descr->bits, descr->infoWidth,
+                             descr->width, descr->dc, bmpImage );
 	break;
     default:
-        fprintf( stderr, "Invalid depth %d for SetDIBits!\n", infoBpp );
+        fprintf( stderr, "Invalid depth %d for SetDIBits!\n", descr->infoBpp );
         break;
     }
     if (colorMapping) free(colorMapping);
-    XPutImage( display, drawable, gc, bmpImage, xSrc, ySrc,
-	       xDest, yDest, width, height );
+    XPutImage( display, descr->drawable, descr->gc, bmpImage,
+               descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
+               descr->width, descr->height );
     XDestroyImage( bmpImage );
-    return lines;
+    return descr->lines;
 }
 
 
 /***********************************************************************
  *           StretchDIBits16   (GDI.439)
  */
-INT16 StretchDIBits16( HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
+INT16 WINAPI StretchDIBits16(HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
                        INT16 heightDst, INT16 xSrc, INT16 ySrc, INT16 widthSrc,
                        INT16 heightSrc, const VOID *bits,
                        const BITMAPINFO *info, UINT16 wUsage, DWORD dwRop )
@@ -655,7 +690,7 @@ INT16 StretchDIBits16( HDC16 hdc, INT16 xDst, INT16 yDst, INT16 widthDst,
 /***********************************************************************
  *           StretchDIBits32   (GDI32.351)
  */
-INT32 StretchDIBits32( HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
+INT32 WINAPI StretchDIBits32(HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
                        INT32 heightDst, INT32 xSrc, INT32 ySrc, INT32 widthSrc,
                        INT32 heightSrc, const void *bits,
                        const BITMAPINFO *info, UINT32 wUsage, DWORD dwRop )
@@ -679,9 +714,9 @@ INT32 StretchDIBits32( HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
 /***********************************************************************
  *           SetDIBits16    (GDI.440)
  */
-INT16 SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
-                   UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
-                   UINT16 coloruse )
+INT16 WINAPI SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
+                          UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
+                          UINT16 coloruse )
 {
     return SetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
 }
@@ -690,43 +725,68 @@ INT16 SetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
 /***********************************************************************
  *           SetDIBits32   (GDI32.312)
  */
-INT32 SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
-                   UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
-                   UINT32 coloruse )
+INT32 WINAPI SetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
+                          UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
+                          UINT32 coloruse )
 {
-    DC * dc;
+    DIB_SETIMAGEBITS_DESCR descr;
     BITMAPOBJ * bmp;
-    DWORD width, height;
-    WORD bpp;
+    DWORD height;
+    INT32 result;
 
       /* Check parameters */
 
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
+    descr.dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!descr.dc) 
     {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
+	descr.dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
+	if (!descr.dc) return 0;
     }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
-	return 0;
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
+    {
+        GDI_HEAP_UNLOCK( hdc );
         return 0;
-    if (!lines || (startscan >= (WORD)height)) return 0;
+    }
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &height,
+                           &descr.infoBpp ) == -1)
+    {
+        GDI_HEAP_UNLOCK( hbitmap );
+        GDI_HEAP_UNLOCK( hdc );
+        return 0;
+    }
+    if (!lines || (startscan >= height))
+    {
+        GDI_HEAP_UNLOCK( hbitmap );
+        GDI_HEAP_UNLOCK( hdc );
+        return 0;
+    }
     if (startscan + lines > height) lines = height - startscan;
 
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 16,
-                                dc, lines, bmp->bitmap.bmBitsPixel,
-                                bits, width, bpp, info,
-                                coloruse, bmp->pixmap, BITMAP_GC(bmp), 0, 0, 0,
-                                height - startscan - lines,
-                                bmp->bitmap.bmWidth, lines );
+    descr.bits      = bits;
+    descr.lines     = lines;
+    descr.depth     = bmp->bitmap.bmBitsPixel;
+    descr.info      = info;
+    descr.coloruse  = coloruse;
+    descr.drawable  = bmp->pixmap;
+    descr.gc        = BITMAP_GC(bmp);
+    descr.xSrc      = 0;
+    descr.ySrc      = 0;
+    descr.xDest     = 0;
+    descr.yDest     = height - startscan - lines;
+    descr.width     = bmp->bitmap.bmWidth;
+    descr.height    = lines;
+
+    result = CALL_LARGE_STACK( DIB_SetImageBits, &descr );
+    GDI_HEAP_UNLOCK( hdc );
+    GDI_HEAP_UNLOCK( hbitmap );
+    return result;
 }
 
 
 /***********************************************************************
  *           SetDIBitsToDevice16    (GDI.443)
  */
-INT16 SetDIBitsToDevice16( HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
+INT16 WINAPI SetDIBitsToDevice16(HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
                            INT16 cy, INT16 xSrc, INT16 ySrc, UINT16 startscan,
                            UINT16 lines, LPCVOID bits, const BITMAPINFO *info,
                            UINT16 coloruse )
@@ -739,14 +799,14 @@ INT16 SetDIBitsToDevice16( HDC16 hdc, INT16 xDest, INT16 yDest, INT16 cx,
 /***********************************************************************
  *           SetDIBitsToDevice32   (GDI32.313)
  */
-INT32 SetDIBitsToDevice32( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
+INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
                            DWORD cy, INT32 xSrc, INT32 ySrc, UINT32 startscan,
                            UINT32 lines, LPCVOID bits, const BITMAPINFO *info,
                            UINT32 coloruse )
 {
+    DIB_SETIMAGEBITS_DESCR descr;
     DC * dc;
     DWORD width, height;
-    WORD bpp;
 
       /* Check parameters */
 
@@ -756,7 +816,8 @@ INT32 SetDIBitsToDevice32( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0;
     }
-    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &bpp ) == -1)
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &width,
+                           &height, &descr.infoBpp ) == -1)
         return 0;
     if (!lines || (startscan >= height)) return 0;
     if (startscan + lines > height) lines = height - startscan;
@@ -769,14 +830,24 @@ INT32 SetDIBitsToDevice32( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 
     DC_SetupGCForText( dc );  /* To have the correct colors */
     XSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 16,
-                                dc, lines, dc->w.bitsPerPixel, bits, width,
-                                bpp, info, coloruse,
-                                dc->u.x.drawable, dc->u.x.gc,
-                                xSrc, ySrc - startscan,
-                                dc->w.DCOrgX + XLPTODP( dc, xDest ),
-                                dc->w.DCOrgY + YLPTODP( dc, yDest ),
-                                cx, cy );
+
+    descr.dc        = dc;
+    descr.bits      = bits;
+    descr.lines     = lines;
+    descr.infoWidth = width;
+    descr.depth     = dc->w.bitsPerPixel;
+    descr.info      = info;
+    descr.coloruse  = coloruse;
+    descr.drawable  = dc->u.x.drawable;
+    descr.gc        = dc->u.x.gc;
+    descr.xSrc      = xSrc;
+    descr.ySrc      = ySrc - startscan;
+    descr.xDest     = dc->w.DCOrgX + XLPTODP( dc, xDest );
+    descr.yDest     = dc->w.DCOrgY + YLPTODP( dc, yDest );
+    descr.width     = cx;
+    descr.height    = cy;
+
+    return CALL_LARGE_STACK( DIB_SetImageBits, &descr );
 }
 
 
@@ -784,9 +855,9 @@ INT32 SetDIBitsToDevice32( HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 /***********************************************************************
  *           GetDIBits16    (GDI.441)
  */
-INT16 GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
-                   UINT16 lines, LPSTR bits, BITMAPINFO * info,
-                   UINT16 coloruse )
+INT16 WINAPI GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
+                          UINT16 lines, LPSTR bits, BITMAPINFO * info,
+                          UINT16 coloruse )
 {
     return GetDIBits32( hdc, hbitmap, startscan, lines, bits, info, coloruse );
 }
@@ -797,9 +868,9 @@ INT16 GetDIBits16( HDC16 hdc, HBITMAP16 hbitmap, UINT16 startscan,
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/func/src/f30_14.htm
  */
-INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
-                   UINT32 lines, LPSTR bits, BITMAPINFO * info,
-                   UINT32 coloruse )
+INT32 WINAPI GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
+                          UINT32 lines, LPSTR bits, BITMAPINFO * info,
+                          UINT32 coloruse )
 {
     DC * dc;
     BITMAPOBJ * bmp;
@@ -818,7 +889,10 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
 	return 0;
     if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
-	return 0;
+    {
+        GDI_HEAP_UNLOCK( hbitmap );
+        return 0;
+    }
 
       /* Transfer color info */
     
@@ -851,7 +925,11 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	if( lines > info->bmiHeader.biHeight ) lines = info->bmiHeader.biHeight;
 	yend = startscan + lines;
 	if( startscan >= bmp->bitmap.bmHeight ) 
-	    return FALSE;
+        {
+            GDI_HEAP_UNLOCK( hbitmap );
+            GDI_HEAP_UNLOCK( dc->w.hPalette );
+            return FALSE;
+        }
 	if( yend > bmp->bitmap.bmHeight ) yend = bmp->bitmap.bmHeight;
 
 	/* adjust scanline width */
@@ -861,12 +939,11 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	{
 	    /* bitmap is wider than DIB, copy only a part */
 
-	    pad = 0; xend = info->bmiHeader.biWidth;
+	    pad = 0;
+            xend = info->bmiHeader.biWidth;
 	}
 
-	bmpImage = (XImage *)CallTo32_LargeStack( (int (*)())XGetImage, 8, 
-		               display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
-		               bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
+	bmpImage = (XImage *)CALL_LARGE_STACK( BITMAP_GetXImage, bmp );
 
 	switch( info->bmiHeader.biBitCount )
 	{
@@ -965,6 +1042,8 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	info->bmiHeader.biCompression = 0;
     }
 
+    GDI_HEAP_UNLOCK( hbitmap );
+    GDI_HEAP_UNLOCK( dc->w.hPalette );
     return lines;
 }
 
@@ -972,7 +1051,7 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 /***********************************************************************
  *           CreateDIBitmap16    (GDI.442)
  */
-HBITMAP16 CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
+HBITMAP16 WINAPI CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
                             DWORD init, LPCVOID bits, const BITMAPINFO * data,
                             UINT16 coloruse )
 {
@@ -983,7 +1062,7 @@ HBITMAP16 CreateDIBitmap16( HDC16 hdc, const BITMAPINFOHEADER * header,
 /***********************************************************************
  *           CreateDIBitmap32    (GDI32.37)
  */
-HBITMAP32 CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
+HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
                             DWORD init, LPCVOID bits, const BITMAPINFO *data,
                             UINT32 coloruse )
 {

@@ -28,7 +28,7 @@ struct Win87EmInfoStruct
  */
 /* FIXME: Only skeletal implementation for now */
 
-void WIN87_fpmath( CONTEXT *context )
+void WINAPI WIN87_fpmath( CONTEXT *context )
 {
     dprintf_int(stddeb, "_fpmath: (cs:eip=%x:%lx es=%x bx=%04x ax=%04x dx==%04x)\n",
                  (WORD)CS_reg(context), EIP_reg(context),
@@ -107,21 +107,20 @@ void WIN87_fpmath( CONTEXT *context )
 }
 
 
-void
-WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS, int cbWin87EmInfoStruct)
+void WINAPI WIN87_WinEm87Info(struct Win87EmInfoStruct *pWIS,
+                              int cbWin87EmInfoStruct)
 {
   dprintf_int(stddeb, "__WinEm87Info(%p,%d)\n",pWIS,cbWin87EmInfoStruct);
 }
 
-void
-WIN87_WinEm87Restore(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
+void WINAPI WIN87_WinEm87Restore(void *pWin87EmSaveArea,
+                                 int cbWin87EmSaveArea)
 {
   dprintf_int(stddeb, "__WinEm87Restore(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);
 }
 
-void
-WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
+void WINAPI WIN87_WinEm87Save(void *pWin87EmSaveArea, int cbWin87EmSaveArea)
 {
   dprintf_int(stddeb, "__WinEm87Save(%p,%d)\n",
 	pWin87EmSaveArea,cbWin87EmSaveArea);

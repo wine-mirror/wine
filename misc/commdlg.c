@@ -56,7 +56,7 @@ static BOOL32 FileDlg_Init()
 /***********************************************************************
  *           GetOpenFileName   (COMMDLG.1)
  */
-BOOL16 GetOpenFileName16( SEGPTR ofn )
+BOOL16 WINAPI GetOpenFileName16( SEGPTR ofn )
 {
     HINSTANCE16 hInst;
     HANDLE32 hDlgTmpl = 0, hResInfo;
@@ -146,7 +146,7 @@ BOOL16 GetOpenFileName16( SEGPTR ofn )
 /***********************************************************************
  *           GetSaveFileName   (COMMDLG.2)
  */
-BOOL16 GetSaveFileName16( SEGPTR ofn)
+BOOL16 WINAPI GetSaveFileName16( SEGPTR ofn)
 {
     HINSTANCE16 hInst;
     HANDLE32 hDlgTmpl = 0;
@@ -296,7 +296,7 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
 	  return fptr;
 	fptr += strlen(fptr) + 1;
     }
-  return NULL;
+  return "*.*"; /* FIXME */
 }
 
 /***********************************************************************
@@ -417,22 +417,51 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME16 lpofn)
  return 0;   
 } 
 
+/***********************************************************************
+ *                              FILEDLG_CallWindowProc             [internal]
+ *
+ * Adapt the structures back for win32 calls so the callee can read lpCustData
+ */
 static BOOL32 FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND32 hwnd,
 	UINT32 wMsg,WPARAM32 wParam,LPARAM lParam
+
 ) {
+	BOOL32	needstruct;
+
+	needstruct = (PTR_SEG_TO_LIN(lParam) == lpofn);
+
 	if (!(lpofn->Flags & OFN_WINE32))
 		return (BOOL32)CallWindowProc16(
 			lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
 		);
 	/* |OFN_WINE32 */
-	if (lpofn->Flags & OFN_UNICODE)
-		return (BOOL32)CallWindowProc32W(
+	if (lpofn->Flags & OFN_UNICODE) {
+		if (needstruct) {
+		    OPENFILENAME32W ofnw;
+
+		    /* FIXME: probably needs more converted */
+		    ofnw.lCustData = lpofn->lCustData;
+		    return (BOOL32)CallWindowProc32W(
+			    (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofnw
+		    );
+		} else
+		    return (BOOL32)CallWindowProc32W(
+			    (WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
+		    );
+	}
+	/* ! |OFN_UNICODE */
+	if (needstruct) {
+		OPENFILENAME32A ofna;
+
+		/* FIXME: probably needs more converted */
+		ofna.lCustData = lpofn->lCustData;
+		return (BOOL32)CallWindowProc32A(
+			(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,(LPARAM)&ofna
+		);
+	} else
+		return (BOOL32)CallWindowProc32A(
 			(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
 		);
-	/* ! |OFN_UNICODE */
-	return (BOOL32)CallWindowProc32A(
-		(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
-	);
 
 }
 
@@ -718,7 +747,8 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                               LPARAM lParam)
 {  
  LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -761,7 +791,8 @@ LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                               LPARAM lParam)
 {
  LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -808,7 +839,7 @@ LRESULT FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam
 /***********************************************************************
  *           FindTextDlg   (COMMDLG.11)
  */
-HWND16 FindText( SEGPTR find )
+HWND16 WINAPI FindText( SEGPTR find )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -833,7 +864,7 @@ HWND16 FindText( SEGPTR find )
 /***********************************************************************
  *           ReplaceText   (COMMDLG.12)
  */
-HWND16 ReplaceText( SEGPTR find )
+HWND16 WINAPI ReplaceText( SEGPTR find )
 {
     HANDLE16 hInst;
     LPCVOID ptr;
@@ -946,7 +977,8 @@ static LRESULT FINDDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-LRESULT FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                               LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -1066,7 +1098,8 @@ static LRESULT REPLACEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                                  LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -1081,7 +1114,7 @@ LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lPa
 /***********************************************************************
  *           PrintDlg   (COMMDLG.20)
  */
-BOOL16 PrintDlg( SEGPTR printdlg )
+BOOL16 WINAPI PrintDlg( SEGPTR printdlg )
 {
     HANDLE16 hInst;
     BOOL16 bRet = FALSE;
@@ -1115,7 +1148,8 @@ BOOL16 PrintDlg( SEGPTR printdlg )
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                            LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1142,7 +1176,8 @@ LRESULT PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
+                                 LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1168,7 +1203,7 @@ LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lPar
 /***********************************************************************
  *           CommDlgExtendedError   (COMMDLG.26)
  */
-DWORD CommDlgExtendedError(void)
+DWORD WINAPI CommDlgExtendedError(void)
 {
   return CommDlgLastError;
 }
@@ -1176,7 +1211,7 @@ DWORD CommDlgExtendedError(void)
 /***********************************************************************
  *           GetFileTitleA   (COMDLG32.8)
  */
-short GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
+short WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 {
     int i, len;
     dprintf_commdlg(stddeb,"GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
@@ -1210,7 +1245,7 @@ short GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 /***********************************************************************
  *           GetFileTitleA   (COMDLG32.8)
  */
-short GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
+short WINAPI GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
 {
 	LPSTR file = HEAP_strdupWtoA(GetProcessHeap(),0,lpFile);
 	LPSTR title = HeapAlloc(GetProcessHeap(),0,cbBuf);
@@ -1226,7 +1261,8 @@ short GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
 /***********************************************************************
  *           GetFileTitle   (COMMDLG.27)
  */
-short GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf) {
+short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
+{
     return GetFileTitle32A(lpFile,lpTitle,cbBuf);
 }
 
@@ -1236,7 +1272,7 @@ short GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf) {
 /***********************************************************************
  *           ChooseColor   (COMMDLG.5)
  */
-BOOL16 ChooseColor(LPCHOOSECOLOR lpChCol)
+BOOL16 WINAPI ChooseColor(LPCHOOSECOLOR lpChCol)
 {
     HINSTANCE16 hInst;
     HANDLE16 hDlgTmpl = 0;
@@ -2272,8 +2308,8 @@ static LRESULT CC_WMLButtonDown(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ColorDlgProc   (COMMDLG.8)
  */
-LRESULT ColorDlgProc(HWND16 hDlg, UINT16 message,
-                     WPARAM16 wParam, LONG lParam)
+LRESULT WINAPI ColorDlgProc(HWND16 hDlg, UINT16 message,
+                            WPARAM16 wParam, LONG lParam)
 {
  int res;
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -2331,7 +2367,7 @@ LRESULT ColorDlgProc(HWND16 hDlg, UINT16 message,
 /***********************************************************************
  *                        ChooseFont   (COMMDLG.15)     
  */
-BOOL16 ChooseFont(LPCHOOSEFONT lpChFont)
+BOOL16 WINAPI ChooseFont(LPCHOOSEFONT lpChFont)
 {
     HINSTANCE16 hInst;
     HANDLE16 hDlgTmpl = 0;
@@ -2411,8 +2447,8 @@ static BOOL32 CFn_HookCallChk(LPCHOOSEFONT lpcf)
 /***********************************************************************
  *                FontFamilyEnumProc                       (COMMDLG.19)
  */
-INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
-                          UINT16 nFontType, LPARAM lParam )
+INT16 WINAPI FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
+                                 UINT16 nFontType, LPARAM lParam )
 {
   int i;
   WORD w;
@@ -2529,8 +2565,8 @@ static int SetFontSizesToCombo3(HWND16 hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf
 /***********************************************************************
  *                 FontStyleEnumProc                     (COMMDLG.18)
  */
-INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
-                         UINT16 nFontType, LPARAM lParam )
+INT16 WINAPI FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
+                                UINT16 nFontType, LPARAM lParam )
 {
   HWND16 hcmb2=LOWORD(lParam);
   HWND16 hcmb3=HIWORD(lParam);
@@ -2947,7 +2983,8 @@ LRESULT CFn_WMCommand(HWND16 hDlg, WPARAM16 wParam, LPARAM lParam)
                     2. some CF_.. flags are not supported
                     3. some TType extensions
  */
-LRESULT FormatCharDlgProc(HWND16 hDlg, UINT16 message, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI FormatCharDlgProc(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
+                                 LPARAM lParam)
 {
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER);  
   if (message!=WM_INITDIALOG)
@@ -2983,7 +3020,7 @@ LRESULT FormatCharDlgProc(HWND16 hDlg, UINT16 message, WPARAM16 wParam, LPARAM l
 
 
 #define GET_XXX_FILENAME(xxx) 						\
-BOOL32 xxx##32A( LPOPENFILENAME32A ofn )				\
+BOOL32 WINAPI xxx##32A( LPOPENFILENAME32A ofn )				\
 {									\
 	BOOL16 ret;							\
 	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));	\
@@ -3062,7 +3099,7 @@ BOOL32 xxx##32A( LPOPENFILENAME32A ofn )				\
 	return ret;							\
 }									\
 									\
-BOOL32 xxx##32W( LPOPENFILENAME32W ofn )				\
+BOOL32 WINAPI xxx##32W( LPOPENFILENAME32W ofn )				\
 {									\
 	BOOL16 ret;							\
 	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));	\

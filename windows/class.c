@@ -304,7 +304,7 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
 /***********************************************************************
  *           RegisterClass16    (USER.57)
  */
-ATOM RegisterClass16( const WNDCLASS16 *wc )
+ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -342,7 +342,7 @@ bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 /***********************************************************************
  *           RegisterClass32A      (USER32.426)
  */
-ATOM RegisterClass32A( const WNDCLASS32A* wc )
+ATOM WINAPI RegisterClass32A( const WNDCLASS32A* wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -379,7 +379,7 @@ hinst=%04x bg=%04x style=%08x clsExt=%d winExt=%d class=%p name='%s'\n",
 /***********************************************************************
  *           RegisterClass32W      (USER32.429)
  */
-ATOM RegisterClass32W( const WNDCLASS32W* wc )
+ATOM WINAPI RegisterClass32W( const WNDCLASS32W* wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -414,7 +414,7 @@ ATOM RegisterClass32W( const WNDCLASS32W* wc )
 /***********************************************************************
  *           RegisterClassEx16    (USER.397)
  */
-ATOM RegisterClassEx16( const WNDCLASSEX16 *wc )
+ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -449,7 +449,7 @@ ATOM RegisterClassEx16( const WNDCLASSEX16 *wc )
 /***********************************************************************
  *           RegisterClassEx32A      (USER32.427)
  */
-ATOM RegisterClassEx32A( const WNDCLASSEX32A* wc )
+ATOM WINAPI RegisterClassEx32A( const WNDCLASSEX32A* wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -484,7 +484,7 @@ ATOM RegisterClassEx32A( const WNDCLASSEX32A* wc )
 /***********************************************************************
  *           RegisterClassEx32W      (USER32.428)
  */
-ATOM RegisterClassEx32W( const WNDCLASSEX32W* wc )
+ATOM WINAPI RegisterClassEx32W( const WNDCLASSEX32W* wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -519,7 +519,7 @@ ATOM RegisterClassEx32W( const WNDCLASSEX32W* wc )
 /***********************************************************************
  *           UnregisterClass16    (USER.403)
  */
-BOOL16 UnregisterClass16( SEGPTR className, HINSTANCE16 hInstance )
+BOOL16 WINAPI UnregisterClass16( SEGPTR className, HINSTANCE16 hInstance )
 {
     CLASS *classPtr;
     ATOM atom;
@@ -535,7 +535,7 @@ BOOL16 UnregisterClass16( SEGPTR className, HINSTANCE16 hInstance )
 /***********************************************************************
  *           UnregisterClass32A    (USER32.562)
  */
-BOOL32 UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
+BOOL32 WINAPI UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
 {
     CLASS *classPtr;
     ATOM atom;
@@ -551,7 +551,7 @@ BOOL32 UnregisterClass32A( LPCSTR className, HINSTANCE32 hInstance )
 /***********************************************************************
  *           UnregisterClass32W    (USER32.563)
  */
-BOOL32 UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
+BOOL32 WINAPI UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
 {
     CLASS *classPtr;
     ATOM atom;
@@ -567,7 +567,7 @@ BOOL32 UnregisterClass32W( LPCWSTR className, HINSTANCE32 hInstance )
 /***********************************************************************
  *           GetClassWord16    (USER.129)
  */
-WORD GetClassWord16( HWND16 hwnd, INT16 offset )
+WORD WINAPI GetClassWord16( HWND16 hwnd, INT16 offset )
 {
     return GetClassWord32( hwnd, offset );
 }
@@ -576,7 +576,7 @@ WORD GetClassWord16( HWND16 hwnd, INT16 offset )
 /***********************************************************************
  *           GetClassWord32    (USER32.218)
  */
-WORD GetClassWord32( HWND32 hwnd, INT32 offset )
+WORD WINAPI GetClassWord32( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -607,7 +607,7 @@ WORD GetClassWord32( HWND32 hwnd, INT32 offset )
 /***********************************************************************
  *           GetClassLong16    (USER.131)
  */
-LONG GetClassLong16( HWND16 hwnd, INT16 offset )
+LONG WINAPI GetClassLong16( HWND16 hwnd, INT16 offset )
 {
     WND *wndPtr;
     LONG ret;
@@ -629,7 +629,7 @@ LONG GetClassLong16( HWND16 hwnd, INT16 offset )
 /***********************************************************************
  *           GetClassLong32A    (USER32.214)
  */
-LONG GetClassLong32A( HWND32 hwnd, INT32 offset )
+LONG WINAPI GetClassLong32A( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -663,7 +663,7 @@ LONG GetClassLong32A( HWND32 hwnd, INT32 offset )
 /***********************************************************************
  *           GetClassLong32W    (USER32.215)
  */
-LONG GetClassLong32W( HWND32 hwnd, INT32 offset )
+LONG WINAPI GetClassLong32W( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
 
@@ -684,7 +684,7 @@ LONG GetClassLong32W( HWND32 hwnd, INT32 offset )
 /***********************************************************************
  *           SetClassWord16    (USER.130)
  */
-WORD SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
+WORD WINAPI SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 {
     return SetClassWord32( hwnd, offset, newval );
 }
@@ -693,7 +693,7 @@ WORD SetClassWord16( HWND16 hwnd, INT16 offset, WORD newval )
 /***********************************************************************
  *           SetClassWord32    (USER32.468)
  */
-WORD SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
+WORD WINAPI SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
 {
     WND * wndPtr;
     WORD retval = 0;
@@ -737,7 +737,7 @@ WORD SetClassWord32( HWND32 hwnd, INT32 offset, WORD newval )
 /***********************************************************************
  *           SetClassLong16    (USER.132)
  */
-LONG SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
+LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 {
     WND *wndPtr;
     LONG retval;
@@ -761,7 +761,7 @@ LONG SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 /***********************************************************************
  *           SetClassLong32A    (USER32.466)
  */
-LONG SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
+LONG WINAPI SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 {
     WND * wndPtr;
     LONG retval = 0;
@@ -813,7 +813,7 @@ LONG SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 /***********************************************************************
  *           SetClassLong32W    (USER32.467)
  */
-LONG SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
+LONG WINAPI SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 {
     WND *wndPtr;
     LONG retval;
@@ -839,7 +839,7 @@ LONG SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 /***********************************************************************
  *           GetClassName16      (USER.58)
  */
-INT16 GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
+INT16 WINAPI GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -850,7 +850,7 @@ INT16 GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 /***********************************************************************
  *           GetClassName32A      (USER32.216)
  */
-INT32 GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
+INT32 WINAPI GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -861,7 +861,7 @@ INT32 GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
 /***********************************************************************
  *           GetClassName32W      (USER32.217)
  */
-INT32 GetClassName32W( HWND32 hwnd, LPWSTR buffer, INT32 count )
+INT32 WINAPI GetClassName32W( HWND32 hwnd, LPWSTR buffer, INT32 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -872,15 +872,19 @@ INT32 GetClassName32W( HWND32 hwnd, LPWSTR buffer, INT32 count )
 /***********************************************************************
  *           GetClassInfo16      (USER.404)
  */
-BOOL16 GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
+BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name,
+                              WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
 
     hInstance = GetExePtr( hInstance );
     if (!(atom = GlobalFindAtom16( name )) ||
-        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-        (hInstance != classPtr->hInstance)) return FALSE;
+        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
+        return FALSE;
+    if ((hInstance != classPtr->hInstance) &&
+        !(classPtr->style & CS_GLOBALCLASS)) /*BWCC likes to pass hInstance=0*/
+        return FALSE;
     wc->style         = (UINT16)classPtr->style;
     wc->lpfnWndProc   = WINPROC_GetProc( classPtr->winproc, WIN_PROC_16 );
     wc->cbClsExtra    = (INT16)classPtr->cbClsExtra;
@@ -900,7 +904,8 @@ BOOL16 GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
 /***********************************************************************
  *           GetClassInfo32A      (USER32.210)
  */
-BOOL32 GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
+BOOL32 WINAPI GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name,
+                               WNDCLASS32A *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -929,7 +934,8 @@ BOOL32 GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
 /***********************************************************************
  *           GetClassInfo32W      (USER32.213)
  */
-BOOL32 GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
+BOOL32 WINAPI GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name,
+                               WNDCLASS32W *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -961,7 +967,8 @@ BOOL32 GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
  * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
  * same in Win16 as in Win32. --AJ
  */
-BOOL16 GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
+BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name,
+                                WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -990,8 +997,8 @@ BOOL16 GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
 /***********************************************************************
  *           GetClassInfoEx32A      (USER32.211)
  */
-BOOL32 GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
-                          WNDCLASSEX32A *wc )
+BOOL32 WINAPI GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
+                                 WNDCLASSEX32A *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -1019,8 +1026,8 @@ BOOL32 GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
 /***********************************************************************
  *           GetClassInfoEx32W      (USER32.212)
  */
-BOOL32 GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
-                          WNDCLASSEX32W *wc )
+BOOL32 WINAPI GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
+                                 WNDCLASSEX32W *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -1048,7 +1055,7 @@ BOOL32 GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
 /***********************************************************************
  *           ClassFirst      (TOOLHELP.69)
  */
-BOOL16 ClassFirst( CLASSENTRY *pClassEntry )
+BOOL16 WINAPI ClassFirst( CLASSENTRY *pClassEntry )
 {
     pClassEntry->wNext = 1;
     return ClassNext( pClassEntry );
@@ -1058,7 +1065,7 @@ BOOL16 ClassFirst( CLASSENTRY *pClassEntry )
 /***********************************************************************
  *           ClassNext      (TOOLHELP.70)
  */
-BOOL16 ClassNext( CLASSENTRY *pClassEntry )
+BOOL16 WINAPI ClassNext( CLASSENTRY *pClassEntry )
 {
     int i;
     CLASS *class = firstClass;

@@ -92,7 +92,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL32 bUpdate)
 /***********************************************************************
  *           BeginPaint16    (USER.39)
  */
-HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
+HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
     BOOL32 bIcon;
     HRGN32 hrgnUpdate;
@@ -156,7 +156,7 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 /***********************************************************************
  *           BeginPaint32    (USER32.9)
  */
-HDC32 BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
+HDC32 WINAPI BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
 {
     PAINTSTRUCT16 ps;
 
@@ -176,7 +176,7 @@ HDC32 BeginPaint32( HWND32 hwnd, PAINTSTRUCT32 *lps )
 /***********************************************************************
  *           EndPaint16    (USER.40)
  */
-BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
+BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
     ReleaseDC16( hwnd, lps->hdc );
     ShowCaret32( hwnd );
@@ -187,7 +187,7 @@ BOOL16 EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 /***********************************************************************
  *           EndPaint32    (USER32.175)
  */
-BOOL32 EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
+BOOL32 WINAPI EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
 {
     ReleaseDC32( hwnd, lps->hdc );
     ShowCaret32( hwnd );
@@ -198,7 +198,7 @@ BOOL32 EndPaint32( HWND32 hwnd, const PAINTSTRUCT32 *lps )
 /***********************************************************************
  *           FillWindow    (USER.324)
  */
-void FillWindow( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
+void WINAPI FillWindow( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
 {
     RECT16 rect;
     GetClientRect16( hwnd, &rect );
@@ -210,8 +210,8 @@ void FillWindow( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
 /***********************************************************************
  *           PaintRect    (USER.325)
  */
-void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
-                HBRUSH16 hbrush, const RECT16 *rect)
+void WINAPI PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
+                       HBRUSH16 hbrush, const RECT16 *rect)
 {
       /* Send WM_CTLCOLOR message if needed */
 
@@ -229,7 +229,7 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 /***********************************************************************
  *           GetControlBrush    (USER.326)
  */
-HBRUSH16 GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
+HBRUSH16 WINAPI GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
 {
     return (HBRUSH16)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
                                      (WPARAM32)hdc, (LPARAM)hwnd );
@@ -462,8 +462,8 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 /***********************************************************************
  *           RedrawWindow32    (USER32.425)
  */
-BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
-                       HRGN32 hrgnUpdate, UINT32 flags )
+BOOL32 WINAPI RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
+                              HRGN32 hrgnUpdate, UINT32 flags )
 {
     return PAINT_RedrawWindow( hwnd, rectUpdate, hrgnUpdate, flags, 0 );
 }
@@ -472,8 +472,8 @@ BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
 /***********************************************************************
  *           RedrawWindow16    (USER.290)
  */
-BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
-                       HRGN16 hrgnUpdate, UINT16 flags )
+BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
+                              HRGN16 hrgnUpdate, UINT16 flags )
 {
     if (rectUpdate)
     {
@@ -489,7 +489,7 @@ BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
 /***********************************************************************
  *           UpdateWindow16   (USER.124)
  */
-void UpdateWindow16( HWND16 hwnd )
+void WINAPI UpdateWindow16( HWND16 hwnd )
 {
     PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
 }
@@ -497,7 +497,7 @@ void UpdateWindow16( HWND16 hwnd )
 /***********************************************************************
  *           UpdateWindow32   (USER32.566)
  */
-void UpdateWindow32( HWND32 hwnd )
+void WINAPI UpdateWindow32( HWND32 hwnd )
 {
     PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
 }
@@ -505,7 +505,7 @@ void UpdateWindow32( HWND32 hwnd )
 /***********************************************************************
  *           InvalidateRgn16   (USER.126)
  */
-void InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
+void WINAPI InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
     PAINT_RedrawWindow((HWND32)hwnd, NULL, (HRGN32)hrgn, 
 		       RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
@@ -515,7 +515,7 @@ void InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 /***********************************************************************
  *           InvalidateRgn32   (USER32.328)
  */
-void InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
+void WINAPI InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
     PAINT_RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
@@ -524,7 +524,7 @@ void InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 /***********************************************************************
  *           InvalidateRect16   (USER.125)
  */
-void InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
+void WINAPI InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 {
     RedrawWindow16( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
 }
@@ -533,7 +533,7 @@ void InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
 /***********************************************************************
  *           InvalidateRect32   (USER32.327)
  */
-void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
+void WINAPI InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 {
     PAINT_RedrawWindow( hwnd, rect, 0, 
 			RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
@@ -543,7 +543,7 @@ void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 /***********************************************************************
  *           ValidateRgn16   (USER.128)
  */
-void ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
+void WINAPI ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 {
     PAINT_RedrawWindow( (HWND32)hwnd, NULL, (HRGN32)hrgn, 
 			RDW_VALIDATE | RDW_NOCHILDREN, 0 );
@@ -553,7 +553,7 @@ void ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 /***********************************************************************
  *           ValidateRgn32   (USER32.571)
  */
-void ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
+void WINAPI ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
 {
     PAINT_RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
 }
@@ -562,7 +562,7 @@ void ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
 /***********************************************************************
  *           ValidateRect16   (USER.127)
  */
-void ValidateRect16( HWND16 hwnd, const RECT16 *rect )
+void WINAPI ValidateRect16( HWND16 hwnd, const RECT16 *rect )
 {
     RedrawWindow16( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
 }
@@ -571,7 +571,7 @@ void ValidateRect16( HWND16 hwnd, const RECT16 *rect )
 /***********************************************************************
  *           ValidateRect32   (USER32.570)
  */
-void ValidateRect32( HWND32 hwnd, const RECT32 *rect )
+void WINAPI ValidateRect32( HWND32 hwnd, const RECT32 *rect )
 {
     PAINT_RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
 }
@@ -580,7 +580,7 @@ void ValidateRect32( HWND32 hwnd, const RECT32 *rect )
 /***********************************************************************
  *           GetUpdateRect16   (USER.190)
  */
-BOOL16 GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
+BOOL16 WINAPI GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 {
     RECT32 r;
     BOOL16 ret;
@@ -595,7 +595,7 @@ BOOL16 GetUpdateRect16( HWND16 hwnd, LPRECT16 rect, BOOL16 erase )
 /***********************************************************************
  *           GetUpdateRect32   (USER32.296)
  */
-BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
+BOOL32 WINAPI GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return FALSE;
@@ -618,7 +618,7 @@ BOOL32 GetUpdateRect32( HWND32 hwnd, LPRECT32 rect, BOOL32 erase )
 /***********************************************************************
  *           GetUpdateRgn16   (USER.237)
  */
-INT16 GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
+INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
     return GetUpdateRgn32( hwnd, hrgn, erase );
 }
@@ -627,7 +627,7 @@ INT16 GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 /***********************************************************************
  *           GetUpdateRgn32   (USER32.297)
  */
-INT32 GetUpdateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
+INT32 WINAPI GetUpdateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
     INT32 retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -647,7 +647,7 @@ INT32 GetUpdateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 /***********************************************************************
  *           ExcludeUpdateRgn16   (USER.238)
  */
-INT16 ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
+INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 {
     return ExcludeUpdateRgn32( hdc, hwnd );
 }
@@ -656,7 +656,7 @@ INT16 ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 /***********************************************************************
  *           ExcludeUpdateRgn32   (USER32.194)
  */
-INT32 ExcludeUpdateRgn32( HDC32 hdc, HWND32 hwnd )
+INT32 WINAPI ExcludeUpdateRgn32( HDC32 hdc, HWND32 hwnd )
 {
     RECT32 rect;
     WND * wndPtr;

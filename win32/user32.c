@@ -22,7 +22,7 @@
 /***********************************************************************
  *          GetMessage32A   (USER32.269)
  */
-BOOL32 GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
+BOOL32 WINAPI GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {
     BOOL32 ret;
     MSG16 *msg = SEGPTR_NEW(MSG16);
@@ -37,7 +37,7 @@ BOOL32 GetMessage32A(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 /***********************************************************************
  *          GetMessage32W   (USER32.273)
  */
-BOOL32 GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
+BOOL32 WINAPI GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 {
     BOOL32 ret;
     MSG16 *msg = SEGPTR_NEW(MSG16);
@@ -52,8 +52,8 @@ BOOL32 GetMessage32W(MSG32* lpmsg,HWND32 hwnd,UINT32 min,UINT32 max)
 /***********************************************************************
  *         PeekMessageA
  */
-BOOL32 PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
-                       UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+BOOL32 WINAPI PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
+                              UINT32 min,UINT32 max,UINT32 wRemoveMsg)
 {
 	MSG16 msg;
 	BOOL32 ret;
@@ -66,8 +66,8 @@ BOOL32 PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
 /***********************************************************************
  *         PeekMessageW
  */
-BOOL32 PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
-                       UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+BOOL32 WINAPI PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
+                              UINT32 min,UINT32 max,UINT32 wRemoveMsg)
 {
 	/* FIXME: Should perform Unicode translation on specific messages */
 	return PeekMessage32A(lpmsg,hwnd,min,max,wRemoveMsg);

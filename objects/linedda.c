@@ -11,8 +11,8 @@
 /**********************************************************************
  *           LineDDA16   (GDI.100)
  */
-void LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd, INT16 nYEnd,
-                LINEDDAPROC16 callback, LPARAM lParam )
+void WINAPI LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd, INT16 nYEnd,
+                       LINEDDAPROC16 callback, LPARAM lParam )
 {
     LineDDA32( nXStart, nYStart, nXEnd, nYEnd,
                (LINEDDAPROC32)callback, lParam );
@@ -22,8 +22,8 @@ void LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd, INT16 nYEnd,
 /**********************************************************************
  *           LineDDA32   (GDI32.248)
  */
-BOOL32 LineDDA32( INT32 nXStart, INT32 nYStart, INT32 nXEnd, INT32 nYEnd,
-                  LINEDDAPROC32 callback, LPARAM lParam )
+BOOL32 WINAPI LineDDA32(INT32 nXStart, INT32 nYStart, INT32 nXEnd, INT32 nYEnd,
+                        LINEDDAPROC32 callback, LPARAM lParam )
 {
     INT32 xadd = 1, yadd = 1;
     INT32 err,erradd;

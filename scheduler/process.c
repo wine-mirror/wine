@@ -219,7 +219,7 @@ BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags )
 /*********************************************************************
  *           CloseHandle   (KERNEL32.23)
  */
-BOOL32 CloseHandle( HANDLE32 handle )
+BOOL32 WINAPI CloseHandle( HANDLE32 handle )
 {
     BOOL32 ret = FALSE;
     K32OBJ *ptr = NULL;
@@ -350,7 +350,7 @@ void PROCESS_Destroy( K32OBJ *ptr )
 /***********************************************************************
  *           ExitProcess   (KERNEL32.100)
  */
-void ExitProcess( DWORD status )
+void WINAPI ExitProcess( DWORD status )
 {
     TASK_KillCurrentTask( status );
 }
@@ -359,7 +359,7 @@ void ExitProcess( DWORD status )
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.198)
  */
-HANDLE32 GetCurrentProcess(void)
+HANDLE32 WINAPI GetCurrentProcess(void)
 {
     return 0x7fffffff;
 }
@@ -368,7 +368,7 @@ HANDLE32 GetCurrentProcess(void)
 /***********************************************************************
  *           GetCurrentProcessId   (KERNEL32.199)
  */
-DWORD GetCurrentProcessId(void)
+DWORD WINAPI GetCurrentProcessId(void)
 {
     return (DWORD)pCurrentProcess;
 }
@@ -377,7 +377,7 @@ DWORD GetCurrentProcessId(void)
 /***********************************************************************
  *      GetEnvironmentStrings32A   (KERNEL32.210) (KERNEL32.211)
  */
-LPSTR GetEnvironmentStrings32A(void)
+LPSTR WINAPI GetEnvironmentStrings32A(void)
 {
     assert( pCurrentProcess );
     return pCurrentProcess->env_db->environ;
@@ -387,7 +387,7 @@ LPSTR GetEnvironmentStrings32A(void)
 /***********************************************************************
  *      GetEnvironmentStrings32W   (KERNEL32.212)
  */
-LPWSTR GetEnvironmentStrings32W(void)
+LPWSTR WINAPI GetEnvironmentStrings32W(void)
 {
     INT32 size;
     LPWSTR ret, pW;
@@ -414,7 +414,7 @@ LPWSTR GetEnvironmentStrings32W(void)
 /***********************************************************************
  *           FreeEnvironmentStrings32A   (KERNEL32.141)
  */
-BOOL32 FreeEnvironmentStrings32A( LPSTR ptr )
+BOOL32 WINAPI FreeEnvironmentStrings32A( LPSTR ptr )
 {
     assert( pCurrentProcess );
     if (ptr != pCurrentProcess->env_db->environ)
@@ -429,7 +429,7 @@ BOOL32 FreeEnvironmentStrings32A( LPSTR ptr )
 /***********************************************************************
  *           FreeEnvironmentStrings32W   (KERNEL32.142)
  */
-BOOL32 FreeEnvironmentStrings32W( LPWSTR ptr )
+BOOL32 WINAPI FreeEnvironmentStrings32W( LPWSTR ptr )
 {
     assert( pCurrentProcess );
     return HeapFree( GetProcessHeap(), 0, ptr );
@@ -439,7 +439,7 @@ BOOL32 FreeEnvironmentStrings32W( LPWSTR ptr )
 /***********************************************************************
  *          GetEnvironmentVariable32A   (KERNEL32.213)
  */
-DWORD GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
+DWORD WINAPI GetEnvironmentVariable32A( LPCSTR name, LPSTR value, DWORD size )
 {
     LPSTR p;
     INT32 len, res;
@@ -470,7 +470,7 @@ not_found:
 /***********************************************************************
  *           GetEnvironmentVariable32W   (KERNEL32.214)
  */
-DWORD GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size )
+DWORD WINAPI GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size)
 {
     LPSTR name = HEAP_strdupWtoA( GetProcessHeap(), 0, nameW );
     LPSTR val  = HeapAlloc( GetProcessHeap(), 0, size );
@@ -485,7 +485,7 @@ DWORD GetEnvironmentVariable32W( LPCWSTR nameW, LPWSTR valW, DWORD size )
 /***********************************************************************
  *           SetEnvironmentVariable32A   (KERNEL32.484)
  */
-BOOL32 SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
+BOOL32 WINAPI SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
 {
     INT32 size, len, res;
     LPSTR p, env, new_env;
@@ -535,7 +535,7 @@ BOOL32 SetEnvironmentVariable32A( LPCSTR name, LPCSTR value )
 /***********************************************************************
  *           SetEnvironmentVariable32W   (KERNEL32.485)
  */
-BOOL32 SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
+BOOL32 WINAPI SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
 {
     LPSTR nameA  = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     LPSTR valueA = HEAP_strdupWtoA( GetProcessHeap(), 0, value );
@@ -549,7 +549,8 @@ BOOL32 SetEnvironmentVariable32W( LPCWSTR name, LPCWSTR value )
 /***********************************************************************
  *           ExpandEnvironmentVariablesA   (KERNEL32.103)
  */
-DWORD ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len) {
+DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
+{
 	LPCSTR s;
         LPSTR d;
 	HANDLE32	heap = GetProcessHeap();
@@ -622,7 +623,8 @@ DWORD ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len) {
 /***********************************************************************
  *           ExpandEnvironmentVariablesA   (KERNEL32.104)
  */
-DWORD ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len) {
+DWORD WINAPI ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len)
+{
 	HANDLE32	heap = GetProcessHeap();
 	LPSTR		srcA = HEAP_strdupWtoA(heap,0,src);
 	LPSTR		dstA = HeapAlloc(heap,0,len);
@@ -637,7 +639,7 @@ DWORD ExpandEnvironmentStrings32W( LPCWSTR src, LPWSTR dst, DWORD len) {
 /***********************************************************************
  *           GetProcessHeap    (KERNEL32.259)
  */
-HANDLE32 GetProcessHeap(void)
+HANDLE32 WINAPI GetProcessHeap(void)
 {
     if (!pCurrentProcess) return SystemHeap;  /* For the boot-up code */
     return pCurrentProcess->heap;
@@ -647,7 +649,7 @@ HANDLE32 GetProcessHeap(void)
 /***********************************************************************
  *           GetThreadLocale    (KERNEL32.295)
  */
-LCID GetThreadLocale(void)
+LCID WINAPI GetThreadLocale(void)
 {
     return pCurrentProcess->locale;
 }
@@ -656,7 +658,7 @@ LCID GetThreadLocale(void)
 /***********************************************************************
  *           SetPriorityClass   (KERNEL32.503)
  */
-BOOL32 SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
+BOOL32 WINAPI SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 {
     PDB32	*pdb;
 
@@ -688,7 +690,7 @@ BOOL32 SetPriorityClass( HANDLE32 hprocess, DWORD priorityclass )
 /***********************************************************************
  *           GetPriorityClass   (KERNEL32.250)
  */
-DWORD GetPriorityClass(HANDLE32 hprocess)
+DWORD WINAPI GetPriorityClass(HANDLE32 hprocess)
 {
     PDB32	*pdb;
     DWORD	ret;
@@ -726,7 +728,7 @@ DWORD GetPriorityClass(HANDLE32 hprocess)
  * FIXME: These should be allocated when a console is created, or inherited
  *        from the parent.
  */
-HANDLE32 GetStdHandle( DWORD std_handle )
+HANDLE32 WINAPI GetStdHandle( DWORD std_handle )
 {
     HFILE32 hFile;
     int fd;
@@ -771,7 +773,7 @@ HANDLE32 GetStdHandle( DWORD std_handle )
 /***********************************************************************
  *           SetStdHandle    (KERNEL32.506)
  */
-BOOL32 SetStdHandle( DWORD std_handle, HANDLE32 handle )
+BOOL32 WINAPI SetStdHandle( DWORD std_handle, HANDLE32 handle )
 {
     assert( pCurrentProcess );
     switch(std_handle)
@@ -793,8 +795,8 @@ BOOL32 SetStdHandle( DWORD std_handle, HANDLE32 handle )
 /***********************************************************************
  *           GetProcessVersion    (KERNEL32)
  */
-DWORD
-GetProcessVersion(DWORD processid) {
+DWORD WINAPI GetProcessVersion(DWORD processid)
+{
 	PDB32	*process;
 	TDB	*pTask;
 
@@ -807,4 +809,66 @@ GetProcessVersion(DWORD processid) {
 	if (!pTask)
 		return 0;
 	return (pTask->version&0xff) | (((pTask->version >>8) & 0xff)<<16);
+}
+
+/***********************************************************************
+ *           SetProcessWorkingSetSize    (KERNEL32)
+ */
+BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
+                                       DWORD maxset)
+{
+	fprintf(stderr,"SetProcessWorkingSetSize(0x%08x,%ld,%ld), STUB!\n",
+		hProcess,minset,maxset
+	);
+	return TRUE;
+}
+
+/***********************************************************************
+ *           GetProcessWorkingSetSize    (KERNEL32)
+ */
+BOOL32 WINAPI GetProcessWorkingSetSize(HANDLE32 hProcess,LPDWORD minset,
+                                       LPDWORD maxset)
+{
+	fprintf(stderr,"SetProcessWorkingSetSize(0x%08x,%p,%p), STUB!\n",
+		hProcess,minset,maxset
+	);
+	/* 32 MB working set size */
+	if (minset) *minset = 32*1024*1024;
+	if (maxset) *maxset = 32*1024*1024;
+	return TRUE;
+}
+
+/***********************************************************************
+ *           SetProcessShutdownParameters    (KERNEL32)
+ */
+BOOL32 WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
+{
+	fprintf(stderr,"SetProcessShutdownParameters(%ld,0x%08lx), STUB!\n",
+		level,flags
+	);
+	return TRUE;
+}
+
+/***********************************************************************
+ *           ReadProcessMemory    		(KERNEL32)
+ * FIXME: check this, if we ever run win32 binaries in different addressspaces
+ *	  ... and add a sizecheck
+ */
+BOOL32 WINAPI ReadProcessMemory( HANDLE32 hProcess, LPCVOID lpBaseAddress,
+                                 LPVOID lpBuffer, DWORD nSize,
+                                 LPDWORD lpNumberOfBytesRead )
+{
+	memcpy(lpBuffer,lpBaseAddress,nSize);
+	if (lpNumberOfBytesRead) *lpNumberOfBytesRead = nSize;
+	return TRUE;
+}
+
+/***********************************************************************
+ *           ConvertToGlobalHandle    		(KERNEL32)
+ * FIXME: this is not correctly implemented...
+ */
+HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 h)
+{
+	fprintf(stderr,"ConvertToGlobalHandle(%d),stub!\n",h);
+	return h;
 }

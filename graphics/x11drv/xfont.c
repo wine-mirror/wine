@@ -48,10 +48,43 @@ typedef struct __fontAlias
   struct __fontAlias*	next;
 } fontAlias;
 
+typedef struct
+{
+  LPSTR                 fatResource;
+  LPSTR                 fatAlias;
+} aliasTemplate;
+
+/* Font alias table - these 2 aliases are always present */
+
 static fontAlias aliasTable[2] = { 
 			{ "Helvetica", "Helv", &aliasTable[1] },
 			{ "Times", "Tms Rmn", NULL } 
 			};
+
+/* Optional built-in aliases, they are installed only when X
+ * cannot supply us with original MS fonts */
+
+static int	     faTemplateNum = 4;
+static aliasTemplate faTemplate[4] = {
+			  { "-adobe-helvetica-", "MS Sans Serif" },
+			  { "-bitstream-charter-", "MS Serif" },
+			  { "-adobe-times-", "Times New Roman" },
+			  { "-adobe-helvetica-", "Arial" }
+			  };
+
+/* Charset translation table, cp125-.. encoded fonts are produced by
+ * the fnt2bdf */
+
+static int	 numCPTranslation = 8;
+static BYTE	 CPTranslation[] = { EE_CHARSET,	/* cp125-0 */
+				     RUSSIAN_CHARSET,	/* cp125-1 */
+				     ANSI_CHARSET,	/* cp125-2 */
+				     GREEK_CHARSET,	/* cp125-3 */
+				     TURKISH_CHARSET,	/* cp125-4 */
+				     HEBREW_CHARSET,	/* cp125-5 */
+				     ARABIC_CHARSET,	/* cp125-6 */
+				     BALTIC_CHARSET	/* cp125-7 */
+				   }; 
 
 UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
 				    TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
@@ -64,14 +97,17 @@ static const char*	INIFontMetrics = "/.cachedmetrics";
 static const char*	INIFontSection = "fonts";
 static const char*	INISubSection = "Alias";
 static const char*	INIDefault = "Default";
+static const char*	INIResolution = "Resolution";
+static const char*	INIGlobalMetrics = "FontMetrics";
 
 static const char*	LFDSeparator = "*-";
+static const char*	localMSEncoding = "cp125-";
 static const char*	iso8859Encoding = "iso8859-";
 static const char*	iso646Encoding = "iso646.1991-";
 static const char*	ansiEncoding = "ansi-";
-static fontResource*	fontList = NULL; 	
 static unsigned		DefResolution = 0;
 
+static fontResource*	fontList = NULL;
 static fontObject*      fontCache = NULL;		/* array */
 static int		fontCacheSize = FONTCACHE;
 static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
@@ -317,28 +353,32 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
   *(lpch - 1) = LFDSeparator[1];
 
 /* charset registry, charset encoding - */
-   if( strstr(lpch, "jisx") || strstr(lpch, "ksc") ) return FALSE;	/* 2-byte stuff */
+   if( strstr(lpch, "jisx") || 
+       strstr(lpch, "ksc") || 
+       strstr(lpch, "gb2312") ) return FALSE;	/* 2-byte stuff */
 
+   fi->df.dfCharSet = ANSI_CHARSET;
    if( strstr(lpch, iso8859Encoding) )
-   {
      fi->fi_flags |= FI_ENC_ISO8859;
-     fi->df.dfCharSet = ANSI_CHARSET;
-   }
    else if( strstr(lpch, iso646Encoding) )
-   {
      fi->fi_flags |= FI_ENC_ISO646;
-     fi->df.dfCharSet = ANSI_CHARSET;
-   }
-   else if( strstr(lpch, ansiEncoding) )	/* font2bdf produces -ansi-0 LFD */
-   {
+   else if( strstr(lpch, ansiEncoding) )	/* fnt2bdf produces -ansi-0 LFD */
      fi->fi_flags |= FI_ENC_ANSI;
-     fi->df.dfCharSet = ANSI_CHARSET;
+   else						/* ... and -cp125-x */
+   {
+	fi->df.dfCharSet = OEM_CHARSET;
+	if( !strncasecmp(lpch, localMSEncoding, 6) )
+	{
+	    lpch = LFD_Advance( lpch, 1 );
+	    if( lpch && (i = atoi( lpch )) < numCPTranslation )
+	    {
+		fi->fi_flags |= FI_ENC_MSCODEPAGE;
+		fi->df.dfCharSet = CPTranslation[i];
+	    }
+	}
+	else if( strstr(lpch, "fontspecific") )
+	    fi->df.dfCharSet = SYMBOL_CHARSET;
    }
-   else if( strstr(lpch, "fontspecific") )
-     fi->df.dfCharSet = SYMBOL_CHARSET;
-   else
-     fi->df.dfCharSet = OEM_CHARSET;		/* FIXME: -cp126-.. from fnt2bdf */
-   
    return TRUE;					
 }
 
@@ -348,7 +388,7 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
 static BOOL32  LFD_ComposeLFD( fontObject* fo, 
 			       INT32 height, LPSTR lpLFD, UINT32 uRelax )
 {
-   int		h, w, ch, point = 0;
+   int		h, w, ch, enc_ch, point = 0;
    char*	lpch; 
    const char*  lpEncoding = NULL;
 
@@ -400,9 +440,12 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    if( fo->fo_flags & FO_SYNTH_HEIGHT ) h = fo->fi->lfd_height;
    else h = (fo->fi->lfd_height * height) / fo->fi->df.dfPixHeight;
 
-   if( fo->lf.lfWidth && (XTextCaps & TC_SF_X_YINDEP) 
-	              && !(fo->fo_flags & FO_SYNTH_WIDTH) )
-       point = (fo->fi->lfd_decipoints * fo->lf.lfWidth) / fo->fi->df.dfAvgWidth;
+   if( XTextCaps & TC_SF_X_YINDEP ) 
+	if( fo->lf.lfWidth && !(fo->fo_flags & FO_SYNTH_WIDTH) )
+	    point = (fo->fi->lfd_decipoints * fo->lf.lfWidth) / fo->fi->df.dfAvgWidth;
+	else 
+	if( fo->fi->fi_flags & FI_SCALABLE ) /* adjust h/w ratio */
+	    point = h * 72 * 10 / fo->fi->lfd_resolution;
 
 /* spacing and width */
 
@@ -411,16 +454,35 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
    else 
        w = ( fo->fi->fi_flags & FI_VARIABLEPITCH ) ? 'p' : LFDSeparator[0]; 
 
-/* encoding, not quite there yet */
+/* encoding */
 
+   enc_ch = '*';
    if( fo->fi->df.dfCharSet == ANSI_CHARSET )
    {
 	if( fo->fi->fi_flags & FI_ENC_ISO8859 )
 	     lpEncoding = iso8859Encoding;
 	else if( fo->fi->fi_flags & FI_ENC_ISO646 )
 	     lpEncoding = iso646Encoding;
+	else if( fo->fi->fi_flags & FI_ENC_MSCODEPAGE )
+	{
+	     enc_ch = '2';
+	     lpEncoding = localMSEncoding;
+	}
 	else lpEncoding = ansiEncoding;
-   } else    lpEncoding = LFDSeparator;
+   } 
+   else if( fo->fi->fi_flags & FI_ENC_MSCODEPAGE )
+   {
+	int i;
+
+	lpEncoding = localMSEncoding;
+	for( i = 0; i < numCPTranslation; i++ )
+	     if( CPTranslation[i] == fo->fi->df.dfCharSet )
+	     {
+		enc_ch = '0' + i;
+		break;
+	     }
+   }
+   else lpEncoding = LFDSeparator;	/* whatever */
 
    lpch = lpLFD + lstrlen32A(lpLFD);
    ch = (fo->fi->fi_flags & FI_SCALABLE) ? '0' : LFDSeparator[0];
@@ -433,20 +495,20 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
        case 0: 
 	    if( point )
 	    {
-	        sprintf( lpch, "%i-%i-%i-%c-%c-*-%s*", h, point, 
-			 fo->fi->lfd_resolution, ch, w, lpEncoding );
+	        sprintf( lpch, "%i-%i-%i-%c-%c-*-%s%c", h, point, 
+			 fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
 	        break;
 	    }
 	    /* fall through */
 
        case 1: 
-	    sprintf( lpch, "%i-*-%i-%c-%c-*-%s*", h, 
-			fo->fi->lfd_resolution, ch, w, lpEncoding );
+	    sprintf( lpch, "%i-*-%i-%c-%c-*-%s%c", h, 
+			fo->fi->lfd_resolution, ch, w, lpEncoding, enc_ch );
 	    break;
 
        case 2:
-	    sprintf( lpch, "%i-*-%i-%c-*-*-%s*",
-			h, fo->fi->lfd_resolution, ch, lpEncoding );
+	    sprintf( lpch, "%i-*-%i-%c-*-*-%s%c",
+			h, fo->fi->lfd_resolution, ch, lpEncoding, enc_ch );
 	    break;
 
        case 3:
@@ -668,7 +730,8 @@ static BYTE XFONT_FixupFlags( LPCSTR lfFaceName )
                     return FF_SWISS;
                   break;
         case 'c':
-        case 'C': if(!lstrcmpi32A(lfFaceName, "Courier") )
+        case 'C': if(!lstrcmpi32A(lfFaceName, "Courier") ||
+		     !lstrcmpi32A(lfFaceName, "Charter") )
                     return FF_ROMAN;
                   break;
         case 'p':
@@ -692,6 +755,18 @@ static BYTE XFONT_FixupFlags( LPCSTR lfFaceName )
 
 
 /***********************************************************************
+ *           XFONT_CheckResourceName
+ */
+static BOOL32 XFONT_CheckResourceName( LPSTR resource, LPCSTR name, INT32 n )
+{
+    resource = LFD_Advance( resource, 2 );
+    if( resource )
+	return (!lstrncmpi32A( resource, name, n ));
+    return FALSE;
+}
+
+
+/***********************************************************************
  *           XFONT_WindowsNames
  *
  * Build generic Windows aliases for X font names.
@@ -711,17 +786,13 @@ static void XFONT_WindowsNames( char* buffer )
 	if( fr->fr_flags & FR_NAMESET ) continue;     /* skip already assigned */
 
 	lpstr = LFD_Advance(fr->resource, 2);
-	i = lpstr - LFD_Advance( lpstr, 1 );
+	i = LFD_Advance( lpstr, 1 ) - lpstr;
 
 	for( pfr = fontList; pfr != fr ; pfr = pfr->next )
 	    if( pfr->fr_flags & FR_NAMESET )
-	    {
-		lpch = LFD_Advance(pfr->resource, 2);
+		if( XFONT_CheckResourceName( pfr->resource, lpstr, i ) )
+		    break;
 
-		/* check if already have the same face name */
-
-		if( !lstrncmp32A(lpch, lpstr, i) ) break;
-	    }
 	if( pfr != fr )  /* prepend vendor name */
 	    lpstr = fr->resource + 1;
 
@@ -781,10 +852,24 @@ static void XFONT_WindowsNames( char* buffer )
  */
 static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
 {
+    int j;
     fontAlias* pfa = aliasTable;
-    int j = lstrlen32A(lpTypeFace) + 1;
 
-    while( pfa->next ) pfa = pfa->next;
+    while( 1 ) 
+    {
+	/* check if we already got one */
+	if( !lstrcmpi32A( pfa->faTypeFace, lpAlias ) )
+	{
+#ifdef DEBUG_FONT_INIT
+	    dprintf_font(stddeb,"\tredundant alias '%s' -> '%s'\n", lpAlias, lpTypeFace );
+#endif
+	    return NULL;
+	} 
+	if( pfa->next ) pfa = pfa->next;
+	else break;
+    }
+
+    j = lstrlen32A(lpTypeFace) + 1;
     pfa->next = HeapAlloc( SystemHeap, 0, sizeof(fontAlias) +
 					  j + lstrlen32A(lpAlias) + 1 );
     if((pfa = pfa->next))
@@ -814,54 +899,79 @@ static fontAlias* XFONT_CreateAlias( LPCSTR lpTypeFace, LPCSTR lpAlias )
  *   Alias0 = Arial, -adobe-helvetica- 
  *   Alias1 = Times New Roman, -bitstream-courier-, 1
  *   ...
+ *
+ * Note that from 081797 and on we have built-in alias templates that take
+ * care of the necessary Windows typefaces.
  */
 static void XFONT_LoadAliases( char** buffer, int buf_size )
 {
+    char* lpResource, *lpAlias;
     char  subsection[32];
-    int	  i = 0;
+    int	  i = 0, j = 0;
+    BOOL32 bHaveAlias = TRUE, bSubst = FALSE;
 
     if( buf_size < 128 )
 	*buffer = HeapReAlloc(SystemHeap, 0, *buffer, 256 );
     do
     {
-	wsprintf32A( subsection, "%s%i", INISubSection, i++ );
-
-	if( PROFILE_GetWineIniString( INIFontSection, subsection, "", *buffer, 128 ) )
+	if( j < faTemplateNum )
 	{
-	    char* lpchX, *lpchW = *buffer;
+	    /* built-in templates first */
 
-	    while( isspace(*lpchW) ) lpchW++;
-	    lpchX = PROFILE_GetStringItem( lpchW );
+	    lpResource = faTemplate[j].fatResource;
+	    lpAlias = faTemplate[j].fatAlias;
+	    j++;
+	}
+	else
+	{
+	    /* then WINE.CONF */
 
-	    if( lpchX )
+	    wsprintf32A( subsection, "%s%i", INISubSection, i++ );
+
+	    if( (bHaveAlias = PROFILE_GetWineIniString( INIFontSection, 
+					subsection, "", *buffer, 128 )) )
 	    {
-		fontResource* fr;
+		lpAlias = *buffer;
+		while( isspace(*lpAlias) ) lpAlias++;
+		lpResource = PROFILE_GetStringItem( lpAlias );
+		bSubst = (PROFILE_GetStringItem( lpResource )) ? TRUE : FALSE;
+	    }
+	}
+
+	if( bHaveAlias )
+	{
+	    int length;
+
+	    length = lstrlen32A( lpAlias );
+	    if( lpResource && length )
+	    {
+		fontResource* fr, *frMatch = NULL;
 
 		for (fr = fontList; fr ; fr = fr->next)
 		{
-		    int j;
-
-		    j = lstrlen32A( fr->resource );
-
-		    if( !lstrncmpi32A( fr->resource, lpchX, j) )
+		    if( !lstrcmpi32A( fr->resource, lpResource ) ) frMatch = fr;
+		    if( XFONT_CheckResourceName( fr->resource, lpAlias, length ) )
 		    {
-			char* lpch = PROFILE_GetStringItem( lpchX );
+			/* alias is not needed since the real font is present */
+			frMatch = NULL; break;
+		    }
+		}
 
-			if( lpch )
-			{
+		if( frMatch )
+		{
+		    if( bSubst )
+		    {
 #ifdef DEBUG_FONT_INIT
-                            dprintf_font(stddeb, "\tsubstituted '%s' with %s\n",
-							fr->lfFaceName, lpchW );
+                        dprintf_font(stddeb, "\tsubstituted '%s' with %s\n",
+						frMatch->lfFaceName, lpAlias );
 #endif
-			    lstrcpyn32A( fr->lfFaceName, lpchW, LF_FACESIZE );
-			    fr->fr_flags |= FR_NAMESET;
-			}
-		        else
-			{
-			    /* create new entry in the alias table */
-			    XFONT_CreateAlias(fr->lfFaceName, lpchW);
-			}
-			break;
+			lstrcpyn32A( frMatch->lfFaceName, lpAlias, LF_FACESIZE );
+			frMatch->fr_flags |= FR_NAMESET;
+		    }
+		    else
+		    {
+			/* create new entry in the alias table */
+			XFONT_CreateAlias( frMatch->lfFaceName, lpAlias );
 		    }
 		}
 	    }
@@ -883,8 +993,10 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
     pwd = getpwuid(getuid());
     if( pwd && pwd->pw_dir )
     {
-	int i = lstrlen32A( pwd->pw_dir ) + lstrlen32A( INIWinePrefix ) + lstrlen32A( INIFontMetrics ) + 2;
-	if( i > *buf_size ) buffer = (char*) HeapReAlloc( SystemHeap, 0, buffer, *buf_size = i );
+	int i = lstrlen32A( pwd->pw_dir ) + lstrlen32A( INIWinePrefix ) + 
+					    lstrlen32A( INIFontMetrics ) + 2;
+	if( i > *buf_size ) 
+	    buffer = (char*) HeapReAlloc( SystemHeap, 0, buffer, *buf_size = i );
 	lstrcpy32A( buffer, pwd->pw_dir );
 	strcat( buffer, INIWinePrefix );
 	strcat( buffer, INIFontMetrics );
@@ -896,7 +1008,7 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 /***********************************************************************
  *           XFONT_ReadCachedMetrics
  */
-static BOOL32 XFONT_ReadCachedMetrics( int fd, unsigned x_checksum, int x_count )
+static BOOL32 XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x_count )
 {
     if( fd >= 0 )
     {
@@ -938,6 +1050,9 @@ static BOOL32 XFONT_ReadCachedMetrics( int fd, unsigned x_checksum, int x_count 
 			      (int)(pfi->next) != j++ ) goto fail;
 
 			   pfi->df.dfFace = pfr->lfFaceName;
+			   pfi->df.dfHorizRes = pfi->df.dfVertRes = res;
+			   pfi->df.dfPoints = (INT16)(((INT32)(pfi->df.dfPixHeight -
+					pfi->df.dfInternalLeading) * 72) / res );
 			   pfi->next = pfi + 1;
 
 			   if( j > pfr->count ) break;
@@ -1059,6 +1174,108 @@ static BOOL32 XFONT_WriteCachedMetrics( int fd, unsigned x_checksum, int x_count
 }
 
 /***********************************************************************
+ *           XFONT_CheckIniSection
+ *
+ *   Examines wine.conf for old/invalid font entries and recommend changes to
+ *   the user.
+ *
+ *   Revision history
+ *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *             Original implementation.
+ */
+static void XFONT_CheckIniCallback(char const *, char const *, void *);
+
+static char const  *fontmsgprologue =
+"Wine warning:\n"
+"   The following entries in the [fonts] section of the wine.conf file are\n"
+"   obsolete or invalid:\n";
+
+static char const  *fontmsgepilogue =
+"   These entries should be eliminated or updated.\n"
+"   See the documentation/fonts file for more information.\n";
+
+static int XFONT_CheckIniSection()
+{
+    int  found = 0;
+
+    PROFILE_EnumerateWineIniSection("Fonts", &XFONT_CheckIniCallback,
+                    (void *)&found);
+    if(found)
+    fprintf(stderr, fontmsgepilogue);
+
+    return 1;
+}
+
+static void  XFONT_CheckIniCallback(
+    char const  *key,
+    char const  *value,
+    void  *found)
+{
+    /* Ignore any keys that start with potential comment characters "'", '#',
+       or ';'. */
+    if(key[0] == '\'' || key[0] == '#' || key[0] == ';' || key[0] == '\0')
+    return;
+
+    /* Make sure this is a valid key */
+    if((strncasecmp(key, INISubSection, 5) == 0) ||
+       (strcasecmp(key, INIDefault) == 0) ||
+       (strcasecmp(key, INIGlobalMetrics) == 0) ||
+       (strcasecmp(key, INIResolution) == 0) ) 
+    {
+	/* Valid key; make sure the value doesn't contain a wildcard */
+	if(strchr(value, '*')) {
+	    if(*(int *)found == 0) {
+		fprintf(stderr, fontmsgprologue);
+		++*(int *)found;
+	    }
+
+	    fprintf(stderr, "     %s=%s [no wildcards allowed]\n", key, value);
+	}
+    }
+    else {
+	/* Not a valid key */
+	if(*(int *)found == 0) {
+	    fprintf(stderr, fontmsgprologue);
+	    ++*(int *)found;
+    }
+
+	fprintf(stderr, "     %s=%s [obsolete]\n", key, value);
+    }
+
+    return;
+}
+
+/***********************************************************************
+ *           XFONT_GetPointResolution()
+ *
+ * Here we initialize DefResolution which is used in the
+ * XFONT_Match() penalty function. We also load the point
+ * resolution value (higher values result in larger fonts).
+ */
+static int XFONT_GetPointResolution( DeviceCaps* pDevCaps )
+{
+    int i, j, point_resolution, num = 3; 
+    int allowed_xfont_resolutions[3] = { 72, 75, 100 };
+    int best = 0, best_diff = 65536;
+
+    DefResolution = point_resolution = PROFILE_GetWineIniInt( INIFontSection, INIResolution, 0 );
+    if( !DefResolution ) DefResolution = point_resolution = pDevCaps->logPixelsY;
+    else pDevCaps->logPixelsX = pDevCaps->logPixelsY = DefResolution;
+
+    for( i = best = 0; i < num; i++ )
+    {
+	j = abs( DefResolution - allowed_xfont_resolutions[i] );
+	if( j < best_diff )
+	{
+	    best = i;
+		best_diff = j;
+	}
+    }
+    DefResolution = allowed_xfont_resolutions[best];
+    return point_resolution;
+}
+
+/***********************************************************************
  *           X11DRV_FONT_Init
  *
  * Initialize font resource list and allocate font cache.
@@ -1069,24 +1286,18 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   fontResource* fr, *pfr;
   fontInfo*	fi, *pfi;
   unsigned	x_checksum;
-  int		i, j, k, x_count, fd = -1, buf_size = 0;
+  int		i, j, res, x_count, fd = -1, buf_size = 0;
   char*		lpstr, *lpch, *lpmetrics, *buffer;
   char**	x_pattern;
 
-  DefResolution = PROFILE_GetWineIniInt( INIFontSection, "Resolution", 0 );
-  if( !DefResolution ) DefResolution = pDevCaps->logPixelsY;
+  XFONT_CheckIniSection();
 
-  i = abs(DefResolution - 72);
-  j = abs(DefResolution - 75);
-  k = abs(DefResolution - 100);
-
-  if( i < j ) DefResolution = ( i < k ) ? 72 : 100;
-  else DefResolution = ( j < k ) ? 75 : 100;
+  res = XFONT_GetPointResolution( pDevCaps );
       
   x_pattern = XListFonts(display, "*", MAX_FONT_FAMILIES * 16, &x_count );
 
-  dprintf_font(stddeb,"Font Mapper: initializing %i fonts [LPY=%i, DR=%i]\n", 
-				    x_count, pDevCaps->logPixelsY, DefResolution);
+  dprintf_font(stddeb,"Font Mapper: initializing %i fonts [LPY=%i, XDR=%i, DR=%i]\n", 
+				    x_count, pDevCaps->logPixelsY, DefResolution, res);
   for( i = x_checksum = 0; i < x_count; i++ )
   {
 #if 0
@@ -1104,17 +1315,17 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
   /* deal with systemwide font metrics cache */
 
-  if( PROFILE_GetWineIniString( INIFontSection, "FontMetrics", "", buffer, 128 ) )
+  if( PROFILE_GetWineIniString( INIFontSection, INIGlobalMetrics, "", buffer, 128 ) )
       fd = open( buffer, O_RDONLY );
 
-  if( XFONT_ReadCachedMetrics(fd, x_checksum, x_count) == FALSE )
+  if( XFONT_ReadCachedMetrics(fd, res, x_checksum, x_count) == FALSE )
   {
       /* try per-user */
       buffer = XFONT_UserMetricsCache( buffer, &buf_size );
       if( buffer[0] )
       {
 	  fd = open( buffer, O_RDONLY );
-	  if( XFONT_ReadCachedMetrics(fd, x_checksum, x_count) == FALSE )
+	  if( XFONT_ReadCachedMetrics(fd, res, x_checksum, x_count) == FALSE )
 	      lpmetrics = HEAP_strdupA( SystemHeap, 0, buffer ); /* update later on */
       }
   }
@@ -1196,8 +1407,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
 	if( (x_fs = XLoadQueryFont(display, lpstr)) )
 	{
-	   fi->df.dfHorizRes = pDevCaps->logPixelsX;
-           fi->df.dfVertRes = pDevCaps->logPixelsY;
+	   fi->df.dfHorizRes = fi->df.dfVertRes = res;
 
 	   XFONT_SetFontMetric( fi, fr, x_fs );
            XFreeFont( display, x_fs );
@@ -1301,7 +1511,7 @@ static INT32 XFONT_IsSubset(fontInfo* match, fontInfo* fi)
  *      weight, italics, underlines, strikeouts
  *
  * NOTE: you can experiment with different penalty weights to see what happens.
- * http://premium.microsoft.com/msdn/library/techart/f30/f34/f40/d4d/sa8bf.htm
+ * http://premium.microsoft.com/msdn/library/techart/f365/f36b/f37b/d38b/sa8bf.htm
  */
 static UINT32 XFONT_Match( fontMatch* pfm )
 {
@@ -1354,7 +1564,7 @@ static UINT32 XFONT_Match( fontMatch* pfm )
 	   else 	/* expand only in integer multiples */
 	   {
 	       pfm->height = height - height%pfi->df.dfPixHeight;
-	       penalty += (height - pfm->height) * pfm->height / height;
+	       penalty += (height - pfm->height + 1) * height / pfi->df.dfPixHeight;
 	   }
        }
        else /* can't be scaled at all */
@@ -1432,18 +1642,6 @@ static UINT32 XFONT_MatchFIList( fontMatch* pfm )
 }
 
 /***********************************************************************
- *            XFONT_CheckAliasTable
- */
-static LPSTR XFONT_CheckAliasTable( LPSTR lpAlias )
-{
-    fontAlias* fa;
-
-    for( fa = aliasTable; fa; fa = fa->next )
-	if( !lstrcmpi32A( fa->faAlias, lpAlias ) ) return fa->faTypeFace;
-    return NULL;
-}
-
-/***********************************************************************
  *            XFONT_CheckFIList
  *
  * REMOVE_SUBSETS - attach new fi and purge subsets
@@ -1515,9 +1713,17 @@ static BOOL32 XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm )
     fontMatch           fm = *pfm;
 
     pfm->pfi = NULL;
-    if( fm.plf->lfFaceName[0] )
+    if( fm.plf->lfFaceName[0] ) 
     {
-	LPSTR str = XFONT_CheckAliasTable( fm.plf->lfFaceName );
+	fontAlias* fa;
+	LPSTR str = NULL;
+
+	for( fa = aliasTable; fa; fa = fa->next )
+	     if( !lstrcmpi32A( fa->faAlias, fm.plf->lfFaceName ) ) 
+	     {
+		str = fa->faTypeFace;
+		break;
+	     }
         fm.pfr = XFONT_FindFIList( start, str ? str : fm.plf->lfFaceName );
     }
 
@@ -1827,11 +2033,17 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
 HFONT32 X11DRV_FONT_SelectObject( DC* dc, HFONT32 hfont, FONTOBJ* font )
 {
     HFONT32 hPrevFont = 0;
+    LOGFONT16	lf;
 
     if( CHECK_PFONT(dc->u.x.font) ) 
         XFONT_ReleaseCacheEntry( __PFONT(dc->u.x.font) );
 
-    dc->u.x.font = XFONT_RealizeFont( &font->logfont );
+    /* FIXME: do we need to pass anything back from here? */
+    memcpy(&lf,&font->logfont,sizeof(lf));
+    lf.lfWidth	= font->logfont.lfWidth * dc->vportExtX/dc->wndExtX;
+    lf.lfHeight	= font->logfont.lfHeight* dc->vportExtY/dc->wndExtY;
+
+    dc->u.x.font = XFONT_RealizeFont( &lf );
     hPrevFont = dc->w.hFont;
     dc->w.hFont = hfont;
 
@@ -1966,7 +2178,7 @@ BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
  *	   the pfr->resource field) with FR_SOFTFONT/FR_SOFTRESOURCE 
  *	   flag set. 
  */
-INT16 AddFontResource16( LPCSTR filename )
+INT16 WINAPI AddFontResource16( LPCSTR filename )
 {
     return AddFontResource32A( filename );
 }
@@ -1975,7 +2187,7 @@ INT16 AddFontResource16( LPCSTR filename )
 /***********************************************************************
  *           AddFontResource32A    (GDI32.2)
  */
-INT32 AddFontResource32A( LPCSTR str )
+INT32 WINAPI AddFontResource32A( LPCSTR str )
 {
     if (HIWORD(str))	/* font file */
         fprintf( stdnimp, "STUB: AddFontResource('%s')\n", str );
@@ -1988,7 +2200,7 @@ INT32 AddFontResource32A( LPCSTR str )
 /***********************************************************************
  *           AddFontResource32W    (GDI32.4)
  */
-INT32 AddFontResource32W( LPCWSTR str )
+INT32 WINAPI AddFontResource32W( LPCWSTR str )
 {
     fprintf( stdnimp, "STUB: AddFontResource32W(%p)\n", str );
     return 1;
@@ -1997,7 +2209,7 @@ INT32 AddFontResource32W( LPCWSTR str )
 /***********************************************************************
  *           RemoveFontResource16    (GDI.136)
  */
-BOOL16 RemoveFontResource16( SEGPTR str )
+BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
 {
     if (HIWORD(str))
         fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n",
@@ -2011,7 +2223,7 @@ BOOL16 RemoveFontResource16( SEGPTR str )
 /***********************************************************************
  *           RemoveFontResource32A    (GDI32.284)
  */
-BOOL32 RemoveFontResource32A( LPCSTR str )
+BOOL32 WINAPI RemoveFontResource32A( LPCSTR str )
 {
     if (HIWORD(str))
         fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n", str );
@@ -2024,7 +2236,7 @@ BOOL32 RemoveFontResource32A( LPCSTR str )
 /***********************************************************************
  *           RemoveFontResource32W    (GDI32.286)
  */
-BOOL32 RemoveFontResource32W( LPCWSTR str )
+BOOL32 WINAPI RemoveFontResource32W( LPCWSTR str )
 {
     fprintf( stdnimp, "STUB: RemoveFontResource32W(%p)\n", str );
     return TRUE;

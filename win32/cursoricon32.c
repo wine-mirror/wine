@@ -461,7 +461,7 @@ static HGLOBAL32 CURSORICON32_Load( HINSTANCE32 hInstance, LPCWSTR name,
 /***********************************************************************
  *           LoadCursorW		(USER32.361)
  */
-HCURSOR32 LoadCursor32W(HINSTANCE32 hInstance,LPCWSTR name)
+HCURSOR32 WINAPI LoadCursor32W(HINSTANCE32 hInstance,LPCWSTR name)
 {
     return CURSORICON32_Load( hInstance, name,
                             SYSMETRICS_CXCURSOR, SYSMETRICS_CYCURSOR, 1, TRUE);
@@ -470,7 +470,7 @@ HCURSOR32 LoadCursor32W(HINSTANCE32 hInstance,LPCWSTR name)
 /***********************************************************************
  *           LoadCursorA		(USER32.358)
  */
-HCURSOR32 LoadCursor32A(HINSTANCE32 hInstance,LPCSTR name)
+HCURSOR32 WINAPI LoadCursor32A(HINSTANCE32 hInstance,LPCSTR name)
 {
 	HCURSOR32 res=0;
 	if(!HIWORD(name))
@@ -488,7 +488,7 @@ HCURSOR32 LoadCursor32A(HINSTANCE32 hInstance,LPCSTR name)
 /***********************************************************************
  *           LoadIconW		(USER32.363)
  */
-HICON32 LoadIcon32W(HINSTANCE32 hInstance,LPCWSTR name)
+HICON32 WINAPI LoadIcon32W(HINSTANCE32 hInstance,LPCWSTR name)
 {
     return CURSORICON32_Load( hInstance, name,
                             SYSMETRICS_CXICON, SYSMETRICS_CYICON,
@@ -498,7 +498,7 @@ HICON32 LoadIcon32W(HINSTANCE32 hInstance,LPCWSTR name)
 /***********************************************************************
  *           LoadIconA		(USER32.362)
  */
-HICON32 LoadIcon32A(HINSTANCE32 hInstance,LPCSTR name)
+HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance,LPCSTR name)
 {
 	HICON32 res=0;
 	if(!HIWORD(name))

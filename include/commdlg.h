@@ -325,33 +325,32 @@ typedef DEVNAMES * LPDEVNAMES;
 #define CDERR_NOHOOK           0x000B
 #define CDERR_REGISTERMSGFAIL  0x000C
 
-BOOL16  ChooseColor(LPCHOOSECOLOR lpChCol);
-DWORD CommDlgExtendedError(void);
-HWND16 FindText( SEGPTR find);
-INT16 GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
-INT16 GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf);
-INT16 GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf);
+BOOL16  WINAPI ChooseColor(LPCHOOSECOLOR lpChCol);
+DWORD   WINAPI CommDlgExtendedError(void);
+HWND16  WINAPI FindText( SEGPTR find);
+INT16   WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
+INT16   WINAPI GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf);
+INT16   WINAPI GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf);
 #define GetFileTitle WINELIB_NAME_AW(GetFileTitle)
-BOOL16  GetOpenFileName16(SEGPTR ofn);
-BOOL32  GetOpenFileName32A(LPOPENFILENAME32A ofn);
-BOOL32  GetOpenFileName32W(LPOPENFILENAME32W ofn);
+BOOL16  WINAPI GetOpenFileName16(SEGPTR ofn);
+BOOL32  WINAPI GetOpenFileName32A(LPOPENFILENAME32A ofn);
+BOOL32  WINAPI GetOpenFileName32W(LPOPENFILENAME32W ofn);
 #define GetOpenFileName WINELIB_NAME_AW(GetOpenFileName)
-BOOL16  GetSaveFileName16(SEGPTR ofn);
-BOOL32  GetSaveFileName32A(LPOPENFILENAME32A ofn);
-BOOL32  GetSaveFileName32W(LPOPENFILENAME32W ofn);
+BOOL16  WINAPI GetSaveFileName16(SEGPTR ofn);
+BOOL32  WINAPI GetSaveFileName32A(LPOPENFILENAME32A ofn);
+BOOL32  WINAPI GetSaveFileName32W(LPOPENFILENAME32W ofn);
 #define GetSaveFileName WINELIB_NAME_AW(GetSaveFileName)
-BOOL16  PrintDlg( SEGPTR print);
-HWND16 ReplaceText( SEGPTR find);
-BOOL16  ChooseFont(LPCHOOSEFONT lpChFont);
-
-LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ColorDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
-LRESULT FormatCharDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+BOOL16  WINAPI PrintDlg( SEGPTR print);
+HWND16  WINAPI ReplaceText( SEGPTR find);
+BOOL16  WINAPI ChooseFont(LPCHOOSEFONT lpChFont);
+LRESULT WINAPI FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI ColorDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI FindTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI PrintDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI PrintSetupDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT WINAPI FormatCharDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam);
 
 #ifdef __cplusplus
 }

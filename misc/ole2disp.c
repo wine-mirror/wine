@@ -36,7 +36,7 @@ static void* BSTR_GetAddr(BSTR in)
 /***********************************************************************
  *           SysAllocString         [OLE2DISP.2]
  */
-BSTR SysAllocString(char *in)
+BSTR WINAPI SysAllocString(char *in)
 {
 	BSTR out=BSTR_AllocBytes(strlen(in)+1);
 	if(!out)return 0;
@@ -47,7 +47,7 @@ BSTR SysAllocString(char *in)
 /***********************************************************************
  *           SysReAllocString       [OLE2DISP.3]
  */
-int SysReAllocString(BSTR *old,char *in)
+int WINAPI SysReAllocString(BSTR *old,char *in)
 {
 	BSTR new=SysAllocString(in);
 	BSTR_Free(*old);
@@ -58,7 +58,7 @@ int SysReAllocString(BSTR *old,char *in)
 /***********************************************************************
  *           SysAllocStringLen      [OLE2DISP.4]
  */
-BSTR SysAllocStringLen(char *in, int len)
+BSTR WINAPI SysAllocStringLen(char *in, int len)
 {
 	BSTR out=BSTR_AllocBytes(len+1);
 	if(!out)return 0;
@@ -69,7 +69,7 @@ BSTR SysAllocStringLen(char *in, int len)
 /***********************************************************************
  *           SysReAllocStringLen    [OLE2DISP.5]
  */
-int SysReAllocStringLen(BSTR *old,char *in,int len)
+int WINAPI SysReAllocStringLen(BSTR *old,char *in,int len)
 {
 	BSTR new=SysAllocStringLen(in,len);
 	BSTR_Free(*old);
@@ -80,7 +80,7 @@ int SysReAllocStringLen(BSTR *old,char *in,int len)
 /***********************************************************************
  *           SysFreeString          [OLE2DISP.6]
  */
-void SysFreeString(BSTR in)
+void WINAPI SysFreeString(BSTR in)
 {
 	BSTR_Free(in);
 }
@@ -88,7 +88,7 @@ void SysFreeString(BSTR in)
 /***********************************************************************
  *           SysStringLen           [OLE2DISP.7]
  */
-int SysStringLen(BSTR str)
+int WINAPI SysStringLen(BSTR str)
 {
 	return strlen(BSTR_GetAddr(str));
 }

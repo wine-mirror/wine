@@ -102,9 +102,12 @@ Window rootWindow;
 int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
 int screenDepth = 0;  /* Screen depth to use */
 int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
-int getVersion16 = 0;
-int getVersion32 = 0;
-OSVERSIONINFO32A getVersionEx;
+
+/* Default version is the same as -winver win31 */
+static LONG getVersion16 = MAKELONG( WINVERSION, 0x0616 ); /* DOS 6.22 */
+static LONG getVersion32 = MAKELONG( 4, 0x1606 ); /* DOS 6.22 */
+static OSVERSIONINFO32A getVersionEx = { sizeof(OSVERSIONINFO32A), 3, 10, 0,
+                                         VER_PLATFORM_WIN32s, "Win32s 1.3" };
 
 struct options Options =
 {  /* default options */
@@ -692,7 +695,7 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
 /***********************************************************************
  *           MessageBeep16   (USER.104)
  */
-void MessageBeep16( UINT16 i )
+void WINAPI MessageBeep16( UINT16 i )
 {
     MessageBeep32( i );
 }
@@ -701,7 +704,7 @@ void MessageBeep16( UINT16 i )
 /***********************************************************************
  *           MessageBeep32   (USER32.389)
  */
-BOOL32 MessageBeep32( UINT32 i )
+BOOL32 WINAPI MessageBeep32( UINT32 i )
 {
     XBell( display, 100 );
     return TRUE;
@@ -711,7 +714,7 @@ BOOL32 MessageBeep32( UINT32 i )
 /***********************************************************************
  *           Beep   (KERNEL32.11)
  */
-BOOL32 Beep( DWORD dwFreq, DWORD dwDur )
+BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
 {
     /* dwFreq and dwDur are ignored by Win95 */
     XBell(display, 100);
@@ -722,42 +725,30 @@ BOOL32 Beep( DWORD dwFreq, DWORD dwDur )
 /***********************************************************************
  *      GetVersion16   (KERNEL.3)
  */
-LONG GetVersion16(void)
+LONG WINAPI GetVersion16(void)
 {
-    if (getVersion16) return getVersion16;
-    return MAKELONG( WINVERSION, WINDOSVER );
+    return getVersion16;
 }
 
 
 /***********************************************************************
  *      GetVersion32
  */
-LONG GetVersion32(void)
+LONG WINAPI GetVersion32(void)
 {
-    if (getVersion32) return getVersion32;
-    return MAKELONG( 4, DOSVERSION);
+    return getVersion32;
 }
 
 
 /***********************************************************************
  *      GetVersionExA
  */
-BOOL32 GetVersionEx32A(OSVERSIONINFO32A *v)
+BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
 {
     if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32A))
     {
         fprintf(stddeb,"wrong OSVERSIONINFO size from app");
         return FALSE;
-    }
-    if(!getVersion32)
-    {
-        /* Return something like NT 3.5 */
-        v->dwMajorVersion = 3;
-        v->dwMinorVersion = 5;
-        v->dwBuildNumber = 42;
-        v->dwPlatformId = VER_PLATFORM_WIN32_NT;
-        strcpy(v->szCSDVersion, "Wine is not an emulator");
-        return TRUE;
     }
     v->dwMajorVersion = getVersionEx.dwMajorVersion;
     v->dwMinorVersion = getVersionEx.dwMinorVersion;
@@ -771,7 +762,7 @@ BOOL32 GetVersionEx32A(OSVERSIONINFO32A *v)
 /***********************************************************************
  *     GetVersionExW
  */
-BOOL32 GetVersionEx32W(OSVERSIONINFO32W *v)
+BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
 {
 	OSVERSIONINFO32A v1;
 	if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
@@ -792,7 +783,7 @@ BOOL32 GetVersionEx32W(OSVERSIONINFO32W *v)
 /***********************************************************************
  *	GetWinFlags (KERNEL.132)
  */
-DWORD GetWinFlags(void)
+DWORD WINAPI GetWinFlags(void)
 {
   static const long cpuflags[5] =
     { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
@@ -827,7 +818,7 @@ DWORD GetWinFlags(void)
 /***********************************************************************
  *          SetEnvironment   (GDI.132)
  */
-INT16 SetEnvironment( LPCSTR lpPortName, LPCSTR lpEnviron, UINT16 nCount )
+INT16 WINAPI SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, UINT16 nCount)
 {
     LPENVENTRY	lpNewEnv;
     LPENVENTRY	lpEnv = lpEnvList;
@@ -896,7 +887,7 @@ INT16 SetEnvironment( LPCSTR lpPortName, LPCSTR lpEnviron, UINT16 nCount )
 /***********************************************************************
  *           GetEnvironment   (GDI.134)
  */
-INT16 GetEnvironment( LPCSTR lpPortName, LPSTR lpEnviron, UINT16 nMaxSiz )
+INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPSTR lpEnviron, UINT16 nMaxSiz)
 {
     WORD       nCount;
     LPENVENTRY lpEnv = lpEnvList;
@@ -921,7 +912,7 @@ INT16 GetEnvironment( LPCSTR lpPortName, LPSTR lpEnviron, UINT16 nMaxSiz )
 /***********************************************************************
  *	GetTimerResolution (USER.14)
  */
-LONG GetTimerResolution(void)
+LONG WINAPI GetTimerResolution(void)
 {
 	return (1000);
 }
@@ -929,8 +920,8 @@ LONG GetTimerResolution(void)
 /***********************************************************************
  *	SystemParametersInfo32A   (USER32.539)
  */
-BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
-                                LPVOID lpvParam, UINT32 fuWinIni )
+BOOL32 WINAPI SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
+                                       LPVOID lpvParam, UINT32 fuWinIni )
 {
 	int timeout, temp;
 	XKeyboardState		keyboard_state;
@@ -1007,7 +998,9 @@ BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 	case SPI_GETICONTITLELOGFONT: {
 		LPLOGFONT32A lpLogFont = (LPLOGFONT32A)lpvParam;
 
-		GetProfileString32A("Desktop", "IconTitleFaceName", "Helvetica", 
+		/* from now on we always have an alias for MS Sans Serif */
+
+		GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 			lpLogFont->lfFaceName, LF_FACESIZE );
 		lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
 
@@ -1029,16 +1022,26 @@ BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 			GetSystemMetrics32( SM_CYSCREEN )
 		);
 		break;
-	case SPI_GETNONCLIENTMETRICS: {
-		/* FIXME: implement correctly */
-		LPNONCLIENTMETRICS32A	lpnm=(LPNONCLIENTMETRICS32A)lpvParam;
+	case SPI_GETNONCLIENTMETRICS: 
 
-		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
-		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
-		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
-		SystemParametersInfo32A(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
+#define lpnm ((LPNONCLIENTMETRICS32A)lpvParam)
+		
+		if( lpnm->cbSize == sizeof(NONCLIENTMETRICS32A) )
+		{
+		    /* FIXME: initialize geometry entries */
+
+		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfCaptionFont),0);
+		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfMenuFont),0);
+		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfStatusFont),0);
+		    SystemParametersInfo32A(SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfMessageFont),0);
+		}
+#undef lpnm
 		break;
-	}
+
 	default:
 		return SystemParametersInfo16(uAction,uParam,lpvParam,fuWinIni);
 	}
@@ -1049,8 +1052,8 @@ BOOL32 SystemParametersInfo32A( UINT32 uAction, UINT32 uParam,
 /***********************************************************************
  *	SystemParametersInfo16   (USER.483)
  */
-BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
-                               LPVOID lpvParam, UINT16 fuWinIni )
+BOOL16 WINAPI SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
+                                      LPVOID lpvParam, UINT16 fuWinIni )
 {
 	int timeout, temp;
 	char buffer[256];
@@ -1174,7 +1177,7 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 	        {
                     LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
 
-		    GetProfileString32A("Desktop", "IconTitleFaceName", "Helvetica", 
+		    GetProfileString32A("Desktop", "IconTitleFaceName", "MS Sans Serif", 
 					lpLogFont->lfFaceName, LF_FACESIZE );
                     lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
 
@@ -1190,16 +1193,25 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
                     lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
                     break;
                 }
-		case SPI_GETNONCLIENTMETRICS: {
-		/* FIXME: implement correctly */
-			LPNONCLIENTMETRICS16	lpnm=(LPNONCLIENTMETRICS16)lpvParam;
+		case SPI_GETNONCLIENTMETRICS:
 
-			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfCaptionFont),0);
-			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMenuFont),0);
-			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfStatusFont),0);
-			SystemParametersInfo16(SPI_GETICONTITLELOGFONT,0,(LPVOID)&(lpnm->lfMessageFont),0);
-			break;
-		}
+#define lpnm ((LPNONCLIENTMETRICS16)lpvParam)
+		    if( lpnm->cbSize == sizeof(NONCLIENTMETRICS16) )
+		    {
+			/* FIXME: initialize geometry entries */
+			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0, 
+							(LPVOID)&(lpnm->lfCaptionFont),0);
+			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfMenuFont),0);
+			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfStatusFont),0);
+			SystemParametersInfo16( SPI_GETICONTITLELOGFONT, 0,
+							(LPVOID)&(lpnm->lfMessageFont),0);
+		    }
+		    else /* winfile 95 sets sbSize to 340 */
+		        SystemParametersInfo32A( uAction, uParam, lpvParam, fuWinIni );
+#undef lpnm
+		    break;
 
 		case SPI_LANGDRIVER:
 		case SPI_SETBORDER:
@@ -1228,8 +1240,8 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 /***********************************************************************
  *	SystemParametersInfo32W   (USER32.540)
  */
-BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
-                                LPVOID lpvParam, UINT32 fuWinIni )
+BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
+                                       LPVOID lpvParam, UINT32 fuWinIni )
 {
     char buffer[256];
 
@@ -1295,7 +1307,7 @@ BOOL32 SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 /***********************************************************************
 *	FileCDR (KERNEL.130)
 */
-void FileCDR(FARPROC16 x)
+void WINAPI FileCDR(FARPROC16 x)
 {
 	printf("FileCDR(%8x)\n", (int) x);
 }
@@ -1303,7 +1315,7 @@ void FileCDR(FARPROC16 x)
 /***********************************************************************
 *	GetWinDebugInfo (KERNEL.355)
 */
-BOOL16 GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
+BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
 {
 	printf("GetWinDebugInfo(%8lx,%d) stub returning 0\n", (unsigned long)lpwdi, flags);
 	/* 0 means not in debugging mode/version */
@@ -1315,7 +1327,7 @@ BOOL16 GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
 /***********************************************************************
 *	GetWinDebugInfo (KERNEL.355)
 */
-BOOL16 SetWinDebugInfo(WINDEBUGINFO *lpwdi)
+BOOL16 WINAPI SetWinDebugInfo(WINDEBUGINFO *lpwdi)
 {
 	printf("SetWinDebugInfo(%8lx) stub returning 0\n", (unsigned long)lpwdi);
 	/* 0 means not in debugging mode/version */

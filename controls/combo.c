@@ -83,30 +83,32 @@ static BOOL32 COMBO_Init()
  */
 static LRESULT COMBO_NCCreate(WND* wnd, LPARAM lParam)
 {
-  LPHEADCOMBO 		lphc;
+   LPHEADCOMBO 		lphc;
 
-  if ( wnd && COMBO_Init() &&
+   if ( wnd && COMBO_Init() &&
       (lphc = HeapAlloc(GetProcessHeap(), 0, sizeof(HEADCOMBO))) )
-  {
-       LPCREATESTRUCT32A     lpcs = (CREATESTRUCT32A*)lParam;
+   {
+	LPCREATESTRUCT32A     lpcs = (CREATESTRUCT32A*)lParam;
        
-       memset( lphc, 0, sizeof(HEADCOMBO) );
+	memset( lphc, 0, sizeof(HEADCOMBO) );
        *(LPHEADCOMBO*)wnd->wExtra = lphc;
 
        /* some braindead apps do try to use scrollbar/border flags */
 
-       lphc->dwStyle = (lpcs->style & ~(WS_BORDER | WS_HSCROLL | WS_VSCROLL));
-       wnd->dwStyle &= ~(WS_BORDER | WS_HSCROLL | WS_VSCROLL);
+	lphc->dwStyle = (lpcs->style & ~(WS_BORDER | WS_HSCROLL | WS_VSCROLL));
+	wnd->dwStyle &= ~(WS_BORDER | WS_HSCROLL | WS_VSCROLL);
 
-       if( !(lpcs->style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) )
-             lphc->dwStyle |= CBS_HASSTRINGS;
+	if( !(lpcs->style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) )
+              lphc->dwStyle |= CBS_HASSTRINGS;
+	if( !(wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) )
+	      lphc->wState |= CBF_NOTIFY;
 
-       dprintf_combo(stddeb, "COMBO_NCCreate: [0x%08x], style = %08x\n", 
-				              (UINT32)lphc, lphc->dwStyle );
+	dprintf_combo(stddeb, "COMBO_NCCreate: [0x%08x], style = %08x\n", 
+						(UINT32)lphc, lphc->dwStyle );
 
-       return (LRESULT)(UINT32)wnd->hwndSelf; 
-  }
-  return (LRESULT)FALSE;
+	return (LRESULT)(UINT32)wnd->hwndSelf; 
+    }
+    return (LRESULT)FALSE;
 }
 
 /***********************************************************************
@@ -1239,7 +1241,8 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM32 wParam, LPARAM lParam )
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/ctrl/src/combobox_15.htm
  */
-LRESULT ComboWndProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
+                             WPARAM32 wParam, LPARAM lParam )
 {
     WND*	pWnd = WIN_FindWndPtr(hwnd);
    

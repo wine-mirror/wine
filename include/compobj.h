@@ -10,7 +10,7 @@ struct tagCLSID {
 
 typedef struct tagCLSID CLSID;
 
-OLESTATUS StringFromCLSID(const CLSID *id, LPSTR);
-OLESTATUS CLSIDFromString(const LPCSTR, CLSID *);
+OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR);
+OLESTATUS WINAPI CLSIDFromString(const LPCSTR, CLSID *);
 
 #endif

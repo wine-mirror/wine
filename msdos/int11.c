@@ -15,7 +15,7 @@
  *
  * Handler for int 11h (get equipment list).
  */
-void INT_Int11Handler( CONTEXT *context )
+void WINAPI INT_Int11Handler( CONTEXT *context )
 {
     int diskdrives = 0;
     int parallelports = 0;

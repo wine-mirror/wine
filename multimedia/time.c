@@ -114,7 +114,7 @@ static void StartMMTime()
 /**************************************************************************
  * 				timeGetSystemTime	[MMSYSTEM.601]
  */
-WORD timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
+WORD WINAPI timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
 {
     dprintf_mmsys(stddeb, "timeGetSystemTime(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)
@@ -127,8 +127,8 @@ WORD timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
 /**************************************************************************
  * 				timeSetEvent		[MMSYSTEM.602]
  */
-WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
-		  DWORD dwUser, WORD wFlags)
+WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
+                         DWORD dwUser, WORD wFlags)
 {
     WORD wNewID = 0;
     LPTIMERENTRY lpNewTimer;
@@ -171,7 +171,7 @@ WORD timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
 /**************************************************************************
  * 				timeKillEvent		[MMSYSTEM.603]
  */
-WORD timeKillEvent(WORD wID)
+WORD WINAPI timeKillEvent(WORD wID)
 {
     LPTIMERENTRY lpTimer = lpTimerList;
     while (lpTimer != NULL) {
@@ -193,7 +193,7 @@ WORD timeKillEvent(WORD wID)
 /**************************************************************************
  * 				timeGetDevCaps		[MMSYSTEM.604]
  */
-WORD timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
+WORD WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
 {
     dprintf_mmtime(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
     if (!mmTimeStarted)
@@ -206,7 +206,7 @@ WORD timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
 /**************************************************************************
  * 				timeBeginPeriod		[MMSYSTEM.605]
  */
-WORD timeBeginPeriod(WORD wPeriod)
+WORD WINAPI timeBeginPeriod(WORD wPeriod)
 {
     dprintf_mmtime(stddeb, "timeBeginPeriod(%u) !\n", wPeriod);
     if (!mmTimeStarted)
@@ -219,7 +219,7 @@ WORD timeBeginPeriod(WORD wPeriod)
 /**************************************************************************
  * 				timeEndPeriod		[MMSYSTEM.606]
  */
-WORD timeEndPeriod(WORD wPeriod)
+WORD WINAPI timeEndPeriod(WORD wPeriod)
 {
     dprintf_mmtime(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
@@ -230,7 +230,7 @@ WORD timeEndPeriod(WORD wPeriod)
 /**************************************************************************
  * 				timeGetTime    		[MMSYSTEM.607]
  */
-DWORD timeGetTime()
+DWORD WINAPI timeGetTime()
 {
     dprintf_mmtime(stddeb, "timeGetTime(); !\n");
     if (!mmTimeStarted)

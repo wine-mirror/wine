@@ -65,7 +65,8 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
     /* So now it's always a toggle */
 
     Caret.on = !Caret.on;
-    if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE | DCX_CACHE ))) return;
+    /* do not use DCX_CACHE here, for x,y,width,height are in logical units */
+    if (!(hdc = GetDCEx32( Caret.hwnd, 0, DCX_USESTYLE /*| DCX_CACHE*/ ))) return;
     hPrevBrush = SelectObject32( hdc, Caret.hBrush );
     PatBlt32( hdc, Caret.x, Caret.y, Caret.width, Caret.height, PATINVERT );
     SelectObject32( hdc, hPrevBrush );
@@ -125,7 +126,8 @@ static void CARET_KillTimer(void)
 /*****************************************************************
  *           CreateCaret16   (USER.163)
  */
-void CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap, INT16 width, INT16 height )
+void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
+                           INT16 width, INT16 height )
 {
     CreateCaret32( hwnd, bitmap, width, height );
 }
@@ -133,8 +135,8 @@ void CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap, INT16 width, INT16 height )
 /*****************************************************************
  *           CreateCaret32   (USER32.65)
  */
-BOOL32 CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
-                      INT32 width, INT32 height )
+BOOL32 WINAPI CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
+                             INT32 width, INT32 height )
 {
     dprintf_caret(stddeb,"CreateCaret: hwnd=%04x\n", hwnd);
 
@@ -175,7 +177,7 @@ BOOL32 CreateCaret32( HWND32 hwnd, HBITMAP32 bitmap,
 /*****************************************************************
  *           DestroyCaret16   (USER.164)
  */
-void DestroyCaret16(void)
+void WINAPI DestroyCaret16(void)
 {
     DestroyCaret32();
 }
@@ -184,7 +186,7 @@ void DestroyCaret16(void)
 /*****************************************************************
  *           DestroyCaret32   (USER32.130)
  */
-BOOL32 DestroyCaret32(void)
+BOOL32 WINAPI DestroyCaret32(void)
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -202,7 +204,7 @@ BOOL32 DestroyCaret32(void)
 /*****************************************************************
  *           SetCaretPos16   (USER.165)
  */
-void SetCaretPos16( INT16 x, INT16 y )
+void WINAPI SetCaretPos16( INT16 x, INT16 y )
 {
     SetCaretPos32( x, y );
 }
@@ -211,7 +213,7 @@ void SetCaretPos16( INT16 x, INT16 y )
 /*****************************************************************
  *           SetCaretPos32   (USER32.465)
  */
-BOOL32 SetCaretPos32( INT32 x, INT32 y)
+BOOL32 WINAPI SetCaretPos32( INT32 x, INT32 y)
 {
     if (!Caret.hwnd) return FALSE;
     if ((x == Caret.x) && (y == Caret.y)) return TRUE;
@@ -234,7 +236,7 @@ BOOL32 SetCaretPos32( INT32 x, INT32 y)
 /*****************************************************************
  *           HideCaret16   (USER.166)
  */
-void HideCaret16( HWND16 hwnd )
+void WINAPI HideCaret16( HWND16 hwnd )
 {
     HideCaret32( hwnd );
 }
@@ -243,7 +245,7 @@ void HideCaret16( HWND16 hwnd )
 /*****************************************************************
  *           HideCaret32   (USER32.316)
  */
-BOOL32 HideCaret32( HWND32 hwnd )
+BOOL32 WINAPI HideCaret32( HWND32 hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
@@ -261,7 +263,7 @@ BOOL32 HideCaret32( HWND32 hwnd )
 /*****************************************************************
  *           ShowCaret16   (USER.167)
  */
-void ShowCaret16( HWND16 hwnd )
+void WINAPI ShowCaret16( HWND16 hwnd )
 {
     ShowCaret32( hwnd );
 }
@@ -270,7 +272,7 @@ void ShowCaret16( HWND16 hwnd )
 /*****************************************************************
  *           ShowCaret32   (USER32.528)
  */
-BOOL32 ShowCaret32( HWND32 hwnd )
+BOOL32 WINAPI ShowCaret32( HWND32 hwnd )
 {
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
@@ -294,7 +296,7 @@ BOOL32 ShowCaret32( HWND32 hwnd )
 /*****************************************************************
  *           SetCaretBlinkTime16   (USER.168)
  */
-void SetCaretBlinkTime16( UINT16 msecs )
+void WINAPI SetCaretBlinkTime16( UINT16 msecs )
 {
     SetCaretBlinkTime32( msecs );
 }
@@ -302,7 +304,7 @@ void SetCaretBlinkTime16( UINT16 msecs )
 /*****************************************************************
  *           SetCaretBlinkTime32   (USER32.464)
  */
-BOOL32 SetCaretBlinkTime32( UINT32 msecs )
+BOOL32 WINAPI SetCaretBlinkTime32( UINT32 msecs )
 {
     if (!Caret.hwnd) return FALSE;
 
@@ -318,7 +320,7 @@ BOOL32 SetCaretBlinkTime32( UINT32 msecs )
 /*****************************************************************
  *           GetCaretBlinkTime16   (USER.169)
  */
-UINT16 GetCaretBlinkTime16(void)
+UINT16 WINAPI GetCaretBlinkTime16(void)
 {
     return (UINT16)GetCaretBlinkTime32();
 }
@@ -327,7 +329,7 @@ UINT16 GetCaretBlinkTime16(void)
 /*****************************************************************
  *           GetCaretBlinkTime32   (USER32.208)
  */
-UINT32 GetCaretBlinkTime32(void)
+UINT32 WINAPI GetCaretBlinkTime32(void)
 {
     return Caret.timeout;
 }
@@ -336,7 +338,7 @@ UINT32 GetCaretBlinkTime32(void)
 /*****************************************************************
  *           GetCaretPos16   (USER.183)
  */
-VOID GetCaretPos16( LPPOINT16 pt )
+VOID WINAPI GetCaretPos16( LPPOINT16 pt )
 {
     if (!Caret.hwnd || !pt) return;
 
@@ -350,7 +352,7 @@ VOID GetCaretPos16( LPPOINT16 pt )
 /*****************************************************************
  *           GetCaretPos32   (USER32.209)
  */
-BOOL32 GetCaretPos32( LPPOINT32 pt )
+BOOL32 WINAPI GetCaretPos32( LPPOINT32 pt )
 {
     if (!Caret.hwnd || !pt) return FALSE;
     pt->x = Caret.x;

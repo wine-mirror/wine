@@ -21,6 +21,7 @@
 /* Win16 socket-related types */
 
 typedef UINT16		SOCKET16;
+typedef UINT32		SOCKET32;
 
 typedef struct ws_hostent
 {
@@ -64,7 +65,9 @@ typedef struct
 
 /* ws_fd_set operations */
 
-INT16   __WSAFDIsSet( SOCKET16, ws_fd_set * );
+INT16 WINAPI __WSAFDIsSet16( SOCKET16, ws_fd_set * );
+INT32 WINAPI __WSAFDIsSet32( SOCKET32, ws_fd_set * );
+#define __WSAFDIsSet WINELIB_NAME(__WSAFDIsSet);
 
 #define WS_FD_CLR(fd, set) do { \
     UINT16 __i; \
@@ -141,8 +144,12 @@ typedef struct WSAData {
  * This is used instead of -1, since the
  * SOCKET type is unsigned.
  */
-#define INVALID_SOCKET  (SOCKET16)(~0)
-#define SOCKET_ERROR              (-1)
+#define INVALID_SOCKET16 	   (~0)
+#define INVALID_SOCKET32 	   (~0)
+#define SOCKET_ERROR               (-1)
+
+DECL_WINELIB_TYPE(INVALID_SOCKET);
+DECL_WINELIB_TYPE(SOCKET);
 
 /*
  * Types
@@ -221,16 +228,17 @@ typedef struct WSAData {
 /*
  * Define flags to be used with the WSAAsyncSelect() call.
  */
-#define WS_FD_READ         0x01
-#define WS_FD_WRITE        0x02
-#define WS_FD_OOB          0x04
-#define WS_FD_ACCEPT       0x08
-#define WS_FD_CONNECT      0x10
-#define WS_FD_CLOSE        0x20
+#define WS_FD_READ         0x0001
+#define WS_FD_WRITE        0x0002
+#define WS_FD_OOB          0x0004
+#define WS_FD_ACCEPT       0x0008
+#define WS_FD_CONNECT      0x0010
+#define WS_FD_CLOSE        0x0020
 
 #define WS_FD_NONBLOCK	   0x10000000	/* internal per-socket flags */
 #define WS_FD_INACTIVE	   0x20000000
 #define WS_FD_CONNECTED	   0x40000000
+#define WS_FD_RAW	   0x80000000
 #define WS_FD_INTERNAL	   0xFFFF0000
 
 /*
@@ -332,35 +340,43 @@ extern "C" {
 
 /* Microsoft Windows Extension function prototypes */
 
-INT16 	  WSAStartup(UINT16 wVersionRequired, LPWSADATA lpWSAData);
-INT16 	  WSACleanup(void);
-void 	  WSASetLastError(INT16 iError);
-INT16 	  WSAGetLastError(void);
-BOOL16 	  WSAIsBlocking(void);
-INT16 	  WSAUnhookBlockingHook(void);
-FARPROC16 WSASetBlockingHook(FARPROC16 lpBlockFunc);
-INT16 	  WSACancelBlockingCall(void);
-HANDLE16  WSAAsyncGetServByName(HWND16 hWnd, UINT16 wMsg,
-                                LPCSTR name, LPCSTR proto,
-                                SEGPTR buf, INT16 buflen);
+INT16     WINAPI WSAStartup16(UINT16 wVersionRequired, LPWSADATA lpWSAData);
+INT32     WINAPI WSAStartup32(UINT32 wVersionRequired, LPWSADATA lpWSAData);
+#define   WSAStartup WINELIB_NAME(WSAStartup);
+void      WINAPI WSASetLastError16(INT16 iError);
+void      WINAPI WSASetLastError32(INT32 iError);
+#define   WSASetLastError WINELIB_NAME(WSASetLastError);
+INT32     WINAPI WSACleanup(void);
+INT32     WINAPI WSAGetLastError(void);
+BOOL32    WINAPI WSAIsBlocking(void);
+INT32     WINAPI WSACancelBlockingCall(void);
+INT16     WINAPI WSAUnhookBlockingHook16(void);
+INT32     WINAPI WSAUnhookBlockingHook32(void);
+#define   WSAUnhookBlockingHook WINELIB_NAME(WSAUnhookBlockingHook)
+FARPROC16 WINAPI WSASetBlockingHook16(FARPROC16 lpBlockFunc);
+FARPROC32 WINAPI WSASetBlockingHook32(FARPROC32 lpBlockFunc);
+#define   WSASetBlockingHook WINELIB_NAME(WSASetBlockingHook)
+HANDLE16  WINAPI WSAAsyncGetServByName(HWND16 hWnd, UINT16 wMsg,
+                                       LPCSTR name, LPCSTR proto,
+                                       SEGPTR buf, INT16 buflen);
 
-HANDLE16  WSAAsyncGetServByPort(HWND16 hWnd, UINT16 wMsg, INT16 port,
-                                LPCSTR proto, SEGPTR buf, INT16 buflen);
+HANDLE16  WINAPI WSAAsyncGetServByPort(HWND16 hWnd, UINT16 wMsg, INT16 port,
+                                       LPCSTR proto, SEGPTR buf, INT16 buflen);
 
-HANDLE16  WSAAsyncGetProtoByName(HWND16 hWnd, UINT16 wMsg,
-                                 LPCSTR name, SEGPTR buf, INT16 buflen);
+HANDLE16  WINAPI WSAAsyncGetProtoByName(HWND16 hWnd, UINT16 wMsg,
+                                        LPCSTR name, SEGPTR buf, INT16 buflen);
 
-HANDLE16  WSAAsyncGetProtoByNumber(HWND16 hWnd, UINT16 wMsg,
-                                   INT16 number, SEGPTR buf, INT16 buflen);
+HANDLE16  WINAPI WSAAsyncGetProtoByNumber(HWND16 hWnd, UINT16 wMsg,
+                                       INT16 number, SEGPTR buf, INT16 buflen);
 
-HANDLE16  WSAAsyncGetHostByName(HWND16 hWnd, UINT16 wMsg,
-                                LPCSTR name, SEGPTR buf, INT16 buflen);
+HANDLE16  WINAPI WSAAsyncGetHostByName(HWND16 hWnd, UINT16 wMsg,
+                                       LPCSTR name, SEGPTR buf, INT16 buflen);
 
-HANDLE16  WSAAsyncGetHostByAddr(HWND16 hWnd, UINT16 wMsg, LPCSTR addr, INT16 len,
-                                INT16 type, SEGPTR buf, INT16 buflen);
-
-INT16 	  WSACancelAsyncRequest(HANDLE16 hAsyncTaskHandle);
-INT16     WSAAsyncSelect(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, UINT32 lEvent);
+HANDLE16  WINAPI WSAAsyncGetHostByAddr(HWND16 hWnd, UINT16 wMsg, LPCSTR addr,
+                              INT16 len, INT16 type, SEGPTR buf, INT16 buflen);
+INT16 	  WINAPI WSACancelAsyncRequest(HANDLE16 hAsyncTaskHandle);
+INT16     WINAPI WSAAsyncSelect(SOCKET16 s, HWND16 hWnd, UINT16 wMsg,
+                                UINT32 lEvent);
 
 #ifdef __cplusplus
 }
@@ -417,9 +433,13 @@ typedef struct timeval TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
 
 /* ----------------------------------- internal structures */
 
-#define WS_DUP_NATIVE           0x0
-#define WS_DUP_OFFSET           0x2
-#define WS_DUP_SEGPTR           0x4
+/* ws_... struct conversion flags */
+
+#define WS_DUP_NATIVE           0x0001		/* native structure format (not ws_..) */
+#define WS_DUP_OFFSET           0x0002		/* internal pointers are offsets */
+#define WS_DUP_SEGPTR           0x0004		/* internal pointers are SEGPTRs */
+						/* by default, internal pointers are linear */
+/* async DNS op flags */
 
 #define AOP_IO                  0x0000001	/* aop_control paramaters */
 
@@ -437,80 +457,60 @@ typedef struct  __aop
 
   /* custom data */
 
-  HWND16        hWnd;
-  UINT16        uMsg;
+  HWND16        hWnd;				/* hWnd to post */ 
+  UINT16        uMsg;				/* uMsg message to. */
 
-  unsigned	flags;
-  SEGPTR	buffer_base;
-  int           buflen;
+  SEGPTR	buffer_base;			/* buffer to copy result to */
+  UINT16        buflen;
+  UINT16	flags;				/* WSMSG_ASYNC_... */
 } ws_async_op;
 
-#define WSMSG_ASYNC_SELECT      0x0000001
-#define WSMSG_ASYNC_HOSTBYNAME  0x0000010
-#define WSMSG_ASYNC_HOSTBYADDR  0x0000020
-#define WSMSG_ASYNC_PROTOBYNAME 0x0000100
-#define WSMSG_ASYNC_PROTOBYNUM  0x0000200
-#define WSMSG_ASYNC_SERVBYNAME  0x0001000
-#define WSMSG_ASYNC_SERVBYPORT  0x0002000
+#define WSMSG_ASYNC_HOSTBYNAME  0x0001
+#define WSMSG_ASYNC_HOSTBYADDR  0x0002
+#define WSMSG_ASYNC_PROTOBYNAME 0x0010
+#define WSMSG_ASYNC_PROTOBYNUM  0x0020
+#define WSMSG_ASYNC_SERVBYNAME  0x0100
+#define WSMSG_ASYNC_SERVBYPORT  0x0200
+#define WSMSG_DEAD_AOP		0x8000
 
-#define MTYPE_PARENT            0x50505357
-#define MTYPE_CLIENT            0x50435357
-
-#pragma pack(1)
-typedef struct
+typedef struct __sop	/* WSAAsyncSelect() control struct */
 {
-  long          mtype;          /* WSMSG_... */
+  struct __sop *next, *prev;
 
-  UINT32        lParam;		/* WS_FD_... event */
-  UINT16        wParam;         /* socket handle - used only for MTYPE_CLIENT messages */
-} ipc_packet;
+  struct __ws*  pws;
+  HWND16        hWnd;
+  UINT16        uMsg;
+} ws_select_op;
 
-#define MTYPE_PARENT_SIZE \
-        (sizeof(UINT32))
-#define MTYPE_CLIENT_SIZE \
-        (sizeof(ipc_packet) - sizeof(long))
-#pragma pack(4)
-
-typedef struct
+typedef struct	__ws	/* socket */
 {
-  int                   fd;
-  unsigned              flags;
-  ws_async_op*          p_aop;	/* AsyncSelect() handler */
+  int		fd;
+  unsigned	flags;
+  ws_select_op*	psop;
 } ws_socket;
-
-typedef struct
-{
-  ws_async_op*  ws_aop;         /* init'ed for getXbyY */
-  ws_socket*    ws_sock;        /* init'ed for AsyncSelect */
-  int           lEvent;
-  int           lLength;
-  char*		buffer;
-  char*		init;
-  ipc_packet    ip;
-} ws_async_ctl;
 
 #define WS_MAX_SOCKETS_PER_THREAD       16
 #define WS_MAX_UDP_DATAGRAM             1024
 
 #define WSI_BLOCKINGCALL	0x00000001	/* per-thread info flags */
+#define WSI_BLOCKINGHOOK32	0x00000002	/* 32-bit callback */
 
-typedef struct __WSINFO
+typedef struct _WSINFO
 {
-  struct __WSINFO*      prev,*next;
+  struct _WSINFO*       prev,*next;
 
   unsigned		flags;
-  int			err;
-  INT16			num_startup;
+  INT32			err;			/* WSAGetLastError() return value */
+  INT16			num_startup;		/* reference counter */
   INT16			num_async_rq;
-  INT16			last_free;
+  INT16			last_free;		/* entry in the socket table */
   UINT16		buflen;
   char*			buffer;			/* allocated from SEGPTR heap */
   char*			dbuffer;		/* buffer for dummies (32 bytes) */
 
   ws_socket		sock[WS_MAX_SOCKETS_PER_THREAD];
-  FARPROC16		blocking_hook;
-  HTASK16               tid;    		/* owning thread id - better switch
-                                 		 * to TLS when it gets fixed */
+  DWORD			blocking_hook;
+  HTASK16               tid;    		/* owning task id - process might be better */
 } WSINFO, *LPWSINFO;
 
 int WS_dup_he(LPWSINFO pwsi, struct hostent* p_he, int flag);
@@ -527,10 +527,12 @@ int WINSOCK_unblock_io(int fd, int noblock);
 int  WINSOCK_check_async_op(ws_async_op* p_aop);
 void WINSOCK_link_async_op(ws_async_op* p_aop);
 void WINSOCK_unlink_async_op(ws_async_op* p_aop);
-void WINSOCK_cancel_async_op(HTASK16 tid);
-void WINSOCK_do_async_select(void);
-void WINSOCK_Shutdown(void);
+int  WINSOCK_cancel_async_op(ws_async_op* p_aop);
 
+void WINSOCK_cancel_task_aops(HTASK16, void (*__memfree)(void*) );
+
+BOOL32 WINSOCK_HandleIO(int* fd_max, int num_pending, fd_set io_set[3] );
+void   WINSOCK_Shutdown(void);
 UINT16 wsaErrno(void);
 UINT16 wsaHerrno(void);
 

@@ -265,7 +265,7 @@ static WORD MODULE_Ne2MemFlags(WORD flags)
  *           MODULE_AllocateSegment (WPROCS.26)
  */
 
-DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
+DWORD WINAPI MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
 {
     WORD size = wSize << wElem;
     HANDLE16 hMem = GlobalAlloc16( MODULE_Ne2MemFlags(wFlags), size);
@@ -478,6 +478,10 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
     if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
+    if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
+      fprintf(stderr, "Sorry, this is an OS/2 linear executable (LX) file !\n");
+      return (HMODULE16)11;
+    }
     /* We now have a valid NE header */
 
     size = sizeof(NE_MODULE) +
@@ -801,6 +805,15 @@ FARPROC16 MODULE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
     return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+}
+
+
+/***********************************************************************
+ *           EntryAddrProc   (WPROCS.27)
+ */
+FARPROC16 WINAPI EntryAddrProc( HMODULE16 hModule, WORD ordinal )
+{
+    return MODULE_GetEntryPoint( hModule, ordinal );
 }
 
 
@@ -1286,7 +1299,7 @@ HINSTANCE16 LoadModule16( LPCSTR name, LPVOID paramBlock )
 /**********************************************************************
  *	    FreeModule16    (KERNEL.46)
  */
-BOOL16 FreeModule16( HMODULE16 hModule )
+BOOL16 WINAPI FreeModule16( HMODULE16 hModule )
 {
     NE_MODULE *pModule;
 
@@ -1303,13 +1316,13 @@ BOOL16 FreeModule16( HMODULE16 hModule )
 /**********************************************************************
  *	    GetModuleHandle16    (KERNEL.47)
  */
-HMODULE16 WIN16_GetModuleHandle( SEGPTR name )
+HMODULE16 WINAPI WIN16_GetModuleHandle( SEGPTR name )
 {
     if (HIWORD(name) == 0) return GetExePtr( (HINSTANCE16)name );
     return MODULE_FindModule( PTR_SEG_TO_LIN(name) );
 }
 
-HMODULE16 GetModuleHandle16( LPCSTR name )
+HMODULE16 WINAPI GetModuleHandle16( LPCSTR name )
 {
     return MODULE_FindModule( name );
 }
@@ -1318,7 +1331,7 @@ HMODULE16 GetModuleHandle16( LPCSTR name )
 /**********************************************************************
  *	    GetModuleUsage    (KERNEL.48)
  */
-INT16 GetModuleUsage( HINSTANCE16 hModule )
+INT16 WINAPI GetModuleUsage( HINSTANCE16 hModule )
 {
     NE_MODULE *pModule;
 
@@ -1333,7 +1346,8 @@ INT16 GetModuleUsage( HINSTANCE16 hModule )
 /**********************************************************************
  *	    GetModuleFileName16    (KERNEL.49)
  */
-INT16 GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
+INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
+                                  INT16 nSize )
 {
     NE_MODULE *pModule;
 
@@ -1349,7 +1363,8 @@ INT16 GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName, INT16 nSize )
 /***********************************************************************
  *              GetModuleFileName32A      (KERNEL32.235)
  */
-DWORD GetModuleFileName32A( HMODULE32 hModule, LPSTR lpFileName, DWORD size )
+DWORD WINAPI GetModuleFileName32A( HMODULE32 hModule, LPSTR lpFileName,
+                                   DWORD size )
 {                   
     NE_MODULE *pModule;
            
@@ -1369,7 +1384,8 @@ DWORD GetModuleFileName32A( HMODULE32 hModule, LPSTR lpFileName, DWORD size )
 /***********************************************************************
  *              GetModuleFileName32W      (KERNEL32.236)
  */
-DWORD GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName, DWORD size )
+DWORD WINAPI GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName,
+                                   DWORD size )
 {
     LPSTR fnA = (char*)HeapAlloc( GetProcessHeap(), 0, size );
     DWORD res = GetModuleFileName32A( hModule, fnA, size );
@@ -1382,7 +1398,7 @@ DWORD GetModuleFileName32W( HMODULE32 hModule, LPWSTR lpFileName, DWORD size )
 /**********************************************************************
  *	    GetModuleName    (KERNEL.27)
  */
-BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
+BOOL16 WINAPI GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
 {
     LPSTR name = MODULE_GetModuleName(hinst);
 
@@ -1395,7 +1411,8 @@ BOOL16 GetModuleName( HINSTANCE16 hinst, LPSTR buf, INT16 nSize )
 /***********************************************************************
  *           LoadLibraryEx32W   (KERNEL.513)
  */
-HINSTANCE16 LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf, DWORD flags )
+HINSTANCE16 WINAPI LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf,
+                                       DWORD flags )
 {
     fprintf(stderr,"LoadLibraryEx32W(%s,%d,%08lx)\n",libname,hf,flags);
     if (!flags && !hf)
@@ -1406,7 +1423,7 @@ HINSTANCE16 LoadLibraryEx32W16( LPCSTR libname, HANDLE16 hf, DWORD flags )
 /***********************************************************************
  *           LoadLibrary   (KERNEL.95)
  */
-HINSTANCE16 LoadLibrary16( LPCSTR libname )
+HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
 {
     HINSTANCE16 handle;
 
@@ -1436,7 +1453,7 @@ HINSTANCE16 LoadLibrary16( LPCSTR libname )
 /***********************************************************************
  *           FreeLibrary16   (KERNEL.96)
  */
-void FreeLibrary16( HINSTANCE16 handle )
+void WINAPI FreeLibrary16( HINSTANCE16 handle )
 {
     dprintf_module( stddeb,"FreeLibrary: %04x\n", handle );
     FreeModule16( handle );
@@ -1446,7 +1463,7 @@ void FreeLibrary16( HINSTANCE16 handle )
 /***********************************************************************
  *           WinExec16   (KERNEL.166)
  */
-HINSTANCE16 WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
+HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 {
     return WinExec32( lpCmdLine, nCmdShow );
 }
@@ -1455,7 +1472,7 @@ HINSTANCE16 WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 /***********************************************************************
  *           WinExec32   (KERNEL32.566)
  */
-HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
+HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 {
     LOADPARAMS params;
     HGLOBAL16 cmdShowHandle, cmdLineHandle;
@@ -1581,7 +1598,7 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 		    argptr = argv;
 		    if (iconic) *argptr++ = "-iconic";
 		    *argptr++ = unixfilename;
-		    p = cmdline;
+		    p = cmdline + 1;
 		    while (1)
 		    {
 			while (*p && (*p == ' ' || *p == '\t')) *p++ = '\0';
@@ -1628,7 +1645,7 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
  *           WIN32_GetProcAddress16   (KERNEL32.36)
  * Get procaddress in 16bit module from win32... (kernel32 undoc. ordinal func)
  */
-FARPROC16 WIN32_GetProcAddress16( HMODULE16 hModule, LPSTR name )
+FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE16 hModule, LPSTR name )
 {
     WORD	ordinal;
     FARPROC16	ret;
@@ -1656,7 +1673,7 @@ FARPROC16 WIN32_GetProcAddress16( HMODULE16 hModule, LPSTR name )
 /***********************************************************************
  *           GetProcAddress16   (KERNEL.50)
  */
-FARPROC16 GetProcAddress16( HMODULE16 hModule, SEGPTR name )
+FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 {
     WORD ordinal;
     FARPROC16 ret;
@@ -1688,7 +1705,7 @@ FARPROC16 GetProcAddress16( HMODULE16 hModule, SEGPTR name )
 /***********************************************************************
  *           GetProcAddress32   (KERNEL32.257)
  */
-FARPROC32 GetProcAddress32( HMODULE32 hModule, LPCSTR function )
+FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 {
 #ifndef WINELIB
     NE_MODULE *pModule;
@@ -1713,8 +1730,7 @@ FARPROC32 GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 /***********************************************************************
  *           RtlImageNtHeaders   (NTDLL)
  */
-LPIMAGE_NT_HEADERS
-RtlImageNtHeader(HMODULE32 hModule)
+LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
 {
 #ifndef WINELIB
     NE_MODULE *pModule;
@@ -1734,7 +1750,7 @@ RtlImageNtHeader(HMODULE32 hModule)
 /**********************************************************************
  *	    GetExpWinVer    (KERNEL.167)
  */
-WORD GetExpWinVer( HMODULE16 hModule )
+WORD WINAPI GetExpWinVer( HMODULE16 hModule )
 {
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
     return pModule ? pModule->expected_version : 0;
@@ -1744,7 +1760,7 @@ WORD GetExpWinVer( HMODULE16 hModule )
 /**********************************************************************
  *	    IsSharedSelector    (KERNEL.345)
  */
-BOOL16 IsSharedSelector( HANDLE16 selector )
+BOOL16 WINAPI IsSharedSelector( HANDLE16 selector )
 {
     /* Check whether the selector belongs to a DLL */
     NE_MODULE *pModule = MODULE_GetPtr( GetExePtr( selector ));
@@ -1756,7 +1772,7 @@ BOOL16 IsSharedSelector( HANDLE16 selector )
 /**********************************************************************
  *	    ModuleFirst    (TOOLHELP.59)
  */
-BOOL16 ModuleFirst( MODULEENTRY *lpme )
+BOOL16 WINAPI ModuleFirst( MODULEENTRY *lpme )
 {
     lpme->wNext = hFirstModule;
     return ModuleNext( lpme );
@@ -1766,7 +1782,7 @@ BOOL16 ModuleFirst( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleNext    (TOOLHELP.60)
  */
-BOOL16 ModuleNext( MODULEENTRY *lpme )
+BOOL16 WINAPI ModuleNext( MODULEENTRY *lpme )
 {
     NE_MODULE *pModule;
 
@@ -1787,7 +1803,7 @@ BOOL16 ModuleNext( MODULEENTRY *lpme )
 /**********************************************************************
  *	    ModuleFindName    (TOOLHELP.61)
  */
-BOOL16 ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
+BOOL16 WINAPI ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 {
     lpme->wNext = GetModuleHandle16( name );
     return ModuleNext( lpme );
@@ -1797,7 +1813,7 @@ BOOL16 ModuleFindName( MODULEENTRY *lpme, LPCSTR name )
 /**********************************************************************
  *	    ModuleFindHandle    (TOOLHELP.62)
  */
-BOOL16 ModuleFindHandle( MODULEENTRY *lpme, HMODULE16 hModule )
+BOOL16 WINAPI ModuleFindHandle( MODULEENTRY *lpme, HMODULE16 hModule )
 {
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     lpme->wNext = hModule;

@@ -76,11 +76,13 @@ typedef struct
 /* wFlags values */
 #define GF_PDB_OWNER        0x0100      /* Low byte is KERNEL flags */
 
-BOOL16 GlobalInfo( GLOBALINFO *pInfo );
-BOOL16 GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
-BOOL16 GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
-BOOL16 GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
-BOOL16 GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule, WORD wSeg );
+WORD   WINAPI GlobalHandleToSel( HGLOBAL16 handle );
+BOOL16 WINAPI GlobalInfo( GLOBALINFO *pInfo );
+BOOL16 WINAPI GlobalFirst( GLOBALENTRY *pGlobal, WORD wFlags );
+BOOL16 WINAPI GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags) ;
+BOOL16 WINAPI GlobalEntryHandle( GLOBALENTRY *pGlobal, HGLOBAL16 hItem );
+BOOL16 WINAPI GlobalEntryModule( GLOBALENTRY *pGlobal, HMODULE16 hModule,
+                                 WORD wSeg );
 
 /* Local heap */
 
@@ -154,9 +156,9 @@ typedef struct
 #define LT_USER_HANDLETABLE         32
 #define LT_USER_MAX                 LT_USER_HANDLETABLE
 
-BOOL16 LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
-BOOL16 LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
-BOOL16 LocalNext( LOCALENTRY *pLocalEntry );
+BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle );
+BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle );
+BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry );
 
 
 /* modules */
@@ -171,10 +173,10 @@ typedef struct
     HANDLE16   wNext;
 } MODULEENTRY, *LPMODULEENTRY;
 
-BOOL16 ModuleFirst(MODULEENTRY *lpModule);
-BOOL16 ModuleNext(MODULEENTRY *lpModule);
-BOOL16 ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
-BOOL16 ModuleFindHandle(MODULEENTRY *lpModule, HMODULE16 hModule);
+BOOL16 WINAPI ModuleFirst(MODULEENTRY *lpModule);
+BOOL16 WINAPI ModuleNext(MODULEENTRY *lpModule);
+BOOL16 WINAPI ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName);
+BOOL16 WINAPI ModuleFindHandle(MODULEENTRY *lpModule, HMODULE16 hModule);
 
 /* tasks */
 
@@ -197,12 +199,12 @@ typedef struct
     HANDLE16     hNext;
 } TASKENTRY, *LPTASKENTRY;
 
-BOOL16 TaskFirst(LPTASKENTRY lpTask);
-BOOL16 TaskNext(LPTASKENTRY lpTask);
-BOOL16 TaskFindHandle(LPTASKENTRY lpTask, HTASK16 hTask);
-DWORD TaskSetCSIP(HTASK16 hTask, WORD wCS, WORD wIP);
-DWORD TaskGetCSIP(HTASK16 hTask);
-BOOL16 TaskSwitch(HTASK16 hTask, DWORD dwNewCSIP);
+BOOL16 WINAPI TaskFirst(LPTASKENTRY lpTask);
+BOOL16 WINAPI TaskNext(LPTASKENTRY lpTask);
+BOOL16 WINAPI TaskFindHandle(LPTASKENTRY lpTask, HTASK16 hTask);
+DWORD  WINAPI TaskSetCSIP(HTASK16 hTask, WORD wCS, WORD wIP);
+DWORD  WINAPI TaskGetCSIP(HTASK16 hTask);
+BOOL16 WINAPI TaskSwitch(HTASK16 hTask, DWORD dwNewCSIP);
 
 /* mem info */
 
@@ -230,8 +232,8 @@ typedef struct
     HGLOBAL16 hGDISegment;
 } SYSHEAPINFO;
 
-BOOL16 MemManInfo(LPMEMMANINFO lpEnhMode);
-BOOL16 SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
+BOOL16 WINAPI MemManInfo(LPMEMMANINFO lpEnhMode);
+BOOL16 WINAPI SystemHeapInfo( SYSHEAPINFO *pHeapInfo );
 
 /* timer info */
 
@@ -241,7 +243,7 @@ typedef struct tagTIMERINFO {
 	DWORD dwmsThisVM;
 } TIMERINFO;
 
-BOOL16 TimerCount( TIMERINFO *pTimerInfo );
+BOOL16 WINAPI TimerCount( TIMERINFO *pTimerInfo );
 
 /* Window classes */
 
@@ -253,14 +255,14 @@ typedef struct
     HANDLE16  wNext;
 } CLASSENTRY;
 
-BOOL16 ClassFirst( CLASSENTRY *pClassEntry );
-BOOL16 ClassNext( CLASSENTRY *pClassEntry );
+BOOL16 WINAPI ClassFirst( CLASSENTRY *pClassEntry );
+BOOL16 WINAPI ClassNext( CLASSENTRY *pClassEntry );
 
 
 /* Memory read/write */
 
-DWORD MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count );
-DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
+DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count );
+DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
 
 /* flags to NotifyRegister() */
 #define NF_NORMAL	0	/* everything except taskswitches, debugerrors,
@@ -269,7 +271,7 @@ DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count );
 #define NF_TASKSWITCH	1	/* get taskswitch information */
 #define NF_RIP		2	/* get debugerrors of system */
 
-BOOL16 NotifyRegister(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
+BOOL16 WINAPI NotifyRegister(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
 
 #define NFY_UNKNOWN	0
 #define NFY_LOADSEG	1

@@ -95,7 +95,7 @@ void DCE_FreeDCE( DCE *dce )
 /**********************************************************************
  *          WindowFromDC16   (USER32.580)
  */
-HWND16 WindowFromDC16( HDC16 hDC )
+HWND16 WINAPI WindowFromDC16( HDC16 hDC )
 {
     return (HWND16)WindowFromDC32( hDC );
 }
@@ -104,7 +104,7 @@ HWND16 WindowFromDC16( HDC16 hDC )
 /**********************************************************************
  *          WindowFromDC32   (USER32.580)
  */
-HWND32 WindowFromDC32( HDC32 hDC )
+HWND32 WINAPI WindowFromDC32( HDC32 hDC )
 {
     DCE *dce = firstDCE;
     while (dce && (dce->hDC != hDC)) dce = dce->next;
@@ -417,7 +417,7 @@ INT16 DCE_ExcludeRgn( HDC32 hDC, WND* wnd, HRGN32 hRgn )
 /***********************************************************************
  *           GetDCEx16    (USER.359)
  */
-HDC16 GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
+HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
 {
     return (HDC16)GetDCEx32( hwnd, hrgnClip, flags );
 }
@@ -428,7 +428,7 @@ HDC16 GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
  *
  * Unimplemented flags: DCX_LOCKWINDOWUPDATE
  */
-HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
+HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 {
     HRGN32 	hrgnVisible;
     HDC32 	hdc = 0;
@@ -583,7 +583,7 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 /***********************************************************************
  *           GetDC16    (USER.66)
  */
-HDC16 GetDC16( HWND16 hwnd )
+HDC16 WINAPI GetDC16( HWND16 hwnd )
 {
     return (HDC16)GetDC32( hwnd );
 }
@@ -592,7 +592,7 @@ HDC16 GetDC16( HWND16 hwnd )
 /***********************************************************************
  *           GetDC32    (USER32.229)
  */
-HDC32 GetDC32( HWND32 hwnd )
+HDC32 WINAPI GetDC32( HWND32 hwnd )
 {
     if (!hwnd)
         return GetDCEx32( GetDesktopWindow32(), 0, DCX_CACHE | DCX_WINDOW );
@@ -603,7 +603,7 @@ HDC32 GetDC32( HWND32 hwnd )
 /***********************************************************************
  *           GetWindowDC16    (USER.67)
  */
-HDC16 GetWindowDC16( HWND16 hwnd )
+HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
 {
     if (!hwnd) hwnd = GetDesktopWindow16();
     return GetDCEx16( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
@@ -613,7 +613,7 @@ HDC16 GetWindowDC16( HWND16 hwnd )
 /***********************************************************************
  *           GetWindowDC32    (USER32.)
  */
-HDC32 GetWindowDC32( HWND32 hwnd )
+HDC32 WINAPI GetWindowDC32( HWND32 hwnd )
 {
     if (!hwnd) hwnd = GetDesktopWindow32();
     return GetDCEx32( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
@@ -623,7 +623,7 @@ HDC32 GetWindowDC32( HWND32 hwnd )
 /***********************************************************************
  *           ReleaseDC16    (USER.68)
  */
-INT16 ReleaseDC16( HWND16 hwnd, HDC16 hdc )
+INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 {
     return (INT32)ReleaseDC32( hwnd, hdc );
 }
@@ -632,7 +632,7 @@ INT16 ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 /***********************************************************************
  *           ReleaseDC32    (USER32.439)
  */
-INT32 ReleaseDC32( HWND32 hwnd, HDC32 hdc )
+INT32 WINAPI ReleaseDC32( HWND32 hwnd, HDC32 hdc )
 {
     DCE * dce = firstDCE;
     
@@ -674,7 +674,7 @@ INT32 ReleaseDC32( HWND32 hwnd, HDC32 hdc )
  *
  * See "Undoc. Windows" for hints (DC, SetDCHook, SetHookFlags)..  
  */
-BOOL16 DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
+BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 {
     HRGN32 hVisRgn;
     DCE *dce = firstDCE;;
@@ -729,7 +729,7 @@ BOOL16 DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 /***********************************************************************
  *           LockWindowUpdate16   (USER.294)
  */
-BOOL16 LockWindowUpdate16( HWND16 hwnd )
+BOOL16 WINAPI LockWindowUpdate16( HWND16 hwnd )
 {
     return LockWindowUpdate32( hwnd );
 }
@@ -738,7 +738,7 @@ BOOL16 LockWindowUpdate16( HWND16 hwnd )
 /***********************************************************************
  *           LockWindowUpdate32   (USER32.377)
  */
-BOOL32 LockWindowUpdate32( HWND32 hwnd )
+BOOL32 WINAPI LockWindowUpdate32( HWND32 hwnd )
 {
     /* FIXME? DCX_LOCKWINDOWUPDATE is unimplemented */
     return TRUE;

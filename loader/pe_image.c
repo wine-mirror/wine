@@ -27,6 +27,7 @@
 #include "global.h"
 #include "task.h"
 #include "ldt.h"
+#include "options.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "debugger.h"
@@ -188,6 +189,8 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
         ordimportwarned = 0;
 	Module = (char *) RVA(pe_imp->Name);
 	dprintf_win32 (stddeb, "%s\n", Module);
+
+	/* FIXME: forwarder entries ... */
 
 	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
 	    dprintf_win32 (stddeb, "Microsoft style imports used\n");
@@ -402,16 +405,14 @@ static void PE_LoadImage( struct pe_data **ret_pe, int fd, HMODULE16 hModule, WO
 		fprintf(stderr,")\n");
 		return;
 	}
-
 /* FIXME: this is a *horrible* hack to make COMDLG32.DLL load OK. The
-problem needs to be fixed properly at some stage */
-
+ * problem needs to be fixed properly at some stage 
+ */
 	if (pe->pe_header->OptionalHeader.NumberOfRvaAndSizes != 16) {
 		printf("Short PE Header!!!\n");
 		lseek( fd, -(16 - pe->pe_header->OptionalHeader.NumberOfRvaAndSizes) * sizeof(IMAGE_DATA_DIRECTORY), SEEK_CUR);
 	}
 
-/* horrible hack ends !!! */
 	/* read sections */
 	pe->pe_seg = xmalloc(sizeof(IMAGE_SECTION_HEADER) * 
 				   pe->pe_header->FileHeader.NumberOfSections);
@@ -423,19 +424,8 @@ problem needs to be fixed properly at some stage */
 	pe->vma_size=0;
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
 	calc_vma_size(pe);
-
-#if 0
-	/* We use malloc here, while a huge part of that address space does
-	   not be supported by actual memory. It has to be contiguous, though.
-	   I don't know if mmap("/dev/null"); would do any better.
-	   What I'd really like to do is a Win32 style VirtualAlloc/MapViewOfFile
-	   sequence */
-	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
-	memset( load_addr, 0, pe->vma_size);
-#else
 	load_addr = (int) VirtualAlloc( (void*)pe->base_addr, pe->vma_size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE );
         pe->load_addr = load_addr;
-#endif
 
 	dprintf_win32(stddeb, "Load addr is really %x, range %x\n",
 		pe->load_addr, pe->vma_size);
@@ -476,7 +466,6 @@ problem needs to be fixed properly at some stage */
 
 		if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
 			pe->pe_reloc = (LPIMAGE_BASE_RELOCATION) result;
-
 	}
 
 	/* There is word that the actual loader does not care about the
@@ -538,11 +527,9 @@ problem needs to be fixed properly at some stage */
 		[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size)
 		dprintf_win32(stdnimp,"Global Pointer (MIPS) ignored\n");
 
-#ifdef NOT	/* we initialize this later */
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_TLS].Size)
-		 dprintf_win32(stdnimp,"Thread local storage ignored\n");
-#endif
+		 fprintf(stdnimp,"Thread local storage ignored\n");
 
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
@@ -658,6 +645,16 @@ static void PE_InitDLL(HMODULE16 hModule, DWORD type,LPVOID lpReserved)
     if (!(pModule->flags & NE_FFLAGS_WIN32) || !(pe = pModule->pe_module))
         return;
 
+    load_addr = pe->load_addr;
+
+#ifndef WINELIB
+    if (Options.debug) {
+            DBG_ADDR addr = { NULL, 0, RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint) };
+            DEBUG_AddBreakpoint( &addr );
+	    DEBUG_SetBreakpoints(TRUE);
+    }
+#endif
+
     /*  DLL_ATTACH_PROCESS:
      *		lpreserved is NULL for dynamic loads, not-NULL for static loads
      *  DLL_DETACH_PROCESS:
@@ -669,7 +666,6 @@ static void PE_InitDLL(HMODULE16 hModule, DWORD type,LPVOID lpReserved)
     if (	(pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
 		(pe->pe_header->OptionalHeader.AddressOfEntryPoint)
     ) {
-        load_addr = pe->load_addr;
 	printf("InitPEDLL() called!\n");
 	CallDLLEntryProc32( 
 	    (FARPROC32)RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint),

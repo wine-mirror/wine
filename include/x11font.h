@@ -55,9 +55,10 @@ typedef struct
 #define FI_VARIABLEPITCH    0x0040
 #define FI_FIXEDPITCH       0x0080
 
-#define FI_ENC_ISO8859	    0x0100
-#define FI_ENC_ISO646	    0x0200
-#define FI_ENC_ANSI	    0x0400
+#define FI_ENC_ISO8859	    0x0100	/* iso8859-* 	*/
+#define FI_ENC_ISO646	    0x0200	/* iso646* 	*/
+#define FI_ENC_ANSI	    0x0400	/* ansi-0 	*/
+#define FI_ENC_MSCODEPAGE   0x0800	/* cp125-* 	*/
 
 #define FI_FIXEDEX	    0x1000
 #define FI_NORMAL	    0x2000

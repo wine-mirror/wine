@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__svr4__)
 #include <sys/filio.h>
 #endif
 #include <sys/ioctl.h>
@@ -148,7 +148,7 @@ int WinError(void)
 /**************************************************************************
  *         BuildCommDCB		(USER.213)
  */
-BOOL16 BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
+BOOL16 WINAPI BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 {
 	/* "COM1:9600,n,8,1"	*/
 	/*  012345		*/
@@ -173,6 +173,8 @@ BOOL16 BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 			return -1;
 		}
 		
+		memset(lpdcb, 0, sizeof(DCB16)); /* initialize */
+
 		if (!COM[port].fd) {
 		    OpenComm(device, 0, 0);
 		}
@@ -243,14 +245,17 @@ BOOL16 BuildCommDCB16(LPCSTR device, LPDCB16 lpdcb)
 /**************************************************************************
  *         BuildCommDCBA		(KERNEL32.14)
  */
-BOOL32 BuildCommDCB32A(LPCSTR device,LPDCB32 lpdcb) {
+BOOL32 WINAPI BuildCommDCB32A(LPCSTR device,LPDCB32 lpdcb)
+{
 	return BuildCommDCBAndTimeouts32A(device,lpdcb,NULL);
 }
 
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsA	(KERNEL32.15)
  */
-BOOL32 BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,LPCOMMTIMEOUTS lptimeouts) {
+BOOL32 WINAPI BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,
+                                         LPCOMMTIMEOUTS lptimeouts)
+{
 	int	port;
 	char	*ptr,*temp;
 
@@ -270,6 +275,9 @@ BOOL32 BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,LPCOMMTIMEOUTS lp
 		temp=(LPSTR)(device+5);
 	} else
 		temp=(LPSTR)device;
+
+	memset(lpdcb, 0, sizeof(DCB32)); /* initialize */
+
 	lpdcb->DCBlength	= sizeof(DCB32);
 	if (strchr(temp,',')) {	/* old style */
 		DCB16	dcb16;
@@ -372,9 +380,9 @@ BOOL32 BuildCommDCBAndTimeouts32A(LPCSTR device, LPDCB32 lpdcb,LPCOMMTIMEOUTS lp
 /**************************************************************************
  *         BuildCommDCBAndTimeoutsW		(KERNEL32.16)
  */
-BOOL32 BuildCommDCBAndTimeouts32W(
-	LPCWSTR devid,LPDCB32 lpdcb,LPCOMMTIMEOUTS lptimeouts
-) {
+BOOL32 WINAPI BuildCommDCBAndTimeouts32W( LPCWSTR devid, LPDCB32 lpdcb,
+                                          LPCOMMTIMEOUTS lptimeouts )
+{
 	LPSTR	devidA;
 	BOOL32	ret;
 
@@ -388,14 +396,15 @@ BOOL32 BuildCommDCBAndTimeouts32W(
 /**************************************************************************
  *         BuildCommDCBW		(KERNEL32.17)
  */
-BOOL32 BuildCommDCB32W(LPCWSTR devid,LPDCB32 lpdcb) {
+BOOL32 WINAPI BuildCommDCB32W(LPCWSTR devid,LPDCB32 lpdcb)
+{
 	return BuildCommDCBAndTimeouts32W(devid,lpdcb,NULL);
 }
 
 /*****************************************************************************
  *	OpenComm		(USER.200)
  */
-INT16 OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
+INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 {
 	int port,fd;
 
@@ -459,7 +468,7 @@ INT16 OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 /*****************************************************************************
  *	CloseComm		(USER.207)
  */
-INT16 CloseComm(INT16 fd)
+INT16 WINAPI CloseComm(INT16 fd)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -483,7 +492,7 @@ INT16 CloseComm(INT16 fd)
 /*****************************************************************************
  *	SetCommBreak		(USER.210)
  */
-INT16 SetCommBreak16(INT16 fd)
+INT16 WINAPI SetCommBreak16(INT16 fd)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -501,7 +510,7 @@ INT16 SetCommBreak16(INT16 fd)
 /*****************************************************************************
  *	SetCommBreak		(KERNEL32.449)
  */
-BOOL32 SetCommBreak32(INT32 fd)
+BOOL32 WINAPI SetCommBreak32(INT32 fd)
 {
 
 	struct DosDeviceStruct *ptr;
@@ -520,7 +529,7 @@ BOOL32 SetCommBreak32(INT32 fd)
 /*****************************************************************************
  *	ClearCommBreak		(USER.211)
  */
-INT16 ClearCommBreak16(INT16 fd)
+INT16 WINAPI ClearCommBreak16(INT16 fd)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -538,7 +547,7 @@ INT16 ClearCommBreak16(INT16 fd)
 /*****************************************************************************
  *	ClearCommBreak		(KERNEL32.20)
  */
-BOOL32 ClearCommBreak32(INT32 fd)
+BOOL32 WINAPI ClearCommBreak32(INT32 fd)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -556,7 +565,7 @@ BOOL32 ClearCommBreak32(INT32 fd)
 /*****************************************************************************
  *	EscapeCommFunction	(USER.214)
  */
-LONG EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
+LONG WINAPI EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 {
 	int	max;
 	struct termios port;
@@ -632,7 +641,7 @@ LONG EscapeCommFunction16(UINT16 fd,UINT16 nFunction)
 /*****************************************************************************
  *	EscapeCommFunction	(KERNEL32.214)
  */
-BOOL32 EscapeCommFunction32(INT32 fd,UINT32 nFunction)
+BOOL32 WINAPI EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 {
 	struct termios	port;
 	struct DosDeviceStruct *ptr;
@@ -705,7 +714,7 @@ BOOL32 EscapeCommFunction32(INT32 fd,UINT32 nFunction)
 /*****************************************************************************
  *	FlushComm	(USER.215)
  */
-INT16 FlushComm(INT16 fd,INT16 fnQueue)
+INT16 WINAPI FlushComm(INT16 fd,INT16 fnQueue)
 {
 	int queue;
 
@@ -720,7 +729,7 @@ INT16 FlushComm(INT16 fd,INT16 fnQueue)
 				fd, fnQueue);
 			return -1;
 		}
-	if (tcflush(fd, fnQueue)) {
+	if (tcflush(fd, queue)) {
 		commerror = WinError();
 		return -1;	
 	} else {
@@ -732,7 +741,7 @@ INT16 FlushComm(INT16 fd,INT16 fnQueue)
 /*****************************************************************************
  *	GetCommError	(USER.203)
  */
-INT16 GetCommError(INT16 fd,LPCOMSTAT lpStat)
+INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
 {
 	int		temperror;
 	unsigned long	cnt;
@@ -771,7 +780,7 @@ INT16 GetCommError(INT16 fd,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	ClearCommError	(KERNEL32.21)
  */
-BOOL32 ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
+BOOL32 WINAPI ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 {
 	int temperror;
 
@@ -785,7 +794,7 @@ BOOL32 ClearCommError(INT32 fd,LPDWORD errors,LPCOMSTAT lpStat)
 /*****************************************************************************
  *	SetCommEventMask	(USER.208)
  */
-UINT16	*SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
+UINT16* WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 {
     	dprintf_comm(stddeb,"SetCommEventMask:fd %d,mask %d\n",fd,fuEvtMask);
 	eventmask |= fuEvtMask;
@@ -795,7 +804,7 @@ UINT16	*SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
 /*****************************************************************************
  *	GetCommEventMask	(USER.209)
  */
-UINT16 GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
+UINT16 WINAPI GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 {
 	int	events = 0;
 
@@ -839,7 +848,7 @@ UINT16 GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 /*****************************************************************************
  *	GetCommMask	(KERNEL32.156)
  */
-BOOL32 GetCommMask(INT32 fd,LPDWORD evtmask)
+BOOL32 WINAPI GetCommMask(INT32 fd,LPDWORD evtmask)
 {
     	dprintf_comm(stddeb,
 		"GetCommMask: fd %d, mask %p\n", fd, evtmask);
@@ -850,7 +859,7 @@ BOOL32 GetCommMask(INT32 fd,LPDWORD evtmask)
 /*****************************************************************************
  *	SetCommMask	(KERNEL32.451)
  */
-BOOL32 SetCommMask(INT32 fd,DWORD evtmask)
+BOOL32 WINAPI SetCommMask(INT32 fd,DWORD evtmask)
 {
     	dprintf_comm(stddeb,
 		"SetCommMask: fd %d, mask %lx\n", fd, evtmask);
@@ -861,7 +870,7 @@ BOOL32 SetCommMask(INT32 fd,DWORD evtmask)
 /*****************************************************************************
  *	SetCommState16	(USER.201)
  */
-INT16 SetCommState16(LPDCB16 lpdcb)
+INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 {
 	struct termios port;
 	struct DosDeviceStruct *ptr;
@@ -1048,8 +1057,12 @@ INT16 SetCommState16(LPDCB16 lpdcb)
 #endif	
 	if (lpdcb->fInX)
 		port.c_iflag |= IXON;
+	else
+		port.c_iflag &= ~IXON;
 	if (lpdcb->fOutX)
 		port.c_iflag |= IXOFF;
+	else
+		port.c_iflag &= ~IXOFF;
 
 	if (tcsetattr(lpdcb->Id, TCSADRAIN, &port) == -1) {
 		commerror = WinError();	
@@ -1063,7 +1076,7 @@ INT16 SetCommState16(LPDCB16 lpdcb)
 /*****************************************************************************
  *	SetCommState32	(KERNEL32.452)
  */
-BOOL32 SetCommState32(INT32 fd,LPDCB32 lpdcb)
+BOOL32 WINAPI SetCommState32(INT32 fd,LPDCB32 lpdcb)
 {
 	struct termios port;
 	struct DosDeviceStruct *ptr;
@@ -1251,8 +1264,12 @@ BOOL32 SetCommState32(INT32 fd,LPDCB32 lpdcb)
 #endif	
 	if (lpdcb->fInX)
 		port.c_iflag |= IXON;
+	else
+		port.c_iflag &= ~IXON;
 	if (lpdcb->fOutX)
 		port.c_iflag |= IXOFF;
+	else
+		port.c_iflag &= ~IXOFF;
 
 	if (tcsetattr(fd,TCSADRAIN,&port)==-1) {
 		commerror = WinError();	
@@ -1267,7 +1284,7 @@ BOOL32 SetCommState32(INT32 fd,LPDCB32 lpdcb)
 /*****************************************************************************
  *	GetCommState	(USER.202)
  */
-INT16 GetCommState16(INT16 fd, LPDCB16 lpdcb)
+INT16 WINAPI GetCommState16(INT16 fd, LPDCB16 lpdcb)
 {
 	struct termios port;
 
@@ -1386,7 +1403,7 @@ INT16 GetCommState16(INT16 fd, LPDCB16 lpdcb)
 /*****************************************************************************
  *	GetCommState	(KERNEL32.159)
  */
-BOOL32 GetCommState32(INT32 fd, LPDCB32 lpdcb)
+BOOL32 WINAPI GetCommState32(INT32 fd, LPDCB32 lpdcb)
 {
 	struct termios	port;
 
@@ -1502,7 +1519,7 @@ BOOL32 GetCommState32(INT32 fd, LPDCB32 lpdcb)
 /*****************************************************************************
  *	TransmitCommChar	(USER.206)
  */
-INT16 TransmitCommChar16(INT16 fd,CHAR chTransmit)
+INT16 WINAPI TransmitCommChar16(INT16 fd,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -1530,7 +1547,7 @@ INT16 TransmitCommChar16(INT16 fd,CHAR chTransmit)
 /*****************************************************************************
  *	TransmitCommChar	(KERNEL32.535)
  */
-BOOL32 TransmitCommChar32(INT32 fd,CHAR chTransmit)
+BOOL32 WINAPI TransmitCommChar32(INT32 fd,CHAR chTransmit)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -1556,7 +1573,7 @@ BOOL32 TransmitCommChar32(INT32 fd,CHAR chTransmit)
 /*****************************************************************************
  *	UngetCommChar	(USER.212)
  */
-INT16 UngetCommChar(INT16 fd,CHAR chUnget)
+INT16 WINAPI UngetCommChar(INT16 fd,CHAR chUnget)
 {
 	struct DosDeviceStruct *ptr;
 
@@ -1580,7 +1597,7 @@ INT16 UngetCommChar(INT16 fd,CHAR chUnget)
 /*****************************************************************************
  *	ReadComm	(USER.204)
  */
-INT16 ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
+INT16 WINAPI ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 {
 	int status, length;
 	struct DosDeviceStruct *ptr;
@@ -1625,7 +1642,7 @@ INT16 ReadComm(INT16 fd,LPSTR lpvBuf,INT16 cbRead)
 /*****************************************************************************
  *	WriteComm	(USER.205)
  */
-INT16 WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
+INT16 WINAPI WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 {
 	int x, length;
 	struct DosDeviceStruct *ptr;
@@ -1660,7 +1677,8 @@ INT16 WriteComm(INT16 fd, LPSTR lpvBuf, INT16 cbWrite)
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
+BOOL32 WINAPI GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts)
+{
 	fprintf(stderr,"GetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
@@ -1670,7 +1688,7 @@ BOOL32 GetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
  */
-BOOL32 SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
+BOOL32 WINAPI SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 	fprintf(stderr,"SetCommTimeouts(%x,%p), empty stub.\n",
 		fd,lptimeouts
 	);
@@ -1680,8 +1698,8 @@ BOOL32 SetCommTimeouts(INT32 fd,LPCOMMTIMEOUTS lptimeouts) {
 /***********************************************************************
  *           EnableCommNotification   (USER.246)
  */
-BOOL16 EnableCommNotification( INT16 fd, HWND16 hwnd, INT16 cbWriteNotify,
-                               INT16 cbOutQueue )
+BOOL16 WINAPI EnableCommNotification( INT16 fd, HWND16 hwnd,
+                                      INT16 cbWriteNotify, INT16 cbOutQueue )
 {
 	fprintf(stderr, "EnableCommNotification(%d, %x, %d, %d), empty stub.\n", fd, hwnd, cbWriteNotify, cbOutQueue);
 	return TRUE;

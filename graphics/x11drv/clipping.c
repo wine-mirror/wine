@@ -31,4 +31,5 @@ void X11DRV_SetDeviceClipping( DC * dc )
     {
         XSetClipRectangles( display, dc->u.x.gc, 0, 0, NULL, 0, 0 );
     }
+    GDI_HEAP_UNLOCK( dc->w.hGCClipRgn );
 }

@@ -131,7 +131,7 @@ base	1
 126 stub _getpid
 127 stub _getsystime
 128 stub _getw
-129 stub _global_unwind2
+129 register _global_unwind2(ptr) CRTDLL__global_unwind2
 130 stub _heapchk
 131 stub _heapmin
 132 stub _heapset
@@ -175,7 +175,7 @@ base	1
 170 stub _kbhit
 171 stub _lfind
 172 stub _loaddll
-173 stub _local_unwind2
+173 register _local_unwind2(ptr long) CRTDLL__local_unwind2
 174 stub _locking
 175 stub _logb
 176 stub _lrotl
@@ -461,7 +461,7 @@ base	1
 456 cdecl sin(long) CRTDLL_sin
 457 cdecl sinh(long) CRTDLL_sinh
 458 cdecl sprintf() CRTDLL_sprintf
-459 cdecl sqrt(long) CRTDLL_sqrt
+459 cdecl sqrt(long long) CRTDLL_sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 cdecl sscanf() CRTDLL_sscanf
 462 cdecl strcat(ptr ptr) strcat

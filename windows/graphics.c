@@ -108,8 +108,13 @@ BOOL32 GRAPH_DrawBitmap( HDC32 hdc, HBITMAP32 hbitmap,
 	    XCopyArea( display, bmp->pixmap, dc->u.x.drawable, 
 		       dc->u.x.gc, xsrc, ysrc, width, height, xdest, ydest );
     }
-    else return FALSE;
+    else 
+    {
+      GDI_HEAP_UNLOCK( hbitmap );
+      return FALSE;
+    }
 
+    GDI_HEAP_UNLOCK( hbitmap );
     return TRUE;
 }
 
@@ -234,6 +239,7 @@ BOOL32 GRAPH_SelectClipMask( HDC32 hdc, HBITMAP32 hMonoBitmap, INT32 x, INT32 y)
 
     XSetClipMask( display, dc->u.x.gc, (bmp) ? bmp->pixmap : None );
 
+    GDI_HEAP_UNLOCK( hMonoBitmap );
     return TRUE;
 }
 

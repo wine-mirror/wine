@@ -1162,7 +1162,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
 /***********************************************************************
  *           SetWindowsHook16   (USER.121)
  */
-FARPROC16 SetWindowsHook16( INT16 id, HOOKPROC16 proc )
+FARPROC16 WINAPI SetWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HANDLE16 handle;
     HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
@@ -1186,7 +1186,7 @@ FARPROC16 SetWindowsHook16( INT16 id, HOOKPROC16 proc )
  *
  * FIXME: I don't know if this is correct
  */
-HHOOK SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
+HHOOK WINAPI SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
 {
     HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
 
@@ -1203,7 +1203,7 @@ HHOOK SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
  *
  * FIXME: I don't know if this is correct
  */
-HHOOK SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
+HHOOK WINAPI SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
 {
     HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
 
@@ -1218,8 +1218,8 @@ HHOOK SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
 /***********************************************************************
  *           SetWindowsHookEx16   (USER.291)
  */
-HHOOK SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
-			  HTASK16 hTask )
+HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
+                                 HTASK16 hTask )
 {
     HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN16, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
@@ -1229,8 +1229,8 @@ HHOOK SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 /***********************************************************************
  *           SetWindowsHookEx32A   (USER32.525)
  */
-HHOOK SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
-			   DWORD dwThreadID )
+HHOOK WINAPI SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
+                                  DWORD dwThreadID )
 {
     HANDLE16 handle;
     HTASK16 hTask;
@@ -1248,8 +1248,8 @@ HHOOK SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
 /***********************************************************************
  *           SetWindowsHookEx32W   (USER32.526)
  */
-HHOOK SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
-			   DWORD dwThreadID )
+HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
+                                  DWORD dwThreadID )
 {
     HANDLE16 handle;
     HTASK16 hTask;
@@ -1267,7 +1267,7 @@ HHOOK SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
 /***********************************************************************
  *           UnhookWindowsHook16   (USER.234)
  */
-BOOL16 UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
+BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
     HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
 
@@ -1287,7 +1287,7 @@ BOOL16 UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 /***********************************************************************
  *           UnhookWindowsHook32   (USER32.556)
  */
-BOOL32 UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
+BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
 {
     HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
 
@@ -1307,7 +1307,7 @@ BOOL32 UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
 /***********************************************************************
  *           UnhookWindowHookEx16   (USER.292)
  */
-BOOL16 UnhookWindowsHookEx16( HHOOK hhook )
+BOOL16 WINAPI UnhookWindowsHookEx16( HHOOK hhook )
 {
     if (HIWORD(hhook) != HOOK_MAGIC) return FALSE;  /* Not a new format hook */
     return HOOK_RemoveHook( LOWORD(hhook) );
@@ -1317,7 +1317,7 @@ BOOL16 UnhookWindowsHookEx16( HHOOK hhook )
 /***********************************************************************
  *           UnhookWindowHookEx32   (USER32.557)
  */
-BOOL32 UnhookWindowsHookEx32( HHOOK hhook )
+BOOL32 WINAPI UnhookWindowsHookEx32( HHOOK hhook )
 {
     return UnhookWindowsHookEx16( hhook );
 }
@@ -1329,8 +1329,8 @@ BOOL32 UnhookWindowsHookEx32( HHOOK hhook )
  * I wouldn't have separated this into 16 and 32 bit versions, but I
  * need a way to figure out if I need to do a mapping or not.
  */
-LRESULT CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
-			  LPARAM lParam )
+LRESULT WINAPI CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
+                                 LPARAM lParam )
 {
     HANDLE16 next;
 
@@ -1346,8 +1346,8 @@ LRESULT CallNextHookEx16( HHOOK hhook, INT16 code, WPARAM16 wParam,
  *
  * There aren't ANSI and UNICODE versions of this.
  */
-LRESULT CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
-			  LPARAM lParam )
+LRESULT WINAPI CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
+                                 LPARAM lParam )
 {
     HANDLE16 next;
     INT32 fromtype;	/* figure out Ansi/Unicode */
@@ -1369,8 +1369,8 @@ LRESULT CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
 /***********************************************************************
  *           DefHookProc16   (USER.235)
  */
-LRESULT DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
-		       HHOOK *hhook )
+LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
+                              HHOOK *hhook )
 {
     /* Note: the *hhook parameter is never used, since we rely on the
      * current hook value from the task queue to find the next hook. */
@@ -1384,7 +1384,7 @@ LRESULT DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
 /***********************************************************************
  *           CallMsgFilter16   (USER.123)
  */
-BOOL16 CallMsgFilter16( SEGPTR msg, INT16 code )
+BOOL16 WINAPI CallMsgFilter16( SEGPTR msg, INT16 code )
 {
     if (GetSysModalWindow16()) return FALSE;
     if (HOOK_CallHooks16( WH_SYSMSGFILTER, code, 0, (LPARAM)msg )) return TRUE;
@@ -1399,7 +1399,7 @@ BOOL16 CallMsgFilter16( SEGPTR msg, INT16 code )
  * FIXME: There are ANSI and UNICODE versions of this, plus an unspecified
  * version, plus USER (the 16bit one) has a CallMsgFilter32 function.
  */
-BOOL32 CallMsgFilter32A( LPMSG32 msg, INT32 code )
+BOOL32 WINAPI CallMsgFilter32A( LPMSG32 msg, INT32 code )
 {
     if (GetSysModalWindow16()) return FALSE;	/* ??? */
     if (HOOK_CallHooks32A( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
@@ -1411,10 +1411,11 @@ BOOL32 CallMsgFilter32A( LPMSG32 msg, INT32 code )
 /***********************************************************************
  *           CallMsgFilter32W   (USER32.15)
  */
-BOOL32 CallMsgFilter32W( LPMSG32 msg, INT32 code )
+BOOL32 WINAPI CallMsgFilter32W( LPMSG32 msg, INT32 code )
 {
     if (GetSysModalWindow16()) return FALSE;	/* ??? */
     if (HOOK_CallHooks32W( WH_SYSMSGFILTER, code, 0, (LPARAM)msg ))
       return TRUE;
     return HOOK_CallHooks32W( WH_MSGFILTER, code, 0, (LPARAM)msg );
 }
+

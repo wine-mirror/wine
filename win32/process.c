@@ -37,7 +37,7 @@ typedef struct {
 /***********************************************************************
  *           CreateMutexA    (KERNEL32.52)
  */
-HANDLE32 CreateMutex32A(SECURITY_ATTRIBUTES *sa,BOOL32 on,LPCSTR name)
+HANDLE32 WINAPI CreateMutex32A(SECURITY_ATTRIBUTES *sa,BOOL32 on,LPCSTR name)
 {
 	K32MUTEX	*mut;
 	HANDLE32	handle;
@@ -71,7 +71,7 @@ HANDLE32 CreateMutex32A(SECURITY_ATTRIBUTES *sa,BOOL32 on,LPCSTR name)
 /***********************************************************************
  *           CreateMutexW    (KERNEL32.53)
  */
-HANDLE32 CreateMutex32W(SECURITY_ATTRIBUTES *sa, BOOL32 on, LPCWSTR a)
+HANDLE32 WINAPI CreateMutex32W(SECURITY_ATTRIBUTES *sa, BOOL32 on, LPCWSTR a)
 {
 	LPSTR		name = a?HEAP_strdupWtoA(GetProcessHeap(),0,a):NULL;
 	HANDLE32	ret;
@@ -84,9 +84,9 @@ HANDLE32 CreateMutex32W(SECURITY_ATTRIBUTES *sa, BOOL32 on, LPCWSTR a)
 /***********************************************************************
  *           CreateSemaphoreA    (KERNEL32.60)
  */
-HANDLE32 CreateSemaphore32A(
-	LPSECURITY_ATTRIBUTES sa,LONG initial,LONG max,LPCSTR name
-) {
+HANDLE32 WINAPI CreateSemaphore32A( LPSECURITY_ATTRIBUTES sa,
+                                    LONG initial,LONG max,LPCSTR name )
+{
 	K32SEMAPHORE	*sem;
 	HANDLE32	handle;
 	K32OBJ 		*obj = K32OBJ_FindName( name );
@@ -119,7 +119,7 @@ HANDLE32 CreateSemaphore32A(
 /***********************************************************************
  *           CreateSemaphoreW    (KERNEL32.61)
  */
-HANDLE32 CreateSemaphore32W(SECURITY_ATTRIBUTES *sa,LONG initial,LONG max,LPCWSTR a)
+HANDLE32 WINAPI CreateSemaphore32W(SECURITY_ATTRIBUTES *sa,LONG initial,LONG max,LPCWSTR a)
 {
 	LPSTR		name =a?HEAP_strdupWtoA(GetProcessHeap(),0,a):NULL;
 	HANDLE32	ret;
@@ -133,7 +133,7 @@ HANDLE32 CreateSemaphore32W(SECURITY_ATTRIBUTES *sa,LONG initial,LONG max,LPCWST
 /***********************************************************************
  *           OpenSemaphoreA    (KERNEL32.403)
  */
-HANDLE32 OpenSemaphore32A(DWORD desired,BOOL32 inherit,LPCSTR name)
+HANDLE32 WINAPI OpenSemaphore32A(DWORD desired,BOOL32 inherit,LPCSTR name)
 {
 	K32OBJ 		*obj = K32OBJ_FindName( name );
 
@@ -149,7 +149,7 @@ HANDLE32 OpenSemaphore32A(DWORD desired,BOOL32 inherit,LPCSTR name)
 /***********************************************************************
  *           OpenSemaphoreA    (KERNEL32.404)
  */
-HANDLE32 OpenSemaphore32W(DWORD desired,BOOL32 inherit,LPCWSTR name)
+HANDLE32 WINAPI OpenSemaphore32W(DWORD desired,BOOL32 inherit,LPCWSTR name)
 {
 	LPSTR	nameA = name?HEAP_strdupWtoA(GetProcessHeap(),0,name):NULL;
 	HANDLE32	ret = OpenSemaphore32A(desired,inherit,nameA);
@@ -161,7 +161,8 @@ HANDLE32 OpenSemaphore32W(DWORD desired,BOOL32 inherit,LPCWSTR name)
 /***********************************************************************
  *           ReleaseSemaphore    (KERNEL32.403)
  */
-BOOL32 ReleaseSemaphore(HANDLE32 hSemaphore,LONG lReleaseCount,LPLONG lpPreviousCount) {
+BOOL32 WINAPI ReleaseSemaphore(HANDLE32 hSemaphore,LONG lReleaseCount,LPLONG lpPreviousCount)
+{
 	K32SEMAPHORE	*sem;
 
 	sem = (K32SEMAPHORE*)PROCESS_GetObjPtr(hSemaphore,K32OBJ_SEMAPHORE);
@@ -183,7 +184,7 @@ BOOL32 ReleaseSemaphore(HANDLE32 hSemaphore,LONG lReleaseCount,LPLONG lpPrevious
 /***********************************************************************
  *           OpenMutexA    (KERNEL32.399)
  */
-HANDLE32 OpenMutex32A(DWORD desiredaccess, BOOL32 inherithandle, LPCSTR name)
+HANDLE32 WINAPI OpenMutex32A(DWORD desiredaccess, BOOL32 inherithandle, LPCSTR name)
 {
 	K32OBJ 		*obj = K32OBJ_FindName( name );
 
@@ -199,7 +200,8 @@ HANDLE32 OpenMutex32A(DWORD desiredaccess, BOOL32 inherithandle, LPCSTR name)
 /***********************************************************************
  *           OpenMutexW    (KERNEL32.400)
  */
-HANDLE32 OpenMutex32W(DWORD desiredaccess, BOOL32 inherithandle, LPCWSTR name)
+HANDLE32 WINAPI OpenMutex32W(DWORD desiredaccess, BOOL32 inherithandle,
+                             LPCWSTR name)
 {
 	LPSTR		nameA=name?HEAP_strdupWtoA(GetProcessHeap(),0,name):NULL;
 	HANDLE32	ret = OpenMutex32A(desiredaccess,inherithandle,nameA);
@@ -211,7 +213,7 @@ HANDLE32 OpenMutex32W(DWORD desiredaccess, BOOL32 inherithandle, LPCWSTR name)
 /***********************************************************************
  *           ReleaseMutex    (KERNEL32.435)
  */
-BOOL32 ReleaseMutex (HANDLE32 h)
+BOOL32 WINAPI ReleaseMutex (HANDLE32 h)
 {
 	K32MUTEX	*mut = (K32MUTEX*)PROCESS_GetObjPtr(h,K32OBJ_MUTEX);
 
@@ -233,7 +235,8 @@ BOOL32 ReleaseMutex (HANDLE32 h)
 /***********************************************************************
  *           CreateEventA    (KERNEL32.43)
  */
-HANDLE32 CreateEvent32A(SECURITY_ATTRIBUTES *sa,BOOL32 au,BOOL32 on,LPCSTR name)
+HANDLE32 WINAPI CreateEvent32A(SECURITY_ATTRIBUTES *sa,BOOL32 au,BOOL32 on,
+                               LPCSTR name)
 {
 	K32EVENT	*evt;
 	HANDLE32	handle;
@@ -263,7 +266,8 @@ HANDLE32 CreateEvent32A(SECURITY_ATTRIBUTES *sa,BOOL32 au,BOOL32 on,LPCSTR name)
 /***********************************************************************
  *           CreateEventW    (KERNEL32.43)
  */
-HANDLE32 CreateEvent32W(SECURITY_ATTRIBUTES *sa, BOOL32 au, BOOL32 on,LPCWSTR name)
+HANDLE32 WINAPI CreateEvent32W(SECURITY_ATTRIBUTES *sa, BOOL32 au,
+                               BOOL32 on,LPCWSTR name)
 {
 	LPSTR nameA=name?HEAP_strdupWtoA(GetProcessHeap(),0,name):NULL;
 	HANDLE32 ret = CreateEvent32A(sa,au,on,nameA);
@@ -275,7 +279,8 @@ HANDLE32 CreateEvent32W(SECURITY_ATTRIBUTES *sa, BOOL32 au, BOOL32 on,LPCWSTR na
 /***********************************************************************
  *           OpenEventA    (KERNEL32.394)
  */
-HANDLE32 OpenEvent32A(DWORD desiredaccess,BOOL32 inherithandle,LPCSTR name) {
+HANDLE32 WINAPI OpenEvent32A(DWORD desiredaccess,BOOL32 inherithandle,LPCSTR name)
+{
 	K32OBJ 		*obj = K32OBJ_FindName( name );
 
 	if (obj) {
@@ -290,7 +295,8 @@ HANDLE32 OpenEvent32A(DWORD desiredaccess,BOOL32 inherithandle,LPCSTR name) {
 /***********************************************************************
  *           OpenEventW    (KERNEL32.395)
  */
-HANDLE32 OpenEvent32W(DWORD desiredaccess,BOOL32 inherithandle,LPCWSTR name) {
+HANDLE32 WINAPI OpenEvent32W(DWORD desiredaccess,BOOL32 inherithandle,LPCWSTR name)
+{
 	LPSTR	nameA = name?HEAP_strdupWtoA(GetProcessHeap(),0,name):NULL;
 	HANDLE32	ret = OpenEvent32A(desiredaccess,inherithandle,nameA);
 
@@ -301,7 +307,7 @@ HANDLE32 OpenEvent32W(DWORD desiredaccess,BOOL32 inherithandle,LPCWSTR name) {
 /***********************************************************************
  *           SetEvent    (KERNEL32.487)
  */
-BOOL32 SetEvent (HANDLE32 h)
+BOOL32 WINAPI SetEvent (HANDLE32 h)
 {
 	fprintf(stderr,"SetEvent(%d) stub\n",h);
 	return 0;
@@ -309,7 +315,7 @@ BOOL32 SetEvent (HANDLE32 h)
 /***********************************************************************
  *           ResetEvent    (KERNEL32.439)
  */
-BOOL32 ResetEvent (HANDLE32 h)
+BOOL32 WINAPI ResetEvent (HANDLE32 h)
 {
 	fprintf(stderr,"ResetEvent(%d) stub\n",h);
 	return 0;
@@ -318,16 +324,26 @@ BOOL32 ResetEvent (HANDLE32 h)
 /***********************************************************************
  *           WaitForSingleObject    (KERNEL32.561)
  */
-DWORD WaitForSingleObject(HANDLE32 h, DWORD timeout)
+DWORD WINAPI WaitForSingleObject(HANDLE32 h, DWORD timeout)
 {
 	fprintf(stderr,"WaitForSingleObject(%d,%ld) stub\n",h,timeout);
 	return 0;
 }
 
 /***********************************************************************
+ *           WaitForSingleObjectEx    (KERNEL32)
+ */
+DWORD WINAPI WaitForSingleObjectEx(HANDLE32 h,DWORD timeout,BOOL32 bAlertable)
+{
+	fprintf(stderr,"WaitForSingleObjectEx(%d,%ld,%d) stub\n",h,timeout,bAlertable);
+	return 0;
+}
+
+
+/***********************************************************************
  *           WaitForMultipleObjects    (USER32.399)
  */
-DWORD MsgWaitForMultipleObjects(
+DWORD WINAPI MsgWaitForMultipleObjects(
 	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,
 	DWORD dwWakeMask
 ) {
@@ -341,20 +357,25 @@ DWORD MsgWaitForMultipleObjects(
 /***********************************************************************
  *           DuplicateHandle    (KERNEL32.78)
  */
-BOOL32 DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL32 f, DWORD g)
+BOOL32 WINAPI DuplicateHandle(HANDLE32 a, HANDLE32 b, HANDLE32 c, HANDLE32 * d, DWORD e, BOOL32 f, DWORD g)
 {
 	fprintf(stderr,"DuplicateHandle(%d,%d,%d,%p,%ld,%d,%ld) stub\n",a,b,c,d,e,f,g);
 	*d = b;
 	return TRUE;
 }
 
+HINSTANCE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
+{
+    fprintf(stderr,"LoadLibraryEx32A(%s,%d,0x%08lx)\n",libname,hfile,flags);
+    return LoadLibrary32A(libname);
+}
 
 /***********************************************************************
  *           LoadLibraryA         (KERNEL32.365)
  * copied from LoadLibrary
  * This does not currently support built-in libraries
  */
-HINSTANCE32 LoadLibrary32A(LPCSTR libname)
+HINSTANCE32 WINAPI LoadLibrary32A(LPCSTR libname)
 {
 	HINSTANCE32 handle;
 	dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
@@ -376,7 +397,7 @@ HINSTANCE32 LoadLibrary32A(LPCSTR libname)
 /***********************************************************************
  *           LoadLibrary32W         (KERNEL32.368)
  */
-HINSTANCE32 LoadLibrary32W(LPCWSTR libnameW)
+HINSTANCE32 WINAPI LoadLibrary32W(LPCWSTR libnameW)
 {
     LPSTR libnameA = HEAP_strdupWtoA( GetProcessHeap(), 0, libnameW );
     HINSTANCE32 ret = LoadLibrary32A( libnameA );
@@ -387,7 +408,7 @@ HINSTANCE32 LoadLibrary32W(LPCWSTR libnameW)
 /***********************************************************************
  *           FreeLibrary
  */
-BOOL32 FreeLibrary32(HINSTANCE32 hLibModule)
+BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
 {
 	fprintf(stderr,"FreeLibrary: empty stub\n");
 	return TRUE;
@@ -396,8 +417,9 @@ BOOL32 FreeLibrary32(HINSTANCE32 hLibModule)
 /**********************************************************************
  *          GetProcessAffinityMask
  */
-BOOL32 GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
-  LPDWORD lpSystemAffinityMask)
+BOOL32 WINAPI GetProcessAffinityMask(HANDLE32 hProcess,
+                                     LPDWORD lpProcessAffinityMask,
+                                     LPDWORD lpSystemAffinityMask)
 {
 	dprintf_task(stddeb,"GetProcessAffinityMask(%x,%lx,%lx)\n",
 		hProcess,(lpProcessAffinityMask?*lpProcessAffinityMask:0),
@@ -415,7 +437,7 @@ BOOL32 GetProcessAffinityMask(HANDLE32 hProcess, LPDWORD lpProcessAffinityMask,
  *           SetThreadAffinityMask
  * Works now like the Windows95 (no MP support) version
  */
-BOOL32 SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
+BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
 {
 	THDB	*thdb = (THDB*)PROCESS_GetObjPtr(hThread,K32OBJ_THREAD);
 
@@ -430,8 +452,7 @@ BOOL32 SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask)
 	return TRUE;
 }
 
-BOOL32
-CreateProcess32A(
+BOOL32 WINAPI CreateProcess32A(
 	LPCSTR appname,LPSTR cmdline,LPSECURITY_ATTRIBUTES processattributes,
         LPSECURITY_ATTRIBUTES threadattributes,BOOL32 inherithandles,
 	DWORD creationflags,LPVOID env,LPCSTR curdir,
@@ -444,8 +465,7 @@ CreateProcess32A(
 	return TRUE;
 }
 
-BOOL32
-ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
+BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
 	fprintf(stderr,"ContinueDebugEvent(%ld,%ld,%ld), stub\n",pid,tid,contstatus);
 	return TRUE;
 }
@@ -455,8 +475,7 @@ ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
  *
  * FIXME: implement this better ...
  */
-BOOL32
-GetProcessTimes(
+BOOL32 WINAPI GetProcessTimes(
 	HANDLE32 hprocess,LPFILETIME lpCreationTime,LPFILETIME lpExitTime,
 	LPFILETIME lpKernelTime, LPFILETIME lpUserTime
 ) {

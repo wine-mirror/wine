@@ -136,7 +136,7 @@ void SYSMETRICS_Init(void)
 /***********************************************************************
  *           GetSystemMetrics16    (USER.179)
  */
-INT16 GetSystemMetrics16( INT16 index )
+INT16 WINAPI GetSystemMetrics16( INT16 index )
 {
     if ((index < 0) || (index > SM_CMETRICS)) return 0;
     else return sysMetrics[index];    
@@ -146,7 +146,7 @@ INT16 GetSystemMetrics16( INT16 index )
 /***********************************************************************
  *           GetSystemMetrics32    (USER32.291)
  */
-INT32 GetSystemMetrics32( INT32 index )
+INT32 WINAPI GetSystemMetrics32( INT32 index )
 {
     if ((index < 0) || (index > SM_CMETRICS)) return 0;
     else return sysMetrics[index];    

@@ -49,8 +49,12 @@ typedef struct
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 
 struct _THDB;
+struct _WSINFO;
 
-  /* Task database. See 'Windows Internals' p. 226 */
+  /* Task database. See 'Windows Internals' p. 226.
+   * Note that 16-bit OLE 2 libs like to read it directly 
+   * so we have to keep entry offsets as they are. 
+   */
 typedef struct
 {
     HTASK16   hNext;                      /* 00 Selector of next TDB */
@@ -82,8 +86,9 @@ typedef struct
     DWORD     int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
     BYTE      unused4[2];                 /* 52 */
-    struct _THDB *thdb;                   /* 54 Pointer to thread database */
-    BYTE      unused5[8];                 /* 58 */
+    struct _THDB   *thdb;                 /* 54 Pointer to thread database */
+    struct _WSINFO *pwsi;		  /* 58 Socket control struct */
+    BYTE      unused5[4];                 /* 5B */
     HANDLE16  hPDB;                       /* 60 Selector of PDB (i.e. PSP) */
     SEGPTR    dta WINE_PACKED;            /* 62 Current DTA */
     BYTE      curdrive;                   /* 66 Current drive */

@@ -12,8 +12,8 @@
 /***********************************************************************
  *           PatBlt16    (GDI.29)
  */
-BOOL16 PatBlt16( HDC16 hdc, INT16 left, INT16 top,
-                 INT16 width, INT16 height, DWORD rop)
+BOOL16 WINAPI PatBlt16( HDC16 hdc, INT16 left, INT16 top,
+                        INT16 width, INT16 height, DWORD rop)
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
@@ -27,8 +27,8 @@ BOOL16 PatBlt16( HDC16 hdc, INT16 left, INT16 top,
 /***********************************************************************
  *           PatBlt32    (GDI32.260)
  */
-BOOL32 PatBlt32( HDC32 hdc, INT32 left, INT32 top,
-                 INT32 width, INT32 height, DWORD rop)
+BOOL32 WINAPI PatBlt32( HDC32 hdc, INT32 left, INT32 top,
+                        INT32 width, INT32 height, DWORD rop)
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pPatBlt) return FALSE;
@@ -42,8 +42,9 @@ BOOL32 PatBlt32( HDC32 hdc, INT32 left, INT32 top,
 /***********************************************************************
  *           BitBlt16    (GDI.34)
  */
-BOOL16 BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
-                 INT16 height, HDC16 hdcSrc, INT16 xSrc, INT16 ySrc, DWORD rop)
+BOOL16 WINAPI BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
+                        INT16 height, HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
+                        DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -63,8 +64,9 @@ BOOL16 BitBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst, INT16 width,
 /***********************************************************************
  *           BitBlt32    (GDI32.10)
  */
-BOOL32 BitBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst, INT32 width,
-                 INT32 height, HDC32 hdcSrc, INT32 xSrc, INT32 ySrc, DWORD rop)
+BOOL32 WINAPI BitBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst, INT32 width,
+                        INT32 height, HDC32 hdcSrc, INT32 xSrc, INT32 ySrc,
+                        DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -84,10 +86,10 @@ BOOL32 BitBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst, INT32 width,
 /***********************************************************************
  *           StretchBlt16    (GDI.35)
  */
-BOOL16 StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
-                     INT16 widthDst, INT16 heightDst,
-                     HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
-                     INT16 widthSrc, INT16 heightSrc, DWORD rop )
+BOOL16 WINAPI StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
+                            INT16 widthDst, INT16 heightDst,
+                            HDC16 hdcSrc, INT16 xSrc, INT16 ySrc,
+                            INT16 widthSrc, INT16 heightSrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -109,10 +111,10 @@ BOOL16 StretchBlt16( HDC16 hdcDst, INT16 xDst, INT16 yDst,
 /***********************************************************************
  *           StretchBlt32    (GDI32.350)
  */
-BOOL32 StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
-                     INT32 widthDst, INT32 heightDst,
-                     HDC32 hdcSrc, INT32 xSrc, INT32 ySrc,
-                     INT32 widthSrc, INT32 heightSrc, DWORD rop )
+BOOL32 WINAPI StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
+                            INT32 widthDst, INT32 heightDst,
+                            HDC32 hdcSrc, INT32 xSrc, INT32 ySrc,
+                            INT32 widthSrc, INT32 heightSrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -134,8 +136,8 @@ BOOL32 StretchBlt32( HDC32 hdcDst, INT32 xDst, INT32 yDst,
 /***********************************************************************
  *           FastWindowFrame    (GDI.400)
  */
-BOOL16 FastWindowFrame( HDC16 hdc, const RECT16 *rect,
-                        INT16 width, INT16 height, DWORD rop )
+BOOL16 WINAPI FastWindowFrame( HDC16 hdc, const RECT16 *rect,
+                               INT16 width, INT16 height, DWORD rop )
 {
     HBRUSH32 hbrush = SelectObject32( hdc, GetStockObject32( GRAY_BRUSH ) );
     PatBlt32( hdc, rect->left, rect->top,

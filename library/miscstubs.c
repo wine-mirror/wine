@@ -17,34 +17,6 @@
 void CallFrom16_long_wwwll(void) {}
 void CallFrom32_stdcall_5(void) {}
 
-int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
-{
-  va_list arglist;
-  int i,a[32];
-
-  va_start(arglist,nbargs);
-
-  for(i=0; i<nbargs; i++) a[i]=va_arg(arglist,int);
-
-  switch(nbargs) /* Ewww... Icky.  But what can I do? */
-  {
-  case 5: return func(a[0],a[1],a[2],a[3],a[4]);
-  case 6: return func(a[0],a[1],a[2],a[3],a[4],a[5]);
-  case 8: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7]);
-  case 10: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
-                a[7],a[8],a[9]);
-  case 11: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
-                a[7],a[8],a[9],a[10]);
-  case 14: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
-                a[7],a[8],a[9],a[10],a[11],a[12],a[13]);
-  case 16: return func(a[0],a[1],a[2],a[3],a[4],a[5],a[6],
-                a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15]);
-  default: fprintf(stderr,"JBP: CallTo32_LargeStack called with unsupported "
-                          "number of arguments (%d).  Ignored.\n",nbargs);
-           return 0;
-  }
-}
-
 extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FileSaveDlgProc(HWND16,UINT16,WPARAM16,LPARAM);

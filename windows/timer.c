@@ -301,7 +301,8 @@ static BOOL32 TIMER_KillTimer( HWND32 hwnd, UINT32 id, BOOL32 sys )
 /***********************************************************************
  *           SetTimer16   (USER.10)
  */
-UINT16 SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
+UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
+                          TIMERPROC16 proc )
 {
     dprintf_timer( stddeb, "SetTimer16: %04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
@@ -313,7 +314,8 @@ UINT16 SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout, TIMERPROC16 proc )
 /***********************************************************************
  *           SetTimer32   (USER32.510)
  */
-UINT32 SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout, TIMERPROC32 proc )
+UINT32 WINAPI SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
+                          TIMERPROC32 proc )
 {
     dprintf_timer( stddeb, "SetTimer32: %04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
@@ -325,8 +327,8 @@ UINT32 SetTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout, TIMERPROC32 proc )
 /***********************************************************************
  *           SetSystemTimer16   (USER.11)
  */
-UINT16 SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
-                         TIMERPROC16 proc )
+UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
+                                TIMERPROC16 proc )
 {
     dprintf_timer( stddeb, "SetSystemTimer16: %04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
@@ -338,8 +340,8 @@ UINT16 SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 /***********************************************************************
  *           SetSystemTimer32   (USER32.508)
  */
-UINT32 SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
-                         TIMERPROC32 proc )
+UINT32 WINAPI SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
+                                TIMERPROC32 proc )
 {
     dprintf_timer( stddeb, "SetSystemTimer32: %04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
@@ -351,7 +353,7 @@ UINT32 SetSystemTimer32( HWND32 hwnd, UINT32 id, UINT32 timeout,
 /***********************************************************************
  *           KillTimer16   (USER.12)
  */
-BOOL16 KillTimer16( HWND16 hwnd, UINT16 id )
+BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
 {
     dprintf_timer(stddeb, "KillTimer16: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
@@ -361,7 +363,7 @@ BOOL16 KillTimer16( HWND16 hwnd, UINT16 id )
 /***********************************************************************
  *           KillTimer32   (USER32.353)
  */
-BOOL32 KillTimer32( HWND32 hwnd, UINT32 id )
+BOOL32 WINAPI KillTimer32( HWND32 hwnd, UINT32 id )
 {
     dprintf_timer(stddeb, "KillTimer32: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
@@ -371,7 +373,7 @@ BOOL32 KillTimer32( HWND32 hwnd, UINT32 id )
 /***********************************************************************
  *           KillSystemTimer16   (USER.182)
  */
-BOOL16 KillSystemTimer16( HWND16 hwnd, UINT16 id )
+BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 {
     dprintf_timer( stddeb, "KillSystemTimer16: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
@@ -381,7 +383,7 @@ BOOL16 KillSystemTimer16( HWND16 hwnd, UINT16 id )
 /***********************************************************************
  *           KillSystemTimer32   (USER32.352)
  */
-BOOL32 KillSystemTimer32( HWND32 hwnd, UINT32 id )
+BOOL32 WINAPI KillSystemTimer32( HWND32 hwnd, UINT32 id )
 {
     dprintf_timer( stddeb, "KillSystemTimer32: %04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );

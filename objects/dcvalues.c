@@ -10,7 +10,7 @@
 
 
 #define DC_GET_VAL_16( func_type, func_name, dc_field ) \
-func_type func_name( HDC16 hdc ) \
+func_type WINAPI func_name( HDC16 hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
@@ -18,7 +18,7 @@ func_type func_name( HDC16 hdc ) \
 }
 
 #define DC_GET_VAL_32( func_type, func_name, dc_field ) \
-func_type func_name( HDC32 hdc ) \
+func_type WINAPI func_name( HDC32 hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
@@ -26,7 +26,7 @@ func_type func_name( HDC32 hdc ) \
 }
 
 #define DC_GET_X_Y( func_type, func_name, ret_x, ret_y ) \
-func_type func_name( HDC16 hdc ) \
+func_type WINAPI func_name( HDC16 hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
@@ -34,7 +34,7 @@ func_type func_name( HDC16 hdc ) \
 }
 
 #define DC_GET_VAL_EX( func_name, ret_x, ret_y ) \
-BOOL16 func_name##16( HDC16 hdc, LPPOINT16 pt ) \
+BOOL16 WINAPI func_name##16( HDC16 hdc, LPPOINT16 pt ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return FALSE; \
@@ -43,7 +43,7 @@ BOOL16 func_name##16( HDC16 hdc, LPPOINT16 pt ) \
     return TRUE; \
 } \
  \
-BOOL32 func_name##32( HDC32 hdc, LPPOINT32 pt ) \
+BOOL32 WINAPI func_name##32( HDC32 hdc, LPPOINT32 pt ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( (HDC16)hdc, DC_MAGIC ); \
     if (!dc) return FALSE; \
@@ -53,7 +53,7 @@ BOOL32 func_name##32( HDC32 hdc, LPPOINT32 pt ) \
 }
 
 #define DC_SET_MODE_16( func_name, dc_field, min_val, max_val, meta_func ) \
-INT16 func_name( HDC16 hdc, INT16 mode ) \
+INT16 WINAPI func_name( HDC16 hdc, INT16 mode ) \
 { \
     INT16 prevMode; \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
@@ -70,7 +70,7 @@ INT16 func_name( HDC16 hdc, INT16 mode ) \
 }
 
 #define DC_SET_MODE_32( func_name, dc_field, min_val, max_val, meta_func ) \
-INT32 func_name( HDC32 hdc, INT32 mode ) \
+INT32 WINAPI func_name( HDC32 hdc, INT32 mode ) \
 { \
     INT32 prevMode; \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \

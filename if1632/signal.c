@@ -28,7 +28,7 @@
 
 #include "debugger.h"
 #include "options.h"
-#include "sigcontext.h"
+#include "sig_context.h"
 #include "miscemu.h"
 
 

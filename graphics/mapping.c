@@ -37,7 +37,7 @@ void MAPPING_FixIsotropic( DC * dc )
 /***********************************************************************
  *           DPtoLP16    (GDI.67)
  */
-BOOL16 DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
+BOOL16 WINAPI DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -55,7 +55,7 @@ BOOL16 DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 /***********************************************************************
  *           DPtoLP32    (GDI32.65)
  */
-BOOL32 DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
+BOOL32 WINAPI DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -73,7 +73,7 @@ BOOL32 DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 /***********************************************************************
  *           LPtoDP16    (GDI.99)
  */
-BOOL16 LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
+BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -91,7 +91,7 @@ BOOL16 LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
 /***********************************************************************
  *           LPtoDP32    (GDI32.247)
  */
-BOOL32 LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
+BOOL32 WINAPI LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -109,7 +109,7 @@ BOOL32 LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 /***********************************************************************
  *           SetMapMode16    (GDI.3)
  */
-INT16 SetMapMode16( HDC16 hdc, INT16 mode )
+INT16 WINAPI SetMapMode16( HDC16 hdc, INT16 mode )
 {
     return SetMapMode32( hdc, mode );
 }
@@ -118,7 +118,7 @@ INT16 SetMapMode16( HDC16 hdc, INT16 mode )
 /***********************************************************************
  *           SetMapMode32    (GDI32.321)
  */
-INT32 SetMapMode32( HDC32 hdc, INT32 mode )
+INT32 WINAPI SetMapMode32( HDC32 hdc, INT32 mode )
 {
     INT32 prevMode;
     DC * dc = DC_GetDCPtr( hdc );
@@ -199,7 +199,7 @@ INT32 SetMapMode32( HDC32 hdc, INT32 mode )
 /***********************************************************************
  *           SetViewportExt    (GDI.14)
  */
-DWORD SetViewportExt( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetViewportExt( HDC16 hdc, INT16 x, INT16 y )
 {
     SIZE32 size;
     if (!SetViewportExtEx32( hdc, x, y, &size )) return 0;
@@ -210,7 +210,7 @@ DWORD SetViewportExt( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetViewportExtEx16    (GDI.479)
  */
-BOOL16 SetViewportExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
+BOOL16 WINAPI SetViewportExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 {
     SIZE32 size32;
     BOOL16 ret = SetViewportExtEx32( hdc, x, y, &size32 );
@@ -222,7 +222,7 @@ BOOL16 SetViewportExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 /***********************************************************************
  *           SetViewportExtEx32    (GDI32.340)
  */
-BOOL32 SetViewportExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
+BOOL32 WINAPI SetViewportExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -246,7 +246,7 @@ BOOL32 SetViewportExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
 /***********************************************************************
  *           SetViewportOrg    (GDI.13)
  */
-DWORD SetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     POINT32 pt;
     if (!SetViewportOrgEx32( hdc, x, y, &pt )) return 0;
@@ -257,7 +257,7 @@ DWORD SetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetViewportOrgEx16    (GDI.480)
  */
-BOOL16 SetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
+BOOL16 WINAPI SetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT32 pt32;
     BOOL16 ret = SetViewportOrgEx32( hdc, x, y, &pt32 );
@@ -269,7 +269,7 @@ BOOL16 SetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 /***********************************************************************
  *           SetViewportOrgEx32    (GDI32.341)
  */
-BOOL32 SetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
+BOOL32 WINAPI SetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -289,7 +289,7 @@ BOOL32 SetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 /***********************************************************************
  *           SetWindowExt    (GDI.12)
  */
-DWORD SetWindowExt( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetWindowExt( HDC16 hdc, INT16 x, INT16 y )
 {
     SIZE32 size;
     if (!SetWindowExtEx32( hdc, x, y, &size )) return 0;
@@ -300,7 +300,7 @@ DWORD SetWindowExt( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetWindowExtEx16    (GDI.481)
  */
-BOOL16 SetWindowExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
+BOOL16 WINAPI SetWindowExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 {
     SIZE32 size32;
     BOOL16 ret = SetWindowExtEx32( hdc, x, y, &size32 );
@@ -312,7 +312,7 @@ BOOL16 SetWindowExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 /***********************************************************************
  *           SetWindowExtEx32    (GDI32.344)
  */
-BOOL32 SetWindowExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
+BOOL32 WINAPI SetWindowExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -335,7 +335,7 @@ BOOL32 SetWindowExtEx32( HDC32 hdc, INT32 x, INT32 y, LPSIZE32 size )
 /***********************************************************************
  *           SetWindowOrg    (GDI.11)
  */
-DWORD SetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     POINT32 pt;
     if (!SetWindowOrgEx32( hdc, x, y, &pt )) return 0;
@@ -346,7 +346,7 @@ DWORD SetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetWindowOrgEx16    (GDI.482)
  */
-BOOL16 SetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
+BOOL16 WINAPI SetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT32 pt32;
     BOOL16 ret = SetWindowOrgEx32( hdc, x, y, &pt32 );
@@ -358,7 +358,7 @@ BOOL16 SetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 /***********************************************************************
  *           SetWindowOrgEx32    (GDI32.345)
  */
-BOOL32 SetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
+BOOL32 WINAPI SetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -377,7 +377,7 @@ BOOL32 SetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 /***********************************************************************
  *           OffsetViewportOrg    (GDI.17)
  */
-DWORD OffsetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI OffsetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     POINT32 pt;
     if (!OffsetViewportOrgEx32( hdc, x, y, &pt )) return 0;
@@ -388,7 +388,7 @@ DWORD OffsetViewportOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           OffsetViewportOrgEx16    (GDI.476)
  */
-BOOL16 OffsetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
+BOOL16 WINAPI OffsetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt)
 {
     POINT32 pt32;
     BOOL16 ret = OffsetViewportOrgEx32( hdc, x, y, &pt32 );
@@ -400,7 +400,7 @@ BOOL16 OffsetViewportOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 /***********************************************************************
  *           OffsetViewportOrgEx32    (GDI32.257)
  */
-BOOL32 OffsetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
+BOOL32 WINAPI OffsetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt)
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -420,7 +420,7 @@ BOOL32 OffsetViewportOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 /***********************************************************************
  *           OffsetWindowOrg    (GDI.15)
  */
-DWORD OffsetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI OffsetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     POINT32 pt;
     if (!OffsetWindowOrgEx32( hdc, x, y, &pt )) return 0;
@@ -431,7 +431,7 @@ DWORD OffsetWindowOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           OffsetWindowOrgEx16    (GDI.477)
  */
-BOOL16 OffsetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
+BOOL16 WINAPI OffsetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT32 pt32;
     BOOL16 ret = OffsetWindowOrgEx32( hdc, x, y, &pt32 );
@@ -443,7 +443,7 @@ BOOL16 OffsetWindowOrgEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 /***********************************************************************
  *           OffsetWindowOrgEx32    (GDI32.258)
  */
-BOOL32 OffsetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
+BOOL32 WINAPI OffsetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -463,8 +463,8 @@ BOOL32 OffsetWindowOrgEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 /***********************************************************************
  *           ScaleViewportExt    (GDI.18)
  */
-DWORD ScaleViewportExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
-                        INT16 yNum, INT16 yDenom )
+DWORD WINAPI ScaleViewportExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
+                               INT16 yNum, INT16 yDenom )
 {
     SIZE32 size;
     if (!ScaleViewportExtEx32( hdc, xNum, xDenom, yNum, yDenom, &size ))
@@ -476,8 +476,8 @@ DWORD ScaleViewportExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
 /***********************************************************************
  *           ScaleViewportExtEx16    (GDI.484)
  */
-BOOL16 ScaleViewportExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
-                             INT16 yNum, INT16 yDenom, LPSIZE16 size )
+BOOL16 WINAPI ScaleViewportExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
+                                    INT16 yNum, INT16 yDenom, LPSIZE16 size )
 {
     SIZE32 size32;
     BOOL16 ret = ScaleViewportExtEx32( hdc, xNum, xDenom, yNum, yDenom,
@@ -490,8 +490,8 @@ BOOL16 ScaleViewportExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
 /***********************************************************************
  *           ScaleViewportExtEx32    (GDI32.293)
  */
-BOOL32 ScaleViewportExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
-                             INT32 yNum, INT32 yDenom, LPSIZE32 size )
+BOOL32 WINAPI ScaleViewportExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
+                                    INT32 yNum, INT32 yDenom, LPSIZE32 size )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
@@ -517,8 +517,8 @@ BOOL32 ScaleViewportExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
 /***********************************************************************
  *           ScaleWindowExt    (GDI.16)
  */
-DWORD ScaleWindowExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
-		      INT16 yNum, INT16 yDenom )
+DWORD WINAPI ScaleWindowExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
+                             INT16 yNum, INT16 yDenom )
 {
     SIZE32 size;
     if (!ScaleWindowExtEx32( hdc, xNum, xDenom, yNum, yDenom, &size ))
@@ -530,8 +530,8 @@ DWORD ScaleWindowExt( HDC16 hdc, INT16 xNum, INT16 xDenom,
 /***********************************************************************
  *           ScaleWindowExtEx16    (GDI.485)
  */
-BOOL16 ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
-                           INT16 yNum, INT16 yDenom, LPSIZE16 size )
+BOOL16 WINAPI ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
+                                  INT16 yNum, INT16 yDenom, LPSIZE16 size )
 {
     SIZE32 size32;
     BOOL16 ret = ScaleWindowExtEx32( hdc, xNum, xDenom, yNum, yDenom,
@@ -544,8 +544,8 @@ BOOL16 ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
 /***********************************************************************
  *           ScaleWindowExtEx32    (GDI32.294)
  */
-BOOL32 ScaleWindowExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
-                           INT32 yNum, INT32 yDenom, LPSIZE32 size )
+BOOL32 WINAPI ScaleWindowExtEx32( HDC32 hdc, INT32 xNum, INT32 xDenom,
+                                  INT32 yNum, INT32 yDenom, LPSIZE32 size )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;

@@ -7,8 +7,8 @@
 #ifndef __WINE_STATUS_H
 #define __WINE_STATUS_H
 
-LRESULT StatusWindowProc( HWND32 hwnd, UINT32 msg,
-                          WPARAM32 wParam, LPARAM lParam );
+LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
+                                 WPARAM32 wParam, LPARAM lParam );
 
 typedef struct
 {

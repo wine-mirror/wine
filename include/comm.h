@@ -1,7 +1,7 @@
 #ifndef __WINE_COMM_H
 #define __WINE_COMM_H
 
-#define MAX_PORTS   16
+#define MAX_PORTS   9
 
 struct DosDeviceStruct {
     char *devicename;   /* /dev/cua1 */

@@ -97,7 +97,7 @@ void WIN_DumpWindow( HWND32 hwnd )
     fprintf( stderr, "Window %04x (%p):\n", hwnd, ptr );
     fprintf( stderr,
              "next=%p  child=%p  parent=%p  owner=%p  class=%p '%s'\n"
-             "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x dce=%p  idmenu=%04x\n"
+             "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x dce=%p  idmenu=%08x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d"
              "sysmenu=%04x  flags=%04x  props=%p  vscroll=%p  hscroll=%p\n",
@@ -544,7 +544,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         if (!cs->hwndParent || (cs->hwndParent == pWndDesktop->hwndSelf))
             wndPtr->owner = NULL;
         else
-            wndPtr->owner = WIN_FindWndPtr(WIN_GetTopParent(cs->hwndParent));
+            wndPtr->owner = WIN_GetTopParentPtr(WIN_FindWndPtr(cs->hwndParent));
     }
 
     wndPtr->window         = 0;
@@ -692,7 +692,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Set the window menu */
 
-    if ((cs->style & WS_CAPTION) && !(cs->style & WS_CHILD))
+    if ((wndPtr->dwStyle & (WS_CAPTION | WS_CHILD)) == WS_CAPTION )
     {
         if (cs->hMenu) SetMenu32(hwnd, cs->hMenu);
         else
@@ -786,10 +786,10 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 /***********************************************************************
  *           CreateWindow16   (USER.41)
  */
-HWND16 CreateWindow16( LPCSTR className, LPCSTR windowName,
-                       DWORD style, INT16 x, INT16 y, INT16 width,
-                       INT16 height, HWND16 parent, HMENU16 menu,
-                       HINSTANCE16 instance, LPVOID data ) 
+HWND16 WINAPI CreateWindow16( LPCSTR className, LPCSTR windowName,
+                              DWORD style, INT16 x, INT16 y, INT16 width,
+                              INT16 height, HWND16 parent, HMENU16 menu,
+                              HINSTANCE16 instance, LPVOID data ) 
 {
     return CreateWindowEx16( 0, className, windowName, style,
 			   x, y, width, height, parent, menu, instance, data );
@@ -799,10 +799,11 @@ HWND16 CreateWindow16( LPCSTR className, LPCSTR windowName,
 /***********************************************************************
  *           CreateWindowEx16   (USER.452)
  */
-HWND16 CreateWindowEx16( DWORD exStyle, LPCSTR className, LPCSTR windowName,
-                         DWORD style, INT16 x, INT16 y, INT16 width,
-                         INT16 height, HWND16 parent, HMENU16 menu,
-                         HINSTANCE16 instance, LPVOID data ) 
+HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
+                                LPCSTR windowName, DWORD style, INT16 x,
+                                INT16 y, INT16 width, INT16 height,
+                                HWND16 parent, HMENU16 menu,
+                                HINSTANCE16 instance, LPVOID data ) 
 {
     ATOM classAtom;
     CREATESTRUCT32A cs;
@@ -841,10 +842,11 @@ HWND16 CreateWindowEx16( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 /***********************************************************************
  *           CreateWindowEx32A   (USER32.82)
  */
-HWND32 CreateWindowEx32A( DWORD exStyle, LPCSTR className, LPCSTR windowName,
-                          DWORD style, INT32 x, INT32 y, INT32 width,
-                          INT32 height, HWND32 parent, HMENU32 menu,
-                          HINSTANCE32 instance, LPVOID data )
+HWND32 WINAPI CreateWindowEx32A( DWORD exStyle, LPCSTR className,
+                                 LPCSTR windowName, DWORD style, INT32 x,
+                                 INT32 y, INT32 width, INT32 height,
+                                 HWND32 parent, HMENU32 menu,
+                                 HINSTANCE32 instance, LPVOID data )
 {
     ATOM classAtom;
     CREATESTRUCT32A cs;
@@ -880,10 +882,11 @@ HWND32 CreateWindowEx32A( DWORD exStyle, LPCSTR className, LPCSTR windowName,
 /***********************************************************************
  *           CreateWindowEx32W   (USER32.83)
  */
-HWND32 CreateWindowEx32W( DWORD exStyle, LPCWSTR className, LPCWSTR windowName,
-                          DWORD style, INT32 x, INT32 y, INT32 width,
-                          INT32 height, HWND32 parent, HMENU32 menu,
-                          HINSTANCE32 instance, LPVOID data )
+HWND32 WINAPI CreateWindowEx32W( DWORD exStyle, LPCWSTR className,
+                                 LPCWSTR windowName, DWORD style, INT32 x,
+                                 INT32 y, INT32 width, INT32 height,
+                                 HWND32 parent, HMENU32 menu,
+                                 HINSTANCE32 instance, LPVOID data )
 {
     ATOM classAtom;
     CREATESTRUCT32W cs;
@@ -963,16 +966,18 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 
 
 /***********************************************************************
- *           DestroyWindow   (USER.53)
+ *           DestroyWindow16   (USER.53)
  */
-BOOL16 DestroyWindow16( HWND16 hwnd )
+BOOL16 WINAPI DestroyWindow16( HWND16 hwnd )
 {
     return DestroyWindow32(hwnd);
 }
+
+
 /***********************************************************************
- *           DestroyWindow   (USER32.134)
+ *           DestroyWindow32   (USER32.134)
  */
-BOOL32 DestroyWindow32( HWND32 hwnd )
+BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
 {
     WND * wndPtr;
 
@@ -1060,7 +1065,7 @@ BOOL32 DestroyWindow32( HWND32 hwnd )
 /***********************************************************************
  *           CloseWindow16   (USER.43)
  */
-BOOL16 CloseWindow16( HWND16 hwnd )
+BOOL16 WINAPI CloseWindow16( HWND16 hwnd )
 {
     return CloseWindow32( hwnd );
 }
@@ -1069,7 +1074,7 @@ BOOL16 CloseWindow16( HWND16 hwnd )
 /***********************************************************************
  *           CloseWindow32   (USER32.55)
  */
-BOOL32 CloseWindow32( HWND32 hwnd )
+BOOL32 WINAPI CloseWindow32( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return FALSE;
@@ -1081,7 +1086,7 @@ BOOL32 CloseWindow32( HWND32 hwnd )
 /***********************************************************************
  *           OpenIcon16   (USER.44)
  */
-BOOL16 OpenIcon16( HWND16 hwnd )
+BOOL16 WINAPI OpenIcon16( HWND16 hwnd )
 {
     return OpenIcon32( hwnd );
 }
@@ -1090,7 +1095,7 @@ BOOL16 OpenIcon16( HWND16 hwnd )
 /***********************************************************************
  *           OpenIcon32   (USER32.409)
  */
-BOOL32 OpenIcon32( HWND32 hwnd )
+BOOL32 WINAPI OpenIcon32( HWND32 hwnd )
 {
     if (!IsIconic32( hwnd )) return FALSE;
     ShowWindow32( hwnd, SW_SHOWNORMAL );
@@ -1158,7 +1163,7 @@ static HWND32 WIN_FindWindow( HWND32 parent, HWND32 child, ATOM className,
 /***********************************************************************
  *           FindWindow16   (USER.50)
  */
-HWND16 FindWindow16( SEGPTR className, LPCSTR title )
+HWND16 WINAPI FindWindow16( SEGPTR className, LPCSTR title )
 {
     return FindWindowEx16( 0, 0, className, title );
 }
@@ -1167,8 +1172,8 @@ HWND16 FindWindow16( SEGPTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindowEx16   (USER.427)
  */
-HWND16 FindWindowEx16( HWND16 parent, HWND16 child,
-                       SEGPTR className, LPCSTR title )
+HWND16 WINAPI FindWindowEx16( HWND16 parent, HWND16 child,
+                              SEGPTR className, LPCSTR title )
 {
     ATOM atom = 0;
 
@@ -1189,7 +1194,7 @@ HWND16 FindWindowEx16( HWND16 parent, HWND16 child,
 /***********************************************************************
  *           FindWindow32A   (USER32.197)
  */
-HWND32 FindWindow32A( LPCSTR className, LPCSTR title )
+HWND32 WINAPI FindWindow32A( LPCSTR className, LPCSTR title )
 {
     return FindWindowEx32A( 0, 0, className, title );
 }
@@ -1198,8 +1203,8 @@ HWND32 FindWindow32A( LPCSTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindowEx32A   (USER32.198)
  */
-HWND32 FindWindowEx32A( HWND32 parent, HWND32 child,
-                        LPCSTR className, LPCSTR title )
+HWND32 WINAPI FindWindowEx32A( HWND32 parent, HWND32 child,
+                               LPCSTR className, LPCSTR title )
 {
     ATOM atom = 0;
 
@@ -1216,8 +1221,8 @@ HWND32 FindWindowEx32A( HWND32 parent, HWND32 child,
 /***********************************************************************
  *           FindWindowEx32W   (USER32.199)
  */
-HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
-                        LPCWSTR className, LPCWSTR title )
+HWND32 WINAPI FindWindowEx32W( HWND32 parent, HWND32 child,
+                               LPCWSTR className, LPCWSTR title )
 {
     ATOM atom = 0;
     char *buffer;
@@ -1239,7 +1244,7 @@ HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
 /***********************************************************************
  *           FindWindow32W   (USER32.200)
  */
-HWND32 FindWindow32W( LPCWSTR className, LPCWSTR title )
+HWND32 WINAPI FindWindow32W( LPCWSTR className, LPCWSTR title )
 {
     return FindWindowEx32W( 0, 0, className, title );
 }
@@ -1257,7 +1262,7 @@ WND *WIN_GetDesktop(void)
 /**********************************************************************
  *           GetDesktopWindow16   (USER.286)
  */
-HWND16 GetDesktopWindow16(void)
+HWND16 WINAPI GetDesktopWindow16(void)
 {
     return (HWND16)pWndDesktop->hwndSelf;
 }
@@ -1266,7 +1271,7 @@ HWND16 GetDesktopWindow16(void)
 /**********************************************************************
  *           GetDesktopWindow32   (USER32.231)
  */
-HWND32 GetDesktopWindow32(void)
+HWND32 WINAPI GetDesktopWindow32(void)
 {
     return pWndDesktop->hwndSelf;
 }
@@ -1278,7 +1283,7 @@ HWND32 GetDesktopWindow32(void)
  * Exactly the same thing as GetDesktopWindow(), but not documented.
  * Don't ask me why...
  */
-HWND16 GetDesktopHwnd(void)
+HWND16 WINAPI GetDesktopHwnd(void)
 {
     return (HWND16)pWndDesktop->hwndSelf;
 }
@@ -1287,7 +1292,7 @@ HWND16 GetDesktopHwnd(void)
 /*******************************************************************
  *           EnableWindow16   (USER.34)
  */
-BOOL16 EnableWindow16( HWND16 hwnd, BOOL16 enable )
+BOOL16 WINAPI EnableWindow16( HWND16 hwnd, BOOL16 enable )
 {
     return EnableWindow32( hwnd, enable );
 }
@@ -1296,7 +1301,7 @@ BOOL16 EnableWindow16( HWND16 hwnd, BOOL16 enable )
 /*******************************************************************
  *           EnableWindow32   (USER32.171)
  */
-BOOL32 EnableWindow32( HWND32 hwnd, BOOL32 enable )
+BOOL32 WINAPI EnableWindow32( HWND32 hwnd, BOOL32 enable )
 {
     WND *wndPtr;
 
@@ -1326,7 +1331,7 @@ BOOL32 EnableWindow32( HWND32 hwnd, BOOL32 enable )
 /***********************************************************************
  *           IsWindowEnabled16   (USER.35)
  */ 
-BOOL16 IsWindowEnabled16(HWND16 hWnd)
+BOOL16 WINAPI IsWindowEnabled16(HWND16 hWnd)
 {
     return IsWindowEnabled32(hWnd);
 }
@@ -1335,7 +1340,7 @@ BOOL16 IsWindowEnabled16(HWND16 hWnd)
 /***********************************************************************
  *           IsWindowEnabled32   (USER32.348)
  */ 
-BOOL32 IsWindowEnabled32(HWND32 hWnd)
+BOOL32 WINAPI IsWindowEnabled32(HWND32 hWnd)
 {
     WND * wndPtr; 
 
@@ -1347,7 +1352,7 @@ BOOL32 IsWindowEnabled32(HWND32 hWnd)
 /***********************************************************************
  *           IsWindowUnicode   (USER32.349)
  */
-BOOL32 IsWindowUnicode( HWND32 hwnd )
+BOOL32 WINAPI IsWindowUnicode( HWND32 hwnd )
 {
     WND * wndPtr; 
 
@@ -1359,7 +1364,7 @@ BOOL32 IsWindowUnicode( HWND32 hwnd )
 /**********************************************************************
  *	     GetWindowWord16    (USER.133)
  */
-WORD GetWindowWord16( HWND16 hwnd, INT16 offset )
+WORD WINAPI GetWindowWord16( HWND16 hwnd, INT16 offset )
 {
     return GetWindowWord32( hwnd, offset );
 }
@@ -1368,7 +1373,7 @@ WORD GetWindowWord16( HWND16 hwnd, INT16 offset )
 /**********************************************************************
  *	     GetWindowWord32    (USER32.313)
  */
-WORD GetWindowWord32( HWND32 hwnd, INT32 offset )
+WORD WINAPI GetWindowWord32( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
@@ -1383,7 +1388,7 @@ WORD GetWindowWord32( HWND32 hwnd, INT32 offset )
     }
     switch(offset)
     {
-    case GWW_ID:         return wndPtr->wIDmenu;
+    case GWW_ID:         return (WORD)wndPtr->wIDmenu;
     case GWW_HWNDPARENT: return wndPtr->parent ? wndPtr->parent->hwndSelf : 0;
     case GWW_HINSTANCE:  return (WORD)wndPtr->hInstance;
     default:
@@ -1407,7 +1412,7 @@ HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd )
 /**********************************************************************
  *	     SetWindowWord16    (USER.134)
  */
-WORD SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
+WORD WINAPI SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
 {
     return SetWindowWord32( hwnd, offset, newval );
 }
@@ -1416,7 +1421,7 @@ WORD SetWindowWord16( HWND16 hwnd, INT16 offset, WORD newval )
 /**********************************************************************
  *	     SetWindowWord32    (USER32.523)
  */
-WORD SetWindowWord32( HWND32 hwnd, INT32 offset, WORD newval )
+WORD WINAPI SetWindowWord32( HWND32 hwnd, INT32 offset, WORD newval )
 {
     WORD *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
@@ -1473,7 +1478,7 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
         case GWL_USERDATA:   return wndPtr->userdata;
         case GWL_STYLE:      return wndPtr->dwStyle;
         case GWL_EXSTYLE:    return wndPtr->dwExStyle;
-        case GWL_ID:         return wndPtr->wIDmenu;
+        case GWL_ID:         return (LONG)wndPtr->wIDmenu;
         case GWL_WNDPROC:    return (LONG)WINPROC_GetProc( wndPtr->winproc,
                                                            type );
         case GWL_HWNDPARENT: return wndPtr->parent ?
@@ -1548,7 +1553,7 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
 /**********************************************************************
  *	     GetWindowLong16    (USER.135)
  */
-LONG GetWindowLong16( HWND16 hwnd, INT16 offset )
+LONG WINAPI GetWindowLong16( HWND16 hwnd, INT16 offset )
 {
     return WIN_GetWindowLong( (HWND32)hwnd, offset, WIN_PROC_16 );
 }
@@ -1557,7 +1562,7 @@ LONG GetWindowLong16( HWND16 hwnd, INT16 offset )
 /**********************************************************************
  *	     GetWindowLong32A    (USER32.304)
  */
-LONG GetWindowLong32A( HWND32 hwnd, INT32 offset )
+LONG WINAPI GetWindowLong32A( HWND32 hwnd, INT32 offset )
 {
     return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32A );
 }
@@ -1566,7 +1571,7 @@ LONG GetWindowLong32A( HWND32 hwnd, INT32 offset )
 /**********************************************************************
  *	     GetWindowLong32W    (USER32.305)
  */
-LONG GetWindowLong32W( HWND32 hwnd, INT32 offset )
+LONG WINAPI GetWindowLong32W( HWND32 hwnd, INT32 offset )
 {
     return WIN_GetWindowLong( hwnd, offset, WIN_PROC_32W );
 }
@@ -1575,7 +1580,7 @@ LONG GetWindowLong32W( HWND32 hwnd, INT32 offset )
 /**********************************************************************
  *	     SetWindowLong16    (USER.136)
  */
-LONG SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
+LONG WINAPI SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 {
     return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_16 );
 }
@@ -1584,7 +1589,7 @@ LONG SetWindowLong16( HWND16 hwnd, INT16 offset, LONG newval )
 /**********************************************************************
  *	     SetWindowLong32A    (USER32.516)
  */
-LONG SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
+LONG WINAPI SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 {
     return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32A );
 }
@@ -1593,7 +1598,7 @@ LONG SetWindowLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 /**********************************************************************
  *	     SetWindowLong32W    (USER32.517)
  */
-LONG SetWindowLong32W( HWND32 hwnd, INT32 offset, LONG newval )
+LONG WINAPI SetWindowLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 {
     return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32W );
 }
@@ -1602,7 +1607,7 @@ LONG SetWindowLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 /*******************************************************************
  *	     GetWindowText16    (USER.36)
  */
-INT16 GetWindowText16( HWND16 hwnd, SEGPTR lpString, INT16 nMaxCount )
+INT16 WINAPI GetWindowText16( HWND16 hwnd, SEGPTR lpString, INT16 nMaxCount )
 {
     return (INT16)SendMessage16(hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString);
 }
@@ -1611,7 +1616,7 @@ INT16 GetWindowText16( HWND16 hwnd, SEGPTR lpString, INT16 nMaxCount )
 /*******************************************************************
  *	     GetWindowText32A    (USER32.308)
  */
-INT32 GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
+INT32 WINAPI GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
 {
     return (INT32)SendMessage32A( hwnd, WM_GETTEXT, nMaxCount,
                                   (LPARAM)lpString );
@@ -1621,7 +1626,7 @@ INT32 GetWindowText32A( HWND32 hwnd, LPSTR lpString, INT32 nMaxCount )
 /*******************************************************************
  *	     GetWindowText32W    (USER32.311)
  */
-INT32 GetWindowText32W( HWND32 hwnd, LPWSTR lpString, INT32 nMaxCount )
+INT32 WINAPI GetWindowText32W( HWND32 hwnd, LPWSTR lpString, INT32 nMaxCount )
 {
     return (INT32)SendMessage32W( hwnd, WM_GETTEXT, nMaxCount,
                                   (LPARAM)lpString );
@@ -1631,25 +1636,25 @@ INT32 GetWindowText32W( HWND32 hwnd, LPWSTR lpString, INT32 nMaxCount )
 /*******************************************************************
  *	     SetWindowText16    (USER.37)
  */
-void SetWindowText16( HWND16 hwnd, SEGPTR lpString )
+void WINAPI SetWindowText16( HWND16 hwnd, SEGPTR lpString )
 {
     SendMessage16( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
- *	     SetWindowText32A    (USER32.)
+ *	     SetWindowText32A    (USER32.521)
  */
-void SetWindowText32A( HWND32 hwnd, LPCSTR lpString )
+void WINAPI SetWindowText32A( HWND32 hwnd, LPCSTR lpString )
 {
     SendMessage32A( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
 
 
 /*******************************************************************
- *	     SetWindowText32W    (USER32.)
+ *	     SetWindowText32W    (USER32.522)
  */
-void SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
+void WINAPI SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
 {
     SendMessage32W( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
@@ -1658,7 +1663,7 @@ void SetWindowText32W( HWND32 hwnd, LPCWSTR lpString )
 /*******************************************************************
  *         GetWindowTextLength16    (USER.38)
  */
-INT16 GetWindowTextLength16( HWND16 hwnd )
+INT16 WINAPI GetWindowTextLength16( HWND16 hwnd )
 {
     return (INT16)SendMessage16( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
@@ -1667,7 +1672,7 @@ INT16 GetWindowTextLength16( HWND16 hwnd )
 /*******************************************************************
  *         GetWindowTextLength32A   (USER32.309)
  */
-INT32 GetWindowTextLength32A( HWND32 hwnd )
+INT32 WINAPI GetWindowTextLength32A( HWND32 hwnd )
 {
     return SendMessage32A( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
@@ -1675,7 +1680,7 @@ INT32 GetWindowTextLength32A( HWND32 hwnd )
 /*******************************************************************
  *         GetWindowTextLength32W   (USER32.309)
  */
-INT32 GetWindowTextLength32W( HWND32 hwnd )
+INT32 WINAPI GetWindowTextLength32W( HWND32 hwnd )
 {
     return SendMessage32W( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 }
@@ -1684,7 +1689,7 @@ INT32 GetWindowTextLength32W( HWND32 hwnd )
 /*******************************************************************
  *         IsWindow16   (USER.47)
  */
-BOOL16 IsWindow16( HWND16 hwnd )
+BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
     return IsWindow32( hwnd );
 }
@@ -1693,7 +1698,7 @@ BOOL16 IsWindow16( HWND16 hwnd )
 /*******************************************************************
  *         IsWindow32   (USER32.347)
  */
-BOOL32 IsWindow32( HWND32 hwnd )
+BOOL32 WINAPI IsWindow32( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     return ((wndPtr != NULL) && (wndPtr->dwMagic == WND_MAGIC));
@@ -1703,7 +1708,7 @@ BOOL32 IsWindow32( HWND32 hwnd )
 /*****************************************************************
  *         GetParent16   (USER.46)
  */
-HWND16 GetParent16( HWND16 hwnd )
+HWND16 WINAPI GetParent16( HWND16 hwnd )
 {
     return (HWND16)GetParent32( hwnd );
 }
@@ -1712,7 +1717,7 @@ HWND16 GetParent16( HWND16 hwnd )
 /*****************************************************************
  *         GetParent32   (USER32.277)
  */
-HWND32 GetParent32( HWND32 hwnd )
+HWND32 WINAPI GetParent32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (!wndPtr) return 0;
@@ -1720,6 +1725,16 @@ HWND32 GetParent32( HWND32 hwnd )
     return wndPtr ? wndPtr->hwndSelf : 0;
 }
 
+/*****************************************************************
+ *         WIN_GetTopParent
+ *
+ * Get the top-level parent for a child window.
+ */
+WND* WIN_GetTopParentPtr( WND* pWnd )
+{
+    while( pWnd && (pWnd->dwStyle & WS_CHILD)) pWnd = pWnd->parent;
+    return pWnd;
+}
 
 /*****************************************************************
  *         WIN_GetTopParent
@@ -1728,8 +1743,7 @@ HWND32 GetParent32( HWND32 hwnd )
  */
 HWND32 WIN_GetTopParent( HWND32 hwnd )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    while (wndPtr && (wndPtr->dwStyle & WS_CHILD)) wndPtr = wndPtr->parent;
+    WND *wndPtr = WIN_GetTopParentPtr ( WIN_FindWndPtr( hwnd ) );
     return wndPtr ? wndPtr->hwndSelf : 0;
 }
 
@@ -1737,7 +1751,7 @@ HWND32 WIN_GetTopParent( HWND32 hwnd )
 /*****************************************************************
  *         SetParent16   (USER.233)
  */
-HWND16 SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
+HWND16 WINAPI SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 {
     return SetParent32( hwndChild, hwndNewParent );
 }
@@ -1746,7 +1760,7 @@ HWND16 SetParent16( HWND16 hwndChild, HWND16 hwndNewParent )
 /*****************************************************************
  *         SetParent32   (USER32.494)
  */
-HWND32 SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
+HWND32 WINAPI SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 {
     HWND32 oldParent;
 
@@ -1769,7 +1783,7 @@ HWND32 SetParent32( HWND32 hwndChild, HWND32 hwndNewParent )
 /*******************************************************************
  *         IsChild16    (USER.48)
  */
-BOOL16 IsChild16( HWND16 parent, HWND16 child )
+BOOL16 WINAPI IsChild16( HWND16 parent, HWND16 child )
 {
     return IsChild32(parent,child);
 }
@@ -1778,7 +1792,7 @@ BOOL16 IsChild16( HWND16 parent, HWND16 child )
 /*******************************************************************
  *         IsChild32    (USER32.338)
  */
-BOOL32 IsChild32( HWND32 parent, HWND32 child )
+BOOL32 WINAPI IsChild32( HWND32 parent, HWND32 child )
 {
     WND * wndPtr = WIN_FindWndPtr( child );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
@@ -1793,7 +1807,7 @@ BOOL32 IsChild32( HWND32 parent, HWND32 child )
 /***********************************************************************
  *           IsWindowVisible16   (USER.49)
  */
-BOOL16 IsWindowVisible16( HWND16 hwnd )
+BOOL16 WINAPI IsWindowVisible16( HWND16 hwnd )
 {
     return IsWindowVisible32(hwnd);
 }
@@ -1802,7 +1816,7 @@ BOOL16 IsWindowVisible16( HWND16 hwnd )
 /***********************************************************************
  *           IsWindowVisible32   (USER32.350)
  */
-BOOL32 IsWindowVisible32( HWND32 hwnd )
+BOOL32 WINAPI IsWindowVisible32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
@@ -1836,7 +1850,7 @@ BOOL32 WIN_IsWindowDrawable( WND* wnd, BOOL32 icon )
 /*******************************************************************
  *         GetTopWindow16    (USER.229)
  */
-HWND16 GetTopWindow16( HWND16 hwnd )
+HWND16 WINAPI GetTopWindow16( HWND16 hwnd )
 {
     return GetTopWindow32(hwnd);
 }
@@ -1845,7 +1859,7 @@ HWND16 GetTopWindow16( HWND16 hwnd )
 /*******************************************************************
  *         GetTopWindow32    (USER.229)
  */
-HWND32 GetTopWindow32( HWND32 hwnd )
+HWND32 WINAPI GetTopWindow32( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (wndPtr && wndPtr->child) return wndPtr->child->hwndSelf;
@@ -1856,7 +1870,7 @@ HWND32 GetTopWindow32( HWND32 hwnd )
 /*******************************************************************
  *         GetWindow16    (USER.262)
  */
-HWND16 GetWindow16( HWND16 hwnd, WORD rel )
+HWND16 WINAPI GetWindow16( HWND16 hwnd, WORD rel )
 {
     return GetWindow32( hwnd,rel );
 }
@@ -1865,7 +1879,7 @@ HWND16 GetWindow16( HWND16 hwnd, WORD rel )
 /*******************************************************************
  *         GetWindow32    (USER32.301)
  */
-HWND32 GetWindow32( HWND32 hwnd, WORD rel )
+HWND32 WINAPI GetWindow32( HWND32 hwnd, WORD rel )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
@@ -1908,7 +1922,7 @@ HWND32 GetWindow32( HWND32 hwnd, WORD rel )
 /*******************************************************************
  *         GetNextWindow16    (USER.230)
  */
-HWND16 GetNextWindow16( HWND16 hwnd, WORD flag )
+HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
 {
     if ((flag != GW_HWNDNEXT) && (flag != GW_HWNDPREV)) return 0;
     return GetWindow16( hwnd, flag );
@@ -1917,7 +1931,7 @@ HWND16 GetNextWindow16( HWND16 hwnd, WORD flag )
 /*******************************************************************
  *         ShowOwnedPopups16  (USER.265)
  */
-void ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
+void WINAPI ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
 {
     ShowOwnedPopups32( owner, fShow );
 }
@@ -1926,7 +1940,7 @@ void ShowOwnedPopups16( HWND16 owner, BOOL16 fShow )
 /*******************************************************************
  *         ShowOwnedPopups32  (USER32.530)
  */
-BOOL32 ShowOwnedPopups32( HWND32 owner, BOOL32 fShow )
+BOOL32 WINAPI ShowOwnedPopups32( HWND32 owner, BOOL32 fShow )
 {
     WND *pWnd = pWndDesktop->child;
     while (pWnd)
@@ -1943,7 +1957,7 @@ BOOL32 ShowOwnedPopups32( HWND32 owner, BOOL32 fShow )
 /*******************************************************************
  *         GetLastActivePopup16   (USER.287)
  */
-HWND16 GetLastActivePopup16( HWND16 hwnd )
+HWND16 WINAPI GetLastActivePopup16( HWND16 hwnd )
 {
     return GetLastActivePopup32( hwnd );
 }
@@ -1951,7 +1965,7 @@ HWND16 GetLastActivePopup16( HWND16 hwnd )
 /*******************************************************************
  *         GetLastActivePopup32   (USER32.255)
  */
-HWND32 GetLastActivePopup32( HWND32 hwnd )
+HWND32 WINAPI GetLastActivePopup32( HWND32 hwnd )
 {
     WND *wndPtr;
     wndPtr = WIN_FindWndPtr(hwnd);
@@ -2016,7 +2030,7 @@ WND **WIN_BuildWinArray( WND *wndPtr, UINT32 bwaFlags, UINT32* pTotal )
 /*******************************************************************
  *           EnumWindows16   (USER.54)
  */
-BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
+BOOL16 WINAPI EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
 {
     WND **list, **ppWnd;
 
@@ -2042,7 +2056,7 @@ BOOL16 EnumWindows16( WNDENUMPROC16 lpEnumFunc, LPARAM lParam )
 /*******************************************************************
  *           EnumWindows32   (USER32.192)
  */
-BOOL32 EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
+BOOL32 WINAPI EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
 {
     return (BOOL32)EnumWindows16( (WNDENUMPROC16)lpEnumFunc, lParam );
 }
@@ -2051,7 +2065,8 @@ BOOL32 EnumWindows32( WNDENUMPROC32 lpEnumFunc, LPARAM lParam )
 /**********************************************************************
  *           EnumTaskWindows16   (USER.225)
  */
-BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
+BOOL16 WINAPI EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func,
+                                 LPARAM lParam )
 {
     WND **list, **ppWnd;
     HQUEUE16 hQueue = GetTaskQueue( hTask );
@@ -2078,7 +2093,7 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
 /**********************************************************************
  *           EnumThreadWindows   (USER32.189)
  */
-BOOL32 EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
+BOOL32 WINAPI EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
 {
     THDB	*tdb = (THDB*)id;
 
@@ -2116,7 +2131,8 @@ static BOOL16 WIN_EnumChildWindows( WND **ppWnd, WNDENUMPROC16 func,
 /**********************************************************************
  *           EnumChildWindows16   (USER.55)
  */
-BOOL16 EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
+BOOL16 WINAPI EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func,
+                                  LPARAM lParam )
 {
     WND **list, *pParent;
 
@@ -2131,7 +2147,8 @@ BOOL16 EnumChildWindows16( HWND16 parent, WNDENUMPROC16 func, LPARAM lParam )
 /**********************************************************************
  *           EnumChildWindows32   (USER32.177)
  */
-BOOL32 EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func, LPARAM lParam )
+BOOL32 WINAPI EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func,
+                                  LPARAM lParam )
 {
     return (BOOL32)EnumChildWindows16( (HWND16)parent, (WNDENUMPROC16)func,
                                        lParam );
@@ -2141,7 +2158,7 @@ BOOL32 EnumChildWindows32( HWND32 parent, WNDENUMPROC32 func, LPARAM lParam )
 /*******************************************************************
  *           AnyPopup16   (USER.52)
  */
-BOOL16 AnyPopup16(void)
+BOOL16 WINAPI AnyPopup16(void)
 {
     return AnyPopup32();
 }
@@ -2150,7 +2167,7 @@ BOOL16 AnyPopup16(void)
 /*******************************************************************
  *           AnyPopup32   (USER32.3)
  */
-BOOL32 AnyPopup32(void)
+BOOL32 WINAPI AnyPopup32(void)
 {
     WND *wndPtr;
     for (wndPtr = pWndDesktop->child; wndPtr; wndPtr = wndPtr->next)
@@ -2162,7 +2179,7 @@ BOOL32 AnyPopup32(void)
 /*******************************************************************
  *            FlashWindow16   (USER.105)
  */
-BOOL16 FlashWindow16( HWND16 hWnd, BOOL16 bInvert )
+BOOL16 WINAPI FlashWindow16( HWND16 hWnd, BOOL16 bInvert )
 {
     return FlashWindow32( hWnd, bInvert );
 }
@@ -2171,7 +2188,7 @@ BOOL16 FlashWindow16( HWND16 hWnd, BOOL16 bInvert )
 /*******************************************************************
  *            FlashWindow32   (USER32.201)
  */
-BOOL32 FlashWindow32( HWND32 hWnd, BOOL32 bInvert )
+BOOL32 WINAPI FlashWindow32( HWND32 hWnd, BOOL32 bInvert )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
 
@@ -2214,7 +2231,7 @@ BOOL32 FlashWindow32( HWND32 hWnd, BOOL32 bInvert )
 /*******************************************************************
  *           SetSysModalWindow16   (USER.188)
  */
-HWND16 SetSysModalWindow16( HWND16 hWnd )
+HWND16 WINAPI SetSysModalWindow16( HWND16 hWnd )
 {
     HWND32 hWndOldModal = hwndSysModal;
     hwndSysModal = hWnd;
@@ -2226,7 +2243,7 @@ HWND16 SetSysModalWindow16( HWND16 hWnd )
 /*******************************************************************
  *           GetSysModalWindow16   (USER.52)
  */
-HWND16 GetSysModalWindow16(void)
+HWND16 WINAPI GetSysModalWindow16(void)
 {
     return hwndSysModal;
 }
@@ -2307,7 +2324,7 @@ BOOL16 DRAG_QueryUpdate( HWND32 hQueryWnd, SEGPTR spDragInfo, BOOL32 bNoSend )
 /*******************************************************************
  *             DragDetect   (USER.465)
  */
-BOOL16 DragDetect16( HWND16 hWnd, POINT16 pt )
+BOOL16 WINAPI DragDetect16( HWND16 hWnd, POINT16 pt )
 {
     POINT32 pt32;
     CONV_POINT16TO32( &pt, &pt32 );
@@ -2317,7 +2334,7 @@ BOOL16 DragDetect16( HWND16 hWnd, POINT16 pt )
 /*******************************************************************
  *             DragDetect32   (USER32.150)
  */
-BOOL32 DragDetect32( HWND32 hWnd, POINT32 pt )
+BOOL32 WINAPI DragDetect32( HWND32 hWnd, POINT32 pt )
 {
     MSG16 msg;
     RECT16  rect;
@@ -2356,8 +2373,8 @@ BOOL32 DragDetect32( HWND32 hWnd, POINT32 pt )
 /******************************************************************************
  *             DragObject16   (USER.464)
  */
-DWORD DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
-                    HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
+DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
+                           HANDLE16 hOfStruct, WORD szList, HCURSOR16 hCursor )
 {
     MSG16	msg;
     LPDRAGINFO	lpDragInfo;

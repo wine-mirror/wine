@@ -8,7 +8,7 @@
  *           INT_Int4bHandler
  *
  */
-void INT_Int4bHandler( CONTEXT *context )
+void WINAPI INT_Int4bHandler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

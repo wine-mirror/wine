@@ -303,8 +303,9 @@ find_ne_resource(
 }
 
 /* GetFileResourceSize				[VER.2] */
-DWORD
-GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
+DWORD WINAPI GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,
+                                 LPDWORD off)
+{
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
 	BYTE			*resdata;
@@ -331,10 +332,9 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 }
 
 /* GetFileResource				[VER.3] */
-DWORD
-GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
-		DWORD off,DWORD datalen,LPVOID data
-) {
+DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
+                             DWORD off,DWORD datalen,LPVOID data )
+{
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
 	BYTE			*resdata;
@@ -367,8 +367,8 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 }
 
 /* GetFileVersionInfoSize			[VER.6] */
-DWORD
-GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle) {
+DWORD WINAPI GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle)
+{
 	DWORD	len,ret;
 	BYTE	buf[72];
 	VS_FIXEDFILEINFO *vffi;
@@ -479,14 +479,14 @@ GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle) {
 }
 
 /* GetFileVersionInfoSize32A			[VERSION.1] */
-DWORD
-GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle) {
+DWORD WINAPI GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle)
+{
 	dprintf_ver(stddeb,"GetFileVersionInfoSize32A(%s,%p)\n",filename,handle);
 	return GetFileVersionInfoSize16(filename,handle);
 }
 
 /* GetFileVersionInfoSize32W			[VERSION.2] */
-DWORD GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
+DWORD WINAPI GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
 {
     LPSTR xfn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     DWORD ret = GetFileVersionInfoSize16( xfn, handle );
@@ -495,8 +495,9 @@ DWORD GetFileVersionInfoSize32W( LPCWSTR filename, LPDWORD handle )
 }
 
 /* GetFileVersionInfo				[VER.7] */
-DWORD 
-GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
+DWORD  WINAPI GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,
+                                   LPVOID data)
+{
 	dprintf_ver(stddeb,"GetFileVersionInfo16(%s,%ld,%ld,%p)\n->",
 		filename,handle,datasize,data
 	);
@@ -506,14 +507,15 @@ GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
 }
 
 /* GetFileVersionInfoA				[VERSION.0] */
-DWORD 
-GetFileVersionInfo32A(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
+DWORD  WINAPI GetFileVersionInfo32A(LPCSTR filename,DWORD handle,
+                                    DWORD datasize,LPVOID data)
+{
 	return GetFileVersionInfo16(filename,handle,datasize,data);
 }
 
 /* GetFileVersionInfoW				[VERSION.3] */
-DWORD GetFileVersionInfo32W( LPCWSTR filename, DWORD handle, DWORD datasize,
-                             LPVOID data)
+DWORD WINAPI GetFileVersionInfo32W( LPCWSTR filename, DWORD handle,
+                                    DWORD datasize, LPVOID data)
 {
     LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     DWORD ret = GetFileVersionInfo16( fn, handle, datasize, data );
@@ -534,7 +536,7 @@ DWORD GetFileVersionInfo32W( LPCWSTR filename, DWORD handle, DWORD datasize,
  *
  ****************************************************************************/
 
-DWORD VerFindFile16(
+DWORD WINAPI VerFindFile16(
     UINT16 flags,
     LPCSTR lpszFilename,
     LPCSTR lpszWinDir,
@@ -693,8 +695,7 @@ DWORD VerFindFile16(
 }
 
 /* VerFindFileA						[VERSION.5] */
-DWORD
-VerFindFile32A(
+DWORD WINAPI VerFindFile32A(
 	UINT32 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
 	LPSTR curdir,UINT32 *pcurdirlen,LPSTR destdir,UINT32 *pdestdirlen )
 {
@@ -707,8 +708,7 @@ VerFindFile32A(
 }
 
 /* VerFindFileW						[VERSION.6] */
-DWORD
-VerFindFile32W(
+DWORD WINAPI VerFindFile32W(
 	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
 	LPWSTR curdir,UINT32 *pcurdirlen,LPWSTR destdir,UINT32 *pdestdirlen )
 {
@@ -735,8 +735,7 @@ VerFindFile32W(
 }
 
 /* VerInstallFile					[VER.9] */
-DWORD
-VerInstallFile16(
+DWORD WINAPI VerInstallFile16(
 	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
  	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT16 *tmpfilelen )
 {
@@ -784,8 +783,7 @@ _error2vif(DWORD error) {
     }
 }
 
-DWORD
-VerInstallFile32A(
+DWORD WINAPI VerInstallFile32A(
 	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
  	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT32 *tmpfilelen )
 {
@@ -948,8 +946,7 @@ VerInstallFile32A(
 }
 
 /* VerInstallFileW				[VERSION.8] */
-DWORD
-VerInstallFile32W(
+DWORD WINAPI VerInstallFile32W(
 	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
 	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT32 *tmpfilelen )
 {
@@ -1035,8 +1032,8 @@ _find_data(BYTE *block,LPCSTR str, WORD buff_remain) {
 
 /* VerQueryValue 			[VER.11] */
 /* take care, 'buffer' is NOT a SEGPTR, it just points to one */
-DWORD
-VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
+DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
+                             UINT16 *buflen)
 {
 	BYTE	*block=PTR_SEG_TO_LIN(segblock),*b;
 	struct	db	*db;
@@ -1062,8 +1059,8 @@ VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
 	return 1;
 }
 
-DWORD
-VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
+DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
+                              LPVOID *vbuffer,UINT32 *buflen)
 {
 	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
 	struct	db	*db;
@@ -1088,8 +1085,8 @@ VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
 	return 1;
 }
 
-DWORD
-VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
+DWORD WINAPI VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,
+                              UINT32 *buflen)
 {
 	/* FIXME: hmm, we not only need to convert subblock, but also 
 	 *        the content...or?

@@ -173,8 +173,9 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
  * 	1) Just count the number of fonts available.
  * 	2) Store all font data passed.
  */
-WORD WineEnumDFontCallback(LPLOGFONT16 lpLogFont, LPTEXTMETRIC16 lpTextMetrics, 
-			   WORD wFontType, LONG lpvClientData) 
+WORD WINAPI WineEnumDFontCallback(LPLOGFONT16 lpLogFont,
+                                  LPTEXTMETRIC16 lpTextMetrics,
+                                  WORD wFontType, LONG lpvClientData) 
 {
     int wRet = 0;
     WEPFC *pWEPFC = (WEPFC *)lpvClientData; 
@@ -325,6 +326,12 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 				  (void *)&wepfc);
                 numFonts = wepfc.nCount;
 	    }
+            else
+            {
+                /* If the number of fonts returned are zero we can not continue */
+                fprintf( stderr, "No fonts? Aborting CreateDC...\n");
+                return FALSE;
+            }
 	}
     }
 		
@@ -476,20 +483,17 @@ struct hpq
 
 static struct hpq *hpqueue;
 
-HPQ 
-CreatePQ(int size) 
+HPQ WINAPI CreatePQ(int size) 
 {
     printf("CreatePQ: %d\n",size);
     return 1;
 }
-int 
-DeletePQ(HPQ hPQ) 
+int WINAPI DeletePQ(HPQ hPQ) 
 {
     printf("DeletePQ: %x\n", hPQ);
     return 0;
 }
-int 
-ExtractPQ(HPQ hPQ) 
+int WINAPI ExtractPQ(HPQ hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;
     int key = 0, tag = -1;
@@ -527,8 +531,7 @@ ExtractPQ(HPQ hPQ)
     return tag;
 }
 
-int 
-InsertPQ(HPQ hPQ, int tag, int key) 
+int WINAPI InsertPQ(HPQ hPQ, int tag, int key) 
 {
     struct hpq *queueItem = malloc(sizeof(struct hpq));
     queueItem->next = hpqueue;
@@ -539,14 +542,12 @@ InsertPQ(HPQ hPQ, int tag, int key)
     printf("InsertPQ: %x %d %d\n", hPQ, tag, key);
     return TRUE;
 }
-int
-MinPQ(HPQ hPQ) 
+int WINAPI MinPQ(HPQ hPQ) 
 {
     printf("MinPQ: %x\n", hPQ); 
     return 0;
 }
-int
-SizePQ(HPQ hPQ, int sizechange) 
+int WINAPI SizePQ(HPQ hPQ, int sizechange) 
 {  
     printf("SizePQ: %x %d\n", hPQ, sizechange); 
     return -1; 
@@ -656,7 +657,7 @@ static int FreePrintJob(HANDLE16 hJob)
     return nRet;
 }
 
-HANDLE16 OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
+HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 {
     HANDLE16 hHandle = SP_ERROR;
     PPRINTJOB pPrintJob;
@@ -690,7 +691,7 @@ HANDLE16 OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
     return hHandle;
 }
 
-int CloseJob(HANDLE16 hJob)
+int WINAPI CloseJob(HANDLE16 hJob)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -708,7 +709,7 @@ int CloseJob(HANDLE16 hJob)
     return nRet;
 }
 
-int WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
+int WINAPI WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
 {
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
@@ -726,7 +727,7 @@ int WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
     return nRet;
 }
 
-int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
+int WINAPI WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 {
     int nRet = 0;
 
@@ -736,7 +737,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
     return nRet;
 }
 
-int DeleteJob(HANDLE16 hJob, WORD wNotUsed)
+int WINAPI DeleteJob(HANDLE16 hJob, WORD wNotUsed)
 {
     int nRet;
 
@@ -751,20 +752,20 @@ int DeleteJob(HANDLE16 hJob, WORD wNotUsed)
  * when it has been processed.  For simplicity they havn't been implemented.
  * This means a whole job has to be processed before it is sent to the printer.
  */
-int StartSpoolPage(HANDLE16 hJob)
+int WINAPI StartSpoolPage(HANDLE16 hJob)
 {
     dprintf_win16drv(stddeb, "StartSpoolPage GDI.246 unimplemented\n");
     return 1;
 
 }
-int EndSpoolPage(HANDLE16 hJob)
+int WINAPI EndSpoolPage(HANDLE16 hJob)
 {
     dprintf_win16drv(stddeb, "EndSpoolPage GDI.247 unimplemented\n");
     return 1;
 }
 
 
-DWORD GetSpoolJob(int nOption, LONG param)
+DWORD WINAPI GetSpoolJob(int nOption, LONG param)
 {
     DWORD retval = 0;
     dprintf_win16drv(stddeb, "In GetSpoolJob param 0x%lx noption %d\n",param, nOption);

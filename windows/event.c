@@ -68,6 +68,12 @@ static Atom wmDeleteWindow = None;
 static Atom dndProtocol = None;
 static Atom dndSelection = None;
 
+/* EVENT_WaitNetEvent() master fd sets */
+
+static fd_set __event_io_set[3];
+static int    __event_max_fd = 0;
+static int    __event_x_connection = 0;
+
 static const char * const event_names[] =
 {
     "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
@@ -102,6 +108,38 @@ static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
 
 extern void FOCUS_SetXFocus( HWND32 );
 extern BOOL16 DRAG_QueryUpdate( HWND16, SEGPTR, BOOL32 );
+extern BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] );
+
+/***********************************************************************
+ *           EVENT_Init
+ *
+ * Initialize network IO.
+ */
+BOOL32 EVENT_Init(void)
+{
+    int  i;
+    for( i = 0; i < 3; i++ )
+	FD_ZERO( __event_io_set + i );
+
+    __event_max_fd = __event_x_connection = ConnectionNumber(display);
+    FD_SET( __event_x_connection, &__event_io_set[EVENT_IO_READ] );
+    __event_max_fd++;
+    return TRUE;
+}
+
+/***********************************************************************
+ *          EVENT_AddIO 
+ */
+void EVENT_AddIO( int fd, int io_type )
+{
+    FD_SET( fd, &__event_io_set[io_type] );
+    if( __event_max_fd <= fd ) __event_max_fd = fd + 1;
+}
+
+void EVENT_DeleteIO( int fd, int io_type )
+{
+    FD_CLR( fd, &__event_io_set[io_type] );
+}
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -253,13 +291,13 @@ void EVENT_DestroyWindow( WND *pWnd )
 }
 
 /***********************************************************************
- *           EVENT_WaitXEvent
+ *           EVENT_WaitNetEvent
  *
- * Wait for an X event, optionally sleeping until one arrives.
+ * Wait for a network event, optionally sleeping until one arrives.
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
+BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 {
     XEvent event;
     LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
@@ -270,12 +308,11 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
 
     if ((maxWait != -1) && !XPending(display))
     {
-        fd_set read_set;
+	int num_pending;
         struct timeval timeout;
-        int fd = ConnectionNumber(display);
-
-        FD_ZERO( &read_set );
-        FD_SET( fd, &read_set );
+	fd_set read_set = __event_io_set[EVENT_IO_READ];
+	fd_set write_set = __event_io_set[EVENT_IO_WRITE];
+	fd_set except_set = __event_io_set[EVENT_IO_EXCEPT];
 
 	timeout.tv_usec = (maxWait % 1000) * 1000;
 	timeout.tv_sec = maxWait / 1000;
@@ -291,8 +328,8 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
 	}
 	stop_wait_op = STOP_WAIT_X;
 	/* The code up to the next "stop_wait_op = CONT" must be reentrant */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
-	    !XPending(display))
+	num_pending = select( __event_max_fd, &read_set, NULL, NULL, &timeout );
+	if ( num_pending == 0 )
         {
 	    stop_wait_op = CONT;
             TIMER_ExpireTimers();
@@ -300,7 +337,9 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
 	}
         else stop_wait_op = CONT;
 #else  /* CONFIG_IPC */
-	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
+	num_pending = select( __event_max_fd, 
+			&read_set, &write_set, &except_set, &timeout );
+	if ( num_pending == 0)
         {
             /* Timeout or error */
             TIMER_ExpireTimers();
@@ -308,9 +347,19 @@ BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek )
         }
 #endif  /* CONFIG_IPC */
 
+	/*  Winsock asynchronous services */
+
+	if( FD_ISSET( __event_x_connection, &read_set) ) 
+	{
+	    num_pending--;
+	    if( num_pending )
+		WINSOCK_HandleIO( &__event_max_fd, num_pending, __event_io_set );
+	}
+	else /* no X events */
+	    return WINSOCK_HandleIO( &__event_max_fd, num_pending, __event_io_set );
     }
 
-    /* Process the event (and possibly others that occurred in the meantime) */
+    /* Process current X event (and possibly others that occurred in the meantime) */
 
     do
     {
@@ -1050,7 +1099,7 @@ INT16 EVENT_GetCaptureInfo()
 /**********************************************************************
  *		SetCapture16   (USER.18)
  */
-HWND16 SetCapture16( HWND16 hwnd )
+HWND16 WINAPI SetCapture16( HWND16 hwnd )
 {
     return (HWND16)EVENT_Capture( hwnd, HTCLIENT );
 }
@@ -1059,7 +1108,7 @@ HWND16 SetCapture16( HWND16 hwnd )
 /**********************************************************************
  *		SetCapture32   (USER32.463)
  */
-HWND32 SetCapture32( HWND32 hwnd )
+HWND32 WINAPI SetCapture32( HWND32 hwnd )
 {
     return EVENT_Capture( hwnd, HTCLIENT );
 }
@@ -1068,7 +1117,7 @@ HWND32 SetCapture32( HWND32 hwnd )
 /**********************************************************************
  *		ReleaseCapture   (USER.19) (USER32.438)
  */
-void ReleaseCapture(void)
+void WINAPI ReleaseCapture(void)
 {
     dprintf_win(stddeb, "ReleaseCapture() [%04x]\n", captureWnd );
     if( captureWnd ) EVENT_Capture( 0, 0 );
@@ -1078,7 +1127,7 @@ void ReleaseCapture(void)
 /**********************************************************************
  *		GetCapture16   (USER.236)
  */
-HWND16 GetCapture16(void)
+HWND16 WINAPI GetCapture16(void)
 {
     return captureWnd;
 }
@@ -1087,7 +1136,7 @@ HWND16 GetCapture16(void)
 /**********************************************************************
  *		GetCapture32   (USER32.207)
  */
-HWND32 GetCapture32(void)
+HWND32 WINAPI GetCapture32(void)
 {
     return captureWnd;
 }
@@ -1096,7 +1145,7 @@ HWND32 GetCapture32(void)
 /***********************************************************************
  *           GetMouseEventProc   (USER.337)
  */
-FARPROC16 GetMouseEventProc(void)
+FARPROC16 WINAPI GetMouseEventProc(void)
 {
     HMODULE16 hmodule = GetModuleHandle16("USER");
     return MODULE_GetEntryPoint( hmodule,
@@ -1107,7 +1156,7 @@ FARPROC16 GetMouseEventProc(void)
 /***********************************************************************
  *           Mouse_Event   (USER.299)
  */
-void Mouse_Event( CONTEXT *context )
+void WINAPI Mouse_Event( CONTEXT *context )
 {
     /* Register values:
      * AX = mouse event
@@ -1147,7 +1196,7 @@ void Mouse_Event( CONTEXT *context )
 /**********************************************************************
  *			EnableHardwareInput   (USER.331)
  */
-BOOL16 EnableHardwareInput(BOOL16 bEnable)
+BOOL16 WINAPI EnableHardwareInput(BOOL16 bEnable)
 {
   BOOL16 bOldState = InputEnabled;
   dprintf_event(stdnimp,"EnableHardwareInput(%d);\n", bEnable);
@@ -1159,7 +1208,7 @@ BOOL16 EnableHardwareInput(BOOL16 bEnable)
 /***********************************************************************
  *	     SwapMouseButton16   (USER.186)
  */
-BOOL16 SwapMouseButton16( BOOL16 fSwap )
+BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
 {
     BOOL16 ret = SwappedButtons;
     SwappedButtons = fSwap;
@@ -1170,7 +1219,7 @@ BOOL16 SwapMouseButton16( BOOL16 fSwap )
 /***********************************************************************
  *	     SwapMouseButton32   (USER32.536)
  */
-BOOL32 SwapMouseButton32( BOOL32 fSwap )
+BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
 {
     BOOL32 ret = SwappedButtons;
     SwappedButtons = fSwap;

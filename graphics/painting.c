@@ -29,7 +29,7 @@
 /***********************************************************************
  *           LineTo16    (GDI.19)
  */
-BOOL16 LineTo16( HDC16 hdc, INT16 x, INT16 y )
+BOOL16 WINAPI LineTo16( HDC16 hdc, INT16 x, INT16 y )
 {
     return LineTo32( hdc, x, y );
 }
@@ -38,7 +38,7 @@ BOOL16 LineTo16( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           LineTo32    (GDI32.249)
  */
-BOOL32 LineTo32( HDC32 hdc, INT32 x, INT32 y )
+BOOL32 WINAPI LineTo32( HDC32 hdc, INT32 x, INT32 y )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -50,7 +50,7 @@ BOOL32 LineTo32( HDC32 hdc, INT32 x, INT32 y )
 /***********************************************************************
  *           MoveTo    (GDI.20)
  */
-DWORD MoveTo( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI MoveTo( HDC16 hdc, INT16 x, INT16 y )
 {
     POINT16	pt;
 
@@ -63,7 +63,7 @@ DWORD MoveTo( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           MoveToEx16    (GDI.483)
  */
-BOOL16 MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
+BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 {
     POINT32 pt32;
 
@@ -77,7 +77,7 @@ BOOL16 MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 /***********************************************************************
  *           MoveToEx32    (GDI32.254)
  */
-BOOL32 MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
+BOOL32 WINAPI MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -89,8 +89,9 @@ BOOL32 MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
 /***********************************************************************
  *           Arc16    (GDI.23)
  */
-BOOL16 Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
-              INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
+BOOL16 WINAPI Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
+                     INT16 bottom, INT16 xstart, INT16 ystart,
+                     INT16 xend, INT16 yend )
 {
     return Arc32( (HDC32)hdc, (INT32)left, (INT32)top, (INT32)right,
    		  (INT32)bottom, (INT32)xstart, (INT32)ystart, (INT32)xend,
@@ -101,8 +102,9 @@ BOOL16 Arc16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 /***********************************************************************
  *           Arc32    (GDI32.7)
  */
-BOOL32 Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-              INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL32 WINAPI Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
+                     INT32 bottom, INT32 xstart, INT32 ystart,
+                     INT32 xend, INT32 yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -114,8 +116,9 @@ BOOL32 Arc32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           Pie16    (GDI.26)
  */
-BOOL16 Pie16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
-              INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
+BOOL16 WINAPI Pie16( HDC16 hdc, INT16 left, INT16 top,
+                     INT16 right, INT16 bottom, INT16 xstart, INT16 ystart,
+                     INT16 xend, INT16 yend )
 {
     return Pie32( (HDC32)hdc, (INT32)left, (INT32)top, (INT32)right,
    		  (INT32)bottom, (INT32)xstart, (INT32)ystart, (INT32)xend,
@@ -126,8 +129,9 @@ BOOL16 Pie16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 /***********************************************************************
  *           Pie32   (GDI32.262)
  */
-BOOL32 Pie32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-              INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL32 WINAPI Pie32( HDC32 hdc, INT32 left, INT32 top,
+                     INT32 right, INT32 bottom, INT32 xstart, INT32 ystart,
+                     INT32 xend, INT32 yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -139,8 +143,9 @@ BOOL32 Pie32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           Chord16    (GDI.348)
  */
-BOOL16 Chord16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
-                INT16 xstart, INT16 ystart, INT16 xend, INT16 yend )
+BOOL16 WINAPI Chord16( HDC16 hdc, INT16 left, INT16 top,
+                       INT16 right, INT16 bottom, INT16 xstart, INT16 ystart,
+                       INT16 xend, INT16 yend )
 {
     return Chord32( hdc, left, top, right, bottom, xstart, ystart, xend, yend );
 }
@@ -149,8 +154,9 @@ BOOL16 Chord16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom,
 /***********************************************************************
  *           Chord32    (GDI32.14)
  */
-BOOL32 Chord32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
-                INT32 xstart, INT32 ystart, INT32 xend, INT32 yend )
+BOOL32 WINAPI Chord32( HDC32 hdc, INT32 left, INT32 top,
+                       INT32 right, INT32 bottom, INT32 xstart, INT32 ystart,
+                       INT32 xend, INT32 yend )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -162,7 +168,8 @@ BOOL32 Chord32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom,
 /***********************************************************************
  *           Ellipse16    (GDI.24)
  */
-BOOL16 Ellipse16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom )
+BOOL16 WINAPI Ellipse16( HDC16 hdc, INT16 left, INT16 top,
+                         INT16 right, INT16 bottom )
 {
     return Ellipse32( hdc, left, top, right, bottom );
 }
@@ -171,7 +178,8 @@ BOOL16 Ellipse16( HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom )
 /***********************************************************************
  *           Ellipse32    (GDI32.75)
  */
-BOOL32 Ellipse32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom )
+BOOL32 WINAPI Ellipse32( HDC32 hdc, INT32 left, INT32 top,
+                         INT32 right, INT32 bottom )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -183,7 +191,8 @@ BOOL32 Ellipse32( HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 /***********************************************************************
  *           Rectangle16    (GDI.27)
  */
-BOOL16 Rectangle16(HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom)
+BOOL16 WINAPI Rectangle16( HDC16 hdc, INT16 left, INT16 top,
+                           INT16 right, INT16 bottom )
 {
     return Rectangle32( hdc, left, top, right, bottom );
 }
@@ -192,7 +201,8 @@ BOOL16 Rectangle16(HDC16 hdc, INT16 left, INT16 top, INT16 right, INT16 bottom)
 /***********************************************************************
  *           Rectangle32    (GDI32.283)
  */
-BOOL32 Rectangle32(HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom)
+BOOL32 WINAPI Rectangle32( HDC32 hdc, INT32 left, INT32 top,
+                           INT32 right, INT32 bottom )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -204,8 +214,8 @@ BOOL32 Rectangle32(HDC32 hdc, INT32 left, INT32 top, INT32 right, INT32 bottom)
 /***********************************************************************
  *           RoundRect16    (GDI.28)
  */
-BOOL16 RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
-                    INT16 bottom, INT16 ell_width, INT16 ell_height )
+BOOL16 WINAPI RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
+                           INT16 bottom, INT16 ell_width, INT16 ell_height )
 {
     return RoundRect32( hdc, left, top, right, bottom, ell_width, ell_height );
 }
@@ -214,8 +224,8 @@ BOOL16 RoundRect16( HDC16 hdc, INT16 left, INT16 top, INT16 right,
 /***********************************************************************
  *           RoundRect32    (GDI32.291)
  */
-BOOL32 RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
-                    INT32 bottom, INT32 ell_width, INT32 ell_height )
+BOOL32 WINAPI RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
+                           INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -227,7 +237,7 @@ BOOL32 RoundRect32( HDC32 hdc, INT32 left, INT32 top, INT32 right,
 /***********************************************************************
  *           FillRect16    (USER.81)
  */
-INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
+INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
     HBRUSH16 prevBrush;
 
@@ -246,7 +256,7 @@ INT16 FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 /***********************************************************************
  *           FillRect32    (USER32.196)
  */
-INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
+INT32 WINAPI FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
     HBRUSH32 prevBrush;
 
@@ -261,7 +271,7 @@ INT32 FillRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 /***********************************************************************
  *           InvertRect16    (USER.82)
  */
-void InvertRect16( HDC16 hdc, const RECT16 *rect )
+void WINAPI InvertRect16( HDC16 hdc, const RECT16 *rect )
 {
     PatBlt32( hdc, rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
@@ -271,7 +281,7 @@ void InvertRect16( HDC16 hdc, const RECT16 *rect )
 /***********************************************************************
  *           InvertRect32    (USER32.329)
  */
-void InvertRect32( HDC32 hdc, const RECT32 *rect )
+void WINAPI InvertRect32( HDC32 hdc, const RECT32 *rect )
 {
     PatBlt32( hdc, rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, DSTINVERT );
@@ -281,7 +291,7 @@ void InvertRect32( HDC32 hdc, const RECT32 *rect )
 /***********************************************************************
  *           FrameRect16    (USER.83)
  */
-INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
+INT16 WINAPI FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
     HBRUSH16 prevBrush;
     int left, top, right, bottom;
@@ -316,7 +326,7 @@ INT16 FrameRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 /***********************************************************************
  *           FrameRect32    (USER32.202)
  */
-INT32 FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
+INT32 WINAPI FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 {
     RECT16 rect16;
     CONV_RECT32TO16( rect, &rect16 );
@@ -327,7 +337,7 @@ INT32 FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 /***********************************************************************
  *           SetPixel16    (GDI.31)
  */
-COLORREF SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
+COLORREF WINAPI SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 {
     return SetPixel32( hdc, x, y, color );
 }
@@ -336,7 +346,7 @@ COLORREF SetPixel16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 /***********************************************************************
  *           SetPixel32    (GDI32.327)
  */
-COLORREF SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
+COLORREF WINAPI SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
     DC * dc = DC_GetDCPtr( hdc );
   
@@ -348,7 +358,7 @@ COLORREF SetPixel32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 /***********************************************************************
  *           GetPixel16    (GDI.83)
  */
-COLORREF GetPixel16( HDC16 hdc, INT16 x, INT16 y )
+COLORREF WINAPI GetPixel16( HDC16 hdc, INT16 x, INT16 y )
 {
     return GetPixel32( hdc, x, y );
 }
@@ -357,7 +367,7 @@ COLORREF GetPixel16( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           GetPixel32    (GDI32.211)
  */
-COLORREF GetPixel32( HDC32 hdc, INT32 x, INT32 y )
+COLORREF WINAPI GetPixel32( HDC32 hdc, INT32 x, INT32 y )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -376,7 +386,7 @@ COLORREF GetPixel32( HDC32 hdc, INT32 x, INT32 y )
 /***********************************************************************
  *           PaintRgn16    (GDI.43)
  */
-BOOL16 PaintRgn16( HDC16 hdc, HRGN16 hrgn )
+BOOL16 WINAPI PaintRgn16( HDC16 hdc, HRGN16 hrgn )
 {
     return PaintRgn32( hdc, hrgn );
 }
@@ -385,7 +395,7 @@ BOOL16 PaintRgn16( HDC16 hdc, HRGN16 hrgn )
 /***********************************************************************
  *           PaintRgn32    (GDI32.259)
  */
-BOOL32 PaintRgn32( HDC32 hdc, HRGN32 hrgn )
+BOOL32 WINAPI PaintRgn32( HDC32 hdc, HRGN32 hrgn )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -397,7 +407,7 @@ BOOL32 PaintRgn32( HDC32 hdc, HRGN32 hrgn )
 /***********************************************************************
  *           FillRgn16    (GDI.40)
  */
-BOOL16 FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
+BOOL16 WINAPI FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
 {
     return FillRgn32( hdc, hrgn, hbrush );
 }
@@ -406,7 +416,7 @@ BOOL16 FillRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush )
 /***********************************************************************
  *           FillRgn32    (GDI32.101)
  */
-BOOL32 FillRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush )
+BOOL32 WINAPI FillRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush )
 {
     BOOL32 retval;
     HBRUSH32 prevBrush = SelectObject32( hdc, hbrush );
@@ -420,8 +430,8 @@ BOOL32 FillRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush )
 /***********************************************************************
  *           FrameRgn16     (GDI.41)
  */
-BOOL16 FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
-                   INT16 nWidth, INT16 nHeight )
+BOOL16 WINAPI FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
+                          INT16 nWidth, INT16 nHeight )
 {
     return FrameRgn32( hdc, hrgn, hbrush, nWidth, nHeight );
 }
@@ -430,8 +440,8 @@ BOOL16 FrameRgn16( HDC16 hdc, HRGN16 hrgn, HBRUSH16 hbrush,
 /***********************************************************************
  *           FrameRgn32     (GDI32.105)
  */
-BOOL32 FrameRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush,
-                   INT32 nWidth, INT32 nHeight )
+BOOL32 WINAPI FrameRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush,
+                          INT32 nWidth, INT32 nHeight )
 {
     HRGN32 tmp = CreateRectRgn32( 0, 0, 0, 0 );
     if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return FALSE;
@@ -444,7 +454,7 @@ BOOL32 FrameRgn32( HDC32 hdc, HRGN32 hrgn, HBRUSH32 hbrush,
 /***********************************************************************
  *           InvertRgn16    (GDI.42)
  */
-BOOL16 InvertRgn16( HDC16 hdc, HRGN16 hrgn )
+BOOL16 WINAPI InvertRgn16( HDC16 hdc, HRGN16 hrgn )
 {
     return InvertRgn32( hdc, hrgn );
 }
@@ -453,7 +463,7 @@ BOOL16 InvertRgn16( HDC16 hdc, HRGN16 hrgn )
 /***********************************************************************
  *           InvertRgn32    (GDI32.246)
  */
-BOOL32 InvertRgn32( HDC32 hdc, HRGN32 hrgn )
+BOOL32 WINAPI InvertRgn32( HDC32 hdc, HRGN32 hrgn )
 {
     HBRUSH32 prevBrush = SelectObject32( hdc, GetStockObject32(BLACK_BRUSH) );
     INT32 prevROP = SetROP232( hdc, R2_NOT );
@@ -467,7 +477,7 @@ BOOL32 InvertRgn32( HDC32 hdc, HRGN32 hrgn )
 /***********************************************************************
  *           DrawFocusRect16    (USER.466)
  */
-void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
+void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 {
     RECT32 rect32;
     CONV_RECT16TO32( rc, &rect32 );
@@ -480,7 +490,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
  *
  * FIXME: PatBlt(PATINVERT) with background brush.
  */
-void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
+void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 {
     HPEN32 hOldPen;
     INT32 oldDrawMode, oldBkMode;
@@ -515,7 +525,7 @@ void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 /**********************************************************************
  *          Polyline16  (GDI.37)
  */
-BOOL16 Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
+BOOL16 WINAPI Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
     LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
@@ -531,7 +541,7 @@ BOOL16 Polyline16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 /**********************************************************************
  *          Polyline32   (GDI32.276)
  */
-BOOL32 Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
+BOOL32 WINAPI Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -543,7 +553,7 @@ BOOL32 Polyline32( HDC32 hdc, const LPPOINT32 pt, INT32 count )
 /**********************************************************************
  *          Polygon16  (GDI.36)
  */
-BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
+BOOL16 WINAPI Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 {
     register int i;
     LPPOINT32 pt32 = (LPPOINT32)xmalloc(count*sizeof(POINT32));
@@ -560,7 +570,7 @@ BOOL16 Polygon16( HDC16 hdc, LPPOINT16 pt, INT16 count )
 /**********************************************************************
  *          Polygon32  (GDI32.275)
  */
-BOOL32 Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
+BOOL32 WINAPI Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -572,7 +582,8 @@ BOOL32 Polygon32( HDC32 hdc, LPPOINT32 pt, INT32 count )
 /**********************************************************************
  *          PolyPolygon16  (GDI.450)
  */
-BOOL16 PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts, UINT16 polygons)
+BOOL16 WINAPI PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts,
+                             UINT16 polygons )
 {
     int		i,nrpts;
     LPPOINT32	pt32;
@@ -597,7 +608,8 @@ BOOL16 PolyPolygon16( HDC16 hdc, LPPOINT16 pt, LPINT16 counts, UINT16 polygons)
 /**********************************************************************
  *          PolyPolygon32  (GDI.450)
  */
-BOOL32 PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
+BOOL32 WINAPI PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts,
+                             UINT32 polygons )
 {
     DC * dc = DC_GetDCPtr( hdc );
 
@@ -608,8 +620,8 @@ BOOL32 PolyPolygon32( HDC32 hdc, LPPOINT32 pt, LPINT32 counts, UINT32 polygons)
 /**********************************************************************
  *          ExtFloodFill16   (GDI.372)
  */
-BOOL16 ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
-                       UINT16 fillType )
+BOOL16 WINAPI ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
+                              UINT16 fillType )
 {
     return ExtFloodFill32( hdc, x, y, color, fillType );
 }
@@ -618,8 +630,8 @@ BOOL16 ExtFloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color,
 /**********************************************************************
  *          ExtFloodFill32   (GDI32.96)
  */
-BOOL32 ExtFloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
-                       UINT32 fillType )
+BOOL32 WINAPI ExtFloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
+                              UINT32 fillType )
 {
     DC *dc = DC_GetDCPtr( hdc );
 
@@ -631,7 +643,7 @@ BOOL32 ExtFloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color,
 /**********************************************************************
  *          FloodFill16   (GDI.25)
  */
-BOOL16 FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
+BOOL16 WINAPI FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 {
     return ExtFloodFill32( hdc, x, y, color, FLOODFILLBORDER );
 }
@@ -640,7 +652,7 @@ BOOL16 FloodFill16( HDC16 hdc, INT16 x, INT16 y, COLORREF color )
 /**********************************************************************
  *          FloodFill32   (GDI32.104)
  */
-BOOL32 FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
+BOOL32 WINAPI FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 {
     return ExtFloodFill32( hdc, x, y, color, FLOODFILLBORDER );
 }
@@ -649,7 +661,7 @@ BOOL32 FloodFill32( HDC32 hdc, INT32 x, INT32 y, COLORREF color )
 /**********************************************************************
  *          DrawEdge16   (USER.659)
  */
-BOOL16 DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
+BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 {
     RECT32 rect32;
     BOOL32 ret;
@@ -664,7 +676,7 @@ BOOL16 DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 /**********************************************************************
  *          DrawEdge32   (USER32.154)
  */
-BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
+BOOL32 WINAPI DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 {
     HBRUSH32 hbrushOld;
 
@@ -747,7 +759,8 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 /**********************************************************************
  *          DrawFrameControl16  (USER.656)
  */
-BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType, UINT16 uState )
+BOOL16 WINAPI DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType,
+                                  UINT16 uState )
 {
     fprintf( stdnimp,"DrawFrameControl16(%x,%p,%d,%x), empty stub!\n",
              hdc,rc,uType,uState );
@@ -758,7 +771,8 @@ BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType, UINT16 uState )
 /**********************************************************************
  *          DrawFrameControl32  (USER32.157)
  */
-BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 uState )
+BOOL32 WINAPI DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType,
+                                  UINT32 uState )
 {
     fprintf( stdnimp,"DrawFrameControl32(%x,%p,%d,%x), empty stub!\n",
              hdc,rc,uType,uState );
@@ -768,10 +782,22 @@ BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 uState )
 /**********************************************************************
  *          DrawFrameControl32  (USER32.152)
  */
-BOOL32 DrawAnimatedRects32( HWND32 hwnd, int idAni,
-                           const LPRECT32 lprcFrom, const LPRECT32 lprcTo )
+BOOL32 WINAPI DrawAnimatedRects32( HWND32 hwnd, int idAni,
+                                   const LPRECT32 lprcFrom,
+                                   const LPRECT32 lprcTo )
 {
     fprintf( stdnimp,"DrawAnimatedRects32(%x,%d,%p,%p), empty stub!\n",
              hwnd, idAni, lprcFrom, lprcTo );
     return TRUE;
 }
+
+BOOL32 WINAPI DrawState32A(
+	HDC32 hdc,HBRUSH32 hbrush,DRAWSTATEPROC drawstateproc,
+	LPARAM lparam,WPARAM32 wparam,INT32 x,INT32 y,INT32 z,INT32 a,UINT32 b
+) {
+	fprintf(stderr,"DrawStateA(%x,%x,%p,0x%08lx,0x%08lx,%d,%d,%d,%d,%d),stub\n",
+		hdc,hbrush,drawstateproc,lparam,wparam,x,y,z,a,b
+	);
+	return TRUE;
+}
+

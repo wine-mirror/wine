@@ -136,6 +136,8 @@ BOOL32 X11DRV_Init(void)
 	X11DRV_DevCaps.rasterCaps |= RC_PALETTE;
 	X11DRV_DevCaps.sizePalette = DefaultVisual(display,DefaultScreen(display))->map_entries;
     }
+ 
+    /* Resolution will be adjusted during the font init */
 
     X11DRV_DevCaps.logPixelsX = (int)(X11DRV_DevCaps.horzRes * 25.4 / X11DRV_DevCaps.horzSize);
     X11DRV_DevCaps.logPixelsY = (int)(X11DRV_DevCaps.vertRes * 25.4 / X11DRV_DevCaps.vertSize);
@@ -177,6 +179,7 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
         dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         dc->w.hVisRgn      = CreateRectRgn32( 0, 0, bmp->bitmap.bmWidth,
                                               bmp->bitmap.bmHeight );
+	GDI_HEAP_UNLOCK( dc->w.hBitmap );
     }
     else
     {

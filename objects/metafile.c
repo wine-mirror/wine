@@ -57,7 +57,7 @@ static int MF_AddHandleDC( DC *dc )
 /******************************************************************
  *         GetMetafile16   (GDI.124)
  */
-HMETAFILE16 GetMetaFile16( LPCSTR lpFilename )
+HMETAFILE16 WINAPI GetMetaFile16( LPCSTR lpFilename )
 {
     return GetMetaFile32A( lpFilename );
 }
@@ -66,7 +66,7 @@ HMETAFILE16 GetMetaFile16( LPCSTR lpFilename )
 /******************************************************************
  *         GetMetafile32A   (GDI32.197)
  */
-HMETAFILE32 GetMetaFile32A( LPCSTR lpFilename )
+HMETAFILE32 WINAPI GetMetaFile32A( LPCSTR lpFilename )
 {
   HMETAFILE16 hmf;
   METAHEADER *mh;
@@ -137,7 +137,7 @@ HMETAFILE32 GetMetaFile32A( LPCSTR lpFilename )
 /******************************************************************
  *         GetMetafile32W   (GDI32.199)
  */
-HMETAFILE32 GetMetaFile32W( LPCWSTR lpFilename )
+HMETAFILE32 WINAPI GetMetaFile32W( LPCWSTR lpFilename )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
     HMETAFILE32 ret = GetMetaFile32A( p );
@@ -150,7 +150,7 @@ HMETAFILE32 GetMetaFile32W( LPCWSTR lpFilename )
  *         CopyMetaFile16   (GDI.151)
  */
 
-HMETAFILE16 CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
+HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
 {
     return CopyMetaFile32A( hSrcMetaFile, lpFilename );
 }
@@ -159,7 +159,7 @@ HMETAFILE16 CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename )
 /******************************************************************
  *         CopyMetaFile32A   (GDI32.23)
  */
-HMETAFILE32 CopyMetaFile32A( HMETAFILE32 hSrcMetaFile, LPCSTR lpFilename )
+HMETAFILE32 WINAPI CopyMetaFile32A(HMETAFILE32 hSrcMetaFile, LPCSTR lpFilename)
 {
     HMETAFILE16 handle = 0;
     METAHEADER *mh;
@@ -201,7 +201,8 @@ HMETAFILE32 CopyMetaFile32A( HMETAFILE32 hSrcMetaFile, LPCSTR lpFilename )
 /******************************************************************
  *         CopyMetaFile32W   (GDI32.24)
  */
-HMETAFILE32 CopyMetaFile32W( HMETAFILE32 hSrcMetaFile, LPCWSTR lpFilename )
+HMETAFILE32 WINAPI CopyMetaFile32W( HMETAFILE32 hSrcMetaFile,
+                                    LPCWSTR lpFilename )
 {
     LPSTR p = HEAP_strdupWtoA( GetProcessHeap(), 0, lpFilename );
     HMETAFILE32 ret = CopyMetaFile32A( hSrcMetaFile, p );
@@ -215,7 +216,7 @@ HMETAFILE32 CopyMetaFile32W( HMETAFILE32 hSrcMetaFile, LPCWSTR lpFilename )
  *         (This is not exactly what windows does, see "Undoc Win")
  */
 
-BOOL16 IsValidMetaFile(HMETAFILE16 hmf)
+BOOL16 WINAPI IsValidMetaFile(HMETAFILE16 hmf)
 {
     BOOL16 resu=FALSE;
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
@@ -234,7 +235,7 @@ BOOL16 IsValidMetaFile(HMETAFILE16 hmf)
 /******************************************************************
  *         PlayMetafile16   (GDI.123)
  */
-BOOL16 PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
+BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 {
     return PlayMetaFile32( hdc, hmf );
 }
@@ -243,7 +244,7 @@ BOOL16 PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
 /******************************************************************
  *         PlayMetafile32   (GDI32.265)
  */
-BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
+BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -262,7 +263,7 @@ BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
     hPen = dc->w.hPen;
     hBrush = dc->w.hBrush;
     hFont = dc->w.hFont;
-
+    GDI_HEAP_UNLOCK(hdc);
     /* create the handle table */
     hHT = GlobalAlloc16(GMEM_MOVEABLE|GMEM_ZEROINIT,
 		      sizeof(HANDLETABLE16) * mh->mtNoObjects);
@@ -299,8 +300,8 @@ BOOL32 PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
  *            EnumMetaFile16   (GDI.175)
  *                                    Niels de carpentier, april 1996
  */
-BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
-                       LPARAM lpData )
+BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
+                              MFENUMPROC16 lpEnumFunc, LPARAM lpData )
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -321,7 +322,8 @@ BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
     hPen = dc->w.hPen;
     hBrush = dc->w.hBrush;
     hFont = dc->w.hFont;
-   
+    GDI_HEAP_UNLOCK(hdc);
+
     /* create the handle table */
     
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
@@ -365,8 +367,8 @@ BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
 /******************************************************************
  *             PlayMetaFileRecord16   (GDI.176)
  */
-void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
-                           UINT16 nHandles )
+void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
+                                  UINT16 nHandles )
 {
     short s1;
     HANDLE16 hndl;
@@ -818,7 +820,7 @@ void PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
  * Trade in a meta file object handle for a handle to the meta file memory
  */
 
-HGLOBAL16 GetMetaFileBits(HMETAFILE16 hmf)
+HGLOBAL16 WINAPI GetMetaFileBits(HMETAFILE16 hmf)
 {
     dprintf_metafile(stddeb,"GetMetaFileBits: hMem out: %04x\n", hmf);
 
@@ -830,7 +832,7 @@ HGLOBAL16 GetMetaFileBits(HMETAFILE16 hmf)
  *
  * Trade in a meta file memory handle for a handle to a meta file object
  */
-HMETAFILE16 SetMetaFileBits( HGLOBAL16 hMem )
+HMETAFILE16 WINAPI SetMetaFileBits( HGLOBAL16 hMem )
 {
     dprintf_metafile(stddeb,"SetMetaFileBits: hmf out: %04x\n", hMem);
 
@@ -840,7 +842,7 @@ HMETAFILE16 SetMetaFileBits( HGLOBAL16 hMem )
 /******************************************************************
  *         SetMetaFileBitsBetter   (GDI.196)
  */
-HMETAFILE16 SetMetaFileBitsBetter( HMETAFILE16 hMeta )
+HMETAFILE16 WINAPI SetMetaFileBitsBetter( HMETAFILE16 hMeta )
 {
    if( IsValidMetaFile( hMeta ) )
        return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
@@ -1044,7 +1046,10 @@ BOOL32 MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 	len = sizeof(METARECORD) + sizeof(BITMAPINFOHEADER) + 
 	      (bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes) + 6;
 	if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
+	  {
+	    GDI_HEAP_UNLOCK((HGDIOBJ16)logbrush->lbHatch);
 	    return FALSE;
+	  }
 	mr = (METARECORD *)GlobalLock16(hmr);
 	memset(mr, 0, len);
 	mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
@@ -1060,6 +1065,7 @@ BOOL32 MF_CreatePatternBrush(DC *dc, HBRUSH16 hBrush, LOGBRUSH16 *logbrush)
 	memcpy(mr->rdParam + (sizeof(BITMAPINFOHEADER) / 2) + 4,
 	       PTR_SEG_TO_LIN(bmp->bitmap.bmBits),
 	       bmp->bitmap.bmHeight * bmp->bitmap.bmWidthBytes);
+	GDI_HEAP_UNLOCK(logbrush->lbHatch);
 	break;
 
     case BS_DIBPATTERN:

@@ -57,14 +57,15 @@ typedef struct tagDRIVERITEM
     DRIVERPROC16          lpDrvProc;
 } DRIVERITEM, *LPDRIVERITEM;
 
-LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
-                      LPARAM dwParam1, LPARAM dwParam2);
-HDRVR16 OpenDriver(LPSTR szDriverName, LPSTR szSectionName, LPARAM lParam2);
-LRESULT CloseDriver(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
-LRESULT SendDriverMessage( HDRVR16 hDriver, UINT16 message, LPARAM lParam1,
-                           LPARAM lParam2 );
-HMODULE16 GetDriverModuleHandle(HDRVR16 hDriver);
-HDRVR16 GetNextDriver(HDRVR16, DWORD);
-BOOL16 GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
+LRESULT WINAPI DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
+                             LPARAM dwParam1, LPARAM dwParam2);
+HDRVR16 WINAPI OpenDriver(LPSTR szDriverName, LPSTR szSectionName,
+                          LPARAM lParam2);
+LRESULT WINAPI CloseDriver(HDRVR16 hDriver, LPARAM lParam1, LPARAM lParam2);
+LRESULT WINAPI SendDriverMessage( HDRVR16 hDriver, UINT16 message,
+                                  LPARAM lParam1, LPARAM lParam2 );
+HMODULE16 WINAPI GetDriverModuleHandle(HDRVR16 hDriver);
+HDRVR16 WINAPI GetNextDriver(HDRVR16, DWORD);
+BOOL16 WINAPI GetDriverInfo(HDRVR16, DRIVERINFOSTRUCT16 *);
 
 #endif  /* __WINE_DRIVER_H */

@@ -419,7 +419,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && XPending(display))
-        EVENT_WaitXEvent( FALSE, FALSE );
+        EVENT_WaitNetEvent( FALSE, FALSE );
 
     for (i = kbd_msg = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
@@ -515,7 +515,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
 /**********************************************************************
  *           SetDoubleClickTime16   (USER.20)
  */
-void SetDoubleClickTime16( UINT16 interval )
+void WINAPI SetDoubleClickTime16( UINT16 interval )
 {
     SetDoubleClickTime32( interval );
 }		
@@ -524,7 +524,7 @@ void SetDoubleClickTime16( UINT16 interval )
 /**********************************************************************
  *           SetDoubleClickTime32   (USER32.479)
  */
-BOOL32 SetDoubleClickTime32( UINT32 interval )
+BOOL32 WINAPI SetDoubleClickTime32( UINT32 interval )
 {
     doubleClickSpeed = interval ? interval : 500;
     return TRUE;
@@ -534,7 +534,7 @@ BOOL32 SetDoubleClickTime32( UINT32 interval )
 /**********************************************************************
  *           GetDoubleClickTime16   (USER.21)
  */
-UINT16 GetDoubleClickTime16(void)
+UINT16 WINAPI GetDoubleClickTime16(void)
 {
     return doubleClickSpeed;
 }		
@@ -543,7 +543,7 @@ UINT16 GetDoubleClickTime16(void)
 /**********************************************************************
  *           GetDoubleClickTime32   (USER32.238)
  */
-UINT32 GetDoubleClickTime32(void)
+UINT32 WINAPI GetDoubleClickTime32(void)
 {
     return doubleClickSpeed;
 }		
@@ -632,7 +632,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
 /***********************************************************************
  *           ReplyMessage16   (USER.115)
  */
-void ReplyMessage16( LRESULT result )
+void WINAPI ReplyMessage16( LRESULT result )
 {
     MESSAGEQUEUE *senderQ;
     MESSAGEQUEUE *queue;
@@ -892,8 +892,8 @@ BOOL32 MSG_InternalGetMessage( MSG16 *msg, HWND32 hwnd, HWND32 hwndOwner,
 /***********************************************************************
  *           PeekMessage16   (USER.109)
  */
-BOOL16 PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
-                      UINT16 last, UINT16 flags )
+BOOL16 WINAPI PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
+                             UINT16 last, UINT16 flags )
 {
     return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
 }
@@ -902,7 +902,7 @@ BOOL16 PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
 /***********************************************************************
  *           GetMessage16   (USER.108)
  */
-BOOL16 GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last ) 
+BOOL16 WINAPI GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last)
 {
     MSG16 *lpmsg = (MSG16 *)PTR_SEG_TO_LIN(msg);
     MSG_PeekMessage( lpmsg,
@@ -918,8 +918,8 @@ BOOL16 GetMessage16( SEGPTR msg, HWND16 hwnd, UINT16 first, UINT16 last )
 /***********************************************************************
  *           PostMessage16   (USER.110)
  */
-BOOL16 PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
-                      LPARAM lParam )
+BOOL16 WINAPI PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
+                             LPARAM lParam )
 {
     MSG16 	msg;
     WND 	*wndPtr;
@@ -963,8 +963,8 @@ BOOL16 PostMessage16( HWND16 hwnd, UINT16 message, WPARAM16 wParam,
 /***********************************************************************
  *           PostMessage32A   (USER32.418)
  */
-BOOL32 PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                       LPARAM lParam )
+BOOL32 WINAPI PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                              LPARAM lParam )
 {
     /* FIXME */
     return PostMessage16( hwnd, message, wParam, lParam );
@@ -974,8 +974,8 @@ BOOL32 PostMessage32A( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 /***********************************************************************
  *           PostMessage32W   (USER32.419)
  */
-BOOL32 PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
-                       LPARAM lParam )
+BOOL32 WINAPI PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
+                              LPARAM lParam )
 {
     /* FIXME */
     return PostMessage16( hwnd, message, wParam, lParam );
@@ -985,8 +985,8 @@ BOOL32 PostMessage32W( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 /***********************************************************************
  *           PostAppMessage16   (USER.116)
  */
-BOOL16 PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
-                         LPARAM lParam )
+BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
+                                LPARAM lParam )
 {
     MSG16 msg;
 
@@ -1006,7 +1006,8 @@ BOOL16 PostAppMessage16( HTASK16 hTask, UINT16 message, WPARAM16 wParam,
 /***********************************************************************
  *           SendMessage16   (USER.111)
  */
-LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+                              LPARAM lParam)
 {
     WND * wndPtr;
     WND **list, **ppWnd;
@@ -1103,7 +1104,8 @@ static void  MSG_CallWndProcHook32( LPMSG32 pmsg, BOOL32 bUnicode )
 /***********************************************************************
  *           SendMessage32A   (USER32.453)
  */
-LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                               LPARAM lParam )
 {
     WND * wndPtr;
     WND **list, **ppWnd;
@@ -1153,7 +1155,8 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           SendMessage32W   (USER32.458)
  */
-LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                               LPARAM lParam )
 {
     WND * wndPtr;
     WND **list, **ppWnd;
@@ -1202,7 +1205,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           WaitMessage    (USER.112) (USER32.577)
  */
-void WaitMessage( void )
+void WINAPI WaitMessage( void )
 {
     QUEUE_WaitBits( QS_ALLINPUT );
 }
@@ -1402,7 +1405,7 @@ static BOOL32 MSG_DoTranslateMessage( UINT32 message, HWND32 hwnd,
 /***********************************************************************
  *           TranslateMessage16   (USER.113)
  */
-BOOL16 TranslateMessage16( const MSG16 *msg )
+BOOL16 WINAPI TranslateMessage16( const MSG16 *msg )
 {
     return MSG_DoTranslateMessage( msg->message, msg->hwnd,
                                    msg->wParam, msg->lParam );
@@ -1412,7 +1415,7 @@ BOOL16 TranslateMessage16( const MSG16 *msg )
 /***********************************************************************
  *           TranslateMessage32   (USER32.555)
  */
-BOOL32 TranslateMessage32( const MSG32 *msg )
+BOOL32 WINAPI TranslateMessage32( const MSG32 *msg )
 {
     return MSG_DoTranslateMessage( msg->message, msg->hwnd,
                                    msg->wParam, msg->lParam );
@@ -1422,7 +1425,7 @@ BOOL32 TranslateMessage32( const MSG32 *msg )
 /***********************************************************************
  *           DispatchMessage16   (USER.114)
  */
-LONG DispatchMessage16( const MSG16* msg )
+LONG WINAPI DispatchMessage16( const MSG16* msg )
 {
     WND * wndPtr;
     LONG retval;
@@ -1467,7 +1470,7 @@ LONG DispatchMessage16( const MSG16* msg )
 /***********************************************************************
  *           DispatchMessage32A   (USER32.140)
  */
-LONG DispatchMessage32A( const MSG32* msg )
+LONG WINAPI DispatchMessage32A( const MSG32* msg )
 {
     WND * wndPtr;
     LONG retval;
@@ -1514,7 +1517,7 @@ LONG DispatchMessage32A( const MSG32* msg )
 /***********************************************************************
  *           DispatchMessage32W   (USER32.141)
  */
-LONG DispatchMessage32W( const MSG32* msg )
+LONG WINAPI DispatchMessage32W( const MSG32* msg )
 {
     WND * wndPtr;
     LONG retval;
@@ -1561,7 +1564,7 @@ LONG DispatchMessage32W( const MSG32* msg )
 /***********************************************************************
  *           RegisterWindowMessage16   (USER.118)
  */
-WORD RegisterWindowMessage16( SEGPTR str )
+WORD WINAPI RegisterWindowMessage16( SEGPTR str )
 {
     dprintf_msg(stddeb, "RegisterWindowMessage16: %08lx\n", (DWORD)str );
     return GlobalAddAtom16( str );
@@ -1571,7 +1574,7 @@ WORD RegisterWindowMessage16( SEGPTR str )
 /***********************************************************************
  *           RegisterWindowMessage32A   (USER32.436)
  */
-WORD RegisterWindowMessage32A( LPCSTR str )
+WORD WINAPI RegisterWindowMessage32A( LPCSTR str )
 {
     dprintf_msg(stddeb, "RegisterWindowMessage32A: %s\n", str );
     return GlobalAddAtom32A( str );
@@ -1581,7 +1584,7 @@ WORD RegisterWindowMessage32A( LPCSTR str )
 /***********************************************************************
  *           RegisterWindowMessage32W   (USER32.437)
  */
-WORD RegisterWindowMessage32W( LPCWSTR str )
+WORD WINAPI RegisterWindowMessage32W( LPCWSTR str )
 {
     dprintf_msg(stddeb, "RegisterWindowMessage32W: %p\n", str );
     return GlobalAddAtom32W( str );
@@ -1591,7 +1594,7 @@ WORD RegisterWindowMessage32W( LPCWSTR str )
 /***********************************************************************
  *           GetTickCount   (USER.13) (KERNEL32.299)
  */
-DWORD GetTickCount(void)
+DWORD WINAPI GetTickCount(void)
 {
     struct timeval t;
     gettimeofday( &t, NULL );
@@ -1604,7 +1607,7 @@ DWORD GetTickCount(void)
  *
  * (effectively identical to GetTickCount)
  */
-DWORD GetCurrentTime16(void)
+DWORD WINAPI GetCurrentTime16(void)
 {
     return GetTickCount();
 }
@@ -1613,7 +1616,7 @@ DWORD GetCurrentTime16(void)
 /***********************************************************************
  *           InSendMessage16    (USER.192)
  */
-BOOL16 InSendMessage16(void)
+BOOL16 WINAPI InSendMessage16(void)
 {
     return InSendMessage32();
 }
@@ -1622,7 +1625,7 @@ BOOL16 InSendMessage16(void)
 /***********************************************************************
  *           InSendMessage32    (USER32.319)
  */
-BOOL32 InSendMessage32(void)
+BOOL32 WINAPI InSendMessage32(void)
 {
     MESSAGEQUEUE *queue;
 

@@ -62,7 +62,7 @@ static UINT16	uMsgShellActivate = 0;
 /*************************************************************************
  *				DragAcceptFiles		[SHELL.9]
  */
-void DragAcceptFiles(HWND16 hWnd, BOOL16 b)
+void WINAPI DragAcceptFiles(HWND16 hWnd, BOOL16 b)
 {
     WND* wnd = WIN_FindWndPtr(hWnd);
 
@@ -75,7 +75,8 @@ void DragAcceptFiles(HWND16 hWnd, BOOL16 b)
 /*************************************************************************
  *				DragQueryFile		[SHELL.11]
  */
-UINT16 DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
+UINT16 WINAPI DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile,
+                            WORD wLength)
 {
     /* hDrop is a global memory block allocated with GMEM_SHARE 
      * with DROPFILESTRUCT as a header and filenames following
@@ -116,7 +117,7 @@ UINT16 DragQueryFile(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength)
 /*************************************************************************
  *				DragFinish		[SHELL.12]
  */
-void DragFinish(HDROP16 h)
+void WINAPI DragFinish(HDROP16 h)
 {
     GlobalFree16((HGLOBAL16)h);
 }
@@ -125,7 +126,7 @@ void DragFinish(HDROP16 h)
 /*************************************************************************
  *				DragQueryPoint		[SHELL.13]
  */
-BOOL16 DragQueryPoint(HDROP16 hDrop, POINT16 *p)
+BOOL16 WINAPI DragQueryPoint(HDROP16 hDrop, POINT16 *p)
 {
     LPDROPFILESTRUCT lpDropFileStruct;  
     BOOL16           bRet;
@@ -143,8 +144,7 @@ BOOL16 DragQueryPoint(HDROP16 hDrop, POINT16 *p)
  *				SHELL_FindExecutable
  * Utility for code sharing between FindExecutable and ShellExecute
  */
-static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile, 
-                                         LPCSTR lpDirectory,
+static HINSTANCE32 SHELL_FindExecutable( LPCSTR lpFile, 
                                          LPCSTR lpOperation,
                                          LPSTR lpResult)
 {
@@ -155,15 +155,13 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
     char command[256];      /* command from registry */
     LONG commandlen=256;    /* This is the most DOS can handle :) */
     char buffer[256];       /* Used to GetProfileString */
-    HINSTANCE16 retval=31;  /* default - 'No association was found' */
+    HINSTANCE32 retval=31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
     char xlpFile[256];      /* result of SearchPath */
 
-    dprintf_exec(stddeb, "SHELL_FindExecutable: File %s, Dir %s\n", 
-		 (lpFile != NULL?lpFile:"-"), 
-		 (lpDirectory != NULL?lpDirectory:"-"));
-
+    dprintf_exec(stddeb, "SHELL_FindExecutable: %s\n",
+                 (lpFile != NULL?lpFile:"-") );
     lpResult[0]='\0'; /* Start off with an empty return string */
 
     /* trap NULL parameters on entry */
@@ -172,7 +170,8 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 	/* FIXME - should throw a warning, perhaps! */
 	return 2; /* File not found. Close enough, I guess. */
     }
-    if (SearchPath32A(lpDirectory,lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
+
+    if (SearchPath32A( NULL, lpFile,".exe",sizeof(xlpFile),xlpFile,NULL))
         lpFile = xlpFile;
 
     /* First thing we need is the file's extension */
@@ -215,7 +214,7 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 				 * attached */
 				dprintf_exec(stddeb, "SHELL_FindExecutable: found %s\n",
 							 lpResult);
-	    return 33;
+                                return 33;
 
 		/* Greater than 32 to indicate success FIXME According to the
 		 * docs, I should be returning a handle for the
@@ -292,11 +291,12 @@ static HINSTANCE16 SHELL_FindExecutable( LPCSTR lpFile,
 /*************************************************************************
  *				ShellExecute16		[SHELL.20]
  */
-HINSTANCE16 ShellExecute16( HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
-                            LPCSTR lpParameters, LPCSTR lpDirectory,
-                            INT16 iShowCmd )
+HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
+                                   LPCSTR lpFile, LPCSTR lpParameters,
+                                   LPCSTR lpDirectory, INT16 iShowCmd )
 {
     HINSTANCE16 retval=31;
+    char old_dir[1024];
     char cmd[256];
 
     dprintf_exec(stddeb, "ShellExecute(%04x,'%s','%s','%s','%s',%x)\n",
@@ -308,30 +308,36 @@ HINSTANCE16 ShellExecute16( HWND16 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
     if (lpOperation==NULL) /* default is open */
       lpOperation="open";
 
-    retval = SHELL_FindExecutable( lpFile, lpDirectory, lpOperation, cmd );
-
-    if ( retval <= 32 )
+    if (lpDirectory)
     {
-	return retval;
+        GetCurrentDirectory32A( sizeof(old_dir), old_dir );
+        SetCurrentDirectory32A( lpDirectory );
     }
 
-    if (lpParameters)
-    {
-	strcat(cmd," ");
-	strcat(cmd,lpParameters);
-    }
+    retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
 
-    dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
-    return WinExec32(cmd,iShowCmd);
+    if (retval > 32)  /* Found */
+    {
+        if (lpParameters)
+        {
+            strcat(cmd," ");
+            strcat(cmd,lpParameters);
+        }
+
+        dprintf_exec(stddeb,"ShellExecute:starting %s\n",cmd);
+        retval = WinExec32( cmd, iShowCmd );
+    }
+    if (lpDirectory) SetCurrentDirectory32A( old_dir );
+    return retval;
 }
 
 
 /*************************************************************************
  *             ShellExecute32A   (SHELL32.84)
  */
-HINSTANCE32 ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
-                             LPCSTR lpParameters, LPCSTR lpDirectory,
-                             INT32 iShowCmd )
+HINSTANCE32 WINAPI ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation,
+                                    LPCSTR lpFile, LPCSTR lpParameters,
+                                    LPCSTR lpDirectory, INT32 iShowCmd )
 {
     return ShellExecute16( hWnd, lpOperation, lpFile, lpParameters,
                            lpDirectory, iShowCmd );
@@ -341,10 +347,20 @@ HINSTANCE32 ShellExecute32A( HWND32 hWnd, LPCSTR lpOperation, LPCSTR lpFile,
 /*************************************************************************
  *             FindExecutable16   (SHELL.21)
  */
-HINSTANCE16 FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
-                              LPSTR lpResult )
+HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
+                                     LPSTR lpResult )
 {
-    HINSTANCE16 retval=31;    /* default - 'No association was found' */
+    return (HINSTANCE16)FindExecutable32A( lpFile, lpDirectory, lpResult );
+}
+
+/*************************************************************************
+ *             FindExecutable32A   (SHELL32.184)
+ */
+HINSTANCE32 WINAPI FindExecutable32A( LPCSTR lpFile, LPCSTR lpDirectory,
+                                      LPSTR lpResult )
+{
+    HINSTANCE32 retval=31;    /* default - 'No association was found' */
+    char old_dir[1024];
 
     dprintf_exec(stddeb, "FindExecutable: File %s, Dir %s\n", 
 		 (lpFile != NULL?lpFile:"-"), 
@@ -359,10 +375,16 @@ HINSTANCE16 FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
 	return 2; /* File not found. Close enough, I guess. */
     }
 
-    retval = SHELL_FindExecutable( lpFile, lpDirectory, "open",
-				  lpResult );
+    if (lpDirectory)
+    {
+        GetCurrentDirectory32A( sizeof(old_dir), old_dir );
+        SetCurrentDirectory32A( lpDirectory );
+    }
+
+    retval = SHELL_FindExecutable( lpFile, "open", lpResult );
 
     dprintf_exec(stddeb, "FindExecutable: returning %s\n", lpResult);
+    if (lpDirectory) SetCurrentDirectory32A( old_dir );
     return retval;
 }
 
@@ -377,8 +399,8 @@ typedef struct
 /*************************************************************************
  *             AboutDlgProc32  (not an exported API function)
  */
-LRESULT AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
-                        LPARAM lParam )
+LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
+                               LPARAM lParam )
 {
     char Template[512], AppTitle[512];
 
@@ -413,8 +435,8 @@ LRESULT AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
 /*************************************************************************
  *             AboutDlgProc16   (SHELL.33)
  */
-LRESULT AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
-                        LPARAM lParam )
+LRESULT WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
+                               LPARAM lParam )
 {
     return AboutDlgProc32( hWnd, msg, wParam, lParam );
 }
@@ -423,8 +445,8 @@ LRESULT AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
 /*************************************************************************
  *             ShellAbout16   (SHELL.22)
  */
-BOOL16 ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
-                     HICON16 hIcon )
+BOOL16 WINAPI ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                            HICON16 hIcon )
 {
     return ShellAbout32A( hWnd, szApp, szOtherStuff, hIcon );
 }
@@ -432,8 +454,8 @@ BOOL16 ShellAbout16( HWND16 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 /*************************************************************************
  *             ShellAbout32A   (SHELL32.82)
  */
-BOOL32 ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
-                      HICON32 hIcon )
+BOOL32 WINAPI ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
+                             HICON32 hIcon )
 {
     ABOUT_INFO info;
     info.szApp        = szApp;
@@ -449,8 +471,8 @@ BOOL32 ShellAbout32A( HWND32 hWnd, LPCSTR szApp, LPCSTR szOtherStuff,
 /*************************************************************************
  *             ShellAbout32W   (SHELL32.83)
  */
-BOOL32 ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
-                      HICON32 hIcon )
+BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
+                             HICON32 hIcon )
 {
     BOOL32 ret;
     ABOUT_INFO info;
@@ -604,7 +626,9 @@ static HGLOBAL16 ICO_GetIconDirectory(HINSTANCE16 hInst, HFILE32 hFile, LPicoICO
  *
  * This abortion is called directly by Progman
  */
-HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UINT16 nIconIndex, WORD n )
+HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
+                                     LPCSTR lpszExeFileName, UINT16 nIconIndex,
+                                     WORD n )
 {
   HGLOBAL16 	hRet = 0;
   HGLOBAL16*	RetPtr = NULL;
@@ -706,8 +730,8 @@ HGLOBAL16 InternalExtractIcon(HINSTANCE16 hInstance, LPCSTR lpszExeFileName, UIN
 /*************************************************************************
  *             ExtractIcon16   (SHELL.34)
  */
-HICON16 ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
-                       UINT16 nIconIndex )
+HICON16 WINAPI ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
+                              UINT16 nIconIndex )
 {
   HGLOBAL16 handle = InternalExtractIcon(hInstance,lpszExeFileName,nIconIndex, 1);
 
@@ -726,8 +750,8 @@ HICON16 ExtractIcon16( HINSTANCE16 hInstance, LPCSTR lpszExeFileName,
 /*************************************************************************
  *             ExtractIcon32A   (SHELL32.20)
  */
-HICON32 ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
-                        UINT32 nIconIndex )
+HICON32 WINAPI ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
+                               UINT32 nIconIndex )
 {
     /* FIXME */
     return ExtractIcon16( hInstance, lpszExeFileName, nIconIndex );
@@ -740,7 +764,8 @@ HICON32 ExtractIcon32A( HINSTANCE32 hInstance, LPCSTR lpszExeFileName,
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
-HICON16 ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,LPWORD lpiIcon)
+HICON16 WINAPI ExtractAssociatedIcon(HINSTANCE16 hInst,LPSTR lpIconPath,
+                                     LPWORD lpiIcon)
 {
     HICON16 hIcon = ExtractIcon16(hInst, lpIconPath, *lpiIcon);
 
@@ -794,7 +819,7 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
   return NULL;
 }
 
-SEGPTR FindEnvironmentString(LPSTR str)
+SEGPTR WINAPI FindEnvironmentString(LPSTR str)
 {
  SEGPTR  spEnv = GetDOSEnvironment();
  LPSTR  lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
@@ -813,7 +838,7 @@ SEGPTR FindEnvironmentString(LPSTR str)
  * Replace %KEYWORD% in the str with the value of variable KEYWORD
  * from "DOS" environment.
  */
-DWORD DoEnvironmentSubst(LPSTR str,WORD length)
+DWORD WINAPI DoEnvironmentSubst(LPSTR str,WORD length)
 {
   LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment());
   LPSTR   lpBuffer = (LPSTR)HeapAlloc( GetProcessHeap(), 0, length);
@@ -886,7 +911,7 @@ DWORD DoEnvironmentSubst(LPSTR str,WORD length)
  *				ShellHookProc		[SHELL.103]
  * System-wide WH_SHELL hook.
  */
-LRESULT ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 {
     dprintf_reg(stddeb,"ShellHookProc: %i, %04x, %08x\n", code, wParam, 
 						      (unsigned)lParam );
@@ -907,7 +932,7 @@ LRESULT ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 /*************************************************************************
  *				RegisterShellHook	[SHELL.102]
  */
-BOOL32 RegisterShellHook(HWND16 hWnd, UINT16 uAction)
+BOOL32 WINAPI RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 {
     dprintf_reg(stddeb,"RegisterShellHook: %04x [%u]\n", hWnd, uAction );
 
@@ -948,10 +973,10 @@ BOOL32 RegisterShellHook(HWND16 hWnd, UINT16 uAction)
 /*************************************************************************
  *				SHGetFileInfoA		[SHELL32.54]
  */
-DWORD
-SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,SHFILEINFO32A *psfi,
-	UINT32 sizeofpsfi,UINT32 flags
-) {
+DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
+                              SHFILEINFO32A *psfi, UINT32 sizeofpsfi,
+                              UINT32 flags )
+{
 	fprintf(stdnimp,"SHGetFileInfo32A(%s,0x%08lx,%p,%d,0x%08x)\n",
 		path,dwFileAttributes,psfi,sizeofpsfi,flags
 	);
@@ -961,8 +986,8 @@ SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,SHFILEINFO32A *psfi,
 /*************************************************************************
  *				CommandLineToArgvW	[SHELL32.2]
  */
-LPWSTR*
-CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs) {
+LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
+{
 	LPWSTR	*argv,s,t;
 	int	i;
 

@@ -1089,7 +1089,7 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS lpCaps, DWORD dwSize)
 	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
 	lpCaps->wPid = 0x0001; 	/* Product ID */
 	lpCaps->vDriverVersion = 0x001; /* Product Version */
-	strcpy(lpCaps->szPname, "Linux MIDIOUT Driver version 0.01");
+	strcpy(lpCaps->szPname, "Linux MIDIOUT Driver v0.01");
 /* FIXME
    Values are the same as I get with Borland TC 4.5
 */

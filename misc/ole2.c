@@ -15,7 +15,7 @@
 /***********************************************************************
  *           OleBuildVersion     [OLE.1]
  */
-DWORD OleBuildVersion()
+DWORD WINAPI OleBuildVersion()
 {
 	dprintf_ole(stddeb,"OleBuildVersion()\n");
 	return (rmm<<16)+rup;
@@ -24,7 +24,7 @@ DWORD OleBuildVersion()
 /***********************************************************************
  *           OleInitialize       [OLE2.2]
  */
-HRESULT OleInitialize(LPVOID reserved)
+HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
     dprintf_ole(stdnimp,"OleInitialize\n");
 	return S_OK;
@@ -33,7 +33,7 @@ HRESULT OleInitialize(LPVOID reserved)
 /***********************************************************************
  *           OleUnitialize       [OLE2.3]
  */
-void OleUninitialize()
+void WINAPI OleUninitialize()
 {
 	dprintf_ole(stdnimp,"OleUninitialize()\n");
 }

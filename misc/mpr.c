@@ -8,8 +8,7 @@
 #include "stddebug.h"
 #include "debug.h"
 
-DWORD
-WNetGetCachedPassword(
+DWORD WINAPI WNetGetCachedPassword(
 	LPSTR	pbResource,
 	WORD	cbResource,
 	LPSTR	pbPassword,
@@ -22,8 +21,7 @@ WNetGetCachedPassword(
 	return 0;
 }
 
-DWORD
-MultinetGetConnectionPerformance32A(
+DWORD WINAPI MultinetGetConnectionPerformance32A(
 	LPNETRESOURCE32A lpNetResource,
 	LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct
 ) {

@@ -18,6 +18,7 @@
 #define CBF_CAPTURE             0x0020
 #define CBF_EDIT                0x0040
 #define CBF_NORESIZE		0x0080
+#define CBF_NOTIFY		0x0100
 #define CBF_EUI                 0x8000
 
 /* Combo state struct */

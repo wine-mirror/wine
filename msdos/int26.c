@@ -17,7 +17,7 @@
  *
  * Handler for int 26h (absolute disk read).
  */
-void INT_Int26Handler( CONTEXT *context )
+void WINAPI INT_Int26Handler( CONTEXT *context )
 {
     BYTE *dataptr = PTR_SEG_OFF_TO_LIN( DS_reg(context), BX_reg(context) );
     DWORD begin, length;

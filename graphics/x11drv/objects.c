@@ -29,6 +29,7 @@ extern HPEN32 X11DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen );
 HGDIOBJ32 X11DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
 {
     GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+    HGDIOBJ32 ret = 0;
 
     if (!ptr) return 0;
     dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", dc->hSelf, handle );
@@ -36,15 +37,21 @@ HGDIOBJ32 X11DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
-	  return X11DRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
+	  ret = X11DRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
+	  break;
       case BRUSH_MAGIC:
-	  return X11DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
+	  ret = X11DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
+	  break;
       case BITMAP_MAGIC:
-	  return X11DRV_BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
+	  ret = X11DRV_BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
+	  break;
       case FONT_MAGIC:
-	  return X11DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
+	  ret = X11DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
+	  break;
       case REGION_MAGIC:
-	  return (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	  ret = (HGDIOBJ16)SelectClipRgn16( dc->hSelf, handle );
+	  break;
     }
-    return 0;
+    GDI_HEAP_UNLOCK( handle );
+    return ret;
 }

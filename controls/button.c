@@ -71,7 +71,8 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 /***********************************************************************
  *           ButtonWndProc
  */
-LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
+                              WPARAM32 wParam, LPARAM lParam )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr(hWnd);

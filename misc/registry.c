@@ -543,7 +543,7 @@ _find_or_add_key(LPKEYSTRUCT lpkey,LPWSTR keyname) {
 	lplpkey= &(lpkey->nextsub);
 	lpxkey	= *lplpkey;
 	while (lpxkey) {
-		if (!lstrcmp32W(lpxkey->keyname,keyname))
+		if (!lstrcmpi32W(lpxkey->keyname,keyname))
 			break;
 		lplpkey	= &(lpxkey->next);
 		lpxkey	= *lplpkey;
@@ -573,7 +573,7 @@ _find_or_add_value(
 				break;
 		} else {
 			if (	val->name!=NULL && 
-				!lstrcmp32W(val->name,name)
+				!lstrcmpi32W(val->name,name)
 			)
 				break;
 		}
@@ -1625,7 +1625,7 @@ SHELL_LoadRegistry() {
  */
 
 /* RegOpenKeyExW		[ADVAPI32.150] */
-DWORD RegOpenKeyEx32W(
+DWORD WINAPI RegOpenKeyEx32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -1654,7 +1654,7 @@ DWORD RegOpenKeyEx32W(
 	while (wps[i]) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!lstrcmp32W(wps[i],lpxkey->keyname))
+			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -1672,7 +1672,7 @@ DWORD RegOpenKeyEx32W(
 }
 
 /* RegOpenKeyW			[ADVAPI32.151] */
-DWORD RegOpenKey32W(
+DWORD WINAPI RegOpenKey32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1685,7 +1685,7 @@ DWORD RegOpenKey32W(
 
 
 /* RegOpenKeyExA		[ADVAPI32.149] */
-DWORD RegOpenKeyEx32A(
+DWORD WINAPI RegOpenKeyEx32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -1709,7 +1709,7 @@ DWORD RegOpenKeyEx32A(
 }
 
 /* RegOpenKeyA			[ADVAPI32.148] */
-DWORD RegOpenKey32A(
+DWORD WINAPI RegOpenKey32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1721,7 +1721,7 @@ DWORD RegOpenKey32A(
 }
 
 /* RegOpenKey			[SHELL.1] [KERNEL.217] */
-DWORD RegOpenKey16(
+DWORD WINAPI RegOpenKey16(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1746,7 +1746,7 @@ DWORD RegOpenKey16(
  */
 
 /* RegCreateKeyExW		[ADVAPI32.131] */
-DWORD RegCreateKeyEx32W(
+DWORD WINAPI RegCreateKeyEx32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -1790,7 +1790,7 @@ DWORD RegCreateKeyEx32W(
 	while (wps[i]) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!lstrcmp32W(wps[i],lpxkey->keyname))
+			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -1851,7 +1851,7 @@ DWORD RegCreateKeyEx32W(
 }
 
 /* RegCreateKeyW		[ADVAPI32.132] */
-DWORD RegCreateKey32W(
+DWORD WINAPI RegCreateKey32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1876,7 +1876,7 @@ DWORD RegCreateKey32W(
 }
 
 /* RegCreateKeyExA		[ADVAPI32.130] */
-DWORD RegCreateKeyEx32A(
+DWORD WINAPI RegCreateKeyEx32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwReserved,
@@ -1928,7 +1928,7 @@ DWORD RegCreateKeyEx32A(
 }
 
 /* RegCreateKeyA		[ADVAPI32.129] */
-DWORD RegCreateKey32A(
+DWORD WINAPI RegCreateKey32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1952,7 +1952,7 @@ DWORD RegCreateKey32A(
 }
 
 /* RegCreateKey			[SHELL.2] [KERNEL.218] */
-DWORD RegCreateKey16(
+DWORD WINAPI RegCreateKey16(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	LPHKEY	retkey
@@ -1976,7 +1976,7 @@ DWORD RegCreateKey16(
  */
 
 /* RegQueryValueExW		[ADVAPI32.158] */
-DWORD RegQueryValueEx32W(
+DWORD WINAPI RegQueryValueEx32W(
 	HKEY	hkey,
 	LPWSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -2002,7 +2002,7 @@ DWORD RegQueryValueEx32W(
 	} else {
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (	lpkey->values[i].name &&
-				!lstrcmp32W(lpszValueName,lpkey->values[i].name)
+				!lstrcmpi32W(lpszValueName,lpkey->values[i].name)
 			)
 				break;
 	}
@@ -2038,7 +2038,7 @@ DWORD RegQueryValueEx32W(
 }
 
 /* RegQueryValueW		[ADVAPI32.159] */
-DWORD RegQueryValue32W(
+DWORD WINAPI RegQueryValue32W(
 	HKEY	hkey,
 	LPWSTR	lpszSubKey,
 	LPWSTR	lpszData,
@@ -2075,7 +2075,7 @@ DWORD RegQueryValue32W(
 }
 
 /* RegQueryValueExA		[ADVAPI32.157] */
-DWORD RegQueryValueEx32A(
+DWORD WINAPI RegQueryValueEx32A(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -2151,7 +2151,7 @@ DWORD RegQueryValueEx32A(
 }
 
 /* RegQueryValueEx		[KERNEL.225] */
-DWORD RegQueryValueEx16(
+DWORD WINAPI RegQueryValueEx16(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	LPDWORD	lpdwReserved,
@@ -2174,7 +2174,7 @@ DWORD RegQueryValueEx16(
 }
 
 /* RegQueryValueA		[ADVAPI32.156] */
-DWORD RegQueryValue32A(
+DWORD WINAPI RegQueryValue32A(
 	HKEY	hkey,
 	LPSTR	lpszSubKey,
 	LPSTR	lpszData,
@@ -2211,7 +2211,7 @@ DWORD RegQueryValue32A(
 }
 
 /* RegQueryValue		[SHELL.6] [KERNEL.224] */
-DWORD RegQueryValue16(
+DWORD WINAPI RegQueryValue16(
 	HKEY	hkey,
 	LPSTR	lpszSubKey,
 	LPSTR	lpszData,
@@ -2238,7 +2238,7 @@ DWORD RegQueryValue16(
  */
 
 /* RegSetValueExW		[ADVAPI32.170] */
-DWORD RegSetValueEx32W(
+DWORD WINAPI RegSetValueEx32W(
 	HKEY	hkey,
 	LPWSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -2266,7 +2266,7 @@ DWORD RegSetValueEx32W(
 	} else {
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (	lpkey->values[i].name &&
-				!lstrcmp32W(lpszValueName,lpkey->values[i].name)
+				!lstrcmpi32W(lpszValueName,lpkey->values[i].name)
 			)
 				break;
 	}
@@ -2294,7 +2294,7 @@ DWORD RegSetValueEx32W(
 }
 
 /* RegSetValueExA		[ADVAPI32.169] */
-DWORD RegSetValueEx32A(
+DWORD WINAPI RegSetValueEx32A(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -2327,7 +2327,7 @@ DWORD RegSetValueEx32A(
 }
 
 /* RegSetValueEx		[KERNEL.226] */
-DWORD RegSetValueEx16(
+DWORD WINAPI RegSetValueEx16(
 	HKEY	hkey,
 	LPSTR	lpszValueName,
 	DWORD	dwReserved,
@@ -2342,7 +2342,7 @@ DWORD RegSetValueEx16(
 }
 
 /* RegSetValueW			[ADVAPI32.171] */
-DWORD RegSetValue32W(
+DWORD WINAPI RegSetValue32W(
 	HKEY	hkey,
 	LPCWSTR	lpszSubKey,
 	DWORD	dwType,
@@ -2378,7 +2378,7 @@ DWORD RegSetValue32W(
 
 }
 /* RegSetValueA			[ADVAPI32.168] */
-DWORD RegSetValue32A(
+DWORD WINAPI RegSetValue32A(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwType,
@@ -2411,7 +2411,7 @@ DWORD RegSetValue32A(
 }
 
 /* RegSetValue			[KERNEL.221] [SHELL.5] */
-DWORD RegSetValue16(
+DWORD WINAPI RegSetValue16(
 	HKEY	hkey,
 	LPCSTR	lpszSubKey,
 	DWORD	dwType,
@@ -2435,7 +2435,7 @@ DWORD RegSetValue16(
  */
 
 /* RegEnumKeyExW		[ADVAPI32.139] */
-DWORD RegEnumKeyEx32W(
+DWORD WINAPI RegEnumKeyEx32W(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPWSTR	lpszName,
@@ -2475,7 +2475,7 @@ DWORD RegEnumKeyEx32W(
 }
 
 /* RegEnumKeyW			[ADVAPI32.140] */
-DWORD RegEnumKey32W(
+DWORD WINAPI RegEnumKey32W(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPWSTR	lpszName,
@@ -2489,7 +2489,7 @@ DWORD RegEnumKey32W(
 	return RegEnumKeyEx32W(hkey,iSubkey,lpszName,&lpcchName,NULL,NULL,NULL,&ft);
 }
 /* RegEnumKeyExA		[ADVAPI32.138] */
-DWORD RegEnumKeyEx32A(
+DWORD WINAPI RegEnumKeyEx32A(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
@@ -2546,7 +2546,7 @@ DWORD RegEnumKeyEx32A(
 }
 
 /* RegEnumKeyA			[ADVAPI32.137] */
-DWORD RegEnumKey32A(
+DWORD WINAPI RegEnumKey32A(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
@@ -2570,7 +2570,7 @@ DWORD RegEnumKey32A(
 }
 
 /* RegEnumKey			[SHELL.7] [KERNEL.216] */
-DWORD RegEnumKey16(
+DWORD WINAPI RegEnumKey16(
 	HKEY	hkey,
 	DWORD	iSubkey,
 	LPSTR	lpszName,
@@ -2590,7 +2590,7 @@ DWORD RegEnumKey16(
  */
 
 /* RegEnumValueW		[ADVAPI32.142] */
-DWORD RegEnumValue32W(
+DWORD WINAPI RegEnumValue32W(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPWSTR	lpszValue,
@@ -2636,7 +2636,7 @@ DWORD RegEnumValue32W(
 }
 
 /* RegEnumValueA		[ADVAPI32.141] */
-DWORD RegEnumValue32A(
+DWORD WINAPI RegEnumValue32A(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPSTR	lpszValue,
@@ -2693,7 +2693,7 @@ DWORD RegEnumValue32A(
 }
 
 /* RegEnumValue			[KERNEL.223] */
-DWORD RegEnumValue16(
+DWORD WINAPI RegEnumValue16(
 	HKEY	hkey,
 	DWORD	iValue,
 	LPSTR	lpszValue,
@@ -2722,7 +2722,7 @@ DWORD RegEnumValue16(
  *  Close registry key
  */
 /* RegCloseKey			[SHELL.3] [KERNEL.220] [ADVAPI32.126] */
-DWORD RegCloseKey(HKEY hkey) {
+DWORD WINAPI RegCloseKey(HKEY hkey) {
 	dprintf_reg(stddeb,"RegCloseKey(%x)\n",hkey);
 	remove_handle(hkey);
 	return ERROR_SUCCESS;
@@ -2734,7 +2734,7 @@ DWORD RegCloseKey(HKEY hkey) {
  * RegDeleteKey16 -> RegDeleteKey32A -> RegDeleteKey32W
  */
 /* RegDeleteKeyW		[ADVAPI32.134] */
-DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
+DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	LPKEYSTRUCT	*lplpPrevKey,lpNextKey,lpxkey;
 	LPWSTR		*wps;
 	int		wpc,i;
@@ -2754,7 +2754,7 @@ DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	while (i<wpc-1) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
-			if (!lstrcmp32W(wps[i],lpxkey->keyname))
+			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
@@ -2769,7 +2769,7 @@ DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	lpxkey	= lpNextKey->nextsub;
 	lplpPrevKey = &(lpNextKey->nextsub);
 	while (lpxkey) {
-		if (!lstrcmp32W(wps[i],lpxkey->keyname))
+		if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 			break;
 		lplpPrevKey	= &(lpxkey->next);
 		lpxkey		= lpxkey->next;
@@ -2790,7 +2790,7 @@ DWORD RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 }
 
 /* RegDeleteKeyA		[ADVAPI32.133] */
-DWORD RegDeleteKey32A(HKEY hkey,LPCSTR lpszSubKey) {
+DWORD WINAPI RegDeleteKey32A(HKEY hkey,LPCSTR lpszSubKey) {
 	LPWSTR	lpszSubKeyW;
 	DWORD	ret;
 
@@ -2804,7 +2804,7 @@ DWORD RegDeleteKey32A(HKEY hkey,LPCSTR lpszSubKey) {
 }
 
 /* RegDeleteKey			[SHELL.4] [KERNEL.219] */
-DWORD RegDeleteKey16(HKEY hkey,LPCSTR lpszSubKey) {
+DWORD WINAPI RegDeleteKey16(HKEY hkey,LPCSTR lpszSubKey) {
 	dprintf_reg(stddeb,"RegDeleteKey16(%x,%s)\n",
 		hkey,lpszSubKey
 	);
@@ -2818,7 +2818,8 @@ DWORD RegDeleteKey16(HKEY hkey,LPCSTR lpszSubKey) {
  * RegDeleteValue16 -> RegDeleteValue32A -> RegDeleteValue32W
  */
 /* RegDeleteValueW		[ADVAPI32.136] */
-DWORD RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue) {
+DWORD WINAPI RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue)
+{
 	DWORD		i;
 	LPKEYSTRUCT	lpkey;
 	LPKEYVALUE	val;
@@ -2832,7 +2833,7 @@ DWORD RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue) {
 	if (lpszValue) {
 		for (i=0;i<lpkey->nrofvalues;i++)
 			if (	lpkey->values[i].name &&
-				!lstrcmp32W(lpkey->values[i].name,lpszValue)
+				!lstrcmpi32W(lpkey->values[i].name,lpszValue)
 			)
 				break;
 	} else {
@@ -2859,7 +2860,8 @@ DWORD RegDeleteValue32W(HKEY hkey,LPWSTR lpszValue) {
 }
 
 /* RegDeleteValueA		[ADVAPI32.135] */
-DWORD RegDeleteValue32A(HKEY hkey,LPSTR lpszValue) {
+DWORD WINAPI RegDeleteValue32A(HKEY hkey,LPSTR lpszValue)
+{
 	LPWSTR	lpszValueW;
 	DWORD	ret;
 
@@ -2871,13 +2873,15 @@ DWORD RegDeleteValue32A(HKEY hkey,LPSTR lpszValue) {
 }
 
 /* RegDeleteValue		[KERNEL.222] */
-DWORD RegDeleteValue16(HKEY hkey,LPSTR lpszValue) {
+DWORD WINAPI RegDeleteValue16(HKEY hkey,LPSTR lpszValue)
+{
 	dprintf_reg( stddeb,"RegDeleteValue16(%x,%s)\n", hkey,lpszValue );
 	return RegDeleteValue32A(hkey,lpszValue);
 }
 
 /* RegFlushKey			[ADVAPI32.143] [KERNEL.227] */
-DWORD RegFlushKey(HKEY hkey) {
+DWORD WINAPI RegFlushKey(HKEY hkey)
+{
 	dprintf_reg(stddeb,"RegFlushKey(%x), STUB.\n",hkey);
 	return SHELL_ERROR_SUCCESS;
 }
@@ -2885,7 +2889,7 @@ DWORD RegFlushKey(HKEY hkey) {
 /* FIXME: lpcchXXXX ... is this counting in WCHARS or in BYTEs ?? */
 
 /* RegQueryInfoKeyW		[ADVAPI32.153] */
-DWORD RegQueryInfoKey32W(
+DWORD WINAPI RegQueryInfoKey32W(
 	HKEY	hkey,
 	LPWSTR	lpszClass,
 	LPDWORD	lpcchClass,
@@ -2961,7 +2965,7 @@ DWORD RegQueryInfoKey32W(
 }
 
 /* RegQueryInfoKeyA		[ADVAPI32.152] */
-DWORD RegQueryInfoKey32A(
+DWORD WINAPI RegQueryInfoKey32A(
 	HKEY	hkey,
 	LPSTR	lpszClass,
 	LPDWORD	lpcchClass,
@@ -3014,7 +3018,8 @@ DWORD RegQueryInfoKey32A(
 	return ret;
 }
 /* RegConnectRegistryA		[ADVAPI32.127] */
-DWORD RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey) {
+DWORD WINAPI RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey)
+{
 	fprintf(stderr,"RegConnectRegistry32A(%s,%08x,%p), STUB.\n",
 		machine,hkey,reskey
 	);

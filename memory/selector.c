@@ -20,7 +20,7 @@
 /***********************************************************************
  *           AllocSelectorArray   (KERNEL.206)
  */
-WORD AllocSelectorArray( WORD count )
+WORD WINAPI AllocSelectorArray( WORD count )
 {
     WORD i, size = 0;
 
@@ -40,7 +40,7 @@ WORD AllocSelectorArray( WORD count )
 /***********************************************************************
  *           AllocSelector   (KERNEL.175)
  */
-WORD AllocSelector( WORD sel )
+WORD WINAPI AllocSelector( WORD sel )
 {
     WORD newsel, count, i;
 
@@ -63,7 +63,7 @@ WORD AllocSelector( WORD sel )
 /***********************************************************************
  *           FreeSelector   (KERNEL.176)
  */
-WORD FreeSelector( WORD sel )
+WORD WINAPI FreeSelector( WORD sel )
 {
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
     SELECTOR_FreeBlock( sel, 1 );
@@ -202,7 +202,7 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
 /***********************************************************************
  *           PrestoChangoSelector   (KERNEL.177)
  */
-WORD PrestoChangoSelector( WORD selSrc, WORD selDst )
+WORD WINAPI PrestoChangoSelector( WORD selSrc, WORD selDst )
 {
     ldt_entry entry;
     LDT_GetEntry( SELECTOR_TO_ENTRY( selSrc ), &entry );
@@ -215,7 +215,7 @@ WORD PrestoChangoSelector( WORD selSrc, WORD selDst )
 /***********************************************************************
  *           AllocCStoDSAlias   (KERNEL.170)
  */
-WORD AllocCStoDSAlias( WORD sel )
+WORD WINAPI AllocCStoDSAlias( WORD sel )
 {
     WORD newsel;
     ldt_entry entry;
@@ -234,7 +234,7 @@ WORD AllocCStoDSAlias( WORD sel )
 /***********************************************************************
  *           AllocDStoCSAlias   (KERNEL.171)
  */
-WORD AllocDStoCSAlias( WORD sel )
+WORD WINAPI AllocDStoCSAlias( WORD sel )
 {
     WORD newsel;
     ldt_entry entry;
@@ -253,7 +253,7 @@ WORD AllocDStoCSAlias( WORD sel )
 /***********************************************************************
  *           LongPtrAdd   (KERNEL.180)
  */
-void LongPtrAdd( DWORD ptr, DWORD add )
+void WINAPI LongPtrAdd( DWORD ptr, DWORD add )
 {
     ldt_entry entry;
     LDT_GetEntry( SELECTOR_TO_ENTRY(SELECTOROF(ptr)), &entry );
@@ -265,7 +265,7 @@ void LongPtrAdd( DWORD ptr, DWORD add )
 /***********************************************************************
  *           GetSelectorBase   (KERNEL.186)
  */
-DWORD GetSelectorBase( WORD sel )
+DWORD WINAPI GetSelectorBase( WORD sel )
 {
     DWORD base = GET_SEL_BASE(sel);
 
@@ -279,7 +279,7 @@ DWORD GetSelectorBase( WORD sel )
 /***********************************************************************
  *           SetSelectorBase   (KERNEL.187)
  */
-WORD SetSelectorBase( WORD sel, DWORD base )
+WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {
     ldt_entry entry;
 
@@ -295,7 +295,7 @@ WORD SetSelectorBase( WORD sel, DWORD base )
 /***********************************************************************
  *           GetSelectorLimit   (KERNEL.188)
  */
-DWORD GetSelectorLimit( WORD sel )
+DWORD WINAPI GetSelectorLimit( WORD sel )
 {
     return GET_SEL_LIMIT(sel);
 }
@@ -304,7 +304,7 @@ DWORD GetSelectorLimit( WORD sel )
 /***********************************************************************
  *           SetSelectorLimit   (KERNEL.189)
  */
-WORD SetSelectorLimit( WORD sel, DWORD limit )
+WORD WINAPI SetSelectorLimit( WORD sel, DWORD limit )
 {
     ldt_entry entry;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
@@ -319,7 +319,7 @@ WORD SetSelectorLimit( WORD sel, DWORD limit )
 /***********************************************************************
  *           SelectorAccessRights   (KERNEL.196)
  */
-WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
+WORD WINAPI SelectorAccessRights( WORD sel, WORD op, WORD val )
 {
     ldt_entry entry;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
@@ -349,7 +349,7 @@ WORD SelectorAccessRights( WORD sel, WORD op, WORD val )
 /***********************************************************************
  *           IsBadCodePtr16   (KERNEL.336)
  */
-BOOL16 IsBadCodePtr16( SEGPTR lpfn )
+BOOL16 WINAPI IsBadCodePtr16( SEGPTR lpfn )
 {
     WORD sel;
     ldt_entry entry;
@@ -367,7 +367,7 @@ BOOL16 IsBadCodePtr16( SEGPTR lpfn )
 /***********************************************************************
  *           IsBadStringPtr16   (KERNEL.337)
  */
-BOOL16 IsBadStringPtr16( SEGPTR ptr, UINT16 size )
+BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 {
     WORD sel;
     ldt_entry entry;
@@ -386,7 +386,7 @@ BOOL16 IsBadStringPtr16( SEGPTR ptr, UINT16 size )
 /***********************************************************************
  *           IsBadHugeReadPtr16   (KERNEL.346)
  */
-BOOL16 IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
+BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 {
     WORD sel;
     ldt_entry entry;
@@ -404,7 +404,7 @@ BOOL16 IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
 /***********************************************************************
  *           IsBadHugeWritePtr16   (KERNEL.347)
  */
-BOOL16 IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
+BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 {
     WORD sel;
     ldt_entry entry;
@@ -421,7 +421,7 @@ BOOL16 IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
 /***********************************************************************
  *           IsBadReadPtr16   (KERNEL.334)
  */
-BOOL16 IsBadReadPtr16( SEGPTR ptr, UINT16 size )
+BOOL16 WINAPI IsBadReadPtr16( SEGPTR ptr, UINT16 size )
 {
     return IsBadHugeReadPtr16( ptr, size );
 }
@@ -430,7 +430,7 @@ BOOL16 IsBadReadPtr16( SEGPTR ptr, UINT16 size )
 /***********************************************************************
  *           IsBadWritePtr16   (KERNEL.335)
  */
-BOOL16 IsBadWritePtr16( SEGPTR ptr, UINT16 size )
+BOOL16 WINAPI IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 {
     return IsBadHugeWritePtr16( ptr, size );
 }
@@ -439,7 +439,7 @@ BOOL16 IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 /***********************************************************************
  *           MemoryRead   (TOOLHELP.78)
  */
-DWORD MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count )
+DWORD WINAPI MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
     if (IS_SELECTOR_FREE(sel)) return 0;
     if (offset > GET_SEL_LIMIT(sel)) return 0;
@@ -453,7 +453,7 @@ DWORD MemoryRead( WORD sel, DWORD offset, void *buffer, DWORD count )
 /***********************************************************************
  *           MemoryWrite   (TOOLHELP.79)
  */
-DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
+DWORD WINAPI MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
 {
     if (IS_SELECTOR_FREE(sel)) return 0;
     if (offset > GET_SEL_LIMIT(sel)) return 0;
@@ -475,7 +475,7 @@ DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
  *
  * Maps fixed segmented pointer to linear.
  */
-LPVOID MapSL( SEGPTR sptr )
+LPVOID WINAPI MapSL( SEGPTR sptr )
 {
     return (LPVOID)PTR_SEG_TO_LIN(sptr);
 }
@@ -486,7 +486,7 @@ LPVOID MapSL( SEGPTR sptr )
  *
  * Maps linear pointer to segmented.
  */
-SEGPTR MapLS( LPVOID ptr )
+SEGPTR WINAPI MapLS( LPVOID ptr )
 {
     WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, SEGMENT_DATA, FALSE, FALSE );
     return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
@@ -498,7 +498,120 @@ SEGPTR MapLS( LPVOID ptr )
  *
  * Free mapped selector.
  */
-void UnMapLS( SEGPTR sptr )
+void WINAPI UnMapLS( SEGPTR sptr )
 {
     if (!__winelib) SELECTOR_FreeBlock( SELECTOROF(sptr), 1 );
 }
+
+/***********************************************************************
+ *           GetThreadSelectorEntry   (KERNEL32)
+ * FIXME: add #ifdef i386 for non x86
+ */
+BOOL32 WINAPI GetThreadSelectorEntry( HANDLE32 hthread, DWORD sel,
+                                      LPLDT_ENTRY ldtent)
+{
+    ldt_entry	ldtentry;
+
+    LDT_GetEntry(SELECTOR_TO_ENTRY(sel),&ldtentry);
+    ldtent->BaseLow = ldtentry.base & 0x0000ffff;
+    ldtent->HighWord.Bits.BaseMid = (ldtentry.base & 0x00ff0000) >> 16;
+    ldtent->HighWord.Bits.BaseHi = (ldtentry.base & 0xff000000) >> 24;
+    ldtent->LimitLow = ldtentry.limit & 0x0000ffff;
+    ldtent->HighWord.Bits.LimitHi = (ldtentry.limit & 0x00ff0000) >> 16;
+    ldtent->HighWord.Bits.Dpl = 3;
+    ldtent->HighWord.Bits.Sys = 0;
+    ldtent->HighWord.Bits.Pres = 1;
+    ldtent->HighWord.Bits.Type = 0x10|(ldtentry.type << 2);
+    if (ldtentry.read_only)
+    	ldtent->HighWord.Bits.Type|=0x2;
+    ldtent->HighWord.Bits.Granularity = ldtentry.limit_in_pages;
+    ldtent->HighWord.Bits.Default_Big = ldtentry.seg_32bit;
+    return TRUE;
+}
+
+
+/**********************************************************************
+ * 		SMapLS*		(KERNEL32)
+ * These functions map linear pointers at [EBP+xxx] to segmented pointers
+ * and return them.
+ * Win95 uses some kind of alias structs, which it stores in [EBP+x] to
+ * unravel them at SUnMapLS. We just store the segmented pointer there.
+ */
+static void
+x_SMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
+    DWORD	val,ptr; 
+
+    val =*(DWORD*)(EBP_reg(context)+argoff);
+    if (val<0x10000) {
+	ptr=val;
+	*(DWORD*)(EBP_reg(context)+argoff) = 0;
+    } else {
+    	ptr = MapLS((LPVOID)val);
+	*(DWORD*)(EBP_reg(context)+argoff) = ptr;
+    }
+    fprintf(stderr,"[EBP+%d] %08lx => %08lx\n",argoff,val,ptr);
+    EAX_reg(context) = ptr;
+}
+
+void WINAPI SMapLS_IP_EBP_8(CONTEXT *context)  {x_SMapLS_IP_EBP_x(context,8);}
+void WINAPI SMapLS_IP_EBP_12(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,12);}
+void WINAPI SMapLS_IP_EBP_16(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,16);}
+void WINAPI SMapLS_IP_EBP_20(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,20);}
+void WINAPI SMapLS_IP_EBP_24(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,24);}
+void WINAPI SMapLS_IP_EBP_28(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,28);}
+void WINAPI SMapLS_IP_EBP_32(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,32);}
+void WINAPI SMapLS_IP_EBP_36(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,36);}
+void WINAPI SMapLS_IP_EBP_40(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,40);}
+
+void WINAPI SMapLS(CONTEXT *context,int argoff)
+{
+    if (EAX_reg(context)>=0x10000) {
+	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
+	EDX_reg(context) = EAX_reg(context);
+    } else {
+	EDX_reg(context) = 0;
+    }
+}
+
+/**********************************************************************
+ *           WOWGetVDMPointer	(KERNEL32.55)
+ * Get linear from segmented pointer. (MSDN lib)
+ */
+LPVOID WINAPI WOWGetVDMPointer(DWORD vp,DWORD nrofbytes,BOOL32 protected)
+{
+    /* FIXME: add size check too */
+    fprintf(stdnimp,"WOWGetVDMPointer(%08lx,%ld,%d)\n",vp,nrofbytes,protected);
+    if (protected)
+	return PTR_SEG_TO_LIN(vp);
+    else
+	return DOSMEM_MapRealToLinear(vp);
+}
+
+/**********************************************************************
+ *           GetVDMPointer32W   (KERNEL.516)
+ */
+LPVOID WINAPI GetVDMPointer32W(DWORD vp,DWORD mode)
+{
+    return WOWGetVDMPointer(vp,0,mode);
+}
+
+/**********************************************************************
+ *           WOWGetVDMPointerFix (KERNEL32.55)
+ * Dito, but fix heapsegment (MSDN lib)
+ */
+LPVOID WINAPI WOWGetVDMPointerFix(DWORD vp,DWORD nrofbytes,BOOL32 protected)
+{
+    /* FIXME: fix heapsegment */
+    fprintf(stdnimp,"WOWGetVDMPointerFix(%08lx,%ld,%d)\n",vp,nrofbytes,protected);
+    return WOWGetVDMPointer(vp,nrofbytes,protected);
+}
+
+/**********************************************************************
+ *           WOWGetVDMPointerUnFix (KERNEL32.56)
+ */
+void WINAPI WOWGetVDMPointerUnfix(DWORD vp)
+{
+    fprintf(stdnimp,"WOWGetVDMPointerUnfix(%08lx), STUB\n",vp);
+    /* FIXME: unfix heapsegment */
+}
+

@@ -230,7 +230,8 @@ static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
 /***********************************************************************
  *           wvsnprintf16   (Not a Windows API)
  */
-INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
+INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
+                           LPCVOID args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
@@ -329,7 +330,8 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsnprintf32A   (Not a Windows API)
  */
-INT32 wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec, LPCVOID args )
+INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
+                            LPCVOID args )
 {
     WPRINTF_FORMAT format;
     LPSTR p = buffer;
@@ -397,7 +399,8 @@ INT32 wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsnprintf32W   (Not a Windows API)
  */
-INT32 wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec, LPCVOID args )
+INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
+                            LPCVOID args )
 {
     WPRINTF_FORMAT format;
     LPWSTR p = buffer;
@@ -464,7 +467,7 @@ INT32 wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsprintf16   (USER.421)
  */
-INT16 wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
+INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
     return wvsnprintf16( buffer, 0xffff, spec, args );
 }
@@ -473,7 +476,7 @@ INT16 wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsprintf32A   (USER32.586)
  */
-INT32 wvsprintf32A( LPSTR buffer, LPCSTR spec, LPCVOID args )
+INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
     return wvsnprintf32A( buffer, 0xffffffff, spec, args );
 }
@@ -482,7 +485,7 @@ INT32 wvsprintf32A( LPSTR buffer, LPCSTR spec, LPCVOID args )
 /***********************************************************************
  *           wvsprintf32W   (USER32.587)
  */
-INT32 wvsprintf32W( LPWSTR buffer, LPCWSTR spec, LPCVOID args )
+INT32 WINAPI wvsprintf32W( LPWSTR buffer, LPCWSTR spec, LPCVOID args )
 {
     return wvsnprintf32W( buffer, 0xffffffff, spec, args );
 }
@@ -492,7 +495,7 @@ INT32 wvsprintf32W( LPWSTR buffer, LPCWSTR spec, LPCVOID args )
  *           wsprintf16   (USER.420)
  */
 /* Winelib version */
-INT16 wsprintf16( LPSTR buffer, LPCSTR spec, ... )
+INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
 {
     va_list valist;
     INT16 res;
@@ -505,7 +508,7 @@ INT16 wsprintf16( LPSTR buffer, LPCSTR spec, ... )
 }
 
 /* Emulator version */
-INT16 WIN16_wsprintf16(void)
+INT16 WINAPIV WIN16_wsprintf16(void)
 {
     SEGPTR *win_stack = (SEGPTR *)CURRENT_STACK16->args;
     LPSTR buffer = (LPSTR)PTR_SEG_TO_LIN(win_stack[0]);
@@ -519,7 +522,7 @@ INT16 WIN16_wsprintf16(void)
  *           wsprintf32A   (USER32.584)
  */
 /* Winelib version */
-INT32 wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
+INT32 WINAPIV wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
 {
     va_list valist;
     INT32 res;
@@ -531,7 +534,7 @@ INT32 wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
 }
 
 /* Emulator version */
-INT32 WIN32_wsprintf32A( DWORD *args )
+INT32 WINAPIV WIN32_wsprintf32A( DWORD *args )
 {
     return wvsprintf32A( (LPSTR)args[0], (LPCSTR)args[1], (LPCVOID)&args[2] );
 }
@@ -541,7 +544,7 @@ INT32 WIN32_wsprintf32A( DWORD *args )
  *           wsprintf32W   (USER32.585)
  */
 /* Winelib version */
-INT32 wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
+INT32 WINAPIV wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
 {
     va_list valist;
     INT32 res;
@@ -553,7 +556,7 @@ INT32 wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
 }
 
 /* Emulator version */
-INT32 WIN32_wsprintf32W( DWORD *args )
+INT32 WINAPIV WIN32_wsprintf32W( DWORD *args )
 {
     return wvsprintf32W( (LPWSTR)args[0], (LPCWSTR)args[1], (LPCVOID)&args[2]);
 }

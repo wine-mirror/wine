@@ -231,11 +231,13 @@ BOOL32 GDI_Init(void)
     {
 	/* Create default palette */
 
+      /* DR well *this* palette can't be moveable (?) */
+
 	HPALETTE16 hpalette = PALETTE_Init();
 
 	if( hpalette )
 	{
-	    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hpalette );
+	    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LOCK( hpalette );
 	    return TRUE;
 	}
     }
@@ -250,12 +252,17 @@ HGDIOBJ16 GDI_AllocObject( WORD size, WORD magic )
 {
     static DWORD count = 0;
     GDIOBJHDR * obj;
-    HGDIOBJ16 handle = GDI_HEAP_ALLOC( size );
+    HGDIOBJ16 handle;
+    if ( magic == DC_MAGIC || magic == METAFILE_DC_MAGIC )
+      handle = GDI_HEAP_ALLOC( size );
+    else 
+      handle = GDI_HEAP_ALLOC_MOVEABLE( size );
     if (!handle) return 0;
-    obj = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    obj = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     obj->hNext   = 0;
     obj->wMagic  = magic;
     obj->dwCount = ++count;
+    GDI_HEAP_UNLOCK( handle );
     return handle;
 }
 
@@ -271,10 +278,10 @@ BOOL32 GDI_FreeObject( HGDIOBJ16 handle )
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
         return TRUE;
     
-    object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (!object) return FALSE;
     object->wMagic = 0;  /* Mark it as invalid */
-
+ 
       /* Free object */
     
     GDI_HEAP_FREE( handle );
@@ -286,6 +293,8 @@ BOOL32 GDI_FreeObject( HGDIOBJ16 handle )
  *
  * Return a pointer to the GDI object associated to the handle.
  * Return NULL if the object has the wrong magic number.
+ * Movable GDI objects are locked in memory: it is up to the caller to unlock
+ * it after the caller is done with the pointer.
  */
 GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
 {
@@ -294,9 +303,13 @@ GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else 
-      ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (!ptr) return NULL;
-    if ((magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) return NULL;
+    if ((magic != MAGIC_DONTCARE) && (ptr->wMagic != magic)) 
+    {
+      GDI_HEAP_UNLOCK( handle );
+      return NULL;
+    }
     return ptr;
 }
 
@@ -304,7 +317,7 @@ GDIOBJHDR * GDI_GetObjPtr( HGDIOBJ16 handle, WORD magic )
 /***********************************************************************
  *           DeleteObject16    (GDI.69)
  */
-BOOL16 DeleteObject16( HGDIOBJ16 obj )
+BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 {
     return DeleteObject32( obj );
 }
@@ -313,12 +326,15 @@ BOOL16 DeleteObject16( HGDIOBJ16 obj )
 /***********************************************************************
  *           DeleteObject32    (GDI32.70)
  */
-BOOL32 DeleteObject32( HGDIOBJ32 obj )
+BOOL32 WINAPI DeleteObject32( HGDIOBJ32 obj )
 {
       /* Check if object is valid */
 
-    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
-    if (!header || HIWORD(obj)) return FALSE;
+    GDIOBJHDR * header;
+    if (HIWORD(obj)) return FALSE;
+    if ((obj >= FIRST_STOCK_HANDLE) && (obj <= LAST_STOCK_HANDLE))
+        return TRUE;
+    if (!(header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj ))) return FALSE;
 
     dprintf_gdi(stddeb, "DeleteObject: %04x\n", obj );
 
@@ -340,7 +356,7 @@ BOOL32 DeleteObject32( HGDIOBJ32 obj )
 /***********************************************************************
  *           GetStockObject16    (GDI.87)
  */
-HGDIOBJ16 GetStockObject16( INT16 obj )
+HGDIOBJ16 WINAPI GetStockObject16( INT16 obj )
 {
     return (HGDIOBJ16)GetStockObject32( obj );
 }
@@ -349,7 +365,7 @@ HGDIOBJ16 GetStockObject16( INT16 obj )
 /***********************************************************************
  *           GetStockObject32    (GDI32.220)
  */
-HGDIOBJ32 GetStockObject32( INT32 obj )
+HGDIOBJ32 WINAPI GetStockObject32( INT32 obj )
 {
     if ((obj < 0) || (obj >= NB_STOCK_OBJECTS)) return 0;
     if (!StockObjects[obj]) return 0;
@@ -362,73 +378,86 @@ HGDIOBJ32 GetStockObject32( INT32 obj )
 /***********************************************************************
  *           GetObject16    (GDI.82)
  */
-INT16 GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
+INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
+    INT16 result = 0;
     dprintf_gdi(stddeb, "GetObject16: %04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (!ptr) return 0;
     
     switch(ptr->wMagic)
-    {
+      {
       case PEN_MAGIC:
-	  return PEN_GetObject16( (PENOBJ *)ptr, count, buffer );
+	result = PEN_GetObject16( (PENOBJ *)ptr, count, buffer );
+	break;
       case BRUSH_MAGIC: 
-	  return BRUSH_GetObject16( (BRUSHOBJ *)ptr, count, buffer );
+	result = BRUSH_GetObject16( (BRUSHOBJ *)ptr, count, buffer );
+	break;
       case BITMAP_MAGIC: 
-	  return BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
+	result = BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
+	break;
       case FONT_MAGIC:
-	  return FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
+	result = FONT_GetObject16( (FONTOBJ *)ptr, count, buffer );
+	break;
       case PALETTE_MAGIC:
-	  return PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
-    }
-    return 0;
+	result = PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
+	break;
+      }
+    GDI_HEAP_UNLOCK( handle );
+    return result;
 }
 
 
 /***********************************************************************
  *           GetObject32A    (GDI32.204)
  */
-INT32 GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
+INT32 WINAPI GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
+    INT32 result = 0;
     dprintf_gdi(stddeb, "GetObject32A: %08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
       ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
     else
-      ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+      ptr = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (!ptr) return 0;
     
     switch(ptr->wMagic)
     {
       case PEN_MAGIC:
-	  return PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+	  result = PEN_GetObject32( (PENOBJ *)ptr, count, buffer );
+	  break;
       case BRUSH_MAGIC: 
-	  return BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
+	  result = BRUSH_GetObject32( (BRUSHOBJ *)ptr, count, buffer );
+	  break;
       case BITMAP_MAGIC: 
-	  return BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+	  result = BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+	  break;
       case FONT_MAGIC:
-	  return FONT_GetObject32A( (FONTOBJ *)ptr, count, buffer );
+	  result = FONT_GetObject32A( (FONTOBJ *)ptr, count, buffer );
+	  break;
       case PALETTE_MAGIC:
           fprintf( stderr, "GetObject32: magic %04x not implemented\n",
                    ptr->wMagic );
           break;
     }
-    return 0;
+    GDI_HEAP_UNLOCK( handle );
+    return result;
 }
 
 
 /***********************************************************************
  *           GetObject32W    (GDI32.206)
  */
-INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
+INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 {
     return GetObject32A( handle, count, buffer );
 }
@@ -437,7 +466,7 @@ INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           SelectObject16    (GDI.45)
  */
-HGDIOBJ16 SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
+HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 {
     return (HGDIOBJ16)SelectObject32( hdc, handle );
 }
@@ -446,7 +475,7 @@ HGDIOBJ16 SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 /***********************************************************************
  *           SelectObject32    (GDI32.299)
  */
-HGDIOBJ32 SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
+HGDIOBJ32 WINAPI SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
 {
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc || !dc->funcs->pSelectObject) return 0;
@@ -458,7 +487,7 @@ HGDIOBJ32 SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
 /***********************************************************************
  *           UnrealizeObject16    (GDI.150)
  */
-BOOL16 UnrealizeObject16( HGDIOBJ16 obj )
+BOOL16 WINAPI UnrealizeObject16( HGDIOBJ16 obj )
 {
     return UnrealizeObject32( obj );
 }
@@ -467,11 +496,12 @@ BOOL16 UnrealizeObject16( HGDIOBJ16 obj )
 /***********************************************************************
  *           UnrealizeObject    (GDI32.358)
  */
-BOOL32 UnrealizeObject32( HGDIOBJ32 obj )
+BOOL32 WINAPI UnrealizeObject32( HGDIOBJ32 obj )
 {
-      /* Check if object is valid */
+    BOOL32 result = TRUE;
+  /* Check if object is valid */
 
-    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( obj );
+    GDIOBJHDR * header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj );
     if (!header) return FALSE;
 
     dprintf_gdi( stddeb, "UnrealizeObject: %04x\n", obj );
@@ -481,21 +511,23 @@ BOOL32 UnrealizeObject32( HGDIOBJ32 obj )
     switch(header->wMagic)
     {
     case PALETTE_MAGIC: 
-        return PALETTE_UnrealizeObject( obj, (PALETTEOBJ *)header );
+        result = PALETTE_UnrealizeObject( obj, (PALETTEOBJ *)header );
+	break;
 
     case BRUSH_MAGIC:
         /* Windows resets the brush origin. We don't need to. */
         break;
     }
-    return TRUE;
+    GDI_HEAP_UNLOCK( obj );
+    return result;
 }
 
 
 /***********************************************************************
  *           EnumObjects16    (GDI.71)
  */
-INT16 EnumObjects16( HDC16 hdc, INT16 nObjType, GOBJENUMPROC16 lpEnumFunc,
-                     LPARAM lParam )
+INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
+                            GOBJENUMPROC16 lpEnumFunc, LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =
@@ -573,8 +605,8 @@ INT16 EnumObjects16( HDC16 hdc, INT16 nObjType, GOBJENUMPROC16 lpEnumFunc,
 /***********************************************************************
  *           EnumObjects32    (GDI32.89)
  */
-INT32 EnumObjects32( HDC32 hdc, INT32 nObjType, GOBJENUMPROC32 lpEnumFunc,
-                     LPARAM lParam )
+INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
+                            GOBJENUMPROC32 lpEnumFunc, LPARAM lParam )
 {
     /* Solid colors to enumerate */
     static const COLORREF solid_colors[] =
@@ -648,12 +680,19 @@ INT32 EnumObjects32( HDC32 hdc, INT32 nObjType, GOBJENUMPROC32 lpEnumFunc,
 
 /***********************************************************************
  *           IsGDIObject    (GDI.462)
+ * 
+ * returns type of object if valid (W95 system programming secrets p. 264-5)
  */
-BOOL16 IsGDIObject( HGDIOBJ16 handle )
+BOOL16 WINAPI IsGDIObject( HGDIOBJ16 handle )
 {
-    GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
     if (object)
-      return (object->wMagic>=PEN_MAGIC && object->wMagic<= METAFILE_DC_MAGIC);
+    {
+        UINT16 magic = object->wMagic;
+        GDI_HEAP_UNLOCK( handle );
+        if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
+            return magic - PEN_MAGIC + 1;
+    }
     return FALSE;
 }
 
@@ -661,7 +700,7 @@ BOOL16 IsGDIObject( HGDIOBJ16 handle )
 /***********************************************************************
  *           MulDiv16   (GDI.128)
  */
-INT16 MulDiv16( INT16 foo, INT16 bar, INT16 baz )
+INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )
 {
     INT32 ret;
     if (!baz) return -32768;
@@ -674,7 +713,7 @@ INT16 MulDiv16( INT16 foo, INT16 bar, INT16 baz )
 /***********************************************************************
  *           MulDiv32   (KERNEL32.391)
  */
-INT32 MulDiv32( INT32 foo, INT32 bar, INT32 baz )
+INT32 WINAPI MulDiv32( INT32 foo, INT32 bar, INT32 baz )
 {
 #ifdef __GNUC__
     long long ret;

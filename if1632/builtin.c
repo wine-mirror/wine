@@ -154,7 +154,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
     { &LZ32_Descriptor,     0 },
-    { &MPR_Descriptor,      0 },
+    { &MPR_Descriptor,      DLL_FLAG_NOT_USED },
     { &NTDLL_Descriptor,    0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },

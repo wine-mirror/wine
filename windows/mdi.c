@@ -615,22 +615,28 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
  HDC32 		hDCSrc  = CreateCompatibleDC32(0);
  HDC32		hDCDest	= CreateCompatibleDC32(hDCSrc);
  HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CLOSE) );
- HBITMAP16	hbCopy,hb_src,hb_dest;
+ HBITMAP16	hbCopy;
+ HANDLE16	hobjSrc, hobjDest;
 
- hb_src = SelectObject32(hDCSrc,hbClose);
+ hobjSrc = SelectObject32(hDCSrc, hbClose);
  hbCopy = CreateCompatibleBitmap32(hDCSrc,SYSMETRICS_CXSIZE,SYSMETRICS_CYSIZE);
- hb_dest = SelectObject32(hDCDest,hbCopy);
+ hobjDest = SelectObject32(hDCDest, hbCopy);
 
  BitBlt32(hDCDest, 0, 0, SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE,
           hDCSrc, SYSMETRICS_CXSIZE, 0, SRCCOPY);
- 
- SelectObject32(hDCSrc,hb_src);
- SelectObject32(hDCDest,hb_dest);
-
+  
+ SelectObject32(hDCSrc, hobjSrc);
  DeleteObject32(hbClose);
-
- DeleteDC32(hDCDest);
  DeleteDC32(hDCSrc);
+
+ hobjSrc = SelectObject32( hDCDest, GetStockObject32(BLACK_PEN) );
+
+ MoveToEx32( hDCDest, SYSMETRICS_CXSIZE - 1, 0, NULL );
+ LineTo32( hDCDest, SYSMETRICS_CXSIZE - 1, SYSMETRICS_CYSIZE - 1);
+
+ SelectObject32(hDCDest, hobjSrc );
+ SelectObject32(hDCDest, hobjDest);
+ DeleteDC32(hDCDest);
 
  return hbCopy;
 }
@@ -897,7 +903,8 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND16 hClient,
  *
  * This function is the handler for all MDI requests.
  */
-LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lParam)
+LRESULT WINAPI MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam,
+                                LPARAM lParam)
 {
     LPCREATESTRUCT16     cs;
     MDICLIENTINFO       *ci;
@@ -1090,8 +1097,8 @@ LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, WPARAM16 wParam, LPARAM lP
 /***********************************************************************
  *           DefFrameProc16   (USER.445)
  */
-LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message, 
-                        WPARAM16 wParam, LPARAM lParam )
+LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
+                               UINT16 message, WPARAM16 wParam, LPARAM lParam )
 {
     HWND16	         childHwnd;
     MDICLIENTINFO*       ci;
@@ -1188,8 +1195,8 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 /***********************************************************************
  *           DefFrameProc32A   (USER32.121)
  */
-LRESULT DefFrameProc32A( HWND32 hwnd, HWND32 hwndMDIClient, UINT32 message, 
-                         WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DefFrameProc32A( HWND32 hwnd, HWND32 hwndMDIClient,
+                                UINT32 message, WPARAM32 wParam, LPARAM lParam)
 {
     if (hwndMDIClient)
     {
@@ -1228,8 +1235,8 @@ LRESULT DefFrameProc32A( HWND32 hwnd, HWND32 hwndMDIClient, UINT32 message,
 /***********************************************************************
  *           DefFrameProc32W   (USER32.122)
  */
-LRESULT DefFrameProc32W( HWND32 hwnd, HWND32 hwndMDIClient, UINT32 message, 
-                         WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DefFrameProc32W( HWND32 hwnd, HWND32 hwndMDIClient,
+                                UINT32 message, WPARAM32 wParam, LPARAM lParam)
 {
     if (hwndMDIClient)
     {
@@ -1265,8 +1272,8 @@ LRESULT DefFrameProc32W( HWND32 hwnd, HWND32 hwndMDIClient, UINT32 message,
 /***********************************************************************
  *           DefMDIChildProc16   (USER.447)
  */
-LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
-                           WPARAM16 wParam, LPARAM lParam )
+LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
+                                  WPARAM16 wParam, LPARAM lParam )
 {
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
@@ -1411,8 +1418,8 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 /***********************************************************************
  *           DefMDIChildProc32A   (USER32.123)
  */
-LRESULT DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
-                            WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
+                                   WPARAM32 wParam, LPARAM lParam )
 {
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
@@ -1463,8 +1470,8 @@ LRESULT DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
 /***********************************************************************
  *           DefMDIChildProc32W   (USER32.124)
  */
-LRESULT DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
-                            WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
+                                   WPARAM32 wParam, LPARAM lParam )
 {
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
@@ -1509,7 +1516,7 @@ LRESULT DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
 /**********************************************************************
  *             TranslateMDISysAccel32   (USER32.554)
  */
-BOOL32 TranslateMDISysAccel32( HWND32 hwndClient, LPMSG32 msg )
+BOOL32 WINAPI TranslateMDISysAccel32( HWND32 hwndClient, LPMSG32 msg )
 {
     MSG16 msg16;
  
@@ -1522,7 +1529,7 @@ BOOL32 TranslateMDISysAccel32( HWND32 hwndClient, LPMSG32 msg )
 /**********************************************************************
  *             TranslateMDISysAccel16   (USER.451)
  */
-BOOL16 TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
+BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
     WND* clientWnd = WIN_FindWndPtr( hwndClient);
 
@@ -1570,7 +1577,7 @@ BOOL16 TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 /***********************************************************************
  *           CalcChildScroll   (USER.462)
  */
-void CalcChildScroll( HWND16 hwnd, WORD scroll )
+void WINAPI CalcChildScroll( HWND16 hwnd, WORD scroll )
 {
     RECT32 childRect, clientRect;
     INT32  vmin, vmax, hmin, hmax, vpos, hpos;
@@ -1620,7 +1627,7 @@ void CalcChildScroll( HWND16 hwnd, WORD scroll )
 /***********************************************************************
  *           ScrollChildren16   (USER.463)
  */
-void ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
+void WINAPI ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
 {
     return ScrollChildren32( hWnd, uMsg, wParam, lParam );
 }
@@ -1629,7 +1636,8 @@ void ScrollChildren16(HWND16 hWnd, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *           ScrollChildren32   (USER32.447)
  */
-void ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
+void WINAPI ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
+                             LPARAM lParam)
 {
     WND	*wndPtr = WIN_FindWndPtr(hWnd);
     INT32 newPos = -1;
@@ -1694,8 +1702,10 @@ void ScrollChildren32(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
  SetScrollPos32(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
 
  if( uMsg == WM_VSCROLL )
-     ScrollWindow32(hWnd ,0 ,curPos - newPos, NULL, NULL);
+     ScrollWindowEx32(hWnd ,0 ,curPos - newPos, NULL, NULL, 0, NULL, 
+			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
  else
-     ScrollWindow32(hWnd ,curPos - newPos, 0, NULL, NULL);
+     ScrollWindowEx32(hWnd ,curPos - newPos, 0, NULL, NULL, 0, NULL,
+			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
 }
 

@@ -175,7 +175,7 @@ void SYSCOLOR_Init(void)
 /*************************************************************************
  *             GetSysColor16   (USER.180)
  */
-COLORREF GetSysColor16( INT16 nIndex )
+COLORREF WINAPI GetSysColor16( INT16 nIndex )
 {
     return SysColors[nIndex];
 }
@@ -184,7 +184,7 @@ COLORREF GetSysColor16( INT16 nIndex )
 /*************************************************************************
  *             GetSysColor32   (USER32.288)
  */
-COLORREF GetSysColor32( INT32 nIndex )
+COLORREF WINAPI GetSysColor32( INT32 nIndex )
 {
     return SysColors[nIndex];
 }
@@ -193,8 +193,8 @@ COLORREF GetSysColor32( INT32 nIndex )
 /*************************************************************************
  *             SetSysColors16   (USER.181)
  */
-VOID SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
-                     const COLORREF *lpColorValues )
+VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
+                            const COLORREF *lpColorValues )
 {
     int i;
 
@@ -217,8 +217,8 @@ VOID SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 /*************************************************************************
  *             SetSysColors32   (USER32.504)
  */
-BOOL32 SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
-                       const COLORREF *lpColorValues )
+BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
+                              const COLORREF *lpColorValues )
 {
     int i;
 

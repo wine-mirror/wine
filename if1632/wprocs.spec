@@ -1,7 +1,6 @@
 name	wprocs
 type	win16
 
-1  pascal WINPROC_CallProc16To32A(word word word long long) WINPROC_CallProc16To32A
 10 pascal MDIClientWndProc(word word word long) MDIClientWndProc
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc
@@ -11,7 +10,7 @@ type	win16
 19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc
 20 pascal PrintDlgProc(word word word long) PrintDlgProc
 24 pascal16 TASK_Reschedule() TASK_Reschedule
-27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
+27 pascal EntryAddrProc(word word) EntryAddrProc
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment
 30 pascal FormatCharDlgProc(word word word long) FormatCharDlgProc
  
@@ -279,6 +278,7 @@ type	win16
 #
 #400+VXD_ID register <VxD handler>() <VxD handler>
 #
+405 register VXD_Timer() VXD_Timer
 414 register VXD_Comm() VXD_Comm
 #415 register VXD_Printer() VXD_Printer
 423 register VXD_Shell() VXD_Shell

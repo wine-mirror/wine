@@ -248,7 +248,8 @@ static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT32 msg, BOOL16 fResult)
 /***********************************************************************
  *           DefDlgProc16   (USER.308)
  */
-LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
+LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+                             LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
     BOOL16 result = FALSE;
@@ -302,7 +303,8 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
 /***********************************************************************
  *           DefDlgProc32A   (USER32.119)
  */
-LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
+                              WPARAM32 wParam, LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
     BOOL16 result = FALSE;
@@ -356,7 +358,8 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 /***********************************************************************
  *           DefDlgProc32W   (USER32.120)
  */
-LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
+LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                              LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
     BOOL16 result = FALSE;

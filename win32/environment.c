@@ -18,7 +18,7 @@
 /***********************************************************************
  *           GetCommandLineA      (KERNEL32.161)
  */
-LPCSTR GetCommandLine32A(void)
+LPCSTR WINAPI GetCommandLine32A(void)
 {
     static char buffer[256];
     char *cp;
@@ -39,7 +39,7 @@ LPCSTR GetCommandLine32A(void)
 /***********************************************************************
  *           GetCommandLineW      (KERNEL32.162)
  */
-LPCWSTR GetCommandLine32W(void)
+LPCWSTR WINAPI GetCommandLine32W(void)
 {
     static WCHAR buffer[256];
 
@@ -51,7 +51,7 @@ LPCWSTR GetCommandLine32W(void)
 /***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.621)
  */
-BOOL32 GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
+BOOL32 WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 {
     return FALSE;   /* no power management support */
 }
@@ -60,7 +60,8 @@ BOOL32 GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
 /***********************************************************************
  *           SetSystemPowerState      (KERNEL32.630)
  */
-BOOL32 SetSystemPowerState(BOOL32 suspend_or_hibernate, BOOL32 force_flag)
+BOOL32 WINAPI SetSystemPowerState(BOOL32 suspend_or_hibernate,
+                                  BOOL32 force_flag)
 {
     /* suspend_or_hibernate flag: w95 does not support
        this feature anyway */

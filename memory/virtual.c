@@ -416,7 +416,7 @@ BOOL32 VIRTUAL_Init(void)
 /***********************************************************************
  *             VirtualAlloc   (KERNEL32.548)
  */
-LPVOID VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect )
+LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
 {
     FILE_VIEW *view;
     UINT32 base, ptr, view_size;
@@ -517,7 +517,7 @@ LPVOID VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect )
 /***********************************************************************
  *             VirtualFree   (KERNEL32.550)
  */
-BOOL32 VirtualFree( LPVOID addr, DWORD size, DWORD type )
+BOOL32 WINAPI VirtualFree( LPVOID addr, DWORD size, DWORD type )
 {
     FILE_VIEW *view;
     UINT32 base;
@@ -567,7 +567,7 @@ BOOL32 VirtualFree( LPVOID addr, DWORD size, DWORD type )
 /***********************************************************************
  *             VirtualLock   (KERNEL32.551)
  */
-BOOL32 VirtualLock( LPVOID addr, DWORD size )
+BOOL32 WINAPI VirtualLock( LPVOID addr, DWORD size )
 {
     return TRUE;
 }
@@ -576,7 +576,7 @@ BOOL32 VirtualLock( LPVOID addr, DWORD size )
 /***********************************************************************
  *             VirtualUnlock   (KERNEL32.556)
  */
-BOOL32 VirtualUnlock( LPVOID addr, DWORD size )
+BOOL32 WINAPI VirtualUnlock( LPVOID addr, DWORD size )
 {
     return TRUE;
 }
@@ -585,8 +585,8 @@ BOOL32 VirtualUnlock( LPVOID addr, DWORD size )
 /***********************************************************************
  *             VirtualProtect   (KERNEL32.552)
  */
-BOOL32 VirtualProtect( LPVOID addr, DWORD size, DWORD new_prot,
-                       LPDWORD old_prot )
+BOOL32 WINAPI VirtualProtect( LPVOID addr, DWORD size, DWORD new_prot,
+                              LPDWORD old_prot )
 {
     FILE_VIEW *view;
     UINT32 base, i;
@@ -628,8 +628,8 @@ BOOL32 VirtualProtect( LPVOID addr, DWORD size, DWORD new_prot,
 /***********************************************************************
  *             VirtualProtectEx   (KERNEL32.553)
  */
-BOOL32 VirtualProtectEx( HANDLE32 handle, LPVOID addr, DWORD size,
-                         DWORD new_prot, LPDWORD old_prot )
+BOOL32 WINAPI VirtualProtectEx( HANDLE32 handle, LPVOID addr, DWORD size,
+                                DWORD new_prot, LPDWORD old_prot )
 {
     BOOL32 ret = FALSE;
 
@@ -649,7 +649,8 @@ BOOL32 VirtualProtectEx( HANDLE32 handle, LPVOID addr, DWORD size,
 /***********************************************************************
  *             VirtualQuery   (KERNEL32.554)
  */
-BOOL32 VirtualQuery( LPCVOID addr, LPMEMORY_BASIC_INFORMATION info, DWORD len )
+BOOL32 WINAPI VirtualQuery( LPCVOID addr, LPMEMORY_BASIC_INFORMATION info,
+                            DWORD len )
 {
     FILE_VIEW *view = VIRTUAL_FirstView;
     UINT32 base = ROUND_ADDR( addr );
@@ -710,8 +711,8 @@ BOOL32 VirtualQuery( LPCVOID addr, LPMEMORY_BASIC_INFORMATION info, DWORD len )
 /***********************************************************************
  *             VirtualQueryEx   (KERNEL32.555)
  */
-BOOL32 VirtualQueryEx( HANDLE32 handle, LPCVOID addr,
-                       LPMEMORY_BASIC_INFORMATION info, DWORD len )
+BOOL32 WINAPI VirtualQueryEx( HANDLE32 handle, LPCVOID addr,
+                              LPMEMORY_BASIC_INFORMATION info, DWORD len )
 {
     BOOL32 ret = FALSE;
 
@@ -731,7 +732,7 @@ BOOL32 VirtualQueryEx( HANDLE32 handle, LPCVOID addr,
 /***********************************************************************
  *             IsBadReadPtr32   (KERNEL32.354)
  */
-BOOL32 IsBadReadPtr32( LPCVOID ptr, UINT32 size )
+BOOL32 WINAPI IsBadReadPtr32( LPCVOID ptr, UINT32 size )
 {
     return !VIRTUAL_CheckFlags( (UINT32)ptr, size,
                                 VPROT_READ | VPROT_COMMITTED );
@@ -741,7 +742,7 @@ BOOL32 IsBadReadPtr32( LPCVOID ptr, UINT32 size )
 /***********************************************************************
  *             IsBadWritePtr32   (KERNEL32.357)
  */
-BOOL32 IsBadWritePtr32( LPVOID ptr, UINT32 size )
+BOOL32 WINAPI IsBadWritePtr32( LPVOID ptr, UINT32 size )
 {
     return !VIRTUAL_CheckFlags( (UINT32)ptr, size,
                                 VPROT_WRITE | VPROT_COMMITTED );
@@ -751,7 +752,7 @@ BOOL32 IsBadWritePtr32( LPVOID ptr, UINT32 size )
 /***********************************************************************
  *             IsBadHugeReadPtr32   (KERNEL32.352)
  */
-BOOL32 IsBadHugeReadPtr32( LPCVOID ptr, UINT32 size )
+BOOL32 WINAPI IsBadHugeReadPtr32( LPCVOID ptr, UINT32 size )
 {
     return IsBadReadPtr32( ptr, size );
 }
@@ -760,7 +761,7 @@ BOOL32 IsBadHugeReadPtr32( LPCVOID ptr, UINT32 size )
 /***********************************************************************
  *             IsBadHugeWritePtr32   (KERNEL32.353)
  */
-BOOL32 IsBadHugeWritePtr32( LPVOID ptr, UINT32 size )
+BOOL32 WINAPI IsBadHugeWritePtr32( LPVOID ptr, UINT32 size )
 {
     return IsBadWritePtr32( ptr, size );
 }
@@ -769,7 +770,7 @@ BOOL32 IsBadHugeWritePtr32( LPVOID ptr, UINT32 size )
 /***********************************************************************
  *             IsBadCodePtr32   (KERNEL32.351)
  */
-BOOL32 IsBadCodePtr32( FARPROC32 ptr )
+BOOL32 WINAPI IsBadCodePtr32( FARPROC32 ptr )
 {
     return !VIRTUAL_CheckFlags( (UINT32)ptr, 1, VPROT_EXEC | VPROT_COMMITTED );
 }
@@ -778,7 +779,7 @@ BOOL32 IsBadCodePtr32( FARPROC32 ptr )
 /***********************************************************************
  *             IsBadStringPtr32A   (KERNEL32.355)
  */
-BOOL32 IsBadStringPtr32A( LPCSTR str, UINT32 max )
+BOOL32 WINAPI IsBadStringPtr32A( LPCSTR str, UINT32 max )
 {
     FILE_VIEW *view;
     UINT32 page, count;
@@ -806,7 +807,7 @@ BOOL32 IsBadStringPtr32A( LPCSTR str, UINT32 max )
 /***********************************************************************
  *             IsBadStringPtr32W   (KERNEL32.356)
  */
-BOOL32 IsBadStringPtr32W( LPCWSTR str, UINT32 max )
+BOOL32 WINAPI IsBadStringPtr32W( LPCWSTR str, UINT32 max )
 {
     FILE_VIEW *view;
     UINT32 page, count;
@@ -834,9 +835,9 @@ BOOL32 IsBadStringPtr32W( LPCWSTR str, UINT32 max )
 /***********************************************************************
  *             CreateFileMapping32A   (KERNEL32.46)
  */
-HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
-                               DWORD protect, DWORD size_high, DWORD size_low,
-                               LPCSTR name )
+HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
+                                     DWORD protect, DWORD size_high,
+                                     DWORD size_low, LPCSTR name )
 {
     FILE_MAPPING *mapping = NULL;
     HANDLE32 handle;
@@ -930,9 +931,9 @@ error:
 /***********************************************************************
  *             CreateFileMapping32W   (KERNEL32.47)
  */
-HANDLE32 CreateFileMapping32W( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
-                               DWORD protect, DWORD size_high, DWORD size_low,
-                               LPCWSTR name )
+HANDLE32 WINAPI CreateFileMapping32W(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
+                                     DWORD protect, DWORD size_high,
+                                     DWORD size_low, LPCWSTR name )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     HANDLE32 ret = CreateFileMapping32A( hFile, attr, protect,
@@ -945,7 +946,7 @@ HANDLE32 CreateFileMapping32W( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
 /***********************************************************************
  *             OpenFileMapping32A   (KERNEL32.397)
  */
-HANDLE32 OpenFileMapping32A( DWORD access, BOOL32 inherit, LPCSTR name )
+HANDLE32 WINAPI OpenFileMapping32A( DWORD access, BOOL32 inherit, LPCSTR name )
 {
     K32OBJ *obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE );
     if (!obj) return 0;
@@ -956,7 +957,7 @@ HANDLE32 OpenFileMapping32A( DWORD access, BOOL32 inherit, LPCSTR name )
 /***********************************************************************
  *             OpenFileMapping32W   (KERNEL32.398)
  */
-HANDLE32 OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name )
+HANDLE32 WINAPI OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name)
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     HANDLE32 ret = OpenFileMapping32A( access, inherit, nameA );
@@ -984,8 +985,8 @@ void VIRTUAL_DestroyMapping( K32OBJ *ptr )
 /***********************************************************************
  *             MapViewOfFile   (KERNEL32.385)
  */
-LPVOID MapViewOfFile( HANDLE32 mapping, DWORD access, DWORD offset_high,
-                      DWORD offset_low, DWORD count )
+LPVOID WINAPI MapViewOfFile( HANDLE32 mapping, DWORD access, DWORD offset_high,
+                             DWORD offset_low, DWORD count )
 {
     return MapViewOfFileEx( mapping, access, offset_high,
                             offset_low, count, NULL );
@@ -995,8 +996,8 @@ LPVOID MapViewOfFile( HANDLE32 mapping, DWORD access, DWORD offset_high,
 /***********************************************************************
  *             MapViewOfFileEx   (KERNEL32.386)
  */
-LPVOID MapViewOfFileEx( HANDLE32 handle, DWORD access, DWORD offset_high,
-                        DWORD offset_low, DWORD count, LPVOID addr )
+LPVOID WINAPI MapViewOfFileEx(HANDLE32 handle, DWORD access, DWORD offset_high,
+                              DWORD offset_low, DWORD count, LPVOID addr )
 {
     FILE_MAPPING *mapping;
     FILE_VIEW *view;
@@ -1082,7 +1083,7 @@ error:
 /***********************************************************************
  *             UnmapViewOfFile   (KERNEL32.540)
  */
-BOOL32 UnmapViewOfFile( LPVOID addr )
+BOOL32 WINAPI UnmapViewOfFile( LPVOID addr )
 {
     FILE_VIEW *view;
     UINT32 base = ROUND_ADDR( addr );

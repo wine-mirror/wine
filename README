@@ -83,7 +83,8 @@ UPDATE: Windows 95 components are known to cause more crashes compared
 
 The best place to get help or to report bugs is the Usenet newsgroup
 comp.emulators.ms-windows.wine. The Wine FAQ is posted there every
-month.
+month. Also, you may want to browse old messages on www.dejanews.com 
+to check whether your problem is already fixed. 
 
 If you add something, or fix a bug, please send a patch ('diff -u'
 format preferred) to julliard@lrc.epfl.ch for inclusion in the next

@@ -874,20 +874,20 @@ base	0
 870 stub _snwprintf
 871 stub _splitpath
 872 stub _strcmpi
-873 stub _stricmp
+873 stdcall _stricmp(ptr ptr) lstrcmpi32A
 874 stub _strlwr
 875 stub _strnicmp
 876 stdcall _strupr(ptr) CRTDLL__strupr
 877 stub _ultoa
 878 stub _vsnprintf
 879 stdcall _wcsicmp(ptr ptr) lstrcmpi32W
-880 stub _wcslwr
-881 stub _wcsnicmp
-882 stub _wcsupr
+880 stdcall _wcslwr(ptr) CRTDLL__wcslwr
+881 stdcall _wcsnicmp(ptr ptr long) lstrncmpi32W
+882 stdcall _wcsupr(ptr) CRTDLL__wcsupr
 883 stub abs
 884 stub atan
 885 stdcall atoi(ptr) CRTDLL_atoi
-886 stub atol
+886 stdcall atol(ptr) CRTDLL_atol
 887 stub ceil
 888 stub cos
 889 stub fabs
@@ -917,10 +917,10 @@ base	0
 913 stdcall sscanf() CRTDLL_sscanf
 914 stub strcat
 915 stdcall strchr(ptr long) strchr
-916 stub strcmp
-917 stub strcpy
+916 stdcall strcmp(ptr ptr) lstrcmp32A
+917 stdcall strcpy(ptr ptr) lstrcpy32A
 918 stub strcspn
-919 stub strlen
+919 stdcall strlen(ptr) lstrlen32A
 920 stub strncat
 921 stub strncmp
 922 stub strncpy

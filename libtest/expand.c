@@ -11,34 +11,29 @@ int PASCAL WinMain(HINSTANCE hinstCurrent,
 {
   OFSTRUCT SourceOpenStruct1, SourceOpenStruct2;
   char OriginalName[256], WriteBuf[256];
-  char FAR *lpzDestFile,
-  			FAR *lpzHolder = lpCmdLine,
-  			FAR *arrgv[2] = {0};
-  int wargs;
+  char FAR *lpzDestFile;
   DWORD dwreturn;
   HFILE hSourceFile, hDestFile;
+  /* Most Windows compilers have something like this: */
+  extern int _ARGC;
+  extern char **_ARGV;
 
-  for (wargs = 1; wargs < 3; wargs++)
-  {arrgv[wargs] = lpzHolder;
-  for (; *lpzHolder != '\0'; lpzHolder++)
-	if (*lpzHolder == ' ') {*lpzHolder++ = '\0'; break;};
-	};
 
-MessageBox((HWND)NULL, (LPCSTR)arrgv[1], (LPCSTR)"arrgv[1]:", MB_OK);
-MessageBox((HWND)NULL, (LPCSTR)arrgv[2], (LPCSTR)"arrgv[2]:", MB_OK);
+MessageBox((HWND)NULL, (LPCSTR)_ARGV[1], (LPCSTR)"_ARGV[1]:", MB_OK);
+MessageBox((HWND)NULL, (LPCSTR)_ARGV[2], (LPCSTR)"_ARGV[2]:", MB_OK);
 
-  hSourceFile = LZOpenFile(arrgv[1], (LPOFSTRUCT) &SourceOpenStruct1,
+  hSourceFile = LZOpenFile(_ARGV[1], (LPOFSTRUCT) &SourceOpenStruct1,
 			OF_READ);
 
 wsprintf(WriteBuf, "Source File Handle: %d\nNo. of args: %d",
-	   hSourceFile, wargs);
+	   hSourceFile, _ARGC);
 MessageBox((HWND)NULL, (LPCSTR)WriteBuf, (LPCSTR)NULL, MB_OK);
 
-  if ((wargs == 3) && (arrgv[2] != NULL)) lpzDestFile = arrgv[2];
+  if ((_ARGC == 3) && (_ARGV[2] != NULL)) lpzDestFile = _ARGV[2];
   else
   {
   lpzDestFile = OriginalName;
-  GetExpandedName(arrgv[1], lpzDestFile);
+  GetExpandedName(_ARGV[1], lpzDestFile);
   };
 
  MessageBox((HWND)NULL, (LPCSTR)lpzDestFile, (LPCSTR)"Destination File",
@@ -47,7 +42,7 @@ MessageBox((HWND)NULL, (LPCSTR)WriteBuf, (LPCSTR)NULL, MB_OK);
   hDestFile = LZOpenFile(lpzDestFile, (LPOFSTRUCT) &SourceOpenStruct2,
 			OF_CREATE | OF_WRITE);
 wsprintf(WriteBuf, "Destination File Handle: %d\nNo. of args: %d",
-	   hDestFile, wargs-1);
+	   hDestFile, _ARGC-1);
 MessageBox((HWND)NULL, (LPCSTR)WriteBuf, (LPCSTR)NULL, MB_OK);
 
   dwreturn = LZCopy(hSourceFile, hDestFile);
@@ -68,7 +63,7 @@ MessageBox((HWND)NULL, (LPCSTR)WriteBuf, (LPCSTR)NULL, MB_OK);
   	MessageBox((HWND)NULL,  (LPCSTR)"LZERROR_WRITE\n", (LPCSTR)NULL, MB_OK);
   if ((long)dwreturn > 0L)
    {wsprintf((LPSTR)WriteBuf, (LPCSTR)"Successful decompression from %s to %s\n",
-    			   arrgv[1], lpzDestFile);
+    			   _ARGV[1], lpzDestFile);
 	MessageBox((HWND)NULL, (LPSTR)WriteBuf, (LPCSTR)NULL, MB_OK);
 	};
   LZClose(hSourceFile); LZClose(hDestFile);

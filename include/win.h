@@ -74,7 +74,7 @@ typedef struct tagWND
     HWND32         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    UINT16         wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    UINT32         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     WORD           flags;         /* Misc. flags (see below) */
     Window         window;        /* X window (only for top-level windows) */
     HMENU16        hSysMenu;      /* window's copy of System Menu */
@@ -124,6 +124,7 @@ extern void   WIN_SendParentNotify( HWND32 hwnd, WORD event,
 extern void   WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew );
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
+extern WND*   WIN_GetTopParentPtr( WND* pWnd );
 extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
 extern HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );

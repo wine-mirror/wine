@@ -45,8 +45,8 @@ void LoadStartupDrivers(void)
 /**************************************************************************
  *				SendDriverMessage		[USER.251]
  */
-LRESULT SendDriverMessage(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
-			  LPARAM lParam2)
+LRESULT WINAPI SendDriverMessage(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
+                                 LPARAM lParam2)
 {
     LPDRIVERITEM lpdrv;
     LRESULT retval;
@@ -73,7 +73,7 @@ LRESULT SendDriverMessage(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
 /**************************************************************************
  *				OpenDriver		        [USER.252]
  */
-HDRVR16 OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
+HDRVR16 WINAPI OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 {
     HDRVR16 hDrvr;
     LPDRIVERITEM lpdrv, lpnewdrv;
@@ -154,7 +154,7 @@ HDRVR16 OpenDriver(LPSTR lpDriverName, LPSTR lpSectionName, LPARAM lParam)
 /**************************************************************************
  *				CloseDriver				[USER.253]
  */
-LRESULT CloseDriver(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI CloseDriver(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
     LPDRIVERITEM lpdrv;
 
@@ -192,7 +192,7 @@ LRESULT CloseDriver(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 /**************************************************************************
  *				GetDriverModuleHandle	[USER.254]
  */
-HMODULE16 GetDriverModuleHandle(HDRVR16 hDrvr)
+HMODULE16 WINAPI GetDriverModuleHandle(HDRVR16 hDrvr)
 {
     LPDRIVERITEM lpdrv;
     HMODULE16 hModule = 0;
@@ -211,8 +211,8 @@ HMODULE16 GetDriverModuleHandle(HDRVR16 hDrvr)
 /**************************************************************************
  *				DefDriverProc			[USER.255]
  */
-LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
-		      LPARAM lParam1, LPARAM lParam2)
+LRESULT WINAPI DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
+                             LPARAM lParam1, LPARAM lParam2)
 {
     switch(wMsg)
     {
@@ -249,7 +249,7 @@ LRESULT DefDriverProc(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
 /**************************************************************************
  *				GetDriverInfo			[USER.256]
  */
-BOOL16 GetDriverInfo(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
+BOOL16 WINAPI GetDriverInfo(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 {
     LPDRIVERITEM lpdrv;
 
@@ -268,7 +268,7 @@ BOOL16 GetDriverInfo(HDRVR16 hDrvr, LPDRIVERINFOSTRUCT16 lpDrvInfo)
 /**************************************************************************
  *				GetNextDriver			[USER.257]
  */
-HDRVR16 GetNextDriver(HDRVR16 hDrvr, DWORD dwFlags)
+HDRVR16 WINAPI GetNextDriver(HDRVR16 hDrvr, DWORD dwFlags)
 {
     LPDRIVERITEM lpdrv;
     HDRVR16 hRetDrv = 0;

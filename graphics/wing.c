@@ -66,7 +66,7 @@ static void __initWinG()
 /***********************************************************************
  *          WinGCreateDC16	(WING.1001)
  */
-HDC16 WinGCreateDC16(void)
+HDC16 WINAPI WinGCreateDC16(void)
 {
   __initWinG();
 
@@ -78,7 +78,7 @@ HDC16 WinGCreateDC16(void)
 /***********************************************************************
  *  WinGRecommendDIBFormat16    (WING.1002)
  */
-BOOL16 WinGRecommendDIBFormat16(BITMAPINFO *fmt)
+BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *fmt)
 {
   fprintf(stdnimp,"WinGRecommendDIBFormat()\n");
 
@@ -93,7 +93,8 @@ BOOL16 WinGRecommendDIBFormat16(BITMAPINFO *fmt)
 /***********************************************************************
  *        WinGCreateBitmap16    (WING.1003)
  */
-HBITMAP16 WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header, void **bits)
+HBITMAP16 WINAPI WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header,
+                                    void **bits)
 {
   fprintf(stdnimp,"WinGCreateBitmap: empty stub! (expect failure)\n");
   if( __WinGOK > 0 && header )
@@ -126,7 +127,7 @@ HBITMAP16 WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header, void **bits)
 	    if (hbitmap)
 	    {
 	      __ShmBitmapCtl* p = (__ShmBitmapCtl*)xmalloc(sizeof(__ShmBitmapCtl));
-		BITMAPOBJ* 	 bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LIN_ADDR( hbitmap );
+		BITMAPOBJ* 	 bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LOCK( hbitmap );
 
 		bmpObjPtr->size.cx = 0;
 		bmpObjPtr->size.cy = 0;
@@ -170,6 +171,7 @@ HBITMAP16 WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header, void **bits)
 		    hbitmap = 0;
 		}
 	    }
+	    GDI_HEAP_UNLOCK( hbitmap );
 	    return hbitmap;
 	}
     }
@@ -181,7 +183,7 @@ HBITMAP16 WinGCreateBitmap16(HDC16 winDC, BITMAPINFO *header, void **bits)
 /***********************************************************************
  *  WinGGetDIBPointer   (WING.1004)
  */
-SEGPTR WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
+SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 {
 #ifdef PRELIMINARY_WING16_SUPPORT
   BITMAPOBJ*	bmp = (BITMAPOBJ *) GDI_GetObjPtr( hWinGBitmap, BITMAP_MAGIC );
@@ -192,6 +194,7 @@ SEGPTR WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
     if( p )
     {
       if( bmpi ) memcpy( bmpi, &__bmpiWinG, sizeof(BITMAPINFOHEADER));
+      GDI_HEAP_UNLOCK( hWinGBitmap );
       return p->bits;
     }
   }
@@ -202,7 +205,8 @@ SEGPTR WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 /***********************************************************************
  *  WinGSetDIBColorTable   (WING.1004)
  */
-UINT16 WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num, RGBQUAD* pColor)
+UINT16 WINAPI WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num,
+                                     RGBQUAD* pColor)
 {
         fprintf(stdnimp,"WinGSetDIBColorTable: empty stub!\n");
         return num;
@@ -211,8 +215,8 @@ UINT16 WinGSetDIBColorTable16(HDC16 hWinGDC, UINT16 start, UINT16 num, RGBQUAD* 
 /***********************************************************************
  *  WinGGetDIBColorTable16   (WING.1005)
  */
-UINT16 WinGGetDIBColorTable16(HDC16 winDC, UINT16 start, UINT16 numentry,
-                            RGBQUAD* colors)
+UINT16 WINAPI WinGGetDIBColorTable16(HDC16 winDC, UINT16 start,
+                                     UINT16 numentry, RGBQUAD* colors)
 {
 	fprintf(stdnimp,"WinGGetDIBColorTable: empty stub!\n");
 	return 0;
@@ -221,7 +225,7 @@ UINT16 WinGGetDIBColorTable16(HDC16 winDC, UINT16 start, UINT16 numentry,
 /***********************************************************************
  *  WinGCreateHalfTonePalette16   (WING.1007)
  */
-HPALETTE16 WinGCreateHalfTonePalette16(void)
+HPALETTE16 WINAPI WinGCreateHalfTonePalette16(void)
 {
         fprintf(stdnimp,"WinGCreateHalfTonePalette: empty stub!\n");
 	return 0;
@@ -230,7 +234,8 @@ HPALETTE16 WinGCreateHalfTonePalette16(void)
 /***********************************************************************
  *  WinGCreateHalfToneBrush16   (WING.1008)
  */
-HPALETTE16 WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col, WING_DITHER_TYPE type)
+HPALETTE16 WINAPI WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col,
+                                            WING_DITHER_TYPE type)
 {
         fprintf(stdnimp,"WinGCreateHalfToneBrush: empty stub!\n");
 	return 0;
@@ -239,9 +244,10 @@ HPALETTE16 WinGCreateHalfToneBrush16(HDC16 winDC, COLORREF col, WING_DITHER_TYPE
 /***********************************************************************
  *  WinGStretchBlt16   (WING.1009)
  */
-BOOL16 WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest, INT16 widDest,
-                        INT16 heiDest, HDC16 srcDC, INT16 xSrc, INT16 ySrc,
-                        INT16 widSrc, INT16 heiSrc)
+BOOL16 WINAPI WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
+                               INT16 widDest, INT16 heiDest,
+                               HDC16 srcDC, INT16 xSrc, INT16 ySrc,
+                               INT16 widSrc, INT16 heiSrc)
 {
 
         return StretchBlt16(destDC, xDest, yDest, widDest, heiDest, srcDC, xSrc, ySrc, widSrc, heiSrc, SRCCOPY);
@@ -252,8 +258,9 @@ BOOL16 WinGStretchBlt16(HDC16 destDC, INT16 xDest, INT16 yDest, INT16 widDest,
 /***********************************************************************
  *  WinGBitBlt16   (WING.1010)
  */
-BOOL16 WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest, INT16 widDest,
-                    INT16 heiDest, HDC16 srcDC, INT16 xSrc, INT16 ySrc)
+BOOL16 WINAPI WinGBitBlt16(HDC16 destDC, INT16 xDest, INT16 yDest,
+                           INT16 widDest, INT16 heiDest, HDC16 srcDC,
+                           INT16 xSrc, INT16 ySrc)
 {
     /* destDC is a display DC, srcDC is a memory DC */
 

@@ -15,7 +15,7 @@
 /* forward definition */
 struct __EXCEPTION_FRAME;
 
-typedef DWORD ( *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD          pexcrec,
+typedef DWORD (CALLBACK *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD pexcrec,
                                       struct __EXCEPTION_FRAME  *pestframe,
                                       PCONTEXT                   pcontext,
                                       LPVOID                     pdispatcher);
@@ -36,9 +36,9 @@ typedef struct __EXCEPTION_FRAME
  * Function definitions  
  */
  
-void RaiseException(DWORD exccode, DWORD excflags, 
-                    DWORD nargs, const LPDWORD pargs,
-                    PCONTEXT pcontext /* Wine additional parameter */ ); 
+void WINAPI RaiseException(DWORD exccode, DWORD excflags, 
+                           DWORD nargs, const LPDWORD pargs,
+                           PCONTEXT pcontext /* Wine additional parameter */); 
                         
 /*
  *  this undocumented function is called when an exception
@@ -54,10 +54,10 @@ void RaiseException(DWORD exccode, DWORD excflags,
  *  context.   
  */
 
-void RtlUnwind( PEXCEPTION_FRAME pestframe,
-                LPVOID unusedEIP,
-                PEXCEPTION_RECORD pexcrec,
-                DWORD contextEAX,
-                PCONTEXT pcontext /* Wine additional parameter */ );
+void WINAPI RtlUnwind( PEXCEPTION_FRAME pestframe,
+                       LPVOID unusedEIP,
+                       PEXCEPTION_RECORD pexcrec,
+                       DWORD contextEAX,
+                       PCONTEXT pcontext /* Wine additional parameter */ );
 
 #endif  /* __WINE_EXCEPT_H */

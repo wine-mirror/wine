@@ -26,8 +26,8 @@ typedef struct
  *
  * Dialog procedure for message boxes.
  */
-static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
-                               WPARAM32 wParam, LPARAM lParam )
+static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
+                                        WPARAM32 wParam, LPARAM lParam )
 {
   LPMSGBOX lpmb;
   RECT32 rect, textrect;
@@ -184,7 +184,7 @@ static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
 /**************************************************************************
  *           MessageBox16   (USER.1)
  */
-INT16 MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
+INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 {
     return MessageBox32A( hwnd, text, title, type );
 }
@@ -193,7 +193,7 @@ INT16 MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
 /**************************************************************************
  *           MessageBox32A   (USER32.390)
  */
-INT32 MessageBox32A( HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type )
+INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 {
     MSGBOX mbox;
 
@@ -211,7 +211,8 @@ INT32 MessageBox32A( HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type )
 /**************************************************************************
  *           MessageBox32W   (USER32.395)
  */
-INT32 MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title, UINT32 type )
+INT32 WINAPI MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title,
+                            UINT32 type )
 {
     LPSTR titleA = HEAP_strdupWtoA( GetProcessHeap(), 0, title );
     LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
@@ -225,8 +226,9 @@ INT32 MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title, UINT32 type )
 /**************************************************************************
  *           MessageBoxEx32A   (USER32.391)
  */
-INT32
-MessageBoxEx32A(HWND32 hWnd,LPCSTR text,LPCSTR title,UINT32 type,WORD langid) {
+INT32 WINAPI MessageBoxEx32A( HWND32 hWnd, LPCSTR text, LPCSTR title,
+                              UINT32 type, WORD langid )
+{
     /* ignore language id for now */
     return MessageBox32A(hWnd,text,title,type);
 }
@@ -234,8 +236,8 @@ MessageBoxEx32A(HWND32 hWnd,LPCSTR text,LPCSTR title,UINT32 type,WORD langid) {
 /**************************************************************************
  *           MessageBoxEx32W   (USER32.392)
  */
-INT32
-MessageBoxEx32W(HWND32 hWnd,LPCWSTR text,LPCWSTR title,UINT32 type,WORD langid)
+INT32 WINAPI MessageBoxEx32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title,
+                              UINT32 type, WORD langid )
 {
     /* ignore language id for now */
     return MessageBox32W(hWnd,text,title,type);
@@ -245,7 +247,7 @@ MessageBoxEx32W(HWND32 hWnd,LPCWSTR text,LPCWSTR title,UINT32 type,WORD langid)
 /**************************************************************************
  *           FatalAppExit16   (KERNEL.137)
  */
-void FatalAppExit16( UINT16 action, LPCSTR str )
+void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 {
     FatalAppExit32A( action, str );
 }
@@ -254,7 +256,7 @@ void FatalAppExit16( UINT16 action, LPCSTR str )
 /**************************************************************************
  *           FatalAppExit32A   (KERNEL32.108)
  */
-void FatalAppExit32A( UINT32 action, LPCSTR str )
+void WINAPI FatalAppExit32A( UINT32 action, LPCSTR str )
 {
     MessageBox32A( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     TASK_KillCurrentTask(0);
@@ -264,7 +266,7 @@ void FatalAppExit32A( UINT32 action, LPCSTR str )
 /**************************************************************************
  *           FatalAppExit32W   (KERNEL32.109)
  */
-void FatalAppExit32W( UINT32 action, LPCWSTR str )
+void WINAPI FatalAppExit32W( UINT32 action, LPCWSTR str )
 {
     MessageBox32W( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     TASK_KillCurrentTask(0);

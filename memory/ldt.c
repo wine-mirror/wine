@@ -34,12 +34,24 @@ static __inline__ int modify_ldt( int func, struct modify_ldt_s *ptr,
                                   unsigned long count )
 {
     int res;
+#ifdef __PIC__
+    __asm__ __volatile__( "pushl %%ebx\n\t"
+                          "movl %2,%%ebx\n\t"
+                          "int $0x80\n\t"
+                          "popl %%ebx"
+                          : "=a" (res)
+                          : "0" (SYS_modify_ldt),
+                            "g" (func),
+                            "c" (ptr),
+                            "d" (count) );
+#else
     __asm__ __volatile__("int $0x80"
                          : "=a" (res)
                          : "0" (SYS_modify_ldt),
                            "b" (func),
                            "c" (ptr),
                            "d" (count) );
+#endif  /* __PIC__ */
     if (res >= 0) return res;
     errno = -res;
     return -1;

@@ -17,7 +17,7 @@
 /***********************************************************************
  *           GetACP               (KERNEL32.148)
  */
-UINT32 GetACP(void)
+UINT32 WINAPI GetACP(void)
 {
     return 1252;    /* Windows 3.1 ISO Latin */
 }
@@ -25,7 +25,7 @@ UINT32 GetACP(void)
 /***********************************************************************
  *           GetCPInfo            (KERNEL32.154)
  */
-BOOL32 GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
+BOOL32 WINAPI GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
 {
     cpinfo->DefaultChar[0] = '?';
     switch (codepage)
@@ -61,7 +61,7 @@ BOOL32 GetCPInfo( UINT32 codepage, LPCPINFO cpinfo )
 /***********************************************************************
  *              GetOEMCP                (KERNEL32.248)
  */
-UINT32 GetOEMCP(void)
+UINT32 WINAPI GetOEMCP(void)
 {
     return 437;    /* MS-DOS United States */
 }
@@ -69,7 +69,7 @@ UINT32 GetOEMCP(void)
 /***********************************************************************
  *           IsValidCodePage   (KERNEL32.360)
  */
-BOOL32 IsValidCodePage(UINT32 CodePage)
+BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
 {
     switch ( CodePage )
     {
@@ -85,14 +85,20 @@ BOOL32 IsValidCodePage(UINT32 CodePage)
 /***********************************************************************
  *              MultiByteToWideChar                (KERNEL32.392)
  */
-int MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,
-                        WCHAR *dst, int dstlen)
+int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,
+                               WCHAR *dst, int dstlen)
 {
-    return (srclen==-1) ? strlen(src) * 2: srclen*2; 
+    if (srclen == -1)
+   	 srclen = lstrlen32A(src);
+    if (!dst)
+         return srclen*2;
+
+    lstrcpynAtoW(dst,src,srclen); /* FIXME */
+    return srclen*2;
 }
 
-int WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
-                        char *dst, int dstlen, char* defchar, BOOL32 *used)
+int WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
+                               char *dst, int dstlen, char* defchar, BOOL32 *used)
 {
 	int count = 0;
 	int dont_copy= (dstlen==0);
@@ -133,7 +139,7 @@ int WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
 /***********************************************************************
  *           IsDBCSLeadByteEx   (KERNEL32.359)
  */
-BOOL32 IsDBCSLeadByteEx( UINT32 codepage, BYTE testchar )
+BOOL32 WINAPI IsDBCSLeadByteEx( UINT32 codepage, BYTE testchar )
 {
     CPINFO cpinfo;
     int i;
@@ -153,7 +159,7 @@ BOOL32 IsDBCSLeadByteEx( UINT32 codepage, BYTE testchar )
 /***********************************************************************
  *           IsDBCSLeadByte16   (KERNEL.207)
  */
-BOOL16 IsDBCSLeadByte16( BYTE testchar )
+BOOL16 WINAPI IsDBCSLeadByte16( BYTE testchar )
 {
     return IsDBCSLeadByteEx(GetACP(), testchar);
 }
@@ -162,7 +168,7 @@ BOOL16 IsDBCSLeadByte16( BYTE testchar )
 /***********************************************************************
  *           IsDBCSLeadByte32   (KERNEL32.358)
  */
-BOOL32 IsDBCSLeadByte32( BYTE testchar )
+BOOL32 WINAPI IsDBCSLeadByte32( BYTE testchar )
 {
     return IsDBCSLeadByteEx(GetACP(), testchar);
 }
@@ -171,8 +177,8 @@ BOOL32 IsDBCSLeadByte32( BYTE testchar )
 /***********************************************************************
  *              EnumSystemCodePages32A                (KERNEL32.92)
  */
-BOOL32
-EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags) {
+BOOL32 WINAPI EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags)
+{
 	dprintf_win32(stddeb,"EnumSystemCodePages32A(%p,%08lx)\n",
 		lpfnCodePageEnum,flags
 	);
@@ -183,8 +189,8 @@ EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A lpfnCodePageEnum,DWORD flags) {
 /***********************************************************************
  *              EnumSystemCodePages32W                (KERNEL32.93)
  */
-BOOL32
-EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum, DWORD flags)
+BOOL32 WINAPI EnumSystemCodePages32W( CODEPAGE_ENUMPROC32W lpfnCodePageEnum,
+                                      DWORD flags)
 {
     WCHAR	*cp;
     dprintf_win32(stddeb,"EnumSystemCodePages32W(%p,%08lx)\n",

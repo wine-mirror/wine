@@ -4,8 +4,8 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef __WINE_SIGCONTEXT_H
-#define __WINE_SIGCONTEXT_H
+#ifndef __WINE_SIG_CONTEXT_H
+#define __WINE_SIG_CONTEXT_H
 
 #ifdef WINELIB
 #error This file must not be used in Winelib
@@ -202,4 +202,4 @@ typedef struct _CONTEXT		/* Note 1 */
                             
 #define FL_sig(context)      (*(WORD*)&EFL_sig(context))
 
-#endif /* __WINE_SIGCONTEXT_H */
+#endif /* __WINE_SIG_CONTEXT_H */

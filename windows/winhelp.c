@@ -14,8 +14,8 @@
 /**********************************************************************
  *             WinHelp16   (USER.171)
  */
-BOOL16 WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
-                  DWORD dwData )
+BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
+                         DWORD dwData )
 {
     return WinHelp32A( hWnd, lpHelpFile, wCommand,
                        (DWORD)PTR_SEG_TO_LIN(dwData) );
@@ -25,8 +25,8 @@ BOOL16 WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 /**********************************************************************
  *             WinHelp32A   (USER32.578)
  */
-BOOL32 WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
-                   DWORD dwData )
+BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
+                          DWORD dwData )
 {
 	static WORD WM_WINHELP=0;
 	HWND32 hDest;
@@ -103,8 +103,8 @@ BOOL32 WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 /**********************************************************************
  *             WinHelp32W   (USER32.579)
  */
-BOOL32 WinHelp32W( HWND32 hWnd, LPCWSTR helpFile, UINT32 command,
-                   DWORD dwData )
+BOOL32 WINAPI WinHelp32W( HWND32 hWnd, LPCWSTR helpFile, UINT32 command,
+                          DWORD dwData )
 {
     LPSTR file = HEAP_strdupWtoA( GetProcessHeap(), 0, helpFile );
     BOOL32 ret = WinHelp32A( hWnd, file, command, dwData );

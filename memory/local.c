@@ -302,7 +302,7 @@ static void LOCAL_PrintHeap( HANDLE16 ds )
 /***********************************************************************
  *           LocalInit   (KERNEL.4)
  */
-BOOL16 LocalInit( HANDLE16 selector, WORD start, WORD end )
+BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
 {
     char *ptr;
     WORD heapInfoArena, freeArena, lastArena;
@@ -1460,7 +1460,7 @@ HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
 /***********************************************************************
  *           LocalAlloc16   (KERNEL.5)
  */
-HLOCAL16 LocalAlloc16( UINT16 flags, WORD size )
+HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 {
     return LOCAL_Alloc( CURRENT_DS, flags, size );
 }
@@ -1469,7 +1469,7 @@ HLOCAL16 LocalAlloc16( UINT16 flags, WORD size )
 /***********************************************************************
  *           LocalReAlloc16   (KERNEL.6)
  */
-HLOCAL16 LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
+HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 {
     return LOCAL_ReAlloc( CURRENT_DS, handle, size, flags );
 }
@@ -1478,7 +1478,7 @@ HLOCAL16 LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 /***********************************************************************
  *           LocalFree16   (KERNEL.7)
  */
-HLOCAL16 LocalFree16( HLOCAL16 handle )
+HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
 {
     return LOCAL_Free( CURRENT_DS, handle );
 }
@@ -1489,7 +1489,7 @@ HLOCAL16 LocalFree16( HLOCAL16 handle )
  *
  * Note: only the offset part of the pointer is returned by the relay code.
  */
-SEGPTR LocalLock16( HLOCAL16 handle )
+SEGPTR WINAPI LocalLock16( HLOCAL16 handle )
 {
     return LOCAL_LockSegptr( CURRENT_DS, handle );
 }
@@ -1498,7 +1498,7 @@ SEGPTR LocalLock16( HLOCAL16 handle )
 /***********************************************************************
  *           LocalUnlock16   (KERNEL.9)
  */
-BOOL16 LocalUnlock16( HLOCAL16 handle )
+BOOL16 WINAPI LocalUnlock16( HLOCAL16 handle )
 {
     return LOCAL_Unlock( CURRENT_DS, handle );
 }
@@ -1507,7 +1507,7 @@ BOOL16 LocalUnlock16( HLOCAL16 handle )
 /***********************************************************************
  *           LocalSize16   (KERNEL.10)
  */
-UINT16 LocalSize16( HLOCAL16 handle )
+UINT16 WINAPI LocalSize16( HLOCAL16 handle )
 {
     return LOCAL_Size( CURRENT_DS, handle );
 }
@@ -1516,7 +1516,7 @@ UINT16 LocalSize16( HLOCAL16 handle )
 /***********************************************************************
  *           LocalHandle16   (KERNEL.11)
  */
-HLOCAL16 LocalHandle16( WORD addr )
+HLOCAL16 WINAPI LocalHandle16( WORD addr )
 { 
     return LOCAL_Handle( CURRENT_DS, addr );
 }
@@ -1525,7 +1525,7 @@ HLOCAL16 LocalHandle16( WORD addr )
 /***********************************************************************
  *           LocalFlags16   (KERNEL.12)
  */
-UINT16 LocalFlags16( HLOCAL16 handle )
+UINT16 WINAPI LocalFlags16( HLOCAL16 handle )
 {
     return LOCAL_Flags( CURRENT_DS, handle );
 }
@@ -1534,7 +1534,7 @@ UINT16 LocalFlags16( HLOCAL16 handle )
 /***********************************************************************
  *           LocalCompact16   (KERNEL.13)
  */
-UINT16 LocalCompact16( UINT16 minfree )
+UINT16 WINAPI LocalCompact16( UINT16 minfree )
 {
     dprintf_local( stddeb, "LocalCompact: %04x\n", minfree );
     return LOCAL_Compact( CURRENT_DS, minfree, 0 );
@@ -1544,7 +1544,7 @@ UINT16 LocalCompact16( UINT16 minfree )
 /***********************************************************************
  *           LocalNotify   (KERNEL.14)
  */
-FARPROC16 LocalNotify( FARPROC16 func )
+FARPROC16 WINAPI LocalNotify( FARPROC16 func )
 {
     LOCALHEAPINFO *pInfo;
     FARPROC16 oldNotify;
@@ -1567,7 +1567,7 @@ FARPROC16 LocalNotify( FARPROC16 func )
 /***********************************************************************
  *           LocalShrink16   (KERNEL.121)
  */
-UINT16 LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
+UINT16 WINAPI LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 {
     dprintf_local( stddeb, "LocalShrink: %04x %04x\n", handle, newsize );
     return 0;
@@ -1577,7 +1577,7 @@ UINT16 LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 /***********************************************************************
  *           GetHeapSpaces   (KERNEL.138)
  */
-DWORD GetHeapSpaces( HMODULE16 module )
+DWORD WINAPI GetHeapSpaces( HMODULE16 module )
 {
     NE_MODULE *pModule;
     WORD ds;
@@ -1592,7 +1592,7 @@ DWORD GetHeapSpaces( HMODULE16 module )
 /***********************************************************************
  *           LocalCountFree   (KERNEL.161)
  */
-WORD LocalCountFree(void)
+WORD WINAPI LocalCountFree(void)
 {
     return LOCAL_CountFree( CURRENT_DS );
 }
@@ -1601,7 +1601,7 @@ WORD LocalCountFree(void)
 /***********************************************************************
  *           LocalHeapSize   (KERNEL.162)
  */
-WORD LocalHeapSize()
+WORD WINAPI LocalHeapSize(void)
 {
     dprintf_local( stddeb, "LocalHeapSize:\n" );
     return LOCAL_HeapSize( CURRENT_DS );
@@ -1611,7 +1611,7 @@ WORD LocalHeapSize()
 /***********************************************************************
  *           LocalHandleDelta   (KERNEL.310)
  */
-WORD LocalHandleDelta( WORD delta )
+WORD WINAPI LocalHandleDelta( WORD delta )
 {
     LOCALHEAPINFO *pInfo;
 
@@ -1630,7 +1630,7 @@ WORD LocalHandleDelta( WORD delta )
 /***********************************************************************
  *           LocalInfo   (TOOLHELP.56)
  */
-BOOL16 LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
+BOOL16 WINAPI LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 {
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap(SELECTOROF(WIN16_GlobalLock16(handle)));
     if (!pInfo) return FALSE;
@@ -1642,7 +1642,7 @@ BOOL16 LocalInfo( LOCALINFO *pLocalInfo, HGLOBAL16 handle )
 /***********************************************************************
  *           LocalFirst   (TOOLHELP.57)
  */
-BOOL16 LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
+BOOL16 WINAPI LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
 {
     WORD ds = GlobalHandleToSel( handle );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
@@ -1665,7 +1665,7 @@ BOOL16 LocalFirst( LOCALENTRY *pLocalEntry, HGLOBAL16 handle )
 /***********************************************************************
  *           LocalNext   (TOOLHELP.58)
  */
-BOOL16 LocalNext( LOCALENTRY *pLocalEntry )
+BOOL16 WINAPI LocalNext( LOCALENTRY *pLocalEntry )
 {
     WORD ds = GlobalHandleToSel( pLocalEntry->hHeap );
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
@@ -1692,7 +1692,7 @@ BOOL16 LocalNext( LOCALENTRY *pLocalEntry )
 /***********************************************************************
  *           LocalAlloc32   (KERNEL32.371)
  */
-HLOCAL32 LocalAlloc32( UINT32 flags, DWORD size )
+HLOCAL32 WINAPI LocalAlloc32( UINT32 flags, DWORD size )
 {
     return (HLOCAL32)GlobalAlloc32( flags, size );
 }
@@ -1701,7 +1701,7 @@ HLOCAL32 LocalAlloc32( UINT32 flags, DWORD size )
 /***********************************************************************
  *           LocalCompact32   (KERNEL32.372)
  */
-UINT32 LocalCompact32( UINT32 minfree )
+UINT32 WINAPI LocalCompact32( UINT32 minfree )
 {
     return 0;  /* LocalCompact does nothing in Win32 */
 }
@@ -1710,7 +1710,7 @@ UINT32 LocalCompact32( UINT32 minfree )
 /***********************************************************************
  *           LocalFlags32   (KERNEL32.374)
  */
-UINT32 LocalFlags32( HLOCAL32 handle )
+UINT32 WINAPI LocalFlags32( HLOCAL32 handle )
 {
     return GlobalFlags32( (HGLOBAL32)handle );
 }
@@ -1719,7 +1719,7 @@ UINT32 LocalFlags32( HLOCAL32 handle )
 /***********************************************************************
  *           LocalFree32   (KERNEL32.375)
  */
-HLOCAL32 LocalFree32( HLOCAL32 handle )
+HLOCAL32 WINAPI LocalFree32( HLOCAL32 handle )
 {
     return (HLOCAL32)GlobalFree32( (HGLOBAL32)handle );
 }
@@ -1728,7 +1728,7 @@ HLOCAL32 LocalFree32( HLOCAL32 handle )
 /***********************************************************************
  *           LocalHandle32   (KERNEL32.376)
  */
-HLOCAL32 LocalHandle32( LPCVOID ptr )
+HLOCAL32 WINAPI LocalHandle32( LPCVOID ptr )
 {
     return (HLOCAL32)GlobalHandle32( ptr );
 }
@@ -1737,7 +1737,7 @@ HLOCAL32 LocalHandle32( LPCVOID ptr )
 /***********************************************************************
  *           LocalLock32   (KERNEL32.377)
  */
-LPVOID LocalLock32( HLOCAL32 handle )
+LPVOID WINAPI LocalLock32( HLOCAL32 handle )
 {
     return GlobalLock32( (HGLOBAL32)handle );
 }
@@ -1746,7 +1746,7 @@ LPVOID LocalLock32( HLOCAL32 handle )
 /***********************************************************************
  *           LocalReAlloc32   (KERNEL32.378)
  */
-HLOCAL32 LocalReAlloc32( HLOCAL32 handle, DWORD size, UINT32 flags )
+HLOCAL32 WINAPI LocalReAlloc32( HLOCAL32 handle, DWORD size, UINT32 flags )
 {
     return (HLOCAL32)GlobalReAlloc32( (HGLOBAL32)handle, size, flags );
 }
@@ -1755,7 +1755,7 @@ HLOCAL32 LocalReAlloc32( HLOCAL32 handle, DWORD size, UINT32 flags )
 /***********************************************************************
  *           LocalShrink32   (KERNEL32.379)
  */
-UINT32 LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
+UINT32 WINAPI LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
 {
     return 0;  /* LocalShrink does nothing in Win32 */
 }
@@ -1764,7 +1764,7 @@ UINT32 LocalShrink32( HGLOBAL32 handle, UINT32 newsize )
 /***********************************************************************
  *           LocalSize32   (KERNEL32.380)
  */
-UINT32 LocalSize32( HLOCAL32 handle )
+UINT32 WINAPI LocalSize32( HLOCAL32 handle )
 {
     return GlobalSize32( (HGLOBAL32)handle );
 }
@@ -1773,7 +1773,7 @@ UINT32 LocalSize32( HLOCAL32 handle )
 /***********************************************************************
  *           LocalUnlock32   (KERNEL32.381)
  */
-BOOL32 LocalUnlock32( HLOCAL32 handle )
+BOOL32 WINAPI LocalUnlock32( HLOCAL32 handle )
 {
     return GlobalUnlock32( (HGLOBAL32)handle );
 }

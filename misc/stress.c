@@ -8,14 +8,14 @@
 #include "debug.h"
 
 
-int AllocDiskSpace(long lLeft, UINT16 uDrive)
+int WINAPI AllocDiskSpace(long lLeft, UINT16 uDrive)
 {
 	dprintf_stress(stdnimp, "stress.dll: AllocDiskSpace %d, %ld\n", uDrive, lLeft);
 
 	return 1;
 }
 
-int AllocFileHandles(int Left)
+int WINAPI AllocFileHandles(int Left)
 {
 	dprintf_stress(stddeb, "stress.dll: AllocFileHandles %d\n", Left);
 
@@ -25,48 +25,48 @@ int AllocFileHandles(int Left)
 		return 1;
 }
 
-BOOL16 AllocGDIMem(UINT16 uLeft)
+BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 {
 	dprintf_stress(stddeb, "stress.dll: AllocGDIMem %d\n", uLeft);
 
 	return 1;
 }
 
-BOOL16 AllocMem(DWORD dwLeft)
+BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
 	dprintf_stress(stdnimp, "stress.dll: AllocMem %ld\n", dwLeft);
 
 	return 1;
 }
 
-BOOL16 AllocUserMem(UINT16 uContig)
+BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 {
 	dprintf_stress(stddeb, "stress.dll: AllocUserMem %d\n", uContig);
 
 	return 1;
 }
 
-void FreeAllMem(void)
+void WINAPI FreeAllMem(void)
 {
 	dprintf_stress(stddeb, "stress.dll: FreeAllMem\n");
 }
 
-void FreeAllGDIMem(void)
+void WINAPI FreeAllGDIMem(void)
 {
 	dprintf_stress(stddeb, "stress.dll: FreeAllGDIMem\n");
 }
 
-void FreeAllUserMem(void)
+void WINAPI FreeAllUserMem(void)
 {
 	dprintf_stress(stddeb, "stress.dll: FreeAllUserMem\n");
 }
 
-void GetFreeAllUserMem(void)
+void WINAPI GetFreeAllUserMem(void)
 {
        dprintf_stress(stddeb, "stress.dll: GetFreeAllUserMem\n");
 }
 
-int GetFreeFileHandles(void)
+int WINAPI GetFreeFileHandles(void)
 {
 	dprintf_stress(stddeb, "stress.dll: GetFreeFileHandles\n");
 
@@ -77,12 +77,12 @@ int GetFreeFileHandles(void)
 #endif
 }
 
-void UnAllocDiskSpace(UINT16 drive)
+void WINAPI UnAllocDiskSpace(UINT16 drive)
 {
 	dprintf_stress(stddeb, "stress.dll: UnAllocDiskSpace %d\n", drive);
 }
 
-void UnAllocFileHandles(void)
+void WINAPI UnAllocFileHandles(void)
 {
 	dprintf_stress(stddeb, "stress.dll: GetFreeAllUserMem\n");
 }

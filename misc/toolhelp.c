@@ -29,7 +29,8 @@ static struct notify
 
 static int nrofnotifys = 0;
 
-BOOL16 NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback, WORD wFlags )
+BOOL16 WINAPI NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback,
+                              WORD wFlags )
 {
     int	i;
 
@@ -51,7 +52,7 @@ BOOL16 NotifyRegister( HTASK16 htask, FARPROC16 lpfnCallback, WORD wFlags )
     return TRUE;
 }
 
-BOOL16 NotifyUnregister( HTASK16 htask )
+BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
 {
     int	i;
     

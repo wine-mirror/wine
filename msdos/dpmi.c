@@ -52,7 +52,7 @@ extern void do_mscdex( CONTEXT *context );
  *
  * Handler for int 31h (DPMI).
  */
-void INT_Int31Handler( CONTEXT *context )
+void WINAPI INT_Int31Handler( CONTEXT *context )
 {
     DWORD dw;
     BYTE *ptr;

@@ -141,7 +141,7 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     DC *dc;
 
     if (!(hdc = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return NULL;
-    dc = (DC *) GDI_HEAP_LIN_ADDR( hdc );
+    dc = (DC *) GDI_HEAP_LOCK( hdc );
 
     dc->hSelf      = hdc;
     dc->funcs      = funcs;
@@ -163,15 +163,17 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
 }
 
 
+
 /***********************************************************************
  *           DC_GetDCPtr
  */
 DC *DC_GetDCPtr( HDC32 hdc )
 {
-    GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hdc );
+    GDIOBJHDR *ptr = (GDIOBJHDR *)GDI_HEAP_LOCK( hdc );
     if (!ptr) return NULL;
     if ((ptr->wMagic == DC_MAGIC) || (ptr->wMagic == METAFILE_DC_MAGIC))
         return (DC *)ptr;
+    GDI_HEAP_UNLOCK( hdc );
     return NULL;
 }
 
@@ -380,14 +382,18 @@ BOOL32 DC_SetupGCForText( DC * dc )
 /***********************************************************************
  *           GetDCState    (GDI.179)
  */
-HDC16 GetDCState( HDC16 hdc )
+HDC16 WINAPI GetDCState( HDC16 hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ16 handle;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
-    if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC ))) return 0;
-    newdc = (DC *) GDI_HEAP_LIN_ADDR( handle );
+    if (!(handle = GDI_AllocObject( sizeof(DC), DC_MAGIC )))
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      return 0;
+    }
+    newdc = (DC *) GDI_HEAP_LOCK( handle );
 
     dprintf_dc(stddeb, "GetDCState(%04x): returning %04x\n", hdc, handle );
 
@@ -446,6 +452,8 @@ HDC16 GetDCState( HDC16 hdc )
     }
     else
 	newdc->w.hClipRgn = 0;
+    GDI_HEAP_UNLOCK( handle );
+    GDI_HEAP_UNLOCK( hdc );
     return handle;
 }
 
@@ -453,13 +461,22 @@ HDC16 GetDCState( HDC16 hdc )
 /***********************************************************************
  *           SetDCState    (GDI.180)
  */
-void SetDCState( HDC16 hdc, HDC16 hdcs )
+void WINAPI SetDCState( HDC16 hdc, HDC16 hdcs )
 {
     DC *dc, *dcs;
     
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
-    if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return;
-    if (!dcs->w.flags & DC_SAVED) return;
+    if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC )))
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      return;
+    }
+    if (!dcs->w.flags & DC_SAVED)
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      GDI_HEAP_UNLOCK( hdcs );
+      return;
+    }
     dprintf_dc(stddeb, "SetDCState: %04x %04x\n", hdc, hdcs );
 
     dc->w.flags           = dcs->w.flags & ~DC_SAVED;
@@ -506,13 +523,15 @@ void SetDCState( HDC16 hdc, HDC16 hdcs )
     SelectObject32( hdc, dcs->w.hFont );
     SelectObject32( hdc, dcs->w.hPen );
     GDISelectPalette( hdc, dcs->w.hPalette, FALSE );
+    GDI_HEAP_UNLOCK( hdc );
+    GDI_HEAP_UNLOCK( hdcs );
 }
 
 
 /***********************************************************************
  *           SaveDC16    (GDI.30)
  */
-INT16 SaveDC16( HDC16 hdc )
+INT16 WINAPI SaveDC16( HDC16 hdc )
 {
     return (INT16)SaveDC32( hdc );
 }
@@ -521,10 +540,11 @@ INT16 SaveDC16( HDC16 hdc )
 /***********************************************************************
  *           SaveDC32    (GDI32.292)
  */
-INT32 SaveDC32( HDC32 hdc )
+INT32 WINAPI SaveDC32( HDC32 hdc )
 {
     HDC32 hdcs;
     DC * dc, * dcs;
+    INT32 ret;
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -532,21 +552,29 @@ INT32 SaveDC32( HDC32 hdc )
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0;
 	MF_MetaParam0(dc, META_SAVEDC);
+	GDI_HEAP_UNLOCK( hdc );
 	return 1;  /* ?? */
     }
-    if (!(hdcs = GetDCState( hdc ))) return 0;
-    dcs = (DC *) GDI_HEAP_LIN_ADDR( hdcs );
+    if (!(hdcs = GetDCState( hdc )))
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      return 0;
+    }
+    dcs = (DC *) GDI_HEAP_LOCK( hdcs );
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
     dprintf_dc(stddeb, "SaveDC(%04x): returning %d\n", hdc, dc->saveLevel+1 );
-    return ++dc->saveLevel;
+    ret = ++dc->saveLevel;
+    GDI_HEAP_UNLOCK( hdcs );
+    GDI_HEAP_UNLOCK( hdc );
+    return ret;
 }
 
 
 /***********************************************************************
  *           RestoreDC16    (GDI.39)
  */
-BOOL16 RestoreDC16( HDC16 hdc, INT16 level )
+BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 {
     return RestoreDC32( hdc, level );
 }
@@ -555,7 +583,7 @@ BOOL16 RestoreDC16( HDC16 hdc, INT16 level )
 /***********************************************************************
  *           RestoreDC32    (GDI32.290)
  */
-BOOL32 RestoreDC32( HDC32 hdc, INT32 level )
+BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
 {
     DC * dc, * dcs;
 
@@ -565,21 +593,35 @@ BOOL32 RestoreDC32( HDC32 hdc, INT32 level )
     {
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return FALSE;
-	if (level != -1) return FALSE;
+	if (level != -1) 
+	{
+	  GDI_HEAP_UNLOCK( hdc );
+	  return FALSE;
+	}
 	MF_MetaParam1(dc, META_RESTOREDC, level);
+	GDI_HEAP_UNLOCK( hdc );
 	return TRUE;
     }
     if (level == -1) level = dc->saveLevel;
-    if ((level < 1) || (level > dc->saveLevel)) return FALSE;
+    if ((level < 1) || (level > dc->saveLevel))
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      return FALSE;
+    }
     
     while (dc->saveLevel >= level)
     {
 	HDC16 hdcs = dc->header.hNext;
-	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return FALSE;
+	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC )))
+	{
+	  GDI_HEAP_UNLOCK( hdc );
+	  return FALSE;
+	}	
 	dc->header.hNext = dcs->header.hNext;
 	if (--dc->saveLevel < level) SetDCState( hdc, hdcs );
 	DeleteDC32( hdcs );
     }
+    GDI_HEAP_UNLOCK( hdc );
     return TRUE;
 }
 
@@ -587,8 +629,8 @@ BOOL32 RestoreDC32( HDC32 hdc, INT32 level )
 /***********************************************************************
  *           CreateDC16    (GDI.53)
  */
-HDC16 CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                  const DEVMODE16 *initData )
+HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
+                         const DEVMODE16 *initData )
 {
     DC * dc;
     const DC_FUNCTIONS *funcs;
@@ -609,6 +651,7 @@ HDC16 CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
     }
 
     DC_InitDC( dc );
+    GDI_HEAP_UNLOCK( dc->hSelf );
     return dc->hSelf;
 }
 
@@ -616,8 +659,8 @@ HDC16 CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateDC32A    (GDI32.)
  */
-HDC32 CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
-                   const DEVMODE32A *initData )
+HDC32 WINAPI CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
+                          const DEVMODE32A *initData )
 {
     return CreateDC16( driver, device, output, (const DEVMODE16 *)initData );
 }
@@ -626,8 +669,8 @@ HDC32 CreateDC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateDC32W    (GDI32.)
  */
-HDC32 CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                   const DEVMODE32W *initData )
+HDC32 WINAPI CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                          const DEVMODE32W *initData )
 { 
     LPSTR driverA = HEAP_strdupWtoA( GetProcessHeap(), 0, driver );
     LPSTR deviceA = HEAP_strdupWtoA( GetProcessHeap(), 0, device );
@@ -644,8 +687,8 @@ HDC32 CreateDC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 /***********************************************************************
  *           CreateIC16    (GDI.153)
  */
-HDC16 CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
-                  const DEVMODE16* initData )
+HDC16 WINAPI CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
+                         const DEVMODE16* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC16( driver, device, output, initData );
@@ -655,8 +698,8 @@ HDC16 CreateIC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateIC32A    (GDI32.49)
  */
-HDC32 CreateIC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
-                   const DEVMODE32A* initData )
+HDC32 WINAPI CreateIC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
+                          const DEVMODE32A* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC32A( driver, device, output, initData );
@@ -666,8 +709,8 @@ HDC32 CreateIC32A( LPCSTR driver, LPCSTR device, LPCSTR output,
 /***********************************************************************
  *           CreateIC32W    (GDI32.50)
  */
-HDC32 CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                   const DEVMODE32W* initData )
+HDC32 WINAPI CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
+                          const DEVMODE32W* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC32W( driver, device, output, initData );
@@ -677,7 +720,7 @@ HDC32 CreateIC32W( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 /***********************************************************************
  *           CreateCompatibleDC16    (GDI.52)
  */
-HDC16 CreateCompatibleDC16( HDC16 hdc )
+HDC16 WINAPI CreateCompatibleDC16( HDC16 hdc )
 {
     return (HDC16)CreateCompatibleDC32( hdc );
 }
@@ -686,7 +729,7 @@ HDC16 CreateCompatibleDC16( HDC16 hdc )
 /***********************************************************************
  *           CreateCompatibleDC32   (GDI32.31)
  */
-HDC32 CreateCompatibleDC32( HDC32 hdc )
+HDC32 WINAPI CreateCompatibleDC32( HDC32 hdc )
 {
     DC *dc, *origDC;
     HBITMAP32 hbitmap;
@@ -722,6 +765,7 @@ HDC32 CreateCompatibleDC32( HDC32 hdc )
     }
 
     DC_InitDC( dc );
+    GDI_HEAP_UNLOCK( dc->hSelf );
     return dc->hSelf;
 }
 
@@ -729,7 +773,7 @@ HDC32 CreateCompatibleDC32( HDC32 hdc )
 /***********************************************************************
  *           DeleteDC16    (GDI.68)
  */
-BOOL16 DeleteDC16( HDC16 hdc )
+BOOL16 WINAPI DeleteDC16( HDC16 hdc )
 {
     return DeleteDC32( hdc );
 }
@@ -738,7 +782,7 @@ BOOL16 DeleteDC16( HDC16 hdc )
 /***********************************************************************
  *           DeleteDC32    (GDI32.67)
  */
-BOOL32 DeleteDC32( HDC32 hdc )
+BOOL32 WINAPI DeleteDC32( HDC32 hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -775,7 +819,7 @@ BOOL32 DeleteDC32( HDC32 hdc )
 /***********************************************************************
  *           ResetDC16    (GDI.376)
  */
-HDC16 ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
+HDC16 WINAPI ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
 {
     fprintf( stderr, "ResetDC16: empty stub!\n" );
     return hdc;
@@ -785,7 +829,7 @@ HDC16 ResetDC16( HDC16 hdc, const DEVMODE16 *devmode )
 /***********************************************************************
  *           ResetDC32A    (GDI32.287)
  */
-HDC32 ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
+HDC32 WINAPI ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
 {
     fprintf( stderr, "ResetDC32A: empty stub!\n" );
     return hdc;
@@ -795,7 +839,7 @@ HDC32 ResetDC32A( HDC32 hdc, const DEVMODE32A *devmode )
 /***********************************************************************
  *           ResetDC32W    (GDI32.288)
  */
-HDC32 ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
+HDC32 WINAPI ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
 {
     fprintf( stderr, "ResetDC32A: empty stub!\n" );
     return hdc;
@@ -805,7 +849,7 @@ HDC32 ResetDC32W( HDC32 hdc, const DEVMODE32W *devmode )
 /***********************************************************************
  *           GetDeviceCaps16    (GDI.80)
  */
-INT16 GetDeviceCaps16( HDC16 hdc, INT16 cap )
+INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
 {
     return GetDeviceCaps32( hdc, cap );
 }
@@ -814,23 +858,31 @@ INT16 GetDeviceCaps16( HDC16 hdc, INT16 cap )
 /***********************************************************************
  *           GetDeviceCaps32    (GDI32.171)
  */
-INT32 GetDeviceCaps32( HDC32 hdc, INT32 cap )
+INT32 WINAPI GetDeviceCaps32( HDC32 hdc, INT32 cap )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    INT32 ret;
+
     if (!dc) return 0;
 
-    if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD))) return 0;
+    if ((cap < 0) || (cap > sizeof(DeviceCaps)-sizeof(WORD)))
+    {
+      GDI_HEAP_UNLOCK( hdc );
+      return 0;
+    }
     
     dprintf_dc(stddeb, "GetDeviceCaps(%04x,%d): returning %d\n",
 	    hdc, cap, *(WORD *)(((char *)dc->w.devCaps) + cap) );
-    return *(WORD *)(((char *)dc->w.devCaps) + cap);
+    ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
+    GDI_HEAP_UNLOCK( hdc );
+    return ret;
 }
 
 
 /***********************************************************************
  *           SetBkColor16    (GDI.1)
  */
-COLORREF SetBkColor16( HDC16 hdc, COLORREF color )
+COLORREF WINAPI SetBkColor16( HDC16 hdc, COLORREF color )
 {
     return SetBkColor32( hdc, color );
 }
@@ -839,7 +891,7 @@ COLORREF SetBkColor16( HDC16 hdc, COLORREF color )
 /***********************************************************************
  *           SetBkColor32    (GDI32.305)
  */
-COLORREF SetBkColor32( HDC32 hdc, COLORREF color )
+COLORREF WINAPI SetBkColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -848,12 +900,14 @@ COLORREF SetBkColor32( HDC32 hdc, COLORREF color )
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0x80000000;
 	MF_MetaParam2(dc, META_SETBKCOLOR, HIWORD(color), LOWORD(color));
+	GDI_HEAP_UNLOCK( hdc );
 	return 0;  /* ?? */
     }
 
     oldColor = dc->w.backgroundColor;
     dc->w.backgroundColor = color;
     dc->w.backgroundPixel = COLOR_ToPhysical( dc, color );
+    GDI_HEAP_UNLOCK( hdc );
     return oldColor;
 }
 
@@ -861,7 +915,7 @@ COLORREF SetBkColor32( HDC32 hdc, COLORREF color )
 /***********************************************************************
  *           SetTextColor16    (GDI.9)
  */
-COLORREF SetTextColor16( HDC16 hdc, COLORREF color )
+COLORREF WINAPI SetTextColor16( HDC16 hdc, COLORREF color )
 {
     return SetTextColor32( hdc, color );
 }
@@ -870,7 +924,7 @@ COLORREF SetTextColor16( HDC16 hdc, COLORREF color )
 /***********************************************************************
  *           SetTextColor32    (GDI32.338)
  */
-COLORREF SetTextColor32( HDC32 hdc, COLORREF color )
+COLORREF WINAPI SetTextColor32( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -879,12 +933,14 @@ COLORREF SetTextColor32( HDC32 hdc, COLORREF color )
 	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
 	if (!dc) return 0x80000000;
 	MF_MetaParam2(dc, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color));
+	GDI_HEAP_UNLOCK( hdc );
 	return 0;  /* ?? */
     }
 
     oldColor = dc->w.textColor;
     dc->w.textColor = color;
     dc->w.textPixel = COLOR_ToPhysical( dc, color );
+    GDI_HEAP_UNLOCK( hdc );
     return oldColor;
 }
 
@@ -892,7 +948,7 @@ COLORREF SetTextColor32( HDC32 hdc, COLORREF color )
 /***********************************************************************
  *           SetTextAlign16    (GDI.346)
  */
-UINT16 SetTextAlign16( HDC16 hdc, UINT16 textAlign )
+UINT16 WINAPI SetTextAlign16( HDC16 hdc, UINT16 textAlign )
 {
     return SetTextAlign32( hdc, textAlign );
 }
@@ -901,7 +957,7 @@ UINT16 SetTextAlign16( HDC16 hdc, UINT16 textAlign )
 /***********************************************************************
  *           SetTextAlign32    (GDI32.336)
  */
-UINT32 SetTextAlign32( HDC32 hdc, UINT32 textAlign )
+UINT32 WINAPI SetTextAlign32( HDC32 hdc, UINT32 textAlign )
 {
     UINT32 prevAlign;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -909,10 +965,12 @@ UINT32 SetTextAlign32( HDC32 hdc, UINT32 textAlign )
     {
 	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
 	MF_MetaParam1( dc, META_SETTEXTALIGN, textAlign );
+	GDI_HEAP_UNLOCK( hdc );
 	return 1;
     }
     prevAlign = dc->w.textAlign;
     dc->w.textAlign = textAlign;
+    GDI_HEAP_UNLOCK( hdc );
     return prevAlign;
 }
 
@@ -920,10 +978,11 @@ UINT32 SetTextAlign32( HDC32 hdc, UINT32 textAlign )
 /***********************************************************************
  *           GetDCOrgEx  (GDI32.168)
  */
-BOOL32 GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
+BOOL32 WINAPI GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC );
-    if (!dc || !lpp) return FALSE;
+    DC * dc;
+    if (!lpp) return FALSE;
+    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return FALSE;
 
     if (!(dc->w.flags & DC_MEMORY))
     {
@@ -935,6 +994,7 @@ BOOL32 GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
     }
     else lpp->x = lpp->y = 0;
     lpp->x += dc->w.DCOrgX; lpp->y += dc->w.DCOrgY;
+    GDI_HEAP_UNLOCK( hDC );
     return TRUE;
 }
 
@@ -942,7 +1002,7 @@ BOOL32 GetDCOrgEx( HDC32 hDC, LPPOINT32 lpp )
 /***********************************************************************
  *           GetDCOrg    (GDI.79)
  */
-DWORD GetDCOrg( HDC16 hdc )
+DWORD WINAPI GetDCOrg( HDC16 hdc )
 {
     POINT32	pt;
     if( GetDCOrgEx( hdc, &pt) )
@@ -954,7 +1014,7 @@ DWORD GetDCOrg( HDC16 hdc )
 /***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
-DWORD SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
+DWORD WINAPI SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD prevOrg;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -962,6 +1022,7 @@ DWORD SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
     prevOrg = dc->w.DCOrgX | (dc->w.DCOrgY << 16);
     dc->w.DCOrgX = x;
     dc->w.DCOrgY = y;
+    GDI_HEAP_UNLOCK( hdc );
     return prevOrg;
 }
 
@@ -969,7 +1030,7 @@ DWORD SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
 /***********************************************************************
  *           SetDCHook   (GDI.190)
  */
-BOOL16 SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
+BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
 
@@ -979,6 +1040,7 @@ BOOL16 SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
     if (!dc) return FALSE;
     dc->hookProc = hookProc;
     dc->dwHookData = dwHookData;
+    GDI_HEAP_UNLOCK( hdc );
     return TRUE;
 }
 
@@ -986,11 +1048,12 @@ BOOL16 SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 /***********************************************************************
  *           GetDCHook   (GDI.191)
  */
-DWORD GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
+DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 {
     DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
     *phookProc = dc->hookProc;
+    GDI_HEAP_UNLOCK( hdc );
     return dc->dwHookData;
 }
 
@@ -998,7 +1061,7 @@ DWORD GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 /***********************************************************************
  *           SetHookFlags       (GDI.192)
  */
-WORD SetHookFlags(HDC16 hDC, WORD flags)
+WORD WINAPI SetHookFlags(HDC16 hDC, WORD flags)
 {
   DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
 
@@ -1016,6 +1079,7 @@ WORD SetHookFlags(HDC16 hDC, WORD flags)
             dc->w.flags |= DC_DIRTY;
         else if( flags & DCHF_VALIDATEVISRGN || !flags )
             dc->w.flags &= ~DC_DIRTY;
+	GDI_HEAP_UNLOCK( hDC );
         return wRet;
     }
   return 0;

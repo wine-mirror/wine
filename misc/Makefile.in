@@ -36,7 +36,7 @@ C_SRCS = \
 	ver.c \
 	w32sys.c \
 	winsock.c \
-	winsock_async.c \
+	winsock_dns.c \
 	wsprintf.c \
 	xmalloc.c
 

@@ -631,16 +631,29 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
  *
  * Main flood-fill routine.
  */
-static BOOL32 X11DRV_DoFloodFill( DC *dc, RECT32 *rect, INT32 x, INT32 y,
-                                 COLORREF color, UINT32 fillType )
+
+struct FloodFill_params
+{
+    DC      *dc;
+    INT32    x;
+    INT32    y;
+    COLORREF color;
+    UINT32   fillType;
+};
+
+static BOOL32 X11DRV_DoFloodFill( const struct FloodFill_params *params )
 {
     XImage *image;
+    RECT32 rect;
+    DC *dc = params->dc;
+
+    if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
 
     if (!(image = XGetImage( display, dc->u.x.drawable,
-                             dc->w.DCOrgX + rect->left,
-                             dc->w.DCOrgY + rect->top,
-                             rect->right - rect->left,
-                             rect->bottom - rect->top,
+                             dc->w.DCOrgX + rect.left,
+                             dc->w.DCOrgY + rect.top,
+                             rect.right - rect.left,
+                             rect.bottom - rect.top,
                              AllPlanes, ZPixmap ))) return FALSE;
 
     if (DC_SetupGCForBrush( dc ))
@@ -648,11 +661,12 @@ static BOOL32 X11DRV_DoFloodFill( DC *dc, RECT32 *rect, INT32 x, INT32 y,
           /* ROP mode is always GXcopy for flood-fill */
         XSetFunction( display, dc->u.x.gc, GXcopy );
         X11DRV_InternalFloodFill(image, dc,
-                                 XLPTODP(dc,x) - rect->left,
-                                 YLPTODP(dc,y) - rect->top,
-                                 dc->w.DCOrgX + rect->left,
-                                 dc->w.DCOrgY + rect->top,
-                                 COLOR_ToPhysical( dc, color ), fillType );
+                                 XLPTODP(dc,params->x) - rect.left,
+                                 YLPTODP(dc,params->y) - rect.top,
+                                 dc->w.DCOrgX + rect.left,
+                                 dc->w.DCOrgY + rect.top,
+                                 COLOR_ToPhysical( dc, params->color ),
+                                 params->fillType );
     }
 
     XDestroyImage( image );
@@ -667,15 +681,11 @@ BOOL32
 X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
                      UINT32 fillType )
 {
-    RECT32 rect;
-    HDC32	hdc = dc->hSelf; /* FIXME */
+    struct FloodFill_params params = { dc, x, y, color, fillType };
 
     dprintf_graphics( stddeb, "X11DRV_ExtFloodFill %d,%d %06lx %d\n",
                       x, y, color, fillType );
 
-    if (!PtVisible32( hdc, x, y )) return FALSE;
-    if (GetRgnBox32( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
-
-    return CallTo32_LargeStack( (int(*)())X11DRV_DoFloodFill, 6,
-                                dc, &rect, x, y, color, fillType );
+    if (!PtVisible32( dc->hSelf, x, y )) return FALSE;
+    return CALL_LARGE_STACK( X11DRV_DoFloodFill, &params );
 }

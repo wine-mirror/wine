@@ -18,7 +18,7 @@ typedef struct
 } DESKTOPINFO;
 
 extern BOOL32 DESKTOP_SetPattern( LPCSTR pattern );
-extern LRESULT DesktopWndProc( HWND32 hwnd, UINT32 message,
-                               WPARAM32 wParam, LPARAM lParam );
+extern LRESULT WINAPI DesktopWndProc( HWND32 hwnd, UINT32 message,
+                                      WPARAM32 wParam, LPARAM lParam );
 
 #endif  /* __WINE_DESKTOP_H */

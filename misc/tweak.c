@@ -241,80 +241,6 @@ int  TWEAK_Init()
 
 /******************************************************************************
  *
- *   int  TWEAK_CheckOldFonts()
- *
- *   Examines wine.conf for old/invalid font entries and recommend changes to
- *   the user.
- *
- *   Revision history
- *        05-Jul-1997 Dave Cuthbert (dacut@ece.cmu.edu)
- *             Original implementation.
- *
- *****************************************************************************/
-
-static void  TWEAK_CheckOldFontsCallback(char const *, char const *, void *);
-
-static char const  *fontmsgprologue = 
-"Wine warning:\n"
-"   The following entries in the [fonts] section of the wine.conf file are\n"
-"   obsolete or invalid:\n";
-
-static char const  *fontmsgepilogue =
-"   These entries should be eliminated or updated.\n"
-"   See the documentation/fonts file for more information.\n";
-
-static int  TWEAK_CheckOldFonts()
-{
-    int  found = 0;
-
-    PROFILE_EnumerateWineIniSection("Fonts", &TWEAK_CheckOldFontsCallback,
-				    (void *)&found);
-    if(found)
-	fprintf(stderr, fontmsgepilogue);
-
-    return 1;
-}
-
-static void  TWEAK_CheckOldFontsCallback(
-    char const  *key,
-    char const  *value,
-    void  *found)
-{
-    /* Ignore any keys that start with potential comment characters "'", '#',
-       or ';'. */
-    if(key[0] == '\'' || key[0] == '#' || key[0] == ';' || key[0] == '\0')
-	return;
-
-    /* Make sure this is a valid key */
-    if(strncasecmp(key, "Alias", 5) == 0 ||
-       strcasecmp(key, "Default") == 0) {
-
-	/* Valid key; make sure the value doesn't contain a wildcard */
-	if(strchr(value, '*')) {
-	    if(*(int *)found == 0) {
-		fprintf(stderr, fontmsgprologue);
-		++*(int *)found;
-	    }
-	    
-	    fprintf(stderr, "     %s=%s [no wildcards allowed]\n", key, value);
-	}
-    }
-    else {
-	/* Not a valid key */
-	if(*(int *)found == 0) {
-	    fprintf(stderr, fontmsgprologue);
-	    ++*(int *)found;
-	}
-
-	fprintf(stderr, "     %s=%s [obsolete]\n", key, value);
-    }
-
-    return;
-}
-
-
-/******************************************************************************
- *
  *   int  TWEAK_CheckConfiguration()
  *
  *   Examines wine.conf for old/bad entries and recommends changes to the user.
@@ -327,10 +253,8 @@ static void  TWEAK_CheckOldFontsCallback(
 
 int  TWEAK_CheckConfiguration()
 {
-    TWEAK_CheckOldFonts();
     return 1;
 }
-
 
 
 /******************************************************************************

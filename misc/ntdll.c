@@ -22,24 +22,24 @@
 /**************************************************************************
  *                 RtlLengthRequiredSid			[NTDLL]
  */
-DWORD
-RtlLengthRequiredSid(DWORD nrofsubauths) {
+DWORD WINAPI RtlLengthRequiredSid(DWORD nrofsubauths)
+{
 	return sizeof(DWORD)*nrofsubauths+sizeof(SID);
 }
 
 /**************************************************************************
  *                 RtlLengthSid				[NTDLL]
  */
-DWORD
-RtlLengthSid(LPSID sid) {
+DWORD WINAPI RtlLengthSid(LPSID sid)
+{
 	return sizeof(DWORD)*sid->SubAuthorityCount+sizeof(SID);
 }
 
 /**************************************************************************
  *                 RtlCreateAcl				[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlCreateAcl(LPACL acl,DWORD size,DWORD rev) {
+DWORD /* NTSTATUS */ WINAPI RtlCreateAcl(LPACL acl,DWORD size,DWORD rev)
+{
 	if (rev!=ACL_REVISION)
 		return STATUS_INVALID_PARAMETER;
 	if (size<sizeof(ACL))
@@ -59,8 +59,8 @@ RtlCreateAcl(LPACL acl,DWORD size,DWORD rev) {
  * looks for the AceCount+1 ACE, and if it is still within the alloced
  * ACL, return a pointer to it
  */
-BOOL32
-RtlFirstFreeAce(LPACL acl,LPACE_HEADER *x) {
+BOOL32 WINAPI RtlFirstFreeAce(LPACL acl,LPACE_HEADER *x)
+{
 	LPACE_HEADER	ace;
 	int		i;
 
@@ -80,8 +80,9 @@ RtlFirstFreeAce(LPACL acl,LPACE_HEADER *x) {
 /**************************************************************************
  *                 RtlAddAce				[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,LPACE_HEADER acestart,DWORD acelen){
+DWORD /* NTSTATUS */  WINAPI RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,
+                                       LPACE_HEADER acestart,DWORD acelen)
+{
 	LPACE_HEADER	ace,targetace;
 	int		nrofaces;
 
@@ -104,8 +105,8 @@ RtlAddAce(LPACL acl,DWORD rev,DWORD xnrofaces,LPACE_HEADER acestart,DWORD acelen
 /**************************************************************************
  *                 RtlCreateSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev) {
+DWORD /* NTSTATUS */ WINAPI RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev)
+{
 	if (rev!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	memset(lpsd,'\0',sizeof(*lpsd));
@@ -116,10 +117,8 @@ RtlCreateSecurityDescriptor(LPSECURITY_DESCRIPTOR lpsd,DWORD rev) {
 /**************************************************************************
  *                 RtlSetDaclSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlSetDaclSecurityDescriptor (
-LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted
-) {
+DWORD /* NTSTATUS */ WINAPI RtlSetDaclSecurityDescriptor ( LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted )
+{
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -140,10 +139,10 @@ LPSECURITY_DESCRIPTOR lpsd,BOOL32 daclpresent,LPACL dacl,BOOL32 dacldefaulted
 /**************************************************************************
  *                 RtlSetSaclSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlSetSaclSecurityDescriptor (
+DWORD /* NTSTATUS */ WINAPI RtlSetSaclSecurityDescriptor (
 LPSECURITY_DESCRIPTOR lpsd,BOOL32 saclpresent,LPACL sacl,BOOL32 sacldefaulted
-) {
+)
+{
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -164,8 +163,8 @@ LPSECURITY_DESCRIPTOR lpsd,BOOL32 saclpresent,LPACL sacl,BOOL32 sacldefaulted
 /**************************************************************************
  *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 ownerdefaulted) {
+DWORD /* NTSTATUS */ WINAPI RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 ownerdefaulted)
+{
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -182,8 +181,8 @@ RtlSetOwnerSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID owner,BOOL32 own
 /**************************************************************************
  *                 RtlSetOwnerSecurityDescriptor		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 groupdefaulted) {
+DWORD /* NTSTATUS */ WINAPI RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 groupdefaulted)
+{
 	if (lpsd->Revision!=SECURITY_DESCRIPTOR_REVISION)
 		return STATUS_UNKNOWN_REVISION;
 	if (lpsd->Control & SE_SELF_RELATIVE)
@@ -201,8 +200,7 @@ RtlSetGroupSecurityDescriptor (LPSECURITY_DESCRIPTOR lpsd,LPSID group,BOOL32 gro
 /**************************************************************************
  *                 RtlNormalizeProcessParams		[NTDLL]
  */
-LPVOID
-RtlNormalizeProcessParams(LPVOID x)
+LPVOID WINAPI RtlNormalizeProcessParams(LPVOID x)
 {
     fprintf(stdnimp,"RtlNormalizeProcessParams(%p), stub.\n",x);
     return x;
@@ -211,8 +209,9 @@ RtlNormalizeProcessParams(LPVOID x)
 /**************************************************************************
  *                 RtlInitializeSid			[NTDLL]
  */
-DWORD
-RtlInitializeSid(LPSID lpsid,LPSID_IDENTIFIER_AUTHORITY lpsidauth,DWORD c) {
+DWORD WINAPI RtlInitializeSid(LPSID lpsid,LPSID_IDENTIFIER_AUTHORITY lpsidauth,
+                              DWORD c)
+{
 	BYTE	a = c&0xff;
 
 	if (a>=SID_MAX_SUB_AUTHORITIES)
@@ -226,24 +225,24 @@ RtlInitializeSid(LPSID lpsid,LPSID_IDENTIFIER_AUTHORITY lpsidauth,DWORD c) {
 /**************************************************************************
  *                 RtlSubAuthoritySid			[NTDLL]
  */
-LPDWORD
-RtlSubAuthoritySid(LPSID lpsid,DWORD nr) {
+LPDWORD WINAPI RtlSubAuthoritySid(LPSID lpsid,DWORD nr)
+{
 	return &(lpsid->SubAuthority[nr]);
 }
 
 /**************************************************************************
  *                 RtlSubAuthorityCountSid		[NTDLL]
  */
-LPBYTE
-RtlSubAuthorityCountSid(LPSID lpsid) {
+LPBYTE WINAPI RtlSubAuthorityCountSid(LPSID lpsid)
+{
 	return ((LPBYTE)lpsid)+1;
 }
 
 /**************************************************************************
  *                 RtlCopySid				[NTDLL]
  */
-DWORD
-RtlCopySid(DWORD len,LPSID to,LPSID from) {
+DWORD WINAPI RtlCopySid(DWORD len,LPSID to,LPSID from)
+{
 	if (len<(from->SubAuthorityCount*4+8))
 		return STATUS_BUFFER_TOO_SMALL;
 	memmove(to,from,from->SubAuthorityCount*4+8);
@@ -253,8 +252,8 @@ RtlCopySid(DWORD len,LPSID to,LPSID from) {
 /**************************************************************************
  *                 RtlAnsiStringToUnicodeString		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LPANSI_STRING ansi,BOOL32 doalloc) {
+DWORD /* NTSTATUS */ WINAPI RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LPANSI_STRING ansi,BOOL32 doalloc)
+{
 	DWORD	unilen = (ansi->Length+1)*sizeof(WCHAR);
 
 	if (unilen>0xFFFF)
@@ -275,8 +274,8 @@ RtlAnsiStringToUnicodeString(LPUNICODE_STRING uni,LPANSI_STRING ansi,BOOL32 doal
 /**************************************************************************
  *                 RtlOemStringToUnicodeString		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc) {
+DWORD /* NTSTATUS */ WINAPI RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc)
+{
 	DWORD	unilen = (ansi->Length+1)*sizeof(WCHAR);
 
 	if (unilen>0xFFFF)
@@ -297,8 +296,8 @@ RtlOemStringToUnicodeString(LPUNICODE_STRING uni,LPSTRING ansi,BOOL32 doalloc) {
  *                 RtlMultiByteToUnicodeN		[NTDLL]
  * FIXME: multibyte support
  */
-DWORD /* NTSTATUS */
-RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen) {
+DWORD /* NTSTATUS */ WINAPI RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
+{
 	DWORD	len;
 	LPWSTR	x;
 
@@ -315,8 +314,8 @@ RtlMultiByteToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DW
 /**************************************************************************
  *                 RtlOemToUnicodeN			[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen) {
+DWORD /* NTSTATUS */ WINAPI RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oemlen)
+{
 	DWORD	len;
 	LPWSTR	x;
 
@@ -333,8 +332,8 @@ RtlOemToUnicodeN(LPWSTR unistr,DWORD unilen,LPDWORD reslen,LPSTR oemstr,DWORD oe
 /**************************************************************************
  *                 RtlInitString			[NTDLL]
  */
-VOID
-RtlInitAnsiString(LPANSI_STRING target,LPCSTR source) {
+VOID WINAPI RtlInitAnsiString(LPANSI_STRING target,LPCSTR source)
+{
 	target->Length = target->MaximumLength = 0;
 	target->Buffer = (LPSTR)source;
 	if (!source)
@@ -345,8 +344,8 @@ RtlInitAnsiString(LPANSI_STRING target,LPCSTR source) {
 /**************************************************************************
  *                 RtlInitString			[NTDLL]
  */
-VOID
-RtlInitString(LPSTRING target,LPCSTR source) {
+VOID WINAPI RtlInitString(LPSTRING target,LPCSTR source)
+{
 	target->Length = target->MaximumLength = 0;
 	target->Buffer = (LPSTR)source;
 	if (!source)
@@ -358,8 +357,8 @@ RtlInitString(LPSTRING target,LPCSTR source) {
 /**************************************************************************
  *                 RtlInitUnicodeString			[NTDLL]
  */
-VOID
-RtlInitUnicodeString(LPUNICODE_STRING target,LPCWSTR source) {
+VOID WINAPI RtlInitUnicodeString(LPUNICODE_STRING target,LPCWSTR source)
+{
 	target->Length = target->MaximumLength = 0;
 	target->Buffer = (LPWSTR)source;
 	if (!source)
@@ -371,8 +370,8 @@ RtlInitUnicodeString(LPUNICODE_STRING target,LPCWSTR source) {
 /**************************************************************************
  *                 RtlFreeUnicodeString			[NTDLL]
  */
-VOID
-RtlFreeUnicodeString(LPUNICODE_STRING str) {
+VOID WINAPI RtlFreeUnicodeString(LPUNICODE_STRING str)
+{
 	if (str->Buffer)
 		HeapFree(GetProcessHeap(),0,str->Buffer);
 }
@@ -380,8 +379,8 @@ RtlFreeUnicodeString(LPUNICODE_STRING str) {
 /**************************************************************************
  *                 RtlUnicodeToOemN			[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD unilen) {
+DWORD /* NTSTATUS */ WINAPI RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD unilen)
+{
 	DWORD	len;
 	LPSTR	x;
 
@@ -398,8 +397,7 @@ RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD un
 /**************************************************************************
  *                 RtlUnicodeStringToOemString		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
+DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
 {
 	if (alloc) {
 		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
@@ -413,8 +411,7 @@ RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
 /**************************************************************************
  *                 RtlUnicodeStringToAnsiString		[NTDLL]
  */
-DWORD /* NTSTATUS */
-RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
+DWORD /* NTSTATUS */ WINAPI RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
 {
 	if (alloc) {
 		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
@@ -428,8 +425,8 @@ RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc
 /**************************************************************************
  *                 RtlNtStatusToDosErro			[NTDLL]
  */
-DWORD
-RtlNtStatusToDosError(DWORD error) {
+DWORD WINAPI RtlNtStatusToDosError(DWORD error)
+{
 	/* FIXME: map STATUS_ to ERROR_ */
 	return error;
 }
@@ -437,8 +434,8 @@ RtlNtStatusToDosError(DWORD error) {
 /**************************************************************************
  *                 RtlGetNtProductType			[NTDLL]
  */
-DWORD
-RtlGetNtProductType(LPVOID x) {
+DWORD WINAPI RtlGetNtProductType(LPVOID x)
+{
 	/* FIXME : find documentation for this one */
 	return 0;
 }
@@ -446,8 +443,8 @@ RtlGetNtProductType(LPVOID x) {
 /**************************************************************************
  *                 RtlUpcaseUnicodeString		[NTDLL]
  */
-DWORD
-RtlUpcaseUnicodeString(LPUNICODE_STRING dest,LPUNICODE_STRING src,BOOL32 doalloc) {
+DWORD WINAPI RtlUpcaseUnicodeString(LPUNICODE_STRING dest,LPUNICODE_STRING src,BOOL32 doalloc)
+{
 	LPWSTR	s,t;
 	DWORD	i,len;
 
@@ -471,16 +468,16 @@ RtlUpcaseUnicodeString(LPUNICODE_STRING dest,LPUNICODE_STRING src,BOOL32 doalloc
 /**************************************************************************
  *                 RtlxOemStringToUnicodeSize		[NTDLL]
  */
-UINT32
-RtlxOemStringToUnicodeSize(LPSTRING str) {
+UINT32 WINAPI RtlxOemStringToUnicodeSize(LPSTRING str)
+{
 	return str->Length*2+2;
 }
 
 /**************************************************************************
  *                 RtlxAnsiStringToUnicodeSize		[NTDLL]
  */
-UINT32
-RtlxAnsiStringToUnicodeSize(LPANSI_STRING str) {
+UINT32 WINAPI RtlxAnsiStringToUnicodeSize(LPANSI_STRING str)
+{
 	return str->Length*2+2;
 }
 
@@ -489,10 +486,9 @@ RtlxAnsiStringToUnicodeSize(LPANSI_STRING str) {
  *
  * FIXME: convert to UNC or whatever is expected here
  */
-BOOL32 
-RtlDosPathNameToNtPathName_U(
-	LPWSTR from,LPUNICODE_STRING us,DWORD x2,DWORD x3
-) {
+BOOL32  WINAPI RtlDosPathNameToNtPathName_U(
+	LPWSTR from,LPUNICODE_STRING us,DWORD x2,DWORD x3)
+{
 	LPSTR	fromA = HEAP_strdupWtoA(GetProcessHeap(),0,from);
 
 	fprintf(stderr,"RtlDosPathNameToNtPathName_U(%s,%p,%08lx,%08lx)\n",
@@ -506,8 +502,8 @@ RtlDosPathNameToNtPathName_U(
 /**************************************************************************
  *                 NtOpenFile				[NTDLL]
  */
-DWORD
-NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6) {
+DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,DWORD x6)
+{
 	fprintf(stderr,"NtOpenFile(%08lx,%08lx,%08lx,%08lx,%08lx,%08lx)\n",
 		x1,flags,x3,x4,alignment,x6
 	);

@@ -21,20 +21,29 @@
              CX_reg(context), DX_reg(context), SI_reg(context), \
              DI_reg(context), (WORD)DS_reg(context), (WORD)ES_reg(context) )
 
+
+static WORD VXD_WinVersion(void)
+{
+    WORD version = GetVersion16();
+    return (version >> 8) | (version << 8);
+}
+
 /***********************************************************************
  *           VXD_PageFile
  */
-void VXD_PageFile( CONTEXT *context )
+void WINAPI VXD_PageFile( CONTEXT *context )
 {
+    unsigned	service = AX_reg(context);
+
     /* taken from Ralf Brown's Interrupt List */
 
-    dprintf_vxd(stddeb,"VxD PageFile called ...\n");
+    dprintf_vxd(stddeb,"VxD: [%04x] PageFile\n", (UINT16)service );
 
-    switch(AX_reg(context)) 
+    switch(service)
     {
     case 0x00: /* get version, is this windows version? */
 	dprintf_vxd(stddeb,"VxD PageFile: returning version\n");
-        AX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
+        AX_reg(context) = VXD_WinVersion();
 	RESET_CFLAG(context);
 	break;
 
@@ -69,15 +78,17 @@ void VXD_PageFile( CONTEXT *context )
 /***********************************************************************
  *           VXD_Shell
  */
-void VXD_Shell( CONTEXT *context )
+void WINAPI VXD_Shell( CONTEXT *context )
 {
-    dprintf_vxd(stddeb,"VxD Shell called ...\n");
+    unsigned	service = DX_reg(context);
 
-    switch (DX_reg(context)) /* Ralf Brown says EDX, but I use DX instead */
+    dprintf_vxd(stddeb,"VxD: [%04x] Shell\n", (UINT16)service);
+
+    switch (service) /* Ralf Brown says EDX, but I use DX instead */
     {
     case 0x0000:
 	dprintf_vxd(stddeb,"VxD Shell: returning version\n");
-        AX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
+        AX_reg(context) = VXD_WinVersion();
 	EBX_reg(context) = 1; /* system VM Handle */
 	break;
 
@@ -127,15 +138,17 @@ void VXD_Shell( CONTEXT *context )
 /***********************************************************************
  *           VXD_Comm
  */
-void VXD_Comm( CONTEXT *context )
+void WINAPI VXD_Comm( CONTEXT *context )
 {
-    dprintf_vxd(stddeb,"VxD Comm called ...\n");
+    unsigned	service = AX_reg(context);
 
-    switch (AX_reg(context))
+    dprintf_vxd(stddeb,"VxD: [%04x] Comm\n", (UINT16)service);
+
+    switch (service)
     {
     case 0x0000: /* get version */
 	dprintf_vxd(stddeb,"VxD Comm: returning version\n");
-        AX_reg(context) = (WINVERSION >> 8) | ((WINVERSION << 8) & 0xff00);
+        AX_reg(context) = VXD_WinVersion();
 	RESET_CFLAG(context);
 	break;
 
@@ -146,3 +159,37 @@ void VXD_Comm( CONTEXT *context )
         VXD_BARF( context, "comm" );
     }
 }
+
+/***********************************************************************
+ *           VXD_Timer
+ */
+void VXD_Timer( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    dprintf_vxd(stddeb,"VxD: [%04x] Virtual Timer\n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+	AX_reg(context) = VXD_WinVersion();
+	RESET_CFLAG(context);
+	break;
+
+    case 0x0100: /* clock tick time, in 840nsecs */
+	EAX_reg(context) = GetTickCount();
+
+	EDX_reg(context) = EAX_reg(context) >> 22;
+	EAX_reg(context) <<= 10; /* not very precise */
+	break;
+
+    case 0x0101: /* current Windows time, msecs */
+    case 0x0102: /* current VM time, msecs */
+	EAX_reg(context) = GetTickCount();
+	break;
+
+    default:
+	VXD_BARF( context, "VTD" );
+    }
+}
+

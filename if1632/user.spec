@@ -283,7 +283,7 @@ file	user.exe
 276 stub LockMyTask
 277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID16
 278 pascal16 GetDesktopHwnd() GetDesktopHwnd
-279 stub OldSetDeskPattern
+279 pascal16 OldSetDeskPattern() SetDeskPattern
 280 pascal16 SetSystemMenu(word word) SetSystemMenu16
 281 pascal16 GetSysColorBrush(word) GetSysColorBrush16
 282 pascal16 SelectPalette(word word word) SelectPalette16
@@ -382,12 +382,12 @@ file	user.exe
 431 pascal   AnsiUpper(segstr) AnsiUpper16
 432 pascal   AnsiLower(segstr) AnsiLower16
 433 pascal16 IsCharAlpha(byte) IsCharAlpha16
-434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric16
+434 pascal16 IsCharAlphaNumeric(byte) IsCharAlphaNumeric16
 435 pascal16 IsCharUpper(byte) IsCharUpper16
 436 pascal16 IsCharLower(byte) IsCharLower16
 437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff16
 438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff16
-441 stub InsertMenuItem
+441 pascal16 InsertMenuItem(word word word ptr) InsertMenuItem16
 443 stub GetMenuItemInfo
 445 pascal   DefFrameProc(word word word word long) DefFrameProc16
 446 stub SetMenuItemInfo
@@ -503,8 +503,8 @@ file	user.exe
 804 stub CHOOSECOLOR_CALLBACK16
 819 stub PeekMessage32
 820 stub GetMessage32
-821 stub TranslateMessage32
-821 stub IsDialogMessage32
+821 stub TranslateMessage32	
+#821 stub IsDialogMessage32		# FIXME: two ordinal 821???
 822 stub DispatchMessage32
 825 stub PostMessage32
 826 stub PostThreadMessage32

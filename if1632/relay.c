@@ -35,6 +35,7 @@ BOOL32 RELAY_Init(void)
 
     extern void CALLTO16_Start(), CALLTO16_End();
     extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
+    extern int CALLTO32_LargeStack();
     extern DWORD CALLTO16_RetAddr_word, CALLTO16_RetAddr_long;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
@@ -48,6 +49,10 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
+
+    /* Set the CallLargeStack function pointer */
+
+    IF1632_CallLargeStack = CALLTO32_LargeStack;
 
     /* Initialize thunking */
 
@@ -326,7 +331,7 @@ void RELAY_DebugCallTo32( unsigned int func, int nbargs, unsigned int arg1  )
 /**********************************************************************
  *	     Catch    (KERNEL.55)
  */
-INT16 Catch( LPCATCHBUF lpbuf )
+INT16 WINAPI Catch( LPCATCHBUF lpbuf )
 {
     STACK16FRAME *pFrame = CURRENT_STACK16;
 
@@ -363,7 +368,7 @@ INT16 Catch( LPCATCHBUF lpbuf )
 /**********************************************************************
  *	     Throw    (KERNEL.56)
  */
-INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
+INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval )
 {
     STACK16FRAME *pFrame;
     WORD es = CURRENT_STACK16->es;
@@ -394,8 +399,8 @@ INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
 /**********************************************************************
  *	     CallProc32W    (KERNEL.56)
  */
-DWORD
-WIN16_CallProc32W() {
+DWORD /*WINAPI*/ WIN16_CallProc32W()
+{
 	DWORD *win_stack = (DWORD *)CURRENT_STACK16->args;
 	DWORD	nrofargs = win_stack[0];
 	DWORD	argconvmask = win_stack[1];
@@ -428,6 +433,10 @@ WIN16_CallProc32W() {
 	case 4:	ret = CallTo32_4(proc32,args[0],args[1],args[2],args[3]);
 		break;
 	case 5:	ret = CallTo32_5(proc32,args[0],args[1],args[2],args[3],args[4]);
+		break;
+	case 6:	ret = CallTo32_6(proc32,args[0],args[1],args[2],args[3],args[4],args[5]);
+		break;
+	case 7:	ret = CallTo32_7(proc32,args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
 	default:
 		/* FIXME: should go up to 32  arguments */

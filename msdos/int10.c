@@ -15,7 +15,7 @@
  *
  * Handler for int 10h (video).
  */
-void INT_Int10Handler( CONTEXT *context )
+void WINAPI INT_Int10Handler( CONTEXT *context )
 {
     switch(AH_reg(context))
     {

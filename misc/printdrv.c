@@ -13,7 +13,7 @@
 #include "winerror.h"
 
 
-INT16 StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
+INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
 {
   INT16 retVal;
   printf("In startdoc16(%p)\n", lpdoc );
@@ -28,17 +28,16 @@ INT16 StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
   return retVal;
 }
 
-INT16
-EndDoc16(HDC16 hdc)
+INT16 WINAPI EndDoc16(HDC16 hdc)
 {
   return  Escape16(hdc, ENDDOC, 0, 0, 0);
 }
 
 
 
-DWORD
-DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
-                  LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded)
+DWORD WINAPI DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+                               LPDWORD lpType, LPBYTE lpPrinterData,
+                               int cbData, LPDWORD lpNeeded)
 {
     fprintf(stderr,"In DrvGetPrinterData ");
     if (HIWORD(lpPrinter))
@@ -55,9 +54,9 @@ DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
 
 
 
-DWORD
-DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
-                  LPBYTE lpPrinterData, DWORD dwSize)
+DWORD WINAPI DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile,
+                               LPDWORD lpType, LPBYTE lpPrinterData,
+                               DWORD dwSize)
 {
     fprintf(stderr,"In DrvSetPrinterData ");
     if (HIWORD(lpPrinter))
@@ -73,4 +72,20 @@ DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
 }
 
 
+INT32 WINAPI DeviceCapabilities32A(LPCSTR printer,LPCSTR target,WORD z,
+                                   LPSTR a,LPDEVMODE32A b)
+{
+    fprintf(stderr,"DeviceCapabilitiesA(%s,%s,%d,%p,%p)\n",printer,target,z,a,b);
+    return 1;   	
+}
+
+LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
+                                LPSTR pDeviceName, LPDEVMODE32A pDevModeOutput,
+                                  LPDEVMODE32A pDevModeInput,DWORD fMode )
+{
+    fprintf(stderr,"DocumentPropertiesA(%d,%d,%s,%p,%p,%d)\n",
+	hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode
+    );
+    return 1;
+}
 

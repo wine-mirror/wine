@@ -21,7 +21,7 @@ DWORD currentMalloc=0;
 /***********************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  */
-DWORD CoBuildVersion()
+DWORD WINAPI CoBuildVersion()
 {
 	dprintf_ole(stddeb,"CoBuildVersion()\n");
 	return (rmm<<16)+rup;
@@ -31,7 +31,7 @@ DWORD CoBuildVersion()
  *           CoInitialize	[COMPOBJ.2]
  * lpReserved is an IMalloc pointer in 16bit OLE. We just stored it as-is.
  */
-HRESULT CoInitialize(DWORD lpReserved)
+HRESULT WINAPI CoInitialize(DWORD lpReserved)
 {
 	dprintf_ole(stdnimp,"CoInitialize\n");
 	/* remember the LPMALLOC, maybe somebody wants to read it later on */
@@ -42,7 +42,7 @@ HRESULT CoInitialize(DWORD lpReserved)
 /***********************************************************************
  *           CoUnitialize   [COMPOBJ.3]
  */
-void CoUnitialize()
+void WINAPI CoUnitialize()
 {
 	dprintf_ole(stdnimp,"CoUnitialize()\n");
 }
@@ -50,7 +50,7 @@ void CoUnitialize()
 /***********************************************************************
  *           CoGetMalloc    [COMPOBJ.4]
  */
-HRESULT CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
+HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
 {
 	if(currentMalloc)
 	{
@@ -65,7 +65,7 @@ HRESULT CoGetMalloc(DWORD dwMemContext, DWORD * lpMalloc)
 /***********************************************************************
  *           CoDisconnectObject
  */
-OLESTATUS CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
+OLESTATUS WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
     dprintf_ole(stdnimp,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
     return OLE_OK;
@@ -77,8 +77,7 @@ OLESTATUS CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 
 /* Class id: DWORD-WORD-WORD-BYTES[2]-BYTES[6] */
 
-OLESTATUS
-CLSIDFromString(const LPCSTR idstr, CLSID *id)
+OLESTATUS WINAPI CLSIDFromString(const LPCSTR idstr, CLSID *id)
 {
   BYTE *s = (BYTE *) idstr;
   BYTE *p;
@@ -146,8 +145,7 @@ CLSIDFromString(const LPCSTR idstr, CLSID *id)
  *           CLSIDFromString [COMPOBJ.19]
  */
 
-OLESTATUS
-StringFromCLSID(const CLSID *id, LPSTR idstr)
+OLESTATUS WINAPI StringFromCLSID(const CLSID *id, LPSTR idstr)
 {
   static const char *hex = "0123456789ABCDEF";
   char *s;

@@ -26,8 +26,8 @@ extern void CLIPPING_UpdateGCRegion(DC* );	/* objects/clipping.c */
 /*************************************************************************
  *             ScrollWindow16   (USER.61)
  */
-void ScrollWindow16( HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
-                     const RECT16 *clipRect )
+void WINAPI ScrollWindow16(HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
+                           const RECT16 *clipRect )
 {
     RECT32 rect32, clipRect32;
 
@@ -39,9 +39,11 @@ void ScrollWindow16( HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 
 /*************************************************************************
  *             ScrollWindow32   (USER32.449)
+ *
+ * FIXME: verify clipping region calculations
  */
-BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
-                       const RECT32 *clipRect )
+BOOL32 WINAPI ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy,
+                              const RECT32 *rect, const RECT32 *clipRect )
 {
     HDC32  	hdc;
     HRGN32 	hrgnUpdate,hrgnClip;
@@ -122,8 +124,9 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 /*************************************************************************
  *             ScrollDC16   (USER.221)
  */
-BOOL16 ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
-                   const RECT16 *cliprc, HRGN16 hrgnUpdate, LPRECT16 rcUpdate )
+BOOL16 WINAPI ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
+                          const RECT16 *cliprc, HRGN16 hrgnUpdate,
+                          LPRECT16 rcUpdate )
 {
     RECT32 rect32, clipRect32, rcUpdate32;
     BOOL16 ret;
@@ -143,8 +146,9 @@ BOOL16 ScrollDC16( HDC16 hdc, INT16 dx, INT16 dy, const RECT16 *rect,
  * Both 'rc' and 'rLClip' are in logical units but update info is 
  * returned in device coordinates.
  */
-BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
-                   const RECT32 *prLClip, HRGN32 hrgnUpdate, LPRECT32 rcUpdate )
+BOOL32 WINAPI ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
+                          const RECT32 *prLClip, HRGN32 hrgnUpdate,
+                          LPRECT32 rcUpdate )
 {
     RECT32 rDClip, rLClip;
     HRGN32 hrgnClip = 0;
@@ -294,9 +298,10 @@ BOOL32 ScrollDC32( HDC32 hdc, INT32 dx, INT32 dy, const RECT32 *rc,
 /*************************************************************************
  *             ScrollWindowEx16   (USER.319)
  */
-INT16 ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
-                        const RECT16 *clipRect, HRGN16 hrgnUpdate,
-                        LPRECT16 rcUpdate, UINT16 flags )
+INT16 WINAPI ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy,
+                               const RECT16 *rect, const RECT16 *clipRect,
+                               HRGN16 hrgnUpdate, LPRECT16 rcUpdate,
+                               UINT16 flags )
 {
     RECT32 rect32, clipRect32, rcUpdate32;
     BOOL16 ret;
@@ -313,7 +318,7 @@ INT16 ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy, const RECT16 *rect,
 /*************************************************************************
  *             SCROLL_FixCaret
  */
-BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
+static BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
 {
    HWND32 hCaret = CARET_GetHwnd();
 
@@ -341,10 +346,13 @@ BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
 
 /*************************************************************************
  *             ScrollWindowEx32   (USER32.450)
+ *
+ * NOTE: Use this function instead of ScrollWindow32
  */
-INT32 ScrollWindowEx32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
-                        const RECT32 *clipRect, HRGN32 hrgnUpdate,
-                        LPRECT32 rcUpdate, UINT32 flags )
+INT32 WINAPI ScrollWindowEx32( HWND32 hwnd, INT32 dx, INT32 dy,
+                               const RECT32 *rect, const RECT32 *clipRect,
+                               HRGN32 hrgnUpdate, LPRECT32 rcUpdate,
+                               UINT32 flags )
 {
     INT32  retVal = NULLREGION;
     BOOL32 bCaret = FALSE, bOwnRgn = TRUE;
@@ -390,12 +398,14 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	    if( dy > 0 ) dst.y = (src.y = dc->w.DCOrgY + cliprc.top) + dy;
 	    else src.y = (dst.y = dc->w.DCOrgY + cliprc.top) - dy;
 
-	    if( bUpdate )
-  		XSetGraphicsExposures( display, dc->u.x.gc, True );
+	    if( bUpdate ) /* handles non-Wine windows hanging over the scrolled area */
+		XSetGraphicsExposures( display, dc->u.x.gc, True );
+
 	    XSetFunction( display, dc->u.x.gc, GXcopy );
 	    XCopyArea( display, dc->u.x.drawable, dc->u.x.drawable, dc->u.x.gc, 
 		       src.x, src.y, cliprc.right - cliprc.left - abs(dx),
 		       cliprc.bottom - cliprc.top - abs(dy), dst.x, dst.y );
+
 	    if( bUpdate )
 		XSetGraphicsExposures( display, dc->u.x.gc, False );
 
@@ -434,7 +444,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	    for( w = wnd->child; w; w = w->next )
 	    {
 		 CONV_RECT16TO32( &w->rectWindow, &r );
-	         if( IntersectRect32(&r, &r, &cliprc) )
+	         if( !clipRect || IntersectRect32(&r, &r, &cliprc) )
 		     SetWindowPos32(w->hwndSelf, 0, w->rectWindow.left + dx,
 				    w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
 				    SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
@@ -443,8 +453,8 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	}
 
 	if( flags & (SW_INVALIDATE | SW_ERASE) )
-            PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
-					((flags & SW_ERASE) ? RDW_ERASENOW : 0), 0 );
+	    PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
+		((flags & SW_ERASE) ? RDW_ERASENOW : 0) | ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ), 0 );
 
 	if( bCaret )
 	{

@@ -26,8 +26,12 @@ extern void TIMER_ExpireTimers(void);
 extern BOOL32 TIMER_GetTimerMsg( MSG16 *msg, HWND32 hwnd,
                                  HQUEUE16 hQueue, BOOL32 remove );
 
+#define EVENT_IO_READ		0
+#define EVENT_IO_WRITE		1
+#define EVENT_IO_EXCEPT		2
+
 /* event.c */
-extern BOOL32 EVENT_WaitXEvent( BOOL32 sleep, BOOL32 peek );
+extern BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek );
 extern void EVENT_Synchronize(void);
 extern void EVENT_ProcessEvent( XEvent *event );
 extern void EVENT_RegisterWindow( WND *pWnd );

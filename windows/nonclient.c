@@ -164,7 +164,7 @@ static void NC_AdjustRect95( LPRECT16 rect, DWORD style, BOOL32 menu,
 /***********************************************************************
  *           AdjustWindowRect16    (USER.102)
  */
-BOOL16 AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
+BOOL16 WINAPI AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 {
     return AdjustWindowRectEx16( rect, style, menu, 0 );
 }
@@ -173,7 +173,7 @@ BOOL16 AdjustWindowRect16( LPRECT16 rect, DWORD style, BOOL16 menu )
 /***********************************************************************
  *           AdjustWindowRect32    (USER32.)
  */
-BOOL32 AdjustWindowRect32( LPRECT32 rect, DWORD style, BOOL32 menu )
+BOOL32 WINAPI AdjustWindowRect32( LPRECT32 rect, DWORD style, BOOL32 menu )
 {
     return AdjustWindowRectEx32( rect, style, menu, 0 );
 }
@@ -182,8 +182,8 @@ BOOL32 AdjustWindowRect32( LPRECT32 rect, DWORD style, BOOL32 menu )
 /***********************************************************************
  *           AdjustWindowRectEx16    (USER.454)
  */
-BOOL16 AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
-                             BOOL16 menu, DWORD exStyle )
+BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
+                                    BOOL16 menu, DWORD exStyle )
 {
       /* Correct the window style */
 
@@ -209,8 +209,8 @@ BOOL16 AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 /***********************************************************************
  *           AdjustWindowRectEx32    (USER32.)
  */
-BOOL32 AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
-                             BOOL32 menu, DWORD exStyle )
+BOOL32 WINAPI AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
+                                    BOOL32 menu, DWORD exStyle )
 {
     RECT16 rect16;
     BOOL32 ret;

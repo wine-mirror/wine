@@ -780,7 +780,7 @@ SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr )
 /***********************************************************************
  *           HeapCreate   (KERNEL32.336)
  */
-HANDLE32 HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
+HANDLE32 WINAPI HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
 {
     int i;
     HEAP *heap;
@@ -838,7 +838,7 @@ HANDLE32 HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
 /***********************************************************************
  *           HeapDestroy   (KERNEL32.337)
  */
-BOOL32 HeapDestroy( HANDLE32 heap )
+BOOL32 WINAPI HeapDestroy( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap;
@@ -862,7 +862,7 @@ BOOL32 HeapDestroy( HANDLE32 heap )
 /***********************************************************************
  *           HeapAlloc   (KERNEL32.334)
  */
-LPVOID HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
+LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 {
     ARENA_FREE *pArena;
     ARENA_INUSE *pInUse;
@@ -922,7 +922,7 @@ LPVOID HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
 /***********************************************************************
  *           HeapFree   (KERNEL32.338)
  */
-BOOL32 HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
+BOOL32 WINAPI HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
 {
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
@@ -961,7 +961,7 @@ BOOL32 HeapFree( HANDLE32 heap, DWORD flags, LPVOID ptr )
 /***********************************************************************
  *           HeapReAlloc   (KERNEL32.340)
  */
-LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
+LPVOID WINAPI HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
 {
     ARENA_INUSE *pArena;
     DWORD oldSize;
@@ -1077,7 +1077,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
 /***********************************************************************
  *           HeapCompact   (KERNEL32.335)
  */
-DWORD HeapCompact( HANDLE32 heap, DWORD flags )
+DWORD WINAPI HeapCompact( HANDLE32 heap, DWORD flags )
 {
     return 0;
 }
@@ -1086,7 +1086,7 @@ DWORD HeapCompact( HANDLE32 heap, DWORD flags )
 /***********************************************************************
  *           HeapLock   (KERNEL32.339)
  */
-BOOL32 HeapLock( HANDLE32 heap )
+BOOL32 WINAPI HeapLock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
@@ -1099,7 +1099,7 @@ BOOL32 HeapLock( HANDLE32 heap )
 /***********************************************************************
  *           HeapUnlock   (KERNEL32.342)
  */
-BOOL32 HeapUnlock( HANDLE32 heap )
+BOOL32 WINAPI HeapUnlock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
 
@@ -1112,7 +1112,7 @@ BOOL32 HeapUnlock( HANDLE32 heap )
 /***********************************************************************
  *           HeapSize   (KERNEL32.341)
  */
-DWORD HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
+DWORD WINAPI HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
 {
     DWORD ret;
     HEAP *heapPtr = HEAP_GetPtr( heap );
@@ -1142,7 +1142,7 @@ DWORD HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
 /***********************************************************************
  *           HeapValidate   (KERNEL32.343)
  */
-BOOL32 HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
+BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
 {
     SUBHEAP *subheap;
     HEAP *heapPtr = (HEAP *)heap;
@@ -1194,7 +1194,7 @@ BOOL32 HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
 /***********************************************************************
  *           HeapWalk   (KERNEL32.344)
  */
-BOOL32 HeapWalk( HANDLE32 heap, void *entry )
+BOOL32 WINAPI HeapWalk( HANDLE32 heap, void *entry )
 {
     fprintf( stderr, "HeapWalk(%08x): not implemented\n", heap );
     return FALSE;

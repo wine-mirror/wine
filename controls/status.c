@@ -38,7 +38,8 @@ static STATUSWINDOWINFO *GetStatusInfo(HWND32 hwnd)
 /***********************************************************************
  *           DrawStatusText32A   (COMCTL32.3)
  */
-void DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style )
+void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
+                               UINT32 style )
 {
     RECT32		r, rt;
     int	oldbkmode;
@@ -435,8 +436,8 @@ SW_Paint(STATUSWINDOWINFO *self, HWND32 hwnd)
     return 0;
 }
 
-LRESULT StatusWindowProc( HWND32 hwnd, UINT32 msg,
-                          WPARAM32 wParam, LPARAM lParam )
+LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
+                                 WPARAM32 wParam, LPARAM lParam )
 {
     STATUSWINDOWINFO *self;
 
@@ -480,8 +481,8 @@ LRESULT StatusWindowProc( HWND32 hwnd, UINT32 msg,
 /***********************************************************************
  *           CreateStatusWindow32A   (COMCTL32.4)
  */
-HWND32 CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
-                              UINT32 wid )
+HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
+                                     UINT32 wid )
 {
     HWND32 ret;
     ATOM atom;

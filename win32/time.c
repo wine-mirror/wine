@@ -16,7 +16,7 @@
 /***********************************************************************
  *              GetLocalTime            (KERNEL32.228)
  */
-VOID GetLocalTime(LPSYSTEMTIME systime)
+VOID WINAPI GetLocalTime(LPSYSTEMTIME systime)
 {
     time_t local_time;
     struct tm *local_tm;
@@ -39,7 +39,7 @@ VOID GetLocalTime(LPSYSTEMTIME systime)
 /***********************************************************************
  *              GetSystemTime            (KERNEL32.285)
  */
-VOID GetSystemTime(LPSYSTEMTIME systime)
+VOID WINAPI GetSystemTime(LPSYSTEMTIME systime)
 {
     time_t local_time;
     struct tm *local_tm;
@@ -63,7 +63,7 @@ VOID GetSystemTime(LPSYSTEMTIME systime)
 /***********************************************************************
  *              SetSystemTime            (KERNEL32.507)
  */
-BOOL32 SetSystemTime(const SYSTEMTIME *systime)
+BOOL32 WINAPI SetSystemTime(const SYSTEMTIME *systime)
 {
     struct timeval tv;
     struct timezone tz;
@@ -99,7 +99,7 @@ BOOL32 SetSystemTime(const SYSTEMTIME *systime)
 /***********************************************************************
  *              GetTimeZoneInformation  (KERNEL32.302)
  */
-DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
+DWORD WINAPI GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 {
     time_t gmt, lt;
 
@@ -118,7 +118,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              SetTimeZoneInformation  (KERNEL32.515)
  */
-BOOL32 SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
+BOOL32 WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 {
     struct timezone tz;
 
@@ -135,7 +135,7 @@ BOOL32 SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
 /***********************************************************************
  *              Sleep  (KERNEL32.523)
  */
-VOID Sleep(DWORD cMilliseconds)
+VOID WINAPI Sleep(DWORD cMilliseconds)
 {
     if(cMilliseconds == INFINITE32)
         while(1) sleep(1000); /* Spin forever */

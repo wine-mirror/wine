@@ -243,6 +243,7 @@ file	krnl386.exe
 318 stub FatalExitHook
 319 stub FlushCachedFileHandle
 320 pascal16 IsTask(word) IsTask
+321 stub KERNEL_321
 323 return IsRomModule 2 0
 324 pascal16 LogError(word ptr) LogError
 325 pascal16 LogParamError(word ptr ptr) LogParamError
@@ -304,7 +305,7 @@ file	krnl386.exe
 445 stub KERNEL_445
 446 stub KERNEL_446
 447 stub KERNEL_447
-449 stub KERNEL_449
+449 pascal KERNEL_449() stub_KERNEL_449
 450 pascal16 KERNEL_450() stub_KERNEL_450
 454 stub KERNEL_454
 455 stub KERNEL_455
@@ -321,7 +322,7 @@ file	krnl386.exe
 513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
 514 pascal16 FreeLibrary32W(long) FreeLibrary32
 515 pascal   GetProcAddress32W(long ptr) GetProcAddress32
-516 stub GetVDMPointer32W
+516 pascal GetVDMPointer32W(segptr long) GetVDMPointer32W
 517 pascal CallProc32W() WIN16_CallProc32W
 518 stub CallProcEx32W
 519 stub KERNEL_519
@@ -334,7 +335,7 @@ file	krnl386.exe
 612 stub KERNEL_612
 613 stub KERNEL_613
 614 stub KERNEL_614
-619 stub KERNEL_619
+619 pascal KERNEL_619(word long long) _KERNEL_619
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
 630 stub KERNEL_630

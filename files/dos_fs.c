@@ -764,7 +764,8 @@ BOOL32 DOSFS_GetFullName( LPCSTR name, BOOL32 check_last, DOS_FULL_NAME *full )
 /***********************************************************************
  *           GetShortPathName32A   (KERNEL32.271)
  */
-DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
+DWORD WINAPI GetShortPathName32A( LPCSTR longpath, LPSTR shortpath,
+                                  DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
 
@@ -778,7 +779,8 @@ DWORD GetShortPathName32A( LPCSTR longpath, LPSTR shortpath, DWORD shortlen )
 /***********************************************************************
  *           GetShortPathName32W   (KERNEL32.272)
  */
-DWORD GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath, DWORD shortlen )
+DWORD WINAPI GetShortPathName32W( LPCWSTR longpath, LPWSTR shortpath,
+                                  DWORD shortlen )
 {
     DOS_FULL_NAME full_name;
     DWORD ret = 0;
@@ -877,7 +879,8 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 /***********************************************************************
  *           GetFullPathName32A   (KERNEL32.272)
  */
-DWORD GetFullPathName32A(LPCSTR name, DWORD len, LPSTR buffer, LPSTR *lastpart)
+DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
+                                 LPSTR *lastpart )
 {
     DWORD ret = DOSFS_DoGetFullPathName( name, len, buffer, FALSE );
     if (ret && lastpart)
@@ -893,8 +896,8 @@ DWORD GetFullPathName32A(LPCSTR name, DWORD len, LPSTR buffer, LPSTR *lastpart)
 /***********************************************************************
  *           GetFullPathName32W   (KERNEL32.273)
  */
-DWORD GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
-                          LPWSTR *lastpart )
+DWORD WINAPI GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
+                                 LPWSTR *lastpart )
 {
     LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
     DWORD ret = DOSFS_DoGetFullPathName( nameA, len, (LPSTR)buffer, TRUE );
@@ -1044,7 +1047,7 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
 /*************************************************************************
  *           FindFirstFile16   (KERNEL.413)
  */
-HANDLE16 FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
+HANDLE16 WINAPI FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
 {
     DOS_FULL_NAME full_name;
     HGLOBAL16 handle;
@@ -1076,7 +1079,7 @@ HANDLE16 FindFirstFile16( LPCSTR path, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindFirstFile32A   (KERNEL32.123)
  */
-HANDLE32 FindFirstFile32A( LPCSTR path, WIN32_FIND_DATA32A *data )
+HANDLE32 WINAPI FindFirstFile32A( LPCSTR path, WIN32_FIND_DATA32A *data )
 {
     HANDLE32 handle = FindFirstFile16( path, data );
     if (handle == INVALID_HANDLE_VALUE16) return INVALID_HANDLE_VALUE32;
@@ -1087,7 +1090,7 @@ HANDLE32 FindFirstFile32A( LPCSTR path, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindFirstFile32W   (KERNEL32.124)
  */
-HANDLE32 FindFirstFile32W( LPCWSTR path, WIN32_FIND_DATA32W *data )
+HANDLE32 WINAPI FindFirstFile32W( LPCWSTR path, WIN32_FIND_DATA32W *data )
 {
     WIN32_FIND_DATA32A dataA;
     LPSTR pathA = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
@@ -1111,7 +1114,7 @@ HANDLE32 FindFirstFile32W( LPCWSTR path, WIN32_FIND_DATA32W *data )
 /*************************************************************************
  *           FindNextFile16   (KERNEL.414)
  */
-BOOL16 FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
+BOOL16 WINAPI FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
 {
     FIND_FIRST_INFO *info;
     int count;
@@ -1143,7 +1146,7 @@ BOOL16 FindNextFile16( HANDLE16 handle, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindNextFile32A   (KERNEL32.126)
  */
-BOOL32 FindNextFile32A( HANDLE32 handle, WIN32_FIND_DATA32A *data )
+BOOL32 WINAPI FindNextFile32A( HANDLE32 handle, WIN32_FIND_DATA32A *data )
 {
     return FindNextFile16( handle, data );
 }
@@ -1152,7 +1155,7 @@ BOOL32 FindNextFile32A( HANDLE32 handle, WIN32_FIND_DATA32A *data )
 /*************************************************************************
  *           FindNextFile32W   (KERNEL32.127)
  */
-BOOL32 FindNextFile32W( HANDLE32 handle, WIN32_FIND_DATA32W *data )
+BOOL32 WINAPI FindNextFile32W( HANDLE32 handle, WIN32_FIND_DATA32W *data )
 {
     WIN32_FIND_DATA32A dataA;
     if (!FindNextFile32A( handle, &dataA )) return FALSE;
@@ -1171,7 +1174,7 @@ BOOL32 FindNextFile32W( HANDLE32 handle, WIN32_FIND_DATA32W *data )
 /*************************************************************************
  *           FindClose16   (KERNEL.415)
  */
-BOOL16 FindClose16( HANDLE16 handle )
+BOOL16 WINAPI FindClose16( HANDLE16 handle )
 {
     FIND_FIRST_INFO *info;
 
@@ -1191,7 +1194,7 @@ BOOL16 FindClose16( HANDLE16 handle )
 /*************************************************************************
  *           FindClose32   (KERNEL32.119)
  */
-BOOL32 FindClose32( HANDLE32 handle )
+BOOL32 WINAPI FindClose32( HANDLE32 handle )
 {
     return FindClose16( (HANDLE16)handle );
 }
@@ -1419,7 +1422,7 @@ time_t DOSFS_FileTimeToUnixTime( const FILETIME *filetime, DWORD *remainder )
 /***********************************************************************
  *           DosDateTimeToFileTime   (KERNEL32.76)
  */
-BOOL32 DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft )
+BOOL32 WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
 {
     struct tm newtm;
 
@@ -1437,8 +1440,8 @@ BOOL32 DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft )
 /***********************************************************************
  *           FileTimeToDosDateTime   (KERNEL32.111)
  */
-BOOL32 FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
-                              LPWORD fattime )
+BOOL32 WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
+                                     LPWORD fattime )
 {
     time_t unixtime = DOSFS_FileTimeToUnixTime( ft, NULL );
     struct tm *tm = localtime( &unixtime );
@@ -1454,7 +1457,8 @@ BOOL32 FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
 /***********************************************************************
  *           LocalFileTimeToFileTime   (KERNEL32.373)
  */
-BOOL32 LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
+BOOL32 WINAPI LocalFileTimeToFileTime( const FILETIME *localft,
+                                       LPFILETIME utcft )
 {
     struct tm *xtm;
     DWORD remainder;
@@ -1470,7 +1474,8 @@ BOOL32 LocalFileTimeToFileTime( const FILETIME *localft, LPFILETIME utcft )
 /***********************************************************************
  *           FileTimeToLocalFileTime   (KERNEL32.112)
  */
-BOOL32 FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
+BOOL32 WINAPI FileTimeToLocalFileTime( const FILETIME *utcft,
+                                       LPFILETIME localft )
 {
     struct tm *xtm;
     DWORD remainder;
@@ -1486,7 +1491,7 @@ BOOL32 FileTimeToLocalFileTime( const FILETIME *utcft, LPFILETIME localft )
 /***********************************************************************
  *           FileTimeToSystemTime   (KERNEL32.113)
  */
-BOOL32 FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
+BOOL32 WINAPI FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
 {
     struct tm *xtm;
     DWORD remainder;
@@ -1508,8 +1513,7 @@ BOOL32 FileTimeToSystemTime( const FILETIME *ft, LPSYSTEMTIME syst )
  *
  * returns array of strings terminated by \0, terminated by \0
  */
-DWORD
-QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
+DWORD WINAPI QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
 {
     LPSTR s;
     char  buffer[200];
@@ -1537,8 +1541,7 @@ QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
  *
  * returns array of strings terminated by \0, terminated by \0
  */
-DWORD
-QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
+DWORD WINAPI QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 {
     LPSTR devnameA = devname?HEAP_strdupWtoA(GetProcessHeap(),0,devname):NULL;
     LPSTR targetA = (LPSTR)HEAP_xalloc(GetProcessHeap(),0,bufsize);
@@ -1554,7 +1557,7 @@ QueryDosDevice32W(LPCWSTR devname,LPWSTR target,DWORD bufsize)
 /***********************************************************************
  *           SystemTimeToFileTime   (KERNEL32.526)
  */
-BOOL32 SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
+BOOL32 WINAPI SystemTimeToFileTime( const SYSTEMTIME *syst, LPFILETIME ft )
 {
     struct tm xtm;
 

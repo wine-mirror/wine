@@ -44,7 +44,7 @@ DWORD INT1A_GetTicksSinceMidnight(void)
  *
  * Handler for int 1ah (date and time).
  */
-void INT_Int1aHandler( CONTEXT *context )
+void WINAPI INT_Int1aHandler( CONTEXT *context )
 {
     time_t ltime;
     DWORD ticks;

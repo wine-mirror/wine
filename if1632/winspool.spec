@@ -52,11 +52,11 @@ base	100
 048 stub DeletePrinterIC
 049 stub DevQueryPrint
 050 stub DeviceCapabilities
-051 stub DeviceCapabilitiesA
+051 stdcall DeviceCapabilitiesA(ptr ptr long ptr ptr) DeviceCapabilities32A
 052 stub DeviceCapabilitiesW
 053 stub DeviceMode
 054 stub DocumentEvent
-055 stub DocumentPropertiesA
+055 stdcall DocumentPropertiesA(long long ptr ptr ptr long) DocumentProperties32A
 056 stub DocumentPropertiesW
 057 stub EXTDEVICEMODE
 058 stub EndDocPrinter

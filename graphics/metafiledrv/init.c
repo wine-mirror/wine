@@ -138,7 +138,7 @@ static BOOL32 MFDRV_DeleteDC( DC *dc )
 /**********************************************************************
  *	     CreateMetafile16   (GDI.125)
  */
-HDC16 CreateMetaFile16( LPCSTR filename )
+HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
@@ -177,7 +177,7 @@ HDC16 CreateMetaFile16( LPCSTR filename )
 /******************************************************************
  *	     CloseMetafile16   (GDI.126)
  */
-HMETAFILE16 CloseMetaFile16( HDC16 hdc )
+HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
 {
     DC *dc;
     HMETAFILE16 hmf;
@@ -231,7 +231,7 @@ HMETAFILE16 CloseMetaFile16( HDC16 hdc )
 /******************************************************************
  *	     DeleteMetafile16   (GDI.127)
  */
-BOOL16 DeleteMetaFile16( HMETAFILE16 hmf )
+BOOL16 WINAPI DeleteMetaFile16( HMETAFILE16 hmf )
 {
     return !GlobalFree16( hmf );
 }

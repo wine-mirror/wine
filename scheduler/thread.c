@@ -12,6 +12,8 @@
 #include "selectors.h"
 #include "miscemu.h"
 #include "winnt.h"
+#include "debug.h"
+#include "stddebug.h"
 
 THDB *pCurrentThread = NULL;
 
@@ -114,9 +116,9 @@ void THREAD_Destroy( K32OBJ *ptr )
  *
  * The only thing missing here is actually getting the thread to run ;-)
  */
-HANDLE32 CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
-                       LPTHREAD_START_ROUTINE start, LPVOID param,
-                       DWORD flags, LPDWORD id )
+HANDLE32 WINAPI CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
+                              LPTHREAD_START_ROUTINE start, LPVOID param,
+                              DWORD flags, LPDWORD id )
 {
     HANDLE32 handle;
     THDB *thread = THREAD_Create( pCurrentProcess, stack, start );
@@ -136,7 +138,7 @@ HANDLE32 CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
 /***********************************************************************
  *           GetCurrentThread   (KERNEL32.200)
  */
-HANDLE32 GetCurrentThread(void)
+HANDLE32 WINAPI GetCurrentThread(void)
 {
     return 0xFFFFFFFE;
 }
@@ -146,7 +148,7 @@ HANDLE32 GetCurrentThread(void)
  *           GetCurrentThreadId   (KERNEL32.201)
  * Returns crypted (xor'ed) pointer to THDB in Win95.
  */
-DWORD GetCurrentThreadId(void)
+DWORD WINAPI GetCurrentThreadId(void)
 {
     /* FIXME: should probably use %fs register here */
     assert( pCurrentThread );
@@ -157,7 +159,7 @@ DWORD GetCurrentThreadId(void)
 /**********************************************************************
  *           GetLastError   (KERNEL.148) (KERNEL32.227)
  */
-DWORD GetLastError(void)
+DWORD WINAPI GetLastError(void)
 {
     THDB *thread = (THDB *)GetCurrentThreadId();
     return thread->last_error;
@@ -167,7 +169,7 @@ DWORD GetLastError(void)
 /**********************************************************************
  *           SetLastError   (KERNEL.147) (KERNEL32.497)
  */
-void SetLastError( DWORD error )
+void WINAPI SetLastError( DWORD error )
 {
     THDB *thread;
     if (!pCurrentThread) return;  /* FIXME */
@@ -179,7 +181,7 @@ void SetLastError( DWORD error )
 /**********************************************************************
  *           SetLastErrorEx   (USER32.484)
  */
-void SetLastErrorEx( DWORD error, DWORD type )
+void WINAPI SetLastErrorEx( DWORD error, DWORD type )
 {
     /* FIXME: what about 'type'? */
     SetLastError( error );
@@ -189,7 +191,7 @@ void SetLastErrorEx( DWORD error, DWORD type )
 /**********************************************************************
  *           TlsAlloc   (KERNEL32.530)
  */
-DWORD TlsAlloc(void)
+DWORD WINAPI TlsAlloc(void)
 {
     DWORD i, mask, ret = 0;
     THDB *thread = (THDB *)GetCurrentThreadId();
@@ -216,7 +218,7 @@ DWORD TlsAlloc(void)
 /**********************************************************************
  *           TlsFree   (KERNEL32.531)
  */
-BOOL32 TlsFree( DWORD index )
+BOOL32 WINAPI TlsFree( DWORD index )
 {
     DWORD mask;
     THDB *thread = (THDB *)GetCurrentThreadId();
@@ -246,7 +248,7 @@ BOOL32 TlsFree( DWORD index )
 /**********************************************************************
  *           TlsGetValue   (KERNEL32.532)
  */
-LPVOID TlsGetValue( DWORD index )
+LPVOID WINAPI TlsGetValue( DWORD index )
 {
     THDB *thread = (THDB *)GetCurrentThreadId();
     if (index >= 64)
@@ -262,7 +264,7 @@ LPVOID TlsGetValue( DWORD index )
 /**********************************************************************
  *           TlsSetValue   (KERNEL32.533)
  */
-BOOL32 TlsSetValue( DWORD index, LPVOID value )
+BOOL32 WINAPI TlsSetValue( DWORD index, LPVOID value )
 {
     THDB *thread = (THDB *)GetCurrentThreadId();
     if (index >= 64)
@@ -278,7 +280,7 @@ BOOL32 TlsSetValue( DWORD index, LPVOID value )
 /***********************************************************************
  *           GetThreadContext   (KERNEL32.294)
  */
-BOOL32 GetThreadContext( HANDLE32 handle, CONTEXT *context )
+BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
 {
     THDB *thread = (THDB*)PROCESS_GetObjPtr( handle, K32OBJ_THREAD );
     if (!thread) return FALSE;
@@ -291,7 +293,7 @@ BOOL32 GetThreadContext( HANDLE32 handle, CONTEXT *context )
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.89)
  */
-void NtCurrentTeb( CONTEXT *context )
+void WINAPI NtCurrentTeb( CONTEXT *context )
 {
     EAX_reg(context) = GetSelectorBase( FS_reg(context) );
 }
@@ -300,7 +302,7 @@ void NtCurrentTeb( CONTEXT *context )
 /**********************************************************************
  *           GetThreadPriority   (KERNEL32.296)
  */
-INT32 GetThreadPriority(HANDLE32 hthread)
+INT32 WINAPI GetThreadPriority(HANDLE32 hthread)
 {
     THDB *thread;
     INT32 ret;
@@ -315,12 +317,21 @@ INT32 GetThreadPriority(HANDLE32 hthread)
 /**********************************************************************
  *           SetThreadPriority   (KERNEL32.514)
  */
-BOOL32 SetThreadPriority(HANDLE32 hthread,INT32 priority)
+BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
 {
     THDB *thread;
     
     if (!(thread = THREAD_GetPtr( hthread ))) return FALSE;
     thread->delta_priority = priority;
     K32OBJ_DecCount( &thread->header );
+    return TRUE;
+}
+
+/**********************************************************************
+ *           TerminateThread   (KERNEL32)
+ */
+BOOL32 WINAPI TerminateThread(DWORD threadid,DWORD exitcode)
+{
+    fprintf(stdnimp,"TerminateThread(0x%08lx,%ld), STUB!\n",threadid,exitcode);
     return TRUE;
 }

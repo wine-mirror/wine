@@ -38,7 +38,7 @@
 * The returned number need not be equal to the result!!!!		*
 ************************************************************************/
 
-LONG InterlockedIncrement(LPLONG lpAddend)
+LONG WINAPI InterlockedIncrement(LPLONG lpAddend)
 {
 #if defined(__i386__)&&defined(__GNUC__)
 	long ret;
@@ -78,7 +78,7 @@ LONG InterlockedIncrement(LPLONG lpAddend)
 * The returned number need not be equal to the result!!!!		*
 ************************************************************************/
 
-LONG InterlockedDecrement(LPLONG lpAddend)
+LONG WINAPI InterlockedDecrement(LPLONG lpAddend)
 {
 #if defined(__i386__)&&defined(__GNUC__)	
 	LONG ret;
@@ -111,7 +111,7 @@ LONG InterlockedDecrement(LPLONG lpAddend)
 *           InterlockedExchange				[KERNEL32]	*
 ************************************************************************/
 
-LONG InterlockedExchange(LPLONG target, LONG value)
+LONG WINAPI InterlockedExchange(LPLONG target, LONG value)
 {
 #if defined(__i386__)&&defined(__GNUC__)	
 	LONG ret;
@@ -145,7 +145,7 @@ LONG InterlockedExchange(LPLONG target, LONG value)
 *           InitializeCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-void InitializeCriticalSection(CRITICAL_SECTION *pcritical)
+void WINAPI InitializeCriticalSection(CRITICAL_SECTION *pcritical)
 {
    pcritical->LockCount=-1;
    pcritical->RecursionCount=0;
@@ -158,7 +158,7 @@ void InitializeCriticalSection(CRITICAL_SECTION *pcritical)
 *           DeleteCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-void DeleteCriticalSection(CRITICAL_SECTION *pcritical)
+void WINAPI DeleteCriticalSection(CRITICAL_SECTION *pcritical)
 {
    semctl((int) pcritical->LockSemaphore,0,IPC_RMID,(union semun)NULL);
    pcritical->Reserved=-1;
@@ -168,7 +168,7 @@ void DeleteCriticalSection(CRITICAL_SECTION *pcritical)
 *           EnterCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-void EnterCriticalSection (CRITICAL_SECTION *pcritical)
+void WINAPI EnterCriticalSection (CRITICAL_SECTION *pcritical)
 {
    if( InterlockedIncrement(&(pcritical->LockCount)))
    {   
@@ -195,7 +195,7 @@ void EnterCriticalSection (CRITICAL_SECTION *pcritical)
 *           TryEnterCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-BOOL32 TryEnterCriticalSection (CRITICAL_SECTION *pcritical)
+BOOL32 WINAPI TryEnterCriticalSection (CRITICAL_SECTION *pcritical)
 {
    if( InterlockedIncrement(&(pcritical->LockCount)))
    {
@@ -215,7 +215,7 @@ BOOL32 TryEnterCriticalSection (CRITICAL_SECTION *pcritical)
 *           LeaveCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-void LeaveCriticalSection (CRITICAL_SECTION *pcritical)
+void WINAPI LeaveCriticalSection(CRITICAL_SECTION *pcritical)
 {
    /* do we actually own this critical section ??? */
    if( pcritical->OwningThread!= (HANDLE32) GetCurrentThreadId())
@@ -245,7 +245,7 @@ void LeaveCriticalSection (CRITICAL_SECTION *pcritical)
 *           ReinitializeCriticalSection			[KERNEL32]	*
 ************************************************************************/
 
-void ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit)
+void WINAPI ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit)
 {
    /* hmm ?????? */	
 }
@@ -254,7 +254,7 @@ void ReinitializeCriticalSection(CRITICAL_SECTION *lpCrit)
 *           MakeCriticalSectionGlobal			[KERNEL32]	*
 ************************************************************************/
 
-void MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit)
+void WINAPI MakeCriticalSectionGlobal(CRITICAL_SECTION *lpCrit)
 {
    /* nothing (SysV Semaphores are already global) */
    return;	

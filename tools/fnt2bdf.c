@@ -350,12 +350,12 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
 	case ANSI_CHARSET: 	fputs("ansi-0\n", fs); break;
 	case GREEK_CHARSET: 	fputs("cp125-3\n", fs); break;
-	case TURKISH_CHARSET: 	fputs("iso8859-9", fs); break;
-	case HEBREW_CHARSET: 	fputs("cp125-5", fs); break;
-	case ARABIC_CHARSET: 	fputs("cp125-6", fs); break;
-	case BALTIC_CHARSET: 	fputs("cp125-7", fs); break;
-	case RUSSIAN_CHARSET: 	fputs("cp125-1", fs); break;
-	case EE_CHARSET: 	fputs("iso8859-2", fs); break; 
+	case TURKISH_CHARSET: 	fputs("cp125-4\n", fs); break;
+	case HEBREW_CHARSET: 	fputs("cp125-5\n", fs); break;
+	case ARABIC_CHARSET: 	fputs("cp125-6\n", fs); break;
+	case BALTIC_CHARSET: 	fputs("cp125-7\n", fs); break;
+	case RUSSIAN_CHARSET: 	fputs("cp125-1\n", fs); break;
+	case EE_CHARSET: 	fputs("cp125-0\n", fs); break; 
 	case SYMBOL_CHARSET: 	fputs("misc-fontspecific\n", fs); break;
 	case SHIFTJIS_CHARSET: 	fputs("jisx0208.1983-0\n", fs); break;
 	case DEFAULT_CHARSET:	fputs("iso8859-1\n", fs); break;
