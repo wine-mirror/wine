@@ -443,7 +443,7 @@ sub process_source_file
     elsif ($parse_state == 2) # Finished reading in a comment
     {
       if ( /(WINAPIV|WINAPI|__cdecl|PASCAL|CALLBACK|FARPROC16)/ ||
-           /.*?\(.*?\)/ )
+           /.*?\(/ )
       {
         # Comment is followed by a function definition
         $parse_state = 4; # Fall through to read prototype
