@@ -1256,8 +1256,12 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return 0;
 
     case SBM_SETRANGE:
-        SetScrollRange( hwnd, SB_CTL, wParam, lParam, FALSE );
-        return 0;  /* FIXME: return previous position */
+        {
+            INT oldPos = GetScrollPos( hwnd, SB_CTL );
+            SetScrollRange( hwnd, SB_CTL, wParam, lParam, FALSE );
+            if (oldPos != GetScrollPos( hwnd, SB_CTL )) return oldPos;
+        }
+        return 0;
 
     case SBM_GETRANGE16:
         FIXME("don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n", wParam, lParam );
@@ -1272,9 +1276,13 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return EnableScrollBar( hwnd, SB_CTL, wParam );
 
     case SBM_SETRANGEREDRAW:
-        SetScrollRange( hwnd, SB_CTL, wParam, lParam, TRUE );
-        return 0;  /* FIXME: return previous position */
-        
+        {
+            INT oldPos = GetScrollPos( hwnd, SB_CTL );
+            SetScrollRange( hwnd, SB_CTL, wParam, lParam, TRUE );
+            if (oldPos != GetScrollPos( hwnd, SB_CTL )) return oldPos;
+        }
+        return 0;
+
     case SBM_SETSCROLLINFO:
         return SetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
 
