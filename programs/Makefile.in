@@ -6,6 +6,7 @@ MODULE    = none
 
 INSTALLSUBDIRS = \
 	control \
+	expand \
 	notepad \
 	progman \
 	regedit \

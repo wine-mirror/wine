@@ -1,5 +1,6 @@
 /*
  * Copyright 1997 Victor Schneider
+ * Copyright 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,32 +23,29 @@
 #include <windows.h>
 #include <lzexpand.h>
 
-int PASCAL WinMain(HINSTANCE hinstCurrent,
-				HINSTANCE hinstPrevious,
-				LPSTR lpCmdLine,
-				int nCmdShow)
+int main(int argc, char *argv[])
 {
   OFSTRUCT SourceOpenStruct1, SourceOpenStruct2;
-  char OriginalName[256];
-  char FAR *lpzDestFile;
   DWORD dwreturn;
   HFILE hSourceFile, hDestFile;
-  /* Most Windows compilers have something like this: */
-  extern int _ARGC;
-  extern char **_ARGV;
 
-  hSourceFile = LZOpenFile(_ARGV[1], (LPOFSTRUCT) &SourceOpenStruct1, OF_READ);
-  if ((_ARGC == 3) && (_ARGV[2] != NULL))
-	lpzDestFile = _ARGV[2];
-  else {
-  	lpzDestFile = OriginalName;
-  	GetExpandedName(_ARGV[1], lpzDestFile);
-  };
-  hDestFile = LZOpenFile(lpzDestFile, (LPOFSTRUCT) &SourceOpenStruct2,
-			OF_CREATE | OF_WRITE);
+  if (argc < 2)
+  {
+      fprintf( stderr, "Usage: %s infile [outfile]\n", argv[0] );
+      return 1;
+  }
+  hSourceFile = LZOpenFile(argv[1], &SourceOpenStruct1, OF_READ);
+  if (argv[2])
+      hDestFile = LZOpenFile(argv[2], &SourceOpenStruct2, OF_CREATE | OF_WRITE);
+  else
+  {
+      char OriginalName[MAX_PATH];
+      GetExpandedName(argv[1], OriginalName);
+      hDestFile = LZOpenFile(OriginalName, &SourceOpenStruct2, OF_CREATE | OF_WRITE);
+  }
   dwreturn = LZCopy(hSourceFile, hDestFile);
   if (dwreturn != 0)
-	  fprintf(stderr,"LZCopy failed: return is %ld\n",dwreturn);
+      fprintf(stderr,"LZCopy failed: return is %ld\n",dwreturn);
   LZClose(hSourceFile);
   LZClose(hDestFile);
   return dwreturn;

@@ -1332,7 +1332,6 @@ dlls/x11drv/Makefile
 documentation/Makefile
 include/Makefile
 library/Makefile
-libtest/Makefile
 miscemu/Makefile
 ole/Makefile
 programs/Makefile
@@ -1340,6 +1339,7 @@ programs/avitools/Makefile
 programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
+programs/expand/Makefile
 programs/notepad/Makefile
 programs/osversioncheck/Makefile
 programs/progman/Makefile

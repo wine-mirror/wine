@@ -50,19 +50,14 @@ LIBSYMLINKS = \
 	libwine_unicode.$(LIBEXT) \
 	libwine_uuid.a
 
-# Sub-directories to run make depend/clean into
+# Sub-directories to run make depend/clean/install into
 SUBDIRS = \
-	$(INSTALLSUBDIRS) \
-	libtest \
-	miscemu
-
-# Sub-directories to run make install into
-INSTALLSUBDIRS = \
 	debugger \
 	dlls \
 	documentation \
 	include \
 	library \
+	miscemu \
 	ole \
 	programs \
 	server \
@@ -96,10 +91,10 @@ install_wine: dummy
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
-install:: all install_wine $(INSTALLSUBDIRS:%=%/__install__)
+install:: all install_wine $(SUBDIRS:%=%/__install__)
 	-$(LDCONFIG)
 
-uninstall:: $(INSTALLSUBDIRS:%=%/__uninstall__)
+uninstall:: $(SUBDIRS:%=%/__uninstall__)
 	$(RM) $(bindir)/wine
 
 $(EMUOBJS) $(PROGRAMS) $(LIBRARIES): dummy
