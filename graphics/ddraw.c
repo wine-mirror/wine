@@ -1363,7 +1363,7 @@ static ULONG WINAPI DGA_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 ifa
     }
     
     HeapFree(GetProcessHeap(),0,This);
-    return 0;
+    return S_OK;
 }
 #endif /* defined(HAVE_LIBXXF86DGA) */
 
@@ -1427,7 +1427,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
     }
 
     HeapFree(GetProcessHeap(),0,This);
-    return 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI IDirectDrawSurface4Impl_GetAttachedSurface(
@@ -1696,11 +1696,11 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE
     /* All DirectDrawSurface versions (1, 2, 3 and 4) use
      * the same interface. And IUnknown does that too of course.
      */
-    if (    !memcmp(&IID_IDirectDrawSurface4,refiid,sizeof(IID))	||
-	    !memcmp(&IID_IDirectDrawSurface3,refiid,sizeof(IID))	||
-	    !memcmp(&IID_IDirectDrawSurface2,refiid,sizeof(IID))	||
-	    !memcmp(&IID_IDirectDrawSurface,refiid,sizeof(IID))	||
-	    !memcmp(&IID_IUnknown,refiid,sizeof(IID))
+    if ( IsEqualGUID( &IID_IDirectDrawSurface4, refiid )	||
+	 IsEqualGUID( &IID_IDirectDrawSurface3, refiid )	||
+	 IsEqualGUID( &IID_IDirectDrawSurface2, refiid )	||
+	 IsEqualGUID( &IID_IDirectDrawSurface,  refiid )	||
+	 IsEqualGUID( &IID_IUnknown,            refiid )
     ) {
 	    *obj = This;
 	    IDirectDrawSurface4_AddRef(iface);
@@ -1708,7 +1708,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE
 	    TRACE("  Creating IDirectDrawSurface interface (%p)\n", *obj);
 	    return S_OK;
     }
-    else if (!memcmp(&IID_IDirect3DTexture2,refiid,sizeof(IID)))
+    else if ( IsEqualGUID( &IID_IDirect3DTexture2, refiid ) )
       {
 	/* Texture interface */
 	*obj = d3dtexture2_create(This);
@@ -1716,7 +1716,7 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_QueryInterface(LPDIRECTDRAWSURFACE
 	TRACE("  Creating IDirect3DTexture2 interface (%p)\n", *obj);
 	return S_OK;
       }
-    else if (!memcmp(&IID_IDirect3DTexture,refiid,sizeof(IID)))
+    else if ( IsEqualGUID( &IID_IDirect3DTexture, refiid ) )
       {
 	/* Texture interface */
 	*obj = d3dtexture_create(This);
@@ -2216,7 +2216,7 @@ static ULONG WINAPI IDirectDrawClipperImpl_Release(LPDIRECTDRAWCLIPPER iface) {
 	if (This->ref)
 		return This->ref;
 	HeapFree(GetProcessHeap(),0,This);
-	return 0;
+	return S_OK;
 }
 
 static HRESULT WINAPI IDirectDrawClipperImpl_GetClipList(
@@ -2408,7 +2408,7 @@ static ULONG WINAPI IDirectDrawPaletteImpl_Release(LPDIRECTDRAWPALETTE iface) {
 			This->cm = 0;
 		}
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+		return S_OK;
 	}
 	return This->ref;
 }
@@ -2487,9 +2487,9 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 
         WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
         TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
-        if ((!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) ||
-	    (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) ||
-	    (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4)))) {
+        if ( ( IsEqualGUID( &IID_IDirectDraw,  refiid ) ) ||
+	     ( IsEqualGUID (&IID_IDirectDraw2, refiid ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) ) {
                 *obj = This->ddraw;
                 IDirect3D_AddRef(iface);
 
@@ -2497,8 +2497,8 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 		
                 return S_OK;
         }
-        if ((!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) ||
-	    (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)))) {
+        if ( ( IsEqualGUID( &IID_IDirect3D, refiid ) ) ||
+	     ( IsEqualGUID( &IID_IUnknown,  refiid ) ) ) {
                 *obj = This;
                 IDirect3D_AddRef(iface);
 
@@ -2506,7 +2506,7 @@ static HRESULT WINAPI IDirect3DImpl_QueryInterface(
 
                 return S_OK;
         }
-        if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) {
+        if ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) {
                 IDirect3D2Impl*  d3d;
 
                 d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -2539,7 +2539,7 @@ static ULONG WINAPI IDirect3DImpl_Release(LPDIRECT3D iface)
         if (!--(This->ref)) {
                 IDirectDraw2_Release((IDirectDraw2*)This->ddraw);
                 HeapFree(GetProcessHeap(),0,This);
-                return 0;
+                return S_OK;
         }
         return This->ref;
 }
@@ -2645,9 +2645,9 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 
         WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
         TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
-        if ((!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) ||
-	    (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) ||
-	    (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4)))) {
+        if ( ( IsEqualGUID( &IID_IDirectDraw,  refiid ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) ) {
                 *obj = This->ddraw;
                 IDirect3D2_AddRef(iface);
 
@@ -2655,8 +2655,8 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 		
                 return S_OK;
         }
-        if ((!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) ||
-	    (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown)))) {
+        if ( ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) ||
+	     ( IsEqualGUID( &IID_IUnknown,   refiid ) ) ) {
                 *obj = This;
                 IDirect3D2_AddRef(iface);
 
@@ -2664,7 +2664,7 @@ static HRESULT WINAPI IDirect3D2Impl_QueryInterface(
 
                 return S_OK;
         }
-        if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
+        if ( IsEqualGUID( &IID_IDirect3D, refiid ) ) {
                 IDirect3DImpl*  d3d;
 
                 d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -2696,7 +2696,7 @@ static ULONG WINAPI IDirect3D2Impl_Release(LPDIRECT3D2 iface) {
 	if (!--(This->ref)) {
 		IDirectDraw2_Release((IDirectDraw2*)This->ddraw);
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+		return S_OK;
 	}
 	return This->ref;
 }
@@ -3972,7 +3972,7 @@ static ULONG WINAPI DGA_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 		SIGNAL_Init();
 #endif
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+		return S_OK;
 	}
 	return This->ref;
 }
@@ -3986,7 +3986,7 @@ static ULONG WINAPI Xlib_IDirectDraw2Impl_Release(LPDIRECTDRAW2 iface) {
 		if (This->d.window && (This->d.mainWindow != This->d.window))
 			DestroyWindow(This->d.window);
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+		return S_OK;
 	}
 	/* FIXME: destroy window ... */
 	return This->ref;
@@ -4001,7 +4001,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
 	TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
-	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
+	if ( IsEqualGUID( &IID_IUnknown, refiid ) ) {
 		*obj = This;
 		IDirectDraw2_AddRef(iface);
 
@@ -4009,7 +4009,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
+	if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_ddvt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4018,7 +4018,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
+	if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd2vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4027,7 +4027,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4))) {
+	if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&dga_dd4vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4036,7 +4036,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
+	if ( IsEqualGUID( &IID_IDirect3D, refiid ) ) {
 		IDirect3DImpl* d3d;
 
 		d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -4050,7 +4050,7 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D2))) {
+	if ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) {
 		IDirect3D2Impl*	d3d;
 
 		d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -4077,7 +4077,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
 	TRACE("(%p)->(%s,%p)\n",This,xrefiid,obj);
-	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
+	if ( IsEqualGUID( &IID_IUnknown, refiid ) ) {
 		*obj = This;
 		IDirectDraw2_AddRef(iface);
 
@@ -4085,7 +4085,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw,refiid,sizeof(IID_IDirectDraw))) {
+	if ( IsEqualGUID( &IID_IDirectDraw, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_ddvt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4094,7 +4094,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw2,refiid,sizeof(IID_IDirectDraw2))) {
+	if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd2vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4103,7 +4103,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 		
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirectDraw4,refiid,sizeof(IID_IDirectDraw4))) {
+	if ( IsEqualGUID( &IID_IDirectDraw4, refiid ) ) {
 		This->lpvtbl = (ICOM_VTABLE(IDirectDraw2)*)&xlib_dd4vt;
 		IDirectDraw2_AddRef(iface);
 		*obj = This;
@@ -4112,7 +4112,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirect3D,refiid,sizeof(IID_IDirect3D))) {
+	if ( IsEqualGUID( &IID_IDirect3D, refiid ) ) {
 		IDirect3DImpl* d3d;
 
 		d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -4126,7 +4126,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
 
 		return S_OK;
 	}
-	if (!memcmp(&IID_IDirect3D2,refiid,sizeof(IID_IDirect3D))) {
+	if ( IsEqualGUID( &IID_IDirect3D2, refiid ) ) {
 		IDirect3D2Impl* d3d;
 
 		d3d = HeapAlloc(GetProcessHeap(),0,sizeof(*d3d));
@@ -5032,10 +5032,10 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 
 	TRACE("(%s,%p,%p)\n",xclsid,ilplpDD,pUnkOuter);
 
-	if ((!lpGUID) ||
-	    (!memcmp(lpGUID,&IID_IDirectDraw ,sizeof(IID_IDirectDraw ))) ||
-	    (!memcmp(lpGUID,&IID_IDirectDraw2,sizeof(IID_IDirectDraw2))) ||
-	    (!memcmp(lpGUID,&IID_IDirectDraw4,sizeof(IID_IDirectDraw4)))) {
+	if ( ( !lpGUID ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw,  lpGUID ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw2, lpGUID ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw4, lpGUID ) ) ) {
 		/* if they didn't request a particular interface, use the best
 		 * supported one */
 		if (DDRAW_DGA_Available())
@@ -5066,12 +5066,15 @@ HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN 
 	wc.lpszClassName= "WINE_DirectDraw";
 	RegisterClassA(&wc);
 
-	if (!memcmp(lpGUID, &DGA_DirectDraw_GUID, sizeof(GUID)))
+	if ( IsEqualGUID( &DGA_DirectDraw_GUID, lpGUID ) ) {
 		ret = DGA_DirectDrawCreate(lplpDD, pUnkOuter);
-	else if (!memcmp(lpGUID, &XLIB_DirectDraw_GUID, sizeof(GUID)))
+	}
+	else if ( IsEqualGUID( &XLIB_DirectDraw_GUID, &XLIB_DirectDraw_GUID ) ) {
 		ret = Xlib_DirectDrawCreate(lplpDD, pUnkOuter);
-	else
+	}
+	else {
 	  goto err;
+	}
 
 
 	(*ilplpDD)->d.winclass = RegisterClassA(&wc);
@@ -5128,13 +5131,13 @@ static HRESULT WINAPI DDCF_CreateInstance(
 
 	WINE_StringFromCLSID(riid,buf);
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
-	if ((!memcmp(riid,&IID_IDirectDraw ,sizeof(IID_IDirectDraw ))) ||
-	    (!memcmp(riid,&IID_IDirectDraw2,sizeof(IID_IDirectDraw2))) ||
-	    (!memcmp(riid,&IID_IDirectDraw4,sizeof(IID_IDirectDraw4)))) {
+	if ( ( IsEqualGUID( &IID_IDirectDraw,  riid ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw2, riid ) ) ||
+	     ( IsEqualGUID( &IID_IDirectDraw4, riid ) ) ) {
 		/* FIXME: reuse already created DirectDraw if present? */
 		return DirectDrawCreate((LPGUID) riid,(LPDIRECTDRAW*)ppobj,pOuter);
 	}
-	return E_NOINTERFACE;
+	return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 static HRESULT WINAPI DDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
@@ -5185,13 +5188,13 @@ DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
     	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
     WINE_StringFromCLSID(riid,xbuf);
     TRACE("(%p,%p,%p)\n", xbuf, buf, ppv);
-    if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
+    if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DDRAW_CF;
 	IClassFactory_AddRef((IClassFactory*)*ppv);
     return S_OK;
     }
     FIXME("(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
-    return E_NOINTERFACE;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 
@@ -5267,7 +5270,7 @@ HRESULT WINAPI DirectDrawEnumerateW(
 
 DWORD WINAPI DDRAW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    return E_NOINTERFACE;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 DWORD WINAPI DDRAW_DllCanUnloadNow(void)

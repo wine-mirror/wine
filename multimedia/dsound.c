@@ -207,7 +207,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 		    "sound",context);
 #endif
 
-	return 0;
+	return DS_OK;
 }
 
 #ifdef HAVE_OSS
@@ -268,7 +268,7 @@ static ULONG WINAPI IDirectSound3DBufferImpl_Release(LPDIRECTSOUND3DBUFFER iface
 	HeapFree(GetProcessHeap(),0,This->buffer);
 	HeapFree(GetProcessHeap(),0,This);
 
-	return 0;
+	return S_OK;
 }
 
 /* IDirectSound3DBuffer methods */
@@ -742,7 +742,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 	if (!This->ref) {
 		IDirectSoundNotify_Release((LPDIRECTSOUNDBUFFER)This->dsb);
 		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+		return S_OK;
 	}
 	return This->ref;
 }
@@ -766,7 +766,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	);
 	This->dsb->nrofnotifies+=howmuch;
 
-	return 0;
+	return S_OK;
 }
 
 ICOM_VTABLE(IDirectSoundNotify) dsnvt = 
@@ -1105,7 +1105,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	LeaveCriticalSection(&(This->lock));
 	/* **** */
 
-	return 0;
+	return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
@@ -1235,7 +1235,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	WINE_StringFromCLSID(riid,xbuf);
 	TRACE("(%p,%s,%p)\n",This,xbuf,ppobj);
 
-	if (!memcmp(&IID_IDirectSoundNotify,riid,sizeof(*riid))) {
+	if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 		IDirectSoundNotifyImpl	*dsn;
 
 		dsn = (IDirectSoundNotifyImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*dsn));
@@ -1244,10 +1244,10 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 		IDirectSoundBuffer_AddRef(iface);
 		dsn->lpvtbl = &dsnvt;
 		*ppobj = (LPVOID)dsn;
-		return 0;
+		return S_OK;
 	}
 
-	if (!memcmp(&IID_IDirectSound3DBuffer,riid,sizeof(*riid))) {
+	if ( IsEqualGUID( &IID_IDirectSound3DBuffer, riid ) ) {
 		*ppobj = This->ds3db;
 		if (*ppobj)
 			return DS_OK;
@@ -1290,7 +1290,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
 	FIXME("(%p,%08lx,%ld):stub\n",This,(DWORD)hwnd,level);
-	return 0;
+	return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
@@ -1445,7 +1445,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	This->buffers[This->nrofbuffers] = *ippdsb;
 	This->nrofbuffers++;
 	IDirectSound_AddRef(iface);
-	return 0;
+	return DS_OK;
 }
 
 
@@ -1498,7 +1498,7 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(LPDIRECTSOUND iface,LPDSCAPS caps
 
 	caps->dwPlayCpuOverheadSwBuffers	= 1;	/* 1% */
 
-	return 0;
+	return DS_OK;
 }
 
 static ULONG WINAPI IDirectSoundImpl_AddRef(LPDIRECTSOUND iface) {
@@ -1515,7 +1515,7 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND iface) {
 		FIXME("need to release all buffers!\n");
 		HeapFree(GetProcessHeap(),0,This);
 		dsound = NULL;
-		return 0;
+		return S_OK;
 	}
 	return This->ref;
 }
@@ -1525,7 +1525,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetSpeakerConfig(
 ) {
 	ICOM_THIS(IDirectSoundImpl,iface);
 	FIXME("(%p,0x%08lx):stub\n",This,config);
-	return 0;
+	return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
@@ -1534,7 +1534,7 @@ static HRESULT WINAPI IDirectSoundImpl_QueryInterface(
 	ICOM_THIS(IDirectSoundImpl,iface);
 	char xbuf[50];
 
-	if (!memcmp(&IID_IDirectSound3DListener,riid,sizeof(*riid))) {
+	if ( IsEqualGUID( &IID_IDirectSound3DListener, riid ) ) {
 
 		if (This->listener) {
 			*ppobj = This->listener;
@@ -2371,7 +2371,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
 
 	WINE_StringFromCLSID(riid,buf);
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
-	if (!memcmp(riid,&IID_IDirectSound,sizeof(IID_IDirectSound))) {
+	if ( IsEqualGUID( &IID_IDirectSound, riid ) ) {
 		/* FIXME: reuse already created dsound if present? */
 		return DirectSoundCreate(riid,(LPDIRECTSOUND*)ppobj,pOuter);
 	}
@@ -2424,13 +2424,14 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
     	sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
     WINE_StringFromCLSID(riid,xbuf);
     TRACE("(%p,%p,%p)\n", xbuf, buf, ppv);
-    if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
+    if ( IsEqualCLSID( &IID_IClassFactory, riid ) ) {
     	*ppv = (LPVOID)&DSOUND_CF;
 	IClassFactory_AddRef((IClassFactory*)*ppv);
     return S_OK;
     }
+
     FIXME("(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);
-    return E_NOINTERFACE;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 
