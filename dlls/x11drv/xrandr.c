@@ -58,7 +58,6 @@ static int XRandRErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 }
 
 static Bool in_desktop_mode;
-static const unsigned int depths[]  = {8, 16, 32};
 
 /* create the mode structures */
 static void make_modes(void)
