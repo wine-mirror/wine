@@ -157,9 +157,9 @@ int preprocess_only = 0;
  */
 int no_preprocess = 0;
 
-char *output_name;		/* The name given by the -o option */
-char *input_name;		/* The name given on the command-line */
-char *temp_name;		/* Temporary file for preprocess pipe */
+char *output_name = NULL;	/* The name given by the -o option */
+char *input_name = NULL;	/* The name given on the command-line */
+char *temp_name = NULL;		/* Temporary file for preprocess pipe */
 
 int line_number = 1;		/* The current line */
 int char_number = 1;		/* The current char pos within the line */
