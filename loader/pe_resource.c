@@ -47,6 +47,39 @@ static const void *get_module_base( HMODULE hmod )
 
 
 /**********************************************************************
+ *  is_data_file_module
+ *
+ * Check if a module handle is for a LOAD_LIBRARY_AS_DATAFILE module.
+ */
+inline static int is_data_file_module( HMODULE hmod )
+{
+    return (ULONG_PTR)hmod & 1;
+}
+
+
+/**********************************************************************
+ *  get_data_file_ptr
+ *
+ * Get a pointer to a given offset in a file mapped as data file.
+ */
+static const void *get_data_file_ptr( const void *base, DWORD offset )
+{
+    const IMAGE_NT_HEADERS *nt = PE_HEADER(base);
+    const IMAGE_SECTION_HEADER *sec = (IMAGE_SECTION_HEADER *)((char *)&nt->OptionalHeader +
+                                                               nt->FileHeader.SizeOfOptionalHeader);
+    int i;
+
+    /* find the section containing the virtual address */
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    {
+        if ((sec->VirtualAddress <= offset) && (sec->VirtualAddress + sec->SizeOfRawData > offset))
+            return (char *)base + sec->PointerToRawData + (offset - sec->VirtualAddress);
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
  *  get_resdir
  *
  * Get the resource directory of a PE module
@@ -61,7 +94,10 @@ static const IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
     {
         dir = &PE_HEADER(base)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
         if (dir->Size && dir->VirtualAddress)
-            ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)base + dir->VirtualAddress);
+        {
+            if (is_data_file_module(hmod)) ret = get_data_file_ptr( base, dir->VirtualAddress );
+            else ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)base + dir->VirtualAddress);
+        }
     }
     return ret;
 }
@@ -274,9 +310,17 @@ HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
  */
 HGLOBAL PE_LoadResource( HMODULE hmod, HRSRC hRsrc )
 {
+    DWORD offset;
     const void *base = get_module_base( hmod );
-    if (!hRsrc) return 0;
-    return (HANDLE)((char *)base + ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+
+    if (!hRsrc || !base) return 0;
+
+    offset = ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData;
+
+    if (is_data_file_module(hmod))
+        return (HANDLE)get_data_file_ptr( base, offset );
+    else
+        return (HANDLE)((char *)base + offset);
 }
 
 

@@ -477,7 +477,6 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, DWORD flags )
     if (!base) return 0;
 
     hModule = (HMODULE)base;
-    if (flags & LOAD_LIBRARY_AS_DATAFILE) return hModule;  /* nothing else to do */
 
     /* perform base relocation, if necessary */
 

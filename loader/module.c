@@ -1284,7 +1284,18 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
                                             NULL, OPEN_EXISTING, 0, 0 );
                 if (hFile != INVALID_HANDLE_VALUE)
                 {
-                    hmod = PE_LoadImage( hFile, filename, flags );
+                    DWORD type;
+                    MODULE_GetBinaryType( hFile, filename, &type );
+                    if (type == SCS_32BIT_BINARY)
+                    {
+                        HANDLE mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY,
+                                                             0, 0, NULL );
+                        if (mapping)
+                        {
+                            hmod = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+                            CloseHandle( mapping );
+                        }
+                    }
                     CloseHandle( hFile );
                 }
                 if (hmod) return (HMODULE)((ULONG_PTR)hmod + 1);
