@@ -1199,7 +1199,10 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
       lpszCurr = NULL; /* Last Path, terminate after this */
 
     if (!PathAppendW(buff, lpszFile))
+    {
+      free(lpszPATH);
       return FALSE;
+    }
     if (PathFileExistsDefExtW(buff, dwWhich))
     {
       strcpyW(lpszFile, buff);
