@@ -361,7 +361,9 @@ typedef struct
 #define EFL_sig(context)     ((context)->uc_mcontext.gregs[EFL])
 
 #define EIP_sig(context)     ((context)->uc_mcontext.gregs[EIP])
-#ifdef R_ESP
+#ifdef UESP
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[UESP])
+#elif defined(R_ESP)
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[R_ESP])
 #else
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
