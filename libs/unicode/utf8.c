@@ -62,24 +62,24 @@ inline static int get_length_wcs_utf8( const WCHAR *src, unsigned int srclen )
 /* return -1 on dst buffer overflow */
 int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
 {
-    int ret = srclen;
+    int len;
 
     if (!dstlen) return get_length_wcs_utf8( src, srclen );
 
-    for (ret = srclen; srclen; srclen--, src++)
+    for (len = dstlen; srclen; srclen--, src++)
     {
         WCHAR ch = *src;
 
         if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
         {
-            if (!dstlen--) return -1;  /* overflow */
+            if (!len--) return -1;  /* overflow */
             *dst++ = ch;
             continue;
         }
 
         if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
         {
-            if ((dstlen -= 2) < 0) return -1;  /* overflow */
+            if ((len -= 2) < 0) return -1;  /* overflow */
             dst[1] = 0x80 | (ch & 0x3f);
             ch >>= 6;
             dst[0] = 0xc0 | ch;
@@ -89,7 +89,7 @@ int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
 
         /* 0x800-0xffff: 3 bytes */
 
-        if ((dstlen -= 3) < 0) return -1;  /* overflow */
+        if ((len -= 3) < 0) return -1;  /* overflow */
         dst[2] = 0x80 | (ch & 0x3f);
         ch >>= 6;
         dst[1] = 0x80 | (ch & 0x3f);
@@ -97,7 +97,7 @@ int wine_utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen )
         dst[0] = 0xe0 | ch;
         dst += 3;
     }
-    return ret;
+    return dstlen - len;
 }
 
 /* query necessary dst length for src string */
