@@ -1267,10 +1267,29 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label,
 /***********************************************************************
  *           SetVolumeLabelA   (KERNEL32.675)
  */
-BOOL WINAPI SetVolumeLabelA(LPCSTR rootpath,LPCSTR volname)
+BOOL WINAPI SetVolumeLabelA( LPCSTR root, LPCSTR volname )
 {
-	FIXME("(%s,%s),stub!\n",rootpath,volname);
-	return TRUE;
+    int drive;
+    
+    /* FIXME, SetLastErrors missing */
+
+    if (!root) drive = DRIVE_GetCurrentDrive();
+    else
+    {
+        if ((root[1]) && (root[1] != ':'))
+        {
+            WARN("invalid root '%s'\n",root);
+            return FALSE;
+        }
+        drive = toupper(root[0]) - 'A';
+    }
+    if (!DRIVE_IsValid( drive )) return FALSE;
+
+    /* some copy protection stuff check this */
+    if (DRIVE_GetType( drive ) == TYPE_CDROM) return FALSE;
+
+    FIXME("(%s,%s),stub!\n", root, volname);
+    return TRUE;
 }
 
 /***********************************************************************
