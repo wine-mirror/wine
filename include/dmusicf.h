@@ -829,7 +829,7 @@ struct _DMUS_IO_SEGMENT_TRACK_HEADER {
 };
 
 struct _DMUS_IO_SEGMENT_ITEM_HEADER {
-	MUSIC_TIME llTimeLogical;
+	MUSIC_TIME lTimeLogical;
 	MUSIC_TIME lTimePhysical;
 	DWORD      dwPlayFlags;
 	DWORD      dwFlags;

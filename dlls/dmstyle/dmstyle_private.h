@@ -214,6 +214,7 @@ struct IDirectMusicChordTrack {
 
   /* IDirectMusicChordTrack fields */
   LPDMUS_OBJECTDESC pDesc;
+  DWORD dwScale;
 };
 
 /* IUnknown: */

@@ -643,6 +643,8 @@ struct IDirectMusicSegTriggerTrack {
 
   /* IDirectMusicSegTriggerTrack fields */
   LPDMUS_OBJECTDESC pDesc;
+  DMUS_IO_SEGMENT_ITEM_HEADER header;
+  WCHAR wszName[DMUS_MAX_NAME];
 };
 
 /* IUnknown: */

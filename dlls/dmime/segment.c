@@ -1,6 +1,7 @@
 /* IDirectMusicSegment8 Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2003-2004 Raphael Junqueira
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -684,10 +685,10 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseTrackForm (LPPERSIST
     case DMUS_FOURCC_TRACK_CHUNK: {
       TRACE_(dmfile)(": track chunck\n");
       IStream_Read (pStm, &track_hdr, sizeof(DMUS_IO_TRACK_HEADER), NULL);
-      TRACE_(dmfile)("class: %s\n", debugstr_guid (&track_hdr.guidClassID));
-      TRACE_(dmfile)("dwGroup: %ld\n", track_hdr.dwGroup);
-      TRACE_(dmfile)("ckid: %s\n", debugstr_fourcc (track_hdr.ckid));
-      TRACE_(dmfile)("fccType: %s\n", debugstr_fourcc (track_hdr.fccType));
+      TRACE_(dmfile)(" - class: %s\n", debugstr_guid (&track_hdr.guidClassID));
+      TRACE_(dmfile)(" - dwGroup: %ld\n", track_hdr.dwGroup);
+      TRACE_(dmfile)(" - ckid: %s\n", debugstr_fourcc (track_hdr.ckid));
+      TRACE_(dmfile)(" - fccType: %s\n", debugstr_fourcc (track_hdr.fccType));
       break;
     }
     case DMUS_FOURCC_TRACK_EXTRAS_CHUNK: {

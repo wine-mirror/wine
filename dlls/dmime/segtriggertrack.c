@@ -1,6 +1,7 @@
 /* IDirectMusicSegTriggerTrack Implementation
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2003-2004 Raphael Junqueira
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -225,8 +226,9 @@ ULONG WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Release (LPPERSISTSTREAM
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
-  FIXME("(%p, %p): stub\n", This, pClassID);
-  return E_NOTIMPL;
+  TRACE("(%p, %p)\n", This, pClassID);
+  memcpy(pClassID, &CLSID_DirectMusicSegTriggerTrack, sizeof(CLSID));
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
@@ -256,14 +258,17 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_SEGMENTITEM_CHUNK: {
       TRACE_(dmfile)(": segment item chunk\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      IStream_Read (pStm, &This->header, sizeof(DMUS_IO_SEGMENT_ITEM_HEADER), NULL);
+      TRACE_(dmfile)(" - lTimePhysical: %lu\n", This->header.lTimeLogical);
+      TRACE_(dmfile)(" - lTimePhysical: %lu\n", This->header.lTimePhysical);
+      TRACE_(dmfile)(" - dwPlayFlags: 0x%08lx\n", This->header.dwPlayFlags);
+      TRACE_(dmfile)(" - dwFlags: 0x%08lx\n", This->header.dwFlags);
       break;
     }
     case DMUS_FOURCC_SEGMENTITEMNAME_CHUNK: {
       TRACE_(dmfile)(": segment item name chunk\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      IStream_Read (pStm, This->wszName, Chunk.dwSize, NULL);
+      TRACE_(dmfile)(" - name: %s \n", debugstr_w(This->wszName));
       break;
     }
     case FOURCC_LIST: {
@@ -275,6 +280,12 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
 	/**
 	 * should be a DMRF (DirectMusic Reference) list @TODO
 	 */
+      case DMUS_FOURCC_REF_LIST: {
+	FIXME_(dmfile)(": DMRF (DM References) list, not yet handled\n");
+	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	break;						
+      }
       default: {
 	TRACE_(dmfile)(": unknown (skipping)\n");
 	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
@@ -359,7 +370,7 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPP
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   if (pChunk->fccID != DMUS_FOURCC_SEGTRACK_LIST) {
-    ERR_(dmfile)(": %s chunk should be a TRACK list\n", debugstr_fourcc (pChunk->fccID));
+    ERR_(dmfile)(": %s chunk should be a SEGTRACK list\n", debugstr_fourcc (pChunk->fccID));
     return E_FAIL;
   }  
 
@@ -411,7 +422,6 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (LPP
   return S_OK;
 }
 
-
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
   ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
 
@@ -433,11 +443,6 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM 
       TRACE_(dmfile)(": segment trigger track list\n");
       hr = IDirectMusicSegTriggerTrack_IPersistStream_ParseSegTrackList (iface, &Chunk, pStm, This);
       if (FAILED(hr)) return hr;
-      /*
-	liMove.QuadPart = Chunk.dwSize;
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-      */
-      
       break;    
     }
     default: {
@@ -463,23 +468,27 @@ HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSISTSTREAM 
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  FIXME("(%p): Saving not implemented yet\n", This);
   return E_NOTIMPL;
 }
 
 HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
+  FIXME("(%p, %p): stub\n", This, pcbSize);
   return E_NOTIMPL;
 }
 
 ICOM_VTABLE(IPersistStream) DirectMusicSegTriggerTrack_PersistStream_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicSegTriggerTrack_IPersistStream_QueryInterface,
-	IDirectMusicSegTriggerTrack_IPersistStream_AddRef,
-	IDirectMusicSegTriggerTrack_IPersistStream_Release,
-	IDirectMusicSegTriggerTrack_IPersistStream_GetClassID,
-	IDirectMusicSegTriggerTrack_IPersistStream_IsDirty,
-	IDirectMusicSegTriggerTrack_IPersistStream_Load,
-	IDirectMusicSegTriggerTrack_IPersistStream_Save,
-	IDirectMusicSegTriggerTrack_IPersistStream_GetSizeMax
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IDirectMusicSegTriggerTrack_IPersistStream_QueryInterface,
+  IDirectMusicSegTriggerTrack_IPersistStream_AddRef,
+  IDirectMusicSegTriggerTrack_IPersistStream_Release,
+  IDirectMusicSegTriggerTrack_IPersistStream_GetClassID,
+  IDirectMusicSegTriggerTrack_IPersistStream_IsDirty,
+  IDirectMusicSegTriggerTrack_IPersistStream_Load,
+  IDirectMusicSegTriggerTrack_IPersistStream_Save,
+  IDirectMusicSegTriggerTrack_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */

@@ -1,6 +1,7 @@
 /* IDirectMusicScript
  *
  * Copyright (C) 2003-2004 Rok Mandeljc
+ * Copyright (C) 2003-2004 Raphael Junqueira
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -114,8 +115,8 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_CallRoutine (LPDIRECTMU
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
   FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
   /*return E_NOTIMPL;*/
-  /*return S_OK;*/
-  return E_FAIL;
+  return S_OK;
+  /*return E_FAIL;*/
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_SetVariableVariant (LPDIRECTMUSICSCRIPT iface, WCHAR* pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO* pErrorInfo) {
@@ -391,37 +392,42 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicObject_ParseDescriptor (LPDIRE
 }
 
 ICOM_VTABLE(IDirectMusicObject) DirectMusicScript_Object_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicScriptImpl_IDirectMusicObject_QueryInterface,
-	IDirectMusicScriptImpl_IDirectMusicObject_AddRef,
-	IDirectMusicScriptImpl_IDirectMusicObject_Release,
-	IDirectMusicScriptImpl_IDirectMusicObject_GetDescriptor,
-	IDirectMusicScriptImpl_IDirectMusicObject_SetDescriptor,
-	IDirectMusicScriptImpl_IDirectMusicObject_ParseDescriptor
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IDirectMusicScriptImpl_IDirectMusicObject_QueryInterface,
+  IDirectMusicScriptImpl_IDirectMusicObject_AddRef,
+  IDirectMusicScriptImpl_IDirectMusicObject_Release,
+  IDirectMusicScriptImpl_IDirectMusicObject_GetDescriptor,
+  IDirectMusicScriptImpl_IDirectMusicObject_SetDescriptor,
+  IDirectMusicScriptImpl_IDirectMusicObject_ParseDescriptor
 };
 
 /* IDirectMusicScriptImpl IPersistStream part: */
 HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-	return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
+  return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 ULONG WINAPI IDirectMusicScriptImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-	return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
+  return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 ULONG WINAPI IDirectMusicScriptImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-	return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
+  return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
+  TRACE("(%p, %p)\n", This, pClassID);
+  memcpy(pClassID, &CLSID_DirectMusicScript, sizeof(CLSID));
+  return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
+  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);  
+  FIXME("(%p): stub, always S_FALSE\n", This);
+  return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
