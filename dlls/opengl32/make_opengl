@@ -83,6 +83,12 @@ $gen_traces = 1;
 	     "1_1" => 1 );
 %cat_1_2 = ( %cat_1_1,
 	     "VERSION_1_2" => 1 );
+%cat_1_3 = ( %cat_1_2,
+	     "VERSION_1_3" => 1 );
+%cat_1_4 = ( %cat_1_3,
+	     "VERSION_1_4" => 1 );
+%cat_1_5 = ( %cat_1_4,
+	     "VERSION_1_5" => 1 );
 
 %norm_categories = ();
 
@@ -109,6 +115,10 @@ $gen_traces = 1;
      "GLhalfNV" => "%d",
      "GLintptrARB" => "%d",
      "GLsizeiptrARB" => "%d",
+     "GLintptr" => "%d",
+     "GLsizeiptr" => "%d",
+     "GLhandleARB" => "%d",
+     "GLcharARB" => "%c",
      "GLvoid" => "(void)",
      "_GLfuncptr" => "%p");
 
@@ -135,6 +145,10 @@ $gen_traces = 1;
      "GLhalfNV" => [ "long", 4 ],
      "GLintptrARB" => [ "long", 4 ],
      "GLsizeiptrARB" => [ "long", 4 ],
+     "GLhandleARB" => [ "long", 4 ],
+     "GLcharARB" => [ "long", 4 ],
+     "GLintptr" => [ "long", 4 ],
+     "GLsizeiptr" => [ "long", 4 ],
      "GLvoid" => [ "void", 4 ],
      "_GLfuncptr" => [ "ptr", 4 ]);
 
@@ -147,7 +161,29 @@ sub ConvertType {
     %hash = ( "GLstring" => "const GLubyte *",
 	      "GLintptrARB" => "ptrdiff_t",
 	      "GLsizeiptrARB" => "ptrdiff_t",
+	      "GLintptr" => "ptrdiff_t",
+	      "GLsizeiptr" => "ptrdiff_t",
+	      "GLhandleARB" => "unsigned int",
+	      "GLcharARB" => "char",
 	      "GLhalfNV" => "unsigned short" );
+
+    foreach $org (keys %hash) {
+	if ($type =~ /$org/) {
+	    ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
+	    return "$before$hash{$org}$after";
+	}
+    }
+    return $type;
+}
+
+#
+# Used to convert some variable names
+#
+sub ConvertVarName {
+    my ($type) = @_;
+
+    %hash = ( "near" => "nearParam",
+	      "far"  => "farParam" );
 
     foreach $org (keys %hash) {
 	if ($type =~ /$org/) {
@@ -176,8 +212,10 @@ sub GenerateThunk {
     }
     $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_" . $func_ref->[0] . "( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	## Quick debug code :-)
+	## print $func_ref->[2]->[$i]->[1] . "\n";
 	$type = $func_ref->[2]->[$i]->[0];
-	$name = $func_ref->[2]->[$i]->[1];
+	$name = ConvertVarName($func_ref->[2]->[$i]->[1]);
 	$ret = $ret . ConvertType($type) . " $name";
 	$call_arg = $call_arg . "$name";
 	if ($type =~ /\*/) {
@@ -239,8 +277,14 @@ if ($version eq "1.0") {
     %norm_categories = %cat_1_1;
 } elsif ($version eq "1.2") {
     %norm_categories = %cat_1_2;
+} elsif ($version eq "1.3") {
+    %norm_categories = %cat_1_3;
+} elsif ($version eq "1.4") {
+    %norm_categories = %cat_1_4;
+} elsif ($version eq "1.5") {
+    %norm_categories = %cat_1_5;
 } else {
-    die "OpenGL version incorrect. Should be one of '1.0', '1.1' or '1.2'.\n";
+    die "Incorrect OpenGL version.\n";
 }
 
 #
@@ -620,7 +664,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 # First, generate the function pointers
 foreach (sort keys %ext_functions) {
     $func_ref = $ext_functions{$_};
-    print EXT $func_ref->[1] . " (*" . $ext_prefix . $func_ref->[0] . ")( ";
+    print EXT ConvertType($func_ref->[1]) . " (*" . $ext_prefix . $func_ref->[0] . ")( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	$type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
@@ -637,7 +681,7 @@ foreach (sort keys %ext_functions) {
 print EXT "\n\n/* The function prototypes */\n";
 foreach (sort keys %ext_functions) {
     $func_ref = $ext_functions{$_};
-    print EXT $func_ref->[1] . " WINAPI " . "wine_" . $func_ref->[0] . "( ";
+    print EXT ConvertType($func_ref->[1]) . " WINAPI " . "wine_" . $func_ref->[0] . "( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	$type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";

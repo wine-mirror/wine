@@ -802,10 +802,10 @@ void WINAPI wine_glDepthMask( GLboolean flag ) {
 /***********************************************************************
  *              glDepthRange (OPENGL32.@)
  */
-void WINAPI wine_glDepthRange( GLclampd nearParm, GLclampd farParm ) {
-  TRACE("(%f, %f)\n", nearParm, farParm );
+void WINAPI wine_glDepthRange( GLclampd nearParam, GLclampd farParam ) {
+  TRACE("(%f, %f)\n", nearParam, farParam );
   ENTER_GL();
-  glDepthRange( nearParm, farParm );
+  glDepthRange( nearParam, farParam );
   LEAVE_GL();
 }
 
