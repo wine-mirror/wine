@@ -2,6 +2,7 @@
  * USER text functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
+ * Copyright 2002 Bill Medland
  *
  * Contains 
  *   1.  DrawText functions
@@ -23,8 +24,6 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text);
-
-#define countof(a) (sizeof(a)/sizeof(a[0]))
 
 /*********************************************************************
  *
@@ -252,29 +251,6 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
     {
         strncpyW (modstr, str, *len_str);
         *(str+*len_str) = '\0';
-    }
-}
-
-void TEXT_CopySansPrefix (int noprefix, WCHAR *d, int *len_d, const WCHAR *s, int len_s)
-{
-    if (noprefix)
-    {
-        strncpyW (d, s, len_s);
-        *len_d = len_s;
-    }
-    else
-    {
-        *len_d = 0;
-        while (len_s--)
-        {
-           if (*s == PREFIX && len_s)
-           {
-               len_s--;
-               s++;
-           } 
-           *d++ = *s++;
-           (*len_d)++;
-        }
     }
 }
 
@@ -516,6 +492,23 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
 }
 
 /*********************************************************************
+ *  Returns true if and only if the remainder of the line is a single 
+ *  newline representation or nothing
+ */
+
+static int remainder_is_none_or_newline (int num_chars, const WCHAR *str)
+{
+    if (!num_chars) return TRUE;
+    if (*str != LF && *str != CR) return FALSE;
+    if (!--num_chars) return TRUE;
+    if (*str == *(str+1)) return FALSE;
+    str++;
+    if (*str != CR && *str != LF) return FALSE;
+    if (--num_chars) return FALSE;
+    return TRUE;
+}
+
+/*********************************************************************
  *  Return next line of text from a string.
  * 
  * hdc - handle to DC.
@@ -526,13 +519,16 @@ static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
  * width - maximum width of line in pixels.
  * format - format type passed to DrawText.
  * retsize - returned size of the line in pixels.
+ * last_line - TRUE if is the last line that will be processed
+ * p_retstr - If DT_MODIFYSTRING this points to a cursor in the buffer in which
+ *            the return string is built.
  *
  * Returns pointer to next char in str after end of the line
  * or NULL if end of str reached.
  */
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
-                                  WCHAR *dest, int *len, int width, WORD format,
-                                  SIZE *retsize)
+                                 WCHAR *dest, int *len, int width, DWORD format,
+                                 SIZE *retsize, int last_line, WCHAR **p_retstr)
 {
     int i = 0, j = 0;
     int plen = 0;
@@ -544,7 +540,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     int word_broken;
     int line_fits;
     int j_in_seg;
-
+    int ellipsified;
 
     /* For each text segment in the line */
 
@@ -600,12 +596,19 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         }
 
 
-        /* Measure the whole text segment and possibly WordBreak it */
+        /* Measure the whole text segment and possibly WordBreak and
+         * ellipsify it
+         */
 
         j_in_seg = j - seg_j;
         max_seg_width = width - plen;
         GetTextExtentExPointW (hdc, dest + seg_j, j_in_seg, max_seg_width, &num_fit, NULL, &size);
 
+        /* The Microsoft handling of various combinations of formats is weird.
+         * The following may very easily be incorrect if several formats are
+         * combined, and may differ between versions (to say nothing of the
+         * several bugs in the Microsoft versions).
+         */
         word_broken = 0;
         line_fits = (num_fit >= j_in_seg);
         if (!line_fits && (format & DT_WORDBREAK))
@@ -621,8 +624,69 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
             i = s - str;
             word_broken = 1;
         }
+        len_before_ellipsis = j_in_seg;
+        len_under_ellipsis = 0;
+        len_after_ellipsis = 0;
+        len_ellipsis = 0;
+        ellipsified = 0;
+        if (!line_fits && (format & DT_PATH_ELLIPSIS))
+        {
+            TEXT_PathEllipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
+                                max_seg_width, &size, *p_retstr, &len_before_ellipsis, &len_ellipsis, &len_under_ellipsis, &len_after_ellipsis);
+            line_fits = (size.cx <= max_seg_width);
+            ellipsified = 1;
+        }
+        /* NB we may end up ellipsifying a word-broken or path_ellipsified
+         * string */
+        if ((!line_fits && (format & DT_WORD_ELLIPSIS)) ||
+            ((format & DT_END_ELLIPSIS) && 
+              ((last_line && *count) ||
+               (remainder_is_none_or_newline (*count, &str[i]) && !line_fits))))
+        {
+            int before;
+            TEXT_Ellipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
+                            max_seg_width, &size, *p_retstr, &before, &len_ellipsis);
+            if (before > len_before_ellipsis)
+            {
+                /* We must have done a path ellipsis too */
+                len_after_ellipsis = before - len_before_ellipsis - len_ellipsis;
+            }
+            else
+            {
+                len_before_ellipsis = before;
+                /* len_after_ellipsis remains as zero as does
+                 * len_under_ellsipsis
+                 */
+            }
+            line_fits = (size.cx <= max_seg_width);
+            ellipsified = 1;
+        }
+        /* As an optimisation if we have ellipsified and we are expanding
+         * tabs and we haven't reached the end of the line we can skip to it
+         * now rather than going around the loop again.
+         */
+        if ((format & DT_EXPANDTABS) && ellipsified)
+        {
+            if (format & DT_SINGLELINE)
+                *count = 0;
+            else
+            {
+                while ((*count) && str[i] != CR && str[i] != LF)
+                {
+                    (*count)--, i++;
+                }
+            }
+        }
 
         j = seg_j + j_in_seg;
+        if (prefix_offset >= seg_j + len_before_ellipsis)
+        {
+            prefix_offset = TEXT_Reprefix (str + seg_i, len_before_ellipsis,
+                                           len_under_ellipsis, len_ellipsis,
+                                           len_after_ellipsis);
+            if (prefix_offset != -1)
+                prefix_offset += seg_j;
+        }
 
         plen += size.cx;
         if (size.cy > retsize->cy)
@@ -772,7 +836,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	prefix_offset = -1;
 	len = MAX_STATIC_BUFFER;
         last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
-	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size);
+	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, &p_retstr);
 
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
@@ -785,46 +849,6 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 	    else if (flags & DT_BOTTOM) y = rect->bottom - size.cy;
         }
 
-        if ((flags & DT_SINGLELINE) && size.cx > width &&
-	    (flags & (DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_WORD_ELLIPSIS)))
-        {
-            if ((flags & DT_EXPANDTABS))
-            {
-                /* If there are tabs then we must only ellipsify the last
-                 * segment.  That will become trivial when we move the 
-                 * ellipsification into the TEXT_NextLineW (coming soon)
-                 */
-                const WCHAR *p;
-                p = line + len;
-                while (p > line)
-                    if (*(--p) == TAB)
-                    {
-                        FIXME ("Ellipsification of single line tabbed strings will be fixed shortly\n");
-                        break;
-                    }
-            }
-
-            if (flags & DT_PATH_ELLIPSIS)
-            {
-                /* We may need to remeasure the string because it was clipped */
-                if ((flags & DT_WORDBREAK) || !(flags & DT_NOCLIP))
-                    TEXT_CopySansPrefix ((flags & DT_NOPREFIX), line, &len, str, i_count >= 0 ? i_count : strlenW(str));
-                TEXT_PathEllipsify (hdc, line, countof(line), &len, width, &size, retstr, &len_before_ellipsis, &len_ellipsis, &len_under_ellipsis, &len_after_ellipsis);
-            }
-            else
-            {
-                TEXT_Ellipsify (hdc, line, countof(line), &len, width, &size, retstr, &len_before_ellipsis, &len_ellipsis);
-                len_after_ellipsis = 0;
-                len_under_ellipsis = 0; /* It is under the path ellipsis */
-            }
-
-            strPtr = NULL; 
-
-            if (prefix_offset >= 0 &&
-                prefix_offset >= len_before_ellipsis)
-                prefix_offset = TEXT_Reprefix (str, len_before_ellipsis, len_under_ellipsis, len_ellipsis, len_after_ellipsis);
-
-	}
 	if (!(flags & DT_CALCRECT))
 	{
             const WCHAR *str = line;
