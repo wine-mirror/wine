@@ -104,10 +104,25 @@ static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
     EMRSELECTOBJECT emr;
     DWORD index;
     HBRUSH hOldBrush;
-
-    index = EMFDRV_CreateBrushIndirect(dc, hBrush );
-    if(!index) return FALSE;
     
+    /* If the object is a stock brush object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock brushes.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+    if (hBrush >= FIRST_STOCK_HANDLE &&
+        hBrush <= FIRST_STOCK_HANDLE+HOLLOW_BRUSH )
+    {
+        DWORD brush_index = hBrush - FIRST_STOCK_HANDLE;
+        index = brush_index | 0x80000000;
+    }
+    else
+    {
+        index = EMFDRV_CreateBrushIndirect(dc, hBrush );
+    }
+    
+    if(!index) return FALSE;
+
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
@@ -169,7 +184,24 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
     DWORD index;
     HFONT hOldFont;
 
-    index = EMFDRV_CreateFontIndirect(dc, hFont );
+    /* If the object is a stock font object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock fonts.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+
+    if (hFont >= STOCK_OEM_FIXED_FONT &&
+        hFont <= STOCK_DEFAULT_GUI_FONT &&
+        hFont != STOCK_DEFAULT_PALETTE)
+    {
+        DWORD font_index = hFont - FIRST_STOCK_HANDLE;
+        index = font_index | 0x80000000;
+    }
+    else
+    {
+        index = EMFDRV_CreateFontIndirect(dc, hFont );
+    }
+
     if(!index) return FALSE;
 
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -214,7 +246,23 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
     DWORD index;
     HFONT hOldPen;
 
-    index = EMFDRV_CreatePenIndirect(dc, hPen );
+    /* If the object is a stock pen object, do not need to create it.
+     * See definitions in  wingdi.h for range of stock pens.
+     * We do however have to handle setting the higher order bit to
+     * designate that this is a stock object.
+     */
+
+    if (hPen >= STOCK_WHITE_PEN &&
+        hPen <= STOCK_NULL_PEN )
+    {
+        DWORD pen_index = hPen - FIRST_STOCK_HANDLE; 
+        index = pen_index | 0x80000000;
+    }
+    else
+    {
+        index = EMFDRV_CreatePenIndirect(dc, hPen );
+    }
+ 
     if(!index) return FALSE;
     
     emr.emr.iType = EMR_SELECTOBJECT;
