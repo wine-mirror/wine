@@ -991,7 +991,7 @@
 
         <programlisting>
 [Drive C]
-"Path" = "${HOME}/wine"
+"Path" = "%HOME%/wine"
 "Type" = "hd"
 "Label" = "MS-DOS"
 "Filesystem" = "win95"
@@ -1075,7 +1075,9 @@ C:\                Root directory of primary disk drive
             You can also make use of environment variables like $HOME here,
 	    an example for using a <filename>mywinedrive</filename>
 	    directory in your home dir would be
-            <programlisting>"Path" = "${HOME}/mywinedrive"</programlisting>
+            <programlisting>"Path" = "%HOME%/mywinedrive"</programlisting>,
+	    but don't forget to put it as a DOS environment variable,
+	    ie surrounded by '%' signs rather than preceded by a '$'.
             Don't forget to leave off the trailing slash!
         </para>
         <para>

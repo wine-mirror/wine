@@ -472,7 +472,8 @@ currently lacking. We need:
 	- C for the C:\ directory. Here we use the user's home directory, for most
 	  applications do see C:\ as root-writeable directory of every windows
 	  installation and this basically is it in the UNIX-user context.
-		Path=${HOME}
+	  Don't forget to identify environment variables as DOS ones (ie, surrounded by '%').
+		Path=%HOME%
 	- R for the CD-Rom drive. Specify your distribution's default CD-ROM mountpoint.
 		Path=/auto/cdrom
 	- T for temporary storage. We do use /tmp/ (rationale: between process 
