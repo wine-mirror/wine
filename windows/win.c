@@ -438,6 +438,7 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
     pWndDesktop->pDriver           = &X11DRV_WND_Driver;
+    pWndDesktop->expose_event      = NULL;
 
     pWndDesktop->winproc = (WNDPROC16)class->winproc;
 
@@ -574,6 +575,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->pHScroll       = NULL;
     wndPtr->pProp          = NULL;
     wndPtr->userdata       = 0;
+    wndPtr->expose_event   = NULL;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
 
