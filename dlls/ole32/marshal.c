@@ -164,7 +164,7 @@ static HRESULT WINAPI ClientIdentity_QueryInterface(IInternalUnknown * iface, RE
 static ULONG WINAPI ClientIdentity_AddRef(IInternalUnknown * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
-    TRACE("%p\n", iface);
+    TRACE("%p - before %ld\n", iface, This->refs);
     return InterlockedIncrement(&This->refs);
 }
 
@@ -172,7 +172,7 @@ static ULONG WINAPI ClientIdentity_Release(IInternalUnknown * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
     ULONG refs = InterlockedDecrement(&This->refs);
-    TRACE("%p\n", iface);
+    TRACE("%p - after %ld\n", iface, refs);
     if (!refs)
         proxy_manager_destroy(This);
     return refs;
@@ -365,6 +365,8 @@ static void proxy_manager_destroy(struct proxy_manager * This)
         struct ifproxy * ifproxy = LIST_ENTRY(cursor, struct ifproxy, entry);
         ifproxy_destroy(ifproxy);
     }
+
+    IRpcChannelBuffer_Release(This->chan);
 
     DeleteCriticalSection(&This->cs);
 
