@@ -18,7 +18,7 @@
 #define PROBLEM2 0
 
 /*
- * Rebar control    rev 7c
+ * Rebar control    rev 7d
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -70,6 +70,14 @@
  * 10. Use _MoveChildWindows in _HandleLRDrag.
  * 11. Another rewrite of _AdjustBands with new algorithm.
  * 12. Correct drawing of rebar borders and handling of RBS_BORDERS.
+ * rev 7d
+ * 13. Support WM_NOTIFYFORMAT (both incoming and outgoing) and do 
+ *     WM_NOTIFY correctly based on results.
+ * 14. Implement WM_SETREDRAW.
+ * 15. Native WM_ERASEBKGND draws horz and vert separators between bands and
+ *     rows, and fills in the background color for each band. The gripper, 
+ *     image, and text for each band is drawn by the WM_PAINT process. Change
+ *     this code to match.
  *
  *
  *    Still to do:
@@ -78,6 +86,9 @@
  *  4. RBBS_HIDDEN (and the CCS_VERT + RBBS_NOVERT case) is not really 
  *     supported by the following functions:
  *      _HandleLRDrag
+ *  5. Native uses (on each draw!!) SM_CYBORDER (or SM_CXBORDER for CCS_VERT)
+ *     to set the size of the separator width (the value SEP_WIDTH_SIZE 
+ *     in here). Should be fixed!!
  */
 
 #include <stdlib.h>
@@ -146,7 +157,6 @@ typedef struct
 #define DRAW_TEXT       0x00000004
 #define DRAW_RIGHTSEP   0x00000010
 #define DRAW_BOTTOMSEP  0x00000020
-#define DRAW_SEPBOTH    (DRAW_RIGHTSEP | DRAW_BOTTOMSEP)
 #define NTF_INVALIDATE  0x01000000
 #define NTF_CHILDSIZE   0x02000000
 
@@ -166,7 +176,9 @@ typedef struct
 
     SIZE     calcSize;    /* calculated rebar size */
     SIZE     oldSize;     /* previous calculated rebar size */
-    BOOL     bUnicode;    /* Unicode flag */
+    BOOL     bUnicode;    /* TRUE if this window is W type */
+    BOOL     NtfUnicode;  /* TRUE if parent wants notify in W format */
+    BOOL     DoRedraw;    /* TRUE to acutally draw bands */
     UINT     fStatus;     /* Status flags (see below)  */ 
     HCURSOR  hcurArrow;   /* handle to the arrow cursor */
     HCURSOR  hcurHorz;    /* handle to the EW cursor */
@@ -392,23 +404,38 @@ REBAR_DumpBand (REBAR_INFO *iP)
 
 }
 
-static INT
-REBAR_Notify (HWND hwnd, NMHDR *nmhdr, REBAR_INFO *infoPtr, UINT code)
+
+static HWND
+REBAR_GetNotifyParent (REBAR_INFO *infoPtr)
 {
     HWND parent, owner;
 
     parent = infoPtr->hwndNotify;
     if (!parent) {
-        parent = GetParent (hwnd);
-	owner = GetWindow (hwnd, GW_OWNER);
+        parent = GetParent (infoPtr->hwndSelf);
+	owner = GetWindow (infoPtr->hwndSelf, GW_OWNER);
 	if (owner) parent = owner;
     }
-    nmhdr->idFrom = GetDlgCtrlID (hwnd);
-    nmhdr->hwndFrom = hwnd;
+    return parent;
+}
+
+
+static INT
+REBAR_Notify (NMHDR *nmhdr, REBAR_INFO *infoPtr, UINT code)
+{
+    HWND parent;
+
+    parent = REBAR_GetNotifyParent (infoPtr);
+    nmhdr->idFrom = GetDlgCtrlID (infoPtr->hwndSelf);
+    nmhdr->hwndFrom = infoPtr->hwndSelf;
     nmhdr->code = code;
 
-    return SendMessageA (parent, WM_NOTIFY, (WPARAM) nmhdr->idFrom,
-			 (LPARAM)nmhdr);
+    if (infoPtr->NtfUnicode)
+	return SendMessageW (parent, WM_NOTIFY, (WPARAM) nmhdr->idFrom,
+			     (LPARAM)nmhdr);
+    else
+	return SendMessageA (parent, WM_NOTIFY, (WPARAM) nmhdr->idFrom,
+			     (LPARAM)nmhdr);
 }
 
 static INT
@@ -434,72 +461,13 @@ REBAR_Notify_NMREBAR (REBAR_INFO *infoPtr, UINT uBand, UINT code)
 	}
     }
     notify_rebar.uBand = uBand;
-    return REBAR_Notify (infoPtr->hwndSelf, (NMHDR *)&notify_rebar, infoPtr, code);
+    return REBAR_Notify ((NMHDR *)&notify_rebar, infoPtr, code);
 }
 
 static VOID
 REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand, DWORD dwStyle)
 {
 
-    /* draw separators on both the bottom and right */
-    if ((lpBand->fDraw & DRAW_SEPBOTH) == DRAW_SEPBOTH) {
-        RECT rcSep;
-	SetRect (&rcSep,
-		 lpBand->rcBand.left,
-		 lpBand->rcBand.top,
-		 lpBand->rcBand.right + SEP_WIDTH_SIZE,
-		 lpBand->rcBand.bottom + SEP_WIDTH_SIZE);
-	DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_BOTTOMRIGHT);
-	TRACE("drawing band separator both (%d,%d)-(%d,%d)\n",
-	      rcSep.left, rcSep.top, rcSep.right, rcSep.bottom);
-    }
-
-    /* draw band separator between bands in a row */
-    if ((lpBand->fDraw & DRAW_SEPBOTH) == DRAW_RIGHTSEP) {
-        RECT rcSep;
-	if (dwStyle & CCS_VERT) {
-	    SetRect (&rcSep, 
-		     lpBand->rcBand.left,
-		     lpBand->rcBand.bottom,
-		     lpBand->rcBand.right,
-		     lpBand->rcBand.bottom + SEP_WIDTH_SIZE);
-	    DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_BOTTOM);
-	}
-	else {
-	    SetRect (&rcSep, 
-		     lpBand->rcBand.right,
-		     lpBand->rcBand.top,
-		     lpBand->rcBand.right + SEP_WIDTH_SIZE,
-		     lpBand->rcBand.bottom);
-	    DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_RIGHT);
-	}
-	TRACE("drawing band separator right (%d,%d)-(%d,%d)\n",
-	      rcSep.left, rcSep.top, rcSep.right, rcSep.bottom);
-    }
-
-    /* draw band separator between rows */
-    if ((lpBand->fDraw & DRAW_SEPBOTH) == DRAW_BOTTOMSEP) {
-        RECT rcRowSep;
-        if (dwStyle & CCS_VERT) {
-	    SetRect (&rcRowSep,
-		     lpBand->rcBand.right,
-		     lpBand->rcBand.top,
-		     lpBand->rcBand.right + SEP_WIDTH_SIZE,
-		     lpBand->rcBand.bottom);
-	    DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_RIGHT);
-	}
-	else {
-	    SetRect (&rcRowSep, 
-		     lpBand->rcBand.left,
-		     lpBand->rcBand.bottom,
-		     lpBand->rcBand.right,
-		     lpBand->rcBand.bottom + SEP_WIDTH_SIZE);
-	    DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_BOTTOM);
-	}
-	TRACE ("drawing band separator bottom (%d,%d)-(%d,%d)\n",
-	       rcRowSep.left, rcRowSep.top,
-	       rcRowSep.right, rcRowSep.bottom);
-    }
 
     /* draw gripper */
     if (lpBand->fDraw & DRAW_GRIPPER)
@@ -543,14 +511,13 @@ REBAR_Refresh (REBAR_INFO *infoPtr, HDC hdc)
     UINT i, oldrow;
     DWORD dwStyle = GetWindowLongA (infoPtr->hwndSelf, GWL_STYLE);
 
+    if (!infoPtr->DoRedraw) return;
+
     oldrow = infoPtr->bands[0].iRow;
     for (i = 0; i < infoPtr->uNumBands; i++) {
 	lpBand = &infoPtr->bands[i];
 
-	if ((lpBand->fStyle & RBBS_HIDDEN) || 
-	    ((dwStyle & CCS_VERT) &&
-	     (lpBand->fStyle & RBBS_NOVERT)))
-	    continue;
+	if (HIDDENBAND(lpBand)) continue; 
 
 	/* now draw the band */
 	REBAR_DrawBand (hdc, infoPtr, lpBand, dwStyle);
@@ -1130,7 +1097,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		rbcz.rcChild = lpBand->rcChild;
 		rbcz.rcBand = lpBand->rcBand;
 		rbcz.rcBand.left += lpBand->cxHeader;
-		REBAR_Notify (infoPtr->hwndSelf, (NMHDR *)&rbcz, infoPtr, RBN_CHILDSIZE);
+		REBAR_Notify ((NMHDR *)&rbcz, infoPtr, RBN_CHILDSIZE);
 		if (!EqualRect (&lpBand->rcChild, &rbcz.rcChild)) {
 		    TRACE("Child rect changed by NOTIFY for band %u\n", i);
 		    TRACE("    from (%d,%d)-(%d,%d)  to (%d,%d)-(%d,%d)\n",
@@ -1191,7 +1158,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
         ERR("EndDeferWindowPos returned NULL\n");
     if (infoPtr->fStatus & NTF_HGHTCHG) {
         infoPtr->fStatus &= ~NTF_HGHTCHG;
-        REBAR_Notify (infoPtr->hwndSelf, &heightchange, infoPtr, RBN_HEIGHTCHANGE);
+        REBAR_Notify (&heightchange, infoPtr, RBN_HEIGHTCHANGE);
     }
 }
 
@@ -1334,8 +1301,6 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
 	if (dwStyle & CCS_VERT) {
 	    /* bound the bottom side if we have a bounding rectangle */
-	    if ((x>0) && (dwStyle & RBS_BANDBORDERS) && prevBand)
-	        prevBand->fDraw |= DRAW_RIGHTSEP;
 	    rightx = clientcx;
 	    bottomy = (lpRect) ? min(clientcy, y+cxsep+cx) : y+cxsep+cx;
 	    lpBand->rcBand.left   = x;
@@ -1347,8 +1312,6 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	}
 	else {
 	    /* bound the right side if we have a bounding rectangle */
-	    if ((x>0) && (dwStyle & RBS_BANDBORDERS) && prevBand)
-	        prevBand->fDraw |= DRAW_RIGHTSEP;
 	    rightx = (lpRect) ? min(clientcx, x+cxsep+cx) : x+cxsep+cx;
 	    bottomy = clientcy;
 	    lpBand->rcBand.left   = min(rightx, x + cxsep);
@@ -1539,12 +1502,25 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
 	/* If RBS_BANDBORDERS set then indicate to draw bottom separator */
 	/* on all bands in all rows but last row.                        */
+	/* Also indicate to draw the right separator for each band in    */
+	/* each row but the rightmost band.                              */
 	if (dwStyle & RBS_BANDBORDERS) {
+	    REBAR_BAND *prevband;
+	    INT currow;
+
+	    prevband = NULL;
+	    currow = -1;
 	    for (i = 0; i < infoPtr->uNumBands; i++) {
 	        lpBand = &infoPtr->bands[i];
 		if (HIDDENBAND(lpBand)) continue;
+
 		if (lpBand->iRow < infoPtr->uNumRows) 
 		    lpBand->fDraw |= DRAW_BOTTOMSEP;
+
+		if (lpBand->iRow != currow) prevband = NULL;
+		currow = lpBand->iRow;
+		if (prevband) prevband->fDraw |= DRAW_RIGHTSEP;
+		prevband = lpBand;
 	    }
 	}
 
@@ -1851,36 +1827,77 @@ REBAR_CommonSetupBand (HWND hwnd, LPREBARBANDINFOA lprbbi, REBAR_BAND *lpBand)
 
 static LRESULT
 REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, RECT *clip)
-     /* Function:  This erases the background rectangle with the  */
-     /*  default brush, then with any band that has a different   */
-     /*  background color.                                        */
+     /* Function:  This erases the background rectangle by drawing  */
+     /*  each band with its background color (or the default) and   */
+     /*  draws each bands right separator if necessary. The row     */
+     /*  separators are drawn on the first band of the next row.    */
 {
     DWORD dwStyle = GetWindowLongA (infoPtr->hwndSelf, GWL_STYLE);
-    HBRUSH hbrBackground = GetClassWord(infoPtr->hwndSelf, GCW_HBRBACKGROUND);
-    RECT eraserect;
     REBAR_BAND *lpBand;
-    INT i;
+    INT i, oldrow;
+    HDC hdc = (HDC)wParam;
+    RECT rect;
+    COLORREF old, new;
 
-    if (hbrBackground)
-        FillRect( (HDC) wParam, clip, hbrBackground);
-
+    oldrow = -1;
     for(i=0; i<infoPtr->uNumBands; i++) {
         lpBand = &infoPtr->bands[i];
 	if (HIDDENBAND(lpBand)) continue;
-	if (lpBand->clrBack != CLR_NONE) {
-	  if (IntersectRect (&eraserect, clip, &lpBand->rcBand)) {
-	    /* draw background */
-	    HBRUSH brh = CreateSolidBrush (lpBand->clrBack);
-	    TRACE("backround color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
-		  lpBand->clrBack,
-		  lpBand->rcBand.left,lpBand->rcBand.top,
-		  lpBand->rcBand.right,lpBand->rcBand.bottom,
-		  clip->left, clip->top,
-		  clip->right, clip->bottom);
-	    FillRect ( (HDC)wParam, &eraserect, brh);
-	    DeleteObject (brh);
-	  }
+
+	/* draw band separator between rows */
+	if (lpBand->iRow != oldrow) {
+	    oldrow = lpBand->iRow;
+	    if (lpBand->fDraw & DRAW_BOTTOMSEP) {
+		RECT rcRowSep;
+		rcRowSep = lpBand->rcBand;
+		if (dwStyle & CCS_VERT) {
+		    rcRowSep.right += SEP_WIDTH_SIZE;
+		    rcRowSep.bottom = infoPtr->calcSize.cy;
+		    DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_RIGHT);
+		}
+		else {
+		    rcRowSep.bottom += SEP_WIDTH_SIZE;
+		    rcRowSep.right = infoPtr->calcSize.cx;
+		    DrawEdge (hdc, &rcRowSep, EDGE_ETCHED, BF_BOTTOM);
+		}
+		TRACE ("drawing band separator bottom (%d,%d)-(%d,%d)\n",
+		       rcRowSep.left, rcRowSep.top,
+		       rcRowSep.right, rcRowSep.bottom);
+	    }
 	}
+
+	/* draw band separator between bands in a row */
+	if (lpBand->fDraw & DRAW_RIGHTSEP) {
+	    RECT rcSep;
+	    rcSep = lpBand->rcBand;
+	    if (dwStyle & CCS_VERT) {
+		rcSep.bottom += SEP_WIDTH_SIZE;
+		DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_BOTTOM);
+	    }
+	    else {
+		rcSep.right += SEP_WIDTH_SIZE;
+		DrawEdge (hdc, &rcSep, EDGE_ETCHED, BF_RIGHT);
+	    }
+	    TRACE("drawing band separator right (%d,%d)-(%d,%d)\n",
+		  rcSep.left, rcSep.top, rcSep.right, rcSep.bottom);
+	}
+
+	/* draw the actual background */
+	if (lpBand->clrBack != CLR_NONE)
+	    new = lpBand->clrBack;
+	else
+	    new = GetSysColor (COLOR_BTNFACE);
+	rect = lpBand->rcBand;
+	old = SetBkColor (hdc, new);
+	TRACE("%s backround color=0x%06lx, band (%d,%d)-(%d,%d), clip (%d,%d)-(%d,%d)\n",
+	      (lpBand->clrBack == CLR_NONE) ? "std" : "",
+	      new,
+	      lpBand->rcBand.left,lpBand->rcBand.top,
+	      lpBand->rcBand.right,lpBand->rcBand.bottom,
+	      clip->left, clip->top,
+	      clip->right, clip->bottom);
+	ExtTextOutA (hdc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, 0);
+	SetBkColor (hdc, old);
     }
     return TRUE;
 }
@@ -2625,6 +2642,9 @@ REBAR_GetToolTips (REBAR_INFO *infoPtr)
 inline static LRESULT
 REBAR_GetUnicodeFormat (REBAR_INFO *infoPtr)
 {
+    TRACE("%s hwnd=0x%x\n", 
+	  infoPtr->bUnicode ? "TRUE" : "FALSE", infoPtr->hwndSelf);
+
     return infoPtr->bUnicode;
 }
 
@@ -3040,8 +3060,14 @@ inline static LRESULT
 REBAR_SetUnicodeFormat (REBAR_INFO *infoPtr, WPARAM wParam)
 {
     BOOL bTemp = infoPtr->bUnicode;
+
+    TRACE("to %s hwnd=0x%04x, was %s\n", 
+	  ((BOOL)wParam) ? "TRUE" : "FALSE", infoPtr->hwndSelf,
+	  (bTemp) ? "TRUE" : "FALSE");
+
     infoPtr->bUnicode = (BOOL)wParam;
-    return bTemp;
+ 
+   return bTemp;
 }
 
 
@@ -3114,6 +3140,7 @@ REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACE("setting NEEDS_LAYOUT\n");
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout (infoPtr, lpRect, TRUE, FALSE);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
     return TRUE;
 }
 
@@ -3125,6 +3152,7 @@ REBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPCREATESTRUCTA cs = (LPCREATESTRUCTA) lParam;
     REBAR_INFO *infoPtr;
     RECT wnrc1, clrc1;
+    INT i;
 
     if (TRACE_ON(rebar)) {
 	GetWindowRect(hwnd, &wnrc1);
@@ -3144,6 +3172,7 @@ REBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->clrText = GetSysColor (COLOR_BTNTEXT);
     infoPtr->ihitBand = -1;
     infoPtr->hwndSelf = hwnd;
+    infoPtr->DoRedraw = TRUE;
 
     infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
     infoPtr->hcurHorz  = LoadCursorA (0, IDC_SIZEWEA);
@@ -3155,7 +3184,14 @@ REBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (GetWindowLongA (hwnd, GWL_STYLE) & RBS_AUTOSIZE)
 	FIXME("style RBS_AUTOSIZE set!\n");
 
-    SendMessageA (hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
+    i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
+		     WM_NOTIFYFORMAT, hwnd, NF_QUERY);
+    if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+	ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
+	    i);
+	i = NFR_ANSI;
+    }
+    infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
 
     TRACE("created!\n");
     return 0;
@@ -3265,7 +3301,7 @@ REBAR_LButtonUp (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     ReleaseCapture ();
 
     if (infoPtr->fStatus & BEGIN_DRAG_ISSUED) {
-        REBAR_Notify(infoPtr->hwndSelf, (NMHDR *) &layout, infoPtr, RBN_LAYOUTCHANGED);
+        REBAR_Notify((NMHDR *) &layout, infoPtr, RBN_LAYOUTCHANGED);
 	REBAR_Notify_NMREBAR (infoPtr, ihitBand, RBN_ENDDRAG);
 	infoPtr->fStatus &= ~BEGIN_DRAG_ISSUED;
     }
@@ -3377,6 +3413,26 @@ REBAR_NCPaint (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    INT i;
+
+    if (lParam == NF_REQUERY) {
+	i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
+			 WM_NOTIFYFORMAT, infoPtr->hwndSelf, NF_QUERY);
+	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
+		i);
+	    i = NFR_ANSI;
+	}
+	infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
+	return (LRESULT)i;
+    }
+    return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
+}
+
+
+static LRESULT
 REBAR_Paint (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
@@ -3456,6 +3512,14 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
+inline static LRESULT
+REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+{
+    TRACE("set to %s\n", (wParam) ? "TRUE" : "FALSE");
+    infoPtr->DoRedraw = (BOOL) wParam;
+    return 0;
+}
+
 static LRESULT
 REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -3474,7 +3538,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
 	    autosize.fChanged = 0;  /* ??? */
 	    autosize.rcActual = autosize.rcTarget;  /* ??? */
-	    REBAR_Notify(infoPtr->hwndSelf, (NMHDR *) &autosize, infoPtr, RBN_AUTOSIZE);
+	    REBAR_Notify((NMHDR *) &autosize, infoPtr, RBN_AUTOSIZE);
 	    TRACE("RBN_AUTOSIZE client=%d, lp=%08lx\n", 
 		  autosize.rcTarget.bottom, lParam);
 	}
@@ -3641,7 +3705,12 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	case WM_DRAWITEM:
 	case WM_NOTIFY:
-	    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
+	    if (infoPtr->NtfUnicode)
+		return SendMessageW (REBAR_GetNotifyParent (infoPtr),
+				     uMsg, wParam, lParam);
+	    else
+		return SendMessageA (REBAR_GetNotifyParent (infoPtr),
+				     uMsg, wParam, lParam);
 
 
 /*      case WM_CHARTOITEM:     supported according to ControlSpy */
@@ -3680,7 +3749,8 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_NCPAINT:
 	    return REBAR_NCPaint (infoPtr, wParam, lParam);
 
-/*      case WM_NOTIFYFORMAT:   supported according to ControlSpy */
+        case WM_NOTIFYFORMAT:
+	    return REBAR_NotifyFormat (infoPtr, wParam, lParam);
 
 	case WM_PAINT:
 	    return REBAR_Paint (infoPtr, wParam, lParam);
@@ -3697,7 +3767,8 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFONT:
 	    return REBAR_SetFont (infoPtr, wParam, lParam);
 
-/*      case WM_SETREDRAW:      supported according to ControlSpy */
+        case WM_SETREDRAW:
+	    return REBAR_SetRedraw (infoPtr, wParam, lParam);
 
 	case WM_SIZE:
 	    return REBAR_Size (infoPtr, wParam, lParam);
