@@ -582,6 +582,8 @@ HRESULT WINAPI StringFromCLSID16(
 	LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
 
 ) {
+    extern BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
+                                           DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode );
     LPMALLOC16	mllc;
     HRESULT	ret;
     DWORD	args[2];
@@ -595,7 +597,7 @@ HRESULT WINAPI StringFromCLSID16(
     /* No need for a Callback entry, we have WOWCallback16Ex which does
      * everything we need.
      */
-    if (!WOWCallback16Ex(
+    if (!K32WOWCallback16Ex(
     	(DWORD)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
 		ICOM_VTBL(((LPMALLOC16)PTR_SEG_TO_LIN(mllc))))
 	)->fnAlloc,

@@ -37,9 +37,9 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
  17 register -i386 CommonUnimpStub() CommonUnimpStub
  18 stdcall GetProcessDword(long long) GetProcessDword
  19 stub ThunkTheTemplateHandle
- 20 stub DosFileHandleToWin32Handle
- 21 stub Win32HandleToDosFileHandle
- 22 stub DisposeLZ32Handle
+ 20 stdcall DosFileHandleToWin32Handle(long) DosFileHandleToWin32Handle
+ 21 stdcall Win32HandleToDosFileHandle(long) Win32HandleToDosFileHandle
+ 22 stdcall DisposeLZ32Handle(long) DisposeLZ32Handle
  23 stub GDIReallyCares
  24 stdcall GlobalAlloc16(long long) GlobalAlloc16
  25 stdcall GlobalLock16(long) GlobalLock16
@@ -71,23 +71,23 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
  51 register -i386 W32S_BackTo32() W32S_BackTo32
  52 stdcall GetThunkBuff() GetThunkBuff
  53 stdcall GetThunkStuff(str str) GetThunkStuff
- 54 stdcall K32WOWCallback16(long long) WOWCallback16
- 55 stdcall K32WOWCallback16Ex(ptr long long ptr ptr) WOWCallback16Ex
- 56 stdcall K32WOWGetVDMPointer(long long long) WOWGetVDMPointer
- 57 stdcall K32WOWHandle32(long long) WOWHandle32
- 58 stdcall K32WOWHandle16(long long) WOWHandle16
- 59 stdcall K32WOWGlobalAlloc16(long long) WOWGlobalAlloc16
- 60 stdcall K32WOWGlobalLock16(long) WOWGlobalLock16
- 61 stdcall K32WOWGlobalUnlock16(long) WOWGlobalUnlock16
- 62 stdcall K32WOWGlobalFree16(long) WOWGlobalFree16
- 63 stdcall K32WOWGlobalAllocLock16(long long ptr) WOWGlobalAllocLock16
- 64 stdcall K32WOWGlobalUnlockFree16(long) WOWGlobalUnlockFree16
- 65 stdcall K32WOWGlobalLockSize16(long ptr) WOWGlobalLockSize16
- 66 stdcall K32WOWYield16() WOWYield16
- 67 stdcall K32WOWDirectedYield16(long) WOWDirectedYield16
- 68 stdcall K32WOWGetVDMPointerFix(long long long) WOWGetVDMPointerFix
- 69 stdcall K32WOWGetVDMPointerUnfix(long) WOWGetVDMPointerUnfix
- 70 stdcall K32WOWGetDescriptor(long long) WOWGetDescriptor
+ 54 stdcall K32WOWCallback16(long long) K32WOWCallback16
+ 55 stdcall K32WOWCallback16Ex(ptr long long ptr ptr) K32WOWCallback16Ex
+ 56 stdcall K32WOWGetVDMPointer(long long long) K32WOWGetVDMPointer
+ 57 stdcall K32WOWHandle32(long long) K32WOWHandle32
+ 58 stdcall K32WOWHandle16(long long) K32WOWHandle16
+ 59 stdcall K32WOWGlobalAlloc16(long long) K32WOWGlobalAlloc16
+ 60 stdcall K32WOWGlobalLock16(long) K32WOWGlobalLock16
+ 61 stdcall K32WOWGlobalUnlock16(long) K32WOWGlobalUnlock16
+ 62 stdcall K32WOWGlobalFree16(long) K32WOWGlobalFree16
+ 63 stdcall K32WOWGlobalAllocLock16(long long ptr) K32WOWGlobalAllocLock16
+ 64 stdcall K32WOWGlobalUnlockFree16(long) K32WOWGlobalUnlockFree16
+ 65 stdcall K32WOWGlobalLockSize16(long ptr) K32WOWGlobalLockSize16
+ 66 stdcall K32WOWYield16() K32WOWYield16
+ 67 stdcall K32WOWDirectedYield16(long) K32WOWDirectedYield16
+ 68 stdcall K32WOWGetVDMPointerFix(long long long) K32WOWGetVDMPointerFix
+ 69 stdcall K32WOWGetVDMPointerUnfix(long) K32WOWGetVDMPointerUnfix
+ 70 stdcall K32WOWGetDescriptor(long long) K32WOWGetDescriptor
  71 stub IsThreadId
  72 forward K32RtlLargeIntegerAdd ntdll.RtlLargeIntegerAdd
  73 forward K32RtlEnlargedIntegerMultiply ntdll.RtlEnlargedIntegerMultiply

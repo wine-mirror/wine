@@ -1033,7 +1033,7 @@ success:  /* We get here if the open was successful */
     }
     else
     {
-        hFileRet = FILE_AllocDosHandle( hFileRet );
+        hFileRet = Win32HandleToDosFileHandle( hFileRet );
         if (hFileRet == HFILE_ERROR16) goto error;
         if (mode & OF_EXIST) /* Return the handle, but close it first */
             _lclose16( hFileRet );
@@ -1075,7 +1075,7 @@ HFILE WINAPI OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
  *           FILE_InitProcessDosHandles
  *
  * Allocates the default DOS handles for a process. Called either by
- * AllocDosHandle below or by the DOSVM stuff.
+ * Win32HandleToDosFileHandle below or by the DOSVM stuff.
  */
 static void FILE_InitProcessDosHandles( void )
 {
@@ -1087,38 +1087,47 @@ static void FILE_InitProcessDosHandles( void )
 }
 
 /***********************************************************************
- *           FILE_AllocDosHandle
+ *           Win32HandleToDosFileHandle   (KERNEL32.21)
  *
  * Allocate a DOS handle for a Win32 handle. The Win32 handle is no
  * longer valid after this function (even on failure).
+ *
+ * Note: this is not exactly right, since on Win95 the Win32 handles
+ *       are on top of DOS handles and we do it the other way
+ *       around. Should be good enough though.
  */
-HFILE16 FILE_AllocDosHandle( HANDLE handle )
+HFILE WINAPI Win32HandleToDosFileHandle( HANDLE handle )
 {
     int i;
 
     if (!handle || (handle == INVALID_HANDLE_VALUE))
-        return INVALID_HANDLE_VALUE16;
+        return HFILE_ERROR;
 
     for (i = 5; i < DOS_TABLE_SIZE; i++)
         if (!dos_handles[i])
         {
             dos_handles[i] = handle;
             TRACE("Got %d for h32 %d\n", i, handle );
-            return i;
+            return (HFILE)i;
         }
     CloseHandle( handle );
     SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-    return INVALID_HANDLE_VALUE16;
+    return HFILE_ERROR;
 }
 
 
 /***********************************************************************
- *           FILE_GetHandle
+ *           DosFileHandleToWin32Handle   (KERNEL32.20)
  *
  * Return the Win32 handle for a DOS handle.
+ *
+ * Note: this is not exactly right, since on Win95 the Win32 handles
+ *       are on top of DOS handles and we do it the other way
+ *       around. Should be good enough though.
  */
-HANDLE FILE_GetHandle( HFILE16 hfile )
+HANDLE WINAPI DosFileHandleToWin32Handle( HFILE handle )
 {
+    HFILE16 hfile = (HFILE16)handle;
     if (hfile < 5 && !dos_handles[hfile]) FILE_InitProcessDosHandles();
     if ((hfile >= DOS_TABLE_SIZE) || !dos_handles[hfile])
     {
@@ -1126,6 +1135,30 @@ HANDLE FILE_GetHandle( HFILE16 hfile )
         return INVALID_HANDLE_VALUE;
     }
     return dos_handles[hfile];
+}
+
+
+/***********************************************************************
+ *           DisposeLZ32Handle   (KERNEL32.22)
+ *
+ * Note: this is not entirely correct, we should only close the
+ *       32-bit handle and not the 16-bit one, but we cannot do
+ *       this because of the way our DOS handles are implemented.
+ *       It shouldn't break anything though.
+ */
+void WINAPI DisposeLZ32Handle( HANDLE handle )
+{
+    int i;
+
+    if (!handle || (handle == INVALID_HANDLE_VALUE)) return;
+
+    for (i = 5; i < DOS_TABLE_SIZE; i++)
+        if (dos_handles[i] == handle)
+        {
+            dos_handles[i] = 0;
+            CloseHandle( handle );
+            break;
+        }
 }
 
 
@@ -1291,7 +1324,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit16( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return _lread(FILE_GetHandle(hFile), PTR_SEG_TO_LIN(buffer), count );
+    return _lread(DosFileHandleToWin32Handle(hFile), PTR_SEG_TO_LIN(buffer), count );
 }
 
 
@@ -1320,7 +1353,7 @@ UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
  */
 UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
 {
-    return (UINT16)_lread(FILE_GetHandle(hFile), buffer, (LONG)count );
+    return (UINT16)_lread(DosFileHandleToWin32Handle(hFile), buffer, (LONG)count );
 }
 
 
@@ -1329,7 +1362,7 @@ UINT16 WINAPI _lread16( HFILE16 hFile, LPVOID buffer, UINT16 count )
  */
 HFILE16 WINAPI _lcreat16( LPCSTR path, INT16 attr )
 {
-    return FILE_AllocDosHandle( _lcreat( path, attr ) );
+    return Win32HandleToDosFileHandle( _lcreat( path, attr ) );
 }
 
 
@@ -1397,7 +1430,7 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
  */
 LONG WINAPI _llseek16( HFILE16 hFile, LONG lOffset, INT16 nOrigin )
 {
-    return SetFilePointer( FILE_GetHandle(hFile), lOffset, NULL, nOrigin );
+    return SetFilePointer( DosFileHandleToWin32Handle(hFile), lOffset, NULL, nOrigin );
 }
 
 
@@ -1415,7 +1448,7 @@ LONG WINAPI _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
  */
 HFILE16 WINAPI _lopen16( LPCSTR path, INT16 mode )
 {
-    return FILE_AllocDosHandle( _lopen( path, mode ) );
+    return Win32HandleToDosFileHandle( _lopen( path, mode ) );
 }
 
 
@@ -1437,7 +1470,7 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
  */
 UINT16 WINAPI _lwrite16( HFILE16 hFile, LPCSTR buffer, UINT16 count )
 {
-    return (UINT16)_hwrite( FILE_GetHandle(hFile), buffer, (LONG)count );
+    return (UINT16)_hwrite( DosFileHandleToWin32Handle(hFile), buffer, (LONG)count );
 }
 
 /***********************************************************************
@@ -1454,7 +1487,7 @@ UINT WINAPI _lwrite( HFILE hFile, LPCSTR buffer, UINT count )
  */
 LONG WINAPI _hread16( HFILE16 hFile, LPVOID buffer, LONG count)
 {
-    return _lread( FILE_GetHandle(hFile), buffer, count );
+    return _lread( DosFileHandleToWin32Handle(hFile), buffer, count );
 }
 
 
@@ -1472,7 +1505,7 @@ LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
  */
 LONG WINAPI _hwrite16( HFILE16 hFile, LPCSTR buffer, LONG count )
 {
-    return _hwrite( FILE_GetHandle(hFile), buffer, count );
+    return _hwrite( DosFileHandleToWin32Handle(hFile), buffer, count );
 }
 
 

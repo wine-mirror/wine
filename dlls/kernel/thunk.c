@@ -1038,7 +1038,6 @@ void WINAPI GetTEBSelectorFS16(void)
 
 /**********************************************************************
  * 		KERNEL_431		(KERNEL.431)
- *		IsPeFormat		(W32SYS.2)
  * Checks the passed filename if it is a PE format executeable
  * RETURNS
  *  TRUE, if it is.
@@ -1048,32 +1047,22 @@ BOOL16 WINAPI IsPeFormat16(
 	LPSTR	fn,	/* [in] filename to executeable */
 	HFILE16 hf16	/* [in] open file, if filename is NULL */
 ) {
-	IMAGE_DOS_HEADER	mzh;
-	OFSTRUCT		ofs;
-	DWORD			xmagic;
+    BOOL ret = FALSE;
+    IMAGE_DOS_HEADER mzh;
+    OFSTRUCT ofs;
+    DWORD xmagic;
 
-	if (fn) {
-		hf16 = OpenFile16(fn,&ofs,OF_READ);
-		if (hf16==HFILE_ERROR16)
-			return FALSE;
-	}
-	_llseek16(hf16,0,SEEK_SET);
-	if (sizeof(mzh)!=_lread16(hf16,&mzh,sizeof(mzh))) {
-		_lclose(hf16);
-		return FALSE;
-	}
-	if (mzh.e_magic!=IMAGE_DOS_SIGNATURE) {
-		WARN("File has not got dos signature!\n");
-		_lclose(hf16);
-		return FALSE;
-	}
-	_llseek16(hf16,mzh.e_lfanew,SEEK_SET);
-	if (sizeof(DWORD)!=_lread16(hf16,&xmagic,sizeof(DWORD))) {
-		_lclose(hf16);
-		return FALSE;
-	}
-	_lclose(hf16);
-	return (xmagic == IMAGE_NT_SIGNATURE);
+    if (fn) hf16 = OpenFile16(fn,&ofs,OF_READ);
+    if (hf16 == HFILE_ERROR16) return FALSE;
+    _llseek16(hf16,0,SEEK_SET);
+    if (sizeof(mzh)!=_lread16(hf16,&mzh,sizeof(mzh))) goto done;
+    if (mzh.e_magic!=IMAGE_DOS_SIGNATURE) goto done;
+    _llseek16(hf16,mzh.e_lfanew,SEEK_SET);
+    if (sizeof(DWORD)!=_lread16(hf16,&xmagic,sizeof(DWORD))) goto done;
+    ret = (xmagic == IMAGE_NT_SIGNATURE);
+ done:
+    _lclose16(hf16);
+    return ret;
 }
 
 
@@ -1341,7 +1330,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(context->Edx);
         struct ThunkDataSL *td = SL16->fpData;
 
-        DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), 631);
+        DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), (LPCSTR)631);
         WORD cs = __get_cs();
 
         if (!td)
@@ -1781,7 +1770,7 @@ INT16 WINAPI UnRegisterCBClient16( INT16 wCBCId,
 void WINAPI InitCBClient16( FARPROC glueLS )
 {
     HMODULE16 kernel = GetModuleHandle16( "KERNEL" );
-    SEGPTR glueSL = (SEGPTR)WIN32_GetProcAddress16( kernel, (LPCSTR)604 );
+    SEGPTR glueSL = (SEGPTR)GetProcAddress16( kernel, (LPCSTR)604 );
 
     SetThunkletCallbackGlue16( glueLS, glueSL );
 }
@@ -1870,7 +1859,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
 	DWORD proc_16;
 
         if (!handle) handle=GetModuleHandle16("WIN32S16");
-        proc_16 = (DWORD)WIN32_GetProcAddress16(handle, func_name);
+        proc_16 = (DWORD)GetProcAddress16(handle, func_name);
 
         x=PTR_SEG_TO_LIN(thunk);
         *x++=0xba; *(DWORD*)x=proc_16;x+=4;             /* movl proc_16, $edx */

@@ -42,8 +42,6 @@ extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                DWORD attributes, HANDLE template, BOOL fail_read_only );
 extern HFILE FILE_CreateDevice( int client_id, DWORD access,
                                   LPSECURITY_ATTRIBUTES sa );
-extern HFILE16 FILE_AllocDosHandle( HANDLE handle );
-extern HANDLE FILE_GetHandle( HFILE16 hfile );
 
 /* files/directory.c */
 extern int DIR_Init(void);

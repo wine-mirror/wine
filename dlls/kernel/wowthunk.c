@@ -39,18 +39,18 @@ DWORD WINAPI CallProcEx32W16(VOID);
  */
 
 /**********************************************************************
- *           WOWGetDescriptor        (WOW32.1) (KERNEL32.70)
+ *           K32WOWGetDescriptor        (WOW32.1) (KERNEL32.70)
  */
-BOOL WINAPI WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
+BOOL WINAPI K32WOWGetDescriptor( SEGPTR segptr, LPLDT_ENTRY ldtent )
 {
     return GetThreadSelectorEntry( GetCurrentThread(), 
                                    segptr >> 16, ldtent );
 }
 
 /**********************************************************************
- *           WOWGetVDMPointer        (WOW32.5) (KERNEL32.56)
+ *           K32WOWGetVDMPointer        (WOW32.5) (KERNEL32.56)
  */
-LPVOID WINAPI WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
+LPVOID WINAPI K32WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 {
     /* FIXME: add size check too */
 
@@ -61,9 +61,9 @@ LPVOID WINAPI WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 }
 
 /**********************************************************************
- *           WOWGetVDMPointerFix     (WOW32.6) (KERNEL32.68)
+ *           K32WOWGetVDMPointerFix     (WOW32.6) (KERNEL32.68)
  */
-LPVOID WINAPI WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
+LPVOID WINAPI K32WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMode )
 {
     /* 
      * Hmmm. According to the docu, we should call:
@@ -77,13 +77,13 @@ LPVOID WINAPI WOWGetVDMPointerFix( DWORD vp, DWORD dwBytes, BOOL fProtectedMode 
      *  fProtectedMode is TRUE, anyway ...)
      */
 
-    return WOWGetVDMPointer( vp, dwBytes, fProtectedMode );
+    return K32WOWGetVDMPointer( vp, dwBytes, fProtectedMode );
 }
 
 /**********************************************************************
- *           WOWGetVDMPointerUnFix   (WOW32.7) (KERNEL32.69)
+ *           K32WOWGetVDMPointerUnFix   (WOW32.7) (KERNEL32.69)
  */
-VOID WINAPI WOWGetVDMPointerUnfix( DWORD vp )
+VOID WINAPI K32WOWGetVDMPointerUnfix( DWORD vp )
 {
     /*
      * See above why we don't call:
@@ -94,75 +94,75 @@ VOID WINAPI WOWGetVDMPointerUnfix( DWORD vp )
 }
 
 /**********************************************************************
- *           WOWGlobalAlloc16        (WOW32.8) (KERNEL32.59)
+ *           K32WOWGlobalAlloc16        (WOW32.8) (KERNEL32.59)
  */
-WORD WINAPI WOWGlobalAlloc16( WORD wFlags, DWORD cb )
+WORD WINAPI K32WOWGlobalAlloc16( WORD wFlags, DWORD cb )
 {
     return (WORD)GlobalAlloc16( wFlags, cb );
 }
 
 /**********************************************************************
- *           WOWGlobalFree16         (WOW32.10) (KERNEL32.62)
+ *           K32WOWGlobalFree16         (WOW32.10) (KERNEL32.62)
  */
-WORD WINAPI WOWGlobalFree16( WORD hMem )
+WORD WINAPI K32WOWGlobalFree16( WORD hMem )
 {
     return (WORD)GlobalFree16( (HGLOBAL16)hMem );
 }
 
 /**********************************************************************
- *           WOWGlobalLock16         (WOW32.11) (KERNEL32.60)
+ *           K32WOWGlobalLock16         (WOW32.11) (KERNEL32.60)
  */
-DWORD WINAPI WOWGlobalLock16( WORD hMem )
+DWORD WINAPI K32WOWGlobalLock16( WORD hMem )
 {
     return (DWORD)WIN16_GlobalLock16( (HGLOBAL16)hMem );
 }
 
 /**********************************************************************
- *           WOWGlobalUnlock16       (WOW32.13) (KERNEL32.61)
+ *           K32WOWGlobalUnlock16       (WOW32.13) (KERNEL32.61)
  */
-BOOL WINAPI WOWGlobalUnlock16( WORD hMem )
+BOOL WINAPI K32WOWGlobalUnlock16( WORD hMem )
 {
     return (BOOL)GlobalUnlock16( (HGLOBAL16)hMem );
 }
 
 /**********************************************************************
- *           WOWGlobalAllocLock16    (WOW32.9) (KERNEL32.63)
+ *           K32WOWGlobalAllocLock16    (WOW32.9) (KERNEL32.63)
  */
-DWORD WINAPI WOWGlobalAllocLock16( WORD wFlags, DWORD cb, WORD *phMem )
+DWORD WINAPI K32WOWGlobalAllocLock16( WORD wFlags, DWORD cb, WORD *phMem )
 {
-    WORD hMem = WOWGlobalAlloc16( wFlags, cb );
+    WORD hMem = K32WOWGlobalAlloc16( wFlags, cb );
     if (phMem) *phMem = hMem;
 
-    return WOWGlobalLock16( hMem );
+    return K32WOWGlobalLock16( hMem );
 }
 
 /**********************************************************************
- *           WOWGlobalLockSize16     (WOW32.12) (KERNEL32.65)
+ *           K32WOWGlobalLockSize16     (WOW32.12) (KERNEL32.65)
  */
-DWORD WINAPI WOWGlobalLockSize16( WORD hMem, PDWORD pcb )
+DWORD WINAPI K32WOWGlobalLockSize16( WORD hMem, PDWORD pcb )
 {
     if ( pcb ) 
         *pcb = GlobalSize16( (HGLOBAL16)hMem );
 
-    return WOWGlobalLock16( hMem );
+    return K32WOWGlobalLock16( hMem );
 }
 
 /**********************************************************************
- *           WOWGlobalUnlockFree16   (WOW32.14) (KERNEL32.64)
+ *           K32WOWGlobalUnlockFree16   (WOW32.14) (KERNEL32.64)
  */
-WORD WINAPI WOWGlobalUnlockFree16( DWORD vpMem )
+WORD WINAPI K32WOWGlobalUnlockFree16( DWORD vpMem )
 {
-    if ( !WOWGlobalUnlock16( HIWORD(vpMem) ) )
+    if ( !K32WOWGlobalUnlock16( HIWORD(vpMem) ) )
         return FALSE;
 
-    return WOWGlobalFree16( HIWORD(vpMem) );
+    return K32WOWGlobalFree16( HIWORD(vpMem) );
 }
 
 
 /**********************************************************************
- *           WOWYield16              (WOW32.17) (KERNEL32.66)
+ *           K32WOWYield16              (WOW32.17) (KERNEL32.66)
  */
-VOID WINAPI WOWYield16( void )
+VOID WINAPI K32WOWYield16( void )
 {
     /*
      * This does the right thing for both Win16 and Win32 tasks.  
@@ -172,9 +172,9 @@ VOID WINAPI WOWYield16( void )
 }
 
 /**********************************************************************
- *           WOWDirectedYield16       (WOW32.4) (KERNEL32.67)
+ *           K32WOWDirectedYield16       (WOW32.4) (KERNEL32.67)
  */
-VOID WINAPI WOWDirectedYield16( WORD htask16 )
+VOID WINAPI K32WOWDirectedYield16( WORD htask16 )
 {
     /*
      * Argh.  Our scheduler doesn't like DirectedYield by Win32
@@ -186,9 +186,9 @@ VOID WINAPI WOWDirectedYield16( WORD htask16 )
 
 
 /***********************************************************************
- *           WOWHandle32              (WOW32.16) (KERNEL32.57)
+ *           K32WOWHandle32              (WOW32.16) (KERNEL32.57)
  */
-HANDLE WINAPI WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
+HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
 {
     switch ( type )
     {
@@ -216,9 +216,9 @@ HANDLE WINAPI WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
 }
 
 /***********************************************************************
- *           WOWHandle16              (WOW32.15) (KERNEL32.58)
+ *           K32WOWHandle16              (WOW32.15) (KERNEL32.58)
  */
-WORD WINAPI WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
+WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 {
     if ( HIWORD(handle ) )
         ERR( "handle 0x%08x of type %d has non-zero HIWORD\n", handle, type );
@@ -249,24 +249,10 @@ WORD WINAPI WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
 }
 
 /**********************************************************************
- *           WOWCallback16            (WOW32.2) (KERNEL32.54)
+ *           K32WOWCallback16Ex         (WOW32.3) (KERNEL32.55)
  */
-DWORD WINAPI WOWCallback16( DWORD vpfn16, DWORD dwParam )
-{
-    DWORD ret;
-
-    if ( !WOWCallback16Ex( vpfn16, WCB16_PASCAL, 
-                           sizeof(DWORD), &dwParam, &ret ) )
-        ret = 0L;
-
-    return ret;
-}
-
-/**********************************************************************
- *           WOWCallback16Ex         (WOW32.3) (KERNEL32.55)
- */
-BOOL WINAPI WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
-                             DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
+BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
+                                DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
 {
     DWORD ret;
 
@@ -293,6 +279,19 @@ BOOL WINAPI WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
     return TRUE;  /* success */
 }
 
+/**********************************************************************
+ *           K32WOWCallback16            (WOW32.2) (KERNEL32.54)
+ */
+DWORD WINAPI K32WOWCallback16( DWORD vpfn16, DWORD dwParam )
+{
+    DWORD ret;
+
+    if ( !K32WOWCallback16Ex( vpfn16, WCB16_PASCAL, 
+                           sizeof(DWORD), &dwParam, &ret ) )
+        ret = 0L;
+
+    return ret;
+}
 
 
 /*
@@ -304,7 +303,7 @@ BOOL WINAPI WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
  */
 DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 {
-    return (DWORD)WOWGetVDMPointer( vp, 0, (DWORD)fMode );
+    return (DWORD)K32WOWGetVDMPointer( vp, 0, (DWORD)fMode );
 }
 
 /***********************************************************************

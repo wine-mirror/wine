@@ -15,8 +15,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/winestring.h"
-#include "file.h"
-#include "heap.h"
+#include "wine/unicode.h"
 #include "lzexpand.h"
 #include "debugtools.h"
 
@@ -152,7 +151,7 @@ INT WINAPI LZStart(void)
  */
 HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
 {
-    HFILE ret = LZInit( FILE_GetHandle(hfSrc) );
+    HFILE ret = LZInit( DosFileHandleToWin32Handle(hfSrc) );
     if (IS_LZ_HANDLE(ret)) return ret;
     if ((INT)ret <= 0) return ret;
     return hfSrc;
@@ -313,16 +312,16 @@ INT WINAPI GetExpandedNameA( LPCSTR in, LPSTR out )
  */
 INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 {
-	char	*xin,*xout;
-	INT	ret;
-
-	xout	= HeapAlloc( GetProcessHeap(), 0, lstrlenW(in)+3 );
-	xin	= HEAP_strdupWtoA( GetProcessHeap(), 0, in );
-	ret	= GetExpandedName16(xin,xout);
-	if (ret>0) lstrcpyAtoW(out,xout);
-	HeapFree( GetProcessHeap(), 0, xin );
-	HeapFree( GetProcessHeap(), 0, xout );
-	return	ret;
+    INT ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, in, -1, NULL, 0, NULL, NULL );
+    char *xin = HeapAlloc( GetProcessHeap(), 0, len );
+    char *xout = HeapAlloc( GetProcessHeap(), 0, len+3 );
+    WideCharToMultiByte( CP_ACP, 0, in, -1, xin, len, NULL, NULL );
+    if ((ret = GetExpandedNameA( xin, xout )) > 0)
+        MultiByteToWideChar( CP_ACP, 0, xout, -1, out, strlenW(in)+4 );
+    HeapFree( GetProcessHeap(), 0, xin );
+    HeapFree( GetProcessHeap(), 0, xout );
+    return ret;
 }
 
 
@@ -332,7 +331,7 @@ INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
 {
     if (IS_LZ_HANDLE(fd)) return LZRead( fd, buf, toread );
-    return _lread( FILE_GetHandle(fd), buf, toread );
+    return _lread( DosFileHandleToWin32Handle(fd), buf, toread );
 }
 
 
@@ -433,7 +432,7 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
 {
     if (IS_LZ_HANDLE(fd)) return LZSeek( fd, off, type );
-    return _llseek( FILE_GetHandle(fd), off, type );
+    return _llseek( DosFileHandleToWin32Handle(fd), off, type );
 }
 
 
@@ -476,19 +475,19 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
 {
     /* already a LZ handle? */
-    if (IS_LZ_HANDLE(src)) return LZCopy( src, FILE_GetHandle(dest) );
+    if (IS_LZ_HANDLE(src)) return LZCopy( src, DosFileHandleToWin32Handle(dest) );
 
     /* no, try to open one */
     src = LZInit16(src);
     if ((INT16)src <= 0) return 0;
     if (IS_LZ_HANDLE(src))
     {
-        LONG ret = LZCopy( src, FILE_GetHandle(dest) );
+        LONG ret = LZCopy( src, DosFileHandleToWin32Handle(dest) );
         LZClose( src );
         return ret;
     }
     /* it was not a compressed file */
-    return LZCopy( FILE_GetHandle(src), FILE_GetHandle(dest) );
+    return LZCopy( DosFileHandleToWin32Handle(src), DosFileHandleToWin32Handle(dest) );
 }
 
 
@@ -576,7 +575,7 @@ HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
     if ((INT)hfret <= 0) return hfret;
     if (IS_LZ_HANDLE(hfret)) return hfret;
     /* but allocate a dos handle for 'normal' files */
-    return FILE_AllocDosHandle(hfret);
+    return Win32HandleToDosFileHandle(hfret);
 }
 
 
@@ -613,20 +612,13 @@ HFILE WINAPI LZOpenFileA( LPCSTR fn, LPOFSTRUCT ofs, UINT mode )
  */
 HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 {
-	LPSTR	xfn;
-	LPWSTR	yfn;
-	HFILE	ret;
-
-	xfn	= HEAP_strdupWtoA( GetProcessHeap(), 0, fn);
-	ret	= LZOpenFile16(xfn,ofs,mode);
-	HeapFree( GetProcessHeap(), 0, xfn );
-	if (ret!=HFILE_ERROR) {
-		/* ofs->szPathName is an array with the OFSTRUCT */
-                yfn = HEAP_strdupAtoW( GetProcessHeap(), 0, ofs->szPathName );
-		memcpy(ofs->szPathName,yfn,lstrlenW(yfn)*2+2);
-                HeapFree( GetProcessHeap(), 0, yfn );
-	}
-	return	ret;
+    HFILE ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, fn, -1, NULL, 0, NULL, NULL );
+    LPSTR xfn = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, fn, -1, xfn, len, NULL, NULL );
+    ret = LZOpenFileA(xfn,ofs,mode);
+    HeapFree( GetProcessHeap(), 0, xfn );
+    return ret;
 }
 
 
@@ -636,7 +628,7 @@ HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 void WINAPI LZClose16( HFILE16 fd )
 {
     if (IS_LZ_HANDLE(fd)) LZClose( fd );
-    else _lclose16( fd );
+    else DisposeLZ32Handle( DosFileHandleToWin32Handle(fd) );
 }
 
 

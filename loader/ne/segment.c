@@ -121,7 +121,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 		pModule->self,hf,segnum );
         DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
                          0, FALSE, DUPLICATE_SAME_ACCESS );
-        hFile16 = FILE_AllocDosHandle( hFile32 );
+        hFile16 = Win32HandleToDosFileHandle( hFile32 );
  	pSeg->hSeg = NE_CallTo16_word_www( selfloadheader->LoadAppSeg,
                                            pModule->self, hFile16, segnum );
 	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
@@ -417,7 +417,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 
         DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
                          GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );
-        hFile16 = FILE_AllocDosHandle( hf );
+        hFile16 = Win32HandleToDosFileHandle( hf );
         TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);
         NE_CallTo16_word_ww(selfloadheader->BootApp, pModule->self,hFile16);

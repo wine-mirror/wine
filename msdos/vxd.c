@@ -600,9 +600,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         if (!(PROCESS_Current()->flags & PDB32_WIN32S_PROC))
         {
             HMODULE16 hModule = GetModuleHandle16("win32s16");
-            SEGPTR func1 = (SEGPTR)WIN32_GetProcAddress16(hModule, "SetFS");
-            SEGPTR func2 = (SEGPTR)WIN32_GetProcAddress16(hModule, 
-                                                  "StackLinearToSegmented");
+            SEGPTR func1 = (SEGPTR)GetProcAddress16(hModule, "SetFS");
+            SEGPTR func2 = (SEGPTR)GetProcAddress16(hModule, "StackLinearToSegmented");
 
             if (   hModule && func1 && func2 
                 && SELECTOROF(func1) == SELECTOROF(func2))
@@ -1073,7 +1072,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
         LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3], W32S_OFFSET);
         DWORD  protect  = stack[4];
         DWORD  flags2   = stack[5];
-        HFILE hFile   = FILE_GetHandle(stack[6]);
+        HANDLE hFile    = DosFileHandleToWin32Handle(stack[6]);
         DWORD  psp      = stack[7];
 
         HANDLE result = INVALID_HANDLE_VALUE;

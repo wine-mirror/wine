@@ -1880,12 +1880,15 @@ typedef struct tagSYSLEVEL
     INT              level;
 } SYSLEVEL;
 
+void        WINAPI DisposeLZ32Handle(HANDLE);
+HANDLE      WINAPI DosFileHandleToWin32Handle(HFILE);
 VOID        WINAPI GetpWin16Lock(SYSLEVEL**);
 DWORD       WINAPI MapLS(LPVOID);
 LPVOID      WINAPI MapSL(DWORD);
 VOID        WINAPI ReleaseThunkLock(DWORD*);
 VOID        WINAPI RestoreThunkLock(DWORD);
 VOID        WINAPI UnMapLS(DWORD);
+HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
 DWORD       WINAPI _ConfirmWin16Lock(void);
 DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
 VOID        WINAPI _EnterSysLevel(SYSLEVEL*);

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lz32
 ALTNAMES  = lzexpand
-IMPORTS   = ntdll
+EXTRALIBS = -lwine_unicode
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

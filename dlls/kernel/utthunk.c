@@ -229,7 +229,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     /* Load 16-bit DLL and get UTProc16 entry point */
 
     if (   (hModule16 = LoadLibrary16( lpsz16BITDLL )) <= 32
-        || (target16  = WIN32_GetProcAddress16( hModule16, lpszProcName )) == 0 )
+        || (target16  = GetProcAddress16( hModule16, lpszProcName )) == 0 )
         return FALSE;
 
     /* Allocate UTINFO struct */
@@ -250,7 +250,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     /* Call UTInit16 if present */
 
     if (     lpszInitName
-         && (init16 = WIN32_GetProcAddress16( hModule16, lpszInitName )) != 0 )
+         && (init16 = GetProcAddress16( hModule16, lpszInitName )) != 0 )
     {
         SEGPTR callback = SEGPTR_GET( &ut->ut16 );
         SEGPTR segBuff  = MapLS( lpBuff );
