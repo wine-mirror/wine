@@ -358,6 +358,7 @@ int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
 	ach[l] = '\0';  /* protect from displaying junk */
         l = strlen(ach);
         DEBUG_OutputA(chnl, ach, l);
+        if (l < sizeof(ach) - 1) break;
         lin += l;
     }
     return len - i; /* number of actually written chars */
