@@ -188,6 +188,19 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                         if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) \
                         {wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
 
+        /* Our resampling algorithm is quite primitive so first try
+         * to just change the bit depth and number of channels
+         */
+        for (i = ndlo; i < ndhi; i++) {
+            wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
+            wfx.nChannels = lpDesc->lpFormat->nChannels;
+            TRY(wfx.nSamplesPerSec, 16);
+            TRY(wfx.nSamplesPerSec, 8);
+            wfx.nChannels ^= 3;
+            TRY(wfx.nSamplesPerSec, 16);
+            TRY(wfx.nSamplesPerSec, 8);
+        }
+
         for (i = ndlo; i < ndhi; i++) {
             /* first try with same stereo/mono option as source */
             wfx.nChannels = lpDesc->lpFormat->nChannels;
