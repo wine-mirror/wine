@@ -1068,6 +1068,8 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name,
     wc->hCursor       = classPtr->hCursor;
     wc->hbrBackground = classPtr->hbrBackground;
     wc->lpszClassName = (SEGPTR)CLASS_GetClassNameA( classPtr );;
+    if (HIWORD(wc->lpszClassName))  /* Make it a SEGPTR */
+        wc->lpszClassName = SEGPTR_GET( (LPSTR)wc->lpszClassName );
     wc->lpszMenuName  = (SEGPTR)CLASS_GetMenuNameA( classPtr );
     if (HIWORD(wc->lpszMenuName))  /* Make it a SEGPTR */
         wc->lpszMenuName = SEGPTR_GET( (LPSTR)wc->lpszMenuName );
