@@ -185,7 +185,7 @@ static const WORD main_key_vkey_dvorak[MAIN_LEN] =
    and Shift-AltGr if it can vary among different X servers */
 /* Remember that your 102nd key (to the right of l-shift) should be on a
    separate line, see existing tables */
-/* If Wine fails to match your new table, use -debugmsg +key to find out why */
+/* If Wine fails to match your new table, use WINEDEBUG=+key to find out why */
 /* Remember to also add your new table to the layout index table far below! */
 
 /*** German Logitech Desktop Pro keyboard layout */

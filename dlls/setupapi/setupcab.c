@@ -19,7 +19,7 @@
  *
  *
  * Many useful traces are commented in code, uncomment them if you have
- * trouble and run with --debugmsg +setupapi
+ * trouble and run with WINEDEBUG=+setupapi
  * 
  */
 
