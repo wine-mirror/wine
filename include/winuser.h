@@ -658,6 +658,8 @@ typedef struct
 #define WM_SIZING	    0x0214
 #define WM_CAPTURECHANGED   0x0215
 #define WM_MOVING	    0x0216
+#define WM_POWERBROADCAST   0x0218
+#define WM_DEVICECHANGE     0x0219
 
 /* wParam for WM_SIZING message */
 #define WMSZ_LEFT           1
@@ -1048,6 +1050,11 @@ typedef struct
 #define SC_TASKLIST     0xf130
 #define SC_SCREENSAVE   0xf140
 #define SC_HOTKEY       0xf150
+  /* Win32 4.0 */
+#define SC_DEFAULT      0xf160
+#define SC_MONITORPOWER 0xf170
+#define SC_CONTEXTHELP  0xf180
+#define SC_SEPARATOR    0xf00f
 
 /* obsolete names(SC_ICON and SC_ZOOM) */
 #define SC_ICON   SC_MINIMIZE
