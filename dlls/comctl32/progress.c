@@ -47,32 +47,45 @@ typedef struct
    "(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam);
 
 /***********************************************************************
- * PROGRESS_EraseBackground
+ * PROGRESS_Invalidate
+ *
+ * Invalide the range between old and new pos.
  */
-static void PROGRESS_EraseBackground(PROGRESS_INFO *infoPtr, WPARAM wParam)
+static void PROGRESS_Invalidate( PROGRESS_INFO *infoPtr, INT old, INT new )
 {
+    LONG style = GetWindowLongW (infoPtr->Self, GWL_STYLE);
     RECT rect;
-    HBRUSH hbrBk;
-    HDC hdc = wParam ? (HDC)wParam : GetDC(infoPtr->Self);
+    int oldPos, newPos, ledWidth;
 
-    /* get the required background brush */
-    if(infoPtr->ColorBk == CLR_DEFAULT)
-	hbrBk = GetSysColorBrush(COLOR_3DFACE);
+    GetClientRect (infoPtr->Self, &rect);
+    InflateRect(&rect, -1, -1);
+
+    if (style & PBS_VERTICAL)
+    {
+        oldPos = rect.bottom - MulDiv (old - infoPtr->MinVal, rect.bottom - rect.top,
+                                       infoPtr->MaxVal - infoPtr->MinVal);
+        newPos = rect.bottom - MulDiv (new - infoPtr->MinVal, rect.bottom - rect.top,
+                                       infoPtr->MaxVal - infoPtr->MinVal);
+        ledWidth = MulDiv (rect.right - rect.left, 2, 3);
+        rect.top = min( oldPos, newPos );
+        rect.bottom = max( oldPos, newPos );
+        if (!(style & PBS_SMOOTH)) rect.top -= ledWidth;
+        InvalidateRect( infoPtr->Self, &rect, oldPos < newPos );
+    }
     else
-	hbrBk = CreateSolidBrush(infoPtr->ColorBk);
-
-    /* get client rectangle */
-    GetClientRect(infoPtr->Self, &rect);
-
-    /* draw the background */
-    FillRect(hdc, &rect, hbrBk);
-
-    /* delete background brush */
-    if(infoPtr->ColorBk != CLR_DEFAULT)
-	DeleteObject (hbrBk);
-
-    if(!wParam) ReleaseDC(infoPtr->Self, hdc);
+    {
+        oldPos = rect.left + MulDiv (old - infoPtr->MinVal, rect.right - rect.left,
+                                     infoPtr->MaxVal - infoPtr->MinVal);
+        newPos = rect.left + MulDiv (new - infoPtr->MinVal, rect.right - rect.left,
+                                     infoPtr->MaxVal - infoPtr->MinVal);
+        ledWidth = MulDiv (rect.bottom - rect.top, 2, 3);
+        rect.left = min( oldPos, newPos );
+        rect.right = max( oldPos, newPos );
+        if (!(style & PBS_SMOOTH)) rect.right += ledWidth;
+        InvalidateRect( infoPtr->Self, &rect, oldPos > newPos );
+    }
 }
+
 
 /***********************************************************************
  * PROGRESS_Draw
@@ -80,7 +93,7 @@ static void PROGRESS_EraseBackground(PROGRESS_INFO *infoPtr, WPARAM wParam)
  */
 static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 {
-    HBRUSH hbrBar;
+    HBRUSH hbrBar, hbrBk;
     int rightBar, rightMost, ledWidth;
     RECT rect;
     DWORD dwStyle;
@@ -93,9 +106,14 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     else
         hbrBar = CreateSolidBrush (infoPtr->ColorBar);
 
+    if (infoPtr->ColorBk == CLR_DEFAULT)
+        hbrBk = GetSysColorBrush(COLOR_3DFACE);
+    else
+        hbrBk = CreateSolidBrush(infoPtr->ColorBk);
+
     /* get client rectangle */
     GetClientRect (infoPtr->Self, &rect);
-
+    FrameRect( hdc, &rect, hbrBk );
     InflateRect(&rect, -1, -1);
 
     /* get the window style */
@@ -119,12 +137,26 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     }
 
     /* now draw the bar */
-    if (dwStyle & PBS_SMOOTH) {
+    if (dwStyle & PBS_SMOOTH)
+    {
         if (dwStyle & PBS_VERTICAL)
-	    rect.top = rightBar;
+        {
+            INT old_top = rect.top;
+            rect.top = rightBar;
+            FillRect(hdc, &rect, hbrBar);
+            rect.bottom = rect.top;
+            rect.top = old_top;
+            FillRect(hdc, &rect, hbrBk);
+        }
         else
-	    rect.right = rightBar;
-        FillRect(hdc, &rect, hbrBar);
+        {
+            INT old_right = rect.right;
+            rect.right = rightBar;
+            FillRect(hdc, &rect, hbrBar);
+            rect.left = rect.right;
+            rect.right = old_right;
+            FillRect(hdc, &rect, hbrBk);
+        }
     } else {
         if (dwStyle & PBS_VERTICAL) {
             while(rect.bottom > rightBar) {
@@ -132,22 +164,34 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
                 if (rect.top < rightMost)
                     rect.top = rightMost;
                 FillRect(hdc, &rect, hbrBar);
-                rect.bottom = rect.top - LED_GAP;
+                rect.bottom = rect.top;
+                rect.top -= LED_GAP;
+                if (rect.top <= rightBar) break;
+                FillRect(hdc, &rect, hbrBk);
+                rect.bottom = rect.top;
             }
+            rect.top = rightMost;
+            FillRect(hdc, &rect, hbrBk);
         } else {
             while(rect.left < rightBar) {
                 rect.right = rect.left + ledWidth;
                 if (rect.right > rightMost)
                     rect.right = rightMost;
                 FillRect(hdc, &rect, hbrBar);
-                rect.left  = rect.right + LED_GAP;
+                rect.left = rect.right;
+                rect.right += LED_GAP;
+                if (rect.right >= rightBar) break;
+                FillRect(hdc, &rect, hbrBk);
+                rect.left = rect.right;
             }
+            rect.right = rightMost;
+            FillRect(hdc, &rect, hbrBk);
         }
     }
 
     /* delete bar brush */
-    if (infoPtr->ColorBar != CLR_DEFAULT)
-        DeleteObject (hbrBar);
+    if (infoPtr->ColorBar != CLR_DEFAULT) DeleteObject (hbrBar);
+    if (infoPtr->ColorBk != CLR_DEFAULT) DeleteObject (hbrBk);
 
     return 0;
 }
@@ -257,10 +301,6 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         SetWindowLongW(hwnd, 0, 0);
         return 0;
 
-    case WM_ERASEBKGND:
-	PROGRESS_EraseBackground(infoPtr, wParam);
-        return TRUE;
-
     case WM_GETFONT:
         return (LRESULT)infoPtr->Font;
 
@@ -276,12 +316,10 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         if(lParam) UNKNOWN_PARAM(PBM_DELTAPOS, wParam, lParam);
         oldVal = infoPtr->CurVal;
         if(wParam != 0) {
-	    BOOL bErase;
 	    infoPtr->CurVal += (INT)wParam;
 	    PROGRESS_CoercePos (infoPtr);
 	    TRACE("PBM_DELTAPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
-	    bErase = (oldVal > infoPtr->CurVal);
-	    InvalidateRect(hwnd, NULL, bErase);
+            PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
         }
         return oldVal;
     }
@@ -292,12 +330,10 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         if (lParam) UNKNOWN_PARAM(PBM_SETPOS, wParam, lParam);
         oldVal = infoPtr->CurVal;
         if(oldVal != wParam) {
-	    BOOL bErase;
 	    infoPtr->CurVal = (INT)wParam;
 	    PROGRESS_CoercePos(infoPtr);
 	    TRACE("PBM_SETPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
-	    bErase = (oldVal > infoPtr->CurVal);
-	    InvalidateRect(hwnd, NULL, bErase);
+            PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
         }
         return oldVal;
     }
@@ -325,10 +361,8 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 	    infoPtr->CurVal = infoPtr->MinVal;
         if(oldVal != infoPtr->CurVal)
 	{
-	    BOOL bErase;
 	    TRACE("PBM_STEPIT: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
-	    bErase = (oldVal > infoPtr->CurVal);
-	    InvalidateRect(hwnd, NULL, bErase);
+            PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
 	}
         return oldVal;
     }
