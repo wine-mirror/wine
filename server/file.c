@@ -573,37 +573,6 @@ int grow_file( struct file *file, int size_high, int size_low )
     return ret;
 }
 
-static int set_file_time( obj_handle_t handle, time_t access_time, time_t write_time )
-{
-    struct file *file;
-    struct utimbuf utimbuf;
-
-    if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
-        return 0;
-    if (!file->name)
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        release_object( file );
-        return 0;
-    }
-    if (!access_time || !write_time)
-    {
-        struct stat st;
-        if (stat( file->name, &st ) == -1) goto error;
-        if (!access_time) access_time = st.st_atime;
-        if (!write_time) write_time = st.st_mtime;
-    }
-    utimbuf.actime  = access_time;
-    utimbuf.modtime = write_time;
-    if (utime( file->name, &utimbuf ) == -1) goto error;
-    release_object( file );
-    return 1;
- error:
-    file_set_error();
-    release_object( file );
-    return 0;
-}
-
 /* create a file */
 DECL_HANDLER(create_file)
 {
@@ -657,12 +626,6 @@ DECL_HANDLER(truncate_file)
         truncate_file( file );
         release_object( file );
     }
-}
-
-/* set a file access and modification times */
-DECL_HANDLER(set_file_time)
-{
-    set_file_time( req->handle, req->access_time, req->write_time );
 }
 
 /* lock a region of a file */

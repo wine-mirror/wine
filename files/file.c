@@ -83,6 +83,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
+#define SECSPERDAY         86400
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+
 mode_t FILE_umask;
 
 /***********************************************************************
@@ -1787,26 +1790,57 @@ BOOL WINAPI CopyFileExA(LPCSTR sourceFilename, LPCSTR destFilename,
  *              SetFileTime   (KERNEL32.@)
  */
 BOOL WINAPI SetFileTime( HANDLE hFile,
-                           const FILETIME *lpCreationTime,
-                           const FILETIME *lpLastAccessTime,
-                           const FILETIME *lpLastWriteTime )
+                         const FILETIME *ctime,
+                         const FILETIME *atime,
+                         const FILETIME *mtime )
 {
-    BOOL ret;
-    SERVER_START_REQ( set_file_time )
+#ifdef HAVE_FUTIMES
+    BOOL ret = FALSE;
+    NTSTATUS status;
+    int fd;
+    ULONGLONG sec, nsec;
+
+    if (!(status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &fd, NULL, NULL )))
     {
-        req->handle = hFile;
-        if (lpLastAccessTime)
-            RtlTimeToSecondsSince1970( (PLARGE_INTEGER) lpLastAccessTime, (DWORD *)&req->access_time );
-        else
-            req->access_time = 0; /* FIXME */
-        if (lpLastWriteTime)
-            RtlTimeToSecondsSince1970( (PLARGE_INTEGER) lpLastWriteTime, (DWORD *)&req->write_time );
-        else
-            req->write_time = 0; /* FIXME */
-        ret = !wine_server_call_err( req );
+        struct timeval tv[2];
+
+        if (!atime || !mtime)
+        {
+            struct stat st;
+
+            tv[0].tv_sec = tv[0].tv_usec = 0;
+            tv[1].tv_sec = tv[1].tv_usec = 0;
+            if (!fstat( fd, &st ))
+            {
+                tv[0].tv_sec = st.st_atime;
+                tv[1].tv_sec = st.st_mtime;
+            }
+        }
+        if (atime)
+        {
+            sec = ((ULONGLONG)atime->dwHighDateTime << 32) | atime->dwLowDateTime;
+            sec = RtlLargeIntegerDivide( sec, 10000000, &nsec );
+            tv[0].tv_sec = sec - SECS_1601_TO_1970;
+            tv[0].tv_usec = (UINT)nsec / 10;
+        }
+        if (mtime)
+        {
+            sec = ((ULONGLONG)mtime->dwHighDateTime << 32) | mtime->dwLowDateTime;
+            sec = RtlLargeIntegerDivide( sec, 10000000, &nsec );
+            tv[0].tv_sec = sec - SECS_1601_TO_1970;
+            tv[0].tv_usec = (UINT)nsec / 10;
+        }
+
+        if (!futimes( fd, tv )) ret = TRUE;
+        else FILE_SetDosError();
+        wine_server_release_fd( hFile, fd );
     }
-    SERVER_END_REQ;
+    else SetLastError( RtlNtStatusToDosError(status) );
     return ret;
+#else
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+#endif  /* HAVE_FUTIMES */
 }
 
 

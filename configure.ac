@@ -1027,6 +1027,7 @@ AC_CHECK_FUNCS(\
 	fpclass \
 	ftruncate \
 	ftruncate64 \
+	futimes \
 	getnetbyaddr \
 	getnetbyname \
 	getopt_long \

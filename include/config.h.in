@@ -134,6 +134,9 @@
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
 
+/* Define to 1 if you have the `futimes' function. */
+#undef HAVE_FUTIMES
+
 /* Define to 1 if you have the `getbkgd' function. */
 #undef HAVE_GETBKGD
 

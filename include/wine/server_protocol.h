@@ -834,20 +834,6 @@ struct truncate_file_reply
 
 
 
-struct set_file_time_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    time_t       access_time;
-    time_t       write_time;
-};
-struct set_file_time_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct flush_file_request
 {
     struct request_header __header;
@@ -3197,7 +3183,6 @@ enum request
     REQ_get_handle_fd,
     REQ_set_file_pointer,
     REQ_truncate_file,
-    REQ_set_file_time,
     REQ_flush_file,
     REQ_get_file_info,
     REQ_lock_file,
@@ -3384,7 +3369,6 @@ union generic_request
     struct get_handle_fd_request get_handle_fd_request;
     struct set_file_pointer_request set_file_pointer_request;
     struct truncate_file_request truncate_file_request;
-    struct set_file_time_request set_file_time_request;
     struct flush_file_request flush_file_request;
     struct get_file_info_request get_file_info_request;
     struct lock_file_request lock_file_request;
@@ -3569,7 +3553,6 @@ union generic_reply
     struct get_handle_fd_reply get_handle_fd_reply;
     struct set_file_pointer_reply set_file_pointer_reply;
     struct truncate_file_reply truncate_file_reply;
-    struct set_file_time_reply set_file_time_reply;
     struct flush_file_reply flush_file_reply;
     struct get_file_info_reply get_file_info_reply;
     struct lock_file_reply lock_file_reply;
@@ -3710,6 +3693,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 135
+#define SERVER_PROTOCOL_VERSION 136
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

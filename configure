@@ -15972,6 +15972,7 @@ fi
 
 
 
+
 for ac_func in \
 	_lwp_create \
 	_lwp_self \
@@ -15988,6 +15989,7 @@ for ac_func in \
 	fpclass \
 	ftruncate \
 	ftruncate64 \
+	futimes \
 	getnetbyaddr \
 	getnetbyname \
 	getopt_long \

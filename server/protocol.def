@@ -633,14 +633,6 @@ enum fd_type
 @END
 
 
-/* Set a file access and modification times */
-@REQ(set_file_time)
-    obj_handle_t handle;        /* handle to the file */
-    time_t       access_time;   /* last access time */
-    time_t       write_time;    /* last write time */
-@END
-
-
 /* Flush a file buffers */
 @REQ(flush_file)
     obj_handle_t handle;        /* handle to the file */
