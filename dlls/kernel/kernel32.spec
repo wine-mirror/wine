@@ -660,7 +660,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall SearchPathA(str str str long ptr ptr) SearchPathA
 @ stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPathW
 @ stdcall SetCommBreak(long) SetCommBreak
-@ stdcall SetCommConfig(long ptr) SetCommConfig
+@ stdcall SetCommConfig(long ptr long) SetCommConfig
 @ stdcall SetCommMask(long ptr) SetCommMask
 @ stdcall SetCommState(long ptr) SetCommState
 @ stdcall SetCommTimeouts(long ptr) SetCommTimeouts

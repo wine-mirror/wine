@@ -1824,8 +1824,9 @@ BOOL WINAPI GetCommConfig(
  *  True on success, false if the handle was bad is not a communications device.
  */
 BOOL WINAPI SetCommConfig(
-    HANDLE       hFile,        /* [in] The communications device. */
-    LPCOMMCONFIG lpCommConfig) /* [in] The desired configuration. */
+    HANDLE       hFile,		/* [in] The communications device. */
+    LPCOMMCONFIG lpCommConfig,	/* [in] The desired configuration. */
+    DWORD dwSize) 		/* [in] size of the lpCommConfig struct */
 {
     TRACE("(%x %p)\n",hFile,lpCommConfig);
     return SetCommState(hFile,&lpCommConfig->dcb);
