@@ -671,8 +671,7 @@ static void exec_wine_binary( char **argv, char **envp )
  *
  * Fork and exec a new Unix process, checking for errors.
  */
-static int fork_and_exec( const char *filename, const char *cmdline,
-                          const char *env, int use_wine )
+static int fork_and_exec( const char *filename, const char *cmdline, const char *env )
 {
     int fd[2];
     int pid, err;
@@ -685,12 +684,12 @@ static int fork_and_exec( const char *filename, const char *cmdline,
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
     if (!(pid = fork()))  /* child */
     {
-        char **argv = build_argv( (char *)cmdline, use_wine ? 2 : 0 );
+        char **argv = build_argv( (char *)cmdline, filename ? 0 : 2 );
         char **envp = build_envp( env );
         close( fd[0] );
         if (argv && envp)
         {
-            if (use_wine)
+            if (!filename)
             {
                 argv[1] = "--";
                 exec_wine_binary( argv, envp );
@@ -726,7 +725,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
                      LPPROCESS_INFORMATION info )
 {
     int pid;
-    const char *unixfilename = filename;
+    const char *unixfilename = NULL;
     DOS_FULL_NAME full_name;
     HANDLE load_done_evt = -1;
     struct new_process_request *req = get_req_buffer();
@@ -734,8 +733,6 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
 
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
     
-    if (DOSFS_GetFullName( filename, TRUE, &full_name )) unixfilename = full_name.long_name;
-
     /* create the process on the server side */
 
     req->inherit_all  = inherit;
@@ -756,13 +753,23 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
     }
     req->cmd_show = startup->wShowWindow;
     req->alloc_fd = 0;
-    lstrcpynA( req->filename, unixfilename, server_remaining(req->filename) );
+
+    if (hFile == -1)  /* unix process */
+    {
+        unixfilename = filename;
+        if (DOSFS_GetFullName( filename, TRUE, &full_name )) unixfilename = full_name.long_name;
+        req->filename[0] = 0;
+    }
+    else  /* new wine process */
+    {
+        if (!GetFullPathNameA( filename, server_remaining(req->filename), req->filename, NULL ))
+            lstrcpynA( req->filename, filename, server_remaining(req->filename) );
+    }
     if (server_call( REQ_NEW_PROCESS )) return FALSE;
 
     /* fork and execute */
 
-    pid = fork_and_exec( unixfilename, cmd_line,
-                         env ? env : GetEnvironmentStringsA(), (hFile != -1) );
+    pid = fork_and_exec( unixfilename, cmd_line, env ? env : GetEnvironmentStringsA() );
 
     wait_req->cancel   = (pid == -1);
     wait_req->pinherit = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
