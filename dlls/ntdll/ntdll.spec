@@ -295,10 +295,11 @@
 @ stdcall RtlClearBits(ptr long long) RtlClearBits
 @ stdcall RtlCompactHeap(long long) RtlCompactHeap
 @ stdcall RtlCompareMemory(ptr ptr long) RtlCompareMemory
-@ stub RtlCompareMemoryUlong
+@ stdcall RtlCompareMemoryUlong(ptr ptr long) RtlCompareMemoryUlong
 @ stdcall RtlCompareString(ptr ptr long) RtlCompareString
 @ stdcall RtlCompareUnicodeString (ptr ptr long) RtlCompareUnicodeString
 @ stub RtlCompressBuffer
+@ stdcall RtlComputeCrc32(long ptr long) RtlComputeCrc32
 @ stub RtlConsoleMultiByteToUnicodeN
 @ stub RtlConvertExclusiveToShared
 @ stdcall -ret64 RtlConvertLongToLargeInteger(long) RtlConvertLongToLargeInteger
@@ -428,7 +429,7 @@
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr) RtlInitializeCriticalSection
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long) RtlInitializeCriticalSectionAndSpinCount
-@ stdcall RtlInitializeGenericTable() RtlInitializeGenericTable
+@ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr) RtlInitializeGenericTable
 @ stub RtlInitializeRXact
 @ stdcall RtlInitializeResource(ptr) RtlInitializeResource
 @ stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
