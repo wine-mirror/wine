@@ -2537,8 +2537,8 @@ TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if ((lStyle & TCS_FIXEDWIDTH) || (lStyle & TCS_OWNERDRAWFIXED))
   {
     lResult = MAKELONG(infoPtr->tabWidth, infoPtr->tabHeight);
-    infoPtr->tabWidth = (INT)LOWORD(lParam);
-    /* If requested Height is 0 this means that program wants to use default. */
+    /* UNDOCUMENTED: If requested Width or Height is 0 this means that program wants to use default. */    
+    if (LOWORD(lParam)) infoPtr->tabWidth = (INT)LOWORD(lParam);
     if (HIWORD(lParam)) infoPtr->tabHeight = (INT)HIWORD(lParam);
     TRACE("was h=%d,w=%d, now h=%d,w=%d\n",
 	  HIWORD(lResult), LOWORD(lResult),
