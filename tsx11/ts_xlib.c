@@ -226,6 +226,15 @@ char * TSXResourceManagerString(Display* a0)
   return r;
 }
 
+VisualID  TSXVisualIDFromVisual(Visual* a0)
+{
+  VisualID  r;
+  wine_tsx11_lock();
+  r = XVisualIDFromVisual(a0);
+  wine_tsx11_unlock();
+  return r;
+}
+
 int   TSXInitThreads(void)
 {
   int   r;

@@ -175,6 +175,7 @@ XUnionRectWithRegion
 XUnionRegion
 XUniqueContext
 XUnmapWindow
+XVisualIDFromVisual
 XWarpPointer
 XXorRegion
 XrmGetFileDatabase

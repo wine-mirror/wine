@@ -42,6 +42,7 @@ extern KeySym  TSXKeycodeToKeysym(Display*, unsigned int, int);
 extern KeySym  TSXLookupKeysym(XKeyEvent*, int);
 extern KeySym * TSXGetKeyboardMapping(Display*, unsigned int, int, int*);
 extern char * TSXResourceManagerString(Display*);
+extern VisualID  TSXVisualIDFromVisual(Visual*);
 extern int   TSXInitThreads(void);
 extern XPixmapFormatValues * TSXListPixmapFormats(Display*, int*);
 extern int * TSXListDepths(Display*, int, int*);
