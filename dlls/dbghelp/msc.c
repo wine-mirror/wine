@@ -1993,7 +1993,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
         ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
     {
-        ERR("-Unable to peruse .PDB file %s\n", pdb_lookup->filename);
+        WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);
         goto leave;
     }
     pdb_init(pdb_lookup, image);
