@@ -1083,6 +1083,7 @@ AC_CHECK_FUNCS(\
 	getservbyport \
 	gettid \
 	gettimeofday \
+	getuid \
 	inet_network \
 	lseek64 \
 	lstat \

@@ -105,10 +105,15 @@ inline static void remove_trailing_slashes( char *path )
 static void init_server_dir( dev_t dev, ino_t ino )
 {
     char *p;
+#ifdef HAVE_GETUID
+    const unsigned int uid = getuid();
+#else
+    const unsigned int uid = 0;
+#endif
 
     server_dir = xmalloc( sizeof(server_root_prefix) + 32 + sizeof(server_dir_prefix) +
                           2*sizeof(dev) + 2*sizeof(ino) );
-    sprintf( server_dir, "%s%u%s", server_root_prefix, getuid(), server_dir_prefix );
+    sprintf( server_dir, "%s%u%s", server_root_prefix, uid, server_dir_prefix );
     p = server_dir + strlen(server_dir);
 
     if (sizeof(dev) > sizeof(unsigned long) && dev > ~0UL)
