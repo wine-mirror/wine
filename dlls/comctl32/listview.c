@@ -3617,10 +3617,11 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
  */
 static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
 {
-    INT rgntype, nFirstCol, nLastCol, nCol;
+    INT rgntype;
     RECT rcClip, rcItem;
     POINT Origin, Position;
-    ITERATOR i;
+    RANGE colRange;
+    ITERATOR i, j;
 
     TRACE("()\n");
 
@@ -3632,28 +3633,26 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     LISTVIEW_GetOrigin(infoPtr, &Origin);
     
     /* narrow down the columns we need to paint */
-    for(nFirstCol = 0; nFirstCol < infoPtr->hdpaColumns->nItemCount; nFirstCol++)
+    for(colRange.lower = 0; colRange.lower < infoPtr->hdpaColumns->nItemCount; colRange.lower++)
     {
-	LISTVIEW_GetHeaderRect(infoPtr, nFirstCol, &rcItem);
+	LISTVIEW_GetHeaderRect(infoPtr, colRange.lower, &rcItem);
 	if (rcItem.right + Origin.x >= rcClip.left) break;
     }
-    for(nLastCol = infoPtr->hdpaColumns->nItemCount - 1; nLastCol >= 0; nLastCol--)
+    for(colRange.upper = infoPtr->hdpaColumns->nItemCount; colRange.upper > 0; colRange.upper--)
     {
-	LISTVIEW_GetHeaderRect(infoPtr, nLastCol, &rcItem);
+	LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
 	if (rcItem.left + Origin.x < rcClip.right) break;
     }
+    iterator_rangeitems(&j, colRange);
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
     
-    /* a last few bits before we start drawing */
-    TRACE("Colums=(%d - %d)\n", nFirstCol, nLastCol);
-
     /* iterate through the invalidated rows */
     while(iterator_next(&i))
     {
 	/* iterate through the invalidated columns */
-	for (nCol = nFirstCol; nCol <= nLastCol; nCol++)
+	while(iterator_next(&j))
 	{
 	    LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position);
 	    Position.x += Origin.x;
@@ -3661,14 +3660,14 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 
 	    if (rgntype == COMPLEXREGION)
 	    {
-		LISTVIEW_GetHeaderRect(infoPtr, nCol, &rcItem);
+		LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
 		rcItem.top = 0;
 	        rcItem.bottom = infoPtr->nItemHeight;
 		OffsetRect(&rcItem, Position.x, Position.y);
 		if (!RectVisible(hdc, &rcItem)) continue;
 	    }
 
-	    LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, nCol, Position, cdmode);
+	    LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, j.nItem, Position, cdmode);
 	}
     }
     iterator_destroy(&i);
