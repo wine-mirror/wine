@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = msi.dll
+IMPORTS   = msi kernel32
+
+CTESTS = \
+	db.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:
