@@ -490,7 +490,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_Execute(
     /* Put this as the default context */
 
     /* Execute... */
-    ((IDirect3DExecuteBufferImpl*)lpDirect3DExecuteBuffer)->execute(lpDirect3DExecuteBuffer, iface, lpDirect3DViewport);
+    ((IDirect3DExecuteBufferImpl*)lpDirect3DExecuteBuffer)->execute(lpDirect3DExecuteBuffer, iface, (IDirect3DViewport2*)lpDirect3DViewport);
 
     return DD_OK;
 }

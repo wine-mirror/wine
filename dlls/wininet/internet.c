@@ -465,7 +465,7 @@ BOOL SetUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentLen, LPCSTR 
     {
 	if (*lppszComponent == NULL)
 	{
-            *lppszComponent = lpszStart;
+            *lppszComponent = (LPSTR)lpszStart;
 	    *dwComponentLen = len;
 	}
 	else
@@ -523,7 +523,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
         }
 	else
 	{
-	    lpszcp = lpszUrl; /* Relative url */
+	    lpszcp = (LPSTR)lpszUrl; /* Relative url */
         }
 
         break;

@@ -7,6 +7,8 @@
  *
  */
 
+#include "config.h"
+
 #include "windows.h"
 #include "wininet.h"
 #include "debugtools.h"
@@ -16,7 +18,9 @@
 #include "winsock.h"
 
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -721,7 +725,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_RESOLVING_NAME,
-           lpszServerName, strlen(lpszServerName));
+           (LPVOID)lpszServerName, strlen(lpszServerName));
 
     if (nServerPort == INTERNET_INVALID_PORT_NUMBER)
 	nServerPort = INTERNET_DEFAULT_HTTP_PORT;
@@ -734,7 +738,7 @@ HINTERNET HTTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_NAME_RESOLVED,
-           lpszServerName, strlen(lpszServerName));
+           (LPVOID)lpszServerName, strlen(lpszServerName));
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
     lpwhs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
@@ -1033,8 +1037,8 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 	{
 	    HTTPHEADERA hdr;
 
-	    hdr.lpszField = field;
-	    hdr.lpszValue = value;
+	    hdr.lpszField = (LPSTR)field;
+	    hdr.lpszValue = (LPSTR)value;
 	    hdr.wFlags = hdr.wCount = 0;
 
             if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
