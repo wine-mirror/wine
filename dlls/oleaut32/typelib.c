@@ -2958,7 +2958,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     for(pBlk = pFirstBlk, order = pHeader->first_blk - 1, i = 0;
 	  pBlkEntry[order].next != 0;
 	  order = pBlkEntry[order].next - 1, i++) {
-	pBlk += pBlkEntry[order].len;
+       pBlk = (char*)pBlk + pBlkEntry[order].len;
     }
     pLibBlk = pBlk;
 
@@ -3133,7 +3133,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	  (*ppTypeInfoImpl)->TypeAttr.cbSizeVft = pTITail->cbSizeVft;
       }
       ppTypeInfoImpl = &((*ppTypeInfoImpl)->next);
-      pBlk += pBlkEntry[order].len;
+      pBlk = (char*)pBlk + pBlkEntry[order].len;
     }
 
     if(i != pTypeLibImpl->TypeInfoCount) {
