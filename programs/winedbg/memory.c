@@ -39,7 +39,7 @@ static	void	DEBUG_Die(const char* msg)
    exit(1);
 }
 
-void*	DEBUG_XMalloc(size_t size)
+void* DBG_alloc(size_t size)
 {
    void *res = malloc(size ? size : 1);
    if (res == NULL)
@@ -48,7 +48,7 @@ void*	DEBUG_XMalloc(size_t size)
    return res;
 }
 
-void* DEBUG_XReAlloc(void *ptr, size_t size)
+void* DBG_realloc(void *ptr, size_t size)
 {
    void* res = realloc(ptr, size);
    if ((res == NULL) && size)
@@ -56,12 +56,17 @@ void* DEBUG_XReAlloc(void *ptr, size_t size)
    return res;
 }
 
-char*	DEBUG_XStrDup(const char *str)
+char* DBG_strdup(const char *str)
 {
    char *res = strdup(str);
    if (!res)
       DEBUG_Die("Memory exhausted.\n");
    return res;
+}
+
+void DBG_free(void *ptr)
+{
+    free(ptr);
 }
 
 enum dbg_mode DEBUG_GetSelectorType( WORD sel )

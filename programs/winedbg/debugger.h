@@ -549,32 +549,10 @@ extern int curr_frame;
 /* gdbproxy.c */
 extern BOOL DEBUG_GdbRemote(unsigned int);
 
-/* Choose your allocator! */
-#if 1
-/* this one is libc's fast one */
-extern void*	DEBUG_XMalloc(size_t size);
-extern void*	DEBUG_XReAlloc(void *ptr, size_t size);
-extern char*	DEBUG_XStrDup(const char *str);
-
-#define DBG_alloc(x)		DEBUG_XMalloc(x)
-#define DBG_realloc(x,y) 	DEBUG_XReAlloc(x,y)
-#define DBG_free(x) 		free(x)
-#define DBG_strdup(x) 		DEBUG_XStrDup(x)
-#else
-/* this one is slow (takes 5 minutes to load the debugger on my machine),
-   if someone could make optimized routines so it wouldn't
-   take so long to load, it could be made default) */
-#define DBG_alloc(x) HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,x)
-#define DBG_realloc(x,y) HeapReAlloc(GetProcessHeap(),0,x,y)
-#define DBG_free(x) HeapFree(GetProcessHeap(),0,x)
-inline static LPSTR DBG_strdup( LPCSTR str )
-{
-    INT len = strlen(str) + 1;
-    LPSTR p = DBG_alloc( len );
-    if (p) memcpy( p, str, len );
-    return p;
-}
-#endif
+extern void *DBG_alloc(size_t size);
+extern void *DBG_realloc(void *ptr, size_t size);
+extern void  DBG_free(void *ptr);
+extern char *DBG_strdup(const char *str);
 
 #define	DEBUG_STATUS_OFFSET		0x80003000
 #define	DEBUG_STATUS_INTERNAL_ERROR	(DEBUG_STATUS_OFFSET+0)
