@@ -989,7 +989,7 @@ static NTSTATUS RTL_GetKeyHandle(ULONG RelativeTo, PCWSTR Path, PHKEY handle)
     strcatW(KeyString.Buffer, Path);
     KeyString.Length = len - sizeof(WCHAR);
     KeyString.MaximumLength = len;
-    InitializeObjectAttributes(&regkey, &KeyString, 0, NULL, NULL);
+    InitializeObjectAttributes(&regkey, &KeyString, OBJ_CASE_INSENSITIVE, NULL, NULL);
     status = NtOpenKey(handle, KEY_ALL_ACCESS, &regkey);
     RtlFreeHeap(GetProcessHeap(), 0, KeyString.Buffer);
     return status;
