@@ -79,6 +79,10 @@ static int strict;
 #define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
 #define SPI_SETSHOWSOUNDS_REGKEY     "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME    "On"
+#define SPI_SETLOWPOWERACTIVE_REGKEY            "Control Panel\\Desktop"
+#define SPI_SETLOWPOWERACTIVE_VALNAME           "LowPowerActive"
+#define SPI_SETPOWEROFFACTIVE_REGKEY            "Control Panel\\Desktop"
+#define SPI_SETPOWEROFFACTIVE_VALNAME           "PowerOffActive"
 #define SPI_SETDRAGFULLWINDOWS_REGKEY           "Control Panel\\Desktop"
 #define SPI_SETDRAGFULLWINDOWS_VALNAME          "DragFullWindows"
 #define SPI_SETMOUSEHOVERWIDTH_REGKEY           "Control Panel\\Mouse"
@@ -1170,6 +1174,82 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
     /* TODO!!! - don't have version of Windows which has this */
 }
 
+static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
+{
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={TRUE,FALSE};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}LOWPOWERACTIVE\n");
+    SetLastError(0);
+    rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &old_b, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        trace("SPI_{GET,SET}LOWPOWERACTIVE not supported on this platform\n");
+        return;
+    }
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        UINT v;
+
+        rc=SystemParametersInfoA( SPI_SETLOWPOWERACTIVE, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        test_change_message( SPI_SETLOWPOWERACTIVE, 0 );
+        test_reg_key( SPI_SETLOWPOWERACTIVE_REGKEY,
+                      SPI_SETLOWPOWERACTIVE_VALNAME,
+                      vals[i] ? "1" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_GETLOWPOWERACTIVE", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETLOWPOWERACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+}
+
+static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
+{
+    BOOL rc;
+    BOOL old_b;
+    const UINT vals[]={TRUE,FALSE};
+    unsigned int i;
+
+    trace("testing SPI_{GET,SET}POWEROFFACTIVE\n");
+    SetLastError(0);
+    rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &old_b, 0 );
+    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
+    {
+        trace("SPI_{GET,SET}POWEROFFACTIVE not supported on this platform\n");
+        return;
+    }
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
+    {
+        UINT v;
+
+        rc=SystemParametersInfoA( SPI_SETPOWEROFFACTIVE, vals[i], 0,
+                                  SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        test_change_message( SPI_SETPOWEROFFACTIVE, 0 );
+        test_reg_key( SPI_SETPOWEROFFACTIVE_REGKEY,
+                      SPI_SETPOWEROFFACTIVE_VALNAME,
+                      vals[i] ? "1" : "0" );
+
+        rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &v, 0 );
+        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        eq( v, vals[i], "SPI_GETPOWEROFFACTIVE", "%d" );
+    }
+
+    rc=SystemParametersInfoA( SPI_SETPOWEROFFACTIVE, old_b, 0, SPIF_UPDATEINIFILE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+}
+
 static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
 {
     BOOL rc;
@@ -1426,6 +1506,8 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETSHOWSOUNDS();                   /*     57 */
     test_SPI_SETKEYBOARDPREF();                 /*     69 */
     test_SPI_SETSCREENREADER();                 /*     71 */
+    test_SPI_SETLOWPOWERACTIVE();               /*     85 */
+    test_SPI_SETPOWEROFFACTIVE();               /*     86 */
     test_SPI_SETMOUSEHOVERWIDTH();              /*     99 */
     test_SPI_SETMOUSEHOVERHEIGHT();             /*    101 */
     test_SPI_SETMOUSEHOVERTIME();               /*    103 */

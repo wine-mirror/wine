@@ -73,8 +73,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETMOUSESCROLLLINES_IDX             29
 #define SPI_SETMENUSHOWDELAY_IDX                30
 #define SPI_SETICONTITLELOGFONT_IDX             31
+#define SPI_SETLOWPOWERACTIVE_IDX               32
+#define SPI_SETPOWEROFFACTIVE_IDX               33
 
-#define SPI_WINE_IDX                            SPI_SETICONTITLELOGFONT_IDX
+#define SPI_WINE_IDX                            SPI_SETPOWEROFFACTIVE_IDX
 
 /**
  * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
@@ -139,8 +141,10 @@ static const WCHAR SPI_SETDESKWALLPAPER_REGKEY[]=             {'C','o','n','t','
 static const WCHAR SPI_SETDESKWALLPAPER_VALNAME[]=            {'W','a','l','l','p','a','p','e','r',0};
 static const WCHAR SPI_SETFONTSMOOTHING_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETFONTSMOOTHING_VALNAME[]=            {'F','o','n','t','S','m','o','o','t','h','i','n','g',0};
-static const WCHAR SPI_GETLOPOWERACTIVE_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-static const WCHAR SPI_GETLOPOWERACTIVE_VALNAME[]=            {'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
+static const WCHAR SPI_SETLOWPOWERACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETLOWPOWERACTIVE_VALNAME[]=           {'L','o','w','P','o','w','e','r','A','c','t','i','v','e',0};
+static const WCHAR SPI_SETPOWEROFFACTIVE_REGKEY[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
+static const WCHAR SPI_SETPOWEROFFACTIVE_VALNAME[]=           {'P','o','w','e','r','O','f','f','A','c','t','i','v','e',0};
 static const WCHAR SPI_USERPREFERENCEMASK_REGKEY[]=           {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_USERPREFERENCEMASK_VALNAME[]=          {'U','s','e','r','P','r','e','f','e','r','e','n','c','e','m','a','s','k',0};
 static const WCHAR SPI_SETLISTBOXSMOOTHSCROLLING_REGKEY[]=    {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -231,6 +235,7 @@ static int menu_show_delay = 400;
 static BOOL screensaver_running = FALSE;
 static BOOL font_smoothing = FALSE;
 static BOOL lowpoweractive = FALSE;
+static BOOL poweroffactive = FALSE;
 static BOOL keyboard_cues = FALSE;
 static BOOL gradient_captions = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
@@ -1912,22 +1917,77 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-        if (!spi_loaded[SPI_GETLOWPOWERACTIVE])
+
+        spi_idx = SPI_SETLOWPOWERACTIVE_IDX;
+        if (!spi_loaded[spi_idx])
         {
             WCHAR buf[5];
-            if(SYSPARAMS_Load(SPI_GETLOPOWERACTIVE_REGKEY, SPI_GETLOPOWERACTIVE_VALNAME, buf, sizeof(buf)))
-            {
-                spi_loaded[SPI_GETLOWPOWERACTIVE] = TRUE;
+            if(SYSPARAMS_Load( SPI_SETLOWPOWERACTIVE_REGKEY,
+                               SPI_SETLOWPOWERACTIVE_VALNAME,
+                               buf, sizeof(buf) ))
                 lowpoweractive = atoiW(buf);
-            }
-            else ret=FALSE;
+            spi_loaded[spi_idx] = TRUE;
         }
         *(BOOL *)pvParam = lowpoweractive;
         break;
 
-    WINE_SPI_FIXME(SPI_GETPOWEROFFACTIVE);	/*     84  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_SETLOWPOWERACTIVE);	/*     85  WINVER >= 0x400 */
-    WINE_SPI_FIXME(SPI_SETPOWEROFFACTIVE);	/*     86  WINVER >= 0x400 */
+    case SPI_GETPOWEROFFACTIVE:                 /*     84  WINVER >= 0x400 */
+        if (!pvParam)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+
+        spi_idx = SPI_SETPOWEROFFACTIVE_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[5];
+            if(SYSPARAMS_Load( SPI_SETPOWEROFFACTIVE_REGKEY,
+                               SPI_SETPOWEROFFACTIVE_VALNAME,
+                               buf, sizeof(buf) ))
+                poweroffactive = atoiW(buf);
+            spi_loaded[spi_idx] = TRUE;
+        }
+        *(BOOL *)pvParam = poweroffactive;
+        break;
+        
+    case SPI_SETLOWPOWERACTIVE:                 /*     85  WINVER >= 0x400 */
+    {
+        WCHAR buf[5];
+
+        spi_idx = SPI_SETLOWPOWERACTIVE_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETLOWPOWERACTIVE_REGKEY,
+                            SPI_SETLOWPOWERACTIVE_VALNAME,
+                            buf, fWinIni ))
+        {
+            lowpoweractive = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_SETPOWEROFFACTIVE:                 /*     86  WINVER >= 0x400 */
+    {
+        WCHAR buf[5];
+
+        spi_idx = SPI_SETPOWEROFFACTIVE_IDX;
+        wsprintfW(buf, CSu, uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETPOWEROFFACTIVE_REGKEY,
+                            SPI_SETPOWEROFFACTIVE_VALNAME,
+                            buf, fWinIni ))
+        {
+            poweroffactive = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     WINE_SPI_FIXME(SPI_SETCURSORS);		/*     87  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_SETICONS);		/*     88  WINVER >= 0x400 */
