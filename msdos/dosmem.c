@@ -14,8 +14,7 @@
 #include "ldt.h"
 #include "miscemu.h"
 #include "vga.h"
-#include "module.h"
-#include "task.h"
+#include "dosexe.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dosmem)
@@ -65,12 +64,10 @@ typedef struct {
  */
 char *DOSMEM_MemoryBase(void)
 {
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+    LPDOSTASK lpDosTask = MZ_Current();
 
-    GlobalUnlock16( GetCurrentTask() );
-    if (pModule && pModule->dos_image)
-        return pModule->dos_image;
+    if (lpDosTask && lpDosTask->img)
+        return lpDosTask->img;
     else
         return DOSMEM_dosmem;
 }
@@ -399,13 +396,14 @@ static void DOSMEM_MovePointers(LPVOID dest, LPVOID src, DWORD size)
  * Create the dos memory segments, and store them into the KERNEL
  * exported values.
  */
-BOOL DOSMEM_Init(HMODULE16 hModule)
+BOOL DOSMEM_Init(BOOL dos_init)
 {
-    if (!hModule)
+    LPVOID base = DOSMEM_MemoryBase();
+    BOOL do_init = dos_init && !DOSMEM_dosmem;
+
+    if (!base)
     {
         /* Allocate 1 MB dosmemory 
-         * - it is mostly wasted but we can use some of it to 
-         *   store internal translation tables, etc...
          */
         DOSMEM_dosmem = VirtualAlloc( NULL, 0x100000, MEM_COMMIT,
                                       PAGE_EXECUTE_READWRITE );
@@ -418,6 +416,11 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
                                      0x100, 0, FALSE, FALSE, FALSE, NULL );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
                                      0x10000, 0, FALSE, FALSE, FALSE, NULL );
+        base = DOSMEM_dosmem;
+        do_init = TRUE;
+    }
+
+    if (do_init) {
         DOSMEM_FillIsrTable();
         DOSMEM_FillBiosSegments();
         DOSMEM_InitMemory();
@@ -426,19 +429,12 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_InitDPMI();
 	DOSDEV_InstallDOSDevices();
     }
-    else
+    else if (dos_init)
     {
-#if 0
-        DOSMEM_FillIsrTable(hModule);
-        DOSMEM_InitMemory(hModule);
-#else
-	LPVOID base = DOSMEM_MemoryBase();
-
         /* bootstrap the new V86 task with a copy of the "system" memory */
         memcpy(base, DOSMEM_dosmem, 0x100000);
 	/* then move existing selectors to it */
 	DOSMEM_MovePointers(base, DOSMEM_dosmem, 0x100000);
-#endif
     }
     return TRUE;
 }

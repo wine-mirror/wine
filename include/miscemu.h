@@ -134,7 +134,7 @@ extern DWORD DOSMEM_ErrorBuffer;
 extern DWORD DOS_LOLSeg;
 extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
 
-extern BOOL DOSMEM_Init(HMODULE16 hModule);
+extern BOOL DOSMEM_Init(BOOL);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern char * DOSMEM_MemoryBase(void);
