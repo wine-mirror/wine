@@ -912,7 +912,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_QueryInterface(
     }
     if ( IsEqualGUID( &IID_IDirectDraw7, refiid ) ) {
 	IDirectDraw4Impl *dd = HeapAlloc(GetProcessHeap(),0,sizeof(*dd));
-	dd->ref = 1;ICOM_VTBL(dd) = &xlib_dd7vt;dd->d = This->d;This->d->ref++;
+	dd->ref = 1;ICOM_VTBL(dd) = (ICOM_VTABLE(IDirectDraw4)*)&xlib_dd7vt;dd->d = This->d;This->d->ref++;
 	*obj = dd;
 
 	IDirectDraw7_AddRef(iface);
