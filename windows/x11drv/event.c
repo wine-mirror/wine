@@ -1057,16 +1057,13 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
                   itemFmtName, CF_TEXT, CLIPBOARD_GetFormatName(CF_TEXT));
     TSXFree(itemFmtName);
 
-    if ( !CLIPBOARD_IsPresent(CF_TEXT) )
-    {
-       rprop = None;
-       goto END;
-    }
-
     hText = GetClipboardData16(CF_TEXT);
+    if ( !hText )
+       return None;
     text = GlobalLock16(hText);
+    if (!text)
+       return None;
     size = GlobalSize16(hText);
-    
     /* remove carriage returns */
     
     lpstr = (char*)HEAP_xalloc( GetProcessHeap(), 0, size-- );
@@ -1088,7 +1085,6 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
     GlobalUnlock16(hText);
     HeapFree( GetProcessHeap(), 0, lpstr );
 
-END:
     return rprop;
 }
 
