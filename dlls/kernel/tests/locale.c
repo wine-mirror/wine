@@ -1272,7 +1272,7 @@ void test_FoldStringW(void)
       0x2789, /* No inverted Patterned circled */
       '\0'    /* Terminator */
   };
-  /* Compatability conversion results */
+  /* Compatibility conversion results */
   static const WCHAR compat_F900_FA2F[256+48] =
   {
       0x8c48, 0x66f4, 0x8eca, 0x8cc8, 0x6ed1, 0x4e32, 0x53e5, 0x9f9c,

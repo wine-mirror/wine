@@ -4645,7 +4645,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
 HRESULT WINAPI VarNumFromParseNum(NUMPARSE *pNumprs, BYTE *rgbDig,
                                   ULONG dwVtBits, VARIANT *pVarDst)
 {
-  /* Scale factors and limits for double arithmatic */
+  /* Scale factors and limits for double arithmetics */
   static const double dblMultipliers[11] = {
     1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0,
     1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0

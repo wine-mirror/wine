@@ -624,7 +624,7 @@ static void processSetValue(LPSTR cmdline)
 {
   LPSTR argv[SET_VALUE_MAX_ARGS];  /* args storage    */
 
-  LPSTR token         = NULL;      /* current token analized */
+  LPSTR token         = NULL;      /* current token analyzed */
   ULONG argCounter    = 0;         /* counter of args */
   INT   counter;
   HRESULT hRes = 0;
@@ -672,7 +672,7 @@ static void processSetValue(LPSTR cmdline)
 static void processQueryValue(LPSTR cmdline)
 {
   LPSTR   argv[QUERY_VALUE_MAX_ARGS];/* args storage    */
-  LPSTR   token      = NULL;         /* current token analized */
+  LPSTR   token      = NULL;         /* current token analyzed */
   ULONG   argCounter = 0;            /* counter of args */
   INT     counter;
   HRESULT hRes       = 0;
@@ -995,7 +995,7 @@ static void doUnregisterDLL(LPSTR stdInput) {
  */
 int PASCAL WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
-  LPSTR  token          = NULL;  /* current token analized */
+  LPSTR  token          = NULL;  /* current token analyzed */
   LPSTR  stdInput       = NULL;  /* line read from stdin */
   INT    cmdIndex       = -1;    /* index of the command in array */
   LPSTR nextLine        = NULL;
@@ -1082,7 +1082,7 @@ int PASCAL WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
     }
 
     /*
-     * We process every lines even the NULL (last) line, to indicate the
+     * We process every line, even the NULL (last) line, to indicate the
      * end of the processing to the specific process.
      */
     commandAPIs[cmdIndex](stdInput);

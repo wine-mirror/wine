@@ -5483,7 +5483,7 @@ TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam, LPARAM lParam)
       *  According to testing V4.71 of COMCTL32 returns the
       *  *previous* status of the redraw flag (either 0 or 1)
       *  instead of the MSDN documented value of 0 if handled.
-      *  (For laughs see the "consistancy" with same function
+      *  (For laughs see the "consistency" with same function
       *   in rebar.)
       *
       *****************************************************/

@@ -564,7 +564,7 @@
 
 /* MENUBAND parts */
 #define MDP_NEWAPPBUTTON 1
-/* sepErator isn't a typo, as per microsofts headers */
+/* MDP_SEPERATOR isn't a typo, as per Microsoft's headers */
 #define MDP_SEPERATOR    2
 
 /* MENUBAND NEWAPPBUTTON states */

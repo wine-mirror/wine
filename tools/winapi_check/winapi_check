@@ -663,7 +663,7 @@ foreach my $file (@c_files) {
 	preprocessor_found => $found_preprocessor
     });
 
-    if($options->config_unnessary) {
+    if($options->config_unnecessary) {
 	if($config && $conditional == 0) {
 	    $output->write("$file: include2info config.h but do not use any conditionals\n");
 	}

@@ -44,8 +44,8 @@ my %options_long = (
     "shared" =>  { default => 0, description => "show shared functions between Win16 and Win32" },
     "shared-segmented" =>  { default => 0, description => "segmented shared functions between Win16 and Win32 checking" },
 
-    "config" => { default => 1, parent => "local", description => "check configuration include consistancy" },
-    "config-unnessary" => { default => 0, parent => "config", description => "check for unnessary #include \"config.h\"" },
+    "config" => { default => 1, parent => "local", description => "check configuration include consistency" },
+    "config-unnecessary" => { default => 0, parent => "config", description => "check for unnecessary #include \"config.h\"" },
 
     "spec-mismatch" => { default => 0, description => "spec file mismatch checking" },
 

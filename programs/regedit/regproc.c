@@ -776,7 +776,7 @@ void processQueryValue(LPSTR cmdline)
   exit(1);
 #if 0
   LPSTR   argv[QUERY_VALUE_MAX_ARGS];/* args storage    */
-  LPSTR   token      = NULL;         /* current token analized */
+  LPSTR   token      = NULL;         /* current token analyzed */
   ULONG   argCounter = 0;            /* counter of args */
   INT     counter;
   HRESULT hRes       = 0;

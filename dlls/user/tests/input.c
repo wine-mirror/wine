@@ -39,7 +39,7 @@
  * 4. resolve the win9x case when there is a need or the testing frame work
  *    offers a nice way.
  * 5. The test app creates a window, the user should not take the focus
- *    away during its short existance. I could do something to prevent that
+ *    away during its short existence. I could do something to prevent that
  *    if it is a problem.
  *
  */

@@ -296,7 +296,7 @@ sub READ_DEFAULTS
             # decomposition of the form "<foo> 1234" -> use char if type is known
             if (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd))
             {
-                # Single char decomposition in the compatability range
+                # Single char decomposition in the compatibility range
                 $compatmap_table[$src] = hex $2;
             }
             next unless ($1 eq "font" ||
@@ -329,7 +329,7 @@ sub READ_DEFAULTS
             elsif ($decomp =~ /^(<[a-z]+>\s)*([0-9a-fA-F]+)$/ &&
                    (($src >= 0xf900 && $src < 0xfb00) || ($src >= 0xfe30 && $src < 0xfffd)))
             {
-                # Single char decomposition in the compatability range
+                # Single char decomposition in the compatibility range
                 $compatmap_table[$src] = hex $2;
             }
         }
