@@ -1251,14 +1251,14 @@ not_found:
     }
 	
     if (ret->charset == SYMBOL_CHARSET && 
-        !pFT_Select_Charmap(ret->ft_face, FT_ENCODING_MS_SYMBOL)) {
+        !pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('s','y','m','b'))) {
         /* No ops */
     }
-    else if (!pFT_Select_Charmap(ret->ft_face, FT_ENCODING_UNICODE)) {
+    else if (!pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('u','n','i','c'))) {
         /* No ops */
     }
     else {
-        pFT_Select_Charmap(ret->ft_face, FT_ENCODING_APPLE_ROMAN);
+        pFT_Select_Charmap(ret->ft_face, MS_MAKE_TAG('a','r','m','n'));
     }
 
     ret->orientation = lf.lfOrientation;
