@@ -600,8 +600,52 @@ HRESULT WINAPI GetThemeDefaults(LPCWSTR pszThemeFileName, LPWSTR pszColorName,
 HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
                           LPVOID lpData)
 {
-    FIXME("%s: stub\n", debugstr_w(pszThemePath));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    WCHAR szDir[MAX_PATH];
+    WCHAR szPath[MAX_PATH];
+    WCHAR szStar[] = {'*','.','*','\0'};
+    WCHAR szFormat[] = {'%','s','%','s','\\','%','s','.','m','s','s','t','y','l','e','s','\0'};
+    WCHAR szDisplayName[] = {'d','i','s','p','l','a','y','n','a','m','e','\0'};
+    WCHAR szTooltip[] = {'t','o','o','l','t','i','p','\0'};
+    WCHAR szName[60];
+    WCHAR szTip[60];
+    HANDLE hFind;
+    WIN32_FIND_DATAW wfd;
+    HRESULT hr;
+
+    TRACE("(%s,%p,%p)\n", debugstr_w(pszThemePath), callback, lpData);
+
+    if(!pszThemePath || !callback)
+        return E_POINTER;
+
+    lstrcpyW(szDir, pszThemePath);
+    PathAddBackslashW(szDir);
+
+    lstrcpyW(szPath, szDir);
+    lstrcatW(szPath, szStar);
+    TRACE("searching %s\n", debugstr_w(szPath));
+
+    hFind = FindFirstFileW(szPath, &wfd);
+    if(hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
+               && !(wfd.cFileName[0] == '.' && ((wfd.cFileName[1] == '.' && wfd.cFileName[2] == 0) || wfd.cFileName[1] == 0))) {
+                wsprintfW(szPath, szFormat, szDir, wfd.cFileName, wfd.cFileName);
+
+                hr = GetThemeDocumentationProperty(szPath, szDisplayName, szName, sizeof(szName)/sizeof(szName[0]));
+                if(SUCCEEDED(hr))
+                    hr = GetThemeDocumentationProperty(szPath, szTooltip, szTip, sizeof(szTip)/sizeof(szTip[0]));
+                if(SUCCEEDED(hr)) {
+                    TRACE("callback(%s,%s,%s,%p)\n", debugstr_w(szPath), debugstr_w(szName), debugstr_w(szTip), lpData);
+                    if(!callback(NULL, szPath, szName, szTip, NULL, lpData)) {
+                        TRACE("callback ended enum\n");
+                        break;
+                    }
+                }
+            }
+        } while(FindNextFileW(hFind, &wfd));
+        FindClose(hFind);
+    }
+    return S_OK;
 }
 
 
