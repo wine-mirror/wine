@@ -34,6 +34,7 @@
 #include "message.h"
 #include "winnls.h"
 #include "commctrl.h"
+#include "commdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(message);
 
@@ -1657,6 +1658,13 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TCN_SELCHANGING,       NMHDR),
     SPNFY(TCN_GETOBJECT,         NMHDR),
     /* Common Dialog  0U-601U  to  0U-699U  */
+    SPNFY(CDN_INITDONE,          OFNOTIFYA),
+    SPNFY(CDN_SELCHANGE,         OFNOTIFYA),
+    SPNFY(CDN_FOLDERCHANGE,      OFNOTIFYA),
+    SPNFY(CDN_SHAREVIOLATION,    OFNOTIFYA),
+    SPNFY(CDN_HELP,              OFNOTIFYA),
+    SPNFY(CDN_FILEOK,            OFNOTIFYA),
+    SPNFY(CDN_TYPECHANGE,        OFNOTIFYA),
     /* Toolbar        0U-700U  to  0U-720U  */
     SPNFY(TBN_GETBUTTONINFOA,    NMTOOLBARA),
     SPNFY(TBN_BEGINDRAG,         NMTOOLBARA),
@@ -2178,6 +2186,10 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 		TRACE("itemData=0x%08lx\n", lpmis->itemData);
 	    }
 	    break;
+        case WM_SIZE:
+            if (!enter) break;
+            TRACE("cx=%d cy=%d\n", LOWORD(sp_e->lParam), HIWORD(sp_e->lParam));
+            break;
 	case WM_WINDOWPOSCHANGED:
 	    if (!enter) break;
 	case WM_WINDOWPOSCHANGING:
