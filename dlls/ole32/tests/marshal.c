@@ -139,6 +139,9 @@ static DWORD CALLBACK host_object_proc(LPVOID p)
     hr = CoMarshalInterface(data->stream, &data->iid, data->object, MSHCTX_INPROC, NULL, data->marshal_flags);
     ok_ole_success(hr, CoMarshalInterface);
 
+    /* force the message queue to be created before signaling parent thread */
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
     SetEvent(data->marshal_event);
 
     while (GetMessage(&msg, NULL, 0, 0))
@@ -199,7 +202,8 @@ static void release_host_object(DWORD tid)
 
 static void end_host_object(DWORD tid, HANDLE thread)
 {
-    PostThreadMessage(tid, WM_QUIT, 0, 0);
+    BOOL ret = PostThreadMessage(tid, WM_QUIT, 0, 0);
+    ok(ret, "PostThreadMessage failed with error %ld\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
@@ -346,9 +350,6 @@ static void test_marshal_proxy_apartment_shutdown()
 
     CoUninitialize();
 
-    /* FIXME: this could be a bit racy - I don't know if there are any
-     * guarantees that the stub will get its disconnection message
-     * immediately */
     todo_wine { ok_no_locks(); }
 
     IUnknown_Release(pProxy);
