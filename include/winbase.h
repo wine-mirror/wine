@@ -1,6 +1,10 @@
 #ifndef __WINE_WINBASE_H
 #define __WINE_WINBASE_H
 
+#ifndef RC_INVOKED
+#include <stdarg.h>
+#endif
+
 #include "basetsd.h"
 #include "winnt.h"
 #include "pshpack1.h"
@@ -113,6 +117,10 @@ typedef struct _DEBUG_EVENT {
         RIP_INFO                  RipInfo;
     } u;
 } DEBUG_EVENT, *LPDEBUG_EVENT;
+
+typedef PCONTEXT LPCONTEXT;
+typedef PEXCEPTION_RECORD LPEXCEPTION_RECORD;
+typedef PEXCEPTION_POINTERS LPEXCEPTION_POINTERS;
 
 #define OFS_MAXPATHNAME 128
 typedef struct
