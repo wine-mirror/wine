@@ -8,7 +8,7 @@
 #define PROBLEM2 0
 
 /*
- * Rebar control    rev 7e
+ * Rebar control    rev 7f
  *
  * Copyright 1998, 1999 Eric Kohl
  *
@@ -82,11 +82,20 @@
  * 23. Support RB_MINIMIZEBAND.
  * 24. RBBS_HIDDEN (and the CCS_VERT+RBBS_NOVERT case) should be supported
  *     by all routines now.
+ * rev 7f
+ * 25. Fix handling of text color.
+ * 26. Correct implementation of WM_SETREDRAW to be closer to native.
+ *     See REBAR_SetRedraw for doc changes of actual vs. MSDN
+ * 27. Do more implementation of RBS_AUTOSIZE in the WM_SIZE processor.
+ * 28. Implement RBBS_VARIABLEHEIGHT. Used by IE4.
+ * 29. Do more testing in WM_SIZE to handle strange cases like native.
  *
  *
  *    Still to do:
  *  2. Following still not handled: RBBS_FIXEDBMP, RBBS_CHILDEDGE,
  *            RBBS_USECHEVRON
+ *  3. Following are only partially handled: 
+ *            RBS_AUTOSIZE, RBBS_VARIABLEHEIGHT
  *  5. Native uses (on each draw!!) SM_CYBORDER (or SM_CXBORDER for CCS_VERT)
  *     to set the size of the separator width (the value SEP_WIDTH_SIZE 
  *     in here). Should be fixed!!
@@ -106,6 +115,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "win.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/unicode.h"
@@ -176,6 +186,7 @@ typedef struct
 {
     COLORREF   clrBk;       /* background color */
     COLORREF   clrText;     /* text color */
+    COLORREF   clrBtnText;  /* system color for BTNTEXT */
     COLORREF   clrBtnFace;  /* system color for BTNFACE */
     HIMAGELIST himl;        /* handle to imagelist */
     UINT     uNumBands;   /* # of bands in rebar (first=0, last=uNumRows-1 */
@@ -211,6 +222,8 @@ typedef struct
 #define RESIZE_ANYHOW       0x00000004
 #define NTF_HGHTCHG         0x00000008
 #define BAND_NEEDS_LAYOUT   0x00000010
+#define BAND_NEEDS_REDRAW   0x00000020
+#define CREATE_RUNNING      0x00000040
 
 /* ----   REBAR layout constants. Mostly determined by        ---- */
 /* ----   experiment on WIN 98.                               ---- */
@@ -385,6 +398,9 @@ REBAR_DumpBand (REBAR_INFO *iP)
 	  iP->hwndSelf, iP->fStatus, iP->dragStart.x, iP->dragStart.y,
 	  iP->dragNow.x, iP->dragNow.y,
 	  iP->ihitBand);
+    TRACE("hwnd=%04x: style=%08lx, I'm Unicode=%s, notify in Unicode=%s, redraw=%s\n",
+	  iP->hwndSelf, iP->dwStyle, (iP->bUnicode)?"TRUE":"FALSE",
+	  (iP->NtfUnicode)?"TRUE":"FALSE", (iP->DoRedraw)?"TRUE":"FALSE");
     for (i = 0; i < iP->uNumBands; i++) {
 	pB = &iP->bands[i];
 	TRACE("band # %u: ID=%u, child=%04x, row=%u, clrF=0x%06lx, clrB=0x%06lx\n",
@@ -512,14 +528,13 @@ REBAR_DrawBand (HDC hdc, REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 	HFONT hOldFont = SelectObject (hdc, infoPtr->hFont);
 	INT oldBkMode = SetBkMode (hdc, TRANSPARENT);
 	COLORREF oldcolor = CLR_NONE;
-	if (lpBand->clrFore != CLR_NONE)
-	    oldcolor = SetTextColor (hdc, lpBand->clrFore);
+	oldcolor = SetTextColor (hdc, (lpBand->clrFore != CLR_NONE) ?
+				 lpBand->clrFore : infoPtr->clrBtnText);
 	DrawTextW (hdc, lpBand->lpText, -1, &lpBand->rcCapText,
 		   DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 	if (oldBkMode != TRANSPARENT)
 	    SetBkMode (hdc, oldBkMode);
-	if (lpBand->clrFore != CLR_NONE)
-	    SetTextColor (hdc, oldcolor);
+	SetTextColor (hdc, oldcolor);
 	SelectObject (hdc, hOldFont);
     }
 }
@@ -671,7 +686,8 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
     }
     if ((x >= maxx) || last_adjusted) {
 	if (x > maxx) {
-	    ERR("Phase 1 failed, x=%d, maxx=%d\n", x, maxx);
+	    ERR("Phase 1 failed, x=%d, maxx=%d, start=%u, end=%u\n", 
+		x, maxx,  rowstart, rowend);
 	}
 	/* done, so spread extra space */
 	if (x < maxx) {
@@ -740,7 +756,8 @@ REBAR_AdjustBands (REBAR_INFO *infoPtr, UINT rowstart, UINT rowend,
     }
     if (x >= maxx) {
 	if (x > maxx) {
-	    ERR("Phase 2 failed, x=%d, maxx=%d\n", x, maxx);
+	    ERR("Phase 2 failed, x=%d, maxx=%d, start=%u, end=%u\n", 
+		x, maxx,  rowstart, rowend);
 	}
 	/* done, so spread extra space */
 	TRACE("Phase 2 succeeded, used x=%d\n", x);
@@ -1132,7 +1149,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		yPos = (lpBand->rcChild.bottom + lpBand->rcChild.top - nEditHeight)/2;
 
 		/* center combo box inside child area */
-		TRACE("moving child (Combo(Ex)) %04x to (%d,%d)-(%d,%d)\n",
+		TRACE("moving child (Combo(Ex)) %04x to (%d,%d) for (%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, yPos,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1147,7 +1164,7 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 		    ERR("DeferWindowPos returned NULL\n");
 	    }
 	    else {
-		TRACE("moving child (Other) %04x to (%d,%d)-(%d,%d)\n",
+		TRACE("moving child (Other) %04x to (%d,%d) for (%d,%d)\n",
 		      lpBand->hwndChild,
 		      lpBand->rcChild.left, lpBand->rcChild.top,
 		      lpBand->rcChild.right - lpBand->rcChild.left,
@@ -1191,6 +1208,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	return;
     }
     infoPtr->fStatus &= ~BAND_NEEDS_LAYOUT;
+    if (!infoPtr->DoRedraw) infoPtr->fStatus |= BAND_NEEDS_REDRAW;
 
     GetClientRect (infoPtr->hwndSelf, &rcClient);
     TRACE("Client is (%d,%d)-(%d,%d)\n",
@@ -1215,6 +1233,12 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
         clientcy = adjcy;
     }
 
+    if (!infoPtr->DoRedraw && (clientcx == 0) && (clientcy == 0)) {
+	ERR("no redraw and client is zero, skip layout\n");
+	infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
+	return;
+    }
+
     /* save height of original control */
     if (infoPtr->dwStyle & CCS_VERT) 
         origheight = infoPtr->calcSize.cx;
@@ -1224,6 +1248,8 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 
     /* ******* Start Phase 1 - all bands on row at minimum size ******* */
 
+    TRACE("band loop constants, clientcx=%d, clientcy=%d\n",
+	  clientcx, clientcy);
     x = 0;
     y = 0;
     row = 1;
@@ -1306,6 +1332,9 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    }
 	}
 
+	TRACE("band %u, row %d, x=%d, y=%d, cxsep=%d, cx=%d\n",
+	      i, row,
+	      x, y, cxsep, cx);
 	if (infoPtr->dwStyle & CCS_VERT) {
 	    /* bound the bottom side if we have a bounding rectangle */
 	    rightx = clientcx;
@@ -1500,6 +1529,61 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
     }
 
     /* ******* End Phase 2 - split rows till adjustment height full ******* */
+
+
+    /* ******* Start Phase 2a - adjust all bands for height full ******* */
+    /* assumes that the following variables contain:                 */
+    /*   y/x     current height/width of all rows                    */
+    /*   clientcy/clientcx     height/width of client area           */
+
+    /* **** FIXME FIXME FIXME 
+     *   this does not take into account that more than one band
+     *   is in a row!!!!!!!!!
+     */
+
+    if (((infoPtr->dwStyle & CCS_VERT) ? clientcx > x : clientcy > y) &&
+	infoPtr->uNumBands) {
+	INT diff, i, j;
+
+	diff = (infoPtr->dwStyle & CCS_VERT) ? clientcx - x : clientcy - y;
+	for (i = infoPtr->uNumBands-1; i >= 0; i--) {
+	    lpBand = &infoPtr->bands[i];
+	    if(HIDDENBAND(lpBand)) continue;
+	    if (!lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
+	    if (((INT)lpBand->cyMaxChild < 1) || 
+		((INT)lpBand->cyIntegral < 1)) {
+		if (lpBand->cyMaxChild + lpBand->cyIntegral == 0) continue;
+		ERR("band %u RBBS_VARIABLEHEIGHT set but cyMax=%d, cyInt=%d\n",
+		    i, lpBand->cyMaxChild, lpBand->cyIntegral);
+		continue;
+	    }
+	    /* j is now the maximum height/width in the client area */
+	    j = ((diff / lpBand->cyIntegral) * lpBand->cyIntegral) + 
+		ircBw(lpBand);
+	    if (j > lpBand->cyMaxChild + REBARSPACE) 
+		j = lpBand->cyMaxChild + REBARSPACE;
+	    diff -= (j - ircBw(lpBand));
+	    if (infoPtr->dwStyle & CCS_VERT)
+		lpBand->rcBand.right = lpBand->rcBand.left + j;
+	    else
+		lpBand->rcBand.bottom = lpBand->rcBand.top + j;
+	    TRACE("P2a band %d, row %d changed to (%d,%d)-(%d,%d)\n",
+		  i, lpBand->iRow,
+		  lpBand->rcBand.left, lpBand->rcBand.top,
+		  lpBand->rcBand.right, lpBand->rcBand.bottom);
+	    if (diff <= 0) break;
+	}
+	if (diff < 0) {
+	    ERR("allocated more than available, diff=%d\n", diff);
+	    diff = 0;
+	}
+	if (infoPtr->dwStyle & CCS_VERT)
+	    x = clientcx - diff;
+	else
+	    y = clientcy - diff;
+    }
+
+    /* ******* End Phase 2a - adjust all bands for height full ******* */
 
 
     /* ******* Start Phase 3 - adjust all bands for width full ******* */
@@ -3080,7 +3164,7 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     REBAR_DumpBand (infoPtr);
 
     if (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE))
-      REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
+	  REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
 
     return TRUE;
 }
@@ -3321,9 +3405,6 @@ REBAR_Create (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	      cs->x, cs->y, cs->cx, cs->cy);
     }
 
-    if (GetWindowLongA (infoPtr->hwndSelf, GWL_STYLE) & RBS_AUTOSIZE)
-	FIXME("style RBS_AUTOSIZE set!\n");
-
     TRACE("created!\n");
     return 0;
 }
@@ -3537,7 +3618,8 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* initialize info structure - initial values are 0 */
     infoPtr->clrBk = CLR_NONE;
-    infoPtr->clrText = GetSysColor (COLOR_BTNTEXT);
+    infoPtr->clrText = CLR_NONE;
+    infoPtr->clrBtnText = GetSysColor (COLOR_BTNTEXT);
     infoPtr->clrBtnFace = GetSysColor (COLOR_BTNFACE);
     infoPtr->ihitBand = -1;
     infoPtr->hwndSelf = hwnd;
@@ -3547,6 +3629,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hcurVert  = LoadCursorA (0, IDC_SIZENSA);
     infoPtr->hcurDrag  = LoadCursorA (0, IDC_SIZEA);
     infoPtr->bUnicode = IsWindowUnicode (hwnd);
+    infoPtr->fStatus = CREATE_RUNNING;
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
     i = SendMessageA(REBAR_GetNotifyParent (infoPtr),
@@ -3758,10 +3841,32 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 inline static LRESULT
 REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+     /*****************************************************
+      *
+      * Function;
+      *  Handles the WM_SETREDRAW message.
+      *
+      * Documentation:
+      *  According to testing V4.71 of COMCTL32 returns the 
+      *  *previous* status of the redraw flag (either 0 or -1)
+      *  instead of the MSDN documented value of 0 if handled
+      *
+      *****************************************************/
 {
-    TRACE("set to %s\n", (wParam) ? "TRUE" : "FALSE");
+    BOOL oldredraw = infoPtr->DoRedraw;
+
+    TRACE("set to %s, fStatus=%08x\n", 
+	  (wParam) ? "TRUE" : "FALSE", infoPtr->fStatus);
     infoPtr->DoRedraw = (BOOL) wParam;
-    return 0;
+    if (wParam) {
+	if (infoPtr->fStatus & BAND_NEEDS_REDRAW) {
+	    REBAR_MoveChildWindows (infoPtr, 0, infoPtr->uNumBands);
+	    REBAR_ForceResize (infoPtr);
+	    InvalidateRect (infoPtr->hwndSelf, 0, TRUE);
+	}
+	infoPtr->fStatus &= ~BAND_NEEDS_REDRAW;
+    }
+    return (oldredraw) ? -1 : 0;
 }
 
 
@@ -3775,31 +3880,72 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	infoPtr->fStatus &= ~AUTO_RESIZE;
 	TRACE("AUTO_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
 	      infoPtr->fStatus, lParam);
-	if (infoPtr->dwStyle & RBS_AUTOSIZE) {
-	    NMRBAUTOSIZE autosize;
-
-	    GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
-	    autosize.fChanged = 0;  /* ??? */
-	    autosize.rcActual = autosize.rcTarget;  /* ??? */
-	    REBAR_Notify((NMHDR *) &autosize, infoPtr, RBN_AUTOSIZE);
-	    TRACE("RBN_AUTOSIZE client=%d, lp=%08lx\n", 
-		  autosize.rcTarget.bottom, lParam);
-	}
 	return 0;
     }
 
-    GetClientRect (infoPtr->hwndSelf, &rcClient);
-    if ((lParam == 0) && (rcClient.right == 0) && (rcClient.bottom == 0)) {
-      /* native control seems to do this */
-      GetClientRect (GetParent(infoPtr->hwndSelf), &rcClient);
-      TRACE("sizing rebar, message and client zero, parent client (%d,%d)\n", 
-	    rcClient.right, rcClient.bottom);
+    if (infoPtr->fStatus & CREATE_RUNNING) {
+	/* still in CreateWindow */
+	RECT rcWin;
+
+	TRACE("still in CreateWindow\n");
+	infoPtr->fStatus &= ~CREATE_RUNNING;
+	GetWindowRect ( infoPtr->hwndSelf, &rcWin);
+	TRACE("win rect (%d,%d)-(%d,%d)\n",
+	      rcWin.left, rcWin.top, rcWin.right, rcWin.bottom);
+
+	if ((lParam == 0) && (rcWin.right-rcWin.left == 0) && 
+	    (rcWin.bottom-rcWin.top == 0)) {
+	    /* native control seems to do this */
+	    GetClientRect (GetParent(infoPtr->hwndSelf), &rcClient);
+	    TRACE("sizing rebar, message and client zero, parent client (%d,%d)\n", 
+		  rcClient.right, rcClient.bottom);
+	}
+	else {
+	    INT cx, cy;
+
+	    cx = rcWin.right - rcWin.left;
+	    cy = rcWin.bottom - rcWin.top;
+	    if ((cx == LOWORD(lParam)) && (cy == HIWORD(lParam))) {
+		return 0;
+	    }
+
+	    /* do the actual WM_SIZE request */
+	    GetClientRect (infoPtr->hwndSelf, &rcClient);
+	    TRACE("sizing rebar from (%ld,%ld) to (%d,%d), client (%d,%d)\n", 
+		  infoPtr->calcSize.cx, infoPtr->calcSize.cy,
+		  LOWORD(lParam), HIWORD(lParam),
+		  rcClient.right, rcClient.bottom);
+	}
     }
     else {
-      TRACE("sizing rebar from (%ld,%ld) to (%d,%d), client (%d,%d)\n", 
-	    infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-	    LOWORD(lParam), HIWORD(lParam),
-	    rcClient.right, rcClient.bottom);
+	/* Handle cases when outside of the CreateWindow process */
+
+	GetClientRect (infoPtr->hwndSelf, &rcClient);
+	if ((lParam == 0) && (rcClient.right + rcClient.bottom != 0) &&
+	    (infoPtr->dwStyle & RBS_AUTOSIZE)) {
+	    /* on a WM_SIZE to zero and current client not zero and AUTOSIZE */
+	    /* native seems to use the current client rect for the size      */
+	    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
+	    TRACE("sizing rebar to client (%d,%d) size is zero but AUTOSIZE set\n", 
+		  rcClient.right, rcClient.bottom);
+	}
+	else {
+	    TRACE("sizing rebar from (%ld,%ld) to (%d,%d), client (%d,%d)\n", 
+		  infoPtr->calcSize.cx, infoPtr->calcSize.cy,
+		  LOWORD(lParam), HIWORD(lParam),
+		  rcClient.right, rcClient.bottom);
+	}
+    }
+
+    if (infoPtr->dwStyle & RBS_AUTOSIZE) {
+	NMRBAUTOSIZE autosize;
+
+	GetClientRect(infoPtr->hwndSelf, &autosize.rcTarget);
+	autosize.fChanged = 0;  /* ??? */
+	autosize.rcActual = autosize.rcTarget;  /* ??? */
+	REBAR_Notify((NMHDR *) &autosize, infoPtr, RBN_AUTOSIZE);
+	TRACE("RBN_AUTOSIZE client=(%d,%d), lp=%08lx\n", 
+	      autosize.rcTarget.right, autosize.rcTarget.bottom, lParam);
     }
 
     if ((infoPtr->calcSize.cx != rcClient.right) ||
@@ -3821,6 +3967,7 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACE("current style=%08lx, styleOld=%08lx, style being set to=%08lx\n",
 	  infoPtr->dwStyle, ss->styleOld, ss->styleNew);
     infoPtr->dwStyle = ss->styleNew;
+
     return FALSE;
 }
 
