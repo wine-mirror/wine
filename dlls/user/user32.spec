@@ -672,7 +672,6 @@ init	UserClientDllInitialize
 @ stdcall DestroyIcon32(long long) DestroyIcon32
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
 @ stdcall GetDriverModuleHandle16(long) GetDriverModuleHandle16
-@ stdcall InitThreadInput16(long long) InitThreadInput16
 @ stdcall OpenDriver16(str str long) OpenDriver16
 @ stdcall PostAppMessage16(long long long long) PostAppMessage16
 @ stdcall SendDriverMessage16(long long long long) SendDriverMessage16

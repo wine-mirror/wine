@@ -1026,6 +1026,16 @@ INT16 WINAPI DlgDirListComboBox16( HWND16 hDlg, LPSTR spec, INT16 idCBox,
 }
 
 
+/***********************************************************************
+ *		GetWindowTask   (USER.224)
+ */
+HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
+{
+    DWORD tid = GetWindowThreadProcessId( HWND_32(hwnd), NULL );
+    if (!tid) return 0;
+    return HTASK_16(tid);
+}
+
 /**********************************************************************
  *		EnumTaskWindows   (USER.225)
  */

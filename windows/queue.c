@@ -192,28 +192,6 @@ void QUEUE_DeleteMsgQueue(void)
 
 
 /***********************************************************************
- *		GetWindowTask (USER.224)
- */
-HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
-{
-    HTASK16 retvalue;
-    MESSAGEQUEUE *queue;
-
-    WND *wndPtr = WIN_FindWndPtr16( hwnd );
-    if (!wndPtr) return 0;
-
-    queue = QUEUE_Lock( wndPtr->hmemTaskQ );
-    WIN_ReleaseWndPtr(wndPtr);
-
-    if (!queue) return 0;
-
-    retvalue = queue->teb->htask16;
-    QUEUE_Unlock( queue );
-
-    return retvalue;
-}
-
-/***********************************************************************
  *		InitThreadInput   (USER.409)
  */
 HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
@@ -232,7 +210,6 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
 
         /* Link new queue into list */
         queuePtr = QUEUE_Lock( hQueue );
-        queuePtr->teb = NtCurrentTeb();
 
         HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );

@@ -52,7 +52,6 @@ typedef struct tagWND
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
     HRGN           hrgnWnd;       /* window's region */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */

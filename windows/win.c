@@ -684,7 +684,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     TIMER_RemoveWindowTimers( hwnd );
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    wndPtr->hmemTaskQ = 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))
     {
@@ -761,7 +760,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->owner             = 0;
     pWndDesktop->class             = class;
     pWndDesktop->text              = NULL;
-    pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->clsStyle          = clsStyle;
     pWndDesktop->dce               = NULL;
@@ -1100,7 +1098,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->winproc        = winproc;
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
-    wndPtr->hmemTaskQ      = InitThreadInput16( 0, 0 );
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hrgnWnd        = 0;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
