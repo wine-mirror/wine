@@ -35,3 +35,17 @@ HRESULT WINAPI CreateStdAccessibleObject( HWND hwnd, LONG idObject,
           debugstr_guid( riidInterface ), ppvObject );
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
+{
+    FIXME("%s %d %p\n", debugstr_guid(riid), wParam, pAcc );
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
+                             REFIID riid, void** ppvObject )
+{
+    FIXME("%p %ld %s %p\n", hwnd, dwObjectID,
+          debugstr_guid( riid ), ppvObject );
+    return E_NOTIMPL;
+}

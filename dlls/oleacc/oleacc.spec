@@ -1,7 +1,7 @@
 @ stub AccessibleChildren
 @ stub AccessibleObjectFromEvent
 @ stub AccessibleObjectFromPoint
-@ stub AccessibleObjectFromWindow
+@ stdcall AccessibleObjectFromWindow(ptr long ptr ptr)
 @ stdcall CreateStdAccessibleObject(ptr long ptr ptr)
 @ stub CreateStdAccessibleProxyA
 @ stub CreateStdAccessibleProxyW
@@ -15,6 +15,6 @@
 @ stub IID_IAccessible
 @ stub IID_IAccessibleHandler
 @ stub LIBID_Accessibility
-@ stub LresultFromObject
+@ stdcall LresultFromObject(ptr long ptr)
 @ stub ObjectFromLresult
 @ stub WindowFromAccessibleObject
