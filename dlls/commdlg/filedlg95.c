@@ -1176,7 +1176,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   /* try if the user selected a folder in the shellview */
   if(nFileCount == 0)
   {
-    if (BrowseSelectedFolder(hwnd))
+      BrowseSelectedFolder(hwnd);
       return FALSE;
   }
  
