@@ -2,6 +2,7 @@
  * Direct3D 8 private include file
  *
  * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
@@ -391,6 +392,7 @@ struct IDirect3DDevice8Impl
     GLint                         cursor;
 
     UINT                          dummyTextureName[8];
+
 };
 
 /* IUnknown: */

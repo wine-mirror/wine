@@ -2,6 +2,7 @@
  * IDirect3D8 implementation
  *
  * Copyright 2002-2004 Jason Edmeades
+ * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
@@ -276,6 +277,15 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
           DisplayFormat, debug_d3dformat(DisplayFormat),
 	  BackBufferFormat, debug_d3dformat(BackBufferFormat),
 	  Windowed);
+    /*
+    switch (DisplayFormat) {
+    case D3DFMT_A8R8G8B8:
+      return D3DERR_NOTAVAILABLE;
+    default:
+      break;
+    }
+    */
+
     return D3D_OK;
 }
 
@@ -707,6 +717,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     GLint gl_max;
     ICOM_THIS(IDirect3D8Impl,iface);
 
+    if (This->gl_info.bIsFilled) return ;
+    This->gl_info.bIsFilled = 1;
+
     /* 
      * Initialize openGL extension related variables
      *  with Default values 
@@ -782,6 +795,9 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
 	} else if (strcmp(ThisExtn, "GL_ARB_texture_border_clamp") == 0) {
 	  FIXME(" FOUND: ARB Texture border clamp support\n");
 	  This->gl_info.supported[ARB_TEXTURE_BORDER_CLAMP] = TRUE;
+	} else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
+	  FIXME(" FOUND: ARB Texture mirrored repeat support\n");
+	  This->gl_info.supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
 	} else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
 	  This->gl_info.vs_arb_version = VS_VERSION_11;
 	  FIXME(" FOUND: ARB Vertex Shader support - version=%02x\n", This->gl_info.vs_arb_version);

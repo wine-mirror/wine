@@ -1,7 +1,7 @@
 /*
  * shaders implementation
  *
- * Copyright 2002 Raphael Junqueira
+ * Copyright 2002-2004 Raphael Junqueira
  * Copyright 2004 Jason Edmeades
  * Copyright 2004 Christian Costa
  *
@@ -35,6 +35,7 @@
 #include "d3d8_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_hw_shader);
 
 /* Shader debugging - Change the following line to enable debugging of software
       vertex shaders                                                             */
@@ -618,13 +619,66 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
   const DWORD* pSavedToken = NULL;
   const SHADER_OPCODE* curOpcode = NULL;
   int nRemInstr = -1;
-  DWORD len = 0;  
   DWORD i;
+  unsigned lineNum = 0;
   char *pgmStr = NULL;
   char  tmpLine[255];
+  DWORD nUseAddressRegister = 0;
+  DWORD nUseTempRegister = 0;
+  DWORD regtype;
+  DWORD reg;
   IDirect3DDevice8Impl* This = vshader->device;
 
   pgmStr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 65535); /* 64kb should be enough */
+
+  /**
+   * First pass to determine what we need to declare:
+   *  - Temporary variables
+   *  - Adress variables
+   */ 
+  if (NULL != pToken) {
+    while (D3DVS_END() != *pToken) {
+      if (vshader_is_version_token(*pToken)) {
+	/** skip version */
+	++pToken;
+	continue;
+      } 
+      if (vshader_is_comment_token(*pToken)) { /** comment */
+	DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+	++pToken;
+	pToken += comment_len;
+	continue;
+      }
+      curOpcode = vshader_program_get_opcode(*pToken);
+      ++pToken;
+      if (NULL == curOpcode) {
+	while (*pToken & 0x80000000) {
+	  /* skip unrecognized opcode */
+	  ++pToken;
+	}
+      } else {
+	if (curOpcode->num_params > 0) {
+	  regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) << D3DSP_REGTYPE_SHIFT);
+	  reg = ((*pToken)  & 0x00001FFF);
+	  /** we should validate GL_MAX_PROGRAM_ADDRESS_REGISTERS_AR limits here */
+	  if (D3DSPR_ADDR == regtype && nUseAddressRegister <= reg) nUseAddressRegister = reg + 1;
+	  /** we should validate GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB limits here */
+	  if (D3DSPR_TEMP == regtype && nUseTempRegister <= reg) nUseTempRegister = reg + 1;
+	  ++pToken;
+	  for (i = 1; i < curOpcode->num_params; ++i) {
+	    regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) << D3DSP_REGTYPE_SHIFT);
+	    reg = ((*pToken)  & 0x00001FFF);
+	    /** we should validate GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB limits here */
+	    if (D3DSPR_TEMP == regtype && nUseTempRegister <= reg) nUseTempRegister = reg + 1;
+	    ++pToken;
+	  }
+	}
+      }
+    }
+  }
+
+  /** second pass, now generate */
+  pToken = pFunction;
 
   if (NULL != pToken) {
     while (D3DVS_END() != *pToken) {
@@ -640,40 +694,47 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
         int version = (((*pToken >> 8) & 0x0F) * 10) + (*pToken & 0x0F);
         int numTemps;
 
-	TRACE("vs.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+	TRACE_(d3d_hw_shader)("vs.%lu.%lu;\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
 
         /* Each release of vertex shaders has had different numbers of temp registers */
         switch (version) {
         case 10:
         case 11: numTemps=12; 
                  strcpy(tmpLine, "!!ARBvp1.0\n");
-                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
         case 20: numTemps=12;
                  strcpy(tmpLine, "!!ARBvp2.0\n");
-                 FIXME("No work done yet to support vs2.0 in hw\n");
-                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 FIXME_(d3d_hw_shader)("No work done yet to support vs2.0 in hw\n");
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
         case 30:  numTemps=32; 
                  strcpy(tmpLine, "!!ARBvp3.0\n");
-                 FIXME("No work done yet to support vs3.0 in hw\n");
-                 TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+                 FIXME_(d3d_hw_shader)("No work done yet to support vs3.0 in hw\n");
+                 TRACE_(d3d_hw_shader)("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
                  break;
         default:
                  numTemps=12;
                  strcpy(tmpLine, "!!ARBvp1.0\n");
-                 FIXME("Unrecognized vertex shader version!\n");
+                 FIXME_(d3d_hw_shader)("Unrecognized vertex shader version!\n");
         }
         strcat(pgmStr,tmpLine);
+	++lineNum;
 
-        for (i=0;i<numTemps;i++) {
+        for (i = 0; i < nUseTempRegister/*we should check numTemps here*/; i++) {
             sprintf(tmpLine, "TEMP T%ld;\n", i);
-            TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+	    ++lineNum;
+            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
             strcat(pgmStr,tmpLine);
         }
+	for (i = 0; i < nUseAddressRegister; i++) {
+            sprintf(tmpLine, "ADDRESS A%ld;\n", i);
+	    ++lineNum;
+            TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+            strcat(pgmStr,tmpLine);
+	}
 
 	++pToken;
-	++len;
 	continue;
       } 
       if (vshader_is_comment_token(*pToken)) { /** comment */
@@ -681,25 +742,36 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
 	++pToken;
 	/*TRACE("comment[%ld] ;%s\n", comment_len, (char*)pToken);*/
 	pToken += comment_len;
-	len += comment_len + 1;
 	continue;
       }
       curOpcode = vshader_program_get_opcode(*pToken);
       ++pToken;
-      ++len;
       if (NULL == curOpcode) {
 	/* unkown current opcode ... */
 	while (*pToken & 0x80000000) {
-	  TRACE("unrecognized opcode: %08lx\n", *pToken);
+	  TRACE_(d3d_hw_shader)("unrecognized opcode: %08lx\n", *pToken);
 	  ++pToken;
-	  ++len;
 	}
       } else {
-	TRACE("%s ", curOpcode->name);
+	/*TRACE("%s ", curOpcode->name);*/
 
         /* Build opcode for GL vertex_program */
         switch (curOpcode->opcode) {
         case D3DSIO_MOV:
+	  {
+	    if (0 < nUseAddressRegister) {
+	      regtype = ((((*pToken) & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT) << D3DSP_REGTYPE_SHIFT);
+	      if (D3DSPR_ADDR == regtype) {
+		/**
+		 * Raphael:
+		 *  NVidia drivers complains about MOV A0, T5.x;
+		 *  because we need to use ARL for address registers
+		 */
+		strcpy(tmpLine, "ARL"); 
+		break;
+	      }
+	    }
+	  }
         case D3DSIO_ADD: 
         case D3DSIO_SUB: 
         case D3DSIO_MAD: 
@@ -745,50 +817,46 @@ inline static VOID IDirect3DVertexShaderImpl_GenerateProgramArbHW(IDirect3DVerte
             continue;
 
         default:
-            FIXME("Cant handle opcode %s in hwShader\n", curOpcode->name);
+            FIXME_(d3d_hw_shader)("Cant handle opcode %s in hwShader\n", curOpcode->name);
         }
 
 	if (curOpcode->num_params > 0) {
 	  vshader_program_add_param(*pToken, 0, tmpLine);
           
 	  ++pToken;
-	  ++len;
 	  for (i = 1; i < curOpcode->num_params; ++i) {
-	    TRACE(", ");
+	    /*TRACE(", ");*/
             strcat(tmpLine, ",");
 	    vshader_program_add_param(*pToken, 1, tmpLine);
 	    ++pToken;
-	    ++len;
 	  }
 	}
-	TRACE("\n");
+	/*TRACE("\n");*/
         strcat(tmpLine,";\n");
-        TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+	++lineNum;
+        TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
         strcat(pgmStr, tmpLine);
       }
     }
-    vshader->functionLength = (len + 1) * sizeof(DWORD);
     strcpy(tmpLine, "END\n"); 
-    TRACE("GL HW (%u) : %s", strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
+    ++lineNum;
+    TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s", lineNum, strlen(pgmStr), tmpLine); /* Dont add /n to this line as already in tmpLine */
     strcat(pgmStr, tmpLine);
-  } else {
-    vshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
   }
   
-
   /*  Create the hw shader */
   GL_EXTCALL(glGenProgramsARB(1, &vshader->prgId));
-  TRACE("Creating a hw vertex shader, prg=%d\n", vshader->prgId);
+  TRACE_(d3d_hw_shader)("Creating a hw vertex shader, prg=%d\n", vshader->prgId);
 
   GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vshader->prgId));
 
   /* Create the program and check for errors */
   GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(pgmStr), pgmStr));
-  if ( glGetError() == GL_INVALID_OPERATION) {
-      GLint errPos;
-      glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &errPos );
-      FIXME("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString( GL_PROGRAM_ERROR_STRING_ARB) );
-      vshader->prgId = -1;
+  if (glGetError() == GL_INVALID_OPERATION) {
+    GLint errPos;
+    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errPos);
+    FIXME_(d3d_hw_shader)("HW VertexShader Error at position: %d\n%s\n", errPos, glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+    vshader->prgId = -1;
   }
   
   HeapFree(GetProcessHeap(), 0, pgmStr);

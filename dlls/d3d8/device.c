@@ -481,7 +481,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST RECT* pSourceRect,CONST RECT* pDestRect,HWND hDestWindowOverride,CONST RGNDATA* pDirtyRegion) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, 
+					      CONST RECT* pSourceRect, CONST RECT* pDestRect, 
+					      HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : complete stub!\n", This);
 
@@ -3454,15 +3456,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 	      break;
             case D3DTADDRESS_MIRROR: 
 	      {
-#if defined(GL_VERSION_1_4)
-		wrapParm = GL_MIRRORED_REPEAT; 
-#elif defined(GL_ARB_texture_mirrored_repeat)
-		wrapParm = GL_MIRRORED_REPEAT_ARB;
-#else
-		/* Unsupported in OpenGL pre-1.4 */
-                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
-		wrapParm = GL_REPEAT;
-#endif
+		if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
+		  wrapParm = GL_MIRRORED_REPEAT_ARB;
+		} else {
+		  /* Unsupported in OpenGL pre-1.4 */
+		  FIXME("Unsupported D3DTADDRESS_MIRROR (needs GL_ARB_texture_mirrored_repeat) state %d\n", Type);
+		  wrapParm = GL_REPEAT;
+		}
 	      }
 	      break;
             case D3DTADDRESS_MIRRORONCE: 
@@ -3470,7 +3470,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 		if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
 		  wrapParm = GL_MIRROR_CLAMP_TO_EDGE_ATI;
 		} else {
-		  FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
+		  FIXME("Unsupported D3DTADDRESS_MIRRORONCE (needs GL_ATI_texture_mirror_once) state %d\n", Type);
 		  wrapParm = GL_REPEAT; 
 		}
 	      }

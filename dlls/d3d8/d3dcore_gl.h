@@ -1,7 +1,7 @@
 /*
  * Direct3D gl definitions
  *
- * Copyright 2003 Raphael Junqueira
+ * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
@@ -188,6 +188,11 @@ typedef void (APIENTRY * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GL
 #ifndef GL_ARB_texture_border_clamp
 #define GL_ARB_texture_border_clamp 1
 #define GL_CLAMP_TO_BORDER_ARB            0x812D
+#endif
+/* GL_ARB_texture_mirrored_repeat (full support GL1.4) */
+#ifndef GL_ARB_texture_mirrored_repeat
+#define GL_ARB_texture_mirrored_repeat 1
+#define GL_MIRRORED_REPEAT_ARB            0x8370
 #endif
 /* GL_ATI_texture_mirror_once */
 #ifndef GL_ATI_texture_mirror_once
@@ -416,6 +421,7 @@ typedef enum _GL_SupportedExt {
   ARB_TEXTURE_ENV_COMBINE,
   ARB_TEXTURE_ENV_DOT3,
   ARB_TEXTURE_BORDER_CLAMP,
+  ARB_TEXTURE_MIRRORED_REPEAT,
   ARB_VERTEX_PROGRAM,
   ARB_VERTEX_BLEND,
   /* EXT */
@@ -550,6 +556,7 @@ typedef struct Direct3DVertexStridedData {
 
 #define USE_GL_FUNC(type, pfn) type pfn;
 typedef struct _GL_Info {
+  unsigned bIsFilled;
   /** 
    * CAPS Constants 
    */
