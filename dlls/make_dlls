@@ -284,7 +284,7 @@ foreach my $mod (keys %imports)
 {
     my $deps = "";
     foreach my $i (@{$linked_dlls{$mod}}) { $deps .= " lib$i.\$(LIBEXT)"; }
-    if ($deps) { printf NEWMAKE "%s:%s\n", $directories{$mod}, $deps; }
+    if ($deps) { printf NEWMAKE "%s %s/__install__:%s\n", $directories{$mod}, $directories{$mod}, $deps; }
 }
 
 print NEWMAKE <<EOF;

@@ -1469,7 +1469,7 @@ LINKABLE_DLLS = ntdll.dll
 libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@
 
-kernel: libntdll.dll.$(LIBEXT)
+kernel kernel/__install__: libntdll.dll.$(LIBEXT)
 
 uninstall::
 	$(RM) $(LINKABLE_DLLS:%=$(libdir)/lib%.$(LIBEXT))
