@@ -163,6 +163,9 @@ static BOOL process_attach(void)
         LocalInit16( USER_HeapSel, 32, 65534 );
     }
 
+    /* some Win9x dlls expect keyboard to be loaded */
+    if (GetVersion() & 0x80000000) LoadLibrary16( "keyboard.drv" );
+
     /* Load the graphics driver */
     if (!load_driver()) return FALSE;
 
