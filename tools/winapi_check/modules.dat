@@ -58,7 +58,6 @@ dlls/gdi
 graphics/metafiledrv
 graphics/win16drv
 graphics
-memory
 objects
 
 % dlls/gdi/gdi32.spec
@@ -91,7 +90,6 @@ dlls/imm32
 
 dlls/kernel
 files
-if1632
 loader/ne
 loader
 memory
@@ -299,6 +297,8 @@ dlls/tapi32
 
 % dlls/ttydrv/ttydrv.spec
 
+dlls/ttydrv
+
 % dlls/urlmon/urlmon.spec
 
 dlls/urlmon
@@ -314,7 +314,7 @@ objects
 
 % dlls/user/keyboard.spec
 
-memory
+dlls/user
 windows
 
 % dlls/user/mouse.spec
@@ -325,7 +325,6 @@ dlls/user
 
 controls
 dlls/user
-if1632
 memory
 misc
 windows
@@ -335,7 +334,6 @@ windows
 controls
 dlls/user
 loader
-memory
 misc
 windows
 
@@ -452,3 +450,6 @@ win32
 
 % dlls/x11drv/x11drv.spec
 
+dlls/x11drv
+graphics/x11drv
+windows/x11drv

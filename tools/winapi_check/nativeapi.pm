@@ -50,16 +50,31 @@ sub new {
     while($again || (defined($_ = <IN>))) {
 	$again = 0;
 	chomp;
-	if(/(.*)\\$/) {
-	    my $line = <IN>;
-	    if(defined($line)) {
-		$_ = $1 . " " . $line;
+	if(/^(.*?)\\$/) {
+	    my $current = $1;
+	    my $next = <IN>;
+	    if(defined($next)) {
+		# remove trailing whitespace
+		$current =~ s/\s+$//;
+
+		# remove leading whitespace
+		$next =~ s/^\s+//;
+
+		$_ = $current . " " . $next;
+
 		$again = 1;
 		next;
 	    }
 	}
+
 	# remove leading and trailing whitespace
 	s/^\s*(.*?)\s*$/$1/;
+
+	# skip emty lines
+	if(/^$/) { next; }
+
+	# skip comments
+	if(/^dnl/) { next; }
 
 	if(/^AC_CHECK_HEADERS\(\s*(.*?)\)\s*$/) {
 	    my @arguments = split(/,/,$1);
@@ -85,7 +100,13 @@ sub new {
     open(IN, "< $config_h_in_file");
     local $/ = "\n";
     while(<IN>) {
-	if(/^\#undef\s+(\S+)\s*$/) {
+	# remove leading and trailing whitespace
+	s/^\s*(.*?)\s*$/$1/;
+
+	# skip emty lines
+	if(/^$/) { next; }
+
+	if(/^\#undef\s+(\S+)$/) {
 	    $$conditionals{$1}++;
 	}
     }
@@ -112,6 +133,15 @@ sub is_conditional {
     return $$conditionals{$name};
 }
 
+sub found_conditional {
+    my $self = shift;
+    my $conditional_found = \%{$self->{CONDITIONAL_FOUND}};
+
+    my $name = shift;
+
+    $$conditional_found{$name}++;
+}
+
 sub is_conditional_header {
     my $self = shift;
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
@@ -128,6 +158,27 @@ sub is_conditional_function {
     my $name = shift;
 
     return $$conditional_functions{$name};
+}
+
+sub global_report {
+    my $self = shift;
+
+    my $output = \${$self->{OUTPUT}};
+    my $conditional_found = \%{$self->{CONDITIONAL_FOUND}};
+    my $conditionals = \%{$self->{CONDITIONALS}};
+
+    my @messages;
+    foreach my $name (sort(keys(%$conditionals))) {
+	if($name =~ /^const|inline|size_t$/) { next; }
+
+	if(0 && !$$conditional_found{$name}) {
+	    push @messages, "config.h.in: conditional $name not used\n";
+	}
+    }
+
+    foreach my $message (sort(@messages)) {
+	$$output->write($message);
+    }
 }
 
 1;

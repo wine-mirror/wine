@@ -509,6 +509,8 @@ foreach my $file ($options->c_files) {
     my $found_conditional = sub {
 	local $_ = shift;
 
+	$nativeapi->found_conditional($_);
+
 	if($options->config) {
 	    if($file_type ne "application") {
 		if(!$nativeapi->is_conditional($_)) {
@@ -702,4 +704,5 @@ if($options->global) {
     winapi_global::check $options, $output, $win32api, $nativeapi if $options->win32;
 
     $modules->global_report;
+    $nativeapi->global_report;
 }

@@ -279,10 +279,20 @@ sub parse_c_file {
 	    my @arguments = ("HDC16");
 	    &$function_begin($documentation, "", $2, "WINAPI", $3, \@arguments);
 	    &$function_end;
-	} elsif(/DC_(GET_VAL_32)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
+	} elsif(/DC_(GET_VAL)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,.*?\)/s) {
 	    $_ = $'; $again = 1;
-	    my @arguments = ("HDC");
-	    &$function_begin($documentation, "", $2, "WINAPI", $3, \@arguments);
+	    my $return16 = $3 . "16";
+	    my $return32 = $3;
+	    my $name16 = $2 . "16";
+	    my $name32 = $2;
+	    my @arguments16 = ("HDC16");
+	    my @arguments32 = ("HDC");
+
+	    if($name16 eq "COLORREF16") { $name16 = "COLORREF"; }
+
+	    &$function_begin($documentation, "", $name16, "WINAPI", $return16, \@arguments16);
+	    &$function_end;
+	    &$function_begin($documentation, "", $name32, "WINAPI", $return32, \@arguments32);
 	    &$function_end;
 	} elsif(/DC_(GET_VAL_EX)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
 	    $_ = $'; $again = 1;
