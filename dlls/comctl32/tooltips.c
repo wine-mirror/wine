@@ -82,14 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(tooltips);
 
 typedef struct
 {
-    WNDPROC wpOrigProc;
-    HWND    hwndToolTip;
-    UINT    uRefCount;
-} TT_SUBCLASS_INFO, *LPTT_SUBCLASS_INFO;
-
-
-typedef struct
-{
     UINT      uFlags;
     HWND      hwnd;
     UINT      uId;
@@ -129,16 +121,11 @@ typedef struct
 #define ID_TIMERLEAVE  3    /* tool leave timer */
 
 
-extern LPSTR COMCTL32_aSubclass; /* global subclassing atom */
-
-/* property name of tooltip window handle */
-/*#define TT_SUBCLASS_PROP "CC32SubclassInfo" */
-
 #define TOOLTIPS_GetInfoPtr(hWindow) ((TOOLTIPS_INFO *)GetWindowLongA (hWindow, 0))
 
 
 LRESULT CALLBACK
-TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
 
 static VOID
@@ -733,37 +720,10 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* install subclassing hook */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-	    if (lpttsi == NULL) {
-		lpttsi =
-		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc =
-		    (WNDPROC)SetWindowLongA ((HWND)toolPtr->uId,
-		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
-		lpttsi->hwndToolTip = hwnd;
-		lpttsi->uRefCount++;
-		SetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass,
-			    (HANDLE)lpttsi);
-	    }
-	    else
-		WARN("A window tool must only be listed once!\n");
+	    SetWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1, hwnd);
 	}
 	else {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-	    if (lpttsi == NULL) {
-		lpttsi =
-		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc =
-		    (WNDPROC)SetWindowLongA (toolPtr->hwnd,
-		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
-		lpttsi->hwndToolTip = hwnd;
-		lpttsi->uRefCount++;
-		SetPropA (toolPtr->hwnd, COMCTL32_aSubclass, (HANDLE)lpttsi);
-	    }
-	    else
-		lpttsi->uRefCount++;
+	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1, hwnd);
 	}
 	TRACE("subclassing installed!\n");
     }
@@ -835,37 +795,10 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* install subclassing hook */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-	    if (lpttsi == NULL) {
-		lpttsi =
-		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc =
-		    (WNDPROC)SetWindowLongA ((HWND)toolPtr->uId,
-		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
-		lpttsi->hwndToolTip = hwnd;
-		lpttsi->uRefCount++;
-		SetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass,
-			    (HANDLE)lpttsi);
-	    }
-	    else
-		WARN("A window tool must only be listed once!\n");
+	    SetWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1, hwnd);
 	}
 	else {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-	    if (lpttsi == NULL) {
-		lpttsi =
-		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
-		lpttsi->wpOrigProc =
-		    (WNDPROC)SetWindowLongA (toolPtr->hwnd,
-		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
-		lpttsi->hwndToolTip = hwnd;
-		lpttsi->uRefCount++;
-		SetPropA (toolPtr->hwnd, COMCTL32_aSubclass, (HANDLE)lpttsi);
-	    }
-	    else
-		lpttsi->uRefCount++;
+	    SetWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1, hwnd);
 	}
 	TRACE("subclassing installed!\n");
     }
@@ -908,32 +841,10 @@ TOOLTIPS_DelToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* remove subclassing */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-	    if (lpttsi) {
-		SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
-				  (LONG)lpttsi->wpOrigProc);
-		RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		COMCTL32_Free (lpttsi);
-	    }
-	    else
-		ERR("Invalid data handle!\n");
+	    RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
 	}
 	else {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-	    if (lpttsi) {
-		if (lpttsi->uRefCount == 1) {
-		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
-				      (LONG)lpttsi->wpOrigProc);
-		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-		    COMCTL32_Free (lpttsi);
-		}
-		else
-		    lpttsi->uRefCount--;
-	    }
-	    else
-		ERR("Invalid data handle!\n");
+	    RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
 	}
     }
 
@@ -1005,32 +916,10 @@ TOOLTIPS_DelToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* remove subclassing */
     if (toolPtr->uFlags & TTF_SUBCLASS) {
 	if (toolPtr->uFlags & TTF_IDISHWND) {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-	    if (lpttsi) {
-		SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
-				  (LONG)lpttsi->wpOrigProc);
-		RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-		COMCTL32_Free (lpttsi);
-	    }
-	    else
-		ERR("Invalid data handle!\n");
+	    RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
 	}
 	else {
-	    LPTT_SUBCLASS_INFO lpttsi =
-		(LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-	    if (lpttsi) {
-		if (lpttsi->uRefCount == 1) {
-		    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
-				      (LONG)lpttsi->wpOrigProc);
-		    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-		    COMCTL32_Free (lpttsi);
-		}
-		else
-		    lpttsi->uRefCount--;
-	    }
-	    else
-		ERR("Invalid data handle!\n");
+	    RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
 	}
     }
 
@@ -2076,25 +1965,11 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 	    /* remove subclassing */
         if (toolPtr->uFlags & TTF_SUBCLASS) {
-            LPTT_SUBCLASS_INFO lpttsi;
-
             if (toolPtr->uFlags & TTF_IDISHWND) {
-                lpttsi = (LPTT_SUBCLASS_INFO)GetPropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-                if (lpttsi) {
-                    SetWindowLongA ((HWND)toolPtr->uId, GWL_WNDPROC,
-                              (LONG)lpttsi->wpOrigProc);
-                    RemovePropA ((HWND)toolPtr->uId, COMCTL32_aSubclass);
-                    COMCTL32_Free (lpttsi);
-                }
+                RemoveWindowSubclass(toolPtr->uId, TOOLTIPS_SubclassProc, 1);
             }
             else {
-                lpttsi = (LPTT_SUBCLASS_INFO)GetPropA (toolPtr->hwnd, COMCTL32_aSubclass);
-                if (lpttsi) {
-                    SetWindowLongA ((HWND)toolPtr->hwnd, GWL_WNDPROC,
-                               (LONG)lpttsi->wpOrigProc);
-                    RemovePropA ((HWND)toolPtr->hwnd, COMCTL32_aSubclass);
-                    COMCTL32_Free (lpttsi);
-                }
+                RemoveWindowSubclass(toolPtr->hwnd, TOOLTIPS_SubclassProc, 1);
             }
         }
     }
@@ -2331,10 +2206,8 @@ TOOLTIPS_WinIniChange (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 LRESULT CALLBACK
-TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
 {
-    LPTT_SUBCLASS_INFO lpttsi =
-	(LPTT_SUBCLASS_INFO)GetPropA (hwnd, COMCTL32_aSubclass);
     MSG msg;
 
     switch(uMsg) {
@@ -2349,13 +2222,13 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	msg.message = uMsg;
 	msg.wParam = wParam;
 	msg.lParam = lParam;
-	TOOLTIPS_RelayEvent(lpttsi->hwndToolTip, 0, (LPARAM)&msg);
+	TOOLTIPS_RelayEvent(dwRef, 0, (LPARAM)&msg);
 	break;
 
     default:
         break;
     }
-    return CallWindowProcA (lpttsi->wpOrigProc, hwnd, uMsg, wParam, lParam);
+    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
 
