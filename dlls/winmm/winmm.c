@@ -37,8 +37,8 @@
 #include "winbase.h"
 #include "mmsystem.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "winreg.h"
-#include "heap.h"
 #include "winternl.h"
 #include "winemm.h"
 
@@ -680,7 +680,7 @@ UINT WINAPI auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 /**************************************************************************
  * 				auxOutMessage		[WINMM.@]
  */
-DWORD WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
+UINT WINAPI auxOutMessage(UINT uDeviceID, UINT uMessage, DWORD dw1, DWORD dw2)
 {
     LPWINE_MLD		wmld;
 
@@ -810,10 +810,15 @@ UINT WINAPI mciGetDeviceIDA(LPCSTR lpstrName)
  */
 UINT WINAPI mciGetDeviceIDW(LPCWSTR lpwstrName)
 {
-    LPSTR 	lpstrName;
+    LPSTR 	lpstrName = NULL;
     UINT	ret;
+    INT         len;
 
-    lpstrName = HEAP_strdupWtoA(GetProcessHeap(), 0, lpwstrName);
+    if (lpwstrName) {
+        len = WideCharToMultiByte( CP_ACP, 0, lpwstrName, -1, NULL, 0, NULL, NULL );
+        lpstrName = HeapAlloc( GetProcessHeap(), 0, len );
+        if (lpstrName) WideCharToMultiByte( CP_ACP, 0, lpwstrName, -1, lpstrName, len, NULL, NULL );
+    }
     ret = MCI_GetDriverFromString(lpstrName);
     HeapFree(GetProcessHeap(), 0, lpstrName);
     return ret;
@@ -1273,8 +1278,8 @@ UINT WINAPI midiOutGetID(HMIDIOUT hMidiOut, UINT* lpuDeviceID)
 /**************************************************************************
  * 				midiOutMessage		[WINMM.@]
  */
-DWORD WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
-			    DWORD dwParam1, DWORD dwParam2)
+UINT WINAPI midiOutMessage(HMIDIOUT hMidiOut, UINT uMessage,
+                           DWORD dwParam1, DWORD dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -1545,8 +1550,8 @@ UINT WINAPI midiInGetID(HMIDIIN hMidiIn, UINT* lpuDeviceID)
 /**************************************************************************
  * 				midiInMessage		[WINMM.@]
  */
-DWORD WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
-			   DWORD dwParam1, DWORD dwParam2)
+UINT WINAPI midiInMessage(HMIDIIN hMidiIn, UINT uMessage,
+                          DWORD dwParam1, DWORD dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -2590,8 +2595,8 @@ UINT WINAPI waveOutGetID(HWAVEOUT hWaveOut, UINT* lpuDeviceID)
 /**************************************************************************
  * 				waveOutMessage 		[WINMM.@]
  */
-DWORD WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
-			    DWORD dwParam1, DWORD dwParam2)
+UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
+                           DWORD dwParam1, DWORD dwParam2)
 {
     LPWINE_MLD		wmld;
 
@@ -2844,8 +2849,8 @@ UINT WINAPI waveInGetID(HWAVEIN hWaveIn, UINT* lpuDeviceID)
 /**************************************************************************
  * 				waveInMessage 		[WINMM.@]
  */
-DWORD WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
-			   DWORD dwParam1, DWORD dwParam2)
+UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
+                          DWORD dwParam1, DWORD dwParam2)
 {
     LPWINE_MLD		wmld;
 

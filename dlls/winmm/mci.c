@@ -1050,10 +1050,11 @@ errCleanUp:
 /**************************************************************************
  * 				mciSendStringW			[WINMM.@]
  */
-DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
+DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPWSTR lpwstrRet,
 			    UINT uRetLen, HWND hwndCallback)
 {
     LPSTR 	lpstrCommand;
+    LPSTR       lpstrRet = NULL;
     UINT	ret;
     INT len;
 
@@ -1061,8 +1062,16 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpwstrCommand, LPSTR lpstrRet,
     len = WideCharToMultiByte( CP_ACP, 0, lpwstrCommand, -1, NULL, 0, NULL, NULL );
     lpstrCommand = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, lpwstrCommand, -1, lpstrCommand, len, NULL, NULL );
+    if (lpwstrRet)
+    {
+        lpstrRet = HeapAlloc(GetProcessHeap(), 0, uRetLen * sizeof(WCHAR));
+        if (!lpstrRet) return MMSYSERR_NOMEM;
+    }
     ret = mciSendStringA(lpstrCommand, lpstrRet, uRetLen, hwndCallback);
+    if (lpwstrRet)
+        MultiByteToWideChar( CP_ACP, 0, lpstrRet, -1, lpwstrRet, uRetLen );
     HeapFree(GetProcessHeap(), 0, lpstrCommand);
+    if (lpstrRet) HeapFree(GetProcessHeap(), 0, lpstrRet);
     return ret;
 }
 

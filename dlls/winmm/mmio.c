@@ -38,8 +38,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "mmsystem.h"
-#include "heap.h"
 #include "winemm.h"
 
 #include "wine/debug.h"
@@ -686,7 +686,15 @@ HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
 		       DWORD dwOpenFlags)
 {
     HMMIO 	ret;
-    LPSTR	szFn = HEAP_strdupWtoA(GetProcessHeap(), 0, szFileName);
+    LPSTR	szFn = NULL;
+
+    if (szFileName)
+    {
+        INT     len = WideCharToMultiByte( CP_ACP, 0, szFileName, -1, NULL, 0, NULL, NULL );
+        szFn = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!szFn) return (HMMIO)NULL;
+        WideCharToMultiByte( CP_ACP, 0, szFileName, -1, szFn, len, NULL, NULL );
+    }
 
     ret = MMIO_Open(szFn, lpmmioinfo, dwOpenFlags, MMIO_PROC_32W);
 
@@ -1063,11 +1071,10 @@ FOURCC WINAPI mmioStringToFOURCCA(LPCSTR sz, UINT uFlags)
  */
 FOURCC WINAPI mmioStringToFOURCCW(LPCWSTR sz, UINT uFlags)
 {
-    LPSTR	szA = HEAP_strdupWtoA(GetProcessHeap(),0,sz);
-    FOURCC	ret = mmioStringToFOURCCA(szA,uFlags);
+    char	szA[4];
 
-    HeapFree(GetProcessHeap(), 0, szA);
-    return ret;
+    WideCharToMultiByte( CP_ACP, 0, sz, 4, szA, sizeof(szA), NULL, NULL );
+    return mmioStringToFOURCCA(szA,uFlags);
 }
 
 /**************************************************************************
@@ -1299,20 +1306,24 @@ MMRESULT WINAPI mmioCreateChunk(HMMIO hmmio, MMCKINFO* lpck, UINT uFlags)
  * 				mmioRenameA    			[WINMM.@]
  */
 MMRESULT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
-                            MMIOINFO* lpmmioinfo, DWORD dwFlags)
+                            const MMIOINFO* lpmmioinfo, DWORD dwFlags)
 {
     struct IOProcList*  ioProc = NULL;
     struct IOProcList   tmp;
+    FOURCC              fcc;
 
     TRACE("('%s', '%s', %p, %08lX);\n",
 	  debugstr_a(szFileName), debugstr_a(szNewFileName), lpmmioinfo, dwFlags);
 
     /* If both params are NULL, then parse the file name */
     if (lpmmioinfo && lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL)
-	lpmmioinfo->fccIOProc = MMIO_ParseExtA(szFileName);
+    {
+	fcc = MMIO_ParseExtA(szFileName);
+        if (fcc) ioProc = MMIO_FindProcNode(fcc);
+    }
 
     /* Handle any unhandled/error case from above. Assume DOS file */
-    if (!lpmmioinfo || (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL))
+    if (!lpmmioinfo || (lpmmioinfo->fccIOProc == 0 && lpmmioinfo->pIOProc == NULL && ioProc == NULL))
 	ioProc = MMIO_FindProcNode(FOURCC_DOS);
     /* if just the four character code is present, look up IO proc */
     else if (lpmmioinfo->pIOProc == NULL)
@@ -1326,7 +1337,10 @@ MMRESULT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
         tmp.count = 1;
     }
 
-    return send_message(ioProc, lpmmioinfo, MMIOM_RENAME,
+    /* FIXME: should we actually pass lpmmioinfo down the drain ???
+     * or make a copy of it because it's const ???
+     */
+    return send_message(ioProc, (LPMMIOINFO)lpmmioinfo, MMIOM_RENAME,
                         (LPARAM)szFileName, (LPARAM)szNewFileName, MMIO_PROC_32A);
 }
 
@@ -1334,11 +1348,29 @@ MMRESULT WINAPI mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
  * 				mmioRenameW    			[WINMM.@]
  */
 MMRESULT WINAPI mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
-                            MMIOINFO* lpmmioinfo, DWORD dwFlags)
+                            const MMIOINFO* lpmmioinfo, DWORD dwFlags)
 {
-    LPSTR	szFn = HEAP_strdupWtoA(GetProcessHeap(), 0, szFileName);
-    LPSTR	sznFn = HEAP_strdupWtoA(GetProcessHeap(), 0, szNewFileName);
-    UINT	ret = mmioRenameA(szFn, sznFn, lpmmioinfo, dwFlags);
+    LPSTR	szFn = NULL;
+    LPSTR	sznFn = NULL;
+    UINT	ret;
+    INT         len;
+
+    if (szFileName)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, szFileName, -1, NULL, 0, NULL, NULL );
+        szFn = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!szFn) return MMSYSERR_NOMEM;
+        WideCharToMultiByte( CP_ACP, 0, szFileName, -1, szFn, len, NULL, NULL );
+    }
+    if (szNewFileName)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, szNewFileName, -1, NULL, 0, NULL, NULL );
+        sznFn = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!sznFn) return MMSYSERR_NOMEM;
+        WideCharToMultiByte( CP_ACP, 0, szNewFileName, -1, sznFn, len, NULL, NULL );
+    }
+
+    ret = mmioRenameA(szFn, sznFn, lpmmioinfo, dwFlags);
 
     HeapFree(GetProcessHeap(),0,szFn);
     HeapFree(GetProcessHeap(),0,sznFn);

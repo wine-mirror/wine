@@ -297,9 +297,6 @@ typedef LPDRVCALLBACK LPWAVECALLBACK;
 #define  WAVE_MAPPED               	0x0004
 #define  WAVE_FORMAT_DIRECT        	0x0008
 #define  WAVE_FORMAT_DIRECT_QUERY  	(WAVE_FORMAT_QUERY | WAVE_FORMAT_DIRECT)
-#ifdef __WINESRC__
-#define  WAVE_DIRECTSOUND               0x0080
-#endif
 
 typedef struct wavehdr_tag {
     LPSTR       lpData;		/* pointer to locked data buffer */
@@ -449,7 +446,7 @@ UINT 		WINAPI 	waveOutSetPitch(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetPlaybackRate(HWAVEOUT,DWORD*);
 UINT 		WINAPI 	waveOutSetPlaybackRate(HWAVEOUT,DWORD);
 UINT 		WINAPI 	waveOutGetID(HWAVEOUT,UINT*);
-DWORD 		WINAPI 	waveOutMessage(HWAVEOUT,UINT,DWORD,DWORD);
+UINT 		WINAPI 	waveOutMessage(HWAVEOUT,UINT,DWORD,DWORD);
 UINT 		WINAPI 	waveInGetNumDevs(void);
 UINT 		WINAPI 	waveInGetDevCapsA(UINT,LPWAVEINCAPSA,UINT);
 UINT 		WINAPI 	waveInGetDevCapsW(UINT,LPWAVEINCAPSW,UINT);
@@ -467,7 +464,7 @@ UINT 		WINAPI  waveInStop(HWAVEIN);
 UINT 		WINAPI  waveInReset(HWAVEIN);
 UINT 		WINAPI  waveInGetPosition(HWAVEIN,LPMMTIME,UINT);
 UINT 		WINAPI  waveInGetID(HWAVEIN,UINT*);
-DWORD 		WINAPI 	waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
+UINT 		WINAPI 	waveInMessage(HWAVEIN,UINT,DWORD,DWORD);
 
 #define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
 #define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
@@ -646,7 +643,7 @@ UINT		WINAPI	midiOutReset(HMIDIOUT);
 UINT		WINAPI	midiOutCachePatches(HMIDIOUT,UINT,WORD*,UINT);
 UINT		WINAPI	midiOutCacheDrumPatches(HMIDIOUT,UINT,WORD*,UINT);
 UINT		WINAPI	midiOutGetID(HMIDIOUT,UINT*);
-DWORD		WINAPI	midiOutMessage(HMIDIOUT,UINT,DWORD,DWORD);
+UINT		WINAPI	midiOutMessage(HMIDIOUT,UINT,DWORD,DWORD);
 
 UINT		WINAPI	midiInGetNumDevs(void);
 UINT		WINAPI	midiInGetDevCapsA(UINT,LPMIDIINCAPSA,UINT);
@@ -664,7 +661,7 @@ UINT		WINAPI	midiInStart(HMIDIIN);
 UINT		WINAPI	midiInStop(HMIDIIN);
 UINT		WINAPI	midiInReset(HMIDIIN);
 UINT		WINAPI	midiInGetID(HMIDIIN,UINT*);
-DWORD		WINAPI	midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
+UINT		WINAPI	midiInMessage(HMIDIIN,UINT,DWORD,DWORD);
 MMRESULT	WINAPI	midiStreamClose(HMIDISTRM hms);
 MMRESULT	WINAPI	midiStreamOpen(HMIDISTRM* phms, LPUINT uDeviceID, DWORD cMidi,
 				       DWORD dwCallback, DWORD dwInstance, DWORD fdwOpen);
@@ -712,7 +709,7 @@ UINT		WINAPI	auxGetDevCapsW(UINT,LPAUXCAPSW,UINT);
 #define 		auxGetDevCaps WINELIB_NAME_AW(auxGetDevCaps)
 UINT		WINAPI	auxSetVolume(UINT,DWORD);
 UINT		WINAPI	auxGetVolume(UINT,LPDWORD);
-DWORD		WINAPI	auxOutMessage(UINT,UINT,DWORD,DWORD);
+UINT		WINAPI	auxOutMessage(UINT,UINT,DWORD,DWORD);
 
 #define TIMERR_NOERROR        (0)                  /* no error */
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
@@ -1389,9 +1386,9 @@ HMMIO		WINAPI	mmioOpenW(LPWSTR,MMIOINFO*,DWORD);
 #define			mmioOpen WINELIB_NAME_AW(mmioOpen)
 
 MMRESULT	WINAPI	mmioRenameA(LPCSTR szFileName, LPCSTR szNewFileName,
-				    MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
+				    const MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
 MMRESULT	WINAPI	mmioRenameW(LPCWSTR szFileName, LPCWSTR szNewFileName,
-				    MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
+				    const MMIOINFO * lpmmioinfo, DWORD dwRenameFlags);
 #define 		mmioRename WINELIB_NAME_AW(mmioRename)
 
 MMRESULT 	WINAPI	mmioClose(HMMIO,UINT);
@@ -1414,7 +1411,7 @@ DWORD		WINAPI	mciSendCommandA(UINT,UINT,DWORD,DWORD);
 DWORD		WINAPI	mciSendCommandW(UINT,UINT,DWORD,DWORD);
 #define 		mciSendCommand WINELIB_NAME_AW(mciSendCommand)
 DWORD		WINAPI	mciSendStringA(LPCSTR,LPSTR,UINT,HWND);
-DWORD		WINAPI	mciSendStringW(LPCWSTR,LPSTR,UINT,HWND);
+DWORD		WINAPI	mciSendStringW(LPCWSTR,LPWSTR,UINT,HWND);
 #define 		mciSendString WINELIB_NAME_AW(mciSendString)
 UINT		WINAPI	mciGetDeviceIDA(LPCSTR);
 UINT		WINAPI	mciGetDeviceIDW(LPCWSTR);

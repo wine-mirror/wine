@@ -38,10 +38,10 @@
 #include "ntstatus.h"
 #include "winternl.h"
 #include "wownt32.h"
+#include "winnls.h"
 
 #include "wine/winuser16.h"
 #include "winemm.h"
-#include "heap.h"
 
 #include "wine/debug.h"
 
@@ -2237,20 +2237,32 @@ static WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lPara
 
 	    if (dci16) {
 		LPSTR str1;
-
+                INT len;
 		dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
 
-		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
-                {
-		    dci16->lpszDCISectionName = MapLS( str1 );
+                if (dci32->lpszDCISectionName) {
+                    len = WideCharToMultiByte( CP_ACP, 0, dci32->lpszDCISectionName, -1, NULL, 0, NULL, NULL );
+                    str1 = HeapAlloc( GetProcessHeap(), 0, len );
+                    if (str1) {
+                        WideCharToMultiByte( CP_ACP, 0, dci32->lpszDCISectionName, -1, str1, len, NULL, NULL );
+                        dci16->lpszDCISectionName = MapLS( str1 );
+                    } else {
+                        return WINMM_MAP_NOMEM;
+                    }
 		} else {
-		    return WINMM_MAP_NOMEM;
+		    dci16->lpszDCISectionName = 0L;
 		}
-		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL)
-                {
-		    dci16->lpszDCIAliasName = MapLS( str1 );
+                if (dci32->lpszDCIAliasName) {
+                    len = WideCharToMultiByte( CP_ACP, 0, dci32->lpszDCIAliasName, -1, NULL, 0, NULL, NULL );
+                    str1 = HeapAlloc( GetProcessHeap(), 0, len );
+                    if (str1) {
+                        WideCharToMultiByte( CP_ACP, 0, dci32->lpszDCIAliasName, -1, str1, len, NULL, NULL );
+                        dci16->lpszDCIAliasName = MapLS( str1 );
+                    } else {
+                        return WINMM_MAP_NOMEM;
+                    }
 		} else {
-		    return WINMM_MAP_NOMEM;
+		    dci16->lpszDCISectionName = 0L;
 		}
 	    } else {
 		return WINMM_MAP_NOMEM;

@@ -23,10 +23,12 @@
  */
 
 #include <string.h>
-#include "heap.h"
+#include <stdarg.h>
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "mmddk.h"
 #include "winemm.h"
 #include "wine/debug.h"
@@ -326,9 +328,28 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
  */
 HDRVR WINAPI OpenDriverW(LPCWSTR lpDriverName, LPCWSTR lpSectionName, LPARAM lParam)
 {
-    LPSTR 		dn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpDriverName);
-    LPSTR 		sn = HEAP_strdupWtoA(GetProcessHeap(), 0, lpSectionName);
-    HDRVR		ret = OpenDriverA(dn, sn, lParam);
+    INT                 len;
+    LPSTR 		dn = NULL;
+    LPSTR 		sn = NULL;
+    HDRVR		ret;
+
+    if (lpDriverName)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, lpDriverName, -1, NULL, 0, NULL, NULL );
+        dn = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!dn) return 0;
+        WideCharToMultiByte( CP_ACP, 0, lpDriverName, -1, dn, len, NULL, NULL );
+    }
+
+    if (lpSectionName)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, lpSectionName, -1, NULL, 0, NULL, NULL );
+        sn = HeapAlloc( GetProcessHeap(), 0, len );
+        if (!sn) return 0;
+        WideCharToMultiByte( CP_ACP, 0, lpSectionName, -1, sn, len, NULL, NULL );
+    }
+
+    ret = OpenDriverA(dn, sn, lParam);
 
     if (dn) HeapFree(GetProcessHeap(), 0, dn);
     if (sn) HeapFree(GetProcessHeap(), 0, sn);
