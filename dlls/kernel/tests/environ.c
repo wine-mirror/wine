@@ -211,8 +211,21 @@ static void test_GetSetEnvironmentVariableW(void)
        ret, GetLastError());
 }
 
+static void test_ExpandEnvironmentStringsA()
+{
+    char buf[256], buf1[256];
+    DWORD ret_size, ret_size1;
+
+    ret_size1 = GetWindowsDirectoryA(buf1,256);
+    ok ((ret_size1 >0) && (ret_size1<256), "GetWindowsDirectory Failed\n");
+    ret_size = ExpandEnvironmentStringsA("%SystemRoot%",buf,256);
+    ok(!strcmp(buf, buf1), "ExpandEnvironmentStrings failed %s vs %s\n", buf, buf1);
+}
+  
+
 START_TEST(environ)
 {
     test_GetSetEnvironmentVariableA();
     test_GetSetEnvironmentVariableW();
+    test_ExpandEnvironmentStringsA();
 }
