@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBPCI_QueryInterface(LPPROVIDECLASSINFO iface,
                                            REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IProvideClassInfoImpl, iface);
+    IProvideClassInfoImpl *This = (IProvideClassInfoImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -46,7 +46,7 @@ static HRESULT WINAPI WBPCI_QueryInterface(LPPROVIDECLASSINFO iface,
 
 static ULONG WINAPI WBPCI_AddRef(LPPROVIDECLASSINFO iface)
 {
-    ICOM_THIS(IProvideClassInfoImpl, iface);
+    IProvideClassInfoImpl *This = (IProvideClassInfoImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -54,7 +54,7 @@ static ULONG WINAPI WBPCI_AddRef(LPPROVIDECLASSINFO iface)
 
 static ULONG WINAPI WBPCI_Release(LPPROVIDECLASSINFO iface)
 {
-    ICOM_THIS(IProvideClassInfoImpl, iface);
+    IProvideClassInfoImpl *This = (IProvideClassInfoImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -93,7 +93,7 @@ IProvideClassInfoImpl SHDOCVW_ProvideClassInfo = { &WBPCI_Vtbl, 1 };
 static HRESULT WINAPI WBPCI2_QueryInterface(LPPROVIDECLASSINFO2 iface,
                                             REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IProvideClassInfo2Impl, iface);
+    IProvideClassInfo2Impl *This = (IProvideClassInfo2Impl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -101,7 +101,7 @@ static HRESULT WINAPI WBPCI2_QueryInterface(LPPROVIDECLASSINFO2 iface,
 
 static ULONG WINAPI WBPCI2_AddRef(LPPROVIDECLASSINFO2 iface)
 {
-    ICOM_THIS(IProvideClassInfo2Impl, iface);
+    IProvideClassInfo2Impl *This = (IProvideClassInfo2Impl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -109,7 +109,7 @@ static ULONG WINAPI WBPCI2_AddRef(LPPROVIDECLASSINFO2 iface)
 
 static ULONG WINAPI WBPCI2_Release(LPPROVIDECLASSINFO2 iface)
 {
-    ICOM_THIS(IProvideClassInfo2Impl, iface);
+    IProvideClassInfo2Impl *This = (IProvideClassInfo2Impl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

@@ -159,7 +159,7 @@ static IBindingVtbl VTBinding_URLMonikerImpl =
  *******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
@@ -193,7 +193,7 @@ static HRESULT WINAPI URLMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,
  ******************************************************************************/
 static ULONG WINAPI URLMonikerImpl_AddRef(IMoniker* iface)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -205,7 +205,7 @@ static ULONG WINAPI URLMonikerImpl_AddRef(IMoniker* iface)
  ******************************************************************************/
 static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -227,7 +227,7 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
 static HRESULT WINAPI URLMonikerImpl_GetClassID(IMoniker* iface,
 						CLSID *pClassID)/* Pointer to CLSID of object */
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     TRACE("(%p,%p)\n",This,pClassID);
 
@@ -243,7 +243,7 @@ static HRESULT WINAPI URLMonikerImpl_GetClassID(IMoniker* iface,
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_IsDirty(IMoniker* iface)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     /* Note that the OLE-provided implementations of the IPersistStream::IsDirty
        method in the OLE-provided moniker interfaces always return S_FALSE because
        their internal state never changes. */
@@ -262,7 +262,7 @@ static HRESULT WINAPI URLMonikerImpl_IsDirty(IMoniker* iface)
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_Load(IMoniker* iface,IStream* pStm)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     
     HRESULT res;
     ULONG len;
@@ -298,7 +298,7 @@ static HRESULT WINAPI URLMonikerImpl_Save(IMoniker* iface,
 					  IStream* pStm,/* pointer to the stream where the object is to be saved */
 					  BOOL fClearDirty)/* Specifies whether to clear the dirty flag */
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     HRESULT res;
     ULONG len;
@@ -321,7 +321,7 @@ static HRESULT WINAPI URLMonikerImpl_Save(IMoniker* iface,
 static HRESULT WINAPI URLMonikerImpl_GetSizeMax(IMoniker* iface,
 						ULARGE_INTEGER* pcbSize)/* Pointer to size of stream needed to save object */
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     TRACE("(%p,%p)\n",This,pcbSize);
 
@@ -403,7 +403,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToObject(IMoniker* iface,
 						  REFIID riid,
 						  VOID** ppvResult)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
 
     *ppvResult=0;
 
@@ -469,7 +469,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 						   REFIID riid,
 						   VOID** ppvObject)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     HRESULT hres;
     IBindStatusCallback *pbscb;
     BINDINFO bi;
@@ -613,7 +613,7 @@ static HRESULT WINAPI URLMonikerImpl_Reduce(IMoniker* iface,
 					    IMoniker** ppmkToLeft,
 					    IMoniker** ppmkReduced)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     
     TRACE("(%p,%p,%ld,%p,%p)\n",This,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
@@ -633,7 +633,7 @@ static HRESULT WINAPI URLMonikerImpl_ComposeWith(IMoniker* iface,
 						 BOOL fOnlyIfNotGeneric,
 						 IMoniker** ppmkComposite)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%d,%p): stub\n",This,pmkRight,fOnlyIfNotGeneric,ppmkComposite);
 
     return E_NOTIMPL;
@@ -644,7 +644,7 @@ static HRESULT WINAPI URLMonikerImpl_ComposeWith(IMoniker* iface,
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     TRACE("(%p,%d,%p)\n",This,fForward,ppenumMoniker);
 
     if(!ppenumMoniker)
@@ -660,7 +660,7 @@ static HRESULT WINAPI URLMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMo
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     CLSID clsid;
     LPOLESTR urlPath;
     IBindCtx* bind;
@@ -697,7 +697,7 @@ static HRESULT WINAPI URLMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherM
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_Hash(IMoniker* iface,DWORD* pdwHash)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     
     int  h = 0,i,skip,len;
     int  off = 0;
@@ -735,7 +735,7 @@ static HRESULT WINAPI URLMonikerImpl_IsRunning(IMoniker* iface,
 					       IMoniker* pmkToLeft,
 					       IMoniker* pmkNewlyRunning)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%p,%p): stub\n",This,pbc,pmkToLeft,pmkNewlyRunning);
 
     return E_NOTIMPL;
@@ -749,7 +749,7 @@ static HRESULT WINAPI URLMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
 							 IMoniker* pmkToLeft,
 							 FILETIME* pFileTime)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%p,%p): stub\n",This,pbc,pmkToLeft,pFileTime);
 
     return E_NOTIMPL;
@@ -760,7 +760,7 @@ static HRESULT WINAPI URLMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     TRACE("(%p,%p)\n",This,ppmk);
 
     return MK_E_NOINVERSE;
@@ -771,7 +771,7 @@ static HRESULT WINAPI URLMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%p): stub\n",This,pmkOther,ppmkPrefix);
 
     return E_NOTIMPL;
@@ -782,7 +782,7 @@ static HRESULT WINAPI URLMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* 
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppmkRelPath)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%p): stub\n",This,pmOther,ppmkRelPath);
 
     return E_NOTIMPL;
@@ -796,7 +796,7 @@ static HRESULT WINAPI URLMonikerImpl_GetDisplayName(IMoniker* iface,
 						    IMoniker* pmkToLeft,
 						    LPOLESTR *ppszDisplayName)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     
     int len;
     
@@ -826,7 +826,7 @@ static HRESULT WINAPI URLMonikerImpl_ParseDisplayName(IMoniker* iface,
 						      ULONG* pchEaten,
 						      IMoniker** ppmkOut)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     FIXME("(%p)->(%p,%p,%p,%p,%p): stub\n",This,pbc,pmkToLeft,pszDisplayName,pchEaten,ppmkOut);
 
     return E_NOTIMPL;
@@ -837,7 +837,7 @@ static HRESULT WINAPI URLMonikerImpl_ParseDisplayName(IMoniker* iface,
  ******************************************************************************/
 static HRESULT WINAPI URLMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {
-    ICOM_THIS(URLMonikerImpl,iface);
+    URLMonikerImpl *This = (URLMonikerImpl *)iface;
     TRACE("(%p,%p)\n",This,pwdMksys);
 
     if(!pwdMksys)

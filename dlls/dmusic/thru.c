@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicThru IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicThruImpl_QueryInterface (LPDIRECTMUSICTHRU iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicThruImpl,iface);
+	IDirectMusicThruImpl *This = (IDirectMusicThruImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -37,13 +37,13 @@ HRESULT WINAPI IDirectMusicThruImpl_QueryInterface (LPDIRECTMUSICTHRU iface, REF
 }
 
 ULONG WINAPI IDirectMusicThruImpl_AddRef (LPDIRECTMUSICTHRU iface) {
-	ICOM_THIS(IDirectMusicThruImpl,iface);
+	IDirectMusicThruImpl *This = (IDirectMusicThruImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicThruImpl_Release (LPDIRECTMUSICTHRU iface) {
-	ICOM_THIS(IDirectMusicThruImpl,iface);
+	IDirectMusicThruImpl *This = (IDirectMusicThruImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -54,7 +54,7 @@ ULONG WINAPI IDirectMusicThruImpl_Release (LPDIRECTMUSICTHRU iface) {
 
 /* IDirectMusicThru Interface follow: */
 HRESULT WINAPI IDirectMusicThruImpl_ThruChannel (LPDIRECTMUSICTHRU iface, DWORD dwSourceChannelGroup, DWORD dwSourceChannel, DWORD dwDestinationChannelGroup, DWORD dwDestinationChannel, LPDIRECTMUSICPORT pDestinationPort) {
-	ICOM_THIS(IDirectMusicThruImpl,iface);
+	IDirectMusicThruImpl *This = (IDirectMusicThruImpl *)iface;
 	FIXME("(%p, %ld, %ld, %ld, %ld, %p): stub\n", This, dwSourceChannelGroup, dwSourceChannel, dwDestinationChannelGroup, dwDestinationChannel, pDestinationPort);
 	return S_OK;
 }

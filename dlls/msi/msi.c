@@ -1382,30 +1382,30 @@ typedef struct {
 } IClassFactoryImpl;
 
 static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   FIXME("(%p, %s, %p): stub\n",This,debugstr_guid(riid),ppobj);
   return E_NOINTERFACE;
 }
 
 static ULONG WINAPI MsiCF_AddRef(LPCLASSFACTORY iface) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   return ++(This->ref);
 }
 
 static ULONG WINAPI MsiCF_Release(LPCLASSFACTORY iface) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   /* static class, won't be  freed */
   return --(This->ref);
 }
 
 static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   FIXME ("(%p, %p, %s, %p): to implement\n", This, pOuter, debugstr_guid(riid), ppobj);
   return 0;
 }
 
 static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   FIXME("(%p, %d): stub\n", This, dolock);
   return S_OK;
 }

@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBPS_QueryInterface(LPPERSISTSTORAGE iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IPersistStorageImpl, iface);
+    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -38,7 +38,7 @@ static HRESULT WINAPI WBPS_QueryInterface(LPPERSISTSTORAGE iface,
 
 static ULONG WINAPI WBPS_AddRef(LPPERSISTSTORAGE iface)
 {
-    ICOM_THIS(IPersistStorageImpl, iface);
+    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -46,7 +46,7 @@ static ULONG WINAPI WBPS_AddRef(LPPERSISTSTORAGE iface)
 
 static ULONG WINAPI WBPS_Release(LPPERSISTSTORAGE iface)
 {
-    ICOM_THIS(IPersistStorageImpl, iface);
+    IPersistStorageImpl *This = (IPersistStorageImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -117,7 +117,7 @@ IPersistStorageImpl SHDOCVW_PersistStorage = { &WBPS_Vtbl, 1 };
 static HRESULT WINAPI WBPSI_QueryInterface(LPPERSISTSTREAMINIT iface,
                                            REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IPersistStreamInitImpl, iface);
+    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -125,7 +125,7 @@ static HRESULT WINAPI WBPSI_QueryInterface(LPPERSISTSTREAMINIT iface,
 
 static ULONG WINAPI WBPSI_AddRef(LPPERSISTSTREAMINIT iface)
 {
-    ICOM_THIS(IPersistStreamInitImpl, iface);
+    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -133,7 +133,7 @@ static ULONG WINAPI WBPSI_AddRef(LPPERSISTSTREAMINIT iface)
 
 static ULONG WINAPI WBPSI_Release(LPPERSISTSTREAMINIT iface)
 {
-    ICOM_THIS(IPersistStreamInitImpl, iface);
+    IPersistStreamInitImpl *This = (IPersistStreamInitImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

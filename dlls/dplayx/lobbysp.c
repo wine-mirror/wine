@@ -77,7 +77,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp
 
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
-    ICOM_THIS(IDPLobbySPImpl,*ppvObj);
+    IDPLobbySPImpl *This = (IDPLobbySPImpl *)*ppvObj;
     This->lpVtbl = &dpLobbySPVT;
   }
   else
@@ -110,7 +110,7 @@ HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp
 
 static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
 {
-  ICOM_THIS(IDPLobbySPImpl,lpSP);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
   This->unk = (DPLobbySPIUnknownData*)HeapAlloc( GetProcessHeap(),
                                                     HEAP_ZERO_MEMORY,
@@ -128,7 +128,7 @@ static BOOL DPLSP_CreateIUnknown( LPVOID lpSP )
 
 static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
 {
-  ICOM_THIS(IDPLobbySPImpl,lpSP);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
   DeleteCriticalSection( &This->unk->DPLSP_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
@@ -138,7 +138,7 @@ static BOOL DPLSP_DestroyIUnknown( LPVOID lpSP )
 
 static BOOL DPLSP_CreateDPLobbySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
-  ICOM_THIS(IDPLobbySPImpl,lpSP);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
   This->sp = (DPLobbySPData*)HeapAlloc( GetProcessHeap(),
                                         HEAP_ZERO_MEMORY,
@@ -172,7 +172,7 @@ static BOOL DPLSP_CreateDPLobbySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 
 static BOOL DPLSP_DestroyDPLobbySP( LPVOID lpSP )
 {
-  ICOM_THIS(IDPLobbySPImpl,lpSP);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)lpSP;
 
   HeapFree( GetProcessHeap(), 0, This->sp );
 
@@ -186,7 +186,7 @@ HRESULT WINAPI DPLSP_QueryInterface
   LPVOID* ppvObj
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
   *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -202,7 +202,7 @@ HRESULT WINAPI DPLSP_QueryInterface
 
   if( IsEqualGUID( &IID_IDPLobbySP, riid ) )
   {
-    ICOM_THIS(IDPLobbySPImpl,*ppvObj);
+    IDPLobbySPImpl *This = (IDPLobbySPImpl *)*ppvObj;
     This->lpVtbl = &dpLobbySPVT;
   }
   else
@@ -224,7 +224,7 @@ ULONG WINAPI DPLSP_AddRef
 ( LPDPLOBBYSP iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
 
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
@@ -240,7 +240,7 @@ ULONG WINAPI DPLSP_Release
 ( LPDPLOBBYSP iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
 
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
@@ -269,7 +269,7 @@ HRESULT WINAPI IDPLobbySPImpl_AddGroupToGroup
   LPSPDATA_ADDREMOTEGROUPTOGROUP argtg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, argtg );
   return DP_OK;
 }
@@ -280,7 +280,7 @@ HRESULT WINAPI IDPLobbySPImpl_AddPlayerToGroup
   LPSPDATA_ADDREMOTEPLAYERTOGROUP arptg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, arptg );
   return DP_OK;
 }
@@ -291,7 +291,7 @@ HRESULT WINAPI IDPLobbySPImpl_CreateGroup
   LPSPDATA_CREATEREMOTEGROUP crg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, crg );
   return DP_OK;
 }
@@ -302,7 +302,7 @@ HRESULT WINAPI IDPLobbySPImpl_CreateGroupInGroup
   LPSPDATA_CREATEREMOTEGROUPINGROUP crgig
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, crgig );
   return DP_OK;
 }
@@ -313,7 +313,7 @@ HRESULT WINAPI IDPLobbySPImpl_DeleteGroupFromGroup
   LPSPDATA_DELETEREMOTEGROUPFROMGROUP drgfg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, drgfg );
   return DP_OK;
 }
@@ -324,7 +324,7 @@ HRESULT WINAPI IDPLobbySPImpl_DeletePlayerFromGroup
   LPSPDATA_DELETEREMOTEPLAYERFROMGROUP drpfg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, drpfg );
   return DP_OK;
 }
@@ -335,7 +335,7 @@ HRESULT WINAPI IDPLobbySPImpl_DestroyGroup
   LPSPDATA_DESTROYREMOTEGROUP drg
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, drg );
   return DP_OK;
 }
@@ -346,7 +346,7 @@ HRESULT WINAPI IDPLobbySPImpl_EnumSessionsResponse
   LPSPDATA_ENUMSESSIONSRESPONSE er
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, er );
   return DP_OK;
 }
@@ -357,7 +357,7 @@ HRESULT WINAPI IDPLobbySPImpl_GetSPDataPointer
   LPVOID* lplpData
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, lplpData );
   return DP_OK;
 }
@@ -368,7 +368,7 @@ HRESULT WINAPI IDPLobbySPImpl_HandleMessage
   LPSPDATA_HANDLEMESSAGE hm
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, hm );
   return DP_OK;
 }
@@ -379,7 +379,7 @@ HRESULT WINAPI IDPLobbySPImpl_SendChatMessage
   LPSPDATA_CHATMESSAGE cm
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, cm );
   return DP_OK;
 }
@@ -390,7 +390,7 @@ HRESULT WINAPI IDPLobbySPImpl_SetGroupName
   LPSPDATA_SETREMOTEGROUPNAME srgn
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, srgn );
   return DP_OK;
 }
@@ -401,7 +401,7 @@ HRESULT WINAPI IDPLobbySPImpl_SetPlayerName
   LPSPDATA_SETREMOTEPLAYERNAME srpn
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, srpn );
   return DP_OK;
 }
@@ -412,7 +412,7 @@ HRESULT WINAPI IDPLobbySPImpl_SetSessionDesc
   LPSPDATA_SETSESSIONDESC ssd
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, ssd );
   return DP_OK;
 }
@@ -423,7 +423,7 @@ HRESULT WINAPI IDPLobbySPImpl_SetSPDataPointer
   LPVOID lpData
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, lpData );
   return DP_OK;
 }
@@ -434,7 +434,7 @@ HRESULT WINAPI IDPLobbySPImpl_StartSession
   LPSPDATA_STARTSESSIONCOMMAND ssc
 )
 {
-  ICOM_THIS(IDPLobbySPImpl,iface);
+  IDPLobbySPImpl *This = (IDPLobbySPImpl *)iface;
   FIXME( "(%p)->(%p):stub\n", This, ssc );
   return DP_OK;
 }

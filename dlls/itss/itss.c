@@ -89,7 +89,7 @@ static const struct object_creation_info object_creation[] =
 static HRESULT WINAPI
 ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IClassFactory))
@@ -104,12 +104,12 @@ ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 }
 
 static ULONG WINAPI ITSSCF_AddRef(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     return ++(This->ref);
 }
 
 static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     ULONG ref = --This->ref;
 
@@ -122,7 +122,7 @@ static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface) {
 
 static HRESULT WINAPI ITSSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
 					  REFIID riid, LPVOID *ppobj) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
     
@@ -143,7 +143,7 @@ static HRESULT WINAPI ITSSCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOut
 }
 
 static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }
@@ -211,7 +211,7 @@ HRESULT WINAPI ITStorageImpl_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IITStorage))
     {
@@ -227,7 +227,7 @@ HRESULT WINAPI ITStorageImpl_QueryInterface(
 ULONG WINAPI ITStorageImpl_AddRef(
     IITStorage* iface)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     TRACE("%p\n", This);
     return ++(This->ref);
 }
@@ -235,7 +235,7 @@ ULONG WINAPI ITStorageImpl_AddRef(
 ULONG WINAPI ITStorageImpl_Release(
     IITStorage* iface)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     ULONG ref = --This->ref;
 
     if (ref == 0)
@@ -251,7 +251,7 @@ HRESULT WINAPI ITStorageImpl_StgCreateDocfile(
     DWORD reserved,
     IStorage** ppstgOpen)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
 
     TRACE("%p %s %lu %lu %p\n", This,
           debugstr_w(pwcsName), grfMode, reserved, ppstgOpen );
@@ -267,7 +267,7 @@ HRESULT WINAPI ITStorageImpl_StgCreateDocfileOnILockBytes(
     DWORD reserved,
     IStorage** ppstgOpen)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -276,7 +276,7 @@ HRESULT WINAPI ITStorageImpl_StgIsStorageFile(
     IITStorage* iface,
     const WCHAR* pwcsName)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -285,7 +285,7 @@ HRESULT WINAPI ITStorageImpl_StgIsStorageILockBytes(
     IITStorage* iface,
     ILockBytes* plkbyt)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -299,7 +299,7 @@ HRESULT WINAPI ITStorageImpl_StgOpenStorage(
     DWORD reserved,
     IStorage** ppstgOpen)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
 
     TRACE("%p %s %p %ld %p\n", This, debugstr_w( pwcsName ),
            pstgPriority, grfMode, snbExclude );
@@ -317,7 +317,7 @@ HRESULT WINAPI ITStorageImpl_StgOpenStorageOnILockBytes(
     DWORD reserved,
     IStorage** ppstgOpen)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -329,7 +329,7 @@ HRESULT WINAPI ITStorageImpl_StgSetTimes(
     FILETIME* patime,
     FILETIME* pmtime)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -338,7 +338,7 @@ HRESULT WINAPI ITStorageImpl_SetControlData(
     IITStorage* iface,
     PITS_Control_Data pControlData)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -347,7 +347,7 @@ HRESULT WINAPI ITStorageImpl_DefaultControlData(
     IITStorage* iface,
     PITS_Control_Data* ppControlData)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }
@@ -357,7 +357,7 @@ HRESULT WINAPI ITStorageImpl_Compact(
     const WCHAR* pwcsName,
     ECompactionLev iLev)
 {
-    ICOM_THIS(ITStorageImpl,iface);
+    ITStorageImpl *This = (ITStorageImpl *)iface;
     FIXME("%p\n", This);
     return E_NOTIMPL;
 }

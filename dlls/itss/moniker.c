@@ -57,7 +57,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IParseDisplayName))
@@ -74,7 +74,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_QueryInterface(
 static ULONG WINAPI ITS_IMonikerImpl_AddRef(
     IMoniker* iface)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
     TRACE("%p\n", This);
     return ++(This->ref);
 }
@@ -82,7 +82,7 @@ static ULONG WINAPI ITS_IMonikerImpl_AddRef(
 static ULONG WINAPI ITS_IMonikerImpl_Release(
     IMoniker* iface)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
     ULONG ref = --This->ref;
 
     if (ref == 0)
@@ -96,7 +96,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_GetClassID(
     IMoniker* iface,
     CLSID* pClassID)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
 
     TRACE("%p %p\n", This, pClassID);
     memcpy( pClassID, &CLSID_ITStorage, sizeof (CLSID) );
@@ -155,7 +155,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_BindToStorage(
     REFIID riid,
     void** ppvObj)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
     DWORD grfMode = STGM_SIMPLE | STGM_READ | STGM_SHARE_EXCLUSIVE;
     HRESULT r;
     IStorage *stg = NULL;
@@ -279,7 +279,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_GetDisplayName(
     IMoniker* pmkToLeft,
     LPOLESTR* ppszDisplayName)
 {
-    ICOM_THIS(ITS_IMonikerImpl,iface);
+    ITS_IMonikerImpl *This = (ITS_IMonikerImpl *)iface;
     static const WCHAR szFormat[] = {
         'm','s','-','i','t','s',':','%','s',':',':','%','s',0 };
     DWORD len = sizeof szFormat / sizeof(WCHAR);
@@ -379,7 +379,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(ITS_IParseDisplayNameImpl,iface);
+    ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IParseDisplayName))
@@ -396,7 +396,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_QueryInterface(
 static ULONG WINAPI ITS_IParseDisplayNameImpl_AddRef(
     IParseDisplayName* iface)
 {
-    ICOM_THIS(ITS_IParseDisplayNameImpl,iface);
+    ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
     TRACE("%p\n", This);
     return ++(This->ref);
 }
@@ -404,7 +404,7 @@ static ULONG WINAPI ITS_IParseDisplayNameImpl_AddRef(
 static ULONG WINAPI ITS_IParseDisplayNameImpl_Release(
     IParseDisplayName* iface)
 {
-    ICOM_THIS(ITS_IParseDisplayNameImpl,iface);
+    ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
     ULONG ref = --This->ref;
 
     if (ref == 0)
@@ -425,7 +425,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_ParseDisplayName(
     const DWORD prefix_len = (sizeof szPrefix/sizeof szPrefix[0])-1;
     DWORD n;
 
-    ICOM_THIS(ITS_IParseDisplayNameImpl,iface);
+    ITS_IParseDisplayNameImpl *This = (ITS_IParseDisplayNameImpl *)iface;
 
     TRACE("%p %s %p %p\n", This,
           debugstr_w( pszDisplayName ), pchEaten, ppmkOut );

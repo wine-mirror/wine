@@ -145,7 +145,7 @@ HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppv)
 static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream *iface,
 						  REFIID refiid, LPVOID *obj)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,%s,%p)\n", iface, debugstr_guid(refiid), obj);
 
@@ -162,7 +162,7 @@ static HRESULT WINAPI ICMStream_fnQueryInterface(IAVIStream *iface,
 
 static ULONG WINAPI ICMStream_fnAddRef(IAVIStream *iface)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p) -> %ld\n", iface, This->ref + 1);
 
@@ -175,7 +175,7 @@ static ULONG WINAPI ICMStream_fnAddRef(IAVIStream *iface)
 
 static ULONG WINAPI ICMStream_fnRelease(IAVIStream* iface)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p) -> %ld\n", iface, This->ref - 1);
 
@@ -233,7 +233,7 @@ static ULONG WINAPI ICMStream_fnRelease(IAVIStream* iface)
 static HRESULT WINAPI ICMStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
 					  LPARAM lParam2)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   ICINFO               icinfo;
   ICCOMPRESSFRAMES     icFrames;
@@ -322,7 +322,7 @@ static HRESULT WINAPI ICMStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
 static HRESULT WINAPI ICMStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
 					LONG size)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,%p,%ld)\n", iface, psi, size);
 
@@ -341,7 +341,7 @@ static HRESULT WINAPI ICMStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
 static LONG WINAPI ICMStream_fnFindSample(IAVIStream *iface, LONG pos,
 					   LONG flags)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,%ld,0x%08lX)\n",iface,pos,flags);
 
@@ -378,7 +378,7 @@ static LONG WINAPI ICMStream_fnFindSample(IAVIStream *iface, LONG pos,
 static HRESULT WINAPI ICMStream_fnReadFormat(IAVIStream *iface, LONG pos,
 					      LPVOID format, LONG *formatsize)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   LPBITMAPINFOHEADER lpbi;
   HRESULT            hr;
@@ -429,7 +429,7 @@ static HRESULT WINAPI ICMStream_fnReadFormat(IAVIStream *iface, LONG pos,
 static HRESULT WINAPI ICMStream_fnSetFormat(IAVIStream *iface, LONG pos,
 					     LPVOID format, LONG formatsize)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,%ld,%p,%ld)\n", iface, pos, format, formatsize);
 
@@ -583,7 +583,7 @@ static HRESULT WINAPI ICMStream_fnRead(IAVIStream *iface, LONG start,
 					LONG buffersize, LPLONG bytesread,
 					LPLONG samplesread)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   LPBITMAPINFOHEADER lpbi;
 
@@ -677,7 +677,7 @@ static HRESULT WINAPI ICMStream_fnWrite(IAVIStream *iface, LONG start,
 					 LPLONG sampwritten,
 					 LPLONG byteswritten)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   HRESULT hr;
 
@@ -722,7 +722,7 @@ static HRESULT WINAPI ICMStream_fnWrite(IAVIStream *iface, LONG start,
 static HRESULT WINAPI ICMStream_fnDelete(IAVIStream *iface, LONG start,
 					  LONG samples)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,%ld,%ld)\n", iface, start, samples);
 
@@ -732,7 +732,7 @@ static HRESULT WINAPI ICMStream_fnDelete(IAVIStream *iface, LONG start,
 static HRESULT WINAPI ICMStream_fnReadData(IAVIStream *iface, DWORD fcc,
 					    LPVOID lp, LPLONG lpread)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,0x%08lX,%p,%p)\n", iface, fcc, lp, lpread);
 
@@ -744,7 +744,7 @@ static HRESULT WINAPI ICMStream_fnReadData(IAVIStream *iface, DWORD fcc,
 static HRESULT WINAPI ICMStream_fnWriteData(IAVIStream *iface, DWORD fcc,
 					     LPVOID lp, LONG size)
 {
-  ICOM_THIS(IAVIStreamImpl,iface);
+  IAVIStreamImpl *This = (IAVIStreamImpl *)iface;
 
   TRACE("(%p,0x%08lx,%p,%ld)\n", iface, fcc, lp, size);
 

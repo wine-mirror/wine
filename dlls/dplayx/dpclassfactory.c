@@ -42,7 +42,7 @@ typedef struct
 
 static HRESULT WINAPI
 DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-        ICOM_THIS(IClassFactoryImpl,iface);
+        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
         FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 
@@ -51,12 +51,12 @@ DP_and_DPL_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 DP_and_DPL_AddRef(LPCLASSFACTORY iface) {
-        ICOM_THIS(IClassFactoryImpl,iface);
+        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
         return ++(This->ref);
 }
 
 static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
-        ICOM_THIS(IClassFactoryImpl,iface);
+        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
         /* static class (reference starts @ 1), won't ever be freed */
         return --(This->ref);
 }
@@ -64,7 +64,7 @@ static ULONG WINAPI DP_and_DPL_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI DP_and_DPL_CreateInstance(
         LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-        ICOM_THIS(IClassFactoryImpl,iface);
+        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
         TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
@@ -81,7 +81,7 @@ static HRESULT WINAPI DP_and_DPL_CreateInstance(
 }
 
 static HRESULT WINAPI DP_and_DPL_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-        ICOM_THIS(IClassFactoryImpl,iface);
+        IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
         FIXME("(%p)->(%d),stub!\n",This,dolock);
         return S_OK;
 }

@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 static HRESULT WINAPI WB_QueryInterface(IWebBrowser *iface, REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IWebBrowserImpl, iface);
+    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -37,7 +37,7 @@ static HRESULT WINAPI WB_QueryInterface(IWebBrowser *iface, REFIID riid, LPVOID 
 
 static ULONG WINAPI WB_AddRef(IWebBrowser *iface)
 {
-    ICOM_THIS(IWebBrowserImpl, iface);
+    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -45,7 +45,7 @@ static ULONG WINAPI WB_AddRef(IWebBrowser *iface)
 
 static ULONG WINAPI WB_Release(IWebBrowser *iface)
 {
-    ICOM_THIS(IWebBrowserImpl, iface);
+    IWebBrowserImpl *This = (IWebBrowserImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

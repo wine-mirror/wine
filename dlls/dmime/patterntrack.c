@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 /* IDirectMusicPatternTrack IUnknown parts follow: */
 HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -38,13 +38,13 @@ HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERN
 }
 
 ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -55,19 +55,19 @@ ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK ifa
 
 /* IDirectMusicPatternTrack Interface follow: */
 HRESULT WINAPI IDirectMusicPatternTrackImpl_CreateSegment (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicStyle* pStyle, IDirectMusicSegment** ppSegment) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	FIXME("(%p, %p, %p): stub\n", This, pStyle, ppSegment);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPatternTrackImpl_SetVariation (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, DWORD dwVariationFlags, DWORD dwPart) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	FIXME("(%p, %p, %ld, %ld): stub\n", This, pSegState, dwVariationFlags, dwPart);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTERNTRACK iface, IDirectMusicSegmentState* pSegState, WCHAR* wszName, IDirectMusicStyle* pStyle, DWORD dwPatternType, DWORD* pdwLength) {
-	ICOM_THIS(IDirectMusicPatternTrackImpl,iface);
+	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
 	FIXME("(%p, %p, %p, %p, %ld, %p): stub\n", This, pSegState, wszName, pStyle, dwPatternType, pdwLength);
 	return S_OK;
 }

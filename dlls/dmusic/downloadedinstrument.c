@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicDownloadedInstrumentImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicDownloadedInstrumentImpl,iface);
+	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)
@@ -37,13 +37,13 @@ HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSI
 }
 
 ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
-	ICOM_THIS(IDirectMusicDownloadedInstrumentImpl,iface);
+	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface) {
-	ICOM_THIS(IDirectMusicDownloadedInstrumentImpl,iface);
+	IDirectMusicDownloadedInstrumentImpl *This = (IDirectMusicDownloadedInstrumentImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {

@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBQA_QueryInterface(LPQUICKACTIVATE iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IQuickActivateImpl, iface);
+    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -40,7 +40,7 @@ static HRESULT WINAPI WBQA_QueryInterface(LPQUICKACTIVATE iface,
 
 static ULONG WINAPI WBQA_AddRef(LPQUICKACTIVATE iface)
 {
-    ICOM_THIS(IQuickActivateImpl, iface);
+    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -48,7 +48,7 @@ static ULONG WINAPI WBQA_AddRef(LPQUICKACTIVATE iface)
 
 static ULONG WINAPI WBQA_Release(LPQUICKACTIVATE iface)
 {
-    ICOM_THIS(IQuickActivateImpl, iface);
+    IQuickActivateImpl *This = (IQuickActivateImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

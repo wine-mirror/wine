@@ -52,7 +52,7 @@ typedef struct _FTMarshalImpl {
 HRESULT WINAPI IiFTMUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, LPVOID * ppv)
 {
 
-    ICOM_THIS (FTMarshalImpl, iface);
+    FTMarshalImpl *This = (FTMarshalImpl *)iface;
 
     TRACE ("\n");
     *ppv = NULL;
@@ -72,7 +72,7 @@ HRESULT WINAPI IiFTMUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, LPV
 ULONG WINAPI IiFTMUnknown_fnAddRef (IUnknown * iface)
 {
 
-    ICOM_THIS (FTMarshalImpl, iface);
+    FTMarshalImpl *This = (FTMarshalImpl *)iface;
 
     TRACE ("\n");
     return InterlockedIncrement (&This->ref);
@@ -81,7 +81,7 @@ ULONG WINAPI IiFTMUnknown_fnAddRef (IUnknown * iface)
 ULONG WINAPI IiFTMUnknown_fnRelease (IUnknown * iface)
 {
 
-    ICOM_THIS (FTMarshalImpl, iface);
+    FTMarshalImpl *This = (FTMarshalImpl *)iface;
 
     TRACE ("\n");
     if (InterlockedDecrement (&This->ref))

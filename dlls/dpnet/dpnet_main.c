@@ -72,32 +72,32 @@ typedef struct
 } IClassFactoryImpl;
 
 static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   
   FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
   return E_NOINTERFACE;
 }
 
 static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   return ++(This->ref);
 }
 
 static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   /* static class, won't be  freed */
   return --(This->ref);
 }
 
 static HRESULT WINAPI DICF_CreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   
   TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
   return This->pfnCreateInstanceFactory(iface, pOuter, riid, ppobj);
 }
 
 static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
   FIXME("(%p)->(%d),stub!\n",This,dolock);
   return S_OK;
 }

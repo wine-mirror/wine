@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 
 /* IDirectMusicSynthSinkImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -37,13 +37,13 @@ HRESULT WINAPI IDirectMusicSynthSinkImpl_QueryInterface (LPDIRECTMUSICSYNTHSINK 
 }
 
 ULONG WINAPI IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK iface) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -54,49 +54,49 @@ ULONG WINAPI IDirectMusicSynthSinkImpl_Release (LPDIRECTMUSICSYNTHSINK iface) {
 
 /* IDirectMusicSynthSinkImpl IDirectMusicSynthSink part: */
 HRESULT WINAPI IDirectMusicSynthSinkImpl_Init (LPDIRECTMUSICSYNTHSINK iface, IDirectMusicSynth* pSynth) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pSynth);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_SetMasterClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock* pClock) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pClock);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_GetLatencyClock (LPDIRECTMUSICSYNTHSINK iface, IReferenceClock** ppClock) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, ppClock);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_Activate (LPDIRECTMUSICSYNTHSINK iface, BOOL fEnable) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %d): stub\n", This, fEnable);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_SampleToRefTime (LPDIRECTMUSICSYNTHSINK iface, LONGLONG llSampleTime, REFERENCE_TIME* prfTime) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %lli, %p): stub\n", This, llSampleTime, prfTime);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_RefTimeToSample (LPDIRECTMUSICSYNTHSINK iface, REFERENCE_TIME rfTime, LONGLONG* pllSampleTime) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %lli, %p): stub\n", This, rfTime, pllSampleTime );
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_SetDirectSound (LPDIRECTMUSICSYNTHSINK iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %p, %p): stub\n", This, pDirectSound, pDirectSoundBuffer);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNTHSINK iface, LPDWORD pdwBufferSizeInSamples) {
-	ICOM_THIS(IDirectMusicSynthSinkImpl,iface);
+	IDirectMusicSynthSinkImpl *This = (IDirectMusicSynthSinkImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pdwBufferSizeInSamples);
 	return S_OK;
 }

@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IDirectMusicBufferImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	TRACE("(%p, (%s, %p)\n",This,debugstr_dmguid(riid),ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) 
 		|| IsEqualIID (riid, &IID_IDirectMusicBuffer)) {
@@ -36,13 +36,13 @@ HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface,
 }
 
 ULONG WINAPI IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -53,79 +53,79 @@ ULONG WINAPI IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface) {
 
 /* IDirectMusicBufferImpl IDirectMusicBuffer part: */
 HRESULT WINAPI IDirectMusicBufferImpl_Flush (LPDIRECTMUSICBUFFER iface) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p): stub\n", This);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_TotalTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prtTime) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, prtTime);	
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_PackStructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %lli, %ld, %ld): stub\n", This, rt, dwChannelGroup, dwChannelMessage);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %lli, %ld, %ld, %p): stub\n", This, rt, dwChannelGroup, cb, lpb);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_ResetReadPtr (LPDIRECTMUSICBUFFER iface) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p): stub\n", This);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetNextEvent (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt, LPDWORD pdwChannelGroup, LPDWORD pdwLength, LPBYTE* ppData) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p, %p, %p, %p): stub\n", This, prt, pdwChannelGroup, pdwLength, ppData);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr (LPDIRECTMUSICBUFFER iface, LPBYTE* ppData) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, ppData);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, prt);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pcb);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pcb);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat (LPDIRECTMUSICBUFFER iface, LPGUID pGuidFormat) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %p): stub\n", This, pGuidFormat);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %lli): stub\n", This, rt);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, DWORD cb) {
-	ICOM_THIS(IDirectMusicBufferImpl,iface);
+	IDirectMusicBufferImpl *This = (IDirectMusicBufferImpl *)iface;
 	FIXME("(%p, %ld): stub\n", This, cb);
 	return S_OK;
 }

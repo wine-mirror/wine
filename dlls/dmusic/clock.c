@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 
 /* IReferenceClockImpl IUnknown part: */
 HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -37,13 +37,13 @@ HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFII
 }
 
 ULONG WINAPI IReferenceClockImpl_AddRef (IReferenceClock *iface) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -54,26 +54,26 @@ ULONG WINAPI IReferenceClockImpl_Release (IReferenceClock *iface) {
 
 /* IReferenceClockImpl IReferenceClock part: */
 HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFERENCE_TIME* pTime) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	TRACE("(%p, %p)\n", This, pTime);
 	*pTime = This->rtTime;
 	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, baseTime, streamTime, hEvent, pdwAdviseCookie);
 	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	FIXME("(%p, %lli, %lli, %p, %p): stub\n", This, startTime, periodTime, hSemaphore, pdwAdviseCookie);
 	return S_OK;
 }
 
 HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie) {
-	ICOM_THIS(IReferenceClockImpl,iface);
+	IReferenceClockImpl *This = (IReferenceClockImpl *)iface;
 	FIXME("(%p, %ld): stub\n", This, dwAdviseCookie);
 	return S_OK;
 }

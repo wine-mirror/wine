@@ -80,7 +80,7 @@ static const struct object_creation_info object_creation[] =
 
 static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IClassFactory))
@@ -96,13 +96,13 @@ static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVO
 
 static ULONG WINAPI XFCF_AddRef(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     return ++(This->ref);
 }
 
 static ULONG WINAPI XFCF_Release(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     ULONG ref = --This->ref;
 
@@ -114,7 +114,7 @@ static ULONG WINAPI XFCF_Release(LPCLASSFACTORY iface)
 
 static HRESULT WINAPI XFCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     HRESULT hres;
     LPUNKNOWN punk;
     
@@ -136,7 +136,7 @@ static HRESULT WINAPI XFCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
 
 static HRESULT WINAPI XFCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }

@@ -101,7 +101,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp 
 
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
-    ICOM_THIS(IDirectPlaySPImpl,*ppvObj);
+    IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)*ppvObj;
     This->lpVtbl = &directPlaySPVT;
   }
   else
@@ -134,7 +134,7 @@ HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp 
 
 static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
 {
-  ICOM_THIS(IDirectPlaySPImpl,lpSP);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
   This->unk = (DirectPlaySPIUnknownData*)HeapAlloc( GetProcessHeap(),
                                                     HEAP_ZERO_MEMORY,
@@ -152,7 +152,7 @@ static BOOL DPSP_CreateIUnknown( LPVOID lpSP )
 
 static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 {
-  ICOM_THIS(IDirectPlaySPImpl,lpSP);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
   DeleteCriticalSection( &This->unk->DPSP_lock );
   HeapFree( GetProcessHeap(), 0, This->unk );
@@ -163,7 +163,7 @@ static BOOL DPSP_DestroyIUnknown( LPVOID lpSP )
 
 static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 {
-  ICOM_THIS(IDirectPlaySPImpl,lpSP);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
   This->sp = (DirectPlaySPData*)HeapAlloc( GetProcessHeap(),
                                            HEAP_ZERO_MEMORY,
@@ -196,7 +196,7 @@ static BOOL DPSP_CreateDirectPlaySP( LPVOID lpSP, IDirectPlay2Impl* dp )
 
 static BOOL DPSP_DestroyDirectPlaySP( LPVOID lpSP )
 {
-  ICOM_THIS(IDirectPlaySPImpl,lpSP);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)lpSP;
 
   /* Normally we should be keeping a reference, but since only the dplay
    * interface that created us can destroy us, we do not keep a reference
@@ -222,7 +222,7 @@ static HRESULT WINAPI DPSP_QueryInterface
   REFIID riid,
   LPVOID* ppvObj )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
   TRACE("(%p)->(%s,%p)\n", This, debugstr_guid( riid ), ppvObj );
 
   *ppvObj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -238,7 +238,7 @@ static HRESULT WINAPI DPSP_QueryInterface
 
   if( IsEqualGUID( &IID_IDirectPlaySP, riid ) )
   {
-    ICOM_THIS(IDirectPlaySPImpl,*ppvObj);
+    IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)*ppvObj;
     This->lpVtbl = &directPlaySPVT;
   }
   else
@@ -259,7 +259,7 @@ static ULONG WINAPI DPSP_AddRef
 ( LPDIRECTPLAYSP iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   ulObjRefCount       = InterlockedIncrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedIncrement( &This->ulInterfaceRef );
@@ -274,7 +274,7 @@ static ULONG WINAPI DPSP_Release
 ( LPDIRECTPLAYSP iface )
 {
   ULONG ulInterfaceRefCount, ulObjRefCount;
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   ulObjRefCount       = InterlockedDecrement( &This->unk->ulObjRef );
   ulInterfaceRefCount = InterlockedDecrement( &This->ulInterfaceRef );
@@ -306,7 +306,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_AddMRUEntry
   DWORD   dwMaxEntries
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   /* Should be able to call the comctl32 undocumented MRU routines.
      I suspect that the interface works appropriately */
@@ -326,7 +326,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_CreateAddress
   LPDWORD lpdwAddressSize
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   FIXME( "(%p)->(%s,%s,%p,0x%08lx,%p,%p): stub\n",
          This, debugstr_guid(guidSP), debugstr_guid(guidDataType),
@@ -343,7 +343,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_EnumAddress
   LPVOID lpContext
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   TRACE( "(%p)->(%p,%p,0x%08lx,%p)\n",
          This, lpEnumAddressCallback, lpAddress, dwAddressSize, lpContext );
@@ -361,7 +361,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_EnumMRUEntries
   LPVOID lpContext
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   /* Should be able to call the comctl32 undocumented MRU routines.
      I suspect that the interface works appropriately */
@@ -377,7 +377,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetPlayerFlags
   LPDWORD lpdwPlayerFlags
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   FIXME( "(%p)->(0x%08lx,%p): stub\n",
          This, idPlayer, lpdwPlayerFlags );
@@ -395,7 +395,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData
 {
   HRESULT hr;
   LPDP_SPPLAYERDATA lpPlayerData;
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   TRACE( "(%p)->(0x%08lx,%p,%p,0x%08lx)\n",
          This, idPlayer, lplpData, lpdwDataSize, dwFlags );
@@ -451,7 +451,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   WORD wVersion;
   DPSP_REPLYDATA data;
 
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   FIXME( "(%p)->(%p,0x%08lx,%p): mostly stub\n",
          This, lpMessageBody, dwMessageBodySize, lpMessageHeader );
@@ -764,7 +764,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPPlayerData
   LPDP_SPPLAYERDATA lpPlayerEntry;
   LPVOID            lpPlayerData;
 
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
 /*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
   TRACE( "(%p)->(0x%08lx,%p,0x%08lx,0x%08lx)\n",
@@ -804,7 +804,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_CreateCompoundAddress
   LPDWORD lpdwAddressSize
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   FIXME( "(%p)->(%p,0x%08lx,%p,%p): stub\n",
          This, lpElements, dwElementCount, lpAddress, lpdwAddressSize );
@@ -820,7 +820,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPData
 )
 {
   HRESULT hr = DP_OK;
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
 /*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
   TRACE( "(%p)->(%p,%p,0x%08lx)\n",
@@ -879,7 +879,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPData
 {
   LPVOID lpSpData;
 
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
 /*  TRACE( "Called on process 0x%08lx\n", GetCurrentProcessId() ); */
   TRACE( "(%p)->(%p,0x%08lx,0x%08lx)\n",
@@ -936,7 +936,7 @@ static VOID WINAPI IDirectPlaySPImpl_SendComplete
   DWORD unknownB
 )
 {
-  ICOM_THIS(IDirectPlaySPImpl,iface);
+  IDirectPlaySPImpl *This = (IDirectPlaySPImpl *)iface;
 
   FIXME( "(%p)->(%p,0x%08lx): stub\n",
          This, unknownA, unknownB );

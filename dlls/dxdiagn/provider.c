@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 /* IDxDiagProvider IUnknown parts follow: */
 HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IDxDiagProviderImpl,iface);
+    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDxDiagProvider)) {
@@ -42,13 +42,13 @@ HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID 
 }
 
 ULONG WINAPI IDxDiagProviderImpl_AddRef(PDXDIAGPROVIDER iface) {
-    ICOM_THIS(IDxDiagProviderImpl,iface);
+    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     TRACE("(%p) : AddRef from %ld\n", This, This->ref);
     return ++(This->ref);
 }
 
 ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
-    ICOM_THIS(IDxDiagProviderImpl,iface);
+    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
@@ -59,7 +59,7 @@ ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
 
 /* IDxDiagProvider Interface follow: */
 HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
-    ICOM_THIS(IDxDiagProviderImpl, iface);
+    IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
     TRACE("(%p,%p)\n", iface, pParams);
 
     if (NULL == pParams) {
@@ -76,7 +76,7 @@ HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT
 
 HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
   HRESULT hr = S_OK;
-  ICOM_THIS(IDxDiagProviderImpl, iface);
+  IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
   TRACE("(%p,%p)\n", iface, ppInstance);
 
   if (NULL == ppInstance) {

@@ -53,7 +53,7 @@ static ULONG WINAPI WBOOBJ_Release(LPOLEOBJECT iface);
 static HRESULT WINAPI WBOOBJ_QueryInterface(LPOLEOBJECT iface,
                                             REFIID riid, void** ppobj)
 {
-    ICOM_THIS(IOleObjectImpl, iface);
+    IOleObjectImpl *This = (IOleObjectImpl *)iface;
 
     /*
      * Perform a sanity check on the parameters.
@@ -143,7 +143,7 @@ static HRESULT WINAPI WBOOBJ_QueryInterface(LPOLEOBJECT iface,
  */
 static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
 {
-    ICOM_THIS(IOleObjectImpl, iface);
+    IOleObjectImpl *This = (IOleObjectImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -154,7 +154,7 @@ static ULONG WINAPI WBOOBJ_AddRef(LPOLEOBJECT iface)
  */
 static ULONG WINAPI WBOOBJ_Release(LPOLEOBJECT iface)
 {
-    ICOM_THIS(IOleObjectImpl, iface);
+    IOleObjectImpl *This = (IOleObjectImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -448,7 +448,7 @@ IOleObjectImpl SHDOCVW_OleObject = { &WBOOBJ_Vtbl, 1 };
 static HRESULT WINAPI WBOIPO_QueryInterface(LPOLEINPLACEOBJECT iface,
                                             REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IOleInPlaceObjectImpl, iface);
+    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -456,7 +456,7 @@ static HRESULT WINAPI WBOIPO_QueryInterface(LPOLEINPLACEOBJECT iface,
 
 static ULONG WINAPI WBOIPO_AddRef(LPOLEINPLACEOBJECT iface)
 {
-    ICOM_THIS(IOleInPlaceObjectImpl, iface);
+    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -464,7 +464,7 @@ static ULONG WINAPI WBOIPO_AddRef(LPOLEINPLACEOBJECT iface)
 
 static ULONG WINAPI WBOIPO_Release(LPOLEINPLACEOBJECT iface)
 {
-    ICOM_THIS(IOleInPlaceObjectImpl, iface);
+    IOleInPlaceObjectImpl *This = (IOleInPlaceObjectImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -550,7 +550,7 @@ IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = { &WBOIPO_Vtbl, 1 };
 static HRESULT WINAPI WBOC_QueryInterface(LPOLECONTROL iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IOleControlImpl, iface);
+    IOleControlImpl *This = (IOleControlImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -558,7 +558,7 @@ static HRESULT WINAPI WBOC_QueryInterface(LPOLECONTROL iface,
 
 static ULONG WINAPI WBOC_AddRef(LPOLECONTROL iface)
 {
-    ICOM_THIS(IOleControlImpl, iface);
+    IOleControlImpl *This = (IOleControlImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -566,7 +566,7 @@ static ULONG WINAPI WBOC_AddRef(LPOLECONTROL iface)
 
 static ULONG WINAPI WBOC_Release(LPOLECONTROL iface)
 {
-    ICOM_THIS(IOleControlImpl, iface);
+    IOleControlImpl *This = (IOleControlImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

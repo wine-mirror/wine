@@ -107,7 +107,7 @@ static HRESULT WINAPI IClassFactory_fnQueryInterface(LPCLASSFACTORY iface,
 
 static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
 {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
   TRACE("(%p)\n", iface);
 
@@ -116,7 +116,7 @@ static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
 
 static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
 {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
   TRACE("(%p)\n", iface);
   if ((--(This->dwRef)) > 0)
@@ -129,7 +129,7 @@ static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,
 						     LPUNKNOWN pOuter,
 						     REFIID riid,LPVOID *ppobj)
 {
-  ICOM_THIS(IClassFactoryImpl,iface);
+  IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
   TRACE("(%p,%p,%s,%p)\n", iface, pOuter, debugstr_guid(riid),
 	ppobj);

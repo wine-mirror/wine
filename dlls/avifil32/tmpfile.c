@@ -134,7 +134,7 @@ PAVIFILE AVIFILE_CreateAVITempFile(int nStreams, PAVISTREAM *ppStreams) {
 static HRESULT WINAPI ITmpFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
 						LPVOID *obj)
 {
-  ICOM_THIS(ITmpFileImpl,iface);
+  ITmpFileImpl *This = (ITmpFileImpl *)iface;
 
   TRACE("(%p,%s,%p)\n", This, debugstr_guid(refiid), obj);
 
@@ -151,7 +151,7 @@ static HRESULT WINAPI ITmpFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
 
 static ULONG   WINAPI ITmpFile_fnAddRef(IAVIFile *iface)
 {
-  ICOM_THIS(ITmpFileImpl,iface);
+  ITmpFileImpl *This = (ITmpFileImpl *)iface;
 
   TRACE("(%p) -> %ld\n", iface, This->ref + 1);
   return ++(This->ref);
@@ -159,7 +159,7 @@ static ULONG   WINAPI ITmpFile_fnAddRef(IAVIFile *iface)
 
 static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
 {
-  ICOM_THIS(ITmpFileImpl,iface);
+  ITmpFileImpl *This = (ITmpFileImpl *)iface;
 
   TRACE("(%p) -> %ld\n", iface, This->ref - 1);
 
@@ -184,7 +184,7 @@ static ULONG   WINAPI ITmpFile_fnRelease(IAVIFile *iface)
 static HRESULT WINAPI ITmpFile_fnInfo(IAVIFile *iface,
 				      AVIFILEINFOW *afi, LONG size)
 {
-  ICOM_THIS(ITmpFileImpl,iface);
+  ITmpFileImpl *This = (ITmpFileImpl *)iface;
 
   TRACE("(%p,%p,%ld)\n",iface,afi,size);
 
@@ -203,7 +203,7 @@ static HRESULT WINAPI ITmpFile_fnInfo(IAVIFile *iface,
 static HRESULT WINAPI ITmpFile_fnGetStream(IAVIFile *iface, PAVISTREAM *avis,
 					   DWORD fccType, LONG lParam)
 {
-  ICOM_THIS(ITmpFileImpl,iface);
+  ITmpFileImpl *This = (ITmpFileImpl *)iface;
 
   ULONG nStream = (ULONG)-1;
 

@@ -139,7 +139,7 @@ PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pStream)
 static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
 						 REFIID refiid, LPVOID *obj)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   TRACE("(%p,%s,%p)\n", This, debugstr_guid(refiid), obj);
 
@@ -154,7 +154,7 @@ static HRESULT WINAPI IGetFrame_fnQueryInterface(IGetFrame *iface,
 
 static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   TRACE("(%p)\n", iface);
 
@@ -163,7 +163,7 @@ static ULONG   WINAPI IGetFrame_fnAddRef(IGetFrame *iface)
 
 static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   TRACE("(%p)\n", iface);
 
@@ -183,7 +183,7 @@ static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
 
 static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   LONG readBytes;
   LONG readSamples;
@@ -302,7 +302,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
 					LONG lEnd, LONG lRate)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   TRACE("(%p,%ld,%ld,%ld)\n", iface, lStart, lEnd, lRate);
 
@@ -313,7 +313,7 @@ static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
 
 static HRESULT WINAPI IGetFrame_fnEnd(IGetFrame *iface)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   TRACE("(%p)\n", iface);
 
@@ -327,7 +327,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 					    LPVOID lpBits, INT x, INT y,
 					    INT dx, INT dy)
 {
-  ICOM_THIS(IGetFrameImpl,iface);
+  IGetFrameImpl *This = (IGetFrameImpl *)iface;
 
   AVISTREAMINFOW     sInfo;
   LPBITMAPINFOHEADER lpbi         = lpbiWanted;

@@ -87,7 +87,7 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IEnumSTATSTG))
@@ -104,14 +104,14 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_QueryInterface(
 static ULONG WINAPI ITSS_IEnumSTATSTG_AddRef(
     IEnumSTATSTG* iface)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
     return ++(This->ref);
 }
 
 static ULONG WINAPI ITSS_IEnumSTATSTG_Release(
     IEnumSTATSTG* iface)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
 
     ULONG ref = --This->ref;
 
@@ -135,7 +135,7 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_Next(
         STATSTG* rgelt,
         ULONG* pceltFetched)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
     DWORD len, n;
     struct enum_info *cur;
 
@@ -187,7 +187,7 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_Skip(
         IEnumSTATSTG* iface,
         ULONG celt)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
     DWORD n;
     struct enum_info *cur;
 
@@ -211,7 +211,7 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_Skip(
 static HRESULT WINAPI ITSS_IEnumSTATSTG_Reset(
         IEnumSTATSTG* iface)
 {
-    ICOM_THIS(IEnumSTATSTG_Impl,iface);
+    IEnumSTATSTG_Impl *This = (IEnumSTATSTG_Impl *)iface;
 
     TRACE("%p\n", This );
 
@@ -262,7 +262,7 @@ HRESULT WINAPI ITSS_IStorageImpl_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_IStorage))
@@ -279,14 +279,14 @@ HRESULT WINAPI ITSS_IStorageImpl_QueryInterface(
 ULONG WINAPI ITSS_IStorageImpl_AddRef(
     IStorage* iface)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
     return ++(This->ref);
 }
 
 ULONG WINAPI ITSS_IStorageImpl_Release(
     IStorage* iface)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
 
     ULONG ref = --This->ref;
 
@@ -318,7 +318,7 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
     DWORD reserved2,
     IStream** ppstm)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
     IStream_Impl *stm;
     DWORD len;
     struct chmUnitInfo ui;
@@ -377,7 +377,7 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
     DWORD reserved,
     IStorage** ppstg)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
 
     FIXME("%p %s %p %lu %p %lu %p\n", This, debugstr_w(pwcsName),
           pstgPriority, grfMode, snbExclude, reserved, ppstg);
@@ -452,7 +452,7 @@ HRESULT WINAPI ITSS_IStorageImpl_EnumElements(
     DWORD reserved3,
     IEnumSTATSTG** ppenum)
 {
-    ICOM_THIS(ITSS_IStorageImpl,iface);
+    ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
     IEnumSTATSTG_Impl* stgenum;
 
     TRACE("%p %ld %p %ld %p\n", This, reserved1, reserved2, reserved3, ppenum );
@@ -598,7 +598,7 @@ static HRESULT WINAPI ITSS_IStream_QueryInterface(
     REFIID riid,
     void** ppvObject)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
 
     if (IsEqualGUID(riid, &IID_IUnknown)
 	|| IsEqualGUID(riid, &IID_ISequentialStream)
@@ -616,14 +616,14 @@ static HRESULT WINAPI ITSS_IStream_QueryInterface(
 static ULONG WINAPI ITSS_IStream_AddRef(
     IStream* iface)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
     return ++(This->ref);
 }
 
 static ULONG WINAPI ITSS_IStream_Release(
     IStream* iface)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
 
     ULONG ref = --This->ref;
 
@@ -642,7 +642,7 @@ static HRESULT WINAPI ITSS_IStream_Read(
         ULONG cb,
         ULONG* pcbRead)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
     ULONG count;
 
     TRACE("%p %p %lu %p\n", This, pv, cb, pcbRead);
@@ -672,7 +672,7 @@ static HRESULT WINAPI ITSS_IStream_Seek(
         DWORD dwOrigin,
         ULARGE_INTEGER* plibNewPosition)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
     LONGLONG newpos;
 
     TRACE("%p %s %lu %p\n", This,
@@ -761,7 +761,7 @@ static HRESULT WINAPI ITSS_IStream_Stat(
         STATSTG* pstatstg,
         DWORD grfStatFlag)
 {
-    ICOM_THIS(IStream_Impl,iface);
+    IStream_Impl *This = (IStream_Impl *)iface;
 
     TRACE("%p %p %ld\n", This, pstatstg, grfStatFlag);
 

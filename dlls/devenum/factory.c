@@ -33,7 +33,7 @@ static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(ClassFactoryImpl, iface);
+    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (This == NULL || ppvObj == NULL) return E_POINTER;
@@ -59,7 +59,7 @@ static HRESULT WINAPI DEVENUM_IClassFactory_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_IClassFactory_AddRef(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(ClassFactoryImpl, iface);
+    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
@@ -77,7 +77,7 @@ static ULONG WINAPI DEVENUM_IClassFactory_AddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI DEVENUM_IClassFactory_Release(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(ClassFactoryImpl, iface);
+    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
@@ -97,7 +97,7 @@ static HRESULT WINAPI DEVENUM_IClassFactory_CreateInstance(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(ClassFactoryImpl, iface);
+    ClassFactoryImpl *This = (ClassFactoryImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (This == NULL || ppvObj == NULL) return E_POINTER;

@@ -38,7 +38,7 @@ static const GUID IID_INotifyDBEvents =
 static HRESULT WINAPI WBCPC_QueryInterface(LPCONNECTIONPOINTCONTAINER iface,
                                            REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IConnectionPointContainerImpl, iface);
+    IConnectionPointContainerImpl *This = (IConnectionPointContainerImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -46,7 +46,7 @@ static HRESULT WINAPI WBCPC_QueryInterface(LPCONNECTIONPOINTCONTAINER iface,
 
 static ULONG WINAPI WBCPC_AddRef(LPCONNECTIONPOINTCONTAINER iface)
 {
-    ICOM_THIS(IConnectionPointContainerImpl, iface);
+    IConnectionPointContainerImpl *This = (IConnectionPointContainerImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -54,7 +54,7 @@ static ULONG WINAPI WBCPC_AddRef(LPCONNECTIONPOINTCONTAINER iface)
 
 static ULONG WINAPI WBCPC_Release(LPCONNECTIONPOINTCONTAINER iface)
 {
-    ICOM_THIS(IConnectionPointContainerImpl, iface);
+    IConnectionPointContainerImpl *This = (IConnectionPointContainerImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -122,7 +122,7 @@ IConnectionPointContainerImpl SHDOCVW_ConnectionPointContainer = { &WBCPC_Vtbl, 
 static HRESULT WINAPI WBCP_QueryInterface(LPCONNECTIONPOINT iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IConnectionPointImpl, iface);
+    IConnectionPointImpl *This = (IConnectionPointImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n", This, debugstr_guid(riid), ppobj);
     return E_NOINTERFACE;
@@ -130,7 +130,7 @@ static HRESULT WINAPI WBCP_QueryInterface(LPCONNECTIONPOINT iface,
 
 static ULONG WINAPI WBCP_AddRef(LPCONNECTIONPOINT iface)
 {
-    ICOM_THIS(IConnectionPointImpl, iface);
+    IConnectionPointImpl *This = (IConnectionPointImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -138,7 +138,7 @@ static ULONG WINAPI WBCP_AddRef(LPCONNECTIONPOINT iface)
 
 static ULONG WINAPI WBCP_Release(LPCONNECTIONPOINT iface)
 {
-    ICOM_THIS(IConnectionPointImpl, iface);
+    IConnectionPointImpl *This = (IConnectionPointImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");

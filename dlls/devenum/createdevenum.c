@@ -56,7 +56,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(CreateDevEnumImpl, iface);
+    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (This == NULL || ppvObj == NULL) return E_POINTER;
@@ -78,7 +78,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface)
 {
-    ICOM_THIS(CreateDevEnumImpl, iface);
+    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
@@ -94,7 +94,7 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_AddRef(ICreateDevEnum * iface)
  */
 static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
 {
-    ICOM_THIS(CreateDevEnumImpl, iface);
+    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
@@ -118,7 +118,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     EnumMonikerImpl * pEnumMoniker;
     HKEY hkey;
     HKEY hbasekey;
-    ICOM_THIS(CreateDevEnumImpl, iface);
+    CreateDevEnumImpl *This = (CreateDevEnumImpl *)iface;
 
     TRACE("(%p)->(%s, %p, %lx)\n\tDeviceClass:\t%s\n", This, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags, debugstr_guid(clsidDeviceClass));
 

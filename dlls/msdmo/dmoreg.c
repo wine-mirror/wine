@@ -289,7 +289,7 @@ lend:
 */
 static BOOL IEnumDMO_Destructor(IEnumDMO* iface)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     TRACE("%p\n", This);
 
@@ -385,7 +385,7 @@ lerr:
  */
 static ULONG WINAPI IEnumDMO_fnAddRef(IEnumDMO * iface)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
     return ++(This->ref);
 }
 
@@ -398,7 +398,7 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     *ppvObj = NULL;
 
@@ -422,7 +422,7 @@ static HRESULT WINAPI IEnumDMO_fnQueryInterface(
  */
 static ULONG WINAPI IEnumDMO_fnRelease(IEnumDMO * iface)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     if (!--(This->ref))
     {
@@ -454,7 +454,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
     UINT count = 0;
     HRESULT hres = S_OK;
 
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     TRACE("%ld\n", cItemsToFetch);
 
@@ -585,7 +585,7 @@ static HRESULT WINAPI IEnumDMO_fnNext(
  */
 static HRESULT WINAPI IEnumDMO_fnSkip(IEnumDMO * iface, DWORD cItemsToSkip)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     This->index += cItemsToSkip;
 
@@ -598,7 +598,7 @@ static HRESULT WINAPI IEnumDMO_fnSkip(IEnumDMO * iface, DWORD cItemsToSkip)
  */
 static HRESULT WINAPI IEnumDMO_fnReset(IEnumDMO * iface)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     This->index = -1;
 
@@ -611,7 +611,7 @@ static HRESULT WINAPI IEnumDMO_fnReset(IEnumDMO * iface)
  */
 static HRESULT WINAPI IEnumDMO_fnClone(IEnumDMO * iface, IEnumDMO **ppEnum)
 {
-    ICOM_THIS(IEnumDMOImpl,iface);
+    IEnumDMOImpl *This = (IEnumDMOImpl *)iface;
 
     FIXME("(%p)->() to (%p)->() E_NOTIMPL\n", This, ppEnum);
 

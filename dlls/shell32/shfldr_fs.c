@@ -132,7 +132,7 @@ static void SF_RegisterClipFmt (IGenericSFImpl * This)
 */
 static HRESULT WINAPI IUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, LPVOID * ppvObj)
 {
-    ICOM_THIS (IGenericSFImpl, iface);
+    IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
     TRACE ("(%p)->(%s,%p)\n", This, shdebugstr_guid (riid), ppvObj);
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI IUnknown_fnQueryInterface (IUnknown * iface, REFIID riid, 
 
 static ULONG WINAPI IUnknown_fnAddRef (IUnknown * iface)
 {
-    ICOM_THIS (IGenericSFImpl, iface);
+    IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
     TRACE ("(%p)->(count=%lu)\n", This, This->ref);
 
@@ -179,7 +179,7 @@ static ULONG WINAPI IUnknown_fnAddRef (IUnknown * iface)
 
 static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
 {
-    ICOM_THIS (IGenericSFImpl, iface);
+    IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
     TRACE ("(%p)->(count=%lu)\n", This, This->ref);
 

@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
 /* IDirectMusicComposerImpl IUnknown part: */
 HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown) || 
@@ -37,13 +37,13 @@ HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER if
 }
 
 ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	TRACE("(%p): AddRef from %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	ULONG ref = --This->ref;
 	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
 	if (ref == 0) {
@@ -54,37 +54,37 @@ ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface) {
 
 /* IDirectMusicComposerImpl IDirectMusicComposer part: */
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, IDirectMusicSegment* pTemplate, WORD wActivity, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %p, %p, %d, %p, %p): stub\n", This, pStyle, pTemplate, wActivity, pChordMap, ppSegment);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, WORD wNumMeasures, WORD wShape, WORD wActivity, BOOL fIntro, BOOL fEnd, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %p, %d, %d, %d, %d, %d, %p, %p): stub\n", This, pStyle, wNumMeasures, wShape, wActivity, fIntro, fEnd, pChordMap, ppSegment);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %p, %p, %ld, %d, %ld, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicPerformance* pPerformance, IDirectMusicSegment* pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg, IDirectMusicSegmentState** ppToSegState, IDirectMusicSegmentState** ppTransSegState) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %p, %d, %ld, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ComposeTemplateFromShape (LPDIRECTMUSICCOMPOSER iface, WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength, IDirectMusicSegment** ppTemplate) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %d, %d, %d, %d, %d, %p): stub\n", This, wNumMeasures, wShape, fIntro, fEnd, wEndLength, ppTemplate);
 	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pSegment, BOOL fTrackScale, IDirectMusicChordMap* pChordMap) {
-	ICOM_THIS(IDirectMusicComposerImpl,iface);
+	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
 	FIXME("(%p, %p, %d, %p): stub\n", This, pSegment, fTrackScale, pChordMap);
 	return S_OK;
 }

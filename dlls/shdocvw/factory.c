@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 static HRESULT WINAPI WBCF_QueryInterface(LPCLASSFACTORY iface,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE ("\n");
 
@@ -54,7 +54,7 @@ static HRESULT WINAPI WBCF_QueryInterface(LPCLASSFACTORY iface,
  */
 static ULONG WINAPI WBCF_AddRef(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("\n");
     return ++(This->ref);
@@ -65,7 +65,7 @@ static ULONG WINAPI WBCF_AddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI WBCF_Release(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     /* static class, won't be freed */
     TRACE("\n");
@@ -78,7 +78,7 @@ static ULONG WINAPI WBCF_Release(LPCLASSFACTORY iface)
 static HRESULT WINAPI WBCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter,
                                           REFIID riid, LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     /* Don't support aggregation (yet?) */
     if (pOuter)
@@ -104,7 +104,7 @@ static HRESULT WINAPI WBCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter
  */
 static HRESULT WINAPI WBCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
 {
-    ICOM_THIS(IClassFactoryImpl, iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n", This, dolock);
     return S_OK;
 }

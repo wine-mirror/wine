@@ -32,7 +32,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(ParseDisplayNameImpl, iface);
+    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
     TRACE("\n\tIID:\t%s\n",debugstr_guid(riid));
 
     if (This == NULL || ppvObj == NULL) return E_POINTER;
@@ -54,7 +54,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_QueryInterface(
  */
 static ULONG WINAPI DEVENUM_IParseDisplayName_AddRef(LPPARSEDISPLAYNAME iface)
 {
-    ICOM_THIS(ParseDisplayNameImpl, iface);
+    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
     TRACE("\n");
 
     if (This == NULL) return E_POINTER;
@@ -71,7 +71,7 @@ static ULONG WINAPI DEVENUM_IParseDisplayName_AddRef(LPPARSEDISPLAYNAME iface)
  */
 static ULONG WINAPI DEVENUM_IParseDisplayName_Release(LPPARSEDISPLAYNAME iface)
 {
-    ICOM_THIS(ParseDisplayNameImpl, iface);
+    ParseDisplayNameImpl *This = (ParseDisplayNameImpl *)iface;
     ULONG ref;
     TRACE("\n");
 

@@ -104,7 +104,7 @@ struct OLEFontImpl
  * There is a version to accomodate all of the VTables implemented
  * by this object.
  */
-#define _ICOM_THIS(class,name) class* this = (class*)name
+#define class *this = (class *)name class* this = (class*)name
 #define _ICOM_THIS_From_IDispatch(class, name) class* this = (class*)(((char*)name)-sizeof(void*))
 #define _ICOM_THIS_From_IPersistStream(class, name) class* this = (class*)(((char*)name)-2*sizeof(void*))
 #define _ICOM_THIS_From_IConnectionPointContainer(class, name) class* this = (class*)(((char*)name)-3*sizeof(void*))
@@ -474,7 +474,7 @@ HRESULT WINAPI OLEFontImpl_QueryInterface(
   REFIID  riid,
   void**  ppvObject)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%s, %p)\n", this, debugstr_guid(riid), ppvObject);
 
   /*
@@ -528,7 +528,7 @@ HRESULT WINAPI OLEFontImpl_QueryInterface(
 ULONG WINAPI OLEFontImpl_AddRef(
   IFont* iface)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", this, this->ref);
   this->ref++;
 
@@ -543,7 +543,7 @@ ULONG WINAPI OLEFontImpl_AddRef(
 ULONG WINAPI OLEFontImpl_Release(
       IFont* iface)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(ref=%ld)\n", this, this->ref);
 
   /*
@@ -573,7 +573,7 @@ static HRESULT WINAPI OLEFontImpl_get_Name(
   IFont*  iface,
   BSTR* pname)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pname);
   /*
    * Sanity check.
@@ -598,7 +598,7 @@ static HRESULT WINAPI OLEFontImpl_put_Name(
   IFont* iface,
   BSTR name)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, name);
 
   if (this->description.lpstrName==0)
@@ -633,7 +633,7 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
   IFont* iface,
   CY*    psize)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, psize);
 
   /*
@@ -657,7 +657,7 @@ static HRESULT WINAPI OLEFontImpl_put_Size(
   IFont* iface,
   CY     size)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%ld)\n", this, size.s.Lo);
   this->description.cySize.s.Hi = 0;
   this->description.cySize.s.Lo = size.s.Lo;
@@ -675,7 +675,7 @@ static HRESULT WINAPI OLEFontImpl_get_Bold(
   IFont*  iface,
   BOOL* pbold)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pbold);
   /*
    * Sanity check
@@ -697,7 +697,7 @@ static HRESULT WINAPI OLEFontImpl_put_Bold(
   IFont* iface,
   BOOL bold)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, bold);
   this->description.sWeight = bold ? FW_BOLD : FW_NORMAL;
   OLEFont_SendNotify(this, DISPID_FONT_BOLD);
@@ -714,7 +714,7 @@ static HRESULT WINAPI OLEFontImpl_get_Italic(
   IFont*  iface,
   BOOL* pitalic)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pitalic);
   /*
    * Sanity check
@@ -736,7 +736,7 @@ static HRESULT WINAPI OLEFontImpl_put_Italic(
   IFont* iface,
   BOOL italic)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, italic);
 
   this->description.fItalic = italic;
@@ -754,7 +754,7 @@ static HRESULT WINAPI OLEFontImpl_get_Underline(
   IFont*  iface,
   BOOL* punderline)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, punderline);
 
   /*
@@ -777,7 +777,7 @@ static HRESULT WINAPI OLEFontImpl_put_Underline(
   IFont* iface,
   BOOL underline)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, underline);
 
   this->description.fUnderline = underline;
@@ -795,7 +795,7 @@ static HRESULT WINAPI OLEFontImpl_get_Strikethrough(
   IFont*  iface,
   BOOL* pstrikethrough)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pstrikethrough);
 
   /*
@@ -818,7 +818,7 @@ static HRESULT WINAPI OLEFontImpl_put_Strikethrough(
  IFont* iface,
  BOOL strikethrough)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, strikethrough);
 
   this->description.fStrikethrough = strikethrough;
@@ -836,7 +836,7 @@ static HRESULT WINAPI OLEFontImpl_get_Weight(
   IFont* iface,
   short* pweight)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pweight);
 
   /*
@@ -859,7 +859,7 @@ static HRESULT WINAPI OLEFontImpl_put_Weight(
   IFont* iface,
   short  weight)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, weight);
 
   this->description.sWeight = weight;
@@ -877,7 +877,7 @@ static HRESULT WINAPI OLEFontImpl_get_Charset(
   IFont* iface,
   short* pcharset)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, pcharset);
 
   /*
@@ -900,7 +900,7 @@ static HRESULT WINAPI OLEFontImpl_put_Charset(
   IFont* iface,
   short charset)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%d)\n", this, charset);
 
   this->description.sCharset = charset;
@@ -918,7 +918,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
   IFont*   iface,
   HFONT* phfont)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, phfont);
   if (phfont==NULL)
     return E_POINTER;
@@ -978,7 +978,7 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   LOGFONTW logFont;
   INT      fontHeight;
   CY       cySize;
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, ppfont);
 
   if (ppfont == NULL)
@@ -1058,7 +1058,7 @@ static HRESULT WINAPI OLEFontImpl_SetRatio(
   long   cyLogical,
   long   cyHimetric)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%ld, %ld)\n", this, cyLogical, cyHimetric);
 
   this->cyLogical  = cyLogical;
@@ -1089,7 +1089,7 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
   IFont*  iface,
   HFONT hfont)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p) (lock=%ld)\n", this, hfont, this->fontLock);
 
   if ( (hfont == 0) ||
@@ -1110,7 +1110,7 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   IFont*  iface,
   HFONT hfont)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p) (lock=%ld)\n", this, hfont, this->fontLock);
 
   if ( (hfont == 0) ||
@@ -1140,7 +1140,7 @@ static HRESULT WINAPI OLEFontImpl_SetHdc(
   IFont* iface,
   HDC  hdc)
 {
-  _ICOM_THIS(OLEFontImpl, iface);
+  OLEFontImpl *this = (OLEFontImpl *)iface;
   FIXME("(%p)->(%p): Stub\n", this, hdc);
   return E_NOTIMPL;
 }
