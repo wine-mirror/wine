@@ -18,12 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include <windows.h>
+#include <advpub.h>
 
 #include "wine/test.h"
-#include "advpub.h"
+
+
+static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
+
 
 static void version_test()
 {
@@ -31,7 +33,7 @@ static void version_test()
     DWORD major, minor;
 
     major = minor = 0;
-    hr = GetVersionFromFile("kernel32.dll", &major, &minor, FALSE);
+    hr = pGetVersionFromFile("kernel32.dll", &major, &minor, FALSE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
         "0x%08lx\n", hr);
 
@@ -39,7 +41,7 @@ static void version_test()
            major, minor);
 
     major = minor = 0;
-    hr = GetVersionFromFile("kernel32.dll", &major, &minor, TRUE);
+    hr = pGetVersionFromFile("kernel32.dll", &major, &minor, TRUE);
     ok (hr == S_OK, "GetVersionFromFileEx(kernel32.dll) failed, returned "
         "0x%08lx\n", hr);
 
@@ -49,5 +51,14 @@ static void version_test()
 
 START_TEST(advpack)
 {
+    HMODULE hdll;
+
+    hdll = LoadLibraryA("advpack.dll");
+    if (!hdll)
+        return;
+    pGetVersionFromFile = (void*)GetProcAddress(hdll, "GetVersionFromFile");
+    if (!pGetVersionFromFile)
+        return;
+
     version_test();
 }
