@@ -431,6 +431,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
            gotContext = TRUE;
            created = TRUE;
         }
+    } else {
+        gotContext = TRUE;
     }
 
     if (gotContext == FALSE) {
