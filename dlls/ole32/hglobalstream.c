@@ -249,7 +249,7 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
     /*
      * This method will allocate a handle if one is not supplied.
      */
-    if (newStream->supportHandle == NULL)
+    if (!newStream->supportHandle)
     {
       newStream->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
 					     GMEM_SHARE, 0);

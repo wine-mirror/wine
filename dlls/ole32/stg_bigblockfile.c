@@ -213,7 +213,7 @@ static BOOL BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile)
                                       0, 0,
                                       NULL);
 
-  if (This->hfilemap == NULL)
+  if (!This->hfilemap)
   {
     CloseHandle(This->hfile);
     return FALSE;
@@ -237,7 +237,7 @@ static BOOL BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile)
 static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
 {
   This->hfile       = 0;
-  This->hfilemap    = NULL;
+  This->hfilemap    = 0;
 
   /*
    * Retrieve the handle to the byte array from the LockByte object.
@@ -404,7 +404,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
      * close file-mapping object, must be done before call to SetEndFile
      */
     CloseHandle(This->hfilemap);
-    This->hfilemap = NULL;
+    This->hfilemap = 0;
 
     /*
      * BEGIN HACK
