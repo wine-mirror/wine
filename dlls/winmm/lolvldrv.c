@@ -39,9 +39,9 @@ typedef struct tagWINE_LLTYPE {
     LPSTR		typestr;	/* name (for debugging) */
     BOOL		bSupportMapper;	/* if type is allowed to support mapper */
     MMDRV_MAPFUNC	Map16To32A;	/* those are function pointers to handle */
-    MMDRV_MAPFUNC	UnMap16To32A;	/*   the parameter conversion (16 vs 32 bit) */
+    MMDRV_UNMAPFUNC	UnMap16To32A;	/*   the parameter conversion (16 vs 32 bit) */
     MMDRV_MAPFUNC	Map32ATo16; 	/*   when hi-func (in mmsystem or winmm) and */
-    MMDRV_MAPFUNC	UnMap32ATo16;	/*   low-func (in .drv) do not match */
+    MMDRV_UNMAPFUNC	UnMap32ATo16;	/*   low-func (in .drv) do not match */
     LPDRVCALLBACK	Callback;       /* handles callback for a specified type */
     /* those attributes reflect the loaded/current situation for the type */
     UINT		wMaxId;		/* number of loaded devices (sum across all loaded drivers */
@@ -74,8 +74,8 @@ static WINE_LLTYPE	llTypes[MMDRV_MAX] = {
  *
  */
 void    MMDRV_InstallMap(unsigned int drv, 
-                         MMDRV_MAPFUNC mp1632, MMDRV_MAPFUNC um1632,
-                         MMDRV_MAPFUNC mp3216, MMDRV_MAPFUNC um3216,
+                         MMDRV_MAPFUNC mp1632, MMDRV_UNMAPFUNC um1632,
+                         MMDRV_MAPFUNC mp3216, MMDRV_UNMAPFUNC um3216,
                          LPDRVCALLBACK cb)
 {
     assert(drv < MMDRV_MAX);
@@ -234,7 +234,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 					  dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
 		if (map == WINMM_MAP_OKMEM)
-		    llType->UnMap16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
+		    llType->UnMap16To32A(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
 		break;
 	    default:
 		FIXME("NIY\n");
@@ -264,7 +264,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
                                          dwParam1, dwParam2);
 		TRACE("=> %lu\n", ret);
 		if (map == WINMM_MAP_OKMEM)
-		    llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2);
+		    llType->UnMap32ATo16(wMsg, &mld->dwDriverInstance, &dwParam1, &dwParam2, ret);
 		break;
 	    default:
 		FIXME("NIY\n");

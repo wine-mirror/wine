@@ -70,7 +70,7 @@ static  WINMM_MapType	MMDRV_Aux_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_UnMap16To32A		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Aux_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -86,7 +86,7 @@ static  WINMM_MapType	MMDRV_Aux_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_UnMap32ATo16		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Aux_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
 #if 0
  case AUXDM_GETDEVCAPS:
@@ -126,7 +126,7 @@ static  WINMM_MapType	MMDRV_Mixer_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap16To32A	[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Mixer_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
 #if 0
     MIXERCAPSA	micA;
@@ -156,7 +156,7 @@ static  WINMM_MapType	MMDRV_Mixer_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap32ATo16	[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Mixer_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -187,7 +187,7 @@ static  WINMM_MapType	MMDRV_MidiIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap16To32A	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -203,7 +203,7 @@ static  WINMM_MapType	MMDRV_MidiIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap32ATo16	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -360,7 +360,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap16To32A	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -411,7 +411,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LP
 	    if (mh16->reserved >= sizeof(MIDIHDR))
 		mh16->dwOffset = mh32->dwOffset;
 
-	    if (wMsg == MODM_UNPREPARE) {
+	    if (wMsg == MODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)mh32 - sizeof(LPMIDIHDR));
 		mh16->lpNext = 0;
 	    }
@@ -571,7 +571,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap32ATo16	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -617,7 +617,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LP
 	    mh32->dwUser = mh16->dwUser;
 	    mh32->dwFlags = mh16->dwFlags;
 
-	    if (wMsg == MODM_UNPREPARE) {
+	    if (wMsg == MODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
                 HeapFree( GetProcessHeap(), 0, ptr );
 		mh32->lpNext = 0;
 	    }
@@ -805,7 +805,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap16To32A	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -860,7 +860,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
 	    wh16->dwFlags = wh32->dwFlags;
 	    wh16->dwLoops = wh32->dwLoops;
 
-	    if (wMsg == WIDM_UNPREPARE) {
+	    if (wMsg == WIDM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
@@ -1047,7 +1047,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap32ATo16	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -1089,7 +1089,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    wh32->dwLoops = wh16->dwLoops;
             UnMapLS( *lpParam1 );
 
-	    if (wMsg == WIDM_UNPREPARE) {
+	    if (wMsg == WIDM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
                 HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
@@ -1303,7 +1303,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap16To32A	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -1369,7 +1369,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LP
 	    wh16->dwFlags = wh32->dwFlags;
 	    wh16->dwLoops = wh32->dwLoops;
 
-	    if (wMsg == WODM_UNPREPARE) {
+	    if (wMsg == WODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
 		HeapFree(GetProcessHeap(), 0, (LPSTR)wh32 - sizeof(LPWAVEHDR));
 		wh16->lpNext = 0;
 	    }
@@ -1575,7 +1575,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap32ATo16	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret;
 
@@ -1659,7 +1659,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LP
 	    wh32->dwLoops = wh16->dwLoops;
 
             UnMapLS( *lpParam1 );
-	    if (wMsg == WODM_UNPREPARE) {
+	    if (wMsg == WODM_UNPREPARE && fn_ret == MMSYSERR_NOERROR) {
                 HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
