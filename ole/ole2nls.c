@@ -2533,7 +2533,10 @@ UINT WINAPI CompareStringW(DWORD lcid, DWORD fdwStyle,
 	len = l1<l2 ? l1:l2;
 	ret = (fdwStyle & NORM_IGNORECASE) ? strncmpiW(s1,s2,len) : strncmpW(s1,s2,len);
 	/* not equal, return 1 or 3 */
-	if(ret!=0) return ret+2;
+	if(ret!=0) {
+		/* need to translate result */
+		return ((int)ret < 0) ? 1 : 3;
+	}
 	/* same len, return 2 */
 	if(l1==l2) return 2;
 	/* the longer one is lexically greater */
