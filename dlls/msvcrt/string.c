@@ -47,18 +47,6 @@ char* msvcrt_strndup(const char* buf, unsigned int size)
 }
 
 /*********************************************************************
- *		_strdec (MSVCRT.@)
- */
-char* _strdec(const char* str1, const char* str2)
-{
-  /* Hmm. While the docs suggest that the following should work... */
-  /*  return (str2<=str1?0:str2-1); */
-  /* ...Version 2.50.4170 (NT) from win98 constantly decrements! */
-  str1 = str1; /* remove warning */
-  return (char *)str2-1;
-}
-
-/*********************************************************************
  *		_mbsdup (MSVCRT.@)
  *		_strdup (MSVCRT.@)
  */
@@ -67,32 +55,6 @@ char* _strdup(const char* str)
     char * ret = MSVCRT_malloc(strlen(str)+1);
     if (ret) strcpy( ret, str );
     return ret;
-}
-
-/*********************************************************************
- *		_strinc (MSVCRT.@)
- */
-char* _strinc(const char* str)
-{
-  return (char*)str+1;
-}
-
-/*********************************************************************
- *		_strnextc (MSVCRT.@)
- */
-unsigned int _strnextc(const char* str)
-{
-  return (unsigned int)*str;
-}
-
-/*********************************************************************
- *		_strninc (MSVCRT.@)
- *
- * Return a pointer to the 'n'th character in a string
- */
-char* _strninc(char* str, unsigned int n)
-{
-  return str + n;
 }
 
 /*********************************************************************
@@ -135,24 +97,6 @@ char* _strset(char* str, int value)
     *ptr++ = value;
 
   return str;
-}
-
-/*********************************************************************
- *		_strncnt (MSVCRT.@)
- */
-unsigned int _strncnt(char* str, unsigned int max)
-{
-  unsigned int len = strlen(str);
-  return (len > max? max : len);
-}
-
-/*********************************************************************
- *		_strspnp (MSVCRT.@)
- */
-char* _strspnp(char* str1, char* str2)
-{
-  str1 += strspn(str1,str2);
-  return *str1? str1 : 0;
 }
 
 /*********************************************************************
