@@ -71,7 +71,12 @@ static HRESULT X11_Create( LPDIRECTDRAW *lplpDD ) {
     /* At DirectDraw creation, the depth is the default depth */
     depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
 
-    _common_depth_to_pixelformat(depth,(LPDIRECTDRAW)ddraw);
+    switch (_common_depth_to_pixelformat(depth,(LPDIRECTDRAW)ddraw)) {
+    case -2: ERR("no depth conversion mode for depth %d found\n",depth); break;
+    case -1: WARN("No conversion needed for depth %d.\n",depth); break;
+    case 0: MESSAGE("Conversion needed from %d.\n",depth); break;
+    }
+
     ddraw->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
     ddraw->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 #ifdef HAVE_LIBXXSHM

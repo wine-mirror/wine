@@ -221,8 +221,14 @@ void _dump_pixelformat(void *in) {
 
     DPRINTF("( ");
     _dump_pixelformat_flag(pf->dwFlags);
-    if (pf->dwFlags & DDPF_FOURCC)
-	DPRINTF(", dwFourCC : %ld", pf->dwFourCC);
+    if (pf->dwFlags & DDPF_FOURCC) {
+	DPRINTF(", dwFourCC : %c%c%c%c",
+		(pf->dwFourCC>>24)&0xff,
+		(pf->dwFourCC>>16)&0xff,
+		(pf->dwFourCC>> 8)&0xff,
+		 pf->dwFourCC     &0xff
+	);
+    }
     if (pf->dwFlags & DDPF_RGB) {
 	char *cmd;
 	DPRINTF(", RGB bits: %ld, ", pf->u.dwRGBBitCount);

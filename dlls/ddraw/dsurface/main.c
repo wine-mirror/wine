@@ -1084,6 +1084,8 @@ HRESULT WINAPI IDirectDrawSurface4Impl_GetDDInterface(
     FIXME("(%p)->(%p),stub!\n", This, lplpDD);
 
     /* Not sure about that... */
+
+    IDirectDraw_AddRef((LPDIRECTDRAW)This->s.ddraw),
     *lplpDD = (void *) This->s.ddraw;
 
     return DD_OK;
