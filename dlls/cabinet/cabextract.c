@@ -40,14 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
-/* The first result of a search will be returned, and
- * the remaining results will be chained to it via the cab->next structure
- * member.
- */
-cab_UBYTE search_buf[CAB_SEARCH_SIZE];
-
-cab_decomp_state decomp_state;
-
 /* all the file IO is abstracted into these routines:
  * cabinet_(open|close|read|seek|skip|getoffset)
  * file_(open|close|write)
@@ -600,7 +592,7 @@ void Ziphuft_free(struct Ziphuft *t)
  * Ziphuft_build (internal)
  */
 cab_LONG Ziphuft_build(cab_ULONG *b, cab_ULONG n, cab_ULONG s, cab_UWORD *d, cab_UWORD *e,
-struct Ziphuft **t, cab_LONG *m)
+struct Ziphuft **t, cab_LONG *m, cab_decomp_state *decomp_state)
 {
   cab_ULONG a;                   	/* counter for codes of length k */
   cab_ULONG el;                  	/* length of EOB code (value 256) */
@@ -780,7 +772,7 @@ struct Ziphuft **t, cab_LONG *m)
  * Zipinflate_codes (internal)
  */
 cab_LONG Zipinflate_codes(struct Ziphuft *tl, struct Ziphuft *td,
-  cab_LONG bl, cab_LONG bd)
+  cab_LONG bl, cab_LONG bd, cab_decomp_state *decomp_state)
 {
   register cab_ULONG e;  /* table entry flag/number of extra bits */
   cab_ULONG n, d;        /* length and index for copy */
@@ -862,7 +854,7 @@ cab_LONG Zipinflate_codes(struct Ziphuft *tl, struct Ziphuft *td,
 /***********************************************************
  * Zipinflate_stored (internal)
  */
-cab_LONG Zipinflate_stored(void)
+cab_LONG Zipinflate_stored(cab_decomp_state *decomp_state)
 /* "decompress" an inflated type 0 (stored) block. */
 {
   cab_ULONG n;           /* number of bytes in block */
@@ -906,7 +898,7 @@ cab_LONG Zipinflate_stored(void)
 /******************************************************
  * Zipinflate_fixed (internal)
  */
-cab_LONG Zipinflate_fixed(void)
+cab_LONG Zipinflate_fixed(cab_decomp_state *decomp_state)
 {
   struct Ziphuft *fixed_tl;
   struct Ziphuft *fixed_td;
@@ -927,7 +919,7 @@ cab_LONG Zipinflate_fixed(void)
     l[i] = 8;
   fixed_bl = 7;
   if((i = Ziphuft_build(l, 288, 257, (cab_UWORD *) Zipcplens,
-  (cab_UWORD *) Zipcplext, &fixed_tl, &fixed_bl)))
+  (cab_UWORD *) Zipcplext, &fixed_tl, &fixed_bl, decomp_state)))
     return i;
 
   /* distance table */
@@ -935,14 +927,14 @@ cab_LONG Zipinflate_fixed(void)
     l[i] = 5;
   fixed_bd = 5;
   if((i = Ziphuft_build(l, 30, 0, (cab_UWORD *) Zipcpdist, (cab_UWORD *) Zipcpdext,
-  &fixed_td, &fixed_bd)) > 1)
+  &fixed_td, &fixed_bd, decomp_state)) > 1)
   {
     Ziphuft_free(fixed_tl);
     return i;
   }
 
   /* decompress until an end-of-block code */
-  i = Zipinflate_codes(fixed_tl, fixed_td, fixed_bl, fixed_bd);
+  i = Zipinflate_codes(fixed_tl, fixed_td, fixed_bl, fixed_bd, decomp_state);
 
   Ziphuft_free(fixed_td);
   Ziphuft_free(fixed_tl);
@@ -952,7 +944,7 @@ cab_LONG Zipinflate_fixed(void)
 /**************************************************************
  * Zipinflate_dynamic (internal)
  */
-cab_LONG Zipinflate_dynamic(void)
+cab_LONG Zipinflate_dynamic(cab_decomp_state *decomp_state)
  /* decompress an inflated type 2 (dynamic Huffman codes) block. */
 {
   cab_LONG i;          	/* temporary variables */
@@ -1001,7 +993,7 @@ cab_LONG Zipinflate_dynamic(void)
 
   /* build decoding table for trees--single level, 7 bit lookup */
   bl = 7;
-  if((i = Ziphuft_build(ll, 19, 19, NULL, NULL, &tl, &bl)) != 0)
+  if((i = Ziphuft_build(ll, 19, 19, NULL, NULL, &tl, &bl, decomp_state)) != 0)
   {
     if(i == 1)
       Ziphuft_free(tl);
@@ -1063,17 +1055,19 @@ cab_LONG Zipinflate_dynamic(void)
 
   /* build the decoding tables for literal/length and distance codes */
   bl = ZIPLBITS;
-  if((i = Ziphuft_build(ll, nl, 257, (cab_UWORD *) Zipcplens, (cab_UWORD *) Zipcplext, &tl, &bl)) != 0)
+  if((i = Ziphuft_build(ll, nl, 257, (cab_UWORD *) Zipcplens, (cab_UWORD *) Zipcplext,
+                        &tl, &bl, decomp_state)) != 0)
   {
     if(i == 1)
       Ziphuft_free(tl);
     return i;                   /* incomplete code set */
   }
   bd = ZIPDBITS;
-  Ziphuft_build(ll + nl, nd, 0, (cab_UWORD *) Zipcpdist, (cab_UWORD *) Zipcpdext, &td, &bd);
+  Ziphuft_build(ll + nl, nd, 0, (cab_UWORD *) Zipcpdist, (cab_UWORD *) Zipcpdext,
+                &td, &bd, decomp_state);
 
   /* decompress until an end-of-block code */
-  if(Zipinflate_codes(tl, td, bl, bd))
+  if(Zipinflate_codes(tl, td, bl, bd, decomp_state))
     return 1;
 
   /* free the decoding tables, return */
@@ -1085,7 +1079,7 @@ cab_LONG Zipinflate_dynamic(void)
 /*****************************************************
  * Zipinflate_block (internal)
  */
-cab_LONG Zipinflate_block(cab_LONG *e) /* e == last block flag */
+cab_LONG Zipinflate_block(cab_LONG *e, cab_decomp_state *decomp_state) /* e == last block flag */
 { /* decompress an inflated block */
   cab_ULONG t;           	/* block type */
   register cab_ULONG b;     /* bit buffer */
@@ -1111,19 +1105,19 @@ cab_LONG Zipinflate_block(cab_LONG *e) /* e == last block flag */
 
   /* inflate that block type */
   if(t == 2)
-    return Zipinflate_dynamic();
+    return Zipinflate_dynamic(decomp_state);
   if(t == 0)
-    return Zipinflate_stored();
+    return Zipinflate_stored(decomp_state);
   if(t == 1)
-    return Zipinflate_fixed();
+    return Zipinflate_fixed(decomp_state);
   /* bad block type */
   return 2;
 }
 
 /****************************************************
- * Zipdecompress (internal)
+ * ZIPdecompress (internal)
  */
-int ZIPdecompress(int inlen, int outlen)
+int ZIPdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
 {
   cab_LONG e;               /* last block flag */
 
@@ -1141,7 +1135,7 @@ int ZIPdecompress(int inlen, int outlen)
 
   do
   {
-    if(Zipinflate_block(&e))
+    if(Zipinflate_block(&e, decomp_state))
       return DECR_ILLEGALDATA;
   } while(!e);
 
@@ -1179,7 +1173,7 @@ void QTMinitmodel(struct QTMmodel *m, struct QTMmodelsym *sym, int n, int s) {
 /******************************************************************
  * QTMinit (internal)
  */
-int QTMinit(int window, int level) {
+int QTMinit(int window, int level, cab_decomp_state *decomp_state) {
   int wndsize = 1 << window, msz = window * 2, i;
   cab_ULONG j;
 
@@ -1370,7 +1364,7 @@ void QTMupdatemodel(struct QTMmodel *model, int sym) {
 /*******************************************************************
  * QTMdecompress (internal)
  */
-int QTMdecompress(int inlen, int outlen)
+int QTMdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
 {
   cab_UBYTE *inpos  = CAB(inbuf);
   cab_UBYTE *window = QTM(window);
@@ -1554,7 +1548,7 @@ static cab_UBYTE extra_bits[51];
 /************************************************************
  * LZXinit (internal)
  */
-int LZXinit(int window) {
+int LZXinit(int window, cab_decomp_state *decomp_state) {
   cab_ULONG wndsize = 1 << window;
   int i, j, posn_slots;
 
@@ -1686,7 +1680,7 @@ int LZXinit(int window) {
  */
 #define READ_LENGTHS(tbl,first,last) do { \
   lb.bb = bitbuf; lb.bl = bitsleft; lb.ip = inpos; \
-  if (lzx_read_lens(LENTABLE(tbl),(first),(last),&lb)) { \
+  if (lzx_read_lens(LENTABLE(tbl),(first),(last),&lb,decomp_state)) { \
     return DECR_ILLEGALDATA; \
   } \
   bitbuf = lb.bb; bitsleft = lb.bl; inpos = lb.ip; \
@@ -1788,7 +1782,8 @@ struct lzx_bits {
 /************************************************************
  * lzx_read_lens (internal)
  */
-int lzx_read_lens(cab_UBYTE *lens, cab_ULONG first, cab_ULONG last, struct lzx_bits *lb) {
+int lzx_read_lens(cab_UBYTE *lens, cab_ULONG first, cab_ULONG last, struct lzx_bits *lb,
+                  cab_decomp_state *decomp_state) {
   cab_ULONG i,j, x,y;
   int z;
 
@@ -1834,7 +1829,7 @@ int lzx_read_lens(cab_UBYTE *lens, cab_ULONG first, cab_ULONG last, struct lzx_b
 /*******************************************************
  * LZXdecompress (internal)
  */
-int LZXdecompress(int inlen, int outlen) {
+int LZXdecompress(int inlen, int outlen, cab_decomp_state *decomp_state) {
   cab_UBYTE *inpos  = CAB(inbuf);
   cab_UBYTE *endinp = inpos + inlen;
   cab_UBYTE *window = LZX(window);
@@ -2157,7 +2152,7 @@ int LZXdecompress(int inlen, int outlen) {
 /*********************************************************
  * find_cabs_in_file (internal)
  */
-struct cabinet *find_cabs_in_file(LPCSTR name)
+struct cabinet *find_cabs_in_file(LPCSTR name, cab_UBYTE search_buf[])
 {
   struct cabinet *cab, *cab2, *firstcab = NULL, *linkcab = NULL;
   cab_UBYTE *pstart = &search_buf[0], *pend, *p;
@@ -2360,8 +2355,9 @@ void find_cabinet_file(char **cabname, LPCSTR origcab) {
  * including spanning cabinets, and working out which file is in which
  * folder in which cabinet. It also throws out the duplicate file entries
  * that appear in spanning cabinets. There is memory leakage here because
- * those entries are not freed. See the XAD CAB client for an
- * implementation of this that correctly frees the discarded file entries.
+ * those entries are not freed. See the XAD CAB client (function CAB_GetInfo
+ * in CAB.c) for an implementation of this that correctly frees the discarded
+ * file entries.
  */
 struct cab_file *process_files(struct cabinet *basecab) {
   struct cabinet *cab;
@@ -2411,7 +2407,8 @@ struct cab_file *process_files(struct cabinet *basecab) {
               /* increase the number of splits */
               if ((i = ++(predfol->num_splits)) > CAB_SPLITMAX) {
                 mergeok = 0;
-                ERR("%s: internal error, increase CAB_SPLITMAX\n", debugstr_a(basecab->filename));
+                ERR("%s: internal error: CAB_SPLITMAX exceeded. please report this to wine-devel@winehq.org)\n",
+		    debugstr_a(basecab->filename));
               }
               else {
                 /* copy information across from the merged folder */
@@ -2497,7 +2494,7 @@ int convertUTF(cab_UBYTE *in) {
 /****************************************************
  * NONEdecompress (internal)
  */
-int NONEdecompress(int inlen, int outlen)
+int NONEdecompress(int inlen, int outlen, cab_decomp_state *decomp_state)
 {
   if (inlen != outlen) return DECR_ILLEGALDATA;
   memcpy(CAB(outbuf), CAB(inbuf), (size_t) inlen);
@@ -2528,7 +2525,7 @@ cab_ULONG checksum(cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum) {
 /**********************************************************
  * decompress (internal)
  */
-int decompress(struct cab_file *fi, int savemode, int fix)
+int decompress(struct cab_file *fi, int savemode, int fix, cab_decomp_state *decomp_state)
 {
   cab_ULONG bytes = savemode ? fi->length : fi->offset - CAB(offset);
   struct cabinet *cab = CAB(current)->cab[CAB(split)];
@@ -2596,7 +2593,7 @@ int decompress(struct cab_file *fi, int savemode, int fix)
     }
 
     /* decompress block */
-    if ((err = CAB(decompress)(inlen, outlen))) {
+    if ((err = CAB(decompress)(inlen, outlen, decomp_state))) {
       if (fix && ((fi->folder->comp_type & cffoldCOMPTYPE_MASK)
 		  == cffoldCOMPTYPE_MSZIP))
       {
@@ -2618,7 +2615,7 @@ int decompress(struct cab_file *fi, int savemode, int fix)
  *
  * workhorse to extract a particular file from a cab
  */
-void extract_file(struct cab_file *fi, int lower, int fix, LPCSTR dir)
+void extract_file(struct cab_file *fi, int lower, int fix, LPCSTR dir, cab_decomp_state *decomp_state)
 {
   struct cab_folder *fol = fi->folder, *oldfol = CAB(current);
   cab_LONG err = DECR_OK;
@@ -2660,12 +2657,12 @@ void extract_file(struct cab_file *fi, int lower, int fix, LPCSTR dir)
 
     case cffoldCOMPTYPE_QUANTUM:
       CAB(decompress) = QTMdecompress;
-      err = QTMinit((comptype >> 8) & 0x1f, (comptype >> 4) & 0xF);
+      err = QTMinit((comptype >> 8) & 0x1f, (comptype >> 4) & 0xF, decomp_state);
       break;
 
     case cffoldCOMPTYPE_LZX:
       CAB(decompress) = LZXdecompress;
-      err = LZXinit((comptype >> 8) & 0x1f);
+      err = LZXinit((comptype >> 8) & 0x1f, decomp_state);
       break;
 
     default:
@@ -2685,12 +2682,12 @@ void extract_file(struct cab_file *fi, int lower, int fix, LPCSTR dir)
 
   if (fi->offset > CAB(offset)) {
     /* decode bytes and send them to /dev/null */
-    if ((err = decompress(fi, 0, fix))) goto exit_handler;
+    if ((err = decompress(fi, 0, fix, decomp_state))) goto exit_handler;
     CAB(offset) = fi->offset;
   }
   
   if (!file_open(fi, lower, dir)) return;
-  err = decompress(fi, 1, fix);
+  err = decompress(fi, 1, fix, decomp_state);
   if (err) CAB(current) = NULL; else CAB(offset) += fi->length;
   file_close(fi);
 
@@ -2772,15 +2769,24 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower)
   struct cabinet *basecab, *cab, *cab1, *cab2;
   struct cab_file *filelist, *fi;
 
+  /* The first result of a search will be returned, and
+   * the remaining results will be chained to it via the cab->next structure
+   * member.
+   */
+  cab_UBYTE search_buf[CAB_SEARCH_SIZE];
+
+  cab_decomp_state decomp_state_local;
+  cab_decomp_state *decomp_state = &decomp_state_local;
+
   /* has the list-mode header been seen before? */
   int viewhdr = 0;
 
-  ZeroMemory(&decomp_state, sizeof(cab_decomp_state));
+  ZeroMemory(decomp_state, sizeof(cab_decomp_state));
 
   TRACE("Extract %s\n", debugstr_a(cabname));
 
   /* load the file requested */
-  basecab = find_cabs_in_file(cabname);
+  basecab = find_cabs_in_file(cabname, search_buf);
   if (!basecab) return FALSE;
 
   /* iterate over all cabinets found in that file */
@@ -2823,7 +2829,7 @@ BOOL process_cabinet(LPCSTR cabname, LPCSTR dir, BOOL fix, BOOL lower)
     TRACE("Beginning Extraction...\n");
     for (fi = filelist; fi; fi = fi->next) {
 	TRACE("  extracting: %s\n", debugstr_a(fi->filename));
-	extract_file(fi, lower, fix, dir);
+	extract_file(fi, lower, fix, dir, decomp_state);
     }
   }
 

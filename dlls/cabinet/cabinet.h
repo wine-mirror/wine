@@ -211,10 +211,10 @@ struct LZXstate {
 };
 
 /* generic stuff */
-#define CAB(x) (decomp_state.x)
-#define ZIP(x) (decomp_state.methods.zip.x)
-#define QTM(x) (decomp_state.methods.qtm.x)
-#define LZX(x) (decomp_state.methods.lzx.x)
+#define CAB(x) (decomp_state->x)
+#define ZIP(x) (decomp_state->methods.zip.x)
+#define QTM(x) (decomp_state->methods.qtm.x)
+#define LZX(x) (decomp_state->methods.lzx.x)
 #define DECR_OK           (0)
 #define DECR_DATAFORMAT   (1)
 #define DECR_ILLEGALDATA  (2)
@@ -269,13 +269,13 @@ struct cabinet {
   cab_UBYTE flags;                     /* header flags                   */
 };
 
-typedef struct {
+typedef struct cds_forward {
   struct cab_folder *current;      /* current folder we're extracting from  */
   cab_ULONG offset;                /* uncompressed offset within folder     */
   cab_UBYTE *outpos;               /* (high level) start of data to use up  */
   cab_UWORD outlen;                /* (high level) amount of data to use up */
   cab_UWORD split;                 /* at which split in current folder?     */
-  int (*decompress)(int, int);     /* the chosen compression func      */
+  int (*decompress)(int, int, struct cds_forward *);     /* the chosen compression func      */
   cab_UBYTE inbuf[CAB_INPUTMAX+2]; /* +2 for lzx bitbuffer overflows!  */
   cab_UBYTE outbuf[CAB_BLOCKMAX];
   union {
