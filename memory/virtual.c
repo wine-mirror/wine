@@ -104,7 +104,8 @@ static UINT page_size;
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
 
-static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size, DWORD offset, int prot, int flags );
+static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size, DWORD offset_low,
+                            DWORD offset_high, int prot, int flags );
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -471,7 +472,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     /* map the header */
 
-    if (VIRTUAL_mmap( fd, ptr, header_size, 0, PROT_READ | PROT_WRITE,
+    if (VIRTUAL_mmap( fd, ptr, header_size, 0, 0, PROT_READ | PROT_WRITE,
                       MAP_PRIVATE | MAP_FIXED ) == (char *)-1) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
@@ -533,7 +534,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
                           sec->PointerToRawData, pos, sec->SizeOfRawData,
                           size, sec->Characteristics );
             if (VIRTUAL_mmap( shared_fd, (char *)ptr + sec->VirtualAddress, size,
-                              pos, PROT_READ|PROT_WRITE|PROT_EXEC,
+                              pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
                               MAP_SHARED|MAP_FIXED ) == (void *)-1)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
@@ -555,7 +556,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
          *       fall back to read(), so we don't need to check anything here.
          */
         if (VIRTUAL_mmap( fd, (char *)ptr + sec->VirtualAddress, sec->SizeOfRawData,
-                          sec->PointerToRawData, PROT_READ|PROT_WRITE|PROT_EXEC,
+                          sec->PointerToRawData, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
                           MAP_PRIVATE | MAP_FIXED ) == (void *)-1)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
@@ -650,6 +651,46 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
 }
 
 
+
+/***********************************************************************
+ *           unaligned_mmap
+ *
+ * Linux kernels before 2.4.x can support non page-aligned offsets, as
+ * long as the offset is aligned to the filesystem block size. This is
+ * a big performance gain so we want to take advantage of it.
+ *
+ * However, when we use 64-bit file support this doesn't work because
+ * glibc rejects unaligned offsets. Also glibc 2.1.3 mmap64 is broken
+ * in that it rounds unaligned offsets down to a page boundary. For
+ * these reasons we do a direct system call here.
+ */
+static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
+                             unsigned int flags, int fd, unsigned int offset_low,
+                             unsigned int offset_high )
+{
+#if defined(linux) && defined(__i386__) && defined(__GNUC__)
+    if (!offset_high && (offset_low & page_mask))
+    {
+        int ret;
+        __asm__ __volatile__("push %%ebx\n\t"
+                             "movl %2,%%ebx\n\t"
+                             "int $0x80\n\t"
+                             "popl %%ebx"
+                             : "=a" (ret)
+                             : "0" (90), /* SYS_mmap */
+                               "g" (&addr) );
+        if (ret < 0 && ret > -4096)
+        {
+            errno = -ret;
+            ret = -1;
+        }
+        return (void *)ret;
+    }
+#endif
+    return mmap( addr, length, prot, flags, fd, ((off_t)offset_high << 32) | offset_low );
+}
+
+
 /***********************************************************************
  *           VIRTUAL_mmap
  *
@@ -657,15 +698,16 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
  * and falls back to read if mmap of a file fails.
  */
 static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
-                            DWORD offset, int prot, int flags )
+                            DWORD offset_low, DWORD offset_high, int prot, int flags )
 {
     int pos;
     LPVOID ret;
+    off_t offset;
 
     if (fd == -1) return wine_anon_mmap( start, size, prot, flags );
 
-    if ((ret = mmap( start, size, prot, flags, fd, offset )) != (LPVOID)-1)
-        return ret;
+    if ((ret = unaligned_mmap( start, size, prot, flags, fd,
+                               offset_low, offset_high )) != (LPVOID)-1) return ret;
 
     /* mmap() failed; if this is because the file offset is not    */
     /* page-aligned (EINVAL), or because the underlying filesystem */
@@ -687,6 +729,7 @@ static LPVOID VIRTUAL_mmap( int fd, LPVOID start, DWORD size,
     ret = wine_anon_mmap( start, size, PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
+    offset = ((off_t)offset_high << 32) | offset_low;
     if ((pos = lseek( fd, offset, SEEK_SET )) == -1)
     {
         munmap( ret, size );
@@ -1524,8 +1567,8 @@ LPVOID WINAPI MapViewOfFileEx(
                           shared_file, shared_size );
 
 
-    if (size_high || offset_high)
-        ERR("Offsets larger than 4Gb not supported\n");
+    if (size_high)
+        ERR("Sizes larger than 4Gb not supported\n");
 
     if ((offset_low >= size_low) ||
         (count > size_low - offset_low))
@@ -1570,7 +1613,7 @@ LPVOID WINAPI MapViewOfFileEx(
 
     TRACE("handle=%x size=%x offset=%lx\n", handle, size, offset_low );
 
-    ptr = (UINT)VIRTUAL_mmap( unix_handle, addr, size, offset_low,
+    ptr = (UINT)VIRTUAL_mmap( unix_handle, addr, size, offset_low, offset_high,
                               VIRTUAL_GetUnixProt( prot ), flags );
     if (ptr == (UINT)-1) {
         /* KB: Q125713, 25-SEP-1995, "Common File Mapping Problems and
