@@ -37,6 +37,7 @@ static int fldrHeight = 0;
 static int fldrWidth = 0;
 
 static const char defaultfilter[]=" \0\0";
+#define OFN_PROP "FILEDLG_OFN_LPARAM"
 
 /***********************************************************************
  *
@@ -741,7 +742,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   LPOPENFILENAME16 lpofn;
   char tmpstr[512];
   LPSTR pstr, old_pstr;
-  SetWindowLongA(hWnd, DWL_USER, lParam);
+  SetPropA(hWnd,OFN_PROP,lParam);
   lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(lParam);
   if (lpofn->lpstrTitle) SetWindowText16( hWnd, lpofn->lpstrTitle );
   /* read custom filter information */
@@ -842,7 +843,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   control = wParam;
   notification = HIWORD(lParam);
     
-  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
+  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetPropA(hWnd,OFN_PROP));
   switch (control)
     {
     case lst1: /* file list */
@@ -1044,7 +1045,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {  
- LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn =(LPOPENFILENAME16)PTR_SEG_TO_LIN(GetPropA(hWnd,OFN_PROP));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
@@ -1087,7 +1088,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
                                LPARAM lParam)
 {
- LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn =(LPOPENFILENAME16)PTR_SEG_TO_LIN(GetPropA(hWnd,OFN_PROP));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
