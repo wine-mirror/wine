@@ -76,21 +76,11 @@ static void call_req_handler( struct thread *thread, enum request req, int fd )
     if (req < REQ_NB_REQUESTS)
     {
         req_handlers[req].handler( current->buffer, fd );
-        if (current && current->state != SLEEPING) send_reply( current );
+        if (current && !current->wait) send_reply( current );
         current = NULL;
         return;
     }
     fatal_protocol_error( current, "bad request %d\n", req );
-}
-
-/* handle a client timeout */
-void call_timeout_handler( void *thread )
-{
-    current = (struct thread *)thread;
-    if (debug_level) trace_timeout();
-    clear_error();
-    thread_timeout();
-    current = NULL;
 }
 
 /* set the fd to pass to the thread */
@@ -103,7 +93,7 @@ void set_reply_fd( struct thread *thread, int pass_fd )
 /* send a reply to a thread */
 void send_reply( struct thread *thread )
 {
-    if (thread->state == SLEEPING) thread->state = RUNNING;
+    assert( !thread->wait );
     if (debug_level) trace_reply( thread );
     if (!write_request( thread )) set_select_events( &thread->obj, POLLOUT );
 }

@@ -1336,11 +1336,6 @@ void trace_request( enum request req, int fd )
     else fprintf( stderr, " )\n" );
 }
 
-void trace_timeout(void)
-{
-    fprintf( stderr, "%08x: *timeout*\n", (unsigned int)current );
-}
-
 void trace_kill( struct thread *thread )
 {
     fprintf( stderr,"%08x: *killed* exit_code=%d\n",

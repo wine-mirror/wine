@@ -20,12 +20,10 @@ struct thread_wait;
 struct thread_apc;
 struct mutex;
 struct debug_ctx;
-struct debug_event;
 
 enum run_state
 {
     RUNNING,    /* running normally */
-    SLEEPING,   /* sleeping waiting for a request to terminate */
     TERMINATED  /* terminated */
 };
 
@@ -40,8 +38,6 @@ struct thread
     struct process     *process;
     struct mutex       *mutex;       /* list of currently owned mutexes */
     struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
-    struct debug_event *debug_event; /* pending debug event for this thread */
-    struct debug_event *exit_event;  /* pending debug exit event for this thread */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */
@@ -59,6 +55,9 @@ struct thread
     enum request        last_req;  /* last request received (for debugging) */
 };
 
+/* callback function for building the thread reply when sleep_on is finished */
+typedef void (*sleep_reply)( struct thread *thread, struct object *obj, int signaled );
+
 extern struct thread *current;
 
 /* thread functions */
@@ -74,8 +73,9 @@ extern void resume_all_threads( void );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int exit_code );
-extern void thread_timeout(void);
 extern void wake_up( struct object *obj, int max );
+extern int sleep_on( int count, struct object *objects[], int flags,
+                     int timeout, sleep_reply func );
 
 /* ptrace functions */
 
