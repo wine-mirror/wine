@@ -270,7 +270,8 @@ void DEBUG_BackTrace(BOOL noisy)
     
     for (ok = TRUE; ok;) {
         if ((frames[frameno].ss == sw_addr.seg) &&
-	    (frames[frameno].ebp >= sw_addr.off)) {
+            sw_addr.off && (frames[frameno].ebp >= sw_addr.off))
+        {
 	   /* 16<->32 switch...
 	    * yes, I know this is confusing, it gave me a headache too */
 	   if (is16) {
