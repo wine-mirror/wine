@@ -211,23 +211,24 @@ static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
          * It is the proc's responsibility to change the return CS:IP in the
          * real-mode call structure. */
         if (flag & 1) {
+	    int _clobber;
             /* 32-bit DPMI client */
             __asm__ __volatile__("
                  pushl %%es
                  pushl %%ds
                  pushfl
-                 movl %4,%%es
-                 movl %3,%%ds
-                 lcall %2
+                 movl %5,%%es
+                 movl %4,%%ds
+                 lcall %3
                  popl %%ds
                  movl %%es,%0
                  popl %%es
              "
-             : "=g" (es), "=D" (edi)
+             : "=g" (es), "=D" (edi), "=S" (_clobber)
              : "m" (rmcb->proc_ofs),
                "g" (ss), "g" (rmcb->regs_sel),
-               "S" (ESP_reg(context)), "D" (rmcb->regs_ofs)
-             : "eax", "ecx", "edx", "esi", "ebp" );
+               "S" (ESP_reg(context)), "1" (rmcb->regs_ofs)
+             : "ecx", "edx", "ebp" );
         } else {
             /* 16-bit DPMI client */
             CONTEXT ctx = *context;
