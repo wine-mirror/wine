@@ -146,6 +146,10 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 #endif
     void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
 			       GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
+    BOOL upload_done = FALSE;
+    BOOL error = FALSE;
+    GLenum format, pixel_format;
+    VOID *surface = NULL;
 
     DDSURFACEDESC *src_d = (DDSURFACEDESC *)&(This->surface_desc);
 
@@ -174,6 +178,7 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	
 	if (pal == NULL) {
 	    ERR("Palettized texture Loading with a NULL palette !\n");
+	    glBindTexture(GL_TEXTURE_2D, current_texture);
 	    return;
 	}
 	/* Get the surface's palette */
@@ -206,10 +211,14 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 			 GL_COLOR_INDEX,      /* texture format */
 			 GL_UNSIGNED_BYTE,    /* texture type */
 			 src_d->lpSurface); /* the texture */
+
+	    upload_done = TRUE;
 	} else {
-	    DWORD *surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
 	    DWORD i;
-	    BYTE *src = (BYTE *) src_d->lpSurface, *dst = (BYTE *) surface;
+	    BYTE *src = (BYTE *) src_d->lpSurface, *dst;
+	    
+	    surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+	    dst = (BYTE *) surface;
 	    
 	    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 	        BYTE color = *src++;
@@ -219,25 +228,8 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 		*dst++ = table[color][3];
 	    }
 	    
-	    if (init_upload)
-	        glTexImage2D(GL_TEXTURE_2D,
-			     This->mipmap_level,
-			     GL_RGBA,
-			     src_d->dwWidth, src_d->dwHeight,
-			     0,
-			     GL_RGBA,
-			     GL_UNSIGNED_BYTE,
-			     surface);
-	    else
-	        glTexSubImage2D(GL_TEXTURE_2D,
-				This->mipmap_level,
-				0, 0,
-				src_d->dwWidth, src_d->dwHeight,
-				GL_RGBA,
-				GL_UNSIGNED_BYTE,
-				surface);
-	    
-	    HeapFree(GetProcessHeap(), 0, surface);
+	    format = GL_RGBA;
+	    pixel_format = GL_UNSIGNED_BYTE;
 	}
     } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
 	    /* ************
@@ -247,186 +239,89 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	        /* **********************
 		   GL_UNSIGNED_BYTE_3_3_2
 		   ********************** */
-	    if (init_upload)
-	        glTexImage2D(GL_TEXTURE_2D,
-			     This->mipmap_level,
-			     GL_RGB,
-			     src_d->dwWidth, src_d->dwHeight,
-			     0,
-			     GL_RGB,
-			     GL_UNSIGNED_BYTE_3_3_2,
-			     src_d->lpSurface);
-	    else
-	        glTexSubImage2D(GL_TEXTURE_2D,
-				This->mipmap_level,
-				0, 0,
-				src_d->dwWidth, src_d->dwHeight,
-				GL_RGB,
-				GL_UNSIGNED_BYTE_3_3_2,
-				src_d->lpSurface);
+	    format = GL_RGB;
+	    pixel_format = GL_UNSIGNED_BYTE_3_3_2;
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 16) {
   	    if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000) {
-		if (init_upload)
-		    glTexImage2D(GL_TEXTURE_2D,
-				 This->mipmap_level,
-				 GL_RGB,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 GL_RGB,
-				 GL_UNSIGNED_SHORT_5_6_5,
-				 src_d->lpSurface);
-		else
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    This->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    GL_RGB,
-				    GL_UNSIGNED_SHORT_5_6_5,
-				    src_d->lpSurface);
-
+	        format = GL_RGB;
+		pixel_format = GL_UNSIGNED_SHORT_5_6_5;
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000001) {
-		if (init_upload)
-		    glTexImage2D(GL_TEXTURE_2D,
-				 This->mipmap_level,
-				 GL_RGBA,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 GL_RGBA,
-				 GL_UNSIGNED_SHORT_5_5_5_1,
-				 src_d->lpSurface);
-		else
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    This->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    GL_RGBA,
-				    GL_UNSIGNED_SHORT_5_5_5_1,
-				    src_d->lpSurface);
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000000F) {
-	        if (init_upload)
-		    glTexImage2D(GL_TEXTURE_2D,
-				 This->mipmap_level,
-				 GL_RGBA,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 GL_RGBA,
-				 GL_UNSIGNED_SHORT_4_4_4_4,
-				 src_d->lpSurface);
-		else
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    This->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    GL_RGBA,
-				    GL_UNSIGNED_SHORT_4_4_4_4,
-				    src_d->lpSurface);
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_SHORT_4_4_4_4;	      
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x0000F000) {
 	        /* Move the four Alpha bits... */
-	        WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 		DWORD i;
-		WORD *src = (WORD *) src_d->lpSurface, *dst = surface;
+		WORD *src = (WORD *) src_d->lpSurface, *dst;
+		
+		surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		dst = surface;
 		
 		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 		    *dst++ = (((*src & 0xFFF0) >>  4) |
 			      ((*src & 0x000F) << 12));
 		    src++;
 		}
-		
-		if (init_upload)
-		    glTexImage2D(GL_TEXTURE_2D,
-				 This->mipmap_level,
-				 GL_RGBA,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 GL_RGBA,
-				 GL_UNSIGNED_SHORT_4_4_4_4,
-				 surface);
-		else
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    This->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    GL_RGBA,
-				    GL_UNSIGNED_SHORT_4_4_4_4,
-				    surface);
-		
-		HeapFree(GetProcessHeap(), 0, surface);
+
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_SHORT_4_4_4_4; 		
 	    } else if (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00008000) {
 	        /* Converting the 1555 format in 5551 packed */
-	        WORD *surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
 		DWORD i;
-		WORD *src = (WORD *) src_d->lpSurface, *dst = surface;
+		WORD *src = (WORD *) src_d->lpSurface, *dst;
 		
+		surface = (WORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(WORD));
+		dst = (WORD *) surface;
 		for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
 		    *dst++ = (((*src & 0x8000) >> 15) |
 			      ((*src & 0x7FFF) <<  1));
 		    src++;
 		}
 		
-		if (init_upload)
-		    glTexImage2D(GL_TEXTURE_2D,
-				 This->mipmap_level,
-				 GL_RGBA,
-				 src_d->dwWidth, src_d->dwHeight,
-				 0,
-				 GL_RGBA,
-				 GL_UNSIGNED_SHORT_5_5_5_1,
-				 surface);
-		else
-		    glTexSubImage2D(GL_TEXTURE_2D,
-				    This->mipmap_level,
-				    0, 0,
-				    src_d->dwWidth, src_d->dwHeight,
-				    GL_RGBA,
-				    GL_UNSIGNED_SHORT_5_5_5_1,
-				    surface);
-
-		HeapFree(GetProcessHeap(), 0, surface);
+	        format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_SHORT_5_5_5_1;
 	    } else {
 	        ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+		error = TRUE;
 	    }
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 24) {
-	    if (init_upload)
-	        glTexImage2D(GL_TEXTURE_2D,
-			     This->mipmap_level,
-			     GL_RGB,
-			     src_d->dwWidth, src_d->dwHeight,
-			     0,
-			     GL_RGB,
-			     GL_UNSIGNED_BYTE,
-			     src_d->lpSurface);
-	    else
-	        glTexSubImage2D(GL_TEXTURE_2D,
-				This->mipmap_level,
-				0, 0,
-				src_d->dwWidth, src_d->dwHeight,
-				GL_RGB,
-				GL_UNSIGNED_BYTE,
-				src_d->lpSurface);
+	    format = GL_RGB;
+	    pixel_format = GL_UNSIGNED_BYTE;
 	} else if (src_d->ddpfPixelFormat.u1.dwRGBBitCount == 32) {
-	    if (init_upload)
-	        glTexImage2D(GL_TEXTURE_2D,
-			     This->mipmap_level,
-			     GL_RGBA,
-			     src_d->dwWidth, src_d->dwHeight,
-			     0,
-			     GL_RGBA,
-			     GL_UNSIGNED_BYTE,
-			     src_d->lpSurface);
-	    else
-	        glTexSubImage2D(GL_TEXTURE_2D,
-				This->mipmap_level,
-				0, 0,
-				src_d->dwWidth, src_d->dwHeight,
-				GL_RGBA,
-				GL_UNSIGNED_BYTE,
-				src_d->lpSurface);
+	    format = GL_RGBA;
+	    pixel_format = GL_UNSIGNED_BYTE;
 	} else {
 	    ERR("Unhandled texture format (bad RGB count)\n");
+	    error = TRUE;
 	}
     } else {
         ERR("Unhandled texture format (neither RGB nor INDEX)\n");
-    }    
+	error = TRUE;
+    } 
+
+    if ((upload_done == FALSE) && (error == FALSE)) {
+        if (init_upload)
+	    glTexImage2D(GL_TEXTURE_2D,
+			 This->mipmap_level,
+			 format,
+			 src_d->dwWidth, src_d->dwHeight,
+			 0,
+			 format,
+			 pixel_format,
+			 surface == NULL ? src_d->lpSurface : surface);
+	else
+	    glTexSubImage2D(GL_TEXTURE_2D,
+			    This->mipmap_level,
+			    0, 0,
+			    src_d->dwWidth, src_d->dwHeight,
+			    format,
+			    pixel_format,
+			    surface == NULL ? src_d->lpSurface : surface);
+	if (surface) HeapFree(GetProcessHeap(), 0, surface);
+    }
+
     glBindTexture(GL_TEXTURE_2D, current_texture);
 }
 
