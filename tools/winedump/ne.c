@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winedump.h"

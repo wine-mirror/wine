@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <signal.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winternl.h"
 #include "global.h"
 #include "wine/exception.h"

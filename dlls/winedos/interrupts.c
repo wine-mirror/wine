@@ -122,7 +122,7 @@ void WINAPI DOSVM_EmulateInterruptPM( CONTEXT86 *context, BYTE intnum )
   if (IS_SELECTOR_32BIT(context->SegSs))
     context->Esp += islong ? -12 : -6;
   else
-    ADD_LOWORD( context->Esp, islong ? -12 : -6 );
+    context->Esp = (context->Esp & ~0xffff) | (WORD)((context->Esp & 0xffff) + (islong ? -12 : -6));
 }
 
 /**********************************************************************

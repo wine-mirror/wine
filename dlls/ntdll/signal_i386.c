@@ -50,8 +50,8 @@
 # include <sys/signal.h>
 #endif
 
+#include "windef.h"
 #include "winternl.h"
-#include "winnt.h"
 #include "wine/library.h"
 
 #include "selectors.h"

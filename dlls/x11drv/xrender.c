@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "wownt32.h"
 #include "x11drv.h"
 #include "bitmap.h"

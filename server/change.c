@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "winnt.h"
+#include "windef.h"
 
 #include "handle.h"
 #include "thread.h"

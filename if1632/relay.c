@@ -25,8 +25,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "windef.h"
 #include "wine/winbase16.h"
-#include "winnt.h"
 #include "module.h"
 #include "stackframe.h"
 #include "selectors.h"

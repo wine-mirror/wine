@@ -43,7 +43,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
 #include "wine/library.h"

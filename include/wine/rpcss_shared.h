@@ -22,7 +22,7 @@
 #define __WINE_RPCSS_SHARED_H
 
 #include "basetsd.h"
-#include "winnt.h"
+#include "windef.h"
 
 #include "rpcdcep.h"
 

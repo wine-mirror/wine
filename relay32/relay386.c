@@ -25,7 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winternl.h"
 #include "stackframe.h"
 #include "module.h"

@@ -50,8 +50,8 @@
 # include <sys/mman.h>
 #endif
 
+#include "windef.h"
 #include "winerror.h"
-#include "winnt.h"
 #include "winreg.h"
 
 #include "wine/winbase16.h"

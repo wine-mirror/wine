@@ -52,7 +52,7 @@
 #ifndef TWAIN
 #define TWAIN
 
-#include "winnt.h"
+#include "windef.h"
 
 #define FAR
 #define huge

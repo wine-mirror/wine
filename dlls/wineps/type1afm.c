@@ -39,7 +39,7 @@
 #include <float.h>  	    /* FLT_MAX */
 #endif
 
-#include "winnt.h"
+#include "windef.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "psdrv.h"

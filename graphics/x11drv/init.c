@@ -24,8 +24,8 @@
 
 #include <string.h>
 
+#include "windef.h"
 #include "bitmap.h"
-#include "winnt.h"
 #include "x11drv.h"
 #include "x11font.h"
 #include "ddrawi.h"

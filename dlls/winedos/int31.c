@@ -697,12 +697,12 @@ void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
 	NewRMCB->proc_sel = context->SegDs;
        NewRMCB->regs_ofs = DOSVM_IsDos32() ? context->Edi : LOWORD(context->Edi);
 	NewRMCB->regs_sel = context->SegEs;
-	SET_LOWORD( context->Ecx, HIWORD(NewRMCB->address) );
-	SET_LOWORD( context->Edx, LOWORD(NewRMCB->address) );
+	SET_CX( context, HIWORD(NewRMCB->address) );
+	SET_DX( context, LOWORD(NewRMCB->address) );
     }
     else
     {
-	SET_LOWORD( context->Eax, 0x8015 ); /* callback unavailable */
+	SET_AX( context, 0x8015 ); /* callback unavailable */
 	SET_CFLAG(context);
     }
 }
@@ -717,7 +717,7 @@ void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
           CX_reg(context), DX_reg(context));
 
     if (DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
-	SET_LOWORD( context->Eax, 0x8024 ); /* invalid callback address */
+	SET_AX( context, 0x8024 ); /* invalid callback address */
 	SET_CFLAG(context);
     }
 }

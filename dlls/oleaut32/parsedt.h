@@ -45,7 +45,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
 #include <stdlib.h>
-#include <winnt.h> /* DateToTm use */
+#include "windef.h" /* DateToTm use */
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE

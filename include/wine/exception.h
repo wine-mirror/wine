@@ -22,7 +22,7 @@
 #define __WINE_WINE_EXCEPTION_H
 
 #include <setjmp.h>
-#include "winnt.h"
+#include "windef.h"
 
 /* The following definitions allow using exceptions in Wine and Winelib code
  *

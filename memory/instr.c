@@ -32,6 +32,11 @@ WINE_DECLARE_DEBUG_CHANNEL(io);
 
 #ifdef __i386__
 
+/* macros to set parts of a DWORD */
+#define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
+#define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
+#define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
+
 inline static void add_stack( CONTEXT86 *context, int offset )
 {
     if (ISV86(context) || !IS_SELECTOR_32BIT(context->SegSs))

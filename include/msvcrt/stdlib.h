@@ -9,7 +9,7 @@
 #define __WINE_STDLIB_H
 #define __WINE_USE_MSVCRT
 
-#include "winnt.h"
+#include "basetsd.h"
 #include "msvcrt/malloc.h"                /* For size_t, malloc & co */
 #include "msvcrt/search.h"                /* For bsearch and qsort */
 

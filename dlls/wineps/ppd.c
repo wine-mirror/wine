@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "winnt.h" /* HEAP_ZERO_MEMORY */
+#include "windef.h" /* HEAP_ZERO_MEMORY */
 #include "wine/debug.h"
 #include "psdrv.h"
 #include "winspool.h"

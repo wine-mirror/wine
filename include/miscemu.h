@@ -21,7 +21,7 @@
 #ifndef __WINE_MISCEMU_H
 #define __WINE_MISCEMU_H
 
-#include "winnt.h"
+#include "windef.h"
 #include "selectors.h"
 #include "wine/windef16.h"
 

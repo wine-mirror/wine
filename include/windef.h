@@ -35,13 +35,144 @@
 # endif /* STRICT */
 #endif /* NO_STRICT */
 
-#include "winnt.h"
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* Calling conventions definitions */
+
+#ifdef __i386__
+# ifndef _X86_
+#  define _X86_
+# endif
+# if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
+#  define __stdcall __attribute__((__stdcall__))
+#  define __cdecl   __attribute__((__cdecl__))
+# elif defined(_MSC_VER)
+/* Nothing needs to be done. __cdecl/__stdcall already exists */
+# else
+#  error You need gcc >= 2.7 to build Wine on a 386
+# endif  /* __GNUC__ */
+#else  /* __i386__ */
+# define __stdcall
+# define __cdecl
+#endif  /* __i386__ */
+
+#ifndef __WINE__
+
+#ifndef pascal
+#define pascal      __stdcall
+#endif
+#ifndef _pascal
+#define _pascal     __stdcall
+#endif
+#ifndef _stdcall
+#define _stdcall    __stdcall
+#endif
+#ifndef _fastcall
+#define _fastcall   __stdcall
+#endif
+#ifndef __fastcall
+#define __fastcall  __stdcall
+#endif
+#ifndef __export
+#define __export    __stdcall
+#endif
+#ifndef cdecl
+#define cdecl       __cdecl
+#endif
+#ifndef _cdecl
+#define _cdecl      __cdecl
+#endif
+
+#ifndef near
+#define near
+#endif
+#ifndef far
+#define far
+#endif
+#ifndef _near
+#define _near
+#endif
+#ifndef _far
+#define _far
+#endif
+#ifndef NEAR
+#define NEAR
+#endif
+#ifndef FAR
+#define FAR
+#endif
+
+#ifndef _declspec
+#define _declspec(x)
+#endif
+#ifndef __declspec
+#define __declspec(x)
+#endif
+
+#endif /* __WINE__ */
+
+#define CALLBACK    __stdcall
+#define WINAPI      __stdcall
+#define APIPRIVATE  __stdcall
+#define PASCAL      __stdcall
+#define CDECL       __cdecl
+#define _CDECL      __cdecl
+#define WINAPIV     __cdecl
+#define APIENTRY    WINAPI
+#define CONST       const
+
+/* Misc. constants. */
+
+#undef NULL
+#ifdef __cplusplus
+#define NULL  0
+#else
+#define NULL  ((void*)0)
+#endif
+
+#ifdef FALSE
+#undef FALSE
+#endif
+#define FALSE 0
+
+#ifdef TRUE
+#undef TRUE
+#endif
+#define TRUE  1
+
+#ifndef IN
+#define IN
+#endif
+
+#ifndef OUT
+#define OUT
+#endif
+
+#ifndef OPTIONAL
+#define OPTIONAL
+#endif
+
+/* Standard data types */
+
+typedef void                                   *LPVOID;
+typedef const void                             *LPCVOID;
+typedef int             BOOL,       *PBOOL,    *LPBOOL;
+typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
+typedef unsigned char   UCHAR,      *PUCHAR;
+typedef unsigned short  WORD,       *PWORD,    *LPWORD;
+typedef unsigned short  USHORT,     *PUSHORT;
+typedef int             INT,        *PINT,     *LPINT;
+typedef unsigned int    UINT,       *PUINT;
+typedef long                                   *LPLONG;
+typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
+typedef unsigned long   ULONG,      *PULONG;
+typedef float           FLOAT,      *PFLOAT;
+typedef double          DOUBLE;
+typedef double          DATE;
+
+#include "winnt.h"
 
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on __WINE__ and UNICODE macros.                      */
@@ -76,7 +207,7 @@ typedef WORD           *LPCATCHBUF;
 typedef DWORD           COLORREF, *LPCOLORREF;
 
 
-/* Handle types that exist both in Win16 and Win32. */
+/* Handle types */
 
 typedef int HFILE;
 DECLARE_HANDLE(HACCEL);
@@ -91,6 +222,7 @@ DECLARE_HANDLE(HHOOK);
 DECLARE_HANDLE(HICON);
 DECLARE_HANDLE(HINSTANCE);
 DECLARE_HANDLE(HKEY);
+typedef HKEY *PHKEY;
 DECLARE_HANDLE(HKL);
 DECLARE_HANDLE(HMENU);
 DECLARE_HANDLE(HMETAFILE);
@@ -139,14 +271,6 @@ typedef INT     (CALLBACK *PROC)();
 
 #define SELECTOROF(ptr)     (HIWORD(ptr))
 #define OFFSETOF(ptr)       (LOWORD(ptr))
-
-#ifdef __WINE__
-/* macros to set parts of a DWORD (not in the Windows API) */
-#define SET_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD(val))
-#define SET_LOBYTE(dw,val)  ((dw) = ((dw) & 0xffffff00) | LOBYTE(val))
-#define SET_HIBYTE(dw,val)  ((dw) = ((dw) & 0xffff00ff) | (LOBYTE(val) << 8))
-#define ADD_LOWORD(dw,val)  ((dw) = ((dw) & 0xffff0000) | LOWORD((DWORD)(dw)+(val)))
-#endif
 
 /* min and max macros */
 #ifndef NOMINMAX

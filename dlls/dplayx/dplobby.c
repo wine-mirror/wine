@@ -19,8 +19,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include <string.h>
+
+#include "windef.h"
 #include "winerror.h"
-#include "winnt.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "wine/debug.h"

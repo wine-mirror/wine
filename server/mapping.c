@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "winnt.h"
 #include "winbase.h"
 
 #include "handle.h"

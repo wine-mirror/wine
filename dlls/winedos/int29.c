@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "winnt.h"
+#include "windef.h"
 
 #include "miscemu.h"
 #include "dosexe.h"

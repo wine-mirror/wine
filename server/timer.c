@@ -27,7 +27,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "handle.h"
 #include "request.h"
 

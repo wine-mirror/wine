@@ -21,7 +21,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "winnt.h"
 #include "winbase.h"
 #include "winuser.h"
 

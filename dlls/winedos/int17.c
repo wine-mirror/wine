@@ -20,10 +20,10 @@
 
 #include <stdlib.h>
 
+#include "windef.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 #include "msdos.h"
-#include "winnt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 

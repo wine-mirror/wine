@@ -30,7 +30,7 @@
 #include <sys/mman.h>
 #endif
 
-#include "winnt.h"
+#include "windef.h"
 #include "wine/library.h"
 
 /* argc/argv for the Windows application */

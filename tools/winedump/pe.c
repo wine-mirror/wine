@@ -38,7 +38,7 @@
 #endif
 #include <fcntl.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winedump.h"
 #include "pe.h"
 

@@ -29,102 +29,7 @@
 #include <string.h>
 #endif
 
-
-/* On Windows winnt.h depends on a few windef.h types and macros and thus
- * is not self-contained. Furthermore windef.h includes winnt.h so that it
- * would be pointless to try to use winnt.h directly.
- * But for Wine and Winelib I decided to make winnt.h self-contained by
- * moving these definitions to winnt.h. It makes no difference to Winelib
- * programs since they are not using winnt.h directly anyway, and it allows
- * us to use winnt.h and get a minimal set of definitions.
- */
-
-/**** Some Wine specific definitions *****/
-
-/* Calling conventions definitions */
-
-#ifdef __i386__
-# ifndef _X86_
-#  define _X86_
-# endif
-# if defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)))
-#  define __stdcall __attribute__((__stdcall__))
-#  define __cdecl   __attribute__((__cdecl__))
-# elif defined(_MSC_VER)
-/* Nothing needs to be done. __cdecl/__stdcall already exists */
-# else
-#  error You need gcc >= 2.7 to build Wine on a 386
-# endif  /* __GNUC__ */
-#else  /* __i386__ */
-# define __stdcall
-# define __cdecl
-#endif  /* __i386__ */
-
-#ifndef __WINE__
-
-#ifndef pascal
-#define pascal      __stdcall
-#endif
-#ifndef _pascal
-#define _pascal     __stdcall
-#endif
-#ifndef _stdcall
-#define _stdcall    __stdcall
-#endif
-#ifndef _fastcall
-#define _fastcall   __stdcall
-#endif
-#ifndef __fastcall
-#define __fastcall  __stdcall
-#endif
-#ifndef __export
-#define __export    __stdcall
-#endif
-#ifndef cdecl
-#define cdecl       __cdecl
-#endif
-#ifndef _cdecl
-#define _cdecl      __cdecl
-#endif
-
-#ifndef near
-#define near
-#endif
-#ifndef far
-#define far
-#endif
-#ifndef _near
-#define _near
-#endif
-#ifndef _far
-#define _far
-#endif
-#ifndef NEAR
-#define NEAR
-#endif
-#ifndef FAR
-#define FAR
-#endif
-
-#ifndef _declspec
-#define _declspec(x)
-#endif
-#ifndef __declspec
-#define __declspec(x)
-#endif
-
-#endif /* __WINE__ */
-
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define NTAPI       __stdcall
-#define APIPRIVATE  __stdcall
-#define PASCAL      __stdcall
-#define CDECL       __cdecl
-#define _CDECL      __cdecl
-#define WINAPIV     __cdecl
-#define APIENTRY    WINAPI
-#define CONST       const
+#define NTAPI __stdcall
 
 /* Macro for structure packing and more. */
 
@@ -346,63 +251,12 @@
 # define C_ASSERT(e) extern char __C_ASSERT__[(e)?1:-1]
 #endif
 
-/**** Parts of windef.h that are needed here *****/
-
-/* Misc. constants. */
-
-#undef NULL
-#ifdef __cplusplus
-#define NULL  0
-#else
-#define NULL  ((void*)0)
-#endif
-
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE 0
-
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE  1
-
-#ifndef IN
-#define IN
-#endif
-
-#ifndef OUT
-#define OUT
-#endif
-
-#ifndef OPTIONAL
-#define OPTIONAL
-#endif
-
 /* Error Masks */
 #define APPLICATION_ERROR_MASK       0x20000000
 #define ERROR_SEVERITY_SUCCESS       0x00000000
 #define ERROR_SEVERITY_INFORMATIONAL 0x40000000
 #define ERROR_SEVERITY_WARNING       0x80000000
 #define ERROR_SEVERITY_ERROR         0xC0000000
-
-/* Standard data types */
-typedef const void                             *LPCVOID;
-typedef int             BOOL,       *PBOOL,    *LPBOOL;
-typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
-typedef unsigned char   UCHAR,      *PUCHAR;
-typedef unsigned short  USHORT,     *PUSHORT;
-typedef unsigned short  WORD,       *PWORD,    *LPWORD;
-typedef int             INT,        *PINT,     *LPINT;
-typedef unsigned int    UINT,       *PUINT;
-typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
-typedef unsigned long   ULONG,      *PULONG;
-typedef float           FLOAT,      *PFLOAT;
-typedef double          DOUBLE;
-typedef double          DATE;
-
-
-/**** winnt.h proper *****/
 
 /* Microsoft's macros for declaring functions */
 
@@ -432,11 +286,11 @@ typedef double          DATE;
 #ifndef VOID
 #define VOID void
 #endif
-typedef VOID           *PVOID,      *LPVOID;
+typedef VOID           *PVOID;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
 typedef short           SHORT,      *PSHORT;
-typedef long            LONG,       *PLONG,    *LPLONG;
+typedef long            LONG,       *PLONG;
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
 #ifndef WINE_WCHAR_DEFINED
@@ -542,14 +396,10 @@ typedef DWORD		EXECUTION_STATE;
 typedef void *HANDLE;
 typedef HANDLE *PHANDLE, *LPHANDLE;
 
-#if (defined(STRICT) || defined(__WINE__))
-#define DECLARE_HANDLE(a) \
-    typedef struct a##__ { int unused; } *a; \
-    typedef a *P##a
+#ifdef STRICT
+#define DECLARE_HANDLE(a) typedef struct a##__ { int unused; } *a;
 #else /*STRICT*/
-#define DECLARE_HANDLE(a) \
-    typedef HANDLE a; \
-    typedef a *P##a
+#define DECLARE_HANDLE(a) typedef HANDLE a;
 #endif /*STRICT*/
 
 /* Defines */

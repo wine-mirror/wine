@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include "winnt.h"
+#include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
 #include "request.h"
