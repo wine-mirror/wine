@@ -531,50 +531,96 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
  */
 static char **build_argv( char *cmdline, int reserved )
 {
-    char **argv;
-    int count = reserved + 1;
-    char *p = cmdline;
+    int argc;
+    char** argv;
+    char *arg,*s,*d;
+    int in_quotes,bcount;
 
-    /* if first word is quoted store it as a single arg */
-    if (*cmdline == '\"')
-    {
-        if ((p = strchr( cmdline + 1, '\"' )))
-        {
-            p++;
-            count++;
-        }
-        else p = cmdline;
-    }
-    while (*p)
-    {
-        while (*p && isspace(*p)) p++;
-        if (!*p) break;
-        count++;
-        while (*p && !isspace(*p)) p++;
-    }
-
-    if ((argv = malloc( count * sizeof(*argv) )))
-    {
-        char **argvptr = argv + reserved;
-        p = cmdline;
-        if (*cmdline == '\"')
-        {
-            if ((p = strchr( cmdline + 1, '\"' )))
-            {
-                *argvptr++ = cmdline + 1;
-                *p++ = 0;
+    argc=reserved+1;
+    bcount=0;
+    in_quotes=0;
+    s=cmdline;
+    while (1) {
+        if (*s=='\0' || ((*s==' ' || *s=='\t') && !in_quotes)) {
+            /* space */
+            argc++;
+            /* skip the remaining spaces */
+            while (*s==' ' || *s=='\t') {
+                s++;
             }
-            else p = cmdline;
+            if (*s=='\0')
+                break;
+            bcount=0;
+            continue;
+        } else if (*s=='\\') {
+            /* '\', count them */
+            bcount++;
+        } else if ((*s=='"') && ((bcount & 1)==0)) {
+            /* unescaped '"' */
+            in_quotes=!in_quotes;
+            bcount=0;
+        } else {
+            /* a regular character */
+            bcount=0;
         }
-        while (*p)
-        {
-            while (*p && isspace(*p)) *p++ = 0;
-            if (!*p) break;
-            *argvptr++ = p;
-            while (*p && !isspace(*p)) p++;
-        }
-        *argvptr = 0;
+        s++;
     }
+    argv=malloc(argc*sizeof(*argv));
+    if (!argv)
+        return NULL;
+
+    arg=d=s=cmdline;
+    bcount=0;
+    in_quotes=0;
+    argc=reserved;
+    while (*s) {
+        if ((*s==' ' || *s=='\t') && !in_quotes) {
+            /* Close the argument and copy it */
+            *d=0;
+            argv[argc++]=arg;
+
+            /* skip the remaining spaces */
+            do {
+                s++;
+            } while (*s==' ' || *s=='\t');
+
+            /* Start with a new argument */
+            arg=d=s;
+            bcount=0;
+        } else if (*s=='\\') {
+            /* '\\' */
+            *d++=*s++;
+            bcount++;
+        } else if (*s=='"') {
+            /* '"' */
+            if ((bcount & 1)==0) {
+                /* Preceeded by an even number of '\', this is half that 
+                 * number of '\', plus a '"' which we discard.
+                 */
+                d-=bcount/2;
+                s++;
+                in_quotes=!in_quotes;
+            } else {
+                /* Preceeded by an odd number of '\', this is half that 
+                 * number of '\' followed by a '"'
+                 */
+                d=d-bcount/2-1;
+                *d++='"';
+                s++;
+            }
+            bcount=0;
+        } else {
+            /* a regular character */
+            *d++=*s++;
+            bcount=0;
+        }
+    }
+    if (*arg) {
+        *d='\0';
+        argv[argc++]=arg;
+    }
+    argv[argc]=NULL;
+
     return argv;
 }
 

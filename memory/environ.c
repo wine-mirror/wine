@@ -174,34 +174,121 @@ ENVDB *ENV_BuildEnvironment(void)
  *
  * Note that it does NOT necessarily include the file name.
  * Sometimes we don't even have any command line options at all.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt 
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"', 
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
  */
 BOOL ENV_BuildCommandLine( char **argv )
 {
-    int len, quote = 0;
+    int len;
     char *p, **arg;
 
-    for (arg = argv, len = 0; *arg; arg++) len += strlen(*arg) + 1;
-    if ((argv[0]) && (quote = (strchr( argv[0], ' ' ) != NULL))) len += 2;
-    if (!(p = current_envdb.cmd_line = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
-    arg = argv;
-    if (quote)
+    len = 0;
+    for (arg = argv; *arg; arg++)
     {
-        *p++ = '\"';
-        strcpy( p, *arg );
-        p += strlen(p);
-        *p++ = '\"';
-        *p++ = ' ';
-        arg++;
+        int has_space,bcount;
+        char* a;
+
+        has_space=0;
+        bcount=0;
+        a=*arg;
+        while (*a!='\0') {
+            if (*a=='\\') {
+                bcount++;
+            } else {
+                if (*a==' ' || *a=='\t') {
+                    has_space=1;
+                } else if (*a=='"') {
+                    /* doubling of '\' preceeding a '"', 
+                     * plus escaping of said '"'
+                     */
+                    len+=2*bcount+1;
+                }
+                bcount=0;
+            }
+            a++;
+        }
+        len+=(a-*arg)+1 /* for the separating space */;
+        if (has_space)
+            len+=2; /* for the quotes */
     }
-    while (*arg)
+
+    if (!(current_envdb.cmd_line = HeapAlloc( GetProcessHeap(), 0, len )))
+        return FALSE;
+
+    p = current_envdb.cmd_line;
+    for (arg = argv; *arg; arg++)
     {
-        strcpy( p, *arg );
-        p += strlen(p);
-        *p++ = ' ';
-        arg++;
+        int has_space,has_quote;
+        char* a;
+
+        /* Check for quotes and spaces in this argument */
+        has_space=has_quote=0;
+        a=*arg;
+        while (*a!='\0') {
+            if (*a==' ' || *a=='\t') {
+                has_space=1;
+                if (has_quote)
+                    break;
+            } else if (*a=='"') {
+                has_quote=1;
+                if (has_space)
+                    break;
+            }
+            a++;
+        }
+
+        /* Now transfer it to the command line */
+        if (has_space)
+            *p++='"';
+        if (has_quote) {
+            int bcount;
+            char* a;
+
+            bcount=0;
+            a=*arg;
+            while (*a!='\0') {
+                if (*a=='\\') {
+                    *p++=*a;
+                    bcount++;
+                } else {
+                    if (*a=='"') {
+                        int i;
+
+                        /* Double all the '\\' preceeding this '"', plus one */
+                        for (i=0;i<=bcount;i++)
+                            *p++='\\';
+                        *p++='"';
+                    } else {
+                        *p++=*a;
+                    }
+                    bcount=0;
+                }
+                a++;
+            }
+        } else {
+            strcpy(p,*arg);
+            p+=strlen(*arg);
+        }
+        if (has_space)
+            *p++='"';
+        *p++=' ';
     }
-    if (p > current_envdb.cmd_line) p--;  /* remove last space */
-    *p = 0;
+    if (p > current_envdb.cmd_line)
+        p--;  /* remove last space */
+    *p = '\0';
+
     /* now allocate the Unicode version */
     len = MultiByteToWideChar( CP_ACP, 0, current_envdb.cmd_line, -1, NULL, 0 );
     if (!(cmdlineW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))

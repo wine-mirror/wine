@@ -34,50 +34,152 @@ DEFAULT_DEBUG_CHANNEL(shell);
 #define MORE_DEBUG 1
 /*************************************************************************
  * CommandLineToArgvW			[SHELL32.@]
+ *
+ * We must interpret the quotes in the command line to rebuild the argv 
+ * array correctly:
+ * - arguments are separated by spaces or tabs
+ * - quotes serve as optional argument delimiters
+ *   '"a b"'   -> 'a b'
+ * - escaped quotes must be converted back to '"'
+ *   '\"'      -> '"'
+ * - an odd number of '\'s followed by '"' correspond to half that number 
+ *   of '\' followed by a '"' (extension of the above)
+ *   '\\\"'    -> '\"'
+ *   '\\\\\"'  -> '\\"'
+ * - an even number of '\'s followed by a '"' correspond to half that number
+ *   of '\', plus a regular quote serving as an argument delimiter (which 
+ *   means it does not appear in the result)
+ *   'a\\"b c"'   -> 'a\b c'
+ *   'a\\\\"b c"' -> 'a\\b c'
+ * - '\' that are not followed by a '"' are copied literally
+ *   'a\b'     -> 'a\b'
+ *   'a\\b'    -> 'a\\b'
+ *
+ * Note:
+ * '\t' == 0x0009
+ * ' '  == 0x0020
+ * '"'  == 0x0022
+ * '\\' == 0x005c
  */
 LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
-{	LPWSTR  *argv,s,t;
-	LPWSTR  cmdline;
-	int	i;
-	TRACE("\n");
+{
+    DWORD argc;
+    LPWSTR  *argv;
+    LPWSTR arg,s,d;
+    LPWSTR cmdline;
+    int in_quotes,bcount;
 
-	/* to get writeable copy */
-        if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpCmdline)+1) * sizeof(WCHAR) )))
-            return NULL;
-        strcpyW( cmdline, lpCmdline );
-        s=cmdline;
-        i=0;
-	while (*s)
-	{ /* space */
-	  if (*s==0x0020) 
-	  { i++;
-	    s++;
-	    while (*s && *s==0x0020)
-	      s++;
-	    continue;
-	  }
-	  s++;
-	}
-	argv=(LPWSTR*)HeapAlloc( GetProcessHeap(), 0, sizeof(LPWSTR)*(i+1) );
-	s=t=cmdline;
-	i=0;
-	while (*s)
-	{
-            if (*s==0x0020)
-            {
-                argv[i++]=t;
-                while (*s==0x0020) *s++ = 0;
-                t=s;
-                continue;
+    /* FIXME: same thing if we only have spaces */
+    if (*lpCmdline==0) {
+        /* Return the path to the executable */
+        DWORD size;
+
+        argv=HeapAlloc(GetProcessHeap(), 0, 2*sizeof(LPWSTR));
+        argv[0]=NULL;
+        size=16;
+        do {
+            size*=2;
+            argv[0]=HeapReAlloc(GetProcessHeap(), 0, argv[0], size);
+        } while (GetModuleFileNameW((HMODULE)0, argv[0], size) == 0);
+        argv[1]=NULL;
+        if (numargs)
+            *numargs=2;
+
+        return argv;
+    }
+
+    /* to get a writeable copy */
+    cmdline = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpCmdline)+1) * sizeof(WCHAR));
+    if (!cmdline)
+        return NULL;
+    strcpyW(cmdline, lpCmdline);
+    argc=0;
+    bcount=0;
+    in_quotes=0;
+    s=cmdline;
+    while (1) {
+        if (*s==0 || ((*s==0x0009 || *s==0x0020) && !in_quotes)) {
+            /* space */
+            argc++;
+            /* skip the remaining spaces */
+            while (*s==0x0009 || *s==0x0020) {
+                s++;
             }
-            s++;
-	}
-	if (*t)
-	  argv[i++]=t;
+            if (*s==0)
+                break;
+            bcount=0;
+            continue;
+        } else if (*s==0x005c) {
+            /* '\', count them */
+            bcount++;
+        } else if ((*s==0x0022) && ((bcount & 1)==0)) {
+            /* unescaped '"' */
+            in_quotes=!in_quotes;
+            bcount=0;
+        } else {
+            /* a regular character */
+            bcount=0;
+        }
+        s++;
+    }
+    argv=HeapAlloc(GetProcessHeap(), 0, (argc+1)*sizeof(LPWSTR));
 
-	argv[i]=NULL;
-	*numargs=i;
-	return argv;
+    argc=0;
+    bcount=0;
+    in_quotes=0;
+    arg=d=s=cmdline;
+    while (*s) {
+        if ((*s==0x0009 || *s==0x0020) && !in_quotes) {
+            /* Close the argument and copy it */
+            *d=0;
+            argv[argc++]=arg;
+
+            /* skip the remaining spaces */
+            do {
+                s++;
+            } while (*s==0x0009 || *s==0x0020);
+
+            /* Start with a new argument */
+            arg=d=s;
+            bcount=0;
+        } else if (*s==0x005c) {
+            /* '\\' */
+            *d++=*s++;
+            bcount++;
+        } else if (*s==0x0022) {
+            /* '"' */
+            if ((bcount & 1)==0) {
+                /* Preceeded by an even number of '\', this is half that 
+                 * number of '\', plus a quote which we erase.
+                 */
+                d-=bcount/2;
+                in_quotes=!in_quotes;
+                s++;
+            } else {
+                /* Preceeded by an odd number of '\', this is half that 
+                 * number of '\' followed by a '"'
+                 */
+                d=d-bcount/2-1;
+                *d++='"';
+                s++;
+            }
+            bcount=0;
+        } else {
+            /* a regular character */
+            *d++=*s++;
+            bcount=0;
+        }
+    }
+    if (*arg) {
+        *d='\0';
+        argv[argc++]=arg;
+    }
+    argv[argc]=NULL;
+    if (numargs)
+        *numargs=argc;
+
+    HeapFree(GetProcessHeap(), 0, cmdline);
+    return argv;
 }
 
 /*************************************************************************
