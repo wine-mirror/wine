@@ -4,9 +4,11 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps.dll
 ALTNAMES  = wineps16.dll
-IMPORTS   = user32.dll gdi32.dll winspool.drv kernel32.dll ntdll.dll
 EXTRALIBS = @CUPSLIBS@
 EXTRAINCL = @FREETYPEINCL@
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
 
 FONTMETRICS = \
 	AvantGarde_Book \

@@ -751,9 +751,7 @@ winedos/winedos.dll$(DLLEXT): dummy user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
 	@cd winedos && $(MAKE) winedos.dll$(DLLEXT)
 
 wineps/wineps.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
-  winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) \
-  libuser32.dll.$(LIBEXT) libgdi32.dll.$(LIBEXT) libwinspool.drv.$(LIBEXT) libkernel32.dll.$(LIBEXT) \
-  libntdll.dll.$(LIBEXT)
+  winspool.drv$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd wineps && $(MAKE) wineps.dll$(DLLEXT)
 
 wininet/wininet.dll$(DLLEXT): dummy shlwapi.dll$(DLLEXT) user32.dll$(DLLEXT) \
@@ -831,9 +829,6 @@ x11drv/x11drv.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
 	@cd x11drv && $(MAKE) x11drv.dll$(DLLEXT)
 
 # Special targets for dlls that we need to link to
-
-libwinspool.drv.$(LIBEXT): winspool/winspool.drv$(DLLEXT)
-	$(RM) $@ && $(LN_S) winspool/winspool.drv$(DLLEXT) $@
 
 libntdll.dll.$(LIBEXT): ntdll/ntdll.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) ntdll/ntdll.dll$(DLLEXT) $@

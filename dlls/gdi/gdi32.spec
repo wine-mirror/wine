@@ -422,6 +422,11 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
-@ stdcall CreateMetaFile16(str) CreateMetaFile16
+@ stdcall CloseJob16(long) CloseJob16
 @ stdcall CloseMetaFile16(long) CloseMetaFile16
+@ stdcall CreateMetaFile16(str) CreateMetaFile16
+@ stdcall DrvGetPrinterData16(str str ptr ptr long ptr) DrvGetPrinterData16
+@ stdcall DrvSetPrinterData16(str str long ptr long) DrvSetPrinterData16
+@ stdcall OpenJob16(str str long) OpenJob16
 @ stdcall SetDCHook(long ptr long) SetDCHook
+@ stdcall WriteSpool16(long ptr long) WriteSpool16
