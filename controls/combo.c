@@ -1679,19 +1679,16 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
 
 
 /***********************************************************************
- *           ComboWndProc
+ *           ComboWndProc_locked
  *
  * http://www.microsoft.com/msdn/sdk/platforms/doc/sdk/win32/ctrl/src/combobox_15.htm
  */
-LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
+static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
                              WPARAM wParam, LPARAM lParam )
 {
-    LRESULT retvalue;
-    WND*	pWnd = WIN_FindWndPtr(hwnd);
-   
-    if( pWnd )
-    {
+    if( pWnd ) {
       LPHEADCOMBO	lphc = CB_GETPTR(pWnd);
+      HWND		hwnd = pWnd->hwndSelf;
 
       TRACE(combo, "[%04x]: msg %s wp %08x lp %08lx\n",
 		   pWnd->hwndSelf, SPY_GetMsgName(message), wParam, lParam );
@@ -1703,15 +1700,13 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 	/* System messages */
 
      	case WM_NCCREATE: 
-                retvalue = COMBO_NCCreate(pWnd, lParam);
-                goto END;
+                return COMBO_NCCreate(pWnd, lParam);
      	case WM_NCDESTROY: 
 		COMBO_NCDestroy(lphc);
-		break;
+		break;/* -> DefWindowProc */
 
      	case WM_CREATE: 
-                retvalue = COMBO_Create(lphc, pWnd, lParam);
-                goto END;
+                return COMBO_Create(lphc, pWnd, lParam);
 
         case WM_PRINTCLIENT:
 	        if (lParam & PRF_ERASEBKGND)
@@ -1720,50 +1715,39 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		/* Fallthrough */
      	case WM_PAINT:
 		/* wParam may contain a valid HDC! */
-		retvalue = COMBO_Paint(lphc, wParam);
-                goto END;
+		return  COMBO_Paint(lphc, wParam);
 	case WM_ERASEBKGND:
-		retvalue = COMBO_EraseBackground(hwnd, lphc, wParam);
-                goto END;
+		return  COMBO_EraseBackground(hwnd, lphc, wParam);
      	case WM_GETDLGCODE: 
-		retvalue = (LRESULT)(DLGC_WANTARROWS | DLGC_WANTCHARS);
-                goto END;
+		return  (LRESULT)(DLGC_WANTARROWS | DLGC_WANTCHARS);
         case WM_WINDOWPOSCHANGING:
-	        retvalue = COMBO_WindowPosChanging(hwnd, lphc, (LPWINDOWPOS)lParam);
-		goto END;
+	        return  COMBO_WindowPosChanging(hwnd, lphc, (LPWINDOWPOS)lParam);
 	case WM_SIZE:
 	        if( lphc->hWndLBox && 
 		  !(lphc->wState & CBF_NORESIZE) ) COMBO_Size( lphc );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_SETFONT:
 		COMBO_Font( lphc, (HFONT16)wParam, (BOOL)lParam );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_GETFONT:
-		retvalue = (LRESULT)lphc->hFont;
-                goto END;
+		return  (LRESULT)lphc->hFont;
 	case WM_SETFOCUS:
 		if( lphc->wState & CBF_EDIT )
 		    SetFocus( lphc->hWndEdit );
 		else
 		    COMBO_SetFocus( lphc );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_KILLFOCUS:
 #define hwndFocus ((HWND16)wParam)
 		if( !hwndFocus ||
 		    (hwndFocus != lphc->hWndEdit && hwndFocus != lphc->hWndLBox ))
 		    COMBO_KillFocus( lphc );
 #undef hwndFocus
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_COMMAND:
-		retvalue = COMBO_Command( lphc, wParam, (HWND)lParam );
-                goto END;
+		return  COMBO_Command( lphc, wParam, (HWND)lParam );
 	case WM_GETTEXT:
-		retvalue = COMBO_GetText( lphc, (UINT)wParam, (LPSTR)lParam );
-                goto END;
+		return  COMBO_GetText( lphc, (UINT)wParam, (LPSTR)lParam );
 	case WM_SETTEXT:
 	case WM_GETTEXTLENGTH:
 	case WM_CLEAR:
@@ -1771,24 +1755,18 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
         case WM_PASTE:
 	case WM_COPY:
 		if( lphc->wState & CBF_EDIT )
-                {
-                    retvalue = SendMessageA( lphc->hWndEdit, message, wParam, lParam );
-                    goto END;
-                }
-		retvalue = CB_ERR;
-                goto END;
+                    return  SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		return  CB_ERR;
 	case WM_DRAWITEM:
 	case WM_DELETEITEM:
 	case WM_COMPAREITEM:
 	case WM_MEASUREITEM:
-		retvalue = COMBO_ItemOp( lphc, message, wParam, lParam );
-                goto END;
+		return  COMBO_ItemOp( lphc, message, wParam, lParam );
 	case WM_ENABLE:
 		if( lphc->wState & CBF_EDIT )
 		    EnableWindow( lphc->hWndEdit, (BOOL)wParam ); 
 		EnableWindow( lphc->hWndLBox, (BOOL)wParam );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_SETREDRAW:
 		if( wParam )
 		    lphc->wState &= ~CBF_NOREDRAW;
@@ -1798,123 +1776,95 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		if( lphc->wState & CBF_EDIT )
 		    SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		SendMessageA( lphc->hWndLBox, message, wParam, lParam );
-		retvalue = 0;
-		goto END;
+		return  0;
 	case WM_SYSKEYDOWN:
 		if( KEYDATA_ALT & HIWORD(lParam) )
 		    if( wParam == VK_UP || wParam == VK_DOWN )
 			COMBO_FlipListbox( lphc, TRUE );
-		break;
+		break;/* -> DefWindowProc */
 
 	case WM_CHAR:
 	case WM_KEYDOWN:
 		if( lphc->wState & CBF_EDIT )
-		    retvalue = SendMessageA( lphc->hWndEdit, message, wParam, lParam );
+		    return  SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		else
-		    retvalue = SendMessageA( lphc->hWndLBox, message, wParam, lParam );
-		goto END;
+		    return  SendMessageA( lphc->hWndLBox, message, wParam, lParam );
 	case WM_LBUTTONDOWN: 
 		if( !(lphc->wState & CBF_FOCUSED) ) SetFocus( lphc->self->hwndSelf );
 		if( lphc->wState & CBF_FOCUSED ) COMBO_LButtonDown( lphc, lParam );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_LBUTTONUP:
 		COMBO_LButtonUp( lphc, lParam );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case WM_MOUSEMOVE: 
 		if( lphc->wState & CBF_CAPTURE ) 
 		    COMBO_MouseMove( lphc, wParam, lParam );
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	/* Combo messages */
 
 	case CB_ADDSTRING16:
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_ADDSTRING:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
 	case CB_INSERTSTRING16:
 		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_INSERTSTRING:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
 	case CB_DELETESTRING16:
 	case CB_DELETESTRING:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_DELETESTRING, wParam, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_DELETESTRING, wParam, 0);
 	case CB_SELECTSTRING16:
 		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_SELECTSTRING:
-		retvalue = COMBO_SelectString( lphc, (INT)wParam, (LPSTR)lParam );
-                goto END;
+		return  COMBO_SelectString( lphc, (INT)wParam, (LPSTR)lParam );
 	case CB_FINDSTRING16:
 		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_FINDSTRING:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_FINDSTRING, wParam, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_FINDSTRING, wParam, lParam);
 	case CB_FINDSTRINGEXACT16:
 		wParam = (INT)(INT16)wParam;
 		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_FINDSTRINGEXACT:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_FINDSTRINGEXACT, 
+		return  SendMessageA( lphc->hWndLBox, LB_FINDSTRINGEXACT, 
 						       wParam, lParam );
-                goto END;
 	case CB_SETITEMHEIGHT16:
 		wParam = (INT)(INT16)wParam;	/* signed integer */
 	case CB_SETITEMHEIGHT:
-		retvalue = COMBO_SetItemHeight( lphc, (INT)wParam, (INT)lParam);
-                goto END;
+		return  COMBO_SetItemHeight( lphc, (INT)wParam, (INT)lParam);
 	case CB_GETITEMHEIGHT16:
 		wParam = (INT)(INT16)wParam;
 	case CB_GETITEMHEIGHT:
 		if( (INT)wParam >= 0 )	/* listbox item */
-                {
-                    retvalue = SendMessageA( lphc->hWndLBox, LB_GETITEMHEIGHT, wParam, 0);
-                    goto END;
-                }
-                retvalue = CBGetTextAreaHeight(hwnd, lphc);
-                goto END;
+                    return  SendMessageA( lphc->hWndLBox, LB_GETITEMHEIGHT, wParam, 0);
+                return  CBGetTextAreaHeight(hwnd, lphc);
 	case CB_RESETCONTENT16: 
 	case CB_RESETCONTENT:
 		SendMessageA( lphc->hWndLBox, LB_RESETCONTENT, 0, 0 );
 		InvalidateRect(CB_HWND(lphc), NULL, TRUE);
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case CB_INITSTORAGE:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_INITSTORAGE, wParam, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_INITSTORAGE, wParam, lParam);
 	case CB_GETHORIZONTALEXTENT:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETHORIZONTALEXTENT, 0, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETHORIZONTALEXTENT, 0, 0);
 	case CB_SETHORIZONTALEXTENT:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_SETHORIZONTALEXTENT, wParam, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_SETHORIZONTALEXTENT, wParam, 0);
 	case CB_GETTOPINDEX:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETTOPINDEX, 0, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETTOPINDEX, 0, 0);
 	case CB_GETLOCALE:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETLOCALE, 0, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETLOCALE, 0, 0);
 	case CB_SETLOCALE:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_SETLOCALE, wParam, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_SETLOCALE, wParam, 0);
 	case CB_GETDROPPEDWIDTH:
 		if( lphc->droppedWidth )
-                {
-                    retvalue = lphc->droppedWidth;
-                    goto END;
-                }
-		retvalue = lphc->droppedRect.right - lphc->droppedRect.left;
-                goto END;
+                    return  lphc->droppedWidth;
+		return  lphc->droppedRect.right - lphc->droppedRect.left;
 	case CB_SETDROPPEDWIDTH:
 		if( (CB_GETTYPE(lphc) != CBS_SIMPLE) &&
 		    (INT)wParam < 32768 ) lphc->droppedWidth = (INT)wParam;
-		retvalue = CB_ERR;
-                goto END;
+		return  CB_ERR;
 	case CB_GETDROPPEDCONTROLRECT16:
 		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 		if( lParam ) 
@@ -1923,23 +1873,19 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		    CBGetDroppedControlRect( lphc, &r );
 		    CONV_RECT32TO16( &r, (LPRECT16)lParam );
 		}
-		retvalue = CB_OKAY;
-                goto END;
+		return  CB_OKAY;
 	case CB_GETDROPPEDCONTROLRECT:
 		if( lParam ) CBGetDroppedControlRect(lphc, (LPRECT)lParam );
-		retvalue = CB_OKAY;
-                goto END;
+		return  CB_OKAY;
 	case CB_GETDROPPEDSTATE16:
 	case CB_GETDROPPEDSTATE:
-		retvalue = (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
-                goto END;
+		return  (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
 	case CB_DIR16: 
                 lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
                 /* fall through */
 	case CB_DIR:
-		retvalue = COMBO_Directory( lphc, (UINT)wParam, 
+		return  COMBO_Directory( lphc, (UINT)wParam, 
 				       (LPSTR)lParam, (message == CB_DIR));
-                goto END;
 	case CB_SHOWDROPDOWN16:
 	case CB_SHOWDROPDOWN:
 		if( CB_GETTYPE(lphc) != CBS_SIMPLE )
@@ -1953,16 +1899,13 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 			if( lphc->wState & CBF_DROPPED ) 
 		            CBRollUp( lphc, FALSE, TRUE );
 		}
-		retvalue = TRUE;
-                goto END;
+		return  TRUE;
 	case CB_GETCOUNT16: 
 	case CB_GETCOUNT:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETCOUNT, 0, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETCOUNT, 0, 0);
 	case CB_GETCURSEL16: 
 	case CB_GETCURSEL:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETCURSEL, 0, 0);
 	case CB_SETCURSEL16:
 		wParam = (INT)(INT16)wParam;
 	case CB_SETCURSEL:
@@ -1973,29 +1916,24 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		    InvalidateRect(CB_HWND(lphc), &lphc->textRect, TRUE);
 		    lphc->wState &= ~CBF_SELCHANGE;
 		}
-	        retvalue = lParam;
-                goto END;
+	        return  lParam;
 	case CB_GETLBTEXT16: 
 		wParam = (INT)(INT16)wParam;
 		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
 	case CB_GETLBTEXT:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETTEXT, wParam, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETTEXT, wParam, lParam);
 	case CB_GETLBTEXTLEN16: 
 		wParam = (INT)(INT16)wParam;
 	case CB_GETLBTEXTLEN:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETTEXTLEN, wParam, 0);
 	case CB_GETITEMDATA16:
 		wParam = (INT)(INT16)wParam;
 	case CB_GETITEMDATA:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, wParam, 0);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_GETITEMDATA, wParam, 0);
 	case CB_SETITEMDATA16:
 		wParam = (INT)(INT16)wParam;
 	case CB_SETITEMDATA:
-		retvalue = SendMessageA( lphc->hWndLBox, LB_SETITEMDATA, wParam, lParam);
-                goto END;
+		return  SendMessageA( lphc->hWndLBox, LB_SETITEMDATA, wParam, lParam);
 	case CB_GETEDITSEL16: 
 		wParam = lParam = 0;   /* just in case */
 	case CB_GETEDITSEL:
@@ -2003,47 +1941,49 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		{
 		    INT	a, b;
 
-		    retvalue = SendMessageA( lphc->hWndEdit, EM_GETSEL,
+		    return  SendMessageA( lphc->hWndEdit, EM_GETSEL,
 					   (wParam) ? wParam : (WPARAM)&a,
 					   (lParam) ? lParam : (LPARAM)&b );
-                    goto END;
 		}
-		retvalue = CB_ERR;
-                goto END;
+		return  CB_ERR;
 	case CB_SETEDITSEL16: 
 	case CB_SETEDITSEL:
 		if( lphc->wState & CBF_EDIT ) 
-                {
-                    retvalue = SendMessageA( lphc->hWndEdit, EM_SETSEL,
+                    return  SendMessageA( lphc->hWndEdit, EM_SETSEL,
 			  (INT)(INT16)LOWORD(lParam), (INT)(INT16)HIWORD(lParam) );
-                    goto END;
-                }
-		retvalue = CB_ERR;
-                goto END;
+		return  CB_ERR;
 	case CB_SETEXTENDEDUI16:
 	case CB_SETEXTENDEDUI:
                 if( CB_GETTYPE(lphc) == CBS_SIMPLE )
-                {
-                    retvalue = CB_ERR;
-                    goto END;
-                }
+                    return  CB_ERR;
 		if( wParam )
 		    lphc->wState |= CBF_EUI;
 		else lphc->wState &= ~CBF_EUI;
-		retvalue = CB_OKAY;
-                goto END;
+		return  CB_OKAY;
 	case CB_GETEXTENDEDUI16:
 	case CB_GETEXTENDEDUI:
-		retvalue = (lphc->wState & CBF_EUI) ? TRUE : FALSE;
-                goto END;
+		return  (lphc->wState & CBF_EUI) ? TRUE : FALSE;
 	case (WM_USER + 0x1B):
 	        WARN(combo, "[%04x]: undocumented msg!\n", hwnd );
     }
-    retvalue = DefWindowProcA(hwnd, message, wParam, lParam);
-    goto END;
+    return DefWindowProcA(hwnd, message, wParam, lParam);
   }
-    retvalue = CB_ERR;
-END:
+  return CB_ERR;
+}
+
+/***********************************************************************
+ *           ComboWndProc
+ *
+ * This is just a wrapper for the real ComboWndProc which locks/unlocks
+ * window structs.
+ */
+LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
+                             WPARAM wParam, LPARAM lParam )
+{
+    WND*	pWnd = WIN_FindWndPtr(hwnd);
+    LRESULT retvalue = ComboWndProc_locked(pWnd,message,wParam,lParam);
+
+    
     WIN_ReleaseWndPtr(pWnd);
     return retvalue;
 }

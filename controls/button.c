@@ -73,15 +73,16 @@ static WORD checkBoxWidth = 0, checkBoxHeight = 0;
 
 
 /***********************************************************************
- *           ButtonWndProc
+ *           ButtonWndProc_locked
+ * 
+ * Called with window lock held.
  */
-LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
-                              WPARAM wParam, LPARAM lParam )
+static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
+					   WPARAM wParam, LPARAM lParam )
 {
     RECT rect;
-    LRESULT retvalue;
+    HWND	hWnd = wndPtr->hwndSelf;
     POINT pt;
-    WND *wndPtr = WIN_FindWndPtr(hWnd);
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
     LONG style = wndPtr->dwStyle & 0x0f;
     HANDLE oldHbitmap;
@@ -92,7 +93,6 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
     switch (uMsg)
     {
     case WM_GETDLGCODE:
-        WIN_ReleaseWndPtr(wndPtr);
         switch(style)
         {
         case BS_PUSHBUTTON:      return DLGC_BUTTON | DLGC_UNDEFPUSHBUTTON;
@@ -123,11 +123,9 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         infoPtr->state = BUTTON_UNCHECKED;
         infoPtr->hFont = 0;
         infoPtr->hImage = NULL;
-        WIN_ReleaseWndPtr(wndPtr);
         return 0;
 
     case WM_ERASEBKGND:
-        WIN_ReleaseWndPtr(wndPtr);
         return 1;
 
     case WM_PAINT:
@@ -184,7 +182,6 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     case WM_NCHITTEST:
-        WIN_ReleaseWndPtr(wndPtr);
         if(style == BS_GROUPBOX) return HTTRANSPARENT;
         return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 
@@ -192,7 +189,6 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         DEFWND_SetText( wndPtr, (LPCSTR)lParam );
 	if( wndPtr->dwStyle & WS_VISIBLE )
             PAINT_BUTTON( wndPtr, style, ODA_DRAWENTIRE );
-        WIN_ReleaseWndPtr(wndPtr);
         return 0;
 
     case WM_SETFONT:
@@ -202,16 +198,12 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     case WM_GETFONT:
-        retvalue = infoPtr->hFont;
-        WIN_ReleaseWndPtr(wndPtr);
-        return retvalue;
+        return infoPtr->hFont;
 
     case WM_SETFOCUS:
         infoPtr->state |= BUTTON_HASFOCUS;
 	if (style == BS_AUTORADIOBUTTON)
-	{
 	    SendMessageA( hWnd, BM_SETCHECK, 1, 0 );
-	}
         PAINT_BUTTON( wndPtr, style, ODA_FOCUS );
         break;
 
@@ -238,19 +230,14 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 	oldHbitmap = infoPtr->hImage;
 	if(wndPtr->dwStyle & BS_BITMAP)
 	    infoPtr->hImage = (HANDLE) lParam;
-        WIN_ReleaseWndPtr(wndPtr);
 	return oldHbitmap;
 
     case BM_GETIMAGE:
-        retvalue = infoPtr->hImage;
-        WIN_ReleaseWndPtr(wndPtr);
-	return retvalue;
+        return infoPtr->hImage;
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
-        retvalue = infoPtr->state & 3;
-        WIN_ReleaseWndPtr(wndPtr);
-        return retvalue;
+        return infoPtr->state & 3;
 
     case BM_SETCHECK16:
     case BM_SETCHECK:
@@ -273,9 +260,7 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
 
     case BM_GETSTATE16:
     case BM_GETSTATE:
-        retvalue = infoPtr->state;
-        WIN_ReleaseWndPtr(wndPtr);
-        return retvalue;
+        return infoPtr->state;
 
     case BM_SETSTATE16:
     case BM_SETSTATE:
@@ -293,13 +278,28 @@ LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
         break;
 
     default:
-        WIN_ReleaseWndPtr(wndPtr);
         return DefWindowProcA(hWnd, uMsg, wParam, lParam);
     }
-    WIN_ReleaseWndPtr(wndPtr);
     return 0;
 }
 
+/***********************************************************************
+ *           ButtonWndProc
+ * The button window procedure. This is just a wrapper which locks
+ * the passed HWND and calls the real window procedure (with a WND*
+ * pointer pointing to the locked windowstructure).
+ */
+LRESULT WINAPI ButtonWndProc( HWND hWnd, UINT uMsg,
+                              WPARAM wParam, LPARAM lParam )
+{
+    LRESULT res;
+    WND *wndPtr = WIN_FindWndPtr(hWnd);
+
+    res = ButtonWndProc_locked(wndPtr,uMsg,wParam,lParam);
+
+    WIN_ReleaseWndPtr(wndPtr);
+    return res;
+}
 
 /**********************************************************************
  *       Push Button Functions

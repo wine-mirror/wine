@@ -194,16 +194,15 @@ static LRESULT DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc,
 
 
 /***********************************************************************
- *           DesktopWndProc
+ *           DesktopWndProc_locked
  *
  * Window procedure for the desktop window.
  */
-LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
+static inline LRESULT WINAPI DesktopWndProc_locked( WND *wndPtr, UINT message,
                                WPARAM wParam, LPARAM lParam )
 {
-    LRESULT retvalue;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
     DESKTOP *desktopPtr = (DESKTOP *)wndPtr->wExtra;
+    HWND hwnd = wndPtr->hwndSelf;
 
       /* Most messages are ignored (we DON'T call DefWindowProc) */
 
@@ -216,33 +215,37 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
 	desktopPtr->hbitmapWallPaper = 0;
 	SetDeskPattern();
 	SetDeskWallPaper( (LPSTR)-1 );
-        retvalue = 1;
-        goto END;
+        return  1;
 	
     case WM_ERASEBKGND:
 	if(!DESKTOP_IsSingleWindow())
-        {
-            retvalue = 1;
-            goto END;
-        }
-        retvalue = DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
-        goto END;
+            return  1;
+        return  DESKTOP_DoEraseBkgnd( hwnd, (HDC)wParam, desktopPtr );
 
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) != SC_CLOSE)
-        {
-            retvalue = 0;
-            goto END;
-        }
+            return  0;
 	ExitWindows16( 0, 0 ); 
 
     case WM_SETCURSOR:
-        retvalue = (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
-        goto END;
+        return  (LRESULT)SetCursor16( LoadCursor16( 0, IDC_ARROW16 ) );
     }
     
-    retvalue = 0;
-END:
+    return 0;
+}
+
+/***********************************************************************
+ *           DesktopWndProc
+ *
+ * This is just a wrapper for the DesktopWndProc which does windows
+ * locking and unlocking.
+ */
+LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message,
+                               WPARAM wParam, LPARAM lParam )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    LRESULT retvalue = DesktopWndProc_locked(wndPtr,message,wParam,lParam);
+
     WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
