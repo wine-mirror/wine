@@ -1213,6 +1213,17 @@ DWORD WINAPI SHLWAPI_174(
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.175]
+ *
+ *	NOTE:
+ *	  Param1 can be an IShellFolder Object
+ */
+HRESULT WINAPI SHLWAPI_175 (LPVOID x, LPVOID y)
+{
+	FIXME("(%p %p) stub\n", x,y);
+	return E_FAIL;
+}
+/*************************************************************************
  *      @	[SHLWAPI.176]
  *
  * Function appears to be interface to IServiceProvider::QueryService

@@ -178,7 +178,7 @@ debug_channels (shell)
 172 stdcall @(ptr ptr) SHLWAPI_172
 173 stub @
 174 stdcall @(ptr ptr) SHLWAPI_174
-175 stub @
+175 stdcall @(ptr ptr) SHLWAPI_175
 176 stdcall @(ptr ptr ptr ptr) SHLWAPI_176
 177 stub @
 178 stub @
