@@ -419,6 +419,8 @@ extern enum dbg_mode DEBUG_GetSelectorType( WORD sel );
 extern void DEBUG_FixAddress( DBG_ADDR *address, DWORD def );
 extern int  DEBUG_IsSelectorSystem( WORD sel );
 #endif
+extern int  DEBUG_PrintStringA( int chnl, const DBG_ADDR* address, int len );
+extern int  DEBUG_PrintStringW( int chnl, const DBG_ADDR* address, int len );
 
   /* debugger/module.c */
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
@@ -513,7 +515,8 @@ extern struct datatype * DEBUG_GetBasicType(enum debug_type_basic);
 #define DBG_CHN_WARN	4
 #define DBG_CHN_FIXME	8
 #define DBG_CHN_TRACE	16
-extern void	DEBUG_Output(int chn, const char* buffer, int len);
+extern void	DEBUG_OutputA(int chn, const char* buffer, int len);
+extern void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len);
 #ifdef __GNUC__
 extern int	DEBUG_Printf(int chn, const char* format, ...) __attribute__((format (printf,2,3)));           
 #else

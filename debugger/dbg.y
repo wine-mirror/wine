@@ -86,7 +86,7 @@ int yyerror(char *);
 %nonassoc ':'
 
 %type <expression> expr lval lvalue 
-%type <type> type_cast type_expr
+%type <type> type_expr
 %type <value> expr_addr lval_addr
 %type <integer> expr_value
 %type <string> pathname identifier
@@ -266,11 +266,8 @@ noprocess_state:
     | tNOPROCESS tSTRING tEOL	{ DEBUG_Printf(DBG_CHN_MESG, "No process loaded, cannot execute '%s'\n", $2); }
     ;
 
-type_cast: '(' type_expr ')'    { $$ = $2; }
-    ;
-
 type_expr:
-      type_expr '*'		{ $$ = DEBUG_FindOrMakePointerType($1); }
+      type_expr '*'		{ $$ = $1 ? DEBUG_FindOrMakePointerType($1) : NULL; }
     | tINT			{ $$ = DEBUG_GetBasicType(DT_BASIC_INT); }
     | tCHAR			{ $$ = DEBUG_GetBasicType(DT_BASIC_CHAR); }
     | tLONG tINT		{ $$ = DEBUG_GetBasicType(DT_BASIC_LONGINT); }
@@ -344,7 +341,7 @@ expr:
     | '(' expr ')'               { $$ = $2; }
     | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
     | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
-    | type_cast expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($1, $2); } 
+    | '(' type_expr ')' expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($2, $4); } 
     ;
 
 /*

@@ -323,6 +323,11 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
     case EXPR_TYPE_CAST:
       rtn = DEBUG_EvalExpr(exp->un.cast.expr);
       rtn.type = exp->un.cast.cast;
+      if (!rtn.type)
+      {
+	  DEBUG_Printf(DBG_CHN_MESG, "Can't cast to unknown type\n");
+	  RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
+      }
       if (DEBUG_GetType(rtn.type) == DT_POINTER)
 	 rtn.cookie = DV_TARGET;
       break;

@@ -48,12 +48,22 @@ static DBG_PROCESS* DEBUG_ProcessList = NULL;
 static int automatic_mode;
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
-void	DEBUG_Output(int chn, const char* buffer, int len)
+void	DEBUG_OutputA(int chn, const char* buffer, int len)
 {
     if (DBG_IVAR(ConChannelMask) & chn)
 	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
     if (DBG_IVAR(StdChannelMask) & chn)
 	fwrite(buffer, len, 1, stderr);
+}
+
+void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len)
+{
+    /* FIXME: this won't work is std output isn't attached to a console */
+    if (DBG_IVAR(ConChannelMask) & chn)
+	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
+    /* simplistic Unicode to ANSI conversion */
+    if (DBG_IVAR(StdChannelMask) & chn)
+        while (len--) fputc((char)*buffer++, stderr);
 }
 
 int	DEBUG_Printf(int chn, const char* format, ...)
@@ -71,7 +81,7 @@ static    char	buf[4*1024];
 	buf[len] = 0;
 	buf[len - 1] = buf[len - 2] = buf[len - 3] = '.';
     }
-    DEBUG_Output(chn, buf, len);
+    DEBUG_OutputA(chn, buf, len);
     return len;
 }
 

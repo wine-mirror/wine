@@ -36,97 +36,107 @@
  */
 void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 {
-  char        * default_format;
-  long long int res;
-
-  assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
-  if( value->type == NULL ) 
+    char        * default_format;
+    long long int res;
+    
+    assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
+    if (value->type == NULL) 
     {
-      DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression\n");
-      return;
+        DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression\n");
+        return;
     }
-  
-  default_format = NULL;
-  res = DEBUG_GetExprValue(value, &default_format);
-
-  switch(format)
+    
+    default_format = NULL;
+    res = DEBUG_GetExprValue(value, &default_format);
+    
+    switch (format)
     {
     case 'x':
-      if (value->addr.seg) 
+        if (value->addr.seg) 
 	{
-	  DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", (long unsigned int) res );
+            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "0x%04lx", (long unsigned int)res);
 	}
-      else 
+        else 
 	{
-	  DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", (long unsigned int) res );
+            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "0x%08lx", (long unsigned int)res);
 	}
-      break;
-      
+        break;
+        
     case 'd':
-      DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "%ld\n", (long int) res );
-      break;
-      
+        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%ld\n", (long int)res);
+        break;
+        
     case 'c':
-      DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "%d = '%c'",
-				   (char)(res & 0xff), (char)(res & 0xff) );
-      break;
-      
+        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%d = '%c'",
+                                    (char)(res & 0xff), (char)(res & 0xff));
+        break;
+        
+    case 'u':
+    {
+        WCHAR wch = (WCHAR)(res & 0xFFFF);
+        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%d = '", (unsigned)(res & 0xffff));
+        DEBUG_OutputW(DBG_CHN_MESG, &wch, 1);
+        DEBUG_Printf(DBG_CHN_MESG, "'");
+    }
+    break;
+    
     case 'i':
     case 's':
     case 'w':
     case 'b':
-      DEBUG_Printf( DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format );
+        DEBUG_Printf(DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format);
     case 0:
-      if( default_format != NULL )
+        if (default_format != NULL)
 	{
-	  if (strstr(default_format, "%S") != NULL)
+            if (strstr(default_format, "%S") != NULL)
 	    {
-	       char* 	ptr;
-	       int	state = 0;
-
-	       /* FIXME: simplistic implementation for default_format being
-		* foo%Sbar => will print foo, then string then bar
-		*/
-	       for (ptr = default_format; *ptr; ptr++) 
-	       {
-		  if (*ptr == '%') state++;
-		  else if (state == 1) 
+                char* 	ptr;
+                int	state = 0;
+                
+                /* FIXME: simplistic implementation for default_format being
+                 * foo%Sbar => will print foo, then string then bar
+                 */
+                for (ptr = default_format; *ptr; ptr++) 
+                {
+                    if (*ptr == '%') 
+                    { 
+                        state++;
+                    }       
+                    else if (state == 1) 
 		    {
-		       if (*ptr == 'S') 
-			 {
-			    char 	ch;
-			    char*	str = (char*)(long)res;
-
-			    for (; DEBUG_READ_MEM(str, &ch, 1) && ch; str++) {
-			       DEBUG_Output(DBG_CHN_MESG, &ch, 1);
-			       DEBUG_nchar++;
-			    }
-			 }
-		       else 
-			 {
+                        if (*ptr == 'S') 
+                        {
+                            DBG_ADDR    addr;
+                            
+                            addr.seg = 0;
+                            addr.off = (long)res;
+                            DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &addr, -1);
+                        }
+                        else 
+                        {
 			    /* shouldn't happen */
 			    DEBUG_Printf(DBG_CHN_MESG, "%%%c", *ptr);
 			    DEBUG_nchar += 2;
-			 }
-		       state = 0;
+                        }
+                        state = 0;
 		    }
-		  else
+                    else
 		    {
-		       DEBUG_Output(DBG_CHN_MESG, ptr, 1);
-		       DEBUG_nchar++;
+                        DEBUG_OutputA(DBG_CHN_MESG, ptr, 1);
+                        DEBUG_nchar++;
 		    }
-	       }
+                }
 	    } 
-	  else if (strcmp(default_format, "%B") == 0)
+            else if (strcmp(default_format, "%B") == 0)
             {
-	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "%s", res ? "true" : "false");
+                DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s", res ? "true" : "false");
             }
-          else
+            else
 	    {
-	       DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, default_format, res );
+                DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, default_format, res);
 	    }
 	}
-      break;
+        break;
     }
 }
 

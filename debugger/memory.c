@@ -276,33 +276,15 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 
     switch(format)
     {
-	case 'u': {
-		WCHAR wch;
-		if (count == 1) count = 256;
-                while (count--)
-                {
-		    if (!DEBUG_READ_MEM_VERBOSE(pnt, &wch, sizeof(wch)) || !wch)
-		       break;
-                    pnt += sizeof(wch);
-                    DEBUG_Printf(DBG_CHN_MESG, "%c", (char)wch);
-                }
-		DEBUG_Printf(DBG_CHN_MESG,"\n");
+         case 'u':
+                if (count == 1) count = 256;
+                DEBUG_nchar += DEBUG_PrintStringW(DBG_CHN_MESG, &value.addr, count);
+		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return;
-	    }
-          case 's': {
-	        char ch;
-
-		if (count == 1) count = 256;
-                while (count--)
-                {
-                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &ch, sizeof(ch)) || !ch)
-		       break;
-                    pnt++;
-                    DEBUG_Output(DBG_CHN_MESG, &ch, 1);
-                }
-		DEBUG_Printf(DBG_CHN_MESG,"\n");
+        case 's':
+                DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &value.addr, count);
+		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return;
-	  }
 	case 'i':
 		while (count-- && DEBUG_DisassembleInstruction( &value.addr ));
 		return;
@@ -329,4 +311,51 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
         case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
 	case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);
 	}
+}
+
+/******************************************************************
+ *		DEBUG_PrintStringA
+ *
+ * Prints on channel chnl, the string starting at address in target
+ * address space. The string stops when either len chars (if <> -1)
+ * have been printed, or the '\0' char is printed
+ */
+int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
+{
+    char*       lin = (void*)DEBUG_ToLinear(address);
+    char        ach[16+1];
+    int         i, l;
+
+    if (len == -1) len = 32767; /* should be big enough */
+
+    /* so that the ach is always terminated */
+    ach[sizeof(ach) - 1] = '\0';
+    for (i = len; i >= 0; i -= sizeof(ach) - 1)
+    {
+        l = min(sizeof(ach) - 1, i);
+        DEBUG_READ_MEM_VERBOSE(lin, ach, l);
+        l = strlen(ach);
+        DEBUG_OutputA(chnl, ach, l);
+        lin += l;
+        if (l < sizeof(ach) - 1) break;
+    }
+    return len - i; /* number of actually written chars */
+}
+
+int  DEBUG_PrintStringW(int chnl, const DBG_ADDR* address, int len)
+{
+    char*       lin = (void*)DEBUG_ToLinear(address);
+    WCHAR       wch;
+    int         ret = 0;
+
+    if (len == -1) len = 32767; /* should be big enough */
+    while (len--)
+    {
+        if (!DEBUG_READ_MEM_VERBOSE(lin, &wch, sizeof(wch)) || !wch)
+            break;
+        lin += sizeof(wch);
+        DEBUG_OutputW(chnl, &wch, 1);
+        ret++;
+    }
+    return ret;
 }
