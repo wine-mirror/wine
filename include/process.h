@@ -95,6 +95,7 @@ typedef struct _PDB
     struct _PDB     *next;             /*    List reference - list of PDB's */
     WORD            hInstance;         /*    hInstance on startup */
     WORD            hPrevInstance;     /*    hPrevInstance on startup */
+    struct _SERVICETABLE *service_table; /*  Service table for service thread */
 } PDB;
 
 /* Process flags */

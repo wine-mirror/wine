@@ -9,8 +9,6 @@
 
 #include "winbase.h"
 
-BOOL SERVICE_Init( void );
-
 HANDLE SERVICE_AddObject( HANDLE object,
                           PAPCFUNC callback, ULONG_PTR callback_arg );
 

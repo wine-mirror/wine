@@ -68,9 +68,6 @@ BOOL MAIN_MainInit(void)
     /* Initialize signal handling */
     if (!SIGNAL_Init()) return FALSE;
 
-    /* Initialize kernel services thread */
-    if (!SERVICE_Init()) return FALSE;
-
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
 

@@ -203,6 +203,7 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     struct new_thread_request request;
     struct new_thread_reply reply = { NULL, -1 };
     int fd[2];
+    HANDLE cleanup_object;
 
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
@@ -250,9 +251,11 @@ THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16
     THREAD_First = thdb;
 
     /* Install cleanup handler */
+    if ( !DuplicateHandle( GetCurrentProcess(), *server_handle, 
+			   GetCurrentProcess(), &cleanup_object, 
+			   0, FALSE, DUPLICATE_SAME_ACCESS ) ) goto error;
+    thdb->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTHDB, (ULONG_PTR)thdb );
 
-    thdb->cleanup = SERVICE_AddObject( *server_handle, 
-                                       THREAD_FreeTHDB, (ULONG_PTR)thdb );
     return thdb;
 
 error:

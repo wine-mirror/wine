@@ -8,10 +8,10 @@
 #include <unistd.h>
 
 #include "services.h"
+#include "process.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(timer)
-
 
 #define SERVICE_USE_OBJECT      0x0001
 #define SERVICE_USE_TIMEOUT     0x0002
@@ -19,34 +19,30 @@ DEFAULT_DEBUG_CHANNEL(timer)
 
 typedef struct _SERVICE
 {
-   struct _SERVICE *next;
-   HANDLE           self;
+   struct _SERVICE 	*next;
+   HANDLE           	self;
 
-   PAPCFUNC       callback;
-   ULONG_PTR      callback_arg;
+   PAPCFUNC       	callback;
+   ULONG_PTR      	callback_arg;
 
-   int            flags;
+   int            	flags;
 
-   HANDLE         object;
-   long           rate;
+   HANDLE         	object;
+   long           	rate;
 
-   struct timeval expire;
+   struct timeval 	expire;
 
 } SERVICE;
 
-typedef struct
+typedef struct _SERVICETABLE
 {
-   HANDLE heap;
-   HANDLE thread;
+   HANDLE	     	thread;
 
-   SERVICE *first;
-   DWORD    counter;
+   SERVICE 		*first;
+   DWORD    		counter;
 
 } SERVICETABLE;
  
-static SERVICETABLE *Service = NULL;
-
-
 /***********************************************************************
  *           SERVICE_AddTimeval
  */
@@ -71,10 +67,10 @@ static long SERVICE_DiffTimeval( struct timeval *time1, struct timeval *time2 )
  */
 static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 {
-    HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-    int count = 0;
-    DWORD timeout = INFINITE;
-    DWORD retval = WAIT_FAILED;
+    HANDLE 	handles[MAXIMUM_WAIT_OBJECTS];
+    int 	count = 0;
+    DWORD 	timeout = INFINITE;
+    DWORD 	retval = WAIT_FAILED;
 
     while ( TRUE )
     {
@@ -87,7 +83,7 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
         struct timeval curTime;
         gettimeofday( &curTime, NULL );
 
-        HeapLock( service->heap );
+        HeapLock( GetProcessHeap() );
 
         callback = NULL;
         callback_arg = 0L;
@@ -96,8 +92,10 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
             if ( s->flags & SERVICE_DISABLED )
                 continue;
 
-            if ( s->flags & SERVICE_USE_OBJECT )
+            if ( s->flags & SERVICE_USE_OBJECT ) 
+	    {
                 if ( retval >= WAIT_OBJECT_0 && retval < WAIT_OBJECT_0 + count )
+		{
                     if ( handles[retval - WAIT_OBJECT_0] == s->object )
                     {
                         retval = WAIT_TIMEOUT;
@@ -105,8 +103,11 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
                         callback_arg = s->callback_arg;
                         break;
                     }
+		}
+	    }
 
             if ( s->flags & SERVICE_USE_TIMEOUT )
+            {
                 if ((s->expire.tv_sec < curTime.tv_sec) ||
                     ((s->expire.tv_sec == curTime.tv_sec) &&
                      (s->expire.tv_usec <= curTime.tv_usec)))
@@ -116,23 +117,22 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
                     callback_arg = s->callback_arg;
                     break;
                 }
+	    }
         }
 
-        HeapUnlock( service->heap );
-
+        HeapUnlock( GetProcessHeap() );
         
         /* If found, call callback routine */
 
         if ( callback )
         {
-            callback( callback_arg );
+	    callback( callback_arg );
             continue;
         }
 
-
         /* If not found, determine wait condition */
 
-        HeapLock( service->heap );
+        HeapLock( GetProcessHeap() );
 
         count = 0;
         timeout = INFINITE;
@@ -154,7 +154,7 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
             }
         }
 
-        HeapUnlock( service->heap );
+        HeapUnlock( GetProcessHeap() );
 
 
         /* Wait until some condition satisfied */
@@ -172,68 +172,78 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 }
 
 /***********************************************************************
- *           SERVICE_Init
+ *           SERVICE_CreateServiceTable
  */
-BOOL SERVICE_Init( void )
+static	BOOL	SERVICE_CreateServiceTable( void )
 {
-    HANDLE heap, thread;
+    HANDLE 		thread;
+    SERVICETABLE	*service_table;
+    PDB			*pdb = PROCESS_Current();
 
-    heap = HeapCreate( HEAP_GROWABLE, 0x1000, 0 );
-    if ( !heap ) return FALSE;
-
-    Service = HeapAlloc( heap, HEAP_ZERO_MEMORY, sizeof(SERVICETABLE) );
-    if ( !Service )
+    service_table = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICETABLE) );
+    if ( !service_table )
     {
-        HeapDestroy( heap );
         return FALSE;
     }
 
-    Service->heap = heap;
+    /* service_table field in PDB must be set *BEFORE* calling CreateThread
+     * otherwise the thread cleanup service will cause an infinite recursion
+     * when installed
+     */
+    pdb->service_table = service_table;
 
     thread = CreateThread( NULL, 0, (LPTHREAD_START_ROUTINE)SERVICE_Loop, 
-                           Service, 0, NULL );
+                           service_table, 0, NULL );
     if ( thread == INVALID_HANDLE_VALUE )
     {
-        HeapDestroy( heap );
+        pdb->service_table = 0;
+	HeapFree( GetProcessHeap(), 0, service_table );
         return FALSE;
     }
-
-    Service->thread = ConvertToGlobalHandle( thread );
+    
+    service_table->thread = thread;
 
     return TRUE;
 }
 
 /***********************************************************************
  *           SERVICE_AddObject
+ *
+ * Warning: the object supplied by the caller must not be closed. It'll
+ * be destroyed when the service is deleted. It's up to the caller
+ * to ensure that object will not be destroyed in between.
  */
 HANDLE SERVICE_AddObject( HANDLE object, 
                           PAPCFUNC callback, ULONG_PTR callback_arg )
 {
-    SERVICE *s;
-    HANDLE handle;
+    SERVICE 		*s;
+    SERVICETABLE 	*service_table;
+    HANDLE 		handle;
 
-    object = ConvertToGlobalHandle( object ); /* FIXME */
-
-    if ( !Service || object == INVALID_HANDLE_VALUE || !callback ) 
+    if ( object == INVALID_HANDLE_VALUE || !callback ) 
         return INVALID_HANDLE_VALUE;
 
-    s = HeapAlloc( Service->heap, HEAP_ZERO_MEMORY, sizeof(SERVICE) );
-    if ( !s ) return INVALID_HANDLE_VALUE;
+    if (PROCESS_Current()->service_table == 0 && !SERVICE_CreateServiceTable())
+       return INVALID_HANDLE_VALUE;
+    service_table = PROCESS_Current()->service_table;
 
-    HeapLock( Service->heap );
+    s = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICE) );
+    if ( !s ) return INVALID_HANDLE_VALUE;
 
     s->callback = callback;
     s->callback_arg = callback_arg;
     s->object = object;
     s->flags = SERVICE_USE_OBJECT;
 
-    s->self = handle = (HANDLE)++Service->counter;
-    s->next = Service->first;
-    Service->first = s;
+    HeapLock( GetProcessHeap() );
 
-    HeapUnlock( Service->heap );
+    s->self = handle = (HANDLE)++service_table->counter;
+    s->next = service_table->first;
+    service_table->first = s;
 
-    QueueUserAPC( NULL, Service->thread, 0L );
+    HeapUnlock( GetProcessHeap() );
+
+    QueueUserAPC( NULL, service_table->thread, 0L );
 
     return handle;
 }
@@ -244,16 +254,19 @@ HANDLE SERVICE_AddObject( HANDLE object,
 HANDLE SERVICE_AddTimer( LONG rate, 
                          PAPCFUNC callback, ULONG_PTR callback_arg )
 {
-    SERVICE *s;
-    HANDLE handle;
+    SERVICE 		*s;
+    SERVICETABLE 	*service_table;
+    HANDLE 		handle;
 
-    if ( !Service || !rate || !callback ) 
+    if ( !rate || !callback ) 
         return INVALID_HANDLE_VALUE;
 
-    s = HeapAlloc( Service->heap, HEAP_ZERO_MEMORY, sizeof(SERVICE) );
-    if ( !s ) return INVALID_HANDLE_VALUE;
+    if (PROCESS_Current()->service_table == 0 && !SERVICE_CreateServiceTable())
+       return INVALID_HANDLE_VALUE;
+    service_table = PROCESS_Current()->service_table;
 
-    HeapLock( Service->heap );
+    s = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICE) );
+    if ( !s ) return INVALID_HANDLE_VALUE;
 
     s->callback = callback;
     s->callback_arg = callback_arg;
@@ -263,13 +276,15 @@ HANDLE SERVICE_AddTimer( LONG rate,
     gettimeofday( &s->expire, NULL );
     SERVICE_AddTimeval( &s->expire, s->rate );
             
-    s->self = handle = (HANDLE)++Service->counter;
-    s->next = Service->first;
-    Service->first = s;
+    HeapLock( GetProcessHeap() );
 
-    HeapUnlock( Service->heap );
+    s->self = handle = (HANDLE)++service_table->counter;
+    s->next = service_table->first;
+    service_table->first = s;
 
-    QueueUserAPC( NULL, Service->thread, 0L );
+    HeapUnlock( GetProcessHeap() );
+
+    QueueUserAPC( NULL, service_table->thread, 0L );
 
     return handle;
 }
@@ -279,33 +294,38 @@ HANDLE SERVICE_AddTimer( LONG rate,
  */
 BOOL SERVICE_Delete( HANDLE service )
 {
-    HANDLE handle = INVALID_HANDLE_VALUE;
-    BOOL retv = TRUE;
-    SERVICE **s, *next;
+    HANDLE 		handle = INVALID_HANDLE_VALUE;
+    BOOL 		retv = FALSE;
+    SERVICE 		**s, *next;
+    SERVICETABLE 	*service_table;
 
-    if ( !Service ) return retv;
+    /* service table must have been created on previous SERVICE_Add??? call */
+    if ((service_table = PROCESS_Current()->service_table) == 0)
+       return retv;
 
-    HeapLock( Service->heap );
+    HeapLock( GetProcessHeap() );
 
-    for ( s = &Service->first; *s; s = &(*s)->next )
+    for ( s = &service_table->first; *s; s = &(*s)->next )
+    {
         if ( (*s)->self == service )
         {
             if ( (*s)->flags & SERVICE_USE_OBJECT )
                 handle = (*s)->object;
 
             next = (*s)->next;
-            HeapFree( Service->heap, 0, *s );
+            HeapFree( GetProcessHeap(), 0, *s );
             *s = next;
-            retv = FALSE;
+            retv = TRUE;
             break;
         }
+    }
 
-    HeapUnlock( Service->heap );
+    HeapUnlock( GetProcessHeap() );
 
     if ( handle != INVALID_HANDLE_VALUE )
         CloseHandle( handle );
 
-    QueueUserAPC( NULL, Service->thread, 0L );
+    QueueUserAPC( NULL, service_table->thread, 0L );
 
     return retv;
 }
@@ -315,14 +335,18 @@ BOOL SERVICE_Delete( HANDLE service )
  */
 BOOL SERVICE_Enable( HANDLE service )
 {
-    BOOL retv = TRUE;
-    SERVICE *s;
+    BOOL 		retv = FALSE;
+    SERVICE 		*s;
+    SERVICETABLE 	*service_table;
 
-    if ( !Service ) return retv;
+    /* service table must have been created on previous SERVICE_Add??? call */
+    if ((service_table = PROCESS_Current()->service_table) == 0)
+       return retv;
 
-    HeapLock( Service->heap );
+    HeapLock( GetProcessHeap() );
 
-    for ( s = Service->first; s; s = s->next )
+    for ( s = service_table->first; s; s = s->next ) 
+    {
         if ( s->self == service )
         {
             if ( s->flags & SERVICE_DISABLED )
@@ -341,13 +365,14 @@ BOOL SERVICE_Enable( HANDLE service )
                                            (delta / s->rate) * s->rate );
                 }
             }
-            retv = FALSE;
+            retv = TRUE;
             break;
         }
+    }
 
-    HeapUnlock( Service->heap );
+    HeapUnlock( GetProcessHeap() );
 
-    QueueUserAPC( NULL, Service->thread, 0L );
+    QueueUserAPC( NULL, service_table->thread, 0L );
 
     return retv;
 }
@@ -357,24 +382,29 @@ BOOL SERVICE_Enable( HANDLE service )
  */
 BOOL SERVICE_Disable( HANDLE service )
 {
-    BOOL retv = TRUE;
-    SERVICE *s;
+    BOOL 		retv = TRUE;
+    SERVICE 		*s;
+    SERVICETABLE 	*service_table;
 
-    if ( !Service ) return retv;
+    /* service table must have been created on previous SERVICE_Add??? call */
+    if ((service_table = PROCESS_Current()->service_table) == 0)
+       return retv;
 
-    HeapLock( Service->heap );
+    HeapLock( GetProcessHeap() );
 
-    for ( s = Service->first; s; s = s->next )
+    for ( s = service_table->first; s; s = s->next ) 
+    {
         if ( s->self == service )
         {
             s->flags |= SERVICE_DISABLED;
-            retv = FALSE;
+            retv = TRUE;
             break;
         }
+    }
 
-    HeapUnlock( Service->heap );
+    HeapUnlock( GetProcessHeap() );
 
-    QueueUserAPC( NULL, Service->thread, 0L );
+    QueueUserAPC( NULL, service_table->thread, 0L );
 
     return retv;
 }
