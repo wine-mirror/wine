@@ -697,7 +697,10 @@ HEADER_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     HEADER_InternalHitTest (hwnd, &phti->pt, &phti->flags, &phti->iItem);
 
-    return phti->flags;
+    if (phti->flags == HHT_ONHEADER)
+        return phti->iItem;
+    else
+        return -1;
 }
 
 
