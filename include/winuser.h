@@ -3013,7 +3013,7 @@ BOOL      WINAPI GetMonitorInfoW(HMONITOR,LPMONITORINFO);
 #define     GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
 INT       WINAPI GetNumberFormatA(LCID,DWORD,LPCSTR,const NUMBERFMTA*,LPSTR,int);
 INT       WINAPI GetNumberFormatW(LCID,DWORD,LPCWSTR,const NUMBERFMTW*,LPWSTR,int);
-#define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat);
+#define     GetNumberFormat WINELIB_NAME_AW(GetNumberFormat)
 DWORD       WINAPI GetWindowContextHelpId(HWND);
 DWORD       WINAPI GetWindowThreadProcessId(HWND,LPDWORD);
 BOOL      WINAPI IsWindowUnicode(HWND);
