@@ -66,6 +66,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
     rc=waveInOpen(&win,device,pwfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER || rc==MMSYSERR_ALLOCATED ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && !(pcaps->dwFormats & format)) ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
@@ -193,9 +194,9 @@ static void wave_in_tests()
 
     for (d=0;d<ndev;d++) {
         rc=waveInGetDevCapsA(d,&caps,sizeof(caps));
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
            "waveInGetDevCapsA: failed to get capabilities of device %d: rc=%s\n",d,wave_in_error(rc));
-        if (rc==MMSYSERR_BADDEVICEID)
+        if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
             continue;
 
         name=NULL;

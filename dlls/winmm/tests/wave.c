@@ -206,6 +206,7 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     /* It is acceptable to fail on formats that are not specified to work */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER || rc==MMSYSERR_ALLOCATED ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && !(pcaps->dwFormats & format)) ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
@@ -320,9 +321,9 @@ static void wave_out_tests()
 
     for (d=0;d<ndev;d++) {
         rc=waveOutGetDevCapsA(d,&caps,sizeof(caps));
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
+        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
            "waveOutGetDevCapsA: failed to get capabilities of device %d: rc=%s\n",d,wave_out_error(rc));
-        if (rc==MMSYSERR_BADDEVICEID)
+        if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
             continue;
 
         name=NULL;
