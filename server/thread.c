@@ -287,24 +287,6 @@ int resume_thread( struct thread *thread )
     return old_count;
 }
 
-/* suspend all threads but the current */
-void suspend_all_threads( void )
-{
-    struct thread *thread;
-    for ( thread = first_thread; thread; thread = thread->next )
-        if ( thread != current )
-            suspend_thread( thread, 0 );
-}
-
-/* resume all threads but the current */
-void resume_all_threads( void )
-{
-    struct thread *thread;
-    for ( thread = first_thread; thread; thread = thread->next )
-        if ( thread != current )
-            resume_thread( thread );
-}
-
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
 int add_queue( struct object *obj, struct wait_queue_entry *entry )
 {

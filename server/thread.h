@@ -94,8 +94,6 @@ extern struct thread *get_thread_from_handle( handle_t handle, unsigned int acce
 extern struct thread *get_thread_from_pid( int pid );
 extern int suspend_thread( struct thread *thread, int check_limit );
 extern int resume_thread( struct thread *thread );
-extern void suspend_all_threads( void );
-extern void resume_all_threads( void );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
