@@ -99,7 +99,7 @@ HANDLE WINAPI ConvertToGlobalHandle(HANDLE hSrc)
  *           SetHandleContext    		(KERNEL32)
  */
 BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
-    FIXME("(%d,%ld), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd,context);
+    FIXME("(%d,%ld), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd,context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -108,7 +108,7 @@ BOOL WINAPI SetHandleContext(HANDLE hnd,DWORD context) {
  *           GetHandleContext    		(KERNEL32)
  */
 DWORD WINAPI GetHandleContext(HANDLE hnd) {
-    FIXME("(%d), stub. The external WSOCK32 will not work with WINE, do not use it.\n",hnd);
+    FIXME("(%d), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n",hnd);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
@@ -117,7 +117,7 @@ DWORD WINAPI GetHandleContext(HANDLE hnd) {
  *           CreateSocketHandle    		(KERNEL32)
  */
 HANDLE WINAPI CreateSocketHandle(void) {
-    FIXME("(), stub. The external WSOCK32 will not work with WINE, do not use it.\n");
+    FIXME("(), stub. In case this got called by WSOCK32/WS2_32: the external WINSOCK DLLs won't work with WINE, don't use them.\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return INVALID_HANDLE_VALUE;
 }
