@@ -735,6 +735,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 
 		case CM_H_ABOUT:
 			DialogBox(g_hInstance, "AboutDialog", hWnd, (DLGPROC) mwcd_About);
+			return 1;
 		case CM_H_USAGE:
 			DialogBox(g_hInstance, "UsageDialog", hWnd, (DLGPROC) mwcd_About);
          	// return value?  *What* return value?
