@@ -96,15 +96,15 @@ PUSHBUTTON    "&Hilfe",       0x153,                180, 39, 40, 15, WS_TABSTOP
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
-STRING_PAGESETUP_FOOTERVALUE,   "Page &s"   /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "Seite &s"   /* FIXME */
 STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
 STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
 STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
 STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
 STRING_NOTEPAD,                                 "Editor"
-STRING_ERROR,                                   "FEHLER"
-STRING_WARNING,                                 "ACHTUNG"
+STRING_ERROR,                                   "Fehler"
+STRING_WARNING,                                 "Achtung"
 STRING_INFO,                                    "Information"
 
 STRING_UNTITLED,                                "(unbenannt)"
