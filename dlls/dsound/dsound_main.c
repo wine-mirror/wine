@@ -1032,6 +1032,35 @@ static void DSOUND_PrimaryClose(IDirectSoundBufferImpl *dsb)
 	}
 }
 
+static HRESULT DSOUND_PrimaryPlay(IDirectSoundBufferImpl *dsb)
+{
+	HRESULT err = DS_OK;
+	if (dsb->hwbuf)
+		err = IDsDriverBuffer_Play(dsb->hwbuf, 0, 0, DSBPLAY_LOOPING);
+	return err;
+}
+
+static HRESULT DSOUND_PrimaryStop(IDirectSoundBufferImpl *dsb)
+{
+	HRESULT err = DS_OK;
+	if (dsb->hwbuf) {
+		err = IDsDriverBuffer_Stop(dsb->hwbuf);
+		if (err == DSERR_BUFFERLOST) {
+			/* Wine-only: the driver wants us to reopen the device */
+			/* FIXME: check for errors */
+			IDsDriverBuffer_Release(primarybuf->hwbuf);
+			waveOutClose(dsb->dsound->hwo);
+			dsb->dsound->hwo = 0;
+			waveOutOpen(&(dsb->dsound->hwo), dsb->dsound->drvdesc.dnDevNode,
+				    &(primarybuf->wfx), 0, 0, CALLBACK_NULL | WAVE_DIRECTSOUND);
+			err = IDsDriver_CreateSoundBuffer(dsb->dsound->driver,&(dsb->wfx),dsb->dsbd.dwFlags,0,
+							  &(dsb->buflen),&(dsb->buffer),
+							  (LPVOID)&(dsb->hwbuf));
+		}
+	}
+	return err;
+}
+
 /* This sets this format for the <em>Primary Buffer Only</em> */
 /* See file:///cdrom/sdk52/docs/worddoc/dsound.doc page 120 */
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
@@ -1304,7 +1333,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER iface) {
 }
 
 static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
-				     DWORD state, DWORD pplay, DWORD pmix, DWORD bmix)
+				     DWORD state, DWORD pplay, DWORD pwrite, DWORD pmix, DWORD bmix)
 {
 	DWORD bplay;
 
@@ -1325,7 +1354,9 @@ static DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 	if (pmix < pplay) pmix += primarybuf->buflen; /* wraparound */
 	pmix -= pplay;
 	/* detect buffer underrun */
-	if ((pmix > ((DS_SND_QUEUE + 1) * primarybuf->dsound->fraglen + primarybuf->writelead))) {
+	if (pwrite < pplay) pwrite += primarybuf->buflen; /* wraparound */
+	pwrite -= pplay;
+	if (pmix > (DS_SND_QUEUE * primarybuf->dsound->fraglen + pwrite + primarybuf->writelead)) {
 		TRACE("detected an underrun: primary queue was %ld\n",pmix);
 		pmix = 0;
 	}
@@ -1383,11 +1414,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			*playpos = This->buf_mixpos;
 		}
 		else if (playpos) {
-			DWORD pplay, lplay, splay, pstate;
+			DWORD pplay, pwrite, lplay, splay, pstate;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(primarybuf->lock));
 			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || primarybuf->hwbuf || !DS_EMULDRIVER) {
-				IDirectSoundBufferImpl_GetCurrentPosition((LPDIRECTSOUNDBUFFER)primarybuf, &pplay, NULL);
+				IDirectSoundBufferImpl_GetCurrentPosition((LPDIRECTSOUNDBUFFER)primarybuf, &pplay, &pwrite);
 				/* detect HEL mode underrun */
 				pstate = primarybuf->state;
 				if (!(primarybuf->hwbuf || primarybuf->dsound->pwqueue)) {
@@ -1403,7 +1434,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				lplay = This->primary_mixpos;
 				splay = This->buf_mixpos;
 				/* calculate play position using this */
-				*playpos = DSOUND_CalcPlayPosition(This, pstate, pplay, lplay, splay);
+				*playpos = DSOUND_CalcPlayPosition(This, pstate, pplay, pwrite, lplay, splay);
 			} else {
 				/* (unless the app isn't using GETCURRENTPOSITION2) */
 				/* don't know exactly how this should be handled...
@@ -2081,6 +2112,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
 	IDirectSoundBuffer_AddRef(pdsb);
 	memcpy(*ippdsb, ipdsb, sizeof(IDirectSoundBufferImpl));
 	(*ippdsb)->ref = 1;
+	(*ippdsb)->state = STATE_STOPPED;
 	(*ippdsb)->playpos = 0;
 	(*ippdsb)->buf_mixpos = 0;
 	(*ippdsb)->dsound = This;
@@ -2710,7 +2742,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	DWORD len, slen;
 	/* determine this buffer's write position */
 	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, dsb->state & primarybuf->state, writepos,
-						     dsb->primary_mixpos, dsb->buf_mixpos);
+						     writepos, dsb->primary_mixpos, dsb->buf_mixpos);
 	/* determine how much already-mixed data exist */
 	DWORD buf_done =
 		((dsb->buf_mixpos < buf_writepos) ? dsb->buflen : 0) +
@@ -2734,9 +2766,13 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 
 	/* check whether CalcPlayPosition detected a mixing underrun */
 	if ((buf_done == 0) && (dsb->primary_mixpos != writepos)) {
-		/* it did, try to recover */
-		ERR("underrun on sound buffer %p\n", dsb);
-		TRACE("recovering from underrun: primary_mixpos=%ld\n", writepos);
+		/* it did, but did we have more to play? */
+		if ((dsb->playflags & DSBPLAY_LOOPING) ||
+		    (dsb->buf_mixpos < dsb->buflen)) {
+			/* yes, have to recover */
+			ERR("underrun on sound buffer %p\n", dsb);
+			TRACE("recovering from underrun: primary_mixpos=%ld\n", writepos);
+		}
 		dsb->primary_mixpos = writepos;
 		primary_done = 0;
 	}
@@ -2949,7 +2985,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 				TRACE("reached end of mixed data (inq=%ld, maxq=%ld)\n", inq, maxq);
 			        inq = 0;
 				/* stop the playback now, to allow buffers to refill */
-				IDsDriverBuffer_Stop(primarybuf->hwbuf);
+				DSOUND_PrimaryStop(primarybuf);
 				if (primarybuf->state == STATE_PLAYING) {
 					primarybuf->state = STATE_STARTING;
 				}
@@ -2988,14 +3024,14 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 			if (frag) {
 				/* buffers have been filled, restart playback */
 				if (primarybuf->state == STATE_STARTING) {
-					IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+					DSOUND_PrimaryPlay(primarybuf);
 					primarybuf->state = STATE_PLAYING;
 					TRACE("starting playback\n");
 				}
 				else if (primarybuf->state == STATE_STOPPED) {
 					/* the primarybuf is supposed to play if there's something to play
 					 * even if it is reported as stopped, so don't let this confuse you */
-					IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+					DSOUND_PrimaryPlay(primarybuf);
 					primarybuf->state = STATE_STOPPING;
 					TRACE("starting playback\n");
 				}
@@ -3004,11 +3040,11 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		} else {
 			/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
 			if (primarybuf->state == STATE_STARTING) {
-				IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
+				DSOUND_PrimaryPlay(primarybuf);
 				primarybuf->state = STATE_PLAYING;
 			} 
 			else if (primarybuf->state == STATE_STOPPING) {
-				IDsDriverBuffer_Stop(primarybuf->hwbuf);
+				DSOUND_PrimaryStop(primarybuf);
 				primarybuf->state = STATE_STOPPED;
 			}
 		}
