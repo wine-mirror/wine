@@ -5504,7 +5504,7 @@ HRESULT WINAPI StgOpenStorage(
   DWORD          shareMode;
   DWORD          accessMode;
   WCHAR          fullname[MAX_PATH];
-  WIN32_FILE_ATTRIBUTE_DATA Fad;
+  DWORD          length;
 
   TRACE("(%s, %p, %lx, %p, %ld, %p)\n", 
 	debugstr_w(pwcsName), pstgPriority, grfMode,
@@ -5547,6 +5547,7 @@ HRESULT WINAPI StgOpenStorage(
                        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
                        0);
   
+  length = GetFileSize(hFile, NULL);
   
   if (hFile==INVALID_HANDLE_VALUE)
   {
@@ -5599,7 +5600,7 @@ HRESULT WINAPI StgOpenStorage(
          NULL,
          grfMode,
          TRUE,
-	 !(Fad.nFileSizeHigh || Fad.nFileSizeLow) /* FALSE */ );
+	 !length );
   
   if (FAILED(hr))
   {
