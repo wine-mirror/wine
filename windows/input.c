@@ -791,13 +791,28 @@ INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
 	return GetKeyboardLayoutNameA(pwszKLID);
 }
 
+/***********************************************************************
+ *           GetKeyboardLayout			(USER32.250)
+ *
+ * FIXME: - device handle for keyboard layout defaulted to 
+ *          the language id. This is the way Windows default works.
+ *        - the thread identifier (dwLayout) is also ignored.
+ */
+HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
+{
+        HKL layout;
+        layout = GetSystemDefaultLCID(); /* FIXME */
+        layout |= (layout<<16);          /* FIXME */
+        TRACE(keyboard,"returning %08x\n",layout);
+        return layout;
+}
+
 /****************************************************************************
  *	GetKeyboardLayoutName32A   (USER32.252)
  */
 INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
 {
-        FIXME(keyboard,"always returns primary U.S. English layout\n");
-        strcpy(pwszKLID,"00000409");
+        sprintf(pwszKLID, "%08x",GetKeyboardLayout(0));
         return 1;
 }
 
@@ -843,36 +858,34 @@ INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
     return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
 }
 
-/***********************************************************************
- *           GetKeyboardLayout			(USER32.250)
- */
-HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
-{
-        HKL layout;
-	FIXME(keyboard,"(%ld): stub\n",dwLayout);
-        layout = (0xcafe<<16)|GetSystemDefaultLCID(); /* FIXME */
-        TRACE(keyboard,"returning %x\n",layout);
-        return layout;
-}
-
 /**********************************************************************
  *           ActivateKeyboardLayout32      (USER32.1)
+ *
+ * Call ignored. WINE supports only system default keyboard layout.
  */
 HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
-    FIXME(keyboard, "(%d, %d): stub\n", hLayout, flags);
-
+    TRACE(keyboard, "(%d, %d)\n", hLayout, flags);
+    ERR(keyboard,"Only default system keyboard layout supported. Call ignored.\n");
     return 0;
 }
 
 
 /***********************************************************************
  *           GetKeyboardLayoutList		(USER32.251)
- * FIXME
+ *
+ * FIXME: Supports only the system default language and layout and 
+ *          returns only 1 value.
+ *
+ * Return number of values available if either input parm is 
+ *  0, per MS documentation.
+ *
  */
 INT WINAPI GetKeyboardLayoutList(INT nBuff,HKL *layouts)
 {
-	FIXME(keyboard,"(%d,%p): stub\n",nBuff,layouts);
+        TRACE(keyboard,"(%d,%p)\n",nBuff,layouts);
+        if (!nBuff || !layouts)
+            return 1;
 	if (layouts)
 		layouts[0] = GetKeyboardLayout(0);
 	return 1;
@@ -913,10 +926,12 @@ INT WINAPI ToUnicode(
 
 /***********************************************************************
  *           LoadKeyboardLayout32A                (USER32.367)
+ * Call ignored. WINE supports only system default keyboard layout.
  */
 HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 {
-  FIXME(keyboard, "%s, %d): stub\n", pwszKLID, Flags);
+    TRACE(keyboard, "(%s, %d)\n", pwszKLID, Flags);
+    ERR(keyboard,"Only default system keyboard layout supported. Call ignored.\n");
   return 0; 
 }
 
@@ -925,6 +940,11 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
  */
 HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
-  FIXME(keyboard, "%p, %d): stub\n", pwszKLID, Flags);
-  return 0;
+    LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, strlen("00000409")+1);
+    int res;
+    lstrcpynWtoA(buf,pwszKLID,8);
+    buf[8] = 0;
+    res = LoadKeyboardLayoutA(buf, Flags);
+    HeapFree( GetProcessHeap(), 0, buf );
+    return res;
 }
