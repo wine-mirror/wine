@@ -21,6 +21,7 @@
 
 #include "En.rc"
 #include "Es.rc"
+#include "Fr.rc"
 #include "It.rc"
 #include "Pt.rc"
 #include "Si.rc"

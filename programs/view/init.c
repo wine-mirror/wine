@@ -24,7 +24,7 @@
 
 HINSTANCE hInst;
 char szAppName[9];
-char szTitle[40];
+char szTitle[80];
 
 BOOL InitApplication(HINSTANCE hInstance)
 {

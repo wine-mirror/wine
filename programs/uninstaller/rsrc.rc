@@ -2,6 +2,7 @@
  * Uninstaller (rsrc.rc)
  *
  * Copyright 2000 Andreas Mohr <andi@lisas.de>
+ * Copyright 2003 Vincent Béron
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -82,3 +83,13 @@ STRINGTABLE {
 }
 
 /* End of English-US Resources */
+
+/* French Resources */
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+
+STRINGTABLE {
+     IDS_APPNAME, "Désinstalleur"
+
+}
+
+/* End of French Resources */
