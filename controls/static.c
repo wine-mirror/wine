@@ -409,11 +409,14 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 	wFormat |= DT_NOPREFIX;
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
-    hBrush = SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
-                             hdc, wndPtr->hwndSelf );
-    if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
-    FillRect( hdc, &rc, hBrush );    
 
+    if ((style & SS_NOPREFIX) || ((style & SS_TYPEMASK) != SS_SIMPLE))
+    {
+        hBrush = SendMessageA( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+                             hdc, wndPtr->hwndSelf );
+        if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
+        FillRect( hdc, &rc, hBrush );    
+    }
     if (!IsWindowEnabled(wndPtr->hwndSelf))
    	SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 
