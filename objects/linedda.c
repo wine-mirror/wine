@@ -21,24 +21,6 @@
 #include <stdlib.h>
 #include "windef.h"
 #include "wingdi.h"
-#include "wine/wingdi16.h"
-
-/* ### start build ### */
-extern WORD CALLBACK DDA_CallTo16_word_wwl(LINEDDAPROC16,WORD,WORD,LONG);
-/* ### stop build ### */
-
-struct linedda16_info
-{
-    LINEDDAPROC16 proc;
-    LPARAM        param;
-};
-
-
-static void CALLBACK DDA_callback( INT x, INT y, LPARAM param )
-{
-    const struct linedda16_info *info = (struct linedda16_info *)param;
-    DDA_CallTo16_word_wwl( info->proc, x, y, info->param );
-}
 
 /**********************************************************************
  *           LineDDA   (GDI32.@)
@@ -84,17 +66,4 @@ BOOL WINAPI LineDDA(INT nXStart, INT nYStart, INT nXEnd, INT nYEnd,
       }
     }
     return TRUE;
-}
-
-
-/**********************************************************************
- *           LineDDA   (GDI.100)
- */
-void WINAPI LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
-                       INT16 nYEnd, LINEDDAPROC16 proc, LPARAM lParam )
-{
-    struct linedda16_info info;
-    info.proc  = proc;
-    info.param = lParam;
-    LineDDA( nXStart, nYStart, nXEnd, nYEnd, DDA_callback, (LPARAM)&info );
 }

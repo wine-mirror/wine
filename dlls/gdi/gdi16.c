@@ -30,6 +30,60 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define HGDIOBJ_32(handle16)    ((HGDIOBJ)(ULONG_PTR)(handle16))
 #define HGDIOBJ_16(handle32)    ((HGDIOBJ16)(ULONG_PTR)(handle32))
 
+/* ### start build ### */
+extern WORD CALLBACK GDI_CallTo16_word_ll(FARPROC16,LONG,LONG);
+extern WORD CALLBACK GDI_CallTo16_word_wwl(FARPROC16,WORD,WORD,LONG);
+/* ### stop build ### */
+
+struct callback16_info
+{
+    FARPROC16 proc;
+    LPARAM    param;
+};
+
+/* callback for LineDDA16 */
+static void CALLBACK linedda_callback( INT x, INT y, LPARAM param )
+{
+    const struct callback16_info *info = (struct callback16_info *)param;
+    GDI_CallTo16_word_wwl( info->proc, x, y, info->param );
+}
+
+/* callback for EnumObjects16 */
+static INT CALLBACK enum_pens_callback( void *ptr, LPARAM param )
+{
+    const struct callback16_info *info = (struct callback16_info *)param;
+    LOGPEN *pen = ptr;
+    LOGPEN16 pen16;
+    SEGPTR segptr;
+    INT ret;
+
+    pen16.lopnStyle   = pen->lopnStyle;
+    pen16.lopnWidth.x = pen->lopnWidth.x;
+    pen16.lopnWidth.y = pen->lopnWidth.y;
+    pen16.lopnColor   = pen->lopnColor;
+    segptr = MapLS( &pen16 );
+    ret = GDI_CallTo16_word_ll( info->proc, segptr, info->param );
+    UnMapLS( segptr );
+    return ret;
+}
+
+/* callback for EnumObjects16 */
+static INT CALLBACK enum_brushes_callback( void *ptr, LPARAM param )
+{
+    const struct callback16_info *info = (struct callback16_info *)param;
+    LOGBRUSH *brush = ptr;
+    LOGBRUSH16 brush16;
+    SEGPTR segptr;
+    INT ret;
+
+    brush16.lbStyle = brush->lbStyle;
+    brush16.lbColor = brush->lbColor;
+    brush16.lbHatch = brush->lbHatch;
+    segptr = MapLS( &brush16 );
+    ret = GDI_CallTo16_word_ll( info->proc, segptr, info->param );
+    UnMapLS( segptr );
+    return ret;
+}
 
 /* convert a LOGFONT16 to a LOGFONTW */
 static void logfont_16_to_W( const LOGFONT16 *font16, LPLOGFONTW font32 )
@@ -941,6 +995,26 @@ BOOL16 WINAPI DeleteObject16( HGDIOBJ16 obj )
 
 
 /***********************************************************************
+ *           EnumObjects    (GDI.71)
+ */
+INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 obj, GOBJENUMPROC16 proc, LPARAM lParam )
+{
+    struct callback16_info info;
+
+    info.proc  = (FARPROC16)proc;
+    info.param = lParam;
+    switch(obj)
+    {
+    case OBJ_PEN:
+        return EnumObjects( HDC_32(hdc), OBJ_PEN, enum_pens_callback, (LPARAM)&info );
+    case OBJ_BRUSH:
+        return EnumObjects( HDC_32(hdc), OBJ_BRUSH, enum_brushes_callback, (LPARAM)&info );
+    }
+    return 0;
+}
+
+
+/***********************************************************************
  *           EqualRgn    (GDI.72)
  */
 BOOL16 WINAPI EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
@@ -1204,6 +1278,21 @@ DWORD WINAPI GetWindowOrg16( HDC16 hdc )
     POINT pt;
     if (!GetWindowOrgEx( HDC_32(hdc), &pt )) return 0;
     return MAKELONG( pt.x, pt.y );
+}
+
+
+
+
+/**********************************************************************
+ *           LineDDA   (GDI.100)
+ */
+void WINAPI LineDDA16( INT16 nXStart, INT16 nYStart, INT16 nXEnd,
+                       INT16 nYEnd, LINEDDAPROC16 proc, LPARAM lParam )
+{
+    struct callback16_info info;
+    info.proc  = (FARPROC16)proc;
+    info.param = lParam;
+    LineDDA( nXStart, nYStart, nXEnd, nYEnd, linedda_callback, (LPARAM)&info );
 }
 
 

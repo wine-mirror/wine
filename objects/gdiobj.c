@@ -28,7 +28,6 @@
 #include "wingdi.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wine/winbase16.h"
 
 #include "bitmap.h"
 #include "font.h"
@@ -39,9 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-/* ### start build ### */
-extern WORD CALLBACK GDI_CallTo16_word_ll(GOBJENUMPROC16,LONG,LONG);
-/* ### stop build ### */
 
 /***********************************************************************
  *          GDI stock objects
@@ -1115,70 +1111,6 @@ RGB(0x80,0x80,0x00), RGB(0x00,0x00,0x80),
 RGB(0x80,0x00,0x80), RGB(0x00,0x80,0x80),
 RGB(0x80,0x80,0x80), RGB(0xc0,0xc0,0xc0)
 };
-
-/***********************************************************************
- *           EnumObjects    (GDI.71)
- */
-INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
-                            GOBJENUMPROC16 lpEnumFunc, LPARAM lParam )
-{
-    INT16 i, retval = 0;
-    LOGPEN16 pen;
-    LOGBRUSH16 brush;
-    SEGPTR segptr;
-
-    TRACE("%04x %d %08lx %08lx\n",
-                 hdc, nObjType, (DWORD)lpEnumFunc, lParam );
-    switch(nObjType)
-    {
-    case OBJ_PEN:
-        /* Enumerate solid pens */
-        segptr = MapLS( &pen );
-        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
-        {
-            pen.lopnStyle   = PS_SOLID;
-            pen.lopnWidth.x = 1;
-            pen.lopnWidth.y = 0;
-            pen.lopnColor   = solid_colors[i];
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
-            TRACE("solid pen %08lx, ret=%d\n", solid_colors[i], retval);
-            if (!retval) break;
-        }
-        UnMapLS( segptr );
-        break;
-
-    case OBJ_BRUSH:
-        /* Enumerate solid brushes */
-        segptr = MapLS( &brush );
-        for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
-        {
-            brush.lbStyle = BS_SOLID;
-            brush.lbColor = solid_colors[i];
-            brush.lbHatch = 0;
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
-            TRACE("solid brush %08lx, ret=%d\n", solid_colors[i], retval);
-            if (!retval) break;
-        }
-
-        /* Now enumerate hatched brushes */
-        if (retval) for (i = HS_HORIZONTAL; i <= HS_DIAGCROSS; i++)
-        {
-            brush.lbStyle = BS_HATCHED;
-            brush.lbColor = RGB(0,0,0);
-            brush.lbHatch = i;
-            retval = GDI_CallTo16_word_ll( lpEnumFunc, segptr, lParam );
-            TRACE("hatched brush %d, ret=%d\n", i, retval);
-            if (!retval) break;
-        }
-        UnMapLS( segptr );
-        break;
-
-    default:
-        WARN("(%d): Invalid type\n", nObjType );
-        break;
-    }
-    return retval;
-}
 
 
 /***********************************************************************
