@@ -67,10 +67,10 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     classatom=RegisterClassW(&cls);
     if (!classatom && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
         return;
-    ok(classatom, "failed to register class");
+    ok(classatom, "failed to register class\n");
 
     ok(!RegisterClassW (&cls),
-        "RegisterClass of the same class should fail for the second time");
+        "RegisterClass of the same class should fail for the second time\n");
 
     /* Setup windows */
     hTestWnd = CreateWindowW (className, winName,
@@ -78,16 +78,16 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        0, hInstance, 0);
 
-    ok(hTestWnd!=0, "Failed to create window");
+    ok(hTestWnd!=0, "Failed to create window\n");
 
     /* test initial values of valid classwords */
     for(i=0; i<NUMCLASSWORDS; i++)
     {
         SetLastError(0);
         ok(!GetClassLongW(hTestWnd,i*sizeof (DWORD)),
-            "GetClassLongW initial value nonzero!");
+            "GetClassLongW initial value nonzero!\n");
         ok(!GetLastError(),
-            "GetClassLongW failed!");
+            "GetClassLongW failed!\n");
     }
 
 #if 0
@@ -98,7 +98,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     SetLastError(0);
     GetClassLongW(hTestWnd, NUMCLASSWORDS*sizeof(DWORD));
     ok(GetLastError(),
-        "GetClassLongW() with invalid offset did not fail");
+        "GetClassLongW() with invalid offset did not fail\n");
 #endif
 
     /* set values of valid class words */
@@ -106,9 +106,9 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok(!SetClassLongW(hTestWnd,i*sizeof(DWORD),i+1),
-            "GetClassLongW(%ld) initial value nonzero!",i*sizeof(DWORD));
+            "GetClassLongW(%ld) initial value nonzero!\n",i*sizeof(DWORD));
         ok(!GetLastError(),
-            "SetClassLongW(%ld) failed!",i*sizeof(DWORD));
+            "SetClassLongW(%ld) failed!\n",i*sizeof(DWORD));
     }
 
     /* test values of valid classwords that we set */
@@ -116,36 +116,36 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     {
         SetLastError(0);
         ok( (i+1) == GetClassLongW(hTestWnd,i*sizeof (DWORD)),
-            "GetClassLongW value doesn't match what was set!");
+            "GetClassLongW value doesn't match what was set!\n");
         ok(!GetLastError(),
-            "GetClassLongW failed!");
+            "GetClassLongW failed!\n");
     }
 
     /* check GetClassName */
     i = GetClassNameW(hTestWnd, str, sizeof(str));
     ok(i == lstrlenW(className),
-        "GetClassName returned incorrect length");
+        "GetClassName returned incorrect length\n");
     ok(!lstrcmpW(className,str),
-        "GetClassName returned incorrect name for this window's class");
+        "GetClassName returned incorrect name for this window's class\n");
 
     /* check GetClassInfo with our hInstance */
     if((test_atom = GetClassInfoW(hInstance, str, &wc)))
     {
         ok(test_atom == classatom,
-            "class atom did not match");
+            "class atom did not match\n");
         ok(wc.cbClsExtra == cls.cbClsExtra,
-            "cbClsExtra did not match");
+            "cbClsExtra did not match\n");
         ok(wc.cbWndExtra == cls.cbWndExtra,
-            "cbWndExtra did not match");
+            "cbWndExtra did not match\n");
         ok(wc.hbrBackground == cls.hbrBackground,
-            "hbrBackground did not match");
+            "hbrBackground did not match\n");
         ok(wc.hCursor== cls.hCursor,
-            "hCursor did not match");
+            "hCursor did not match\n");
         ok(wc.hInstance== cls.hInstance,
-            "hInstance did not match");
+            "hInstance did not match\n");
     }
     else
-        ok(FALSE,"GetClassInfo (hinstance) failed!");
+        ok(FALSE,"GetClassInfo (hinstance) failed!\n");
 
     /* check GetClassInfo with zero hInstance */
     if(global)
@@ -153,35 +153,35 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
         if((test_atom = GetClassInfoW(0, str, &wc)))
         {
             ok(test_atom == classatom,
-                "class atom did not match %x != %x", test_atom, classatom);
+                "class atom did not match %x != %x\n", test_atom, classatom);
             ok(wc.cbClsExtra == cls.cbClsExtra,
-                "cbClsExtra did not match %x!=%x",wc.cbClsExtra,cls.cbClsExtra);
+                "cbClsExtra did not match %x!=%x\n",wc.cbClsExtra,cls.cbClsExtra);
             ok(wc.cbWndExtra == cls.cbWndExtra,
-                "cbWndExtra did not match %x!=%x",wc.cbWndExtra,cls.cbWndExtra);
+                "cbWndExtra did not match %x!=%x\n",wc.cbWndExtra,cls.cbWndExtra);
             ok(wc.hbrBackground == cls.hbrBackground,
-                "hbrBackground did not match %p!=%p",wc.hbrBackground,cls.hbrBackground);
+                "hbrBackground did not match %p!=%p\n",wc.hbrBackground,cls.hbrBackground);
             ok(wc.hCursor== cls.hCursor,
-                "hCursor did not match %p!=%p",wc.hCursor,cls.hCursor);
+                "hCursor did not match %p!=%p\n",wc.hCursor,cls.hCursor);
             ok(!wc.hInstance,
-                "hInstance not zero for global class %p",wc.hInstance);
+                "hInstance not zero for global class %p\n",wc.hInstance);
         }
         else
-            ok(FALSE,"GetClassInfo (0) failed for global class!");
+            ok(FALSE,"GetClassInfo (0) failed for global class!\n");
     }
     else
     {
         ok(!GetClassInfoW(0, str, &wc),
-            "GetClassInfo (0) succeeded for local class!");
+            "GetClassInfo (0) succeeded for local class!\n");
     }
 
     ok(!UnregisterClassW(className, hInstance),
-        "Unregister class succeeded with window existing");
+        "Unregister class succeeded with window existing\n");
 
     ok(DestroyWindow(hTestWnd),
-        "DestroyWindow() failed!");
+        "DestroyWindow() failed!\n");
 
     ok(UnregisterClassW(className, hInstance),
-        "UnregisterClass() failed");
+        "UnregisterClass() failed\n");
 
     return;
 }

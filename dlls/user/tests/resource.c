@@ -43,12 +43,12 @@ test_LoadStringA (void)
         const int expected = tests[i].expected;
         const int len = LoadStringA (hInst, 0, buf, bufsiz);
 
-        ok (len == expected, "bufsiz=%d: got %d, expected %d",
+        ok (len == expected, "bufsiz=%d: got %d, expected %d\n",
             bufsiz, len, expected);
         ok (!memcmp (buf, str, len),
-            "bufsiz=%d: got '%s', expected '%.*s'",
+            "bufsiz=%d: got '%s', expected '%.*s'\n",
             bufsiz, buf, len, str);
-        ok (buf[len] == 0, "bufsiz=%d: NUL termination missing",
+        ok (buf[len] == 0, "bufsiz=%d: NUL termination missing\n",
             bufsiz);
     }
 }
