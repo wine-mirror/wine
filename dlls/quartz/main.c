@@ -205,3 +205,51 @@ HRESULT WINAPI QUARTZ_DllCanUnloadNow()
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }
+
+
+static struct {
+	const GUID	riid;
+	char 	*name;
+} InterfaceDesc[] =
+{
+    #define OUR_GUID_ENTRY(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } , #name },
+        #include <uuids.h>
+	{ { 0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0} }, NULL }
+};
+
+/***********************************************************************
+ *              qzdebugstr_guid (internal)
+ *
+ * Gives a text version of DirectShow GUIDs
+ */
+const char * qzdebugstr_guid( const GUID * id )
+{
+    int i;
+    char * name = NULL;
+
+    for (i=0;InterfaceDesc[i].name && !name;i++) {
+        if (IsEqualGUID(&InterfaceDesc[i].riid, id)) return InterfaceDesc[i].name;
+    }
+    return debugstr_guid(id);
+}
+
+/***********************************************************************
+ *              qzdebugstr_State (internal)
+ *
+ * Gives a text version of the FILTER_STATE enumeration
+ */
+const char * qzdebugstr_State(FILTER_STATE state)
+{
+    switch (state)
+    {
+    case State_Stopped:
+        return "State_Stopped";
+    case State_Running:
+        return "State_Running";
+    case State_Paused:
+        return "State_Paused";
+    default:
+        return "State_Unknown";
+    }
+}

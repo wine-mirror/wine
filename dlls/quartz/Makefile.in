@@ -10,10 +10,13 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	enummedia.c \
 	enummoniker.c \
+	enumpins.c \
 	filtergraph.c \
 	filtermapper.c \
-	main.c
+	main.c \
+	pin.c
 
 @MAKE_DLL_RULES@
 

@@ -34,4 +34,26 @@ HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
 
+typedef struct tagENUMPINDETAILS
+{
+	ULONG cPins;
+	IPin ** ppPins;
+} ENUMPINDETAILS;
+
+typedef struct tagENUMEDIADETAILS
+{
+	ULONG cMediaTypes;
+	AM_MEDIA_TYPE * pMediaTypes;
+} ENUMMEDIADETAILS;
+
+HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** ppEnum);
+HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMediaTypes ** ppEnum);
+
+extern const char * qzdebugstr_guid(const GUID * id);
+extern const char * qzdebugstr_State(FILTER_STATE state);
+
+void CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
+BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
+void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
+
 #endif /* __QUARTZ_PRIVATE_INCLUDED__ */

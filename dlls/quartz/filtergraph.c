@@ -23,6 +23,7 @@
 #include "config.h"
 #include "dshow.h"
 #include "wine/debug.h"
+#include "strmif.h"
 #include "wine/unicode.h"
 
 #include "quartz_private.h"
@@ -46,15 +47,13 @@ typedef struct _IFilterGraphImpl {
     /* IFilterMapper2 */
     /* IGraphConfig */
     /* IGraphVersion */
-    /* IMediaEvent */
     /* IMediaEventSink */
     /* IMediaPosition */
-    /* IMediaSeeking */
     /* IQueueCommand */
     /* IRegisterServiceProvider */
     /* IResourceMananger */
     /* IServiceProvider */
-    /* IVideoFramStep */
+    /* IVideoFrameStep */
 
     ULONG ref;
     IBaseFilter ** ppFiltersInGraph;
@@ -89,7 +88,7 @@ static HRESULT Filtergraph_QueryInterface(IFilterGraphImpl *This,
         *ppvObj = &(This->IVideoWindow_vtbl);
         TRACE("   returning IVideoWindow interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaEvent, riid) ||
-          IsEqualGUID(&IID_IMediaEventEx, riid)) {
+	   IsEqualGUID(&IID_IMediaEventEx, riid)) {
         *ppvObj = &(This->IMediaEventEx_vtbl);
         TRACE("   returning IMediaEvent(Ex) interface (%p)\n", *ppvObj);
     } else if (IsEqualGUID(&IID_IMediaFilter, riid) ||
@@ -119,6 +118,8 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     
     ref = --This->ref;
     if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This->ppFiltersInGraph);
+        HeapFree(GetProcessHeap(), 0, This->pFilterNames);
 	HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -2122,6 +2123,10 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
     fimpl->IMediaEventEx_vtbl = &IMediaEventEx_VTable;
     fimpl->IMediaFilter_vtbl = &IMediaFilter_VTable;
     fimpl->ref = 1;
+    fimpl->ppFiltersInGraph = NULL;
+    fimpl->pFilterNames = NULL;
+    fimpl->nFilters = 0;
+    fimpl->filterCapacity = 0;
 
     *ppObj = fimpl;
     return S_OK;
