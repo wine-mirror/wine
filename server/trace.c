@@ -811,7 +811,8 @@ static void dump_create_socket_request( const struct create_socket_request *req 
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " family=%d,", req->family );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " protocol=%d", req->protocol );
+    fprintf( stderr, " protocol=%d,", req->protocol );
+    fprintf( stderr, " flags=%08x", req->flags );
 }
 
 static void dump_create_socket_reply( const struct create_socket_reply *req )

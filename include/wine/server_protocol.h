@@ -874,6 +874,7 @@ struct create_socket_request
     int          family;
     int          type;
     int          protocol;
+    unsigned int flags;
 };
 struct create_socket_reply
 {
@@ -3042,6 +3043,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 69
+#define SERVER_PROTOCOL_VERSION 70
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -640,6 +640,7 @@ enum fd_type
     int          family;        /* family, see socket manpage */
     int          type;          /* type, see socket manpage */
     int          protocol;      /* protocol, see socket manpage */
+    unsigned int flags;         /* socket flags */
 @REPLY
     handle_t     handle;        /* handle to the new socket */
 @END

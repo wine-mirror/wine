@@ -36,6 +36,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "request.h"
+#include "async.h"
 
 /* To avoid conflicts with the Unix socket headers. Plus we only need a few
  * macros anyway.
@@ -50,8 +51,11 @@ struct sock
     unsigned int        mask;        /* event mask */
     unsigned int        hmask;       /* held (blocked) events */
     unsigned int        pmask;       /* pending events */
+    unsigned int        flags;       /* socket flags */
     struct event       *event;       /* event object */
     int                 errors[FD_MAX_EVENTS]; /* event errors */
+    struct async_queue  read_q;      /* Queue for asynchronous reads */
+    struct async_queue  write_q;     /* Queue for asynchronous writes */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -275,6 +279,9 @@ static int sock_get_fd( struct object *obj )
 
 static int sock_get_info( struct object *obj, struct get_file_info_reply *reply, int *flags )
 {
+    struct sock *sock = (struct sock*) obj;
+    assert ( obj->ops == &sock_ops );
+
     if (reply)
     {
         reply->type        = FILE_TYPE_PIPE;
@@ -289,6 +296,7 @@ static int sock_get_info( struct object *obj, struct get_file_info_reply *reply,
         reply->serial      = 0;
     }
     *flags = 0;
+    if (sock->flags & WSA_FLAG_OVERLAPPED) *flags |= FD_FLAG_OVERLAPPED;
     return FD_TYPE_DEFAULT;
 }
 
@@ -298,6 +306,13 @@ static void sock_destroy( struct object *obj )
     assert( obj->ops == &sock_ops );
 
     /* FIXME: special socket shutdown stuff? */
+
+    if ( sock->flags & WSA_FLAG_OVERLAPPED )
+    {
+        destroy_async_queue ( &sock->read_q );
+        destroy_async_queue ( &sock->write_q );
+    }
+
     if (sock->event)
     {
         /* if the service thread was waiting for the event object,
@@ -311,7 +326,7 @@ static void sock_destroy( struct object *obj )
 }
 
 /* create a new and unconnected socket */
-static struct object *create_socket( int family, int type, int protocol )
+static struct object *create_socket( int family, int type, int protocol, unsigned int flags )
 {
     struct sock *sock;
     int sockfd;
@@ -330,9 +345,15 @@ static struct object *create_socket( int family, int type, int protocol )
     sock->mask  = 0;
     sock->hmask = 0;
     sock->pmask = 0;
+    sock->flags = flags;
     sock->event = NULL;
     sock_reselect( sock );
     clear_error();
+    if (sock->flags & WSA_FLAG_OVERLAPPED)
+    {
+        init_async_queue (&sock->read_q);
+        init_async_queue (&sock->write_q);
+    }
     return &sock->obj;
 }
 
@@ -378,6 +399,12 @@ static struct object *accept_socket( handle_t handle )
     acceptsock->event  = NULL;
     if (sock->event && !(sock->mask & FD_WINE_SERVEVENT))
         acceptsock->event = (struct event *)grab_object( sock->event );
+    acceptsock->flags = sock->flags;
+    if ( acceptsock->flags & WSA_FLAG_OVERLAPPED )
+    {
+	init_async_queue ( &acceptsock->read_q );
+	init_async_queue ( &acceptsock->write_q );
+    }
 
     sock_reselect( acceptsock );
     clear_error();
@@ -464,7 +491,7 @@ DECL_HANDLER(create_socket)
     struct object *obj;
 
     reply->handle = 0;
-    if ((obj = create_socket( req->family, req->type, req->protocol )) != NULL)
+    if ((obj = create_socket( req->family, req->type, req->protocol, req->flags )) != NULL)
     {
         reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
         release_object( obj );
