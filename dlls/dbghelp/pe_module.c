@@ -66,8 +66,12 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
 
     if (stabstrsize && stabsize)
     {
-        ret = stabs_parse(module, mapping, module->module.BaseOfImage, 
-                          stabs, stabsize, stabstr, stabstrsize);
+        ret = stabs_parse(module, 
+                          module->module.BaseOfImage - nth->OptionalHeader.ImageBase, 
+                          RtlImageRvaToVa(nth, (void*)mapping, stabs, NULL),
+                          stabsize,
+                          RtlImageRvaToVa(nth, (void*)mapping, stabstr, NULL),
+                          stabstrsize);
     }
     return ret;
 }
@@ -269,7 +273,8 @@ static BOOL pe_load_export_debug_info(const struct process* pcs,
         }
     }
     /* no real debug info, only entry points */
-    module->module.SymType = SymExport;
+    if (module->module.SymType == SymDeferred)
+        module->module.SymType = SymExport;
     return TRUE;
 }
 
@@ -303,6 +308,7 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
                  * in which case we'll rely on the export's on the ELF side
                  */
             }
+// FIXME shouldn't we check that? if (!module_get_debug(pcs, module))l  
             if (pe_load_export_debug_info(pcs, module, mapping, nth) && !ret)
                 ret = TRUE;
             UnmapViewOfFile(mapping);
@@ -403,9 +409,10 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
         IMAGE_DOS_HEADER    dos;
         IMAGE_NT_HEADERS    nth;
 
-        if (read_mem(pcs->handle, base, &dos, sizeof(dos)) &&
+        if (ReadProcessMemory(pcs->handle, (char*)base, &dos, sizeof(dos), NULL) &&
             dos.e_magic == IMAGE_DOS_SIGNATURE &&
-            read_mem(pcs->handle, base + dos.e_lfanew, &nth, sizeof(nth)) &&
+            ReadProcessMemory(pcs->handle, (char*)(base + dos.e_lfanew), 
+                              &nth, sizeof(nth), NULL) &&
             nth.Signature == IMAGE_NT_SIGNATURE)
         {
             if (!size) size = nth.OptionalHeader.SizeOfImage;

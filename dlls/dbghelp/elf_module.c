@@ -158,6 +158,12 @@ static void elf_hash_symtab(const struct module* module, struct pool* pool,
         }
         if (j < num_areas) continue;
 
+        /* FIXME: we don't need to handle them (GCC internals)
+         * Moreover, they screw up our symbol lookup :-/
+         */
+        if (symname[0] == '.' && symname[1] == 'L' && isdigit(symname[2]))
+            continue;
+
         ste = pool_alloc(pool, sizeof(*ste));
         /* GCC seems to emit, in some cases, a .<digit>+ suffix.
          * This is used for static variable inside functions, so
@@ -286,7 +292,7 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
                 ((struct symt_function*)sym)->address = module->elf_info->elf_addr +
                                                         symp->st_value;
                 ((struct symt_function*)sym)->size    = symp->st_size;
-            }
+            } else FIXME("Couldn't find %s\n", sym->hash_elt.name);
             break;
         case SymTagData:
             switch (((struct symt_data*)sym)->kind)
@@ -694,9 +700,10 @@ static BOOL elf_load_debug_info_from_file(
         if (stab_sect != -1 && stabstr_sect != -1)
         {
             /* OK, now just parse all of the stabs. */
-            ret = stabs_parse(module, addr, module->elf_info->elf_addr,
-                              spnt[stab_sect].sh_offset, spnt[stab_sect].sh_size,
-                              spnt[stabstr_sect].sh_offset,
+            ret = stabs_parse(module, module->elf_info->elf_addr,
+                              addr + spnt[stab_sect].sh_offset,
+                              spnt[stab_sect].sh_size,
+                              addr + spnt[stabstr_sect].sh_offset,
                               spnt[stabstr_sect].sh_size);
             if (!ret)
             {
@@ -1010,8 +1017,9 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     struct elf_info     elf_info;
     struct module*      module;
 
-    if (!pcs->dbg_hdr_addr) return FALSE;
-    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
+    if (!pcs->dbg_hdr_addr ||
+        !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr, 
+                           &dbg_hdr, sizeof(dbg_hdr), NULL))
         return FALSE;
 
     for (module = pcs->lmodules; module; module = module->next)
@@ -1027,12 +1035,12 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
      */
     for (lm_addr = (void*)dbg_hdr.r_map; lm_addr; lm_addr = (void*)lm.l_next)
     {
-	if (!read_mem(pcs->handle, (ULONG)lm_addr, &lm, sizeof(lm)))
+	if (!ReadProcessMemory(pcs->handle, lm_addr, &lm, sizeof(lm), NULL))
 	    return FALSE;
 
 	if (lm.l_prev != NULL && /* skip first entry, normally debuggee itself */
 	    lm.l_name != NULL &&
-	    read_mem(pcs->handle, (ULONG)lm.l_name, bufstr, sizeof(bufstr))) 
+	    ReadProcessMemory(pcs->handle, lm.l_name, bufstr, sizeof(bufstr), NULL)) 
         {
 	    bufstr[sizeof(bufstr) - 1] = '\0';
             elf_search_and_load_file(pcs, bufstr, (unsigned long)lm.l_addr,
@@ -1087,7 +1095,7 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
  *		elf_load_module
  *
  * loads an ELF module and stores it in process' module list
- * if 'sync' is TRUE, let's find module real name and load address from
+ * Also, find module real name and load address from
  * the real loaded modules list in pcs address space
  */
 struct module*  elf_load_module(struct process* pcs, const char* name)
@@ -1111,17 +1119,17 @@ struct module*  elf_load_module(struct process* pcs, const char* name)
     xname = strrchr(name, '/');
     if (!xname++) xname = name;
 
-    if (!read_mem(pcs->handle, pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr)))
+    if (!ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr, &dbg_hdr, sizeof(dbg_hdr), NULL))
         return NULL;
 
     for (lm_addr = (void*)dbg_hdr.r_map; lm_addr; lm_addr = (void*)lm.l_next)
     {
-        if (!read_mem(pcs->handle, (ULONG)lm_addr, &lm, sizeof(lm)))
+        if (!ReadProcessMemory(pcs->handle, lm_addr, &lm, sizeof(lm), NULL))
             return NULL;
 
         if (lm.l_prev != NULL && /* skip first entry, normally debuggee itself */
             lm.l_name != NULL &&
-            read_mem(pcs->handle, (ULONG)lm.l_name, bufstr, sizeof(bufstr))) 
+            ReadProcessMemory(pcs->handle, lm.l_name, bufstr, sizeof(bufstr), NULL)) 
         {
             bufstr[sizeof(bufstr) - 1] = '\0';
             /* memcmp is needed for matches when bufstr contains also version information

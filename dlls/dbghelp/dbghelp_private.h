@@ -296,16 +296,6 @@ extern struct module*
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
 
-/* memory.c */
-struct memory_access
-{
-    BOOL        (*read_mem)(HANDLE hProcess, DWORD addr, void* buf, DWORD len);
-    BOOL        (*write_mem)(HANDLE hProcess, DWORD addr, void* buf, DWORD len);
-};
-
-extern struct memory_access mem_access;
-#define read_mem(p,a,b,l) (mem_access.read_mem)((p),(a),(b),(l))
-#define write_mem(p,a,b,l) (mem_access.write_mem)((p),(a),(b),(l))
 extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* module.c */
@@ -351,10 +341,9 @@ extern unsigned     source_new(struct module* module, const char* source);
 extern const char*  source_get(const struct module* module, unsigned idx);
 
 /* stabs.c */
-extern BOOL         stabs_parse(struct module* module, const char* addr, 
-                                unsigned long load_offset,
-                                unsigned int staboff, int stablen,
-                                unsigned int strtaboff, int strtablen);
+extern BOOL         stabs_parse(struct module* module, unsigned long load_offset,
+                                const void* stabs, int stablen,
+                                const char* strs, int strtablen);
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);

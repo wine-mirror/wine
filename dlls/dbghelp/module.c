@@ -201,16 +201,17 @@ struct module* module_get_containee(const struct process* pcs,
  */
 struct module* module_get_debug(const struct process* pcs, struct module* module)
 {
-    BOOL        ret;
+    struct module*      parent;
 
     if (!module) return NULL;
-    switch (module->module.SymType)
+    /* for a PE builtin, always get info from parent */
+    if ((parent = module_get_container(pcs, module)))
+        module = parent;
+    /* if deferred, force loading */
+    if (module->module.SymType == SymDeferred)
     {
-    case SymNone:
-        module = module_get_container(pcs, module);
-        if (!module || module->module.SymType != SymDeferred) break;
-        /* fall through */
-    case SymDeferred:
+        BOOL ret;
+
         switch (module->type)
         {
         case DMT_ELF: ret = elf_load_debug_info(module);     break;
@@ -218,8 +219,7 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
         default:      ret = FALSE;                           break;
         }
         if (!ret) module->module.SymType = SymNone;
-        break;
-    default: break;
+        assert(module->module.SymType != SymDeferred);
     }
     return (module && module->module.SymType != SymNone) ? module : NULL;
 }

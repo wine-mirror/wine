@@ -1060,8 +1060,11 @@ struct pending_loc_var
  * Ends function creation: mainly:
  * - cleans up line number information
  * - tries to set up a debug-start tag (FIXME: heuristic to be enhanced)
+ * - for stabs which have abolute address in them, initializes the size of the 
+ *   function (assuming that current function ends where next function starts)
  */
-static void stabs_finalize_function(struct module* module, struct symt_function* func)
+static void stabs_finalize_function(struct module* module, struct symt_function* func,
+                                    unsigned long end)
 {
     IMAGEHLP_LINE       il;
    
@@ -1076,11 +1079,12 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
         symt_add_function_point(module, func, SymTagFuncDebugStart, 
                                 il.Address - func->address, NULL);
     }
+    if (end) func->size = end - func->address;
 }
 
-BOOL stabs_parse(struct module* module, const char* addr, 
-                 unsigned long load_offset, unsigned int staboff, int stablen,
-                 unsigned int strtaboff, int strtablen)
+BOOL stabs_parse(struct module* module, unsigned long load_offset, 
+                 const void* pv_stab_ptr, int stablen,
+                 const char* strs, int strtablen)
 {
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
@@ -1092,8 +1096,7 @@ BOOL stabs_parse(struct module* module, const char* addr,
     const char*                 ptr;
     char*                       stabbuff;
     unsigned int                stabbufflen;
-    const struct stab_nlist*    stab_ptr;
-    const char*                 strs;
+    const struct stab_nlist*    stab_ptr = pv_stab_ptr;
     const char*                 strs_end;
     int                         strtabinc;
     char                        symname[4096];
@@ -1106,8 +1109,6 @@ BOOL stabs_parse(struct module* module, const char* addr,
     BOOL                        ret = TRUE;
 
     nstab = stablen / sizeof(struct stab_nlist);
-    stab_ptr = (const struct stab_nlist*)(addr + staboff);
-    strs = (const char*)(addr + strtaboff);
     strs_end = strs + strtablen;
 
     memset(srcpath, 0, sizeof(srcpath));
@@ -1355,7 +1356,8 @@ BOOL stabs_parse(struct module* module, const char* addr,
             break;
         case N_FUN:
             /* First, clean up the previous function we were working on. */
-            stabs_finalize_function(module, curr_func);
+            stabs_finalize_function(module, curr_func, 
+                                    stab_ptr->n_value ? load_offset + stab_ptr->n_value : 0);
 
             /*
              * For now, just declare the various functions.  Later
@@ -1394,7 +1396,8 @@ BOOL stabs_parse(struct module* module, const char* addr,
             {
                 /* Nuke old path. */
                 srcpath[0] = '\0';
-                stabs_finalize_function(module, curr_func);
+                stabs_finalize_function(module, curr_func, 
+                                        stab_ptr->n_value ? load_offset + stab_ptr->n_value : 0);
                 curr_func = NULL;
                 source_idx = -1;
                 incl_stk = -1;
@@ -1429,7 +1432,9 @@ BOOL stabs_parse(struct module* module, const char* addr,
         case N_UNDF:
             strs += strtabinc;
             strtabinc = stab_ptr->n_value;
-            stabs_finalize_function(module, curr_func);
+            /* I'm not sure this is needed, so trace it before we obsolete it */
+            if (curr_func) FIXME("UNDF: curr_func %s\n", curr_func->hash_elt.name);
+            stabs_finalize_function(module, curr_func, 0); /* FIXME */
             curr_func = NULL;
             break;
         case N_OPT:

@@ -26,21 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-BOOL        win32_read_mem(HANDLE hProcess, DWORD addr, void* buf, DWORD len)
-{
-    return ReadProcessMemory(hProcess, (void*)addr, buf, len, NULL);
-}
-
-BOOL        win32_write_mem(HANDLE hProcess, DWORD addr, void* buf, DWORD len)
-{
-    return WriteProcessMemory(hProcess, (void*)addr, buf, len, NULL);
-}
-
-/* standard routines for reading / writing memory. Can be overriden for some
- * minidump usage
- */
-struct memory_access mem_access = {win32_read_mem, win32_write_mem};
-
 /******************************************************************
  *		addr_to_linear
  *
