@@ -2233,7 +2233,7 @@ BOOL WINAPI TlsFree(
  *
  * RETURNS
  *    Success: Value stored in calling thread's TLS slot for index
- *    Failure: 0 and GetLastError returns NO_ERROR
+ *    Failure: 0 and GetLastError() returns NO_ERROR
  */
 LPVOID WINAPI TlsGetValue(
     DWORD index) /* [in] TLS index to retrieve value for */
@@ -2690,7 +2690,9 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
  *    minset   [I] Specifies minimum working set size
  *    maxset   [I] Specifies maximum working set size
  *
- * RETURNS  STD
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
                                      SIZE_T maxset)
@@ -2838,7 +2840,7 @@ BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
  */
 DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
-    /* I don't think that Wine needs to do anything in that function */
+    /* I don't think that Wine needs to do anything in this function */
     return 1; /* success */
 }
 
@@ -2847,8 +2849,18 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  *           GetSystemMSecCount (SYSTEM.6)
  *           GetTickCount       (KERNEL32.@)
  *
- * Returns the number of milliseconds, modulo 2^32, since the start
- * of the wineserver.
+ * Get the number of milliseconds the system has been running.
+ *
+ * PARANS
+ *  None.
+ *
+ * RETURNS
+ *  The current tick count.
+ *
+ * NOTES
+ *  -The value returned will wrap arounf every 2^32 milliseconds.
+ *  -Under Windows, tick 0 is the moment at which the system is rebooted.
+ *  Under Wine, tick 0 begins at the moment the wineserver process is started,
  */
 DWORD WINAPI GetTickCount(void)
 {
@@ -2860,6 +2872,14 @@ DWORD WINAPI GetTickCount(void)
 
 /***********************************************************************
  *           GetCurrentProcess   (KERNEL32.@)
+ *
+ * Get a handle to the current process.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  A handle representing the current process.
  */
 #undef GetCurrentProcess
 HANDLE WINAPI GetCurrentProcess(void)
