@@ -490,7 +490,7 @@ file	krnl386.exe
 618 pascal16 GetDialog32Size(ptr) GetDialog32Size
 619 pascal16 RegisterCBClient(word ptr long) RegisterCBClient
 620 register CBClientThunkSL() CBClientThunkSL
-621 stub KERNEL_621  # (cbclient)
+621 register CBClientThunkSLEx() CBClientThunkSLEx
 622 pascal16 UnRegisterCBClient(word ptr long) UnRegisterCBClient
 623 pascal16 InitCBClient(long) InitCBClient
 624 pascal SetFastQueue(long long) SetFastQueue

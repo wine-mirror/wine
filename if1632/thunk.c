@@ -1535,3 +1535,32 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
     EAX_reg(context) = CALL32_CBClient( proc, args );
 }
 
+/***********************************************************************
+ *     CBClientThunkSLEx                    (KERNEL.621)
+ */
+void WINAPI CBClientThunkSLEx( CONTEXT *context )
+{
+    /* Call 32-bit relay code */
+    extern DWORD WINAPI CALL32_CBClientEx( FARPROC32 proc, 
+                                           LPWORD args, INT32 *nArgs );
+
+    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
+    FARPROC32 proc = CBClientRelay32[ args[2] ][ args[1] ];
+    INT32 nArgs;
+    LPWORD stackLin;
+
+    EAX_reg(context) = CALL32_CBClientEx( proc, args, &nArgs );
+
+    /* Restore registers saved by CBClientGlueSL */
+    stackLin = (LPWORD)((LPBYTE)CURRENT_STACK16 + sizeof(STACK16FRAME) - 4);
+    BP_reg( context ) = stackLin[3];
+    SI_reg( context ) = stackLin[2];
+    DI_reg( context ) = stackLin[1];
+    DS_reg( context ) = stackLin[0];
+    SP_reg( context ) += 16+nArgs;
+
+    /* Return to caller of CBClient thunklet */
+    CS_reg ( context ) = stackLin[9];
+    EIP_reg( context ) = stackLin[8];
+}
+
