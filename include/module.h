@@ -198,7 +198,7 @@ extern void NE_DumpModule( HMODULE16 hModule );
 extern void NE_WalkModules(void);
 extern void NE_RegisterModule( NE_MODULE *pModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
-extern FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
+extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
 extern HANDLE NE_OpenFile( NE_MODULE *pModule );

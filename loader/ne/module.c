@@ -289,7 +289,7 @@ WORD NE_GetOrdinal( HMODULE16 hModule, const char *name )
  *
  * Return the entry point for a given ordinal.
  */
-FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
+FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
 {
     return NE_GetEntryPointEx( hModule, ordinal, TRUE );
 }
