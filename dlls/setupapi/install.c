@@ -73,8 +73,9 @@ static const WCHAR BitReg[]     = {'B','i','t','R','e','g',0};
 static const WCHAR UpdateInis[] = {'U','p','d','a','t','e','I','n','i','s',0};
 static const WCHAR CopyINF[]    = {'C','o','p','y','I','N','F',0};
 static const WCHAR UpdateIniFields[] = {'U','p','d','a','t','e','I','n','i','F','i','e','l','d','s',0};
-static const WCHAR RegisterDlls[] = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
-static const WCHAR ProfileItems[] = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
+static const WCHAR RegisterDlls[]    = {'R','e','g','i','s','t','e','r','D','l','l','s',0};
+static const WCHAR UnregisterDlls[]  = {'U','n','r','e','g','i','s','t','e','r','D','l','l','s',0};
+static const WCHAR ProfileItems[]    = {'P','r','o','f','i','l','e','I','t','e','m','s',0};
 
 
 /***********************************************************************
@@ -862,7 +863,7 @@ BOOL WINAPI SetupInstallFromInfSectionW( HWND owner, HINF hinf, PCWSTR section, 
         }
         else info.callback = NULL;
 
-        if (!iterate_section_fields( hinf, section, RegisterDlls, register_dlls_callback, &info ))
+        if (!iterate_section_fields( hinf, section, UnregisterDlls, register_dlls_callback, &info ))
             return FALSE;
     }
     if (flags & SPINST_REGISTRY)
