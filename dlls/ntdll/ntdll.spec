@@ -1041,6 +1041,7 @@ debug_channels (atom cdrom console debug delayhlp dll dosfs dosmem file fixup
 
 # Server interface
 @ cdecl -norelay wine_server_call(ptr) wine_server_call
+@ cdecl wine_server_handle_to_fd(long long ptr ptr ptr) wine_server_handle_to_fd
 
 # Codepages
 @ cdecl __wine_init_codepages(ptr ptr) __wine_init_codepages

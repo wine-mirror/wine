@@ -51,7 +51,8 @@ struct __server_request_info
 
 extern unsigned int wine_server_call( void *req_ptr );
 extern void wine_server_send_fd( int fd );
-extern int wine_server_recv_fd( handle_t handle );
+extern int wine_server_handle_to_fd( handle_t handle, unsigned int access, int *unix_fd,
+                                     enum fd_type *type, int *flags );
 
 /* do a server call and set the last error code */
 inline static unsigned int wine_server_call_err( void *req_ptr )

@@ -330,23 +330,17 @@ static int receive_fd( handle_t *handle )
 
 
 /***********************************************************************
- *           wine_server_recv_fd
+ *           store_cached_fd
  *
- * Receive a file descriptor passed from the server.
- * The file descriptor must not be closed.
- * Return -2 if a race condition stole our file descriptor.
+ * Store the cached fd value for a given handle back into the server.
+ * Returns the new fd, which can be different if there was already an
+ * fd in the cache for that handle.
  */
-int wine_server_recv_fd( handle_t handle )
+inline static int store_cached_fd( int fd, handle_t handle )
 {
-    handle_t fd_handle;
-
-    int fd = receive_fd( &fd_handle );
-
-    /* now store it in the server fd cache for this handle */
-
     SERVER_START_REQ( set_handle_info )
     {
-        req->handle = fd_handle;
+        req->handle = handle;
         req->flags  = 0;
         req->mask   = 0;
         req->fd     = fd;
@@ -366,9 +360,52 @@ int wine_server_recv_fd( handle_t handle )
         }
     }
     SERVER_END_REQ;
-
-    if (handle != fd_handle) fd = -2;  /* not the one we expected */
     return fd;
+}
+
+
+/***********************************************************************
+ *           wine_server_handle_to_fd   (NTDLL.@)
+ *
+ * Retrieve the Unix fd corresponding to a file handle.
+ */
+int wine_server_handle_to_fd( handle_t handle, unsigned int access, int *unix_fd,
+                              enum fd_type *type, int *flags )
+{
+    handle_t fd_handle;
+    int ret, fd = -1;
+
+    *unix_fd = -1;
+    for (;;)
+    {
+        SERVER_START_REQ( get_handle_fd )
+        {
+            req->handle = handle;
+            req->access = access;
+            if (!(ret = wine_server_call( req ))) fd = reply->fd;
+            if (type) *type = reply->type;
+            if (flags) *flags = reply->flags;
+        }
+        SERVER_END_REQ;
+        if (ret) return ret;
+
+        if (fd != -1) break;
+
+        /* it wasn't in the cache, get it from the server */
+        fd = receive_fd( &fd_handle );
+        /* and store it back into the cache */
+        fd = store_cached_fd( fd, fd_handle );
+
+        if (fd_handle == handle) break;
+        /* if we received a different handle this means there was
+         * a race with another thread; we restart everything from
+         * scratch in this case.
+         */
+    }
+
+    if ((fd != -1) && ((fd = dup(fd)) == -1)) return STATUS_TOO_MANY_OPENED_FILES;
+    *unix_fd = fd;
+    return STATUS_SUCCESS;
 }
 
 

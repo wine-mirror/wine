@@ -227,36 +227,12 @@ HANDLE FILE_DupUnixHandle( int fd, DWORD access, BOOL inherit )
  * Retrieve the Unix handle corresponding to a file handle.
  * Returns -1 on failure.
  */
-static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, DWORD *flags )
+static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags )
 {
     int ret, fd = -1;
 
-    do
-    {
-        SERVER_START_REQ( get_handle_fd )
-        {
-            req->handle = handle;
-            req->access = access;
-            if (!(ret = wine_server_call_err( req )))
-            {
-                fd = reply->fd;
-            }
-            if (type) *type = reply->type;
-            if (flags) *flags = reply->flags;
-        }
-        SERVER_END_REQ;
-        if (ret) return -1;
-
-        if (fd == -1)  /* it wasn't in the cache, get it from the server */
-            fd = wine_server_recv_fd( handle );
-
-    } while (fd == -2);  /* -2 means race condition, so restart from scratch */
-
-    if (fd != -1)
-    {
-        if ((fd = dup(fd)) == -1)
-            SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-    }
+    ret = wine_server_handle_to_fd( handle, access, &fd, type, flags );
+    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
     return fd;
 }
 
@@ -1467,9 +1443,8 @@ static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPD
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
-    int unix_handle, result;
+    int unix_handle, result, flags;
     enum fd_type type;
-    DWORD flags;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToRead, 
           bytesRead, overlapped );
@@ -1693,9 +1668,8 @@ BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
-    int unix_handle, result;
+    int unix_handle, result, flags;
     enum fd_type type;
-    DWORD flags;
 
     TRACE("%d %p %ld %p %p\n", hFile, buffer, bytesToWrite, 
           bytesWritten, overlapped );
