@@ -94,6 +94,23 @@ typedef struct IWineD3DImpl
 
 extern IWineD3DVtbl IWineD3D_Vtbl;
 
+/*****************************************************************************
+ * IWineD3DDevice implementation structure
+ */
+typedef struct IWineD3DDeviceImpl
+{
+    /* IUnknown fields */
+    IWineD3DDeviceVtbl     *lpVtbl;
+    DWORD                   ref;     /* Note: Ref counting not required */
+
+    /* WineD3D Information */
+    IWineD3D               *WineD3D;
+
+    /* GL Information */
+} IWineD3DDeviceImpl;
+
+extern IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
+
 /* Utility function prototypes */
 const char* debug_d3dformat(D3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);

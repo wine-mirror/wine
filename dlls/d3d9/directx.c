@@ -168,8 +168,35 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 					     DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, 
 					     IDirect3DDevice9** ppReturnedDeviceInterface) {
 
-    IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IDirect3D9Impl       *This   = (IDirect3D9Impl *)iface;
+    IDirect3DDevice9Impl *object = NULL;
+    WINED3DPRESENT_PARAMETERS localParameters;
+
+    TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
+          hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
+
+    /* Check the validity range of the adapter parameter */
+    if (Adapter >= IDirect3D9Impl_GetAdapterCount(iface)) {
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Allocate the storage for the device object */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDevice9Impl));
+    if (NULL == object) {
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    object->lpVtbl = &Direct3DDevice9_Vtbl;
+    object->ref = 1;
+    object->direct3d = This;
+    IDirect3D9_AddRef((LPDIRECT3D9) object->direct3d);
+    *ppReturnedDeviceInterface = (IDirect3DDevice9 *)object;
+    
+    /* Allocate an associated WineD3DDevice object */
+    memcpy(&localParameters, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice);
+    memcpy(pPresentationParameters, &localParameters, sizeof(D3DPRESENT_PARAMETERS));
+
+    FIXME("(%p) : incomplete stub\n", This);
     return D3D_OK;
 }
 

@@ -196,9 +196,6 @@ struct IDirect3D9Impl
     IWineD3D               *WineD3D;
 
     /* IDirect3D9 fields */
-    /*
-    GL_Info                 gl_info;
-    */
 };
 
 /* IUnknown: */
@@ -242,7 +239,9 @@ struct IDirect3DDevice9Impl
 
     /* IDirect3DDevice9 fields */
     IDirect3D9Impl               *direct3d;
+    IWineD3DDevice               *WineD3DDevice;
 
+    /* FIXME: To be sorted out during move */
     IDirect3DSurface9Impl        *frontBuffer;
     IDirect3DSurface9Impl        *backBuffer;
     IDirect3DSurface9Impl        *depthStencilBuffer;

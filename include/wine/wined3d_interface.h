@@ -53,12 +53,29 @@ typedef struct _WINED3DADAPTER_IDENTIFIER {
     DWORD          *WHQLLevel;
 } WINED3DADAPTER_IDENTIFIER;
 
+typedef struct _WINED3DPRESENT_PARAMETERS {
+    UINT                BackBufferWidth;
+    UINT                BackBufferHeight;
+    D3DFORMAT           BackBufferFormat;
+    UINT                BackBufferCount;
+    D3DMULTISAMPLE_TYPE MultiSampleType;
+    DWORD               MultiSampleQuality;
+    D3DSWAPEFFECT       SwapEffect;
+    HWND                hDeviceWindow;
+    BOOL                Windowed;
+    BOOL                EnableAutoDepthStencil;
+    D3DFORMAT           AutoDepthStencilFormat;
+    DWORD               Flags;
+    UINT                FullScreen_RefreshRateInHz;
+    UINT                PresentationInterval;
+} WINED3DPRESENT_PARAMETERS;
 
+typedef struct IWineD3D IWineD3D;
+typedef struct IWineD3DDevice IWineD3DDevice;
 
 /*****************************************************************************
  * WineD3D interface 
  */
-typedef struct IWineD3D IWineD3D;
 
 #define INTERFACE IWineD3D
 DECLARE_INTERFACE_(IWineD3D,IUnknown)
@@ -81,6 +98,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, void * pCaps) PURE;
+    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface) PURE;
 };
 #undef INTERFACE
 
@@ -103,13 +121,33 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
 #define IWineD3D_CheckDeviceFormat(p,a,b,c,d,e,f)         (p)->lpVtbl->CheckDeviceFormat(p,a,b,c,d,e,f)
 #define IWineD3D_CheckDeviceFormatConversion(p,a,b,c,d)   (p)->lpVtbl->CheckDeviceFormatConversion(p,a,b,c,d)
 #define IWineD3D_GetDeviceCaps(p,a,b,c)                   (p)->lpVtbl->GetDeviceCaps(p,a,b,c)
+#define IWineD3D_CreateDevice(p,a,b,c,d,e,f)              (p)->lpVtbl->CreateDevice(p,a,b,c,d,e,f)
 #endif
 
 /* Define the main WineD3D entrypoint */
 IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion);
 
+/*****************************************************************************
+ * WineD3DDevice interface 
+ */
+#define INTERFACE IWineD3DDevice
+DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+    /*** IWineD3D methods ***/
+};
+#undef INTERFACE
 
-
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IWineD3D_QueryInterface(p,a,b)                    (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)
+#define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
+/*** IWineD3D methods ***/
+#endif
 
 #if 0 /* FIXME: During porting in from d3d8 - the following will be used */
 /*****************************************************************

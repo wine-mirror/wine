@@ -1306,6 +1306,24 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     return D3D_OK;
 }
 
+/* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
+   and fields being inserted in the middle, a new structure is used in place    */
+HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
+                                           DWORD BehaviourFlags, WINED3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                            IWineD3DDevice** ppReturnedDeviceInterface) {
+
+    /* Create a WineD3DDevice object */
+    IWineD3DDeviceImpl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DDeviceImpl));
+    object->lpVtbl  = &IWineD3DDevice_Vtbl;
+    object->ref     = 1;
+    object->WineD3D = iface;
+    IWineD3D_AddRef(object->WineD3D);
+    *ppReturnedDeviceInterface = (IWineD3DDevice *)object;
+
+    TRACE("Created WineD3DDevice object @ %p \n", object);
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -1351,5 +1369,6 @@ IWineD3DVtbl IWineD3D_Vtbl =
     IWineD3DImpl_CheckDeviceType,
     IWineD3DImpl_CheckDeviceFormat,
     IWineD3DImpl_CheckDeviceFormatConversion,
-    IWineD3DImpl_GetDeviceCaps
+    IWineD3DImpl_GetDeviceCaps,
+    IWineD3DImpl_CreateDevice
 };
