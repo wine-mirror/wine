@@ -368,6 +368,79 @@ void InternetCrackUrlW_test(void)
     ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
 }
 
+static void InternetTimeFromSystemTimeA_test()
+{
+    BOOL ret;
+    static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    char string[INTERNET_RFC1123_BUFSIZE];
+    static const char expect[] = "Fri, 07 Jan 2005 12:06:35 GMT";
+
+    ret = InternetTimeFromSystemTimeA( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    ok( ret, "InternetTimeFromSystemTimeA failed (%ld)\n", GetLastError() );
+
+    ok( !memcmp( string, expect, sizeof(expect) ),
+        "InternetTimeFromSystemTimeA failed (%ld)\n", GetLastError() );
+}
+
+static void InternetTimeFromSystemTimeW_test()
+{
+    BOOL ret;
+    static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    WCHAR string[INTERNET_RFC1123_BUFSIZE + 1];
+    static const WCHAR expect[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
+                                    '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
+
+    ret = InternetTimeFromSystemTimeW( &time, INTERNET_RFC1123_FORMAT, string, sizeof(string) );
+    ok( ret, "InternetTimeFromSystemTimeW failed (%ld)\n", GetLastError() );
+
+    ok( !memcmp( string, expect, sizeof(expect) ),
+        "InternetTimeFromSystemTimeW failed (%ld)\n", GetLastError() );
+}
+
+static void InternetTimeToSystemTimeA_test()
+{
+    BOOL ret;
+    SYSTEMTIME time;
+    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    static const char string[] = "Fri, 07 Jan 2005 12:06:35 GMT";
+    static const char string2[] = " fri 7 jan 2005 12 06 35";
+
+    ret = InternetTimeToSystemTimeA( string, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeA failed (%ld)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeA failed (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeA( string2, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeA failed (%ld)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeA failed (%ld)\n", GetLastError() );
+}
+
+static void InternetTimeToSystemTimeW_test()
+{
+    BOOL ret;
+    SYSTEMTIME time;
+    static const SYSTEMTIME expect = { 2005, 1, 5, 7, 12, 6, 35, 0 };
+    static const WCHAR string[] = { 'F','r','i',',',' ','0','7',' ','J','a','n',' ','2','0','0','5',' ',
+                                    '1','2',':','0','6',':','3','5',' ','G','M','T',0 };
+    static const WCHAR string2[] = { ' ','f','r','i',' ','7',' ','j','a','n',' ','2','0','0','5',' ',
+                                     '1','2',' ','0','6',' ','3','5',0 };
+    static const WCHAR string3[] = { 'F','r',0 };
+
+    ret = InternetTimeToSystemTimeW( string, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeW( string2, &time, 0 );
+    ok( ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+    ok( !memcmp( &time, &expect, sizeof(expect) ),
+        "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+
+    ret = InternetTimeToSystemTimeW( string3, &time, 0 );
+    ok( !ret, "InternetTimeToSystemTimeW failed (%ld)\n", GetLastError() );
+}
+
 START_TEST(http)
 {
     winapi_test(0x10000000);
@@ -375,4 +448,8 @@ START_TEST(http)
     InternetCrackUrl_test();
     InternetOpenUrlA_test();
     InternetCrackUrlW_test();
+    InternetTimeFromSystemTimeA_test();
+    InternetTimeFromSystemTimeW_test();
+    InternetTimeToSystemTimeA_test();
+    InternetTimeToSystemTimeW_test();
 }

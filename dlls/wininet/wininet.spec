@@ -159,8 +159,12 @@
 @ stdcall InternetSetStatusCallbackA(ptr ptr)
 @ stdcall InternetSetStatusCallbackW(ptr ptr)
 @ stub InternetShowSecurityInfoByURL
-@ stub InternetTimeFromSystemTime
-@ stub InternetTimeToSystemTime
+@ stdcall InternetTimeFromSystemTime(ptr long ptr long) InternetTimeFromSystemTimeA
+@ stdcall InternetTimeFromSystemTimeA(ptr long ptr long)
+@ stdcall InternetTimeFromSystemTimeW(ptr long ptr long)
+@ stdcall InternetTimeToSystemTime(str ptr long) InternetTimeToSystemTimeA
+@ stdcall InternetTimeToSystemTimeA(str ptr long)
+@ stdcall InternetTimeToSystemTimeW(wstr ptr long)
 @ stdcall InternetUnlockRequestFile(ptr)
 @ stdcall InternetWriteFile(ptr ptr long ptr)
 @ stub InternetWriteFileExA

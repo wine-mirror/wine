@@ -285,6 +285,7 @@ BOOLAPI InternetTimeFromSystemTimeA(CONST SYSTEMTIME *,DWORD ,LPSTR ,DWORD);
 BOOLAPI InternetTimeFromSystemTimeW(CONST SYSTEMTIME *,DWORD ,LPWSTR ,DWORD);
 #define InternetTimeFromSystemTime WINELIB_NAME_AW(InternetTimeFromSystemTime)
 
+#define INTERNET_RFC1123_FORMAT    0
 #define INTERNET_RFC1123_BUFSIZE   30
 
 BOOLAPI InternetTimeToSystemTimeA(LPCSTR ,SYSTEMTIME *,DWORD);

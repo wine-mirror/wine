@@ -2035,6 +2035,151 @@ BOOL WINAPI InternetSetOptionExW(HINTERNET hInternet, DWORD dwOption,
     return InternetSetOptionW( hInternet, dwOption, lpBuffer, dwBufferLength );
 }
 
+static const WCHAR WININET_wkday[7][4] =
+    { { 'S','u','n', 0 }, { 'M','o','n', 0 }, { 'T','u','e', 0 }, { 'W','e','d', 0 },
+      { 'T','h','u', 0 }, { 'F','r','i', 0 }, { 'S','a','t', 0 } };
+static const WCHAR WININET_month[12][4] =
+    { { 'J','a','n', 0 }, { 'F','e','b', 0 }, { 'M','a','r', 0 }, { 'A','p','r', 0 },
+      { 'M','a','y', 0 }, { 'J','u','n', 0 }, { 'J','u','l', 0 }, { 'A','u','g', 0 },
+      { 'S','e','p', 0 }, { 'O','c','t', 0 }, { 'N','o','v', 0 }, { 'D','e','c', 0 } };
+
+/***********************************************************************
+ *           InternetTimeFromSystemTimeA (WININET.@)
+ */
+BOOL WINAPI InternetTimeFromSystemTimeA( const SYSTEMTIME* time, DWORD format, LPSTR string, DWORD size )
+{
+    BOOL ret;
+    WCHAR stringW[INTERNET_RFC1123_BUFSIZE];
+
+    TRACE( "%p 0x%08lx %p 0x%08lx\n", time, format, string, size );
+
+    ret = InternetTimeFromSystemTimeW( time, format, stringW, sizeof(stringW) );
+    if (ret) WideCharToMultiByte( CP_ACP, 0, stringW, -1, string, size, NULL, NULL );
+
+    return ret;
+}
+
+/***********************************************************************
+ *           InternetTimeFromSystemTimeW (WININET.@)
+ */
+BOOL WINAPI InternetTimeFromSystemTimeW( const SYSTEMTIME* time, DWORD format, LPWSTR string, DWORD size )
+{
+    static const WCHAR date[] =
+        { '%','s',',',' ','%','0','2','d',' ','%','s',' ','%','4','d',' ','%','0',
+          '2','d',':','%','0','2','d',':','%','0','2','d',' ','G','M','T', 0 };
+
+    TRACE( "%p 0x%08lx %p 0x%08lx\n", time, format, string, size );
+
+    if (!time || !string) return FALSE;
+
+    if (format != INTERNET_RFC1123_FORMAT || size < INTERNET_RFC1123_BUFSIZE * sizeof(WCHAR))
+        return FALSE;
+
+    sprintfW( string, date,
+              WININET_wkday[time->wDayOfWeek],
+              time->wDay,
+              WININET_month[time->wMonth - 1],
+              time->wYear,
+              time->wHour,
+              time->wMinute,
+              time->wSecond );
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           InternetTimeToSystemTimeA (WININET.@)
+ */
+BOOL WINAPI InternetTimeToSystemTimeA( LPCSTR string, SYSTEMTIME* time, DWORD reserved )
+{
+    BOOL ret = FALSE;
+    WCHAR *stringW;
+    int len;
+
+    TRACE( "%s %p 0x%08lx\n", debugstr_a(string), time, reserved );
+
+    len = MultiByteToWideChar( CP_ACP, 0, string, -1, NULL, 0 );
+    stringW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+
+    if (stringW)
+    {
+        MultiByteToWideChar( CP_ACP, 0, string, -1, stringW, len );
+        ret = InternetTimeToSystemTimeW( stringW, time, reserved );
+        HeapFree( GetProcessHeap(), 0, stringW );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           InternetTimeToSystemTimeW (WININET.@)
+ */
+BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD reserved )
+{
+    unsigned int i;
+    WCHAR *s = (LPWSTR)string;
+
+    TRACE( "%s %p 0x%08lx\n", debugstr_w(string), time, reserved );
+
+    if (!string || !time || reserved != 0) return FALSE;
+
+    /*  Convert an RFC1123 time such as 'Fri, 07 Jan 2005 12:06:35 GMT' into
+     *  a SYSTEMTIME structure.
+     */
+
+    while (*s && !isalphaW( *s )) s++;
+    if (*s == '\0' || *(s + 1) == '\0' || *(s + 2) == '\0') return FALSE;
+    time->wDayOfWeek = 7;
+
+    for (i = 0; i < 7; i++)
+    {
+        if (toupperW( WININET_wkday[i][0] ) == toupperW( *s ) &&
+            toupperW( WININET_wkday[i][1] ) == toupperW( *(s + 1) ) &&
+            toupperW( WININET_wkday[i][2] ) == toupperW( *(s + 2) ) )
+        {
+            time->wDayOfWeek = i;
+            break;
+        }
+    }
+
+    if (time->wDayOfWeek > 6) return FALSE;
+    while (*s && !isdigitW( *s )) s++;
+    time->wDay = strtolW( s, &s, 10 );
+
+    while (*s && !isalphaW( *s )) s++;
+    if (*s == '\0' || *(s + 1) == '\0' || *(s + 2) == '\0') return FALSE;
+    time->wMonth = 0;
+
+    for (i = 0; i < 12; i++)
+    {
+        if (toupperW( WININET_month[i][0]) == toupperW( *s ) &&
+            toupperW( WININET_month[i][1]) == toupperW( *(s + 1) ) &&
+            toupperW( WININET_month[i][2]) == toupperW( *(s + 2) ) )
+        {
+            time->wMonth = i + 1;
+            break;
+        }
+    }
+    if (time->wMonth == 0) return FALSE;
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return FALSE;
+    time->wYear = strtolW( s, &s, 10 );
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return FALSE;
+    time->wHour = strtolW( s, &s, 10 );
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return FALSE;
+    time->wMinute = strtolW( s, &s, 10 );
+
+    while (*s && !isdigitW( *s )) s++;
+    if (*s == '\0') return FALSE;
+    time->wSecond = strtolW( s, &s, 10 );
+
+    time->wMilliseconds = 0;
+    return TRUE;
+}
 
 /***********************************************************************
  *	InternetCheckConnectionA (WININET.@)
@@ -2078,16 +2223,16 @@ BOOL WINAPI InternetCheckConnectionA( LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRes
   }
   else
   {
-     URL_COMPONENTSA componets;
+     URL_COMPONENTSA components;
 
-     ZeroMemory(&componets,sizeof(URL_COMPONENTSA));
-     componets.lpszHostName = (LPSTR)&host;
-     componets.dwHostNameLength = 1024;
+     ZeroMemory(&components,sizeof(URL_COMPONENTSA));
+     components.lpszHostName = (LPSTR)&host;
+     components.dwHostNameLength = 1024;
 
-     if (!InternetCrackUrlA(lpszUrl,0,0,&componets))
+     if (!InternetCrackUrlA(lpszUrl,0,0,&components))
        goto End;
 
-     TRACE("host name : %s\n",componets.lpszHostName);
+     TRACE("host name : %s\n",components.lpszHostName);
   }
 
   /*
