@@ -55,7 +55,6 @@ typedef struct tagWND
     HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
     HRGN           hrgnUpdate;    /* Update region */
     HRGN           hrgnWnd;       /* window's region */
-    HWND           hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     DWORD          clsStyle;      /* Class style at window creation */

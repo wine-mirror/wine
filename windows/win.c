@@ -763,7 +763,6 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->text              = NULL;
     pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
-    pWndDesktop->hwndLastActive    = hwndDesktop;
     pWndDesktop->clsStyle          = clsStyle;
     pWndDesktop->dce               = NULL;
     pWndDesktop->pVScroll          = NULL;
@@ -1104,7 +1103,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hmemTaskQ      = InitThreadInput16( 0, 0 );
     wndPtr->hrgnUpdate     = 0;
     wndPtr->hrgnWnd        = 0;
-    wndPtr->hwndLastActive = hwnd;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->clsStyle       = clsStyle;
@@ -1489,8 +1487,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (!is_child)
     {
-        HWND owner;
-
         for (;;)
         {
             int i, got_one = 0;
@@ -1511,16 +1507,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
                 HeapFree( GetProcessHeap(), 0, list );
             }
             if (!got_one) break;
-        }
-
-        if ((owner = GetWindow( hwnd, GW_OWNER )))
-        {
-            WND *ptr = WIN_FindWndPtr( owner );
-            if (ptr)
-            {
-                if (ptr->hwndLastActive == hwnd) ptr->hwndLastActive = owner;
-                WIN_ReleaseWndPtr( ptr );
-            }
         }
     }
 
@@ -2856,12 +2842,14 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
  */
 HWND WINAPI GetLastActivePopup( HWND hwnd )
 {
-    HWND retval;
-    WND *wndPtr =WIN_FindWndPtr(hwnd);
-    if (!wndPtr) return hwnd;
-    retval = wndPtr->hwndLastActive;
-    if (!IsWindow( retval )) retval = wndPtr->hwndSelf;
-    WIN_ReleaseWndPtr(wndPtr);
+    HWND retval = hwnd;
+
+    SERVER_START_REQ( get_window_info )
+    {
+        req->handle = hwnd;
+        if (!wine_server_call_err( req )) retval = reply->last_active;
+    }
+    SERVER_END_REQ;
     return retval;
 }
 
