@@ -6260,7 +6260,7 @@ typedef struct _GDI_OBJECT {
 } GDI_OBJECT;
 
 typedef struct _userSTGMEDIUM {
-    struct _STGMEDIUM_UNION {
+    struct {
         DWORD tymed;
         union {
             wireHMETAFILEPICT hMetaFilePict;

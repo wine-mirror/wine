@@ -1523,7 +1523,7 @@ interface IAdviseSink : IUnknown
   } GDI_OBJECT;
 
   typedef struct _userSTGMEDIUM {
-    union _STGMEDIUM_UNION switch(DWORD tymed) u {
+    union switch(DWORD tymed) u {
     case TYMED_NULL:     ;
     case TYMED_MFPICT:   wireHMETAFILEPICT hMetaFilePict;
     case TYMED_ENHMF:    wireHENHMETAFILE hHEnhMetaFile;
