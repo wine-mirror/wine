@@ -6024,6 +6024,12 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 
     case SB_THUMBTRACK:
         scrollInfo.nPos = nCurrentPos;
+        if (scrollInfo.nPos > scrollInfo.nMax)
+            scrollInfo.nPos=scrollInfo.nMax;
+
+        if (scrollInfo.nPos < scrollInfo.nMin)
+            scrollInfo.nPos=scrollInfo.nMin;
+
       break;
     }
 
@@ -6111,6 +6117,12 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
 
     case SB_THUMBTRACK:
         scrollInfo.nPos = nCurrentPos;
+
+        if (scrollInfo.nPos > scrollInfo.nMax)
+            scrollInfo.nPos=scrollInfo.nMax;
+
+        if (scrollInfo.nPos < scrollInfo.nMin)
+            scrollInfo.nPos=scrollInfo.nMin;
       break;
     }
 
@@ -6130,6 +6142,52 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
   }
     
   return 0;
+}
+
+static LRESULT LISTVIEW_MouseWheel(HWND hwnd, INT wheelDelta)
+{
+    INT gcWheelDelta = 0;
+    UINT pulScrollLines = 3;
+    SCROLLINFO scrollInfo;
+
+    UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+
+    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+    gcWheelDelta -= wheelDelta;
+
+    ZeroMemory(&scrollInfo, sizeof(SCROLLINFO));
+    scrollInfo.cbSize = sizeof(SCROLLINFO);
+    scrollInfo.fMask = SIF_POS | SIF_RANGE;
+
+    switch(uView)
+    {
+    case LVS_ICON:
+    case LVS_SMALLICON:
+       /*
+        *  listview should be scrolled by a multiple of 37 dependently on its dimension or its visible item number
+        *  should be fixed in the future.
+        */
+        if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
+            LISTVIEW_VScroll(hwnd, SB_THUMBPOSITION, scrollInfo.nPos + (gcWheelDelta < 0) ? 37 : -37, 0);
+        break;
+
+    case LVS_REPORT:
+        if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+        {
+            if (GetScrollInfo(hwnd, SB_VERT, &scrollInfo) != FALSE)
+            {
+                int cLineScroll = min(LISTVIEW_GetCountPerColumn(hwnd), pulScrollLines);
+                cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
+                LISTVIEW_VScroll(hwnd, SB_THUMBPOSITION, scrollInfo.nPos + cLineScroll, 0);
+            }
+        }
+        break;
+
+    case LVS_LIST:
+        LISTVIEW_HScroll(hwnd, (gcWheelDelta < 0) ? SB_LINELEFT : SB_LINERIGHT, 0, 0);
+        break;
+    }
+    return 0;
 }
 
 /***
@@ -7449,7 +7507,11 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return LISTVIEW_VScroll(hwnd, (INT)LOWORD(wParam), 
                             (INT)HIWORD(wParam), (HWND)lParam);
 
-/*	case WM_WINDOWPOSCHANGED: */
+  case WM_MOUSEWHEEL:
+      if (wParam & (MK_SHIFT | MK_CONTROL))
+          return DefWindowProcA( hwnd, uMsg, wParam, lParam );
+      return LISTVIEW_MouseWheel(hwnd, (short int)HIWORD(wParam));/*	case WM_WINDOWPOSCHANGED: */
+
 /*	case WM_WININICHANGE: */
 
   default:

@@ -870,6 +870,25 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg,
 		result = EDIT_WM_VScroll(wnd, es, LOWORD(wParam), SHIWORD(wParam), (HWND)(lParam));
 		break;
 
+        case WM_MOUSEWHEEL:
+                {
+                    short gcWheelDelta = 0;
+                    UINT pulScrollLines = 3;
+                    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+
+                    if (wParam & (MK_SHIFT | MK_CONTROL)) {
+                        result = DefWindowProcA(hwnd, msg, wParam, lParam);
+                        break;
+                    }
+                    gcWheelDelta -= (short) HIWORD(wParam);
+                    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+                    {
+                        int cLineScroll= (int) min((UINT) es->line_count, pulScrollLines);
+                        cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
+                    result = EDIT_EM_LineScroll(wnd, es, 0, cLineScroll);
+                    }
+                }
+                break;
 	default:
 		result = DefWindowProcA(hwnd, msg, wParam, lParam);
 		break;

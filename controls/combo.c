@@ -1936,6 +1936,14 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		if( lphc->wState & CBF_CAPTURE ) 
 		    COMBO_MouseMove( lphc, wParam, lParam );
 		return  TRUE;
+
+        case WM_MOUSEWHEEL:
+                if (wParam & (MK_SHIFT | MK_CONTROL))
+                    return DefWindowProcA( hwnd, message, wParam, lParam );
+                if ((short) HIWORD(wParam) > 0) return SendMessageA(hwnd,WM_KEYDOWN,VK_UP,0);
+                if ((short) HIWORD(wParam) < 0) return SendMessageA(hwnd,WM_KEYDOWN,VK_DOWN,0);
+                return TRUE;
+
 	/* Combo messages */
 
 	case CB_ADDSTRING16:

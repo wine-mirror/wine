@@ -1767,6 +1767,23 @@ static LRESULT LISTBOX_HandleHScroll( WND *wnd, LB_DESCR *descr,
     return 0;
 }
 
+static LRESULT LISTBOX_HandleMouseWheel(WND *wnd, LB_DESCR *descr,WPARAM wParam, LPARAM lParam )
+{
+    short gcWheelDelta = 0;
+    UINT pulScrollLines = 3;
+
+    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+
+    gcWheelDelta -= (short) HIWORD(wParam);
+
+    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+    {
+        int cLineScroll = (int) min((UINT) descr->page_size, pulScrollLines);
+        cLineScroll *= (gcWheelDelta / WHEEL_DELTA);
+        LISTBOX_SetTopItem( wnd, descr, descr->top_item + cLineScroll, TRUE );
+    }
+    return 0;
+}
 
 /***********************************************************************
  *           LISTBOX_HandleLButtonDown
@@ -2668,6 +2685,10 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return LISTBOX_HandleHScroll( wnd, descr, wParam, lParam );
     case WM_VSCROLL:
         return LISTBOX_HandleVScroll( wnd, descr, wParam, lParam );
+    case WM_MOUSEWHEEL:
+        if (wParam & (MK_SHIFT | MK_CONTROL))
+            return DefWindowProcA( hwnd, msg, wParam, lParam );
+        return LISTBOX_HandleMouseWheel( wnd, descr, wParam, lParam );
     case WM_LBUTTONDOWN:
         return LISTBOX_HandleLButtonDown( wnd, descr, wParam,
                                           (INT16)LOWORD(lParam),

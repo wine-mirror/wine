@@ -55,10 +55,6 @@ extern void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 
 #define WHEEL_DELTA      120
 
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL (WM_MOUSELAST+1)
-#endif
-
 #define MOUSEZ_CLASSNAME  "MouseZ"          
 #define MOUSEZ_TITLE      "Magellan MSWHEEL"
 

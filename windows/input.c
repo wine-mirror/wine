@@ -275,6 +275,11 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         hardware_event( WM_MBUTTONUP,
                         keyState, 0L, PosX, PosY, time, extra );
     }
+    if ( dwFlags & MOUSEEVENTF_WHEEL )
+    {
+        hardware_event( WM_MOUSEWHEEL,
+                        keyState, 0L, PosX, PosY, time, extra );
+    }
 }
 
 /***********************************************************************

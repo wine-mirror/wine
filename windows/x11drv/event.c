@@ -58,7 +58,8 @@ extern Atom dndSelection;
 extern void X11DRV_KEYBOARD_UpdateState(void);
 extern void X11DRV_KEYBOARD_HandleEvent(WND *pWnd, XKeyEvent *event);
 
-#define NB_BUTTONS      3     /* Windows can handle 3 buttons */
+#define NB_BUTTONS      5     /* Windows can handle 3 buttons and the wheel too */
+
 
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
@@ -716,13 +717,13 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
 static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
 {
   static WORD statusCodes[NB_BUTTONS] = 
-  { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN };
+  { MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_WHEEL, MOUSEEVENTF_WHEEL};
   int buttonNum = event->button - 1;
   
   WND *pWnd = WIN_FindWndPtr(hWnd);
   int xOffset = pWnd? pWnd->rectWindow.left : 0;
   int yOffset = pWnd? pWnd->rectWindow.top  : 0;
-  WORD keystate;
+  WORD keystate,wData = 0;
   
   WIN_ReleaseWndPtr(pWnd);
 
@@ -748,11 +749,17 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
     case 2:
       keystate |= MK_RBUTTON;
       break;
+    case 3:
+        wData = WHEEL_DELTA;
+        break;
+    case 4:
+        wData = -WHEEL_DELTA;
+        break;
   }
   
   MOUSE_SendEvent( statusCodes[buttonNum], 
 		   xOffset + event->x, yOffset + event->y,
-		   keystate, 
+		   MAKEWPARAM(keystate,wData),
 		   event->time - MSG_WineStartTicks,
 		   hWnd);
 }
@@ -795,6 +802,8 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
     case 2:
       keystate &= ~MK_RBUTTON;
       break;
+  default:
+      return;
   }
 
   MOUSE_SendEvent( statusCodes[buttonNum], 

@@ -391,7 +391,8 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_MBUTTONDOWN",		/* 0x0207 */
     "WM_MBUTTONUP",		/* 0x0208 */
     "WM_MBUTTONDBLCLK",		/* 0x0209 */
-    NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_MOUSEWHEEL",            /* 0x020A */
+    NULL, NULL, NULL, NULL, NULL,
 
     "WM_PARENTNOTIFY",		/* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
