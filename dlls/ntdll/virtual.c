@@ -763,7 +763,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         DWORD size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
         BYTE vprot = VPROT_COMMITTED;
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
-        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITE|VPROT_WRITECOPY;
+        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITE|VPROT_WRITECOPY;
         if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
 
         /* make sure the import directory is writable */
