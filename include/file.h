@@ -23,6 +23,7 @@
 
 #include <time.h> /* time_t */
 #include <sys/time.h>
+#include <sys/types.h>
 #include "winbase.h"
 #include "wine/windef16.h"  /* HFILE16 */
 
@@ -85,6 +86,7 @@ inline static int FILE_contains_path (LPCSTR name)
 }
 
 /* files/file.c */
+extern mode_t FILE_umask;
 extern int FILE_strcasecmp( const char *str1, const char *str2 );
 extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);

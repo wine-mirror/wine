@@ -10,7 +10,6 @@ C_SRCS = \
 	device.c \
 	editline.c \
 	except.c \
-	file.c \
 	init.c \
 	kernel32.c \
 	newfns.c \

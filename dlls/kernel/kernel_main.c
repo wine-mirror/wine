@@ -23,10 +23,12 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "winbase.h"
 
 #include "wine/winbase16.h"
+#include "file.h"
 #include "global.h"
 #include "miscemu.h"
 #include "module.h"
@@ -42,6 +44,10 @@ extern BOOL RELAY_Init(void);
 static BOOL process_attach(void)
 {
     HMODULE16 hModule;
+
+    /* Get the umask */
+    FILE_umask = umask(0777);
+    umask( FILE_umask );
 
     /* Setup codepage info */
     CODEPAGE_Init();
