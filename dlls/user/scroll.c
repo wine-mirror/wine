@@ -1493,14 +1493,13 @@ INT WINAPI SetScrollInfo(HWND hwnd, INT nBar, const SCROLLINFO *info, BOOL bRedr
         return SCROLL_SetScrollInfo( hwnd, nBar, info, bRedraw );
 }
 
-static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BOOL bRedraw )
+static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, LPCSCROLLINFO info, BOOL bRedraw )
 {
     /* Update the scrollbar state and set action flags according to
      * what has to be done graphics wise. */
 
     SCROLLBAR_INFO *infoPtr;
     UINT new_flags;
-    BOOL bChangeParams = FALSE; /* don't show/hide scrollbar if params don't change */
     INT action = 0;
 
     /* handle invalid data structure */
@@ -1521,11 +1520,10 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BO
 
     if (info->fMask & SIF_PAGE)
     {
-	if( infoPtr->page != info->nPage )
+	if( infoPtr->page != info->nPage && info->nPage >= 0)
 	{
             infoPtr->page = info->nPage;
             action |= SA_SSI_REFRESH;
-           bChangeParams = TRUE;
 	}
     }
 
@@ -1548,9 +1546,9 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BO
         if ((info->nMin > info->nMax) ||
             ((UINT)(info->nMax - info->nMin) >= 0x80000000))
         {
+            action |= SA_SSI_REFRESH;
             infoPtr->minVal = 0;
             infoPtr->maxVal = 0;
-            bChangeParams = TRUE;
         }
         else
         {
@@ -1560,13 +1558,11 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BO
                 action |= SA_SSI_REFRESH;
                 infoPtr->minVal = info->nMin;
                 infoPtr->maxVal = info->nMax;
-                bChangeParams = TRUE;
 	    }
         }
     }
 
     /* Make sure the page size is valid */
-
     if (infoPtr->page < 0) infoPtr->page = 0;
     else if (infoPtr->page > infoPtr->maxVal - infoPtr->minVal + 1 )
         infoPtr->page = infoPtr->maxVal - infoPtr->minVal + 1;
@@ -1600,16 +1596,16 @@ static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BO
                 new_flags = ESB_DISABLE_BOTH;
                 action |= SA_SSI_REFRESH;
 	    }
-            else if ((nBar != SB_CTL) && bChangeParams)
+            else if ((nBar != SB_CTL) && (action & SA_SSI_REFRESH))
 	    {
                 action = SA_SSI_HIDE;
-		goto done;
             }
         }
-        else  /* Show and enable scroll-bar */
+        else  /* Show and enable scroll-bar only if no page only changed. */
+        if (info->fMask != SIF_PAGE)
         {
-	    new_flags = 0;
-            if ((nBar != SB_CTL) && bChangeParams)
+	    new_flags = ESB_ENABLE_BOTH;
+            if ((nBar != SB_CTL) && ( (action & SA_SSI_REFRESH) ))
                 action |= SA_SSI_SHOW;
         }
 
