@@ -56,6 +56,7 @@ HRESULT WINAPI DGA_IDirectDrawPaletteImpl_SetEntries(
 	This->palents[start+i].peFlags = palent[i].peFlags;
     }
     ddpriv->InstallColormap(display,DefaultScreen(display),dppriv->cm);
+    TSXFlush(display);
     return DD_OK;
 }
 ICOM_VTABLE(IDirectDrawPalette) dga_ddpalvt = 

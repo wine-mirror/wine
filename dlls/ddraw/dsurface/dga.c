@@ -109,6 +109,7 @@ HRESULT WINAPI DGA_IDirectDrawSurface4Impl_SetPalette(
 	    dib->colorMap = This->s.palette ? This->s.palette->screen_palents : NULL;
 	    GDI_HEAP_UNLOCK(This->s.DIBsection);
 	}
+	TSXFlush(display);
     }
     return DD_OK;
 }
