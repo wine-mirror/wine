@@ -2905,6 +2905,9 @@ typedef struct tagLVITEMA
     INT  iImage;
     LPARAM lParam;
     INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
+    int iGroupId;       /* (_WIN32_IE >= 0x560) */
+    UINT cColumns;      /* (_WIN32_IE >= 0x560) */
+    PUINT puColumns;	/* (_WIN32_IE >= 0x560) */
 } LVITEMA, *LPLVITEMA;
 
 typedef struct tagLVITEMW
@@ -2919,7 +2922,40 @@ typedef struct tagLVITEMW
     INT  iImage;
     LPARAM lParam;
     INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
+    int iGroupId;       /* (_WIN32_IE >= 0x560) */
+    UINT cColumns;      /* (_WIN32_IE >= 0x560) */
+    PUINT puColumns;	/* (_WIN32_IE >= 0x560) */
 } LVITEMW, *LPLVITEMW;
+
+#define LVITEM   WINELIB_NAME_AW(LVITEM)
+#define LPLVITEM WINELIB_NAME_AW(LPLVITEM)
+
+#define LVITEM_V1_SIZEA CCSIZEOF_STRUCT(LVITEMA, lParam)
+#define LVITEM_V1_SIZEW CCSIZEOF_STRUCT(LVITEMW, lParam)
+#define LVITEM_V1_SIZE WINELIB_NAME_AW(LVITEM_V1_SIZE)
+
+#define LV_ITEM LVITEM
+
+typedef struct LVSETINFOTIPA
+{
+    UINT cbSize;
+    DWORD dwFlags;
+    LPSTR pszText;
+    int iItem;
+    int iSubItem;
+} LVSETINFOTIPA, *PLVSETINFOTIPA;
+
+typedef struct LVSETINFOTIPW
+{
+    UINT cbSize;
+    DWORD dwFlags;
+    LPWSTR pszText;
+    int iItem;
+    int iSubItem;
+} LVSETINFOTIPW, *PLVSETINFOTIPW;
+
+#define LVSETINFOTIP WINELIB_NAME_AW(LVSETINFOTIP)
+#define PLVSETINFOTIP WINELIB_NAME_AW(PLVSETINFOTIP)
 
 /* ListView background image structs and constants
    For _WIN32_IE version 0x400 and later. */
@@ -2961,15 +2997,6 @@ typedef struct tagLVBKIMAGEW
 #define ListView_GetBkImage(hwnd, plvbki) \
     (BOOL)SNDMSG((hwnd), LVM_GETBKIMAGE, 0, (LPARAM)plvbki)
 
-#define LVITEM   WINELIB_NAME_AW(LVITEM)
-#define LPLVITEM WINELIB_NAME_AW(LPLVITEM)
-
-#define LVITEM_V1_SIZEA CCSIZEOF_STRUCT(LVITEMA, lParam)
-#define LVITEM_V1_SIZEW CCSIZEOF_STRUCT(LVITEMW, lParam)
-#define LVITEM_V1_SIZE WINELIB_NAME_AW(LVITEM_V1_SIZE)
-
-#define LV_ITEM LVITEM
-
 typedef struct tagLVCOLUMNA
 {
     UINT mask;
@@ -3006,12 +3033,12 @@ typedef struct tagLVCOLUMNW
 
 typedef struct tagNMLISTVIEW
 {
-    NMHDR   hdr;
-    INT   iItem;
-    INT   iSubItem;
-    UINT  uNewState;
-    UINT  uOldState;
-    UINT  uChanged;
+    NMHDR hdr;
+    INT iItem;
+    INT iSubItem;
+    UINT uNewState;
+    UINT uOldState;
+    UINT uChanged;
     POINT ptAction;
     LPARAM  lParam;
 } NMLISTVIEW, *LPNMLISTVIEW;
@@ -3032,15 +3059,15 @@ typedef struct tagNMITEMACTIVATE
     UINT uKeyFlags;
 } NMITEMACTIVATE, *LPNMITEMACTIVATE;
 
-typedef struct tagLVDISPINFO
+typedef struct tagLVDISPINFOA
 {
-    NMHDR     hdr;
+    NMHDR hdr;
     LVITEMA item;
 } NMLVDISPINFOA, *LPNMLVDISPINFOA;
 
 typedef struct tagLVDISPINFOW
 {
-    NMHDR     hdr;
+    NMHDR hdr;
     LVITEMW item;
 } NMLVDISPINFOW, *LPNMLVDISPINFOW;
 
@@ -3118,6 +3145,98 @@ typedef struct tagLVFINDINFOW
 #define LVFINDINFO WINELIB_NAME_AW(LVFINDINFO)
 #define LPLVFINDINFO WINELIB_NAME_AW(LPLVFINDINFO)
 
+/* Groups relates structures */
+
+typedef struct LVGROUPA
+{
+	UINT cbSize;
+	UINT mask;
+	LPSTR pszHeader;
+	int cchHeader;
+	int iGroupId;
+	UINT stateMask;
+	UINT state;
+	UINT uAlign;
+} LVGROUPA, *PLVGROUPA;
+
+typedef struct LVGROUPW
+{
+	UINT cbSize;
+	UINT mask;
+	LPWSTR pszHeader;
+	int cchHeader;
+	int iGroupId;
+	UINT stateMask;
+	UINT state;
+	UINT uAlign;
+} LVGROUPW, *PLVGROUPW;
+
+#define LVGROUP WINELIB_NAME_AW(LVGROUP)
+#define PLVGROUP WINELIB_NAME_AW(PLVGROUP)
+
+typedef struct LVGROUPMETRICS
+{
+	UINT cbSize;
+	UINT mask;
+	UINT Left;
+	UINT Top;
+	UINT Right;
+	UINT Bottom;
+	COLORREF crLeft;
+	COLORREF crTop;
+	COLORREF crRight;
+	COLORREF crBottom;
+	COLORREF crRightHeader;
+	COLORREF crFooter;
+} LVGROUPMETRICS, *PLVGROUPMETRICS;
+
+typedef INT (*PFNLVGROUPCOMPARE)(INT, INT, VOID*);
+
+typedef struct LVINSERTGROUPSORTEDA
+{
+	PFNLVGROUPCOMPARE pfnGroupCompare;
+	LPVOID *pvData;
+	LVGROUPA lvGroup;
+} LVINSERTGROUPSORTEDA, *PLVINSERTGROUPSORTEDA;
+
+typedef struct LVINSERTGROUPSORTEDW
+{
+	PFNLVGROUPCOMPARE pfnGroupCompare;
+	LPVOID *pvData;
+	LVGROUPW lvGroup;
+} LVINSERTGROUPSORTEDW, *PLVINSERTGROUPSORTEDW;
+
+#define LVINSERTGROUPSORTED WINELIB_NAME_AW(LVINSERTGROUPSORTED)
+#define PLVINSERTGROUPSORTED WINELIB_NAME_AW(PLVINSERTGROUPSORTED)
+
+/* Tile related structures */
+
+typedef struct LVTILEINFO 
+{
+	UINT cbSize;
+	int iItem;
+	UINT cColumns;
+	PUINT puColumns;
+} LVTILEINFO, *PLVTILEINFO;
+
+typedef struct LVTILEVIEWINFO
+{
+	UINT cbSize;
+	DWORD dwMask;
+	DWORD dwFlags;
+	SIZE sizeTile;
+	int cLines;
+	RECT rcLabelMargin;
+} LVTILEVIEWINFO, *PLVTILEVIEWINFO;
+
+typedef struct LVINSERTMARK
+{
+	UINT cbSize;
+	DWORD dwFlags;
+	int iItem;
+	DWORD dwReserved;
+} LVINSERTMARK, *PLVINSERTMARK;
+
 typedef struct tagTCHITTESTINFO
 {
 	POINT pt;
@@ -3135,7 +3254,15 @@ typedef struct tagNMLVCUSTOMDRAW
     NMCUSTOMDRAW nmcd;
     COLORREF clrText;
     COLORREF clrTextBk;
-    int iSubItem;
+    int iSubItem;	/* (_WIN32_IE >= 0x0400) */
+    DWORD dwItemType;	/* (_WIN32_IE >= 0x560) */
+    COLORREF clrFace;   /* (_WIN32_IE >= 0x560) */
+    int iIconEffect;	/* (_WIN32_IE >= 0x560) */
+    int iIconPhase;	/* (_WIN32_IE >= 0x560) */
+    int iPartId;	/* (_WIN32_IE >= 0x560) */
+    int iStateId;	/* (_WIN32_IE >= 0x560) */
+    RECT rcText;	/* (_WIN32_IE >= 0x560) */
+    UINT uAlign;	/* (_WIN32_IE >= 0x560) */
 } NMLVCUSTOMDRAW, *LPNMLVCUSTOMDRAW;
 
 typedef struct tagNMLVCACHEHINT
@@ -3181,6 +3308,13 @@ typedef struct tagNMLVODSTATECHANGE
 #define PNM_ODSTATECHANGE LPNMLVODSTATECHANGE
 #define LPNM_ODSTATECHANGE LPNMLVODSTATECHANGE
 #define NM_ODSTATECHANGE NMLVODSTATECHANGE
+
+typedef struct NMLVSCROLL
+{
+    NMHDR hdr;
+    int dx;
+    int dy;
+} NMLVSCROLL, *LPNMLVSCROLL;
 
 #define ListView_SetTextBkColor(hwnd,clrBk) \
     (BOOL)SendMessageA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
