@@ -11,6 +11,8 @@ C_SRCS = \
 	fci.c \
 	fdi.c
 
+RC_SRCS = cabinet.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
