@@ -873,9 +873,32 @@ FOURCC WINAPI mmioStringToFOURCC16(LPCSTR sz, UINT16 uFlags)
 /**************************************************************************
 * 				mmioInstallIOProc16	[MMSYSTEM.1221]
 */
+
+
+/* maximum number of I/O procedures which can be installed */
+
+struct IOProcList
+{
+  struct IOProcList *pNext;      /* Next item in linked list */
+  FOURCC            fourCC;     /* four-character code identifying IOProc */
+  LPMMIOPROC16      pIOProc;    /* pointer to IProc */
+};
+
+/* This array will be the entire list for most apps */
+
+static struct IOProcList defaultProcs[] = {
+  { &defaultProcs[1], (FOURCC) FOURCC_DOS,(LPMMIOPROC16) mmioDosIOProc },
+  { NULL, (FOURCC) FOURCC_MEM,(LPMMIOPROC16) mmioMemIOProc },
+};
+
+static struct IOProcList *pIOProcListAnchor = &defaultProcs[0];
+
 LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, 
                                         LPMMIOPROC16 pIOProc, DWORD dwFlags)
 {
+	LPMMIOPROC16        lpProc = NULL;
+        struct IOProcList  *pListNode;
+
 	TRACE("(%ld, %p, %08lX)\n",
 				 fccIOProc, pIOProc, dwFlags);
 
@@ -886,19 +909,64 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc,
 	/* just handle the known procedures for now */
 	switch(dwFlags & (MMIO_INSTALLPROC|MMIO_REMOVEPROC|MMIO_FINDPROC)) {
 		case MMIO_INSTALLPROC:
-			return NULL;
+	          /* Create new entry for the IOProc list */
+	          pListNode = HeapAlloc(GetProcessHeap(),0,sizeof(*pListNode));
+	          if (pListNode)
+	          {
+	            /* Find the end of the list, so we can add our new entry to it */
+	            struct IOProcList *pListEnd = pIOProcListAnchor;
+	            while (pListEnd->pNext) 
+	               pListEnd = pListEnd->pNext;
+	    
+	            /* Fill in this node */
+	            pListNode->fourCC = fccIOProc;
+	            pListNode->pIOProc = pIOProc;
+	    
+	            /* Stick it on the end of the list */
+	            pListEnd->pNext = pListNode;
+	            pListNode->pNext = NULL;
+	    
+	            /* Return this IOProc - that's how the caller knows we succeeded */
+	            lpProc = pIOProc;
+	          };  
+	          break;
+	          
 		case MMIO_REMOVEPROC:
-			return NULL;
+	          /* 
+	           * Search for the node that we're trying to remove - note
+	           * that this method won't find the first item on the list, but
+	           * since the first two items on this list are ones we won't
+	           * let the user delete anyway, that's okay
+	           */
+	    
+	          pListNode = pIOProcListAnchor;
+	          while (pListNode && pListNode->pNext->fourCC != fccIOProc)
+	            pListNode = pListNode->pNext;
+	    
+	          /* If we found it, remove it, but only if it isn't builtin */
+	          if (pListNode && 
+	              ((pListNode >= defaultProcs) && (pListNode < defaultProcs + sizeof(defaultProcs))))
+	          {
+	            /* Okay, nuke it */
+	            pListNode->pNext = pListNode->pNext->pNext;
+	            HeapFree(GetProcessHeap(),0,pListNode);
+	          };
+	          break;
+	    
 		case MMIO_FINDPROC:
-			if (fccIOProc == FOURCC_DOS)
-				return (LPMMIOPROC16) mmioDosIOProc;
-			else if (fccIOProc == FOURCC_MEM)
-				return (LPMMIOPROC16) mmioMemIOProc;
-			else
-				return NULL;
-		default:
-			return NULL;
+		      /* Iterate through the list looking for this proc identified by fourCC */
+		      for (pListNode = pIOProcListAnchor; pListNode; pListNode=pListNode->pNext)
+		      {
+		        if (pListNode->fourCC == fccIOProc)
+		        {
+		          lpProc = pListNode->pIOProc;
+		          break;
+		        };
+		      };
+		      break;
 	}
+
+	return lpProc;
 }
 
 /**************************************************************************
@@ -907,13 +975,8 @@ LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc,
 LPMMIOPROC WINAPI mmioInstallIOProcA(FOURCC fccIOProc, 
                                          LPMMIOPROC pIOProc, DWORD dwFlags)
 {
-	FIXME("(%c%c%c%c,%p,0x%08lx) -- empty stub \n",
-                     (char)((fccIOProc&0xff000000)>>24),
-                     (char)((fccIOProc&0x00ff0000)>>16),
-                     (char)((fccIOProc&0x0000ff00)>> 8),
-                     (char)(fccIOProc&0x000000ff),
-                     pIOProc, dwFlags );
-	return 0;
+	return (LPMMIOPROC) mmioInstallIOProc16(fccIOProc,
+                                        (LPMMIOPROC16)pIOProc, dwFlags);
 }
 
 /**************************************************************************
