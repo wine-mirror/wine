@@ -50,7 +50,7 @@
 #define PI 3.14159265358979323846
 static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
 {
-    int i;
+    int i,j;
     int nb_samples;
     char* buf;
     char* b;
@@ -62,18 +62,31 @@ static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
         double y=sin(440.0*2*PI*i/wfx->nSamplesPerSec);
         if (wfx->wBitsPerSample==8) {
             unsigned char sample=(unsigned char)((double)127.5*(y+1.0));
-            *b++=sample;
-            if (wfx->nChannels==2)
-               *b++=sample;
-        } else {
+            for (j = 0; j < wfx->nChannels; j++)
+                *b++=sample;
+        } else if (wfx->wBitsPerSample==16) {
             signed short sample=(signed short)((double)32767.5*y-0.5);
-            b[0]=sample & 0xff;
-            b[1]=sample >> 8;
-            b+=2;
-            if (wfx->nChannels==2) {
+            for (j = 0; j < wfx->nChannels; j++) {
                 b[0]=sample & 0xff;
                 b[1]=sample >> 8;
                 b+=2;
+            }
+        } else if (wfx->wBitsPerSample==24) {
+            signed int sample=(signed int)(((double)0x7fffff+0.5)*y-0.5);
+            for (j = 0; j < wfx->nChannels; j++) {
+                b[0]=sample & 0xff;
+                b[1]=(sample >> 8) & 0xff;
+                b[2]=(sample >> 16) & 0xff;
+                b+=3;
+            }
+        } else if (wfx->wBitsPerSample==32) {
+            signed int sample=(signed int)(((double)0x7fffffff+0.5)*y-0.5);
+            for (j = 0; j < wfx->nChannels; j++) {
+                b[0]=sample & 0xff;
+                b[1]=(sample >> 8) & 0xff;
+                b[2]=(sample >> 16) & 0xff;
+                b[3]=(sample >> 24) & 0xff;
+                b+=4;
             }
         }
     }
@@ -147,7 +160,8 @@ const char* wave_out_error(MMRESULT error)
 
     rc = waveOutGetErrorText(error, msg, sizeof(msg));
     if (rc != MMSYSERR_NOERROR)
-        sprintf(long_msg, "waveOutGetErrorText(%x) failed with error %x", error, rc);
+        sprintf(long_msg, "waveOutGetErrorText(%x) failed with error %x",
+                error, rc);
     else
         sprintf(long_msg, "%s(%s)", mmsys_error(error), msg);
     return long_msg;
@@ -239,7 +253,61 @@ static const char * wave_time_format(UINT type)
     return msg;
 }
 
-static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATEX pwfx )
+const char * get_format_str(WORD format)
+{
+    static char msg[32];
+#define WAVE_FORMAT(f) case f: return #f
+    switch (format) {
+    WAVE_FORMAT(WAVE_FORMAT_PCM);
+    WAVE_FORMAT(WAVE_FORMAT_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_IBM_CVSD);
+    WAVE_FORMAT(WAVE_FORMAT_ALAW);
+    WAVE_FORMAT(WAVE_FORMAT_MULAW);
+    WAVE_FORMAT(WAVE_FORMAT_OKI_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_IMA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_MEDIASPACE_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_SIERRA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_G723_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_DIGISTD);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIFIX);
+    WAVE_FORMAT(WAVE_FORMAT_DIALOGIC_OKI_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_YAMAHA_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_SONARC);
+    WAVE_FORMAT(WAVE_FORMAT_DSPGROUP_TRUESPEECH);
+    WAVE_FORMAT(WAVE_FORMAT_ECHOSC1);
+    WAVE_FORMAT(WAVE_FORMAT_AUDIOFILE_AF36);
+    WAVE_FORMAT(WAVE_FORMAT_APTX);
+    WAVE_FORMAT(WAVE_FORMAT_AUDIOFILE_AF10);
+    WAVE_FORMAT(WAVE_FORMAT_DOLBY_AC2);
+    WAVE_FORMAT(WAVE_FORMAT_GSM610);
+    WAVE_FORMAT(WAVE_FORMAT_ANTEX_ADPCME);
+    WAVE_FORMAT(WAVE_FORMAT_CONTROL_RES_VQLPC);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIREAL);
+    WAVE_FORMAT(WAVE_FORMAT_DIGIADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_CONTROL_RES_CR10);
+    WAVE_FORMAT(WAVE_FORMAT_NMS_VBXADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_G721_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_MPEG);
+    WAVE_FORMAT(WAVE_FORMAT_MPEGLAYER3);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_ADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_FASTSPEECH8);
+    WAVE_FORMAT(WAVE_FORMAT_CREATIVE_FASTSPEECH10);
+    WAVE_FORMAT(WAVE_FORMAT_FM_TOWNS_SND);
+    WAVE_FORMAT(WAVE_FORMAT_OLIGSM);
+    WAVE_FORMAT(WAVE_FORMAT_OLIADPCM);
+    WAVE_FORMAT(WAVE_FORMAT_OLICELP);
+    WAVE_FORMAT(WAVE_FORMAT_OLISBC);
+    WAVE_FORMAT(WAVE_FORMAT_OLIOPR);
+    WAVE_FORMAT(WAVE_FORMAT_DEVELOPMENT);
+    WAVE_FORMAT(WAVE_FORMAT_EXTENSIBLE);
+    }
+#undef WAVE_FORMAT
+    sprintf(msg, "Unknown(0x%04x)", format);
+    return msg;
+}
+
+static void check_position(int device, HWAVEOUT wout, DWORD bytes,
+                           LPWAVEFORMATEX pwfx )
 {
     MMTIME mmtime;
     DWORD samples;
@@ -270,8 +338,8 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
            "waveOutGetPosition(%s): returned %ld samples, should be %ld\n",
            dev_name(device), mmtime.u.sample, samples);
     else
-        trace("waveOutGetPosition(%s): TIME_SAMPLES not supported, returned %s\n",
-              dev_name(device),wave_time_format(mmtime.wType));
+        trace("waveOutGetPosition(%s): TIME_SAMPLES not supported, "
+              "returned %s\n",dev_name(device),wave_time_format(mmtime.wType));
 
     mmtime.wType = TIME_MS;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -296,8 +364,9 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
            mmtime.u.smpte.min==(BYTE)(fmod(floor(duration/60), 60)) &&
            mmtime.u.smpte.sec==(BYTE)(fmod(duration,60)) &&
            mmtime.u.smpte.frame==frames,
-           "waveOutGetPosition(%s): returned %d:%d:%d %d, should be %d:%d:%d %d\n",
-           dev_name(device), mmtime.u.smpte.hour, mmtime.u.smpte.min, mmtime.u.smpte.sec, mmtime.u.smpte.frame,
+           "waveOutGetPosition(%s): returned %d:%d:%d %d, "
+           "should be %d:%d:%d %d\n", dev_name(device), mmtime.u.smpte.hour,
+           mmtime.u.smpte.min, mmtime.u.smpte.sec, mmtime.u.smpte.frame,
            (BYTE)(floor(duration/(60*60))),
            (BYTE)(fmod(floor(duration/60), 60)),
            (BYTE)(fmod(duration,60)),
@@ -308,7 +377,9 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes, LPWAVEFORMATE
               dev_name(device),wave_time_format(mmtime.wType));
 }
 
-static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEOUTCAPS pcaps)
+static void wave_out_test_deviceOut(int device, double duration,
+                                    LPWAVEFORMATEX pwfx, DWORD format,
+                                    DWORD flags, LPWAVEOUTCAPS pcaps)
 {
     HWAVEOUT wout;
     HANDLE hevent;
@@ -329,22 +400,27 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
     /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
     /* It is acceptable to fail on formats that are not specified to work */
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
-       rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER || rc==MMSYSERR_ALLOCATED ||
+       rc==MMSYSERR_NOTENABLED || rc==MMSYSERR_NODRIVER ||
+       rc==MMSYSERR_ALLOCATED ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && !(pcaps->dwFormats & format)) ||
        ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
-       (!(flags & WAVE_FORMAT_DIRECT) || (flags & WAVE_MAPPED)) && !(pcaps->dwFormats & format)) ||
+       (!(flags & WAVE_FORMAT_DIRECT) || (flags & WAVE_MAPPED)) &&
+       !(pcaps->dwFormats & format)) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveOutOpen(%s): format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",dev_name(device),
-       pwfx->nSamplesPerSec,pwfx->wBitsPerSample,pwfx->nChannels,CALLBACK_EVENT|flags,
+       "waveOutOpen(%s): format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",
+       dev_name(device),pwfx->nSamplesPerSec,pwfx->wBitsPerSample,
+       pwfx->nChannels,CALLBACK_EVENT|flags,
        wave_open_flags(CALLBACK_EVENT|flags),wave_out_error(rc));
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
-        trace(" Reason: The device lists this format as supported in it's capabilities but opening it failed.\n");
+        trace(" Reason: The device lists this format as supported in it's "
+              "capabilities but opening it failed.\n");
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        !(pcaps->dwFormats & format))
-        trace("waveOutOpen(%s): format=%ldx%2dx%d %s rc=%s failed but format not supported so OK.\n",
-              dev_name(device), pwfx->nSamplesPerSec,pwfx->wBitsPerSample,pwfx->nChannels,
+        trace("waveOutOpen(%s): format=%ldx%2dx%d %s rc=%s failed but format "
+              "not supported so OK.\n", dev_name(device), pwfx->nSamplesPerSec,
+              pwfx->wBitsPerSample,pwfx->nChannels,
               flags & WAVE_FORMAT_DIRECT ? "flags=WAVE_FORMAT_DIRECT" :
               flags & WAVE_MAPPED ? "flags=WAVE_MAPPED" : "", mmsys_error(rc));
     if (rc!=MMSYSERR_NOERROR) {
@@ -364,7 +440,8 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
     frag.dwLoops=0;
 
     rc=waveOutGetVolume(wout,&volume);
-    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume(%s): rc=%s\n",
+       dev_name(device),wave_out_error(rc));
 
     rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
@@ -372,8 +449,9 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
 
     if (winetest_interactive && rc==MMSYSERR_NOERROR) {
         DWORD start,end;
-        trace("Playing %g second 440Hz tone at %5ldx%2dx%d %s\n",duration,
+        trace("Playing %g second 440Hz tone at %5ldx%2dx%d %s %s\n",duration,
               pwfx->nSamplesPerSec, pwfx->wBitsPerSample,pwfx->nChannels,
+              get_format_str(pwfx->wFormatTag),
               flags & WAVE_FORMAT_DIRECT ? "WAVE_FORMAT_DIRECT" :
               flags & WAVE_MAPPED ? "WAVE_MAPPED" : "");
 
@@ -381,33 +459,41 @@ static void wave_out_test_deviceOut(int device, double duration, LPWAVEFORMATEX 
         check_position(device, wout, 0.0, pwfx);
 
         rc=waveOutSetVolume(wout,0x20002000);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
+           dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
         start=GetTickCount();
         rc=waveOutWrite(wout, &frag, sizeof(frag));
-        ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+        ok(rc==MMSYSERR_NOERROR,"waveOutWrite(%s): rc=%s\n",
+           dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
         /* Check the sound duration was within 10% of the expected value */
         end=GetTickCount();
-        trace("sound duration=%ld\n",end-start);
-        ok(fabs(1000*duration-end+start)<=100*duration,"The sound played for %ld ms instead of %g ms\n",end-start,1000*duration);
+        if (winetest_debug > 1)
+            trace("sound duration=%ld\n",end-start);
+        ok(fabs(1000*duration-end+start)<=100*duration,
+           "The sound played for %ld ms instead of %g ms\n",
+           end-start,1000*duration);
 
         rc=waveOutSetVolume(wout,volume);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
+           dev_name(device),wave_out_error(rc));
 
         check_position(device, wout, frag.dwBufferLength, pwfx);
     }
 
     rc=waveOutUnprepareHeader(wout, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
-       "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+       "waveOutUnprepareHeader(%s): rc=%s\n",dev_name(device),
+       wave_out_error(rc));
     free(frag.lpData);
 
     CloseHandle(hevent);
     rc=waveOutClose(wout);
-    ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR,"waveOutClose(%s): rc=%s\n",dev_name(device),
+       wave_out_error(rc));
 }
 
 static void wave_out_test_device(int device)
@@ -415,7 +501,7 @@ static void wave_out_test_device(int device)
     WAVEOUTCAPSA capsA;
     WAVEOUTCAPSW capsW;
     WAVEFORMATEX format, oformat;
-    WAVEFORMATEXTENSIBLE wfex, owfex;
+    WAVEFORMATEXTENSIBLE wfex;
     HWAVEOUT wout;
     MMRESULT rc;
     UINT f;
@@ -432,53 +518,69 @@ static void wave_out_test_device(int device)
     dwPageSize = sSysInfo.dwPageSize;
 
     rc=waveOutGetDevCapsA(device,&capsA,sizeof(capsA));
-    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER,
-       "waveOutGetDevCapsA(%s): failed to get capabilities, rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
+       rc==MMSYSERR_NODRIVER,
+       "waveOutGetDevCapsA(%s): failed to get capabilities: rc=%s\n",
+       dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
 
     rc=waveOutGetDevCapsW(device,&capsW,sizeof(capsW));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsA(device,0,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
-       "waveOutGetDevCapsA(%s): MMSYSERR_INVALPARAM expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsA(%s): MMSYSERR_INVALPARAM expected, "
+       "got %s\n",dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,0,sizeof(capsW));
     ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
 
 #if 0 /* FIXME: this works on windows but crashes wine */
     rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPSA)1,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
-       "waveOutGetDevCapsA(%s): MMSYSERR_INVALPARAM expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsA(%s): MMSYSERR_INVALPARAM expected, got %s\n",
+       dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,(LPWAVEOUTCAPSW)1,sizeof(capsW));
     ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
 #endif
 
     rc=waveOutGetDevCapsA(device,&capsA,4);
     ok(rc==MMSYSERR_NOERROR,
-       "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsA(%s): MMSYSERR_NOERROR expected, got %s\n",
+       dev_name(device),wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,&capsW,4);
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",dev_name(device),wave_out_error(rc));
+       "waveOutGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED "
+       "expected, got %s\n",dev_name(device),wave_out_error(rc));
 
     nameA=NULL;
-    rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
-    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-       "waveOutMessage(%s): failed to get interface size, rc=%s\n",dev_name(device),wave_out_error(rc));
+    rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE,
+                      (DWORD_PTR)&size, 0);
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutMessage(%s): failed to get interface size, rc=%s\n",
+       dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         nameW = (WCHAR *)malloc(size);
-        rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)nameW, size);
-        ok(rc==MMSYSERR_NOERROR,"waveOutMessage(%s): failed to get interface name, rc=%s\n",dev_name(device),wave_out_error(rc));
-        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
+        rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACE,
+                          (DWORD_PTR)nameW, size);
+        ok(rc==MMSYSERR_NOERROR,"waveOutMessage(%s): failed to get interface "
+           "name, rc=%s\n",dev_name(device),wave_out_error(rc));
+        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size: "
+           "%ld instead of %d\n",size,(lstrlenW(nameW)+1)*sizeof(WCHAR));
         if (rc==MMSYSERR_NOERROR) {
             nameA = malloc(size/sizeof(WCHAR));
-            WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA, size/sizeof(WCHAR), NULL, NULL);
+            WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA,
+                                size/sizeof(WCHAR), NULL, NULL);
         }
         free(nameW);
     }
@@ -486,11 +588,12 @@ static void wave_out_test_device(int device)
         nameA=strdup("not supported");
     }
 
-    trace("  %s: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx support=%04lx(%s)\n",
-          dev_name(device),capsA.szPname,(nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
-          capsA.vDriverVersion & 0xff,
-          capsA.wMid,capsA.wPid,
-          capsA.wChannels,capsA.dwFormats,capsA.dwSupport,wave_out_caps(capsA.dwSupport));
+    trace("  %s: \"%s\" (%s) %d.%d (%d:%d)\n",dev_name(device),capsA.szPname,
+          (nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
+          capsA.vDriverVersion & 0xff, capsA.wMid,capsA.wPid);
+    trace("     channels=%d formats=%05lx support=%04lx\n",
+          capsA.wChannels,capsA.dwFormats,capsA.dwSupport);
+    trace("     %s\n",wave_out_caps(capsA.dwSupport));
     free(nameA);
 
     if (winetest_interactive && (device != WAVE_MAPPER))
@@ -517,19 +620,25 @@ static void wave_out_test_device(int device)
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],0,&capsA);
-        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_FORMAT_DIRECT,&capsA);
+        wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+                                WAVE_FORMAT_DIRECT,&capsA);
         if (device != WAVE_MAPPER)
-            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],WAVE_MAPPED,&capsA);
+            wave_out_test_deviceOut(device,1.0,&format,win_formats[f][0],
+                                    WAVE_MAPPED,&capsA);
     }
 
-    /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds checking */
-    twoPages = VirtualAlloc(NULL, 2 * dwPageSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    /* Try a PCMWAVEFORMAT aligned next to an unaccessable page for bounds
+     * checking */
+    twoPages = VirtualAlloc(NULL, 2 * dwPageSize, MEM_RESERVE | MEM_COMMIT,
+                            PAGE_READWRITE);
     ok(twoPages!=NULL,"Failed to allocate 2 pages of memory\n");
     if (twoPages) {
-        res = VirtualProtect(twoPages + dwPageSize, dwPageSize, PAGE_NOACCESS, &flOldProtect);
+        res = VirtualProtect(twoPages + dwPageSize, dwPageSize, PAGE_NOACCESS,
+                             &flOldProtect);
         ok(res, "Failed to set memory access on second page\n");
         if (res) {
-            LPWAVEFORMATEX pwfx = (LPWAVEFORMATEX)(twoPages + dwPageSize - sizeof(PCMWAVEFORMAT));
+            LPWAVEFORMATEX pwfx = (LPWAVEFORMATEX)(twoPages + dwPageSize -
+                sizeof(PCMWAVEFORMAT));
             pwfx->wFormatTag=WAVE_FORMAT_PCM;
             pwfx->nChannels=1;
             pwfx->wBitsPerSample=8;
@@ -537,15 +646,16 @@ static void wave_out_test_device(int device)
             pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
             wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,0,&capsA);
-            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_FORMAT_DIRECT,&capsA);
+            wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+                                    WAVE_FORMAT_DIRECT,&capsA);
             if (device != WAVE_MAPPER)
-                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,WAVE_MAPPED,&capsA);
+                wave_out_test_deviceOut(device,1.0,pwfx,WAVE_FORMAT_2M08,
+                                    WAVE_MAPPED,&capsA);
         }
         VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
     }
 
-    /* Try invalid formats to test error handling */
-    trace("Testing invalid format: 11 bits per sample\n");
+    /* Testing invalid format: 11 bits per sample */
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
     format.wBitsPerSample=11;
@@ -555,8 +665,10 @@ static void wave_out_test_device(int device)
     format.cbSize=0;
     oformat=format;
     rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-    ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-       "waveOutOpen(%s): opening the device in 11 bits mode should fail: rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG ||
+       rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): opening the device in 11 bits mode should fail: "
+       "rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,
@@ -566,7 +678,7 @@ static void wave_out_test_device(int device)
         waveOutClose(wout);
     }
 
-    trace("Testing invalid format: 2 MHz sample rate\n");
+    /* Testing invalid format: 2 MHz sample rate */
     format.wFormatTag=WAVE_FORMAT_PCM;
     format.nChannels=2;
     format.wBitsPerSample=16;
@@ -576,8 +688,10 @@ static void wave_out_test_device(int device)
     format.cbSize=0;
     oformat=format;
     rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-    ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-       "waveOutOpen(%s): opening the device at 2 MHz sample rate should fail: rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG ||
+       rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): opening the device at 2 MHz sample rate should fail: "
+       "rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,
@@ -587,28 +701,68 @@ static void wave_out_test_device(int device)
         waveOutClose(wout);
     }
 
+    /* try some non PCM formats */
+    format.wFormatTag=WAVE_FORMAT_MULAW;
+    format.nChannels=1;
+    format.wBitsPerSample=8;
+    format.nSamplesPerSec=8000;
+    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+    format.cbSize=0;
+    oformat=format;
+    rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR ||rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&format,0,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): WAVE_FORMAT_MULAW not supported\n",
+              dev_name(device));
+
+    format.wFormatTag=WAVE_FORMAT_ADPCM;
+    format.nChannels=2;
+    format.wBitsPerSample=4;
+    format.nSamplesPerSec=22050;
+    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
+    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
+    format.cbSize=0;
+    oformat=format;
+    rc=waveOutOpen(&wout,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR ||rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&format,0,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): WAVE_FORMAT_ADPCM not supported\n",
+              dev_name(device));
+
     /* test if WAVEFORMATEXTENSIBLE supported */
     wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
     wfex.Format.nChannels=2;
     wfex.Format.wBitsPerSample=16;
     wfex.Format.nSamplesPerSec=22050;
     wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
-    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*wfex.Format.nBlockAlign;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
     wfex.Format.cbSize=22;
     wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
     wfex.dwChannelMask=SPEAKER_ALL;
     wfex.SubFormat=KSDATAFORMAT_SUBTYPE_PCM;
-    owfex=wfex;
-    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
-              wfex.Format.nSamplesPerSec, wfex.Format.wBitsPerSample,
-              wfex.Format.nChannels,
-              owfex.Format.nSamplesPerSec, owfex.Format.wBitsPerSample,
-              owfex.Format.nChannels);
         waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,0,
+                                &capsA);
     } else
         trace("waveOutOpen(%s): WAVE_FORMAT_EXTENSIBLE not supported\n",
               dev_name(device));
@@ -619,24 +773,100 @@ static void wave_out_test_device(int device)
     wfex.Format.wBitsPerSample=16;
     wfex.Format.nSamplesPerSec=22050;
     wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
-    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*wfex.Format.nBlockAlign;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
     wfex.Format.cbSize=22;
     wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
     wfex.dwChannelMask=SPEAKER_ALL;
     wfex.SubFormat=KSDATAFORMAT_SUBTYPE_PCM;
-    owfex=wfex;
-    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
        "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
-              wfex.Format.nSamplesPerSec, wfex.Format.wBitsPerSample,
-              wfex.Format.nChannels,
-              owfex.Format.nSamplesPerSec, owfex.Format.wBitsPerSample,
-              owfex.Format.nChannels);
         waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,0,0,
+                                &capsA);
     } else
         trace("waveOutOpen(%s): 4 channels not supported\n",
+              dev_name(device));
+
+    /* test if 6 channels supported */
+    wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
+    wfex.Format.nChannels=6;
+    wfex.Format.wBitsPerSample=16;
+    wfex.Format.nSamplesPerSec=22050;
+    wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
+    wfex.Format.cbSize=22;
+    wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
+    wfex.dwChannelMask=SPEAKER_ALL;
+    wfex.SubFormat=KSDATAFORMAT_SUBTYPE_PCM;
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): 6 channels not supported\n",
+              dev_name(device));
+
+#if 0	/* ALSA doesn't like this format */
+    /* test if 24 bit samples supported */
+    wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
+    wfex.Format.nChannels=2;
+    wfex.Format.wBitsPerSample=24;
+    wfex.Format.nSamplesPerSec=22050;
+    wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
+    wfex.Format.cbSize=22;
+    wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
+    wfex.dwChannelMask=SPEAKER_ALL;
+    wfex.SubFormat=KSDATAFORMAT_SUBTYPE_PCM;
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): 24 bit samples not supported\n",
+              dev_name(device));
+#endif
+
+    /* test if 32 bit samples supported */
+    wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
+    wfex.Format.nChannels=2;
+    wfex.Format.wBitsPerSample=32;
+    wfex.Format.nSamplesPerSec=22050;
+    wfex.Format.nBlockAlign=wfex.Format.nChannels*wfex.Format.wBitsPerSample/8;
+    wfex.Format.nAvgBytesPerSec=wfex.Format.nSamplesPerSec*
+        wfex.Format.nBlockAlign;
+    wfex.Format.cbSize=22;
+    wfex.Samples.wValidBitsPerSample=wfex.Format.wBitsPerSample;
+    wfex.dwChannelMask=SPEAKER_ALL;
+    wfex.SubFormat=KSDATAFORMAT_SUBTYPE_PCM;
+    rc=waveOutOpen(&wout,device,&wfex.Format,0,0,
+                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
+    ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+    if (rc==MMSYSERR_NOERROR) {
+        waveOutClose(wout);
+        wave_out_test_deviceOut(device,1.0,&wfex.Format,WAVE_FORMAT_2M16,0,
+                                &capsA);
+    } else
+        trace("waveOutOpen(%s): 32 bit samples not supported\n",
               dev_name(device));
 }
 

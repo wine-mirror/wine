@@ -71,3 +71,4 @@ extern const char* dev_name(int);
 extern const char* wave_open_flags(DWORD);
 extern const char* mmsys_error(MMRESULT);
 extern const char* wave_out_error(MMRESULT);
+extern const char* get_format_str(WORD format);
