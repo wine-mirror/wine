@@ -1,0 +1,4 @@
+Makefile
+dsound.ok
+dsound_test.exe.spec.c
+testlist.c

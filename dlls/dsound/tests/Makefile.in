@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = dsound.dll
+IMPORTS   = dsound kernel32
+
+CTESTS = \
+	dsound.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

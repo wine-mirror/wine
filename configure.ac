@@ -1418,6 +1418,7 @@ dlls/dinput8/Makefile
 dlls/dplay/Makefile
 dlls/dplayx/Makefile
 dlls/dsound/Makefile
+dlls/dsound/tests/Makefile
 dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
