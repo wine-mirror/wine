@@ -2,6 +2,7 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <string.h>
+#include <wctype.h>
 
 #include "winerror.h"
 #include "windef.h"
@@ -334,6 +335,53 @@ LPWSTR WINAPI StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
 }
 
 
+/**************************************************************************
+ * StrRChrIA [SHLWAPI.@]
+ *
+ */
+LPSTR WINAPI StrRChrIA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
+{
+    LPCSTR lpGotIt = NULL;
+    BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+
+    if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextA(lpStart))
+    {
+	if (dbcs) {
+	    /*
+	    if (_mbctoupper(*lpStart) == _mbctoupper(wMatch))
+		lpGotIt = lpStart;
+	    */
+	    if (toupper(*lpStart) == toupper(wMatch)) lpGotIt = lpStart;
+	} else {
+	    if (toupper(*lpStart) == toupper(wMatch)) lpGotIt = lpStart;
+	}
+    }    
+    return (LPSTR)lpGotIt;
+}
+
+
+/**************************************************************************
+ * StrRChrIW [SHLWAPI.@]
+ *
+ */
+LPWSTR WINAPI StrRChrIW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
+{
+    LPCWSTR lpGotIt = NULL;
+
+    TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+    if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
+
+    for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))
+        if (towupper(*lpStart) == towupper(wMatch)) lpGotIt = lpStart;
+
+    return (LPWSTR)lpGotIt;
+}
+
+
 /*************************************************************************
  *	StrCatBuffA		[SHLWAPI.@]
  *
@@ -377,6 +425,13 @@ LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size)
  *
  * NOTES
  *  the pidl is for STRRET OFFSET
+ *
+ * ***** NOTE *****
+ *  This routine is identical to StrRetToStrNA in dlls/shell32/shellstring.c.
+ *  It was duplicated there because not every version of Shlwapi.dll exports
+ *  StrRetToBufA. If you change one routine, change them both. YOU HAVE BEEN
+ *  WARNED.
+ * ***** NOTE *****
  */
 HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, DWORD len)
 {
@@ -415,6 +470,13 @@ HRESULT WINAPI StrRetToBufA (LPSTRRET src, const ITEMIDLIST *pidl, LPSTR dest, D
  *
  * NOTES
  *  the pidl is for STRRET OFFSET
+ *
+ * ***** NOTE *****
+ *  This routine is identical to StrRetToStrNW in dlls/shell32/shellstring.c.
+ *  It was duplicated there because not every version of Shlwapi.dll exports
+ *  StrRetToBufW. If you change one routine, change them both. YOU HAVE BEEN
+ *  WARNED.
+ * ***** NOTE *****
  */
 HRESULT WINAPI StrRetToBufW (LPSTRRET src, const ITEMIDLIST *pidl, LPWSTR dest, DWORD len)
 {

@@ -25,6 +25,13 @@ DEFAULT_DEBUG_CHANNEL(shell);
  *
  * NOTES
  *  the pidl is for STRRET OFFSET
+ *
+ * ***** NOTE *****
+ *  This routine is identical to StrRetToBufA in dlls/shlwapi/string.c.
+ *  It was duplicated here because not every version of Shlwapi.dll exports
+ *  StrRetToBufA. If you change one routine, change them both. YOU HAVE BEEN
+ *  WARNED.
+ * ***** NOTE *****
  */
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
@@ -56,7 +63,21 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 	return S_OK;
 }
 
-/*************************************************************************/
+/*************************************************************************
+ * StrRetToStrNW				[SHELL32.]
+ * 
+ * converts a STRRET to a normal string
+ *
+ * NOTES
+ *  the pidl is for STRRET OFFSET
+ *
+ * ***** NOTE *****
+ *  This routine is identical to StrRetToBufW in dlls/shlwapi/string.c.
+ *  It was duplicated here because not every version of Shlwapi.dll exports
+ *  StrRetToBufW. If you change one routine, change them both. YOU HAVE BEEN
+ *  WARNED.
+ * ***** NOTE *****
+ */
 
 HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {

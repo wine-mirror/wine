@@ -644,8 +644,8 @@ debug_channels (shell)
 @ stub    StrPBrkA
 @ stub    StrPBrkW
 @ stdcall StrRChrA (str str long) StrRChrA
-@ stub    StrRChrIA
-@ stub    StrRChrIW
+@ stdcall StrRChrIA (str str long) StrRChrIA
+@ stdcall StrRChrIW (str str long) StrRChrIW
 @ stdcall StrRChrW (wstr wstr long) StrRChrW
 @ stub    StrRStrIA
 @ stub    StrRStrIW
