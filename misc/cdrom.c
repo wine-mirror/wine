@@ -709,7 +709,8 @@ DWORD CDROM_GetSerial(int drive)
 	    TRACE("%sCD serial number is %04x-%04x.\n",
 		p, HIWORD(serial), LOWORD(serial));
 	else
-	    ERR("couldn't get %sCD serial !\n", p);
+	    if (media >= CDS_AUDIO)
+		ERR("couldn't get %sCD serial !\n", p);
 	CDROM_Close(&wcda);
     }
     return serial;
