@@ -373,9 +373,11 @@ BOOL FDI_read_entries(
   base_offset = FDI_getoffset(hfdi, hf);
 
   if (PFDI_SEEK(hfdi, hf, 0, SEEK_END) == -1) {
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
@@ -383,25 +385,31 @@ BOOL FDI_read_entries(
 
   if ((cabsize == -1) || (base_offset == -1) || 
       ( PFDI_SEEK(hfdi, hf, base_offset, SEEK_SET) == -1 )) {
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
   /* read in the CFHEADER */
   if (PFDI_READ(hfdi, hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
   
   /* check basic MSCF signature */
   if (EndGetI32(buf+cfhead_Signature) != 0x4643534d) {
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
@@ -410,9 +418,11 @@ BOOL FDI_read_entries(
   if (num_folders == 0) {
     /* PONDERME: is this really invalid? */
     WARN("weird cabinet detect failure: no folders in cabinet\n");
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
@@ -421,9 +431,11 @@ BOOL FDI_read_entries(
   if (num_files == 0) {
     /* PONDERME: is this really invalid? */
     WARN("weird cabinet detect failure: no files in cabinet\n");
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
+      PFDI_INT(hfdi)->perf->erfType = 0;
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
@@ -438,9 +450,11 @@ BOOL FDI_read_entries(
       (buf[cfhead_MajorVersion] == 1 && buf[cfhead_MinorVersion] > 3))
   {
     WARN("cabinet format version > 1.3\n");
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_UNKNOWN_CABINET_VERSION;
-    PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    if (pmii) {
+      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_UNKNOWN_CABINET_VERSION;
+      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
+      PFDI_INT(hfdi)->perf->fError = TRUE;
+    }
     return FALSE;
   }
 
@@ -451,9 +465,11 @@ BOOL FDI_read_entries(
   if (flags & cfheadRESERVE_PRESENT) {
     if (PFDI_READ(hfdi, hf, buf, cfheadext_SIZEOF) != cfheadext_SIZEOF) {
       ERR("bunk reserve-sizes?\n");
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      if (pmii) {
+        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+      }
       return FALSE;
     }
 
@@ -471,9 +487,11 @@ BOOL FDI_read_entries(
     /* skip the reserved header */
     if ((header_resv) && (PFDI_SEEK(hfdi, hf, header_resv, SEEK_CUR) == -1)) {
       ERR("seek failure: header_resv\n");
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      if (pmii) {
+        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+      }
       return FALSE;
     }
   }
@@ -481,9 +499,11 @@ BOOL FDI_read_entries(
   if (flags & cfheadPREV_CABINET) {
     prevname = FDI_read_string(hfdi, hf, cabsize);
     if (!prevname) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      if (pmii) {
+        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
+        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
+        PFDI_INT(hfdi)->perf->fError = TRUE;
+      }
       return FALSE;
     } else
       if (pmii)
@@ -583,18 +603,18 @@ BOOL __cdecl FDIIsCabinet(
 
   if (!hf) {
     ERR("(!hf)!\n");
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
+    /* PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
     PFDI_INT(hfdi)->perf->erfType = ERROR_INVALID_HANDLE;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    PFDI_INT(hfdi)->perf->fError = TRUE; */
     SetLastError(ERROR_INVALID_HANDLE);
     return FALSE;
   }
 
   if (!pfdici) {
     ERR("(!pfdici)!\n");
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NONE;
+    /* PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NONE;
     PFDI_INT(hfdi)->perf->erfType = ERROR_BAD_ARGUMENTS;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    PFDI_INT(hfdi)->perf->fError = TRUE; */
     SetLastError(ERROR_BAD_ARGUMENTS);
     return FALSE;
   }
