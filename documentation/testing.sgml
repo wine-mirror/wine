@@ -256,18 +256,30 @@ thread.c: 86 tests executed, 5 marked as todo, 0 failures.
       <sect2>
         <title>Cross compiling with MinGW on Linux</title>
         <para>
-          Details are still pretty sketchy but it would go something like
-          this on a Debian machine:
+          Here is how to generate Windows executables for the tests straight
+          from the comfort of Linux.
+        </para>
+        <itemizedlist>
+          <listitem><para>
+            First you need to get the MinGW cross-compiler. On Debian all
+            you need to do is type <command>apt-get install mingw32</>.
+          </para></listitem>
+          <listitem><para>
+            If you had already run <command>configure</>, then delete
+            <filename>config.cache</> and re-run <command>configure</>.
+            You can then run <command>make crosstest</>. To sum up:
 <screen>
-<prompt>$ </>apt-get install mingw32
-<prompt>$ </>cd ~/wine
-<prompt>$ </>./configure
-<prompt>$ </>make crosstest
+<prompt>$ </><userinput>rm config.cache</>
+<prompt>$ </><userinput>./configure</>
+<prompt>$ </><userinput>make crosstest</>
 </screen>
-        </para>
-        <para>
-          You should then have Windows executables for the tests.
-        </para>
+          </para></listitem>
+          <listitem><para>
+            If you get an error when compiling <filename>winsock.h</> then
+            you probably need to apply the following patch:
+            <ulink url="http://www.winehq.com/hypermail/wine-patches/2002/12/0157.html">http://www.winehq.com/hypermail/wine-patches/2002/12/0157.html</>
+          </para></listitem>
+        </itemizedlist>
       </sect2>
     </sect1>
 
