@@ -295,6 +295,13 @@ BOOL16 WINAPI CreateDirectory16( LPCSTR path, LPVOID dummy )
 
 /***********************************************************************
  *           CreateDirectory32A   (KERNEL32.39)
+ * RETURNS:
+ *	TRUE : success
+ *	FALSE : failure
+ *		ERROR_DISK_FULL:	on full disk
+ *		ERROR_ALREADY_EXISTS:	if directory name exists (even as file)
+ *		ERROR_ACCESS_DENIED:	on permission problems
+ *		ERROR_FILENAME_EXCED_RANGE: too long filename(s)
  */
 BOOL WINAPI CreateDirectoryA( LPCSTR path,
                                   LPSECURITY_ATTRIBUTES lpsecattribs )
@@ -309,11 +316,16 @@ BOOL WINAPI CreateDirectoryA( LPCSTR path,
         return FALSE;
     }
     if (!DOSFS_GetFullName( path, FALSE, &full_name )) return 0;
-    if ((mkdir( full_name.long_name, 0777 ) == -1) && (errno != EEXIST))
-    {
-      WARN (file, "Errno %i trying to create directory %s.\n", errno, full_name.long_name);
-        FILE_SetDosError();
-        return FALSE;
+    if (mkdir( full_name.long_name, 0777 ) == -1) {
+        WARN (file, "Errno %i trying to create directory %s.\n", errno, full_name.long_name);
+	/* the FILE_SetDosError() generated error codes don't match the 
+	 * CreateDirectory ones for some errnos */
+	switch (errno) {
+	case EEXIST: SetLastError(ERROR_ALREADY_EXISTS); break;
+	case ENOSPC: SetLastError(ERROR_DISK_FULL); break;
+	default: FILE_SetDosError();break;
+	}
+	return FALSE;
     }
     return TRUE;
 }

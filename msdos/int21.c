@@ -1010,12 +1010,14 @@ static void INT21_GetExtendedError( CONTEXT *context )
         action = SA_Abort;
         locus  = EL_Unknown;
         break;
+    case ERROR_DISK_FULL:
     case ERROR_HANDLE_DISK_FULL:
         class  = EC_MediaError;
         action = SA_Abort;
         locus  = EL_Disk;
         break;
     case ERROR_FILE_EXISTS:
+    case ERROR_ALREADY_EXISTS:
         class  = EC_Exists;
         action = SA_Abort;
         locus  = EL_Disk;
@@ -1469,6 +1471,21 @@ void WINAPI DOS3Call( CONTEXT *context )
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  DS_reg(context), EDX_reg(context)));
         bSetDOSExtendedError = (!CreateDirectory16( CTX_SEG_OFF_TO_LIN(context,  DS_reg(context),
                                                            EDX_reg(context) ), NULL));
+	/* FIXME: CreateDirectory's LastErrors will clash with the ones
+	 * used by dos. AH=39 only returns 3 (path not found) and 5 (access
+	 * denied), while CreateDirectory return several ones. remap some of
+	 * them. -Marcus
+	 */
+	if (bSetDOSExtendedError) {
+		switch (GetLastError()) {
+		case ERROR_ALREADY_EXISTS:
+		case ERROR_FILENAME_EXCED_RANGE:
+		case ERROR_DISK_FULL:
+			SetLastError(ERROR_ACCESS_DENIED);
+			break;
+		default: break;
+		}
+	}
         break;
 	
     case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
