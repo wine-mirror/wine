@@ -452,6 +452,27 @@ static const char main_key_TK[MAIN_LEN][4] =
 "zZ","xX","cC","vV","bB","nN","mM","öÖ","çÇ",".:"
 };
 
+/*** VNC keyboard layout */
+static const WORD main_key_scan_vnc[MAIN_LEN] =
+{
+   0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x1A,0x1B,0x27,0x28,0x29,0x33,0x34,0x35,0x2B,
+   0x1E,0x30,0x2E,0x20,0x12,0x21,0x22,0x23,0x17,0x24,0x25,0x26,0x32,0x31,0x18,0x19,0x10,0x13,0x1F,0x14,0x16,0x2F,0x11,0x2D,0x15,0x2C,
+   0x56
+};
+
+static const WORD main_key_vkey_vnc[MAIN_LEN] =
+{
+   VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,VK_OEM_4,VK_OEM_6,VK_OEM_1,VK_OEM_7,VK_OEM_3,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,VK_OEM_5,
+   VK_A,VK_B,VK_C,VK_D,VK_E,VK_F,VK_G,VK_H,VK_I,VK_J,VK_K,VK_L,VK_M,VK_N,VK_O,VK_P,VK_Q,VK_R,VK_S,VK_T,VK_U,VK_V,VK_W,VK_X,VK_Y,VK_Z,
+   VK_OEM_102
+};
+
+static const char main_key_vnc[MAIN_LEN][4] =
+{
+ "1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+","[{","]}",";:","'\"","`~",",<",".>","/?","\\|",
+ "aA","bB","cC","dD","eE","fF","gG","hH","iI","jJ","kK","lL","mM","nN","oO","pP","qQ","rR","sS","tT","uU","vV","wW","xX","yY","zZ"
+};
+
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
     const char *comment;
@@ -496,6 +517,7 @@ static const struct {
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"VNC keyboard layout", 28591, &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
@@ -922,8 +944,8 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	}
       }
     }
-    TRACE("matches=%d, mismatches=%d, score=%d\n",
-	   match, mismatch, score);
+    TRACE("matches=%d, mismatches=%d, seq=%d, score=%d\n",
+	   match, mismatch, seq, score);
     if ((score > max_score) ||
 	((score == max_score) && (seq > max_seq))) {
       /* best match so far */
