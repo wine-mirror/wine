@@ -753,6 +753,8 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPARAM lParam, BOOL 
         if (!lParam)
             return strlenW(descr->items[index].str);
 
+	TRACE("index %d (0x%04x) %s\n", index, index, debugstr_w(descr->items[index].str));
+
         if(unicode)
         {
             LPWSTR buffer = (LPWSTR)lParam;
@@ -2046,6 +2048,7 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
 
         if(!PtInRect(&screenRect, screenMousePos))
         { 
+	    LISTBOX_SetCaretIndex( pWnd, pDescr, pDescr->lphc->droppedIndex, FALSE );
             LISTBOX_SetSelection( pWnd, pDescr, pDescr->lphc->droppedIndex, FALSE, FALSE );
             COMBO_FlipListbox( pDescr->lphc, FALSE, FALSE );
             return 0;
@@ -2745,6 +2748,10 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     {
         INT index;
         LPWSTR textW;
+
+	if(HAS_STRINGS(descr))
+	    TRACE("LB_SELECTSTRING: %s\n", unicode ? debugstr_w((LPWSTR)lParam) :
+						     debugstr_a((LPSTR)lParam));
         if(unicode || !HAS_STRINGS(descr))
             textW = (LPWSTR)lParam;
         else
@@ -2758,7 +2765,10 @@ static LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         if(!unicode && HAS_STRINGS(descr))
             HeapFree(GetProcessHeap(), 0, textW);
         if (index != LB_ERR)
+	{
+	    LISTBOX_SetCaretIndex( wnd, descr, index, TRUE );
             LISTBOX_SetSelection( wnd, descr, index, TRUE, FALSE );
+	}
         return index;
     }
 
@@ -3061,7 +3071,7 @@ static LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
                                              WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LRESULT lRet = 0;
-    HWND hwnd = wnd->hwndSelf;
+    HWND hwnd;
 
     if (wnd)
     {
@@ -3069,6 +3079,8 @@ static LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 
         TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
 		     wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
+
+	hwnd = wnd->hwndSelf;
 
 	if( descr || msg == WM_CREATE )
         {
