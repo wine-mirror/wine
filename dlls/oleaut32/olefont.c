@@ -953,7 +953,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
   }
 
   *phfont = this->gdiFont;
-  TRACE("Returning %08x\n", *phfont);
+  TRACE("Returning %p\n", *phfont);
   return S_OK;
 }
 
@@ -1083,7 +1083,7 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
   HFONT hfont)
 {
   _ICOM_THIS(OLEFontImpl, iface);
-  TRACE("(%p)->(%08x) (lock=%ld)\n", this, hfont, this->fontLock);
+  TRACE("(%p)->(%p) (lock=%ld)\n", this, hfont, this->fontLock);
 
   if ( (hfont == 0) ||
        (hfont != this->gdiFont) )
@@ -1104,7 +1104,7 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   HFONT hfont)
 {
   _ICOM_THIS(OLEFontImpl, iface);
-  TRACE("(%p)->(%08x) (lock=%ld)\n", this, hfont, this->fontLock);
+  TRACE("(%p)->(%p) (lock=%ld)\n", this, hfont, this->fontLock);
 
   if ( (hfont == 0) ||
        (hfont != this->gdiFont) )
@@ -1134,7 +1134,7 @@ static HRESULT WINAPI OLEFontImpl_SetHdc(
   HDC  hdc)
 {
   _ICOM_THIS(OLEFontImpl, iface);
-  FIXME("(%p)->(%08x): Stub\n", this, hdc);
+  FIXME("(%p)->(%p): Stub\n", this, hdc);
   return E_NOTIMPL;
 }
 

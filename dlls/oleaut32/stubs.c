@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  */
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
 {
-	FIXME("(%x,%x), not implemented (olepro32.dll)\n",hinstExe,hicon);
+	FIXME("(%p,%p), not implemented (olepro32.dll)\n",hinstExe,hicon);
 	return S_OK;
 }
 
@@ -56,7 +56,7 @@ HRESULT WINAPI OleCreatePropertyFrame(
     LPUNKNOWN* ppUnk, ULONG cPages, LPCLSID pPageClsID, LCID lcid,
     DWORD dwReserved, LPVOID pvReserved )
 {
-	FIXME("(%x,%d,%d,%s,%ld,%p,%ld,%p,%x,%ld,%p), not implemented (olepro32.dll)\n",
+	FIXME("(%p,%d,%d,%s,%ld,%p,%ld,%p,%x,%ld,%p), not implemented (olepro32.dll)\n",
 		hwndOwner,x,y,debugstr_w(lpszCaption),cObjects,ppUnk,cPages,
 		pPageClsID, (int)lcid,dwReserved,pvReserved);
 	return S_OK;

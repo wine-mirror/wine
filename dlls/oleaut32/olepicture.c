@@ -134,7 +134,7 @@ static void OLEPictureImpl_SetBitmap(OLEPictureImpl*This) {
   BITMAP bm;
   HDC hdcRef;
 
-  TRACE("bitmap handle %08x\n", This->desc.u.bmp.hbitmap);
+  TRACE("bitmap handle %p\n", This->desc.u.bmp.hbitmap);
   if(GetObjectA(This->desc.u.bmp.hbitmap, sizeof(bm), &bm) != sizeof(bm)) {
     ERR("GetObject fails\n");
     return;
@@ -210,7 +210,7 @@ static OLEPictureImpl* OLEPictureImpl_Construct(LPPICTDESC pictDesc, BOOL fOwn)
 	break;
 
       case PICTYPE_METAFILE:
-	TRACE("metafile handle %08x\n", pictDesc->u.wmf.hmeta);
+	TRACE("metafile handle %p\n", pictDesc->u.wmf.hmeta);
 	newObject->himetricWidth = pictDesc->u.wmf.xExt;
 	newObject->himetricHeight = pictDesc->u.wmf.yExt;
 	break;
@@ -412,13 +412,13 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
   TRACE("(%p)->(%p)\n", This, phandle);
   switch(This->desc.picType) {
   case PICTYPE_BITMAP:
-    *phandle = This->desc.u.bmp.hbitmap;
+    *phandle = (OLE_HANDLE)This->desc.u.bmp.hbitmap;
     break;
   case PICTYPE_METAFILE:
     *phandle = (OLE_HANDLE)This->desc.u.wmf.hmeta;
     break;
   case PICTYPE_ICON:
-    *phandle = This->desc.u.icon.hicon;
+    *phandle = (OLE_HANDLE)This->desc.u.icon.hicon;
     break;
   case PICTYPE_ENHMETAFILE:
     *phandle = (OLE_HANDLE)This->desc.u.emf.hemf;
@@ -490,7 +490,7 @@ static HRESULT WINAPI OLEPictureImpl_Render(IPicture *iface, HDC hdc,
 					    LPCRECT prcWBounds)
 {
   ICOM_THIS(OLEPictureImpl, iface);
-  TRACE("(%p)->(%08x, (%ld,%ld), (%ld,%ld) <- (%ld,%ld), (%ld,%ld), %p)\n",
+  TRACE("(%p)->(%p, (%ld,%ld), (%ld,%ld) <- (%ld,%ld), (%ld,%ld), %p)\n",
 	This, hdc, x, y, cx, cy, xSrc, ySrc, cxSrc, cySrc, prcWBounds);
   if(prcWBounds)
     TRACE("prcWBounds (%d,%d) - (%d,%d)\n", prcWBounds->left, prcWBounds->top,
@@ -559,7 +559,7 @@ static HRESULT WINAPI OLEPictureImpl_get_CurDC(IPicture *iface,
 					       HDC *phdc)
 {
   ICOM_THIS(OLEPictureImpl, iface);
-  TRACE("(%p), returning %x\n", This, This->hDCCur);
+  TRACE("(%p), returning %p\n", This, This->hDCCur);
   if (phdc) *phdc = This->hDCCur;
   return S_OK;
 }
@@ -573,7 +573,7 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
 						   OLE_HANDLE *phbmpOut)
 {
   ICOM_THIS(OLEPictureImpl, iface);
-  TRACE("(%p)->(%08x, %p, %p)\n", This, hdcIn, phdcOut, phbmpOut);
+  TRACE("(%p)->(%p, %p, %p)\n", This, hdcIn, phdcOut, phbmpOut);
   if (This->desc.picType == PICTYPE_BITMAP) {
       SelectObject(hdcIn,This->desc.u.bmp.hbitmap);
 
@@ -581,7 +581,7 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
 	  *phdcOut = This->hDCCur;
       This->hDCCur = hdcIn;
       if (phbmpOut)
-	  *phbmpOut = This->desc.u.bmp.hbitmap;
+	  *phbmpOut = (OLE_HANDLE)This->desc.u.bmp.hbitmap;
       return S_OK;
   } else {
       FIXME("Don't know how to select picture type %d\n",This->desc.picType);
