@@ -28,6 +28,7 @@
 #include "msvcrt/string.h"
 
 #include "wine/library.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -55,15 +56,84 @@ char **MSVCRT___argv;
 WCHAR **MSVCRT___wargv;
 char *MSVCRT__acmdln;
 WCHAR *MSVCRT__wcmdln;
-char **MSVCRT__environ;
-WCHAR **MSVCRT__wenviron;
-char **MSVCRT___initenv;
-WCHAR **MSVCRT___winitenv;
+char **MSVCRT__environ = 0;
+WCHAR **MSVCRT__wenviron = 0;
+char **MSVCRT___initenv = 0;
+WCHAR **MSVCRT___winitenv = 0;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
 
-static char* environ_strings;
-static WCHAR* wenviron_strings;
+/* Get a snapshot of the current environment
+ * and construct the __p__environ array
+ *
+ * The pointer returned from GetEnvironmentStrings may get invalid when
+ * some other module cause a reallocation of the env-variable block
+ *
+ * blk is an array of pointers to environment strings, ending with a NULL
+ * and after that the actual copy of the environment strings, ending in a \0
+ */
+char ** msvcrt_SnapshotOfEnvironmentA(char **blk)
+{
+  char* environ_strings = GetEnvironmentStringsA();
+  int count = 1, len = 1, i = 0; /* keep space for the trailing NULLS */
+  char *ptr;
+
+  for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
+  {
+    count++;
+    len += strlen(ptr) + 1;
+  }
+  if (blk)
+      blk = HeapReAlloc( GetProcessHeap(), 0, blk, count* sizeof(char*) + len );
+  else
+    blk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(char*) + len );
+
+  if (blk)
+    {
+      if (count)
+	{
+	  memcpy(&blk[count],environ_strings,len);
+	  for (ptr = (char*) &blk[count]; *ptr; ptr += strlen(ptr) + 1)
+	    {
+	      blk[i++] = ptr;
+	    }
+	}
+      blk[i] = NULL;
+    }
+  FreeEnvironmentStringsA(environ_strings);
+  return blk;
+}
+
+WCHAR ** msvcrt_SnapshotOfEnvironmentW(WCHAR **wblk)
+{
+  WCHAR* wenviron_strings = GetEnvironmentStringsW();
+  int count = 1, len = 1, i = 0; /* keep space for the trailing NULLS */
+  WCHAR *wptr;
+
+  for (wptr = wenviron_strings; *wptr; wptr += strlenW(wptr) + 1)
+  {
+    count++;
+    len += strlenW(wptr) + 1;
+  }
+  if (wblk)
+      wblk = HeapReAlloc( GetProcessHeap(), 0, wblk, count* sizeof(WCHAR*) + len * sizeof(WCHAR));
+  else
+    wblk = HeapAlloc(GetProcessHeap(), 0, count* sizeof(WCHAR*) + len * sizeof(WCHAR));
+  if (wblk)
+    {
+      if (count)
+	{
+	  memcpy(&wblk[count],wenviron_strings,len * sizeof(WCHAR));
+	  for (wptr = (WCHAR*)&wblk[count]; *wptr; wptr += strlenW(wptr) + 1)
+	    {
+	      wblk[i++] = wptr;
+	    }
+	}
+      wblk[i] = NULL;
+    }
+  FreeEnvironmentStringsW(wenviron_strings);
+  return wblk;
+}
 
 typedef void (*_INITTERMFUN)(void);
 
@@ -125,12 +195,22 @@ WCHAR*** __p___wargv(void) { return &MSVCRT___wargv; }
 /*********************************************************************
  *		__p__environ (MSVCRT.@)
  */
-char*** __p__environ(void) { return &MSVCRT__environ; }
+char*** __p__environ(void)
+{
+  if (!MSVCRT__environ)
+    MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(NULL);
+  return &MSVCRT__environ;
+}
 
 /*********************************************************************
  *		__p__wenviron (MSVCRT.@)
  */
-WCHAR*** __p__wenviron(void) { return &MSVCRT__wenviron; }
+WCHAR*** __p__wenviron(void)
+{
+  if (!MSVCRT__wenviron)
+    MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(NULL);
+  return &MSVCRT__wenviron;
+}
 
 /*********************************************************************
  *		__p___initenv (MSVCRT.@)
@@ -165,9 +245,6 @@ static WCHAR *wstrdupa(const char *str)
  */
 void msvcrt_init_args(void)
 {
-  char *ptr;
-  WCHAR *wptr;
-  int count;
   DWORD version;
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
@@ -198,42 +275,9 @@ void msvcrt_init_args(void)
 
   /* FIXME: set app type for Winelib apps */
 
-  environ_strings = GetEnvironmentStringsA();
-  count = 1; /* for NULL sentinel */
-  for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
-  {
-    count++;
-  }
-  MSVCRT__environ = HeapAlloc(GetProcessHeap(), 0, count * sizeof(char*));
-  if (MSVCRT__environ)
-  {
-    count = 0;
-    for (ptr = environ_strings; *ptr; ptr += strlen(ptr) + 1)
-    {
-      MSVCRT__environ[count++] = ptr;
-    }
-    MSVCRT__environ[count] = NULL;
-  }
+  MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
+  MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
 
-  MSVCRT___initenv = MSVCRT__environ;
-
-  wenviron_strings = GetEnvironmentStringsW();
-  count = 1; /* for NULL sentinel */
-  for (wptr = wenviron_strings; *wptr; wptr += lstrlenW(wptr) + 1)
-  {
-    count++;
-  }
-  MSVCRT__wenviron = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR*));
-  if (MSVCRT__wenviron)
-  {
-    count = 0;
-    for (wptr = wenviron_strings; *wptr; wptr += lstrlenW(wptr) + 1)
-    {
-      MSVCRT__wenviron[count++] = wptr;
-    }
-    MSVCRT__wenviron[count] = NULL;
-  }
-  MSVCRT___winitenv = MSVCRT__wenviron;
 }
 
 
@@ -241,8 +285,10 @@ void msvcrt_init_args(void)
 void msvcrt_free_args(void)
 {
   /* FIXME: more things to free */
-  FreeEnvironmentStringsA(environ_strings);
-  FreeEnvironmentStringsW(wenviron_strings);
+  if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0,MSVCRT___initenv);
+  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0,MSVCRT__environ);
+  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0,MSVCRT__environ);
+  if (MSVCRT__wenviron) HeapFree(GetProcessHeap(), 0,MSVCRT__wenviron);
 }
 
 /*********************************************************************

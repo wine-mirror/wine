@@ -94,6 +94,7 @@ int _putenv(const char *str)
 {
  char name[256], value[512];
  char *dst = name;
+ int ret;
 
  TRACE("%s\n", str);
 
@@ -109,7 +110,13 @@ int _putenv(const char *str)
   *dst++ = *str++;
  *dst = '\0';
 
- return !SetEnvironmentVariableA(name, value[0] ? value : NULL);
+ ret = !SetEnvironmentVariableA(name, value[0] ? value : NULL);
+ /* Update the __p__environ array only when already initialized */
+ if (MSVCRT__environ)
+   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
+ if (MSVCRT__wenviron)
+   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
+ return ret;
 }
 
 /*********************************************************************
@@ -119,6 +126,7 @@ int _wputenv(const WCHAR *str)
 {
  WCHAR name[256], value[512];
  WCHAR *dst = name;
+ int ret;
 
  TRACE("%s\n", debugstr_w(str));
 
@@ -134,5 +142,11 @@ int _wputenv(const WCHAR *str)
   *dst++ = *str++;
  *dst = (WCHAR)L'\0';
 
- return !SetEnvironmentVariableW(name, value[0] ? value : NULL);
+ ret = !SetEnvironmentVariableW(name, value[0] ? value : NULL);
+ /* Update the __p__environ array only when already initialized */
+ if (MSVCRT__environ)
+   MSVCRT__environ = msvcrt_SnapshotOfEnvironmentA(MSVCRT__environ);
+ if (MSVCRT__wenviron)
+   MSVCRT__wenviron = msvcrt_SnapshotOfEnvironmentW(MSVCRT__wenviron);
+ return ret;
 }

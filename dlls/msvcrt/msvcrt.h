@@ -53,6 +53,12 @@ LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);
 
 void MSVCRT__amsg_exit(int errnum);
 
+extern char **MSVCRT__environ;
+extern WCHAR **MSVCRT__wenviron;
+
+extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
+extern WCHAR ** msvcrt_SnapshotOfEnvironmentW(WCHAR **);
+
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */
