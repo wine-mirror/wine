@@ -523,7 +523,7 @@ type	win32
 515 stdcall RtlUnicodeToOemN(ptr long ptr ptr long) RtlUnicodeToOemN
 516 stub RtlUniform
 517 stub RtlUnlockHeap
-518 stub RtlUnwind
+518 register RtlUnwind() RtlUnwind
 519 stub RtlUpcaseUnicodeChar
 520 stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
 521 stub RtlUpcaseUnicodeStringToAnsiString

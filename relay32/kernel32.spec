@@ -2,6 +2,8 @@ name	kernel32
 type	win32
 init	MAIN_KernelInit
 
+import  ntdll.dll
+
 # Functions exported by the Win95 kernel32.dll 
 # (these need to have these exact ordinals, for some win95 dlls 
 #  import kernel32.dll by ordinal)
@@ -604,10 +606,10 @@ init	MAIN_KernelInit
 585 stdcall RemoveDirectoryW(wstr) RemoveDirectoryW
 586 stdcall ResetEvent(long) ResetEvent
 587 stdcall ResumeThread(long) ResumeThread
-588 stdcall RtlFillMemory(ptr long long) RtlFillMemory
-589 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
-590 register RtlUnwind() RtlUnwind
-591 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
+588 forward RtlFillMemory NTDLL.RtlFillMemory
+589 forward RtlMoveMemory NTDLL.RtlMoveMemory
+590 forward RtlUnwind NTDLL.RtlUnwind
+591 forward RtlZeroMemory NTDLL.RtlZeroMemory
 592 register SMapLS() SMapLS
 593 register SMapLS_IP_EBP_12() SMapLS_IP_EBP_12
 594 register SMapLS_IP_EBP_16() SMapLS_IP_EBP_16
