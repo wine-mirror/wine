@@ -713,6 +713,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
 
     /* We don't need the orignal mapping any more */
     UnmapViewOfFile( (LPVOID)hModule );
+    close( unix_handle );
     return (HMODULE)load_addr;
 
 error:
