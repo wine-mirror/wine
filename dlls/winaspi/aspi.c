@@ -311,34 +311,52 @@ struct LinuxProcScsiDevice
 	int ansirev;
 };
 
+/*
+ * we need to declare white spaces explicitly via %*1[ ],
+ * as there are very dainbread CD-ROM devices out there
+ * which have their manufacturer name blanked out via spaces,
+ * which confuses fscanf's parsing (skips all blank spaces)
+ */
 static int
 SCSI_getprocentry( FILE * procfile, struct LinuxProcScsiDevice * dev )
 {
 	int result;
 	result = fscanf( procfile,
-		"Host: scsi%d Channel: %d Id: %d Lun: %d\n",
+		"Host:%*1[ ]scsi%d%*1[ ]Channel:%*1[ ]%d%*1[ ]Id:%*1[ ]%d%*1[ ]Lun:%*1[ ]%d\n",
 		&dev->host,
 		&dev->channel,
 		&dev->target,
 		&dev->lun );
 	if( result == EOF )
+	{
+		/* "end of entries" return, so no TRACE() here */
 		return EOF;
+	}
 	if( result != 4 )
+	{
+		ERR("bus id line scan count error\n");
 		return 0;
+	}
 	result = fscanf( procfile,
-		"  Vendor: %8c Model: %16c Rev: %4c\n",
+		"  Vendor:%*1[ ]%8c%*1[ ]Model:%*1[ ]%16c%*1[ ]Rev:%*1[ ]%4c\n",
 		dev->vendor,
 		dev->model,
 		dev->rev );
 	if( result != 3 )
+	{
+		ERR("model line scan count error\n");
 		return 0;
+	}
 
 	result = fscanf( procfile,
-		"  Type:   %32c ANSI SCSI revision: %d\n",
+		"  Type:%*3[ ]%32c%*1[ ]ANSI%*1[ ]SCSI%*1[ ]revision:%*1[ ]%d\n",
 		dev->type,
 		&dev->ansirev );
 	if( result != 2 )
+	{
+		ERR("SCSI type line scan count error\n");
 		return 0;
+	}
 	/* Since we fscanf with %XXc instead of %s.. put a NULL at end */
 	dev->vendor[8] = 0;
 	dev->model[16] = 0;
