@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = glut32.dll
+IMPORTS   = kernel32
+EXTRALIBS = @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ @OPENGL_LIBS@ @GLUT_LIBS@
+
+C_SRCS = \
+	glut.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

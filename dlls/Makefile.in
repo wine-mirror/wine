@@ -8,9 +8,10 @@ VPATH     = @srcdir@
 # special configure-dependent targets
 
 GLU32FILES = glu32
+GLUT32FILES = glut32
 OPENGLFILES = d3d8 d3d9 d3dx8 opengl32 wined3d
 XFILES = ddraw x11drv
-EXTRADIRS = @GLU32FILES@ @OPENGLFILES@ @XFILES@
+EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 
 # Subdir list
 
@@ -139,6 +140,7 @@ SUBDIRS = \
 	d3dx8 \
 	ddraw \
 	glu32 \
+	glut32 \
 	opengl32 \
 	wined3d \
 	x11drv
@@ -435,6 +437,9 @@ gdi32.dll$(DLLEXT) dispdib.dll$(DLLEXT) gdi.exe$(DLLEXT) \
 
 glu32.dll$(DLLEXT): glu32/glu32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) glu32/glu32.dll$(DLLEXT) $@
+
+glut32.dll$(DLLEXT): glut32/glut32.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) glut32/glut32.dll$(DLLEXT) $@
 
 icmp.dll$(DLLEXT): icmp/icmp.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) icmp/icmp.dll$(DLLEXT) $@
@@ -745,6 +750,7 @@ IMPORT_LIBS = \
 	libdsound \
 	libgdi32 \
 	libglu32 \
+	libglut32 \
 	libicmp \
 	libimagehlp \
 	libimm32 \
@@ -994,6 +1000,11 @@ libglu32.def: glu32/glu32.spec.def
 	$(RM) $@ && $(LN_S) glu32/glu32.spec.def $@
 libglu32.a: glu32/glu32.spec.def
 	$(DLLTOOL) -k -l $@ -d glu32/glu32.spec.def
+
+libglut32.def: glut32/glut32.spec.def
+	$(RM) $@ && $(LN_S) glut32/glut32.spec.def $@
+libglut32.a: glut32/glut32.spec.def
+	$(DLLTOOL) -k -l $@ -d glut32/glut32.spec.def
 
 libicmp.def: icmp/icmp.spec.def
 	$(RM) $@ && $(LN_S) icmp/icmp.spec.def $@
@@ -1376,6 +1387,7 @@ dpnhpast/dpnhpast.spec.def: $(WINEBUILD)
 dsound/dsound.spec.def: $(WINEBUILD)
 gdi/gdi32.spec.def: $(WINEBUILD)
 glu32/glu32.spec.def: $(WINEBUILD)
+glut32/glut32.spec.def: $(WINEBUILD)
 icmp/icmp.spec.def: $(WINEBUILD)
 imagehlp/imagehlp.spec.def: $(WINEBUILD)
 imm32/imm32.spec.def: $(WINEBUILD)
@@ -1488,6 +1500,7 @@ dpnhpast/dpnhpast.dll$(DLLEXT): dpnhpast
 dsound/dsound.dll$(DLLEXT): dsound
 gdi/gdi32.dll$(DLLEXT): gdi
 glu32/glu32.dll$(DLLEXT): glu32
+glut32/glut32.dll$(DLLEXT): glut32
 icmp/icmp.dll$(DLLEXT): icmp
 msacm/imaadp32/imaadp32.acm$(DLLEXT): msacm/imaadp32
 imagehlp/imagehlp.dll$(DLLEXT): imagehlp

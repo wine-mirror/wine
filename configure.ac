@@ -340,6 +340,12 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
 	     fi
+
+             dnl Check for glut32 library.
+             AC_CHECK_LIB(glut,glutMainLoop,
+                       [AC_SUBST(GLUT_LIBS,"-lglut")
+                        AC_SUBST(GLUT32FILES,'$(GLUT32FILES)')],,
+                        $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS)
 	 fi
     fi
 
@@ -1516,6 +1522,7 @@ dlls/dsound/tests/Makefile
 dlls/gdi/Makefile
 dlls/gdi/tests/Makefile
 dlls/glu32/Makefile
+dlls/glut32/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
