@@ -347,7 +347,7 @@
 @ stdcall RtlDestroyHeap(long)
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
-@ stub RtlDetermineDosPathNameType_U
+@ stdcall RtlDetermineDosPathNameType_U(wstr) RtlDetermineDosPathNameType_U
 @ stub RtlDoesFileExists_U
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long)
 @ stub RtlDosSearchPath_U
@@ -441,7 +441,7 @@
 @ stdcall RtlInt64ToUnicodeString(long long long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)
 @ stdcall RtlIntegerToUnicodeString(long long ptr)
-@ stub RtlIsDosDeviceName_U
+@ stdcall RtlIsDosDeviceName_U(wstr) RtlIsDosDeviceName_U
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsNameLegalDOS8Dot3
 @ stdcall RtlIsTextUnicode(ptr long ptr)

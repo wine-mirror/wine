@@ -83,6 +83,7 @@ C_SRCS = \
 	misc.c \
 	nt.c \
 	om.c \
+	path.c \
 	reg.c \
 	rtl.c \
 	rtlstr.c \

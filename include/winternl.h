@@ -327,6 +327,19 @@ typedef enum
     MemoryBasicInformation = 0
 } MEMORY_INFORMATION_CLASS;
 
+/* return type of RtlDetermineDosPathNameType_U (FIXME: not the correct names) */
+typedef enum
+{
+    INVALID_PATH = 0,
+    UNC_PATH,              /* "//foo" */
+    ABSOLUTE_DRIVE_PATH,   /* "c:/foo" */
+    RELATIVE_DRIVE_PATH,   /* "c:foo" */
+    ABSOLUTE_PATH,         /* "/foo" */
+    RELATIVE_PATH,         /* "foo" */
+    DEVICE_PATH,           /* "//./foo" */
+    UNC_DOT_PATH           /* "//." */
+} DOS_PATHNAME_TYPE;
+
 /***********************************************************************
  * IA64 specific types and data structures
  */
@@ -935,6 +948,7 @@ void      WINAPI RtlDeleteResource(LPRTL_RWLOCK);
 DWORD     WINAPI RtlDeleteSecurityObject(DWORD);
 DWORD     WINAPI RtlDestroyEnvironment(DWORD);
 HANDLE    WINAPI RtlDestroyHeap(HANDLE);
+DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U(PCWSTR);
 BOOLEAN   WINAPI RtlDosPathNameToNtPathName_U(LPWSTR,PUNICODE_STRING,DWORD,DWORD);
 WCHAR     WINAPI RtlDowncaseUnicodeChar(WCHAR);
 NTSTATUS  WINAPI RtlDowncaseUnicodeString(UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
@@ -979,8 +993,9 @@ DWORD     WINAPI RtlFreeSid(PSID);
 void      WINAPI RtlFreeUnicodeString(PUNICODE_STRING);
 
 DWORD     WINAPI RtlGetAce(PACL,DWORD,LPVOID *);
-NTSTATUS  WINAPI RtlGetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,PBOOLEAN,PACL *,PBOOLEAN);
 NTSTATUS  WINAPI RtlGetControlSecurityDescriptor(PSECURITY_DESCRIPTOR, PSECURITY_DESCRIPTOR_CONTROL,LPDWORD);
+NTSTATUS  WINAPI RtlGetDaclSecurityDescriptor(PSECURITY_DESCRIPTOR,PBOOLEAN,PACL *,PBOOLEAN);
+ULONG     WINAPI RtlGetFullPathName_U(PCWSTR,ULONG,PWSTR,PWSTR*);
 NTSTATUS  WINAPI RtlGetGroupSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID *,PBOOLEAN);
 BOOLEAN   WINAPI RtlGetNtProductType(LPDWORD);
 NTSTATUS  WINAPI RtlGetOwnerSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID *,PBOOLEAN);
@@ -1005,6 +1020,7 @@ BOOL      WINAPI RtlInitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 NTSTATUS  WINAPI RtlInt64ToUnicodeString(ULONGLONG,ULONG,UNICODE_STRING *);
 NTSTATUS  WINAPI RtlIntegerToChar(ULONG,ULONG,ULONG,PCHAR);
 NTSTATUS  WINAPI RtlIntegerToUnicodeString(ULONG,ULONG,UNICODE_STRING *);
+ULONG     WINAPI RtlIsDosDeviceName_U(PCWSTR);
 BOOLEAN   WINAPI RtlIsNameLegalDOS8Dot3(PUNICODE_STRING,POEM_STRING,PBOOLEAN);
 DWORD     WINAPI RtlIsTextUnicode(LPVOID,DWORD,DWORD *);
 

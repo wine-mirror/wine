@@ -3,6 +3,7 @@ error.ok
 generated.ok
 large_int.ok
 ntdll_test.exe.spec.c
+path.ok
 rtl.ok
 rtlbitmap.ok
 rtlstr.ok
