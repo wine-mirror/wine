@@ -46,7 +46,10 @@ typedef struct _GUID
 
 typedef GUID *LPGUID;
 typedef GUID CLSID,*LPCLSID;
+#ifndef __IID_DEFINED__
+#define __IID_DEFINED__
 typedef GUID IID,*LPIID;
+#endif /* ndef __IID_DEFINED__ */
 typedef GUID FMTID,*LPFMTID;
 
 #if defined(__cplusplus) && !defined(CINTERFACE)
