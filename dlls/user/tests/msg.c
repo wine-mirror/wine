@@ -769,6 +769,7 @@ static const struct message WmSetScrollRangeHV_NC_Seq[] =
 static int after_end_dialog;
 static int sequence_cnt, sequence_size;
 static struct message* sequence;
+static int log_all_parent_messages;
 
 static void add_message(const struct message *msg)
 {
@@ -2834,6 +2835,13 @@ static const struct message WmInvalidateRgn[] = {
     { 0 }
 };
 
+static const struct message WmGetUpdateRect[] = {
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_PAINT, sent },
+    { 0 }
+};
+
 static const struct message WmInvalidateFull[] = {
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -2862,6 +2870,14 @@ static const struct message WmInvalidateErasePaint[] = {
     { 0 }
 };
 
+static const struct message WmInvalidateErasePaint2[] = {
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
 static const struct message WmErase[] = {
     { WM_ERASEBKGND, sent },
     { 0 }
@@ -2872,10 +2888,90 @@ static const struct message WmPaint[] = {
     { 0 }
 };
 
+static const struct message WmParentOnlyPaint[] = {
+    { WM_PAINT, sent|parent },
+    { 0 }
+};
+
+static const struct message WmInvalidateParent[] = {
+    { WM_NCPAINT, sent|parent },
+    { WM_GETTEXT, sent|defwinproc|parent|optional },
+    { WM_ERASEBKGND, sent|parent },
+    { 0 }
+};
+
+static const struct message WmInvalidateParentChild[] = {
+    { WM_NCPAINT, sent|parent },
+    { WM_GETTEXT, sent|defwinproc|parent|optional },
+    { WM_ERASEBKGND, sent|parent },
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
+static const struct message WmInvalidateParentChild2[] = {
+    { WM_ERASEBKGND, sent|parent },
+    { WM_NCPAINT, sent },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
+static const struct message WmParentPaint[] = {
+    { WM_PAINT, sent|parent },
+    { WM_PAINT, sent },
+    { 0 }
+};
+
+static const struct message WmParentPaintNc[] = {
+    { WM_PAINT, sent|parent },
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+static const struct message WmChildPaintNc[] = {
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+static const struct message WmParentErasePaint[] = {
+    { WM_PAINT, sent|parent },
+    { WM_NCPAINT, sent|parent|beginpaint },
+    { WM_GETTEXT, sent|parent|beginpaint|defwinproc|optional },
+    { WM_ERASEBKGND, sent|parent|beginpaint },
+    { WM_PAINT, sent },
+    { WM_NCPAINT, sent|beginpaint },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+static const struct message WmParentOnlyNcPaint[] = {
+    { WM_PAINT, sent|parent },
+    { WM_NCPAINT, sent|parent|beginpaint },
+    { WM_GETTEXT, sent|parent|beginpaint|defwinproc|optional },
+    { 0 }
+};
+
+static const struct message WmSetParentStyle[] = {
+    { WM_STYLECHANGING, sent|parent },
+    { WM_STYLECHANGED, sent|parent },
+    { 0 }
+};
+
 static void test_paint_messages(void)
 {
     RECT rect;
+    POINT pt;
     MSG msg;
+    HWND hparent, hchild;
     HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
     HRGN hrgn2 = CreateRectRgn( 0, 0, 0, 0 );
     HWND hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
@@ -2884,6 +2980,11 @@ static void test_paint_messages(void)
 
     ShowWindow( hwnd, SW_SHOW );
     UpdateWindow( hwnd );
+
+    /* try to flush pending X expose events */
+    MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+
     check_update_rgn( hwnd, 0 );
     SetRectRgn( hrgn, 10, 10, 20, 20 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE );
@@ -2959,12 +3060,12 @@ static void test_paint_messages(void)
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_ERASE );
     SetRectRgn( hrgn, 0, 0, 50, 50 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOERASE | RDW_UPDATENOW );
-    ok_sequence( WmPaint, "Paint", FALSE );
+    ok_sequence( WmPaint, "Paint", TRUE );
 
     flush_sequence();
     SetRectRgn( hrgn, -4, -4, -2, -2 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | RDW_FRAME );
-    SetRectRgn( hrgn, -4, -4, -3, -3 );
+    SetRectRgn( hrgn, -200, -200, -198, -198 );
     RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOFRAME | RDW_ERASENOW );
     ok_sequence( WmEmptySeq, "EmptySeq", FALSE );
 
@@ -3001,13 +3102,219 @@ static void test_paint_messages(void)
             ret = GetUpdateRect( hwnd, &rect, TRUE );
             ok( !ret, "Invalid GetUpdateRect result %d\n", ret );
         }
-        else DispatchMessage( &msg );
+        DispatchMessage( &msg );
     }
-    ok_sequence( WmInvalidateRgn, "InvalidateRgn", FALSE );
+    ok_sequence( WmGetUpdateRect, "GetUpdateRect", FALSE );
+
+    DestroyWindow( hwnd );
+
+    /* now test with a child window */
+
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE | WS_BORDER,
+                           10, 10, 100, 100, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+
+    ShowWindow( hparent, SW_SHOW );
+    UpdateWindow( hparent );
+    UpdateWindow( hchild );
+    /* try to flush pending X expose events */
+    MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+
+    flush_sequence();
+    log_all_parent_messages++;
+
+    SetRect( &rect, 0, 0, 50, 50 );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW | RDW_ALLCHILDREN );
+    ok_sequence( WmInvalidateParentChild, "InvalidateParentChild", FALSE );
+
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    pt.x = pt.y = 0;
+    MapWindowPoints( hchild, hparent, &pt, 1 );
+    SetRectRgn( hrgn, 0, 0, 50 - pt.x, 50 - pt.y );
+    check_update_rgn( hchild, hrgn );
+    SetRectRgn( hrgn, 0, 0, 50, 50 );
+    check_update_rgn( hparent, hrgn );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmInvalidateParent, "InvalidateParent", FALSE );
+    RedrawWindow( hchild, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmEmptySeq, "EraseNow child", FALSE );
+
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentPaintNc, "WmParentPaintNc", FALSE );
+
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmInvalidateParent, "InvalidateParent2", FALSE );
+    RedrawWindow( hchild, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmEmptySeq, "EraseNow child", FALSE );
+
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW | RDW_ALLCHILDREN );
+    ok_sequence( WmInvalidateParentChild2, "InvalidateParentChild2", FALSE );
+
+    SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) | WS_CLIPCHILDREN );
+    flush_sequence();
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmInvalidateParentChild, "InvalidateParentChild3", FALSE );
+
+    /* flush all paint messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+
+    /* RDW_UPDATENOW on child with WS_CLIPCHILDREN doesn't change corresponding parent area */
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
+    SetRectRgn( hrgn, 0, 0, 50, 50 );
+    check_update_rgn( hparent, hrgn );
+    RedrawWindow( hchild, NULL, 0, RDW_UPDATENOW );
+    ok_sequence( WmInvalidateErasePaint2, "WmInvalidateErasePaint2", FALSE );
+    SetRectRgn( hrgn, 0, 0, 50, 50 );
+    check_update_rgn( hparent, hrgn );
+
+    /* flush all paint messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) & ~WS_CLIPCHILDREN );
+    flush_sequence();
+
+    /* RDW_UPDATENOW on child without WS_CLIPCHILDREN will validate corresponding parent area */
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetRectRgn( hrgn, 0, 0, 50, 50 );
+    check_update_rgn( hparent, hrgn );
+    RedrawWindow( hchild, NULL, 0, RDW_UPDATENOW );
+    ok_sequence( WmInvalidateErasePaint2, "WmInvalidateErasePaint2", FALSE );
+    SetRectRgn( hrgn2, 10, 10, 50, 50 );
+    CombineRgn( hrgn, hrgn, hrgn2, RGN_DIFF );
+    check_update_rgn( hparent, hrgn );
+    /* flush all paint messages */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+
+    /* same as above but parent gets completely validated */
+    SetRect( &rect, 20, 20, 30, 30 );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetRectRgn( hrgn, 20, 20, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+    RedrawWindow( hchild, NULL, 0, RDW_UPDATENOW );
+    ok_sequence( WmInvalidateErasePaint2, "WmInvalidateErasePaint2", FALSE );
+    check_update_rgn( hparent, 0 );  /* no update region */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "WmEmpty", FALSE );  /* and no paint messages */
+
+    /* make sure RDW_VALIDATE on child doesn't have the same effect */
+    flush_sequence();
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetRectRgn( hrgn, 20, 20, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+    RedrawWindow( hchild, NULL, 0, RDW_VALIDATE | RDW_NOERASE );
+    SetRectRgn( hrgn, 20, 20, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+
+    /* same as above but normal WM_PAINT doesn't validate parent */
+    flush_sequence();
+    SetRect( &rect, 20, 20, 30, 30 );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    SetRectRgn( hrgn, 20, 20, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+    /* no WM_PAINT in child while parent still pending */
+    while (PeekMessage( &msg, hchild, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "No WM_PAINT", FALSE );
+    while (PeekMessage( &msg, hparent, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentErasePaint, "WmParentErasePaint", FALSE );
+
+    flush_sequence();
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME );
+    /* no WM_PAINT in child while parent still pending */
+    while (PeekMessage( &msg, hchild, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "No WM_PAINT", FALSE );
+    RedrawWindow( hparent, &rect, 0, RDW_VALIDATE | RDW_NOERASE | RDW_NOCHILDREN );
+    /* now that parent is valid child should get WM_PAINT */
+    while (PeekMessage( &msg, hchild, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmInvalidateErasePaint2, "WmInvalidateErasePaint2", FALSE );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "No other message", FALSE );
+
+    /* same thing with WS_CLIPCHILDREN in parent */
+    flush_sequence();
+    SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) | WS_CLIPCHILDREN );
+    ok_sequence( WmSetParentStyle, "WmSetParentStyle", FALSE );
+    /* changing style invalidates non client area, but we need to invalidate something else to see it */
+    RedrawWindow( hparent, &rect, 0, RDW_UPDATENOW );
+    ok_sequence( WmEmptySeq, "No message", FALSE );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_UPDATENOW );
+    ok_sequence( WmParentOnlyNcPaint, "WmParentOnlyNcPaint", FALSE );
+
+    flush_sequence();
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+    SetRectRgn( hrgn, 20, 20, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+    /* no WM_PAINT in child while parent still pending */
+    while (PeekMessage( &msg, hchild, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmEmptySeq, "No WM_PAINT", FALSE );
+    /* WM_PAINT in parent first */
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentPaintNc, "WmParentPaintNc2", FALSE );
+
+    /* no RDW_ERASE in parent still causes RDW_ERASE and RDW_FRAME in child */
+    flush_sequence();
+    SetRect( &rect, 0, 0, 30, 30 );
+    RedrawWindow( hparent, &rect, 0, RDW_INVALIDATE | RDW_ALLCHILDREN );
+    SetRectRgn( hrgn, 0, 0, 30, 30 );
+    check_update_rgn( hparent, hrgn );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentPaintNc, "WmParentPaintNc3", FALSE );
+
+    /* validate doesn't cause RDW_NOERASE or RDW_NOFRAME in child */
+    flush_sequence();
+    SetRect( &rect, -10, 0, 30, 30 );
+    RedrawWindow( hchild, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
+    SetRect( &rect, 0, 0, 20, 20 );
+    RedrawWindow( hparent, &rect, 0, RDW_VALIDATE | RDW_ALLCHILDREN );
+    RedrawWindow( hparent, NULL, 0, RDW_UPDATENOW );
+    ok_sequence( WmChildPaintNc, "WmChildPaintNc", FALSE );
+
+    /* validate doesn't cause RDW_NOERASE or RDW_NOFRAME in child */
+    flush_sequence();
+    SetRect( &rect, -10, 0, 30, 30 );
+    RedrawWindow( hchild, &rect, 0, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE );
+    SetRect( &rect, 0, 0, 100, 100 );
+    RedrawWindow( hparent, &rect, 0, RDW_VALIDATE | RDW_ALLCHILDREN );
+    RedrawWindow( hparent, NULL, 0, RDW_UPDATENOW );
+    ok_sequence( WmEmptySeq, "WmChildPaintNc2", FALSE );
+    RedrawWindow( hparent, NULL, 0, RDW_ERASENOW );
+    ok_sequence( WmEmptySeq, "WmChildPaintNc3", FALSE );
+
+    /* test RDW_INTERNALPAINT behavior */
+
+    flush_sequence();
+    RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT | RDW_NOCHILDREN );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentOnlyPaint, "WmParentOnlyPaint", FALSE );
+
+    RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT | RDW_ALLCHILDREN );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentPaint, "WmParentPaint", FALSE );
+
+    RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentOnlyPaint, "WmParentOnlyPaint", FALSE );
+
+    SetWindowLong( hparent, GWL_STYLE, GetWindowLong(hparent,GWL_STYLE) & ~WS_CLIPCHILDREN );
+    ok_sequence( WmSetParentStyle, "WmSetParentStyle", FALSE );
+    RedrawWindow( hparent, NULL, 0, RDW_INTERNALPAINT );
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence( WmParentPaint, "WmParentPaint", FALSE );
+
+    log_all_parent_messages--;
+    DestroyWindow( hparent );
 
     DeleteObject( hrgn );
     DeleteObject( hrgn2 );
-    DestroyWindow( hwnd );
 }
 
 struct wnd_event
@@ -3454,12 +3761,14 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
 static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
+    static long beginpaint_counter = 0;
     LRESULT ret;
     struct message msg;
 
     trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
-    if (message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
+    if (log_all_parent_messages ||
+        message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
 	message == WM_SETFOCUS || message == WM_KILLFOCUS ||
 	message == WM_ENABLE ||	message == WM_ENTERIDLE ||
 	message == WM_IME_SETCONTEXT)
@@ -3467,9 +3776,20 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
+        if (beginpaint_counter) msg.flags |= beginpaint;
         msg.wParam = wParam;
         msg.lParam = lParam;
         add_message(&msg);
+    }
+
+    if (message == WM_PAINT)
+    {
+        PAINTSTRUCT ps;
+        beginpaint_counter++;
+        BeginPaint( hwnd, &ps );
+        beginpaint_counter--;
+        EndPaint( hwnd, &ps );
+        return 0;
     }
 
     defwndproc_counter++;
