@@ -369,7 +369,7 @@ static HRESULT WINAPI IDirectSoundBuffer_GetCaps(
 ) {
 	caps->dwSize = sizeof(*caps);
 	caps->dwFlags = DSBCAPS_PRIMARYBUFFER|DSBCAPS_STATIC|DSBCAPS_CTRLALL|DSBCAPS_LOCSOFTWARE;
-	caps->dwBufferBytes = 0;
+	caps->dwBufferBytes = 65536;
 	caps->dwUnlockTransferRate = 0;
 	caps->dwPlayCpuOverhead = 0;
 	return DS_OK;
@@ -493,7 +493,7 @@ static HRESULT WINAPI IDirectSound_GetCaps(LPDIRECTSOUND this,LPDSCAPS caps) {
 	TRACE(dsound,"(flags=0x%08lx)\n",caps->dwFlags);
 
 	caps->dwSize = sizeof(*caps);
-	caps->dwFlags = DSCAPS_PRIMARYSTEREO|DSCAPS_PRIMARY16BIT|DSCAPS_EMULDRIVER|DSCAPS_SECONDARYSTEREO|DSCAPS_SECONDARY16BIT;
+	caps->dwFlags = DSCAPS_PRIMARYSTEREO|DSCAPS_PRIMARY16BIT|DSCAPS_SECONDARYSTEREO|DSCAPS_SECONDARY16BIT;
 	/* FIXME: query OSS */
 	caps->dwMinSecondarySampleRate = 22050;
 	caps->dwMaxSecondarySampleRate = 48000;
@@ -503,10 +503,12 @@ static HRESULT WINAPI IDirectSound_GetCaps(LPDIRECTSOUND this,LPDSCAPS caps) {
 }
 
 static ULONG WINAPI IDirectSound_AddRef(LPDIRECTSOUND this) {
+	TRACE(dsound,"(%p), ref was %d\n",this,this->ref);
 	return ++(this->ref);
 }
 
 static ULONG WINAPI IDirectSound_Release(LPDIRECTSOUND this) {
+	TRACE(dsound,"(%p), ref was %d\n",this,this->ref);
 	if (!--(this->ref)) {
 		HeapFree(GetProcessHeap(),0,this);
 		dsound = NULL;
@@ -922,11 +924,11 @@ DSOUND_thread(LPVOID arg) {
 		if (!dsound->nrofbuffers) {
 			/* no soundbuffer yet... wait. */
 			Sleep(1000);
+			dsound->lpvtbl->fnRelease(dsound);
 			continue;
 		}
 		memset(playbuf,0,sizeof(playbuf));
 		playing = 0;
-		dsound->lpvtbl->fnAddRef(dsound); 
 		haveprimary = 0;
 		for (i=dsound->nrofbuffers;i--;) {
 			IDirectSoundBuffer	*dsb = dsound->buffers[i];
