@@ -764,6 +764,9 @@ x11drv/libx11drv.$(LIBEXT): dummy libuser32.$(LIBEXT) libgdi32.$(LIBEXT) \
 
 # Misc rules
 
+$(SUBDIRS:%=%/__test__): dummy
+	@cd `dirname $@` && $(MAKE) test
+
 $(SUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 
@@ -773,6 +776,8 @@ $(SUBDIRS:%=%/__debug_channels__): dummy
 install:: $(SUBDIRS:%=%/__install__)
 
 uninstall:: $(SUBDIRS:%=%/__uninstall__)
+
+test:: $(SUBDIRS:%=%/__test__)
 
 checklink:: $(SUBDIRS:%=%/__checklink__)
 

@@ -36,6 +36,10 @@ lib$(MODULE).dll: $(ALL_OBJS) Makefile.in
 checklink:: lib$(MODULE).$(LIBEXT)
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) $(ALL_LIBS) && $(RM) checklink
 
+# Rules for testing
+
+$(TESTRESULTS): lib$(MODULE).$(LIBEXT)
+
 # Rules for debug channels
 
 debug_channels: dummy

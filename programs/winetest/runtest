@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Wrapper script to run tests from inside the Wine tree
+#
+# Usage: runtest $TOPOBJDIR input_file [flags...]
+#
+usage()
+{
+    echo "Usage: $0 \$TOPOBJDIR input_file [flags]"
+    exit 1
+}
+
+if [ $# -lt 2 ]
+then
+    usage
+fi
+
+if [ -d "$1" ]
+then
+    topobjdir=`cd "$1" && pwd`
+else
+    echo "$1 is not a directory"
+    usage
+fi
+LD_LIBRARY_PATH="$topobjdir/dlls:$topobjdir:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
+WINESERVER="$topobjdir/server/wineserver"
+export WINESERVER
+WINELOADER="$topobjdir/wine"
+export WINELOADER
+testdir=`dirname "$0"`
+infile="$2"
+shift 2
+exec $topobjdir/programs/winetest/winetest -- -I "$testdir" $infile $@

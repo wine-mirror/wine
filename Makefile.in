@@ -1,13 +1,15 @@
 # This Makefile understands the following targets:
 #
-# all (default):	build wine
-# clean:		remove all intermediate files
-# distclean:		also remove all files created by configure
-# install:              install everything
-# uninstall:		uninstall everything
-# depend:		create the dependencies
-# etags:		create a TAGS file for Emacs.
-# manpages:		compile manpages for Wine API
+# all (default):   build wine
+# clean:           remove all intermediate files
+# distclean:       also remove all files created by configure
+# test:            run tests
+# testclean:       clean test results to force running all tests again
+# install:         install everything
+# uninstall:       uninstall everything
+# depend:          create the dependencies
+# etags:           create a TAGS file for Emacs.
+# manpages:        compile manpages for Wine API
 #
 
 # Directories
@@ -129,6 +131,10 @@ uninstall_programs: dummy
 checklink::
 	@cd dlls && $(MAKE) checklink
 	@cd debugger && $(MAKE) checklink
+
+test::
+	@cd programs/winetest && $(MAKE) test
+	@cd dlls && $(MAKE) test
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`

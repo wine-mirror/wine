@@ -31,6 +31,10 @@ $(MODULE): $(MODULE).so
 checklink:: $(MODULE).so
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c $(MODULE).so $(ALL_LIBS) && $(RM) checklink
 
+# Rules for testing
+
+$(TESTRESULTS): $(MODULE).so
+
 # Rules for debug channels
 
 debug_channels: dummy
