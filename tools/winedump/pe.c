@@ -566,6 +566,144 @@ static void	dump_separate_dbg(void)
     }
 }
 
+static void dump_unicode_str( const WCHAR *str, int len )
+{
+    if (len == -1) for (len = 0; str[len]; len++) ;
+    printf( "L\"");
+    while (len-- > 0 && *str)
+    {
+        WCHAR c = *str++;
+        switch (c)
+        {
+        case '\n': printf( "\\n" ); break;
+        case '\r': printf( "\\r" ); break;
+        case '\t': printf( "\\t" ); break;
+        case '"':  printf( "\\\"" ); break;
+        case '\\': printf( "\\\\" ); break;
+        default:
+            if (c >= ' ' && c <= 126) putchar(c);
+            else printf( "\\u%04x",c);
+        }
+    }
+    printf( "\"" );
+}
+
+static const char *get_resource_type( int id )
+{
+    static const char *types[] =
+    {
+        NULL,
+        "CURSOR",
+        "BITMAP",
+        "ICON",
+        "MENU",
+        "DIALOG",
+        "STRING",
+        "FONTDIR",
+        "FONT",
+        "ACCELERATOR",
+        "RCDATA",
+        "MESSAGETABLE",
+        "GROUP_CURSOR",
+        NULL,
+        "GROUP_ICON",
+        NULL,
+        "VERSION",
+        "DLGINCLUDE",
+        NULL,
+        "PLUGPLAY",
+        "VXD",
+        "ANICURSOR",
+        "ANIICON",
+        "HTML"
+    };
+
+    if (id < sizeof(types)/sizeof(types[0])) return types[id];
+    return NULL;
+}
+
+static void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix )
+{
+    int i, j;
+
+    printf( "%s", prefix );
+    for (i = 0; i < size; i++)
+    {
+        printf( "%02x%c", ptr[i], (i % 16 == 7) ? '-' : ' ' );
+        if ((i % 16) == 15)
+        {
+            printf( " " );
+            for (j = 0; j < 16; j++)
+                printf( "%c", isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.' );
+            if (i < size-1) printf( "\n%s", prefix );
+        }
+    }
+    if (i % 16)
+    {
+        printf( "%*s ", 3 * (16-(i%16)), "" );
+        for (j = 0; j < i % 16; j++)
+            printf( "%c", isprint(ptr[i-(i%16)+j]) ? ptr[i-(i%16)+j] : '.' );
+    }
+    printf( "\n" );
+}
+
+static void dump_dir_resource(void)
+{
+    const IMAGE_RESOURCE_DIRECTORY *root = get_dir(IMAGE_FILE_RESOURCE_DIRECTORY);
+    const IMAGE_RESOURCE_DIRECTORY *namedir;
+    const IMAGE_RESOURCE_DIRECTORY *langdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *e1, *e2, *e3;
+    const IMAGE_RESOURCE_DIR_STRING_U *string;
+    const IMAGE_RESOURCE_DATA_ENTRY *data;
+    int i, j, k;
+
+    if (!root) return;
+
+    printf( "Resources:" );
+
+    for (i = 0; i< root->NumberOfNamedEntries + root->NumberOfIdEntries; i++)
+    {
+        e1 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(root + 1) + i;
+        namedir = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + e1->u2.s3.OffsetToDirectory);
+        for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
+        {
+            e2 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(namedir + 1) + j;
+            langdir = (IMAGE_RESOURCE_DIRECTORY *)((char *)root + e2->u2.s3.OffsetToDirectory);
+            for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
+            {
+                e3 = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(langdir + 1) + k;
+
+                printf( "\n  " );
+                if (e1->u1.s1.NameIsString)
+                {
+                    string = (PIMAGE_RESOURCE_DIR_STRING_U)((char *)root + e1->u1.s1.NameOffset);
+                    dump_unicode_str( string->NameString, string->Length );
+                }
+                else
+                {
+                    const char *type = get_resource_type( e1->u1.s2.Id );
+                    if (type) printf( "%s", type );
+                    else printf( "%04x", e1->u1.s2.Id );
+                }
+
+                printf( " Name=" );
+                if (e2->u1.s1.NameIsString)
+                {
+                    string = (PIMAGE_RESOURCE_DIR_STRING_U) ((char *)root + e2->u1.s1.NameOffset);
+                    dump_unicode_str( string->NameString, string->Length );
+                }
+                else
+                    printf( "%04x", e2->u1.s2.Id );
+
+                printf( " Language=%04x:\n", e3->u1.s2.Id );
+                data = (IMAGE_RESOURCE_DATA_ENTRY *)((char *)root + e3->u2.OffsetToData);
+                dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+            }
+        }
+    }
+    printf( "\n\n" );
+}
+
 static	void	do_dump(void)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
@@ -592,10 +730,10 @@ static	void	do_dump(void)
 	    dump_dir_exported_functions();
 	if (all || !strcmp(globals.dumpsect, "debug"))
 	    dump_dir_debug();
-#if 0
-	/* FIXME: not implemented yet */
 	if (all || !strcmp(globals.dumpsect, "resource"))
 	    dump_dir_resource();
+#if 0
+	/* FIXME: not implemented yet */
 	if (all || !strcmp(globals.dumpsect, "reloc"))
 	    dump_dir_reloc();
 #endif
