@@ -28,17 +28,26 @@ typedef struct
   BOOL16    bPending;
 } QSMCTRL;
 
-/* Per-queue system windows */
+/* Per-queue data for the message queue
+ * Note that we currently only store the current values for
+ * Active, Capture and Focus windows currently.
+ * It might be necessary to store a pointer to the system message queue
+ * as well since windows 9x maintains per thread system message queues
+ */
 typedef struct tagPERQUEUEDATA      
 {
-  HWND32    hWndCapture;
-  HWND32    hWndFocus;
-  HWND32    hWndActive;
+  HWND32    hWndFocus;              /* Focus window */
+  HWND32    hWndActive;             /* Active window */
+  HWND32    hWndCapture;            /* Capture window */
+  INT16     nCaptureHT;             /* Capture info (hit-test) */
+  ULONG     ulRefCount;             /* Reference count */
+  CRITICAL_SECTION cSection;        /* Critical section for thread safe access */
 } PERQUEUEDATA;
 
+/* Message queue */
 typedef struct tagMESSAGEQUEUE
 {
-  HQUEUE16  next;                   /* NNext queue */
+  HQUEUE16  next;                   /* Next queue */
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   THDB*     thdb;                   /* Thread owning queue */
   HANDLE32  hEvent;                 /* Event handle */
@@ -84,7 +93,7 @@ typedef struct tagMESSAGEQUEUE
   HANDLE16  hCurHook;               /* Current hook */
   HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
 
-  HANDLE16  hPerQueue;              /* handle on PERQUEUEDATA structure */
+  PERQUEUEDATA *pQData;             /* pointer to (shared) PERQUEUEDATA structure */
   
 } MESSAGEQUEUE;
 
@@ -99,6 +108,20 @@ typedef struct tagMESSAGEQUEUE
 
 #define QUEUE_MAGIC        0xD46E80AF
 
+/* Per queue data management methods */
+PERQUEUEDATA* PERQDATA_CreateInstance( );
+ULONG PERQDATA_Addref( PERQUEUEDATA* pQData );
+ULONG PERQDATA_Release( PERQUEUEDATA* pQData );
+HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData );
+HWND32 PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND32 hWndFocus );
+HWND32 PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData );
+HWND32 PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND32 hWndActive );
+HWND32 PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData );
+HWND32 PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND32 hWndCapture );
+INT16  PERQDATA_GetCaptureInfo( PERQUEUEDATA *pQData );
+INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT );
+    
+/* Message queue management methods */
 extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );

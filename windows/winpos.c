@@ -53,7 +53,6 @@
 
 /* ----- internal variables ----- */
 
-static HWND32 hwndActive      = 0;  /* Currently active window */
 static HWND32 hwndPrevActive  = 0;  /* Previously active window */
 static HWND32 hGlobalShellWindow=0; /*the shell*/
 
@@ -76,14 +75,27 @@ BOOL32 WINPOS_CreateInternalPosAtom()
  *
  * Called when a window is destroyed.
  */
-void WINPOS_CheckInternalPos( HWND32 hwnd )
+void WINPOS_CheckInternalPos( WND* wndPtr )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS) GetProp32A( hwnd, atomInternalPos );
+    LPINTERNALPOS lpPos;
+    MESSAGEQUEUE *pMsgQ = 0;
+    HWND32 hwnd = wndPtr->hwndSelf;
+
+    lpPos = (LPINTERNALPOS) GetProp32A( hwnd, atomInternalPos );
+
+    /* Retrieve the message queue associated with this window */
+    pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
+    if ( !pMsgQ )
+    {
+        WARN( win, "\tMessage queue not found. Exiting!\n" );
+        return;
+    }
 
     if( hwnd == hwndPrevActive ) hwndPrevActive = 0;
-    if( hwnd == hwndActive )
+
+    if( hwnd == PERQDATA_GetActiveWnd( pMsgQ->pQData ) )
     {
-	hwndActive = 0; 
+        PERQDATA_SetActiveWnd( pMsgQ->pQData, 0 );
 	WARN(win, "\tattempt to activate destroyed window!\n");
     }
 
@@ -93,6 +105,9 @@ void WINPOS_CheckInternalPos( HWND32 hwnd )
 	    DestroyWindow32( lpPos->hwndIconTitle );
 	HeapFree( SystemHeap, 0, lpPos );
     }
+
+    QUEUE_Unlock( pMsgQ );
+    return;
 }
 
 /***********************************************************************
@@ -680,7 +695,7 @@ BOOL32 WINAPI IsZoomed32(HWND32 hWnd)
  */
 HWND16 WINAPI GetActiveWindow16(void)
 {
-    return (HWND16)hwndActive;
+    return (HWND16)GetActiveWindow32();
 }
 
 /*******************************************************************
@@ -688,7 +703,21 @@ HWND16 WINAPI GetActiveWindow16(void)
  */
 HWND32 WINAPI GetActiveWindow32(void)
 {
-    return (HWND32)hwndActive;
+    MESSAGEQUEUE *pCurMsgQ = 0;
+    HWND32 hwndActive = 0;
+
+    /* Get the messageQ for the current thread */
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+{
+        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        return 0;
+    }
+
+    /* Return the current active window from the perQ data of the current message Q */
+    hwndActive = PERQDATA_GetActiveWnd( pCurMsgQ->pQData );
+
+    QUEUE_Unlock( pCurMsgQ );
+    return hwndActive;
 }
 
 
@@ -717,12 +746,45 @@ HWND16 WINAPI SetActiveWindow16( HWND16 hwnd )
  */
 HWND32 WINAPI SetActiveWindow32( HWND32 hwnd )
 {
-    HWND32 prev = hwndActive;
+    HWND32 prev = 0;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
+    MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
 
     if ( !WINPOS_CanActivate(wndPtr) ) return 0;
 
+    /* Get the messageQ for the current thread */
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    {
+        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        goto CLEANUP;
+    }
+    
+    /* Retrieve the message queue associated with this window */
+    pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
+    if ( !pMsgQ )
+    {
+        WARN( win, "\tWindow message queue not found. Exiting!\n" );
+        goto CLEANUP;
+    }
+
+    /* Make sure that the window is associated with the calling threads
+     * message queue. It must share the same perQ data.
+     */
+    if ( pCurMsgQ->pQData != pMsgQ->pQData )
+        goto CLEANUP;
+    
+    /* Save current active window */
+    prev = PERQDATA_GetActiveWnd( pMsgQ->pQData );
+    
     WINPOS_SetActiveWindow( hwnd, 0, 0 );
+
+CLEANUP:
+    /* Unlock the queues before returning */
+    if ( pMsgQ )
+        QUEUE_Unlock( pMsgQ );
+    if ( pCurMsgQ )
+        QUEUE_Unlock( pCurMsgQ );
+    
     return prev;
 }
 
@@ -1460,10 +1522,21 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     CBTACTIVATESTRUCT16* cbtStruct;
     WND*     wndPtr, *wndTemp;
     HQUEUE16 hOldActiveQueue, hNewActiveQueue;
+    MESSAGEQUEUE *pOldActiveQueue = 0, *pNewActiveQueue = 0;
     WORD     wIconized = 0;
+    HWND32   hwndActive = 0;
+    BOOL32   bRet = 0;
+
+    /* Get current active window from the active queue */
+    if ( hActiveQueue )
+    {
+        pOldActiveQueue = QUEUE_Lock( hActiveQueue );
+        if ( pOldActiveQueue )
+            hwndActive = PERQDATA_GetActiveWnd( pOldActiveQueue->pQData );
+    }
 
     /* paranoid checks */
-    if( hWnd == GetDesktopWindow32() || hWnd == hwndActive ) return 0;
+    if( hWnd == GetDesktopWindow32() || hWnd == hwndActive ) goto CLEANUP;
 
 /*  if (wndPtr && (GetFastQueue() != wndPtr->hmemTaskQ))
  *	return 0;
@@ -1485,15 +1558,23 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         wRet = HOOK_CallHooks16( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
                                  (LPARAM)SEGPTR_GET(cbtStruct) );
         SEGPTR_FREE(cbtStruct);
-        if (wRet) return wRet;
+        if (wRet)
+        {
+            /* Unlock the active queue before returning */
+            if ( pOldActiveQueue )
+                QUEUE_Unlock( pOldActiveQueue );
+            return wRet;
+        }
     }
 
     /* set prev active wnd to current active wnd and send notification */
     if ((hwndPrevActive = hwndActive) && IsWindow32(hwndPrevActive))
     {
+        MESSAGEQUEUE *pTempActiveQueue = 0;
+        
         if (!SendMessage32A( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
         {
-	    if (GetSysModalWindow16() != hWnd) return 0;
+	    if (GetSysModalWindow16() != hWnd) goto CLEANUP;
 	    /* disregard refusal if hWnd is sysmodal */
         }
 
@@ -1508,12 +1589,24 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 				MAKELPARAM( (HWND16)hWnd, wIconized ) );
 #endif
 
-	/* check if something happened during message processing */
-	if( hwndPrevActive != hwndActive ) return 0;
+        /* check if something happened during message processing
+         * (global active queue may have changed)
+         */
+        pTempActiveQueue = QUEUE_Lock( hActiveQueue );
+        hwndActive = PERQDATA_GetActiveWnd( pTempActiveQueue->pQData );
+        QUEUE_Unlock( pTempActiveQueue );
+        if( hwndPrevActive != hwndActive )
+            goto CLEANUP;
     }
 
-    /* set active wnd */
+    /* Set new active window in the message queue */
     hwndActive = hWnd;
+    if ( wndPtr )
+    {
+        pNewActiveQueue = QUEUE_Lock( wndPtr->hmemTaskQ );
+        if ( pNewActiveQueue )
+            PERQDATA_SetActiveWnd( pNewActiveQueue->pQData, hwndActive );
+    }
 
     /* send palette messages */
     if (hWnd && SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
@@ -1532,9 +1625,10 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 	if( wndTemp != wndPtr )
 	    SetWindowPos32(hWnd, HWND_TOP, 0,0,0,0, 
 			   SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
-        if (!IsWindow32(hWnd)) return 0;
+        if (!IsWindow32(hWnd))  goto CLEANUP;
     }
 
+    /* Get a handle to the new active queue */
     hNewActiveQueue = wndPtr ? wndPtr->hmemTaskQ : 0;
 
     /* send WM_ACTIVATEAPP if necessary */
@@ -1570,7 +1664,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
             HeapFree( SystemHeap, 0, list );
         }
         
-	if (!IsWindow32(hWnd)) return 0;
+	if (!IsWindow32(hWnd)) goto CLEANUP;
     }
 
     if (hWnd)
@@ -1592,13 +1686,13 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
                       MAKELPARAM( (HWND16)hwndPrevActive, wIconized) );
 #endif
 
-        if( !IsWindow32(hWnd) ) return 0;
+        if( !IsWindow32(hWnd) ) goto CLEANUP;
     }
 
     /* change focus if possible */
     if( fChangeFocus && GetFocus32() )
 	if( WIN_GetTopParent(GetFocus32()) != hwndActive )
-	    FOCUS_SwitchFocus( GetFocus32(),
+	    FOCUS_SwitchFocus( pNewActiveQueue, GetFocus32(),
 			       (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
 			       0:
 			       hwndActive
@@ -1610,7 +1704,16 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     /* if active wnd is minimized redraw icon title */
     if( IsIconic32(hwndActive) ) WINPOS_RedrawIconTitle(hwndActive);
 
-    return (hWnd == hwndActive);
+    bRet = 1;  // Success
+    
+CLEANUP:
+
+    /* Unlock the message queues before returning */
+    if ( pOldActiveQueue )
+        QUEUE_Unlock( pOldActiveQueue );
+    if ( pNewActiveQueue )
+        QUEUE_Unlock( pNewActiveQueue );
+    return bRet ? (hWnd == hwndActive) : 0;
 }
 
 /*******************************************************************
@@ -1622,6 +1725,18 @@ BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
 {
   BOOL32	bRet = 0;
   WND*  	pWndTo = NULL;
+    HWND32       hwndActive = 0;
+
+    /* Get current active window from the active queue */
+    if ( hActiveQueue )
+    {
+        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
+        if ( pActiveQueue )
+        {
+            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
+            QUEUE_Unlock( pActiveQueue );
+        }
+    }
 
   if( pWnd->hwndSelf == hwndPrevActive )
       hwndPrevActive = 0;
@@ -1663,6 +1778,18 @@ BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd)
 BOOL32 WINPOS_ChangeActiveWindow( HWND32 hWnd, BOOL32 mouseMsg )
 {
     WND *wndPtr = WIN_FindWndPtr(hWnd);
+    HWND32 hwndActive = 0;
+
+    /* Get current active window from the active queue */
+    if ( hActiveQueue )
+    {
+        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
+        if ( pActiveQueue )
+        {
+            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
+            QUEUE_Unlock( pActiveQueue );
+        }
+    }
 
     if (!hWnd) return WINPOS_SetActiveWindow( 0, mouseMsg, TRUE );
 
@@ -2063,6 +2190,18 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     int 	result = 0;
     UINT32 	uFlags = 0;
     BOOL32      resync = FALSE;
+    HWND32      hwndActive = 0;
+
+    /* Get current active window from the active queue */
+    if ( hActiveQueue )
+    {
+        MESSAGEQUEUE *pActiveQueue = QUEUE_Lock( hActiveQueue );
+        if ( pActiveQueue )
+        {
+            hwndActive = PERQDATA_GetActiveWnd( pActiveQueue->pQData );
+            QUEUE_Unlock( pActiveQueue );
+        }
+    }
 
     TRACE(win,"hwnd %04x, (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
@@ -2393,6 +2532,10 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 
 	if (hwnd == CARET_GetHwnd()) DestroyCaret32();
 
+        /* FIXME: This will cause the window to be activated irrespective
+         * of whether it is owned by the same thread.
+         * Should this behaviour be allowed in SetWindowPos?
+         */
 	if (winpos.hwnd == hwndActive)
 	    WINPOS_ActivateOtherWindow( wndPtr );
     }

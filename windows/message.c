@@ -122,7 +122,8 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
     else 
     {
 	pWnd = WIN_FindWndPtr(hWnd);
-	ht = EVENT_GetCaptureInfo();
+        if (queue)
+            ht = PERQDATA_GetCaptureInfo( queue->pQData );
     }
 
 	/* stop if not the right queue */

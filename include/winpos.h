@@ -41,7 +41,7 @@ extern LONG WINPOS_SendNCCalcSize(HWND32 hwnd, BOOL32 calcValidRect,
 extern LONG WINPOS_HandleWindowPosChanging16(WND *wndPtr, WINDOWPOS16 *winpos);
 extern LONG WINPOS_HandleWindowPosChanging32(WND *wndPtr, WINDOWPOS32 *winpos);
 extern INT16 WINPOS_WindowFromPoint( WND* scopeWnd, POINT16 pt, WND **ppWnd );
-extern void WINPOS_CheckInternalPos( HWND32 hwnd );
+extern void WINPOS_CheckInternalPos( WND* wndPtr );
 extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
 extern BOOL32 WINPOS_CreateInternalPosAtom(void);
 

@@ -20,6 +20,8 @@
 #include "server.h"
 #include "stackframe.h"
 #include "debug.h"
+#include "queue.h"
+#include "hook.h"
 
 #ifndef __i386__
 THDB *pCurrentThread;
@@ -788,25 +790,79 @@ BOOL32 WINAPI GetThreadTimes(
  * RETURNS
  *    Success: TRUE
  *    Failure: FALSE
+ *
+ * TODO:
+ *    1. Reset the Key State (currenly per thread key state is not maintained)
  */
 BOOL32 WINAPI AttachThreadInput( 
     DWORD idAttach,   /* [in] Thread to attach */
     DWORD idAttachTo, /* [in] Thread to attach to */
     BOOL32 fAttach)   /* [in] Attach or detach */
 {
-    BOOL32 ret;
+    MESSAGEQUEUE *pSrcMsgQ = 0, *pTgtMsgQ = 0;
+    BOOL16 bRet = 0;
 
-    FIXME(thread, "(0x%08lx,0x%08lx,%d): stub\n",idAttach,idAttachTo,fAttach);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    if (fAttach) {
-        /* Attach threads */
-        ret = FALSE;
+
+    /* A thread cannot attach to itself */
+    if ( idAttach == idAttachTo )
+        goto CLEANUP;
+
+    /* According to the docs this method should fail if a
+     * "Journal record" hook is installed. (attaches all input queues together)
+     */
+    if ( HOOK_IsHooked( WH_JOURNALRECORD ) )
+        goto CLEANUP;
+        
+    /* Retrieve message queues corresponding to the thread id's */
+    pTgtMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue( idAttach ) );
+    pSrcMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetThreadQueue( idAttachTo ) );
+
+    /* Ensure we have message queues and that Src and Tgt threads
+     * are not system threads.
+     */
+    if ( !pSrcMsgQ || !pTgtMsgQ || !pSrcMsgQ->pQData || !pTgtMsgQ->pQData )
+        goto CLEANUP;
+
+    if (fAttach)   /* Attach threads */
+    {
+        /* Only attach if currently detached  */
+        if ( pTgtMsgQ->pQData != pSrcMsgQ->pQData )
+        {
+            /* First release the target threads perQData */
+            PERQDATA_Release( pTgtMsgQ->pQData );
+        
+            /* Share a reference to the source threads perQDATA */
+            PERQDATA_Addref( pSrcMsgQ->pQData );
+            pTgtMsgQ->pQData = pSrcMsgQ->pQData;
+        }
     }
-    else {
-        /* Detach threads */
-        ret = FALSE;
-    };
-    return ret;
+    else    /* Detach threads */
+    {
+        /* Only detach if currently attached */
+        if ( pTgtMsgQ->pQData == pSrcMsgQ->pQData )
+        {
+            /* First release the target threads perQData */
+            PERQDATA_Release( pTgtMsgQ->pQData );
+        
+            /* Give the target thread its own private perQDATA once more */
+            pTgtMsgQ->pQData = PERQDATA_CreateInstance();
+        }
+    }
+
+    /* TODO: Reset the Key State */
+
+    bRet = 1;      // Success
+    
+CLEANUP:
+
+    /* Unlock the queues before returning */
+    if ( pSrcMsgQ )
+        QUEUE_Unlock( pSrcMsgQ );
+    if ( pTgtMsgQ )
+        QUEUE_Unlock( pTgtMsgQ );
+    
+    return bRet;
 }
 
 /**********************************************************************

@@ -11,6 +11,8 @@
 #include "ldt.h"
 #include "windows.h"
 #include "winproc.h"
+#include "queue.h"
+
 
 #define WND_MAGIC     0x444e4957  /* 'WIND' */
 
@@ -172,6 +174,6 @@ extern HWND32 ICONTITLE_Create( WND* );
 extern BOOL32 ICONTITLE_Init( void );
 
 /* windows/focus.c */
-extern void FOCUS_SwitchFocus( HWND32 , HWND32 );
+extern void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND32 , HWND32 );
 
 #endif  /* __WINE_WIN_H */

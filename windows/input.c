@@ -27,9 +27,8 @@
 #include "debugtools.h"
 #include "struct32.h"
 #include "winerror.h"
+#include "task.h"
 
-static INT16  captureHT = HTCLIENT;
-static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;
 static BOOL32 SwappedButtons = FALSE;
 
@@ -274,7 +273,20 @@ BOOL32 WINAPI SwapMouseButton32( BOOL32 fSwap )
  */
 HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 {
-    HWND32 capturePrev = captureWnd;
+    HWND32 capturePrev = 0, captureWnd = 0;
+    MESSAGEQUEUE *pMsgQ = 0, *pCurMsgQ = 0;
+    WND* wndPtr = 0;
+    INT16 captureHT = 0;
+
+    /* Get the messageQ for the current thread */
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+    {
+        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        goto CLEANUP;
+    }
+    
+    /* Get the current capture window from the perQ data of the current message Q */
+    capturePrev = PERQDATA_GetCaptureWnd( pCurMsgQ->pQData );
 
     if (!hwnd)
     {
@@ -283,7 +295,7 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
     }
     else
     {
-        WND* wndPtr = WIN_FindWndPtr( hwnd );
+        wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr)
         {
             TRACE(win, "(0x%04x)\n", hwnd );
@@ -292,22 +304,47 @@ HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
         }
     }
 
-    if( capturePrev && capturePrev != captureWnd )
+    /* Update the perQ capture window and send messages */
+    if( capturePrev != captureWnd )
+    {
+        if (wndPtr)
+        {
+            /* Retrieve the message queue associated with this window */
+            pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
+            if ( !pMsgQ )
+            {
+                WARN( win, "\tMessage queue not found. Exiting!\n" );
+                goto CLEANUP;
+            }
+    
+            /* Make sure that message queue for the window we are setting capture to
+             * shares the same perQ data as the current threads message queue.
+             */
+            if ( pCurMsgQ->pQData != pMsgQ->pQData )
+                goto CLEANUP;
+        }
+
+        PERQDATA_SetCaptureWnd( pCurMsgQ->pQData, captureWnd );
+        PERQDATA_SetCaptureInfo( pCurMsgQ->pQData, captureHT );
+        
+        if( capturePrev )
     {
         WND* wndPtr = WIN_FindWndPtr( capturePrev );
         if( wndPtr && (wndPtr->flags & WIN_ISWIN32) )
             SendMessage32A( capturePrev, WM_CAPTURECHANGED, 0L, hwnd);
     }
+}
+
+CLEANUP:
+    /* Unlock the queues before returning */
+    if ( pMsgQ )
+        QUEUE_Unlock( pMsgQ );
+    if ( pCurMsgQ )
+        QUEUE_Unlock( pCurMsgQ );
+    
     return capturePrev;
 }
 
-/**********************************************************************
- *              EVENT_GetCaptureInfo
- */
-INT16 EVENT_GetCaptureInfo()
-{
-    return captureHT;
-}
 
 /**********************************************************************
  *              SetCapture16   (USER.18)
@@ -332,8 +369,7 @@ HWND32 WINAPI SetCapture32( HWND32 hwnd )
  */
 void WINAPI ReleaseCapture(void)
 {
-    TRACE(win, "captureWnd=%04x\n", captureWnd );
-    if( captureWnd ) EVENT_Capture( 0, 0 );
+    EVENT_Capture( 0, 0 );
 }
 
 
@@ -342,7 +378,7 @@ void WINAPI ReleaseCapture(void)
  */
 HWND16 WINAPI GetCapture16(void)
 {
-    return captureWnd;
+    return (HWND16)GetCapture32();
 }
 
 /**********************************************************************
@@ -350,7 +386,21 @@ HWND16 WINAPI GetCapture16(void)
  */
 HWND32 WINAPI GetCapture32(void)
 {
-    return captureWnd;
+    MESSAGEQUEUE *pCurMsgQ = 0;
+    HWND32 hwndCapture = 0;
+
+    /* Get the messageQ for the current thread */
+    if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
+{
+        TRACE( win, "GetCapture32:  Current message queue not found. Exiting!\n" );
+        return 0;
+    }
+    
+    /* Get the current capture window from the perQ data of the current message Q */
+    hwndCapture = PERQDATA_GetCaptureWnd( pCurMsgQ->pQData );
+
+    QUEUE_Unlock( pCurMsgQ );
+    return hwndCapture;
 }
 
 /**********************************************************************

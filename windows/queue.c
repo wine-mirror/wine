@@ -1,5 +1,4 @@
-/*
- * Message queues related functions
+/* * Message queues related functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
  */
@@ -16,6 +15,7 @@
 #include "heap.h"
 #include "thread.h"
 #include "process.h"
+#include <assert.h>
 #include "debug.h"
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
@@ -24,6 +24,7 @@ static HQUEUE16 hFirstQueue = 0;
 static HQUEUE16 hExitingQueue = 0;
 static HQUEUE16 hmemSysMsgQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
+static PERQUEUEDATA *pQDataWin16 = NULL;  /* Global perQData for Win16 tasks */
 
 static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
 static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
@@ -33,9 +34,266 @@ HQUEUE16 hActiveQueue = 0;
 
 
 /***********************************************************************
+ *           PERQDATA_CreateInstance
+ *
+ * Creates an instance of a reference counted PERQUEUEDATA element
+ * for the message queue. perQData is stored globally for 16 bit tasks.
+ *
+ * Note: We don't implement perQdata exactly the same way Windows does.
+ * Each perQData element is reference counted since it may be potentially
+ * shared by multiple message Queues (via AttachThreadInput).
+ * We only store the current values for Active, Capture and focus windows
+ * currently.
+ */
+PERQUEUEDATA * PERQDATA_CreateInstance( )
+{
+    PERQUEUEDATA *pQData;
+    
+    BOOL16 bIsWin16 = 0;
+    
+    TRACE(msg,"()\n");
+
+    /* Share a single instance of perQData for all 16 bit tasks */
+    if ( ( bIsWin16 = THREAD_IsWin16( THREAD_Current() ) ) )
+    {
+        /* If previously allocated, just bump up ref count */
+        if ( pQDataWin16 )
+        {
+            PERQDATA_Addref( pQDataWin16 );
+            return pQDataWin16;
+        }
+    }
+
+    /* Allocate PERQUEUEDATA from the system heap */
+    if (!( pQData = (PERQUEUEDATA *) HeapAlloc( SystemHeap, 0,
+                                                    sizeof(PERQUEUEDATA) ) ))
+        return 0;
+
+    /* Initialize */
+    pQData->hWndCapture = pQData->hWndFocus = pQData->hWndActive = 0;
+    pQData->ulRefCount = 1;
+    pQData->nCaptureHT = HTCLIENT;
+
+    /* Note: We have an independent critical section for the per queue data
+     * since this may be shared by different threads. see AttachThreadInput()
+     */
+    InitializeCriticalSection( &pQData->cSection );
+
+    /* Save perQData globally for 16 bit tasks */
+    if ( bIsWin16 )
+        pQDataWin16 = pQData;
+        
+    return pQData;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_Addref
+ *
+ * Increment reference count for the PERQUEUEDATA instance
+ * Returns reference count for debugging purposes
+ */
+ULONG PERQDATA_Addref( PERQUEUEDATA *pQData )
+{
+    assert(pQData != 0 );
+    TRACE(msg,"(): current refcount %lu ...\n", pQData->ulRefCount);
+
+    EnterCriticalSection( &pQData->cSection );
+    ++pQData->ulRefCount;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return pQData->ulRefCount;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_Release
+ *
+ * Release a reference to a PERQUEUEDATA instance.
+ * Destroy the instance if no more references exist
+ * Returns reference count for debugging purposes
+ */
+ULONG PERQDATA_Release( PERQUEUEDATA *pQData )
+{
+    assert(pQData != 0 );
+    TRACE(msg,"(): current refcount %lu ...\n",
+          (LONG)pQData->ulRefCount );
+
+    EnterCriticalSection( &pQData->cSection );
+    if ( --pQData->ulRefCount == 0 )
+    {
+        LeaveCriticalSection( &pQData->cSection );
+        DeleteCriticalSection( &pQData->cSection );
+
+        TRACE(msg,"(): deleting PERQUEUEDATA instance ...\n" );
+
+        /* Deleting our global 16 bit perQData? */
+        if ( pQData == pQDataWin16 )
+            pQDataWin16 = 0;
+            
+        /* Free the PERQUEUEDATA instance */
+        HeapFree( SystemHeap, 0, pQData );
+
+        return 0;
+    }
+    LeaveCriticalSection( &pQData->cSection );
+
+    return pQData->ulRefCount;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_GetFocusWnd
+ *
+ * Get the focus hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_GetFocusWnd( PERQUEUEDATA *pQData )
+{
+    HWND32 hWndFocus;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndFocus = pQData->hWndFocus;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndFocus;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_SetFocusWnd
+ *
+ * Set the focus hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_SetFocusWnd( PERQUEUEDATA *pQData, HWND32 hWndFocus )
+{
+    HWND32 hWndFocusPrv;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndFocusPrv = pQData->hWndFocus;
+    pQData->hWndFocus = hWndFocus;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndFocusPrv;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_GetActiveWnd
+ *
+ * Get the active hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_GetActiveWnd( PERQUEUEDATA *pQData )
+{
+    HWND32 hWndActive;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndActive = pQData->hWndActive;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndActive;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_SetActiveWnd
+ *
+ * Set the active focus hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_SetActiveWnd( PERQUEUEDATA *pQData, HWND32 hWndActive )
+{
+    HWND32 hWndActivePrv;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndActivePrv = pQData->hWndActive;
+    pQData->hWndActive = hWndActive;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndActivePrv;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_GetCaptureWnd
+ *
+ * Get the capture hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_GetCaptureWnd( PERQUEUEDATA *pQData )
+{
+    HWND32 hWndCapture;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndCapture = pQData->hWndCapture;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndCapture;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_SetCaptureWnd
+ *
+ * Set the capture hwnd member in a threadsafe manner
+ */
+HWND32 PERQDATA_SetCaptureWnd( PERQUEUEDATA *pQData, HWND32 hWndCapture )
+{
+    HWND32 hWndCapturePrv;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    hWndCapturePrv = pQData->hWndCapture;
+    pQData->hWndCapture = hWndCapture;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return hWndCapturePrv;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_GetCaptureInfo
+ *
+ * Get the capture info member in a threadsafe manner
+ */
+INT16 PERQDATA_GetCaptureInfo( PERQUEUEDATA *pQData )
+{
+    INT16 nCaptureHT;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    nCaptureHT = pQData->nCaptureHT;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return nCaptureHT;
+}
+
+
+/***********************************************************************
+ *           PERQDATA_SetCaptureInfo
+ *
+ * Set the capture info member in a threadsafe manner
+ */
+INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT )
+{
+    INT16 nCaptureHTPrv;
+    assert(pQData != 0 );
+
+    EnterCriticalSection( &pQData->cSection );
+    nCaptureHTPrv = pQData->nCaptureHT;
+    pQData->nCaptureHT = nCaptureHT;
+    LeaveCriticalSection( &pQData->cSection );
+
+    return nCaptureHTPrv;
+}
+
+
+/***********************************************************************
  *	     QUEUE_Lock
  *
- * Fonction for getting a 32 bit pointer on queue strcture. For thread
+ * Function for getting a 32 bit pointer on queue strcture. For thread
  * safeness programmers should use this function instead of GlobalLock to
  * retrieve a pointer on the structure. QUEUE_Unlock should also be called
  * when access to the queue structure is not required anymore.
@@ -57,6 +315,7 @@ MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue )
 
     return queue;
 }
+
 
 /***********************************************************************
  *	     QUEUE_Unlock
@@ -169,13 +428,13 @@ void QUEUE_SetExitingQueue( HQUEUE16 hQueue )
  *
  * Creates a message queue. Doesn't link it into queue list!
  */
-static HQUEUE16 QUEUE_CreateMsgQueue( )
+static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 {
     HQUEUE16 hQueue;
     MESSAGEQUEUE * msgQueue;
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
 
-    TRACE(msg,"Creating message queue...\n");
+    TRACE(msg,"(): Creating message queue...\n");
 
     if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT,
                                   sizeof(MESSAGEQUEUE) )))
@@ -192,6 +451,9 @@ static HQUEUE16 QUEUE_CreateMsgQueue( )
     InitializeCriticalSection( &msgQueue->cSection );
     msgQueue->lockCount = 1;
     msgQueue->magic = QUEUE_MAGIC;
+    
+    /* Create and initialize our per queue data */
+    msgQueue->pQData = bCreatePerQData ? PERQDATA_CreateInstance() : NULL;
     
     return hQueue;
 }
@@ -211,7 +473,7 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     HQUEUE16  senderQ;
     HQUEUE16 *pPrev;
 
-    TRACE(msg,"Deleting message queue %04x\n", hQueue);
+    TRACE(msg,"(): Deleting message queue %04x\n", hQueue);
 
     if (!hQueue || !msgQueue)
     {
@@ -238,6 +500,13 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 
     SYSTEM_LOCK();
 
+    /* Release per queue data if present */
+    if ( msgQueue->pQData )
+    {
+        PERQDATA_Release( msgQueue->pQData );
+        msgQueue->pQData = 0;
+    }
+    
     /* remove the message queue from the global link list */
     pPrev = &hFirstQueue;
     while (*pPrev && (*pPrev != hQueue))
@@ -266,7 +535,10 @@ BOOL32 QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
  */
 BOOL32 QUEUE_CreateSysMsgQueue( int size )
 {
-    if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( ))) return FALSE;
+    /* Note: We dont need perQ data for the system message queue */
+    if (!(hmemSysMsgQueue = QUEUE_CreateMsgQueue( FALSE )))
+        return FALSE;
+    
     sysMsgQueue = (MESSAGEQUEUE *) GlobalLock16( hmemSysMsgQueue );
     return TRUE;
 }
@@ -947,7 +1219,7 @@ HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
     if ( !hQueue )
     {
         /* Create thread message queue */
-        if( !(hQueue = QUEUE_CreateMsgQueue( 0 )))
+        if( !(hQueue = QUEUE_CreateMsgQueue( TRUE )))
         {
             WARN(msg, "failed!\n");
             return FALSE;

@@ -59,7 +59,6 @@ extern BOOL32 EVENT_Pending(void);
 /* input.c */
 
 extern HWND32 EVENT_Capture( HWND32, INT16 );
-extern INT16 EVENT_GetCaptureInfo(void);
 extern BOOL32 EVENT_QueryPointer( DWORD *posX, DWORD *posY, DWORD *state );
 
 extern void joySendMessages(void);

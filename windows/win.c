@@ -282,7 +282,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
 
-    WINPOS_CheckInternalPos( hwnd );
+    WINPOS_CheckInternalPos( wndPtr );
     if( hwnd == GetCapture32()) ReleaseCapture();
 
     /* free resources associated with the window */
@@ -1322,6 +1322,8 @@ BOOL32 WINAPI EnableWindow32( HWND32 hwnd, BOOL32 enable )
 {
     WND *wndPtr;
 
+    TRACE(win,"EnableWindow32: ( %x, %d )\n", hwnd, enable);
+   
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
     if (enable && (wndPtr->dwStyle & WS_DISABLED))
     {
@@ -1335,9 +1337,13 @@ BOOL32 WINAPI EnableWindow32( HWND32 hwnd, BOOL32 enable )
 	  /* Disable window */
 	wndPtr->dwStyle |= WS_DISABLED;
 	if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32() ))
+        {
 	    SetFocus32( 0 );  /* A disabled window can't have the focus */
+        }
 	if ((hwnd == GetCapture32()) || IsChild32( hwnd, GetCapture32() ))
+        {
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
+        }
 	SendMessage32A( hwnd, WM_ENABLE, FALSE, 0 );
 	return FALSE;
     }
