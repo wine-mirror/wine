@@ -733,18 +733,19 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
 
     if (elf_info->flags & ELF_INFO_MODULE)
     {
+        struct elf_module_info *elf_module_info = 
+            HeapAlloc(GetProcessHeap(), 0, sizeof(struct elf_module_info));
+        if (!elf_module_info) goto leave;
         elf_info->module = module_new(pcs, filename, DMT_ELF, 
-                                      (load_offset) ? load_offset : start, 
-                                      size, 0, 0);
-        if (!elf_info->module) goto leave;
-        elf_info->module->elf_info = HeapAlloc(GetProcessHeap(), 
-                                               0, sizeof(struct elf_module_info));
-        if (elf_info->module->elf_info == NULL) 
+                                        (load_offset) ? load_offset : start, 
+                                        size, 0, 0);
+        if (!elf_info->module)
         {
-            ERR("OOM\n");
-            exit(0); /* FIXME */
+            HeapFree(GetProcessHeap(), 0, elf_module_info);
+            goto leave;
         }
-            elf_info->module->elf_info->elf_addr = load_offset;
+        elf_info->module->elf_info = elf_module_info;
+        elf_info->module->elf_info->elf_addr = load_offset;
 
         if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         {
