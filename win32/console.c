@@ -106,7 +106,7 @@ CONSOLE_string_to_IR( HANDLE hConsoleInput,unsigned char *buf,int len) {
 	    );
 	    ir.Event.KeyEvent.uChar.AsciiChar = inchar;
 
-	    if (inchar==127) { /* backspace */
+	    if ((inchar==127)||(inchar=='\b')) { /* backspace */
 	    	ir.Event.KeyEvent.uChar.AsciiChar = '\b'; /* FIXME: hmm */
 		ir.Event.KeyEvent.wVirtualScanCode = 0x0e;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK;
