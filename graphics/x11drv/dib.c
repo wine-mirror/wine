@@ -271,48 +271,1274 @@ static INT X11DRV_DIB_GetNearestIndex(RGBQUAD *colormap, int numColors, BYTE r, 
     }
     return best;
 }
+/*********************************************************************
+ *         X11DRV_DIB_MaskToShift
+ *
+ * Helper for X11DRV_DIB_GetDIBits.
+ * Returns the by how many bits to shift a given color so that it is 
+ * in the proper position.
+ */
+static INT X11DRV_DIB_MaskToShift(DWORD mask)
+{
+    int shift;
+
+    if (mask==0)
+        return 0;
+
+    shift=0;
+    while ((mask&1)==0) {
+        mask>>=1;
+        shift++;
+    }
+    return shift;
+}
 
 /***********************************************************************
- *           X11DRV_DIB_SetImageBits_1_Line
+ *           X11DRV_DIB_Convert_any_asis
  *
- * Handles a single line of 1 bit data.
+ * All X11DRV_DIB_Convert_Xxx functions take at least the following 
+ * parameters:
+ * - width
+ *   This is the width in pixel of the surface to copy. This may be less 
+ *   than the full width of the image.
+ * - height
+ *   The number of lines to copy. This may be less than the full height
+ *   of the image. This is always >0.
+ * - srcbits
+ *   Points to the first byte containing data to be copied. If the source
+ *   surface starts are coordinates (x,y) then this is:
+ *   image_ptr+x*bytes_pre_pixel+y*bytes_per_line
+ *   (with further adjustments for top-down/bottom-up images)
+ * - srclinebytes
+ *   This is the number of bytes per line. It may be >0 or <0 depending on
+ *   whether this is a top-down or bottom-up image.
+ * - dstbits
+ *   Same as srcbits but for the destination
+ * - dstlinebytes
+ *   Same as srclinebytes but for the destination.
+ *
+ * Notes:
+ * - The supported Dib formats are: pal1, pal4, pal8, rgb555, bgr555, 
+ *   rgb565, bgr565, rgb888 and any 32bit (0888) format.
+ *   The supported XImage (Bmp) formats are: pal1, pal4, pal8, 
+ *   rgb555, bgr555, rgb565, bgr565, rgb888, bgr888, rgb0888, bgr0888.
+ * - Rgb formats are those for which the masks are such that:
+ *   red_mask > green_mask > blue_mask
+ * - Bgr formats are those for which the masks sort in the other direction.
+ * - Many conversion functions handle both rgb->bgr and bgr->rgb conversions
+ *   so the comments use h, g, l to mean respectively the source color in the 
+ *   high bits, the green, and the source color in the low bits.
  */
-static void X11DRV_DIB_SetImageBits_1_Line(DWORD dstwidth, int left, int *colors,
-				    XImage *bmpImage, int h, const BYTE *bits)
+static void X11DRV_DIB_Convert_any_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
 {
-    BYTE pix, extra;
-    DWORD i, x;
+    int y;
 
-    if((extra = (left & 7)) != 0) {
-        left &= ~7;
-	dstwidth += extra;
+    width=abs(dstlinebytes);
+    for (y=0; y<height; y++) {
+        memcpy(dstbits, srcbits, width);
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+/*
+ * 15 bit conversions
+ */
+
+static void X11DRV_DIB_Convert_555_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 10) & 0x7c007c00) | /* h */
+                        ( srcval        & 0x03e003e0) | /* g */
+                        ((srcval >> 10) & 0x001f001f);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval << 10) & 0x7c00) | /* h */
+                               ( srcval        & 0x03e0) | /* g */
+                               ((srcval >> 10) & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_565_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 1) & 0xffc0ffc0) | /* h, g */
+                        ((srcval >> 4) & 0x00200020) | /* g - 1 bit */
+                        ( srcval       & 0x001f001f);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval << 1) & 0xffc0) | /* h, g */
+                               ((srcval >> 4) & 0x0020) | /* g - 1 bit */
+                                (srcval       & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_565_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 10) & 0x001f001f) | /* h */
+                        ((srcval <<  1) & 0x07c007c0) | /* g */
+                        ((srcval >>  4) & 0x00200020) | /* g - 1 bit */
+                        ((srcval << 11) & 0xf800f800);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval >> 10) & 0x001f) | /* h */
+                               ((srcval <<  1) & 0x07c0) | /* g */
+                               ((srcval >>  4) & 0x0020) | /* g - 1 bit */
+                               ((srcval << 11) & 0xf800);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=((srcval <<  3) & 0xf8) | /* l */
+                        ((srcval >>  2) & 0x07);  /* l - 3 bits */
+            dstpixel[1]=((srcval >>  2) & 0xf8) | /* g */
+                        ((srcval >>  7) & 0x07);  /* g - 3 bits */
+            dstpixel[2]=((srcval >>  7) & 0xf8) | /* h */
+                        ((srcval >> 12) & 0x07);  /* h - 3 bits */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=((srcval >>  7) & 0xf8) | /* h */
+                        ((srcval >> 12) & 0x07);  /* h - 3 bits */
+            dstpixel[1]=((srcval >>  2) & 0xf8) | /* g */
+                        ((srcval >>  7) & 0x07);  /* g - 3 bits */
+            dstpixel[2]=((srcval <<  3) & 0xf8) | /* l */
+                        ((srcval >>  2) & 0x07);  /* l - 3 bits */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_0888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 9) & 0xf80000) | /* h */
+                        ((srcval << 4) & 0x070000) | /* h - 3 bits */
+                        ((srcval << 6) & 0x00f800) | /* g */
+                        ((srcval << 1) & 0x000700) | /* g - 3 bits */
+                        ((srcval << 3) & 0x0000f8) | /* l */
+                        ((srcval >> 2) & 0x000007);  /* l - 3 bits */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_555_to_0888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >>  7) & 0x0000f8) | /* h */
+                        ((srcval >> 12) & 0x000007) | /* h - 3 bits */
+                        ((srcval <<  6) & 0x00f800) | /* g */
+                        ((srcval <<  1) & 0x000700) | /* g - 3 bits */
+                        ((srcval << 19) & 0xf80000) | /* l */
+                        ((srcval << 14) & 0x070000);  /* l - 3 bits */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_5x5_to_any0888(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    WORD rsrc, WORD gsrc, WORD bsrc,
+                                    void* dstbits, int dstlinebytes,
+                                    DWORD rdst, DWORD gdst, DWORD bdst)
+{
+    int rRightShift1,gRightShift1,bRightShift1;
+    int rRightShift2,gRightShift2,bRightShift2;
+    BYTE gMask1,gMask2;
+    int rLeftShift,gLeftShift,bLeftShift;
+    const WORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    /* Note, the source pixel value is shifted left by 16 bits so that
+     * we know we will always have to shift right to extract the components.
+     */
+    rRightShift1=16+X11DRV_DIB_MaskToShift(rsrc)-3;
+    gRightShift1=16+X11DRV_DIB_MaskToShift(gsrc)-3;
+    bRightShift1=16+X11DRV_DIB_MaskToShift(bsrc)-3;
+    rRightShift2=rRightShift1+5;
+    gRightShift2=gRightShift1+5;
+    bRightShift2=bRightShift1+5;
+    if (gsrc==0x03e0) {
+        /* Green has 5 bits, like the others */
+        gMask1=0xf8;
+        gMask2=0x07;
+    } else {
+        /* Green has 6 bits, not 5. Compensate. */
+        gRightShift1++;
+        gRightShift2+=2;
+        gMask1=0xfc;
+        gMask2=0x03;
     }
 
-    bits += left >> 3;
+    rLeftShift=X11DRV_DIB_MaskToShift(rdst);
+    gLeftShift=X11DRV_DIB_MaskToShift(gdst);
+    bLeftShift=X11DRV_DIB_MaskToShift(bdst);
 
-    /* FIXME: should avoid putting x<left pixels (minor speed issue) */
-    for (i = dstwidth/8, x = left; i > 0; i--)
-    {
-	pix = *bits++;
-	XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 6) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 5) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 4) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 3) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 2) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[(pix >> 1) & 1] );
-	XPutPixel( bmpImage, x++, h, colors[pix & 1] );
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            BYTE red,green,blue;
+            srcval=*srcpixel++ << 16;
+            red=  ((srcval >> rRightShift1) & 0xf8) |
+                  ((srcval >> rRightShift2) & 0x07);
+            green=((srcval >> gRightShift1) & gMask1) |
+                  ((srcval >> gRightShift2) & gMask2);
+            blue= ((srcval >> bRightShift1) & 0xf8) |
+                  ((srcval >> bRightShift2) & 0x07);
+            *dstpixel++=(red   << rLeftShift) |
+                        (green << gLeftShift) |
+                        (blue  << bLeftShift);
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
     }
-    pix = *bits;
-    switch(dstwidth & 7)
-    {
-    case 7: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 6: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 5: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 4: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 3: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 2: XPutPixel( bmpImage, x++, h, colors[pix >> 7] ); pix <<= 1;
-    case 1: XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
+}
+
+/*
+ * 16 bits conversions
+ */
+
+static void X11DRV_DIB_Convert_565_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 11) & 0xf800f800) | /* h */
+                        ( srcval        & 0x07e007e0) | /* g */
+                        ((srcval >> 11) & 0x001f001f);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval << 11) & 0xf800) | /* h */
+                               ( srcval        & 0x07e0) | /* g */
+                               ((srcval >> 11) & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_555_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 1) & 0x7fe07fe0) | /* h, g */
+                        ( srcval       & 0x001f001f);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval >> 1) & 0x7fe0) | /* h, g */
+                               ( srcval       & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_555_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width/2; x++) {
+            /* Do 2 pixels at a time */
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 11) & 0x001f001f) | /* h */
+                        ((srcval >>  1) & 0x03e003e0) | /* g */
+                        ((srcval << 10) & 0x7c007c00);  /* l */
+        }
+        if (width&1) {
+            /* And the the odd pixel */
+            WORD srcval;
+            srcval=*((WORD*)srcpixel);
+            *((WORD*)dstpixel)=((srcval >> 11) & 0x001f) | /* h */
+                               ((srcval >>  1) & 0x03e0) | /* g */
+                               ((srcval << 10) & 0x7c00);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=((srcval <<  3) & 0xf8) | /* l */
+                        ((srcval >>  2) & 0x07);  /* l - 3 bits */
+            dstpixel[1]=((srcval >>  3) & 0xfc) | /* g */
+                        ((srcval >>  9) & 0x03);  /* g - 2 bits */
+            dstpixel[2]=((srcval >>  8) & 0xf8) | /* h */
+                        ((srcval >> 13) & 0x07);  /* h - 3 bits */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=((srcval >>  8) & 0xf8) | /* h */
+                        ((srcval >> 13) & 0x07);  /* h - 3 bits */
+            dstpixel[1]=((srcval >>  3) & 0xfc) | /* g */
+                        ((srcval >>  9) & 0x03);  /* g - 2 bits */
+            dstpixel[2]=((srcval <<  3) & 0xf8) | /* l */
+                        ((srcval >>  2) & 0x07);  /* l - 3 bits */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_0888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 8) & 0xf80000) | /* h */
+                        ((srcval << 3) & 0x070000) | /* h - 3 bits */
+                        ((srcval << 5) & 0x00fc00) | /* g */
+                        ((srcval >> 1) & 0x000300) | /* g - 2 bits */
+                        ((srcval << 3) & 0x0000f8) | /* l */
+                        ((srcval >> 2) & 0x000007);  /* l - 3 bits */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_565_to_0888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const WORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            WORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >>  8) & 0x0000f8) | /* h */
+                        ((srcval >> 13) & 0x000007) | /* h - 3 bits */
+                        ((srcval <<  5) & 0x00fc00) | /* g */
+                        ((srcval >>  1) & 0x000300) | /* g - 2 bits */
+                        ((srcval << 19) & 0xf80000) | /* l */
+                        ((srcval << 14) & 0x070000);  /* l - 3 bits */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+/*
+ * 24 bit conversions
+ */
+
+static void X11DRV_DIB_Convert_888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const BYTE* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            dstpixel[0]=srcpixel[2];
+            dstpixel[1]=srcpixel[1];
+            dstpixel[2]=srcpixel[0];
+            srcpixel+=3;
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_555_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    const BYTE* srcbyte;
+    WORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 words out */
+            DWORD srcval1,srcval2;
+            srcval1=srcpixel[0];
+            dstpixel[0]=((srcval1 >>  3) & 0x001f) | /* l1 */
+                        ((srcval1 >>  6) & 0x03e0) | /* g1 */
+                        ((srcval1 >>  9) & 0x7c00);  /* h1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=((srcval1 >> 27) & 0x001f) | /* l2 */
+                        ((srcval2 <<  2) & 0x03e0) | /* g2 */
+                        ((srcval2 >>  1) & 0x7c00);  /* h2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=((srcval2 >> 19) & 0x001f) | /* l3 */
+                        ((srcval2 >> 22) & 0x03e0) | /* g3 */
+                        ((srcval1 <<  7) & 0x7c00);  /* h3 */
+            dstpixel[3]=((srcval1 >> 11) & 0x001f) | /* l4 */
+                        ((srcval1 >> 14) & 0x03e0) | /* g4 */
+                        ((srcval1 >> 17) & 0x7c00);  /* h4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        srcbyte=(LPBYTE)srcpixel;
+        for (x=0; x<oddwidth; x++) {
+            WORD dstval;
+            dstval =((srcbyte[0] >> 3) & 0x001f);    /* l */
+            dstval|=((srcbyte[1] << 2) & 0x03e0);    /* g */
+            dstval|=((srcbyte[2] << 7) & 0x7c00);    /* h */
+            *dstpixel++=dstval;
+            srcbyte+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_555_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    const BYTE* srcbyte;
+    WORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 words out */
+            DWORD srcval1,srcval2;
+            srcval1=srcpixel[0];
+            dstpixel[0]=((srcval1 <<  7) & 0x7c00) | /* l1 */
+                        ((srcval1 >>  6) & 0x03e0) | /* g1 */
+                        ((srcval1 >> 19) & 0x001f);  /* h1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=((srcval1 >> 17) & 0x7c00) | /* l2 */
+                        ((srcval2 <<  2) & 0x03e0) | /* g2 */
+                        ((srcval2 >> 11) & 0x001f);  /* h2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=((srcval2 >>  9) & 0x7c00) | /* l3 */
+                        ((srcval2 >> 22) & 0x03e0) | /* g3 */
+                        ((srcval1 >>  3) & 0x001f);  /* h3 */
+            dstpixel[3]=((srcval1 >>  1) & 0x7c00) | /* l4 */
+                        ((srcval1 >> 14) & 0x03e0) | /* g4 */
+                        ((srcval1 >> 27) & 0x001f);  /* h4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        srcbyte=(LPBYTE)srcpixel;
+        for (x=0; x<oddwidth; x++) {
+            WORD dstval;
+            dstval =((srcbyte[0] << 7) & 0x7c00);    /* l */
+            dstval|=((srcbyte[1] << 2) & 0x03e0);    /* g */
+            dstval|=((srcbyte[2] >> 3) & 0x001f);    /* h */
+            *dstpixel++=dstval;
+            srcbyte+=3;
+       }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_565_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    const BYTE* srcbyte;
+    WORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 words out */
+            DWORD srcval1,srcval2;
+            srcval1=srcpixel[0];
+            dstpixel[0]=((srcval1 >>  3) & 0x001f) | /* l1 */
+                        ((srcval1 >>  5) & 0x07e0) | /* g1 */
+                        ((srcval1 >>  8) & 0xf800);  /* h1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=((srcval1 >> 27) & 0x001f) | /* l2 */
+                        ((srcval2 <<  3) & 0x07e0) | /* g2 */
+                        ( srcval2        & 0xf800);  /* h2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=((srcval2 >> 19) & 0x001f) | /* l3 */
+                        ((srcval2 >> 21) & 0x07e0) | /* g3 */
+                        ((srcval1 <<  8) & 0xf800);  /* h3 */
+            dstpixel[3]=((srcval1 >> 11) & 0x001f) | /* l4 */
+                        ((srcval1 >> 13) & 0x07e0) | /* g4 */
+                        ((srcval1 >> 16) & 0xf800);  /* h4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        srcbyte=(LPBYTE)srcpixel;
+        for (x=0; x<oddwidth; x++) {
+            WORD dstval;
+            dstval =((srcbyte[0] >> 3) & 0x001f);    /* l */
+            dstval|=((srcbyte[1] << 3) & 0x07e0);    /* g */
+            dstval|=((srcbyte[2] << 8) & 0xf800);    /* h */
+            *dstpixel++=dstval;
+            srcbyte+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_565_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    const BYTE* srcbyte;
+    WORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 words out */
+            DWORD srcval1,srcval2;
+            srcval1=srcpixel[0];
+            dstpixel[0]=((srcval1 <<  8) & 0xf800) | /* l1 */
+                        ((srcval1 >>  5) & 0x07e0) | /* g1 */
+                        ((srcval1 >> 19) & 0x001f);  /* h1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=((srcval1 >> 16) & 0xf800) | /* l2 */
+                        ((srcval2 <<  3) & 0x07e0) | /* g2 */
+                        ((srcval2 >> 11) & 0x001f);  /* h2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=((srcval2 >>  8) & 0xf800) | /* l3 */
+                        ((srcval2 >> 21) & 0x07e0) | /* g3 */
+                        ((srcval1 >>  3) & 0x001f);  /* h3 */
+            dstpixel[3]=(srcval1         & 0xf800) | /* l4 */
+                        ((srcval1 >> 13) & 0x07e0) | /* g4 */
+                        ((srcval1 >> 27) & 0x001f);  /* h4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        srcbyte=(LPBYTE)srcpixel;
+        for (x=0; x<oddwidth; x++) {
+            WORD dstval;
+            dstval =((srcbyte[0] << 8) & 0xf800);    /* l */
+            dstval|=((srcbyte[1] << 3) & 0x07e0);    /* g */
+            dstval|=((srcbyte[2] >> 3) & 0x001f);    /* h */
+            *dstpixel++=dstval;
+            srcbyte+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_0888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 dwords out */
+            DWORD srcval1,srcval2;
+            srcval1=srcpixel[0];
+            dstpixel[0]=( srcval1        & 0x00ffffff);  /* h1, g1, l1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=( srcval1 >> 24) |              /* l2 */
+                        ((srcval2 <<  8) & 0x00ffff00); /* h2, g2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=( srcval2 >> 16) |              /* g3, l3 */
+                        ((srcval1 << 16) & 0x00ff0000); /* h3 */
+            dstpixel[3]=( srcval1 >>  8);               /* h4, g4, l4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        for (x=0; x<oddwidth; x++) {
+            DWORD srcval;
+            srcval=*srcpixel;
+            srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+            *dstpixel++=( srcval         & 0x00ffffff); /* h, g, l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_888_to_0888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 3 dwords in and 4 dwords out */
+            DWORD srcval1,srcval2;
+
+            srcval1=srcpixel[0];
+            dstpixel[0]=((srcval1 >> 16) & 0x0000ff) | /* h1 */
+                        ( srcval1        & 0x00ff00) | /* g1 */
+                        ((srcval1 << 16) & 0xff0000);  /* l1 */
+            srcval2=srcpixel[1];
+            dstpixel[1]=((srcval1 >>  8) & 0xff0000) | /* l2 */
+                        ((srcval2 <<  8) & 0x00ff00) | /* g2 */
+                        ((srcval2 >>  8) & 0x0000ff);  /* h2 */
+            srcval1=srcpixel[2];
+            dstpixel[2]=( srcval2        & 0xff0000) | /* l3 */
+                        ((srcval2 >> 16) & 0x00ff00) | /* g3 */
+                        ( srcval1        & 0x0000ff);  /* h3 */
+            dstpixel[3]=((srcval1 >> 24) & 0x0000ff) | /* h4 */
+                        ((srcval1 >>  8) & 0x00ff00) | /* g4 */
+                        ((srcval1 <<  8) & 0xff0000);  /* l4 */
+            srcpixel+=3;
+            dstpixel+=4;
+        }
+        /* And now up to 3 odd pixels */
+        for (x=0; x<oddwidth; x++) {
+            DWORD srcval;
+            srcval=*srcpixel;
+            srcpixel=(LPDWORD)(((char*)srcpixel)+3);
+            *dstpixel++=((srcval  >> 16) & 0x0000ff) | /* h */
+                        ( srcval         & 0x00ff00) | /* g */
+                        ((srcval  << 16) & 0xff0000);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_rgb888_to_any0888(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes,
+                                    DWORD rdst, DWORD gdst, DWORD bdst)
+{
+    int rLeftShift,gLeftShift,bLeftShift;
+    const BYTE* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    rLeftShift=X11DRV_DIB_MaskToShift(rdst);
+    gLeftShift=X11DRV_DIB_MaskToShift(gdst);
+    bLeftShift=X11DRV_DIB_MaskToShift(bdst);
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            *dstpixel++=(srcpixel[0] << bLeftShift) | /* b */
+                        (srcpixel[1] << gLeftShift) | /* g */
+                        (srcpixel[2] << rLeftShift);  /* r */
+            srcpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_bgr888_to_any0888(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes,
+                                    DWORD rdst, DWORD gdst, DWORD bdst)
+{
+    int rLeftShift,gLeftShift,bLeftShift;
+    const BYTE* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    rLeftShift=X11DRV_DIB_MaskToShift(rdst);
+    gLeftShift=X11DRV_DIB_MaskToShift(gdst);
+    bLeftShift=X11DRV_DIB_MaskToShift(bdst);
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            *dstpixel++=(srcpixel[0] << rLeftShift) | /* r */
+                        (srcpixel[1] << gLeftShift) | /* g */
+                        (srcpixel[2] << bLeftShift);  /* b */
+            srcpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+/*
+ * 32 bit conversions
+ */
+
+static void X11DRV_DIB_Convert_0888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval << 16) & 0x00ff0000) | /* h */
+                        ( srcval        & 0x0000ff00) | /* g */
+                        ((srcval >> 16) & 0x000000ff);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_any(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                    void* dstbits, int dstlinebytes,
+                                    DWORD rdst, DWORD gdst, DWORD bdst)
+{
+    int rRightShift,gRightShift,bRightShift;
+    int rLeftShift,gLeftShift,bLeftShift;
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    int x,y;
+
+    rRightShift=X11DRV_DIB_MaskToShift(rsrc);
+    gRightShift=X11DRV_DIB_MaskToShift(gsrc);
+    bRightShift=X11DRV_DIB_MaskToShift(bsrc);
+    rLeftShift=X11DRV_DIB_MaskToShift(rdst);
+    gLeftShift=X11DRV_DIB_MaskToShift(gdst);
+    bLeftShift=X11DRV_DIB_MaskToShift(bdst);
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=(((srcval >> rRightShift) & 0xff) << rLeftShift) |
+                        (((srcval >> gRightShift) & 0xff) << gLeftShift) |
+                        (((srcval >> bRightShift) & 0xff) << bLeftShift);
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_555_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    WORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 9) & 0x7c00) | /* h */
+                        ((srcval >> 6) & 0x03e0) | /* g */
+                        ((srcval >> 3) & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_555_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    WORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 19) & 0x001f) | /* h */
+                        ((srcval >>  6) & 0x03e0) | /* g */
+                        ((srcval <<  7) & 0x7c00);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_565_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    WORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 8) & 0xf800) | /* h */
+                        ((srcval >> 5) & 0x07e0) | /* g */
+                        ((srcval >> 3) & 0x001f);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_565_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    WORD* dstpixel;
+    int x,y;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=((srcval >> 19) & 0x001f) | /* h */
+                        ((srcval >>  5) & 0x07e0) | /* g */
+                        ((srcval <<  8) & 0xf800);  /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_any0888_to_5x5(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                    void* dstbits, int dstlinebytes,
+                                    WORD rdst, WORD gdst, WORD bdst)
+{
+    int rRightShift,gRightShift,bRightShift;
+    int rLeftShift,gLeftShift,bLeftShift;
+    const DWORD* srcpixel;
+    WORD* dstpixel;
+    int x,y;
+
+    /* Here is how we proceed. Assume we have rsrc=0x0000ff00 and our pixel
+     * contains 0x11223344.
+     * - first we shift 0x11223344 right by rRightShift to bring the most 
+     *   significant bits of the red components in the bottom 5 (or 6) bits
+     *   -> 0x4488c
+     * - then we remove non red bits by anding with the modified rdst (0x1f)
+     *   -> 0x0c
+     * - finally shift these bits left by rLeftShift so that they end up in 
+     *   the right place
+     *   -> 0x3000
+     */
+    rRightShift=X11DRV_DIB_MaskToShift(rsrc)+3;
+    gRightShift=X11DRV_DIB_MaskToShift(gsrc);
+    gRightShift+=(gdst==0x07e0?2:3);
+    bRightShift=X11DRV_DIB_MaskToShift(bsrc)+3;
+
+    rLeftShift=X11DRV_DIB_MaskToShift(rdst);
+    rdst=rdst >> rLeftShift;
+    gLeftShift=X11DRV_DIB_MaskToShift(gdst);
+    gdst=gdst >> gLeftShift;
+    bLeftShift=X11DRV_DIB_MaskToShift(bdst);
+    bdst=bdst >> bLeftShift;
+
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *dstpixel++=(((srcval >> rRightShift) & rdst) << rLeftShift) |
+                        (((srcval >> gRightShift) & gdst) << gLeftShift) |
+                        (((srcval >> bRightShift) & bdst) << bLeftShift);
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_888_asis(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    BYTE* dstbyte;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 4 dwords in and 3 dwords out */
+            DWORD srcval;
+            srcval=((*srcpixel++)       & 0x00ffffff);  /* h1, g1, l1*/
+            *dstpixel++=srcval | ((*srcpixel)   << 24); /* h2 */
+            srcval=((*srcpixel++ >> 8 ) & 0x0000ffff);  /* g2, l2 */
+            *dstpixel++=srcval | ((*srcpixel)   << 16); /* h3, g3 */
+            srcval=((*srcpixel++ >> 16) & 0x000000ff);  /* l3 */
+            *dstpixel++=srcval | ((*srcpixel++) << 8);  /* h4, g4, l4 */
+        }
+        /* And now up to 3 odd pixels */
+        dstbyte=(BYTE*)dstpixel;
+        for (x=0; x<oddwidth; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *((WORD*)dstbyte)++=srcval;                 /* h, g */
+            *dstbyte++=srcval >> 16;                    /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_0888_to_888_reverse(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    void* dstbits, int dstlinebytes)
+{
+    const DWORD* srcpixel;
+    DWORD* dstpixel;
+    BYTE* dstbyte;
+    int x,y;
+    int oddwidth;
+
+    oddwidth=width & 3;
+    width=width/4;
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            /* Do 4 pixels at a time: 4 dwords in and 3 dwords out */
+            DWORD srcval1,srcval2;
+            srcval1=*srcpixel++;
+            srcval2=    ((srcval1 >> 16) & 0x000000ff) | /* h1 */
+                        ( srcval1        & 0x0000ff00) | /* g1 */
+                        ((srcval1 << 16) & 0x00ff0000);  /* l1 */
+            srcval1=*srcpixel++;
+            *dstpixel++=srcval2 |
+                        ((srcval1 <<  8) & 0xff000000);  /* h2 */
+            srcval2=    ((srcval1 >>  8) & 0x000000ff) | /* g2 */
+                        ((srcval1 <<  8) & 0x0000ff00);  /* l2 */
+            srcval1=*srcpixel++;
+            *dstpixel++=srcval2 |
+                        ( srcval1        & 0x00ff0000) | /* h3 */
+                        ((srcval1 << 16) & 0xff000000);  /* g3 */
+            srcval2=    ( srcval1        & 0x000000ff);  /* l3 */
+            srcval1=*srcpixel++;
+            *dstpixel++=srcval2 |
+                        ((srcval1 >>  8) & 0x0000ff00) | /* h4 */
+                        ((srcval1 <<  8) & 0x00ff0000) | /* g4 */
+                        ( srcval1 << 24);                /* l4 */
+        }
+        /* And now up to 3 odd pixels */
+        dstbyte=(BYTE*)dstpixel;
+        for (x=0; x<oddwidth; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            *((WORD*)dstbyte)++=((srcval >> 16) & 0x00ff) | /* h */
+                                (srcval         & 0xff00);  /* g */
+            *dstbyte++=srcval;                              /* l */
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_any0888_to_rgb888(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                    void* dstbits, int dstlinebytes)
+{
+    int rRightShift,gRightShift,bRightShift;
+    const DWORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    rRightShift=X11DRV_DIB_MaskToShift(rsrc);
+    gRightShift=X11DRV_DIB_MaskToShift(gsrc);
+    bRightShift=X11DRV_DIB_MaskToShift(bsrc);
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=(srcval >> bRightShift); /* b */
+            dstpixel[1]=(srcval >> gRightShift); /* g */
+            dstpixel[2]=(srcval >> rRightShift); /* r */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
+    }
+}
+
+static void X11DRV_DIB_Convert_any0888_to_bgr888(int width, int height,
+                                    const void* srcbits, int srclinebytes,
+                                    DWORD rsrc, DWORD gsrc, DWORD bsrc,
+                                    void* dstbits, int dstlinebytes)
+{
+    int rRightShift,gRightShift,bRightShift;
+    const DWORD* srcpixel;
+    BYTE* dstpixel;
+    int x,y;
+
+    rRightShift=X11DRV_DIB_MaskToShift(rsrc);
+    gRightShift=X11DRV_DIB_MaskToShift(gsrc);
+    bRightShift=X11DRV_DIB_MaskToShift(bsrc);
+    for (y=0; y<height; y++) {
+        srcpixel=srcbits;
+        dstpixel=dstbits;
+        for (x=0; x<width; x++) {
+            DWORD srcval;
+            srcval=*srcpixel++;
+            dstpixel[0]=(srcval >> rRightShift); /* r */
+            dstpixel[1]=(srcval >> gRightShift); /* g */
+            dstpixel[2]=(srcval >> bRightShift); /* b */
+            dstpixel+=3;
+        }
+        srcbits += srclinebytes;
+        dstbits += dstlinebytes;
     }
 }
 
@@ -326,20 +1552,49 @@ static void X11DRV_DIB_SetImageBits_1( int lines, const BYTE *srcbits,
                                 int *colors, XImage *bmpImage, DWORD linebytes)
 {
     int h;
+    const BYTE* srcbyte;
+    BYTE srcval, extra;
+    DWORD i, x;
 
-    if (lines > 0) {
-	for (h = lines-1; h >=0; h--) {
-	    X11DRV_DIB_SetImageBits_1_Line(dstwidth, left, colors, bmpImage, h,
-					   srcbits);
-	    srcbits += linebytes;
-	}
-    } else {
-	lines = -lines;
-	for (h = 0; h < lines; h++) {
-	    X11DRV_DIB_SetImageBits_1_Line(dstwidth, left, colors, bmpImage, h,
-					   srcbits);
-	    srcbits += linebytes;
-	}
+    if (lines < 0 ) {
+        lines = -lines;
+        srcbits = srcbits + linebytes * (lines - 1);
+        linebytes = -linebytes;
+    }
+
+    if ((extra = (left & 7)) != 0) {
+        left &= ~7;
+        dstwidth += extra;
+    }
+    srcbits += left >> 3;
+
+    /* ==== pal 1 dib -> any bmp format ==== */
+    for (h = lines-1; h >=0; h--) {
+        srcbyte=srcbits;
+        /* FIXME: should avoid putting x<left pixels (minor speed issue) */
+        for (i = dstwidth/8, x = left; i > 0; i--) {
+            srcval=*srcbyte++;
+            XPutPixel( bmpImage, x++, h, colors[ srcval >> 7] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 6) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 5) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 4) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 3) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 2) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[(srcval >> 1) & 1] );
+            XPutPixel( bmpImage, x++, h, colors[ srcval       & 1] );
+        }
+        srcval=*srcbyte;
+        switch (dstwidth & 7)
+        {
+        case 7: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 6: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 5: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 4: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 3: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 2: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]); srcval<<=1;
+        case 1: XPutPixel(bmpImage, x++, h, colors[srcval >> 7]);
+        }
+        srcbits += linebytes;
     }
 }
 
@@ -355,226 +1610,320 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
 {
     DWORD x;
     int h;
-    BYTE *bits;
 
     if (lines < 0 ) {
         lines = -lines;
-	dstbits = dstbits + linebytes * (lines - 1);
-	linebytes = -linebytes;
+        dstbits = dstbits + linebytes * (lines - 1);
+        linebytes = -linebytes;
     }
 
-    bits = dstbits;
-
-    switch(bmpImage->depth) {
-
+    switch (bmpImage->depth)
+    {
     case 1:
-       /* ==== monochrome bitmap to monochrome dib ==== */
     case 4:
-       /* ==== 4 colormap bitmap to monochrome dib ==== */
-       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-	 { 
-	   PALETTEENTRY val;
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 1 or 4 bmp -> pal 1 dib ==== */
+            BYTE* dstbyte;
 
-	   for (h = lines - 1; h >= 0; h--) {
-	     for (x = 0; x < dstwidth; x++) {
-	       val = srccolors[XGetPixel(bmpImage, x, h)];
-	       if (!(x&7)) *bits = 0;
-	       *bits |= (X11DRV_DIB_GetNearestIndex(colors, 2, 
-						    val.peRed,
-						    val.peGreen, 
-						    val.peBlue) << (7 - (x & 7)));
-	       if ((x&7)==7) bits++;
-	     }
-	     bits = (dstbits += linebytes);
-	   }
-	 }
-       else goto notsupported;
-       
-       break;
-      
+            for (h=lines-1; h>=0; h--) {
+                BYTE dstval;
+                dstbyte=dstbits;
+                dstval=0;
+                for (x=0; x<dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[XGetPixel(bmpImage, x, h)];
+                    dstval|=(X11DRV_DIB_GetNearestIndex
+                             (colors, 2,
+                              srcval.peRed,
+                              srcval.peGreen,
+                              srcval.peBlue) << (7 - (x & 7)));
+                    if ((x&7)==7) {
+                        *dstbyte++=dstval;
+                        dstval=0;
+                    }
+                }
+                if ((dstwidth&7)!=0) {
+                    *dstbyte=dstval;
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
     case 8:
-      /* ==== 8 colormap bitmap to monochrome dib ==== */
-      if ( bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-      {
-	BYTE *srcpixel;
-	PALETTEENTRY val;
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 8 bmp -> pal 1 dib ==== */
+            const void* srcbits;
+            const BYTE* srcpixel;
+            BYTE* dstbyte;
 
-       for( h = lines- 1; h >= 0; h-- ) {
-	  srcpixel = bmpImage->data + (h*bmpImage->bytes_per_line);
-	  for( x = 0; x < dstwidth; x++ ) {
-	    if (!(x&7)) *bits = 0;
-	    val = srccolors[(int)*srcpixel++];
-	    *bits |= ( X11DRV_DIB_GetNearestIndex(colors, 2,
-						  val.peRed,
-						  val.peGreen,
-						  val.peBlue) << (7-(x&7)) );
-	    if ((x&7)==7) bits++;
-	  }
-	  bits = (dstbits += linebytes);
-	}
-      }
-      else goto notsupported;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-      break;
-      
+            for (h=0; h<lines; h++) {
+                BYTE dstval;
+                srcpixel=srcbits;
+                dstbyte=dstbits;
+                dstval=0;
+                for (x=0; x<dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[(int)*srcpixel++];
+                    dstval|=(X11DRV_DIB_GetNearestIndex
+                             (colors, 2,
+                              srcval.peRed,
+                              srcval.peGreen,
+                              srcval.peBlue) << (7-(x&7)) );
+                    if ((x&7)==7) {
+                        *dstbyte++=dstval;
+                        dstval=0;
+                    }
+                }
+                if ((dstwidth&7)!=0) {
+                    *dstbyte=dstval;
+                }
+                srcbits -= bmpImage->bytes_per_line;
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
     case 15:
-      {
-	LPWORD srcpixel;
-	WORD val;
-	
-	/* ==== 555 BGR bitmap to monochrome dib ==== */
-	if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x1f)
-	{
-	  for( h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&7)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 2, 
-							((val >> 7) & 0xf8) |
-							((val >> 12) & 0x7),
-							((val >> 2) & 0xf8) |
-							((val >> 7) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) ) << (7-(x&7)) );
-		  if ((x&7)==7) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 555 RGB bitmap to monochrome dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&1)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 2, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 2) & 0xf8) |
-							((val >> 7) & 0x3),
-							((val >> 7) & 0xf8) |
-							((val >> 12) &  0x7) ) << (7-(x&7)) );
-		  if ((x&7)==7) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0x7c00) {
+                /* ==== rgb 555 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  ((srcval >>  7) & 0xf8) | /* r */
+                                  ((srcval >> 12) & 0x07),
+                                  ((srcval >>  2) & 0xf8) | /* g */
+                                  ((srcval >>  7) & 0x07),
+                                  ((srcval <<  3) & 0xf8) | /* b */
+                                  ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 555 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    WORD dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        BYTE srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  ((srcval <<  3) & 0xf8) | /* r */
+                                  ((srcval >>  2) & 0x07),
+                                  ((srcval >>  2) & 0xf8) | /* g */
+                                  ((srcval >>  7) & 0x07),
+                                  ((srcval >>  7) & 0xf8) | /* b */
+                                  ((srcval >> 12) & 0x07) ) << (7-(x&7)) );
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
         }
-	else goto notsupported;
-      }
-      break;
- 
+        break;
+
     case 16:
-      {
-	LPWORD srcpixel;
-	WORD val;
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
 
-	/* ==== 565 BGR bitmap to monochrome dib ==== */
-	if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f) 
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&7)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 2, 
-							((val >> 8) & 0xf8) |
-							((val >> 13) & 0x7),
-							((val >> 3) & 0xfc) |
-							((val >> 9) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) ) << (7-(x&7)) );
-		  if ((x&7)==7) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 565 RGB bitmap to monochrome dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&7)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 2, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 3) & 0xfc) |
-							((val >> 9) & 0x3),
-							((val >> 8) & 0xf8) |
-							((val >> 13) &  0x7) ) << (7-(x&7)) );
-		  if ((x&7)==7) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0xf800) {
+                /* ==== rgb 565 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  ((srcval >>  8) & 0xf8) | /* r */
+                                  ((srcval >> 13) & 0x07),
+                                  ((srcval >>  3) & 0xfc) | /* g */
+                                  ((srcval >>  9) & 0x03),
+                                  ((srcval <<  3) & 0xf8) | /* b */
+                                  ((srcval >>  2) & 0x07) ) << (7-(x&7)) );
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 565 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  ((srcval <<  3) & 0xf8) | /* r */
+                                  ((srcval >>  2) & 0x07),
+                                  ((srcval >>  3) & 0xfc) | /* g */
+                                  ((srcval >>  9) & 0x03),
+                                  ((srcval >>  8) & 0xf8) | /* b */
+                                  ((srcval >> 13) & 0x07) ) << (7-(x&7)) );
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
         }
-	else goto notsupported;
-      }
-      break;
-      
-    case 24: 
+        break;
+
+    case 24:
     case 32:
-      {
-	BYTE *srcpixel;
- 	
-	/* ==== 24/32 BGR bitmap to monochrome dib ==== */
-	if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
-	{	 
-	  for (h = lines - 1; h >= 0; h--)
-	  {
-	    srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	    for (x = 0; x < dstwidth; x++, srcpixel+=4) {
-	      if (!(x&7)) *bits = 0;
-	      *bits |= (X11DRV_DIB_GetNearestIndex(colors, 2, srcpixel[2] , srcpixel[1], srcpixel[0]) << (7-(x&7)) );
-	      if ((x&7)==7) bits++;
-	    }
-	    bits = (dstbits += linebytes);
-	  }
-	} 
-	/* ==== 24/32 RGB bitmap to monochrome dib ==== */
-	else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-	{
-	  for (h = lines - 1; h >= 0; h--)
-	  {
-	    srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	    for (x = 0; x < dstwidth; x++, srcpixel+=4) { 
-                       if (!(x & 7)) *bits = 0;
-		       *bits |= (X11DRV_DIB_GetNearestIndex(colors, 2, srcpixel[0] , srcpixel[1], srcpixel[2]) << (7-(x&7)) );
-                       if ((x & 7) == 7) bits++;
-	    }
-	    bits = (dstbits += linebytes);
-	  }
-	}
-	else goto notsupported;
-      }
-      break;
+        {
+            const void* srcbits;
+            const BYTE *srcbyte;
+            BYTE* dstbyte;
+            int bytes_per_pixel;
 
-    default: /* ? bit bmp -> monochrome DIB */
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            bytes_per_pixel=(bmpImage->bits_per_pixel==24?3:4);
+
+            if (bmpImage->red_mask==0xff0000) {
+                /* ==== rgb 888 or 0888 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  srcbyte[2],
+                                  srcbyte[1],
+                                  srcbyte[0]) << (7-(x&7)) );
+                        srcbyte+=bytes_per_pixel;
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 888 or 0888 bmp -> pal 1 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 2,
+                                  srcbyte[0],
+                                  srcbyte[1],
+                                  srcbyte[2]) << (7-(x&7)) );
+                        srcbyte+=bytes_per_pixel;
+                        if ((x&7)==7) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&7)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
+        }
+        break;
+
+    default:
     notsupported:
-      {
-	unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
+        {
+            BYTE* dstbyte;
+            unsigned long white = (1 << bmpImage->bits_per_pixel) - 1;
 
-	FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 1 bit DIB\n",
-              bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-              (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-      
-	for( h = lines - 1; h >= 0; h-- ) {
-	  for( x = 0; x < dstwidth; x++ ) {
-	    if (!(x&7)) *bits = 0;
-	    *bits |= (XGetPixel( bmpImage, x, h) >= white) 
-	      << (7 - (x&7));
-	    if ((x&7)==7) bits++;
-	  }
-	  bits = (dstbits += linebytes);
-	}
-      }
-      break;
+            /* ==== any bmp format -> pal 1 dib ==== */
+            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 1 bit DIB\n",
+                  bmpImage->bits_per_pixel, bmpImage->red_mask,
+                  bmpImage->green_mask, bmpImage->blue_mask );
+
+            for (h=lines-1; h>=0; h--) {
+                BYTE dstval;
+                dstbyte=dstbits;
+                dstval=0;
+                for (x=0; x<dstwidth; x++) {
+                    dstval|=(XGetPixel( bmpImage, x, h) >= white) << (7 - (x&7));
+                    if ((x&7)==7) {
+                        *dstbyte++=dstval;
+                        dstval=0;
+                    }
+                }
+                if ((dstwidth&7)!=0) {
+                    *dstbyte=dstval;
+                }
+                dstbits += linebytes;
+            }
+        }
+        break;
     }
 }
 
@@ -587,38 +1936,33 @@ static void X11DRV_DIB_SetImageBits_4( int lines, const BYTE *srcbits,
                                 DWORD srcwidth, DWORD dstwidth, int left,
                                 int *colors, XImage *bmpImage, DWORD linebytes)
 {
-    DWORD i, x;
     int h;
-    const BYTE *bits = srcbits + (left >> 1);
-  
-    if(left & 1) {
-        left--;
-	dstwidth++;
+    const BYTE* srcbyte;
+    DWORD i, x;
+
+    if (lines < 0 ) {
+        lines = -lines;
+        srcbits = srcbits + linebytes * (lines - 1);
+        linebytes = -linebytes;
     }
 
-    if (lines > 0) {
-	for (h = lines-1; h >= 0; h--) {
-	    for (i = dstwidth/2, x = left; i > 0; i--) {
-		BYTE pix = *bits++;
-		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
-		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
-	    }
-	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
-	    srcbits += linebytes;
-	    bits	 = srcbits + (left >> 1);
-	}
-    } else {
-	lines = -lines;
-	for (h = 0; h < lines; h++) {
-	    for (i = dstwidth/2, x = left; i > 0; i--) {
-		BYTE pix = *bits++;
-		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
-		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
-	    }
-	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
-	    srcbits += linebytes;
-	    bits	 = srcbits + (left >> 1);
-	}
+    if (left & 1) {
+        left--;
+        dstwidth++;
+    }
+    srcbits += left >> 1;
+
+    /* ==== pal 4 dib -> any bmp format ==== */
+    for (h = lines-1; h >= 0; h--) {
+        srcbyte=srcbits;
+        for (i = dstwidth/2, x = left; i > 0; i--) {
+            BYTE srcval=*srcbyte++;
+            XPutPixel( bmpImage, x++, h, colors[srcval >> 4] );
+            XPutPixel( bmpImage, x++, h, colors[srcval & 0x0f] );
+        }
+        if (dstwidth & 1)
+            XPutPixel( bmpImage, x, h, colors[*srcbyte >> 4] );
+        srcbits += linebytes;
     }
 }
 
@@ -637,7 +1981,6 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
     DWORD x;
     int h;
     BYTE *bits;
-    LPBYTE srcpixel;
 
     if (lines < 0 )
     {
@@ -648,207 +1991,384 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
 
     bits = dstbits;
 
-    switch(bmpImage->depth) {
+    switch (bmpImage->depth) {
+    case 1:
+    case 4:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 1 or 4 bmp -> pal 4 dib ==== */
+            BYTE* dstbyte;
 
-     case 1:
-	/* ==== monochrome bitmap to 4 colormap dib ==== */
-     case 4:
-       /* ==== 4 colormap bitmap to 4 colormap dib ==== */
-       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-	 {
-	   PALETTEENTRY val;
-	   
-       for (h = lines-1; h >= 0; h--) {
-	     for (x = 0; x < dstwidth; x++) {
-	       if (!(x&1)) *bits = 0;
-	       val = srccolors[XGetPixel(bmpImage, x, h)];
-	       *bits |= (X11DRV_DIB_GetNearestIndex(colors, 16, 
-						    val.peRed,
-						    val.peGreen, 
-						    val.peBlue) << (4-((x&1)<<2)));
-	       if ((x&1)==1) bits++;
-           }
-	     bits = (dstbits += linebytes);
-       }
-	 }
-       else goto notsupported;
-       
-       break;
-      
+            for (h = lines-1; h >= 0; h--) {
+                BYTE dstval;
+                dstbyte=dstbits;
+                dstval=0;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[XGetPixel(bmpImage, x, h)];
+                    dstval|=(X11DRV_DIB_GetNearestIndex
+                             (colors, 16,
+                              srcval.peRed,
+                              srcval.peGreen,
+                              srcval.peBlue) << (4-((x&1)<<2)));
+                    if ((x&1)==1) {
+                        *dstbyte++=dstval;
+                        dstval=0;
+                    }
+                }
+                if ((dstwidth&1)!=0) {
+                    *dstbyte=dstval;
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
     case 8:
-      /* ==== 8 colormap bitmap to 4 colormap dib ==== */
-      if ( bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-      {
-	PALETTEENTRY val;
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 8 bmp -> pal 4 dib ==== */
+            const void* srcbits;
+            const BYTE *srcpixel;
+            BYTE* dstbyte;
 
-	for( h = lines - 1; h >= 0; h-- ) {
-	  srcpixel = bmpImage->data + (h*bmpImage->bytes_per_line);
-	  for( x = 0; x < dstwidth; x++ ) {
-	    if (!(x&1)) *bits = 0;
-	    val = srccolors[(int)*srcpixel++];
-	    *bits |= ( X11DRV_DIB_GetNearestIndex(colors, 16,
-						  val.peRed,
-						  val.peGreen,
-						  val.peBlue) << (4*(1-(x&1))) );
-	    if ((x&1)==1) bits++;
-	  }
-	  bits = (dstbits += linebytes);
-	}
-      }
-      else goto notsupported;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            for (h=0; h<lines; h++) {
+                BYTE dstval;
+                srcpixel=srcbits;
+                dstbyte=dstbits;
+                dstval=0;
+                for (x=0; x<dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval = srccolors[(int)*srcpixel++];
+                    dstval|=(X11DRV_DIB_GetNearestIndex
+                             (colors, 16,
+                              srcval.peRed,
+                              srcval.peGreen,
+                              srcval.peBlue) << (4*(1-(x&1))) );
+                    if ((x&1)==1) {
+                        *dstbyte++=dstval;
+                        dstval=0;
+                    }
+                }
+                if ((dstwidth&1)!=0) {
+                    *dstbyte=dstval;
+                }
+                srcbits -= bmpImage->bytes_per_line;
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
 
-      break;
-      
     case 15:
-      {
-	LPWORD srcpixel;
-	WORD val;
-	
-	/* ==== 555 BGR bitmap to 4 colormap dib ==== */
-	if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x1f)
-	{
-	  for( h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&1)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 16, 
-							((val >> 7) & 0xf8) |
-							((val >> 12) & 0x7),
-							((val >> 2) & 0xf8) |
-							((val >> 7) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) ) << ((1-(x&1))<<2) );
-		  if ((x&1)==1) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 555 RGB bitmap to 4 colormap dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0x7c00)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&1)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 16, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 2) & 0xfc) |
-							((val >> 7) & 0x3),
-							((val >> 7) & 0xf8) |
-							((val >> 12) &  0x7) ) << ((1-(x&1))<<2) );
-		  if ((x&1)==1) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0x7c00) {
+                /* ==== rgb 555 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 16,
+                                  ((srcval >>  7) & 0xf8) | /* r */
+                                  ((srcval >> 12) & 0x07),
+                                  ((srcval >>  2) & 0xf8) | /* g */
+                                  ((srcval >>  7) & 0x07),
+                                  ((srcval <<  3) & 0xf8) | /* b */
+                                  ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
+                        if ((x&1)==1) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&1)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 555 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    WORD dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 16,
+                                  ((srcval <<  3) & 0xf8) | /* r */
+                                  ((srcval >>  2) & 0x07),
+                                  ((srcval >>  2) & 0xf8) | /* g */
+                                  ((srcval >>  7) & 0x07),
+                                  ((srcval >>  7) & 0xf8) | /* b */
+                                  ((srcval >> 12) & 0x07) ) << ((1-(x&1))<<2) );
+                        if ((x&1)==1) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&1)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
         }
-	else goto notsupported;
-      }
-      break;
- 
+        break;
+
     case 16:
-      {
-	LPWORD srcpixel;
-	WORD val;
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
 
-	/* ==== 565 BGR bitmap to 4 colormap dib ==== */
-	if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f) 
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&1)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 16, 
-							((val >> 8) & 0xf8) |
-							((val >> 13) & 0x7),
-							((val >> 3) & 0xfc) |
-							((val >> 9) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) )  << ((1-(x&1))<<2) );
-		  if ((x&1)==1) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 565 RGB bitmap to 4 colormap dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++) {
-		  if (!(x&1)) *bits = 0;
-		  val = *srcpixel++;
-		  *bits |= (X11DRV_DIB_GetNearestIndex( colors, 16, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 3) & 0xfc) |
-							((val >> 9) & 0x3),
-							((val >> 8) & 0xf8) |
-							((val >> 13) &  0x7) ) << ((1-(x&1))<<2) );
-		  if ((x&1)==1) bits++;
-		}
-		bits = (dstbits += linebytes);
-	    }
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0xf800) {
+                /* ==== rgb 565 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    BYTE dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 16,
+                                  ((srcval >>  8) & 0xf8) | /* r */
+                                  ((srcval >> 13) & 0x07),
+                                  ((srcval >>  3) & 0xfc) | /* g */
+                                  ((srcval >>  9) & 0x03),
+                                  ((srcval <<  3) & 0xf8) | /* b */
+                                  ((srcval >>  2) & 0x07) ) << ((1-(x&1))<<2) );
+                        if ((x&1)==1) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&1)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 565 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    WORD dstval;
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    dstval=0;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        dstval|=(X11DRV_DIB_GetNearestIndex
+                                 (colors, 16,
+                                  ((srcval <<  3) & 0xf8) | /* r */
+                                  ((srcval >>  2) & 0x07),
+                                  ((srcval >>  3) & 0xfc) | /* g */
+                                  ((srcval >>  9) & 0x03),
+                                  ((srcval >>  8) & 0xf8) | /* b */
+                                  ((srcval >> 13) & 0x07) ) << ((1-(x&1))<<2) );
+                        if ((x&1)==1) {
+                            *dstbyte++=dstval;
+                            dstval=0;
+                        }
+                    }
+                    if ((dstwidth&1)!=0) {
+                        *dstbyte=dstval;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
         }
-	else goto notsupported;
-      }
-      break;
-      
-    case 24: 
-    case 32:
-      {
-	BYTE *srcpixel;
- 	
-	/* ==== 24/32 BGR bitmap to 4 colormap dib ==== */
-	if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
-	{	 
-	  for (h = lines - 1; h >= 0; h--)
-	  {
-	    srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	    for (x = 0; x < dstwidth; x+=2, srcpixel+=8) /* 2 pixels at a time */
-	      *bits++ = (X11DRV_DIB_GetNearestIndex(colors, 16, srcpixel[2] , srcpixel[1], srcpixel[0]) << 4) |
-		         X11DRV_DIB_GetNearestIndex(colors, 16, srcpixel[6] , srcpixel[5], srcpixel[4]);
-	    bits = (dstbits += linebytes);
-	  }
-	} 
-	/* ==== 24/32 RGB bitmap to 4 colormap dib ==== */
-	else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-	{
-	  for (h = lines - 1; h >= 0; h--)
-	  {
-	    srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	    for (x = 0; x < dstwidth; x+=2, srcpixel+=8) /* 2 pixels at a time */
-	      *bits++ = (X11DRV_DIB_GetNearestIndex(colors, 16, srcpixel[0] , srcpixel[1], srcpixel[2]) << 4) |
-		         X11DRV_DIB_GetNearestIndex(colors, 16, srcpixel[4] , srcpixel[5], srcpixel[6]);
-	    bits = (dstbits += linebytes);
-	  }
-	}
-	else goto notsupported;
-      }
-      break;
+        break;
 
-    default: /* ? bit bmp -> 4 bit DIB */
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            const void* srcbits;
+            const BYTE *srcbyte;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0xff0000) {
+                /* ==== rgb 888 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth/2; x++) {
+                        /* Do 2 pixels at a time */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[2],
+                                     srcbyte[1],
+                                     srcbyte[0]) << 4) |
+                                    X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[5],
+                                     srcbyte[4],
+                                     srcbyte[3]);
+                        srcbyte+=6;
+                    }
+                    if (dstwidth&1) {
+                        /* And the the odd pixel */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[2],
+                                     srcbyte[1],
+                                     srcbyte[0]) << 4);
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 888 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth/2; x++) {
+                        /* Do 2 pixels at a time */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[0],
+                                     srcbyte[1],
+                                     srcbyte[2]) << 4) |
+                                    X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[3],
+                                     srcbyte[4],
+                                     srcbyte[5]);
+                        srcbyte+=6;
+                    }
+                    if (dstwidth&1) {
+                        /* And the the odd pixel */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[0],
+                                     srcbyte[1],
+                                     srcbyte[2]) << 4);
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
+            break;
+        }
+        /* Fall through */
+
+    case 32:
+        {
+            const void* srcbits;
+            const BYTE *srcbyte;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0xff0000) {
+                /* ==== rgb 0888 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth/2; x++) {
+                        /* Do 2 pixels at a time */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[2],
+                                     srcbyte[1],
+                                     srcbyte[0]) << 4) |
+                                    X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[6],
+                                     srcbyte[5],
+                                     srcbyte[4]);
+                        srcbyte+=8;
+                    }
+                    if (dstwidth&1) {
+                        /* And the the odd pixel */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[2],
+                                     srcbyte[1],
+                                     srcbyte[0]) << 4);
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 0888 bmp -> pal 4 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth/2; x++) {
+                        /* Do 2 pixels at a time */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[0],
+                                     srcbyte[1],
+                                     srcbyte[2]) << 4) |
+                                    X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[4],
+                                     srcbyte[5],
+                                     srcbyte[6]);
+                        srcbyte+=8;
+                    }
+                    if (dstwidth&1) {
+                        /* And the the odd pixel */
+                        *dstbyte++=(X11DRV_DIB_GetNearestIndex
+                                    (colors, 16,
+                                     srcbyte[0],
+                                     srcbyte[1],
+                                     srcbyte[2]) << 4);
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
+        }
+        break;
+
+    default:
     notsupported:
-      FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 4 bit DIB\n",
-            bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-      for (h = lines-1; h >= 0; h--) {
-          for (x = 0; x < dstwidth-1; x += 2)
-          {
-              *bits++ = (X11DRV_DIB_MapColor((int *)colors, 16, XGetPixel( bmpImage, x, h ), 0) << 4)
-                  | (X11DRV_DIB_MapColor((int *)colors, 16, XGetPixel( bmpImage, x+1, h ), 0) & 0x0f);
-          }
-          if (dstwidth & 1)
-              *bits = (X11DRV_DIB_MapColor((int *)colors, 16, XGetPixel( bmpImage, x, h ), 0) << 4);
-          bits = (dstbits += linebytes);
-       }
-      break;
+        {
+            BYTE* dstbyte;
+
+            /* ==== any bmp format -> pal 4 dib ==== */
+            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 4 bit DIB\n",
+                  bmpImage->bits_per_pixel, bmpImage->red_mask,
+                  bmpImage->green_mask, bmpImage->blue_mask );
+            for (h=lines-1; h>=0; h--) {
+                dstbyte=dstbits;
+                for (x=0; x<(dstwidth & ~1); x+=2) {
+                    *dstbyte++=(X11DRV_DIB_MapColor((int*)colors, 16, XGetPixel(bmpImage, x, h), 0) << 4) |
+                        X11DRV_DIB_MapColor((int*)colors, 16, XGetPixel(bmpImage, x+1, h), 0);
+                }
+                if (dstwidth & 1) {
+                    *dstbyte=(X11DRV_DIB_MapColor((int *)colors, 16, XGetPixel(bmpImage, x, h), 0) << 4);
+                }
+                dstbits += linebytes;
+            }
+        }
+        break;
     }
 }
 
@@ -921,27 +2441,29 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 				DWORD linebytes )
 {
     DWORD x;
-    int h, color;
-    const BYTE *bits;
-
-    dstwidth += left;
+    int h;
+    const BYTE* srcbyte;
+    BYTE* dstbits;
 
     if (lines < 0 )
     {
         lines = -lines;
-        srcbits = srcbits + ( linebytes * (lines-1) );
+        srcbits = srcbits + linebytes * (lines-1);
         linebytes = -linebytes;
     }
-
-    bits = srcbits + left;
+    srcbits += left;
+    srcbyte = srcbits;
 
     switch (bmpImage->depth) {
     case 15:
     case 16:
 #if defined(__i386__) && defined(__GNUC__)
 	/* Some X servers might have 32 bit/ 16bit deep pixel */
-	if (lines && (dstwidth!=left) && (bmpImage->bits_per_pixel == 16))
+	if (lines && dstwidth && (bmpImage->bits_per_pixel == 16))
 	{
+	    dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+	    /* FIXME: Does this really handle all these cases correctly? */
+	    /* ==== pal 8 dib -> rgb or bgr 555 or 565 bmp ==== */
 	    for (h = lines ; h--; ) {
 		int _cl1,_cl2; /* temp outputs for asm below */
 		/* Borrowed from DirectDraw */
@@ -954,23 +2476,28 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 		"    stosw\n"
 		"      xor %%eax,%%eax\n"
 		"    loop 1b\n"
-		:"=S" (bits), "=D" (_cl1), "=c" (_cl2)
-		:"S" (bits),
-		 "D" (bmpImage->data+h*bmpImage->bytes_per_line+left*2),
-		 "c" (dstwidth-left),
+		:"=S" (srcbyte), "=D" (_cl1), "=c" (_cl2)
+		:"S" (srcbyte),
+		 "D" (dstbits),
+		 "c" (dstwidth),
 		 "d" (colors)
 		:"eax", "cc", "memory"
 		);
-		bits = (srcbits += linebytes) + left;
+		srcbyte = (srcbits += linebytes);
+		dstbits -= bmpImage->bytes_per_line;
 	    }
 	    return;
 	}
 	break;
 #endif
     case 24:
+    case 32:
 #if defined(__i386__) && defined(__GNUC__)
-	if (lines && (dstwidth!=left) && (bmpImage->bits_per_pixel == 32))
+	if (lines && dstwidth && (bmpImage->bits_per_pixel == 32))
 	{
+	    dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
+	    /* FIXME: Does this really handle both cases correctly? */
+	    /* ==== pal 8 dib -> rgb or bgr 0888 bmp ==== */
 	    for (h = lines ; h--; ) {
 		int _cl1,_cl2; /* temp outputs for asm below */
 		/* Borrowed from DirectDraw */
@@ -983,29 +2510,30 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 		"    stosl\n"
 		"      xor %%eax,%%eax\n"
 		"    loop 1b\n"
-		:"=S" (bits), "=D" (_cl1), "=c" (_cl2)
-		:"S" (bits),
-		 "D" (bmpImage->data+h*bmpImage->bytes_per_line+left*4),
-		 "c" (dstwidth-left),
+		:"=S" (srcbyte), "=D" (_cl1), "=c" (_cl2)
+		:"S" (srcbyte),
+		 "D" (dstbits),
+		 "c" (dstwidth),
 		 "d" (colors)
 		:"eax", "cc", "memory"
 		);
-		bits = (srcbits += linebytes) + left;
+		srcbyte = (srcbits += linebytes);
+		dstbits -= bmpImage->bytes_per_line;
 	    }
 	    return;
 	}
 	break;
 #endif
     default:
-    	break; /* use slow generic case below */
+        break; /* use slow generic case below */
     }
 
-    for (h = lines - 1; h >= 0; h--) {
-        for (x = left; x < dstwidth; x++, bits++) {
-	    color = colors[*bits];	    
-            XPutPixel( bmpImage, x, h, colors[*bits] );
+    /* ==== pal 8 dib -> any bmp format ==== */
+    for (h=lines-1; h>=0; h--) {
+        for (x=left; x<dstwidth+left; x++) {
+            XPutPixel(bmpImage, x, h, colors[*srcbyte++]);
         }
-        bits = (srcbits += linebytes) + left;
+        srcbyte = (srcbits += linebytes);
     }
 }
 
@@ -1021,7 +2549,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
 {
     DWORD x;
     int h;
-    BYTE *bits;
+    BYTE* dstbyte;
 
     if (lines < 0 )
     {
@@ -1030,206 +2558,234 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
        linebytes = -linebytes;
     }
 
-    bits = dstbits;
-
     /* 
-       Hack for now 
-       This condition is true when GetImageBits has been called by UpdateDIBSection.
-       For now, GetNearestIndex is too slow to support 256 colormaps, so we'll just use for
-       for GetDIBits calls. (In somes cases, in a updateDIBSection, the returned colors are bad too)
-    */
+     * Hack for now 
+     * This condition is true when GetImageBits has been called by 
+     * UpdateDIBSection. For now, GetNearestIndex is too slow to support 
+     * 256 colormaps, so we'll just use for for GetDIBits calls. 
+     * (In somes cases, in a updateDIBSection, the returned colors are bad too)
+     */
     if (!srccolors) goto updatesection;
 
-    switch(bmpImage->depth) {
-
+    switch (bmpImage->depth) {
     case 1:
-	/* ==== monochrome bitmap to 8 colormap dib ==== */
     case 4:
-       /* ==== 4 colormap bitmap to 8 colormap dib ==== */
-       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-	 {
-	   PALETTEENTRY val;
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
 
-    for (h = lines - 1; h >= 0; h--) {
-	     for (x = 0; x < dstwidth; x++) {
-	       val = srccolors[XGetPixel(bmpImage, x, h)];
-	       *bits++ = X11DRV_DIB_GetNearestIndex(colors, 256, val.peRed,
-						    val.peGreen, val.peBlue);
-	     }
-	     bits = (dstbits += linebytes);
-	   }
-	 }
-       else goto notsupported;
-       
-       break;
-    
-     case 8:
-       /* ==== 8 colormap bitmap to 8 colormap dib ==== */
-       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-	 {
-	   BYTE *srcpixel;
-	   PALETTEENTRY val;
-	   
-	   for (h = lines - 1; h >= 0; h--) {
-	     srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	     for (x = 0; x < dstwidth; x++) {
-	       val = srccolors[(int)*srcpixel++];
-	       *bits++ = X11DRV_DIB_GetNearestIndex(colors, 256, val.peRed, 
-						    val.peGreen, val.peBlue);
-	     }
-	     bits = (dstbits += linebytes);
-	   }
-	 }
-       else goto notsupported;
-       
-       break;
-
-      case 15:
-      {
-	LPWORD srcpixel;
-	WORD val;
-	
-	/* ==== 555 BGR bitmap to 8 colormap dib ==== */
-	if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x001f)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++ )
-		{
-		  val = *srcpixel++;
-		  *bits++ = X11DRV_DIB_GetNearestIndex( colors, 256, 
-							((val >> 7) & 0xf8) |
-							((val >> 12) & 0x7),
-							((val >> 2) & 0xf8) |
-							((val >> 7) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) );
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 555 RGB bitmap to 8 colormap dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0x7c00)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++ )
-		{
-		  val = *srcpixel++;
-		  *bits++ = X11DRV_DIB_GetNearestIndex( colors, 256, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 2) & 0xf8) |
-							((val >> 7) & 0x3),
-							((val >> 7) & 0xf8) |
-							((val >> 12) &  0x7) );
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	else goto notsupported;
-      }
-      break;
-
-      case 16:
-      {
-	LPWORD srcpixel;
-	WORD val;
-	
-	/* ==== 565 BGR bitmap to 8 colormap dib ==== */
-	if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++ )
-		{
-		  val = *srcpixel++;
-		  *bits++ = X11DRV_DIB_GetNearestIndex( colors, 256, 
-							((val >> 8) & 0xf8) |
-							((val >> 13) & 0x7),
-							((val >> 3) & 0xfc) |
-							((val >> 9) & 0x3),
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7) );
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 565 RGB bitmap to 8 colormap dib ==== */
-	else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800)
-	{
-	    for( h = lines - 1; h >= 0; h--) 
-	    {
-		srcpixel = (LPWORD)(bmpImage->data + h*bmpImage->bytes_per_line);
-		for( x = 0; x < dstwidth; x++ )
-		{
-		  val = *srcpixel++;
-		  *bits++ = X11DRV_DIB_GetNearestIndex( colors, 256, 
-							((val << 3) & 0xf8) |
-							((val >> 2) & 0x7),
-							((val >> 3) & 0x00fc) |
-							((val >> 9) & 0x3),
-							((val >> 8) & 0x00f8) |
-							((val >> 13) &  0x7) );
-		}
-		bits = (dstbits += linebytes);
-	    }
-	}
-	else goto notsupported;
-      }
-      break;
-      
-      case 24: 
-      case 32:
-      {
-	BYTE *srcpixel;
-	
-	/* ==== 24/32 BGR bitmap to 8 colormap dib ==== */
-	if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
-	{
-	  for (h = lines - 1; h >= 0; h--)
-	    {
-	      srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	      for (x = 0; x < dstwidth; x++, srcpixel+=4)
-		*bits++ = X11DRV_DIB_GetNearestIndex(colors, 256, 
-						     srcpixel[2] , srcpixel[1], *srcpixel);
-	      bits = (dstbits += linebytes);
-	    }
-	}
-	/* ==== 24/32 RGB bitmap to 8 colormap dib ==== */
-	else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-	{
-	  for (h = lines - 1; h >= 0; h--)
-	    {
-	      srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-	      for (x = 0; x < dstwidth; x++, srcpixel+=4)
-		*bits++ = X11DRV_DIB_GetNearestIndex(colors, 256, 
-						     *srcpixel, srcpixel[1], srcpixel[2]);
-	      bits = (dstbits += linebytes);
-	    }
-	  
-	}
-	else goto notsupported;
-      }
-      break;
-
-    default: /* ? bit bmp -> 8 bit DIB */
-    notsupported:
-      FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 8 bit DIB\n",
-            bmpImage->depth, (int)bmpImage->red_mask, 
-            (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-    updatesection:
-      for (h = lines - 1; h >= 0; h--) {
-	for (x = 0; x < dstwidth; x++, bits++) {
-	  *bits = X11DRV_DIB_MapColor((int *)colors, 256,
-                                         XGetPixel( bmpImage, x, h ), *bits);
+            /* ==== pal 1 bmp -> pal 8 dib ==== */
+            /* ==== pal 4 bmp -> pal 8 dib ==== */
+            for (h=lines-1; h>=0; h--) {
+                dstbyte=dstbits;
+                for (x=0; x<dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[XGetPixel(bmpImage, x, h)];
+                    *dstbyte++=X11DRV_DIB_GetNearestIndex(colors, 256,
+                                                          srcval.peRed,
+                                                          srcval.peGreen,
+                                                          srcval.peBlue);
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
         }
-	bits = (dstbits += linebytes);
+        break;
+
+    case 8:
+       if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 8 bmp -> pal 8 dib ==== */
+           const void* srcbits;
+           const BYTE* srcpixel;
+
+           srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+           for (h=0; h<lines; h++) {
+               srcpixel=srcbits;
+               dstbyte=dstbits;
+               for (x = 0; x < dstwidth; x++) {
+                   PALETTEENTRY srcval;
+                   srcval=srccolors[(int)*srcpixel++];
+                   *dstbyte++=X11DRV_DIB_GetNearestIndex(colors, 256,
+                                                         srcval.peRed,
+                                                         srcval.peGreen,
+                                                         srcval.peBlue);
+               }
+               srcbits -= bmpImage->bytes_per_line;
+               dstbits += linebytes;
+           }
+       } else {
+           goto notsupported;
+       }
+       break;
+
+    case 15:
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0x7c00) {
+                /* ==== rgb 555 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             ((srcval >>  7) & 0xf8) | /* r */
+                             ((srcval >> 12) & 0x07),
+                             ((srcval >>  2) & 0xf8) | /* g */
+                             ((srcval >>  7) & 0x07),
+                             ((srcval <<  3) & 0xf8) | /* b */
+                             ((srcval >>  2) & 0x07) );
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 555 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             ((srcval <<  3) & 0xf8) | /* r */
+                             ((srcval >>  2) & 0x07),
+                             ((srcval >>  2) & 0xf8) | /* g */
+                             ((srcval >>  7) & 0x07),
+                             ((srcval >>  7) & 0xf8) | /* b */
+                             ((srcval >> 12) & 0x07) );
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+           }
+        }
+        break;
+
+    case 16:
+        {
+            const void* srcbits;
+            const WORD* srcpixel;
+            BYTE* dstbyte;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (bmpImage->red_mask==0xf800) {
+                /* ==== rgb 565 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             ((srcval >>  8) & 0xf8) | /* r */
+                             ((srcval >> 13) & 0x07),
+                             ((srcval >>  3) & 0xfc) | /* g */
+                             ((srcval >>  9) & 0x03),
+                             ((srcval <<  3) & 0xf8) | /* b */
+                             ((srcval >>  2) & 0x07) );
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 565 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcpixel=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        WORD srcval;
+                        srcval=*srcpixel++;
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             ((srcval <<  3) & 0xf8) | /* r */
+                             ((srcval >>  2) & 0x07),
+                             ((srcval >>  3) & 0xfc) | /* g */
+                             ((srcval >>  9) & 0x03),
+                             ((srcval >>  8) & 0xf8) | /* b */
+                             ((srcval >> 13) & 0x07) );
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+           }
       }
       break;
+
+    case 24:
+    case 32:
+        {
+            const void* srcbits;
+            const BYTE *srcbyte;
+            BYTE* dstbyte;
+            int bytes_per_pixel;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            bytes_per_pixel=(bmpImage->bits_per_pixel==24?3:4);
+
+            if (bmpImage->red_mask==0xff0000) {
+                /* ==== rgb 888 or 0888 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             srcbyte[2],
+                             srcbyte[1],
+                             srcbyte[0]);
+                        srcbyte+=bytes_per_pixel;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            } else {
+                /* ==== bgr 888 or 0888 bmp -> pal 8 dib ==== */
+                for (h=0; h<lines; h++) {
+                    srcbyte=srcbits;
+                    dstbyte=dstbits;
+                    for (x=0; x<dstwidth; x++) {
+                        *dstbyte++=X11DRV_DIB_GetNearestIndex
+                            (colors, 256,
+                             srcbyte[0],
+                             srcbyte[1],
+                             srcbyte[2]);
+                        srcbyte+=bytes_per_pixel;
+                    }
+                    srcbits -= bmpImage->bytes_per_line;
+                    dstbits += linebytes;
+                }
+            }
+        }
+        break;
+
+    default:
+    notsupported:
+        FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 8 bit DIB\n",
+              bmpImage->depth, bmpImage->red_mask,
+              bmpImage->green_mask, bmpImage->blue_mask );
+    updatesection:
+        /* ==== any bmp format -> pal 8 dib ==== */
+        for (h=lines-1; h>=0; h--) {
+            dstbyte=dstbits;
+            for (x=0; x<dstwidth; x++) {
+                *dstbyte=X11DRV_DIB_MapColor
+                    ((int*)colors, 256,
+                     XGetPixel(bmpImage, x, h), *dstbyte);
+                dstbyte++;
+            }
+            dstbits += linebytes;
+        }
+        break;
     }
 }
 
@@ -1360,150 +2916,249 @@ static void X11DRV_DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 {
     DWORD x;
     int h;
-  
+
     if (lines < 0 )
     {
         lines = -lines;
         srcbits = srcbits + ( linebytes * (lines-1));
         linebytes = -linebytes;
     }
-    	
-    switch ( bmpImage->depth )
+
+    switch (bmpImage->depth)
     {
-        case 15:
-            /* using same format as XImage */
-            if (rSrc == bmpImage->red_mask && gSrc == bmpImage->green_mask && bSrc == bmpImage->blue_mask)
-                for (h = lines - 1; h >= 0; h--, srcbits += linebytes)
-                    memcpy ( bmpImage->data + h * bmpImage->bytes_per_line + left*2, srcbits + left*2, dstwidth*2 );
-            else     /* We need to do a conversion from a 565 dib */
-            {
-                LPDWORD dstpixel, ptr = (LPDWORD)(srcbits + left*2);
-                DWORD val;
-                int div = dstwidth % 2;
+    case 15:
+        {
+            char* dstbits;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPDWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                    for (x = 0; x < dstwidth/2; x++) { /* Do 2 pixels at a time */
-                        val = *ptr++;
-                        *dstpixel++ =   ((val >> 1) & 0x7fe07fe0) | (val & 0x001f001f); /* Red & Green & Blue */
-                    }
-                    if (div != 0) /* Odd width? */
-                        *dstpixel = ((*(WORD *)ptr >> 1) & 0x7fe0) | (*(WORD *)ptr & 0x001f);
-                    ptr = (LPDWORD) ((srcbits += linebytes) + left*2);
+            srcbits=srcbits+left*2;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gSrc==bmpImage->green_mask) {
+                if (rSrc == bmpImage->red_mask) {
+                    /* ==== rgb 555 dib -> rgb 555 bmp ==== */
+                    /* ==== bgr 555 dib -> bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 555 dib -> bgr 555 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 555 bmp ==== */
+                    X11DRV_DIB_Convert_555_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
+                    /* ==== rgb 565 dib -> rgb 555 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 565 dib -> bgr 555 bmp ==== */
+                    /* ==== bgr 565 dib -> rgb 555 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
                 }
             }
-            break;
-
-        case 16:
-            /* using same format as XImage */
-            if (rSrc == bmpImage->red_mask && gSrc == bmpImage->green_mask && bSrc == bmpImage->blue_mask)
-                for (h = lines - 1; h >= 0; h--, srcbits += linebytes)
-                    memcpy ( bmpImage->data + h * bmpImage->bytes_per_line + left*2, srcbits + left*2, dstwidth*2 );
-            else     /* We need to do a conversion from a 555 dib */
-            {
-                LPDWORD dstpixel, ptr = (LPDWORD)(srcbits + left*2);
-                DWORD val;
-                int div = dstwidth % 2;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPDWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                    for (x = 0; x < dstwidth/2; x++) { /* Do 2 pixels at a time */
-                        val = *ptr++;
-                        *dstpixel++ = ((val << 1) & 0xffc0ffc0) | ((val >> 4) & 0x00200020) | /* Red & Green */
-			  (val & 0x001f001f);                             /* Blue */
-                    }
-                    if (div != 0) /* Odd width? */
-                        *dstpixel = ((*(WORD *)ptr << 1) & 0xffc0) | ((*(WORD *)ptr >> 4) & 0x0020)
-                                    | (*(WORD *)ptr & 0x001f);
-                    ptr = (LPDWORD) ((srcbits += linebytes) + left*2);
-                }
-            }
-            break;
-
-        case 24:
-        case 32:
-            {
-                DWORD  *dstpixel;
-                LPWORD ptr = (LPWORD)srcbits + left;
-                DWORD val;
-
-		if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
-                {
-		  if ((rSrc == 0xF800) && (gSrc == 0x07E0) && (bSrc == 0x001F)) {
-		    /* ==== 555 RGB dib to 24/32 RGB bitmap ==== */
-		    for (h = lines - 1; h >= 0; h--) {
-		      dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
-		      for (x = 0; x < dstwidth; x++) {
-                        val = *ptr++;
-			*dstpixel++ = ((val << 8) & 0xF80000) | /* Red */
-			              ((val << 5) & 0x00FC00) | /* Green */
-			              ((val << 3) & 0x0000FF);  /* Blue */
-		      }
-		      ptr = (LPWORD)(srcbits += linebytes) + left;
-		    }
-		  } else {
-		    /* ==== 555 BGR dib to 24/32 BGR bitmap ==== */
-		    for (h = lines - 1; h >= 0; h--) {
-		      dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
-		      for (x = 0; x < dstwidth; x++) {
-			
-                        val = *ptr++;
-                        *dstpixel++ = ((val << 9) & 0xf80000) | ((val << 4) & 0x070000) | /* Red */
-			  ((val << 6) & 0x00f800) | ((val << 1) & 0x000700) | /* Green */
-			  ((val << 3) & 0x0000f8) | ((val >> 2) & 0x000007);      /* Blue */
-		      }
-		      ptr = (LPWORD)(srcbits += linebytes) + left;
-		    }
-		  }
-		}
-		/* ==== 555 BGR dib to 24/32 RGB bitmap ==== */
-		else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-                {
-		  for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line + left*4);
-                    for (x = 0; x < dstwidth; x++) {
-
-                        val = *ptr++;
-                        *dstpixel++ = ((val >> 7) & 0x0000f8) | ((val >> 12) & 0x000007) | /* Red */
-			  ((val << 6) & 0x00f800) | ((val << 1) & 0x000700) | /* Green */
-			  ((val << 19) & 0xf80000) | ((val >> 14) & 0x070000);      /* Blue */
-                    }
-                    ptr = (LPWORD)(srcbits += linebytes) + left;
-		  }
-		}
-
-	    }
-            break;
-
-        case 1:
-        case 4:
-        case 8:
-            {
-                LPWORD ptr = (LPWORD)srcbits + left;
-                WORD val;
-                int sc1, sc2;
-
-                /* Set color scaling values */
-                if ( rSrc == 0x7c00 ) { sc1 = 7; sc2 = 2; }             /* 555 dib */
-                else { sc1 = 8; sc2 = 3; }                              /* 565 dib */
-
-	        for (h = lines - 1; h >= 0; h--) {
-                    for (x = left; x < dstwidth+left; x++) {
-                        val = *ptr++;
-		        XPutPixel( bmpImage, x, h,
-                                   X11DRV_PALETTE_ToPhysical(dc, RGB(((val & rSrc) >> sc1),  /* Red */
-                                                                     ((val & gSrc) >> sc2),  /* Green */
-                                                                     ((val & bSrc) << 3)))); /* Blue */
-	            }
-	            ptr = (LPWORD) (srcbits += linebytes) + left;
-	        }
-	    }
-            break;
-
-        default:
-            FIXME("16 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
+        }
         break;
 
+    case 16:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*2;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gSrc==bmpImage->green_mask) {
+                if (rSrc==bmpImage->red_mask && bSrc==bmpImage->blue_mask) {
+                    /* ==== rgb 565 dib -> rgb 565 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 565 dib -> bgr 565 bmp ==== */
+                    /* ==== bgr 565 dib -> rgb 565 bmp ==== */
+                    X11DRV_DIB_Convert_565_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                if (rSrc==bmpImage->red_mask || bSrc==bmpImage->blue_mask) {
+                    /* ==== rgb 555 dib -> rgb 565 bmp ==== */
+                    /* ==== bgr 555 dib -> bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 555 dib -> bgr 565 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 565 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            }
+        }
+        break;
+
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            char* dstbits;
+
+            srcbits=srcbits+left*2;
+            dstbits=bmpImage->data+left*3+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gSrc==0x03e0) {
+                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 555 dib -> rgb 888 bmp ==== */
+                    /* ==== bgr 555 dib -> bgr 888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_888_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 555 dib -> bgr 888 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_888_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 565 dib -> rgb 888 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_888_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 565 dib -> bgr 888 bmp ==== */
+                    /* ==== bgr 565 dib -> rgb 888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_888_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            }
+            break;
+        }
+        /* Fall through */
+
+    case 32:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*2;
+            dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gSrc==0x03e0) {
+                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 555 dib -> rgb 0888 bmp ==== */
+                    /* ==== bgr 555 dib -> bgr 0888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 555 dib -> bgr 0888 bmp ==== */
+                    /* ==== bgr 555 dib -> rgb 0888 bmp ==== */
+                    X11DRV_DIB_Convert_555_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                if ((rSrc==0x1f && bmpImage->red_mask==0xff) ||
+                    (bSrc==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 565 dib -> rgb 0888 bmp ==== */
+                    /* ==== bgr 565 dib -> bgr 0888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 565 dib -> bgr 0888 bmp ==== */
+                    /* ==== bgr 565 dib -> rgb 0888 bmp ==== */
+                    X11DRV_DIB_Convert_565_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            }
+        }
+        break;
+
+    case 1:
+    case 4:
+    case 8:
+        {
+            /* ==== rgb or bgr 555 or 565 dib -> pal 1, 4 or 8 ==== */
+            const WORD* srcpixel;
+            int rShift1,gShift1,bShift1;
+            int rShift2,gShift2,bShift2;
+            BYTE gMask1,gMask2;
+
+            /* Set color scaling values */
+            rShift1=16+X11DRV_DIB_MaskToShift(rSrc)-3;
+            gShift1=16+X11DRV_DIB_MaskToShift(gSrc)-3;
+            bShift1=16+X11DRV_DIB_MaskToShift(bSrc)-3;
+            rShift2=rShift1+5;
+            gShift2=gShift1+5;
+            bShift2=bShift1+5;
+            if (gSrc==0x03e0) {
+                /* Green has 5 bits, like the others */
+                gMask1=0xf8;
+                gMask2=0x07;
+            } else {
+                /* Green has 6 bits, not 5. Compensate. */
+                gShift1++;
+                gShift2+=2;
+                gMask1=0xfc;
+                gMask2=0x03;
+            }
+
+            /* We could split it into four separate cases to optimize 
+             * but it is probably not worth it.
+             */
+            srcbits+=2*left;
+            for (h=lines-1; h>=0; h--) {
+                srcpixel=(const WORD*)srcbits;
+                for (x=left; x<dstwidth+left; x++) {
+                    DWORD srcval;
+                    BYTE red,green,blue;
+                    srcval=*srcpixel++ << 16;
+                    red=  ((srcval >> rShift1) & 0xf8) |
+                          ((srcval >> rShift2) & 0x07);
+                    green=((srcval >> gShift1) & gMask1) |
+                          ((srcval >> gShift2) & gMask2);
+                    blue= ((srcval >> bShift1) & 0xf8) |
+                          ((srcval >> bShift2) & 0x07);
+                    XPutPixel(bmpImage, x, h,
+                              X11DRV_PALETTE_ToPhysical(dc, RGB(red,green,blue)));
+                }
+                srcbits += linebytes;
+            }
+        }
+        break;
+
+    default:
+        FIXME("16 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
+        break;
     }
 }
 
@@ -1520,7 +3175,7 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
 					XImage *bmpImage, DWORD dibpitch )
 {
     DWORD x;
-    int h, rsc, gsc;
+    int h;
 
     DWORD linebytes = dibpitch;
 
@@ -1531,200 +3186,305 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
         linebytes = -linebytes;
     }
 
-    /* Set color scaling values */
-    if ( rDst == 0x7c00 ) { rsc = 7; gsc = 2; }             /* 555 dib */
-    else { rsc = 8; gsc = 3; }                              /* 565 dib */
-
-    switch ( bmpImage->depth )
+    switch (bmpImage->depth)
     {
-        case 15:
-	    /* using same format as XImage */
-	    if (rDst == bmpImage->red_mask && bDst == bmpImage->blue_mask)
-                for (h = lines - 1; h >= 0; h--, dstbits += linebytes)
-                    memcpy( dstbits, bmpImage->data + h*bmpImage->bytes_per_line, srcwidth*2 );
-	    /* reversed format (BGR <=> RGB) */
-            else if (rDst == bmpImage->blue_mask && bDst == bmpImage->red_mask)
-            {
-                LPDWORD srcpixel, ptr = (LPDWORD)dstbits;
-                DWORD val;
-                int div = srcwidth % 2;
+    case 15:
+        {
+            const char* srcbits;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    srcpixel = (LPDWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < srcwidth/2; x++) {  /* Do 2 pixels at a time */
-                        val = *srcpixel++;
-                        *ptr++ = ((val << 10) & 0xf800f800) | (val & 0x03e003e0) |        /* Red & Green */
-			  ((val >> 10) & 0x001f001f);                                     /* Blue */
-                    }
-                    if (div != 0) /* Odd width? */
-                        *ptr = ((*(WORD *)srcpixel << 1) & 0xffc0) | ((*(WORD *)srcpixel >> 4) & 0x0020) |
-                               (*(WORD *)srcpixel & 0x001f);
-                    ptr = (LPDWORD)(dstbits += linebytes);
-               }
-           }
-	   else goto notsupported;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-           break;
-
-       case 16:
-           {
-	   LPDWORD srcpixel, ptr = (LPDWORD)dstbits;
-	   DWORD val;
-	   int div = srcwidth % 2;
-
-	   /* using same format as XImage */
-	   if (rDst == bmpImage->red_mask && bDst == bmpImage->blue_mask)
-	       for (h = lines - 1; h >= 0; h--, dstbits += linebytes)
-		   memcpy( dstbits, bmpImage->data + h*bmpImage->bytes_per_line, srcwidth*2 );
-           /* ==== 565 BGR bitmap to 555 BGR dib ==== */
-           else if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f &&
-		    rDst == 0x7c00 && bDst == 0x001f)
-	   {
-               for (h = lines - 1; h >= 0; h--) {
-                   srcpixel = (LPDWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                   for (x = 0; x < srcwidth/2; x++) {  /* Do 2 pixels at a time */
-                       val = *srcpixel++;
-                       *ptr++ = ((val >> 1) & 0x7fe07fe0) |                    /* Red & Green */
-			 (val & 0x001f001f);                                   /* Blue */
-                   }
-                   if (div != 0) /* Odd width? */
-                       *ptr = ((*(WORD *)srcpixel >> 1) & 0x7fe0) | (*(WORD *)srcpixel & 0x001f);
-                   ptr = (LPDWORD) (dstbits += linebytes);
-               }
-	   }
-	   /* ==== 565 RGB bitmap to 555 BGR dib ==== */
-           else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800 &&
-		    rDst == 0x7c00 && bDst == 0x001f)
-           {
-               for (h = lines - 1; h >= 0; h--) {
-                   srcpixel = (LPDWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                   for (x = 0; x < srcwidth/2; x++) {  /* Do 2 pixels at a time */
-                       val = *srcpixel++;
-                       *ptr++ = ((val << 10) & 0x7c007c00) | ((val >> 1) & 0x03e003e0) |   /* Red & Green */
-			 ((val >> 11) & 0x001f001f);                                       /* Blue */
-                   }
-                   if (div != 0) /* Odd width? */
-                       *ptr = ((*(WORD *)srcpixel >> 1) & 0x7fe0) | (*(WORD *)srcpixel & 0x001f);
-                   ptr = (LPDWORD) (dstbits += linebytes);
-               }
-               }
-	   else goto notsupported;
-           }
-           break;
-
-       case 24:
-       case 32:
-           {
-               DWORD  *srcpixel;
-               LPWORD ptr = (LPWORD)dstbits;
-               DWORD val;
-
-	       /* ==== 24/32 BGR bitmap ==== */
-	       if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff)
-	       {
-		   int rsc2 = 16-rsc, gsc2 = 8-gsc;
-		   for (h = lines - 1; h >= 0; h--) {
-		       srcpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
-		       for (x = 0; x < srcwidth; x++, ptr++) {
-			   val = *srcpixel++;
-			   *ptr = ((val >> rsc2) & rDst) |
-			          ((val >> gsc2) & gDst) |
-			          ((val >> 3) & bDst);
-		       }
-		       ptr = (LPWORD)(dstbits += linebytes);
-		   }
-	       }
-	       /* ==== 24/32 RGB bitmap ==== */
-	       else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-	       {
-		   int gsc2 = 8-gsc;
-		   for (h = lines - 1; h >= 0; h--) {
-		       srcpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
-		       for (x = 0; x < srcwidth; x++, ptr++) {
-			   val = *srcpixel++;
-			   *ptr = ((val << rsc) & rDst) |
-			          ((val >> gsc2) & gDst) |
-			          ((val >> 19) & bDst);
-		       }
-		       ptr = (LPWORD) (dstbits += linebytes);
-		   }
-               }
-	       else goto notsupported;
-           }
-           break;
-
-       case 1:
-	    /* ==== monochrome bitmap ==== */
-       case 4:
-	    /* ==== 4 colormap bitmap ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-            {
-	        LPWORD ptr = (LPWORD)dstbits;
-		PALETTEENTRY val;
-
-                for (h = lines - 1; h >= 0; h--) {
-		  for (x = 0; x < dstwidth; x++) {
-		    val = srccolors[XGetPixel(bmpImage, x, h)];
-		    *ptr++ = ((val.peRed << rsc) & rDst) | 
-		             ((val.peGreen << gsc) & gDst) |
-		             ((val.peBlue >> 3) & bDst);
-		  }
-		  ptr = (LPWORD)(dstbits += linebytes);
+            if (gDst==bmpImage->green_mask) {
+                if (rDst==bmpImage->red_mask) {
+                    /* ==== rgb 555 bmp -> rgb 555 dib ==== */
+                    /* ==== bgr 555 bmp -> bgr 555 dib ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 555 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 555 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_555_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            } else {
+                if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
+                    /* ==== rgb 555 bmp -> rgb 565 dib ==== */
+                    /* ==== bgr 555 bmp -> bgr 565 dib ==== */
+                    X11DRV_DIB_Convert_555_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 555 bmp -> bgr 565 dib ==== */
+                    /* ==== bgr 555 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_555_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
                 }
             }
-	    else goto notsupported;
+        }
+        break;
 
+    case 16:
+        {
+            const char* srcbits;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gDst==bmpImage->green_mask) {
+                if (rDst == bmpImage->red_mask) {
+                    /* ==== rgb 565 bmp -> rgb 565 dib ==== */
+                    /* ==== bgr 565 bmp -> bgr 565 dib ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 565 bmp -> bgr 565 dib ==== */
+                    /* ==== bgr 565 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_565_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            } else {
+                if (rDst==bmpImage->red_mask || bDst==bmpImage->blue_mask) {
+                    /* ==== rgb 565 bmp -> rgb 555 dib ==== */
+                    /* ==== bgr 565 bmp -> bgr 555 dib ==== */
+                    X11DRV_DIB_Convert_565_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 565 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 565 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_565_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            }
+        }
+        break;
+
+    case 24:
+        if (bmpImage->bits_per_pixel == 24) {
+            const char* srcbits;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gDst==0x03e0) {
+                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 888 bmp -> rgb 555 dib ==== */
+                    /* ==== bgr 888 bmp -> bgr 555 dib ==== */
+                    X11DRV_DIB_Convert_888_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 888 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 888 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_888_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            } else {
+                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
+                    /* ==== rgb 888 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_888_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 888 bmp -> bgr 565 dib ==== */
+                    /* ==== bgr 888 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_888_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            }
             break;
+        }
+        /* Fall through */
 
-        case 8:
-	    /* ==== 8 colormap bitmap ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-            {
-	        LPWORD ptr = (LPWORD)dstbits;
-                BYTE *srcpixel;
-		PALETTEENTRY val;
+    case 32:
+        {
+            const char* srcbits;
 
-               for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-		  for (x = 0; x < dstwidth; x++) {
-		    val = srccolors[(int)*srcpixel++];
-		    *ptr++ = ((val.peRed << rsc) & rDst) | 
-		             ((val.peGreen << gsc) & gDst) |
-		             ((val.peBlue >> 3) & bDst);
-                   }
-		  ptr = (LPWORD)(dstbits += linebytes);
-               }
-           }
-	    else goto notsupported;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-           break;
+            if (gDst==0x03e0) {
+                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 0888 bmp -> rgb 555 dib ==== */
+                    /* ==== bgr 0888 bmp -> bgr 555 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 0888 bmp -> bgr 555 dib ==== */
+                    /* ==== bgr 0888 bmp -> rgb 555 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            } else {
+                if ((rDst==0x1f && bmpImage->red_mask==0xff) ||
+                    (bDst==0x1f && bmpImage->blue_mask==0xff)) {
+                    /* ==== rgb 0888 bmp -> rgb 565 dib ==== */
+                    /* ==== bgr 0888 bmp -> bgr 565 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 0888 bmp -> bgr 565 dib ==== */
+                    /* ==== bgr 0888 bmp -> rgb 565 dib ==== */
+                    X11DRV_DIB_Convert_0888_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                }
+            }
+        }
+        break;
 
-       default:
-       notsupported:
-	    {
-	      BYTE r,g, b;
-	      LPWORD ptr = (LPWORD)dstbits;
+    case 1:
+    case 4:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 1 or 4 bmp -> rgb or bgr 555 or 565 dib ==== */
+            int rShift,gShift,bShift;
+            WORD* dstpixel;
 
-	      FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 16 bit DIB %lx,%lx,%lx\n",
-                    bmpImage->depth, bmpImage->red_mask, 
-                    bmpImage->green_mask, bmpImage->blue_mask,
-		    rDst, gDst, bDst);
+            /* Shift everything 16 bits left so that all shifts are >0,
+             * even for BGR DIBs. Then a single >> 16 will bring everything
+             * back into place.
+             */
+            rShift=16+X11DRV_DIB_MaskToShift(rDst)-3;
+            gShift=16+X11DRV_DIB_MaskToShift(gDst)-3;
+            bShift=16+X11DRV_DIB_MaskToShift(bDst)-3;
+            if (gDst==0x07e0) {
+                /* 6 bits for the green */
+                gShift++;
+            }
+            rDst=rDst << 16;
+            gDst=gDst << 16;
+            bDst=bDst << 16;
+            for (h = lines - 1; h >= 0; h--) {
+                dstpixel=(LPWORD)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    DWORD dstval;
+                    srcval=srccolors[XGetPixel(bmpImage, x, h)];
+                    dstval=((srcval.peRed   << rShift) & rDst) |
+                           ((srcval.peGreen << gShift) & gDst) |
+                           ((srcval.peBlue  << bShift) & bDst);
+                    *dstpixel++=dstval >> 16;
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
 
-	      for (h = lines - 1; h >= 0; h--)
-		{
-		  for (x = 0; x < dstwidth; x++, ptr++)
-		    {
-		      COLORREF pixel = X11DRV_PALETTE_ToLogical( XGetPixel( bmpImage, x, h ) );
-		      r = (BYTE) GetRValue(pixel);
-		      g = (BYTE) GetGValue(pixel);
-		      b = (BYTE) GetBValue(pixel);
-		      *ptr = ( ((r << rsc) & rDst) | ((g << gsc) & gDst) | ((b >> 3) & bDst) );
-		    }
-		  ptr = (LPWORD) (dstbits += linebytes);
-		}
-	    }
-           break;
-   }
+    case 8:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 8 bmp -> rgb or bgr 555 or 565 dib ==== */
+            int rShift,gShift,bShift;
+            const BYTE* srcbits;
+            const BYTE* srcpixel;
+            WORD* dstpixel;
+
+            /* Shift everything 16 bits left so that all shifts are >0,
+             * even for BGR DIBs. Then a single >> 16 will bring everything
+             * back into place.
+             */
+            rShift=16+X11DRV_DIB_MaskToShift(rDst)-3;
+            gShift=16+X11DRV_DIB_MaskToShift(gDst)-3;
+            bShift=16+X11DRV_DIB_MaskToShift(bDst)-3;
+            if (gDst==0x07e0) {
+                /* 6 bits for the green */
+                gShift++;
+            }
+            rDst=rDst << 16;
+            gDst=gDst << 16;
+            bDst=bDst << 16;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            for (h=0; h<lines; h++) {
+                srcpixel=srcbits;
+                dstpixel=(LPWORD)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    DWORD dstval;
+                    srcval=srccolors[(int)*srcpixel++];
+                    dstval=((srcval.peRed   << rShift) & rDst) |
+                           ((srcval.peGreen << gShift) & gDst) |
+                           ((srcval.peBlue  << bShift) & bDst);
+                    *dstpixel++=dstval >> 16;
+                }
+                srcbits -= bmpImage->bytes_per_line;
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
+    default:
+    notsupported:
+        {
+            /* ==== any bmp format -> rgb or bgr 555 or 565 dib ==== */
+            int rShift,gShift,bShift;
+            WORD* dstpixel;
+
+            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 16 bit DIB %lx,%lx,%lx\n",
+                  bmpImage->depth, bmpImage->red_mask,
+                  bmpImage->green_mask, bmpImage->blue_mask,
+                  rDst, gDst, bDst);
+
+            /* Shift everything 16 bits left so that all shifts are >0,
+             * even for BGR DIBs. Then a single >> 16 will bring everything
+             * back into place.
+             */
+            rShift=16+X11DRV_DIB_MaskToShift(rDst)-3;
+            gShift=16+X11DRV_DIB_MaskToShift(gDst)-3;
+            bShift=16+X11DRV_DIB_MaskToShift(bDst)-3;
+            if (gDst==0x07e0) {
+                /* 6 bits for the green */
+                gShift++;
+            }
+            rDst=rDst << 16;
+            gDst=gDst << 16;
+            bDst=bDst << 16;
+            for (h = lines - 1; h >= 0; h--) {
+                dstpixel=(LPWORD)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    COLORREF srcval;
+                    DWORD dstval;
+                    srcval=X11DRV_PALETTE_ToLogical(XGetPixel(bmpImage, x, h));
+                    dstval=((GetRValue(srcval) << rShift) & rDst) |
+                           ((GetGValue(srcval) << gShift) & gDst) |
+                           ((GetBValue(srcval) << bShift) & bDst);
+                    *dstpixel++=dstval >> 16;
+                }
+                dstbits += linebytes;
+            }
+        }
+        break;
+    }
 }
 
 
@@ -1735,11 +3495,13 @@ static void X11DRV_DIB_GetImageBits_16( int lines, BYTE *dstbits,
  */
 static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
                                  DWORD srcwidth, DWORD dstwidth, int left,
-				 DC *dc, XImage *bmpImage, DWORD linebytes )
+                                 DC *dc,
+                                 DWORD rSrc, DWORD gSrc, DWORD bSrc,
+                                 XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
-  
+
     if (lines < 0 )
     {
         lines = -lines;
@@ -1747,214 +3509,137 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
         linebytes = -linebytes;
     }
 
-    switch ( bmpImage->depth )
+    switch (bmpImage->depth)
     {
-        case 24:
-	    {
-		if (bmpImage->bits_per_pixel == 24) {
-			int dstlinebytes = linebytes;
-			BYTE *dstpixel;
-			BYTE *ptr = (BYTE *)(srcbits+left*3);
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            char* dstbits;
 
-			if (dstlinebytes < 0 ) dstlinebytes = -dstlinebytes;
-			dstpixel = bmpImage->data + lines*dstlinebytes + left*3;
-                        for(h = lines ; h-- ; ) {
-				dstpixel-=dstlinebytes;
-				memcpy(dstpixel,ptr,dstwidth*3);
-				ptr +=linebytes;
-			}
-			break;
-		}
-	    }
-        case 32:
-            {
-	        if( bmpImage->blue_mask == 0xff && bmpImage->red_mask == 0xff0000 )  /* packed BGR to unpacked BGR */
-                {
-                    DWORD *dstpixel, val, buf;
-                    DWORD *ptr = (DWORD *)(srcbits + left*3);
-                    BYTE *bits;
-                    int div = dstwidth % 4;
-                    int divk;
+            srcbits=srcbits+left*3;
+            dstbits=bmpImage->data+left*3+(lines-1)*bmpImage->bytes_per_line;
 
-                    for(h = lines - 1; h >= 0; h--)
-                    {
-                        dstpixel = (DWORD *) (bmpImage->data + h*bmpImage->bytes_per_line + left*4);
-
-                        for (x = 0; x < dstwidth/4; x++) {   /* do 3 dwords source, 4 dwords dest at a time */
-                            buf = *ptr++;
-                            *dstpixel++ = buf&0x00ffffff;                  /* b1, g1, r1 */
-                            val = (buf >> 24);                             /* b2 */
-                            buf = *ptr++;
-                            *dstpixel++ = (val | (buf<<8)) &0x00ffffff;    /* g2, r2 */
-                            val = (buf >> 16);                             /* b3, g3 */
-                            buf = *ptr++;
-                            *dstpixel++ = (val | (buf<<16)) &0x00ffffff;   /* r3 */
-                            *dstpixel++ = (buf >> 8);                      /* b4, g4, r4 */
-                        }
-                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) /* do remainder */
-                        {
-			    *dstpixel++ = *(DWORD*)bits & 0x00ffffff;      /* b, g, r */
-                        }
-                        ptr = (DWORD*)((srcbits+=linebytes)+left*3);
-                    }
-                }
-		else if( bmpImage->blue_mask == 0xff0000 && bmpImage->red_mask == 0xff )  /* packed BGR to unpacked RGB */
-                {
-                    DWORD *dstpixel, val, buf;
-                    DWORD *ptr = (DWORD *)(srcbits + left*3);
-                    BYTE *bits;
-                    int div = dstwidth % 4;
-                    int divk;
-
-                    for(h = lines - 1; h >= 0; h--)
-                    {
-                        dstpixel = (DWORD *) (bmpImage->data + h*bmpImage->bytes_per_line + left*4);
-
-                        for (x = 0; x < dstwidth/4; x++) {   /* do 3 dwords source, 4 dwords dest at a time */
-                            buf = *ptr++;
-                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  /* b1, g1, r1 */
-                            val = ((buf&0xff000000)>>8);                                           /* b2 */
-                            buf = *ptr++;
-                            *dstpixel++ = val | ((buf&0xff)<<8) | ((buf&0xff00)>>8);               /* g2, r2 */
-                            val = (buf&0xff0000) | ((buf&0xff000000)>>16);                         /* b3, g3 */
-                            buf = *ptr++;
-                            *dstpixel++ = val | (buf&0xff);                                        /* r3 */
-                            *dstpixel++ = ((buf&0xff00)<<8) | ((buf&0xff0000)>>8) | (buf>>24);     /* b4, g4, r4 */
-                        }
-                        for ( divk=div, bits=(BYTE*)ptr; divk>0; divk--, bits+=3 ) /* do remainder */
-                        {
-                            buf = *(DWORD*)bits;
-                            *dstpixel++ = ((buf&0xff)<<16) | (buf&0xff00) | ((buf&0xff0000)>>16);  /* b, g, r */
-                        }
-                        ptr = (DWORD*)((srcbits+=linebytes)+left*3);
-                    }
-                }
-                else
-                    goto notsupported;
+            if (rSrc==bmpImage->red_mask) {
+                /* ==== rgb 888 dib -> rgb 888 bmp ==== */
+                /* ==== bgr 888 dib -> bgr 888 bmp ==== */
+                X11DRV_DIB_Convert_any_asis
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else {
+                /* ==== rgb 888 dib -> bgr 888 bmp ==== */
+                /* ==== bgr 888 dib -> rgb 888 bmp ==== */
+                X11DRV_DIB_Convert_888_reverse
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
             }
             break;
+        }
 
-        case 15:
-            {
-	        if( bmpImage->blue_mask == 0x7c00 && bmpImage->red_mask == 0x1f )   /* BGR888 to RGB555 */
-                {
-                    DWORD  *ptr = (DWORD *)(srcbits + left*3);
-                    LPBYTE bits;
-                    LPWORD dstpixel;
-                    int div = dstwidth % 4;
-                    int divk;
+    case 32:
+        {
+            char* dstbits;
 
-                    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
-                        dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                        for (x = 0; x < dstwidth/4; x++, ptr += 3) {
-                            *dstpixel++ = ((ptr[0] << 7) & 0x7c00)  | ((ptr[0] >> 6) & 0x03e0)  | ((ptr[0] >> 19) & 0x1f);
-                            *dstpixel++ = ((ptr[0] >> 17) & 0x7c00) | ((ptr[1] << 2) & 0x03e0)  | ((ptr[1] >> 11) & 0x1f);
-                            *dstpixel++ = ((ptr[1] >> 9) & 0x07c00) | ((ptr[1] >> 22) & 0x03e0) | ((ptr[2] >> 3) & 0x1f);
-                            *dstpixel++ = ((ptr[2] >> 1) & 0x07c00) | ((ptr[2] >> 14) & 0x03e0) | ((ptr[2] >> 27) & 0x1f);
-                        }
-                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth not divisible by 4? */
-                            *dstpixel++ = (((WORD)bits[0] << 7) & 0x07c00) |
-                                            (((WORD)bits[1] << 2) & 0x03e0) |
-                                            (((WORD)bits[2] >> 3) & 0x001f);
-                        ptr = (DWORD *)((srcbits += linebytes) + left * 3);
-                    }
-                }
-                else if( bmpImage->blue_mask == 0x1f && bmpImage->red_mask == 0x7c00 )   /* BGR888 to BGR555 */
-                {
-                    DWORD  *ptr = (DWORD *)(srcbits + left*3);
-                    LPBYTE bits;
-                    LPWORD dstpixel;
-                    int div = dstwidth % 4;
-                    int divk;
+            srcbits=srcbits+left*3;
+            dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 
-                    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
-                        dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                        for (x = 0; x < dstwidth/4; x++, ptr += 3) {
-                            *dstpixel++ = ((ptr[0] >> 3) & 0x1f)  | ((ptr[0] >> 6) & 0x03e0)  | ((ptr[0] >> 9) & 0x7c00);
-                            *dstpixel++ = ((ptr[0] >> 27) & 0x1f) | ((ptr[1] << 2) & 0x03e0)  | ((ptr[1] >> 1) & 0x7c00);
-                            *dstpixel++ = ((ptr[1] >> 19) & 0x1f) | ((ptr[1] >> 22) & 0x03e0) | ((ptr[2] << 7) & 0x7c00);
-                            *dstpixel++ = ((ptr[2] >> 11) & 0x1f) | ((ptr[2] >> 14) & 0x03e0) | ((ptr[2] >> 17) & 0x7c00);
-                        }
-                        for (bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth not divisible by 4? */
-                            *dstpixel++ = (((WORD)bits[2] << 7) & 0x07c00) |
-                                            (((WORD)bits[1] << 2) & 0x03e0) |
-                                            (((WORD)bits[0] >> 3) & 0x001f);
-                        ptr = (DWORD *)((srcbits += linebytes) + left * 3);
-                    }
-                }
-                else
-                    goto notsupported;
+            if (rSrc==bmpImage->red_mask) {
+                /* ==== rgb 888 dib -> rgb 0888 bmp ==== */
+                /* ==== bgr 888 dib -> bgr 0888 bmp ==== */
+                X11DRV_DIB_Convert_888_to_0888_asis
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else {
+                /* ==== rgb 888 dib -> bgr 0888 bmp ==== */
+                /* ==== bgr 888 dib -> rgb 0888 bmp ==== */
+                X11DRV_DIB_Convert_888_to_0888_reverse
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
             }
             break;
+        }
 
-        case 16:
-            {
-                DWORD  *ptr = (DWORD *)(srcbits + left*3);
-                LPBYTE bits;
-                LPWORD dstpixel;
-                int div = dstwidth % 4;
-                int divk;
+    case 15:
+        {
+            char* dstbits;
 
-                if( bmpImage->blue_mask == 0x001f && bmpImage->red_mask == 0xf800 )    /* BGR888 to BGR565 */
-                {
-		    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
-                        dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                        for (x = 0; x < dstwidth/4; x++, ptr += 3) {
-                            *dstpixel++ = ((ptr[0] >> 3) & 0x1f)  | ((ptr[0] >> 5) & 0x07e0)  | ((ptr[0] >> 8) & 0xf800);
-                            *dstpixel++ = ((ptr[0] >> 27) & 0x1f) | ((ptr[1] << 3) & 0x07e0)  | (ptr[1] & 0xf800);
-                            *dstpixel++ = ((ptr[1] >> 19) & 0x1f) | ((ptr[1] >> 21) & 0x07e0) | ((ptr[2] << 8) & 0xf800);
-                            *dstpixel++ = ((ptr[2] >> 11) & 0x1f) | ((ptr[2] >> 13) & 0x07e0) | ((ptr[2] >> 16) & 0xf800);
-                        }
-                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth is not divisible by 4? */
-                            *dstpixel++ = (((WORD)bits[2] << 8) & 0xf800) |
-                                            (((WORD)bits[1] << 3) & 0x07e0) |
-                                            (((WORD)bits[0] >> 3) & 0x001f);
-                        ptr = (DWORD *)((srcbits += linebytes) + left * 3);
-                    }
-                }
-                else if( bmpImage->blue_mask == 0xf800 && bmpImage->red_mask == 0x001f ) /* BGR888 to RGB565 */
-                {
-		    for (h = lines - 1; h >= 0; h--) {              /* Do 4 pixels at a time */
-                        dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line + left*2);
-                        for (x = 0; x < dstwidth/4; x++, ptr += 3) {
-                            *dstpixel++ = ((ptr[0] << 8) & 0xf800)  | ((ptr[0] >> 5) & 0x07e0)  | ((ptr[0] >> 19) & 0x1f);
-                            *dstpixel++ = ((ptr[0] >> 16) & 0xf800) | ((ptr[1] << 3) & 0x07e0)  | ((ptr[1] >> 11) & 0x1f);
-                            *dstpixel++ = ((ptr[1] >> 8) & 0xf800)  | ((ptr[1] >> 21) & 0x07e0) | ((ptr[2] >> 3) & 0x1f);
-                            *dstpixel++ = (ptr[2] & 0xf800)         | ((ptr[2] >> 13) & 0x07e0) | ((ptr[2] >> 27) & 0x1f);
-                        }
-                        for (   bits = (LPBYTE)ptr, divk=div; divk > 0; divk--, bits+=3)  /* dstwidth is not divisible by 4? */
-                            *dstpixel++ = (((WORD)bits[0] << 8) & 0xf800) |
-                                            (((WORD)bits[1] << 3) & 0x07e0) |
-                                            (((WORD)bits[2] >> 3) & 0x001f);
-                        ptr = (DWORD *)((srcbits += linebytes) + left * 3);
-                    }
-                }
-                else
-                    goto notsupported;
+            srcbits=srcbits+left*3;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if ((rSrc==0xff && bmpImage->red_mask==0x1f) ||
+                (bSrc==0xff && bmpImage->blue_mask==0x1f)) {
+                /* ==== rgb 888 dib -> rgb 555 bmp ==== */
+                /* ==== bgr 888 dib -> bgr 555 bmp ==== */
+                X11DRV_DIB_Convert_888_to_555_asis
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else {
+                /* ==== rgb 888 dib -> bgr 555 bmp ==== */
+                /* ==== bgr 888 dib -> rgb 555 bmp ==== */
+                X11DRV_DIB_Convert_888_to_555_reverse
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
             }
-            break;
-         
-        case 1:
-        case 4:
-        case 8:
-            {
-                LPBYTE bits = (LPBYTE)srcbits + left*3;
+        }
+        break;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    for (x = left; x < dstwidth+left; x++, bits+=3)
-                        XPutPixel( bmpImage, x, h, 
-                                   X11DRV_PALETTE_ToPhysical(dc, RGB(bits[2], bits[1], bits[0])));
-                    bits = (LPBYTE)(srcbits += linebytes) + left * 3;
-                }
+    case 16:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*3;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if ((rSrc==0xff && bmpImage->red_mask==0x1f) ||
+                (bSrc==0xff && bmpImage->blue_mask==0x1f)) {
+                /* ==== rgb 888 dib -> rgb 565 bmp ==== */
+                /* ==== bgr 888 dib -> bgr 565 bmp ==== */
+                X11DRV_DIB_Convert_888_to_565_asis
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else {
+                /* ==== rgb 888 dib -> bgr 565 bmp ==== */
+                /* ==== bgr 888 dib -> rgb 565 bmp ==== */
+                X11DRV_DIB_Convert_888_to_565_reverse
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
             }
-            break;
+        }
+        break;
 
-        default:
-        notsupported:
-            FIXME("from 24 bit DIB to %d bit bitmap with mask R,G,B %x,%x,%x\n",
-                  bmpImage->bits_per_pixel, (int)bmpImage->red_mask, 
-                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-            break;
+    case 1:
+    case 4:
+    case 8:
+        {
+            /* ==== rgb 888 dib -> any bmp bormat ==== */
+            const BYTE* srcbyte;
+
+            /* Windows only supports one 24bpp DIB format: RGB888 */
+            srcbits+=left*3;
+            for (h = lines - 1; h >= 0; h--) {
+                srcbyte=(const BYTE*)srcbits;
+                for (x = left; x < dstwidth+left; x++) {
+                    XPutPixel(bmpImage, x, h,
+                              X11DRV_PALETTE_ToPhysical
+                              (dc, RGB(srcbyte[2], srcbyte[1], srcbyte[0])));
+                    srcbyte+=3;
+                }
+                srcbits += linebytes;
+            }
+        }
+        break;
+
+    default:
+        FIXME("from 24 bit DIB to %d bit bitmap with mask R,G,B %lx,%lx,%lx\n",
+              bmpImage->bits_per_pixel, bmpImage->red_mask,
+              bmpImage->green_mask, bmpImage->blue_mask );
+        break;
     }
 }
 
@@ -1967,9 +3652,10 @@ static void X11DRV_DIB_SetImageBits_24( int lines, const BYTE *srcbits,
 static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
+                                        DWORD rDst, DWORD gDst, DWORD bDst,
 					XImage *bmpImage, DWORD linebytes )
 {
-    DWORD x, val;
+    DWORD x;
     int h;
 
     if (lines < 0 )
@@ -1979,234 +3665,183 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
         linebytes = -linebytes;
     }
 
-    switch ( bmpImage->depth )
+    switch (bmpImage->depth)
     {
-        case 24:
-	    {
-		if (bmpImage->bits_per_pixel == 24) {
-			int tocopy = linebytes;
-			BYTE *srcpixel;
-			BYTE *ptr = (LPBYTE)dstbits;
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            const char* srcbits;
 
-			if (tocopy < 0 ) tocopy = -tocopy;
-			srcpixel = bmpImage->data + lines*tocopy;
-                        for(h = lines ; h-- ; ) {
-				srcpixel-=tocopy;
-				memcpy(ptr,srcpixel,tocopy);
-				ptr = (LPBYTE)(dstbits+=linebytes);
-			}
-			break;
-		}
-	    }
-        case 32:
-            {
-                    DWORD  *srcpixel, buf;
-                    LPBYTE bits;
-	    DWORD *ptr=(DWORD *)dstbits;
-                    int quotient = dstwidth / 4;
-                    int remainder = dstwidth % 4;
-                    int remk;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-	    /* ==== 24/32 BGR bitmap to 24 BGR dib==== */
-	    if( bmpImage->blue_mask == 0xff && bmpImage->red_mask == 0xff0000 )
-	    {
-                    for(h = lines - 1; h >= 0; h--)
-                    {
-		  srcpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
-
-                        for (x = 0; x < quotient; x++) {     /* do 4 dwords source, 3 dwords dest at a time */
-			  buf = ((*srcpixel++)&0x00ffffff);      /* b1, g1, r1*/
-			  *ptr++ = buf | ((*srcpixel)<<24);      /* b2 */
-			  buf = ((*srcpixel++>>8)&0x0000ffff);   /* g2, r2 */
-			  *ptr++ = buf | ((*srcpixel)<<16);      /* b3, g3 */
-			  buf = ((*srcpixel++>>16)&0x000000ff);  /* r3 */
-			  *ptr++ = buf | ((*srcpixel++)<<8);     /* b4, g4, r4 */
-                        }
-                        for ( remk=remainder, bits=(BYTE*)ptr; remk>0; remk--, bits+=3 ) /* do remainder */
-                        {
-                            buf=*srcpixel++;
-                            *(WORD*)bits = buf;                    /* b, g */
-			  *(bits+2) = buf>>16;                   /* r */
-                        }
-		  ptr = (DWORD*)(dstbits+=linebytes);
-                    }
-
-                }
-	    /* ==== 24/32 RGB bitmap to 24 BGR dib ==== */
-	    else if( bmpImage->blue_mask == 0xff0000 && bmpImage->red_mask == 0xff )
-                {
-                    for(h = lines - 1; h >= 0; h--)
-                    {
-		  srcpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
-
-                        for (x = 0; x < quotient; x++) {     /* do 4 dwords source, 3 dwords dest at a time */
-                            buf = *srcpixel++;
-                            val = ((buf&0xff0000)>>16) | (buf&0xff00) | ((buf&0xff)<<16);       /* b1, g1, r1 */
-                            buf = *srcpixel++;
-                            *ptr++ = val | ((buf&0xff0000)<<8);                                 /* b2 */
-                            val = ((buf&0xff00)>>8) | ((buf&0xff)<<8);                          /* g2, r2 */
-                            buf = *srcpixel++;
-                            *ptr++ = val | (buf&0xff0000) | ((buf&0xff00)<<16);                 /* b3, g3 */
-                            val = (buf&0xff);                                                   /* r3 */
-                            buf = *srcpixel++;
-                            *ptr++ = val | ((buf&0xff0000)>>8) | ((buf&0xff00)<<8) | (buf<<24); /* b4, g4, r4 */
-                        }
-                        for ( remk=remainder, bits=(BYTE*)ptr; remk>0; remk--, bits+=3 ) /* do remainder */
-                        {
-                            buf=*srcpixel++;
-                            *(WORD*)bits = (buf&0xff00) | ((buf&0xff0000)>>16) ;                /* b, g */
-                            *(bits+2) = buf;                                                    /* r */
-                        }
-		  ptr = (DWORD*)(dstbits+=linebytes);
-                    }
-                }
-	    else goto notsupported;
+            if (rDst==bmpImage->red_mask) {
+                /* ==== rgb 888 bmp -> rgb 888 dib ==== */
+                /* ==== bgr 888 bmp -> bgr 888 dib ==== */
+                X11DRV_DIB_Convert_any_asis
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else {
+                /* ==== rgb 888 bmp -> bgr 888 dib ==== */
+                /* ==== bgr 888 bmp -> rgb 888 dib ==== */
+                X11DRV_DIB_Convert_888_reverse
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
             }
             break;
+        }
 
-        case 15:
-            {
-                LPWORD srcpixel;
-	    LPBYTE bits = dstbits;
-                WORD val;
+    case 32:
+        {
+            const char* srcbits;
 
-	    /* ==== 555 BGR bitmap to 24 BGR dib ==== */
-	    if( bmpImage->blue_mask == 0x1f && bmpImage->red_mask == 0x7c00 )  
-                {
-                    for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                        for (x = 0; x < srcwidth; x++, bits += 3) {
-                            val = *srcpixel++;
-                            bits[2] = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));           /*Red*/
-                            bits[1] = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));            /*Green*/
-                            bits[0] = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));            /*Blue*/
-			}
-		  bits = (dstbits += linebytes);
-                    }
-                }
-	    /* ==== 555 RGB bitmap to 24 RGB dib==== */
-	    else if( bmpImage->blue_mask == 0x7c00 && bmpImage->red_mask == 0x1f )
-                {
-                    for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                        for (x = 0; x < srcwidth; x++, bits += 3) {
-                            val = *srcpixel++;
-                            bits[0] = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));           /*Red*/
-                            bits[1] = (BYTE)(((val >> 2) & 0xf8) | ((val >> 7) & 0x07));            /*Green*/
-                            bits[2] = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));            /*Blue*/
-                        }
-		  bits = (dstbits += linebytes);
-                    }
-                }
-	    else goto notsupported;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (rDst==bmpImage->red_mask) {
+                /* ==== rgb 888 bmp -> rgb 0888 dib ==== */
+                /* ==== bgr 888 bmp -> bgr 0888 dib ==== */
+                X11DRV_DIB_Convert_0888_to_888_asis
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else {
+                /* ==== rgb 888 bmp -> bgr 0888 dib ==== */
+                /* ==== bgr 888 bmp -> rgb 0888 dib ==== */
+                X11DRV_DIB_Convert_0888_to_888_reverse
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
             }
             break;
+        }
 
-        case 16:
-            {
-                LPWORD srcpixel;
-	    LPBYTE bits = dstbits;
-                WORD val;
+    case 15:
+        {
+            const char* srcbits;
 
-	    /* ==== 565 BGR bitmap to 24 BGR dib ==== */
-	    if( bmpImage->blue_mask == 0x1f && bmpImage->red_mask == 0xf800 )
-                {
-                    for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                        for (x = 0; x < srcwidth; x++, bits += 3) {
-                            val = *srcpixel++;
-                            bits[2] = (BYTE)(((val >> 8) & 0xf8) | ((val >> 13) & 0x07));           /*Red*/
-                            bits[1] = (BYTE)(((val >> 3) & 0xfc) | ((val >> 9) & 0x03));            /*Green*/
-                            bits[0] = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));            /*Blue*/
-                        }
-		  bits = (dstbits += linebytes);
-                    }
-                }
-	    /* ==== 565 RGB bitmap to 24 BGR dib ==== */
-	    else if( bmpImage->blue_mask == 0xf800 && bmpImage->red_mask == 0x1f )
-                {
-                    for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                        for (x = 0; x < srcwidth; x++, bits += 3) {
-                            val = *srcpixel++;
-                            bits[0] = (BYTE)(((val >> 8) & 0xf8) | ((val >> 13) & 0x07));           /*Red*/
-                            bits[1] = (BYTE)(((val >> 3) & 0xfc) | ((val >> 9) & 0x03));            /*Green*/
-                            bits[2] = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x07));            /*Blue*/
-                        }
-		  bits = (dstbits += linebytes);
-                    }
-                }
-	    else  goto notsupported;
-	    }
-            break;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-        case 1:
-	    /* ==== monochrome bitmap to 24 BGR dib ==== */
-        case 4:
-	    /* ==== 4 colormap bitmap to 24 BGR dib ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-            {
-		LPBYTE bits = dstbits;
-		PALETTEENTRY val;
-
-                for (h = lines - 1; h >= 0; h--) {
-		  for (x = 0; x < dstwidth; x++) {
-		    val = srccolors[XGetPixel(bmpImage, x, h)];
-		    *bits++ = val.peBlue;
-		    *bits++ = val.peGreen;
-		    *bits++ = val.peRed;
-		  }
-		  bits = (dstbits += linebytes);
-                }
+            if ((rDst==0xff && bmpImage->red_mask==0x1f) ||
+                (bDst==0xff && bmpImage->blue_mask==0x1f)) {
+                /* ==== rgb 555 bmp -> rgb 888 dib ==== */
+                /* ==== bgr 555 bmp -> bgr 888 dib ==== */
+                X11DRV_DIB_Convert_555_to_888_asis
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else {
+                /* ==== rgb 555 bmp -> bgr 888 dib ==== */
+                /* ==== bgr 555 bmp -> rgb 888 dib ==== */
+                X11DRV_DIB_Convert_555_to_888_reverse
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
             }
-	    else goto notsupported;
+        }
+        break;
 
-            break;
+    case 16:
+        {
+            const char* srcbits;
 
-        case 8:
-	    /* ==== 8 colormap bitmap to 24 BGR dib ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask == 0 && srccolors)
-            {
-                BYTE *srcpixel;
-		LPBYTE bits = dstbits;
-		PALETTEENTRY val;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-                for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-		  for (x = 0; x < dstwidth; x++ ) {
-		    val = srccolors[(int)*srcpixel++];
-		    *bits++ = val.peBlue;               /*Blue*/
-		    *bits++ = val.peGreen;              /*Green*/
-		    *bits++ = val.peRed;                /*Red*/
-                    }
-		  bits = (dstbits += linebytes);
-                }
+            if ((rDst==0xff && bmpImage->red_mask==0x1f) ||
+                (bDst==0xff && bmpImage->blue_mask==0x1f)) {
+                /* ==== rgb 565 bmp -> rgb 888 dib ==== */
+                /* ==== bgr 565 bmp -> bgr 888 dib ==== */
+                X11DRV_DIB_Convert_565_to_888_asis
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else {
+                /* ==== rgb 565 bmp -> bgr 888 dib ==== */
+                /* ==== bgr 565 bmp -> rgb 888 dib ==== */
+                X11DRV_DIB_Convert_565_to_888_reverse
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
             }
-	    else goto notsupported;
+        }
+        break;
 
-            break;
+    case 1:
+    case 4:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 1 or 4 bmp -> rgb 888 dib ==== */
+            BYTE* dstbyte;
 
-        default:
-        notsupported:
-	    {
-	      LPBYTE bits = dstbits;
+            /* Windows only supports one 24bpp DIB format: rgb 888 */
+            for (h = lines - 1; h >= 0; h--) {
+                dstbyte=dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[XGetPixel(bmpImage, x, h)];
+                    dstbyte[0]=srcval.peBlue;
+                    dstbyte[1]=srcval.peGreen;
+                    dstbyte[2]=srcval.peRed;
+                    dstbyte+=3;
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
 
-            FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 24 bit DIB\n",
-                  bmpImage->depth, (int)bmpImage->red_mask, 
-                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-	      for (h = lines - 1; h >= 0; h--)
-		{
-		  for (x = 0; x < dstwidth; x++, bits += 3)
-		    {
-		      COLORREF pixel = X11DRV_PALETTE_ToLogical( XGetPixel( bmpImage, x, h ) );
-		      bits[0] = GetBValue(pixel);
-		      bits[1] = GetGValue(pixel);
-		      bits[2] = GetRValue(pixel);
-		    }
-		  bits = (dstbits += linebytes);
-		}
-	    }
-            break;
+    case 8:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask == 0 && srccolors) {
+            /* ==== pal 8 bmp -> rgb 888 dib ==== */
+            const void* srcbits;
+            const BYTE* srcpixel;
+            BYTE* dstbyte;
+
+            /* Windows only supports one 24bpp DIB format: rgb 888 */
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            for (h = lines - 1; h >= 0; h--) {
+                srcpixel=srcbits;
+                dstbyte=dstbits;
+                for (x = 0; x < dstwidth; x++ ) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[(int)*srcpixel++];
+                    dstbyte[0]=srcval.peBlue;
+                    dstbyte[1]=srcval.peGreen;
+                    dstbyte[2]=srcval.peRed;
+                    dstbyte+=3;
+                }
+                srcbits -= bmpImage->bytes_per_line;
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
+    default:
+    notsupported:
+        {
+            /* ==== any bmp format -> 888 dib ==== */
+            BYTE* dstbyte;
+
+            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 24 bit DIB\n",
+                  bmpImage->depth, bmpImage->red_mask,
+                  bmpImage->green_mask, bmpImage->blue_mask );
+
+            /* Windows only supports one 24bpp DIB format: rgb 888 */
+            for (h = lines - 1; h >= 0; h--) {
+                dstbyte=dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    COLORREF srcval=X11DRV_PALETTE_ToLogical
+                        (XGetPixel( bmpImage, x, h ));
+                    dstbyte[0]=GetBValue(srcval);
+                    dstbyte[1]=GetGValue(srcval);
+                    dstbyte[2]=GetRValue(srcval);
+                    dstbyte+=3;
+                }
+                dstbits += linebytes;
+            }
+        }
+        break;
     }
 }
 
@@ -2216,14 +3851,16 @@ static void X11DRV_DIB_GetImageBits_24( int lines, BYTE *dstbits,
  *
  * SetDIBits for a 32-bit deep DIB.
  */
-static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
-                                 DWORD srcwidth, DWORD dstwidth, int left,
-					DC *dc, XImage *bmpImage,
-					DWORD linebytes )
+static void X11DRV_DIB_SetImageBits_32(int lines, const BYTE *srcbits,
+                                       DWORD srcwidth, DWORD dstwidth, int left,
+                                       DC *dc,
+                                       DWORD rSrc, DWORD gSrc, DWORD bSrc,
+                                       XImage *bmpImage,
+                                       DWORD linebytes)
 {
     DWORD x, *ptr;
     int h;
-  
+
     if (lines < 0 )
     {
        lines = -lines;
@@ -2233,143 +3870,216 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 
     ptr = (DWORD *) srcbits + left;
 
-    switch ( bmpImage->depth )
+    switch (bmpImage->depth)
     {
-        case 32:
-            /* ==== 32 BGR dib to 24/32 BGR bitmap ==== */
-            if (bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff) {
-                for (h = lines - 1; h >= 0; h--, srcbits+=linebytes) {
-                    memcpy( bmpImage->data + h * bmpImage->bytes_per_line, srcbits + left*4, dstwidth*4 );
-                }
-            }
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            char* dstbits;
 
-	    /* ==== 32 BGR dib to 24/32 RGB bitmap ==== */
-            else if (bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000)
-            {
-                DWORD *dstpixel;
+            srcbits=srcbits+left*4;
+            dstbits=bmpImage->data+left*3+(lines-1)*bmpImage->bytes_per_line;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (DWORD *) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < dstwidth; x++, ptr++) {
-                        *dstpixel++ =   ((*ptr << 16) & 0xff0000) | (*ptr & 0xff00) | ((*ptr >> 16) & 0xff);
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-            }
-	    else goto notsupported;
-
-            break;
-
-        case 24:
-	    /* ==== 32 BGR dib to 24 (888) BGR bitmap ==== */
-	    /* we need to check that source mask matches destination */
-	    if (bmpImage->bits_per_pixel == 32)
-	    {
-                for (h = lines - 1; h >= 0; h--, srcbits+=linebytes) {
-                    memcpy( bmpImage->data + h * bmpImage->bytes_per_line, srcbits + left*4, dstwidth*4 );
-		}
-	    }
-	    else
-            {
-                BYTE  *bptr;
-
-                ptr = (DWORD *) srcbits + left;
-                bptr = bmpImage->data;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    for (x = 0; x < dstwidth; x++) {
-                         /* *ptr is a 32bit value */
-                         /* bptr points to first of 3 bytes */
-                        *bptr++ = (*ptr >> 16) & 0xff;
-                        *bptr++ = (*ptr >>  8) & 0xff;
-                        *bptr++ = (*ptr      ) & 0xff;
-                        ptr++;
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-            }
-	    break;
-	
-        case 15:
-	    /* ==== 32 BGR dib to 555 BGR bitmap ==== */
-	    if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x001f) {
-                LPWORD  dstpixel;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < dstwidth; x++, ptr++) {
-                        *dstpixel++ = (WORD) (((*ptr >> 9) & 0x7c00) | ((*ptr >> 6) & 0x03e0) | ((*ptr >> 3) & 0x001f));
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-            }
-	    /* ==== 32 BGR dib to 555 RGB bitmap ==== */
-	    else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0x7c00)
-            {
-                LPWORD  dstpixel;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < dstwidth; x++, ptr++) {
-                        *dstpixel++ = (WORD) (((*ptr << 7) & 0x7c00) | ((*ptr >> 6) & 0x03e0) | ((*ptr >> 19) & 0x001f));
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-            }
-	    else goto notsupported;
-
-            break;
-
-        case 16:
-	    /* ==== 32 BGR dib to 565 BGR bitmap ==== */
-	    if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f)
-            {
-                LPWORD  dstpixel;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < dstwidth; x++, ptr++) {
-                        *dstpixel++ = (WORD) (((*ptr >> 8) & 0xf800) | ((*ptr >> 5) & 0x07e0) | ((*ptr >> 3) & 0x001f));
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-	    }
-	    /* ==== 32 BGR dib to 565 RGB bitmap ==== */
-	    else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0xf800)
-            {
-                LPWORD dstpixel;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    dstpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-                    for (x = 0; x < dstwidth; x++, ptr++) {
-                        *dstpixel++ = (WORD) (((*ptr << 8) & 0xf800) | ((*ptr >> 5) & 0x07e0) | ((*ptr >> 19) & 0x001f));
-                    }
-                    ptr = (DWORD *) (srcbits += linebytes) + left;
-                }
-            }
-	    else goto notsupported;
-
-            break;
-
-        case 1:
-        case 4:
-        case 8:
-            {
-                LPBYTE bits = (LPBYTE)srcbits + left*4;
-
-                for (h = lines - 1; h >= 0; h--) {
-                    for (x = left; x < dstwidth+left; x++, bits += 4)
-                        XPutPixel( bmpImage, x, h,
-                                   X11DRV_PALETTE_ToPhysical(dc, RGB( bits[2],  bits[1], *bits )));
-                    bits = (LPBYTE)(srcbits += linebytes) + left * 4;
-                }
+            if (rSrc==bmpImage->red_mask && gSrc==bmpImage->green_mask && bSrc==bmpImage->blue_mask) {
+                /* ==== rgb 0888 dib -> rgb 888 bmp ==== */
+                /* ==== bgr 0888 dib -> bgr 888 bmp ==== */
+                X11DRV_DIB_Convert_0888_to_888_asis
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else if (rSrc==bmpImage->blue_mask && gSrc==bmpImage->green_mask && bSrc==bmpImage->red_mask) {
+                /* ==== rgb 0888 dib -> bgr 888 bmp ==== */
+                /* ==== bgr 0888 dib -> rgb 888 bmp ==== */
+                X11DRV_DIB_Convert_0888_to_888_reverse
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else if (bmpImage->red_mask==0xff0000) {
+                /* ==== any 0888 dib -> rgb 888 bmp ==== */
+                X11DRV_DIB_Convert_any0888_to_rgb888
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     rSrc,gSrc,bSrc,
+                     dstbits,-bmpImage->bytes_per_line);
+            } else {
+                /* ==== any 0888 dib -> bgr 888 bmp ==== */
+                X11DRV_DIB_Convert_any0888_to_bgr888
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     rSrc,gSrc,bSrc,
+                     dstbits,-bmpImage->bytes_per_line);
             }
             break;
+        }
 
-       default:
-       notsupported:
-            FIXME("32 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
-            break;
+    case 32:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*4;
+            dstbits=bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gSrc==bmpImage->green_mask) {
+                if (rSrc==bmpImage->red_mask && bSrc==bmpImage->blue_mask) {
+                    /* ==== rgb 0888 dib -> rgb 0888 bmp ==== */
+                    /* ==== bgr 0888 dib -> bgr 0888 bmp ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else if (rSrc==bmpImage->blue_mask && bSrc==bmpImage->red_mask) {
+                    /* ==== rgb 0888 dib -> bgr 0888 bmp ==== */
+                    /* ==== bgr 0888 dib -> rgb 0888 bmp ==== */
+                    X11DRV_DIB_Convert_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== any 0888 dib -> any 0888 bmp ==== */
+                    X11DRV_DIB_Convert_0888_any
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         rSrc,gSrc,bSrc,
+                         dstbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+                }
+            } else {
+                /* ==== any 0888 dib -> any 0888 bmp ==== */
+                X11DRV_DIB_Convert_0888_any
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     rSrc,gSrc,bSrc,
+                     dstbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+            }
+        }
+        break;
+
+    case 15:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*4;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if (rSrc==0xff0000 && gSrc==0x00ff00 && bSrc==0x0000ff) {
+                if (bmpImage->blue_mask==0x1f) {
+                    /* ==== rgb 0888 dib -> rgb 555 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 0888 dib -> bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else if (rSrc==0x0000ff && gSrc==0x00ff00 && bSrc==0xff0000) {
+                if (bmpImage->red_mask==0x1f) {
+                    /* ==== bgr 0888 dib -> bgr 555 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_555_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== bgr 0888 dib -> rgb 555 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_555_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                /* ==== any 0888 dib -> rgb or bgr 555 bmp ==== */
+                X11DRV_DIB_Convert_any0888_to_5x5
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     rSrc,gSrc,bSrc,
+                     dstbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+            }
+        }
+        break;
+
+    case 16:
+        {
+            char* dstbits;
+
+            srcbits=srcbits+left*4;
+            dstbits=bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
+
+            if (rSrc==0xff0000 && gSrc==0x00ff00 && bSrc==0x0000ff) {
+                if (bmpImage->blue_mask==0x1f) {
+                    /* ==== rgb 0888 dib -> rgb 565 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== rgb 0888 dib -> bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else if (rSrc==0x0000ff && gSrc==0x00ff00 && bSrc==0xff0000) {
+                if (bmpImage->red_mask==0x1f) {
+                    /* ==== bgr 0888 dib -> bgr 565 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_565_asis
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                } else {
+                    /* ==== bgr 0888 dib -> rgb 565 bmp ==== */
+                    X11DRV_DIB_Convert_0888_to_565_reverse
+                        (dstwidth,lines,
+                         srcbits,linebytes,
+                         dstbits,-bmpImage->bytes_per_line);
+                }
+            } else {
+                /* ==== any 0888 dib -> rgb or bgr 565 bmp ==== */
+                X11DRV_DIB_Convert_any0888_to_5x5
+                    (dstwidth,lines,
+                     srcbits,linebytes,
+                     rSrc,gSrc,bSrc,
+                     dstbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+            }
+        }
+        break;
+
+    case 1:
+    case 4:
+    case 8:
+        {
+            /* ==== any 0888 dib -> pal 1, 4 or 8 bmp ==== */
+            const DWORD* srcpixel;
+            int rShift,gShift,bShift;
+
+            rShift=X11DRV_DIB_MaskToShift(rSrc);
+            gShift=X11DRV_DIB_MaskToShift(gSrc);
+            bShift=X11DRV_DIB_MaskToShift(bSrc);
+            srcbits+=left*4;
+            for (h = lines - 1; h >= 0; h--) {
+                srcpixel=(const DWORD*)srcbits;
+                for (x = left; x < dstwidth+left; x++) {
+                    DWORD srcvalue;
+                    BYTE red,green,blue;
+                    srcvalue=*srcpixel++;
+                    red=  (srcvalue >> rShift) & 0xff;
+                    green=(srcvalue >> gShift) & 0xff;
+                    blue= (srcvalue >> bShift) & 0xff;
+                    XPutPixel(bmpImage, x, h, X11DRV_PALETTE_ToPhysical
+                              (dc, RGB(red,green,blue)));
+                }
+                srcbits += linebytes;
+            }
+        }
+        break;
+
+    default:
+        FIXME("32 bit DIB %d bit bitmap\n", bmpImage->bits_per_pixel);
+        break;
     }
 
 }
@@ -2382,13 +4092,12 @@ static void X11DRV_DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 					DWORD dstwidth, DWORD srcwidth,
 					PALETTEENTRY *srccolors,
+					DWORD rDst, DWORD gDst, DWORD bDst,
 					XImage *bmpImage, DWORD linebytes )
 {
     DWORD x;
     int h;
     BYTE *bits;
-
-    DWORD copybytes = srcwidth * 4;
 
     if (lines < 0 )
     {
@@ -2399,195 +4108,264 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
 
     bits = dstbits;
 
-    switch ( bmpImage->depth )
+    switch (bmpImage->depth)
     {
-        case 32:
-            /* ==== 24/32 BGR bitmap to 32 BGR dib ==== */
-            if ( bmpImage->red_mask == 0xff0000 && bmpImage->blue_mask == 0xff )
-                for (h = lines - 1; h >= 0; h--, dstbits+=linebytes)
-                    memcpy( dstbits, bmpImage->data + h*bmpImage->bytes_per_line, copybytes );
+    case 24:
+        if (bmpImage->bits_per_pixel==24) {
+            const void* srcbits;
 
-	    /* ==== 24/32 RGB bitmap to 32 BGR dib ==== */
-            else if ( bmpImage->red_mask == 0xff && bmpImage->blue_mask == 0xff0000 )
-            {
-                LPBYTE srcbits;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    srcbits = bmpImage->data + h * bmpImage->bytes_per_line;
-                    for (x = 0; x < dstwidth; x++, bits+=4, srcbits+=2) {
-                        *(bits + 2) = *srcbits++;
-                        *(bits + 1) = *srcbits++;
-                        *bits = *srcbits;
-                    }
-                    bits = (dstbits += linebytes);
+            if (rDst==bmpImage->red_mask && gDst==bmpImage->green_mask && bDst==bmpImage->blue_mask) {
+                /* ==== rgb 888 bmp -> rgb 0888 dib ==== */
+                /* ==== bgr 888 bmp -> bgr 0888 dib ==== */
+                X11DRV_DIB_Convert_888_to_0888_asis
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else if (rDst==bmpImage->blue_mask && gDst==bmpImage->green_mask && bDst==bmpImage->red_mask) {
+                /* ==== rgb 888 bmp -> bgr 0888 dib ==== */
+                /* ==== bgr 888 bmp -> rgb 0888 dib ==== */
+                X11DRV_DIB_Convert_888_to_0888_reverse
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes);
+            } else if (bmpImage->red_mask==0xff0000) {
+                /* ==== rgb 888 bmp -> any 0888 dib ==== */
+                X11DRV_DIB_Convert_rgb888_to_any0888
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes,
+                     rDst,gDst,bDst);
+            } else {
+                /* ==== bgr 888 bmp -> any 0888 dib ==== */
+                X11DRV_DIB_Convert_bgr888_to_any0888
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     dstbits,linebytes,
+                     rDst,gDst,bDst);
+            }
+            break;
+        }
+
+    case 32:
+        {
+            const char* srcbits;
+
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (gDst==bmpImage->green_mask) {
+                if (rDst==bmpImage->red_mask && bDst==bmpImage->blue_mask) {
+                    /* ==== rgb 0888 bmp -> rgb 0888 dib ==== */
+                    /* ==== bgr 0888 bmp -> bgr 0888 dib ==== */
+                    X11DRV_DIB_Convert_any_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else if (rDst==bmpImage->blue_mask && bDst==bmpImage->red_mask) {
+                    /* ==== rgb 0888 bmp -> bgr 0888 dib ==== */
+                    /* ==== bgr 0888 bmp -> rgb 0888 dib ==== */
+                    X11DRV_DIB_Convert_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== any 0888 bmp -> any 0888 dib ==== */
+                    X11DRV_DIB_Convert_0888_any
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                         dstbits,linebytes,
+                         rDst,gDst,bDst);
                 }
+            } else {
+                /* ==== any 0888 bmp -> any 0888 dib ==== */
+                X11DRV_DIB_Convert_0888_any
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                     dstbits,linebytes,
+                     rDst,gDst,bDst);
             }
-            else goto notsupported;
-            break;
+        }
+        break;
 
-        case 24:
-	    /* ==== 24 BGR bitmap to 32 (0888) BGR dib ==== */
-	    /* we need to check that source mask matches destination */
-            {
-                DWORD *srcpixel;
-                BYTE  *bptr;
-                DWORD srcdata;
+    case 15:
+        {
+            const char* srcbits;
 
-                srcpixel = (DWORD *) dstbits;
-                bptr = bmpImage->data;
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
 
-                for (h = lines - 1; h >= 0; h--) {
-                    for (x = 0; x < dstwidth; x++) {
-                        /* *srcpixel is a 32bit value */
-						/* bptr points to first of 3 bytes */
-                        srcdata = 0;
-						srcdata	= srcdata << 8 | *bptr++;
-						srcdata = srcdata << 8 | *bptr++;	
-                        srcdata = srcdata << 8 | *bptr++;	
-
-                        *srcpixel++ = srcdata;
-                    }
-                    srcpixel = (DWORD *) (dstbits += linebytes);
-				}
-            }
-	    break;
-
-        case 15:
-            {
-                LPWORD srcpixel;
-                WORD val;
-
-	    /* ==== 555 BGR bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask == 0x7c00 && bmpImage->blue_mask == 0x001f)
-	    {
-	      for (h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-		for (x = 0; x < dstwidth; x++, bits+=2) {
-		  val = *srcpixel++;
-		  *bits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x03)); /*Blue*/
-		  *bits++ = (BYTE)(((val >> 2) & 0xfc) | ((val >> 8) & 0x03)); /*Green*/
-		  *bits = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));  /*Red*/
-		}
-		bits = (dstbits += linebytes);
-	      }
-            }
-	    /* ==== 555 RGB bitmap to 32 BGR dib ==== */
-	    else if (bmpImage->red_mask == 0x001f && bmpImage->blue_mask == 0x7c00)
-	    {
-                for (h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-		for (x = 0; x < dstwidth; x++, bits+=2) {
-                        val = *srcpixel++;
-		  *bits++ = (BYTE)(((val >> 7) & 0xf8) | ((val >> 12) & 0x07));/*Blue*/
-		  *bits++ = (BYTE)(((val >> 2) & 0xfc) | ((val >> 8) & 0x03)); /*Green*/
-		  *bits = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x03));   /*Red*/
-		}
-		bits = (dstbits += linebytes);
-                    }
+            if (rDst==0xff0000 && gDst==0x00ff00 && bDst==0x0000ff) {
+                if (bmpImage->blue_mask==0x1f) {
+                    /* ==== rgb 555 bmp -> rgb 0888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== bgr 555 bmp -> rgb 0888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
                 }
-	    else goto notsupported;
-            }
-            break;
-
-        case 16:
-            {
-                LPWORD srcpixel;
-                WORD val;
-
-	    /* ==== 565 BGR bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f)
-	    {
-                for (h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-		for (x = 0; x < srcwidth; x++, bits+=2) {
-                        val = *srcpixel++;
-		  *bits++ = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x03)); /*Blue*/
-		  *bits++ = (BYTE)(((val >> 3) & 0xfc) | ((val >> 9) & 0x03)); /*Green*/
-		  *bits = (BYTE)(((val >> 8) & 0xf8) | ((val >> 13) & 0x07));  /*Red*/
-		}
-		bits = (dstbits += linebytes);
-	      }
-	    }
-	    /* ==== 565 RGB bitmap to 32 BGR dib ==== */
-	    else if (bmpImage->red_mask == 0xf800 && bmpImage->blue_mask == 0x001f)
-	    {
-	      for (h = lines - 1; h >= 0; h--) {
-		srcpixel = (LPWORD) (bmpImage->data + h * bmpImage->bytes_per_line);
-		for (x = 0; x < srcwidth; x++, bits+=2) {
-		  val = *srcpixel++;
-		  *bits++ = (BYTE)(((val >> 8) & 0xf8) | ((val >> 13) & 0x07));/*Blue*/
-		  *bits++ = (BYTE)(((val >> 3) & 0xfc) | ((val >> 9) & 0x03)); /*Green*/
-		  *bits = (BYTE)(((val << 3) & 0xf8) | ((val >> 2) & 0x03));   /*Red*/
-		}
-		bits = (dstbits += linebytes);
-                    }
+            } else if (rDst==0x0000ff && gDst==0x00ff00 && bDst==0xff0000) {
+                if (bmpImage->red_mask==0x1f) {
+                    /* ==== bgr 555 bmp -> bgr 0888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== rgb 555 bmp -> bgr 0888 dib ==== */
+                    X11DRV_DIB_Convert_555_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
                 }
-	    else goto notsupported;
+            } else {
+                /* ==== rgb or bgr 555 bmp -> any 0888 dib ==== */
+                X11DRV_DIB_Convert_5x5_to_any0888
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                     dstbits,linebytes,
+                     rDst,gDst,bDst);
             }
-            break;
+        }
+        break;
 
-        case 1:
-	    /* ==== monochrome bitmap to 32 BGR dib ==== */
-        case 4:
-	    /* ==== 4 colormap bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-            {
-		PALETTEENTRY val;
+    case 16:
+        {
+            const char* srcbits;
 
-                for (h = lines - 1; h >= 0; h--) {
-		  for (x = 0; x < dstwidth; x++) {
-		    val = srccolors[XGetPixel(bmpImage, x, h)];
-		    *bits++ = val.peBlue;
-		    *bits++ = val.peGreen;
-		    *bits++ = val.peRed;
-		    *bits++ = 0;
-		  }
-		  bits = (dstbits += linebytes);
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+
+            if (rDst==0xff0000 && gDst==0x00ff00 && bDst==0x0000ff) {
+                if (bmpImage->blue_mask==0x1f) {
+                    /* ==== rgb 565 bmp -> rgb 0888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                    /* ==== bgr 565 bmp -> rgb 0888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
                 }
-            }
-	    else goto notsupported;
-
-            break;
-
-        case 8:
-	    /* ==== 8 colormap bitmap to 32 BGR dib ==== */
-	    if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors)
-            {
-                BYTE *srcpixel;
-		PALETTEENTRY val;
-
-                for (h = lines - 1; h >= 0; h--) {
-		  srcpixel = bmpImage->data + h*bmpImage->bytes_per_line;
-		  for (x = 0; x < dstwidth; x++) {
-		    val = srccolors[(int)*srcpixel++];
-		    *bits++ = val.peBlue;               /*Blue*/
-		    *bits++ = val.peGreen;              /*Green*/
-		    *bits++ = val.peRed;                /*Red*/
-		    *bits++ = 0;
-                    }
-		  bits = (dstbits += linebytes);
+            } else if (rDst==0x0000ff && gDst==0x00ff00 && bDst==0xff0000) {
+                if (bmpImage->red_mask==0x1f) {
+                /* ==== bgr 565 bmp -> bgr 0888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_0888_asis
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
+                } else {
+                /* ==== rgb 565 bmp -> bgr 0888 dib ==== */
+                    X11DRV_DIB_Convert_565_to_0888_reverse
+                        (dstwidth,lines,
+                         srcbits,-bmpImage->bytes_per_line,
+                         dstbits,linebytes);
                 }
+            } else {
+                /* ==== rgb or bgr 565 bmp -> any 0888 dib ==== */
+                X11DRV_DIB_Convert_5x5_to_any0888
+                    (dstwidth,lines,
+                     srcbits,-bmpImage->bytes_per_line,
+                     bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask,
+                     dstbits,linebytes,
+                     rDst,gDst,bDst);
             }
-	    else goto notsupported;
-            break;
+        }
+        break;
 
-        default:
-        notsupported:
-	    FIXME("from %d bit bitmap with mask R,G,B %x,%x,%x to 32 bit DIB\n",
-                  bmpImage->depth, (int)bmpImage->red_mask, 
-                  (int)bmpImage->green_mask, (int)bmpImage->blue_mask );
-	    for (h = lines - 1; h >= 0; h--)
-	      {
-		for (x = 0; x < dstwidth; x++, bits += 4)
-		  {
-		    COLORREF pixel = X11DRV_PALETTE_ToLogical( XGetPixel( bmpImage, x, h ) );
-		    bits[0] = GetBValue(pixel);
-		    bits[1] = GetGValue(pixel);
-		    bits[2] = GetRValue(pixel);
-		  }
-		bits = (dstbits += linebytes);
-	      }
-            break;
+    case 1:
+    case 4:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 1 or 4 bmp -> any 0888 dib ==== */
+            int rShift,gShift,bShift;
+            DWORD* dstpixel;
+
+            rShift=X11DRV_DIB_MaskToShift(rDst);
+            gShift=X11DRV_DIB_MaskToShift(gDst);
+            bShift=X11DRV_DIB_MaskToShift(bDst);
+            for (h = lines - 1; h >= 0; h--) {
+                dstpixel=(DWORD*)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval = srccolors[XGetPixel(bmpImage, x, h)];
+                    *dstpixel++=(srcval.peRed   << rShift) |
+                                (srcval.peGreen << gShift) |
+                                (srcval.peBlue  << bShift);
+                }
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
+    case 8:
+        if (bmpImage->red_mask==0 && bmpImage->green_mask==0 && bmpImage->blue_mask==0 && srccolors) {
+            /* ==== pal 8 bmp -> any 0888 dib ==== */
+            int rShift,gShift,bShift;
+            const void* srcbits;
+            const BYTE* srcpixel;
+            DWORD* dstpixel;
+
+            rShift=X11DRV_DIB_MaskToShift(rDst);
+            gShift=X11DRV_DIB_MaskToShift(gDst);
+            bShift=X11DRV_DIB_MaskToShift(bDst);
+            srcbits=bmpImage->data+(lines-1)*bmpImage->bytes_per_line;
+            for (h = lines - 1; h >= 0; h--) {
+                srcpixel=srcbits;
+                dstpixel=(DWORD*)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    PALETTEENTRY srcval;
+                    srcval=srccolors[(int)*srcpixel++];
+                    *dstpixel++=(srcval.peRed   << rShift) |
+                                (srcval.peGreen << gShift) |
+                                (srcval.peBlue  << bShift);
+                }
+                srcbits -= bmpImage->bytes_per_line;
+                dstbits += linebytes;
+            }
+        } else {
+            goto notsupported;
+        }
+        break;
+
+    default:
+    notsupported:
+        {
+            /* ==== any bmp format -> any 0888 dib ==== */
+            int rShift,gShift,bShift;
+            DWORD* dstpixel;
+
+            FIXME("from %d bit bitmap with mask R,G,B %lx,%lx,%lx to 32 bit DIB %lx,%lx,%lx\n",
+                  bmpImage->depth, bmpImage->red_mask,
+                  bmpImage->green_mask, bmpImage->blue_mask,
+                  rDst,gDst,bDst);
+
+            rShift=X11DRV_DIB_MaskToShift(rDst);
+            gShift=X11DRV_DIB_MaskToShift(gDst);
+            bShift=X11DRV_DIB_MaskToShift(bDst);
+            for (h = lines - 1; h >= 0; h--) {
+                dstpixel=(DWORD*)dstbits;
+                for (x = 0; x < dstwidth; x++) {
+                    COLORREF srcval;
+                    srcval=X11DRV_PALETTE_ToLogical(XGetPixel(bmpImage, x, h));
+                    *dstpixel++=(GetRValue(srcval) << rShift) |
+                                (GetGValue(srcval) << gShift) |
+                                (GetBValue(srcval) << bShift);
+                }
+                dstbits += linebytes;
+            }
+        }
+        break;
     }
 }
 
@@ -2616,6 +4394,12 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
             return lines;
         }
     }
+
+    TRACE("Dib: depth=%d r=%lx g=%lx b=%lx\n",
+          descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
+    TRACE("Bmp: depth=%d/%d r=%lx g=%lx b=%lx\n",
+          bmpImage->depth,bmpImage->bits_per_pixel,
+          bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
 
       /* Transfer the pixels */
     switch(descr->infoBpp)
@@ -2667,13 +4451,15 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     case 24:
 	X11DRV_DIB_SetImageBits_24( descr->lines, descr->bits,
 				    descr->infoWidth, descr->width,
-				    descr->xSrc, descr->dc, bmpImage,
-				    descr->dibpitch);
+				    descr->xSrc, descr->dc, 
+                                    descr->rMask, descr->gMask, descr->bMask,
+				    bmpImage, descr->dibpitch);
 	break;
     case 32:
 	X11DRV_DIB_SetImageBits_32( descr->lines, descr->bits,
 				    descr->infoWidth, descr->width,
                                    descr->xSrc, descr->dc,
+                                   descr->rMask, descr->gMask, descr->bMask,
                                    bmpImage, descr->dibpitch);
 	break;
     default:
@@ -2714,7 +4500,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
     XImage *bmpImage;
 
-    wine_tsx11_lock(); 
+    wine_tsx11_lock();
    if (descr->image)
         bmpImage = descr->image;
     else {
@@ -2736,6 +4522,11 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
                   descr->width, lines, AllPlanes, ZPixmap,
                   bmpImage, descr->xDest, descr->yDest );
 
+    TRACE("Dib: depth=%2d r=%lx g=%lx b=%lx\n",
+          descr->infoBpp,descr->rMask,descr->gMask,descr->bMask);
+    TRACE("Bmp: depth=%2d/%2d r=%lx g=%lx b=%lx\n",
+          bmpImage->depth,bmpImage->bits_per_pixel,
+          bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
       /* Transfer the pixels */
     switch(descr->infoBpp)
     {
@@ -2777,13 +4568,17 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     case 24:
        X11DRV_DIB_GetImageBits_24( descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth,descr->width,
-				   descr->palentry, bmpImage, descr->dibpitch);
+				   descr->palentry,
+				   descr->rMask, descr->gMask, descr->bMask,
+                                   bmpImage, descr->dibpitch);
        break;
 
     case 32:
        X11DRV_DIB_GetImageBits_32( descr->lines, (LPVOID)descr->bits,
 				   descr->infoWidth, descr->width,
-				   descr->palentry, bmpImage, descr->dibpitch);
+				   descr->palentry,
+                                   descr->rMask, descr->gMask, descr->bMask,
+                                   bmpImage, descr->dibpitch);
        break;
 
     default:
@@ -2854,9 +4649,9 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
                break;
 
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0xff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0xff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
     }
@@ -2928,8 +4723,8 @@ INT X11DRV_DIB_SetDIBits(
        case 15:
        case 16:
                descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x03e0;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x001f;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x03e0;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x001f;
                descr.colorMap = 0;
                break;
 
@@ -2939,9 +4734,9 @@ INT X11DRV_DIB_SetDIBits(
                break;
 
        case 32:
-               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0xff0000;
-               descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0xff00;
-               descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0xff;
+               descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors       : 0xff0000;
+               descr.gMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 1) : 0x00ff00;
+               descr.bMask = (descr.compression == BI_BITFIELDS) ? *((DWORD *)info->bmiColors + 2) : 0x0000ff;
                descr.colorMap = 0;
                break;
 
@@ -3026,20 +4821,19 @@ INT X11DRV_DIB_GetDIBits(
       case 1:
       case 4:
       case 8:
-      case 24:
-          descr.rMask = descr.gMask = descr.bMask = 0;
+          descr.rMask= descr.gMask = descr.bMask = 0;
           break;
       case 15:
       case 16:
-          descr.rMask = 0x7c00;
-          descr.gMask = 0x03e0;
-          descr.bMask = 0x001f;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0x7c00;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x03e0;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x001f;
           break;
-  
+      case 24:
       case 32:
-          descr.rMask = 0xff0000;
-          descr.gMask = 0xff00;
-          descr.bMask = 0xff;
+          descr.rMask = (descr.compression == BI_BITFIELDS) ? *(DWORD *)info->bmiColors : 0xff0000;
+          descr.gMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 1) : 0x00ff00;
+          descr.bMask = (descr.compression == BI_BITFIELDS) ?  *((DWORD *)info->bmiColors + 2) : 0x0000ff;
           break;
   }
 
@@ -3145,13 +4939,12 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
   descr.nColorMap = nColorMap;
   descr.bits      = dib->dibSection.dsBm.bmBits;
   descr.depth     = bmp->bitmap.bmBitsPixel;
-  
+
   switch (descr.infoBpp)
   {
     case 1:
     case 4:
     case 8:
-    case 24:
       descr.rMask = descr.gMask = descr.bMask = 0;
       break;
     case 15:
@@ -3161,10 +4954,11 @@ static void X11DRV_DIB_DoCopyDIBSection(BITMAPOBJ *bmp, BOOL toDIB,
       descr.bMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[2] : 0x001f;
       break;
 
+    case 24:
     case 32:
-      descr.rMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[0] : 0xff;
-      descr.gMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[1] : 0xff00;
-      descr.bMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[2] : 0xff0000;
+      descr.rMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[0] : 0xff0000;
+      descr.gMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[1] : 0x00ff00;
+      descr.bMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[2] : 0x0000ff;
       break;
   }
 
@@ -3790,6 +5584,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
        }
        else switch( bi->biBitCount )
        {
+           case 15:
            case 16:
                dib->dibSection.dsBitfields[0] = (bi->biCompression == BI_BITFIELDS) ? *(DWORD *)bmi->bmiColors : 0x7c00;
                dib->dibSection.dsBitfields[1] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 1) : 0x03e0;
@@ -3797,15 +5592,10 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
                break;
 
            case 24:
-               dib->dibSection.dsBitfields[0] = 0xff;
-               dib->dibSection.dsBitfields[1] = 0xff00;
-               dib->dibSection.dsBitfields[2] = 0xff0000;
-               break;
-
            case 32:
-               dib->dibSection.dsBitfields[0] = (bi->biCompression == BI_BITFIELDS) ? *(DWORD *)bmi->bmiColors : 0xff;
-               dib->dibSection.dsBitfields[1] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 1) : 0xff00;
-               dib->dibSection.dsBitfields[2] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 2) : 0xff0000;
+               dib->dibSection.dsBitfields[0] = (bi->biCompression == BI_BITFIELDS) ? *(DWORD *)bmi->bmiColors       : 0xff0000;
+               dib->dibSection.dsBitfields[1] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 1) : 0x00ff00;
+               dib->dibSection.dsBitfields[2] = (bi->biCompression == BI_BITFIELDS) ? *((DWORD *)bmi->bmiColors + 2) : 0x0000ff;
                break;
        }
       dib->dibSection.dshSection = section;
