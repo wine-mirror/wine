@@ -118,7 +118,7 @@ extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void kill_thread( struct thread *thread, int violent_death );
 extern void wake_up( struct object *obj, int max );
 extern int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
-                             enum apc_type type, int system, int nb_args, ... );
+                             enum apc_type type, int system, void *arg1, void *arg2, void *arg3 );
 extern void thread_cancel_apc( struct thread *thread, struct object *owner, int system );
 extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
 extern int thread_get_inflight_fd( struct thread *thread, int client );

@@ -357,9 +357,9 @@ static int wait_reply( void *cookie )
  */
 static void call_apcs( BOOL alertable )
 {
-    FARPROC proc = NULL;
+    FARPROC proc;
     LARGE_INTEGER time;
-    void *args[4];
+    void *arg1, *arg2, *arg3;
 
     for (;;)
     {
@@ -367,12 +367,11 @@ static void call_apcs( BOOL alertable )
         SERVER_START_REQ( get_apc )
         {
             req->alertable = alertable;
-            wine_server_set_reply( req, args, sizeof(args) );
-            if (!wine_server_call( req ))
-            {
-                type = reply->type;
-                proc = reply->func;
-            }
+            if (!wine_server_call( req )) type = reply->type;
+            proc = reply->func;
+            arg1 = reply->arg1;
+            arg2 = reply->arg2;
+            arg3 = reply->arg3;
         }
         SERVER_END_REQ;
 
@@ -381,19 +380,19 @@ static void call_apcs( BOOL alertable )
         case APC_NONE:
             return;  /* no more APCs */
         case APC_ASYNC:
-            proc( args[0], args[1]);
+            proc( arg1, arg2 );
             break;
         case APC_USER:
-            proc( args[0] );
+            proc( arg1, arg2, arg3 );
             break;
         case APC_TIMER:
             /* convert sec/usec to NT time */
-            RtlSecondsSince1970ToTime( (time_t)args[0], &time );
-            time.QuadPart += (DWORD)args[1] * 10;
-            proc( args[2], time.s.LowPart, time.s.HighPart );
+            RtlSecondsSince1970ToTime( (time_t)arg1, &time );
+            time.QuadPart += (DWORD)arg2 * 10;
+            proc( arg3, time.s.LowPart, time.s.HighPart );
             break;
         case APC_ASYNC_IO:
-            check_async_list ( args[0], (DWORD) args[1]);
+            check_async_list( arg1, (DWORD) arg2 );
             break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", type );

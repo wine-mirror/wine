@@ -201,48 +201,6 @@ NTSTATUS WINAPI NtSetInformationProcess(
  */
 
 /******************************************************************************
- *  NtResumeThread	[NTDLL.@]
- *  ZwResumeThread	[NTDLL.@]
- */
-NTSTATUS WINAPI NtResumeThread(
-	IN HANDLE ThreadHandle,
-	IN PULONG SuspendCount)
-{
-	FIXME("(%p,%p),stub!\n",
-	ThreadHandle,SuspendCount);
-	return 0;
-}
-
-
-/******************************************************************************
- *  NtTerminateThread	[NTDLL.@]
- *  ZwTerminateThread	[NTDLL.@]
- */
-NTSTATUS WINAPI NtTerminateThread( HANDLE handle, LONG exit_code )
-{
-    NTSTATUS ret;
-    BOOL self, last;
-
-    SERVER_START_REQ( terminate_thread )
-    {
-        req->handle    = handle;
-        req->exit_code = exit_code;
-        ret = wine_server_call( req );
-        self = !ret && reply->self;
-        last = reply->last;
-    }
-    SERVER_END_REQ;
-
-    if (self)
-    {
-        if (last) exit( exit_code );
-        else SYSDEPS_ExitThread( exit_code );
-    }
-    return ret;
-}
-
-
-/******************************************************************************
 *  NtQueryInformationThread		[NTDLL.@]
 *  ZwQueryInformationThread		[NTDLL.@]
 *

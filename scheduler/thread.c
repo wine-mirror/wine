@@ -371,16 +371,9 @@ HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwTh
 BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread with context */
                               const CONTEXT *context ) /* [in] Address of context structure */
 {
-    BOOL ret;
-    SERVER_START_REQ( set_thread_context )
-    {
-        req->handle = handle;
-        req->flags = context->ContextFlags;
-        wine_server_add_data( req, context, sizeof(*context) );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status = NtSetContextThread( handle, context );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -394,17 +387,9 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
 BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with context */
                               CONTEXT *context ) /* [out] Address of context structure */
 {
-    BOOL ret;
-    SERVER_START_REQ( get_thread_context )
-    {
-        req->handle = handle;
-        req->flags = context->ContextFlags;
-        wine_server_add_data( req, context, sizeof(*context) );
-        wine_server_set_reply( req, context, sizeof(*context) );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status = NtGetContextThread( handle, context );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -577,16 +562,16 @@ BOOL WINAPI GetExitCodeThread(
  *    Failure: 0xFFFFFFFF
  *    Already running: 0
  */
-DWORD WINAPI ResumeThread(
-    HANDLE hthread) /* [in] Identifies thread to restart */
+DWORD WINAPI ResumeThread( HANDLE hthread ) /* [in] Identifies thread to restart */
 {
-    DWORD ret = 0xffffffff;
-    SERVER_START_REQ( resume_thread )
+    DWORD ret;
+    NTSTATUS status = NtResumeThread( hthread, &ret );
+
+    if (status)
     {
-        req->handle = hthread;
-        if (!wine_server_call_err( req )) ret = reply->count;
+        ret = ~0U;
+        SetLastError( RtlNtStatusToDosError(status) );
     }
-    SERVER_END_REQ;
     return ret;
 }
 
@@ -598,36 +583,36 @@ DWORD WINAPI ResumeThread(
  *    Success: Previous suspend count
  *    Failure: 0xFFFFFFFF
  */
-DWORD WINAPI SuspendThread(
-    HANDLE hthread) /* [in] Handle to the thread */
+DWORD WINAPI SuspendThread( HANDLE hthread ) /* [in] Handle to the thread */
 {
-    DWORD ret = 0xffffffff;
-    SERVER_START_REQ( suspend_thread )
+    DWORD ret;
+    NTSTATUS status = NtSuspendThread( hthread, &ret );
+
+    if (status)
     {
-        req->handle = hthread;
-        if (!wine_server_call_err( req )) ret = reply->count;
+        ret = ~0U;
+        SetLastError( RtlNtStatusToDosError(status) );
     }
-    SERVER_END_REQ;
     return ret;
 }
 
+
+/* callback for QueueUserAPC */
+static void CALLBACK call_user_apc( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+{
+    PAPCFUNC func = (PAPCFUNC)arg1;
+    func( arg2 );
+}
 
 /***********************************************************************
  *              QueueUserAPC  (KERNEL32.@)
  */
 DWORD WINAPI QueueUserAPC( PAPCFUNC func, HANDLE hthread, ULONG_PTR data )
 {
-    DWORD ret;
-    SERVER_START_REQ( queue_apc )
-    {
-        req->handle = hthread;
-        req->user   = 1;
-        req->func   = func;
-        req->param  = (void *)data;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    NTSTATUS status = NtQueueApcThread( hthread, call_user_apc, (ULONG_PTR)func, data, 0 );
+
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

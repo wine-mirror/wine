@@ -503,7 +503,9 @@ struct queue_apc_request
     obj_handle_t handle;
     int          user;
     void*        func;
-    void*        param;
+    void*        arg1;
+    void*        arg2;
+    void*        arg3;
 };
 struct queue_apc_reply
 {
@@ -522,7 +524,9 @@ struct get_apc_reply
     struct reply_header __header;
     void*        func;
     int          type;
-    /* VARARG(args,ptrs); */
+    void*        arg1;
+    void*        arg2;
+    void*        arg3;
 };
 enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
@@ -3577,6 +3581,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 104
+#define SERVER_PROTOCOL_VERSION 105
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

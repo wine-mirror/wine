@@ -65,7 +65,8 @@ void async_notify(struct async *async, int status)
 {
     /* fprintf(stderr,"notifying %p!\n",async->overlapped); */
     async->status = status;
-    thread_queue_apc(async->thread, NULL, NULL, APC_ASYNC_IO, 1, 2, async->overlapped, status);
+    thread_queue_apc(async->thread, NULL, NULL, APC_ASYNC_IO, 1,
+                     async->overlapped, (void *)status, NULL );
 }
 
 void destroy_async_queue( struct async_queue *q )

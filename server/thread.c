@@ -67,7 +67,9 @@ struct thread_apc
     void               *func;     /* function to call in client */
     enum apc_type       type;     /* type of apc function */
     int                 nb_args;  /* number of arguments */
-    void               *args[1];  /* function arguments */
+    void               *arg1;     /* function arguments */
+    void               *arg2;
+    void               *arg3;
 };
 
 
@@ -580,7 +582,7 @@ void wake_up( struct object *obj, int max )
 
 /* queue an async procedure call */
 int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
-                      enum apc_type type, int system, int nb_args, ... )
+                      enum apc_type type, int system, void *arg1, void *arg2, void *arg3 )
 {
     struct thread_apc *apc;
     struct apc_queue *queue = system ? &thread->system_apc : &thread->user_apc;
@@ -589,21 +591,15 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
     if (owner) thread_cancel_apc( thread, owner, system );
     if (thread->state == TERMINATED) return 0;
 
-    if (!(apc = mem_alloc( sizeof(*apc) + (nb_args-1)*sizeof(apc->args[0]) ))) return 0;
-    apc->prev    = queue->tail;
-    apc->next    = NULL;
-    apc->owner   = owner;
-    apc->func    = func;
-    apc->type    = type;
-    apc->nb_args = nb_args;
-    if (nb_args)
-    {
-        int i;
-        va_list args;
-        va_start( args, nb_args );
-        for (i = 0; i < nb_args; i++) apc->args[i] = va_arg( args, void * );
-        va_end( args );
-    }
+    if (!(apc = mem_alloc( sizeof(*apc) ))) return 0;
+    apc->prev   = queue->tail;
+    apc->next   = NULL;
+    apc->owner  = owner;
+    apc->func   = func;
+    apc->type   = type;
+    apc->arg1   = arg1;
+    apc->arg2   = arg2;
+    apc->arg3   = arg3;
     queue->tail = apc;
     if (!apc->prev)  /* first one */
     {
@@ -972,7 +968,8 @@ DECL_HANDLER(queue_apc)
     struct thread *thread;
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
-        thread_queue_apc( thread, NULL, req->func, APC_USER, !req->user, 1, req->param );
+        thread_queue_apc( thread, NULL, req->func, APC_USER, !req->user,
+                          req->arg1, req->arg2, req->arg3 );
         release_object( thread );
     }
 }
@@ -981,7 +978,6 @@ DECL_HANDLER(queue_apc)
 DECL_HANDLER(get_apc)
 {
     struct thread_apc *apc;
-    size_t size;
 
     for (;;)
     {
@@ -999,11 +995,11 @@ DECL_HANDLER(get_apc)
         if (apc->func || apc->type == APC_ASYNC_IO) break;
         free( apc );
     }
-    size = apc->nb_args * sizeof(apc->args[0]);
-    if (size > get_reply_max_size()) size = get_reply_max_size();
     reply->func = apc->func;
     reply->type = apc->type;
-    set_reply_data( apc->args, size );
+    reply->arg1 = apc->arg1;
+    reply->arg2 = apc->arg2;
+    reply->arg3 = apc->arg3;
     free( apc );
 }
 

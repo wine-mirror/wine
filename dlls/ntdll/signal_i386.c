@@ -855,7 +855,7 @@ static void do_trap( CONTEXT *context, int trap_code )
         else  /* hardware breakpoint, fetch the debug registers */
         {
             context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-            GetThreadContext(GetCurrentThread(), context);
+            NtGetContextThread(GetCurrentThread(), context);
         }
         break;
     case T_BPTFLT:   /* Breakpoint exception */
@@ -879,7 +879,7 @@ static void do_trap( CONTEXT *context, int trap_code )
     {
         /* the debug registers have changed, set the new values */
         context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
-        SetThreadContext(GetCurrentThread(), context);
+        NtSetContextThread(GetCurrentThread(), context);
     }
 }
 

@@ -151,8 +151,8 @@ static void notify_waiter( struct pipe_user *user, unsigned int status)
     if(user->thread && user->func && user->overlapped)
     {
         /* queue a system APC, to notify a waiting thread */
-        thread_queue_apc(user->thread,NULL,user->func,
-            APC_ASYNC,1,2,user->overlapped,status);
+        thread_queue_apc(user->thread, NULL, user->func, APC_ASYNC, 1,
+                         user->overlapped, (void *)status, NULL);
     }
     if (user->thread) release_object(user->thread);
     user->thread = NULL;
@@ -426,7 +426,7 @@ DECL_HANDLER(wait_named_pipe)
         /* this should use notify_waiter,
            but no pipe_user object exists now... */
         thread_queue_apc(current,NULL,req->func,
-                         APC_ASYNC,1,2,req->overlapped,STATUS_SUCCESS);
+                         APC_ASYNC, 1, req->overlapped, STATUS_SUCCESS, NULL);
         release_object(partner);
     }
     else

@@ -94,7 +94,7 @@ static void timer_callback( void *private )
     /* queue an APC */
     if (timer->thread)
     {
-        if (!thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0, 3,
+        if (!thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0,
                                (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg))
         {
             release_object( timer->thread );

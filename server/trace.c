@@ -157,21 +157,6 @@ static void dump_varargs_handles( size_t size )
     remove_data( size );
 }
 
-static void dump_varargs_ptrs( size_t size )
-{
-    void * const *data = cur_data;
-    size_t len = size / sizeof(*data);
-
-    fputc( '{', stderr );
-    while (len > 0)
-    {
-        fprintf( stderr, "%p", *data++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
-    remove_data( size );
-}
-
 static void dump_varargs_user_handles( size_t size )
 {
     const user_handle_t *data = cur_data;
@@ -623,7 +608,9 @@ static void dump_queue_apc_request( const struct queue_apc_request *req )
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " user=%d,", req->user );
     fprintf( stderr, " func=%p,", req->func );
-    fprintf( stderr, " param=%p", req->param );
+    fprintf( stderr, " arg1=%p,", req->arg1 );
+    fprintf( stderr, " arg2=%p,", req->arg2 );
+    fprintf( stderr, " arg3=%p", req->arg3 );
 }
 
 static void dump_get_apc_request( const struct get_apc_request *req )
@@ -635,8 +622,9 @@ static void dump_get_apc_reply( const struct get_apc_reply *req )
 {
     fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " args=" );
-    dump_varargs_ptrs( cur_size );
+    fprintf( stderr, " arg1=%p,", req->arg1 );
+    fprintf( stderr, " arg2=%p,", req->arg2 );
+    fprintf( stderr, " arg3=%p", req->arg3 );
 }
 
 static void dump_close_handle_request( const struct close_handle_request *req )

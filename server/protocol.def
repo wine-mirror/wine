@@ -417,7 +417,9 @@ typedef struct
     obj_handle_t handle;       /* thread handle */
     int          user;         /* user or system apc? */
     void*        func;         /* function to call */
-    void*        param;        /* param for function to call */
+    void*        arg1;         /* params for function to call */
+    void*        arg2;
+    void*        arg3;
 @END
 
 
@@ -427,7 +429,9 @@ typedef struct
 @REPLY
     void*        func;         /* function to call */
     int          type;         /* function type */
-    VARARG(args,ptrs);         /* function arguments */
+    void*        arg1;         /* function arguments */
+    void*        arg2;
+    void*        arg3;
 @END
 enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 

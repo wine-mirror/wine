@@ -114,7 +114,7 @@
 @ stub NtFlushWriteBuffer
 @ stdcall NtFreeVirtualMemory(long ptr ptr long)
 @ stdcall NtFsControlFile(long long long long long long long long long long)
-@ stub NtGetContextThread
+@ stdcall NtGetContextThread(long ptr)
 @ stub NtGetPlugPlayEvent
 @ stub NtGetTickCount
 @ stub NtImpersonateClientOfPort
@@ -142,7 +142,7 @@
 @ stdcall NtOpenSection(ptr long ptr)
 @ stdcall NtOpenSemaphore(long long ptr)
 @ stdcall NtOpenSymbolicLinkObject (long long long)
-@ stub NtOpenThread
+@ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long long)
 @ stub NtOpenTimer
 @ stub NtPlugPlayControl
@@ -181,6 +181,7 @@
 @ stdcall NtQueryValueKey(long long long long long long)
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
+@ stdcall NtQueueApcThread(long ptr long long long)
 @ stdcall NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long)
@@ -204,7 +205,7 @@
 @ stdcall NtResumeThread(long long)
 @ stdcall NtSaveKey(long long)
 @ stub NtSecureConnectPort
-@ stub NtSetContextThread
+@ stdcall NtSetContextThread(long ptr)
 @ stub NtSetDefaultHardErrorPort
 @ stub NtSetDefaultLocale
 @ stub NtSetEaFile
@@ -236,7 +237,7 @@
 @ stub NtShutdownSystem
 @ stub NtStartProfile
 @ stub NtStopProfile
-@ stub NtSuspendThread
+@ stdcall NtSuspendThread(long ptr)
 @ stub NtSystemDebugControl
 @ stdcall NtTerminateProcess(long long)
 @ stdcall NtTerminateThread(long long)
@@ -640,7 +641,7 @@
 @ stub ZwFlushWriteBuffer
 @ stdcall ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall ZwFsControlFile(long long long long long long long long long long) NtFsControlFile
-@ stub ZwGetContextThread
+@ stdcall ZwGetContextThread(long ptr) NtGetContextThread
 @ stub ZwGetPlugPlayEvent
 @ stub ZwGetTickCount
 @ stub ZwImpersonateClientOfPort
@@ -668,7 +669,7 @@
 @ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall ZwOpenSemaphore(long long ptr) NtOpenSemaphore
 @ stdcall ZwOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
-@ stub ZwOpenThread
+@ stdcall ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
 @ stub ZwOpenTimer
 @ stub ZwPlugPlayControl
@@ -728,7 +729,7 @@
 @ stdcall ZwRestoreKey(long long long) NtRestoreKey
 @ stdcall ZwResumeThread(long long) NtResumeThread
 @ stdcall ZwSaveKey(long long) NtSaveKey
-@ stub ZwSetContextThread
+@ stdcall ZwSetContextThread(long ptr) NtSetContextThread
 @ stub ZwSetDefaultHardErrorPort
 @ stub ZwSetDefaultLocale
 @ stub ZwSetEaFile
@@ -760,7 +761,7 @@
 @ stub ZwShutdownSystem
 @ stub ZwStartProfile
 @ stub ZwStopProfile
-@ stub ZwSuspendThread
+@ stdcall ZwSuspendThread(long ptr) NtSuspendThread
 @ stub ZwSystemDebugControl
 @ stdcall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall ZwTerminateThread(long long) NtTerminateThread
@@ -1009,7 +1010,6 @@
 @ stub NtDeleteAtom
 @ stub NtFindAtom
 @ stub NtQueryFullAttributesFile
-@ stub NtQueueApcThread
 @ stub NtReadFileScatter
 @ stub NtSignalAndWaitForSingleObject
 @ stub NtWriteFileGather
