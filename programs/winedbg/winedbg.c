@@ -591,6 +591,27 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
         case EXCEPTION_VM86_PICRETURN:
             DEBUG_Printf(DBG_CHN_MESG, "PIC return in vm86 mode");
             break;
+	case EXCEPTION_FLT_DENORMAL_OPERAND:
+            DEBUG_Printf(DBG_CHN_MESG, "denormal float operand");
+            break;
+	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+            DEBUG_Printf(DBG_CHN_MESG, "divide by zero");
+            break;
+	case EXCEPTION_FLT_INEXACT_RESULT:
+            DEBUG_Printf(DBG_CHN_MESG, "inexact float result");
+            break;
+	case EXCEPTION_FLT_INVALID_OPERATION:
+            DEBUG_Printf(DBG_CHN_MESG, "invalid float operation");
+            break;
+	case EXCEPTION_FLT_OVERFLOW:
+            DEBUG_Printf(DBG_CHN_MESG, "floating pointer overflow");
+            break;
+	case EXCEPTION_FLT_UNDERFLOW:
+            DEBUG_Printf(DBG_CHN_MESG, "floating pointer underflow");
+            break;
+	case EXCEPTION_FLT_STACK_CHECK:
+            DEBUG_Printf(DBG_CHN_MESG, "floating point stack check");
+            break;
         default:
             DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);
             break;
