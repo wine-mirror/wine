@@ -1159,7 +1159,9 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
 
     /* if key event is received, the scrollbar has the focus*/
     case WM_KEYDOWN:
-        HideCaret(hwnd);  /*hide caret to prevent flicker*/
+        /* hide caret on first KEYDOWN to prevent flicker */
+        if ((lParam & 0x40000000)==0)
+            HideCaret(hwnd);
         SCROLL_HandleKbdEvent( hwnd, wParam );
         break;
 
