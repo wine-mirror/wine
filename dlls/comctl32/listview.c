@@ -4871,10 +4871,20 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	/* if we need to callback, do it now */
 	if ((lpLVItem->mask & ~LVIF_STATE) || infoPtr->uCallbackMask)
 	{
-	    memcpy(&dispInfo.item, lpLVItem, sizeof(LVITEMW));
-	    dispInfo.item.stateMask &= infoPtr->uCallbackMask;
+	    /* NOTE: copy only fields which we _know_ are initialized, some apps
+	     *       depend on the uninitialized fields being 0 */
+	    dispInfo.item.mask = lpLVItem->mask;
+	    dispInfo.item.iItem = lpLVItem->iItem;
+	    dispInfo.item.iSubItem = lpLVItem->iSubItem;
+	    if (lpLVItem->mask & LVIF_TEXT)
+	    {
+		dispInfo.item.pszText = lpLVItem->pszText;
+		dispInfo.item.cchTextMax = lpLVItem->cchTextMax;		
+	    }
+	    if (lpLVItem->mask & LVIF_STATE)
+	        dispInfo.item.stateMask = lpLVItem->stateMask & infoPtr->uCallbackMask;
 	    notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
-	    memcpy(lpLVItem, &dispInfo.item, sizeof(LVITEMW));      
+	    *lpLVItem = dispInfo.item;
 	    TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	}
 
