@@ -92,11 +92,16 @@ sub _check_function {
     my $implemented_return_kind;
     $winapi->type_used_in_module($return_type,$module);
     if(!defined($implemented_return_kind = $winapi->translate_argument($return_type))) {
+	$winapi->declare_argument($return_type, "unknown");
 	if($return_type ne "") {
 	    $output->write("no translation defined: " . $return_type . "\n");
 	}
-    } elsif(!$winapi->is_allowed_kind($implemented_return_kind) || !$winapi->allowed_type_in_module($return_type,$module)) {
+    } elsif(!$winapi->is_allowed_kind($implemented_return_kind) ||
+	    !$winapi->is_allowed_type_in_module($return_type, $module)) 
+    {
 	$forbidden_return_type = 1;
+	$winapi->allow_kind($implemented_return_kind);
+	$winapi->allow_type_in_module($return_type, $module);
 	if($options->report_argument_forbidden($return_type)) {
 	    $output->write("return type is forbidden: $return_type ($implemented_return_kind)\n");
 	}
@@ -190,11 +195,15 @@ sub _check_function {
 	    if($type eq "CONTEXT86 *") {
 		$kind = "context86";
 	    } elsif(!defined($kind = $winapi->translate_argument($type))) {
+		$winapi->declare_argument($type, "unknown");
 		$output->write("no translation defined: " . $type . "\n");
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
-		    !$winapi->allowed_type_in_module($type, $module)) {
+		    !$winapi->is_allowed_type_in_module($type, $module)) 
+	    {
+		$winapi->allow_kind($kind);
+		$winapi->allow_type_in_module($type, $module);
 		if($options->report_argument_forbidden($type)) {
-		    $output->write("forbidden argument " . ($n + 1) . " type " . $type . " (" . $kind . ")\n");
+		    $output->write("argument " . ($n + 1) . " type is forbidden: " . $type . " (" . $kind . ")\n");
 		}
 	    }
 
@@ -225,8 +234,10 @@ sub _check_function {
 	    if($argument_kinds[$n] eq "context86") {
 		# Nothing
 	    } elsif(!$winapi->is_allowed_kind($argument_kinds[$n]) ||
-	       !$winapi->allowed_type_in_module($argument_types[$n], $module)) 
+	       !$winapi->is_allowed_type_in_module($argument_types[$n], $module)) 
 	    {
+		$winapi->allow_kind($argument_kinds[$n]);
+		$winapi->allow_type_in_module($argument_types[$n],, $module);
 		if($options->report_argument_forbidden($argument_types[$n])) {
 		    $output->write("argument " . ($n + 1) . " type is forbidden: " .
 				   "$argument_types[$n] ($argument_kinds[$n])\n");

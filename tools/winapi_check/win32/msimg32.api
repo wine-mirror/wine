@@ -2,9 +2,16 @@
 
 BOOL
 HDC
+UINT
 ULONG
+int
 
 %ptr
 
+BLENDFUNCTION
+TRIVERTEX *
 void *
 
+%void
+
+void

@@ -1,0 +1,10 @@
+%long
+
+TW_UINT16
+TW_UINT32
+
+%ptr
+
+TW_MEMREF
+pTW_IDENTITY
+

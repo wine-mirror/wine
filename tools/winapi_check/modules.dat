@@ -202,6 +202,10 @@ dlls/msacm
 
 dlls/msacm
 
+% dlls/msacm/msg711/msg711.drv.spec
+
+dlls/msacm/msg711
+
 % dlls/msnet32/msnet32.spec
 
 % dlls/msvideo/msvfw32.spec
@@ -361,6 +365,10 @@ dlls/sti
 
 dlls/ttydrv
 
+% dlls/twain/twain_32.spec
+
+dlls/twain
+
 % dlls/urlmon/urlmon.spec
 
 dlls/urlmon
@@ -482,6 +490,10 @@ dlls/winmm/midimap
 % dlls/winmm/wavemap/msacm.drv.spec
 
 dlls/winmm/wavemap
+
+% dlls/winmm/winearts/winearts.drv.spec
+
+dlls/winmm/winearts
 
 % dlls/winmm/wineoss/wineoss.drv.spec
 

@@ -1,1 +1,17 @@
+%long
 
+BOOL
+DWORD
+HWND
+UINT
+int
+
+%str
+
+LPCSTR
+LPSTR
+
+%wstr
+
+LPCWSTR
+LPWSTR

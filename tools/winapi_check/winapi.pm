@@ -437,6 +437,16 @@ sub is_allowed_kind {
     } else {
 	return 0;
     }
+
+}
+
+sub allow_kind {
+    my $self = shift;
+    my $allowed_kind = \%{$self->{ALLOWED_KIND}};
+
+    my $kind = shift;
+
+    $$allowed_kind{$kind}++;
 }
 
 sub is_limited_type {
@@ -448,7 +458,7 @@ sub is_limited_type {
     return $$allowed_modules_limited{$type};
 }
 
-sub allowed_type_in_module {
+sub is_allowed_type_in_module {
     my $self = shift;
     my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
     my $allowed_modules_limited = \%{$self->{ALLOWED_MODULES_LIMITED}};
@@ -463,6 +473,18 @@ sub allowed_type_in_module {
     }
 
     return 0;
+}
+
+sub allow_type_in_module {
+    my $self = shift;
+    my $allowed_modules = \%{$self->{ALLOWED_MODULES}};
+
+    my $type = shift;
+    my @modules = split(/ \& /, shift);
+
+    foreach my $module (@modules) {
+	$$allowed_modules{$type}{$module}++;
+    }
 }
 
 sub type_used_in_module {
@@ -523,9 +545,19 @@ sub translate_argument {
     my $self = shift;
     my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
 
-    my $argument = shift;
+    my $type = shift;
 
-    return $$translate_argument{$argument};
+    return $$translate_argument{$type};
+}
+
+sub declare_argument {
+    my $self = shift;
+    my $translate_argument = \%{$self->{TRANSLATE_ARGUMENT}};
+
+    my $type = shift;
+    my $kind = shift;
+
+    $$translate_argument{$type} = $kind;
 }
 
 sub all_declared_types {
