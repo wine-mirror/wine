@@ -50,6 +50,9 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_lwll (LPMMIOPROC16,LONG,WORD,LONG,LO
 /* ### stop build ### */
 
 static WINE_MMTHREAD*   WINMM_GetmmThread(HANDLE16);
+static LPWINE_DRIVER    DRIVER_OpenDriver16(LPCSTR, LPCSTR, LPARAM);
+static LRESULT          DRIVER_CloseDriver16(HDRVR16, LPARAM, LPARAM);
+static LRESULT          DRIVER_SendMessage16(HDRVR16, UINT, LPARAM, LPARAM);
 static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM);
 
 /* ###################################################
@@ -81,11 +84,17 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	WINMM_IData->hWinMM16Instance = hinstDLL;
         /* hook in our 16 bit function pointers */
         pFnGetMMThread16  = WINMM_GetmmThread;
+        pFnOpenDriver16   = DRIVER_OpenDriver16;
+        pFnCloseDriver16  = DRIVER_CloseDriver16;
+        pFnSendMessage16  = DRIVER_SendMessage16;
         pFnMmioCallback16 = MMIO_Callback16;
 	break;
     case DLL_PROCESS_DETACH:
 	WINMM_IData->hWinMM16Instance = 0;
         pFnGetMMThread16  = NULL;
+        pFnOpenDriver16   = NULL;
+        pFnCloseDriver16  = NULL;
+        pFnSendMessage16  = NULL;
         pFnMmioCallback16 = NULL;
 	break;
     case DLL_THREAD_ATTACH:
@@ -2183,11 +2192,11 @@ void WINAPI WMMMidiRunOnce16(void)
  */
 
 /**************************************************************************
- *                              DRIVER_MapMsg32To16             [internal]
+ *				DRIVER_MapMsg32To16		[internal]
  *
  * Map a 32 bit driver message to a 16 bit driver message.
  */
-WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
+static WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 {
     WINMM_MapType       ret = WINMM_MAP_MSGERROR;
 
@@ -2201,63 +2210,63 @@ WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
     case DRV_EXITSESSION:
     case DRV_EXITAPPLICATION:
     case DRV_POWER:
-    case DRV_CLOSE:     /* should be 0/0 */
-    case DRV_OPEN:      /* pass through */
-        /* lParam1 and lParam2 are not used */
-        ret = WINMM_MAP_OK;
-        break;
+    case DRV_CLOSE:	/* should be 0/0 */
+    case DRV_OPEN:	/* pass through */
+	/* lParam1 and lParam2 are not used */
+	ret = WINMM_MAP_OK;
+	break;
     case DRV_CONFIGURE:
     case DRV_INSTALL:
-        /* lParam1 is a handle to a window (conf) or to a driver (inst) or not used,
-         * lParam2 is a pointer to DRVCONFIGINFO
-         */
-        if (*lParam2) {
+	/* lParam1 is a handle to a window (conf) or to a driver (inst) or not used,
+	 * lParam2 is a pointer to DRVCONFIGINFO
+	 */
+	if (*lParam2) {
             LPDRVCONFIGINFO16 dci16 = HeapAlloc( GetProcessHeap(), 0, sizeof(*dci16) );
-            LPDRVCONFIGINFO     dci32 = (LPDRVCONFIGINFO)(*lParam2);
+            LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)(*lParam2);
 
-            if (dci16) {
-                LPSTR str1;
+	    if (dci16) {
+		LPSTR str1;
 
-                dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
+		dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
 
-                if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
                 {
-                    dci16->lpszDCISectionName = MapLS( str1 );
-                } else {
-                    return WINMM_MAP_NOMEM;
-                }
-                if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL)
+		    dci16->lpszDCISectionName = MapLS( str1 );
+		} else {
+		    return WINMM_MAP_NOMEM;
+		}
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL)
                 {
-                    dci16->lpszDCIAliasName = MapLS( str1 );
-                } else {
-                    return WINMM_MAP_NOMEM;
-                }
-            } else {
-                return WINMM_MAP_NOMEM;
-            }
-            *lParam2 = MapLS( dci16 );
-            ret = WINMM_MAP_OKMEM;
-        } else {
-            ret = WINMM_MAP_OK;
-        }
-        break;
+		    dci16->lpszDCIAliasName = MapLS( str1 );
+		} else {
+		    return WINMM_MAP_NOMEM;
+		}
+	    } else {
+		return WINMM_MAP_NOMEM;
+	    }
+	    *lParam2 = MapLS( dci16 );
+	    ret = WINMM_MAP_OKMEM;
+	} else {
+	    ret = WINMM_MAP_OK;
+	}
+	break;
     default:
-        if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
-           FIXME("Unknown message 0x%04x\n", wMsg);
-        }
-        ret = WINMM_MAP_OK;
+	if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
+	   FIXME("Unknown message 0x%04x\n", wMsg);
+	}
+	ret = WINMM_MAP_OK;
     }
     return ret;
 }
 
 /**************************************************************************
- *                              DRIVER_UnMapMsg32To16           [internal]
+ *				DRIVER_UnMapMsg32To16		[internal]
  *
  * UnMap a 32 bit driver message to a 16 bit driver message.
  */
-WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
+static WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 {
-    WINMM_MapType       ret = WINMM_MAP_MSGERROR;
+    WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
     switch (wMsg) {
     case DRV_LOAD:
@@ -2271,29 +2280,97 @@ WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
     case DRV_POWER:
     case DRV_OPEN:
     case DRV_CLOSE:
-        /* lParam1 and lParam2 are not used */
-        break;
+	/* lParam1 and lParam2 are not used */
+	break;
     case DRV_CONFIGURE:
     case DRV_INSTALL:
-        /* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
-        if (lParam2) {
-            LPDRVCONFIGINFO16   dci16 = MapSL(lParam2);
+	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
+	if (lParam2) {
+	    LPDRVCONFIGINFO16	dci16 = MapSL(lParam2);
             HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCISectionName) );
             HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCIAliasName) );
             UnMapLS( lParam2 );
             UnMapLS( dci16->lpszDCISectionName );
             UnMapLS( dci16->lpszDCIAliasName );
             HeapFree( GetProcessHeap(), 0, dci16 );
-        }
-        ret = WINMM_MAP_OK;
-        break;
+	}
+	ret = WINMM_MAP_OK;
+	break;
     default:
-        if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
-            FIXME("Unknown message 0x%04x\n", wMsg);
-        }
-        ret = WINMM_MAP_OK;
+	if (!((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100))) {
+	    FIXME("Unknown message 0x%04x\n", wMsg);
+	}
+	ret = WINMM_MAP_OK;
     }
     return ret;
+}
+
+/**************************************************************************
+ *				DRIVER_TryOpenDriver16		[internal]
+ *
+ * Tries to load a 16 bit driver whose DLL's (module) name is lpFileName.
+ */
+static	LPWINE_DRIVER	DRIVER_OpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2)
+{
+    LPWINE_DRIVER 	lpDrv = NULL;
+    LPCSTR		cause = 0;
+
+    TRACE("(%s, %08lX);\n", debugstr_a(sn), lParam2);
+
+    lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
+    if (lpDrv == NULL) {cause = "OOM"; goto exit;}
+
+    /* FIXME: shall we do some black magic here on sn ?
+     *	drivers32 => drivers
+     *	mci32 => mci
+     * ...
+     */
+    lpDrv->d.d16.hDriver16 = OpenDriver16(fn, sn, lParam2);
+    if (lpDrv->d.d16.hDriver16 == 0) {cause = "Not a 16 bit driver"; goto exit;}
+    lpDrv->dwFlags = WINE_GDF_16BIT;
+
+    TRACE("=> %p\n", lpDrv);
+    return lpDrv;
+ exit:
+    HeapFree(GetProcessHeap(), 0, lpDrv);
+    TRACE("Unable to load 16 bit module %s: %s\n", debugstr_a(fn), cause);
+    return NULL;
+}
+
+/******************************************************************
+ *		DRIVER_SendMessage16
+ *
+ *
+ */
+static LRESULT  DRIVER_SendMessage16(HDRVR16 hDrv16, UINT msg, 
+                                     LPARAM lParam1, LPARAM lParam2)
+{
+    LRESULT             ret = 0;
+    WINMM_MapType	map;
+
+    TRACE("Before sdm16 call hDrv=%04x wMsg=%04x p1=%08lx p2=%08lx\n",
+          hDrv16, msg, lParam1, lParam2);
+
+    switch (map = DRIVER_MapMsg32To16(msg, &lParam1, &lParam2)) {
+    case WINMM_MAP_OKMEM:
+    case WINMM_MAP_OK:
+        ret = SendDriverMessage16(hDrv16, msg, lParam1, lParam2);
+        if (map == WINMM_MAP_OKMEM)
+            DRIVER_UnMapMsg32To16(msg, lParam1, lParam2);
+    default:
+        break;
+    }
+    return ret;
+}
+
+/******************************************************************
+ *		DRIVER_CloseDriver16
+ *
+ *
+ */
+static LRESULT DRIVER_CloseDriver16(HDRVR16 hDrv16, LPARAM lParam1, LPARAM lParam2)
+{
+    return CloseDriver16(hDrv16, lParam1, lParam2);
 }
 
 /**************************************************************************

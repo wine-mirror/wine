@@ -290,8 +290,6 @@ void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
 /* temporary definitions */
-WINMM_MapType DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2);
-WINMM_MapType DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2);
 WINMM_MapType	MCI_MapMsg16To32A  (WORD uDevType, WORD wMsg,                DWORD* lParam);
 WINMM_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg,                DWORD  lParam);
 WINMM_MapType	MCI_MapMsg32ATo16  (WORD uDevType, WORD wMsg, DWORD dwFlags, DWORD* lParam);
@@ -343,6 +341,9 @@ extern LPWINE_MM_IDATA  WINMM_IData;
  * NULL otherwise
  */
 extern LRESULT          (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM);
+extern  LPWINE_DRIVER   (*pFnOpenDriver16)(LPCSTR,LPCSTR,LPARAM);
+extern  LRESULT         (*pFnCloseDriver16)(HDRVR16,LPARAM,LPARAM);
+extern  LRESULT         (*pFnSendMessage16)(HDRVR16,UINT,LPARAM,LPARAM);
 extern WINE_MMTHREAD*   (*pFnGetMMThread16)(HANDLE16);
 
 /* HANDLE16 -> HANDLE conversions */

@@ -25,16 +25,20 @@
 #include <string.h>
 #include "heap.h"
 #include "windef.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "mmddk.h"
 #include "winemm.h"
-#include "wine/winbase16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
-static LPWINE_DRIVER	lpDrvItemList = NULL;
+static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
 
-WINE_MMTHREAD* (*pFnGetMMThread16)(HANDLE16 h) /* = NULL */;
+WINE_MMTHREAD*  (*pFnGetMMThread16)(HANDLE16 h) /* = NULL */;
+LPWINE_DRIVER   (*pFnOpenDriver16)(LPCSTR,LPCSTR,LPARAM) /* = NULL */;
+LRESULT         (*pFnCloseDriver16)(HDRVR16,LPARAM,LPARAM) /* = NULL */;
+LRESULT         (*pFnSendMessage16)(HDRVR16,UINT,LPARAM,LPARAM) /* = NULL */;
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]
@@ -77,26 +81,23 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
  *				DRIVER_SendMessage		[internal]
  */
 static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT msg,
-					LPARAM lParam1, LPARAM lParam2)
+                                         LPARAM lParam1, LPARAM lParam2)
 {
-    if (lpDrv->dwFlags & WINE_GDF_16BIT) {
-	LRESULT		ret;
-	int		map = 0;
-	TRACE("Before sdm16 call hDrv=%04x wMsg=%04x p1=%08lx p2=%08lx\n",
-	      lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
+    LRESULT		ret = 0;
 
-	if ((map = DRIVER_MapMsg32To16(msg, &lParam1, &lParam2)) >= 0) {
-	    ret = SendDriverMessage16(lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
-	    if (map == 1)
-		DRIVER_UnMapMsg32To16(msg, lParam1, lParam2);
-	} else {
-	    ret = 0;
-	}
-	return ret;
+    if (lpDrv->dwFlags & WINE_GDF_16BIT) {
+        /* no need to check mmsystem presence: the driver must have been opened as a 16 bit one,
+         */
+        if (pFnSendMessage16)
+            ret = pFnSendMessage16(lpDrv->d.d16.hDriver16, msg, lParam1, lParam2);
+    } else {
+        TRACE("Before call32 proc=%p drvrID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx\n", 
+              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
+        ret = lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
+        TRACE("After  call32 proc=%p drvrID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx => %08lx\n", 
+              lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2, ret);
     }
-    TRACE("Before func32 call proc=%p driverID=%08lx hDrv=%08x wMsg=%04x p1=%08lx p2=%08lx\n",
-	  lpDrv->d.d32.lpDrvProc, lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
-    return lpDrv->d.d32.lpDrvProc(lpDrv->d.d32.dwDriverID, (HDRVR)lpDrv, msg, lParam1, lParam2);
+    return ret;
 }
 
 /**************************************************************************
@@ -275,40 +276,6 @@ LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCSTR fn, LPARAM lParam2)
 }
 
 /**************************************************************************
- *				DRIVER_TryOpenDriver16		[internal]
- *
- * Tries to load a 16 bit driver whose DLL's (module) name is lpFileName.
- */
-static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR fn, LPCSTR sn, LPARAM lParam2)
-{
-    LPWINE_DRIVER 	lpDrv = NULL;
-    LPCSTR		cause = 0;
-
-    TRACE("(%s, %08lX);\n", debugstr_a(sn), lParam2);
-
-    lpDrv = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_DRIVER));
-    if (lpDrv == NULL) {cause = "OOM"; goto exit;}
-
-    /* FIXME: shall we do some black magic here on sn ?
-     *	drivers32 => drivers
-     *	mci32 => mci
-     * ...
-     */
-    lpDrv->d.d16.hDriver16 = OpenDriver16(fn, sn, lParam2);
-    if (lpDrv->d.d16.hDriver16 == 0) {cause = "Not a 16 bit driver"; goto exit;}
-    lpDrv->dwFlags = WINE_GDF_16BIT;
-
-    if (!DRIVER_AddToList(lpDrv, 0, lParam2)) {cause = "load failed"; goto exit;}
-
-    TRACE("=> %p\n", lpDrv);
-    return lpDrv;
- exit:
-    HeapFree(GetProcessHeap(), 0, lpDrv);
-    TRACE("Unable to load 32 bit module %s: %s\n", debugstr_a(fn), cause);
-    return NULL;
-}
-
-/**************************************************************************
  *				OpenDriverA		        [WINMM.@]
  *				DrvOpenA			[WINMM.@]
  * (0,1,DRV_LOAD  ,0       ,0)
@@ -334,8 +301,20 @@ HDRVR WINAPI OpenDriverA(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
 	(lpDrv = DRIVER_TryOpenDriver32(libName, lParam2)))
 	goto the_end;
 
-    if (!(lpDrv = DRIVER_TryOpenDriver16(lpDriverName, lpSectionName, lParam2)))
-	TRACE("Failed to open driver %s from system.ini file, section %s\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName));
+    /* now we will try a 16 bit driver (and add all the glue to make it work... which
+     * is located in our mmsystem implementation)
+     * so ensure, we can load our mmsystem, otherwise just fail
+     */
+    WINMM_CheckForMMSystem();
+    if (pFnOpenDriver16 &&
+        (lpDrv = pFnOpenDriver16(lpDriverName, lpSectionName, lParam2)))
+    {
+        if (DRIVER_AddToList(lpDrv, 0, lParam2)) goto the_end;
+        HeapFree(GetProcessHeap(), 0, lpDrv);
+    }
+    TRACE("Failed to open driver %s from system.ini file, section %s\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName));
+    return 0;
+
  the_end:
     if (lpDrv)	TRACE("=> %08lx\n", (DWORD)lpDrv);
     return (HDRVR)lpDrv;
@@ -369,7 +348,10 @@ LRESULT WINAPI CloseDriver(HDRVR hDrvr, LPARAM lParam1, LPARAM lParam2)
     if ((lpDrv = DRIVER_FindFromHDrvr(hDrvr)) != NULL)
     {
 	if (lpDrv->dwFlags & WINE_GDF_16BIT)
-	    CloseDriver16(lpDrv->d.d16.hDriver16, lParam1, lParam2);
+        {
+            if (pFnCloseDriver16)
+                pFnCloseDriver16(lpDrv->d.d16.hDriver16, lParam1, lParam2);
+        }
 	else
         {
 	    DRIVER_SendMessage(lpDrv, DRV_CLOSE, lParam1, lParam2);
@@ -463,4 +445,65 @@ LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hDrv,
     default:
         return 0;
     }
+}
+
+/**************************************************************************
+ * 				DriverCallback			[WINMM.@]
+ */
+BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
+			   UINT wMsg, DWORD dwUser, DWORD dwParam1,
+			   DWORD dwParam2)
+{
+    TRACE("(%08lX, %04X, %04X, %04X, %08lX, %08lX, %08lX); !\n",
+	  dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
+
+    switch (uFlags & DCB_TYPEMASK) {
+    case DCB_NULL:
+	TRACE("Null !\n");
+	if (dwCallBack)
+	    WARN("uFlags=%04X has null DCB value, but dwCallBack=%08lX is not null !\n", uFlags, dwCallBack);
+	break;
+    case DCB_WINDOW:
+	TRACE("Window(%04lX) handle=%04X!\n", dwCallBack, hDev);
+	PostMessageA((HWND)dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
+	break;
+    case DCB_TASK: /* aka DCB_THREAD */
+	TRACE("Task(%04lx) !\n", dwCallBack);
+	PostThreadMessageA(dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
+	break;
+    case DCB_FUNCTION:
+	TRACE("Function (32 bit) !\n");
+	((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
+	break;
+    case DCB_EVENT:
+	TRACE("Event(%08lx) !\n", dwCallBack);
+	SetEvent((HANDLE)dwCallBack);
+	break;
+    case 6: /* I would dub it DCB_MMTHREADSIGNAL */
+	/* this is an undocumented DCB_ value used for mmThreads
+	 * loword of dwCallBack contains the handle of the lpMMThd block
+	 * which dwSignalCount has to be incremented
+	 */     
+        if (pFnGetMMThread16)
+	{
+	    WINE_MMTHREAD*	lpMMThd = pFnGetMMThread16(LOWORD(dwCallBack));
+
+	    TRACE("mmThread (%04x, %p) !\n", LOWORD(dwCallBack), lpMMThd);
+	    /* same as mmThreadSignal16 */
+	    InterlockedIncrement(&lpMMThd->dwSignalCount);
+	    SetEvent(lpMMThd->hEvent);
+	    /* some other stuff on lpMMThd->hVxD */
+	}
+	break;
+#if 0
+    case 4:
+	/* this is an undocumented DCB_ value for... I don't know */
+	break;
+#endif
+    default:
+	WARN("Unknown callback type %d\n", uFlags & DCB_TYPEMASK);
+	return FALSE;
+    }
+    TRACE("Done\n");
+    return TRUE;
 }
