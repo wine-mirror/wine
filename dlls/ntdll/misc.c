@@ -72,7 +72,7 @@ LONG __cdecl NTDLL__ftol(double fl)
  *                  _CIpow   (NTDLL)
  */
 #ifdef USING_REAL_FPU
-LONG __cdecl NTDLL__CIpow(void)
+double __cdecl NTDLL__CIpow(void)
 {
 	double x,y;
 	POP_FPU(y);
@@ -80,7 +80,7 @@ LONG __cdecl NTDLL__CIpow(void)
 	return pow(x,y);
 }
 #else
-LONG __cdecl NTDLL__CIpow(double x,double y)
+double __cdecl NTDLL__CIpow(double x,double y)
 {
 	FIXME("should be register function\n");
 	return pow(x,y);
