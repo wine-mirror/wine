@@ -19,9 +19,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * FIXME:
- *  1. Implement following extended styles:
- *	     CBES_EX_NOSIZELIMIT
  */
 
 #include <string.h>
@@ -399,9 +396,24 @@ static void COMBOEX_ReSize (COMBOEX_INFO *infoPtr)
 	TRACE("upgraded height due to image:  height=%d\n", cy);
     }
     SendMessageW (infoPtr->hwndSelf, CB_SETITEMHEIGHT, (WPARAM)-1, (LPARAM)cy);
-    if (infoPtr->hwndCombo)
+    if (infoPtr->hwndCombo) {
         SendMessageW (infoPtr->hwndCombo, CB_SETITEMHEIGHT,
 		      (WPARAM) 0, (LPARAM) cy);
+	if ( !(infoPtr->flags & CBES_EX_NOSIZELIMIT)) {
+	    RECT comboRect;
+	    if (GetWindowRect(infoPtr->hwndCombo, &comboRect)) {
+		RECT ourRect;
+		if (GetWindowRect(infoPtr->hwndSelf, &ourRect)) {
+		    if (comboRect.bottom > ourRect.bottom) {
+			POINT pt = { ourRect.left, ourRect.top };
+			if (ScreenToClient(infoPtr->hwndSelf, &pt))
+			    MoveWindow( infoPtr->hwndSelf, pt.x, pt.y, ourRect.right - ourRect.left,
+					comboRect.bottom - comboRect.top, FALSE);
+		    }
+		}
+	    }
+	}
+    }
 }
 
 
@@ -641,9 +653,6 @@ COMBOEX_SetExtendedStyle (COMBOEX_INFO *infoPtr, DWORD mask, DWORD style)
     TRACE("(mask=x%08lx, style=0x%08lx)\n", mask, style);
 
     dwTemp = infoPtr->dwExtStyle;
-
-    if (style & CBES_EX_NOSIZELIMIT)
-	FIXME("Extended style CBES_EX_NOSIZELIMIT implemented\n");
 
     if (mask)
 	infoPtr->dwExtStyle = (infoPtr->dwExtStyle & ~mask) | style;
