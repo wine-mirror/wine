@@ -251,6 +251,20 @@ typedef struct _charrange
     LONG    cpMax;
 } CHARRANGE;
 
+typedef struct _textrange
+{
+    CHARRANGE chrg;
+    LPSTR     lpstrText;
+} TEXTRANGEA;
+
+typedef struct _textrangew
+{
+    CHARRANGE chrg;
+    LPWSTR     lpstrText;
+} TEXTRANGEW;
+
+DECL_WINELIB_TYPE_AW(TEXTRANGE)
+
 typedef struct
 {
     DWORD		dwCookie;

@@ -69,7 +69,8 @@ typedef enum
 	END_0 = 0,	/* line ends with terminating '\0' character */
 	END_WRAP,	/* line is wrapped */
 	END_HARD,	/* line ends with a hard return '\r\n' */
-	END_SOFT	/* line ends with a soft return '\r\r\n' */
+        END_SOFT,       /* line ends with a soft return '\r\r\n' */
+        END_RICH        /* line ends with a single '\n' */
 } LINE_END;
 
 typedef struct tagLINEDEF {
@@ -1238,6 +1239,7 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		/* Find end of line */
 		cp = current_position;
 		while (*cp) {
+                    if (*cp == '\n') break;
 			if ((*cp == '\r') && (*(cp + 1) == '\n'))
 				break;
 			cp++;
@@ -1250,6 +1252,9 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		} else if ((cp > current_position) && (*(cp - 1) == '\r')) {
 			current_line->ending = END_SOFT;
 			current_line->net_length = cp - current_position - 1;
+                } else if (*cp == '\n') {
+			current_line->ending = END_RICH;
+			current_line->net_length = cp - current_position;
 		} else {
 			current_line->ending = END_HARD;
 			current_line->net_length = cp - current_position;
@@ -1310,6 +1315,9 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		switch (current_line->ending) {
 		case END_SOFT:
 			current_line->length = current_line->net_length + 3;
+			break;
+                case END_RICH:
+			current_line->length = current_line->net_length + 1;
 			break;
 		case END_HARD:
 			current_line->length = current_line->net_length + 2;
