@@ -12385,6 +12385,8 @@ ac_config_commands="$ac_config_commands dlls/kernel/tests"
 
 ac_config_commands="$ac_config_commands dlls/oleaut32/tests"
 
+ac_config_commands="$ac_config_commands dlls/shlwapi/tests"
+
 ac_config_commands="$ac_config_commands dlls/user/dde"
 
 ac_config_commands="$ac_config_commands dlls/user/resources"
@@ -13048,6 +13050,7 @@ do
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
   "dlls/kernel/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/tests" ;;
   "dlls/oleaut32/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/oleaut32/tests" ;;
+  "dlls/shlwapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/shlwapi/tests" ;;
   "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/user/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/tests" ;;
@@ -13716,6 +13719,8 @@ echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/message
 echo "$as_me: creating dlls/kernel/tests" >&6;} && mkdir "dlls/kernel/tests") ;;
     dlls/oleaut32/tests ) test -d "dlls/oleaut32/tests" || ({ echo "$as_me:$LINENO: creating dlls/oleaut32/tests" >&5
 echo "$as_me: creating dlls/oleaut32/tests" >&6;} && mkdir "dlls/oleaut32/tests") ;;
+    dlls/shlwapi/tests ) test -d "dlls/shlwapi/tests" || ({ echo "$as_me:$LINENO: creating dlls/shlwapi/tests" >&5
+echo "$as_me: creating dlls/shlwapi/tests" >&6;} && mkdir "dlls/shlwapi/tests") ;;
     dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:$LINENO: creating dlls/user/dde" >&5
 echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
     dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:$LINENO: creating dlls/user/resources" >&5

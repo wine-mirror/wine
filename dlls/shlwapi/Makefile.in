@@ -19,7 +19,11 @@ C_SRCS = \
 	string.c \
 	url.c
 
+EXTRASUBDIRS = tests
+
+CTESTS = \
+	tests/shreg.c
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
