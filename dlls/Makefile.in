@@ -31,6 +31,7 @@ BASEDIRS = \
 	commdlg \
 	crtdll \
 	crypt32 \
+	cryptdll \
 	ctl3d \
 	d3dim \
 	d3drm \
@@ -258,6 +259,7 @@ SYMLINKS_SO = \
 	comdlg32.dll.so \
 	crtdll.dll.so \
 	crypt32.dll.so \
+	cryptdll.dll.so \
 	ctl3d32.dll.so \
 	d3dim.dll.so \
 	d3drm.dll.so \
@@ -459,6 +461,9 @@ crtdll.dll.so: crtdll/crtdll.dll.so
 
 crypt32.dll.so: crypt32/crypt32.dll.so
 	$(RM) $@ && $(LN_S) crypt32/crypt32.dll.so $@
+
+cryptdll.dll.so: cryptdll/cryptdll.dll.so
+	$(RM) $@ && $(LN_S) cryptdll/cryptdll.dll.so $@
 
 ctl3d32.dll.so: ctl3d/ctl3d32.dll.so
 	$(RM) $@ && $(LN_S) ctl3d/ctl3d32.dll.so $@
@@ -997,6 +1002,7 @@ IMPORT_LIBS = \
 	libcomdlg32.$(IMPLIBEXT) \
 	libcrtdll.$(IMPLIBEXT) \
 	libcrypt32.$(IMPLIBEXT) \
+	libcryptdll.$(IMPLIBEXT) \
 	libctl3d32.$(IMPLIBEXT) \
 	libd3d8.$(IMPLIBEXT) \
 	libd3d9.$(IMPLIBEXT) \
@@ -1191,6 +1197,11 @@ libcrypt32.def: crypt32/crypt32.spec.def
 	$(RM) $@ && $(LN_S) crypt32/crypt32.spec.def $@
 libcrypt32.a: crypt32/crypt32.spec.def
 	$(DLLTOOL) -k -l $@ -d crypt32/crypt32.spec.def
+
+libcryptdll.def: cryptdll/cryptdll.spec.def
+	$(RM) $@ && $(LN_S) cryptdll/cryptdll.spec.def $@
+libcryptdll.a: cryptdll/cryptdll.spec.def
+	$(DLLTOOL) -k -l $@ -d cryptdll/cryptdll.spec.def
 
 libctl3d32.def: ctl3d/ctl3d32.spec.def
 	$(RM) $@ && $(LN_S) ctl3d/ctl3d32.spec.def $@
@@ -1767,6 +1778,7 @@ comctl32/comctl32.spec.def: $(WINEBUILD)
 commdlg/comdlg32.spec.def: $(WINEBUILD)
 crtdll/crtdll.spec.def: $(WINEBUILD)
 crypt32/crypt32.spec.def: $(WINEBUILD)
+cryptdll/cryptdll.spec.def: $(WINEBUILD)
 ctl3d/ctl3d32.spec.def: $(WINEBUILD)
 d3d8/d3d8.spec.def: $(WINEBUILD)
 d3d9/d3d9.spec.def: $(WINEBUILD)
@@ -1900,6 +1912,7 @@ comctl32/comctl32.dll.so: comctl32
 commdlg/comdlg32.dll.so: commdlg
 crtdll/crtdll.dll.so: crtdll
 crypt32/crypt32.dll.so: crypt32
+cryptdll/cryptdll.dll.so: cryptdll
 ctl3d/ctl3d32.dll.so: ctl3d
 d3d8/d3d8.dll.so: d3d8
 d3d9/d3d9.dll.so: d3d9

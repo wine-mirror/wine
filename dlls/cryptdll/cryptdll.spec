@@ -1,0 +1,14 @@
+@ stub CDBuildIntegrityVect
+@ stub CDBuildVect
+@ stub CDFindCommonCSystem
+@ stub CDFindCommonCSystemWithKey
+@ stub CDGenerateRandomBits
+@ stub CDLocateCSystem
+@ stub CDLocateCheckSum
+@ stub CDLocateRng
+@ stub CDRegisterCSystem
+@ stub CDRegisterCheckSum
+@ stub CDRegisterRng
+@ stub MD5Final
+@ stub MD5Init
+@ stub MD5Update
