@@ -49,6 +49,8 @@
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
+#define ALSA_PCM_OLD_HW_PARAMS_API
+#define ALSA_PCM_OLD_SW_PARAMS_API
 #include "alsa.h"
 #include "wine/library.h"
 #include "wine/debug.h"
