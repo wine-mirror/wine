@@ -16,6 +16,24 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 9, 2004, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ *
+ * TODO:
+ *    - GetListBoxInfo()
+ *    - LB_GETLISTBOXINFO
+ *    - LBS_COMBOBOX
+ *    - LBS_NODATA
+ *    - LBS_STANDARD
+ *    - LB_SETLOCALE: some FIXMEs remain
+ *    - LBS_USETABSTOPS: some FIXMEs remain
  */
 
 #include <string.h>
@@ -39,14 +57,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(listbox);
 WINE_DECLARE_DEBUG_CHANNEL(combo);
-
-/* Unimplemented yet:
- * - LBS_USETABSTOPS
- * - Locale handling
- *
- * Probably needs improvement:
- * - LBS_NOSEL
- */
 
 /* Items array granularity */
 #define LB_ARRAY_GRANULARITY 16
@@ -76,7 +86,7 @@ typedef struct
     UINT        style;          /* Window style */
     INT         width;          /* Window width */
     INT         height;         /* Window height */
-    LB_ITEMDATA  *items;          /* Array of items */
+    LB_ITEMDATA  *items;        /* Array of items */
     INT         nb_items;       /* Number of items */
     INT         top_item;       /* Top visible item */
     INT         selected_item;  /* Selected item */
@@ -93,8 +103,8 @@ typedef struct
     BOOL        captured;       /* Is mouse captured? */
     BOOL	in_focus;
     HFONT       font;           /* Current font */
-    LCID          locale;         /* Current locale for string comparisons */
-    LPHEADCOMBO   lphc;		  /* ComboLBox */
+    LCID          locale;       /* Current locale for string comparisons */
+    LPHEADCOMBO   lphc;		/* ComboLBox */
 } LB_DESCR;
 
 
@@ -565,7 +575,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
 	    if (action == ODA_FOCUS)
 		DrawFocusRect( hdc, rect );
 	    else
-	        FIXME("called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
+	        ERR("called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
 	    return;
 	}
 
