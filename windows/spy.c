@@ -1581,6 +1581,10 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TVN_BEGINLABELEDITW,   NMHDR),
     SPNFY(TVN_ENDLABELEDITW,     NMHDR),
     /* Tooltips       0U-520U  to  0U-549U  */
+    SPNFY(TTN_GETDISPINFOA,      NMHDR),
+    SPNFY(TTN_SHOW,              NMHDR),
+    SPNFY(TTN_POP,               NMHDR),
+    SPNFY(TTN_GETDISPINFOW,      NMHDR),
     /* Tab            0U-550U  to  0U-580U  */
     SPNFY(TCN_KEYDOWN,           NMHDR),
     SPNFY(TCN_SELCHANGE,         NMHDR),
@@ -1609,8 +1613,23 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(TBN_GETINFOTIPW,       NMTBGETINFOTIPW),
     SPNFY(TBN_GETBUTTONINFOW,    NMTOOLBARW),
     /* Up/Down        0U-721U  to  0U-740U  */
+    SPNFY(UDN_DELTAPOS,          NMHDR),           
     /* Month Calendar 0U-750U  to  0U-759U  */
+    SPNFY(MCN_SELCHANGE,         NMHDR),        
+    SPNFY(MCN_GETDAYSTATE,       NMHDR),        
+    SPNFY(MCN_SELECT,            NMHDR),        
     /* Date/Time      0U-760U  to  0U-799U  */
+    SPNFY(DTN_DATETIMECHANGE,    NMHDR),      
+    SPNFY(DTN_USERSTRINGA,       NMHDR),      
+    SPNFY(DTN_WMKEYDOWNA,        NMHDR),      
+    SPNFY(DTN_FORMATA,           NMHDR),      
+    SPNFY(DTN_FORMATQUERYA,      NMHDR),       
+    SPNFY(DTN_DROPDOWN,          NMHDR),      
+    SPNFY(DTN_CLOSEUP,           NMHDR),      
+    SPNFY(DTN_USERSTRINGW,       NMHDR),         
+    SPNFY(DTN_WMKEYDOWNW,        NMHDR),        
+    SPNFY(DTN_FORMATW,           NMHDR),      
+    SPNFY(DTN_FORMATQUERYW,      NMHDR),      
     /* ComboBoxEx     0U-800U  to  0U-830U  */
     SPNFY(CBEN_GETDISPINFOA,     NMCOMBOBOXEXA),
     SPNFY(CBEN_INSERTITEM,       NMCOMBOBOXEXA),
@@ -1632,7 +1651,9 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(RBN_DELETEDBAND,       NMREBAR),
     SPNFY(RBN_CHILDSIZE,         NMREBARCHILDSIZE),
     /* IP Adderss     0U-860U  to  0U-879U  */
+    SPNFY(IPN_FIELDCHANGED,      NMHDR),         
     /* Status bar     0U-880U  to  0U-899U  */
+    SPNFY(SBN_SIMPLEMODECHANGE,  NMHDR),
     /* Pager          0U-900U  to  0U-950U  */
     SPNFY(PGN_SCROLL,            NMPGSCROLL),
     SPNFY(PGN_CALCSIZE,          NMPGCALCSIZE),
@@ -2043,20 +2064,34 @@ void SPY_DumpStructure (SPY_INSTANCE *sp_e, BOOL enter)
 	    }
 	    break;
 	case WM_NOTIFY:
-	    if (!enter) break;
+	    /* if (!enter) break; */
 	    {   
 		NMHDR * pnmh = (NMHDR*) sp_e->lParam;
-		UINT *q;
+		UINT *q, dumplen;
 		const SPY_NOTIFY *p;
+		WCHAR from_class[60];
+		DWORD save_error;
 
 		p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array, 
 					pnmh->code);
 		if (p) {
 		    TRACE("NMHDR hwndFrom=0x%08x idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
 			  pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
-		    if (p->len > 0) {
+		    dumplen = p->len;
+
+		    /* for CUSTOMDRAW, dump all the data for TOOLBARs */
+		    if (pnmh->code == NM_CUSTOMDRAW) {
+			/* save and restore error code over the next call */	
+			save_error = GetLastError();
+			GetClassNameW(pnmh->hwndFrom, from_class, 
+				      sizeof(from_class)/sizeof(WCHAR));
+			SetLastError(save_error);
+			if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0) 
+			    dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
+		    }
+		    if (dumplen > 0) {
 			q = (UINT *)(pnmh + 1);
-			SPY_DumpMem ("NM extra", q, (INT)p->len);
+			SPY_DumpMem ("NM extra", q, (INT)dumplen);
 		    }
 		}
 		else
