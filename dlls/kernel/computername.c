@@ -683,23 +683,55 @@ BOOL WINAPI SetComputerNameExA( COMPUTER_NAME_FORMAT type, LPCSTR lpComputerName
 /***********************************************************************
  *              DnsHostnameToComputerNameA         (KERNEL32.@)
  */
-BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR Hostname, LPSTR ComputerName,
-                              LPDWORD nSize)
+BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR hostname,
+    LPSTR computername, LPDWORD size)
 {
-    FIXME("(%s, %s, %08lx): stub\n", debugstr_a(Hostname),
-          debugstr_a(ComputerName), *nSize);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    DWORD len;
+
+    FIXME("(%s, %p, %p): stub\n", debugstr_a(hostname), computername, size);
+
+    if (!hostname || !size) return FALSE;
+    len = lstrlenA(hostname);
+
+    if (len > MAX_COMPUTERNAME_LENGTH)
+        len = MAX_COMPUTERNAME_LENGTH;
+
+    if (*size < len)
+    {
+        *size = len;
+        return FALSE;
+    }
+    if (!computername) return FALSE;
+
+    memcpy( computername, hostname, len );
+    computername[len + 1] = 0;
+    return TRUE;
 }
 
 /***********************************************************************
  *              DnsHostnameToComputerNameW         (KERNEL32.@)
  */
-BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR Hostname, LPWSTR ComputerName,
-                              LPDWORD nSize)
+BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR hostname,
+    LPWSTR computername, LPDWORD size)
 {
-    FIXME("(%s, %s, %08lx): stub\n", debugstr_w(Hostname),
-          debugstr_w(ComputerName), *nSize);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    DWORD len;
+
+    FIXME("(%s, %p, %p): stub\n", debugstr_w(hostname), computername, size);
+
+    if (!hostname || !size) return FALSE;
+    len = lstrlenW(hostname);
+
+    if (len > MAX_COMPUTERNAME_LENGTH)
+        len = MAX_COMPUTERNAME_LENGTH;
+
+    if (*size < len)
+    {
+        *size = len;
+        return FALSE;
+    }
+    if (!computername) return FALSE;
+
+    memcpy( computername, hostname, len * sizeof(WCHAR) );
+    computername[len + 1] = 0;
+    return TRUE;
 }
