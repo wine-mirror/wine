@@ -36,8 +36,8 @@ import kernel32.dll
 28 stub DispGetParam
 29 stub DispGetIDsOfNames
 30 stub DispInvoke
-31 stub CreateDispTypeInfo
-32 stub CreateStdDispatch
+31 stdcall CreateDispTypeInfo(ptr long ptr) CreateDispTypeInfo
+32 stdcall CreateStdDispatch(ptr ptr ptr ptr) CreateStdDispatch
 33 stdcall RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject
 34 stdcall RevokeActiveObject(long ptr) RevokeActiveObject
 35 stdcall GetActiveObject(ptr ptr ptr) GetActiveObject

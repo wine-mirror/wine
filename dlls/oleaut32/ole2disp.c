@@ -325,14 +325,54 @@ int WINAPI SysStringByteLen(BSTR str)
 }
 
 /******************************************************************************
- * CreateDispTypeInfo [OLE2DISP.31]
+ * CreateDispTypeInfo16 [OLE2DISP.31]
  */
 HRESULT WINAPI CreateDispTypeInfo16(
 	INTERFACEDATA *pidata,
 	LCID lcid,
-	ITypeInfo **pptinfo
-) {
+	ITypeInfo **pptinfo)
+{
 	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	return 0;
+}
+
+/******************************************************************************
+ * CreateDispTypeInfo [OLE2DISP.31]
+ */
+HRESULT WINAPI CreateDispTypeInfo(
+	INTERFACEDATA *pidata,
+	LCID lcid,
+	ITypeInfo **pptinfo)
+{
+	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	return 0;
+}
+
+/******************************************************************************
+ * CreateStdDispatch16 [OLE2DISP.32]
+ */
+HRESULT WINAPI CreateStdDispatch16(
+        IUnknown* punkOuter,
+        void* pvThis,
+	ITypeInfo* ptinfo,
+	IUnknown** ppunkStdDisp)
+{
+	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
+               ppunkStdDisp);
+	return 0;
+}
+
+/******************************************************************************
+ * CreateStdDispatch [OLE2DISP.32]
+ */
+HRESULT WINAPI CreateStdDispatch(
+        IUnknown* punkOuter,
+        void* pvThis,
+	ITypeInfo* ptinfo,
+	IUnknown** ppunkStdDisp)
+{
+	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
+               ppunkStdDisp);
 	return 0;
 }
 

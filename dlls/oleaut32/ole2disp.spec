@@ -33,7 +33,7 @@ owner	oleaut32
 29 stub DISPGETIDSOFNAMES
 30 stub DISPINVOKE
 31 pascal CreateDispTypeInfo(ptr long ptr) CreateDispTypeInfo16
-32 stub CREATESTDDISPATCH
+32 pascal CreateStdDispatch(ptr ptr ptr ptr) CreateStdDispatch16
 33 stub _IID_IDISPATCH
 34 stub _IID_IENUMVARIANT
 35 pascal RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject16
