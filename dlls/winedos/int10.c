@@ -162,6 +162,7 @@ static const INT10_MODE INT10_modelist[] =
     {0x0010,  640,  350,  4},
     {0x0012,  640,  480,  4},
     {0x0013,  320,  200,  8},
+    {0x006a,  800,  600,  4},   /* VESA mode, same as 0x102 */
     {0x0100,  640,  400,  8},
     {0x0101,  640,  480,  8},
     {0x0102,  800,  600,  4},
@@ -192,6 +193,11 @@ static const INT10_MODE INT10_modelist[] =
     {0x011b, 1280, 1024, 24},
     {0xffff,    0,    0,  0}
 };
+
+/* True if video mode is a vesa mode, false otherwise.
+ * More correct would be to use something like (x > 0xff || x == 0x6a)
+ * but as long as we have only the standard VGA and VESA modes this is ok too */
+#define IS_VESA_MODE(x)         ((x) >= 0x6a)
 
 /* Forward declarations. */
 static INT10_HEAP *INT10_GetHeap(void);
@@ -352,7 +358,7 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
             attr |= 0x0010;
 
         /* Not VGA-compatible? */
-        if (mode > 0xff)
+        if (IS_VESA_MODE(mode))
             attr |= 0x0020;
 
         mib->ModeAttributes = attr;
@@ -776,7 +782,7 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
     {
         /* Text mode. */
         TRACE( "Setting %s %dx%d text mode (screen %s)\n", 
-               mode <= 0xff ? "VGA" : "VESA", 
+               IS_VESA_MODE(mode) ? "VESA" : "VGA", 
                ptr->Width, ptr->Height, 
                clearScreen ? "cleared" : "preserved" );
 
@@ -799,7 +805,7 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
     {
         /* Graphics mode. */
         TRACE( "Setting %s %dx%dx%d graphics mode (screen %s)\n", 
-               mode <= 0xff ? "VGA" : "VESA", 
+               IS_VESA_MODE(mode) ? "VESA" : "VGA", 
                ptr->Width, ptr->Height, ptr->Depth,
                clearScreen ? "cleared" : "preserved" );
 
@@ -1041,7 +1047,7 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
     case 0x00: /* SET VIDEO MODE */
         TRACE( "Set VGA video mode %02x\n", AL_reg(context) );
         if (!INT10_SetVideoMode( data, AL_reg(context) ))
-            FIXME( "Unsupported VGA video mode requested: %d\n", 
+            FIXME( "Unsupported VGA video mode requested: %#x\n", 
                    AL_reg(context) );
         break;
 
