@@ -211,11 +211,11 @@ HRESULT WINAPI CoInitialize16(
 }
 
 /******************************************************************************
- *		CoInitialize32	[OLE32.26]
+ *		CoInitialize	[OLE32.26]
  *
  * Initializes the COM libraries.
  *
- * See CoInitializeEx32
+ * See CoInitializeEx
  */
 HRESULT WINAPI CoInitialize(
 	LPVOID lpReserved	/* [in] pointer to win32 malloc interface
@@ -229,7 +229,7 @@ HRESULT WINAPI CoInitialize(
 }
 
 /******************************************************************************
- *		CoInitializeEx32	[OLE32.163]
+ *		CoInitializeEx	[OLE32.163]
  *
  * Initializes the COM libraries. The behavior used to set the win32 IMalloc
  * used for memory management is obsolete.
@@ -309,7 +309,7 @@ void WINAPI CoUninitialize16(void)
 }
 
 /***********************************************************************
- *           CoUninitialize32   [OLE32.47]
+ *           CoUninitialize   [OLE32.47]
  *
  * This method will release the COM libraries.
  *
@@ -369,7 +369,7 @@ HRESULT WINAPI CoGetMalloc16(
 }
 
 /******************************************************************************
- *		CoGetMalloc32	[OLE32.20]
+ *		CoGetMalloc	[OLE32.20]
  *
  * RETURNS
  *	The current win32 IMalloc
@@ -415,7 +415,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
  */
 BOOL16 WINAPI IsEqualGUID16(
 	GUID* g1,	/* [in] unique id 1 */
-	GUID* g2	/**/
+	GUID* g2	/* [in] unique id 2 */
 ) {
     return !memcmp( g1, g2, sizeof(GUID) );
 }
@@ -555,7 +555,7 @@ HRESULT WINAPI CoCreateGuid(
        * However, under earlier systems, sa_len isn't present, so
        *  the size is just sizeof(struct ifreq)
        */
-# ifdef HAVE_SA_LEN
+#ifdef HAVE_SA_LEN
 #  ifndef max
 #   define max(a,b) ((a) > (b) ? (a) : (b))
 #  endif
@@ -715,7 +715,7 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
 }
 
 /******************************************************************************
- *		CLSIDFromString32	[OLE32.3]
+ *		CLSIDFromString	[OLE32.3]
  * Converts a unique identifier from it's string representation into 
  * the GUID struct.
  * RETURNS
@@ -815,7 +815,7 @@ HRESULT WINAPI StringFromCLSID16(
 }
 
 /******************************************************************************
- *		StringFromCLSID32	[OLE32.151]
+ *		StringFromCLSID	[OLE32.151]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
  * RETURNS
@@ -860,7 +860,7 @@ StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax)
   if (strlen(xguid)>=cmax)
   	return 0;
   lstrcpyAtoW(str,xguid);
-  return strlen(xguid);
+  return strlen(xguid) + 1;
 }
 
 /******************************************************************************
@@ -946,7 +946,7 @@ HRESULT WINAPI CLSIDFromProgID16(
 }
 
 /******************************************************************************
- *		CLSIDFromProgID32	[OLE32.2]
+ *		CLSIDFromProgID	[OLE32.2]
  * Converts a program id into the respective GUID. (By using a registry lookup)
  * RETURNS
  *	riid associated with the progid
@@ -962,8 +962,8 @@ HRESULT WINAPI CLSIDFromProgID(
 	return ret;
 }
 
-/************************************************************************************************
- *    OleSaveToStream
+/***********************************************************************
+ *		WriteClassStm
  *
  * This function write a CLSID on stream
  */
@@ -977,8 +977,8 @@ HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
     return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
 }
 
-/************************************************************************************************
- *    OleSaveToStream
+/***********************************************************************
+ *		ReadClassStm
  *
  * This function read a CLSID from a stream
  */
@@ -1133,7 +1133,7 @@ static HRESULT COM_GetRegisteredClassObject(
 }
 
 /******************************************************************************
- *		CoRegisterClassObject32	[OLE32.36]
+ *		CoRegisterClassObject	[OLE32.36]
  *
  * This method will register the class object for a given class ID.
  *
@@ -1225,7 +1225,7 @@ HRESULT WINAPI CoRegisterClassObject(
 }
 
 /***********************************************************************
- *           CoRevokeClassObject32 [OLE32.40]
+ *           CoRevokeClassObject [OLE32.40]
  *
  * This method will remove a class object from the class registry
  *
@@ -1384,7 +1384,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     return hres;
 }
 
-/****************************************************************************************
+/***********************************************************************
  *        CoResumeClassObjects
  *
  * Resumes classobjects registered with REGCLS suspended
@@ -1395,7 +1395,7 @@ HRESULT WINAPI CoResumeClassObjects(void)
 	return S_OK;
 }
 
-/****************************************************************************************
+/***********************************************************************
  *        GetClassFile
  *
  * This function supplies the CLSID associated with the given filename.
@@ -1816,7 +1816,7 @@ HRESULT WINAPI CoLockObjectExternal16(
 }
 
 /******************************************************************************
- *		CoLockObjectExternal32	[OLE32.31]
+ *		CoLockObjectExternal	[OLE32.31]
  */
 HRESULT WINAPI CoLockObjectExternal(
     LPUNKNOWN pUnk,		/* [in] object to be locked */
@@ -1854,7 +1854,7 @@ HRESULT WINAPI CoGetState16(LPDWORD state)
     return S_OK;
 }
 /***********************************************************************
- *           CoSetState32 [COM32.42]
+ *           CoSetState [COM32.42]
  */
 HRESULT WINAPI CoSetState(LPDWORD state)
 {
