@@ -946,6 +946,7 @@ AC_CHECK_FUNCS(\
 	_pclose \
 	_popen \
 	_snprintf \
+	_spawnvp \
 	_stricmp \
 	_strnicmp \
 	_vsnprintf \

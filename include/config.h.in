@@ -686,6 +686,9 @@
 /* Define to 1 if you have the `_snprintf' function. */
 #undef HAVE__SNPRINTF
 
+/* Define to 1 if you have the `_spawnvp' function. */
+#undef HAVE__SPAWNVP
+
 /* Define to 1 if you have the `_stricmp' function. */
 #undef HAVE__STRICMP
 

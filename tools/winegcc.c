@@ -75,6 +75,9 @@ char *strmake(const char *fmt, ...)
 
 void spawn(char *const argv[])
 {
+#ifdef HAVE__SPAWNVP
+    if (!_spawnvp( _P_WAIT, argv[0], argv)) return;
+#else
     int pid, status, wret, i;
 
     if (verbose)
@@ -92,6 +95,8 @@ void spawn(char *const argv[])
         if (pid == wret && WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
         error("%s failed.", argv[0]);
     }
+#endif  /* HAVE__SPAWNVP */
+
     perror("Error:");
     exit(3);
 }

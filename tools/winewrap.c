@@ -296,6 +296,9 @@ void create_file(const char *name, const char *fmt, ...)
 
 void spawn(char *const argv[])
 {
+#ifdef HAVE__SPAWNVP
+    if (!_spawnvp( _P_WAIT, argv[0], argv)) return;
+#else
     int pid, status, wret, i;
 
     if (verbose)
@@ -313,6 +316,8 @@ void spawn(char *const argv[])
         if (pid == wret && WIFEXITED(status) && WEXITSTATUS(status) == 0) return;
         error("%s failed.", argv[0]);
     }
+#endif  /* HAVE__SPAWNVP */
+
     perror("Error:");
     exit(3);
 }
@@ -675,7 +680,7 @@ int main(int argc, char **argv)
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);
-    chmod(base_file, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+    chmod(base_file, 0755);
 
     return 0;    
 } 
