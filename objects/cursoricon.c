@@ -696,7 +696,6 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
     {
         WORD resid;
         HDC hdc;
-        DC *dc;
 
         if ( HIWORD(name) )
         {
@@ -714,12 +713,13 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
         }
         else resid = LOWORD(name);
 	hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-	dc = DC_GetDCPtr( hdc );
-	if (dc->funcs->pLoadOEMResource)
-	    h = dc->funcs->pLoadOEMResource( resid, fCursor ?
-                                                    OEM_CURSOR : OEM_ICON );
-        GDI_HEAP_UNLOCK( hdc );
-        DeleteDC(  hdc );
+	if (hdc) {
+	    DC *dc = DC_GetDCPtr( hdc );
+	    if (dc->funcs->pLoadOEMResource)
+	        h = dc->funcs->pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
+	    GDI_HEAP_UNLOCK( hdc );
+	    DeleteDC(  hdc );
+	}
     }
 
     else  /* Load from resource */
