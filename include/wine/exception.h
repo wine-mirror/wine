@@ -179,7 +179,6 @@ extern void __wine_enter_vm86( CONTEXT *context );
 
 #ifdef __WINE__
 extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-extern BOOL SIGNAL_Init(void);
 #endif
 
 #endif  /* __WINE_WINE_EXCEPTION_H */

@@ -109,9 +109,6 @@ extern STARTUPINFOA current_startupinfo;
 /* scheduler/pthread.c */
 extern void PTHREAD_init_done(void);
 
-/* scheduler/sysdeps.c */
-extern void SYSDEPS_SwitchToThreadStack( void (*func)(void) ) WINE_NORETURN;
-
 extern BOOL MAIN_MainInit(void);
 
 typedef WORD WINAPI (*pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );

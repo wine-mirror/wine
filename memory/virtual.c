@@ -958,7 +958,13 @@ BOOL WINAPI VirtualFree(
         return FALSE;
     }
 
-    /* Compute the protection flags */
+    /* Check the type */
+
+    if (type & MEM_SYSTEM)
+    {
+        view->flags |= VFLAG_SYSTEM;
+        type &= ~MEM_SYSTEM;
+    }
 
     if ((type != MEM_DECOMMIT) && (type != MEM_RELEASE))
     {

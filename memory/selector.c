@@ -27,6 +27,8 @@ inline static WORD get_sel_count( WORD sel )
     return (wine_ldt_copy.limit[sel >> __AHSHIFT] >> 16) + 1;
 }
 
+static const LDT_ENTRY null_entry;  /* all-zeros, used to clear LDT entries */
+
 /***********************************************************************
  *           SELECTOR_AllocArray
  *
@@ -98,8 +100,6 @@ WORD WINAPI AllocSelector16( WORD sel )
  */
 WORD WINAPI FreeSelector16( WORD sel )
 {
-    LDT_ENTRY entry;
-
     if (IS_SELECTOR_FREE(sel)) return sel;  /* error */
 
 #ifdef __i386__
@@ -112,10 +112,26 @@ WORD WINAPI FreeSelector16( WORD sel )
     if (!((__get_gs() ^ sel) & ~7)) __set_gs( 0 );
 #endif  /* __i386__ */
 
-    memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
-    wine_ldt_set_entry( sel, &entry );
+    wine_ldt_set_entry( sel, &null_entry );
     wine_ldt_copy.flags[sel >> __AHSHIFT] &= ~WINE_LDT_FLAGS_ALLOCATED;
     return 0;
+}
+
+
+/***********************************************************************
+ *           SELECTOR_FreeFs
+ *
+ * Free the current %fs selector.
+ */
+void SELECTOR_FreeFs(void)
+{
+    WORD fs = __get_fs();
+    if (fs)
+    {
+        wine_ldt_copy.flags[fs >> __AHSHIFT] &= ~WINE_LDT_FLAGS_ALLOCATED;
+        __set_fs(0);
+        wine_ldt_set_entry( fs, &null_entry );
+    }
 }
 
 

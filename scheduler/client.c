@@ -98,7 +98,7 @@ void server_protocol_error( const char *err, ... )
     fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
     vfprintf( stderr, err, args );
     va_end( args );
-    SYSDEPS_ExitThread(1);
+    SYSDEPS_AbortThread(1);
 }
 
 
@@ -109,7 +109,7 @@ void server_protocol_perror( const char *err )
 {
     fprintf( stderr, "wine client error:%p: ", NtCurrentTeb()->tid );
     perror( err );
-    SYSDEPS_ExitThread(1);
+    SYSDEPS_AbortThread(1);
 }
 
 
@@ -144,7 +144,7 @@ static void send_request( const struct __server_request_info *req )
     }
 
     if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
-    if (errno == EPIPE) SYSDEPS_ExitThread(0);
+    if (errno == EPIPE) SYSDEPS_AbortThread(0);
     server_protocol_perror( "sendmsg" );
 }
 
@@ -172,7 +172,7 @@ static void read_reply_data( void *buffer, size_t size )
         server_protocol_perror("read");
     }
     /* the server closed the connection; time to die... */
-    SYSDEPS_ExitThread(0);
+    SYSDEPS_AbortThread(0);
 }
 
 
@@ -252,7 +252,7 @@ void wine_server_send_fd( int fd )
         if ((ret = sendmsg( fd_socket, &msghdr, 0 )) == sizeof(data)) return;
         if (ret >= 0) server_protocol_error( "partial write %d\n", ret );
         if (errno == EINTR) continue;
-        if (errno == EPIPE) SYSDEPS_ExitThread(0);
+        if (errno == EPIPE) SYSDEPS_AbortThread(0);
         server_protocol_perror( "sendmsg" );
     }
 }
@@ -311,7 +311,7 @@ static int receive_fd( handle_t *handle )
         server_protocol_perror("recvmsg");
     }
     /* the server closed the connection; time to die... */
-    SYSDEPS_ExitThread(0);
+    SYSDEPS_AbortThread(0);
 }
 
 

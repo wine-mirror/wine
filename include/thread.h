@@ -89,8 +89,7 @@ typedef struct _TEB
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
-    DWORD        cleanup;        /* --3 1fc Cleanup service handle */
-    DWORD        unused[3];      /* --3 200 Was server buffer */
+    DWORD        unused[4];      /* --3 1fc Was server buffer */
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */
@@ -132,5 +131,11 @@ extern TEB *THREAD_IdToTEB( DWORD id );
 extern int SYSDEPS_SpawnThread( TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
 extern void SYSDEPS_ExitThread( int status ) WINE_NORETURN;
+extern void SYSDEPS_AbortThread( int status ) WINE_NORETURN;
+extern void SYSDEPS_SwitchToThreadStack( void (*func)(void) ) WINE_NORETURN;
+
+/* signal handling */
+extern BOOL SIGNAL_Init(void);
+extern void SIGNAL_Reset(void);
 
 #endif  /* __WINE_THREAD_H */

@@ -21,9 +21,13 @@
 #ifdef HAVE_UCONTEXT_H
 # include <ucontext.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 #include "thread.h"
 #include "wine/server.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "wine/exception.h"
 #include "debugtools.h"
 
@@ -42,6 +46,21 @@ DEFAULT_DEBUG_CHANNEL(thread);
 # endif  /* CLONE_VM */
 #endif  /* linux || HAVE_CLONE */
 
+extern void SELECTOR_FreeFs(void);
+
+struct thread_cleanup_info
+{
+    void *stack_base;
+    int   stack_size;
+    int   status;
+};
+
+/* temporary stacks used on thread exit */
+#define TEMP_STACK_SIZE 1024
+#define NB_TEMP_STACKS  8
+static char temp_stacks[NB_TEMP_STACKS][TEMP_STACK_SIZE];
+static LONG next_temp_stack;  /* next temp stack to use */
+
 /***********************************************************************
  *           SYSDEPS_SetCurThread
  *
@@ -57,6 +76,58 @@ void SYSDEPS_SetCurThread( TEB *teb )
     _lwp_setprivate( teb );
 #endif
 }
+
+
+/***********************************************************************
+ *           call_on_thread_stack
+ *
+ * Call a function once we switched to the thread stack.
+ */
+static void call_on_thread_stack( void *func )
+{
+    __TRY
+    {
+        void (*funcptr)(void) = func;
+        funcptr();
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    SYSDEPS_ExitThread(0);  /* should never get here */
+}
+
+
+/***********************************************************************
+ *           get_temp_stack
+ *
+ * Get a temporary stack address to run the thread exit code on.
+ */
+inline static char *get_temp_stack(void)
+{
+    unsigned int next = InterlockedExchangeAdd( &next_temp_stack, 1 );
+    return temp_stacks[next % NB_TEMP_STACKS];
+}
+
+
+/***********************************************************************
+ *           cleanup_thread
+ *
+ * Cleanup the remains of a thread. Runs on a temporary stack.
+ */
+static void cleanup_thread( void *ptr )
+{
+    /* copy the info structure since it is on the stack we will free */
+    struct thread_cleanup_info info = *(struct thread_cleanup_info *)ptr;
+    munmap( info.stack_base, info.stack_size );
+    SELECTOR_FreeFs();
+#ifdef HAVE__LWP_CREATE
+    _lwp_exit();
+#endif
+    _exit( info.status );
+}
+
 
 /***********************************************************************
  *           SYSDEPS_StartThread
@@ -138,6 +209,36 @@ int SYSDEPS_SpawnThread( TEB *teb )
 }
 
 
+/***********************************************************************
+ *           SYSDEPS_CallOnStack
+ */
+void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg ) WINE_NORETURN;
+#ifdef __i386__
+__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
+                   "movl 4(%esp),%ecx\n\t"  /* func */
+                   "movl 8(%esp),%edx\n\t"  /* arg */
+                   ".byte 0x64\n\tmovl 0x04,%esp\n\t"  /* teb->stack_top */
+                   "pushl %edx\n\t"
+                   "xorl %ebp,%ebp\n\t"
+                   "call *%ecx\n\t"
+                   "int $3" /* we never return here */ );
+#else
+void SYSDEPS_CallOnStack( void (*func)(LPVOID), LPVOID arg )
+{
+    func( arg );
+    while(1); /* avoid warning */
+}
+#endif
+
+
+/***********************************************************************
+ *           SYSDEPS_SwitchToThreadStack
+ */
+void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
+{
+    SYSDEPS_CallOnStack( call_on_thread_stack, func );
+}
+
 
 /***********************************************************************
  *           SYSDEPS_ExitThread
@@ -146,96 +247,48 @@ int SYSDEPS_SpawnThread( TEB *teb )
  */
 void SYSDEPS_ExitThread( int status )
 {
-    int fd = NtCurrentTeb()->request_fd;
-    NtCurrentTeb()->request_fd = -1;
-    close( fd );
+    TEB *teb = NtCurrentTeb();
+    struct thread_cleanup_info info;
+    MEMORY_BASIC_INFORMATION meminfo;
+
+    FreeSelector16( teb->stack_sel );
+    VirtualQuery( teb->stack_top, &meminfo, sizeof(meminfo) );
+    info.stack_base = meminfo.AllocationBase;
+    info.stack_size = meminfo.RegionSize + ((char *)teb->stack_top - (char *)meminfo.AllocationBase);
+    info.status     = status;
+
+    SIGNAL_Reset();
+
+    VirtualFree( teb->stack_base, 0, MEM_RELEASE | MEM_SYSTEM );
+    close( teb->wait_fd[0] );
+    close( teb->wait_fd[1] );
+    close( teb->reply_fd );
+    close( teb->request_fd );
+    teb->stack_low = get_temp_stack();
+    teb->stack_top = teb->stack_low + TEMP_STACK_SIZE;
+    SYSDEPS_CallOnStack( cleanup_thread, &info );
+}
+
+
+/***********************************************************************
+ *           SYSDEPS_AbortThread
+ *
+ * Same as SYSDEPS_ExitThread, but must not do anything that requires a server call.
+ */
+void SYSDEPS_AbortThread( int status )
+{
+    SIGNAL_Reset();
+    close( NtCurrentTeb()->wait_fd[0] );
+    close( NtCurrentTeb()->wait_fd[1] );
+    close( NtCurrentTeb()->reply_fd );
+    close( NtCurrentTeb()->request_fd );
 #ifdef HAVE__LWP_CREATE
     _lwp_exit();
 #endif
-    _exit( status );
-    /*
-     * It is of course impossible to come here,
-     * but it eliminates a compiler warning.
-     */
-    exit( status );
+    for (;;)  /* avoid warning */
+        _exit( status );
 }
 
-
-/***********************************************************************
- *           SYSDEPS_CallOnStack
- */
-int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg )
-{
-    int retv = 0;
-
-    __TRY
-    {
-        retv = func( arg );
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-        return 0;
-    }
-    __ENDTRY
-
-    return retv;
-}
-
-#ifdef __i386__
-int SYSDEPS_CallOnStack( LPVOID stackTop, LPVOID stackLow,
-                         int (*func)(LPVOID), LPVOID arg );
-__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
-                   "pushl %ebp\n\t"
-                   "movl %esp, %ebp\n\t"
-                   ".byte 0x64; pushl 0x04\n\t"
-                   ".byte 0x64; pushl 0x08\n\t"
-                   "movl 8(%ebp), %esp\n\t"
-                   "movl 12(%ebp), %eax\n\t"
-                   ".byte 0x64; movl %esp, 0x04\n\t"
-                   ".byte 0x64; movl %eax, 0x08\n\t"
-                   "pushl 20(%ebp)\n\t"
-                   "pushl 16(%ebp)\n\t"
-                   "call " __ASM_NAME("SYSDEPS_DoCallOnStack") "\n\t"
-                   "leal -8(%ebp), %esp\n\t"
-                   ".byte 0x64; popl 0x08\n\t"
-                   ".byte 0x64; popl 0x04\n\t"
-                   "popl %ebp\n\t"
-                   "ret" );
-#else
-int SYSDEPS_CallOnStack( LPVOID stackTop, LPVOID stackLow,
-                         int (*func)(LPVOID), LPVOID arg )
-{
-    return SYSDEPS_DoCallOnStack( func, arg );
-}
-#endif
-
-/***********************************************************************
- *           SYSDEPS_SwitchToThreadStack
- */
-void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
-{
-    DWORD page_size = getpagesize();
-    void *cur_stack = (void *)(((ULONG_PTR)&func + (page_size-1)) & ~(page_size-1));
-
-    TEB *teb = NtCurrentTeb();
-    LPVOID stackTop = teb->stack_top;
-    LPVOID stackLow = teb->stack_low;
-
-    struct rlimit rl;
-
-    if ( getrlimit(RLIMIT_STACK, &rl) < 0 ) 
-    {
-        WARN("Can't get rlimit\n");
-        rl.rlim_cur = 8*1024*1024;
-    }
-
-    teb->stack_top = cur_stack;
-    teb->stack_low = (char *)cur_stack - rl.rlim_cur;
-
-    SYSDEPS_CallOnStack( stackTop, stackLow, 
-                         (int (*)(void *))func, NULL );
-}
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
