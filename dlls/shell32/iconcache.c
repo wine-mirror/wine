@@ -11,8 +11,6 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
-#include "neexe.h"
-#include "cursoricon.h"
 #include "heap.h"
 #include "debugtools.h"
 
