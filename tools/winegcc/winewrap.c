@@ -175,7 +175,8 @@ static const char *wrapper_code =
     "{\n"
     "    HINSTANCE hApp = 0, hMFC = 0, hMain = 0;\n"
     "    void* appMain;\n"
-    "    int retcode;\n"
+    "    int retcode, i;\n"
+    "    const char* libs[] = { %s };\n"
     "\n"
     "    /* Then if this application is MFC based, load the MFC module */\n"
     "    if (mfcModule) {\n"
@@ -183,6 +184,10 @@ static const char *wrapper_code =
     "        if (!hMFC) error(\"Could not load the MFC module %%s (%%d)\", mfcModule, GetLastError());\n"
     "        /* For MFC apps, WinMain is in the MFC library */\n"
     "        hMain = hMFC;\n"
+    "    }\n"
+    "\n"
+    "    for (i = 0; i < sizeof(libs)/sizeof(libs[0]); i++) {\n"
+    "        if (!LoadLibrary(libs[i])) error(\"Could not load %%s (%%d)\", libs[i], GetLastError());\n"
     "    }\n"
     "\n"
     "    /* Load the application's module */\n"
@@ -340,8 +345,9 @@ static void add_lib_file(const char* library)
 static void create_the_wrapper(char* base_file, char* base_name, char* app_name, int gui_mode)
 {
     char *wrp_temp_name, *wspec_name, *wspec_c_name, *wspec_o_name;
-    char *wrap_c_name, *wrap_o_name;
+    char *wrap_c_name, *wrap_o_name, *dlls = "";
     strarray *wwrap_args, *wspec_args, *wcomp_args, *wlink_args;
+    int i;
 
     wrp_temp_name = tempnam(0, "wwrp");
     wspec_name = strmake("%s.spec", wrp_temp_name);
@@ -362,7 +368,9 @@ static void create_the_wrapper(char* base_file, char* base_name, char* app_name,
     strarray_add(wwrap_args, wrap_c_name);
     strarray_add(wwrap_args, NULL);
 
-    create_file(wrap_c_name, wrapper_code, base_name, gui_mode, app_name);
+    for (i = dll_files->size - 1; i >= 0; i--)
+        dlls = strmake("\"%s\", %s", dll_files->base[i] + 2, dlls);
+    create_file(wrap_c_name, wrapper_code, base_name, gui_mode, app_name, dlls);
     spawn(wwrap_args);
     strarray_free(wwrap_args);
     rm_temp_file(wrap_c_name);
@@ -611,7 +619,7 @@ int main(int argc, char **argv)
     rm_temp_file(spec_o_name);
 
     if (create_wrapper)
-	create_the_wrapper(base_file, base_name, app_name, gui_mode);
+	create_the_wrapper(base_file, base_name, app_name, gui_mode );
 
     /* create the loader script */
     create_file(base_file, app_loader_script, base_name);
