@@ -473,6 +473,7 @@ static const struct message WmEndCustomDialogSeq[] = {
 /* Creation and destruction of a modal dialog (32) */
 static const struct message WmModalDialogSeq[] = {
     { WM_CANCELMODE, sent|parent },
+    { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent|parent },
     { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
     { WM_ENABLE, sent|parent|wparam, 0 },
@@ -1607,6 +1608,126 @@ static void test_messages(void)
     flush_sequence();
 }
 
+/****************** button message test *************************/
+static const struct message WmSetFocusButtonSeq[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { 0 }
+};
+static const struct message WmKillFocusButtonSeq[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLORBTN, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { 0 }
+};
+static const struct message WmSetFocusStaticSeq[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLORSTATIC, sent|defwinproc },
+    { 0 }
+};
+static const struct message WmKillFocusStaticSeq[] =
+{
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLORSTATIC, sent|defwinproc },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { 0 }
+};
+
+static WNDPROC old_button_proc;
+
+static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(old_button_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static void subclass_button(void)
+{
+    WNDCLASSA cls;
+
+    if (!GetClassInfoA(0, "button", &cls)) assert(0);
+
+    old_button_proc = cls.lpfnWndProc;
+
+    cls.hInstance = GetModuleHandle(0);
+    cls.lpfnWndProc = button_hook_proc;
+    cls.lpszClassName = "my_button_class";
+    if (!RegisterClassA(&cls)) assert(0);
+}
+
+static void test_button_messages(void)
+{
+    static const struct
+    {
+	DWORD style;
+	const struct message *setfocus;
+	const struct message *killfocus;
+    } button[] = {
+	{ BS_PUSHBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_DEFPUSHBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_CHECKBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_AUTOCHECKBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_RADIOBUTTON, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_3STATE, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_AUTO3STATE, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_GROUPBOX, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_USERBUTTON, WmSetFocusButtonSeq, WmKillFocusButtonSeq },
+	{ BS_AUTORADIOBUTTON, WmSetFocusStaticSeq, WmKillFocusStaticSeq },
+	{ BS_OWNERDRAW, WmSetFocusButtonSeq, WmKillFocusButtonSeq }
+    };
+    int i;
+    HWND hwnd;
+
+    subclass_button();
+
+    for (i = 0; i < sizeof(button)/sizeof(button[0]); i++)
+    {
+	hwnd = CreateWindowExA(0, "my_button_class", "test", button[i].style | WS_POPUP,
+			       0, 0, 50, 14, 0, 0, 0, NULL);
+	ok(hwnd != 0, "Failed to create button window\n");
+
+	ShowWindow(hwnd, SW_SHOW);
+	UpdateWindow(hwnd);
+	SetFocus(0);
+	flush_sequence();
+
+	trace("button style %08lx\n", button[i].style);
+	SetFocus(hwnd);
+	ok_sequence(button[i].setfocus, "SetFocus(hwnd) on a button");
+
+	SetFocus(0);
+	ok_sequence(button[i].killfocus, "SetFocus(0) on a button");
+
+	DestroyWindow(hwnd);
+    }
+}
+/************* end of button message test ********************/
+
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
@@ -1784,6 +1905,9 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     trace("CBT: %d, %08x, %08lx\n", nCode, wParam, lParam);
 
+    /* Log also SetFocus(0) calls */
+    if (!wParam) wParam = lParam;
+
     if (GetClassNameA((HWND)wParam, buf, sizeof(buf)))
     {
 	if (!strcmp(buf, "TestWindowClass") ||
@@ -1794,6 +1918,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	    !strcmp(buf, "MDI_frame_class") ||
 	    !strcmp(buf, "MDI_client_class") ||
 	    !strcmp(buf, "MDI_child_class") ||
+	    !strcmp(buf, "my_button_class") ||
 	    !strcmp(buf, "#32770"))
 	{
 	    struct message msg;
@@ -1817,6 +1942,7 @@ START_TEST(msg)
 
     test_messages();
     test_mdi_messages();
+    test_button_messages();
 
     UnhookWindowsHookEx(hCBT_hook);
 }
