@@ -121,14 +121,19 @@ DECLARE_INTERFACE_(IDirectXFileSaveObject,IUnknown) { IDirectXFileSaveObject_MET
 #define IDirectXFileSaveObject_SaveData(p,a)                   (p)->lpVtbl->SaveData(p,a)
 #endif
 
-#define IDIRECTXFILEOBJECT_METHODS \
-    STDMETHOD(GetName) (THIS_ LPSTR, LPDWORD) PURE; \
-    STDMETHOD(GetId) (THIS_ LPGUID) PURE;
+#define IUNKNOWN_METHODS(kind) \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) kind; \
+    STDMETHOD_(ULONG,AddRef)(THIS) kind; \
+    STDMETHOD_(ULONG,Release)(THIS) kind
+
+#define IDIRECTXFILEOBJECT_METHODS(kind) \
+    STDMETHOD(GetName) (THIS_ LPSTR, LPDWORD) kind; \
+    STDMETHOD(GetId) (THIS_ LPGUID) kind
 
 #define INTERFACE IDirectXFileObject
 #define IDirectXFileObject_METHODS \
-    IUnknown_METHODS \
-    IDIRECTXFILEOBJECT_METHODS
+    IUNKNOWN_METHODS(PURE); \
+    IDIRECTXFILEOBJECT_METHODS(PURE);
 DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 #undef INTERFACE
 
@@ -144,8 +149,8 @@ DECLARE_INTERFACE_(IDirectXFileObject,IUnknown) { IDirectXFileObject_METHODS };
 
 #define INTERFACE IDirectXFileData
 #define IDirectXFileData_METHODS \
-    IUnknown_METHODS \
-    IDIRECTXFILEOBJECT_METHODS \
+    IUNKNOWN_METHODS(PURE); \
+    IDIRECTXFILEOBJECT_METHODS(PURE); \
     STDMETHOD(GetData) (THIS_ LPCSTR, DWORD *, void **) PURE; \
     STDMETHOD(GetType) (THIS_ const GUID **) PURE; \
     STDMETHOD(GetNextObject) (THIS_ LPDIRECTXFILEOBJECT *) PURE; \
@@ -174,8 +179,8 @@ DECLARE_INTERFACE_(IDirectXFileData,IDirectXFileObject) { IDirectXFileData_METHO
 
 #define INTERFACE IDirectXFileDataReference
 #define IDirectXFileDataReference_METHODS \
-    IUnknown_METHODS \
-    IDIRECTXFILEOBJECT_METHODS \
+    IUNKNOWN_METHODS(PURE); \
+    IDIRECTXFILEOBJECT_METHODS(PURE); \
     STDMETHOD(Resolve) (THIS_ LPDIRECTXFILEDATA *) PURE;
 DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileDataReference_METHODS };
 #undef INTERFACE
@@ -194,8 +199,8 @@ DECLARE_INTERFACE_(IDirectXFileDataReference,IDirectXFileObject) { IDirectXFileD
 
 #define INTERFACE IDirectXFileBinary
 #define IDirectXFileBinary_METHODS \
-    IUnknown_METHODS \
-    IDIRECTXFILEOBJECT_METHODS \
+    IUNKNOWN_METHODS(PURE); \
+    IDIRECTXFILEOBJECT_METHODS(PURE); \
     STDMETHOD(GetSize)      (THIS_ DWORD *) PURE; \
     STDMETHOD(GetMimeType)  (THIS_ LPCSTR *) PURE; \
     STDMETHOD(Read)         (THIS_ LPVOID, DWORD, LPDWORD) PURE;
