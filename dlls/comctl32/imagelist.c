@@ -440,7 +440,7 @@ ImageList_BeginDrag (HIMAGELIST himlTrack, INT iTrack,
 
 BOOL WINAPI
 ImageList_Copy (HIMAGELIST himlDst, INT iDst,	HIMAGELIST himlSrc,
-		INT iSrc, INT uFlags)
+		INT iSrc, UINT uFlags)
 {
     TRACE("iDst=%d  iSrc=%d\n", iDst, iSrc);
 
@@ -1244,7 +1244,7 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
  *     Failure: FALSE
  */
 
-BOOL WINAPI
+VOID WINAPI
 ImageList_EndDrag (void)
 {
     /* cleanup the InternalDrag struct */
@@ -1259,8 +1259,6 @@ ImageList_EndDrag (void)
     DeleteObject(InternalDrag.hbmBg);
     InternalDrag.hbmBg = 0;
     InternalDrag.bHSPending = FALSE;
-
-    return TRUE;
 }
 
 
@@ -2511,7 +2509,7 @@ ImageList_SetIconSize (HIMAGELIST himl, INT cx, INT cy)
  */
 
 BOOL WINAPI
-ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
+ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 {
     HDC     hdcBitmap;
     HBITMAP hbmNewBitmap;

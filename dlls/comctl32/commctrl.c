@@ -531,7 +531,7 @@ void WINAPI DrawStatusTextA (HDC hdc, LPRECT lprc, LPCSTR text, UINT style)
  */
 
 HWND WINAPI
-CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
+CreateStatusWindowA (LONG style, LPCSTR text, HWND parent, UINT wid)
 {
     return CreateWindowA(STATUSCLASSNAMEA, text, style,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
@@ -555,7 +555,7 @@ CreateStatusWindowA (INT style, LPCSTR text, HWND parent, UINT wid)
  */
 
 HWND WINAPI
-CreateStatusWindowW (INT style, LPCWSTR text, HWND parent, UINT wid)
+CreateStatusWindowW (LONG style, LPCWSTR text, HWND parent, UINT wid)
 {
     return CreateWindowW(STATUSCLASSNAMEW, text, style,
 			   CW_USEDEFAULT, CW_USEDEFAULT,
@@ -928,11 +928,11 @@ CreateMappedBitmap (HINSTANCE hInstance, INT idBitmap, UINT wFlags,
 HWND WINAPI
 CreateToolbar (HWND hwnd, DWORD style, UINT wID, INT nBitmaps,
 	       HINSTANCE hBMInst, UINT wBMID,
-	       LPCOLDTBBUTTON lpButtons,INT iNumButtons)
+	       LPCTBBUTTON lpButtons,INT iNumButtons)
 {
     return CreateToolbarEx (hwnd, style | CCS_NODIVIDER, wID, nBitmaps,
-			    hBMInst, wBMID, (LPCTBBUTTON)lpButtons,
-			    iNumButtons, 0, 0, 0, 0, sizeof (OLDTBBUTTON));
+			    hBMInst, wBMID, lpButtons,
+			    iNumButtons, 0, 0, 0, 0, CCSIZEOF_STRUCT(TBBUTTON, dwData));
 }
 
 

@@ -106,8 +106,7 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
 
     *phDpa = (HDPA)NULL;
 
-    position.s.LowPart = 0;
-    position.s.HighPart = 0;
+    position.QuadPart = 0;
 
     /*
      * Zero out our streamData
