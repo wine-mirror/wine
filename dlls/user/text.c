@@ -838,7 +838,7 @@ static void TEXT_DrawUnderscore (HDC hdc, int x, int y, const WCHAR *str, int of
  * 3 more than a null-terminated string).  If this is not so then increase
  * the allowance in DrawTextExA.
  */
-#define MAX_STATIC_BUFFER 1024
+#define MAX_BUFFER 1024
 INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                         LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
@@ -846,7 +846,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     const WCHAR *strPtr;
     WCHAR *retstr, *p_retstr;
     size_t size_retstr;
-    WCHAR line[MAX_STATIC_BUFFER];
+    WCHAR line[MAX_BUFFER];
     int len, lh, count=i_count;
     TEXTMETRICW tm;
     int lmargin = 0, rmargin = 0;
@@ -911,7 +911,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     do
     {
-	len = MAX_STATIC_BUFFER;
+	len = sizeof(line)/sizeof(line[0]);
         last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, &p_retstr, tabwidth, &prefix_offset, &ellip);
 
