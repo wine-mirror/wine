@@ -70,18 +70,20 @@ int getDrive(char letter)
 
 BOOL addDrive(char letter, char *targetpath, char *label, char *serial, uint type)
 {
-    if(drives[getDrive(letter)].in_use)
+    int driveIndex = getDrive(letter);
+
+    if(drives[driveIndex].in_use)
         return FALSE;
 
     WINE_TRACE("letter == '%c', unixpath == '%s', label == '%s', serial == '%s', type == %d\n",
                letter, targetpath, label, serial, type);
 
-    drives[getDrive(letter)].letter = toupper(letter);
-    drives[getDrive(letter)].unixpath = strdup(targetpath);
-    drives[getDrive(letter)].label = strdup(label);
-    drives[getDrive(letter)].serial = strdup(serial);
-    drives[getDrive(letter)].type = type;
-    drives[getDrive(letter)].in_use = TRUE;
+    drives[driveIndex].letter   = toupper(letter);
+    drives[driveIndex].unixpath = strdup(targetpath);
+    drives[driveIndex].label    = strdup(label);
+    drives[driveIndex].serial   = strdup(serial);
+    drives[driveIndex].type     = type;
+    drives[driveIndex].in_use   = TRUE;
 
     return TRUE;
 }
@@ -696,7 +698,7 @@ void onAddDriveClicked(HWND hDlg) {
 
 void onDriveInitDialog(void)
 {
-  char *pDevices;
+  char *pDevices, *pDev;
   int ret;
   int i;
   int retval;
@@ -704,7 +706,7 @@ void onDriveInitDialog(void)
   WINE_TRACE("\n");
 
   /* setup the drives array */
-  pDevices = (char*)malloc(512);
+  pDev = pDevices = malloc(512);
   ret = GetLogicalDriveStrings(512, pDevices);
 
   /* make all devices unused */
@@ -786,7 +788,7 @@ void onDriveInitDialog(void)
 
   WINE_TRACE("found %d drives\n", i);
 
-  free(pDevices);
+  free(pDev);
 }
 
 
