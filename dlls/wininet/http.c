@@ -15,6 +15,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "winsock.h"
+#include "shlwapi.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -222,8 +223,13 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->nSocketFD = INVALID_SOCKET;
 
-    if (NULL != lpszObjectName && strlen(lpszObjectName))
-    	lpwhr->lpszPath = HTTP_strdup(lpszObjectName);
+    if (NULL != lpszObjectName && strlen(lpszObjectName)) {
+        DWORD needed = 0;
+        UrlEscapeA(lpszObjectName, NULL, &needed, URL_ESCAPE_SPACES_ONLY);
+        lpwhr->lpszPath = HeapAlloc(GetProcessHeap(), 0, needed);
+        UrlEscapeA(lpszObjectName, lpwhr->lpszPath, &needed,
+                   URL_ESCAPE_SPACES_ONLY);
+    }
 
     if (NULL != lpszReferrer && strlen(lpszReferrer))
         HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDHDR_FLAG_COALESCE);
