@@ -7,7 +7,7 @@
  * object to insert the interface into a table, and you get back a cookie.
  * Then when it's retrieved, it'll be unmarshalled into the right apartment.
  *
- * Copyright 1999 Mike Hearn <mike@theoretic.com>
+ * Copyright 2003 Mike Hearn <mike@theoretic.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
