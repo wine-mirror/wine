@@ -54,6 +54,11 @@ void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
 
     TRACE("hdc=%p\n", physDev->hdc);
 
+    if(physDev->pathdepth) {
+        TRACE("inside a path, so not clipping\n");
+        goto end;
+    }
+
     empty = !GetClipRgn(physDev->hdc, hrgn);
 
     if(!empty) {
@@ -123,8 +128,8 @@ void PSDRV_ResetClip( PSDRV_PDEVICE *physDev )
     HRGN hrgn = CreateRectRgn(0,0,0,0);
     BOOL empty;
 
-     empty = !GetClipRgn(physDev->hdc, hrgn);
-     if(!empty)
-         PSDRV_WriteGRestore(physDev);
+    empty = !GetClipRgn(physDev->hdc, hrgn);
+    if(!empty && !physDev->pathdepth)
+        PSDRV_WriteGRestore(physDev);
     DeleteObject(hrgn);
 }
