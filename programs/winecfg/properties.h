@@ -60,6 +60,11 @@ typedef struct
     HDPA  DLLs;
 } APP_DESC;
 
+typedef struct
+{
+  char szName[MAX_NAME_LENGTH];
+  char szDriver[MAX_NAME_LENGTH];
+} AUDIO_DRIVER;
 
 typedef struct
 {
@@ -86,5 +91,6 @@ VERSION_DESC *getWinVersions(void);
 VERSION_DESC *getDOSVersions(void);
 VERSION_DESC *getWinelook(void);
 DLL_DESC *getDLLDefaults(void);
+AUDIO_DRIVER *getAudioDrivers(void);
 
 #endif

@@ -111,6 +111,9 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 INT_PTR CALLBACK AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+/* Audio config dialog */
+INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 /* some basic utilities to make win32 suck less */
 char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);

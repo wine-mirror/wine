@@ -8,6 +8,7 @@ IMPORTS   = comdlg32 comctl32 user32 advapi32
 
 C_SRCS = \
 	appdefaults.c \
+	audio.c \
 	drive.c \
 	libraries.c \
 	main.c \

@@ -77,6 +77,18 @@ static DLL_DESC sDLLType[] = {
     {"", -1}
 };
 
+static AUDIO_DRIVER sAudioDrivers[] = {
+  {"Alsa", "winealsa.drv"},
+  {"aRts", "winearts.drv"},
+  {"OSS", "wineoss.drv"},
+  {"Jack", "winejack.drv"},
+  {"Nas", "winenas.drv"},
+  {"Audio IO(Solaris)", "wineaudioio.drv"},
+  {"Disable sound", ""},
+  {"", ""}
+};
+ 
+
 
 /*****************************************************************************
  */
@@ -107,4 +119,11 @@ VERSION_DESC* getWinelook(void)
 DLL_DESC* getDLLDefaults(void)
 {
     return sDLLType;
+}
+
+/*****************************************************************************
+ */
+AUDIO_DRIVER* getAudioDrivers(void)
+{
+    return sAudioDrivers;
 }

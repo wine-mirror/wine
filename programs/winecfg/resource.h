@@ -30,10 +30,11 @@
 #define IDB_WINE                        104
 #define IDD_GENERALCFG                  107
 #define IDD_APPCFG                      108
-#define IDD_X11DRVCFG                   109
-#define IDD_DLLCFG                      110
-#define IDD_DRIVECFG                    111
-#define IDD_SYSTEMCFG                   112
+#define IDD_AUDIOCFG                    109
+#define IDD_X11DRVCFG                   110
+#define IDD_DLLCFG                      111
+#define IDD_DRIVECFG                    112
+#define IDD_SYSTEMCFG                   113
 #define IDD_DRIVE_EDIT                  114
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
@@ -120,3 +121,7 @@
 #define IDC_EDITING_APP                 1082
 #define IDC_ADD_APPDEFAULT              1083
 #define IDC_REMOVE_APPDEFAULT           1084
+
+/* audio tab */
+#define IDC_AUDIO_AUTODETECT            1085
+#define IDC_AUDIO_DRIVER                1086

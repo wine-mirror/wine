@@ -177,7 +177,8 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-#define NUM_PROPERTY_PAGES 5
+#define NUM_PROPERTY_PAGES 6
+
 INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 {
@@ -244,6 +245,15 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[4].pfnDlgProc = DriveDlgProc;
     psp[4].pszTitle = "Drives";
     psp[4].lParam = 0;
+
+    psp[5].dwSize = sizeof (PROPSHEETPAGE);
+    psp[5].dwFlags = PSP_USETITLE;
+    psp[5].hInstance = hInstance;
+    psp[5].u.pszTemplate = MAKEINTRESOURCE (IDD_AUDIOCFG);
+    psp[5].u2.pszIcon = NULL;
+    psp[5].pfnDlgProc = AudioDlgProc;
+    psp[5].pszTitle = "Audio";
+    psp[5].lParam = 0;
     
     /*
      * Fill out the PROPSHEETHEADER

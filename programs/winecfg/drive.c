@@ -525,7 +525,7 @@ void onEditChanged(HWND hDlg, WORD controlID) {
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   int selection;
-  
+
   switch (uMsg)  {
       case WM_INITDIALOG: {
 	editWindowLetter = (char) lParam;
@@ -634,7 +634,6 @@ void onAddDriveClicked(HWND hDlg) {
 INT_PTR CALLBACK
 DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  int selection = -1;
   int nItem;
   char letter;
   
@@ -642,7 +641,10 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       case WM_COMMAND:
 	switch (LOWORD(wParam)) {
 	    case IDC_LIST_DRIVES:
-	      if (HIWORD(wParam) == LBN_DBLCLK) selection = -1;
+	      /* double click should open the edit window for the chosen drive */
+	      if (HIWORD(wParam) == LBN_DBLCLK)
+	        SendMessageA(hDlg, WM_COMMAND, IDC_BUTTON_EDIT, 0);
+
 	      if (HIWORD(wParam) == LBN_SELCHANGE) lastSel = SendDlgItemMessage(hDlg, IDC_LIST_DRIVES, LB_GETCURSEL, 0, 0);
 	      break;
 
@@ -684,7 +686,6 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      break;
 	}
 	break;
-
   }
 
   return FALSE;
