@@ -132,6 +132,49 @@ UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
             MsiSetPropertyW(hPackage, cszSourceDir, pth);
     }
 
+    if (szCommandLine)
+    {
+        LPWSTR ptr,ptr2;
+        ptr = (LPWSTR)szCommandLine;
+        
+        while (*ptr)
+        {
+            BOOL quote=FALSE;
+            WCHAR prop[0x100];
+            WCHAR val[0x100];
+
+            ptr2 = strchrW(ptr,'=');
+            if (ptr2)
+            {
+                DWORD len = 0;
+                strncpyW(prop,ptr,ptr2-ptr);
+                prop[ptr2-ptr]=0;
+                ptr2++;
+            
+                ptr = ptr2; 
+                while (*ptr && (!quote && *ptr!=' '))
+                {
+                    if (*ptr == '"')
+                        quote = !quote;
+                    ptr++;
+                    len++;
+                }
+               
+                if (*ptr2=='"')
+                {
+                    ptr2++;
+                    len -= 2;
+                }
+                strncpyW(val,ptr2,len);
+                val[len]=0;
+
+                if (*ptr)
+                    ptr++;
+            }            
+            MsiSetPropertyW(hPackage,prop,val);
+        }
+    }
+
     db = MsiGetActiveDatabase(hPackage);
     rc = MsiDatabaseOpenViewA(db, ExecSeqQuery, &view);
     MsiCloseHandle(db);
@@ -514,6 +557,12 @@ static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source,
         return ERROR_SUCCESS;
     }
 
+    if (!strchrW(tmp_file,'.'))
+    {
+        static const WCHAR dot[]={'.',0};
+        strcatW(tmp_file,dot);
+    } 
+ 
     DLL = LoadLibraryW(tmp_file);
     if (DLL)
     {
@@ -633,7 +682,7 @@ sizeof(WCHAR));
  */
 static UINT ACTION_CreateFolders(MSIHANDLE hPackage)
 {
-    static const CHAR *ExecSeqQuery = "select * from CreateFolder";
+    static const CHAR *ExecSeqQuery = "select Directory_ from CreateFolder";
     UINT rc;
     MSIHANDLE view;
     MSIHANDLE db;
@@ -865,12 +914,136 @@ static UINT resolve_directory(MSIHANDLE hPackage, const WCHAR* dir,
 }
 
 /*
- * This is the action where all the features and components are loaded into
- * memory... so when we start doing that that will be important.
- * 
+ * I am not doing any of the costing functionality yet. 
+ * Mostly looking at doing the Component and Feature loading
+ *
+ * The native MSI does ALOT of modification to tables here. Mostly adding alot
+ * of temporary columns to the Feature and Component tables. 
+ * Unfortinatly i cannot add temporary columns yet, nor can i really figure
+ * out what all the colums are for. So i am going to attack this another way
+ * and make some temporary tables to hold the data i think i need.
+ *
+ * WINE_Feature
+ *   Feature Identifier : key into the Feature table
+ *   Enabled Int : 1 if being installed, 0 if not
  */
 static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
 {
+    MSIHANDLE db;
+    MSIHANDLE view;
+    MSIHANDLE row;
+    CHAR local[0x100]; 
+    WCHAR buffer[0x100];
+    DWORD sz;
+
+    static const CHAR CreateSql[] = "CREATE TABLE `WINE_Feature` ( `Feature`"
+        "CHAR(56) NOT NULL, `Enabled` INT NOT NULL PRIMARY KEY `Feature`)";
+    static const CHAR Insert[] =
+      "INSERT into `WINE_Feature` (`Feature`, `Enabled`) VALUES (?)";
+    static const CHAR Query_all[] = "SELECT * FROM Feature";
+    static const CHAR Query_one[] = "SELECT * FROM Feature WHERE Feature='%s'";
+    CHAR Query[1023];
+
+    MsiSetPropertyA(hPackage,"CostingComplete","0");
+    MsiSetPropertyW(hPackage, cszRootDrive , c_collen);
+
+    db = MsiGetActiveDatabase(hPackage);
+    MsiDatabaseOpenViewA(db,CreateSql,&view);
+    MsiViewExecute(view,0); 
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+    sz = 0x100;
+    if (MsiGetPropertyA(hPackage,"ADDLOCAL",local,&sz)==ERROR_SUCCESS)
+    {
+        if (strcasecmp(local,"ALL")==0)
+        {
+            MsiDatabaseOpenViewA(db,Query_all,&view);
+            MsiViewExecute(view,0);
+            while (1)
+            {
+                MSIHANDLE view2;
+                MSIHANDLE row2;
+                DWORD rc;
+
+                rc = MsiViewFetch(view,&row);
+                if (rc != ERROR_SUCCESS)
+                    break;
+        
+                row2 = MsiCreateRecord(2);
+
+                sz=0x100;
+                MsiRecordGetStringW(row,1,buffer,&sz);                
+                MsiRecordSetStringW(row2,1,buffer);
+                MsiRecordSetInteger(row2,2,1);
+
+                MsiDatabaseOpenViewA(db,Insert,&view2);
+                MsiViewExecute(view2,row2);
+                MsiCloseHandle(row2);
+                MsiCloseHandle(row);
+                MsiViewClose(view2);
+                MsiCloseHandle(view2);
+                TRACE("Enabling feature %s\n",debugstr_w(buffer));
+            }
+            MsiViewClose(view);
+            MsiCloseHandle(view);
+        }
+        else
+        {
+            LPSTR ptr,ptr2;
+            ptr = local;
+
+            while (ptr && *ptr)
+            {
+                CHAR feature[0x100];
+                MSIHANDLE view2;
+                MSIHANDLE row2;
+                DWORD rc;
+
+                ptr2 = strchr(ptr,',');
+
+                if (ptr2)
+                {
+                    strncpy(feature,ptr,ptr2-ptr);
+                    feature[ptr2-ptr]=0;
+                    ptr2++;
+                    ptr = ptr2;
+                }
+                else
+                {
+                    strcpy(feature,ptr);
+                    ptr = NULL;
+                }
+
+                sprintf(Query,Query_one,feature);
+
+                MsiDatabaseOpenViewA(db,Query,&view);
+                MsiViewExecute(view,0);
+                rc = MsiViewFetch(view,&row);
+                if (rc != ERROR_SUCCESS)
+                    break;
+        
+                row2 = MsiCreateRecord(2);
+
+                sz=0x100;
+                MsiRecordGetStringW(row,1,buffer,&sz);                
+                MsiRecordSetStringW(row2,1,buffer);
+                MsiRecordSetInteger(row2,2,1);
+
+                MsiDatabaseOpenViewA(db,Insert,&view2);
+                MsiViewExecute(view,row2);
+                MsiCloseHandle(row2);
+                MsiCloseHandle(row);
+                MsiViewClose(view2);
+                MsiCloseHandle(view2);
+                MsiViewClose(view);
+                MsiCloseHandle(view);
+                TRACE("Enabling feature %s\n",feature);
+            }
+        }
+    }
+
+    MsiCloseHandle(db);
     return ERROR_SUCCESS;
 }
 
@@ -879,9 +1052,12 @@ static UINT ACTION_CostInitialize(MSIHANDLE hPackage)
  * The costing needs to be implemented at some point but for now i am going
  * to focus on the directory building
  *
- * Note about directory names: I know that directory names get processed into 
- * properties.  I am still very unclear where the name_source
- * part is used but I am preserving it just as a precaution
+ * WINE_Directory
+ *    Directory Identifier: key into the Directory Table
+ *    Source    Path : resolved source path without SourceDir
+ *    Target    Path : resolved target path wihout  TARGETDIR
+ *    Created   Int  : 0 uncreated, 1 created but if empty remove, 2 created
+ *
  */
 static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
 {
@@ -990,26 +1166,74 @@ end:
  *
  * Extract a file from a .cab file.
  */
-static BOOL extract_cabinet_file( const WCHAR *cabinet, const WCHAR *root)
+static void (WINAPI *pExtractFiles)( LPSTR, LPSTR, DWORD, DWORD, DWORD, DWORD );
+
+static BOOL extract_cabinet_file_advpack( const WCHAR *cabinet, 
+                                          const WCHAR *root)
+{
+    static const WCHAR extW[] = {'.','c','a','b',0};
+    static HMODULE advpack;
+
+    char *cab_path, *cab_file;
+    int len = strlenW( cabinet );
+
+    /* make sure the cabinet file has a .cab extension */
+    if (len <= 4 || strcmpiW( cabinet + len - 4, extW )) return FALSE;
+    if (!pExtractFiles)
+    {
+        if (!advpack && !(advpack = LoadLibraryA( "advpack.dll" )))
+        {
+            ERR( "could not load advpack.dll\n" );
+            return FALSE;
+        }
+        if (!(pExtractFiles = (void *)GetProcAddress( advpack, "ExtractFiles"
+)))
+        {
+            ERR( "could not find ExtractFiles in advpack.dll\n" );
+            return FALSE;
+        }
+    }
+
+    if (!(cab_file = strdupWtoA( cabinet ))) return FALSE;
+    if (!(cab_path = strdupWtoA( root ))) return FALSE;
+
+    FIXME( "awful hack: extracting cabinet %s\n", debugstr_a(cab_file) );
+    pExtractFiles( cab_file, cab_path, 0, 0, 0, 0 );
+    HeapFree( GetProcessHeap(), 0, cab_file );
+    HeapFree( GetProcessHeap(), 0, cab_path );
+    return TRUE;
+}
+
+static BOOL extract_cabinet_file_cabinet( const WCHAR *cabinet, 
+                                          const WCHAR *root)
                                   
 {
     static const WCHAR extW[] = {'.','c','a','b',0};
 
     /* from cabinet.h */
+
+    struct ExtractFileList {
+        LPSTR  filename;
+        struct ExtractFileList *next;
+        BOOL   unknown;  /* always 1L */
+    } ;
+
     typedef struct {
         long  result1;          /* 0x000 */
         long  unknown1[3];      /* 0x004 */
-        void* filelist;         /* 0x010 */
+        struct ExtractFileList* filelist;         /* 0x010 */
         long  filecount;        /* 0x014 */
         long  unknown2;         /* 0x018 */
         char  directory[0x104]; /* 0x01c */
         char  lastfile[0x20c];  /* 0x120 */
     } EXTRACTdest;
-    extern HRESULT WINAPI Extract(EXTRACTdest*, LPCSTR);
+
+    HRESULT WINAPI Extract(EXTRACTdest *dest, LPCSTR what);
 
     char *cab_path, *src_path;
     int len = strlenW( cabinet );
     EXTRACTdest exd;
+    struct ExtractFileList fl;
 
     /* make sure the cabinet file has a .cab extension */
     if (len <= 4 || strcmpiW( cabinet + len - 4, extW )) return FALSE;
@@ -1019,9 +1243,24 @@ static BOOL extract_cabinet_file( const WCHAR *cabinet, const WCHAR *root)
 
     memset(&exd,0,sizeof(exd));
     strcpy(exd.directory,src_path);
+    exd.unknown2 = 0x1;
+    fl.filename = cab_path;
+    fl.next = NULL;
+    fl.unknown = 1;
+    exd.filelist = &fl;
+    FIXME( "awfuler hack: extracting cabinet %s\n", debugstr_a(cab_path) );
     Extract(&exd,cab_path);
+
     HeapFree( GetProcessHeap(), 0, cab_path );
     HeapFree( GetProcessHeap(), 0, src_path );
+    return TRUE;
+}
+
+
+static BOOL extract_cabinet_file(const WCHAR* source, const WCHAR* path)
+{
+    if (!extract_cabinet_file_advpack(source,path))
+        return extract_cabinet_file_cabinet(source,path);
     return TRUE;
 }
 
@@ -1263,6 +1502,10 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
             break;
         }
         reduce_to_longfilename(filename);
+
+        /* create the path */
+        create_full_pathW(install_path);
+
         strcatW(install_path,filename);
 
         TRACE("Installing file %s to %s\n",debugstr_w(src_path),
