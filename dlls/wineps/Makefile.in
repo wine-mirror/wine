@@ -1,9 +1,12 @@
-DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = psdrv
+MODULE    = wineps
+SOVERSION = 1.0
+ALTNAMES  = wineps16
+
+SPEC_SRCS = wineps.spec wineps16.spec
 
 C_SRCS = \
 	afm.c \
@@ -23,8 +26,6 @@ C_SRCS = \
 	ps.c \
 	text.c
 
-all: $(MODULE).o
-
-@MAKE_RULES@
+@MAKE_DLL_RULES@
 
 ### Dependencies:

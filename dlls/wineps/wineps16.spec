@@ -1,4 +1,4 @@
-name    wineps
+name    wineps16
 type    win16
 
 13 pascal16 DeviceMode(word word str str) PSDRV_DeviceMode16

@@ -49,7 +49,6 @@
 #include "thread.h"
 #include "task.h"
 #include "debugtools.h"
-#include "psdrv.h"
 #include "win16drv.h"
 #include "callback.h"
 #include "server.h"

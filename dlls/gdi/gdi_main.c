@@ -8,7 +8,6 @@
 
 #include "gdi.h"
 #include "global.h"
-#include "psdrv.h"
 #include "tweak.h"
 #include "win16drv.h"
 
@@ -35,7 +34,7 @@ BOOL WINAPI MAIN_GdiInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved
     if (!WIN16DRV_Init()) return FALSE;
 
     /* PSDRV initialization */
-    if(!PSDRV_Init()) return FALSE;
+    if (!LoadLibraryA( "wineps" )) return FALSE;
 
     return TRUE;
 }

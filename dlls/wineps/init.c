@@ -221,14 +221,34 @@ static LOGFONTA DefaultLogFont = {
  * Initializes font metrics and registers driver. Called from GDI_Init()
  *
  */
-BOOL PSDRV_Init(void)
+BOOL WINAPI PSDRV_Init( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
-    TRACE("\n");
-    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
-    PSDRV_GetFontMetrics();
-    PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
-    return DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
+    static int process_count = 0;
+
+    TRACE("(0x%4x, 0x%08lx, %p)\n", hinst, reason, reserved);
+   
+    switch(reason) {
+	case DLL_PROCESS_ATTACH:
+	    if (!process_count++) {
+		/* FIXME: return FALSE if we fail any of these steps */
+		PSDRV_Heap = HeapCreate(0, 0x10000, 0);
+		PSDRV_GetFontMetrics();
+		PSDRV_DefaultFont = CreateFontIndirectA(&DefaultLogFont);
+		DRIVER_RegisterDriver( "WINEPS", &PSDRV_Funcs );
+	    }
+	break;
+	case DLL_PROCESS_DETACH:
+            if (!--process_count) {
+		DeleteObject( PSDRV_DefaultFont );
+		HeapDestroy( PSDRV_Heap );
+		DRIVER_UnregisterDriver( "WINEPS" );
+	    }
+	break;
+    }
+ 
+    return TRUE;
 }
+
 
 /**********************************************************************
  *	     PSDRV_CreateDC

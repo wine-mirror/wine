@@ -75,7 +75,6 @@ EXTRADLLNAMES = \
 	commdlg \
 	compobj \
 	ddeml \
-	dispdib \
 	dplay \
 	gdi \
 	keyboard \
@@ -183,7 +182,7 @@ libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
 	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
 
-libgdi32.@LIBEXT@ libgdi.@LIBEXT@ libdispdib.@LIBEXT@: gdi/libgdi32.@LIBEXT@
+libgdi32.@LIBEXT@ libgdi.@LIBEXT@: gdi/libgdi32.@LIBEXT@
 	$(RM) $@ && $(LN_S) gdi/libgdi32.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@

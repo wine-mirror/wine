@@ -1,10 +1,4 @@
+*.spec.c
 Makefile
 call16.s
-comm.spec.c
-dispdib.spec.c
-kernel.spec.c
-system.spec.c
 thunk.glue.c
-toolhelp.spec.c
-wineps.spec.c
-wprocs.spec.c

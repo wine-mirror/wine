@@ -140,6 +140,7 @@ DLLS = \
 	win87em \
 	windebug \
 	wineoss.drv \
+	wineps \
 	wing \
 	wininet \
 	winmm \

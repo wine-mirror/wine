@@ -6239,6 +6239,7 @@ dlls/win32s/Makefile
 dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/windebug/Makefile
+dlls/wineps/Makefile
 dlls/wing/Makefile
 dlls/wininet/Makefile
 dlls/winmm/Makefile
@@ -6262,7 +6263,6 @@ files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
-graphics/psdrv/Makefile
 graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile
@@ -6473,6 +6473,7 @@ dlls/win32s/Makefile
 dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/windebug/Makefile
+dlls/wineps/Makefile
 dlls/wing/Makefile
 dlls/wininet/Makefile
 dlls/winmm/Makefile
@@ -6496,7 +6497,6 @@ files/Makefile
 graphics/Makefile
 graphics/enhmetafiledrv/Makefile
 graphics/metafiledrv/Makefile
-graphics/psdrv/Makefile
 graphics/ttydrv/Makefile
 graphics/win16drv/Makefile
 graphics/x11drv/Makefile

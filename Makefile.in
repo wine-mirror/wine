@@ -37,7 +37,6 @@ LIBSUBDIRS = \
 	graphics \
 	graphics/enhmetafiledrv \
 	graphics/metafiledrv \
-	graphics/psdrv \
 	graphics/win16drv \
 	if1632 \
 	library \
@@ -105,7 +104,6 @@ LIBOBJS = \
 	graphics/graphics.o \
 	graphics/enhmetafiledrv/enhmetafiledrv.o \
 	graphics/metafiledrv/metafiledrv.o \
-	graphics/psdrv/psdrv.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	loader/loader.o \
