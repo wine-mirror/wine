@@ -618,8 +618,11 @@ static BOOL process_init( char *argv[], char **environ )
     RTL_USER_PROCESS_PARAMETERS *params;
     PEB *peb = NtCurrentTeb()->Peb;
     HANDLE hstdin, hstdout, hstderr;
+    extern void __wine_dbg_kernel32_init(void);
 
     PTHREAD_Init();
+
+    __wine_dbg_kernel32_init();  /* hack: register debug channels early */
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);

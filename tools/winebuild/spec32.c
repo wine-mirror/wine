@@ -491,7 +491,6 @@ void BuildSpec32File( FILE *outfile )
     int nr_exports, nr_imports, nr_resources;
     int characteristics, subsystem;
     DWORD page_size;
-    char constructor[100];
 
 #ifdef HAVE_GETPAGESIZE
     page_size = getpagesize();
@@ -569,30 +568,53 @@ void BuildSpec32File( FILE *outfile )
 
     nr_resources = output_resources( outfile );
 
-    /* Output LibMain function */
+    /* Output the entry point function */
+
+    fprintf( outfile, "extern int __wine_main_argc;\n" );
+    fprintf( outfile, "extern char **__wine_main_argv;\n" );
+    fprintf( outfile, "extern char **__wine_main_environ;\n" );
+    fprintf( outfile, "extern unsigned short **__wine_main_wargv;\n" );
+    fprintf( outfile, "extern void _init(int, char**, char**);\n" );
+    fprintf( outfile, "extern void _fini();\n" );
 
     characteristics = subsystem = 0;
     switch(SpecMode)
     {
     case SPEC_MODE_DLL:
-        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+        if (init_func)
+            fprintf( outfile, "extern int __stdcall %s( void*, unsigned int, void* );\n\n", init_func );
         else
         {
             fprintf( outfile, "#ifdef __GNUC__\n" );
             fprintf( outfile, "# ifdef __APPLE__\n" );
-            fprintf( outfile, "extern void DllMain() __attribute__((weak_import));\n" );
+            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* ) __attribute__((weak_import));\n" );
             fprintf( outfile, "# else\n" );
-            fprintf( outfile, "extern void DllMain() __attribute__((weak));\n" );
+            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* ) __attribute__((weak));\n" );
             fprintf( outfile, "# endif\n" );
             fprintf( outfile, "#else\n" );
-            fprintf( outfile, "extern void DllMain();\n" );
+            fprintf( outfile, "extern int __stdcall DllMain( void*, unsigned int, void* );\n" );
             fprintf( outfile, "static void __asm__dummy_dllmain(void)" );
             fprintf( outfile, " { asm(\".weak " __ASM_NAME("DllMain") "\"); }\n" );
-            fprintf( outfile, "#endif\n" );
+            fprintf( outfile, "#endif\n\n" );
+            init_func = "DllMain";
         }
+#ifdef HAVE_LINKER_INIT_FINI
+        fprintf( outfile,
+                 "static int __stdcall __wine_dll_main( void *inst, unsigned int reason, void *reserved )\n"
+                 "{\n"
+                 "    int ret;\n"
+                 "    if (reason == %d) _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
+                 "    ret = %s ? %s( inst, reason, reserved ) : 1;\n"
+                 "    if (reason == %d) _fini();\n"
+                 "    return ret;\n"
+                 "}\n",
+                 DLL_PROCESS_ATTACH, init_func, init_func, DLL_PROCESS_DETACH );
+        init_func = "__wine_dll_main";
+#endif
         characteristics = IMAGE_FILE_DLL;
         break;
     case SPEC_MODE_GUIEXE:
+    case SPEC_MODE_GUIEXE_UNICODE:
         if (!init_func) init_func = "WinMain";
         fprintf( outfile,
                  "\ntypedef struct {\n"
@@ -604,8 +626,6 @@ void BuildSpec32File( FILE *outfile )
                  "    char *lpReserved2;\n"
                  "    void *hStdInput, *hStdOutput, *hStdError;\n"
                  "} STARTUPINFOA;\n"
-                 "int _ARGC;\n"
-                 "char **_ARGV;\n"
                  "extern int __stdcall %s(void *,void *,char *,int);\n"
                  "extern char * __stdcall GetCommandLineA(void);\n"
                  "extern void * __stdcall GetModuleHandleA(char *);\n"
@@ -613,11 +633,9 @@ void BuildSpec32File( FILE *outfile )
                  "extern void __stdcall ExitProcess(unsigned int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
-                 "    extern int __wine_main_argc;\n"
-                 "    extern char **__wine_main_argv;\n"
                  "    STARTUPINFOA info;\n"
                  "    char *cmdline = GetCommandLineA();\n"
-                 "    int bcount=0, in_quotes=0;\n"
+                 "    int ret, bcount=0, in_quotes=0;\n"
                  "    while (*cmdline) {\n"
                  "        if ((*cmdline=='\\t' || *cmdline==' ') && !in_quotes) break;\n"
                  "        else if (*cmdline=='\\\\') bcount++;\n"
@@ -631,56 +649,14 @@ void BuildSpec32File( FILE *outfile )
                  "    while (*cmdline=='\\t' || *cmdline==' ') cmdline++;\n"
                  "    GetStartupInfoA( &info );\n"
                  "    if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
-                 "    _ARGC = __wine_main_argc;\n"
-                 "    _ARGV = __wine_main_argv;\n"
-                 "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
-                 "}\n\n", init_func, init_func );
-        init_func = "__wine_exe_main";
-        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
-        break;
-    case SPEC_MODE_GUIEXE_UNICODE:
-        if (!init_func) init_func = "WinMain";
-        fprintf( outfile,
-                 "\ntypedef unsigned short WCHAR;\n"
-                 "typedef struct {\n"
-                 "    unsigned int cb;\n"
-                 "    char *lpReserved, *lpDesktop, *lpTitle;\n"
-                 "    unsigned int dwX, dwY, dwXSize, dwYSize;\n"
-                 "    unsigned int dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags;\n"
-                 "    unsigned short wShowWindow, cbReserved2;\n"
-                 "    char *lpReserved2;\n"
-                 "    void *hStdInput, *hStdOutput, *hStdError;\n"
-                 "} STARTUPINFOA;\n"
-                 "int _ARGC;\n"
-                 "WCHAR **_ARGV;\n"
-                 "extern int __stdcall %s(void *,void *,char *,int);\n"
-                 "extern char * __stdcall GetCommandLineA(void);\n"
-                 "extern void * __stdcall GetModuleHandleA(char *);\n"
-                 "extern void __stdcall GetStartupInfoA(STARTUPINFOA *);\n"
-                 "extern void __stdcall ExitProcess(unsigned int);\n"
-                 "static void __wine_exe_main(void)\n"
-                 "{\n"
-                 "    extern int __wine_main_argc;\n"
-                 "    extern WCHAR **__wine_main_wargv;\n"
-                 "    STARTUPINFOA info;\n"
-                 "    char *cmdline = GetCommandLineA();\n"
-                 "    int bcount=0, in_quotes=0;\n"
-                 "    while (*cmdline) {\n"
-                 "        if ((*cmdline=='\\t' || *cmdline==' ') && !in_quotes) break;\n"
-                 "        else if (*cmdline=='\\\\') bcount++;\n"
-                 "        else if (*cmdline=='\\\"') {\n"
-                 "            if ((bcount & 1)==0) in_quotes=!in_quotes;\n"
-                 "            bcount=0;\n"
-                 "        }\n"
-                 "        else bcount=0;\n"
-                 "        cmdline++;\n"
-                 "    }\n"
-                 "    while (*cmdline=='\\t' || *cmdline==' ') cmdline++;\n"
-                 "    GetStartupInfoA( &info );\n"
-                 "    if (!(info.dwFlags & 1)) info.wShowWindow = 1;\n"
-                 "    _ARGC = __wine_main_argc;\n"
-                 "    _ARGV = __wine_main_wargv;\n"
-                 "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
+#ifdef HAVE_LINKER_INIT_FINI
+                 "    _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
+                 "    ret = %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );\n"
+                 "    _fini();\n"
+#else
+                 "    ret = %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow );\n"
+#endif
+                 "    ExitProcess( ret );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
@@ -688,17 +664,19 @@ void BuildSpec32File( FILE *outfile )
     case SPEC_MODE_CUIEXE:
         if (!init_func) init_func = "main";
         fprintf( outfile,
-                 "\nint _ARGC;\n"
-                 "char **_ARGV;\n"
-                 "extern void __stdcall ExitProcess(int);\n"
+                 "\nextern void __stdcall ExitProcess(int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
+                 "    int ret;\n"
                  "    extern int %s( int argc, char *argv[] );\n"
-                 "    extern int __wine_main_argc;\n"
-                 "    extern char **__wine_main_argv;\n"
-                 "    _ARGC = __wine_main_argc;\n"
-                 "    _ARGV = __wine_main_argv;\n"
-                 "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
+#ifdef HAVE_LINKER_INIT_FINI
+                 "    _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
+                 "    ret = %s( __wine_main_argc, __wine_main_argv );\n"
+                 "    _fini();\n"
+#else
+                 "    ret = %s( __wine_main_argc, __wine_main_argv );\n"
+#endif
+                 "    ExitProcess( ret );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -706,18 +684,19 @@ void BuildSpec32File( FILE *outfile )
     case SPEC_MODE_CUIEXE_UNICODE:
         if (!init_func) init_func = "wmain";
         fprintf( outfile,
-                 "\ntypedef unsigned short WCHAR;\n"
-                 "int _ARGC;\n"
-                 "WCHAR **_ARGV;\n"
-                 "extern void __stdcall ExitProcess(int);\n"
+                 "\nextern void __stdcall ExitProcess(int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
-                 "    extern int %s( int argc, WCHAR *argv[] );\n"
-                 "    extern int __wine_main_argc;\n"
-                 "    extern WCHAR **__wine_main_wargv;\n"
-                 "    _ARGC = __wine_main_argc;\n"
-                 "    _ARGV = __wine_main_wargv;\n"
-                 "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
+                 "    int ret;\n"
+                 "    extern int %s( int argc, unsigned short *argv[] );\n"
+#ifdef HAVE_LINKER_INIT_FINI
+                 "    _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );\n"
+                 "    ret = %s( __wine_main_argc, __wine_main_wargv );\n"
+                 "    _fini();\n"
+#else
+                 "    ret = %s( __wine_main_argc, __wine_main_wargv );\n"
+#endif
+                 "    ExitProcess( ret );\n"
                  "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
@@ -787,7 +766,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_NT_OPTIONAL_HDR_MAGIC );  /* Magic */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
     fprintf( outfile, "    0, 0, 0,\n" );                /* SizeOfCode/Data */
-    fprintf( outfile, "    %s,\n", init_func ? init_func : "DllMain" );  /* AddressOfEntryPoint */
+    fprintf( outfile, "    %s,\n", init_func );          /* AddressOfEntryPoint */
     fprintf( outfile, "    0, __wine_spec_data_start,\n" );              /* BaseOfCode/Data */
     fprintf( outfile, "    __wine_spec_pe_header,\n" );  /* ImageBase */
     fprintf( outfile, "    %ld,\n", page_size );         /* SectionAlignment */
@@ -818,17 +797,16 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(dll_file_name) );
-    output_dll_init( outfile, constructor, NULL );
-
+#ifndef HAVE_LINKER_INIT_FINI
+    output_dll_init( outfile, "__wine_spec_init", NULL );
+#endif
     fprintf( outfile,
-             "void %s(void)\n"
+             "void __wine_spec_init(void)\n"
              "{\n"
              "    extern void __wine_dll_register( const struct image_nt_headers *, const char * );\n"
-             "    extern void *__wine_dbg_register( char * const *, int );\n"
              "    __wine_dll_register( &nt_header, \"%s\" );\n"
              "}\n",
-             constructor, dll_file_name );
+             dll_file_name );
 }
 
 
@@ -942,8 +920,8 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
 
     fprintf( outfile,
              "#ifdef __GNUC__\n"
-             "static void __wine_dbg_%s_init(void) __attribute__((constructor));\n"
-             "static void __wine_dbg_%s_fini(void) __attribute__((destructor));\n"
+             "void __wine_dbg_%s_init(void) __attribute__((constructor));\n"
+             "void __wine_dbg_%s_fini(void) __attribute__((destructor));\n"
              "#else\n"
              "static void __asm__dummy_dll_init(void) {\n",
              prefix, prefix );
@@ -971,21 +949,15 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
-    fprintf( outfile, "}\n#endif /* defined(__GNUC__) */\n" );
+    fprintf( outfile, "}\n#endif /* defined(__GNUC__) */\n\n" );
 
     fprintf( outfile,
-             "\n#ifdef __GNUC__\n"
-             "static\n"
-             "#endif\n"
              "void __wine_dbg_%s_init(void)\n"
              "{\n"
              "    extern void *__wine_dbg_register( char * const *, int );\n"
-             "    debug_registration = __wine_dbg_register( debug_channels, %d );\n"
-             "}\n", prefix, nr_debug );
+             "    if (!debug_registration) debug_registration = __wine_dbg_register( debug_channels, %d );\n"
+             "}\n\n", prefix, nr_debug );
     fprintf( outfile,
-             "\n#ifdef __GNUC__\n"
-             "static\n"
-             "#endif\n"
              "void __wine_dbg_%s_fini(void)\n"
              "{\n"
              "    extern void __wine_dbg_unregister( void* );\n"

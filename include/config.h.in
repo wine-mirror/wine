@@ -462,6 +462,11 @@
 #undef HAVE_LIBXXSHM
 
 /* 
+   Define if the linker supports renaming the init
+   and fini functions */
+#undef HAVE_LINKER_INIT_FINI
+
+/* 
    Define to 1 if you have the <link.h>
    header file. */
 #undef HAVE_LINK_H

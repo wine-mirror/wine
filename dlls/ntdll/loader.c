@@ -1956,8 +1956,10 @@ void __wine_process_init( int argc, char *argv[] )
     NTSTATUS status;
     ANSI_STRING func_name;
     void (* DECLSPEC_NORETURN init_func)();
+    extern void __wine_dbg_ntdll_init(void);
 
     thread_init();
+    __wine_dbg_ntdll_init();  /* hack: register debug channels early */
 
     /* setup the load callback and create ntdll modref */
     wine_dll_set_callback( load_builtin_callback );

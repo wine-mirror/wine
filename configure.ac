@@ -880,6 +880,15 @@ case $host_os in
           LDDLL="$LDDLL,-z,defs"
         fi
 
+        AC_CACHE_CHECK([whether the linker accepts -init and -fini], ac_cv_c_dll_init_fini,
+          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-init,__wine_spec_init,-fini,__wine_spec_fini],
+                           ac_cv_c_dll_init_fini="yes",ac_cv_c_dll_init_fini="no")])
+        if test "$ac_cv_c_dll_init_fini" = "yes"
+        then
+          AC_DEFINE(HAVE_LINKER_INIT_FINI,1,[Define if the linker supports renaming the init and fini functions])
+          LDDLL="$LDDLL,-init,__wine_spec_init,-fini,__wine_spec_fini"
+        fi
+
         AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
           [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                            ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
