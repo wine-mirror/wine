@@ -336,7 +336,8 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
     /* remove extra stuff from the stack */
     context->Eip = stack32_pop(context);
     args = (int *)context->Esp;
-    context->Esp += 4 * nb_args;
+    if (relay->ret == 0xc2) /* stdcall */
+        context->Esp += nb_args * sizeof(int);
 
     assert(TRACE_ON(relay));
 
