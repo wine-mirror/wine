@@ -8,6 +8,7 @@
 #include "wintypes.h"
 #include "winerror.h"
 #include "oleidl.h"
+#include "oleauto.h"
 
 /* OLE version */
 #define rmm             23
