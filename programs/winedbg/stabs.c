@@ -436,7 +436,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
      * the file (we cannot keep the struct datatype** around, because address can
      * change when realloc is done, so we must call over and over
      * DEBUG_FileSubNr2StabEnum to keep the correct values around
-     * (however, keeping struct datatype* is valid
+     * (however, keeping struct datatype* is valid))
      */
     if (DEBUG_PTS_ReadTypeReference(ptd, &filenr1, &subnr1) == -1) return -1;
 
@@ -466,6 +466,11 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    new_dt = DEBUG_NewDataType(DT_POINTER, NULL);
 	    if (DEBUG_PTS_ReadTypedef(ptd, NULL, &ref_dt) == -1) return -1;
 	    DEBUG_SetPointerType(new_dt, ref_dt);
+           break;
+       case 'k': /* 'const' modifier */
+       case 'B': /* 'volatile' modifier */
+           /* just kinda ignore the modifier, I guess -gmt */
+           if (DEBUG_PTS_ReadTypedef(ptd, NULL, &new_dt) == -1) return -1;
 	    break;
 	case '(':
 	    ptd->ptr--;
