@@ -191,11 +191,11 @@ uninstall_emu: uninstall_lib
 install_lib: dummy
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	if [ $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
-	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
+	if [ -f wine.sym ]; then $(INSTALL_DATA) wine.sym $(libdir)/wine.sym; fi
 
 uninstall_lib: dummy
 	cd $(libdir); $(RM) $(LIB_TARGET)
-	$(RM) $(libdir)/wine.sym
+	if [ -f $(libdir)/wine.sym ]; then $(RM) $(libdir)/wine.sym; fi
 
 $(BUILDSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
