@@ -227,6 +227,8 @@ typedef struct WSAData {
  * Socket I/O flags (supported by spec 1.1)
  */
 
+#define FIONREAD       WS_FIONREAD
+#define FIONBIO        WS_FIONBIO
 #define WS_FIONREAD    WS_IOR('f', 127, u_long)
 #define WS_FIONBIO     WS_IOW('f', 126, u_long)
 
@@ -253,6 +255,12 @@ typedef struct WSAData {
 /*
  * Define flags to be used with the WSAAsyncSelect() call.
  */
+#define FD_READ            WS_FD_READ
+#define FD_WRITE           WS_FD_WRITE
+#define FD_OOB             WS_FD_OOB
+#define FD_ACCEPT          WS_FD_ACCEPT
+#define FD_CONNECT         WS_FD_CONNECT
+#define FD_CLOSE           WS_FD_CLOSE
 #define WS_FD_READ         0x0001
 #define WS_FD_WRITE        0x0002
 #define WS_FD_OOB          0x0004

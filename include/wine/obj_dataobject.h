@@ -112,6 +112,24 @@ struct STGMEDIUM
     IUnknown *pUnkForRelease;
 };   
 
+typedef enum tagADVF
+{
+	ADVF_NODATA = 1,
+	ADVF_PRIMEFIRST = 2,
+	ADVF_ONLYONCE = 4,
+	ADVF_DATAONSTOP = 64,
+	ADVFCACHE_NOHANDLER = 8,
+	ADVFCACHE_FORCEBUILTIN = 16,
+	ADVFCACHE_ONSAVE = 32
+} ADVF;
+
+typedef struct tagSTATDATA
+{
+	FORMATETC formatetc;
+	DWORD advf;
+	IAdviseSink *pAdvSink;
+	DWORD dwConnection;
+} STATDATA, *LPSTATDATA;
 
 /*****************************************************************************
  * IAdviseSink interface
@@ -213,7 +231,7 @@ HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
     ICOM_METHOD2(HRESULT,GetCanonicalFormatEtc, LPFORMATETC,pformatectIn, LPFORMATETC,pformatetcOut) \
     ICOM_METHOD3(HRESULT,SetData,               LPFORMATETC,pformatetc, STGMEDIUM*,pmedium, BOOL,fRelease) \
     ICOM_METHOD2(HRESULT,EnumFormatEtc,         DWORD,dwDirection, IEnumFORMATETC**,ppenumFormatEtc) \
-    ICOM_METHOD4(HRESULT,DAdvise,               LPFORMATETC*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
+    ICOM_METHOD4(HRESULT,DAdvise,               FORMATETC*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
     ICOM_METHOD1(HRESULT,DUnadvise,             DWORD,dwConnection) \
     ICOM_METHOD1(HRESULT,EnumDAdvise,           IEnumSTATDATA**,ppenumAdvise)
 #define IDataObject_IMETHODS \
@@ -271,17 +289,9 @@ ICOM_DEFINE(IEnumFORMATETC,IUnknown)
 /*****************************************************************************
  * IEnumSTATDATA interface
  */
-typedef struct tagSTATDATA
-{
-    FORMATETC formatetc;
-    DWORD advf;
-    IAdviseSink* pAdvSink;
-    DWORD dwConnection;
-} STATDATA32;
-
 #define ICOM_INTERFACE IEnumSTATDATA
 #define IEnumSTATDATA_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATDATA32*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATDATA*,rgelt, ULONG*,pceltFethed) \
     ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
     ICOM_METHOD (HRESULT,Reset) \
     ICOM_METHOD1(HRESULT,Clone, IEnumSTATDATA**,ppenum)

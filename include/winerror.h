@@ -4,8 +4,17 @@
 
 extern int WIN32_LastError;
 
+#define FACILITY_NULL      0
+#define FACILITY_RPC       1
+#define FACILITY_DISPATCH  2
+#define FACILITY_STORAGE   3
 #define FACILITY_ITF		4
 #define FACILITY_WIN32		7
+#define FACILITY_WINDOWS   8
+#define FACILITY_SSPI      9
+#define FACILITY_CONTROL   10
+#define FACILITY_CERT      11
+#define FACILITY_INTERNET  12
 
 #define SEVERITY_ERROR		1
 
@@ -16,6 +25,12 @@ extern int WIN32_LastError;
         ((SCODE) (((unsigned long)(sev)<<31) | ((unsigned long)(fac)<<16) | ((unsigned long)(code))) )
 #define SUCCEEDED(stat) ((HRESULT)(stat)>=0)
 #define FAILED(stat) ((HRESULT)(stat)<0)
+
+#define HRESULT_CODE(hr) ((hr) & 0xFFFF)
+#define SCODE_CODE(sc)   ((sc) & 0xFFFF)
+
+#define HRESULT_FACILITY(hr)  (((hr) >> 16) & 0x1FFF)
+#define SCODE_FACILITY(sc)  (((sc) >> 16) & 0x1FFF)
 
 /* ERROR_UNKNOWN is a placeholder for error conditions which haven't
  * been tested yet so we're not exactly sure what will be returned.
@@ -251,14 +266,23 @@ extern int WIN32_LastError;
 #define S_OK                                   ((HRESULT)0L)
 #define S_FALSE                                ((HRESULT)1L)
 
+#define DISP_E_UNKNOWNINTERFACE 0x80020001L
+#define DISP_E_MEMBERNOTFOUND   0x80020003L
+#define DISP_E_PARAMNOTFOUND    0x80020004L
+#define DISP_E_TYPEMISMATCH     0x80020005L
+#define DISP_E_UNKNOWNNAME      0x80020006L
+#define DISP_E_NONAMEDARGS      0x80020007L
 #define DISP_E_BADVARTYPE   0x80020008L
+#define DISP_E_EXCEPTION        0x80020009L
 #define DISP_E_OVERFLOW     0x8002000AL
-#define DISP_E_TYPEMISMATCH 0x80020005L
-#define DISP_E_ARRAYISLOCKED  0x8002000D
-#define DISP_E_BADINDEX       0x8002000B
-#define DISP_E_MEMBERNOTFOUND            0x80020003L
+#define DISP_E_BADINDEX         0x8002000BL
+#define DISP_E_UNKNOWNLCID      0x8002000CL
+#define DISP_E_ARRAYISLOCKED    0x8002000DL
+#define DISP_E_BADPARAMCOUNT    0x8002000EL
+#define DISP_E_PARAMNOTOPTIONAL 0x8002000FL
 
 #define TYPE_E_ELEMENTNOTFOUND           0x8002802BL
+#define TYPE_E_CANTLOADLIBRARY  0x80029C4AL
 
 
 /* Drag and Drop */
@@ -293,14 +317,22 @@ extern int WIN32_LastError;
 
 #define CO_E_OBJISREG                   0x800401FB
 #define	OLE_E_ENUM_NOMORE		      0x80040002
+#define	OLE_E_ADVISENOTSUPPORTED  0x80040003
+#define	OLE_E_NOCONNECTION        0x80040004
+#define	OLE_E_NOTRUNNING          0x80040005
+#define	OLE_E_NOCACHE             0x80040006
+#define	OLE_E_BLANK		            0x80040007
+#define	OLE_E_NOT_INPLACEACTIVE		0x80040010
+#define	OLE_E_STATIC              0x8004000B
+#define	OLE_E_PROMPTSAVECANCELLED 0x8004000C
 #define OLE_S_USEREG                            0x00040000
-#define CLASS_E_NOAGGREGATION     0x80040110
-#define	CLASS_E_CLASSNOTAVAILABLE	0x80040111
+#define DV_E_FORMATETC            0x80040064
+#define DV_E_DVASPECT             0x8004006B
+#define DATA_S_SAMEFORMATETC      0x80040130
 #define E_ACCESSDENIED			      0x80070005
 #define E_HANDLE            			0x80070006
 #define	E_OUTOFMEMORY			        0x8007000E
 #define	E_INVALIDARG			        0x80070057
-
 /*#define OLE_E_FIRST 0x80040000L */
 /*#define OLE_E_LAST  0x800400FFL */
 /*#define OLE_S_FIRST 0x00040000L */
@@ -358,5 +390,28 @@ extern int WIN32_LastError;
 /* registry errors */
 #define REGDB_E_READREGDB               0x80040150
 #define REGDB_E_CLASSNOTREG             0x80040154
+
+#define INPLACE_E_NOTUNDOABLE           0x800401A0
+#define INPLACE_E_NOTOOLSPACE           0x800401A1
+
+#define DATA_E_FORMATETC                DV_E_FORMATETC
+
+#define CLASSFACTORY_E_FIRST            0x80040110L
+#define CLASSFACTORY_E_LAST             0x8004011FL
+#define CLASSFACTORY_S_FIRST            0x80040110L
+#define CLASSFACTORY_S_LAST             0x8004011FL
+
+#define CLASS_E_NOTLICENSED             (CLASSFACTORY_E_FIRST+2)
+#define CLASS_E_NOAGGREGATION           0x80040110
+#define	CLASS_E_CLASSNOTAVAILABLE	      0x80040111
+
+#define MK_E_EXCEEDEDDEADLINE           0x800401E1L
+#define MK_E_SYNTAX                     0x800401E4L
+#define MK_E_NOOBJECT                   0x800401E5L
+#define MK_E_INVALIDEXTENSION           0x800401E6L
+#define MK_E_NOSTORAGE                  0x800401EDL
+
+#define OLEOBJ_E_NOVERBS                0x00040180L
+#define OLEOBJ_S_INVALIDVERB            0x00040180L
 
 #endif  /* __WINE_WINERROR_H */

@@ -28,6 +28,11 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
 #define	DROPEFFECT_MOVE		2
 #define	DROPEFFECT_LINK		4
 #define	DROPEFFECT_SCROLL	0x80000000
+#define DD_DEFSCROLLINSET 11
+#define DD_DEFSCROLLDELAY 50
+#define DD_DEFSCROLLINTERVAL 50
+#define DD_DEFDRAGDELAY   50
+#define DD_DEFDRAGMINDIST  2
 
 /*****************************************************************************
  * IDropSource interface

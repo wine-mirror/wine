@@ -64,7 +64,7 @@ typedef enum tagOLEUPDATE
 {
 	OLEUPDATE_ALWAYS = 1,
 	OLEUPDATE_ONCALL = 3
-} OLEUPDATE;
+} OLEUPDATE, *LPOLEUPDATE;
 
 typedef struct tagOLEVERB
 {
@@ -74,6 +74,25 @@ typedef struct tagOLEVERB
 	DWORD grfAttribs;
 } OLEVERB, *LPOLEVERB;
 	
+typedef enum tagOLELINKBIND
+{
+	OLELINKBIND_EVENIFCLASSDIFF = 1
+} OLELINKBIND;
+
+typedef enum tagOLEWHICHMK
+{
+	OLEWHICHMK_CONTAINER = 1,
+	OLEWHICHMK_OBJREL = 2,
+	OLEWHICHMK_OBJFULL = 3
+} OLEWHICHMK;
+
+typedef enum tagBINDSPEED
+{
+	BINDSPEED_INDEFINITE = 1,
+	BINDSPEED_MODERATE = 2,
+	BINDSPEED_IMMEDIATE = 3
+} BINDSPEED;
+
 typedef HGLOBAL HOLEMENU;
 typedef LPRECT LPBORDERWIDTHS;
 typedef LPCRECT LPCBORDERWIDTHS;
@@ -111,6 +130,9 @@ typedef struct IParseDisplayName IParseDisplayName, *LPPARSEDISPLAYNAME;
 
 DEFINE_OLEGUID(IID_IOleItemContainer,  0x0000011aL, 0, 0);
 typedef struct IOleItemContainer IOleItemContainer, *LPOLEITEMCONTAINER;
+
+DEFINE_OLEGUID(IID_IOleLink,  0x0000011dL, 0, 0);
+typedef struct IOleLink IOleLink, *LPOLELINK;
 
 /*****************************************************************************
  * IOleWindow interface
@@ -417,6 +439,47 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 #define IOleItemContainer_IsRunning(p,a)              ICOM_CALL1(IsRunning,p,a)
 #endif
 
+
+/*****************************************************************************
+ * IOleItemContainer interface
+ */
+#define ICOM_INTERFACE IOleLink
+#define IOleLink_METHODS \
+	ICOM_METHOD1(HRESULT,SetUpdateOptions, DWORD,dwUpdateOpt) \
+	ICOM_METHOD1(HRESULT,GetUpdateOptions, DWORD*,pdwUpdateOpt) \
+	ICOM_METHOD2(HRESULT,SetSourceMoniker, IMoniker*,pmk, REFCLSID,rclsid) \
+	ICOM_METHOD1(HRESULT,GetSourceMoniker, IMoniker**,ppmk) \
+	ICOM_METHOD1(HRESULT,SetSourceDisplayName, LPCOLESTR,pszStatusText) \
+	ICOM_METHOD1(HRESULT,GetSourceDisplayName, LPOLESTR*,ppszDisplayName) \
+	ICOM_METHOD2(HRESULT,BindToSource, DWORD,bindflags, IBindCtx*,pbc) \
+	ICOM_METHOD (HRESULT,BindIfRunning) \
+	ICOM_METHOD1(HRESULT,GetBoundSource, IUnknown**,ppunk) \
+	ICOM_METHOD (HRESULT,UnBindSource) \
+	ICOM_METHOD1(HRESULT,Update, IBindCtx*,pbc)
+#define IOleLink_IMETHODS \
+	IUnknown_IMETHODS \
+	IOleLink_METHODS
+ICOM_DEFINE(IOleLink,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IOleLink_QueryInterface(p,a,b)       ICOM_CALL2(QueryInterface,p,a,b)
+#define IOleLink_AddRef(p)                   ICOM_CALL (AddRef,p)
+#define IOleLink_Release(p)                  ICOM_CALL (Release,p)
+/*** IOleLink methods ***/
+#define IOleLink_SetUpdateOptions(p,a)       ICOM_CALL1(SetUpdateOptions,p,a)
+#define IOleLink_GetUpdateOptions(p,a)       ICOM_CALL1(GetUpdateOptions,p,a)
+#define IOleLink_SetSourceMoniker(p,a,b)     ICOM_CALL2(SetSourceMoniker,p,a,b)
+#define IOleLink_GetSourceMoniker(p,a)       ICOM_CALL1(GetSourceMoniker,p,a)
+#define IOleLink_SetSourceDisplayName(p,a)   ICOM_CALL1(SetSourceDisplayName,p,a)
+#define IOleLink_GetSourceDisplayName(p,a)   ICOM_CALL1(GetSourceDisplayName,p,a)
+#define IOleLink_BindToSource(p,a,b)         ICOM_CALL2(BindToSource,p,a,b)
+#define IOleLink_BindIfRunning(p)            ICOM_CALL (BindIfRunning,p)
+#define IOleLink_GetBoundSource(p,a)         ICOM_CALL1(GetBoundSource,p,a)
+#define IOleLink_UnBindSource(p)             ICOM_CALL (UnBindSource,p)
+#define IOleLink_Update(p,a)                 ICOM_CALL1(Update,p,a)
+#endif
 
 
 #endif /* __WINE_WINE_OBJ_INPLACE_H */

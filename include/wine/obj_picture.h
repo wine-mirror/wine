@@ -31,7 +31,7 @@ DEFINE_GUID(IID_IPictureDisp, 0x7bf80981, 0xbf32, 0x101a, 0x8b, 0xbb, 0x00, 0xAA
 typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
 
 /*****************************************************************************
- * IFont interface
+ * IPicture interface
  */
 #define ICOM_INTERFACE IPicture
 #define IPicture_METHODS \
@@ -60,7 +60,7 @@ ICOM_DEFINE(IPicture,IUnknown)
 #define IPicture_QueryInterface(p,a,b)         ICOM_CALL2(QueryInterface,p,a,b)
 #define IPicture_AddRef(p)                     ICOM_CALL (AddRef,p)
 #define IPicture_Release(p)                    ICOM_CALL (Release,p)
-/*** IFont methods ***/
+/*** IPicture methods ***/
 #define IPicture_get_Handle(p,a)               ICOM_CALL1(get_Handle,p,a)
 #define IPicture_get_hPal(p,a)                 ICOM_CALL1(get_hPal,p,a)
 #define IPicture_get_Type(p,a)                 ICOM_CALL1(get_Type,p,a)
@@ -75,6 +75,31 @@ ICOM_DEFINE(IPicture,IUnknown)
 #define IPicture_PictureChanged(p)             ICOM_CALL (PictureChanged,p)
 #define IPicture_SaveAsFile(p,a,b,c)           ICOM_CALL3(SaveAsFile,p,a,b,c)
 #define IPicture_get_Attributes(p,a)           ICOM_CALL1(get_Attributes,p,a)
+#endif
+
+
+/*****************************************************************************
+ * IPictureDisp interface
+ */
+#define ICOM_INTERFACE IPictureDisp
+#define IPictureDisp_METHODS 
+#define IPictureDisp_IMETHODS \
+				IDispatch_IMETHODS \
+				IPictureDisp_METHODS
+ICOM_DEFINE(IPictureDisp,IDispatch)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IPictureDisp_QueryInterface(p,a,b)      ICOM_CALL2(QueryInterface,p,a,b)
+#define IPictureDisp_AddRef(p)                  ICOM_CALL (AddRef,p)
+#define IPictureDisp_Release(p)                 ICOM_CALL (Release,p)
+/*** IDispatch methods ***/
+#define IPictureDisp_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
+#define IPictureDisp_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,b,c)
+#define IPictureDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
+#define IPictureDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
+/*** IPictureDisp methods ***/
 #endif
 
 

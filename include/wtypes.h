@@ -33,6 +33,9 @@ typedef OLECHAR	*BSTR;
 typedef BSTR16		*LPBSTR16;
 typedef BSTR		*LPBSTR;
 
+#define OLESTR16(x) x
+#define OLESTR(x) L##x
+
 #ifndef GUID_DEFINED
 #define GUID_DEFINED
 typedef struct _GUID
@@ -70,6 +73,14 @@ typedef enum tagDVASPECT
        DVASPECT_ICON      = 4,   
        DVASPECT_DOCPRINT  = 8
 } DVASPECT;
+
+typedef enum tagSTGC
+{
+	STGC_DEFAULT = 0,
+	STGC_OVERWRITE = 1,
+	STGC_ONLYIFCURRENT = 2,
+	STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE = 4
+} STGC;
 
 #define DECLARE_HANDLE(a)  typedef HANDLE16 a##16; typedef HANDLE a
 DECLARE_HANDLE(HMETAFILEPICT);

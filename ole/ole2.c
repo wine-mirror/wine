@@ -13,6 +13,7 @@
 #include "process.h"
 #include "wine/obj_clientserver.h"
 #include "debug.h"
+#include "ole2ver.h"
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the 
@@ -474,10 +475,11 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(
 /***********************************************************************
  * OleDestroyMenuDescriptor [OLE32.99]
  */
-void WINAPI OleDestroyMenuDescriptor(
+HRESULT WINAPI OleDestroyMenuDescriptor(
   HOLEMENU hmenuDescriptor)
 {
   FIXME(ole,"(%x),stub!\n", (unsigned int)hmenuDescriptor);
+	return S_OK;
 }
 
 /***********************************************************************

@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define _WINGDI_
+
 #pragma pack(1)
 
 typedef struct _ABCFLOAT {
@@ -1139,6 +1141,26 @@ typedef struct
     UINT16  fract;
     INT16   value;
 } FIXED;
+
+typedef struct tagPOINTFX
+{
+	FIXED x;
+	FIXED y;
+} POINTFX, *LPPOINTFX;
+
+typedef struct tagTTPOLYCURVE
+{
+	WORD wType;
+	WORD cpfx;
+	POINTFX apfx[1];
+} TTPOLYCURVE, *LPTTPOLYCURVE;
+
+typedef struct tagTTPOLYGONHEADER
+{
+	DWORD cb;
+	DWORD dwType;
+	POINTFX pfxStart;
+} TTPOLYGONHEADER, *LPTTPOLYGONHEADER;
 
 typedef struct
 {

@@ -94,6 +94,39 @@ typedef enum tagOLEDCFLAGS
 	OLEDC_OFFSCREEN = 0x4
 } OLEDCFLAGS;
 
+typedef enum tagDVASPECT2
+{
+	DVASPECT_OPAQUE = 16,
+	DVASPECT_TRANSPARENT = 32,
+} DVASPECT2;
+
+typedef enum tagHITRESULT 
+{
+	HITRESULT_OUTSIDE = 0,
+	HITRESULT_TRANSPARENT = 1,
+	HITRESULT_CLOSE = 2,
+	HITRESULT_HIT = 3
+} HITRESULT;
+
+typedef enum tagAspectInfoFlag
+{
+	DVASPECTINFOFLAG_CANOPTIMIZE = 1
+} DVASPECTINFOFLAG;
+
+typedef struct tagAspectInfo
+{
+	ULONG cb;
+	DWORD dwFlags;
+} DVASPECTINFO;
+
+typedef enum tagVIEWSTATUS
+{
+	VIEWSTATUS_OPAQUE = 1,
+	VIEWSTATUS_SOLIDBKGND = 2,
+	VIEWSTATUS_DVASPECTOPAQUE = 4,
+	VIEWSTATUS_DVASPECTTRANSPARENT = 8
+} VIEWSTATUS;
+
 /*****************************************************************************
  * Predeclare the interfaces
  */

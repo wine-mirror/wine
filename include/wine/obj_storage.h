@@ -12,10 +12,37 @@
 /*****************************************************************************
  * Predeclare the structures
  */
+typedef enum tagLOCKTYPE
+{
+	LOCK_WRITE = 1,
+	LOCK_EXCLUSIVE = 2,
+	LOCK_ONLYONCE = 4
+} LOCKTYPE;
+
+typedef struct tagStorageLayout
+{
+    DWORD LayoutType;
+    OLECHAR16* pwcsElementName;
+    LARGE_INTEGER cOffset;
+    LARGE_INTEGER cBytes;
+} StorageLayout;
+
+typedef struct tagSTATSTG {
+    LPOLESTR	pwcsName;
+    DWORD	type;
+    ULARGE_INTEGER cbSize;
+    FILETIME	mtime;
+    FILETIME	ctime;
+    FILETIME	atime;
+    DWORD	grfMode;
+    DWORD	grfLocksSupported;
+    CLSID	clsid;
+    DWORD	grfStateBits;
+    DWORD	reserved;
+} STATSTG;
+
 typedef LPOLESTR16 *SNB16;
 typedef LPOLESTR *SNB;
-
-typedef struct STATSTG STATSTG;
 
 
 /*****************************************************************************
@@ -112,24 +139,6 @@ typedef struct IStream IStream,*LPSTREAM;
 #define STREAM_SEEK_END 2
 
 /*****************************************************************************
- * STATSTG structure
- */
-struct STATSTG {
-    LPOLESTR16	pwcsName;
-    DWORD	type;
-    ULARGE_INTEGER cbSize;
-    FILETIME	mtime;
-    FILETIME	ctime;
-    FILETIME	atime;
-    DWORD	grfMode;
-    DWORD	grfLocksSupported;
-    CLSID	clsid;
-    DWORD	grfStateBits;
-    DWORD	reserved;
-};
-
-
-/*****************************************************************************
  * IEnumSTATSTG interface
  */
 #define ICOM_INTERFACE IEnumSTATSTG
@@ -188,14 +197,6 @@ ICOM_DEFINE(IFillLockBytes,IUnknown)
 /*****************************************************************************
  * ILayoutStorage interface
  */
-typedef struct tagStorageLayout
-{
-    DWORD LayoutType;
-    OLECHAR16* pwcsElementName;
-    LARGE_INTEGER cOffset;
-    LARGE_INTEGER cBytes;
-} StorageLayout;
-
 #define ICOM_INTERFACE ILayoutStorage
 #define ILayoutStorage_METHODS \
     ICOM_METHOD2(HRESULT,LayoutScript,                DWORD,nEntries, DWORD,glfInterleavedFlag) \
@@ -448,18 +449,18 @@ ICOM_DEFINE(ISequentialStream,IUnknown)
  */
 #define ICOM_INTERFACE IStorage16
 #define IStorage16_METHODS \
-    ICOM_METHOD5(HRESULT,CreateStream,   LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm) \
-    ICOM_METHOD5(HRESULT,OpenStream,     LPCOLESTR16,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm) \
-    ICOM_METHOD5(HRESULT,CreateStorage,  LPCOLESTR16,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg) \
-    ICOM_METHOD6(HRESULT,OpenStorage,    LPCOLESTR16,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg) \
+    ICOM_METHOD5(HRESULT,CreateStream,   OLECHAR*,pwcsName, DWORD,grfMode, DWORD,reserved1, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,OpenStream,     OLECHAR*,pwcsName, void*,reserved1, DWORD,grfMode, DWORD,reserved2, IStream16**,ppstm) \
+    ICOM_METHOD5(HRESULT,CreateStorage,  OLECHAR*,pwcsName, DWORD,grfMode, DWORD,dwStgFmt, DWORD,reserved2, IStorage16**,ppstg) \
+    ICOM_METHOD6(HRESULT,OpenStorage,    OLECHAR*,pwcsName, IStorage16*,pstgPriority, DWORD,grfMode, SNB16,snb16Exclude, DWORD,reserved, IStorage16**,ppstg) \
     ICOM_METHOD4(HRESULT,CopyTo,         DWORD,ciidExclude, const IID*,rgiidExclude, SNB16,snb16Exclude, IStorage16*,pstgDest) \
     ICOM_METHOD4(HRESULT,MoveElementTo,  LPCOLESTR16,pwcsName, IStorage16*,pstgDest, LPCOLESTR16,pwcsNewName, DWORD,grfFlags) \
     ICOM_METHOD1(HRESULT,Commit,         DWORD,grfCommitFlags) \
     ICOM_METHOD (HRESULT,Revert) \
     ICOM_METHOD4(HRESULT,EnumElements,   DWORD,reserved1, void*,reserved2, DWORD,reserved3, IEnumSTATSTG**,ppenum) \
-    ICOM_METHOD1(HRESULT,DestroyElement, LPCOLESTR16,pwcsName) \
-    ICOM_METHOD2(HRESULT,RenameElement,  LPCOLESTR16,pwcsOldName, LPCOLESTR16,pwcsNewName) \
-    ICOM_METHOD4(HRESULT,SetElementTimes,LPCOLESTR16,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
+    ICOM_METHOD1(HRESULT,DestroyElement, OLECHAR*,pwcsName) \
+    ICOM_METHOD2(HRESULT,RenameElement,  OLECHAR*,pwcsOldName, OLECHAR*,pwcsNewName) \
+    ICOM_METHOD4(HRESULT,SetElementTimes,OLECHAR*,pwcsName, const FILETIME*,pctime, const FILETIME*,patime, const FILETIME*,pmtime) \
     ICOM_METHOD1(HRESULT,SetClass,       REFCLSID,clsid) \
     ICOM_METHOD2(HRESULT,SetStateBits,   DWORD,grfStateBits, DWORD,grfMask) \
     ICOM_METHOD2(HRESULT,Stat,           STATSTG*,pstatstg, DWORD,grfStatFlag)

@@ -29,9 +29,11 @@ typedef struct IViewObject2 IViewObject2, *LPVIEWOBJECT2;
 /*****************************************************************************
  * IViewObject interface
  */
+typedef BOOL    (CALLBACK* pfnContinue)(DWORD);
+
 #define ICOM_INTERFACE IViewObject
 #define IViewObject_METHODS \
-	ICOM_METHOD10(HRESULT,Draw, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DVTARGETDEVICE*,ptd, HDC,hdcTargetDev, HDC,hdcDraw, LPCRECTL,lprcBounds, LPCRECTL,lprcWBounds, BOOL*,pfContinue(DWORD dwContinue), DWORD,dwContinue) \
+	ICOM_METHOD10(HRESULT,Draw, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DVTARGETDEVICE*,ptd, HDC,hdcTargetDev, HDC,hdcDraw, LPCRECTL,lprcBounds, LPCRECTL,lprcWBounds, pfnContinue,, DWORD,dwContinue) \
 	ICOM_METHOD6(HRESULT,GetColorSet, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DVTARGETDEVICE*,ptd, HDC,hicTargetDevice, LOGPALETTE**,ppColorSet) \
 	ICOM_METHOD4(HRESULT,Freeze, DWORD,dwDrawAspect, LONG,lindex, void*,pvAspect, DWORD*,pdwFreeze) \
 	ICOM_METHOD1(HRESULT,Unfreeze, DWORD,dwFreeze) \

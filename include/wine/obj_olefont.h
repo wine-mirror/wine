@@ -90,6 +90,31 @@ ICOM_DEFINE(IFont,IUnknown)
 #define IFont_SetHdc(p,a)            ICOM_CALL1(SetHdc,a)
 #endif
 
+/*****************************************************************************
+ * IFont interface
+ */
+#define ICOM_INTERFACE IFontDisp
+#define IFontDisp_METHODS 
+#define IFontDisp_IMETHODS \
+  IUnknown_IMETHODS \
+	IFontDisp_METHODS
+ICOM_DEFINE(IFontDisp,IDispatch)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IFontDisp_QueryInterface(p,a,b)  ICOM_CALL2(QueryInterface,p,a,b)
+#define IFontDisp_AddRef(p)              ICOM_CALL (AddRef,p)
+#define IFontDisp_Release(p)             ICOM_CALL (Release,p)
+/*** IDispatch methods ***/
+#define IFontDisp_GetTypeInfoCount(p,a)      ICOM_CALL1 (GetTypeInfoCount,p,a)
+#define IFontDisp_GetTypeInfo(p,a,b,c)       ICOM_CALL3 (GetTypeInfo,p,b,c)
+#define IFontDisp_GetIDsOfNames(p,a,b,c,d,e) ICOM_CALL5 (GetIDsOfNames,p,a,b,c,d,e)
+#define IFontDisp_Invoke(p,a,b,c,d,e,f,g,h)  ICOM_CALL8 (Invoke,p,a,b,c,d,e,f,g,h)
+/*** IFontDisp methods ***/
+#endif
+
+
 #endif /* __WINE_WINE_OBJ_OLEFONT_H */
 
 

@@ -16,6 +16,7 @@
  */
 DEFINE_SHLGUID(IID_IShellLink,          0x000214EEL, 0, 0);
 typedef struct IShellLink IShellLink,*LPSHELLLINK;
+#define IShellLinkA IShellLink
 
 DEFINE_SHLGUID(IID_IShellLinkW,         0x000214F9L, 0, 0);
 typedef struct IShellLinkW IShellLinkW,*LPSHELLLINKW;

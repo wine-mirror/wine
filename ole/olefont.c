@@ -313,7 +313,7 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
   newObject->description.sCharset       = fontDesc->sCharset;
   newObject->description.fItalic        = fontDesc->fItalic;
   newObject->description.fUnderline     = fontDesc->fUnderline;
-  newObject->description.fStrikeThrough = fontDesc->fStrikeThrough;
+  newObject->description.fStrikethrough = fontDesc->fStrikethrough;
 
   /*
    * Initializing all the other members.
@@ -676,7 +676,7 @@ static HRESULT WINAPI OLEFontImpl_get_Strikethrough(
   if (pstrikethrough==0)
     return E_POINTER;
 
-  *pstrikethrough = this->description.fStrikeThrough;
+  *pstrikethrough = this->description.fStrikethrough;
 
   return S_OK;
 }
@@ -692,7 +692,7 @@ static HRESULT WINAPI OLEFontImpl_put_Strikethrough(
 {
   _ICOM_THIS(OLEFontImpl, iface);
 
-  this->description.fStrikeThrough = strikethrough;
+  this->description.fStrikethrough = strikethrough;
 
   return S_OK;
 }
@@ -813,7 +813,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
                                                               (-fontHeight/10000L);
     logFont.lfItalic          = this->description.fItalic;
     logFont.lfUnderline       = this->description.fUnderline;
-    logFont.lfStrikeOut       = this->description.fStrikeThrough;
+    logFont.lfStrikeOut       = this->description.fStrikethrough;
     logFont.lfWeight          = this->description.sWeight;
     logFont.lfCharSet         = this->description.sCharset;
     logFont.lfOutPrecision    = OUT_CHARACTER_PRECIS;
@@ -1212,7 +1212,7 @@ static HRESULT WINAPI OLEFontImpl_Load(
     return E_FAIL;
 
   this->description.fItalic        = (bAttributes & FONTPERSIST_ITALIC) != 0;
-  this->description.fStrikeThrough = (bAttributes & FONTPERSIST_STRIKETHROUGH) != 0;
+  this->description.fStrikethrough = (bAttributes & FONTPERSIST_STRIKETHROUGH) != 0;
   this->description.fUnderline     = (bAttributes & FONTPERSIST_UNDERLINE) != 0;
     
   /*
@@ -1299,7 +1299,7 @@ static HRESULT WINAPI OLEFontImpl_Save(
   if (this->description.fItalic)
     bAttributes |= FONTPERSIST_ITALIC;
 
-  if (this->description.fStrikeThrough)
+  if (this->description.fStrikethrough)
     bAttributes |= FONTPERSIST_STRIKETHROUGH;
   
   if (this->description.fUnderline)

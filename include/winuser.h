@@ -79,6 +79,17 @@ typedef struct
     INT       code;
 } DEBUGHOOKINFO, *LPDEBUGHOOKINFO;
 
+#define HKL_PREV   0
+#define HKL_NEXT   1
+
+#define KLF_ACTIVATE       0x00000001
+#define KLF_SUBSTITUTE_OK  0x00000002
+#define KLF_UNLOADPREVIOUS 0x00000004
+#define KLF_REORDER        0x00000008
+#define KLF_REPLACELANG    0x00000010
+#define KLF_NOTELLSHELL    0x00000080
+
+#define KL_NAMELENGTH      9
 
   /***** Dialogs *****/
 #ifdef FSHIFT

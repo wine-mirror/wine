@@ -18,9 +18,6 @@
 extern "C" {
 #endif
 
-#define OLESTR16(x) x
-#define OLESTR(x) L##x	/* probably wrong */
-
 /* object types */
 #define OT_LINK		1
 #define OT_EMBEDDED	2

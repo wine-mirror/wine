@@ -10,9 +10,14 @@
 #include "oleidl.h"
 #include "oleauto.h"
 
-/* OLE version */
-#define rmm             23
-#define rup            639
+#define OLEIVERB_PRIMARY            (0L)
+#define OLEIVERB_SHOW               (-1L)
+#define OLEIVERB_OPEN               (-2L)
+#define OLEIVERB_HIDE               (-3L)
+#define OLEIVERB_UIACTIVATE         (-4L)
+#define OLEIVERB_INPLACEACTIVATE    (-5L)
+#define OLEIVERB_DISCARDUNDOSTATE   (-6L)
+#define OLEIVERB_PROPERTIES         (-7L)
 
 /*
  * API declarations
@@ -26,13 +31,12 @@ HRESULT     WINAPI DoDragDrop(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
 
 HOLEMENU  WINAPI OleCreateMenuDescriptor(HMENU              hmenuCombined,
 					   LPOLEMENUGROUPWIDTHS lpMenuWidths);
-void        WINAPI OleDestroyMenuDescriptor(HOLEMENU hmenuDescriptor);
+HRESULT   WINAPI OleDestroyMenuDescriptor(HOLEMENU hmenuDescriptor);
 HRESULT     WINAPI OleSetMenuDescriptor(HOLEMENU               hmenuDescriptor,
 					HWND                   hwndFrame,
 					HWND                   hwndActiveObject,
 					LPOLEINPLACEFRAME        lpFrame,
 					LPOLEINPLACEACTIVEOBJECT lpActiveObject);
-
 
 #endif  /* __WINE_OLE2_H */
 

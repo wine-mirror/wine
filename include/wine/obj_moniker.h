@@ -129,7 +129,7 @@ ICOM_DEFINE(IClassActivator,IUnknown)
  */
 #define ICOM_INTERFACE IEnumMoniker
 #define IEnumMoniker_METHODS \
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, IMoniker***,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, IMoniker**,rgelt, ULONG*,pceltFethed) \
     ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
     ICOM_METHOD (HRESULT,Reset) \
     ICOM_METHOD1(HRESULT,Clone, IEnumMoniker**,ppenum)

@@ -93,8 +93,13 @@ SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
 
 /* These are macros that help accessing the VARIANT date type.
  */
+#ifdef __cplusplus
+#define V_UNION(A, B)	((A)->B)
+#define V_VT(A) 		((A)->vt)
+#else
 #define V_UNION(A, B)	((A)->u.B)
 #define V_VT(A) 		((A)->vt)
+#endif /* cplusplus */
 
 #define V_ISBYREF(A)	 (V_VT(A)&VT_BYREF)
 #define V_ISARRAY(A)	 (V_VT(A)&VT_ARRAY)

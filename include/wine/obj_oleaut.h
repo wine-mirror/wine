@@ -132,7 +132,7 @@ struct tagVARIANT {
 	WORD wReserved1;
 	WORD wReserved2;
 	WORD wReserved3;
-	union DUMMY_UNION_NAME
+	union /*DUMMY_UNION_NAME*/
 	{
 	/* By value. */
 		CHAR cVal;
@@ -184,6 +184,11 @@ struct tagVARIANT {
 typedef LONG DISPID;
 typedef DWORD HREFTYPE;
 typedef DISPID MEMBERID;
+
+#define DISPATCH_METHOD         0x1
+#define DISPATCH_PROPERTYGET    0x2
+#define DISPATCH_PROPERTYPUT    0x4
+#define DISPATCH_PROPERTYPUTREF 0x8
 
 #define DISPID_UNKNOWN  ( -1 )
 #define DISPID_VALUE  ( 0 )
@@ -390,6 +395,22 @@ typedef union tagBINDPTR
 	ITypeComp *lptcomp;
 } BINDPTR, *LPBINDPTR;
 
+typedef enum tagVARFLAGS
+{
+	VARFLAG_FREADONLY = 0x1,
+	VARFLAG_FSOURCE = 0x2,
+	VARFLAG_FBINDABLE = 0x4,
+	VARFLAG_FREQUESTEDIT  = 0x8,
+	VARFLAG_FDISPLAYBIND  = 0x10,
+	VARFLAG_FDEFAULTBIND  = 0x20,
+	VARFLAG_FHIDDEN = 0x40,
+	VARFLAG_FRESTRICTED = 0x80,
+	VARFLAG_FDEFAULTCOLLELEM  = 0x100,
+	VARFLAG_FUIDEFAULT  = 0x200,
+	VARFLAG_FNONBROWSABLE = 0x400,
+	VARFLAG_FREPLACEABLE  = 0x800,
+	VARFLAG_FIMMEDIATEBIND  = 0x1000
+} VARFLAGS;
 
 /*****************************************************************
  *  SafeArray defines and structs 
@@ -526,7 +547,7 @@ ICOM_DEFINE(IDispatch,IUnknown)
 	ICOM_METHOD3(HRESULT,CreateInstance, IUnknown*,pUnkOuter, REFIID,riid, PVOID*,ppvObj) \
 	ICOM_METHOD2(HRESULT,GetMops, MEMBERID,memid, BSTR*,pBstrMops) \
 	ICOM_METHOD2(HRESULT,GetContainingTypeLib, ITypeLib**,ppTLib, UINT*,pIndex) \
-	ICOM_METHOD1(HRESULT,ReleaseTypeAttr, TYPEATTR,*pTypeAttr) \
+	ICOM_METHOD1(HRESULT,ReleaseTypeAttr, TYPEATTR*,pTypeAttr) \
 	ICOM_METHOD1(HRESULT,ReleaseFuncDesc, FUNCDESC*,pFuncDesc) \
 	ICOM_METHOD1(HRESULT,ReleaseVarDesc, VARDESC*,pVarDesc) 
 #define ITypeInfo_IMETHODS \
