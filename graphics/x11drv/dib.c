@@ -34,7 +34,9 @@ DECLARE_DEBUG_CHANNEL(x11drv);
 
 static int ximageDepthTable[32];
 
+#ifdef HAVE_LIBXXSHM
 static int XShmErrorFlag = 0;
+#endif
 
 /* This structure holds the arguments for DIB_SetImageBits() */
 typedef struct
@@ -2776,6 +2778,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
      descr->drawable, descr->gc, bmpImage,
      descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
      descr->width, descr->height);
+#ifdef HAVE_LIBXXSHM
     if (descr->useShm)
     {
         XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
@@ -2784,6 +2787,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         XSync( gdi_display, 0 );
     }
     else
+#endif
         XPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
 		   descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
 		   descr->width, descr->height );
@@ -3769,6 +3773,7 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
     return res;
 }
 
+#ifdef HAVE_LIBXXSHM
 /***********************************************************************
  *           X11DRV_XShmErrorHandler
  *
@@ -3783,8 +3788,6 @@ static int XShmErrorHandler(Display *dpy, XErrorEvent *event)
  *           X11DRV_XShmCreateImage
  *
  */
-
-#ifdef HAVE_LIBXXSHM
 static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                                        XShmSegmentInfo* shminfo)
 {
