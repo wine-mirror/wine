@@ -45,7 +45,7 @@ int yyerror(char *);
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
-%token tPROCESS tMODREF
+%token tPROCESS tTHREAD tMODREF
 %token tEOL tSTRING tDEBUGSTR
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS
@@ -282,6 +282,7 @@ walk_command:
     | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( $3, 0 ); }
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
+    | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
     | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); }
 
 

@@ -159,6 +159,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INFO_CMD,WALK_CMD>module|modul|modu|mod  { return tMODULE; }
 <INFO_CMD,WALK_CMD>queue|queu|que	{ return tQUEUE; }
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
+<INFO_CMD,WALK_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
 <INFO_CMD,WALK_CMD>modref|modre|modr	{ return tMODREF; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }

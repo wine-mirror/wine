@@ -13,6 +13,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "toolhelp.h"
+#include "tlhelp32.h"
 #include "debugger.h"
 #include "expr.h"
 
@@ -440,7 +441,49 @@ void DEBUG_WalkWindows(HWND hWnd, int indent)
 
 void DEBUG_WalkProcess(void)
 {
-   DEBUG_Printf(DBG_CHN_MESG, "No longer walking processes list\n");
+    HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+    if (snap != INVALID_HANDLE_VALUE)
+    {
+        PROCESSENTRY32 entry;
+        DWORD current = DEBUG_CurrProcess ? DEBUG_CurrProcess->pid : 0;
+        BOOL ok = Process32First( snap, &entry );
+
+        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %-8.8s %s\n",
+                     "pid", "threads", "parent", "exe" );
+        while (ok)
+        {
+            if (entry.th32ProcessID != GetCurrentProcessId())
+                DEBUG_Printf(DBG_CHN_MESG, "%08lx %8d %08lx '%s'%s\n",
+                             entry.th32ProcessID, entry.cntThreads,
+                             entry.th32ParentProcessID, entry.szExeFile,
+                             (entry.th32ProcessID == current) ? " <==" : "" );
+            ok = Process32Next( snap, &entry );
+        }
+        CloseHandle( snap );
+    }
+}
+
+void DEBUG_WalkThreads(void)
+{
+    HANDLE snap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
+    if (snap != INVALID_HANDLE_VALUE)
+    {
+        THREADENTRY32 entry;
+        DWORD current = DEBUG_CurrThread ? DEBUG_CurrThread->tid : 0;
+        BOOL ok = Thread32First( snap, &entry );
+
+        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %s\n",
+                     "tid", "process", "prio" );
+        while (ok)
+        {
+            if (entry.th32OwnerProcessID != GetCurrentProcessId())
+                DEBUG_Printf(DBG_CHN_MESG, "%08lx %08lx %4ld%s\n",
+                             entry.th32ThreadID, entry.th32OwnerProcessID,
+                             entry.tbBasePri, (entry.th32ThreadID == current) ? " <==" : "" );
+            ok = Thread32Next( snap, &entry );
+        }
+        CloseHandle( snap );
+    }
 }
 
 void DEBUG_WalkModref(DWORD p)
