@@ -852,9 +852,9 @@ END:
 /***********************************************************************
  *		UpdateWindow (USER32.@)
  */
-void WINAPI UpdateWindow( HWND hwnd )
+BOOL WINAPI UpdateWindow( HWND hwnd )
 {
-    RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+    return RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
 }
 
 

@@ -4441,7 +4441,7 @@ BOOL      WINAPI UnionRect(LPRECT,const RECT*,const RECT*);
 BOOL      WINAPI UnregisterClassA(LPCSTR,HINSTANCE);
 BOOL      WINAPI UnregisterClassW(LPCWSTR,HINSTANCE);
 #define     UnregisterClass WINELIB_NAME_AW(UnregisterClass)
-VOID        WINAPI UpdateWindow(HWND);
+BOOL        WINAPI UpdateWindow(HWND);
 UINT        WINAPI UserRealizePalette(HDC);
 BOOL        WINAPI ValidateRect(HWND,const RECT*);
 BOOL        WINAPI ValidateRgn(HWND,HRGN);
