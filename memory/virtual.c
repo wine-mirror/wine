@@ -256,7 +256,8 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT offset,
 static void VIRTUAL_DeleteView(
             FILE_VIEW *view /* [in] View */
 ) {
-    FILE_munmap( (void *)view->base, 0, view->size );
+    if (!(view->flags & VFLAG_SYSTEM))
+        FILE_munmap( (void *)view->base, 0, view->size );
     if (view->next) view->next->prev = view->prev;
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
@@ -598,13 +599,13 @@ LPVOID WINAPI VirtualAlloc(
     }
     /* Compute the protection flags */
 
-    if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
-        (type & ~(MEM_COMMIT | MEM_RESERVE)))
+    if (!(type & (MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)) ||
+        (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_SYSTEM)))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
     }
-    if (type & MEM_COMMIT)
+    if (type & (MEM_COMMIT | MEM_SYSTEM))
         vprot = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
     else vprot = 0;
 
@@ -613,8 +614,11 @@ LPVOID WINAPI VirtualAlloc(
     if ((type & MEM_RESERVE) || !base)
     {
         view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
-                                   VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
+        if (type & MEM_SYSTEM)
+             ptr = base;
+        else
+             ptr = (UINT)FILE_dommap( -1, (LPVOID)base, 0, view_size, 0, 0,
+                                       VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
         if (ptr == (UINT)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
@@ -642,7 +646,8 @@ LPVOID WINAPI VirtualAlloc(
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, -1 )))
+        if (!(view = VIRTUAL_CreateView( ptr, size, 0, (type & MEM_SYSTEM) ?
+                                         VFLAG_SYSTEM : 0, vprot, -1 )))
         {
             FILE_munmap( (void *)ptr, 0, size );
             SetLastError( ERROR_OUTOFMEMORY );

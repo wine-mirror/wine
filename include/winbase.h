@@ -909,6 +909,9 @@ typedef DWORD (WINAPI *LPPROGRESS_ROUTINE)(LARGE_INTEGER, LARGE_INTEGER, LARGE_I
 #define MEM_PRIVATE             0x00020000
 #define MEM_MAPPED              0x00040000
 #define MEM_TOP_DOWN            0x00100000
+#ifdef __WINE__
+#define MEM_SYSTEM              0x80000000
+#endif
 
 #define SEC_FILE                0x00800000
 #define SEC_IMAGE               0x01000000
