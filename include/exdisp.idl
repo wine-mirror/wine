@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2001 John R. Sheets (for CodeWeavers)
  * Copyright (C) 2003 Alexandre Julliard
+ * Copuright (C) 2004 Jacek Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,7 @@
 import "ocidl.idl";
 import "docobj.idl";
 
+#include <exdispid.h>
 
 /*****************************************************************************
  * IWebBrowser interface
@@ -155,6 +157,169 @@ interface IWebBrowser2 : IWebBrowserApp
 }
 
 [
+    uuid(eab22ac2-30c1-11CF-a7eb-0000C05bae0b)
+]
+dispinterface DWebBrowserEvents
+{
+    properties:
+    methods:
+    [id(DISPID_BEFORENAVIGATE)]
+    void BeforeNavigate(
+        [in] BSTR URL,
+        [in] long Flags,
+        [in] BSTR TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] BSTR Headers,
+        [in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_NAVIGATECOMPLETE)]
+    void NavigateComplete([in] BSTR URL);
+
+    [id(DISPID_STATUSTEXTCHANGE)]
+    void StatusTextChange([in] BSTR Text);
+
+    [id(DISPID_PROGRESSCHANGE)]
+    void ProgressChange([in] long Progress, [in] long ProgressMax);
+
+    [id(DISPID_DOWNLOADCOMPLETE)]
+    void DownloadComplete();
+
+    [id(DISPID_COMMANDSTATECHANGE)]
+    void CommandStateChange([in] long Command, [in]VARIANT_BOOL Enable);
+
+    [id(DISPID_DOWNLOADBEGIN)]
+    void DownloadBegin();
+
+    [id(DISPID_NEWWINDOW)]
+    void NewWindow(
+        [in] BSTR URL,
+        [in] long Flags,
+        [in] BSTR TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] BSTR Headers,
+        [in,out] VARIANT_BOOL *Processed);
+
+    [id(DISPID_TITLECHANGE)]
+    void TitleChange([in] BSTR Text);
+
+    [id(DISPID_FRAMEBEFORENAVIGATE)]
+    void FrameBeforeNavigate(
+        [in] BSTR URL,
+        [in] long Flags,
+        [in] BSTR TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] BSTR Headers,
+        [in, out]VARIANT_BOOL *Cancel);
+
+    [id(DISPID_FRAMENAVIGATECOMPLETE)]
+    void FrameNavigateComplete([in] BSTR URL);
+
+    [id(DISPID_FRAMENEWWINDOW)]
+    void FrameNewWindow(
+        [in] BSTR URL,
+        [in] long Flags,
+        [in] BSTR TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] BSTR Headers,
+        [in,out] VARIANT_BOOL *Processed);
+
+    [id(DISPID_QUIT)]
+    void Quit([in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_WINDOWMOVE)]
+    void WindowMove();
+
+    [id(DISPID_WINDOWRESIZE)]
+    void WindowResize();
+
+    [id(DISPID_WINDOWACTIVATE)]
+    void WindowActivate();
+
+    [id(DISPID_PROPERTYCHANGE)]
+    void PropertyChange([in] BSTR Property);
+}
+
+[
+    uuid(34a715a0-6587-11d0-924a-0020afc7ac4d)
+]
+dispinterface DWebBrowserEvents2
+{
+    properties:
+    methods:
+    [id(DISPID_STATUSTEXTCHANGE)]
+    void StatusTextChange([in] BSTR Text);
+
+    [id(DISPID_PROGRESSCHANGE)]
+    void ProgressChange([in] long Progress, [in] long ProgressMax);
+
+    [id(DISPID_COMMANDSTATECHANGE)]
+    void CommandStateChange([in] long Command, [in] VARIANT_BOOL Enable);
+
+    [id(DISPID_DOWNLOADBEGIN)]
+    void DownloadBegin();
+
+    [id(DISPID_DOWNLOADCOMPLETE)]
+    void DownloadComplete();
+
+    [id(DISPID_TITLECHANGE)]
+    void TitleChange([in] BSTR szProperty);
+
+    [id(DISPID_PROPERTYCHANGE)]
+    void PropertyChange([in] BSTR szProperty);
+
+    [id(DISPID_BEFORENAVIGATE2)]
+    void BeforeNavigate2(
+        [in] IDispatch *pDisp,
+        [in] VARIANT *URL,
+        [in] VARIANT *Flags,
+        [in] VARIANT *TargetFrameName,
+        [in] VARIANT *PostData,
+        [in] VARIANT *Headers,
+        [in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_NEWWINDOW2)]
+    void NewWindow2([in, out] IDispatch **ppDisp, [in, out] VARIANT_BOOL *Cancel);
+
+    [id(DISPID_NAVIGATECOMPLETE2)]
+    void NavigateComplete2([in] IDispatch *pDisp, [in] VARIANT *URL);
+
+    [id(DISPID_DOCUMENTCOMPLETE)]
+    void DocumentComplete([in] IDispatch *pDisp, [in] VARIANT *URL);
+
+    [id(DISPID_ONQUIT)]
+    void OnQuit();
+
+    [id(DISPID_ONVISIBLE)]
+    void OnVisible([in] VARIANT_BOOL Visible);
+
+    [id(DISPID_ONTOOLBAR)]
+    void OnToolBar([in] VARIANT_BOOL ToolBar);
+
+    [id(DISPID_ONMENUBAR)]
+    void OnMenuBar([in] VARIANT_BOOL MenuBar);
+
+    [id(DISPID_ONSTATUSBAR)]
+    void OnStatusBar([in] VARIANT_BOOL StatusBar);
+
+    [id(DISPID_ONFULLSCREEN)]
+    void OnFullScreen([in] VARIANT_BOOL FullScreen);
+
+    [id(DISPID_ONTHEATERMODE)]
+    void OnTheaterMode([in] VARIANT_BOOL TheaterMode);
+}
+
+[
+    uuid(8856f961-340a-11d0-a96b-00c04fd705a2)
+]
+coclass WebBrowser
+{
+    [default] interface IWebBrowser2;
+    interface IWebBrowser;
+    [default, source] dispinterface DWebBrowserEvents2;
+    [source] dispinterface DWebBrowserEvents;
+}
+
+[
     object,
     oleautomation,
     uuid(85cb6900-4d95-11cf-960c-0080c7f4ee85)
@@ -177,6 +342,3 @@ interface IShellWindows : IDispatch
     HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
     HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
 }
-
-/* FIXME */
-cpp_quote("DEFINE_GUID(CLSID_WebBrowser, 0x8856f961, 0x340a, 0x11d0, 0xa9, 0x6b, 0x00, 0xc0, 0x4f, 0xd7, 0x05, 0xa2);")

@@ -106,6 +106,7 @@ WINDOWS_INCLUDES = \
 	dxfile.h \
 	evcode.h \
 	excpt.h \
+	exdispid.h \
 	fci.h \
 	fdi.h \
 	guiddef.h \
