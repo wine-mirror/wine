@@ -314,3 +314,12 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
 
   return S_OK; /*FIXME: this should be RPC_S_OK */
 }
+
+WINAPI HRESULT NdrDllRegisterProxy(
+  HMODULE hDll,
+  /*const ProxyFileInfo */ void **pProxyFileList,
+  const CLSID *            pclsid
+) {
+  FIXME("(%x,%p,%s), stub!\n",hDll,pProxyFileList,debugstr_guid(pclsid));
+  return S_OK;
+}
