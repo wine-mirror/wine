@@ -20,6 +20,7 @@ C_SRCS = \
 	factory.c \
 	getframe.c \
 	icmstream.c \
+	tmpfile.c \
 	wavfile.c
 
 RC_SRCS = \

@@ -42,6 +42,7 @@ LONG	    VFWAPI  TermVFW(void);
 typedef struct IAVIStream IAVIStream,*PAVISTREAM;
 typedef struct IAVIFile IAVIFile,*PAVIFILE;
 typedef struct IGetFrame IGetFrame,*PGETFRAME;
+typedef struct IAVIEditStream IAVIEditStream, *PAVIEDITSTREAM;
 
 /* Installable Compressor Manager */
 
@@ -743,6 +744,7 @@ typedef WORD TWOCC;
 
 #define ckidAVINEWINDEX         mmioFOURCC('i', 'd', 'x', '1')
 
+#define streamtypeANY           0UL
 #define streamtypeVIDEO         mmioFOURCC('v', 'i', 'd', 's')
 #define streamtypeAUDIO         mmioFOURCC('a', 'u', 'd', 's')
 #define streamtypeMIDI          mmioFOURCC('m', 'i', 'd', 's')
@@ -1042,6 +1044,7 @@ LPVOID  WINAPI AVIStreamGetFrame(PGETFRAME pg,LONG pos);
 HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg);
 
 HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM*ppsCompressed,PAVISTREAM ppsSource,AVICOMPRESSOPTIONS *lpOptions,CLSID*pclsidHandler);
+HRESULT WINAPI AVIMakeFileFromStreams(PAVIFILE *ppfile, int nStreams, PAVISTREAM *ppStreams);
 
 HRESULT WINAPI AVIStreamOpenFromFileA(PAVISTREAM *ppavi, LPCSTR szFile,
 				      DWORD fccType, LONG lParam,
@@ -1058,6 +1061,14 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving);
 BOOL WINAPI AVISaveOptions(HWND hWnd,UINT uFlags,INT nStream,
 			   PAVISTREAM *ppavi,LPAVICOMPRESSOPTIONS *ppOptions);
 HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions);
+
+HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
+			 AVISAVECALLBACK lpfnCallback, int nStream,
+			 PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *plpOptions);
+HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
+			 AVISAVECALLBACK lpfnCallback, int nStream,
+			 PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *plpOptions);
+#define AVISaveV WINELIB_NAME_AW(AVISaveV)
 
 LONG WINAPI AVIStreamStart(PAVISTREAM iface);
 LONG WINAPI AVIStreamLength(PAVISTREAM iface);
@@ -1082,6 +1093,52 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
     AVIStreamTimeToSample(pavi1, AVIStreamSampleToTime(pavi2, samp2))
 #define AVIStreamStartTime(pavi) \
     AVIStreamSampleToTime(pavi, AVIStreamStart(pavi))
+
+/*****************************************************************************
+ * IAVIEditStream interface
+ */
+#define INTERFACE IAVIEditStream
+#define IAVIEditStream_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(Cut)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE; \
+    STDMETHOD(Copy)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE; \
+    STDMETHOD(Paste)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE; \
+    STDMETHOD(Clone)(IAVIEditStream*iface,PAVISTREAM*ppResult) PURE; \
+    STDMETHOD(SetInfo)(IAVIEditStream*iface,LPAVISTREAMINFOW asi, LONG size) PURE;
+ICOM_DEFINE(IAVIEditStream,IUnknown)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+/*** IUnknown methods ***/
+#define IAVIEditStream_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IAVIEditStream_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IAVIEditStream_Release(p)            (p)->lpVtbl->Release(p)
+/*** IAVIEditStream methods ***/
+#define IAVIEditStream_Cut(p,a,b,c)	     (p)->lpVtbl->Cut(p,a,b,c)
+#define IAVIEditStream_Copy(p,a,b,c)	     (p)->lpVtbl->Copy(p,a,b,c)
+#define IAVIEditStream_Paste(p,a,b,c,d,e)    (p)->lpVtbl->Paste(p,a,b,c,d,e)
+#define IAVIEditStream_Clone(p,a)	     (p)->lpVtbl->Clone(p,a)
+#define IAVIEditStream_SetInfo(p,a,b)	     (p)->lpVtbl->SetInfo(p,a,b)
+#endif
+
+HRESULT WINAPI CreateEditableStream(PAVISTREAM *ppEditable,PAVISTREAM pSource);
+HRESULT WINAPI EditStreamClone(PAVISTREAM pStream, PAVISTREAM *ppResult);
+HRESULT WINAPI EditStreamCopy(PAVISTREAM pStream, LONG *plStart,
+			      LONG *plLength, PAVISTREAM *ppResult);
+HRESULT WINAPI EditStreamCut(PAVISTREAM pStream, LONG *plStart,
+			     LONG *plLength, PAVISTREAM *ppResult);
+HRESULT WINAPI EditStreamPaste(PAVISTREAM pDest, LONG *plStart, LONG *plLength,
+			       PAVISTREAM pSource, LONG lStart, LONG lEnd);
+
+HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
+				  LONG size);
+HRESULT WINAPI EditStreamSetInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
+				  LONG size);
+#define EditStreamSetInfo WINELIB_NAME_AW(EditStreamSetInfo)
+
+HRESULT WINAPI EditStreamSetNameA(PAVISTREAM pstream, LPCSTR szName);
+HRESULT WINAPI EditStreamSetNameW(PAVISTREAM pstream, LPCWSTR szName);
+#define EditStreamSetName WINELIB_NAME_AW(EditStreamSetName)
 
 /*****************************************************************************
  * IAVIFile interface
@@ -1158,6 +1215,23 @@ ICOM_DEFINE(IGetFrame,IUnknown)
 #define IGetFrame_Begin(p,a,b,c)           (p)->lpVtbl->Begin(p,a,b,c)
 #define IGetFrame_End(p)                   (p)->lpVtbl->End(p)
 #define IGetFrame_SetFormat(p,a,b,c,d,e,f) (p)->lpVtbl->SetFormat(p,a,b,c,d,e,f)
+#endif
+
+HRESULT WINAPI AVIClearClipboard(void);
+HRESULT WINAPI AVIGetFromClipboard(PAVIFILE *ppfile);
+HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile);
+
+#ifdef _WIN32
+#ifdef OFN_READONLY
+BOOL WINAPI GetOpenFileNamePreviewA(LPOPENFILENAMEA lpofn);
+BOOL WINAPI GetOpenFileNamePreviewW(LPOPENFILENAMEW lpofn);
+#define GetOpenFileNamePreview WINELIB_NAME_AW(GetOpenFileNamePreview)
+
+BOOL WINAPI GetSaveFileNamePreviewA(LPOPENFILENAMEA lpofn);
+BOOL WINAPI GetSaveFileNamePreviewW(LPOPENFILENAMEW lpofn);
+#define GetSaveFileNamePreview WINELIB_NAME_AW(GetSaveFileNamePreview)
+
+#endif
 #endif
 
 #define AVIERR_OK		0

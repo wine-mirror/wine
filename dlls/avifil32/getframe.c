@@ -71,9 +71,9 @@ typedef struct _IGetFrameImpl {
   PAVISTREAM         pStream;
 
   LPVOID             lpInBuffer;
-  DWORD              cbInBuffer;
+  LONG               cbInBuffer;
   LPBITMAPINFOHEADER lpInFormat;
-  DWORD              cbInFormat;
+  LONG               cbInFormat;
 
   LONG               lCurrentFrame;
   LPBITMAPINFOHEADER lpOutFormat;
@@ -341,7 +341,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
   if (This->lpInFormat == NULL) {
     HRESULT hr;
 
-    This->cbInBuffer = sInfo.dwSuggestedBufferSize;
+    This->cbInBuffer = (LONG)sInfo.dwSuggestedBufferSize;
     if (This->cbInBuffer == 0)
       This->cbInBuffer = 1024;
 

@@ -298,9 +298,9 @@ static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,
       MulDiv(This->sInfo.dwSampleSize,This->sInfo.dwRate,This->sInfo.dwScale);
   }
 
-  memcpy(afi, &This->fInfo, min(size, sizeof(This->fInfo)));
+  memcpy(afi, &This->fInfo, min((DWORD)size, sizeof(This->fInfo)));
 
-  if (size < sizeof(This->fInfo))
+  if ((DWORD)size < sizeof(This->fInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -667,9 +667,9 @@ static HRESULT WINAPI IAVIStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
   if (size < 0)
     return AVIERR_BADSIZE;
 
-  memcpy(psi, &This->paf->sInfo, min(size, sizeof(This->paf->sInfo)));
+  memcpy(psi, &This->paf->sInfo, min((DWORD)size, sizeof(This->paf->sInfo)));
 
-  if (size < sizeof(This->paf->sInfo))
+  if ((DWORD)size < sizeof(This->paf->sInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -810,7 +810,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     *samplesread = 0;
 
   /* positions without data */
-  if (start < 0 || start > This->sInfo.dwLength)
+  if (start < 0 || (DWORD)start > This->sInfo.dwLength)
     return AVIERR_OK;
 
   /* check samples */
@@ -818,13 +818,13 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     samples = 0;
   if (buffersize > 0) {
     if (samples > 0)
-      samples = min(samples, buffersize / This->sInfo.dwSampleSize);
+      samples = min((DWORD)samples, buffersize / This->sInfo.dwSampleSize);
     else
       samples = buffersize / This->sInfo.dwSampleSize;
   }
 
   /* limit to end of stream */
-  if (start + samples > This->sInfo.dwLength)
+  if ((DWORD)(start + samples) > This->sInfo.dwLength)
     samples = This->sInfo.dwLength - start;
 
   /* request only the sizes? */
@@ -846,7 +846,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     return AVIERR_OK;
 
   /* Can I atleast read one sample? */
-  if (buffersize < This->sInfo.dwSampleSize)
+  if ((DWORD)buffersize < This->sInfo.dwSampleSize)
     return AVIERR_BUFFERTOOSMALL;
 
   buffersize = samples * This->sInfo.dwSampleSize;
@@ -909,7 +909,7 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
     if (mmioWrite(This->hmmio, (HPSTR)buffer, buffersize) != buffersize)
       return AVIERR_FILEWRITE;
 
-    This->sInfo.dwLength = max(This->sInfo.dwLength, start + samples);
+    This->sInfo.dwLength = max(This->sInfo.dwLength, (DWORD)start + samples);
     This->ckData.cksize  = max(This->ckData.cksize,
 			       start * This->sInfo.dwSampleSize + buffersize);
 
@@ -935,23 +935,23 @@ static HRESULT WINAPI IAVIStream_fnDelete(IAVIStream *iface, LONG start,
     return AVIERR_BADPARAM;
 
   /* Delete before start of stream? */
-  if (start + samples < This->sInfo.dwStart)
+  if ((DWORD)(start + samples) < This->sInfo.dwStart)
     return AVIERR_OK;
 
   /* Delete after end of stream? */
-  if (start > This->sInfo.dwLength)
+  if ((DWORD)start > This->sInfo.dwLength)
     return AVIERR_OK;
 
   /* For the rest we need write permissions */
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
 
-  if (start + samples >= This->sInfo.dwLength) {
+  if ((DWORD)(start + samples) >= This->sInfo.dwLength) {
     /* deletion at end */
     samples = This->sInfo.dwLength - start;
     This->sInfo.dwLength -= samples;
     This->ckData.cksize  -= samples * This->sInfo.dwSampleSize;
-  } else if (start <= This->sInfo.dwStart) {
+  } else if ((DWORD)start <= This->sInfo.dwStart) {
     /* deletion at start */
     samples = This->sInfo.dwStart - start;
     start   = This->sInfo.dwStart;

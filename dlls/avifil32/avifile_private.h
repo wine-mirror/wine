@@ -20,7 +20,7 @@
 #define __AVIFILE_PRIVATE_H
 
 #ifndef MAX_AVISTREAMS
-#define MAX_AVISTREAMS 4
+#define MAX_AVISTREAMS 8
 #endif
 
 #ifndef comptypeDIB
@@ -65,6 +65,7 @@ extern HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateACMStream(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppobj);
 extern PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pstream);
+extern PAVIFILE  AVIFILE_CreateAVITempFile(int nStreams,PAVISTREAM *ppStreams);
 
 extern LPCWSTR  AVIFILE_BasenameW(LPCWSTR szFileName);
 

@@ -329,9 +329,9 @@ static HRESULT WINAPI ICMStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
   if (size < 0)
     return AVIERR_BADSIZE;
 
-  memcpy(psi, &This->sInfo, min(size, sizeof(This->sInfo)));
+  memcpy(psi, &This->sInfo, min((DWORD)size, sizeof(This->sInfo)));
 
-  if (size < sizeof(This->sInfo))
+  if ((DWORD)size < sizeof(This->sInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -885,7 +885,7 @@ static HRESULT AVIFILE_EncodeFrame(IAVIStreamImpl *This,
 static HRESULT AVIFILE_OpenGetFrame(IAVIStreamImpl *This)
 {
   LPBITMAPINFOHEADER lpbi;
-  LONG               size;
+  DWORD              size;
 
   /* pre-conditions */
   assert(This != NULL);
@@ -910,7 +910,7 @@ static HRESULT AVIFILE_OpenGetFrame(IAVIStreamImpl *This)
 
   /* get memory for output format */
   size = ICCompressGetFormatSize(This->hic, lpbi);
-  if (size < sizeof(BITMAPINFOHEADER))
+  if ((LONG)size < (LONG)sizeof(BITMAPINFOHEADER))
     return AVIERR_COMPRESSOR;
   This->lpbiOutput = (LPBITMAPINFOHEADER)GlobalAllocPtr(GHND, size);
   if (This->lpbiOutput == NULL)

@@ -33,7 +33,7 @@ HRESULT ReadExtraChunk(LPEXTRACHUNKS extra,FOURCC ckid,LPVOID lpData,
 		       LPLONG size)
 {
   LPBYTE lp;
-  LONG   cb;
+  DWORD  cb;
 
   /* pre-conditions */
   assert(extra != NULL);
@@ -47,9 +47,10 @@ HRESULT ReadExtraChunk(LPEXTRACHUNKS extra,FOURCC ckid,LPVOID lpData,
       if (((FOURCC*)lp)[0] == ckid) {
 	/* found correct chunk */
 	if (lpData != NULL && *size > 0)
-	  memcpy(lpData, lp + 2 * sizeof(DWORD), min(((LPDWORD)lp)[1],*size));
+	  memcpy(lpData, lp + 2 * sizeof(DWORD),
+		 min(((LPDWORD)lp)[1], *(LPDWORD)size));
 
-	*size = ((LPDWORD)lp)[1];
+	*(LPDWORD)size = ((LPDWORD)lp)[1];
 
 	return AVIERR_OK;
       } else {
@@ -103,7 +104,7 @@ HRESULT WriteExtraChunk(LPEXTRACHUNKS extra,FOURCC ckid,LPVOID lpData,
 HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
 {
   LPDWORD lp;
-  LONG    cb;
+  DWORD   cb;
 
   /* pre-conditions */
   assert(extra != NULL);
@@ -132,7 +133,7 @@ HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
   if (lpck->cksize > 0) {
     if (mmioSeek(hmmio, lpck->dwDataOffset, SEEK_SET) == -1)
       return AVIERR_FILEREAD;
-    if (mmioRead(hmmio, (HPSTR)&lp[2], lpck->cksize) != lpck->cksize)
+    if (mmioRead(hmmio, (HPSTR)&lp[2], lpck->cksize) != (LONG)lpck->cksize)
       return AVIERR_FILEREAD;
   }
 

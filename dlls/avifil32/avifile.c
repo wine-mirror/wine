@@ -344,9 +344,9 @@ static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, LPAVIFILEINFOW afi,
 
   AVIFILE_UpdateInfo(This);
 
-  memcpy(afi, &This->fInfo, min(size, sizeof(This->fInfo)));
+  memcpy(afi, &This->fInfo, min((DWORD)size, sizeof(This->fInfo)));
 
-  if (size < sizeof(This->fInfo))
+  if ((DWORD)size < sizeof(This->fInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -735,9 +735,9 @@ static HRESULT WINAPI IAVIStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
   if (size < 0)
     return AVIERR_BADSIZE;
 
-  memcpy(psi, &This->sInfo, min(size, sizeof(This->sInfo)));
+  memcpy(psi, &This->sInfo, min((DWORD)size, sizeof(This->sInfo)));
 
-  if (size < sizeof(This->sInfo))
+  if ((DWORD)size < sizeof(This->sInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -786,19 +786,21 @@ static LONG WINAPI IAVIStream_fnFindSample(IAVIStream *iface, LONG pos,
       };
     } else if ((flags & FIND_FORMAT) && This->idxFmtChanges != NULL &&
 	       This->sInfo.fccType == streamtypeVIDEO) {
-      UINT n;
-
       if (flags & FIND_NEXT) {
+	ULONG n;
+
 	for (n = 0; n < This->sInfo.dwFormatChangeCount; n++)
 	  if (This->idxFmtChanges[n].ckid >= pos)
 	    goto RETURN_FOUND;
       } else {
-	for (n = This->sInfo.dwFormatChangeCount; n >= 0; n--) {
+	LONG n;
+
+	for (n = (LONG)This->sInfo.dwFormatChangeCount; n >= 0; n--) {
 	  if (This->idxFmtChanges[n].ckid <= pos)
 	    goto RETURN_FOUND;
 	}
 
-	if (pos > This->sInfo.dwStart)
+	if (pos > (LONG)This->sInfo.dwStart)
 	  return 0; /* format changes always for first frame */
       }
     }
@@ -850,8 +852,8 @@ static HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream *iface, LONG pos,
   }
 
   /* copy initial format (only as much as will fit) */
-  memcpy(format, This->lpFormat, min(*formatsize, This->cbFormat));
-  if (*formatsize < This->cbFormat) {
+  memcpy(format, This->lpFormat, min(*(DWORD*)formatsize, This->cbFormat));
+  if (*(DWORD*)formatsize < This->cbFormat) {
     *formatsize = This->cbFormat;
     return AVIERR_BUFFERTOOSMALL;
   }
@@ -999,9 +1001,9 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
     *samplesread = 0;
 
   /* check parameters */
-  if (This->sInfo.dwStart > start)
+  if ((LONG)This->sInfo.dwStart > start)
     return AVIERR_NODATA; /* couldn't read before start of stream */
-  if (This->sInfo.dwStart + This->sInfo.dwLength < start)
+  if (This->sInfo.dwStart + This->sInfo.dwLength < (DWORD)start)
     return AVIERR_NODATA; /* start is past end of stream */
 
   /* should we read as much as possible? */
@@ -1017,7 +1019,7 @@ static HRESULT WINAPI IAVIStream_fnRead(IAVIStream *iface, LONG start,
   }
 
   /* limit to end of stream */
-  if (This->sInfo.dwLength < samples)
+  if ((LONG)This->sInfo.dwLength < samples)
     samples = This->sInfo.dwLength;
   if ((start - This->sInfo.dwStart) > (This->sInfo.dwLength - samples))
     samples = This->sInfo.dwLength - (start - This->sInfo.dwStart);
@@ -1392,11 +1394,11 @@ static DWORD   AVIFILE_ComputeMoviStart(IAVIFileImpl *This)
 
     /* strl,strh,strf => (3 + 2 * 2) * sizeof(DWORD) = 7 * sizeof(DWORD) */
     dwPos += 7 * sizeof(DWORD) + sizeof(AVIStreamHeader);
-    dwPos += ((pStream->cbFormat + 1) & ~1);
+    dwPos += ((pStream->cbFormat + 1) & ~1U);
     if (pStream->lpHandlerData != NULL && pStream->cbHandlerData > 0)
-      dwPos += 2 * sizeof(DWORD) + ((pStream->cbHandlerData + 1) & ~1);
+      dwPos += 2 * sizeof(DWORD) + ((pStream->cbHandlerData + 1) & ~1U);
     if (lstrlenW(pStream->sInfo.szName) > 0)
-      dwPos += 2 * sizeof(DWORD) + ((lstrlenW(pStream->sInfo.szName) + 1) & ~1);
+      dwPos += 2 * sizeof(DWORD) + ((lstrlenW(pStream->sInfo.szName) + 1) & ~1U);
   }
 
   if (This->dwMoviChunkPos == 0) {
@@ -1427,7 +1429,7 @@ static void    AVIFILE_ConstructAVIStream(IAVIFileImpl *paf, DWORD nr, LPAVISTRE
   pstream->ref            = 0;
   pstream->paf            = paf;
   pstream->nStream        = nr;
-  pstream->dwCurrentFrame = -1;
+  pstream->dwCurrentFrame = (DWORD)-1;
   pstream->lLastFrame    = -1;
 
   if (asi != NULL) {
@@ -1465,7 +1467,7 @@ static void    AVIFILE_DestructAVIStream(IAVIStreamImpl *This)
   /* pre-conditions */
   assert(This != NULL);
 
-  This->dwCurrentFrame = -1;
+  This->dwCurrentFrame = (DWORD)-1;
   This->lLastFrame    = -1;
   This->paf = NULL;
   if (This->idxFrames != NULL) {
@@ -1541,6 +1543,12 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   }
   if (mmioRead(This->hmmio, (HPSTR)&MainAVIHdr, ck.cksize) != ck.cksize)
     return AVIERR_FILEREAD;
+
+  /* check for MAX_AVISTREAMS limit */
+  if (MainAVIHdr.dwStreams > MAX_AVISTREAMS) {
+    WARN("file contains %lu streams, but only supports %d -- change MAX_AVISTREAMS!\n", MainAVIHdr.dwStreams, MAX_AVISTREAMS);
+    return AVIERR_UNSUPPORTED;
+  }
 
   /* adjust permissions if copyrighted material in file */
   if (MainAVIHdr.dwFlags & AVIFILEINFO_COPYRIGHTED) {

@@ -279,9 +279,9 @@ static HRESULT WINAPI ACMStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
       return hr;
   }
 
-  memcpy(psi, &This->sInfo, min(size, sizeof(This->sInfo)));
+  memcpy(psi, &This->sInfo, min(size, (LONG)sizeof(This->sInfo)));
 
-  if (size < sizeof(This->sInfo))
+  if (size < (LONG)sizeof(This->sInfo))
     return AVIERR_BUFFERTOOSMALL;
   return AVIERR_OK;
 }
@@ -402,7 +402,7 @@ static HRESULT WINAPI ACMStream_fnRead(IAVIStream *iface, LONG start,
   ICOM_THIS(IAVIStreamImpl,iface);
 
   HRESULT hr;
-  LONG    size;
+  DWORD   size;
 
   TRACE("(%p,%ld,%ld,%p,%ld,%p,%p)\n", iface, start, samples, buffer,
  	buffersize, bytesread, samplesread);
@@ -618,11 +618,11 @@ static HRESULT WINAPI ACMStream_fnDelete(IAVIStream *iface, LONG start,
     return AVIERR_BADPARAM;
 
   /* Delete before start of stream? */
-  if (start + samples < This->sInfo.dwStart)
+  if ((DWORD)(start + samples) < This->sInfo.dwStart)
     return AVIERR_OK;
 
   /* Delete after end of stream? */
-  if (start > This->sInfo.dwLength)
+  if ((DWORD)start > This->sInfo.dwLength)
     return AVIERR_OK;
 
   /* For the rest we need write capability */
@@ -722,7 +722,7 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
   This->sInfo.dwSampleSize = This->lpOutFormat->nBlockAlign;
   This->sInfo.dwScale      = This->lpOutFormat->nBlockAlign;
   This->sInfo.dwRate       = This->lpOutFormat->nAvgBytesPerSec;
-  This->sInfo.dwQuality    = ICQUALITY_DEFAULT;
+  This->sInfo.dwQuality    = (DWORD)ICQUALITY_DEFAULT;
   SetRectEmpty(&This->sInfo.rcFrame);
 
   /* convert positions ansd sizes to output format */

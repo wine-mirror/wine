@@ -71,13 +71,13 @@ static struct {
  */
 static HRESULT AVIFILE_CLSIDFromString(LPCSTR idstr, LPCLSID id)
 {
-  BYTE *s = (BYTE*)idstr;
+  BYTE const *s = (BYTE const*)idstr;
   BYTE *p;
   INT   i;
   BYTE table[256];
 
   if (!s) {
-    memset(s, 0, sizeof(CLSID));
+    memset(id, 0, sizeof(CLSID));
     return S_OK;
   } else {  /* validate the CLSID string */
     if (lstrlenA(s) != 38)
@@ -321,7 +321,7 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE pfile, LPAVIFILEINFOA afi, LONG size)
 
   if (pfile == NULL)
     return AVIERR_BADHANDLE;
-  if (size < sizeof(AVIFILEINFOA))
+  if ((DWORD)size < sizeof(AVIFILEINFOA))
     return AVIERR_BADSIZE;
 
   hres = IAVIFile_Info(pfile, &afiw, sizeof(afiw));
@@ -364,6 +364,7 @@ HRESULT WINAPI AVIFileGetStream(PAVIFILE pfile, PAVISTREAM *avis,
 
 /***********************************************************************
  *		AVIFileCreateStreamA	(AVIFIL32.@)
+ *              AVIFileCreateStream	(AVIFILE.144)
  */
 HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE pfile, PAVISTREAM *ppavi,
 				    LPAVISTREAMINFOA psi)
@@ -396,6 +397,7 @@ HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile, PAVISTREAM *avis,
 
 /***********************************************************************
  *		AVIFileWriteData	(AVIFIL32.@)
+ *		AVIFileWriteData	(AVIFILE.146)
  */
 HRESULT WINAPI AVIFileWriteData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LONG size)
 {
@@ -409,6 +411,7 @@ HRESULT WINAPI AVIFileWriteData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LONG size)
 
 /***********************************************************************
  *		AVIFileReadData		(AVIFIL32.@)
+ *		AVIFileReadData		(AVIFILE.147)
  */
 HRESULT WINAPI AVIFileReadData(PAVIFILE pfile,DWORD fcc,LPVOID lp,LPLONG size)
 {
@@ -501,6 +504,7 @@ HRESULT WINAPI AVIStreamCreate(PAVISTREAM *ppavi, LONG lParam1, LONG lParam2,
 
 /***********************************************************************
  *		AVIStreamInfoA		(AVIFIL32.@)
+ *		AVIStreamInfo		(AVIFILE.162)
  */
 HRESULT WINAPI AVIStreamInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 			      LONG size)
@@ -512,7 +516,7 @@ HRESULT WINAPI AVIStreamInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
 
   if (pstream == NULL)
     return AVIERR_BADHANDLE;
-  if (size < sizeof(AVISTREAMINFOA))
+  if ((DWORD)size < sizeof(AVISTREAMINFOA))
     return AVIERR_BADSIZE;
 
   hres = IAVIStream_Info(pstream, &asiw, sizeof(asiw));
@@ -541,6 +545,7 @@ HRESULT WINAPI AVIStreamInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
 
 /***********************************************************************
  *		AVIStreamFindSample	(AVIFIL32.@)
+ *		AVIStreamFindSample	(AVIFILE.163)
  */
 HRESULT WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, DWORD flags)
 {
@@ -554,6 +559,7 @@ HRESULT WINAPI AVIStreamFindSample(PAVISTREAM pstream, LONG pos, DWORD flags)
 
 /***********************************************************************
  *		AVIStreamReadFormat	(AVIFIL32.@)
+ *		AVIStreamReadFormat	(AVIFILE.164)
  */
 HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM pstream, LONG pos,
 				   LPVOID format, LPLONG formatsize)
@@ -568,6 +574,7 @@ HRESULT WINAPI AVIStreamReadFormat(PAVISTREAM pstream, LONG pos,
 
 /***********************************************************************
  *		AVIStreamSetFormat	(AVIFIL32.@)
+ *		AVIStreamSetFormat	(AVIFILE.169)
  */
 HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM pstream, LONG pos,
 				  LPVOID format, LONG formatsize)
@@ -582,6 +589,7 @@ HRESULT WINAPI AVIStreamSetFormat(PAVISTREAM pstream, LONG pos,
 
 /***********************************************************************
  *		AVIStreamRead		(AVIFIL32.@)
+ *		AVIStreamRead		(AVIFILE.167)
  */
 HRESULT WINAPI AVIStreamRead(PAVISTREAM pstream, LONG start, LONG samples,
 			     LPVOID buffer, LONG buffersize,
@@ -599,6 +607,7 @@ HRESULT WINAPI AVIStreamRead(PAVISTREAM pstream, LONG start, LONG samples,
 
 /***********************************************************************
  *		AVIStreamWrite		(AVIFIL32.@)
+ *		AVIStreamWrite		(AVIFILE.168)
  */
 HRESULT WINAPI AVIStreamWrite(PAVISTREAM pstream, LONG start, LONG samples,
 			      LPVOID buffer, LONG buffersize, DWORD flags,
@@ -616,6 +625,7 @@ HRESULT WINAPI AVIStreamWrite(PAVISTREAM pstream, LONG start, LONG samples,
 
 /***********************************************************************
  *		AVIStreamReadData	(AVIFIL32.@)
+ *		AVIStreamReadData	(AVIFILE.165)
  */
 HRESULT WINAPI AVIStreamReadData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 				 LPLONG lpread)
@@ -630,6 +640,7 @@ HRESULT WINAPI AVIStreamReadData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 
 /***********************************************************************
  *		AVIStreamWriteData	(AVIFIL32.@)
+ *		AVIStreamWriteData	(AVIFILE.166)
  */
 HRESULT WINAPI AVIStreamWriteData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 				  LONG size)
@@ -644,6 +655,7 @@ HRESULT WINAPI AVIStreamWriteData(PAVISTREAM pstream, DWORD fcc, LPVOID lp,
 
 /***********************************************************************
  *		AVIStreamGetFrameOpen	(AVIFIL32.@)
+ *		AVIStreamGetFrameOpen	(AVIFILE.112)
  */
 PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pstream,
 				       LPBITMAPINFOHEADER lpbiWanted)
@@ -669,6 +681,7 @@ PGETFRAME WINAPI AVIStreamGetFrameOpen(PAVISTREAM pstream,
 
 /***********************************************************************
  *		AVIStreamGetFrame	(AVIFIL32.@)
+ *		AVIStreamGetFrame	(AVIFILE.110)
  */
 LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg, LONG pos)
 {
@@ -681,7 +694,8 @@ LPVOID WINAPI AVIStreamGetFrame(PGETFRAME pg, LONG pos)
 }
 
 /***********************************************************************
- *		AVIStreamGetFrameClose (AVIFIL32.@)
+ *		AVIStreamGetFrameClose	(AVIFIL32.@)
+ *		AVIStreamGetFrameClose	(AVIFILE.111)
  */
 HRESULT WINAPI AVIStreamGetFrameClose(PGETFRAME pg)
 {
@@ -743,6 +757,24 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,
   }
 
   return hr;
+}
+
+/***********************************************************************
+ *		AVIMakeFileFromStreams	(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIMakeFileFromStreams(PAVIFILE *ppfile, int nStreams,
+				      PAVISTREAM *ppStreams)
+{
+  TRACE("(%p,%d,%p)\n", ppfile, nStreams, ppStreams);
+
+  if (nStreams < 0 || ppfile == NULL || ppStreams == NULL)
+    return AVIERR_BADPARAM;
+
+  *ppfile = AVIFILE_CreateAVITempFile(nStreams, ppStreams);
+  if (*ppfile == NULL)
+    return AVIERR_MEMORY;
+
+  return AVIERR_OK;
 }
 
 /***********************************************************************
@@ -884,6 +916,7 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime)
 
 /***********************************************************************
  *		AVIBuildFilterA		(AVIFIL32.@)
+ *		AVIBuildFilter		(AVIFILE.123)
  */
 HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
 {
@@ -931,9 +964,9 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
   WCHAR      szFileExt[10];
   WCHAR      szValue[128];
   HKEY       hKey;
-  LONG       n, i;
+  DWORD      n, i;
   LONG       size;
-  LONG       count = 0;
+  DWORD      count = 0;
 
   TRACE("(%p,%ld,%d)\n", szFilter, cbFilter, fSaving);
 
@@ -972,7 +1005,7 @@ HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving)
 	break; /* a new one */
     }
 
-    if (count - i == -1) {
+    if (count - i == -1U) {
       /* it's a new CLSID */
 
       /* FIXME: How do we get info's about read/write capabilities? */
@@ -1094,7 +1127,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
       memset(pOptions, 0, sizeof(AVICOMPRESSOPTIONS));
       pOptions->fccType    = streamtypeVIDEO;
       pOptions->fccHandler = comptypeDIB;
-      pOptions->dwQuality  = ICQUALITY_DEFAULT;
+      pOptions->dwQuality  = (DWORD)ICQUALITY_DEFAULT;
     }
 
     cv.cbSize     = sizeof(cv);
@@ -1117,6 +1150,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
 			     SaveOpts.ppavis[SaveOpts.nCurrent], &cv, NULL);
 
     if (ret) {
+      pOptions->fccHandler = cv.fccHandler;
       pOptions->lpParms   = cv.lpState;
       pOptions->cbParms   = cv.cbState;
       pOptions->dwQuality = cv.lQ;
@@ -1151,7 +1185,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
     if ((pOptions->cbFormat == 0 || pOptions->lpFormat == NULL) && size != 0) {
       pOptions->lpFormat = GlobalAllocPtr(GMEM_MOVEABLE, size);
       pOptions->cbFormat = size;
-    } else if (pOptions->cbFormat < size) {
+    } else if (pOptions->cbFormat < (DWORD)size) {
       pOptions->lpFormat = GlobalReAllocPtr(pOptions->lpFormat, size, GMEM_MOVEABLE);
       pOptions->cbFormat = size;
     }
@@ -1163,7 +1197,7 @@ static BOOL AVISaveOptionsFmtChoose(HWND hWnd)
     size = 0;
     AVIStreamFormatSize(SaveOpts.ppavis[SaveOpts.nCurrent],
 			sInfo.dwStart, &size);
-    if (size < sizeof(PCMWAVEFORMAT))
+    if (size < (LONG)sizeof(PCMWAVEFORMAT))
       size = sizeof(PCMWAVEFORMAT);
     afmtc.pwfxEnum = GlobalAllocPtr(GHND, size);
     if (afmtc.pwfxEnum != NULL) {
@@ -1287,7 +1321,7 @@ INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
     SaveOpts.nCurrent = 0;
     if (SaveOpts.nStreams == 1) {
       EndDialog(hWnd, AVISaveOptionsFmtChoose(hWnd));
-      return FALSE;
+      return TRUE;
     }
 
     /* add streams */
@@ -1318,7 +1352,7 @@ INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
     EnableWindow(GetDlgItem(hWnd, IDC_INTERLEAVEEVERY), bIsInterleaved);
     break;
   case WM_COMMAND:
-    switch (GET_WM_COMMAND_CMD(wParam, lParam)) {
+    switch (GET_WM_COMMAND_ID(wParam, lParam)) {
     case IDOK:
       /* get data from controls and save them */
       dwInterleave   = GetDlgItemInt(hWnd, IDC_INTERLEAVEEVERY, NULL, 0);
@@ -1350,10 +1384,10 @@ INT_PTR CALLBACK AVISaveOptionsDlgProc(HWND hWnd, UINT uMsg,
       AVISaveOptionsFmtChoose(hWnd);
       break;
     };
-    return FALSE;
+    return TRUE;
   };
 
-  return TRUE;
+  return FALSE;
 }
 
 /***********************************************************************
@@ -1409,6 +1443,7 @@ BOOL WINAPI AVISaveOptions(HWND hWnd, UINT uFlags, INT nStreams,
 
 /***********************************************************************
  *		AVISaveOptionsFree	(AVIFIL32.@)
+ *		AVISaveOptionsFree	(AVIFILE.124)
  */
 HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions)
 {
@@ -1435,4 +1470,317 @@ HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions)
   }
 
   return AVIERR_OK;
+}
+
+/***********************************************************************
+ *		AVISaveVA		(AVIFIL32.@)
+ */
+HRESULT WINAPI AVISaveVA(LPCSTR szFile, CLSID *pclsidHandler,
+			 AVISAVECALLBACK lpfnCallback, int nStream,
+			 PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *plpOptions)
+{
+  LPWSTR  wszFile = NULL;
+  HRESULT hr;
+  int     len;
+
+  TRACE("%s,%p,%p,%d,%p,%p)\n", debugstr_a(szFile), pclsidHandler,
+	lpfnCallback, nStream, ppavi, plpOptions);
+
+  if (szFile == NULL || ppavi == NULL || plpOptions == NULL)
+    return AVIERR_BADPARAM;
+
+  /* convert ASCII string to Unicode and call Unicode function */
+  len = lstrlenA(szFile);
+  if (len <= 0)
+    return AVIERR_BADPARAM;
+
+  wszFile = (LPWSTR)LocalAlloc(LPTR, (len + 1) * sizeof(WCHAR));
+  if (wszFile == NULL)
+    return AVIERR_MEMORY;
+
+  MultiByteToWideChar(CP_ACP, 0, szFile, -1, wszFile, len + 1);
+  wszFile[len + 1] = 0;
+
+  hr = AVISaveVW(wszFile, pclsidHandler, lpfnCallback,
+		 nStream, ppavi, plpOptions);
+
+  LocalFree((HLOCAL)wszFile);
+
+  return hr;
+}
+
+/***********************************************************************
+ *		AVISaveVW		(AVIFIL32.@)
+ */
+HRESULT WINAPI AVISaveVW(LPCWSTR szFile, CLSID *pclsidHandler,
+			 AVISAVECALLBACK lpfnCallback, int nStream,
+			 PAVISTREAM *ppavi, LPAVICOMPRESSOPTIONS *plpOptions)
+{
+  FIXME("(%s,%p,%p,%d,%p,%p), stub!\n", debugstr_w(szFile), pclsidHandler,
+	lpfnCallback, nStream, ppavi, plpOptions);
+
+  if (szFile == NULL || ppavi == NULL || plpOptions == NULL)
+    return AVIERR_BADPARAM;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
+ *		CreateEditableStream	(AVIFIL32.@)
+ */
+HRESULT WINAPI CreateEditableStream(PAVISTREAM *ppEditable, PAVISTREAM pSource)
+{
+  FIXME("(%p,%p), stub!\n", ppEditable, pSource);
+
+  if (pSource == NULL)
+    return AVIERR_BADHANDLE;
+  if (ppEditable == NULL)
+    return AVIERR_BADPARAM;
+
+  *ppEditable = NULL;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
+ *		EditStreamClone		(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamClone(PAVISTREAM pStream, PAVISTREAM *ppResult)
+{
+  PAVIEDITSTREAM pEdit = NULL;
+  HRESULT        hr;
+
+  TRACE("(%p,%p)\n", pStream, ppResult);
+
+  if (pStream == NULL)
+    return AVIERR_BADHANDLE;
+  if (ppResult == NULL)
+    return AVIERR_BADPARAM;
+
+  *ppResult = NULL;
+
+  hr = IAVIStream_QueryInterface(pStream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
+  if (SUCCEEDED(hr) && pEdit != NULL) {
+    hr = IAVIEditStream_Clone(pEdit, ppResult);
+
+    IAVIEditStream_Release(pEdit);
+  } else
+    hr = AVIERR_UNSUPPORTED;
+
+  return hr;
+}
+
+/***********************************************************************
+ *		EditStreamCopy		(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamCopy(PAVISTREAM pStream, LONG *plStart,
+			      LONG *plLength, PAVISTREAM *ppResult)
+{
+  PAVIEDITSTREAM pEdit = NULL;
+  HRESULT        hr;
+
+  TRACE("(%p,%p,%p,%p)\n", pStream, plStart, plLength, ppResult);
+
+  if (pStream == NULL)
+    return AVIERR_BADHANDLE;
+  if (plStart == NULL || plLength == NULL || ppResult == NULL)
+    return AVIERR_BADPARAM;
+
+  *ppResult = NULL;
+
+  hr = IAVIStream_QueryInterface(pStream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
+  if (SUCCEEDED(hr) && pEdit != NULL) {
+    hr = IAVIEditStream_Copy(pEdit, plStart, plLength, ppResult);
+
+    IAVIEditStream_Release(pEdit);
+  } else
+    hr = AVIERR_UNSUPPORTED;
+
+  return hr;
+}
+
+/***********************************************************************
+ *		EditStreamCut		(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamCut(PAVISTREAM pStream, LONG *plStart,
+			     LONG *plLength, PAVISTREAM *ppResult)
+{
+  PAVIEDITSTREAM pEdit = NULL;
+  HRESULT        hr;
+
+  TRACE("(%p,%p,%p,%p)\n", pStream, plStart, plLength, ppResult);
+
+  if (pStream == NULL)
+    return AVIERR_BADHANDLE;
+  if (plStart == NULL || plLength == NULL || ppResult == NULL)
+    return AVIERR_BADPARAM;
+
+  *ppResult = NULL;
+
+  hr = IAVIStream_QueryInterface(pStream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
+  if (SUCCEEDED(hr) && pEdit != NULL) {
+    hr = IAVIEditStream_Cut(pEdit, plStart, plLength, ppResult);
+
+    IAVIEditStream_Release(pEdit);
+  } else
+    hr = AVIERR_UNSUPPORTED;
+
+  return hr;
+}
+
+/***********************************************************************
+ *		EditStreamPaste		(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamPaste(PAVISTREAM pDest, LONG *plStart, LONG *plLength,
+			       PAVISTREAM pSource, LONG lStart, LONG lEnd)
+{
+  PAVIEDITSTREAM pEdit = NULL;
+  HRESULT        hr;
+
+  TRACE("(%p,%p,%p,%p,%ld,%ld)\n", pDest, plStart, plLength,
+	pSource, lStart, lEnd);
+
+  if (pDest == NULL || pSource == NULL)
+    return AVIERR_BADHANDLE;
+  if (plStart == NULL || plLength == NULL || lStart < 0)
+    return AVIERR_BADPARAM;
+
+  hr = IAVIStream_QueryInterface(pDest, &IID_IAVIEditStream,(LPVOID*)&pEdit);
+  if (SUCCEEDED(hr) && pEdit != NULL) {
+    hr = IAVIEditStream_Paste(pEdit, plStart, plLength, pSource, lStart, lEnd);
+
+    IAVIEditStream_Release(pEdit);
+  } else
+    hr = AVIERR_UNSUPPORTED;
+
+  return hr;
+}
+
+/***********************************************************************
+ *		EditStreamSetInfoA	(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
+				  LONG size)
+{
+  AVISTREAMINFOW asiw;
+
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
+
+  if (pstream == NULL)
+    return AVIERR_BADHANDLE;
+  if ((DWORD)size < sizeof(AVISTREAMINFOA))
+    return AVIERR_BADSIZE;
+
+  memcpy(&asiw, asi, sizeof(asi) - sizeof(asi->szName));
+  MultiByteToWideChar(CP_ACP, 0, asi->szName, -1,
+		      asiw.szName, sizeof(asiw.szName));
+
+  return EditStreamSetInfoW(pstream, &asiw, sizeof(asiw));
+}
+
+/***********************************************************************
+ *		EditStreamSetInfoW	(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamSetInfoW(PAVISTREAM pstream, LPAVISTREAMINFOW asi,
+				  LONG size)
+{
+  PAVIEDITSTREAM pEdit = NULL;
+  HRESULT        hr;
+
+  TRACE("(%p,%p,%ld)\n", pstream, asi, size);
+
+  hr = IAVIStream_QueryInterface(pstream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
+  if (SUCCEEDED(hr) && pEdit != NULL) {
+    hr = IAVIEditStream_SetInfo(pEdit, asi, size);
+
+    IAVIEditStream_Release(pEdit);
+  } else
+    hr = AVIERR_UNSUPPORTED;
+
+  return hr;
+}
+
+/***********************************************************************
+ *		EditStreamSetNameA	(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamSetNameA(PAVISTREAM pstream, LPCSTR szName)
+{
+  AVISTREAMINFOA asia;
+  HRESULT        hres;
+
+  TRACE("(%p,%s)\n", pstream, debugstr_a(szName));
+
+  if (pstream == NULL)
+    return AVIERR_BADHANDLE;
+  if (szName == NULL)
+    return AVIERR_BADPARAM;
+
+  hres = AVIStreamInfoA(pstream, &asia, sizeof(asia));
+  if (FAILED(hres))
+    return hres;
+
+  memset(asia.szName, 0, sizeof(asia.szName));
+  lstrcpynA(asia.szName, szName, sizeof(asia.szName)/sizeof(asia.szName[0]));
+
+  return EditStreamSetInfoA(pstream, &asia, sizeof(asia));
+}
+
+/***********************************************************************
+ *		EditStreamSetNameW	(AVIFIL32.@)
+ */
+HRESULT WINAPI EditStreamSetNameW(PAVISTREAM pstream, LPCWSTR szName)
+{
+  AVISTREAMINFOW asiw;
+  HRESULT        hres;
+
+  TRACE("(%p,%s)\n", pstream, debugstr_w(szName));
+
+  if (pstream == NULL)
+    return AVIERR_BADHANDLE;
+  if (szName == NULL)
+    return AVIERR_BADPARAM;
+
+  hres = IAVIStream_Info(pstream, &asiw, sizeof(asiw));
+  if (FAILED(hres))
+    return hres;
+
+  memset(asiw.szName, 0, sizeof(asiw.szName));
+  lstrcpynW(asiw.szName, szName, sizeof(asiw.szName)/sizeof(asiw.szName[0]));
+
+  return EditStreamSetInfoW(pstream, &asiw, sizeof(asiw));
+}
+
+/***********************************************************************
+ *		AVIClearClipboard	(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIClearClipboard(void)
+{
+  TRACE("()\n");
+
+  return AVIERR_UNSUPPORTED; /* OleSetClipboard(NULL); */
+}
+
+/***********************************************************************
+ *		AVIGetFromClipboard	(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIGetFromClipboard(PAVIFILE *ppfile)
+{
+  FIXME("(%p), stub!\n", ppfile);
+
+  *ppfile = NULL;
+
+  return AVIERR_UNSUPPORTED;
+}
+
+/***********************************************************************
+ *		AVIPutFileOnClipboard	(AVIFIL32.@)
+ */
+HRESULT WINAPI AVIPutFileOnClipboard(PAVIFILE pfile)
+{
+  FIXME("(%p), stub!\n", pfile);
+
+  if (pfile == NULL)
+    return AVIERR_BADHANDLE;
+
+  return AVIERR_UNSUPPORTED;
 }
