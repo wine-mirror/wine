@@ -449,7 +449,7 @@ static void start_process(void)
     int debugged, console_app;
     LPTHREAD_START_ROUTINE entry;
     WINE_MODREF *wm;
-    HFILE main_file = main_exe_file;
+    HANDLE main_file = main_exe_file;
 
     /* use original argv[0] as name for the main module */
     if (!main_exe_name[0])
@@ -1332,7 +1332,7 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return GetAppCompatFlags16(0);
 
     case GPD_LOAD_DONE_EVENT:
-        return current_process.load_done_evt;
+        return (DWORD)current_process.load_done_evt;
 
     case GPD_HINSTANCE16:
         return GetTaskDS16();
@@ -1347,10 +1347,10 @@ DWORD WINAPI GetProcessDword( DWORD dwProcessID, INT offset )
         return (DWORD)&current_process;
 
     case GPD_STARTF_SHELLDATA: /* return stdoutput handle from startupinfo ??? */
-        return current_startupinfo.hStdOutput;
+        return (DWORD)current_startupinfo.hStdOutput;
 
     case GPD_STARTF_HOTKEY: /* return stdinput handle from startupinfo ??? */
-        return current_startupinfo.hStdInput;
+        return (DWORD)current_startupinfo.hStdInput;
 
     case GPD_STARTF_SHOWWINDOW:
         return current_startupinfo.wShowWindow;
@@ -1920,5 +1920,5 @@ BOOL WINAPI TlsSetValue(
 #undef GetCurrentProcess
 HANDLE WINAPI GetCurrentProcess(void)
 {
-    return 0xffffffff;
+    return (HANDLE)0xffffffff;
 }

@@ -277,7 +277,7 @@ HDC WINAPI CreateEnhMetaFileW(
     DC *dc;
     HDC hRefDC = hdc ? hdc : CreateDCA("DISPLAY",NULL,NULL,NULL); /* If no ref, use current display */
     EMFDRV_PDEVICE *physDev;
-    HFILE hFile;
+    HANDLE hFile;
     DWORD size = 0, length = 0;
 
     TRACE("%s\n", debugstr_w(filename) );

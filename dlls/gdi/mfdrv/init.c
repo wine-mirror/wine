@@ -219,7 +219,7 @@ HDC16 WINAPI CreateMetaFile16(
     HDC ret;
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
-    HFILE hFile;
+    HANDLE hFile;
 
     TRACE("'%s'\n", filename );
 

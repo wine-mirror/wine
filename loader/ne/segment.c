@@ -111,7 +111,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     WORD count, i, offset, next_offset;
     HMODULE16 module;
     FARPROC16 address = 0;
-    HFILE hf;
+    HANDLE hf;
     DWORD res;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
@@ -152,7 +152,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
  	/* Implement self-loading segments */
  	SELFLOADHEADER *selfloadheader;
         DWORD oldstack;
-        HFILE hFile32;
+        HANDLE hFile32;
         HFILE16 hFile16;
 
  	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
@@ -437,7 +437,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 
     if (pModule->flags & NE_FFLAGS_SELFLOAD)
     {
-        HFILE hf;
+        HANDLE hf;
         HFILE16 hFile16;
         HGLOBAL16 sel;
         /* Handle self-loading modules */

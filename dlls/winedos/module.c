@@ -342,7 +342,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
    * (i.e. one DOS app spawning another) */
   /* FIXME: do we want to check binary type first, to check
    * whether it's a NE/PE executable? */
-  HFILE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
+  HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ,
 			     NULL, OPEN_EXISTING, 0, 0);
   BOOL ret = FALSE;
   if (hFile == INVALID_HANDLE_VALUE) return FALSE;

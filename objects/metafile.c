@@ -209,7 +209,7 @@ BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
  * Returns a pointer to a memory based METAHEADER read in from file HFILE
  *
  */
-static METAHEADER *MF_ReadMetaFile(HFILE hfile)
+static METAHEADER *MF_ReadMetaFile(HANDLE hfile)
 {
     METAHEADER *mh;
     DWORD BytesRead, size;

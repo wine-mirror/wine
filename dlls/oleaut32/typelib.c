@@ -2044,7 +2044,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
 {
     int ret = TYPE_E_CANTLOADLIBRARY;
     DWORD dwSignature = 0;
-    HFILE hFile;
+    HANDLE hFile;
 
     TRACE_(typelib)("%s:%d\n", debugstr_w(pszFileName), index);
 

@@ -251,7 +251,7 @@ static HRESULT ICO_ExtractIconExW(
 	HGLOBAL		hRet = E_FAIL;
 	LPBYTE		pData;
 	DWORD		sig;
-	HFILE		hFile;
+	HANDLE		hFile;
 	UINT16		iconDirCount = 0,iconCount = 0;
 	LPBYTE		peimage;
 	HANDLE		fmapping;
@@ -676,4 +676,3 @@ HRESULT WINAPI PrivateExtractIconExA (
 	HeapFree(GetProcessHeap(), 0, lpwstrFile);
 	return ret;
 }
-

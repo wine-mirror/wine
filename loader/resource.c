@@ -59,7 +59,7 @@ typedef struct _HRSRC_MAP
 /**********************************************************************
  *          MapHRsrc32To16
  */
-static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
+static HRSRC MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     HRSRC_ELEM *newElem;
@@ -80,7 +80,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
     /* Check whether HRSRC32 already in map */
     for ( i = 0; i < map->nUsed; i++ )
         if ( map->elem[i].hRsrc == hRsrc32 )
-            return (HRSRC16)(i + 1);
+            return (HRSRC)(i + 1);
 
     /* If no space left, grow table */
     if ( map->nUsed == map->nAlloc )
@@ -102,13 +102,13 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HANDLE hRsrc32, WORD type )
     map->elem[map->nUsed].type  = type;
     map->nUsed++;
 
-    return (HRSRC16)map->nUsed;
+    return (HRSRC)map->nUsed;
 }
 
 /**********************************************************************
  *          MapHRsrc16To32
  */
-static HANDLE MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
+static HRSRC MapHRsrc16To32( NE_MODULE *pModule, HRSRC hRsrc16 )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     if ( !map || !hRsrc16 || (int)hRsrc16 > map->nUsed ) return 0;
@@ -119,7 +119,7 @@ static HANDLE MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
 /**********************************************************************
  *          MapHRsrc16ToType
  */
-static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC16 hRsrc16 )
+static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC hRsrc16 )
 {
     HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
     if ( !map || !hRsrc16 || (int)hRsrc16 > map->nUsed ) return 0;
@@ -293,7 +293,7 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
             /* 16-bit NE module */
 
             /* If we got a 32-bit hRsrc, we don't need to convert it */
-            hMem = NE_LoadResource( pModule, hRsrc );
+            hMem = NE_LoadResource( pModule, LOWORD(hRsrc) );
 
             /* If we are to return a 32-bit resource, we should probably
                convert it but we don't for now.  FIXME !!! */
@@ -332,8 +332,8 @@ static HGLOBAL RES_LoadResource( HMODULE hModule, HRSRC hRsrc, BOOL bRet16 )
  */
 HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 {
-    return RES_FindResource( hModule, type, name,
-                    MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, TRUE );
+    return LOWORD( RES_FindResource( hModule, type, name,
+                                     MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), FALSE, TRUE ) );
 }
 
 /**********************************************************************
@@ -420,7 +420,7 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
         return (LPVOID)handle;
 
     /* 16-bit memory handle */
-    return LockResource16( handle );
+    return LockResource16( LOWORD(handle) );
 }
 
 typedef WORD (WINAPI *pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
@@ -432,7 +432,7 @@ typedef WORD (WINAPI *pDestroyIcon32Proc)( HGLOBAL16 handle, UINT16 flags );
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
-    HGLOBAL retv = handle;
+    HGLOBAL16 retv = handle;
     NE_MODULE *pModule = NE_GetPtr( FarGetOwner16( handle ) );
 
     TRACE("(%04x)\n", handle );
@@ -463,7 +463,7 @@ BOOL WINAPI FreeResource( HGLOBAL handle )
 {
     if (HIWORD(handle)) return 0; /* 32-bit memory handle: nothing to do */
 
-    return FreeResource16( handle );
+    return FreeResource16( LOWORD(handle) );
 }
 
 /**********************************************************************

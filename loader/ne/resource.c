@@ -311,7 +311,7 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
 /**********************************************************************
  *	    NE_FindResource
  */
-HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
+HRSRC NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
 {
     NE_TYPEINFO *pTypeInfo;
     NE_NAMEINFO *pNameInfo;
@@ -363,7 +363,7 @@ HRSRC16 NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type )
         if ((pNameInfo = NE_FindResourceFromType( pResTab, pTypeInfo, name )))
         {
             TRACE("    Found id %08lx\n", (DWORD)name );
-            return (HRSRC16)( (int)pNameInfo - (int)pModule );
+            return (HRSRC)( (char *)pNameInfo - (char *)pModule );
         }
         TRACE("    Not found, going on\n" );
         pTypeInfo = NEXT_TYPEINFO(pTypeInfo);
@@ -443,7 +443,7 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
 /**********************************************************************
  *	    NE_SizeofResource
  */
-DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc )
+DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC hRsrc )
 {
     NE_NAMEINFO *pNameInfo=NULL;
     WORD sizeShift;
@@ -453,7 +453,7 @@ DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC16 hRsrc )
     TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
 
     sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
-    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    pNameInfo = (NE_NAMEINFO*)((char*)pModule + LOWORD(hRsrc));
     return (DWORD)pNameInfo->length << sizeShift;
 }
 

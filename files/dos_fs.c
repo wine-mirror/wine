@@ -684,7 +684,7 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
  */
 const DOS_DEVICE *DOSFS_GetDevice( const char *name )
 {
-    int	i;
+    unsigned int i;
     const char *p;
 
     if (!name) return NULL; /* if FILE_DupUnixHandle was used */
@@ -707,7 +707,7 @@ const DOS_DEVICE *DOSFS_GetDevice( const char *name )
 /***********************************************************************
  *           DOSFS_GetDeviceByHandle
  */
-const DOS_DEVICE *DOSFS_GetDeviceByHandle( HFILE hFile )
+const DOS_DEVICE *DOSFS_GetDeviceByHandle( HANDLE hFile )
 {
     const DOS_DEVICE *ret = NULL;
     SERVER_START_REQ( get_file_info )
@@ -769,7 +769,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, 
  */
 HANDLE DOSFS_OpenDevice( const char *name, DWORD access, DWORD attributes, LPSECURITY_ATTRIBUTES sa )
 {
-    int i;
+    unsigned int i;
     const char *p;
     HANDLE handle;
 

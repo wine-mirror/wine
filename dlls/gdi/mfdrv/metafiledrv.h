@@ -33,7 +33,7 @@ typedef struct
     DC          *dc;
     METAHEADER  *mh;           /* Pointer to metafile header */
     UINT       nextHandle;     /* Next handle number */
-    HFILE      hFile;          /* HFILE for disk based MetaFile */
+    HANDLE     hFile;          /* Handle for disk based MetaFile */
 } METAFILEDRV_PDEVICE;
 
 
@@ -152,4 +152,3 @@ extern BOOL MFDRV_StrokePath( PHYSDEV dev );
 extern BOOL MFDRV_WidenPath( PHYSDEV dev );
 
 #endif  /* __WINE_METAFILEDRV_H */
-

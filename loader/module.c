@@ -899,8 +899,8 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
-    HINSTANCE hInstance;
     char *cmdline;
+    UINT ret;
 
     memset( &startup, 0, sizeof(startup) );
     startup.cb = sizeof(startup);
@@ -917,18 +917,18 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
         /* Give 30 seconds to the app to come up */
         if (wait_input_idle( info.hProcess, 30000 ) == 0xFFFFFFFF)
             WARN("WaitForInputIdle failed: Error %ld\n", GetLastError() );
-        hInstance = (HINSTANCE)33;
+        ret = 33;
         /* Close off the handles */
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else if ((hInstance = (HINSTANCE)GetLastError()) >= (HINSTANCE)32)
+    else if ((ret = GetLastError()) >= 32)
     {
-        FIXME("Strange error set by CreateProcess: %d\n", hInstance );
-        hInstance = (HINSTANCE)11;
+        FIXME("Strange error set by CreateProcess: %d\n", ret );
+        ret = 11;
     }
     HeapFree( GetProcessHeap(), 0, cmdline );
-    return hInstance;
+    return ret;
 }
 
 /**********************************************************************
@@ -1188,7 +1188,7 @@ static LPCSTR allocate_lib_dir(LPCSTR libname)
  *        init function into load_library).
  * allocated_libdir is TRUE in the stack frame that allocated libdir
  */
-WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
+WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
 {
 	DWORD err = GetLastError();
 	WINE_MODREF *pwm;

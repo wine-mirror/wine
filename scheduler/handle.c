@@ -37,10 +37,10 @@ BOOL WINAPI CloseHandle( HANDLE handle )
     NTSTATUS status;
 
     /* stdio handles need special treatment */
-    if ((handle == STD_INPUT_HANDLE) ||
-        (handle == STD_OUTPUT_HANDLE) ||
-        (handle == STD_ERROR_HANDLE))
-        handle = GetStdHandle( handle );
+    if ((handle == (HANDLE)STD_INPUT_HANDLE) ||
+        (handle == (HANDLE)STD_OUTPUT_HANDLE) ||
+        (handle == (HANDLE)STD_ERROR_HANDLE))
+        handle = GetStdHandle( (DWORD)handle );
 
     status = NtClose( handle );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
