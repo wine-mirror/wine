@@ -91,7 +91,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 typedef struct IDirect3DGLImpl
 {
     struct IDirect3DImpl parent;
-    int free_lights;
+    DWORD free_lights;
     void (*light_released)(IDirect3DImpl *, GLenum light_num);
 } IDirect3DGLImpl;
 

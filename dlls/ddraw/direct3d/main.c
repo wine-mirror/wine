@@ -466,6 +466,10 @@ Thunk_IDirect3DImpl_3_CreateVertexBuffer(LPDIRECT3D3 iface,
     LPDIRECT3DVERTEXBUFFER7 ret_val;
 
     TRACE("(%p)->(%p,%p,%08lx,%p) thunking to IDirect3D7 interface.\n", iface, lpD3DVertBufDesc, lplpD3DVertBuf, dwFlags, lpUnk);
+    
+    /* dwFlags is not used in the D3D7 interface, use the vertex buffer description instead */
+    if (dwFlags & D3DDP_DONOTCLIP) lpD3DVertBufDesc->dwCaps |= D3DVBCAPS_DONOTCLIP;
+
     ret = IDirect3D7_CreateVertexBuffer(COM_INTERFACE_CAST(IDirect3DImpl, IDirect3D3, IDirect3D7, iface),
 					lpD3DVertBufDesc,
 					&ret_val,

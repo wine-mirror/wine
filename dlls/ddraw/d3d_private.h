@@ -226,6 +226,7 @@ extern const char *_get_renderstate(D3DRENDERSTATETYPE type);
 extern void dump_D3DMATERIAL7(LPD3DMATERIAL7 lpMat);
 extern void dump_D3DCOLORVALUE(D3DCOLORVALUE *lpCol);
 extern void dump_D3DLIGHT7(LPD3DLIGHT7 lpLight);
+extern void dump_DPFLAGS(DWORD dwFlags);
 
 #define dump_mat(mat) \
     TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \

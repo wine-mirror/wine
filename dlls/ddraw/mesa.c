@@ -464,9 +464,12 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	        glStencilMask(dwRenderState);
 	        break;
 
+	    case D3DRENDERSTATE_CLIPPING:    /* 136 */
+	        /* Nothing to do here... Even if what we receive is already clipped by the application,
+		   we cannot tell OpenGL to not re-clip it. */
+	        break;
+
 	    case D3DRENDERSTATE_LIGHTING:    /* 137 */
-	        /* There will be more to do here once we really support D3D7 Lighting.
-		   Should be enough for now to prevent warnings :-) */
 	        if (dwRenderState)
 		    glEnable(GL_LIGHTING);
 		else

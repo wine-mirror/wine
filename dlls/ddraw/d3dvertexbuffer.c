@@ -99,6 +99,8 @@ Main_IDirect3DVertexBufferImpl_7_1T_Lock(LPDIRECT3DVERTEXBUFFER7 iface,
 	DDRAW_dump_lockflag(dwFlags);
     }
     
+    if (This->desc.dwCaps & D3DVBCAPS_OPTIMIZED) return D3DERR_VERTEXBUFFEROPTIMIZED;
+
     if (lpdwSize != NULL) *lpdwSize = This->vertex_buffer_size;
     *lplpData = This->vertices;
     
@@ -135,9 +137,14 @@ Main_IDirect3DVertexBufferImpl_7_1T_GetVertexBufferDesc(LPDIRECT3DVERTEXBUFFER7 
 {
     DWORD size;
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
+    
     TRACE("(%p/%p)->(%p)\n", This, iface, lpD3DVertexBufferDesc);
-    size = (lpD3DVertexBufferDesc->dwSize < This->desc.dwSize) ? lpD3DVertexBufferDesc->dwSize : This->desc.dwSize;
-    memcpy(lpD3DVertexBufferDesc,&This->desc,size);
+    
+    size = lpD3DVertexBufferDesc->dwSize;
+    memset(lpD3DVertexBufferDesc, 0, size);
+    memcpy(lpD3DVertexBufferDesc, &This->desc, 
+	   (size < This->desc.dwSize) ? size : This->desc.dwSize);
+    
     return DD_OK;
 }
 
@@ -148,6 +155,9 @@ Main_IDirect3DVertexBufferImpl_7_Optimize(LPDIRECT3DVERTEXBUFFER7 iface,
 {
     ICOM_THIS_FROM(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, iface);
     FIXME("(%p/%p)->(%p,%08lx): stub!\n", This, iface, lpD3DDevice, dwFlags);
+
+    This->desc.dwCaps |= D3DVBCAPS_OPTIMIZED;
+
     return DD_OK;
 }
 
@@ -297,6 +307,7 @@ HRESULT d3dvertexbuffer_create(IDirect3DVertexBufferImpl **obj, IDirect3DImpl *d
 {
     IDirect3DVertexBufferImpl *object;
     static const flag_info flags[] = {
+        FE(D3DVBCAPS_DONOTCLIP),
         FE(D3DVBCAPS_OPTIMIZED),
 	FE(D3DVBCAPS_SYSTEMMEMORY),
 	FE(D3DVBCAPS_WRITEONLY)

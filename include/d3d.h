@@ -183,6 +183,12 @@ typedef struct IDirect3DVertexBuffer7 IDirect3DVertexBuffer7, *LPDIRECT3DVERTEXB
 #define D3DNEXT_HEAD 0x02l
 #define D3DNEXT_TAIL 0x04l
 
+#define D3DDP_WAIT               0x00000001l
+#define D3DDP_OUTOFORDER         0x00000002l
+#define D3DDP_DONOTCLIP          0x00000004l
+#define D3DDP_DONOTUPDATEEXTENTS 0x00000008l
+#define D3DDP_DONOTLIGHT         0x00000010l
+
 /* ********************************************************************
    Types and structures
    ******************************************************************** */
@@ -1014,6 +1020,5 @@ ICOM_DEFINE(IDirect3DVertexBuffer7,IUnknown)
 #define IDirect3DVertexBuffer7_GetVertexBufferDesc(p,a)                ICOM_CALL1(GetVertexBufferDesc,p,a)
 #define IDirect3DVertexBuffer7_Optimize(p,a,b)                         ICOM_CALL2(Optimize,p,a,b)
 #define IDirect3DVertexBuffer7_ProcessVerticesStrided(p,a,b,c,d,e,f,g) ICOM_CALL7(ProcessVerticesStrided,p,a,b,c,d,e,f,g)
-
 
 #endif /* __WINE_D3D_H */

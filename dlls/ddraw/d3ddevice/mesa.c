@@ -831,11 +831,13 @@ GL_IDirect3DDeviceImpl_2_DrawPrimitive(LPDIRECT3DDEVICE2 iface,
 				       DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
-    TRACE("(%p/%p)->(%08x,%08x,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
 
-    ENTER_GL();
+    TRACE("(%p/%p)->(%08x,%08x,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
+
     draw_primitive(This, dwVertexCount, NULL, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
-    LEAVE_GL();
 		   
     return DD_OK;
 }
@@ -852,10 +854,11 @@ GL_IDirect3DDeviceImpl_2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
     TRACE("(%p/%p)->(%08x,%08x,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
 
-    ENTER_GL();
     draw_primitive(This, dwIndexCount, dwIndices, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
-    LEAVE_GL();
     
     return DD_OK;
 }
@@ -1291,7 +1294,11 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitive(LPDIRECT3DDEVICE7 iface,
 					  DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
 
     draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
     
@@ -1309,7 +1316,11 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitive(LPDIRECT3DDEVICE7 iface,
 						 DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
 
     draw_primitive_7(This, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, 0, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
     
@@ -1325,8 +1336,13 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
                                                    DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
     draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, NULL, dwVertexCount, dwFlags);
+
     return DD_OK;
 }
 
@@ -1341,8 +1357,14 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveStrided(LPDIRECT3DDEVICE7 iface,
                                                           DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+
     TRACE("(%p/%p)->(%08x,%08lx,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
+
     draw_primitive_strided_7(This, d3dptPrimitiveType, dwVertexType, lpD3DDrawPrimStrideData, 0, dwVertexCount, lpIndex, dwIndexCount, dwFlags);
+
     return DD_OK;
 }
 
@@ -1358,6 +1380,9 @@ GL_IDirect3DDeviceImpl_7_3T_DrawPrimitiveVB(LPDIRECT3DDEVICE7 iface,
     IDirect3DVertexBufferImpl *vb_impl = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, lpD3DVertexBuf);
 
     TRACE("(%p/%p)->(%08x,%p,%08lx,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
 
     draw_primitive_7(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, vb_impl->vertices, dwStartVertex, dwNumVertices, NULL, dwNumVertices, dwFlags);
 
@@ -1378,6 +1403,9 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
     IDirect3DVertexBufferImpl *vb_impl = ICOM_OBJECT(IDirect3DVertexBufferImpl, IDirect3DVertexBuffer7, lpD3DVertexBuf);
     
     TRACE("(%p/%p)->(%08x,%p,%08lx,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, lpD3DVertexBuf, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
+    if (TRACE_ON(ddraw)) {
+        TRACE(" - flags : "); dump_DPFLAGS(dwFlags);
+    }
 
     draw_primitive_7(This, d3dptPrimitiveType, vb_impl->desc.dwFVF, vb_impl->vertices, dwStartVertex, dwNumVertices, lpwIndices, dwIndexCount, dwFlags);
 

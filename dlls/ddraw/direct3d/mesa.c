@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-#define MAX_LIGHTS 8
-
 HRESULT WINAPI
 GL_IDirect3DImpl_3_2T_1T_EnumDevices(LPDIRECT3D3 iface,
 				     LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback,
