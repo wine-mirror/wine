@@ -230,6 +230,7 @@ FARPROC PE_FindExportedFunction(
         else  /* forward entry point */
         {
                 WINE_MODREF *wm;
+                FARPROC proc;
                 char *forward = RVA(addr);
 		char module[256];
 		char *end = strchr(forward, '.');
@@ -243,7 +244,9 @@ FARPROC PE_FindExportedFunction(
                     ERR("module not found for forward '%s'\n", forward );
                     return NULL;
                 }
-		return MODULE_GetProcAddress( wm->module, end + 1, snoop );
+		if (!(proc = MODULE_GetProcAddress( wm->module, end + 1, snoop )))
+                    ERR("function not found for forward '%s'\n", forward );
+		return proc;
 	}
 }
 
@@ -270,7 +273,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
     if (!pe_imp) return 0;
 
     /* We assume that we have at least one import with !0 characteristics and
-     * detect broken imports with all characteristsics 0 (notably Borland) and
+     * detect broken imports with all characteristics 0 (notably Borland) and
      * switch the detection off for them.
      */
     for (i = 0; pe_imp->Name ; pe_imp++) {
@@ -301,7 +304,7 @@ DWORD fixup_imports( WINE_MODREF *wm )
 
 	wmImp = MODULE_LoadLibraryExA( name, 0, 0 );
 	if (!wmImp) {
-	    ERR_(module)("Module %s not found\n", name);
+	    ERR_(module)("Module (file) %s needed by %s not found\n", name, wm->filename);
 	    return 1;
 	}
         wm->deps[i++] = wmImp;
@@ -447,7 +450,7 @@ static void do_relocations( unsigned int load_addr, IMAGE_BASE_RELOCATION *r )
 				FIXME("Is this a MIPS machine ???\n");
 				break;
 			default:
-				FIXME("Unknown fixup type\n");
+				FIXME("Unknown fixup type %d.\n", type);
 				break;
 			}
 		}
@@ -566,7 +569,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
     /* Check entrypoint address */
     aoep = nt->OptionalHeader.AddressOfEntryPoint;
     if (aoep && (aoep < lowest_va))
-        FIXME("VIRUS WARNING: '%s' has an invalid entrypoint (0x%08lx) "
+        MESSAGE("VIRUS WARNING: '%s' has an invalid entrypoint (0x%08lx) "
                       "below the first virtual address (0x%08x) "
                       "(possibly infected by Tchernobyl/SpaceFiller virus)!\n",
                        filename, aoep, lowest_va );
