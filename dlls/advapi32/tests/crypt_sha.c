@@ -18,12 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
+#include <stdarg.h>
 
-#include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+
+#include "wine/test.h"
 
 typedef struct {
    ULONG Unknown[6];
@@ -32,19 +33,12 @@ typedef struct {
    UCHAR Buffer[64];
 } SHA_CTX, *PSHA_CTX;
 
-typedef VOID (WINAPI *fnA_SHAInit)(PSHA_CTX Context);
-typedef VOID (WINAPI *fnA_SHAUpdate)(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize);
-typedef VOID (WINAPI *fnA_SHAFinal)(PSHA_CTX Context, PULONG Result);
-
-fnA_SHAInit pA_SHAInit;
-fnA_SHAUpdate pA_SHAUpdate;
-fnA_SHAFinal pA_SHAFinal;
-
 #define ctxcmp(a,b) memcmp((char*)a, (char*)b, FIELD_OFFSET(SHA_CTX, Buffer))
 
-void test_sha_ctx()
+static void test_sha_ctx(void)
 {
-   PCHAR test_buffer = "In our Life there's If"
+   FARPROC pA_SHAInit, pA_SHAUpdate, pA_SHAFinal;
+   static const char test_buffer[] = "In our Life there's If"
                        "In our beliefs there's Lie"
                        "In our business there is Sin"
                        "In our bodies, there is Die";
@@ -58,9 +52,11 @@ void test_sha_ctx()
    ULONG result_correct[5] = {0xe014f93, 0xe09791ec, 0x6dcf96c8, 0x8e9385fc, 0x1611c1bb};
 
    hmod = LoadLibrary("advapi32.dll");
-   pA_SHAInit = (fnA_SHAInit)GetProcAddress(hmod, "A_SHAInit");
-   pA_SHAUpdate = (fnA_SHAUpdate)GetProcAddress(hmod, "A_SHAUpdate");
-   pA_SHAFinal = (fnA_SHAFinal)GetProcAddress(hmod, "A_SHAFinal");
+   pA_SHAInit = GetProcAddress(hmod, "A_SHAInit");
+   pA_SHAUpdate = GetProcAddress(hmod, "A_SHAUpdate");
+   pA_SHAFinal = GetProcAddress(hmod, "A_SHAFinal");
+
+   if (!pA_SHAInit || !pA_SHAUpdate || !pA_SHAFinal) return;
 
    RtlZeroMemory(&ctx, sizeof(ctx));
    pA_SHAInit(&ctx);
