@@ -261,7 +261,7 @@ LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
     struct IOProcList*  pListNode;
     struct IOProcList** ppListNode;
 
-    TRACE("(%ld, %p, %08lX, %i)\n", fccIOProc, pIOProc, dwFlags, type);
+    TRACE("(%08lx, %p, %08lX, %i)\n", fccIOProc, pIOProc, dwFlags, type);
 
     if (dwFlags & MMIO_GLOBALPROC)
 	FIXME("Global procedures not implemented\n");
@@ -529,14 +529,16 @@ static LONG	MMIO_GrabNextBuffer(LPWINE_MMIO wm, int for_read)
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + wm->info.cchBuffer;
 
+    wm->bBufferLoaded = TRUE;
     if (for_read) {
 	size = send_message(wm->ioProc, &wm->info, MMIOM_READ, 
                             (LPARAM)wm->info.pchBuffer, size, MMIO_PROC_32A);
 	if (size > 0)
 	    wm->info.pchEndRead += size;
+        else
+            wm->bBufferLoaded = FALSE;
     }
 
-    wm->bBufferLoaded = TRUE;
     return size;
 }
 
@@ -560,13 +562,6 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
         HeapFree(GetProcessHeap(), 0, wm->info.pchBuffer);
         wm->info.pchBuffer = NULL;
 	wm->info.dwFlags &= ~MMIO_ALLOCBUF;
-    }
-
-    /* free segmented ptr mapping, if any */
-    if (wm->info.dwReserved1 != 0L)
-    {
-        UnMapLS(wm->info.dwReserved1);
-        wm->info.dwReserved1 = 0L;
     }
 
     if (pchBuffer) {

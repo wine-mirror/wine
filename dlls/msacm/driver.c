@@ -292,15 +292,12 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         len = strlen("Drivers32") + 1;
         adod.pszSectionName = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, "Drivers32", -1, (LPWSTR)adod.pszSectionName, len);
-        len = strlen(padid->pszDriverAlias) + 1;
-        adod.pszAliasName = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, padid->pszDriverAlias, -1, (LPWSTR)adod.pszAliasName, len);
+        adod.pszAliasName = padid->pszDriverAlias;
         adod.dnDevNode = 0;
 
-        pad->hDrvr = OpenDriverA(padid->pszDriverAlias, NULL, (DWORD)&adod);
+        pad->hDrvr = OpenDriver(padid->pszDriverAlias, NULL, (DWORD)&adod);
 
         HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszSectionName);
-        HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszAliasName);
         if (!pad->hDrvr)
         {
             ret = adod.dwError;
@@ -314,7 +311,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
 
     /* FIXME: Create a WINE_ACMDRIVER32 */
     *phad = (HACMDRIVER)pad;
-    TRACE("'%s' => %08lx\n", padid->pszDriverAlias, (DWORD)pad);
+    TRACE("'%s' => %08lx\n", debugstr_w(padid->pszDriverAlias), (DWORD)pad);
 
     return MMSYSERR_NOERROR;
  gotError:

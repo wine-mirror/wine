@@ -34,6 +34,7 @@
 #include "msacmdrv.h"
 #include "wineacm.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
@@ -112,7 +113,7 @@ static BOOL MSACM_FillCache(PWINE_ACMDRIVERID padid)
     for (ntag = 0; ntag < add.cFormatTags; ntag++) {
 	aftd.dwFormatTagIndex = ntag;
 	if (MSACM_Message(had, ACMDM_FORMATTAG_DETAILS, (LPARAM)&aftd, ACM_FORMATTAGDETAILSF_INDEX)) {
-	    TRACE("IIOs (%s)\n", padid->pszDriverAlias);
+	    TRACE("IIOs (%s)\n", debugstr_w(padid->pszDriverAlias));
 	    goto errCleanUp;
 	}
 	padid->aFormatTag[ntag].dwFormatTag = aftd.dwFormatTag;
@@ -133,23 +134,25 @@ errCleanUp:
 /***********************************************************************
  *           MSACM_GetRegistryKey
  */
-static	LPSTR	MSACM_GetRegistryKey(const WINE_ACMDRIVERID* padid)
+static	LPWSTR	MSACM_GetRegistryKey(const WINE_ACMDRIVERID* padid)
 {
-    static const char*	baseKey = "Software\\Microsoft\\AudioCompressionManager\\DriverCache\\";
-    LPSTR	ret;
+    static const WCHAR	baseKey[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+                                     'A','u','d','i','o','C','o','m','p','r','e','s','s','i','o','n','M','a','n','a','g','e','r','\\',
+                                     'D','r','i','v','e','r','C','a','c','h','e','\\','\0'};
+    LPWSTR	ret;
     int		len;
 
     if (!padid->pszDriverAlias) {
 	ERR("No alias needed for registry entry\n");
 	return NULL;
     }
-    len = strlen(baseKey);
-    ret = HeapAlloc(MSACM_hHeap, 0, len + strlen(padid->pszDriverAlias) + 1);
+    len = strlenW(baseKey);
+    ret = HeapAlloc(MSACM_hHeap, 0, (len + strlenW(padid->pszDriverAlias) + 1) * sizeof(WCHAR));
     if (!ret) return NULL;
 
-    strcpy(ret, baseKey);
-    strcpy(ret + len, padid->pszDriverAlias);
-    CharLowerA(ret + len);
+    strcpyW(ret, baseKey);
+    strcpyW(ret + len, padid->pszDriverAlias);
+    CharLowerW(ret + len);
     return ret;
 }
 
@@ -158,7 +161,7 @@ static	LPSTR	MSACM_GetRegistryKey(const WINE_ACMDRIVERID* padid)
  */
 static BOOL MSACM_ReadCache(PWINE_ACMDRIVERID padid)
 {
-    LPSTR	key = MSACM_GetRegistryKey(padid);
+    LPWSTR	key = MSACM_GetRegistryKey(padid);
     HKEY	hKey;
     DWORD	type, size;
 
@@ -166,7 +169,7 @@ static BOOL MSACM_ReadCache(PWINE_ACMDRIVERID padid)
 
     padid->aFormatTag = NULL;
 
-    if (RegCreateKeyA(HKEY_LOCAL_MACHINE, key, &hKey))
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, key, &hKey))
 	goto errCleanUp;
 
     size = sizeof(padid->cFormatTags);
@@ -202,12 +205,12 @@ static BOOL MSACM_ReadCache(PWINE_ACMDRIVERID padid)
  */
 static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 {
-    LPSTR	key = MSACM_GetRegistryKey(padid);
+    LPWSTR	key = MSACM_GetRegistryKey(padid);
     HKEY	hKey;
 
     if (!key) return FALSE;
 
-    if (RegCreateKeyA(HKEY_LOCAL_MACHINE, key, &hKey))
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, key, &hKey))
 	goto errCleanUp;
 
     if (RegSetValueExA(hKey, "cFormatTags", 0, REG_DWORD, (void*)&padid->cFormatTags, sizeof(DWORD)))
@@ -231,12 +234,13 @@ static	BOOL MSACM_WriteCache(PWINE_ACMDRIVERID padid)
 /***********************************************************************
  *           MSACM_RegisterDriver()
  */
-PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
+PWINE_ACMDRIVERID MSACM_RegisterDriver(LPWSTR pszDriverAlias, LPWSTR pszFileName,
 				       HINSTANCE hinstModule)
 {
     PWINE_ACMDRIVERID	padid;
 
-    TRACE("('%s', '%s', %p)\n", pszDriverAlias, pszFileName, hinstModule);
+    TRACE("(%s, %s, %p)\n", 
+          debugstr_w(pszDriverAlias), debugstr_w(pszFileName), hinstModule);
 
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
     padid->obj.dwType = WINE_ACMOBJ_DRIVERID;
@@ -244,14 +248,14 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     padid->pszDriverAlias = NULL;
     if (pszDriverAlias)
     {
-        padid->pszDriverAlias = HeapAlloc( MSACM_hHeap, 0, strlen(pszDriverAlias)+1 );
-        strcpy( padid->pszDriverAlias, pszDriverAlias );
+        padid->pszDriverAlias = HeapAlloc( MSACM_hHeap, 0, (strlenW(pszDriverAlias)+1) * sizeof(WCHAR) );
+        strcpyW( padid->pszDriverAlias, pszDriverAlias );
     }
     padid->pszFileName = NULL;
     if (pszFileName)
     {
-        padid->pszFileName = HeapAlloc( MSACM_hHeap, 0, strlen(pszFileName)+1 );
-        strcpy( padid->pszFileName, pszFileName );
+        padid->pszFileName = HeapAlloc( MSACM_hHeap, 0, (strlenW(pszFileName)+1) * sizeof(WCHAR) );
+        strcpyW( padid->pszFileName, pszFileName );
     }
     padid->hInstModule = hinstModule;
 
@@ -265,7 +269,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 	MSACM_pFirstACMDriverID = padid;
     /* disable the driver if we cannot load the cache */
     if (!MSACM_ReadCache(padid) && !MSACM_FillCache(padid)) {
-	WARN("Couldn't load cache for ACM driver (%s)\n", pszFileName);
+	WARN("Couldn't load cache for ACM driver (%s)\n", debugstr_w(pszFileName));
 	MSACM_UnregisterDriver(padid);
 	return NULL;
     }
@@ -277,8 +281,12 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
  */
 void MSACM_RegisterAllDrivers(void)
 {
-    LPSTR pszBuffer;
+    LPWSTR pszBuffer;
     DWORD dwBufferLength;
+    static WCHAR msacm32[] = {'m','s','a','c','m','3','2','.','d','l','l','\0'};
+    static WCHAR msacmW[] = {'M','S','A','C','M','.'};
+    static WCHAR drv32[] = {'d','r','i','v','e','r','s','3','2','\0'};
+    static WCHAR sys[] = {'s','y','s','t','e','m','.','i','n','i','\0'};
 
     /* FIXME
      *  What if the user edits system.ini while the program is running?
@@ -291,26 +299,32 @@ void MSACM_RegisterAllDrivers(void)
     dwBufferLength = 1024;
 /* EPP 	GetPrivateProfileSectionA("drivers32", NULL, 0, "system.ini"); */
 
-    pszBuffer = (LPSTR) HeapAlloc(MSACM_hHeap, 0, dwBufferLength);
-    if (GetPrivateProfileSectionA("drivers32", pszBuffer, dwBufferLength, "system.ini")) {
-	char* s = pszBuffer;
-	while (*s) {
-	    if (!strncasecmp("MSACM.", s, 6)) {
-		char *s2 = s;
+    pszBuffer = (LPWSTR) HeapAlloc(MSACM_hHeap, 0, dwBufferLength * sizeof(WCHAR));
+    if (GetPrivateProfileSectionW(drv32, pszBuffer, dwBufferLength, sys))
+    {
+	LPWSTR s = pszBuffer, s2;
+
+	while (*s)
+        {
+            CharUpperBuffW(s, 6);
+            if (memcmp(s, msacmW, 6 * sizeof(WCHAR)) == 0)
+            {
+                s2 = s;
 		while (*s2 != '\0' && *s2 != '=') s2++;
-		if (*s2) {
+		if (*s2)
+                {
 		    *s2 = '\0';
 		    MSACM_RegisterDriver(s, s2 + 1, 0);
 		    *s2 = '=';
 		}
 	    }
-	    s += strlen(s) + 1; /* Either next char or \0 */
+	    s += strlenW(s) + 1; /* Either next char or \0 */
 	}
     }
 
     HeapFree(MSACM_hHeap, 0, pszBuffer);
 
-    MSACM_RegisterDriver("msacm32.dll", "msacm32.dll", 0);
+    MSACM_RegisterDriver(msacm32, msacm32, 0);
 }
 
 /***********************************************************************

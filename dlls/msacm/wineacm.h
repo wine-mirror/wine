@@ -317,8 +317,8 @@ typedef struct _WINE_ACMSTREAM
 typedef struct _WINE_ACMDRIVERID
 {
     WINE_ACMOBJ		obj;
-    LPSTR		pszDriverAlias;
-    LPSTR               pszFileName;
+    LPWSTR		pszDriverAlias;
+    LPWSTR              pszFileName;
     HINSTANCE		hInstModule;          /* NULL if global */
     PWINE_ACMDRIVER     pACMDriverList;
     PWINE_ACMDRIVERID   pNextACMDriverID;
@@ -337,7 +337,7 @@ typedef struct _WINE_ACMDRIVERID
 extern HANDLE MSACM_hHeap;
 extern PWINE_ACMDRIVERID MSACM_pFirstACMDriverID;
 extern PWINE_ACMDRIVERID MSACM_pLastACMDriverID;
-extern PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
+extern PWINE_ACMDRIVERID MSACM_RegisterDriver(LPWSTR pszDriverAlias, LPWSTR pszFileName,
 					      HINSTANCE hinstModule);
 extern void MSACM_RegisterAllDrivers(void);
 extern PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p);

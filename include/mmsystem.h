@@ -220,11 +220,13 @@ typedef struct {
 
 LRESULT WINAPI DefDriverProc(DWORD dwDriverIdentifier, HDRVR hdrvr,
 			     UINT Msg, LPARAM lParam1, LPARAM lParam2);
+/* this sounds odd, but it's the way it is. OpenDriverA even disapeared
+ * from latest SDK
+ */
 HDRVR 	WINAPI OpenDriverA(LPCSTR szDriverName, LPCSTR szSectionName,
 			   LPARAM lParam2);
-HDRVR 	WINAPI OpenDriverW(LPCWSTR szDriverName, LPCWSTR szSectionName,
-			   LPARAM lParam2);
-#define OpenDriver WINELIB_NAME_AW(OpenDriver)
+HDRVR 	WINAPI OpenDriver(LPCWSTR szDriverName, LPCWSTR szSectionName,
+                          LPARAM lParam2);
 LRESULT WINAPI CloseDriver(HDRVR hDriver, LPARAM lParam1, LPARAM lParam2);
 LRESULT WINAPI SendDriverMessage(HDRVR hDriver, UINT message,
 				 LPARAM lParam1, LPARAM lParam2);

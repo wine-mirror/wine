@@ -34,7 +34,7 @@
 #define NONAMELESSSTRUCT
 #include "mmsystem.h"
 #include "winbase.h"
-#include "wine/winuser16.h" /* FIXME: should be removed, only used for UserYield16 */
+#include "winuser.h"
 #include "heap.h"
 #include "winternl.h"
 #include "winemm.h"
@@ -42,6 +42,21 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
+
+/******************************************************************
+ *		MyUserYield
+ *
+ * Internal wrapper to call USER.UserYield16 (in fact through a Wine only export from USER32).
+ */
+static void MyUserYield(void)
+{
+    HMODULE mod = GetModuleHandleA( "user32.dll" );
+    if (mod)
+    {
+        FARPROC proc = GetProcAddress( mod, "UserYield16" );
+        if (proc) proc();
+    }
+}
 
 /* ========================================================================
  *                   G L O B A L   S E T T I N G S
@@ -812,7 +827,7 @@ UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 
     if ((HIWORD(data) != 0 && HWND_16(GetActiveWindow()) != HIWORD(data)) ||
 	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
-	UserYield16();
+	MyUserYield();
 	ret = 0;
     } else {
 	MSG		msg;
@@ -906,7 +921,7 @@ UINT WINAPI mciDriverYield(UINT uDeviceID)
     TRACE("(%04x)\n", uDeviceID);
 
     if (!(wmd = MCI_GetDriver(uDeviceID)) || !wmd->lpfnYieldProc || !wmd->bIs32) {
-	UserYield16();
+	MyUserYield();
     } else {
 	ret = wmd->lpfnYieldProc(uDeviceID, wmd->dwYieldData);
     }

@@ -4,7 +4,7 @@
  * MMSYTEM functions
  *
  * Copyright 1993      Martin Ayotte
- *           1998-2002 Eric Pouech
+ *           1998-2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,10 +24,6 @@
 /*
  * Eric POUECH :
  *  	99/4	added mmTask and mmThread functions support
- */
-
-/* FIXME: I think there are some segmented vs. linear pointer weirdnesses
- *        and long term pointers to 16 bit space in here
  */
 
 #include <string.h>
@@ -2690,12 +2686,13 @@ static LRESULT MMIO_Callback16(SEGPTR cb16, LPMMIOINFO lpmmioinfo, UINT uMessage
  *             MMIO_ResetSegmentedData
  *
  */
-static LRESULT     MMIO_SetSegmentedBuffer(HMMIO hmmio, SEGPTR ptr)
+static LRESULT     MMIO_SetSegmentedBuffer(HMMIO hmmio, SEGPTR ptr, BOOL release)
 {
     LPWINE_MMIO		wm;
 
     if ((wm = MMIO_Get(hmmio)) == NULL)
 	return MMSYSERR_INVALHANDLE;
+    if (release) UnMapLS(wm->segBuffer16);
     wm->segBuffer16 = ptr;
     return MMSYSERR_NOERROR;
 }
@@ -2727,7 +2724,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
 	mmioinfo.adwInfo[3]  = lpmmioinfo16->adwInfo[3];
 
 	ret = MMIO_Open(szFileName, &mmioinfo, dwOpenFlags, MMIO_PROC_16);
-        MMIO_SetSegmentedBuffer(mmioinfo.hmmio, (SEGPTR)lpmmioinfo16->pchBuffer);
+        MMIO_SetSegmentedBuffer(mmioinfo.hmmio, (SEGPTR)lpmmioinfo16->pchBuffer, FALSE);
 
 	lpmmioinfo16->wErrorRet = mmioinfo.wErrorRet;
         lpmmioinfo16->hmmio     = HMMIO_16(mmioinfo.hmmio);
@@ -2742,6 +2739,7 @@ HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo16,
  */
 MMRESULT16 WINAPI mmioClose16(HMMIO16 hmmio, UINT16 uFlags)
 {
+    MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), (SEGPTR)NULL, TRUE);
     return mmioClose(HMMIO_32(hmmio), uFlags);
 }
 
@@ -2854,7 +2852,9 @@ MMRESULT16 WINAPI mmioSetBuffer16(HMMIO16 hmmio, LPSTR pchBuffer,
                                     cchBuffer, uFlags);
 
     if (ret == MMSYSERR_NOERROR)
-        MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), (DWORD)pchBuffer);
+        MMIO_SetSegmentedBuffer(HMMIO_32(hmmio), (DWORD)pchBuffer, TRUE);
+    else
+        UnMapLS((DWORD)pchBuffer);
     return ret;
 }
 

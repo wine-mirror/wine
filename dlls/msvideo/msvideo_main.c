@@ -48,12 +48,13 @@ LRESULT (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM) = NULL;
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
 
 typedef struct _reg_driver reg_driver;
-struct _reg_driver{
-	DWORD fccType;
-	DWORD fccHandler;
-	DRIVERPROC proc;
-	char* name;
-	reg_driver* next;
+struct _reg_driver
+{
+    DWORD       fccType;
+    DWORD       fccHandler;
+    DRIVERPROC  proc;
+    LPWSTR      name;
+    reg_driver* next;
 };
 
 static reg_driver* reg_driver_list = NULL;
@@ -164,34 +165,37 @@ static DWORD IC_HandleRef = 1;
 BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDesc, UINT wFlags) 
 {
     reg_driver* driver;
+    unsigned len;
 
     TRACE("(%s,%s,%p,%p,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), (void*)lParam, szDesc, wFlags);
 
     /* Check if a driver is already registered */
-    driver = reg_driver_list;
-    while(driver)
+    for (driver = reg_driver_list; driver; driver = driver->next)
+    {
         if (!compare_fourcc(fccType, driver->fccType) &&
             !compare_fourcc(fccHandler, driver->fccHandler))
             break;
-        else
-            driver = driver->next;
-    if (driver)
-        return FALSE;
+    }
+    if (driver) return FALSE;
 
     /* Register the driver */
     driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(reg_driver));
+    if (!driver) goto oom;
     driver->fccType = fccType;
     driver->fccHandler = fccHandler;
 
-    switch(wFlags) {
+    switch(wFlags)
+    {
     case ICINSTALL_FUNCTION:
         driver->proc = (DRIVERPROC)lParam;
 	driver->name = NULL;
         break;
     case ICINSTALL_DRIVER:
 	driver->proc = NULL;
-	driver->name = HeapAlloc(GetProcessHeap(), 0, strlen((char*)lParam));
-	strcpy(driver->name, (char*) lParam);
+        len = MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, NULL, 0);
+        driver->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (!driver->name) goto oom;
+        MultiByteToWideChar(CP_ACP, 0, (char*)lParam, -1, driver->name, len);
 	break;
     default:
 	ERR("Invalid flags!\n");
@@ -204,6 +208,9 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
    reg_driver_list = driver;
     
    return TRUE;
+ oom:
+   if (driver) HeapFree(GetProcessHeap(), 0, driver);
+   return FALSE;
 }
 
 /***********************************************************************
@@ -211,30 +218,25 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
  */
 BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags) 
 {
-    reg_driver* driver;
-    reg_driver** previous;
+    reg_driver** pdriver;
     
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wFlags);
 
     /* Check if a driver is already registered */
-    driver = reg_driver_list;
-    previous = &reg_driver_list;
-    while(driver)
-        if (!compare_fourcc(fccType, driver->fccType) &&
-            !compare_fourcc(fccHandler, driver->fccHandler))
+    for (pdriver = &reg_driver_list; *pdriver; pdriver = &(*pdriver)->next)
+    {
+        if (!compare_fourcc(fccType, (*pdriver)->fccType) &&
+            !compare_fourcc(fccHandler, (*pdriver)->fccHandler))
             break;
-        else {
-            previous = &(driver->next);
-            driver = driver->next;
-        }
-    if (!driver)
+    }
+    if (!*pdriver)
         return FALSE;
 
     /* Remove the driver from the list */
-    *previous = driver->next;
-    if (driver->name)
-        HeapFree(GetProcessHeap(), 0, driver->name);
-    HeapFree(GetProcessHeap(), 0, driver);
+    *pdriver = (*pdriver)->next;
+    if ((*pdriver)->name)
+        HeapFree(GetProcessHeap(), 0, (*pdriver)->name);
+    HeapFree(GetProcessHeap(), 0, *pdriver);
     
     return TRUE;  
 }
@@ -246,11 +248,12 @@ BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags)
  */
 HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode) 
 {
-    char		codecname[10];
+    WCHAR		codecname[10];
     ICOPEN		icopen;
     HDRVR		hdrv;
     WINE_HIC*           whic;
     BOOL                bIs16;
+    static WCHAR        drv32W[] = {'d','r','i','v','e','r','s','3','2','\0'};
     reg_driver*         driver;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
@@ -294,7 +297,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         codecname[8] = HIBYTE(HIWORD(fccHandler));
         codecname[9] = '\0';
 
-        hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);
+        hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
         if (!hdrv) 
         {
             if (fccType == streamtypeVIDEO) 
@@ -305,14 +308,14 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
                 codecname[3] = 'c';
 
 		fccType = ICTYPE_VIDEO;
-                hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);   
+                hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
 	    }
             if (!hdrv)
                 return 0;
 	}
     } else {
         /* The driver has been registered at runtime with its name */
-        hdrv = OpenDriverA(driver->name, NULL, (LPARAM)&icopen);
+        hdrv = OpenDriver(driver->name, NULL, (LPARAM)&icopen);
         if (!hdrv) 
             return 0; 
     }
