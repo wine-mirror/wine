@@ -1,11 +1,13 @@
 name setupapi
 type win32
+rsrc setupapi.res
 
+import user32.dll
 import advapi32.dll
 import kernel32.dll
 import ntdll.dll
 
-debug_channels (setupapi setupx)
+debug_channels (setupapi)
 
 # almost all functions are commented out for now. Ordinals are from setupapi.dll 4.0
 

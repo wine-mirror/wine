@@ -1,7 +1,17 @@
-#ifndef __SETUPX_PRIVATE_H
-#define __SETUPX_PRIVATE_H
+#ifndef __SETUPAPI_PRIVATE_H
+#define __SETUPAPI_PRIVATE_H
 
 #include "wine/windef16.h"
+
+#define COPYFILEDLGORD	1000
+#define SOURCESTRORD	500
+#define DESTSTRORD	501
+#define PROGRESSORD	502
+
+
+#define REG_INSTALLEDFILES "System\\CurrentControlSet\\Control\\InstalledFiles"
+#define REGPART_RENAME "\\Rename"
+#define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
 typedef struct tagLDD_LIST {
         LPLOGDISKDESC pldd;
@@ -26,4 +36,4 @@ extern WORD InfNumEntries;
 
 extern LPCSTR IP_GetFileName(HINF16 hInf);
 
-#endif /* __SETUPX_PRIVATE_H */
+#endif /* __SETUPAPI_PRIVATE_H */

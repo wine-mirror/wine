@@ -14,11 +14,11 @@ owner	setupapi
 10   stub     IpGetIntField #(word ptr word ptr)
 11   stub     IpFindNextLine #(word ptr)
 12   stub     IpGetFileName #(word ptr word)
-13   stub     VcpQueueCopy #(str str str str word word ptr word long)
+13   pascal16 VcpQueueCopy(str str str str word word ptr word long) VcpQueueCopy16
 14   stub     NOAUTORUNWNDPROC
 15   stub     __DEBUGMSG
 16   stub     __ASSERTMSG
-17   stub     VcpQueueDelete #(str str word long)
+17   pascal16 VcpQueueDelete(str str word long) VcpQueueDelete16
 18   stub     TpOpenFile #(str ptr word)
 19   stub     TpCloseFile #(word)
 20   stub     TpOpenSection #(word ptr str word)
@@ -62,6 +62,7 @@ owner	setupapi
 61   stub     suErrorToIds #(word word)
 62   stub     TPWriteProfileString #(str str str)
 63   stub     SURPLSETUP
+# does SUSTORELDIDPATH set the path of an LDID in the registry ?
 64   stub     SUSTORELDIDPATH
 65   stub     WILDCARDSTRCMPI
 101  pascal16 GenInstall(word str word) GenInstall16
@@ -122,20 +123,20 @@ owner	setupapi
 160  stub     SXUPDATEDS
 170  stub     SUSETMEM
 171  stub     WriteDMFBootData #(word ptr word)
-200  pascal   VcpOpen(ptr str) VcpOpen16
+200  pascal   VcpOpen(segptr ptr) VcpOpen16
 201  pascal   VcpClose(word str) VcpClose16
-202  stub     vcpDefCallbackProc #(ptr word word long long)
+202  pascal16 vcpDefCallbackProc(ptr word word long long) vcpDefCallbackProc16
 203  stub     vcpEnumFiles #(ptr long)
-204  stub     VcpQueueRename #(str str str str word word long)
-205  stub     vsmGetStringName #(word ptr word)
-206  stub     vsmStringDelete #(word)
-207  stub     vsmStringAdd #(str)
-208  stub     vsmGetStringRawName #(word)
+204  pascal16 VcpQueueRename(str str str str word word long) VcpQueueRename16
+205  pascal16 vsmGetStringName(word ptr word) vsmGetStringName16
+206  pascal16 vsmStringDelete(word) vsmStringDelete16
+207  pascal16 vsmStringAdd(str) vsmStringAdd16
+208  pascal   vsmGetStringRawName(word) vsmGetStringRawName16
 209  stub     IpSaveRestorePosition #(word word)
 210  pascal16 IpGetProfileString(word str str ptr word) IpGetProfileString16
 211  stub     IpOpenEx #(str ptr word)
 212  stub     IpOpenAppendEx #(str word word)
-213  stub     vcpUICallbackProc #(ptr word word long long)
+213  pascal16 vcpUICallbackProc(ptr word word long long) vcpUICallbackProc16
 214  stub     VcpAddMRUPath #(str)
 300  stub     DiBuildCompatDrvList #(ptr)
 301  stub     DiBuildClassDrvList #(ptr)

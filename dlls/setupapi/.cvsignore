@@ -1,3 +1,5 @@
 Makefile
+setupapi.res
 setupapi.spec.c
 setupx.spec.c
+virtcopy.glue.c

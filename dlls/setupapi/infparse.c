@@ -16,9 +16,9 @@
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "setupx16.h"
-#include "setupx_private.h"
+#include "setupapi_private.h"
 
-DEFAULT_DEBUG_CHANNEL(setupx);
+DEFAULT_DEBUG_CHANNEL(setupapi);
 
 WORD InfNumEntries = 0;
 INF_FILE *InfList = NULL;

@@ -13,7 +13,14 @@ C_SRCS = \
 	devinst.c \
 	infparse.c \
 	setupx_main.c \
-	stubs.c
+	stubs.c \
+	virtcopy.c
+
+GLUE = \
+	virtcopy.c
+
+RC_SRCS= \
+	setupapi.rc
 
 @MAKE_DLL_RULES@
 

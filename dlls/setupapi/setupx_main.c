@@ -47,12 +47,12 @@
 #include "winreg.h"
 #include "wine/winuser16.h"
 #include "setupx16.h"
-#include "setupx_private.h"
+#include "setupapi_private.h"
 #include "winerror.h"
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(setupx);
+DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /***********************************************************************
  *		SURegOpenKey
@@ -292,7 +292,7 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
     LPSTR *pSub;
     DWORD count;
     HINF16 hInf = 0;
-    RETERR16 res = OK;
+    RETERR16 res = OK, tmp;
     WORD wFlags;
     BOOL reboot = FALSE;
     HMODULE hMod;
@@ -310,6 +310,8 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
 	res = ERROR_FILE_NOT_FOUND; /* yes, correct */
 	goto end;
     }
+    if (VcpOpen16(NULL, 0))
+	goto end;
     if (GenInstall16(hInf, *(pSub+count-2), GENINSTALL_DO_ALL) != OK)
 	goto end;
     wFlags = atoi(*(pSub+count-1)) & ~128;
@@ -338,7 +340,12 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
     
     res = OK;
 end:
-    IpClose16(hInf);
+    tmp = VcpClose16(VCPFL_ALL, NULL);
+    if (tmp != OK)
+	res = tmp;
+    tmp = IpClose16(hInf);
+    if (tmp != OK)
+	res = tmp;
     SETUPX_FreeSubStrings(pSub);
     if (reboot)
     {
@@ -502,7 +509,7 @@ static const LDID_DATA LDID_Data[34] =
  * LDID == Logical Device ID
  *
  * The whole LDD/LDID business might go into a separate file named
- * ldd.c or logdevice.c.
+ * ldd.c.
  * At the moment I don't know what the hell these functions are really doing.
  * That's why I added reporting stubs.
  * The only thing I do know is that I need them for the LDD/LDID infrastructure.
@@ -1048,28 +1055,6 @@ void WINAPI GenFormStrWithoutPlaceHolders16( LPSTR szDst, LPCSTR szSrc, HINF16 h
     TRACE("ret '%s'\n", szDst);
 }
 
-/***********************************************************************
- *		VcpOpen
- *
- * No idea what to do here.
- */
-RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef)
-{
-    FIXME("(%p, %08lx), stub.\n", vifproc, lparamMsgRef);
-    return OK;
-}
-
-/***********************************************************************
- *		VcpClose
- *
- * Is fl related to VCPDISKINFO.fl ?
- */
-RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
-{
-    FIXME("(%04x, '%s'), stub.\n", fl, lpszBackupDest);
-    return OK;
-}
-
 /*
  * Copy all items in a CopyFiles entry over to the destination
  *
@@ -1077,26 +1062,29 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
  */
 static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 {
-    BOOL res = FALSE;
+    BOOL bSingle = FALSE;
     unsigned int n;
     LPCSTR filename = IP_GetFileName(hInf);
     LPSTR pCopyEntry;
-    char pDestStr[MAX_PATH];
+    char pDstStr[MAX_PATH];
     LPSTR pSrcDir, pDstDir;
     LPSTR pFileEntries, p;
     WORD ldid;
     LOGDISKDESC_S ldd;
     LPSTR *pSubFile;
     LPSTR pSrcFile, pDstFile;
+    WORD flag;
 
     for (n=0; n < *(DWORD *)pSub; n++)
     {
 	pCopyEntry = *(pSub+1+n);
 	if (*pCopyEntry == '@')
 	{
-	    ERR("single file not handled yet !\n");
-	    continue;
+	    pCopyEntry++;
+	    bSingle = TRUE;
 	}
+	else
+	    bSingle = FALSE;
 
 	/* get source directory for that entry */
 	INIT_LDD(ldd, LDID_SRCPATH);
@@ -1105,20 +1093,35 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 	
         /* get destination directory for that entry */
 	if (!(GetPrivateProfileStringA("DestinationDirs", pCopyEntry, "",
-					pDestStr, sizeof(pDestStr), filename)))
-	    continue;
+					pDstStr, sizeof(pDstStr), filename)))
+	{
+	    /* hmm, not found; try the default entry */
+	    if (!(GetPrivateProfileStringA("DestinationDirs", "DefaultDestDir", "", pDstStr, sizeof(pDstStr), filename)))
+	    {
+		WARN("DefaultDestDir not found.\n");
+	        continue;
+	    }
+	}
 
 	/* translate destination dir if given as LDID */
-	ldid = atoi(pDestStr);
+	ldid = atoi(pDstStr);
 	if (ldid)
 	{
 	    if (!(SETUPX_IP_TranslateLDID(ldid, &pDstDir, hInf)))
 		continue;
 	}
 	else
-	    pDstDir = pDestStr;
+	    pDstDir = pDstStr;
 	
-	/* now that we have the destination dir, iterate over files to copy */
+	/* now that we have the destination dir, register file copying */
+
+	if (bSingle)
+	{
+	    VcpQueueCopy16(pCopyEntry, pCopyEntry, pSrcDir, pDstDir, LDID_SRCPATH, ldid ? ldid : 0xffff, 0, VFNL_COPY, 0);
+	    return TRUE;
+	}
+
+	/* entry wasn't a single file, so let's iterate over section */
 	pFileEntries = SETUPX_GetSectionEntries(filename, pCopyEntry);
         for (p=pFileEntries; *p; p +=strlen(p)+1)
 	{
@@ -1126,30 +1129,34 @@ static BOOL SETUPX_CopyFiles(LPSTR *pSub, HINF16 hInf)
 	    pSrcFile = *(pSubFile+1);
 	    pDstFile = (*(DWORD *)pSubFile > 1) ? *(pSubFile+2) : pSrcFile;
 	    TRACE("copying file '%s\\%s' to '%s\\%s'\n", pSrcDir, pSrcFile, pDstDir, pDstFile);
+	    flag = 0;
 	    if (*(DWORD *)pSubFile > 2)
 	    {
-		WORD flag;
 		if ((flag = atoi(*(pSubFile+3)))) /* ah, flag */
 		{
 		    if (flag & 0x2c)
 		    FIXME("VNLP_xxx flag %d not handled yet.\n", flag);
 		}
 		else
-		    FIXME("temp file name '%s' given. Need to register in wininit.ini !\n", *(pSubFile+3)); /* strong guess that this is VcpQueueCopy() */
+		{
+		    FIXME("temp file name '%s' given. Need to register in wininit.ini !\n", *(pSubFile+3));
+		    /* we probably need to set VIRTNODE.vhstrDstFinalName to
+		     * the final destination name, and the temp name is merely
+		     * the copy destination */
+		}
 	    }
+	    VcpQueueCopy16(pSrcFile, pDstFile, pSrcDir, pDstDir, LDID_SRCPATH, ldid ? ldid : 0xffff, 0, VFNL_COPY|flag, 0);
 	    SETUPX_FreeSubStrings(pSubFile);
-	    /* we don't copy ANYTHING yet ! (I'm too lazy and want to verify
-	     * this first before destroying whole partitions ;-) */
 	}
     }
 	    
-    return res;
+    return TRUE;
 }
 
 /***********************************************************************
  *		GenInstall
  *
- * general install function for .INF file sections
+ * generic installer function for .INF file sections
  *
  * This is not perfect - patch whenever you can !
  * 
