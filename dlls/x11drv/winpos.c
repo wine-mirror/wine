@@ -59,16 +59,16 @@ DEFAULT_DEBUG_CHANNEL(x11drv);
  *
  * Clip all children of a given window out of the visible region
  */
-static void clip_children( WND *win, HRGN hrgn, int whole_window )
+static void clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
 {
     WND *ptr;
     HRGN rectRgn;
     int x, y;
 
     /* first check if we have anything to do */
-    for (ptr = win->child; ptr; ptr = ptr->next)
+    for (ptr = win->child; ptr != last; ptr = ptr->next)
         if (ptr->dwStyle & WS_VISIBLE) break;
-    if (!ptr) return; /* no children to clip */
+    if (ptr == last) return; /* no children to clip */
 
     if (whole_window)
     {
@@ -78,7 +78,7 @@ static void clip_children( WND *win, HRGN hrgn, int whole_window )
     else x = y = 0;
 
     rectRgn = CreateRectRgn( 0, 0, 0, 0 );
-    while (ptr)
+    while (ptr != last)
     {
         if (ptr->dwStyle & WS_VISIBLE)
         {
@@ -98,7 +98,7 @@ static void clip_children( WND *win, HRGN hrgn, int whole_window )
  *
  * Compute the visible region of a window
  */
-static HRGN get_visible_region( WND *win, UINT flags )
+static HRGN get_visible_region( WND *win, WND *top, UINT flags, int mode )
 {
     HRGN rgn;
     RECT rect;
@@ -128,15 +128,30 @@ static HRGN get_visible_region( WND *win, UINT flags )
 
     if (!(rgn = CreateRectRgn( rect.left, rect.top, rect.right, rect.bottom ))) return 0;
 
-    if (flags & DCX_CLIPCHILDREN)
+    if ((flags & DCX_CLIPCHILDREN) && (mode != ClipByChildren))
     {
-        /* if we are clipping siblings and using the client area,
-         * X will do the clipping for us; otherwise, we need to
-         * clip children by hand here
-         */
-        if ((flags & DCX_WINDOW) || !(flags & DCX_CLIPSIBLINGS))
-            clip_children( win, rgn, (flags & DCX_WINDOW) );
+        /* we need to clip children by hand */
+        clip_children( win, NULL, rgn, (flags & DCX_WINDOW) );
     }
+
+    if (top && top != win)  /* need to clip siblings of ancestors */
+    {
+        WND *ptr = win;
+
+        OffsetRgn( rgn, xoffset, yoffset );
+        for (;;)
+        {
+            if (ptr->dwStyle & WS_CLIPSIBLINGS) clip_children( ptr->parent, ptr, rgn, FALSE );
+            if (ptr == top) break;
+            ptr = ptr->parent;
+            OffsetRgn( rgn, ptr->rectClient.left, ptr->rectClient.top );
+            xoffset += ptr->rectClient.left;
+            yoffset += ptr->rectClient.top;
+        }
+        /* make it relative to the target window again */
+        OffsetRgn( rgn, -xoffset, -yoffset );
+    }
+
     return rgn;
 }
 
@@ -150,6 +165,7 @@ static HRGN get_visible_region( WND *win, UINT flags )
 BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     WND *win = WIN_FindWndPtr( hwnd );
+    WND *ptr, *top;
     X11DRV_WND_DATA *data = win->pDriverData;
     Drawable drawable;
     int org_x, org_y, mode = IncludeInferiors;
@@ -157,7 +173,31 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
-    if (flags & DCX_CLIPSIBLINGS)
+    /* find the top parent in the hierarchy that isn't clipping siblings */
+    top = NULL;
+    for (ptr = win->parent; ptr && ptr->parent; ptr = ptr->parent)
+        if (!(ptr->dwStyle & WS_CLIPSIBLINGS)) top = ptr;
+
+    if (!top && !(flags & DCX_CLIPSIBLINGS)) top = win;
+
+    if (top)
+    {
+        org_x = org_y = 0;
+        if (flags & DCX_WINDOW)
+        {
+            org_x = win->rectWindow.left - win->rectClient.left;
+            org_y = win->rectWindow.top - win->rectClient.top;
+        }
+        for (ptr = win; ptr != top->parent; ptr = ptr->parent)
+        {
+            org_x += ptr->rectClient.left;
+            org_y += ptr->rectClient.top;
+        }
+        /* have to use the parent so that we include siblings */
+        if (top->parent) drawable = get_client_window( top->parent );
+        else drawable = root_window;
+    }
+    else
     {
         if (IsIconic( hwnd ))
         {
@@ -179,22 +219,6 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
             if (flags & DCX_CLIPCHILDREN) mode = ClipByChildren;  /* can use X11 clipping */
         }
     }
-    else
-    {
-        /* not clipping siblings -> have to use parent client drawable */
-        if (win->parent) drawable = get_client_window( win->parent );
-        else drawable = root_window;
-        if (flags & DCX_WINDOW)
-        {
-            org_x = win->rectWindow.left;
-            org_y = win->rectWindow.top;
-        }
-        else
-        {
-            org_x = win->rectClient.left;
-            org_y = win->rectClient.top;
-        }
-    }
 
     X11DRV_SetDrawable( hdc, drawable, mode, org_x, org_y );
 
@@ -202,7 +226,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         SetHookFlags16( hdc, DCHF_VALIDATEVISRGN ))  /* DC was dirty */
     {
         /* need to recompute the visible region */
-        HRGN visRgn = get_visible_region( win, flags );
+        HRGN visRgn = get_visible_region( win, top, flags, mode );
 
         if (flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN))
             CombineRgn( visRgn, visRgn, hrgn, (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
