@@ -74,7 +74,7 @@
 @ stub NetFileEnum
 @ stub NetFileGetInfo
 @ stub NetGetAnyDCName
-@ stub NetGetDCName
+@ stdcall NetGetDCName(wstr wstr ptr) NetGetDCName
 @ stub NetGetDisplayInformationIndex
 @ stub NetGroupAdd
 @ stub NetGroupAddUser
