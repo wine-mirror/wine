@@ -556,7 +556,7 @@ BOOL WINAPI EscapeCommFunction(
 
 		case SETRTS:
 		        TRACE("SETRTS\n");
-#ifdef TIOCM_DTR
+#ifdef TIOCM_RTS
 			direct=TRUE;
 			result= COMM_WhackModem(fd, 0, TIOCM_RTS);
 			break;
