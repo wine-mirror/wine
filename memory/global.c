@@ -1039,9 +1039,13 @@ HGLOBAL WINAPI GlobalAlloc(
       /* HeapLock(heap); */
 
       pintern=HeapAlloc(heap, 0,  sizeof(GLOBAL32_INTERN));
+      if (!pintern) return NULL;
       if(size)
       {
-	 palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL));
+	 if (!(palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL)))) {
+	    HeapFree(heap, 0, pintern);
+	    return NULL;
+	 }
 	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
 	 pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);
       }
