@@ -283,19 +283,20 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if(Properties[strlen(Properties)-1] == ' ')
+	{
+		Properties[strlen(Properties)-1] = 0;
+		TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)-1);
+		if(!TempStr)
+		{
+			fprintf(stderr, "Out of memory!\n");
+			ExitProcess(1);
+		}
+		Properties = TempStr;
+	}
+
 	if(FunctionInstall)
 	{
-		if(Properties[strlen(Properties)-1] == ' ')
-		{
-			Properties[strlen(Properties)-1] = 0;
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)-1);
-			if(!TempStr)
-			{
-				fprintf(stderr, "Out of memory!\n");
-				ExitProcess(1);
-			}
-			Properties = TempStr;
-		}
 		if(GotProductCode)
 		{
 			WINE_FIXME("Product code treatment not implemented yet\n");
