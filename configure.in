@@ -140,62 +140,85 @@ then
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
-    dnl Check for -lXpm
-    AC_CHECK_HEADERS(X11/xpm.h)
-    if test "$ac_cv_header_X11_xpm_h" = "yes"
-    then 
-        AC_CHECK_LIB(Xpm,XpmCreatePixmapFromData,AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-    else
-    	echo "When compiling with X support, you need the Xpm library, or"
-	echo "WINE will not work. This Xpm library is within the following RPM,"
-	echo "which you need to install:"
-	echo "Redhat		:	xpm, xpm-devel"
-	echo "Caldera OpenLinux	:	xpm, xpm-devel, xpm-devel-static"
+    dnl *** Check for -lXpm
+    AC_CHECK_HEADERS(X11/xpm.h,
+      [ dnl *** If X11/xpm.h exists...
+        AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,
+          [ AC_DEFINE(HAVE_LIBXXPM) X_PRE_LIBS="$X_PRE_LIBS -lXpm"],,
+          $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+        )
+      ],
+      [ dnl *** If X11/xpm.h does not exist...
+        dnl NOTE: autoconf does not allow commas inside the third 
+        dnl       parameter to AC_CHECK_HEADERS, due to some quoting
+        dnl       magic it does.
+	echo "Redhat		:	xpm xpm-devel"
+	echo "Caldera OpenLinux	:	xpm xpm-devel xpm-devel-static"
 	echo "SuSE		:	xpm"
-	echo "Debian/Corel Linux: 	xpm4g, xpm4g-dev"
+	echo "Debian/Corel Linux: 	xpm4g xpm4g-dev"
 	echo
 	echo "Or get the sources from ftp.x.org and all its mirror sites from "
 	echo "the directory /contrib/libraries."
 	echo
 	exit 1
-    fi
+      ]
+    )
 
+    dnl *** All three of the following tests require X11/Xlib.h
+    AC_CHECK_HEADERS(X11/Xlib.h,
+      [
+        dnl *** Check for X Shm extension
+        AC_CHECK_HEADERS(X11/extensions/XShm.h,
+            [ dnl *** If X11/extensions/XShm.h exists...
+              AC_CHECK_LIB(Xext, XShmQueryExtension,
+              AC_DEFINE(HAVE_LIBXXSHM),,
+              $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+            ],
+            AC_MSG_WARN([Xshm extension not found!!])
+        )
 
-    dnl Check for X Shm extension
-    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/XShm.h)
-    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_XShm_h" = "yes"
-    then 
-        AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-    fi
-    dnl Check for XFree86 DGA / DGA 2.0 extension
-    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86dga.h)
-    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86dga_h" = "yes"
-    then 
-         AC_CHECK_LIB(Xxf86dga,
-	              XDGAQueryExtension,
-		      	AC_DEFINE(HAVE_LIBXXF86DGA2)
-			AC_DEFINE(HAVE_LIBXXF86DGA)
-			X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-	 		DGA_SRCS='$(DGA_SRCS)'
-			DGA2_SRCS='$(DGA2_SRCS)'
-			,,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS
-	 )
-	 if test "$ac_cv_lib_Xxf86dga_XDGAQueryExtension" = "no"
-	 then
-           AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,
-		AC_DEFINE(HAVE_LIBXXF86DGA)
-		X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
-		DGA_SRCS='$(DGA_SRCS)'
-		,,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-	 fi
-    fi
+        dnl *** Check for XFree86 DGA / DGA 2.0 extension
+        AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
+            [ dnl *** If X11/extensions/xf86dga.h exists, check 
+              dnl *** for XDGAQueryExtension()...
+              AC_CHECK_LIB(Xxf86dga, XDGAQueryExtension,
+                [ dnl *** If found...
+                  AC_DEFINE(HAVE_LIBXXF86DGA2)
+                  AC_DEFINE(HAVE_LIBXXF86DGA)
+                  X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
+                  DGA_SRCS='$(DGA_SRCS)'
+                  DGA2_SRCS='$(DGA2_SRCS)'
+               ],
+                [ dnl *** If not found, look for XF86DGAQueryExtension()
+                  dnl *** instead (DGA 2.0 not found)...
+                  AC_CHECK_LIB(Xxf86dga, XF86DGAQueryExtension,
+                    [ AC_DEFINE(HAVE_LIBXXF86DGA)
+                      X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga"
+                      DGA_SRCS='$(DGA_SRCS)'
+                    ],,
+                    $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+                  )
+                ],
+                $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+              )
+            ],
+            AC_MSG_WARN([DGA extension not found!!])
+        )
 
-    dnl Check for XFree86 VMODE extension
-    AC_CHECK_HEADERS(X11/Xlib.h X11/extensions/xf86vmode.h)
-    if test "$ac_cv_header_X11_Xlib_h" = "yes" -a "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
-    then 
-        AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
-    fi
+        dnl *** Check for XFree86 VMODE extension
+        AC_CHECK_HEADERS(X11/extensions/xf86vmode.h,
+            [ dnl *** If X11/extensions/xf86vmode.h exists...
+                AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,
+                  [ AC_DEFINE(HAVE_LIBXXF86VM)
+                     X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm"
+                  ],,
+                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS
+                )
+            ],
+            AC_MSG_WARN([XFree86 VMODE extension not found!!])
+        )
+      ]
+    ) dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL
     if test $OPENGL = "yes" -o $OPENGL = "normal"
