@@ -40,7 +40,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Esperto",        IDM_EXPERT
         MENUITEM "&Presonalizza",        IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "E&sci\Alt+X",          IDM_EXIT
+        MENUITEM "E&sci\tAlt+X",          IDM_EXIT
     }
     POPUP "&Informazioni" {
         MENUITEM "&Tempi migliori",    IDM_TIMES
