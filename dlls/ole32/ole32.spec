@@ -28,7 +28,7 @@ import kernel32.dll
  19 stub CoGetInterfaceAndReleaseStream # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  20 stdcall CoGetMalloc(long ptr) CoGetMalloc
  21 stub CoGetMarshalSizeMax        # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
- 22 stub CoGetPSClsid               # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid 
  23 stub CoGetStandardMarshal       # stdcall (ptr ptr long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
  24 stub CoGetState
  25 stub CoGetTreatAsClass          # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED

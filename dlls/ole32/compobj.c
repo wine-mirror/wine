@@ -756,6 +756,75 @@ HRESULT WINAPI CLSIDFromProgID(
 	return ret;
 }
 
+
+
+/*****************************************************************************
+ *             CoGetPSClsid [OLE32.22]
+ *
+ * This function returns the CLSID of the DLL that implements the proxy and stub
+ * for the specified interface. 
+ *
+ * It determines this by searching the 
+ * HKEY_CLASSES_ROOT\Interface\{string form of riid}\ProxyStubClsid32 in the registry
+ * and any interface id registered by CoRegisterPSClsid within the current process.
+ * 
+ * FIXME: We only search the registry, not ids registered with CoRegisterPSClsid.
+ */
+HRESULT WINAPI CoGetPSClsid(
+          REFIID riid,     /* [in]  Interface whose proxy/stub CLSID is to be returned */
+          CLSID *pclsid )    /* [out] Where to store returned proxy/stub CLSID */
+{
+    char *buf, buf2[40];
+    DWORD buf2len;
+    HKEY xhkey;
+
+    TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
+
+    /* Get the input iid as a string */
+    WINE_StringFromCLSID(riid, buf2);
+    /* Allocate memory for the registry key we will construct.
+       (length of iid string plus constant length of static text */
+    buf = HeapAlloc(GetProcessHeap(), 0, strlen(buf2)+27);
+    if (buf == NULL)
+    {
+       return (E_OUTOFMEMORY);
+    }
+
+    /* Construct the registry key we want */
+    sprintf(buf,"Interface\\%s\\ProxyStubClsid32", buf2);
+
+    /* Open the key.. */
+    if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
+    {
+       HeapFree(GetProcessHeap(),0,buf);
+       return (E_INVALIDARG);
+    }
+    HeapFree(GetProcessHeap(),0,buf);
+
+    /* ... Once we have the key, query the registry to get the
+       value of CLSID as a string, and convert it into a 
+       proper CLSID structure to be passed back to the app */
+    buf2len = sizeof(buf2);
+    if ( (RegQueryValueA(xhkey,NULL,buf2,&buf2len)) )
+    {
+       RegCloseKey(xhkey);
+       return E_INVALIDARG;
+    }
+    RegCloseKey(xhkey);
+
+    /* We have the CLSid we want back from the registry as a string, so
+       lets convert it into a CLSID structure */
+    if ( (CLSIDFromString16(buf2,pclsid)) != NOERROR)
+    {
+       return E_INVALIDARG;
+    }
+
+    TRACE ("() Returning CLSID=%s\n", debugstr_guid(pclsid));
+    return (S_OK);
+}
+
+
+
 /***********************************************************************
  *		WriteClassStm
  *
