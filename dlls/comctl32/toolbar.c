@@ -2943,6 +2943,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* free toolbar info data */
     COMCTL32_Free (infoPtr);
+    SetWindowLongA (hwnd, 0, 0);
 
     return 0;
 }
@@ -3411,6 +3412,21 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 static LRESULT WINAPI
 ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+
+    switch (uMsg)
+    {
+       case WM_DESTROY:
+           return TOOLBAR_Destroy (hwnd, wParam, lParam);
+
+       case WM_NCCREATE:
+           return TOOLBAR_NCCreate (hwnd, wParam, lParam);
+    }
+
+    if (!TOOLBAR_GetInfoPtr (hwnd))
+    {
+       return DefWindowProcA (hwnd, uMsg, wParam, lParam);
+    }
+
     switch (uMsg)
     {
 	case TB_ADDBITMAP:
@@ -3671,9 +3687,6 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 	    return TOOLBAR_Create (hwnd, wParam, lParam);
 
-	case WM_DESTROY:
-	    return TOOLBAR_Destroy (hwnd, wParam, lParam);
-
 	case WM_ERASEBKGND:
 	    return TOOLBAR_EraseBackground (hwnd, wParam, lParam);
 
@@ -3700,9 +3713,6 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_NCCALCSIZE:
 	    return TOOLBAR_NCCalcSize (hwnd, wParam, lParam);
-
-	case WM_NCCREATE:
-	    return TOOLBAR_NCCreate (hwnd, wParam, lParam);
 
 	case WM_NCPAINT:
 	    return TOOLBAR_NCPaint (hwnd, wParam, lParam);
