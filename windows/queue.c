@@ -701,8 +701,19 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 
         if ( !THREAD_IsWin16( THREAD_Current() ) )
         {
-            /* win32 thread, use WaitForMultipleObjects */
-            MsgWaitForMultipleObjects( 0, NULL, FALSE, timeout, queue->wakeMask );
+	    BOOL		bHasWin16Lock;
+	    DWORD		dwlc;
+
+	    if ( (bHasWin16Lock = _ConfirmWin16Lock()) )
+	    {
+	        TRACE_(msg)("bHasWin16Lock=TRUE\n");
+	        ReleaseThunkLock( &dwlc );
+	    }
+	    WaitForSingleObject( queue->hEvent, timeout );
+	    if ( bHasWin16Lock ) 
+	    {
+	        RestoreThunkLock( dwlc );
+	    }
         }
         else
         {
@@ -714,13 +725,13 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
                 if (GetTickCount() - curTime > timeout)
                 {
 
-        QUEUE_Unlock( queue );
+		    QUEUE_Unlock( queue );
                     return 0;   /* exit with timeout */
                 }
                 Yield16();
             }
+	}
     }
-}
 }
 
 
