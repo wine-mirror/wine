@@ -4982,6 +4982,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     ITEM_INFO *lpItem;
     ITEMHDR* pItemHdr;
     HDPA hdpaSubItems;
+    INT isubitem;
 
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
@@ -4989,6 +4990,9 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	return FALSE;
 
     if (lpLVItem->mask == 0) return TRUE;
+
+    /* make a local copy */
+    isubitem = lpLVItem->iSubItem;
 
     /* a quick optimization if all we're asked is the focus state
      * these queries are worth optimising since they are common,
@@ -5016,7 +5020,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	     *       depend on the uninitialized fields being 0 */
 	    dispInfo.item.mask = lpLVItem->mask & ~LVIF_PARAM;
 	    dispInfo.item.iItem = lpLVItem->iItem;
-	    dispInfo.item.iSubItem = lpLVItem->iSubItem;
+	    dispInfo.item.iSubItem = isubitem;
 	    if (lpLVItem->mask & LVIF_TEXT)
 	    {
 		dispInfo.item.pszText = lpLVItem->pszText;
@@ -5048,7 +5052,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	if (lpLVItem->mask & LVIF_PARAM) lpLVItem->lParam = 0;
 	
 	/* we store only a little state, so if we're not asked, we're done */
-	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return TRUE;
+	if (!(lpLVItem->mask & LVIF_STATE) || isubitem) return TRUE;
 
 	/* if focus is handled by us, report it */
 	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED ) 
@@ -5074,16 +5078,20 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
     assert (lpItem);
 
-    if (lpLVItem->iSubItem)
+    if (isubitem)
     {
-	SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
+	SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, isubitem);
         pItemHdr = lpSubItem ? &lpSubItem->hdr : &callbackHdr;
+        if( !lpSubItem) {
+            WARN(" iSubItem invalid (%08x), ignored.\n", isubitem);
+            isubitem = 0;
+        }
     }
     else
 	pItemHdr = &lpItem->hdr;
 
     /* Do we need to query the state from the app? */
-    if ((lpLVItem->mask & LVIF_STATE) && infoPtr->uCallbackMask && lpLVItem->iSubItem == 0)
+    if ((lpLVItem->mask & LVIF_STATE) && infoPtr->uCallbackMask && isubitem == 0)
     {
 	dispInfo.item.mask |= LVIF_STATE;
 	dispInfo.item.stateMask = infoPtr->uCallbackMask;
@@ -5091,7 +5099,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
   
     /* Do we need to enquire about the image? */
     if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK &&
-        (lpLVItem->iSubItem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES)))
+        (isubitem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES)))
     {
 	dispInfo.item.mask |= LVIF_IMAGE;
         dispInfo.item.iImage = I_IMAGECALLBACK;
@@ -5111,14 +5119,14 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (dispInfo.item.mask != 0)
     {
 	dispInfo.item.iItem = lpLVItem->iItem;
-	dispInfo.item.iSubItem = lpLVItem->iSubItem;
+	dispInfo.item.iSubItem = isubitem;
 	dispInfo.item.lParam = lpItem->lParam;
 	notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	TRACE("   getdispinfo(2):item=%s\n", debuglvitem_t(&dispInfo.item, isW));
     }
 
     /* we should not store values for subitems */
-    if (lpLVItem->iSubItem) dispInfo.item.mask &= ~LVIF_DI_SETITEM;
+    if (isubitem) dispInfo.item.mask &= ~LVIF_DI_SETITEM;
 
     /* Now, handle the iImage field */
     if (dispInfo.item.mask & LVIF_IMAGE)
@@ -5129,7 +5137,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
     else if (lpLVItem->mask & LVIF_IMAGE)
     {
-        if(lpLVItem->iSubItem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
+        if(isubitem == 0 || (infoPtr->dwLvExStyle & LVS_EX_SUBITEMIMAGES))
             lpLVItem->iImage = pItemHdr->iImage;
         else
             lpLVItem->iImage = 0;
@@ -5150,7 +5158,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     }
 
     /* if this is a subitem, we're done */
-    if (lpLVItem->iSubItem) return TRUE;
+    if (isubitem) return TRUE;
   
     /* Next is the lParam field */
     if (dispInfo.item.mask & LVIF_PARAM)
