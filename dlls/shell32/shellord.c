@@ -13,6 +13,7 @@
 #include "winnls.h"
 #include "heap.h"
 
+#include "shlwapi.h"
 #include "shellapi.h"
 #include "shlguid.h"
 #include "shlobj.h"
@@ -434,6 +435,115 @@ SignalFileOpen (DWORD dwParam1)
 }
 
 /*************************************************************************
+ * SHADD_get_policy - helper function for SHAddToRecentDocs
+ *
+ * PARAMETERS
+ *   policy    [IN]  policy name (null termed string) to find
+ *   type      [OUT] ptr to DWORD to receive type
+ *   buffer    [OUT] ptr to area to hold data retrieved
+ *   len       [IN/OUT] ptr to DWORD holding size of buffer and getting
+ *                      length filled
+ *
+ * RETURNS
+ *   result of the SHQueryValueEx call
+ */
+static INT SHADD_get_policy(LPSTR policy, LPDWORD type, LPVOID buffer, LPDWORD len)
+{
+    HKEY Policy_basekey;
+    INT ret;
+
+    /* Get the key for the policies location in the registry 
+     */
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+		      "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+		      0, KEY_READ, &Policy_basekey)) {
+
+	if (RegOpenKeyExA(HKEY_CURRENT_USER,
+			  "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+			  0, KEY_READ, &Policy_basekey)) {
+	    ERR("No Explorer Policies location\n");
+	    *len = 0;
+	    return ERROR_FILE_NOT_FOUND;
+	}
+    }
+
+    /* Retrieve the data if it exists
+     */
+    ret = SHQueryValueExA(Policy_basekey, policy, 0, type, buffer, len);
+    RegCloseKey(Policy_basekey);
+    return ret;
+}
+
+
+/*************************************************************************
+ * SHADD_compare_mru - helper function for SHAddToRecentDocs
+ *
+ * PARAMETERS
+ *   data1     [IN] data being looked for
+ *   data2     [IN] data in MRU
+ *   cbdata    [IN] length from FindMRUData call (not used)
+ *
+ * RETURNS
+ *   position within MRU list that data was added.
+ */
+static INT CALLBACK SHADD_compare_mru(LPCVOID data1, LPCVOID data2, DWORD cbData)
+{
+    return lstrcmpiA(data1, data2);
+}
+
+/*************************************************************************
+ * SHADD_create_add_mru_data - helper function for SHAddToRecentDocs
+ *
+ * PARAMETERS
+ *   mruhandle    [IN] handle for created MRU list
+ *   doc_name     [IN] null termed pure doc name
+ *   new_lnk_name [IN] null termed path and file name for .lnk file
+ *   buffer       [IN/OUT] 2048 byte area to consturct MRU data
+ *   len          [OUT] ptr to int to receive space used in buffer
+ *
+ * RETURNS
+ *   position within MRU list that data was added.
+ */
+static INT SHADD_create_add_mru_data(HANDLE mruhandle, LPSTR doc_name, LPSTR new_lnk_name,
+                                     LPSTR buffer, INT *len)
+{
+    LPSTR ptr;
+    INT wlen;
+    
+    /*FIXME: Document:
+     *  RecentDocs MRU data structure seems to be:
+     *    +0h   document file name w/ terminating 0h
+     *    +nh   short int w/ size of remaining
+     *    +n+2h 02h 30h, or 01h 30h, or 00h 30h  -  unknown 
+     *    +n+4h 10 bytes zeros  -   unknown
+     *    +n+eh shortcut file name w/ terminating 0h
+     *    +n+e+nh 3 zero bytes  -  unknown
+     */
+
+    /* Create the MRU data structure for "RecentDocs"
+	 */
+    ptr = buffer;
+    lstrcpyA(ptr, doc_name);
+    ptr += (lstrlenA(buffer) + 1);
+    wlen= lstrlenA(new_lnk_name) + 1 + 12;
+    *((short int*)ptr) = wlen;
+    ptr += 2;   /* step past the length */
+    *(ptr++) = 0x30;  /* unknown reason */
+    *(ptr++) = 0;     /* unknown, but can be 0x00, 0x01, 0x02 */
+    memset(ptr, 0, 10);
+    ptr += 10;
+    lstrcpyA(ptr, new_lnk_name);
+    ptr += (lstrlenA(new_lnk_name) + 1);
+    memset(ptr, 0, 3);
+    ptr += 3;
+    *len = ptr - buffer;
+
+    /* Add the new entry into the MRU list 
+     */
+    return pAddMRUData(mruhandle, (LPCVOID)buffer, *len);
+}
+
+/*************************************************************************
  * SHAddToRecentDocs				[SHELL32.@]
  *
  * PARAMETERS
@@ -442,16 +552,344 @@ SignalFileOpen (DWORD dwParam1)
  *
  * NOTES
  *     exported by name
+ *
+ * FIXME: ?? MSDN shows this as a VOID
  */
 DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)   
-{ if (SHARD_PIDL==uFlags)
-  { FIXME("(0x%08x,pidl=%p):stub.\n", uFlags,pv);
+{
+
+/* FIXME: !!! move CREATEMRULIST and flags to header file !!! */
+/*        !!! it is in both here and comctl32undoc.c      !!! */
+typedef struct tagCREATEMRULIST
+{
+    DWORD  cbSize;        /* size of struct */
+    DWORD  nMaxItems;     /* max no. of items in list */
+    DWORD  dwFlags;       /* see below */
+    HKEY   hKey;          /* root reg. key under which list is saved */
+    LPCSTR lpszSubKey;    /* reg. subkey */
+    PROC   lpfnCompare;   /* item compare proc */
+} CREATEMRULIST, *LPCREATEMRULIST;
+
+/* dwFlags */
+#define MRUF_STRING_LIST  0 /* list will contain strings */
+#define MRUF_BINARY_LIST  1 /* list will contain binary data */
+#define MRUF_DELAYED_SAVE 2 /* only save list order to reg. is FreeMRUList */
+
+/* If list is a string list lpfnCompare has the following prototype
+ * int CALLBACK MRUCompareString(LPCSTR s1, LPCSTR s2)
+ * for binary lists the prototype is
+ * int CALLBACK MRUCompareBinary(LPCVOID data1, LPCVOID data2, DWORD cbData)
+ * where cbData is the no. of bytes to compare.
+ * Need to check what return value means identical - 0?
+ */
+
+
+    UINT olderrormode;
+    HKEY HCUbasekey;
+    CHAR doc_name[MAX_PATH];
+    CHAR link_dir[MAX_PATH];
+    CHAR new_lnk_filepath[MAX_PATH];
+    CHAR new_lnk_name[MAX_PATH];
+    IMalloc *ppM;
+    LPITEMIDLIST pidl;
+    HWND hwnd = 0;       /* FIXME:  get real window handle */
+    INT ret;
+    DWORD data[64], datalen, type;
+
+    /*FIXME: Document:
+     *  RecentDocs MRU data structure seems to be:
+     *    +0h   document file name w/ terminating 0h
+     *    +nh   short int w/ size of remaining
+     *    +n+2h 02h 30h, or 01h 30h, or 00h 30h  -  unknown 
+     *    +n+4h 10 bytes zeros  -   unknown
+     *    +n+eh shortcut file name w/ terminating 0h
+     *    +n+e+nh 3 zero bytes  -  unknown
+     */
+
+    /* See if we need to do anything.
+     */
+    datalen = 64;
+    ret=SHADD_get_policy( "NoRecentDocsHistory", &type, &data, &datalen);
+    if ((ret > 0) && (ret != ERROR_FILE_NOT_FOUND)) {
+	ERR("Error %d getting policy \"NoRecentDocsHistory\"\n", ret);
+	return 0;
+    }
+    if (ret == ERROR_SUCCESS) {
+	if (!( (type == REG_DWORD) || 
+	       ((type == REG_BINARY) && (datalen == 4)) )) {
+	    ERR("Error policy data for \"NoRecentDocsHistory\" not formated correctly, type=%ld, len=%ld\n",
+		type, datalen);
+	    return 0;
 	}
-	else
-	{ FIXME("(0x%08x,%s):stub.\n", uFlags,(char*)pv);
+
+	TRACE("policy value for NoRecentDocsHistory = %08lx\n", data[0]);
+	/* now test the actual policy value */
+	if ( data[0] != 0)
+	    return 0;
+    }
+
+    /* Open key to where the necessary info is
+     */
+    /* FIXME: This should be done during DLL PROCESS_ATTACH (or THREAD_ATTACH)
+     *        and the close should be done during the _DETACH. The resulting
+     *        key is stored in the DLL global data.
+     */
+    RegOpenKeyExA(HKEY_CURRENT_USER,
+		  "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",
+		  0,
+		  KEY_READ,
+		  &HCUbasekey);
+
+    /* Get path to user's "Recent" directory
+     */
+    if(SUCCEEDED(SHGetMalloc(&ppM))) {
+	if (SUCCEEDED(SHGetSpecialFolderLocation(hwnd, CSIDL_RECENT, 
+						 &pidl))) {
+	    SHGetPathFromIDListA(pidl, link_dir);
+	    IMalloc_Free(ppM, pidl);
 	}
-  return 0;
+	IMalloc_Release(ppM);
+    }
+    else {
+	/* serious issues */
+	link_dir[0] = 0;
+	ERR("serious issues\n");
+    }
+    TRACE("Users Recent dir %s\n", link_dir);
+
+    /* If no input, then go clear the lists */
+    if (!pv) {
+	/* clear user's Recent dir
+	 */
+
+	/* FIXME: delete all files in "link_dir"
+	 *
+	 * while( more files ) {
+	 *    lstrcpyA(old_lnk_name, link_dir);
+	 *    PathAppendA(old_lnk_name, filenam);
+	 *    DeleteFileA(old_lnk_name);
+	 * }
+	 */
+	FIXME("should delete all files in %s\\ \n", link_dir);
+
+	/* clear MRU list
+	 */
+	/* MS Bug ?? v4.72.3612.1700 of shell32 does the delete against
+	 *  HKEY_LOCAL_MACHINE version of ...CurrentVersion\Explorer
+	 *  and naturally it fails w/ rc=2. It should do it against
+	 *  HKEY_CURRENT_USER which is where it is stored, and where
+	 *  the MRU routines expect it!!!!
+	 */
+	RegDeleteKeyA(HCUbasekey, "RecentDocs");
+	RegCloseKey(HCUbasekey);
+	return 0;
+    }
+
+    /* Have data to add, the jobs to be done:
+     *   1. Add document to MRU list in registry "HKCU\Software\
+     *      Microsoft\Windows\CurrentVersion\Explorer\RecentDocs".
+     *   2. Add shortcut to document in the user's Recent directory 
+     *      (CSIDL_RECENT).
+     *   3. Add shortcut to Start menu's Documents submenu.
+     */
+
+    /* Get the pure document name from the input
+     */
+    if (uFlags & SHARD_PIDL) {
+	SHGetPathFromIDListA((LPCITEMIDLIST) pv, doc_name);
+    }
+    else {
+	lstrcpyA(doc_name, (LPSTR) pv);
+    }
+    TRACE("full document name %s\n", doc_name);
+    PathStripPathA(doc_name);;
+    TRACE("stripped document name %s\n", doc_name);
+
+
+    /* ***  JOB 1: Update registry for ...\Explorer\RecentDocs list  *** */
+
+    {  /* on input needs: 
+	*      doc_name    -  pure file-spec, no path 
+	*      link_dir    -  path to the user's Recent directory
+	*      HCUbasekey  -  key of ...Windows\CurrentVersion\Explorer" node
+	* creates:
+	*      new_lnk_name-  pure file-spec, no path for new .lnk file
+	*      new_lnk_filepath
+	*                  -  path and file name of new .lnk file 
+	*/
+	CREATEMRULIST mymru;
+	HANDLE mruhandle;
+	INT len, pos, bufused, err;
+	INT i;
+	DWORD attr;
+	CHAR buffer[2048];
+	CHAR *ptr;
+	CHAR old_lnk_name[MAX_PATH];
+	short int slen;
+
+	mymru.cbSize = sizeof(CREATEMRULIST);
+	mymru.nMaxItems = 15;
+	mymru.dwFlags = MRUF_BINARY_LIST | MRUF_DELAYED_SAVE;
+	mymru.hKey = HCUbasekey;
+	mymru.lpszSubKey = "RecentDocs";
+	mymru.lpfnCompare = &SHADD_compare_mru;
+	mruhandle = pCreateMRUListA(&mymru);
+	if (!mruhandle) {
+	    /* MRU failed */
+	    ERR("MRU processing failed, handle zero\n");
+	    RegCloseKey(HCUbasekey);
+	    return 0;
+	}
+	len = lstrlenA(doc_name);
+	pos = pFindMRUData(mruhandle, doc_name, len, 0);
+
+	/* Now get the MRU entry that will be replaced 
+	 * and delete the .lnk file for it 
+	 */
+	if ((bufused = pEnumMRUListA(mruhandle, (pos == -1) ? 14 : pos, 
+				     buffer, 2048)) != -1) {
+	    ptr = buffer;
+	    ptr += (lstrlenA(buffer) + 1);
+	    slen = *((short int*)ptr);
+	    ptr += 2;  /* skip the length area */
+	    if (bufused >= slen + (ptr-buffer)) {
+		/* buffer size looks good */
+		ptr += 12; /* get to string */
+		len = bufused - (ptr-buffer);  /* get length of buf remaining */
+		if ((lstrlenA(ptr) > 0) && (lstrlenA(ptr) <= len-1)) {
+		    /* appears to be good string */
+		    lstrcpyA(old_lnk_name, link_dir);
+		    PathAppendA(old_lnk_name, ptr);
+		    if (!DeleteFileA(old_lnk_name)) {
+			if ((attr = GetFileAttributesA(old_lnk_name)) == -1) {
+			    if ((err = GetLastError()) != ERROR_FILE_NOT_FOUND) {
+				ERR("Delete for %s failed, err=%d, attr=%08lx\n",
+				    old_lnk_name, err, attr);
+			    }
+			    else {
+				TRACE("old .lnk file %s did not exist\n",
+				      old_lnk_name);
+			    }
+			}
+			else {
+			    ERR("Delete for %s failed, attr=%08lx\n",
+				old_lnk_name, attr);
+			}
+		    }
+		    else {
+			TRACE("deleted old .lnk file %s\n", old_lnk_name);
+		    }
+		}
+	    }
+	}
+
+	/* Create usable .lnk file name for the "Recent" directory
+	 */
+	wsprintfA(new_lnk_name, "%s.lnk", doc_name);
+	lstrcpyA(new_lnk_filepath, link_dir);
+	PathAppendA(new_lnk_filepath, new_lnk_name);
+	i = 1;
+	olderrormode = SetErrorMode(SEM_FAILCRITICALERRORS);
+	while (GetFileAttributesA(new_lnk_filepath) != -1) {
+	    i++;
+	    wsprintfA(new_lnk_name, "%s (%u).lnk", doc_name, i);
+	    lstrcpyA(new_lnk_filepath, link_dir);
+	    PathAppendA(new_lnk_filepath, new_lnk_name);
+	}
+	SetErrorMode(olderrormode);
+	TRACE("new shortcut will be %s\n", new_lnk_filepath);
+
+	/* Now add the new MRU entry and data
+	 */
+	pos = SHADD_create_add_mru_data(mruhandle, doc_name, new_lnk_name,
+					buffer, &len);
+	pFreeMRUListA(mruhandle);
+	TRACE("Updated MRU list, new doc is position %d\n", pos);
+    }
+
+    /* ***  JOB 2: Create shortcut in user's "Recent" directory  *** */
+
+    {  /* on input needs: 
+	*      doc_name    -  pure file-spec, no path
+	*      new_lnk_filepath
+	*                  -  path and file name of new .lnk file 
+ 	*      uFlags[in]  -  flags on call to SHAddToRecentDocs
+	*      pv[in]      -  document path/pidl on call to SHAddToRecentDocs
+	*/
+	IShellLinkA *psl = NULL;
+	IPersistFile *pPf = NULL;
+	HRESULT hres;
+	CHAR desc[MAX_PATH];
+	WCHAR widelink[MAX_PATH];
+
+	CoInitialize(0);
+
+	hres = CoCreateInstance( &CLSID_ShellLink,
+				 NULL,
+				 CLSCTX_INPROC_SERVER,
+				 &IID_IShellLinkA,
+				 (LPVOID )&psl);
+	if(SUCCEEDED(hres)) {
+
+	    hres = IShellLinkA_QueryInterface(psl, &IID_IPersistFile, 
+					     (LPVOID *)&pPf);
+	    if(FAILED(hres)) {
+		/* bombed */
+		ERR("failed QueryInterface for IPersistFile %08lx\n", hres);
+		goto fail;
+	    }
+
+	    /* Set the document path or pidl */
+	    if (uFlags & SHARD_PIDL) {
+		hres = IShellLinkA_SetIDList(psl, (LPCITEMIDLIST) pv);
+	    } else {
+		hres = IShellLinkA_SetPath(psl, (LPCSTR) pv);
+	    }
+	    if(FAILED(hres)) {
+		/* bombed */
+		ERR("failed Set{IDList|Path} %08lx\n", hres);
+		goto fail;
+	    }
+
+	    lstrcpyA(desc, "Shortcut to ");
+	    lstrcatA(desc, doc_name);
+	    hres = IShellLinkA_SetDescription(psl, desc);
+	    if(FAILED(hres)) {
+		/* bombed */
+		ERR("failed SetDescription %08lx\n", hres);
+		goto fail;
+	    }
+
+	    MultiByteToWideChar(CP_ACP, 0, new_lnk_filepath, -1, 
+				widelink, MAX_PATH);
+	    /* create the short cut */
+	    hres = IPersistFile_Save(pPf, widelink, TRUE);
+	    if(FAILED(hres)) {
+		/* bombed */
+		ERR("failed IPersistFile::Save %08lx\n", hres);
+		IPersistFile_Release(pPf);
+		IShellLinkA_Release(psl);
+		goto fail;
+	    }
+	    hres = IPersistFile_SaveCompleted(pPf, widelink);
+	    IPersistFile_Release(pPf);
+	    IShellLinkA_Release(psl);
+	    TRACE("shortcut %s has been created, result=%08lx\n", 
+		  new_lnk_filepath, hres);
+	}
+	else {
+	    ERR("CoCreateInstance failed, hres=%08lx\n", hres);
+	}
+    }
+
+ fail:
+    CoUninitialize();
+
+    /* all done */
+    RegCloseKey(HCUbasekey);
+    return 0;
 }
+
 /*************************************************************************
  * SHCreateShellFolderViewEx			[SHELL32.174]
  *
