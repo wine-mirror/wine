@@ -203,7 +203,6 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
    *  PSH_WIZARDHASFINISH    0x00000010
    *  PSH_RTLREADING         0x00000800
    *  PSH_WIZARDCONTEXTHELP  0x00001000
-   *  PSH_WIZARD97           0x00002000  (pre IE 5)
    *  PSH_WATERMARK          0x00008000
    *  PSH_USEHBMWATERMARK    0x00010000
    *  PSH_USEHPLWATERMARK    0x00020000
@@ -219,7 +218,6 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
     add_flag(PSH_WIZARDHASFINISH);
     add_flag(PSH_RTLREADING);
     add_flag(PSH_WIZARDCONTEXTHELP);
-    add_flag(PSH_WIZARD97_OLD);
     add_flag(PSH_STRETCHWATERMARK);
     add_flag(PSH_USEPAGELANG);
     add_flag(PSH_WIZARD_LITE);
@@ -1619,13 +1617,14 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
       return TRUE;
   }
 
+  ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
   if (psInfo->proppage[index].hwndPage == 0)
   {
-     ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
      PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
   }
 
-  if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) == 0)
+  if ((psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) &&
+      (ppshpage->dwFlags & PSP_USETITLE))
   {
      PROPSHEET_SetTitleW(hwndDlg, psInfo->ppshheader.dwFlags,
                          psInfo->proppage[index].pszText);
@@ -3082,11 +3081,11 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 	int oldBkMode = 0;
 
 	hbmp = SelectObject(hdcSrc, psInfo->ppshheader.u5.hbmHeader);
-	hOldFont = SelectObject(hdc, psInfo->hFontBold);		
+	hOldFont = SelectObject(hdc, psInfo->hFontBold);
 
 	GetClientRect(hwndLineHeader, &r);
 	MapWindowPoints(hwndLineHeader, hwnd, (LPPOINT) &r, 2);
-	SetRect(&rzone, 0, 0, r.right, r.top - 1);
+	SetRect(&rzone, 0, 0, r.right + 1, r.top - 1);
 
 	GetObjectA(psInfo->ppshheader.u5.hbmHeader, sizeof(BITMAP), (LPVOID)&bm);		
 
@@ -3112,19 +3111,36 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
  	        }
  	        DeleteObject(hbr);
  	    }
+
+ 	    /* Draw the header itself. */
+ 	    BitBlt(hdc, 0, 0,
+ 	           bm.bmWidth, min(bm.bmHeight, rzone.bottom),
+ 	           hdcSrc, 0, 0, SRCCOPY);
  	}
  	else
  	{
  	    hbr = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
  	    FillRect(hdc, &rzone, hbr);
  	    DeleteObject(hbr);
+
+ 	    /* Draw the header bitmap. It's always centered like a
+ 	     * common 49 x 49 bitmap. */
+ 	    BitBlt(hdc, rzone.right - 49 - ((rzone.bottom - 49) / 2),
+ 	           (rzone.bottom - 49) / 2,
+ 	           bm.bmWidth, bm.bmHeight,
+ 	           hdcSrc, 0, 0, SRCCOPY);
+
+ 	    /* NOTE: Native COMCTL32 draws a white stripe over the bitmap
+ 	     * if its height is smaller than 49 pixels. Because the reason
+ 	     * for this bug is unknown the current code doesn't try to
+ 	     * replicate it. */
  	}
- 
+
 	clrOld = SetTextColor (hdc, 0x00000000);
 	oldBkMode = SetBkMode (hdc, TRANSPARENT); 
 
 	if (ppshpage->dwFlags & PSP_USEHEADERTITLE) {
-	    SetRect(&r, 20, 10, rzone.right - bm.bmWidth, 18);
+	    SetRect(&r, 20, 10, 0, 0);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
 	    {
 		if (psInfo->unicode)
@@ -3148,7 +3164,7 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 
 	if (ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) {
 	    SelectObject(hdc, psInfo->hFont);
-	    SetRect(&r, 40, 25, rzone.right - bm.bmWidth, 43);
+	    SetRect(&r, 40, 25, 0, 0);
 	    if (HIWORD(ppshpage->pszHeaderTitle))
 	    {
 		if (psInfo->unicode)
@@ -3169,20 +3185,6 @@ static LRESULT PROPSHEET_Paint(HWND hwnd)
 		}
 	    }
 	}
-
- 	if (psInfo->ppshheader.dwFlags & PSH_WIZARD97_OLD)
- 	{
- 	    BitBlt(hdc, 0, 0,
- 	           bm.bmWidth, min(bm.bmHeight, rzone.bottom),
- 	           hdcSrc, 0, 0, SRCCOPY);
- 	}
- 	else
- 	{
- 	    BitBlt(hdc, rzone.right - bm.bmWidth,
- 	           (rzone.bottom - bm.bmHeight) / 2,
- 	           bm.bmWidth, bm.bmHeight,
- 	           hdcSrc, 0, 0, SRCCOPY);
- 	}
 
 	offsety = rzone.bottom + 2;
 
