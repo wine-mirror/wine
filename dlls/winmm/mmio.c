@@ -1284,17 +1284,21 @@ MMRESULT WINAPI mmioAdvance(HMMIO hmmio, MMIOINFO* lpmmioinfo, UINT uFlags)
     }
     if (MMIO_Flush(wm, 0) != MMSYSERR_NOERROR)
 	return MMIOERR_CANNOTWRITE;
-    wm->dwFileSize = max(wm->dwFileSize, lpmmioinfo->lBufOffset + (lpmmioinfo->pchNext - lpmmioinfo->pchBuffer));
 
+    if (lpmmioinfo) {
+	wm->dwFileSize = max(wm->dwFileSize, lpmmioinfo->lBufOffset + (lpmmioinfo->pchNext - lpmmioinfo->pchBuffer));
+    }
     MMIO_GrabNextBuffer(wm, uFlags == MMIO_READ);
 
-    lpmmioinfo->pchNext = lpmmioinfo->pchBuffer;
-    lpmmioinfo->pchEndRead  = lpmmioinfo->pchBuffer + 
-	(wm->info.pchEndRead - wm->info.pchBuffer);
-    lpmmioinfo->pchEndWrite = lpmmioinfo->pchBuffer + 
-	(wm->info.pchEndWrite - wm->info.pchBuffer);
-    lpmmioinfo->lDiskOffset = wm->info.lDiskOffset;
-    lpmmioinfo->lBufOffset = wm->info.lBufOffset;
+    if (lpmmioinfo) {
+	lpmmioinfo->pchNext = lpmmioinfo->pchBuffer;
+	lpmmioinfo->pchEndRead  = lpmmioinfo->pchBuffer + 
+	    (wm->info.pchEndRead - wm->info.pchBuffer);
+	lpmmioinfo->pchEndWrite = lpmmioinfo->pchBuffer + 
+	    (wm->info.pchEndWrite - wm->info.pchBuffer);
+	lpmmioinfo->lDiskOffset = wm->info.lDiskOffset;
+	lpmmioinfo->lBufOffset = wm->info.lBufOffset;
+    }
     return MMSYSERR_NOERROR;
 }
 
