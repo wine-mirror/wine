@@ -44,7 +44,7 @@ AC_ARG_ENABLE(trace,
 [if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
 
 AC_ARG_WITH(ncurses,
-[  --with-ncurses          compile in the ncurses terminal],
+[  --with-ncurses          compile in the ncurses terminal (EXPERIMENTAL)],
 [if test "$withval" = "yes"; then LIBS="$LIBS -lncurses"; AC_DEFINE(WINE_NCURSES) fi])
 
 AC_ARG_WITH(reentrant-x,
@@ -106,6 +106,8 @@ then
     AC_CHECK_LIB(Xext,XShmQueryExtension,AC_DEFINE(HAVE_LIBXXSHM),,$X_LIBS -lXext -lX11)
     dnl Check for XFree86 DGA extension
     AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
+    dnl Check for XFree86 VMODE extension
+    AC_CHECK_LIB(Xxf86vm,XF86VidModeQueryExtension,AC_DEFINE(HAVE_LIBXXF86VM) X_PRE_LIBS="$X_PRE_LIBS -lXxf86vm",,$X_LIBS -lXext -lX11)
 else
     XLIB=""
     X_CFLAGS=""

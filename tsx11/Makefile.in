@@ -7,6 +7,7 @@ MODULE    = tsx11
 
 C_SRCS = \
 	ts_xf86dga.c \
+	ts_xf86vmode.c \
 	ts_xshm.c \
 	ts_xlib.c \
 	ts_xresource.c \

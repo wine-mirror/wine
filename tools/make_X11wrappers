@@ -17,7 +17,7 @@
 $X11_include_dir = "/usr/X11R6/include";
 $outdir = "tsx11";
 $wantfile = "$outdir/X11_calls";
-@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga");
+@dolist = ("Xlib", "Xresource", "Xutil", "xpm", "XShm", "xf86dga", "xf86vmode");
 
 # First read list of wanted function names.
 
@@ -59,6 +59,12 @@ foreach $name (@dolist) {
     }
     if($name eq "XShm") {
 	$extensions_dir = "extensions/";
+    }
+    if($name eq "xf86vmode") {
+     	$x11_incl = "#include <X11/Xlib.h>\n";
+	$extensions_dir = "extensions/";
+	$pre_file = "#include \"config.h\"\n#ifdef HAVE_LIBXXF86VM\n";
+	$post_file = "#endif";
     }
 
     print OUTH <<END;
@@ -170,6 +176,77 @@ END
 		"Display*a0,int a1,int a2",
 		"a0,a1,a2"
 	);
+    } elsif($name eq "xf86vmode") {
+    	output_fn("XF86VidModeQueryVersion",Bool,
+		"Display*,int*,int*",
+		"Display*a0,int*a1,int*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeQueryExtension",Bool,
+		"Display*,int*,int*",
+		"Display*a0,int*a1,int*a2",
+		"a0,a2,a2"
+	);
+	output_fn("XF86VidModeGetModeLine",Bool,
+		"Display*,int,int*,XF86VidModeModeLine*",
+		"Display*a0,int a1,int*a2,XF86VidModeModeLine*a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86VidModeGetAllModeLines",Bool,
+		"Display*,int,int*,XF86VidModeModeInfo***",
+		"Display*a0,int a1,int*a2,XF86VidModeModeInfo***a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86VidModeAddModeLine",Bool,
+		"Display*,int,XF86VidModeModeInfo*,XF86VidModeModeInfo*",
+		"Display*a0,int a1,XF86VidModeModeInfo*a2,XF86VidModeModeInfo*a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86VidModeDeleteModeLine",Bool,
+		"Display*,int,XF86VidModeModeInfo*",
+		"Display*a0,int a1,XF86VidModeModeInfo*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeModModeLine",Bool,
+		"Display*,int,XF86VidModeModeLine*",
+		"Display*a0,int a1,XF86VidModeModeLine*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeValidateModeLine",Status,
+		"Display*,int,XF86VidModeModeInfo*",
+		"Display*a0,int a1,XF86VidModeModeInfo*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeSwitchMode",Bool,
+		"Display*,int,int",
+		"Display*a0,int a1,int a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeSwitchToMode",Bool,
+		"Display*,int,XF86VidModeModeInfo*",
+		"Display*a0,int a1,XF86VidModeModeInfo*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeLockModeSwitch",Bool,
+		"Display*,int,int",
+		"Display*a0,int a1,int a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeGetMonitor",Bool,
+		"Display*,int,XF86VidModeMonitor*",
+		"Display*a0,int a1,XF86VidModeMonitor*a2",
+		"a0,a1,a2"
+	);
+	output_fn("XF86VidModeGetViewPort",Bool,
+		"Display*,int,int*,int*",
+		"Display*a0,int a1,int*a2,int*a3",
+		"a0,a1,a2,a3"
+	);
+	output_fn("XF86VidModeSetViewPort",Bool,
+		"Display*,int,int,int",
+		"Display*a0,int a1,int a2,int a3",
+		"a0,a1,a2,a3"
+	);	
     } else {
 	open(IN, "echo \"$x11_incl#include <X11/$extensions_dir$name.h>\" | gcc -L$X11_include_dir -E - | grep -v '^[ \t]*\$'|") || die "open";
 

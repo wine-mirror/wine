@@ -20,6 +20,15 @@
 #include <sys/signal.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
+
+#ifdef HAVE_LIBXXF86VM
+/* X is retarted and insists on declaring INT32, INT16 etc in Xmd.h, this is a crude hack to get around it */
+/* Anywhere ts_xf86vmode.h is included you must define LONG64 also, see include/wintypes.h  */
+#define LONG64
+#include "ts_xf86vmode.h"
+#undef LONG64
+#endif
 
 #include "windows.h"
 #include "winerror.h"
@@ -1958,7 +1967,7 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
 #ifdef HAVE_LIBXXF86DGA
-	int	i,*depths,depcount;
+        int	i,*depths,depcount,mode_count;
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n", this, width, height, depth);
 
@@ -1983,6 +1992,33 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	if (this->e.dga.fb_height < height)
 		this->e.dga.fb_height = height;
 	_common_IDirectDraw_SetDisplayMode(this);
+
+#ifdef HAVE_LIBXXF86VM
+        {
+            XF86VidModeModeInfo **all_modes, *vidmode;
+            /* set fullscreen mode */
+            /* do we need to save the old video mode and restore it when we exit? */
+ 
+            TSXF86VidModeGetAllModeLines(display,DefaultScreen(display),&mode_count,&all_modes);
+            for (i=0;i<mode_count;i++)
+            {
+                if (all_modes[i]->hdisplay == width && all_modes[i]->vdisplay == height)
+                {
+                    vidmode = (XF86VidModeModeInfo *)malloc(sizeof(XF86VidModeModeInfo));
+                    *vidmode = *(all_modes[i]);
+                    break;
+                } else
+                    TSXFree(all_modes[i]->private);
+            }
+            TSXFree(all_modes);
+
+            if (!vidmode)
+                WARN(ddraw, "Fullscreen mode not available!\n");
+
+            if (vidmode)
+                TSXF86VidModeSwitchToMode(display, DefaultScreen(display), vidmode);
+        }
+#endif
 
 	/* FIXME: this function OVERWRITES several signal handlers. 
 	 * can we save them? and restore them later? In a way that
@@ -2675,7 +2711,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #ifdef HAVE_LIBXXF86DGA
 	int	memsize,banksize,width,major,minor,flags,height;
 	char	*addr;
-	int     fd;
+	int     fd;             	
 
         /* Must be able to access /dev/mem for DGA extensions to work, root is not neccessary. --stephenc */
         if ((fd = open("/dev/mem", O_RDWR)) != -1)

@@ -179,3 +179,17 @@ XF86DGAQueryVersion
 XF86DGAQueryDirectVideo
 XF86DGAGetVideo
 XF86DGAGetViewPortSize
+XF86VidModeQueryVersion
+XF86VidModeQueryExtension
+XF86VidModeGetModeLine
+XF86VidModeGetAllModeLines
+XF86VidModeAddModeLine
+XF86VidModeDeleteModeLine
+XF86VidModeModModeLine
+XF86VidModeValidateModeLine
+XF86VidModeSwitchMode
+XF86VidModeSwitchToMode
+XF86VidModeLockModeSwitch
+XF86VidModeGetMonitor
+XF86VidModeGetViewPort
+XF86VidModeSetViewPort
