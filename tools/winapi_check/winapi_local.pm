@@ -272,20 +272,27 @@ sub _check_function($$$$$$) {
 	    }
 	}
 
-        if($#argument_kinds != $#declared_argument_kinds &&
-	   $implemented_calling_convention ne "asm")
+        if ($options->argument_count &&
+            $implemented_calling_convention ne "asm")
 	{
-	    if($options->argument_count) {
+	    if ($#argument_kinds != $#declared_argument_kinds and
+                $#argument_types != $#declared_argument_kinds) {
 		$output->write("argument count differs: " .
-		    ($#argument_types + 1) . " != " .
+		    ($#argument_kinds + 1) . " != " .
 		    ($#declared_argument_kinds + 1) . "\n");
+	    } elsif ($#argument_kinds != $#declared_argument_kinds or
+                     $#argument_types != $#declared_argument_kinds) {
+		$output->write("argument count differs: " .
+		    ($#argument_kinds + 1) . "/" . ($#argument_types + 1) .
+		     " != " . ($#declared_argument_kinds + 1) .
+                     " (long vs. long long problem?)\n");
 	    }
 	}
 
     }
 
     if($segmented && $options->shared_segmented && $winapi->is_shared_internal_function($internal_name)) {
-	$output->write("function using segmented pointers shared between Win16 och Win32\n");
+	$output->write("function using segmented pointers shared between Win16 and Win32\n");
     }
 }
 
