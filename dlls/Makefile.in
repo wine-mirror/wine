@@ -75,7 +75,7 @@ DLLFILES = \
 	winnls/libwinnls32.@LIBEXT@ \
 	winsock/libws2_32.@LIBEXT@ \
 	winspool/libwinspool.drv.@LIBEXT@ \
-	wintrust/wintrust.@LIBEXT@ \
+	wintrust/libwintrust.@LIBEXT@ \
 	wow32/libwow32.@LIBEXT@ \
 	wsock32/libwsock32.@LIBEXT@
 
