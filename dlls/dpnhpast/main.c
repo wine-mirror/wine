@@ -35,6 +35,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 	if (fdwReason == DLL_PROCESS_ATTACH)
 	{
+            DisableThreadLibraryCalls(hinstDLL);
 		/* FIXME: Initialisation */
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH)

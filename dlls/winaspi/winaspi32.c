@@ -62,14 +62,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	switch( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hInstDLL);
             SCSI_Init();
             break;
 	case DLL_PROCESS_DETACH:
             DeleteCriticalSection( &ASPI_CritSection );
             break;
-	case DLL_THREAD_ATTACH:
-	case DLL_THREAD_DETACH:
-		break;
 	}
 #endif /* defined(linux) */
 	return TRUE;

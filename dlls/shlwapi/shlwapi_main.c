@@ -65,6 +65,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	switch (fdwReason)
 	{
 	  case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinstDLL);
 	    shlwapi_hInstance = hinstDLL;
 	    SHLWAPI_ThreadRef_index = TlsAlloc();
 	    break;

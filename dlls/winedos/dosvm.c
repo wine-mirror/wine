@@ -688,6 +688,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
+        DisableThreadLibraryCalls(hinstDLL);
         DOSVM_InitSegments();
 
         event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);

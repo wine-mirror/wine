@@ -1902,13 +1902,10 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved)
 
   switch (dwReason) {
   case DLL_PROCESS_ATTACH:
-    if (MSRLE32_hModule == 0)
-      MSRLE32_hModule = hModule;
+    DisableThreadLibraryCalls(hModule);
+    MSRLE32_hModule = hModule;
     break;
-  case DLL_THREAD_ATTACH:
-    break;
-  case DLL_THREAD_DETACH:
-    break;
+
   case DLL_PROCESS_DETACH:
     break;
   };

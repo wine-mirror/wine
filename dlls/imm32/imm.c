@@ -86,6 +86,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hInstDLL);
             hImeInst = hInstDLL;
             break;
         case DLL_PROCESS_DETACH:

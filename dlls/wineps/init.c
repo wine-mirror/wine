@@ -121,6 +121,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason) {
 
 	case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinst);
 
 	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
 	    if (PSDRV_Heap == NULL)

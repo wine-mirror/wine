@@ -145,6 +145,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls(hinstDLL);
+
             COMCTL32_hModule = (HMODULE)hinstDLL;
 
             /* create private heap */

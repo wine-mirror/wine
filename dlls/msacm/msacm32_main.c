@@ -44,6 +44,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hInstDLL);
         MSACM_hHeap = HeapCreate(0, 0x10000, 0);
         MSACM_hInstance32 = hInstDLL;
         MSACM_RegisterAllDrivers();
@@ -53,10 +54,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         HeapDestroy(MSACM_hHeap);
         MSACM_hHeap = NULL;
         MSACM_hInstance32 = NULL;
-	break;
-    case DLL_THREAD_ATTACH:
-	break;
-    case DLL_THREAD_DETACH:
 	break;
     default:
 	break;

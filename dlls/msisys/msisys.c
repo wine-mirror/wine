@@ -62,15 +62,12 @@ BOOL WINAPI DllMain(
 	switch ( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
+                DisableThreadLibraryCalls(hInstDLL);
 		if ( !MSISYS_InitProcess() )
 			return FALSE;
 		break;
 	case DLL_PROCESS_DETACH:
 		MSISYS_UninitProcess();
-		break;
-	case DLL_THREAD_ATTACH:
-		break;
-	case DLL_THREAD_DETACH:
 		break;
 	}
 

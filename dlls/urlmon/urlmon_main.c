@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wtypes.h"
 
@@ -39,6 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
         URLMON_hInstance = hinstDLL;
 	break;
 

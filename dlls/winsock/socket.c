@@ -444,6 +444,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hInstDLL);
         opentype_tls_index = TlsAlloc();
         break;
     case DLL_PROCESS_DETACH:

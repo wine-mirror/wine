@@ -176,6 +176,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
        TRACE("Loading ODBC...\n");
+       DisableThreadLibraryCalls(hinstDLL);
        if (ODBC_LoadDriverManager())
           ODBC_LoadDMFunctions();
     }

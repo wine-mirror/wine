@@ -32,6 +32,7 @@
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID lpvReserved)
 {
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
+    DisableThreadLibraryCalls(hinstDLL);
     return GDI_Init();
 }
 

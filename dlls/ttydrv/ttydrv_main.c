@@ -76,6 +76,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinst);
         process_attach();
         break;
 

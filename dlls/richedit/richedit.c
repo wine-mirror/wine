@@ -71,6 +71,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
         /* create private heap */
         RICHED32_hHeap = HeapCreate (0, 0x10000, 0);
         /* register the Rich Edit class */

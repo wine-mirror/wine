@@ -20,8 +20,7 @@
 
 #include "config.h"
 
-#include "windef.h"
-
+#include "winbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(snmpapi);
@@ -38,12 +37,9 @@ BOOL WINAPI DllMain(
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
-        break;
-    case DLL_THREAD_ATTACH:
-        break;
-    case DLL_THREAD_DETACH:
         break;
     }
 

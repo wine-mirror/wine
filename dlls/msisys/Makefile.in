@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msisys.ocx
+IMPORTS   = kernel32
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@

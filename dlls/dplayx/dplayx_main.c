@@ -38,6 +38,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
   switch ( fdwReason )
   {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
         /* First instance perform construction of global processor data */
         return DPLAYX_ConstructData();
 
@@ -45,9 +46,6 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
         /* Last instance performs destruction of global processor data */
         return DPLAYX_DestructData();
 
-    case DLL_THREAD_ATTACH: /* Do nothing */
-    case DLL_THREAD_DETACH: /* Do nothing */
-      break;
     default:
       break;
 

@@ -41,6 +41,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
   {
     case DLL_PROCESS_ATTACH: {
       extern void WINSPOOL_LoadSystemPrinters();
+
+      DisableThreadLibraryCalls(hInstance);
       WINSPOOL_LoadSystemPrinters();
       break;
     }

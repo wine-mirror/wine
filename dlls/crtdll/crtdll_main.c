@@ -88,6 +88,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
   if (fdwReason == DLL_PROCESS_ATTACH)
   {
     DWORD version = GetVersion();
+
+    DisableThreadLibraryCalls(hinstDLL);
+
     CRTDLL__basemajor_dll   = (version >> 24) & 0xFF;
     CRTDLL__baseminor_dll   = (version >> 16) & 0xFF;
     CRTDLL__baseversion_dll = (version >> 16);

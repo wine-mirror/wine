@@ -63,7 +63,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     TRACE("fdwReason=%ld\n", fdwReason);
        if (fdwReason == DLL_PROCESS_ATTACH)
        {
-           HMODULE mod = GetModuleHandleA( "x11drv.dll" );
+           HMODULE mod;
+
+           DisableThreadLibraryCalls(hInstDLL);
+
+           mod = GetModuleHandleA( "x11drv.dll" );
            if (mod)
            {
                wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );

@@ -125,6 +125,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hInstDLL);
+
 	if (!WINMM_CreateIData(hInstDLL))
 	    return FALSE;
         if (!MCI_Init() || !MMDRV_Init()) {
@@ -140,9 +142,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
         DRIVER_UnloadAll();
 
 	WINMM_DeleteIData();
-	break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
 	break;
     }
     return TRUE;

@@ -40,15 +40,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
+      DisableThreadLibraryCalls(hinstDLL);
       IMAGEHLP_hHeap = HeapCreate(0, 0x10000, 0);
       break;
     case DLL_PROCESS_DETACH:
       HeapDestroy(IMAGEHLP_hHeap);
       IMAGEHLP_hHeap = NULL;
-      break;
-    case DLL_THREAD_ATTACH:
-      break;
-    case DLL_THREAD_DETACH:
       break;
     default:
       break;
