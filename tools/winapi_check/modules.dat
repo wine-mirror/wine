@@ -193,7 +193,7 @@ dlls/imm32
 
 dlls/iphlpapi
 
-% dlls/kernel/comm.spec
+% dlls/kernel/comm.drv.spec
 
 % dlls/kernel/krnl386.exe.spec
 
@@ -255,7 +255,7 @@ dlls/mswsock
 
 dlls/kernel
 
-% dlls/kernel/system.spec
+% dlls/kernel/system.drv.spec
 
 memory
 misc
@@ -314,6 +314,14 @@ dlls/msacm/msg711
 % dlls/msacm/winemp3/winemp3.acm.spec
 
 dlls/msacm/winemp3
+
+% dlls/mshtml/mshtml.spec
+
+dlls/mshtml
+
+% dlls/msi/msi.spec
+
+dlls/msi
 
 % dlls/msnet32/msnet32.spec
 
@@ -496,17 +504,17 @@ dlls/urlmon
 
 dlls/user/dde
 
-% dlls/user/display.spec
+% dlls/user/display.drv.spec
 
 dlls/user
 objects
 
-% dlls/user/keyboard.spec
+% dlls/user/keyboard.drv.spec
 
 dlls/user
 windows
 
-% dlls/user/mouse.spec
+% dlls/user/mouse.drv.spec
 
 dlls/user
 

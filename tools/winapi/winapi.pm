@@ -49,10 +49,10 @@ sub import {
 
     my @spec_files16 = $modules->allowed_spec_files16;
     $win16api = 'winapi'->new("win16", \@spec_files16);
-    
+
     my @spec_files32 = $modules->allowed_spec_files32;
     $win32api = 'winapi'->new("win32", \@spec_files32);
-    
+
     @winapis = ($win16api, $win32api);
 
     for my $internal_name ($win32api->all_internal_functions) {
@@ -270,8 +270,8 @@ sub parse_spec_file {
 
 	my $ordinal;
 	if(/^(\d+|@)\s+
-	   (pascal|pascal16|stdcall|cdecl|varargs)\s+
-	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
+	   (pascal|stdcall|cdecl|varargs)\s+
+	   ((?:(?:-noname|-norelay|-i386|-ret16|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
@@ -380,7 +380,7 @@ sub parse_spec_file {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub(?:\s+(-noimport|-noname|-norelay|-i386|-ret64|-private))?\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub(?:\s+(-noname|-norelay|-i386|-ret16|-ret64|-private))?\s+(\S+)$/) {
 	    $ordinal = $1;
 
 	    my $flags = $2;
@@ -429,7 +429,7 @@ sub parse_spec_file {
 	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
-	} elsif(/^(\d+|@)\s+extern(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s*(\S*)$/) {
+	} elsif(/^(\d+|@)\s+extern(?:\s+(?:-norelay|-i386|-ret16|-ret64))?\s+(\S+)\s*(\S*)$/) {
 	    $ordinal = $1;
 
 	    my $external_name = $2;

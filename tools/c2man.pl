@@ -252,11 +252,11 @@ sub process_spec_file
 
       for ($call_convention)
       {
-        /^(cdecl|stdcall|varargs|pascal|pascal16)$/
+        /^(cdecl|stdcall|varargs|pascal)$/
                  && do { $spec_details->{NUM_FUNCS}++;    last; };
         /^(variable|equate)$/
                  && do { $spec_details->{NUM_VARS}++;     last; };
-        /^(forward|extern)$/
+        /^(extern)$/
                  && do { $spec_details->{NUM_FORWARDS}++; last; };
         /^stub$/ && do { $spec_details->{NUM_STUBS}++;    last; };
         if ($opt_verbose > 0)
