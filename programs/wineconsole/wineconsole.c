@@ -376,7 +376,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
 
     /* the handles here are created without the whistles and bells required by console
      * (mainly because wineconsole doesn't need it)
-     * - there are not inheritable
+     * - they are not inheritable
      * - hConIn is not synchronizable
      */
     SERVER_START_REQ(alloc_console)
@@ -390,6 +390,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, void* pid)
     }
     SERVER_END_REQ;
     if (!ret) goto error;
+    WINE_TRACE("using hConIn event %p, hSynchro event %p\n", data->hConIn, data->hSynchro);
 
     SERVER_START_REQ( set_console_input_info )
     {

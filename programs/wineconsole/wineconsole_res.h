@@ -21,7 +21,7 @@
 /* strings */
 #define IDS_EDIT		0x100
 #define IDS_DEFAULT		0x101
-#define IDS_PROPERTY		0x102
+#define IDS_PROPERTIES		0x102
 
 #define IDS_MARK		0x110
 #define IDS_COPY		0x111
@@ -67,4 +67,3 @@
 #define IDC_CNF_WIN_WIDTH_UD	0x0306
 #define IDC_CNF_WIN_HEIGHT	0x0307
 #define IDC_CNF_WIN_HEIGHT_UD	0x0308
-

@@ -270,7 +270,7 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     {
 	console_input->active = (struct screen_buffer*)grab_object( screen_buffer );
 
-	/* generate the fist events */
+	/* generate the initial events */
 	evt.event = CONSOLE_RENDERER_ACTIVE_SB_EVENT;
 	console_input_events_append( console_input->evt, &evt );
 
@@ -411,7 +411,7 @@ static int propagate_console_signal_cb(struct process *process, void *user)
     return FALSE;
 }
 
-static void propagate_console_signal( struct console_input *console, 
+static void propagate_console_signal( struct console_input *console,
                                       int sig, void* group_id )
 {
     struct console_signal_info csi;
@@ -498,13 +498,13 @@ static int write_console_input( struct console_input* console, int count,
         int i = 0;
         while (i < count)
         {
-            if (records[i].EventType == KEY_EVENT && 
+            if (records[i].EventType == KEY_EVENT &&
 		records[i].Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
 		!(records[i].Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
             {
                 if (i != count - 1)
-                    memcpy( &console->records[console->recnum + i], 
-                            &console->records[console->recnum + i + 1], 
+                    memcpy( &console->records[console->recnum + i],
+                            &console->records[console->recnum + i + 1],
                             (count - i - 1) * sizeof(INPUT_RECORD) );
                 count--;
                 if (records[i].Event.KeyEvent.bKeyDown)
@@ -1470,5 +1470,3 @@ DECL_HANDLER(send_console_signal)
     else
         propagate_console_signal( current->process->console, req->signal, group );
 }
-
-

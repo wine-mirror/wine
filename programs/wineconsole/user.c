@@ -820,8 +820,8 @@ static BOOL WCUSER_FillMenu(HMENU hMenu, BOOL sep)
     InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING|MF_POPUP, (UINT_PTR)hSubMenu, buff);
     LoadString(hInstance, IDS_DEFAULT, buff, sizeof(buff) / sizeof(WCHAR));
     InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_DEFAULT, buff);
-    LoadString(hInstance, IDS_PROPERTY, buff, sizeof(buff) / sizeof(WCHAR));
-    InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTY, buff);
+    LoadString(hInstance, IDS_PROPERTIES, buff, sizeof(buff) / sizeof(WCHAR));
+    InsertMenu(hMenu, -1, MF_BYPOSITION|MF_STRING, IDS_PROPERTIES, buff);
 
     return TRUE;
 }
@@ -1260,7 +1260,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case IDS_DEFAULT:
 	    WCUSER_GetProperties(data, FALSE);
 	    break;
-	case IDS_PROPERTY:
+	case IDS_PROPERTIES:
 	    WCUSER_GetProperties(data, TRUE);
 	    break;
 	default:
@@ -1273,7 +1273,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case IDS_DEFAULT:
 	    WCUSER_GetProperties(data, FALSE);
 	    break;
-	case IDS_PROPERTY:
+	case IDS_PROPERTIES:
 	    WCUSER_GetProperties(data, TRUE);
 	    break;
 	case IDS_MARK:
@@ -1345,22 +1345,29 @@ static int WCUSER_MainLoop(struct inner_data* data)
 
     for (;;)
     {
-	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
+	switch(MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
 	{
 	case WAIT_OBJECT_0:
 	    if (!WINECON_GrabChanges(data) && data->curcfg.exit_on_die)
                 PostQuitMessage(0);
 	    break;
 	case WAIT_OBJECT_0+1:
-	    switch (GetMessage(&msg, 0, 0, 0))
+	    /* need to use PeekMessage loop instead of simple GetMessage:
+	     * multiple messages might have arrived in between,
+	     * so GetMessage would lead to delayed processing */
+	    while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
 	    {
-	    case -1: /* the event handle became invalid, so exit */
-		return -1;
-	    case 0: /* WM_QUIT has been posted */
-		return 0;
-	    default:
-		DispatchMessage(&msg);
-		break;
+	        switch (GetMessage(&msg, 0, 0, 0))
+	        {
+	        case -1: /* the event handle became invalid, so exit */
+		    return -1;
+	        case 0: /* WM_QUIT has been posted */
+		    return 0;
+	        default:
+		    WINE_TRACE("dispatching msg %04x\n", msg.message);
+		    DispatchMessage(&msg);
+		    break;
+	        }
 	    }
 	    break;
 	default:
@@ -1421,4 +1428,3 @@ BOOL WCUSER_InitBackend(struct inner_data* data)
 
     return TRUE;
 }
-
