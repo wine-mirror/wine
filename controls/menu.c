@@ -1023,7 +1023,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
 	  /* Parse items until line break or end of menu */
 	for (i = start; i < lppop->nItems; i++, lpitem++)
 	{
-	    if ((helpPos == -1) && (lpitem->fType & MF_HELP)) helpPos = i;
+	    if ((helpPos == -1) && (lpitem->fType & MF_RIGHTJUSTIFY)) helpPos = i;
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
@@ -1048,21 +1048,19 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     lprect->bottom = maxY;
     lppop->Height = lprect->bottom - lprect->top;
 
-    if (TWEAK_WineLook == WIN31_LOOK) {
-        /* Flush right all magic items and items between the MF_HELP and */
-        /* the last item (if several lines, only move the last line) */
-        lpitem = &lppop->items[lppop->nItems-1];
-        orgY = lpitem->rect.top;
-        orgX = lprect->right;
-        for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
-            if ( !IS_BITMAP_ITEM(lpitem->fType) && ((helpPos==-1) || (helpPos>i) ))
-                break;				/* done */
-            if (lpitem->rect.top != orgY) break;	/* Other line */
-            if (lpitem->rect.right >= orgX) break;	/* Too far right already */
-            lpitem->rect.left += orgX - lpitem->rect.right;
-            lpitem->rect.right = orgX;
-            orgX = lpitem->rect.left;
-        }
+    /* Flush right all items between the MF_RIGHTJUSTIFY and */
+    /* the last item (if several lines, only move the last line) */
+    lpitem = &lppop->items[lppop->nItems-1];
+    orgY = lpitem->rect.top;
+    orgX = lprect->right;
+    for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
+        if ( (helpPos==-1) || (helpPos>i) )
+            break;				/* done */
+        if (lpitem->rect.top != orgY) break;	/* Other line */
+        if (lpitem->rect.right >= orgX) break;	/* Too far right already */
+        lpitem->rect.left += orgX - lpitem->rect.right;
+        lpitem->rect.right = orgX;
+        orgX = lpitem->rect.left;
     }
 }
 
