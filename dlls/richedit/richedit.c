@@ -714,8 +714,10 @@ static LRESULT WINAPI RICHED32_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
     }
 
-    FIXME("Unknown message 0x%x Passed to default hwnd=%p, wParam=%08x, lParam=%08x\n",
-           uMsg, hwnd, (UINT)wParam, (UINT)lParam);
+    if ((uMsg >= WM_USER) && (uMsg < WM_APP)) {
+	FIXME("Unknown message 0x%x Passed to default hwnd=%p, wParam=%08x, lParam=%08x\n",
+	       uMsg, hwnd, (UINT)wParam, (UINT)lParam);
+    }
 
    return DefWindowProcA( hwnd,uMsg,wParam,lParam);
 }
