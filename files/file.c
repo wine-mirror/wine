@@ -2623,6 +2623,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 {
     DOS_FULL_NAME full_name1, full_name2;
     HANDLE hFile;
+    DWORD attr = INVALID_FILE_ATTRIBUTES;
 
     TRACE("(%s,%s,%04lx)\n", debugstr_w(fn1), debugstr_w(fn2), flag);
 
@@ -2663,8 +2664,7 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
                 /* target exists, check if we may overwrite */
                 if (!(flag & MOVEFILE_REPLACE_EXISTING))
                 {
-                    /* FIXME: Use right error code */
-                    SetLastError( ERROR_ACCESS_DENIED );
+                    SetLastError( ERROR_FILE_EXISTS );
                     return FALSE;
                 }
             }
@@ -2691,17 +2691,17 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
             return FILE_AddBootRenameEntry( fn1, fn2, flag );
         }
 
+        attr = GetFileAttributesW( fn1 );
+        if ( attr == INVALID_FILE_ATTRIBUTES ) return FALSE;
+
         /* check if we are allowed to rename the source */
         hFile = FILE_CreateFile( full_name1.long_name, 0, 0,
                                  NULL, OPEN_EXISTING, 0, 0, TRUE,
                                  GetDriveTypeW( full_name1.short_name ) );
         if (!hFile)
         {
-            DWORD attr;
-
             if (GetLastError() != ERROR_ACCESS_DENIED) return FALSE;
-            attr = GetFileAttributesA( full_name1.long_name );
-            if (attr == (DWORD)-1 || !(attr & FILE_ATTRIBUTE_DIRECTORY)) return FALSE;
+            if ( !(attr & FILE_ATTRIBUTE_DIRECTORY) ) return FALSE;
             /* if it's a directory we can continue */
         }
         else CloseHandle(hFile);
@@ -2716,20 +2716,36 @@ BOOL WINAPI MoveFileExW( LPCWSTR fn1, LPCWSTR fn2, DWORD flag )
 
         if (full_name1.drive != full_name2.drive)
         {
-            /* use copy, if allowed */
             if (!(flag & MOVEFILE_COPY_ALLOWED))
             {
-                /* FIXME: Use right error code */
-                SetLastError( ERROR_FILE_EXISTS );
+                SetLastError( ERROR_NOT_SAME_DEVICE );
                 return FALSE;
             }
-            return CopyFileW( fn1, fn2, !(flag & MOVEFILE_REPLACE_EXISTING) );
+            else if ( attr & FILE_ATTRIBUTE_DIRECTORY )
+            {
+                /* Strange, but that's what Windows returns */
+                SetLastError ( ERROR_ACCESS_DENIED );
+                return FALSE;
+            }
         }
         if (rename( full_name1.long_name, full_name2.long_name ) == -1)
-	{
-            FILE_SetDosError();
-            return FALSE;
-	}
+            /* Try copy/delete unless it's a directory. */
+            /* FIXME: This does not handle the (unlikely) case that the two locations
+               are on the same Wine drive, but on different Unix file systems. */
+        {
+            if ( attr & FILE_ATTRIBUTE_DIRECTORY )
+            {
+                FILE_SetDosError();
+                return FALSE;
+            }
+            else
+            {
+                if ( ! CopyFileW( fn1, fn2, !(flag & MOVEFILE_REPLACE_EXISTING) ))
+                    return FALSE;
+                if ( ! DeleteFileW ( fn1 ) )
+                    return FALSE;
+            }
+        }
         if (is_executable( full_name1.long_name ) != is_executable( full_name2.long_name ))
         {
             struct stat fstat;
