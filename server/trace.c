@@ -65,7 +65,8 @@ static int dump_init_process_reply( struct init_process_reply *req, int len )
 
 static int dump_init_thread_request( struct init_thread_request *req, int len )
 {
-    fprintf( stderr, " unix_pid=%d", req->unix_pid );
+    fprintf( stderr, " unix_pid=%d,", req->unix_pid );
+    fprintf( stderr, " teb=%p", req->teb );
     return (int)sizeof(*req);
 }
 

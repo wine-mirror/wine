@@ -363,6 +363,7 @@ int CLIENT_InitThread(void)
     struct init_thread_reply reply;
 
     req.unix_pid = getpid();
+    req.teb      = &thdb->teb;
     CLIENT_SendRequest( REQ_INIT_THREAD, -1, 1, &req, sizeof(req) );
     if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return -1;
     thdb->process->server_pid = reply.pid;

@@ -102,6 +102,7 @@ struct init_process_reply
 struct init_thread_request
 {
     int          unix_pid;     /* Unix pid of new thread */
+    void*        teb;          /* TEB of new thread (in thread address space) */
 };
 struct init_thread_reply
 {
