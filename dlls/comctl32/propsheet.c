@@ -17,6 +17,7 @@
 #include "winnls.h"
 #include "comctl32.h"
 #include "debugtools.h"
+#include "heap.h"
 
 
 /******************************************************************************
@@ -272,6 +273,13 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
   psInfo->proppage[index].pszText = (LPCWSTR)p;
   TRACE("Tab %d %s\n",index,debugstr_w((LPCWSTR)p));
   p += lstrlenW((LPCWSTR)p) + 1;
+
+  if (dwFlags & PSP_USETITLE)
+  {
+    psInfo->proppage[index].pszText = HEAP_strdupAtoW(GetProcessHeap(),
+                                                      0,
+                                                      lppsp->pszTitle);
+  }
 
   /*
    * Build the image list for icons
@@ -1289,6 +1297,31 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       char* strCaption = (char*)COMCTL32_Alloc(MAX_CAPTION_LENGTH);
       HWND hwndTabCtrl = GetDlgItem(hwnd, IDC_TABCONTROL);
       LPCPROPSHEETPAGEA ppshpage;
+
+      /*
+       * Small icon in the title bar.
+       */
+      if ((psInfo->ppshheader->dwFlags & PSH_USEICONID) ||
+          (psInfo->ppshheader->dwFlags & PSH_USEHICON))
+      {
+        HICON hIcon;
+        int icon_cx = GetSystemMetrics(SM_CXSMICON);
+        int icon_cy = GetSystemMetrics(SM_CYSMICON);
+
+        if (psInfo->ppshheader->dwFlags & PSH_USEICONID)
+          hIcon = LoadImageA(psInfo->ppshheader->hInstance,
+                             psInfo->ppshheader->u1.pszIcon,
+                             IMAGE_ICON,
+                             icon_cx, icon_cy,
+                             LR_DEFAULTCOLOR);
+        else
+          hIcon = psInfo->ppshheader->u1.hIcon;
+
+        SendMessageA(hwnd, WM_SETICON, 0, hIcon);
+      }
+      
+      if (psInfo->ppshheader->dwFlags & PSH_USEHICON)
+        SendMessageA(hwnd, WM_SETICON, 0, psInfo->ppshheader->u1.hIcon);
 
       psInfo->strPropertiesFor = strCaption;
 
