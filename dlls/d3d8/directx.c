@@ -638,7 +638,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         whichHWND = hFocusWindow;
     }
     object->win_handle = whichHWND;
-    object->win     = (Window)GetPropA( whichHWND, "__wine_x11_client_window" );
+    object->win     = (Window)GetPropA( whichHWND, "__wine_x11_whole_window" );
 
     hDc = GetDC(whichHWND);
     object->display = get_display(hDc);

@@ -68,24 +68,14 @@ static BYTE *pKeyStateTable;
  *
  * get the coordinates of a mouse event
  */
-static void get_coords( HWND *hwnd, Window window, int x, int y, POINT *pt )
+static inline void get_coords( HWND hwnd, Window window, int x, int y, POINT *pt )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( *hwnd );
+    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
     if (!data) return;
 
-    if (window == data->whole_window)
-    {
-        x -= data->client_rect.left;
-        y -= data->client_rect.top;
-    }
-    pt->x = x;
-    pt->y = y;
-    if (*hwnd != GetDesktopWindow())
-    {
-        ClientToScreen( *hwnd, pt );
-        *hwnd = GetAncestor( *hwnd, GA_ROOT );
-    }
+    pt->x = x + data->whole_rect.left;
+    pt->y = y + data->whole_rect.top;
 }
 
 
@@ -152,9 +142,6 @@ static void send_mouse_event( HWND hwnd, DWORD flags, DWORD posX, DWORD posY,
 static void update_cursor( HWND hwnd, Window win )
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
-
-    if (win == X11DRV_get_client_window( hwnd ))
-        win = X11DRV_get_whole_window( hwnd );  /* always set cursor on whole window */
 
     if (data->cursor_window != win)
     {
@@ -559,7 +546,7 @@ void X11DRV_ButtonPress( HWND hwnd, XButtonEvent *event )
     if (!hwnd) return;
 
     update_cursor( hwnd, event->window );
-    get_coords( &hwnd, event->window, event->x, event->y, &pt );
+    get_coords( hwnd, event->window, event->x, event->y, &pt );
 
     switch (buttonNum)
     {
@@ -588,7 +575,7 @@ void X11DRV_ButtonRelease( HWND hwnd, XButtonEvent *event )
     if (!hwnd) return;
 
     update_cursor( hwnd, event->window );
-    get_coords( &hwnd, event->window, event->x, event->y, &pt );
+    get_coords( hwnd, event->window, event->x, event->y, &pt );
     update_key_state( event->state );
     send_mouse_event( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
                       pt.x, pt.y, 0, event->time );
@@ -607,7 +594,7 @@ void X11DRV_MotionNotify( HWND hwnd, XMotionEvent *event )
     if (!hwnd) return;
 
     update_cursor( hwnd, event->window );
-    get_coords( &hwnd, event->window, event->x, event->y, &pt );
+    get_coords( hwnd, event->window, event->x, event->y, &pt );
     update_key_state( event->state );
     send_mouse_event( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                       pt.x, pt.y, 0, event->time );
@@ -628,7 +615,7 @@ void X11DRV_EnterNotify( HWND hwnd, XCrossingEvent *event )
 
     /* simulate a mouse motion event */
     update_cursor( hwnd, event->window );
-    get_coords( &hwnd, event->window, event->x, event->y, &pt );
+    get_coords( hwnd, event->window, event->x, event->y, &pt );
     update_key_state( event->state );
     send_mouse_event( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
                       pt.x, pt.y, 0, event->time );

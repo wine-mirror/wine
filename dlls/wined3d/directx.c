@@ -1375,7 +1375,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
         whichHWND = hFocusWindow;
     }
     object->win_handle = whichHWND;
-    object->win        = (Window)GetPropA( whichHWND, "__wine_x11_client_window" );
+    object->win        = (Window)GetPropA( whichHWND, "__wine_x11_whole_window" );
     hDc                = GetDC(whichHWND);
     object->display    = get_display(hDc);
     ReleaseDC(whichHWND, hDc);

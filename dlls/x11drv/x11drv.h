@@ -531,7 +531,6 @@ struct x11drv_win_data
 {
     HWND    hwnd;           /* hwnd that this private data belongs to */
     Window  whole_window;   /* X window for the complete window */
-    Window  client_window;  /* X window for the client area */
     Window  icon_window;    /* X window for the icon */
     RECT    window_rect;    /* USER window rectangle relative to parent */
     RECT    whole_rect;     /* X window rectangle for the whole window relative to parent */
@@ -542,16 +541,11 @@ struct x11drv_win_data
 };
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
-extern Window X11DRV_get_client_window( HWND hwnd );
+extern POINT X11DRV_get_client_area_offset( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );
 
-inline static BOOL is_window_top_level( HWND hwnd )
-{
-    return (root_window == DefaultRootWindow(gdi_display) &&
-            GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow());
-}
 
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
@@ -569,10 +563,8 @@ extern void X11DRV_X_to_window_rect( HWND hwnd, RECT *rect );
 extern void X11DRV_create_desktop_thread(void);
 extern Window X11DRV_create_desktop( XVisualInfo *desktop_vi, const char *geometry );
 extern void X11DRV_sync_window_style( Display *display, struct x11drv_win_data *data );
-extern int X11DRV_sync_whole_window_position( Display *display, struct x11drv_win_data *data,
-                                              int zorder );
-extern int X11DRV_sync_client_window_position( Display *display, struct x11drv_win_data *data,
-                                               const RECT *new_client_rect );
+extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data,
+                                         UINT swp_flags, const RECT *new_client_rect );
 extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, UINT wvr_flags );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
