@@ -1987,10 +1987,6 @@ static HRESULT FILEDLG95_SHELL_Init(HWND hwnd)
   fodInfos->ShellInfos.folderSettings.fFlags |= FWF_AUTOARRANGE | FWF_ALIGNLEFT;
   fodInfos->ShellInfos.folderSettings.ViewMode = FVM_LIST;
 
-  GetWindowRect(GetDlgItem(hwnd,IDC_SHELLSTATIC),&fodInfos->ShellInfos.rectView);
-  ScreenToClient(hwnd,(LPPOINT)&fodInfos->ShellInfos.rectView.left);
-  ScreenToClient(hwnd,(LPPOINT)&fodInfos->ShellInfos.rectView.right);
-
   /* Construct the IShellBrowser interface */
   fodInfos->Shell.FOIShellBrowser = IShellBrowserImpl_Construct(hwnd);
 

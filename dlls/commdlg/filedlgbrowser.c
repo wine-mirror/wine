@@ -305,6 +305,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     HWND hwndView;
     HWND hDlgWnd;
     BOOL bViewHasFocus;
+    RECT rectView;
 
     ICOM_THIS(IShellBrowserImpl, iface);
 
@@ -400,11 +401,14 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     COMDLG32_UpdateCurrentDir(fodInfos);
 
+    GetWindowRect(GetDlgItem(This->hwndOwner, IDC_SHELLSTATIC), &rectView);
+    MapWindowPoints(0, This->hwndOwner, (LPPOINT)&rectView, 2);
+
     /* Create the window */
     TRACE("create view window\n");
     if(FAILED(hRes = IShellView_CreateViewWindow(psvTmp, NULL,
          &fodInfos->ShellInfos.folderSettings, fodInfos->Shell.FOIShellBrowser,
-         &fodInfos->ShellInfos.rectView, &hwndView))) goto error;
+         &rectView, &hwndView))) goto error;
 
     fodInfos->ShellInfos.hwndView = hwndView;
 

@@ -68,7 +68,6 @@ typedef struct
     struct {
         HWND hwndOwner;
         HWND hwndView;
-        RECT rectView;
         FOLDERSETTINGS folderSettings;
         LPITEMIDLIST pidlAbsCurrent;
         LPWSTR lpstrCurrentFilter;
