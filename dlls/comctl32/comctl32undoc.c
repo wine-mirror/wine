@@ -410,15 +410,15 @@ COMCTL32_GetSize (LPVOID lpMem)
  *
  */
 
-typedef struct tagMRUINFO
+typedef struct tagCREATEMRULIST
 {
-    DWORD  dwParam1;
-    DWORD  dwParam2;
-    DWORD  dwParam3;
-    HKEY   hkeyMain;
+    DWORD  cbSize;
+    DWORD  nMaxItems;
+    DWORD  dwFlags;
+    HKEY   hKey;
     LPCSTR lpszSubKey;
-    DWORD  dwParam6;
-} MRUINFO, *LPMRUINFO;
+    DWORD  lpfnCompare;
+} CREATEMRULIST, *LPCREATEMRULIST;
 
  
 typedef struct tagMRU
@@ -431,8 +431,8 @@ typedef struct tagMRU
     DWORD  dwParam6;
 } MRU, *HMRU;
 
-LPVOID WINAPI
-CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2,
+HANDLE WINAPI
+CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2,
 		    DWORD dwParam3, DWORD dwParam4);
 
 
@@ -445,17 +445,17 @@ CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2,
  * RETURNS
  */
 
-LPVOID WINAPI
-CreateMRUListA (LPMRUINFO lpmi)
+HANDLE WINAPI
+CreateMRUListA (LPCREATEMRULIST lpcml)
 {
-     return CreateMRUListLazyA (lpmi, 0, 0, 0);
+     return CreateMRUListLazyA (lpcml, 0, 0, 0);
 }
 
 
 DWORD WINAPI
-FreeMRUListA (HMRU hmru)
+FreeMRUListA (HANDLE hMRUList)
 {
-    FIXME("(%p) empty stub!\n", hmru);
+    FIXME("(%p) empty stub!\n", hMRUList);
 
 #if 0
     if (!(hmru->dwParam1 & 1001)) {
@@ -469,7 +469,7 @@ FreeMRUListA (HMRU hmru)
     COMCTL32_Free32 (hmru->lpszMRUString);
 #endif
 
-    return COMCTL32_Free (hmru);
+    return COMCTL32_Free ((LPVOID)hMRUList);
 }
 
 
@@ -496,8 +496,8 @@ FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 }
 
 
-LPVOID WINAPI
-CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+HANDLE WINAPI
+CreateMRUListLazyA (LPCREATEMRULIST lpcml, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
 {
     /* DWORD  dwLocal1;   *
      * HKEY   hkeyResult; *
@@ -511,20 +511,24 @@ CreateMRUListLazyA (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwPara
     /* internal variables */
     LPVOID ptr;
 
-    FIXME("(%p) empty stub!\n", lpmi);
+    FIXME("(%p) empty stub!\n", lpcml);
 
-    if (lpmi) {
-	FIXME("(%lx %lx %lx %lx \"%s\" %lx)\n",
-	       lpmi->dwParam1, lpmi->dwParam2, lpmi->dwParam3,
-	       (DWORD)lpmi->hkeyMain, lpmi->lpszSubKey, lpmi->dwParam6);
-    }
+    if (lpcml == NULL)
+	return NULL;
+
+    if (lpcml->cbSize < sizeof(CREATEMRULIST))
+	return NULL;
+
+    FIXME("(%lu %lu %lx %lx \"%s\" %lx)\n",
+	  lpcml->cbSize, lpcml->nMaxItems, lpcml->dwFlags,
+	  (DWORD)lpcml->hKey, lpcml->lpszSubKey, lpcml->lpfnCompare);
 
     /* dummy pointer creation */
     ptr = COMCTL32_Alloc (32);
 
     FIXME("-- ret = %p\n", ptr);
 
-    return ptr;
+    return (HANDLE)ptr;
 }
 
 
@@ -2086,6 +2090,55 @@ BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
    return TRUE;
 }
 
+/**************************************************************************
+ * comctl32_411 [COMCTL32.411]
+ *
+ * FIXME: What's this supposed to do?
+ *        Parameter 1 is an HWND, you're on your own for the rest.
+ */
+
+BOOL WINAPI comctl32_411( HWND hw, DWORD b, DWORD c) {
+
+   FIXME_(commctrl)("(%x, %lx, %lx): stub!\n", hw, b, c);
+
+   return TRUE;
+}
+
+/**************************************************************************
+ * comctl32_412 [COMCTL32.412]
+ *
+ * FIXME: What's this supposed to do?
+ *        Parameter 1 is an HWND, you're on your own for the rest.
+ */
+
+BOOL WINAPI comctl32_412( HWND hwnd, DWORD b, DWORD c)
+{
+    FIXME_(commctrl)("(%x, %lx, %lx): stub!\n", hwnd, b, c);
+
+    if (IsWindow (hwnd) == FALSE)
+	return FALSE;
+
+    if (b == 0)
+	return FALSE;
+
+
+    return TRUE;
+}
+
+/**************************************************************************
+ * comctl32_413 [COMCTL32.413]
+ *
+ * FIXME: What's this supposed to do?
+ *        Parameter 1 is an HWND, you're on your own for the rest.
+ */
+
+BOOL WINAPI comctl32_413( HWND hw, DWORD b, DWORD c, DWORD d) {
+
+   FIXME_(commctrl)("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+
+   return TRUE;
+}
+
 /*************************************************************************
  * InitMUILanguage [COMCTL32.70]
  *
@@ -2093,9 +2146,9 @@ BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
  *
  */
 
-BOOL WINAPI InitMUILanguage( DWORD a ) {
+BOOL WINAPI InitMUILanguage( LANGID uiLang) {
 
-   FIXME_(commctrl)("(%lx): stub!\n", a);
+   FIXME_(commctrl)("(%lx): stub!\n", uiLang);
 
    return TRUE;
 }
