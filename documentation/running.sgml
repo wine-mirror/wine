@@ -250,75 +250,53 @@ Options:
 		<table frame="none"><title>Debug Channels</title>
 		<tgroup cols=5 align="left">
 		<tbody>
-<row><entry>
-all</><entry>accel</><entry>advapi</><entry>animate</><entry>aspi</>
-</row><row><entry>
-atom</><entry>avifile</><entry> bitblt</><entry> bitmap</><entry> caret</>
-</row><row><entry>
-cdrom</><entry>class</><entry> clipboard</><entry> clipping</><entry>combo</>
-</row><row><entry>
-comboex</><entry> comm</><entry>commctrl</><entry>commdlg</><entry> console</>
-</row><row><entry>
-crtdll</><entry>cursor</><entry>datetime</><entry>dc</><entry> ddeml</>
-</row><row><entry>
-ddraw</><entry> debug</><entry> debugstr</><entry>delayhlp</><entry>dialog</>
-</row><row><entry>
-dinput</><entry>dll</><entry> dosfs</><entry>dosmem</><entry>dplay</>
-</row><row><entry>
-driver</><entry>dsound</><entry>edit</><entry>elfdll</><entry>enhmetafile</>
-</row><row><entry>
-event</><entry>exec</><entry>file</><entry>fixup</><entry>font</>
-</row><row><entry>
-gdi</><entry> global</><entry>graphics</><entry> header</><entry>heap</>
-</row><row><entry>
-hook</><entry>hotkey</><entry>icmp</><entry>icon</><entry>imagehlp</>
-</row><row><entry>
-imagelist</><entry> imm</><entry>int</><entry>int10</><entry>int16</>
-</row><row><entry>
-int17</><entry>int19</><entry>int21</><entry>int31</><entry> io</>
-</row><row><entry>
-ipaddress</><entry>joystick</><entry>key</><entry>keyboard</><entry>loaddll</>
-</row><row><entry>
-ldt</><entry>listbox</><entry>listview</><entry>local</><entry>mci</>
-</row><row><entry>
-mcianim</><entry>mciavi</><entry>mcicda</><entry>mcimidi</><entry>mciwave</>
-</row><row><entry>
-mdi</><entry>menu</><entry>message</><entry>metafile</><entry>midi</>
-</row><row><entry>
-mmaux</><entry>mmio</><entry>mmsys</><entry>mmtime</><entry>module</>
-</row><row><entry>
-monthcal</><entry>mpr</><entry>msacm</><entry>msg</><entry>msvideo</>
-</row><row><entry>
-nativefont</><entry>nonclient</><entry>ntdll</><entry>odbc</><entry>ole</>
-</row><row><entry>
-opengl</><entry>pager</><entry>palette</><entry>pidl</><entry>print</>
-</row><row><entry>
-process</><entry>profile</><entry>progress</><entry>prop</><entry>propsheet</>
-</row><row><entry>
-psapi</><entry>psdrv</><entry>ras</><entry>rebar</><entry>reg</>
-</row><row><entry>
-region</><entry>relay</><entry>resource</><entry>richedit</><entry>scroll</>
-</row><row><entry>
-segment</><entry>seh</><entry>selector</><entry>sendmsg</><entry>server</>
-</row><row><entry>
-setupapi</><entry>setupx</><entry>shell</><entry>snoop</><entry>sound</>
-</row><row><entry>
-static</><entry>statusbar</><entry>storage</><entry>stress</><entry>string</>
-</row><row><entry>
-syscolor</><entry>system</><entry>tab</><entry>tape</><entry>tapi</>
-</row><row><entry>
-task</><entry>text</><entry>thread</><entry>thunk</><entry>timer</>
-</row><row><entry>
-toolbar</><entry>toolhelp</><entry>tooltips</><entry>trackbar</><entry>treeview</>
-</row><row><entry>
-ttydrv</><entry>tweak</><entry>typelib</><entry>updown</><entry>ver</>
-</row><row><entry>
-virtual</><entry>vxd</><entry>wave</><entry>win</><entry>win16drv</>
-</row><row><entry>
-win32</><entry>winedbg</><entry>wing</><entry>wininet</><entry>winsock</>
-</row><row><entry>
-winspool</><entry>wnet</><entry>x11</>
-</row>
+<row> <entry>accel</entry>  <entry>adpcm</entry>  <entry>advapi</entry>  <entry>animate</entry>  <entry>aspi</entry> </row>
+<row> <entry>atom</entry>  <entry>avicap</entry>  <entry>avifile</entry>  <entry>bidi</entry>  <entry>bitblt</entry> </row>
+<row> <entry>bitmap</entry>  <entry>cabinet</entry>  <entry>capi</entry>  <entry>caret</entry>  <entry>cdrom</entry> </row>
+<row> <entry>cfgmgr32</entry>  <entry>class</entry>  <entry>clipboard</entry>  <entry>clipping</entry>  <entry>combo</entry> </row>
+<row> <entry>comboex</entry>  <entry>comm</entry>  <entry>commctrl</entry>  <entry>commdlg</entry>  <entry>computername</entry> </row>
+<row> <entry>console</entry>  <entry>crtdll</entry>  <entry>crypt</entry>  <entry>curses</entry>  <entry>cursor</entry> </row>
+<row> <entry>d3d</entry>  <entry>d3d_shader</entry>  <entry>d3d_surface</entry>  <entry>datetime</entry>  <entry>dc</entry> </row>
+<row> <entry>ddeml</entry>  <entry>ddraw</entry>  <entry>ddraw_fps</entry>  <entry>ddraw_geom</entry>  <entry>ddraw_tex</entry> </row>
+<row> <entry>debugstr</entry>  <entry>devenum</entry>  <entry>dialog</entry>  <entry>dinput</entry>  <entry>dll</entry> </row>
+<row> <entry>dma</entry>  <entry>dmband</entry>  <entry>dmcompos</entry>  <entry>dmfile</entry>  <entry>dmfiledat</entry> </row>
+<row> <entry>dmime</entry>  <entry>dmloader</entry>  <entry>dmscript</entry>  <entry>dmstyle</entry>  <entry>dmsynth</entry> </row>
+<row> <entry>dmusic</entry>  <entry>dosfs</entry>  <entry>dosmem</entry>  <entry>dplay</entry>  <entry>dplayx</entry> </row>
+<row> <entry>dpnhpast</entry>  <entry>driver</entry>  <entry>dsound</entry>  <entry>dsound3d</entry>  <entry>edit</entry> </row>
+<row> <entry>enhmetafile</entry>  <entry>environ</entry>  <entry>event</entry>  <entry>eventlog</entry>  <entry>exec</entry> </row>
+<row> <entry>file</entry>  <entry>fixup</entry>  <entry>font</entry>  <entry>fps</entry>  <entry>g711</entry> </row>
+<row> <entry>gdi</entry>  <entry>global</entry>  <entry>glu</entry>  <entry>graphics</entry>  <entry>header</entry> </row>
+<row> <entry>heap</entry>  <entry>hook</entry>  <entry>hotkey</entry>  <entry>icmp</entry>  <entry>icon</entry> </row>
+<row> <entry>imagehlp</entry>  <entry>imagelist</entry>  <entry>imm</entry>  <entry>int</entry>  <entry>int21</entry> </row>
+<row> <entry>int31</entry>  <entry>io</entry>  <entry>ipaddress</entry>  <entry>iphlpapi</entry>  <entry>jack</entry> </row>
+<row> <entry>joystick</entry>  <entry>key</entry>  <entry>keyboard</entry>  <entry>listbox</entry>  <entry>listview</entry> </row>
+<row> <entry>loaddll</entry>  <entry>local</entry>  <entry>mapi</entry>  <entry>mci</entry>  <entry>mcianim</entry> </row>
+<row> <entry>mciavi</entry>  <entry>mcicda</entry>  <entry>mcimidi</entry>  <entry>mciwave</entry>  <entry>mdi</entry> </row>
+<row> <entry>menu</entry>  <entry>menubuilder</entry>  <entry>message</entry>  <entry>metafile</entry>  <entry>midi</entry> </row>
+<row> <entry>mmaux</entry>  <entry>mmio</entry>  <entry>mmsys</entry>  <entry>mmtime</entry>  <entry>module</entry> </row>
+<row> <entry>monthcal</entry>  <entry>mpeg3</entry>  <entry>mpr</entry>  <entry>msacm</entry>  <entry>msdmo</entry> </row>
+<row> <entry>msg</entry>  <entry>mshtml</entry>  <entry>msi</entry>  <entry>msimg32</entry>  <entry>msisys</entry> </row>
+<row> <entry>msrle32</entry>  <entry>msvcrt</entry>  <entry>msvideo</entry>  <entry>mswsock</entry>  <entry>nativefont</entry> </row>
+<row> <entry>netapi32</entry>  <entry>netbios</entry>  <entry>nls</entry>  <entry>nonclient</entry>  <entry>ntdll</entry> </row>
+<row> <entry>odbc</entry>  <entry>ole</entry>  <entry>oledlg</entry>  <entry>olerelay</entry>  <entry>opengl</entry> </row>
+<row> <entry>pager</entry>  <entry>palette</entry>  <entry>pidl</entry>  <entry>powermgnt</entry>  <entry>print</entry> </row>
+<row> <entry>process</entry>  <entry>profile</entry>  <entry>progress</entry>  <entry>propsheet</entry>  <entry>psapi</entry> </row>
+<row> <entry>psdrv</entry>  <entry>qcap</entry>  <entry>quartz</entry>  <entry>ras</entry>  <entry>rebar</entry> </row>
+<row> <entry>reg</entry>  <entry>region</entry>  <entry>relay</entry>  <entry>resource</entry>  <entry>richedit</entry> </row>
+<row> <entry>rundll32</entry>  <entry>sblaster</entry>  <entry>scroll</entry>  <entry>seh</entry>  <entry>selector</entry> </row>
+<row> <entry>server</entry>  <entry>setupapi</entry>  <entry>shdocvw</entry>  <entry>shell</entry>  <entry>shlctrl</entry> </row>
+<row> <entry>snmpapi</entry>  <entry>snoop</entry>  <entry>sound</entry>  <entry>static</entry>  <entry>statusbar</entry> </row>
+<row> <entry>storage</entry>  <entry>stress</entry>  <entry>string</entry>  <entry>syscolor</entry>  <entry>system</entry> </row>
+<row> <entry>tab</entry>  <entry>tape</entry>  <entry>tapi</entry>  <entry>task</entry>  <entry>text</entry> </row>
+<row> <entry>thread</entry>  <entry>thunk</entry>  <entry>tid</entry>  <entry>timer</entry>  <entry>toolbar</entry> </row>
+<row> <entry>toolhelp</entry>  <entry>tooltips</entry>  <entry>trackbar</entry>  <entry>treeview</entry>  <entry>ttydrv</entry> </row>
+<row> <entry>twain</entry>  <entry>typelib</entry>  <entry>uninstaller</entry>  <entry>updown</entry>  <entry>urlmon</entry> </row>
+<row> <entry>uxtheme</entry>  <entry>ver</entry>  <entry>virtual</entry>  <entry>vxd</entry>  <entry>wave</entry> </row>
+<row> <entry>wc_font</entry>  <entry>win</entry>  <entry>win32</entry>  <entry>wineboot</entry>  <entry>winecfg</entry> </row>
+<row> <entry>wineconsole</entry>  <entry>wine_d3d</entry>  <entry>winevdm</entry>  <entry>wing</entry>  <entry>winhelp</entry> </row>
+<row> <entry>wininet</entry>  <entry>winmm</entry>  <entry>winsock</entry>  <entry>winspool</entry>  <entry>wintab</entry> </row>
+<row> <entry>wintab32</entry>  <entry>wnet</entry>  <entry>x11drv</entry>  <entry>x11settings</entry>  <entry>xdnd</entry> </row>
+<row> <entry>xrandr</entry>  <entry>xrender</entry>  <entry>xvidmode</entry> </row>
 		</tbody>
 		</tgroup>
 		</table>
