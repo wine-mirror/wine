@@ -122,10 +122,11 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
 #if defined(GL_VERSION_1_3)
                    glActiveTexture(GL_TEXTURE0 + Stage);
+                   checkGLcall("glActiveTexture");
 #else
                    glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-#endif
                    checkGLcall("glActiveTextureARB");
+#endif
                 } else if (Stage > 0) {
                     FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
                 }
@@ -1514,8 +1515,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
             int tex = d3dts - D3DTS_TEXTURE0;
 #if defined(GL_VERSION_1_3)
             glActiveTexture(GL_TEXTURE0 + tex);
+            checkGLcall("glActiveTexture");
 #else 
             glActiveTextureARB(GL_TEXTURE0_ARB + tex);
+            checkGLcall("glActiveTextureARB");
 #endif
             set_texture_matrix((float *)lpmatrix, This->UpdateStateBlock->texture_state[tex][D3DTSS_TEXTURETRANSFORMFLAGS]);
         }
@@ -3071,10 +3074,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
 #if defined(GL_VERSION_1_3)
         glActiveTexture(GL_TEXTURE0 + Stage);
+        checkGLcall("glActiveTexture");
 #else
         glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-#endif
         checkGLcall("glActiveTextureARB");
+#endif
     } else if (Stage>0) {
         FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
