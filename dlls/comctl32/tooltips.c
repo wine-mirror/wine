@@ -2,6 +2,7 @@
  * Tool tip control
  *
  * Copyright 1998, 1999 Eric Kohl
+ * Copyright 2004 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -87,6 +88,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(tooltips);
 
+static HICON hTooltipIcons[TTI_ERROR+1];
+
 typedef struct
 {
     UINT      uFlags;
@@ -109,6 +112,7 @@ typedef struct
     COLORREF   clrBk;
     COLORREF   clrText;
     HFONT    hFont;
+    HFONT    hTitleFont;
     INT      xTrackPos;
     INT      yTrackPos;
     INT      nMaxTipWidth;
@@ -120,6 +124,8 @@ typedef struct
     INT      nInitialTime;
     RECT     rcMargin;
     BOOL     bToolBelow;
+    LPWSTR   pszTitle;
+    HICON    hTitleIcon;
 
     TTTOOL_INFO *tools;
 } TOOLTIPS_INFO;
@@ -141,9 +147,41 @@ typedef struct
 #define BALLOON_STEMWIDTH 10
 #define BALLOON_STEMINDENT 20
 
+#define BALLOON_ICON_TITLE_SPACING 8 /* horizontal spacing between icon and title */
+#define BALLOON_TITLE_TEXT_SPACING 8 /* vertical spacing between icon/title and main text */
+#define ICON_HEIGHT 16
+#define ICON_WIDTH  16
+
 LRESULT CALLBACK
 TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uId, DWORD_PTR dwRef);
 
+
+static inline UINT_PTR TOOLTIPS_GetTitleIconIndex(HICON hIcon)
+{
+    UINT i;
+    for (i = 0; i <= TTI_ERROR; i++)
+        if (hTooltipIcons[i] == hIcon)
+            return i;
+    return (UINT_PTR)hIcon;
+}
+
+static void
+TOOLTIPS_InitSystemSettings (TOOLTIPS_INFO *infoPtr)
+{
+    NONCLIENTMETRICSW nclm;
+
+    infoPtr->clrBk   = GetSysColor (COLOR_INFOBK);
+    infoPtr->clrText = GetSysColor (COLOR_INFOTEXT);
+
+    DeleteObject (infoPtr->hFont);
+    nclm.cbSize = sizeof(nclm);
+    SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+    infoPtr->hFont = CreateFontIndirectW (&nclm.lfStatusFont);
+
+    DeleteObject (infoPtr->hTitleFont);
+    nclm.lfStatusFont.lfWeight = FW_BOLD;
+    infoPtr->hTitleFont = CreateFontIndirectW (&nclm.lfStatusFont);
+}
 
 static VOID
 TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
@@ -165,6 +203,11 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
 
     hBrush = CreateSolidBrush(infoPtr->clrBk);
 
+    /* already drawn the background; don't need to draw it again
+     * when drawing text */
+    oldBkMode = SetBkMode (hdc, TRANSPARENT);
+    SetTextColor (hdc, infoPtr->clrText);
+
     if (dwStyle & TTS_BALLOON)
     {
         /* create a region to store result into */
@@ -176,13 +219,6 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
         FillRgn(hdc, hRgn, hBrush);
         DeleteObject(hBrush);
         hBrush = NULL;
-
-        /* calculate text rectangle */
-        rc.left   += (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.left);
-        rc.top    += (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.top);
-        rc.right  -= (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.right);
-        rc.bottom -= (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.bottom);
-        if(infoPtr->bToolBelow) rc.top += BALLOON_STEMHEIGHT;
     }
     else
     {
@@ -190,7 +226,41 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
         FillRect(hdc, &rc, hBrush);
         DeleteObject(hBrush);
         hBrush = NULL;
+    }
 
+    if ((dwStyle & TTS_BALLOON) || infoPtr->pszTitle)
+    {
+        /* calculate text rectangle */
+        rc.left   += (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.left);
+        rc.top    += (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.top);
+        rc.right  -= (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.right);
+        rc.bottom -= (BALLOON_TEXT_MARGIN + infoPtr->rcMargin.bottom);
+        if(infoPtr->bToolBelow) rc.top += BALLOON_STEMHEIGHT;
+
+        if (infoPtr->pszTitle)
+        {
+            RECT rcTitle = {rc.left, rc.top, rc.right, rc.bottom};
+            int height;
+            BOOL icon_present;
+
+            /* draw icon */
+            icon_present = infoPtr->hTitleIcon && 
+                DrawIconEx(hdc, rc.left, rc.top, infoPtr->hTitleIcon,
+                           ICON_WIDTH, ICON_HEIGHT, 0, NULL, DI_NORMAL);
+            if (icon_present)
+                rcTitle.left += ICON_WIDTH + BALLOON_ICON_TITLE_SPACING;
+
+            rcTitle.bottom = rc.top + ICON_HEIGHT;
+
+            /* draw title text */
+            hOldFont = SelectObject (hdc, infoPtr->hTitleFont);
+            height = DrawTextW(hdc, infoPtr->pszTitle, -1, &rcTitle, DT_BOTTOM | DT_SINGLELINE | DT_NOPREFIX);
+            SelectObject (hdc, hOldFont);
+            rc.top += height + BALLOON_TITLE_TEXT_SPACING;
+        }
+    }
+    else
+    {
         /* calculate text rectangle */
         rc.left   += (NORMAL_TEXT_MARGIN + infoPtr->rcMargin.left);
         rc.top    += (NORMAL_TEXT_MARGIN + infoPtr->rcMargin.top);
@@ -198,12 +268,8 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
         rc.bottom -= (NORMAL_TEXT_MARGIN + infoPtr->rcMargin.bottom);
     }
 
-    /* already drawn the background; don't need to draw it again
-     * when drawing text */
-    oldBkMode = SetBkMode (hdc, TRANSPARENT);
-    SetTextColor (hdc, infoPtr->clrText);
-    hOldFont = SelectObject (hdc, infoPtr->hFont);
     /* draw text */
+    hOldFont = SelectObject (hdc, infoPtr->hFont);
     DrawTextW (hdc, infoPtr->szTipText, -1, &rc, uFlags);
     /* be polite and reset the things we changed in the dc */
     SelectObject (hdc, hOldFont);
@@ -359,6 +425,7 @@ TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
     DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
     UINT uFlags = DT_EXTERNALLEADING | DT_CALCRECT;
     RECT rc = {0, 0, 0, 0};
+    SIZE title = {0, 0};
 
     if (infoPtr->nMaxTipWidth > -1) {
 	rc.right = infoPtr->nMaxTipWidth;
@@ -369,16 +436,32 @@ TOOLTIPS_CalcTipSize (HWND hwnd, TOOLTIPS_INFO *infoPtr, LPSIZE lpSize)
     TRACE("%s\n", debugstr_w(infoPtr->szTipText));
 
     hdc = GetDC (hwnd);
+    if (infoPtr->pszTitle)
+    {
+        RECT rcTitle = {0, 0, 0, 0};
+        TRACE("title %s\n", debugstr_w(infoPtr->pszTitle));
+        if (infoPtr->hTitleIcon)
+        {
+            title.cx = ICON_WIDTH;
+            title.cy = ICON_HEIGHT;
+        }
+        if (title.cx != 0) title.cx += BALLOON_ICON_TITLE_SPACING;
+        hOldFont = SelectObject (hdc, infoPtr->hTitleFont);
+        DrawTextW(hdc, infoPtr->pszTitle, -1, &rcTitle, DT_SINGLELINE | DT_NOPREFIX | DT_CALCRECT);
+        SelectObject (hdc, hOldFont);
+        title.cy = max(title.cy, rcTitle.bottom - rcTitle.top) + BALLOON_TITLE_TEXT_SPACING;
+        title.cx += (rcTitle.right - rcTitle.left);
+    }
     hOldFont = SelectObject (hdc, infoPtr->hFont);
     DrawTextW (hdc, infoPtr->szTipText, -1, &rc, uFlags);
     SelectObject (hdc, hOldFont);
     ReleaseDC (hwnd, hdc);
 
-    if (style & TTS_BALLOON)
+    if ((style & TTS_BALLOON) || infoPtr->pszTitle)
     {
-        lpSize->cx = rc.right - rc.left + 2*BALLOON_TEXT_MARGIN +
+        lpSize->cx = max(rc.right - rc.left, title.cx) + 2*BALLOON_TEXT_MARGIN +
                        infoPtr->rcMargin.left + infoPtr->rcMargin.right;
-        lpSize->cy = rc.bottom - rc.top + 2*BALLOON_TEXT_MARGIN +
+        lpSize->cy = title.cy + rc.bottom - rc.top + 2*BALLOON_TEXT_MARGIN +
                        infoPtr->rcMargin.bottom + infoPtr->rcMargin.top +
                        BALLOON_STEMHEIGHT;
     }
@@ -1824,6 +1907,56 @@ TOOLTIPS_SetTipTextColor (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+TOOLTIPS_SetTitleA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    LPCSTR pszTitle = (LPCSTR)lParam;
+    UINT uTitleIcon = (UINT)wParam;
+    UINT size;
+
+    TRACE("hwnd = %p, title = %s, icon = %p\n", hwnd, pszTitle, (void*)uTitleIcon);
+
+    size = sizeof(WCHAR)*MultiByteToWideChar(CP_ACP, 0, pszTitle, -1, NULL, 0);
+    infoPtr->pszTitle = Alloc(size);
+    if (!infoPtr->pszTitle)
+        return FALSE;
+    MultiByteToWideChar(CP_ACP, 0, pszTitle, -1, infoPtr->pszTitle, size/sizeof(WCHAR));
+    if (uTitleIcon <= TTI_ERROR)
+        infoPtr->hTitleIcon = hTooltipIcons[uTitleIcon];
+    else
+        infoPtr->hTitleIcon = CopyIcon((HICON)wParam);
+
+    return TRUE;
+}
+
+
+static LRESULT
+TOOLTIPS_SetTitleW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
+    LPCWSTR pszTitle = (LPCWSTR)lParam;
+    UINT uTitleIcon = (UINT)wParam;
+    UINT size;
+
+    TRACE("hwnd = %p, title = %s, icon = %p\n", hwnd, debugstr_w(pszTitle), (void*)uTitleIcon);
+
+    size = (strlenW(pszTitle)+1)*sizeof(WCHAR);
+    infoPtr->pszTitle = Alloc(size);
+    if (!infoPtr->pszTitle)
+        return FALSE;
+    memcpy(infoPtr->pszTitle, pszTitle, size);
+    if (uTitleIcon <= TTI_ERROR)
+        infoPtr->hTitleIcon = hTooltipIcons[uTitleIcon];
+    else
+        infoPtr->hTitleIcon = CopyIcon((HICON)wParam);
+
+    TRACE("icon = %p\n", infoPtr->hTitleIcon);
+
+    return TRUE;
+}
+
+
+static LRESULT
 TOOLTIPS_SetToolInfoA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
@@ -2134,7 +2267,6 @@ static LRESULT
 TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     TOOLTIPS_INFO *infoPtr;
-    NONCLIENTMETRICSA nclm;
 
     /* allocate memory for info structure */
     infoPtr = (TOOLTIPS_INFO *)Alloc (sizeof(TOOLTIPS_INFO));
@@ -2143,17 +2275,14 @@ TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     /* initialize info structure */
     infoPtr->bActive = TRUE;
     infoPtr->bTrackActive = FALSE;
-    infoPtr->clrBk   = GetSysColor (COLOR_INFOBK);
-    infoPtr->clrText = GetSysColor (COLOR_INFOTEXT);
-
-    nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-    SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-    infoPtr->hFont = CreateFontIndirectA (&nclm.lfStatusFont);
 
     infoPtr->nMaxTipWidth = -1;
     infoPtr->nTool = -1;
     infoPtr->nCurrentTool = -1;
     infoPtr->nTrackTool = -1;
+
+    /* initialize colours and fonts */
+    TOOLTIPS_InitSystemSettings(infoPtr);
 
     TOOLTIPS_SetDelayTime(hwnd, TTDT_AUTOMATIC, 0L);
 
@@ -2196,8 +2325,15 @@ TOOLTIPS_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	Free (infoPtr->tools);
     }
 
-    /* delete font */
+    /* free title string */
+    Free (infoPtr->pszTitle);
+    /* free title icon if not a standard one */
+    if (TOOLTIPS_GetTitleIconIndex(infoPtr->hTitleIcon) > TTI_ERROR)
+        DeleteObject(infoPtr->hTitleIcon);
+
+    /* delete fonts */
     DeleteObject (infoPtr->hFont);
+    DeleteObject (infoPtr->hTitleFont);
 
     /* free tool tips info data */
     Free (infoPtr);
@@ -2299,8 +2435,12 @@ TOOLTIPS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if(!GetObjectW((HFONT)wParam, sizeof(lf), &lf))
         return 0;
 
-    if(infoPtr->hFont) DeleteObject (infoPtr->hFont);
+    DeleteObject (infoPtr->hFont);
     infoPtr->hFont = CreateFontIndirectW(&lf);
+
+    DeleteObject (infoPtr->hTitleFont);
+    lf.lfWeight = FW_BOLD;
+    infoPtr->hTitleFont = CreateFontIndirectW(&lf);
 
     if ((LOWORD(lParam)) & (infoPtr->nCurrentTool != -1)) {
 	FIXME("full redraw needed!\n");
@@ -2402,15 +2542,8 @@ static LRESULT
 TOOLTIPS_WinIniChange (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
-    NONCLIENTMETRICSA nclm;
 
-    infoPtr->clrBk   = GetSysColor (COLOR_INFOBK);
-    infoPtr->clrText = GetSysColor (COLOR_INFOTEXT);
-
-    DeleteObject (infoPtr->hFont);
-    nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-    SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-    infoPtr->hFont = CreateFontIndirectA (&nclm.lfStatusFont);
+    TOOLTIPS_InitSystemSettings (infoPtr);
 
     return 0;
 }
@@ -2544,6 +2677,12 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TTM_SETTIPTEXTCOLOR:
 	    return TOOLTIPS_SetTipTextColor (hwnd, wParam, lParam);
 
+	case TTM_SETTITLEA:
+	    return TOOLTIPS_SetTitleA (hwnd, wParam, lParam);
+
+	case TTM_SETTITLEW:
+	    return TOOLTIPS_SetTitleW (hwnd, wParam, lParam);
+
 	case TTM_SETTOOLINFOA:
 	    return TOOLTIPS_SetToolInfoA (hwnd, wParam, lParam);
 
@@ -2644,11 +2783,22 @@ TOOLTIPS_Register (void)
     wndClass.lpszClassName = TOOLTIPS_CLASSA;
 
     RegisterClassA (&wndClass);
+
+    hTooltipIcons[TTI_NONE] = NULL;
+    hTooltipIcons[TTI_INFO] = LoadImageW(COMCTL32_hModule,
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_INFO_SM), IMAGE_ICON, 0, 0, 0);
+    hTooltipIcons[TTI_WARNING] = LoadImageW(COMCTL32_hModule,
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_WARN_SM), IMAGE_ICON, 0, 0, 0);
+    hTooltipIcons[TTI_ERROR] = LoadImageW(COMCTL32_hModule,
+        (LPCWSTR)MAKEINTRESOURCE(IDI_TT_ERROR_SM), IMAGE_ICON, 0, 0, 0);
 }
 
 
 VOID
 TOOLTIPS_Unregister (void)
 {
+    int i;
+    for (i = 0; i < TTI_ERROR+1; i++)
+        DeleteObject(hTooltipIcons[i]);
     UnregisterClassA (TOOLTIPS_CLASSA, NULL);
 }
