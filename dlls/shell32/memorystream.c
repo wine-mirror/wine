@@ -107,7 +107,7 @@ HRESULT CreateStreamOnFile (LPCWSTR pszFilename, DWORD grfMode, IStream ** ppstm
 
 	TRACE("Opening %s\n", debugstr_w(pszFilename) );
 
-	handle = CreateFileW( pszFilename, access, 0, NULL, creat, 0, NULL );
+       handle = CreateFileW( pszFilename, access, FILE_SHARE_READ, NULL, creat, 0, NULL );
 	if( handle == INVALID_HANDLE_VALUE )
 		return E_FAIL;
 
