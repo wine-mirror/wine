@@ -561,10 +561,10 @@ int main(int argc,char *argv[])
 	pp_flex_debug = debuglevel & DEBUGLEVEL_PPLEX ? 1 : 0;
 
 	/* Set the default defined stuff */
-	add_cmdline_define("__WRC__=" WRC_STRINGIZE(WRC_MAJOR_VERSION));
-	add_cmdline_define("__WRC_MINOR__=" WRC_STRINGIZE(WRC_MINOR_VERSION));
-	add_cmdline_define("__WRC_MICRO__=" WRC_STRINGIZE(WRC_MICRO_VERSION));
-	add_cmdline_define("__WRC_PATCH__=" WRC_STRINGIZE(WRC_MICRO_VERSION));
+	add_cmdline_define("__WRC__=" WRC_EXP_STRINGIZE(WRC_MAJOR_VERSION));
+	add_cmdline_define("__WRC_MINOR__=" WRC_EXP_STRINGIZE(WRC_MINOR_VERSION));
+	add_cmdline_define("__WRC_MICRO__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
+	add_cmdline_define("__WRC_PATCH__=" WRC_EXP_STRINGIZE(WRC_MICRO_VERSION));
 
 	add_cmdline_define("RC_INVOKED=1");
 

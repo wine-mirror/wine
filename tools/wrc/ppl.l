@@ -1307,13 +1307,14 @@ static void add_text_to_macro(char *text, int len)
 
 	assert(mep->ppp->expanding == 0);
 
-	if(mep->curargalloc - mep->curargsize <= len)
+	if(mep->curargalloc - mep->curargsize <= len+1)	/* +1 for '\0' */
 	{
-		mep->curargalloc += ALLOCBLOCKSIZE;
+		mep->curargalloc += MAX(ALLOCBLOCKSIZE, len+1);
 		mep->curarg = xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
 	}
-	memcpy(mep->curarg + mep->curargsize, text, len+1);	/* +1 for '\0' */
+	memcpy(mep->curarg + mep->curargsize, text, len);
 	mep->curargsize += len;
+	mep->curarg[mep->curargsize] = '\0';
 }
 
 static void macro_add_arg(int last)

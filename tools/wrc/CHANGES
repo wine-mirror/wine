@@ -1,4 +1,26 @@
 ---------------------------------------------------------------------------
+Version 1.1.6 (05-Jun-2000)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Bugfix: Macro expansion of strings would assert an internal error
+  or a segfault due to a lacking '\0' in the expansion.
+- Bugfix: Prevent buffer overflow in reallocation of macro expansion
+  buffers.
+- Bugfix: Wrc's version information was not passed as numerical to the
+  preprocessor due to an error in the definition of the macro.
+- Relaxed the newline constraint in global LANGUAGE statements, which
+  was introduced in version 1.1.3, so that some fancy preprocessor
+  constructs can work.
+- Removed the gcc-style #line handling from the resource-parser to the
+  resource-scanner so that it is possible to include files at any stage
+  of the source, independent of the parser-state.
+- Bugfix: Stringtables were not correctly searched for duplicates
+  because the language comparison disregarded the sublanguage.
+- Eliminated a repetitive warning when writing stringtables with zero
+  length string entries. These are perfectly valid (but make no sense:-).
+  Warning are now only generated during parse in pedantic mode.
+
+---------------------------------------------------------------------------
 Version 1.1.5 (12-Jun-2000)
 
 Bertho Stultiens <bertho@akhphd.au.dk>

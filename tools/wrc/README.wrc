@@ -1,4 +1,4 @@
-Release 1.1.5 of wrc (12-Jun-2000), the wine resource compiler.
+Release 1.1.6 of wrc (05-Jul-2000), the wine resource compiler.
 
 See the file CHANGES for differences between the version and what has been
 corrected in the current version.
@@ -101,8 +101,8 @@ but not expanded properly. This will be corrected in the future.
 
 The preprocessor handles the special defines and aditionally defines an
 extra set of defines:
-  Define   | Value             | Comment
------------+-------------------+---------------
+  Define       | Value         | Comment
+---------------+---------------+---------------
 RC_INVOKED     | 1             | Always defined
 __FLAT__       | 1             | Only defined if win32 compile
 __WIN32__      | 1             | Only defined if win32 compile
@@ -112,8 +112,8 @@ __TIME__       | "23:59:59"    | Timestring of compilation
 __DATE__       | "May  1 2000" | Datestring of compilation
 __WRC__         1             | Wrc's major version
 __WRC_MINOR__  | 1             | Wrc's minor version
-__WRC_MICRO__  | 0             | Wrc's minor version
-__WRC_PATCH__  | 0             | Alias of __WRC_MICRO__
+__WRC_MICRO__  | 6             | Wrc's minor version
+__WRC_PATCH__  | 6             | Alias of __WRC_MICRO__
 
 Include-files are not read twice if they are protected with this scheme:
 #ifndef SOME_DEFINE

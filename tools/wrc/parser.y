@@ -135,6 +135,8 @@ stringtable_t *tagstt;	/* Stringtable tag.
 stringtable_t *sttres;	/* Stringtable resources. This holds the list of
 			 * stringtables with different lanuages
 			 */
+static int dont_want_id = 0;	/* See language parsing for details */
+
 /* Set to the current options of the currently scanning stringtable */
 static int *tagstt_memopt;
 static characts_t *tagstt_characts;
@@ -305,7 +307,7 @@ static int rsrcid_to_token(int lookahead);
 %type <tlbarItems>	toolbar_items
 %type <dginit>  dlginit
 %type <styles>  optional_style_pair 
-%type <num>	any_num any_nums
+%type <num>	any_num
 %type <style>   optional_style
 %type <style>   style
 %type <str>	filename
@@ -388,39 +390,14 @@ resources
 		}
 		else
 			$$ = NULL;
-		want_id = 1;
+
+		if(!dont_want_id)	/* See comments in language parsing below */
+			want_id = 1;
+		dont_want_id = 0;
 		}
-	| resources preprocessor		{ $$ = $1; want_id = 1; }
 	| resources cjunk			{ $$ = $1; want_id = 1; }
 	;
 
-/*
- * The preprocessor generates line directives a la gcc
- * in the format:
- * # <linenum> "filename" <codes>
- *
- * Codes can be a sequence of:
- * - 1 start of new file
- * - 2 returning to previous
- * - 3 system header
- * - 4 interpret as C-code
- *
- * 4 is not used and 1 mutually excludes 2
- * Anyhow, we are not really interested in these at all
- * because we only want to know the linenumber and
- * filename.
- */
-preprocessor
-	: '#' { want_nl = 1; } tNUMBER tSTRING any_nums tNL	{
-		line_number = $3;
-		input_name = $4->str.cstr;
-		/* fprintf(stderr, "Now at %s:%d\n", input_name, line_number); */
-		}
-	;
-
-any_nums: any_num
-	| any_nums any_num
-	;
 
 /* C ignore stuff */
 cjunk	: tTYPEDEF			{ strip_til_semicolon(); }
@@ -461,17 +438,40 @@ resource
 		$$ = NULL;
 		chat("Got STRINGTABLE");
 		}
-	| tLANGUAGE {want_nl = 1; } expr ',' expr tNL	{
+	| tLANGUAGE {want_nl = 1; } expr ',' expr {
 		/* We *NEED* the newline to delimit the expression.
 		 * Otherwise, we would not be able to set the next
 		 * want_id anymore because of the token-lookahead.
+		 *
+		 * However, we can test the lookahead-token for
+		 * being "non-expression" type, in which case we
+		 * continue. Fortunately, tNL is the only token that
+		 * will break expression parsing and is implicitely
+		 * void, so we just remove it. This scheme makes it
+		 * possible to do some (not all) fancy preprocessor
+		 * stuff.
+		 * BTW, we also need to make sure that the next
+		 * reduction of 'resources' above will *not* set
+		 * want_id because we already have a lookahead that
+		 * cannot be undone.
 		 */
+		if(yychar != YYEMPTY && yychar != tNL)
+			dont_want_id = 1;
+
+		if(yychar == tNL)
+			yychar = YYEMPTY;
+		else if(yychar == tIDENT)
+			yywarning("LANGUAGE statement not delimited with newline; next identifier might be wrong");
+
+		want_nl = 0;	/* We don't want it anymore if we didn't get it */
+
 		if(!win32)
 			yywarning("LANGUAGE not supported in 16-bit mode");
 		if(currentlanguage)
 			free(currentlanguage);
 		currentlanguage = new_language($3, $5);
 		$$ = NULL;
+		chat("Got LANGUAGE %d,%d (0x%04x)", $3, $5, ($5<<10) + $3);
 		}
 	;
 
@@ -1433,6 +1433,8 @@ strings	: /* Empty */	{ $$ = NULL; }
 		tagstt->entries[tagstt->nentries-1].version = tagstt_version;
 		tagstt->entries[tagstt->nentries-1].characts = tagstt_characts;
 
+		if(pedantic && !$4->size)
+			yywarning("Zero length strings make no sense");
 		if(!win32 && $4->size > 254)
 			yyerror("Stringtable entry more than 254 characters");
 		if(win32 && $4->size > 65534) /* Hmm..., does this happen? */
@@ -2426,7 +2428,7 @@ static stringtable_t *find_stringtable(lvc_t *lvc)
 	for(stt = sttres; stt; stt = stt->next)
 	{
 		if(stt->lvc.language->id == lvc->language->id
-		&& stt->lvc.language->id == lvc->language->id)
+		&& stt->lvc.language->sub == lvc->language->sub)
 		{
 			/* Found a table with the same language */
 			/* The version and characteristics are now handled

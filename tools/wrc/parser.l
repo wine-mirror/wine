@@ -65,6 +65,8 @@
 %x pp_strips
 %x pp_stripp
 %x pp_stripp_final
+/* Set when scanning #line style directives */
+%x pp_line
 
 %option stack
 %option never-interactive
@@ -290,6 +292,45 @@ static struct keyword *iskeyword(char *kw)
  **************************************************************************
  */
 %%
+	/*
+	 * Catch the GCC-style line statements here and parse them.
+	 * This has the advantage that you can #include at any
+	 * stage in the resource file.
+	 * The preprocessor generates line directives in the format:
+	 * # <linenum> "filename" <codes>
+	 *
+	 * Codes can be a sequence of:
+	 * - 1 start of new file
+	 * - 2 returning to previous
+	 * - 3 system header
+	 * - 4 interpret as C-code
+	 *
+	 * 4 is not used and 1 mutually excludes 2
+	 * Anyhow, we are not really interested in these at all
+	 * because we only want to know the linenumber and
+	 * filename.
+	 */
+<INITIAL,pp_strips,pp_stripp>^{ws}*\#{ws}*	yy_push_state(pp_line);
+<pp_line>[^\n]*	{
+		int lineno;
+		char *cptr;
+		char *fname;
+		yy_pop_state();
+		lineno = (int)strtol(yytext, &cptr, 10);
+		if(!lineno)
+			yyerror("Malformed '#...' line-directive; invalid linenumber");
+		fname = strchr(cptr, '"');
+		if(!fname)
+			yyerror("Malformed '#...' line-directive; missing filename");
+		fname++;
+		cptr = strchr(fname, '"');
+		if(!cptr)
+			yyerror("Malformed '#...' line-directive; missing terminating \"");
+		*cptr = '\0';
+		line_number = lineno - 1;	/* We didn't read the newline */
+		input_name = xstrdup(fname);
+	}
+
 	/*
 	 * Strip everything until a ';' taking
 	 * into account braces {} for structures,

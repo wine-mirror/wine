@@ -1416,7 +1416,7 @@ static res_t *stringtable2res(stringtable_t *stt)
 		restag = put_res_header(res, WRC_RT_STRING, NULL, &name, stt->memopt, win32 ? &(stt->lvc) : NULL);
 		for(i = 0; i < stt->nentries; i++)
 		{
-			if(stt->entries[i].str)
+			if(stt->entries[i].str && stt->entries[i].str->size)
 			{
 				if(win32)
 					put_word(res, stt->entries[i].str->size);
