@@ -874,7 +874,9 @@ static DWORD MIDI_mciPlay(UINT16 wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
     }
 
     /* stop all notes */
+#ifdef HAVE_OSS
     modMessage(wDevID, MODM_DATA, 0, (MIDI_CTL_CHANGE << 8) | 0x78, 0);
+#endif
     MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE(midi, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
