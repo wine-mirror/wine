@@ -52,10 +52,10 @@ EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 BOOL
 EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
+    POINT pt;
     EMRLINETO emr;
     RECTL bounds;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
 
     emr.emr.iType = EMR_LINETO;
     emr.emr.nSize = sizeof(emr);
@@ -65,10 +65,12 @@ EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
     	return FALSE;
 
-    bounds.left   = min(x, dc->CursPosX);
-    bounds.top    = min(y, dc->CursPosY);
-    bounds.right  = max(x, dc->CursPosX);
-    bounds.bottom = max(y, dc->CursPosY);
+    GetCurrentPositionEx(physDev->hdc, &pt);
+
+    bounds.left   = min(x, pt.x);
+    bounds.top    = min(y, pt.y);
+    bounds.right  = max(x, pt.x);
+    bounds.bottom = max(y, pt.y);
 
     EMFDRV_UpdateBBox( dev, &bounds );
 
@@ -89,14 +91,13 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     EMRARC emr;
     RECTL bounds;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
 
     if(left == right || top == bottom) return FALSE;
 
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(GetGraphicsMode(physDev->hdc) == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -224,7 +225,6 @@ EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     EMRELLIPSE emr;
     INT temp;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
 
     TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
@@ -233,7 +233,7 @@ EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(GetGraphicsMode(physDev->hdc) == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -258,7 +258,6 @@ EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     EMRRECTANGLE emr;
     INT temp;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
 
     TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
@@ -267,7 +266,7 @@ EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(GetGraphicsMode(physDev->hdc) == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -293,14 +292,13 @@ EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
     EMRROUNDRECT emr;
     INT temp;
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    DC *dc = physDev->dc;
 
     if(left == right || top == bottom) return FALSE;
 
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(GetGraphicsMode(physDev->hdc) == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }

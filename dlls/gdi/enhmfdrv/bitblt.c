@@ -85,7 +85,7 @@ static BOOL EMFDRV_BitBlockTransfer(
     WORD nBPP;
     LPBITMAPINFOHEADER lpBmiH;
     EMFDRV_PDEVICE* physDevSrc = (EMFDRV_PDEVICE*)devSrc;
-    DC* dcSrc = physDevSrc->dc;
+    HBITMAP hBitmap = GetCurrentObject(physDevSrc->hdc, OBJ_BITMAP);
 
     if (emrType == EMR_BITBLT)
         emrSize = sizeof(EMRBITBLT);
@@ -94,7 +94,7 @@ static BOOL EMFDRV_BitBlockTransfer(
     else
         return FALSE;
 
-    GetObjectA(dcSrc->hBitmap, sizeof(BITMAP), &BM);
+    GetObjectW(hBitmap, sizeof(BITMAP), &BM);
 
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
@@ -127,7 +127,7 @@ static BOOL EMFDRV_BitBlockTransfer(
     pEMR->xformSrc.eM22 = 1.0;  /** Where should we  */
     pEMR->xformSrc.eDx = 0.0;   /** get that info    */
     pEMR->xformSrc.eDy = 0.0;   /** ????             */
-    pEMR->crBkColorSrc = dcSrc->backgroundColor;
+    pEMR->crBkColorSrc = GetBkColor(physDevSrc->hdc);
     pEMR->iUsageSrc = DIB_RGB_COLORS;
     pEMR->offBmiSrc = emrSize;
     pEMR->cbBmiSrc = bmiSize;
@@ -152,16 +152,16 @@ static BOOL EMFDRV_BitBlockTransfer(
     lpBmiH->biCompression = BI_RGB;
     lpBmiH->biSizeImage = bitsSize;
     lpBmiH->biYPelsPerMeter = /* 1 meter  = 39.37 inch */
-        MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSX),3937,100);
+        MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSX),3937,100);
     lpBmiH->biXPelsPerMeter = 
-        MulDiv(GetDeviceCaps(dcSrc->hSelf,LOGPIXELSY),3937,100);
+        MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSY),3937,100);
     lpBmiH->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     /* Set biClrImportant to 0, indicating that all of the 
        device colors are important. */
     lpBmiH->biClrImportant = 0; 
 
     /* Initiliaze bitmap bits */
-    if (GetDIBits(dcSrc->hSelf, dcSrc->hBitmap, 0, (UINT)lpBmiH->biHeight,
+    if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBmiH->biHeight,
                   (BYTE*)pEMR + pEMR->offBitsSrc,
                   (LPBITMAPINFO)lpBmiH, DIB_RGB_COLORS))
     {
