@@ -31,12 +31,6 @@
 #define SOUND_DEV "/dev/dsp"
 #define MIXER_DEV "/dev/mixer"
 
-#ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		((-1==ioctl(a,b,&c))&&(perror("ioctl:"#b":"#c),0))
-#else
-#define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
-#endif
-
 #define MAX_WAVEOUTDRV 	(1)
 #define MAX_WAVEINDRV 	(1)
 

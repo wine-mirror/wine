@@ -868,7 +868,7 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
        int w, h, border, depth;
        /* FIXME: this is not correct for managed windows */
        TSXGetGeometry( display, physDev->drawable, &root,
-                    &lpp->x, &lpp->y, &w, &h, &border, &depth );
+                    (int*)&lpp->x, (int*)&lpp->y, &w, &h, &border, &depth );
     }
     else lpp->x = lpp->y = 0;
     lpp->x += dc->w.DCOrgX; lpp->y += dc->w.DCOrgY;

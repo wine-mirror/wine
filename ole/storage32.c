@@ -5213,21 +5213,14 @@ static DWORD GetAccessModeFromSTGM(DWORD stgm)
  */
 static DWORD GetCreationModeFromSTGM(DWORD stgm)
 {
-  DWORD dwCreationDistribution;
-  BOOL bSTGM_CREATE      = ((stgm & STGM_CREATE) == STGM_CREATE);
-  BOOL bSTGM_CONVERT     = ((stgm & STGM_CONVERT) == STGM_CONVERT);
-  BOOL bSTGM_FAILIFTHERE = ! (bSTGM_CREATE || bSTGM_CONVERT);
-
-  if (bSTGM_CREATE)
-    dwCreationDistribution = CREATE_ALWAYS;
-  else if (bSTGM_FAILIFTHERE)
-    dwCreationDistribution = CREATE_NEW;
-  else if (bSTGM_CONVERT)
-  {
+  if ( stgm & STGM_CREATE)
+    return CREATE_ALWAYS;
+  if (stgm & STGM_CONVERT) {
     FIXME(ole, "STGM_CONVERT not implemented!\n");
-    dwCreationDistribution = CREATE_NEW;
+    return CREATE_NEW;
   }
-
-  return dwCreationDistribution;
+  /* All other cases */
+  if (stgm & ~ (STGM_CREATE|STGM_CONVERT))
+  	FIXME(ole,"unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
+  return CREATE_NEW;
 }
-

@@ -821,11 +821,12 @@ HMODULE PE_LoadLibraryExA (LPCSTR name,
     }
 
     /* Now try the built-in even if disabled */
-    if ( builtin )
+    if ( builtin ) {
         if ( (hModule32 = BUILTIN32_LoadImage( name, &ofs, TRUE )) )
             WARN( module, "Could not load external DLL '%s', using built-in module.\n", name );
         else
             return 0;
+    }
 
 
     /* Create 16-bit dummy module */

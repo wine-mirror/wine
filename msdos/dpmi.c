@@ -437,7 +437,7 @@ static void CallRMProc( CONTEXT *context, int iret )
 }
 
 
-static void WINAPI RMCallbackProc( RMCB *rmcb )
+static void WINAPI WINE_UNUSED RMCallbackProc( RMCB *rmcb )
 {
     /* This routine should call DPMI_CallRMCBProc, but we don't have the
        register structure available - this is easily fixed by going through

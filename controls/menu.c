@@ -1717,7 +1717,7 @@ static LPCSTR MENUEX_ParseResource( LPCSTR res, HMENU hMenu)
 	}
 
 	if (resinfo & 1) {	/* Pop-up? */
-	    DWORD helpid = GET_DWORD(res); /* FIXME: use this.  */
+	    /* DWORD helpid = GET_DWORD(res); FIXME: use this.  */
 	    res += sizeof(DWORD);
 	    mii.hSubMenu = CreatePopupMenu();
 	    if (!mii.hSubMenu)

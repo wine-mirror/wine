@@ -233,7 +233,7 @@ HOTKEY_SetFont (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-static LRESULT
+static LRESULT WINE_UNUSED
 HOTKEY_SysKeyDown (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */
@@ -262,7 +262,7 @@ HOTKEY_SysKeyDown (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 }
 
 
-static LRESULT
+static LRESULT WINE_UNUSED
 HOTKEY_SysKeyUp (WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
     /* HOTKEY_INFO *infoPtr = HOTKEY_GetInfoPtr(wndPtr); */

@@ -313,14 +313,17 @@ static void
 TOOLBAR_CalcToolbar (WND *wndPtr)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
-    TBUTTON_INFO *btnPtr, *grpPtr;
-    INT i, j, nRows;
+    TBUTTON_INFO *btnPtr;
+    INT i, nRows;
     INT x, y, cx, cy;
     BOOL bWrap;
     SIZE  sizeString;
 /* --- new --- */
+#ifdef __NEW_WRAP_CODE__
     INT  nGrpCount = 0;
-    INT  grpX;
+    INT  grpX,j;
+    TBUTTON_INFO *grpPtr;
+#endif
 /* --- end new --- */
 
     TOOLBAR_CalcStrings (wndPtr, &sizeString);

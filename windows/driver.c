@@ -28,7 +28,7 @@ static LPWINE_DRIVER	lpDrvItemList = NULL;
 /**************************************************************************
  *			LoadStartupDrivers			[internal]
  */
-static void DRIVER_LoadStartupDrivers(void)
+static void WINE_UNUSED DRIVER_LoadStartupDrivers(void)
 {
     HDRVR16	hDrv;
     char  	str[256];

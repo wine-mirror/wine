@@ -419,7 +419,7 @@ TREEVIEW_DrawItem (WND *wndPtr, HDC hdc, TREEVIEW_ITEM *wineItem)
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
   INT  oldBkMode,center,xpos,cx,cy, cditem, drawmode;
   TREEVIEW_ITEM *parentItem;
-  COLORREF oldBkColor;
+  COLORREF oldBkColor = 0;
   HFONT hOldFont;
   UINT uTextJustify = DT_LEFT;
   HPEN hOldPen, hnewPen;

@@ -1534,6 +1534,7 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 UINT WINAPI mciLoadCommandResource(HANDLE hinst, LPCWSTR resname,UINT type)
 {
     FIXME(mmsys,"(%04x,%s,%d): stub!\n", hinst, debugstr_w(resname), type);
+    return 0;
 }
 
 const char* MCI_CommandToString(UINT16 wMsg)
@@ -3381,7 +3382,7 @@ typedef struct {
 /**************************************************************************
  * 				MMSYSTEM_MidiStreamPlayer	[internal]
  */
-static	void	MMSYSTEM_MidiStreamPlayer(WINE_MIDIStream* ms)
+static	void	WINE_UNUSED MMSYSTEM_MidiStreamPlayer(WINE_MIDIStream* ms)
 {
     /* FIXME: should I sleep a bit when there is no pending lpMidiHdr ? 
      * => provide a better synchronization system

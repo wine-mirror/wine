@@ -1091,7 +1091,7 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
 	     message queues.
 	  */
 	  HTASK16 htask = (HTASK16) *plparam;
-	  DWORD idThread = ((TDB*)GlobalLock16(htask))->thdb->server_tid;
+	  DWORD idThread = (DWORD)((TDB*)GlobalLock16(htask))->thdb->server_tid;
 	  *plparam = (LPARAM) idThread;
 	}
 	return 1;
