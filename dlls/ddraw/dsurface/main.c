@@ -165,11 +165,22 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
 	This->ref++;
 	return is_OpenGL_dx3(riid, This, (IDirect3DDeviceImpl**)ppObj)?S_OK:E_NOINTERFACE;
     }
-    else if (IsEqualGUID( &IID_IDirect3DTexture, riid ) )
+    else if (IsEqualGUID( &IID_IDirect3DTexture, riid ))
     {
 	LPDIRECT3DTEXTURE iface;
 	This->ref++;
 	iface = d3dtexture_create(This);
+	if (iface) {
+	  *ppObj = (LPVOID)iface;
+	  return S_OK;
+	} else
+	  return E_NOINTERFACE;
+    }    
+    else if (IsEqualGUID( &IID_IDirect3DTexture2, riid ))
+    {
+	LPDIRECT3DTEXTURE2 iface;
+	This->ref++;
+	iface = d3dtexture2_create(This);
 	if (iface) {
 	  *ppObj = (LPVOID)iface;
 	  return S_OK;
