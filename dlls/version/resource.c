@@ -289,7 +289,7 @@ DWORD WINAPI GetFileResource32( LPCSTR lpszFileName,
     BOOL32 retv = FALSE;
     HFILE32 lzfd;
     OFSTRUCT ofs;
-    DWORD reslen;
+    DWORD reslen = dwResLen;
 
     TRACE( ver, "(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,data=%p)\n",
 		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
