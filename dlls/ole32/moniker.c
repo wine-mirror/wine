@@ -203,7 +203,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
         return E_OUTOFMEMORY;
 
     runningObjectTableInstance->runObjTabSize=BLOCK_TAB_SIZE;
-    runningObjectTableInstance->runObjTabRegister=0;
+    runningObjectTableInstance->runObjTabRegister=1;
     runningObjectTableInstance->runObjTabLastIndx=0;
 
     return S_OK;
