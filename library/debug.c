@@ -187,6 +187,13 @@ static const char *default_dbgstr_an( const char *str, int n )
 {
     char *dst, *res;
 
+    if (!HIWORD(str))
+    {
+        if (!str) return "(null)";
+        res = get_tmp_space( 6 );
+        sprintf( res, "#%04x", LOWORD(str) );
+        return res;
+    }
     if (n == -1) n = strlen(str);
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
@@ -231,6 +238,13 @@ static const char *default_dbgstr_wn( const WCHAR *str, int n )
 {
     char *dst, *res;
 
+    if (!HIWORD(str))
+    {
+        if (!str) return "(null)";
+        res = get_tmp_space( 6 );
+        sprintf( res, "#%04x", LOWORD(str) );
+        return res;
+    }
     if (n == -1) n = strlenW(str);
     if (n < 0) n = 0;
     else if (n > 200) n = 200;
