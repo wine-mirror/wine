@@ -66,9 +66,9 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
     switch (lpTimer->wFlags & 0x30) {
     case TIME_CALLBACK_FUNCTION:
 	if (lpTimer->wFlags & WINE_TIMER_IS32)
-	    ((LPTIMECALLBACK)lpTimer->lpFunc)(lpTimer->wTimerID, 0, lpTimer->dwUser, 0, 0);
+	    (lpTimer->lpFunc)(lpTimer->wTimerID, 0, lpTimer->dwUser, 0, 0);
 	else if (pFnCallMMDrvFunc16)
-	    pFnCallMMDrvFunc16(lpTimer->lpFunc, lpTimer->wTimerID, 0,
+	    pFnCallMMDrvFunc16((DWORD)lpTimer->lpFunc, lpTimer->wTimerID, 0,
                                lpTimer->dwUser, 0, 0);
 	break;
     case TIME_CALLBACK_EVENT_SET:
@@ -226,7 +226,7 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
  * 				TIME_SetEventInternal	[internal]
  */
 WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
-                              FARPROC16 lpFunc, DWORD dwUser, UINT wFlags)
+                              LPTIMECALLBACK lpFunc, DWORD dwUser, UINT wFlags)
 {
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
@@ -276,7 +276,7 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return TIME_SetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
+    return TIME_SetEventInternal(wDelay, wResol, lpFunc,
                                  dwUser, wFlags|WINE_TIMER_IS32);
 }
 

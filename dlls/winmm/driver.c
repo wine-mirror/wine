@@ -37,10 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
 static LPWINE_DRIVER   lpDrvItemList  /* = NULL */;
 
-WINE_MMTHREAD*  (*pFnGetMMThread16)(HANDLE16 h) /* = NULL */;
+WINE_MMTHREAD*  (*pFnGetMMThread16)(UINT16 h) /* = NULL */;
 LPWINE_DRIVER   (*pFnOpenDriver16)(LPCSTR,LPCSTR,LPARAM) /* = NULL */;
-LRESULT         (*pFnCloseDriver16)(HDRVR16,LPARAM,LPARAM) /* = NULL */;
-LRESULT         (*pFnSendMessage16)(HDRVR16,UINT,LPARAM,LPARAM) /* = NULL */;
+LRESULT         (*pFnCloseDriver16)(UINT16,LPARAM,LPARAM) /* = NULL */;
+LRESULT         (*pFnSendMessage16)(UINT16,UINT,LPARAM,LPARAM) /* = NULL */;
 
 /**************************************************************************
  *			DRIVER_GetNumberOfModuleRefs		[internal]

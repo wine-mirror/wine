@@ -30,7 +30,7 @@
 #include "winreg.h"
 #include "winver.h"
 #include "wownt32.h"
-#include "winemm.h"
+#include "winemm16.h"
 #include "digitalv.h"
 #include "wine/debug.h"
 
@@ -1736,8 +1736,8 @@ static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInst
  *  M A P P E R S   H A N D L I N G
  * ================================= */
 
-static  LRESULT    MMDRV_CallMMDrvFunc16(FARPROC16 fp16, WORD dev, WORD msg, LONG instance,
-                                 LONG lp1, LONG lp2)
+static  LRESULT    MMDRV_CallMMDrvFunc16(DWORD fp16, WORD dev, WORD msg, LONG instance,
+                                         LONG lp1, LONG lp2)
 {
     WORD args[8];
     DWORD ret;
@@ -1750,7 +1750,7 @@ static  LRESULT    MMDRV_CallMMDrvFunc16(FARPROC16 fp16, WORD dev, WORD msg, LON
     args[2] = LOWORD(lp1);
     args[1] = HIWORD(lp2);
     args[0] = LOWORD(lp2);
-    WOWCallback16Ex( (DWORD)fp16, WCB16_PASCAL, sizeof(args), args, &ret );
+    WOWCallback16Ex( fp16, WCB16_PASCAL, sizeof(args), args, &ret );
     return LOWORD(ret);
 }
 

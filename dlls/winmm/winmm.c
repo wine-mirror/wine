@@ -41,6 +41,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winemm.h"
+#include "wownt32.h"
 
 #include "wine/debug.h"
 
@@ -718,7 +719,7 @@ BOOL WINAPI mciGetErrorStringW(DWORD wError, LPWSTR lpstrBuffer, UINT uLength)
  */
 BOOL WINAPI mciGetErrorStringA(DWORD dwError, LPSTR lpstrBuffer, UINT uLength)
 {
-    BOOL16		ret = FALSE;
+    BOOL		ret = FALSE;
 
     if (lpstrBuffer != NULL && uLength > 0 &&
 	dwError >= MCIERR_BASE && dwError <= MCIERR_CUSTOM_DRIVER_BASE) {

@@ -41,7 +41,7 @@
 #include "winnls.h"
 
 #include "wine/winuser16.h"
-#include "winemm.h"
+#include "winemm16.h"
 
 #include "wine/debug.h"
 
@@ -1923,7 +1923,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD
 	lpMMThd->dwCounter   	= 0;
 	lpMMThd->hThread     	= 0;
 	lpMMThd->dwThreadID  	= 0;
-	lpMMThd->fpThread    	= fpThreadAddr;
+	lpMMThd->fpThread    	= (DWORD)fpThreadAddr;
 	lpMMThd->dwThreadPmt 	= dwPmt;
 	lpMMThd->dwSignalCount	= 0;
 	lpMMThd->hEvent      	= 0;
@@ -2150,7 +2150,7 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("[20-%p]\n", lpMMThd->hThread);
     lpMMThd->dwStatus = 0x20;
     if (lpMMThd->fpThread) {
-	WOWCallback16((DWORD)lpMMThd->fpThread, lpMMThd->dwThreadPmt);
+	WOWCallback16(lpMMThd->fpThread, lpMMThd->dwThreadPmt);
     }
     lpMMThd->dwStatus = 0x30;
     TRACE("[30-%p]\n", lpMMThd->hThread);
@@ -2539,7 +2539,7 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return TIME_SetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
+    return TIME_SetEventInternal(wDelay, wResol, (LPTIMECALLBACK)lpFunc,
                                  dwUser, wFlags & ~WINE_TIMER_IS32);
 }
 

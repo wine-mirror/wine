@@ -46,7 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmio);
 
-LRESULT         (*pFnMmioCallback16)(SEGPTR,LPMMIOINFO,UINT,LPARAM,LPARAM) /* = NULL */;
+LRESULT         (*pFnMmioCallback16)(DWORD,LPMMIOINFO,UINT,LPARAM,LPARAM) /* = NULL */;
 
 /**************************************************************************
  *               	mmioDosIOProc           		[internal]
@@ -355,7 +355,7 @@ static LRESULT	send_message(struct IOProcList* ioProc, LPMMIOINFO mmioinfo,
     switch (ioProc->type) {
     case MMIO_PROC_16:
         if (pFnMmioCallback16)
-            result = pFnMmioCallback16((SEGPTR)ioProc->pIOProc,
+            result = pFnMmioCallback16((DWORD)ioProc->pIOProc,
                                        mmioinfo, wMsg, lp1, lp2);
         break;
     case MMIO_PROC_32A:
@@ -460,8 +460,8 @@ static	LPWINE_MMIO		MMIO_Create(void)
     if (wm) {
 	EnterCriticalSection(&WINMM_IData->cs);
         /* lookup next unallocated WORD handle, with a non NULL value */
-	while (++MMIO_counter == 0 || MMIO_Get(HMMIO_32(MMIO_counter)));
-	wm->info.hmmio = HMMIO_32(MMIO_counter);
+	while (++MMIO_counter == 0 || MMIO_Get((HMMIO)(ULONG_PTR)MMIO_counter));
+	wm->info.hmmio = (HMMIO)(ULONG_PTR)MMIO_counter;
 	wm->lpNext = WINMM_IData->lpMMIO;
 	WINMM_IData->lpMMIO = wm;
 	LeaveCriticalSection(&WINMM_IData->cs);
@@ -611,7 +611,7 @@ HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 	char	buffer[MAX_PATH];
 
 	if (GetFullPathNameA(szFileName, sizeof(buffer), buffer, NULL) >= sizeof(buffer))
-	    return (HMMIO16)FALSE;
+	    return (HMMIO)FALSE;
 	if ((dwOpenFlags & MMIO_EXIST) && (GetFileAttributesA(buffer) == INVALID_FILE_ATTRIBUTES))
 	    return (HMMIO)FALSE;
 	strcpy(szFileName, buffer);
