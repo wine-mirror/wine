@@ -88,6 +88,7 @@ extern "C" {
 #define TARGET_IS_NT40_OR_LATER 1
 #define TARGET_IS_NT351_OR_WIN95_OR_LATER 1
 
+#define small char
 typedef unsigned char byte;
 #define hyper __int64
 #define MIDL_uhyper unsigned __int64
@@ -97,10 +98,13 @@ typedef unsigned char _wine_boolean;
 
 #define __RPC_CALLEE WINAPI
 #define RPC_VAR_ENTRY WINAPIV
+#define NDR_SHAREABLE static
 
 #define MIDL_ascii_strlen(s) strlen(s)
 #define MIDL_ascii_strcpy(d,s) strcpy(d,s)
 #define MIDL_memset(d,v,n) memset(d,v,n)
+#define midl_user_free MIDL_user_free
+#define midl_user_allocate MIDL_user_allocate
 
 #define NdrFcShort(s) (unsigned char)(s & 0xff), (unsigned char)(s >> 8)
 #define NdrFcLong(s)  (unsigned char)(s & 0xff), (unsigned char)((s & 0x0000ff00) >> 8), \
@@ -207,7 +211,15 @@ typedef struct _GENERIC_BINDING_ROUTINE_PAIR GENERIC_BINDING_ROUTINE_PAIR, *PGEN
 
 typedef struct __GENERIC_BINDING_INFO GENERIC_BINDING_INFO, *PGENERIC_BINDING_INFO;
 
-typedef struct _XMIT_ROUTINE_QUINTUPLE XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
+typedef void (__RPC_USER *XMIT_HELPER_ROUTINE)(PMIDL_STUB_MESSAGE);
+
+typedef struct _XMIT_ROUTINE_QUINTUPLE
+{
+  XMIT_HELPER_ROUTINE pfnTranslateToXmit;
+  XMIT_HELPER_ROUTINE pfnTranslateFromXmit;
+  XMIT_HELPER_ROUTINE pfnFreeXmit;
+  XMIT_HELPER_ROUTINE pfnFreeInst;
+} XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
 
 typedef unsigned long (__RPC_USER *USER_MARSHAL_SIZING_ROUTINE)(unsigned long *, unsigned long, void *);
 typedef unsigned char * (__RPC_USER *USER_MARSHAL_MARSHALLING_ROUTINE)(unsigned long *, unsigned char *, void *);
@@ -222,9 +234,17 @@ typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
   USER_MARSHAL_FREEING_ROUTINE pfnFree;
 } USER_MARSHAL_ROUTINE_QUADRUPLE;
 
-typedef struct _MALLOC_FREE_STRUCT MALLOC_FREE_STRUCT;
+typedef struct _MALLOC_FREE_STRUCT
+{
+  void * (__RPC_USER *pfnAllocate)(size_t);
+  void   (__RPC_USER *pfnFree)(void *);
+} MALLOC_FREE_STRUCT;
 
-typedef struct _COMM_FAULT_OFFSETS COMM_FAULT_OFFSETS;
+typedef struct _COMM_FAULT_OFFSETS
+{
+  short CommOffset;
+  short FaultOffset;
+} COMM_FAULT_OFFSETS;
 
 typedef struct _MIDL_STUB_DESC
 {
@@ -438,6 +458,8 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat );
 
+/* Note: this should return a CLIENT_CALL_RETURN, but calling convention for
+ * returning structures/unions is different between Windows and gcc on i386. */
 LONG_PTR RPC_VAR_ENTRY
   NdrClientCall2( PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, ... );
 LONG_PTR RPC_VAR_ENTRY
