@@ -1087,7 +1087,7 @@ static void SortDirectory(Entry* dir, SORT_ORDER sortOrder)
 		len++;
 
 	if (len) {
-		array = (Entry**) alloca(len*sizeof(Entry*));
+		array = HeapAlloc(GetProcessHeap(), 0, len*sizeof(Entry*));
 
 		p = array;
 		for(entry=dir->down; entry; entry=entry->next)
@@ -1102,6 +1102,7 @@ static void SortDirectory(Entry* dir, SORT_ORDER sortOrder)
 			p[0]->next = p[1];
 
 		(*p)->next = 0;
+                HeapFree( GetProcessHeap(), 0, array );
 	}
 }
 
