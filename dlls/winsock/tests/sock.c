@@ -37,6 +37,14 @@
 #define TEST_TIMEOUT 30    /* seconds to wait before killing child threads
                               after server initialization, if something hangs */
 
+#define NUM_UDP_PEERS 3    /* Number of UDP sockets to create and test > 1 */
+
+#define NUM_THREADS 3      /* Number of threads to run getservbyname */
+#define NUM_QUERIES 250    /* Number of getservbyname queries per thread */
+
+#define SERVERIP "127.0.0.1"   /* IP to bind to */
+#define SERVERPORT 9374        /* Port number to bind to */
+
 #define wsa_ok(op, cond, msg) \
    do { \
         int tmp, err = 0; \
@@ -862,8 +870,8 @@ static void test_so_reuseaddr()
 #define STD_STREAM_SOCKET \
             SOCK_STREAM, \
             0, \
-            "127.0.0.1", \
-            9374
+            SERVERIP, \
+            SERVERPORT
 
 static test_setup tests [NUM_TESTS] =
 {
@@ -931,6 +939,105 @@ static test_setup tests [NUM_TESTS] =
         }
     }
 };
+
+static void test_UDP()
+{
+    /* This function tests UDP sendto() and recvfrom(). UDP is unreliable, so it is
+       possible that this test fails due to dropped packets. */
+
+    /* peer 0 receives data from all other peers */
+    struct sock_info peer[NUM_UDP_PEERS];
+    char buf[16];
+    int ss, i, n_recv, n_sent;
+
+    for ( i = NUM_UDP_PEERS - 1; i >= 0; i-- ) {
+        ok ( ( peer[i].s = socket ( AF_INET, SOCK_DGRAM, 0 ) ) != INVALID_SOCKET, "UDP: socket failed\n" );
+
+        peer[i].addr.sin_family         = AF_INET;
+        peer[i].addr.sin_addr.s_addr    = inet_addr ( SERVERIP );
+
+        if ( i == 0 ) {
+            peer[i].addr.sin_port       = htons ( SERVERPORT );
+        } else {
+            peer[i].addr.sin_port       = htons ( 0 );
+        }
+
+        do_bind ( peer[i].s, (struct sockaddr *) &peer[i].addr, sizeof( peer[i].addr ) );
+
+        /* test getsockname() to get peer's port */
+        ss = sizeof ( peer[i].addr );
+        ok ( getsockname ( peer[i].s, (struct sockaddr *) &peer[i].addr, &ss ) != SOCKET_ERROR, "UDP: could not getsockname()\n" );
+        ok ( peer[i].addr.sin_port != htons ( 0 ), "UDP: bind() did not associate port\n" );
+    }
+
+    /* test getsockname() */
+    ok ( peer[0].addr.sin_port == htons ( SERVERPORT ), "UDP: getsockname returned incorrect peer port\n" );
+
+    for ( i = 1; i < NUM_UDP_PEERS; i++ ) {
+        /* send client's ip */
+        memcpy( buf, &peer[i].addr.sin_port, sizeof(peer[i].addr.sin_port) );
+        n_sent = sendto ( peer[i].s, buf, sizeof(buf), 0, (struct sockaddr*) &peer[0].addr, sizeof(peer[0].addr) );
+        ok ( n_sent == sizeof(buf), "UDP: sendto() sent wrong amount of data or socket error: %d\n", n_sent );
+    }
+
+    for ( i = 1; i < NUM_UDP_PEERS; i++ ) {
+        n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0,(struct sockaddr *) &peer[0].peer, &ss );
+        ok ( n_recv == sizeof(buf), "UDP: recvfrom() received wrong amount of data or socket error: %d\n", n_recv );
+        ok ( memcmp ( &peer[0].peer.sin_port, buf, sizeof(peer[0].addr.sin_port) ) == 0, "UDP: port numbers do not match\n" );
+    }
+}
+
+static void WINAPI do_getservbyname( HANDLE *starttest )
+{
+    struct {
+        char *name;
+        char *proto;
+        int port;
+    } serv[2] = { {"domain", "udp", 53}, {"telnet", "tcp", 23} };
+
+    int i, j;
+    struct servent *pserv[2];
+
+    ok ( WaitForSingleObject ( *starttest, TEST_TIMEOUT * 1000 ) != WAIT_TIMEOUT, "test_getservbyname: timeout waiting for start signal\n");
+
+    /* ensure that necessary buffer resizes are completed */
+    for ( j = 0; j < 2; j++) {
+        pserv[j] = getservbyname ( serv[j].name, serv[j].proto );
+    }
+
+    for ( i = 0; i < NUM_QUERIES / 2; i++ ) {
+        for ( j = 0; j < 2; j++ ) {
+            pserv[j] = getservbyname ( serv[j].name, serv[j].proto );
+            ok ( pserv[j] != NULL, "getservbyname could not retreive information for %s: %d\n", serv[j].name, WSAGetLastError() );
+            ok ( pserv[j]->s_port == htons(serv[j].port), "getservbyname returned the wrong port for %s: %d\n", serv[j].name, ntohs(pserv[j]->s_port) );
+            ok ( !strcmp ( pserv[j]->s_proto, serv[j].proto ), "getservbyname returned the wrong protocol for %s: %s\n", serv[j].name, pserv[j]->s_proto );
+            ok ( !strcmp ( pserv[j]->s_name, serv[j].name ), "getservbyname returned the wrong name for %s: %s\n", serv[j].name, pserv[j]->s_name );
+        }
+
+        ok ( pserv[0] == pserv[1], "getservbyname: winsock resized servent buffer when not necessary\n" );
+    }
+}
+
+static void test_getservbyname()
+{
+    int i;
+    HANDLE starttest, thread[NUM_THREADS];
+    DWORD thread_id[NUM_THREADS];
+
+    starttest = CreateEvent ( NULL, 1, 0, "test_getservbyname_starttest" );
+
+    /* create threads */
+    for ( i = 0; i < NUM_THREADS; i++ ) {
+        thread[i] = CreateThread ( NULL, 0, (LPTHREAD_START_ROUTINE) &do_getservbyname, &starttest, 0, &thread_id[i] );
+    }
+
+    /* signal threads to start */
+    SetEvent ( starttest );
+
+    for ( i = 0; i < NUM_THREADS; i++) {
+        WaitForSingleObject ( thread[i], TEST_TIMEOUT * 1000 );
+    }
+}
 
 static void test_WSAAddressToStringA()
 {
@@ -1192,6 +1299,10 @@ START_TEST( sock )
         do_test (  &tests[i] );
         trace ( " **** TEST %d COMPLETE **** \n", i );
     }
+
+    test_UDP();
+
+    test_getservbyname();
 
     test_WSAAddressToStringA();
     test_WSAAddressToStringW();
