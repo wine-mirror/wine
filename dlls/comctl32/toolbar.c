@@ -286,6 +286,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     RECT rc;
+    INT xOffset = (infoPtr->nButtonWidth / 2) - (infoPtr->nBitmapWidth / 2);
 
     if (btnPtr->fsState & TBSTATE_HIDDEN)
 	return;
@@ -315,9 +316,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	if (infoPtr->himlDis && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
-				rc.left+1, rc.top+1, ILD_NORMAL);
+			rc.left + xOffset + 1, rc.top + 1, ILD_NORMAL);
 	else
-	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
+	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left + xOffset + 1, rc.top + 1);
 
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
@@ -331,7 +332,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left+2, rc.top+2, ILD_NORMAL);
+			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
+
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
@@ -350,7 +352,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left+2, rc.top+2, ILD_NORMAL);
+			rc.left + xOffset, rc.top + 2, ILD_NORMAL);
 
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
@@ -362,7 +364,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
 	TOOLBAR_DrawPattern (hdc, &rc);
-	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
+	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left + xOffset + 1, rc.top + 1);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
 	return;
     }
@@ -378,10 +380,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	if (btnPtr->bHot && infoPtr->himlHot && 
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
-			    rc.left +2, rc.top +2, ILD_NORMAL);
+			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
 	else if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			    rc.left +2, rc.top +2, ILD_NORMAL);
+			rc.left + xOffset + 2, rc.top + 2, ILD_NORMAL);
     }
     else
     {
@@ -390,7 +392,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
         if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left+1, rc.top+1, ILD_NORMAL);
+			rc.left + xOffset + 1, rc.top + 1, ILD_NORMAL);
     }
 
     TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState, dwStyle);
@@ -440,7 +442,7 @@ TOOLBAR_MeasureString(HWND hwnd, INT index, LPSIZE lpSize)
     SelectObject (hdc, hOldFont);
     ReleaseDC (0, hdc);
 
-    TRACE("string size %d x %d!\n", lpSize->cx, lpSize->cy);
+    TRACE("string size %ld x %ld!\n", lpSize->cx, lpSize->cy);
 }
 
 static void
@@ -467,7 +469,7 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
         }
     }
 
-    TRACE("string size %d x %d!\n", lpSize->cx, lpSize->cy);
+    TRACE("string size %ld x %ld!\n", lpSize->cx, lpSize->cy);
 }
 
 /***********************************************************************
@@ -809,7 +811,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 		       	nSepRows * (SEPARATOR_WIDTH * 2 / 3) +
 			nSepRows * (infoPtr->nBitmapHeight + 1) + 
 			BOTTOM_BORDER; 
-    TRACE("toolbar height %d\n", infoPtr->nHeight);
+    TRACE("toolbar height %d, button width %d\n", infoPtr->nHeight, infoPtr->nButtonWidth);
 }
 
 
@@ -2133,8 +2135,6 @@ TOOLBAR_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TBUTTON_INFO *btnPtr;
     LPRECT     lpRect;
     INT        nIndex;
-
-    TRACE("\n");
 
     if (infoPtr == NULL)
 	return FALSE;
