@@ -73,7 +73,7 @@ extern int FILE_strcasecmp( const char *str1, const char *str2 );
 extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
 extern void FILE_SetDosError(void);
 extern int FILE_GetUnixHandle( HANDLE handle, DWORD access );
-extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
+extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                                LPSECURITY_ATTRIBUTES sa, DWORD creation,

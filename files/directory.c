@@ -80,7 +80,7 @@ static int DIR_GetPath( LPCWSTR keyname, LPCWSTR defval, DOS_FULL_NAME *full_nam
     PROFILE_GetWineIniString( wineW, keyname, defval, path, MAX_PATHNAME_LEN );
 
     if (!DOSFS_GetFullName( path, TRUE, full_name ) ||
-        (!FILE_Stat( full_name->long_name, &info ) && (mess=strerror(errno)))||
+        (!FILE_Stat( full_name->long_name, &info, NULL ) && (mess=strerror(errno)))||
         (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && (mess="not a directory")) ||
         (!(GetLongPathNameW(full_name->short_name, longname, longname_len))) )
     {

@@ -734,7 +734,7 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
  *
  * Stat a Unix path name. Return TRUE if OK.
  */
-BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
+BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info, BOOL *is_symlink_ptr )
 {
     struct stat st;
     int is_symlink;
@@ -756,11 +756,10 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
             return FALSE;
         }
     }
-    
+
     /* fill in the information we gathered so far */
     FILE_FillInfo( &st, info );
-    if (is_symlink) info->dwFileAttributes |= FILE_ATTRIBUTE_SYMLINK;
-    
+
     /* and now see if this is a hidden file, based on the name */
     p = strrchr( unixName, '/');
     p = p ? p + 1 : unixName;
@@ -774,7 +773,7 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 	if (!show_dot_files)
 	    info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
     }
-    
+    if (is_symlink_ptr) *is_symlink_ptr = is_symlink;
     return TRUE;
 }
 
@@ -849,7 +848,7 @@ DWORD WINAPI GetFileAttributesW( LPCWSTR name )
     }
     if (!DOSFS_GetFullName( name, TRUE, &full_name) )
         return -1;
-    if (!FILE_Stat( full_name.long_name, &info )) return -1;
+    if (!FILE_Stat( full_name.long_name, &info, NULL )) return -1;
     return info.dwFileAttributes;
 }
 
@@ -3361,7 +3360,7 @@ BOOL WINAPI GetFileAttributesExW(
 	LPWIN32_FILE_ATTRIBUTE_DATA lpFad =
 	    (LPWIN32_FILE_ATTRIBUTE_DATA) lpFileInformation;
 	if (!DOSFS_GetFullName( lpFileName, TRUE, &full_name )) return FALSE;
-	if (!FILE_Stat( full_name.long_name, &info )) return FALSE;
+	if (!FILE_Stat( full_name.long_name, &info, NULL )) return FALSE;
 
 	lpFad->dwFileAttributes = info.dwFileAttributes;
 	lpFad->ftCreationTime   = info.ftCreationTime;

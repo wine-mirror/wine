@@ -1104,7 +1104,7 @@ int DRIVE_Chdir( int drive, LPCWSTR path )
     buffer[MAX_PATHNAME_LEN - 1] = 0; /* ensure 0 termination */
 
     if (!DOSFS_GetFullName( buffer, TRUE, &full_name )) return 0;
-    if (!FILE_Stat( full_name.long_name, &info )) return 0;
+    if (!FILE_Stat( full_name.long_name, &info, NULL )) return 0;
     if (!(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
     {
         SetLastError( ERROR_FILE_NOT_FOUND );

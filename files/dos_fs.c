@@ -1696,7 +1696,7 @@ BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
  */
 static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
 {
-    DWORD attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY | FILE_ATTRIBUTE_SYMLINK;
+    DWORD attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
     UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
@@ -1704,6 +1704,7 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
     LPCWSTR long_name, short_name;
     BY_HANDLE_FILE_INFORMATION fileinfo;
     WCHAR dos_name[13];
+    BOOL is_symlink;
 
     if ((info->attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
@@ -1765,13 +1766,12 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
         /* Check the file attributes */
         WideCharToMultiByte(DRIVE_GetCodepage(info->drive), 0, long_name, -1,
                             p, sizeof(buffer) - (int)(p - buffer), NULL, NULL);
-        if (!FILE_Stat( buffer, &fileinfo ))
+        if (!FILE_Stat( buffer, &fileinfo, &is_symlink ))
         {
             WARN("can't stat %s\n", buffer);
             continue;
         }
-        if ((fileinfo.dwFileAttributes & FILE_ATTRIBUTE_SYMLINK) &&
-            (fileinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        if (is_symlink && (fileinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
             static const WCHAR wineW[] = {'w','i','n','e',0};
             static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
