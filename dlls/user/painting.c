@@ -265,7 +265,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
             }
             if (!hdc_ret)
             {
-                if (need_erase)  /* FIXME: mark it as needing erase again */
+                if (need_erase && hwnd != GetDesktopWindow())  /* FIXME: mark it as needing erase again */
                     RedrawWindow( hwnd, NULL, client_rgn, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
                 ReleaseDC( hwnd, hdc );
             }
@@ -282,7 +282,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
  *
  * Implementation of RDW_ERASENOW behavior.
  */
-void erase_now( HWND hwnd, UINT rdw_flags )
+static void erase_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child;
     HRGN hrgn;
@@ -324,9 +324,12 @@ void erase_now( HWND hwnd, UINT rdw_flags )
  * HIWORD(lParam) = hwndSkip  (not used; always NULL)
  *
  */
-void update_now( HWND hwnd, UINT rdw_flags )
+static void update_now( HWND hwnd, UINT rdw_flags )
 {
     HWND child;
+
+    /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
+    if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
 
     /* loop while we find a child to repaint */
     for (;;)

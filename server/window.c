@@ -1660,7 +1660,12 @@ DECL_HANDLER(get_update_region)
     else
     {
         if (reply->flags & UPDATE_NONCLIENT) validate_non_client( win );
-        if (reply->flags & UPDATE_ERASE) win->paint_flags &= ~PAINT_ERASE;
+        if (reply->flags & UPDATE_ERASE)
+        {
+            win->paint_flags &= ~PAINT_ERASE;
+            /* desktop window only gets erased, not repainted */
+            if (win == top_window) validate_whole_window( win );
+        }
     }
 }
 

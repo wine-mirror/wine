@@ -44,8 +44,7 @@ static LRESULT WINAPI desktop_winproc( HWND hwnd, UINT message, WPARAM wParam, L
 
     case WM_ERASEBKGND:
         PaintDesktop( (HDC)wParam );
-        ValidateRect( hwnd, NULL );
-        break;
+        return TRUE;
 
     case WM_SYSCOMMAND:
         if ((wParam & 0xfff0) == SC_CLOSE) ExitWindows( 0, 0 );
