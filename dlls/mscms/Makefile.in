@@ -10,6 +10,8 @@ C_SRCS = \
 	mscms_main.c \
 	profile.c
 
+RC_SRCS = version.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@
