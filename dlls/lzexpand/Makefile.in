@@ -11,9 +11,9 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	lzexpand16.c \
 	lzexpand_main.c
 
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-

@@ -35,7 +35,6 @@
 #include "lzexpand.h"
 
 #include "wine/unicode.h"
-#include "wine/winbase16.h"
 
 #include "wine/debug.h"
 
@@ -136,15 +135,6 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 	return 1;
 }
 
-/***********************************************************************
- *           LZStart   (LZEXPAND.7)
- */
-INT16 WINAPI LZStart16(void)
-{
-    TRACE("(void)\n");
-    return 1;
-}
-
 
 /***********************************************************************
  *           LZStart   (LZ32.@)
@@ -153,18 +143,6 @@ INT WINAPI LZStart(void)
 {
     TRACE("(void)\n");
     return 1;
-}
-
-
-/***********************************************************************
- *           LZInit   (LZEXPAND.3)
- */
-HFILE16 WINAPI LZInit16( HFILE16 hfSrc )
-{
-    HFILE ret = LZInit( DosFileHandleToWin32Handle(hfSrc) );
-    if (IS_LZ_HANDLE(ret)) return ret;
-    if ((INT)ret <= 0) return ret;
-    return hfSrc;
 }
 
 
@@ -228,15 +206,6 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 void WINAPI LZDone(void)
 {
     TRACE("(void)\n");
-}
-
-
-/***********************************************************************
- *           GetExpandedName   (LZEXPAND.10)
- */
-INT16 WINAPI GetExpandedName16( LPCSTR in, LPSTR out )
-{
-    return (INT16)GetExpandedNameA( in, out );
 }
 
 
@@ -337,16 +306,6 @@ INT WINAPI GetExpandedNameW( LPCWSTR in, LPWSTR out )
 
 
 /***********************************************************************
- *           LZRead   (LZEXPAND.5)
- */
-INT16 WINAPI LZRead16( HFILE16 fd, LPVOID buf, UINT16 toread )
-{
-    if (IS_LZ_HANDLE(fd)) return LZRead( fd, buf, toread );
-    return _lread( DosFileHandleToWin32Handle(fd), buf, toread );
-}
-
-
-/***********************************************************************
  *           LZRead   (LZ32.@)
  */
 INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
@@ -438,16 +397,6 @@ INT WINAPI LZRead( HFILE fd, LPVOID vbuf, UINT toread )
 
 
 /***********************************************************************
- *           LZSeek   (LZEXPAND.4)
- */
-LONG WINAPI LZSeek16( HFILE16 fd, LONG off, INT16 type )
-{
-    if (IS_LZ_HANDLE(fd)) return LZSeek( fd, off, type );
-    return _llseek( DosFileHandleToWin32Handle(fd), off, type );
-}
-
-
-/***********************************************************************
  *           LZSeek   (LZ32.@)
  */
 LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
@@ -476,29 +425,6 @@ LONG WINAPI LZSeek( HFILE fd, LONG off, INT type )
 		return LZERROR_BADVALUE;
 	lzs->realwanted	= newwanted;
 	return newwanted;
-}
-
-
-/***********************************************************************
- *           LZCopy   (LZEXPAND.1)
- *
- */
-LONG WINAPI LZCopy16( HFILE16 src, HFILE16 dest )
-{
-    /* already a LZ handle? */
-    if (IS_LZ_HANDLE(src)) return LZCopy( src, DosFileHandleToWin32Handle(dest) );
-
-    /* no, try to open one */
-    src = LZInit16(src);
-    if ((INT16)src <= 0) return 0;
-    if (IS_LZ_HANDLE(src))
-    {
-        LONG ret = LZCopy( src, DosFileHandleToWin32Handle(dest) );
-        LZClose( src );
-        return ret;
-    }
-    /* it was not a compressed file */
-    return LZCopy( DosFileHandleToWin32Handle(src), DosFileHandleToWin32Handle(dest) );
 }
 
 
@@ -577,20 +503,6 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
 
 
 /***********************************************************************
- *           LZOpenFile   (LZEXPAND.2)
- */
-HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
-{
-    HFILE hfret = LZOpenFileA( fn, ofs, mode );
-    /* return errors and LZ handles unmodified */
-    if ((INT)hfret <= 0) return hfret;
-    if (IS_LZ_HANDLE(hfret)) return hfret;
-    /* but allocate a dos handle for 'normal' files */
-    return Win32HandleToDosFileHandle(hfret);
-}
-
-
-/***********************************************************************
  *           LZOpenFileA   (LZ32.@)
  *
  * Opens a file. If not compressed, open it as a normal file.
@@ -634,16 +546,6 @@ HFILE WINAPI LZOpenFileW( LPCWSTR fn, LPOFSTRUCT ofs, UINT mode )
 
 
 /***********************************************************************
- *           LZClose   (LZEXPAND.6)
- */
-void WINAPI LZClose16( HFILE16 fd )
-{
-    if (IS_LZ_HANDLE(fd)) LZClose( fd );
-    else DisposeLZ32Handle( DosFileHandleToWin32Handle(fd) );
-}
-
-
-/***********************************************************************
  *           LZClose   (LZ32.@)
  */
 void WINAPI LZClose( HFILE fd )
@@ -659,15 +561,6 @@ void WINAPI LZClose( HFILE fd )
             lzstates[fd - 0x400] = NULL;
             HeapFree( GetProcessHeap(), 0, lzs );
         }
-}
-
-/***********************************************************************
- *           CopyLZFile   (LZEXPAND.8)
- */
-LONG WINAPI CopyLZFile16( HFILE16 src, HFILE16 dest )
-{
-    TRACE("(%d,%d)\n",src,dest);
-    return LZCopy16(src,dest);
 }
 
 
