@@ -362,13 +362,13 @@ BOOL CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda)
 	wcda->sc.what.position.absaddr.msf.frame;
 #endif
 #ifdef linux
-    TRACE("%02u-%02u:%02u:%02u \n",
+    TRACE("%02u-%02u:%02u:%02u\n",
 	  wcda->sc.cdsc_trk,
 	  wcda->sc.cdsc_absaddr.msf.minute,
 	  wcda->sc.cdsc_absaddr.msf.second,
 	  wcda->sc.cdsc_absaddr.msf.frame);
 #else
-    TRACE("%02u-%02u:%02u:%02u \n",
+    TRACE("%02u-%02u:%02u:%02u\n",
 	  wcda->sc.what.position.track_number,
 	  wcda->sc.what.position.absaddr.msf.minute,
 	  wcda->sc.what.position.absaddr.msf.second,
@@ -588,9 +588,9 @@ DWORD CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda)
 
 	/*
 	 * wMagic collects the wFrames from track 1
-	 * dwStart, dwEnd collect the begining and end of the disc respectively, in
+	 * dwStart, dwEnd collect the beginning and end of the disc respectively, in
 	 * frames.
-	 * There is is collected for correcting the serial when there are less than
+	 * There it is collected for correcting the serial when there are less than
 	 * 3 tracks.
 	 */
 	wMagic = 0;
@@ -676,9 +676,9 @@ DWORD CDROM_GetSerial(int drive)
     WINE_CDAUDIO wcda;
     DWORD serial = 0;
 
-    /* EXPIRES 01.01.2001 */
-    FIXME("CD-ROM serial number calculation might fail.\n");
-    FIXME("Please test with as many exotic CDs as possible !\n");
+    /* EXPIRES 01.01.2002 */
+    WARN("CD-ROM serial number calculation might fail.\n");
+    WARN("Please test with as many exotic CDs as possible !\n");
 
     if (!(CDROM_Open(&wcda, drive)))
     {
@@ -706,7 +706,7 @@ DWORD CDROM_GetSerial(int drive)
 	p = (media == CDS_AUDIO) ? "Audio " :
 	    (media > CDS_AUDIO) ? "Data " : "";
 	if (serial)
-	    FIXME("%sCD serial number is %04x-%04x.\n",
+	    TRACE("%sCD serial number is %04x-%04x.\n",
 		p, HIWORD(serial), LOWORD(serial));
 	else
 	    ERR("couldn't get %sCD serial !\n", p);

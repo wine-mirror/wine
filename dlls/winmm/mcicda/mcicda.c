@@ -503,7 +503,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    TRACE("MCI_STATUS_TIME_FORMAT=%08x!\n", LOWORD(lpParms->dwReturn));
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
-	case 4001: /* FIXME: for boggus FullCD */
+	case 4001: /* FIXME: for bogus FullCD */
 	case MCI_CDA_STATUS_TYPE_TRACK:
 	    if (!(dwFlags & MCI_TRACK)) 
 		ret = MCIERR_MISSING_PARAMETER;
@@ -711,7 +711,7 @@ static DWORD MCICDA_Set(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
     
     if (wmcda == NULL)	return MCIERR_INVALID_DEVICE_ID;
-    if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;;
+    if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
     /*
       TRACE("dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
       TRACE("dwAudio=%08lX\n", lpParms->dwAudio);
