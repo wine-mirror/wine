@@ -18,6 +18,221 @@
 #include "debug.h"
 #include "main.h"
 
+struct NLS_langlocale {
+	const int lang;
+	struct NLS_localevar {
+		const int	type;
+		const char	*val;
+	} locvars[150];
+};
+
+#define LANG_BEGIN(l,s)	{	MAKELANGID(l,s), {
+
+#define LOCVAL(type,value)					{type,value},
+
+#define LANG_END					 }},
+
+static const struct NLS_langlocale langlocales[] = {
+/* add languages in numerical order of main language (last two digits)
+ * it is much easier to find the missing holes that way */
+
+LANG_BEGIN (LANG_CATALAN, SUBLANG_DEFAULT)	/*0x0403*/
+#include "nls/cat.nls"
+LANG_END
+
+LANG_BEGIN (LANG_CZECH, SUBLANG_DEFAULT)	/*0x0405*/
+#include "nls/cze.nls"
+LANG_END
+
+LANG_BEGIN (LANG_DANISH, SUBLANG_DEFAULT)	/*0x0406*/
+#include "nls/dan.nls"
+LANG_END
+
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN)		/*0x0407*/
+#include "nls/deu.nls"
+LANG_END
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_SWISS)		/*0x0807*/
+#include "nls/des.nls"
+LANG_END
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN)	/*0x0C07*/
+#include "nls/dea.nls"
+LANG_END
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LUXEMBOURG)	/*0x1007*/
+#include "nls/del.nls"
+LANG_END
+LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LIECHTENSTEIN)	/*0x1407*/
+#include "nls/dec.nls"
+LANG_END
+
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_US)		/*0x0409*/
+#include "nls/enu.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_UK)		/*0x0809*/
+#include "nls/eng.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_AUS)		/*0x0C09*/
+#include "nls/ena.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CAN)		/*0x1009*/
+#include "nls/enc.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_NZ)		/*0x1409*/
+#include "nls/enz.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_EIRE)		/*0x1809*/
+#include "nls/irl.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_SAFRICA)	/*0x1C09*/
+#include "nls/ens.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_JAMAICA)	/*0x2009*/
+#include "nls/enj.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CARRIBEAN)	/*0x2409*/
+#include "nls/enb.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_BELIZE)	/*0x2809*/
+#include "nls/enl.nls"
+LANG_END
+LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_TRINIDAD)    	/*0x2C09*/
+#include "nls/ent.nls"
+LANG_END
+
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH)		/*0x040a*/
+#include "nls/esp.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MEXICAN)	/*0x080a*/
+#include "nls/esm.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MODERN)	/*0x0C0a*/
+#include "nls/esn.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_GUATEMALA)	/*0x100a*/
+#include "nls/esg.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COSTARICA)	/*0x140a*/
+#include "nls/esc.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PANAMA)	/*0x180a*/
+#include "nls/esa.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_DOMINICAN)	/*0x1C0A*/
+#include "nls/esd.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_VENEZUELA)	/*0x200a*/
+#include "nls/esv.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COLOMBIA)	/*0x240a*/
+#include "nls/eso.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PERU)		/*0x280a*/
+#include "nls/esr.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA)	/*0x2c0a*/
+#include "nls/ess.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ECUADOR)	/*0x300a*/
+#include "nls/esf.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_CHILE)	/*0x340a*/
+#include "nls/esl.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_URUGUAY)	/*0x380a*/
+#include "nls/esy.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PARAGUAY)	/*0x3c0a*/
+#include "nls/esz.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_BOLIVIA)	/*0x400a*/
+#include "nls/esb.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_EL_SALVADOR)	/*0x440a*/
+#include "nls/ese.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_HONDURAS)	/*0x480a*/
+#include "nls/esh.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_NICARAGUA)	/*0x4c0a*/
+#include "nls/esi.nls"
+LANG_END
+LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PUERTO_RICO)	/*0x500a*/
+#include "nls/esu.nls"
+LANG_END
+
+LANG_BEGIN (LANG_FINNISH, SUBLANG_DEFAULT)	/*0x040B*/
+#include "nls/fin.nls"
+LANG_END
+
+LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH)		/*0x040C*/
+#include "nls/fra.nls"
+LANG_END
+LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_BELGIAN)	/*0x080C*/
+#include "nls/frb.nls"
+LANG_END
+LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_CANADIAN)	/*0x0C0C*/
+#include "nls/frc.nls"
+LANG_END
+LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_SWISS)		/*0x100C*/
+#include "nls/frs.nls"
+LANG_END
+LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_LUXEMBOURG)	/*0x140C*/
+#include "nls/frl.nls"
+LANG_END
+
+LANG_BEGIN (LANG_HUNGARIAN, SUBLANG_DEFAULT)	/*0x040e*/
+#include "nls/hun.nls"
+LANG_END
+
+LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN)		/*0x0410*/
+#include "nls/ita.nls"
+LANG_END
+LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN_SWISS)	/*0x0810*/
+#include "nls/its.nls"
+LANG_END
+
+LANG_BEGIN (LANG_KOREAN, SUBLANG_KOREAN)	/*0x0412*/
+#include "nls/kor.nls"
+LANG_END
+
+LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL)	/*0x0414*/
+#include "nls/nor.nls"
+LANG_END
+LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_NYNORSK)	/*0x0814*/
+#include "nls/non.nls"
+LANG_END
+
+LANG_BEGIN (LANG_POLISH, SUBLANG_DEFAULT)	/*0x0415*/
+#include "nls/plk.nls"
+LANG_END
+
+LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE_BRAZILIAN)	/*0x0416*/
+#include "nls/ptb.nls"
+LANG_END
+LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE)		/*0x0816*/
+#include "nls/ptg.nls"
+LANG_END
+
+LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x041b*/
+#include "nls/sky.nls"
+LANG_END
+
+LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH)		/*0x041d*/
+#include "nls/sve.nls"
+LANG_END
+LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH_FINLAND)	/*0x081d*/
+#include "nls/svf.nls"
+LANG_END
+
+LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
+#include "nls/tha.nls"
+LANG_END
+
+LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
+#include "nls/esperanto.nls"
+LANG_END
+	    };
+
+
 /* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
  * MUST contain all #defines from winnls.h
  * last entry has NULL name, 0 id.
@@ -423,25 +638,23 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
  */
 INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
-	char	*retString;
+  LPCSTR  retString;
 	int	found,i;
 	int	lang=0;
 
-	TRACE(ole,"(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",
-			lcid,LCType,buf,len);
+  TRACE(ole,"(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
 
-	if (len && (! buf) )
-	{	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+  if (len && (! buf) ) {
+    SetLastError(ERROR_INSUFFICIENT_BUFFER);
 		return 0;
 	}
 
-	if (lcid == LOCALE_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) ) 
-	{ lcid = GetSystemDefaultLCID();
+  if (lcid == LOCALE_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) ) {
+    lcid = GetSystemDefaultLCID();
+  } else 
+    if (lcid == LOCALE_USER_DEFAULT) {
+      lcid = GetUserDefaultLCID();
 	} 
-	else if (lcid == LOCALE_USER_DEFAULT) 
-	{ lcid = GetUserDefaultLCID();
-	}	
-
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
 
 	/* As an option, we could obtain the value from win.ini.
@@ -459,246 +672,44 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 		i++;
 	}
 	if (!retString) {
-		WARN(ole,"Unkown LC type %lX\n",LCType);
+      FIXME(ole,"Unkown LC type %lX\n",LCType);
 		return 0;
 	}
 
-#define LOCVAL(type,value) case type:retString=value;found=1;break;
-#define LANG_BEGIN(l,s) case MAKELANGID(l,s): switch (LCType) {
-#define LANG_END 	default: found=0; break; } break;
 
-    /* Now, the language specific definitions. They don't have to be
-       complete */
-
-    found=0; i=0; lang=lcid;
-
-    if ((lang & 0x3ff) == 0x000) /*LANG_NEUTRAL ==> US English*/
-    {
+    if ((lang & 0x3ff) == 0x000) /*LANG_NEUTRAL ==> US English*/ {
 	lang = 0x0409;
         WARN(ole,"no language set, assume LANG_ENGLISH_US \n");
     }
     
 
-    do 
-    {	switch(lang) 
-    	{
+    found=0;lang=lcid;
+    for (i=0;i<3;i++) {
+      int j;
 
-/* add languages in numerical order of main language (last two digits)
- * it is much easier to find the missing holes that way */
+      for (j=0;j<sizeof(langlocales)/sizeof(langlocales[0]);j++) {
+	if (langlocales[j].lang == lang) {
+	  int k;
 
-LANG_BEGIN (LANG_CATALAN, SUBLANG_DEFAULT)	/*0x0403*/
-#include "nls/cat.nls"
-LANG_END
-
-LANG_BEGIN (LANG_CZECH, SUBLANG_DEFAULT)	/*0x0405*/
-#include "nls/cze.nls"
-LANG_END
-
-LANG_BEGIN (LANG_DANISH, SUBLANG_DEFAULT)	/*0x0406*/
-#include "nls/dan.nls"
-LANG_END
-
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN)		/*0x0407*/
-#include "nls/deu.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_SWISS)		/*0x0807*/
-#include "nls/des.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN)	/*0x0C07*/
-#include "nls/dea.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LUXEMBOURG)	/*0x1007*/
-#include "nls/del.nls"
-LANG_END
-LANG_BEGIN (LANG_GERMAN, SUBLANG_GERMAN_LIECHTENSTEIN)	/*0x1407*/
-#include "nls/dec.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_US)		/*0x0409*/
-#include "nls/enu.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_UK)		/*0x0809*/
-#include "nls/eng.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_AUS)		/*0x0C09*/
-#include "nls/ena.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CAN)		/*0x1009*/
-#include "nls/enc.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_NZ)		/*0x1409*/
-#include "nls/enz.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_EIRE)		/*0x1809*/
-#include "nls/irl.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_SAFRICA)	/*0x1C09*/
-#include "nls/ens.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_JAMAICA)	/*0x2009*/
-#include "nls/enj.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_CARRIBEAN)	/*0x2409*/
-#include "nls/enb.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_BELIZE)	/*0x2809*/
-#include "nls/enl.nls"
-LANG_END
-LANG_BEGIN (LANG_ENGLISH, SUBLANG_ENGLISH_TRINIDAD)    	/*0x2C09*/
-#include "nls/ent.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH)		/*0x040a*/
-#include "nls/esp.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MEXICAN)	/*0x080a*/
-#include "nls/esm.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_MODERN)	/*0x0C0a*/
-#include "nls/esn.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_GUATEMALA)	/*0x100a*/
-#include "nls/esg.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COSTARICA)	/*0x140a*/
-#include "nls/esc.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PANAMA)	/*0x180a*/
-#include "nls/esa.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_DOMINICAN)	/*0x1C0A*/
-#include "nls/esd.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_VENEZUELA)	/*0x200a*/
-#include "nls/esv.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_COLOMBIA)	/*0x240a*/
-#include "nls/eso.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PERU)		/*0x280a*/
-#include "nls/esr.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA)	/*0x2c0a*/
-#include "nls/ess.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_ECUADOR)	/*0x300a*/
-#include "nls/esf.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_CHILE)	/*0x340a*/
-#include "nls/esl.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_URUGUAY)	/*0x380a*/
-#include "nls/esy.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PARAGUAY)	/*0x3c0a*/
-#include "nls/esz.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_BOLIVIA)	/*0x400a*/
-#include "nls/esb.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_EL_SALVADOR)	/*0x440a*/
-#include "nls/ese.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_HONDURAS)	/*0x480a*/
-#include "nls/esh.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_NICARAGUA)	/*0x4c0a*/
-#include "nls/esi.nls"
-LANG_END
-LANG_BEGIN (LANG_SPANISH, SUBLANG_SPANISH_PUERTO_RICO)	/*0x500a*/
-#include "nls/esu.nls"
-LANG_END
-
-LANG_BEGIN (LANG_FINNISH, SUBLANG_DEFAULT)	/*0x040B*/
-#include "nls/fin.nls"
-LANG_END
-
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH)		/*0x040C*/
-#include "nls/fra.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_BELGIAN)	/*0x080C*/
-#include "nls/frb.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_CANADIAN)	/*0x0C0C*/
-#include "nls/frc.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_SWISS)		/*0x100C*/
-#include "nls/frs.nls"
-LANG_END
-LANG_BEGIN (LANG_FRENCH, SUBLANG_FRENCH_LUXEMBOURG)	/*0x140C*/
-#include "nls/frl.nls"
-LANG_END
-
-LANG_BEGIN (LANG_HUNGARIAN, SUBLANG_DEFAULT)	/*0x040e*/
-#include "nls/hun.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN)		/*0x0410*/
-#include "nls/ita.nls"
-LANG_END
-LANG_BEGIN (LANG_ITALIAN, SUBLANG_ITALIAN_SWISS)	/*0x0810*/
-#include "nls/its.nls"
-LANG_END
-
-LANG_BEGIN (LANG_KOREAN, SUBLANG_KOREAN)	/*0x0412*/
-#include "nls/kor.nls"
-LANG_END
-
-LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL)	/*0x0414*/
-#include "nls/nor.nls"
-LANG_END
-LANG_BEGIN (LANG_NORWEGIAN, SUBLANG_NORWEGIAN_NYNORSK)	/*0x0814*/
-#include "nls/non.nls"
-LANG_END
-
-LANG_BEGIN (LANG_POLISH, SUBLANG_DEFAULT)	/*0x0415*/
-#include "nls/plk.nls"
-LANG_END
-
-LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE_BRAZILIAN)	/*0x0416*/
-#include "nls/ptb.nls"
-LANG_END
-LANG_BEGIN (LANG_PORTUGUESE ,SUBLANG_PORTUGUESE)		/*0x0816*/
-#include "nls/ptg.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SLOVAK, SUBLANG_DEFAULT)	/*0x041b*/
-#include "nls/sky.nls"
-LANG_END
-
-LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH)		/*0x041d*/
-#include "nls/sve.nls"
-LANG_END
-LANG_BEGIN (LANG_SWEDISH, SUBLANG_SWEDISH_FINLAND)	/*0x081d*/
-#include "nls/svf.nls"
-LANG_END
-
-LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
-#include "nls/tha.nls"
-LANG_END
-
-LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
-#include "nls/esperanto.nls"
-LANG_END
-
-
-	default:
-	  found=0;
+	  for (k=0;k<sizeof(langlocales[j].locvars)/sizeof(langlocales[j].locvars[0]) && (langlocales[j].locvars[k].type);k++) {
+	    if (langlocales[j].locvars[k].type == LCType) {
+	      found = 1;
+	      retString = langlocales[j].locvars[k].val;
 	  break;
-	  }  /* switch */
-
-
+	    }
+	  }
+          if (found)
+	    break;
+	}
+      }
 	  /* language not found, try without a sublanguage*/
 	  if (i==1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
-
 	  /* mask the LC Value */
 	  if (i==2) LCType &= 0xfff;
+    }
 
-	  i++;
-	} while (!found && i<3);
-
-	if(!found) 
-	{	ERR(ole,"'%s' not supported for your language (%4X).\n",
+    if(!found) {
+      ERR(ole,"'%s' not supported for your language (%4X).\n",
 			retString,lang);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;			
