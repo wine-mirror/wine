@@ -682,7 +682,7 @@ static int encode_type(
     int typeoffset;
     int *typedata;
     int target_type;
-    int child_size;
+    int child_size = 0;
 
     chat("encode_type vt %d type %p\n", vt, type);
 
@@ -739,6 +739,12 @@ static int encode_type(
 	*encoded_type = default_type;
 	*width = 4;
 	*alignment = 4;
+	break;
+
+    case VT_R8:
+	*encoded_type = default_type;
+	*width = 8;
+	*alignment = 8;
 	break;
 
     case VT_CY:
