@@ -498,7 +498,6 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr(hwnd);
     INT iItem = (INT)wParam;
-    HDC hdc;
 
     TRACE("[iItem=%d]\n", iItem);
     
@@ -539,9 +538,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
 
     HEADER_SetItemBounds (hwnd);
 
-    hdc = GetDC (hwnd);
-    HEADER_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
     
     return TRUE;
 }
@@ -711,7 +708,6 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMA   *phdi = (HDITEMA*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    HDC       hdc;
     INT       len;
 
     if ((phdi == NULL) || (nItem < 0))
@@ -789,9 +785,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     HEADER_SetItemBounds (hwnd);
 
-    hdc = GetDC (hwnd);
-    HEADER_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return nItem;
 }
@@ -804,7 +798,6 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMW   *phdi = (HDITEMW*)lParam;
     INT       nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    HDC       hdc;
     INT       len;
 
     if ((phdi == NULL) || (nItem < 0))
@@ -876,9 +869,7 @@ HEADER_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     HEADER_SetItemBounds (hwnd);
 
-    hdc = GetDC (hwnd);
-    HEADER_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return nItem;
 }
@@ -935,7 +926,6 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMA *phdi = (HDITEMA*)lParam;
     INT nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    HDC hdc;
 
     if (phdi == NULL)
 	return FALSE;
@@ -985,9 +975,8 @@ HEADER_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem);
 
     HEADER_SetItemBounds (hwnd);
-    hdc = GetDC (hwnd);
-    HEADER_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
 }
@@ -1000,7 +989,6 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HDITEMW *phdi = (HDITEMW*)lParam;
     INT nItem = (INT)wParam;
     HEADER_ITEM *lpItem;
-    HDC hdc;
 
     if (phdi == NULL)
 	return FALSE;
@@ -1050,9 +1038,8 @@ HEADER_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGEDA, nItem);
 
     HEADER_SetItemBounds (hwnd);
-    hdc = GetDC (hwnd);
-    HEADER_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+
+    InvalidateRect(hwnd, NULL, FALSE);
 
     return TRUE;
 }
@@ -1264,9 +1251,7 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    }
 
 	    HEADER_SetItemBounds (hwnd);
-	    hdc = GetDC (hwnd);
-	    HEADER_Refresh (hwnd, hdc);
-	    ReleaseDC (hwnd, hdc);
+	    InvalidateRect(hwnd, NULL, FALSE);
 	}
     }
 
@@ -1299,9 +1284,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    infoPtr->iHotItem = nItem;
 	else
 	    infoPtr->iHotItem = -1;
-	hdc = GetDC (hwnd);
-	HEADER_Refresh (hwnd, hdc);
-	ReleaseDC (hwnd, hdc);
+	InvalidateRect(hwnd, NULL, FALSE);
     }
 
     if (infoPtr->bCaptured) {
@@ -1329,9 +1312,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 					     infoPtr->iMoveItem);
 		}
 		HEADER_SetItemBounds (hwnd);
-		hdc = GetDC (hwnd);
-		HEADER_Refresh (hwnd, hdc);
-		ReleaseDC (hwnd, hdc);
+		InvalidateRect(hwnd, NULL, FALSE);
 	    }
 	    else {
 		hdc = GetDC (hwnd);
@@ -1442,9 +1423,7 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->bRectsValid = FALSE;
 	
     if (lParam) {
-        hdc = GetDC (hwnd);
-        HEADER_Refresh (hwnd, hdc);
-        ReleaseDC (hwnd, hdc);
+        InvalidateRect(hwnd, NULL, FALSE);
     }
 
     return 0;
