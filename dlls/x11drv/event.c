@@ -274,9 +274,18 @@ static void EVENT_ProcessEvent( XEvent *event )
   if (!hWnd && event->type != PropertyNotify && event->type != MappingNotify)
       WARN( "Got event %s for unknown Window %08lx\n",
             event_names[event->type], event->xany.window );
+  else if (event->type <= MappingNotify)
+      TRACE("Got event %s for hwnd/window %p/%lx, GetFocus()=%p\n",
+            event_names[event->type], hWnd, event->xany.window, GetFocus() );
   else
-      TRACE("Got event %s for hwnd %p\n",
-            event_names[event->type], hWnd );
+      TRACE("Got extension event for hwnd/window %p/%lx, GetFocus()=%p\n",
+            hWnd, event->xany.window, GetFocus() );
+
+  if (X11DRV_ProcessTabletEvent(hWnd, event))
+  {
+        TRACE("Return: filtered by tablet\n");
+        return;
+  }
 
   switch(event->type)
     {

@@ -1195,6 +1195,11 @@
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
 
 /* 
+   Define to 1 if you have the <X11/extensions/XInput.h>
+   header file. */
+#undef HAVE_X11_EXTENSIONS_XINPUT_H
+
+/* 
    Define to 1 if you have the <X11/extensions/Xrandr.h>
    header file. */
 #undef HAVE_X11_EXTENSIONS_XRANDR_H
@@ -1377,6 +1382,11 @@
    Define to the soname of the libXext library.
    */
 #undef SONAME_LIBXEXT
+
+/* 
+   Define to the soname of the libXi library.
+   */
+#undef SONAME_LIBXI
 
 /* 
    Define to the soname of the libXrender library.

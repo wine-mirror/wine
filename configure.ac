@@ -181,6 +181,7 @@ then
         AC_CHECK_HEADERS([X11/XKBlib.h \
                           X11/Xutil.h \
                           X11/extensions/shape.h \
+                          X11/extensions/XInput.h \
                           X11/extensions/XShm.h \
                           X11/extensions/Xrandr.h \
                           X11/extensions/Xrender.h \
@@ -989,6 +990,7 @@ if test "$LIBEXT" = "so"
 then
   WINE_GET_SONAME(X11,XCreateWindow,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xi,XOpenDevice,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])

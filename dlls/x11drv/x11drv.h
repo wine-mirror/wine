@@ -475,6 +475,8 @@ extern INPUT_TYPE X11DRV_EVENT_SetInputMethod(INPUT_TYPE type);
 void X11DRV_EVENT_SetDGAStatus(HWND hwnd, int event_base) ;
 #endif
 
+extern int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event);
+
 /* x11drv private window data */
 struct x11drv_win_data
 {

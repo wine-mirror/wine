@@ -3,14 +3,15 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintab32.dll
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 ALTNAMES  = wintab.dll
 
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)
 
 C_SRCS = \
 	context.c \
-	manager.c
+	manager.c \
+	wintab32.c
 
 C_SRCS16 = \
 	wintab16.c

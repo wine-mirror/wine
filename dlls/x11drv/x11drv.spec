@@ -111,6 +111,12 @@
 @ cdecl ShowWindow(long long) X11DRV_ShowWindow
 @ cdecl SysCommandSizeMove(long long) X11DRV_SysCommandSizeMove
 
+# WinTab32
+@ cdecl AttachEventQueueToTablet(long) X11DRV_AttachEventQueueToTablet
+@ cdecl GetCurrentPacket(ptr) X11DRV_GetCurrentPacket
+@ cdecl LoadTabletInfo(long) X11DRV_LoadTabletInfo
+@ cdecl WTInfoA(long long ptr) X11DRV_WTInfoA
+
 # X11 locks
 @ cdecl -norelay wine_tsx11_lock()
 @ cdecl -norelay wine_tsx11_unlock()
