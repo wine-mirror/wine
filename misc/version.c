@@ -53,6 +53,7 @@ typedef enum
     NT40,    /* Windows NT 4.0 */
     NT2K,    /* Windows 2000 */
     WINXP,   /* Windows XP */
+    WIN2K3,  /* Windows 2003 */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -193,6 +194,17 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
             VER_PLATFORM_WIN32_NT, "Service Pack 1",
             1, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
         }
+    },
+    /* WIN2K3 */
+    {
+	"Windows 2003",
+        0x05005F03, /* Assuming DOS 5 like the other NT */
+        0x0ECE0205,
+        {
+            sizeof(OSVERSIONINFOA), 5, 2, 0xECE,
+            VER_PLATFORM_WIN32_NT, "",
+            0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_SERVER, 0
+        }
     }
 };
 
@@ -207,7 +219,8 @@ static const char *WinVersionNames[NB_WINDOWS_VERSIONS] =
     "nt351",
     "nt40",
     "win2000,win2k,nt2k,nt2000",
-    "winxp"
+    "winxp",
+    "win2003,win2k3"
 };
 
 /* if one of the following dlls is importing ntdll the windows
@@ -427,9 +440,10 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
 		  case 4: return NT40;
 		  case 5: return NT2K;
 		  case 6: return WINXP;
+		  case 7: return WIN2K3; /* FIXME: Not sure, should be verified with a Win2K3 dll */
 		  default:
 			  FIXME("Unknown DLL OS version, please report !!\n");
-			  return WINXP;
+			  return WIN2K3;
 	      }
 	    }
         }
