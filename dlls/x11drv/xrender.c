@@ -1047,12 +1047,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	SIZE tmpsz;
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
 	for(i = 0; i < count; i++) {
-	    deltas[i] = char_extra;
 	    if(lpDx)
-	        deltas[i] += lpDx[i];
+	        deltas[i] = lpDx[i] + char_extra;
 	    else {
 	        GetTextExtentPointI(hdc, glyphs + i, 1, &tmpsz);
-		deltas[i] += tmpsz.cx;
+		deltas[i] = tmpsz.cx;
 	    }
 	}
     } else if(lpDx)

@@ -974,6 +974,7 @@ BOOL WINAPI GetTextExtentPoint32W(
         ret = WineEngGetTextExtentPoint(dc->gdiFont, str, count, size);
 	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
 	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+        size->cx += count * dc->charExtra;
     }
     else if(dc->funcs->pGetTextExtentPoint)
         ret = dc->funcs->pGetTextExtentPoint( dc->physDev, str, count, size );
@@ -1008,6 +1009,7 @@ BOOL WINAPI GetTextExtentPointI(
         ret = WineEngGetTextExtentPointI(dc->gdiFont, indices, count, size);
 	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
 	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+        size->cx += count * dc->charExtra;
     }
     else if(dc->funcs->pGetTextExtentPoint) {
         FIXME("calling GetTextExtentPoint\n");
