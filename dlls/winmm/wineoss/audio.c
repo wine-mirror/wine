@@ -716,23 +716,30 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 /**************************************************************************
  * 			     wodPlayer_WriteMaxFrags            [internal]
  * Writes the maximum number of bytes possible to the DSP and returns
- * the number of bytes written.
+ * TRUE iff the current playPtr has been fully played
  */
-static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
+static BOOL wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
 {
-    /* Only attempt to write to free bytes */
-    DWORD dwLength = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
-    int toWrite = min(dwLength, *bytes);
-    int written;
+    DWORD       dwLength = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
+    DWORD       toWrite = min(dwLength, *bytes);
+    int         written;
+    BOOL        ret = FALSE;
 
-    TRACE("Writing wavehdr %p.%lu[%lu]\n", 
-          wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength);
-    written = write(wwo->unixdev, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
-    if (written <= 0) return written;
+    TRACE("Writing wavehdr %p.%lu[%lu]/%lu\n", 
+          wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength, toWrite);
+
+    if (toWrite > 0)
+    {
+        written = write(wwo->unixdev, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
+        if (written <= 0) return FALSE;
+    }
+    else
+        written = 0;
 
     if (written >= dwLength) {
         /* If we wrote all current wavehdr, skip to the next one */
         wodPlayer_PlayPtrNext(wwo);
+        ret = TRUE;
     } else {
         /* Remove the amount written */
         wwo->dwPartialOffset += written;
@@ -740,7 +747,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     *bytes -= written;
     wwo->dwWrittenTotal += written;
 
-    return written;
+    return ret;
 }
 
 
@@ -937,7 +944,8 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 
     /* input queue empty and output buffer with less than one fragment to play */
     if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize) {
-        TRACE("Run out of wavehdr:s... flushing\n");
+        TRACE("Run out of wavehdr:s... flushing (%lu => %lu)\n", 
+              wwo->dwPlayedTotal, wwo->dwWrittenTotal);
         ioctl(wwo->unixdev, SNDCTL_DSP_SYNC, 0);
         wwo->dwPlayedTotal = wwo->dwWrittenTotal;
         return INFINITE;
@@ -951,12 +959,13 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
         }
 
         /* Feed wavehdrs until we run out of wavehdrs or DSP space */
-        if (wwo->dwPartialOffset == 0) {
-            while (wwo->lpPlayPtr && availInQ > 0) {
+        if (wwo->dwPartialOffset == 0 && wwo->lpPlayPtr) {
+            do {
+                TRACE("Setting time to elapse for %p to %lu\n", 
+                      wwo->lpPlayPtr, wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength);
                 /* note the value that dwPlayedTotal will return when this wave finishes playing */
                 wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-                wodPlayer_WriteMaxFrags(wwo, &availInQ);
-            }
+            } while (wodPlayer_WriteMaxFrags(wwo, &availInQ) && wwo->lpPlayPtr && availInQ > 0);
         }
     }
 
