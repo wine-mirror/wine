@@ -172,9 +172,6 @@ extern void WINAPI EXC_RtlUnwind( PEXCEPTION_FRAME, LPVOID,
                                   PEXCEPTION_RECORD, DWORD, CONTEXT * );
 extern void WINAPI EXC_DebugBreak( CONTEXT *context );
 
-typedef DWORD (*DEBUGHOOK)( EXCEPTION_RECORD *, CONTEXT *, BOOL );
-extern void EXC_SetDebugEventHook( DEBUGHOOK hook );
-extern DEBUGHOOK EXC_GetDebugEventHook(void);
 extern BOOL SIGNAL_Init(void);
 #endif
 

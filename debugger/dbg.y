@@ -423,10 +423,16 @@ static void DEBUG_Freeze( BOOL freeze )
 
     if ( freeze && !frozen )
     {
-        /* Don't freeze thread currently holding the X crst! */
-        EnterCriticalSection( &X11DRV_CritSection );
-        CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
-        LeaveCriticalSection( &X11DRV_CritSection );
+        if ( X11DRV_CritSection.LockSemaphore )
+        {
+            /* Don't freeze thread currently holding the X crst! */
+            EnterCriticalSection( &X11DRV_CritSection );
+            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+            LeaveCriticalSection( &X11DRV_CritSection );
+        }
+        else
+            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+
         frozen = TRUE;
     }
 
@@ -468,7 +474,8 @@ static void DEBUG_Main( BOOL is_debug )
 
     if (in_debugger)
     {
-        fprintf( stderr, " inside debugger, exiting.\n" );
+        fprintf( stderr, " inside debugger, trying to invoke external debugger.\n" );
+        DEBUG_ExternalDebugger();
         DEBUG_Exit(1);
     }
     in_debugger = TRUE;
@@ -554,7 +561,7 @@ static void DEBUG_Main( BOOL is_debug )
         DEBUG_Freeze( TRUE );
 
         /* Put the display in a correct state */
-	USER_Driver->pBeginDebugging();
+	if (USER_Driver) USER_Driver->pBeginDebugging();
 
 #ifdef __i386__
         newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
@@ -633,7 +640,7 @@ static void DEBUG_Main( BOOL is_debug )
 
     in_debugger = FALSE;
 
-    USER_Driver->pEndDebugging();
+    if (USER_Driver) USER_Driver->pEndDebugging();
 }
 
 

@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
+#include "options.h"
 
 #define DBG_BUFF_SIZE  12
 
@@ -90,9 +90,9 @@ void DEBUG_ExternalDebugger(void)
   if (child_pid == 0)
   {
     int  status;
-    char *dbg_external;
-    char *dbg_wine_location;
-    char *dbg_no_xterm;
+    const char *dbg_external;
+    const char *dbg_wine_location;
+    const char *dbg_no_xterm;
     char pid_string[DBG_BUFF_SIZE];    
 
 
@@ -107,7 +107,7 @@ void DEBUG_ExternalDebugger(void)
 
     /* if not set in environment, use default */
     if (!dbg_wine_location)
-      dbg_wine_location = "/usr/local/bin/wine";
+      dbg_wine_location = argv0;
 
     /* check for empty string in WINE_DBG_NO_XTERM */
     if (dbg_no_xterm && (strlen(dbg_no_xterm) < 1))

@@ -108,12 +108,8 @@ int main( int argc, char *argv[] )
 {
     NE_MODULE *pModule;
 
-    /* Set up debugger hook */
-    EXC_SetDebugEventHook( wine_debugger );
-    TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
-
     /* Initialize everything */
-    if (!MAIN_MainInit( &argc, argv )) return 1;
+    if (!MAIN_MainInit( &argc, argv, FALSE )) return 1;
     MAIN_argc = argc; MAIN_argv = argv;
 
     /* Create initial task */

@@ -34,6 +34,7 @@ TOOLSUBDIRS = \
 LIBSUBDIRS = \
 	controls \
 	console \
+	debugger \
 	dlls/advapi32 \
 	dlls/avifil32 \
 	dlls/comctl32 \
@@ -115,7 +116,6 @@ X11SUBDIRS = \
 	windows/x11drv
 
 EMUSUBDIRS = \
-	debugger \
 	miscemu \
 	server
 
@@ -154,6 +154,7 @@ CLEANSUBDIRS = dlls include include/bitmaps include/wine
 LIBOBJS = \
 	controls/controls.o \
 	console/console.o \
+	debugger/debugger.o \
 	dlls/advapi32/advapi32.o \
 	dlls/avifil32/avifil32.o \
 	dlls/comctl32/comctl32.o \
@@ -234,7 +235,6 @@ X11OBJS = \
 	windows/x11drv/x11drv.o
 
 EMUOBJS = \
-	debugger/debugger.o \
 	miscemu/miscemu.o
 
 EXTRA_OBJS = $(LIBOBJS) $(X11OBJS)

@@ -325,6 +325,9 @@ extern void DEBUG_NukePath(void);
 extern void DEBUG_GetCurrentAddress( DBG_ADDR * );
 extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
+  /* debugger/external.c */
+extern void DEBUG_ExternalDebugger(void);
+
   /* debugger/dbg.y */
 extern DWORD wine_debugger( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
 extern void DEBUG_Exit( DWORD exit_code );

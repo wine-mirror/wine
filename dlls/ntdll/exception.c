@@ -13,6 +13,7 @@
 #include "wine/exception.h"
 #include "stackframe.h"
 #include "miscemu.h"
+#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
@@ -25,36 +26,6 @@ typedef struct
 } EXC_NESTED_FRAME;
 
  
-/* Default hook for built-in debugger */
-static DWORD default_hook( EXCEPTION_RECORD *rec, CONTEXT *ctx, BOOL first )
-{
-    if (!first)
-    {
-    	DPRINTF( "stopping process due to unhandled exception %08lx.\n",
-                 rec->ExceptionCode );
-	raise( SIGSTOP );
-    }
-    return 0;  /* not handled */
-}
-static DEBUGHOOK debug_hook = default_hook;
-
-/*******************************************************************
- *         EXC_SetDebugEventHook
- *         EXC_GetDebugEventHook
- *
- * Set/Get the hook for the built-in debugger.
- *
- * FIXME: the built-in debugger should use the normal debug events.
- */
-void EXC_SetDebugEventHook( DEBUGHOOK hook )
-{
-    debug_hook = hook;
-}
-DEBUGHOOK EXC_GetDebugEventHook(void)
-{
-    return debug_hook;
-}
-
 /*******************************************************************
  *         EXC_RaiseHandler
  *
@@ -125,7 +96,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
         (DEBUG_SendExceptionEvent( rec, FALSE, context ) == DBG_CONTINUE))
         return;  /* continue execution */
 
-    if (debug_hook( rec, context, FALSE ) == DBG_CONTINUE)
+    if (wine_debugger( rec, context, FALSE ) == DBG_CONTINUE)
         return;  /* continue execution */
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
@@ -155,7 +126,7 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
         (DEBUG_SendExceptionEvent( rec, TRUE, context ) == DBG_CONTINUE))
         return;  /* continue execution */
 
-    if (debug_hook( rec, context, TRUE ) == DBG_CONTINUE)
+    if (wine_debugger( rec, context, TRUE ) == DBG_CONTINUE)
         return;  /* continue execution */
 
     frame = NtCurrentTeb()->except;

@@ -31,6 +31,7 @@
 #include "process.h"
 #include "thread.h"
 #include "stackframe.h"
+#include "debugger.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh)
@@ -78,8 +79,8 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     }
 
     /* FIXME: does not belong here */
-    if (((*EXC_GetDebugEventHook())( epointers->ExceptionRecord,
-                                     epointers->ContextRecord, FALSE )) == DBG_CONTINUE)
+    if (wine_debugger( epointers->ExceptionRecord,
+                       epointers->ContextRecord, FALSE ) == DBG_CONTINUE)
         return EXCEPTION_CONTINUE_EXECUTION;
 
     /* FIXME: Should check the current error mode */

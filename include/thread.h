@@ -63,7 +63,7 @@ typedef struct _TEB
     void        *signal_stack;   /* --3  58 Signal stack (was: exit_stack) */
     void        *emu_data;       /* --n  5c Related to 80387 emulation */
     DWORD        last_error;     /* 1--  60 Last error code */
-    HANDLE       event;          /* --3  64 Thread event (was: debugger context block) */
+    HANDLE       debug_cb;       /* 1-n  64 Debugger context block */
     DWORD        debug_thread;   /* 1-n  68 Thread debugging this one (?) */
     void        *pcontext;       /* 1-n  6c Thread register context */
     DWORD        cur_stack;      /* --3  70 Current stack (was: unknown) */
