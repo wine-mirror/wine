@@ -282,6 +282,10 @@ static HANDLER_DEF(SIGNAL_fault)
 
     if (fnWINE_Debugger)
 	fnWINE_Debugger( signal, HANDLER_CONTEXT );
+    else {
+    	MSG("stopping pid %d due to unhandled %s.\n",getpid(),fault);
+	kill(getpid(),SIGSTOP);
+    }
 }
 
 
