@@ -751,8 +751,10 @@ static ICOM_VTABLE(ITypeInfo2) itypeinfo2 =
     CTypeInfo2Impl_fnGetAllImplTypeCustData,
 };
 
-/*****************************************************************************/
 
+/******************************************************************************
+ *		CreateDispTypeInfo  (OLEAUT32.31)
+ */
 HRESULT WINAPI CreateDispTypeInfo(
 	INTERFACEDATA* pifd,
 	LCID lcid,

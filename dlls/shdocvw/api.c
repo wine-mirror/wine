@@ -30,7 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 /***********************************************************************
- *              DllGetVersion (SHDOCVW.113)
+ *              DllGetVersion (SHDOCVW.@)
  */
 HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *pdvi)
 {
@@ -39,7 +39,7 @@ HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *pdvi)
 }
 
 /*************************************************************************
- *              DllInstall (SHDOCVW.114)
+ *              DllInstall (SHDOCVW.@)
  */
 HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 {
@@ -49,18 +49,18 @@ HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- *		DllRegisterServer (SHDOCVW.124)
+ *		DllRegisterServer (SHDOCVW.@)
  */
-HRESULT WINAPI SHDOCVW_DllRegisterServer()
+HRESULT WINAPI SHDOCVW_DllRegisterServer(void)
 {
     FIXME("(), stub!\n");
     return E_NOTIMPL;
 }
 
 /***********************************************************************
- *		DllUnregisterServer (SHDOCVW.127)
+ *		DllUnregisterServer (SHDOCVW.@)
  */
-HRESULT WINAPI SHDOCVW_DllUnregisterServer()
+HRESULT WINAPI SHDOCVW_DllUnregisterServer(void)
 {
     FIXME("(), stub!\n");
     return E_NOTIMPL;

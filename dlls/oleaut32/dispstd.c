@@ -211,7 +211,9 @@ static ICOM_VTABLE(IDispatch) idisp =
 	CStdDispImpl_fnInvoke,
 };
 
-/*****************************************************************************/
+/******************************************************************************
+ *		CreateStdDispatch  (OLEAUT32.32)
+ */
 
 HRESULT WINAPI CreateStdDispatch(
 	IUnknown* punkOuter,

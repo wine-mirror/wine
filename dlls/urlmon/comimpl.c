@@ -356,9 +356,9 @@ static void COMIMPL_UninitProcess( HINSTANCE hInstDLL )
 
 
 /***********************************************************************
- *		COMIMPL_DllMain
+ *		URLMON_DllMain
  */
-BOOL WINAPI COMIMPL_DllMain(
+BOOL WINAPI URLMON_DllMain(
 	HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
 	TRACE("(%08x,%08lx,%p)\n",hInstDLL,fdwReason,lpvReserved);
@@ -382,9 +382,9 @@ BOOL WINAPI COMIMPL_DllMain(
 }
 
 /***********************************************************************
- *		COMIMPL_DllGetClassObject
+ *		DllGetClassObject   (URLMON.@)
  */
-HRESULT WINAPI COMIMPL_DllGetClassObject(
+HRESULT WINAPI URLMON_DllGetClassObject(
 		const CLSID* pclsid,const IID* piid,void** ppv)
 {
 	*ppv = NULL;
@@ -398,13 +398,13 @@ HRESULT WINAPI COMIMPL_DllGetClassObject(
 }
 
 /***********************************************************************
- *		COMIMPL_DllCanUnloadNow
+ *		DllCanUnloadNow   (URLMON.@)
  *
  * RETURNS
  *    Success: S_OK
  *    Failure: S_FALSE
  */
-HRESULT WINAPI COMIMPL_DllCanUnloadNow(void)
+HRESULT WINAPI URLMON_DllCanUnloadNow(void)
 {
 	HRESULT	hr;
 

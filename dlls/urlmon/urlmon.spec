@@ -1,6 +1,6 @@
 name    urlmon
 type    win32
-init	COMIMPL_DllMain
+init	URLMON_DllMain
 
 import	ole32.dll
 import	kernel32.dll
@@ -30,8 +30,8 @@ debug_channels (comimpl urlmon)
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long) CreateAsyncBindCtxEx
 @ stdcall CreateFormatEnumerator(long ptr ptr) CreateFormatEnumerator
 @ stdcall CreateURLMoniker(ptr str ptr) CreateURLMoniker
-@ stdcall DllCanUnloadNow() COMIMPL_DllCanUnloadNow
-@ stdcall DllGetClassObject(ptr ptr ptr) COMIMPL_DllGetClassObject
+@ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow
+@ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
 @ stdcall DllInstall(long ptr) URLMON_DllInstall
 @ stdcall DllRegisterServer() URLMON_DllRegisterServer
 @ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
