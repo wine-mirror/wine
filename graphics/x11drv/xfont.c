@@ -141,8 +141,8 @@ static const SuffixCharset sufch_microsoft[] = {
     { "cp1255", HEBREW_CHARSET, 1255, X11DRV_CPTABLE_SBCS },
     { "cp1256", ARABIC_CHARSET, 1256, X11DRV_CPTABLE_SBCS },
     { "cp1257", BALTIC_CHARSET, 1257, X11DRV_CPTABLE_SBCS },
-    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
-    { "symbol", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SBCS },
+    { "fontspecific", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SYMBOL },
+    { "symbol", SYMBOL_CHARSET, CP_SYMBOL, X11DRV_CPTABLE_SYMBOL },
     {   NULL,   ANSI_CHARSET, 1252, X11DRV_CPTABLE_SBCS }};
 
 static const SuffixCharset sufch_tcvn[] = {

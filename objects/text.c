@@ -43,8 +43,8 @@ LPWSTR FONT_mbtowc(HDC hdc, LPCSTR str, INT count, INT *plenW, UINT *pCP)
         cp = csi.ciACP;
     else {
         switch(charset) {
-	case SYMBOL_CHARSET:
-	    cp = CP_SYMBOL;
+	case SYMBOL_CHARSET: /* We don't want any translation here */
+	    cp = GetACP();
 	    break;
 	case OEM_CHARSET:
 	    cp = GetOEMCP();

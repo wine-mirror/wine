@@ -364,6 +364,30 @@ static XChar2b* X11DRV_unicode_to_char2b_cp950( fontObject* pfo,
     return str2b;
 }
 
+static XChar2b* X11DRV_unicode_to_char2b_symbol( fontObject* pfo,
+						 LPCWSTR lpwstr, UINT count )
+{
+    XChar2b *str2b;
+    UINT i;
+    char ch = pfo->fs->default_char;
+
+    if (!(str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) )))
+	return NULL;
+
+    for (i = 0; i < count; i++)
+    {
+	str2b[i].byte1 = 0;
+	if(lpwstr[i] >= 0xf000 && lpwstr[i] < 0xf100)
+	    str2b[i].byte2 = lpwstr[i] - 0xf000;
+	else if(lpwstr[i] < 0x100)
+	    str2b[i].byte2 = lpwstr[i];
+	else
+	    str2b[i].byte2 = ch;
+    }
+
+    return str2b;
+}
+
 
 static void X11DRV_DrawString_normal( fontObject* pfo, Display* pdisp,
                                       Drawable d, GC gc, int x, int y,
@@ -700,4 +724,13 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextExtents_dbcs_2fonts,
         X11DRV_GetTextMetricsA_cp932,
     },
+    { /* SYMBOL */
+	X11DRV_enum_subfont_charset_normal,
+	X11DRV_unicode_to_char2b_symbol,
+	X11DRV_DrawString_normal,
+	X11DRV_TextWidth_normal,
+	X11DRV_DrawText_normal,
+	X11DRV_TextExtents_normal,
+	X11DRV_GetTextMetricsA_normal,
+    }
 };
