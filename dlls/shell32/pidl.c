@@ -134,6 +134,29 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 
   	return newpidl;
 }
+
+/*************************************************************************
+ * SHCloneSpecialIDList [SHELL32.89]
+ * 
+ * PARAMETERS
+ *  hwndOwner 	[in] 
+ *  nFolder 	[in]	CSIDL_xxxxx ??
+ *
+ * RETURNS
+ *  pidl ??
+ * NOTES
+ *     exported by ordinal
+ */
+LPITEMIDLIST WINAPI SHCloneSpecialIDList(HWND32 hwndOwner,DWORD nFolder,DWORD x3)
+{	LPITEMIDLIST ppidl;
+	WARN(shell,"(hwnd=0x%x,csidl=0x%lx,0x%lx):semi-stub.\n",
+					 hwndOwner,nFolder,x3);
+
+	SHGetSpecialFolderLocation(hwndOwner, nFolder, &ppidl);
+
+	return ppidl;
+}
+
 /*************************************************************************
  * ILGlobalClone [SHELL32.97]
  *
@@ -316,8 +339,9 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
  *
  * NOTES
  */
-LPITEMIDLIST WINAPI SHGetRealIDL(DWORD x, DWORD y, DWORD z)
-{	FIXME(pidl,"0x%04lx 0x%04lx 0x%04lx\n",x,y,z);
+LPITEMIDLIST WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl, DWORD z)
+{	FIXME(pidl,"sf=%p pidl=%p 0x%04lx\n",lpsf,pidl,z);
+	pdump (pidl);
 	return 0;
 }
 
@@ -490,6 +514,30 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPath32AW (LPVOID lpszPath)
 	{ return _ILCreateFolder(lpszElement);
 	}
 	return _ILCreateValue(lpszElement);
+}
+/*************************************************************************
+ * SHGetDataFromIDListA [SHELL32.247]
+ *
+ */
+HRESULT WINAPI SHGetDataFromIDList32A(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
+{	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+	switch (nFormat)
+	{ case SHGDFIL_FINDDATA:
+	  case SHGDFIL_NETRESOURCE:	   
+	  case SHGDFIL_DESCRIPTIONID:
+	    break;
+	  default:
+	    ERR(shell,"Unknown SHGDFIL %i, please report\n", nFormat);
+	}
+	return E_INVALIDARG;
+}
+/*************************************************************************
+ * SHGetDataFromIDListW [SHELL32.247]
+ *
+ */
+HRESULT WINAPI SHGetDataFromIDList32W(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)
+{	FIXME(shell,"sf=%p pidl=%p 0x%04x %p 0x%04x stub\n",psf,pidl,nFormat,dest,len);
+	return SHGetDataFromIDList32A( psf, pidl, nFormat, dest, len);
 }
 
 /**************************************************************************
