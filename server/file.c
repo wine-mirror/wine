@@ -26,13 +26,13 @@
 
 struct file
 {
-    struct object  obj;             /* object header */
-    struct file   *next;            /* next file in hashing list */
-    char          *name;            /* file name */
-    int            fd;              /* Unix file descriptor */
-    unsigned int   access;          /* file access (GENERIC_READ/WRITE) */
-    unsigned int   flags;           /* flags (FILE_FLAG_*) */
-    unsigned int   sharing;         /* file sharing mode */
+    struct object       obj;        /* object header */
+    struct select_user  select;     /* select user */
+    struct file        *next;       /* next file in hashing list */
+    char               *name;       /* file name */
+    unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
+    unsigned int        flags;      /* flags (FILE_FLAG_*) */
+    unsigned int        sharing;    /* file sharing mode */
 };
 
 #define NAME_HASH_SIZE 37
@@ -61,12 +61,6 @@ static const struct object_ops file_ops =
     file_flush,
     file_get_info,
     file_destroy
-};
-
-static const struct select_ops select_ops =
-{
-    default_select_event,
-    NULL   /* we never set a timeout on a file */
 };
 
 
@@ -194,10 +188,13 @@ static struct object *create_file( int fd, const char *name, unsigned int access
         file->next = NULL;
     }
     init_object( &file->obj, &file_ops, NULL );
-    file->fd      = fd;
-    file->access  = access;
-    file->flags   = attrs;
-    file->sharing = sharing;
+    file->select.fd      = fd;
+    file->select.func    = default_select_event;
+    file->select.private = file;
+    file->access         = access;
+    file->flags          = attrs;
+    file->sharing        = sharing;
+    register_select_user( &file->select );
     CLEAR_ERROR();
     return &file->obj;
 }
@@ -231,12 +228,15 @@ struct file *create_temp_file( int access )
         return NULL;
     }
     init_object( &file->obj, &file_ops, NULL );
-    file->name    = NULL;
-    file->next    = NULL;
-    file->fd      = fd;
-    file->access  = access;
-    file->flags   = 0;
-    file->sharing = 0;
+    file->name           = NULL;
+    file->next           = NULL;
+    file->select.fd      = fd;
+    file->select.func    = default_select_event;
+    file->select.private = file;
+    file->access         = access;
+    file->flags          = 0;
+    file->sharing        = 0;
+    register_select_user( &file->select );
     CLEAR_ERROR();
     return file;
 }
@@ -246,7 +246,7 @@ static void file_dump( struct object *obj, int verbose )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
     printf( "File fd=%d flags=%08x name='%s'\n",
-            file->fd, file->flags, file->name );
+            file->select.fd, file->flags, file->name );
 }
 
 static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -255,11 +255,10 @@ static int file_add_queue( struct object *obj, struct wait_queue_entry *entry )
     assert( obj->ops == &file_ops );
     if (!obj->head)  /* first on the queue */
     {
-        if (!add_select_user( file->fd, READ_EVENT | WRITE_EVENT, &select_ops, file ))
-        {
-            SET_ERROR( ERROR_OUTOFMEMORY );
-            return 0;
-        }
+        int events = 0;
+        if (file->access & GENERIC_READ) events |= READ_EVENT;
+        if (file->access & GENERIC_WRITE) events |= WRITE_EVENT;
+        set_select_events( &file->select, events );
     }
     add_queue( obj, entry );
     return 1;
@@ -272,37 +271,44 @@ static void file_remove_queue( struct object *obj, struct wait_queue_entry *entr
 
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        remove_select_user( file->fd );
+        set_select_events( &file->select, 0 );
     release_object( obj );
 }
 
 static int file_signaled( struct object *obj, struct thread *thread )
 {
-    fd_set read_fds, write_fds;
-    struct timeval tv = { 0, 0 };
-
+    int events = 0;
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    FD_ZERO( &read_fds );
-    FD_ZERO( &write_fds );
-    if (file->access & GENERIC_READ) FD_SET( file->fd, &read_fds );
-    if (file->access & GENERIC_WRITE) FD_SET( file->fd, &write_fds );
-    return select( file->fd + 1, &read_fds, &write_fds, NULL, &tv ) > 0;
+    if (file->access & GENERIC_READ) events |= READ_EVENT;
+    if (file->access & GENERIC_WRITE) events |= WRITE_EVENT;
+    if (check_select_events( &file->select, events ))
+    {
+        /* stop waiting on select() if we are signaled */
+        set_select_events( &file->select, 0 );
+        return 1;
+    }
+    else
+    {
+        /* restart waiting on select() if we are no longer signaled */
+        if (obj->head) set_select_events( &file->select, events );
+        return 0;
+    }
 }
 
 static int file_get_read_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    return dup( file->fd );
+    return dup( file->select.fd );
 }
 
 static int file_get_write_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    return dup( file->fd );
+    return dup( file->select.fd );
 }
 
 static int file_flush( struct object *obj )
@@ -311,7 +317,7 @@ static int file_flush( struct object *obj )
     struct file *file = (struct file *)grab_object(obj);
     assert( obj->ops == &file_ops );
 
-    ret = (fsync( file->fd ) != -1);
+    ret = (fsync( file->select.fd ) != -1);
     if (!ret) file_set_error();
     release_object( file );
     return ret;
@@ -323,13 +329,13 @@ static int file_get_info( struct object *obj, struct get_file_info_reply *reply 
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (fstat( file->fd, &st ) == -1)
+    if (fstat( file->select.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) ||
-        S_ISSOCK(st.st_mode) || isatty(file->fd)) reply->type = FILE_TYPE_CHAR;
+        S_ISSOCK(st.st_mode) || isatty(file->select.fd)) reply->type = FILE_TYPE_CHAR;
     else reply->type = FILE_TYPE_DISK;
     if (S_ISDIR(st.st_mode)) reply->attr = FILE_ATTRIBUTE_DIRECTORY;
     else reply->attr = FILE_ATTRIBUTE_ARCHIVE;
@@ -360,7 +366,8 @@ static void file_destroy( struct object *obj )
         if (file->flags & FILE_FLAG_DELETE_ON_CLOSE) unlink( file->name );
         free( file->name );
     }
-    close( file->fd );
+    unregister_select_user( &file->select );
+    close( file->select.fd );
     free( file );
 }
 
@@ -397,7 +404,7 @@ struct file *get_file_obj( struct process *process, int handle,
 
 int file_get_mmap_fd( struct file *file )
 {
-    return dup( file->fd );
+    return dup( file->select.fd );
 }
 
 static int set_file_pointer( int handle, int *low, int *high, int whence )
@@ -414,7 +421,7 @@ static int set_file_pointer( int handle, int *low, int *high, int whence )
 
     if (!(file = get_file_obj( current->process, handle, 0 )))
         return 0;
-    if ((result = lseek( file->fd, *low, whence )) == -1)
+    if ((result = lseek( file->select.fd, *low, whence )) == -1)
     {
         /* Check for seek before start of file */
         if ((errno == EINVAL) && (whence != SEEK_SET) && (*low < 0))
@@ -436,8 +443,8 @@ static int truncate_file( int handle )
 
     if (!(file = get_file_obj( current->process, handle, GENERIC_WRITE )))
         return 0;
-    if (((result = lseek( file->fd, 0, SEEK_CUR )) == -1) ||
-        (ftruncate( file->fd, result ) == -1))
+    if (((result = lseek( file->select.fd, 0, SEEK_CUR )) == -1) ||
+        (ftruncate( file->select.fd, result ) == -1))
     {
         file_set_error();
         release_object( file );
@@ -458,13 +465,13 @@ int grow_file( struct file *file, int size_high, int size_low )
         SET_ERROR( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (fstat( file->fd, &st ) == -1)
+    if (fstat( file->select.fd, &st ) == -1)
     {
         file_set_error();
         return 0;
     }
     if (st.st_size >= size_low) return 1;  /* already large enough */
-    if (ftruncate( file->fd, size_low ) != -1) return 1;
+    if (ftruncate( file->select.fd, size_low ) != -1) return 1;
     file_set_error();
     return 0;
 }

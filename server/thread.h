@@ -19,7 +19,7 @@ struct process;
 struct thread_wait;
 struct thread_apc;
 struct mutex;
-struct debugger;
+struct debug_ctx;
 
 enum run_state { STARTING, RUNNING, TERMINATED };
 
@@ -31,16 +31,18 @@ struct thread
     struct thread      *proc_next; /* per-process thread list */
     struct thread      *proc_prev;
     struct process     *process;
-    struct mutex       *mutex;     /* list of currently owned mutexes */
-    struct debugger    *debugger;  /* debugger info if this thread is a debugger */
+    struct mutex       *mutex;       /* list of currently owned mutexes */
+    struct debug_ctx   *debug_ctx;   /* debugger context if this thread is a debugger */
+    struct process     *debug_first; /* head of debugged processes list */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     struct thread_apc  *apc;       /* list of async procedure calls */
     int                 apc_count; /* number of outstanding APCs */
     int                 error;     /* current error code */
     enum run_state      state;     /* running state */
     int                 exit_code; /* thread exit code */
-    int                 client_fd; /* client fd for socket communications */
+    struct client      *client;    /* client for socket communications */
     int                 unix_pid;  /* Unix pid of client */
+    void               *teb;       /* TEB address (in client address space) */
     int                 priority;  /* priority level */
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */

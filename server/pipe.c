@@ -26,10 +26,10 @@ enum side { READ_SIDE, WRITE_SIDE };
 
 struct pipe
 {
-    struct object obj;             /* object header */
-    struct pipe  *other;           /* the pipe other end */
-    int           fd;              /* Unix file descriptor */
-    enum side     side;            /* which side of the pipe is this */
+    struct object       obj;         /* object header */
+    struct pipe        *other;       /* the pipe other end */
+    struct select_user  select;      /* select user */
+    enum side           side;        /* which side of the pipe is this */
 };
 
 static void pipe_dump( struct object *obj, int verbose );
@@ -55,11 +55,6 @@ static const struct object_ops pipe_ops =
     pipe_destroy
 };
 
-static const struct select_ops select_ops =
-{
-    default_select_event,
-    NULL   /* we never set a timeout on a pipe */
-};
 
 static int create_pipe( struct object *obj[2] )
 {
@@ -86,14 +81,20 @@ static int create_pipe( struct object *obj[2] )
     }
     init_object( &newpipe[0]->obj, &pipe_ops, NULL );
     init_object( &newpipe[1]->obj, &pipe_ops, NULL );
-    newpipe[0]->fd    = fd[0];
-    newpipe[0]->other = newpipe[1];
-    newpipe[0]->side  = READ_SIDE;
-    newpipe[1]->fd    = fd[1];
-    newpipe[1]->other = newpipe[0];
-    newpipe[1]->side  = WRITE_SIDE;
+    newpipe[0]->select.fd      = fd[0];
+    newpipe[0]->select.func    = default_select_event;
+    newpipe[0]->select.private = newpipe[0];
+    newpipe[0]->other          = newpipe[1];
+    newpipe[0]->side           = READ_SIDE;
+    newpipe[1]->select.fd      = fd[1];
+    newpipe[1]->select.func    = default_select_event;
+    newpipe[1]->select.private = newpipe[1];
+    newpipe[1]->other          = newpipe[0];
+    newpipe[1]->side           = WRITE_SIDE;
     obj[0] = &newpipe[0]->obj;
     obj[1] = &newpipe[1]->obj;
+    register_select_user( &newpipe[0]->select );
+    register_select_user( &newpipe[1]->select );
     CLEAR_ERROR();
     return 1;
 }
@@ -103,7 +104,7 @@ static void pipe_dump( struct object *obj, int verbose )
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
     fprintf( stderr, "Pipe %s-side fd=%d\n",
-             (pipe->side == READ_SIDE) ? "read" : "write", pipe->fd );
+             (pipe->side == READ_SIDE) ? "read" : "write", pipe->select.fd );
 }
 
 static int pipe_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -111,15 +112,8 @@ static int pipe_add_queue( struct object *obj, struct wait_queue_entry *entry )
     struct pipe *pipe = (struct pipe *)obj;
     assert( obj->ops == &pipe_ops );
     if (!obj->head)  /* first on the queue */
-    {
-        if (!add_select_user( pipe->fd,
-                              (pipe->side == READ_SIDE) ? READ_EVENT : WRITE_EVENT,
-                              &select_ops, pipe ))
-        {
-            SET_ERROR( ERROR_OUTOFMEMORY );
-            return 0;
-        }
-    }
+        set_select_events( &pipe->select,
+                           (pipe->side == READ_SIDE) ? READ_EVENT : WRITE_EVENT );
     add_queue( obj, entry );
     return 1;
 }
@@ -131,23 +125,29 @@ static void pipe_remove_queue( struct object *obj, struct wait_queue_entry *entr
 
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        remove_select_user( pipe->fd );
+        set_select_events( &pipe->select, 0 );
     release_object( obj );
 }
 
 static int pipe_signaled( struct object *obj, struct thread *thread )
 {
+    int event;
     struct pipe *pipe = (struct pipe *)obj;
-    struct timeval tv = { 0, 0 };
-    fd_set fds;
-
     assert( obj->ops == &pipe_ops );
-    FD_ZERO( &fds );
-    FD_SET( pipe->fd, &fds );
-    if (pipe->side == READ_SIDE)
-        return select( pipe->fd + 1, &fds, NULL, NULL, &tv ) > 0;
+
+    event = (pipe->side == READ_SIDE) ? READ_EVENT : WRITE_EVENT;
+    if (check_select_events( &pipe->select, event ))
+    {
+        /* stop waiting on select() if we are signaled */
+        set_select_events( &pipe->select, 0 );
+        return 1;
+    }
     else
-        return select( pipe->fd + 1, NULL, &fds, NULL, &tv ) > 0;
+    {
+        /* restart waiting on select() if we are no longer signaled */
+        if (obj->head) set_select_events( &pipe->select, event );
+        return 0;
+    }
 }
 
 static int pipe_get_read_fd( struct object *obj )
@@ -165,7 +165,7 @@ static int pipe_get_read_fd( struct object *obj )
         SET_ERROR( ERROR_ACCESS_DENIED );
         return -1;
     }
-    return dup( pipe->fd );
+    return dup( pipe->select.fd );
 }
 
 static int pipe_get_write_fd( struct object *obj )
@@ -183,7 +183,7 @@ static int pipe_get_write_fd( struct object *obj )
         SET_ERROR( ERROR_ACCESS_DENIED );
         return -1;
     }
-    return dup( pipe->fd );
+    return dup( pipe->select.fd );
 }
 
 static int pipe_get_info( struct object *obj, struct get_file_info_reply *reply )
@@ -199,7 +199,8 @@ static void pipe_destroy( struct object *obj )
     assert( obj->ops == &pipe_ops );
 
     if (pipe->other) pipe->other->other = NULL;
-    close( pipe->fd );
+    unregister_select_user( &pipe->select );
+    close( pipe->select.fd );
     free( pipe );
 }
 

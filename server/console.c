@@ -33,7 +33,7 @@ struct screen_buffer;
 struct console_input
 {
     struct object         obj;           /* object header */
-    int                   fd;            /* Unix file descriptor */
+    struct select_user    select;        /* select user */
     int                   mode;          /* input mode */
     struct screen_buffer *output;        /* associated screen buffer */
     int                   recnum;        /* number of input records */
@@ -43,7 +43,7 @@ struct console_input
 struct screen_buffer
 {
     struct object         obj;           /* object header */
-    int                   fd;            /* Unix file descriptor */
+    struct select_user    select;        /* select user */
     int                   mode;          /* output mode */
     struct console_input *input;         /* associated console input */
     int                   cursor_size;   /* size of cursor (percentage filled) */
@@ -98,11 +98,6 @@ static const struct object_ops screen_buffer_ops =
     screen_buffer_destroy
 };
 
-static const struct select_ops select_ops =
-{
-    default_select_event,
-    NULL   /* we never set a timeout on a console */
-};
 
 int create_console( int fd, struct object *obj[2] )
 {
@@ -136,19 +131,25 @@ int create_console( int fd, struct object *obj[2] )
     }
     init_object( &console_input->obj, &console_input_ops, NULL );
     init_object( &screen_buffer->obj, &screen_buffer_ops, NULL );
-    console_input->fd             = read_fd;
+    console_input->select.fd      = read_fd;
+    console_input->select.func    = default_select_event;
+    console_input->select.private = console_input;
     console_input->mode           = ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                                     ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT;
     console_input->output         = screen_buffer;
     console_input->recnum         = 0;
     console_input->records        = NULL;
-    screen_buffer->fd             = write_fd;
+    screen_buffer->select.fd      = write_fd;
+    screen_buffer->select.func    = default_select_event;
+    screen_buffer->select.private = screen_buffer;
     screen_buffer->mode           = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
     screen_buffer->input          = console_input;
     screen_buffer->cursor_size    = 100;
     screen_buffer->cursor_visible = 1;
     screen_buffer->pid            = 0;
     screen_buffer->title          = strdup( "Wine console" );
+    register_select_user( &console_input->select );
+    register_select_user( &screen_buffer->select );
     CLEAR_ERROR();
     obj[0] = &console_input->obj;
     obj[1] = &screen_buffer->obj;
@@ -183,6 +184,10 @@ static int set_console_fd( int handle, int fd, int pid )
         return 0;
     }
 
+    /* can't change the fd if someone is waiting on it */
+    assert( !input->obj.head );
+    assert( !output->obj.head );
+
     if ((fd_in = dup(fd)) == -1)
     {
         file_set_error();
@@ -198,11 +203,15 @@ static int set_console_fd( int handle, int fd, int pid )
         release_object( output );
         return 0;
     }
-    close( input->fd );
-    close( output->fd );
-    input->fd = fd_in;
-    output->fd = fd_out;
-    output->pid = pid;
+    unregister_select_user( &input->select );
+    unregister_select_user( &output->select );
+    close( input->select.fd );
+    close( output->select.fd );
+    input->select.fd  = fd_in;
+    output->select.fd = fd_out;
+    output->pid       = pid;
+    register_select_user( &input->select );
+    register_select_user( &output->select );
     release_object( input );
     release_object( output );
     return 1;
@@ -346,7 +355,7 @@ static void console_input_dump( struct object *obj, int verbose )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    fprintf( stderr, "Console input fd=%d\n", console->fd );
+    fprintf( stderr, "Console input fd=%d\n", console->select.fd );
 }
 
 static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -354,13 +363,7 @@ static int console_input_add_queue( struct object *obj, struct wait_queue_entry 
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
     if (!obj->head)  /* first on the queue */
-    {
-        if (!add_select_user( console->fd, READ_EVENT, &select_ops, console ))
-        {
-            SET_ERROR( ERROR_OUTOFMEMORY );
-            return 0;
-        }
-    }
+        set_select_events( &console->select, READ_EVENT );
     add_queue( obj, entry );
     return 1;
 }
@@ -372,27 +375,34 @@ static void console_input_remove_queue( struct object *obj, struct wait_queue_en
 
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        remove_select_user( console->fd );
+        set_select_events( &console->select, 0 );
     release_object( obj );
 }
 
 static int console_input_signaled( struct object *obj, struct thread *thread )
 {
-    fd_set fds;
-    struct timeval tv = { 0, 0 };
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
 
-    FD_ZERO( &fds );
-    FD_SET( console->fd, &fds );
-    return select( console->fd + 1, &fds, NULL, NULL, &tv ) > 0;
+    if (check_select_events( &console->select, READ_EVENT ))
+    {
+        /* stop waiting on select() if we are signaled */
+        set_select_events( &console->select, 0 );
+        return 1;
+    }
+    else
+    {
+        /* restart waiting on select() if we are no longer signaled */
+        if (obj->head) set_select_events( &console->select, READ_EVENT );
+        return 0;
+    }
 }
 
 static int console_input_get_read_fd( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    return dup( console->fd );
+    return dup( console->select.fd );
 }
 
 static int console_get_info( struct object *obj, struct get_file_info_reply *reply )
@@ -406,7 +416,8 @@ static void console_input_destroy( struct object *obj )
 {
     struct console_input *console = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
-    close( console->fd );
+    unregister_select_user( &console->select );
+    close( console->select.fd );
     if (console->output) console->output->input = NULL;
     free( console );
 }
@@ -415,7 +426,7 @@ static void screen_buffer_dump( struct object *obj, int verbose )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    fprintf( stderr, "Console screen buffer fd=%d\n", console->fd );
+    fprintf( stderr, "Console screen buffer fd=%d\n", console->select.fd );
 }
 
 static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry )
@@ -423,13 +434,7 @@ static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry 
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
     if (!obj->head)  /* first on the queue */
-    {
-        if (!add_select_user( console->fd, WRITE_EVENT, &select_ops, console ))
-        {
-            SET_ERROR( ERROR_OUTOFMEMORY );
-            return 0;
-        }
-    }
+        set_select_events( &console->select, WRITE_EVENT );
     add_queue( obj, entry );
     return 1;
 }
@@ -441,34 +446,42 @@ static void screen_buffer_remove_queue( struct object *obj, struct wait_queue_en
 
     remove_queue( obj, entry );
     if (!obj->head)  /* last on the queue is gone */
-        remove_select_user( console->fd );
+        set_select_events( &console->select, 0 );
     release_object( obj );
 }
 
 static int screen_buffer_signaled( struct object *obj, struct thread *thread )
 {
-    fd_set fds;
-    struct timeval tv = { 0, 0 };
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
 
-    FD_ZERO( &fds );
-    FD_SET( console->fd, &fds );
-    return select( console->fd + 1, NULL, &fds, NULL, &tv ) > 0;
+    if (check_select_events( &console->select, WRITE_EVENT ))
+    {
+        /* stop waiting on select() if we are signaled */
+        set_select_events( &console->select, 0 );
+        return 1;
+    }
+    else
+    {
+        /* restart waiting on select() if we are no longer signaled */
+        if (obj->head) set_select_events( &console->select, WRITE_EVENT );
+        return 0;
+    }
 }
 
 static int screen_buffer_get_write_fd( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    return dup( console->fd );
+    return dup( console->select.fd );
 }
 
 static void screen_buffer_destroy( struct object *obj )
 {
     struct screen_buffer *console = (struct screen_buffer *)obj;
     assert( obj->ops == &screen_buffer_ops );
-    close( console->fd );
+    unregister_select_user( &console->select );
+    close( console->select.fd );
     if (console->input) console->input->output = NULL;
     if (console->pid) kill( console->pid, SIGTERM );
     if (console->title) free( console->title );

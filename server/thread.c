@@ -40,6 +40,7 @@ struct thread_wait
     int                     count;      /* count of objects */
     int                     flags;
     struct timeval          timeout;
+    struct timeout_user    *user;
     struct wait_queue_entry queues[1];
 };
 
@@ -80,21 +81,23 @@ static struct thread *first_thread = &initial_thread;
 static void init_thread( struct thread *thread, int fd )
 {
     init_object( &thread->obj, &thread_ops, NULL );
-    thread->client_fd = fd;
-    thread->unix_pid  = 0;  /* not known yet */
-    thread->mutex     = NULL;
-    thread->debugger  = NULL;
-    thread->wait      = NULL;
-    thread->apc       = NULL;
-    thread->apc_count = 0;
-    thread->error     = 0;
-    thread->state     = STARTING;
-    thread->exit_code = 0x103;  /* STILL_ACTIVE */
-    thread->next      = NULL;
-    thread->prev      = NULL;
-    thread->priority  = THREAD_PRIORITY_NORMAL;
-    thread->affinity  = 1;
-    thread->suspend   = 0;
+    thread->client      = NULL;
+    thread->unix_pid    = 0;  /* not known yet */
+    thread->teb         = NULL;
+    thread->mutex       = NULL;
+    thread->debug_ctx   = NULL;
+    thread->debug_first = NULL;
+    thread->wait        = NULL;
+    thread->apc         = NULL;
+    thread->apc_count   = 0;
+    thread->error       = 0;
+    thread->state       = STARTING;
+    thread->exit_code   = 0x103;  /* STILL_ACTIVE */
+    thread->next        = NULL;
+    thread->prev        = NULL;
+    thread->priority    = THREAD_PRIORITY_NORMAL;
+    thread->affinity    = 1;
+    thread->suspend     = 0;
 }
 
 /* create the initial thread and start the main server loop */
@@ -104,7 +107,7 @@ void create_initial_thread( int fd )
     init_thread( &initial_thread, fd );
     initial_thread.process = create_initial_process(); 
     add_process_thread( initial_thread.process, &initial_thread );
-    add_client( fd, &initial_thread );
+    initial_thread.client = add_client( fd, &initial_thread );
     grab_object( &initial_thread ); /* so that we never free it */
     select_loop();
 }
@@ -134,7 +137,7 @@ static struct thread *create_thread( int fd, void *pid, int suspend, int inherit
 
     if ((*handle = alloc_handle( current->process, thread,
                                  THREAD_ALL_ACCESS, inherit )) == -1) goto error;
-    if (add_client( fd, thread ) == -1)
+    if (!(thread->client = add_client( fd, thread )))
     {
         SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
         goto error;
@@ -169,8 +172,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread pid=%d fd=%d\n",
-             thread->unix_pid, thread->client_fd );
+    fprintf( stderr, "Thread pid=%d teb=%p client=%p\n",
+             thread->unix_pid, thread->teb, thread->client );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )
@@ -214,7 +217,7 @@ static int suspend_thread( struct thread *thread )
     int old_count = thread->suspend;
     if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
     {
-        if (!thread->suspend++)
+        if (!(thread->process->suspend + thread->suspend++))
         {
             if (thread->unix_pid) kill( thread->unix_pid, SIGSTOP );
         }
@@ -228,7 +231,7 @@ static int resume_thread( struct thread *thread )
     int old_count = thread->suspend;
     if (thread->suspend > 0)
     {
-        if (!--thread->suspend)
+        if (!(--thread->suspend + thread->process->suspend))
         {
             if (thread->unix_pid) kill( thread->unix_pid, SIGCONT );
         }
@@ -270,7 +273,7 @@ int send_reply( struct thread *thread, int pass_fd, int n,
         vec[i].iov_len  = va_arg( args, int );
     }
     va_end( args );
-    return send_reply_v( thread->client_fd, thread->error, pass_fd, vec, n );
+    return send_reply_v( thread->client, thread->error, pass_fd, vec, n );
 }
 
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
@@ -306,7 +309,7 @@ static void end_wait( struct thread *thread )
     assert( wait );
     for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
         entry->obj->ops->remove_queue( entry->obj, entry );
-    if (wait->flags & SELECT_TIMEOUT) set_select_timeout( thread->client_fd, NULL );
+    if (wait->user) remove_timeout_user( wait->user );
     free( wait );
     thread->wait = NULL;
 }
@@ -329,20 +332,8 @@ static int wait_on( struct thread *thread, int count,
     thread->wait  = wait;
     wait->count   = count;
     wait->flags   = flags;
-    if (flags & SELECT_TIMEOUT)
-    {
-        gettimeofday( &wait->timeout, 0 );
-        if (timeout)
-        {
-            wait->timeout.tv_usec += (timeout % 1000) * 1000;
-            if (wait->timeout.tv_usec >= 1000000)
-            {
-                wait->timeout.tv_usec -= 1000000;
-                wait->timeout.tv_sec++;
-            }
-            wait->timeout.tv_sec += timeout / 1000;
-        }
-    }
+    wait->user    = NULL;
+    if (flags & SELECT_TIMEOUT) make_timeout( &wait->timeout, timeout );
 
     for (i = 0, entry = wait->queues; i < count; i++, entry++)
     {
@@ -375,8 +366,12 @@ static int check_wait( struct thread *thread, int *signaled )
     assert( wait );
     if (wait->flags & SELECT_ALL)
     {
+        int not_ok = 0;
+        /* Note: we must check them all anyway, as some objects may
+         * want to do something when signaled, even if others are not */
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            if (!entry->obj->ops->signaled( entry->obj, thread )) goto other_checks;
+            not_ok |= !entry->obj->ops->signaled( entry->obj, thread );
+        if (not_ok) goto other_checks;
         /* Wait satisfied: tell it to all objects */
         *signaled = 0;
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
@@ -458,11 +453,15 @@ static void sleep_on( struct thread *thread, int count, int *handles, int flags,
         send_select_reply( thread, -1 );
         return;
     }
-    if (!wake_thread( thread ))
+    if (wake_thread( thread )) return;
+    /* now we need to wait */
+    if (flags & SELECT_TIMEOUT)
     {
-        /* we need to wait */
-        if (flags & SELECT_TIMEOUT)
-            set_select_timeout( thread->client_fd, &thread->wait->timeout );
+        if (!(thread->wait->user = add_timeout_user( &thread->wait->timeout,
+                                                     call_timeout_handler, thread )))
+        {
+            send_select_reply( thread, -1 );
+        }
     }
 }
 
@@ -470,6 +469,7 @@ static void sleep_on( struct thread *thread, int count, int *handles, int flags,
 void thread_timeout(void)
 {
     assert( current->wait );
+    current->wait->user = NULL;
     end_wait( current );
     send_select_reply( current, STATUS_TIMEOUT );
 }
@@ -513,7 +513,7 @@ void kill_thread( struct thread *thread, int exit_code )
 {
     if (thread->state == TERMINATED) return;  /* already killed */
     if (thread->unix_pid) kill( thread->unix_pid, SIGTERM );
-    remove_client( thread->client_fd, exit_code ); /* this will call thread_killed */
+    remove_client( thread->client, exit_code ); /* this will call thread_killed */
 }
 
 /* a thread has been killed */
@@ -558,7 +558,9 @@ DECL_HANDLER(init_thread)
     }
     current->state    = RUNNING;
     current->unix_pid = req->unix_pid;
-    if (current->suspend > 0) kill( current->unix_pid, SIGSTOP );
+    current->teb      = req->teb;
+    if (current->suspend + current->process->suspend > 0)
+        kill( current->unix_pid, SIGSTOP );
     reply.pid = current->process;
     reply.tid = current;
     send_reply( current, -1, 1, &reply, sizeof(reply) );
