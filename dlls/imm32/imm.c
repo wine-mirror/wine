@@ -142,6 +142,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             IMM_RegisterMessages();
             x11drv = GetModuleHandleA("x11drv.dll");
             if (x11drv) pX11DRV_ForceXIMReset = (void *)GetProcAddress( x11drv, "ForceXIMReset");
+            IMM_Register();
             break;
         case DLL_PROCESS_DETACH:
             if (hwndDefault)
@@ -735,7 +736,6 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
   {
         static const WCHAR the_name[] = {'I','M','E','\0'};
 
-        IMM_Register();
         hwndDefault = CreateWindowExW( WS_EX_CLIENTEDGE, WC_IMECLASSNAME,
                 the_name, WS_POPUPWINDOW|WS_CAPTION, 0, 0, 120, 55, 0, 0,
                 hImeInst, 0);
