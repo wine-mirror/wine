@@ -4382,8 +4382,10 @@ static INT TREEVIEW_ProcessLetterKeys(
 static LRESULT
 TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
 {
+    int viscount;
+    BOOL hasFirstVisible = infoPtr->firstVisible != NULL;
     HTREEITEM newFirstVisible = NULL;
-    int visible_pos;
+    int visible_pos = -1;
 
     if (!TREEVIEW_ValidItem(infoPtr, item))
 	return FALSE;
@@ -4408,23 +4410,26 @@ TREEVIEW_EnsureVisible(TREEVIEW_INFO *infoPtr, HTREEITEM item, BOOL bHScroll)
 	}
     }
 
-    TRACE("%p (%s) %ld - %ld\n", item, TREEVIEW_ItemName(item), item->visibleOrder,
-	  infoPtr->firstVisible->visibleOrder);
+    viscount = TREEVIEW_GetVisibleCount(infoPtr);
 
-    visible_pos = item->visibleOrder - infoPtr->firstVisible->visibleOrder;
+    TRACE("%p (%s) %ld - %ld viscount(%d)\n", item, TREEVIEW_ItemName(item), item->visibleOrder, 
+        hasFirstVisible ? infoPtr->firstVisible->visibleOrder : -1, viscount);
+
+    if (hasFirstVisible)
+        visible_pos = item->visibleOrder - infoPtr->firstVisible->visibleOrder;
 
     if (visible_pos < 0)
     {
 	/* item is before the start of the list: put it at the top. */
 	newFirstVisible = item;
     }
-    else if (visible_pos >= TREEVIEW_GetVisibleCount(infoPtr)
+    else if (visible_pos >= viscount
 	     /* Sometimes, before we are displayed, GVC is 0, causing us to
 	      * spuriously scroll up. */
 	     && visible_pos > 0)
     {
 	/* item is past the end of the list. */
-	int scroll = visible_pos - TREEVIEW_GetVisibleCount(infoPtr);
+	int scroll = visible_pos - viscount;
 
 	newFirstVisible = TREEVIEW_GetListItem(infoPtr, infoPtr->firstVisible,
 					       scroll + 1);
