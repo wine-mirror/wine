@@ -1202,6 +1202,79 @@ static const struct message WmCreateMDIchildVisibleMaxSeq2[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
+/* WM_MDICREATE MDI child window, initially visible and maximized */
+static const struct message WmCreateMDIchildVisibleMaxSeq3[] = {
+    { WM_MDICREATE, sent },
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_CREATE, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_CREATE*/ }, /* in MDI client */
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_MDIREFRESHMENU, sent/*|wparam|lparam, 0, 0*/ },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
+
+    /* Win9x: message sequence terminates here. */
+
+    { WM_NCACTIVATE, sent|wparam|defwinproc, 1 },
+    { HCBT_SETFOCUS, hook }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|defwinproc },
+
+    { WM_MDIACTIVATE, sent|defwinproc },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI client */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc },
+
+    { 0 }
+};
 /* WM_SYSCOMMAND/SC_CLOSE for the 2nd MDI child window, initially visible and maximized */
 static const struct message WmDestroyMDIchildVisibleMaxSeq2[] = {
     { WM_SYSCOMMAND, sent|wparam, SC_CLOSE },
@@ -1274,6 +1347,131 @@ static const struct message WmDestroyMDIchildVisibleMaxSeq2[] = {
 
     { WM_DESTROY, sent|defwinproc },
     { WM_NCDESTROY, sent|defwinproc },
+    { 0 }
+};
+/* WM_MDIDESTROY for the single MDI child window, initially visible and maximized */
+static const struct message WmDestroyMDIchildVisibleMaxSeq1[] = {
+    { WM_MDIDESTROY, sent }, /* in MDI client */
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_ERASEBKGND, sent|parent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI client */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI client */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOREDRAW|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_MDIACTIVATE, sent },
+
+    { HCBT_MINMAX, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_SHOWWINDOW|0x8000 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE|0x8000 },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI child */
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam|defwinproc, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|defwinproc, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+     /* in MDI frame */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+
+     /* in MDI client */
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_NOZORDER },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_SIZE, sent },
+
+    { HCBT_SETFOCUS, hook },
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { WM_MDIREFRESHMENU, sent }, /* in MDI client */
+
+    { HCBT_DESTROYWND, hook },
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_DESTROY, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_DESTROY*/ }, /* in MDI client */
+
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER },
+    { WM_ERASEBKGND, sent|parent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
     { 0 }
 };
 /* ShowWindow(SW_MAXIMIZE) for a not visible MDI child window */
@@ -1526,6 +1724,7 @@ static void test_mdi_messages(void)
     CLIENTCREATESTRUCT client_cs;
     HWND mdi_frame, mdi_child, mdi_child2, active_child;
     BOOL zoomed;
+    HMENU hMenu = CreateMenu();
 
     assert(mdi_RegisterWindowClasses());
 
@@ -1536,7 +1735,7 @@ static void test_mdi_messages(void)
                                 WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                 WS_MAXIMIZEBOX | WS_VISIBLE,
                                 100, 100, CW_USEDEFAULT, CW_USEDEFAULT,
-                                GetDesktopWindow(), 0,
+                                GetDesktopWindow(), hMenu,
                                 GetModuleHandleA(0), NULL);
     assert(mdi_frame);
     ok_sequence(WmCreateMDIframeSeq, "Create MDI frame window", TRUE);
@@ -1811,19 +2010,33 @@ static void test_mdi_messages(void)
     mdi_cs.szClass = "MDI_child_Class";
     mdi_cs.szTitle = "MDI child";
     mdi_cs.hOwner = GetModuleHandleA(0);
-    mdi_cs.x = CW_USEDEFAULT;
-    mdi_cs.y = CW_USEDEFAULT;
+    mdi_cs.x = 0;
+    mdi_cs.y = 0;
     mdi_cs.cx = CW_USEDEFAULT;
     mdi_cs.cy = CW_USEDEFAULT;
-    mdi_cs.style = WS_CHILD | WS_VISIBLE | WS_MAXIMIZEBOX;
+    mdi_cs.style = WS_CHILD | WS_SYSMENU | WS_VISIBLE | WS_MAXIMIZEBOX | WS_MAXIMIZE;
     mdi_cs.lParam = 0;
     mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
     ok(mdi_child != 0, "MDI child creation failed\n");
+    ok_sequence(WmCreateMDIchildVisibleMaxSeq3, "WM_MDICREATE for maximized visible MDI child window", TRUE);
+
+    ok(GetMenuItemID(hMenu, GetMenuItemCount(hMenu) - 1) == SC_CLOSE, "SC_CLOSE menu item not found\n");
 
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
 
+    ok(IsZoomed(mdi_child), "MDI child should be maximized\n");
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == mdi_child, "wrong focus window %p\n", GetFocus());
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(active_child == mdi_child, "wrong active MDI child %p\n", active_child);
+    ok(zoomed, "wrong zoomed state %d\n", zoomed);
+    flush_sequence();
+
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
+    ok_sequence(WmDestroyMDIchildVisibleMaxSeq1, "Destroy visible maximized MDI child window", TRUE);
+
     ok(!IsWindow(mdi_child), "MDI child should be destroyed\n");
     active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
     ok(!active_child, "wrong active MDI child %p\n", active_child);
@@ -2272,6 +2485,9 @@ static void test_messages(void)
     flush_sequence();
 
     /* Message sequence for SetMenu */
+    ok(!DrawMenuBar(hwnd), "DrawMenuBar should return FALSE for a window without a menu\n");
+    ok_sequence(WmEmptySeq, "DrawMenuBar for a window without a menu", FALSE);
+
     hmenu = CreateMenu();
     ok (hmenu != 0, "Failed to create menu\n");
     ok (InsertMenuA(hmenu, -1, MF_BYPOSITION, 0x1000, "foo"), "InsertMenu failed\n");

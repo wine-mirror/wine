@@ -515,7 +515,7 @@ static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo )
 /**********************************************************************
  *                                      MDIDestroyChild
  */
-static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
+static LRESULT MDIDestroyChild( HWND client, MDICLIENTINFO *ci,
                                 HWND child, BOOL flagDestroy )
 {
     UINT i;
@@ -528,7 +528,15 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
         if (next)
             MDI_SwitchActiveChild(ci, next);
         else
-            ci->hwndActiveChild = 0; /* nothing to activate */
+        {
+            ShowWindow(child, SW_HIDE);
+            if (IsZoomed(child))
+            {
+                MDI_RestoreFrameMenu(GetParent(client), child);
+                MDI_UpdateFrameText(GetParent(client), client, NULL);
+            }
+            MDI_ChildActivate(client, 0);
+        }
     }
 
     for (i = 0; i < ci->nActiveChildren; i++)
@@ -547,6 +555,8 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
         }
     }
 
+    SendMessageW(client, WM_MDIREFRESHMENU, 0, 0);
+
     if (flagDestroy)
     {
         MDI_PostUpdate(GetParent(child), ci, SB_BOTH+1);
@@ -561,7 +571,8 @@ static LRESULT MDIDestroyChild( HWND parent, MDICLIENTINFO *ci,
 /**********************************************************************
  *					MDI_ChildActivate
  *
- * Called in response to WM_CHILDACTIVATE
+ * Called in response to WM_CHILDACTIVATE, or when last MDI child
+ * is being deactivated.
  */
 static LONG MDI_ChildActivate( HWND client, HWND child )
 {
@@ -872,6 +883,8 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 
     TRACE("frame %p,child %p,nIt=%d,iId=%d\n",frame,hChild,nItems,iId);
 
+    if( !menu ) return 0;
+
     /* if there is no system buttons then nothing to do */
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0;
@@ -1058,10 +1071,12 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
       case WM_MDICREATE:
         if (lParam)
         {
+            HWND child;
+
             if (unicode)
             {
                 MDICREATESTRUCTW *csW = (MDICREATESTRUCTW *)lParam;
-                return (LRESULT)CreateWindowExW(WS_EX_MDICHILD, csW->szClass,
+                child = CreateWindowExW(WS_EX_MDICHILD, csW->szClass,
                                             csW->szTitle, csW->style,
                                             csW->x, csW->y, csW->cx, csW->cy,
                                             hwnd, 0, csW->hOwner,
@@ -1070,12 +1085,19 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
             else
             {
                 MDICREATESTRUCTA *csA = (MDICREATESTRUCTA *)lParam;
-                return (LRESULT)CreateWindowExA(WS_EX_MDICHILD, csA->szClass,
+                child = CreateWindowExA(WS_EX_MDICHILD, csA->szClass,
                                             csA->szTitle, csA->style,
                                             csA->x, csA->y, csA->cx, csA->cy,
                                             hwnd, 0, csA->hOwner,
                                             (LPVOID)csA->lParam);
             }
+
+            if (IsZoomed(ci->hwndActiveChild))
+            {
+                MDI_AugmentFrameMenu(GetParent(hwnd), child);
+                MDI_UpdateFrameText(GetParent(hwnd), hwnd, NULL);
+            }
+            return (LRESULT)child;
         }
         return 0;
 
