@@ -49,7 +49,7 @@ Atom dndSelection = None;
  */
 Window X11DRV_WND_GetXWindow(WND *wndPtr)
 {
-    return wndPtr ? 
+    return wndPtr && wndPtr->pDriverData ? 
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window : 0;
 }
 
