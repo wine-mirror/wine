@@ -525,6 +525,13 @@ serialize_param(
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
+    case VT_I4|VT_BYREF:
+	hres = S_OK;
+	if (debugout) TRACE_(olerelay)("&0x%lx",*arg);
+	if (writeit)
+	    hres = xbuf_add(buf,(LPBYTE)(DWORD*)*arg,sizeof(DWORD));
+	/* do not dealloc at this time */
+	return hres;
     case VT_VARIANT: {
 	TYPEDESC	tdesc2;
 	VARIANT		*vt = (VARIANT*)arg;
@@ -542,11 +549,11 @@ serialize_param(
 	return hres;
     }
     case VT_BSTR|VT_BYREF: {
-        if (debugout) TRACE_(olerelay)("[byref]'%s'", *arg ? relaystr(*((BSTR*)*arg)) : "<bstr NULL>");
+	if (debugout) TRACE_(olerelay)("[byref]'%s'", *(BSTR*)*arg ? relaystr(*((BSTR*)*arg)) : "<bstr NULL>");
         if (writeit) {
             /* ptr to ptr to magic widestring, basically */
             BSTR *bstr = (BSTR *) *arg;
-            if (!bstr) {
+            if (!*bstr) {
                 /* -1 means "null string" which is equivalent to empty string */
                 DWORD fakelen = -1;     
                 xbuf_add(buf, (LPBYTE)&fakelen,4);
@@ -1082,6 +1089,16 @@ deserialize_param(
 	    }
 	    if (debugout) TRACE_(olerelay)("%02lx",*arg & 0xff);
 	    return hres;
+        case VT_I4|VT_BYREF:
+	    hres = S_OK;
+	    if (alloc)
+		*arg = (DWORD)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD));
+	    if (readit) {
+		hres = xbuf_get(buf,(LPBYTE)*arg,sizeof(DWORD));
+		if (hres) ERR("Failed to read integer 4 byte\n");
+	    }
+	    if (debugout) TRACE_(olerelay)("&0x%lx",*(DWORD*)*arg);
+	    return hres;
 	case VT_BSTR|VT_BYREF: {
 	    BSTR **bstr = (BSTR **)arg;
 	    WCHAR	*str;
@@ -1094,7 +1111,8 @@ deserialize_param(
 		    return hres;
 		}
 		if (len == -1) {
-		    *bstr = NULL;
+                    *bstr = CoTaskMemAlloc(sizeof(BSTR *));
+		    **bstr = NULL;
 		    if (debugout) TRACE_(olerelay)("<bstr NULL>");
 		} else {
 		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
