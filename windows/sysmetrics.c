@@ -20,12 +20,12 @@ static short sysMetrics[SM_CMETRICS+1];
  * Initialisation of the system metrics array.
  *
  * Differences in return values between 3.1 and 95 apps under Win95 (FIXME ?):
- * SM_CXVSCROLL        x+1      x
- * SM_CYHSCROLL        x+1      x
- * SM_CXDLGFRAME       x-1      x
- * SM_CYDLGFRAME       x-1      x
- * SM_CYCAPTION        x+1      x
- * SM_CYMENU           x-1      x
+ * SM_CXVSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CYHSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CXDLGFRAME       x-1      x	Already fixed
+ * SM_CYDLGFRAME       x-1      x	Already fixed
+ * SM_CYCAPTION        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
+ * SM_CYMENU           x-1      x	Already fixed
  * SM_CYFULLSCREEN     x-1      x
  * 
  * (collides with TWEAK_WineLook sometimes,
@@ -37,15 +37,19 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYCURSOR] = 32;
     sysMetrics[SM_CXSCREEN] = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
     sysMetrics[SM_CYSCREEN] =  MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-    sysMetrics[SM_CXVSCROLL] =
-	PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16) + 1;
+    if (TWEAK_WineLook > WIN31_LOOK)
+	sysMetrics[SM_CXVSCROLL] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16);
+    else
+	sysMetrics[SM_CXVSCROLL] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 17);
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
     if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CYCAPTION] =
 	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 19);
     else
-	sysMetrics[SM_CYCAPTION] = 2 +
-	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 18);
+	sysMetrics[SM_CYCAPTION] =
+	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 20);
     sysMetrics[SM_CXBORDER] = 1;
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CXDLGFRAME] =
