@@ -20,8 +20,8 @@
 @ stdcall ExportSecurityContext(ptr long ptr ptr)
 @ stdcall FreeContextBuffer(ptr)
 @ stdcall FreeCredentialsHandle(ptr)
-@ stub GetComputerObjectNameA
-@ stub GetComputerObjectNameW
+@ stdcall GetComputerObjectNameA(long ptr ptr)
+@ stdcall GetComputerObjectNameW(long ptr ptr)
 @ stub GetSecurityUserInfo
 @ stub GetUserNameExA
 @ stub GetUserNameExW

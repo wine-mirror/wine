@@ -25,6 +25,7 @@
 #include "shlwapi.h"
 #include "sspi.h"
 #include "secur32_priv.h"
+#include "secext.h"
 #include "thunks.h"
 
 #include "wine/debug.h"
@@ -878,6 +879,26 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesA(PULONG pcPackages,
         FreeContextBuffer(info);
     }
     return ret;
+}
+
+/***********************************************************************
+ *		GetComputerObjectNameA (SECUR32.@)
+ */
+BOOLEAN WINAPI GetComputerObjectNameA(
+  EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
+{
+    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		GetComputerObjectNameW (SECUR32.@)
+ */
+BOOLEAN WINAPI GetComputerObjectNameW(
+  EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
+{
+    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
+    return FALSE;
 }
 
 /***********************************************************************
