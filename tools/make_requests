@@ -14,7 +14,9 @@
     "unsigned int" => "%08x",
     "void*"        => "%p",
     "time_t"       => "%ld",
-    "char[1]"      => "\\\"%s\\\""
+    "path_t"       => "&dump_unicode_string",
+    "char[1]"      => "\\\"%s\\\"",
+    "WCHAR[1]"     => "&dump_unicode_string"
 );
 
 my @requests = ();
@@ -128,15 +130,25 @@ sub DO_DUMP_FUNC
 	my $var = shift;
 	if (defined($formats{$type}))
 	{
-	    push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
-	    push @trace_lines, "," if ($#_ > 0);
-	    push @trace_lines, "\", ";
-	    push @trace_lines, "req->$var );\n";
+            if ($formats{$type} =~ /^&(.*)/)
+            {
+                my $func = $1;
+                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
+                push @trace_lines, "    $func( req->$var );\n";
+                push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
+            }
+            else
+            {
+                push @trace_lines, "    fprintf( stderr, \" $var=$formats{$type}";
+                push @trace_lines, "," if ($#_ > 0);
+                push @trace_lines, "\", ";
+                push @trace_lines, "req->$var );\n";
+            }
 	}
 	else  # must be some varargs format
 	{
 	    push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-	    push @trace_lines, "    dump_varargs_${name}( req );\n";
+	    push @trace_lines, "    dump_varargs_${name}_${req}( req );\n";
         }
     }
     push @trace_lines, "}\n\n";
