@@ -16,6 +16,9 @@
 #include <sys/mman.h>
 #endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -546,24 +549,29 @@ DECL_HANDLER(new_thread)
 {
     struct thread *thread;
     struct process *process;
+    int sock[2];
 
-    if ((process = get_process_from_id( req->pid )))
+    if (!(process = get_process_from_id( req->pid ))) return;
+
+    if (socketpair( AF_UNIX, SOCK_STREAM, 0, sock ) != -1)
     {
-        if ((fd = dup(fd)) != -1)
+        if ((thread = create_thread( sock[0], process, req->suspend )))
         {
-            if ((thread = create_thread( fd, process, req->suspend )))
+            req->tid = thread;
+            if ((req->handle = alloc_handle( current->process, thread,
+                                             THREAD_ALL_ACCESS, req->inherit )) != -1)
             {
-                req->tid = thread;
-                if ((req->handle = alloc_handle( current->process, thread,
-                                                 THREAD_ALL_ACCESS, req->inherit )) == -1)
-                    release_object( thread );
-                /* else will be released when the thread gets killed */
+                set_reply_fd( current, sock[1] );
+                release_object( process );
+                /* thread object will be released when the thread gets killed */
+                return;
             }
-            else close( fd );
+            release_object( thread );
         }
-        else file_set_error();
-        release_object( process );
+        close( sock[1] );
     }
+    else file_set_error();
+    release_object( process );
 }
 
 /* retrieve the thread buffer file descriptor */

@@ -9,9 +9,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -213,7 +210,6 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
                      LPSECURITY_ATTRIBUTES sa, int *server_handle )
 {
     struct new_thread_request *req = get_req_buffer();
-    int fd[2];
     HANDLE cleanup_object;
 
     TEB *teb = VirtualAlloc(0, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -233,24 +229,15 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
     teb->teb_sel = SELECTOR_AllocBlock( teb, 0x1000, SEGMENT_DATA, TRUE, FALSE );
     if (!teb->teb_sel) goto error;
 
-    /* Create the socket pair for server communication */
-
-    if (socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) == -1)
-    {
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );  /* FIXME */
-        goto error;
-    }
-    teb->socket = fd[0];
-    fcntl( fd[0], F_SETFD, 1 ); /* set close on exec flag */
-
     /* Create the thread on the server side */
 
     req->pid     = teb->process->server_pid;
     req->suspend = ((flags & CREATE_SUSPENDED) != 0);
     req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    if (server_call_fd( REQ_NEW_THREAD, fd[1], NULL )) goto error;
+    if (server_call_fd( REQ_NEW_THREAD, -1, &teb->socket )) goto error;
     teb->tid = req->tid;
     *server_handle = req->handle;
+    fcntl( teb->socket, F_SETFD, 1 ); /* set close on exec flag */
 
     /* Do the rest of the initialization */
 
