@@ -1255,12 +1255,66 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     WINE_SPI_FIXME(SPI_SETPENWINDOWS);		/*     49  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETFILTERKEYS);		/*     50 */
+    case SPI_GETFILTERKEYS:                     /*     50 */
+    {
+        LPFILTERKEYS lpFilterKeys = (LPFILTERKEYS)pvParam;
+        WARN("SPI_GETFILTERKEYS not fully implemented\n");
+        if (lpFilterKeys->cbSize == sizeof(FILTERKEYS))
+        {
+            /* Indicate that no FilterKeys feature available */
+            lpFilterKeys->dwFlags = 0;
+            lpFilterKeys->iWaitMSec = 0;
+            lpFilterKeys->iDelayMSec = 0;
+            lpFilterKeys->iRepeatMSec = 0;
+            lpFilterKeys->iBounceMSec = 0;
+         }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETFILTERKEYS);		/*     51 */
-    WINE_SPI_FIXME(SPI_GETTOGGLEKEYS);		/*     52 */
+
+    case SPI_GETTOGGLEKEYS:                     /*     52 */
+    {
+        LPTOGGLEKEYS lpToggleKeys = (LPTOGGLEKEYS)pvParam;
+        WARN("SPI_GETTOGGLEKEYS not fully implemented\n");
+        if (lpToggleKeys->cbSize == sizeof(TOGGLEKEYS))
+        {
+            /* Indicate that no ToggleKeys feature available */
+            lpToggleKeys->dwFlags = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETTOGGLEKEYS);		/*     53 */
-    WINE_SPI_FIXME(SPI_GETMOUSEKEYS);		/*     54 */
+
+    case SPI_GETMOUSEKEYS:                      /*     54 */
+    {
+        LPMOUSEKEYS lpMouseKeys = (LPMOUSEKEYS)pvParam;
+        WARN("SPI_GETMOUSEKEYS not fully implemented\n");
+        if (lpMouseKeys->cbSize == sizeof(MOUSEKEYS))
+        {
+            /* Indicate that no MouseKeys feature available */
+            lpMouseKeys->dwFlags = 0;
+            lpMouseKeys->iMaxSpeed = 360;
+            lpMouseKeys->iTimeToMaxSpeed = 1000;
+            lpMouseKeys->iCtrlSpeed = 0;
+            lpMouseKeys->dwReserved1 = 0;
+            lpMouseKeys->dwReserved2 = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
+
     case SPI_GETSHOWSOUNDS:			/*     56 */
         spi_idx = SPI_SETSHOWSOUNDS_IDX;
 
@@ -1297,15 +1351,88 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             ret = FALSE;
         break;
     }
-    WINE_SPI_FIXME(SPI_GETSTICKYKEYS);		/*     58 */
+
+    case SPI_GETSTICKYKEYS:                     /*     58 */
+    {
+        LPSTICKYKEYS lpStickyKeys = (LPSTICKYKEYS)pvParam;
+        WARN("SPI_GETSTICKYKEYS not fully implemented\n");
+        if (lpStickyKeys->cbSize == sizeof(STICKYKEYS))
+        {
+            /* Indicate that no StickyKeys feature available */
+            lpStickyKeys->dwFlags = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETSTICKYKEYS);		/*     59 */
-    WINE_SPI_FIXME(SPI_GETACCESSTIMEOUT);	/*     60 */
+
+    case SPI_GETACCESSTIMEOUT:                  /*     60 */
+    {
+        LPACCESSTIMEOUT lpAccessTimeout = (LPACCESSTIMEOUT)pvParam;
+        WARN("SPI_GETACCESSTIMEOUT not fully implemented\n");
+        if (lpAccessTimeout->cbSize == sizeof(ACCESSTIMEOUT))
+        {
+            /* Indicate that no accessibility features timeout is available */
+            lpAccessTimeout->dwFlags = 0;
+            lpAccessTimeout->iTimeOutMSec = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETACCESSTIMEOUT);	/*     61 */
 
-    WINE_SPI_FIXME(SPI_GETSERIALKEYS);		/*     62  WINVER >= 0x400 */
+    case SPI_GETSERIALKEYS:                     /*     62  WINVER >= 0x400 */
+    {
+        LPSERIALKEYSA lpSerialKeysA = (LPSERIALKEYSA)pvParam;
+        WARN("SPI_GETSERIALKEYS not fully implemented\n");
+        if (lpSerialKeysA->cbSize == sizeof(SERIALKEYSA))
+        {
+            /* Indicate that no SerialKeys feature available */
+            lpSerialKeysA->dwFlags = 0;
+            lpSerialKeysA->lpszActivePort = NULL;
+            lpSerialKeysA->lpszPort = NULL;
+            lpSerialKeysA->iBaudRate = 0;
+            lpSerialKeysA->iPortState = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETSERIALKEYS);		/*     63  WINVER >= 0x400 */
 
-    WINE_SPI_FIXME(SPI_GETSOUNDSENTRY);		/*     64 */
+    case SPI_GETSOUNDSENTRY:                    /*     64 */
+    {
+        LPSOUNDSENTRYA lpSoundSentryA = (LPSOUNDSENTRYA)pvParam;
+        WARN("SPI_GETSOUNDSENTRY not fully implemented\n");
+        if (lpSoundSentryA->cbSize == sizeof(SOUNDSENTRYA))
+        {
+            /* Indicate that no SoundSentry feature available */
+            lpSoundSentryA->dwFlags = 0;
+            lpSoundSentryA->iFSTextEffect = 0;
+            lpSoundSentryA->iFSTextEffectMSec = 0;
+            lpSoundSentryA->iFSTextEffectColorBits = 0;
+            lpSoundSentryA->iFSGrafEffect = 0;
+            lpSoundSentryA->iFSGrafEffectMSec = 0;
+            lpSoundSentryA->iFSGrafEffectColor = 0;
+            lpSoundSentryA->iWindowsEffect = 0;
+            lpSoundSentryA->iWindowsEffectMSec = 0;
+            lpSoundSentryA->lpszWindowsEffectDLL = 0;
+            lpSoundSentryA->iWindowsEffectOrdinal = 0;
+        }
+        else
+        {
+            ret = FALSE;
+        }
+        break;
+    }
     WINE_SPI_FIXME(SPI_SETSOUNDSENTRY);		/*     65 */
     
     case SPI_GETHIGHCONTRAST:			/*     66  WINVER >= 0x400 */
@@ -1314,7 +1441,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	WARN("SPI_GETHIGHCONTRAST not fully implemented\n");
 	if (lpHighContrastA->cbSize == sizeof(HIGHCONTRASTA))
 	{
-	    /* Indicate that there is no high contrast available */
+	    /* Indicate that no high contrast feature available */
 	    lpHighContrastA->dwFlags = 0;
 	    lpHighContrastA->lpszDefaultScheme = NULL;
 	}

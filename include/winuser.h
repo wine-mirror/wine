@@ -62,6 +62,169 @@ DECL_WINELIB_TYPE_AW(WINSTAENUMPROC)
 
 typedef HANDLE HDWP;
 
+/* flags for FILTERKEYS dwFlags field */
+#define FKF_AVAILABLE       0x00000002
+#define FKF_CLICKON         0x00000040
+#define FKF_FILTERKEYSON    0x00000001
+#define FKF_HOTKEYACTIVE    0x00000004
+#define FKF_HOTKEYSOUND     0x00000010
+#define FKF_CONFIRMHOTKEY   0x00000008
+#define FKF_INDICATOR       0x00000020
+
+typedef struct tagFILTERKEYS
+{
+    UINT   cbSize;
+    DWORD  dwFlags;
+    DWORD  iWaitMSec;
+    DWORD  iDelayMSec;
+    DWORD  iRepeatMSec;
+    DWORD  iBounceMSec;
+} FILTERKEYS, *PFILTERKEYS, *LPFILTERKEYS;
+
+/* flags for TOGGLEKEYS dwFlags field */
+#define TKF_AVAILABLE       0x00000002
+#define TKF_CONFIRMHOTKEY   0x00000008
+#define TKF_HOTKEYACTIVE    0x00000004
+#define TKF_HOTKEYSOUND     0x00000010
+#define TKF_TOGGLEKEYSON    0x00000001
+
+typedef struct tagTOGGLEKEYS
+{
+    DWORD   cbSize;
+    DWORD   dwFlags;
+} TOGGLEKEYS, *PTOGGLEKEYS, *LPTOGGLEKEYS;
+
+/* flags for MOUSEKEYS dwFlags field */
+#define MKF_AVAILABLE       0x00000002
+#define MKF_CONFIRMHOTKEY   0x00000008
+#define MKF_HOTKEYACTIVE    0x00000004
+#define MKF_HOTKEYSOUND     0x00000010
+#define MKF_INDICATOR       0x00000020
+#define MKF_MOUSEKEYSON     0x00000001
+#define MKF_MODIFIERS       0x00000040
+#define MKF_REPLACENUMBERS  0x00000080
+
+typedef struct tagMOUSEKEYS
+{
+    UINT    cbSize;
+    DWORD   dwFlags;
+    DWORD   iMaxSpeed;
+    DWORD   iTimeToMaxSpeed;
+    DWORD   iCtrlSpeed;
+    DWORD   dwReserved1;
+    DWORD   dwReserved2;
+} MOUSEKEYS, *PMOUSEKEYS, *LPMOUSEKEYS;
+
+/* flags for STICKYKEYS dwFlags field */
+#define SKF_AUDIBLEFEEDBACK 0x00000040
+#define SKF_AVAILABLE       0x00000002
+#define SKF_CONFIRMHOTKEY   0x00000008
+#define SKF_HOTKEYACTIVE    0x00000004
+#define SKF_HOTKEYSOUND     0x00000010
+#define SKF_INDICATOR       0x00000020
+#define SKF_STICKYKEYSON    0x00000001
+#define SKF_TRISTATE        0x00000080
+#define SKF_TWOKEYSOFF      0x00000100
+
+typedef struct tagSTICKYKEYS
+{
+    DWORD   cbSize;
+    DWORD   dwFlags;
+} STICKYKEYS, *PSTICKYKEYS, *LPSTICKYKEYS;
+
+/* flags for ACCESSTIMEOUT dwFlags field */
+#define ATF_ONOFFFEEDBACK   0x00000002
+#define ATF_AVAILABLE       0x00000004
+#define ATF_TIMEOUTON       0x00000001
+
+typedef struct tagACCESSTIMEOUT
+{
+    UINT    cbSize;
+    DWORD   dwFlags;
+    DWORD   iTimeOutMSec;
+} ACCESSTIMEOUT, *PACCESSTIMEOUT, *LPACCESSTIMEOUT;
+
+/* flags for SERIALKEYS dwFlags field */
+#define SERKF_ACTIVE        0x00000008
+#define SERKF_AVAILABLE     0x00000002
+#define SERKF_INDICATOR     0x00000004
+#define SERKF_SERIALKEYSON  0x00000001
+
+typedef struct tagSERIALKEYSA
+{
+    UINT  cbSize;
+    DWORD  dwFlags;
+    LPSTR  lpszActivePort;
+    LPSTR  lpszPort;
+    UINT  iBaudRate;
+    UINT  iPortState;
+    UINT  iActive;
+} SERIALKEYSA, *LPSERIALKEYSA;
+
+typedef struct tagSERIALKEYSW {
+    UINT  cbSize;
+    DWORD   dwFlags;
+    LPWSTR  lpszActivePort;
+    LPWSTR  lpszPort;
+    UINT   iBaudRate;
+    UINT   iPortState;
+    UINT   iActive;
+} SERIALKEYSW,*LPSERIALKEYSW;
+
+DECL_WINELIB_TYPE_AW(SERIALKEYS)
+DECL_WINELIB_TYPE_AW(LPSERIALKEYS)
+
+/* flags for SOUNDSENTRY dwFlags field */
+#define SSF_AVAILABLE       0x00000002
+#define SSF_SOUNDSENTRYON   0x00000001
+
+#define SSTF_BORDER         0x00000002
+#define SSTF_CHARS          0x00000001
+#define SSTF_DISPLAY        0x00000003
+#define SSTF_NONE           0x00000000
+
+#define SSGF_DISPLAY        0x00000003
+#define SSGF_NONE           0x00000000
+
+#define SSWF_DISPLAY        0x00000003
+#define SSWF_NONE           0x00000000
+#define SSWF_TITLE          0x00000001
+#define SSWF_WINDOW         0x00000002
+
+typedef struct tagSOUNDSENTRYA
+{
+    UINT  cbSize;
+    DWORD  dwFlags;
+    DWORD  iFSTextEffect;
+    DWORD  iFSTextEffectMSec;
+    DWORD  iFSTextEffectColorBits;
+    DWORD  iFSGrafEffect;
+    DWORD  iFSGrafEffectMSec;
+    DWORD  iFSGrafEffectColor;
+    DWORD  iWindowsEffect;
+    DWORD  iWindowsEffectMSec;
+    LPSTR  lpszWindowsEffectDLL;
+    DWORD  iWindowsEffectOrdinal;
+} SOUNDSENTRYA, *LPSOUNDSENTRYA;
+
+typedef struct tagSOUNDSENTRYW
+{
+    UINT  cbSize;
+    DWORD  dwFlags;
+    DWORD  iFSTextEffect;
+    DWORD  iFSTextEffectMSec;
+    DWORD  iFSTextEffectColorBits;
+    DWORD  iFSGrafEffect;
+    DWORD  iFSGrafEffectMSec;
+    DWORD  iFSGrafEffectColor;
+    DWORD  iWindowsEffect;
+    DWORD  iWindowsEffectMSec;
+    LPWSTR  lpszWindowsEffectDLL;
+    DWORD  iWindowsEffectOrdinal;
+} SOUNDSENTRYW, *LPSOUNDSENTRYW;
+
+DECL_WINELIB_TYPE_AW(SOUNDSENTRY)
+DECL_WINELIB_TYPE_AW(LPSOUNDSENTRY)
 
 /* flags for HIGHCONTRAST dwFlags field */
 #define HCF_HIGHCONTRASTON  0x00000001
@@ -97,7 +260,6 @@ typedef struct
     DWORD   time;
     HWND  hwnd;
 } EVENTMSG, *PEVENTMSG, *LPEVENTMSG;
-
 
 /* WH_KEYBOARD_LL structure */
 typedef struct tagKBDLLHOOKSTRUCT
