@@ -114,6 +114,30 @@ static const SHL_2_inet_scheme shlwapi_schemes[] = {
   {0, 0}
 };
 
+/* function pointers for GET_FUNC macro; these need to be global because of gcc bug */
+static LPITEMIDLIST (WINAPI *pSHBrowseForFolderW)(LPBROWSEINFOW);
+static HRESULT (WINAPI *pConvertINetUnicodeToMultiByte)(LPDWORD,DWORD,LPCWSTR,LPINT,LPSTR,LPINT);
+static BOOL    (WINAPI *pPlaySoundW)(LPCWSTR, HMODULE, DWORD);
+static DWORD   (WINAPI *pSHGetFileInfoW)(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
+static UINT    (WINAPI *pDragQueryFileW)(HDROP, UINT, LPWSTR, UINT);
+static BOOL    (WINAPI *pSHGetPathFromIDListW)(LPCITEMIDLIST, LPWSTR);
+static BOOL    (WINAPI *pShellExecuteExW)(LPSHELLEXECUTEINFOW);
+static HICON   (WINAPI *pSHFileOperationW)(LPSHFILEOPSTRUCTW);
+static HICON   (WINAPI *pExtractIconExW)(LPCWSTR, INT,HICON *,HICON *, UINT);
+static BOOL    (WINAPI *pSHGetNewLinkInfoW)(LPCWSTR, LPCWSTR, LPCWSTR, BOOL*, UINT);
+static DWORD   (WINAPI *pSHDefExtractIconW)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID, LPVOID); /* FIXME: Correct args */
+static HICON   (WINAPI *pExtractIconW)(HINSTANCE, LPCWSTR, UINT);
+static BOOL    (WINAPI *pGetSaveFileNameW)(LPOPENFILENAMEW);
+static DWORD   (WINAPI *pWNetRestoreConnectionW)(LPVOID, LPVOID); /* FIXME: Correct args */
+static DWORD   (WINAPI *pWNetGetLastErrorW)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID); /* FIXME: Correct args */
+static BOOL    (WINAPI *pPageSetupDlgW)(LPPAGESETUPDLGW);
+static BOOL    (WINAPI *pPrintDlgW)(LPPRINTDLGW);
+static BOOL    (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
+static HRESULT (WINAPI *pSHGetInstanceExplorer)(LPUNKNOWN *);
+static DWORD   (WINAPI *pGetFileVersionInfoSizeW)(LPCWSTR,LPDWORD);
+static BOOL    (WINAPI *pGetFileVersionInfoW)(LPCWSTR,DWORD,DWORD,LPVOID);
+static WORD    (WINAPI *pVerQueryValueW)(LPVOID,LPCWSTR,LPVOID*,UINT*);
+
 /*
  NOTES: Most functions exported by ordinal seem to be superflous.
  The reason for these functions to be there is to provide a wraper
@@ -1363,7 +1387,6 @@ DWORD WINAPI SHLWAPI_215 (
 INT WINAPI SHLWAPI_218(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
                        LPINT lpnMultiCharCount)
 {
-  static HRESULT (WINAPI *pfnFunc)(LPDWORD,DWORD,LPCWSTR,LPINT,LPSTR,LPINT);
   WCHAR emptyW[] = { '\0' };
   int len , reqLen;
   LPSTR mem;
@@ -1389,9 +1412,9 @@ INT WINAPI SHLWAPI_218(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
       DWORD dwMode = 0;
       INT nWideCharCount = len - 1;
 
-      GET_FUNC(mlang, "ConvertINetUnicodeToMultiByte", 0);
-      if (!pfnFunc(&dwMode, CodePage, lpSrcStr, &nWideCharCount, lpDstStr,
-                   lpnMultiCharCount))
+      GET_FUNC(pConvertINetUnicodeToMultiByte, mlang, "ConvertINetUnicodeToMultiByte", 0);
+      if (!pConvertINetUnicodeToMultiByte(&dwMode, CodePage, lpSrcStr, &nWideCharCount, lpDstStr,
+                                          lpnMultiCharCount))
         return 0;
 
       if (nWideCharCount < len - 1)
@@ -1402,7 +1425,7 @@ INT WINAPI SHLWAPI_218(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
 
         *lpnMultiCharCount = 0;
 
-        if (pfnFunc(&dwMode, CodePage, lpSrcStr, &len, mem, lpnMultiCharCount))
+        if (pConvertINetUnicodeToMultiByte(&dwMode, CodePage, lpSrcStr, &len, mem, lpnMultiCharCount))
         {
           SHLWAPI_162 (mem, *lpnMultiCharCount);
           lstrcpynA(lpDstStr, mem, *lpnMultiCharCount + 1);
@@ -1746,10 +1769,8 @@ HWND WINAPI SHLWAPI_278 (
  */
 BOOL WINAPI SHLWAPI_289(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 {
-  static BOOL (WINAPI *pfnFunc)(LPCWSTR, HMODULE, DWORD) = NULL;
-
-  GET_FUNC(winmm, "PlaySoundW", FALSE);
-  return pfnFunc(pszSound, hmod, fdwSound);
+  GET_FUNC(pPlaySoundW, winmm, "PlaySoundW", FALSE);
+  return pPlaySoundW(pszSound, hmod, fdwSound);
 }
 
 /*************************************************************************
@@ -1784,10 +1805,8 @@ BOOL WINAPI SHLWAPI_294(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len,  LPC
 DWORD WINAPI SHLWAPI_313(LPCWSTR path, DWORD dwFileAttributes,
                          SHFILEINFOW *psfi, UINT sizeofpsfi, UINT flags)
 {
-  static DWORD (WINAPI *pfnFunc)(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT) = NULL;
-
-  GET_FUNC(shell32, "SHGetFileInfoW", 0);
-  return pfnFunc(path, dwFileAttributes, psfi, sizeofpsfi, flags);
+  GET_FUNC(pSHGetFileInfoW, shell32, "SHGetFileInfoW", 0);
+  return pSHGetFileInfoW(path, dwFileAttributes, psfi, sizeofpsfi, flags);
 }
 
 /*************************************************************************
@@ -1797,10 +1816,8 @@ DWORD WINAPI SHLWAPI_313(LPCWSTR path, DWORD dwFileAttributes,
  */
 UINT WINAPI SHLWAPI_318(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength)
 {
-  static UINT (WINAPI *pfnFunc)(HDROP, UINT, LPWSTR, UINT) = NULL;
-
-  GET_FUNC(shell32, "DragQueryFileW", 0);
-  return pfnFunc(hDrop, lFile, lpszFile, lLength);
+  GET_FUNC(pDragQueryFileW, shell32, "DragQueryFileW", 0);
+  return pDragQueryFileW(hDrop, lFile, lpszFile, lLength);
 }
 
 /*************************************************************************
@@ -1810,10 +1827,8 @@ UINT WINAPI SHLWAPI_318(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength)
  */
 LPITEMIDLIST WINAPI SHLWAPI_333(LPBROWSEINFOW lpBi)
 {
-  static LPITEMIDLIST (WINAPI *pfnFunc)(LPBROWSEINFOW) = NULL;
-
-  GET_FUNC(shell32, "SHBrowseForFolderW", NULL);
-  return pfnFunc(lpBi);
+  GET_FUNC(pSHBrowseForFolderW, shell32, "SHBrowseForFolderW", NULL);
+  return pSHBrowseForFolderW(lpBi);
 }
 
 /*************************************************************************
@@ -1823,10 +1838,8 @@ LPITEMIDLIST WINAPI SHLWAPI_333(LPBROWSEINFOW lpBi)
  */
 BOOL WINAPI SHLWAPI_334(LPCITEMIDLIST pidl,LPWSTR pszPath)
 {
-  static BOOL (WINAPI *pfnFunc)(LPCITEMIDLIST, LPWSTR) = NULL;
-
-  GET_FUNC(shell32, "SHGetPathFromIDListW", 0);
-  return pfnFunc(pidl, pszPath);
+  GET_FUNC(pSHGetPathFromIDListW, shell32, "SHGetPathFromIDListW", 0);
+  return pSHGetPathFromIDListW(pidl, pszPath);
 }
 
 /*************************************************************************
@@ -1836,10 +1849,8 @@ BOOL WINAPI SHLWAPI_334(LPCITEMIDLIST pidl,LPWSTR pszPath)
  */
 BOOL WINAPI SHLWAPI_335(LPSHELLEXECUTEINFOW lpExecInfo)
 {
-  static BOOL (WINAPI *pfnFunc)(LPSHELLEXECUTEINFOW) = NULL;
-
-  GET_FUNC(shell32, "ShellExecuteExW", FALSE);
-  return pfnFunc(lpExecInfo);
+  GET_FUNC(pShellExecuteExW, shell32, "ShellExecuteExW", FALSE);
+  return pShellExecuteExW(lpExecInfo);
 }
 
 /*************************************************************************
@@ -1849,10 +1860,8 @@ BOOL WINAPI SHLWAPI_335(LPSHELLEXECUTEINFOW lpExecInfo)
  */
 DWORD WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
 {
-  static HICON (WINAPI *pfnFunc)(LPSHFILEOPSTRUCTW) = NULL;
-
-  GET_FUNC(shell32, "SHFileOperationW", 0);
-  return pfnFunc(lpFileOp);
+  GET_FUNC(pSHFileOperationW, shell32, "SHFileOperationW", 0);
+  return pSHFileOperationW(lpFileOp);
 }
 
 /*************************************************************************
@@ -1863,10 +1872,8 @@ DWORD WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
 HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
                          HICON *phiconSmall, UINT nIcons)
 {
-  static HICON (WINAPI *pfnFunc)(LPCWSTR, INT,HICON *,HICON *, UINT) = NULL;
-
-  GET_FUNC(shell32, "ExtractIconExW", (HICON)0);
-  return pfnFunc(lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
+  GET_FUNC(pExtractIconExW, shell32, "ExtractIconExW", (HICON)0);
+  return pExtractIconExW(lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 
 /*************************************************************************
@@ -1900,11 +1907,10 @@ DWORD WINAPI SHLWAPI_350 (
 	LPWSTR x,
 	LPVOID y)
 {
-static DWORD   WINAPI (*pfnFunc)(LPCWSTR,LPDWORD) = NULL;
         DWORD ret;
 
-	GET_FUNC(version, "GetFileVersionInfoSizeW", 0);
-	ret = pfnFunc(x, y);
+	GET_FUNC(pGetFileVersionInfoSizeW, version, "GetFileVersionInfoSizeW", 0);
+	ret = pGetFileVersionInfoSizeW(x, y);
 	return 0x208 + ret;
 }
 
@@ -1919,10 +1925,8 @@ BOOL  WINAPI SHLWAPI_351 (
 	DWORD  y,   /* [in] return value from .350 - assume length */
 	LPVOID z)   /* [in/out] buffer (+0x208 sent to GetFileVersionInfoA) */
 {
-        static BOOL    WINAPI (*pfnFunc)(LPCWSTR,DWORD,DWORD,LPVOID) = NULL;
-
-	GET_FUNC(version, "GetFileVersionInfoW", 0);
-	return pfnFunc(w, x, y-0x208, z+0x208);
+    GET_FUNC(pGetFileVersionInfoW, version, "GetFileVersionInfoW", 0);
+    return pGetFileVersionInfoW(w, x, y-0x208, z+0x208);
 }
 
 /*************************************************************************
@@ -1937,10 +1941,8 @@ WORD WINAPI SHLWAPI_352 (
 	LPVOID y,   /* [out]  ver buffer - passed to VerQueryValueA as #3 */
 	UINT*  z)   /* [in]   ver length - passed to VerQueryValueA as #4 */
 {
-        static WORD    WINAPI (*pfnFunc)(LPVOID,LPCWSTR,LPVOID*,UINT*) = NULL;
-
-	GET_FUNC(version, "VerQueryValueW", 0);
-	return pfnFunc(w+0x208, x, y, z);
+    GET_FUNC(pVerQueryValueW, version, "VerQueryValueW", 0);
+    return pVerQueryValueW(w+0x208, x, y, z);
 }
 
 /**************************************************************************
@@ -1975,10 +1977,8 @@ DWORD WINAPI SHLWAPI_356(PACL pDacl, PSECURITY_DESCRIPTOR pSD, LPCSTR *str)
 BOOL WINAPI SHLWAPI_357(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
                         BOOL *pfMustCopy, UINT uFlags)
 {
-  static BOOL (WINAPI *pfnFunc)(LPCWSTR, LPCWSTR, LPCWSTR, BOOL*, UINT) = NULL;
-
-  GET_FUNC(shell32, "SHGetNewLinkInfoW", FALSE);
-  return pfnFunc(pszLinkTo, pszDir, pszName, pfMustCopy, uFlags);
+  GET_FUNC(pSHGetNewLinkInfoW, shell32, "SHGetNewLinkInfoW", FALSE);
+  return pSHGetNewLinkInfoW(pszLinkTo, pszDir, pszName, pfMustCopy, uFlags);
 }
 
 /*************************************************************************
@@ -1989,11 +1989,8 @@ BOOL WINAPI SHLWAPI_357(LPCWSTR pszLinkTo, LPCWSTR pszDir, LPWSTR pszName,
 DWORD WINAPI SHLWAPI_358(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
                          LPVOID arg5, LPVOID arg6)
 {
-  /* FIXME: Correct args */
-  static DWORD (WINAPI *pfnFunc)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID, LPVOID) = NULL;
-
-  GET_FUNC(shell32, "SHDefExtractIconW", 0);
-  return pfnFunc(arg1, arg2, arg3, arg4, arg5, arg6);
+  GET_FUNC(pSHDefExtractIconW, shell32, "SHDefExtractIconW", 0);
+  return pSHDefExtractIconW(arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 /*************************************************************************
@@ -2015,10 +2012,8 @@ DWORD WINAPI SHLWAPI_364(LPCSTR src, LPSTR dst, INT n)
 HICON WINAPI SHLWAPI_370(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
                          UINT nIconIndex)
 {
-  static HICON (WINAPI *pfnFunc)(HINSTANCE, LPCWSTR, UINT) = NULL;
-
-  GET_FUNC(shell32, "ExtractIconW", (HICON)0);
-  return pfnFunc(hInstance, lpszExeFileName, nIconIndex);
+  GET_FUNC(pExtractIconW, shell32, "ExtractIconW", (HICON)0);
+  return pExtractIconW(hInstance, lpszExeFileName, nIconIndex);
 }
 
 /*************************************************************************
@@ -2099,10 +2094,8 @@ DWORD WINAPI SHLWAPI_378 (
  */
 BOOL WINAPI SHLWAPI_389(LPOPENFILENAMEW ofn)
 {
-  static BOOL (WINAPI *pfnFunc)(LPOPENFILENAMEW) = NULL;
-
-  GET_FUNC(comdlg32, "GetSaveFileNameW", FALSE);
-  return pfnFunc(ofn);
+  GET_FUNC(pGetSaveFileNameW, comdlg32, "GetSaveFileNameW", FALSE);
+  return pGetSaveFileNameW(ofn);
 }
 
 /*************************************************************************
@@ -2112,11 +2105,8 @@ BOOL WINAPI SHLWAPI_389(LPOPENFILENAMEW ofn)
  */
 DWORD WINAPI SHLWAPI_390(LPVOID arg1, LPVOID arg2)
 {
-  /* FIXME: Correct args */
-  static DWORD (WINAPI *pfnFunc)(LPVOID, LPVOID) = NULL;
-
-  GET_FUNC(mpr, "WNetRestoreConnectionW", 0);
-  return pfnFunc(arg1, arg2);
+  GET_FUNC(pWNetRestoreConnectionW, mpr, "WNetRestoreConnectionW", 0);
+  return pWNetRestoreConnectionW(arg1, arg2);
 }
 
 /*************************************************************************
@@ -2127,11 +2117,8 @@ DWORD WINAPI SHLWAPI_390(LPVOID arg1, LPVOID arg2)
 DWORD WINAPI SHLWAPI_391(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
                          LPVOID arg5)
 {
-  /* FIXME: Correct args */
-  static DWORD (WINAPI *pfnFunc)(LPVOID, LPVOID, LPVOID, LPVOID, LPVOID) = NULL;
-
-  GET_FUNC(mpr, "WNetGetLastErrorW", 0);
-  return pfnFunc(arg1, arg2, arg3, arg4, arg5);
+  GET_FUNC(pWNetGetLastErrorW, mpr, "WNetGetLastErrorW", 0);
+  return pWNetGetLastErrorW(arg1, arg2, arg3, arg4, arg5);
 }
 
 /*************************************************************************
@@ -2141,10 +2128,8 @@ DWORD WINAPI SHLWAPI_391(LPVOID arg1, LPVOID arg2, LPVOID arg3, LPVOID arg4,
  */
 BOOL WINAPI SHLWAPI_401(LPPAGESETUPDLGW pagedlg)
 {
-  static BOOL (WINAPI *pfnFunc)(LPPAGESETUPDLGW) = NULL;
-
-  GET_FUNC(comdlg32, "PageSetupDlgW", FALSE);
-  return pfnFunc(pagedlg);
+  GET_FUNC(pPageSetupDlgW, comdlg32, "PageSetupDlgW", FALSE);
+  return pPageSetupDlgW(pagedlg);
 }
 
 /*************************************************************************
@@ -2154,10 +2139,8 @@ BOOL WINAPI SHLWAPI_401(LPPAGESETUPDLGW pagedlg)
  */
 BOOL WINAPI SHLWAPI_402(LPPRINTDLGW printdlg)
 {
-  static BOOL (WINAPI *pfnFunc)(LPPRINTDLGW) = NULL;
-
-  GET_FUNC(comdlg32, "PrintDlgW", FALSE);
-  return pfnFunc(printdlg);
+  GET_FUNC(pPrintDlgW, comdlg32, "PrintDlgW", FALSE);
+  return pPrintDlgW(printdlg);
 }
 
 /*************************************************************************
@@ -2167,10 +2150,8 @@ BOOL WINAPI SHLWAPI_402(LPPRINTDLGW printdlg)
  */
 BOOL WINAPI SHLWAPI_403(LPOPENFILENAMEW ofn)
 {
-  static BOOL (WINAPI *pfnFunc)(LPOPENFILENAMEW) = NULL;
-
-  GET_FUNC(comdlg32, "GetOpenFileNameW", FALSE);
-  return pfnFunc(ofn);
+  GET_FUNC(pGetOpenFileNameW, comdlg32, "GetOpenFileNameW", FALSE);
+  return pGetOpenFileNameW(ofn);
 }
 
 /* INTERNAL: Map from HLS color space to RGB */
@@ -2450,10 +2431,8 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
  */
 HRESULT WINAPI _SHGetInstanceExplorer (LPUNKNOWN *lpUnknown)
 {
-  static HRESULT (WINAPI *pfnFunc)(LPUNKNOWN *) = NULL;
-
-  GET_FUNC(shell32, "SHGetInstanceExplorer", E_FAIL);
-  return pfnFunc(lpUnknown);
+  GET_FUNC(pSHGetInstanceExplorer, shell32, "SHGetInstanceExplorer", E_FAIL);
+  return pSHGetInstanceExplorer(lpUnknown);
 }
 
 /*************************************************************************

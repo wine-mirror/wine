@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+/* function pointers for GET_FUNC macro; these need to be global because of gcc bug */
+static BOOL (WINAPI *pIsNetDrive)(DWORD);
+
 /*************************************************************************
  * PathAppendA    [SHLWAPI.@]
  *
@@ -3313,7 +3316,6 @@ VOID WINAPI PathSetDlgItemPathW(HWND hDlg, int id, LPCWSTR lpszPath)
  */
 BOOL WINAPI PathIsNetworkPathA(LPCSTR lpszPath)
 {
-  static BOOL (WINAPI *pfnFunc)(DWORD);
   DWORD dwDriveNum;
 
   TRACE("(%s)\n",debugstr_a(lpszPath));
@@ -3325,8 +3327,8 @@ BOOL WINAPI PathIsNetworkPathA(LPCSTR lpszPath)
   dwDriveNum = PathGetDriveNumberA(lpszPath);
   if (dwDriveNum == -1)
     return FALSE;
-  GET_FUNC(shell32, (LPCSTR)66, FALSE); /* ord 66 = shell32.IsNetDrive */
-  return pfnFunc(dwDriveNum);
+  GET_FUNC(pIsNetDrive, shell32, (LPCSTR)66, FALSE); /* ord 66 = shell32.IsNetDrive */
+  return pIsNetDrive(dwDriveNum);
 }
 
 /*************************************************************************
@@ -3336,7 +3338,6 @@ BOOL WINAPI PathIsNetworkPathA(LPCSTR lpszPath)
  */
 BOOL WINAPI PathIsNetworkPathW(LPCWSTR lpszPath)
 {
-  static BOOL (WINAPI *pfnFunc)(DWORD);
   DWORD dwDriveNum;
 
   TRACE("(%s)\n", debugstr_w(lpszPath));
@@ -3348,8 +3349,8 @@ BOOL WINAPI PathIsNetworkPathW(LPCWSTR lpszPath)
   dwDriveNum = PathGetDriveNumberW(lpszPath);
   if (dwDriveNum == -1)
     return FALSE;
-  GET_FUNC(shell32, (LPCSTR)66, FALSE); /* ord 66 = shell32.IsNetDrive */
-  return pfnFunc(dwDriveNum);
+  GET_FUNC(pIsNetDrive, shell32, (LPCSTR)66, FALSE); /* ord 66 = shell32.IsNetDrive */
+  return pIsNetDrive(dwDriveNum);
 }
 
 /*************************************************************************

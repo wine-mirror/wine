@@ -44,11 +44,13 @@ typedef struct {
 DWORD WINAPI SHLWAPI_2(LPCWSTR x, UNKNOWN_SHLWAPI_2 *y);
 
 /* Macro to get function pointer for a module*/
-#define GET_FUNC(module, name, fail) \
-  if (!SHLWAPI_h##module) SHLWAPI_h##module = LoadLibraryA(#module ".dll"); \
-  if (!SHLWAPI_h##module) return fail; \
-  if (!pfnFunc) pfnFunc = (void*)GetProcAddress(SHLWAPI_h##module, name); \
-  if (!pfnFunc) return fail
+#define GET_FUNC(func, module, name, fail) \
+  do { \
+    if (!func) { \
+      if (!SHLWAPI_h##module && !(SHLWAPI_h##module = LoadLibraryA(#module ".dll"))) return fail; \
+      if (!(func = (void*)GetProcAddress(SHLWAPI_h##module, name))) return fail; \
+    } \
+  } while (0)
 
 extern HMODULE SHLWAPI_hshell32;
 
