@@ -253,6 +253,7 @@ typedef struct tagLISTVIEW_INFO
   BOOL bFirstPaint;		/* Flags if the control has never painted before */
   BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
   BOOL bFocus;
+  BOOL bDoChangeNotify;                /* send change notification messages? */
   INT nFocusedItem;
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
@@ -2827,7 +2828,12 @@ static INT shift_item(LISTVIEW_INFO *infoPtr, INT nShiftItem, INT nItem, INT dir
 static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT direction)
 {
     INT nNewFocus;
-    
+    BOOL bOldChange;
+
+    /* temporarily disable change notification while shifting items */
+    bOldChange = infoPtr->bDoChangeNotify;
+    infoPtr->bDoChangeNotify = FALSE;
+
     TRACE("Shifting %iu, %i steps\n", nItem, direction);
 
     ranges_shift(infoPtr->selectionRanges, nItem, direction, infoPtr->nItemCount);
@@ -2841,6 +2847,8 @@ static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT directi
         LISTVIEW_SetItemFocus(infoPtr, nNewFocus);
     
     /* But we are not supposed to modify nHotItem! */
+
+    infoPtr->bDoChangeNotify = bOldChange;
 }
 
 
@@ -3183,8 +3191,10 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     nmlv.lParam = item.lParam;
     
     /* send LVN_ITEMCHANGING notification, if the item is not being inserted */
-    /* and we are _NOT_ virtual (LVS_OWERNDATA) */
-    if(lpItem && !isNew && notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv))
+    /* and we are _NOT_ virtual (LVS_OWERNDATA), and change notifications */
+    /* are enabled */
+    if(lpItem && !isNew && infoPtr->bDoChangeNotify &&
+       notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv))
 	return FALSE;
 
     /* copy information */
@@ -3234,7 +3244,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     
     /* send LVN_ITEMCHANGED notification */
     if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
-    notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
+    if (infoPtr->bDoChangeNotify) notify_listview(infoPtr, LVN_ITEMCHANGED, &nmlv);
 
     return TRUE;
 }
@@ -7049,6 +7059,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->bRedraw = TRUE;
   infoPtr->bFirstPaint = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
+  infoPtr->bDoChangeNotify = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
