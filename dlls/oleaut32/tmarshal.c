@@ -556,10 +556,24 @@ serialize_param(
 	    if (debugout) MESSAGE("}");
 	    break;
 	}
-	default:
-	    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
-	    hres = E_FAIL;
+	default: {
+	    TYPEDESC tdesc2;
+
+	    if (debugout) MESSAGE("U{");
+	    memset(&tdesc2,0,sizeof(tdesc2));
+	    tdesc2.vt = tattr->typekind;
+	    hres = serialize_param(
+			tinfo2,
+			writeit,
+			debugout,
+			dealloc,
+			&tdesc2,
+			arg,
+			buf
+	    );
+	    if (debugout) MESSAGE("}");
 	    break;
+	}
 	}
 	ITypeInfo_Release(tinfo2);
 	return hres;
@@ -896,10 +910,24 @@ deserialize_param(
 		    if (debugout) MESSAGE("}");
 		    break;
 		}
-		default:
-		    FIXME("Don't know how to marshal type kind %d\n",tattr->typekind);
-		    hres = E_FAIL;
+		default: {
+		    TYPEDESC tdesc2;
+
+		    if (debugout) MESSAGE("U{");
+		    memset(&tdesc2,0,sizeof(tdesc2));
+		    tdesc2.vt = tattr->typekind;
+		    hres = deserialize_param(
+				tinfo2,
+				readit,
+				debugout,
+				alloc,
+				&tdesc2,
+				(DWORD*)*arg,
+				buf
+		    );
+		    if (debugout) MESSAGE("}");
 		    break;
+		}
 		}
 	    }
 	    if (hres)
