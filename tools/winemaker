@@ -1908,22 +1908,22 @@ sub generate_project_files
   if (@$project[$P_PATH] eq "") {
     # This is the main project. It is also responsible for recursively 
     # calling the other projects
-    print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
+    print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) install) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\tfor i in \$(EXES); do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
-    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
+    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(bindir); done\n";
+    print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(INSTALL_PROGRAM) \$\$i \$(libdir); done\n";
   }
   print FILEO "\n";
   print FILEO "uninstall::\n";
   if (@$project[$P_PATH] eq "") {
     # This is the main project. It is also responsible for recursively 
     # calling the other projects
-    print FILEO "\tfor i in \$(SUBDIRS); do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
+    print FILEO "\t_list=\"\$(SUBDIRS)\"; for i in \$\$_list; do (cd \$\$i; \$(MAKE) uninstall) || exit 1; done\n";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO "\tfor i in \$(EXES); do \$(RM) \$(bindir)/\$\$i;done\n";
-    print FILEO "\tfor i in \$(EXES:%=%.so) \$(DLLS); do \$(RM) \$(libdir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(EXES) \$(EXES:%=%.so)\"; for i in \$\$_list; do \$(RM) \$(bindir)/\$\$i;done\n";
+    print FILEO "\t_list=\"\$(DLLS)\"; for i in \$\$_list; do \$(RM) \$(libdir)/\$\$i;done\n";
   }
   print FILEO "\n\n\n";
 
