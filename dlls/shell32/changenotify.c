@@ -113,7 +113,7 @@ static BOOL DeleteNode(LPNOTIFICATIONLIST item)
 	EnterCriticalSection(&SHELL32_ChangenotifyCS);
 
 	ptr = head.next;
-	while((ptr != &tail) && (ret == FALSE))
+	while(ptr != &tail)
 	{
 	  TRACE("ptr=%p\n", ptr);
 
@@ -131,7 +131,9 @@ static BOOL DeleteNode(LPNOTIFICATIONLIST item)
 	    for (i=0; i<item->cidl;i++) SHFree(item->apidl[i].pidlPath);
 	    SHFree(item->apidl);
 	    SHFree(item);
+
 	    ret = TRUE;
+	    break;
 	  }
 	  ptr = ptr->next;
 	}
