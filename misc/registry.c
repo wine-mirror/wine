@@ -776,7 +776,7 @@ typedef struct
  *
  * once on offset 0x20
  *
- * structure: [rgkn][dke]*	(repeat till rgkn->size is reached)
+ * structure: [rgkn][dke]*	(repeat till last_dke is reached)
  */
 #define	W95_REG_RGKN_ID	0x4e4b4752
 
@@ -785,7 +785,8 @@ typedef struct
 	DWORD	id;		/*"RGKN" = W95_REG_RGKN_ID */
 	DWORD	size;		/* Size of the RGKN-block */
 	DWORD	root_off;	/* Rel. Offset of the root-record */
-	DWORD	uk[5];
+	DWORD   last_dke;       /* Offset to last DKE ? */
+	DWORD	uk[4];
 } _w95rgkn;
 
 /* Disk Key Entry Structure
@@ -804,9 +805,17 @@ typedef struct
  * cannot be found again (although they would be displayed in REGEDIT)
  * End of list-pointers are filled with 0xFFFFFFFF
  *
- * Disk keys are layed out flat ... But, sometimes, nrLS and nrHS are both
+ * Disk keys are layed out flat ... But, sometimes, nrLS and nrMS are both
  * 0xFFFF, which means skipping over nextkeyoffset bytes (including this
  * structure) and reading another RGDB_section.
+ *
+ * The last DKE (see field last_dke in _w95_rgkn) has only 3 DWORDs with
+ * 0x80000000 (EOL indicator ?) as x1, the hash value and 0xFFFFFFFF as x3.
+ * The remaining space between last_dke and the offset calculated from
+ * rgkn->size seems to be free for use for more dke:s.
+ * So it seems if more dke:s are added, they are added to that space and
+ * last_dke is grown, and in case that "free" space is out, the space
+ * gets grown and rgkn->size gets adjusted.
  *
  * there is a one to one relationship between dke and dkh
  */
@@ -830,9 +839,9 @@ typedef struct
  *  blocks:	[rgdb] [subblocks]* 	(repeat till block size reached )
  *  subblocks:	[dkh] [dkv]*		(repeat dkh->values times )
  *
- * An interesting relationship exists in RGDB_section. The value at offset
- * 10 equals the value at offset 4 minus the value at offset 8. I have no
- * idea at the moment what this means.  (Kevin Cozens)
+ * An interesting relationship exists in RGDB_section. The DWORD value
+ * at offset 0x10 equals the one at offset 0x04 minus the one at offset 0x08.
+ * I have no idea at the moment what this means.  (Kevin Cozens)
  */
 
 /* block header, once per block */
@@ -840,7 +849,7 @@ typedef struct
 
 typedef struct
 {
-	DWORD	id;	/* 0x00 'rgdb' = W95_REG_RGDB_ID */
+	DWORD	id;	/* 0x00 'RGDB' = W95_REG_RGDB_ID */
 	DWORD	size;	/* 0x04 */
 	DWORD	uk1;	/* 0x08 */
 	DWORD	uk2;	/* 0x0c */
@@ -854,7 +863,7 @@ typedef struct
 /* Disk Key Header structure (RGDB part), once per key */
 typedef	struct 
 {
-	DWORD	nextkeyoff; 	/* 0x00 offset to next dkh*/
+	DWORD	nextkeyoff; 	/* 0x00 offset to next dkh */
 	WORD	nrLS;		/* 0x04 id inside the rgdb block */
 	WORD	nrMS;		/* 0x06 number of the rgdb block */
 	DWORD	bytesused;	/* 0x08 */
@@ -965,13 +974,10 @@ static int _w95_parse_dke(
 	char * name;
 	int ret = FALSE;
 
-	/* get start address of root key block */
-	if (!dke) dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
-	
 	/* special root key */
 	if (dke->nrLS == 0xffff || dke->nrMS==0xffff)		/* eg. the root key has no name */
 	{
-	  /* parse the one subkey*/
+	  /* parse the one subkey */
 	  if (dke->nextsub != 0xffffffff) 
 	  {
     	    return _w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level);
@@ -1032,6 +1038,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
         DOS_FULL_NAME full_name;
 	int ret = FALSE;
 	void * base;
+	char *filetype = "unknown";
 			
         if (!DOSFS_GetFullName( fn, 0, &full_name )) return FALSE;
 	
@@ -1043,13 +1050,15 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 
 	switch (*(LPDWORD)base)
 	{
-	  /* windows 95 'creg' */
+	  /* windows 95 'CREG' */
 	  case W95_REG_CREG_ID:
 	    {
-	      _w95creg * creg;
-	      _w95rgkn * rgkn;
+	      _w95creg *creg;
+	      _w95rgkn *rgkn;
+	      _w95dke *dke, *root_dke;
 	      creg = base;
-	      TRACE("Loading win95 registry '%s' '%s'\n",fn, full_name.long_name);
+	      filetype = "win95";
+	      TRACE("Loading %s registry '%s' '%s'\n", filetype, fn, full_name.long_name);
 
 	      /* load the header (rgkn) */
 	      rgkn = (_w95rgkn*)(creg + 1);
@@ -1058,8 +1067,37 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 		ERR("second IFF header not RGKN, but %lx\n", rgkn->id);
 		goto error1;
 	      }
+	      if (rgkn->root_off != 0x20)
+	      {
+		ERR("rgkn->root_off not 0x20, please report !\n");
+		goto error1;
+	      }
+	      if (rgkn->last_dke > rgkn->size)
+	      {
+		ERR("registry file corrupt! last_dke > size!\n");
+		goto error1;
+	      }
+	      /* verify last dke */
+	      dke = (_w95dke*)((char*)rgkn + rgkn->last_dke);
+	      if (dke->x1 != 0x80000000)
+	      { /* wrong magic */
+		ERR("last dke invalid !\n");
+		goto error1;
+	      }
+	      if (rgkn->size > creg->rgdb_off)
+	      {
+		ERR("registry file corrupt! rgkn size > rgdb_off !\n");
+		goto error1;
+	      }
+	      root_dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
+	      if ( (root_dke->prevlvl != 0xffffffff)
+	        || (root_dke->next != 0xffffffff) )
+	      {
+		ERR("registry file corrupt! invalid root dke !\n");
+		goto error1;
+	      }
 
-	      ret = _w95_parse_dke(hkey, creg, rgkn, NULL, level);
+	      ret = _w95_parse_dke(hkey, creg, rgkn, root_dke, level);
 	    }
 	    break;
 	  /* nt 'regf'*/
@@ -1070,7 +1108,8 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      nt_hbin_sub * hbin_sub;
 	      nt_nk* nk;
 
-	      TRACE("Loading nt registry '%s' '%s'\n",fn, full_name.long_name);
+	      filetype = "NT";
+	      TRACE("Loading %s registry '%s' '%s'\n", filetype, fn, full_name.long_name);
 
 	      /* start block */
 	      regf = base;
@@ -1079,7 +1118,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      hbin = (nt_hbin*)((char*) base + 0x1000);
 	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
 	      {
-	        ERR( "%s hbin block invalid\n", fn);
+	        ERR( "hbin block invalid\n");
 	        goto error1;
 	      }
 
@@ -1087,7 +1126,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
 	      if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k'))
 	      {
-	        ERR( "%s hbin_sub block invalid\n", fn);
+	        ERR( "hbin_sub block invalid\n");
 	        goto error1;
 	      }
 
@@ -1095,7 +1134,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	      nk = (nt_nk*)&(hbin_sub->data[0]);
 	      if (nk->Type != NT_REG_ROOT_KEY_BLOCK_TYPE)
 	      {
-	        ERR( "%s special nk block not found\n", fn);
+	        ERR( "special nk block not found\n");
 	        goto error1;
 	      }
 
@@ -1104,12 +1143,19 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	    break;
 	  default:
 	    {
-	      ERR("unknown signature in registry file %s.\n",fn);
+	      ERR("unknown registry signature !\n");
 	      goto error1;
 	    }
 	}
-	if(!ret) ERR("error loading registry file %s\n", fn);
-error1:	munmap(base, st.st_size);
+error1:	if(!ret)
+	{
+	  ERR("error loading %s registry file %s\n",
+						filetype, full_name.long_name);
+	  if (!strcmp(filetype, "win95"))
+	    ERR("Please report to a.mohr@mailto.de.\n");
+	  ERR("Make a backup of the file, run a good reg cleaner program and try again !\n");
+	}
+	munmap(base, st.st_size);
 error:	close(fd);
 	return ret;	
 }
