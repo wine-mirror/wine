@@ -13,6 +13,7 @@
 #ifdef HAVE_DL_API
 #include <dlfcn.h>
 #endif
+#include <sys/types.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
