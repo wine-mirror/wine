@@ -706,6 +706,7 @@ sub output_test_pack_fields {
 
     foreach my $field ($type->fields()) {
 	my $field_type_name = $field->type_name;
+	$field_type_name =~ s/\s+DECLSPEC_ALIGN\(\d+\)//;
 	my $field_name = $field->name;
 	my $field_size = $field->size;
 	my $field_offset = $field->offset;
