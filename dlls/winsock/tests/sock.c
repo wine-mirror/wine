@@ -18,13 +18,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <mswsock.h>
+#include "wine/test.h"
+#else
 #include "wine/test.h"
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>
-#undef USE_WS_PREFIX
 #include <winsock2.h>
 #include <mswsock.h>
+#endif
 
 #define MAX_CLIENTS 4      /* Max number of clients */
 #define NUM_TESTS   2      /* Number of tests performed */
@@ -503,30 +508,32 @@ static void WINAPI event_client ( client_params *par )
                 WSAEventSelect ( mem->s, event, mask );
             }
         }
-        else if ( wsa_events.lNetworkEvents & FD_READ )
+        if ( wsa_events.lNetworkEvents & FD_READ )
         {
             err = wsa_events.iErrorCode[ FD_READ_BIT ];
             ok ( err == 0, "event_client (%x): FD_READ error code: %d\n", id, err );
-
+            if ( err != 0 ) break;
+            
+            /* First read must succeed */
             n = recv ( mem->s, recv_p, min ( recv_last - recv_p, par->buflen ), 0 );
             wsa_ok ( n, 0 <=, "event_client (%lx): recv error: %d\n" );
-            if ( err != 0 || n < 0 )
-                break;
-            else if ( n == 0 )
-            {
-                ok ( 0, "event_client (%x): empty receive", id );
-                break;
-            }
 
-            recv_p += n;
-            if ( recv_p == recv_last )
-            {
-                trace ( "event_client (%x): all data received\n", id );
-                mask &= ~FD_READ;
-                WSAEventSelect ( mem->s, event, mask );
+            while ( n >= 0 ) {
+                recv_p += n;
+                if ( recv_p == recv_last )
+                {
+                    mask &= ~FD_READ;
+                    trace ( "event_client (%x): all data received\n", id );
+                    WSAEventSelect ( mem->s, event, mask );
+                    break;
+                }
+                n = recv ( mem->s, recv_p, min ( recv_last - recv_p, par->buflen ), 0 );
+                if ( n < 0 && ( err = WSAGetLastError()) != WSAEWOULDBLOCK )
+                    ok ( 0, "event_client (%x): read error: %d\n", id, err );
+                
             }
-        }
-        else if ( wsa_events.lNetworkEvents & FD_CLOSE )
+        }   
+        if ( wsa_events.lNetworkEvents & FD_CLOSE )
         {
             trace ( "event_client (%x): close event\n", id );
             err = wsa_events.iErrorCode[ FD_CLOSE_BIT ];
@@ -592,8 +599,8 @@ static void StartClients (LPTHREAD_START_ROUTINE routine,
 
 static void do_test( test_setup *test )
 {
-    int i, n = min (test->general.n_clients, MAX_CLIENTS);
-    int wait;
+    DWORD i, n = min (test->general.n_clients, MAX_CLIENTS);
+    DWORD wait;
 
     server_ready = CreateEventA ( NULL, TRUE, FALSE, NULL );
     for (i = 0; i <= n; i++)
@@ -604,9 +611,10 @@ static void do_test( test_setup *test )
     WaitForSingleObject ( server_ready, INFINITE );
 
     wait = WaitForMultipleObjects ( 1 + n, thread, TRUE, 1000 * TEST_TIMEOUT );
-    ok ( wait == WAIT_OBJECT_0, "some threads have not completed\n" );
+    ok ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n , 
+         "some threads have not completed: %lx\n", wait );
 
-    if ( wait == WAIT_TIMEOUT )
+    if ( ! ( wait >= WAIT_OBJECT_0 && wait <= WAIT_OBJECT_0 + n ) )
     {
         for (i = 0; i <= n; i++)
         {
