@@ -35,6 +35,7 @@
 #endif
 
 /*#define DUMP_CP_INFO*/
+/*#define DUMP_SCRIPT_INFO*/
 
 #define TRACE_2 OutputDebugStringA
 
@@ -45,8 +46,19 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     WCHAR stringW[] = {'J','u','s','t',' ','a',' ','t','e','s','t',' ','s','t','r','i','n','g',0};
     char bufA[256];
     WCHAR bufW[256];
-    UINT lenA, lenW;
+    UINT lenA, lenW, expected_len;
     HRESULT ret;
+    HMODULE hMlang;
+    FARPROC pConvertINetMultiByteToUnicode;
+    FARPROC pConvertINetUnicodeToMultiByte;
+
+    hMlang = LoadLibraryA("mlang.dll");
+    ok(hMlang != 0, "couldn't load mlang.dll\n");
+
+    pConvertINetMultiByteToUnicode = GetProcAddress(hMlang, "ConvertINetMultiByteToUnicode");
+    ok(pConvertINetMultiByteToUnicode != NULL, "couldn't resolve ConvertINetMultiByteToUnicode\n");
+    pConvertINetUnicodeToMultiByte = GetProcAddress(hMlang, "ConvertINetUnicodeToMultiByte");
+    ok(pConvertINetUnicodeToMultiByte != NULL, "couldn't resolve ConvertINetUnicodeToMultiByte\n");
 
     /* IMultiLanguage2_ConvertStringToUnicode tests */
 
@@ -93,6 +105,33 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     bufW[lenW] = 0; /* -1 doesn't include 0 terminator */
     ok(!lstrcmpA((LPCSTR)bufW, stringA), "bufW/stringA mismatch\n");
 
+    memset(bufW, 'x', sizeof(bufW));
+    lenA = lstrlenA(stringA);
+    lenW = 0;
+    ret = IMultiLanguage2_ConvertStringToUnicode(iML2, NULL, 1252, stringA, &lenA, NULL, &lenW);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08lx\n", ret);
+    ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
+    expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
+    ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
+
+    memset(bufW, 'x', sizeof(bufW));
+    lenA = lstrlenA(stringA);
+    lenW = sizeof(bufW)/sizeof(bufW[0]);
+    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
+    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08lx\n", ret);
+    ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
+    expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
+    ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
+
+    memset(bufW, 'x', sizeof(bufW));
+    lenA = lstrlenA(stringA);
+    lenW = 0;
+    ret = pConvertINetMultiByteToUnicode(NULL, 1252, stringA, &lenA, NULL, &lenW);
+    ok(ret == S_OK, "ConvertINetMultiByteToUnicode failed: %08lx\n", ret);
+    ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
+    expected_len = MultiByteToWideChar(1252, 0, stringA, lenA, NULL, 0);
+    ok(lenW == expected_len, "expected lenW %u, got %u\n", expected_len, lenW);
+
     /* IMultiLanguage2_ConvertStringFromUnicode tests */
 
     memset(bufA, 'x', sizeof(bufA));
@@ -138,6 +177,33 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     bufA[lenA] = 0; /* -1 doesn't include 0 terminator */
     bufA[lenA+1] = 0; /* sizeof(WCHAR) */
     ok(!lstrcmpW((LPCWSTR)bufA, stringW), "bufA/stringW mismatch\n");
+
+    memset(bufA, 'x', sizeof(bufA));
+    lenW = lstrlenW(stringW);
+    lenA = 0;
+    ret = IMultiLanguage2_ConvertStringFromUnicode(iML2, NULL, 1252, stringW, &lenW, NULL, &lenA);
+    ok(ret == S_OK, "IMultiLanguage2_ConvertStringFromUnicode failed: %08lx\n", ret);
+    ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
+    expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
+    ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
+
+    memset(bufA, 'x', sizeof(bufA));
+    lenW = lstrlenW(stringW);
+    lenA = sizeof(bufA);
+    ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
+    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08lx\n", ret);
+    ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
+    expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
+    ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
+
+    memset(bufA, 'x', sizeof(bufA));
+    lenW = lstrlenW(stringW);
+    lenA = 0;
+    ret = pConvertINetUnicodeToMultiByte(NULL, 1252, stringW, &lenW, NULL, &lenA);
+    ok(ret == S_OK, "ConvertINetUnicodeToMultiByte failed: %08lx\n", ret);
+    ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
+    expected_len = WideCharToMultiByte(1252, 0, stringW, lenW, NULL, 0, NULL, NULL);
+    ok(lenA == expected_len, "expected lenA %u, got %u\n", expected_len, lenA);
 }
 
 static void inline cpinfo_cmp(MIMECPINFO *cpinfo1, MIMECPINFO *cpinfo2)
@@ -222,7 +288,7 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     n = total * 2;
     TRACE_2("Call IEnumCodePage_Next\n");
     ret = IEnumCodePage_Next(iEnumCP, n, cpinfo, &n);
-    ok(ret == S_OK && n != 0, "IEnumCodePage_Next: expected S_OK, got %08lx/%lu\n", ret, n);
+    ok(ret == S_OK && n != 0, "IEnumCodePage_Next: expected S_OK/!0, got %08lx/%lu\n", ret, n);
 
     trace("flags %08lx, enumerated codepages %lu\n", flags, n);
 
@@ -310,13 +376,13 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     /* now IEnumCodePage_Next should fail, since pointer is at the end */
     n = 1;
     ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
-    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_OK/0, got %08lx/%lu\n", ret, n);
+    ok(ret == S_FALSE && n == 0, "IEnumCodePage_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
 
     ret = IEnumCodePage_Reset(iEnumCP);
     ok(ret == S_OK, "IEnumCodePage_Reset: expected S_OK, got %08lx\n", ret);
     n = 0;
     ret = IEnumCodePage_Next(iEnumCP, 1, &cpinfo2, &n);
-    ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 2/S_OK, got %lu/%08lx\n", n, ret);
+    ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
     cpinfo_cmp(&cpinfo[0], &cpinfo2);
 
 #if 0
@@ -336,6 +402,125 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 
     HeapFree(GetProcessHeap(), 0, cpinfo);
     IEnumCodePage_Release(iEnumCP);
+}
+
+static void inline scriptinfo_cmp(SCRIPTINFO *sinfo1, SCRIPTINFO *sinfo2)
+{
+    ok(sinfo1->ScriptId == sinfo2->ScriptId, "ScriptId mismatch: %d != %d\n", sinfo1->ScriptId, sinfo2->ScriptId);
+    ok(sinfo1->uiCodePage == sinfo2->uiCodePage, "uiCodePage mismatch: %u != %u\n", sinfo1->uiCodePage, sinfo2->uiCodePage);
+    ok(!lstrcmpW(sinfo1->wszDescription, sinfo2->wszDescription), "wszDescription mismatch\n");
+    ok(!lstrcmpW(sinfo1->wszFixedWidthFont, sinfo2->wszFixedWidthFont), "wszFixedWidthFont mismatch\n");
+    ok(!lstrcmpW(sinfo1->wszProportionalFont, sinfo2->wszProportionalFont), "wszProportionalFont mismatch\n");
+}
+
+static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
+{
+    IEnumScript *iEnumScript = NULL;
+    SCRIPTINFO *sinfo;
+    SCRIPTINFO sinfo2;
+    HRESULT ret;
+    ULONG i, n;
+    UINT total;
+
+    total = 0;
+    TRACE_2("Call IMultiLanguage2_GetNumberOfScripts\n");
+    ret = IMultiLanguage2_GetNumberOfScripts(iML2, &total);
+    ok(ret == S_OK && total != 0, "IMultiLanguage2_GetNumberOfScripts: expected S_OK/!0, got %08lx/%u\n", ret, total);
+
+    trace("total mlang supported scripts %u\n", total);
+
+    TRACE_2("Call IMultiLanguage2_EnumScripts\n");
+    ret = IMultiLanguage2_EnumScripts(iML2, flags, LANG_NEUTRAL, &iEnumScript);
+    trace("IMultiLanguage2_EnumScripts = %08lx, iEnumScript = %p\n", ret, iEnumScript);
+    ok(ret == S_OK && iEnumScript, "IMultiLanguage2_EnumScripts: expected S_OK/!NULL, got %08lx/%p\n", ret, iEnumScript);
+
+    TRACE_2("Call IEnumScript_Reset\n");
+    ret = IEnumScript_Reset(iEnumScript);
+    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08lx\n", ret);
+    n = 65536;
+    TRACE_2("Call IEnumScript_Next\n");
+    ret = IEnumScript_Next(iEnumScript, 0, NULL, &n);
+    ok(n == 65536 && ret == E_FAIL, "IEnumScript_Next: expected 65536/E_FAIL, got %lu/%08lx\n", n, ret);
+    TRACE_2("Call IEnumScript_Next\n");
+    ret = IEnumScript_Next(iEnumScript, 0, NULL, NULL);
+    ok(ret == E_FAIL, "IEnumScript_Next: expected E_FAIL, got %08lx\n", ret);
+
+    sinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*sinfo) * total * 2);
+
+    n = total * 2;
+    TRACE_2("Call IEnumScript_Next\n");
+    ret = IEnumScript_Next(iEnumScript, 0, sinfo, &n);
+    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+
+    n = total * 2;
+    TRACE_2("Call IEnumScript_Next\n");
+    ret = IEnumScript_Next(iEnumScript, n, sinfo, &n);
+    ok(ret == S_OK && n != 0, "IEnumScript_Next: expected S_OK, got %08lx/%lu\n", ret, n);
+
+    trace("flags %08lx, enumerated scripts %lu\n", flags, n);
+
+    if (!flags)
+    {
+	ok(n == total, "IEnumScript_Next: expected %u, got %lu", total, n);
+	flags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
+    }
+
+    total = n;
+
+    for (i = 0; i < n; i++)
+    {
+	CPINFOEXA cpinfoex;
+#ifdef DUMP_SCRIPT_INFO
+	trace("SCRIPTINFO #%lu:\n"
+	      "ScriptId %08lx\n"
+	      "uiCodePage %u\n"
+	      "wszDescription %s\n"
+	      "wszFixedWidthFont %s\n"
+	      "wszProportionalFont %s\n\n",
+	      i,
+	      sinfo[i].ScriptId,
+	      sinfo[i].uiCodePage,
+	      wine_dbgstr_w(sinfo[i].wszDescription),
+	      wine_dbgstr_w(sinfo[i].wszFixedWidthFont),
+	      wine_dbgstr_w(sinfo[i].wszProportionalFont));
+#endif
+	if (GetCPInfoExA(sinfo[i].uiCodePage, 0, &cpinfoex))
+	    trace("CodePage %u name: %s\n", sinfo[i].uiCodePage, cpinfoex.CodePageName);
+	else
+	    trace("GetCPInfoExA failed for cp %u\n", sinfo[i].uiCodePage);
+
+	trace("---\n");
+    }
+
+    /* now IEnumScript_Next should fail, since pointer is at the end */
+    n = 1;
+    ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
+    ok(ret == S_FALSE && n == 0, "IEnumScript_Next: expected S_FALSE/0, got %08lx/%lu\n", ret, n);
+
+    ret = IEnumScript_Reset(iEnumScript);
+    ok(ret == S_OK, "IEnumScript_Reset: expected S_OK, got %08lx\n", ret);
+    n = 0;
+    ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
+    ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+    scriptinfo_cmp(&sinfo[0], &sinfo2);
+
+#if 0
+    /* Due to a bug in MS' implementation of IEnumScript_Skip
+     * it's not used here.
+     */
+    ret = IEnumScript_Skip(iEnumScript, 1);
+    ok(ret == S_OK, "IEnumScript_Skip: expected S_OK, got %08lx\n", ret);
+#endif
+    for (i = 0; i < total - 1; i++)
+    {
+        n = 0;
+        ret = IEnumScript_Next(iEnumScript, 1, &sinfo2, &n);
+        ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %lu/%08lx\n", n, ret);
+        scriptinfo_cmp(&sinfo[i + 1], &sinfo2);
+    }
+
+    HeapFree(GetProcessHeap(), 0, sinfo);
+    IEnumScript_Release(iEnumScript);
 }
 
 START_TEST(mlang)
@@ -358,6 +543,10 @@ START_TEST(mlang)
     test_EnumCodePages(iML2, MIMECONTF_VALID);
     /* FIXME: why MIMECONTF_MIME_REGISTRY returns 0 of supported codepages? */
     /*test_EnumCodePages(iML2, MIMECONTF_MIME_REGISTRY);*/
+
+    test_EnumScripts(iML2, 0);
+    test_EnumScripts(iML2, SCRIPTCONTF_SCRIPT_USER);
+    test_EnumScripts(iML2, SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM);
 
     TRACE_2("Call IMultiLanguage2_IsConvertible\n");
     ret = IMultiLanguage2_IsConvertible(iML2, CP_UTF8, CP_UNICODE);

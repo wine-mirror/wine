@@ -412,14 +412,18 @@ HRESULT WINAPI ConvertINetMultiByteToUnicode(
             *pcSrcSize = lstrlenW((LPCWSTR)pSrcStr);
         *pcDstSize = min(*pcSrcSize, *pcDstSize);
         *pcSrcSize *= sizeof(WCHAR);
-        memmove(pDstStr, pSrcStr, *pcDstSize * sizeof(WCHAR));
+        if (pDstStr)
+            memmove(pDstStr, pSrcStr, *pcDstSize * sizeof(WCHAR));
         break;
 
     default:
         if (*pcSrcSize == -1)
             *pcSrcSize = lstrlenA(pSrcStr);
 
-        *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize);
+        if (pDstStr)
+            *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize);
+        else
+            *pcDstSize = MultiByteToWideChar(dwEncoding, 0, pSrcStr, *pcSrcSize, NULL, 0);
         break;
     }
     
@@ -461,14 +465,18 @@ HRESULT WINAPI ConvertINetUnicodeToMultiByte(
         if (*pcSrcSize == -1)
             *pcSrcSize = lstrlenW(pSrcStr);
         *pcDstSize = min(*pcSrcSize * sizeof(WCHAR), *pcDstSize);
-        memmove(pDstStr, pSrcStr, *pcDstSize);
+        if (pDstStr)
+            memmove(pDstStr, pSrcStr, *pcDstSize);
         break;
 
     default:
         if (*pcSrcSize == -1)
             *pcSrcSize = lstrlenW(pSrcStr);
 
-        *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize, NULL, NULL);
+        if (pDstStr)
+            *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, pDstStr, *pcDstSize, NULL, NULL);
+        else
+            *pcDstSize = WideCharToMultiByte(dwEncoding, 0, pSrcStr, *pcSrcSize, NULL, 0, NULL, NULL);
         break;
     }
 
@@ -687,7 +695,7 @@ typedef struct tagMLang_impl
     ICOM_VTABLE(IMultiLanguage) *vtbl_IMultiLanguage;
     ICOM_VTABLE(IMultiLanguage2) *vtbl_IMultiLanguage2;
     DWORD ref;
-    DWORD total;
+    DWORD total_cp, total_scripts;
 } MLang_impl;
 
 static ULONG WINAPI MLang_AddRef( MLang_impl* This)
@@ -887,6 +895,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
     ecp = HeapAlloc( GetProcessHeap(), 0, sizeof (EnumCodePage_impl) );
     ecp->vtbl_IEnumCodePage = &IEnumCodePage_vtbl;
     ecp->ref = 1;
+    ecp->pos = 0;
     ecp->total = 0;
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
     {
@@ -913,6 +922,161 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
     TRACE("enumerated %ld codepages with flags %08lx\n", ecp->total, grfFlags);
 
     *ppEnumCodePage = (IEnumCodePage*) ecp;
+
+    return S_OK;
+}
+
+/******************************************************************************/
+
+typedef struct tagEnumScript_impl
+{
+    ICOM_VTABLE(IEnumScript) *vtbl_IEnumScript;
+    DWORD ref;
+    SCRIPTINFO *script_info;
+    DWORD total, pos;
+} EnumScript_impl;
+
+static HRESULT WINAPI fnIEnumScript_QueryInterface(
+        IEnumScript* iface,
+        REFIID riid,
+        void** ppvObject)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+
+    TRACE("%p -> %s\n", This, debugstr_guid(riid) );
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IEnumScript))
+    {
+        IEnumScript_AddRef(iface);
+        TRACE("Returning IID_IEnumScript %p ref = %ld\n", This, This->ref);
+        *ppvObject = &(This->vtbl_IEnumScript);
+        return S_OK;
+    }
+
+    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppvObject);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fnIEnumScript_AddRef(
+        IEnumScript* iface)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    return ++(This->ref);
+}
+
+static ULONG WINAPI fnIEnumScript_Release(
+        IEnumScript* iface)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    ULONG ref = --This->ref;
+
+    TRACE("%p ref = %ld\n", This, ref);
+    if (ref == 0)
+    {
+        TRACE("Destroying %p\n", This);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI fnIEnumScript_Clone(
+        IEnumScript* iface,
+        IEnumScript** ppEnum)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    FIXME("%p %p: stub!\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static  HRESULT WINAPI fnIEnumScript_Next(
+        IEnumScript* iface,
+        ULONG celt,
+        PSCRIPTINFO rgelt,
+        ULONG* pceltFetched)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    TRACE("%p %lu %p %p\n", This, celt, rgelt, pceltFetched);
+
+    if (!pceltFetched || !rgelt) return E_FAIL;
+
+    *pceltFetched = 0;
+
+    if (This->pos + celt > This->total)
+        celt = This->total - This->pos;
+
+    if (!celt) return S_FALSE;
+
+    memcpy(rgelt, This->script_info + This->pos, celt * sizeof(SCRIPTINFO));
+    *pceltFetched = celt;
+    This->pos += celt;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI fnIEnumScript_Reset(
+        IEnumScript* iface)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    TRACE("%p\n", This);
+
+    This->pos = 0;
+    return S_OK;
+}
+
+static  HRESULT WINAPI fnIEnumScript_Skip(
+        IEnumScript* iface,
+        ULONG celt)
+{
+    ICOM_THIS_MULTI(EnumScript_impl, vtbl_IEnumScript, iface);
+    TRACE("%p %lu\n", This, celt);
+
+    if (celt >= This->total) return S_FALSE;
+
+    This->pos = celt;  /* FIXME: should be += ?? */
+    return S_OK;
+}
+
+static ICOM_VTABLE(IEnumScript) IEnumScript_vtbl =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    fnIEnumScript_QueryInterface,
+    fnIEnumScript_AddRef,
+    fnIEnumScript_Release,
+    fnIEnumScript_Clone,
+    fnIEnumScript_Next,
+    fnIEnumScript_Reset,
+    fnIEnumScript_Skip
+};
+
+static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
+                     LANGID LangId, IEnumScript** ppEnumScript )
+{
+    static const WCHAR defaultW[] = { 'D','e','f','a','u','l','t',0 };
+    EnumScript_impl *es;
+
+    FIXME("%p, %08lx, %04x, %p: stub!\n", mlang, dwFlags, LangId, ppEnumScript);
+
+    if (!dwFlags) /* enumerate all available scripts */
+        dwFlags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
+
+    es = HeapAlloc( GetProcessHeap(), 0, sizeof (EnumScript_impl) );
+    es->vtbl_IEnumScript = &IEnumScript_vtbl;
+    es->ref = 1;
+    es->pos = 0;
+    es->total = 1;
+
+    es->script_info = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPTINFO) * es->total);
+
+    /* just a fake for now */
+    es->script_info[0].ScriptId = 0;
+    es->script_info[0].uiCodePage = 0;
+    strcpyW(es->script_info[0].wszDescription, defaultW);
+    es->script_info[0].wszFixedWidthFont[0] = 0;
+    es->script_info[0].wszProportionalFont[0] = 0;
+
+    *ppEnumScript = (IEnumScript *)es;
 
     return S_OK;
 }
@@ -1260,7 +1424,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfCodePageInfo(
 
     if (!pcCodePage) return S_FALSE;
 
-    *pcCodePage = This->total;
+    *pcCodePage = This->total_cp;
     return S_OK;
 }
 
@@ -1489,6 +1653,21 @@ static HRESULT WINAPI fnIMultiLanguage2_ConvertStringToUnicodeEx(
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI fnIMultiLanguage2_ConvertStringFromUnicodeEx(
+    IMultiLanguage2* This,
+    DWORD* pdwMode,
+    DWORD dwEncoding,
+    WCHAR* pSrcStr,
+    UINT* pcSrcSize,
+    CHAR* pDstStr,
+    UINT* pcDstSize,
+    DWORD dwFlag,
+    WCHAR* lpFallBack)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT WINAPI fnIMultiLanguage2_DetectCodepageInIStream(
     IMultiLanguage2* iface,
     DWORD dwFlag,
@@ -1554,8 +1733,13 @@ static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfScripts(
     IMultiLanguage2* iface,
     UINT* pnScripts)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
+    TRACE("%p %p\n", This, pnScripts);
+
+    if (!pnScripts) return S_FALSE;
+
+    *pnScripts = This->total_scripts;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_EnumScripts(
@@ -1564,8 +1748,10 @@ static HRESULT WINAPI fnIMultiLanguage2_EnumScripts(
     LANGID LangId,
     IEnumScript** ppEnumScript)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
+    TRACE("%p %08lx %04x %p\n", This, dwFlags, LangId, ppEnumScript);
+
+    return EnumScript_create( This, dwFlags, LangId, ppEnumScript );
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
@@ -1574,8 +1760,10 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
     HWND hwnd,
     DWORD dwfIODControl)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage2, iface);
+    FIXME("%p %u %p %08lx: stub!\n", This, uiCodePage, hwnd, dwfIODControl);
+
+    return S_FALSE;
 }
 
 static ICOM_VTABLE(IMultiLanguage2) IMultiLanguage2_vtbl =
@@ -1601,6 +1789,7 @@ static ICOM_VTABLE(IMultiLanguage2) IMultiLanguage2_vtbl =
     fnIMultiLanguage2_CreateConvertCharset,
     fnIMultiLanguage2_ConvertStringInIStream,
     fnIMultiLanguage2_ConvertStringToUnicodeEx,
+    fnIMultiLanguage2_ConvertStringFromUnicodeEx,
     fnIMultiLanguage2_DetectCodepageInIStream,
     fnIMultiLanguage2_DetectInputCodepage,
     fnIMultiLanguage2_ValidateCodePage,
@@ -1624,9 +1813,11 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     mlang->vtbl_IMultiLanguage = &IMultiLanguage_vtbl;
     mlang->vtbl_IMultiLanguage2 = &IMultiLanguage2_vtbl;
 
-    mlang->total = 0;
+    mlang->total_cp = 0;
     for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
-        mlang->total += mlang_data[i].number_of_cp;
+        mlang->total_cp += mlang_data[i].number_of_cp;
+
+    mlang->total_scripts = 1;
 
     mlang->ref = 1;
     *ppObj = (LPVOID) mlang;

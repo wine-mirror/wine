@@ -346,14 +346,78 @@ typedef struct IEnumScript IEnumScript;
 
 #define MAX_SCRIPT_NAME (48)
 
+#define MAX_MIMEFACE_NAME (32)
+
 typedef BYTE SCRIPT_ID;
+
+typedef __int64 SCRIPT_IDS;
+
+typedef enum tagSCRIPTCONTF {
+    sidDefault = 0,
+    sidMerge = sidDefault + 1,
+    sidAsciiSym = sidMerge + 1,
+    sidAsciiLatin = sidAsciiSym + 1,
+    sidLatin = sidAsciiLatin + 1,
+    sidGreek = sidLatin + 1,
+    sidCyrillic = sidGreek + 1,
+    sidArmenian = sidCyrillic + 1,
+    sidHebrew = sidArmenian + 1,
+    sidArabic = sidHebrew + 1,
+    sidDevanagari = sidArabic + 1,
+    sidBengali = sidDevanagari + 1,
+    sidGurmukhi = sidBengali + 1,
+    sidGujarati = sidGurmukhi + 1,
+    sidOriya = sidGujarati + 1,
+    sidTamil = sidOriya + 1,
+    sidTelugu = sidTamil + 1,
+    sidKannada = sidTelugu + 1,
+    sidMalayalam = sidKannada + 1,
+    sidThai = sidMalayalam + 1,
+    sidLao = sidThai + 1,
+    sidTibetan = sidLao + 1,
+    sidGeorgian = sidTibetan + 1,
+    sidHangul = sidGeorgian + 1,
+    sidKana = sidHangul + 1,
+    sidBopomofo = sidKana + 1,
+    sidHan = sidBopomofo + 1,
+    sidEthiopic = sidHan + 1,
+    sidCanSyllabic = sidEthiopic + 1,
+    sidCherokee = sidCanSyllabic + 1,
+    sidYi = sidCherokee + 1,
+    sidBraille = sidYi + 1,
+    sidRunic = sidBraille + 1,
+    sidOgham = sidRunic + 1,
+    sidSinhala = sidOgham + 1,
+    sidSyriac = sidSinhala + 1,
+    sidBurmese = sidSyriac + 1,
+    sidKhmer = sidBurmese + 1,
+    sidThaana = sidKhmer + 1,
+    sidMongolian = sidThaana + 1,
+    sidUserDefined = sidMongolian + 1,
+    sidLim = sidUserDefined + 1,
+    sidFEFirst = sidHangul,
+    sidFELast = sidHan
+} SCRIPTCONTF;
+
+typedef enum tagSCRIPTFONTCONTF {
+    SCRIPTCONTF_FIXED_FONT = 0x1,
+    SCRIPTCONTF_PROPORTIONAL_FONT = 0x2,
+    SCRIPTCONTF_SCRIPT_USER = 0x10000,
+    SCRIPTCONTF_SCRIPT_HIDE = 0x20000,
+    SCRIPTCONTF_SCRIPT_SYSTEM = 0x40000
+} SCRIPTFONTCONTF;
+
+typedef struct tagSCRIPFONTINFO {
+    SCRIPT_IDS scripts;
+    WCHAR wszFont[32];
+} SCRIPTFONTINFO, *PSCRIPTFONTINFO;
 
 typedef struct tagSCRIPTINFO {
     SCRIPT_ID ScriptId;
     UINT uiCodePage;
     WCHAR wszDescription[48];
-    WCHAR wszFixedWidthFont[1];
-    WCHAR wszProportionalFont[1];
+    WCHAR wszFixedWidthFont[32];
+    WCHAR wszProportionalFont[32];
 } SCRIPTINFO, *PSCRIPTINFO;
 
 /*****************************************************************************
@@ -488,8 +552,6 @@ typedef struct IEnumCodePage IEnumCodePage;
 #define MAX_MIMECP_NAME (64)
 
 #define MAX_MIMECSET_NAME (50)
-
-#define MAX_MIMEFACE_NAME (32)
 
 typedef enum tagMIMECONTF {
     MIMECONTF_MAILNEWS = 0x1,
@@ -1501,6 +1563,16 @@ struct IMultiLanguage2 : public IUnknown
         DWORD dwFlag,
         WCHAR* lpFallBack) = 0;
 
+    virtual HRESULT STDMETHODCALLTYPE ConvertStringFromUnicodeEx(
+        DWORD* pdwMode,
+        DWORD dwEncoding,
+        WCHAR* pSrcStr,
+        UINT* pcSrcSize,
+        CHAR* pDstStr,
+        UINT* pcDstSize,
+        DWORD dwFlag,
+        WCHAR* lpFallBack) = 0;
+
     virtual HRESULT STDMETHODCALLTYPE DetectCodepageInIStream(
         DWORD dwFlag,
         DWORD dwPrefWinCodePage,
@@ -1678,6 +1750,17 @@ struct IMultiLanguage2Vtbl {
         DWORD dwFlag,
         WCHAR* lpFallBack);
 
+    HRESULT (STDMETHODCALLTYPE *ConvertStringFromUnicodeEx)(
+        IMultiLanguage2* This,
+        DWORD* pdwMode,
+        DWORD dwEncoding,
+        WCHAR* pSrcStr,
+        UINT* pcSrcSize,
+        CHAR* pDstStr,
+        UINT* pcDstSize,
+        DWORD dwFlag,
+        WCHAR* lpFallBack);
+
     HRESULT (STDMETHODCALLTYPE *DetectCodepageInIStream)(
         IMultiLanguage2* This,
         DWORD dwFlag,
@@ -1755,6 +1838,7 @@ struct IMultiLanguage2Vtbl {
 #define IMultiLanguage2_CreateConvertCharset(p,a,b,c,d) (p)->lpVtbl->CreateConvertCharset(p,a,b,c,d)
 #define IMultiLanguage2_ConvertStringInIStream(p,a,b,c,d,e,f,g) (p)->lpVtbl->ConvertStringInIStream(p,a,b,c,d,e,f,g)
 #define IMultiLanguage2_ConvertStringToUnicodeEx(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->ConvertStringToUnicodeEx(p,a,b,c,d,e,f,g,h)
+#define IMultiLanguage2_ConvertStringFromUnicodeEx(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->ConvertStringFromUnicodeEx(p,a,b,c,d,e,f,g,h)
 #define IMultiLanguage2_DetectCodepageInIStream(p,a,b,c,d,e) (p)->lpVtbl->DetectCodepageInIStream(p,a,b,c,d,e)
 #define IMultiLanguage2_DetectInputCodepage(p,a,b,c,d,e,f) (p)->lpVtbl->DetectInputCodepage(p,a,b,c,d,e,f)
 #define IMultiLanguage2_ValidateCodePage(p,a,b) (p)->lpVtbl->ValidateCodePage(p,a,b)
@@ -1791,6 +1875,7 @@ struct IMultiLanguage2Vtbl {
     STDMETHOD_(HRESULT,CreateConvertCharset)(THIS_ UINT uiSrcCodePage, UINT uiDstCodePage, DWORD dwProperty, IMLangConvertCharset** ppMLangConvertCharset) PURE; \
     STDMETHOD_(HRESULT,ConvertStringInIStream)(THIS_ DWORD* pdwMode, DWORD dwFlag, WCHAR* lpFallBack, DWORD dwSrcEncoding, DWORD dwDstEncoding, IStream* pstmIn, IStream* pstmOut) PURE; \
     STDMETHOD_(HRESULT,ConvertStringToUnicodeEx)(THIS_ DWORD* pdwMode, DWORD dwEncoding, CHAR* pSrcStr, UINT* pcSrcSize, WCHAR* pDstStr, UINT* pcDstSize, DWORD dwFlag, WCHAR* lpFallBack) PURE; \
+    STDMETHOD_(HRESULT,ConvertStringFromUnicodeEx)(THIS_ DWORD* pdwMode, DWORD dwEncoding, WCHAR* pSrcStr, UINT* pcSrcSize, CHAR* pDstStr, UINT* pcDstSize, DWORD dwFlag, WCHAR* lpFallBack) PURE; \
     STDMETHOD_(HRESULT,DetectCodepageInIStream)(THIS_ DWORD dwFlag, DWORD dwPrefWinCodePage, IStream* pstmIn, DetectEncodingInfo* lpEncoding, INT* pnScores) PURE; \
     STDMETHOD_(HRESULT,DetectInputCodepage)(THIS_ DWORD dwFlag, DWORD dwPrefWinCodePage, CHAR* pSrcStr, INT* pcSrcSize, DetectEncodingInfo* lpEncoding, INT* pnScores) PURE; \
     STDMETHOD_(HRESULT,ValidateCodePage)(THIS_ UINT uiCodePage, HWND hwnd) PURE; \
@@ -1980,6 +2065,21 @@ void __RPC_STUB IMultiLanguage2_ConvertStringToUnicodeEx_Stub(
     struct IRpcChannelBuffer* pRpcChannelBuffer,
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
+HRESULT CALLBACK IMultiLanguage2_ConvertStringFromUnicodeEx_Proxy(
+    IMultiLanguage2* This,
+    DWORD* pdwMode,
+    DWORD dwEncoding,
+    WCHAR* pSrcStr,
+    UINT* pcSrcSize,
+    CHAR* pDstStr,
+    UINT* pcDstSize,
+    DWORD dwFlag,
+    WCHAR* lpFallBack);
+void __RPC_STUB IMultiLanguage2_ConvertStringFromUnicodeEx_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
 HRESULT CALLBACK IMultiLanguage2_DetectCodepageInIStream_Proxy(
     IMultiLanguage2* This,
     DWORD dwFlag,
@@ -2088,6 +2188,7 @@ DEFINE_GUID(IID_IMLangFontLink, 0x359F3441,0xBD4A,0x11D0,0xB1,0x88,0x00,0xAA,0x0
 DEFINE_GUID(IID_IMultiLanguage2, 0xDCCFC164,0x2B38,0x11d2,0xB7,0xEC,0x00,0xC0,0x4F,0x8F,0x5D,0x9A);
 DEFINE_GUID(IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);
 DEFINE_GUID(IID_IEnumCodePage, 0x275c23e3,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);
+DEFINE_GUID(IID_IEnumScript, 0xae5f1430,0x388b,0x11d2,0x83,0x80,0x00,0xc0,0x4f,0x8f,0x5d,0xa1);
 #ifdef __cplusplus
 }
 #endif

@@ -79,8 +79,73 @@ interface IMLangFontLink : IMLangCodePages
 interface IEnumScript : IUnknown
 {
     const USHORT MAX_SCRIPT_NAME = 48;
+    const USHORT MAX_MIMEFACE_NAME = 32;
 
     typedef BYTE SCRIPT_ID;
+    typedef __int64 SCRIPT_IDS;
+
+    typedef enum tagSCRIPTCONTF
+    {
+        sidDefault = 0,
+        sidMerge = sidDefault + 1,
+        sidAsciiSym = sidMerge + 1,
+        sidAsciiLatin = sidAsciiSym + 1,
+        sidLatin = sidAsciiLatin + 1,
+        sidGreek = sidLatin + 1,
+        sidCyrillic = sidGreek + 1,
+        sidArmenian = sidCyrillic + 1,
+        sidHebrew = sidArmenian + 1,
+        sidArabic = sidHebrew + 1,
+        sidDevanagari = sidArabic + 1,
+        sidBengali = sidDevanagari + 1,
+        sidGurmukhi = sidBengali + 1,
+        sidGujarati = sidGurmukhi + 1,
+        sidOriya = sidGujarati + 1,
+        sidTamil = sidOriya + 1,
+        sidTelugu = sidTamil + 1,
+        sidKannada = sidTelugu + 1,
+        sidMalayalam = sidKannada + 1,
+        sidThai = sidMalayalam + 1,
+        sidLao = sidThai + 1,
+        sidTibetan = sidLao + 1,
+        sidGeorgian = sidTibetan + 1,
+        sidHangul = sidGeorgian + 1,
+        sidKana = sidHangul + 1,
+        sidBopomofo = sidKana + 1,
+        sidHan = sidBopomofo + 1,
+        sidEthiopic = sidHan + 1,
+        sidCanSyllabic = sidEthiopic + 1,
+        sidCherokee = sidCanSyllabic + 1,
+        sidYi = sidCherokee + 1,
+        sidBraille = sidYi + 1,
+        sidRunic = sidBraille + 1,
+        sidOgham = sidRunic + 1,
+        sidSinhala = sidOgham + 1,
+        sidSyriac = sidSinhala + 1,
+        sidBurmese = sidSyriac + 1,
+        sidKhmer = sidBurmese + 1,
+        sidThaana = sidKhmer + 1,
+        sidMongolian = sidThaana + 1,
+        sidUserDefined = sidMongolian + 1,
+        sidLim = sidUserDefined + 1,
+        sidFEFirst = sidHangul,
+        sidFELast = sidHan
+    } SCRIPTCONTF;
+
+    typedef enum tagSCRIPTFONTCONTF
+    {
+        SCRIPTCONTF_FIXED_FONT = 0x1,
+        SCRIPTCONTF_PROPORTIONAL_FONT = 0x2,
+        SCRIPTCONTF_SCRIPT_USER = 0x10000,
+        SCRIPTCONTF_SCRIPT_HIDE = 0x20000,
+        SCRIPTCONTF_SCRIPT_SYSTEM = 0x40000
+    } SCRIPTFONTCONTF;
+
+    typedef struct tagSCRIPFONTINFO
+    {
+        SCRIPT_IDS scripts;
+        WCHAR wszFont[MAX_MIMEFACE_NAME];
+    } SCRIPTFONTINFO, *PSCRIPTFONTINFO;
 
     typedef struct tagSCRIPTINFO {
         SCRIPT_ID ScriptId;
@@ -112,7 +177,6 @@ interface IEnumCodePage : IUnknown
 {
     const USHORT MAX_MIMECP_NAME = 64;
     const USHORT MAX_MIMECSET_NAME = 50;
-    const USHORT MAX_MIMEFACE_NAME = 32;
 
     typedef enum tagMIMECONTF
     {
@@ -418,6 +482,16 @@ interface IMultiLanguage2 : IUnknown
         [in] DWORD dwFlag,
         [in] WCHAR *lpFallBack);
 
+    HRESULT ConvertStringFromUnicodeEx(
+        [in,out] DWORD *pdwMode,
+        [in] DWORD dwEncoding,
+        [in] WCHAR *pSrcStr,
+        [in,out] UINT *pcSrcSize,
+        [in] CHAR *pDstStr,
+        [in,out] UINT *pcDstSize,
+        [in] DWORD dwFlag,
+        [in] WCHAR *lpFallBack);
+
     HRESULT DetectCodepageInIStream(      
         [in] DWORD dwFlag,
         [in] DWORD dwPrefWinCodePage,
@@ -482,3 +556,4 @@ cpp_quote("DEFINE_GUID(IID_IMLangFontLink, 0x359F3441,0xBD4A,0x11D0,0xB1,0x88,0x
 cpp_quote("DEFINE_GUID(IID_IMultiLanguage2, 0xDCCFC164,0x2B38,0x11d2,0xB7,0xEC,0x00,0xC0,0x4F,0x8F,0x5D,0x9A);")
 cpp_quote("DEFINE_GUID(IID_IMultiLanguage, 0x275c23e1,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);")
 cpp_quote("DEFINE_GUID(IID_IEnumCodePage, 0x275c23e3,0x3747,0x11d0,0x9f,0xea,0x00,0xaa,0x00,0x3f,0x86,0x46);")
+cpp_quote("DEFINE_GUID(IID_IEnumScript, 0xae5f1430,0x388b,0x11d2,0x83,0x80,0x00,0xc0,0x4f,0x8f,0x5d,0xa1);")
