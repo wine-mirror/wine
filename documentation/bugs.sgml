@@ -14,13 +14,10 @@
       </para>
       
       <sect2>
-        <title>Run "winecheck" to check your configuration</title>
-
-	<para>
-	  Run a Perl script called <command>winecheck</command>.
-	  For details, please refer to the <link
-	  linkend="config-verify">Configuration section</link>.
-	</para>
+        <title>Verify your wine configuration</title>
+        <para>
+        Refer to the <link linkend="config-verify">Configuration verification section</link>
+        </para>
       </sect2>
 
       <sect2>

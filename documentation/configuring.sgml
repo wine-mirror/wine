@@ -165,32 +165,16 @@
       <title>Verification of correct configuration</title>
 
       <para>
-	After you finished configuring Wine, you may run a Perl
-	script called <command>winecheck</command>, to be found
-	in Wine's tools/ directory. It tries to check your
-	configuration's correctness by checking for some popular
-	problems.  To run it, run in a <glossterm>terminal</glossterm> 
-	in the Wine source tree directory:
+        TODO: After you have finished configuring Wine you can verify
+        your Wine configuration by running winecfg.
+        This functionality will be added to winecfg
+        in the near future.
       </para>
-  <screen>
-  <prompt>$ </><userinput>cd tools</>
-  <prompt>$ </><userinput>perl ./winecheck</>
-  </screen>
       <para>
-	The winecheck output will be a percentage score indicating Wine
-	configuration correctness.  Please note that winecheck is not 
-        100% accurate.
-      </para>
-
-      <para>
-        If this yields a "good" percentage score, then you can consider
-	your Wine installation to be finished successfully:
-	Congratulations!
-	Otherwise (or if there are still some configuration problems
-	that <command>winecheck</command> doesn't catch properly), please check out the
-	configuration documentation below to find out more about some
-	parts, or proceed to the <link linkend="bugs">Troubleshooting
-	chapter</link>.
+        Please check out the
+        configuration documentation below to find out more about Wine's
+        configuration, or proceed to the <link linkend="bugs">Troubleshooting
+        chapter</link>.
       </para>
     </sect1>
 
