@@ -34,8 +34,9 @@
 #include "ldt.h"
 #include "tweak.h"
 #include "x11font.h"
+#include "server.h"
 
-DEFAULT_DEBUG_CHANNEL(font)
+DEFAULT_DEBUG_CHANNEL(font);
 
 #define X_PFONT_MAGIC		(0xFADE0000)
 #define X_FMC_MAGIC		(0x0000CAFE)
@@ -72,7 +73,6 @@ TC_CP_STROKE | TC_CR_ANY |
 
 			/* X11R6 adds TC_SF_X_YINDEP, maybe more... */
 
-static const char*	INIWinePrefix = "/.wine";
 static const char*	INIFontMetrics = "/cachedmetrics.";
 static const char*	INIFontSection = "fonts";
 static const char*	INIAliasSection = "Alias";
@@ -1684,22 +1684,18 @@ static void XFONT_LoadIgnores(void)
  */
 static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 {
-    char* pchDisplay, *home;
+    const char *confdir = get_config_dir();
+    const char *display_name = Options.display;
+    int len = strlen(confdir) + strlen(INIFontMetrics) + strlen(display_name) + 2;
 
-    pchDisplay = getenv( "DISPLAY" );
-    if( !pchDisplay ) pchDisplay = "0";
-
-    if ((home = getenv( "HOME" )) != NULL)
+    if ((len > *buf_size) &&
+        !(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, *buf_size = len )))
     {
-	int i = strlen( home ) + strlen( INIWinePrefix ) + 
-		strlen( INIFontMetrics ) + strlen( pchDisplay ) + 2;
-	if( i > *buf_size ) 
-	    buffer = (char*) HeapReAlloc( GetProcessHeap(), 0, buffer, *buf_size = i );
-	strcpy( buffer, home );
-	strcat( buffer, INIWinePrefix );
-	strcat( buffer, INIFontMetrics );
-	strcat( buffer, pchDisplay );
-    } else buffer[0] = '\0';
+        ERR("out of memory\n");
+        ExitProcess(1);
+    }
+
+    sprintf( buffer, "%s/%s%s", confdir, INIFontMetrics, display_name );
     return buffer;
 }
 
