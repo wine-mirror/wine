@@ -7311,7 +7311,7 @@ if test "${ac_cv_lib_Xrandr_XRRSetScreenConfigAndRate+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXrandr $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrandr $X_LIBS -lXrender -lXext -lX11 $X_EXTRA_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -7365,7 +7365,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_LIBXRANDR 1
 _ACEOF
 
-                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr"
+                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr -lXrender"
 
 fi
 

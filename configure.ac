@@ -257,9 +257,9 @@ then
         then
                 AC_CHECK_LIB(Xrandr, XRRSetScreenConfigAndRate,
                   [ AC_DEFINE(HAVE_LIBXRANDR, 1, [Define if you have the Xrandr library])
-                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr"
+                     X_PRE_LIBS="$X_PRE_LIBS -lXrandr -lXrender"
                   ],,
-                  $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+                  $X_LIBS -lXrender -lXext -lX11 $X_EXTRA_LIBS)
         fi
 
         dnl *** Check for XVideo extension supporting XvImages
