@@ -63,6 +63,8 @@ typedef struct tagRMCB {
 
 static RMCB *FirstRMCB = NULL;
 
+UINT16 DPMI_wrap_seg;
+
 /**********************************************************************
  *	    DPMI_xalloc
  * special virtualalloc, allocates lineary monoton growing memory.
@@ -154,6 +156,7 @@ static void INT_GetRealModeContext( REALMODECALL *call, CONTEXT *context )
     ES_reg(context)  = call->es;
     FS_reg(context)  = call->fs;
     GS_reg(context)  = call->gs;
+    SS_reg(context)  = call->ss;
     (char*)V86BASE(context) = DOSMEM_MemoryBase(0);
 }
 
@@ -178,6 +181,7 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
     call->es  = ES_reg(context);
     call->fs  = FS_reg(context);
     call->gs  = GS_reg(context);
+    call->ss  = SS_reg(context);
 }
 
 
@@ -269,7 +273,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 
     TRACE(int31, "EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
                  EAX_reg(context), EBX_reg(context), ECX_reg(context), EDX_reg(context) );
-    TRACE(int31, "ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
+    TRACE(int31, "ESI=%08lx EDI=%08lx ES=%04lx DS=%04lx CS:IP=%04lx:%04x, %d WORD arguments, %s\n",
                  ESI_reg(context), EDI_reg(context), ES_reg(context), DS_reg(context),
                  CS_reg(context), IP_reg(context), args, iret?"IRET":"FAR" );
 
@@ -298,7 +302,7 @@ callrmproc_again:
     if (!already) {
         if (!SS_reg(context)) {
             alloc = 1; /* allocate default stack */
-            stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, &(SS_reg(context)) );
+            stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, (UINT16 *)&(SS_reg(context)) );
             SP_reg(context) = 64-2;
             stack16 += 32-1;
             if (!addr) {
@@ -322,8 +326,8 @@ callrmproc_again:
         }
 #ifdef MZ_SUPPORTED
         /* push return address (return to interrupt wrapper) */
-        *(--stack16) = pModule->lpDosTask->dpmi_seg;
-        *(--stack16) = pModule->lpDosTask->wrap_ofs;
+        *(--stack16) = DPMI_wrap_seg;
+        *(--stack16) = 0;
         /* adjust stack */
         SP_reg(context) -= 2*sizeof(WORD);
 #endif
@@ -334,8 +338,8 @@ callrmproc_again:
         /* RMCB call, invoke protected-mode handler directly */
         DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask?pModule->lpDosTask->dpmi_flag:0);
         /* check if we returned to where we thought we would */
-        if ((CS_reg(context) != pModule->lpDosTask->dpmi_seg) ||
-            (IP_reg(context) != pModule->lpDosTask->wrap_ofs)) {
+        if ((CS_reg(context) != DPMI_wrap_seg) ||
+            (IP_reg(context) != 0)) {
             /* we need to continue at different address in real-mode space,
                so we need to set it all up for real mode again */
             goto callrmproc_again;
@@ -349,8 +353,8 @@ callrmproc_again:
         /* adjust stack */
         SP_reg(context) -= 2*sizeof(WORD);
         /* set initial CS:IP to the wrapper's "lret" */
-        CS_reg(context) = pModule->lpDosTask->dpmi_seg;
-        IP_reg(context) = pModule->lpDosTask->call_ofs;
+        CS_reg(context) = DPMI_wrap_seg;
+        IP_reg(context) = 2;
 #endif
         TRACE(int31,"entering real mode...\n");
         DOSVM_Enter( context );
@@ -414,10 +418,6 @@ static void CallRMProc( CONTEXT *context, int iret )
 {
     REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
     CONTEXT context16;
-    THDB *thdb = THREAD_Current();
-    WORD argsize, sel;
-    LPVOID addr;
-    SEGPTR seg_addr;
 
     TRACE(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
 	p->eax, p->ebx, p->ecx, p->edx);
@@ -488,7 +488,6 @@ static RMCB *DPMI_AllocRMCB( void )
 static void AllocRMCB( CONTEXT *context )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
-    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
 
     TRACE(int31, "Function to call: %04x:%04x\n", (WORD)DS_reg(context), SI_reg(context) );
 

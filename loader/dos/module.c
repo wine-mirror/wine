@@ -135,22 +135,14 @@ static char enter_pm[]={
  0xCB                 /* lret */
 };
 
-static char wrap_rm[]={
- 0xCD,0x31,           /* int $0x31 */
- 0xCB                 /* lret */
-};
-
 static void MZ_InitDPMI( LPDOSTASK lpDosTask )
 {
- unsigned size=sizeof(enter_pm)+sizeof(wrap_rm);
+ unsigned size=sizeof(enter_pm);
  LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,size,&(lpDosTask->dpmi_seg));
  
  lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, size, SEGMENT_CODE, FALSE, FALSE );
- lpDosTask->wrap_ofs = size-sizeof(wrap_rm);
- lpDosTask->call_ofs = size-1;
 
  memcpy(start,enter_pm,sizeof(enter_pm));
- memcpy(start+sizeof(enter_pm),wrap_rm,sizeof(wrap_rm));
 }
 
 static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )

@@ -182,6 +182,23 @@ static void DOSMEM_FillIsrTable(HMODULE16 hModule)
 } 
 
 /***********************************************************************
+ *           DOSMEM_InitDPMI
+ *
+ * Allocate the global DPMI RMCB wrapper.
+ */
+static void DOSMEM_InitDPMI(void)
+{
+    extern UINT16 DPMI_wrap_seg;
+    static char wrap_code[]={
+     0xCD,0x31, /* int $0x31 */
+     0xCB       /* lret */
+    };
+    LPSTR wrapper = (LPSTR)DOSMEM_GetBlock(0, sizeof(wrap_code), &DPMI_wrap_seg);
+
+    memcpy(wrapper, wrap_code, sizeof(wrap_code));
+}
+
+/***********************************************************************
  *           DOSMEM_FillBiosSegment
  *
  * Fill the BIOS data segment with dummy values.
@@ -343,6 +360,7 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_InitMemory(0);
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
+        DOSMEM_InitDPMI();
     }
     else
     {

@@ -76,12 +76,12 @@ static void DOSVM_Dump( LPDOSTASK lpDosTask, int fn,
 
 static int DOSVM_Int( int vect, PCONTEXT context, LPDOSTASK lpDosTask )
 {
+ extern UINT16 DPMI_wrap_seg;
+
  if (vect==0x31) {
-  if (CS_reg(context)==lpDosTask->dpmi_sel) {
-   if (IP_reg(context)>=lpDosTask->wrap_ofs) {
-    /* exit from real-mode wrapper */
-    return -1;
-   }
+  if (CS_reg(context)==DPMI_wrap_seg) {
+   /* exit from real-mode wrapper */
+   return -1;
   }
   /* we could probably move some other dodgy stuff here too from dpmi.c */
  }

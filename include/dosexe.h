@@ -20,7 +20,6 @@ typedef struct _DOSTASK {
  WORD init_cs,init_ip,init_ss,init_sp;
  WORD xms_seg;
  WORD dpmi_seg,dpmi_sel,dpmi_flag;
- DWORD wrap_ofs,call_ofs;
  WORD system_timer;
  HMODULE16 hModule;
  char mm_name[128];
