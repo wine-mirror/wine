@@ -1,4 +1,4 @@
-This is release 20010510 of Wine, a free implementation of Windows on
+This is release 20010629 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
@@ -6,9 +6,12 @@ correctly.
 Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20010510: (see ChangeLog for details)
-	- Many improvements to printing support.
-	- Some graphics driver restructurations.
+WHAT'S NEW with Wine-20010629: (see ChangeLog for details)
+	- Better font metrics support in Postscript driver using Freetype.
+	- Major window management redesign (still in progress).
+	- Message queues in wineserver to prepare for inter-process messaging.
+	- DDE merged from Corel tree, plus various fixes.
+	- 64-bit file size support.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,10 +20,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010510.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010510.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010510.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010510.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20010629.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20010629.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20010629.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20010629.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 For more download locations, see http://ftpsearch.lycos.com. These
