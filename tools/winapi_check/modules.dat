@@ -136,6 +136,14 @@ msdos
 relay32
 windows
 
+% dlls/kernel/win87em.spec
+
+dlls/kernel
+
+% dlls/kernel/windebug.spec
+
+dlls/kernel
+
 % dlls/lzexpand/lz32.spec
 
 dlls/lzexpand
@@ -152,9 +160,9 @@ dlls/mpr
 
 dlls/msacm
 
-% dlls/msacm32/msacm32.spec
+% dlls/msacm/msacm32.spec
 
-dlls/msacm32
+dlls/msacm
 
 % dlls/msnet32/msnet32.spec
 
@@ -262,6 +270,14 @@ dlls/rasapi32
 % dlls/richedit/riched32.spec
 
 dlls/richedit
+
+% dlls/rpcrt4/rpcrt4.spec
+
+dlls/rpcrt4
+
+% dlls/serialui/serialui.spec
+
+dlls/serialui
 
 % dlls/setupapi/setupapi.spec
 
@@ -376,10 +392,6 @@ dlls/win32s
 memory
 scheduler
 
-% dlls/win87em/win87em.spec
-
-dlls/win87em
-
 % dlls/winaspi/winaspi.spec
 
 dlls/winaspi
@@ -387,10 +399,6 @@ dlls/winaspi
 % dlls/winaspi/wnaspi32.spec
 
 dlls/winaspi
-
-% dlls/windebug/windebug.spec
-
-dlls/windebug
 
 % dlls/wineps/wineps.spec
 

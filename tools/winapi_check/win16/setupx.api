@@ -18,4 +18,7 @@ LPSTR
 
 %word # --forbidden
 
+INT16
+HINSTANCE16
 HKEY
+HWND16
