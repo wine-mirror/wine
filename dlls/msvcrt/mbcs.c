@@ -551,6 +551,41 @@ unsigned char* _mbsrchr(const unsigned char* s, unsigned int x)
 }
 
 /*********************************************************************
+ *		_mbstok(MSVCRT.@)
+ *
+ * Find and extract tokens from strings
+ */
+unsigned char* _mbstok(unsigned char *str, const unsigned char *delim)
+{
+    static char *next = NULL;
+    char *ret;
+
+    if(MSVCRT___mb_cur_max > 1)
+    {
+	unsigned int c;
+
+	if (!str)
+    	    if (!(str = next)) return NULL;
+
+	while ((c = _mbsnextc(str)) && _mbschr(delim, c)) {
+	    str += c > 255 ? 2 : 1;
+	}
+	if (!*str) return NULL;
+	ret = str++;
+	while ((c = _mbsnextc(str)) && !_mbschr(delim, c)) {
+	    str += c > 255 ? 2 : 1;
+	}
+	if (*str) {
+	    *str++ = 0;
+	    if (c > 255) *str++ = 0;
+	}
+	next = str;
+	return ret;
+    }
+    return strtok(str, delim);	/* ASCII CP */
+}
+
+/*********************************************************************
  *		mbtowc(MSVCRT.@)
  */
 int MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
@@ -790,6 +825,36 @@ unsigned char* _mbsset(unsigned char* str, unsigned int c)
     str[0] = '\0'; /* FIXME: OK to shorten? */
 
   return ret;
+}
+
+/*********************************************************************
+ *		_mbsnbset(MSVCRT.@)
+ */
+unsigned char* _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t len)
+{
+    unsigned char *ret = str;
+
+    if(!len)
+	return ret;
+
+    if(MSVCRT___mb_cur_max == 1 || c < 256)
+	return _strnset(str, c, len); /* ASCII CP or SB char */
+
+    c &= 0xffff; /* Strip high bits */
+
+    while(str[0] && str[1] && (len > 1))
+    {
+	*str++ = c >> 8;
+	len--;
+	*str++ = c & 0xff;
+	len--;
+    }
+    if(len && str[0]) {
+	/* as per msdn pad with a blank character */
+	str[0] = ' ';
+    }
+
+    return ret;
 }
 
 /*********************************************************************

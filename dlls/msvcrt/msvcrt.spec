@@ -366,7 +366,7 @@
 @ cdecl _mbsnbcpy(ptr str long) _mbsnbcpy
 @ cdecl _mbsnbicmp(str str long) _mbsnbicmp
 @ stub _mbsnbicoll #(str str long)
-@ stub _mbsnbset #(str long long)
+@ cdecl _mbsnbset(str long long) _mbsnbset
 @ cdecl _mbsncat(str str long) _mbsncat
 @ cdecl _mbsnccnt(str long) _mbsnccnt
 @ cdecl _mbsncmp(str str long) _mbsncmp
@@ -384,7 +384,7 @@
 @ cdecl _mbsspn(str str) _mbsspn
 @ stub _mbsspnp #(str str)
 @ cdecl _mbsstr(str str) strstr
-@ stub _mbstok #(str str)
+@ cdecl _mbstok(str str) _mbstok
 @ cdecl _mbstrlen(str) _mbstrlen
 @ cdecl _mbsupr(str) _mbsupr
 @ cdecl _memccpy(ptr ptr long long) memccpy
