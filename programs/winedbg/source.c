@@ -68,12 +68,12 @@ DEBUG_ShowDir(void)
 {
   struct searchlist * sl;
 
-  DEBUG_Printf(DBG_CHN_MESG,"Search list :\n");
+  DEBUG_Printf("Search list :\n");
   for(sl = listhead; sl; sl = sl->next)
     {
-      DEBUG_Printf(DBG_CHN_MESG, "\t%s\n", sl->path);
+      DEBUG_Printf("\t%s\n", sl->path);
     }
-  DEBUG_Printf(DBG_CHN_MESG, "\n");
+  DEBUG_Printf("\n");
 }
 
 void
@@ -250,7 +250,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                     ol->nlines = 0;
                     ol->linelist = NULL;
                     ofiles = ol;
-                    DEBUG_Printf(DBG_CHN_MESG,"Unable to open file %s\n", tmppath);
+                    DEBUG_Printf("Unable to open file %s\n", tmppath);
                     return FALSE;
                 }
             }
@@ -329,7 +329,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
             memcpy(&buffer, addr + ol->linelist[i],
                    (ol->linelist[i+1] - ol->linelist[i]) - 1);
 	}
-        DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
+        DEBUG_Printf("%d\t%s\n", i + 1,  buffer);
     }
 
     DEBUG_UnmapFile(addr, hMap);
@@ -355,7 +355,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
       && source2->sourcefile != NULL
       && strcmp(source1->sourcefile, source2->sourcefile) != 0 )
     {
-      DEBUG_Printf(DBG_CHN_MESG, "Ambiguous source file specification.\n");
+      DEBUG_Printf("Ambiguous source file specification.\n");
       return;
     }
 
@@ -379,7 +379,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 
   if( sourcefile == NULL )
     {
-      DEBUG_Printf(DBG_CHN_MESG, "No source file specified.\n");
+      DEBUG_Printf("No source file specified.\n");
       return;
     }
 
@@ -442,14 +442,14 @@ BOOL DEBUG_DisassembleInstruction(DBG_ADDR *addr)
    BOOL		ret = TRUE;
 
    DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, TRUE);
-   DEBUG_Printf(DBG_CHN_MESG, ": ");
+   DEBUG_Printf(": ");
    if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear(addr), &ch, sizeof(ch))) {
-      DEBUG_Printf(DBG_CHN_MESG, "-- no code --");
+      DEBUG_Printf("-- no code --");
       ret = FALSE;
    } else {
       DEBUG_Disasm(addr, TRUE);
    }
-   DEBUG_Printf(DBG_CHN_MESG,"\n");
+   DEBUG_Printf("\n");
    return ret;
 }
 

@@ -32,6 +32,9 @@
 #include "tlhelp32.h"
 #include "debugger.h"
 #include "expr.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /***********************************************************************
  *           DEBUG_PrintBasic
@@ -46,7 +49,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
     assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
     if (value->type == NULL)
     {
-        DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression\n");
+        DEBUG_Printf("Unable to evaluate expression\n");
         return;
     }
 
@@ -58,29 +61,29 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
     case 'x':
         if (value->addr.seg)
 	{
-            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "0x%04lx", (long unsigned int)res);
+            DEBUG_nchar += DEBUG_Printf("0x%04lx", (long unsigned int)res);
 	}
         else
 	{
-            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "0x%08lx", (long unsigned int)res);
+            DEBUG_nchar += DEBUG_Printf("0x%08lx", (long unsigned int)res);
 	}
         break;
 
     case 'd':
-        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%ld\n", (long int)res);
+        DEBUG_nchar += DEBUG_Printf("%ld\n", (long int)res);
         break;
 
     case 'c':
-        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%d = '%c'",
+        DEBUG_nchar += DEBUG_Printf("%d = '%c'",
                                     (char)(res & 0xff), (char)(res & 0xff));
         break;
 
     case 'u':
     {
         WCHAR wch = (WCHAR)(res & 0xFFFF);
-        DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%d = '", (unsigned)(res & 0xffff));
-        DEBUG_OutputW(DBG_CHN_MESG, &wch, 1);
-        DEBUG_Printf(DBG_CHN_MESG, "'");
+        DEBUG_nchar += DEBUG_Printf("%d = '", (unsigned)(res & 0xffff));
+        DEBUG_OutputW(&wch, 1);
+        DEBUG_Printf("'");
     }
     break;
 
@@ -88,7 +91,7 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
     case 's':
     case 'w':
     case 'b':
-        DEBUG_Printf(DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format);
+        DEBUG_Printf("Format specifier '%c' is meaningless in 'print' command\n", format);
     case 0:
         if (default_format == NULL) break;
 
@@ -114,38 +117,38 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 
                         addr.seg = 0;
                         addr.off = (long)res;
-                        DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &addr, -1);
+                        DEBUG_nchar += DEBUG_PrintStringA(&addr, -1);
                     }
                     else
                     {
                         /* shouldn't happen */
-                        DEBUG_Printf(DBG_CHN_MESG, "%%%c", *ptr);
+                        DEBUG_Printf("%%%c", *ptr);
                         DEBUG_nchar += 2;
                     }
                     state = 0;
                 }
                 else
                 {
-                    DEBUG_OutputA(DBG_CHN_MESG, ptr, 1);
+                    DEBUG_OutputA(ptr, 1);
                     DEBUG_nchar++;
                 }
             }
         }
         else if (strcmp(default_format, "%B") == 0)
         {
-            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s", res ? "true" : "false");
+            DEBUG_nchar += DEBUG_Printf("%s", res ? "true" : "false");
         }
         else if (strcmp(default_format, "%R") == 0)
         {
             if (value->cookie == DV_HOST)
                 DEBUG_InfoRegisters((CONTEXT*)value->addr.off);
             else
-                DEBUG_Printf(DBG_CHN_MESG, "NIY: info on register struct in debuggee address space\n");
+                DEBUG_Printf("NIY: info on register struct in debuggee address space\n");
             DEBUG_nchar = 0;
         }
         else
         {
-            DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, default_format, res);
+            DEBUG_nchar += DEBUG_Printf(default_format, res);
         }
         break;
     }
@@ -165,10 +168,10 @@ DEBUG_PrintAddress( const DBG_ADDR *addr, enum dbg_mode mode, int flag )
     const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, 0,
 						&rtn.list );
 
-    if (addr->seg) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx:", addr->seg&0xFFFF );
-    if (mode != MODE_32) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
-    else DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", addr->off );
-    if (name) DEBUG_Printf( DBG_CHN_MESG, " (%s)", name );
+    if (addr->seg) DEBUG_Printf("0x%04lx:", addr->seg & 0xFFFF);
+    if (mode != MODE_32) DEBUG_Printf("0x%04lx", addr->off);
+    else DEBUG_Printf("0x%08lx", addr->off);
+    if (name) DEBUG_Printf(" (%s)", name);
     return rtn;
 }
 /***********************************************************************
@@ -187,10 +190,10 @@ DEBUG_PrintAddressAndArgs( const DBG_ADDR *addr, enum dbg_mode mode,
     const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, ebp,
 						&rtn.list );
 
-    if (addr->seg) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx:", addr->seg );
-    if (mode != MODE_32) DEBUG_Printf( DBG_CHN_MESG, "0x%04lx", addr->off );
-    else DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", addr->off );
-    if (name) DEBUG_Printf( DBG_CHN_MESG, " (%s)", name );
+    if (addr->seg) DEBUG_Printf("0x%04lx:", addr->seg);
+    if (mode != MODE_32) DEBUG_Printf("0x%04lx", addr->off);
+    else DEBUG_Printf("0x%08lx", addr->off);
+    if (name) DEBUG_Printf(" (%s)", name);
 
     return rtn;
 }
@@ -241,7 +244,7 @@ void DEBUG_Help(void)
 NULL
 };
 
-    while(helptext[i]) DEBUG_Printf(DBG_CHN_MESG,"%s\n", helptext[i++]);
+    while(helptext[i]) DEBUG_Printf("%s\n", helptext[i++]);
 }
 
 
@@ -270,7 +273,7 @@ void DEBUG_HelpInfo(void)
 NULL
 };
 
-    while(infotext[i]) DEBUG_Printf(DBG_CHN_MESG,"%s\n", infotext[i++]);
+    while(infotext[i]) DEBUG_Printf("%s\n", infotext[i++]);
 }
 
 /* FIXME: merge InfoClass and InfoClass2 */
@@ -279,13 +282,12 @@ void DEBUG_InfoClass(const char* name)
    WNDCLASSEXA	wca;
 
    if (!GetClassInfoEx(0, name, &wca)) {
-      DEBUG_Printf(DBG_CHN_MESG, "Cannot find class '%s'\n", name);
+      DEBUG_Printf("Cannot find class '%s'\n", name);
       return;
    }
 
-   DEBUG_Printf(DBG_CHN_MESG,  "Class '%s':\n", name);
-   DEBUG_Printf(DBG_CHN_MESG,
-		"style=%08x  wndProc=%08lx\n"
+   DEBUG_Printf("Class '%s':\n", name);
+   DEBUG_Printf("style=%08x  wndProc=%08lx\n"
 		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
 		"clsExtra=%d  winExtra=%d\n",
 		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
@@ -303,13 +305,12 @@ static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
    WNDCLASSEXA	wca;
 
    if (!GetClassInfoEx((HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), name, &wca)) {
-      DEBUG_Printf(DBG_CHN_MESG, "Cannot find class '%s'\n", name);
+      DEBUG_Printf("Cannot find class '%s'\n", name);
       return;
    }
 
-   DEBUG_Printf(DBG_CHN_MESG,  "Class '%s':\n", name);
-   DEBUG_Printf(DBG_CHN_MESG,
-		"style=%08x  wndProc=%08lx\n"
+   DEBUG_Printf("Class '%s':\n", name);
+   DEBUG_Printf("style=%08x  wndProc=%08lx\n"
 		"inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
 		"clsExtra=%d  winExtra=%d\n",
 		wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
@@ -320,16 +321,15 @@ static	void DEBUG_InfoClass2(HWND hWnd, const char* name)
       int		i;
       WORD		w;
 
-      DEBUG_Printf(DBG_CHN_MESG,  "Extra bytes:" );
+      DEBUG_Printf("Extra bytes:");
       for (i = 0; i < wca.cbClsExtra / 2; i++) {
 	 w = GetClassWord(hWnd, i * 2);
 	 /* FIXME: depends on i386 endian-ity */
-	 DEBUG_Printf(DBG_CHN_MESG,  " %02x", HIBYTE(w));
-	 DEBUG_Printf(DBG_CHN_MESG,  " %02x", LOBYTE(w));
+	 DEBUG_Printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
       }
-      DEBUG_Printf(DBG_CHN_MESG,  "\n" );
+      DEBUG_Printf("\n");
     }
-    DEBUG_Printf(DBG_CHN_MESG,  "\n" );
+    DEBUG_Printf("\n");
 }
 
 struct class_walker {
@@ -398,8 +398,7 @@ void DEBUG_InfoWindow(HWND hWnd)
       SetRectEmpty(&windowRect);
 
    /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
-   DEBUG_Printf(DBG_CHN_MESG,
-		"next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
+   DEBUG_Printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
 		"inst=%p  active=%p  idmenu=%08lx\n"
 		"style=%08lx  exstyle=%08lx  wndproc=%08lx  text='%s'\n"
 		"client=%ld,%ld-%ld,%ld  window=%ld,%ld-%ld,%ld sysmenu=%p\n",
@@ -420,16 +419,15 @@ void DEBUG_InfoWindow(HWND hWnd)
 		GetSystemMenu(hWnd, FALSE));
 
     if (GetClassLong(hWnd, GCL_CBWNDEXTRA)) {
-        DEBUG_Printf(DBG_CHN_MESG,  "Extra bytes:" );
+        DEBUG_Printf("Extra bytes:" );
         for (i = 0; i < GetClassLong(hWnd, GCL_CBWNDEXTRA) / 2; i++) {
 	   w = GetWindowWord(hWnd, i * 2);
 	   /* FIXME: depends on i386 endian-ity */
-	   DEBUG_Printf(DBG_CHN_MESG, " %02x", HIBYTE(w));
-	   DEBUG_Printf(DBG_CHN_MESG, " %02x", LOBYTE(w));
+	   DEBUG_Printf(" %02x %02x", HIBYTE(w), LOBYTE(w));
 	}
-        DEBUG_Printf(DBG_CHN_MESG, "\n");
+        DEBUG_Printf("\n");
     }
-    DEBUG_Printf(DBG_CHN_MESG, "\n");
+    DEBUG_Printf("\n");
 }
 
 void DEBUG_WalkWindows(HWND hWnd, int indent)
@@ -442,8 +440,7 @@ void DEBUG_WalkWindows(HWND hWnd, int indent)
       hWnd = GetDesktopWindow();
 
     if (!indent)  /* first time around */
-       DEBUG_Printf(DBG_CHN_MESG,
-		    "%-16.16s %-17.17s %-8.8s %s\n",
+       DEBUG_Printf("%-16.16s %-17.17s %-8.8s %s\n",
 		    "hwnd", "Class Name", " Style", " WndProc Text");
 
     do {
@@ -453,8 +450,8 @@ void DEBUG_WalkWindows(HWND hWnd, int indent)
 	  strcpy(wndName, "-- Empty --");
 
        /* FIXME: missing hmemTaskQ */
-       DEBUG_Printf(DBG_CHN_MESG, "%*s%04x%*s", indent, "", (UINT)hWnd, 13-indent,"");
-       DEBUG_Printf(DBG_CHN_MESG, "%-17.17s %08lx %08lx %.14s\n",
+       DEBUG_Printf("%*s%04x%*s", indent, "", (UINT)hWnd, 13-indent,"");
+       DEBUG_Printf("%-17.17s %08lx %08lx %.14s\n",
 		    clsName, GetWindowLong(hWnd, GWL_STYLE),
 		    GetWindowLong(hWnd, GWL_WNDPROC), wndName);
 
@@ -475,12 +472,12 @@ void DEBUG_WalkProcess(void)
         entry.dwSize = sizeof(entry);
         ok = Process32First( snap, &entry );
 
-        DEBUG_Printf(DBG_CHN_MESG, " %-8.8s %-8.8s %-8.8s %s\n",
+        DEBUG_Printf(" %-8.8s %-8.8s %-8.8s %s\n",
                      "pid", "threads", "parent", "executable" );
         while (ok)
         {
             if (entry.th32ProcessID != GetCurrentProcessId())
-                DEBUG_Printf(DBG_CHN_MESG, "%c%08lx %-8ld %08lx '%s'\n",
+                DEBUG_Printf("%c%08lx %-8ld %08lx '%s'\n",
                              (entry.th32ProcessID == current) ? '>' : ' ',
                              entry.th32ProcessID, entry.cntThreads,
                              entry.th32ParentProcessID, entry.szExeFile);
@@ -503,7 +500,7 @@ void DEBUG_WalkThreads(void)
 	entry.dwSize = sizeof(entry);
 	ok = Thread32First( snap, &entry );
 
-        DEBUG_Printf(DBG_CHN_MESG, "%-8.8s %-8.8s %s\n", "process", "tid", "prio" );
+        DEBUG_Printf("%-8.8s %-8.8s %s\n", "process", "tid", "prio" );
         while (ok)
         {
             if (entry.th32OwnerProcessID != GetCurrentProcessId())
@@ -516,11 +513,11 @@ void DEBUG_WalkThreads(void)
 		{
 		    DBG_PROCESS*	p = DEBUG_GetProcess(entry.th32OwnerProcessID);
 
-		    DEBUG_Printf(DBG_CHN_MESG, "%08lx%s %s\n",
-				 entry.th32OwnerProcessID,  p ? " (D)" : "", p ? p->imageName : "");
+		    DEBUG_Printf("%08lx%s %s\n",
+				 entry.th32OwnerProcessID, p ? " (D)" : "", p ? p->imageName : "");
 		    lastProcessId = entry.th32OwnerProcessID;
 		}
-                DEBUG_Printf(DBG_CHN_MESG, "\t%08lx %4ld%s\n",
+                DEBUG_Printf("\t%08lx %4ld%s\n",
                              entry.th32ThreadID, entry.tpBasePri,
 			     (entry.th32ThreadID == current) ? " <==" : "");
 
@@ -544,12 +541,11 @@ void DEBUG_WalkExceptions(DWORD tid)
 
     if (!DEBUG_CurrProcess || !DEBUG_CurrThread)
     {
-        DEBUG_Printf(DBG_CHN_MESG, 
-                     "Cannot walk exceptions while no process is loaded\n");
+        DEBUG_Printf("Cannot walk exceptions while no process is loaded\n");
         return;
     }
 
-    DEBUG_Printf( DBG_CHN_MESG, "Exception frames:\n" );
+    DEBUG_Printf("Exception frames:\n");
 
     if (tid == DEBUG_CurrTid) thread = DEBUG_CurrThread;
     else
@@ -558,19 +554,19 @@ void DEBUG_WalkExceptions(DWORD tid)
 
          if (!thread)
          {
-              DEBUG_Printf( DBG_CHN_MESG, "Unknown thread id (0x%08lx) in current process\n", tid);
+              DEBUG_Printf("Unknown thread id (0x%08lx) in current process\n", tid);
               return;
          }
          if (SuspendThread( thread->handle ) == -1)
          {
-              DEBUG_Printf( DBG_CHN_MESG, "Can't suspend thread id (0x%08lx)\n", tid);
+              DEBUG_Printf("Can't suspend thread id (0x%08lx)\n", tid);
               return;
          }
     }
 
     if (!DEBUG_READ_MEM(thread->teb, &next_frame, sizeof(next_frame)))
     {
-        DEBUG_Printf( DBG_CHN_MESG, "Can't read TEB:except_frame\n");
+        DEBUG_Printf("Can't read TEB:except_frame\n");
         return;
     }
 
@@ -578,13 +574,13 @@ void DEBUG_WalkExceptions(DWORD tid)
     {
         EXCEPTION_REGISTRATION_RECORD frame;
 
-        DEBUG_Printf( DBG_CHN_MESG, "%p: ", next_frame );
+        DEBUG_Printf("%p: ", next_frame);
         if (!DEBUG_READ_MEM(next_frame, &frame, sizeof(frame)))
         {
-            DEBUG_Printf( DBG_CHN_MESG, "Invalid frame address\n" );
+            DEBUG_Printf("Invalid frame address\n");
             break;
         }
-        DEBUG_Printf( DBG_CHN_MESG, "prev=%p handler=%p\n", frame.Prev, frame.Handler );
+        DEBUG_Printf("prev=%p handler=%p\n", frame.Prev, frame.Handler);
         next_frame = frame.Prev;
     }
 
@@ -617,8 +613,7 @@ void DEBUG_InfoSegments(DWORD start, int length)
             flags[1] = (le.HighWord.Bits.Type & 0x2) ? 'w' : '-';
             flags[2] = '-';
         }
-        DEBUG_Printf(DBG_CHN_MESG,
-		     "%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
+        DEBUG_Printf("%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
 		     i, (i<<3)|7,
 		     (le.HighWord.Bits.BaseHi << 24) +
 		     (le.HighWord.Bits.BaseMid << 16) + le.BaseLow,
@@ -642,8 +637,7 @@ void DEBUG_InfoVirtual(DWORD pid)
     {
         if (DEBUG_CurrProcess == NULL)
         {
-            DEBUG_Printf(DBG_CHN_MESG, 
-                         "Cannot look at mapping of current process, while no process is loaded\n");
+            DEBUG_Printf("Cannot look at mapping of current process, while no process is loaded\n");
             return;
         }
         hProc = DEBUG_CurrProcess->handle;
@@ -653,12 +647,12 @@ void DEBUG_InfoVirtual(DWORD pid)
         hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
         if (hProc == NULL)
         {
-            DEBUG_Printf(DBG_CHN_MESG, "Cannot open process <%lu>\n", pid);
+            DEBUG_Printf("Cannot open process <%lu>\n", pid);
             return;
         }
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Address  Size     State   Type    RWX\n");
+    DEBUG_Printf("Address  Size     State   Type    RWX\n");
 
     while (VirtualQueryEx(hProc, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
     {
@@ -695,7 +689,7 @@ void DEBUG_InfoVirtual(DWORD pid)
             type = "";
             prot[0] = '\0';
         }
-        DEBUG_Printf(DBG_CHN_MESG, "%08lx %08lx %s %s %s\n",
+        DEBUG_Printf("%08lx %08lx %s %s %s\n",
                      (DWORD)addr, mbi.RegionSize, state, type, prot);
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
             break;
@@ -726,7 +720,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
 
     if (DEBUG_GetSymbolValue("first_dll", -1, &val, FALSE) != gsv_found)
     {
-        DEBUG_Printf(DBG_CHN_MESG, "Can't get first_option symbol");
+        DEBUG_Printf("Can't get first_option symbol");
         return;
     }
     addr = (void*)DEBUG_ToLinear(&val.addr);
@@ -735,7 +729,7 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
     else if (!strcmp(chnl, "err"))      mask = 2;
     else if (!strcmp(chnl, "warn"))     mask = 4;
     else if (!strcmp(chnl, "trace"))    mask = 8;
-    else { DEBUG_Printf(DBG_CHN_MESG, "Unknown channel %s\n", chnl); return; }
+    else { DEBUG_Printf("Unknown channel %s\n", chnl); return; }
 
     bAll = !strcmp("all", name);
     while (addr && DEBUG_READ_MEM(addr, &dol, sizeof(dol)))
@@ -752,6 +746,6 @@ void DEBUG_DbgChannel(BOOL turn_on, const char* chnl, const char* name)
         }
         addr = dol.next;
     }
-    if (!done) DEBUG_Printf(DBG_CHN_MESG, "Unable to find debug channel %s\n", name);
-    else DEBUG_Printf(DBG_CHN_TRACE, "Changed %d channel instances\n", done);
+    if (!done) DEBUG_Printf("Unable to find debug channel %s\n", name);
+    else WINE_TRACE("Changed %d channel instances\n", done);
 }

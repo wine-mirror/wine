@@ -22,6 +22,9 @@
 
 #include "config.h"
 #include "debugger.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #ifdef __i386__
 #define DR7_CONTROL_SHIFT	16
@@ -197,7 +200,7 @@ void DEBUG_SetBreakpoints( BOOL set )
 	    if (!DEBUG_WRITE_MEM( (void*)DEBUG_ToLinear(&breakpoints[i].addr),
 				  &ch, sizeof(ch) ))
 	    {
-	       DEBUG_Printf(DBG_CHN_MESG, "Invalid address for breakpoint %d, disabling it\n", i);
+	       DEBUG_Printf("Invalid address for breakpoint %d, disabling it\n", i);
 	       breakpoints[i].enabled = FALSE;
 	    }
 #endif
@@ -304,7 +307,7 @@ static	int	DEBUG_InitXPoint(int type, const DBG_ADDR* addr)
       }
    }
 
-   DEBUG_Printf( DBG_CHN_MESG, "Too many breakpoints. Please delete some.\n" );
+   DEBUG_Printf("Too many breakpoints. Please delete some.\n");
    return -1;
 }
 
@@ -350,7 +353,7 @@ BOOL DEBUG_AddBreakpoint( const DBG_VALUE *value, BOOL (*func)(void), BOOL verbo
     if (!DEBUG_READ_MEM((void*)DEBUG_ToLinear( &value->addr ), &ch, sizeof(ch)))
     {
         if (verbose)
-            DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n");
+            DEBUG_Printf("Invalid address, can't set breakpoint\n");
         return FALSE;
     }
 
@@ -360,10 +363,10 @@ BOOL DEBUG_AddBreakpoint( const DBG_VALUE *value, BOOL (*func)(void), BOOL verbo
     breakpoints[num].u.b.opcode = ch;
     breakpoints[num].u.b.func = func;
 
-    DEBUG_Printf( DBG_CHN_MESG, "Breakpoint %d at ", num );
+    DEBUG_Printf("Breakpoint %d at ", num);
     DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16,
 			TRUE );
-    DEBUG_Printf( DBG_CHN_MESG, "\n" );
+    DEBUG_Printf("\n");
 
     return FALSE;
 }
@@ -395,11 +398,11 @@ BOOL DEBUG_AddBreakpointFromValue( const DBG_VALUE *_value )
     {
         if (!DBG_IVAR(CanDeferOnBPByAddr))
         {
-            DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n"
-                          "You can turn on deferring breakpoints by address by setting $CanDeferOnBPByAddr to 1\n");
+            DEBUG_Printf("Invalid address, can't set breakpoint\n"
+                         "You can turn on deferring breakpoints by address by setting $CanDeferOnBPByAddr to 1\n");
             return FALSE;
         }
-        DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again any time a new DLL is loaded\n");
+        DEBUG_Printf("Unable to add breakpoint, will check again any time a new DLL is loaded\n");
         DEBUG_CurrProcess->delayed_bp = DBG_realloc(DEBUG_CurrProcess->delayed_bp,
                                                     sizeof(DBG_DELAYED_BP) * ++DEBUG_CurrProcess->num_delayed_bp);
 
@@ -432,7 +435,7 @@ void	DEBUG_AddBreakpointFromId(const char *name, int lineno)
         return;
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint, will check again when a new DLL is loaded\n");
+    DEBUG_Printf("Unable to add breakpoint, will check again when a new DLL is loaded\n");
     for (i = 0; i < DEBUG_CurrProcess->num_delayed_bp; i++)
     {
         if (DEBUG_CurrProcess->delayed_bp[i].is_symbol &&
@@ -466,7 +469,7 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
         DEBUG_FindNearestSymbol(&value.addr, TRUE, &nh, 0, NULL);
         if (nh == NULL)
         {
-            DEBUG_Printf(DBG_CHN_MESG, "Unable to add breakpoint\n");
+            DEBUG_Printf("Unable to add breakpoint\n");
             return;
         }
         DEBUG_GetLineNumberAddr(nh, lineno, &value.addr, TRUE);
@@ -497,15 +500,15 @@ void		DEBUG_CheckDelayedBP(void)
         }
         else
             value = dbp[i].u.value;
-        DEBUG_Printf(DBG_CHN_MESG, "trying to add delayed %s-bp\n", dbp[i].is_symbol ? "S" : "A");
+        WINE_TRACE("trying to add delayed %s-bp\n", dbp[i].is_symbol ? "S" : "A");
         if (!dbp[i].is_symbol)
-            DEBUG_Printf(DBG_CHN_MESG, "\t%04x %04lx:%08lx\n",
-                         dbp[i].u.value.cookie,
-                         dbp[i].u.value.addr.seg,
-                         dbp[i].u.value.addr.off);
+            WINE_TRACE("\t%04x %04lx:%08lx\n",
+                       dbp[i].u.value.cookie,
+                       dbp[i].u.value.addr.seg,
+                       dbp[i].u.value.addr.off);
         else
-            DEBUG_Printf(DBG_CHN_MESG, "\t'%s' @ %d\n",
-                         dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
+            WINE_TRACE("\t'%s' @ %d\n",
+                       dbp[i].u.symbol.name, dbp[i].u.symbol.lineno);
 
         if (DEBUG_AddBreakpoint(&value, NULL, FALSE))
             memmove(&dbp[i], &dbp[i+1], (--DEBUG_CurrProcess->num_delayed_bp - i) * sizeof(*dbp));
@@ -554,7 +557,7 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
    for (reg = 0; reg < 4 && (mask & (1 << reg)); reg++);
    if (reg == 4)
    {
-      DEBUG_Printf(DBG_CHN_MESG, "All i386 hardware watchpoints have been set. Delete some\n");
+      DEBUG_Printf("All i386 hardware watchpoints have been set. Delete some\n");
       return;
    }
 #endif
@@ -568,7 +571,7 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
 
    if (!DEBUG_GetWatchedValue( num, &breakpoints[num].u.w.oldval))
    {
-      DEBUG_Printf(DBG_CHN_MESG, "Bad address. Watchpoint not set\n");
+      DEBUG_Printf("Bad address. Watchpoint not set\n");
       breakpoints[num].refcount = 0;
    }
    else
@@ -576,9 +579,9 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
       breakpoints[num].u.w.rw = (is_write) ? TRUE : FALSE;
       breakpoints[reg].u.w.reg = reg;
 
-      DEBUG_Printf( DBG_CHN_MESG, "Watchpoint %d at ", num );
+      DEBUG_Printf("Watchpoint %d at ", num);
       DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? MODE_32 : MODE_16, TRUE );
-      DEBUG_Printf( DBG_CHN_MESG, "\n" );
+      DEBUG_Printf("\n");
    }
 }
 
@@ -597,7 +600,7 @@ void	DEBUG_AddWatchpointFromId(const char *name)
       DEBUG_AddWatchpoint( &value, 1 );
       break;
    case gsv_unknown:
-      DEBUG_Printf(DBG_CHN_MESG, "Unable to add watchpoint\n");
+      DEBUG_Printf("Unable to add watchpoint\n");
       break;
    case gsv_aborted: /* user aborted symbol lookup */
        break;
@@ -613,14 +616,14 @@ void DEBUG_DelBreakpoint( int num )
 {
     if ((num <= 0) || (num >= next_bp) || breakpoints[num].refcount == 0)
     {
-        DEBUG_Printf( DBG_CHN_MESG, "Invalid breakpoint number %d\n", num );
+        DEBUG_Printf("Invalid breakpoint number %d\n", num);
         return;
     }
 
     if (--breakpoints[num].refcount > 0)
        return;
 
-    if( breakpoints[num].condition != NULL )
+    if (breakpoints[num].condition != NULL)
     {
        DEBUG_FreeExpr(breakpoints[num].condition);
        breakpoints[num].condition = NULL;
@@ -640,7 +643,7 @@ void DEBUG_EnableBreakpoint( int num, BOOL enable )
 {
     if ((num <= 0) || (num >= next_bp) || breakpoints[num].refcount == 0)
     {
-        DEBUG_Printf( DBG_CHN_MESG, "Invalid breakpoint number %d\n", num );
+        DEBUG_Printf("Invalid breakpoint number %d\n", num);
         return;
     }
     breakpoints[num].enabled = (enable) ? TRUE : FALSE;
@@ -728,40 +731,40 @@ void DEBUG_InfoBreakpoints(void)
 {
     int i;
 
-    DEBUG_Printf( DBG_CHN_MESG, "Breakpoints:\n" );
+    DEBUG_Printf("Breakpoints:\n");
     for (i = 1; i < next_bp; i++)
     {
         if (breakpoints[i].refcount && breakpoints[i].type == DBG_BREAK)
         {
-            DEBUG_Printf( DBG_CHN_MESG, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
+            DEBUG_Printf("%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
             DEBUG_PrintAddress( &breakpoints[i].addr,
 				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
-            DEBUG_Printf( DBG_CHN_MESG, " (%u)\n", breakpoints[i].refcount );
+            DEBUG_Printf(" (%u)\n", breakpoints[i].refcount );
 	    if( breakpoints[i].condition != NULL )
 	    {
-	        DEBUG_Printf(DBG_CHN_MESG, "\t\tstop when  ");
+	        DEBUG_Printf("\t\tstop when  ");
  		DEBUG_DisplayExpr(breakpoints[i].condition);
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+		DEBUG_Printf("\n");
 	    }
         }
     }
-    DEBUG_Printf( DBG_CHN_MESG, "Watchpoints:\n" );
+    DEBUG_Printf("Watchpoints:\n");
     for (i = 1; i < next_bp; i++)
     {
         if (breakpoints[i].refcount && breakpoints[i].type == DBG_WATCH)
         {
-            DEBUG_Printf( DBG_CHN_MESG, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
+            DEBUG_Printf("%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
             DEBUG_PrintAddress( &breakpoints[i].addr,
 				breakpoints[i].is32 ? MODE_32 : MODE_16, TRUE);
-            DEBUG_Printf( DBG_CHN_MESG, " on %d byte%s (%c)\n",
+            DEBUG_Printf(" on %d byte%s (%c)\n",
 		     breakpoints[i].u.w.len + 1,
 		     breakpoints[i].u.w.len > 0 ? "s" : "",
 		     breakpoints[i].u.w.rw ? 'W' : 'R');
 	    if( breakpoints[i].condition != NULL )
 	    {
-	        DEBUG_Printf(DBG_CHN_MESG, "\t\tstop when  ");
+	        DEBUG_Printf("\t\tstop when  ");
  		DEBUG_DisplayExpr(breakpoints[i].condition);
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+		DEBUG_Printf("\n");
 	    }
         }
     }
@@ -784,9 +787,9 @@ static	BOOL DEBUG_ShallBreak( int bpnum )
 	    /*
 	     * Something wrong - unable to evaluate this expression.
 	     */
-	    DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
+	    DEBUG_Printf("Unable to evaluate expression ");
 	    DEBUG_DisplayExpr(breakpoints[bpnum].condition);
-	    DEBUG_Printf(DBG_CHN_MESG, "\nTurning off condition\n");
+	    DEBUG_Printf("\nTurning off condition\n");
 	    DEBUG_AddBPCondition(bpnum, NULL);
         }
         else if( !DEBUG_GetExprValue( &value, NULL) )
@@ -834,10 +837,10 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
     {
         if (!DEBUG_ShallBreak(bpnum)) return TRUE;
 
-        DEBUG_Printf( DBG_CHN_MESG, "Stopped on breakpoint %d at ", bpnum );
+        DEBUG_Printf("Stopped on breakpoint %d at ", bpnum);
         syminfo = DEBUG_PrintAddress( &breakpoints[bpnum].addr,
 				      breakpoints[bpnum].is32 ? MODE_32 : MODE_16, TRUE );
-        DEBUG_Printf( DBG_CHN_MESG, "\n" );
+        DEBUG_Printf("\n");
 
 	if( syminfo.list.sourcefile != NULL )
 	    DEBUG_List(&syminfo.list, NULL, 0);
@@ -858,10 +861,10 @@ BOOL DEBUG_ShouldContinue( DBG_ADDR *addr, DWORD code, int * count )
        if (!DEBUG_ShallBreak(wpnum)) return TRUE;
 
        addr_mode = DEBUG_GetSelectorType( addr->seg );
-       DEBUG_Printf(DBG_CHN_MESG, "Stopped on watchpoint %d at ", wpnum);
+       DEBUG_Printf("Stopped on watchpoint %d at ", wpnum);
        syminfo = DEBUG_PrintAddress( addr, addr_mode, TRUE );
 
-       DEBUG_Printf(DBG_CHN_MESG, " values: old=%lu new=%lu\n",
+       DEBUG_Printf(" values: old=%lu new=%lu\n",
                     oldval, breakpoints[wpnum].u.w.oldval);
        if (syminfo.list.sourcefile != NULL)
 	  DEBUG_List(&syminfo.list, NULL, 0);
@@ -980,7 +983,7 @@ void DEBUG_RestartExecution( int count )
       {
 	if( mode == EXEC_CONT && count > 1 )
 	  {
-	    DEBUG_Printf(DBG_CHN_MESG, "Not stopped at any breakpoint; argument ignored.\n");
+	    DEBUG_Printf("Not stopped at any breakpoint; argument ignored.\n");
 	  }
       }
 
@@ -1011,19 +1014,15 @@ void DEBUG_RestartExecution( int count )
 	if( ((mode == EXEC_STEP_OVER) || (mode == EXEC_STEPI_OVER))
 	    && status == FUNC_IS_TRAMPOLINE )
 	  {
-#if 0
-	    DEBUG_Printf(DBG_CHN_MESG, "Not stepping into trampoline at %x (no lines)\n",
-		    addr2.off);
-#endif
+            WINE_TRACE("Not stepping into trampoline at %lx (no lines)\n",
+                       addr2.off);
 	    mode = EXEC_STEP_OVER_TRAMPOLINE;
 	  }
 
 	if( mode == EXEC_STEP_INSTR && status == FUNC_HAS_NO_LINES )
 	  {
-#if 0
-	    DEBUG_Printf(DBG_CHN_MESG, "Not stepping into function at %x (no lines)\n",
-		    addr2.off);
-#endif
+            WINE_TRACE("Not stepping into function at %lx (no lines)\n",
+                       addr2.off);
 	    mode = EXEC_STEP_OVER;
 	  }
       }
@@ -1033,8 +1032,8 @@ void DEBUG_RestartExecution( int count )
       {
 	if( DEBUG_CheckLinenoStatus(&addr) == FUNC_HAS_NO_LINES )
 	  {
-	    DEBUG_Printf(DBG_CHN_MESG, "Single stepping until exit from function, \n");
-	    DEBUG_Printf(DBG_CHN_MESG, "which has no line number information.\n");
+	    DEBUG_Printf("Single stepping until exit from function, \n"
+                         "which has no line number information.\n");
 
 	    ret_mode = mode = EXEC_FINISH;
 	  }
@@ -1109,7 +1108,7 @@ DEBUG_AddBPCondition(int num, struct expr * exp)
 {
     if ((num <= 0) || (num >= next_bp) || !breakpoints[num].refcount)
     {
-        DEBUG_Printf( DBG_CHN_MESG, "Invalid breakpoint number %d\n", num );
+        DEBUG_Printf("Invalid breakpoint number %d\n", num);
         return FALSE;
     }
 

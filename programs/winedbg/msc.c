@@ -42,8 +42,12 @@
 #define PATH_MAX MAX_PATH
 #endif
 #include "wine/exception.h"
+#include "wine/debug.h"
 #include "excpt.h"
 #include "debugger.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+WINE_DECLARE_DEBUG_CHANNEL(winedbg_msc);
 
 #define MAX_PATHNAME_LEN 1024
 
@@ -251,7 +255,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
   DBG_VALUE	       		new_value;
   enum DbgInfoLoad		dil = DIL_ERROR;
 
-  DEBUG_Printf(DBG_CHN_TRACE, "Processing COFF symbols...\n");
+  WINE_TRACE("Processing COFF symbols...\n");
 
   assert(sizeof(IMAGE_SYMBOL) == IMAGE_SIZEOF_SYMBOL);
   assert(sizeof(IMAGE_LINENUMBER) == IMAGE_SIZEOF_LINENUMBER);
@@ -278,7 +282,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
       if( coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE )
 	{
 	  curr_file_idx = DEBUG_AddCoffFile( &coff_files, (char *) (coff_sym + 1) );
-	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", coff_files.files[curr_file_idx].filename);
+	  WINE_TRACE("New file %s\n", coff_files.files[curr_file_idx].filename);
 	  i += naux;
 	  continue;
 	}
@@ -286,7 +290,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
       if (curr_file_idx < 0) {
 	  assert(coff_files.nfiles == 0 && coff_files.nfiles_alloc == 0);
 	  curr_file_idx = DEBUG_AddCoffFile( &coff_files, "<none>" );
-	  DEBUG_Printf(DBG_CHN_TRACE,"New file %s\n", coff_files.files[curr_file_idx].filename);
+	  WINE_TRACE("New file %s\n", coff_files.files[curr_file_idx].filename);
       }
 
       /*
@@ -309,22 +313,22 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       */
 	      const char* fn = coff_files.files[curr_file_idx].filename;
 
-#ifdef MORE_DBG
-	      DEBUG_Printf(DBG_CHN_TRACE, "Duplicating sect from %s: %lx %x %x %d %d\n",
-			   coff_files.files[curr_file_idx].filename,
-			   aux->Section.Length,
-			   aux->Section.NumberOfRelocations,
-			   aux->Section.NumberOfLinenumbers,
-			   aux->Section.Number,
-			   aux->Section.Selection);
-	      DEBUG_Printf(DBG_CHN_TRACE, "More sect %d %s %08lx %d %d %d\n",
-			   coff_sym->SectionNumber,
-			   DEBUG_GetCoffName( coff_sym, coff_strtab ),
-			   coff_sym->Value,
-			   coff_sym->Type,
-			   coff_sym->StorageClass,
-			   coff_sym->NumberOfAuxSymbols);
-#endif
+	      WINE_TRACE_(winedbg_msc)(
+                  "Duplicating sect from %s: %lx %x %x %d %d\n",
+                  coff_files.files[curr_file_idx].filename,
+                  aux->Section.Length,
+                  aux->Section.NumberOfRelocations,
+                  aux->Section.NumberOfLinenumbers,
+                  aux->Section.Number,
+                  aux->Section.Selection);
+	      WINE_TRACE_(winedbg_msc)(
+                  "More sect %d %s %08lx %d %d %d\n",
+                  coff_sym->SectionNumber,
+                  DEBUG_GetCoffName( coff_sym, coff_strtab ),
+                  coff_sym->Value,
+                  coff_sym->Type,
+                  coff_sym->StorageClass,
+                  coff_sym->NumberOfAuxSymbols);
 
 	      /*
 	       * Duplicate the file entry.  We have no way to describe
@@ -332,18 +336,17 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	       */
 	      DEBUG_AddCoffFile( &coff_files, fn );
 	    }
-#ifdef MORE_DBG
 	  else
 	    {
-	      DEBUG_Printf(DBG_CHN_TRACE, "New text sect from %s: %lx %x %x %d %d\n",
-			   coff_files.files[curr_file_idx].filename,
-			   aux->Section.Length,
-			   aux->Section.NumberOfRelocations,
-			   aux->Section.NumberOfLinenumbers,
-			   aux->Section.Number,
-			   aux->Section.Selection);
+	      WINE_TRACE_(winedbg_msc)(
+                  "New text sect from %s: %lx %x %x %d %d\n",
+                  coff_files.files[curr_file_idx].filename,
+                  aux->Section.Length,
+                  aux->Section.NumberOfRelocations,
+                  aux->Section.NumberOfLinenumbers,
+                  aux->Section.Number,
+                  aux->Section.Selection);
 	    }
-#endif
 
 	  if( coff_files.files[curr_file_idx].startaddr > coff_sym->Value )
 	    {
@@ -377,9 +380,7 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  new_value.addr.seg = 0;
 	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-#ifdef MORE_DBG
-	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding static symbol %s\n", nampnt);
-#endif
+	  WINE_TRACE_(winedbg_msc)("\tAdding static symbol %s\n", nampnt);
 
 	  /* FIXME: was adding symbol to this_file ??? */
 	  DEBUG_AddCoffSymbol( &coff_files.files[curr_file_idx],
@@ -401,12 +402,10 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  new_value.addr.seg = 0;
 	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-#ifdef MORE_DBG
-	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %lx %s\n", i, new_value.addr.off, nampnt);
-
-	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global symbol %s (sect=%s)\n",
-		       nampnt, MSC_INFO(module)->sectp[coff_sym->SectionNumber - 1].Name);
-#endif
+	  WINE_TRACE_(winedbg_msc)("%d: %lx %s\n", i, new_value.addr.off, nampnt);
+	  WINE_TRACE_(winedbg_msc)(
+              "\tAdding global symbol %s (sect=%s)\n",
+              nampnt, module->msc_info->sectp[coff_sym->SectionNumber - 1].Name);
 
 	  /*
 	   * Now we need to figure out which file this guy belongs to.
@@ -443,11 +442,8 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  new_value.addr.seg = 0;
 	  new_value.addr.off = (int) ((char *)module->load_addr + base + coff_sym->Value);
 
-#ifdef MORE_DBG
-	  DEBUG_Printf(DBG_CHN_TRACE, "%d: %lx %s\n", i, new_value.addr.off, nampnt);
-
-	  DEBUG_Printf(DBG_CHN_TRACE,"\tAdding global data symbol %s\n", nampnt);
-#endif
+	  WINE_TRACE_(winedbg_msc)("%d: %lx %s\n", i, new_value.addr.off, nampnt);
+	  WINE_TRACE_(winedbg_msc)("\tAdding global data symbol %s\n", nampnt);
 
 	  /*
 	   * Now we need to figure out which file this guy belongs to.
@@ -468,11 +464,10 @@ static enum DbgInfoLoad DEBUG_ProcessCoff( DBG_MODULE *module, LPBYTE root )
 	  continue;
 	}
 
-#ifdef MORE_DBG
-      DEBUG_Printf(DBG_CHN_TRACE,"Skipping unknown entry '%s' %d %d %d\n",
-		   DEBUG_GetCoffName( coff_sym, coff_strtab ),
-		   coff_sym->StorageClass, coff_sym->SectionNumber, naux);
-#endif
+      WINE_TRACE_(winedbg_msc)(
+          "Skipping unknown entry '%s' %d %d %d\n",
+          DEBUG_GetCoffName( coff_sym, coff_strtab ),
+          coff_sym->StorageClass, coff_sym->SectionNumber, naux);
 
       /*
        * For now, skip past the aux entries.
@@ -1261,7 +1256,7 @@ numeric_leaf( int *value, unsigned short int *leaf )
             break;
 
         default:
-	    DEBUG_Printf( DBG_CHN_MESG, "Unknown numeric leaf type %04x\n", type );
+	    DEBUG_Printf("Unknown numeric leaf type %04x\n", type);
             *value = 0;
             break;
         }
@@ -1408,8 +1403,8 @@ DEBUG_AddCVType_EnumFieldList( unsigned int typeno, unsigned char *list, int len
         }
 
         default:
-            DEBUG_Printf( DBG_CHN_MESG, "Unhandled type %04x in ENUM field list\n",
-                                         type->generic.id );
+            DEBUG_Printf("Unhandled type %04x in ENUM field list\n",
+                         type->generic.id);
             return FALSE;
         }
     }
@@ -1580,8 +1575,8 @@ DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int l
             break;
 
         default:
-            DEBUG_Printf( DBG_CHN_MESG, "Unhandled type %04x in STRUCT field list\n",
-                                        type->generic.id );
+            DEBUG_Printf("Unhandled type %04x in STRUCT field list\n",
+                         type->generic.id);
             return FALSE;
         }
     }
@@ -2570,7 +2565,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
     int header_size = 0;
     char *modimage, *file;
 
-    DEBUG_Printf( DBG_CHN_TRACE, "Processing PDB file %s\n", filename );
+    WINE_TRACE("Processing PDB file %s\n", filename);
 
     /*
      * Open and map() .PDB file
@@ -2578,7 +2573,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
     image = DEBUG_MapDebugInfoFile( filename, 0, 0, &hFile, &hMap );
     if ( !image )
     {
-        DEBUG_Printf( DBG_CHN_ERR, "-Unable to peruse .PDB file %s\n", filename );
+        WINE_ERR("-Unable to peruse .PDB file %s\n", filename);
         goto leave;
     }
 
@@ -2597,9 +2592,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
 
     if ( !root )
     {
-        DEBUG_Printf( DBG_CHN_ERR,
-                      "-Unable to get root from .PDB file %s\n",
-                      filename );
+        WINE_ERR("-Unable to get root from .PDB file %s\n", filename);
         goto leave;
     }
 
@@ -2615,7 +2608,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            DEBUG_Printf( DBG_CHN_ERR, "-Unknown root block version %ld\n", root->version );
+            WINE_ERR("-Unknown root block version %ld\n", root->version);
     }
 
     switch ( types.version )
@@ -2625,7 +2618,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
         case 19961031:      /* VC 5.0 / 6.0 */
             break;
         default:
-            DEBUG_Printf( DBG_CHN_ERR, "-Unknown type info version %ld\n", types.version );
+            WINE_ERR("-Unknown type info version %ld\n", types.version);
     }
 
     switch ( symbols.version )
@@ -2635,7 +2628,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
         case 19970606:     /* VC 6.0 */
             break;
         default:
-            DEBUG_Printf( DBG_CHN_ERR, "-Unknown symbol info version %ld\n", symbols.version );
+            WINE_ERR("-Unknown symbol info version %ld\n", symbols.version);
     }
 
 
@@ -2645,8 +2638,8 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
 
     if ( root->TimeDateStamp != timestamp )
     {
-        DEBUG_Printf( DBG_CHN_ERR, "-Wrong time stamp of .PDB file %s (0x%08lx, 0x%08lx)\n",
-		      filename, root->TimeDateStamp, timestamp );
+        WINE_ERR("-Wrong time stamp of .PDB file %s (0x%08lx, 0x%08lx)\n",
+                 filename, root->TimeDateStamp, timestamp );
     }
 
     /*
@@ -2662,7 +2655,7 @@ static enum DbgInfoLoad DEBUG_ProcessPDBFile( DBG_MODULE *module,
     if ( symbols.pdbimport_size )
     {
         /* FIXME */
-        DEBUG_Printf(DBG_CHN_ERR, "-Type server .PDB imports ignored!\n" );
+        WINE_ERR("-Type server .PDB imports ignored!\n");
     }
 
     /*
@@ -2855,8 +2848,8 @@ static enum DbgInfoLoad DEBUG_ProcessCodeView( DBG_MODULE *module, LPBYTE root )
     }
 
     default:
-        DEBUG_Printf( DBG_CHN_ERR, "Unknown CODEVIEW signature %08lX in module %s\n",
-                      cv->dwSignature, module->module_name );
+        WINE_ERR("Unknown CODEVIEW signature %08lX in module %s\n",
+                 cv->dwSignature, module->module_name );
         break;
     }
 
@@ -2909,7 +2902,7 @@ static enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module,
 	  */
         for ( i = 0; i < nDbg; i++ )
             if ( dbg[i].Type == IMAGE_DEBUG_TYPE_FPO )
-                DEBUG_Printf(DBG_CHN_MESG, "This guy has FPO information\n");
+                DEBUG_Printf("This guy has FPO information\n");
 
 #define FRAME_FPO   0
 #define FRAME_TRAP  1
@@ -2952,13 +2945,12 @@ static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
     PIMAGE_DEBUG_DIRECTORY dbg;
     int nDbg;
 
-
-    DEBUG_Printf( DBG_CHN_TRACE, "Processing DBG file %s\n", filename );
+    WINE_TRACE("Processing DBG file %s\n", filename);
 
     file_map = DEBUG_MapDebugInfoFile( filename, 0, 0, &hFile, &hMap );
     if ( !file_map )
     {
-        DEBUG_Printf( DBG_CHN_ERR, "-Unable to peruse .DBG file %s\n", filename );
+        WINE_ERR("-Unable to peruse .DBG file %s\n", filename);
         goto leave;
     }
 
@@ -2966,8 +2958,7 @@ static enum DbgInfoLoad DEBUG_ProcessDBGFile( DBG_MODULE *module,
 
     if ( hdr->TimeDateStamp != timestamp )
     {
-        DEBUG_Printf( DBG_CHN_ERR, "Warning - %s has incorrect internal timestamp\n",
-	              filename );
+        WINE_ERR("Warning - %s has incorrect internal timestamp\n", filename);
         /*
          *  Well, sometimes this happens to DBG files which ARE REALLY the right .DBG
          *  files but nonetheless this check fails. Anyway, WINDBG (debugger for
@@ -3054,8 +3045,8 @@ enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo( DBG_MODULE *module, HANDLE hFile,
         if ( nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC
                        || misc->DataType != IMAGE_DEBUG_MISC_EXENAME )
         {
-            DEBUG_Printf( DBG_CHN_ERR, "-Debug info stripped, but no .DBG file in module %s\n",
-	                  module->module_name );
+            WINE_ERR("-Debug info stripped, but no .DBG file in module %s\n",
+                     module->module_name );
             goto leave;
         }
 
@@ -3141,12 +3132,11 @@ enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile,
 				     s1 + stabsize, stabstrsize)) {
 	     dil = DEBUG_ParseStabs(s1, 0, 0, stabsize, stabsize, stabstrsize);
 	  } else {
-	     DEBUG_Printf(DBG_CHN_MESG, "couldn't read data block\n");
+	     DEBUG_Printf("couldn't read data block\n");
 	  }
 	  DBG_free(s1);
        } else {
-	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n",
-		       stabsize + stabstrsize);
+	  DEBUG_Printf("couldn't alloc %d bytes\n", stabsize + stabstrsize);
        }
     } else {
        dil = DIL_NOINFO;

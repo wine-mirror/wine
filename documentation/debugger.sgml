@@ -1147,66 +1147,6 @@ set $BreakAllThreadsStartup = 1
         </sect3>
 
         <sect3>
-          <title>Output handling</title>
-
-          <variablelist>
-            <varlistentry>
-              <term><varname>ConChannelMask</varname></term>
-              <listitem>
-                <para>
-                  Mask of active debugger output channels on console
-                </para>
-              </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term><varname>StdChannelMask</varname></term>
-              <listitem>
-                <para>
-                  Mask of active debugger output channels on <filename>stderr</filename>
-                </para>
-              </listitem>
-            </varlistentry>
-          </variablelist>
-
-          <para>
-            Those last 2 variables are jointly used in two generic ways:
-          </para>
-
-          <orderedlist>
-            <listitem>
-              <para>
-                default
-              </para>
-              <programlisting>
-ConChannelMask = DBG_CHN_MESG (1)
-StdChannelMask = 0
-              </programlisting>
-              <para>
-                In this case, all input/output goes into the
-                debugger's console (either the standard unix console
-                if winedbg is started from the command line, or a
-                specific windowed-console if the debugger is started
-                upon an exception in a running program. All debug
-                messages <function>TRACE</function>,
-                <function>WARN</function>... still goes to tty where
-                wine is run from).
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                To have all input/output go into the tty where Wine
-                was started from (to be used in a X11-free
-                environment)
-              </para>
-              <screen>
-ConChannelMask = 0
-StdChannelMask = DBG_CHN_MESG (1)
-              </screen>
-            </listitem>
-          </orderedlist>
-        </sect3>
-
-        <sect3>
           <title>Context information</title>
 
           <variablelist>

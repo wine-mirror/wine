@@ -76,7 +76,7 @@ void DEBUG_InfoStack(void)
     value.addr.seg = DEBUG_context.SegSs;
     value.addr.off = DEBUG_context.Esp;
 
-    DEBUG_Printf(DBG_CHN_MESG,"Stack dump:\n");
+    DEBUG_Printf("Stack dump:\n");
     switch (DEBUG_GetSelectorType(value.addr.seg))
     {
     case MODE_32: /* 32-bit mode */
@@ -88,9 +88,9 @@ void DEBUG_InfoStack(void)
         DEBUG_ExamineMemory( &value, 24, 'w' );
 	break;
     default:
-       DEBUG_Printf(DBG_CHN_MESG, "Bad segment (%ld)\n", value.addr.seg);
+       DEBUG_Printf("Bad segment (%ld)\n", value.addr.seg);
     }
-    DEBUG_Printf(DBG_CHN_MESG,"\n");
+    DEBUG_Printf("\n");
 #endif
 }
 
@@ -102,7 +102,7 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, enum 
     frames = (struct bt_info *)DBG_realloc(frames,
 					   nframe*sizeof(struct bt_info));
     if (noisy)
-      DEBUG_Printf(DBG_CHN_MESG,"%s%d ", (theframe == curr_frame ? "=>" : "  "),
+      DEBUG_Printf("%s%d ", (theframe == curr_frame ? "=>" : "  "),
               frameno);
     frames[theframe].cs = code->seg;
     frames[theframe].eip = code->off;
@@ -115,8 +115,8 @@ static void DEBUG_ForceFrame(DBG_ADDR *stack, DBG_ADDR *code, int frameno, enum 
     frames[theframe].ss = stack->seg;
     frames[theframe].ebp = stack->off;
     if (noisy) {
-      DEBUG_Printf( DBG_CHN_MESG, (mode != MODE_32) ? " (bp=%04lx%s)\n" : " (ebp=%08lx%s)\n",
-                    stack->off, caveat?caveat:"" );
+      DEBUG_Printf((mode != MODE_32) ? " (bp=%04lx%s)\n" : " (ebp=%08lx%s)\n",
+                   stack->off, caveat ? caveat : "");
     }
 }
 
@@ -205,7 +205,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
     int			copy_curr_frame = 0;
     struct bt_info* 	copy_frames = NULL;
 
-    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Backtrace:\n" );
+    if (noisy) DEBUG_Printf("Backtrace:\n");
 
     if (tid == DEBUG_CurrTid)
     {
@@ -221,7 +221,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 
 	 if (!thread)
 	 {
-	      DEBUG_Printf( DBG_CHN_MESG, "Unknown thread id (0x%08lx) in current process\n", tid);
+	      DEBUG_Printf("Unknown thread id (0x%08lx) in current process\n", tid);
 	      return;
 	 }
 	 memset(&ctx, 0, sizeof(ctx));
@@ -230,7 +230,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	 if ( SuspendThread( thread->handle ) == -1 ||
 	      !GetThreadContext( thread->handle, &ctx ))
 	 {
-	      DEBUG_Printf( DBG_CHN_MESG, "Can't get context for thread id (0x%08lx) in current process\n", tid);
+	      DEBUG_Printf("Can't get context for thread id (0x%08lx) in current process\n", tid);
 	      return;
 	 }
 	 /* need to avoid trashing stack frame for current thread */
@@ -280,7 +280,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
         is16 = TRUE;
 	break;
     default:
-        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad segment '%x'\n", ss);
+        if (noisy) DEBUG_Printf("Bad segment '%x'\n", ss);
 	return;
     }
 
@@ -289,14 +289,14 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
      */
     cur_switch = (DWORD)thread->teb + OFFSET_OF(TEB, cur_stack);
     if (!DEBUG_READ_MEM((void*)cur_switch, &next_switch, sizeof(next_switch))) {
-        if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Can't read TEB:cur_stack\n");
+        if (noisy) DEBUG_Printf("Can't read TEB:cur_stack\n");
 	return;
     }
 
     if (is16) {
         if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-				     (unsigned long)(STACK32FRAME*)next_switch );
+	    if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                    (unsigned long)(STACK32FRAME*)next_switch );
 	    return;
 	}
 	cur_switch = (DWORD)frame32.frame16;
@@ -308,8 +308,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	p = DEBUG_ToLinear(&tmp);
 
 	if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-	    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-				     (unsigned long)(STACK16FRAME*)p );
+	    if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                    (unsigned long)(STACK16FRAME*)p );
 	    return;
 	}
 	cur_switch = (DWORD)frame16.frame32;
@@ -330,8 +330,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	   if (is16) {
 
 	       if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-					   (unsigned long)(STACK32FRAME*)next_switch );
+		  if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                          (unsigned long)(STACK32FRAME*)next_switch );
 		  return;
 	       }
 
@@ -349,8 +349,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	       p = DEBUG_ToLinear(&tmp);
 
 	       if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		   if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-					    (unsigned long)(STACK16FRAME*)p );
+		   if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                           (unsigned long)(STACK16FRAME*)p );
 		   return;
 	       }
 	       cur_switch = (DWORD)frame16.frame32;
@@ -364,8 +364,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	      p = DEBUG_ToLinear(&tmp);
 
 	      if (!DEBUG_READ_MEM((void*)p, &frame16, sizeof(STACK16FRAME))) {
-		  if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-					   (unsigned long)(STACK16FRAME*)p );
+		  if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                          (unsigned long)(STACK16FRAME*)p );
 		  return;
 	      }
 
@@ -379,8 +379,8 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 
 	      next_switch = cur_switch;
 	      if (!DEBUG_READ_MEM((void*)next_switch, &frame32, sizeof(STACK32FRAME))) {
-		 if (noisy) DEBUG_Printf( DBG_CHN_MESG, "Bad stack frame 0x%08lx\n",
-					  (unsigned long)(STACK32FRAME*)next_switch );
+		 if (noisy) DEBUG_Printf("Bad stack frame 0x%08lx\n",
+                                         (unsigned long)(STACK32FRAME*)next_switch );
 		 return;
 	      }
 	      cur_switch = (DWORD)frame32.frame16;
@@ -399,7 +399,7 @@ void DEBUG_BackTrace(DWORD tid, BOOL noisy)
 	      : DEBUG_Frame32( &addr, &cs, ++frameno, noisy);
 	}
     }
-    if (noisy) DEBUG_Printf( DBG_CHN_MESG, "\n" );
+    if (noisy) DEBUG_Printf("\n");
 
     if (tid != DEBUG_CurrTid)
     {

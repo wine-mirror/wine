@@ -38,6 +38,10 @@
 #include "wine/library.h"
 #include "winnls.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+
 DBG_PROCESS*	DEBUG_CurrProcess = NULL;
 DBG_THREAD*	DEBUG_CurrThread = NULL;
 DWORD		DEBUG_CurrTid;
@@ -53,15 +57,12 @@ static enum {none_mode = 0, winedbg_mode, automatic_mode, gdb_mode} local_mode;
 
 DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
-void	DEBUG_OutputA(int chn, const char* buffer, int len)
+void	DEBUG_OutputA(const char* buffer, int len)
 {
-    if (DBG_IVAR(ConChannelMask) & chn)
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
-    if (DBG_IVAR(StdChannelMask) & chn)
-	fwrite(buffer, len, 1, stderr);
+    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
 }
 
-void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len)
+void	DEBUG_OutputW(const WCHAR* buffer, int len)
 {
 	char* ansi = NULL;
 	int newlen;
@@ -97,12 +98,12 @@ void	DEBUG_OutputW(int chn, const WCHAR* buffer, int len)
 	
 	if(ansi)
 	{
-		DEBUG_OutputA(chn, ansi, newlen);
+		DEBUG_OutputA(ansi, newlen);
 		DBG_free(ansi);
 	}
 }
 
-int	DEBUG_Printf(int chn, const char* format, ...)
+int	DEBUG_Printf(const char* format, ...)
 {
 static    char	buf[4*1024];
     va_list 	valist;
@@ -117,7 +118,7 @@ static    char	buf[4*1024];
 	buf[len] = 0;
 	buf[len - 1] = buf[len - 2] = buf[len - 3] = '.';
     }
-    DEBUG_OutputA(chn, buf, len);
+    DEBUG_OutputA(buf, len);
     return len;
 }
 
@@ -140,9 +141,7 @@ static	BOOL DEBUG_IntVarsRW(int read)
     }
 
     if (RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
-	/* since the IVars are not yet setup, DEBUG_Printf doesn't work,
-	 * so don't use it */
-	fprintf(stderr, "Cannot create WineDbg key in registry\n");
+	WINE_ERR("Cannot create WineDbg key in registry\n");
 	return FALSE;
     }
 
@@ -195,7 +194,7 @@ DBG_PROCESS*	DEBUG_AddProcess(DWORD pid, HANDLE h, const char* imageName)
     {
         if (p->handle != 0)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Process (%lu) is already defined\n", pid);
+            WINE_ERR("Process (%lu) is already defined\n", pid);
         }
         else
         {
@@ -362,7 +361,7 @@ BOOL				DEBUG_Attach(DWORD pid, BOOL cofe, BOOL wfe)
     if (!(DEBUG_CurrProcess = DEBUG_AddProcess(pid, 0, NULL))) return FALSE;
 
     if (!DebugActiveProcess(pid)) {
-        DEBUG_Printf(DBG_CHN_MESG, "Can't attach process %lx: error %ld\n", pid, GetLastError());
+        DEBUG_Printf("Can't attach process %lx: error %ld\n", pid, GetLastError());
         DEBUG_DelProcess(DEBUG_CurrProcess);
 	return FALSE;
     }
@@ -409,7 +408,7 @@ static BOOL                     DEBUG_FetchContext(void)
                                ;
     if (!GetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
     {
-        DEBUG_Printf(DBG_CHN_WARN, "Can't get thread's context\n");
+        WINE_WARN("Can't get thread's context\n");
         return FALSE;
     }
     return TRUE;
@@ -427,27 +426,32 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     if (!is_debug)
     {
         if (!addr.seg)
-            DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (0x%08lx)", addr.off);
+            DEBUG_Printf(" in 32-bit code (0x%08lx)", addr.off);
         else
-            switch(DEBUG_GetSelectorType(addr.seg))
+            switch (DEBUG_GetSelectorType(addr.seg))
             {
             case MODE_32:
-                DEBUG_Printf(DBG_CHN_MESG, " in 32-bit code (%04lx:%08lx)", addr.seg, addr.off);
+                DEBUG_Printf(" in 32-bit code (%04lx:%08lx)", addr.seg, addr.off);
                 break;
             case MODE_16:
-                DEBUG_Printf(DBG_CHN_MESG, " in 16-bit code (%04lx:%04lx)", addr.seg, addr.off);
+                DEBUG_Printf(" in 16-bit code (%04lx:%04lx)", addr.seg, addr.off);
                 break;
             case MODE_VM86:
-                DEBUG_Printf(DBG_CHN_MESG, " in vm86 code (%04lx:%04lx)", addr.seg, addr.off);
+                DEBUG_Printf(" in vm86 code (%04lx:%04lx)", addr.seg, addr.off);
                 break;
             case MODE_INVALID:
-                DEBUG_Printf(DBG_CHN_MESG, " bad CS (%lx)", addr.seg);
+                DEBUG_Printf(" bad CS (%lx)", addr.seg);
                 break;
         }
-	DEBUG_Printf(DBG_CHN_MESG, ".\n");
+	DEBUG_Printf(".\n");
     }
 
     DEBUG_LoadEntryPoints("Loading new modules symbols:\n");
+    /*
+     * Do a quiet backtrace so that we have an idea of what the situation
+     * is WRT the source files.
+     */
+    DEBUG_BackTrace(DEBUG_CurrTid, FALSE);
 
     if (!force && is_debug &&
 	DEBUG_ShouldContinue(&addr, code,
@@ -458,19 +462,13 @@ static  BOOL	DEBUG_ExceptionProlog(BOOL is_debug, BOOL force, DWORD code)
     if (newmode != DEBUG_CurrThread->dbg_mode)
     {
         static const char * const names[] = { "???", "16-bit", "32-bit", "vm86" };
-        DEBUG_Printf(DBG_CHN_MESG,"In %s mode.\n", names[newmode] );
+        DEBUG_Printf("In %s mode.\n", names[newmode] );
         DEBUG_CurrThread->dbg_mode = newmode;
     }
 
     DEBUG_DoDisplay();
 
-    if (is_debug || force) {
-	/*
-	 * Do a quiet backtrace so that we have an idea of what the situation
-	 * is WRT the source files.
-	 */
-	DEBUG_BackTrace(DEBUG_CurrTid, FALSE);
-    } else {
+    if (!is_debug && !force) {
 	/* This is a real crash, dump some info */
 	DEBUG_InfoRegisters(&DEBUG_context);
 	DEBUG_InfoStack();
@@ -538,9 +536,8 @@ static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 
         if (ReadProcessMemory(DEBUG_CurrThread->process->handle, pThreadName->szName,
                               pThread->name, 9, NULL))
-            DEBUG_Printf (DBG_CHN_MESG,
-                          "Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
-                          pThread->tid, pThread->name);
+            DEBUG_Printf("Thread ID=0x%lx renamed using MS VC6 extension (name==\"%s\")\n",
+                         pThread->tid, pThread->name);
         return DBG_CONTINUE;
     }
 
@@ -553,44 +550,44 @@ static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOO
     if (!is_debug)
     {
         /* print some infos */
-        DEBUG_Printf(DBG_CHN_MESG, "%s: ",
-		      first_chance ? "First chance exception" : "Unhandled exception");
+        DEBUG_Printf("%s: ",
+                     first_chance ? "First chance exception" : "Unhandled exception");
         switch (rec->ExceptionCode)
         {
         case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            DEBUG_Printf(DBG_CHN_MESG, "divide by zero");
+            DEBUG_Printf("divide by zero");
             break;
         case EXCEPTION_INT_OVERFLOW:
-            DEBUG_Printf(DBG_CHN_MESG, "overflow");
+            DEBUG_Printf("overflow");
             break;
         case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            DEBUG_Printf(DBG_CHN_MESG, "array bounds ");
+            DEBUG_Printf("array bounds");
             break;
         case EXCEPTION_ILLEGAL_INSTRUCTION:
-            DEBUG_Printf(DBG_CHN_MESG, "illegal instruction");
+            DEBUG_Printf("illegal instruction");
             break;
         case EXCEPTION_STACK_OVERFLOW:
-            DEBUG_Printf(DBG_CHN_MESG, "stack overflow");
+            DEBUG_Printf("stack overflow");
             break;
         case EXCEPTION_PRIV_INSTRUCTION:
-            DEBUG_Printf(DBG_CHN_MESG, "privileged instruction");
+            DEBUG_Printf("privileged instruction");
             break;
         case EXCEPTION_ACCESS_VIOLATION:
             if (rec->NumberParameters == 2)
-                DEBUG_Printf(DBG_CHN_MESG, "page fault on %s access to 0x%08lx",
-			      rec->ExceptionInformation[0] ? "write" : "read",
-			      rec->ExceptionInformation[1]);
+                DEBUG_Printf("page fault on %s access to 0x%08lx",
+                             rec->ExceptionInformation[0] ? "write" : "read",
+                             rec->ExceptionInformation[1]);
             else
-                DEBUG_Printf(DBG_CHN_MESG, "page fault");
+                DEBUG_Printf("page fault");
             break;
         case EXCEPTION_DATATYPE_MISALIGNMENT:
-            DEBUG_Printf(DBG_CHN_MESG, "Alignment");
+            DEBUG_Printf("Alignment");
             break;
 	case DBG_CONTROL_C:
-            DEBUG_Printf(DBG_CHN_MESG, "^C");
+            DEBUG_Printf("^C");
             break;
         case CONTROL_C_EXIT:
-            DEBUG_Printf(DBG_CHN_MESG, "^C");
+            DEBUG_Printf("^C");
             break;
         case STATUS_POSSIBLE_DEADLOCK:
 	    {
@@ -599,12 +596,12 @@ static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 		addr.seg = 0;
 		addr.off = rec->ExceptionInformation[0];
 
-		DEBUG_Printf(DBG_CHN_MESG, "wait failed on critical section ");
+		DEBUG_Printf("wait failed on critical section ");
 		DEBUG_PrintAddress(&addr, DEBUG_CurrThread->dbg_mode, FALSE);
 	    }
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
 	    {
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+		DEBUG_Printf("\n");
 		return DBG_EXCEPTION_NOT_HANDLED;
 	    }
             break;
@@ -615,45 +612,45 @@ static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOO
                                         (char *)rec->ExceptionInformation[0] );
                 DEBUG_ProcessGetString( name, sizeof(name), DEBUG_CurrThread->process->handle,
                                         (char *)rec->ExceptionInformation[1] );
-                DEBUG_Printf(DBG_CHN_MESG, "unimplemented function %s.%s called", dll, name );
+                DEBUG_Printf("unimplemented function %s.%s called", dll, name );
             }
             break;
         case EXCEPTION_WINE_ASSERTION:
-            DEBUG_Printf(DBG_CHN_MESG, "assertion failed");
+            DEBUG_Printf("assertion failed");
             break;
         case EXCEPTION_VM86_INTx:
-            DEBUG_Printf(DBG_CHN_MESG, "interrupt %02lx in vm86 mode",
+            DEBUG_Printf("interrupt %02lx in vm86 mode",
                          rec->ExceptionInformation[0]);
             break;
         case EXCEPTION_VM86_STI:
-            DEBUG_Printf(DBG_CHN_MESG, "sti in vm86 mode");
+            DEBUG_Printf("sti in vm86 mode");
             break;
         case EXCEPTION_VM86_PICRETURN:
-            DEBUG_Printf(DBG_CHN_MESG, "PIC return in vm86 mode");
+            DEBUG_Printf("PIC return in vm86 mode");
             break;
 	case EXCEPTION_FLT_DENORMAL_OPERAND:
-            DEBUG_Printf(DBG_CHN_MESG, "denormal float operand");
+            DEBUG_Printf("denormal float operand");
             break;
 	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            DEBUG_Printf(DBG_CHN_MESG, "divide by zero");
+            DEBUG_Printf("divide by zero");
             break;
 	case EXCEPTION_FLT_INEXACT_RESULT:
-            DEBUG_Printf(DBG_CHN_MESG, "inexact float result");
+            DEBUG_Printf("inexact float result");
             break;
 	case EXCEPTION_FLT_INVALID_OPERATION:
-            DEBUG_Printf(DBG_CHN_MESG, "invalid float operation");
+            DEBUG_Printf("invalid float operation");
             break;
 	case EXCEPTION_FLT_OVERFLOW:
-            DEBUG_Printf(DBG_CHN_MESG, "floating pointer overflow");
+            DEBUG_Printf("floating pointer overflow");
             break;
 	case EXCEPTION_FLT_UNDERFLOW:
-            DEBUG_Printf(DBG_CHN_MESG, "floating pointer underflow");
+            DEBUG_Printf("floating pointer underflow");
             break;
 	case EXCEPTION_FLT_STACK_CHECK:
-            DEBUG_Printf(DBG_CHN_MESG, "floating point stack check");
+            DEBUG_Printf("floating point stack check");
             break;
         default:
-            DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);
+            DEBUG_Printf("%08lx", rec->ExceptionCode);
             break;
         }
     }
@@ -693,14 +690,14 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
     case EXCEPTION_DEBUG_EVENT:
         if (!DEBUG_CurrThread)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "%08lx:%08lx: not a registered process or thread (perhaps a 16 bit one ?)\n",
-                         de->dwProcessId, de->dwThreadId);
+            WINE_ERR("%08lx:%08lx: not a registered process or thread (perhaps a 16 bit one ?)\n",
+                     de->dwProcessId, de->dwThreadId);
             break;
         }
 
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: exception code=%08lx\n",
-                     de->dwProcessId, de->dwThreadId,
-                     de->u.Exception.ExceptionRecord.ExceptionCode);
+        WINE_TRACE("%08lx:%08lx: exception code=%08lx\n",
+                   de->dwProcessId, de->dwThreadId,
+                   de->u.Exception.ExceptionRecord.ExceptionCode);
 
         if (DEBUG_CurrProcess->continue_on_first_exception)
         {
@@ -722,17 +719,17 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         break;
 
     case CREATE_THREAD_DEBUG_EVENT:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread D @%08lx\n", de->dwProcessId, de->dwThreadId,
-                     (unsigned long)(LPVOID)de->u.CreateThread.lpStartAddress);
+        WINE_TRACE("%08lx:%08lx: create thread D @%08lx\n", de->dwProcessId, de->dwThreadId,
+                   (unsigned long)(LPVOID)de->u.CreateThread.lpStartAddress);
 
         if (DEBUG_CurrProcess == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
+            WINE_ERR("Unknown process\n");
             break;
         }
         if (DEBUG_GetThread(DEBUG_CurrProcess, de->dwThreadId) != NULL)
         {
-            DEBUG_Printf(DBG_CHN_TRACE, "Thread already listed, skipping\n");
+            WINE_TRACE("Thread already listed, skipping\n");
             break;
         }
 
@@ -743,7 +740,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                                            de->u.CreateThread.lpThreadLocalBase);
         if (!DEBUG_CurrThread)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Couldn't create thread\n");
+            WINE_ERR("Couldn't create thread\n");
             break;
         }
         DEBUG_InitCurrThread();
@@ -755,25 +752,25 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                                        de->u.CreateProcessInfo.lpImageName,
                                        de->u.CreateProcessInfo.fUnicode);
 
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
-                     de->dwProcessId, de->dwThreadId,
-                     buffer, de->u.CreateProcessInfo.lpImageName,
-                     (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress,
-                     de->u.CreateProcessInfo.dwDebugInfoFileOffset,
-                     de->u.CreateProcessInfo.nDebugInfoSize);
+        WINE_TRACE("%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
+                   de->dwProcessId, de->dwThreadId,
+                   buffer, de->u.CreateProcessInfo.lpImageName,
+                   (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress,
+                   de->u.CreateProcessInfo.dwDebugInfoFileOffset,
+                   de->u.CreateProcessInfo.nDebugInfoSize);
 
         DEBUG_CurrProcess = DEBUG_AddProcess(de->dwProcessId,
                                              de->u.CreateProcessInfo.hProcess,
                                              buffer[0] ? buffer : "<Debugged Process>");
         if (DEBUG_CurrProcess == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Couldn't create process\n");
+            WINE_ERR("Couldn't create process\n");
             break;
         }
 
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: create thread I @%08lx\n",
-                     de->dwProcessId, de->dwThreadId,
-                     (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress);
+        WINE_TRACE("%08lx:%08lx: create thread I @%08lx\n",
+                   de->dwProcessId, de->dwThreadId,
+                   (unsigned long)(LPVOID)de->u.CreateProcessInfo.lpStartAddress);
 
         DEBUG_CurrThread = DEBUG_AddThread(DEBUG_CurrProcess,
                                            de->dwThreadId,
@@ -782,7 +779,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                                            de->u.CreateProcessInfo.lpThreadLocalBase);
         if (!DEBUG_CurrThread)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Couldn't create thread\n");
+            WINE_ERR("Couldn't create thread\n");
             break;
         }
 
@@ -806,12 +803,12 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         break;
 
     case EXIT_THREAD_DEBUG_EVENT:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: exit thread (%ld)\n",
-                     de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
+        WINE_TRACE("%08lx:%08lx: exit thread (%ld)\n",
+                   de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
 
         if (DEBUG_CurrThread == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Unknown thread\n");
+            WINE_ERR("Unknown thread\n");
             break;
         }
         /* FIXME: remove break point set on thread startup */
@@ -819,12 +816,12 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         break;
 
     case EXIT_PROCESS_DEBUG_EVENT:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: exit process (%ld)\n",
-                     de->dwProcessId, de->dwThreadId, de->u.ExitProcess.dwExitCode);
+        WINE_TRACE("%08lx:%08lx: exit process (%ld)\n",
+                   de->dwProcessId, de->dwThreadId, de->u.ExitProcess.dwExitCode);
 
         if (DEBUG_CurrProcess == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Unknown process\n");
+            WINE_ERR("Unknown process\n");
             break;
         }
         /* just in case */
@@ -833,13 +830,13 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
         DEBUG_DelThread(DEBUG_CurrProcess->threads);
         DEBUG_DelProcess(DEBUG_CurrProcess);
 
-        DEBUG_Printf(DBG_CHN_MESG, "Process of pid=%08lx has terminated\n", DEBUG_CurrPid);
+        DEBUG_Printf("Process of pid=%08lx has terminated\n", DEBUG_CurrPid);
         break;
 
     case LOAD_DLL_DEBUG_EVENT:
         if (DEBUG_CurrThread == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Unknown thread\n");
+            WINE_ERR("Unknown thread\n");
             break;
         }
         DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer),
@@ -847,31 +844,31 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                                        de->u.LoadDll.lpImageName,
                                        de->u.LoadDll.fUnicode);
 
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n",
-                     de->dwProcessId, de->dwThreadId,
-                     buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
-                     de->u.LoadDll.dwDebugInfoFileOffset,
-                     de->u.LoadDll.nDebugInfoSize);
+        WINE_TRACE("%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n",
+                   de->dwProcessId, de->dwThreadId,
+                   buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
+                   de->u.LoadDll.dwDebugInfoFileOffset,
+                   de->u.LoadDll.nDebugInfoSize);
         _strupr(buffer);
         DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, de->u.LoadDll.lpBaseOfDll);
         DEBUG_CheckDelayedBP();
         if (DBG_IVAR(BreakOnDllLoad))
         {
-            DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n",
+            DEBUG_Printf("Stopping on DLL %s loading at %08lx\n",
                          buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
             if (DEBUG_FetchContext()) cont = 0;
         }
         break;
 
     case UNLOAD_DLL_DEBUG_EVENT:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: unload DLL @%08lx\n", de->dwProcessId, de->dwThreadId,
-                     (unsigned long)de->u.UnloadDll.lpBaseOfDll);
+        WINE_TRACE("%08lx:%08lx: unload DLL @%08lx\n", de->dwProcessId, de->dwThreadId,
+                   (unsigned long)de->u.UnloadDll.lpBaseOfDll);
         break;
 
     case OUTPUT_DEBUG_STRING_EVENT:
         if (DEBUG_CurrThread == NULL)
         {
-            DEBUG_Printf(DBG_CHN_ERR, "Unknown thread\n");
+            WINE_ERR("Unknown thread\n");
             break;
         }
 
@@ -880,19 +877,19 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                                de->u.DebugString.lpDebugStringData);
 
         /* FIXME unicode de->u.DebugString.fUnicode ? */
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: output debug string (%s)\n",
-                     de->dwProcessId, de->dwThreadId, buffer);
+        WINE_TRACE("%08lx:%08lx: output debug string (%s)\n",
+                   de->dwProcessId, de->dwThreadId, buffer);
         break;
 
     case RIP_EVENT:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: rip error=%ld type=%ld\n",
-                     de->dwProcessId, de->dwThreadId, de->u.RipInfo.dwError,
-                     de->u.RipInfo.dwType);
+        WINE_TRACE("%08lx:%08lx: rip error=%ld type=%ld\n",
+                   de->dwProcessId, de->dwThreadId, de->u.RipInfo.dwError,
+                   de->u.RipInfo.dwType);
         break;
 
     default:
-        DEBUG_Printf(DBG_CHN_TRACE, "%08lx:%08lx: unknown event (%ld)\n",
-                     de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
+        WINE_TRACE("%08lx:%08lx: unknown event (%ld)\n",
+                   de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
     if (!cont) return TRUE;  /* stop execution */
     ContinueDebugEvent(de->dwProcessId, de->dwThreadId, cont);
@@ -904,27 +901,25 @@ static void                     DEBUG_ResumeDebuggee(DWORD cont)
     if (DEBUG_InException)
     {
         DEBUG_ExceptionEpilog();
-#if 1
-        DEBUG_Printf(DBG_CHN_TRACE,
-                     "Exiting debugger      PC=%lx EFL=%08lx mode=%d count=%d\n",
 #ifdef __i386__
-                     DEBUG_context.Eip, DEBUG_context.EFlags,
+        WINE_TRACE("Exiting debugger      PC=%lx EFL=%08lx mode=%d count=%d\n",
+                   DEBUG_context.Eip, DEBUG_context.EFlags,
+                   DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #else
-                     0L, 0L,
-#endif
-                     DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
+        WINE_TRACE("Exiting debugger      PC=%lx EFL=%08lx mode=%d count=%d\n",
+                   0L, 0L,
+                   DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #endif
         if (DEBUG_CurrThread)
         {
             if (!SetThreadContext(DEBUG_CurrThread->handle, &DEBUG_context))
-                DEBUG_Printf(DBG_CHN_MESG, "Cannot set ctx on %lu\n", DEBUG_CurrTid);
+                DEBUG_Printf("Cannot set ctx on %lu\n", DEBUG_CurrTid);
             DEBUG_CurrThread->wait_for_first_exception = 0;
         }
     }
     DEBUG_InteractiveP = FALSE;
     if (!ContinueDebugEvent(DEBUG_CurrPid, DEBUG_CurrTid, cont))
-        DEBUG_Printf(DBG_CHN_MESG, "Cannot continue on %lu (%lu)\n",
-                     DEBUG_CurrTid, cont);
+        DEBUG_Printf("Cannot continue on %lu (%lu)\n", DEBUG_CurrTid, cont);
 }
 
 void                            DEBUG_WaitNextException(DWORD cont, int count, int mode)
@@ -944,15 +939,14 @@ void                            DEBUG_WaitNextException(DWORD cont, int count, i
     }
     if (!DEBUG_CurrProcess) return;
     DEBUG_InteractiveP = TRUE;
-#if 1
-    DEBUG_Printf(DBG_CHN_TRACE,
-                 "Entering debugger     PC=%lx EFL=%08lx mode=%d count=%d\n",
 #ifdef __i386__
-                 DEBUG_context.Eip, DEBUG_context.EFlags,
+    WINE_TRACE("Entering debugger     PC=%lx EFL=%08lx mode=%d count=%d\n",
+               DEBUG_context.Eip, DEBUG_context.EFlags,
+               DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #else
-                 0L, 0L,
-#endif
-                 DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
+    WINE_TRACE("Entering debugger     PC=%lx EFL=%08lx mode=%d count=%d\n",
+               0L, 0L,
+               DEBUG_CurrThread->exec_mode, DEBUG_CurrThread->exec_count);
 #endif
 }
 
@@ -960,7 +954,7 @@ static	DWORD	DEBUG_MainLoop(void)
 {
     DEBUG_EVENT		de;
 
-    DEBUG_Printf(DBG_CHN_MESG, "WineDbg starting on pid %lx\n", DEBUG_CurrPid);
+    DEBUG_Printf("WineDbg starting on pid %lx\n", DEBUG_CurrPid);
 
     /* wait for first exception */
     while (WaitForDebugEvent(&de, INFINITE))
@@ -970,9 +964,9 @@ static	DWORD	DEBUG_MainLoop(void)
     if (local_mode == automatic_mode)
     {
         /* print some extra information */
-        DEBUG_Printf(DBG_CHN_MESG, "Modules:\n");
+        DEBUG_Printf("Modules:\n");
         DEBUG_WalkModules();
-        DEBUG_Printf(DBG_CHN_MESG, "Threads:\n");
+        DEBUG_Printf("Threads:\n");
         DEBUG_WalkThreads();
     }
     else
@@ -980,7 +974,7 @@ static	DWORD	DEBUG_MainLoop(void)
         DEBUG_InteractiveP = TRUE;
         DEBUG_Parser(NULL);
     }
-    DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
+    DEBUG_Printf("WineDbg terminated on pid %lx\n", DEBUG_CurrPid);
 
     return 0;
 }
@@ -1002,7 +996,7 @@ static	BOOL	DEBUG_Start(LPSTR cmdLine)
 		       FALSE, DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_NEW_CONSOLE,
                        NULL, NULL, &startup, &info))
     {
-	DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", cmdLine);
+	DEBUG_Printf("Couldn't start process '%s'\n", cmdLine);
 	return FALSE;
     }
     DEBUG_CurrPid = info.dwProcessId;
@@ -1017,10 +1011,10 @@ void	DEBUG_Run(const char* args)
     const char* pgm = (wmod) ? wmod->module_name : "none";
 
     if (args) {
-	DEBUG_Printf(DBG_CHN_MESG, "Run (%s) with '%s'\n", pgm, args);
+	DEBUG_Printf("Run (%s) with '%s'\n", pgm, args);
     } else {
 	if (!DEBUG_LastCmdLine) {
-	    DEBUG_Printf(DBG_CHN_MESG, "Cannot find previously used command line.\n");
+	    DEBUG_Printf("Cannot find previously used command line.\n");
 	    return;
 	}
 	DEBUG_Start(DEBUG_LastCmdLine);
@@ -1029,11 +1023,13 @@ void	DEBUG_Run(const char* args)
 
 BOOL DEBUG_InterruptDebuggee(void)
 {
-    DEBUG_Printf(DBG_CHN_MESG, "Ctrl-C: stopping debuggee\n");
+    DEBUG_Printf("Ctrl-C: stopping debuggee\n");
     /* FIXME: since we likely have a single process, signal the first process
      * in list
      */
-    return DEBUG_ProcessList && DebugBreakProcess(DEBUG_ProcessList->handle);
+    if (!DEBUG_ProcessList) return FALSE;
+    DEBUG_ProcessList->continue_on_first_exception = FALSE;
+    return DebugBreakProcess(DEBUG_ProcessList->handle);
 }
 
 static BOOL WINAPI DEBUG_CtrlCHandler(DWORD dwCtrlType)
@@ -1056,7 +1052,7 @@ static void DEBUG_InitConsole(void)
 
 static int DEBUG_Usage(void)
 {
-    DEBUG_Printf(DBG_CHN_MESG, "Usage: winedbg [--debugmsg dbgoptions] [--auto] [--gdb] cmdline\n" );
+    DEBUG_Printf("Usage: winedbg [--debugmsg dbgoptions] [--auto] [--gdb] cmdline\n" );
     return 1;
 }
 
@@ -1081,8 +1077,6 @@ int main(int argc, char** argv)
             local_mode = automatic_mode;
             /* force some internal variables */
             DBG_IVAR(BreakOnDllLoad) = 0;
-            DBG_IVAR(ConChannelMask) = 0;
-            DBG_IVAR(StdChannelMask) = DBG_CHN_MESG;
             argc--; argv++;
             continue;
         }
@@ -1146,7 +1140,7 @@ int main(int argc, char** argv)
 	    }
 	    if (!SetEvent(hEvent))
             {
-		DEBUG_Printf(DBG_CHN_ERR, "Invalid event handle: %p\n", hEvent);
+		WINE_ERR("Invalid event handle: %p\n", hEvent);
 		goto leave;
 	    }
             CloseHandle(hEvent);
@@ -1173,7 +1167,7 @@ int main(int argc, char** argv)
 
 	if (!DEBUG_Start(cmdLine))
         {
-	    DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", cmdLine);
+	    DEBUG_Printf("Couldn't start process '%s'\n", cmdLine);
 	    goto leave;
 	}
 	DBG_free(DEBUG_LastCmdLine);
@@ -1193,6 +1187,6 @@ int main(int argc, char** argv)
     return retv;
 
  oom_leave:
-    DEBUG_Printf(DBG_CHN_MESG, "Out of memory\n");
+    DEBUG_Printf("Out of memory\n");
     goto leave;
 }

@@ -1070,7 +1070,7 @@ static unsigned int db_get_task_value( const DBG_ADDR *addr,
     char       		buffer[4];
 
     if (size != 1 && size != 2 && size != 4) {
-        DEBUG_Printf(DBG_CHN_MESG, "Illegal size specified\n");
+        DEBUG_Printf("Illegal size specified\n");
     } else {
        DEBUG_READ_MEM((void*)DEBUG_ToLinear( addr ), buffer, size);
 
@@ -1194,21 +1194,21 @@ static void db_task_printsym(unsigned int addr, int size)
 void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref)
 {
 	if (addrp->is_reg) {
-	    DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][addrp->disp]);
+	    DEBUG_Printf("%s", db_reg[size][addrp->disp]);
 	    return;
 	}
 
 	if (seg) {
-	    DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
+	    DEBUG_Printf("%s:", seg);
 	}
 
 	if (addrp->base != 0 || addrp->index != 0) {
-	    DEBUG_Printf(DBG_CHN_MESG,"0x%x(", addrp->disp);
+	    DEBUG_Printf("0x%x(", addrp->disp);
 	    if (addrp->base)
-		DEBUG_Printf(DBG_CHN_MESG,"%s", addrp->base);
+		DEBUG_Printf("%s", addrp->base);
 	    if (addrp->index)
-		DEBUG_Printf(DBG_CHN_MESG,",%s,%d", addrp->index, 1<<addrp->ss);
-	    DEBUG_Printf(DBG_CHN_MESG,")");
+		DEBUG_Printf(",%s,%d", addrp->index, 1<<addrp->ss);
+	    DEBUG_Printf(")");
 	}
 	else {
 
@@ -1218,11 +1218,11 @@ void db_print_address(const char *seg, int size, struct i_addr *addrp, int byref
 	       void*	a1;
 	       void*	a2;
 
-               DEBUG_Printf(DBG_CHN_MESG,"0x%x -> ", addrp->disp);
+               DEBUG_Printf("0x%x -> ", addrp->disp);
 	       if (!DEBUG_READ_MEM((void*)addrp->disp, &a1, sizeof(a1))) {
-		   DEBUG_Printf(DBG_CHN_MESG, "(invalid source)");
+		   DEBUG_Printf("(invalid source)");
 	       } else if (!DEBUG_READ_MEM(a1, &a2, sizeof(a2))) {
-		  DEBUG_Printf(DBG_CHN_MESG, "(invalid destination)");
+		  DEBUG_Printf("(invalid destination)");
 	       } else {
 		  db_task_printsym((unsigned long)a1, 0);
                }
@@ -1254,34 +1254,22 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
+            const char* p;
 	    /*
 	     * Normal address modes.
 	     */
 	    db_read_address( addr, short_addr, regmodrm, &address);
-	    DEBUG_Printf(DBG_CHN_MESG,fp->f_name);
+	    DEBUG_Printf(fp->f_name);
 	    switch(fp->f_size) {
-		case SNGL:
-		    DEBUG_Printf(DBG_CHN_MESG,"s");
-		    break;
-		case DBLR:
-		    DEBUG_Printf(DBG_CHN_MESG,"l");
-		    break;
-		case EXTR:
-		    DEBUG_Printf(DBG_CHN_MESG,"t");
-		    break;
-		case WORD:
-		    DEBUG_Printf(DBG_CHN_MESG,"s");
-		    break;
-		case LONG:
-		    DEBUG_Printf(DBG_CHN_MESG,"l");
-		    break;
-		case QUAD:
-		    DEBUG_Printf(DBG_CHN_MESG,"q");
-		    break;
-		default:
-		    break;
+		case SNGL: p = "s"; break;
+		case DBLR: p = "l"; break;
+		case EXTR: p = "t"; break;
+		case WORD: p = "s"; break;
+		case LONG: p = "l"; break;
+		case QUAD: p = "q"; break;
+		default:   p = "";  break;
 	    }
-	    DEBUG_Printf(DBG_CHN_MESG,"\t");
+	    DEBUG_Printf("%s\t", p);
 	    db_print_address(seg, BYTE, &address, 0);
 	}
 	else {
@@ -1291,25 +1279,24 @@ void db_disasm_esc( DBG_ADDR *addr, int inst, int short_addr,
 	    switch (fp->f_rrmode) {
 		case op2(ST,STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
+		    DEBUG_Printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
 		    break;
 		case op2(STI,ST):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st(%d),%%st",name, f_rm(regmodrm));
+		    DEBUG_Printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
 		    break;
 		case op1(STI):
 		    name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%st(%d)",name, f_rm(regmodrm));
+		    DEBUG_Printf("%s\t%%st(%d)",name, f_rm(regmodrm));
 		    break;
 		case op1(X):
-		    DEBUG_Printf(DBG_CHN_MESG,"%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+		    DEBUG_Printf("%s", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		case op1(XA):
-		    DEBUG_Printf(DBG_CHN_MESG,"%s\t%%ax",
-				 ((char **)fp->f_rrname)[f_rm(regmodrm)]);
+		    DEBUG_Printf("%s\t%%ax", ((char **)fp->f_rrname)[f_rm(regmodrm)]);
 		    break;
 		default:
-		    DEBUG_Printf(DBG_CHN_MESG,"<bad instruction>");
+		    DEBUG_Printf("<bad instruction>");
 		    break;
 	    }
 	}
@@ -1349,7 +1336,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
         case MODE_VM86:
 	case MODE_16: db_disasm_16 = 1; break;
 	case MODE_32: db_disasm_16 = 0; break;
-	default: DEBUG_Printf(DBG_CHN_MESG, "Bad selector %lx\n", addr->seg); return;
+	default: DEBUG_Printf("Bad selector %lx\n", addr->seg); return;
 	}
 
 	get_value_inc( inst, addr, 1, FALSE );
@@ -1399,15 +1386,15 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    break;
 		case 0xf0:
 		    if( db_display )
-			DEBUG_Printf(DBG_CHN_MESG,"lock ");
+			DEBUG_Printf("lock ");
 		    break;
 		case 0xf2:
 		    if( db_display )
-			DEBUG_Printf(DBG_CHN_MESG,"repne ");
+			DEBUG_Printf("repne ");
 		    break;
 		case 0xf3:
 		    if( db_display )
-			DEBUG_Printf(DBG_CHN_MESG,"repe ");	/* XXX repe VS rep */
+			DEBUG_Printf("repe ");	/* XXX repe VS rep */
 		    break;
 		default:
 		    prefix = FALSE;
@@ -1475,28 +1462,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 	  if( db_display )
 	    {
 	      if (size == WORD)
-		DEBUG_Printf(DBG_CHN_MESG,i_name);
+		DEBUG_Printf(i_name);
 	      else
-		DEBUG_Printf(DBG_CHN_MESG,ip->i_extra);
+		DEBUG_Printf(ip->i_extra);
 	    }
 	}
 	else {
 	  if( db_display )
 	    {
-	      DEBUG_Printf(DBG_CHN_MESG,i_name);
+	      DEBUG_Printf(i_name);
 	    }
 	    if (i_size != NONE) {
 		if (i_size == BYTE) {
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"b");
+		      DEBUG_Printf("b");
 		    }
 		    size = BYTE;
 		}
 		else if (i_size == WORD) {
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"w");
+		      DEBUG_Printf("w");
 		    }
 		    size = WORD;
 		}
@@ -1504,28 +1491,28 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  {
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"w");
+		      DEBUG_Printf("w");
 		    }
 		  }
 		else
 		  {
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"l");
+		      DEBUG_Printf("l");
 		    }
 		  }
 	    }
 	}
 	if( db_display )
 	  {
-	    DEBUG_Printf(DBG_CHN_MESG,"\t");
+	    DEBUG_Printf("\t");
 	  }
 	for (first = TRUE;
 	     i_mode != 0;
 	     i_mode >>= 8, first = FALSE)
 	{
 	    if (!first && db_display)
-		DEBUG_Printf(DBG_CHN_MESG,",");
+		DEBUG_Printf(",");
 
 	    switch (i_mode & 0xFF) {
 
@@ -1539,7 +1526,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case Eind:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"*");
+		      DEBUG_Printf("*");
 		      db_print_address(seg, size, &address, 1);
 		    }
 		    break;
@@ -1561,31 +1548,31 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case R:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][f_reg(regmodrm)]);
+		      DEBUG_Printf("%s", db_reg[size][f_reg(regmodrm)]);
 		    }
 		    break;
 		case MX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%mm%d", f_reg(regmodrm));
+		      DEBUG_Printf("%%mm%d", f_reg(regmodrm));
 		    }
 		    break;
 		case EMX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%mm%d", f_rm(regmodrm));
+		      DEBUG_Printf("%%mm%d", f_rm(regmodrm));
 		    }
 		    break;
 		case XMM:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%xmm%d", f_reg(regmodrm));
+		      DEBUG_Printf("%%xmm%d", f_reg(regmodrm));
 		    }
 		    break;
 		case EXMM:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%xmm%d", f_rm(regmodrm));
+		      DEBUG_Printf("%%xmm%d", f_rm(regmodrm));
 		    }
 		    break;
 
@@ -1593,35 +1580,35 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case Rw:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[WORD][f_reg(regmodrm)]);
+		      DEBUG_Printf("%s", db_reg[WORD][f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Ri:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][f_rm(inst)]);
+		      DEBUG_Printf("%s", db_reg[size][f_rm(inst)]);
 		    }
 		    break;
 
 		case S:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_seg_reg[f_reg(regmodrm)]);
+		      DEBUG_Printf("%s", db_seg_reg[f_reg(regmodrm)]);
 		    }
 		    break;
 
 		case Si:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_seg_reg[f_reg(inst)]);
+		      DEBUG_Printf("%s", db_seg_reg[f_reg(inst)]);
 		    }
 		    break;
 
 		case A:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%s", db_reg[size][0]);	/* acc */
+		      DEBUG_Printf("%s", db_reg[size][0]);	/* acc */
 		    }
 		    break;
 
@@ -1629,22 +1616,22 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
-		      DEBUG_Printf(DBG_CHN_MESG,"(%s)", short_addr ? "%bx" : "%ebx");
+			DEBUG_Printf("%s:", seg);
+		      DEBUG_Printf("(%s)", short_addr ? "%bx" : "%ebx");
 		    }
 		    break;
 
 		case CL:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%cl");
+		      DEBUG_Printf("%%cl");
 		    }
 		    break;
 
 		case DX:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%dx");
+		      DEBUG_Printf("%%dx");
 		    }
 		    break;
 
@@ -1652,36 +1639,36 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		  if( db_display )
 		    {
 		      if (seg)
-			DEBUG_Printf(DBG_CHN_MESG,"%s:", seg);
-		      DEBUG_Printf(DBG_CHN_MESG,"(%s)", short_addr ? "%si" : "%esi");
+			DEBUG_Printf("%s:", seg);
+		      DEBUG_Printf("(%s)", short_addr ? "%si" : "%esi");
 		    }
 		    break;
 
 		case DI:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%es:(%s)", short_addr ? "%di" : "%edi");
+		      DEBUG_Printf("%%es:(%s)", short_addr ? "%di" : "%edi");
 		    }
 		    break;
 
 		case CR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%cr%d", f_reg(regmodrm));
+		      DEBUG_Printf("%%cr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case DR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%dr%d", f_reg(regmodrm));
+		      DEBUG_Printf("%%dr%d", f_reg(regmodrm));
 		    }
 		    break;
 
 		case TR:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"%%tr%d", f_reg(regmodrm));
+		      DEBUG_Printf("%%tr%d", f_reg(regmodrm));
 		    }
 		    break;
 
@@ -1690,7 +1677,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, FALSE);/* unsigned */
 		    if( db_display )
 		      {
-			DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
+			DEBUG_Printf("$0x%x", imm);
 		      }
 		    break;
 
@@ -1699,7 +1686,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, len, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$%d", imm);
+		      DEBUG_Printf("$%d", imm);
 		    }
 		    break;
 
@@ -1707,7 +1694,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
+		      DEBUG_Printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1715,7 +1702,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 1, TRUE); /* signed */
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$%d", imm);
+		      DEBUG_Printf("$%d", imm);
 		    }
 		    break;
 
@@ -1723,7 +1710,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 2, FALSE); /* unsigned */
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
+		      DEBUG_Printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1731,7 +1718,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		    get_value_inc(imm, addr, 4, FALSE);
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$0x%x", imm);
+		      DEBUG_Printf("$0x%x", imm);
 		    }
 		    break;
 
@@ -1748,7 +1735,7 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		      }
 
 		    if (seg)
-			DEBUG_Printf(DBG_CHN_MESG,"%s:0x%x",seg, displ);
+			DEBUG_Printf("%s:0x%x",seg, displ);
 		    else
 			db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
@@ -1790,14 +1777,14 @@ void DEBUG_Disasm( DBG_ADDR *addr, int display )
 		case o1:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$1");
+		      DEBUG_Printf("$1");
 		    }
 		    break;
 
 		case o3:
 		  if( db_display )
 		    {
-		      DEBUG_Printf(DBG_CHN_MESG,"$3");
+		      DEBUG_Printf("$3");
 		    }
 		    break;
 

@@ -26,6 +26,10 @@
 #include <limits.h>
 #include <sys/types.h>
 #include "debugger.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+WINE_DECLARE_DEBUG_CHANNEL(winedbg_sym);
 
 #define NR_NAME_HASH 16384
 #ifndef PATH_MAX
@@ -148,8 +152,8 @@ DEBUG_ResortSymbols(void)
 	    if( (nh->flags & SYM_INVALID) == 0 )
 	       nsym++;
 	    else
-	       DEBUG_Printf( DBG_CHN_MESG, "Symbol %s (%04lx:%08lx) is invalid\n", 
-                             nh->name, nh->value.addr.seg, nh->value.addr.off );
+	       DEBUG_Printf("Symbol %s (%04lx:%08lx) is invalid\n", 
+                            nh->name, nh->value.addr.seg, nh->value.addr.off );
           }
     }
 
@@ -219,10 +223,9 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
                  */
                 if (nh->value.addr.seg == 0 && nh->value.addr.off == 0 && c != 0)
                 {
-#if 0
-                    DEBUG_Printf(DBG_CHN_MESG, "Changing address for symbol %s (%04lx:%08lx => %04lx:%08lx)\n",
-                                 name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
-#endif
+                    WINE_TRACE_(winedbg_sym)(
+                        "Changing address for symbol %s (%04lx:%08lx => %04lx:%08lx)\n",
+                        name, nh->value.addr.seg, nh->value.addr.off, value->addr.seg, value->addr.off);
                     nh->value.addr = value->addr;
                 }
                 if (nh->value.type == NULL && value->type != NULL)
@@ -244,10 +247,9 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value,
         }
     }
 
-#if 0
-    DEBUG_Printf(DBG_CHN_TRACE, "adding %s symbol (%s) from file '%s' at %04lx:%08lx\n",
-		 (flags & SYM_INVALID) ? "invalid" : "  valid", name, source, value->addr.seg, value->addr.off);
-#endif
+    WINE_TRACE_(winedbg_sym)(
+        "adding %s symbol (%s) from file '%s' at %04lx:%08lx\n",
+        (flags & SYM_INVALID) ? "invalid" : "  valid", name, source, value->addr.seg, value->addr.off);
 
     /*
      * First see if we already have an entry for this symbol.  If so
@@ -383,7 +385,7 @@ enum get_sym_val DEBUG_GetSymbolValue( const char * name,
                                        const int lineno,
                                        DBG_VALUE *rtn, int bp_flag )
 {
-#define NUMDBGV 10
+#define NUMDBGV 100
    /* FIXME: NUMDBGV should be made variable */
    DBG_VALUE 	value[NUMDBGV];
    DBG_VALUE	vtmp;
@@ -400,7 +402,7 @@ enum get_sym_val DEBUG_GetSymbolValue( const char * name,
           strcpy(buffer + 1, name);
           num = DEBUG_GSV_Helper(buffer, lineno, value, NUMDBGV, bp_flag);
       }
-      else DEBUG_Printf(DBG_CHN_WARN, "Way too long symbol (%s)\n", name);
+      else WINE_WARN("Way too long symbol (%s)\n", name);
    }
 
    /* now get the local symbols if any */
@@ -419,24 +421,24 @@ enum get_sym_val DEBUG_GetSymbolValue( const char * name,
       char	buffer[256];
 
       if (num == NUMDBGV+1) {
-	 DEBUG_Printf(DBG_CHN_MESG, "Too many addresses for symbol '%s', limiting the first %d\n", name, NUMDBGV);
+	 DEBUG_Printf("Too many addresses for symbol '%s', limiting the first %d\n", name, NUMDBGV);
 	 num = NUMDBGV;
       }
-      DEBUG_Printf(DBG_CHN_MESG, "Many symbols with name '%s', choose the one you want (<cr> to abort):\n", name);
+      DEBUG_Printf("Many symbols with name '%s', choose the one you want (<cr> to abort):\n", name);
       for (i = 0; i < num; i++) {
-	 DEBUG_Printf(DBG_CHN_MESG, "[%d]: ", i + 1);
+	 DEBUG_Printf("[%d]: ", i + 1);
          if (i == local) {
              struct name_hash*func;
              unsigned int     ebp;
              unsigned int     eip;
 
              if (DEBUG_GetCurrentFrame(&func, &eip, &ebp))
-                 DEBUG_Printf(DBG_CHN_MESG, "local variable of %s in %s\n", func->name, func->sourcefile);
+                 DEBUG_Printf("local variable of %s in %s\n", func->name, func->sourcefile);
              else
-                 DEBUG_Printf(DBG_CHN_MESG, "local variable\n");
+                 DEBUG_Printf("local variable\n");
          } else {
              DEBUG_PrintAddress( &value[i].addr, DEBUG_GetSelectorType(value[i].addr.seg), TRUE);
-             DEBUG_Printf(DBG_CHN_MESG, "\n");
+             DEBUG_Printf("\n");
          }
       }
       do {
@@ -446,7 +448,7 @@ enum get_sym_val DEBUG_GetSymbolValue( const char * name,
               if (buffer[0] == '\0') return gsv_aborted;
 	      i = atoi(buffer);
 	      if (i < 1 || i > num)
-		  DEBUG_Printf(DBG_CHN_MESG, "Invalid choice %d\n", i);
+		  DEBUG_Printf("Invalid choice %d\n", i);
 	  }
       } while (i < 1 || i > num);
 
@@ -612,14 +614,13 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 		      }
 		  }
 		nearest = addr_sorttab[mid];
-#if 0
-		DEBUG_Printf(DBG_CHN_MESG, "Found %x:%x when looking for %x:%x %x %s\n",
-			     addr_sorttab[mid ]->value.addr.seg,
-			     addr_sorttab[mid ]->value.addr.off,
-			     addr->seg, addr->off,
-			     addr_sorttab[mid ]->linetab,
-			     addr_sorttab[mid ]->name);
-#endif
+		WINE_TRACE_(winedbg_sym)(
+                    "Found %lx:%lx when looking for %lx:%lx %p %s\n",
+                    addr_sorttab[mid ]->value.addr.seg,
+                    addr_sorttab[mid ]->value.addr.off,
+                    addr->seg, addr->off,
+                    addr_sorttab[mid ]->linetab,
+                    addr_sorttab[mid ]->name);
 		break;
 	      }
 	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
@@ -788,11 +789,11 @@ void DEBUG_ReadSymbolTable( const char* filename, unsigned long offset )
 
     if (!(symbolfile = fopen(filename, "r")))
     {
-        DEBUG_Printf( DBG_CHN_WARN, "Unable to open symbol table %s\n", filename );
+        WINE_WARN("Unable to open symbol table %s\n", filename);
         return;
     }
 
-    DEBUG_Printf( DBG_CHN_MESG, "Reading symbols from file %s\n", filename );
+    DEBUG_Printf("Reading symbols from file %s\n", filename);
 
     value.type = NULL;
     value.addr.seg = 0;
@@ -821,7 +822,7 @@ void DEBUG_ReadSymbolTable( const char* filename, unsigned long offset )
         if (sscanf(buffer, "%lx %c %s", &value.addr.off, &type, name) == 3)
         {
            if (value.addr.off + offset < value.addr.off)
-              DEBUG_Printf( DBG_CHN_WARN, "Address wrap around\n");
+              WINE_WARN("Address wrap around\n");
            value.addr.off += offset;
 	   DEBUG_AddSymbol( name, &value, NULL, SYM_WINE );
         }
@@ -900,7 +901,7 @@ DEBUG_DumpHashInfo(void)
 	{
 	  depth++;
 	}
-      DEBUG_Printf(DBG_CHN_MESG, "Bucket %d: %d\n", i, depth);
+      DEBUG_Printf("Bucket %d: %d\n", i, depth);
     }
 }
 
@@ -975,14 +976,13 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 		      }
 		  }
 		nearest = addr_sorttab[mid];
-#if 0
-		DEBUG_Printf(DBG_CHN_MESG, "Found %x:%x when looking for %x:%x %x %s\n",
-			     addr_sorttab[mid ]->value.addr.seg,
-			     addr_sorttab[mid ]->value.addr.off,
-			     addr->seg, addr->off,
-			     addr_sorttab[mid ]->linetab,
-			     addr_sorttab[mid ]->name);
-#endif
+		WINE_TRACE_(winedbg_sym)(
+                    "Found %lx:%lx when looking for %lx:%lx %p %s\n",
+                    addr_sorttab[mid ]->value.addr.seg,
+                    addr_sorttab[mid ]->value.addr.off,
+                    addr->seg, addr->off,
+                    addr_sorttab[mid ]->linetab,
+                    addr_sorttab[mid ]->name);
 		break;
 	      }
 	    if(    (addr_sorttab[mid]->value.addr.seg < addr->seg)
@@ -1118,11 +1118,11 @@ DEBUG_GetFuncInfo( struct list_id * ret, const char * filename,
       {
 	if( filename != NULL )
 	  {
-	    DEBUG_Printf(DBG_CHN_MESG, "No such function %s in %s\n", name, filename);
+	    DEBUG_Printf("No such function %s in %s\n", name, filename);
 	  }
 	else
 	  {
-	    DEBUG_Printf(DBG_CHN_MESG, "No such function %s\n", name);
+	    DEBUG_Printf("No such function %s\n", name);
 	  }
 	ret->sourcefile = NULL;
 	ret->line = -1;
@@ -1228,7 +1228,7 @@ DEBUG_InfoLocals(void)
       return FALSE;
     }
 
-  DEBUG_Printf(DBG_CHN_MESG, "%s:\n", curr_func->name);
+  DEBUG_Printf("%s:\n", curr_func->name);
 
   for(i=0; i < curr_func->n_locals; i++ )
     {
@@ -1256,7 +1256,7 @@ DEBUG_InfoLocals(void)
 	{
 	  ptr = (unsigned int *)(((DWORD)&DEBUG_context)
 				 + reg_ofs[curr_func->local_vars[i].regno - 1]);
-	  DEBUG_Printf(DBG_CHN_MESG, " %s (optimized into register $%s) == 0x%8.8x\n",
+	  DEBUG_Printf(" %s (optimized into register $%s) == 0x%8.8x\n",
 		       curr_func->local_vars[i].name,
 		       reg_name[curr_func->local_vars[i].regno - 1],
 		       *ptr);
@@ -1265,7 +1265,7 @@ DEBUG_InfoLocals(void)
 	{
 	  DEBUG_READ_MEM_VERBOSE((void*)(ebp + curr_func->local_vars[i].offset),
 				 &val, sizeof(val));
-	  DEBUG_Printf(DBG_CHN_MESG, " %s == 0x%8.8x\n",
+	  DEBUG_Printf(" %s == 0x%8.8x\n",
 		       curr_func->local_vars[i].name, val);
 	}
     }
@@ -1366,18 +1366,18 @@ void DEBUG_InfoSymbols(const char* str)
                                         NULL, 0, NULL );
 
         if (mode != MODE_32) 
-            DEBUG_Printf( DBG_CHN_MESG, "%04lx:%04lx :", 
-                          array[i]->value.addr.seg & 0xFFFF,
-                          array[i]->value.addr.off );
+            DEBUG_Printf("%04lx:%04lx :", 
+                         array[i]->value.addr.seg & 0xFFFF,
+                         array[i]->value.addr.off);
         else
-            DEBUG_Printf( DBG_CHN_MESG, "%08lx  :", array[i]->value.addr.off );
+            DEBUG_Printf("%08lx  :", array[i]->value.addr.off);
         if (array[i]->value.type)
         {
-            DEBUG_Printf( DBG_CHN_MESG, " (");
+            DEBUG_Printf(" (");
             DEBUG_PrintTypeCast(array[i]->value.type);
-            DEBUG_Printf( DBG_CHN_MESG, ")");
+            DEBUG_Printf(")");
         }
-        if (name) DEBUG_Printf( DBG_CHN_MESG, " %s\n", name );
+        if (name) DEBUG_Printf(" %s\n", name);
     }
     HeapFree(GetProcessHeap(), 0, array);
 }
@@ -1386,7 +1386,7 @@ void DEBUG_InfoSymbols(const char* str)
 
 void DEBUG_InfoSymbols(const char* str)
 {
-    DEBUG_Printf( DBG_CHN_MESG, "FIXME: needs regex support\n" );
+    WINE_FIXME("Requires regex support\n");
 }
 
 #endif /* HAVE_REGEX_H */

@@ -88,40 +88,40 @@ static char *DEBUG_Flags( DWORD flag, char *buf )
  */
 void DEBUG_InfoRegisters(const CONTEXT* ctx)
 {
-    DEBUG_Printf(DBG_CHN_MESG,"Register dump:\n");
+    DEBUG_Printf("Register dump:\n");
 
 #ifdef __i386__
     /* First get the segment registers out of the way */
-    DEBUG_Printf( DBG_CHN_MESG," CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
-		  (WORD)ctx->SegCs, (WORD)ctx->SegSs,
-		  (WORD)ctx->SegDs, (WORD)ctx->SegEs,
-		  (WORD)ctx->SegFs, (WORD)ctx->SegGs );
+    DEBUG_Printf(" CS:%04x SS:%04x DS:%04x ES:%04x FS:%04x GS:%04x",
+                 (WORD)ctx->SegCs, (WORD)ctx->SegSs,
+                 (WORD)ctx->SegDs, (WORD)ctx->SegEs,
+                 (WORD)ctx->SegFs, (WORD)ctx->SegGs);
     if (DEBUG_CurrThread->dbg_mode != MODE_32)
     {
         char flag[33];
 
-        DEBUG_Printf( DBG_CHN_MESG,"\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
-		      LOWORD(ctx->Eip), LOWORD(ctx->Esp),
-		      LOWORD(ctx->Ebp), LOWORD(ctx->EFlags),
-		      DEBUG_Flags(LOWORD(ctx->EFlags), flag));
-	DEBUG_Printf( DBG_CHN_MESG," AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
-		      LOWORD(ctx->Eax), LOWORD(ctx->Ebx),
-		      LOWORD(ctx->Ecx), LOWORD(ctx->Edx),
-		      LOWORD(ctx->Esi), LOWORD(ctx->Edi) );
+        DEBUG_Printf("\n IP:%04x SP:%04x BP:%04x FLAGS:%04x(%s)\n",
+                     LOWORD(ctx->Eip), LOWORD(ctx->Esp),
+                     LOWORD(ctx->Ebp), LOWORD(ctx->EFlags),
+                     DEBUG_Flags(LOWORD(ctx->EFlags), flag));
+	DEBUG_Printf(" AX:%04x BX:%04x CX:%04x DX:%04x SI:%04x DI:%04x\n",
+                     LOWORD(ctx->Eax), LOWORD(ctx->Ebx),
+                     LOWORD(ctx->Ecx), LOWORD(ctx->Edx),
+                     LOWORD(ctx->Esi), LOWORD(ctx->Edi));
     }
     else  /* 32-bit mode */
     {
         char flag[33];
 
-        DEBUG_Printf( DBG_CHN_MESG, "\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
-		      ctx->Eip, ctx->Esp,
-		      ctx->Ebp, ctx->EFlags,
-		      DEBUG_Flags(ctx->EFlags, flag));
-	DEBUG_Printf( DBG_CHN_MESG, " EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
-		      ctx->Eax, ctx->Ebx,
-		      ctx->Ecx, ctx->Edx );
-	DEBUG_Printf( DBG_CHN_MESG, " ESI:%08lx EDI:%08lx\n",
-		      ctx->Esi, ctx->Edi );
+        DEBUG_Printf("\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
+                     ctx->Eip, ctx->Esp,
+                     ctx->Ebp, ctx->EFlags,
+                     DEBUG_Flags(ctx->EFlags, flag));
+	DEBUG_Printf(" EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
+                     ctx->Eax, ctx->Ebx,
+                     ctx->Ecx, ctx->Edx );
+	DEBUG_Printf(" ESI:%08lx EDI:%08lx\n",
+                     ctx->Esi, ctx->Edi );
     }
 #endif
 }
@@ -145,8 +145,8 @@ BOOL DEBUG_ValidateRegisters(void)
 /* Check that a selector is a valid ring-3 LDT selector, or a NULL selector */
 #define CHECK_SEG(seg,name) \
     if (((seg) & ~3) && ((((seg) & 7) != 7) || !DEBUG_IsSelector(seg))) { \
-        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for %s register: %04x\n", \
-                      (name), (WORD)(seg) ); \
+        DEBUG_Printf("*** Invalid value for %s register: %04x\n", \
+                     (name), (WORD)(seg) ); \
         return FALSE; \
     }
 
@@ -164,14 +164,14 @@ BOOL DEBUG_ValidateRegisters(void)
 
     if (!(DEBUG_context.SegCs & ~3))
     {
-        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for CS register: %04x\n",
-		      (WORD)DEBUG_context.SegCs );
+        DEBUG_Printf("*** Invalid value for CS register: %04x\n",
+                     (WORD)DEBUG_context.SegCs );
         return FALSE;
     }
     if (!(DEBUG_context.SegSs & ~3))
     {
-        DEBUG_Printf( DBG_CHN_MESG, "*** Invalid value for SS register: %04x\n",
-		      (WORD)DEBUG_context.SegSs );
+        DEBUG_Printf("*** Invalid value for SS register: %04x\n",
+                     (WORD)DEBUG_context.SegSs );
         return FALSE;
     }
 

@@ -665,7 +665,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         DEBUG_CheckDelayedBP();
         if (DBG_IVAR(BreakOnDllLoad))
         {
-            DEBUG_Printf(DBG_CHN_MESG, "Stopping on DLL %s loading at %08lx\n",
+            DEBUG_Printf("Stopping on DLL %s loading at %08lx\n",
                          buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll);
             DEBUG_Parser();
         }

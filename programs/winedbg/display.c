@@ -85,7 +85,7 @@ int DEBUG_InfoDisplay(void)
 			continue;
 
 		if (displaypoints[i].function_name)
-			DEBUG_Printf(DBG_CHN_MESG, "%d in %s%s : ", i + 1,
+			DEBUG_Printf("%d in %s%s : ", i + 1,
 				DEBUG_GetSymbolName(displaypoints[i].function_name),
 				(displaypoints[i].enabled ?
 					(displaypoints[i].function_name != DEBUG_GetCurrentFrameFunctionName() ?
@@ -93,10 +93,10 @@ int DEBUG_InfoDisplay(void)
 					: " (disabled)")
 				);
 		else
-			DEBUG_Printf(DBG_CHN_MESG, "%d%s : ", i + 1,
-				(displaypoints[i].enabled ? "" : " (disabled)"));
+			DEBUG_Printf("%d%s : ", i + 1,
+                                     (displaypoints[i].enabled ? "" : " (disabled)"));
 		DEBUG_DisplayExpr(displaypoints[i].exp);
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+		DEBUG_Printf("\n");
 	}
 
 	return TRUE;
@@ -109,19 +109,19 @@ void DEBUG_PrintOneDisplay(int i)
 	if (displaypoints[i].enabled) {
 		value = DEBUG_EvalExpr(displaypoints[i].exp);
 		if (value.type == NULL) {
-			DEBUG_Printf(DBG_CHN_MESG, "Unable to evaluate expression ");
+			DEBUG_Printf("Unable to evaluate expression ");
 			DEBUG_DisplayExpr(displaypoints[i].exp);
-			DEBUG_Printf(DBG_CHN_MESG, "\nDisabling display %d ...\n", i + 1);
+			DEBUG_Printf("\nDisabling display %d ...\n", i + 1);
 			displaypoints[i].enabled = FALSE;
 			return;
 		}
 	}
 
-	DEBUG_Printf(DBG_CHN_MESG, "%d  : ", i + 1);
+	DEBUG_Printf("%d  : ", i + 1);
 	DEBUG_DisplayExpr(displaypoints[i].exp);
-	DEBUG_Printf(DBG_CHN_MESG, " = ");
+	DEBUG_Printf(" = ");
 	if (!displaypoints[i].enabled)
-		DEBUG_Printf(DBG_CHN_MESG, "(disabled)\n");
+		DEBUG_Printf("(disabled)\n");
 	else
 	if (displaypoints[i].format == 'i')
 		DEBUG_ExamineMemory(&value, displaypoints[i].count, displaypoints[i].format);
@@ -152,7 +152,7 @@ int DEBUG_DelDisplay(int displaynum)
 
 	if (displaynum > ndisplays || displaynum == 0 || displaynum < -1
 	    || displaypoints[displaynum - 1].exp == NULL) {
-		DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
+		DEBUG_Printf("Invalid display number\n");
 		return TRUE;
 	}
 
@@ -185,7 +185,7 @@ int DEBUG_EnableDisplay(int displaynum, int enable)
 {
 	--displaynum;
 	if (displaynum >= ndisplays || displaynum < 0 || displaypoints[displaynum].exp == NULL) {
-		DEBUG_Printf(DBG_CHN_MESG, "Invalid display number\n");
+		DEBUG_Printf("Invalid display number\n");
 		return TRUE;
 	}
 

@@ -62,6 +62,7 @@ STRING     \"[^\n"]+\"
 %s WALK_CMD
 %s SHOW_CMD
 %s MODE_CMD
+%s MAINT_CMD
 %s NOCMD
 
 %x ASTRING_EXPECTED
@@ -145,6 +146,7 @@ STRING     \"[^\n"]+\"
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
 <INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }
+<INITIAL>maintenance|maint              { BEGIN(MAINT_CMD); return tMAINTENANCE; }
 <NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
@@ -156,11 +158,12 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
-<INFO_CMD>symbol|sym                    { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }
+<INFO_CMD>symbol|symbo|symb|sym         { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }
 <WALK_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
 <MODE_CMD>vm86                          { return tVM86; }
+<MAINT_CMD>type                         { return tTYPE; }
 
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir {
 			                  BEGIN(PATH_EXPECTED); return tDIR; }
@@ -187,7 +190,7 @@ enum					{ return tENUM; }
 <NOPROCESS>.                            { BEGIN(ASTRING_EXPECTED); yyless(0); return tNOPROCESS;}
 <*>.                                    { if (syntax_error == 0) {
                                              syntax_error++;
-					     DEBUG_Printf(DBG_CHN_MESG, "Syntax Error (%s)\n", yytext); }
+					     DEBUG_Printf("Syntax Error (%s)\n", yytext); }
 		                        }
 %%
 
@@ -241,7 +244,10 @@ static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* allo
         /* store stuff at the end of last_line */
         if (len + nread + 1 > *alloc)
         {
-            *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc += nread + 1);
+            if (*line)
+                *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc += nread + 1);
+            else
+                *line = HeapAlloc(GetProcessHeap(), 0, *alloc += nread + 1);
         }
         strcpy(*line + len, buf_line);
         len += nread;

@@ -35,7 +35,7 @@
 
 static	void	DEBUG_Die(const char* msg)
 {
-   DEBUG_Printf(DBG_CHN_MESG, msg);
+   DEBUG_Printf(msg);
    exit(1);
 }
 
@@ -139,9 +139,9 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 
 void	DEBUG_InvalAddr( const DBG_ADDR* addr )
 {
-   DEBUG_Printf(DBG_CHN_MESG,"*** Invalid address ");
+   DEBUG_Printf("*** Invalid address ");
    DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
-   DEBUG_Printf(DBG_CHN_MESG,"\n");
+   DEBUG_Printf("\n");
    if (DBG_IVAR(ExtDbgOnInvalidAddress)) DEBUG_ExternalDebugger();
 }
 
@@ -255,7 +255,7 @@ BOOL DEBUG_GrabAddress( DBG_VALUE* value, BOOL fromCode )
 	        value->addr.off = DEBUG_GetExprValue(value, NULL);
 	}
     } else if (!value->addr.seg && !value->addr.off) {
-        DEBUG_Printf(DBG_CHN_MESG,"Invalid expression\n");
+        DEBUG_Printf("Invalid expression\n");
 	return FALSE;
     }
     return TRUE;
@@ -277,7 +277,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
     if (format != 'i' && count > 1)
     {
         DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
-        DEBUG_Printf(DBG_CHN_MESG,": ");
+        DEBUG_Printf(": ");
     }
 
     pnt = (void*)DEBUG_ToLinear( &value.addr );
@@ -286,13 +286,13 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
     {
          case 'u':
                 if (count == 1) count = 256;
-                DEBUG_nchar += DEBUG_PrintStringW(DBG_CHN_MESG, &value.addr, count);
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+                DEBUG_nchar += DEBUG_PrintStringW(&value.addr, count);
+		DEBUG_Printf("\n");
 		return;
         case 's':
 		if (count == 1) count = 256;
-                DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &value.addr, count);
-		DEBUG_Printf(DBG_CHN_MESG, "\n");
+                DEBUG_nchar += DEBUG_PrintStringA(&value.addr, count);
+		DEBUG_Printf("\n");
 		return;
 	case 'i':
 		while (count-- && DEBUG_DisassembleInstruction( &value.addr ));
@@ -302,7 +302,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
                 {
                     GUID guid;
                     if (!DEBUG_READ_MEM_VERBOSE(pnt, &guid, sizeof(guid))) break;
-                    DEBUG_Printf(DBG_CHN_MESG,"{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                    DEBUG_Printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
                                  guid.Data1, guid.Data2, guid.Data3,
                                  guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
                                  guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
@@ -311,7 +311,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
                     if (count)
                     {
                         DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
-                        DEBUG_Printf(DBG_CHN_MESG,": ");
+                        DEBUG_Printf(": ");
                     }
                 }
                 return;
@@ -320,15 +320,15 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 	        _t _v; \
 		for(i=0; i<count; i++) { \
                     if (!DEBUG_READ_MEM_VERBOSE(pnt, &_v, sizeof(_t))) break; \
-                    DEBUG_Printf(DBG_CHN_MESG,_f,(_vv)); \
+                    DEBUG_Printf(_f,(_vv)); \
                     pnt += sizeof(_t); value.addr.off += sizeof(_t); \
                     if ((i % (_l)) == (_l)-1) { \
-                        DEBUG_Printf(DBG_CHN_MESG,"\n"); \
+                        DEBUG_Printf("\n"); \
                         DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );\
-                        DEBUG_Printf(DBG_CHN_MESG,": ");\
+                        DEBUG_Printf(": ");\
                     } \
 		} \
-		DEBUG_Printf(DBG_CHN_MESG,"\n"); \
+		DEBUG_Printf("\n"); \
         } \
 	return
 #define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v)
@@ -350,7 +350,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
  * address space. The string stops when either len chars (if <> -1)
  * have been printed, or the '\0' char is printed
  */
-int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
+int  DEBUG_PrintStringA(const DBG_ADDR* address, int len)
 {
     char*       lin = (void*)DEBUG_ToLinear(address);
     char        ch[CHARBUFSIZE+1];
@@ -364,7 +364,7 @@ int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
         if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write)) break;
         ch[to_write] = '\0';  /* protect from displaying junk */
         to_write = lstrlenA(ch);
-        DEBUG_OutputA(chnl, ch, to_write);
+        DEBUG_OutputA(ch, to_write);
         lin += to_write;
         written += to_write;
         if (to_write < CHARBUFSIZE) break;
@@ -372,7 +372,7 @@ int  DEBUG_PrintStringA(int chnl, const DBG_ADDR* address, int len)
     return written; /* number of actually written chars */
 }
 
-int  DEBUG_PrintStringW(int chnl, const DBG_ADDR* address, int len)
+int  DEBUG_PrintStringW(const DBG_ADDR* address, int len)
 {
     char*       lin = (void*)DEBUG_ToLinear(address);
     WCHAR       ch[CHARBUFSIZE+1];
@@ -386,7 +386,7 @@ int  DEBUG_PrintStringW(int chnl, const DBG_ADDR* address, int len)
         if (!DEBUG_READ_MEM_VERBOSE(lin, ch, to_write * sizeof(WCHAR))) break;
         ch[to_write] = 0;  /* protect from displaying junk */
         to_write = lstrlenW(ch);
-        DEBUG_OutputW(chnl, ch, to_write);
+        DEBUG_OutputW(ch, to_write);
         lin += to_write;
         written += to_write;
         if (to_write < CHARBUFSIZE) break;

@@ -26,6 +26,9 @@
 #include "debugger.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 /***********************************************************************
  * Creates and links a new module to the current process
@@ -445,25 +448,25 @@ int DEBUG_LoadEntryPoints(const char* pfx)
 	    (module.flags & NE_FFLAGS_WIN32) /* NE module */)
 	    continue;
 	if (!first) {
-	    if (pfx) DEBUG_Printf(DBG_CHN_MESG, pfx);
-	    DEBUG_Printf(DBG_CHN_MESG, "   ");
+	    if (pfx) DEBUG_Printf(pfx);
+	    DEBUG_Printf("   ");
 	    rowcount = 3 + (pfx ? strlen(pfx) : 0);
 	    first = 1;
 	}
 
 	len = strlen(entry.szModule);
 	if ((rowcount + len) > 76) {
-	    DEBUG_Printf(DBG_CHN_MESG, "\n   ");
+	    DEBUG_Printf("\n   ");
 	    rowcount = 3;
 	}
-	DEBUG_Printf(DBG_CHN_MESG, " %s", entry.szModule);
+	DEBUG_Printf(" %s", entry.szModule);
 	rowcount += len + 1;
 
 	DEBUG_LoadModule16(entry.hModule, &module, moduleAddr, entry.szModule);
     } while (ModuleNext16(&entry));
 #endif
 
-    if (first) DEBUG_Printf(DBG_CHN_MESG, "\n");
+    if (first) DEBUG_Printf("\n");
     return first;
 }
 
@@ -485,11 +488,11 @@ void	DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx, const char* filename
 	fmt = "Can't find file for %s '%s' (%p)\n";
 	break;
     default:
-	DEBUG_Printf(DBG_CHN_ERR, "Oooocch (%d)\n", dil);
+	WINE_ERR("Oooocch (%d)\n", dil);
 	return;
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, fmt, pfx, filename, load_addr);
+    DEBUG_Printf(fmt, pfx, filename, load_addr);
 }
 
 static const char*      DEBUG_GetModuleType(enum DbgModuleType type)
@@ -540,8 +543,8 @@ static inline BOOL DEBUG_IsContainer(const DBG_MODULE* wmod_cntnr,
 
 static void	DEBUG_InfoShareModule(const DBG_MODULE* module, int ident)
 {
-    if (ident) DEBUG_Printf(DBG_CHN_MESG, "  \\-");
-    DEBUG_Printf(DBG_CHN_MESG, "%s\t0x%08lx-%08lx\t%s\n",
+    if (ident) DEBUG_Printf("  \\-");
+    DEBUG_Printf("%s\t0x%08lx-%08lx\t%s\n",
 		 DEBUG_GetModuleType(module->type),
 		 (DWORD)module->load_addr, (DWORD)module->load_addr + module->size,
 		 module->module_name);
@@ -560,7 +563,7 @@ void DEBUG_InfoShare(void)
     ref = DBG_alloc(sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
     if (!ref) return;
 
-    DEBUG_Printf(DBG_CHN_MESG, "Module\tAddress\t\t\tName\t%d modules\n",
+    DEBUG_Printf("Module\tAddress\t\t\tName\t%d modules\n",
 		 DEBUG_CurrProcess->num_modules);
 
     memcpy(ref, DEBUG_CurrProcess->modules,
@@ -588,7 +591,7 @@ void DEBUG_InfoShare(void)
 		DEBUG_InfoShareModule(ref[i], 0);
 	    break;
 	default:
-	    DEBUG_Printf(DBG_CHN_ERR, "Unknown type (%d)\n", ref[i]->type);
+	    WINE_ERR("Unknown type (%d)\n", ref[i]->type);
 	}
     }
     DBG_free(ref);
@@ -604,11 +607,11 @@ void DEBUG_DumpModule(DWORD mod)
 
     if (!(wmod = DEBUG_FindModuleByHandle((HANDLE)mod, DMT_UNKNOWN)) &&
 	!(wmod = DEBUG_FindModuleByAddr((void*)mod, DMT_UNKNOWN))) {
-	DEBUG_Printf(DBG_CHN_MESG, "'0x%08lx' is not a valid module handle or address\n", mod);
+	DEBUG_Printf("'0x%08lx' is not a valid module handle or address\n", mod);
 	return;
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Module '%s' (handle=%p) 0x%08lx-0x%08lx (%s, debug info %s)\n",
+    DEBUG_Printf("Module '%s' (handle=%p) 0x%08lx-0x%08lx (%s, debug info %s)\n",
 		 wmod->module_name, wmod->handle, (DWORD)wmod->load_addr,
 		 (DWORD)wmod->load_addr + wmod->size,
 		 DEBUG_GetModuleType(wmod->type), DEBUG_GetDbgInfo(wmod->dil));
@@ -626,12 +629,11 @@ void DEBUG_WalkModules(void)
 
     if (!DEBUG_CurrProcess)
     {
-        DEBUG_Printf(DBG_CHN_MESG, 
-                     "Cannot walk classes while no process is loaded\n");
+        DEBUG_Printf("Cannot walk classes while no process is loaded\n");
         return;
     }
 
-    DEBUG_Printf(DBG_CHN_MESG, "Address\t\t\tModule\tName\n");
+    DEBUG_Printf("Address\t\t\tModule\tName\n");
 
     amod = DBG_alloc(sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);
     if (!amod) return;
@@ -643,7 +645,7 @@ void DEBUG_WalkModules(void)
     for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	if (amod[i]->type == DMT_ELF)	continue;
 
-	DEBUG_Printf(DBG_CHN_MESG, "0x%08lx-%08lx\t(%s)\t%s\n",
+	DEBUG_Printf("0x%08lx-%08lx\t(%s)\t%s\n",
 		     (DWORD)amod[i]->load_addr,
 		     (DWORD)amod[i]->load_addr + amod[i]->size,
 		     DEBUG_GetModuleType(amod[i]->type), amod[i]->module_name);

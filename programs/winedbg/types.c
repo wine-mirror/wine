@@ -34,6 +34,9 @@
 #endif
 
 #include "debugger.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #define NR_TYPE_HASH 521
 
@@ -368,8 +371,7 @@ DEBUG_GetExprValue(const DBG_VALUE* _value, const char** format)
    case DT_BASIC:
 
       if (value.type->un.basic.basic_size > sizeof(rtn)) {
-	 DEBUG_Printf(DBG_CHN_ERR, "Size too large (%d)\n",
-		      value.type->un.basic.basic_size);
+         WINE_ERR("Size too large (%d)\n", value.type->un.basic.basic_size);
 	 return 0;
       }
       /* FIXME: following code implies i386 byte ordering */
@@ -576,11 +578,11 @@ int
 DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2)
 {
   if (!(dt->type == dt2->type && ((dt->type == DT_STRUCT) || (dt->type == DT_ENUM)))) {
-    DEBUG_Printf(DBG_CHN_MESG, "Error: Copyfield list mismatch (%d<>%d): ", dt->type, dt2->type);
+    DEBUG_Printf("Error: Copyfield list mismatch (%d<>%d): ", dt->type, dt2->type);
     DEBUG_PrintTypeCast(dt);
-    DEBUG_Printf(DBG_CHN_MESG, " ");
+    DEBUG_Printf(" ");
     DEBUG_PrintTypeCast(dt2);
-    DEBUG_Printf(DBG_CHN_MESG, "\n");
+    DEBUG_Printf("\n");
     return FALSE;
   }
 
@@ -750,7 +752,7 @@ int DEBUG_GetObjectSize(struct datatype * dt)
     case DT_FUNC:
       assert(FALSE);
     default:
-      DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
+      WINE_ERR("Unknown type???\n");
       break;
     }
   return 0;
@@ -814,7 +816,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 
   if (count != 1)
     {
-      DEBUG_Printf( DBG_CHN_MESG, "Count other than 1 is meaningless in 'print' command\n" );
+      DEBUG_Printf("Count other than 1 is meaningless in 'print' command\n");
       return;
     }
 
@@ -822,8 +824,8 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
   {
       /* No type, just print the addr value */
       if (value->addr.seg && (value->addr.seg != 0xffffffff))
-          DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%04lx: ", value->addr.seg );
-      DEBUG_nchar += DEBUG_Printf( DBG_CHN_MESG, "0x%08lx", value->addr.off );
+          DEBUG_nchar += DEBUG_Printf("0x%04lx: ", value->addr.seg);
+      DEBUG_nchar += DEBUG_Printf("0x%08lx", value->addr.off);
       goto leave;
   }
 
@@ -834,13 +836,13 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 
   if( DEBUG_nchar > DEBUG_maxchar )
     {
-      DEBUG_Printf(DBG_CHN_MESG, "...");
+      DEBUG_Printf("...");
       goto leave;
     }
 
   if( format == 'i' || format == 's' || format == 'w' || format == 'b' || format == 'g')
     {
-      DEBUG_Printf( DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format );
+      DEBUG_Printf("Format specifier '%c' is meaningless in 'print' command\n", format);
       format = '\0';
     }
 
@@ -852,24 +854,24 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       DEBUG_PrintBasic(value, 1, format);
       break;
     case DT_STRUCT:
-      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "{");
+      DEBUG_nchar += DEBUG_Printf("{");
       for(m = value->type->un.structure.members; m; m = m->next)
 	{
 	  val1 = *value;
 	  DEBUG_FindStructElement(&val1, m->name, &xval);
-	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "%s=", m->name);
+	  DEBUG_nchar += DEBUG_Printf("%s=", m->name);
 	  DEBUG_Print(&val1, 1, format, level + 1);
 	  if( m->next != NULL )
 	    {
-	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, ", ");
+	      DEBUG_nchar += DEBUG_Printf(", ");
 	    }
 	  if( DEBUG_nchar > DEBUG_maxchar )
 	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "...}");
+	      DEBUG_Printf("...}");
 	      goto leave;
 	    }
 	}
-      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "}");
+      DEBUG_nchar += DEBUG_Printf("}");
       break;
     case DT_ARRAY:
       /*
@@ -888,47 +890,47 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
           clen = (DEBUG_nchar + len < DEBUG_maxchar)
               ? len : (DEBUG_maxchar - DEBUG_nchar);
 
-          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
+          DEBUG_nchar += DEBUG_Printf("\"");
           switch (value->cookie)
           {
           case DV_TARGET:
-              DEBUG_nchar += DEBUG_PrintStringA(DBG_CHN_MESG, &value->addr, clen);
+              DEBUG_nchar += DEBUG_PrintStringA(&value->addr, clen);
               break;
           case DV_HOST:
-              DEBUG_OutputA(DBG_CHN_MESG, pnt, clen);
+              DEBUG_OutputA(pnt, clen);
               break;
           default: assert(0);
           }
-          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, (len > clen) ? "...\"" : "\"");
+          DEBUG_nchar += DEBUG_Printf((len > clen) ? "...\"" : "\"");
           break;
         }
       val1 = *value;
       val1.type = value->type->un.array.basictype;
-      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "{");
+      DEBUG_nchar += DEBUG_Printf("{");
       for( i=value->type->un.array.start; i <= value->type->un.array.end; i++ )
 	{
 	  DEBUG_Print(&val1, 1, format, level + 1);
 	  val1.addr.off += size;
 	  if( i == value->type->un.array.end )
 	    {
-	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "}");
+	      DEBUG_nchar += DEBUG_Printf("}");
 	    }
 	  else
 	    {
-	      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, ", ");
+	      DEBUG_nchar += DEBUG_Printf(", ");
 	    }
 	  if( DEBUG_nchar > DEBUG_maxchar )
 	    {
-	      DEBUG_Printf(DBG_CHN_MESG, "...}");
+	      DEBUG_Printf("...}");
 	      goto leave;
 	    }
 	}
       break;
     case DT_FUNC:
-      DEBUG_Printf(DBG_CHN_MESG, "Function at ???\n");
+      DEBUG_Printf("Function at ???\n");
       break;
     default:
-      DEBUG_Printf(DBG_CHN_MESG, "Unknown type (%d)\n", value->type->type);
+      DEBUG_Printf("Unknown type (%d)\n", value->type->type);
       assert(FALSE);
       break;
     }
@@ -937,7 +939,7 @@ leave:
 
   if( level == 0 )
     {
-      DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\n");
+      DEBUG_nchar += DEBUG_Printf("\n");
     }
 }
 
@@ -945,58 +947,56 @@ static void DEBUG_DumpAType(struct datatype* dt, BOOL deep)
 {
     const char* name = (dt->name) ? dt->name : "--none--";
 
-/* EPP     DEBUG_Printf(DBG_CHN_MESG, "0x%08lx ", (unsigned long)dt); */
     switch (dt->type)
     {
     case DT_BASIC:
-        DEBUG_Printf(DBG_CHN_MESG, "BASIC(%s)", name);
+        DEBUG_Printf("BASIC(%s)", name);
         break;
     case DT_POINTER:
-        DEBUG_Printf(DBG_CHN_MESG, "POINTER(%s)<", name);
+        DEBUG_Printf("POINTER(%s)<", name);
         DEBUG_DumpAType(dt->un.pointer.pointsto, FALSE);
-        DEBUG_Printf(DBG_CHN_MESG, ">");
+        DEBUG_Printf(">");
         break;
     case DT_STRUCT:
-        DEBUG_Printf(DBG_CHN_MESG, "STRUCT(%s) %d {",
+        DEBUG_Printf("STRUCT(%s) %d {",
                      name, dt->un.structure.size);
         if (dt->un.structure.members != NULL)
         {
             struct member * m;
             for (m = dt->un.structure.members; m; m = m->next)
             {
-                DEBUG_Printf(DBG_CHN_MESG, " %s(%d", 
-                             m->name, m->offset / 8);
+                DEBUG_Printf(" %s(%d", m->name, m->offset / 8);
                 if (m->offset % 8 != 0)
-                    DEBUG_Printf(DBG_CHN_MESG, ".%d", m->offset / 8);
-                DEBUG_Printf(DBG_CHN_MESG, "/%d", m->size / 8);
+                    DEBUG_Printf(".%d", m->offset / 8);
+                DEBUG_Printf("/%d", m->size / 8);
                 if (m->size % 8 != 0)
-                    DEBUG_Printf(DBG_CHN_MESG, ".%d", m->size % 8);
-                DEBUG_Printf(DBG_CHN_MESG, ")");
+                    DEBUG_Printf(".%d", m->size % 8);
+                DEBUG_Printf(")");
             }
         }
-        DEBUG_Printf(DBG_CHN_MESG, " }");
+        DEBUG_Printf(" }");
         break;
     case DT_ARRAY:
-        DEBUG_Printf(DBG_CHN_MESG, "ARRAY(%s)[", name);
+        DEBUG_Printf("ARRAY(%s)[", name);
         DEBUG_DumpAType(dt->un.array.basictype, FALSE);
-        DEBUG_Printf(DBG_CHN_MESG, "]");
+        DEBUG_Printf("]");
         break;
     case DT_ENUM:
-        DEBUG_Printf(DBG_CHN_MESG, "ENUM(%s)", name);
+        DEBUG_Printf("ENUM(%s)", name);
         break;
     case DT_BITFIELD:
-        DEBUG_Printf(DBG_CHN_MESG, "BITFIELD(%s)", name);
+        DEBUG_Printf("BITFIELD(%s)", name);
         break;
     case DT_FUNC:
-        DEBUG_Printf(DBG_CHN_MESG, "FUNC(%s)(", name);
+        DEBUG_Printf("FUNC(%s)(", name);
         DEBUG_DumpAType(dt->un.funct.rettype, FALSE);
-        DEBUG_Printf(DBG_CHN_MESG, ")");
+        DEBUG_Printf(")");
         break;
     default:
-        DEBUG_Printf(DBG_CHN_ERR, "Unknown type???");
+        WINE_ERR("Unknown type???");
         break;
     }
-    if (deep) DEBUG_Printf(DBG_CHN_MESG, "\n");
+    if (deep) DEBUG_Printf("\n");
 }
 
 int DEBUG_DumpTypes(void)
@@ -1051,7 +1051,7 @@ DEBUG_PrintTypeCast(const struct datatype * dt)
 
   if(dt == NULL)
     {
-      DEBUG_Printf(DBG_CHN_MESG, "--invalid--");
+      DEBUG_Printf("--invalid--");
       return FALSE;
     }
 
@@ -1063,31 +1063,31 @@ DEBUG_PrintTypeCast(const struct datatype * dt)
   switch(dt->type)
     {
     case DT_BASIC:
-      DEBUG_Printf(DBG_CHN_MESG, "%s", name);
+      DEBUG_Printf("%s", name);
       break;
     case DT_POINTER:
       DEBUG_PrintTypeCast(dt->un.pointer.pointsto);
-      DEBUG_Printf(DBG_CHN_MESG, "*");
+      DEBUG_Printf("*");
       break;
     case DT_STRUCT:
-      DEBUG_Printf(DBG_CHN_MESG, "struct %s", name);
+      DEBUG_Printf("struct %s", name);
       break;
     case DT_ARRAY:
-      DEBUG_Printf(DBG_CHN_MESG, "%s[]", name);
+      DEBUG_Printf("%s[]", name);
       break;
     case DT_ENUM:
-      DEBUG_Printf(DBG_CHN_MESG, "enum %s", name);
+      DEBUG_Printf("enum %s", name);
       break;
     case DT_BITFIELD:
-      DEBUG_Printf(DBG_CHN_MESG, "unsigned %s", name);
+      DEBUG_Printf("unsigned %s", name);
       break;
     case DT_FUNC:
       DEBUG_PrintTypeCast(dt->un.funct.rettype);
-      DEBUG_Printf(DBG_CHN_MESG, "(*%s)()", name);
+      DEBUG_Printf("(*%s)()", name);
       break;
     default:
-       DEBUG_Printf(DBG_CHN_ERR, "Unknown type???\n");
-       break;
+      WINE_ERR("Unknown type???\n");
+      break;
     }
 
   return TRUE;
@@ -1099,11 +1099,11 @@ int DEBUG_PrintType( const DBG_VALUE *value )
 
    if (!value->type)
    {
-      DEBUG_Printf(DBG_CHN_MESG, "Unknown type\n");
+      DEBUG_Printf("Unknown type\n");
       return FALSE;
    }
    if (!DEBUG_PrintTypeCast(value->type))
       return FALSE;
-   DEBUG_Printf(DBG_CHN_MESG, "\n");
+   DEBUG_Printf("\n");
    return TRUE;
 }

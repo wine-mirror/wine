@@ -68,6 +68,11 @@
 #endif
 #endif
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+WINE_DECLARE_DEBUG_CHANNEL(winedbg_stabs);
+
 #ifndef N_UNDF
 #define N_UNDF		0x00
 #endif
@@ -230,7 +235,7 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
 {
   struct datatype** ret;
 
-  /* DEBUG_Printf(DBG_CHN_MESG, "creating type id for (%d,%d)\n", filenr, subnr); */
+  WINE_TRACE_(winedbg_stabs)("creating type id for (%d,%d)\n", filenr, subnr);
 
   /* FIXME: I could perhaps create a dummy include_def for each compilation
    * unit which would allow not to handle those two cases separately
@@ -261,7 +266,7 @@ DEBUG_FileSubNr2StabEnum(int filenr, int subnr)
 	}
       ret = &idef->vector[subnr];
     }
-  /* DEBUG_Printf(DBG_CHN_MESG,"(%d,%d) is %d\n",filenr,subnr,ret); */
+  WINE_TRACE_(winedbg_stabs)("(%d,%d) is %p\n",filenr,subnr,ret);
   return ret;
 }
 
@@ -606,7 +611,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 	    if (*++ptd->ptr == 's') {
 		ptd->ptr++;
 		if (DEBUG_PTS_ReadNum(ptd, &sz) == -1) {
-		    DEBUG_Printf(DBG_CHN_MESG, "Not an attribute... NIY\n");
+		    WINE_ERR_(winedbg_stabs)("Not an attribute... NIY\n");
 		    ptd->ptr -= 2;
 		    return -1;
 		}
@@ -664,8 +669,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 		*DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = new_dt;
 	    } else {
 		if (DEBUG_GetType(dt1) != DT_STRUCT) {
-		    DEBUG_Printf(DBG_CHN_MESG,
-				 "Forward declaration is not an aggregate\n");
+		    WINE_ERR_(winedbg_stabs)("Forward declaration is not an aggregate\n");
 		    return -1;
 		}
 
@@ -780,7 +784,7 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
             }
             break;
 	default:
-	    DEBUG_Printf(DBG_CHN_MESG, "Unknown type '%c'\n", ptd->ptr[-1]);
+	    WINE_ERR_(winedbg_stabs)("Unknown type '%c'\n", ptd->ptr[-1]);
 	    return -1;
 	}
     }
@@ -796,13 +800,11 @@ static int DEBUG_PTS_ReadTypedef(struct ParseTypedefData* ptd, const char* typen
 
     *DEBUG_FileSubNr2StabEnum(filenr1, subnr1) = *ret_dt = new_dt;
 
-#if 0
-    if (typename) {
-	DEBUG_Printf(DBG_CHN_MESG, "Adding (%d,%d) %s => ", filenr1, subnr1, typename);
+    if (typename && WINE_TRACE_ON(winedbg_stabs)) {
+	DEBUG_Printf("Adding (%d,%d) %s => ", filenr1, subnr1, typename);
 	DEBUG_PrintTypeCast(new_dt);
-	DEBUG_Printf(DBG_CHN_MESG, "\n");
+	DEBUG_Printf("\n");
     }
-#endif
 
     return 0;
 }
@@ -836,20 +838,20 @@ static int DEBUG_ParseTypedefStab(char* ptr, const char* typename)
     if (ret == -1 || *ptd.ptr) {
 #ifdef PTS_DEBUG
         int     i;
-	DEBUG_Printf(DBG_CHN_MESG, "Failure on %s\n", ptr);
+	WINE_TRACE_(winedbg_stabs)("Failure on %s\n", ptr);
         if (ret == -1)
         {
             for (i = 0; i < ptd.err_idx; i++)
             {
-                DEBUG_Printf(DBG_CHN_MESG, "[%d]: line %d => %s\n", 
-                             i, ptd.errors[i].line, ptd.errors[i].ptr);
+                WINE_TRACE_(winedbg_stabs)("[%d]: line %d => %s\n", 
+                                           i, ptd.errors[i].line, ptd.errors[i].ptr);
             }
         }
         else
-            DEBUG_Printf(DBG_CHN_MESG, "[0]: => %s\n", ptd.ptr);
+            WINE_TRACE_(winedbg_stabs)("[0]: => %s\n", ptd.ptr);
             
 #else
-	DEBUG_Printf(DBG_CHN_MESG, "Failure on %s at %s\n", ptr, ptd.ptr);
+	WINE_ERR_(winedbg_stabs)("Failure on %s at %s\n", ptr, ptd.ptr);
 #endif
 	return FALSE;
     }
@@ -988,7 +990,8 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
 
           stab_strcpy(symname, sizeof(symname), ptr);
 #ifdef __ELF__
-          new_value.addr.off = 0;
+          /* EPP used to be: new_value.addr.off = 0; */
+          new_value.addr.off = (unsigned long)load_offset + stab_ptr->n_value;
           curr_sym = DEBUG_AddSymbol( symname, &new_value, currpath,
                                       SYM_WINE | SYM_DATA | SYM_INVALID );
 #else
@@ -1197,17 +1200,15 @@ enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
            */
           break;
         default:
-	  DEBUG_Printf(DBG_CHN_MESG, "Unknown stab type 0x%02x\n", stab_ptr->n_type);
+          WINE_ERR_(winedbg_stabs)("Unknown stab type 0x%02x\n", stab_ptr->n_type);
           break;
         }
 
       stabbuff[0] = '\0';
 
-#if 0
-      DEBUG_Printf(DBG_CHN_MESG, "0x%02x %x %s\n", stab_ptr->n_type,
-		   (unsigned int) stab_ptr->n_value,
-		   strs + (unsigned int) stab_ptr->n_un.n_name);
-#endif
+      WINE_TRACE_(winedbg_stabs)("0x%02x %x %s\n", stab_ptr->n_type,
+                                 (unsigned int) stab_ptr->n_value,
+                                 strs + (unsigned int) stab_ptr->n_un.n_name);
     }
 
   DEBUG_FreeIncludes();
@@ -1314,7 +1315,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
     int		stabstrsect;
 
     if (module->type != DMT_ELF || !module->elf_info) {
-	DEBUG_Printf(DBG_CHN_ERR, "Bad elf module '%s'\n", module->module_name);
+	WINE_ERR("Bad elf module '%s'\n", module->module_name);
 	return DIL_ERROR;
     }
 
@@ -1354,7 +1355,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
     }
 
     if (stabsect == -1 || stabstrsect == -1) {
-	DEBUG_Printf(DBG_CHN_WARN, "No .stab section\n");
+	WINE_WARN("No .stab section\n");
 	goto leave;
     }
 
@@ -1370,7 +1371,7 @@ enum DbgInfoLoad DEBUG_LoadElfStabs(DBG_MODULE* module)
 	dil = DIL_LOADED;
     } else {
 	dil = DIL_ERROR;
-	DEBUG_Printf(DBG_CHN_WARN, "Couldn't read correctly read stabs\n");
+	WINE_WARN("Couldn't read correctly read stabs\n");
 	goto leave;
     }
 
@@ -1420,7 +1421,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
     DWORD	size;
     DWORD	delta;
 
-    DEBUG_Printf(DBG_CHN_TRACE, "Processing elf file '%s'\n", filename);
+    WINE_TRACE("Processing elf file '%s'\n", filename);
 
     /* check that the file exists, and that the module hasn't been loaded yet */
     if (stat(filename, &statbuf) == -1) goto leave;
@@ -1486,7 +1487,7 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
     }
 
     if ((module->elf_info = DBG_alloc(sizeof(ELF_DBG_INFO))) == NULL) {
-	DEBUG_Printf(DBG_CHN_ERR, "OOM\n");
+	WINE_ERR("OOM\n");
 	exit(0);
     }
 
@@ -1640,8 +1641,7 @@ enum DbgInfoLoad	DEBUG_ReadExecutableDbgInfo(const char* exe_name)
     if (dbg_hdr.r_brk) {
 	DBG_VALUE	value;
 
-	DEBUG_Printf(DBG_CHN_TRACE, "Setting up a breakpoint on r_brk(%lx)\n",
-		     (unsigned long)dbg_hdr.r_brk);
+	WINE_TRACE("Setting up a breakpoint on r_brk(%lx)\n", (unsigned long)dbg_hdr.r_brk);
 
 	DEBUG_SetBreakpoints(FALSE);
 	value.type = NULL;
