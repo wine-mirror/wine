@@ -1574,6 +1574,7 @@ HRESULT WINAPI SHGetFolderPathW(
         *pszPath = '\0';
     if (folder >= sizeof(CSIDL_Data) / sizeof(CSIDL_Data[0]))
         return E_INVALIDARG;
+    szTemp[0] = 0;
     type = CSIDL_Data[folder].type;
     switch (type)
     {
@@ -1620,15 +1621,13 @@ HRESULT WINAPI SHGetFolderPathW(
             break;
     }
 
-    if (FAILED(hr)) goto end;
-
     /* Expand environment strings if necessary */
     if (*szTemp == '%')
         hr = _SHExpandEnvironmentStrings(szTemp, szBuildPath);
     else
         strcpyW(szBuildPath, szTemp);
     /* Copy the path if it's available before we might return */
-    if (pszPath)
+    if (SUCCEEDED(hr) && pszPath)
         strcpyW(pszPath, szBuildPath);
 
     if (FAILED(hr)) goto end;
