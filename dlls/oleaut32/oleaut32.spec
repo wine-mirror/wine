@@ -152,7 +152,7 @@
 154 stub VarImp # stdcall (ptr ptr ptr)
 155 stub VarMod # stdcall (ptr ptr ptr)
 156 stub VarMul # stdcall (ptr ptr ptr)
-157 stub VarOr # stdcall (ptr ptr ptr)
+157 stdcall VarOr(ptr ptr ptr) VarOr
 158 stub VarPow # stdcall (ptr ptr ptr)
 159 stub VarSub # stdcall (ptr ptr ptr)
 160 stdcall CreateTypeLib(long wstr ptr) CreateTypeLib
