@@ -24,6 +24,9 @@
  *  even when the user has overridden their default i8n settings (e.g. in
  *  the control panel i8n page), we will still get the expected results.
  */
+
+#include <assert.h>
+#include <stdlib.h>
 #include <stdarg.h>
 
 #include "wine/test.h"
@@ -774,8 +777,151 @@ static void test_CompareStringA()
   ret = CompareStringA(lcid, NORM_IGNORECASE, "haha", -1, "hoho", 0);
   ok (ret== 3, "(haha/hoho) Expected 3, got %d\n", ret);
 
-  ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "SaLuT", -1);
-  ok (ret== 2, "(Salut/SaLuT) Expected 2, got %d\n", ret);
+    ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "saLuT", -1);
+    ok (ret == 2, "(Salut/saLuT) Expected 2, got %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x10, "NULL", -1, "NULL", -1);
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
+        "unexpected error code %ld\n", GetLastError());
+    ok(!ret, "CompareStringA must fail with invalid flag\n");
+
+    ret = lstrcmpA("", "");
+    ok (!ret, "lstrcmpA(\"\", \"\") should return 0, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"EndDialog",-1,"_Property",-1);
+    ok( ret == 3, "EndDialog vs _Property ... expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"osp_vba.sreg0070",-1,"_IEWWBrowserComp",-1);
+    ok( ret == 3, "osp_vba.sreg0070 vs _IEWWBrowserComp ... expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"r",-1,"\\",-1); 
+    ok( ret == 3, "r vs \\ ... expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"osp_vba.sreg0031", -1, "OriginalDatabase", -1 );
+    ok( ret == 3, "osp_vba.sreg0031 vs OriginalDatabase ... expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aaa", -1 );
+    ok( ret == 3, "AAA vs aaa expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aab", -1 );
+    ok( ret == 1, "AAA vs aab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "Aab", -1 );
+    ok( ret == 1, "AAA vs Aab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "Aab", -1 );
+    ok( ret == 1, ".AAA vs Aab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "A.ab", -1 );
+    ok( ret == 1, ".AAA vs A.ab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "AB", -1 );
+    ok( ret == 1, "aa vs AB expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "Aab", -1 );
+    ok( ret == 1, "aa vs Aab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aB", -1, "Aab", -1 );
+    ok( ret == 3, "aB vs Aab expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "Ba", -1, "bab", -1 );
+    ok( ret == 1, "Ba vs bab expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "{100}{83}{71}{71}{71}", -1, "Global_DataAccess_JRO", -1 );
+    ok( ret == 1, "{100}{83}{71}{71}{71} vs Global_DataAccess_JRO expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "a", -1, "{", -1 );
+    ok( ret == 3, "a vs { expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "A", -1, "{", -1 );
+    ok( ret == 3, "A vs { expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.5", 0, "4.0", -1 );
+    ok(ret == 1, "3.5/0 vs 4.0/-1 expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.5", -1, "4.0", -1 );
+    ok(ret == 1, "3.5 vs 4.0 expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.520.4403.2", -1, "4.0.2927.10", -1 );
+    ok(ret == 1, "3.520.4403.2 vs 4.0.2927.10 expected 1, got %d", ret);
+
+   /* hyphen and apostrophe are treated differently depending on
+    * whether SORT_STRINGSORT specified or not
+    */
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "-o", -1, "/m", -1 );
+    ok(ret == 3, "-o vs /m expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "-o", -1 );
+    ok(ret == 1, "/m vs -o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-o", -1, "/m", -1 );
+    ok(ret == 1, "-o vs /m expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "-o", -1 );
+    ok(ret == 3, "/m vs -o expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "/m", -1 );
+    ok(ret == 3, "'o vs /m expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "'o", -1 );
+    ok(ret == 1, "/m vs 'o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'o", -1, "/m", -1 );
+    ok(ret == 1, "'o vs /m expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "'o", -1 );
+    ok(ret == 3, "/m vs 'o expected 3, got %d", ret);
+
+#if 0 /* this requires collation table patch to make it MS compatible */
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "-o", -1 );
+    ok(ret == 1, "'o vs -o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'o", -1, "-o", -1 );
+    ok(ret == 1, "'o vs -o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'", -1, "-", -1 );
+    ok(ret == 1, "' vs - expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'", -1, "-", -1 );
+    ok(ret == 1, "' vs - expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "`o", -1, "/m", -1 );
+    ok(ret == 3, "`o vs /m expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "`o", -1 );
+    ok(ret == 1, "/m vs `o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "`o", -1, "/m", -1 );
+    ok(ret == 3, "`o vs /m expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "`o", -1 );
+    ok(ret == 1, "/m vs `o expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "`o", -1, "-m", -1 );
+    ok(ret == 1, "`o vs -m expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "-m", -1, "`o", -1 );
+    ok(ret == 3, "-m vs `o expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "`o", -1, "-m", -1 );
+    ok(ret == 3, "`o vs -m expected 3, got %d", ret);
+
+    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-m", -1, "`o", -1 );
+    ok(ret == 1, "-m vs `o expected 1, got %d", ret);
+#endif
+
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ", 9);
+    ok(ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0 expected 2, got %d", ret);
+
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 7, "aLuZkUtZ\0A", 10);
+    ok(ret == 1, "aLuZkUtZ vs aLuZkUtZ\\0A expected 1, got %d", ret);
+
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ\0A", 10);
+    ok(ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0A expected 2, got %d", ret);
+
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLu\0ZkUtZ", 8, "aLu\0ZkUtZ\0A", 10);
+    ok(ret == 2, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected 2, got %d", ret);
 }
 
 void test_LCMapStringA(void)
@@ -833,6 +979,13 @@ void test_LCMapStringA(void)
        "ret %d, error %ld, expected value %d\n",
        ret, GetLastError(), lstrlenA(lower_case) + 1);
     ok(!lstrcmpA(buf, upper_case), "LCMapStringA should return %s, but not %s\n", upper_case, buf);
+
+    /* test buffer overflow */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       lower_case, -1, buf, 4);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", ret);
 
     /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
     lstrcpyA(buf, lower_case);
@@ -924,6 +1077,13 @@ void test_LCMapStringA(void)
     ok(ret == lstrlenA(symbols_stripped) + 1, "LCMapStringA should return %d, ret = %d\n",
 	lstrlenA(symbols_stripped) + 1, ret);
     ok(!lstrcmpA(buf, symbols_stripped), "LCMapStringA should return %s, but not %s\n", lower_case, buf);
+
+    /* test srclen = 0 */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringA(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
+    ok(!ret, "LCMapStringA should fail with srclen = 0");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "unexpected error code %ld\n", GetLastError());
 }
 
 void test_LCMapStringW(void)
@@ -987,6 +1147,13 @@ void test_LCMapStringW(void)
        "ret %d, error %ld, expected value %d\n",
        ret, GetLastError(), lstrlenW(lower_case) + 1);
     ok(!lstrcmpW(buf, upper_case), "string compare mismatch\n");
+
+    /* test buffer overflow */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
+                       lower_case, -1, buf, 4);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "should return 0 and ERROR_INSUFFICIENT_BUFFER, got %d\n", ret);
 
     /* LCMAP_UPPERCASE or LCMAP_LOWERCASE should accept src == dst */
     lstrcpyW(buf, lower_case);
@@ -1069,9 +1236,143 @@ void test_LCMapStringW(void)
     ok(ret == lstrlenW(symbols_stripped) + 1, "LCMapStringW should return %d, ret = %d\n",
 	lstrlenW(symbols_stripped) + 1, ret);
     ok(!lstrcmpW(buf, symbols_stripped), "string comparison mismatch\n");
+
+    /* test srclen = 0 */
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW(LOCALE_USER_DEFAULT, 0, upper_case, 0, buf, sizeof(buf));
+    ok(!ret, "LCMapStringW should fail with srclen = 0");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "unexpected error code %ld\n", GetLastError());
 }
 
-void test_FoldStringA(void)
+#if 0 /* this requires collation table patch to make it MS compatible */
+const char *strings_sorted[] =
+{
+"'",
+"-",
+"!",
+"\"",
+".",
+":",
+"\\",
+"_",
+"`",
+"{",
+"}",
+"+",
+"0",
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"a",
+"A",
+"b",
+"B",
+"c",
+"C"
+};
+
+const char *strings[] =
+{
+"C",
+"\"",
+"9",
+"'",
+"}",
+"-",
+"7",
+"+",
+"`",
+"1",
+"a",
+"5",
+"\\",
+"8",
+"B",
+"3",
+"_",
+"6",
+"{",
+"2",
+"c",
+"4",
+"!",
+"0",
+"A",
+":",
+"b",
+"."
+};
+
+static int compare_string1(const void *e1, const void *e2)
+{
+    const char *s1 = *(const char **)e1;
+    const char *s2 = *(const char **)e2;
+
+    return lstrcmpA(s1, s2);
+}
+
+static int compare_string2(const void *e1, const void *e2)
+{
+    const char *s1 = *(const char **)e1;
+    const char *s2 = *(const char **)e2;
+
+    return CompareStringA(0, 0, s1, -1, s2, -1) - 2;
+}
+
+static int compare_string3(const void *e1, const void *e2)
+{
+    const char *s1 = *(const char **)e1;
+    const char *s2 = *(const char **)e2;
+    char key1[256], key2[256];
+
+    LCMapStringA(0, LCMAP_SORTKEY, s1, -1, key1, sizeof(key1));
+    LCMapStringA(0, LCMAP_SORTKEY, s2, -1, key2, sizeof(key2));
+    return strcmp(key1, key2);
+}
+
+static void test_sorting(void)
+{
+    char buf[256];
+    char **str_buf = (char **)buf;
+    int i;
+
+    assert(sizeof(buf) >= sizeof(strings));
+
+    /* 1. sort using lstrcmpA */
+    memcpy(buf, strings, sizeof(strings));
+    qsort(buf, sizeof(strings)/sizeof(strings[0]), sizeof(strings[0]), compare_string1);
+    for (i = 0; i < sizeof(strings)/sizeof(strings[0]); i++)
+    {
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using lstrcmpA failed for element %d\n", i);
+    }
+    /* 2. sort using CompareStringA */
+    memcpy(buf, strings, sizeof(strings));
+    qsort(buf, sizeof(strings)/sizeof(strings[0]), sizeof(strings[0]), compare_string2);
+    for (i = 0; i < sizeof(strings)/sizeof(strings[0]); i++)
+    {
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using CompareStringA failed for element %d\n", i);
+    }
+    /* 3. sort using sort keys */
+    memcpy(buf, strings, sizeof(strings));
+    qsort(buf, sizeof(strings)/sizeof(strings[0]), sizeof(strings[0]), compare_string3);
+    for (i = 0; i < sizeof(strings)/sizeof(strings[0]); i++)
+    {
+        ok(!strcmp(strings_sorted[i], str_buf[i]),
+           "qsort using sort keys failed for element %d\n", i);
+    }
+}
+#endif
+
+static void test_FoldStringA(void)
 {
   int ret, i;
   char src[256], dst[256];
@@ -1117,6 +1418,13 @@ void test_FoldStringA(void)
 
   if (!pFoldStringA)
     return; /* FoldString is present in NT v3.1+, but not 95/98/Me */
+
+  /* these tests are locale specific */
+  if (GetACP() != 1252)
+  {
+      trace("Skipping FoldStringA tests for a not Latin 1 locale\n");
+      return;
+  }
 
   /* MAP_FOLDDIGITS */
   SetLastError(0);
@@ -1212,7 +1520,7 @@ void test_FoldStringA(void)
   }
 }
 
-void test_FoldStringW(void)
+static void test_FoldStringW(void)
 {
   int ret;
   size_t i, j;
@@ -1596,8 +1904,8 @@ static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
      "Enumerated grp %ld not valid (flags %ld)\n", lgrpid, dwFlags);
 
   /* If lParam is one, we are calling with flags defaulted from 0 */
-  ok(!lParam || dwFlags == LGRPID_INSTALLED,
-	 "Expected dwFlags == LGRPID_INSTALLED, got %ld\n", dwFlags);
+  ok(!lParam || (dwFlags == LGRPID_INSTALLED || dwFlags == LGRPID_SUPPORTED),
+	 "Expected dwFlags == LGRPID_INSTALLED || dwFlags == LGRPID_SUPPORTED, got %ld\n", dwFlags);
 
   return TRUE;
 }
@@ -1710,4 +2018,7 @@ START_TEST(locale)
   test_EnumSystemLanguageGroupsA();
   test_EnumLanguageGroupLocalesA();
   test_SetLocaleInfoA();
+#if 0 /* this requires collation table patch to make it MS compatible */
+  test_sorting();
+#endif
 }

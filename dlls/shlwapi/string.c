@@ -64,7 +64,7 @@ static BOOL WINAPI SHLWAPI_ChrCmpHelperA(WORD ch1, WORD ch2, DWORD dwFlags)
   char str1[3], str2[3];
 
   str1[0] = LOBYTE(ch1);
-  if (IsDBCSLeadByte(ch1))
+  if (IsDBCSLeadByte(str1[0]))
   {
     str1[1] = HIBYTE(ch1);
     str1[2] = '\0';
@@ -73,7 +73,7 @@ static BOOL WINAPI SHLWAPI_ChrCmpHelperA(WORD ch1, WORD ch2, DWORD dwFlags)
     str1[1] = '\0';
 
   str2[0] = LOBYTE(ch2);
-  if (IsDBCSLeadByte(ch2))
+  if (IsDBCSLeadByte(str2[0]))
   {
     str2[1] = HIBYTE(ch2);
     str2[2] = '\0';

@@ -156,33 +156,37 @@ static const StrFromTimeIntervalResult StrFromTimeInterval_results[] = {
 static void test_StrChrA(void)
 {
   char string[129];
-  int count;
+  WORD count;
 
-  ok(!StrChrA(NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrChrA(NULL,'\0'), "found a character in a NULL string!");*/
 
   for (count = 32; count < 128; count++)
-    string[count] = count;
+    string[count] = (char)count;
   string[128] = '\0';
 
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrChrA(string+32, count);
-    ok(result - string == count, "found char %d in wrong place", count);
+    ok(result - string == count,
+        "found char '%c' in wrong place: got %d, expected %d\n",
+        count, result - string, count);
   }
 
   for (count = 32; count < 128; count++)
   {
     LPSTR result = StrChrA(string+count+1, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char '%c' not in the string\n", count);
   }
 }
 
 static void test_StrChrW(void)
 {
   WCHAR string[16385];
-  int count;
+  WORD count;
 
-  ok(!StrChrW(NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrChrW(NULL,'\0'), "found a character in a NULL string!");*/
 
   for (count = 32; count < 16384; count++)
     string[count] = count;
@@ -204,12 +208,13 @@ static void test_StrChrW(void)
 static void test_StrChrIA(void)
 {
   char string[129];
-  int count;
+  WORD count;
 
-  ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");*/
 
   for (count = 32; count < 128; count++)
-    string[count] = count;
+    string[count] = (char)count;
   string[128] = '\0';
 
   for (count = 'A'; count <= 'X'; count++)
@@ -230,9 +235,10 @@ static void test_StrChrIA(void)
 static void test_StrChrIW(void)
 {
   WCHAR string[129];
-  int count;
+  WORD count;
 
-  ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrChrIA(NULL,'\0'), "found a character in a NULL string!");*/
 
   for (count = 32; count < 128; count++)
     string[count] = count;
@@ -256,12 +262,13 @@ static void test_StrChrIW(void)
 static void test_StrRChrA(void)
 {
   char string[129];
-  int count;
+  WORD count;
 
-  ok(!StrRChrA(NULL, NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrRChrA(NULL, NULL,'\0'), "found a character in a NULL string!");*/
 
   for (count = 32; count < 128; count++)
-    string[count] = count;
+    string[count] = (char)count;
   string[128] = '\0';
 
   for (count = 32; count < 128; count++)
@@ -285,31 +292,34 @@ static void test_StrRChrA(void)
 
 static void test_StrRChrW(void)
 {
-  WCHAR string[16385];
-  int count;
+  WCHAR string[129];
+  WORD count;
 
-  ok(!StrRChrW(NULL, NULL,'\0'), "found a character in a NULL string!");
+  /* this test crashes on win2k SP4 */
+  /*ok(!StrRChrW(NULL, NULL,'\0'), "found a character in a NULL string!");*/
 
-  for (count = 32; count < 16384; count++)
+  for (count = 32; count < 128; count++)
     string[count] = count;
-  string[16384] = '\0';
+  string[128] = '\0';
 
-  for (count = 32; count < 16384; count++)
+  for (count = 32; count < 128; count++)
   {
     LPWSTR result = StrRChrW(string+32, NULL, count);
-    ok(result - string == count, "found char %d in wrong place", count);
+    ok(result - string == count,
+        "found char %d in wrong place: got %d, expected %d\n",
+        count, result - string, count);
   }
 
-  for (count = 32; count < 16384; count++)
+  for (count = 32; count < 128; count++)
   {
     LPWSTR result = StrRChrW(string+count+1, NULL, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char %d not in the string\n", count);
   }
 
-  for (count = 32; count < 16384; count++)
+  for (count = 32; count < 128; count++)
   {
     LPWSTR result = StrRChrW(string+count+1, string + 127, count);
-    ok(!result, "found char not in the string");
+    ok(!result, "found char %d not in the string\n", count);
   }
 }
 
@@ -455,6 +465,8 @@ static void test_StrDupA()
 
 static void test_StrFormatByteSize64A(void)
 {
+/* this test fails on locales which do not use '.' as a decimal separator */
+#if 0
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
@@ -462,10 +474,13 @@ static void test_StrFormatByteSize64A(void)
   {
     StrFormatByteSize64A(result->value, szBuff, 256);
 
-    ok(!strcmp(result->byte_size_64, szBuff), "Formatted %lld wrong", result->value);
+    ok(!strcmp(result->byte_size_64, szBuff),
+        "Formatted %lx%08lx wrong: got %s, expected %s\n",
+       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->byte_size_64);
 
     result++;
   }
+#endif
 }
 
 static void test_StrFormatKBSizeW(void)
@@ -480,8 +495,9 @@ static void test_StrFormatKBSizeW(void)
   {
     StrFormatKBSizeW(result->value, szBuffW, 256);
     WideCharToMultiByte(0,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),0,0);
-    ok(!strcmp(result->kb_size, szBuff), "Formatted %lld wrong",
-       result->value);
+    ok(!strcmp(result->kb_size, szBuff),
+        "Formatted %lx%08lx wrong: got %s, expected %s\n",
+       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
   }
 #endif
@@ -489,6 +505,7 @@ static void test_StrFormatKBSizeW(void)
 
 static void test_StrFormatKBSizeA(void)
 {
+/* this test fails on locales which do not use '.' as a decimal separator */
 #if 0
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
@@ -497,8 +514,9 @@ static void test_StrFormatKBSizeA(void)
   {
     StrFormatKBSizeA(result->value, szBuff, 256);
 
-    ok(!strcmp(result->kb_size, szBuff), "Formatted %lld wrong",
-       result->value);
+    ok(!strcmp(result->kb_size, szBuff),
+        "Formatted %lx%08lx wrong: got %s, expected %s\n",
+       (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
   }
 #endif

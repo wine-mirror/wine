@@ -1971,6 +1971,12 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
         }
     }
 
+    if (srclen)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return 0;
+    }
+
     return dst_ptr - dst;
 }
 
@@ -1994,7 +2000,7 @@ INT WINAPI LCMapStringW(LCID lcid, DWORD flags, LPCWSTR src, INT srclen,
 INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
                         LPSTR dst, INT dstlen)
 {
-    WCHAR bufW[128];
+    WCHAR *bufW = NtCurrentTeb()->StaticUnicodeBuffer;
     LPWSTR srcW, dstW;
     INT ret = 0, srclenW, dstlenW;
     UINT locale_cp;
@@ -2007,7 +2013,7 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
 
     locale_cp = get_lcid_codepage(lcid);
 
-    srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, bufW, 128);
+    srclenW = MultiByteToWideChar(locale_cp, 0, src, srclen, bufW, 260);
     if (srclenW)
         srcW = bufW;
     else
@@ -2040,6 +2046,9 @@ INT WINAPI LCMapStringA(LCID lcid, DWORD flags, LPCSTR src, INT srclen,
     }
 
     dstlenW = LCMapStringW(lcid, flags, srcW, srclenW, NULL, 0);
+    if (!dstlenW)
+        goto map_string_exit;
+
     dstW = HeapAlloc(GetProcessHeap(), 0, dstlenW * sizeof(WCHAR));
     if (!dstW)
     {
@@ -2172,7 +2181,7 @@ INT WINAPI FoldStringW(DWORD dwFlags, LPCWSTR src, INT srclen,
 INT WINAPI CompareStringW(LCID lcid, DWORD style,
                           LPCWSTR str1, INT len1, LPCWSTR str2, INT len2)
 {
-    INT ret, len;
+    INT ret;
 
     if (!str1 || !str2)
     {
@@ -2180,19 +2189,24 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
         return 0;
     }
 
-    if (len1 < 0) len1 = lstrlenW(str1);
-    if (len2 < 0) len2 = lstrlenW(str2);
+    if( style & ~(NORM_IGNORECASE|NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|
+        SORT_STRINGSORT|NORM_IGNOREKANATYPE|NORM_IGNOREWIDTH|0x10000000) )
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
 
-    len = (len1 < len2) ? len1 : len2;
-    ret = (style & NORM_IGNORECASE) ? strncmpiW(str1, str2, len) :
-                                      strncmpW(str1, str2, len);
+    if (style & 0x10000000)
+        FIXME("Ignoring unknown style 0x10000000\n");
+
+    if (len1 < 0) len1 = strlenW(str1);
+    if (len2 < 0) len2 = strlenW(str2);
+
+    ret = wine_compare_string(style, str1, len1, str2, len2);
 
     if (ret) /* need to translate result */
         return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
-
-    if (len1 == len2) return CSTR_EQUAL;
-    /* the longer one is lexically greater */
-    return (len1 < len2) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
+    return CSTR_EQUAL;
 }
 
 /******************************************************************************
@@ -2216,7 +2230,8 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
 INT WINAPI CompareStringA(LCID lcid, DWORD style,
                           LPCSTR str1, INT len1, LPCSTR str2, INT len2)
 {
-    WCHAR buf1W[128], buf2W[128];
+    WCHAR *buf1W = NtCurrentTeb()->StaticUnicodeBuffer;
+    WCHAR *buf2W = buf1W + 130;
     LPWSTR str1W, str2W;
     INT len1W, len2W, ret;
     UINT locale_cp;
@@ -2226,13 +2241,12 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-
     if (len1 < 0) len1 = strlen(str1);
     if (len2 < 0) len2 = strlen(str2);
 
     locale_cp = get_lcid_codepage(lcid);
 
-    len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 128);
+    len1W = MultiByteToWideChar(locale_cp, 0, str1, len1, buf1W, 130);
     if (len1W)
         str1W = buf1W;
     else
@@ -2246,7 +2260,7 @@ INT WINAPI CompareStringA(LCID lcid, DWORD style,
         }
         MultiByteToWideChar(locale_cp, 0, str1, len1, str1W, len1W);
     }
-    len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 128);
+    len2W = MultiByteToWideChar(locale_cp, 0, str2, len2, buf2W, 130);
     if (len2W)
         str2W = buf2W;
     else
