@@ -812,8 +812,8 @@ DECL_HANDLER(init_thread)
 /* set the shared buffer for a thread */
 DECL_HANDLER(set_thread_buffer)
 {
-    unsigned int size = MAX_REQUEST_LENGTH;
-    unsigned int offset = 0;
+    const unsigned int size = MAX_REQUEST_LENGTH;
+    const unsigned int offset = 0;
     int fd = thread_get_inflight_fd( current, req->fd );
 
     req->size = size;
@@ -821,8 +821,10 @@ DECL_HANDLER(set_thread_buffer)
 
     if (fd != -1)
     {
-        if (ftruncate( fd, size ) == -1) file_set_error();
-        else
+        static const char zero;
+
+        /* grow the file to the requested size */
+        if (lseek( fd, size - 1, SEEK_SET ) != -1 && write( fd, &zero, 1 ) == 1)
         {
             void *buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset );
             if (buffer == (void *)-1) file_set_error();
@@ -832,6 +834,7 @@ DECL_HANDLER(set_thread_buffer)
                 current->buffer = buffer;
             }
         }
+        else file_set_error();
         close( fd );
     }
     else set_error( STATUS_INVALID_HANDLE );
