@@ -74,6 +74,7 @@ HWND WINAPI SetFocus( HWND hwnd )
         /* Check if we can set the focus to this window */
         WND *wndPtr;
 
+        hwnd = WIN_GetFullHandle( hwnd );
         for (;;)
         {
             HWND parent;

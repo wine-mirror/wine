@@ -12,9 +12,6 @@
  * The internal implementation talks to a "clipboard driver" to fill or
  * expose the cache to the native device. (Currently only the X11 and
  * TTY clipboard  driver are available)
- *
- * TODO: 
- *
  */
 
 #include <stdlib.h>
@@ -31,6 +28,7 @@
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "user.h"
+#include "win.h"
 #include "clipboard.h"
 #include "debugtools.h"
 
@@ -45,10 +43,10 @@ DEFAULT_DEBUG_CHANNEL(clipboard);
 static HANDLE hClipLock   = 0;
 static BOOL bCBHasChanged  = FALSE;
 
-HWND hWndClipWindow = 0;          /* window that last opened clipboard */
-HWND hWndClipOwner  = 0;          /* current clipboard owner */
-HANDLE16 hTaskClipOwner = 0;      /* clipboard owner's task  */
-static HWND hWndViewer     = 0;   /* start of viewers chain */
+static HWND hWndClipWindow;        /* window that last opened clipboard */
+static HWND hWndClipOwner;         /* current clipboard owner */
+static HANDLE16 hTaskClipOwner;    /* clipboard owner's task  */
+static HWND hWndViewer;            /* start of viewers chain */
 
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
@@ -737,7 +735,7 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
         hClipLock = GetCurrentTask();
 
         /* Save current user of the clipboard */
-        hWndClipWindow = hWnd;
+        hWndClipWindow = WIN_GetFullHandle( hWnd );
         bCBHasChanged = FALSE;
         bRet = TRUE;
     }
@@ -1320,7 +1318,7 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
 
     TRACE("(%04x): returning %04x\n", hWnd, hwndPrev);
 
-    hWndViewer = hWnd;
+    hWndViewer = WIN_GetFullHandle( hWnd );
     return hwndPrev;
 }
 
@@ -1368,7 +1366,7 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
     else
 	WARN("hWndViewer is lost\n");
 
-    if( hWnd == hWndViewer ) hWndViewer = hWndNext;
+    if( hWnd == hWndViewer ) hWndViewer = WIN_GetFullHandle( hWndNext );
 
     return bRet;
 }
@@ -1474,4 +1472,3 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
 	/* FIXME: Use serial numbers */
 	return 0;
 }
-

@@ -1091,7 +1091,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         cwp.lParam  = lparam;
         cwp.wParam  = wparam;
         cwp.message = msg;
-        cwp.hwnd    = hwnd;
+        cwp.hwnd    = WIN_GetFullHandle( hwnd );
         if (unicode) HOOK_CallHooksW( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp );
         else HOOK_CallHooksA( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp );
         lparam = cwp.lParam;
@@ -1120,7 +1120,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         cwp.lParam  = lparam;
         cwp.wParam  = wparam;
         cwp.message = msg;
-        cwp.hwnd    = hwnd;
+        cwp.hwnd    = WIN_GetFullHandle( hwnd );
         if (unicode) HOOK_CallHooksW( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
         else HOOK_CallHooksA( WH_CALLWNDPROCRET, HC_ACTION, 1, (LPARAM)&cwp );
     }

@@ -1953,6 +1953,9 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
 {
     HWND hwnd, retvalue;
 
+    hwndDlg = WIN_GetFullHandle( hwndDlg );
+    hwndCtrl = WIN_GetFullHandle( hwndCtrl );
+
     if(hwndCtrl)
     {
         /* if the hwndCtrl is the child of the control in the hwndDlg,
@@ -2108,6 +2111,8 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
 HWND WINAPI GetNextDlgTabItem( HWND hwndDlg, HWND hwndCtrl,
                                    BOOL fPrevious )
 {
+    hwndDlg = WIN_GetFullHandle( hwndDlg );
+    hwndCtrl = WIN_GetFullHandle( hwndCtrl );
     return DIALOG_GetNextTabItem(hwndDlg,hwndDlg,hwndCtrl,fPrevious); 
 }
 

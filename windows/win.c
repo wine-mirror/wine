@@ -147,17 +147,50 @@ static WND *free_window_handle( HWND hwnd )
 
 
 /***********************************************************************
- *           WIN_GetFullHandle
+ *           get_wnd_ptr
  *
- * Get the full 32-bit window handle from a possibly truncated handle.
+ * Return a pointer to the WND structure if local to the process.
+ * If ret value is non-NULL, the user lock is held.
  */
-HWND WIN_GetFullHandle( HWND hwnd )
+static WND *get_wnd_ptr( HWND hwnd )
 {
-    if (!HIWORD(hwnd))
+    WND * ptr;
+
+    if (!hwnd) return NULL;
+
+    USER_Lock();
+    if ((ptr = user_handles[LOWORD(hwnd)]))
+    {
+        if (ptr->dwMagic == WND_MAGIC && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
+            return ptr;
+    }
+    USER_Unlock();
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           WIN_Handle32
+ *
+ * Convert a 16-bit window handle to a full 32-bit handle.
+ */
+HWND WIN_Handle32( HWND16 hwnd16 )
+{
+    WND *ptr;
+    HWND hwnd = (HWND)hwnd16;
+
+    if (!hwnd || hwnd == HWND_BROADCAST) return hwnd;
+
+    if ((ptr = get_wnd_ptr( hwnd )))
+    {
+        hwnd = ptr->hwndSelf;
+        USER_Unlock();
+    }
+    else  /* may belong to another process */
     {
         SERVER_START_REQ( get_window_info )
         {
-            req->handle = hwnd;
+            req->handle = (user_handle_t)hwnd16;
             if (!SERVER_CALL_ERR()) hwnd = req->full_handle;
         }
         SERVER_END_REQ;
@@ -177,27 +210,19 @@ WND * WIN_FindWndPtr( HWND hwnd )
 
     if (!hwnd) return NULL;
 
-    USER_Lock();
-    if (!(ptr = user_handles[LOWORD(hwnd)]))
+    if ((ptr = get_wnd_ptr( hwnd )))
     {
-        /* check other processes */
-        if (IsWindow( hwnd ))
-        {
-            ERR( "window %04x belongs to other process\n", hwnd );
-            /* DbgBreakPoint(); */
-        }
-        goto error;
+        /* increment destruction monitoring */
+        ptr->irefCount++;
+        return ptr;
     }
-    if (ptr->dwMagic != WND_MAGIC) goto error;
-    /* verify that handle highword (if any) matches the window */
-    if (HIWORD(hwnd) && hwnd != ptr->hwndSelf) goto error;
-    /*and increment destruction monitoring*/
-     ptr->irefCount++;
-    return ptr;
 
- error:
-    /* Unlock all WND structures for thread safeness*/
-    USER_Unlock();
+    /* check other processes */
+    if (IsWindow( hwnd ))
+    {
+        ERR( "window %04x belongs to other process\n", hwnd );
+        /* DbgBreakPoint(); */
+    }
     SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
 }
@@ -2078,24 +2103,24 @@ BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 BOOL WINAPI IsWindow( HWND hwnd )
 {
     WND *ptr;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     USER_Lock();
     if ((ptr = user_handles[LOWORD(hwnd)]))
     {
         ret = ((ptr->dwMagic == WND_MAGIC) && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf));
+        USER_Unlock();
+        return ret;
     }
     USER_Unlock();
 
-    if (!ret)  /* check other processes */
+    /* check other processes */
+    SERVER_START_REQ( get_window_info )
     {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = hwnd;
-            ret = !SERVER_CALL_ERR();
-        }
-        SERVER_END_REQ;
+        req->handle = hwnd;
+        ret = !SERVER_CALL_ERR();
     }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -2601,9 +2626,8 @@ HWND WINAPI GetLastActivePopup( HWND hwnd )
     WND *wndPtr =WIN_FindWndPtr(hwnd);
     if (!wndPtr) return hwnd;
     retval = wndPtr->hwndLastActive;
+    if (!IsWindow( retval )) retval = wndPtr->hwndSelf;
     WIN_ReleaseWndPtr(wndPtr);
-    if ((retval != hwnd) && (!IsWindow(retval)))
-       retval = hwnd;
     return retval;
 }
 

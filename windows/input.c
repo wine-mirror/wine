@@ -493,7 +493,7 @@ HWND EVENT_Capture(HWND hwnd, INT16 ht)
         if (wndPtr)
         {
             TRACE_(win)("(0x%04x)\n", hwnd );
-            captureWnd   = hwnd;
+            captureWnd   = wndPtr->hwndSelf;
             captureHT    = ht;
         }
     }

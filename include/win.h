@@ -85,7 +85,7 @@ extern WND*   WIN_FindWndPtr( HWND hwnd );
 extern WND*   WIN_LockWndPtr(WND *wndPtr);
 extern void   WIN_ReleaseWndPtr(WND *wndPtr);
 extern void   WIN_UpdateWndPtr(WND **oldPtr,WND *newPtr);
-extern HWND WIN_GetFullHandle( HWND hwnd );
+extern HWND WIN_Handle32( HWND16 hwnd16 );
 extern void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter );
 extern void WIN_UnlinkWindow( HWND hwnd );
 extern HWND WIN_FindWinToRepaint( HWND hwnd );
@@ -95,6 +95,17 @@ extern BOOL WIN_IsWindowDrawable(WND*, BOOL );
 extern HWND *WIN_ListParents( HWND hwnd );
 extern HWND *WIN_ListChildren( HWND hwnd );
 extern BOOL WIN_InternalShowOwnedPopups( HWND owner, BOOL fShow, BOOL unmanagedOnly );
+
+inline static HWND WIN_GetFullHandle( HWND hwnd )
+{
+    if (!HIWORD(hwnd) && hwnd) hwnd = WIN_Handle32( LOWORD(hwnd) );
+    return hwnd;
+}
+
+inline static HWND16 WIN_Handle16( HWND hwnd )
+{
+    return LOWORD(hwnd);
+}
 
 extern HWND CARET_GetHwnd(void);
 extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */

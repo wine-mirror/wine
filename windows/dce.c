@@ -70,7 +70,6 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
     FARPROC16 hookProc;
     DCE * dce;
-    WND* wnd;
     
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(DCE) ))) return NULL;
     if (!(dce->hDC = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
@@ -80,32 +79,31 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     }
     if (!defaultDCstate) defaultDCstate = GetDCState16( dce->hDC );
 
-    wnd = WIN_FindWndPtr(hWnd);
-    
     /* store DCE handle in DC hook data field */
 
     hookProc = GetProcAddress16( GetModuleHandle16("USER"), (LPCSTR)362 );
     SetDCHook( dce->hDC, hookProc, (DWORD)dce );
 
-    dce->hwndCurrent = hWnd;
+    dce->hwndCurrent = WIN_GetFullHandle( hWnd );
     dce->hClipRgn    = 0;
-    dce->next        = firstDCE;
-    firstDCE = dce;
 
     if( type != DCE_CACHE_DC ) /* owned or class DC */
     {
 	dce->DCXflags = DCX_DCEBUSY;
 	if( hWnd )
 	{
-	    if( wnd->dwStyle & WS_CLIPCHILDREN ) dce->DCXflags |= DCX_CLIPCHILDREN;
-	    if( wnd->dwStyle & WS_CLIPSIBLINGS ) dce->DCXflags |= DCX_CLIPSIBLINGS;
+            LONG style = GetWindowLongW( hWnd, GWL_STYLE );
+            if (style & WS_CLIPCHILDREN) dce->DCXflags |= DCX_CLIPCHILDREN;
+            if (style & WS_CLIPSIBLINGS) dce->DCXflags |= DCX_CLIPSIBLINGS;
 	}
 	SetHookFlags16(dce->hDC,DCHF_INVALIDATEVISRGN);
     }
     else dce->DCXflags = DCX_CACHE | DCX_DCEEMPTY;
-
-    WIN_ReleaseWndPtr(wnd);
     
+    USER_Lock();
+    dce->next = firstDCE;
+    firstDCE = dce;
+    USER_Unlock();
     return dce;
 }
 
@@ -115,7 +113,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
  */
 DCE* DCE_FreeDCE( DCE *dce )
 {
-    DCE **ppDCE;
+    DCE **ppDCE, *ret;
 
     if (!dce) return NULL;
 
@@ -125,6 +123,8 @@ DCE* DCE_FreeDCE( DCE *dce )
 
     while (*ppDCE && (*ppDCE != dce)) ppDCE = &(*ppDCE)->next;
     if (*ppDCE == dce) *ppDCE = dce->next;
+    ret = *ppDCE;
+    USER_Unlock();
 
     SetDCHook(dce->hDC, NULL, 0L);
 
@@ -133,9 +133,7 @@ DCE* DCE_FreeDCE( DCE *dce )
 	DeleteObject(dce->hClipRgn);
     HeapFree( GetProcessHeap(), 0, dce );
 
-    USER_Unlock();
-    
-    return *ppDCE;
+    return ret;
 }
 
 /***********************************************************************
@@ -146,22 +144,21 @@ DCE* DCE_FreeDCE( DCE *dce )
 void DCE_FreeWindowDCE( HWND hwnd )
 {
     DCE *pDCE;
+    WND *pWnd = WIN_FindWndPtr( hwnd );
 
-    USER_Lock();
     pDCE = firstDCE;
+    hwnd = pWnd->hwndSelf;  /* make it a full handle */
 
     while( pDCE )
     {
 	if( pDCE->hwndCurrent == hwnd )
 	{
-            WND *pWnd = WIN_FindWndPtr( hwnd );
 	    if( pDCE == pWnd->dce ) /* owned or Class DCE*/
 	    {
                 if (pWnd->clsStyle & CS_OWNDC)	/* owned DCE*/
 		{
                     pDCE = DCE_FreeDCE( pDCE );
                     pWnd->dce = NULL;
-                    WIN_ReleaseWndPtr( pWnd );
                     continue;
                 }
 		else if( pDCE->DCXflags & (DCX_INTERSECTRGN | DCX_EXCLUDERGN) )	/* Class DCE*/
@@ -181,8 +178,7 @@ void DCE_FreeWindowDCE( HWND hwnd )
                      * We should change this to WARN when Wine is more stable
                      * (for 1.0?).
                      */
-		    ERR("[%04x] GetDC() without ReleaseDC()!\n", 
-			pWnd->hwndSelf);
+		    ERR("[%08x] GetDC() without ReleaseDC()!\n",hwnd);
 		    DCE_ReleaseDC( pDCE );
 		}
 
@@ -190,12 +186,11 @@ void DCE_FreeWindowDCE( HWND hwnd )
 		pDCE->DCXflags |= DCX_DCEEMPTY;
 		pDCE->hwndCurrent = 0;
 	    }
-            WIN_ReleaseWndPtr( pWnd );
 	}
 	pDCE = pDCE->next;
     }
     
-    USER_Unlock();
+    WIN_ReleaseWndPtr( pWnd );
 }
 
 
@@ -403,6 +398,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (!hwnd) hwnd = GetDesktopWindow();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
+    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     /* fixup flags */
 

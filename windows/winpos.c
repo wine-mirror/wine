@@ -374,6 +374,7 @@ HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest )
 
     if (!hwndScope) hwndScope = GetDesktopWindow();
     if (!(wndScope = WIN_FindWndPtr( hwndScope ))) return 0;
+    hwndScope = wndScope->hwndSelf;  /* make it a full handle */
 
     *hittest = HTERROR;
     wndPtr = WIN_LockWndPtr(wndScope->child);
@@ -892,7 +893,7 @@ HWND16 WINAPI GetShellWindow16(void)
 HWND WINAPI SetShellWindow(HWND hwndshell)
 {   WARN("(hWnd=%08x) semi stub\n",hwndshell );
 
-    hGlobalShellWindow = hwndshell;
+    hGlobalShellWindow = WIN_GetFullHandle( hwndshell );
     return hGlobalShellWindow;
 }
 
@@ -1423,6 +1424,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             hwndActive = PERQDATA_GetActiveWnd( pOldActiveQueue->pQData );
     }
 
+    if ((wndPtr = WIN_FindWndPtr(hWnd)))
+        hWnd = wndPtr->hwndSelf;  /* make it a full handle */
+
     /* paranoid checks */
     if( hWnd == GetDesktopWindow() || (bRet = (hWnd == hwndActive)) )
 	goto CLEANUP_END;
@@ -1430,7 +1434,6 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
 /*  if (wndPtr && (GetFastQueue16() != wndPtr->hmemTaskQ))
  *	return 0;
  */
-    wndPtr = WIN_FindWndPtr(hWnd);
     hOldActiveQueue = hActiveQueue;
 
     if( (wndTemp = WIN_FindWndPtr(hwndActive)) )
