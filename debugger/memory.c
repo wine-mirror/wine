@@ -288,6 +288,25 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 	case 'i':
 		while (count-- && DEBUG_DisassembleInstruction( &value.addr ));
 		return;
+        case 'g':
+                while (count--)
+                {
+                    GUID guid;
+                    if (!DEBUG_READ_MEM_VERBOSE(pnt, &guid, sizeof(guid))) break;
+                    DEBUG_Printf(DBG_CHN_MESG,"{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                                 guid.Data1, guid.Data2, guid.Data3,
+                                 guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+                                 guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7] );
+                    pnt += sizeof(guid);
+                    value.addr.off += sizeof(guid);
+                    if (count)
+                    {
+                        DEBUG_PrintAddress( &value.addr, DEBUG_CurrThread->dbg_mode, FALSE );
+                        DEBUG_Printf(DBG_CHN_MESG,": ");
+                    }
+                }
+                return;
+
 #define DO_DUMP2(_t,_l,_f,_vv) { \
 	        _t _v; \
 		for(i=0; i<count; i++) { \

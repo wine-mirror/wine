@@ -835,7 +835,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       goto leave;
     }
 
-  if( format == 'i' || format == 's' || format == 'w' || format == 'b' )
+  if( format == 'i' || format == 's' || format == 'w' || format == 'b' || format == 'g')
     {
       DEBUG_Printf( DBG_CHN_MESG, "Format specifier '%c' is meaningless in 'print' command\n", format );
       format = '\0';
