@@ -611,10 +611,11 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
                                PSPCB_CREATE,
                                (LPPROPSHEETPAGEA)ppshpage);
 
-  hwndPage = CreateDialogIndirectA(ppshpage->hInstance,
-                                   pTemplate,
-                                   hwndParent,
-                                   ppshpage->pfnDlgProc);
+  hwndPage = CreateDialogIndirectParamA(ppshpage->hInstance,
+					pTemplate,
+					hwndParent,
+					ppshpage->pfnDlgProc,
+					ppshpage);
 
   ppInfo[index].hwndPage = hwndPage;
 
