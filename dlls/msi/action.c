@@ -1413,40 +1413,40 @@ typedef struct
         WCHAR *source;
 } thread_struct;
 
-static DWORD WINAPI DllThread(LPVOID info)
+static DWORD WINAPI ACTION_CallDllFunction(thread_struct *stuff)
 {
-    HANDLE DLL;
+    HANDLE hModule;
     LPSTR proc;
-    thread_struct *stuff;
     CustomEntry *fn;
-     
-    stuff = (thread_struct*)info;
 
-    TRACE("Asynchronous start (%s, %s) \n", debugstr_w(stuff->source),
+    TRACE("calling function (%s, %s) \n", debugstr_w(stuff->source),
           debugstr_w(stuff->target));
 
-    DLL = LoadLibraryW(stuff->source);
-    if (DLL)
+    hModule = LoadLibraryW(stuff->source);
+    if (hModule)
     {
         proc = strdupWtoA( stuff->target );
-        fn = (CustomEntry*)GetProcAddress(DLL,proc);
+        fn = (CustomEntry*)GetProcAddress(hModule,proc);
         if (fn)
         {
             MSIHANDLE hPackage;
             MSIPACKAGE *package = stuff->package;
 
-            TRACE("Calling function\n");
+            TRACE("Calling function %s\n", proc);
             hPackage = msiobj_findhandle( &package->hdr );
-            if( !hPackage )
+            if (hPackage )
+            {
+                fn(hPackage);
+                msiobj_release( &package->hdr );
+            }
+            else
                 ERR("Handle for object %p not found\n", package );
-            fn(hPackage);
-            msiobj_release( &package->hdr );
         }
         else
             ERR("Cannot load functon\n");
 
         HeapFree(GetProcessHeap(),0,proc);
-        FreeLibrary(DLL);
+        FreeLibrary(hModule);
     }
     else
         ERR("Unable to load library\n");
@@ -1457,13 +1457,30 @@ static DWORD WINAPI DllThread(LPVOID info)
     return 0;
 }
 
+static DWORD WINAPI DllThread(LPVOID info)
+{
+    thread_struct *stuff;
+    DWORD rc = 0;
+  
+    TRACE("MSI Thread (0x%lx) started for custom action\n",
+                        GetCurrentThreadId());
+    
+    stuff = (thread_struct*)info;
+    rc = ACTION_CallDllFunction(stuff);
+
+    TRACE("MSI Thread (0x%lx) finished\n",GetCurrentThreadId());
+    /* clse all handles for this thread */
+    MsiCloseAllHandles();
+    return rc;
+}
+
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source, 
                                 const LPWSTR target, const INT type)
 {
     WCHAR tmp_file[MAX_PATH];
-    CustomEntry *fn;
-    HANDLE DLL;
-    LPSTR proc;
+    thread_struct *info;
+    DWORD ThreadId;
+    HANDLE ThreadHandle;
 
     store_binary_to_temp(package, source, tmp_file);
 
@@ -1476,48 +1493,19 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, const LPWSTR source,
         strcatW(tmp_file,dot);
     } 
 
-    if (type & 0xc0)
-    {
-        DWORD ThreadId;
-        HANDLE ThreadHandle;
-        thread_struct *info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
+    info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
+    msiobj_addref( &package->hdr );
+    info->package = package;
+    info->target = dupstrW(target);
+    info->source = dupstrW(tmp_file);
 
-        msiobj_addref( &package->hdr );
-        info->package = package;
-        info->target = dupstrW(target);
-        info->source = dupstrW(tmp_file);
-        TRACE("Start Asynchronous execution of dll\n");
-        ThreadHandle = CreateThread(NULL,0,DllThread,(LPVOID)info,0,&ThreadId);
-        CloseHandle(ThreadHandle);
-        /* FIXME: release the package if the CreateThread fails */
-        return ERROR_SUCCESS;
-    }
+    ThreadHandle = CreateThread(NULL,0,DllThread,(LPVOID)info,0,&ThreadId);
+
+    if (!(type & 0xc0))
+        WaitForSingleObject(ThreadHandle,INFINITE);
+
+    CloseHandle(ThreadHandle);
  
-    DLL = LoadLibraryW(tmp_file);
-    if (DLL)
-    {
-        proc = strdupWtoA( target );
-        fn = (CustomEntry*)GetProcAddress(DLL,proc);
-        if (fn)
-        {
-            MSIHANDLE hPackage;
-
-            TRACE("Calling function\n");
-            hPackage = msiobj_findhandle( &package->hdr );
-            if( !hPackage )
-                ERR("Handle for object %p not found\n", package );
-            fn(hPackage);
-            msiobj_release( &package->hdr );
-        }
-        else
-            ERR("Cannot load functon\n");
-
-        HeapFree(GetProcessHeap(),0,proc);
-        FreeLibrary(DLL);
-    }
-    else
-        ERR("Unable to load library\n");
-
     return ERROR_SUCCESS;
 }
 
