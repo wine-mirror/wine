@@ -88,7 +88,7 @@ HRESULT WINAPI Main_DirectDrawClipper_SetHwnd(
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
-    TRACE("(%p)->SetHwnd(0x%08lx,0x%08lx)\n",This,dwFlags,(DWORD)hWnd);
+    TRACE("(%p)->(0x%08lx,0x%08lx)\n", This, dwFlags, (DWORD)hWnd);
     if( dwFlags ) {
 	FIXME("dwFlags = 0x%08lx, not supported.\n",dwFlags);
 	return DDERR_INVALIDPARAMS;
@@ -149,7 +149,7 @@ HRESULT WINAPI Main_DirectDrawClipper_GetClipList(
 {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
 
-	TRACE("(%p,%p,%p,%p)\n", This, lpRect, lpClipList, lpdwSize);
+    TRACE("(%p,%p,%p,%p)\n", This, lpRect, lpClipList, lpdwSize);
 
     if (This->hWnd)
     {
@@ -236,7 +236,7 @@ HRESULT WINAPI Main_DirectDrawClipper_GetHWnd(
     LPDIRECTDRAWCLIPPER iface, HWND* hWndPtr
 ) {
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    FIXME("(%p)->(%p),stub!\n",This,hWndPtr);
+    TRACE("(%p)->(%p)\n", This, hWndPtr);
 
     *hWndPtr = This->hWnd;
 
@@ -248,7 +248,7 @@ HRESULT WINAPI Main_DirectDrawClipper_Initialize(
 ) {
     IDirectDrawImpl* pOwner;
     IDirectDrawClipperImpl *This = (IDirectDrawClipperImpl *)iface;
-    FIXME("(%p)->(%p,0x%08lx),stub!\n",This,lpDD,dwFlags);
+    TRACE("(%p)->(%p,0x%08lx)\n", This, lpDD, dwFlags);
 
     if (This->ddraw_owner != NULL) return DDERR_ALREADYINITIALIZED;
 
