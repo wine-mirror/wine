@@ -252,32 +252,34 @@ VPATH                 = @srcdir@
         <programlisting>
 SUBDIRS               =
 DLLS                  =
-EXES                  = hello
+EXES                  = hello.exe
         </programlisting>
         <para>
           This is where the targets for this directory are listed. The names 
           are pretty self-explanatory. <varname>SUBDIRS</varname> is usually 
-          only present in the top-level makefile. For libraries you should 
-          put the full Unix name, e.g. <literal>libfoo.so</literal>.
+          only present in the top-level makefile. For libraries and
+          executables, specify the full name, including the '.dll' or '.exe'
+          extension. Note that these names must be in all lowercase.
         </para>
         <programlisting>
 ### Global settings
 
 DEFINES               = -DSTRICT
 INCLUDE_PATH          =
+DLL_PATH              =
 LIBRARY_PATH          =
 LIBRARIES             =
         </programlisting>
         <para>
-          This section contains the global compilation settings: they apply 
-          to all the targets in this makefile. The <varname>LIBRARIES</varname> 
-          variable allows you to specify additional Unix libraries to link with. 
-          Note that you would normally not specify Winelib libraries there. To 
-          link with a Winelib library, one uses the 'import' statement of the 
-          <link linkend="spec-file">spec files</link>. The exception is when you 
-          have not explicitly exported the functions of a Winelib library. One 
-          library you are likely to find here is <literal>mfc</literal> (note, 
-          the '-l' is omitted).
+          This section contains the global compilation settings: they apply
+          to all the targets in this makefile. The <varname>LIBRARIES</>
+          variable allows you to specify additional Unix libraries to link
+          with. Note that you would normally not specify Winelib libraries
+          there. To link with a Winelib library, one uses the <varname>DLLS</>
+          variables of the Makefile. The exception is for C++ libraries where
+          you currently don't have  a choice but to link with them in the
+          Unix sense. One library you are likely to find here is 
+          <literal>mfc</> (note, the '-l' is omitted).
         </para>
         <para>
           The other variable 
@@ -287,21 +289,19 @@ LIBRARIES             =
           <varname>WRCEXTRA</varname> which allow you to specify additional 
           flags for, respectively, the C compiler, the C++ compiler and the 
           resource compiler. Finally note that all these variable contain 
-          the option's name except <varname>IMPORTS</varname>. So you should 
-          put <literal>-DSTRICT</literal> in <varname>DEFINES</varname> but 
-          <literal>winmm</literal> in <varname>IMPORTS</varname>.
+          the option's name.
         </para>
         <para>
           Then come one section per target, each describing the various 
           components that target is made of.
         </para>
         <programlisting>
-### hello sources and settings
+### hello.exe sources and settings
 
-hello_C_SRCS          = hello.c
-hello_CXX_SRCS        =
-hello_RC_SRCS         =
-hello_SPEC_SRCS       = hello.spec
+hello_exe_C_SRCS          = hello.c
+hello_exe_CXX_SRCS        =
+hello_exe_RC_SRCS         =
+hello_exe_SPEC_SRCS       =
         </programlisting>
         <para>
           Each section will start with a comment indicating the name of the 
@@ -314,32 +314,34 @@ hello_SPEC_SRCS       = hello.spec
           The above variables list the sources that are used togenerate the 
           target. Note that there should only be one resource file in 
           <varname>RC_SRCS</varname>, and that <varname>SPEC_SRCS</varname> 
-          will always contain a single spec file.
+          will usually be empty for executables, and will contain a single
+          spec file for libraries.
         </para>
         <programlisting>
-hello_LIBRARY_PATH    =
-hello_LIBRARIES       =
-hello_DEPENDS         =
+hello_exe_DLL_PATH        =
+hello_exe_DLLS            =
+hello_exe_LIBRARY_PATH    =
+hello_exe_LIBRARIES       =
+hello_exe_DEPENDS         =
         </programlisting>
         <para>
           The above variables specify how to link the target. Note that they 
           add to the global settings we saw at the beginning of this file.
         </para>
         <para>
-          <varname>DEPENDS</varname>, when present, specifies a list of other 
-          targets that this target depends on. Winemaker will automatically 
-          fill this field, and the <varname>LIBRARIES</varname> field, when an 
-          executable and a library are built in the same directory.
+          The <varname>DLLS</> field is where you would enumerate the list of
+          dlls that executable imports. It should contain the full dll name
+          including the '.dll' extension, but not the '-l' option.
         </para>
         <para>
-          The reason why winemaker also links with libraries in the Unix sense 
-          in the case above is because functions will not be properly exported. 
-          Once you have exported all the functions in the library's spec file 
-          you should remove them from the <varname>LIBRARIES</varname> field.
+          <varname>DEPENDS</>, when present, specifies a list of other 
+          targets that this target depends on. Winemaker will automatically 
+          fill this field when an executable and a library are built in the
+          same directory.
         </para>
         <programlisting>
-hello_OBJS            = $(hello_C_SRCS:.c=.o) \
-                        $(hello_CXX_SRCS:.cpp=.o) \
+hello_exe_OBJS        = $(hello_exe_C_SRCS:.c=.o) \
+                        $(hello_exe_CXX_SRCS:.cpp=.o) \
                         $(EXTRA_OBJS)
         </programlisting>
         <para>
@@ -350,19 +352,22 @@ hello_OBJS            = $(hello_C_SRCS:.c=.o) \
         <programlisting>
 ### Global source lists
 
-C_SRCS                = $(hello_C_SRCS)
-CXX_SRCS              = $(hello_CXX_SRCS)
-RC_SRCS               = $(hello_RC_SRCS)
-SPEC_SRCS             = $(hello_SPEC_SRCS)
+C_SRCS                = $(hello_exe_C_SRCS)
+CXX_SRCS              = $(hello_exe_CXX_SRCS)
+RC_SRCS               = $(hello_exe_RC_SRCS)
+SPEC_SRCS             = $(hello_exe_SPEC_SRCS)
         </programlisting>
         <para>
           This section builds 'summary' lists of source files. These lists are 
           used by the <filename>Make.rules</filename> file.
         </para>
+        <note><para>
+          FIXME:The following is not up-to-date.
+        </para></note>
         <programlisting>
 ### Generic autoconf targets
 
-all: $(DLLS) $(EXES:%=%.so)
+all: $(DLLS:%=%.so) $(EXES:%=%.so)
 
 @MAKE_RULES@
 
@@ -550,53 +555,22 @@ WRCFLAGS      = -r -L
           A typical spec file will look something like this:
         </para>
         <screen>
-name    hello
-type    win32
-mode    guiexe
 init    WinMain
 rsrc    resource.res
-
-import  winmm.dll
         </screen>
         <para>
           And here are the entries you will probably want to change: 
         </para>
         <variablelist>
           <varlistentry>
-            <term>name</term>
-            <listitem>
-              <para>
-                This is the name of the Win32 module. Usually this is the 
-                same as that of the application or library (but without the 
-                'lib' and the '.so').
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mode</term>
             <term>init</term>
             <listitem>
               <para>
-                <literal>mode</literal> defines whether what you are 
-                building is a library, <literal>dll</literal>, a console 
-                application, <literal>cuiexe</literal> or a regular 
-                graphical application <literal>guiexe</literal>. Then 
                 <literal>init</literal> defines what is the entry point of 
                 that module. For a library this is customarily set to 
                 <literal>DllMain</literal>, for a console application this 
                 is <literal>main</literal> and for a graphical application 
                 this is <literal>WinMain</literal>.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>import</term>
-            <listitem>
-              <para>
-                Add an 'import' statement for each library that this 
-                executable depends on. If you don't, these libraries will 
-                not get initialized in which case they may very well not 
-                work (e.g. winmm).
               </para>
             </listitem>
           </varlistentry>
@@ -626,6 +600,9 @@ hello.spec.c: hello.res
           <varlistentry>
             <term>@</term>
             <listitem>
+              <note><para>
+                FIXME: You must now export functions from dlls.
+              </para></note>
               <para>
                 This entry is not shown above because it is not always 
                 necessary. In fact it is only necessary to export functions 
@@ -678,9 +655,6 @@ WINEBUILD=$(WINE_DIR)/tools/winebuild
 
       <sect2 id="spec-reference">
         <title id="spec-reference.title">More details</title>
-        <para>
-          (Extracted from tools/winebuild/README)
-        </para>
 
         <para>
           Here is a more detailed description of the spec file's format.
@@ -694,59 +668,12 @@ WINEBUILD=$(WINE_DIR)/tools/winebuild
         </para>
 
         <programlisting>
-name    NAME
-type    win16|win32 &lt;--- the |'s mean it's one or the other
-        </programlisting>
-        <para>
-            These two fields are mandatory. <literal>name</literal> 
-            defines the name of your module and <literal>type</literal> 
-            whether it is a Win16 or Win32 module. Note that for Winelib 
-            you should only be using Win32 modules.
-        </para>
-
-        <programlisting>
-file    WINFILENAME
-        </programlisting>
-        <para>
-          This field is optional. It gives the name of the Windows file that 
-          is replaced by the builtin. <literal>&lt;name&gt;.DLL</literal> 
-          is assumed if none is given. This is important for kernel, which 
-          lives in the Windows file <filename>KRNL386.EXE</filename>.
-        </para>
-
-        <programlisting>
-heap    SIZE
-        </programlisting>
-        <para>
-          This field is optional and specific to Win16 modules. It defines 
-          the size of the module local heap. The default is no local heap.
-        </para>
-
-        <programlisting>
-mode    dll|cuiexe|guiexe
-        </programlisting>
-        <para>
-          This field is optional. It specifies specifies whether it is the 
-          spec file for a dll or the main exe. This is only valid for Win32 
-          spec files.
-        </para>
-
-        <programlisting>
 init    FUNCTION
         </programlisting>
         <para>
           This field is optional and specific to Win32 modules. It 
           specifies a function which will be called when the dll is loaded 
           or the executable started.
-        </para>
-
-        <programlisting>
-import  DLL
-        </programlisting>
-        <para>
-          This field can be present zero or more times.
-          Each instance names a dll that this module depends on (only for 
-          Win32 modules at the present).
         </para>
 
         <programlisting>
@@ -912,7 +839,7 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
         </itemizedlist>
         <para>
           It is for debug messages. If the parameter is OUT
-          it might not be initialized as thus it should not
+          it might not be initialized and thus it should not
           be printed as a string.
         </para>
         <para>
@@ -967,7 +894,9 @@ ORDINAL forward EXPORTNAME SYMBOLNAME
 
     <sect1 id="linking">
       <title id="linking.title">Linking it all together</title>
-      <!-- FIXME: This is outdated -->
+      <note><para>
+        FIXME:The following is not up-to-date.
+      </para></note>
       <para>
         To link an executable you need to link together: your object files, 
         the spec file, any Windows libraries that your application depends
