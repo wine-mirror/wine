@@ -1,7 +1,7 @@
 /*	DirectDraw driver for User-based primary surfaces
  *	with XF86VidMode mode switching in full-screen mode.
  *
- * Copyright 2000 TransGaming Technologies Inc.
+ * Copyright 2000-2001 TransGaming Technologies Inc.
  */
 
 #include "config.h"
@@ -373,7 +373,7 @@ static ICOM_VTABLE(IDirectDraw7) XVidMode_DirectDraw_VTable =
     User_DirectDraw_EnumDisplayModes,
     Main_DirectDraw_EnumSurfaces,
     Main_DirectDraw_FlipToGDISurface,
-    User_DirectDraw_GetCaps,
+    Main_DirectDraw_GetCaps,
     Main_DirectDraw_GetDisplayMode,
     Main_DirectDraw_GetFourCCCodes,
     Main_DirectDraw_GetGDISurface,

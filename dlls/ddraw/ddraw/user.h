@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies Inc. */
+/* Copyright 2000-2001 TransGaming Technologies Inc. */
 
 #ifndef WINE_DDRAW_DDRAW_USER_H_INCLUDED
 #define WINE_DDRAW_DDRAW_USER_H_INCLUDED
@@ -35,9 +35,6 @@ HRESULT WINAPI
 User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 				 LPDDSURFACEDESC2 pDDSD, LPVOID context,
 				 LPDDENUMMODESCALLBACK2 callback);
-HRESULT WINAPI
-User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
-			LPDDCAPS pHELCaps);
 HRESULT WINAPI
 User_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
 				    LPDDDEVICEIDENTIFIER2 pDDDI,

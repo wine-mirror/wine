@@ -411,7 +411,7 @@ static ICOM_VTABLE(IDirectDraw7) XF86DGA2_DirectDraw_VTable =
     User_DirectDraw_EnumDisplayModes,
     Main_DirectDraw_EnumSurfaces,
     Main_DirectDraw_FlipToGDISurface,
-    User_DirectDraw_GetCaps,
+    Main_DirectDraw_GetCaps,
     Main_DirectDraw_GetDisplayMode,
     Main_DirectDraw_GetFourCCCodes,
     Main_DirectDraw_GetGDISurface,

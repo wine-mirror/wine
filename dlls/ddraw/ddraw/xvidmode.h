@@ -1,4 +1,4 @@
-/* Copyright 2000 TransGaming Technologies, Inc. */
+/* Copyright 2000-2001 TransGaming Technologies, Inc. */
 #ifndef WINE_DDRAW_DDRAW_XVIDMODE_H_INCLUDED
 #define WINE_DDRAW_DDRAW_XVIDMODE_H_INCLUDED
 

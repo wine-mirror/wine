@@ -144,6 +144,45 @@ HRESULT User_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
 
     ICOM_INIT_INTERFACE(This, IDirectDraw7, User_DirectDraw_VTable);
 
+    /* capabilities */
+#define BLIT_CAPS (DDCAPS_BLT | DDCAPS_BLTCOLORFILL | DDCAPS_BLTDEPTHFILL \
+	  | DDCAPS_BLTSTRETCH | DDCAPS_CANBLTSYSMEM | DDCAPS_CANCLIP	  \
+	  | DDCAPS_CANCLIPSTRETCHED | DDCAPS_COLORKEY			  \
+	  | DDCAPS_COLORKEYHWASSIST)
+#define CKEY_CAPS (DDCKEYCAPS_DESTBLT | DDCKEYCAPS_SRCBLT)
+#define FX_CAPS (DDFXCAPS_BLTALPHA | DDFXCAPS_BLTMIRRORLEFTRIGHT	\
+		| DDFXCAPS_BLTMIRRORUPDOWN | DDFXCAPS_BLTROTATION90	\
+		| DDFXCAPS_BLTSHRINKX | DDFXCAPS_BLTSHRINKXN		\
+		| DDFXCAPS_BLTSHRINKY | DDFXCAPS_BLTSHRINKXN		\
+		| DDFXCAPS_BLTSTRETCHX | DDFXCAPS_BLTSTRETCHXN		\
+		| DDFXCAPS_BLTSTRETCHY | DDFXCAPS_BLTSTRETCHYN)
+    This->caps.dwCaps |= DDCAPS_GDI | DDCAPS_PALETTE | BLIT_CAPS;
+    This->caps.dwCaps2 |= DDCAPS2_CERTIFIED | DDCAPS2_NOPAGELOCKREQUIRED |
+			  DDCAPS2_PRIMARYGAMMA | DDCAPS2_WIDESURFACES;
+    This->caps.dwCKeyCaps |= CKEY_CAPS;
+    This->caps.dwFXCaps |= FX_CAPS;
+    This->caps.dwPalCaps |= DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE;
+    This->caps.dwVidMemTotal = 16*1024*1024;
+    This->caps.dwVidMemFree = 16*1024*1024;
+    This->caps.dwSVBCaps |= BLIT_CAPS;
+    This->caps.dwSVBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwSVBFXCaps |= FX_CAPS;
+    This->caps.dwVSBCaps |= BLIT_CAPS;
+    This->caps.dwVSBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwVSBFXCaps |= FX_CAPS;
+    This->caps.dwSSBCaps |= BLIT_CAPS;
+    This->caps.dwSSBCKeyCaps |= CKEY_CAPS;
+    This->caps.dwSSBFXCaps |= FX_CAPS;
+    This->caps.ddsCaps.dwCaps |= DDSCAPS_ALPHA | DDSCAPS_BACKBUFFER |
+				 DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER |
+				 DDSCAPS_OFFSCREENPLAIN | DDSCAPS_PALETTE |
+				 DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY |
+				 DDSCAPS_VIDEOMEMORY | DDSCAPS_VISIBLE;
+    This->caps.ddsOldCaps.dwCaps = This->caps.ddsCaps.dwCaps;
+#undef BLIT_CAPS
+#undef CKEY_CAPS
+#undef FX_CAPS
+
     return S_OK;
 }
 
@@ -322,6 +361,7 @@ User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
 /* EnumSurfaces: generic */
 /* FlipToGDISurface: ??? */
 
+#if 0
 HRESULT WINAPI
 User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 			LPDDCAPS pHELCaps)
@@ -441,6 +481,7 @@ User_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 
     return DD_OK;
 }
+#endif
 
 HRESULT WINAPI
 User_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
@@ -508,7 +549,7 @@ static ICOM_VTABLE(IDirectDraw7) User_DirectDraw_VTable =
     User_DirectDraw_EnumDisplayModes,
     Main_DirectDraw_EnumSurfaces,
     Main_DirectDraw_FlipToGDISurface,
-    User_DirectDraw_GetCaps,
+    Main_DirectDraw_GetCaps,
     Main_DirectDraw_GetDisplayMode,
     Main_DirectDraw_GetFourCCCodes,
     Main_DirectDraw_GetGDISurface,
