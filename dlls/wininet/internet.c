@@ -89,6 +89,7 @@ VOID INTERNET_ExecuteWork();
 DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
 DWORD dwNumThreads;
 DWORD dwNumIdleThreads;
+DWORD dwNumJobs;
 HANDLE hEventArray[2];
 #define hQuitEvent hEventArray[0]
 #define hWorkEvent hEventArray[1]
@@ -127,6 +128,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
             dwNumThreads = 0;
             dwNumIdleThreads = 0;
+	    dwNumJobs = 0;
 
         case DLL_THREAD_ATTACH:
 	    {
@@ -1674,6 +1676,10 @@ DWORD INTERNET_WorkerThreadFunc(LPVOID *lpvParam)
 
     while (1)
     {
+	if(dwNumJobs > 0) {
+	    INTERNET_ExecuteWork();
+	    continue;
+	}
         dwWaitRes = WaitForMultipleObjects(2, hEventArray, FALSE, MAX_IDLE_WORKER);
 
         if (dwWaitRes == WAIT_OBJECT_0 + 1)
@@ -1724,6 +1730,7 @@ BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
         LeaveCriticalSection(&csQueue);
 
 	bSuccess = TRUE;
+	InterlockedIncrement(&dwNumJobs);
     }
 
     return bSuccess;
@@ -1762,6 +1769,7 @@ BOOL INTERNET_GetWorkRequest(LPWORKREQUEST lpWorkRequest)
         memcpy(lpWorkRequest, lpRequest, sizeof(WORKREQUEST));
         HeapFree(GetProcessHeap(), 0, lpRequest);
 	bSuccess = TRUE;
+	InterlockedDecrement(&dwNumJobs);
     }
 
     return bSuccess;
@@ -1824,6 +1832,7 @@ VOID INTERNET_ExecuteWork()
 
     if (INTERNET_GetWorkRequest(&workRequest))
     {
+	TRACE("Got work %d\n", workRequest.asyncall);
 	switch (workRequest.asyncall)
 	{
             case FTPPUTFILEA:
