@@ -18,7 +18,8 @@ AC_SUBST(LIBEXT,"so")
 AC_ARG_ENABLE(win16, AC_HELP_STRING([--disable-win16],[do not include Win16 support]))
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
-AC_ARG_ENABLE(opengl,AC_HELP_STRING([--enable-opengl],[force usage of OpenGL even if the latter is thread-safe via pthread]))
+
+AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
@@ -245,7 +246,7 @@ then
     ) dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL
-    if test "x$enable_opengl" != "xno"
+    if test "x$with_opengl" != "xno"
     then
         if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so
         then
@@ -267,18 +268,7 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 	      )
             )
 
-	    dnl Check for the thread-safety of the OpenGL library
-	    AC_CACHE_CHECK([for thread-safe OpenGL version],
-			   wine_cv_opengl_version_threadsafe,
-              [saved_libs=$LIBS
-	       LIBS="$X_LIBS -lGL"
-	       AC_TRY_LINK([],[pthread_getspecific();],
-			      [wine_cv_opengl_version_threadsafe="yes"],
-			      [wine_cv_opengl_version_threadsafe="no"])
-	       LIBS=$saved_libs]
-	    )
-
-	    if test "$wine_cv_opengl_version_OK" = "yes" -a \( "$wine_cv_opengl_version_threadsafe" = "no" -o "x$enable_opengl" = "xyes" \)
+	    if test "$wine_cv_opengl_version_OK" = "yes"
             then
 		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
@@ -1582,23 +1572,6 @@ then
   echo
   echo "*** Warning: old Mesa headers detected. Wine will be built without Direct3D"
   echo "*** support. Consider upgrading your Mesa libraries (http://www.mesa3d.org/)."
-fi
-
-if test "$wine_cv_opengl_version_threadsafe" = "yes" -a "x$enable_opengl" = "x"
-then
-  echo
-  echo "*** Warning: the OpenGL version you have installed relies on libpthread for"
-  echo "*** thread-safety. To prevent crashes, OpenGL support has been disabled."
-  echo "*** A fix for glibc 2.1.3 that seems to work is included in this version of Wine,"
-  echo "*** start configure with '--enable-opengl' to force OpenGL support."
-fi
-
-if test "$wine_cv_opengl_version_threadsafe" = "yes" -a "x$enable_opengl" = "xyes"
-then
-  echo
-  echo "*** Warning: you explicitly linked in a thread-safe OpenGL version. If you"
-  echo "*** experience unusual crashes on DirectDraw games, try first to disable OpenGL"
-  echo "*** support before reporting bugs."
 fi
 
 if test "$wine_cv_msg_freetype" = "yes"
