@@ -581,12 +581,14 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             report (R_FATAL, "Could not reset environment: %d", errno);
 
         report (R_STATUS, "Starting up");
-        logname = run_tests (logname, tag);
-        if (report (R_ASK, MB_YESNO, "Do you want to submit the "
-                    "test results?") == IDYES)
-            if (!send_file (logname) && remove (logname))
-                report (R_WARNING, "Can't remove logfile: %d.", errno);
-        free (logname);
+        if (!logname) {
+            logname = run_tests (NULL, tag);
+            if (report (R_ASK, MB_YESNO, "Do you want to submit the "
+                        "test results?") == IDYES)
+                if (!send_file (logname) && remove (logname))
+                    report (R_WARNING, "Can't remove logfile: %d.", errno);
+            free (logname);
+        } else run_tests (logname, tag);
         report (R_STATUS, "Finished");
     }
     exit (0);
