@@ -72,7 +72,7 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 
 	    if (acmDriverOpen(&had, hadid, 0) == MMSYSERR_NOERROR) {
 		ACMFORMATDETAILSA	afd;
-		unsigned int		i, idx;
+               unsigned int            i, len;
 		MMRESULT		mmr;
 		char			buffer[ACMFORMATDETAILS_FORMAT_CHARS+16];
 
@@ -88,10 +88,9 @@ static BOOL CALLBACK MSACM_FillFormatTagsCB(HACMDRIVERID hadid,
 		    afd.dwFormatIndex = i;
 		    mmr = acmFormatDetailsA(had, &afd, ACM_FORMATDETAILSF_INDEX);
 		    if (mmr == MMSYSERR_NOERROR) {
-			strncpy(buffer, afd.szFormat, ACMFORMATTAGDETAILS_FORMATTAG_CHARS);
-			for (idx = strlen(buffer);
-			     idx < ACMFORMATTAGDETAILS_FORMATTAG_CHARS; idx++)
-			    buffer[idx] = ' ';
+                       lstrcpynA(buffer, afd.szFormat, ACMFORMATTAGDETAILS_FORMATTAG_CHARS + 1);
+                       len = strlen(buffer);
+                       memset(buffer+len, ' ', ACMFORMATTAGDETAILS_FORMATTAG_CHARS - len);
 			wsprintfA(buffer + ACMFORMATTAGDETAILS_FORMATTAG_CHARS,
 				  "%d Ko/s",
 				  (afd.pwfx->nAvgBytesPerSec + 512) / 1024);

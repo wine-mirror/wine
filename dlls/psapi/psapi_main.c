@@ -338,6 +338,7 @@ DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule,
 {
     WCHAR  tmp[MAX_PATH];
     WCHAR* ptr;
+    int    ptrlen;
 
     if(!lpBaseName || !nSize) {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -349,8 +350,9 @@ DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule,
         return 0;
     TRACE("%s\n", debugstr_w(tmp));
     if ((ptr = strrchrW(tmp, '\\')) != NULL) ptr++; else ptr = tmp;
-    strncpyW(lpBaseName, ptr, nSize);
-    return min(strlenW(ptr), nSize);
+    ptrlen = strlenW(ptr);
+    memcpy(lpBaseName, ptr, min(ptrlen+1,nSize) * sizeof(WCHAR));
+    return min(ptrlen, nSize);
 }
 
 /***********************************************************************

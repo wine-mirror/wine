@@ -163,7 +163,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
     /* Now this should take only a couple iterations at most. */
     for ( ; ; )
     {
-        strncpyW (str + *len_str, ELLIPSISW, len_ellipsis);
+        memcpy(str + *len_str, ELLIPSISW, len_ellipsis*sizeof(WCHAR));
 
         if (!GetTextExtentExPointW (hdc, str, *len_str + len_ellipsis, width,
                                     NULL, NULL, size)) break;
@@ -178,7 +178,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
 
     if (modstr)
     {
-        strncpyW (modstr, str, *len_str);
+        memcpy (modstr, str, *len_str * sizeof(WCHAR));
         *(str+*len_str) = '\0';
     }
 }
@@ -253,7 +253,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
 
     /* overlap-safe movement to the right */
     memmove (lastSlash+len_ellipsis, lastSlash, len_trailing * sizeof(WCHAR));
-    strncpyW (lastSlash, ELLIPSISW, len_ellipsis);
+    memcpy (lastSlash, ELLIPSISW, len_ellipsis*sizeof(WCHAR));
     len_trailing += len_ellipsis;
     /* From this point on lastSlash actually points to the ellipsis in front
      * of the last slash and len_trailing includes the ellipsis

@@ -354,16 +354,18 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	}
 	else if (flags & MSG_PEEK && peek_msg)
 	{
-	    if (len < strlen(peek_msg))
+	    size_t peek_msg_len = strlen(peek_msg);
+	    if (len < peek_msg_len)
 		FIXME("buffer isn't big enough. Do the expect us to wrap?\n");
-	    strncpy(buf, peek_msg, len);
-	    *recvd = (strlen(peek_msg) <= len ? strlen(peek_msg) : len);
+	    memcpy(buf, peek_msg, min(len,peek_msg_len+1));
+	    *recvd = min(len, peek_msg_len);
             return TRUE;
 	}
 	else if (peek_msg)
 	{
-	    strncpy(buf, peek_msg, len);
-	    peek_msg += *recvd = min(len, strlen(peek_msg));
+	    size_t peek_msg_len = strlen(peek_msg);
+	    memcpy(buf, peek_msg, min(len,peek_msg_len+1));
+	    peek_msg += *recvd = min(len, peek_msg_len);
 	    if (*peek_msg == '\0' || *(peek_msg - 1) == '\0')
 	    {
 		HeapFree(GetProcessHeap(), 0, peek_msg_mem);
@@ -383,7 +385,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 	    }
 	    else
 	    {
-		strncpy(peek_msg, buf, *recvd);
+		memcpy(peek_msg, buf, *recvd);
 		peek_msg[*recvd] = '\0';
 	    }
 	}
