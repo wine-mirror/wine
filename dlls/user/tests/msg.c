@@ -244,11 +244,44 @@ static const struct message WmCreateMaximizedChildSeq[] = {
     { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
     { 0 }
 };
+/* CreateWindow (for a child window, initially visible) */
+static const struct message WmCreateVisibleChildSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    /* child is inserted into parent's child list after WM_NCCREATE returns */
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_ERASEBKGND, sent|parent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
 /* ShowWindow(SW_SHOW) for a not visible child window */
 static const struct message WmShowChildSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ERASEBKGND, sent|parent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
+ * for a not visible child window
+ */
+static const struct message WmShowChildSeq_2[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_CHILDACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE)
+ * for a not visible child window
+ */
+static const struct message WmShowChildSeq_3[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { 0 }
 };
@@ -804,17 +837,24 @@ static void test_messages(void)
     DestroyWindow(hchild);
     flush_sequence();
 
-    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILDWINDOW,
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child");
+    DestroyWindow(hchild);
+    flush_sequence();
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
     ok_sequence(WmCreateChildSeq, "CreateWindow:child");
     
-    hchild2 = CreateWindowExA(0, "SimpleWindowClass", "Test child2", WS_CHILDWINDOW,
+    hchild2 = CreateWindowExA(0, "SimpleWindowClass", "Test child2", WS_CHILD,
                                100, 100, 50, 50, hparent, 0, 0, NULL);
     ok (hchild2 != 0, "Failed to create child2 window\n");
     flush_sequence();
 
-    hbutton = CreateWindowExA(0, "TestWindowClass", "Test button", WS_CHILDWINDOW,
+    hbutton = CreateWindowExA(0, "TestWindowClass", "Test button", WS_CHILD,
                               0, 100, 50, 50, hchild, 0, 0, NULL);
     ok (hbutton != 0, "Failed to create button window\n");
 
@@ -827,11 +867,22 @@ static void test_messages(void)
     /* test WM_SETREDRAW on a visible child window */
     test_WM_SETREDRAW(hchild);
 
-    SetFocus(hchild);
-    flush_sequence();
-
     MoveWindow(hchild, 10, 10, 20, 20, TRUE);
     ok_sequence(WmResizingChildWithMoveWindowSeq, "MoveWindow:child");
+
+    ShowWindow(hchild, SW_HIDE);
+    flush_sequence();
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
+    ok_sequence(WmShowChildSeq_2, "SetWindowPos:show_child_2");
+
+    ShowWindow(hchild, SW_HIDE);
+    flush_sequence();
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+    ok_sequence(WmShowChildSeq_3, "SetWindowPos:show_child_3");
+
+    /* DestroyWindow sequence below expects that a child has focus */
+    SetFocus(hchild);
+    flush_sequence();
 
     DestroyWindow(hchild);
     ok_sequence(WmDestroyChildSeq, "DestroyWindow:child");
@@ -855,13 +906,13 @@ static void test_messages(void)
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowVisiblePopupSeq, "CreateWindow:show_visible_popup");
+    ok_sequence(WmShowVisiblePopupSeq, "ShowWindow:show_visible_popup");
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmShowVisiblePopupSeq_2, "CreateWindow:show_visible_popup_2");
+    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-    ok_sequence(WmShowVisiblePopupSeq_3, "CreateWindow:show_visible_popup_3");
+    ok_sequence(WmShowVisiblePopupSeq_3, "SetWindowPos:show_visible_popup_3");
     DestroyWindow(hchild);
 
     /* this time add WS_VISIBLE for CreateWindowEx, but this fact actually
@@ -876,10 +927,10 @@ static void test_messages(void)
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowVisiblePopupSeq, "CreateWindow:show_visible_popup");
+    ok_sequence(WmShowVisiblePopupSeq, "ShowWindow:show_visible_popup");
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
-    ok_sequence(WmShowVisiblePopupSeq_2, "CreateWindow:show_visible_popup_2");
+    ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
     DestroyWindow(hchild);
 
     flush_sequence();
@@ -931,7 +982,7 @@ static void test_messages(void)
     hparent = CreateWindowExA(0, "TestWindowClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                               100, 100, 200, 200, 0, 0, 0, NULL);
     ok (hparent != 0, "Failed to create parent window\n");
-    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILDWINDOW | WS_VISIBLE,
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_VISIBLE,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
 
