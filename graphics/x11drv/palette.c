@@ -139,11 +139,11 @@ BOOL X11DRV_PALETTE_Init(void)
 		break;
 	    }
 	}
-	X11DRV_PALETTE_PaletteXColormap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
         break;
 
     case StaticGray:
-	X11DRV_PALETTE_PaletteXColormap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_Graymax = (1 << X11DRV_GetDepth())-1;
         break;
@@ -161,18 +161,18 @@ BOOL X11DRV_PALETTE_Init(void)
 	    for( white = X11DRV_DevCaps.sizePalette - 1; !(white & 1); white >>= 1 )
 	        monoPlane++;
     	    X11DRV_PALETTE_PaletteFlags = (white & mask) ? X11DRV_PALETTE_WHITESET : 0;
-	    X11DRV_PALETTE_PaletteXColormap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+            X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);  
 	    TSXFree(depths);
 	    break;
 	}
 	TSXFree(depths);
-        X11DRV_PALETTE_PaletteXColormap = DefaultColormapOfScreen( X11DRV_GetXScreen() );
+        X11DRV_PALETTE_PaletteXColormap = TSXCreateColormap(display, X11DRV_GetXRootWindow(), visual, AllocNone);
         X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_FIXED;
         X11DRV_PALETTE_ComputeShifts(visual->red_mask, &X11DRV_PALETTE_Redshift, &X11DRV_PALETTE_Redmax);
 	X11DRV_PALETTE_ComputeShifts(visual->green_mask, &X11DRV_PALETTE_Greenshift, &X11DRV_PALETTE_Greenmax);
         X11DRV_PALETTE_ComputeShifts(visual->blue_mask, &X11DRV_PALETTE_Blueshift, &X11DRV_PALETTE_Bluemax);
 	break;
-    }
+      }
     }
 
     TRACE(" visual class %i (%i)\n",  visual->class, monoPlane);

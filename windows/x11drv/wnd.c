@@ -349,17 +349,16 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CREATESTRUCTA *cs, BOOL bUnicode)
         if (cs->cx <= 0) cs->cx = 1;
         if (cs->cy <= 0) cs->cy = 1;
 
-
       ((X11DRV_WND_DATA *) wndPtr->pDriverData)->window = 
 	TSXCreateWindow( display, X11DRV_GetXRootWindow(), 
 			 cs->x, cs->y, cs->cx, cs->cy, 
-			 0, CopyFromParent, 
-			 InputOutput, CopyFromParent,
+			 0, screen_depth, 
+			 InputOutput, visual,
 			 CWEventMask | CWOverrideRedirect |
 			 CWColormap | CWCursor | CWSaveUnder |
 			 CWBackingStore | CWBitGravity, 
 			 &win_attr );
-      
+
       if(!(wGroupLeader = X11DRV_WND_GetXWindow(wndPtr)))
 	return FALSE;
 

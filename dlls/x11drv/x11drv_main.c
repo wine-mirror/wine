@@ -193,6 +193,37 @@ static void setup_options(void)
 
    
 /***********************************************************************
+ *		setup_opengl_visual
+ *
+ * Setup the default visual used for OpenGL and Direct3D, and the desktop
+ * window (if it exists).  If OpenGL isn't available, the visual is simply 
+ * set to the default visual for the display
+ */
+XVisualInfo *desktop_vi = NULL;
+#ifdef HAVE_OPENGL
+static void setup_opengl_visual( void )
+{
+    int err_base, evt_base;
+
+    /* In order to support OpenGL or D3D, we require a double-buffered 
+     * visual */
+    if (glXQueryExtension(display, &err_base, &evt_base) == True) {
+	  int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+	
+	  ENTER_GL();
+	  desktop_vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
+	  LEAVE_GL();
+    }
+
+    if (desktop_vi != NULL) {
+      visual       = desktop_vi->visual;
+      screen       = ScreenOfDisplay(display, desktop_vi->screen);
+      screen_depth = desktop_vi->depth;
+    }
+}
+#endif /* HAVE_OPENGL */    
+
+/***********************************************************************
  *		create_desktop
  *
  * Create the desktop window for the --desktop mode.
@@ -208,27 +239,6 @@ static void create_desktop( const char *geometry )
     XSetWindowAttributes win_attr;
     XTextProperty window_name;
     Atom XA_WM_DELETE_WINDOW;
-    /* Used to create the desktop window with a good visual */
-    XVisualInfo *vi = NULL;
-#ifdef HAVE_OPENGL
-    BOOL dblbuf_visual;
-    int err_base, evt_base;
-    
-    /* Get in wine.ini if the desktop window should have a double-buffered visual or not.
-       But first, test if OpenGL is even supported on the display ! */
-    if (glXQueryExtension(display, &err_base, &evt_base) == True) {
-      dblbuf_visual = PROFILE_GetWineIniBool( "x11drv", "DesktopDoubleBuffered", 0 );
-      if (dblbuf_visual)  {
-	int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-	
-	ENTER_GL();
-	vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
-	win_attr.colormap = XCreateColormap(display, RootWindow(display,vi->screen),
-					    vi->visual, AllocNone);
-	LEAVE_GL();
-      }
-    }
-#endif /* HAVE_OPENGL */    
 
     flags = TSXParseGeometry( geometry, &x, &y, &width, &height );
     screen_width  = width;
@@ -241,18 +251,17 @@ static void create_desktop( const char *geometry )
                           ButtonReleaseMask | EnterWindowMask;
     win_attr.cursor = TSXCreateFontCursor( display, XC_top_left_arrow );
 
-    if (vi != NULL) {
-      visual       = vi->visual;
-      screen       = ScreenOfDisplay(display, vi->screen);
-      screen_depth = vi->depth;
+    if (desktop_vi != NULL) {
+      win_attr.colormap = XCreateColormap(display, RootWindow(display,desktop_vi->screen),
+						desktop_vi->visual, AllocNone);
     }
     root_window = TSXCreateWindow( display,
-                                   (vi == NULL ? DefaultRootWindow(display) : RootWindow(display, vi->screen)),
+                                   (desktop_vi == NULL ? DefaultRootWindow(display) : RootWindow(display, desktop_vi->screen)),
                                    x, y, width, height, 0,
-                                   (vi == NULL ? CopyFromParent : vi->depth),
+                                   (desktop_vi == NULL ? CopyFromParent : desktop_vi->depth),
                                    InputOutput,
-                                   (vi == NULL ? CopyFromParent : vi->visual),
-                                   CWBackPixel | CWEventMask | CWCursor | (vi == NULL ? 0 : CWColormap),
+                                   (desktop_vi == NULL ? CopyFromParent : desktop_vi->visual),
+                                   CWBackPixel | CWEventMask | CWCursor | (desktop_vi == NULL ? 0 : CWColormap),
                                    &win_attr );
   
     /* Set window manager properties */
@@ -341,6 +350,11 @@ static void process_attach(void)
 	}
     }
     else screen_depth = DefaultDepthOfScreen( screen );
+
+    /* If OpenGL is available, change the default visual, etc as necessary */
+#ifdef HAVE_OPENGL
+    setup_opengl_visual();
+#endif /* HAVE_OPENGL */
 
     /* tell the libX11 that we will do input method handling ourselves
      * that keep libX11 from doing anything whith dead keys, allowing Wine

@@ -78,6 +78,8 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   X11DRV_PDEVICE *physDev;
   XVisualInfo *vis;
   Wine_GLContext *ret;
+  int num;
+  XVisualInfo template;
 
   TRACE("(%08x)\n", hdc);
 
@@ -88,8 +90,9 @@ HGLRC WINAPI wglCreateContext(HDC hdc) {
   
   physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-  /* First, get the visual for the choosen pixel format */
-  vis = physDev->visuals[physDev->current_pf - 1];
+  /* First, get the visual in use by the X11DRV */
+  template.visualid = XVisualIDFromVisual(X11DRV_GetVisual());
+  vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
 
   if (vis == NULL) {
     ERR("NULL visual !!!\n");
@@ -299,7 +302,7 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
       return ret->func;
     } else {
-      ERR("Extension defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n");
+      ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
       return NULL;
     }
   }
@@ -458,6 +461,8 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
 static void process_attach(void) {
+  XWindowAttributes win_attr;
+  Visual *rootVisual;
   int num;
   XVisualInfo template;
   XVisualInfo *vis = NULL;
@@ -468,7 +473,24 @@ static void process_attach(void) {
   }
   
   ENTER_GL();
-  template.visualid = XVisualIDFromVisual(visual);
+
+  /* Try to get the visual from the Root Window.  We can't use the standard (presumably
+     double buffered) X11DRV visual with the Root Window, since we don't know if the Root
+     Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal 
+     with mismatched visuals.  Note that the Root Window visual may not be double 
+     buffered, so apps actually attempting to render this way may flicker */
+  if (TSXGetWindowAttributes( display, X11DRV_GetXRootWindow(), &win_attr ))
+  {
+    rootVisual = win_attr.visual; 
+  }
+  else
+  {
+    /* Get the default visual, since we can't seem to get the attributes from the 
+       Root Window.  Let's hope that the Root Window Visual matches the DefaultVisual */
+    rootVisual = DefaultVisual( display, DefaultScreen(display) );
+  }
+
+  template.visualid = XVisualIDFromVisual(rootVisual);
   vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
   if (vis != NULL)        default_cx = glXCreateContext(display, vis, 0, GL_TRUE);
   if (default_cx != NULL) glXMakeCurrent(display, X11DRV_GetXRootWindow(), default_cx);
