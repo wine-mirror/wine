@@ -124,7 +124,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
     switch (dwRenderStateType) {
 
     case D3DRENDERSTATE_TEXTUREHANDLE: {    /*  1 */
-      LPDIRECT3DTEXTURE2 tex = (LPDIRECT3DTEXTURE2) dwRenderState;
+      IDirect3DTexture2Impl* tex = (IDirect3DTexture2Impl*) dwRenderState;
       
       if (tex == NULL) {
 	glBindTexture(GL_TEXTURE_2D, 0);

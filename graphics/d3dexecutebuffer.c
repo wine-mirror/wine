@@ -46,7 +46,7 @@ typedef struct {
   D3DVALUE v;
 } OGL_LVertex;
 
-static IDirect3DExecuteBuffer_VTable executebuffer_vtable;
+static ICOM_VTABLE(IDirect3DExecuteBuffer) executebuffer_vtable;
 
 /*******************************************************************************
  *				ExecuteBuffer static functions
@@ -169,18 +169,20 @@ void _dump_executedata(LPD3DEXECUTEDATA lpData) {
 static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 		    LPDIRECT3DDEVICE dev,
 		    LPDIRECT3DVIEWPORT vp) {
-  /* DWORD bs = lpBuff->desc.dwBufferSize; */
-  DWORD vs = lpBuff->data.dwVertexOffset;
-  /* DWORD vc = lpBuff->data.dwVertexCount; */
-  DWORD is = lpBuff->data.dwInstructionOffset;
-  /* DWORD il = lpBuff->data.dwInstructionLength; */
+  IDirect3DExecuteBufferImpl* ilpBuff=(IDirect3DExecuteBufferImpl*)lpBuff;
+  IDirect3DViewport2Impl* ivp=(IDirect3DViewport2Impl*)vp;
+  /* DWORD bs = ilpBuff->desc.dwBufferSize; */
+  DWORD vs = ilpBuff->data.dwVertexOffset;
+  /* DWORD vc = ilpBuff->data.dwVertexCount; */
+  DWORD is = ilpBuff->data.dwInstructionOffset;
+  /* DWORD il = ilpBuff->data.dwInstructionLength; */
   
-  void *instr = lpBuff->desc.lpData + is;
+  void *instr = ilpBuff->desc.lpData + is;
   OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) dev;
   
   TRACE(ddraw, "ExecuteData : \n");
   if (TRACE_ON(ddraw))
-  _dump_executedata(&(lpBuff->data));
+  _dump_executedata(&(ilpBuff->data));
   
   while (1) {
     LPD3DINSTRUCTION current = (LPD3DINSTRUCTION) instr;
@@ -213,13 +215,13 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	0.0, 0.0,  1.0, 1.0
       };
       
-      OGL_Vertex  *vx    = (OGL_Vertex  *) lpBuff->vertex_data;
-      OGL_LVertex *l_vx  = (OGL_LVertex *) lpBuff->vertex_data;
-      D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) lpBuff->vertex_data;
+      OGL_Vertex  *vx    = (OGL_Vertex  *) ilpBuff->vertex_data;
+      OGL_LVertex *l_vx  = (OGL_LVertex *) ilpBuff->vertex_data;
+      D3DTLVERTEX *tl_vx = (D3DTLVERTEX *) ilpBuff->vertex_data;
       
       TRACE(ddraw, "TRIANGLE         (%d)\n", count);
 
-      switch (lpBuff->vertex_type) {
+      switch (ilpBuff->vertex_type) {
       case D3DVT_VERTEX:
 	/* This time, there is lighting */
 	glEnable(GL_LIGHTING);
@@ -271,7 +273,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         
-        if (vp == NULL) {
+        if (ivp == NULL) {
           ERR(ddraw, "No current viewport !\n");
           /* Using standard values */
           height = 640.0;
@@ -279,10 +281,10 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
           minZ = -10.0;
           maxZ = 10.0;
         } else {
-          height = (GLdouble) vp->viewport.vp1.dwHeight;
-          width  = (GLdouble) vp->viewport.vp1.dwWidth;
-          minZ   = (GLdouble) vp->viewport.vp1.dvMinZ;
-          maxZ   = (GLdouble) vp->viewport.vp1.dvMaxZ;
+          height = (GLdouble) ivp->viewport.vp1.dwHeight;
+          width  = (GLdouble) ivp->viewport.vp1.dwWidth;
+          minZ   = (GLdouble) ivp->viewport.vp1.dvMinZ;
+          maxZ   = (GLdouble) ivp->viewport.vp1.dvMaxZ;
 
 	  if (minZ == maxZ) {
 	    /* I do not know why, but many Dx 3.0 games have minZ = maxZ = 0.0 */
@@ -299,7 +301,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	break;
       }
 
-      switch (lpBuff->vertex_type) {
+      switch (ilpBuff->vertex_type) {
       case D3DVT_VERTEX:
 	TRIANGLE_LOOP(DO_VERTEX);
 	break;
@@ -397,7 +399,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	/* Handle the state transform */
 	switch (ci->t.dlstLightStateType) {
 	case D3DLIGHTSTATE_MATERIAL: {
-	  LPDIRECT3DMATERIAL mat = (LPDIRECT3DMATERIAL) ci->v.dwArg[0];
+	  IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) ci->v.dwArg[0];
 	  TRACE(ddraw, "  MATERIAL\n");
 	  
 	  if (mat != NULL) {
@@ -522,14 +524,14 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	/* Enough for the moment */
 	if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
 	  int nb;
-	  D3DVERTEX  *src = ((LPD3DVERTEX)  (lpBuff->desc.lpData + vs)) + ci->wStart;
-	  OGL_Vertex *dst = ((OGL_Vertex *) (lpBuff->vertex_data)) + ci->wDest;
+	  D3DVERTEX  *src = ((LPD3DVERTEX)  (ilpBuff->desc.lpData + vs)) + ci->wStart;
+	  OGL_Vertex *dst = ((OGL_Vertex *) (ilpBuff->vertex_data)) + ci->wDest;
 	  D3DMATRIX *mat = odev->world_mat;
 
 	  TRACE(ddraw, "  World Matrix : (%p)\n", mat);
 	  dump_mat(mat);
 
-	  lpBuff->vertex_type = D3DVT_VERTEX;
+	  ilpBuff->vertex_type = D3DVT_VERTEX;
 	  
 	  for (nb = 0; nb < ci->dwCount; nb++) {
 	    /* For the moment, no normal transformation... */
@@ -551,14 +553,14 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	  }
 	} else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
 	  int nb;
-	  D3DLVERTEX *src  = ((LPD3DLVERTEX) (lpBuff->desc.lpData + vs)) + ci->wStart;
-	  OGL_LVertex *dst = ((OGL_LVertex *) (lpBuff->vertex_data)) + ci->wDest;
+	  D3DLVERTEX *src  = ((LPD3DLVERTEX) (ilpBuff->desc.lpData + vs)) + ci->wStart;
+	  OGL_LVertex *dst = ((OGL_LVertex *) (ilpBuff->vertex_data)) + ci->wDest;
 	  D3DMATRIX *mat = odev->world_mat;
 
 	  TRACE(ddraw, "  World Matrix : (%p)\n", mat);
 	  dump_mat(mat);
 
-	  lpBuff->vertex_type = D3DVT_LVERTEX;
+	  ilpBuff->vertex_type = D3DVT_LVERTEX;
 	  
 	  for (nb = 0; nb < ci->dwCount; nb++) {
 	    dst->c  = src->c.color;
@@ -576,10 +578,10 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 	    dst++;
 	  }
 	} else if (ci->dwFlags == D3DPROCESSVERTICES_COPY) {
-	  D3DTLVERTEX *src = ((LPD3DTLVERTEX) (lpBuff->desc.lpData + vs)) + ci->wStart;
-	  D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (lpBuff->vertex_data)) + ci->wDest;
+	  D3DTLVERTEX *src = ((LPD3DTLVERTEX) (ilpBuff->desc.lpData + vs)) + ci->wStart;
+	  D3DTLVERTEX *dst = ((LPD3DTLVERTEX) (ilpBuff->vertex_data)) + ci->wDest;
 
-	  lpBuff->vertex_type = D3DVT_TLVERTEX;
+	  ilpBuff->vertex_type = D3DVT_TLVERTEX;
 	  
 	  memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
 	} else {
@@ -611,7 +613,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       for (i = 0; i < count; i++) {
 	LPD3DBRANCH ci = (LPD3DBRANCH) instr;
 	
-	if ((lpBuff->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
+	if ((ilpBuff->data.dsStatus.dwStatus & ci->dwMask) == ci->dwValue) {
 	  if (!ci->bNegate) {
 	    TRACE(ddraw," Should branch to %ld\n", ci->dwOffset);
 	  }
@@ -638,7 +640,7 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
       for (i = 0; i < count; i++) {
 	LPD3DSTATUS ci = (LPD3DSTATUS) instr;
 	
-	lpBuff->data.dsStatus = *ci;
+	ilpBuff->data.dsStatus = *ci;
 	
 	instr += size;
       }
@@ -658,11 +660,11 @@ static void execute(LPDIRECT3DEXECUTEBUFFER lpBuff,
 /*******************************************************************************
  *				ExecuteBuffer Creation functions
  */
-LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(LPDIRECT3DDEVICE d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc)
+LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(IDirect3DDeviceImpl* d3ddev, LPD3DEXECUTEBUFFERDESC lpDesc)
 {
-  LPDIRECT3DEXECUTEBUFFER eb;
+  IDirect3DExecuteBufferImpl* eb;
   
-  eb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DExecuteBuffer));
+  eb = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DExecuteBufferImpl));
   eb->ref = 1;
   eb->lpvtbl = &executebuffer_vtable;
   eb->d3ddev = d3ddev;
@@ -693,97 +695,104 @@ LPDIRECT3DEXECUTEBUFFER d3dexecutebuffer_create(LPDIRECT3DDEVICE d3ddev, LPD3DEX
 
   eb->execute = execute;
   
-  return eb;
+  return (LPDIRECT3DEXECUTEBUFFER)eb;
 }
 
 /*******************************************************************************
- *				IDirect3DLight methods
+ *				IDirect3ExecuteBuffer methods
  */
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_QueryInterface(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_QueryInterface(LPDIRECT3DEXECUTEBUFFER iface,
 							    REFIID riid,
 							    LPVOID* ppvObj)
 {
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", this, xrefiid,ppvObj);
+  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
 
 
 
-static ULONG WINAPI IDirect3DExecuteBuffer_AddRef(LPDIRECT3DEXECUTEBUFFER this)
+static ULONG WINAPI IDirect3DExecuteBufferImpl_AddRef(LPDIRECT3DEXECUTEBUFFER iface)
 {
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
   
-  return ++(this->ref);
+  return ++(This->ref);
 }
 
 
 
-static ULONG WINAPI IDirect3DExecuteBuffer_Release(LPDIRECT3DEXECUTEBUFFER this)
+static ULONG WINAPI IDirect3DExecuteBufferImpl_Release(LPDIRECT3DEXECUTEBUFFER iface)
 {
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
-  if (!--(this->ref)) {
-    if ((this->desc.lpData != NULL) && this->need_free)
-      HeapFree(GetProcessHeap(),0,this->desc.lpData);
+  if (!--(This->ref)) {
+    if ((This->desc.lpData != NULL) && This->need_free)
+      HeapFree(GetProcessHeap(),0,This->desc.lpData);
 
-    if (this->vertex_data != NULL)
-      HeapFree(GetProcessHeap(),0,this->vertex_data);
+    if (This->vertex_data != NULL)
+      HeapFree(GetProcessHeap(),0,This->vertex_data);
 
-    HeapFree(GetProcessHeap(),0,this);
+    HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
   
-  return this->ref;
+  return This->ref;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_Initialize(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Initialize(LPDIRECT3DEXECUTEBUFFER iface,
 							LPDIRECT3DDEVICE lpDirect3DDevice,
 							LPD3DEXECUTEBUFFERDESC lpDesc)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lpDirect3DDevice, lpDesc);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lpDirect3DDevice, lpDesc);
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_Lock(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Lock(LPDIRECT3DEXECUTEBUFFER iface,
 						  LPD3DEXECUTEBUFFERDESC lpDesc)
 {
-  TRACE(ddraw, "(%p)->(%p)\n", this, lpDesc);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->(%p)\n", This, lpDesc);
 
   /* Copies the buffer description */
-  *lpDesc = this->desc;
+  *lpDesc = This->desc;
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_Unlock(LPDIRECT3DEXECUTEBUFFER this)
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Unlock(LPDIRECT3DEXECUTEBUFFER iface)
 {
-  TRACE(ddraw, "(%p)->()\n", this);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->()\n", This);
 
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_SetExecuteData(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_SetExecuteData(LPDIRECT3DEXECUTEBUFFER iface,
 							    LPD3DEXECUTEDATA lpData)
 {
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
   DWORD nbvert;
 
-  TRACE(ddraw, "(%p)->(%p)\n", this, lpData);
+  TRACE(ddraw, "(%p)->(%p)\n", This, lpData);
 
-  this->data = *lpData;
+  This->data = *lpData;
 
   /* Get the number of vertices in the execute buffer */
-  nbvert = this->data.dwVertexCount;
+  nbvert = This->data.dwVertexCount;
     
   /* Prepares the transformed vertex buffer */
-  if (this->vertex_data != NULL)
-    HeapFree(GetProcessHeap(), 0, this->vertex_data);
-  this->vertex_data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,nbvert * sizeof(OGL_Vertex));
+  if (This->vertex_data != NULL)
+    HeapFree(GetProcessHeap(), 0, This->vertex_data);
+  This->vertex_data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,nbvert * sizeof(OGL_Vertex));
 
 
   if (TRACE_ON(ddraw)) {
@@ -793,31 +802,34 @@ static HRESULT WINAPI IDirect3DExecuteBuffer_SetExecuteData(LPDIRECT3DEXECUTEBUF
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_GetExecuteData(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_GetExecuteData(LPDIRECT3DEXECUTEBUFFER iface,
 							    LPD3DEXECUTEDATA lpData)
 {
-  TRACE(ddraw, "(%p)->(%p): stub\n", this, lpData);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->(%p): stub\n", This, lpData);
 
-  *lpData = this->data;
+  *lpData = This->data;
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_Validate(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Validate(LPDIRECT3DEXECUTEBUFFER iface,
 						      LPDWORD lpdwOffset,
 						      LPD3DVALIDATECALLBACK lpFunc,
 						      LPVOID lpUserArg,
 						      DWORD dwReserved)
 {
-  TRACE(ddraw, "(%p)->(%p,%p,%p,%lu)\n", this, lpdwOffset, lpFunc, lpUserArg, dwReserved);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p,%p,%lu)\n", This, lpdwOffset, lpFunc, lpUserArg, dwReserved);
 
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DExecuteBuffer_Optimize(LPDIRECT3DEXECUTEBUFFER this,
+static HRESULT WINAPI IDirect3DExecuteBufferImpl_Optimize(LPDIRECT3DEXECUTEBUFFER iface,
 						      DWORD dwReserved)
 {
-  TRACE(ddraw, "(%p)->(%lu)\n", this, dwReserved);
+  ICOM_THIS(IDirect3DExecuteBufferImpl,iface);
+  TRACE(ddraw, "(%p)->(%lu)\n", This, dwReserved);
 
   return DD_OK;
 }
@@ -826,19 +838,19 @@ static HRESULT WINAPI IDirect3DExecuteBuffer_Optimize(LPDIRECT3DEXECUTEBUFFER th
 /*******************************************************************************
  *				IDirect3DLight VTable
  */
-static IDirect3DExecuteBuffer_VTable executebuffer_vtable = {
+static ICOM_VTABLE(IDirect3DExecuteBuffer) executebuffer_vtable = {
   /*** IUnknown methods ***/
-  IDirect3DExecuteBuffer_QueryInterface,
-  IDirect3DExecuteBuffer_AddRef,
-  IDirect3DExecuteBuffer_Release,
+  IDirect3DExecuteBufferImpl_QueryInterface,
+  IDirect3DExecuteBufferImpl_AddRef,
+  IDirect3DExecuteBufferImpl_Release,
   /*** IDirect3DExecuteBuffer methods ***/
-  IDirect3DExecuteBuffer_Initialize,
-  IDirect3DExecuteBuffer_Lock,
-  IDirect3DExecuteBuffer_Unlock,
-  IDirect3DExecuteBuffer_SetExecuteData,
-  IDirect3DExecuteBuffer_GetExecuteData,
-  IDirect3DExecuteBuffer_Validate,
-  IDirect3DExecuteBuffer_Optimize
+  IDirect3DExecuteBufferImpl_Initialize,
+  IDirect3DExecuteBufferImpl_Lock,
+  IDirect3DExecuteBufferImpl_Unlock,
+  IDirect3DExecuteBufferImpl_SetExecuteData,
+  IDirect3DExecuteBufferImpl_GetExecuteData,
+  IDirect3DExecuteBufferImpl_Validate,
+  IDirect3DExecuteBufferImpl_Optimize
 };
 
 #endif /* HAVE_MESAGL */

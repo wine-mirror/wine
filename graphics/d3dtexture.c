@@ -23,37 +23,37 @@
    texture memory) */
 #undef TEXTURE_SNOOP
 
-static IDirect3DTexture2_VTable texture2_vtable;
-static IDirect3DTexture_VTable texture_vtable;
+static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable;
+static ICOM_VTABLE(IDirect3DTexture) texture_vtable;
 
 /*******************************************************************************
  *				Texture2 Creation functions
  */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE4 surf)
+LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf)
 {
-  LPDIRECT3DTEXTURE2 mat;
+  IDirect3DTexture2Impl* tex;
   
-  mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2));
-  mat->ref = 1;
-  mat->lpvtbl = &texture2_vtable;
-  mat->surface = surf;
+  tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
+  tex->ref = 1;
+  tex->lpvtbl = &texture2_vtable;
+  tex->surface = surf;
   
-  return mat;
+  return (LPDIRECT3DTEXTURE2)tex;
 }
 
 /*******************************************************************************
  *				Texture Creation functions
  */
-LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf)
+LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf)
 {
-  LPDIRECT3DTEXTURE mat;
+  IDirect3DTexture2Impl* tex;
   
-  mat = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture));
-  mat->ref = 1;
-  mat->lpvtbl = (IDirect3DTexture2_VTable*) &texture_vtable;
-  mat->surface = surf;
+  tex = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirect3DTexture2Impl));
+  tex->ref = 1;
+  tex->lpvtbl = (ICOM_VTABLE(IDirect3DTexture2)*)&texture_vtable;
+  tex->surface = surf;
   
-  return mat;
+  return (LPDIRECT3DTEXTURE)tex;
 }
 
 
@@ -61,137 +61,149 @@ LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf)
  *				IDirect3DTexture2 methods
  */
 
-static HRESULT WINAPI IDirect3DTexture2_QueryInterface(LPDIRECT3DTEXTURE2 this,
+static HRESULT WINAPI IDirect3DTexture2Impl_QueryInterface(LPDIRECT3DTEXTURE2 iface,
 							REFIID riid,
 							LPVOID* ppvObj)
 {
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", this, xrefiid,ppvObj);
+  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
 
 
 
-static ULONG WINAPI IDirect3DTexture2_AddRef(LPDIRECT3DTEXTURE2 this)
+static ULONG WINAPI IDirect3DTexture2Impl_AddRef(LPDIRECT3DTEXTURE2 iface)
 {
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
   
-  return ++(this->ref);
+  return ++(This->ref);
 }
 
 
 
-static ULONG WINAPI IDirect3DTexture2_Release(LPDIRECT3DTEXTURE2 this)
+static ULONG WINAPI IDirect3DTexture2Impl_Release(LPDIRECT3DTEXTURE2 iface)
 {
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
-  if (!--(this->ref)) {
+  if (!--(This->ref)) {
     /* Delete texture from OpenGL */
-    glDeleteTextures(1, &(this->tex_name));
+    glDeleteTextures(1, &(This->tex_name));
     
     /* Release surface */
-    this->surface->lpvtbl->fnRelease(this->surface);
+    IDirectDrawSurface4_Release((IDirectDrawSurface4*)This->surface);
     
-    HeapFree(GetProcessHeap(),0,this);
+    HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
   
-  return this->ref;
+  return This->ref;
 }
 
 /*** IDirect3DTexture methods ***/
-static HRESULT WINAPI IDirect3DTexture_GetHandle(LPDIRECT3DTEXTURE this,
+static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
 						 LPDIRECT3DDEVICE lpD3DDevice,
 						 LPD3DTEXTUREHANDLE lpHandle)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lpD3DDevice, lpHandle);
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  IDirect3DDeviceImpl* ilpD3DDevice=(IDirect3DDeviceImpl*)lpD3DDevice;
+  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, ilpD3DDevice, lpHandle);
 
-  *lpHandle = (DWORD) this;
+  *lpHandle = (D3DTEXTUREHANDLE) This;
   
   /* Now, bind a new texture */
-  lpD3DDevice->set_context(lpD3DDevice);
-  this->D3Ddevice = (void *) lpD3DDevice;
-  if (this->tex_name == 0)
-    glGenTextures(1, &(this->tex_name));
+  ilpD3DDevice->set_context(ilpD3DDevice);
+  This->D3Ddevice = (void *) ilpD3DDevice;
+  if (This->tex_name == 0)
+    glGenTextures(1, &(This->tex_name));
 
-  TRACE(ddraw, "OpenGL texture handle is : %d\n", this->tex_name);
+  TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
   
   return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DTexture_Initialize(LPDIRECT3DTEXTURE this,
+static HRESULT WINAPI IDirect3DTextureImpl_Initialize(LPDIRECT3DTEXTURE iface,
 						  LPDIRECT3DDEVICE lpD3DDevice,
 						  LPDIRECTDRAWSURFACE lpSurface)
 {
-  TRACE(ddraw, "(%p)->(%p,%p)\n", this, lpD3DDevice, lpSurface);
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p)\n", This, lpD3DDevice, lpSurface);
 
   return DDERR_ALREADYINITIALIZED;
 }
 
-static HRESULT WINAPI IDirect3DTexture_Unload(LPDIRECT3DTEXTURE this)
+static HRESULT WINAPI IDirect3DTextureImpl_Unload(LPDIRECT3DTEXTURE iface)
 {
-  FIXME(ddraw, "(%p)->(): stub\n", this);
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  FIXME(ddraw, "(%p)->(): stub\n", This);
 
   return D3D_OK;
 }
 
 /*** IDirect3DTexture2 methods ***/
-static HRESULT WINAPI IDirect3DTexture2_GetHandle(LPDIRECT3DTEXTURE2 this,
+static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
 						  LPDIRECT3DDEVICE2 lpD3DDevice2,
 						  LPD3DTEXTUREHANDLE lpHandle)
 {
-  TRACE(ddraw, "(%p)->(%p,%p)\n", this, lpD3DDevice2, lpHandle);
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  IDirect3DDevice2Impl* ilpD3DDevice2=(IDirect3DDevice2Impl*)lpD3DDevice2;
+  TRACE(ddraw, "(%p)->(%p,%p)\n", This, ilpD3DDevice2, lpHandle);
 
   /* For 32 bits OSes, handles = pointers */
-  *lpHandle = (DWORD) this;
+  *lpHandle = (D3DTEXTUREHANDLE) This;
   
   /* Now, bind a new texture */
-  lpD3DDevice2->set_context(lpD3DDevice2);
-  this->D3Ddevice = (void *) lpD3DDevice2;
-  if (this->tex_name == 0)
-  glGenTextures(1, &(this->tex_name));
+  ilpD3DDevice2->set_context(ilpD3DDevice2);
+  This->D3Ddevice = (void *) ilpD3DDevice2;
+  if (This->tex_name == 0)
+  glGenTextures(1, &(This->tex_name));
 
-  TRACE(ddraw, "OpenGL texture handle is : %d\n", this->tex_name);
+  TRACE(ddraw, "OpenGL texture handle is : %d\n", This->tex_name);
   
   return D3D_OK;
 }
 
 /* Common methods */
-static HRESULT WINAPI IDirect3DTexture2_PaletteChanged(LPDIRECT3DTEXTURE2 this,
+static HRESULT WINAPI IDirect3DTexture2Impl_PaletteChanged(LPDIRECT3DTEXTURE2 iface,
 						       DWORD dwStart,
 						       DWORD dwCount)
 {
-  FIXME(ddraw, "(%p)->(%8ld,%8ld): stub\n", this, dwStart, dwCount);
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  FIXME(ddraw, "(%p)->(%8ld,%8ld): stub\n", This, dwStart, dwCount);
 
   return D3D_OK;
 }
 
 /* NOTE : if you experience crashes in this function, you must have a buggy
           version of Mesa. See the file d3dtexture.c for a cure */
-static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
+static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 					     LPDIRECT3DTEXTURE2 lpD3DTexture2)
 {
+  ICOM_THIS(IDirect3DTexture2Impl,iface);
+  IDirect3DTexture2Impl* ilpD3DTexture2=(IDirect3DTexture2Impl*)lpD3DTexture2;
   DDSURFACEDESC	*src_d, *dst_d;
-  TRACE(ddraw, "(%p)->(%p)\n", this, lpD3DTexture2);
+  TRACE(ddraw, "(%p)->(%p)\n", This, ilpD3DTexture2);
 
-  TRACE(ddraw, "Copied to surface %p, surface %p\n", this->surface, lpD3DTexture2->surface);
+  TRACE(ddraw, "Copied to surface %p, surface %p\n", This->surface, ilpD3DTexture2->surface);
 
   /* Suppress the ALLOCONLOAD flag */
-  this->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
+  This->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
   /* Copy one surface on the other */
-  dst_d = &(this->surface->s.surface_desc);
-  src_d = &(lpD3DTexture2->surface->s.surface_desc);
+  dst_d = &(This->surface->s.surface_desc);
+  src_d = &(ilpD3DTexture2->surface->s.surface_desc);
 
   if ((src_d->dwWidth != dst_d->dwWidth) || (src_d->dwHeight != dst_d->dwHeight)) {
     /* Should also check for same pixel format, lPitch, ... */
     ERR(ddraw, "Error in surface sizes\n");
     return D3DERR_TEXTURE_LOAD_FAILED;
   } else {
-    /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) this->D3Ddevice; */
+    /* LPDIRECT3DDEVICE2 d3dd = (LPDIRECT3DDEVICE2) This->D3Ddevice; */
     /* I should put a macro for the calculus of bpp */
     int bpp = (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
 	       1 /* 8 bit of palette index */:
@@ -206,15 +218,15 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
 
     /* If the GetHandle was not done, get the texture name here */
-    if (this->tex_name == 0)
-      glGenTextures(1, &(this->tex_name));
-    glBindTexture(GL_TEXTURE_2D, this->tex_name);
+    if (This->tex_name == 0)
+      glGenTextures(1, &(This->tex_name));
+    glBindTexture(GL_TEXTURE_2D, This->tex_name);
 
     if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
       /* ****************
 	 Paletted Texture
 	 **************** */
-      LPDIRECTDRAWPALETTE pal = this->surface->s.palette;
+      IDirectDrawPaletteImpl* pal = This->surface->s.palette;
       BYTE table[256][4];
       int i;
       
@@ -228,9 +240,9 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 	table[i][0] = pal->palents[i].peRed;
 	table[i][1] = pal->palents[i].peGreen;
 	table[i][2] = pal->palents[i].peBlue;
-	if ((this->surface->s.surface_desc.dwFlags & DDSD_CKSRCBLT) &&
-	    (i >= this->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) &&
-	    (i <= this->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
+	if ((This->surface->s.surface_desc.dwFlags & DDSD_CKSRCBLT) &&
+	    (i >= This->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue) &&
+	    (i <= This->surface->s.surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue))
 	  table[i][3] = 0x00;
 	else
 	table[i][3] = 0xFF;
@@ -242,7 +254,7 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 	char buf[32];
 	int x, y;
 	
-	sprintf(buf, "%d.pnm", this->tex_name);
+	sprintf(buf, "%d.pnm", This->tex_name);
 	f = fopen(buf, "wb");
 	fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
 	for (y = 0; y < src_d->dwHeight; y++) {
@@ -296,7 +308,7 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 	    char buf[32];
 	    int x, y;
 	    
-	    sprintf(buf, "%d.pnm", this->tex_name);
+	    sprintf(buf, "%d.pnm", This->tex_name);
 	    f = fopen(buf, "wb");
 	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
 	    for (y = 0; y < src_d->dwHeight; y++) {
@@ -325,7 +337,7 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 	    char buf[32];
 	    int x, y;
 	    
-	    sprintf(buf, "%d.pnm", this->tex_name);
+	    sprintf(buf, "%d.pnm", This->tex_name);
 	    f = fopen(buf, "wb");
 	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
 	    for (y = 0; y < src_d->dwHeight; y++) {
@@ -395,42 +407,42 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 /*******************************************************************************
  *				IDirect3DTexture2 VTable
  */
-static IDirect3DTexture2_VTable texture2_vtable = {
+static ICOM_VTABLE(IDirect3DTexture2) texture2_vtable = {
   /*** IUnknown methods ***/
-  IDirect3DTexture2_QueryInterface,
-  IDirect3DTexture2_AddRef,
-  IDirect3DTexture2_Release,
+  IDirect3DTexture2Impl_QueryInterface,
+  IDirect3DTexture2Impl_AddRef,
+  IDirect3DTexture2Impl_Release,
   /*** IDirect3DTexture methods ***/
-  IDirect3DTexture2_GetHandle,
-  IDirect3DTexture2_PaletteChanged,
-  IDirect3DTexture2_Load
+  IDirect3DTexture2Impl_GetHandle,
+  IDirect3DTexture2Impl_PaletteChanged,
+  IDirect3DTexture2Impl_Load
 };
 
 /*******************************************************************************
  *				IDirect3DTexture VTable
  */
-static IDirect3DTexture_VTable texture_vtable = {
+static ICOM_VTABLE(IDirect3DTexture) texture_vtable = {
   /*** IUnknown methods ***/
-  IDirect3DTexture2_QueryInterface,
-  IDirect3DTexture2_AddRef,
-  IDirect3DTexture2_Release,
+  IDirect3DTexture2Impl_QueryInterface,
+  IDirect3DTexture2Impl_AddRef,
+  IDirect3DTexture2Impl_Release,
   /*** IDirect3DTexture methods ***/
-  IDirect3DTexture_Initialize,
-  IDirect3DTexture_GetHandle,
-  IDirect3DTexture2_PaletteChanged,
-  IDirect3DTexture2_Load,
-  IDirect3DTexture_Unload
+  IDirect3DTextureImpl_Initialize,
+  IDirect3DTextureImpl_GetHandle,
+  IDirect3DTexture2Impl_PaletteChanged,
+  IDirect3DTexture2Impl_Load,
+  IDirect3DTextureImpl_Unload
 };
 
 #else /* HAVE_MESAGL */
 
 /* These function should never be called if MesaGL is not present */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE4 surf) {
+LPDIRECT3DTEXTURE2 d3dtexture2_create(IDirectDrawSurface4Impl* surf) {
   ERR(ddraw, "Should not be called...\n");
   return NULL;
 }
 
-LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf) {
+LPDIRECT3DTEXTURE d3dtexture_create(IDirectDrawSurface4Impl* surf) {
   ERR(ddraw, "Should not be called...\n");
   return NULL;
 }

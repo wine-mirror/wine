@@ -39,28 +39,28 @@ static GUID IID_D3DDEVICE_OpenGL = {
 };
 
 
-static IDirect3DDevice2_VTable OpenGL_vtable;
-static IDirect3DDevice_VTable OpenGL_vtable_dx3;
+static ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable;
+static ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3;
 
 /*******************************************************************************
  *				OpenGL static functions
  */
-static void set_context(LPDIRECT3DDEVICE2 this) {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+static void set_context(IDirect3DDevice2Impl* This) {
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
 
   OSMesaMakeCurrent(odev->ctx, odev->buffer,
 		    GL_UNSIGNED_BYTE,
-		    this->surface->s.surface_desc.dwWidth,
-		    this->surface->s.surface_desc.dwHeight);
+		    This->surface->s.surface_desc.dwWidth,
+		    This->surface->s.surface_desc.dwHeight);
 }
 
-static void set_context_dx3(LPDIRECT3DDEVICE this) {
-  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) this;
+static void set_context_dx3(IDirect3DDeviceImpl* This) {
+  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This;
 
   OSMesaMakeCurrent(odev->ctx, odev->buffer,
 		    GL_UNSIGNED_BYTE,
-		    this->surface->s.surface_desc.dwWidth,
-		    this->surface->s.surface_desc.dwHeight);
+		    This->surface->s.surface_desc.dwWidth,
+		    This->surface->s.surface_desc.dwHeight);
 }
 
 static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
@@ -132,7 +132,7 @@ int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   return cb((void*)&IID_D3DDEVICE2_OpenGL,"WINE Direct3D using OpenGL","direct3d",&d1,&d2,context);
 }
 
-int is_OpenGL(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE2 *device, LPDIRECT3D2 d3d)
+int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d)
 {
   if (/* Default device */
       (rguid == NULL) ||
@@ -193,48 +193,52 @@ int is_OpenGL(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE2 *de
  *				Common IDirect3DDevice2
  */
 
-static HRESULT WINAPI IDirect3DDevice2_QueryInterface(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_QueryInterface(LPDIRECT3DDEVICE2 iface,
 						      REFIID riid,
 						      LPVOID* ppvObj)
 {
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", this, xrefiid,ppvObj);
+  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
 
 
 
-static ULONG WINAPI IDirect3DDevice2_AddRef(LPDIRECT3DDEVICE2 this)
+static ULONG WINAPI IDirect3DDevice2Impl_AddRef(LPDIRECT3DDEVICE2 iface)
 {
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
   
-  return ++(this->ref);
+  return ++(This->ref);
 }
 
 
 
-static ULONG WINAPI IDirect3DDevice2_Release(LPDIRECT3DDEVICE2 this)
+static ULONG WINAPI IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
 {
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
-  if (!--(this->ref)) {
-    HeapFree(GetProcessHeap(),0,this);
+  if (!--(This->ref)) {
+    HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
   
-  return this->ref;
+  return This->ref;
 }
 
 
 /*** IDirect3DDevice2 methods ***/
-static HRESULT WINAPI IDirect3DDevice2_GetCaps(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetCaps(LPDIRECT3DDEVICE2 iface,
 					       LPD3DDEVICEDESC lpdescsoft,
 					       LPD3DDEVICEDESC lpdeschard)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lpdescsoft, lpdeschard);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lpdescsoft, lpdeschard);
   
   fill_opengl_caps(lpdescsoft, lpdeschard);
   
@@ -243,51 +247,57 @@ static HRESULT WINAPI IDirect3DDevice2_GetCaps(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SwapTextureHandles(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SwapTextureHandles(LPDIRECT3DDEVICE2 iface,
 							  LPDIRECT3DTEXTURE2 lptex1,
 							  LPDIRECT3DTEXTURE2 lptex2)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, lptex1, lptex2);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, lptex1, lptex2);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetStats(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetStats(LPDIRECT3DDEVICE2 iface,
 						LPD3DSTATS lpstats)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpstats);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpstats);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_AddViewport(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_AddViewport(LPDIRECT3DDEVICE2 iface,
 						   LPDIRECT3DVIEWPORT2 lpvp)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvp);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, ilpvp);
   
   /* Adds this viewport to the viewport list */
-  lpvp->next = this->viewport_list;
-  this->viewport_list = lpvp;
+  ilpvp->next = This->viewport_list;
+  This->viewport_list = ilpvp;
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_DeleteViewport(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_DeleteViewport(LPDIRECT3DDEVICE2 iface,
 						      LPDIRECT3DVIEWPORT2 lpvp)
 {
-  LPDIRECT3DVIEWPORT2 cur, prev;
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvp);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  IDirect3DViewport2Impl *cur, *prev;
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpvp);
   
   /* Finds this viewport in the list */
   prev = NULL;
-  cur = this->viewport_list;
-  while ((cur != NULL) && (cur != lpvp)) {
+  cur = This->viewport_list;
+  while ((cur != NULL) && (cur != ilpvp)) {
     prev = cur;
     cur = cur->next;
   }
@@ -296,7 +306,7 @@ static HRESULT WINAPI IDirect3DDevice2_DeleteViewport(LPDIRECT3DDEVICE2 this,
   
   /* And remove it */
   if (prev == NULL)
-    this->viewport_list = cur->next;
+    This->viewport_list = cur->next;
   else
     prev->next = cur->next;
   
@@ -305,28 +315,31 @@ static HRESULT WINAPI IDirect3DDevice2_DeleteViewport(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_NextViewport(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_NextViewport(LPDIRECT3DDEVICE2 iface,
 						    LPDIRECT3DVIEWPORT2 lpvp,
 						    LPDIRECT3DVIEWPORT2* lplpvp,
 						    DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%p,%p,%08lx): stub\n", this, lpvp, lpvp, dwFlags);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  IDirect3DViewport2Impl** ilplpvp=(IDirect3DViewport2Impl**)lplpvp;
+  FIXME(ddraw, "(%p)->(%p,%p,%08lx): stub\n", This, lpvp, lpvp, dwFlags);
   
   switch (dwFlags) {
   case D3DNEXT_NEXT:
-    *lplpvp = lpvp->next;
+    *ilplpvp = ilpvp->next;
     break;
     
   case D3DNEXT_HEAD:
-    *lplpvp = this->viewport_list;
+    *ilplpvp = This->viewport_list;
     break;
     
   case D3DNEXT_TAIL:
-    lpvp = this->viewport_list;
-    while (lpvp->next != NULL)
-      lpvp = lpvp->next;
+    ilpvp = This->viewport_list;
+    while (ilpvp->next != NULL)
+      ilpvp = ilpvp->next;
     
-    *lplpvp = lpvp;
+    *ilplpvp = ilpvp;
     break;
     
   default:
@@ -428,22 +441,24 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice2_EnumTextureFormats(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_EnumTextureFormats(LPDIRECT3DDEVICE2 iface,
 							  LPD3DENUMTEXTUREFORMATSCALLBACK cb,
 							  LPVOID context)
 {
-  FIXME(ddraw, "(%p)->(%p,%p): stub\n", this, cb, context);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p,%p): stub\n", This, cb, context);
   
   return enum_texture_format_OpenGL(cb, context);
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_BeginScene(LPDIRECT3DDEVICE2 this)
+static HRESULT WINAPI IDirect3DDevice2Impl_BeginScene(LPDIRECT3DDEVICE2 iface)
 {
-  /* OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this; */
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  /* OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This; */
   
-  FIXME(ddraw, "(%p)->(): stub\n", this);
+  FIXME(ddraw, "(%p)->(): stub\n", This);
   
   /* Here, we should get the DDraw surface and 'copy it' to the
      OpenGL surface.... */
@@ -453,20 +468,21 @@ static HRESULT WINAPI IDirect3DDevice2_BeginScene(LPDIRECT3DDEVICE2 this)
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_EndScene(LPDIRECT3DDEVICE2 this)
+static HRESULT WINAPI IDirect3DDevice2Impl_EndScene(LPDIRECT3DDEVICE2 iface)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
-  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) this->surface;
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
+  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
   DDSURFACEDESC sdesc;
   int x,y;
   unsigned char *src;
   unsigned short *dest;
   
-  FIXME(ddraw, "(%p)->(): stub\n", this);
+  FIXME(ddraw, "(%p)->(): stub\n", This);
 
   /* Here we copy back the OpenGL scene to the the DDraw surface */
   /* First, lock the surface */
-  surf->lpvtbl->fnLock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
+  IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
 
   /* The copy the OpenGL buffer to this surface */
   
@@ -493,18 +509,19 @@ static HRESULT WINAPI IDirect3DDevice2_EndScene(LPDIRECT3DDEVICE2 this)
   }
 
   /* Unlock the surface */
-  surf->lpvtbl->fnUnlock(surf,sdesc.y.lpSurface);
+  IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetDirect3D(LPDIRECT3DDEVICE2 this, LPDIRECT3D2 *lpd3d2)
+static HRESULT WINAPI IDirect3DDevice2Impl_GetDirect3D(LPDIRECT3DDEVICE2 iface, LPDIRECT3D2 *lpd3d2)
 {
-  TRACE(ddraw, "(%p)->(%p): stub\n", this, lpd3d2);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  TRACE(ddraw, "(%p)->(%p): stub\n", This, lpd3d2);
   
-  *lpd3d2 = this->d3d;
+  *lpd3d2 = (LPDIRECT3D2)This->d3d;
   
   return DD_OK;
 }
@@ -512,112 +529,122 @@ static HRESULT WINAPI IDirect3DDevice2_GetDirect3D(LPDIRECT3DDEVICE2 this, LPDIR
 
 
 /*** DrawPrimitive API ***/
-static HRESULT WINAPI IDirect3DDevice2_SetCurrentViewport(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetCurrentViewport(LPDIRECT3DDEVICE2 iface,
 							  LPDIRECT3DVIEWPORT2 lpvp)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvp);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, ilpvp);
   
   /* Should check if the viewport was added or not */
   
   /* Set this viewport as the current viewport */
-  this->current_viewport = lpvp;
+  This->current_viewport = ilpvp;
   
   /* Activate this viewport */
-  lpvp->device.active_device2 = this;
-  lpvp->activate(lpvp);
+  ilpvp->device.active_device2 = This;
+  ilpvp->activate(ilpvp);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetCurrentViewport(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetCurrentViewport(LPDIRECT3DDEVICE2 iface,
 							  LPDIRECT3DVIEWPORT2 *lplpvp)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lplpvp);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lplpvp);
   
   /* Returns the current viewport */
-  *lplpvp = this->current_viewport;
+  *lplpvp = (LPDIRECT3DVIEWPORT2)This->current_viewport;
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SetRenderTarget(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetRenderTarget(LPDIRECT3DDEVICE2 iface,
 						       LPDIRECTDRAWSURFACE lpdds,
 						       DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%p,%08lx): stub\n", this, lpdds, dwFlags);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p,%08lx): stub\n", This, lpdds, dwFlags);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetRenderTarget(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetRenderTarget(LPDIRECT3DDEVICE2 iface,
 						       LPDIRECTDRAWSURFACE *lplpdds)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lplpdds);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lplpdds);
   
   /* Returns the current rendering target (the surface on wich we render) */
-  *lplpdds = this->surface;
+  *lplpdds = (LPDIRECTDRAWSURFACE)This->surface;
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_Begin(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_Begin(LPDIRECT3DDEVICE2 iface,
 					     D3DPRIMITIVETYPE d3dp,
 					     D3DVERTEXTYPE d3dv,
 					     DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%d,%d,%08lx): stub\n", this, d3dp, d3dv, dwFlags);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%d,%08lx): stub\n", This, d3dp, d3dv, dwFlags);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_BeginIndexed(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_BeginIndexed(LPDIRECT3DDEVICE2 iface,
 						    D3DPRIMITIVETYPE d3dp,
 						    D3DVERTEXTYPE d3dv,
 						    LPVOID lpvert,
 						    DWORD numvert,
 						    DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", this, d3dp, d3dv, lpvert, numvert, dwFlags);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvert, numvert, dwFlags);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_Vertex(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_Vertex(LPDIRECT3DDEVICE2 iface,
 					      LPVOID lpvert)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvert);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpvert);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_Index(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_Index(LPDIRECT3DDEVICE2 iface,
 					     WORD index)
 {
-  FIXME(ddraw, "(%p)->(%d): stub\n", this, index);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d): stub\n", This, index);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_End(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_End(LPDIRECT3DDEVICE2 iface,
 					   DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%08lx): stub\n", this, dwFlags);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%08lx): stub\n", This, dwFlags);
   
   return DD_OK;
 }
@@ -625,24 +652,26 @@ static HRESULT WINAPI IDirect3DDevice2_End(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetRenderState(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetRenderState(LPDIRECT3DDEVICE2 iface,
 						      D3DRENDERSTATETYPE d3drs,
 						      LPDWORD lprstate)
 {
-  FIXME(ddraw, "(%p)->(%d,%p): stub\n", this, d3drs, lprstate);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3drs, lprstate);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SetRenderState(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetRenderState(LPDIRECT3DDEVICE2 iface,
 						      D3DRENDERSTATETYPE dwRenderStateType,
 						      DWORD dwRenderState)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
 
-  TRACE(ddraw, "(%p)->(%d,%ld)\n", this, dwRenderStateType, dwRenderState);
+  TRACE(ddraw, "(%p)->(%d,%ld)\n", This, dwRenderStateType, dwRenderState);
   
   /* Call the render state functions */
   set_render_state(dwRenderStateType, dwRenderState, &(odev->rs));
@@ -652,26 +681,28 @@ static HRESULT WINAPI IDirect3DDevice2_SetRenderState(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetLightState(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetLightState(LPDIRECT3DDEVICE2 iface,
 						     D3DLIGHTSTATETYPE d3dls,
 						     LPDWORD lplstate)
 {
-  FIXME(ddraw, "(%p)->(%d,%p): stub\n", this, d3dls, lplstate);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3dls, lplstate);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SetLightState(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetLightState(LPDIRECT3DDEVICE2 iface,
 						     D3DLIGHTSTATETYPE dwLightStateType,
 						     DWORD dwLightState)
 {
-  FIXME(ddraw, "(%p)->(%d,%08lx): stub\n", this, dwLightStateType, dwLightState);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%08lx): stub\n", This, dwLightStateType, dwLightState);
   
   switch (dwLightStateType) {
   case D3DLIGHTSTATE_MATERIAL: {  /* 1 */
-    LPDIRECT3DMATERIAL2 mat = (LPDIRECT3DMATERIAL2) dwLightState;
+    IDirect3DMaterial2Impl* mat = (IDirect3DMaterial2Impl*) dwLightState;
     
     if (mat != NULL) {
       mat->activate(mat);
@@ -715,13 +746,14 @@ static HRESULT WINAPI IDirect3DDevice2_SetLightState(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SetTransform(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetTransform(LPDIRECT3DDEVICE2 iface,
 						    D3DTRANSFORMSTATETYPE d3dts,
 						    LPD3DMATRIX lpmatrix)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
   
-  FIXME(ddraw, "(%p)->(%d,%p): stub\n", this, d3dts, lpmatrix);
+  FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3dts, lpmatrix);
   
   /* Using a trial and failure approach, I found that the order of 
      Direct3D transformations that works best is :
@@ -784,22 +816,24 @@ static HRESULT WINAPI IDirect3DDevice2_SetTransform(LPDIRECT3DDEVICE2 this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetTransform(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetTransform(LPDIRECT3DDEVICE2 iface,
 						    D3DTRANSFORMSTATETYPE d3dts,
 						    LPD3DMATRIX lpmatrix)
 {
-  FIXME(ddraw, "(%p)->(%d,%p): stub\n", this, d3dts, lpmatrix);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3dts, lpmatrix);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_MultiplyTransform(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_MultiplyTransform(LPDIRECT3DDEVICE2 iface,
 							 D3DTRANSFORMSTATETYPE d3dts,
 							 LPD3DMATRIX lpmatrix)
 {
-  FIXME(ddraw, "(%p)->(%d,%p): stub\n", this, d3dts, lpmatrix);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%d,%p): stub\n", This, d3dts, lpmatrix);
   
   return DD_OK;
 }
@@ -840,7 +874,7 @@ static HRESULT WINAPI IDirect3DDevice2_MultiplyTransform(LPDIRECT3DDEVICE2 this,
       glMatrixMode(GL_PROJECTION);						\
       glLoadIdentity();								\
 										\
-      if (this->current_viewport == NULL) {					\
+      if (This->current_viewport == NULL) {					\
 	ERR(ddraw, "No current viewport !\n");					\
 	/* Using standard values */						\
 	height = 640.0;								\
@@ -848,16 +882,16 @@ static HRESULT WINAPI IDirect3DDevice2_MultiplyTransform(LPDIRECT3DDEVICE2 this,
 	minZ = -10.0;								\
 	maxZ = 10.0;								\
       } else {									\
-	if (this->current_viewport->use_vp2) {					\
-	  height = (GLdouble) this->current_viewport->viewport.vp2.dwHeight;	\
-	  width  = (GLdouble) this->current_viewport->viewport.vp2.dwWidth;	\
-	  minZ   = (GLdouble) this->current_viewport->viewport.vp2.dvMinZ;	\
-	  maxZ   = (GLdouble) this->current_viewport->viewport.vp2.dvMaxZ;	\
+	if (This->current_viewport->use_vp2) {					\
+	  height = (GLdouble) This->current_viewport->viewport.vp2.dwHeight;	\
+	  width  = (GLdouble) This->current_viewport->viewport.vp2.dwWidth;	\
+	  minZ   = (GLdouble) This->current_viewport->viewport.vp2.dvMinZ;	\
+	  maxZ   = (GLdouble) This->current_viewport->viewport.vp2.dvMaxZ;	\
 	} else {								\
-	  height = (GLdouble) this->current_viewport->viewport.vp1.dwHeight;	\
-	  width  = (GLdouble) this->current_viewport->viewport.vp1.dwWidth;	\
-	  minZ   = (GLdouble) this->current_viewport->viewport.vp1.dvMinZ;	\
-	  maxZ   = (GLdouble) this->current_viewport->viewport.vp1.dvMaxZ;	\
+	  height = (GLdouble) This->current_viewport->viewport.vp1.dwHeight;	\
+	  width  = (GLdouble) This->current_viewport->viewport.vp1.dwWidth;	\
+	  minZ   = (GLdouble) This->current_viewport->viewport.vp1.dvMinZ;	\
+	  maxZ   = (GLdouble) This->current_viewport->viewport.vp1.dvMaxZ;	\
 	}									\
       }										\
 										\
@@ -965,17 +999,18 @@ static HRESULT WINAPI IDirect3DDevice2_MultiplyTransform(LPDIRECT3DDEVICE2 this,
   TRACE(ddraw, "End\n");
 
 
-static HRESULT WINAPI IDirect3DDevice2_DrawPrimitive(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_DrawPrimitive(LPDIRECT3DDEVICE2 iface,
 						     D3DPRIMITIVETYPE d3dp,
 						     D3DVERTEXTYPE d3dv,
 						     LPVOID lpvertex,
 						     DWORD vertcount,
 						     DWORD dwFlags)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
   int vx_index;
   
-  TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", this, d3dp, d3dv, lpvertex, vertcount, dwFlags);
+  TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
   DRAW_PRIMITIVE(vertcount, vx_index);
     
@@ -984,7 +1019,7 @@ static HRESULT WINAPI IDirect3DDevice2_DrawPrimitive(LPDIRECT3DDEVICE2 this,
     
 
       
-static HRESULT WINAPI IDirect3DDevice2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 iface,
 							    D3DPRIMITIVETYPE d3dp,
 							    D3DVERTEXTYPE d3dv,
 							    LPVOID lpvertex,
@@ -993,10 +1028,11 @@ static HRESULT WINAPI IDirect3DDevice2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 th
 							    DWORD indexcount,
 							    DWORD dwFlags)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) This;
   int vx_index;
   
-  TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", this, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
+  TRACE(ddraw, "(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
   
   DRAW_PRIMITIVE(indexcount, lpindexes[vx_index]);
   
@@ -1005,20 +1041,22 @@ static HRESULT WINAPI IDirect3DDevice2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 th
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_SetClipStatus(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_SetClipStatus(LPDIRECT3DDEVICE2 iface,
 						     LPD3DCLIPSTATUS lpcs)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpcs);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpcs);
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice2_GetClipStatus(LPDIRECT3DDEVICE2 this,
+static HRESULT WINAPI IDirect3DDevice2Impl_GetClipStatus(LPDIRECT3DDEVICE2 iface,
 						     LPD3DCLIPSTATUS lpcs)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpcs);
+  ICOM_THIS(IDirect3DDevice2Impl,iface);
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpcs);
   
   return DD_OK;
 }
@@ -1033,48 +1071,48 @@ static HRESULT WINAPI IDirect3DDevice2_GetClipStatus(LPDIRECT3DDEVICE2 this,
  *				OpenGL-specific VTable
  */
 
-static IDirect3DDevice2_VTable OpenGL_vtable = {
-  IDirect3DDevice2_QueryInterface,
-  IDirect3DDevice2_AddRef,
-  IDirect3DDevice2_Release,
+static ICOM_VTABLE(IDirect3DDevice2) OpenGL_vtable = {
+  IDirect3DDevice2Impl_QueryInterface,
+  IDirect3DDevice2Impl_AddRef,
+  IDirect3DDevice2Impl_Release,
   /*** IDirect3DDevice2 methods ***/
-  IDirect3DDevice2_GetCaps,
-  IDirect3DDevice2_SwapTextureHandles,
-  IDirect3DDevice2_GetStats,
-  IDirect3DDevice2_AddViewport,
-  IDirect3DDevice2_DeleteViewport,
-  IDirect3DDevice2_NextViewport,
-  IDirect3DDevice2_EnumTextureFormats,
-  IDirect3DDevice2_BeginScene,
-  IDirect3DDevice2_EndScene,
-  IDirect3DDevice2_GetDirect3D,
+  IDirect3DDevice2Impl_GetCaps,
+  IDirect3DDevice2Impl_SwapTextureHandles,
+  IDirect3DDevice2Impl_GetStats,
+  IDirect3DDevice2Impl_AddViewport,
+  IDirect3DDevice2Impl_DeleteViewport,
+  IDirect3DDevice2Impl_NextViewport,
+  IDirect3DDevice2Impl_EnumTextureFormats,
+  IDirect3DDevice2Impl_BeginScene,
+  IDirect3DDevice2Impl_EndScene,
+  IDirect3DDevice2Impl_GetDirect3D,
   
   /*** DrawPrimitive API ***/
-  IDirect3DDevice2_SetCurrentViewport,
-  IDirect3DDevice2_GetCurrentViewport,
+  IDirect3DDevice2Impl_SetCurrentViewport,
+  IDirect3DDevice2Impl_GetCurrentViewport,
   
-  IDirect3DDevice2_SetRenderTarget,
-  IDirect3DDevice2_GetRenderTarget,
+  IDirect3DDevice2Impl_SetRenderTarget,
+  IDirect3DDevice2Impl_GetRenderTarget,
   
-  IDirect3DDevice2_Begin,
-  IDirect3DDevice2_BeginIndexed,
-  IDirect3DDevice2_Vertex,
-  IDirect3DDevice2_Index,
-  IDirect3DDevice2_End,
+  IDirect3DDevice2Impl_Begin,
+  IDirect3DDevice2Impl_BeginIndexed,
+  IDirect3DDevice2Impl_Vertex,
+  IDirect3DDevice2Impl_Index,
+  IDirect3DDevice2Impl_End,
   
-  IDirect3DDevice2_GetRenderState,
-  IDirect3DDevice2_SetRenderState,
-  IDirect3DDevice2_GetLightState,
-  IDirect3DDevice2_SetLightState,
-  IDirect3DDevice2_SetTransform,
-  IDirect3DDevice2_GetTransform,
-  IDirect3DDevice2_MultiplyTransform,
+  IDirect3DDevice2Impl_GetRenderState,
+  IDirect3DDevice2Impl_SetRenderState,
+  IDirect3DDevice2Impl_GetLightState,
+  IDirect3DDevice2Impl_SetLightState,
+  IDirect3DDevice2Impl_SetTransform,
+  IDirect3DDevice2Impl_GetTransform,
+  IDirect3DDevice2Impl_MultiplyTransform,
   
-  IDirect3DDevice2_DrawPrimitive,
-  IDirect3DDevice2_DrawIndexedPrimitive,
+  IDirect3DDevice2Impl_DrawPrimitive,
+  IDirect3DDevice2Impl_DrawIndexedPrimitive,
   
-  IDirect3DDevice2_SetClipStatus,
-  IDirect3DDevice2_GetClipStatus,
+  IDirect3DDevice2Impl_SetClipStatus,
+  IDirect3DDevice2Impl_GetClipStatus,
 };
 
 /*******************************************************************************
@@ -1097,7 +1135,7 @@ float id_mat[16] = {
   0.0, 0.0, 0.0, 1.0
 };
 
-int is_OpenGL_dx3(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE *device)
+int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDeviceImpl** device)
 {
   if (!memcmp(&IID_D3DDEVICE_OpenGL,rguid,sizeof(IID_D3DDEVICE_OpenGL))) {
     OpenGL_IDirect3DDevice *odev;
@@ -1145,57 +1183,62 @@ int is_OpenGL_dx3(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE 
 /*******************************************************************************
  *				Direct3DDevice
  */
-static HRESULT WINAPI IDirect3DDevice_QueryInterface(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_QueryInterface(LPDIRECT3DDEVICE iface,
 						     REFIID riid,
 						     LPVOID* ppvObj)
 {
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
   char xrefiid[50];
   
   WINE_StringFromCLSID((LPCLSID)riid,xrefiid);
-  FIXME(ddraw, "(%p)->(%s,%p): stub\n", this, xrefiid,ppvObj);
+  FIXME(ddraw, "(%p)->(%s,%p): stub\n", This, xrefiid,ppvObj);
   
   return S_OK;
 }
 
 
 
-static ULONG WINAPI IDirect3DDevice_AddRef(LPDIRECT3DDEVICE this)
+static ULONG WINAPI IDirect3DDeviceImpl_AddRef(LPDIRECT3DDEVICE iface)
 {
-  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->()incrementing from %lu.\n", This, This->ref );
   
-  return ++(this->ref);
+  return ++(This->ref);
 }
 
 
 
-static ULONG WINAPI IDirect3DDevice_Release(LPDIRECT3DDEVICE this)
+static ULONG WINAPI IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
 {
-  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", this, this->ref );
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  FIXME( ddraw, "(%p)->() decrementing from %lu.\n", This, This->ref );
   
-  if (!--(this->ref)) {
-    HeapFree(GetProcessHeap(),0,this);
+  if (!--(This->ref)) {
+    HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
   
-  return this->ref;
+  return This->ref;
 }
 
-static HRESULT WINAPI IDirect3DDevice_Initialize(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_Initialize(LPDIRECT3DDEVICE iface,
 						 LPDIRECT3D lpd3d,
 						 LPGUID lpGUID,
 						 LPD3DDEVICEDESC lpd3ddvdesc)
 {
-  TRACE(ddraw, "(%p)->(%p,%p,%p): stub\n", this, lpd3d,lpGUID, lpd3ddvdesc);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p,%p): stub\n", This, lpd3d,lpGUID, lpd3ddvdesc);
   
   return DDERR_ALREADYINITIALIZED;
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_GetCaps(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_GetCaps(LPDIRECT3DDEVICE iface,
 					      LPD3DDEVICEDESC lpD3DHWDevDesc,
 					      LPD3DDEVICEDESC lpD3DSWDevDesc)
 {
-  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpD3DHWDevDesc, lpD3DSWDevDesc);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", This, lpD3DHWDevDesc, lpD3DSWDevDesc);
 
   fill_opengl_caps(lpD3DHWDevDesc, lpD3DSWDevDesc);  
   
@@ -1203,76 +1246,84 @@ static HRESULT WINAPI IDirect3DDevice_GetCaps(LPDIRECT3DDEVICE this,
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_SwapTextureHandles(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_SwapTextureHandles(LPDIRECT3DDEVICE iface,
 							 LPDIRECT3DTEXTURE lpD3DTex1,
 							 LPDIRECT3DTEXTURE lpD3DTex2)
 {
-  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpD3DTex1, lpD3DTex2);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", This, lpD3DTex1, lpD3DTex2);
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice_CreateExecuteBuffer(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_CreateExecuteBuffer(LPDIRECT3DDEVICE iface,
 							  LPD3DEXECUTEBUFFERDESC lpDesc,
 							  LPDIRECT3DEXECUTEBUFFER *lplpDirect3DExecuteBuffer,
 							  IUnknown *pUnkOuter)
 {
-  TRACE(ddraw, "(%p)->(%p,%p,%p)\n", this, lpDesc, lplpDirect3DExecuteBuffer, pUnkOuter);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p,%p)\n", This, lpDesc, lplpDirect3DExecuteBuffer, pUnkOuter);
 
-  *lplpDirect3DExecuteBuffer = d3dexecutebuffer_create(this, lpDesc);
+  *lplpDirect3DExecuteBuffer = d3dexecutebuffer_create(This, lpDesc);
   
   return DD_OK;
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_GetStats(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_GetStats(LPDIRECT3DDEVICE iface,
 					       LPD3DSTATS lpD3DStats)
 {
-  TRACE(ddraw, "(%p)->(%p): stub\n", this, lpD3DStats);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p): stub\n", This, lpD3DStats);
   
   return DD_OK;
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_Execute(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_Execute(LPDIRECT3DDEVICE iface,
 					      LPDIRECT3DEXECUTEBUFFER lpDirect3DExecuteBuffer,
 					      LPDIRECT3DVIEWPORT lpDirect3DViewport,
 					      DWORD dwFlags)
 {
-  TRACE(ddraw, "(%p)->(%p,%p,%08ld): stub\n", this, lpDirect3DExecuteBuffer, lpDirect3DViewport, dwFlags);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p,%08ld): stub\n", This, lpDirect3DExecuteBuffer, lpDirect3DViewport, dwFlags);
 
   /* Put this as the default context */
 
   /* Execute... */
-  lpDirect3DExecuteBuffer->execute(lpDirect3DExecuteBuffer, this, lpDirect3DViewport);
+  ((IDirect3DExecuteBufferImpl*)lpDirect3DExecuteBuffer)->execute(lpDirect3DExecuteBuffer, iface, lpDirect3DViewport);
   
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice_AddViewport(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_AddViewport(LPDIRECT3DDEVICE iface,
 						  LPDIRECT3DVIEWPORT lpvp)
 {
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvp);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, ilpvp);
   
   /* Adds this viewport to the viewport list */
-  lpvp->next = this->viewport_list;
-  this->viewport_list = lpvp;
+  ilpvp->next = This->viewport_list;
+  This->viewport_list = ilpvp;
   
   return DD_OK;
 }
 
 
 
-static HRESULT WINAPI IDirect3DDevice_DeleteViewport(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_DeleteViewport(LPDIRECT3DDEVICE iface,
 						     LPDIRECT3DVIEWPORT lpvp)
 {
-  LPDIRECT3DVIEWPORT cur, prev;
-  FIXME(ddraw, "(%p)->(%p): stub\n", this, lpvp);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  IDirect3DViewport2Impl *cur, *prev;
+  FIXME(ddraw, "(%p)->(%p): stub\n", This, lpvp);
   
   /* Finds this viewport in the list */
   prev = NULL;
-  cur = this->viewport_list;
-  while ((cur != NULL) && (cur != lpvp)) {
+  cur = This->viewport_list;
+  while ((cur != NULL) && (cur != ilpvp)) {
     prev = cur;
     cur = cur->next;
   }
@@ -1281,7 +1332,7 @@ static HRESULT WINAPI IDirect3DDevice_DeleteViewport(LPDIRECT3DDEVICE this,
   
   /* And remove it */
   if (prev == NULL)
-    this->viewport_list = cur->next;
+    This->viewport_list = cur->next;
   else
     prev->next = cur->next;
   
@@ -1290,28 +1341,31 @@ static HRESULT WINAPI IDirect3DDevice_DeleteViewport(LPDIRECT3DDEVICE this,
 
 
 
-static HRESULT WINAPI IDirect3DDevice_NextViewport(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_NextViewport(LPDIRECT3DDEVICE iface,
 						   LPDIRECT3DVIEWPORT lpvp,
 						   LPDIRECT3DVIEWPORT* lplpvp,
 						   DWORD dwFlags)
 {
-  FIXME(ddraw, "(%p)->(%p,%p,%08lx): stub\n", this, lpvp, lpvp, dwFlags);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
+  IDirect3DViewport2Impl** ilplpvp=(IDirect3DViewport2Impl**)lplpvp;
+  FIXME(ddraw, "(%p)->(%p,%p,%08lx): stub\n", This, ilpvp, ilplpvp, dwFlags);
   
   switch (dwFlags) {
   case D3DNEXT_NEXT:
-    *lplpvp = lpvp->next;
+    *ilplpvp = ilpvp->next;
     break;
     
   case D3DNEXT_HEAD:
-    *lplpvp = this->viewport_list;
+    *ilplpvp = This->viewport_list;
     break;
     
   case D3DNEXT_TAIL:
-    lpvp = this->viewport_list;
-    while (lpvp->next != NULL)
-      lpvp = lpvp->next;
+    ilpvp = This->viewport_list;
+    while (ilpvp->next != NULL)
+      ilpvp = ilpvp->next;
     
-    *lplpvp = lpvp;
+    *ilplpvp = ilpvp;
     break;
     
   default:
@@ -1321,43 +1375,47 @@ static HRESULT WINAPI IDirect3DDevice_NextViewport(LPDIRECT3DDEVICE this,
   return DD_OK;
 }
 
-static HRESULT WINAPI IDirect3DDevice_Pick(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_Pick(LPDIRECT3DDEVICE iface,
 					   LPDIRECT3DEXECUTEBUFFER lpDirect3DExecuteBuffer,
 					   LPDIRECT3DVIEWPORT lpDirect3DViewport,
 					   DWORD dwFlags,
 					   LPD3DRECT lpRect)
 {
-  TRACE(ddraw, "(%p)->(%p,%p,%08lx,%p): stub\n", this, lpDirect3DExecuteBuffer, lpDirect3DViewport,
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p,%08lx,%p): stub\n", This, lpDirect3DExecuteBuffer, lpDirect3DViewport,
 	dwFlags, lpRect);
   
   return DD_OK;
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_GetPickRecords(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_GetPickRecords(LPDIRECT3DDEVICE iface,
 						     LPDWORD lpCount,
 						     LPD3DPICKRECORD lpD3DPickRec)
 {
-  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpCount, lpD3DPickRec);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", This, lpCount, lpD3DPickRec);
   
   return DD_OK;
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_EnumTextureFormats(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_EnumTextureFormats(LPDIRECT3DDEVICE iface,
 							 LPD3DENUMTEXTUREFORMATSCALLBACK lpd3dEnumTextureProc,
 							 LPVOID lpArg)
 {
-  TRACE(ddraw, "(%p)->(%p,%p): stub\n", this, lpd3dEnumTextureProc, lpArg);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p,%p): stub\n", This, lpd3dEnumTextureProc, lpArg);
   
   return enum_texture_format_OpenGL(lpd3dEnumTextureProc, lpArg);
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_CreateMatrix(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_CreateMatrix(LPDIRECT3DDEVICE iface,
 						   LPD3DMATRIXHANDLE lpD3DMatHandle)
 {
-  TRACE(ddraw, "(%p)->(%p)\n", this, lpD3DMatHandle);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p)\n", This, lpD3DMatHandle);
 
   *lpD3DMatHandle = (D3DMATRIXHANDLE) HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(D3DMATRIX));
   
@@ -1365,11 +1423,12 @@ static HRESULT WINAPI IDirect3DDevice_CreateMatrix(LPDIRECT3DDEVICE this,
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_SetMatrix(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_SetMatrix(LPDIRECT3DDEVICE iface,
 						D3DMATRIXHANDLE d3dMatHandle,
 						const LPD3DMATRIX lpD3DMatrix)
 {
-  TRACE(ddraw, "(%p)->(%08lx,%p)\n", this, d3dMatHandle, lpD3DMatrix);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%08lx,%p)\n", This, d3dMatHandle, lpD3DMatrix);
 
   dump_mat(lpD3DMatrix);
   
@@ -1379,11 +1438,12 @@ static HRESULT WINAPI IDirect3DDevice_SetMatrix(LPDIRECT3DDEVICE this,
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_GetMatrix(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_GetMatrix(LPDIRECT3DDEVICE iface,
 						D3DMATRIXHANDLE D3DMatHandle,
 						LPD3DMATRIX lpD3DMatrix)
 {
-  TRACE(ddraw, "(%p)->(%08lx,%p)\n", this, D3DMatHandle, lpD3DMatrix);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%08lx,%p)\n", This, D3DMatHandle, lpD3DMatrix);
 
   *lpD3DMatrix = *((D3DMATRIX *) D3DMatHandle);
   
@@ -1391,10 +1451,11 @@ static HRESULT WINAPI IDirect3DDevice_GetMatrix(LPDIRECT3DDEVICE this,
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_DeleteMatrix(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_DeleteMatrix(LPDIRECT3DDEVICE iface,
 						   D3DMATRIXHANDLE d3dMatHandle)
 {
-  TRACE(ddraw, "(%p)->(%08lx)\n", this, d3dMatHandle);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%08lx)\n", This, d3dMatHandle);
 
   HeapFree(GetProcessHeap(),0, (void *) d3dMatHandle);
   
@@ -1402,14 +1463,15 @@ static HRESULT WINAPI IDirect3DDevice_DeleteMatrix(LPDIRECT3DDEVICE this,
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_BeginScene(LPDIRECT3DDEVICE this)
+static HRESULT WINAPI IDirect3DDeviceImpl_BeginScene(LPDIRECT3DDEVICE iface)
 {
-  /* OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) this; */
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  /* OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This; */
   
-  FIXME(ddraw, "(%p)->(): stub\n", this);
+  FIXME(ddraw, "(%p)->(): stub\n", This);
   
   /* We get the pointer to the surface (should be done on flip) */
-  /* odev->zb->pbuf = this->surface->s.surface_desc.y.lpSurface; */
+  /* odev->zb->pbuf = This->surface->s.surface_desc.y.lpSurface; */
   
   return DD_OK;
 }
@@ -1417,20 +1479,21 @@ static HRESULT WINAPI IDirect3DDevice_BeginScene(LPDIRECT3DDEVICE this)
 
 /* This is for the moment copy-pasted from IDirect3DDevice2...
    Will make a common function ... */
-static HRESULT WINAPI IDirect3DDevice_EndScene(LPDIRECT3DDEVICE this)
+static HRESULT WINAPI IDirect3DDeviceImpl_EndScene(LPDIRECT3DDEVICE iface)
 {
-  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) this;
-  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) this->surface;
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) This;
+  LPDIRECTDRAWSURFACE3 surf = (LPDIRECTDRAWSURFACE3) This->surface;
   DDSURFACEDESC sdesc;
   int x,y;
   unsigned char *src;
   unsigned short *dest;
   
-  FIXME(ddraw, "(%p)->(): stub\n", this);
+  FIXME(ddraw, "(%p)->(): stub\n", This);
 
   /* Here we copy back the OpenGL scene to the the DDraw surface */
   /* First, lock the surface */
-  surf->lpvtbl->fnLock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
+  IDirectDrawSurface3_Lock(surf,NULL,&sdesc,DDLOCK_WRITEONLY,0);
 
   /* The copy the OpenGL buffer to this surface */
   
@@ -1458,16 +1521,17 @@ static HRESULT WINAPI IDirect3DDevice_EndScene(LPDIRECT3DDEVICE this)
   }
 
   /* Unlock the surface */
-  surf->lpvtbl->fnUnlock(surf,sdesc.y.lpSurface);
+  IDirectDrawSurface3_Unlock(surf,sdesc.y.lpSurface);
   
   return DD_OK;  
 }
 
 
-static HRESULT WINAPI IDirect3DDevice_GetDirect3D(LPDIRECT3DDEVICE this,
+static HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(LPDIRECT3DDEVICE iface,
 						  LPDIRECT3D *lpDirect3D)
 {
-  TRACE(ddraw, "(%p)->(%p): stub\n", this, lpDirect3D);
+  ICOM_THIS(IDirect3DDeviceImpl,iface);
+  TRACE(ddraw, "(%p)->(%p): stub\n", This, lpDirect3D);
 
   return DD_OK;
 }
@@ -1477,29 +1541,29 @@ static HRESULT WINAPI IDirect3DDevice_GetDirect3D(LPDIRECT3DDEVICE this,
 /*******************************************************************************
  *				Direct3DDevice VTable
  */
-static IDirect3DDevice_VTable OpenGL_vtable_dx3 = {
-  IDirect3DDevice_QueryInterface,
-  IDirect3DDevice_AddRef,
-  IDirect3DDevice_Release,
-  IDirect3DDevice_Initialize,
-  IDirect3DDevice_GetCaps,
-  IDirect3DDevice_SwapTextureHandles,
-  IDirect3DDevice_CreateExecuteBuffer,
-  IDirect3DDevice_GetStats,
-  IDirect3DDevice_Execute,
-  IDirect3DDevice_AddViewport,
-  IDirect3DDevice_DeleteViewport,
-  IDirect3DDevice_NextViewport,
-  IDirect3DDevice_Pick,
-  IDirect3DDevice_GetPickRecords,
-  IDirect3DDevice_EnumTextureFormats,
-  IDirect3DDevice_CreateMatrix,
-  IDirect3DDevice_SetMatrix,
-  IDirect3DDevice_GetMatrix,
-  IDirect3DDevice_DeleteMatrix,
-  IDirect3DDevice_BeginScene,
-  IDirect3DDevice_EndScene,
-  IDirect3DDevice_GetDirect3D,
+static ICOM_VTABLE(IDirect3DDevice) OpenGL_vtable_dx3 = {
+  IDirect3DDeviceImpl_QueryInterface,
+  IDirect3DDeviceImpl_AddRef,
+  IDirect3DDeviceImpl_Release,
+  IDirect3DDeviceImpl_Initialize,
+  IDirect3DDeviceImpl_GetCaps,
+  IDirect3DDeviceImpl_SwapTextureHandles,
+  IDirect3DDeviceImpl_CreateExecuteBuffer,
+  IDirect3DDeviceImpl_GetStats,
+  IDirect3DDeviceImpl_Execute,
+  IDirect3DDeviceImpl_AddViewport,
+  IDirect3DDeviceImpl_DeleteViewport,
+  IDirect3DDeviceImpl_NextViewport,
+  IDirect3DDeviceImpl_Pick,
+  IDirect3DDeviceImpl_GetPickRecords,
+  IDirect3DDeviceImpl_EnumTextureFormats,
+  IDirect3DDeviceImpl_CreateMatrix,
+  IDirect3DDeviceImpl_SetMatrix,
+  IDirect3DDeviceImpl_GetMatrix,
+  IDirect3DDeviceImpl_DeleteMatrix,
+  IDirect3DDeviceImpl_BeginScene,
+  IDirect3DDeviceImpl_EndScene,
+  IDirect3DDeviceImpl_GetDirect3D,
 };
 
 #else /* HAVE_MESAGL */
@@ -1508,7 +1572,7 @@ int d3d_OpenGL(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   return 0;
 }
 
-int is_OpenGL(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE2 *device, LPDIRECT3D2 d3d)
+int is_OpenGL(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevice2Impl** device, IDirect3D2Impl* d3d)
 {
   return 0;
 }
@@ -1517,7 +1581,7 @@ int d3d_OpenGL_dx3(LPD3DENUMDEVICESCALLBACK cb, LPVOID context) {
   return 0;
 }
 
-int is_OpenGL_dx3(REFCLSID rguid, LPDIRECTDRAWSURFACE surface, LPDIRECT3DDEVICE *device)
+int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDeviceImpl** device)
 {
   return 0;
 }
