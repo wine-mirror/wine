@@ -3836,6 +3836,32 @@ DWORD WINAPI DeletePrinterDataExA( HANDLE hPrinter, LPCSTR pKeyName,
     return ERROR_INVALID_PARAMETER;
 }
 
+/*****************************************************************************
+ *          EnumMonitorsA [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
+                          DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    FIXME("%s,%ld,%p,%ld,%p,%p\n", debugstr_a(pName), Level, pMonitors,
+          cbBuf, pcbNeeded, pcReturned);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/*****************************************************************************
+ *          EnumMonitorsW [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumMonitorsW(LPWSTR pName, DWORD Level, LPBYTE pMonitors,
+                          DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    FIXME("%s,%ld,%p,%ld,%p,%p\n", debugstr_w(pName), Level, pMonitors,
+          cbBuf, pcbNeeded, pcReturned);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
 /******************************************************************************
  *		XcvDataW (WINSPOOL.@)
  *

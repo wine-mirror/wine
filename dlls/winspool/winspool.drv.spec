@@ -68,8 +68,8 @@
 @ stub EnumFormsW
 @ stdcall EnumJobsA(long long long long ptr long ptr ptr)
 @ stdcall EnumJobsW(long long long long ptr long ptr ptr)
-@ stub EnumMonitorsA
-@ stub EnumMonitorsW
+@ stdcall EnumMonitorsA(str long ptr long long long)
+@ stdcall EnumMonitorsW(wstr long ptr long long long)
 @ stdcall EnumPortsA(ptr long ptr ptr ptr ptr)
 @ stub EnumPortsW
 @ stub EnumPrintProcessorDatatypesA
