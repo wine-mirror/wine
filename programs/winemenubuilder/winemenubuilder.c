@@ -57,6 +57,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(menubuilder);
 
+#define in_desktop_dir(csidl) ((csidl)==CSIDL_DESKTOPDIRECTORY || \
+                               (csidl)==CSIDL_COMMON_DESKTOPDIRECTORY)
+#define in_startmenu(csidl)   ((csidl)==CSIDL_STARTMENU || \
+                               (csidl)==CSIDL_COMMON_STARTMENU)
+        
 /* link file formats */
 
 #include "pshpack1.h"
@@ -663,7 +668,9 @@ static BOOL GetLinkLocation( LPCWSTR linkfile, DWORD *ofs, DWORD *loc )
     WCHAR filename[MAX_PATH], buffer[MAX_PATH];
     DWORD len, i, r, filelen;
     const DWORD locations[] = {
-        CSIDL_STARTUP, CSIDL_DESKTOPDIRECTORY, CSIDL_STARTMENU };
+        CSIDL_STARTUP, CSIDL_DESKTOPDIRECTORY, CSIDL_STARTMENU,
+        CSIDL_COMMON_STARTUP, CSIDL_COMMON_DESKTOPDIRECTORY,
+        CSIDL_COMMON_STARTMENU };
 
     WINE_TRACE("%s\n", wine_dbgstr_w(linkfile));
     filelen=GetFullPathNameW( linkfile, MAX_PATH, filename, NULL );
@@ -717,7 +724,7 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
         WINE_WARN("Unknown link location '%s'. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
     }
-    if( (csidl != CSIDL_DESKTOPDIRECTORY) && (csidl != CSIDL_STARTMENU) )
+    if (!in_desktop_dir(csidl) && !in_startmenu(csidl))
     {
         WINE_WARN("Not under desktop or start menu. Ignoring.\n");
         return TRUE;
@@ -799,8 +806,8 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
         escaped_args = escape(szArgs);
 
     r = fork_and_wait("wineshelllink", link_name, escaped_path,
-                  (csidl == CSIDL_DESKTOPDIRECTORY), escaped_args, icon_name,
-                   work_dir ? work_dir : "", szDescription );
+                      in_desktop_dir(csidl), escaped_args, icon_name,
+                      work_dir ? work_dir : "", szDescription );
 
     HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
