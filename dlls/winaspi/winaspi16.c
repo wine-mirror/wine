@@ -72,11 +72,7 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
-#ifdef HAVE_STRERROR
 	ERR("Error opening device %s, error '%s'\n", device_str, strerror(save_error));
-#else
-    ERR("Error opening device %s, error %d\n", device_str, save_error);
-#endif
 	return -1;
     }
 
@@ -308,11 +304,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 		if (save_error == ENOMEM) {
 	    MESSAGE("ASPI: Linux generic scsi driver\n  You probably need to re-compile your kernel with a larger SG_BIG_BUFF value (sg.h)\n  Suggest 130560\n");
 	}
-#ifdef HAVE_STRERROR
 		WARN("error:= '%s'\n", strerror(save_error));
-#else
-		WARN("error:= %d\n", save_error);
-#endif
     }
     goto error_exit;
   }

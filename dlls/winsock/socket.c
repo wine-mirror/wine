@@ -3039,11 +3039,7 @@ int WS_dup_se(LPWSINFO pwsi, struct servent* p_se, int flag)
 UINT16 wsaErrno(void)
 {
     int	loc_errno = errno; 
-#ifdef HAVE_STRERROR
     WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
-#else
-    WARN("errno %d\n", loc_errno);
-#endif
 
     switch(loc_errno)
     {
