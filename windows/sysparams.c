@@ -372,17 +372,14 @@ void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 /***********************************************************************
  * Loads system parameter from user profile.
  */
-BOOL SYSPARAMS_Load( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpBuf )
+BOOL SYSPARAMS_Load( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpBuf, DWORD count )
 {
     BOOL ret = FALSE;
     DWORD type;
     HKEY hKey;
-    DWORD count;
 
-    if ((RegOpenKeyA( get_volatile_regkey(), lpRegKey,
-                     &hKey ) == ERROR_SUCCESS) ||
-        (RegOpenKeyA( HKEY_CURRENT_USER, lpRegKey,
-                      &hKey ) == ERROR_SUCCESS))
+    if ((RegOpenKeyA( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS) ||
+        (RegOpenKeyA( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS))
     {
         ret = !RegQueryValueExA( hKey, lpValName, NULL, &type, lpBuf, &count );
         RegCloseKey( hKey );
@@ -443,7 +440,7 @@ void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
         char buf[10];
 
         if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY1,
-                            SPI_SETDOUBLECLKWIDTH_VALNAME, buf ))
+                            SPI_SETDOUBLECLKWIDTH_VALNAME, buf, sizeof(buf) ))
         {
             SYSMETRICS_Set( SM_CXDOUBLECLK, atoi( buf ) );
         }
@@ -452,7 +449,7 @@ void SYSPARAMS_GetDoubleClickSize( INT *width, INT *height )
     if (!spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX])
     {
         if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
-                            SPI_SETDOUBLECLKHEIGHT_VALNAME, buf ))
+                            SPI_SETDOUBLECLKHEIGHT_VALNAME, buf, sizeof(buf) ))
         {
             SYSMETRICS_Set( SM_CYDOUBLECLK, atoi( buf ) );
         }
@@ -477,7 +474,7 @@ INT SYSPARAMS_GetMouseButtonSwap( void )
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETMOUSEBUTTONSWAP_REGKEY,
-                                SPI_SETMOUSEBUTTONSWAP_VALNAME, buf ))
+                                SPI_SETMOUSEBUTTONSWAP_VALNAME, buf, sizeof(buf) ))
             {
                 SYSMETRICS_Set( SM_SWAPBUTTON, atoi( buf ) );
             }
@@ -569,7 +566,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         {
             char buf[5];
 
-            if (SYSPARAMS_Load( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME, buf ))
+            if (SYSPARAMS_Load( SPI_SETBEEP_REGKEY, SPI_SETBEEP_VALNAME, buf, sizeof(buf) ))
                 beep_active  = !strcasecmp( "Yes", buf );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -596,13 +593,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[10];
 
             if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME1,
-                                buf ))
+                                buf, sizeof(buf) ))
                 mouse_threshold1 = atoi( buf );
             if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME2,
-                                buf ))
+                                buf, sizeof(buf) ))
                 mouse_threshold2 = atoi( buf );
             if (SYSPARAMS_Load( SPI_SETMOUSE_REGKEY, SPI_SETMOUSE_VALNAME3,
-                                buf ))
+                                buf, sizeof(buf) ))
                 mouse_speed = atoi( buf );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -645,7 +642,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         {
             char buf[10];
 
-            if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf ))
+            if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf, sizeof(buf) ))
                 border = SYSPARAMS_Twips2Pixels( atoi(buf) );
 
             spi_loaded[spi_idx] = TRUE;
@@ -692,7 +689,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
             if (SYSPARAMS_Load( SPI_SETKEYBOARDSPEED_REGKEY,
                                 SPI_SETKEYBOARDSPEED_VALNAME,
-                                buf ))
+                                buf, sizeof(buf) ))
                 keyboard_speed = atoi( buf );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -733,7 +730,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 		int val;
 
                 if (SYSPARAMS_Load( SPI_ICONHORIZONTALSPACING_REGKEY,
-                                    SPI_ICONHORIZONTALSPACING_VALNAME, buf ))
+                                    SPI_ICONHORIZONTALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
                     val = SYSPARAMS_Twips2Pixels( atoi(buf) );
                     SYSMETRICS_Set( SM_CXICONSPACING, val );
@@ -770,7 +767,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
             if (SYSPARAMS_Load( SPI_SETSCREENSAVETIMEOUT_REGKEY,
                                 SPI_SETSCREENSAVETIMEOUT_VALNAME,
-                                buf ))
+                                buf, sizeof(buf) ))
                 screensave_timeout = atoi( buf );
 
             spi_loaded[spi_idx] = TRUE;
@@ -822,7 +819,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
             if (SYSPARAMS_Load( SPI_SETGRIDGRANULARITY_REGKEY,
                                 SPI_SETGRIDGRANULARITY_VALNAME,
-                                buf ))
+                                buf, sizeof(buf) ))
                 grid_granularity = atoi( buf );
 
             spi_loaded[spi_idx] = TRUE;
@@ -875,7 +872,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
             if (SYSPARAMS_Load( SPI_SETKEYBOARDDELAY_REGKEY,
                                 SPI_SETKEYBOARDDELAY_VALNAME,
-                                buf ))
+                                buf, sizeof(buf) ))
             {
                 int i = atoi( buf );
                 if ( (i >= 0) && (i <= 3)) keyboard_delay = i;
@@ -916,7 +913,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 		int val;
 
                 if (SYSPARAMS_Load( SPI_ICONVERTICALSPACING_REGKEY,
-                                    SPI_ICONVERTICALSPACING_VALNAME, buf ))
+                                    SPI_ICONVERTICALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
                     val = SYSPARAMS_Twips2Pixels( atoi(buf) );
                     SYSMETRICS_Set( SM_CYICONSPACING, val );
@@ -953,7 +950,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETICONTITLEWRAP_REGKEY1,
-                                SPI_SETICONTITLEWRAP_VALNAME, buf ))
+                                SPI_SETICONTITLEWRAP_VALNAME, buf, sizeof(buf) ))
                 icon_title_wrap  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
@@ -990,7 +987,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETMENUDROPALIGNMENT_REGKEY1,
-                                SPI_SETMENUDROPALIGNMENT_VALNAME, buf ))
+                                SPI_SETMENUDROPALIGNMENT_VALNAME, buf, sizeof(buf) ))
             {
                 SYSMETRICS_Set( SM_MENUDROPALIGNMENT, atoi( buf ) );
             }
@@ -1169,7 +1166,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETDRAGFULLWINDOWS_REGKEY,
-                                SPI_SETDRAGFULLWINDOWS_VALNAME, buf ))
+                                SPI_SETDRAGFULLWINDOWS_VALNAME, buf, sizeof(buf) ))
                 drag_full_windows  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1314,7 +1311,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
           if (SYSPARAMS_Load( SPI_SETWORKAREA_REGKEY,
                               SPI_SETWORKAREA_VALNAME,
-                              buf ))
+                              buf, sizeof(buf) ))
           {
               sscanf( buf, "%ld %ld %ld %ld",
                       &work_area.left, &work_area.top,
@@ -1396,7 +1393,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[10];
 
             if (SYSPARAMS_Load( SPI_SETSHOWSOUNDS_REGKEY,
-                                SPI_SETSHOWSOUNDS_VALNAME, buf ))
+                                SPI_SETSHOWSOUNDS_VALNAME, buf, sizeof(buf) ))
             {
                 SYSMETRICS_Set( SM_SHOWSOUNDS, atoi( buf ) );
             }
@@ -1533,7 +1530,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETKEYBOARDPREF_REGKEY,
-                                SPI_SETKEYBOARDPREF_VALNAME, buf ))
+                                SPI_SETKEYBOARDPREF_VALNAME, buf, sizeof(buf) ))
                 keyboard_pref  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1566,7 +1563,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETSCREENREADER_REGKEY,
-                                SPI_SETSCREENREADER_VALNAME, buf ))
+                                SPI_SETSCREENREADER_VALNAME, buf, sizeof(buf) ))
                 screen_reader  = atoi(buf);
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1697,7 +1694,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             char buf[5];
 
             if (SYSPARAMS_Load( SPI_SETSCREENSAVERRUNNING_REGKEY,
-                                SPI_SETSCREENSAVERRUNNING_VALNAME, buf ))
+                                SPI_SETSCREENSAVERRUNNING_VALNAME, buf, sizeof(buf) ))
                 screensaver_running  = atoi( buf );
             spi_loaded[spi_idx] = TRUE;
         }
@@ -1714,7 +1711,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	    uiParam = MAX_PATH;
 	}
 
-        if (SYSPARAMS_Load(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, buf))
+        if (SYSPARAMS_Load(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, buf, sizeof(buf)))
 	{
 	    strncpy((char*)pvParam, buf, uiParam);
 	}
@@ -1993,7 +1990,7 @@ UINT WINAPI GetDoubleClickTime(void)
     {
         if (SYSPARAMS_Load( SPI_SETDOUBLECLICKTIME_REGKEY,
                             SPI_SETDOUBLECLICKTIME_VALNAME,
-                            buf ))
+                            buf, sizeof(buf) ))
         {
             double_click_time = atoi( buf );
             if (!double_click_time) double_click_time = 500;
