@@ -2500,7 +2500,7 @@ TREEVIEW_Paint (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if(!wParam) EndPaint (hwnd, &ps);
   TRACE("done\n");
       
-  return DefWindowProcA (hwnd, WM_PAINT, wParam, lParam);
+  return 0;
 }
 
 static LRESULT
