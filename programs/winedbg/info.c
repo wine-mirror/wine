@@ -222,7 +222,7 @@ void DEBUG_Help(void)
 "  set <reg> = <expr>                     set *<addr> = <expr>",
 "  mode [16,32,vm86]                      walk [wnd,class,module,maps,",
 "  whatis                                       process,thread,exception]",
-"  info (see 'help info' for options)     debugmsg <class>[-+]<type>\n",
+"  info (see 'help info' for options)",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.\n",
