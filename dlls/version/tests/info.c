@@ -28,15 +28,19 @@
 #define EXPECT_BAD_PATH__NOT_FOUND \
     ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
+	(ERROR_FILE_NOT_FOUND == GetLastError()) || \
 	(ERROR_BAD_PATHNAME == GetLastError()), \
 	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME (98)/" \
-	"ERROR_PATH_NOT_FOUND (NT4) expected, got 0x%08lx\n", GetLastError());
+	"ERROR_PATH_NOT_FOUND (NT4)/ERROR_FILE_NOT_FOUND (2k3)" \
+	"expected, got 0x%08lx\n", GetLastError());
 #define EXPECT_INVALID__NOT_FOUND \
     ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
+	(ERROR_FILE_NOT_FOUND == GetLastError()) || \
 	(ERROR_INVALID_PARAMETER == GetLastError()), \
 	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER (98)/" \
-	"ERROR_PATH_NOT_FOUND (NT4) expected, got 0x%08lx\n", GetLastError());
+	"ERROR_PATH_NOT_FOUND (NT4)/ERROR_FILE_NOT_FOUND (2k3)" \
+	"expected, got 0x%08lx\n", GetLastError());
 
 static void test_info_size(void)
 {   DWORD hdl, retval;
