@@ -55,6 +55,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
     LPDDENUMCALLBACKEXA lpCallback, LPVOID lpContext, DWORD dwFlags)
 {
     int i;
+    GUID	zeroGUID;
     TRACE("(%p,%p, %08lx)\n", lpCallback, lpContext, dwFlags);
 
     if (TRACE_ON(ddraw)) {
@@ -67,7 +68,24 @@ HRESULT WINAPI DirectDrawEnumerateExA(
 	    DPRINTF("DDENUM_NONDISPLAYDEVICES ");
 	DPRINTF("\n");
     }
+    if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES) {
+	FIXME("no attached secondary devices supported.\n");
+	/*return E_FAIL;*/
+    }
 
+    memset(&zeroGUID,0,sizeof(zeroGUID));
+
+    /* we have at least one DDRAW driver */
+    if (ddraw_drivers[0]) {
+	if (!lpCallback(
+	    &zeroGUID, /* FIXME: or NULL? -MM */
+	    "WINE DirectDraw",
+	    "display",
+	    lpContext,
+	    0		/* FIXME: flags not supported here */
+	))
+	    return DD_OK;
+    }
     /* Invoke callback for what flags we do support */
     for (i=0;i<MAX_DDRAW_DRIVERS;i++) {
 	if (!ddraw_drivers[i])
@@ -94,11 +112,6 @@ HRESULT WINAPI DirectDrawEnumerateExA(
     if (dwFlags & DDENUM_NONDISPLAYDEVICES) {
 	FIXME("no non-display devices supported.\n");
     }
-/* Hmm. Leave this out.
-    if (dwFlags & DDENUM_ATTACHEDSECONDARYDEVICES) {
-	FIXME("no attached secondary devices supported.\n");
-    }
- */
     if (dwFlags & DDENUM_DETACHEDSECONDARYDEVICES) {
 	FIXME("no detached secondary devices supported.\n");
     }
