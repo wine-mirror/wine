@@ -232,11 +232,7 @@ void write_proxy(type_t *iface)
   func_t *cur = iface->funcs;
   if_list *if_cur;
 
-  if (!cur) {
-    yywarning("%s has no methods", iface->name);
-    return;
-  }
-
+  if (!cur) return;
   if (header_only) return;
 
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);

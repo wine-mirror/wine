@@ -426,6 +426,7 @@ static void write_icom_method_def(type_t *iface)
 {
   func_t *cur = iface->funcs;
   if (iface->ref) write_icom_method_def( iface->ref );
+  if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
   if (cur) fprintf( header, " \\\n    /*** %s methods ***/", iface->name );
   while (cur) {
@@ -461,10 +462,13 @@ static int write_method_macro(type_t *iface, char *name)
 {
   int idx;
   func_t *cur = iface->funcs;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
   if (iface->ref) idx = write_method_macro(iface->ref, name);
   else idx = 0;
+
+  if (!cur) return idx;
+  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
     var_t *def = cur->def;
@@ -533,6 +537,8 @@ void write_args(FILE *h, var_t *arg, char *name, int method)
 static void write_cpp_method_def(type_t *iface)
 {
   func_t *cur = iface->funcs;
+
+  if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
   while (cur) {
     var_t *def = cur->def;
@@ -554,9 +560,11 @@ static void write_cpp_method_def(type_t *iface)
 static void do_write_c_method_def(type_t *iface, char *name)
 {
   func_t *cur = iface->funcs;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
   if (iface->ref) do_write_c_method_def(iface->ref, name);
+
+  if (!cur) return;
+  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
   indent(0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
@@ -583,6 +591,8 @@ static void write_c_method_def(type_t *iface)
 static void write_method_proto(type_t *iface)
 {
   func_t *cur = iface->funcs;
+
+  if (!cur) return;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
   while (cur) {
     var_t *def = cur->def;
@@ -679,7 +689,7 @@ void write_guid(type_t *iface)
 
 void write_com_interface(type_t *iface)
 {
-  if (!iface->funcs) {
+  if (!iface->funcs && !iface->ref) {
     yywarning("%s has no methods", iface->name);
     return;
   }
