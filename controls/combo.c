@@ -1999,7 +1999,10 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case CB_RESETCONTENT16: 
 	case CB_RESETCONTENT:
 		SendMessageA( lphc->hWndLBox, LB_RESETCONTENT, 0, 0 );
-		InvalidateRect(CB_HWND(lphc), NULL, TRUE);
+                if( CB_HASSTRINGS(lphc) )
+                    SendMessageA( lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)"" );
+                else
+                    InvalidateRect(CB_HWND(lphc), NULL, TRUE);
 		return  TRUE;
 	case CB_INITSTORAGE:
 		return  SendMessageA( lphc->hWndLBox, LB_INITSTORAGE, wParam, lParam);
