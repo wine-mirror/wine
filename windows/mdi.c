@@ -342,24 +342,14 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
     }
     else
     {
-        INT nItems;
-        UINT iId;
-
-        ci->hFrameMenu = GetMenu(hwndFrame);
-        nItems = GetMenuItemCount(ci->hFrameMenu) - 1;
-        iId = GetMenuItemID(ci->hFrameMenu, nItems);
-
-	if( !(iId == SC_RESTORE || iId == SC_CLOSE) )
-	{
-	    /* SetMenu() may already have been called, meaning that this window
-	     * already has its menu. But they may have done a SetMenu() on
-	     * an MDI window, and called MDISetMenu() after the fact, meaning
-	     * that the "if" to this "else" wouldn't catch the need to
-	     * augment the frame menu.
-	     */
-	    if( IsZoomed(ci->hwndActiveChild) )
-		MDI_AugmentFrameMenu( hwndFrame, ci->hwndActiveChild );
-	}
+        /* SetMenu() may already have been called, meaning that this window
+         * already has its menu. But they may have done a SetMenu() on
+         * an MDI window, and called MDISetMenu() after the fact, meaning
+         * that the "if" to this "else" wouldn't catch the need to
+         * augment the frame menu.
+         */
+        if( IsZoomed(ci->hwndActiveChild) )
+            MDI_AugmentFrameMenu( hwndFrame, ci->hwndActiveChild );
     }
 
     return 0;
@@ -815,22 +805,23 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
 static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
 {
     HMENU menu = GetMenu( frame );
-    WND*	child = WIN_FindWndPtr(hChild);
     HMENU  	hSysPopup = 0;
-  HBITMAP hSysMenuBitmap = 0;
+    HBITMAP hSysMenuBitmap = 0;
+    INT nItems;
+    UINT iId;
 
     TRACE("frame %p,child %p\n",frame,hChild);
 
-    if( !menu || !child->hSysMenu )
-    {
-        WIN_ReleaseWndPtr(child);
+    if( !menu ) return 0;
+
+    /* if the system buttons already exist do not add them again */
+    nItems = GetMenuItemCount(menu) - 1;
+    iId = GetMenuItemID(menu,nItems) ;
+    if (iId == SC_RESTORE || iId == SC_CLOSE)
         return 0;
-    }
-    WIN_ReleaseWndPtr(child);
 
     /* create a copy of sysmenu popup and insert it into frame menu bar */
-
-    if (!(hSysPopup = LoadMenuA(GetModuleHandleA("USER32"), "SYSMENU")))
+    if (!(hSysPopup = GetSystemMenu(hChild, FALSE)))
 	return 0;
 
     AppendMenuA(menu,MF_HELP | MF_BITMAP,
@@ -849,9 +840,11 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
 
   if(TWEAK_WineLook > WIN31_LOOK)
   {
-    HICON hIcon = (HICON)GetClassLongA(hChild, GCL_HICONSM);
+    HICON hIcon = (HICON)GetClassLongW(hChild, GCL_HICONSM);
     if (!hIcon)
-      hIcon = (HICON)GetClassLongA(hChild, GCL_HICON);
+        hIcon = (HICON)GetClassLongW(hChild, GCL_HICON);
+    if (!hIcon)
+        hIcon = LoadImageW(0, MAKEINTRESOURCEW(IDI_WINLOGO), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
     if (hIcon)
     {
       HDC hMemDC;
@@ -912,6 +905,7 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 
     TRACE("frame %p,child %p,nIt=%d,iId=%d\n",frame,hChild,nItems,iId);
 
+    /* if there is no system buttons then nothing to do */
     if(!(iId == SC_RESTORE || iId == SC_CLOSE) )
 	return 0;
 
@@ -1512,7 +1506,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         break;
 
     case WM_SIZE:
-        if( wParam != SIZE_MAXIMIZED )
+        if( hwnd == ci->hwndActiveChild && wParam != SIZE_MAXIMIZED )
         {
             MDI_RestoreFrameMenu( GetParent(client), hwnd );
             MDI_UpdateFrameText( GetParent(client), client, TRUE, NULL );
