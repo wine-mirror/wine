@@ -11,9 +11,7 @@
 
 /* dll loading */
 
-struct _IMAGE_NT_HEADERS;
-
-typedef void (*load_dll_callback_t)( const struct _IMAGE_NT_HEADERS *, const char * );
+typedef void (*load_dll_callback_t)( void *, const char * );
 
 extern void wine_dll_set_callback( load_dll_callback_t load );
 extern void *wine_dll_load( const char *filename );
