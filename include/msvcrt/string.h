@@ -121,7 +121,7 @@ MSVCRT(size_t)  MSVCRT(wcsxfrm)(MSVCRT(wchar_t)*,const MSVCRT(wchar_t)*,MSVCRT(s
 #ifndef USE_MSVCRT_PREFIX
 #define memccpy _memccpy
 #define memicmp _memicmp
-#define strcasecmp _strcasecmp
+#define strcasecmp _stricmp
 #define strcmpi _strcmpi
 #define strdup _strdup
 #define stricmp _stricmp
