@@ -95,7 +95,7 @@
  *   -- LVS_EX_UNDERLINEHOT
  *   
  * Notifications:
- *   -- LVN_BEGINDRAG, LVN_BEGINRDRAG
+ *   -- LVN_BEGINRDRAG
  *   -- LVN_BEGINSCROLL, LVN_ENDSCROLL
  *   -- LVN_GETINFOTIP
  *   -- LVN_HOTTRACK
@@ -107,7 +107,6 @@
  *
  * Messages:
  *   -- LVM_CANCELEDITLABEL
- *   -- LVM_CREATEDRAGIMAGE
  *   -- LVM_ENABLEGROUPVIEW
  *   -- LVM_GETBKIMAGE, LVM_SETBKIMAGE
  *   -- LVM_GETGROUPINFO, LVM_SETGROUPINFO
@@ -4000,7 +3999,70 @@ static DWORD LISTVIEW_ApproximateViewRect(LISTVIEW_INFO *infoPtr, INT nItemCount
   return dwViewRect;
 }
 
-/* << LISTVIEW_CreateDragImage >> */
+
+/***
+ * DESCRIPTION:
+ * Create a drag image list for the specified item.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] iItem   : index of item
+ * [O] lppt    : Upperr-left corner of the image
+ *
+ * RETURN:
+ * Returns a handle to the image list if successful, NULL otherwise.
+ */
+static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LPPOINT lppt)
+{
+    RECT rcItem;
+    SIZE size;
+    POINT pos;
+    HDC hdc, hdcOrig;
+    HBITMAP hbmp, hOldbmp;
+    HIMAGELIST dragList = 0;
+    TRACE("iItem=%d Count=%d \n", iItem, infoPtr->nItemCount);
+
+    if (iItem < 0 || iItem >= infoPtr->nItemCount)
+        return 0;
+
+    rcItem.left = LVIR_BOUNDS;
+    if (!LISTVIEW_GetItemRect(infoPtr, iItem, &rcItem))
+        return 0;
+
+    lppt->x = rcItem.left;
+    lppt->y = rcItem.top;
+
+    size.cx = rcItem.right - rcItem.left;
+    size.cy = rcItem.bottom - rcItem.top;
+
+    hdcOrig = GetDC(infoPtr->hwndSelf);
+    hdc = CreateCompatibleDC(hdcOrig);
+    hbmp = CreateCompatibleBitmap(hdcOrig, size.cx, size.cy);
+    hOldbmp = SelectObject(hdc, hbmp);
+
+    rcItem.left = rcItem.top = 0;
+    rcItem.right = size.cx;
+    rcItem.bottom = size.cy;
+    FillRect(hdc, &rcItem, infoPtr->hBkBrush);
+    
+    pos.x = pos.y = 0;
+    if (LISTVIEW_DrawItem(infoPtr, hdc, iItem, 0, pos, infoPtr->cditemmode))
+    {
+        dragList = ImageList_Create(size.cx, size.cy, ILC_COLOR, 10, 10);
+        SelectObject(hdc, hOldbmp);
+        ImageList_Add(dragList, hbmp, 0);
+    }
+    else
+        SelectObject(hdc, hOldbmp);
+
+    DeleteObject(hbmp);
+    DeleteDC(hdc);
+    ReleaseDC(infoPtr->hwndSelf, hdcOrig);
+
+    TRACE("ret=%p\n", dragList);
+
+    return dragList;
+}
 
 
 /***
@@ -7676,6 +7738,68 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     return 0;
 }
 
+
+/***
+ * DESCRIPTION:
+ * Track mouse/dragging
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] pt : mouse coordinate
+ *
+ * RETURN:
+ * Zero
+ */
+static LRESULT LISTVIEW_TrackMouse(LISTVIEW_INFO *infoPtr, POINT pt)
+{
+    INT cxDrag = GetSystemMetrics(SM_CXDRAG);
+    INT cyDrag = GetSystemMetrics(SM_CYDRAG);
+    RECT r;
+    MSG msg;
+
+    TRACE("\n");
+
+    r.top = pt.y - cyDrag;
+    r.left = pt.x - cxDrag;
+    r.bottom = pt.y + cyDrag;
+    r.right = pt.x + cxDrag;
+
+    SetCapture(infoPtr->hwndSelf);
+
+    while (1)
+    {
+	if (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE | PM_NOYIELD))
+	{
+	    if (msg.message == WM_MOUSEMOVE)
+	    {
+		pt.x = (short)LOWORD(msg.lParam);
+		pt.y = (short)HIWORD(msg.lParam);
+		if (PtInRect(&r, pt))
+		    continue;
+		else
+		{
+		    ReleaseCapture();
+		    return 1;
+		}
+	    }
+	    else if (msg.message >= WM_LBUTTONDOWN &&
+		     msg.message <= WM_RBUTTONDBLCLK)
+	    {
+		break;
+	    }
+
+	    DispatchMessageW(&msg);
+	}
+
+	if (GetCapture() != infoPtr->hwndSelf)
+	    return 0;
+    }
+
+    ReleaseCapture();
+    return 0;
+}
+
+
 /***
  * DESCRIPTION:
  * Processes double click messages (left mouse button).
@@ -7747,6 +7871,20 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   infoPtr->nEditLabelItem = -1;
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
+    if (LISTVIEW_TrackMouse(infoPtr, lvHitTestInfo.pt))
+    {
+        NMLISTVIEW nmlv;
+
+	ZeroMemory(&nmlv, sizeof(nmlv));
+        nmlv.iItem = nItem;
+        nmlv.ptAction.x = lvHitTestInfo.pt.x;
+        nmlv.ptAction.y = lvHitTestInfo.pt.y;
+
+        notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+
+        return 0;
+    }
+
     if (infoPtr->dwStyle & LVS_SINGLESEL)
     {
       if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
@@ -8500,7 +8638,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 /* case LVM_CANCELEDITLABEL: */
 
-/* case LVM_CREATEDRAGIMAGE: */
+  case LVM_CREATEDRAGIMAGE:
+    return (LRESULT)LISTVIEW_CreateDragImage(infoPtr, (INT)wParam, (LPPOINT)lParam);
 
   case LVM_DELETEALLITEMS:
     return LISTVIEW_DeleteAllItems(infoPtr);
