@@ -106,7 +106,7 @@ unsigned long Offset(void* ptr)
     return (char*)ptr - (char*)PE_base;
 }
 
-void*	RVA(unsigned long rva, unsigned long len)
+static void*	RVA(unsigned long rva, unsigned long len)
 {
     IMAGE_SECTION_HEADER*	sectHead;
     int				i;
@@ -1040,7 +1040,7 @@ static	enum FileSig	check_headers(void)
     return sig;
 }
 
-int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_sig)
+static int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig wanted_sig)
 {
     int			fd;
     enum FileSig	effective_sig;

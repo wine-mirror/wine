@@ -68,7 +68,7 @@ static const char*  errorEmpty = "No fonts found.\n";
 
 /* info */
 
-void usage(void)
+static void usage(void)
 {
     printf("Usage: fnt2bdf [-t] [-c charset] [-o basename] [input file]\n");
     printf("  -c charset\tcharset name for OEM_CHARSET fonts\n");
@@ -81,7 +81,7 @@ void usage(void)
 
 /* convert little-endian value to the local format */
 
-int return_data_value(enum data_types dtype, void * pChr)
+static int return_data_value(enum data_types dtype, void * pChr)
 {
 int   ret_val = 0;
 
@@ -109,7 +109,7 @@ int   ret_val = 0;
     return ret_val;
 }
 
-int make_bdf_filename(char* name, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
+static int make_bdf_filename(char* name, fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
 {
 long	l_nameoffset = return_data_value(dfLong, &cpe_font_struct->hdr.fi.dfFace);
 char*   lpChar;
@@ -142,7 +142,7 @@ char*   lpChar;
 
 /* parse FONT resource and write .bdf file */
 
-int parse_fnt_data(unsigned char* file_buffer, int length)
+static int parse_fnt_data(unsigned char* file_buffer, int length)
 {
   fnt_fontS	cpe_font_struct;
   int     	ic=0, t;
@@ -433,7 +433,7 @@ int	l_ascent = return_data_value(dfShort, &cpe_font_struct->hdr.fi.dfAscent);
 
 
 
-void parse_options(int argc, char **argv)
+static void parse_options(int argc, char **argv)
 {
   int i;
 
@@ -482,7 +482,7 @@ void parse_options(int argc, char **argv)
 
 /* read file data and return file type */
 
-int get_resource_table(int fd, unsigned char** lpdata, int fsize)
+static int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 {
   IMAGE_DOS_HEADER mz_header;
   IMAGE_OS2_HEADER ne_header;

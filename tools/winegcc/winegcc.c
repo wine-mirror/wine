@@ -177,7 +177,7 @@ static void exit_on_signal( int sig )
     exit(1);  /* this will call the atexit functions */
 }
 
-char* get_temp_file(const char* prefix, const char* suffix)
+static char* get_temp_file(const char* prefix, const char* suffix)
 {
     int fd;
     sigset_t old_set;

@@ -77,7 +77,7 @@ struct resheader32 {
  * Remarks	:
  *****************************************************************************
 */
-int read_data(FILE *fp, size_t size, void *buf)
+static int read_data(FILE *fp, size_t size, void *buf)
 {
 	unsigned int r;
 	int pos = ftell(fp);
@@ -100,7 +100,7 @@ int read_data(FILE *fp, size_t size, void *buf)
  * Remarks	:
  *****************************************************************************
 */
-enum res_e res_type_from_id(const name_id_t *nid)
+static enum res_e res_type_from_id(const name_id_t *nid)
 {
 	if(nid->type == name_str)
 		return res_usr;

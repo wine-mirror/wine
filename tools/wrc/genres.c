@@ -141,7 +141,7 @@ void put_dword(res_t *res, unsigned d)
 	res->size += sizeof(DWORD);
 }
 
-void put_pad(res_t *res)
+static void put_pad(res_t *res)
 {
 	while(res->size & 0x3)
 		put_byte(res, 0);
@@ -163,7 +163,7 @@ void put_pad(res_t *res)
  * Remarks	:
  *****************************************************************************
 */
-void set_word(res_t *res, int ofs, unsigned w)
+static void set_word(res_t *res, int ofs, unsigned w)
 {
 	switch(byteorder)
 	{
@@ -185,7 +185,7 @@ void set_word(res_t *res, int ofs, unsigned w)
 	}
 }
 
-void set_dword(res_t *res, int ofs, unsigned d)
+static void set_dword(res_t *res, int ofs, unsigned d)
 {
 	switch(byteorder)
 	{
@@ -226,7 +226,7 @@ void set_dword(res_t *res, int ofs, unsigned d)
  * Remarks	:
  *****************************************************************************
 */
-WORD get_word(res_t *res, int ofs)
+static WORD get_word(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
@@ -246,7 +246,7 @@ WORD get_word(res_t *res, int ofs)
 	}
 }
 
-DWORD get_dword(res_t *res, int ofs)
+static DWORD get_dword(res_t *res, int ofs)
 {
 	switch(byteorder)
 	{
@@ -428,7 +428,7 @@ static void put_lvc(res_t *res, lvc_t *lvc)
  * Remarks	:
  *****************************************************************************
 */
-void put_raw_data(res_t *res, raw_data_t *raw, int offset)
+static void put_raw_data(res_t *res, raw_data_t *raw, int offset)
 {
 	int wsize = raw->size - offset;
 	if(res->allocsize - res->size < wsize)
@@ -456,8 +456,8 @@ void put_raw_data(res_t *res, raw_data_t *raw, int offset)
  * Remarks	:
  *****************************************************************************
 */
-int put_res_header(res_t *res, int type, name_id_t *ntype, name_id_t *name,
-		      DWORD memopt, lvc_t *lvc)
+static int put_res_header(res_t *res, int type, name_id_t *ntype, name_id_t *name,
+                          DWORD memopt, lvc_t *lvc)
 {
 	if(win32)
 	{

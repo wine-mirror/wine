@@ -78,7 +78,7 @@ const char *get_typename(const resource_t* r)
  * Remarks	: No codepage translation is done.
  *****************************************************************************
 */
-char *strncpyWtoA(char *cs, const short *ws, int maxlen)
+static char *strncpyWtoA(char *cs, const short *ws, int maxlen)
 {
 	char *cptr = cs;
 	const short *wsMax = ws + maxlen - 1;
@@ -102,7 +102,7 @@ char *strncpyWtoA(char *cs, const short *ws, int maxlen)
  * Remarks	:
  *****************************************************************************
 */
-void print_string(const string_t *str)
+static void print_string(const string_t *str)
 {
 	char buffer[512];
 	if(!str)
