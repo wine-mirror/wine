@@ -118,7 +118,7 @@
  125 stdcall FileMenu_AddFilesForPidl(long long long ptr long long ptr)
  126 stdcall SHOutOfMemoryMessageBox (long long long)
  127 stdcall SHWinHelp (long long long long)
- 128 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
+ 128 stdcall -private DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
  129 stdcall DAD_AutoScroll(long ptr ptr)
  130 stdcall DAD_DragEnter(long)
  131 stdcall DAD_DragEnterEx(long long long)
@@ -317,9 +317,10 @@
 @ stdcall Control_RunDLL(ptr ptr str long) Control_RunDLLA
 @ stdcall Control_RunDLLA(ptr ptr str long)
 @ stdcall Control_RunDLLW(ptr ptr wstr long)
+@ stdcall -private DllCanUnloadNow() SHELL32_DllCanUnloadNow
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
-@ stdcall DllRegisterServer() SHELL32_DllRegisterServer
-@ stdcall DllUnregisterServer() SHELL32_DllUnregisterServer
+@ stdcall -private DllRegisterServer() SHELL32_DllRegisterServer
+@ stdcall -private DllUnregisterServer() SHELL32_DllUnregisterServer
 @ stdcall DoEnvironmentSubstA(str str)
 @ stdcall DoEnvironmentSubstW(wstr wstr)
 @ stub DragQueryFileAorW
@@ -399,7 +400,6 @@
 # version 4.71 (IE4.0)
 # _WIN32_IE >= 0x0400
 #
-@ stdcall DllCanUnloadNow() SHELL32_DllCanUnloadNow
 @ stdcall DllGetVersion(ptr)SHELL32_DllGetVersion
 @ stub SHGetFreeDiskSpace
 @ stdcall SHGetSpecialFolderPathA(long ptr long long)

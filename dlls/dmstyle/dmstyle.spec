@@ -1,4 +1,4 @@
-1 stdcall DllCanUnloadNow() DMSTYLE_DllCanUnloadNow
-2 stdcall DllGetClassObject(long long ptr) DMSTYLE_DllGetClassObject
-3 stdcall DllRegisterServer() DMSTYLE_DllRegisterServer
-4 stdcall DllUnregisterServer() DMSTYLE_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow() DMSTYLE_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(long long ptr) DMSTYLE_DllGetClassObject
+@ stdcall -private DllRegisterServer() DMSTYLE_DllRegisterServer
+@ stdcall -private DllUnregisterServer() DMSTYLE_DllUnregisterServer

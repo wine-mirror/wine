@@ -1,4 +1,4 @@
-1 stdcall DllCanUnloadNow() DMBAND_DllCanUnloadNow
-2 stdcall DllGetClassObject(long long ptr) DMBAND_DllGetClassObject
-3 stdcall DllRegisterServer() DMBAND_DllRegisterServer
-4 stdcall DllUnregisterServer() DMBAND_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow() DMBAND_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(long long ptr) DMBAND_DllGetClassObject
+@ stdcall -private DllRegisterServer() DMBAND_DllRegisterServer
+@ stdcall -private DllUnregisterServer() DMBAND_DllUnregisterServer

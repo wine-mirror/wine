@@ -1,4 +1,4 @@
-@ stdcall DllCanUnloadNow() MSISYS_DllCanUnloadNow
-@ stdcall DllGetClassObject(ptr ptr ptr) MSISYS_DllGetClassObject
-@ stdcall DllRegisterServer() MSISYS_DllRegisterServer
-@ stdcall DllUnregisterServer() MSISYS_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow() MSISYS_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(ptr ptr ptr) MSISYS_DllGetClassObject
+@ stdcall -private DllRegisterServer() MSISYS_DllRegisterServer
+@ stdcall -private DllUnregisterServer() MSISYS_DllUnregisterServer

@@ -60,7 +60,7 @@
  60 stub CreatePointerMoniker       # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  61 stdcall CreateStreamOnHGlobal(ptr long ptr)
  62 stdcall DllDebugObjectRPCHook(long ptr)
- 63 stdcall DllGetClassObject (ptr ptr ptr) OLE32_DllGetClassObject
+ 63 stdcall -private DllGetClassObject (ptr ptr ptr) OLE32_DllGetClassObject
  64 stub DllGetClassObjectWOW
  65 stdcall DoDragDrop(ptr ptr long ptr)
  66 stub EnableHookObject
@@ -191,7 +191,7 @@
 191 stub CoSwitchCallContext
 192 stdcall CreateErrorInfo(ptr)
 193 stub CreateObjrefMoniker
-194 stdcall DllRegisterServer() OLE32_DllRegisterServer
+194 stdcall -private DllRegisterServer() OLE32_DllRegisterServer
 195 stdcall FreePropVariantArray(long ptr)
 196 stdcall GetErrorInfo(long ptr)
 197 stub HACCEL_UserFree
@@ -263,4 +263,4 @@
 263 stub WdtpInterfacePointer_UserMarshal
 264 stub WdtpInterfacePointer_UserSize
 265 stub WdtpInterfacePointer_UserUnmarshal
-@ stdcall DllUnregisterServer() OLE32_DllUnregisterServer
+@ stdcall -private DllUnregisterServer() OLE32_DllUnregisterServer

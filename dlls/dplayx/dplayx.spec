@@ -5,5 +5,5 @@
   5 stdcall DirectPlayLobbyCreateW(ptr ptr ptr ptr long)
   6 extern gdwDPlaySPRefCount
   9 stdcall DirectPlayEnumerate(ptr ptr) DirectPlayEnumerateA
-  10 stdcall DllCanUnloadNow() DPLAYX_DllCanUnloadNow
-  11 stdcall DllGetClassObject(ptr ptr ptr) DPLAYX_DllGetClassObject
+  10 stdcall -private DllCanUnloadNow() DPLAYX_DllCanUnloadNow
+  11 stdcall -private DllGetClassObject(ptr ptr ptr) DPLAYX_DllGetClassObject

@@ -21,12 +21,12 @@
 @ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long)
 @ stub CreateFormatEnumerator
 @ stdcall CreateURLMoniker(ptr wstr ptr)
-@ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow
-@ stdcall DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
+@ stdcall -private DllCanUnloadNow() URLMON_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(ptr ptr ptr) URLMON_DllGetClassObject
 @ stdcall DllInstall(long ptr) URLMON_DllInstall
-@ stdcall DllRegisterServer() URLMON_DllRegisterServer
-@ stdcall DllRegisterServerEx() URLMON_DllRegisterServerEx
-@ stdcall DllUnregisterServer() URLMON_DllUnregisterServer
+@ stdcall -private DllRegisterServer() URLMON_DllRegisterServer
+@ stdcall -private DllRegisterServerEx() URLMON_DllRegisterServerEx
+@ stdcall -private DllUnregisterServer() URLMON_DllUnregisterServer
 @ stdcall Extract(long ptr) cabinet.Extract
 @ stub FaultInIEFeature
 @ stub FindMediaType

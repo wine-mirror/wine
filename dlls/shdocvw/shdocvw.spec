@@ -98,12 +98,12 @@
 225 stub @
 226 stub @
 
-@ stdcall DllCanUnloadNow() SHDOCVW_DllCanUnloadNow
-@ stdcall DllGetClassObject(long long ptr) SHDOCVW_DllGetClassObject
+@ stdcall -private DllCanUnloadNow() SHDOCVW_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(long long ptr) SHDOCVW_DllGetClassObject
 @ stdcall DllGetVersion(ptr) SHDOCVW_DllGetVersion
 @ stdcall DllInstall(long wstr) SHDOCVW_DllInstall
-@ stdcall DllRegisterServer() SHDOCVW_DllRegisterServer
-@ stdcall DllUnregisterServer() SHDOCVW_DllUnregisterServer
+@ stdcall -private DllRegisterServer() SHDOCVW_DllRegisterServer
+@ stdcall -private DllUnregisterServer() SHDOCVW_DllUnregisterServer
 @ stub DllRegisterWindowClasses
 @ stub DoAddToFavDlg
 @ stub DoAddToFavDlgW

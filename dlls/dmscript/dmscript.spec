@@ -1,4 +1,4 @@
-1 stdcall DllCanUnloadNow() DMSCRIPT_DllCanUnloadNow
-2 stdcall DllGetClassObject(long long ptr) DMSCRIPT_DllGetClassObject
-3 stdcall DllRegisterServer() DMSCRIPT_DllRegisterServer
-4 stdcall DllUnregisterServer() DMSCRIPT_DllUnregisterServer
+@ stdcall -private DllCanUnloadNow() DMSCRIPT_DllCanUnloadNow
+@ stdcall -private DllGetClassObject(long long ptr) DMSCRIPT_DllGetClassObject
+@ stdcall -private DllRegisterServer() DMSCRIPT_DllRegisterServer
+@ stdcall -private DllUnregisterServer() DMSCRIPT_DllUnregisterServer
