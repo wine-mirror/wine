@@ -18,9 +18,6 @@
 #ifdef HAVE_SYS_PTRACE_H
 # include <sys/ptrace.h>
 #endif
-#ifdef HAVE_SYS_USER_H
-# include <sys/user.h>
-#endif
 
 #include "winbase.h"
 

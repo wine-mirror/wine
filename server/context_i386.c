@@ -20,9 +20,6 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
-#ifdef HAVE_SYS_USER_H
-# include <sys/user.h>
-#endif
 
 #include "winbase.h"
 #include "thread.h"
@@ -58,6 +55,9 @@
 #endif
 
 #ifdef linux
+#ifdef HAVE_SYS_USER_H
+# include <sys/user.h>
+#endif
 
 /* user_regs definitions from asm/user.h */
 struct kernel_user_regs_struct
