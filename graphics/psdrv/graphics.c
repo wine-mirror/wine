@@ -152,6 +152,9 @@ static BOOL PSDRV_DrawArc( DC *dc, INT left, INT top,
 
     if(lines == 2) /* pie */
         PSDRV_WriteMoveTo(dc, x, y);
+    else
+        PSDRV_WriteNewPath( dc );
+
     PSDRV_WriteArc(dc, x, y, w, h, start_angle, end_angle);
     if(lines == 1 || lines == 2) { /* chord or pie */
         PSDRV_WriteClosePath(dc);

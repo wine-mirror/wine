@@ -511,10 +511,6 @@ BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h, double ang1,
     /* Make angles -ve and swap order because we're working with an upside
        down y-axis */
     sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
-
-    /* Write newpath operator to ensure there's no line segment drawn
-       from the current point to the beginning of the arc. */
-    PSDRV_WriteNewPath( dc );
     return PSDRV_WriteSpool(dc, buf, strlen(buf));
 }
 
