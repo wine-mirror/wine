@@ -330,7 +330,7 @@ HOTKEY_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-HOTKEY_Register (VOID)
+HOTKEY_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -350,7 +350,7 @@ HOTKEY_Register (VOID)
 
 
 VOID
-HOTKEY_Unregister (VOID)
+HOTKEY_Unregister (void)
 {
     if (GlobalFindAtomA (HOTKEY_CLASSA))
 	UnregisterClassA (HOTKEY_CLASSA, (HINSTANCE)NULL);

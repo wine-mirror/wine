@@ -2347,7 +2347,7 @@ TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-TOOLTIPS_Register (VOID)
+TOOLTIPS_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -2367,7 +2367,7 @@ TOOLTIPS_Register (VOID)
 
 
 VOID
-TOOLTIPS_Unregister (VOID)
+TOOLTIPS_Unregister (void)
 {
     if (GlobalFindAtomA (TOOLTIPS_CLASSA))
 	UnregisterClassA (TOOLTIPS_CLASSA, (HINSTANCE)NULL);

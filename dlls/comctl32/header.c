@@ -1551,7 +1551,7 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-HEADER_Register (VOID)
+HEADER_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -1570,7 +1570,7 @@ HEADER_Register (VOID)
 
 
 VOID
-HEADER_Unregister (VOID)
+HEADER_Unregister (void)
 {
     if (GlobalFindAtomA (WC_HEADERA))
 	UnregisterClassA (WC_HEADERA, (HINSTANCE)NULL);

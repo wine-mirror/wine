@@ -2990,7 +2990,7 @@ ATOM        WINAPI GlobalDeleteAtom(ATOM);
 DWORD       WINAPI OemKeyScan(WORD);
 BOOL        WINAPI ReleaseCapture(void);
 BOOL        WINAPI SetKeyboardState(LPBYTE);
-VOID        WINAPI WaitMessage(VOID);
+VOID        WINAPI WaitMessage(void);
 
 
 /* Declarations for functions that change between Win16 and Win32 */

@@ -1118,7 +1118,7 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
  */
 
 BOOL WINAPI
-ImageList_EndDrag (VOID)
+ImageList_EndDrag (void)
 {
     FIXME (imagelist, "semi-stub!\n");
 

@@ -1244,7 +1244,7 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
  */
 
 VOID
-STATUS_Register (VOID)
+STATUS_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -1270,7 +1270,7 @@ STATUS_Register (VOID)
  */
 
 VOID
-STATUS_Unregister (VOID)
+STATUS_Unregister (void)
 {
     if (GlobalFindAtomA (STATUSCLASSNAMEA))
 	UnregisterClassA (STATUSCLASSNAMEA, (HINSTANCE)NULL);

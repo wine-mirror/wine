@@ -2009,7 +2009,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-REBAR_Register (VOID)
+REBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -2029,7 +2029,7 @@ REBAR_Register (VOID)
 
 
 VOID
-REBAR_Unregister (VOID)
+REBAR_Unregister (void)
 {
     if (GlobalFindAtomA (REBARCLASSNAMEA))
 	UnregisterClassA (REBARCLASSNAMEA, (HINSTANCE)NULL);

@@ -1824,7 +1824,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-TAB_Register (VOID)
+TAB_Register (void)
 {
   WNDCLASSA wndClass;
 
@@ -1844,7 +1844,7 @@ TAB_Register (VOID)
 
 
 VOID
-TAB_Unregister (VOID)
+TAB_Unregister (void)
 {
   if (GlobalFindAtomA (WC_TABCONTROLA))
     UnregisterClassA (WC_TABCONTROLA, (HINSTANCE)NULL);

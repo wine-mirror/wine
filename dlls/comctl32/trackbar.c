@@ -1628,7 +1628,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-TRACKBAR_Register (VOID)
+TRACKBAR_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -1648,7 +1648,7 @@ TRACKBAR_Register (VOID)
 
 
 VOID
-TRACKBAR_Unregister (VOID)
+TRACKBAR_Unregister (void)
 {
     if (GlobalFindAtomA (TRACKBAR_CLASSA))
 	UnregisterClassA (TRACKBAR_CLASSA, (HINSTANCE)NULL);

@@ -152,7 +152,7 @@ FlatSB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-FLATSB_Register (VOID)
+FLATSB_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -172,7 +172,7 @@ FLATSB_Register (VOID)
 
 
 VOID
-FLATSB_Unregister (VOID)
+FLATSB_Unregister (void)
 {
     if (GlobalFindAtomA (FLATSB_CLASSA))
 	UnregisterClassA (FLATSB_CLASSA, (HINSTANCE)NULL);

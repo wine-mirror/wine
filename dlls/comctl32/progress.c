@@ -357,7 +357,7 @@ LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
  */
 
 VOID
-PROGRESS_Register (VOID)
+PROGRESS_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -382,7 +382,7 @@ PROGRESS_Register (VOID)
  */
 
 VOID
-PROGRESS_Unregister (VOID)
+PROGRESS_Unregister (void)
 {
     if (GlobalFindAtomA (PROGRESS_CLASSA))
 	UnregisterClassA (PROGRESS_CLASSA, (HINSTANCE)NULL);

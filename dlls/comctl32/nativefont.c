@@ -81,7 +81,7 @@ NATIVEFONT_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-NATIVEFONT_Register (VOID)
+NATIVEFONT_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -101,7 +101,7 @@ NATIVEFONT_Register (VOID)
 
 
 VOID
-NATIVEFONT_Unregister (VOID)
+NATIVEFONT_Unregister (void)
 {
     if (GlobalFindAtomA (WC_NATIVEFONTCTLA))
 	UnregisterClassA (WC_NATIVEFONTCTLA, (HINSTANCE)NULL);

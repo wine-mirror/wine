@@ -873,7 +873,7 @@ UPDOWN_Register(void)
  */
 
 VOID
-UPDOWN_Unregister (VOID)
+UPDOWN_Unregister (void)
 {
     if (GlobalFindAtomA (UPDOWN_CLASSA))
 	UnregisterClassA (UPDOWN_CLASSA, (HINSTANCE)NULL);

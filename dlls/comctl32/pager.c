@@ -358,7 +358,7 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-PAGER_Register (VOID)
+PAGER_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -378,7 +378,7 @@ PAGER_Register (VOID)
 
 
 VOID
-PAGER_Unregister (VOID)
+PAGER_Unregister (void)
 {
     if (GlobalFindAtomA (WC_PAGESCROLLERA))
 	UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);

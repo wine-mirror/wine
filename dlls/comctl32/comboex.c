@@ -307,7 +307,7 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-COMBOEX_Register (VOID)
+COMBOEX_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -327,7 +327,7 @@ COMBOEX_Register (VOID)
 
 
 VOID
-COMBOEX_Unregister (VOID)
+COMBOEX_Unregister (void)
 {
     if (GlobalFindAtomA (WC_COMBOBOXEXA))
 	UnregisterClassA (WC_COMBOBOXEXA, (HINSTANCE)NULL);

@@ -573,7 +573,7 @@ IPADDRESS_Register (void)
 }
 
 VOID
-IPADDRESS_Unregister (VOID)
+IPADDRESS_Unregister (void)
 {
     if (GlobalFindAtomA (WC_IPADDRESSA))
     UnregisterClassA (WC_IPADDRESSA, (HINSTANCE)NULL);

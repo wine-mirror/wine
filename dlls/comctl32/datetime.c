@@ -133,7 +133,7 @@ DATETIME_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-DATETIME_Register (VOID)
+DATETIME_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -153,7 +153,7 @@ DATETIME_Register (VOID)
 
 
 VOID
-DATETIME_Unregister (VOID)
+DATETIME_Unregister (void)
 {
     if (GlobalFindAtomA (DATETIMEPICK_CLASSA))
 	UnregisterClassA (DATETIMEPICK_CLASSA, (HINSTANCE)NULL);

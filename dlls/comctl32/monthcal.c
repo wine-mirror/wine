@@ -90,7 +90,7 @@ MONTHCAL_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 VOID
-MONTHCAL_Register (VOID)
+MONTHCAL_Register (void)
 {
     WNDCLASSA wndClass;
 
@@ -110,7 +110,7 @@ MONTHCAL_Register (VOID)
 
 
 VOID
-MONTHCAL_Unregister (VOID)
+MONTHCAL_Unregister (void)
 {
     if (GlobalFindAtomA (MONTHCAL_CLASSA))
 	UnregisterClassA (MONTHCAL_CLASSA, (HINSTANCE)NULL);
