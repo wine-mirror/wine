@@ -376,9 +376,8 @@ static unsigned __td_lookup( Window w, Window* list, unsigned max )
   return i;
 }
 
-static BOOL EVENT_QueryZOrder( HWND hWndCheck)
+static HWND EVENT_QueryZOrder( HWND hWndCheck)
 {
-  BOOL      bRet = FALSE;
   HWND      hwndInsertAfter = HWND_TOP;
   WND      *pWndCheck = WIN_FindWndPtr(hWndCheck);
   WND      *pDesktop = WIN_GetDesktop();
@@ -391,7 +390,7 @@ static BOOL EVENT_QueryZOrder( HWND hWndCheck)
       WIN_ReleaseWndPtr(pWndCheck);
       WIN_ReleaseWndPtr(pDesktop->child);
       WIN_ReleaseDesktop();
-      return TRUE;
+      return hwndInsertAfter;
   }
   WIN_LockWndPtr(pWndZ);
   WIN_LockWndPtr(pWnd);
@@ -433,16 +432,13 @@ static BOOL EVENT_QueryZOrder( HWND hWndCheck)
 		  if( best - check == 1 ) break;
               }
           }
-	  /* and link pWndCheck right behind it in the local z-order */
       }
-      WIN_UnlinkWindow( pWndCheck->hwndSelf );
-      WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
   }
   if( children ) TSXFree( children );
   WIN_ReleaseWndPtr(pWnd);
   WIN_ReleaseWndPtr(pWndZ);
   WIN_ReleaseWndPtr(pWndCheck);
-  return bRet;
+  return hwndInsertAfter;
 }
 
 /***********************************************************************
@@ -758,101 +754,49 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
  */
 static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
 {
-  WINDOWPOS winpos;
-  RECT newWindowRect, newClientRect;
-  RECT oldWindowRect, oldClientRect;
-  Window above = event->above;
-  int x, y;
-  unsigned int width, height;
+    RECT rectWindow;
+    int x, y, flags = 0;
+    unsigned int width, height;
+    HWND newInsertAfter, oldInsertAfter;
   
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  assert (pWnd->flags & WIN_MANAGED);
-  
-  /* We don't rely on the event geometry info, because it is relative
-   * to parent and not to root, and it may be wrong (XFree sets x,y to 0,0
-   * if the window hasn't moved).
-   */
-  EVENT_GetGeometry( event->window, &x, &y, &width, &height );
-    
-TRACE_(win)("%04x adjusted to (%i,%i)-(%i,%i)\n", pWnd->hwndSelf, 
-	    x, y, x + width, y + height );
+    /* Get geometry and Z-order according to X */
 
-  /* Fill WINDOWPOS struct */
-  winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
-  winpos.hwnd = hWnd;
-  winpos.x = x;
-  winpos.y = y;
-  winpos.cx = width;
-  winpos.cy = height;
-    
-  /* Check for unchanged attributes */
-  if (winpos.x == pWnd->rectWindow.left && winpos.y == pWnd->rectWindow.top)
-    winpos.flags |= SWP_NOMOVE;
-  if ((winpos.cx == pWnd->rectWindow.right - pWnd->rectWindow.left) &&
-      (winpos.cy == pWnd->rectWindow.bottom - pWnd->rectWindow.top))
-    winpos.flags |= SWP_NOSIZE;
-  else
-    {
-      RECT rect;
+    EVENT_GetGeometry( event->window, &x, &y, &width, &height );
+    newInsertAfter = EVENT_QueryZOrder( hWnd );
 
-      rect.left = 0;
-      rect.top = 0;
-      rect.right = pWnd->rectWindow.right - pWnd->rectWindow.left;
-      rect.bottom = pWnd->rectWindow.bottom - pWnd->rectWindow.top;
+    /* Get geometry and Z-order according to Wine */
 
-      DCE_InvalidateDCE( pWnd, &rect );
-    }
-  
-  /* Send WM_WINDOWPOSCHANGING */
-  SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
+    GetWindowRect( hWnd, &rectWindow );
+    oldInsertAfter = GetWindow( hWnd, GW_HWNDPREV );
+    if ( !oldInsertAfter ) oldInsertAfter = HWND_TOP;
 
-  if (!IsWindow( winpos.hwnd ))
-  {
-      WIN_ReleaseWndPtr(pWnd);
-      return;
-  }
-  
-  /* Calculate new position and size */
-  newWindowRect.left = x;
-  newWindowRect.right = x + width;
-  newWindowRect.top = y;
-  newWindowRect.bottom = y + height;
+    /* Compare what has changed */
 
-  WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
-			 &pWnd->rectWindow, &pWnd->rectClient,
-			 &winpos, &newClientRect );
-  
-  if (!IsWindow( winpos.hwnd ))
-  {
-      WIN_ReleaseWndPtr(pWnd);
-      return;
-  }
-  
-  oldWindowRect = pWnd->rectWindow;
-  oldClientRect = pWnd->rectClient;
+    if ( rectWindow.left == x && rectWindow.top == y )
+        flags |= SWP_NOMOVE;
+    else
+        TRACE_(win)( "%04x moving from (%d,%d) to (%d,%d)\n", hWnd, 
+	             rectWindow.left, rectWindow.top, x, y );
 
-  /* Set new size and position */
-  pWnd->rectWindow = newWindowRect;
-  pWnd->rectClient = newClientRect;
+    if (    rectWindow.right - rectWindow.left == width
+         && rectWindow.bottom - rectWindow.top == height )
+        flags |= SWP_NOSIZE;
+    else
+        TRACE_(win)( "%04x resizing from (%d,%d) to (%d,%d)\n", hWnd, 
+                     rectWindow.right - rectWindow.left, 
+                     rectWindow.bottom - rectWindow.top, width, height );
 
-  /* FIXME: Copy valid bits */
+    if ( newInsertAfter == oldInsertAfter )
+        flags |= SWP_NOZORDER;
+    else
+        TRACE_(win)( "%04x restacking from after %04x to after %04x\n", hWnd, 
+                     oldInsertAfter, newInsertAfter );
 
-  if( oldClientRect.top - oldWindowRect.top != newClientRect.top - newWindowRect.top ||
-      oldClientRect.left - oldWindowRect.left != newClientRect.left - newWindowRect.left )
-      RedrawWindow( winpos.hwnd, NULL, 0, RDW_FRAME | RDW_ALLCHILDREN |
-                                          RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
+    /* If anything changed, call SetWindowPos */
 
-  WIN_ReleaseWndPtr(pWnd);
-
-  SendMessageA( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
-  
-  if (!IsWindow( winpos.hwnd )) return;
-  if( above == None )			/* absolute bottom */
-    {
-      WIN_UnlinkWindow( winpos.hwnd );
-      WIN_LinkWindow( winpos.hwnd, HWND_BOTTOM);
-    }
-  else EVENT_QueryZOrder( hWnd );	/* try to outsmart window manager */
+    if ( flags != (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER) )
+        SetWindowPos( hWnd, newInsertAfter, x, y, width, height, 
+                            flags | SWP_NOACTIVATE );
 }
 
 
