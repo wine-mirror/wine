@@ -168,6 +168,10 @@ static SuffixCharset sufch_windows[] = {
     { "1257", BALTIC_CHARSET },
     {  NULL,  BALTIC_CHARSET }}; /* CHECK/FIXME is BALTIC really the default ? */
 
+static SuffixCharset sufch_koi8[] = {
+    { "r", RUSSIAN_CHARSET },
+    { NULL, RUSSIAN_CHARSET }};
+
 /* Each of these must be matched explicitly */
 static SuffixCharset sufch_any[] = {
     { "fontspecific", SYMBOL_CHARSET },
@@ -194,6 +198,7 @@ static fontEncodingTemplate __fETTable[] = {
 			{ "tis620.2533",  sufch_tis620,       &__fETTable[7] },
 			{ "viscii1.1",    sufch_viscii,       &__fETTable[8] },
 			{ "windows",      sufch_windows,      &__fETTable[9] },
+			{ "koi8",         sufch_koi8,         &__fETTable[10] },
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
@@ -287,7 +292,7 @@ static LFD* LFD_Parse(LPSTR lpFont)
     int i;
     if (*lpch != HYPHEN)
     {
-/*        WARN("font '%s' doesn't begin with '%c'\n", lpFont, HYPHEN); */
+        WARN("font '%s' doesn't begin with '%c'\n", lpFont, HYPHEN);
 	return NULL;
     }
 
@@ -549,13 +554,11 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
    {
    case 0: /* Bitmap */
        break;
+   case 2: /* Scalable bitmap */
    case 4: /* Scalable */
        fi->fi_flags |= FI_SCALABLE;
        break;
-   case 2:
-       /* #$%^!!! X11R6 mutant garbage (scalable bitmap) */
-       TRACE("Skipping scalable bitmap '%s'\n", fullname);
-       return FALSE;
+
    default:
        WARN("Font '%s' has weird scalability\n", fullname);
        return FALSE;
@@ -643,7 +646,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 	   }
        }
    }
-/*   WARN("font '%s' has unknown character set '%s'\n", fullname, lpstr);  */
+   WARN("font '%s' has unknown character set '%s'\n", fullname, lpstr);
    return FALSE;
 
 done:
