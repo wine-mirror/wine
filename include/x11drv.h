@@ -158,6 +158,8 @@ extern INT X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP hbitmap,
 				      WORD fGet, UINT startscan,
 				      UINT lines, LPSTR bits,
 				      LPBITMAPINFO info, UINT coloruse );
+extern BOOL X11DRV_GetDeviceGammaRamp( struct tagDC *dc, LPVOID ramp );
+extern BOOL X11DRV_SetDeviceGammaRamp( struct tagDC *dc, LPVOID ramp );
 
 /* OpenGL / X11 driver functions */
 extern int X11DRV_ChoosePixelFormat(DC *dc, const PIXELFORMATDESCRIPTOR *pppfd) ;
@@ -268,6 +270,8 @@ void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,
 			       DWORD xSrc, DWORD ySrc,   
 			       DWORD xDest, DWORD yDest, 
 			       DWORD width, DWORD height);
+
+extern INT X11DRV_DCICommand(INT cbInput, LPVOID lpInData, LPVOID lpOutData);
 
 /**************************************************************************
  * X11 GDI driver

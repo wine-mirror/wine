@@ -17,6 +17,10 @@ void X11DRV_XF86VM_Cleanup(void);
 int X11DRV_XF86VM_GetCurrentMode(void);
 void X11DRV_XF86VM_SetCurrentMode(int mode);
 void X11DRV_XF86VM_SetExclusiveMode(int lock);
+int X11DRV_XF86VM_CreateDriver(LPDDHALINFO info);
+
+BOOL X11DRV_XF86VM_GetGammaRamp(LPDDGAMMARAMP ramp);
+BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp);
 
 #endif /* HAVE_LIBXXF86VM */
 #endif /* __WINE_XVIDMODE_H */
