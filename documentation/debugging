@@ -137,7 +137,8 @@ Disassembling programs:
   Windows Codeback, archivename wcbxxx.zip, which usually can be found
   in the Cica-Mirror subdirectory on the WINE ftpsites. (See ANNOUNCE).
   Disassembling win32 programs is possible using the Windows Disassembler 32,
-  archivename something like w32dasm.zip on ftp.winsite.com and mirrors.
+  which can be found at http://www.winsite.com/ and mirrors by searching for
+  w32dsm87.zip. This file used to be available under the name w32dasm.zip.
   The shareware version does not allow saving of disassembly listings.
 
   [It also has a bug, it disassembles the dll and immediately after that
