@@ -31,11 +31,9 @@
 #include "dinput.h"
 #include "debug.h"
 #include "message.h"
-
+#include "display.h"
 #include "mouse.h"
-#include "ts_xlib.h"
 #include "sysmetrics.h"
-#include "x11drv.h"
 
 extern BYTE InputKeyStateTable[256];
 extern int min_keycode, max_keycode;
@@ -79,7 +77,6 @@ struct SysMouseAImpl
         LONG prevX, prevY;
         LPMOUSE_EVENT_PROC prev_handler;
         HWND win;
-        int xwin;
         DWORD win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA data_queue;
         int queue_pos, queue_len;
@@ -891,6 +888,8 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
   TRACE(dinput,"(this=%p)\n",This);
 
   if (This->acquired == 0) {
+    POINT       point;
+
     /* This stores the current mouse handler.
        FIXME : need to be fixed for native USER use */
     This->prev_handler = mouse_event;
@@ -903,14 +902,15 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     
     /* Get the window dimension and find the center */
     GetWindowRect(This->win, &rect);
-    This->xwin = ((X11DRV_WND_DATA *) WIN_FindWndPtr(This->win)->pDriverData)->window;
     This->win_centerX = (rect.right  - rect.left) / 2;
     This->win_centerY = (rect.bottom - rect.top ) / 2;
+
     /* Warp the mouse to the center of the window */
     TRACE(dinput, "Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    TSXWarpPointer(display, DefaultRootWindow(display),
-		   This->xwin, 0, 0, 0, 0,
-		   This->win_centerX, This->win_centerY);
+    point.x = This->win_centerX;
+    point.y = This->win_centerY;
+    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
+    DISPLAY_MoveCursor(point.x, point.y);
     
     This->acquired = 1;
   }
@@ -983,10 +983,14 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
   
   /* Check if we need to do a mouse warping */
   if (This->need_warp) {
+    POINT point;
+
     TRACE(dinput, "Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    TSXWarpPointer(display, DefaultRootWindow(display),
-		   This->xwin, 0, 0, 0, 0,
-		   This->win_centerX, This->win_centerY);
+    point.x = This->win_centerX;
+    point.y = This->win_centerY;
+    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
+    DISPLAY_MoveCursor(point.x, point.y);
+
     This->need_warp = 0;
   }
   
@@ -1039,10 +1043,14 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
   
   /* Check if we need to do a mouse warping */
   if (This->need_warp) {
+    POINT point;
+
     TRACE(dinput, "Warping mouse to %ld - %ld\n", This->win_centerX, This->win_centerY);
-    TSXWarpPointer(display, DefaultRootWindow(display),
-		   This->xwin, 0, 0, 0, 0,
-		   This->win_centerX, This->win_centerY);
+    point.x = This->win_centerX;
+    point.y = This->win_centerY;
+    MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
+    DISPLAY_MoveCursor(point.x, point.y);
+
     This->need_warp = 0;
   }
   
