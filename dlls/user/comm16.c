@@ -51,6 +51,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -66,7 +67,6 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
-#include "wine/port.h"
 #include "win.h"
 #include "winerror.h"
 

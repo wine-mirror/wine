@@ -25,6 +25,7 @@
 #define GLPRIVATE_NO_REDEFINE
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -44,7 +45,6 @@
 #include "ddraw_private.h"
 #include "wine/debug.h"
 #include "wine/library.h"
-#include "wine/port.h"
 
 #include "gl_private.h"
 

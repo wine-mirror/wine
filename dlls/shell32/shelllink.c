@@ -24,6 +24,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -38,7 +39,6 @@
 # include <sys/wait.h>
 #endif
 #include "wine/debug.h"
-#include "wine/port.h"
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
