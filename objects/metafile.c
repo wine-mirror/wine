@@ -58,6 +58,10 @@ typedef struct
 #define MFHEADERSIZE (sizeof(METAHEADER))
 #define MFVERSION 0x300
 
+/* ### start build ### */
+extern WORD CALLBACK MF_CallTo16_word_wllwl(MFENUMPROC16,WORD,LONG,LONG,WORD,LONG);
+/* ### stop build ### */
+
 /******************************************************************
  *         MF_AddHandle
  *
@@ -614,9 +618,10 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!lpEnumFunc( hdc, (HANDLETABLE16 *)spht,
-                         (METARECORD *)MAKESEGPTR( seg + (HIWORD(offset) << __AHSHIFT), LOWORD(offset) ),
-                         mh->mtNoObjects, (LONG)lpData ))
+
+        if (!MF_CallTo16_word_wllwl( lpEnumFunc, hdc, spht,
+                                  MAKESEGPTR( seg + (HIWORD(offset) << __AHSHIFT), LOWORD(offset) ),
+                                     mh->mtNoObjects, (LONG)lpData ))
 	{
 	    result = FALSE;
 	    break;

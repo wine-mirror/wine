@@ -1,7 +1,8 @@
-*.spec.c
-*.spec.glue.s
 Makefile
+dispdib.spec.c
+gdi.spec.c
+gdi32.spec.c
 printdrv.glue.c
-thunk.glue.c
 version.res
 version16.res
+wing.spec.c

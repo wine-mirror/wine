@@ -87,6 +87,10 @@ static CHARSETINFO FONT_tci[MAXTCIINDEX] = {
   { DEFAULT_CHARSET, 0, FS(0)},
 };
 
+/* ### start build ### */
+extern WORD CALLBACK FONT_CallTo16_word_llwl(FONTENUMPROCEX16,LONG,LONG,WORD,LONG);
+/* ### stop build ### */
+
 /***********************************************************************
  *              LOGFONT conversion functions.
  */
@@ -630,8 +634,9 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, LPNEWTEXTMETRICEXW ptm,
     {
         FONT_EnumLogFontExWTo16(plf, pfe->lpLogFont);
 	FONT_NewTextMetricExWTo16(ptm, pfe->lpTextMetric);
-        return pfe->lpEnumFunc( pfe->segLogFont, pfe->segTextMetric,
-				(UINT16)fType, (LPARAM)(pfe->lpData) );
+
+        return FONT_CallTo16_word_llwl( pfe->lpEnumFunc, pfe->segLogFont, pfe->segTextMetric,
+                                        (UINT16)fType, (LPARAM)pfe->lpData );
     }
 #undef pfe
     return 1;
@@ -787,7 +792,7 @@ INT16 WINAPI EnumFontFamilies16( HDC16 hDC, LPCSTR lpFamily,
     if( lpFamily ) lstrcpynA( lf.lfFaceName, lpFamily, LF_FACESIZE );
     else lf.lfFaceName[0] = '\0';
 
-    return EnumFontFamiliesEx16( hDC, &lf, (FONTENUMPROCEX16)efproc, lpData, 0 );
+    return EnumFontFamiliesEx16( hDC, &lf, efproc, lpData, 0 );
 }
 
 /***********************************************************************

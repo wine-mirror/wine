@@ -15,7 +15,6 @@ C_SRCS = \
 	freetype.c \
 	gdi_main.c \
 	printdrv.c \
-	thunk.c \
 	wing.c
 
 RC_SRCS= \
@@ -24,7 +23,7 @@ RC_SRCS= \
 RC_SRCS16= \
 	version16.rc
 
-GLUE = printdrv.c thunk.c
+GLUE = printdrv.c
 
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/graphics/graphics.o \

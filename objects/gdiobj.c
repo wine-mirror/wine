@@ -29,6 +29,9 @@
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
+/* ### start build ### */
+extern WORD CALLBACK GDI_CallTo16_word_ll(GOBJENUMPROC16,LONG,LONG);
+/* ### stop build ### */
 
 /***********************************************************************
  *          GDI stock objects 
@@ -886,7 +889,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             pen->lopnWidth.x = 1;
             pen->lopnWidth.y = 0;
             pen->lopnColor   = solid_colors[i];
-            retval = lpEnumFunc( SEGPTR_GET(pen), lParam );
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(pen), lParam );
             TRACE("solid pen %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -902,7 +905,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbStyle = BS_SOLID;
             brush->lbColor = solid_colors[i];
             brush->lbHatch = 0;
-            retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(brush), lParam );
             TRACE("solid brush %08lx, ret=%d\n",
                          solid_colors[i], retval);
             if (!retval) break;
@@ -914,7 +917,7 @@ INT16 WINAPI EnumObjects16( HDC16 hdc, INT16 nObjType,
             brush->lbStyle = BS_HATCHED;
             brush->lbColor = RGB(0,0,0);
             brush->lbHatch = i;
-            retval = lpEnumFunc( SEGPTR_GET(brush), lParam );
+            retval = GDI_CallTo16_word_ll( lpEnumFunc, SEGPTR_GET(brush), lParam );
             TRACE("hatched brush %d, ret=%d\n",
                          i, retval);
             if (!retval) break;

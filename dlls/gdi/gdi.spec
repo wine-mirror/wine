@@ -80,8 +80,8 @@ rsrc	version16.res
 67  pascal16 DPtoLP(word ptr s_word) DPtoLP16
 68  pascal16 DeleteDC(word) DeleteDC16
 69  pascal16 DeleteObject(word) DeleteObject16
-70  pascal16 EnumFonts(word str segptr long) THUNK_EnumFonts16
-71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
+70  pascal16 EnumFonts(word str segptr long) EnumFonts16
+71  pascal16 EnumObjects(word word segptr long) EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn16
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect16
 74  pascal   GetBitmapBits(word long ptr) GetBitmapBits16
@@ -175,7 +175,7 @@ rsrc	version16.res
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn16
 173 pascal16 GetClipRgn(word) GetClipRgn16
 174 stub BLOAT # W2.0 (only ?) ROTFL ! ;-))
-175 pascal16 EnumMetaFile(word word segptr long) THUNK_EnumMetaFile16
+175 pascal16 EnumMetaFile(word word segptr long) EnumMetaFile16
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord16
 177 stub RCOS # W2.0 (only ?)
 178 stub RSIN # W2.0 (only ?)
@@ -259,7 +259,7 @@ rsrc	version16.res
 315 pascal   EngineRealizeFontExt(long long long long) EngineRealizeFontExt16
 316 stub EngineGetCharWidthStr
 317 stub EngineGetGlyphBmpExt
-330 pascal16 EnumFontFamilies(word str segptr long) THUNK_EnumFontFamilies16
+330 pascal16 EnumFontFamilies(word str segptr long) EnumFontFamilies16
 332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs16
 345 pascal16 GetTextAlign(word) GetTextAlign16
 346 pascal16 SetTextAlign(word word) SetTextAlign16
@@ -418,7 +418,7 @@ rsrc	version16.res
 610 pascal16 GdiSignalProc32(long long long word) GdiSignalProc
 611 stub GetRandomRgn
 612 pascal16 GetTextCharset(word) GetTextCharset16
-613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) THUNK_EnumFontFamiliesEx16
+613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) EnumFontFamiliesEx16
 614 stub AddLpkToGDI
 615 stub GetCharacterPlacement
 616 pascal   GetFontLanguageInfo(word) GetFontLanguageInfo16
