@@ -653,6 +653,10 @@ HRESULT WINAPI FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, 
     {
       case WM_INITDIALOG:
       {         
+        /* Hide caption since some program may leave it */
+        DWORD Style = GetWindowLongA(hwnd, GWL_STYLE);
+        if (Style & WS_CAPTION) SetWindowLongA(hwnd, GWL_STYLE, Style & (~WS_CAPTION));
+
         fodInfos = (FileOpenDlgInfos *)lParam;
         lParam = (LPARAM) fodInfos->ofnInfos;
         ArrangeCtrlPositions(hwnd,GetParent(hwnd));
@@ -845,10 +849,6 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
       {
          FileOpenDlgInfos * fodInfos = (FileOpenDlgInfos *)lParam;
-
-         /* Hide caption since some program may leave it */
-         DWORD Style = GetWindowLongA(hwnd, GWL_STYLE);
-         if (Style & WS_CAPTION) SetWindowLongA(hwnd, GWL_STYLE, Style & (~WS_CAPTION));
 
 	 /* Adds the FileOpenDlgInfos in the property list of the dialog 
             so it will be easily accessible through a GetPropA(...) */
