@@ -327,6 +327,7 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count,
     acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
     p = HeapAlloc( GetProcessHeap(), 0, acount );
     acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
+    if (count == -1) acount = -1;
     ret = DrawTextA( hdc, p, acount, rect, flags );
 
     HeapFree( GetProcessHeap(), 0, p );
