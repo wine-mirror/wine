@@ -4,11 +4,11 @@
  *  Copyright 1998 Eric Kohl
  *            2000 Jason Mawdsley.
  *            2001 Michael Stefaniuc
+ *            2001 Charles Loep for CodeWeavers
  *
  *  TODO:
  *    - Fix ImageList_DrawIndirect (xBitmap, yBitmap, rgbFg, rgbBk, dwRop).
  *    - Fix ImageList_GetIcon.
- *    - Fix ImageList_Write.
  *    - Fix ImageList_SetFilter (undocumented).
  *      BTW does anybody know anything about this function???
  *        - It removes 12 Bytes from the stack (3 Parameters).
@@ -2853,6 +2853,105 @@ ImageList_SetOverlayImage (HIMAGELIST himl, INT iImage, INT iOverlay)
 }
 
 
+
+/* helper for ImageList_Write - write bitmap to pstm 
+ * currently everything is written as 24 bit RGB, except masks
+ */
+static BOOL 
+_write_bitmap(HBITMAP hBitmap, LPSTREAM pstm, int cx, int cy)
+{
+    LPBITMAPFILEHEADER bmfh;
+    LPBITMAPINFOHEADER bmih;
+    LPBYTE data, lpBits, lpBitsOrg;
+    BITMAP bm;
+    INT bitCount, sizeImage, offBits, totalSize;
+    INT nwidth, nheight, nsizeImage, icount;
+    HDC xdc;
+    BOOL result = FALSE;
+
+
+    xdc = GetDC(0);
+    GetObjectA(hBitmap, sizeof(BITMAP), (LPVOID)&bm);
+    
+    /* XXX is this always correct? */
+    icount = bm.bmWidth / cx;
+    nwidth = cx << 2;
+    nheight = cy * ((icount+3)>>2);
+
+    bitCount = bm.bmBitsPixel == 1 ? 1 : 24;
+    sizeImage = ((((bm.bmWidth * bitCount)+31) & ~31) >> 3) * bm.bmHeight;
+    nsizeImage = ((((nwidth * bitCount)+31) & ~31) >> 3) * nheight;
+
+    totalSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+    if(bitCount != 24)
+	totalSize += (1 << bitCount) * sizeof(RGBQUAD);
+    offBits = totalSize;
+    totalSize += nsizeImage;
+
+    data = (LPBYTE)LocalAlloc(LMEM_ZEROINIT, totalSize);
+    bmfh = (LPBITMAPFILEHEADER)data;
+    bmih = (LPBITMAPINFOHEADER)(data + sizeof(BITMAPFILEHEADER));
+    lpBits = data + offBits;
+
+    /* setup BITMAPFILEHEADER */
+    bmfh->bfType      = (('M' << 8) | 'B');
+    bmfh->bfSize      = 0;
+    bmfh->bfReserved1 = 0;
+    bmfh->bfReserved2 = 0;
+    bmfh->bfOffBits   = offBits;
+
+    /* setup BITMAPINFOHEADER */
+    bmih->biSize          = sizeof(BITMAPINFOHEADER);
+    bmih->biWidth         = bm.bmWidth;
+    bmih->biHeight        = bm.bmHeight;
+    bmih->biPlanes        = 1;
+    bmih->biBitCount      = bitCount;
+    bmih->biCompression   = BI_RGB;
+    bmih->biSizeImage     = nsizeImage;
+    bmih->biXPelsPerMeter = 0;
+    bmih->biYPelsPerMeter = 0;
+    bmih->biClrUsed       = 0;
+    bmih->biClrImportant  = 0;
+
+    lpBitsOrg = (LPBYTE)LocalAlloc(LMEM_ZEROINIT, nsizeImage);
+    if(!GetDIBits(xdc, hBitmap, 0, bm.bmHeight, lpBitsOrg, 
+		  (BITMAPINFO *)bmih, DIB_RGB_COLORS))
+	goto failed;
+    else {
+	int i;
+	int obpl = (((bm.bmWidth*bitCount+31) & ~31)>>3);
+	int nbpl = (((nwidth*bitCount+31) & ~31)>>3);
+        	
+	for(i = 0; i < nheight; i++) {
+	    int ooff = ((nheight-1-i)%cy) * obpl + ((i/cy) * nbpl);
+	    int noff = (nbpl * (nheight-1-i));
+	    memcpy(lpBits + noff, lpBitsOrg + ooff, nbpl);
+	}
+    }
+    
+    bmih->biWidth  = nwidth;
+    bmih->biHeight = nheight;
+
+    if(bitCount == 1) {
+	//Hack.
+	LPBITMAPINFO inf = (LPBITMAPINFO)bmih;
+	inf->bmiColors[0].rgbRed = inf->bmiColors[0].rgbGreen = inf->bmiColors[0].rgbBlue = 0;
+	inf->bmiColors[1].rgbRed = inf->bmiColors[1].rgbGreen = inf->bmiColors[1].rgbBlue = 0xff;
+    }
+
+    if(!SUCCEEDED(IStream_Write(pstm, data, totalSize, NULL)))
+	goto failed;
+
+    result = TRUE;
+
+    failed:
+    ReleaseDC(0, xdc);
+    LocalFree((HLOCAL)lpBitsOrg);
+
+    return result;
+}
+
+
 /*************************************************************************
  * ImageList_Write [COMCTL32.83]
  *
@@ -2866,22 +2965,45 @@ ImageList_SetOverlayImage (HIMAGELIST himl, INT iImage, INT iOverlay)
  *     Success: TRUE
  *     Failure: FALSE
  *
- * NOTES
- *     This function can not be implemented yet, because
- *     IStream32::Write is not implemented.
- *
  * BUGS
- *     empty stub.
+ *     probably.
  */
 
 BOOL WINAPI
 ImageList_Write (HIMAGELIST himl, LPSTREAM pstm)
 {
+    ILHEAD ilHead;
+    int i;
+
     if (!himl)
 	return FALSE;
 
-    FIXME("empty stub!\n");
+    ilHead.usMagic   = (('L' << 8) | 'I');
+    ilHead.usVersion = 0x101;
+    ilHead.cCurImage = himl->cCurImage;
+    ilHead.cMaxImage = himl->cMaxImage;
+    ilHead.cGrow     = himl->cGrow;
+    ilHead.cx        = himl->cx;
+    ilHead.cy        = himl->cy;
+    ilHead.bkcolor   = himl->clrBk;
+    ilHead.flags     = himl->flags;
+    for(i = 0; i < 4; i++) {
+	ilHead.ovls[i] = himl->nOvlIdx[i];
+    }
 
-    return FALSE;
+    if(!SUCCEEDED(IStream_Write(pstm, &ilHead, sizeof(ILHEAD), NULL)))
+	return FALSE;
+
+    /* write the bitmap */
+    if(!_write_bitmap(himl->hbmImage, pstm, himl->cx, himl->cy))
+	return FALSE;
+
+    /* write the mask if we have one */
+    if(himl->flags & ILC_MASK) {
+	if(!_write_bitmap(himl->hbmMask, pstm, himl->cx, himl->cy))
+	    return FALSE;
+    }
+
+    return TRUE;
 }
 
