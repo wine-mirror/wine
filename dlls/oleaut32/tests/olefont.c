@@ -38,6 +38,9 @@
 #include <wtypes.h>
 #include <olectl.h>
 
+static HMODULE hOleaut32;
+
+static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
 
 START_TEST(olefont)
 {
@@ -45,7 +48,12 @@ START_TEST(olefont)
 	HRESULT hres;
 	IFont*	font = NULL;
 
-	hres = OleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
+	hOleaut32 = LoadLibraryA("oleaut32.dll");    
+	pOleCreateFontIndirect = (void*)GetProcAddress(hOleaut32, "OleCreateFontIndirect");
+	if (!pOleCreateFontIndirect)
+	    return;
+
+	hres = pOleCreateFontIndirect(NULL, &IID_IFont, &pvObj);
 	font = pvObj;
 
 	ok(hres == S_OK,"OCFI (NULL,..) does not return 0, but 0x%08lx\n",hres);
