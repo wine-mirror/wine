@@ -324,19 +324,19 @@ HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 
 	  FIXME("wanted 'con'\n");
 	}
 
-	if (IsEqualGUID(iidInterfaceID,&IID_IDirectMusicSegment)) {
-	  IDirectMusicSegmentImpl* segment;
-	  segment = (IDirectMusicSegmentImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectMusicImpl));
-	  segment->lpVtbl = &DirectMusicSegment_Vtbl;
-	  segment->ref = 1;
-	  *ppObject = segment;
-	  return S_OK;
-	} else if (IsEqualGUID(iidInterfaceID,&IID_IDirectMusicSegment8)) {
-	  IDirectMusicSegmentImpl* segment;
-	  segment = (IDirectMusicSegmentImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IDirectMusicImpl));
+	if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment) || 
+	    IsEqualGUID(iidInterfaceID, &IID_IDirectMusicSegment8)) {
+	  IDirectMusicSegment8Impl* segment;
+	  segment = (IDirectMusicSegment8Impl*) HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicSegment8Impl));
 	  segment->lpVtbl = &DirectMusicSegment8_Vtbl;
 	  segment->ref = 1;
 	  *ppObject = segment;
+	} else if (IsEqualGUID(iidInterfaceID, &IID_IDirectMusicContainer)) {
+	  IDirectMusicContainerImpl* container;
+	  container = HeapAlloc(GetProcessHeap(), 0, sizeof(IDirectMusicContainerImpl));
+	  container->lpVtbl = &DirectMusicContainer_Vtbl;
+	  container->ref = 1;
+	  *ppObject = container;
 	  return S_OK;
 	} else {
 	  FIXME("bad iid\n");

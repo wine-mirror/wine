@@ -310,7 +310,9 @@ HRESULT WINAPI IDirectMusicSegment8Impl_QueryInterface (LPDIRECTMUSICSEGMENT8 if
 {
 	ICOM_THIS(IDirectMusicSegment8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicSegment8))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicSegment) ||
+	    IsEqualGUID(riid, &IID_IDirectMusicSegment8))
 	{
 		IDirectMusicSegment8Impl_AddRef(iface);
 		*ppobj = This;
@@ -728,7 +730,9 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMEN
 {
 	ICOM_THIS(IDirectMusicSegmentState8Impl,iface);
 
-	if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IDirectMusicSegmentState8))
+	if (IsEqualGUID(riid, &IID_IUnknown) || 
+	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState) ||
+	    IsEqualGUID(riid, &IID_IDirectMusicSegmentState8))
 	{
 		IDirectMusicSegmentState8Impl_AddRef(iface);
 		*ppobj = This;

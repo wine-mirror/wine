@@ -1131,9 +1131,9 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	default:
 		break;
 	}
-	
+
 	/* FIXME: Should we create one secondary buffer for each PChannel? */
-	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8)This->dsound, &desc, &buffer, NULL);
+	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8) This->dsound, &desc, &buffer, NULL);
 	default_path->buffer = (IDirectSoundBuffer*) buffer;
 
 	/* Update description for creating primary buffer */
@@ -1141,7 +1141,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	desc.dwBufferBytes = 0;
 	desc.lpwfxFormat = NULL;
 
-	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8)This->dsound, &desc, &buffer, NULL);
+	IDirectSound8_CreateSoundBuffer((LPDIRECTSOUND8) This->dsound, &desc, &buffer, NULL);
 
 	default_path->primary = (IDirectSoundBuffer*) buffer;
 
