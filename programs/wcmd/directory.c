@@ -161,8 +161,13 @@ ULARGE_INTEGER byte_count, file_size;
     }
     else {
       file_count++;
+#ifndef NONAMELESSSTRUCT
       file_size.LowPart = (fd+i)->nFileSizeLow;
       file_size.HighPart = (fd+i)->nFileSizeHigh;
+#else
+      file_size.s.LowPart = (fd+i)->nFileSizeLow;
+      file_size.s.HighPart = (fd+i)->nFileSizeHigh;
+#endif
       byte_count.QuadPart += file_size.QuadPart;
       WCMD_output ("%8s  %8s    %10s  %s\n",
      	  datestring, timestring,
