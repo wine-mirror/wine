@@ -729,6 +729,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 
             *uaddrlen=sizeof(struct sockaddr_ipx);
             uipx=malloc(*uaddrlen);
+            memset(&uipx,0,sizeof(uipx));
             uipx->sipx_family=AF_IPX;
             uipx->sipx_port=wsipx->sa_socket;
             /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node
@@ -738,7 +739,6 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 #ifdef IPX_FRAME_NONE
             uipx->sipx_type=IPX_FRAME_NONE;
 #endif
-            memset(&uipx->sipx_zero,0,sizeof(uipx->sipx_zero));
             return (const struct sockaddr*)uipx;
         }
 #endif
