@@ -147,7 +147,6 @@ struct process *create_initial_process(void)
                                                GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
         process->info->hstderr = alloc_handle( process, process->console_out,
                                                GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
-        release_object( process );
     }
     return process;
 }
