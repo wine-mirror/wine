@@ -87,6 +87,7 @@ static void set_dll_file_name( const char *name )
 {
     char *p;
 
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
     if ((p = strrchr( name, '/' ))) name = p + 1;
     strcpy( DLLFileName, name );
     if ((p = strrchr( DLLFileName, '.' )) && !strcmp( p, ".spec" )) *p = 0;

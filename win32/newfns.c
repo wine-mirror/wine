@@ -22,6 +22,7 @@
 at a later date. */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <string.h>

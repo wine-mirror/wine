@@ -19,9 +19,11 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <fcntl.h>
 #include <memory.h>
+#include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
