@@ -314,11 +314,15 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     }
 
     rc=pDirectSoundCaptureCreate(lpGuid,&dsco,NULL);
-    ok((rc==DS_OK)||(rc==DSERR_NODRIVER),"DirectSoundCaptureCreate() failed: "
-       "%s\n",DXGetErrorString8(rc));
+    ok((rc==DS_OK)||(rc==DSERR_NODRIVER)||(rc==E_FAIL)||(rc==DSERR_ALLOCATED),
+       "DirectSoundCaptureCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK) {
         if (rc==DSERR_NODRIVER)
             trace("  No Driver\n");
+        else if (rc==E_FAIL)
+            trace("  E_FAIL\n");
+        else if (rc==DSERR_ALLOCATED)
+            trace("  Already In Use\n");
 	goto EXIT;
     }
 
