@@ -1421,7 +1421,7 @@ BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
  */
 WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
 {
-    char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALARENA *pArena;
 
     TRACE("%04x ds=%04x\n", handle, ds );
