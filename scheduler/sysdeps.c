@@ -362,15 +362,15 @@ int SYSDEPS_GetUnixTid(void)
 /* default errno before threading is initialized */
 static int *default_errno_location(void)
 {
-    static int errno;
-    return &errno;
+    static int static_errno;
+    return &static_errno;
 }
 
 /* default h_errno before threading is initialized */
 static int *default_h_errno_location(void)
 {
-    static int h_errno;
-    return &h_errno;
+    static int static_h_errno;
+    return &static_h_errno;
 }
 
 /* errno once threading is working */
