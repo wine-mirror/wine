@@ -16,7 +16,6 @@ C_SRCS = \
 	connpt.c \
 	dispatch.c \
 	hash.c \
-	ole2disp.c \
 	oleaut.c \
 	olefont.c \
 	olepicture.c \
@@ -27,7 +26,9 @@ C_SRCS = \
 	typelib.c \
 	variant.c
 
-C_SRCS16 = typelib16.c
+C_SRCS16 = \
+	ole2disp.c \
+	typelib16.c
 
 RC_SRCS = version.rc
 

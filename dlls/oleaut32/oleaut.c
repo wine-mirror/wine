@@ -28,7 +28,7 @@
 
 #include "ole2.h"
 #include "olectl.h"
-#include "wine/obj_oleaut.h"
+#include "oleauto.h"
 #include "wine/obj_olefont.h"
 
 #include "tmarshal.h"
@@ -36,6 +36,265 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+/******************************************************************************
+ *             SysStringLen  [OLEAUT32.7]
+ *
+ * The Windows documentation states that the length returned by this function
+ * is not necessarely the same as the length returned by the _lstrlenW method.
+ * It is the same number that was passed in as the "len" parameter if the
+ * string was allocated with a SysAllocStringLen method call.
+ */
+int WINAPI SysStringLen(BSTR str)
+{
+    DWORD* bufferPointer;
+
+     if (!str) return 0;
+    /*
+     * The length of the string (in bytes) is contained in a DWORD placed
+     * just before the BSTR pointer
+     */
+    bufferPointer = (DWORD*)str;
+
+    bufferPointer--;
+
+    return (int)(*bufferPointer/sizeof(WCHAR));
+}
+
+/******************************************************************************
+ *             SysStringByteLen  [OLEAUT32.149]
+ *
+ * The Windows documentation states that the length returned by this function
+ * is not necessarely the same as the length returned by the _lstrlenW method.
+ * It is the same number that was passed in as the "len" parameter if the
+ * string was allocated with a SysAllocStringLen method call.
+ */
+int WINAPI SysStringByteLen(BSTR str)
+{
+    DWORD* bufferPointer;
+
+     if (!str) return 0;
+    /*
+     * The length of the string (in bytes) is contained in a DWORD placed
+     * just before the BSTR pointer
+     */
+    bufferPointer = (DWORD*)str;
+
+    bufferPointer--;
+
+    return (int)(*bufferPointer);
+}
+
+/******************************************************************************
+ *		SysAllocString	[OLEAUT32.2]
+ *
+ * MSDN (October 2001) states that this returns a NULL value if the argument
+ * is a zero-length string.  This does not appear to be true; certainly it
+ * returns a value under Win98 (Oleaut32.dll Ver 2.40.4515.0)
+ */
+BSTR WINAPI SysAllocString(LPCOLESTR in)
+{
+    if (!in) return 0;
+
+    /* Delegate this to the SysAllocStringLen32 method. */
+    return SysAllocStringLen(in, lstrlenW(in));
+}
+
+/******************************************************************************
+ *		SysFreeString	[OLEAUT32.6]
+ */
+void WINAPI SysFreeString(BSTR in)
+{
+    DWORD* bufferPointer;
+
+    /* NULL is a valid parameter */
+    if(!in) return;
+
+    /*
+     * We have to be careful when we free a BSTR pointer, it points to
+     * the beginning of the string but it skips the byte count contained
+     * before the string.
+     */
+    bufferPointer = (DWORD*)in;
+
+    bufferPointer--;
+
+    /*
+     * Free the memory from its "real" origin.
+     */
+    HeapFree(GetProcessHeap(), 0, bufferPointer);
+}
+
+/******************************************************************************
+ *             SysAllocStringLen     [OLEAUT32.4]
+ *
+ * In "Inside OLE, second edition" by Kraig Brockshmidt. In the Automation
+ * section, he describes the DWORD value placed *before* the BSTR data type.
+ * he describes it as a "DWORD count of characters". By experimenting with
+ * a windows application, this count seems to be a DWORD count of bytes in
+ * the string. Meaning that the count is double the number of wide
+ * characters in the string.
+ */
+BSTR WINAPI SysAllocStringLen(const OLECHAR *in, unsigned int len)
+{
+    DWORD  bufferSize;
+    DWORD* newBuffer;
+    WCHAR* stringBuffer;
+
+    /*
+     * Find the length of the buffer passed-in in bytes.
+     */
+    bufferSize = len * sizeof (WCHAR);
+
+    /*
+     * Allocate a new buffer to hold the string.
+     * dont't forget to keep an empty spot at the beginning of the
+     * buffer for the character count and an extra character at the
+     * end for the NULL.
+     */
+    newBuffer = (DWORD*)HeapAlloc(GetProcessHeap(),
+                                 0,
+                                 bufferSize + sizeof(WCHAR) + sizeof(DWORD));
+
+    /*
+     * If the memory allocation failed, return a null pointer.
+     */
+    if (newBuffer==0)
+      return 0;
+
+    /*
+     * Copy the length of the string in the placeholder.
+     */
+    *newBuffer = bufferSize;
+
+    /*
+     * Skip the byte count.
+     */
+    newBuffer++;
+
+    /*
+     * Copy the information in the buffer.
+     * Since it is valid to pass a NULL pointer here, we'll initialize the
+     * buffer to nul if it is the case.
+     */
+    if (in != 0)
+      memcpy(newBuffer, in, bufferSize);
+    else
+      memset(newBuffer, 0, bufferSize);
+
+    /*
+     * Make sure that there is a nul character at the end of the
+     * string.
+     */
+    stringBuffer = (WCHAR*)newBuffer;
+    stringBuffer[len] = L'\0';
+
+    return (LPWSTR)stringBuffer;
+}
+
+/******************************************************************************
+ *             SysReAllocStringLen   [OLEAUT32.5]
+ */
+int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
+{
+    /*
+     * Sanity check
+     */
+    if (old==NULL)
+      return 0;
+
+    /*
+     * Make sure we free the old string.
+     */
+    if (*old!=NULL)
+      SysFreeString(*old);
+
+    /*
+     * Allocate the new string
+     */
+    *old = SysAllocStringLen(in, len);
+
+    return 1;
+}
+
+/******************************************************************************
+ *             SysAllocStringByteLen     [OLEAUT32.150]
+ *
+ */
+BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
+{
+    DWORD* newBuffer;
+    char* stringBuffer;
+
+    /*
+     * Allocate a new buffer to hold the string.
+     * dont't forget to keep an empty spot at the beginning of the
+     * buffer for the character count and an extra character at the
+     * end for the NULL.
+     */
+    newBuffer = (DWORD*)HeapAlloc(GetProcessHeap(),
+                                 0,
+                                 len + sizeof(WCHAR) + sizeof(DWORD));
+
+    /*
+     * If the memory allocation failed, return a null pointer.
+     */
+    if (newBuffer==0)
+      return 0;
+
+    /*
+     * Copy the length of the string in the placeholder.
+     */
+    *newBuffer = len;
+
+    /*
+     * Skip the byte count.
+     */
+    newBuffer++;
+
+    /*
+     * Copy the information in the buffer.
+     * Since it is valid to pass a NULL pointer here, we'll initialize the
+     * buffer to nul if it is the case.
+     */
+    if (in != 0)
+      memcpy(newBuffer, in, len);
+
+    /*
+     * Make sure that there is a nul character at the end of the
+     * string.
+     */
+    stringBuffer = (char *)newBuffer;
+    stringBuffer[len] = 0;
+    stringBuffer[len+1] = 0;
+
+    return (LPWSTR)stringBuffer;
+}
+
+/******************************************************************************
+ *		SysReAllocString	[OLEAUT32.3]
+ */
+INT WINAPI SysReAllocString(LPBSTR old,LPCOLESTR in)
+{
+    /*
+     * Sanity check
+     */
+    if (old==NULL)
+      return 0;
+
+    /*
+     * Make sure we free the old string.
+     */
+    if (*old!=NULL)
+      SysFreeString(*old);
+
+    /*
+     * Allocate the new string
+     */
+    *old = SysAllocString(in);
+
+     return 1;
+}
 
 static WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
 static WCHAR	*pdelimiter = &_delimiter[0];
@@ -148,6 +407,87 @@ UINT WINAPI OaBuildVersion()
 		ERR("Version value not known yet. Please investigate it !\n");
 		return 0x0;
     }
+}
+
+/******************************************************************************
+ *		OleTranslateColor	[OLEAUT32.421]
+ *
+ * Converts an OLE_COLOR to a COLORREF.
+ * See the documentation for conversion rules.
+ * pColorRef can be NULL. In that case the user only wants to test the
+ * conversion.
+ */
+HRESULT WINAPI OleTranslateColor(
+  OLE_COLOR clr,
+  HPALETTE  hpal,
+  COLORREF* pColorRef)
+{
+  COLORREF colorref;
+  BYTE b = HIBYTE(HIWORD(clr));
+
+  TRACE("(%08lx, %p, %p):stub\n", clr, hpal, pColorRef);
+
+  /*
+   * In case pColorRef is NULL, provide our own to simplify the code.
+   */
+  if (pColorRef == NULL)
+    pColorRef = &colorref;
+
+  switch (b)
+  {
+    case 0x00:
+    {
+      if (hpal != 0)
+        *pColorRef =  PALETTERGB(GetRValue(clr),
+                                 GetGValue(clr),
+                                 GetBValue(clr));
+      else
+        *pColorRef = clr;
+
+      break;
+    }
+
+    case 0x01:
+    {
+      if (hpal != 0)
+      {
+        PALETTEENTRY pe;
+        /*
+         * Validate the palette index.
+         */
+        if (GetPaletteEntries(hpal, LOWORD(clr), 1, &pe) == 0)
+          return E_INVALIDARG;
+      }
+
+      *pColorRef = clr;
+
+      break;
+    }
+
+    case 0x02:
+      *pColorRef = clr;
+      break;
+
+    case 0x80:
+    {
+      int index = LOBYTE(LOWORD(clr));
+
+      /*
+       * Validate GetSysColor index.
+       */
+      if ((index < COLOR_SCROLLBAR) || (index > COLOR_GRADIENTINACTIVECAPTION))
+        return E_INVALIDARG;
+
+      *pColorRef =  GetSysColor(index);
+
+      break;
+    }
+
+    default:
+      return E_INVALIDARG;
+  }
+
+  return S_OK;
 }
 
 /***********************************************************************

@@ -154,3 +154,29 @@ HRESULT WINAPI DispGetParam(
     if (hr == DISP_E_TYPEMISMATCH) *puArgErr = pos;
     return hr;
 }
+
+/******************************************************************************
+ * CreateStdDispatch [OLEAUT32.32]
+ */
+HRESULT WINAPI CreateStdDispatch(
+        IUnknown* punkOuter,
+        void* pvThis,
+	ITypeInfo* ptinfo,
+	IUnknown** ppunkStdDisp)
+{
+	FIXME("(%p,%p,%p,%p),stub\n",punkOuter, pvThis, ptinfo,
+               ppunkStdDisp);
+	return E_NOTIMPL;
+}
+
+/******************************************************************************
+ * CreateDispTypeInfo [OLEAUT32.31]
+ */
+HRESULT WINAPI CreateDispTypeInfo(
+	INTERFACEDATA *pidata,
+	LCID lcid,
+	ITypeInfo **pptinfo)
+{
+	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	return 0;
+}
