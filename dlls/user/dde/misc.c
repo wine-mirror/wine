@@ -1902,6 +1902,7 @@ WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected)
     WDML_CONV*	pConv = (WDML_CONV*)hConv;
 
     /* FIXME: should do better checking */
+    if (pConv == NULL) return NULL;
 
     if (checkConnected && !(pConv->wStatus & ST_CONNECTED))
     {
