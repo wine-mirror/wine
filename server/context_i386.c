@@ -15,7 +15,9 @@
 #endif
 #include <unistd.h>
 #include <sys/ptrace.h>
-#include <sys/param.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
 #include <sys/user.h>
 
 #include "winbase.h"
