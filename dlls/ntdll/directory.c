@@ -41,6 +41,12 @@
 #ifdef HAVE_LINUX_IOCTL_H
 #include <linux/ioctl.h>
 #endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
 #include <time.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -266,6 +272,44 @@ static char *get_default_drive_device( const char *root )
     {
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
         if (ret) strcpy( ret, device );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+#elif defined(__APPLE__)
+    struct statfs *mntStat;
+    struct stat st;
+    int i;
+    int mntSize;
+    dev_t dev;
+    ino_t ino;
+    static const char path_bsd_device[] = "/dev/disk";
+    int res;
+
+    res = stat( root, &st );
+    if (res == -1) return NULL;
+
+    dev = st.st_dev;
+    ino = st.st_ino;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    mntSize = getmntinfo(&mntStat, MNT_NOWAIT);
+
+    for (i = 0; i < mntSize && !ret; i++)
+    {
+        if (stat(mntStat[i].f_mntonname, &st ) == -1) continue;
+        if (st.st_dev != dev || st.st_ino != ino) continue;
+
+        /* FIXME add support for mounted network drive */
+        if ( strncmp(mntStat[i].f_mntfromname, path_bsd_device, strlen(path_bsd_device)) == 0)
+        {
+            /* set return value to the corresponding raw BSD node */
+            ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(mntStat[i].f_mntfromname) + 2 /* 2 : r and \0 */ );
+            if (ret)
+            {
+                strcpy(ret, "/dev/r");
+                strcat(ret, mntStat[i].f_mntfromname+sizeof("/dev/")-1);
+            }
+        }
     }
     RtlLeaveCriticalSection( &dir_section );
 #else
