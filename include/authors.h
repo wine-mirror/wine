@@ -90,6 +90,7 @@ static const char * const SHELL_People[] =
     "Michael Patra",
     "Dimitrie O. Paun",
     "Jim Peterson",
+    "Eric Pouech",
     "Robert Pouliot",
     "Petter Reinholdtsen",
     "Keith Reynolds",
