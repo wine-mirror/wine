@@ -68,6 +68,7 @@ static LRESULT WINAPI DirectDrawSurface_WndProc(HWND hwnd, UINT msg, WPARAM wPar
 	case WM_SIZE:
 	case WM_MOVE:
 	case WM_ERASEBKGND:
+	case WM_SYNCPAINT:
 	    /* since we're pretending fullscreen,
 	     * let's not pass these on to the app */
 	    ret = DefWindowProcA(hwnd, msg, wParam, lParam);
