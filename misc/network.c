@@ -641,6 +641,18 @@ UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, DWORD dwUsage,
 	return WN_NO_NETWORK;
 }
 
+/**************************************************************************
+ *                             WNetOpenEnumW           [MPR.93]
+ */
+UINT32 WINAPI WNetOpenEnum32W(DWORD dwScope, DWORD dwType, DWORD dwUsage,
+                              LPNETRESOURCE32A lpNet, HANDLE32 *lphEnum)
+{
+       FIXME(wnet, "(%08lX, %08lX, %08lX, %p, %p): stub\n",
+             dwScope, dwType, dwUsage, lpNet, lphEnum);
+       SetLastError(WN_NO_NETWORK);
+       return WN_NO_NETWORK;
+}
+
 /* ****************************************************************
  *    WNetGetResourceInformationA [MPR.80]
  * */

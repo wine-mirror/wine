@@ -93,7 +93,7 @@ type win32
 0090 stub WNetLogonA
 0091 stub WNetLogonW
 0092 stdcall WNetOpenEnumA(long long long ptr ptr) WNetOpenEnum32A
-0093 stub WNetOpenEnumW
+0093 stdcall WNetOpenEnumW(long long long ptr ptr) WNetOpenEnum32W
 0094 stub WNetRemoveCachedPassword
 0095 stub WNetRestoreConnectionA
 0096 stub WNetRestoreConnectionW
