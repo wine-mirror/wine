@@ -2903,6 +2903,16 @@ static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
     int ebufsize=1024;
     struct hostent hostentry;
     int locerr = ENOBUFS;
+#endif
+    char buf[100];
+    if( !name) {
+        name = buf;
+        if( gethostname( buf, 100) == -1) {
+            SetLastError( WSAENOBUFS); /* appropriate ? */
+            return retval;
+        }
+    }
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
     host = NULL;
     extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
     while(extrabuf) {

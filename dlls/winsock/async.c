@@ -402,6 +402,16 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
                         int ebufsize=1024;
                         struct hostent hostentry;
                         int locerr = ENOBUFS;
+#endif
+                        char buf[100];
+                        if( !(aq->host_name)) {
+                            aq->host_name = buf;
+                            if( gethostname( buf, 100) == -1) {
+                                fail = WSAENOBUFS; /* appropriate ? */
+                                break;
+                            }
+                        }
+#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
                         he = NULL;
                         extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
                         while(extrabuf) {
