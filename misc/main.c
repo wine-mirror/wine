@@ -42,6 +42,7 @@
 #include "gdi.h"
 #include "user.h"
 #include "wine/winuser16.h"
+#include "tweak.h"
 
 /**********************************************************************/
 
@@ -973,16 +974,45 @@ BOOL WINAPI SystemParametersInfoA( UINT uAction, UINT uParam,
 #define lpnm ((LPNONCLIENTMETRICSA)lpvParam)
 		
 		if( lpnm->cbSize == sizeof(NONCLIENTMETRICSA) )
-		{
+		{   LPLOGFONTA lpLogFont = &(lpnm->lfMenuFont);
+		
 		    /* FIXME: initialize geometry entries */
 
 		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfCaptionFont),0);
+
+		    /* caption */
+		    lpnm->iCaptionWidth = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 12;
+		    lpnm->iCaptionHeight = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 12;
+		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont),0);
 		    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
-		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
-							(LPVOID)&(lpnm->lfSmCaptionFont),0);
-		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
-							(LPVOID)&(lpnm->lfMenuFont),0);
+
+		    /* small caption */
+		    lpnm->iCaptionWidth = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 10;
+		    lpnm->iCaptionHeight = (TWEAK_WineLook > WIN31_LOOK)  ? 19 : 10;
+
+		    /* menus, FIXME: names of wine.conf entrys are bogus */
+
+		    lpnm->iMenuWidth = GetProfileIntA("Desktop","MenuWidth", 8);	/* size of the menu buttons*/
+		    lpnm->iMenuHeight = GetProfileIntA("Desktop","MenuHeight", 
+						(TWEAK_WineLook > WIN31_LOOK) ? 8 : 16);
+
+		    GetProfileStringA("Desktop", "MenuFont", 
+			(TWEAK_WineLook > WIN31_LOOK) ? "MS Sans Serif": "System", 
+			lpLogFont->lfFaceName, LF_FACESIZE );
+
+		    lpLogFont->lfHeight = -GetProfileIntA("Desktop","MenuFontSize", 8);
+		    lpLogFont->lfWidth = 0;
+		    lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+		    lpLogFont->lfWeight = (TWEAK_WineLook > WIN31_LOOK) ? FW_NORMAL : FW_BOLD;
+		    lpLogFont->lfItalic = FALSE;
+		    lpLogFont->lfStrikeOut = FALSE;
+		    lpLogFont->lfUnderline = FALSE;
+		    lpLogFont->lfCharSet = ANSI_CHARSET;
+		    lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+		    lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		    lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+
 		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
 							(LPVOID)&(lpnm->lfStatusFont),0);
 		    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, 0,
