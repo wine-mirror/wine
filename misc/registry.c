@@ -1063,6 +1063,7 @@ static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 	/* map the registry into the memory */
 	if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return FALSE;
 	if ((fstat(fd, &st) == -1)) goto error;
+	if (!st.st_size) goto error;
 	if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error;
 
 	switch (*(LPDWORD)base)
