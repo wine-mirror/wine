@@ -1,12 +1,30 @@
-#ifndef __WINE_PSHPACK_H
-#define __WINE_PSHPACK_H 8
+#if defined(__WINE_PSHPACK_H3)
 
-#if 0
-#pragma pack(8)
-#elif !defined(RC_INVOKED)
-#error "8 as alignment is not supported"
-#endif /* 0 ; !defined(RC_INVOKED) */
+   /* Depth > 3 */
+#  error "Alignment nesting > 3 is not supported"
 
-#else /* !defined(__WINE_PSHPACK_H) */
-#error "Nested pushing of alignment isn't supported by the compiler"
-#endif /* !defined(__WINE_PSHPACK_H) */
+#else
+
+#  if !defined(__WINE_PSHPACK_H)
+#    define __WINE_PSHPACK_H  8
+     /* Depth == 1 */
+#  elif !defined(__WINE_PSHPACK_H2)
+#    define __WINE_PSHPACK_H2 8
+     /* Depth == 2 */
+#    define __WINE_INTERNAL_POPPACK
+#    include "poppack.h"
+#  elif !defined(__WINE_PSHPACK_H3)
+#    define __WINE_PSHPACK_H3 8
+     /* Depth == 3 */
+#    define __WINE_INTERNAL_POPPACK
+#    include "poppack.h"
+#  endif
+
+#  if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#    pragma pack(8)
+#    warning "8 as alignment is not supported"
+#  elif !defined(RC_INVOKED)
+#    error "Adjusting the alignment is not supported with this compiler"
+#  endif
+
+#endif
