@@ -1024,11 +1024,13 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
   DWORD nLength;
   URL_COMPONENTSW UCW;
   WCHAR* lpwszUrl;
-  if(dwUrlLength==0)
-      dwUrlLength=strlen(lpszUrl);
-  lpwszUrl=HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(dwUrlLength+1));
-  memset(lpwszUrl,0,sizeof(WCHAR)*(dwUrlLength+1));
-  nLength=MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,lpwszUrl,dwUrlLength+1);
+
+  if(dwUrlLength<=0)
+      dwUrlLength=-1;
+  nLength=MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,NULL,0);
+  lpwszUrl=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR)*nLength);
+  MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,lpwszUrl,nLength);
+
   memset(&UCW,0,sizeof(UCW));
   if(lpUrlComponents->dwHostNameLength!=0)
       UCW.dwHostNameLength=1;
