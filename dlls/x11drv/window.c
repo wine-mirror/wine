@@ -18,6 +18,7 @@
 #include "debugtools.h"
 #include "x11drv.h"
 #include "win.h"
+#include "dce.h"
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(win);
@@ -630,4 +631,155 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
 
     WIN_ReleaseWndPtr( wndPtr );
     return old;
+}
+
+
+/*************************************************************************
+ *             fix_caret
+ */
+static BOOL fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
+{
+   HWND hCaret = CARET_GetHwnd();
+
+   if( hCaret )
+   {
+       RECT rc;
+       CARET_GetRect( &rc );
+       if( hCaret == hWnd ||
+          (flags & SW_SCROLLCHILDREN && IsChild(hWnd, hCaret)) )
+       {
+           POINT pt;
+           pt.x = rc.left;
+           pt.y = rc.top;
+           MapWindowPoints( hCaret, hWnd, (LPPOINT)&rc, 2 );
+           if( IntersectRect(lprc, lprc, &rc) )
+           {
+               HideCaret(0);
+               lprc->left = pt.x;
+               lprc->top = pt.y;
+               return TRUE;
+           }
+       }
+   }
+   return FALSE;
+}
+
+
+/*************************************************************************
+ *		ScrollWindowEx   (X11DRV.@)
+ */
+INT X11DRV_ScrollWindowEx( HWND hwnd, INT dx, INT dy,
+                           const RECT *rect, const RECT *clipRect,
+                           HRGN hrgnUpdate, LPRECT rcUpdate, UINT flags )
+{
+    INT  retVal = NULLREGION;
+    BOOL bCaret = FALSE, bOwnRgn = TRUE;
+    RECT rc, cliprc;
+    WND*   wnd = WIN_FindWndPtr( hwnd );
+
+    if( !wnd || !WIN_IsWindowDrawable( wnd, TRUE ))
+    {
+        retVal = ERROR;
+        goto END;
+    }
+
+    GetClientRect(hwnd, &rc);
+    if (rect) IntersectRect(&rc, &rc, rect);
+
+    if (clipRect) IntersectRect(&cliprc,&rc,clipRect);
+    else cliprc = rc;
+
+    if (!IsRectEmpty(&cliprc) && (dx || dy))
+    {
+        HDC   hDC;
+        BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
+        HRGN  hrgnClip = CreateRectRgnIndirect(&cliprc);
+        HRGN  hrgnTemp = CreateRectRgnIndirect(&rc);
+        RECT  caretrc;
+
+        TRACE("%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",
+              (HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
+              clipRect?clipRect->left:0, clipRect?clipRect->top:0,
+              clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,
+              rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
+
+        caretrc = rc;
+        bCaret = fix_caret(hwnd, &caretrc, flags);
+
+        if( hrgnUpdate ) bOwnRgn = FALSE;
+        else if( bUpdate ) hrgnUpdate = CreateRectRgn( 0, 0, 0, 0 );
+
+        hDC = GetDCEx( hwnd, hrgnClip, DCX_CACHE | DCX_USESTYLE |
+                         DCX_KEEPCLIPRGN | DCX_INTERSECTRGN |
+                       ((flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0) );
+        if (hDC)
+        {
+            X11DRV_WND_SurfaceCopy(wnd,hDC,dx,dy,&rc,bUpdate);
+            if( bUpdate )
+            {
+                DC* dc;
+
+                if( (dc = DC_GetDCPtr(hDC)) )
+                {
+                    OffsetRgn( hrgnTemp, dc->DCOrgX, dc->DCOrgY );
+                    CombineRgn( hrgnTemp, hrgnTemp, dc->hVisRgn,
+                                RGN_AND );
+                    OffsetRgn( hrgnTemp, -dc->DCOrgX, -dc->DCOrgY );
+                    CombineRgn( hrgnUpdate, hrgnTemp, hrgnClip,
+                                RGN_AND );
+                    OffsetRgn( hrgnTemp, dx, dy );
+                    retVal =
+                        CombineRgn( hrgnUpdate, hrgnUpdate, hrgnTemp,
+                                    RGN_DIFF );
+
+                    if( rcUpdate ) GetRgnBox( hrgnUpdate, rcUpdate );
+                    GDI_ReleaseObj( hDC );
+                }
+            }
+            ReleaseDC(hwnd, hDC);
+        }
+
+        if( wnd->hrgnUpdate > 1 )
+        {
+            /* Takes into account the fact that some damages may have
+               occured during the scroll. */
+            CombineRgn( hrgnTemp, wnd->hrgnUpdate, 0, RGN_COPY );
+            OffsetRgn( hrgnTemp, dx, dy );
+            CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
+            CombineRgn( wnd->hrgnUpdate, wnd->hrgnUpdate, hrgnTemp, RGN_OR );
+        }
+
+        if( flags & SW_SCROLLCHILDREN )
+        {
+            RECT r;
+            WND *w;
+            for( w =WIN_LockWndPtr(wnd->child); w; WIN_UpdateWndPtr(&w, w->next))
+            {
+                r = w->rectWindow;
+                if( !rect || IntersectRect(&r, &r, &rc) )
+                    SetWindowPos(w->hwndSelf, 0, w->rectWindow.left + dx,
+                                 w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
+                                 SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                                 SWP_DEFERERASE );
+            }
+        }
+
+        if( flags & (SW_INVALIDATE | SW_ERASE) )
+            RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
+                          ((flags & SW_ERASE) ? RDW_ERASENOW : 0) |
+                          ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
+
+        if( bCaret )
+        {
+            SetCaretPos( caretrc.left + dx, caretrc.top + dy );
+            ShowCaret(0);
+        }
+
+        if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
+        DeleteObject( hrgnClip );
+        DeleteObject( hrgnTemp );
+    }
+END:
+    WIN_ReleaseWndPtr(wnd);
+    return retVal;
 }

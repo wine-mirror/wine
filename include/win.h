@@ -71,7 +71,6 @@ typedef struct tagWND
 typedef struct tagWND_DRIVER
 {
     void   (*pForceWindowRaise)(WND *);
-    void   (*pSurfaceCopy)(WND *, HDC, INT, INT, const RECT *, BOOL);
     BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
 } WND_DRIVER;
 

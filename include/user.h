@@ -75,6 +75,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
     BOOL   (*pEnableWindow)(HWND,BOOL);
+    INT    (*pScrollWindowEx)(HWND,INT,INT,const RECT*,const RECT*,HRGN,LPRECT,UINT);
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
     BOOL   (*pSetWindowPos)(WINDOWPOS *);

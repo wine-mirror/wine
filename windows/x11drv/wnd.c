@@ -41,7 +41,6 @@ extern Atom wmChangeState;
 WND_DRIVER X11DRV_WND_Driver =
 {
   X11DRV_WND_ForceWindowRaise,
-  X11DRV_WND_SurfaceCopy,
   X11DRV_WND_SetHostAttr
 };
 

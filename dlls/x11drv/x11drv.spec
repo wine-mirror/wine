@@ -32,6 +32,7 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl GetDC(long long long long) X11DRV_GetDC
 @ cdecl EnableWindow(long long) X11DRV_EnableWindow
+@ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
 @ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos

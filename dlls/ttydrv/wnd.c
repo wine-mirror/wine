@@ -18,7 +18,6 @@ DEFAULT_DEBUG_CHANNEL(ttydrv);
 WND_DRIVER TTYDRV_WND_Driver =
 {
   TTYDRV_WND_ForceWindowRaise,
-  TTYDRV_WND_ScrollWindow,
   TTYDRV_WND_SetHostAttr
 };
 
@@ -96,16 +95,6 @@ BOOL TTYDRV_DestroyWindow( HWND hwnd )
 void TTYDRV_WND_ForceWindowRaise(WND *wndPtr)
 {
   FIXME("(%p): stub\n", wndPtr);
-}
-
-/*****************************************************************
- *		 TTYDRV_WND_ScrollWindow
- */
-void TTYDRV_WND_ScrollWindow( WND *wndPtr, HDC hdc, INT dx, INT dy, 
-                              const RECT *clipRect, BOOL bUpdate)
-{
-  FIXME("(%p, %x, %d, %d, %p, %d): stub\n", 
-	wndPtr, hdc, dx, dy, clipRect, bUpdate);
 }
 
 /***********************************************************************
