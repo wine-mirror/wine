@@ -236,7 +236,9 @@ static DWORD CDAUDIO_mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS 
     if (wmcda == NULL) 	return MCIERR_INVALID_DEVICE_ID;
     
     if (wmcda->nUseCount == 1) {
-	CDAUDIO_mciStop(wDevID, 0, NULL);
+	/* FIXME: I don't think we have to stop CD on exit
+	 * CDAUDIO_mciStop(wDevID, 0, NULL); 
+	 */
 	CDAUDIO_Close(&wmcda->wcda);
     }
     wmcda->nUseCount--;
@@ -561,9 +563,7 @@ static DWORD CDAUDIO_mciResume(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS
  */
 static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-    DWORD	dwRet;
-    MCI_PLAY_PARMS 	playParms;
-    
+    DWORD		at;
     WINE_MCICDAUDIO*	wmcda = CDAUDIO_mciGetOpenDrv(wDevID);
     
     TRACE(cdaudio,"(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -575,29 +575,29 @@ static DWORD CDAUDIO_mciSeek(UINT16 wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpPa
     switch (dwFlags & ~(MCI_NOTIFY|MCI_WAIT)) {
     case MCI_SEEK_TO_START:
 	TRACE(cdaudio, "Seeking to start\n");
-	playParms.dwFrom = 0;
+	at = 0;
 	break;
     case MCI_SEEK_TO_END:
 	TRACE(cdaudio, "Seeking to end\n");
-	playParms.dwFrom = wmcda->wcda.dwTotalLen;
+	at = wmcda->wcda.dwTotalLen;
 	break;
     case MCI_TO:
 	TRACE(cdaudio, "Seeking to %lu\n", lpParms->dwTo);
-	playParms.dwFrom = lpParms->dwTo;
+	at = lpParms->dwTo;
 	break;
     default:
 	TRACE(cdaudio, "Seeking to ??=%lu\n", dwFlags);
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
-    dwRet = CDAUDIO_mciPlay(wDevID, MCI_WAIT | MCI_FROM, &playParms);
-    if (dwRet != 0) return dwRet;
-    dwRet = CDAUDIO_mciStop(wDevID, MCI_WAIT, (LPMCI_GENERIC_PARMS)&playParms);
+    if (CDAUDIO_Seek(&wmcda->wcda, at) == -1) {
+	return MCIERR_HARDWARE;
+    }
     if (dwFlags & MCI_NOTIFY) {
 	TRACE(cdaudio, "MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify16((HWND16)LOWORD(lpParms->dwCallback), 
 			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
-    return dwRet;
+    return 0;
 }
 
 /**************************************************************************
@@ -668,10 +668,10 @@ static DWORD CDAUDIO_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParm
 }
 
 /**************************************************************************
- * 			MCICDAUDIO_DriverProc32		[sample driver]
+ * 			MCICDAUDIO_DriverProc			[sample driver]
  */
 LONG MCICDAUDIO_DriverProc(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg, 
-			     DWORD dwParam1, DWORD dwParam2)
+			   DWORD dwParam1, DWORD dwParam2)
 {
     switch(wMsg) {
     case DRV_LOAD:		return 1;
