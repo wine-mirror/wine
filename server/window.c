@@ -251,8 +251,11 @@ static void destroy_window( struct window *win )
             if (ptr->owner == win) ptr->owner = NULL;
     }
 
-    if (win->paint_count) inc_queue_paint_count( win->thread, -win->paint_count );
-    queue_cleanup_window( win->thread, win->handle );
+    if (win->thread->queue)
+    {
+        if (win->paint_count) inc_queue_paint_count( win->thread, -win->paint_count );
+        queue_cleanup_window( win->thread, win->handle );
+    }
     free_user_handle( win->handle );
     destroy_properties( win );
     unlink_window( win );
