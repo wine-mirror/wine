@@ -782,6 +782,18 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
     case WM_COMMAND:
         SendMessage(GetParent(hWnd), msg, wParam, lParam);
         break;
+
+    case WM_KEYDOWN:
+        switch (wParam)
+        {
+        case VK_UP:
+        case VK_DOWN:
+        case VK_PRIOR:
+        case VK_NEXT:
+        case VK_ESCAPE:
+            return SendMessage(GetParent(hWnd), msg, wParam, lParam);
+        }
+        break;
     }
 
     return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -793,13 +805,19 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
  */
 static LRESULT CALLBACK WINHELP_ButtonWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    WINHELP_WINDOW* win;
-
-    if (msg == WM_LBUTTONUP)
+    if (msg == WM_KEYDOWN)
     {
-        win = (WINHELP_WINDOW*) GetWindowLong(GetParent(hWnd), 0);
-        SetFocus(win->hMainWnd);
+        switch (wParam)
+        {
+        case VK_UP:
+        case VK_DOWN:
+        case VK_PRIOR:
+        case VK_NEXT:
+        case VK_ESCAPE:
+            return SendMessage(GetParent(hWnd), msg, wParam, lParam);
+        }
     }
+
     return CallWindowProc(Globals.button_proc, hWnd, msg, wParam, lParam);
 }
 
