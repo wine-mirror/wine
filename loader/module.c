@@ -489,6 +489,7 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
     WCHAR filenameW[MAX_PATH];
     HANDLE hFile = INVALID_HANDLE_VALUE;
     HANDLE mapping;
+    HMODULE module;
 
     *hmod = 0;
 
@@ -499,23 +500,23 @@ static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
                              NULL, OPEN_EXISTING, 0, 0 );
     }
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-    switch (MODULE_GetBinaryType( hFile ))
-    {
-    case BINARY_PE_EXE:
-    case BINARY_PE_DLL:
-        mapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
-        if (mapping)
-        {
-            *hmod = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
-            CloseHandle( mapping );
-        }
-        break;
-    default:
-        break;
-    }
-    CloseHandle( hFile );
 
-    return *hmod != 0;
+    mapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+    CloseHandle( hFile );
+    if (!mapping) return FALSE;
+
+    module = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+    CloseHandle( mapping );
+    if (!module) return FALSE;
+
+    /* make sure it's a valid PE file */
+    if (!RtlImageNtHeader(module))
+    {
+        UnmapViewOfFile( module );
+        return FALSE;
+    }
+    *hmod = (HMODULE)((char *)module + 1);  /* set low bit of handle to indicate datafile module */
+    return TRUE;
 }
 
 /******************************************************************
@@ -548,7 +549,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
         if (load_library_as_datafile( wstr.Buffer, &hModule))
         {
             RtlFreeUnicodeString( &wstr );
-            return (HMODULE)((ULONG_PTR)hModule + 1);
+            return hModule;
         }
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
@@ -585,8 +586,7 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
         /* The method in load_library_as_datafile allows searching for the
          * 'native' libraries only
          */
-        if (load_library_as_datafile(libnameW, &hModule))
-            return (HMODULE)((ULONG_PTR)hModule + 1);
+        if (load_library_as_datafile(libnameW, &hModule)) return hModule;
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
     }
