@@ -914,7 +914,12 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define SM_CYVIRTUALSCREEN    79
 #define SM_CMONITORS          80
 #define SM_SAMEDISPLAYFORMAT  81
-#define SM_CMETRICS           83
+#define SM_IMMENABLED         82
+#define SM_CXFOCUSBORDER      83
+#define SM_CYFOCUSBORDER      84
+#define SM_TABLETPC           86
+#define SM_MEDIACENTER        87
+#define SM_CMETRICS           88
 
 
 /* Messages */
