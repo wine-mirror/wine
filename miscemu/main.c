@@ -115,25 +115,13 @@ int main( int argc, char *argv[] )
      */
     DEBUG_argv0 = argv[0];
 
-    /* Create the initial process */
-    if (!PROCESS_Init()) return FALSE;
-
-    /* Parse command-line */
-    if (!MAIN_WineInit( &argc, argv )) return 1;
-    MAIN_argc = argc; MAIN_argv = argv;
-
     /* Set up debugger hook */
     EXC_SetDebugEventHook( wine_debugger );
-
-    if (Options.debug) 
-        TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
+    TASK_AddTaskEntryBreakpoint = DEBUG_AddTaskEntryBreakpoint;
 
     /* Initialize everything */
-    if (!MAIN_MainInit()) return 1;
-
-    /* Load kernel modules */
-    if (!LoadLibrary16( "KRNL386.EXE" )) return 1;
-    if (!LoadLibraryA( "KERNEL32" )) return 1;
+    if (!MAIN_MainInit( &argc, argv )) return 1;
+    MAIN_argc = argc; MAIN_argv = argv;
 
     /* Create initial task */
     if ( !(pModule = NE_GetPtr( GetModuleHandle16( "KERNEL" ) )) ) return 1;

@@ -57,13 +57,19 @@ DEFAULT_DEBUG_CHANNEL(server)
 /***********************************************************************
  *           Main initialisation routine
  */
-BOOL MAIN_MainInit(void)
+BOOL MAIN_MainInit( int *argc, char *argv[] )
 {
+    /* Create the initial process */
+    if (!PROCESS_Init()) return 0;
+
     /* Set server debug level */
     CLIENT_SetDebug( TRACE_ON(server) );
 
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
+
+    /* Parse command line arguments */
+    MAIN_WineInit( argc, argv );
 
     /* Load the configuration file */
     if (!PROFILE_LoadWineIni()) return FALSE;
@@ -97,6 +103,10 @@ BOOL MAIN_MainInit(void)
     
     /* Read DOS config.sys */
     if (!DOSCONF_ReadConfig()) return FALSE;
+
+    /* Initialize KERNEL */
+    if (!LoadLibrary16( "KRNL386.EXE" )) return FALSE;
+    if (!LoadLibraryA( "KERNEL32" )) return FALSE;
 
     return TRUE;
 }
@@ -288,18 +298,8 @@ HINSTANCE MAIN_WinelibInit( int *argc, char *argv[] )
     OFSTRUCT ofs;
     HMODULE16 hModule;
 
-    /* Create the initial process */
-    if (!PROCESS_Init()) return 0;
-
-    /* Parse command line arguments */
-    MAIN_WineInit( argc, argv );
-
     /* Main initialization */
-    if (!MAIN_MainInit()) return 0;
-
-    /* Initialize KERNEL */
-    if (!LoadLibrary16( "KRNL386.EXE" )) return 0;
-    if (!LoadLibraryA( "KERNEL32" )) return 0;
+    if (!MAIN_MainInit( argc, argv )) return 0;
 
     /* Create and switch to initial task */
     if (!(wm = ELF_CreateDummyModule( argv[0], argv[0] )))

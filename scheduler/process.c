@@ -23,6 +23,7 @@
 #include "pe_image.h"
 #include "task.h"
 #include "server.h"
+#include "options.h"
 #include "callback.h"
 #include "debugtools.h"
 
@@ -482,7 +483,7 @@ void PROCESS_Start(void)
     }
 
     /* If requested, add entry point breakpoint */
-    if ( TASK_AddTaskEntryBreakpoint )
+    if ( Options.debug && TASK_AddTaskEntryBreakpoint )
         TASK_AddTaskEntryBreakpoint( pdb->task );
 
     /* Now call the entry point */
