@@ -53,10 +53,9 @@ void pdump (LPCITEMIDLIST pidl)
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
  */
-BOOL32 WINAPI ILGetDisplayName(LPCITEMIDLIST iil,LPSTR path)
-{	FIXME(pidl,"(%p,%p),stub, return e:!\n",iil,path);
-	strcpy(path,"e:\\");
-	return TRUE;
+BOOL32 WINAPI ILGetDisplayName(LPCITEMIDLIST pidl,LPSTR path)
+{	FIXME(shell,"pidl=%p %p semi-stub\n",pidl,path);
+	return SHGetPathFromIDList32A(pidl, path);
 }
 /*************************************************************************
  * ILFindLastID [SHELL32.16]
