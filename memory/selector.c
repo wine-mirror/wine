@@ -198,14 +198,15 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
  *
  * Change the size of a block of selectors.
  */
-WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
-                           enum seg_type type, BOOL is32bit, BOOL readonly)
+WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size )
 {
+    ldt_entry entry;
     WORD i, oldcount, newcount;
 
     if (!size) size = 1;
     oldcount = (GET_SEL_LIMIT(sel) >> 16) + 1;
     newcount = (size + 0xffff) >> 16;
+    LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
 
     if (oldcount < newcount)  /* We need to add selectors */
     {
@@ -231,7 +232,8 @@ WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
         SELECTOR_FreeBlock( ENTRY_TO_SELECTOR(SELECTOR_TO_ENTRY(sel)+newcount),
                             oldcount - newcount );
     }
-    if (sel) SELECTOR_SetEntries( sel, base, size, type, is32bit, readonly );
+    if (sel) SELECTOR_SetEntries( sel, base, size, entry.type,
+                                  entry.seg_32bit, entry.read_only );
     return sel;
 }
 

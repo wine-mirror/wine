@@ -361,7 +361,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
          * change the selector if we are shrinking the block.
 	 * FIXME: shouldn't we keep selectors until the block is deleted?
 	 */
-        SELECTOR_ReallocBlock( sel, 0, 1, SEGMENT_DATA, 0, 0 );
+        SELECTOR_ReallocBlock( sel, 0, 1 );
         return handle;
     }
 
@@ -398,7 +398,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
       /* Reallocate the selector(s) */
 
-    sel = SELECTOR_ReallocBlock( sel, ptr, size, SEGMENT_DATA, 0, 0 );
+    sel = SELECTOR_ReallocBlock( sel, ptr, size );
     if (!sel)
     {
         HeapFree( SystemHeap, 0, ptr );

@@ -13,9 +13,7 @@
 extern WORD SELECTOR_AllocBlock( const void *base, DWORD size,
 				 enum seg_type type, BOOL is32bit,
 				 BOOL readonly );
-extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size,
-                                   enum seg_type type, BOOL is32bit,
-                                   BOOL readonly );
+extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
 extern void SELECTOR_MoveBlock( WORD sel, const void *new_base );
 extern void SELECTOR_FreeBlock( WORD sel, WORD count );
 
