@@ -1150,7 +1150,7 @@ static HWND32 WIN_FindWindow( HWND32 parent, HWND32 child, ATOM className,
     {
         if (className && !(pWnd->dwStyle & WS_CHILD))
         {
-            if (!(pClass = CLASS_FindClassByAtom( className, GetExePtr(pWnd->hInstance))))
+            if (!(pClass = CLASS_FindClassByAtom( className, pWnd->hInstance)))
                 continue;  /* Skip this window */
         }
 
