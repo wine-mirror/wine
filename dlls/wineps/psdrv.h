@@ -316,6 +316,7 @@ typedef struct {
 typedef struct {
     HANDLE16		hJob;
     LPSTR		output;		/* Output file/port */
+    LPSTR               DocName;        /* Document Name */
     BOOL		banding;        /* Have we received a NEXTBAND */
     BOOL		OutOfPage;      /* Page header not sent yet */
     INT			PageNo;

@@ -542,9 +542,10 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
       return 1;
     }
 
+  /* Windows returns 9999 too */
   case DC_COPIES:
-    FIXME("DC_COPIES: returning %d.  Is this correct?\n", lpdm->dmCopies);
-    return lpdm->dmCopies;
+    TRACE("DC_COPIES: returning 9999\n");
+    return 9999;
 
   case DC_DRIVER:
     return lpdm->dmDriverVersion;
@@ -626,14 +627,15 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
   case DC_VERSION:
     return lpdm->dmSpecVersion;
 
-  /* Printer supports collating - 1 if yes, 0 if no. */
+  /* We'll just return false here, very few printers can collate anyway */
   case DC_COLLATE:
-    return ((lpdm->dmFields & DM_COLLATE) ? 1 : 0); /* Collation is supported if DM_COLLATE is set */
-    
+    TRACE("DC_COLLATE: returning FALSE\n");
+    return FALSE;
+
   /* Printer supports colour printing - 1 if yes, 0 if no (Win2k/XP only) */
   case DC_COLORDEVICE:
-    return ((lpdm->dmFields & DM_COLOR) ? 1 : 0); /* Colour is supported if DM_COLOR is set */
-    
+    return pi->ppd->ColorDevice;
+
   /* Identification number of the printer manufacturer for use with ICM (Win9x only) */
   case DC_MANUFACTURER:
     FIXME("DC_MANUFACTURER: stub\n");

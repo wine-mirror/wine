@@ -306,7 +306,12 @@ INT PSDRV_StartPage( PSDRV_PDEVICE *physDev )
         FIXME("Already started a page?\n");
 	return 1;
     }
-    physDev->job.PageNo++;
+
+    if(physDev->job.PageNo++ == 0) {
+        if(!PSDRV_WriteHeader( physDev, physDev->job.DocName ))
+            return 0;
+    }
+
     if(!PSDRV_WriteNewPage( physDev ))
         return 0;
     physDev->job.OutOfPage = FALSE;
@@ -368,8 +373,12 @@ INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
     physDev->job.banding = FALSE;
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
-    if(!PSDRV_WriteHeader( physDev, doc->lpszDocName ))
-        return 0;
+
+    if(doc->lpszDocName) {
+        physDev->job.DocName = HeapAlloc(GetProcessHeap(), 0, strlen(doc->lpszDocName)+1);
+        strcpy(physDev->job.DocName, doc->lpszDocName);
+    } else
+        physDev->job.DocName = NULL;
 
     return physDev->job.hJob;
 }
@@ -397,5 +406,9 @@ INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 	ret = 0;
     }
     physDev->job.hJob = 0;
+    if(physDev->job.DocName) {
+        HeapFree(GetProcessHeap(), 0, physDev->job.DocName);
+        physDev->job.DocName = NULL;
+    }
     return ret;
 }
