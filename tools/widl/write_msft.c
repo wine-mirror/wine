@@ -1590,6 +1590,9 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
 
     typeinfo->typekind |= kind | 0x20;
 
+    if(kind == TKIND_COCLASS)
+        typeinfo->flags |= 0x2; /* TYPEFLAG_FCANCREATE */
+
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
         case ATTR_HELPCONTEXT:
@@ -1613,6 +1616,10 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
           }
         case ATTR_HIDDEN:
             typeinfo->flags |= 0x10; /* TYPEFLAG_FHIDDEN */
+            break;
+
+        case ATTR_NONCREATABLE:
+            typeinfo->flags &= ~0x2; /* TYPEFLAG_FCANCREATE */
             break;
 
         case ATTR_ODL:
@@ -1819,7 +1826,6 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     }
 }
 
-
 static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
 {
     msft_typeinfo_t *msft_typeinfo;
@@ -1835,6 +1841,86 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, var_t *tdef)
                &alignment, &msft_typeinfo->typeinfo->datatype2);
     tdef->type->attrs = attrs;
     msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
+}
+
+static void add_coclass_typeinfo(msft_typelib_t *typelib, class_t *cls)
+{
+    msft_typeinfo_t *msft_typeinfo;
+    ifref_t *iref;
+    int num_ifaces = 0, offset, i;
+    MSFT_RefRecord *ref, *first = NULL, *first_source = NULL;
+    int have_default = 0, have_default_source = 0;
+    attr_t *attr;
+
+    msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs,
+                                         typelib->typelib_header.nrtypeinfos);
+
+    if((iref = cls->ifaces)) {
+        num_ifaces++;
+        while(NEXT_LINK(iref)) {
+            iref = NEXT_LINK(iref);
+            num_ifaces++;
+        }
+    }
+
+    offset = msft_typeinfo->typeinfo->datatype1 = ctl2_alloc_segment(typelib, MSFT_SEG_REFERENCES,
+                                                                     num_ifaces * sizeof(*ref), 0);
+    for(i = 0; i < num_ifaces; i++) {
+        if(iref->iface->typelib_idx == -1)
+            add_interface_typeinfo(typelib, iref->iface);
+        ref = (MSFT_RefRecord*) (typelib->typelib_segment_data[MSFT_SEG_REFERENCES] + offset + i * sizeof(*ref));
+        ref->reftype = typelib->typelib_typeinfo_offsets[iref->iface->typelib_idx];
+        ref->flags = 0;
+        ref->oCustData = -1;
+        ref->onext = -1;
+        if(i < num_ifaces - 1)
+            ref->onext = offset + (i + 1) * sizeof(*ref);
+
+        for(attr = iref->attrs; attr; attr = NEXT_LINK(attr)) {
+            switch(attr->type) {
+            case ATTR_DEFAULT:
+                ref->flags |= 0x1; /* IMPLTYPEFLAG_FDEFAULT */
+                break;
+            case ATTR_RESTRICTED:
+                ref->flags |= 0x4; /* IMPLTYPEFLAG_FRESTRICTED */
+                break;
+            case ATTR_SOURCE:
+                ref->flags |= 0x2; /* IMPLTYPEFLAG_FSOURCE */
+                break;
+            default:
+                warning("add_coclass_typeinfo: unhandled attr %d\n", attr->type);
+            }
+        }
+        if(ref->flags & 0x1) { /* IMPLTYPEFLAG_FDEFAULT */
+            if(ref->flags & 0x2) /* IMPLTYPEFLAG_SOURCE */
+                have_default_source = 1;
+            else
+                have_default = 1;
+        }
+
+        /* If the interface is non-restricted and we haven't already had one then
+           remember it so that we can use it as a default later */
+        if((ref->flags & 0x4) == 0) { /* IMPLTYPEFLAG_FRESTRICTED */
+            if(ref->flags & 0x2) { /* IMPLTYPEFLAG_FSOURCE */
+                if(!first_source)
+                    first_source = ref;
+            }
+            else if(!first)
+                first = ref;
+        }
+        iref = PREV_LINK(iref);
+    }
+
+    /* If we haven't had a default interface, then set the default flags on the
+       first ones */
+    if(!have_default && first)
+        first->flags |= 0x1;
+    if(!have_default_source && first_source)
+        first_source->flags |= 0x1;
+
+    msft_typeinfo->typeinfo->cImplTypes = num_ifaces;
+    msft_typeinfo->typeinfo->size = 4;
+    msft_typeinfo->typeinfo->typekind |= 0x2200;
 }
 
 static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
@@ -1854,6 +1940,10 @@ static void add_entry(msft_typelib_t *typelib, typelib_entry_t *entry)
 
     case TKIND_ALIAS:
         add_typedef_typeinfo(typelib, entry->u.tdef);
+        break;
+
+    case TKIND_COCLASS:
+        add_coclass_typeinfo(typelib, entry->u.class);
         break;
 
     default:

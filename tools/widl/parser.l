@@ -259,6 +259,7 @@ static struct keyword {
 /* ... */
 	{"module",			tMODULE},
 /* ... */
+	{"noncreatable",		tNONCREATABLE},
 	{"object",			tOBJECT},
 	{"odl",				tODL},
 	{"oleautomation",		tOLEAUTOMATION},

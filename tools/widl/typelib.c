@@ -205,22 +205,12 @@ void add_interface(type_t *iface)
 
 void add_coclass(class_t *cls)
 {
-    ifref_t *lcur = cls->ifaces;
-    ifref_t *cur;
     typelib_entry_t *entry;
-
-    if (lcur) {
-        while (NEXT_LINK(lcur)) lcur = NEXT_LINK(lcur);
-    }
 
     if (!typelib) return;
 
-    /* install interfaces the coclass depends on */
-    cur = lcur;
-    while (cur) {
-        add_interface(cur->iface);
-        cur = PREV_LINK(cur);
-    }
+    chat("add coclass: %s\n", cls->name);
+
     entry = xmalloc(sizeof(*entry));
     entry->kind = TKIND_COCLASS;
     entry->u.class = cls;

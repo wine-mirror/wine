@@ -157,6 +157,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %token tLONG
 %token tMETHODS
 %token tMODULE
+%token tNONCREATABLE
 %token tOBJECT tODL tOLEAUTOMATION
 %token tOPTIONAL
 %token tOUT
@@ -360,6 +361,7 @@ attribute:
 	| tINPUTSYNC				{ $$ = make_attr(ATTR_INPUTSYNC); }
 	| tLENGTHIS '(' m_exprs ')'		{ $$ = make_attrp(ATTR_LENGTHIS, $3); }
 	| tLOCAL				{ $$ = make_attr(ATTR_LOCAL); }
+	| tNONCREATABLE				{ $$ = make_attr(ATTR_NONCREATABLE); }
 	| tOBJECT				{ $$ = make_attr(ATTR_OBJECT); }
 	| tODL					{ $$ = make_attr(ATTR_ODL); }
 	| tOLEAUTOMATION			{ $$ = make_attr(ATTR_OLEAUTOMATION); }
