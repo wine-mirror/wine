@@ -41,6 +41,7 @@ extern "C" {
 #define WINE_tchar_tclen(a) (1)
 #define WINE_tchar_tccpy(a,b) do { *(a)=*(b); } while (0)
 
+#define __targv       WINE_tchar_routine(__argv,          __argv,      __wargv)
 #define _fgettc       WINE_tchar_routine(fgetc,           fgetc,       fgetwc)
 #define _fgettchar    WINE_tchar_routine(fgetchar,        fgetchar,    _fgetwchar)
 #define _fgetts       WINE_tchar_routine(fgets,           fgets,       fgetws)
@@ -72,7 +73,6 @@ extern "C" {
 #define _puttc        WINE_tchar_routine(putc,            putc,        putwc)
 #define _puttchar     WINE_tchar_routine(putchar,         putchar,     putwchar)
 #define _putts        WINE_tchar_routine(puts,            puts,        putws)
-#define _tmain        WINE_tchar_routine(main,            main,        wmain)
 #define _sntprintf    WINE_tchar_routine(sprintf,         sprintf,     swprintf)
 #define _stprintf     WINE_tchar_routine(sprintf,         sprintf,     swprintf)
 #define _stscanf      WINE_tchar_routine(sscanf,          sscanf,      swscanf)
@@ -128,6 +128,7 @@ extern "C" {
 #define _tcsupr       WINE_tchar_routine(_strupr,         _mbsupr,     _wcsupr)
 #define _tcsxfrm      WINE_tchar_routine(strxfrm,         strxfrm,     wcsxfrm)
 #define _tctime       WINE_tchar_routine(ctime,           ctime,       _wctime)
+#define _tenviron     WINE_tchar_routine(_environ,        _environ,    _wenviron)
 #define _texecl       WINE_tchar_routine(_execl,          _execl,      _wexecl)
 #define _texecle      WINE_tchar_routine(_execle,         _execle,     _wexecle)
 #define _texeclp      WINE_tchar_routine(_execlp,         _execlp,     _wexeclp)
