@@ -611,7 +611,6 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
                                0, (LPARAM)s2);
             SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_SETCURSEL,
                                di->config.edition_mode, 0);
-            WINE_FIXME("edmo=%d\n", di->config.edition_mode);
     	}
 
 	break;
@@ -624,7 +623,7 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     case WM_NOTIFY:
     {
 	NMHDR*	        nmhdr = (NMHDR*)lParam;
-        int             x, y;
+        int             win_w, win_h, sb_w, sb_h;
         BOOL            st1, st2;
 
 	di = (struct dialog_info*)GetWindowLong(hDlg, DWL_USER);
@@ -634,21 +633,39 @@ static BOOL WINAPI WCUSER_ConfigDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
             di->hDlg = hDlg;
             break;
 	case PSN_APPLY:
-            x = GetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,  &st1, FALSE);
-            y = GetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT, &st2, FALSE);
-            if (st1 && st2)
+            sb_w = GetDlgItemInt(hDlg, IDC_CNF_SB_WIDTH,  &st1, FALSE);
+            sb_h = GetDlgItemInt(hDlg, IDC_CNF_SB_HEIGHT, &st2, FALSE);
+            if (!st1 || ! st2)
             {
-                di->config.sb_width  = x;
-                di->config.sb_height = y;
+                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID);        
+                return TRUE;
             }
+            win_w = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st1, FALSE);
+            win_h = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st2, FALSE);
+            if (!st1 || !st2)
+            {
+                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID); 
+                return TRUE;
+            }
+            if (win_w > sb_w || win_h > sb_h)
+            {
+                WCHAR   cap[256];
+                WCHAR   txt[256];
 
-            x = GetDlgItemInt(hDlg, IDC_CNF_WIN_WIDTH,  &st1, FALSE);
-            y = GetDlgItemInt(hDlg, IDC_CNF_WIN_HEIGHT, &st2, FALSE);
-            if (st1 && st2)
-            {
-                di->config.win_width  = x;
-                di->config.win_height = y;
+                LoadString(GetModuleHandle(NULL), IDS_DLG_TIT_ERROR, 
+                           cap, sizeof(cap) / sizeof(WCHAR));
+                LoadString(GetModuleHandle(NULL), IDS_DLG_ERR_SBWINSIZE, 
+                           txt, sizeof(txt) / sizeof(WCHAR));
+                
+                MessageBox(hDlg, txt, cap, MB_OK);
+                SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_INVALID); 
+                return TRUE;
             }
+            di->config.win_width  = win_w;
+            di->config.win_height = win_h;
+            di->config.sb_width  = sb_w;
+            di->config.sb_height = sb_h;
+
             di->config.exit_on_die = IsDlgButtonChecked(hDlg, IDC_CNF_CLOSE_EXIT) ? 1 : 0;
             di->config.edition_mode = SendDlgItemMessage(hDlg, IDC_CNF_EDITION_MODE, CB_GETCURSEL,
                                                          0, 0);

@@ -33,8 +33,10 @@ IDS_SEARCH,		"&Keresés"
 IDS_FNT_DISPLAY,	"Minden karakter %ld pixel széles és %ld pixel magas"
 IDS_FNT_PREVIEW_1,	"Ez egy teszt"
 IDS_FNT_PREVIEW_2,	""
-IDS_DLG_TIT_DEFAULT     "Beállítás - alapértelmezett beállítások"
-IDS_DLG_TIT_CURRENT     "Beállítás - aktuális beállítások"
+IDS_DLG_TIT_DEFAULT,    "Beállítás - alapértelmezett beállítások"
+IDS_DLG_TIT_CURRENT,    "Beállítás - aktuális beállítások"
+IDS_DLG_TIT_ERROR,      "Configuration error"
+IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105

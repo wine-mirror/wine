@@ -32,8 +32,10 @@ IDS_SEARCH,		"&Suchen"
 IDS_FNT_DISPLAY,	"Jeder Buchstabe ist %ld Pixel breit und %ld Pixel hoch"
 IDS_FNT_PREVIEW_1,	"Dies ist ein Test"
 IDS_FNT_PREVIEW_2,	""
-IDS_DLG_TIT_DEFAULT     "Setup - Standardeinstellungen"
-IDS_DLG_TIT_CURRENT     "Setup - aktuelle Einstellungen"
+IDS_DLG_TIT_DEFAULT,    "Setup - Standardeinstellungen"
+IDS_DLG_TIT_CURRENT,    "Setup - aktuelle Einstellungen"
+IDS_DLG_TIT_ERROR,      "Configuration error"
+IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105

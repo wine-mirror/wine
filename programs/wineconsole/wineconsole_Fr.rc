@@ -32,8 +32,10 @@ IDS_SEARCH,		"C&hercher"
 IDS_FNT_DISPLAY,	"Chaque caractère a %ld points en largeur et %ld points en hauteur"
 IDS_FNT_PREVIEW_1,	"Ceci est un test"
 IDS_FNT_PREVIEW_2,	"éèàôë"
-IDS_DLG_TIT_DEFAULT     "Configuration par défault"
-IDS_DLG_TIT_CURRENT     "Configuration courante"
+IDS_DLG_TIT_DEFAULT,    "Configuration par défault"
+IDS_DLG_TIT_CURRENT,    "Configuration courante"
+IDS_DLG_TIT_ERROR,	"Erreur de configuration"
+IDS_DLG_ERR_SBWINSIZE,	"La taille du tampon écran doit être plus grande que celle de la fenêtre"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105

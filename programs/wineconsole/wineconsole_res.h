@@ -32,6 +32,9 @@
 
 #define IDS_DLG_TIT_DEFAULT     0x120
 #define IDS_DLG_TIT_CURRENT     0x121
+#define IDS_DLG_TIT_ERROR       0x122
+
+#define IDS_DLG_ERR_SBWINSIZE   0x130
 
 #define IDS_FNT_DISPLAY		0x200
 #define IDS_FNT_PREVIEW_1	0x201

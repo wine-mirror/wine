@@ -34,8 +34,10 @@ IDS_SEARCH,		"搜索（&E）"
 IDS_FNT_DISPLAY,	"每个字都是 %ld 个像素宽，%ld 个像素高"
 IDS_FNT_PREVIEW_1,	"这是一段测试语句"
 IDS_FNT_PREVIEW_2,	""
-IDS_DLG_TIT_DEFAULT     "配置 - 默认设置"
-IDS_DLG_TIT_CURRENT     "配置 - 当前设置"
+IDS_DLG_TIT_DEFAULT,    "配置 - 默认设置"
+IDS_DLG_TIT_CURRENT,    "配置 - 当前设置"
+IDS_DLG_TIT_ERROR,      "Configuration error"
+IDS_DLG_ERR_SBWINSIZE,  "Screen buffer size must be greater or equal to the window's one"
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
