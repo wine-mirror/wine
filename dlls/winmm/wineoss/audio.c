@@ -663,8 +663,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int			format;
     int			sample_rate;
     int			dsp_stereo;
-    int			audio_fragment;
     int			fragment_size;
+    int			audio_fragment;
     WINE_WAVEOUT*	wwo;
 
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
@@ -696,14 +696,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo = &WOutDev[wDevID];
 
-    if (dwFlags & WAVE_DIRECTSOUND) {
-	if (!(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
-	    /* not supported, ignore it */
-	    dwFlags &= ~WAVE_DIRECTSOUND;
-    }
+    if ((dwFlags & WAVE_DIRECTSOUND) && !(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
+	/* not supported, ignore it */
+	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    
-    wwo->unixdev = 0;
     if (access(SOUND_DEV, 0) != 0) 
 	return MMSYSERR_NOTENABLED;
     if (dwFlags & WAVE_DIRECTSOUND)
@@ -717,16 +713,18 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_ALLOCATED;
     }
 
+    wwo->unixdev = audio;
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
     
-    memcpy(&wwo->waveDesc, lpDesc, 		sizeof(WAVEOPENDESC));
+    memcpy(&wwo->waveDesc, lpDesc, 	     sizeof(WAVEOPENDESC));
     memcpy(&wwo->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
     
-    if (WOutDev[wDevID].format.wBitsPerSample == 0) {
-	WOutDev[wDevID].format.wBitsPerSample = 8 *
-	    (WOutDev[wDevID].format.wf.nAvgBytesPerSec /
-	     WOutDev[wDevID].format.wf.nSamplesPerSec) /
-	    WOutDev[wDevID].format.wf.nChannels;
+    if (wwo->format.wBitsPerSample == 0) {
+	WARN("Resetting zeroed wBitsPerSample\n");
+	wwo->format.wBitsPerSample = 8 *
+	    (wwo->format.wf.nAvgBytesPerSec /
+	     wwo->format.wf.nSamplesPerSec) /
+	    wwo->format.wf.nChannels;
     }
     
     if (dwFlags & WAVE_DIRECTSOUND) {
@@ -763,8 +761,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* even if we set fragment size above, read it again, just in case */
     IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
-
-    wwo->unixdev = audio;
+    if (fragment_size == -1) {
+	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
+	close(audio);
+	wwo->unixdev = 0;
+	return MMSYSERR_NOTENABLED;
+    }
     wwo->dwFragmentSize = fragment_size;
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
@@ -1697,8 +1699,11 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    int 		audio, abuf_size, smplrate, samplesize, dsp_stereo;
-    LPWAVEFORMAT	lpFormat;
+    int 		audio;
+    int			fragment_size;
+    int			sample_rate;
+    int			format;
+    int			dsp_stereo;
     WINE_WAVEIN*	wwi;
 
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
@@ -1725,56 +1730,65 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
-    wwi = &WInDev[wDevID];
-    wwi->unixdev = 0;
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
     audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0);
     if (audio == -1) {
 	WARN("can't open (%s)!\n", strerror(errno));
 	return MMSYSERR_ALLOCATED;
     }
-    IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
-    if (abuf_size < 1024 || abuf_size > 65536) {
-	if (abuf_size == -1)
-        {
-            WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
-	    close(audio);
-            return MMSYSERR_NOTENABLED;
-        }
-        WARN("SNDCTL_DSP_GETBLKSIZE Invalid dwFragmentSize %d!\n",abuf_size);
-    }
-    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
+    wwi = &WInDev[wDevID];
     if (wwi->lpQueuePtr) {
 	WARN("Should have an empty queue (%p)\n", wwi->lpQueuePtr);
 	wwi->lpQueuePtr = NULL;
     }
     wwi->unixdev = audio;
-    wwi->dwFragmentSize = abuf_size;
     wwi->dwTotalRecorded = 0;
-    memcpy(&wwi->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
-    lpFormat = (LPWAVEFORMAT) lpDesc->lpFormat; 
+    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
-    memcpy(&wwi->format, lpFormat, sizeof(PCMWAVEFORMAT));
-    wwi->format.wBitsPerSample = 8; /* <-------------- */
-    if (wwi->format.wf.nChannels == 0) return WAVERR_BADFORMAT;
-    if (wwi->format.wf.nSamplesPerSec == 0) return WAVERR_BADFORMAT;
+    memcpy(&wwi->waveDesc, lpDesc,           sizeof(WAVEOPENDESC));
+    memcpy(&wwi->format,   lpDesc->lpFormat, sizeof(PCMWAVEFORMAT));
+
     if (wwi->format.wBitsPerSample == 0) {
+	WARN("Resetting zeroed wBitsPerSample\n");
 	wwi->format.wBitsPerSample = 8 *
 	    (wwi->format.wf.nAvgBytesPerSec /
 	     wwi->format.wf.nSamplesPerSec) /
 	    wwi->format.wf.nChannels;
     }
-    samplesize = wwi->format.wBitsPerSample;
-    smplrate = wwi->format.wf.nSamplesPerSec;
+
+    sample_rate = wwi->format.wf.nSamplesPerSec;
     dsp_stereo = (wwi->format.wf.nChannels > 1) ? TRUE : FALSE;
-    IOCTL(audio, SNDCTL_DSP_SPEED, smplrate);
-    IOCTL(audio, SNDCTL_DSP_SAMPLESIZE, samplesize);
+    format = (wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8;
+
+    IOCTL(audio, SNDCTL_DSP_SETFMT, format);
     IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
-    TRACE("wBitsPerSample=%u !\n", wwi->format.wBitsPerSample);
-    TRACE("nSamplesPerSec=%lu !\n", wwi->format.wf.nSamplesPerSec);
-    TRACE("nChannels=%u !\n", wwi->format.wf.nChannels);
-    TRACE("nAvgBytesPerSec=%lu\n", wwi->format.wf.nAvgBytesPerSec); 
+    IOCTL(audio, SNDCTL_DSP_SPEED,  sample_rate);
+
+    /* paranoid checks */
+    if (format != ((wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8))
+	ERR("Can't set format to %d (%d)\n", 
+	    (wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8, format);
+    if (dsp_stereo != (wwi->format.wf.nChannels > 1) ? 1 : 0) 
+	ERR("Can't set stereo to %u (%d)\n", 
+	    (wwi->format.wf.nChannels > 1) ? 1 : 0, dsp_stereo);
+    if (!NEAR_MATCH(sample_rate, wwi->format.wf.nSamplesPerSec))
+	ERR("Can't set sample_rate to %lu (%d)\n", 
+	    wwi->format.wf.nSamplesPerSec, sample_rate);
+
+    IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, fragment_size);
+    if (fragment_size == -1) {
+	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
+	close(audio);
+	wwi->unixdev = 0;
+	return MMSYSERR_NOTENABLED;
+    }
+    wwi->dwFragmentSize = fragment_size;
+
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n", 
+	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec, 
+	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
+	  wwi->format.wf.nBlockAlign);
 
     wwi->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
