@@ -7,16 +7,6 @@
       support programs etc.
     </para>
 
-    <para>
-      This chapter will describe all aspects of running Wine, like e.g.
-      basic Wine invocation, command line parameters of various Wine
-      support programs etc.
-    </para>
-
-    <para>
-
-    </para>
-
     <sect1 id="basic-usage">
       <title>Basic usage: applications and control panel applets</title>
       <para>
@@ -75,21 +65,12 @@
 	remember to include the double quotes.  Some programs don't
 	always use obvious naming for their directories and EXE files,
 	so you might have to look inside the program files directory to
-	see what it put where.
+	see what was put where.
       </para>
     </sect1>
 
     <sect1 id="running-wine">
       <title>How to run Wine</title>
-      <para>
-        Wine is a very complicated piece of software with many ways to
-        adjust how it runs.  With very few exceptions, you can
-        activate the same set of features through the <link
-        linkend="config-file">configuration file</link> as you can
-        with command-line parameters.  In this chapter, we'll briefly
-        discuss these parameters, and match them up with their
-        corresponding configuration variables.
-      </para>
 
       <para>
         You can invoke the <command>wine --help</command> command to

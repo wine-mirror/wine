@@ -2,13 +2,9 @@
     <title>The Registry</title>
 
     <para>
-      Originally written by Ove Kåven
-    </para>
-
-    <para>
       After Win3.x, the registry became a fundamental part of Windows.
       It is the place where both Windows itself, and all
-      Win95/98/NT/2000/whatever-compliant applications, store
+      Win95/98/NT/2000/XP/etc.-compliant applications, store
       configuration and state data. While most sane system
       administrators (and Wine developers) curse badly at the twisted
       nature of the Windows registry, it is still necessary for Wine

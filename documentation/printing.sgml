@@ -208,61 +208,6 @@
 	</sect4>
       </sect3>
 
-      <sect3>
-        <title>TODO / Bugs</title>
-
-        <itemizedlist>
-          <listitem>
-            <para>
-              Driver does read PPD files, but ignores all constraints
-              and doesn't let you specify whether you have optional
-              extras such as envelope feeders. You will therefore find
-              a larger than normal selection of input bins in the
-              print setup dialog box. I've only really tested ppd
-              parsing on the <filename>hp4m6_v1.ppd</filename> file.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              No TrueType download.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              StretchDIBits uses level 2 PostScript.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              AdvancedSetup dialog box.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Many partially implemented functions.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              ps.c is becoming messy.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Notepad often starts text too far to the left depending
-              on the margin settings. However the win3.1
-              <filename>pscript.drv</filename> (under wine) also does
-              this.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              Probably many more...
-            </para>
-          </listitem>
-        </itemizedlist>
-
-      </sect3>
     </sect2>
   </sect1>
 

@@ -489,9 +489,6 @@ FontPath "tcp/localhost:7100"
         </listitem>
       </orderedlist>
 
-      <para>
-        Hope this helps...
-    </para>
   </sect2>
 
 </sect1>
