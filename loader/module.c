@@ -1069,10 +1069,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     /* Warn if unsupported features are used */
 
-    if (dwCreationFlags & DEBUG_PROCESS)
-        FIXME_(module)("(%s,...): DEBUG_PROCESS ignored\n", name);
-    if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS)
-        FIXME_(module)("(%s,...): DEBUG_ONLY_THIS_PROCESS ignored\n", name);
     if (dwCreationFlags & CREATE_SUSPENDED)
         FIXME_(module)("(%s,...): CREATE_SUSPENDED ignored\n", name);
     if (dwCreationFlags & DETACHED_PROCESS)
@@ -1141,7 +1137,8 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     lstrcpynA( ofs.szPathName, name, sizeof( ofs.szPathName ) );
     retv = NE_CreateProcess( HFILE_ERROR, &ofs, cmdline, lpEnvironment, 
                              lpProcessAttributes, lpThreadAttributes,
-                             bInheritHandles, lpStartupInfo, lpProcessInfo );
+                             bInheritHandles, dwCreationFlags,
+                             lpStartupInfo, lpProcessInfo );
 
     /* Load file and create process */
 
@@ -1176,19 +1173,22 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
         case SCS_32BIT_BINARY:
             retv = PE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+                                     bInheritHandles, dwCreationFlags,
+                                     lpStartupInfo, lpProcessInfo );
             break;
     
         case SCS_DOS_BINARY:
             retv = MZ_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+                                     bInheritHandles, dwCreationFlags,
+                                     lpStartupInfo, lpProcessInfo );
             break;
 
         case SCS_WOW_BINARY:
             retv = NE_CreateProcess( hFile, &ofs, cmdline, lpEnvironment, 
                                      lpProcessAttributes, lpThreadAttributes,
-                                     bInheritHandles, lpStartupInfo, lpProcessInfo );
+                                     bInheritHandles, dwCreationFlags,
+                                     lpStartupInfo, lpProcessInfo );
             break;
 
         case SCS_PIF_BINARY:
@@ -1440,6 +1440,10 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			pwm->refCount++;
 
 			LeaveCriticalSection(&PROCESS_Current()->crit_section);
+
+                        if (PROCESS_Current()->flags & PDB32_DEBUGGED)
+                            DEBUG_SendLoadDLLEvent( -1 /*FIXME*/, pwm->module, pwm->modname );
+                        
 			return pwm;
 		}
 
@@ -1591,7 +1595,11 @@ BOOL MODULE_FreeLibrary( WINE_MODREF *wm )
 
     /* Call process detach notifications */
     if ( PROCESS_Current()->free_lib_count <= 1 )
+    {
         MODULE_DllProcessDetach( FALSE, NULL );
+        if (PROCESS_Current()->flags & PDB32_DEBUGGED)
+            DEBUG_SendUnloadDLLEvent( wm->module );
+    }
 
     MODULE_FlushModrefs();
 

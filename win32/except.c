@@ -69,9 +69,12 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     char message[80];
     PDB *pdb = PROCESS_Current();
 
-    /* FIXME: Should check if the process is being debugged */
-
-    if (pdb->top_filter)
+    if (pdb->flags & PDB32_DEBUGGED)
+    {
+        if (DEBUG_SendExceptionEvent( epointers->ExceptionRecord, FALSE ) == DBG_CONTINUE)
+            return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    else if (pdb->top_filter)
     {
         DWORD ret = pdb->top_filter( epointers );
         if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;

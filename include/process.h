@@ -160,9 +160,15 @@ extern PDB *PROCESS_Create( struct _NE_MODULE *pModule,
                             LPCSTR cmd_line, LPCSTR env, 
                             HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance, 
                             LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                            BOOL inherit,
+                            BOOL inherit, DWORD flags,
                             STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_FreePDB( PDB *pdb );
 
-#endif  /* __WINE_PROCESS_H */
+/* scheduler/debugger.c */
+extern DWORD DEBUG_SendExceptionEvent( EXCEPTION_RECORD *rec, BOOL first_chance );
+extern DWORD DEBUG_SendCreateProcessEvent( HFILE file, HMODULE module, void *entry );
+extern DWORD DEBUG_SendCreateThreadEvent( void *entry );
+extern DWORD DEBUG_SendLoadDLLEvent( HFILE file, HMODULE module, LPSTR name );
+extern DWORD DEBUG_SendUnloadDLLEvent( HMODULE module );
 
+#endif  /* __WINE_PROCESS_H */

@@ -65,7 +65,7 @@ extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
 
 extern BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              BOOL inherit, LPSTARTUPINFOA startup, 
+                              BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
                               LPPROCESS_INFORMATION info );
 extern LPDOSTASK MZ_Current( void );
 extern int DOSVM_Enter( PCONTEXT context );

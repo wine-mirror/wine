@@ -914,7 +914,7 @@ void PE_UnloadLibrary(WINE_MODREF *wm)
  */
 BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, LPSTARTUPINFOA startup,
+                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                        LPPROCESS_INFORMATION info )
 {
     LPCSTR modName = NULL;
@@ -948,7 +948,7 @@ BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env,
 
     /* Create new process */
     if ( !PROCESS_Create( pModule, cmd_line, env,
-                          0, 0, psa, tsa, inherit, startup, info ) )
+                          0, 0, psa, tsa, inherit, flags, startup, info ) )
         return FALSE;
 
     /* Note: PE_CreateModule and the remaining process initialization will

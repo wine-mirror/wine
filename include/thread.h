@@ -57,7 +57,7 @@ typedef struct _THDB
     void          *ring0_thread;   /*  5c Pointer to ring 0 thread */
     void          *ptdbx;          /*  60 Pointer to TDBX structure */
     void          *stack_base;     /*  64 Base of the stack */
-    void          *exit_stack;     /*  68 Stack pointer on thread exit */
+    void          *signal_stack;   /*  68 Signal stack (was: exit_stack) */
     void          *emu_data;       /*  6c Related to 80387 emulation */
     DWORD          last_error;     /*  70 Last error code */
     void          *debugger_CB;    /*  74 Debugger context block */
@@ -92,6 +92,9 @@ typedef struct _THDB
 
 /* The pseudo handle value returned by GetCurrentThread */
 #define CURRENT_THREAD_PSEUDOHANDLE 0xfffffffe
+
+/* The per-thread signal stack size */
+#define SIGNAL_STACK_SIZE  16384
 
 #ifdef __i386__
 /* On the i386, the current thread is in the %fs register */

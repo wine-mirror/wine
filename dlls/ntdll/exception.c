@@ -8,6 +8,7 @@
 #include "debugtools.h"
 #include "winnt.h"
 #include "ntddk.h"
+#include "process.h"
 #include "wine/exception.h"
 #include "stackframe.h"
 
@@ -69,7 +70,8 @@ static DWORD EXC_CallHandler( PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nes
     newframe.frame.Handler = nested_handler;
     newframe.prevFrame     = frame;
     EXC_push_frame( &newframe.frame );
-    TRACE( "calling handler at %p\n", handler );
+    TRACE( "calling handler at %p code=%lx flags=%lx\n",
+           handler, record->ExceptionCode, record->ExceptionFlags );
     ret = handler( record, frame, context, dispatcher );
     TRACE( "handler returned %lx\n", ret );
     EXC_pop_frame( &newframe.frame );
@@ -84,6 +86,10 @@ static DWORD EXC_CallHandler( PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nes
  */
 static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
+        (DEBUG_SendExceptionEvent( rec, FALSE ) == DBG_CONTINUE))
+        return;  /* continue execution */
+
     if (rec->ExceptionFlags & EH_STACK_INVALID)
         ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
     else if (rec->ExceptionCode == EXCEPTION_NONCONTINUABLE_EXCEPTION)
@@ -104,6 +110,12 @@ void WINAPI REGS_FUNC(RtlRaiseException)( EXCEPTION_RECORD *rec, CONTEXT *contex
     PEXCEPTION_FRAME frame, dispatch, nested_frame;
     EXCEPTION_RECORD newrec;
     DWORD res;
+
+    TRACE( "code=%lx flags=%lx\n", rec->ExceptionCode, rec->ExceptionFlags );
+
+    if ((PROCESS_Current()->flags & PDB32_DEBUGGED) &&
+        (DEBUG_SendExceptionEvent( rec, TRUE ) == DBG_CONTINUE))
+        return;  /* continue execution */
 
     frame = NtCurrentTeb()->except;
     nested_frame = NULL;
@@ -181,7 +193,9 @@ void WINAPI REGS_FUNC(RtlUnwind)( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
     }
 
     pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
-  
+
+    TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
+
     /* get chain of exception frames */
     frame = NtCurrentTeb()->except;
     while ((frame != (PEXCEPTION_FRAME)0xffffffff) && (frame != pEndFrame))

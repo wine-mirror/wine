@@ -204,7 +204,7 @@ extern HANDLE NE_OpenFile( NE_MODULE *pModule );
 extern HINSTANCE16 MODULE_LoadModule16( LPCSTR name, BOOL implicit );
 extern BOOL NE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              BOOL inherit, LPSTARTUPINFOA startup,
+                              BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info );
 
 /* loader/ne/resource.c */

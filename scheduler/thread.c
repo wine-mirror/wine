@@ -110,8 +110,8 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
     	stack_size = 1024 * 1024;
     if (stack_size >= 16*1024*1024)
     	WARN("Thread stack size is %ld MB.\n",stack_size/1024/1024);
-    thdb->stack_base = VirtualAlloc(NULL,
-                                    stack_size + (alloc_stack16 ? 0x10000 : 0),
+    thdb->stack_base = VirtualAlloc(NULL, stack_size + SIGNAL_STACK_SIZE +
+                                    (alloc_stack16 ? 0x10000 : 0),
                                     MEM_COMMIT, PAGE_EXECUTE_READWRITE );
     if (!thdb->stack_base) goto error;
     /* Set a guard page at the bottom of the stack */
@@ -119,7 +119,7 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
                     &old_prot );
     thdb->teb.stack_top   = (char *)thdb->stack_base + stack_size;
     thdb->teb.stack_low   = thdb->stack_base;
-    thdb->exit_stack      = thdb->teb.stack_top;
+    thdb->signal_stack    = thdb->teb.stack_top;  /* start of signal stack */
 
     /* Allocate the 16-bit stack selector */
 
@@ -131,6 +131,7 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
         if (!thdb->teb.stack_sel) goto error;
         thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( thdb->teb.stack_sel, 
                                                  0x10000 - sizeof(STACK16FRAME) );
+        thdb->signal_stack = (char *)thdb->signal_stack + 0x10000;
     }
 
     /* Create the thread event */
@@ -294,6 +295,9 @@ static void THREAD_Start(void)
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );
     PE_InitTls();
     MODULE_DllThreadAttach( NULL );
+
+    if (thdb->process->flags & PDB32_DEBUGGED) DEBUG_SendCreateThreadEvent( func );
+
     ExitThread( func( thdb->entry_arg ) );
 }
 

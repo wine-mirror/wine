@@ -452,7 +452,7 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
 
 BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env, 
                        LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                       BOOL inherit, LPSTARTUPINFOA startup, 
+                       BOOL inherit, DWORD flags, LPSTARTUPINFOA startup, 
                        LPPROCESS_INFORMATION info )
 {
  LPDOSTASK lpDosTask = NULL; /* keep gcc from complaining */
@@ -501,7 +501,7 @@ BOOL MZ_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmdline, LPCSTR env,
   }
   inherit = TRUE; /* bad hack for inheriting the CreatePipe... */
   if (!PROCESS_Create( pModule, cmdline, env, 0, 0, 
-                       psa, tsa, inherit, startup, info ))
+                       psa, tsa, inherit, flags, startup, info ))
    return FALSE;
  }
  return TRUE;

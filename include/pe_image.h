@@ -33,7 +33,7 @@ extern struct _wine_modref *PE_CreateModule( HMODULE hModule, OFSTRUCT *ofs,
                                              DWORD flags, BOOL builtin );
 extern BOOL PE_CreateProcess( HFILE hFile, OFSTRUCT *ofs, LPCSTR cmd_line, LPCSTR env, 
                               LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                              BOOL inherit, LPSTARTUPINFOA startup,
+                              BOOL inherit, DWORD flags, LPSTARTUPINFOA startup,
                               LPPROCESS_INFORMATION info );
 
 extern void PE_InitTls(void);

@@ -195,7 +195,7 @@ import  ntdll.dll
 177 stub CreateTapePartition
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 179 stdcall CreateToolhelp32Snapshot(long long) CreateToolhelp32Snapshot
-180 stub DebugActiveProcess
+180 stdcall DebugActiveProcess(long) DebugActiveProcess
 # FIXME
 #181 register DebugBreak() DebugBreak
 181 stub DebugBreak

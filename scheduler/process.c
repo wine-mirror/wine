@@ -526,6 +526,10 @@ void PROCESS_Start(void)
 
     entry = (LPTHREAD_START_ROUTINE)RVA_PTR(pModule->module32,
                                             OptionalHeader.AddressOfEntryPoint);
+
+    if (pdb->flags & PDB32_DEBUGGED)
+        DEBUG_SendCreateProcessEvent( -1 /*FIXME*/, pModule->module32, entry );
+
     TRACE_(relay)("(entryproc=%p)\n", entry );
     ExitProcess( entry(NULL) );
 
@@ -542,7 +546,7 @@ void PROCESS_Start(void)
 PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
                      HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
                      LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
-                     BOOL inherit, STARTUPINFOA *startup,
+                     BOOL inherit, DWORD flags, STARTUPINFOA *startup,
                      PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
@@ -559,9 +563,10 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
 
     /* Create the process on the server side */
 
-    req.inherit     = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
-    req.inherit_all = inherit;
-    req.start_flags = startup->dwFlags;
+    req.inherit      = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle);
+    req.inherit_all  = inherit;
+    req.create_flags = flags;
+    req.start_flags  = startup->dwFlags;
     if (startup->dwFlags & STARTF_USESTDHANDLES)
     {
         req.hstdin  = startup->hStdInput;
@@ -580,6 +585,10 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     pdb->server_pid   = reply.pid;
     info->hProcess    = reply.handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
+
+    if ((flags & DEBUG_PROCESS) ||
+        ((parent->flags & PDB32_DEBUGGED) && !(flags & DEBUG_ONLY_THIS_PROCESS)))
+        pdb->flags |= PDB32_DEBUGGED;
 
     if (pModule->module32)
     {
