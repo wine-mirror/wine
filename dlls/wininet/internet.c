@@ -701,6 +701,10 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 		retval = FTP_CloseFindNextHandle((LPWININETFINDNEXTA) lpwh);
 		break;
 
+	    case WH_HFILE:
+		retval = FTP_CloseFileTransferHandle((LPWININETFILE) lpwh);
+		break;
+		
 	    default:
 		break;
 	}
@@ -1331,12 +1335,6 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
             break;
     }
 
-    if (nSocket != -1)
-    {
-        int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, 0);
-        retval = (res >= 0);
-        *dwNumOfBytesRead = retval ? res : 0;
-    }
     return retval;
 }
 

@@ -243,6 +243,7 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPSTR lpszBuffer, LPDWORD dwBuffer);
 
 BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn);
+BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwfn);
 BOOLAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     LPCSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext);
 BOOLAPI FTP_FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory);

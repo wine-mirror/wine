@@ -72,6 +72,7 @@ typedef enum {
   FTP_CMD_STOR,
   FTP_CMD_TYPE,
   FTP_CMD_USER,
+  FTP_CMD_SIZE,
 
   /* FTP commands without arguments. */
   FTP_CMD_ABOR,
@@ -96,6 +97,7 @@ static const CHAR *szFtpCommands[] = {
   "STOR",
   "TYPE",
   "USER",
+  "SIZE",
   "ABOR",
   "LIST",
   "NLST",
@@ -120,6 +122,7 @@ BOOL FTP_ConnectToHost(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendPassword(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendAccount(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendType(LPWININETFTPSESSIONA lpwfs, DWORD dwType);
+BOOL FTP_GetFileSize(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD *dwSize);
 BOOL FTP_SendPort(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_DoPassive(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONA lpwfs);
@@ -1690,7 +1693,6 @@ INT FTP_ReceiveResponse(INT nSocket, LPSTR lpszResponse, DWORD dwResponse,
 
     if (nRecv >= 3)
     {
-        lpszResponse[nRecv] = '\0';
         rc = atoi(lpszResponse);
 
         if (lpfnStatusCB)
@@ -1896,7 +1898,7 @@ lend:
 BOOL FTP_SendType(LPWININETFTPSESSIONA lpwfs, DWORD dwType)
 {
     INT nResCode;
-    CHAR type[2] = { "I\0" };
+    CHAR type[2] = { "I" };
     BOOL bSuccess = FALSE;
 
     TRACE("\n");
@@ -1914,6 +1916,49 @@ BOOL FTP_SendType(LPWININETFTPSESSIONA lpwfs, DWORD dwType)
             bSuccess = TRUE;
 	else
             FTP_SetResponseError(nResCode);
+    }
+
+lend:
+    return bSuccess;
+}
+
+/***********************************************************************
+ *           FTP_GetFileSize (internal)
+ *
+ * Retrieves from the server the size of the given file
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+BOOL FTP_GetFileSize(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD *dwSize)
+{
+    INT nResCode;
+    BOOL bSuccess = FALSE;
+
+    TRACE("\n");
+
+    if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_SIZE, lpszRemoteFile, 0, 0, 0))
+        goto lend;
+
+    nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
+        MAX_REPLY_LEN, 0, 0, 0);
+    if (nResCode)
+    {
+        if (nResCode == 213) {
+	    /* Now parses the output to get the actual file size */
+	    int i;
+	    LPSTR lpszResponseBuffer = INTERNET_GetResponseBuffer();
+
+	    for (i = 0; (lpszResponseBuffer[i] != ' ') && (lpszResponseBuffer[i] != '\0'); i++) ;
+	    if (lpszResponseBuffer[i] == '\0') return FALSE;
+	    *dwSize = atol(&(lpszResponseBuffer[i + 1]));
+	    
+            bSuccess = TRUE;
+	} else {
+            FTP_SetResponseError(nResCode);
+	}
     }
 
 lend:
@@ -2210,33 +2255,19 @@ DWORD FTP_SendRetrieve(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD 
     if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
+    if (!FTP_GetFileSize(lpwfs, lpszRemoteFile, &nResult))
+	goto lend;
+
+    TRACE("Waiting to receive %ld bytes\n", nResult);
+    
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_RETR, lpszRemoteFile, 0, 0, 0))
         goto lend;
 
     nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
         MAX_REPLY_LEN, 0, 0, 0);
-    if (nResCode)
-    {
-        if (nResCode == 125 || nResCode == 150)
-        {
-            /* Parse size of data to be retrieved */
-            INT i, sizepos = -1;
-	    LPSTR lpszResponseBuffer = INTERNET_GetResponseBuffer();
-            for (i = strlen(lpszResponseBuffer) - 1; i >= 0; i--)
-            {
-                if ('(' == lpszResponseBuffer[i])
-                {
-                    sizepos = i;
-                    break;
-                }
-            }
-
-            if (sizepos >= 0)
-            {
-                nResult = atol(&lpszResponseBuffer[sizepos+1]);
-                TRACE("Waiting to receive %ld bytes\n", nResult);
-            }
-        }
+    if ((nResCode != 125) && (nResCode != 150)) {
+	/* That means that we got an error getting the file. */
+	nResult = 0;
     }
 
 lend:
@@ -2316,6 +2347,8 @@ recv_end:
  */
 BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs)
 {
+    TRACE("\n");
+    
     if (lpwfs->sndSocket != -1)
         close(lpwfs->sndSocket);
 
@@ -2335,7 +2368,7 @@ BOOL FTP_CloseSessionHandle(LPWININETFTPSESSIONA lpwfs)
 
 
 /***********************************************************************
- *           FTP_CloseSessionHandle (internal)
+ *           FTP_CloseFindNextHandle (internal)
  *
  * Deallocate session handle
  *
@@ -2362,6 +2395,28 @@ BOOL FTP_CloseFindNextHandle(LPWININETFINDNEXTA lpwfn)
     return TRUE;
 }
 
+/***********************************************************************
+ *           FTP_CloseFindNextHandle (internal)
+ *
+ * Closes the file transfer handle. This also 'cleans' the data queue of
+ * the 'transfer conplete' message (this is a bit of a hack though :-/ )
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+BOOL FTP_CloseFileTransferHandle(LPWININETFILE lpwh)
+{
+    TRACE("\n");
+    
+    if (lpwh->nDataSocket != -1)
+        close(lpwh->nDataSocket);
+
+    HeapFree(GetProcessHeap(), 0, lpwh);
+    
+    return TRUE;
+}
 
 /***********************************************************************
  *           FTP_ReceiveFileList (internal)
