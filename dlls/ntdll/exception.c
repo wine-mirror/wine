@@ -70,6 +70,8 @@ static CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0,
 # define GET_IP(context) ((LPVOID)(context)->pc)
 #elif defined(__powerpc__)
 # define GET_IP(context) ((LPVOID)(context)->Iar)
+#elif defined(__ALPHA__)
+# define GET_IP(context) ((LPVOID)(context)->Fir)
 #else
 # error You must define GET_IP for this CPU
 #endif

@@ -749,6 +749,10 @@ static int output_immediate_imports( FILE *outfile )
             fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
             fprintf(outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf(outfile, "\t\"\\tbctr\\n");
+#elif defined(__ALPHA__)
+            fprintf( outfile, "\tlda $0,imports\\n\"\n" );
+            fprintf( outfile, "\t\"\\tlda $0,%d($0)\\n\"\n", pos);
+            fprintf( outfile, "\t\"\\tjmp $31,($0)\\n" );
 #else
 #error You need to define import thunks for your architecture!
 #endif
@@ -952,6 +956,9 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 
     /* branch to ctr register. */
     fprintf( outfile, "    \"bctr\\n\"\n");
+#elif defined(__ALPHA__)
+    fprintf( outfile, "    \"\\tjsr $26,__wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -997,6 +1004,10 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
 #endif /* __APPLE__ */
+#elif defined(__ALPHA__)
+            fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
+            fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
+            fprintf( outfile, "    \"\\tjmp $31,__wine_delay_load_asm\\n\"\n" );
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
@@ -1064,6 +1075,10 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
             fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
             fprintf( outfile, "\t\"\\tbctr\\n\"");
+#elif defined(__ALPHA__)
+            fprintf( outfile, "\t\"lda $0,delay_imports\\n\"\n" );
+            fprintf( outfile, "\t\"\\tlda $0,%d($0)\\n\"\n", pos);
+            fprintf( outfile, "\t\"\\tjmp $31,($0)\\n\"" );
 #else
 #error You need to define delayed import thunks for your architecture!
 #endif

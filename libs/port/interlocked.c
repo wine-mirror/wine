@@ -249,11 +249,11 @@ long interlocked_xchg_add( long *dest, long incr )
 
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "L0cmpxchg:\n\t"
-                  "ldq_l $0,0($16)\n\t"
+                  "ldl_l $0,0($16)\n\t"
                   "cmpeq $0,$18,$1\n\t"
                   "beq   $1,L1cmpxchg\n\t"
                   "mov   $17,$0\n\t"
-                  "stq_c $0,0($16)\n\t"
+                  "stl_c $0,0($16)\n\t"
                   "beq   $0,L0cmpxchg\n\t"
                   "mov   $18,$0\n"
                   "L1cmpxchg:\n\t"
@@ -273,9 +273,9 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
 
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "L0xchg:\n\t"
-                  "ldq_l $0,0($16)\n\t"
+                  "ldl_l $0,0($16)\n\t"
                   "mov   $17,$1\n\t"
-                  "stq_c $1,0($16)\n\t"
+                  "stl_c $1,0($16)\n\t"
                   "beq   $1,L0xchg\n\t"
                   "mb");
 
@@ -289,9 +289,9 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
 
 __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "L0xchg_add:\n\t"
-                  "ldq_l $0,0($16)\n\t"
-                  "addq  $0,$17,$1\n\t"
-                  "stq_c $1,0($16)\n\t"
+                  "ldl_l $0,0($16)\n\t"
+                  "addl  $0,$17,$1\n\t"
+                  "stl_c $1,0($16)\n\t"
                   "beq   $1,L0xchg_add\n\t"
                   "mb");
 

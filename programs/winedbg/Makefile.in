@@ -8,6 +8,7 @@ IMPORTS   = dbghelp advapi32 kernel32 ntdll
 DELAYIMPORTS = user32
 
 C_SRCS = \
+	be_alpha.c \
 	be_i386.c \
 	be_ppc.c \
 	break.c \

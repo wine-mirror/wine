@@ -312,9 +312,11 @@ void wine_pthread_init_current_teb( struct wine_pthread_thread_info *info )
 # else
     __asm__ __volatile__("mr 2, %0" : : "r" (info->teb_base));
 # endif
-#elif defined(HAVE__LWP_CREATE)
-    /* On non-i386 Solaris, we use the LWP private pointer */
-    _lwp_setprivate( info->teb_base );
+#elif defined(__ALPHA__)
+    /* FIXME: On Alpha, the current TEB is not accessible to user-space */
+/*    __asm__ __volatile__();*/
+#else
+# error You must implement wine_pthread_init_current_teb for your platform
 #endif
 
     /* set pid and tid */
@@ -344,6 +346,14 @@ void *wine_pthread_get_current_teb(void)
 # else
     __asm__( "mr %0,2" : "=r" (ret) );
 # endif
+#elif defined(__ALPHA__)
+    /* 0x00ab is the PAL opcode for rdteb */
+    __asm__( "lda $30,8($30)\n\t"
+             "stq $0,0($30)\n\t"
+             "call_pal 0x00ab\n\t"
+             "mov $0,%0\n\t"
+             "ldq $0,0($30)\n\t"
+             "lda $30,-8($30)" : "=r" (ret) );
 #else
 # error wine_pthread_get_current_teb not defined for this architecture
 #endif  /* __i386__ */
