@@ -1,3 +1,27 @@
+%long
+
+DWORD
+
+%long # --forbidden
+
+BOOL
+HANDLE
+
 %ptr
 
+LPCVOID
+LPDWORD
 LPMEMORY_BASIC_INFORMATION
+LPVOID
+
+%segptr
+
+SEGPTR
+
+%void
+
+void
+
+%word
+
+WORD

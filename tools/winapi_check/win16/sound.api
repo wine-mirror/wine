@@ -1,0 +1,15 @@
+%long
+
+DWORD
+
+%ptr
+
+LPINT16
+
+%void
+
+void
+
+%word
+
+INT16

@@ -1,7 +1,21 @@
-%word # --forbidden
+%long
 
-HKEY
+DWORD
 
 %ptr
 
+LPBYTE
+LPDWORD
+
+%ptr # --forbidden
+
 LPHKEY
+
+%str
+
+LPCSTR
+LPSTR
+
+%word # --forbidden
+
+HKEY

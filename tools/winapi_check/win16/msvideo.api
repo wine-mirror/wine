@@ -4,4 +4,8 @@ DWORD
 
 %ptr
 
-LPSRB
+LPVOID
+
+%word
+
+WORD

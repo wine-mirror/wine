@@ -1,14 +1,49 @@
+%long
+
+DWORD
+LPARAM
+LRESULT
+
+%long # --forbidden
+
+BOOL
+
 %ptr
 
 HICON16 *
+LPDWORD
+LPWORD
+POINT16 *
 
 %ptr # --forbidden
 
 LPHKEY
 
+%segptr
+
+SEGPTR
+
+%str
+
+LPCSTR
+LPSTR
+
+%void
+
+void
+
 %word
 
+BOOL16
 HDROP16
+HGLOBAL16
+HICON16
+HINSTANCE16
+HWND16
+INT16
+UINT16
+WORD
+WPARAM16
 
 %word # --forbidden
 

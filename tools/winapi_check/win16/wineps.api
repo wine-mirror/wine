@@ -1,3 +1,19 @@
+%long
+
+DWORD
+
 %ptr # --forbidden
 
 LPDEVMODEA
+
+%str
+
+LPCSTR
+LPSTR
+
+%word
+
+HANDLE16
+HWND16
+INT16
+WORD

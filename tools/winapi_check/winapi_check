@@ -50,8 +50,8 @@ if($options->help) {
 
 my $output = 'output'->new;
 
-my $win16api = 'winapi'->new($output, "win16", "$winapi_check_dir/win16api.dat", "$winapi_check_dir/win16");
-my $win32api = 'winapi'->new($output, "win32", "$winapi_check_dir/win32api.dat", "$winapi_check_dir/win32");
+my $win16api = 'winapi'->new($output, "win16", "$winapi_check_dir/win16");
+my $win32api = 'winapi'->new($output, "win32", "$winapi_check_dir/win32");
 'winapi'->read_spec_files($wine_dir, $win16api, $win32api);
 
 my $nativeapi = 'nativeapi'->new($output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");

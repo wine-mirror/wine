@@ -1,5 +1,7 @@
 %long
 
+DWORD
+HRESULT
 ULONG
 
 %longlong
@@ -20,5 +22,10 @@ SNB16
 STATSTG16 *
 ULARGE_INTEGER *
 ULONG *
+void *
+
+%str
+
+LPCOLESTR16
 
 

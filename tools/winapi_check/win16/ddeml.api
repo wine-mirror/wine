@@ -1,11 +1,31 @@
 %long
 
+DWORD
 HCONV
 HCONVLIST
 HDDEDATA
 HSZ
 
+%long # --forbidden
+
+int
+
 %ptr
 
+LPBYTE
 LPCONVCONTEXT16
 LPCONVINFO16
+LPDWORD
+LPVOID
+
+%str
+
+LPCSTR
+LPSTR
+
+%word
+
+BOOL16
+INT16
+UINT16
+

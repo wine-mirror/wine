@@ -1,6 +1,7 @@
 %long
 
 LHCLIENTDOC
+LONG
 
 %ptr
 
@@ -9,6 +10,20 @@ LPOLECLIENT
 LPOLEOBJECT
 LPOLEOBJECT *
 
+%segptr
+
+SEGPTR
+
+%str
+
+LPCSTR
+
 %word
 
+BOOL16
 HDC16
+OLESTATUS
+UINT16
+
+
+

@@ -1,24 +1,51 @@
+%long
+
+DWORD
+LONG
+
 %long # --forbidden
+
+BOOL
+INT
+HINSTANCE
 u_long
 
 %ptr
 
+INT16 *
 LPWSADATA
 ULONG *
+char *
 struct sockaddr *
 struct timeval *
 ws_fd_set16 *
 
-%unknown
+%segptr
 
-struct in_addr
+FARPROC16
+SEGPTR
+
+%str
+
+LPCSTR
+
+%void
+
+void
 
 %word
 
+HANDLE16
+HWND16
+INT16
 SOCKET16
+UINT16
+WORD
 
 %word # --forbidden
 
 u_short
 
+%unknown
 
+struct in_addr

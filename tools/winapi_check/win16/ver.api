@@ -1,24 +1,23 @@
 %long
 
-LONG
+DWORD
 
 %ptr
 
-LPOFSTRUCT
+LPDWORD
 LPVOID
+SEGPTR *
+UINT16 *
+
+%segptr
+
+SEGPTR
 
 %str
 
 LPCSTR
 LPSTR
 
-%void
-
-void
-
 %word
 
-HFILE16
-INT16
 UINT16
-

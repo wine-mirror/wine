@@ -129,7 +129,7 @@ sub check_function {
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
 		    !$winapi->allowed_type_in_module($type, $module)) {
 		if($options->report_argument_forbidden($type)) {
-		    &$output("forbidden argument " . ($n + 1) . " type (" . $type . ")");
+		    &$output("forbidden argument " . ($n + 1) . " type " . $type . " (" . $kind . ")");
 		}
 	    }
 	    if(defined($kind) && $kind eq "longlong") {

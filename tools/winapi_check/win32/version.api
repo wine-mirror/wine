@@ -1,25 +1,21 @@
 %long
 
-HFILE
-INT
-LONG
+DWORD
 UINT
 
 %ptr
 
-LPOFSTRUCT
+LPDWORD
 LPVOID
+LPVOID *
+UINT *
 
 %str
 
 LPSTR
 LPCSTR
 
-%void
-
-void
-
 %wstr
 
-LPWSTR
 LPCWSTR
+LPWSTR

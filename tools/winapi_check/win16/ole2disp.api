@@ -1,3 +1,14 @@
+%long
+
+DWORD
+HRESULT
+LCID
+
+%long # --forbidden
+
+int
+unsigned
+
 %ptr
 
 BSTR16 *
@@ -6,11 +17,20 @@ INTERFACEDATA *
 ITypeInfo **
 IUnknown *
 REFCLSID
+char *
 
 %segstr
 
 BSTR16
 
-%word # --forbidden
+%str
 
-unsigned
+LPCOLESTR16
+
+%void
+
+void
+
+%word
+
+INT16

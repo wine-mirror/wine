@@ -2,15 +2,12 @@
 
 DWORD
 
-%ptr
-
-LPWIN32SINFO
-
 %segptr
 
+FARPROC16
 SEGPTR
 
 %word
 
-HFILE16
+BOOL16
 WORD

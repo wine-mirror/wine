@@ -1,3 +1,7 @@
+%long
+
+DWORD
+
 %ptr
 
 CLASSENTRY *
@@ -11,6 +15,7 @@ STACKTRACEENTRY *
 TASKENTRY *
 SYSHEAPINFO *
 TIMERINFO *
+void *
 
 %ptr # --forbidden
 
@@ -18,3 +23,18 @@ FARPROC
 LOCAL32ENTRY *
 LOCAL32INFO *
 
+%segptr
+
+FARPROC16
+
+%str
+
+LPCSTR
+
+%word
+
+BOOL16
+HGLOBAL16
+HMODULE16
+HTASK16
+WORD

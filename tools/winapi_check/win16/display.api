@@ -1,3 +1,7 @@
+%long
+
+DWORD
+
 %ptr
 
 LPCURSORINFO
@@ -5,3 +9,16 @@ LPCURSORINFO
 %ptr # --forbidden
 
 struct tagCURSORICONINFO *
+
+%str
+
+LPSTR
+
+%void
+
+VOID
+
+%word
+
+BOOL16
+WORD

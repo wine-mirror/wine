@@ -1,3 +1,12 @@
+%long
+
+DWORD
+
 %long # --forbidden
 
 HTASK16
+
+%str
+
+LPSTR
+

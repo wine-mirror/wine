@@ -13,11 +13,7 @@ sub new {
 
     $$output = shift;
     $$name = shift;
-    my $file = shift;
     my $path = shift;
-
-    $file =~ s/^.\/(.*)$/$1/;
-    $self->parse_api_file($file);
 
     my @files = map {
 	s/^.\/(.*)$/$1/;
@@ -328,7 +324,7 @@ sub types_unlimited_used_in_modules {
 	    $count++;
 	    push @modules, $module;
 	}
-        if($count <= 1) {
+        if($count) {
 	    foreach my $module (@modules) {
 	      $$used_types{$type}{$module} = 1;
 	    }

@@ -5,27 +5,44 @@ double
 
 %long
 
+BOOL
+BYTE
+CHAR
 DATE
+DWORD
+FLOAT
 HCURSOR
 HICON
+HINSTANCE
 HPALETTE
+HRESULT
 HWND
+INT
+LCID
+LONG
 OLE_COLOR
 REGKIND
 SYSKIND
+UINT
+ULONG
 USHORT
 VARIANT_BOOL
 VARTYPE
+WORD
 
 %long # --forbidden
 
+int
 short
+unsigned
 
 %ptr
 
 BSTR *
-CY *
+BYTE *
+CHAR *
 COLORREF *
+CY *
 DATE *
 FLOAT *
 ICreateErrorInfo **
@@ -33,23 +50,46 @@ IErrorInfo *
 IErrorInfo **
 ITypeLib *
 ITypeLib **
+LONG *
 LPBSTR
+LPCLSID
+LPDWORD
 LPFONTDESC
 LPOCPFIPARAMS
 LPOLESTR
 LPPICTDESC
 LPSTREAM
+LPUNKNOWN
+LPUNKNOWN *
+LPVOID
+LPVOID *
+OLECHAR *
+REFCLSID
+REFGUID
+REFIID
 SAFEARRAY *
 SAFEARRAY **
 SAFEARRAYBOUND *
+ULONG *
 USHORT *
 VARIANT *
 VARIANTARG *
 VARIANT_BOOL *
+char *
 double *
 short *
+void *
+void **
 
-%wstr
+%str # ???
+
+LPCOLESTR
+
+%void
+
+void
+
+%wstr # ???
 
 BSTR
 

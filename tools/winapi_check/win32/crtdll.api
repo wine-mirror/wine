@@ -1,13 +1,36 @@
 %long
 
+BOOL
+CHAR
+DWORD
+HANDLE
+HFILE
+INT
+LONG
+UINT
+WCHAR
 clock_t
 time_t
 
+%long # --forbidden
+
+int
+long
+unsigned
+
 %ptr
 
+CHAR *
 CRTDLL_FILE *
+INT *
+LPCVOID
+LPDWORD
 LPDWORD *
+LPINT
+LPSTR *
 LPSTR **
+LPVOID
+LPWSTR *
 PCONTEXT
 PEXCEPTION_FRAME
 PEXCEPTION_FRAME *
@@ -15,11 +38,29 @@ PEXCEPTION_RECORD
 VOID *
 WCHAR *
 _INITTERMFUN *
+char *
 jmp_buf
 struct find_t *
 struct stat *
 struct win_stat *
 time_t *
+va_list
+void *
+
+%str
+
+LPSTR
+LPCSTR
+
+%void
+
+void
+VOID
+
+%wstr
+
+LPCWSTR
+LPWSTR
 
 %unknown
 

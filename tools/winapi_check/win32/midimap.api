@@ -1,7 +1,5 @@
 %long
 
 DWORD
-
-%ptr
-
-LPSRB
+UINT
+WORD

@@ -4,13 +4,16 @@ DWORD
 
 %ptr
 
-LPWIN32SINFO
+char *
 
 %segptr
 
-SEGPTR
+FARPROC16
+
+%void
+
+void
 
 %word
 
-HFILE16
 WORD

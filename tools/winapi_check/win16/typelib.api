@@ -1,8 +1,19 @@
+%long
+
+DWORD
+HRESULT
+LCID
+
 %ptr
 
 LPBSTR16
 REFGUID
+void *
 
 %str # --forbidden
 
 LPOLESTR
+
+%word
+
+WORD

@@ -1,0 +1,7 @@
+%ptr
+
+CONTEXT86 *
+
+%void
+
+void
