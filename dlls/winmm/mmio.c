@@ -250,9 +250,7 @@ static LRESULT mmioMemIOProc(LPMMIOINFO16 lpmmioinfo, UINT16 uMessage, LPARAM lP
 /**************************************************************************
  * 		MMIO_Open      		[internal]
  */
-static HMMIO16 MMIO_Open(LPSTR szFileName, FOURCC fccIOProc, LPMMIOPROC16 pIOProc, 
-			 HPSTR pchBuffer, LONG cchBuffer,
-			 DWORD dwOpenFlags, LPUINT lpRet, int use16)
+static HMMIO16 MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags, int use16)
 {
 	LPMMIOINFO16 lpmminfo;
 	HMMIO16 hmmio;
@@ -275,43 +273,45 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, FOURCC fccIOProc, LPMMIOPROC16 pIOPro
 	memset(lpmminfo, 0, sizeof(MMIOINFO16));
 
 	/* assume DOS file if not otherwise specified */
-	if (fccIOProc == 0 && pIOProc == NULL) {
+	if (refmminfo->fccIOProc == 0 && refmminfo->pIOProc == NULL) {
 		lpmminfo->fccIOProc = FOURCC_DOS;
 		lpmminfo->pIOProc = (LPMMIOPROC16) mmioDosIOProc;
 	}
 	/* if just the four character code is present, look up IO proc */
-	else if (pIOProc == NULL) {
+	else if (refmminfo->pIOProc == NULL) {
 
-		lpmminfo->fccIOProc = fccIOProc;
-		lpmminfo->pIOProc = mmioInstallIOProc16(fccIOProc, NULL, MMIO_FINDPROC);
+		lpmminfo->fccIOProc = refmminfo->fccIOProc;
+		lpmminfo->pIOProc = mmioInstallIOProc16(refmminfo->fccIOProc, NULL, MMIO_FINDPROC);
 
 	} 
 	/* if IO proc specified, use it and specified four character code */
 	else {
 
-		lpmminfo->fccIOProc = fccIOProc;
-		lpmminfo->pIOProc = pIOProc;
+		lpmminfo->fccIOProc = refmminfo->fccIOProc;
+		lpmminfo->pIOProc = (LPMMIOPROC16)refmminfo->pIOProc;
 	}
 
 	if (dwOpenFlags & MMIO_ALLOCBUF) {
-		if ((*lpRet = mmioSetBuffer16(hmmio, NULL, MMIO_DEFAULTBUFFER, 0))) {
+		if ((refmminfo->wErrorRet = mmioSetBuffer16(hmmio, NULL, MMIO_DEFAULTBUFFER, 0))) {
 			return 0;
 		}
 	} else if (lpmminfo->fccIOProc == FOURCC_MEM) {
-		if ((*lpRet = mmioSetBuffer16(hmmio, pchBuffer, cchBuffer, 0))) {
+		if ((refmminfo->wErrorRet = mmioSetBuffer16(hmmio, refmminfo->pchBuffer, refmminfo->cchBuffer, 0))) {
 			return 0;
 		}
 	}
 	
+	/* see mmioDosIOProc for that one */
+	lpmminfo->adwInfo[0] = refmminfo->adwInfo[0];
 	lpmminfo->dwFlags = dwOpenFlags;
 	lpmminfo->hmmio = hmmio;
 	
 	/* call IO proc to actually open file */
-	*lpRet = (UINT16) mmioSendMessage(hmmio, MMIOM_OPEN, (LPARAM) szFileName, (LPARAM) use16);
+	refmminfo->wErrorRet = (UINT16) mmioSendMessage(hmmio, MMIOM_OPEN, (LPARAM) szFileName, (LPARAM) use16);
 	
 	GlobalUnlock16(hmmio);
 	
-	if (*lpRet != 0) {
+	if (refmminfo->wErrorRet != 0) {
 		GlobalFree16(hmmio);
 		return 0;
 	}
@@ -322,22 +322,12 @@ static HMMIO16 MMIO_Open(LPSTR szFileName, FOURCC fccIOProc, LPMMIOPROC16 pIOPro
 /**************************************************************************
  * 				mmioOpenW       		[WINMM.123]
  */
-HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO * lpmmioinfo,
+HMMIO WINAPI mmioOpenW(LPWSTR szFileName, MMIOINFO* lpmmioinfo,
 		       DWORD dwOpenFlags)
 {
 	LPSTR	szFn = HEAP_strdupWtoA(GetProcessHeap(),0,szFileName);
-	HMMIO 	ret;
-	
-	if (lpmmioinfo) {
-		ret = MMIO_Open(szFn, lpmmioinfo->fccIOProc, 
-				(LPMMIOPROC16)lpmmioinfo->pIOProc,
-				lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer, 
-				dwOpenFlags, &lpmmioinfo->wErrorRet, FALSE);
-	} else {
-		UINT	res;
-		ret = MMIO_Open(szFn, 0, NULL, NULL, 0, 
-				dwOpenFlags, &res, FALSE);
-	}
+	HMMIO 	ret = mmioOpenA(szFn, lpmmioinfo, dwOpenFlags);
+
 	HeapFree(GetProcessHeap(),0,szFn);
 	return ret;
 }
@@ -349,15 +339,18 @@ HMMIO WINAPI mmioOpenA(LPSTR szFileName, MMIOINFO* lpmmioinfo,
 		       DWORD dwOpenFlags)
 {
 	HMMIO 	ret;
-	UINT	res;
 	
 	if (lpmmioinfo) {
-		ret = MMIO_Open(szFileName, lpmmioinfo->fccIOProc, 
-				(LPMMIOPROC16)lpmmioinfo->pIOProc,
-				lpmmioinfo->pchBuffer, lpmmioinfo->cchBuffer, 
-				dwOpenFlags, &lpmmioinfo->wErrorRet, FALSE);
+		ret = MMIO_Open(szFileName, lpmmioinfo, dwOpenFlags, FALSE);
 	} else {
-		ret = MMIO_Open(szFileName, 0, NULL, NULL, 0, dwOpenFlags, &res, FALSE);
+	   MMIOINFO	mmioinfo;
+
+	   mmioinfo.fccIOProc = 0;
+	   mmioinfo.pIOProc = NULL;
+	   mmioinfo.pchBuffer = NULL;
+	   mmioinfo.cchBuffer = 0;
+
+	   ret = MMIO_Open(szFileName, &mmioinfo, dwOpenFlags, FALSE);
 	}
 	return ret;
 }
@@ -368,16 +361,19 @@ HMMIO WINAPI mmioOpenA(LPSTR szFileName, MMIOINFO* lpmmioinfo,
 HMMIO16 WINAPI mmioOpen16(LPSTR szFileName, MMIOINFO16* lpmmioinfo, 
 			  DWORD dwOpenFlags)
 {
-	HMMIO 	ret;
-	UINT	res;
-	
+	HMMIO 		ret;
+	MMIOINFO	mmio;
+
 	if (lpmmioinfo) {
-		ret = MMIO_Open(szFileName, lpmmioinfo->fccIOProc, lpmmioinfo->pIOProc,
-				PTR_SEG_TO_LIN(lpmmioinfo->pchBuffer), lpmmioinfo->cchBuffer, 
-				dwOpenFlags, &res, FALSE);
-		lpmmioinfo->wErrorRet = res;
+		mmio.fccIOProc = lpmmioinfo->fccIOProc;
+		mmio.pIOProc = (LPMMIOPROC)lpmmioinfo->pIOProc;
+		mmio.pchBuffer = PTR_SEG_TO_LIN(lpmmioinfo->pchBuffer);
+		mmio.cchBuffer = lpmmioinfo->cchBuffer;
+		mmio.adwInfo[0] = lpmmioinfo->adwInfo[0];
+		ret = MMIO_Open(szFileName, &mmio, dwOpenFlags, FALSE);
+		lpmmioinfo->wErrorRet = mmio.wErrorRet;
 	} else {
-		ret = MMIO_Open(szFileName, 0, NULL, NULL, 0, dwOpenFlags, &res, TRUE);
+	        return mmioOpenA(szFileName, NULL, dwOpenFlags);
 	}
 	return ret;
 }
