@@ -527,6 +527,7 @@ extern void *GDI_ReallocObject( WORD, HGDIOBJ, void *obj );
 extern BOOL GDI_FreeObject( HGDIOBJ, void *obj );
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );
 extern void GDI_ReleaseObj( HGDIOBJ );
+extern void GDI_CheckNotLock(void);
 
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name );
 extern const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs );

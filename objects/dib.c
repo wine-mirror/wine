@@ -160,14 +160,18 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
     if(!dc) return FALSE;
 
     if(dc->funcs->pStretchDIBits)
-    	   heightSrc = dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst, 
-					    heightDst, xSrc, ySrc, widthSrc,
-					    heightSrc, bits, info, wUsage,
-					    dwRop);
-    else { /* use StretchBlt */
+    {
+        heightSrc = dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst,
+                                              heightDst, xSrc, ySrc, widthSrc,
+                                              heightSrc, bits, info, wUsage, dwRop);
+        GDI_ReleaseObj( hdc );
+    }
+    else /* use StretchBlt */
+    {
         HBITMAP hBitmap, hOldBitmap;
 	HDC hdcMem;
 
+        GDI_ReleaseObj( hdc );
 	hdcMem = CreateCompatibleDC( hdc );
 	if (info->bmiHeader.biCompression == BI_RLE4 ||
 	    info->bmiHeader.biCompression == BI_RLE8) {
@@ -212,7 +216,6 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 	DeleteDC( hdcMem );
 	DeleteObject( hBitmap );
     }
-    GDI_ReleaseObj( hdc );
     return heightSrc;
 }
 

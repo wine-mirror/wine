@@ -271,6 +271,9 @@ static void  ReadFontInformation(
     RegCloseKey(hkey);
 }
 
+static int stock_font_height[STOCK_LAST+1];
+static int stock_font_width[STOCK_LAST+1];
+
 /***********************************************************************
  * Because the stock fonts have their structure initialized with
  * a height of 0 to keep them independent of mapping mode, simply
@@ -278,20 +281,26 @@ static void  ReadFontInformation(
  * These "FixStockFontSizeXXX()" methods will get the correct
  * size for the fonts.
  */
-static void GetFontMetrics(HFONT handle, LPTEXTMETRICA lptm)
+static void init_stock_fonts_metrics(void)
 {
-  HDC         hdc;
-  HFONT       hOldFont;
+    int i;
+    TEXTMETRICA tm;
+    HDC hdc;
+    static int done;
 
-  hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    if (done) return;
+    done = 1;
+    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
 
-  hOldFont = (HFONT)SelectObject(hdc, handle);
-
-  GetTextMetricsA(hdc, lptm);
-
-  SelectObject(hdc, hOldFont);
-
-  DeleteDC(hdc);
+    for (i = 0; i <= STOCK_LAST; i++)
+    {
+        if (GetObjectType( GetStockObject(i) ) != OBJ_FONT) continue;
+        SelectObject( hdc, GetStockObject(i) );
+        GetTextMetricsA( hdc, &tm );
+        stock_font_height[i] = tm.tmHeight;
+        stock_font_width[i] = tm.tmAveCharWidth;
+    }
+    DeleteDC(hdc);
 }
 
 static inline void FixStockFontSize16(
@@ -299,7 +308,6 @@ static inline void FixStockFontSize16(
   INT16  count, 
   LPVOID buffer)
 {
-  TEXTMETRICA tm;
   LOGFONT16*  pLogFont = (LOGFONT16*)buffer;
 
   /*
@@ -309,10 +317,8 @@ static inline void FixStockFontSize16(
   if ( (count >= 2*sizeof(INT16)) &&
        (pLogFont->lfHeight == 0) )
   {
-    GetFontMetrics(handle, &tm);
-    
-    pLogFont->lfHeight = tm.tmHeight;
-    pLogFont->lfWidth  = tm.tmAveCharWidth;
+      pLogFont->lfHeight = stock_font_height[handle-FIRST_STOCK_HANDLE];
+      pLogFont->lfWidth  = stock_font_width[handle-FIRST_STOCK_HANDLE];
   }
 }
 
@@ -321,7 +327,6 @@ static inline void FixStockFontSizeA(
   INT    count, 
   LPVOID buffer)
 {
-  TEXTMETRICA tm;
   LOGFONTA*  pLogFont = (LOGFONTA*)buffer;
 
   /*
@@ -331,10 +336,8 @@ static inline void FixStockFontSizeA(
   if ( (count >= 2*sizeof(INT)) &&
        (pLogFont->lfHeight == 0) )
   {
-    GetFontMetrics(handle, &tm);
-
-    pLogFont->lfHeight = tm.tmHeight;
-    pLogFont->lfWidth  = tm.tmAveCharWidth;
+      pLogFont->lfHeight = stock_font_height[handle-FIRST_STOCK_HANDLE];
+      pLogFont->lfWidth  = stock_font_width[handle-FIRST_STOCK_HANDLE];
   }
 }
 
@@ -576,6 +579,15 @@ void GDI_ReleaseObj( HGDIOBJ handle )
 
 
 /***********************************************************************
+ *           GDI_CheckNotLock
+ */
+void GDI_CheckNotLock(void)
+{
+    _CheckNotSysLevel( &GDI_level );
+}
+
+
+/***********************************************************************
  *           DeleteObject    (GDI.69)
  *           SysDeleteObject (GDI.605)
  */
@@ -668,6 +680,8 @@ INT16 WINAPI GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
     TRACE("%04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
+    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
+
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
     
     switch(GDIMAGIC(ptr->wMagic))
@@ -709,6 +723,8 @@ INT WINAPI GetObjectA( HANDLE handle, INT count, LPVOID buffer )
     INT result = 0;
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
+
+    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
@@ -765,6 +781,8 @@ INT WINAPI GetObjectW( HANDLE handle, INT count, LPVOID buffer )
     INT result = 0;
     TRACE("%08x %d %p\n", handle, count, buffer );
     if (!count) return 0;
+
+    if (handle >= FIRST_STOCK_FONT && handle <= LAST_STOCK_FONT) init_stock_fonts_metrics();
 
     if (!(ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE ))) return 0;
 
