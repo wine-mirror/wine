@@ -216,6 +216,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             int _clobber;
             __asm__ __volatile__(
                  "pushl %%ebp\n"
+                 "pushl %%ebx\n"
                  "pushl %%es\n"
                  "pushl %%ds\n"
                  "pushfl\n"
@@ -225,12 +226,12 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
                  "popl %%ds\n"
                  "mov %%es,%0\n"
                  "popl %%es\n"
+                 "popl %%ebx\n"
                  "popl %%ebp\n"
              : "=d" (es), "=D" (edi), "=S" (_clobber), "=a" (_clobber), "=c" (_clobber)
              : "0" (ss), "2" (ESP_reg(context)),
                "4" (rmcb->regs_sel), "1" (rmcb->regs_ofs),
-               "3" (&rmcb->proc_ofs)
-             : "ebx" );
+               "3" (&rmcb->proc_ofs) );
         } else {
             /* 16-bit DPMI client */
             CONTEXT86 ctx = *context;
