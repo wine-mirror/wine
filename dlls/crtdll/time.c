@@ -84,7 +84,7 @@ clock_t __cdecl CRTDLL_clock(void)
     times(&alltimes);
     res = alltimes.tms_utime + alltimes.tms_stime+
         alltimes.tms_cutime + alltimes.tms_cstime;
-    /* Fixme: We need some symbolic representation
+    /* FIXME: We need some symbolic representation
        for (Hostsystem_)CLOCKS_PER_SEC 
        and (Emulated_system_)CLOCKS_PER_SEC
        10 holds only for Windows/Linux_i86)

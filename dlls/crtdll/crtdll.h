@@ -19,20 +19,20 @@
 #define CRTDLL_LC_MONETARY	3
 #define CRTDLL_LC_NUMERIC	4
 #define CRTDLL_LC_TIME		5
-#define CRTDLL_LC_MIN		LC_ALL
-#define CRTDLL_LC_MAX		LC_TIME
+#define CRTDLL_LC_MIN		CRTDLL_LC_ALL
+#define CRTDLL_LC_MAX		CRTDLL_LC_TIME
 
 /* ctype defines */
-#define CRTDLL_UPPER		0x1
-#define CRTDLL_LOWER		0x2
-#define CRTDLL_DIGIT		0x4
-#define CRTDLL_SPACE		0x8
-#define CRTDLL_PUNCT		0x10
-#define CRTDLL_CONTROL		0x20
-#define CRTDLL_BLANK		0x40
-#define CRTDLL_HEX		0x80
+#define CRTDLL_UPPER		C1_UPPER
+#define CRTDLL_LOWER		C1_LOWER
+#define CRTDLL_DIGIT		C1_DIGIT
+#define CRTDLL_SPACE		C1_SPACE
+#define CRTDLL_PUNCT		C1_PUNCT
+#define CRTDLL_CONTROL		C1_CNTRL
+#define CRTDLL_BLANK		C1_BLANK
+#define CRTDLL_HEX		C1_XDIGIT
 #define CRTDLL_LEADBYTE		0x8000
-#define CRTDLL_ALPHA		(0x0100|CRTDLL_UPPER|CRTDLL_LOWER)
+#define CRTDLL_ALPHA		(C1_ALPHA|CRTDLL_UPPER|CRTDLL_LOWER)
 
 /* stat() mode bits */
 #define _S_IFMT                  0170000
@@ -416,6 +416,7 @@ VOID   __cdecl CRTDLL__purecall( VOID );
 double __cdecl CRTDLL__y0( double x );
 double __cdecl CRTDLL__y1( double x );
 double __cdecl CRTDLL__yn( INT x, double y );
+double __cdecl CRTDLL__nextafter( double x, double y );
 
 /* CRTDLL_mem.c */
 LPVOID  __cdecl CRTDLL_new( DWORD size );
@@ -486,5 +487,11 @@ INT    __cdecl CRTDLL_iswxdigit( WCHAR wc );
 void   __CRTDLL__set_errno(ULONG err);
 LPSTR  __CRTDLL__strndup(LPSTR buf, INT size);
 VOID   __CRTDLL__init_io(VOID);
+
+extern WORD CRTDLL_ctype [257];
+extern WORD __CRTDLL_current_ctype[257];
+extern WORD* CRTDLL_pctype_dll;
+extern INT CRTDLL__mb_cur_max_dll;
+extern LCID __CRTDLL_current_lc_all_lcid;
 
 #endif /* __WINE_CRTDLL_H */

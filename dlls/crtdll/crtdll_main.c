@@ -72,6 +72,7 @@ UINT CRTDLL_winminor_dll;     /* CRTDLL.330 */
 UINT CRTDLL_winver_dll;       /* CRTDLL.331 */
 INT  CRTDLL_doserrno = 0; 
 INT  CRTDLL_errno = 0;
+INT  CRTDLL__mb_cur_max_dll = 1;
 const INT  CRTDLL__sys_nerr = 43;
 
 /* ASCII char classification flags - binary compatible */
@@ -103,6 +104,17 @@ WORD CRTDLL_ctype [257] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+/* Internal: Current ctype table for locale */
+WORD __CRTDLL_current_ctype[257];
+ 
+/* pctype is used by macros in the Win32 headers. It must point
+ * To a table of flags exactly like ctype. To allow locale
+ * changes to affect ctypes (i.e. isleadbyte), we use a second table
+ * and update its flags whenever the current locale changes.
+ */
+WORD* CRTDLL_pctype_dll = __CRTDLL_current_ctype + 1;
+
+
 /*********************************************************************
  *                  CRTDLL_MainInit  (CRTDLL.init)
  */
@@ -112,6 +124,7 @@ BOOL WINAPI CRTDLL_Init(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 	  __CRTDLL__init_io();
+	  CRTDLL_setlocale( CRTDLL_LC_ALL, "C" );
 	  CRTDLL_HUGE_dll = HUGE_VAL;
 	}
 	return TRUE;
@@ -641,32 +654,29 @@ VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
 
 
 /*********************************************************************
- *                  setlocale           (CRTDLL.453)
- */
-LPSTR __cdecl CRTDLL_setlocale(INT category,LPCSTR locale)
-{
-    LPSTR categorystr;
-
-    switch (category) {
-    case CRTDLL_LC_ALL: categorystr="LC_ALL";break;
-    case CRTDLL_LC_COLLATE: categorystr="LC_COLLATE";break;
-    case CRTDLL_LC_CTYPE: categorystr="LC_CTYPE";break;
-    case CRTDLL_LC_MONETARY: categorystr="LC_MONETARY";break;
-    case CRTDLL_LC_NUMERIC: categorystr="LC_NUMERIC";break;
-    case CRTDLL_LC_TIME: categorystr="LC_TIME";break;
-    default: categorystr = "UNKNOWN?";break;
-    }
-    FIXME("(%s,%s),stub!\n",categorystr,locale);
-    return "C";
-}
-
-
-/*********************************************************************
  *                  _isctype           (CRTDLL.138)
  */
-INT __cdecl CRTDLL__isctype(INT c,UINT type)
+INT __cdecl CRTDLL__isctype(INT c, UINT type)
 {
-  return CRTDLL_ctype[(UINT)c+1] & type;
+  if (c >= -1 && c <= 255)
+    return CRTDLL_pctype_dll[c] & type;
+
+  if (CRTDLL__mb_cur_max_dll != 1 && c > 0)
+  {
+    /* FIXME: Is there a faster way to do this? */
+    WORD typeInfo;
+    char convert[3], *pconv = convert;
+
+    if (CRTDLL_pctype_dll[(UINT)c >> 8] & CRTDLL_LEADBYTE)
+      *pconv++ = (UINT)c >> 8;
+    *pconv++ = c & 0xff;
+    *pconv = 0;
+    /* FIXME: Use ctype LCID */
+    if (GetStringTypeExA(__CRTDLL_current_lc_all_lcid, CT_CTYPE1,
+                         convert, convert[1] ? 2 : 1, &typeInfo))
+      return typeInfo & type;
+  }
+  return 0;
 }
 
 
@@ -993,6 +1003,15 @@ INT __cdecl CRTDLL_isdigit(INT c)
 INT __cdecl CRTDLL_isgraph(INT c)
 {
   return CRTDLL__isctype( c, CRTDLL_ALPHA | CRTDLL_DIGIT | CRTDLL_PUNCT );
+}
+
+
+/*********************************************************************
+ *                   isleadbyte         (CRTDLL.447)
+ */
+INT __cdecl CRTDLL_isleadbyte(unsigned char c)
+{
+    return CRTDLL__isctype( c, CRTDLL_LEADBYTE );
 }
 
 
@@ -1639,3 +1658,17 @@ double __cdecl CRTDLL__yn(INT x, double y)
   }
   return retVal;
 }
+
+
+/*********************************************************************
+ *                  _nextafter        (CRTDLL.235)
+ *
+ */
+double __cdecl CRTDLL__nextafter(double x, double y)
+{
+  double retVal;
+  if (!finite(x) || !finite(y)) CRTDLL_errno = EDOM;
+    retVal  = nextafter(x,y);
+  return retVal;
+}
+

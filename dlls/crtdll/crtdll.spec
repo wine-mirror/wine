@@ -38,7 +38,7 @@ debug_channels (crtdll)
 @ cdecl __isascii(long) CRTDLL___isascii
 @ cdecl __iscsym(long) CRTDLL___iscsym
 @ cdecl __iscsymf(long) CRTDLL___iscsymf
-@ stub __mb_cur_max_dll
+@ extern __mb_cur_max_dll CRTDLL__mb_cur_max_dll
 @ stub __pxcptinfoptrs
 @ forward __threadhandle kernel32.GetCurrentThread
 @ forward __threadid kernel32.GetCurrentThreadId
@@ -244,7 +244,7 @@ debug_channels (crtdll)
 @ cdecl _mkdir(str) CRTDLL__mkdir
 @ cdecl _mktemp(str) CRTDLL__mktemp
 @ cdecl _msize(ptr) CRTDLL__msize
-@ cdecl _nextafter(double double) nextafter
+@ cdecl _nextafter(double double) CRTDLL__nextafter
 @ cdecl _onexit(ptr) CRTDLL__onexit
 @ cdecl _open(str long) CRTDLL__open
 @ cdecl _open_osfhandle(long long) CRTDLL__open_osfhandle
@@ -254,7 +254,7 @@ debug_channels (crtdll)
 @ extern _osver_dll CRTDLL_osver_dll
 @ extern _osversion_dll CRTDLL_osversion_dll
 @ stub _pclose
-@ stub _pctype_dll
+@ extern _pctype_dll CRTDLL_pctype_dll
 @ stub _pgmptr_dll
 @ stub _pipe
 @ stub _popen
@@ -275,7 +275,7 @@ debug_channels (crtdll)
 @ cdecl _setmode(long long) CRTDLL__setmode
 @ stub _setsystime
 @ cdecl _sleep(long) CRTDLL__sleep
-@ stub _snprintf
+@ varargs _snprintf(ptr long ptr) snprintf
 @ stub _snwprintf
 @ stub _sopen
 @ stub _spawnl
@@ -406,7 +406,7 @@ debug_channels (crtdll)
 @ cdecl iscntrl(long) CRTDLL_iscntrl
 @ cdecl isdigit(long) CRTDLL_isdigit
 @ cdecl isgraph(long) CRTDLL_isgraph
-@ stub isleadbyte
+@ cdecl isleadbyte(long) CRTDLL_isleadbyte
 @ cdecl islower(long) CRTDLL_islower
 @ cdecl isprint(long) CRTDLL_isprint
 @ cdecl ispunct(long) CRTDLL_ispunct

@@ -13,6 +13,7 @@ C_SRCS = \
 	dir.c \
 	exit.c \
 	file.c \
+	locale.c \
 	mbstring.c \
 	memory.c \
 	spawn.c \
