@@ -371,7 +371,7 @@ static void EVENT_ProcessEvent( XEvent *event )
  */
 static int set_focus_error_handler( Display *display, XErrorEvent *event, void *arg )
 {
-    return (event->error_code == BadValue);
+    return (event->error_code == BadMatch);
 }
 
 
@@ -399,7 +399,7 @@ static void set_focus( HWND hwnd, Time time )
         TRACE( "setting focus to %x (%lx) time=%ld\n", focus, win, time );
         X11DRV_expect_error( display, set_focus_error_handler, NULL );
         XSetInputFocus( display, win, RevertToParent, time );
-        if (X11DRV_check_error()) ERR("got BadMatch, ignoring\n" );
+        if (X11DRV_check_error()) TRACE("got BadMatch, ignoring\n" );
     }
 }
 
