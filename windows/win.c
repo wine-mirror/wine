@@ -145,7 +145,8 @@ WND * WIN_FindWndPtr( HWND hwnd )
      ptr->irefCount--;
      */
 error2:
-    SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    if ( hwnd!=0 )
+      SetLastError( ERROR_INVALID_WINDOW_HANDLE );
     return NULL;
 }
 
