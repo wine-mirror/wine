@@ -119,26 +119,6 @@ static void TIMER_ClearTimer( TIMER * pTimer )
 
 
 /***********************************************************************
- *           TIMER_SwitchQueue
- */
-void TIMER_SwitchQueue( HQUEUE16 old, HQUEUE16 new )
-{
-    TIMER * pT;
-
-    EnterCriticalSection( &csTimer );
-
-    pT = pNextTimer;
-    while (pT)
-    {
-        if (pT->hq == old) pT->hq = new;
-        pT = pT->next;
-    }
-    
-    LeaveCriticalSection( &csTimer );
-}
-
-
-/***********************************************************************
  *           TIMER_RemoveWindowTimers
  *
  * Remove all timers for a given window.

@@ -1240,8 +1240,6 @@ HQUEUE16 WINAPI SetTaskQueue16( HTASK16 hTask, HQUEUE16 hQueue )
     hPrev = pTask->hQueue;
     pTask->hQueue = hQueue;
 
-    TIMER_SwitchQueue( hPrev, hQueue );
-
     return hPrev;
 }
 
