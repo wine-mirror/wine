@@ -35,7 +35,7 @@ import kernel32.dll
  26 stdcall CoInitialize(ptr) CoInitialize
  27 stdcall CoInitializeWOW(long long) CoInitializeWOW
  28 stub CoIsHandlerConnected       # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
- 29 stub CoIsOle1Class              # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
+ 29 stdcall CoIsOle1Class (ptr) CoIsOle1Class
  30 stdcall CoLoadLibrary(wstr long) CoLoadLibrary
  31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal
  32 stub CoMarshalHresult           # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED

@@ -273,3 +273,12 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /*PROPVARIANT* */void* rgva
 
 	return S_OK;
 }
+
+/***********************************************************************
+ *           CoIsOle1Class                              [OLE32]
+ */
+BOOL WINAPI CoIsOle1Class(REFCLSID clsid)
+{
+  FIXME("%s\n", debugstr_guid(clsid));
+  return FALSE;
+}
