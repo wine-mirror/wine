@@ -677,6 +677,7 @@ BOOL WINAPI CryptCreateHash (HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey,
 
 	/* CSP error! */
 	CRYPT_Free(hash);
+	*phHash = 0;
 	return FALSE;
 }
 
