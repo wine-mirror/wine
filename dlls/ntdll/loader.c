@@ -22,10 +22,20 @@
 #include "ntddk.h"
 
 #include "module.h"
+#include "wine/exception.h"
+#include "msvcrt/excpt.h"
 #include "wine/debug.h"
 
-
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 
 NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HANDLE hModule)
 {
@@ -75,14 +85,24 @@ NTSTATUS WINAPI LdrGetProcedureAddress(PVOID base, PANSI_STRING name, ULONG ord,
  */
 PIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE hModule)
 {
-    IMAGE_NT_HEADERS *ret = NULL;
-    IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)hModule;
+    IMAGE_NT_HEADERS *ret;
 
-    if (dos->e_magic == IMAGE_DOS_SIGNATURE)
+    __TRY
     {
-        ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
-        if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
+        IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)hModule;
+
+        ret = NULL;
+        if (dos->e_magic == IMAGE_DOS_SIGNATURE)
+        {
+            ret = (IMAGE_NT_HEADERS *)((char *)dos + dos->e_lfanew);
+            if (ret->Signature != IMAGE_NT_SIGNATURE) ret = NULL;
+        }
     }
+    __EXCEPT(page_fault)
+    {
+        return NULL;
+    }
+    __ENDTRY
     return ret;
 }
 
