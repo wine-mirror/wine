@@ -263,22 +263,32 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lpara
     PIMAGE_RESOURCE_DIRECTORY resdir = get_resdir(hmod);
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
 
     if (!resdir) return FALSE;
 
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	LPSTR	name;
+        LPSTR type;
 
-	if (et[i].u1.s.NameIsString)
-		name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)resdir + et[i].u1.s.NameOffset));
-	else
-		name = (LPSTR)(int)et[i].u1.Id;
-	ret = lpfun(hmod,name,lparam);
-	if (HIWORD(name))
-		HeapFree(heap,0,name);
+        if (et[i].u1.s.NameIsString)
+        {
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s.NameOffset);
+            DWORD len = WideCharToMultiByte( CP_ACP, 0, pResString->NameString, pResString->Length,
+                                             NULL, 0, NULL, NULL);
+            if (!(type = HeapAlloc(GetProcessHeap(), 0, len + 1)))
+                return FALSE;
+            WideCharToMultiByte( CP_ACP, 0, pResString->NameString, pResString->Length,
+                                 type, len, NULL, NULL);
+            type[len] = '\0';
+            ret = lpfun(hmod,type,lparam);
+            HeapFree(GetProcessHeap(), 0, type);
+        }
+        else
+        {
+            type = (LPSTR)(int)et[i].u1.Id;
+            ret = lpfun(hmod,type,lparam);
+        }
 	if (!ret)
 		break;
     }
@@ -302,12 +312,22 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lpara
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	type;
-    	if (et[i].u1.s.NameIsString)
-		type = (LPWSTR)((LPBYTE)resdir + et[i].u1.s.NameOffset);
-	else
-		type = (LPWSTR)(int)et[i].u1.Id;
 
-	ret = lpfun(hmod,type,lparam);
+        if (et[i].u1.s.NameIsString)
+        {
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) resdir + et[i].u1.s.NameOffset);
+            if (!(type = HeapAlloc(GetProcessHeap(), 0, (pResString->Length+1) * sizeof (WCHAR))))
+                return FALSE;
+            memcpy(type, pResString->NameString, pResString->Length * sizeof (WCHAR));
+            type[pResString->Length] = '\0';
+            ret = lpfun(hmod,type,lparam);
+            HeapFree(GetProcessHeap(), 0, type);
+        }
+        else
+        {
+            type = (LPWSTR)(int)et[i].u1.Id;
+            ret = lpfun(hmod,type,lparam);
+        }
 	if (!ret)
 		break;
     }
@@ -325,31 +345,34 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
-    LPWSTR	typeW;
 
     if (!basedir) return FALSE;
 
-    if (HIWORD(type))
-	typeW = HEAP_strdupAtoW(heap,0,type);
-    else
-	typeW = (LPWSTR)type;
-    resdir = GetResDirEntryW(basedir,typeW,(DWORD)basedir,FALSE);
-    if (HIWORD(typeW))
-    	HeapFree(heap,0,typeW);
-    if (!resdir)
-    	return FALSE;
+    if (!(resdir = GetResDirEntryA(basedir,type,(DWORD)basedir,FALSE))) return FALSE;
+
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	LPSTR	name;
+        LPSTR name;
 
-	if (et[i].u1.s.NameIsString)
-	    name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)basedir + et[i].u1.s.NameOffset));
-	else
-	    name = (LPSTR)(int)et[i].u1.Id;
-	ret = lpfun(hmod,type,name,lparam);
-	if (HIWORD(name)) HeapFree(heap,0,name);
+        if (et[i].u1.s.NameIsString)
+        {
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s.NameOffset);
+            DWORD len = WideCharToMultiByte(CP_ACP, 0, pResString->NameString, pResString->Length,
+                                            NULL, 0, NULL, NULL);
+            if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
+                return FALSE;
+            WideCharToMultiByte( CP_ACP, 0, pResString->NameString, pResString->Length,
+                                 name, len, NULL, NULL );
+            name[len] = '\0';
+            ret = lpfun(hmod,type,name,lparam);
+            HeapFree( GetProcessHeap(), 0, name );
+        }
+        else
+        {
+            name = (LPSTR)(int)et[i].u1.Id;
+            ret = lpfun(hmod,type,name,lparam);
+        }
 	if (!ret)
 		break;
     }
@@ -376,12 +399,23 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
     et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-	LPWSTR	name;
-    	if (et[i].u1.s.NameIsString)
-		name = (LPWSTR)((LPBYTE)basedir + et[i].u1.s.NameOffset);
-	else
-		name = (LPWSTR)(int)et[i].u1.Id;
-	ret = lpfun(hmod,type,name,lparam);
+        LPWSTR name;
+
+        if (et[i].u1.s.NameIsString)
+        {
+            PIMAGE_RESOURCE_DIR_STRING_U pResString = (PIMAGE_RESOURCE_DIR_STRING_U) ((LPBYTE) basedir + et[i].u1.s.NameOffset);
+            if (!(name = HeapAlloc(GetProcessHeap(), 0, (pResString->Length + 1) * sizeof (WCHAR))))
+                return FALSE;
+            memcpy(name, pResString->NameString, pResString->Length * sizeof (WCHAR));
+            name[pResString->Length] = '\0';
+            ret = lpfun(hmod,type,name,lparam);
+            HeapFree(GetProcessHeap(), 0, name);
+        }
+        else
+        {
+            name = (LPWSTR)(int)et[i].u1.Id;
+            ret = lpfun(hmod,type,name,lparam);
+        }
 	if (!ret)
 		break;
     }
@@ -400,34 +434,15 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
     PIMAGE_RESOURCE_DIRECTORY		resdir;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
     BOOL	ret;
-    HANDLE	heap = GetProcessHeap();	
 
     if (!basedir) return FALSE;
-
-    if (HIWORD(type))
-    {
-	LPWSTR typeW = HEAP_strdupAtoW(heap,0,type);
-        resdir = GetResDirEntryW(basedir,typeW,(DWORD)basedir,FALSE);
-    	HeapFree(heap,0,typeW);
-    }
-    else resdir = GetResDirEntryW(basedir,(LPWSTR)type,(DWORD)basedir,FALSE);
-    if (!resdir)
-    	return FALSE;
-
-    if (HIWORD(name))
-    {
-	LPWSTR nameW = HEAP_strdupAtoW(heap,0,name);
-        resdir = GetResDirEntryW(resdir,nameW,(DWORD)basedir,FALSE);
-    	HeapFree(heap,0,nameW);
-    }
-    else resdir = GetResDirEntryW(resdir,(LPWSTR)name,(DWORD)basedir,FALSE);
-    if (!resdir)
-    	return FALSE;
+    if (!(resdir = GetResDirEntryA(basedir,type,(DWORD)basedir,FALSE))) return FALSE;
+    if (!(resdir = GetResDirEntryA(resdir,name,(DWORD)basedir,FALSE))) return FALSE;
 
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-    	/* languages are just ids... I hope */
+        /* languages are just ids... I hope */
 	ret = lpfun(hmod,type,name,et[i].u1.Id,lparam);
 	if (!ret)
 		break;
