@@ -635,8 +635,23 @@ sub process_comment
 
   if ($comment->{COMMENT_NAME} eq "@")
   {
-    # Create an implementation name
-    $comment->{COMMENT_NAME} = $comment->{DLL_NAME}."_".$comment->{ORDINAL};
+    my $found = 0;
+
+    # Find the name from the .spec file
+    for (@{$spec_details->{EXPORTS}})
+    {
+      if (@$_[0] eq $comment->{ORDINAL})
+      {
+        $comment->{COMMENT_NAME} = @$_[2];
+        $found = 1;
+      }
+    }
+
+    if ($found == 0)
+    {
+      # Create an implementation name
+      $comment->{COMMENT_NAME} = $comment->{DLL_NAME}."_".$comment->{ORDINAL};
+    }
   }
 
   my $exported_names = $spec_details->{EXPORTED_NAMES};
