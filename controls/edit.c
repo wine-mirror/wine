@@ -111,7 +111,10 @@ typedef struct
 #define DPRINTF_EDIT_NOTIFY(hwnd, str) \
 	({TRACE(edit, "notification " str " sent to hwnd=%08x\n", \
 		       (UINT)(hwnd));})
-
+/* used for disabled or read-only edit control */
+#define EDIT_SEND_CTLCOLORSTATIC(wnd,hdc) \
+	(SendMessageA((wnd)->parent->hwndSelf, WM_CTLCOLORSTATIC, \
+			(WPARAM)(hdc), (LPARAM)(wnd)->hwndSelf))
 #define EDIT_SEND_CTLCOLOR(wnd,hdc) \
 	(SendMessageA((wnd)->parent->hwndSelf, WM_CTLCOLOREDIT, \
 			(WPARAM)(hdc), (LPARAM)(wnd)->hwndSelf))
@@ -3071,8 +3074,13 @@ static LRESULT EDIT_WM_EraseBkGnd(WND *wnd, EDITSTATE *es, HDC dc)
 	HBRUSH brush;
 	RECT rc;
 
-	if (!(brush = (HBRUSH)EDIT_SEND_CTLCOLOR(wnd, dc)))
-		brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+        if (IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+                brush = (HBRUSH)EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
+        else
+                brush = (HBRUSH)EDIT_SEND_CTLCOLOR(wnd, dc);
+
+        if (!brush)
+                brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 
 	GetClientRect(wnd->hwndSelf, &rc);
 	IntersectClipRect(dc, rc.left, rc.top, rc.right, rc.bottom);
@@ -3648,7 +3656,10 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es)
 	}
 	if (es->font)
 		old_font = SelectObject(dc, es->font);
-	EDIT_SEND_CTLCOLOR(wnd, dc);
+        if (IsWindowEnabled(wnd->hwndSelf) || (es->style & ES_READONLY))
+                EDIT_SEND_CTLCOLORSTATIC(wnd, dc);
+        else
+                EDIT_SEND_CTLCOLOR(wnd, dc);
 	if (!IsWindowEnabled(wnd->hwndSelf))
 		SetTextColor(dc, GetSysColor(COLOR_GRAYTEXT));
 	GetClipBox(dc, &rcRgn);
