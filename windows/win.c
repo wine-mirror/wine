@@ -362,7 +362,6 @@ void WIN_UnlinkWindow( HWND hwnd )
  */
 void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
 {
-    BOOL ret;
     WND *wndPtr = WIN_GetPtr( hwnd );
 
     if (!wndPtr) return;
@@ -377,10 +376,17 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         req->handle   = hwnd;
         req->parent   = parent;
         req->previous = hwndInsertAfter;
-        ret = !SERVER_CALL_ERR();
+        if (!SERVER_CALL())
+        {
+            if (req->full_parent && req->full_parent != wndPtr->parent)
+            {
+                wndPtr->owner = 0;  /* reset owner when changing parent */
+                wndPtr->parent = req->full_parent;
+            }
+        }
+
     }
     SERVER_END_REQ;
-    if (ret && parent) wndPtr->parent = WIN_GetFullHandle(parent);
     WIN_ReleasePtr( wndPtr );
 }
 
@@ -392,12 +398,102 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
  */
 void WIN_SetOwner( HWND hwnd, HWND owner )
 {
-    WND *win = WIN_FindWndPtr( hwnd );
-    if (win)
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (!win) return;
+    if (win == WND_OTHER_PROCESS)
     {
-        win->owner = owner;
-        WIN_ReleaseWndPtr( win );
+        if (IsWindow(hwnd)) ERR( "cannot set owner %x on other process window %x\n", owner, hwnd );
+        return;
     }
+    SERVER_START_REQ( set_window_owner )
+    {
+        req->handle = hwnd;
+        req->owner  = owner;
+        if (!SERVER_CALL()) win->owner = req->full_owner;
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( win );
+}
+
+
+/***********************************************************************
+ *           WIN_SetStyle
+ *
+ * Change the style of a window.
+ */
+LONG WIN_SetStyle( HWND hwnd, LONG style )
+{
+    BOOL ok;
+    LONG ret = 0;
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (!win) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (IsWindow(hwnd))
+            ERR( "cannot set style %lx on other process window %x\n", style, hwnd );
+        return 0;
+    }
+    if (style == win->dwStyle)
+    {
+        WIN_ReleasePtr( win );
+        return style;
+    }
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle = hwnd;
+        req->flags  = SET_WIN_STYLE;
+        req->style  = style;
+        if ((ok = !SERVER_CALL()))
+        {
+            ret = req->old_style;
+            win->dwStyle = style;
+        }
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( win );
+    if (ok && USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, ret );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           WIN_SetExStyle
+ *
+ * Change the extended style of a window.
+ */
+LONG WIN_SetExStyle( HWND hwnd, LONG style )
+{
+    LONG ret = 0;
+    WND *win = WIN_GetPtr( hwnd );
+
+    if (!win) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (IsWindow(hwnd))
+            ERR( "cannot set exstyle %lx on other process window %x\n", style, hwnd );
+        return 0;
+    }
+    if (style == win->dwExStyle)
+    {
+        WIN_ReleasePtr( win );
+        return style;
+    }
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle   = hwnd;
+        req->flags    = SET_WIN_EXSTYLE;
+        req->ex_style = style;
+        if (!SERVER_CALL())
+        {
+            ret = req->old_ex_style;
+            win->dwExStyle = style;
+        }
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( win );
+    return ret;
 }
 
 
@@ -603,11 +699,10 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     wndPtr->hmemTaskQ = 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))
-       if (wndPtr->wIDmenu)
-       {
-	   DestroyMenu( wndPtr->wIDmenu );
-	   wndPtr->wIDmenu = 0;
-       }
+    {
+        HMENU menu = (HMENU)SetWindowLongW( hwnd, GWL_ID, 0 );
+        if (menu) DestroyMenu( menu );
+    }
     if (wndPtr->hSysMenu)
     {
 	DestroyMenu( wndPtr->hSysMenu );
@@ -682,8 +777,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hmemTaskQ         = 0;
     pWndDesktop->hrgnUpdate        = 0;
     pWndDesktop->hwndLastActive    = hwndDesktop;
-    pWndDesktop->dwStyle           = WS_VISIBLE | WS_CLIPCHILDREN |
-                                     WS_CLIPSIBLINGS;
+    pWndDesktop->dwStyle           = 0;
     pWndDesktop->dwExStyle         = 0;
     pWndDesktop->clsStyle          = clsStyle;
     pWndDesktop->dce               = NULL;
@@ -712,6 +806,7 @@ BOOL WIN_CreateDesktopWindow(void)
 
     SetRect( &rect, 0, 0, cs.cx, cs.cy );
     WIN_SetRectangles( hwndDesktop, &rect, &rect );
+    WIN_SetStyle( hwndDesktop, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS );
 
     if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE )) return FALSE;
 
@@ -798,11 +893,9 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     struct tagCLASS *classPtr;
     WND *wndPtr;
     HWND hwnd, hwndLinkAfter, parent, owner;
-    POINT maxSize, maxPos, minTrack, maxTrack;
     INT wndExtra;
     DWORD clsStyle;
     WNDPROC winproc;
-    RECT rect;
     DCE *dce;
     BOOL unicode = (type == WIN_PROC_32W);
 
@@ -924,8 +1017,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 	    TRACE("CBT-hook returned 0\n");
             free_window_handle( hwnd );
             CLASS_RemoveWindow( classPtr );
-            hwnd =  0;
-            goto end;
+            WIN_ReleaseWndPtr(wndPtr);
+            return 0;
 	}
     }
 
@@ -940,34 +1033,22 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             wndPtr->flags |= WIN_NEED_SIZE;
 	}
     }
+    SERVER_START_REQ( set_window_info )
+    {
+        req->handle    = hwnd;
+        req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE;
+        req->style     = wndPtr->dwStyle;
+        req->ex_style  = wndPtr->dwExStyle;
+        req->instance  = (void *)wndPtr->hInstance;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
 
     /* Get class or window DC if needed */
 
     if (clsStyle & CS_OWNDC) wndPtr->dce = DCE_AllocDCE(hwnd,DCE_WINDOW_DC);
     else if (clsStyle & CS_CLASSDC) wndPtr->dce = dce;
     else wndPtr->dce = NULL;
-
-    /* Initialize the dimensions before sending WM_GETMINMAXINFO */
-
-    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    WIN_SetRectangles( hwnd, &rect, &rect );
-
-    /* Send the WM_GETMINMAXINFO message and fix the size if needed */
-
-    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
-    {
-        WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
-        if (maxSize.x < cs->cx) cs->cx = maxSize.x;
-        if (maxSize.y < cs->cy) cs->cy = maxSize.y;
-        if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
-        if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
-    }
-
-    if (cs->cx < 0) cs->cx = 0;
-    if (cs->cy < 0) cs->cy = 0;
-
-    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-    WIN_SetRectangles( hwnd, &rect, &rect );
 
     /* Set the window menu */
 
@@ -988,41 +1069,35 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             }
         }
     }
-    else wndPtr->wIDmenu = (UINT)cs->hMenu;
+    else SetWindowLongW( hwnd, GWL_ID, (UINT)cs->hMenu );
+    WIN_ReleaseWndPtr( wndPtr );
 
     if (!USER_Driver.pCreateWindow( hwnd, cs, unicode))
     {
-        WARN("aborted by WM_xxCREATE!\n");
-        WIN_ReleaseWndPtr( wndPtr );
         WIN_DestroyWindow( hwnd );
-        CLASS_RemoveWindow( classPtr );
         return 0;
     }
 
     /* Notify the parent window only */
 
     send_parent_notify( hwnd, WM_CREATE );
-    if( !IsWindow(hwnd) )
-    {
-        hwnd = 0;
-        goto end;
-    }
+    if (!IsWindow( hwnd )) return 0;
 
     if (cs->style & WS_VISIBLE)
     {
         /* in case WS_VISIBLE got set in the meantime */
-        wndPtr->dwStyle &= ~WS_VISIBLE;
+        if (!(wndPtr = WIN_GetPtr( hwnd ))) return 0;
+        WIN_SetStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+        WIN_ReleasePtr( wndPtr );
         ShowWindow( hwnd, sw );
     }
 
     /* Call WH_SHELL hook */
 
-    if (!(wndPtr->dwStyle & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
+    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
         HOOK_CallHooksA( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0 );
 
     TRACE("created window %04x\n", hwnd);
- end:
-    WIN_ReleaseWndPtr(wndPtr);
     return hwnd;
 }
 
@@ -1524,27 +1599,31 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
     WND *wndPtr;
     BOOL retvalue;
+    LONG style;
+    HWND full_handle;
+
+    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
+        return SendMessageW( hwnd, WM_WINE_ENABLEWINDOW, enable, 0 );
+
+    hwnd = full_handle;
 
     TRACE("( %x, %d )\n", hwnd, enable);
 
-    if (USER_Driver.pEnableWindow)
-        return USER_Driver.pEnableWindow( hwnd, enable );
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
+    style = wndPtr->dwStyle;
+    retvalue = ((style & WS_DISABLED) != 0);
+    WIN_ReleasePtr( wndPtr );
 
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
-
-    if (enable && (wndPtr->dwStyle & WS_DISABLED))
+    if (enable && retvalue)
     {
-        wndPtr->dwStyle &= ~WS_DISABLED; /* Enable window */
+        WIN_SetStyle( hwnd, style & ~WS_DISABLED );
         SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
     }
-    else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
+    else if (!enable && !retvalue)
     {
         SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
 
-        wndPtr->dwStyle |= WS_DISABLED; /* Disable window */
+        WIN_SetStyle( hwnd, style | WS_DISABLED );
 
         if (hwnd == GetFocus())
             SetFocus( 0 );  /* A disabled window can't have the focus */
@@ -1554,7 +1633,6 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
         SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
     }
-    WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
 
@@ -1588,22 +1666,32 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 {
-    WORD retvalue;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
     if (offset >= 0)
     {
-        if (offset + sizeof(WORD) > wndPtr->cbWndExtra)
+        WORD retvalue = 0;
+        WND *wndPtr = WIN_GetPtr( hwnd );
+        if (!wndPtr)
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (wndPtr == WND_OTHER_PROCESS)
+        {
+            if (IsWindow( hwnd ))
+                FIXME( "(%d) not supported yet on other process window %x\n", offset, hwnd );
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (offset > wndPtr->cbWndExtra - sizeof(WORD))
         {
             WARN("Invalid offset %d\n", offset );
-            retvalue = 0;
+            SetLastError( ERROR_INVALID_INDEX );
         }
         else retvalue = *(WORD *)(((char *)wndPtr->wExtra) + offset);
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
         return retvalue;
     }
 
-    WIN_ReleaseWndPtr(wndPtr);
     switch(offset)
     {
     case GWL_HWNDPARENT:
@@ -1629,24 +1717,8 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
 {
     WORD *ptr, retval;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
-    if (offset >= 0)
-    {
-        if (offset + sizeof(WORD) > wndPtr->cbWndExtra)
-        {
-            WARN("Invalid offset %d\n", offset );
-            WIN_ReleaseWndPtr(wndPtr);
-            return 0;
-        }
-        ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
-        retval = *ptr;
-        *ptr = newval;
-        WIN_ReleaseWndPtr(wndPtr);
-        return retval;
-    }
+    WND * wndPtr;
 
-    WIN_ReleaseWndPtr(wndPtr);
     switch(offset)
     {
     case GWL_ID:
@@ -1654,9 +1726,40 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
     case GWL_HWNDPARENT:
         return SetWindowLongW( hwnd, offset, (UINT)newval );
     default:
+        if (offset < 0)
+        {
+            WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
+    }
+
+    wndPtr = WIN_GetPtr( hwnd );
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (IsWindow(hwnd))
+            FIXME( "set %d <- %x not supported yet on other process window %x\n",
+                   offset, newval, hwnd );
+        wndPtr = NULL;
+    }
+    if (!wndPtr)
+    {
+       SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+       return 0;
+    }
+
+    if (offset > wndPtr->cbWndExtra - sizeof(WORD))
+    {
         WARN("Invalid offset %d\n", offset );
+        WIN_ReleasePtr(wndPtr);
+        SetLastError( ERROR_INVALID_INDEX );
         return 0;
     }
+    ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
+    retval = *ptr;
+    *ptr = newval;
+    WIN_ReleasePtr(wndPtr);
+    return retval;
 }
 
 
@@ -1667,49 +1770,87 @@ WORD WINAPI SetWindowWord( HWND hwnd, INT offset, WORD newval )
  */
 static LONG WIN_GetWindowLong( HWND hwnd, INT offset, WINDOWPROCTYPE type )
 {
-    LONG retvalue;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return 0;
+    LONG retvalue = 0;
+    WND *wndPtr;
+
+    if (offset == GWL_HWNDPARENT) return (LONG)GetParent( hwnd );
+
+    if (!(wndPtr = WIN_GetPtr( hwnd )))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        if (offset >= 0)
+        {
+            FIXME( "(%d) not supported on other process window %x\n", offset, hwnd );
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (offset == GWL_WNDPROC)
+        {
+            SetLastError( ERROR_ACCESS_DENIED );
+            return 0;
+        }
+        SERVER_START_REQ( set_window_info )
+        {
+            req->handle = hwnd;
+            req->flags  = 0;  /* don't set anything, just retrieve */
+            if (!SERVER_CALL_ERR())
+            {
+                switch(offset)
+                {
+                case GWL_STYLE:     retvalue = req->style; break;
+                case GWL_EXSTYLE:   retvalue = req->ex_style; break;
+                case GWL_ID:        retvalue = req->id; break;
+                case GWL_HINSTANCE: retvalue = (ULONG_PTR)req->instance; break;
+                case GWL_USERDATA:  retvalue = (ULONG_PTR)req->user_data; break;
+                default:
+                    SetLastError( ERROR_INVALID_INDEX );
+                    break;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        return retvalue;
+    }
+
+    /* now we have a valid wndPtr */
+
     if (offset >= 0)
     {
-        if (offset + sizeof(LONG) > wndPtr->cbWndExtra)
+        if (offset > wndPtr->cbWndExtra - sizeof(LONG))
         {
             WARN("Invalid offset %d\n", offset );
-            retvalue = 0;
-            goto end;
+            WIN_ReleasePtr( wndPtr );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
         }
-        retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
-        {
             retvalue = (LONG)WINPROC_GetProc( (HWINDOWPROC)retvalue, type );
-            goto end;
+        else
+            retvalue = *(LONG *)(((char *)wndPtr->wExtra) + offset);
+        WIN_ReleasePtr( wndPtr );
+        return retvalue;
     }
-        goto end;
-    }
+
     switch(offset)
     {
-        case GWL_USERDATA:   retvalue = wndPtr->userdata;
-                             goto end;
-        case GWL_STYLE:      retvalue = wndPtr->dwStyle;
-                             goto end;
-        case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle;
-                             goto end;
-        case GWL_ID:         retvalue = (LONG)wndPtr->wIDmenu;
-                             goto end;
-        case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc,
-                                                           type );
-                             goto end;
-        case GWL_HWNDPARENT: retvalue = (LONG)GetParent(hwnd);
-                             goto end;
-        case GWL_HINSTANCE:  retvalue = wndPtr->hInstance;
-                             goto end;
-        default:
-            WARN("Unknown offset %d\n", offset );
+    case GWL_USERDATA:   retvalue = wndPtr->userdata; break;
+    case GWL_STYLE:      retvalue = wndPtr->dwStyle; break;
+    case GWL_EXSTYLE:    retvalue = wndPtr->dwExStyle; break;
+    case GWL_ID:         retvalue = (LONG)wndPtr->wIDmenu; break;
+    case GWL_WNDPROC:    retvalue = (LONG)WINPROC_GetProc( wndPtr->winproc, type ); break;
+    case GWL_HINSTANCE:  retvalue = wndPtr->hInstance; break;
+    default:
+        WARN("Unknown offset %d\n", offset );
+        SetLastError( ERROR_INVALID_INDEX );
+        break;
     }
-    retvalue = 0;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr(wndPtr);
     return retvalue;
 }
 
@@ -1721,99 +1862,148 @@ end:
  *
  * 0 is the failure code. However, in the case of failure SetLastError
  * must be set to distinguish between a 0 return value and a failure.
- *
- * FIXME: The error values for SetLastError may not be right. Can
- *        someone check with the real thing?
  */
 static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                                WINDOWPROCTYPE type )
 {
-    LONG *ptr, retval;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    STYLESTRUCT style;
+    LONG retval = 0;
+    WND *wndPtr;
 
-    TRACE("%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
+    TRACE( "%x %d %lx %x\n", hwnd, offset, newval, type );
 
-    if (!wndPtr)
+    if (!WIN_IsCurrentThread( hwnd ))
     {
-       /* Is this the right error? */
-       SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-       return 0;
+        ERR("set %x %d %x\n", hwnd, offset, newval );
+        return SendMessageW( hwnd, WM_WINE_SETWINDOWLONG, offset, newval );
     }
+
+    wndPtr = WIN_GetPtr( hwnd );
 
     if (offset >= 0)
     {
-        if (offset + sizeof(LONG) > wndPtr->cbWndExtra)
+        LONG *ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
+        if (offset > wndPtr->cbWndExtra - sizeof(LONG))
         {
             WARN("Invalid offset %d\n", offset );
-
-            /* Is this the right error? */
-            SetLastError( ERROR_OUTOFMEMORY );
-
-            retval = 0;
-            goto end;
+            WIN_ReleasePtr( wndPtr );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
         }
-        ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
         /* Special case for dialog window procedure */
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
             WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval,
                              type, WIN_PROC_WINDOW );
-            goto end;
+            WIN_ReleasePtr( wndPtr );
+            return retval;
         }
+        retval = *ptr;
+        *ptr = newval;
+        WIN_ReleasePtr( wndPtr );
     }
-    else switch(offset)
+    else
     {
-	case GWL_ID:
-		ptr = (DWORD*)&wndPtr->wIDmenu;
-		break;
-	case GWL_HINSTANCE:
-                ptr = (DWORD*)&wndPtr->hInstance;
-                break;
-        case GWL_USERDATA:
-                ptr = &wndPtr->userdata;
-                break;
-        case GWL_HWNDPARENT:
-                retval = SetParent( hwnd, (HWND)newval );
-                goto end;
-	case GWL_WNDPROC:
-		retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
-		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval,
-						type, WIN_PROC_WINDOW );
-		goto end;
-	case GWL_STYLE:
-                retval = wndPtr->dwStyle;
-	       	style.styleOld = wndPtr->dwStyle;
-		style.styleNew = newval;
-                SendMessageA(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
-		wndPtr->dwStyle = style.styleNew;
-                if (USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, retval );
-                SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
-                retval = style.styleOld;
-                goto end;
+        STYLESTRUCT style;
+        BOOL ok;
+
+        /* first some special cases */
+        switch( offset )
+        {
+        case GWL_STYLE:
         case GWL_EXSTYLE:
-	        style.styleOld = wndPtr->dwExStyle;
-		style.styleNew = newval;
-                SendMessageA(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
-		wndPtr->dwExStyle = style.styleNew;
-                SendMessageA(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
-                retval = style.styleOld;
-                goto end;
-
-	default:
+            style.styleOld = wndPtr->dwStyle;
+            style.styleNew = newval;
+            WIN_ReleasePtr( wndPtr );
+            SendMessageW( hwnd, WM_STYLECHANGING, offset, (LPARAM)&style );
+            if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
+            newval = style.styleNew;
+            break;
+        case GWL_HWNDPARENT:
+            WIN_ReleasePtr( wndPtr );
+            return (LONG)SetParent( hwnd, (HWND)newval );
+        case GWL_WNDPROC:
+            retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
+            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval,
+                             type, WIN_PROC_WINDOW );
+            WIN_ReleasePtr( wndPtr );
+            return retval;
+        case GWL_ID:
+        case GWL_HINSTANCE:
+        case GWL_USERDATA:
+            break;
+        default:
+            WIN_ReleasePtr( wndPtr );
             WARN("Invalid offset %d\n", offset );
+            SetLastError( ERROR_INVALID_INDEX );
+            return 0;
+        }
 
-            /* Don't think this is right error but it should do */
-            SetLastError( ERROR_OUTOFMEMORY );
+        SERVER_START_REQ( set_window_info )
+        {
+            req->handle = hwnd;
+            switch(offset)
+            {
+            case GWL_STYLE:
+                req->flags = SET_WIN_STYLE;
+                req->style = newval;
+                break;
+            case GWL_EXSTYLE:
+                req->flags = SET_WIN_EXSTYLE;
+                req->ex_style = newval;
+                break;
+            case GWL_ID:
+                req->flags = SET_WIN_ID;
+                req->id = newval;
+                break;
+            case GWL_HINSTANCE:
+                req->flags = SET_WIN_INSTANCE;
+                req->instance = (void *)newval;
+                break;
+            case GWL_USERDATA:
+                req->flags = SET_WIN_USERDATA;
+                req->user_data = (void *)newval;
+                break;
+            }
+            if ((ok = !SERVER_CALL_ERR()))
+            {
+                switch(offset)
+                {
+                case GWL_STYLE:
+                    wndPtr->dwStyle = newval;
+                    retval = req->old_style;
+                    break;
+                case GWL_EXSTYLE:
+                    wndPtr->dwExStyle = newval;
+                    retval = req->old_ex_style;
+                    break;
+                case GWL_ID:
+                    wndPtr->wIDmenu = newval;
+                    retval = req->old_id;
+                    break;
+                case GWL_HINSTANCE:
+                    wndPtr->hInstance = newval;
+                    retval = (HINSTANCE)req->old_instance;
+                    break;
+                case GWL_USERDATA:
+                    wndPtr->userdata = newval;
+                    retval = (ULONG_PTR)req->old_user_data;
+                    break;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        WIN_ReleasePtr( wndPtr );
 
-            retval = 0;
-            goto end;
+        if (!ok) return 0;
+
+        if (offset == GWL_STYLE && USER_Driver.pSetWindowStyle)
+            USER_Driver.pSetWindowStyle( hwnd, retval );
+
+        if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
+            SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
+
     }
-    retval = *ptr;
-    *ptr = newval;
-end:
-    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -1928,15 +2118,6 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  * it sends WM_STYLECHANGING before changing the settings
  * and WM_STYLECHANGED afterwards.
  * App ver 4.0 can't use SetWindowLong to change WS_EX_TOPMOST.
- *
- * BUGS
- *
- * GWL_STYLE does not dispatch WM_STYLE... messages.
- *
- * CONFORMANCE
- *
- * ECMA-234, Win32
- *
  */
 LONG WINAPI SetWindowLongW(
     HWND hwnd,  /* [in] window to alter */
@@ -2089,13 +2270,33 @@ HWND WINAPI GetParent( HWND hwnd )
     WND *wndPtr;
     HWND retvalue = 0;
 
-    if ((wndPtr = WIN_FindWndPtr(hwnd)))
+    if (!(wndPtr = WIN_GetPtr( hwnd )))
     {
-        if (wndPtr->dwStyle & WS_CHILD)
-            retvalue = wndPtr->parent;
-        else if (wndPtr->dwStyle & WS_POPUP)
-            retvalue = wndPtr->owner;
-        WIN_ReleaseWndPtr(wndPtr);
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (wndPtr == WND_OTHER_PROCESS)
+    {
+        LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+        if (style & (WS_POPUP | WS_CHILD))
+        {
+            SERVER_START_REQ( get_window_tree )
+            {
+                req->handle = hwnd;
+                if (!SERVER_CALL_ERR())
+                {
+                    if (style & WS_CHILD) retvalue = req->parent;
+                    else retvalue = req->owner;
+                }
+            }
+            SERVER_END_REQ;
+        }
+    }
+    else
+    {
+        if (wndPtr->dwStyle & WS_CHILD) retvalue = wndPtr->parent;
+        else if (wndPtr->dwStyle & WS_POPUP) retvalue = wndPtr->owner;
+        WIN_ReleasePtr( wndPtr );
     }
     return retvalue;
 }
@@ -2106,8 +2307,30 @@ HWND WINAPI GetParent( HWND hwnd )
  */
 HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 {
+    WND *win;
     HWND ret = 0;
-    size_t size = (type == GA_PARENT) ? sizeof(user_handle_t) : REQUEST_MAX_VAR_SIZE;
+    size_t size;
+
+    for (;;)
+    {
+        if (!(win = WIN_GetPtr( hwnd )))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+        if (win == WND_OTHER_PROCESS) break;  /* need to do it the hard way */
+        ret = win->parent;
+        WIN_ReleasePtr( win );
+        if (type == GA_PARENT) return ret;
+        if (!ret || ret == GetDesktopWindow())
+        {
+            ret = hwnd;  /* if ret is the desktop, hwnd is the root ancestor */
+            goto done;
+        }
+        hwnd = ret;  /* restart with parent as hwnd */
+    }
+
+    size = (type == GA_PARENT) ? sizeof(user_handle_t) : REQUEST_MAX_VAR_SIZE;
 
     SERVER_START_VAR_REQ( get_window_parents, size )
     {
@@ -2134,6 +2357,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
     }
     SERVER_END_VAR_REQ;
 
+ done:
     if (ret && type == GA_ROOTOWNER)
     {
         for (;;)
@@ -2148,15 +2372,27 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 
 
 /*****************************************************************
- *		WIN_SetParent
- *
- * Implementation of SetParent, runs in the thread owning the window.
+ *		SetParent (USER32.@)
  */
-HWND WIN_SetParent( HWND hwnd, HWND parent )
+HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
     WND *wndPtr;
-    HWND retvalue;
+    HWND retvalue, full_handle;
     BOOL was_visible;
+
+    if (!parent) parent = GetDesktopWindow();
+    else parent = WIN_GetFullHandle( parent );
+
+    if (!IsWindow( parent ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+
+    if (!(full_handle = WIN_IsCurrentThread( hwnd )))
+        return SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
+
+    hwnd = full_handle;
 
     if (USER_Driver.pSetParent)
         return USER_Driver.pSetParent( hwnd, parent );
@@ -2193,34 +2429,6 @@ HWND WIN_SetParent( HWND hwnd, HWND parent )
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
     return retvalue;
-}
-
-
-/*****************************************************************
- *		SetParent (USER32.@)
- */
-HWND WINAPI SetParent( HWND hwnd, HWND parent )
-{
-    HWND full_handle;
-
-    if (!parent) parent = GetDesktopWindow();
-    else parent = WIN_GetFullHandle( parent );
-
-    if (!IsWindow( parent ))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-
-    if ((full_handle = WIN_IsCurrentThread( hwnd )))
-        return WIN_SetParent( full_handle, parent );
-
-    if ((full_handle = WIN_GetFullHandle(hwnd)) == GetDesktopWindow())
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return 0;
-    }
-    return SendMessageW( full_handle, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 }
 
 
@@ -2305,13 +2513,21 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 {
     HWND retval = 0;
 
-    if (rel == GW_OWNER)  /* special case: not fully supported in the server yet */
+    if (rel == GW_OWNER)  /* this one may be available locally */
     {
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-        if (!wndPtr) return 0;
-        retval = wndPtr->owner;
-        WIN_ReleaseWndPtr( wndPtr );
-        return retval;
+        WND *wndPtr = WIN_GetPtr( hwnd );
+        if (!wndPtr)
+        {
+            SetLastError( ERROR_INVALID_HANDLE );
+            return 0;
+        }
+        if (wndPtr != WND_OTHER_PROCESS)
+        {
+            retval = wndPtr->owner;
+            WIN_ReleasePtr( wndPtr );
+            return retval;
+        }
+        /* else fall through to server call */
     }
 
     SERVER_START_REQ( get_window_tree )
@@ -2332,6 +2548,9 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
                 break;
             case GW_HWNDPREV:
                 retval = req->prev_sibling;
+                break;
+            case GW_OWNER:
+                retval = req->owner;
                 break;
             case GW_CHILD:
                 retval = req->first_child;

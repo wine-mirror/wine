@@ -1714,10 +1714,8 @@ LPINT lpMax /* [out] Where to store maximum value */)
 BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, 
 			     BOOL fShowH, BOOL fShowV )
 {
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL retvalue = FALSE;
+    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    if (!wndPtr) return FALSE;
     TRACE("hwnd=%04x bar=%d horz=%d, vert=%d\n",
                     hwnd, nBar, fShowH, fShowV );
 
@@ -1725,20 +1723,19 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
     {
     case SB_CTL:
         ShowWindow( hwnd, fShowH ? SW_SHOW : SW_HIDE );
-        retvalue = TRUE;
-        goto END;
+        return TRUE;
 
     case SB_BOTH:
     case SB_HORZ:
         if (fShowH)
         {
-            fShowH = !(wndPtr->dwStyle & WS_HSCROLL);
-            wndPtr->dwStyle |= WS_HSCROLL;
+            fShowH = !(style & WS_HSCROLL);
+            style |= WS_HSCROLL;
         }
         else  /* hide it */
         {
-            fShowH = (wndPtr->dwStyle & WS_HSCROLL);
-            wndPtr->dwStyle &= ~WS_HSCROLL;
+            fShowH = (style & WS_HSCROLL);
+            style &= ~WS_HSCROLL;
         }
         if( nBar == SB_HORZ ) {
             fShowV = FALSE;
@@ -1749,35 +1746,30 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
     case SB_VERT:
         if (fShowV)
         {
-            fShowV = !(wndPtr->dwStyle & WS_VSCROLL);
-            wndPtr->dwStyle |= WS_VSCROLL;
+            fShowV = !(style & WS_VSCROLL);
+            style |= WS_VSCROLL;
         }
 	else  /* hide it */
         {
-            fShowV = (wndPtr->dwStyle & WS_VSCROLL);
-            wndPtr->dwStyle &= ~WS_VSCROLL;
+            fShowV = (style & WS_VSCROLL);
+            style &= ~WS_VSCROLL;
         }
         if ( nBar == SB_VERT )
            fShowH = FALSE;
         break;
 
     default:
-        retvalue = FALSE;  /* Nothing to do! */
-        goto END;
+        return FALSE;  /* Nothing to do! */
     }
 
     if( fShowH || fShowV ) /* frame has been changed, let the window redraw itself */
     {
+        WIN_SetStyle( hwnd, style );
 	SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
                     | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-        retvalue = TRUE;
-        goto END;
+        return TRUE;
     }
-
-    retvalue = FALSE; /* no frame changes */
-END:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return FALSE; /* no frame changes */
 }
 
 

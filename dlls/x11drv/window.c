@@ -22,6 +22,7 @@
 #include "debugtools.h"
 #include "x11drv.h"
 #include "win.h"
+#include "winpos.h"
 #include "dce.h"
 #include "options.h"
 
@@ -106,8 +107,8 @@ static int get_window_attributes( Display *display, WND *win, XSetWindowAttribut
     BOOL is_top_level = is_window_top_level( win );
     BOOL managed = is_top_level && is_window_managed( win );
 
-    if (managed) win->dwExStyle |= WS_EX_MANAGED;
-    else win->dwExStyle &= ~WS_EX_MANAGED;
+    if (managed) WIN_SetExStyle( win->hwndSelf, win->dwExStyle | WS_EX_MANAGED );
+    else WIN_SetExStyle( win->hwndSelf, win->dwExStyle & ~WS_EX_MANAGED );
 
     attr->override_redirect = !managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
@@ -833,13 +834,17 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
-    wndPtr = WIN_FindWndPtr( hwnd );
+    wndPtr = WIN_GetPtr( hwnd );
     wndPtr->pDriverData = data;
+
+    /* initialize the dimensions before sending WM_GETMINMAXINFO */
+    SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+    WIN_SetRectangles( hwnd, &rect, &rect );
 
     if (!wndPtr->parent)
     {
         create_desktop( display, wndPtr, cs );
-        WIN_ReleaseWndPtr( wndPtr );
+        WIN_ReleasePtr( wndPtr );
         return TRUE;
     }
 
@@ -847,10 +852,29 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (!create_client_window( display, wndPtr )) goto failed;
     TSXSync( display, False );
 
-    WIN_ReleaseWndPtr( wndPtr );
-
     SetPropA( hwnd, whole_window_atom, (HANDLE)data->whole_window );
     SetPropA( hwnd, client_window_atom, (HANDLE)data->client_window );
+
+    /* Send the WM_GETMINMAXINFO message and fix the size if needed */
+    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
+    {
+        POINT maxSize, maxPos, minTrack, maxTrack;
+
+        WIN_ReleasePtr( wndPtr );
+        WINPOS_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack);
+        if (maxSize.x < cs->cx) cs->cx = maxSize.x;
+        if (maxSize.y < cs->cy) cs->cy = maxSize.y;
+        if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
+        if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
+        if (cs->cx < 0) cs->cx = 0;
+        if (cs->cy < 0) cs->cy = 0;
+
+        if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
+        SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
+        WIN_SetRectangles( hwnd, &rect, &rect );
+        X11DRV_sync_whole_window_position( display, wndPtr, 0 );
+    }
+    WIN_ReleasePtr( wndPtr );
 
     /* send WM_NCCREATE */
     TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
@@ -860,17 +884,20 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         ret = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
     if (!ret)
     {
-        X11DRV_DestroyWindow( hwnd );
+        WARN("aborted by WM_xxCREATE!\n");
         return FALSE;
     }
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
+    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
 
     sync_window_style( display, wndPtr );
 
     /* send WM_NCCALCSIZE */
     rect = wndPtr->rectWindow;
+    WIN_ReleasePtr( wndPtr );
     SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
+
+    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
     if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
     WIN_SetRectangles( hwnd, &wndPtr->rectWindow, &rect );
     X11DRV_sync_client_window_position( display, wndPtr );
@@ -892,7 +919,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     else
         WIN_LinkWindow( hwnd, wndPtr->parent, HWND_TOP );
 
-    WIN_ReleaseWndPtr( wndPtr );
+    WIN_ReleasePtr( wndPtr );
 
     if (unicode)
         ret = (SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs ) != -1);
@@ -902,7 +929,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (!ret)
     {
         WIN_UnlinkWindow( hwnd );
-        X11DRV_DestroyWindow( hwnd );
         return FALSE;
     }
 
@@ -932,7 +958,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
         RECT newPos;
         UINT swFlag = (wndPtr->dwStyle & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
-        wndPtr->dwStyle &= ~(WS_MAXIMIZE | WS_MINIMIZE);
+        WIN_SetStyle( hwnd, wndPtr->dwStyle & ~(WS_MAXIMIZE | WS_MINIMIZE) );
         WINPOS_MinMaximize( hwnd, swFlag, &newPos );
         swFlag = ((wndPtr->dwStyle & WS_CHILD) || GetActiveWindow())
             ? SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED
@@ -946,8 +972,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 
 
  failed:
-    X11DRV_DestroyWindow( wndPtr->hwndSelf );
-    WIN_ReleaseWndPtr( wndPtr );
+    X11DRV_DestroyWindow( hwnd );
+    if (wndPtr) WIN_ReleasePtr( wndPtr );
     return FALSE;
 }
 
@@ -1048,78 +1074,6 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
     /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
      * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
-    return retvalue;
-}
-
-
-/*******************************************************************
- *		EnableWindow   (X11DRV.@)
- */
-BOOL X11DRV_EnableWindow( HWND hwnd, BOOL enable )
-{
-    Display *display = thread_display();
-    XWMHints *wm_hints;
-    WND *wndPtr;
-    BOOL retvalue;
-
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    hwnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    retvalue = ((wndPtr->dwStyle & WS_DISABLED) != 0);
-
-    if (enable && (wndPtr->dwStyle & WS_DISABLED))
-    {
-        /* Enable window */
-        wndPtr->dwStyle &= ~WS_DISABLED;
-
-        if (wndPtr->dwExStyle & WS_EX_MANAGED)
-        {
-            wine_tsx11_lock();
-            if (!(wm_hints = XGetWMHints( display, get_whole_window(wndPtr) )))
-                wm_hints = XAllocWMHints();
-            if (wm_hints)
-            {
-                wm_hints->flags |= InputHint;
-                wm_hints->input = TRUE;
-                XSetWMHints( display, get_whole_window(wndPtr), wm_hints );
-                XFree(wm_hints);
-            }
-            wine_tsx11_unlock();
-        }
-
-        SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
-    }
-    else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
-    {
-        SendMessageA( wndPtr->hwndSelf, WM_CANCELMODE, 0, 0 );
-
-        /* Disable window */
-        wndPtr->dwStyle |= WS_DISABLED;
-
-        if (wndPtr->dwExStyle & WS_EX_MANAGED)
-        {
-            wine_tsx11_lock();
-            if (!(wm_hints = XGetWMHints( display, get_whole_window(wndPtr) )))
-                wm_hints = XAllocWMHints();
-            if (wm_hints)
-            {
-                wm_hints->flags |= InputHint;
-                wm_hints->input = FALSE;
-                XSetWMHints( display, get_whole_window(wndPtr), wm_hints );
-                XFree(wm_hints);
-            }
-            wine_tsx11_unlock();
-        }
-
-        if (hwnd == GetFocus())
-            SetFocus( 0 );  /* A disabled window can't have the focus */
-
-        if (hwnd == GetCapture())
-            ReleaseCapture();  /* A disabled window can't capture the mouse */
-
-        SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
-    }
-    WIN_ReleaseWndPtr(wndPtr);
     return retvalue;
 }
 

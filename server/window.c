@@ -42,6 +42,11 @@ struct window
     atom_t           atom;            /* class atom */
     rectangle_t      window_rect;     /* window rectangle */
     rectangle_t      client_rect;     /* client rectangle */
+    unsigned int     style;           /* window style */
+    unsigned int     ex_style;        /* window extended style */
+    unsigned int     id;              /* window id */
+    void*            instance;        /* creator instance */
+    void*            user_data;       /* user-specific data */
     int              prop_inuse;      /* number of in-use window properties */
     int              prop_alloc;      /* number of allocated window properties */
     struct property *properties;      /* window properties array */
@@ -81,7 +86,11 @@ static void link_window( struct window *win, struct window *parent, struct windo
 
     if (parent)
     {
-        win->parent = parent;
+        if (win->parent != parent)
+        {
+            win->owner = NULL;  /* reset owner if changing parent */
+            win->parent = parent;
+        }
         if ((win->prev = previous))
         {
             if ((win->next = previous->next)) win->next->prev = win;
@@ -261,6 +270,11 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->first_unlinked = NULL;
     win->thread         = current;
     win->atom           = atom;
+    win->style          = 0;
+    win->ex_style       = 0;
+    win->id             = 0;
+    win->instance       = NULL;
+    win->user_data      = NULL;
     win->prop_inuse     = 0;
     win->prop_alloc     = 0;
     win->properties     = NULL;
@@ -323,6 +337,12 @@ DECL_HANDLER(create_window)
 
         if (!(parent = get_window( req->parent ))) return;
         if (req->owner && !(owner = get_window( req->owner ))) return;
+        if (owner && owner->parent != parent)
+        {
+            /* owner must be a sibling of the new window */
+            set_error( STATUS_ACCESS_DENIED );
+            return;
+        }
         if (!(win = create_window( parent, owner, req->atom ))) return;
         req->handle = win->handle;
     }
@@ -342,6 +362,7 @@ DECL_HANDLER(link_window)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
+    req->full_parent = parent ? parent->handle : 0;
     if (parent && req->previous)
     {
         if (req->previous == (user_handle_t)1)  /* special case: HWND_BOTTOM */
@@ -376,6 +397,24 @@ DECL_HANDLER(destroy_window)
 }
 
 
+/* set a window owner */
+DECL_HANDLER(set_window_owner)
+{
+    struct window *win = get_window( req->handle );
+    struct window *owner = get_window( req->owner );
+
+    if (!win || !owner) return;
+    if (owner->parent != win->parent)
+    {
+        /* owner has to be a sibling of window */
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    win->owner = owner;
+    req->full_owner = owner->handle;
+}
+
+
 /* get information from a window handle */
 DECL_HANDLER(get_window_info)
 {
@@ -388,10 +427,29 @@ DECL_HANDLER(get_window_info)
         req->full_handle = win->handle;
         if (win->thread)
         {
-            req->tid = get_thread_id( win->thread );
-            req->pid = get_process_id( win->thread->process );
+            req->tid  = get_thread_id( win->thread );
+            req->pid  = get_process_id( win->thread->process );
+            req->atom = win->atom;
         }
     }
+}
+
+
+/* set some information in a window */
+DECL_HANDLER(set_window_info)
+{
+    struct window *win = get_window( req->handle );
+    if (!win) return;
+    req->old_style     = win->style;
+    req->old_ex_style  = win->ex_style;
+    req->old_id        = win->id;
+    req->old_instance  = win->instance;
+    req->old_user_data = win->user_data;
+    if (req->flags & SET_WIN_STYLE) win->style = req->style;
+    if (req->flags & SET_WIN_EXSTYLE) win->ex_style = req->ex_style;
+    if (req->flags & SET_WIN_ID) win->id = req->id;
+    if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
+    if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;
 }
 
 

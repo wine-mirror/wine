@@ -38,7 +38,9 @@ enum wine_internal_message
     WM_WINE_DESTROYWINDOW = 0x80000000,
     WM_WINE_SETWINDOWPOS,
     WM_WINE_SHOWWINDOW,
-    WM_WINE_SETPARENT
+    WM_WINE_SETPARENT,
+    WM_WINE_SETWINDOWLONG,
+    WM_WINE_ENABLEWINDOW
 };
 
 /* internal SendInput codes (FIXME) */
@@ -79,7 +81,6 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
-    BOOL   (*pEnableWindow)(HWND,BOOL);
     void   (*pForceWindowRaise)(HWND);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
     BOOL   (*pScrollDC)(HDC,INT,INT,const RECT*,const RECT*,HRGN,LPRECT);
@@ -87,7 +88,7 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
     BOOL   (*pSetWindowPos)(WINDOWPOS *);
-    BOOL   (*pSetWindowRgn)(HWND,HRGN,BOOL);
+    int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
     HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
     void   (*pSetWindowStyle)(HWND,DWORD);
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);

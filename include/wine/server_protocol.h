@@ -1601,6 +1601,7 @@ struct link_window_request
     user_handle_t  handle;
     user_handle_t  parent;
     user_handle_t  previous;
+    user_handle_t  full_parent;
 };
 
 
@@ -1613,6 +1614,16 @@ struct destroy_window_request
 
 
 
+struct set_window_owner_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    user_handle_t  owner;
+    user_handle_t  full_owner;
+};
+
+
+
 struct get_window_info_request
 {
     struct request_header __header;
@@ -1620,7 +1631,32 @@ struct get_window_info_request
     user_handle_t  full_handle;
     void*          pid;
     void*          tid;
+    atom_t         atom;
 };
+
+
+
+struct set_window_info_request
+{
+    struct request_header __header;
+    user_handle_t  handle;
+    unsigned int   flags;
+    unsigned int   style;
+    unsigned int   ex_style;
+    unsigned int   id;
+    void*          instance;
+    void*          user_data;
+    unsigned int   old_style;
+    unsigned int   old_ex_style;
+    unsigned int   old_id;
+    void*          old_instance;
+    void*          old_user_data;
+};
+#define SET_WIN_STYLE     0x01
+#define SET_WIN_EXSTYLE   0x02
+#define SET_WIN_ID        0x04
+#define SET_WIN_INSTANCE  0x08
+#define SET_WIN_USERDATA  0x10
 
 
 
@@ -1858,7 +1894,9 @@ enum request
     REQ_create_window,
     REQ_link_window,
     REQ_destroy_window,
+    REQ_set_window_owner,
     REQ_get_window_info,
+    REQ_set_window_info,
     REQ_get_window_parents,
     REQ_get_window_children,
     REQ_get_window_tree,
@@ -2001,7 +2039,9 @@ union generic_request
     struct create_window_request create_window;
     struct link_window_request link_window;
     struct destroy_window_request destroy_window;
+    struct set_window_owner_request set_window_owner;
     struct get_window_info_request get_window_info;
+    struct set_window_info_request set_window_info;
     struct get_window_parents_request get_window_parents;
     struct get_window_children_request get_window_children;
     struct get_window_tree_request get_window_tree;
@@ -2014,6 +2054,6 @@ union generic_request
     struct get_window_properties_request get_window_properties;
 };
 
-#define SERVER_PROTOCOL_VERSION 60
+#define SERVER_PROTOCOL_VERSION 61
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

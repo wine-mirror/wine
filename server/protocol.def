@@ -1434,12 +1434,22 @@ enum message_type
     user_handle_t  parent;      /* handle to the parent */
     user_handle_t  previous;    /* previous child in Z-order */
 @REPLY
+    user_handle_t  full_parent; /* full handle of new parent */
 @END
 
 
 /* Destroy a window */
 @REQ(destroy_window)
     user_handle_t  handle;      /* handle to the window */
+@END
+
+
+/* Set a window owner */
+@REQ(set_window_owner)
+    user_handle_t  handle;      /* handle to the window */
+    user_handle_t  owner;       /* new owner */
+@REPLY
+    user_handle_t  full_owner;  /* full handle of new owner */
 @END
 
 
@@ -1450,7 +1460,31 @@ enum message_type
     user_handle_t  full_handle; /* full 32-bit handle */
     void*          pid;         /* process owning the window */
     void*          tid;         /* thread owning the window */
+    atom_t         atom;        /* class atom */
 @END
+
+
+/* Set some information in a window */
+@REQ(set_window_info)
+    user_handle_t  handle;        /* handle to the window */
+    unsigned int   flags;         /* flags for fields to set (see below) */
+    unsigned int   style;         /* window style */
+    unsigned int   ex_style;      /* window extended style */
+    unsigned int   id;            /* window id */
+    void*          instance;      /* creator instance */
+    void*          user_data;     /* user-specific data */
+@REPLY
+    unsigned int   old_style;     /* old window style */
+    unsigned int   old_ex_style;  /* old window extended style */
+    unsigned int   old_id;        /* old window id */
+    void*          old_instance;  /* old creator instance */
+    void*          old_user_data; /* old user-specific data */
+@END
+#define SET_WIN_STYLE     0x01
+#define SET_WIN_EXSTYLE   0x02
+#define SET_WIN_ID        0x04
+#define SET_WIN_INSTANCE  0x08
+#define SET_WIN_USERDATA  0x10
 
 
 /* Get a list of the window parents, up to the root of the tree */

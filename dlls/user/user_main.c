@@ -87,7 +87,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(CreateWindow);
     GET_USER_FUNC(DestroyWindow);
     GET_USER_FUNC(GetDC);
-    GET_USER_FUNC(EnableWindow);
     GET_USER_FUNC(ForceWindowRaise);
     GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     GET_USER_FUNC(ScrollDC);

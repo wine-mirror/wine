@@ -1707,9 +1707,25 @@ static void dump_link_window_request( const struct link_window_request *req )
     fprintf( stderr, " previous=%08x", req->previous );
 }
 
+static void dump_link_window_reply( const struct link_window_request *req )
+{
+    fprintf( stderr, " full_parent=%08x", req->full_parent );
+}
+
 static void dump_destroy_window_request( const struct destroy_window_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
+}
+
+static void dump_set_window_owner_request( const struct set_window_owner_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " owner=%08x", req->owner );
+}
+
+static void dump_set_window_owner_reply( const struct set_window_owner_request *req )
+{
+    fprintf( stderr, " full_owner=%08x", req->full_owner );
 }
 
 static void dump_get_window_info_request( const struct get_window_info_request *req )
@@ -1721,7 +1737,28 @@ static void dump_get_window_info_reply( const struct get_window_info_request *re
 {
     fprintf( stderr, " full_handle=%08x,", req->full_handle );
     fprintf( stderr, " pid=%p,", req->pid );
-    fprintf( stderr, " tid=%p", req->tid );
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " atom=%04x", req->atom );
+}
+
+static void dump_set_window_info_request( const struct set_window_info_request *req )
+{
+    fprintf( stderr, " handle=%08x,", req->handle );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " style=%08x,", req->style );
+    fprintf( stderr, " ex_style=%08x,", req->ex_style );
+    fprintf( stderr, " id=%08x,", req->id );
+    fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " user_data=%p", req->user_data );
+}
+
+static void dump_set_window_info_reply( const struct set_window_info_request *req )
+{
+    fprintf( stderr, " old_style=%08x,", req->old_style );
+    fprintf( stderr, " old_ex_style=%08x,", req->old_ex_style );
+    fprintf( stderr, " old_id=%08x,", req->old_id );
+    fprintf( stderr, " old_instance=%p,", req->old_instance );
+    fprintf( stderr, " old_user_data=%p", req->old_user_data );
 }
 
 static void dump_get_window_parents_request( const struct get_window_parents_request *req )
@@ -1970,7 +2007,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_window_request,
     (dump_func)dump_link_window_request,
     (dump_func)dump_destroy_window_request,
+    (dump_func)dump_set_window_owner_request,
     (dump_func)dump_get_window_info_request,
+    (dump_func)dump_set_window_info_request,
     (dump_func)dump_get_window_parents_request,
     (dump_func)dump_get_window_children_request,
     (dump_func)dump_get_window_tree_request,
@@ -2107,9 +2146,11 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_window_reply,
+    (dump_func)dump_link_window_reply,
     (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_set_window_owner_reply,
     (dump_func)dump_get_window_info_reply,
+    (dump_func)dump_set_window_info_reply,
     (dump_func)dump_get_window_parents_reply,
     (dump_func)dump_get_window_children_reply,
     (dump_func)dump_get_window_tree_reply,
@@ -2248,7 +2289,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_window",
     "link_window",
     "destroy_window",
+    "set_window_owner",
     "get_window_info",
+    "set_window_info",
     "get_window_parents",
     "get_window_children",
     "get_window_tree",

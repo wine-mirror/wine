@@ -1084,16 +1084,21 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
  */
 static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
+    if (hwnd == GetDesktopWindow()) return 0;
     switch(msg)
     {
+    case WM_WINE_DESTROYWINDOW:
+        return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
         return USER_Driver.pSetWindowPos( (WINDOWPOS *)lparam );
     case WM_WINE_SHOWWINDOW:
-        return USER_Driver.pShowWindow( hwnd, wparam );
-    case WM_WINE_DESTROYWINDOW:
-        return WIN_DestroyWindow( hwnd );
+        return ShowWindow( hwnd, wparam );
     case WM_WINE_SETPARENT:
-        return (LRESULT)WIN_SetParent( hwnd, (HWND)wparam );
+        return (LRESULT)SetParent( hwnd, (HWND)wparam );
+    case WM_WINE_SETWINDOWLONG:
+        return (LRESULT)SetWindowLongW( hwnd, wparam, lparam );
+    case WM_WINE_ENABLEWINDOW:
+        return EnableWindow( hwnd, wparam );
     default:
         FIXME( "unknown internal message %x\n", msg );
         return 0;

@@ -191,7 +191,9 @@ DECL_HANDLER(get_named_pipe_info);
 DECL_HANDLER(create_window);
 DECL_HANDLER(link_window);
 DECL_HANDLER(destroy_window);
+DECL_HANDLER(set_window_owner);
 DECL_HANDLER(get_window_info);
+DECL_HANDLER(set_window_info);
 DECL_HANDLER(get_window_parents);
 DECL_HANDLER(get_window_children);
 DECL_HANDLER(get_window_tree);
@@ -333,7 +335,9 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_create_window,
     (req_handler)req_link_window,
     (req_handler)req_destroy_window,
+    (req_handler)req_set_window_owner,
     (req_handler)req_get_window_info,
+    (req_handler)req_set_window_info,
     (req_handler)req_get_window_parents,
     (req_handler)req_get_window_children,
     (req_handler)req_get_window_tree,

@@ -14,6 +14,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winerror.h"
 
 #include "x11drv.h"
 #include "hook.h"
@@ -407,7 +408,7 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
  */
 BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
-    WND *win = WIN_FindWndPtr( hwnd );
+    WND *win = WIN_GetPtr( hwnd );
     HWND top = 0;
     X11DRV_WND_DATA *data = win->pDriverData;
     Drawable drawable;
@@ -505,7 +506,7 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
         DeleteObject( visRgn );
     }
 
-    WIN_ReleaseWndPtr( win );
+    WIN_ReleasePtr( win );
     return TRUE;
 }
 
@@ -675,10 +676,14 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
 /* fix redundant flags and values in the WINDOWPOS structure */
 static BOOL fixup_flags( WINDOWPOS *winpos )
 {
-    WND *wndPtr = WIN_FindWndPtr( winpos->hwnd );
+    WND *wndPtr = WIN_GetPtr( winpos->hwnd );
     BOOL ret = TRUE;
 
-    if (!wndPtr) return FALSE;
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
     winpos->hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
     if (wndPtr->dwStyle & WS_VISIBLE) winpos->flags &= ~SWP_SHOWWINDOW;
@@ -723,25 +728,20 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     /* hwndInsertAfter must be a sibling of the window */
     if ((winpos->hwndInsertAfter != HWND_TOP) && (winpos->hwndInsertAfter != HWND_BOTTOM))
     {
-        WND* wnd = WIN_FindWndPtr(winpos->hwndInsertAfter);
-        if (wnd)
+        winpos->hwndInsertAfter = WIN_GetFullHandle( winpos->hwndInsertAfter );
+        if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != wndPtr->parent) ret = FALSE;
+        else
         {
-            winpos->hwndInsertAfter = wnd->hwndSelf;  /* make it a full handle */
-            if (wnd->parent != wndPtr->parent) ret = FALSE;
-            else
-            {
-                /* don't need to change the Zorder of hwnd if it's already inserted
-                 * after hwndInsertAfter or when inserting hwnd after itself.
-                 */
-                if ((winpos->hwnd == winpos->hwndInsertAfter) ||
-                    (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
-                    winpos->flags |= SWP_NOZORDER;
-            }
-            WIN_ReleaseWndPtr(wnd);
+            /* don't need to change the Zorder of hwnd if it's already inserted
+             * after hwndInsertAfter or when inserting hwnd after itself.
+             */
+            if ((winpos->hwnd == winpos->hwndInsertAfter) ||
+                (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
+                winpos->flags |= SWP_NOZORDER;
         }
     }
  done:
-    WIN_ReleaseWndPtr(wndPtr);
+    WIN_ReleasePtr( wndPtr );
     return ret;
 }
 
@@ -754,18 +754,51 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
 void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
 {
     Display *display = thread_display();
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
+    WND *wndPtr;
+    LONG changed;
 
-    if ((wndPtr->dwStyle & WS_VISIBLE) && (!(oldStyle & WS_VISIBLE)))
+    if (hwnd == GetDesktopWindow()) return;
+    if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
+    if (wndPtr == WND_OTHER_PROCESS) return;
+
+    changed = wndPtr->dwStyle ^ oldStyle;
+
+    if (changed & WS_VISIBLE)
     {
         if (!IsRectEmpty( &wndPtr->rectWindow ))
         {
-            TRACE( "mapping win %x\n", hwnd );
-            TSXMapWindow( display, get_whole_window(wndPtr) );
+            if (wndPtr->dwStyle & WS_VISIBLE)
+            {
+                TRACE( "mapping win %x\n", hwnd );
+                TSXMapWindow( display, get_whole_window(wndPtr) );
+            }
+            else
+            {
+                TRACE( "unmapping win %x\n", hwnd );
+                TSXUnmapWindow( display, get_whole_window(wndPtr) );
+            }
         }
     }
-    WIN_ReleaseWndPtr(wndPtr);
+
+    if (changed & WS_DISABLED)
+    {
+        if (wndPtr->dwExStyle & WS_EX_MANAGED)
+        {
+            XWMHints *wm_hints;
+            wine_tsx11_lock();
+            if (!(wm_hints = XGetWMHints( display, get_whole_window(wndPtr) )))
+                wm_hints = XAllocWMHints();
+            if (wm_hints)
+            {
+                wm_hints->flags |= InputHint;
+                wm_hints->input = !(wndPtr->dwStyle & WS_DISABLED);
+                XSetWMHints( display, get_whole_window(wndPtr), wm_hints );
+                XFree(wm_hints);
+            }
+            wine_tsx11_unlock();
+        }
+    }
+    WIN_ReleasePtr(wndPtr);
 }
 
 
@@ -844,37 +877,26 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
-    if (winpos->flags & SWP_SHOWWINDOW) wndPtr->dwStyle |= WS_VISIBLE;
-    else if (winpos->flags & SWP_HIDEWINDOW)
-    {
-        /* clear the update region */
-        RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE |
-                                             RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
-        wndPtr->dwStyle &= ~WS_VISIBLE;
-    }
-
     if (get_whole_window(wndPtr))  /* don't do anything if X window not created yet */
     {
         Display *display = thread_display();
 
-        wine_tsx11_lock();
         if (!(winpos->flags & SWP_SHOWWINDOW) && (winpos->flags & SWP_HIDEWINDOW))
         {
-            if (!IsRectEmpty( &oldWindowRect ))
-            {
-                XUnmapWindow( display, get_whole_window(wndPtr) );
-                TRACE( "unmapping win %x\n", winpos->hwnd );
-            }
-            else TRACE( "not unmapping zero size win %x\n", winpos->hwnd );
+            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+            /* clear the update region */
+//            RedrawWindow( winpos->hwnd, NULL, 0, RDW_VALIDATE | RDW_NOFRAME |
+//                          RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_ALLCHILDREN );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
                  !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
         {
             /* resizing to zero size -> unmap */
             TRACE( "unmapping zero size win %x\n", winpos->hwnd );
-            XUnmapWindow( display, get_whole_window(wndPtr) );
+            TSXUnmapWindow( display, get_whole_window(wndPtr) );
         }
 
+        wine_tsx11_lock();
         if (bChangePos)
             X11DRV_sync_whole_window_position( display, wndPtr, !(winpos->flags & SWP_NOZORDER) );
         else
@@ -893,12 +915,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         }
         if (winpos->flags & SWP_SHOWWINDOW)
         {
-            if (!IsRectEmpty( &newWindowRect ))
-            {
-                XMapWindow( display, get_whole_window(wndPtr) );
-                TRACE( "mapping win %x\n", winpos->hwnd );
-            }
-            else TRACE( "not mapping win %x, size is zero\n", winpos->hwnd );
+            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
         }
         else if ((wndPtr->dwStyle & WS_VISIBLE) &&
                  IsRectEmpty( &oldWindowRect ) && !IsRectEmpty( &newWindowRect ))
@@ -909,6 +926,13 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
         }
         XFlush( display );  /* FIXME: should not be necessary */
         wine_tsx11_unlock();
+    }
+    else  /* no X window, simply toggle the window style */
+    {
+        if (winpos->flags & SWP_SHOWWINDOW)
+            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
+        else if (winpos->flags & SWP_HIDEWINDOW)
+            WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
     }
 
     /* manually expose the areas that X won't expose because they are still covered by something */
@@ -1021,6 +1045,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     WND *wndPtr;
     UINT swpFlags = 0;
     POINT size;
+    LONG old_style;
     WINDOWPLACEMENT wpl;
 
     TRACE("0x%04x %u\n", hwnd, cmd );
@@ -1046,14 +1071,10 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     switch( cmd )
     {
     case SW_MINIMIZE:
-        if( wndPtr->dwStyle & WS_MAXIMIZE)
-        {
-            wndPtr->flags |= WIN_RESTORE_MAX;
-            wndPtr->dwStyle &= ~WS_MAXIMIZE;
-        }
-        else
-            wndPtr->flags &= ~WIN_RESTORE_MAX;
-        wndPtr->dwStyle |= WS_MINIMIZE;
+        if( wndPtr->dwStyle & WS_MAXIMIZE) wndPtr->flags |= WIN_RESTORE_MAX;
+        else wndPtr->flags &= ~WIN_RESTORE_MAX;
+
+        WIN_SetStyle( hwnd, (wndPtr->dwStyle & ~WS_MAXIMIZE) | WS_MINIMIZE );
 
         X11DRV_set_iconic_state( wndPtr );
 
@@ -1067,21 +1088,19 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     case SW_MAXIMIZE:
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
-        if( wndPtr->dwStyle & WS_MINIMIZE )
+        old_style = WIN_SetStyle( hwnd, (wndPtr->dwStyle & ~WS_MINIMIZE) | WS_MAXIMIZE );
+        if (old_style & WS_MINIMIZE)
         {
-            wndPtr->dwStyle &= ~WS_MINIMIZE;
             WINPOS_ShowIconTitle( hwnd, FALSE );
             X11DRV_set_iconic_state( wndPtr );
         }
-        wndPtr->dwStyle |= WS_MAXIMIZE;
-
         SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
         break;
 
     case SW_RESTORE:
-        if( wndPtr->dwStyle & WS_MINIMIZE )
+        old_style = WIN_SetStyle( hwnd, wndPtr->dwStyle & ~(WS_MINIMIZE|WS_MAXIMIZE) );
+        if (old_style & WS_MINIMIZE)
         {
-            wndPtr->dwStyle &= ~WS_MINIMIZE;
             WINPOS_ShowIconTitle( hwnd, FALSE );
             X11DRV_set_iconic_state( wndPtr );
 
@@ -1089,16 +1108,12 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             {
                 /* Restore to maximized position */
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
-                wndPtr->dwStyle |= WS_MAXIMIZE;
+                WIN_SetStyle( hwnd, wndPtr->dwStyle | WS_MAXIMIZE );
                 SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
                 break;
             }
         }
-        else
-        {
-            if (!(wndPtr->dwStyle & WS_MAXIMIZE)) break;
-            wndPtr->dwStyle &= ~WS_MAXIMIZE;
-        }
+        else if (!(old_style & WS_MAXIMIZE)) break;
 
         /* Restore to normal position */
 
@@ -1250,7 +1265,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
     HWND hwndFocus = GetFocus();
     WND *win;
 
-    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+    if (!(win = WIN_GetPtr( hwnd ))) return;
 
     if ((win->dwStyle & WS_VISIBLE) &&
         (win->dwStyle & WS_MINIMIZE) &&
@@ -1260,16 +1275,7 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         unsigned int width, height, border, depth;
         Window root, top;
         RECT rect;
-
-        DCE_InvalidateDCE( hwnd, &win->rectWindow );
-        win->dwStyle &= ~WS_MINIMIZE;
-        win->dwStyle |= WS_VISIBLE;
-        WIN_InternalShowOwnedPopups( hwnd, TRUE, TRUE );
-
-        if (win->flags & WIN_RESTORE_MAX)
-            win->dwStyle |= WS_MAXIMIZE;
-        else
-            win->dwStyle &= ~WS_MAXIMIZE;
+        LONG style = (win->dwStyle & ~(WS_MINIMIZE|WS_MAXIMIZE)) | WS_VISIBLE;
 
         /* FIXME: hack */
         wine_tsx11_lock();
@@ -1283,12 +1289,19 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         rect.bottom = y + height;
         X11DRV_X_to_window_rect( win, &rect );
 
+        DCE_InvalidateDCE( hwnd, &win->rectWindow );
+
+        if (win->flags & WIN_RESTORE_MAX) style |= WS_MAXIMIZE;
+        WIN_SetStyle( hwnd, style );
+        WIN_ReleasePtr( win );
+
+        WIN_InternalShowOwnedPopups( hwnd, TRUE, TRUE );
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
                       SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
     }
+    else WIN_ReleasePtr( win );
     if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
-    WIN_ReleaseWndPtr( win );
 }
 
 
@@ -1299,28 +1312,26 @@ void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
 {
     WND *win;
 
-    if (!(win = WIN_FindWndPtr( hwnd ))) return;
+    if (!(win = WIN_GetPtr( hwnd ))) return;
 
     if ((win->dwStyle & WS_VISIBLE) && (win->dwExStyle & WS_EX_MANAGED))
     {
+        if (win->dwStyle & WS_MAXIMIZE)
+            win->flags |= WIN_RESTORE_MAX;
+        else
+            win->flags &= ~WIN_RESTORE_MAX;
+
+        WIN_SetStyle( hwnd, (win->dwStyle & ~WS_MAXIMIZE) | WS_MINIMIZE );
+        WIN_ReleasePtr( win );
+
         EndMenu();
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
-
-        win->flags &= ~WIN_RESTORE_MAX;
-        win->dwStyle |= WS_MINIMIZE;
-
-        if (win->dwStyle & WS_MAXIMIZE)
-        {
-            win->flags |= WIN_RESTORE_MAX;
-            win->dwStyle &= ~WS_MAXIMIZE;
-        }
-
         SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
                       SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
 
         WIN_InternalShowOwnedPopups( hwnd, FALSE, TRUE );
     }
-    WIN_ReleaseWndPtr( win );
+    else WIN_ReleasePtr( win );
 }
 
 
@@ -1538,23 +1549,26 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
  *
  * Assign specified region to window (for non-rectangular windows)
  */
-BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
-    RECT rect;
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-    int ret = FALSE;
+    WND *wndPtr;
 
-    if (!wndPtr) return FALSE;
+    if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd ))
+            FIXME( "not supported on other process window %x\n", hwnd );
+        wndPtr = NULL;
+    }
+    if (!wndPtr)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
 
     if (wndPtr->hrgnWnd == hrgn)
     {
-        ret = TRUE;
-        goto done;
-    }
-
-    if (hrgn) /* verify that region really exists */
-    {
-        if (GetRgnBox( hrgn, &rect ) == ERROR) goto done;
+        WIN_ReleasePtr( wndPtr );
+        return TRUE;
     }
 
     if (wndPtr->hrgnWnd)
@@ -1584,8 +1598,11 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
                 DWORD size;
                 DWORD dwBufferSize = GetRegionData(hrgn, 0, NULL);
                 PRGNDATA pRegionData = HeapAlloc(GetProcessHeap(), 0, dwBufferSize);
-                if (!pRegionData) goto done;
-
+                if (!pRegionData)
+                {
+                    WIN_ReleasePtr( wndPtr );
+                    return TRUE;
+                }
                 GetRegionData(hrgn, dwBufferSize, pRegionData);
                 size = pRegionData->rdh.nCount;
                 x_offset = wndPtr->rectWindow.left - data->whole_rect.left;
@@ -1624,12 +1641,9 @@ BOOL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     }
 #endif  /* HAVE_LIBXSHAPE */
 
+    WIN_ReleasePtr( wndPtr );
     if (redraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
-    ret = TRUE;
-
- done:
-    WIN_ReleaseWndPtr(wndPtr);
-    return ret;
+    return TRUE;
 }
 
 

@@ -168,9 +168,7 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
     {
 	if( !bVisible )
 	{
-	    wndPtr->dwStyle |= WS_VISIBLE;
-            if (USER_Driver.pSetWindowStyle)
-                USER_Driver.pSetWindowStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
+            WIN_SetStyle( hwnd, wndPtr->dwStyle | WS_VISIBLE );
             DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
 	}
     }
@@ -181,9 +179,7 @@ static void DEFWND_SetRedraw( HWND hwnd, WPARAM wParam )
 
         RedrawWindow( hwnd, NULL, 0, wParam );
         DCE_InvalidateDCE( hwnd, &wndPtr->rectWindow );
-	wndPtr->dwStyle &= ~WS_VISIBLE;
-        if (USER_Driver.pSetWindowStyle)
-            USER_Driver.pSetWindowStyle( hwnd, wndPtr->dwStyle | WS_VISIBLE );
+        WIN_SetStyle( hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
     }
     WIN_ReleaseWndPtr( wndPtr );
 }

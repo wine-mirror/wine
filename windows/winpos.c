@@ -215,14 +215,24 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 {
     int nRet = ERROR;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (wndPtr)
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (wndPtr == WND_OTHER_PROCESS)
     {
-        if (wndPtr->hrgnWnd) nRet = CombineRgn( hrgn, wndPtr->hrgnWnd, 0, RGN_COPY );
-        WIN_ReleaseWndPtr(wndPtr);
+        if (IsWindow( hwnd ))
+            FIXME( "not supported on other process window %x\n", hwnd );
+        wndPtr = NULL;
     }
+    if (!wndPtr)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return ERROR;
+    }
+    if (wndPtr->hrgnWnd) nRet = CombineRgn( hrgn, wndPtr->hrgnWnd, 0, RGN_COPY );
+    WIN_ReleasePtr( wndPtr );
     return nRet;
 }
+
 
 /***********************************************************************
  *		SetWindowRgn (USER32.@)
@@ -231,22 +241,31 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 {
     RECT rect;
     WND *wndPtr;
-    int ret = FALSE;
+
+    if (hrgn) /* verify that region really exists */
+    {
+        if (GetRgnBox( hrgn, &rect ) == ERROR) return FALSE;
+    }
 
     if (USER_Driver.pSetWindowRgn)
         return USER_Driver.pSetWindowRgn( hwnd, hrgn, bRedraw );
 
-    if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
+    if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
+    {
+        if (IsWindow( hwnd ))
+            FIXME( "not supported on other process window %x\n", hwnd );
+        wndPtr = NULL;
+    }
+    if (!wndPtr)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
 
     if (wndPtr->hrgnWnd == hrgn)
     {
-        ret = TRUE;
-        goto done;
-    }
-
-    if (hrgn) /* verify that region really exists */
-    {
-        if (GetRgnBox( hrgn, &rect ) == ERROR) goto done;
+        WIN_ReleasePtr( wndPtr );
+        return TRUE;
     }
 
     if (wndPtr->hrgnWnd)
@@ -256,17 +275,14 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         wndPtr->hrgnWnd = 0;
     }
     wndPtr->hrgnWnd = hrgn;
+    WIN_ReleasePtr( wndPtr );
 
     /* Size the window to the rectangle of the new region (if it isn't NULL) */
     if (hrgn) SetWindowPos( hwnd, 0, rect.left, rect.top,
                             rect.right  - rect.left, rect.bottom - rect.top,
                             SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOACTIVATE |
                             SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
-    ret = TRUE;
-
- done:
-    WIN_ReleaseWndPtr(wndPtr);
-    return ret;
+    return TRUE;
 }
 
 

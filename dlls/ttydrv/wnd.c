@@ -609,13 +609,9 @@ BOOL TTYDRV_SetWindowPos( WINDOWPOS *winpos )
     WIN_SetRectangles( winpos->hwnd, &newWindowRect, &newClientRect );
 
     if( winpos->flags & SWP_SHOWWINDOW )
-    {
-        wndPtr->dwStyle |= WS_VISIBLE;
-    }
+        WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle | WS_VISIBLE );
     else if( winpos->flags & SWP_HIDEWINDOW )
-    {
-        wndPtr->dwStyle &= ~WS_VISIBLE;
-    }
+        WIN_SetStyle( winpos->hwnd, wndPtr->dwStyle & ~WS_VISIBLE );
 
     /* ------------------------------------------------------------------------ FINAL */
 
