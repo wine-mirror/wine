@@ -80,10 +80,13 @@ char _NEResTab[] = "_NEResTab";
 char _PEResTab[] = "_PEResTab";
 char _ResTable[] = "_ResTable";
 
-res_count_t *rcarray = NULL;
-int rccount = 0;
-int n_id_entries = 0;
-int n_name_entries = 0;
+/* Variables used for resource sorting */
+res_count_t *rcarray = NULL;	/* Type-level count array */
+int rccount = 0;		/* Nr of entries in the type-level array */
+int n_id_entries = 0;		/* win32 only: Nr of unique ids in the type-level array */ 
+int n_name_entries = 0;		/* win32 only: Nr of unique namess in the type-level array */
+
+static int direntries;		/* win32 only: Total number of unique resources */
 
 time_t now;
 
@@ -312,9 +315,9 @@ int compare_name_id(name_id_t *n1, name_id_t *n2)
 		}
 	}
 	else if(n1->type == name_ord && n2->type == name_str)
-		return -1;
-	else if(n1->type == name_str && n2->type == name_ord)
 		return 1;
+	else if(n1->type == name_str && n2->type == name_ord)
+		return -1;
 	else
 		internal_error(__FILE__, __LINE__, "Comparing name-ids with unknown types (%d, %d)",
 				n1->type, n2->type);
@@ -518,17 +521,6 @@ void count_resources(resource_t *top)
 				r32cp->count++;
 				r32cp->rsc = (resource_t **)xrealloc(r32cp->rsc, r32cp->count * sizeof(resource_t *));
 				r32cp->rsc[r32cp->count-1] = rcap->rscarray[j];
-
-				if(rcap->rscarray[j]->name->type == name_ord)
-				{
-					rcap->n_id_entries = 1;
-					rcap->n_name_entries = 0;
-				}
-				else
-				{
-					rcap->n_id_entries = 0;
-					rcap->n_name_entries = 1;
-				}
 			}
 			else
 			{
@@ -571,7 +563,6 @@ void count_resources(resource_t *top)
 void write_pe_segment(FILE *fp, resource_t *top)
 {
 	int i;
-	int direntries;
 
 	fprintf(fp, "\t.align\t4\n");
 	fprintf(fp, "%s%s:\n", prefix, _PEResTab);
@@ -639,9 +630,10 @@ void write_pe_segment(FILE *fp, resource_t *top)
 				fprintf(fp, "\t.long\t%d\n", rsc->name->name.i_name);
 			else
 			{
-				fprintf(fp, "\t.long\t(%s%s_name - %s%s) | 0x80000000\n",
+				char *label = prep_nid_for_label(rsc->name);
+				fprintf(fp, "\t.long\t(%s_%s_name - %s%s) | 0x80000000\n",
 					prefix,
-					rsc->c_name,
+					label,
 					prefix,
 					_PEResTab);
 			}
@@ -757,11 +749,6 @@ void write_pe_segment(FILE *fp, resource_t *top)
 		}
 		free(typelabel);
 	}
-
-	fprintf(fp, "\t.align\t4\n");
-	fprintf(fp, "%s_NumberOfResources:\n", prefix);
-	fprintf(fp, "\t.globl\t%s_NumberOfResources\n", prefix);
-	fprintf(fp, "\t.long\t%d\n", direntries);
 }
 
 /*
@@ -806,12 +793,6 @@ void write_ne_segment(FILE *fp, resource_t *top)
 		/* NameInfo */
 		for(j = 0; j < rcp->count; j++)
 		{
-			/* FIXME: dividing by `alignment` doesn't seem to
-			 * work with as (GAS). Shifting results in the
-			 * correct behaviour. Maybe an as bug or just my
-			 * lack of knowing as expression-syntax.
-			 */
-			/* Offset */
 /*
  * VERY IMPORTANT:
  * The offset is relative to the beginning of the NE resource segment
@@ -820,6 +801,7 @@ void write_ne_segment(FILE *fp, resource_t *top)
  * scaled by the AlignShift field.
  * All other things are as the MS doc describes (alignment etc.)
  */
+			/* Offset */
 			fprintf(fp, "\t.short\t(%s%s_data - %s%s) >> %d\n",
 				prefix,
 				rcp->rscarray[j]->c_name,
@@ -887,9 +869,10 @@ void write_rsc_names(FILE *fp, resource_t *top)
 
 				if(rsc->name->type == name_str)
 				{
-					fprintf(fp, "%s%s_name:\n",
+					char *name = prep_nid_for_label(rsc->name);
+					fprintf(fp, "%s_%s_name:\n",
 						prefix,
-						rsc->c_name);
+						name);
 					write_name_str(fp, rsc->name);
 				}
 			}
@@ -971,6 +954,9 @@ void write_s_file(char *outname, resource_t *top)
 
 	/* Dump the names */
 	write_rsc_names(fo, top);
+
+	if(create_dir)
+		fprintf(fo, ".LResTabEnd:\n");
 	
 	if(!indirect_only)
 	{
@@ -993,10 +979,29 @@ void write_s_file(char *outname, resource_t *top)
 
 		if(create_dir)
 		{
-			/* Add the size of the entire resource section for elf-dlls */
+			/* Add a resource descriptor for built-in and elf-dlls */
+			fprintf(fo, "\t.align\t4\n");
+			fprintf(fo, "%s_ResourceDescriptor:\n", prefix);
+			fprintf(fo, "\t.globl\t%s_ResourceDescriptor\n", prefix);
+			fprintf(fo, "%s_ResourceTable:\n", prefix);
+			if(global)
+				fprintf(fo, "\t.globl\t%s_ResourceTable\n", prefix);
+			fprintf(fo, "\t.long\t%s%s\n", prefix, win32 ? _PEResTab : _NEResTab);
+			fprintf(fo, "%s_NumberOfResources:\n", prefix);
+			if(global)
+				fprintf(fo, "\t.globl\t%s_NumberOfResources\n", prefix);
+			fprintf(fo, "\t.long\t%d\n", direntries);
 			fprintf(fo, "%s_ResourceSectionSize:\n", prefix);
-			fprintf(fo, "\t.globl\t%s_ResourceSectionSize\n", prefix);
-			fprintf(fo, "\t.long\t. - %s%s\n", prefix, _PEResTab);
+			if(global)
+				fprintf(fo, "\t.globl\t%s_ResourceSectionSize\n", prefix);
+			fprintf(fo, "\t.long\t.LResTabEnd - %s%s\n", prefix, win32 ? _PEResTab : _NEResTab);
+			if(win32)
+			{
+				fprintf(fo, "%s_ResourcesEntries:\n", prefix);
+				if(global)
+					fprintf(fo, "\t.globl\t%s_ResourcesEntries\n", prefix);
+				fprintf(fo, "\t.long\t%s_ResourceDirectory\n", prefix);
+			}
 		}
 	}
 
@@ -1009,6 +1014,7 @@ void write_s_file(char *outname, resource_t *top)
 		{
 			int type;
 			char *type_name = NULL;
+			char *label;
 
 			if(!rsc->binres)
 				continue;
@@ -1047,10 +1053,12 @@ void write_s_file(char *outname, resource_t *top)
 			fprintf(fo, "%s%s:\n", prefix, rsc->c_name);
 			if(global)
 				fprintf(fo, "\t.globl\t%s%s\n", prefix, rsc->c_name);
-			fprintf(fo, "\t.long\t%d, %s%s%s, %d, %s%s%s%s, %s%s_data, %d\n",
+			label = prep_nid_for_label(rsc->name);
+			fprintf(fo, "\t.long\t%d, %s%s%s%s, %d, %s%s%s%s, %s%s_data, %d\n",
 				rsc->name->type == name_ord ? rsc->name->name.i_name : 0,
 				rsc->name->type == name_ord ? "0" : prefix,
-				rsc->name->type == name_ord ? "" : rsc->c_name,
+				rsc->name->type == name_ord ? "" : "_",
+				rsc->name->type == name_ord ? "" : label,
 				rsc->name->type == name_ord ? "" : "_name",
 				type,
 				type ? "0" : prefix,

@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------
+Version 1.0.11 (22-Apr-1999)
+
+Bertho Stultiens <bertho@akhphd.au.dk>
+- Fixed a counting bug in the win32 count and sort routine.
+- Fixed sort order of resources (must be name before ordinal).
+- Shuffled a couple of global variables so that built-in dlls now can
+  load resources through the proper PE interface.
+
+---------------------------------------------------------------------------
 Version 1.0.10 (18-Feb-1999)
 
 Alexandre Julliard <julliard@lrc.epfl.ch>
