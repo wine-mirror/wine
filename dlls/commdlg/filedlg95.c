@@ -728,7 +728,7 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
     if(!fodInfos) return 0;
 
     if(fodInfos->ofnInfos->Flags & OFN_UNICODE)
-      FIXME("sending OPENFILENAMEA structure. Hook is expecting OPENFILENAMEW!");
+      FIXME("sending OPENFILENAMEA structure. Hook is expecting OPENFILENAMEW!\n");
 
     if(fodInfos->DlgInfos.hwndCustomDlg)
     {
