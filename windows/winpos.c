@@ -281,13 +281,12 @@ BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
     BOOL ret;
 
-    rect->right = rect->bottom = 0;
     if ((ret = WIN_GetRectangles( hwnd, NULL, rect )))
     {
         rect->right -= rect->left;
         rect->bottom -= rect->top;
+        rect->left = rect->top = 0;
     }
-    rect->left = rect->top = 0;
     return ret;
 }
 
