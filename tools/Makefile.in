@@ -8,7 +8,8 @@ MODULE    = none
 PROGRAMS = \
 	bin2res \
 	fnt2bdf \
-	makedep
+	makedep \
+	wineprefixcreate
 
 C_SRCS = \
 	bin2res.c \
@@ -40,13 +41,18 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
 
-install::
+wineprefixcreate: wineprefixcreate.in
+	sed -e 's,@dlldir\@,$(dlldir),g' -e 's,@datadir\@,$(datadir),g' $(SRCDIR)/wineprefixcreate.in >$@ || ($(RM) $@ && false)
+	chmod +x wineprefixcreate
+
+install:: wineprefixcreate
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext) $(datadir)/wine
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
+	$(INSTALL_SCRIPT) wineprefixcreate $(bindir)/wineprefixcreate
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 	$(INSTALL_DATA) $(SRCDIR)/wine.inf $(datadir)/wine/wine.inf
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(datadir)/wine/wine.inf
+	$(RM) $(bindir)/winemaker $(bindir)/wineprefixcreate $(mandir)/man$(prog_manext)/winemaker.$(prog_manext) $(datadir)/wine/wine.inf
 
 ### Dependencies:

@@ -1,0 +1,105 @@
+#!/bin/sh
+#
+# Script to create the initial WINEPREFIX directory
+#
+# Copyright 1999 Ove Kåven
+# Copyright 2004 Chris Morgan
+# Copyright 2004 Alexandre Julliard
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+dlldir=@dlldir@
+datadir=@datadir@
+
+WINEPREFIX="${1:-$WINEPREFIX}"
+WINEPREFIX="${WINEPREFIX:-$HOME/.wine}"
+
+if [ -d "$WINEPREFIX" ]
+then
+  echo "The $WINEPREFIX directory already exists, aborting"
+  exit 1
+fi
+
+if mkdir "$WINEPREFIX"; then :
+else
+  echo "Could not create $WINEPREFIX, aborting"
+  exit 1
+fi
+
+CROOT="$WINEPREFIX/drive_c"
+
+# Create the directory tree
+
+for i in \
+    "$WINEPREFIX/dosdevices" \
+    "$CROOT" \
+    "$CROOT/windows" \
+    "$CROOT/windows/command" \
+    "$CROOT/windows/fonts" \
+    "$CROOT/windows/inf" \
+    "$CROOT/windows/profiles" \
+    "$CROOT/windows/profiles/Administrator" \
+    "$CROOT/windows/Program Files" \
+    "$CROOT/windows/Program Files/Common Files" \
+    "$CROOT/windows/Start Menu" \
+    "$CROOT/windows/Start Menu/Programs" \
+    "$CROOT/windows/Start Menu/Programs/Startup" \
+    "$CROOT/windows/system" \
+    "$CROOT/windows/temp"
+do
+  mkdir "$i"
+done
+
+# Create the drive symlinks
+
+ln -s "../drive_c" "$WINEPREFIX/dosdevices/c:"
+ln -s "/" "$WINEPREFIX/dosdevices/z:"
+
+# Create the application symlinks
+
+link_app()
+{
+   ln -s "$dlldir/$1.exe.so" "$2" || echo "Warning: failed to create $2"
+}
+
+link_app start        "$CROOT/windows/command/start.exe"
+link_app notepad      "$CROOT/windows/notepad.exe"
+link_app regedit      "$CROOT/windows/regedit.exe"
+link_app rundll32     "$CROOT/windows/rundll32.exe"
+link_app wcmd         "$CROOT/windows/system/wcmd.exe"
+link_app control      "$CROOT/windows/system/control.exe"
+link_app winhelp      "$CROOT/windows/system/help.exe"
+link_app notepad      "$CROOT/windows/system/notepad.exe"
+link_app progman      "$CROOT/windows/system/progman.exe"
+link_app regsvr32     "$CROOT/windows/system/regsvr32.exe"
+link_app winemine     "$CROOT/windows/system/winmine.exe"
+link_app winver       "$CROOT/windows/system/winver.exe"
+link_app uninstaller  "$CROOT/windows/uninstall.exe"
+link_app winhelp      "$CROOT/windows/winhelp.exe"
+link_app winhelp      "$CROOT/windows/winhlp32.exe"
+link_app winebrowser  "$CROOT/windows/winebrowser.exe"
+
+# Copy the .inf script and run it
+
+cp "$datadir/wine/wine.inf" "$CROOT/windows/inf/wine.inf"
+export WINEPREFIX
+${WINELOADER:-wine} rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
+
+# Wait for the wineserver to finish
+
+${WINESERVER:-wineserver} -w
+
+echo "$WINEPREFIX created successfully."
