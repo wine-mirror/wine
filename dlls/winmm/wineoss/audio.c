@@ -2090,6 +2090,8 @@ struct IDsDriverBufferImpl
     WAVEFORMATEX                wfx;
     LPBYTE                      mapping;
     DWORD                       maplen;
+    int                         fd;
+    DWORD                       dwFlags;
 
     /* IDsDriverNotifyImpl fields */
     IDsDriverNotifyImpl*        notify;
@@ -2313,7 +2315,7 @@ static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
     TRACE("(%p)\n",dsdb);
     if (!dsdb->mapping) {
         dsdb->mapping = mmap(NULL, dsdb->maplen, PROT_WRITE, MAP_SHARED,
-                             WOutDev[dsdb->drv->wDevID].ossdev->fd, 0);
+                             dsdb->fd, 0);
         if (dsdb->mapping == (LPBYTE)-1) {
             TRACE("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
             return DSERR_GENERIC;
@@ -2513,8 +2515,9 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 	ERR("device not open, but accessing?\n");
 	return DSERR_UNINITIALIZED;
     }
-    if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_GETOPTR, &info) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_GETOPTR) failed (%s)\n", WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
+    if (ioctl(This->fd, SNDCTL_DSP_GETOPTR, &info) < 0) {
+        ERR("ioctl(%s, SNDCTL_DSP_GETOPTR) failed (%s)\n",
+            WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	return DSERR_GENERIC;
     }
     ptr = info.ptr & ~3; /* align the pointer, just in case */
@@ -2539,7 +2542,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
     WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
     enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
-    if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+    if (ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	if (errno == EINVAL) {
 	    /* Don't give up yet. OSS trigger support is inconsistent. */
 	    if (WOutDev[This->drv->wDevID].ossdev->open_count == 1) {
@@ -2550,7 +2553,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 		    WOutDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
 		/* try it again */
     		enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
-		if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
+                if (ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
 		    return DS_OK;
 	    }	 
 	}
@@ -2569,13 +2572,13 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     /* no more playing */
     WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
     enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
-    if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+    if (ioctl(This->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	return DSERR_GENERIC;
     }
 #if 0
     /* the play position must be reset to the beginning of the buffer */
-    if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_RESET, 0) < 0) {
+    if (ioctl(This->fd, SNDCTL_DSP_RESET, 0) < 0) {
 	ERR("ioctl(%s, SNDCTL_DSP_RESET) failed (%s)\n", WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	return DSERR_GENERIC;
     }
@@ -2735,9 +2738,11 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
     (*ippdsdb)->ref	= 1;
     (*ippdsdb)->drv	= This;
     (*ippdsdb)->wfx     = *pwfx;
+    (*ippdsdb)->fd      = WOutDev[This->wDevID].ossdev->fd;
+    (*ippdsdb)->dwFlags = dwFlags;
 
     /* check how big the DMA buffer is now */
-    if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
+    if (ioctl((*ippdsdb)->fd, SNDCTL_DSP_GETOSPACE, &info) < 0) {
         ERR("ioctl(%s, SNDCTL_DSP_GETOSPACE) failed (%s)\n",
             WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
 	HeapFree(GetProcessHeap(),0,*ippdsdb);
@@ -2761,8 +2766,9 @@ static HRESULT WINAPI DSD_CreatePrimaryBuffer(PIDSDRIVER iface,
     /* some drivers need some extra nudging after mapping */
     WOutDev[This->wDevID].ossdev->bOutputEnabled = FALSE;
     enable = getEnables(WOutDev[This->wDevID].ossdev);
-    if (ioctl(WOutDev[This->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
-	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n", WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
+    if (ioctl((*ippdsdb)->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+        ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",
+            WOutDev[This->wDevID].ossdev->dev_name, strerror(errno));
 	return DSERR_GENERIC;
     }
 
