@@ -795,7 +795,7 @@ HRESULT WINAPI StringFromCLSID16(
      */
     if (!WOWCallback16Ex(
     	(DWORD)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
-		((LPMALLOC16)PTR_SEG_TO_LIN(mllc))->lpvtbl)
+		ICOM_VTBL(((LPMALLOC16)PTR_SEG_TO_LIN(mllc))))
 	)->fnAlloc,
 	WCB16_CDECL,
 	2*sizeof(DWORD),
@@ -828,7 +828,7 @@ HRESULT WINAPI StringFromCLSID(
 
 	ret=WINE_StringFromCLSID(id,buf);
 	if (!ret) {
-		*idstr = mllc->lpvtbl->fnAlloc(mllc,strlen(buf)*2+2);
+		*idstr = IMalloc_Alloc(mllc,strlen(buf)*2+2);
 		lstrcpyAtoW(*idstr,buf);
 	}
 	return ret;

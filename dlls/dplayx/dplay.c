@@ -40,7 +40,7 @@ static ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
 struct IDirectPlayImpl
 {
     /* IUnknown fields */
-    ICOM_VTABLE(IDirectPlay4)* lpvtbl;
+    ICOM_VFIELD(IDirectPlay4);
     DWORD                      ref;
     CRITICAL_SECTION           DP_lock;
     /* IDirectPlay3Impl fields */
@@ -68,10 +68,10 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay2WVT;
+    ICOM_VTBL(lpDP) = &directPlay2WVT;
 
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 
@@ -89,9 +89,9 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay2AVT;
+    ICOM_VTBL(lpDP) = &directPlay2AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 
@@ -109,9 +109,9 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay3WVT;
+    ICOM_VTBL(lpDP) = &directPlay3WVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 
@@ -129,9 +129,9 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay3AVT;
+    ICOM_VTBL(lpDP) = &directPlay3AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 
@@ -149,9 +149,9 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay4WVT;
+    ICOM_VTBL(lpDP) = &directPlay4WVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 
@@ -169,9 +169,9 @@ HRESULT directPlay_QueryInterface
        return DPERR_OUTOFMEMORY;
     }
 
-    lpDP->lpvtbl = &directPlay4AVT;
+    ICOM_VTBL(lpDP) = &directPlay4AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
+    IDirectPlayX_AddRef( lpDP );
 
     *ppvObj = lpDP;
 

@@ -69,7 +69,7 @@ typedef struct tagDirectPlayLobby3Data
 
 struct IDirectPlayLobbyImpl
 {
-    ICOM_VTABLE(IDirectPlayLobby)* lpvtbl;
+    ICOM_VFIELD(IDirectPlayLobby);
  
     /* IUnknown fields */
     DirectPlayLobbyIUnknownData*  unk;
@@ -237,7 +237,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobbyWVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobbyWVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL ) 
@@ -257,7 +257,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobbyAVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobbyAVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL ) 
@@ -277,7 +277,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobby2WVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobby2WVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL ) &&
@@ -298,7 +298,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobby2AVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobby2AVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL )  &&
@@ -319,7 +319,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobby3WVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobby3WVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL ) &&
@@ -341,7 +341,7 @@ HRESULT directPlayLobby_QueryInterface
       return E_OUTOFMEMORY;
     }
 
-    lpDPL->lpvtbl = &directPlayLobby3AVT;
+    ICOM_VTBL(lpDPL) = &directPlayLobby3AVT;
 
     if ( DPL_CreateIUnknown( lpDPL ) &&
          DPL_CreateLobby1( lpDPL ) &&
@@ -475,7 +475,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface
       IsEqualGUID( &IID_IDirectPlayLobby3A, riid )
     )
   {
-    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)This );
+    IDirectPlayLobby_AddRef( This );
     *ppvObj = This;
     return S_OK;
   }
@@ -498,7 +498,7 @@ static HRESULT WINAPI IDirectPlayLobby3WImpl_QueryInterface
       IsEqualGUID( &IID_IDirectPlayLobby3, riid )
     )
   {
-    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)This );
+    IDirectPlayLobby_AddRef( iface );
     *ppvObj = This;
     return S_OK;
   }
