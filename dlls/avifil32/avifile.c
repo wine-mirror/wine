@@ -305,8 +305,8 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
     for (i = 0; i < This->fInfo.dwStreams; i++) {
       if (This->ppStreams[i] != NULL) {
 	if (This->ppStreams[i]->ref != 0) {
-	  ERR(": someone has still a reference to stream %u (%p)!\n",
-	       i, This->ppStreams[i]);
+	  ERR(": someone has still %lu reference to stream %u (%p)!\n",
+	       This->ppStreams[i]->ref, i, This->ppStreams[i]);
 	}
 	AVIFILE_DestructAVIStream(This->ppStreams[i]);
 	LocalFree((HLOCAL)This->ppStreams[i]);
@@ -529,7 +529,7 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile *iface, DWORD fccType,
   if (lParam < 0)
     return AVIERR_BADPARAM;
 
-  /* Habe user write permissions? */
+  /* Have user write permissions? */
   if ((This->uMode & MMIO_RWMODE) == 0)
     return AVIERR_READONLY;
 
@@ -756,10 +756,12 @@ static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface)
     return 0;
   }
 
+  This->ref--;
+
   if (This->paf != NULL)
     IAVIFile_Release((PAVIFILE)This->paf);
 
-  return --This->ref;
+  return This->ref;
 }
 
 static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream *iface, LPARAM lParam1,

@@ -57,6 +57,7 @@
 DEFINE_AVIGUID(CLSID_ICMStream, 0x00020001, 0, 0);
 DEFINE_AVIGUID(CLSID_WAVFile,   0x00020003, 0, 0);
 DEFINE_AVIGUID(CLSID_ACMStream, 0x0002000F, 0, 0);
+DEFINE_AVIGUID(IID_IEditStreamInternal, 0x0002000A,0,0);
 
 extern HMODULE AVIFILE_hModule;
 
@@ -64,6 +65,7 @@ extern HRESULT AVIFILE_CreateAVIFile(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateACMStream(REFIID riid, LPVOID *ppobj);
 extern HRESULT AVIFILE_CreateICMStream(REFIID riid, LPVOID *ppobj);
+extern PAVIEDITSTREAM AVIFILE_CreateEditStream(PAVISTREAM pstream);
 extern PGETFRAME AVIFILE_CreateGetFrame(PAVISTREAM pstream);
 extern PAVIFILE  AVIFILE_CreateAVITempFile(int nStreams,PAVISTREAM *ppStreams);
 

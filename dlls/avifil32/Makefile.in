@@ -16,6 +16,7 @@ C_SRCS = \
 	acmstream.c \
 	api.c \
 	avifile.c \
+	editstream.c \
 	extrachunk.c \
 	factory.c \
 	getframe.c \

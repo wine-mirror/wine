@@ -171,7 +171,7 @@ static ULONG   WINAPI IGetFrame_fnRelease(IGetFrame *iface)
   if (!--(This->ref)) {
     AVIFILE_CloseCompressor(This);
     if (This->pStream != NULL) {
-      AVIStreamRelease(This->pStream);
+      IAVIStream_Release(This->pStream);
       This->pStream = NULL;
     }
 
@@ -190,6 +190,10 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
   LONG readSamples;
 
   TRACE("(%p,%ld)\n", iface, lPos);
+
+  /* We don't want negative start values! -- marks invalid buffer content */
+  if (lPos < 0)
+    return NULL;
 
   /* check state */
   if (This->pStream == NULL)
@@ -226,17 +230,18 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
   }
 
   if (lPos != This->lCurrentFrame) {
-    LONG lNext = AVIStreamFindSample(This->pStream, lPos, FIND_KEY|FIND_PREV);
+    LONG lNext = IAVIStream_FindSample(This->pStream,lPos,FIND_KEY|FIND_PREV);
 
     if (lNext == -1)
-      return NULL;
+      return NULL; /* frame doesn't exist */
     if (lNext <= This->lCurrentFrame && This->lCurrentFrame < lPos)
       lNext = This->lCurrentFrame + 1;
 
     for (; lNext <= lPos; lNext++) {
       /* new format for this frame? */
       if (This->bFormatChanges) {
-	AVIStreamReadFormat(This->pStream, lNext, This->lpInFormat, &This->cbInFormat);
+	IAVIStream_ReadFormat(This->pStream, lNext,
+			      This->lpInFormat, &This->cbInFormat);
 	if (This->lpOutFormat != NULL) {
 	  if (This->lpOutFormat->biBitCount <= 8)
 	    ICDecompressGetPalette(This->hic, This->lpInFormat,
@@ -250,17 +255,26 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 	/* not enough memory for input buffer? */
 	readBytes = 0;
 	if (FAILED(AVIStreamSampleSize(This->pStream, lNext, &readBytes)))
+	  return NULL; /* bad thing, but bad things will happen */
+	if (readBytes <= 0) {
+	  ERR(": IAVIStream::REad doesn't return needed bytes!\n");
 	  return NULL;
+	}
+
+	/* IAVIStream::Read failed because of other reasons not buffersize? */
 	if (This->cbInBuffer >= readBytes)
 	  break;
-	This->lpInFormat = GlobalReAllocPtr(This->lpInFormat, This->cbInFormat + readBytes, 0);
+	This->cbInBuffer = This->cbInFormat + readBytes;
+	This->lpInFormat = GlobalReAllocPtr(This->lpInFormat, This->cbInBuffer, 0);
 	if (This->lpInFormat == NULL)
-	  return NULL;
+	  return NULL; /* out of memory */
 	This->lpInBuffer = (BYTE*)This->lpInFormat + This->cbInFormat;
       }
 
-      if (readSamples != 1)
+      if (readSamples != 1) {
+	ERR(": no frames read\n");
 	return NULL;
+      }
       if (readBytes != 0) {
 	This->lpInFormat->biSizeImage = readBytes;
 
@@ -349,7 +363,8 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
     if (This->cbInBuffer == 0)
       This->cbInBuffer = 1024;
 
-    AVIStreamFormatSize(This->pStream, sInfo.dwStart, &This->cbInFormat);
+    IAVIStream_ReadFormat(This->pStream, sInfo.dwStart,
+			  NULL, &This->cbInFormat);
 
     This->lpInFormat =
       (LPBITMAPINFOHEADER)GlobalAllocPtr(GHND, This->cbInFormat + This->cbInBuffer);
@@ -358,7 +373,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
       return AVIERR_MEMORY;
     }
 
-    hr = AVIStreamReadFormat(This->pStream, sInfo.dwStart, This->lpInFormat, &This->cbInFormat);
+    hr = IAVIStream_ReadFormat(This->pStream, sInfo.dwStart, This->lpInFormat, &This->cbInFormat);
     if (FAILED(hr)) {
       AVIFILE_CloseCompressor(This);
       return hr;

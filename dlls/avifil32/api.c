@@ -395,6 +395,9 @@ HRESULT WINAPI AVIFileCreateStreamW(PAVIFILE pfile, PAVISTREAM *avis,
 {
   TRACE("(%p,%p,%p)\n", pfile, avis, asi);
 
+  if (pfile == NULL)
+    return AVIERR_BADHANDLE;
+
   return IAVIFile_CreateStream(pfile, avis, asi);
 }
 
@@ -1006,7 +1009,7 @@ HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving)
   szFilter[0] = 0;
   szFilter[1] = 0;
 
-  wszFilter = (LPWSTR)GlobalAllocPtr(GHND, cbFilter);
+  wszFilter = (LPWSTR)GlobalAllocPtr(GHND, cbFilter * sizeof(WCHAR));
   if (wszFilter == NULL)
     return AVIERR_MEMORY;
 
@@ -2030,7 +2033,7 @@ HRESULT WINAPI CreateEditableStream(PAVISTREAM *ppEditable, PAVISTREAM pSource)
   IAVIEditStream *pEdit = NULL;
   HRESULT	  hr;
 
-  FIXME("(%p,%p), semi stub!\n", ppEditable, pSource);
+  TRACE("(%p,%p)\n", ppEditable, pSource);
 
   if (ppEditable == NULL)
     return AVIERR_BADPARAM;
@@ -2040,14 +2043,21 @@ HRESULT WINAPI CreateEditableStream(PAVISTREAM *ppEditable, PAVISTREAM pSource)
   if (pSource != NULL) {
     hr = IAVIStream_QueryInterface(pSource, &IID_IAVIEditStream,
 				   (LPVOID*)&pEdit);
-    if (FAILED(hr) || pEdit == NULL) {
-      /* need own implementation of IAVIEditStream */
+    if (SUCCEEDED(hr) && pEdit != NULL) {
+      hr = IAVIEditStream_Clone(pEdit, ppEditable);
+      IAVIEditStream_Release(pEdit);
 
-      return AVIERR_UNSUPPORTED;
+      return hr;
     }
   }
 
-  hr = IAVIEditStream_Clone(pEdit, ppEditable);
+  /* need own implementation of IAVIEditStream */
+  pEdit = AVIFILE_CreateEditStream(pSource);
+  if (pEdit == NULL)
+    return AVIERR_MEMORY;
+
+  hr = IAVIEditStream_QueryInterface(pEdit, &IID_IAVIStream,
+                                     (LPVOID*)ppEditable);
   IAVIEditStream_Release(pEdit);
 
   return hr;
@@ -2121,12 +2131,12 @@ HRESULT WINAPI EditStreamCut(PAVISTREAM pStream, LONG *plStart,
 
   TRACE("(%p,%p,%p,%p)\n", pStream, plStart, plLength, ppResult);
 
+  if (ppResult != NULL)
+    *ppResult = NULL;
   if (pStream == NULL)
     return AVIERR_BADHANDLE;
-  if (plStart == NULL || plLength == NULL || ppResult == NULL)
+  if (plStart == NULL || plLength == NULL)
     return AVIERR_BADPARAM;
-
-  *ppResult = NULL;
 
   hr = IAVIStream_QueryInterface(pStream, &IID_IAVIEditStream,(LPVOID*)&pEdit);
   if (SUCCEEDED(hr) && pEdit != NULL) {
@@ -2182,7 +2192,7 @@ HRESULT WINAPI EditStreamSetInfoA(PAVISTREAM pstream, LPAVISTREAMINFOA asi,
   if ((DWORD)size < sizeof(AVISTREAMINFOA))
     return AVIERR_BADSIZE;
 
-  memcpy(&asiw, asi, sizeof(asi) - sizeof(asi->szName));
+  memcpy(&asiw, asi, sizeof(asiw) - sizeof(asiw.szName));
   MultiByteToWideChar(CP_ACP, 0, asi->szName, -1,
 		      asiw.szName, sizeof(asiw.szName));
 

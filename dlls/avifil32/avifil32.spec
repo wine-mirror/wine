@@ -15,7 +15,7 @@
 @ stdcall AVIFileInit()
 @ stub    AVIFileOpen
 @ stdcall AVIFileOpenA(ptr str long ptr)
-@ stdcall AVIFileOpenW(ptr str long ptr)
+@ stdcall AVIFileOpenW(ptr wstr long ptr)
 @ stdcall AVIFileReadData(ptr long ptr ptr)
 @ stdcall AVIFileRelease(ptr)
 @ stdcall AVIFileWriteData(ptr long ptr long)
