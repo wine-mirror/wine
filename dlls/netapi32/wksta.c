@@ -18,12 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdlib.h>
 #include "winbase.h"
 #include "nb30.h"
 #include "lmcons.h"
 #include "lmapibuf.h"
 #include "lmerr.h"
 #include "lmwksta.h"
+#include "iphlpapi.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "ntsecapi.h"
@@ -59,8 +61,53 @@ BOOL NETAPI_IsLocalComputer(LPCWSTR ServerName)
     }
 }
 
-int enum_hw(void);
-void wprint_mac(WCHAR* buffer, int index);
+static void wprint_mac(WCHAR* buffer, PIP_ADAPTER_INFO adapter)
+{
+  if (adapter != NULL)
+    {
+      int i;
+      unsigned char  val;
+
+      for (i = 0; i<max(adapter->AddressLength, 6); i++)
+        {
+          val = adapter->Address[i];
+          if ((val >>4) >9)
+            buffer[2*i] = (WCHAR)((val >>4) + 'A' - 10);
+          else
+            buffer[2*i] = (WCHAR)((val >>4) + '0');
+          if ((val & 0xf ) >9)
+            buffer[2*i+1] = (WCHAR)((val & 0xf) + 'A' - 10);
+          else
+            buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
+        }
+      buffer[12]=(WCHAR)0;
+    }
+  else
+    buffer[0] = 0;
+}
+
+#define TRANSPORT_NAME_HEADER "\\Device\\NetBT_Tcpip_"
+#define TRANSPORT_NAME_LEN \
+ (sizeof(TRANSPORT_NAME_HEADER) + MAX_ADAPTER_NAME_LENGTH)
+
+static void wprint_name(WCHAR *buffer, int len, PIP_ADAPTER_INFO adapter)
+{
+  WCHAR *ptr;
+  const char *name;
+
+  if (!buffer)
+    return;
+  if (!adapter)
+    return;
+
+  for (ptr = buffer, name = TRANSPORT_NAME_HEADER; *name && ptr < buffer + len;
+   ptr++, name++)
+    *ptr = *name;
+  for (name = adapter->AdapterName; name && *name && ptr < buffer + len;
+   ptr++, name++)
+    *ptr = *name;
+  *ptr = '\0';
+}
 
 NET_API_STATUS WINAPI 
 NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
@@ -84,49 +131,73 @@ NetWkstaTransportEnum(LPCWSTR ServerName, DWORD level, LPBYTE* pbuf,
 	
       switch (level)
 	{
-	case 0: /* transport info */
-	  {
-	    PWKSTA_TRANSPORT_INFO_0 ti;
-	    int i,size_needed,n_adapt  = enum_hw();
-	    
-	    if (n_adapt == 0)
+  	case 0: /* transport info */
+  	  {
+  	    PWKSTA_TRANSPORT_INFO_0 ti;
+	    int i,size_needed,n_adapt;
+            DWORD apiReturn, adaptInfoSize = 0;
+            PIP_ADAPTER_INFO info, ptr;
+  	    
+            apiReturn = GetAdaptersInfo(NULL, &adaptInfoSize);
+	    if (apiReturn == ERROR_NO_DATA)
               return ERROR_NETWORK_UNREACHABLE;
 	    if (!read_entries)
               return STATUS_ACCESS_VIOLATION;
 	    if (!total_entries || !pbuf)
               return RPC_X_NULL_REF_POINTER;
-	    
-	    size_needed = n_adapt * (sizeof(WKSTA_TRANSPORT_INFO_0) 
-				     * 13 * sizeof (WCHAR));
-	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
-	      NetApiBufferAllocate( size_needed, (LPVOID *) pbuf);
-	    else
-	      {
-		if (size_needed > prefmaxlen)
-		  return ERROR_MORE_DATA;
-		NetApiBufferAllocate(prefmaxlen,
-				     (LPVOID *) pbuf);
-	      }
-	    for (i = 0; i <n_adapt; i++)
-	      {
-		ti = (PWKSTA_TRANSPORT_INFO_0) 
-		  ((PBYTE) *pbuf + i * sizeof(WKSTA_TRANSPORT_INFO_0));
-		ti->wkti0_quality_of_service=0;
-		ti->wkti0_number_of_vcs=0;
-		ti->wkti0_transport_name=NULL;
-		ti->wkti0_transport_address= (LPWSTR)
-		  ((PBYTE )*pbuf + n_adapt* sizeof(WKSTA_TRANSPORT_INFO_0) 
-		   + i * 13 * sizeof (WCHAR));
-		ti->wkti0_wan_ish=TRUE; /*TCPIP/NETBIOS Protocoll*/
-		wprint_mac(ti->wkti0_transport_address,i);
-		TRACE("%d of %d:ti at %p transport_address at %p %s\n",i,n_adapt,
-		      ti, ti->wkti0_transport_address, debugstr_w(ti->wkti0_transport_address));
-	      }
+
+            info = (PIP_ADAPTER_INFO)malloc(adaptInfoSize);
+            apiReturn = GetAdaptersInfo(info, &adaptInfoSize);
+            if (apiReturn != NO_ERROR)
+              {
+                free(info);
+                return apiReturn;
+              }
+
+            for (n_adapt = 0, ptr = info; ptr; ptr = ptr->Next)
+              n_adapt++;
+  	    size_needed = n_adapt * (sizeof(WKSTA_TRANSPORT_INFO_0) 
+	     + n_adapt * TRANSPORT_NAME_LEN * sizeof (WCHAR)
+	     + n_adapt * 13 * sizeof (WCHAR));
+  	    if (prefmaxlen == MAX_PREFERRED_LENGTH)
+  	      NetApiBufferAllocate( size_needed, (LPVOID *) pbuf);
+  	    else
+  	      {
+  		if (size_needed > prefmaxlen)
+                  {
+                    free(info);
+		    return ERROR_MORE_DATA;
+                  }
+  		NetApiBufferAllocate(prefmaxlen,
+  				     (LPVOID *) pbuf);
+  	      }
+	    for (i = 0, ptr = info; ptr; ptr = ptr->Next, i++)
+  	      {
+  		ti = (PWKSTA_TRANSPORT_INFO_0) 
+  		  ((PBYTE) *pbuf + i * sizeof(WKSTA_TRANSPORT_INFO_0));
+  		ti->wkti0_quality_of_service=0;
+  		ti->wkti0_number_of_vcs=0;
+		ti->wkti0_transport_name= (LPWSTR)
+		  ((PBYTE )*pbuf +
+                   n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0)
+		   + i * TRANSPORT_NAME_LEN * sizeof (WCHAR));
+                wprint_name(ti->wkti0_transport_name,TRANSPORT_NAME_LEN, ptr);
+  		ti->wkti0_transport_address= (LPWSTR)
+		  ((PBYTE )*pbuf +
+                   n_adapt * sizeof(WKSTA_TRANSPORT_INFO_0) +
+                   n_adapt * TRANSPORT_NAME_LEN * sizeof (WCHAR)
+  		   + i * 13 * sizeof (WCHAR));
+  		ti->wkti0_wan_ish=TRUE; /*TCPIP/NETBIOS Protocoll*/
+		wprint_mac(ti->wkti0_transport_address, ptr);
+  		TRACE("%d of %d:ti at %p transport_address at %p %s\n",i,n_adapt,
+  		      ti, ti->wkti0_transport_address, debugstr_w(ti->wkti0_transport_address));
+  	      }
 	    *read_entries = n_adapt;
 	    *total_entries = n_adapt;
-	    if(hresume) *hresume= 0;
-	    break;
-	  }
+            free(info);
+  	    if(hresume) *hresume= 0;
+  	    break;
+  	  }
 	default:
 	  ERR("Invalid level %ld is specified\n", level);
 	  return ERROR_INVALID_LEVEL;

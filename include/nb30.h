@@ -100,9 +100,11 @@ typedef struct _LANA_ENUM
 #define NRC_ILLCMD  0x03
 #define NRC_CMDTMO  0x05
 #define NRC_INCOMP  0x06
+#define NRC_NORESOURCES 0x38
 #define NRC_INVADDRESS 0x39
 #define NRC_PENDING 0xff
 #define NRC_OPENERROR 0x3f
+#define NRC_SYSTEM  0x40
 
 #ifdef __cplusplus
 }

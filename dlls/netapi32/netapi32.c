@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -33,183 +34,73 @@
 #include "winerror.h"
 #include "nb30.h"
 #include "lmcons.h"
-
-#ifdef HAVE_SYS_FILE_H
-# include <sys/file.h>
-#endif
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SOCKIO_H
-# include <sys/sockio.h>
-#endif
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-#  ifndef max
-#   define max(a,b) ((a) > (b) ? (a) : (b))
-#  endif
-#  define ifreq_size(i) max(sizeof(struct ifreq),\
-sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
-# else
-#  define ifreq_size(i) sizeof(struct ifreq)
-# endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
+#include "iphlpapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 
 HMODULE NETAPI32_hModule = 0;
 
-struct NetBiosAdapter
-{
-    int valid;
-    unsigned char address[6];
-};
-
-static struct NetBiosAdapter NETBIOS_Adapter[MAX_LANA];
-
-# ifdef SIOCGIFHWADDR
-int get_hw_address(int sd, struct ifreq *ifr, unsigned char *address)
-{
-    if (ioctl(sd, SIOCGIFHWADDR, ifr) < 0)
-        return -1;
-    memcpy(address, (unsigned char *)&ifr->ifr_hwaddr.sa_data, 6);
-    return 0;
-}
-# else
-#  ifdef SIOCGENADDR
-int get_hw_address(int sd, struct ifreq *ifr, unsigned char *address)
-{
-    if (ioctl(sd, SIOCGENADDR, ifr) < 0)
-        return -1;
-    memcpy(address, (unsigned char *) ifr->ifr_enaddr, 6);
-    return 0;
-}
-#   else
-int get_hw_address(int sd, struct ifreq *ifr, unsigned char *address)
-{
-    return -1;
-}
-#  endif /* SIOCGENADDR */
-# endif /* SIOCGIFHWADDR */
-
-int enum_hw(void)
-{
-    int ret = 0;
-#ifdef HAVE_NET_IF_H
-    int             sd;
-    struct ifreq    ifr, *ifrp;
-    struct ifconf   ifc;
-    unsigned char   buf[1024];
-    int             i, ofs;
-    /* BSD 4.4 defines the size of an ifreq to be
-     * max(sizeof(ifreq), sizeof(ifreq.ifr_name)+ifreq.ifr_addr.sa_len
-     * However, under earlier systems, sa_len isn't present, so
-     *  the size is just sizeof(struct ifreq)
-     */
-
-    sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-    if (sd < 0)
-        return NRC_OPENERROR;
-
-    memset(buf, 0, sizeof(buf));
-    ifc.ifc_len = sizeof(buf);
-    ifc.ifc_buf = buf;
-    /* get the ifconf interface */
-    if (ioctl (sd, SIOCGIFCONF, (char *)&ifc) < 0)
-    {
-        close(sd);
-        return NRC_OPENERROR;
-    }
-
-    /* loop through the interfaces, looking for a valid one */
-    /* n = ifc.ifc_len; */
-    ofs = 0;
-    for (i = 0; i < ifc.ifc_len; i++)
-    {
-        unsigned char *a = NETBIOS_Adapter[i].address;
-
-        ifrp = (struct ifreq *)((char *)ifc.ifc_buf+ofs);
-        strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-
-        /* try to get the address for this interface */
-        if(get_hw_address(sd, &ifr, a)==0)
-        {
-            /* make sure it's not blank */
-            /* if (!a[0] && !a[1] && !a[2] && !a[3] && !a[4] && !a[5])
-	        continue; */
-
-            TRACE("Found valid adapter %d at %02x:%02x:%02x:%02x:%02x:%02x\n", i,
-                        a[0],a[1],a[2],a[3],a[4],a[5]);
-
-            NETBIOS_Adapter[i].valid = TRUE;
-
-	    ret++;
-        }
-        ofs += ifreq_size(ifr);
-    }
-    close(sd);
-    TRACE("found %d adapters\n",ret);
-#endif /* HAVE_NET_IF_H */
-    return ret;
-}
-
-void wprint_mac(WCHAR* buffer, int index)
-{
-  int i;
-  unsigned char  val;
-  for (i = 0; i<6; i++)
-    {
-      val = NETBIOS_Adapter[index].address[i];
-      if ((val >>4) >9)
-	buffer[2*i] = (WCHAR)((val >>4) + 'A' - 10);
-      else
-	buffer[2*i] = (WCHAR)((val >>4) + '0');
-      if ((val & 0xf ) >9)
-	buffer[2*i+1] = (WCHAR)((val & 0xf) + 'A' - 10);
-      else
-	buffer[2*i+1] = (WCHAR)((val & 0xf) + '0');
-    }
-  buffer[12]=(WCHAR)0;
-      
-}
 static UCHAR NETBIOS_Enum(PNCB ncb)
 {
     int             i;
     LANA_ENUM *lanas = (PLANA_ENUM) ncb->ncb_buffer;
-
+    DWORD apiReturn, size = 0;
+    PMIB_IFTABLE table;
+    UCHAR ret;
+ 
     TRACE("NCBENUM\n");
-
-    lanas->length = 0;
-    for (i = 0; i < enum_hw(); i++)
-    {
-         lanas->lana[lanas->length] = i;
-	 lanas->length++;
-    }
-    return NRC_GOODRET;
+ 
+    apiReturn = GetIfTable(NULL, &size, FALSE);
+    if (apiReturn != NO_ERROR)
+      {
+        table = (PMIB_IFTABLE)malloc(size);
+        if (table)
+          {
+            apiReturn = GetIfTable(table, &size, FALSE);
+            if (apiReturn == NO_ERROR)
+              {
+                lanas->length = 0;
+                for (i = 0; i < table->dwNumEntries && lanas->length < MAX_LANA;
+                 i++)
+                  {
+                    if (table->table[i].dwType != MIB_IF_TYPE_LOOPBACK)
+                      {
+                        lanas->lana[lanas->length] = table->table[i].dwIndex;
+                        lanas->length++;
+                      }
+                  }
+                ret = NRC_GOODRET;
+              }
+            else
+                ret = NRC_SYSTEM;
+            free(table);
+          }
+        else
+            ret = NRC_NORESOURCES;
+      }
+    else
+        ret = NRC_SYSTEM;
+    return ret;
 }
 
 
 static UCHAR NETBIOS_Astat(PNCB ncb)
 {
-    struct NetBiosAdapter *nad = &NETBIOS_Adapter[ncb->ncb_lana_num];
     PADAPTER_STATUS astat = (PADAPTER_STATUS) ncb->ncb_buffer;
-
+    MIB_IFROW row;
+  
     TRACE("NCBASTAT (Adapter %d)\n", ncb->ncb_lana_num);
-
-    if(!nad->valid)
-        return NRC_INVADDRESS;
-
+  
     memset(astat, 0, sizeof astat);
-    memcpy(astat->adapter_address, nad->address, sizeof astat->adapter_address);
-
+  
+    row.dwIndex = ncb->ncb_lana_num;
+    if (GetIfEntry(&row) != NO_ERROR)
+        return NRC_INVADDRESS;
+    /* doubt anyone cares, but why not.. */
+    if (row.dwType == MIB_IF_TYPE_TOKENRING)
+        astat->adapter_type = 0xff;
+    else
+        astat->adapter_type = 0xfe; /* for Ethernet */
     return NRC_GOODRET;
 }
 
@@ -241,9 +132,16 @@ BOOL WINAPI Netbios(PNCB pncb)
     {
     case NCBRESET:
         FIXME("NCBRESET adapter %d\n",pncb->ncb_lana_num);
-        if( (pncb->ncb_lana_num < MAX_LANA ) &&
-             NETBIOS_Adapter[pncb->ncb_lana_num].valid)
-            ret = NRC_GOODRET;
+        if(pncb->ncb_lana_num < MAX_LANA )
+          {
+            MIB_IFROW row;
+
+            row.dwIndex = pncb->ncb_lana_num;
+            if (GetIfEntry(&row) != NO_ERROR)
+                ret = NRC_GOODRET;
+            else
+                ret = NRC_ILLCMD; /* NetBIOS emulator not found */
+          }
         else
             ret = NRC_ILLCMD; /* NetBIOS emulator not found */
         break;
