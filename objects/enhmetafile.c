@@ -1,7 +1,8 @@
 /*
-  Enhanced metafile functions
-  Copyright 1998, Douglas Ridgway
-*/
+ * Enhanced metafile functions
+ * Copyright 1998 Douglas Ridgway
+ *           1999 Huw D M Davies 
+ */ 
 
 #include <string.h>
 #include <assert.h>
@@ -9,12 +10,94 @@
 #include "wingdi.h"
 #include "wine/winestring.h"
 #include "winerror.h"
+#include "enhmetafile.h"
 #include "debug.h"
+#include "heap.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile)
+
+/****************************************************************************
+ *          EMF_Create_HENHMETAFILE
+ */
+HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, HFILE hFile, HANDLE
+				     hMapping )
+{
+    HENHMETAFILE hmf = GDI_AllocObject( sizeof(ENHMETAFILEOBJ),
+					ENHMETAFILE_MAGIC );
+    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_HEAP_LOCK( hmf );
+    metaObj->emh = emh;
+    metaObj->hFile = hFile;
+    metaObj->hMapping = hMapping;
+    GDI_HEAP_UNLOCK( hmf );
+    return hmf;
+}
+
+/****************************************************************************
+ *          EMF_Delete_HENHMETAFILE
+ */
+static BOOL EMF_Delete_HENHMETAFILE( HENHMETAFILE hmf )
+{
+    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
+							   ENHMETAFILE_MAGIC );
+    if(!metaObj) return FALSE;
+    if(metaObj->hMapping) {
+        UnmapViewOfFile( metaObj->emh );
+	CloseHandle( metaObj->hMapping );
+	CloseHandle( metaObj->hFile );
+    } else
+        HeapFree( SystemHeap, 0, metaObj->emh );
+    return GDI_FreeObject( hmf );
+}
+
+/******************************************************************
+ *         EMF_GetEnhMetaHeader
+ *
+ * Returns ptr to ENHMETAHEADER associated with HENHMETAFILE
+ * Should be followed by call to EMF_ReleaseEnhMetaHeader
+ */
+static ENHMETAHEADER *EMF_GetEnhMetaHeader( HENHMETAFILE hmf )
+{
+    ENHMETAFILEOBJ *metaObj = (ENHMETAFILEOBJ *)GDI_GetObjPtr( hmf,
+							   ENHMETAFILE_MAGIC );
+    TRACE(enhmetafile, "hmf %04x -> enhmetaObj %p\n", hmf, metaObj);
+    return metaObj->emh;
+}
+
+/******************************************************************
+ *         EMF_ReleaseEnhMetaHeader
+ *
+ * Releases ENHMETAHEADER associated with HENHMETAFILE
+ */
+static BOOL EMF_ReleaseEnhMetaHeader( HENHMETAFILE hmf )
+{
+    return GDI_HEAP_UNLOCK( hmf );
+}
 
 /*****************************************************************************
- *          GetEnhMetaFile32A (GDI32.174)
+ *         EMF_GetEnhMetaFile
+ *
+ */
+static HENHMETAFILE EMF_GetEnhMetaFile( HFILE hFile )
+{
+    ENHMETAHEADER *emh;
+    HANDLE hMapping;
+    
+    hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+    emh = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+
+    if (emh->iType != EMR_HEADER || emh->dSignature != ENHMETA_SIGNATURE) {
+        WARN(enhmetafile, "Invalid emf header type 0x%08lx sig 0x%08lx.\n",
+	     emh->iType, emh->dSignature);
+	UnmapViewOfFile( emh );
+	CloseHandle( hMapping );
+	return 0;
+    }
+    return EMF_Create_HENHMETAFILE( emh, hFile, hMapping );
+}
+
+
+/*****************************************************************************
+ *          GetEnhMetaFileA (GDI32.174)
  *
  *
  */
@@ -22,54 +105,18 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 	     LPCSTR lpszMetaFile  /* filename of enhanced metafile */
     )
 {
-  HENHMETAFILE hmf = 0;
-  ENHMETAHEADER h;
-  BYTE *p;
-  DWORD read;
-  HFILE hf = CreateFileA(lpszMetaFile, GENERIC_READ, 0, 0, 
-			     OPEN_EXISTING, 0, 0);
-  if (hf == INVALID_HANDLE_VALUE) {
-    FIXME(metafile,"could not open %s\n",lpszMetaFile);
-    return 0;
-  }
-  if (!ReadFile(hf, &h, sizeof(ENHMETAHEADER), &read, NULL)) {
-    FIXME(metafile,"%s can't be read.\n",lpszMetaFile);
-    CloseHandle(hf);
-    return 0;
-  }
-  if (read!=sizeof(ENHMETAHEADER)) {
-    FIXME(metafile,"%s is not long enough.\n",lpszMetaFile);
-    CloseHandle(hf);
-    return 0;
-  }
-  if (h.iType!=1) {
-    FIXME(metafile,"%s has invalid emf header (type 0x%08lx).\n",lpszMetaFile,h.iType);
-    CloseHandle(hf);
-    return 0;
-  }
-  if (memcmp(&(h.dSignature)," EMF",4)) {
-    FIXME(metafile,"%s has invalid EMF header (dSignature 0x%08lx).\n",lpszMetaFile,h.dSignature);
-    CloseHandle(hf);
-    return 0;
-  }
-  SetFilePointer(hf, 0, NULL, FILE_BEGIN); 
-  /*  hmf = CreateFileMapping32A( hf, NULL, NULL, NULL, NULL, "temp"); */
-  hmf = GlobalAlloc(GPTR, h.nBytes);
-  p = GlobalLock(hmf);
-  if (!ReadFile(hf, p, h.nBytes, &read, NULL)) {
-    FIXME(metafile,"%s could not be read.\n",lpszMetaFile);
-    GlobalFree(hmf);
-    CloseHandle(hf);
-    return 0;
-  }
-  if (read!=h.nBytes) {
-    FIXME(metafile,"%s is not long enough (%ld expected, %ld got).\n",lpszMetaFile,h.nBytes,read);
-    GlobalFree(hmf);
-    CloseHandle(hf);
-    return 0;
-  }
-  GlobalUnlock(hmf);
-  return hmf;
+    HENHMETAFILE hmf;
+    HFILE hFile;
+
+    hFile = CreateFileA(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        WARN(enhmetafile,"could not open %s\n", lpszMetaFile);
+	return 0;
+    }
+    hmf = EMF_GetEnhMetaFile( hFile );
+    if(!hmf)
+        CloseHandle( hFile );
+    return hmf;
 }
 
 /*****************************************************************************
@@ -78,8 +125,18 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
 HENHMETAFILE WINAPI GetEnhMetaFileW(
              LPCWSTR lpszMetaFile)  /* filename of enhanced metafile */ 
 {
-  FIXME(metafile, "(%p): stub\n", lpszMetaFile);
-  return 0;
+    HENHMETAFILE hmf;
+    HFILE hFile;
+
+    hFile = CreateFileW(lpszMetaFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        WARN(enhmetafile,"could not open %s\n", debugstr_w(lpszMetaFile));
+	return 0;
+    }
+    hmf = EMF_GetEnhMetaFile( hFile );
+    if(!hmf)
+        CloseHandle( hFile );
+    return hmf;
 }
 
 /*****************************************************************************
@@ -95,11 +152,13 @@ UINT WINAPI GetEnhMetaFileHeader(
        LPENHMETAHEADER buf /* buffer */ 
     )
 {
-  LPENHMETAHEADER p = GlobalLock(hmf);
-  if (!buf) return sizeof(ENHMETAHEADER);
-  memmove(buf, p, MIN(sizeof(ENHMETAHEADER), bufsize));
-  GlobalUnlock(hmf);
-  return MIN(sizeof(ENHMETAHEADER), bufsize);
+    LPENHMETAHEADER emh;
+
+    if (!buf) return sizeof(ENHMETAHEADER);
+    emh = EMF_GetEnhMetaHeader(hmf);
+    memmove(buf, emh, MIN(sizeof(ENHMETAHEADER), bufsize));
+    EMF_ReleaseEnhMetaHeader(hmf);
+    return MIN(sizeof(ENHMETAHEADER), bufsize);
 }
 
 
@@ -112,18 +171,27 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
        LPSTR buf /* buffer to receive description */
     )
 {
-  LPENHMETAHEADER p = GlobalLock(hmf);
-  INT first  = lstrlenW( (LPWSTR) ((char *)p+p->offDescription));
-
-  if (!buf || !size) return p->nDescription;
-
-  lstrcpynWtoA(buf, (LPWSTR) ((char *)p+p->offDescription), size);
-  buf += first +1;
-  lstrcpynWtoA(buf, (LPWSTR) ((char *)p+p->offDescription+2*(first+1)), size-first-1);
-
-  /*  memmove(buf, (LPWSTR) ((char *)p+p->offDescription), MIN(size,p->nDescription)); */
-  GlobalUnlock(hmf);
-  return MIN(size,p->nDescription);
+     LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
+     INT first;
+ 
+     if(emh->nDescription == 0 || emh->offDescription == 0) {
+         EMF_ReleaseEnhMetaHeader(hmf);
+ 	return 0;
+     }
+     if (!buf || !size ) {
+         EMF_ReleaseEnhMetaHeader(hmf);
+ 	return emh->nDescription;
+     }
+ 
+     first = lstrlenW( (void *)emh + emh->offDescription);
+ 
+     lstrcpynWtoA(buf, (void *)emh + emh->offDescription, size);
+     buf += first + 1;
+     lstrcpynWtoA(buf, (void *)emh + emh->offDescription+2*(first+1),
+ 		 size - first - 1);
+ 
+     EMF_ReleaseEnhMetaHeader(hmf);
+     return MIN(size, emh->nDescription);
 }
 
 /*****************************************************************************
@@ -141,13 +209,21 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
        LPWSTR buf /* buffer to receive description */
     )
 {
-  LPENHMETAHEADER p = GlobalLock(hmf);
-
-  if (!buf || !size) return p->nDescription;
-
-  memmove(buf, (char *)p+p->offDescription, MIN(size,p->nDescription));
-  GlobalUnlock(hmf);
-  return MIN(size,p->nDescription);
+     LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
+ 
+     if(emh->nDescription == 0 || emh->offDescription == 0) {
+         EMF_ReleaseEnhMetaHeader(hmf);
+ 	return 0;
+     }
+     if (!buf || !size ) {
+         EMF_ReleaseEnhMetaHeader(hmf);
+ 	return emh->nDescription;
+     }
+ 
+     memmove(buf, (void *)emh + emh->offDescription, 
+ 	    MIN(size,emh->nDescription));
+     EMF_ReleaseEnhMetaHeader(hmf);
+     return MIN(size, emh->nDescription);
 }
 
 /****************************************************************************
@@ -157,11 +233,9 @@ UINT WINAPI GetEnhMetaFileDescriptionW(
  */
 HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT bufsize, const BYTE *buf)
 {
-  HENHMETAFILE hmf = GlobalAlloc(GPTR, bufsize);
-  LPENHMETAHEADER h = GlobalLock(hmf);
-  memmove(h, buf, bufsize);
-  GlobalUnlock(hmf);
-  return hmf;
+    ENHMETAHEADER *emh = HeapAlloc( SystemHeap, 0, bufsize );
+    memmove(emh, buf, bufsize);
+    return EMF_Create_HENHMETAFILE( emh, 0, 0 );
 }
 
 /*****************************************************************************
@@ -194,14 +268,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
      ) 
 {
   int type;
-  TRACE(metafile, 
+  TRACE(enhmetafile, 
 	"hdc = %08x, handletable = %p, record = %p, numHandles = %d\n", 
 	  hdc, handletable, mr, handles);
   if (!mr) return FALSE;
 
   type = mr->iType;
 
-  TRACE(metafile, " type=%d\n", type);
+  TRACE(enhmetafile, " type=%d\n", type);
   switch(type) 
     {
     case EMR_HEADER:
@@ -328,7 +402,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	DWORD obj = mr->dParm[0];
 	DWORD style = mr->dParm[1], brush = mr->dParm[2];
 	LOGBRUSH *b = (LOGBRUSH *) &mr->dParm[3];
-	FIXME(metafile, "Some ExtCreatePen args not handled\n");
+	FIXME(enhmetafile, "Some ExtCreatePen args not handled\n");
 	(handletable->objectHandle)[obj] = 
 	  ExtCreatePen(style, brush, b, 0, NULL);
 	break;
@@ -377,7 +451,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	/* 0-3 : a bounding rectangle? */
 	INT count = mr->dParm[4];
-	FIXME(metafile, "Some Polygon16 args not handled\n");
+	FIXME(enhmetafile, "Some Polygon16 args not handled\n");
 	Polygon16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
@@ -385,7 +459,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       {
 	/* 0-3 : a bounding rectangle? */
 	INT count = mr->dParm[4];
-	FIXME(metafile, "Some Polyline16 args not handled\n");
+	FIXME(enhmetafile, "Some Polyline16 args not handled\n");
 	Polyline16(hdc, (POINT16 *)&mr->dParm[5], count);
 	break;
       }
@@ -432,14 +506,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	/* 10-16: ??? */
 	LPWSTR str = (LPWSTR)& mr->dParm[17];
 	/* trailing info: dx array? */
-	FIXME(metafile, "Many ExtTextOut args not handled\n");
+	FIXME(enhmetafile, "Many ExtTextOut args not handled\n");
 	ExtTextOutW(hdc, x, y, flags, /* lpRect */ NULL, 
 		      str, count, /* lpDx */ NULL); 
 	break;
       }
 
     default:
-      FIXME(metafile, "type %d is unimplemented\n", type);
+      FIXME(enhmetafile, "type %d is unimplemented\n", type);
       /*  SetLastError(E_NOTIMPL); */
       break;
     }
@@ -472,19 +546,20 @@ BOOL WINAPI EnumEnhMetaFile(
      const RECT *rect  /* bounding rectangle for rendered metafile */
     )
 {
-  BOOL ret = TRUE;
-  LPENHMETARECORD p = GlobalLock(hmf);
-  INT count = ((LPENHMETAHEADER) p)->nHandles;
-  HANDLETABLE *ht = (HANDLETABLE *)GlobalAlloc(GPTR, sizeof(HANDLETABLE)*count);
-  ht->objectHandle[0] = hmf;
-  while (ret) {
-    ret = (*callback)(hdc, ht, p, count, data); 
-    if (p->iType == EMR_EOF) break;
-    p = (LPENHMETARECORD) ((char *) p + p->nSize);
-  }
-  GlobalFree((HGLOBAL)ht);
-  GlobalUnlock(hmf);
-  return ret;
+    BOOL ret = TRUE;
+    LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
+    INT count = ((LPENHMETAHEADER) p)->nHandles;
+    HANDLETABLE *ht = HeapAlloc( GetProcessHeap(), 0, 
+				 sizeof(HANDLETABLE)*count);
+    ht->objectHandle[0] = hmf;
+    while (ret) {
+        ret = (*callback)(hdc, ht, p, count, data); 
+	if (p->iType == EMR_EOF) break;
+	p = (void *) p + p->nSize;
+    }
+    HeapFree( GetProcessHeap(), 0, ht);
+    EMF_ReleaseEnhMetaHeader(hmf);
+    return ret;
 }
 
 
@@ -504,40 +579,39 @@ BOOL WINAPI PlayEnhMetaFile(
        const RECT *lpRect  /* rectangle to place metafile inside */
       )
 {
-  LPENHMETARECORD p = GlobalLock(hmf);
-  INT count = ((LPENHMETAHEADER) p)->nHandles;
-  HANDLETABLE *ht = (HANDLETABLE *)GlobalAlloc(GPTR, 
-				    sizeof(HANDLETABLE)*count);
-  BOOL ret = FALSE;
-  INT savedMode = 0;
-  if (lpRect) {
-    LPENHMETAHEADER h = (LPENHMETAHEADER) p;
-    FLOAT xscale = (h->rclBounds.right-h->rclBounds.left)/(lpRect->right-lpRect->left);
-    FLOAT yscale = (h->rclBounds.bottom-h->rclBounds.top)/(lpRect->bottom-lpRect->top);
-    XFORM xform;
-    xform.eM11 = xscale;
-    xform.eM12 = 0;
-    xform.eM21 = 0;
-    xform.eM22 = yscale;
-    xform.eDx = lpRect->left;
-    xform.eDy = lpRect->top; 
-    FIXME(metafile, "play into rect doesn't work\n");
-    savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
-    if (!SetWorldTransform(hdc, &xform)) {
-      WARN(metafile, "World transform failed!\n");
+    LPENHMETARECORD p = (LPENHMETARECORD) EMF_GetEnhMetaHeader(hmf);
+    INT count = ((LPENHMETAHEADER) p)->nHandles;
+    HANDLETABLE *ht = HeapAlloc( GetProcessHeap(), 0, 
+				 sizeof(HANDLETABLE) * count);
+    BOOL ret = FALSE;
+    INT savedMode = 0;
+    if (lpRect) {
+        LPENHMETAHEADER h = (LPENHMETAHEADER) p;
+	FLOAT xscale = (h->rclBounds.right - h->rclBounds.left) /
+	  (lpRect->right - lpRect->left);
+	FLOAT yscale = (h->rclBounds.bottom - h->rclBounds.top) /
+	  (lpRect->bottom - lpRect->top);
+	XFORM xform = {xscale, 0, 0, yscale, 0, 0};
+        xform.eDx = lpRect->left;
+	xform.eDy = lpRect->top; 
+	FIXME(enhmetafile, "play into rect doesn't work\n");
+	savedMode = SetGraphicsMode(hdc, GM_ADVANCED);
+	if (!SetWorldTransform(hdc, &xform)) {
+	    WARN(enhmetafile, "World transform failed!\n");
+	}
     }
-  }
 
-  ht->objectHandle[0] = hmf;
-  while (1) {
-    PlayEnhMetaFileRecord(hdc, ht, p, count);
-    if (p->iType == EMR_EOF) break;
-    p = (LPENHMETARECORD) ((char *) p + p->nSize); /* casted so that arithmetic is in bytes */
-  }
-  GlobalUnlock(hmf);
-  if (savedMode) SetGraphicsMode(hdc, savedMode);
-  ret = TRUE; /* FIXME: calculate a more accurate return value */
-  return ret;
+    ht->objectHandle[0] = hmf;
+    while (1) {
+        PlayEnhMetaFileRecord(hdc, ht, p, count);
+	if (p->iType == EMR_EOF) break;
+	p = (void *) p + p->nSize; /* casted so that arithmetic is in bytes */
+    }
+    HeapFree( GetProcessHeap(), 0, ht );
+    EMF_ReleaseEnhMetaHeader(hmf);
+    if (savedMode) SetGraphicsMode(hdc, savedMode);
+    ret = TRUE; /* FIXME: calculate a more accurate return value */
+    return ret;
 }
 
 /*****************************************************************************
@@ -545,8 +619,9 @@ BOOL WINAPI PlayEnhMetaFile(
  *
  *  Deletes an enhanced metafile and frees the associated storage.
  */
-BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf) {
-  return !GlobalFree(hmf);
+BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf)
+{
+    return EMF_Delete_HENHMETAFILE( hmf );
 }
 
 /*****************************************************************************
@@ -555,23 +630,27 @@ BOOL WINAPI DeleteEnhMetaFile(HENHMETAFILE hmf) {
  *   
  */
 HENHMETAFILE WINAPI CopyEnhMetaFileA(
-    HENHMETAFILE hmf, 
+    HENHMETAFILE hmfSrc, 
     LPCSTR file)
 {
-  if (!file) {
-    LPENHMETAHEADER h = GlobalLock(hmf);
-    HENHMETAFILE hmf2 = GlobalAlloc(GPTR, h->nBytes);
-    LPENHMETAHEADER h2 = GlobalLock(hmf2);
-    if (!h2) return 0;
-    memmove(h2, h, h->nBytes);
-    GlobalUnlock(hmf2);
-    GlobalUnlock(hmf);
-    return hmf2;
-  } else {
-    FIXME(metafile, "write to file not implemented\n");
-    return 0;
-  }
+    ENHMETAHEADER *emrSrc = EMF_GetEnhMetaHeader( hmfSrc ), *emrDst;
+    HENHMETAFILE hmfDst;
+
+    if (!file) {
+        emrDst = HeapAlloc( SystemHeap, 0, emrSrc->nBytes );
+	memcpy( emrDst, emrSrc, emrSrc->nBytes );
+	hmfDst = EMF_Create_HENHMETAFILE( emrDst, 0, 0 );
+    } else {
+        HFILE hFile;
+        hFile = CreateFileA( file, GENERIC_WRITE | GENERIC_READ, 0, NULL,
+			     CREATE_ALWAYS, 0, -1);
+	WriteFile( hFile, emrSrc, emrSrc->nBytes, 0, 0);
+	hmfDst = EMF_GetEnhMetaFile( hFile );
+    }
+    EMF_ReleaseEnhMetaHeader( hmfSrc );
+    return hmfDst;
 }
+
 
 /*****************************************************************************
  *  GetEnhMetaFilePaletteEntries (GDI32.179)  
@@ -583,23 +662,8 @@ UINT WINAPI GetEnhMetaFilePaletteEntries(HENHMETAFILE hemf,
 					     UINT cEntries,
 					     LPPALETTEENTRY lppe)
 {
-  LPENHMETAHEADER h = GlobalLock(hemf);
-
-  if ( h == NULL ){
-    GlobalUnlock(hemf);
-    return(0);
-  } else {
-    if ((lppe)&&(cEntries>0)){
-      FIXME(metafile,"Stub\n");
-      GlobalUnlock(hemf);
-      return(GDI_ERROR);
-    } else{
-      GlobalUnlock(hemf);
-      return(0);
-    }
-  }
+    return 0;
 }
-
 
 
 /******************************************************************
@@ -614,9 +678,8 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   CONST METAFILEPICT *lpmfp
 					   ) 
 {
-   FIXME(metafile,"Stub\n");
-   return 0;
-
+     FIXME(enhmetafile,"Stub\n");
+     return 0;
 }
 
 
