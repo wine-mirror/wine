@@ -14,7 +14,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "driver.h"
 #include "heap.h"
 #include "mmsystem.h"
 #include "msacm.h"

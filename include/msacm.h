@@ -6,7 +6,6 @@
 #define __WINE_MSACM_H
 
 #include "windef.h"
-#include "driver.h"
 #include "mmsystem.h"
 #include "mmreg.h"
 

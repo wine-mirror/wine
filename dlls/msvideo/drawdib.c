@@ -11,7 +11,6 @@
 #include "winuser.h"
 #include "winbase.h"
 #include "debugtools.h"
-#include "driver.h"
 #include "vfw.h"
 #include "windef.h"
 

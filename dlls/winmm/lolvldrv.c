@@ -11,7 +11,6 @@
 #include "heap.h"
 #include "user.h"	/* should be removed asap; used in MMDRV_(Get|Alloc|Free) */
 #include "selectors.h"
-#include "driver.h"
 #include "winver.h"
 #include "module.h"
 #include "winemm.h"
@@ -2364,7 +2363,6 @@ BOOL	MMDRV_Init(void)
     /* finish with mappers */
     if (MMDRV_Install("msacm.drv", 	   num, TRUE )) num++;
     if (MMDRV_Install("midimap.drv",	   num, TRUE )) num++;
-
 
     /* be sure that size of MMDrvs matches the max number of loadable drivers !! 
      * if not just increase size of MMDrvs */

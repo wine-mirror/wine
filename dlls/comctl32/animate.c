@@ -19,7 +19,6 @@
 
 #include "winbase.h"
 #include "commctrl.h"
-#include "driver.h"
 #include "animate.h"
 #include "mmsystem.h"
 #include "services.h"

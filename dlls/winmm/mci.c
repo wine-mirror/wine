@@ -14,7 +14,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "heap.h"
-#include "driver.h"
 #include "winemm.h"
 #include "selectors.h"
 #include "digitalv.h"

@@ -17,7 +17,6 @@
 #include <sys/ioctl.h>
 #include "windef.h"
 #include "user.h"
-#include "driver.h"
 #include "mmddk.h"
 #include "oss.h"
 #include "debugtools.h"

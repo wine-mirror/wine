@@ -40,7 +40,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
-#include "driver.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(joystick);

@@ -21,7 +21,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
-#include "driver.h"
 #include "heap.h"
 #include "debugtools.h"
 

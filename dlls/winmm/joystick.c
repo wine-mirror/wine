@@ -18,7 +18,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "driver.h"
 #include "winemm.h"
 #include "debugtools.h"
 

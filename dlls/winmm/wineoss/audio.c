@@ -32,7 +32,6 @@
 #include "wingdi.h"
 #include "winerror.h"
 #include "wine/winuser16.h"
-#include "driver.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"

@@ -14,7 +14,6 @@
 #include "wine/winbase16.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "driver.h"
 #include "ldt.h"
 #include "module.h"
 #include "mmddk.h"
@@ -637,7 +636,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam, BOOL bCallFr
  *
  * Creates unique ID for 16 bit drivers.
  */
-static	HDRVR16	DRIVER_CreateDrvr16()
+static	HDRVR16	DRIVER_CreateDrvr16(void)
 {
     static	WORD	DRIVER_hDrvr16Counter = 0;
     

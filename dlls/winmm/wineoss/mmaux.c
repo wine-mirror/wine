@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windef.h"
-#include "driver.h"
 #include "mmddk.h"
 #include "oss.h"
 #include "debugtools.h"

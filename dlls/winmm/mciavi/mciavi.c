@@ -12,7 +12,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "user.h"
-#include "driver.h"
 #include "digitalv.h"
 #include "debugtools.h"
 

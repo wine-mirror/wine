@@ -8,7 +8,6 @@
 #include "winbase.h"
 #include "vfw.h"
 #include "wine/winestring.h"
-#include "driver.h"
 #include "mmsystem.h"
 #include "winerror.h"
 #include "debugtools.h"

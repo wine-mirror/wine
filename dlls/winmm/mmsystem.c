@@ -22,15 +22,14 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "wownt32.h"
 #include "heap.h"
-#include "driver.h"
 #include "winemm.h"
 #include "syslevel.h"
 #include "callback.h"
 #include "selectors.h"
 #include "module.h"
 #include "debugtools.h"
+#include "ntddk.h"
 
 DEFAULT_DEBUG_CHANNEL(mmsys)
 
@@ -59,7 +58,8 @@ LPWINE_MM_IDATA	MULTIMEDIA_GetIData(void)
     LPWINE_MM_IDATA	iData = MULTIMEDIA_GetIDataNoCheck();
 
     if (!iData) {
-	ERR("IData not found. Suicide !!!\n");
+	ERR("IData not found for pid=%08lx. Suicide !!!\n", GetCurrentProcessId());
+	DbgBreakPoint();
 	ExitProcess(0);
     }
     return iData;
@@ -81,6 +81,7 @@ static	BOOL	MULTIMEDIA_CreateIData(HINSTANCE hInstDLL)
     iData->lpNextIData = lpFirstIData;
     lpFirstIData = iData;
     InitializeCriticalSection(&iData->cs);
+    TRACE("Created IData (%p) for pid %08lx\n", iData, iData->dwThisProcess);
     return TRUE;
 }
 
@@ -156,8 +157,8 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 	/* need to load WinMM in order to:
-	 * - correctly initiates shared variables (MULTIMEDIA_Init())
-	 * - correctly creates the per process WINE_MM_IDATA chunk
+	 * - initiate correctly shared variables (MULTIMEDIA_Init())
+	 * - create correctly the per process WINE_MM_IDATA chunk
 	 */
 	hndl = LoadLibraryA("WINMM.DLL");
 	
@@ -562,7 +563,7 @@ BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 				      !((DWORD)pszSound >> 16)) || !pszSound)) {
 	pszSoundA = HEAP_strdupWtoA(GetProcessHeap(), 0,pszSound);
 	bSound = PlaySoundA(pszSoundA, hmod, fdwSound);
-	HeapFree(GetProcessHeap(), 0,pszSoundA);
+	HeapFree(GetProcessHeap(), 0, pszSoundA);
     } else  
 	bSound = PlaySoundA((LPCSTR)pszSound, hmod, fdwSound);
     
@@ -3335,7 +3336,7 @@ static	MMRESULT WINAPI MMSYSTEM_MidiStream_Open(HMIDISTRM* lphMidiStrm, LPUINT l
 	*lphMidiStrm = hMidiOut;
 
     /* FIXME: is lpuDevice initialized upon entering midiStreamOpen ? */
-    FIXME("*lpuDeviceID=%u\n", *lpuDeviceID);
+    FIXME("*lpuDeviceID=%x\n", *lpuDeviceID);
     lpwm->mld.uDeviceID = *lpuDeviceID = 0;
 
     ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD)&lpwm->mod, fdwOpen);

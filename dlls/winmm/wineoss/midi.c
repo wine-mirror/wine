@@ -23,7 +23,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "oss.h"
-#include "driver.h"
 #include "debugtools.h"
 #include "heap.h"
 #include "ldt.h"

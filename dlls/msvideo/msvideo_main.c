@@ -16,7 +16,6 @@
 #include "winuser.h"
 #include "vfw.h"
 #include "wine/winestring.h"
-#include "driver.h"
 #include "debugtools.h"
 #include "ldt.h"
 #include "heap.h"
