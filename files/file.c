@@ -719,54 +719,6 @@ UINT WINAPI SetHandleCount( UINT count )
 
 
 /**************************************************************************
- *           SetEndOfFile   (KERNEL32.@)
- */
-BOOL WINAPI SetEndOfFile( HANDLE hFile )
-{
-    BOOL ret;
-    SERVER_START_REQ( truncate_file )
-    {
-        req->handle = hFile;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           GetFileType   (KERNEL32.@)
- */
-DWORD WINAPI GetFileType( HANDLE hFile )
-{
-    NTSTATUS status;
-    int fd;
-    DWORD ret = FILE_TYPE_UNKNOWN;
-
-    if (is_console_handle( hFile ))
-        return FILE_TYPE_CHAR;
-
-    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
-    {
-        struct stat st;
-
-        if (fstat( fd, &st ) == -1)
-            FILE_SetDosError();
-        else if (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode))
-            ret = FILE_TYPE_PIPE;
-        else if (S_ISCHR(st.st_mode))
-            ret = FILE_TYPE_CHAR;
-        else
-            ret = FILE_TYPE_DISK;
-        wine_server_release_fd( hFile, fd );
-    }
-    else SetLastError( RtlNtStatusToDosError(status) );
-
-    return ret;
-}
-
-
-/**************************************************************************
  *           CopyFileW   (KERNEL32.@)
  */
 BOOL WINAPI CopyFileW( LPCWSTR source, LPCWSTR dest, BOOL fail_if_exists )

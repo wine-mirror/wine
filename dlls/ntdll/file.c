@@ -1124,6 +1124,29 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
 
+    case FileEndOfFileInformation:
+        if (len >= sizeof(FILE_END_OF_FILE_INFORMATION))
+        {
+            const FILE_END_OF_FILE_INFORMATION *info = ptr;
+
+            if (info->EndOfFile.QuadPart > lseek( fd, 0, SEEK_END ))
+            {
+                static const char zero;
+
+                /* extend the file one byte beyond the requested size and then truncate it */
+                /* this should work around ftruncate implementations that can't extend files */
+                if (pwrite( fd, &zero, 1, (off_t)info->EndOfFile.QuadPart ) == -1)
+                {
+                    io->u.Status = FILE_GetNtStatus();
+                    break;
+                }
+            }
+            if (ftruncate( fd, (off_t)info->EndOfFile.QuadPart ) == -1)
+                io->u.Status = FILE_GetNtStatus();
+        }
+        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;
@@ -1278,11 +1301,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         {
             FILE_FS_DEVICE_INFORMATION *info = buffer;
 
-#if defined(linux) && defined(HAVE_FSTATFS)
-            struct statfs stfs;
-
             info->Characteristics = 0;
-
             if (fstat( fd, &st ) < 0)
             {
                 io->u.Status = FILE_GetNtStatus();
@@ -1290,6 +1309,8 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             }
             if (S_ISCHR( st.st_mode ))
             {
+                info->DeviceType = FILE_DEVICE_UNKNOWN;
+#ifdef linux
                 switch(major(st.st_rdev))
                 {
                 case MEM_MAJOR:
@@ -1301,10 +1322,8 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                 case LP_MAJOR:
                     info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
                     break;
-                default:
-                    info->DeviceType = FILE_DEVICE_UNKNOWN;
-                    break;
                 }
+#endif
             }
             else if (S_ISBLK( st.st_mode ))
             {
@@ -1316,7 +1335,8 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             }
             else  /* regular file or directory */
             {
-                info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
+#if defined(linux) && defined(HAVE_FSTATFS)
+                struct statfs stfs;
 
                 /* check for floppy disk */
                 if (major(st.st_dev) == FLOPPY_MAJOR)
@@ -1346,13 +1366,13 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
                     break;
                 }
-            }
 #else
-            static int warned;
-            if (!warned++) FIXME( "device info not supported on this platform\n" );
-            info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-            info->Characteristics = 0;
+                static int warned;
+                if (!warned++) FIXME( "device info not properly supported on this platform\n" );
+                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
 #endif
+                info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
+            }
             io->Information = sizeof(*info);
             io->u.Status = STATUS_SUCCESS;
         }

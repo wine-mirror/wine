@@ -2,7 +2,7 @@
  * File handling functions
  *
  * Copyright 1993 John Burton
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 2004 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,10 +17,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * TODO:
- *    Fix the CopyFileEx methods to implement the "extended" functionality.
- *    Right now, they simply call the CopyFile method.
  */
 
 #include "config.h"
@@ -36,6 +32,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wincon.h"
 #include "wine/winbase16.h"
 #include "kernel_private.h"
@@ -331,6 +328,39 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
 
 
 /***********************************************************************
+ *           GetFileType   (KERNEL32.@)
+ */
+DWORD WINAPI GetFileType( HANDLE hFile )
+{
+    FILE_FS_DEVICE_INFORMATION info;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    if (is_console_handle( hFile )) return FILE_TYPE_CHAR;
+
+    status = NtQueryVolumeInformationFile( hFile, &io, &info, sizeof(info), FileFsDeviceInformation );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FILE_TYPE_UNKNOWN;
+    }
+
+    switch(info.DeviceType)
+    {
+    case FILE_DEVICE_NULL:
+    case FILE_DEVICE_SERIAL_PORT:
+    case FILE_DEVICE_PARALLEL_PORT:
+    case FILE_DEVICE_UNKNOWN:
+        return FILE_TYPE_CHAR;
+    case FILE_DEVICE_NAMED_PIPE:
+        return FILE_TYPE_PIPE;
+    default:
+        return FILE_TYPE_DISK;
+    }
+}
+
+
+/***********************************************************************
  *             GetFileInformationByHandle   (KERNEL32.@)
  */
 BOOL WINAPI GetFileInformationByHandle( HANDLE hFile, BY_HANDLE_FILE_INFORMATION *info )
@@ -390,6 +420,28 @@ BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
         *lpFileSize = info.EndOfFile;
         return TRUE;
     }
+    SetLastError( RtlNtStatusToDosError(status) );
+    return FALSE;
+}
+
+
+/**************************************************************************
+ *           SetEndOfFile   (KERNEL32.@)
+ */
+BOOL WINAPI SetEndOfFile( HANDLE hFile )
+{
+    FILE_POSITION_INFORMATION pos;
+    FILE_END_OF_FILE_INFORMATION eof;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( hFile, &io, &pos, sizeof(pos), FilePositionInformation );
+    if (status == STATUS_SUCCESS)
+    {
+        eof.EndOfFile = pos.CurrentByteOffset;
+        status = NtSetInformationFile( hFile, &io, &eof, sizeof(eof), FileEndOfFileInformation );
+    }
+    if (status == STATUS_SUCCESS) return TRUE;
     SetLastError( RtlNtStatusToDosError(status) );
     return FALSE;
 }
