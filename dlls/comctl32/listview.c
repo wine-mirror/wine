@@ -6689,7 +6689,33 @@ static LRESULT LISTVIEW_InsertColumnT(HWND hwnd, INT nColumn,
     if (lpColumn->mask & LVCF_WIDTH) 
     {
       hdi.mask |= HDI_WIDTH;
-      hdi.cxy = lpColumn->cx;
+      if(lpColumn->cx == LVSCW_AUTOSIZE_USEHEADER)
+      {
+        /* make it fill the remainder of the controls width */
+        HDITEMW hdit;
+        RECT rcHeader;
+        INT item_index;
+        
+        ZeroMemory(&hdit, sizeof(hdit));
+  
+        /* get the width of every item except the current one */
+        hdit.mask = HDI_WIDTH;
+        hdi.cxy = 0;
+        
+        for(item_index = 0; item_index < (nColumn - 1); item_index++) {
+          Header_GetItemW(infoPtr->hwndHeader, item_index, (LPARAM)(&hdit));
+          hdi.cxy+=hdit.cxy;
+        }
+
+        /* retrieve the layout of the header */
+        GetClientRect(hwnd, &rcHeader);
+/*        GetWindowRect(infoPtr->hwndHeader, &rcHeader);*/
+        TRACE("start cxy=%d left=%d right=%d\n", hdi.cxy, rcHeader.left, rcHeader.right);
+
+        hdi.cxy = (rcHeader.right - rcHeader.left) - hdi.cxy;
+      }
+      else
+        hdi.cxy = lpColumn->cx;
     }
   
     if (lpColumn->mask & LVCF_TEXT) 
@@ -7114,8 +7140,10 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     WCHAR text_buffer[DISP_TEXT_SIZE];
     INT header_item_count;
     INT item_index;
+    INT nLabelWidth;
     RECT rcHeader;
-
+    LVITEMW lvItem;
+    WCHAR szDispText[DISP_TEXT_SIZE];
 
     /* make sure we can get the listview info */
     if (!(infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0)))
@@ -7128,6 +7156,8 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     if ((uView != LVS_REPORT) && (uView != LVS_LIST))
       return (FALSE);            
 
+    TRACE("(hwnd=%x, iCol=%d, cx=%d\n", hwnd, iCol, cx);
+    
     /* take care of invalid cx values */
     if((uView == LVS_REPORT) && (cx < -2))
       cx = LVSCW_AUTOSIZE;
@@ -7144,12 +7174,38 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
     /* autosize based on listview items width */
     if(cx == LVSCW_AUTOSIZE)
     {
-      /* set the width of the header to the width of the widest item */
-      for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
+      /* set the width of the column to the width of the widest item */
+      if (iCol == 0 || uView == LVS_LIST)
       {
-        if(cx < LISTVIEW_GetLabelWidth(hwnd, item_index))
-          cx = LISTVIEW_GetLabelWidth(hwnd, item_index);
-      } 
+        cx = 0;
+        for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
+        {
+          nLabelWidth = LISTVIEW_GetLabelWidth(hwnd, item_index);
+          cx = (nLabelWidth>cx)?nLabelWidth:cx;
+        }
+        /* I had to add the '3' to prevent clipping of the end of the
+           line. Probably one of these padding numbers is incorrect. */
+        if (infoPtr->himlSmall)
+          cx += WIDTH_PADDING + IMAGE_PADDING + 3;
+      }
+      else
+      {
+        ZeroMemory(&lvItem, sizeof(lvItem));
+        lvItem.iSubItem = iCol;
+        lvItem.mask = LVIF_TEXT;
+        lvItem.cchTextMax = DISP_TEXT_SIZE;
+        lvItem.pszText = szDispText;
+        *lvItem.pszText = '\0';
+        cx = 0;
+        for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
+        {
+          lvItem.iItem = item_index;
+          LISTVIEW_GetItemT(hwnd, &lvItem, FALSE, TRUE);
+          nLabelWidth = LISTVIEW_GetStringWidthT(hwnd, lvItem.pszText, TRUE);
+          cx = (nLabelWidth>cx)?nLabelWidth:cx;
+        }
+      }
+      cx += TRAILING_PADDING;
     } /* autosize based on listview header width */
     else if(cx == LVSCW_AUTOSIZE_USEHEADER)
     {
@@ -7173,6 +7229,13 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
       }                                  
       else
       {
+        /* Despite what the MS docs say, if this is not the last
+           column, then MS resizes the column to the width of the
+           largest text string in the column, including headers
+           and items. This is different from LVSCW_AUTOSIZE in that
+           LVSCW_AUTOSIZE ignores the header string length.
+           */
+           
         /* retrieve header font */
         header_font = SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0L, 0L);
  
@@ -7192,8 +7255,28 @@ static LRESULT LISTVIEW_SetColumnWidth(HWND hwnd, INT iCol, INT cx)
         SelectObject(hdc, old_font); /* restore the old font */    
         ReleaseDC(hwnd, hdc);
  
-        /* set the width of this column to the width of the text */
+        ZeroMemory(&lvItem, sizeof(lvItem));
+        lvItem.iSubItem = iCol;
+        lvItem.mask = LVIF_TEXT;
+        lvItem.cchTextMax = DISP_TEXT_SIZE;
+        lvItem.pszText = szDispText;
+        *lvItem.pszText = '\0';
         cx = size.cx;
+        for(item_index = 0; item_index < GETITEMCOUNT(infoPtr); item_index++)
+        {
+          lvItem.iItem = item_index;
+          LISTVIEW_GetItemT(hwnd, &lvItem, FALSE, TRUE);
+          nLabelWidth = LISTVIEW_GetStringWidthT(hwnd, lvItem.pszText, TRUE);
+          nLabelWidth += TRAILING_PADDING;
+          /* While it is possible for subitems to have icons, even MS messes
+             up the positioning, so I suspect no applications actually use
+             them. */
+          if (item_index == 0 && infoPtr->himlSmall)
+            /* I had to add the '3' to prevent clipping of the end of the
+               line. Probably one of these padding numbers is incorrect. */
+            nLabelWidth += WIDTH_PADDING + IMAGE_PADDING + 3;
+          cx = (nLabelWidth>cx)?nLabelWidth:cx;
+        }
       }
   }
 
