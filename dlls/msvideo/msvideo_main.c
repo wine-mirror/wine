@@ -217,8 +217,9 @@ HIC16 VFWAPI ICOpen16(DWORD fccType, DWORD fccHandler, UINT16 wMode) {
 /***********************************************************************
  *		ICOpenFunction			[MSVIDEO.206]
  */
-HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler) {
-	return MSVIDEO_OpenFunc(fccType, fccHandler, wMode, lpfnHandler,FALSE);
+HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler)
+{
+	return MSVIDEO_OpenFunc(fccType, fccHandler, wMode, (FARPROC)lpfnHandler,FALSE);
 }
 
 /***********************************************************************
