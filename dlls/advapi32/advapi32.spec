@@ -54,14 +54,14 @@ import	ntdll.dll
 @ stub CryptGetKeyParam
 @ stub CryptGetHashParam
 @ stub CryptGetProvParam
-@ stub CryptGenRandom
+@ stdcall CryptGenRandom(long long ptr) CryptGenRandom
 @ stub CryptGetDefaultProviderA
 @ stub CryptGetDefaultProviderW
 @ stub CryptGetUserKey
 @ stub CryptHashData
 @ stub CryptHashSessionKey
 @ stub CryptImportKey
-@ stub CryptReleaseContext
+@ stdcall CryptReleaseContext(long long) CryptReleaseContext
 @ stub CryptSetHashParam
 @ stdcall CryptSetKeyParam(long long ptr long) CryptSetKeyParam
 @ stub CryptSetProvParam
