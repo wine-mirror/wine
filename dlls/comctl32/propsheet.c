@@ -1529,29 +1529,19 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
 	    pageWidth, pageHeight, padding.x, padding.y);
 
-      /* If there is a watermark, offset the dialog items */     
-      if ( (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
-           (psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
-	   ((index == 0) || (index == psInfo->nPages - 1)) )
-      {
-	  /* if PSH_USEHBMWATERMARK is not set, load the resource from pszbmWatermark 
-	     and put the HBITMAP in hbmWatermark. Thus all the rest of the code always 
-	     considers hbmWatermark as valid. */
-	  if (!(psInfo->ppshheader.dwFlags & PSH_USEHBMWATERMARK)) 
-	  {
-	      ((PropSheetInfo *)psInfo)->ppshheader.u4.hbmWatermark = 
-		  CreateMappedBitmap(ppshpage->hInstance, (INT)psInfo->ppshheader.u4.pszbmWatermark, 0, NULL, 0);
-	  }
-      }
-
       if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD) &&
           psInfo->ppshheader.dwFlags & PSH_HEADER)
       {
-	  /* Same behavior as for watermarks */
-	  if (!(psInfo->ppshheader.dwFlags & PSH_USEHBMHEADER))
+	  if ((ppshpage->dwFlags & PSP_USEHEADERTITLE) &&
+	      (HIWORD(ppshpage->pszHeaderTitle) == 0))
 	  {
-	      ((PropSheetInfo *)psInfo)->ppshheader.u5.hbmHeader = 
-		  CreateMappedBitmap(ppshpage->hInstance, (INT)psInfo->ppshheader.u5.pszbmHeader, 0, NULL, 0);
+	    /* FIXME: load title string into ppshpage->pszHeaderTitle */
+	  }
+
+	  if ((ppshpage->dwFlags & PSP_USEHEADERSUBTITLE) &&
+	      (HIWORD(ppshpage->pszHeaderSubTitle) == 0))
+	  {
+	    /* FIXME: load title string into ppshpage->pszHeaderSubTitle */
 	  }
 
 	  hwndChild = GetDlgItem(hwndParent, IDC_SUNKEN_LINEHEADER);
@@ -1584,6 +1574,36 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   return TRUE;
 }
+
+/******************************************************************************
+ *            PROPSHEET_LoadWizardBitmaps
+ *
+ * Loads the watermark and header bitmaps for a wizard.
+ */
+static VOID PROPSHEET_LoadWizardBitmaps(PropSheetInfo *psInfo)
+{
+  if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD))
+  {
+    /* if PSH_USEHBMWATERMARK is not set, load the resource from pszbmWatermark 
+       and put the HBITMAP in hbmWatermark. Thus all the rest of the code always 
+       considers hbmWatermark as valid. */
+    if ((psInfo->ppshheader.dwFlags & PSH_WATERMARK) &&
+        !(psInfo->ppshheader.dwFlags & PSH_USEHBMWATERMARK))
+    {
+      ((PropSheetInfo *)psInfo)->ppshheader.u4.hbmWatermark = 
+        CreateMappedBitmap(psInfo->ppshheader.hInstance, (INT)psInfo->ppshheader.u4.pszbmWatermark, 0, NULL, 0);
+    }
+
+    /* Same behavior as for watermarks */
+    if ((psInfo->ppshheader.dwFlags & PSH_HEADER) &&
+        !(psInfo->ppshheader.dwFlags & PSH_USEHBMHEADER))
+    {
+      ((PropSheetInfo *)psInfo)->ppshheader.u5.hbmHeader = 
+        CreateMappedBitmap(psInfo->ppshheader.hInstance, (INT)psInfo->ppshheader.u5.pszbmHeader, 0, NULL, 0);
+    }
+  }
+}
+
 
 /******************************************************************************
  *            PROPSHEET_ShowPage
@@ -3209,6 +3229,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       GetWindowTextW(hwnd, psInfo->strPropertiesFor, MAX_CAPTION_LENGTH);
 
       PROPSHEET_CreateTabControl(hwnd, psInfo);
+
+      PROPSHEET_LoadWizardBitmaps(psInfo);
 
       if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
       {
