@@ -363,6 +363,8 @@ void file_set_error(void)
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
     case ENOTDIR:   set_error( STATUS_NOT_A_DIRECTORY ); break;
     case EFBIG:     set_error( STATUS_SECTION_TOO_BIG ); break;
+    case ENODEV:    set_error( STATUS_NO_SUCH_DEVICE ); break;
+    case ENXIO:     set_error( STATUS_NO_SUCH_DEVICE ); break;
 #ifdef EOVERFLOW
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
 #endif
