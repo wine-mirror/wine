@@ -47,6 +47,11 @@
 #define MAX_INTERFACE_PHYSADDR    8
 #define MAX_INTERFACE_DESCRIPTION 256
 
+/* Call before using the functions in this module */
+void interfaceMapInit(void);
+/* Call to free resources allocated in interfaceMapInit() */
+void interfaceMapFree(void);
+
 DWORD getNumInterfaces(void);
 DWORD getNumNonLoopbackInterfaces(void);
 

@@ -43,6 +43,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
+BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+  switch (fdwReason) {
+    case DLL_PROCESS_ATTACH:
+      DisableThreadLibraryCalls( hinstDLL );
+      interfaceMapInit();
+      break;
+
+    case DLL_PROCESS_DETACH:
+      interfaceMapFree();
+      break;
+  }
+  return TRUE;
+}
 
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)

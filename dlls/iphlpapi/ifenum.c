@@ -27,27 +27,13 @@
  *   an index is a key, and that an interface has 0 or 1 IP addresses.
  *   If that behavior were consistent across UNIXen (I don't know), it could
  *   help me implement multiple IP addresses more in the Windows way.
- *   But here's a problem with doing so:
- * - Netbios() has a concept of an LAN adapter number (LANA), which is an 8-bit
- *   number in the range 0-254, inclusive.  The MSDN pages for Netbios() says
- *   the original Netbios() spec allowed only 0 or 1 to be used, though "new"
- *   applications should enumerate available adapters rather than assuming 0
- *   is the default adapter.
- *   I'm concerned that some old application might depend on being able to get
- *   "the" MAC address of a machine by opening LANA 0 and getting its MAC
- *   address.  This also implies LANA 0 should correspond to a non-loopback
- *   interface.
- *   On Linux, the if_nametoindex index is 1-based, and "lo" typically has
- *   index 1.
- *   I could make netapi32 do its own LANA map, independent of my index
- *   assignment, but it seems simpler just to assign 0-based indexes and put
- *   non-loopback adapters first, so the first 255 indexes (!) on a system will
- *   automatically map to LANA numbers without difficulty.
- * - One more argument for doing it this way, if you don't buy the Netbios()
- *   argument: WsControl() (in wsock32) uses the same index to refer to an IP
- *   address and an interface.  If I assigned multiple IP addresses to an
- *   interface, wsock32 would have to maintain a table of IP addresses with its
- *   own indexing scheme.  No thanks.
+ * I used to assert I could not use UNIX interface indexes as my iphlpapi
+ * indexes due to restrictions in netapi32 and wsock32, but I have removed
+ * those restrictions, so using if_nametoindex and if_indextoname rather
+ * than my current mess would probably be better.
+ * FIXME:
+ * - I don't support IPv6 addresses here, since SIOCGIFCONF can't return them
+ * - the memory interface uses malloc/free; it should be using HeapAlloc instead
  *
  * There are three implemened methods for determining the MAC address of an
  * interface:
@@ -115,9 +101,6 @@
 #include <net/if_types.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "iprtrmib.h"
 #include "ifenum.h"
 
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
@@ -156,17 +139,32 @@ typedef struct _InterfaceNameMap {
 
 /* Global variables */
 
+static CRITICAL_SECTION mapCS;
 static InterfaceNameMap *gNonLoopbackInterfaceMap = NULL;
 static InterfaceNameMap *gLoopbackInterfaceMap = NULL;
 
 /* Functions */
+
+void interfaceMapInit(void)
+{
+    InitializeCriticalSection(&mapCS);
+}
+
+void interfaceMapFree(void)
+{
+    DeleteCriticalSection(&mapCS);
+    if (gNonLoopbackInterfaceMap)
+        free(gNonLoopbackInterfaceMap);
+    if (gLoopbackInterfaceMap)
+        free(gLoopbackInterfaceMap);
+}
 
 /* Sizes the passed-in map to have enough space for numInterfaces interfaces.
  * If map is NULL, allocates a new map.  If it is not, may reallocate the
  * existing map and return a map of increased size.  Returns the allocated map,
  * or NULL if it could not allocate a map of the requested size.
  */
-InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
+static InterfaceNameMap *sizeMap(InterfaceNameMap *map, DWORD numInterfaces)
 {
   if (!map) {
     numInterfaces = max(numInterfaces, INITIAL_INTERFACES_ASSUMED);
@@ -286,10 +284,12 @@ static void classifyInterfaces(int fd, caddr_t buf, size_t len)
   while (ifPtr && ifPtr < buf + len) {
     struct ifreq *ifr = (struct ifreq *)ifPtr;
 
-    if (isLoopbackInterface(fd, ifr->ifr_name))
-      storeInterfaceInMap(gLoopbackInterfaceMap, ifr->ifr_name);
-    else
-      storeInterfaceInMap(gNonLoopbackInterfaceMap, ifr->ifr_name);
+    if (ifr->ifr_addr.sa_family == AF_INET) {
+      if (isLoopbackInterface(fd, ifr->ifr_name))
+        storeInterfaceInMap(gLoopbackInterfaceMap, ifr->ifr_name);
+      else
+        storeInterfaceInMap(gNonLoopbackInterfaceMap, ifr->ifr_name);
+    }
     ifPtr += ifreq_len(ifr);
   }
 }
@@ -329,8 +329,10 @@ static void enumerateInterfaces(void)
      ifc.ifc_len == (sizeof(struct ifreq) * guessedNumInterfaces));
 
     if (ret == 0) {
+      EnterCriticalSection(&mapCS);
       countInterfaces(fd, ifc.ifc_buf, ifc.ifc_len);
       classifyInterfaces(fd, ifc.ifc_buf, ifc.ifc_len);
+      LeaveCriticalSection(&mapCS);
     }
 
     if (ifc.ifc_buf)
@@ -359,6 +361,7 @@ const char *getInterfaceNameByIndex(DWORD index)
   InterfaceNameMap *map;
   const char *ret = NULL;
 
+  EnterCriticalSection(&mapCS);
   if (index & INDEX_IS_LOOPBACK) {
     realIndex = index ^ INDEX_IS_LOOPBACK;
     map = gLoopbackInterfaceMap;
@@ -369,12 +372,13 @@ const char *getInterfaceNameByIndex(DWORD index)
   }
   if (map && realIndex < map->nextAvailable)
     ret = map->table[realIndex].name;
+  LeaveCriticalSection(&mapCS);
   return ret;
 }
 
 DWORD getInterfaceIndexByName(const char *name, PDWORD index)
 {
-  DWORD ndx;
+  DWORD ndx, ret;
   BOOL found = FALSE;
 
   if (!name)
@@ -382,6 +386,7 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index)
   if (!index)
     return ERROR_INVALID_PARAMETER;
 
+  EnterCriticalSection(&mapCS);
   for (ndx = 0; !found && gNonLoopbackInterfaceMap &&
    ndx < gNonLoopbackInterfaceMap->nextAvailable; ndx++)
     if (!strncmp(gNonLoopbackInterfaceMap->table[ndx].name, name, IFNAMSIZ)) {
@@ -394,10 +399,12 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index)
       found = TRUE;
       *index = ndx | INDEX_IS_LOOPBACK;
     }
+  LeaveCriticalSection(&mapCS);
   if (found)
-    return NO_ERROR;
+    ret = NO_ERROR;
   else
-    return ERROR_INVALID_DATA;
+    ret = ERROR_INVALID_DATA;
+  return ret;
 }
 
 static void addMapEntriesToIndexTable(InterfaceIndexTable *table,
@@ -420,28 +427,36 @@ static void addMapEntriesToIndexTable(InterfaceIndexTable *table,
 
 InterfaceIndexTable *getInterfaceIndexTable(void)
 {
-  DWORD numInterfaces = getNumInterfaces();
-  InterfaceIndexTable *ret = (InterfaceIndexTable *)calloc(1,
+  DWORD numInterfaces;
+  InterfaceIndexTable *ret;
+ 
+  EnterCriticalSection(&mapCS);
+  numInterfaces = getNumInterfaces();
+  ret = (InterfaceIndexTable *)calloc(1,
    sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
-
   if (ret) {
     ret->numAllocated = numInterfaces;
     addMapEntriesToIndexTable(ret, gNonLoopbackInterfaceMap);
     addMapEntriesToIndexTable(ret, gLoopbackInterfaceMap);
   }
+  LeaveCriticalSection(&mapCS);
   return ret;
 }
 
 InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void)
 {
-  DWORD numInterfaces = getNumNonLoopbackInterfaces();
-  InterfaceIndexTable *ret = (InterfaceIndexTable *)calloc(1,
-   sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
+  DWORD numInterfaces;
+  InterfaceIndexTable *ret;
 
+  EnterCriticalSection(&mapCS);
+  numInterfaces = getNumNonLoopbackInterfaces();
+  ret = (InterfaceIndexTable *)calloc(1,
+   sizeof(InterfaceIndexTable) + (numInterfaces - 1) * sizeof(DWORD));
   if (ret) {
     ret->numAllocated = numInterfaces;
     addMapEntriesToIndexTable(ret, gNonLoopbackInterfaceMap);
   }
+  LeaveCriticalSection(&mapCS);
   return ret;
 }
 
