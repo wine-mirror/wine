@@ -435,10 +435,10 @@ init	RPCRT4_LibMain
 @ stub I_RpcConnectionSetSockBuffSize
 @ stub I_RpcDeleteMutex
 @ stub I_RpcFree
-@ stub I_RpcFreeBuffer
+@ stdcall I_RpcFreeBuffer(ptr) I_RpcFreeBuffer
 @ stub I_RpcFreePipeBuffer
 @ stub I_RpcGetAssociationContext
-@ stub I_RpcGetBuffer
+@ stdcall I_RpcGetBuffer(ptr) I_RpcGetBuffer
 @ stub I_RpcGetBufferWithObject
 @ stub I_RpcGetCurrentCallHandle
 @ stub I_RpcGetExtendedError
@@ -458,10 +458,10 @@ init	RPCRT4_LibMain
 @ stub I_RpcParseSecurity
 @ stub I_RpcPauseExecution
 @ stub I_RpcReallocPipeBuffer
-@ stub I_RpcReceive
+@ stdcall I_RpcReceive(ptr) I_RpcReceive
 @ stub I_RpcRequestMutex
-@ stub I_RpcSend
-@ stub I_RpcSendReceive
+@ stdcall I_RpcSend(ptr) I_RpcSend
+@ stdcall I_RpcSendReceive(ptr) I_RpcSendReceive
 @ stub I_RpcServerAllocateIpPort
 @ stub I_RpcServerInqAddressChangeFn
 @ stub I_RpcServerInqTransportType

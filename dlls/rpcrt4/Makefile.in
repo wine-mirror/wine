@@ -11,6 +11,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	rpc_binding.c \
+	rpc_message.c \
 	rpcrt4_main.c
 
 SUBDIRS = tests

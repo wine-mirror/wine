@@ -128,27 +128,6 @@ RPC_STATUS WINAPI RpcStringFreeW(LPWSTR* String)
 }
 
 /*************************************************************************
- * UuidEqual [RPCRT4.@]
- *
- * PARAMS
- *     UUID *Uuid1        [I] Uuid to compare
- *     UUID *Uuid2        [I] Uuid to compare
- *     RPC_STATUS *Status [O] returns RPC_S_OK
- *
- * RETURNS
- *     TRUE/FALSE
- */
-int WINAPI UuidEqual(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
-{
-  TRACE("(%s,%s)\n", debugstr_guid(Uuid1), debugstr_guid(Uuid2));
-  *Status = RPC_S_OK;
-  if (!Uuid1) Uuid1 = &uuid_nil;
-  if (!Uuid2) Uuid2 = &uuid_nil;
-  if (Uuid1 == Uuid2) return TRUE;
-  return !memcmp(Uuid1, Uuid2, sizeof(UUID));
-}
-
-/*************************************************************************
  * UuidCompare [RPCRT4.@]
  *
  * (an educated-guess implementation)
@@ -171,6 +150,23 @@ int WINAPI UuidCompare(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
   if (!Uuid2) Uuid2 = &uuid_nil;
   if (Uuid1 == Uuid2) return 0;
   return memcmp(Uuid1, Uuid2, sizeof(UUID));
+}
+
+/*************************************************************************
+ * UuidEqual [RPCRT4.@]
+ *
+ * PARAMS
+ *     UUID *Uuid1        [I] Uuid to compare
+ *     UUID *Uuid2        [I] Uuid to compare
+ *     RPC_STATUS *Status [O] returns RPC_S_OK
+ *
+ * RETURNS
+ *     TRUE/FALSE
+ */
+int WINAPI UuidEqual(UUID *Uuid1, UUID *Uuid2, RPC_STATUS *Status)
+{
+  TRACE("(%s,%s)\n", debugstr_guid(Uuid1), debugstr_guid(Uuid2));
+  return !UuidCompare(Uuid1, Uuid2, Status);
 }
 
 /*************************************************************************
