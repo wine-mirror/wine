@@ -107,12 +107,12 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
 	    SendMessageA (toolPtr->hwnd, WM_NOTIFY,
 			    (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
 
-	    if ((ttnmdi.hinst) && (HIWORD((UINT)ttnmdi.szText) == 0)) {
-		LoadStringW (ttnmdi.hinst, (UINT)ttnmdi.szText,
+	    if ((ttnmdi.hinst) && (HIWORD((UINT)ttnmdi.lpszText) == 0)) {
+		LoadStringW (ttnmdi.hinst, (UINT)ttnmdi.lpszText,
 			       infoPtr->szTipText, INFOTIPSIZE);
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
 		    toolPtr->hinst = ttnmdi.hinst;
-		    toolPtr->lpszText = (LPWSTR)ttnmdi.szText;
+		    toolPtr->lpszText = (LPWSTR)ttnmdi.lpszText;
 		}
 	    }
 	    else if (ttnmdi.szText[0]) {
