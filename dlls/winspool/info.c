@@ -275,6 +275,7 @@ PRINTCAP_LoadPrinters(void) {
 
 void
 WINSPOOL_LoadSystemPrinters() {
+    HKEY    	    	hkPPD;
     DRIVER_INFO_3A	di3a;
     di3a.cVersion = 0x400;
     di3a.pName = "PS Driver";
@@ -296,7 +297,15 @@ WINSPOOL_LoadSystemPrinters() {
     if (CUPS_LoadPrinters())
 	return;
 #endif
-    PRINTCAP_LoadPrinters();
+
+    /* Check for [ppd] section in config file before parsing /etc/printcap */
+    
+    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd",
+    	    &hkPPD) == ERROR_SUCCESS)
+    {
+    	RegCloseKey(hkPPD);
+    	PRINTCAP_LoadPrinters();
+    }
 }
 
 
