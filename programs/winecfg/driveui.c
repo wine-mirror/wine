@@ -51,6 +51,7 @@ static BOOL updating_ui = FALSE;
 static struct drive* current_drive;
 
 static void get_etched_rect(HWND dialog, RECT *rect);
+static void update_controls(HWND dialog);
 
 static void set_advanced(HWND dialog)
 {
@@ -297,6 +298,8 @@ void on_add_click(HWND dialog)
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, c, 0);
 
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
+
+    update_controls(dialog);
 }
 
 void on_remove_click(HWND dialog)
@@ -324,9 +327,12 @@ void on_remove_click(HWND dialog)
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, item, 0);   /* previous item */
 
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
+
+    update_controls(dialog);
 }
 
-void update_controls(HWND dialog) {
+static void update_controls(HWND dialog)
+{
     char *path;
     uint type;
     char *label;
