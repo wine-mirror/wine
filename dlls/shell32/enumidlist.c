@@ -125,6 +125,7 @@ static BOOL CreateFolderEnumList(
 	  {
 	    do
 	    {
+	      if ( !(dwFlags & SHCONTF_INCLUDEHIDDEN) && (stffile.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) continue;
 	      if ( (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strcmp (stffile.cFileName, ".") && strcmp (stffile.cFileName, ".."))
 	      {
 		pidl = _ILCreateFolder (&stffile);
@@ -148,6 +149,7 @@ static BOOL CreateFolderEnumList(
 	  {
 	    do
 	    {
+	      if ( !(dwFlags & SHCONTF_INCLUDEHIDDEN) && (stffile.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ) continue;
 	      if (! (stffile.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
 	      {
 		pidl = _ILCreateValue(&stffile);
