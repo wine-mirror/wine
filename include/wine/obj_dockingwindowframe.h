@@ -34,12 +34,10 @@ DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0
 
 #define INTERFACE IDockingWindowFrame
 #define IDockingWindowFrame_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(AddToolbar)(THIS_ IUnknown * punkSrc, LPCWSTR  pwszItem, DWORD  dwAddFlags) PURE; \
 	STDMETHOD(RemoveToolbar)(THIS_ IUnknown * punkSrc, DWORD  dwRemoveFlags) PURE; \
 	STDMETHOD(FindToolbar)(THIS_ LPCWSTR  pwszItem, REFIID  riid, LPVOID * ppvObj) PURE;
-#define IDockingWindowFrame_IMETHODS \
-	IOleWindow_IMETHODS \
-	IDockingWindowFrame_METHODS
 ICOM_DEFINE(IDockingWindowFrame,IOleWindow)
 #undef INTERFACE
 

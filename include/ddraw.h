@@ -1203,13 +1203,11 @@ typedef struct tagDDDEVICEIDENTIFIER2 {
  */
 #define INTERFACE IDirectDrawPalette
 #define IDirectDrawPalette_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetCaps)(THIS_ LPDWORD lpdwCaps) PURE; \
     STDMETHOD(GetEntries)(THIS_ DWORD dwFlags, DWORD dwBase, DWORD dwNumEntries, LPPALETTEENTRY lpEntries) PURE; \
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, DWORD dwFlags, LPPALETTEENTRY lpDDColorTable) PURE; \
     STDMETHOD(SetEntries)(THIS_ DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, LPPALETTEENTRY lpEntries) PURE;
-#define IDirectDrawPalette_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawPalette_METHODS
 ICOM_DEFINE(IDirectDrawPalette,IUnknown)
 #undef INTERFACE
 
@@ -1231,15 +1229,13 @@ ICOM_DEFINE(IDirectDrawPalette,IUnknown)
  */
 #define INTERFACE IDirectDrawClipper
 #define IDirectDrawClipper_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetClipList)(THIS_ LPRECT lpRect, LPRGNDATA lpClipList, LPDWORD lpdwSize) PURE; \
     STDMETHOD(GetHWnd)(THIS_ HWND *lphWnd) PURE; \
     STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW lpDD, DWORD dwFlags) PURE; \
     STDMETHOD(IsClipListChanged)(THIS_ BOOL *lpbChanged) PURE; \
     STDMETHOD(SetClipList)(THIS_ LPRGNDATA lpClipList, DWORD dwFlags) PURE; \
     STDMETHOD(SetHWnd)(THIS_ DWORD dwFlags, HWND hWnd) PURE;
-#define IDirectDrawClipper_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawClipper_METHODS
 ICOM_DEFINE(IDirectDrawClipper,IUnknown)
 #undef INTERFACE
 
@@ -1263,6 +1259,7 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
  */
 #define INTERFACE IDirectDraw
 #define IDirectDraw_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Compact)(THIS) PURE; \
     STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE; \
@@ -1283,9 +1280,6 @@ ICOM_DEFINE(IDirectDrawClipper,IUnknown)
     STDMETHOD(SetCooperativeLevel)(THIS_ HWND hWnd, DWORD dwFlags) PURE; \
     STDMETHOD(SetDisplayMode)(THIS_ DWORD dwWidth, DWORD dwHeight, DWORD dwBPP) PURE; \
     STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE;
-#define IDirectDraw_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDraw_METHODS
 ICOM_DEFINE(IDirectDraw,IUnknown)
 #undef INTERFACE
 
@@ -1337,6 +1331,7 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
  */
 #define INTERFACE IDirectDraw2
 #define IDirectDraw2_METHODS \
+/*00*/    IUnknown_METHODS \
 /*0c*/    STDMETHOD(Compact)(THIS) PURE; \
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE; \
 /*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE; \
@@ -1359,9 +1354,6 @@ ICOM_DEFINE(IDirectDraw,IUnknown)
 /*58*/    STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE; \
           /* added in v2 */ \
 /*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
-#define IDirectDraw2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDraw2_METHODS
 ICOM_DEFINE(IDirectDraw2,IUnknown)
 #undef INTERFACE
 
@@ -1401,6 +1393,7 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
  */
 #define INTERFACE IDirectDraw4
 #define IDirectDraw4_METHODS \
+/*00*/    IUnknown_METHODS \
 /*0c*/    STDMETHOD(Compact)(THIS) PURE; \
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE; \
 /*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE; \
@@ -1428,9 +1421,6 @@ ICOM_DEFINE(IDirectDraw2,IUnknown)
 /*64*/    STDMETHOD(RestoreAllSurfaces)(THIS) PURE; \
 /*68*/    STDMETHOD(TestCooperativeLevel)(THIS) PURE; \
 /*6c*/    STDMETHOD(GetDeviceIdentifier)(THIS_ LPDDDEVICEIDENTIFIER pDDDI, DWORD dwFlags) PURE;
-#define IDirectDraw4_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDraw4_METHODS
 ICOM_DEFINE(IDirectDraw4,IUnknown)
 #undef INTERFACE
 
@@ -1478,6 +1468,7 @@ ICOM_DEFINE(IDirectDraw4,IUnknown)
  */
 #define INTERFACE IDirectDraw7
 #define IDirectDraw7_METHODS \
+/*00*/    IUnknown_METHODS \
 /*0c*/    STDMETHOD(Compact)(THIS) PURE; \
 /*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE; \
 /*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE; \
@@ -1508,9 +1499,6 @@ ICOM_DEFINE(IDirectDraw4,IUnknown)
           /* added in v7 */ \
 /*70*/    STDMETHOD(StartModeTest)(THIS_ LPSIZE pModes, DWORD dwNumModes, DWORD dwFlags) PURE; \
 /*74*/    STDMETHOD(EvaluateMode)(THIS_ DWORD dwFlags, DWORD  *pTimeout) PURE;
-#define IDirectDraw7_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDraw7_METHODS
 ICOM_DEFINE(IDirectDraw7,IUnknown)
 #undef INTERFACE
 
@@ -1558,6 +1546,7 @@ ICOM_DEFINE(IDirectDraw7,IUnknown)
  */
 #define INTERFACE IDirectDrawSurface
 #define IDirectDrawSurface_METHODS \
+/*00*/    IUnknown_METHODS \
 /*0c*/    STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSAttachedSurface) PURE; \
 /*10*/    STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE; \
 /*14*/    STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE; \
@@ -1591,9 +1580,6 @@ ICOM_DEFINE(IDirectDraw7,IUnknown)
 /*84*/    STDMETHOD(UpdateOverlay)(THIS_ LPRECT lpSrcRect, LPDIRECTDRAWSURFACE lpDDDestSurface, LPRECT lpDestRect, DWORD dwFlags, LPDDOVERLAYFX lpDDOverlayFx) PURE; \
 /*88*/    STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD dwFlags) PURE; \
 /*8c*/    STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSReference) PURE;
-#define IDirectDrawSurface_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawSurface_METHODS
 ICOM_DEFINE(IDirectDrawSurface,IUnknown)
 #undef INTERFACE
 
@@ -1647,6 +1633,7 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
  */
 #define INTERFACE IDirectDrawSurface2
 #define IDirectDrawSurface2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE2 lpDDSAttachedSurface) PURE; \
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE; \
     STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE2 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE; \
@@ -1684,9 +1671,6 @@ ICOM_DEFINE(IDirectDrawSurface,IUnknown)
     STDMETHOD(GetDDInterface)(THIS_ LPVOID *lplpDD) PURE; \
     STDMETHOD(PageLock)(THIS_ DWORD dwFlags) PURE; \
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE;
-#define IDirectDrawSurface2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawSurface2_METHODS
 ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
 #undef INTERFACE
 
@@ -1744,6 +1728,7 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
  */
 #define INTERFACE IDirectDrawSurface3
 #define IDirectDrawSurface3_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE3 lpDDSAttachedSurface) PURE; \
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE; \
     STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE3 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE; \
@@ -1783,9 +1768,6 @@ ICOM_DEFINE(IDirectDrawSurface2,IUnknown)
     STDMETHOD(PageUnlock)(THIS_ DWORD dwFlags) PURE; \
     /* added in v3 */ \
     STDMETHOD(SetSurfaceDesc)(THIS_ LPDDSURFACEDESC lpDDSD, DWORD dwFlags) PURE;
-#define IDirectDrawSurface3_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawSurface3_METHODS
 ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 #undef INTERFACE
 
@@ -1844,6 +1826,7 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
  */
 #define INTERFACE IDirectDrawSurface4
 #define IDirectDrawSurface4_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE4 lpDDSAttachedSurface) PURE; \
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE; \
     STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE4 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE; \
@@ -1889,9 +1872,6 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     STDMETHOD(FreePrivateData)(THIS_ REFGUID tag) PURE; \
     STDMETHOD(GetUniquenessValue)(THIS_ LPDWORD pValue) PURE; \
     STDMETHOD(ChangeUniquenessValue)(THIS) PURE;
-#define IDirectDrawSurface4_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawSurface4_METHODS
 ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
 #undef INTERFACE
 
@@ -1954,6 +1934,7 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
  */
 #define INTERFACE IDirectDrawSurface7
 #define IDirectDrawSurface7_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE7 lpDDSAttachedSurface) PURE; \
     STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT lpRect) PURE; \
     STDMETHOD(Blt)(THIS_ LPRECT lpDestRect, LPDIRECTDRAWSURFACE7 lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) PURE; \
@@ -2004,9 +1985,6 @@ ICOM_DEFINE(IDirectDrawSurface4,IUnknown)
     STDMETHOD(GetPriority)(THIS_ LPDWORD prio) PURE; \
     STDMETHOD(SetLOD)(THIS_ DWORD lod) PURE; \
     STDMETHOD(GetLOD)(THIS_ LPDWORD lod) PURE;
-#define IDirectDrawSurface7_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawSurface7_METHODS
 ICOM_DEFINE(IDirectDrawSurface7,IUnknown)
 #undef INTERFACE
 
@@ -2073,11 +2051,9 @@ ICOM_DEFINE(IDirectDrawSurface7,IUnknown)
  */
 #define INTERFACE IDirectDrawColorControl
 #define IDirectDrawColorControl_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE; \
     STDMETHOD(SetColorControls)(THIS_ LPDDCOLORCONTROL lpColorControl) PURE;
-#define IDirectDrawColorControl_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawColorControl_METHODS
 ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
 #undef INTERFACE
 
@@ -2096,11 +2072,9 @@ ICOM_DEFINE(IDirectDrawColorControl,IUnknown)
  */
 #define INTERFACE IDirectDrawGammaControl
 #define IDirectDrawGammaControl_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE; \
     STDMETHOD(SetGammaRamp)(THIS_ DWORD dwFlags, LPDDGAMMARAMP lpGammaRamp) PURE;
-#define IDirectDrawGammaControl_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectDrawGammaControl_METHODS
 ICOM_DEFINE(IDirectDrawGammaControl,IUnknown)
 #undef INTERFACE
 

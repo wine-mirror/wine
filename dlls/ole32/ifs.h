@@ -29,15 +29,13 @@ typedef struct IMalloc16 IMalloc16, *LPMALLOC16;
 
 #define INTERFACE IMalloc16
 #define IMalloc16_METHODS \
+    IUnknown_METHODS \
     STDMETHOD_(LPVOID,Alloc)(THIS_ DWORD   cb) PURE; \
     STDMETHOD_(LPVOID,Realloc)(THIS_ LPVOID  pv, DWORD  cb) PURE; \
     STDMETHOD_(void,Free)(THIS_ LPVOID  pv) PURE; \
     STDMETHOD_(DWORD,GetSize)(THIS_ LPVOID  pv) PURE; \
     STDMETHOD_(INT16,DidAlloc)(THIS_ LPVOID  pv) PURE; \
     STDMETHOD_(LPVOID,HeapMinimize)(THIS) PURE;
-#define IMalloc16_IMETHODS \
-    IUnknown_IMETHODS \
-    IMalloc16_METHODS
 ICOM_DEFINE(IMalloc16,IUnknown)
 #undef INTERFACE
 
@@ -51,6 +49,7 @@ typedef struct ILockBytes16 *LPLOCKBYTES16, ILockBytes16;
 
 #define INTERFACE ILockBytes
 #define ILockBytes16_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(ReadAt)(THIS_ ULARGE_INTEGER ulOffset, void *pv, ULONG  cb, ULONG *pcbRead) PURE; \
 	STDMETHOD(WriteAt)(THIS_ ULARGE_INTEGER ulOffset, const void *pv, ULONG cb, ULONG *pcbWritten) PURE; \
 	STDMETHOD(Flush)(THIS) PURE; \
@@ -58,11 +57,6 @@ typedef struct ILockBytes16 *LPLOCKBYTES16, ILockBytes16;
 	STDMETHOD(LockRegion)(THIS_ ULARGE_INTEGER libOffset, ULARGE_INTEGER  cb, DWORD dwLockType) PURE; \
 	STDMETHOD(UnlockRegion)(THIS_ ULARGE_INTEGER libOffset, ULARGE_INTEGER  cb, DWORD dwLockType) PURE; \
 	STDMETHOD(Stat)(THIS_ STATSTG *pstatstg, DWORD grfStatFlag) PURE;
-
-#define ILockBytes16_IMETHODS \
-	IUnknown_IMETHODS \
-	ILockBytes16_METHODS
-
 ICOM_DEFINE(ILockBytes16,IUnknown)
 #undef INTERFACE
 

@@ -421,6 +421,7 @@ typedef BOOL (CALLBACK *LPDPENUMSESSIONSCALLBACK2)(
  */
 #define INTERFACE IDirectPlay
 #define IDirectPlay_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
     STDMETHOD(Close)(THIS) PURE; \
     STDMETHOD(CreatePlayer)(THIS_ LPDPID lpidPlayer, LPSTR lpPlayerName, LPSTR, LPHANDLE) PURE; \
@@ -443,9 +444,6 @@ typedef BOOL (CALLBACK *LPDPENUMSESSIONSCALLBACK2)(
     STDMETHOD(SaveSession)(THIS_ LPSTR) PURE; \
     STDMETHOD(Send)(THIS_ DPID idFrom, DPID idTo, DWORD dwFlags, LPVOID lpData, DWORD dwDataSize) PURE; \
     STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPSTR lpPlayerName, LPSTR) PURE;
-#define IDirectPlay_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectPlay_METHODS
 ICOM_DEFINE(IDirectPlay,IUnknown)
 #undef INTERFACE
 
@@ -485,6 +483,7 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
  */
 #define INTERFACE IDirectPlay2
 #define IDirectPlay2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(AddPlayerToGroup)(THIS_ DPID idGroup, DPID idPlayer) PURE; \
     STDMETHOD(Close)(THIS) PURE; \
     STDMETHOD(CreateGroup)(THIS_ LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
@@ -514,9 +513,6 @@ ICOM_DEFINE(IDirectPlay,IUnknown)
     STDMETHOD(SetPlayerData)(THIS_ DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
     STDMETHOD(SetPlayerName)(THIS_ DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags) PURE; \
     STDMETHOD(SetSessionDesc)(THIS_ LPDPSESSIONDESC2 lpSessDesc, DWORD dwFlags) PURE;
-#define IDirectPlay2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectPlay2_METHODS
 ICOM_DEFINE(IDirectPlay2,IUnknown)
 #undef INTERFACE
 
@@ -563,6 +559,7 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
  */
 #define INTERFACE IDirectPlay3
 #define IDirectPlay3_METHODS \
+    IDirectPlay2_METHODS \
     STDMETHOD(AddGroupToGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE; \
     STDMETHOD(CreateGroupInGroup)(THIS_ DPID idParentGroup, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags) PURE; \
     STDMETHOD(DeleteGroupFromGroup)(THIS_ DPID idParentGroup, DPID idGroup) PURE; \
@@ -578,9 +575,6 @@ ICOM_DEFINE(IDirectPlay2,IUnknown)
     STDMETHOD(GetGroupParent)(THIS_ DPID idGroup, LPDPID lpidParent) PURE; \
     STDMETHOD(GetPlayerAccount)(THIS_ DPID idPlayer, DWORD dwFlags, LPVOID lpData, LPDWORD lpdwDataSize) PURE; \
     STDMETHOD(GetPlayerFlags)(THIS_ DPID idPlayer, LPDWORD lpdwFlags) PURE;
-#define IDirectPlay3_IMETHODS \
-    IDirectPlay2_IMETHODS \
-    IDirectPlay3_METHODS
 ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
 #undef INTERFACE
 
@@ -642,16 +636,13 @@ ICOM_DEFINE(IDirectPlay3,IDirectPlay2)
  */
 #define INTERFACE IDirectPlay4
 #define IDirectPlay4_METHODS \
+    IDirectPlay3_METHODS \
     STDMETHOD(GetGroupOwner)(THIS_ DPID , LPDPID  ) PURE; \
     STDMETHOD(SetGroupOwner)(THIS_ DPID , DPID  ) PURE; \
     STDMETHOD(SendEx)(THIS_ DPID , DPID , DWORD , LPVOID , DWORD , DWORD , DWORD , LPVOID , LPDWORD  ) PURE; \
     STDMETHOD(GetMessageQueue)(THIS_ DPID , DPID , DWORD , LPDWORD , LPDWORD  ) PURE; \
     STDMETHOD(CancelMessage)(THIS_ DWORD , DWORD  ) PURE; \
     STDMETHOD(CancelPriority)(THIS_ DWORD , DWORD , DWORD  ) PURE;
-
-#define IDirectPlay4_IMETHODS \
-    IDirectPlay3_IMETHODS \
-    IDirectPlay4_METHODS
 ICOM_DEFINE(IDirectPlay4,IDirectPlay3)
 #undef INTERFACE
 

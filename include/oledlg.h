@@ -642,6 +642,7 @@ DECL_WINELIB_TYPE_AW(LPOLEUICHANGESOURCE)
  */
 #define INTERFACE   IOleUILinkContainerA
 #define IOleUILinkContainerA_METHODS \
+    IUnknown_METHODS \
     STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD dwUpdateOpt) PURE; \
     STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink, DWORD *lpdwUpdateOpt) PURE; \
@@ -653,14 +654,12 @@ DECL_WINELIB_TYPE_AW(LPOLEUICHANGESOURCE)
     STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-#define IOleUILinkContainerA_IMETHODS \
-    IUnknown_IMETHODS \
-    IOleUILinkContainerA_METHODS
 ICOM_DEFINE(IOleUILinkContainerA, IUnknown)
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkContainerW
 #define IOleUILinkContainerW_METHODS \
+    IUnknown_METHODS \
     STDMETHOD_(DWORD,GetNextLink)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(SetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD dwUpdateOpt) PURE; \
     STDMETHOD(GetLinkUpdateOptions)(THIS_ DWORD dwLink,  DWORD *lpdwUpdateOpt) PURE; \
@@ -672,9 +671,6 @@ ICOM_DEFINE(IOleUILinkContainerA, IUnknown)
     STDMETHOD(OpenLinkSource)(THIS_ DWORD dwLink) PURE; \
     STDMETHOD(UpdateLink)(THIS_ DWORD dwLink, BOOL fErrorMessage, BOOL fReserved) PURE; \
     STDMETHOD(CancelLink)(THIS_ DWORD dwLink) PURE;
-#define IOleUILinkContainerW_IMETHODS \
-    IUnknown_IMETHODS \
-    IOleUILinkContainerW_METHODS
 ICOM_DEFINE(IOleUILinkContainerW, IUnknown)
 #undef INTERFACE
 
@@ -704,19 +700,15 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKCONTAINER)
  */
 #define INTERFACE   IOleUILinkInfoA
 #define IOleUILinkInfoA_METHODS \
+    IOleUILinkContainerA_METHODS \
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-#define IOleUILinkInfoA_IMETHODS \
-    IOleUILinkContainerA_IMETHODS \
-    IOleUILinkInfoA_METHODS
 ICOM_DEFINE(IOleUILinkInfoA, IOleUILinkContainerA)
 #undef INTERFACE
 
 #define INTERFACE   IOleUILinkInfoW
 #define IOleUILinkInfoW_METHODS \
+    IOleUILinkContainerW_METHODS \
     STDMETHOD(GetLastUpdate)(THIS_ DWORD dwLink,  FILETIME *lpLastUpdate) PURE;
-#define IOleUILinkInfoW_IMETHODS \
-    IOleUILinkContainerW_IMETHODS \
-    IOleUILinkInfoW_METHODS
 ICOM_DEFINE(IOleUILinkInfoW, IOleUILinkContainerW)
 #undef  INTERFACE
 
@@ -748,6 +740,7 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
  */
 #define INTERFACE   IOleUIObjInfoA
 #define IOleUIObjInfoA_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPSTR *lplpszLabel, \
                 LPSTR *lplpszType, LPSTR *lplpszShortType, LPSTR *lplpszLocation) PURE; \
     STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat, \
@@ -756,14 +749,12 @@ DECL_WINELIB_TYPE_AW(LPOLEUILINKINFO)
     STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
     STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-#define IOleUIObjInfoA_IMETHODS \
-    IUnknown_IMETHODS \
-    IOleUIObjInfoA_METHODS
 ICOM_DEFINE(IOleUIObjInfoA, IUnknown)
 #undef INTERFACE
 
 #define INTERFACE   IOleUIObjInfoW
 #define IOleUIObjInfoW_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetObjectInfo)(THIS_ DWORD dwObject, DWORD *lpdwObjSize, LPWSTR *lplpszLabel, \
                 LPWSTR *lplpszType,  LPWSTR *lplpszShortType,  LPWSTR *lplpszLocation) PURE; \
     STDMETHOD(GetConvertInfo)(THIS_ DWORD dwObject, CLSID *lpClassID, WORD *lpwFormat, \
@@ -772,9 +763,6 @@ ICOM_DEFINE(IOleUIObjInfoA, IUnknown)
     STDMETHOD(GetViewInfo)(THIS_ DWORD dwObject, HGLOBAL *phMetaPict, DWORD *pdvAspect, INT *pnCurrentScale) PURE; \
     STDMETHOD(SetViewInfo)(THIS_ DWORD dwObject, HGLOBAL hMetaPict, DWORD dvAspect, \
                 INT nCurrentScale, BOOL bRelativeToOrig) PURE;
-#define IOleUIObjInfoW_IMETHODS \
-    IUnknown_IMETHODS \
-    IOleUIObjInfoW_METHODS
 ICOM_DEFINE(IOleUIObjInfoW, IUnknown)
 #undef INTERFACE
 

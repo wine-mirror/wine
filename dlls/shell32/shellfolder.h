@@ -37,13 +37,11 @@ typedef struct ISFHelper ISFHelper, *LPISFHELPER;
 
 #define INTERFACE ISFHelper
 #define ISFHelper_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetUniqueName)(THIS_ LPSTR  lpName, UINT  uLen) PURE; \
 	STDMETHOD(AddFolder)(THIS_ HWND  hwnd, LPCSTR  lpName, LPITEMIDLIST * ppidlOut) PURE; \
 	STDMETHOD(DeleteItems)(THIS_ UINT  cidl, LPCITEMIDLIST * apidl) PURE; \
 	STDMETHOD(CopyItems)(THIS_ IShellFolder * pSFFrom, UINT  cidl, LPCITEMIDLIST * apidl) PURE;
-#define ISFHelper_IMETHODS \
-    IUnknown_IMETHODS \
-    ISFHelper_METHODS
 ICOM_DEFINE(ISFHelper, IUnknown)
 #undef INTERFACE
 

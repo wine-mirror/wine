@@ -50,14 +50,12 @@ typedef struct IOleCacheControl IOleCacheControl, *LPOLECACHECONTROL;
  */
 #define INTERFACE IOleCache
 #define IOleCache_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Cache)(THIS_ FORMATETC *pformatetc, DWORD advf, DWORD * pdwConnection) PURE; \
 	STDMETHOD(Uncache)(THIS_ DWORD dwConnection) PURE; \
 	STDMETHOD(EnumCache)(THIS_ IEnumSTATDATA **ppenumSTATDATA) PURE; \
 	STDMETHOD(InitCache)(THIS_ IDataObject *pDataObject) PURE; \
 	STDMETHOD(SetData)(THIS_ FORMATETC *pformatetc, STGMEDIUM *pmedium, BOOL fRelease) PURE;
-#define IOleCache_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleCache_METHODS
 ICOM_DEFINE(IOleCache,IUnknown)
 #undef INTERFACE
 
@@ -80,11 +78,9 @@ ICOM_DEFINE(IOleCache,IUnknown)
  */
 #define INTERFACE IOleCache2
 #define IOleCache2_METHODS \
+	IOleCache_METHODS \
 	STDMETHOD(UpdateCache)(THIS_ LPDATAOBJECT pDataObject, DWORD grfUpdf, LPVOID pReserved) PURE; \
 	STDMETHOD(DiscardCache)(THIS_ DWORD dwDiscardOptions) PURE;
-#define IOleCache2_IMETHODS \
-	IOleCache_IMETHODS \
-	IOleCache2_METHODS
 ICOM_DEFINE(IOleCache2,IOleCache)
 #undef INTERFACE
 
@@ -110,11 +106,9 @@ ICOM_DEFINE(IOleCache2,IOleCache)
  */
 #define INTERFACE IOleCacheControl
 #define IOleCacheControl_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(OnRun)(THIS_ LPDATAOBJECT pDataObject) PURE; \
 	STDMETHOD(OnStop)(THIS) PURE;
-#define IOleCacheControl_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleCacheControl_METHODS
 ICOM_DEFINE(IOleCacheControl,IUnknown)
 #undef INTERFACE
 

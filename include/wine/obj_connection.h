@@ -57,14 +57,12 @@ typedef struct IEnumConnectionPoints IEnumConnectionPoints, *LPENUMCONNECTIONPOI
  */
 #define INTERFACE IConnectionPoint
 #define IConnectionPoint_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetConnectionInterface)(THIS_ IID *pIID) PURE; \
 	STDMETHOD(GetConnectionPointContainer)(THIS_ IConnectionPointContainer **ppCPC) PURE; \
 	STDMETHOD(Advise)(THIS_ IUnknown *pUnkSink, DWORD *pdwCookie) PURE; \
 	STDMETHOD(Unadvise)(THIS_ DWORD dwCookie) PURE; \
 	STDMETHOD(EnumConnections)(THIS_ IEnumConnections **ppEnum) PURE;
-#define IConnectionPoint_IMETHODS \
-	IUnknown_IMETHODS \
-	IConnectionPoint_METHODS
 ICOM_DEFINE(IConnectionPoint,IUnknown)
 #undef INTERFACE
 
@@ -87,11 +85,9 @@ ICOM_DEFINE(IConnectionPoint,IUnknown)
  */
 #define INTERFACE IConnectionPointContainer
 #define IConnectionPointContainer_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(EnumConnectionPoints)(THIS_ IEnumConnectionPoints **ppEnum) PURE; \
 	STDMETHOD(FindConnectionPoint)(THIS_ REFIID riid, IConnectionPoint **ppCP) PURE;
-#define IConnectionPointContainer_IMETHODS \
-	IUnknown_IMETHODS \
-	IConnectionPointContainer_METHODS
 ICOM_DEFINE(IConnectionPointContainer,IUnknown)
 #undef INTERFACE
 
@@ -111,13 +107,11 @@ ICOM_DEFINE(IConnectionPointContainer,IUnknown)
  */
 #define INTERFACE IEnumConnections
 #define IEnumConnections_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Next)(THIS_ ULONG cConnections, LPCONNECTDATA rgcd, ULONG *pcFectched) PURE; \
 	STDMETHOD(Skip)(THIS_ ULONG cConnections) PURE; \
 	STDMETHOD(Reset)(THIS) PURE; \
 	STDMETHOD(Clone)(THIS_ IEnumConnections **ppEnum) PURE;
-#define IEnumConnections_IMETHODS \
-	IUnknown_IMETHODS \
-	IEnumConnections_METHODS
 ICOM_DEFINE(IEnumConnections,IUnknown)
 #undef INTERFACE
 
@@ -138,13 +132,11 @@ ICOM_DEFINE(IEnumConnections,IUnknown)
  */
 #define INTERFACE IEnumConnectionPoints
 #define IEnumConnectionPoints_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Next)(THIS_ ULONG cConnections, LPCONNECTIONPOINT *ppCP, ULONG *pcFectched) PURE; \
 	STDMETHOD(Skip)(THIS_ ULONG cConnections) PURE; \
 	STDMETHOD(Reset)(THIS) PURE; \
 	STDMETHOD(Clone)(THIS_ IEnumConnections **ppEnum) PURE;
-#define IEnumConnectionPoints_IMETHODS \
-	IUnknown_IMETHODS \
-	IEnumConnectionPoints_METHODS
 ICOM_DEFINE(IEnumConnectionPoints,IUnknown)
 #undef INTERFACE
 

@@ -58,14 +58,9 @@ typedef struct ID3DXFont                ID3DXFont, *LPD3DXFONT;
 #undef INTERFACE
 #define INTERFACE ID3DXBuffer
 #define ID3DXBuffer_METHODS \
-    /*** ID3DXBuffer methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD_(LPVOID,GetBufferPointer)(THIS) PURE; \
     STDMETHOD_(DWORD,GetBufferSize)(THIS) PURE;
-
-    /*** ID3DXBuffer methods ***/
-#define ID3DXBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    ID3DXBuffer_METHODS
 ICOM_DEFINE(ID3DXBuffer,IUnknown)
 #undef INTERFACE
 
@@ -85,15 +80,10 @@ ICOM_DEFINE(ID3DXBuffer,IUnknown)
 #undef INTERFACE
 #define INTERFACE ID3DXFont
 #define ID3DXFont_METHODS \
-    /*** ID3DXFont methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Begin)(THIS) PURE; \
     STDMETHOD(DrawTextA)(THIS) PURE; \
     STDMETHOD(End)(THIS) PURE;
-
-    /*** ID3DXFont methods ***/
-#define ID3DXFont_IMETHODS \
-    IUnknown_IMETHODS \
-    ID3DXFont_METHODS
 ICOM_DEFINE(ID3DXFont,IUnknown)
 #undef INTERFACE
 

@@ -54,6 +54,7 @@ typedef enum
  */
 #define INTERFACE IShellLinkA
 #define IShellLinkA_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetPath)(THIS_ LPSTR  pszFile, INT  cchMaxPath, WIN32_FIND_DATAA  * pfd, DWORD  fFlags) PURE; \
     STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST  * ppidl) PURE; \
     STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST  pidl) PURE; \
@@ -72,9 +73,6 @@ typedef enum
     STDMETHOD(SetRelativePath)(THIS_ LPCSTR  pszPathRel, DWORD  dwReserved) PURE; \
     STDMETHOD(Resolve)(THIS_ HWND  hwnd, DWORD  fFlags) PURE; \
     STDMETHOD(SetPath)(THIS_ LPCSTR  pszFile) PURE;
-#define IShellLinkA_IMETHODS \
-    IUnknown_IMETHODS \
-    IShellLinkA_METHODS
 ICOM_DEFINE(IShellLinkA,IUnknown)
 #undef INTERFACE
 
@@ -109,6 +107,7 @@ ICOM_DEFINE(IShellLinkA,IUnknown)
  */
 #define INTERFACE IShellLinkW
 #define IShellLinkW_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetPath)(THIS_ LPWSTR  pszFile, INT  cchMaxPath, WIN32_FIND_DATAA  * pfd, DWORD  fFlags) PURE; \
     STDMETHOD(GetIDList)(THIS_ LPITEMIDLIST  * ppidl) PURE; \
     STDMETHOD(SetIDList)(THIS_ LPCITEMIDLIST  pidl) PURE; \
@@ -127,9 +126,6 @@ ICOM_DEFINE(IShellLinkA,IUnknown)
     STDMETHOD(SetRelativePath)(THIS_ LPCWSTR  pszPathRel, DWORD  dwReserved) PURE; \
     STDMETHOD(Resolve)(THIS_ HWND  hwnd, DWORD  fFlags) PURE; \
     STDMETHOD(SetPath)(THIS_ LPCWSTR  pszFile) PURE;
-#define IShellLinkW_IMETHODS \
-    IUnknown_IMETHODS \
-    IShellLinkW_METHODS
 ICOM_DEFINE(IShellLinkW,IUnknown)
 #undef INTERFACE
 

@@ -165,11 +165,9 @@ typedef struct IOleLink IOleLink, *LPOLELINK;
  */
 #define INTERFACE IOleWindow
 #define IOleWindow_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetWindow)(THIS_ HWND *phwnd) PURE; \
 	STDMETHOD(ContextSensitiveHelp)(THIS_ BOOL fEnterMode) PURE;
-#define IOleWindow_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleWindow_METHODS
 ICOM_DEFINE(IOleWindow,IUnknown)
 #undef INTERFACE
 
@@ -189,13 +187,11 @@ ICOM_DEFINE(IOleWindow,IUnknown)
  */
 #define INTERFACE IOleInPlaceObject
 #define IOleInPlaceObject_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(InPlaceDeactivate)(THIS) PURE; \
 	STDMETHOD(UIDeactivate)(THIS) PURE; \
 	STDMETHOD(SetObjectRects)(THIS_ LPCRECT lprcPosRect, LPCRECT lprcClipRect) PURE; \
 	STDMETHOD(ReactivateAndUndo)(THIS) PURE;
-#define IOleInPlaceObject_IMETHODS \
-	IOleWindow_IMETHODS \
-	IOleInPlaceObject_METHODS
 ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
 #undef INTERFACE
 
@@ -219,14 +215,12 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
  */
 #define INTERFACE IOleInPlaceActiveObject
 #define IOleInPlaceActiveObject_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(TranslateAccelerator)(THIS_ struct tagMSG *lpmsg) PURE; \
 	STDMETHOD(OnFrameWindowActivate)(THIS_ BOOL fActivate) PURE; \
 	STDMETHOD(OnDocWindowActivate)(THIS_ BOOL fActivate) PURE; \
 	STDMETHOD(ResizeBorder)(THIS_ LPCRECT prcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fWindowFrame) PURE; \
 	STDMETHOD(EnableModeless)(THIS_ BOOL fEnable) PURE;
-#define IOleInPlaceActiveObject_IMETHODS \
-	IOleWindow_IMETHODS \
-	IOleInPlaceActiveObject_METHODS
 ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
 #undef INTERFACE
 
@@ -251,13 +245,11 @@ ICOM_DEFINE(IOleInPlaceActiveObject,IOleWindow)
  */
 #define INTERFACE IOleInPlaceUIWindow
 #define IOleInPlaceUIWindow_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(GetBorder)(THIS_ LPRECT lprectBorder) PURE; \
 	STDMETHOD(RequestBorderSpace)(THIS_ LPCBORDERWIDTHS pborderwidths) PURE; \
 	STDMETHOD(SetBorderSpace)(THIS_ LPCBORDERWIDTHS pborderwidths) PURE; \
 	STDMETHOD(SetActiveObject)(THIS_ IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName) PURE;
-#define IOleInPlaceUIWindow_IMETHODS \
-	IOleWindow_IMETHODS \
-	IOleInPlaceUIWindow_METHODS
 ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 #undef INTERFACE
 
@@ -282,15 +274,13 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
  */
 #define INTERFACE IOleInPlaceFrame
 #define IOleInPlaceFrame_METHODS \
+	IOleInPlaceUIWindow_METHODS \
 	STDMETHOD(InsertMenus)(THIS_ HMENU hemnuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths) PURE; \
 	STDMETHOD(SetMenu)(THIS_ HMENU hemnuShared, HOLEMENU holemenu, HWND hwndActiveObject) PURE; \
 	STDMETHOD(RemoveMenus)(THIS_ HMENU hemnuShared) PURE; \
 	STDMETHOD(SetStatusText)(THIS_ LPCOLESTR pszStatusText) PURE; \
 	STDMETHOD(EnableModeless)(THIS_ BOOL fEnable) PURE; \
 	STDMETHOD(TranslateAccelerator)(THIS_ struct tagMSG *lpmsg, WORD wID) PURE;
-#define IOleInPlaceFrame_IMETHODS \
-	IOleInPlaceUIWindow_IMETHODS \
-	IOleInPlaceFrame_METHODS
 ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 #undef INTERFACE
 
@@ -322,6 +312,7 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
  */
 #define INTERFACE IOleInPlaceSite
 #define IOleInPlaceSite_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(CanInPlaceActivate)(THIS) PURE; \
 	STDMETHOD(OnInPlaceActivate)(THIS) PURE; \
 	STDMETHOD(OnUIActivate)(THIS) PURE; \
@@ -332,9 +323,6 @@ ICOM_DEFINE(IOleInPlaceFrame,IOleInPlaceUIWindow)
 	STDMETHOD(DiscardUndoState)(THIS) PURE; \
 	STDMETHOD(DeactivateAndUndo)(THIS) PURE; \
 	STDMETHOD(OnPosRectChange)(THIS_ LPCRECT lprcPosRect) PURE;
-#define IOleInPlaceSite_IMETHODS \
-	IOleWindow_IMETHODS \
-	IOleInPlaceSite_METHODS
 ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
 #undef INTERFACE
 
@@ -365,15 +353,13 @@ ICOM_DEFINE(IOleInPlaceSite,IOleWindow)
  */
 #define INTERFACE IOleClientSite
 #define IOleClientSite_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SaveObject)(THIS) PURE; \
 	STDMETHOD(GetMoniker)(THIS_ DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk) PURE; \
 	STDMETHOD(GetContainer)(THIS_ IOleContainer **ppContainer) PURE; \
 	STDMETHOD(ShowObject)(THIS) PURE; \
 	STDMETHOD(OnShowWindow)(THIS_ BOOL fShow) PURE; \
 	STDMETHOD(RequestNewObjectLayout)(THIS) PURE;
-#define IOleClientSite_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleClientSite_METHODS
 ICOM_DEFINE(IOleClientSite,IUnknown)
 #undef INTERFACE
 
@@ -397,10 +383,8 @@ ICOM_DEFINE(IOleClientSite,IUnknown)
  */
 #define INTERFACE IParseDisplayName
 #define IParseDisplayName_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(ParseDisplayName)(THIS_ IBindCtx *pbc, LPOLESTR pszDisplayName, ULONG *pchEaten, IMoniker **ppmkOut) PURE;
-#define IParseDisplayName_IMETHODS \
-	IUnknown_IMETHODS \
-	IParseDisplayName_METHODS
 ICOM_DEFINE(IParseDisplayName,IUnknown)
 #undef INTERFACE
 
@@ -419,11 +403,9 @@ ICOM_DEFINE(IParseDisplayName,IUnknown)
  */
 #define INTERFACE IOleContainer
 #define IOleContainer_METHODS \
+	IParseDisplayName_METHODS \
 	STDMETHOD(EnumObjects)(THIS_ DWORD grfFlags, IEnumUnknown **ppenum) PURE; \
 	STDMETHOD(LockContainer)(THIS_ BOOL fLock) PURE;
-#define IOleContainer_IMETHODS \
-	IParseDisplayName_IMETHODS \
-	IOleContainer_METHODS
 ICOM_DEFINE(IOleContainer,IParseDisplayName)
 #undef INTERFACE
 
@@ -449,12 +431,10 @@ ICOM_DEFINE(IOleContainer,IParseDisplayName)
 
 #define INTERFACE IOleItemContainer
 #define IOleItemContainer_METHODS \
+	IOleContainer_METHODS \
 	STDMETHOD(GetObject)(THIS_ LPOLESTR pszItem, DWORD dwSpeedNeeded, IBindCtx *pbc, REFIID riid, void **ppvObject) PURE; \
 	STDMETHOD(GetObjectStorage)(THIS_ LPOLESTR pszItem, IBindCtx *pbc, REFIID riid, void **ppvStorage) PURE; \
 	STDMETHOD(IsRunning)(THIS_ LPOLESTR pszItem) PURE;
-#define IOleItemContainer_IMETHODS \
-	IOleContainer_IMETHODS \
-	IOleItemContainer_METHODS
 ICOM_DEFINE(IOleItemContainer,IOleContainer)
 #undef INTERFACE
 
@@ -475,6 +455,7 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
  */
 #define INTERFACE IOleLink
 #define IOleLink_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SetUpdateOptions)(THIS_ DWORD dwUpdateOpt) PURE; \
 	STDMETHOD(GetUpdateOptions)(THIS_ DWORD *pdwUpdateOpt) PURE; \
 	STDMETHOD(SetSourceMoniker)(THIS_ IMoniker *pmk, REFCLSID rclsid) PURE; \
@@ -486,9 +467,6 @@ ICOM_DEFINE(IOleItemContainer,IOleContainer)
 	STDMETHOD(GetBoundSource)(THIS_ IUnknown **ppunk) PURE; \
 	STDMETHOD(UnBindSource)(THIS) PURE; \
 	STDMETHOD(Update)(THIS_ IBindCtx *pbc) PURE;
-#define IOleLink_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleLink_METHODS
 ICOM_DEFINE(IOleLink,IUnknown)
 #undef INTERFACE
 

@@ -104,7 +104,7 @@ typedef struct IDirect3DVolumeTexture8   IDirect3DVolumeTexture8, *LPDIRECT3DVOL
  */
 #define INTERFACE IDirect3D8
 #define IDirect3D8_METHODS \
-    /*** IDirect3D8 methods ***/                         \
+    IUnknown_METHODS \
     STDMETHOD(RegisterSoftwareDevice)(THIS_ void * pInitializeFunction) PURE; \
     STDMETHOD_(UINT,GetAdapterCount             )(THIS) PURE; \
     STDMETHOD(GetAdapterIdentifier)(THIS_ UINT  Adapter, DWORD  Flags, D3DADAPTER_IDENTIFIER8 * pIdentifier) PURE; \
@@ -118,11 +118,6 @@ typedef struct IDirect3DVolumeTexture8   IDirect3DVolumeTexture8, *LPDIRECT3DVOL
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DCAPS8 * pCaps) PURE; \
     STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT  Adapter) PURE; \
     STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, D3DPRESENT_PARAMETERS * pPresentationParameters, IDirect3DDevice8 ** ppReturnedDeviceInterface) PURE;
-
-    /*** IDirect3D8 methods ***/
-#define IDirect3D8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3D8_METHODS
 ICOM_DEFINE(IDirect3D8,IUnknown)
 #undef INTERFACE
 
@@ -152,7 +147,7 @@ ICOM_DEFINE(IDirect3D8,IUnknown)
  */
 #define INTERFACE IDirect3DDevice8
 #define IDirect3DDevice8_METHODS \
-    /*** IDirect3DDevice8 methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(TestCooperativeLevel)(THIS) PURE; \
     STDMETHOD_(UINT,GetAvailableTextureMem)(THIS) PURE; \
     STDMETHOD(ResourceManagerDiscardBytes)(THIS_ DWORD  Bytes) PURE; \
@@ -246,12 +241,7 @@ ICOM_DEFINE(IDirect3D8,IUnknown)
     STDMETHOD(GetPixelShaderFunction)(THIS_ DWORD  Handle,void * pData,DWORD * pSizeOfData) PURE; \
     STDMETHOD(DrawRectPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DRECTPATCH_INFO * pRectPatchInfo) PURE; \
     STDMETHOD(DrawTriPatch)(THIS_ UINT  Handle,CONST float * pNumSegs,CONST D3DTRIPATCH_INFO * pTriPatchInfo) PURE; \
-    STDMETHOD(DeletePatch)(THIS_ UINT  Handle) PURE; \
-
-    /*** IDirect3DDevice8 methods ***/
-#define IDirect3DDevice8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DDevice8_METHODS
+    STDMETHOD(DeletePatch)(THIS_ UINT  Handle) PURE;
 ICOM_DEFINE(IDirect3DDevice8,IUnknown)
 #undef INTERFACE
 
@@ -362,7 +352,7 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
  */
 #define INTERFACE IDirect3DVolume8
 #define IDirect3DVolume8_METHODS \
-    /*** IDirect3DVolume8 methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid,CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE; \
     STDMETHOD(GetPrivateData)(THIS_ REFGUID   refguid,void * pData, DWORD * pSizeOfData) PURE; \
@@ -370,12 +360,7 @@ ICOM_DEFINE(IDirect3DDevice8,IUnknown)
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DVOLUME_DESC * pDesc) PURE; \
     STDMETHOD(LockBox)(THIS_ D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox, DWORD  Flags) PURE; \
-    STDMETHOD(UnlockBox)(THIS) PURE; \
-
-    /*** IDirect3DVolume8 methods ***/
-#define IDirect3DVolume8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DVolume8_METHODS
+    STDMETHOD(UnlockBox)(THIS) PURE;
 ICOM_DEFINE(IDirect3DVolume8,IUnknown)
 #undef INTERFACE
 
@@ -400,14 +385,9 @@ ICOM_DEFINE(IDirect3DVolume8,IUnknown)
  */
 #define INTERFACE IDirect3DSwapChain8
 #define IDirect3DSwapChain8_METHODS \
-    /*** IDirect3DSwapChain8 methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect, CONST RECT * pDestRect, HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE; \
-    STDMETHOD(GetBackBuffer)(THIS_ UINT  BackBuffer, D3DBACKBUFFER_TYPE  Type,IDirect3DSurface8 ** ppBackBuffer) PURE; \
-
-    /*** IDirect3DSwapChain8 methods ***/
-#define IDirect3DSwapChain8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DSwapChain8_METHODS
+    STDMETHOD(GetBackBuffer)(THIS_ UINT  BackBuffer, D3DBACKBUFFER_TYPE  Type,IDirect3DSurface8 ** ppBackBuffer) PURE;
 ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
 #undef INTERFACE
 
@@ -426,7 +406,7 @@ ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
  */
 #define INTERFACE IDirect3DSurface8
 #define IDirect3DSurface8_METHODS \
-    /*** IDirect3DSurface8 methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid,CONST void * pData,DWORD  SizeOfData,DWORD  Flags) PURE; \
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid,void * pData,DWORD * pSizeOfData) PURE; \
@@ -434,12 +414,7 @@ ICOM_DEFINE(IDirect3DSwapChain8,IUnknown)
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DSURFACE_DESC * pDesc) PURE; \
     STDMETHOD(LockRect)(THIS_ D3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE; \
-    STDMETHOD(UnlockRect)(THIS) PURE; \
-
-    /*** IDirect3DSurface8 methods ***/
-#define IDirect3DSurface8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DSurface8_METHODS
+    STDMETHOD(UnlockRect)(THIS) PURE;
 ICOM_DEFINE(IDirect3DSurface8,IUnknown)
 #undef INTERFACE
 
@@ -464,7 +439,7 @@ ICOM_DEFINE(IDirect3DSurface8,IUnknown)
  */
 #define INTERFACE IDirect3DResource8
 #define IDirect3DResource8_METHODS \
-    /*** IDirect3DResource8 methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(GetDevice)(THIS_ IDirect3DDevice8 ** ppDevice) PURE; \
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE; \
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE; \
@@ -473,11 +448,6 @@ ICOM_DEFINE(IDirect3DSurface8,IUnknown)
     STDMETHOD_(DWORD,GetPriority)(THIS) PURE; \
     STDMETHOD_(void,PreLoad)(THIS) PURE; \
     STDMETHOD_(D3DRESOURCETYPE,GetType)(THIS) PURE;
-
-    /*** IDirect3DResource8 methods ***/
-#define IDirect3DResource8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS
 ICOM_DEFINE(IDirect3DResource8,IUnknown)
 #undef INTERFACE
 
@@ -502,16 +472,10 @@ ICOM_DEFINE(IDirect3DResource8,IUnknown)
  */
 #define INTERFACE IDirect3DVertexBuffer8
 #define IDirect3DVertexBuffer8_METHODS \
-    /*** IDirect3DVertexBuffer8 methods ***/ \
+    IDirect3DResource8_METHODS \
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(GetDesc)(THIS_ D3DVERTEXBUFFER_DESC  * pDesc) PURE;
-
-    /*** IDirect3DVertexBuffer8 methods ***/
-#define IDirect3DVertexBuffer8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DVertexBuffer8_METHODS
 ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
 #undef INTERFACE
 
@@ -540,16 +504,10 @@ ICOM_DEFINE(IDirect3DVertexBuffer8,IDirect3DResource8)
  */
 #define INTERFACE IDirect3DIndexBuffer8
 #define IDirect3DIndexBuffer8_METHODS \
-    /*** IDirect3DIndexBuffer8 methods ***/ \
+    IDirect3DResource8_METHODS \
     STDMETHOD(Lock)(THIS_ UINT  OffsetToLock, UINT  SizeToLock, BYTE ** ppbData, DWORD  Flags) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
-    STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC * pDesc) PURE; \
-
-    /*** IDirect3DIndexBuffer8 methods ***/
-#define IDirect3DIndexBuffer8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DIndexBuffer8_METHODS
+    STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC * pDesc) PURE;
 ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
 #undef INTERFACE
 
@@ -578,16 +536,10 @@ ICOM_DEFINE(IDirect3DIndexBuffer8,IDirect3DResource8)
  */
 #define INTERFACE IDirect3DBaseTexture8
 #define IDirect3DBaseTexture8_METHODS \
-    /*** IDirect3DBaseTexture8 methods ***/ \
+    IDirect3DResource8_METHODS \
     STDMETHOD_(DWORD,SetLOD)(THIS_ DWORD  LODNew) PURE; \
     STDMETHOD_(DWORD,GetLOD)(THIS) PURE; \
     STDMETHOD_(DWORD,GetLevelCount)(THIS) PURE;
-
-    /*** IDirect3DBaseTexture8 methods ***/
-#define IDirect3DBaseTexture8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DBaseTexture8_METHODS
 ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
 #undef INTERFACE
 
@@ -616,19 +568,12 @@ ICOM_DEFINE(IDirect3DBaseTexture8,IDirect3DResource8)
  */
 #define INTERFACE IDirect3DCubeTexture8
 #define IDirect3DCubeTexture8_METHODS \
-    /*** IDirect3DCubeTexture8 methods ***/ \
+    IDirect3DBaseTexture8_METHODS \
     STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DSURFACE_DESC * pDesc) PURE; \
     STDMETHOD(GetCubeMapSurface)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level,IDirect3DSurface8 ** ppCubeMapSurface) PURE; \
     STDMETHOD(LockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ D3DCUBEMAP_FACES  FaceType,UINT  Level) PURE; \
-    STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES  FaceType,CONST RECT * pDirtyRect) PURE; \
-
-    /*** IDirect3DCubeTexture8 methods ***/
-#define IDirect3DCubeTexture8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DBaseTexture8_METHODS \
-    IDirect3DCubeTexture8_METHODS
+    STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES  FaceType,CONST RECT * pDirtyRect) PURE;
 ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
 #undef INTERFACE
 
@@ -663,19 +608,12 @@ ICOM_DEFINE(IDirect3DCubeTexture8,IDirect3DBaseTexture8)
  */
 #define INTERFACE IDirect3DTexture8
 #define IDirect3DTexture8_METHODS \
-    /*** IDirect3DTexture8 methods ***/ \
+    IDirect3DBaseTexture8_METHODS \
     STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DSURFACE_DESC * pDesc) PURE; \
     STDMETHOD(GetSurfaceLevel)(THIS_ UINT  Level,IDirect3DSurface8 ** ppSurfaceLevel) PURE; \
     STDMETHOD(LockRect)(THIS_ UINT  Level,D3DLOCKED_RECT * pLockedRect,CONST RECT * pRect,DWORD  Flags) PURE; \
     STDMETHOD(UnlockRect)(THIS_ UINT  Level) PURE; \
-    STDMETHOD(AddDirtyRect)(THIS_ CONST RECT * pDirtyRect) PURE; \
-
-    /*** IDirect3DTexture8 methods ***/
-#define IDirect3DTexture8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DBaseTexture8_METHODS \
-    IDirect3DTexture8_METHODS
+    STDMETHOD(AddDirtyRect)(THIS_ CONST RECT * pDirtyRect) PURE;
 ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
 #undef INTERFACE
 
@@ -710,19 +648,12 @@ ICOM_DEFINE(IDirect3DTexture8,IDirect3DBaseTexture8)
  */
 #define INTERFACE IDirect3DVolumeTexture8
 #define IDirect3DVolumeTexture8_METHODS \
-    /*** IDirect3DVolumeTexture8 methods ***/ \
+    IDirect3DBaseTexture8_METHODS \
     STDMETHOD(GetLevelDesc)(THIS_ UINT  Level,D3DVOLUME_DESC * pDesc) PURE; \
     STDMETHOD(GetVolumeLevel)(THIS_ UINT  Level,IDirect3DVolume8 ** ppVolumeLevel) PURE; \
     STDMETHOD(LockBox)(THIS_ UINT  Level,D3DLOCKED_BOX * pLockedVolume,CONST D3DBOX * pBox,DWORD  Flags) PURE; \
     STDMETHOD(UnlockBox)(THIS_ UINT  Level) PURE; \
     STDMETHOD(AddDirtyBox)(THIS_ CONST D3DBOX * pDirtyBox) PURE;
-
-    /*** IDirect3DVolumeTexture8 methods ***/
-#define IDirect3DVolumeTexture8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DResource8_METHODS \
-    IDirect3DBaseTexture8_METHODS \
-    IDirect3DVolumeTexture8_METHODS
 ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
 #undef INTERFACE
 

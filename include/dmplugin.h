@@ -67,18 +67,13 @@ DEFINE_GUID(CLSID_DirectMusicWaveTrack,						0xeed36461,0x9ea5,0x11d3,0x9b,0xd1,
 #undef  INTERFACE
 #define INTERFACE IDirectMusicTool
 #define IDirectMusicTool_METHODS \
-    /*** IDirectMusicTool methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Init)(THIS_ IDirectMusicGraph *pGraph) PURE; \
     STDMETHOD(GetMsgDeliveryType)(THIS_ DWORD *pdwDeliveryType) PURE; \
     STDMETHOD(GetMediaTypeArraySize)(THIS_ DWORD *pdwNumElements) PURE; \
     STDMETHOD(GetMediaTypes)(THIS_ DWORD **padwMediaTypes, DWORD dwNumElements) PURE; \
     STDMETHOD(ProcessPMsg)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG) PURE; \
     STDMETHOD(Flush)(THIS_ IDirectMusicPerformance *pPerf, DMUS_PMSG *pPMSG, REFERENCE_TIME rtTime) PURE;
-
-	/*** IDirectMusicTool methods ***/
-#define IDirectMusicTool_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicTool_METHODS
 ICOM_DEFINE(IDirectMusicTool,IUnknown)
 #undef INTERFACE
 
@@ -103,14 +98,8 @@ ICOM_DEFINE(IDirectMusicTool,IUnknown)
 #undef  INTERFACE
 #define INTERFACE IDirectMusicTool8
 #define IDirectMusicTool8_METHODS \
-    /*** IDirectMusicTool8 methods ***/ \
-    STDMETHOD(Clone)(THIS_ IDirectMusicTool **ppTool) PURE;
-
-	/*** IDirectMusicTool8 methods ***/
-#define IDirectMusicTool8_IMETHODS \
-    IUnknown_IMETHODS \
     IDirectMusicTool_METHODS \
-    IDirectMusicTool8_METHODS
+    STDMETHOD(Clone)(THIS_ IDirectMusicTool **ppTool) PURE;
 ICOM_DEFINE(IDirectMusicTool8,IDirectMusicTool)
 #undef INTERFACE
 
@@ -156,7 +145,7 @@ typedef enum enumDMUS_TRACKF_FLAGS
 #undef  INTERFACE
 #define INTERFACE IDirectMusicTrack
 #define IDirectMusicTrack_METHODS \
-    /*** IDirectMusicTrack methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Init)(THIS_ IDirectMusicSegment *pSegment) PURE; \
     STDMETHOD(InitPlay)(THIS_ IDirectMusicSegmentState *pSegmentState, IDirectMusicPerformance *pPerformance, void **ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags) PURE; \
     STDMETHOD(EndPlay)(THIS_ void *pStateData) PURE; \
@@ -167,11 +156,6 @@ typedef enum enumDMUS_TRACKF_FLAGS
     STDMETHOD(AddNotificationType)(THIS_ REFGUID rguidNotificationType) PURE; \
     STDMETHOD(RemoveNotificationType)(THIS_ REFGUID rguidNotificationType) PURE; \
     STDMETHOD(Clone)(THIS_ MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack **ppTrack) PURE;
-
-	/*** IDirectMusicTrack methods ***/
-#define IDirectMusicTrack_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicTrack_METHODS
 ICOM_DEFINE(IDirectMusicTrack,IUnknown)
 #undef INTERFACE
 
@@ -200,19 +184,12 @@ ICOM_DEFINE(IDirectMusicTrack,IUnknown)
 #undef  INTERFACE
 #define INTERFACE IDirectMusicTrack8
 #define IDirectMusicTrack8_METHODS \
-    /*** IDirectMusicTrack8 methods ***/ \
+    IDirectMusicTrack_METHODS \
     STDMETHOD(PlayEx)(THIS_ void *pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance *pPerf, IDirectMusicSegmentState *pSegSt, DWORD dwVirtualID) PURE; \
     STDMETHOD(GetParamEx)(THIS_ REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME *prtNext, void *pParam, void *pStateData, DWORD dwFlags) PURE; \
     STDMETHOD(SetParamEx)(THIS_ REFGUID rguidType, REFERENCE_TIME rtTime, void *pParam, void *pStateData, DWORD dwFlags) PURE; \
     STDMETHOD(Compose)(THIS_ IUnknown *pContext, DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack) PURE; \
     STDMETHOD(Join)(THIS_ IDirectMusicTrack *pNewTrack, MUSIC_TIME mtJoin, IUnknown *pContext, DWORD dwTrackGroup, IDirectMusicTrack **ppResultTrack) PURE;
-
-	/*** IDirectMusicTrack8 methods ***/
-#define IDirectMusicTrack8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicTrack_METHODS \
-    IDirectMusicTrack8_METHODS
-
 ICOM_DEFINE(IDirectMusicTrack8,IDirectMusicTrack)
 #undef INTERFACE
 

@@ -370,6 +370,7 @@ typedef BOOL (CALLBACK *LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
  */
 #define INTERFACE IDirectPlayLobby
 #define IDirectPlayLobby_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Connect)(THIS_ DWORD, LPDIRECTPLAY2*, IUnknown*) PURE; \
     STDMETHOD(CreateAddress)(THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE; \
     STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE; \
@@ -381,9 +382,6 @@ typedef BOOL (CALLBACK *LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     STDMETHOD(SendLobbyMessage)(THIS_ DWORD, DWORD, LPVOID, DWORD) PURE; \
     STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE; \
     STDMETHOD(SetLobbyMessageEvent)(THIS_ DWORD, DWORD, HANDLE) PURE;
-#define IDirectPlayLobby_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectPlayLobby_METHODS
 ICOM_DEFINE(IDirectPlayLobby,IUnknown)
 #undef INTERFACE
 
@@ -392,10 +390,8 @@ ICOM_DEFINE(IDirectPlayLobby,IUnknown)
  */
 #define INTERFACE IDirectPlayLobby2
 #define IDirectPlayLobby2_METHODS \
+    IDirectPlayLobby_METHODS \
     STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
-#define IDirectPlayLobby2_IMETHODS \
-    IDirectPlayLobby_IMETHODS \
-    IDirectPlayLobby2_METHODS
 ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
 #undef INTERFACE
 
@@ -404,14 +400,11 @@ ICOM_DEFINE(IDirectPlayLobby2,IDirectPlayLobby)
  */
 #define INTERFACE IDirectPlayLobby3
 #define IDirectPlayLobby3_METHODS \
+    IDirectPlayLobby2_METHODS \
     STDMETHOD(ConnectEx)(THIS_ DWORD, REFIID, LPVOID *, IUnknown *) PURE; \
     STDMETHOD(RegisterApplication)(THIS_ DWORD, LPDPAPPLICATIONDESC) PURE; \
     STDMETHOD(UnregisterApplication)(THIS_ DWORD, REFGUID) PURE; \
     STDMETHOD(WaitForConnectionSettings)(THIS_ DWORD) PURE;
-
-#define IDirectPlayLobby3_IMETHODS \
-    IDirectPlayLobby2_IMETHODS \
-    IDirectPlayLobby3_METHODS
 ICOM_DEFINE(IDirectPlayLobby3,IDirectPlayLobby2)
 #undef INTERFACE
 

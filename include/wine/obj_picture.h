@@ -55,6 +55,7 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
  */
 #define INTERFACE IPicture
 #define IPicture_METHODS \
+  IUnknown_METHODS \
   STDMETHOD(get_Handle)(THIS_ OLE_HANDLE *pHandle) PURE; \
   STDMETHOD(get_hPal)(THIS_ OLE_HANDLE *phPal) PURE; \
   STDMETHOD(get_Type)(THIS_ SHORT *pType) PURE; \
@@ -69,9 +70,6 @@ typedef struct IPictureDisp IPictureDisp, *LPPICTUREDISP;
   STDMETHOD(PictureChanged)(THIS) PURE; \
   STDMETHOD(SaveAsFile)(THIS_ LPSTREAM pStream, BOOL fSaveMemCopy, LONG *pCbSize) PURE; \
   STDMETHOD(get_Attributes)(THIS_ DWORD *pDwAttr) PURE;
-#define IPicture_IMETHODS \
-	IUnknown_IMETHODS \
-	IPicture_METHODS
 ICOM_DEFINE(IPicture,IUnknown)
 #undef INTERFACE
 
@@ -102,10 +100,8 @@ ICOM_DEFINE(IPicture,IUnknown)
  * IPictureDisp interface
  */
 #define INTERFACE IPictureDisp
-#define IPictureDisp_METHODS
-#define IPictureDisp_IMETHODS \
-				IDispatch_IMETHODS \
-				IPictureDisp_METHODS
+#define IPictureDisp_METHODS \
+     IDispatch_METHODS
 ICOM_DEFINE(IPictureDisp,IDispatch)
 #undef INTERFACE
 

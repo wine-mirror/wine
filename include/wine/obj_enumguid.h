@@ -38,13 +38,11 @@ typedef struct IEnumGUID IEnumGUID, *LPENUMGUID;
  */
 #define INTERFACE IEnumGUID
 #define IEnumGUID_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Next)(THIS_ ULONG  celt, GUID * rgelt, ULONG * pceltFetched) PURE; \
     STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
     STDMETHOD(Reset)(THIS) PURE; \
     STDMETHOD(Clone)(THIS_ IEnumGUID ** ppenum) PURE;
-#define IEnumGUID_IMETHODS \
-    IUnknown_IMETHODS \
-    IEnumGUID_METHODS
 ICOM_DEFINE(IEnumGUID,IUnknown)
 #undef INTERFACE
 

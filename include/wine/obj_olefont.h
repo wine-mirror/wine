@@ -43,6 +43,7 @@ typedef TEXTMETRICW TEXTMETRICOLE;
  */
 #define INTERFACE IFont
 #define IFont_METHODS \
+  IUnknown_METHODS \
   STDMETHOD(get_Name)(THIS_ BSTR * pname) PURE; \
   STDMETHOD(put_Name)(THIS_ BSTR  name) PURE; \
   STDMETHOD(get_Size)(THIS_ CY * psize) PURE; \
@@ -67,9 +68,6 @@ typedef TEXTMETRICW TEXTMETRICOLE;
   STDMETHOD(AddRefHfont)(THIS_ HFONT  hfont) PURE; \
   STDMETHOD(ReleaseHfont)(THIS_ HFONT  hfont) PURE; \
   STDMETHOD(SetHdc)(THIS_ HDC  hdc) PURE;
-#define IFont_IMETHODS \
-	IUnknown_IMETHODS \
-	IFont_METHODS
 ICOM_DEFINE(IFont,IUnknown)
 #undef INTERFACE
 
@@ -110,10 +108,8 @@ ICOM_DEFINE(IFont,IUnknown)
  * IFont interface
  */
 #define INTERFACE IFontDisp
-#define IFontDisp_METHODS
-#define IFontDisp_IMETHODS \
-  IUnknown_IMETHODS \
-	IFontDisp_METHODS
+#define IFontDisp_METHODS \
+  IDispatch_METHODS
 ICOM_DEFINE(IFontDisp,IDispatch)
 #undef INTERFACE
 

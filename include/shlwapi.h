@@ -245,14 +245,12 @@ typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
 
 #define INTERFACE IQueryAssociations
 #define IQueryAssociations_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Init)(THIS_ ASSOCF  flags, LPCWSTR  pszAssoc, HKEY  hkProgid, HWND  hwnd) PURE; \
     STDMETHOD(GetString)(THIS_ ASSOCF  flags, ASSOCSTR  str, LPCWSTR  pszExtra, LPWSTR  pszOut, DWORD * pcchOut) PURE; \
     STDMETHOD(GetKey)(THIS_ ASSOCF  flags, ASSOCKEY  key, LPCWSTR  pszExtra, HKEY * phkeyOut) PURE; \
     STDMETHOD(GetData)(THIS_ ASSOCF  flags, ASSOCDATA  data, LPCWSTR  pszExtra, LPVOID  pvOut, DWORD * pcbOut) PURE; \
     STDMETHOD(GetEnum)(THIS_ ASSOCF  flags, ASSOCENUM  assocenum, LPCWSTR  pszExtra, REFIID  riid, LPVOID * ppvOut) PURE;
-#define IQueryAssociations_IMETHODS \
-        IUnknown_IMETHODS \
-        IQueryAssociations_METHODS
 ICOM_DEFINE(IQueryAssociations,IUnknown)
 #undef INTERFACE
 
@@ -843,7 +841,7 @@ VOID WINAPI ColorRGBToHLS(COLORREF,LPWORD,LPWORD,LPWORD);
 
 
 /* Stream functions */
-#if !defined(NO_SHLWAPI_STREAM) && defined(IStream_IMETHODS)
+#if !defined(NO_SHLWAPI_STREAM) && defined(IStream_METHODS)
 
 IStream * WINAPI SHOpenRegStreamA(HKEY,LPCSTR,LPCSTR,DWORD);
 IStream * WINAPI SHOpenRegStreamW(HKEY,LPCWSTR,LPCWSTR,DWORD);
@@ -880,7 +878,7 @@ HRESULT WINAPI SHCreateStreamWrapper(LPBYTE,DWORD,DWORD,IStream**);
 HRESULT WINAPI SHAutoComplete(HWND,DWORD);
 
 /* Threads */
-#if defined(IUnknown_IMETHODS)
+#if defined(IUnknown_METHODS)
 HRESULT WINAPI SHGetThreadRef(IUnknown**);
 HRESULT WINAPI SHSetThreadRef(IUnknown*);
 #endif
@@ -897,7 +895,7 @@ HRESULT WINAPI SHReleaseThreadRef();
 
 BOOL WINAPI SHCreateThread(LPTHREAD_START_ROUTINE,void*,DWORD,LPTHREAD_START_ROUTINE);
 
-#if defined(IBindCtx_IMETHODS)
+#if defined(IBindCtx_METHODS)
 BOOL WINAPI SHSkipJunction(IBindCtx*,const CLSID*);
 #endif
 

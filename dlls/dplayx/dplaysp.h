@@ -53,6 +53,7 @@ typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,
 /* Define the COM interface */
 #define INTERFACE IDirectPlaySP
 #define IDirectPlaySP_METHODS \
+   IUnknown_METHODS \
    STDMETHOD(AddMRUEntry)(THIS_ LPCWSTR lpSection, LPCWSTR lpKey, LPCVOID lpData, DWORD dwDataSize, DWORD dwMaxEntries ) PURE; \
    STDMETHOD(CreateAddress)(THIS_ REFGUID guidSP, REFGUID guidDataType, LPCVOID lpData, DWORD dwDataSize, LPVOID lpAddress,LPDWORD lpdwAddressSize) PURE; \
    STDMETHOD(EnumAddress)(THIS_ LPDPENUMADDRESSCALLBACK lpEnumAddressCallback, LPCVOID lpAddress, DWORD dwAddressSize, LPVOID lpContext ) PURE; \
@@ -65,11 +66,6 @@ typedef BOOL (CALLBACK *LPENUMMRUCALLBACK)( LPCVOID lpData,
    STDMETHOD(GetSPData)(THIS_ LPVOID *lplpData, LPDWORD dwDataSize, DWORD dwFlags ) PURE; \
    STDMETHOD(SetSPData)(THIS_ LPVOID lpData, DWORD dwDataSize, DWORD dwFlags ) PURE; \
    STDMETHOD_(VOID,SendComplete)(THIS_ LPVOID , DWORD  ) PURE;
-
-#define IDirectPlaySP_IMETHODS \
-   IUnknown_IMETHODS \
-   IDirectPlaySP_METHODS
-
 ICOM_DEFINE(IDirectPlaySP,IUnknown)
 #undef INTERFACE
 

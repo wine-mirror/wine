@@ -125,14 +125,12 @@ typedef struct tagCMInvokeCommandInfoEx
 
 #define INTERFACE IContextMenu
 #define IContextMenu_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(QueryContextMenu)(THIS_ HMENU  hmenu, UINT  indexMenu, UINT  idCmdFirst, UINT  idCmdLast, UINT  uFlags) PURE; \
 	STDMETHOD(InvokeCommand)(THIS_ LPCMINVOKECOMMANDINFO  lpici) PURE; \
 	STDMETHOD(GetCommandString)(THIS_ UINT  idCmd, UINT  uType, UINT * pwReserved, LPSTR  pszName, UINT  cchMax) PURE; \
 	STDMETHOD(HandleMenuMsg)(THIS_ UINT  uMsg, WPARAM  wParam, LPARAM  lParam) PURE; \
 	void * guard;   /*possibly another nasty entry from ContextMenu3 ?*/
-#define IContextMenu_IMETHODS \
-	IUnknown_IMETHODS \
-	IContextMenu_METHODS
 ICOM_DEFINE(IContextMenu,IUnknown)
 #undef INTERFACE
 

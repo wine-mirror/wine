@@ -68,6 +68,7 @@ DEFINE_GUID(SID_STopLevelBrowser, 0x4C96BE40L, 0x915C, 0x11CF, 0x99, 0xD3, 0x00,
 
 #define INTERFACE IShellBrowser
 #define IShellBrowser_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(InsertMenusSB)(THIS_ HMENU  hmenuShared, LPOLEMENUGROUPWIDTHS  lpMenuWidths) PURE; \
 	STDMETHOD(SetMenuSB)(THIS_ HMENU  hmenuShared, HOLEMENU  holemenuReserved, HWND  hwndActiveObject) PURE; \
 	STDMETHOD(RemoveMenusSB)(THIS_ HMENU  hmenuShared) PURE; \
@@ -81,9 +82,6 @@ DEFINE_GUID(SID_STopLevelBrowser, 0x4C96BE40L, 0x915C, 0x11CF, 0x99, 0xD3, 0x00,
 	STDMETHOD(QueryActiveShellView)(THIS_ IShellView ** IShellView) PURE; \
 	STDMETHOD(OnViewWindowActive)(THIS_ IShellView * IShellView) PURE; \
 	STDMETHOD(SetToolbarItems)(THIS_ LPTBBUTTON  lpButtons, UINT  nButtons, UINT  uFlags) PURE;
-#define IShellBrowser_IMETHODS \
-	IOleWindow_IMETHODS \
-	IShellBrowser_METHODS
 ICOM_DEFINE(IShellBrowser,IOleWindow)
 #undef INTERFACE
 

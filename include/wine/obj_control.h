@@ -180,13 +180,11 @@ typedef struct IProvideClassInfo2 IProvideClassInfo2, *LPPROVIDECLASSINFO2;
  */
 #define INTERFACE IOleControl
 #define IOleControl_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetControlInfo)(THIS_ CONTROLINFO *pCI) PURE; \
 	STDMETHOD(OnMnemonic)(THIS_ struct tagMSG *pMsg) PURE; \
 	STDMETHOD(OnAmbientPropertyChange)(THIS_ DISPID dispID) PURE; \
 	STDMETHOD(FreezeEvents)(THIS_ BOOL bFreeze) PURE;
-#define IOleControl_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleControl_METHODS
 ICOM_DEFINE(IOleControl,IUnknown)
 #undef INTERFACE
 
@@ -208,6 +206,7 @@ ICOM_DEFINE(IOleControl,IUnknown)
  */
 #define INTERFACE IOleControlSite
 #define IOleControlSite_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(OnControlInfoChanged)(THIS) PURE; \
 	STDMETHOD(LockInPlaceActive)(THIS_ BOOL fLock) PURE; \
 	STDMETHOD(GetExtendedControl)(THIS_ IDispatch **ppDisp) PURE; \
@@ -215,9 +214,6 @@ ICOM_DEFINE(IOleControl,IUnknown)
 	STDMETHOD(TranslateAccelerator)(THIS_ struct tagMSG *pMsg, DWORD grfModifiers) PURE; \
 	STDMETHOD(OnFocus)(THIS_ BOOL fGotFocus) PURE; \
 	STDMETHOD(ShowPropertyFrame)(THIS) PURE;
-#define IOleControlSite_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleControlSite_METHODS
 ICOM_DEFINE(IOleControlSite,IUnknown)
 #undef INTERFACE
 
@@ -242,12 +238,10 @@ ICOM_DEFINE(IOleControlSite,IUnknown)
  */
 #define INTERFACE IOleInPlaceSiteEx
 #define IOleInPlaceSiteEx_METHODS \
+	IOleInPlaceSite_METHODS \
 	STDMETHOD(OnInPlaceActivateEx)(THIS_ BOOL *pfNoRedraw, DWORD dwFlags) PURE; \
 	STDMETHOD(OnInPlaceDeactivateEx)(THIS_ BOOL fNoRedraw) PURE; \
 	STDMETHOD(RequestUIActivate)(THIS) PURE;
-#define IOleInPlaceSiteEx_IMETHODS \
-	IOleInPlaceSite_IMETHODS \
-	IOleInPlaceSiteEx_METHODS
 ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
 #undef INTERFACE
 
@@ -282,6 +276,7 @@ ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
  */
 #define INTERFACE IOleInPlaceSiteWindowless
 #define IOleInPlaceSiteWindowless_METHODS \
+	IOleInPlaceSite_METHODS \
 	STDMETHOD(CanWindowlessActivate)(THIS) PURE; \
 	STDMETHOD(GetCapture)(THIS) PURE; \
 	STDMETHOD(SetCapture)(THIS_ BOOL fCapture) PURE; \
@@ -294,9 +289,6 @@ ICOM_DEFINE(IOleInPlaceSiteEx,IOleInPlaceSite)
 	STDMETHOD(ScrollRect)(THIS_ INT dx, INT dy, LPCRECT pRectScroll, LPCRECT pRectClip) PURE; \
 	STDMETHOD(AdjustRect)(THIS_ LPRECT prc) PURE; \
 	STDMETHOD(OnDefWindowMessage)(THIS_ UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult) PURE;
-#define IOleInPlaceSiteWindowless_IMETHODS \
-	IOleInPlaceSite_IMETHODS \
-	IOleInPlaceSiteWindowless_METHODS
 ICOM_DEFINE(IOleInPlaceSiteWindowless,IOleInPlaceSite)
 #undef INTERFACE
 
@@ -340,11 +332,9 @@ ICOM_DEFINE(IOleInPlaceSiteWindowless,IOleInPlaceSite)
  */
 #define INTERFACE IOleInPlaceObjectWindowless
 #define IOleInPlaceObjectWindowless_METHODS \
+	IOleInPlaceObject_METHODS \
 	STDMETHOD(OnWindowMessage)(THIS_ UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult) PURE; \
 	STDMETHOD(GetDropTarget)(THIS_ IDropTarget **ppDropTarget) PURE;
-#define IOleInPlaceObjectWindowless_IMETHODS \
-	IOleInPlaceObject_IMETHODS \
-	IOleInPlaceObjectWindowless_METHODS
 ICOM_DEFINE(IOleInPlaceObjectWindowless,IOleInPlaceObject)
 #undef INTERFACE
 
@@ -372,12 +362,10 @@ ICOM_DEFINE(IOleInPlaceObjectWindowless,IOleInPlaceObject)
  */
 #define INTERFACE IClassFactory2
 #define IClassFactory2_METHODS \
+	IClassFactory_METHODS \
 	STDMETHOD(GetLicInfo)(THIS_ LICINFO *pLicInfo) PURE; \
 	STDMETHOD(RequestLicKey)(THIS_ DWORD dwReserved, BSTR *pBstrKey) PURE; \
 	STDMETHOD(CreateInstanceLic)(THIS_ IUnknown *pUnkOuter, IUnknown *pUnkReserved, REFIID riid, BSTR bstrKey, PVOID *ppvObj) PURE;
-#define IClassFactory2_IMETHODS \
-	IClassFactory_IMETHODS \
-	IClassFactory2_METHODS
 ICOM_DEFINE(IClassFactory2,IClassFactory)
 #undef INTERFACE
 
@@ -401,14 +389,12 @@ ICOM_DEFINE(IClassFactory2,IClassFactory)
  */
 #define INTERFACE IViewObjectEx
 #define IViewObjectEx_METHODS \
+	IViewObject2_METHODS \
 	STDMETHOD(GetRect)(THIS_ DWORD dwAspect, LPRECTL pRect) PURE; \
 	STDMETHOD(GetViewStatus)(THIS_ DWORD *pdwStatus) PURE; \
 	STDMETHOD(QueryHitPoint)(THIS_ DWORD dwAspect, LPCRECT pRectBounds, POINT ptlLoc, LONG lCloseHint, DWORD *pHitResult) PURE; \
 	STDMETHOD(QueryHitRect)(THIS_ DWORD dwAspect, LPCRECT pRectBounds, LPCRECT pRectLoc, LONG lCloseHint, DWORD *pHitResult) PURE; \
 	STDMETHOD(GetNaturalExtent)(THIS_ DWORD dwAspect, LONG lindex, DVTARGETDEVICE *ptd, HDC hicTargetDev, DVEXTENTINFO *pExtentInfo, LPSIZEL pSizel) PURE;
-#define IViewObjectEx_IMETHODS \
-	IViewObject2_IMETHODS \
-	IViewObjectEx_METHODS
 ICOM_DEFINE(IViewObjectEx,IViewObject2)
 #undef INTERFACE
 
@@ -444,10 +430,8 @@ ICOM_DEFINE(IViewObjectEx,IViewObject2)
 
 #define INTERFACE IProvideClassInfo
 #define IProvideClassInfo_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetClassInfo)(THIS_ ITypeInfo **ppTI) PURE;
-#define IProvideClassInfo_IMETHODS \
-	IUnknown_IMETHODS \
-	IProvideClassInfo_METHODS
 ICOM_DEFINE(IProvideClassInfo,IUnknown)
 #undef INTERFACE
 
@@ -467,10 +451,8 @@ ICOM_DEFINE(IProvideClassInfo,IUnknown)
  */
 #define INTERFACE IProvideClassInfo2
 #define IProvideClassInfo2_METHODS \
+	IProvideClassInfo_METHODS \
 	STDMETHOD(GetGUID)(THIS_ DWORD dwGuidKind, GUID *pGUID) PURE;
-#define IProvideClassInfo2_IMETHODS \
-	IProvideClassInfo_IMETHODS \
-	IProvideClassInfo2_METHODS
 ICOM_DEFINE(IProvideClassInfo2,IProvideClassInfo)
 #undef INTERFACE
 

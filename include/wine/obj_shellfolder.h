@@ -80,13 +80,11 @@ typedef struct
 
 #define INTERFACE IEnumExtraSearch
 #define IEnumExtraSearch_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Next)(THIS_ ULONG  celt, LPEXTRASEARCH * rgelt, ULONG * pceltFetched) PURE; \
     STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
     STDMETHOD(Reset)(THIS) PURE; \
     STDMETHOD(Clone)(THIS_ IEnumExtraSearch ** ppenum) PURE;
-#define IEnumExtraSearch_IMETHODS \
-    IUnknown_IMETHODS \
-    IEnumExtraSearch_METHODS
 ICOM_DEFINE(IEnumExtraSearch,IUnknown)
 #undef INTERFACE
 
@@ -200,6 +198,7 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
  */
 #define INTERFACE IShellFolder
 #define IShellFolder_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(ParseDisplayName)(THIS_ HWND  hwndOwner,LPBC  pbcReserved, LPOLESTR  lpszDisplayName, ULONG  * pchEaten, LPITEMIDLIST  * ppidl, ULONG  * pdwAttributes) PURE; \
     STDMETHOD(EnumObjects)(THIS_ HWND  hwndOwner, DWORD  grfFlags, LPENUMIDLIST  * ppenumIDList) PURE;\
     STDMETHOD(BindToObject)(THIS_ LPCITEMIDLIST  pidl, LPBC  pbcReserved, REFIID  riid, LPVOID  * ppvOut) PURE;\
@@ -210,9 +209,6 @@ DWORD WINAPI SHGetDesktopFolder(IShellFolder * *);
     STDMETHOD(GetUIObjectOf)(THIS_ HWND  hwndOwner, UINT  cidl, LPCITEMIDLIST  * apidl, REFIID  riid, UINT  * prgfInOut, LPVOID  * ppvOut) PURE;\
     STDMETHOD(GetDisplayNameOf)(THIS_ LPCITEMIDLIST  pidl, DWORD  uFlags, LPSTRRET  lpName) PURE;\
     STDMETHOD(SetNameOf)(THIS_ HWND  hwndOwner, LPCITEMIDLIST  pidl,LPCOLESTR  lpszName, DWORD  uFlags,LPITEMIDLIST  * ppidlOut) PURE;
-#define IShellFolder_IMETHODS \
-    IUnknown_IMETHODS \
-    IShellFolder_METHODS
 ICOM_DEFINE(IShellFolder,IUnknown)
 #undef INTERFACE
 
@@ -274,6 +270,7 @@ typedef struct
 
 #define INTERFACE IShellFolder2
 #define IShellFolder2_METHODS \
+    IShellFolder_METHODS \
     STDMETHOD(GetDefaultSearchGUID)(THIS_ LPGUID  lpguid) PURE;\
     STDMETHOD(EnumSearches)(THIS_ LPENUMEXTRASEARCH  * ppEnum) PURE; \
     STDMETHOD(GetDefaultColumn)(THIS_ DWORD  dwReserved, ULONG  * pSort, ULONG  * pDisplay) PURE;\
@@ -281,9 +278,6 @@ typedef struct
     STDMETHOD(GetDetailsEx)(THIS_ LPCITEMIDLIST  pidl, const SHCOLUMNID  * pscid, VARIANT  * pv) PURE;\
     STDMETHOD(GetDetailsOf)(THIS_ LPCITEMIDLIST  pidl, UINT  iColumn, LPSHELLDETAILS  pDetails) PURE;\
     STDMETHOD(MapNameToSCID)(THIS_ LPCWSTR  pwszName, SHCOLUMNID  * pscid) PURE;
-#define IShellFolder2_IMETHODS \
-    IShellFolder_METHODS \
-    IShellFolder2_METHODS
 ICOM_DEFINE(IShellFolder2, IShellFolder)
 #undef INTERFACE
 
@@ -319,10 +313,8 @@ ICOM_DEFINE(IShellFolder2, IShellFolder)
 
 #define INTERFACE IPersistFolder
 #define IPersistFolder_METHODS \
+    IPersist_METHODS \
     STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST  pidl) PURE;
-#define IPersistFolder_IMETHODS \
-    IPersist_IMETHODS \
-    IPersistFolder_METHODS
 ICOM_DEFINE(IPersistFolder, IPersist)
 #undef INTERFACE
 
@@ -343,11 +335,8 @@ ICOM_DEFINE(IPersistFolder, IPersist)
 
 #define INTERFACE IPersistFolder2
 #define IPersistFolder2_METHODS \
-    STDMETHOD(GetCurFolder)(THIS_ LPITEMIDLIST * pidl) PURE;
-#define IPersistFolder2_IMETHODS \
-    IPersist_IMETHODS \
     IPersistFolder_METHODS \
-    IPersistFolder2_METHODS
+    STDMETHOD(GetCurFolder)(THIS_ LPITEMIDLIST * pidl) PURE;
 ICOM_DEFINE(IPersistFolder2, IPersistFolder)
 #undef INTERFACE
 
@@ -379,13 +368,9 @@ typedef struct {
 
 #define INTERFACE IPersistFolder3
 #define IPersistFolder3_METHODS \
+    IPersistFolder2_METHODS \
     STDMETHOD(InitializeEx)(THIS_ IBindCtx * pbc, LPCITEMIDLIST  pidlRoot, const PERSIST_FOLDER_TARGET_INFO * ppfti) PURE;\
     STDMETHOD(GetFolderTargetInfo)(THIS_ PERSIST_FOLDER_TARGET_INFO * ppfti) PURE;
-#define IPersistFolder3_IMETHODS \
-    IPersist_IMETHODS \
-    IPersistFolder_METHODS \
-    IPersistFolder2_METHODS \
-    IPersistFolder3_METHODS
 ICOM_DEFINE(IPersistFolder3, IPersistFolder2)
 #undef INTERFACE
 

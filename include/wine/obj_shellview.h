@@ -129,6 +129,7 @@ typedef enum
 
 #define INTERFACE IShellView
 #define IShellView_METHODS \
+	IOleWindow_METHODS \
 	STDMETHOD(TranslateAccelerator)(THIS_ LPMSG  lpmsg) PURE; \
 	STDMETHOD(EnableModeless)(THIS_ BOOL  fEnable) PURE; \
 	STDMETHOD(UIActivate)(THIS_ UINT  uState) PURE; \
@@ -141,9 +142,6 @@ typedef enum
 	STDMETHOD(SelectItem)(THIS_ LPCITEMIDLIST  pidlItem, UINT  uFlags) PURE; \
 	STDMETHOD(GetItemObject)(THIS_ UINT  uItem, REFIID  riid, LPVOID * ppv) PURE; \
 	STDMETHOD(EditItem)(THIS_ LPCITEMIDLIST  pidlItem) PURE;
-#define IShellView_IMETHODS \
-	IOleWindow_IMETHODS \
-	IShellView_METHODS
 ICOM_DEFINE(IShellView,IOleWindow)
 #undef INTERFACE
 

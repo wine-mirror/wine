@@ -195,12 +195,10 @@ typedef struct IPrint IPrint, *LPPRINT;
  */
 #define INTERFACE IOleDocument
 #define IOleDocument_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(CreateView)(THIS_ IOleInPlaceSite *pIPSite, IStream *pstm, DWORD dwReserved, IOleDocumentView **ppView) PURE; \
 	STDMETHOD(GetDocMiscStatus)(THIS_ DWORD *pdwStatus) PURE; \
 	STDMETHOD(EnumViews)(THIS_ IEnumOleDocumentViews **ppEnum, IOleDocumentView **ppView) PURE;
-#define IOleDocument_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleDocument_METHODS
 ICOM_DEFINE(IOleDocument,IUnknown)
 #undef INTERFACE
 
@@ -221,10 +219,8 @@ ICOM_DEFINE(IOleDocument,IUnknown)
  */
 #define INTERFACE IOleDocumentSite
 #define IOleDocumentSite_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(ActivateMe)(THIS_ IOleDocumentView *pViewToActivate) PURE;
-#define IOleDocumentSite_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleDocumentSite_METHODS
 ICOM_DEFINE(IOleDocumentSite,IUnknown)
 #undef INTERFACE
 
@@ -243,6 +239,7 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
  */
 #define INTERFACE IOleDocumentView
 #define IOleDocumentView_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SetInPlaceSite)(THIS_ IOleInPlaceSite *pIPSite) PURE; \
 	STDMETHOD(GetInPlaceSite)(THIS_ IOleInPlaceSite **ppIPSite) PURE; \
 	STDMETHOD(GetDocument)(THIS_ IUnknown **ppunk) PURE; \
@@ -256,9 +253,6 @@ ICOM_DEFINE(IOleDocumentSite,IUnknown)
 	STDMETHOD(SaveViewState)(THIS_ LPSTREAM pstm) PURE; \
 	STDMETHOD(ApplyViewState)(THIS_ LPSTREAM pstm) PURE; \
 	STDMETHOD(Clone)(THIS_ IOleInPlaceSite *pIPSiteNew, IOleDocumentView **ppViewNew) PURE;
-#define IOleDocumentView_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleDocumentView_METHODS
 ICOM_DEFINE(IOleDocumentView,IUnknown)
 #undef INTERFACE
 
@@ -289,13 +283,11 @@ ICOM_DEFINE(IOleDocumentView,IUnknown)
  */
 #define INTERFACE IEnumOleDocumentViews
 #define IEnumOleDocumentViews_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Next)(THIS_ ULONG cViews, IOleDocumentView **rgpView, ULONG *pcFetched) PURE; \
 	STDMETHOD(Skip)(THIS_ ULONG cViews) PURE; \
 	STDMETHOD(Reset)(THIS) PURE; \
 	STDMETHOD(Clone)(THIS_ IEnumOleDocumentViews **ppEnum) PURE;
-#define IEnumOleDocumentViews_IMETHODS \
-	IUnknown_IMETHODS \
-	IEnumOleDocumentViews_METHODS
 ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
 #undef INTERFACE
 
@@ -317,11 +309,9 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
  */
 #define INTERFACE IOleCommandTarget
 #define IOleCommandTarget_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(QueryStatus)(THIS_ const GUID *pguidCmdGroup, ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT *pCmdText) PURE; \
 	STDMETHOD(Exec)(THIS_ const GUID *pguidCmdGroup, DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut) PURE;
-#define IOleCommandTarget_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleCommandTarget_METHODS
 ICOM_DEFINE(IOleCommandTarget,IUnknown)
 #undef INTERFACE
 
@@ -341,11 +331,9 @@ ICOM_DEFINE(IOleCommandTarget,IUnknown)
  */
 #define INTERFACE IContinueCallback
 #define IContinueCallback_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(FContinue)(THIS) PURE; \
 	STDMETHOD(FContinuePrinting)(THIS_ LONG nCntPrinted, LONG nCurPage, WCHAR *pwszPrintStatus) PURE;
-#define IContinueCallback_IMETHODS \
-	IUnknown_IMETHODS \
-	IContinueCallback_METHODS
 ICOM_DEFINE(IContinueCallback,IUnknown)
 #undef INTERFACE
 
@@ -365,12 +353,10 @@ ICOM_DEFINE(IContinueCallback,IUnknown)
  */
 #define INTERFACE IPrint
 #define IPrint_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SetInitialPageNum)(THIS_ LONG nFirstPage) PURE; \
 	STDMETHOD(GetPageInfo)(THIS_ LONG *pnFirstPage, LONG *pcPages) PURE; \
 	STDMETHOD(Print)(THIS_ DWORD grfFlags, DVTARGETDEVICE **pptd, PAGESET **ppPageSet, STGMEDIUM *pstgmOptions, IContinueCallback *pcallback, LONG nFirstPage, LONG *pcPagesPrinted, LONG *pnLastPage) PURE;
-#define IPrint_IMETHODS \
-	IUnknown_IMETHODS \
-	IPrint_METHODS
 ICOM_DEFINE(IPrint,IUnknown)
 #undef INTERFACE
 

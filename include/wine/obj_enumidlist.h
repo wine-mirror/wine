@@ -34,13 +34,11 @@ typedef struct IEnumIDList IEnumIDList, *LPENUMIDLIST;
 
 #define INTERFACE IEnumIDList
 #define IEnumIDList_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Next)(THIS_ ULONG  celt, LPITEMIDLIST * rgelt, ULONG * pceltFetched) PURE; \
     STDMETHOD(Skip)(THIS_ ULONG  celt) PURE; \
     STDMETHOD(Reset)(THIS) PURE; \
     STDMETHOD(Clone)(THIS_ IEnumIDList ** ppenum) PURE;
-#define IEnumIDList_IMETHODS \
-    IUnknown_IMETHODS \
-    IEnumIDList_METHODS
 ICOM_DEFINE(IEnumIDList,IUnknown)
 #undef INTERFACE
 

@@ -1050,6 +1050,7 @@ DECL_WINELIB_TYPE_AW(LPCDIDEVICEIMAGEINFOHEADER)
  */
 #define INTERFACE IDirectInputEffect
 #define IDirectInputEffect_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ HINSTANCE, DWORD, REFGUID) PURE; \
     STDMETHOD(GetEffectGuid)(THIS_ LPGUID) PURE; \
     STDMETHOD(GetParameters)(THIS_ LPDIEFFECT, DWORD) PURE; \
@@ -1060,9 +1061,6 @@ DECL_WINELIB_TYPE_AW(LPCDIDEVICEIMAGEINFOHEADER)
     STDMETHOD(Download)(THIS) PURE; \
     STDMETHOD(Unload)(THIS) PURE; \
     STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE) PURE;
-#define IDirectInputEffect_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectInputEffect_METHODS
 ICOM_DEFINE(IDirectInputEffect,IUnknown)
 #undef INTERFACE
 
@@ -1090,6 +1088,7 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
  */
 #define INTERFACE IDirectInputDeviceA
 #define IDirectInputDeviceA_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetCapabilities)(THIS_ LPDIDEVCAPS lpDIDevCaps) PURE; \
     STDMETHOD(EnumObjects)(THIS_ LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(GetProperty)(THIS_ REFGUID rguidProp, LPDIPROPHEADER pdiph) PURE; \
@@ -1105,9 +1104,6 @@ ICOM_DEFINE(IDirectInputEffect,IUnknown)
     STDMETHOD(GetDeviceInfo)(THIS_ LPDIDEVICEINSTANCEA pdidi) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion, REFGUID rguid) PURE;
-#define IDirectInputDeviceA_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectInputDeviceA_METHODS
 ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
 #undef INTERFACE
 
@@ -1140,6 +1136,7 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
  */
 #define INTERFACE IDirectInputDevice2A
 #define IDirectInputDevice2A_METHODS \
+    IDirectInputDeviceA_METHODS \
     STDMETHOD(CreateEffect)(THIS_ REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter) PURE; \
     STDMETHOD(EnumEffects)(THIS_ LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType) PURE; \
     STDMETHOD(GetEffectInfo)(THIS_ LPDIEFFECTINFOA pdei, REFGUID rguid) PURE; \
@@ -1149,9 +1146,6 @@ ICOM_DEFINE(IDirectInputDeviceA,IUnknown)
     STDMETHOD(Escape)(THIS_ LPDIEFFESCAPE pesc) PURE; \
     STDMETHOD(Poll)(THIS) PURE; \
     STDMETHOD(SendDeviceData)(THIS_ DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl) PURE;
-#define IDirectInputDevice2A_IMETHODS \
-    IDirectInputDeviceA_IMETHODS \
-    IDirectInputDevice2A_METHODS
 ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
 #undef INTERFACE
 
@@ -1194,11 +1188,9 @@ ICOM_DEFINE(IDirectInputDevice2A,IDirectInputDeviceA)
  */
 #define INTERFACE IDirectInputDevice7A
 #define IDirectInputDevice7A_METHODS \
+    IDirectInputDevice2A_METHODS \
     STDMETHOD(EnumEffectsInFile)(THIS_ LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags) PURE; \
     STDMETHOD(WriteEffectToFile)(THIS_ LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags) PURE;
-#define IDirectInputDevice7A_IMETHODS \
-    IDirectInputDevice2A_IMETHODS \
-    IDirectInputDevice7A_METHODS
 ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
 #undef INTERFACE
 
@@ -1246,12 +1238,10 @@ ICOM_DEFINE(IDirectInputDevice7A,IDirectInputDevice2A)
  */
 #define INTERFACE IDirectInputDevice8A
 #define IDirectInputDevice8A_METHODS \
+    IDirectInputDevice7A_METHODS \
     STDMETHOD(BuildActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(SetActionMap)(THIS_ LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags) PURE; \
     STDMETHOD(GetImageInfo)(THIS_ LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader) PURE;
-#define IDirectInputDevice8A_IMETHODS \
-    IDirectInputDevice7A_IMETHODS \
-    IDirectInputDevice8A_METHODS
 ICOM_DEFINE(IDirectInputDevice8A,IDirectInputDevice7A)
 #undef INTERFACE
 
@@ -1338,14 +1328,12 @@ extern const DIDATAFORMAT c_dfDIJoystick2;
  */
 #define INTERFACE IDirectInputA
 #define IDirectInputA_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
     STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
     STDMETHOD(RunControlPanel)(THIS_ HWND hwndOwner, DWORD dwFlags) PURE; \
     STDMETHOD(Initialize)(THIS_ HINSTANCE hinst, DWORD dwVersion) PURE;
-#define IDirectInputA_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectInputA_METHODS
 ICOM_DEFINE(IDirectInputA,IUnknown)
 #undef INTERFACE
 
@@ -1367,10 +1355,8 @@ ICOM_DEFINE(IDirectInputA,IUnknown)
  */
 #define INTERFACE IDirectInput2A
 #define IDirectInput2A_METHODS \
+    IDirectInputA_METHODS \
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE;
-#define IDirectInput2A_IMETHODS \
-    IDirectInputA_IMETHODS \
-    IDirectInput2A_METHODS
 ICOM_DEFINE(IDirectInput2A,IDirectInputA)
 #undef INTERFACE
 
@@ -1395,10 +1381,8 @@ ICOM_DEFINE(IDirectInput2A,IDirectInputA)
  */
 #define INTERFACE IDirectInput7A
 #define IDirectInput7A_METHODS \
+    IDirectInput2A_METHODS \
     STDMETHOD(CreateDeviceEx)(THIS_ REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter) PURE;
-#define IDirectInput7A_IMETHODS \
-    IDirectInput2A_IMETHODS \
-    IDirectInput7A_METHODS
 ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
 #undef INTERFACE
 
@@ -1427,6 +1411,7 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
  */
 #define INTERFACE IDirectInput8A
 #define IDirectInput8A_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(CreateDevice)(THIS_ REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter) PURE; \
     STDMETHOD(EnumDevices)(THIS_ DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(GetDeviceStatus)(THIS_ REFGUID rguidInstance) PURE; \
@@ -1435,9 +1420,6 @@ ICOM_DEFINE(IDirectInput7A,IDirectInput2A)
     STDMETHOD(FindDevice)(THIS_ REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance) PURE; \
     STDMETHOD(EnumDevicesBySemantics)(THIS_ LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags) PURE; \
     STDMETHOD(ConfigureDevices)(THIS_ LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) PURE;
-#define IDirectInput8A_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectInput8A_METHODS
 ICOM_DEFINE(IDirectInput8A,IUnknown)
 #undef INTERFACE
 

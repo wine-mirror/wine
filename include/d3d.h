@@ -200,15 +200,13 @@ typedef DWORD D3DVIEWPORTHANDLE, *LPD3DVIEWPORTHANDLE;
  */
 #define INTERFACE IDirect3D
 #define IDirect3D_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ REFIID riid) PURE; \
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE; \
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL *lplpDirect3DMaterial, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT *lplpD3DViewport, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice) PURE;
-#define IDirect3D_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3D_METHODS
 ICOM_DEFINE(IDirect3D,IUnknown)
 #undef INTERFACE
 
@@ -232,15 +230,13 @@ ICOM_DEFINE(IDirect3D,IUnknown)
  */
 #define INTERFACE IDirect3D2
 #define IDirect3D2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE; \
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL2 *lplpDirect3DMaterial2, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreateViewport)(THIS_ LPDIRECT3DVIEWPORT2 *lplpD3DViewport2, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(FindDevice)(THIS_ LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lpD3DFDR) PURE; \
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid, LPDIRECTDRAWSURFACE lpDDS, LPDIRECT3DDEVICE2 *lplpD3DDevice2) PURE;
-#define IDirect3D2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3D2_METHODS
 ICOM_DEFINE(IDirect3D2,IUnknown)
 #undef INTERFACE
 
@@ -264,6 +260,7 @@ ICOM_DEFINE(IDirect3D2,IUnknown)
  */
 #define INTERFACE IDirect3D3
 #define IDirect3D3_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) PURE; \
     STDMETHOD(CreateLight)(THIS_ LPDIRECT3DLIGHT *lplpDirect3DLight, IUnknown *pUnkOuter) PURE; \
     STDMETHOD(CreateMaterial)(THIS_ LPDIRECT3DMATERIAL3 *lplpDirect3DMaterial3, IUnknown *pUnkOuter) PURE; \
@@ -273,9 +270,6 @@ ICOM_DEFINE(IDirect3D2,IUnknown)
     STDMETHOD(CreateVertexBuffer)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,LPDIRECT3DVERTEXBUFFER *lplpD3DVertBuf,DWORD dwFlags,LPUNKNOWN lpUnk) PURE; \
     STDMETHOD(EnumZBufferFormats)(THIS_ REFCLSID riidDevice,LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,LPVOID lpContext) PURE; \
     STDMETHOD(EvictManagedTextures)(THIS) PURE;
-#define IDirect3D3_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3D3_METHODS
 ICOM_DEFINE(IDirect3D3,IUnknown)
 #undef INTERFACE
 
@@ -301,14 +295,12 @@ ICOM_DEFINE(IDirect3D3,IUnknown)
  */
 #define INTERFACE IDirect3D7
 #define IDirect3D7_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(EnumDevices)(THIS_ LPD3DENUMDEVICESCALLBACK7 lpEnumDevicesCallback, LPVOID lpUserArg) PURE; \
     STDMETHOD(CreateDevice)(THIS_ REFCLSID rclsid,LPDIRECTDRAWSURFACE7 lpDDS, LPDIRECT3DDEVICE7 *lplpD3DDevice) PURE; \
     STDMETHOD(CreateVertexBuffer)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertBufDesc,LPDIRECT3DVERTEXBUFFER7 *lplpD3DVertBuf,DWORD dwFlags) PURE; \
     STDMETHOD(EnumZBufferFormats)(THIS_ REFCLSID riidDevice,LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,LPVOID lpContext) PURE; \
     STDMETHOD(EvictManagedTextures)(THIS) PURE;
-#define IDirect3D7_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3D7_METHODS
 ICOM_DEFINE(IDirect3D7,IUnknown)
 #undef INTERFACE
 
@@ -331,12 +323,10 @@ ICOM_DEFINE(IDirect3D7,IUnknown)
  */
 #define INTERFACE IDirect3DLight
 #define IDirect3DLight_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D) PURE; \
     STDMETHOD(SetLight)(THIS_ LPD3DLIGHT lpLight) PURE; \
     STDMETHOD(GetLight)(THIS_ LPD3DLIGHT lpLight) PURE;
-#define IDirect3DLight_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DLight_METHODS
 ICOM_DEFINE(IDirect3DLight,IUnknown)
 #undef INTERFACE
 
@@ -357,15 +347,13 @@ ICOM_DEFINE(IDirect3DLight,IUnknown)
  */
 #define INTERFACE IDirect3DMaterial
 #define IDirect3DMaterial_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D) PURE; \
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DMATERIALHANDLE lpHandle) PURE; \
     STDMETHOD(Reserve)(THIS) PURE; \
     STDMETHOD(Unreserve)(THIS) PURE;
-#define IDirect3DMaterial_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DMaterial_METHODS
 ICOM_DEFINE(IDirect3DMaterial,IUnknown)
 #undef INTERFACE
 
@@ -389,12 +377,10 @@ ICOM_DEFINE(IDirect3DMaterial,IUnknown)
  */
 #define INTERFACE IDirect3DMaterial2
 #define IDirect3DMaterial2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE2 lpDirect3DDevice2, LPD3DMATERIALHANDLE lpHandle) PURE;
-#define IDirect3DMaterial2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DMaterial2_METHODS
 ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
 #undef INTERFACE
 
@@ -415,12 +401,10 @@ ICOM_DEFINE(IDirect3DMaterial2,IUnknown)
  */
 #define INTERFACE IDirect3DMaterial3
 #define IDirect3DMaterial3_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(SetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetMaterial)(THIS_ LPD3DMATERIAL lpMat) PURE; \
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE3 lpDirect3DDevice3, LPD3DMATERIALHANDLE lpHandle) PURE;
-#define IDirect3DMaterial3_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DMaterial3_METHODS
 ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
 #undef INTERFACE
 
@@ -441,14 +425,12 @@ ICOM_DEFINE(IDirect3DMaterial3,IUnknown)
  */
 #define INTERFACE IDirect3DTexture
 #define IDirect3DTexture_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPDIRECTDRAWSURFACE lpDDSurface) PURE; \
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DTEXTUREHANDLE  lpHandle) PURE; \
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE; \
     STDMETHOD(Load)(THIS_ LPDIRECT3DTEXTURE lpD3DTexture) PURE; \
     STDMETHOD(Unload)(THIS) PURE;
-#define IDirect3DTexture_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DTexture_METHODS
 ICOM_DEFINE(IDirect3DTexture,IUnknown)
 #undef INTERFACE
 
@@ -471,12 +453,10 @@ ICOM_DEFINE(IDirect3DTexture,IUnknown)
  */
 #define INTERFACE IDirect3DTexture2
 #define IDirect3DTexture2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetHandle)(THIS_ LPDIRECT3DDEVICE2 lpDirect3DDevice2, LPD3DTEXTUREHANDLE lpHandle) PURE; \
     STDMETHOD(PaletteChanged)(THIS_ DWORD dwStart, DWORD dwCount) PURE; \
     STDMETHOD(Load)(THIS_ LPDIRECT3DTEXTURE2 lpD3DTexture2) PURE;
-#define IDirect3DTexture2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DTexture2_METHODS
 ICOM_DEFINE(IDirect3DTexture2,IUnknown)
 #undef INTERFACE
 
@@ -497,6 +477,7 @@ ICOM_DEFINE(IDirect3DTexture2,IUnknown)
  */
 #define INTERFACE IDirect3DViewport
 #define IDirect3DViewport_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D) PURE; \
     STDMETHOD(GetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE; \
     STDMETHOD(SetViewport)(THIS_ LPD3DVIEWPORT lpData) PURE; \
@@ -510,9 +491,6 @@ ICOM_DEFINE(IDirect3DTexture2,IUnknown)
     STDMETHOD(AddLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE; \
     STDMETHOD(DeleteLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight) PURE; \
     STDMETHOD(NextLight)(THIS_ LPDIRECT3DLIGHT lpDirect3DLight, LPDIRECT3DLIGHT *lplpDirect3DLight, DWORD dwFlags) PURE;
-#define IDirect3DViewport_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DViewport_METHODS
 ICOM_DEFINE(IDirect3DViewport,IUnknown)
 #undef INTERFACE
 
@@ -543,11 +521,9 @@ ICOM_DEFINE(IDirect3DViewport,IUnknown)
  */
 #define INTERFACE IDirect3DViewport2
 #define IDirect3DViewport2_METHODS \
+    IDirect3DViewport_METHODS \
     STDMETHOD(GetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE; \
     STDMETHOD(SetViewport2)(THIS_ LPD3DVIEWPORT2 lpData) PURE;
-#define IDirect3DViewport2_IMETHODS \
-    IDirect3DViewport_IMETHODS \
-    IDirect3DViewport2_METHODS
 ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
 #undef INTERFACE
 
@@ -580,12 +556,10 @@ ICOM_DEFINE(IDirect3DViewport2,IDirect3DViewport)
  */
 #define INTERFACE IDirect3DViewport3
 #define IDirect3DViewport3_METHODS \
+    IDirect3DViewport2_METHODS \
     STDMETHOD(SetBackgroundDepth2)(THIS_ LPDIRECTDRAWSURFACE4 lpDDS) PURE; \
     STDMETHOD(GetBackgroundDepth2)(THIS_ LPDIRECTDRAWSURFACE4 *lplpDDS,LPBOOL lpValid) PURE; \
     STDMETHOD(Clear2)(THIS_ DWORD dwCount,LPD3DRECT lpRects,DWORD dwFlags,DWORD dwColor,D3DVALUE dvZ,DWORD dwStencil) PURE;
-#define IDirect3DViewport3_IMETHODS \
-    IDirect3DViewport2_IMETHODS \
-    IDirect3DViewport3_METHODS
 ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport2)
 #undef INTERFACE
 
@@ -624,6 +598,7 @@ ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport2)
  */
 #define INTERFACE IDirect3DExecuteBuffer
 #define IDirect3DExecuteBuffer_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3DDEVICE lpDirect3DDevice, LPD3DEXECUTEBUFFERDESC lpDesc) PURE; \
     STDMETHOD(Lock)(THIS_ LPD3DEXECUTEBUFFERDESC lpDesc) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
@@ -631,9 +606,6 @@ ICOM_DEFINE(IDirect3DViewport3,IDirect3DViewport2)
     STDMETHOD(GetExecuteData)(THIS_ LPD3DEXECUTEDATA lpData) PURE; \
     STDMETHOD(Validate)(THIS_ LPDWORD lpdwOffset, LPD3DVALIDATECALLBACK lpFunc, LPVOID lpUserArg, DWORD dwReserved) PURE; \
     STDMETHOD(Optimize)(THIS_ DWORD dwDummy) PURE;
-#define IDirect3DExecuteBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DExecuteBuffer_METHODS
 ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
 #undef INTERFACE
 
@@ -658,6 +630,7 @@ ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
  */
 #define INTERFACE IDirect3DDevice
 #define IDirect3DDevice_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Initialize)(THIS_ LPDIRECT3D lpDirect3D, LPGUID lpGUID, LPD3DDEVICEDESC lpD3DDVDesc) PURE; \
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE; \
     STDMETHOD(SwapTextureHandles)(THIS_ LPDIRECT3DTEXTURE lpD3Dtex1, LPDIRECT3DTEXTURE lpD3DTex2) PURE; \
@@ -677,9 +650,6 @@ ICOM_DEFINE(IDirect3DExecuteBuffer,IUnknown)
     STDMETHOD(BeginScene)(THIS) PURE; \
     STDMETHOD(EndScene)(THIS) PURE; \
     STDMETHOD(GetDirect3D)(THIS_ LPDIRECT3D *lplpDirect3D) PURE;
-#define IDirect3DDevice_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DDevice_METHODS
 ICOM_DEFINE(IDirect3DDevice,IUnknown)
 #undef INTERFACE
 
@@ -716,6 +686,7 @@ ICOM_DEFINE(IDirect3DDevice,IUnknown)
  */
 #define INTERFACE IDirect3DDevice2
 #define IDirect3DDevice2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE; \
     STDMETHOD(SwapTextureHandles)(THIS_ LPDIRECT3DTEXTURE2 lpD3DTex1, LPDIRECT3DTEXTURE2 lpD3DTex2) PURE; \
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE; \
@@ -747,9 +718,6 @@ ICOM_DEFINE(IDirect3DDevice,IUnknown)
     STDMETHOD(DrawIndexedPrimitive)(THIS_ D3DPRIMITIVETYPE d3dptPrimitiveType, D3DVERTEXTYPE d3dvtVertexType, LPVOID lpvVertices, DWORD dwVertexCount, LPWORD dwIndices, DWORD dwIndexCount, DWORD dwFlags) PURE; \
     STDMETHOD(SetClipStatus)(THIS_ LPD3DCLIPSTATUS lpD3DClipStatus) PURE; \
     STDMETHOD(GetClipStatus)(THIS_ LPD3DCLIPSTATUS lpD3DClipStatus) PURE;
-#define IDirect3DDevice2_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DDevice2_METHODS
 ICOM_DEFINE(IDirect3DDevice2,IUnknown)
 #undef INTERFACE
 
@@ -796,6 +764,7 @@ ICOM_DEFINE(IDirect3DDevice2,IUnknown)
  */
 #define INTERFACE IDirect3DDevice3
 #define IDirect3DDevice3_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC lpD3DHWDevDesc, LPD3DDEVICEDESC lpD3DHELDevDesc) PURE; \
     STDMETHOD(GetStats)(THIS_ LPD3DSTATS lpD3DStats) PURE; \
     STDMETHOD(AddViewport)(THIS_ LPDIRECT3DVIEWPORT3 lpDirect3DViewport3) PURE; \
@@ -836,9 +805,6 @@ ICOM_DEFINE(IDirect3DDevice2,IUnknown)
     STDMETHOD(GetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,LPDWORD lpdwState) PURE; \
     STDMETHOD(SetTextureStageState)(THIS_ DWORD dwStage,D3DTEXTURESTAGESTATETYPE d3dTexStageStateType,DWORD dwState) PURE; \
     STDMETHOD(ValidateDevice)(THIS_ LPDWORD lpdwPasses) PURE;
-#define IDirect3DDevice3_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DDevice3_METHODS
 ICOM_DEFINE(IDirect3DDevice3,IUnknown)
 #undef INTERFACE
 
@@ -894,6 +860,7 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
  */
 #define INTERFACE IDirect3DDevice7
 #define IDirect3DDevice7_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetCaps)(THIS_ LPD3DDEVICEDESC7 lpD3DHELDevDesc) PURE; \
     STDMETHOD(EnumTextureFormats)(THIS_ LPD3DENUMPIXELFORMATSCALLBACK lpD3DEnumPixelProc, LPVOID lpArg) PURE; \
     STDMETHOD(BeginScene)(THIS) PURE; \
@@ -940,9 +907,6 @@ ICOM_DEFINE(IDirect3DDevice3,IUnknown)
     STDMETHOD(SetClipPlane)(THIS_ DWORD dwIndex,D3DVALUE *pPlaneEquation) PURE; \
     STDMETHOD(GetClipPlane)(THIS_ DWORD dwIndex,D3DVALUE *pPlaneEquation) PURE; \
     STDMETHOD(GetInfo)(THIS_ DWORD dwDevInfoID,LPVOID pDevInfoStruct,DWORD dwSize) PURE;
-#define IDirect3DDevice7_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DDevice7_METHODS
 ICOM_DEFINE(IDirect3DDevice7,IUnknown)
 #undef INTERFACE
 
@@ -1005,14 +969,12 @@ ICOM_DEFINE(IDirect3DDevice7,IUnknown)
  */
 #define INTERFACE IDirect3DVertexBuffer
 #define IDirect3DVertexBuffer_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Lock)(THIS_ DWORD dwFlags,LPVOID *lplpData,LPDWORD lpdwSize) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(ProcessVertices)(THIS_ DWORD dwVertexOp,DWORD dwDestIndex,DWORD dwCount,LPDIRECT3DVERTEXBUFFER lpSrcBuffer,DWORD dwSrcIndex,LPDIRECT3DDEVICE3 lpD3DDevice,DWORD dwFlags) PURE; \
     STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE; \
     STDMETHOD(Optimize)(THIS_ LPDIRECT3DDEVICE3  lpD3DDevice,DWORD dwFlags) PURE;
-#define IDirect3DVertexBuffer_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DVertexBuffer_METHODS
 ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
 #undef INTERFACE
 
@@ -1034,15 +996,13 @@ ICOM_DEFINE(IDirect3DVertexBuffer,IUnknown)
  */
 #define INTERFACE IDirect3DVertexBuffer7
 #define IDirect3DVertexBuffer7_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Lock)(THIS_ DWORD dwFlags,LPVOID *lplpData,LPDWORD lpdwSize) PURE; \
     STDMETHOD(Unlock)(THIS) PURE; \
     STDMETHOD(ProcessVertices)(THIS_ DWORD dwVertexOp,DWORD dwDestIndex,DWORD dwCount,LPDIRECT3DVERTEXBUFFER7 lpSrcBuffer,DWORD dwSrcIndex,LPDIRECT3DDEVICE7 lpD3DDevice,DWORD dwFlags) PURE; \
     STDMETHOD(GetVertexBufferDesc)(THIS_ LPD3DVERTEXBUFFERDESC lpD3DVertexBufferDesc) PURE; \
     STDMETHOD(Optimize)(THIS_ LPDIRECT3DDEVICE7  lpD3DDevice,DWORD dwFlags) PURE; \
     STDMETHOD(ProcessVerticesStrided)(THIS_ DWORD dwVertexOp,DWORD dwDestIndex,DWORD dwCount,LPD3DDRAWPRIMITIVESTRIDEDDATA lpStrideData,DWORD dwVertexTypeDesc,LPDIRECT3DDEVICE7 lpD3DDevice,DWORD dwFlags) PURE;
-#define IDirect3DVertexBuffer7_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirect3DVertexBuffer7_METHODS
 ICOM_DEFINE(IDirect3DVertexBuffer7,IUnknown)
 #undef INTERFACE
 

@@ -124,10 +124,8 @@ typedef GUID SHELLVIEWID;
 
 #define INTERFACE IShellIcon
 #define IShellIcon_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT flags, LPINT lpIconIndex) PURE;
-#define IShellIcon_IMETHODS \
-    IUnknown_IMETHODS \
-    IShellIcon_METHODS
 ICOM_DEFINE(IShellIcon, IUnknown)
 #undef INTERFACE
 

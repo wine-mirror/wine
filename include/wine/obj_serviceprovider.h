@@ -42,10 +42,8 @@ typedef struct IServiceProvider IServiceProvider, *LPSERVICEPROVIDER;
  */
 #define INTERFACE IServiceProvider
 #define IServiceProvider_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(QueryService)(THIS_ REFGUID  guidService, REFIID  riid, void ** ppv) PURE;
-#define IServiceProvider_IMETHODS \
-    IUnknown_IMETHODS \
-    IServiceProvider_METHODS
 ICOM_DEFINE(IServiceProvider,IUnknown)
 #undef INTERFACE
 

@@ -65,6 +65,7 @@ typedef enum RefreshConstants
  */
 #define INTERFACE IWebBrowser
 #define IWebBrowser_METHODS \
+	IDispatch_METHODS \
 	STDMETHOD(GoBack)(THIS) PURE; \
 	STDMETHOD(GoForward)(THIS) PURE; \
 	STDMETHOD(GoHome)(THIS) PURE; \
@@ -91,9 +92,6 @@ typedef enum RefreshConstants
 	STDMETHOD(get_LocationName)(THIS_ BSTR *LocationName) PURE; \
 	STDMETHOD(get_LocationURL)(THIS_ BSTR *LocationURL) PURE; \
 	STDMETHOD(get_Busy)(THIS_ VARIANT *pBool) PURE;
-#define IWebBrowser_IMETHODS \
-	IDispatch_IMETHODS \
-	IWebBrowser_METHODS
 ICOM_DEFINE(IWebBrowser,IDispatch)
 #undef INTERFACE
 
@@ -137,6 +135,7 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
 
 #define INTERFACE IWebBrowserApp
 #define IWebBrowserApp_METHODS \
+    IWebBrowser_METHODS \
     STDMETHOD(Quit)(THIS) PURE; \
     STDMETHOD(ClientToWindow)(THIS_ int *pcx,int *pcy) PURE; \
     STDMETHOD(PutProperty)(THIS_ BSTR szProperty,VARIANT vtValue) PURE; \
@@ -157,10 +156,6 @@ ICOM_DEFINE(IWebBrowser,IDispatch)
     STDMETHOD(put_MenuBar)(THIS_ VARIANT_BOOL Value) PURE; \
     STDMETHOD(get_FullScreen)(THIS_ VARIANT_BOOL *pbFullScreen) PURE; \
     STDMETHOD(put_FullScreen)(THIS_ VARIANT_BOOL bFullScreen) PURE;
-#define IWebBrowserApp_IMETHODS \
-    IDispatch_IMETHODS \
-    IWebBrowser_METHODS \
-    IWebBrowserApp_METHODS
 ICOM_DEFINE(IWebBrowserApp,IWebBrowser)
 #undef INTERFACE
 

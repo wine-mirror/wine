@@ -49,15 +49,13 @@ typedef BOOL    (CALLBACK *IVO_ContCallback)(DWORD);
 
 #define INTERFACE IViewObject
 #define IViewObject_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Draw)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds, LPCRECTL lprcWBounds, IVO_ContCallback  pfnContinue, DWORD dwContinue) PURE; \
 	STDMETHOD(GetColorSet)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DVTARGETDEVICE *ptd, HDC hicTargetDevice, struct tagLOGPALETTE **ppColorSet) PURE; \
 	STDMETHOD(Freeze)(THIS_ DWORD dwDrawAspect, LONG lindex, void *pvAspect, DWORD *pdwFreeze) PURE; \
 	STDMETHOD(Unfreeze)(THIS_ DWORD dwFreeze) PURE; \
 	STDMETHOD(SetAdvise)(THIS_ DWORD aspects, DWORD advf, IAdviseSink *pAdvSink) PURE; \
 	STDMETHOD(GetAdvise)(THIS_ DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink) PURE;
-#define IViewObject_IMETHODS \
-	IUnknown_IMETHODS \
-	IViewObject_METHODS
 ICOM_DEFINE(IViewObject,IUnknown)
 #undef INTERFACE
 
@@ -82,10 +80,8 @@ ICOM_DEFINE(IViewObject,IUnknown)
  */
 #define INTERFACE IViewObject2
 #define IViewObject2_METHODS \
+	IViewObject_METHODS \
 	STDMETHOD(GetExtent)(THIS_ DWORD dwDrawAspect, LONG lindex, DVTARGETDEVICE *ptd, LPSIZEL lpsizel) PURE;
-#define IViewObject2_IMETHODS \
-	IViewObject_IMETHODS \
-	IViewObject2_METHODS
 ICOM_DEFINE(IViewObject2,IViewObject)
 #undef INTERFACE
 

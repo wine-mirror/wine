@@ -988,7 +988,8 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
  * IAVIStream interface
  */
 #define INTERFACE IAVIStream
-#define IAVIStream_METHODS						\
+#define IAVIStream_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Create)(THIS_ LPARAM lParam1, LPARAM lParam2) PURE; \
     STDMETHOD(Info)(THIS_ AVISTREAMINFOW *psi, LONG lSize) PURE; \
     STDMETHOD_(LONG,FindSample)(THIS_ LONG lPos, LONG lFlags) PURE; \
@@ -1000,9 +1001,6 @@ DEFINE_AVIGUID(CLSID_AVIFile,           0x00020000, 0, 0);
     STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
     STDMETHOD(WriteData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG cbBuffer) PURE; \
     STDMETHOD(SetInfo)(THIS_ AVISTREAMINFOW *plInfo, LONG cbInfo) PURE;
-#define IAVIStream_IMETHODS	\
-	IUnknown_IMETHODS	\
-	IAVIStream_METHODS
 ICOM_DEFINE(IAVIStream, IUnknown)
 #undef INTERFACE
 
@@ -1090,7 +1088,8 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
  */
 /* In Win32 this interface uses UNICODE only */
 #define INTERFACE IAVIFile
-#define IAVIFile_METHODS 						\
+#define IAVIFile_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Info)(THIS_ AVIFILEINFOW *pfi, LONG lSize) PURE; \
     STDMETHOD(GetStream)(THIS_ PAVISTREAM *ppStream, DWORD fccType, LONG lParam) PURE; \
     STDMETHOD(CreateStream)(THIS_ PAVISTREAM *ppStream, AVISTREAMINFOW *psi) PURE; \
@@ -1098,9 +1097,6 @@ LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
     STDMETHOD(ReadData)(THIS_ DWORD fcc, LPVOID lpBuffer, LONG *lpcbBuffer) PURE; \
     STDMETHOD(EndRecord)(THIS) PURE; \
     STDMETHOD(DeleteStream)(THIS_ DWORD fccType, LONG lParam) PURE;
-#define IAVIFile_IMETHODS 	\
-	IUnknown_IMETHODS	\
-	IAVIFile_METHODS
 ICOM_DEFINE(IAVIFile,IUnknown)
 #undef INTERFACE
 
@@ -1143,14 +1139,12 @@ HRESULT WINAPI AVIFileEndRecord(PAVIFILE pfile);
  * IGetFrame interface
  */
 #define INTERFACE IGetFrame
-#define IGetFrame_METHODS					\
+#define IGetFrame_METHODS \
+    IUnknown_METHODS \
     STDMETHOD_(LPVOID,GetFrame)(THIS_ LONG lPos) PURE; \
     STDMETHOD(Begin)(THIS_ LONG lStart, LONG lEnd, LONG lRate) PURE; \
     STDMETHOD(End)(THIS) PURE; \
     STDMETHOD(SetFormat)(THIS_ LPBITMAPINFOHEADER lpbi, LPVOID lpBits, INT x, INT y, INT dx, INT dy) PURE;
-#define IGetFrame_IMETHODS	\
-	IUnknown_IMETHODS	\
-	IGetFrame_METHODS
 ICOM_DEFINE(IGetFrame,IUnknown)
 #undef INTERFACE
 

@@ -36,12 +36,10 @@ typedef struct 	ICommDlgBrowser ICommDlgBrowser, *LPCOMMDLGBROWSER;
 
 #define INTERFACE ICommDlgBrowser
 #define ICommDlgBrowser_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(OnDefaultCommand)(THIS_ IShellView * IShellView) PURE; \
 	STDMETHOD(OnStateChange)(THIS_ IShellView * IShellView, ULONG  uChange) PURE; \
 	STDMETHOD(IncludeObject)(THIS_ IShellView * IShellView, LPCITEMIDLIST  pidl) PURE;
-#define ICommDlgBrowser_IMETHODS \
-	IUnknown_IMETHODS \
-	ICommDlgBrowser_METHODS
 ICOM_DEFINE(ICommDlgBrowser,IUnknown)
 #undef INTERFACE
 

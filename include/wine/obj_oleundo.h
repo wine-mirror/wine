@@ -101,12 +101,10 @@ typedef struct tagQACONTAINER
  */
 #define INTERFACE IQuickActivate
 #define IQuickActivate_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(QuickActivate)(THIS_ QACONTAINER *pQaContainer, QACONTROL *pQaControl) PURE; \
 	STDMETHOD(SetContentExtent)(THIS_ LPSIZEL pSizel) PURE; \
 	STDMETHOD(GetContentExtent)(THIS_ LPSIZEL pSizel) PURE;
-#define IQuickActivate_IMETHODS \
-	IUnknown_IMETHODS \
-	IQuickActivate_METHODS
 ICOM_DEFINE(IQuickActivate,IUnknown)
 #undef INTERFACE
 
@@ -127,12 +125,10 @@ ICOM_DEFINE(IQuickActivate,IUnknown)
  */
 #define INTERFACE IPointerInactive
 #define IPointerInactive_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetActivationPolicy)(THIS_ DWORD *pdwPolicy) PURE; \
 	STDMETHOD(OnInactiveMouseMove)(THIS_ LPCRECT pRectBounds, LONG x, LONG y, DWORD grfKeyState) PURE; \
 	STDMETHOD(OnInactiveSetCursor)(THIS_ LPCRECT pRectBounds, LONG x, LONG y, DWORD dwMouseMsg, BOOL fSetAlways) PURE;
-#define IPointerInactive_IMETHODS \
-	IUnknown_IMETHODS \
-	IPointerInactive_METHODS
 ICOM_DEFINE(IPointerInactive,IUnknown)
 #undef INTERFACE
 
@@ -153,10 +149,8 @@ ICOM_DEFINE(IPointerInactive,IUnknown)
  */
 #define INTERFACE IAdviseSinkEx
 #define IAdviseSinkEx_METHODS \
+	IAdviseSink_METHODS \
 	STDMETHOD(OnViewStatusChange)(THIS_ DWORD dwViewStatus) PURE;
-#define IAdviseSinkEx_IMETHODS \
-	IAdviseSink_IMETHODS \
-	IAdviseSinkEx_METHODS
 ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 #undef INTERFACE
 
@@ -181,6 +175,7 @@ ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
  */
 #define INTERFACE IOleUndoManager
 #define IOleUndoManager_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Open)(THIS_ IOleParentUndoUnit *pPUU) PURE; \
 	STDMETHOD(Close)(THIS_ IOleParentUndoUnit *pPUU, BOOL fCommit) PURE; \
 	STDMETHOD(Add)(THIS_ IOleUndoUnit *pUU) PURE; \
@@ -193,9 +188,6 @@ ICOM_DEFINE(IAdviseSinkEx,IAdviseSink)
 	STDMETHOD(GetLastUndoDescription)(THIS_ BSTR *pBstr) PURE; \
 	STDMETHOD(GetLastRedoDescription)(THIS_ BSTR *pBstr) PURE; \
 	STDMETHOD(Enable)(THIS_ BOOL fEnable) PURE;
-#define IOleUndoManager_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleUndoManager_METHODS
 ICOM_DEFINE(IOleUndoManager,IUnknown)
 #undef INTERFACE
 
@@ -225,13 +217,11 @@ ICOM_DEFINE(IOleUndoManager,IUnknown)
  */
 #define INTERFACE IOleUndoUnit
 #define IOleUndoUnit_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Do)(THIS_ IOleUndoManager *pUndoManager) PURE; \
 	STDMETHOD(GetDescription)(THIS_ BSTR *pBstr) PURE; \
 	STDMETHOD(GetUnitType)(THIS_ CLSID *pClsid, LONG *plID) PURE; \
 	STDMETHOD(OnNextAdd)(THIS) PURE;
-#define IOleUndoUnit_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleUndoUnit_METHODS
 ICOM_DEFINE(IOleUndoUnit,IUnknown)
 #undef INTERFACE
 
@@ -254,14 +244,12 @@ ICOM_DEFINE(IOleUndoUnit,IUnknown)
  */
 #define INTERFACE IOleParentUndoUnit
 #define IOleParentUndoUnit_METHODS \
+	IOleUndoUnit_METHODS \
 	STDMETHOD(Open)(THIS_ IOleParentUndoUnit *pPUU) PURE; \
 	STDMETHOD(Close)(THIS_ IOleParentUndoUnit *pPUU, BOOL fCommit) PURE; \
 	STDMETHOD(Add)(THIS_ IOleUndoUnit *pUU) PURE; \
 	STDMETHOD(FindUnit)(THIS_ IOleUndoUnit *pUU) PURE; \
 	STDMETHOD(GetParentState)(THIS_ DWORD *pdwState) PURE;
-#define IOleParentUndoUnit_IMETHODS \
-	IOleUndoUnit_IMETHODS \
-	IOleParentUndoUnit_METHODS
 ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
 #undef INTERFACE
 
@@ -289,13 +277,11 @@ ICOM_DEFINE(IOleParentUndoUnit,IOleUndoUnit)
  */
 #define INTERFACE IEnumOleUndoUnits
 #define IEnumOleUndoUnits_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Next)(THIS_ ULONG cElt, IOleUndoUnit **rgElt, ULONG *pcEltFetched) PURE; \
 	STDMETHOD(Skip)(THIS_ ULONG cElt) PURE; \
 	STDMETHOD(Reset)(THIS) PURE; \
 	STDMETHOD(Clone)(THIS_ IEnumOleUndoUnits **ppEnum) PURE;
-#define IEnumOleUndoUnits_IMETHODS \
-	IUnknown_IMETHODS \
-	IEnumOleUndoUnits_METHODS
 ICOM_DEFINE(IEnumOleUndoUnits,IUnknown)
 #undef INTERFACE
 

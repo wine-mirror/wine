@@ -134,15 +134,13 @@ typedef struct _DSCDRIVERCAPS
  */
 #define INTERFACE IDsDriver
 #define IDsDriver_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE; \
     STDMETHOD(Open)(THIS) PURE; \
     STDMETHOD(Close)(THIS) PURE; \
     STDMETHOD(GetCaps)(THIS_ PDSDRIVERCAPS pDsDrvCaps) PURE; \
     STDMETHOD(CreateSoundBuffer)(THIS_ LPWAVEFORMATEX pwfx,DWORD dwFlags,DWORD dwCardAddress,LPDWORD pdwcbBufferSize,LPBYTE *ppbBuffer,LPVOID *ppvObj) PURE; \
     STDMETHOD(DuplicateSoundBuffer)(THIS_ PIDSDRIVERBUFFER pIDsDriverBuffer,LPVOID *ppvObj) PURE;
-#define IDsDriver_IMETHODS \
-    IUnknown_METHODS \
-    IDsDriver_METHODS
 ICOM_DEFINE(IDsDriver,IUnknown)
 #undef INTERFACE
 
@@ -165,6 +163,7 @@ ICOM_DEFINE(IDsDriver,IUnknown)
  */
 #define INTERFACE IDsDriverBuffer
 #define IDsDriverBuffer_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *pdwAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE; \
     STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE; \
     STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE; \
@@ -174,9 +173,6 @@ ICOM_DEFINE(IDsDriver,IUnknown)
     STDMETHOD(GetPosition)(THIS_ LPDWORD lpdwCurrentPlayCursor,LPDWORD lpdwCurrentWriteCursor) PURE; \
     STDMETHOD(Play)(THIS_ DWORD dwReserved1,DWORD dwReserved2,DWORD dwFlags) PURE; \
     STDMETHOD(Stop)(THIS) PURE;
-#define IDsDriverBuffer_IMETHODS \
-    IUnknown_METHODS \
-    IDsDriverBuffer_METHODS
 ICOM_DEFINE(IDsDriverBuffer,IUnknown)
 #undef INTERFACE
 
@@ -202,12 +198,10 @@ ICOM_DEFINE(IDsDriverBuffer,IUnknown)
  */
 #define INTERFACE IDsDriverPropertySet
 #define IDsDriverPropertySet_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Get)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData,PULONG pcbReturnedData) PURE; \
     STDMETHOD(Set)(THIS_ PDSPROPERTY pDsProperty,LPVOID pPropertyParams,ULONG cbPropertyParams,LPVOID pPropertyData,ULONG cbPropertyData) PURE; \
     STDMETHOD(QuerySupport)(THIS_ REFGUID PropertySetId,ULONG PropertyId,PULONG pSupport) PURE;
-#define IDsDriverPropertySet_IMETHODS \
-    IUnknown_METHODS \
-    IDsDriverPropertySet_METHODS
 ICOM_DEFINE(IDsDriverPropertySet,IUnknown)
 #undef INTERFACE
 
@@ -262,10 +256,8 @@ typedef enum
  */
 #define INTERFACE IDsDriverNotify
 #define IDsDriverNotify_METHODS \
-    STDMETHOD(SetNotificationPositions)(THIS_ DWORD dwPositionNotifies,LPCDSBPOSITIONNOTIFY pcPositionNotifies) PURE;
-#define IDsDriverNotify_IMETHODS \
     IUnknown_METHODS \
-    IDsDriverNotify_METHODS
+    STDMETHOD(SetNotificationPositions)(THIS_ DWORD dwPositionNotifies,LPCDSBPOSITIONNOTIFY pcPositionNotifies) PURE;
 ICOM_DEFINE(IDsDriverNotify,IUnknown)
 #undef INTERFACE
 
@@ -283,14 +275,12 @@ ICOM_DEFINE(IDsDriverNotify,IUnknown)
  */
 #define INTERFACE IDsCaptureDriver
 #define IDsCaptureDriver_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(GetDriverDesc)(THIS_ PDSDRIVERDESC pDsDriverDesc) PURE; \
     STDMETHOD(Open)(THIS) PURE; \
     STDMETHOD(Close)(THIS) PURE; \
     STDMETHOD(GetCaps)(THIS_ PDSCDRIVERCAPS pDsDrvCaps) PURE; \
     STDMETHOD(CreateCaptureBuffer)(THIS_ LPWAVEFORMATEX pwfx,DWORD dwFlags,DWORD dwCardAddress,LPDWORD pdwcbBufferSize,LPBYTE *ppbBuffer,LPVOID *ppvObj) PURE;
-#define IDsCaptureDriver_IMETHODS \
-    IUnknown_METHODS \
-    IDsCaptureDriver_METHODS
 ICOM_DEFINE(IDsCaptureDriver,IUnknown)
 #undef INTERFACE
 
@@ -312,6 +302,7 @@ ICOM_DEFINE(IDsCaptureDriver,IUnknown)
  */
 #define INTERFACE IDsCaptureDriverBuffer
 #define IDsCaptureDriverBuffer_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Lock)(THIS_ LPVOID *ppvAudio1,LPDWORD pdwLen1,LPVOID *ppvAudio2,LPDWORD pdwLen2,DWORD dwWritePosition,DWORD dwWriteLen,DWORD dwFlags) PURE; \
     STDMETHOD(Unlock)(THIS_ LPVOID pvAudio1,DWORD dwLen1,LPVOID pvAudio2,DWORD dwLen2) PURE; \
     STDMETHOD(SetFormat)(THIS_ LPWAVEFORMATEX pwfxToSet) PURE; \
@@ -319,9 +310,6 @@ ICOM_DEFINE(IDsCaptureDriver,IUnknown)
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
     STDMETHOD(Start)(THIS_ DWORD dwFlags) PURE; \
     STDMETHOD(Stop)(THIS) PURE;
-#define IDsCaptureDriverBuffer_IMETHODS \
-    IUnknown_METHODS \
-    IDsCaptureDriverBuffer_METHODS
 ICOM_DEFINE(IDsCaptureDriverBuffer,IUnknown)
 #undef INTERFACE
 

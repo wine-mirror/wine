@@ -138,6 +138,7 @@ typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
  */
 #define INTERFACE IPropertyPage
 #define IPropertyPage_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SetPageSite)(THIS_ IPropertyPageSite *pPageSite) PURE; \
 	STDMETHOD(Activate)(THIS_ HWND hWndParent, LPCRECT pRect, BOOL bModal) PURE; \
 	STDMETHOD(Deactivate)(THIS) PURE; \
@@ -149,9 +150,6 @@ typedef struct IPerPropertyBrowsing IPerPropertyBrowsing,*LPPERPROPERTYBROWSING;
 	STDMETHOD(Apply)(THIS) PURE; \
 	STDMETHOD(Help)(THIS_ LPCOLESTR pszHelpDir) PURE; \
 	STDMETHOD(TranslateAccelerator)(THIS_ MSG *pMsg) PURE;
-#define IPropertyPage_IMETHODS \
-	IUnknown_IMETHODS \
-	IPropertyPage_METHODS
 ICOM_DEFINE(IPropertyPage,IUnknown)
 #undef INTERFACE
 
@@ -180,10 +178,8 @@ ICOM_DEFINE(IPropertyPage,IUnknown)
  */
 #define INTERFACE IPropertyPage2
 #define IPropertyPage2_METHODS \
+	IPropertyPage_METHODS \
 	STDMETHOD(EditProperty)(THIS_ DISPID dispID) PURE;
-#define IPropertyPage2_IMETHODS \
-	IPropertyPage_IMETHODS \
-	IPropertyPage2_METHODS
 ICOM_DEFINE(IPropertyPage2,IPropertyPage)
 #undef INTERFACE
 
@@ -214,13 +210,11 @@ ICOM_DEFINE(IPropertyPage2,IPropertyPage)
  */
 #define INTERFACE IPropertyPageSite
 #define IPropertyPageSite_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(OnStatusChange)(THIS_ DWORD dwFlags) PURE; \
 	STDMETHOD(GetLocaleID)(THIS_ LCID *pLocaleID) PURE; \
 	STDMETHOD(GetPageContainer)(THIS_ IUnknown **ppUnk) PURE; \
 	STDMETHOD(TranslateAccelerator)(THIS_ MSG *pMsg) PURE;
-#define IPropertyPageSite_IMETHODS \
-	IUnknown_IMETHODS \
-	IPropertyPageSite_METHODS
 ICOM_DEFINE(IPropertyPageSite,IUnknown)
 #undef INTERFACE
 
@@ -242,11 +236,9 @@ ICOM_DEFINE(IPropertyPageSite,IUnknown)
  */
 #define INTERFACE IPropertyNotifySink
 #define IPropertyNotifySink_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(OnChanged)(THIS_ DISPID dispID) PURE; \
 	STDMETHOD(OnRequestEdit)(THIS_ DISPID dispID) PURE;
-#define IPropertyNotifySink_IMETHODS \
-	IUnknown_IMETHODS \
-	IPropertyNotifySink_METHODS
 ICOM_DEFINE(IPropertyNotifySink,IUnknown)
 #undef INTERFACE
 
@@ -266,11 +258,9 @@ ICOM_DEFINE(IPropertyNotifySink,IUnknown)
  */
 #define INTERFACE ISimpleFrameSite
 #define ISimpleFrameSite_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(PreMessageFilter)(THIS_ HWND hWnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *plResult, DWORD *pwdCookie) PURE; \
 	STDMETHOD(PostMessageFilter)(THIS_ HWND hWnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *plResult, DWORD pwdCookie) PURE;
-#define ISimpleFrameSite_IMETHODS \
-	IUnknown_IMETHODS \
-	ISimpleFrameSite_METHODS
 ICOM_DEFINE(ISimpleFrameSite,IUnknown)
 #undef INTERFACE
 
@@ -290,14 +280,12 @@ ICOM_DEFINE(ISimpleFrameSite,IUnknown)
  */
 #define INTERFACE IPersistStreamInit
 #define IPersistStreamInit_METHODS \
+	IPersist_METHODS \
 	STDMETHOD(IsDirty)(THIS) PURE; \
 	STDMETHOD(Load)(THIS_ LPSTREAM pStm) PURE; \
 	STDMETHOD(Save)(THIS_ LPSTREAM pStm, BOOL fClearDirty) PURE; \
 	STDMETHOD(GetSizeMax)(THIS_ ULARGE_INTEGER *pcbSize) PURE; \
 	STDMETHOD(InitNew)(THIS) PURE;
-#define IPersistStreamInit_IMETHODS \
-	IPersist_IMETHODS \
-	IPersistStreamInit_METHODS
 ICOM_DEFINE(IPersistStreamInit,IPersist)
 #undef INTERFACE
 
@@ -322,14 +310,12 @@ ICOM_DEFINE(IPersistStreamInit,IPersist)
  */
 #define INTERFACE IPersistMemory
 #define IPersistMemory_METHODS \
+	IPersist_METHODS \
 	STDMETHOD(IsDirty)(THIS) PURE; \
 	STDMETHOD(Load)(THIS_ LPVOID pMem, ULONG cbSize) PURE; \
 	STDMETHOD(Save)(THIS_ LPVOID pMem, BOOL fClearDirty, ULONG cbSize) PURE; \
 	STDMETHOD(GetSizeMax)(THIS_ ULONG *pCbSize) PURE; \
 	STDMETHOD(InitNew)(THIS) PURE;
-#define IPersistMemory_IMETHODS \
-	IPersist_IMETHODS \
-	IPersistMemory_METHODS
 ICOM_DEFINE(IPersistMemory,IPersist)
 #undef INTERFACE
 
@@ -354,12 +340,10 @@ ICOM_DEFINE(IPersistMemory,IPersist)
  */
 #define INTERFACE IPersistPropertyBag
 #define IPersistPropertyBag_METHODS \
+	IPersist_METHODS \
 	STDMETHOD(InitNew)(THIS) PURE; \
 	STDMETHOD(Load)(THIS_ IPropertyBag *pPropBag, IErrorLog *pErrorLog) PURE; \
 	STDMETHOD(Save)(THIS_ IPropertyBag *pPropBag, BOOL fClearDirty, BOOL fSaveAllProperties) PURE;
-#define IPersistPropertyBag_IMETHODS \
-	IPersist_IMETHODS \
-	IPersistPropertyBag_METHODS
 ICOM_DEFINE(IPersistPropertyBag,IPersist)
 #undef INTERFACE
 
@@ -382,13 +366,11 @@ ICOM_DEFINE(IPersistPropertyBag,IPersist)
  */
 #define INTERFACE IPersistPropertyBag2
 #define IPersistPropertyBag2_METHODS \
+	IPersist_METHODS \
 	STDMETHOD(InitNew)(THIS) PURE; \
 	STDMETHOD(Load)(THIS_ IPropertyBag2 *pPropBag, IErrorLog *pErrorLog) PURE; \
 	STDMETHOD(Save)(THIS_ IPropertyBag2 *pPropBag, BOOL fClearDirty, BOOL fSaveAllProperties) PURE; \
-    STDMETHOD(IsDirty)(THIS) PURE;
-#define IPersistPropertyBag2_IMETHODS \
-	IPersist_IMETHODS \
-	IPersistPropertyBag2_METHODS
+	STDMETHOD(IsDirty)(THIS) PURE;
 ICOM_DEFINE(IPersistPropertyBag2,IPersist)
 #undef INTERFACE
 
@@ -412,10 +394,8 @@ ICOM_DEFINE(IPersistPropertyBag2,IPersist)
  */
 #define INTERFACE IErrorLog
 #define IErrorLog_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(AddError)(THIS_ LPCOLESTR pszPropName, EXCEPINFO *pExcepInfo) PURE;
-#define IErrorLog_IMETHODS \
-	IUnknown_IMETHODS \
-	IErrorLog_METHODS
 ICOM_DEFINE(IErrorLog,IUnknown)
 #undef INTERFACE
 
@@ -434,11 +414,9 @@ ICOM_DEFINE(IErrorLog,IUnknown)
  */
 #define INTERFACE IPropertyBag
 #define IPropertyBag_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Read)(THIS_ LPCOLESTR pszPropName, VARIANT *pVar, IErrorLog *pErrorLog) PURE; \
 	STDMETHOD(Write)(THIS_ LPCOLESTR pszPropName, VARIANT *pVar) PURE;
-#define IPropertyBag_IMETHODS \
-	IUnknown_IMETHODS \
-	IPropertyBag_METHODS
 ICOM_DEFINE(IPropertyBag,IUnknown)
 #undef INTERFACE
 
@@ -458,14 +436,12 @@ ICOM_DEFINE(IPropertyBag,IUnknown)
  */
 #define INTERFACE IPropertyBag2
 #define IPropertyBag2_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Read)(THIS_ ULONG cProperties, PROPBAG2 *pPropBag, IErrorLog *pErrLog, VARIANT *pvarValue, HRESULT *phrError) PURE; \
     STDMETHOD(Write)(THIS_ ULONG cProperties, PROPBAG2 *pPropBag, VARIANT *pvarValue) PURE; \
     STDMETHOD(CountProperties)(THIS_ ULONG *pcProperties) PURE; \
     STDMETHOD(GetPropertyInfo)(THIS_ ULONG iProperty, ULONG cProperties, PROPBAG2 *pPropBag, ULONG *pcProperties) PURE; \
     STDMETHOD(LoadObject)(THIS_ LPCOLESTR pstrName, DWORD dwHint, IUnknown *pUnkObject, IErrorLog *pErrLog) PURE;
-#define IPropertyBag2_IMETHODS \
-	IUnknown_IMETHODS \
-	IPropertyBag2_METHODS
 ICOM_DEFINE(IPropertyBag2,IUnknown)
 #undef INTERFACE
 
@@ -488,10 +464,8 @@ ICOM_DEFINE(IPropertyBag2,IUnknown)
  */
 #define INTERFACE ISpecifyPropertyPages
 #define ISpecifyPropertyPages_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetPages)(THIS_ CAUUID *pPages) PURE;
-#define ISpecifyPropertyPages_IMETHODS \
-	IUnknown_IMETHODS \
-	ISpecifyPropertyPages_METHODS
 ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
 #undef INTERFACE
 
@@ -510,13 +484,11 @@ ICOM_DEFINE(ISpecifyPropertyPages,IUnknown)
  */
 #define INTERFACE IPerPropertyBrowsing
 #define IPerPropertyBrowsing_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetDisplayString)(THIS_ DISPID dispID, BSTR *pBstr) PURE; \
 	STDMETHOD(MapPropertyToPage)(THIS_ DISPID dispID, CLSID *pClsid) PURE; \
 	STDMETHOD(GetPredefinedStrings)(THIS_ DISPID dispID, CALPOLESTR *pCaStringsOut, CADWORD *pCaCookiesOut) PURE; \
 	STDMETHOD(GetPredefinedValue)(THIS_ DISPID dispID, DWORD dwCookie, VARIANT *pVarOut) PURE;
-#define IPerPropertyBrowsing_IMETHODS \
-	IUnknown_IMETHODS \
-	IPerPropertyBrowsing_METHODS
 ICOM_DEFINE(IPerPropertyBrowsing,IUnknown)
 #undef INTERFACE
 

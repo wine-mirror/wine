@@ -29,10 +29,8 @@ typedef struct 	IShellExtInit IShellExtInit, *LPSHELLEXTINIT;
 
 #define INTERFACE IShellExtInit
 #define IShellExtInit_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST  pidlFolder, LPDATAOBJECT  lpdobj, HKEY  hkeyProgID) PURE;
-#define IShellExtInit_IMETHODS \
-	IUnknown_IMETHODS \
-	IShellExtInit_METHODS
 ICOM_DEFINE(IShellExtInit,IUnknown)
 #undef INTERFACE
 

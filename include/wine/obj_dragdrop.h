@@ -54,11 +54,9 @@ typedef struct IDropTarget IDropTarget,*LPDROPTARGET;
  */
 #define INTERFACE IDropSource
 #define IDropSource_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(QueryContinueDrag)(THIS_ BOOL  fEscapePressed, DWORD  grfKeyState) PURE; \
     STDMETHOD(GiveFeedback)(THIS_ DWORD  dwEffect) PURE;
-#define IDropSource_IMETHODS \
-	IUnknown_IMETHODS \
-	IDropSource_METHODS
 ICOM_DEFINE(IDropSource,IUnknown)
 #undef INTERFACE
 
@@ -77,13 +75,11 @@ ICOM_DEFINE(IDropSource,IUnknown)
  */
 #define INTERFACE IDropTarget
 #define IDropTarget_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(DragEnter)(THIS_ IDataObject * pDataObject, DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE; \
     STDMETHOD(DragOver)(THIS_ DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE; \
     STDMETHOD(DragLeave)(THIS) PURE; \
     STDMETHOD(Drop)(THIS_ IDataObject * pDataObject, DWORD  grfKeyState, POINTL  pt, DWORD * pdwEffect) PURE;
-#define IDropTarget_IMETHODS \
-	IUnknown_IMETHODS \
-	IDropTarget_METHODS
 ICOM_DEFINE(IDropTarget,IUnknown)
 #undef INTERFACE
 

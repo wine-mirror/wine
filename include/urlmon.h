@@ -172,15 +172,13 @@ typedef enum BINDSTATUS {
  */
 #define INTERFACE IBinding
 #define IBinding_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(Abort)(THIS) PURE; \
     STDMETHOD(Suspend)(THIS) PURE; \
     STDMETHOD(Resume)(THIS) PURE; \
     STDMETHOD(SetPriority)(THIS_ LONG nPriority) PURE; \
     STDMETHOD(GetPriority)(THIS_ LONG *pnPriority) PURE; \
     STDMETHOD(GetBindResult)(THIS_ CLSID *pclsidProtocol, DWORD *pdwResult, LPOLESTR *pszResult, DWORD *pdwReserved) PURE;
-#define IBinding_IMETHODS \
-    IUnknown_IMETHODS \
-    IBinding_METHODS
 ICOM_DEFINE(IBinding,IUnknown)
 #undef INTERFACE
 
@@ -203,6 +201,7 @@ ICOM_DEFINE(IBinding,IUnknown)
  */
 #define INTERFACE IBindStatusCallback
 #define IBindStatusCallback_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(OnStartBinding)(THIS_ DWORD dwReserved, IBinding *pib) PURE; \
     STDMETHOD(GetPriority)(THIS_ LONG *pnPriority) PURE; \
     STDMETHOD(OnLowResource)(THIS) PURE; \
@@ -211,9 +210,6 @@ ICOM_DEFINE(IBinding,IUnknown)
     STDMETHOD(GetBindInfo)(THIS_ DWORD *grfBINDF, BINDINFO *pbindinfo) PURE; \
     STDMETHOD(OnDataAvailable)(THIS_ DWORD grfBSCF, DWORD dwSize, FORMATETC *pformatetc, STGMEDIUM *pstgmed) PURE; \
     STDMETHOD(OnObjectAvailable)(THIS_ REFIID iid, IUnknown *punk) PURE;
-#define IBindStatusCallback_IMETHODS \
-    IUnknown_IMETHODS \
-    IBindStatusCallback_METHODS
 ICOM_DEFINE(IBindStatusCallback,IUnknown)
 #undef INTERFACE
 
@@ -238,12 +234,10 @@ ICOM_DEFINE(IBindStatusCallback,IUnknown)
  */
 #define INTERFACE IBindHost
 #define IBindHost_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(CreateMoniker)(THIS_ LPOLESTR szName, IBindCtx *pBC, IMoniker **ppmk, DWORD dwReserved) PURE; \
     STDMETHOD(MonikerBindToStorage)(THIS_ IMoniker *pMk, IBindCtx *pBC, IBindStatusCallback *pBSC, REFIID riid, LPVOID *ppvObj) PURE; \
     STDMETHOD(MonikerBindToObject)(THIS_ IMoniker *pMk, IBindCtx *pBC, IBindStatusCallback *pBSC, REFIID riid, LPVOID *ppvObj) PURE;
-#define IBindHost_IMETHODS \
-    IUnknown_IMETHODS \
-    IBindHost_METHODS
 ICOM_DEFINE(IBindHost,IUnknown)
 #undef INTERFACE
 
@@ -281,10 +275,8 @@ typedef enum _tagQUERYOPTION {
  */
 #define INTERFACE IWinInetInfo
 #define IWinInetInfo_METHODS \
+    IUnknown_METHODS \
     STDMETHOD(QueryOption)(THIS_ DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf) PURE;
-#define IWinInetInfo_IMETHODS \
-    IUnknown_IMETHODS \
-    IWinInetInfo_METHODS
 ICOM_DEFINE(IWinInetInfo,IUnknown)
 #undef INTERFACE
 
@@ -302,10 +294,8 @@ ICOM_DEFINE(IWinInetInfo,IUnknown)
  */
 #define INTERFACE IWinInetHttpInfo
 #define IWinInetHttpInfo_METHODS \
+    IWinInetInfo_METHODS \
     STDMETHOD(QueryInfo)(THIS_ DWORD dwOption, LPVOID pBuffer, DWORD *pcbBuf, DWORD *pdwFlags, DWORD *pdwReserved) PURE;
-#define IWinInetHttpInfo_IMETHODS \
-    IWinInetInfo_IMETHODS \
-    IWinInetHttpInfo_METHODS
 ICOM_DEFINE(IWinInetHttpInfo,IWinInetInfo)
 #undef INTERFACE
 

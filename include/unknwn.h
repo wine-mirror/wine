@@ -8,22 +8,17 @@
 extern "C" {
 #endif
 #include "wtypes.h"
-#if defined(__cplusplus) && !defined(CINTERFACE)
- #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
-  #define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
- #else
-  #define ICOM_COM_INTERFACE_ATTRIBUTE
- #endif
+#if defined(ICOM_USE_COM_INTERFACE_ATTRIBUTE) && defined(__cplusplus) && !defined(CINTERFACE)
+# define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
 #else
- #ifdef ICOM_MSVTABLE_COMPAT
-  #define ICOM_MSVTABLE_COMPAT_FIELDS \
-    long dummyRTTI1; \
-    long dummyRTTI2;
-  #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
- #else
-  #define ICOM_MSVTABLE_COMPAT_FIELDS
-  #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
- #endif
+# define ICOM_COM_INTERFACE_ATTRIBUTE
+#endif
+#if defined(ICOM_MSVTABLE_COMPAT) && (!defined(__cplusplus) || defined(CINTERFACE))
+# define ICOM_MSVTABLE_COMPAT_FIELDS long dummyRTTI1,dummyRTTI2;
+# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
+#else
+# define ICOM_MSVTABLE_COMPAT_FIELDS
+# define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 #endif
 typedef struct IUnknown IUnknown;
 typedef IUnknown *LPUNKNOWN;
@@ -68,18 +63,19 @@ struct IUnknownVtbl {
 
 };
 
-#define IUnknown_IMETHODS \
-    /*** IUnknown methods ***/ \
-    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
-    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
-    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This);
-
 /*** IUnknown methods ***/
 #define IUnknown_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IUnknown_AddRef(p) (p)->lpVtbl->AddRef(p)
 #define IUnknown_Release(p) (p)->lpVtbl->Release(p)
 
 #endif
+
+#define IUnknown_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
 
 HRESULT CALLBACK IUnknown_QueryInterface_Proxy(
     IUnknown* This,
@@ -157,15 +153,6 @@ struct IClassFactoryVtbl {
 
 };
 
-#define IClassFactory_IMETHODS \
-    /*** IUnknown methods ***/ \
-    HRESULT (STDMETHODCALLTYPE *QueryInterface)(INTERFACE *This, REFIID riid, void** ppvObject); \
-    ULONG (STDMETHODCALLTYPE *AddRef)(INTERFACE *This); \
-    ULONG (STDMETHODCALLTYPE *Release)(INTERFACE *This); \
-    /*** IClassFactory methods ***/ \
-    HRESULT (STDMETHODCALLTYPE *CreateInstance)(INTERFACE *This, IUnknown* pUnkOuter, REFIID riid, void** ppvObject); \
-    HRESULT (STDMETHODCALLTYPE *LockServer)(INTERFACE *This, BOOL fLock);
-
 /*** IUnknown methods ***/
 #define IClassFactory_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
 #define IClassFactory_AddRef(p) (p)->lpVtbl->AddRef(p)
@@ -175,6 +162,16 @@ struct IClassFactoryVtbl {
 #define IClassFactory_LockServer(p,a) (p)->lpVtbl->LockServer(p,a)
 
 #endif
+
+#define IClassFactory_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IClassFactory methods ***/ \
+    STDMETHOD_(HRESULT,CreateInstance)(THIS_ IUnknown* pUnkOuter, REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(HRESULT,LockServer)(THIS_ BOOL fLock) PURE;
 
 HRESULT CALLBACK IClassFactory_RemoteCreateInstance_Proxy(
     IClassFactory* This,

@@ -94,6 +94,7 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
  */
 #define INTERFACE IOleObject
 #define IOleObject_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(SetClientSite)(THIS_ IOleClientSite *pClientSite) PURE; \
 	STDMETHOD(GetClientSite)(THIS_ IOleClientSite **ppClientSite) PURE; \
 	STDMETHOD(SetHostNames)(THIS_ LPCOLESTR szContainerApp, LPCOLESTR szContainerObj) PURE; \
@@ -115,9 +116,6 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 	STDMETHOD(EnumAdvise)(THIS_ IEnumSTATDATA **ppenumAdvise) PURE; \
 	STDMETHOD(GetMiscStatus)(THIS_ DWORD dwAspect, DWORD *pdwStatus) PURE; \
 	STDMETHOD(SetColorScheme)(THIS_ struct tagLOGPALETTE *pLogpal) PURE;
-#define IOleObject_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleObject_METHODS
 ICOM_DEFINE(IOleObject,IUnknown)
 #undef INTERFACE
 
@@ -156,15 +154,13 @@ ICOM_DEFINE(IOleObject,IUnknown)
  */
 #define INTERFACE IOleAdviseHolder
 #define IOleAdviseHolder_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Advise)(THIS_ IAdviseSink *pAdvise, DWORD *pdwConnection) PURE; \
 	STDMETHOD(Unadvise)(THIS_ DWORD dwConnection) PURE; \
 	STDMETHOD(EnumAdvise)(THIS_ IEnumSTATDATA **ppenumAdvise) PURE; \
 	STDMETHOD(SendOnRename)(THIS_ IMoniker *pmk) PURE; \
 	STDMETHOD(SendOnSave)(THIS) PURE; \
 	STDMETHOD(SendOnClose)(THIS) PURE;
-#define IOleAdviseHolder_IMETHODS \
-	IUnknown_IMETHODS \
-	IOleAdviseHolder_METHODS
 ICOM_DEFINE(IOleAdviseHolder,IUnknown)
 #undef INTERFACE
 
@@ -188,13 +184,11 @@ ICOM_DEFINE(IOleAdviseHolder,IUnknown)
  */
 #define INTERFACE IEnumOLEVERB
 #define IEnumOLEVERB_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(Next)(THIS_ ULONG celt, LPOLEVERB rgelt, ULONG *pceltFetched) PURE; \
 	STDMETHOD(Skip)(THIS_ ULONG celt) PURE; \
 	STDMETHOD(Reset)(THIS) PURE; \
 	STDMETHOD(Clone)(THIS_ IEnumOLEVERB **ppenum) PURE;
-#define IEnumOLEVERB_IMETHODS \
-	IUnknown_IMETHODS \
-	IEnumOLEVERB_METHODS
 ICOM_DEFINE(IEnumOLEVERB,IUnknown)
 #undef INTERFACE
 

@@ -438,20 +438,20 @@ static void write_icom_method_def(type_t *iface)
 	  arg = NEXT_LINK(arg);
 	}
       }
-      fprintf(header, " \\\n    ");
+      fprintf(header, " \\\n    STDMETHOD_(");
       write_type(header, def->type, def, def->tname);
-      fprintf(header, " (STDMETHODCALLTYPE *");
+      fprintf(header, ",");
       write_name(header, def);
-      fprintf(header, ")(INTERFACE *This");
+      fprintf(header, ")(%s", arg ? "THIS_ " : "THIS" );
       while (arg) {
-	fprintf(header, ", ");
 	write_type(header, arg->type, arg, arg->tname);
 	fprintf(header, " ");
 	write_name(header,arg);
 	write_array(header, arg->array, 0);
 	arg = PREV_LINK(arg);
+	if (arg) fprintf(header, ", ");
       }
-      fprintf(header, ");");
+      fprintf(header, ") PURE;");
     }
     cur = PREV_LINK(cur);
   }
@@ -711,15 +711,16 @@ void write_com_interface(type_t *iface)
   indentation--;
   fprintf(header, "};\n");
   fprintf(header, "\n");
-  if (compat_icom) {
-      fprintf(header, "#define %s_IMETHODS", iface->name);
-      write_icom_method_def(iface);
-      fprintf(header, "\n\n");
-  }
   write_method_macro(iface, iface->name);
   fprintf(header, "\n");
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
+  if (compat_icom) {
+      fprintf(header, "#define %s_METHODS \\\n", iface->name);
+      fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS");
+      write_icom_method_def(iface);
+      fprintf(header, "\n\n");
+  }
   write_method_proto(iface);
   fprintf(header, "\n");
 

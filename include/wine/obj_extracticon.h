@@ -46,11 +46,9 @@ typedef struct IExtractIconW IExtractIconW,*LPEXTRACTICONW;
 
 #define INTERFACE IExtractIconA
 #define IExtractIconA_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetIconLocation)(THIS_ UINT  uFlags, LPSTR  szIconFile, UINT  cchMax, INT * piIndex, UINT  * pwFlags) PURE; \
 	STDMETHOD(Extract)(THIS_ LPCSTR  pszFile, UINT  nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT  nIconSize) PURE;
-#define IExtractIconA_IMETHODS \
-	IUnknown_IMETHODS \
-	IExtractIconA_METHODS
 ICOM_DEFINE(IExtractIconA,IUnknown)
 #undef INTERFACE
 
@@ -65,11 +63,9 @@ ICOM_DEFINE(IExtractIconA,IUnknown)
 
 #define INTERFACE IExtractIconW
 #define IExtractIconW_METHODS \
+	IUnknown_METHODS \
 	STDMETHOD(GetIconLocation)(THIS_ UINT  uFlags, LPWSTR  szIconFile, UINT  cchMax, INT * piIndex, UINT  * pwFlags) PURE; \
 	STDMETHOD(Extract)(THIS_ LPCWSTR  pszFile, UINT  nIconIndex, HICON * phiconLarge, HICON * phiconSmall, UINT  nIconSize) PURE;
-#define IExtractIconW_IMETHODS \
-	IUnknown_IMETHODS \
-	IExtractIconW_METHODS
 ICOM_DEFINE(IExtractIconW,IUnknown)
 #undef INTERFACE
 

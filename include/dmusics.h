@@ -66,7 +66,7 @@ typedef struct _DMUS_VOICE_STATE
 #undef  INTERFACE
 #define INTERFACE IDirectMusicSynth
 #define IDirectMusicSynth_METHODS \
-    /*** IDirectMusicSynth methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Open)(THIS_ LPDMUS_PORTPARAMS pPortParams) PURE; \
     STDMETHOD(Close)(THIS) PURE; \
     STDMETHOD(SetNumChannelGroups)(THIS_ DWORD dwGroups) PURE; \
@@ -84,11 +84,6 @@ typedef struct _DMUS_VOICE_STATE
     STDMETHOD(GetChannelPriority)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority) PURE; \
     STDMETHOD(GetFormat)(THIS_ LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSiz) PURE; \
     STDMETHOD(GetAppend)(THIS_ DWORD *pdwAppend) PURE;
-
-/*** IDirectMusicSynth methods ***/
-#define IDirectMusicSynth_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicSynth_METHODS
 ICOM_DEFINE(IDirectMusicSynth,IUnknown)
 #undef INTERFACE
 
@@ -124,18 +119,12 @@ ICOM_DEFINE(IDirectMusicSynth,IUnknown)
 #undef  INTERFACE
 #define INTERFACE IDirectMusicSynth8
 #define IDirectMusicSynth8_METHODS \
-    /*** IDirectMusicSynth8 methods ***/ \
+    IDirectMusicSynth_METHODS \
     STDMETHOD(PlayVoice)(THIS_ REFERENCE_TIME rt, DWORD dwVoiceId, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwDLId, long prPitch, long vrVolume, SAMPLE_TIME stVoiceStart, SAMPLE_TIME stLoopStart, SAMPLE_TIME stLoopEnd) PURE; \
     STDMETHOD(StopVoice)(THIS_ REFERENCE_TIME rt, DWORD dwVoiceId) PURE; \
     STDMETHOD(GetVoiceState)(THIS_ DWORD dwVoice[], DWORD cbVoice, DMUS_VOICE_STATE dwVoiceState[]) PURE; \
     STDMETHOD(Refresh)(THIS_ DWORD dwDownloadID, DWORD dwFlags) PURE; \
     STDMETHOD(AssignChannelToBuses)(THIS_ DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwBuses, DWORD cBuses) PURE;
-
-/*** IDirectMusicSynth methods ***/
-#define IDirectMusicSynth8_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicSynth_METHODS \
-    IDirectMusicSynth8_METHODS
 ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
 #undef INTERFACE
 
@@ -177,7 +166,7 @@ ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
 #undef  INTERFACE
 #define INTERFACE IDirectMusicSynthSink
 #define IDirectMusicSynthSink_METHODS \
-    /*** IDirectMusicSynthSink methods ***/ \
+    IUnknown_METHODS \
     STDMETHOD(Init)(THIS_ IDirectMusicSynth *pSynth) PURE; \
     STDMETHOD(SetMasterClock)(THIS_ IReferenceClock *pClock) PURE; \
     STDMETHOD(GetLatencyClock)(THIS_ IReferenceClock **ppClock) PURE; \
@@ -186,11 +175,6 @@ ICOM_DEFINE(IDirectMusicSynth8,IDirectMusicSynth)
     STDMETHOD(RefTimeToSample)(THIS_ REFERENCE_TIME rfTime, LONGLONG *pllSampleTime) PURE; \
     STDMETHOD(SetDirectSound)(THIS_ LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer) PURE; \
     STDMETHOD(GetDesiredBufferSize)(THIS_ LPDWORD pdwBufferSizeInSamples) PURE;
-
-/*** IDirectMusicSynthSink methods ***/
-#define IDirectMusicSynthSink_IMETHODS \
-    IUnknown_IMETHODS \
-    IDirectMusicSynthSink_METHODS
 ICOM_DEFINE(IDirectMusicSynthSink,IUnknown)
 #undef INTERFACE
 
