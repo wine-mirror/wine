@@ -90,6 +90,11 @@ Por favor use um editor diferente."
 #define STRING_NOTEXT           "Você não digitou nenhum texto. \
 \nPor favor digite alguma coisa e tente novamente"
 
+/* FIXME */
+
+#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+Do you want to create a new file ?"
+
 #define STRING_NOTSAVED         "Arquivo '%s'\nfoi modificado\n\n \
 Gostaria de salvar as alteraçÕes ?"
 

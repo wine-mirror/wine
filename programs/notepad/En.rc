@@ -91,6 +91,9 @@ Please use a different editor."
 #define STRING_NOTEXT           "You didn't enter any text. \
 \nPlease type something and try again"
 
+#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+Do you want to create a new file ?"
+
 #define STRING_NOTSAVED         "File '%s'\nhas been modified\n\n \
 Would you like to save the changes ?"
 

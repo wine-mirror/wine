@@ -34,6 +34,7 @@
 #include "dialog.h"
 #include "language.h"
 
+extern BOOL FileExists(LPCSTR szFilename);
 extern BOOL DoCloseFile(void);
 extern void DoOpenFile(LPCSTR szFileName);
 
@@ -477,7 +478,6 @@ void LoadBufferFromFile(LPCSTR szFileName)
             memmove(&pTemp[0],&pTemp[i], bytes_left);
     }
     CloseHandle(hFile);
-    MessageBox(Globals.hMainWnd, "Finished", "Info", MB_OK);
 }
 
 BOOL DoInput(HDC hDC, WPARAM wParam, LPARAM lParam)
@@ -847,6 +847,94 @@ LRESULT WINAPI NOTEPAD_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
     return 0l;
 }
 
+int AlertFileDoesNotExist(LPSTR szFileName) {
+
+   int nResult;
+   CHAR szMessage[MAX_STRING_LEN];
+   CHAR szRessource[MAX_STRING_LEN];
+
+   LoadString(Globals.hInstance, IDS_DOESNOTEXIST, szRessource,
+              sizeof(szRessource));
+   wsprintf(szMessage, szRessource, szFileName);
+   
+   LoadString(Globals.hInstance, IDS_ERROR,  szRessource, sizeof(szRessource));
+
+   nResult = MessageBox(Globals.hMainWnd, szMessage, szRessource,
+                        MB_ICONEXCLAMATION | MB_YESNO);
+   
+   return(nResult);
+}
+
+void HandleCommandLine(LPSTR cmdline)
+{
+    
+    while (*cmdline && (*cmdline == ' ' || *cmdline == '-')) 
+    
+    {
+        CHAR   option;
+
+        if (*cmdline++ == ' ') continue;
+
+        option = *cmdline;
+        if (option) cmdline++;
+        while (*cmdline && *cmdline == ' ') cmdline++;
+
+        switch(option)
+        {
+            case 'p':
+            case 'P': printf("Print file: ");
+                      /* Not yet able to print a file */
+                      break;
+        }
+    }
+
+    if (*cmdline) 
+    {
+        /* file name is passed in the command line */
+        char *file_name;
+        BOOL file_exists;
+        char buf[MAX_PATH];
+
+        if (FileExists(cmdline)) 
+        {
+            file_exists = TRUE;
+            file_name = cmdline;
+        }
+        else 
+        {
+            /* try to find file with ".txt" extention */ 
+            if (!strcmp(".txt", cmdline + strlen(cmdline) - strlen(".txt"))) 
+            {
+                file_exists = FALSE;
+                file_name = cmdline;
+            }
+            else
+            {
+                strncpy(buf, cmdline, MAX_PATH - strlen(".txt") - 1);
+                strcat(buf, ".txt");
+                file_name = buf;
+                file_exists = FileExists(buf);
+            }
+        }
+
+        if (file_exists)
+        {
+            DoOpenFile(file_name);
+            InvalidateRect(Globals.hMainWnd, NULL, FALSE);
+        }
+        else
+        {
+            switch (AlertFileDoesNotExist(file_name)) {
+            case IDYES:
+                DoOpenFile(file_name);
+                break;
+
+            case IDNO:
+                break;
+            }
+        }
+     }
+}
 
 
 /***********************************************************************
@@ -932,28 +1020,7 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
                   "Error", MB_ICONEXCLAMATION);
     }
 
-    /* now handle command line */
-    
-    while (*cmdline && (*cmdline == ' ' || *cmdline == '-')) 
-    
-    {
-        CHAR   option;
-/*      LPCSTR topic_id; */
-
-        if (*cmdline++ == ' ') continue;
-
-        option = *cmdline;
-        if (option) cmdline++;
-        while (*cmdline && *cmdline == ' ') cmdline++;
-
-        switch(option)
-        {
-            case 'p':
-            case 'P': printf("Print file: ");
-                      /* Not yet able to print a file */
-                      break;
-        }
-    }
+    HandleCommandLine(cmdline);
 
     /* Set up Drag&Drop */
 

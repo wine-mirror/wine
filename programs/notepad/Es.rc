@@ -94,6 +94,9 @@ Use otro editor."
 
 /* FIXME */
 
+#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+Do you want to create a new file ?"
+
 #define STRING_NOTSAVED         "El texto en el archivo '%s' ha cambiado\n\n \
 ¿Desea guardar los cambios?"
 

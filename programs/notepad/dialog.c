@@ -89,7 +89,7 @@ VOID AlertOutOfMemory(void) {
 }
 
 
-BOOL ExistFile(LPCSTR szFilename) {
+BOOL FileExists(LPCSTR szFilename) {
 /*
  *  Returns: TRUE  - if "szFileName" exists
  *           FALSE - if it does not
@@ -206,7 +206,7 @@ VOID DIALOG_FileOpen(VOID)
 
         if (GetOpenFileName(&openfilename)) {
                 
-                if (ExistFile(openfilename.lpstrFile))
+                if (FileExists(openfilename.lpstrFile))
                     DoOpenFile(openfilename.lpstrFile);
                 else 
                     AlertFileNotFound(openfilename.lpstrFile);

@@ -82,17 +82,18 @@ extern CHAR STRING_PAGESETUP_Xx[];
 #define IDS_INFO                        STRINGID(07)
 #define IDS_TOOLARGE                    STRINGID(08)
 #define IDS_NOTEXT                      STRINGID(09)
-#define IDS_NOTSAVED                    STRINGID(0A)
-#define IDS_NOTFOUND                    STRINGID(0B)
-#define IDS_OUT_OF_MEMORY               STRINGID(0C)
-#define IDS_UNTITLED                    STRINGID(0D)
+#define IDS_DOESNOTEXIST                STRINGID(0A)
+#define IDS_NOTSAVED                    STRINGID(0B)
+#define IDS_NOTFOUND                    STRINGID(0C)
+#define IDS_OUT_OF_MEMORY               STRINGID(0D)
+#define IDS_UNTITLED                    STRINGID(0E)
 
-#define IDS_PAGESETUP_HEADERVALUE       STRINGID(0E)
-#define IDS_PAGESETUP_FOOTERVALUE       STRINGID(0F)
-#define IDS_PAGESETUP_LEFTVALUE         STRINGID(10)
-#define IDS_PAGESETUP_RIGHTVALUE        STRINGID(11)
-#define IDS_PAGESETUP_TOPVALUE          STRINGID(12)
-#define IDS_PAGESETUP_BOTTOMVALUE       STRINGID(13)
+#define IDS_PAGESETUP_HEADERVALUE       STRINGID(0F)
+#define IDS_PAGESETUP_FOOTERVALUE       STRINGID(10)
+#define IDS_PAGESETUP_LEFTVALUE         STRINGID(11)
+#define IDS_PAGESETUP_RIGHTVALUE        STRINGID(12)
+#define IDS_PAGESETUP_TOPVALUE          STRINGID(13)
+#define IDS_PAGESETUP_BOTTOMVALUE       STRINGID(14)
 
 /* main menu */
 

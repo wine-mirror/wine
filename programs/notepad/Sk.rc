@@ -91,6 +91,11 @@ Please use a different editor."
 #define STRING_NOTEXT           "Niè ste nenapísali. \
 \nProsím, napíšte nejakı text a pokúste sa znovu."
 
+/* FIXME */
+
+#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+Do you want to create a new file ?"
+
 #define STRING_NOTSAVED         "Súbor '%s'\nbol zmenenın\n \
 Prajete si uloi zmeny ?"
 

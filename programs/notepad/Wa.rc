@@ -93,6 +93,11 @@ Eployoz on ôte aspougneu di tekse."
 #define STRING_NOTEXT           "Vos n' avoz rén sicrît. \
 \nTapez ene sacwe èt rasayez"
 
+/* FIXME */
+
+#define STRING_DOESNOTEXIST     "File '%s'\ndoes not exist\n\n \
+Do you want to create a new file ?"
+
 #define STRING_NOTSAVED         "Li fitchî '%s'\na candjî\n\n \
 El voloz schaper ?"
 
