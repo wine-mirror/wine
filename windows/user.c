@@ -512,3 +512,11 @@ BOOL32 WINAPI GetUserObjectInformation32W( HANDLE32 hObj, int nIndex, LPVOID pvI
 {	FIXME(win32,"(0x%x %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
 	return TRUE;
 }
+/***********************************************************************
+ *           GetUserObjectSecurity32   (USER32.300)
+ */
+BOOL32 WINAPI GetUserObjectSecurity32(HANDLE32 hObj, SECURITY_INFORMATION * pSIRequested,
+	PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
+{	FIXME(win32,"(0x%x %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
+	return TRUE;
+}

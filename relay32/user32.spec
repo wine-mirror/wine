@@ -302,7 +302,7 @@ init	MAIN_UserInit
 298 stdcall GetUpdateRgn(long long long) GetUpdateRgn32
 299 stdcall GetUserObjectInformationA (long long ptr long ptr) GetUserObjectInformation32A
 300 stdcall GetUserObjectInformationW (long long ptr long ptr) GetUserObjectInformation32W
-301 stub GetUserObjectSecurity
+301 stdcall GetUserObjectSecurity (long ptr ptr long ptr) GetUserObjectSecurity32
 302 stdcall GetWindow(long long) GetWindow32
 303 stdcall GetWindowContextHelpId(long) GetWindowContextHelpId
 304 stdcall GetWindowDC(long) GetWindowDC32
