@@ -6,6 +6,7 @@
 
 #include "config.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -103,6 +104,25 @@ int clone( int (*fn)(void *), void *stack, int flags, void *arg )
 }
 #endif  /* !HAVE_CLONE && __linux__ */
 
+
+#ifndef HAVE_STRCASECMP
+int strcasecmp( const char *str1, const char *str2 )
+{
+    while (*str1 && toupper(*str1) == toupper(*str2)) { str1++; str2++; }
+    return toupper(*str1) - toupper(*str2);
+}
+#endif /* HAVE_STRCASECMP */
+
+#ifndef HAVE_STRNCASECMP
+int strncasecmp( const char *str1, const char *str2, size_t n )
+{
+    int res;
+    if (!n) return 0;
+    while ((--n > 0) && *str1)
+      if ((res = toupper(*str1++) - toupper(*str2++))) return res;
+    return toupper(*str1) - toupper(*str2);
+}
+#endif /* HAVE_STRNCASECMP */
 
 /** 
  *  It looks like the openpty that comes with glibc in RedHat 5.0

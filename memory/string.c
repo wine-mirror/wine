@@ -389,23 +389,6 @@ INT WINAPI lstrlenW( LPCWSTR str )
 
 
 /***********************************************************************
- *           lstrncmpi32A   (Not a Windows API)
- */
-INT WINAPI lstrncmpiA( LPCSTR str1, LPCSTR str2, INT n )
-{
-    INT res;
-
-    TRACE("strncmpi %s and %s for %d chars\n",
-		   debugstr_an (str1, n), debugstr_an (str2, n), n);
-    if (!n) return 0;
-    while ((--n > 0) && *str1)
-      if ( (res = toupper(*str1++) - toupper(*str2++)) ) return res;
-
-    return toupper(*str1) - toupper(*str2);
-}
-
-
-/***********************************************************************
  *           lstrcpyAtoW   (Not a Windows API)
  */
 LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )

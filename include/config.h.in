@@ -160,11 +160,14 @@
 /* Define if you have the sigaltstack function.  */
 #undef HAVE_SIGALTSTACK
 
+/* Define if you have the strcasecmp function.  */
+#undef HAVE_STRCASECMP
+
 /* Define if you have the strerror function.  */
 #undef HAVE_STRERROR
 
-/* Define if you have the stricmp function.  */
-#undef HAVE_STRICMP
+/* Define if you have the strncasecmp function.  */
+#undef HAVE_STRNCASECMP
 
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR

@@ -487,8 +487,9 @@ AC_CHECK_FUNCS(\
 	rfork \
 	sendmsg \
 	sigaltstack \
+	strcasecmp \
 	strerror \
-	stricmp \
+	strncasecmp \
 	tcgetattr \
 	timegm \
 	usleep \

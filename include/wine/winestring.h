@@ -3,14 +3,13 @@
 
 #include "windef.h"
 
-INT16       WINAPI WideCharToLocal16(LPSTR,LPWSTR,INT16);
 INT         WINAPI WideCharToLocal(LPSTR,LPWSTR,INT);
-INT16       WINAPI LocalToWideChar16(LPWSTR,LPSTR,INT16);
 INT         WINAPI LocalToWideChar(LPWSTR,LPSTR,INT);
-INT         WINAPI lstrncmpiA(LPCSTR,LPCSTR,INT);
 LPWSTR      WINAPI lstrcpyAtoW(LPWSTR,LPCSTR);
 LPSTR       WINAPI lstrcpyWtoA(LPSTR,LPCWSTR);
 LPWSTR      WINAPI lstrcpynAtoW(LPWSTR,LPCSTR,INT);
 LPSTR       WINAPI lstrcpynWtoA(LPSTR,LPCWSTR,INT);
+
+#define lstrncmpiA strncasecmp
 
 #endif /* __WINE_WINE_WINESTRING_H */
