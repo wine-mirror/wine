@@ -129,7 +129,7 @@ TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
     HDC32 hdcImageList = CreateCompatibleDC32 (0);
     HDC32 hdcMask = CreateCompatibleDC32 (0);
-    HIMAGELIST himl = infoPtr->himlDef;
+    HIMAGELIST himl = infoPtr->himlStd;
     HBITMAP32 hbmMask;
 
     /* create new bitmap */
@@ -187,7 +187,15 @@ TOOLBAR_DrawButton (WND *wndPtr, TBUTTON_INFO *btnPtr, HDC32 hdc)
 	DrawEdge32 (hdc, &rc, EDGE_RAISED,
 		    BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
+	if (bFlat) {
+//	    if (infoPtr->himlDis)
+		ImageList_Draw (infoPtr->himlDis, btnPtr->iBitmap, hdc,
+				rc.left+1, rc.top+1, ILD_NORMAL);
+//	    else
+//		TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
+	}
+	else
+	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rc.left+1, rc.top+1);
 
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 	return;
@@ -197,7 +205,7 @@ TOOLBAR_DrawButton (WND *wndPtr, TBUTTON_INFO *btnPtr, HDC32 hdc)
     if (btnPtr->fsState & TBSTATE_PRESSED) {
 	DrawEdge32 (hdc, &rc, EDGE_SUNKEN,
 		    BF_RECT | BF_MIDDLE | BF_ADJUST);
-	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+	ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
 			rc.left+2, rc.top+2, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 	return;
@@ -214,8 +222,12 @@ TOOLBAR_DrawButton (WND *wndPtr, TBUTTON_INFO *btnPtr, HDC32 hdc)
 			BF_RECT | BF_MIDDLE | BF_ADJUST);
 
 	TOOLBAR_DrawPattern (hdc, &rc);
-	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rc.left+2, rc.top+2, ILD_NORMAL);
+	if (bFlat)
+	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+			    rc.left+2, rc.top+2, ILD_NORMAL);
+	else
+	    ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+			    rc.left+2, rc.top+2, ILD_NORMAL);
 	TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 	return;
     }
@@ -234,8 +246,14 @@ TOOLBAR_DrawButton (WND *wndPtr, TBUTTON_INFO *btnPtr, HDC32 hdc)
     /* normal state */
     DrawEdge32 (hdc, &rc, EDGE_RAISED,
 		BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
-    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-		    rc.left+1, rc.top+1, ILD_NORMAL);
+
+    if (bFlat)
+	ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
+			rc.left+1, rc.top+1, ILD_NORMAL);
+    else
+	ImageList_Draw (infoPtr->himlStd, btnPtr->iBitmap, hdc,
+			rc.left+1, rc.top+1, ILD_NORMAL);
+
     TOOLBAR_DrawString (infoPtr, btnPtr, hdc, btnPtr->fsState);
 }
 
@@ -603,7 +621,7 @@ TOOLBAR_AddBitmap (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (!(infoPtr->himlDef)) {
 	/* create new default image list */
 	TRACE (toolbar, "creating default image list!\n");
-	infoPtr->himlDef =
+	infoPtr->himlStd =
 	    ImageList_Create (infoPtr->nBitmapWidth, infoPtr->nBitmapHeight,
 			      ILC_COLOR | ILC_MASK, (INT32)wParam, 2);
     }
@@ -622,7 +640,7 @@ TOOLBAR_AddBitmap (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     /* Add bitmaps to the default image list */
     if (lpAddBmp->hInst == (HINSTANCE32)0) {
 	nIndex = 
-	    ImageList_AddMasked (infoPtr->himlDef, (HBITMAP32)lpAddBmp->nID,
+	    ImageList_AddMasked (infoPtr->himlStd, (HBITMAP32)lpAddBmp->nID,
 				 CLR_DEFAULT);
     }
     else if (lpAddBmp->hInst == HINST_COMMCTRL) {
@@ -631,14 +649,14 @@ TOOLBAR_AddBitmap (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	/* Hack to "add" some reserved images within the image list 
 	   to get the right image indices */
-	nIndex = ImageList_GetImageCount (infoPtr->himlDef);
-	ImageList_SetImageCount (infoPtr->himlDef, nIndex + (INT32)wParam);
+	nIndex = ImageList_GetImageCount (infoPtr->himlStd);
+	ImageList_SetImageCount (infoPtr->himlStd, nIndex + (INT32)wParam);
     }
     else {
 	HBITMAP32 hBmp =
 	    LoadBitmap32A (lpAddBmp->hInst, (LPSTR)lpAddBmp->nID);
 
-	nIndex = ImageList_AddMasked (infoPtr->himlDef, hBmp, CLR_DEFAULT);
+	nIndex = ImageList_AddMasked (infoPtr->himlStd, hBmp, CLR_DEFAULT);
 
 	DeleteObject32 (hBmp); 
     }
@@ -2052,7 +2070,7 @@ TOOLBAR_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (wndPtr->dwStyle & TBSTYLE_TOOLTIPS) {
 	/* Create tooltip control */
 	infoPtr->hwndToolTip =
-	    CreateWindowEx32A (0, TOOLTIPS_CLASS32A, NULL, TTS_ALWAYSTIP,
+	    CreateWindowEx32A (0, TOOLTIPS_CLASS32A, NULL, 0,
 			       CW_USEDEFAULT32, CW_USEDEFAULT32,
 			       CW_USEDEFAULT32, CW_USEDEFAULT32,
 			       wndPtr->hwndSelf, 0, 0, 0);
@@ -2830,7 +2848,8 @@ ToolbarWindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void TOOLBAR_Register (void)
+VOID
+TOOLBAR_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -2847,3 +2866,12 @@ void TOOLBAR_Register (void)
  
     RegisterClass32A (&wndClass);
 }
+
+
+VOID
+TOOLBAR_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (TOOLBARCLASSNAME32A))
+	UnregisterClass32A (TOOLBARCLASSNAME32A, (HINSTANCE32)NULL);
+}
+

@@ -16,7 +16,7 @@ init	ComCtl32LibMain
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
  10 stub COMCTL32_10
- 11 stdcall COMCTL32_11(long long long long long long) COMCTL32_11
+ 11 stdcall COMCTL32_11(ptr ptr long long long long) COMCTL32_11
 #12 stub Cctl1632_ThunkData32
  13 stub MakeDragList
  14 stub LBItemFromPt

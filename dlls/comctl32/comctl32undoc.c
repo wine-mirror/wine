@@ -252,7 +252,7 @@ FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
     FIXME (commctrl, "(%lx %lx %lx %lx) empty stub!\n",
 	   dwParam1, dwParam2, dwParam3, dwParam4);
 
-    return -1;
+    return TRUE;
 }
 
 
@@ -1353,7 +1353,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
 	}
 
 	if (uOptions & DPAS_INSERTAFTER) {
-	    TRACE (commctrl, "-- ret=%d\n", r);
+	    TRACE (commctrl, "-- ret=%d\n", l);
 	    return l;
 	}
     }

@@ -91,6 +91,7 @@ PAGER_RecalcSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     NMPGCALCSIZE nmpgcs;
 
     if (infoPtr->hwndChild) {
+	ZeroMemory (&nmpgcs, sizeof (NMPGCALCSIZE));
 	nmpgcs.hdr.hwndFrom = wndPtr->hwndSelf;
 	nmpgcs.hdr.idFrom = wndPtr->wIDmenu;
 	nmpgcs.hdr.code = PGN_CALCSIZE;
@@ -166,10 +167,11 @@ PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     FIXME (pager, "hwnd=%x\n", infoPtr->hwndChild);
 
     /* FIXME: redraw */
-    SetParent32 (infoPtr->hwndChild, wndPtr->hwndSelf);
-    SetWindowPos32 (infoPtr->hwndChild, wndPtr->hwndSelf,
-		    0, 0, 40, 40, SWP_SHOWWINDOW);
-    RedrawWindow32 (wndPtr->hwndSelf, NULL, NULL, RDW_INVALIDATE);
+    if (infoPtr->hwndChild) {
+	SetParent32 (infoPtr->hwndChild, wndPtr->hwndSelf);
+	SetWindowPos32 (infoPtr->hwndChild, HWND_TOP,
+			0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
+    }
 
     return 0;
 }
@@ -185,8 +187,8 @@ PAGER_SetPos (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     FIXME (pager, "pos=%d\n", infoPtr->nPos);
 
     /* FIXME: redraw */
-    SetWindowPos32 (infoPtr->hwndChild, wndPtr->hwndSelf,
-		    0, 0, 0, 0, SWP_NOSIZE);
+    SetWindowPos32 (infoPtr->hwndChild, HWND_TOP,
+		    0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
 
     return 0;
 }
@@ -212,7 +214,7 @@ PAGER_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     }
 
     /* set default settings */
-    infoPtr->hwndChild = 0;
+    infoPtr->hwndChild = (HWND32)NULL;
     infoPtr->clrBk = GetSysColor32 (COLOR_BTNFACE);
     infoPtr->nBorder = 0;
     infoPtr->nButtonSize = 0;
@@ -245,15 +247,39 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     HBRUSH32 hBrush = CreateSolidBrush32 (infoPtr->clrBk);
     RECT32 rect;
 
-//    GetClientRect32 (wndPtr->hwndSelf, &rect);
-//    FillRect32 ((HDC32)wParam, &rect, hBrush);
-//    DeleteObject32 (hBrush);
-    return TRUE;
+    GetClientRect32 (wndPtr->hwndSelf, &rect);
+    FillRect32 ((HDC32)wParam, &rect, hBrush);
+    DeleteObject32 (hBrush);
+
+//    return TRUE;
+    return FALSE;
 }
 
 
 // << PAGER_MouseMove >>
 // << PAGER_Paint >>
+
+
+static LRESULT
+PAGER_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+    RECT32 rect;
+
+    GetClientRect32 (wndPtr->hwndSelf, &rect);
+    if (infoPtr->hwndChild) {
+	SetWindowPos32 (infoPtr->hwndChild, HWND_TOP, rect.left, rect.top,
+			rect.right - rect.left, rect.bottom - rect.top,
+			SWP_SHOWWINDOW);
+//	MoveWindow32 (infoPtr->hwndChild, 1, 1, rect.right - 2, rect.bottom-2, TRUE);
+//	UpdateWindow32 (infoPtr->hwndChild);
+
+    }
+//    FillRect32 ((HDC32)wParam, &rect, hBrush);
+//    DeleteObject32 (hBrush);
+    return TRUE;
+}
+
 
 
 LRESULT WINAPI
@@ -316,6 +342,8 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 //	case WM_PAINT:
 //	    return PAGER_Paint (wndPtr, wParam);
 
+	case WM_SIZE:
+	    return PAGER_Size (wndPtr, wParam, lParam);
 
 	default:
 	    if (uMsg >= WM_USER)
@@ -327,8 +355,8 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-void
-PAGER_Register (void)
+VOID
+PAGER_Register (VOID)
 {
     WNDCLASS32A wndClass;
 
@@ -344,5 +372,13 @@ PAGER_Register (void)
     wndClass.lpszClassName = WC_PAGESCROLLER32A;
  
     RegisterClass32A (&wndClass);
+}
+
+
+VOID
+PAGER_Unregister (VOID)
+{
+    if (GlobalFindAtom32A (WC_PAGESCROLLER32A))
+	UnregisterClass32A (WC_PAGESCROLLER32A, (HINSTANCE32)NULL);
 }
 
