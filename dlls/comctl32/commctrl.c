@@ -21,7 +21,6 @@
 #include "nativefont.h"
 #include "pager.h"
 #include "progress.h"
-#include "propsheet.h"
 #include "rebar.h"
 #include "status.h"
 #include "tab.h"
@@ -78,7 +77,6 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		HOTKEY_Register ();
 		LISTVIEW_Register ();
 		PROGRESS_Register ();
-		PROPSHEET_Register ();
 		STATUS_Register ();
 		TAB_Register ();
 		TOOLBAR_Register ();
@@ -106,7 +104,6 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		NATIVEFONT_Unregister ();
 		PAGER_Unregister ();
 		PROGRESS_Unregister ();
-		PROPSHEET_UnRegister ();
 		REBAR_Unregister ();
 		STATUS_Unregister ();
 		TAB_Unregister ();
