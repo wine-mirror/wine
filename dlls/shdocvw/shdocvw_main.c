@@ -42,6 +42,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
+#define MOZILLA_ACTIVEX_MESSAGE "You need to install the Mozilla ActiveX control to\n" \
+                                "use Wine's builtin CLSID_WebBrowser from SHDOCVW.DLL"
 
 DEFINE_GUID( CLSID_MozillaBrowser, 0x1339B54C,0x3453,0x11D2,0x93,0xB9,0x00,0x00,0x00,0x00,0x00,0x00);
 
@@ -133,8 +135,9 @@ static BOOL SHDOCVW_TryLoadMozillaControl()
 
     if( !SHDOCVW_GetMozctlPath( szPath, sizeof szPath ) )
     {
-        MESSAGE("You need to install the Mozilla ActiveX control to\n");
-        MESSAGE("use Wine's builtin CLSID_WebBrowser from SHDOCVW.DLL\n");
+        MESSAGE(MOZILLA_ACTIVEX_MESSAGE "\n");
+        MessageBoxA(NULL, MOZILLA_ACTIVEX_MESSAGE, "Wine", MB_OK | MB_ICONEXCLAMATION);
+        hMozCtl = 0;
         return FALSE;
     }
     hMozCtl = LoadLibraryExW(szPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
