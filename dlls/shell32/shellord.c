@@ -1088,15 +1088,41 @@ BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 			 NULL, sei->lpDirectory,
 			 &startup, &info))
 	{
-	  sei->hInstApp = GetLastError();
-	  return FALSE;
+        BOOL failed = TRUE;
+
+        if ((!sei->lpVerb)||(strcasecmp(sei->lpVerb,"open")))
+        {
+            LPSTR   ext = PathFindExtensionA(szApplicationName);
+            CHAR    key[1023];
+            CHAR    buffer[1023];
+            CHAR    cmdline[1023];
+            DWORD   size;
+
+            sprintf(key,"Software\\Classes\\%s",ext);   
+            size = 1023;
+            if (!RegQueryValueA(HKEY_LOCAL_MACHINE,key,buffer,&size))
+            {
+                sprintf(key,"Software\\Classes\\%s\\shell\\%s\\command", buffer,
+                    (sei->lpVerb)?sei->lpVerb:"open");
+                size = 1023;
+                if (!RegQueryValueA(HKEY_LOCAL_MACHINE,key,buffer,&size))
+                {
+                    sprintf(cmdline,"%s \"%s\"",buffer,szApplicationName);
+                    if (CreateProcessA(NULL,cmdline,  NULL, NULL, FALSE, 0,
+                                   NULL, sei->lpDirectory, &startup, &info))
+                        failed = FALSE;
+                }
+            }
+        }
+
+        if (failed)
+        {
+            sei->hInstApp = GetLastError();
+            return FALSE;
+        }
 	}
 
         sei->hInstApp = 33;
-	
-    	/* Give 30 seconds to the app to come up */
-	if ( WaitForInputIdle ( info.hProcess, 30000 ) ==  0xFFFFFFFF )
-	  ERR("WaitForInputIdle failed: Error %ld\n", GetLastError() );
  
 	if(sei->fMask & SEE_MASK_NOCLOSEPROCESS)
 	  sei->hProcess = info.hProcess;	  
