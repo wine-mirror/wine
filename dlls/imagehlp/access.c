@@ -9,7 +9,7 @@
 #include "winerror.h"
 #include "windef.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "imagehlp.h"
 
 DEFAULT_DEBUG_CHANNEL(imagehlp)
@@ -44,7 +44,7 @@ BOOL WINAPI EnumerateLoadedModules(
   PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
   PVOID UserContext)
 {
-  FIXME(imagehlp, "(0x%08x, %p, %p): stub\n",
+  FIXME("(0x%08x, %p, %p): stub\n",
     hProcess, EnumLoadedModulesCallback, UserContext
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -56,7 +56,7 @@ BOOL WINAPI EnumerateLoadedModules(
  */
 DWORD WINAPI GetTimestampForLoadedLibrary(HMODULE Module)
 {
-  FIXME(imagehlp, "(0x%08x): stub\n", Module);
+  FIXME("(0x%08x): stub\n", Module);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -68,7 +68,7 @@ BOOL WINAPI GetImageConfigInformation(
   PLOADED_IMAGE LoadedImage,
   PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation)
 {
-  FIXME(imagehlp, "(%p, %p): stub\n",
+  FIXME("(%p, %p): stub\n",
     LoadedImage, ImageConfigInformation
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -82,7 +82,7 @@ DWORD WINAPI GetImageUnusedHeaderBytes(
   PLOADED_IMAGE LoadedImage,
   LPDWORD SizeUnusedHeaderBytes)
 {
-  FIXME(imagehlp, "(%p, %p): stub\n",
+  FIXME("(%p, %p): stub\n",
     LoadedImage, SizeUnusedHeaderBytes
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -95,7 +95,7 @@ DWORD WINAPI GetImageUnusedHeaderBytes(
 PVOID WINAPI ImageDirectoryEntryToData(
   PVOID Base, BOOLEAN MappedAsImage, USHORT DirectoryEntry, PULONG Size)
 {
-  FIXME(imagehlp, "(%p, %d, %d, %p): stub\n",
+  FIXME("(%p, %d, %d, %p): stub\n",
     Base, MappedAsImage, DirectoryEntry, Size
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -127,7 +127,7 @@ PIMAGE_NT_HEADERS WINAPI ImageNtHeader(PVOID Base)
 PIMAGE_SECTION_HEADER WINAPI ImageRvaToSection(
   PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva)
 {
-  FIXME(imagehlp, "(%p, %p, %ld): stub\n", NtHeaders, Base, Rva);
+  FIXME("(%p, %p, %ld): stub\n", NtHeaders, Base, Rva);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return NULL;
 }
@@ -139,7 +139,7 @@ PVOID WINAPI ImageRvaToVa(
   PIMAGE_NT_HEADERS NtHeaders, PVOID Base, ULONG Rva,
   PIMAGE_SECTION_HEADER *LastRvaSection)
 {
-  FIXME(imagehlp, "(%p, %p, %ld, %p): stub\n",
+  FIXME("(%p, %p, %ld, %p): stub\n",
     NtHeaders, Base, Rva, LastRvaSection
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -215,7 +215,7 @@ BOOL WINAPI MapAndLoad(
     hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL)))
     {
       DWORD dwLastError = GetLastError();
-      WARN(imagehlp, "CreateFileMapping: Error = %ld\n", dwLastError);
+      WARN("CreateFileMapping: Error = %ld\n", dwLastError);
       SetLastError(dwLastError);
       goto Error;
     }
@@ -226,7 +226,7 @@ BOOL WINAPI MapAndLoad(
     hFileMapping, FILE_MAP_READ, 0, 0, 0)))
     {
       DWORD dwLastError = GetLastError();
-      WARN(imagehlp, "MapViewOfFile: Error = %ld\n", dwLastError);
+      WARN("MapViewOfFile: Error = %ld\n", dwLastError);
       SetLastError(dwLastError);
       goto Error;
     }
@@ -287,7 +287,7 @@ BOOL WINAPI SetImageConfigInformation(
   PLOADED_IMAGE LoadedImage,
   PIMAGE_LOAD_CONFIG_DIRECTORY ImageConfigInformation)
 {
-  FIXME(imagehlp, "(%p, %p): stub\n",
+  FIXME("(%p, %p): stub\n",
     LoadedImage, ImageConfigInformation
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -299,7 +299,7 @@ BOOL WINAPI SetImageConfigInformation(
  */
 BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE LoadedImage)
 {
-  FIXME(imagehlp, "(%p): stub\n", LoadedImage);
+  FIXME("(%p): stub\n", LoadedImage);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }

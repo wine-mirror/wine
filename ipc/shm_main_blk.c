@@ -9,7 +9,6 @@
  */
 #ifdef CONFIG_IPC
 
-#define inline inline
 #include <sys/types.h>
 #include <sys/sem.h>
 #include <time.h>
@@ -17,7 +16,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "shm_fragment.h"
 #include "shm_block.h"
 #include "shm_main_blk.h"
@@ -80,7 +79,7 @@ int proc_exist(pid_t pid)
 /* setup a new main shm block (only construct a shm block object). */
 static void shm_setup_main_block()
 {
-  TRACE(shm,"creating data structure\n");
+  TRACE("creating data structure\n");
   main_block->build_lock=1;
   strcpy(main_block->magic, shm_header);
 
@@ -134,19 +133,19 @@ static int attach_MainBlock(int shm_id)
 
   /* Make sure we don't work on somebody else's block */
   if (shm_info.shm_perm.cuid != getuid()) { /* creator is not me */
-     WARN(shm, "Creator is not me!\n");
+     WARN("Creator is not me!\n");
      return 0;
   }
 
-  TRACE(shm,"shared memory exist, attaching anywhere\n");
+  TRACE("shared memory exist, attaching anywhere\n");
   main_block=(struct shm_main_block *)shmat(shm_id, 0, 0);
   if ( (int)main_block==-1) {
-     WARN(shm, "Attach failed\n");
+     WARN("Attach failed\n");
      return 0;
   }
 
   if (strcmp(main_block->magic, shm_header) != 0) {
-     TRACE(shm,"Detaching, wrong magic\n");
+     TRACE("Detaching, wrong magic\n");
      shmdt((void *)main_block);
      return 0;
   }
@@ -156,7 +155,7 @@ static int attach_MainBlock(int shm_id)
 
   /* Is it an old unused block ? */
   if (shm_info.shm_nattch == 0) {
-     TRACE(shm,"No attaches, deleting old data\n");
+     TRACE("No attaches, deleting old data\n");
      shm_delete_all(shm_id);
      return 0;
   }
@@ -181,10 +180,10 @@ static int shm_locate_MainBlock(key_t shm_key)
     int shm_id;			/* Descriptor to this shared memory */
     int i;
 
-    TRACE(shm,"trying to attach, key=0x%x\n",
+    TRACE("trying to attach, key=0x%x\n",
 		shm_key);
     for (i=0 ; i < SHM_KEY_RANGE ; i++) {
-       TRACE(shm,"iteration=%d\n", i);
+       TRACE("iteration=%d\n", i);
 
        shm_id= shmget ( shm_key+i, SHM_MINBLOCK ,0700);
 
@@ -203,7 +202,7 @@ static int shm_locate_MainBlock(key_t shm_key)
 	    case ENOMEM:	   /* no free memory */
 	    case ENOENT:	   /* this key does not exist */
 	    default :
-	      WARN(shm,"shmget failed, errno=%d, %s\n",
+	      WARN("shmget failed, errno=%d, %s\n",
 		     errno, strerror(errno) );
 	      return 0;		   /* Failed */
 	  }
@@ -223,7 +222,7 @@ static int shm_create_MainBlock(key_t MainShmKey)
   int flags= 0700 | IPC_CREAT | IPC_EXCL;
   int i;
 
-  TRACE(shm,"creating shared memory\n");
+  TRACE("creating shared memory\n");
 
   /* try to allocate shared memory with key="Wine", size=SHM_MINBLOCK, */
   /* complete user permission */
@@ -233,10 +232,10 @@ static int shm_create_MainBlock(key_t MainShmKey)
 	break;
   }
   if (shm_id == -1) {
-     WARN(shm, "failed to create shared memory\n");
+     WARN("failed to create shared memory\n");
      return 0;
   }
-  TRACE(shm,"shared memory created, attaching\n");
+  TRACE("shared memory created, attaching\n");
   main_block=(struct shm_main_block*) shmat(shm_id, 0,0);
   if (TRACE_ON(shm))
      print_shm_info(shm_id);
@@ -253,7 +252,7 @@ int shm_init(void)
 {
   if ( !shm_locate_MainBlock(WineKey)
        && !shm_create_MainBlock(WineKey)) { 
-     ERR(shm, "Failed to init main shm block\n");
+     ERR("Failed to init main shm block\n");
      exit(1);
   }
 

@@ -19,7 +19,7 @@
 
 #include "console.h"
 #include "options.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(console)
 
@@ -139,7 +139,7 @@ static BOOL wine_create_console(FILE **master, FILE **slave, int *pid)
                 execlp(console_xterm_prog, console_xterm_prog, buf, "-fg",
                    "white", "-bg", "black", "-g",
                    xterm_resolution, NULL);
-                ERR(console, "error creating xterm (file not found?)\n");
+                ERR("error creating xterm (file not found?)\n");
                 exit(1);
         }
 
@@ -155,7 +155,7 @@ static BOOL wine_create_console(FILE **master, FILE **slave, int *pid)
                         usleep(100);
                 }
                 if (i > 10000) {
-                        WARN(console, "can't read xterm WID\n");
+                        WARN("can't read xterm WID\n");
                         kill(*pid, SIGKILL);
                         return FALSE;
                 }

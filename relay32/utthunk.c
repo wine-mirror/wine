@@ -10,7 +10,7 @@
 #include "selectors.h"
 #include "callback.h"
 #include "process.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugstr.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk)
@@ -103,7 +103,7 @@ DWORD WINAPI UTGlue32( FARPROC16 target, LPVOID lpBuff, DWORD dwUserDefined,
         segptrList = HeapAlloc( GetProcessHeap(), 0, sizeof(SEGPTR)*nList );
         if ( !segptrList )
         {
-            FIXME( thunk, "Unable to allocate segptrList!" );
+            FIXME("Unable to allocate segptrList!" );
             return 0;
         }
 
@@ -280,7 +280,7 @@ VOID WINAPI UTUnRegister( HMODULE hModule )
  */
 WORD WINAPI UTInit16( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
 {
-    FIXME( thunk, "(%08lx, %08lx, %08lx, %08lx): stub\n", x1, x2, x3, x4 );
+    FIXME("(%08lx, %08lx, %08lx, %08lx): stub\n", x1, x2, x3, x4 );
     return 0;
 }
 

@@ -12,7 +12,7 @@
 #include <win.h>
 #include "dde_atom.h"
 #include "shm_main_blk.h"
-#include <debug.h>
+#include "debugtools.h"
 
 DECLARE_DEBUG_CHANNEL(atom)
 DECLARE_DEBUG_CHANNEL(sem)

@@ -16,7 +16,7 @@
 #include "shm_semaph.h"
 #include <sys/shm.h>
 #define DEBUG_DEFINE_VARIABLES
-#include <debug.h>
+#include "debugtools.h"
 
 static volatile int * volatile data;
 static int isparent=0;

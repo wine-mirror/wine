@@ -10,7 +10,7 @@
 #include "scroll.h"
 #include "heap.h"
 #include "win.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll)
 
@@ -708,7 +708,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           return;  /* Should never happen */
     }
 
-    TRACE(scroll, "Event: hwnd=%04x bar=%d msg=%x pt=%ld,%ld hit=%d\n",
+    TRACE("Event: hwnd=%04x bar=%d msg=%x pt=%ld,%ld hit=%d\n",
 		 hwnd, nBar, msg, pt.x, pt.y, hittest );
 
     switch(SCROLL_trackHitTest)
@@ -865,7 +865,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
 	    CREATESTRUCTA *lpCreat = (CREATESTRUCTA *)lParam;
             if (lpCreat->style & SBS_SIZEBOX)
             {
-                FIXME(scroll, "Unimplemented style SBS_SIZEBOX.\n" );
+                FIXME("Unimplemented style SBS_SIZEBOX.\n" );
                 return 0;
             }
             
@@ -893,7 +893,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
-        TRACE(scroll, "ScrollBar creation, hwnd=%04x\n", hwnd );
+        TRACE("ScrollBar creation, hwnd=%04x\n", hwnd );
         return 0;
 	
     case WM_LBUTTONDOWN:
@@ -944,7 +944,7 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
         return 0;  /* FIXME: return previous position */
 
     case SBM_GETRANGE16:
-        FIXME(scroll, "don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n", wParam, lParam );
+        FIXME("don't know how to handle SBM_GETRANGE16 (wp=%04x,lp=%08lx)\n", wParam, lParam );
         return 0;
 
     case SBM_GETRANGE:
@@ -973,13 +973,13 @@ LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam,
     case 0x00ed:
     case 0x00ee:
     case 0x00ef:
-        ERR(scroll, "unknown Win32 msg %04x wp=%08x lp=%08lx\n",
+        ERR("unknown Win32 msg %04x wp=%08x lp=%08lx\n",
 		    message, wParam, lParam );
         break;
 
     default:
         if (message >= WM_USER)
-            WARN(scroll, "unknown msg %04x wp=%04x lp=%08lx\n",
+            WARN("unknown msg %04x wp=%04x lp=%08lx\n",
 			 message, wParam, lParam );
         return DefWindowProcA( hwnd, message, wParam, lParam );
     }
@@ -1103,7 +1103,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
         }
     }
 
-    TRACE(scroll, "hwnd=%04x bar=%d %s\n", 
+    TRACE("hwnd=%04x bar=%d %s\n", 
 		    hwnd, nBar, dbg_str(scroll));
 
     /* Make sure the page size is valid */
@@ -1119,7 +1119,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     else if (infoPtr->CurVal > infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 ))
         infoPtr->CurVal = infoPtr->MaxVal - MAX( infoPtr->Page-1, 0 );
 
-    TRACE(scroll, "    new values: page=%d pos=%d min=%d max=%d\n",
+    TRACE("    new values: page=%d pos=%d min=%d max=%d\n",
 		 infoPtr->Page, infoPtr->CurVal,
 		 infoPtr->MinVal, infoPtr->MaxVal );
 
@@ -1397,7 +1397,7 @@ BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
     BOOL retvalue = FALSE;
 
     if (!wndPtr) return FALSE;
-    TRACE(scroll, "hwnd=%04x bar=%d horz=%d, vert=%d\n",
+    TRACE("hwnd=%04x bar=%d horz=%d, vert=%d\n",
                     hwnd, nBar, fShowH, fShowV );
 
     switch(nBar)
@@ -1498,7 +1498,7 @@ BOOL WINAPI EnableScrollBar( HWND hwnd, INT nBar, UINT flags )
     BOOL bFineWithMe;
     SCROLLBAR_INFO *infoPtr;
 
-    TRACE(scroll, "%04x %d %d\n", hwnd, nBar, flags );
+    TRACE("%04x %d %d\n", hwnd, nBar, flags );
 
     flags &= ESB_DISABLE_BOTH;
 

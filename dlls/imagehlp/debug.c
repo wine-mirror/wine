@@ -7,7 +7,7 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "windef.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "imagehlp.h"
 
 DEFAULT_DEBUG_CHANNEL(imagehlp)
@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(imagehlp)
 HANDLE WINAPI FindDebugInfoFile(
   LPSTR FileName, LPSTR SymbolPath, LPSTR DebugFilePath)
 {
-  FIXME(imagehlp, "(%s, %s, %s): stub\n",
+  FIXME("(%s, %s, %s): stub\n",
     debugstr_a(FileName), debugstr_a(SymbolPath),
     debugstr_a(DebugFilePath)
   );
@@ -32,7 +32,7 @@ HANDLE WINAPI FindDebugInfoFile(
 HANDLE WINAPI FindExecutableImage(
   LPSTR FileName, LPSTR SymbolPath, LPSTR ImageFilePath)
 {
-  FIXME(imagehlp, "(%s, %s, %s): stub\n",
+  FIXME("(%s, %s, %s): stub\n",
     debugstr_a(FileName), debugstr_a(SymbolPath),
     debugstr_a(ImageFilePath)
   );
@@ -47,7 +47,7 @@ PIMAGE_DEBUG_INFORMATION WINAPI MapDebugInformation(
   HANDLE FileHandle, LPSTR FileName,
   LPSTR SymbolPath, DWORD ImageBase)
 {
-  FIXME(imagehlp, "(0x%08x, %s, %s, 0x%08lx): stub\n",
+  FIXME("(0x%08x, %s, %s, 0x%08lx): stub\n",
     FileHandle, FileName, SymbolPath, ImageBase
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -65,7 +65,7 @@ BOOL WINAPI StackWalk(
   PGET_MODULE_BASE_ROUTINE GetModuleBaseRoutine,
   PTRANSLATE_ADDRESS_ROUTINE TranslateAddress)
 {
-  FIXME(imagehlp,
+  FIXME(
     "(%ld, 0x%08x, 0x%08x, %p, %p, %p, %p, %p, %p): stub\n",
       MachineType, hProcess, hThread, StackFrame, ContextRecord,
       ReadMemoryRoutine, FunctionTableAccessRoutine,
@@ -82,7 +82,7 @@ DWORD WINAPI UnDecorateSymbolName(
   LPCSTR DecoratedName, LPSTR UnDecoratedName,
   DWORD UndecoratedLength, DWORD Flags)
 {
-  FIXME(imagehlp, "(%s, %s, %ld, 0x%08lx): stub\n",
+  FIXME("(%s, %s, %ld, 0x%08lx): stub\n",
     debugstr_a(DecoratedName), debugstr_a(UnDecoratedName),
     UndecoratedLength, Flags
   );
@@ -97,7 +97,7 @@ DWORD WINAPI UnDecorateSymbolName(
 BOOL WINAPI UnmapDebugInformation(
   PIMAGE_DEBUG_INFORMATION DebugInfo)
 {
-  FIXME(imagehlp, "(%p): stub\n", DebugInfo);
+  FIXME("(%p): stub\n", DebugInfo);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }

@@ -17,8 +17,8 @@
 #include "debugtools.h"
 #include "tweak.h"
 
+DEFAULT_DEBUG_CHANNEL(listbox)
 DECLARE_DEBUG_CHANNEL(combo)
-DECLARE_DEBUG_CHANNEL(listbox)
 
 /* Unimplemented yet:
  * - LBS_NOSEL
@@ -106,13 +106,13 @@ void LISTBOX_Dump( WND *wnd )
     LB_ITEMDATA *item;
     LB_DESCR *descr = *(LB_DESCR **)wnd->wExtra;
 
-    TRACE_(listbox)( "Listbox:\n" );
-    TRACE_(listbox)( "hwnd=%04x descr=%08x heap=%08x items=%d top=%d\n",
+    TRACE( "Listbox:\n" );
+    TRACE( "hwnd=%04x descr=%08x heap=%08x items=%d top=%d\n",
                      wnd->hwndSelf, (UINT)descr, descr->heap, descr->nb_items,
                      descr->top_item );
     for (i = 0, item = descr->items; i < descr->nb_items; i++, item++)
     {
-        TRACE_(listbox)( "%4d: %-40s %d %08lx %3d\n",
+        TRACE( "%4d: %-40s %d %08lx %3d\n",
                          i, item->str, item->selected, item->data, item->height );
     }
 }
@@ -324,7 +324,7 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
         if ((descr->height > descr->item_height) &&
             (descr->height % descr->item_height))
         {
-            TRACE_(listbox)("[%04x]: changing height %d -> %d\n",
+            TRACE("[%04x]: changing height %d -> %d\n",
 			 wnd->hwndSelf, descr->height,
 			 descr->height - descr->height%descr->item_height );
             SetWindowPos( wnd->hwndSelf, 0, 0, 0,
@@ -335,7 +335,7 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
             return;
         }
     }
-    TRACE_(listbox)("[%04x]: new size = %d,%d\n",
+    TRACE("[%04x]: new size = %d,%d\n",
 		 wnd->hwndSelf, descr->width, descr->height );
     LISTBOX_UpdatePage( wnd, descr );
     LISTBOX_UpdateScroll( wnd, descr );
@@ -464,7 +464,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
 	    if (action == ODA_FOCUS) 
 		DrawFocusRect( hdc, rect );
 	    else
-	        FIXME_(listbox)("called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
+	        FIXME("called with an out of bounds index %d(%d) in owner draw, Not good.\n",index,descr->nb_items);
 	    return;
 	}
         dis.CtlType      = ODT_LISTBOX;
@@ -481,7 +481,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
         if (wnd->dwStyle & WS_DISABLED) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item ? item->data : 0;
         dis.rcItem       = *rect;
-        TRACE_(listbox)("[%04x]: drawitem %d (%s) action=%02x "
+        TRACE("[%04x]: drawitem %d (%s) action=%02x "
 		     "state=%02x rect=%d,%d-%d,%d\n",
 		     wnd->hwndSelf, index, item ? item->str : "", action,
 		     dis.itemState, rect->left, rect->top,
@@ -503,7 +503,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
             oldText = SetTextColor( hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
         }
 
-        TRACE_(listbox)("[%04x]: painting %d (%s) action=%02x "
+        TRACE("[%04x]: painting %d (%s) action=%02x "
 		     "rect=%d,%d-%d,%d\n",
 		     wnd->hwndSelf, index, item ? item->str : "", action,
 		     rect->left, rect->top, rect->right, rect->bottom );
@@ -635,7 +635,7 @@ static BOOL LISTBOX_SetTabStops( WND *wnd, LB_DESCR *descr, INT count,
 	    if(TRACE_ON(listbox))
               dsprintf(listbox, "%hd ", descr->tabs[i]);
 	}
-        TRACE_(listbox)("[%04x]: settabstops %s\n", 
+        TRACE("[%04x]: settabstops %s\n", 
 		     wnd->hwndSelf, dbg_str(listbox));
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT) );
@@ -1015,7 +1015,7 @@ static LRESULT LISTBOX_SetItemHeight( WND *wnd, LB_DESCR *descr, INT index,
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
-        TRACE_(listbox)("[%04x]: item %d height = %d\n",
+        TRACE("[%04x]: item %d height = %d\n",
 		     wnd->hwndSelf, index, height );
         descr->items[index].height = height;
         LISTBOX_UpdateScroll( wnd, descr );
@@ -1023,7 +1023,7 @@ static LRESULT LISTBOX_SetItemHeight( WND *wnd, LB_DESCR *descr, INT index,
     }
     else if (height != descr->item_height)
     {
-        TRACE_(listbox)("[%04x]: new height = %d\n",
+        TRACE("[%04x]: new height = %d\n",
 		     wnd->hwndSelf, height );
         descr->item_height = height;
         LISTBOX_UpdatePage( wnd, descr );
@@ -1045,7 +1045,7 @@ static void LISTBOX_SetHorizontalPos( WND *wnd, LB_DESCR *descr, INT pos )
         pos = descr->horz_extent - descr->width;
     if (pos < 0) pos = 0;
     if (!(diff = descr->horz_pos - pos)) return;
-    TRACE_(listbox)("[%04x]: new horz pos = %d\n",
+    TRACE("[%04x]: new horz pos = %d\n",
 		 wnd->hwndSelf, pos );
     descr->horz_pos = pos;
     LISTBOX_UpdateScroll( wnd, descr );
@@ -1067,7 +1067,7 @@ static LRESULT LISTBOX_SetHorizontalExtent( WND *wnd, LB_DESCR *descr,
         return LB_OKAY;
     if (extent <= 0) extent = 1;
     if (extent == descr->horz_extent) return LB_OKAY;
-    TRACE_(listbox)("[%04x]: new horz extent = %d\n",
+    TRACE("[%04x]: new horz extent = %d\n",
 		 wnd->hwndSelf, extent );
     descr->horz_extent = extent;
     if (descr->horz_pos > extent - descr->width)
@@ -1085,7 +1085,7 @@ static LRESULT LISTBOX_SetColumnWidth( WND *wnd, LB_DESCR *descr, UINT width)
 {
     width += 2;  /* For left and right margin */
     if (width == descr->column_width) return LB_OKAY;
-    TRACE_(listbox)("[%04x]: new column width = %d\n",
+    TRACE("[%04x]: new column width = %d\n",
 		 wnd->hwndSelf, width );
     descr->column_width = width;
     LISTBOX_UpdatePage( wnd, descr );
@@ -1108,7 +1108,7 @@ static INT LISTBOX_SetFont( WND *wnd, LB_DESCR *descr, HFONT font )
 
     if (!(hdc = GetDCEx( wnd->hwndSelf, 0, DCX_CACHE )))
     {
-        ERR_(listbox)("unable to get DC.\n" );
+        ERR("unable to get DC.\n" );
         return 16;
     }
     if (font) oldFont = SelectObject( hdc, font );
@@ -1340,7 +1340,7 @@ static LRESULT LISTBOX_InsertItem( WND *wnd, LB_DESCR *descr, INT index,
         mis.itemHeight = descr->item_height;
         SendMessageA( descr->owner, WM_MEASUREITEM, id, (LPARAM)&mis );
         item->height = mis.itemHeight ? mis.itemHeight : 1;
-        TRACE_(listbox)("[%04x]: measure item %d (%s) = %d\n",
+        TRACE("[%04x]: measure item %d (%s) = %d\n",
 		     wnd->hwndSelf, index, str ? str : "", item->height );
     }
 
@@ -1392,7 +1392,7 @@ static LRESULT LISTBOX_InsertString( WND *wnd, LB_DESCR *descr, INT index,
         return ret;
     }
 
-    TRACE_(listbox)("[%04x]: added item %d '%s'\n",
+    TRACE("[%04x]: added item %d '%s'\n",
 		 wnd->hwndSelf, index, HAS_STRINGS(descr) ? new_str : "" );
     return index;
 }
@@ -1729,7 +1729,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
                                           WPARAM wParam, INT x, INT y )
 {
     INT index = LISTBOX_GetItemFromPoint( wnd, descr, x, y );
-    TRACE_(listbox)("[%04x]: lbuttondown %d,%d item %d\n",
+    TRACE("[%04x]: lbuttondown %d,%d item %d\n",
 		 wnd->hwndSelf, x, y, index );
     if (!descr->caret_on && (GetFocus() == wnd->hwndSelf)) return 0;
     if (index != -1)
@@ -2146,7 +2146,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         {
             if (!LISTBOX_Create( wnd, NULL ))
                 return -1;
-            TRACE_(listbox)("creating wnd=%04x descr=%p\n",
+            TRACE("creating wnd=%04x descr=%p\n",
 			 hwnd, *(LB_DESCR **)wnd->wExtra );
             return 0;
         }
@@ -2154,7 +2154,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
 
-    TRACE_(listbox)("[%04x]: msg %s wp %08x lp %08lx\n",
+    TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
 		 wnd->hwndSelf, SPY_GetMsgName(msg), wParam, lParam );
     switch(msg)
     {
@@ -2531,7 +2531,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return DefWindowProcA( hwnd, msg, wParam, lParam );
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            WARN_(listbox)("[%04x]: unknown msg %04x wp %08x lp %08lx\n",
+            WARN("[%04x]: unknown msg %04x wp %08x lp %08lx\n",
 			 hwnd, msg, wParam, lParam );
         return DefWindowProcA( hwnd, msg, wParam, lParam );
     }

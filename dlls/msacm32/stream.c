@@ -7,7 +7,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(msacm)
 MMRESULT WINAPI acmStreamClose(
   HACMSTREAM has, DWORD fdwClose)
 {
-  FIXME(msacm, "(0x%08x, %ld): stub\n", has, fdwClose);
+  FIXME("(0x%08x, %ld): stub\n", has, fdwClose);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -31,7 +31,7 @@ MMRESULT WINAPI acmStreamClose(
 MMRESULT WINAPI acmStreamConvert(
   HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwConvert)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", has, pash, fdwConvert);
+  FIXME("(0x%08x, %p, %ld): stub\n", has, pash, fdwConvert);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -42,7 +42,7 @@ MMRESULT WINAPI acmStreamConvert(
 MMRESULT WINAPI acmStreamMessage(
   HACMSTREAM has, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-  FIXME(msacm, "(0x%08x, %u, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %u, %ld, %ld): stub\n",
     has, uMsg, lParam1, lParam2
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -57,7 +57,7 @@ MMRESULT WINAPI acmStreamOpen(
   PWAVEFORMATEX pwfxDst, PWAVEFILTER pwfltr, DWORD dwCallback,
   DWORD dwInstance, DWORD fdwOpen)
 {
-  FIXME(msacm, "(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld): stub\n",
+  FIXME("(%p, 0x%08x, %p, %p, %p, %ld, %ld, %ld): stub\n",
     phas, had, pwfxSrc, pwfxDst, pwfltr,
     dwCallback, dwInstance, fdwOpen
   );
@@ -72,7 +72,7 @@ MMRESULT WINAPI acmStreamOpen(
 MMRESULT WINAPI acmStreamPrepareHeader(
   HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwPrepare)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", has, pash, fdwPrepare);
+  FIXME("(0x%08x, %p, %ld): stub\n", has, pash, fdwPrepare);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -83,7 +83,7 @@ MMRESULT WINAPI acmStreamPrepareHeader(
 MMRESULT WINAPI acmStreamReset(
   HACMSTREAM has, DWORD fdwReset)
 {
-  FIXME(msacm, "(0x%08x, %ld): stub\n", has, fdwReset);
+  FIXME("(0x%08x, %ld): stub\n", has, fdwReset);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -95,7 +95,7 @@ MMRESULT WINAPI acmStreamSize(
   HACMSTREAM has, DWORD cbInput, 
   LPDWORD pdwOutputBytes, DWORD fdwSize)
 {
-  FIXME(msacm, "(0x%08x, %ld, %p, %ld): stub\n",
+  FIXME("(0x%08x, %ld, %p, %ld): stub\n",
     has, cbInput, pdwOutputBytes, fdwSize
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -108,7 +108,7 @@ MMRESULT WINAPI acmStreamSize(
 MMRESULT WINAPI acmStreamUnprepareHeader(
   HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwUnprepare)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n",
+  FIXME("(0x%08x, %p, %ld): stub\n",
     has, pash, fdwUnprepare
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

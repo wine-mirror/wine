@@ -12,7 +12,7 @@
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 /**********************************************************************/
 

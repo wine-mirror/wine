@@ -9,7 +9,7 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 
@@ -26,7 +26,7 @@ EnumServicesStatusA( HANDLE hSCManager, DWORD dwServiceType,
                        DWORD dwServiceState, LPVOID lpServices,
                        DWORD cbBufSize, LPDWORD pcbBytesNeeded,
                        LPDWORD lpServicesReturned, LPDWORD lpResumeHandle )
-{	FIXME (advapi,"%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
+{	FIXME("%x type=%lx state=%lx %p %lx %p %p %p\n", hSCManager, 
 		dwServiceType, dwServiceState, lpServices, cbBufSize,
 		pcbBytesNeeded, lpServicesReturned,  lpResumeHandle);
 	SetLastError (ERROR_ACCESS_DENIED);
@@ -41,7 +41,7 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {	LPSERVICE_TABLE_ENTRYA ptr = servent;
 
 	while (ptr->lpServiceName)
-	{ FIXME(advapi,"%s at %p\n", ptr->lpServiceName, ptr);
+	{ FIXME("%s at %p\n", ptr->lpServiceName, ptr);
 	  ptr++;
 	}
 	return TRUE;
@@ -59,7 +59,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 	LPSERVICE_MAIN_FUNCTIONW fpMain;
 	
 	while (ptr->lpServiceName)
-	{ FIXME(advapi,"%s at %p): STUB.\n", debugstr_w(ptr->lpServiceName),ptr);
+	{ FIXME("%s at %p): STUB.\n", debugstr_w(ptr->lpServiceName),ptr);
 	  fpMain = ptr->lpServiceProc;
 	  fpMain(0,NULL);	/* try to start the service */
 	  ptr++;
@@ -73,7 +73,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerA( LPSTR lpServiceName,
                              LPHANDLER_FUNCTION lpfHandler )
-{	FIXME(advapi,"%s %p\n", lpServiceName, lpfHandler);
+{	FIXME("%s %p\n", lpServiceName, lpfHandler);
 	return 0xcacacafe;	
 }
 
@@ -87,7 +87,7 @@ RegisterServiceCtrlHandlerA( LPSTR lpServiceName,
 SERVICE_STATUS_HANDLE WINAPI
 RegisterServiceCtrlHandlerW( LPWSTR lpServiceName, 
                              LPHANDLER_FUNCTION lpfHandler )
-{	FIXME(advapi,"%s %p\n", debugstr_w(lpServiceName), lpfHandler);
+{	FIXME("%s %p\n", debugstr_w(lpServiceName), lpfHandler);
 	return 0xcacacafe;	
 }
 
@@ -100,14 +100,14 @@ RegisterServiceCtrlHandlerW( LPWSTR lpServiceName,
  */
 BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
-{	FIXME(advapi,"%lx %p\n",hService, lpStatus);
-	TRACE(advapi,"\tType:%lx\n",lpStatus->dwServiceType);
-	TRACE(advapi,"\tState:%lx\n",lpStatus->dwCurrentState);
-	TRACE(advapi,"\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
-	TRACE(advapi,"\tExitCode:%lx\n",lpStatus->dwWin32ExitCode);
-	TRACE(advapi,"\tServiceExitCode:%lx\n",lpStatus->dwServiceSpecificExitCode);
-	TRACE(advapi,"\tCheckPoint:%lx\n",lpStatus->dwCheckPoint);
-	TRACE(advapi,"\tWaitHint:%lx\n",lpStatus->dwWaitHint);
+{	FIXME("%lx %p\n",hService, lpStatus);
+	TRACE("\tType:%lx\n",lpStatus->dwServiceType);
+	TRACE("\tState:%lx\n",lpStatus->dwCurrentState);
+	TRACE("\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
+	TRACE("\tExitCode:%lx\n",lpStatus->dwWin32ExitCode);
+	TRACE("\tServiceExitCode:%lx\n",lpStatus->dwServiceSpecificExitCode);
+	TRACE("\tCheckPoint:%lx\n",lpStatus->dwCheckPoint);
+	TRACE("\tWaitHint:%lx\n",lpStatus->dwWaitHint);
 	return TRUE;
 }
 
@@ -147,7 +147,7 @@ HANDLE WINAPI
 OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                   DWORD dwDesiredAccess )
 {
-    FIXME(advapi,"(%s,%s,0x%08lx): stub\n", debugstr_w(lpMachineName), 
+    FIXME("(%s,%s,0x%08lx): stub\n", debugstr_w(lpMachineName), 
           debugstr_w(lpDatabaseName), dwDesiredAccess);
     return 1;
 }
@@ -186,7 +186,7 @@ BOOL WINAPI
 ControlService( HANDLE hService, DWORD dwControl, 
                 LPSERVICE_STATUS lpServiceStatus )
 {
-    FIXME(advapi, "(%d,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
+    FIXME("(%d,%ld,%p): stub\n",hService,dwControl,lpServiceStatus);
     return TRUE;
 }
 
@@ -206,7 +206,7 @@ ControlService( HANDLE hService, DWORD dwControl,
 BOOL WINAPI
 CloseServiceHandle( HANDLE hSCObject )
 {
-    FIXME(advapi, "(%d): stub\n", hSCObject);
+    FIXME("(%d): stub\n", hSCObject);
     return TRUE;
 }
 
@@ -246,7 +246,7 @@ HANDLE WINAPI
 OpenServiceW(HANDLE hSCManager, LPCWSTR lpServiceName,
                DWORD dwDesiredAccess)
 {
-    FIXME(advapi, "(%d,%p,%ld): stub\n",hSCManager, lpServiceName,
+    FIXME("(%d,%p,%ld): stub\n",hSCManager, lpServiceName,
           dwDesiredAccess);
     return 1;
 }
@@ -264,7 +264,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
                   LPCSTR lpDependencies, LPCSTR lpServiceStartName, 
                   LPCSTR lpPassword )
 {
-    FIXME(advapi, "(%ld,%s,%s,...): stub\n", 
+    FIXME("(%ld,%s,%s,...): stub\n", 
           hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
     return 1;
 }
@@ -284,7 +284,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
 BOOL WINAPI
 DeleteService( HANDLE hService )
 {
-    FIXME(advapi, "(%d): stub\n",hService);
+    FIXME("(%d): stub\n",hService);
     return TRUE;
 }
 
@@ -299,7 +299,7 @@ BOOL WINAPI
 StartServiceA( HANDLE hService, DWORD dwNumServiceArgs,
                  LPCSTR *lpServiceArgVectors )
 {
-    FIXME(advapi, "(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,lpServiceArgVectors);
+    FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,lpServiceArgVectors);
     return TRUE;
 }
 
@@ -322,7 +322,7 @@ BOOL WINAPI
 StartServiceW( HANDLE hService, DWORD dwNumServiceArgs,
                  LPCWSTR *lpServiceArgVectors )
 {
-    FIXME(advapi, "(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,
+    FIXME("(%d,%ld,%p): stub\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
     return TRUE;
 }
@@ -341,7 +341,7 @@ StartServiceW( HANDLE hService, DWORD dwNumServiceArgs,
 BOOL WINAPI
 QueryServiceStatus( HANDLE hService, LPVOID lpservicestatus )
 {
-	FIXME(advapi,"(%d,%p),stub!\n",hService,lpservicestatus);
+	FIXME("(%d,%p),stub!\n",hService,lpservicestatus);
 	return TRUE;
 }
 

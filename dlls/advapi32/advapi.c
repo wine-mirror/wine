@@ -12,7 +12,7 @@
 #include "wine/winestring.h"
 #include "heap.h"
 
-#include "debug.h"
+#include "debugtools.h"
 
 
 /******************************************************************************

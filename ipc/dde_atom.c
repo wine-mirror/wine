@@ -15,7 +15,7 @@
 #include "shm_main_blk.h"
 #include "shm_fragment.h"
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(atom)
 
@@ -130,7 +130,7 @@ ATOM DDE_GlobalAddAtom( SEGPTR name )
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }
 
-  TRACE(atom,"(\"%s\")\n",str);
+  TRACE("(\"%s\")\n",str);
 
   DDE_IPC_init();		/* will initialize only if needed */
   
@@ -175,7 +175,7 @@ ATOM DDE_GlobalDeleteAtom( ATOM atom )
   AtomData_ptr atom_ptr;
   ATOM retval=(ATOM) 0;
   
-  TRACE(atom,"(\"%d\")\n",(int)atom);
+  TRACE("(\"%d\")\n",(int)atom);
   atom_idx=(int)atom - MIN_STR_ATOM;
   
   if (atom_idx < 0 )
@@ -188,7 +188,7 @@ ATOM DDE_GlobalDeleteAtom( ATOM atom )
   switch (atom_ofs=ATOM_OFS(atom_idx)) {
     case DELETED:
     case EMPTY:
-      WARN(atom, "Trying to free unallocated atom %d\n", atom);
+      WARN("Trying to free unallocated atom %d\n", atom);
       retval=atom;
       break;
     default :
@@ -212,7 +212,7 @@ ATOM DDE_GlobalFindAtom( SEGPTR name )
   int atom_ofs;
   char *str;
 
-  TRACE(atom,"(%08lx)\n", name );
+  TRACE("(%08lx)\n", name );
 
   /* First check for integer atom */
 
@@ -224,7 +224,7 @@ ATOM DDE_GlobalFindAtom( SEGPTR name )
      ATOM atom= (ATOM) atoi(&str[1]);
      return (atom<MIN_STR_ATOM) ? atom : 0;
   }
-  TRACE(atom,"(\"%s\")\n",str);
+  TRACE("(\"%s\")\n",str);
 
   DDE_IPC_init();		/* will initialize only if needed */
 
@@ -274,7 +274,7 @@ WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
   shm_read_wait(main_block->sem);
   atom_ofs=ATOM_OFS(atom_idx);
   if (atom_ofs==EMPTY || atom_ofs==DELETED) {
-     WARN(atom,"Illegal atom=%d\n",(int)atom);
+     WARN("Illegal atom=%d\n",(int)atom);
      size=0;
   } else {			   /* non empty entry */
      /* string length will be at most count-1, find actual size */

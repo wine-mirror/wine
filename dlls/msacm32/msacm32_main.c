@@ -7,7 +7,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "winversion.h"
@@ -67,7 +67,7 @@ DWORD WINAPI acmGetVersion()
   switch(VERSION_GetVersion()) 
     {
     default: 
-      FIXME(msacm, "%s not supported\n", VERSION_GetVersionName());
+      FIXME("%s not supported\n", VERSION_GetVersionName());
     case WIN95:
       return 0x04000000; /* 4.0.0 */
     case NT40:
@@ -90,7 +90,7 @@ MMRESULT WINAPI acmMetrics(
   PWINE_ACMOBJ pao = MSACM_GetObj(hao);
   BOOL bLocal = TRUE;
 
-  FIXME(msacm, "(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
+  FIXME("(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
 
   switch(uMetric)
     {

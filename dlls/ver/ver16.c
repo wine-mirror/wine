@@ -8,7 +8,7 @@
 #include "winver.h"
 #include "ldt.h"
 #include "ver.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
 
@@ -51,7 +51,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName,
  */
 DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 {
-    TRACE( ver, "(%s, %p)\n", debugstr_a(lpszFileName), lpdwHandle );
+    TRACE("(%s, %p)\n", debugstr_a(lpszFileName), lpdwHandle );
     return GetFileVersionInfoSizeA( lpszFileName, lpdwHandle );
 }
 
@@ -61,7 +61,7 @@ DWORD WINAPI GetFileVersionInfoSize16( LPCSTR lpszFileName, LPDWORD lpdwHandle )
 DWORD WINAPI GetFileVersionInfo16( LPCSTR lpszFileName, DWORD handle,
                                    DWORD cbBuf, LPVOID lpvData )
 {
-    TRACE( ver, "(%s, %08lx, %ld, %p)\n", 
+    TRACE("(%s, %08lx, %ld, %p)\n", 
                 debugstr_a(lpszFileName), handle, cbBuf, lpvData );
 
     return GetFileVersionInfoA( lpszFileName, handle, cbBuf, lpvData );
@@ -120,7 +120,7 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
     UINT buflen;
     DWORD retv;
 
-    TRACE( ver, "(%p, %s, %p, %p)\n", 
+    TRACE("(%p, %s, %p, %p)\n", 
                 lpvBlock, debugstr_a(lpszSubBlock), lpspBuffer, lpcb );
 
     retv = VerQueryValueA( lpvBlock, lpszSubBlock, &buffer, &buflen );
@@ -128,7 +128,7 @@ DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock,
 
     if ( OFFSETOF( spvBlock ) + ((char *) buffer - (char *) lpvBlock) >= 0x10000 )
     {
-        FIXME( ver, "offset %08X too large relative to %04X:%04X\n",
+        FIXME("offset %08X too large relative to %04X:%04X\n",
                (char *) buffer - (char *) lpvBlock, SELECTOROF( spvBlock ), OFFSETOF( spvBlock ) );
         return FALSE;
     }

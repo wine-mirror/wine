@@ -4,7 +4,7 @@
 #include "windef.h"
 #include "winerror.h"
 #include "wincrypt.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 
@@ -26,7 +26,7 @@ BOOL WINAPI
 CryptAcquireContextA( HCRYPTPROV *phProv, LPCSTR pszContainer,
 		      LPCSTR pszProvider, DWORD dwProvType, DWORD dwFlags)
 {
-    FIXME(advapi,"(%p, %s, %s, %ld, %08lx): stub!\n", phProv, pszContainer,
+    FIXME_(advapi)("(%p, %s, %s, %ld, %08lx): stub!\n", phProv, pszContainer,
 	  pszProvider, dwProvType, dwFlags);
     return FALSE;
 }

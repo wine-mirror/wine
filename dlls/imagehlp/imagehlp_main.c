@@ -8,7 +8,7 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "windef.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(imagehlp)
 
@@ -72,7 +72,7 @@ PAPI_VERSION WINAPI ImagehlpApiVersionEx(PAPI_VERSION AppVersion)
  */
 BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 {
-  FIXME(imagehlp, "(%s): stub\n", debugstr_a(DirPath));
+  FIXME("(%s): stub\n", debugstr_a(DirPath));
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -89,7 +89,7 @@ BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
 BOOL WINAPI SearchTreeForFile(
   LPSTR RootPath, LPSTR InputPathName, LPSTR OutputPathBuffer)
 {
-  FIXME(imagehlp, "(%s, %s, %s): stub\n",
+  FIXME("(%s, %s, %s): stub\n",
     debugstr_a(RootPath), debugstr_a(InputPathName), 
     debugstr_a(OutputPathBuffer)
   );
@@ -103,7 +103,7 @@ BOOL WINAPI SearchTreeForFile(
 BOOL WINAPI TouchFileTimes(
   HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)
 {
-  FIXME(imagehlp, "(0x%08x, %p): stub\n",
+  FIXME("(0x%08x, %p): stub\n",
     FileHandle, lpSystemTime
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

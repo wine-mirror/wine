@@ -17,7 +17,7 @@
 #include "heap.h"
 #include "lzexpand.h"
 #include "peexe.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
 
@@ -48,7 +48,7 @@ static int read_xx_header( HFILE lzfd )
         return IMAGE_NT_SIGNATURE;
 
     magic[2] = '\0';
-    WARN( ver, "Can't handle %s files.\n", magic );
+    WARN("Can't handle %s files.\n", magic );
     return 0;
 }
 
@@ -72,7 +72,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resTabSize = nehd.rname_tab_offset - nehd.resource_tab_offset; 
     if ( !resTabSize )
     {
-        TRACE( ver, "No resources in NE dll\n" );
+        TRACE("No resources in NE dll\n" );
         return FALSE;
     }
 
@@ -92,14 +92,14 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     typeInfo = NE_FindTypeSection( resTab, typeInfo, typeid );
     if ( !typeInfo )
     {
-        TRACE( ver, "No typeid entry found for %p\n", typeid );
+        TRACE("No typeid entry found for %p\n", typeid );
         HeapFree( GetProcessHeap(), 0, resTab );
         return FALSE;
     }
     nameInfo = NE_FindResourceFromType( resTab, typeInfo, resid );
     if ( !nameInfo )
     {
-        TRACE( ver, "No resid entry found for %p\n", typeid );
+        TRACE("No resid entry found for %p\n", typeid );
         HeapFree( GetProcessHeap(), 0, resTab );
         return FALSE;
     }
@@ -137,7 +137,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resDataDir = pehd.OptionalHeader.DataDirectory+IMAGE_FILE_RESOURCE_DIRECTORY;
     if ( !resDataDir->Size )
     {
-        TRACE( ver, "No resources in PE dll\n" );
+        TRACE("No resources in PE dll\n" );
         return FALSE;
     }
 
@@ -169,7 +169,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     if ( i == nSections )
     {
         HeapFree( GetProcessHeap(), 0, sections );
-        TRACE( ver, "Couldn't find resource section\n" );
+        TRACE("Couldn't find resource section\n" );
         return FALSE;
     }
 
@@ -198,7 +198,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resPtr = GetResDirEntryA( resPtr, typeid, resDir, FALSE );
     if ( !resPtr )
     {
-        TRACE( ver, "No typeid entry found for %p\n", typeid );
+        TRACE("No typeid entry found for %p\n", typeid );
         HeapFree( GetProcessHeap(), 0, resSection );
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -206,7 +206,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resPtr = GetResDirEntryA( resPtr, resid, resDir, FALSE );
     if ( !resPtr )
     {
-        TRACE( ver, "No resid entry found for %p\n", resid );
+        TRACE("No resid entry found for %p\n", resid );
         HeapFree( GetProcessHeap(), 0, resSection );
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -214,7 +214,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resPtr = GetResDirEntryA( resPtr, 0, resDir, TRUE );
     if ( !resPtr )
     {
-        TRACE( ver, "No default language entry found for %p\n", resid );
+        TRACE("No default language entry found for %p\n", resid );
         HeapFree( GetProcessHeap(), 0, resSection );
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -230,7 +230,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
     if ( i == nSections )
     {
-        TRACE( ver, "Couldn't find resource data section\n" );
+        TRACE("Couldn't find resource data section\n" );
         HeapFree( GetProcessHeap(), 0, resSection );
         HeapFree( GetProcessHeap(), 0, sections );
         return FALSE;
@@ -258,7 +258,7 @@ DWORD WINAPI GetFileResourceSize( LPCSTR lpszFileName,
     OFSTRUCT ofs;
     DWORD reslen;
 
-    TRACE( ver, "(%s,type=0x%lx,id=0x%lx,off=%p)\n",
+    TRACE("(%s,type=0x%lx,id=0x%lx,off=%p)\n",
                 debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
                 lpszResId );
 
@@ -295,7 +295,7 @@ DWORD WINAPI GetFileResource( LPCSTR lpszFileName,
     OFSTRUCT ofs;
     DWORD reslen = dwResLen;
 
-    TRACE( ver, "(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,data=%p)\n",
+    TRACE("(%s,type=0x%lx,id=0x%lx,off=%ld,len=%ld,data=%p)\n",
 		debugstr_a(lpszFileName), (LONG)lpszResType, (LONG)lpszResId, 
                 dwFileOffset, dwResLen, lpvData );
 

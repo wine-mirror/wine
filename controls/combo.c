@@ -17,7 +17,7 @@
 #include "heap.h"
 #include "combo.h"
 #include "drive.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(combo)
@@ -74,7 +74,7 @@ static BOOL COMBO_Init()
       CBitHeight = bm.bmHeight;
       CBitWidth  = bm.bmWidth;
 
-      TRACE(combo, "combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
+      TRACE("combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
 
       hPrevB = SelectObject16( hDC, hComboBmp);
       SetRect( &r, 0, 0, CBitWidth, CBitHeight );
@@ -119,7 +119,7 @@ static LRESULT COMBO_NCCreate(WND* wnd, LPARAM lParam)
 	if( !(wnd->dwExStyle & WS_EX_NOPARENTNOTIFY) )
 	      lphc->wState |= CBF_NOTIFY;
 
-	TRACE(combo, "[0x%08x], style = %08x\n", 
+	TRACE("[0x%08x], style = %08x\n", 
 		     (UINT)lphc, lphc->dwStyle );
 
 	return (LRESULT)(UINT)wnd->hwndSelf; 
@@ -137,7 +137,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
    {
        WND*		wnd = lphc->self;
 
-       TRACE(combo,"[%04x]: freeing storage\n", CB_HWND(lphc));
+       TRACE("[%04x]: freeing storage\n", CB_HWND(lphc));
 
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox ) 
    	   DestroyWindow( lphc->hWndLBox );
@@ -388,13 +388,13 @@ static void CBCalcPlacement(
        lprLB->right = lprLB->left + lphc->droppedWidth;
   }
 
-  TRACE(combo,"\ttext\t= (%i,%i-%i,%i)\n",
+  TRACE("\ttext\t= (%i,%i-%i,%i)\n",
 	lprEdit->left, lprEdit->top, lprEdit->right, lprEdit->bottom);
   
-  TRACE(combo,"\tbutton\t= (%i,%i-%i,%i)\n",
+  TRACE("\tbutton\t= (%i,%i-%i,%i)\n",
 	lprButton->left, lprButton->top, lprButton->right, lprButton->bottom);
   
-  TRACE(combo,"\tlbox\t= (%i,%i-%i,%i)\n", 
+  TRACE("\tlbox\t= (%i,%i-%i,%i)\n", 
 	lprLB->left, lprLB->top, lprLB->right, lprLB->bottom );
 }
 
@@ -597,12 +597,12 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
 	      CBForceDummyResize(lphc);
 	    }
 	    
-	    TRACE(combo,"init done\n");
+	    TRACE("init done\n");
 	    return wnd->hwndSelf;
 	  }
-	  ERR(combo, "edit control failure.\n");
-      } else ERR(combo, "listbox failure.\n");
-  } else ERR(combo, "no owner for visible combo.\n");
+	  ERR("edit control failure.\n");
+      } else ERR("listbox failure.\n");
+  } else ERR("no owner for visible combo.\n");
 
   /* CreateWindow() will send WM_NCDESTROY to cleanup */
 
@@ -970,7 +970,7 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc )
    if( length > 0 ) 
        pText = (LPSTR) HeapAlloc( GetProcessHeap(), 0, length + 1);
 
-   TRACE(combo,"\t edit text length %i\n", length );
+   TRACE("\t edit text length %i\n", length );
 
    if( pText )
    {
@@ -1006,7 +1006,7 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
    INT	length;
    LPSTR	pText = NULL;
 
-   TRACE(combo,"\t %i\n", index );
+   TRACE("\t %i\n", index );
 
    if( index == -1 )
    {
@@ -1050,7 +1050,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
    INT	index;
    RECT	rect;
 
-   TRACE(combo,"[%04x]: drop down\n", CB_HWND(lphc));
+   TRACE("[%04x]: drop down\n", CB_HWND(lphc));
 
    CB_NOTIFY( lphc, CBN_DROPDOWN );
 
@@ -1106,7 +1106,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
    if( IsWindow( hWnd ) && CB_GETTYPE(lphc) != CBS_SIMPLE )
    {
 
-       TRACE(combo,"[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
+       TRACE("[%04x]: roll up [%i]\n", CB_HWND(lphc), (INT)ok );
 
        /* always send WM_LBUTTONUP? */
        SendMessageA( lphc->hWndLBox, WM_LBUTTONUP, 0, (LPARAM)(-1) );
@@ -1252,7 +1252,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
        {   
 	   case (EN_SETFOCUS >> 8):
 
-		TRACE(combo,"[%04x]: edit [%04x] got focus\n", 
+		TRACE("[%04x]: edit [%04x] got focus\n", 
 			     CB_HWND(lphc), lphc->hWndEdit );
 
 		if( !(lphc->wState & CBF_FOCUSED) ) COMBO_SetFocus( lphc );
@@ -1260,7 +1260,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 
 	   case (EN_KILLFOCUS >> 8):
 
-		TRACE(combo,"[%04x]: edit [%04x] lost focus\n",
+		TRACE("[%04x]: edit [%04x] lost focus\n",
 			     CB_HWND(lphc), lphc->hWndEdit );
 
 		/* NOTE: it seems that Windows' edit control sends an
@@ -1301,7 +1301,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 	   case LBN_SELCHANGE:
 	   case LBN_SELCANCEL:
 
-		TRACE(combo,"[%04x]: lbox selection change [%04x]\n", 
+		TRACE("[%04x]: lbox selection change [%04x]\n", 
 			     CB_HWND(lphc), lphc->wState );
 
 		/* do not roll up if selection is being tracked 
@@ -1335,7 +1335,7 @@ static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg,
 {
    HWND	hWnd = lphc->self->hwndSelf;
 
-   TRACE(combo,"[%04x]: ownerdraw op %04x\n", CB_HWND(lphc), msg );
+   TRACE("[%04x]: ownerdraw op %04x\n", CB_HWND(lphc), msg );
 
 #define lpIS    ((LPDELETEITEMSTRUCT)lParam)
 
@@ -1690,7 +1690,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
       LPHEADCOMBO	lphc = CB_GETPTR(pWnd);
       HWND		hwnd = pWnd->hwndSelf;
 
-      TRACE(combo, "[%04x]: msg %s wp %08x lp %08lx\n",
+      TRACE("[%04x]: msg %s wp %08x lp %08lx\n",
 		   pWnd->hwndSelf, SPY_GetMsgName(message), wParam, lParam );
 
       if( lphc || message == WM_NCCREATE )
@@ -1964,7 +1964,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case CB_GETEXTENDEDUI:
 		return  (lphc->wState & CBF_EUI) ? TRUE : FALSE;
 	case (WM_USER + 0x1B):
-	        WARN(combo, "[%04x]: undocumented msg!\n", hwnd );
+	        WARN("[%04x]: undocumented msg!\n", hwnd );
     }
     return DefWindowProcA(hwnd, message, wParam, lParam);
   }

@@ -9,12 +9,11 @@
  */
 #ifdef CONFIG_IPC
 
-#define inline inline
 #include <assert.h>
 #include <unistd.h>
 #include <sys/sem.h>
 #include <errno.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "shm_semaph.h"
 
 DEFAULT_DEBUG_CHANNEL(sem)
@@ -29,7 +28,7 @@ void shm_read_wait(shm_sem semid)
   struct sembuf sop[2];
   int ret;
   
-  TRACE(sem,"(%d)\n",semid);
+  TRACE("(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=1;		   /* add this read instance */
   sop[0].sem_flg=SEM_UNDO;	   /* undo in case process dies */
@@ -43,7 +42,7 @@ void shm_read_wait(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
   
   if (ret<0) 
-     WARN(sem,"(semid=%d,errno=%d): Failed semaphore lock for read\n",
+     WARN("(semid=%d,errno=%d): Failed semaphore lock for read\n",
          semid, errno);
 }
 void shm_write_wait(shm_sem semid)
@@ -51,7 +50,7 @@ void shm_write_wait(shm_sem semid)
   struct sembuf sop[3];
   int ret;
   
-  TRACE(sem,"(%d)\n",semid);
+  TRACE("(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=0;		   /* wait until no reading instance exist */
   sop[0].sem_flg=SEM_UNDO;		   
@@ -69,7 +68,7 @@ void shm_write_wait(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     WARN(sem,"(semid=%d,errno=%d): Failed semaphore lock for write\n",
+     WARN("(semid=%d,errno=%d): Failed semaphore lock for write\n",
 	     semid, errno);
 }
 void shm_write_signal(shm_sem semid)
@@ -77,7 +76,7 @@ void shm_write_signal(shm_sem semid)
   struct sembuf sop[2];
   int ret;
 
-  TRACE(sem,"(%d)\n",semid);
+  TRACE("(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=-1;	
   sop[0].sem_flg=IPC_NOWAIT | SEM_UNDO;	/* no reason to wait */
@@ -91,7 +90,7 @@ void shm_write_signal(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     WARN(sem,"(semid=%d,errno=%d): Failed semaphore unlock for write\n",
+     WARN("(semid=%d,errno=%d): Failed semaphore unlock for write\n",
 	     semid, errno);
 }
 
@@ -100,7 +99,7 @@ void shm_read_signal(shm_sem semid)
   struct sembuf sop[2];
   int ret;
 
-  TRACE(sem,"(%d)\n",semid);
+  TRACE("(%d)\n",semid);
   sop[0].sem_num=SEM_READ;
   sop[0].sem_op=-1;	
   sop[0].sem_flg=IPC_NOWAIT | SEM_UNDO;	/* no reason to wait */
@@ -110,7 +109,7 @@ void shm_read_signal(shm_sem semid)
   } while (ret<0 && errno==EINTR);  /* interrupted system call? */
 
   if (ret<0) 			   /* test for the error */
-     WARN(sem,"(semid=%d,errno=%d): Failed semaphore unlock for read\n",
+     WARN("(semid=%d,errno=%d): Failed semaphore unlock for read\n",
 	     semid, errno);
 }
 

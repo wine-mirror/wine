@@ -21,7 +21,7 @@
    driver, it should make sure to perserve the old values. 
 */
 
-#include "debug.h"
+#include "debugtools.h"
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(console)
@@ -107,7 +107,7 @@ void NCURSES_Write(char output, int fg, int bg, int attribute)
    if (waddch(stdscr, output | COLOR_PAIR(pair)) == ERR)
    {
       NCURSES_GetCursorPosition(&row, &col);
-      FIXME(console, "NCURSES: waddch() failed at %d, %d.\n", row, col);
+      FIXME("NCURSES: waddch() failed at %d, %d.\n", row, col);
    }
 }
 
@@ -148,7 +148,7 @@ int NCURSES_CheckForKeystroke(char *scan, char *ascii)
 void NCURSES_MoveCursor(char row, char col)
 {
    if (wmove(stdscr, row, col) == ERR)
-      FIXME(console, "NCURSES: wmove() failed to %d, %d.\n", row, col);
+      FIXME("NCURSES: wmove() failed to %d, %d.\n", row, col);
 }
 
 void NCURSES_GetCursorPosition(char *row, char *col)
@@ -201,7 +201,7 @@ int NCURSES_AllocColor(int color)
       case WINE_CYAN:		return COLOR_CYAN;
    }
 
-   FIXME(console, "Unable to allocate color %d (%s)\n", color,
+   FIXME("Unable to allocate color %d (%s)\n", color,
       color_names[color]);
 
    /* Don't allocate a color... yet */
@@ -242,7 +242,7 @@ void NCURSES_NotifyResizeScreen(int x, int y)
       calls ResizeScreen(). It is meant to resize the ncurses internal
       data structures to know about the new window dimensions. */
  
-   TRACE(console, "Terminal resized to y: %d, x: %d\n", y, x);
+   TRACE("Terminal resized to y: %d, x: %d\n", y, x);
 
    resizeterm(y, x);
 }
@@ -267,7 +267,7 @@ static int get_color_pair(int fg_color, int bg_color)
    {
       if ((fg_color == fg[x]) && (bg_color == bg[x]))
       {
-         TRACE(console, "Color pair: already allocated\n");
+         TRACE("Color pair: already allocated\n");
          return x;  
       }    
    }
@@ -276,7 +276,7 @@ static int get_color_pair(int fg_color, int bg_color)
    current++;
    fg[current] = fg_color;
    bg[current] = bg_color;
-   TRACE(console, "Color pair: allocated.\n");
+   TRACE("Color pair: allocated.\n");
    return init_pair(current, fg_color, bg_color);
 }
 

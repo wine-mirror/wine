@@ -16,7 +16,7 @@
 #include "ver.h"
 #include "lzexpand.h"
 #include "xmalloc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
 
@@ -50,7 +50,7 @@ static void  ver_dstring(
     char const * teststring,
     char const * epilogue )
 {
-    TRACE(ver, "%s %p (\"%s\") %s\n", prologue,
+    TRACE("%s %p (\"%s\") %s\n", prologue,
                 (void const *) teststring,
                 teststring ? teststring : "(null)",
                 epilogue);
@@ -189,27 +189,27 @@ DWORD WINAPI VerFindFileA(
     retval = 0;
 
     /* Print out debugging information */
-    TRACE(ver, "called with parameters:\n"
+    TRACE("called with parameters:\n"
 		 "\tflags = %x", flags);
     if(flags & VFFF_ISSHAREDFILE)
-	TRACE(ver, " (VFFF_ISSHAREDFILE)\n");
+	TRACE(" (VFFF_ISSHAREDFILE)\n");
     else
-	TRACE(ver, "\n");
+	TRACE("\n");
 
     ver_dstring("\tlpszFilename = ", lpszFilename, "");
     ver_dstring("\tlpszWinDir = ", lpszWinDir, "");
     ver_dstring("\tlpszAppDir = ", lpszAppDir, "");
 
-    TRACE(ver, "\tlpszCurDir = %p\n", lpszCurDir);
+    TRACE("\tlpszCurDir = %p\n", lpszCurDir);
     if(lpuCurDirLen)
-	TRACE(ver, "\tlpuCurDirLen = %p (%u)\n",
+	TRACE("\tlpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
-	TRACE(ver, "\tlpuCurDirLen = (null)\n");
+	TRACE("\tlpuCurDirLen = (null)\n");
 
-    TRACE(ver, "\tlpszDestDir = %p\n", lpszDestDir);
+    TRACE("\tlpszDestDir = %p\n", lpszDestDir);
     if(lpuDestDirLen)
-	TRACE(ver, "\tlpuDestDirLen = %p (%u)\n",
+	TRACE("\tlpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);
 
     /* Figure out where the file should go; shared files default to the
@@ -301,21 +301,21 @@ DWORD WINAPI VerFindFileA(
 	*lpuCurDirLen = curDirSizeReq;
     }
 
-    TRACE(ver, "ret = %lu (%s%s%s)\n", retval,
+    TRACE("ret = %lu (%s%s%s)\n", retval,
 		 (retval & VFF_CURNEDEST) ? "VFF_CURNEDEST " : "",
 		 (retval & VFF_FILEINUSE) ? "VFF_FILEINUSE " : "",
 		 (retval & VFF_BUFFTOOSMALL) ? "VFF_BUFFTOOSMALL " : "");
 
     ver_dstring("\t(Exit) lpszCurDir = ", lpszCurDir, "");
     if(lpuCurDirLen)
-	TRACE(ver, "\t(Exit) lpuCurDirLen = %p (%u)\n",
+	TRACE("\t(Exit) lpuCurDirLen = %p (%u)\n",
 		    lpuCurDirLen, *lpuCurDirLen);
     else
-	TRACE(ver, "\t(Exit) lpuCurDirLen = (null)\n");
+	TRACE("\t(Exit) lpuCurDirLen = (null)\n");
 
     ver_dstring("\t(Exit) lpszDestDir = ", lpszDestDir, "");
     if(lpuDestDirLen)
-	TRACE(ver, "\t(Exit) lpuDestDirLen = %p (%u)\n",
+	TRACE("\t(Exit) lpuDestDirLen = %p (%u)\n",
 		    lpuDestDirLen, *lpuDestDirLen);
 
     return retval;
@@ -371,7 +371,7 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
 	    	*vffi = (VS_FIXEDFILEINFO*)(buf+0x28);
 	    if ((*vffi)->dwSignature != VS_FFI_SIGNATURE)
-	    	WARN(ver,"Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
+	    	WARN("Bad VS_FIXEDFILEINFO signature 0x%08lx\n",(*vffi)->dwSignature);
 	    return buf;
 	}
     }
@@ -404,7 +404,7 @@ DWORD WINAPI VerInstallFileA(
     LPBYTE	buf1,buf2;
     OFSTRUCT	ofs;
 
-    TRACE(ver,"(%x,%s,%s,%s,%s,%s,%p,%d)\n",
+    TRACE("(%x,%s,%s,%s,%s,%s,%p,%d)\n",
 	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
     );
     xret = 0;

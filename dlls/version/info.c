@@ -15,7 +15,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "ver.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver)
 
@@ -32,7 +32,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 {
         dbg_decl_str(ver, 1024);
 
-	TRACE(ver," structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
+	TRACE(" structversion=%u.%u, fileversion=%u.%u.%u.%u, productversion=%u.%u.%u.%u, flagmask=0x%lx, flags=%s%s%s%s%s%s\n",
 		    HIWORD(vffi->dwStrucVersion),LOWORD(vffi->dwStrucVersion),
 		    HIWORD(vffi->dwFileVersionMS),LOWORD(vffi->dwFileVersionMS),
 		    HIWORD(vffi->dwFileVersionLS),LOWORD(vffi->dwFileVersionLS),
@@ -68,7 +68,7 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 	case VOS__PM32:dsprintf(ver,"PM32");break;
 	default:dsprintf(ver,"UNKNOWN(0x%x)",LOWORD(vffi->dwFileOS));break;
 	}
-	TRACE(ver, "(%s)\n", dbg_str(ver));
+	TRACE("(%s)\n", dbg_str(ver));
 
 	dbg_reset_str(ver);
 	switch (vffi->dwFileType) {
@@ -134,9 +134,9 @@ static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
 	case VFT_VXD:dsprintf(ver,"filetype=VXD");break;
 	case VFT_STATIC_LIB:dsprintf(ver,"filetype=STATIC_LIB");break;
 	}
-	TRACE(ver, "%s\n", dbg_str(ver));
+	TRACE("%s\n", dbg_str(ver));
 
-	TRACE(ver, "  filedata=0x%lx.0x%lx\n",
+	TRACE("  filedata=0x%lx.0x%lx\n",
 		    vffi->dwFileDateMS,vffi->dwFileDateLS);
 }
 
@@ -207,28 +207,28 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     VS_VERSION_INFO_STRUCT32 *child32 = VersionInfo32_Children( info32 );
     VS_VERSION_INFO_STRUCT16 *child16;
 
-    TRACE( ver, "Converting %p to %p\n", info32, info16 );
-    TRACE( ver, "wLength %d, wValueLength %d, bText %d, value %p, child %p\n",
+    TRACE("Converting %p to %p\n", info32, info16 );
+    TRACE("wLength %d, wValueLength %d, bText %d, value %p, child %p\n",
                 wLength, wValueLength, bText, lpValue, child32 );
 
     /* Convert key */
     lstrcpyWtoA( info16->szKey, info32->szKey );
 
-    TRACE( ver, "Copied key from %p to %p: %s\n", info32->szKey, info16->szKey,
+    TRACE("Copied key from %p to %p: %s\n", info32->szKey, info16->szKey,
                 debugstr_a(info16->szKey) );
 
     /* Convert value */
     if ( wValueLength == 0 )
     {
         info16->wValueLength = 0;
-        TRACE( ver, "No value present\n" );
+        TRACE("No value present\n" );
     }
     else if ( bText )
     {
         info16->wValueLength = lstrlenW( (LPCWSTR)lpValue ) + 1;
         lstrcpyWtoA( VersionInfo16_Value( info16 ), (LPCWSTR)lpValue );
 
-        TRACE( ver, "Copied value from %p to %p: %s\n", lpValue, 
+        TRACE("Copied value from %p to %p: %s\n", lpValue, 
                     VersionInfo16_Value( info16 ), 
                     debugstr_a(VersionInfo16_Value( info16 )) );
     }
@@ -237,7 +237,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
         info16->wValueLength = wValueLength;
         memmove( VersionInfo16_Value( info16 ), lpValue, wValueLength );
 
-        TRACE( ver, "Copied value from %p to %p: %d bytes\n", lpValue, 
+        TRACE("Copied value from %p to %p: %d bytes\n", lpValue, 
                      VersionInfo16_Value( info16 ), wValueLength );
     }
 
@@ -256,7 +256,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
     /* Fixup length */
     info16->wLength = (DWORD)child16 - (DWORD)info16;
 
-    TRACE( ver, "Finished, length is %d (%p - %p)\n", 
+    TRACE("Finished, length is %d (%p - %p)\n", 
                 info16->wLength, info16, child16 );
 }
 
@@ -270,7 +270,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     DWORD len, ret, offset;
     BYTE buf[144];
 
-    TRACE( ver, "(%s,%p)\n", debugstr_a(filename), handle );
+    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
 
     len = GetFileResourceSize( filename,
                                  MAKEINTRESOURCEA(VS_FILE_INFO),
@@ -293,7 +293,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 
     if ( vffi->dwSignature != VS_FFI_SIGNATURE )
     {
-        WARN( ver, "vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
+        WARN("vffi->dwSignature is 0x%08lx, but not 0x%08lx!\n",
                    vffi->dwSignature, VS_FFI_SIGNATURE );
         return 0;
     }
@@ -301,7 +301,7 @@ DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
     if ( ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength < len )
         len = ((VS_VERSION_INFO_STRUCT16 *)buf)->wLength;
 
-    if ( TRACE_ON( ver ) )
+    if ( TRACE_ON(ver) )
         print_vffi_debug( vffi );
 
     return len;
@@ -324,7 +324,7 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 DWORD WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
                                     DWORD datasize, LPVOID data )
 {
-    TRACE( ver, "(%s,%ld,size=%ld,data=%p)\n",
+    TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(filename), handle, datasize, data );
 
     if ( !GetFileResource( filename, MAKEINTRESOURCEA(VS_FILE_INFO),
@@ -353,7 +353,7 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
     LPSTR fn = HEAP_strdupWtoA( GetProcessHeap(), 0, filename );
     DWORD retv = TRUE;
 
-    TRACE( ver, "(%s,%ld,size=%ld,data=%p)\n",
+    TRACE("(%s,%ld,size=%ld,data=%p)\n",
                 debugstr_a(fn), handle, datasize, data );
 
     if ( !GetFileResource( fn, MAKEINTRESOURCEA(VS_FILE_INFO),
@@ -365,7 +365,7 @@ DWORD WINAPI GetFileVersionInfoW( LPCWSTR filename, DWORD handle,
               && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength 
               && VersionInfoIs16( data ) )
     {
-        ERR( ver, "Cannot access NE resource in %s\n", debugstr_a(fn) );
+        ERR("Cannot access NE resource in %s\n", debugstr_a(fn) );
         retv =  FALSE;
     }
 
@@ -422,11 +422,11 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
     VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
     if ( !VersionInfoIs16( info ) )
     {
-        ERR( ver, "called on PE resource!\n" );
+        ERR("called on PE resource!\n" );
         return FALSE;
     }
 
-    TRACE( ver, "(%p,%s,%p,%p)\n",
+    TRACE("(%p,%s,%p,%p)\n",
                 pBlock, debugstr_a(lpSubBlock), lplpBuffer, puLen );
 
     while ( *lpSubBlock )
@@ -468,11 +468,11 @@ DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
     VS_VERSION_INFO_STRUCT32 *info = (VS_VERSION_INFO_STRUCT32 *)pBlock;
     if ( VersionInfoIs16( info ) )
     {
-        ERR( ver, "called on NE resource!\n" );
+        ERR("called on NE resource!\n" );
         return FALSE;
     }
 
-    TRACE( ver, "(%p,%s,%p,%p)\n",
+    TRACE("(%p,%s,%p,%p)\n",
                 pBlock, debugstr_w(lpSubBlock), lplpBuffer, puLen );
 
     while ( *lpSubBlock )
@@ -516,7 +516,7 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
     LPCSTR  name;
     DWORD   result;
 
-    TRACE( ver, "(%d,%p,%d)\n", wLang, szLang, nSize );
+    TRACE("(%d,%p,%d)\n", wLang, szLang, nSize );
 
     /* 
      * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
@@ -551,7 +551,7 @@ DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
     LPCSTR  name;
     DWORD   result;
 
-    TRACE( ver, "(%d,%p,%d)\n", wLang, szLang, nSize );
+    TRACE("(%d,%p,%d)\n", wLang, szLang, nSize );
 
     /* 
      * First, check \System\CurrentControlSet\control\Nls\Locale\<langid>

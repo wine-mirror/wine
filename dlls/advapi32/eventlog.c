@@ -9,7 +9,7 @@
 #include "winerror.h"
 #include "heap.h"
 
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(advapi)
 
@@ -18,7 +18,7 @@ DEFAULT_DEBUG_CHANNEL(advapi)
  */
 BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -32,7 +32,7 @@ BOOL WINAPI BackupEventLogA( HANDLE hEventLog, LPCSTR lpBackupFileName )
 BOOL WINAPI
 BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -41,7 +41,7 @@ BackupEventLogW( HANDLE hEventLog, LPCWSTR lpBackupFileName )
  */
 BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -50,7 +50,7 @@ BOOL WINAPI ClearEventLogA ( HANDLE hEventLog, LPCSTR lpBackupFileName )
  */
 BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -59,7 +59,7 @@ BOOL WINAPI ClearEventLogW ( HANDLE hEventLog, LPCWSTR lpBackupFileName )
  */
 BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -74,7 +74,7 @@ BOOL WINAPI CloseEventLog ( HANDLE hEventLog )
  */
 BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 {
-    FIXME(advapi, "(%d): stub\n",hEventLog);
+    FIXME("(%d): stub\n",hEventLog);
     return TRUE;
 }
 
@@ -88,7 +88,7 @@ BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 BOOL WINAPI
 GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -102,7 +102,7 @@ GetNumberOfEventLogRecords( HANDLE hEventLog, PDWORD NumberOfRecords )
 BOOL WINAPI
 GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 {
-	FIXME(advapi,":stub\n");
+	FIXME(":stub\n");
 	return TRUE;
 }
 
@@ -115,7 +115,7 @@ GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
  */
 BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -125,7 +125,7 @@ BOOL WINAPI NotifyChangeEventLog( HANDLE hEventLog, HANDLE hEvent )
 HANDLE WINAPI
 OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -139,7 +139,7 @@ OpenBackupEventLogA( LPCSTR lpUNCServerName, LPCSTR lpFileName )
 HANDLE WINAPI
 OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -148,7 +148,7 @@ OpenBackupEventLogW( LPCWSTR lpUNCServerName, LPCWSTR lpFileName )
  */
 HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source) 
 {
-	FIXME(advapi,"(%s,%s),stub!\n",uncname,source);
+	FIXME("(%s,%s),stub!\n",uncname,source);
 	return 0xcafe4242;
 }
 
@@ -162,7 +162,7 @@ HANDLE WINAPI OpenEventLogA(LPCSTR uncname,LPCSTR source)
 HANDLE WINAPI
 OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -172,7 +172,7 @@ OpenEventLogW( LPCWSTR uncname, LPCWSTR source )
 BOOL WINAPI ReadEventLogA( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
     LPVOID lpBuffer, DWORD nNumberOfBytesToRead, DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -193,7 +193,7 @@ ReadEventLogW( HANDLE hEventLog, DWORD dwReadFlags, DWORD dwRecordOffset,
                  LPVOID lpBuffer, DWORD nNumberOfBytesToRead, 
                  DWORD *pnBytesRead, DWORD *pnMinNumberOfBytesNeeded )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -225,7 +225,7 @@ HANDLE WINAPI RegisterEventSourceA( LPCSTR lpUNCServerName, LPCSTR lpSourceName 
 HANDLE WINAPI
 RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 {
-    FIXME(advapi, "(%s,%s): stub\n", debugstr_w(lpUNCServerName),
+    FIXME("(%s,%s): stub\n", debugstr_w(lpUNCServerName),
           debugstr_w(lpSourceName));
     return 1;
 }
@@ -236,7 +236,7 @@ RegisterEventSourceW( LPCWSTR lpUNCServerName, LPCWSTR lpSourceName )
 BOOL WINAPI ReportEventA ( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dwEventID,
     PSID lpUserSid, WORD wNumStrings, DWORD dwDataSize, LPCSTR *lpStrings, LPVOID lpRawData)
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }
 
@@ -259,6 +259,6 @@ ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory,
                 DWORD dwEventID, PSID lpUserSid, WORD wNumStrings, 
                 DWORD dwDataSize, LPCWSTR *lpStrings, LPVOID lpRawData )
 {
-	FIXME(advapi,"stub\n");
+	FIXME("stub\n");
 	return TRUE;
 }

@@ -7,7 +7,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "windef.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
@@ -20,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(msacm)
 MMRESULT WINAPI acmFormatChooseA(
   PACMFORMATCHOOSEA pafmtc)
 {
-  FIXME(msacm, "(%p): stub\n", pafmtc);
+  FIXME("(%p): stub\n", pafmtc);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -31,7 +31,7 @@ MMRESULT WINAPI acmFormatChooseA(
 MMRESULT WINAPI acmFormatChooseW(
   PACMFORMATCHOOSEW pafmtc)
 {
-  FIXME(msacm, "(%p): stub\n", pafmtc);
+  FIXME("(%p): stub\n", pafmtc);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -62,7 +62,7 @@ MMRESULT WINAPI acmFormatDetailsA(
 MMRESULT WINAPI acmFormatDetailsW(
   HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD fdwDetails)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", had, pafd, fdwDetails);
+  FIXME("(0x%08x, %p, %ld): stub\n", had, pafd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -74,7 +74,7 @@ MMRESULT WINAPI acmFormatEnumA(
   HACMDRIVER had, PACMFORMATDETAILSA pafd,
   ACMFORMATENUMCBA fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, pafd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -88,7 +88,7 @@ MMRESULT WINAPI acmFormatEnumW(
   HACMDRIVER had, PACMFORMATDETAILSW pafd,
   ACMFORMATENUMCBW fnCallback, DWORD dwInstance,  DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, pafd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -102,7 +102,7 @@ MMRESULT WINAPI acmFormatSuggest(
   HACMDRIVER had, PWAVEFORMATEX pwfxSrc, PWAVEFORMATEX pwfxDst,
   DWORD cbwfxDst, DWORD fdwSuggest)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, pwfxSrc, pwfxDst, cbwfxDst, fdwSuggest
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -136,7 +136,7 @@ MMRESULT WINAPI acmFormatTagDetailsA(
 MMRESULT WINAPI acmFormatTagDetailsW(
   HACMDRIVER had, PACMFORMATTAGDETAILSW paftd, DWORD fdwDetails)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", had, paftd, fdwDetails);
+  FIXME("(0x%08x, %p, %ld): stub\n", had, paftd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -148,7 +148,7 @@ MMRESULT WINAPI acmFormatTagEnumA(
   HACMDRIVER had, PACMFORMATTAGDETAILSA paftd,
   ACMFORMATTAGENUMCBA fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, paftd, fnCallback, dwInstance, fdwEnum
   ); 
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -162,7 +162,7 @@ MMRESULT WINAPI acmFormatTagEnumW(
   HACMDRIVER had, PACMFORMATTAGDETAILSW paftd,
   ACMFORMATTAGENUMCBW fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, paftd, fnCallback, dwInstance, fdwEnum
   ); 
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

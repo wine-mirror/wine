@@ -11,7 +11,7 @@
 #include "cursoricon.h"
 #include "static.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(static)
@@ -64,7 +64,7 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_ICON) return 0;
     if (hicon && !info) {
-	ERR(static, "huh? hicon!=0, but info=0???\n");
+	ERR("huh? hicon!=0, but info=0???\n");
     	return 0;
     }
     prevIcon = infoPtr->hIcon;
@@ -91,7 +91,7 @@ static HICON16 STATIC_SetBitmap( WND *wndPtr, HICON16 hicon )
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hicon && !info) {
-	ERR(static, "huh? hicon!=0, but info=0???\n");
+	ERR("huh? hicon!=0, but info=0???\n");
     	return 0;
     }
     prevIcon = infoPtr->hIcon;
@@ -127,7 +127,7 @@ static HICON16 STATIC_LoadIcon( WND *wndPtr, LPCSTR name )
         LPSTR segname = SEGPTR_STRDUP(name);
 
 	if (HIWORD(wndPtr->hInstance))
-		FIXME(static,"win16 window class, but win32 hinstance??\n");
+		FIXME("win16 window class, but win32 hinstance??\n");
         hicon = LoadIcon16( wndPtr->hInstance, SEGPTR_GET(segname) );
         SEGPTR_FREE(segname);
     }
@@ -198,14 +198,14 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
             if (cs->lpszName)
                 STATIC_SetBitmap( wndPtr,
                                 STATIC_LoadBitmap( wndPtr, cs->lpszName ));
-	    WARN(static, "style SS_BITMAP, dwStyle is 0x%08lx\n",
+	    WARN("style SS_BITMAP, dwStyle is 0x%08lx\n",
 			wndPtr->dwStyle);
             lResult = 1;
             goto END;
 	}
         if (!HIWORD(cs->lpszName) && (cs->lpszName))
         {
-		FIXME(static,"windowName is 0x%04x, not doing DefWindowProc\n",
+		FIXME("windowName is 0x%04x, not doing DefWindowProc\n",
 		    LOWORD(cs->lpszName));
                 lResult = 1;
                 goto END;
@@ -216,7 +216,7 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
         {
-            ERR(static, "Unknown style 0x%02lx\n", style );
+            ERR("Unknown style 0x%02lx\n", style );
             lResult = -1L;
             break;
         }

@@ -9,7 +9,7 @@
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(msacm)
 
@@ -19,7 +19,7 @@ DEFAULT_DEBUG_CHANNEL(msacm)
 MMRESULT WINAPI acmFilterChooseA(
   PACMFILTERCHOOSEA pafltrc)
 {
-  FIXME(msacm, "(%p): stub\n", pafltrc);
+  FIXME("(%p): stub\n", pafltrc);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -30,7 +30,7 @@ MMRESULT WINAPI acmFilterChooseA(
 MMRESULT WINAPI acmFilterChooseW(
   PACMFILTERCHOOSEW pafltrc)
 {
-  FIXME(msacm, "(%p): stub\n", pafltrc);
+  FIXME("(%p): stub\n", pafltrc);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -61,7 +61,7 @@ MMRESULT WINAPI acmFilterDetailsA(
 MMRESULT WINAPI acmFilterDetailsW(
   HACMDRIVER had, PACMFILTERDETAILSW pafd, DWORD fdwDetails)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", had, pafd, fdwDetails);
+  FIXME("(0x%08x, %p, %ld): stub\n", had, pafd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -73,7 +73,7 @@ MMRESULT WINAPI acmFilterEnumA(
   HACMDRIVER had, PACMFILTERDETAILSA pafd, 
   ACMFILTERENUMCBA fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, pafd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -87,7 +87,7 @@ MMRESULT WINAPI acmFilterEnumW(
   HACMDRIVER had, PACMFILTERDETAILSW pafd, 
   ACMFILTERENUMCBW fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, pafd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -122,7 +122,7 @@ MMRESULT WINAPI acmFilterTagDetailsA(
 MMRESULT WINAPI acmFilterTagDetailsW(
   HACMDRIVER had, PACMFILTERTAGDETAILSW paftd, DWORD fdwDetails)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", had, paftd, fdwDetails);
+  FIXME("(0x%08x, %p, %ld): stub\n", had, paftd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -134,7 +134,7 @@ MMRESULT WINAPI acmFilterTagEnumA(
   HACMDRIVER had, PACMFILTERTAGDETAILSA  paftd,
   ACMFILTERTAGENUMCBA fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, paftd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -148,7 +148,7 @@ MMRESULT WINAPI acmFilterTagEnumW(
   HACMDRIVER had, PACMFILTERTAGDETAILSW paftd,
   ACMFILTERTAGENUMCBW fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
-  FIXME(msacm, "(0x%08x, %p, %p, %ld, %ld): stub\n",
+  FIXME("(0x%08x, %p, %p, %ld, %ld): stub\n",
     had, paftd, fnCallback, dwInstance, fdwEnum
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

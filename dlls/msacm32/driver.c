@@ -8,7 +8,7 @@
 #include "winerror.h"
 #include "windef.h"
 #include "winuser.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "driver.h"
 #include "heap.h"
 #include "mmsystem.h"
@@ -59,7 +59,7 @@ MMRESULT WINAPI acmDriverAddW(
   PHACMDRIVERID phadid, HINSTANCE hinstModule,
   LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
-  FIXME(msacm, "(%p, 0x%08x, %ld, %ld, %ld): stub\n",
+  FIXME("(%p, 0x%08x, %ld, %ld, %ld): stub\n",
     phadid, hinstModule, lParam, dwPriority, fdwAdd
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -143,7 +143,7 @@ MMRESULT WINAPI acmDriverDetailsA(
 MMRESULT WINAPI acmDriverDetailsW(
   HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, DWORD fdwDetails)
 {
-  FIXME(msacm, "(0x%08x, %p, %ld): stub\n", hadid, padd, fdwDetails);
+  FIXME("(0x%08x, %p, %ld): stub\n", hadid, padd, fdwDetails);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return MMSYSERR_ERROR;
 }
@@ -241,7 +241,7 @@ MMRESULT WINAPI acmDriverOpen(
   if(padid->pACMDriver)
     {
       /* FIXME: Is it allowed? */
-      ERR(msacm, "Can't open driver twice\n");
+      ERR("Can't open driver twice\n");
       return MMSYSERR_ERROR;
     }
 
@@ -319,7 +319,7 @@ MMRESULT WINAPI acmDriverPriority(
     if(lError != ERROR_SUCCESS)
       break;
 
-    FIXME(msacm, "(0x%08x, %ld, %ld): stub (partial)\n", 
+    FIXME("(0x%08x, %ld, %ld): stub (partial)\n", 
       hadid, dwPriority, fdwPriority
     );
     break;

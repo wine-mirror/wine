@@ -6,7 +6,7 @@
 
 #include "windef.h"
 #include "ras.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ras)
 
@@ -15,6 +15,6 @@ DEFAULT_DEBUG_CHANNEL(ras)
  */
 DWORD WINAPI RasEnumConnectionsA( LPRASCONNA rca, LPDWORD x, LPDWORD y) {
 	/* Remote Access Service stuff is done by underlying OS anyway */
-	FIXME(ras,"(%p,%p,%p),stub!\n",rca,x,y);
+	FIXME("(%p,%p,%p),stub!\n",rca,x,y);
 	return 0;
 }

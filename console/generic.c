@@ -14,7 +14,7 @@
 
 #include "console.h"
 #include "config.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(console)
 
@@ -26,7 +26,7 @@ void GENERIC_Start()
    /* Here, we only want to add a driver if there is not one already
       defined. */
 
-   TRACE(console, "GENERIC_Start\n");
+   TRACE("GENERIC_Start\n");
 
    if (!driver.clearWindow)
       driver.clearWindow = GENERIC_ClearWindow;
@@ -72,7 +72,7 @@ void GENERIC_ScrollUpWindow(char row1, char col1, char row2, char col2,
    char trow, tcol;
    int old_refresh, x;
 
-   TRACE(console, "Scroll Up %d lines from %d to %d.\n", lines, row1,
+   TRACE("Scroll Up %d lines from %d to %d.\n", lines, row1,
       row2);
 
    /* Abort if we have only partial functionality */
@@ -146,7 +146,7 @@ static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
 
    int x;
 
-   TRACE(console, "Clear Line: %d from %d to %d.\n", row, col1, col2);
+   TRACE("Clear Line: %d from %d to %d.\n", row, col1, col2);
 
    for (x = col1; x <= col2; x++)
    {
@@ -169,7 +169,7 @@ static void GENERIC_MoveLine(char row1, char row2, char col1, char col2)
    int bg_color, fg_color, attribute;
    char ch;
 
-   TRACE(console, "Move Line: Move %d to %d.\n", row1, row2);
+   TRACE("Move Line: Move %d to %d.\n", row1, row2);
 
    for (x = col1; x <= col2; x++)
    {
