@@ -273,7 +273,7 @@ int   main (int argc, char *argv[])
 	VERBOSE = 1;
 
 	symbol_init (&symbol, globals.input_name);
-	if (symbol_demangle (&symbol) == -1);
+	if (symbol_demangle (&symbol) == -1)
 	    fatal( "Symbol hasn't got a mangled name\n");
 	if (symbol.flags & SYM_DATA)
 	    printf (symbol.arg_text[0]);

@@ -320,7 +320,7 @@ static int dump_cv_sst_align_sym(OMFDirEntry* omfde)
 
 static void dump_codeview_all_modules(OMFDirHeader *omfdh)
 {
-    int 		i;
+    unsigned 		i;
     OMFDirEntry	       *dirEntry;
     const char*		str;
 
@@ -376,7 +376,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     OMFDirHeader	*dirHeader;
     OMFSignature	*signature;
     OMFDirEntry		*dirEntry;
-    int			i;
+    unsigned		i;
     int modulecount = 0, alignsymcount = 0, srcmodulecount = 0, librariescount = 0;
     int globalsymcount = 0, globalpubcount = 0, globaltypescount = 0;
     int segmapcount = 0, fileindexcount = 0, staticsymcount = 0;

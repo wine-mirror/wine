@@ -18,7 +18,7 @@
 #include "pe.h"
 
 static void*			base;
-static long			total_len;
+static unsigned long		total_len;
 static IMAGE_NT_HEADERS*	nt_headers;
 
 enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG};
@@ -114,7 +114,7 @@ static	void	dump_pe_header(void)
     char			*str;
     IMAGE_FILE_HEADER		*fileHeader;
     IMAGE_OPTIONAL_HEADER	*optionalHeader;
-    int				i;
+    unsigned			i;
     
     printf("File Header\n");
     fileHeader = &nt_headers->FileHeader;
@@ -220,7 +220,7 @@ static	void	dump_pe_header(void)
 static	void	dump_sections(void* addr, unsigned num_sect)
 {
     IMAGE_SECTION_HEADER*	sectHead = addr;
-    int				i;
+    unsigned			i;
     
     printf("Section Table\n");
     for (i = 0; i < num_sect; i++, sectHead++)
@@ -655,14 +655,15 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
     int			fd;
     enum FileSig	effective_sig;
     int			ret = 1;
-    
+    struct stat		s;
+
     setbuf(stdout, NULL);
     
     fd = open(name, O_RDONLY);
     if (fd == -1) fatal("Can't open file");
     
-    total_len = lseek(fd, 0, SEEK_END);
-    if (total_len < 0) fatal("Can't get size");
+    if (fstat(fd, &s) < 0) fatal("Can't get size");
+    total_len = s.st_size;
     
     base = mmap(NULL, total_len, PROT_READ, MAP_PRIVATE, fd, 0);
     if (base == (void*)-1) fatal("Can't map file");
@@ -682,7 +683,7 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 	    ret = 0; break;
 	case SIG_PE:
 	    printf("Contents of \"%s\": %ld bytes\n\n", name, total_len);
-	    do_dump();
+	    (*fn)();
 	    break;
 	case SIG_DBG:
 	    dump_separate_dbg();
