@@ -177,17 +177,17 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
 
     /*Decrement destruction monitoring value*/
      wndPtr->irefCount--;
-    /* Check if it's time to release the memory*/
      /* Check if it's time to release the memory*/
      if(wndPtr->irefCount == 0 && !wndPtr->dwMagic)
      {
          /* Release memory */
          USER_HEAP_FREE( wndPtr->hwndSelf);
+         wndPtr->hwndSelf = 0;
      }
      else if(wndPtr->irefCount < 0)
      {
          /* This else if is useful to monitor the WIN_ReleaseWndPtr function */
-         TRACE_(win)("forgot a Lock on %p somewhere\n",wndPtr);
+         ERR_(win)("forgot a Lock on %p somewhere\n",wndPtr);
      }
      /*unlock all WND structures for thread safeness*/
      WIN_UnlockWnds();
@@ -516,7 +516,6 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     wndPtr->pDriver->pDestroyWindow( wndPtr );
     DCE_FreeWindowDCE( wndPtr );    /* Always do this to catch orphaned DCs */ 
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
-    wndPtr->hwndSelf = 0;
     wndPtr->class->cWindows--;
     wndPtr->class = NULL;
 
