@@ -5,6 +5,9 @@ if [ -z "$WINE_BUILD" ]; then
     echo "warning: using automatically generated BUILD tag: $WINE_BUILD" 1>&2
 fi
 
+TOPSRCDIR="$1"
+shift
+
 echo "/* Automatically generated -- do not edit! */"
 echo "STRINGTABLE {"
 echo "0 \"$WINE_BUILD\""
@@ -16,13 +19,15 @@ do
     echo "$i \"$test\""
 done
 
-if [ -f revision.info ]; then
-    i=0
-    for line in `cat revision.info`; do
-        i=`expr $i + 1`
-	echo "$i+30000 \"$line\""
-    done
-fi
+i=30000
+cd $TOPSRCDIR
+for dir in dlls/*/tests; do
+    sed -ne "s|^/\([^.]*.c\)/\([^/]*\).*|$dir/\1:\2|p" $dir/CVS/Entries 2>/dev/null
+done |\
+while read; do
+    echo "$i \"$REPLY\""
+    i=`expr $i + 1`
+done
 
 echo "}"
 

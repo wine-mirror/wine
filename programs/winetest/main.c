@@ -140,7 +140,6 @@ const char* get_test_source_file(const char* test, const char* subtest)
     }
 
     snprintf(buffer, sizeof(buffer), "dlls/%s/tests/%s.c", test, subtest);
-    fprintf(stderr, "file=%s\n", buffer);
     return buffer;
 }
 
@@ -149,36 +148,35 @@ const char* get_file_rev(const char* file)
     const struct rev_info* rev;
  
     for(rev = rev_infos; rev->file; rev++) {
-	fprintf(stderr, "  ?{%s:%s)\n", rev->file, rev->rev);
 	if (strcmp(rev->file, file) == 0) return rev->rev;
     }
 
-    return "";
+    return "-";
 }
 
 void extract_rev_infos ()
 {
     char revinfo[256], *p;
-    int size = 0, i = 0, len;
+    int size = 0, i, len;
     HMODULE module = GetModuleHandle (NULL);
 
     for (i = 0; TRUE; i++) {
 	if (i >= size) {
 	    size += 100;
-	    rev_infos = xrealloc(rev_infos, size);
+	    rev_infos = xrealloc (rev_infos, size * sizeof (*rev_infos));
 	}
 	memset(rev_infos + i, 0, sizeof(rev_infos[i]));
 
         len = LoadStringA (module, i + 30000, revinfo, sizeof(revinfo));
         if (len == 0) break; /* end of revision info */
-	if (len >= sizeof(revinfo)) 
+	if (len >= sizeof(revinfo) - 1) 
 	    report (R_FATAL, "Revision info too long.");
 	if(!(p = strrchr(revinfo, ':')))
 	    report (R_FATAL, "Revision info malformed (i=%d)", i);
 	*p = 0;
 	rev_infos[i].file = strdup(revinfo);
 	rev_infos[i].rev = strdup(p + 1);
-    } while(1);
+    }
 }
 
 void* extract_rcdata (int id, DWORD* size)
@@ -196,7 +194,7 @@ void* extract_rcdata (int id, DWORD* size)
     return addr;
 }
 
-/* Fills out the name, is_elf and exename fields */
+/* Fills in the name, is_elf and exename fields */
 void
 extract_test (struct wine_test *test, const char *dir, int id)
 {
@@ -459,48 +457,45 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
 
     cmdLine = mystrtok (cmdLine);
     while (cmdLine) {
-        if (*cmdLine == '-')
-            if (cmdLine[2]) {
-                report (R_ERROR, "Not a single letter option: %s",
-                        cmdLine);
+        if (cmdLine[0] != '-' || cmdLine[2]) {
+            report (R_ERROR, "Not a single letter option: %s", cmdLine);
+            usage ();
+            exit (2);
+        }
+        switch (cmdLine[1]) {
+        case 'c':
+            report (R_TEXTMODE);
+            break;
+        case 'h':
+            usage ();
+            exit (0);
+        case 'q':
+            report (R_QUIET);
+            break;
+        case 's':
+            submit = mystrtok (NULL);
+            if (tag)
+                report (R_WARNING, "ignoring tag for submit");
+            send_file (submit);
+            break;
+        case 'o':
+            logname = mystrtok (NULL);
+            run_tests (logname, tag);
+            break;
+        case 't':
+            tag = mystrtok (NULL);
+            cp = badtagchar (tag);
+            if (cp) {
+                report (R_ERROR, "invalid char in tag: %c", *cp);
                 usage ();
                 exit (2);
             }
-            cmdLine++;
-            switch (*cmdLine) {
-            case 'c':
-                report (R_TEXTMODE);
-                break;
-            case 'h':
-                usage ();
-                exit (0);
-            case 'q':
-                report (R_QUIET);
-                break;
-            case 's':
-                submit = mystrtok (NULL);
-                if (tag)
-                    report (R_WARNING, "ignoring tag for submit");
-                send_file (submit);
-                break;
-            case 'o':
-                logname = mystrtok (NULL);
-                run_tests (logname, tag);
-                break;
-            case 't':
-                tag = mystrtok (NULL);
-                cp = badtagchar (tag);
-                if (cp) {
-                    report (R_ERROR, "invalid char in tag: %c", *cp);
-                    usage ();
-                    exit (2);
-                }
-                break;
-            default:
-                report (R_ERROR, "invalid option: -%c", *cmdLine);
-                usage ();
-                exit (2);
-            }
+            break;
+        default:
+            report (R_ERROR, "invalid option: -%c", cmdLine[1]);
+            usage ();
+            exit (2);
+        }
         cmdLine = mystrtok (NULL);
     }
     if (!logname && !submit) {

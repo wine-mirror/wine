@@ -21,6 +21,7 @@
 #include <windows.h>
 #include <winres.h>
 #include "guires.h"
+#include "winetest.rc"          /* for the MinGW cross-compiler */
 
 IDD_STATUS DIALOG 0, 0, 160, 140
 STYLE WS_OVERLAPPEDWINDOW

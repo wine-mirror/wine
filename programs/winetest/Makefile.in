@@ -13,8 +13,7 @@ C_SRCS = \
 	util.c
 
 RC_SRCS = \
-	gui.rc \
-	winetest.rc
+	gui.rc
 
 RC_BINSRC = gui.rc
 RC_BINARIES = wine.ico 
@@ -45,12 +44,9 @@ TESTS = \
 TESTBINS = $(TESTS:%=%_test.exe$(DLLEXT))
 
 winetest.rc: maketest Makefile.in
-	$(SRCDIR)/maketest $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )
+	$(SRCDIR)/maketest $(TOPSRCDIR) $(TESTBINS) > $@ || ( $(RM) $@ && exit 1 )
 
-revision.info:
-	(cd $(TOPSRCDIR); for file in dlls/*/tests/*.c; do rev=`cvs stat "$$file" | grep "Working" | awk '{print $$3}'`; echo "$$file:$$rev"; done) > $@ || ( $(RM) $@ && exit 1 )
-
-winetest.res: $(TESTBINS)
+gui.res: winetest.rc $(TESTBINS)
 
 clean::
 	$(RM) winetest.rc $(TESTBINS)

@@ -158,7 +158,7 @@ send_file (const char *name)
 
     report (R_STATUS, "Sending %u bytes of data", filesize);
     report (R_PROGRESS, 2, filesize);
-    while ((bytes_read = fread (buffer, 1, BUFLEN / 8, f))) {
+    while ((bytes_read = fread (buffer, 1, BUFLEN / 2, f))) {
         if (send_buf (s, buffer, bytes_read)) {
             report (R_WARNING, "Error sending body: %d, %d",
                     errno, WSAGetLastError ());
