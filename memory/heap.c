@@ -19,6 +19,7 @@
 #include "heap.h"
 #include "toolhelp.h"
 #include "debugtools.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(heap);
 
@@ -1688,12 +1689,14 @@ LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
 LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
 {
     LPSTR ret;
+    INT len;
 
     if (!str) return NULL;
-    ret = HeapAlloc( heap, flags, lstrlenW(str) + 1 );
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    ret = HeapAlloc( heap, flags, len );
     if(ret) {
         SET_EIP(ret);
-        lstrcpyWtoA( ret, str );
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
 }
