@@ -68,7 +68,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
+#ifdef HAVE_ALSA
 
 /* internal ALSALIB functions */
 snd_pcm_uframes_t _snd_pcm_mmap_hw_ptr(snd_pcm_t *pcm);
@@ -3580,9 +3580,7 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-#endif
-
-#if !(defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1))
+#else
 
 /**************************************************************************
  * 				widMessage (WINEALSA.@)
@@ -3593,10 +3591,6 @@ DWORD WINAPI ALSA_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
-
-#endif
-
-#ifndef HAVE_ALSA
 
 /**************************************************************************
  * 				wodMessage (WINEALSA.@)

@@ -48,14 +48,12 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "mmddk.h"
-#ifdef HAVE_ALSA
-# include "alsa.h"
-#endif
+#include "alsa.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
+#ifdef HAVE_ALSA
 
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
@@ -1186,7 +1184,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
     }
 }
 
-#endif /* defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1) */
+#endif /* HAVE_ALSA */
 
 
 /*======================================================================*
@@ -1200,7 +1198,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
  */
 LONG ALSA_MidiInit(void)
 {
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
+#ifdef HAVE_ALSA
     static	BOOL	bInitDone = FALSE;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
@@ -1266,7 +1264,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
+#ifdef HAVE_ALSA
     case DRVM_INIT:
     case DRVM_EXIT:
     case DRVM_ENABLE:
@@ -1310,7 +1308,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-#if defined(HAVE_ALSA) && ((SND_LIB_MAJOR == 0 && SND_LIB_MINOR >= 9) || SND_LIB_MAJOR >= 1)
+#ifdef HAVE_ALSA
     case DRVM_INIT:
     case DRVM_EXIT:
     case DRVM_ENABLE:

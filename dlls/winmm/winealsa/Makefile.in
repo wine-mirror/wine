@@ -8,7 +8,6 @@ EXTRALIBS = -ldxguid -luuid @ALSALIBS@
 
 C_SRCS = \
 	audio.c \
-	audio_05.c \
 	alsa.c \
 	midi.c
 

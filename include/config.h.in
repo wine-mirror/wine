@@ -20,7 +20,7 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define if you have ALSA including devel headers */
+/* Define if you have ALSA 1.x including devel headers */
 #undef HAVE_ALSA
 
 /* Define to 1 if you have the <alsa/asoundlib.h> header file. */
