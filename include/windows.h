@@ -6883,7 +6883,7 @@ BOOL32      WINAPI GetStringTypeEx32W(LCID,DWORD,LPCWSTR,INT32,LPWORD);
 VOID        WINAPI GetSystemInfo(LPSYSTEM_INFO);
 BOOL32      WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID        WINAPI GetSystemTime(LPSYSTEMTIME);
-INT32       WINAPI GetTextCharsetInfo(HDC32,LPCHARSETINFO,DWORD);
+UINT32      WINAPI GetTextCharsetInfo(HDC32,LPFONTSIGNATURE,DWORD);
 BOOL32      WINAPI GetTextExtentExPoint32A(HDC32,LPCSTR,INT32,INT32,
                                            LPINT32,LPINT32,LPSIZE32);
 BOOL32      WINAPI GetTextExtentExPoint32W(HDC32,LPCWSTR,INT32,INT32,
@@ -8314,8 +8314,8 @@ UINT32      WINAPI GetTextAlign32(HDC32);
 INT16       WINAPI GetTextCharacterExtra16(HDC16);
 INT32       WINAPI GetTextCharacterExtra32(HDC32);
 #define     GetTextCharacterExtra WINELIB_NAME(GetTextCharacterExtra)
-INT16       WINAPI GetTextCharset16(HDC16);
-INT32       WINAPI GetTextCharset32(HDC32);
+UINT16      WINAPI GetTextCharset16(HDC16);
+UINT32      WINAPI GetTextCharset32(HDC32);
 #define     GetTextCharset WINELIB_NAME(GetTextCharset)
 COLORREF    WINAPI GetTextColor16(HDC16);
 COLORREF    WINAPI GetTextColor32(HDC32);

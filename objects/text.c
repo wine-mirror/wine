@@ -721,12 +721,13 @@ DWORD WINAPI GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
  *
  * NOTES
  *    Should it return a UINT32 instead of an INT32?
+ *    => YES, as GetTextCharsetInfo returns UINT32
  *
  * RETURNS
  *    Success: Character set identifier
  *    Failure: DEFAULT_CHARSET
  */
-INT32 WINAPI GetTextCharset32(
+UINT32 WINAPI GetTextCharset32(
     HDC32 hdc) /* [in] Handle to device context */
 {
     /* MSDN docs say this is equivalent */
@@ -736,9 +737,9 @@ INT32 WINAPI GetTextCharset32(
 /***********************************************************************
  * GetTextCharset16 [GDI.612]
  */
-INT16 WINAPI GetTextCharset16(HDC16 hdc)
+UINT16 WINAPI GetTextCharset16(HDC16 hdc)
 {
-    return GetTextCharset32(hdc);
+    return (UINT16)GetTextCharset32(hdc);
 }
 
 /***********************************************************************
@@ -747,21 +748,31 @@ INT16 WINAPI GetTextCharset16(HDC16 hdc)
  * NOTES
  *    Should csi be an LPFONTSIGNATURE instead of an LPCHARSETINFO?
  *    Should it return a UINT32 instead of an INT32?
+ *    => YES and YES, from win32.hlp from Borland
  *
  * RETURNS
  *    Success: Character set identifier
  *    Failure: DEFAULT_CHARSET
  */
-INT32 WINAPI GetTextCharsetInfo(
-    HDC32 hdc,         /* [in]  Handle to device context */
-    LPCHARSETINFO csi, /* [out] Pointer to struct to receive data */
-    DWORD flags)       /* [in]  Reserved - must be 0 */
+UINT32 WINAPI GetTextCharsetInfo(
+    HDC32 hdc,          /* [in]  Handle to device context */
+    LPFONTSIGNATURE fs, /* [out] Pointer to struct to receive data */
+    DWORD flags)        /* [in]  Reserved - must be 0 */
 {
-    FIXME(text,"(0x%x,%p,%08lx): stub\n",hdc,csi,flags);
-    if (csi) {
-	csi->ciCharset = DEFAULT_CHARSET;
-	csi->ciACP = GetACP();
+    HGDIOBJ32 hFont;
+    UINT32 charSet = DEFAULT_CHARSET;
+    LOGFONT32W lf;
+
+    if (fs != NULL)
+        FIXME(text,"(0x%x,%p,%08lx): stub\n",hdc,fs,flags);
+    hFont = GetCurrentObject(hdc, OBJ_FONT);
+    if (hFont == 0)
+        return(DEFAULT_CHARSET);
+    if ( GetObject32W(hFont, sizeof(LOGFONT32W), &lf) != 0 )
+        charSet = lf.lfCharSet;
+
+    if (fs != NULL) {
+        /* ... fill fontstruct too ... still to do*/
     }
-    /* ... fill fontstruct too ... */
-    return DEFAULT_CHARSET;
+    return charSet;
 }
