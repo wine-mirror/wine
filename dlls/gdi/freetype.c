@@ -2968,6 +2968,9 @@ BOOL WineEngGetCharABCWidths(GdiFont font, UINT firstChar, UINT lastChar,
 
     TRACE("%p, %d, %d, %p\n", font, firstChar, lastChar, buffer);
 
+    if(!FT_IS_SCALABLE(font->ft_face))
+        return FALSE;
+
     for(c = firstChar; c <= lastChar; c++) {
         glyph_index = get_glyph_index(font, c);
         WineEngGetGlyphOutline(font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
