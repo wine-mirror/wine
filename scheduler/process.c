@@ -39,6 +39,7 @@ DECLARE_DEBUG_CHANNEL(win32);
 
 static ENVDB initial_envdb;
 static STARTUPINFOA initial_startup;
+static HFILE main_exe_file = -1;
 
 static PDB *PROCESS_First;
 
@@ -195,7 +196,6 @@ static BOOL PROCESS_CreateEnvDB(void)
     req->ldt_flags = ldt_flags_copy;
     req->ppid      = getppid();
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
-    pdb->exe_file        = req->exe_file;
     startup->dwFlags     = req->start_flags;
     startup->wShowWindow = req->cmd_show;
     env_db->hStdin  = startup->hStdInput  = req->hstdin;
@@ -292,7 +292,7 @@ BOOL PROCESS_Init( BOOL win32 )
     req->ldt_flags = ldt_flags_copy;
     req->ppid      = getppid();
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
-    pdb->exe_file               = req->exe_file;
+    main_exe_file               = req->exe_file;
     initial_startup.dwFlags     = req->start_flags;
     initial_startup.wShowWindow = req->cmd_show;
     initial_envdb.hStdin   = initial_startup.hStdInput  = req->hstdin;
@@ -337,7 +337,7 @@ BOOL PROCESS_Init( BOOL win32 )
  *
  * Load system DLLs into the initial process (and initialize them)
  */
-static int load_system_dlls(void)
+static inline int load_system_dlls(void)
 {
     char driver[MAX_PATH];
 
@@ -446,14 +446,13 @@ static void start_process(void)
  */
 void PROCESS_Init32( HFILE hFile, LPCSTR filename, LPCSTR cmd_line )
 {
-    WORD version;
     HMODULE main_module;
     PDB *pdb = PROCESS_Current();
 
     pdb->env_db->cmd_line = HEAP_strdupA( GetProcessHeap(), 0, cmd_line );
 
     /* load main module */
-    if ((main_module = PE_LoadImage( hFile, filename, &version )) < 32)
+    if ((main_module = PE_LoadImage( hFile, filename )) < 32)
         ExitProcess( main_module );
 #if 0
     if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
@@ -727,6 +726,7 @@ BOOL PROCESS_CreateUnixProcess( LPCSTR filename, LPCSTR cmd_line, LPCSTR env,
     }
     req->cmd_show = startup->wShowWindow;
     req->alloc_fd = 0;
+    lstrcpynA( req->filename, unixfilename, server_remaining(req->filename) );
     if (server_call( REQ_NEW_PROCESS )) return FALSE;
 
     /* fork and execute */
@@ -948,6 +948,7 @@ PDB *PROCESS_Create( NE_MODULE *pModule, HFILE hFile, LPCSTR cmd_line, LPCSTR en
     }
     req->cmd_show = startup->wShowWindow;
     req->alloc_fd = 1;
+    req->filename[0] = 0;
     if (server_call_fd( REQ_NEW_PROCESS, -1, &fd )) goto error;
 
     if (pModule->module32)   /* Win32 process */

@@ -223,7 +223,9 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
-    fprintf( stderr, " alloc_fd=%d", req->alloc_fd );
+    fprintf( stderr, " alloc_fd=%d,", req->alloc_fd );
+    fprintf( stderr, " filename=" );
+    dump_string( req, req->filename );
 }
 
 static void dump_wait_process_request( const struct wait_process_request *req )
@@ -274,7 +276,9 @@ static void dump_init_process_reply( const struct init_process_request *req )
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );
     fprintf( stderr, " hstderr=%d,", req->hstderr );
-    fprintf( stderr, " cmd_show=%d", req->cmd_show );
+    fprintf( stderr, " cmd_show=%d,", req->cmd_show );
+    fprintf( stderr, " filename=" );
+    dump_string( req, req->filename );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )

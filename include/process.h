@@ -95,7 +95,6 @@ typedef struct _PDB
     struct _SERVICETABLE *service_table; /*  Service table for service thread */
     HANDLE           idle_event;       /* event to signal, when the process is idle */
     HANDLE16         main_queue;       /* main message queue of the process */ 
-    HFILE            exe_file;         /* handle to main exe file */
 } PDB;
 
 /* Process flags */

@@ -113,6 +113,7 @@ struct new_process_request
     IN  int          hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
     IN  int          alloc_fd;     /* create the fd pair right now? */
+    IN  char         filename[1];  /* file name of main exe */
 };
 
 
@@ -160,6 +161,7 @@ struct init_process_request
     OUT int          hstdout;      /* handle for stdout */
     OUT int          hstderr;      /* handle for stderr */
     OUT int          cmd_show;     /* main window show mode */
+    OUT char         filename[1];  /* file name of main exe */
 };
 
 
@@ -1253,7 +1255,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 10
+#define SERVER_PROTOCOL_VERSION 11
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

@@ -63,11 +63,12 @@ struct startup_info
     int                 inherit_all;  /* inherit all handles from parent */
     int                 create_flags; /* creation flags */
     int                 start_flags;  /* flags from startup info */
-    int                 exe_file;     /* file handle for main exe */
     int                 hstdin;       /* handle for stdin */
     int                 hstdout;      /* handle for stdout */
     int                 hstderr;      /* handle for stderr */
     int                 cmd_show;     /* main window show mode */
+    struct file        *exe_file;     /* file handle for main exe */
+    char               *filename;     /* file name for main exe */
     struct process     *process;      /* created process */
     struct thread      *thread;       /* created thread */
 };
@@ -229,10 +230,9 @@ static void init_process( int ppid, struct init_process_request *req )
 
     /* retrieve the main exe file */
     req->exe_file = -1;
-    if (parent && info->exe_file != -1)
+    if (parent && info->exe_file)
     {
-        if (!(process->exe.file = get_file_obj( parent, info->exe_file, GENERIC_READ )))
-            goto error;
+        process->exe.file = (struct file *)grab_object( info->exe_file );
         if ((req->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )) == -1)
             goto error;
     }
@@ -256,6 +256,7 @@ static void init_process( int ppid, struct init_process_request *req )
     {
         req->start_flags = info->start_flags;
         req->cmd_show    = info->cmd_show;
+        strcpy( req->filename, info->filename );
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
         wake_up( &info->obj, 0 );
@@ -264,6 +265,7 @@ static void init_process( int ppid, struct init_process_request *req )
     {
         req->start_flags  = STARTF_USESTDHANDLES;
         req->cmd_show     = 0;
+        req->filename[0]  = 0;
     }
  error:
 }
@@ -305,6 +307,8 @@ static void startup_info_destroy( struct object *obj )
 {
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
+    if (info->filename) free( info->filename );
+    if (info->exe_file) release_object( info->exe_file );
     if (info->process) release_object( info->process );
     if (info->thread) release_object( info->thread );
 }
@@ -314,8 +318,8 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d\n",
-             info->start_flags, info->hstdin, info->hstdout, info->hstderr );
+    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d name='%s'\n",
+             info->start_flags, info->hstdin, info->hstdout, info->hstderr, info->filename );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
@@ -699,6 +703,7 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
+    size_t len = get_req_strlen( req, req->filename );
     struct startup_info *info;
     int sock[2];
 
@@ -713,13 +718,28 @@ DECL_HANDLER(new_process)
     info->inherit_all  = req->inherit_all;
     info->create_flags = req->create_flags;
     info->start_flags  = req->start_flags;
-    info->exe_file     = req->exe_file;
     info->hstdin       = req->hstdin;
     info->hstdout      = req->hstdout;
     info->hstderr      = req->hstderr;
     info->cmd_show     = req->cmd_show;
+    info->exe_file     = NULL;
+    info->filename     = NULL;
     info->process      = NULL;
     info->thread       = NULL;
+
+    if ((req->exe_file != -1) &&
+        !(info->exe_file = get_file_obj( current->process, req->exe_file, GENERIC_READ )))
+    {
+        release_object( info );
+        return;
+    }
+
+    if (!(info->filename = memdup( req->filename, len+1 )))
+    {
+        release_object( info );
+        return;
+    }
+    info->filename[len] = 0;
 
     if (req->alloc_fd)
     {
@@ -753,6 +773,7 @@ DECL_HANDLER(wait_process)
     req->tid     = 0;
     req->phandle = -1;
     req->thandle = -1;
+    req->event   = -1;
     if (req->cancel)
     {
         release_object( current->info );
