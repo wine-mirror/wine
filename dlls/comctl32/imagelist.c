@@ -21,22 +21,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *  TODO:
- *    - Fix ImageList_DrawIndirect (rgbFg, rgbBk, dwRop).
- *    - Fix ImageList_SetFilter (undocumented).
- *      BTW does anybody know anything about this function???
- *        - It removes 12 Bytes from the stack (3 Parameters).
- *        - First parameter SHOULD be a HIMAGELIST.
- *        - Second parameter COULD be an index?????
- *        - Third parameter.... ?????????????????????
+ *    - Fix ImageList_DrawIndirect (dwRop).
  *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
  *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE, ILS_ALPHA
  *
  *  Comments:
- *    - ImageList_Draw, ImageList_DrawEx and ImageList_GetIcon use
- *      ImageList_DrawIndirect. Since ImageList_DrawIndirect is still
- *      partially implemented, the functions mentioned above will be
- *      limited in functionality too.
- *
  *    - Hotspot handling still not correct. The Hotspot passed to BeginDrag
  *	is the offset of the image position relative to the actual mouse pointer
  *	position. However the Hotspot passed to SetDragCursorImage is the
@@ -95,7 +84,7 @@ static INTERNALDRAG InternalDrag = { 0, 0, 0, 0, 0, 0, FALSE, 0, FALSE };
  * NOTES
  *     This function can NOT be used to reduce the number of images.
  */
-static VOID
+static void
 IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT cy)
 {
     HDC     hdcImageList, hdcBitmap;
@@ -168,7 +157,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
  *
  *     Blending and Overlays styles are accomplished by another function
  */
-static VOID
+static void
 IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
     HDC hImageDC;
@@ -206,12 +195,13 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  *
  *     Blending and Overlays styles are accomplished by another function.
  */
-static VOID
+static void
 IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
     HBITMAP hOldBitmapImage, hOldBitmapMask;
     HIMAGELIST himlLocal = pimldp->himl;
     UINT fStyle = pimldp->fStyle & (~ILD_OVERLAYMASK);
+    COLORREF clrBk = (pimldp->rgbBk == CLR_DEFAULT) ? himlLocal->clrBk : pimldp->rgbBk;
 
     /*
      * We need a dc and bitmap to draw on that is
@@ -220,7 +210,8 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     HDC hOffScreenDC = CreateCompatibleDC( pimldp->hdcDst );
     HBITMAP hOffScreenBmp = CreateCompatibleBitmap( pimldp->hdcDst, cx, cy );
 
-    BOOL bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
+    BOOL bUseCustomBackground = (clrBk != CLR_NONE) &&
+	    			!((fStyle & ILD_TRANSPARENT) && himlLocal->hbmMask);
     BOOL bBlendFlag = (fStyle & ILD_BLEND50 ) || (fStyle & ILD_BLEND25);
 
     HDC hImageDC = CreateCompatibleDC(0);
@@ -249,7 +240,7 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
          || bBlendFlag) )
     {
 
-        HBRUSH hBrush = CreateSolidBrush (himlLocal->clrBk);
+        HBRUSH hBrush = CreateSolidBrush (clrBk);
         HBRUSH hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
 
         PatBlt( hOffScreenDC, pimldp->x, pimldp->y, cx, cy, PATCOPY );
@@ -319,8 +310,6 @@ cleanup:
 
     DeleteDC( hOffScreenDC );
     DeleteObject( hOffScreenBmp );
-
-    return;
 }
 
 /*************************************************************************
@@ -341,7 +330,7 @@ cleanup:
  *     required to add the blend to the current image.
  *
  */
-static VOID
+static void
 IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
 
@@ -351,11 +340,10 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     COLORREF    clrBlend, oldFgColor, oldBkColor;
     HIMAGELIST  himlLocal = pimldp->himl;
 
-    clrBlend = GetSysColor (COLOR_HIGHLIGHT);
-    if (!(pimldp->rgbFg == CLR_DEFAULT))
-    {
-        clrBlend = pimldp->rgbFg;
-    }
+    clrBlend = pimldp->rgbFg;
+    if (clrBlend == CLR_DEFAULT) clrBlend = GetSysColor (COLOR_HIGHLIGHT);
+    else if (clrBlend == CLR_NONE) clrBlend = GetTextColor (pimldp->hdcDst);
+
     /* Create the blend Mask
     */
     hBlendMaskDC = CreateCompatibleDC(0);
@@ -430,7 +418,7 @@ IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  *
  *
  */
-static VOID
+static void
 IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
     INT nOvlIdx;
@@ -2661,10 +2649,11 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
  * ImageList_SetFilter [COMCTL32.@]
  *
  * Sets a filter (or does something completely different)!!???
+ * It removes 12 Bytes from the stack (3 Parameters).
  *
  * PARAMS
- *     himl     [I] handle to image list
- *     i        [I] ???
+ *     himl     [I] SHOULD be a handle to image list
+ *     i        [I] COULD be an index?
  *     dwFilter [I] ???
  *
  * RETURNS
@@ -2679,8 +2668,7 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT iDrag,
 BOOL WINAPI
 ImageList_SetFilter (HIMAGELIST himl, INT i, DWORD dwFilter)
 {
-    FIXME("(%p 0x%x 0x%lx):empty stub!\n",
-	   himl, i, dwFilter);
+    FIXME("(%p 0x%x 0x%lx):empty stub!\n", himl, i, dwFilter);
 
     return FALSE;
 }
