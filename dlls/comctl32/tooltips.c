@@ -191,7 +191,6 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     RECT rect, wndrect;
     SIZE size;
-    HDC  hdc;
     NMHDR  hdr;
 
     if (infoPtr->nTool == -1) {
@@ -274,9 +273,8 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 		    SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
     /* repaint the tooltip */
-    hdc = GetDC (hwnd);
-    TOOLTIPS_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
 
     SetTimer (hwnd, ID_TIMERPOP, infoPtr->nAutoPopTime, 0);
 }
@@ -314,7 +312,6 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     TTTOOL_INFO *toolPtr;
     RECT rect;
     SIZE size;
-    HDC  hdc;
     NMHDR hdr;
 
     if (infoPtr->nTrackTool == -1) {
@@ -390,9 +387,8 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 		    rect.right - rect.left, rect.bottom - rect.top,
 		    SWP_SHOWWINDOW | SWP_NOACTIVATE );
 
-    hdc = GetDC (hwnd);
-    TOOLTIPS_Refresh (hwnd, hdc);
-    ReleaseDC (hwnd, hdc);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
 }
 
 
