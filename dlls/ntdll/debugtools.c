@@ -47,16 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(tid);
 
 /* ---------------------------------------------------------------------- */
 
-struct debug_info
-{
-    char *str_pos;       /* current position in strings buffer */
-    char *out_pos;       /* current position in output buffer */
-    char  strings[1024]; /* buffer for temporary strings */
-    char  output[1024];  /* current output line */
-};
-
-static struct debug_info initial_thread_info;  /* debug info for initial thread */
-
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
 {
@@ -68,15 +58,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
 {
-    struct debug_info *info = NtCurrentTeb()->debug_info;
-
-    if (!info) NtCurrentTeb()->debug_info = info = &initial_thread_info;
-    if (!info->str_pos)
-    {
-        info->str_pos = info->strings;
-        info->out_pos = info->output;
-    }
-    return info;
+    return NtCurrentTeb()->debug_info;
 }
 
 /* allocate some tmp space for a string */

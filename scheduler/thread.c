@@ -162,25 +162,23 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
      * 1 page              PAGE_GUARD guard page
      * stack_size          normal stack
      * 1 page              TEB (except for initial thread)
-     * 1 page              debug info (except for initial thread)
      */
 
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
     total_size = stack_size + SIGNAL_STACK_SIZE + 3 * page_size;
-    if (!teb) total_size += 2 * page_size;
+    if (!teb) total_size += page_size;
 
     if (!(base = VirtualAlloc( NULL, total_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
         return NULL;
 
     if (!teb)
     {
-        teb = (TEB *)((char *)base + total_size - 2 * page_size);
+        teb = (TEB *)((char *)base + total_size - page_size);
         if (!THREAD_InitTEB( teb ))
         {
             VirtualFree( base, 0, MEM_RELEASE );
             return NULL;
         }
-        teb->debug_info = (char *)teb + page_size;
     }
 
     teb->stack_low    = base;
@@ -207,10 +205,15 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
  */
 void THREAD_Init(void)
 {
+    static struct debug_info info;  /* debug info for initial thread */
+
     if (!initial_teb.self)  /* do it only once */
     {
         THREAD_InitTEB( &initial_teb );
         assert( initial_teb.teb_sel );
+        info.str_pos = info.strings;
+        info.out_pos = info.output;
+        initial_teb.debug_info = &info;
         initial_teb.Peb = (PEB *)&current_process;  /* FIXME */
         SYSDEPS_SetCurThread( &initial_teb );
     }
@@ -224,9 +227,18 @@ DECL_GLOBAL_CONSTRUCTOR(thread_init) { THREAD_Init(); }
  *
  * Start execution of a newly created thread. Does not return.
  */
-static void THREAD_Start(void)
+static void THREAD_Start( TEB *teb )
 {
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)NtCurrentTeb()->entry_point;
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)teb->entry_point;
+    struct debug_info info;
+
+    info.str_pos = info.strings;
+    info.out_pos = info.output;
+    teb->debug_info = &info;
+
+    SYSDEPS_SetCurThread( teb );
+    SIGNAL_Init();
+    CLIENT_InitThread();
 
     if (TRACE_ON(relay))
         DPRINTF("%04lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
@@ -289,11 +301,10 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
     teb->request_fd  = request_pipe[1];
     teb->entry_point = start;
     teb->entry_arg   = param;
-    teb->startup     = THREAD_Start;
     teb->htask16     = GetCurrentTask();
 
     if (id) *id = tid;
-    if (SYSDEPS_SpawnThread( teb ) == -1)
+    if (SYSDEPS_SpawnThread( THREAD_Start, teb ) == -1)
     {
         CloseHandle( handle );
         close( request_pipe[1] );

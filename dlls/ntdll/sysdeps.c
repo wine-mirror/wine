@@ -138,27 +138,12 @@ static void cleanup_thread( void *ptr )
 
 
 /***********************************************************************
- *           SYSDEPS_StartThread
- *
- * Startup routine for a new thread.
- */
-static void SYSDEPS_StartThread( TEB *teb )
-{
-    SYSDEPS_SetCurThread( teb );
-    SIGNAL_Init();
-    CLIENT_InitThread();
-    teb->startup();
-    SYSDEPS_ExitThread(0);  /* should never get here */
-}
-
-
-/***********************************************************************
  *           SYSDEPS_SpawnThread
  *
  * Start running a new thread.
  * Return -1 on error, 0 if OK.
  */
-int SYSDEPS_SpawnThread( TEB *teb )
+int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
 {
 #ifdef HAVE_NPTL
     pthread_t id;
@@ -166,10 +151,10 @@ int SYSDEPS_SpawnThread( TEB *teb )
 
     pthread_attr_init( &attr );
     pthread_attr_setstack( &attr, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
-    if (pthread_create( &id, &attr, (void * (*)(void *))SYSDEPS_StartThread, teb )) return -1;
+    if (pthread_create( &id, &attr, (void * (*)(void *))func, teb )) return -1;
     return 0;
 #elif defined(HAVE_CLONE)
-    if (clone( (int (*)(void *))SYSDEPS_StartThread, teb->stack_top,
+    if (clone( (int (*)(void *))func, teb->stack_top,
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, teb ) < 0)
         return -1;
     return 0;
@@ -177,7 +162,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
     void **sp = (void **)teb->stack_top;
     *--sp = teb;
     *--sp = 0;
-    *--sp = SYSDEPS_StartThread;
+    *--sp = func;
     __asm__ __volatile__(
     "pushl %2;\n\t"		/* flags */
     "pushl $0;\n\t"		/* 0 ? */
@@ -194,7 +179,7 @@ int SYSDEPS_SpawnThread( TEB *teb )
     return 0;
 #elif defined(HAVE__LWP_CREATE)
     ucontext_t context;
-    _lwp_makecontext( &context, (void(*)(void *))SYSDEPS_StartThread, teb,
+    _lwp_makecontext( &context, (void(*)(void *))func, teb,
                       NULL, teb->stack_base, (char *)teb->stack_top - (char *)teb->stack_base );
     if ( _lwp_create( &context, 0, NULL ) )
         return -1;

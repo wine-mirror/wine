@@ -30,6 +30,14 @@ struct tagSYSLEVEL;
 struct server_buffer_info;
 struct fiber_data;
 
+struct debug_info
+{
+    char *str_pos;       /* current position in strings buffer */
+    char *out_pos;       /* current position in output buffer */
+    char  strings[1024]; /* buffer for temporary strings */
+    char  output[1024];  /* current output line */
+};
+
 /* Thread exception block
 
   flags in the comment:
@@ -70,7 +78,7 @@ typedef struct _TEB
     WORD         emu_sel;        /* 1-n  3e 80387 emulator selector */
     DWORD        unknown1;       /* --n  40 */
     DWORD        unknown2;       /* --n  44 */
-    void       (*startup)(void); /* --3  48 Thread startup routine */
+    DWORD        unknown3;       /* --n  48 */
     int          thread_errno;   /* --3  4c Per-thread errno (was: ring0_thread) */
     int          thread_h_errno; /* --3  50 Per-thread h_errno (was: ptr to tdbx structure) */
     void        *signal_stack;   /* --3  54 Signal stack (was: stack_base) */
@@ -109,7 +117,7 @@ typedef struct _TEB
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */
-    void        *debug_info;     /* --3 21c Info for debugstr functions */
+    struct debug_info *debug_info;        /* --3 21c Info for debugstr functions */
     void        *pthread_data;   /* --3 220 Data for pthread emulation */
     struct async_private *pending_list;   /* --3 224 list of pending async operations */
     void        *driver_data;    /* --3 228 Graphics driver private data */
@@ -144,7 +152,7 @@ extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 extern TEB *THREAD_IdToTEB( DWORD id );
 
 /* scheduler/sysdeps.c */
-extern int SYSDEPS_SpawnThread( TEB *teb );
+extern int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb );
 extern void SYSDEPS_SetCurThread( TEB *teb );
 extern int SYSDEPS_GetUnixTid(void);
 extern void DECLSPEC_NORETURN SYSDEPS_ExitThread( int status );
