@@ -690,12 +690,9 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
     {
         DOSVM_InitSegments();
 
-#ifdef MZ_SUPPORTED
         event_notifier = CreateEventA(NULL, FALSE, FALSE, NULL);
         if(!event_notifier)
           ERR("Failed to create event object!\n");
-#endif
-
     }
     return TRUE;
 }
