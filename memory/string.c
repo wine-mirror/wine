@@ -183,12 +183,18 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
  *           lstrcpynA   (KERNEL32.@)
  *
  * Note: this function differs from the UNIX strncpy, it _always_ writes
- * a terminating \0
+ * a terminating \0.
+ *
+ * Note: n is an INT but Windows treats it as unsigned, and will happily
+ * copy a gazillion chars if n is negative.
  */
 LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR p = dst;
+    UINT count = n;
+
     TRACE("(%p, %s, %i)\n", dst, debugstr_a(src), n);
+
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -197,21 +203,32 @@ LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    while ((n-- > 1) && *src) *p++ = *src++;
-    if (n >= 0) *p = 0;
+    while ((count > 1) && *src)
+    {
+        count--;
+        *p++ = *src++;
+    }
+    if (count) *p = 0;
     return dst;
 }
 
 
 /***********************************************************************
  *           lstrcpynW   (KERNEL32.@)
+ *
  * Note: this function differs from the UNIX strncpy, it _always_ writes
  * a terminating \0
+ *
+ * Note: n is an INT but Windows treats it as unsigned, and will happily
+ * copy a gazillion chars if n is negative.
  */
 LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR p = dst;
+    UINT count = n;
+
     TRACE("(%p, %s, %i)\n", dst,  debugstr_w(src), n);
+
     /* In real windows the whole function is protected by an exception handler
      * that returns ERROR_INVALID_PARAMETER on faulty parameters
      * We currently just check for NULL.
@@ -220,8 +237,12 @@ LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    while ((n-- > 1) && *src) *p++ = *src++;
-    if (n >= 0) *p = 0;
+    while ((count > 1) && *src)
+    {
+        count--;
+        *p++ = *src++;
+    }
+    if (count) *p = 0;
     return dst;
 }
 
