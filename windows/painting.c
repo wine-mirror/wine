@@ -219,7 +219,7 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
  */
 HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
 {
-    return (HBRUSH)SendMessage32A( GetParent(hwnd), WM_CTLCOLOR+control,
+    return (HBRUSH)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
                                    (WPARAM)hdc, (LPARAM)hwnd );
 }
 

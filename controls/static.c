@@ -221,7 +221,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
 	wFormat |= DT_NOPREFIX;
 
     if (infoPtr->hFont) SelectObject( hdc, infoPtr->hFont );
-    hBrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+    hBrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
     if (!hBrush) hBrush = GetStockObject(WHITE_BRUSH);
     FillRect16(hdc, &rc, hBrush);
@@ -275,7 +275,7 @@ static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
-    hbrush = SendMessage32A( GetParent(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
+    hbrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,
                              hdc, wndPtr->hwndSelf );
     FillRect16( hdc, &rc, hbrush );
     if (infoPtr->hIcon) DrawIcon( hdc, rc.left, rc.top, infoPtr->hIcon );

@@ -25,12 +25,14 @@
 
 #ifdef linux
 #include <linux/soundcard.h>
+#elif __FreeBSD__
+#include <machine/soundcard.h>
 #endif
 
 #include "stddebug.h"
 #include "debug.h"
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 #define SOUND_DEV "/dev/dsp"
 
 #ifdef SOUND_VERSION
@@ -774,7 +776,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_NOTENABLED;
 		}
 	IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
-	if (abuf_size < 4096 || abuf_size > 65536) {
+	if (abuf_size < 1024 || abuf_size > 65536) {
 		if (abuf_size == -1)
 			dprintf_mciwave(stddeb,"Linux 'wodOpen' // IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 		else
@@ -1073,7 +1075,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 	return MMSYSERR_NOERROR;
 }
 
-#endif /* linux */
+#endif /* linux || __FreeBSD__*/
 
 /**************************************************************************
 * 				wodMessage			[sample driver]
@@ -1083,7 +1085,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 {
 	dprintf_mciwave(stddeb,"wodMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
         switch(wMsg) {
 		case WODM_OPEN:
 			return wodOpen(wDevID, (LPWAVEOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
@@ -1133,7 +1135,7 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 
 /*-----------------------------------------------------------------------*/
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 
 /**************************************************************************
 * 				widGetDevCaps				[internal]
@@ -1223,7 +1225,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 		return MMSYSERR_NOTENABLED;
 		}
 	IOCTL(audio, SNDCTL_DSP_GETBLKSIZE, abuf_size);
-	if (abuf_size < 4096 || abuf_size > 65536) {
+	if (abuf_size < 1024 || abuf_size > 65536) {
 		if (abuf_size == -1)
 			dprintf_mciwave(stddeb,"Linux 'widOpen' // IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 		else
@@ -1532,7 +1534,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 	return MMSYSERR_NOERROR;
 }
 
-#endif /* linux */
+#endif /* linux || __FreeBSD__ */
 
 /**************************************************************************
 * 				widMessage			[sample driver]
@@ -1542,7 +1544,7 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 {
 	dprintf_mciwave(stddeb,"widMessage(%u, %04X, %08lX, %08lX, %08lX);\n",
 			wDevID, wMsg, dwUser, dwParam1, dwParam2);
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {
 		case WIDM_OPEN:
 			return widOpen(wDevID, (LPWAVEOPENDESC)PTR_SEG_TO_LIN(dwParam1), dwParam2);
@@ -1582,7 +1584,7 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mciwave(stddeb,"WAVE_DriverProc(%08lX, %04X, %04X, %08lX, %08lX)\n", 
 		dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 	switch(wMsg) {

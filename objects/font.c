@@ -287,8 +287,9 @@ void FONT_GetMetrics( LOGFONT16 * logfont, XFontStruct * xfont,
     metrics->tmHeight  = xfont->ascent + xfont->descent;
 
     metrics->tmInternalLeading  = 0;
-    if (XGetFontProperty( xfont, XA_X_HEIGHT, &prop ))
-	metrics->tmInternalLeading = xfont->ascent - (short)prop;
+    if (XGetFontProperty( xfont, XA_CAP_HEIGHT, &prop ))
+	metrics->tmInternalLeading = xfont->ascent+xfont->descent-(INT16)prop;
+
     metrics->tmExternalLeading  = 0;
     metrics->tmMaxCharWidth     = xfont->max_bounds.width;
     metrics->tmWeight           = logfont->lfWeight;

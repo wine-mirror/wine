@@ -277,12 +277,12 @@ typedef DEVNAMES * LPDEVNAMES;
 
 BOOL  ChooseColor(LPCHOOSECOLOR lpChCol);
 DWORD CommDlgExtendedError(void);
-BOOL  FindText(LPFINDREPLACE lpFind);
+BOOL  FindText( SEGPTR find);
 short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT cbBuf);
-BOOL  GetOpenFileName(LPOPENFILENAME lpofn);
-BOOL  GetSaveFileName(LPOPENFILENAME lpofn);
-BOOL  PrintDlg(LPPRINTDLG lpPrint);
-BOOL  ReplaceText(LPFINDREPLACE lpFind);
+BOOL  GetOpenFileName(SEGPTR ofn);
+BOOL  GetSaveFileName(SEGPTR ofn);
+BOOL  PrintDlg( SEGPTR print);
+BOOL  ReplaceText( SEGPTR find);
 BOOL  ChooseFont(LPCHOOSEFONT lpChFont);
 
 LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);

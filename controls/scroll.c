@@ -364,7 +364,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT16 *rect,
     {
         if (nBar == SB_CTL)  /* Only scrollbar controls send WM_CTLCOLOR */
         {
-            HBRUSH hbrush = SendMessage32A( GetParent(hwnd),
+            HBRUSH hbrush = SendMessage32A( GetParent32(hwnd),
                                             WM_CTLCOLORSCROLLBAR, hdc, hwnd );
             SelectObject( hdc, hbrush );
         }
@@ -519,7 +519,7 @@ static void SCROLL_HandleKbdEvent( HWND hwnd, WORD wParam )
     default:
         return;
     }
-    SendMessage32A( GetParent(hwnd),
+    SendMessage32A( GetParent32(hwnd),
                     (wndPtr->dwStyle & SBS_VERT) ? WM_VSCROLL : WM_HSCROLL,
                     msg, hwnd );
 }
@@ -559,7 +559,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT16 pt )
     hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbPos );
-    hwndOwner = (nBar == SB_CTL) ? GetParent(hwnd) : hwnd;
+    hwndOwner = (nBar == SB_CTL) ? GetParent32(hwnd) : hwnd;
     hwndCtl   = (nBar == SB_CTL) ? hwnd : 0;
 
     switch(msg)

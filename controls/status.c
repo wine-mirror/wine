@@ -279,7 +279,7 @@ SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 	ReleaseDC(0, hdc);
     }
 
-    parent = GetParent(hwnd);
+    parent = GetParent32(hwnd);
     GetClientRect32(parent, &rect);
     width = rect.right - rect.left;
     height = (self->textHeight * 3)/2;
@@ -393,7 +393,7 @@ SW_Size(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 
     if (flags == SIZE_RESTORED) {
 	/* width and height don't apply */
-	parent = GetParent(hwnd);
+	parent = GetParent32(hwnd);
 	GetClientRect32(parent, &parent_rect);
 	height = (self->textHeight * 3)/2;
 	width = parent_rect.right - parent_rect.left;

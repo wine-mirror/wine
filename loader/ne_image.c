@@ -524,7 +524,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
     if (!(pModule = MODULE_GetPtr( hModule ))) return;
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
-        PE_InitializeDLLs(hModule);
+/*        PE_InitializeDLLs(hModule); */
         return;
     }
     if (pModule->dlls_to_init)

@@ -547,16 +547,10 @@ HINSTANCE PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
     if (!(pModule->pe_module->pe_header->coff.Characteristics & IMAGE_FILE_DLL))
     {
-        int fs;
         TASK_CreateTask( hModule, hInstance, 0,
                          params->hEnvironment,
                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
                          *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
-        fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
-        PE_InitTEB(fs);
-        /* FIXME: this should be done in the context of the new task */
-        __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
-        PE_InitializeDLLs( hModule );
     }
     return hInstance;
 }
@@ -566,6 +560,7 @@ void PE_InitTEB(int hTEB);
 
 void PE_Win32CallToStart( SIGCONTEXT *context )
 {
+    int fs;
     HMODULE16 hModule;
     NE_MODULE *pModule;
 
@@ -574,6 +569,10 @@ void PE_Win32CallToStart( SIGCONTEXT *context )
     hModule = GetExePtr( GetCurrentTask() );
     pModule = MODULE_GetPtr( hModule );
     USER_InitApp( hModule );
+    fs=(int)GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, 0x10000 );
+    PE_InitTEB(fs);
+    __asm__ __volatile__("movw %w0,%%fs"::"r" (fs));
+    PE_InitializeDLLs( hModule );
     CallTaskStart32( (FARPROC32)(pModule->pe_module->load_addr + 
                                pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
 }

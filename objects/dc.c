@@ -582,6 +582,8 @@ HDC CreateCompatibleDC( HDC hdc )
         return 0;
     }
 
+    DC_InitDC( dc );
+
     return handle;
 }
 
@@ -650,9 +652,9 @@ int GetDeviceCaps( HDC hdc, WORD cap )
 
 
 /***********************************************************************
- *           SetBkColor    (GDI.1)
+ *           SetBkColor    (GDI.1) (GDI32.305)
  */
-COLORREF SetBkColor( HDC hdc, COLORREF color )
+COLORREF SetBkColor( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -672,9 +674,9 @@ COLORREF SetBkColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextColor    (GDI.9)
+ *           SetTextColor    (GDI.9) (GDI32.338)
  */
-COLORREF SetTextColor( HDC hdc, COLORREF color )
+COLORREF SetTextColor( HDC32 hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

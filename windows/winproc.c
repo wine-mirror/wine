@@ -390,11 +390,8 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
         }
         return 1;
     case WM_ASKCBFORMATNAME:
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
     case WM_DEVMODECHANGE:
     case WM_MDIACTIVATE:
-    case WM_MEASUREITEM:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
@@ -497,11 +494,8 @@ INT32 WINPROC_MapMsg32WTo32A( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
         }
         return 1;
     case WM_ASKCBFORMATNAME:
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
     case WM_DEVMODECHANGE:
     case WM_MDIACTIVATE:
-    case WM_MEASUREITEM:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
@@ -570,17 +564,67 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
     case WM_COMMAND:
-    case WM_HSCROLL:
     case WM_VKEYTOITEM:
-    case WM_VSCROLL:
         *pwparam32 = MAKEWPARAM( wParam16, HIWORD(*plparam) );
         *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+        return 0;
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+        *pwparam32 = MAKEWPARAM( wParam16, LOWORD(*plparam) );
+        *plparam   = (LPARAM)(HWND32)HIWORD(*plparam);
         return 0;
     case WM_CTLCOLOR:
         *pmsg32    = WM_CTLCOLORMSGBOX + HIWORD(*plparam);
         *pwparam32 = (WPARAM32)(HDC32)wParam16;
         *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
         return 0;
+    case WM_COMPAREITEM:
+        {
+            COMPAREITEMSTRUCT16* cis16 = (COMPAREITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
+            COMPAREITEMSTRUCT32 *cis = (COMPAREITEMSTRUCT32 *)
+                                        HeapAlloc(SystemHeap, 0, sizeof(*cis));
+            if (!cis) return -1;
+            cis->CtlType    = cis16->CtlType;
+            cis->CtlID      = cis16->CtlID;
+            cis->hwndItem   = cis16->hwndItem;
+            cis->itemID1    = cis16->itemID1;
+            cis->itemData1  = cis16->itemData1;
+            cis->itemID2    = cis16->itemID2;
+            cis->itemData2  = cis16->itemData2;
+            cis->dwLocaleId = 0;  /* FIXME */
+            *plparam = (LPARAM)cis;
+        }
+        return 1;
+    case WM_DELETEITEM:
+        {
+            DELETEITEMSTRUCT16* dis16 = (DELETEITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
+            DELETEITEMSTRUCT32 *dis = (DELETEITEMSTRUCT32 *)
+                                        HeapAlloc(SystemHeap, 0, sizeof(*dis));
+            if (!dis) return -1;
+            dis->CtlType  = dis16->CtlType;
+            dis->CtlID    = dis16->CtlID;
+            dis->hwndItem = dis16->hwndItem;
+            dis->itemData = dis16->itemData;
+            *plparam = (LPARAM)dis;
+        }
+        return 1;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT16* mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
+            MEASUREITEMSTRUCT32 *mis = (MEASUREITEMSTRUCT32 *)
+                                        HeapAlloc(SystemHeap, 0,
+                                                sizeof(*mis) + sizeof(LPARAM));
+            if (!mis) return -1;
+            mis->CtlType    = mis16->CtlType;
+            mis->CtlID      = mis16->CtlID;
+            mis->itemID     = mis16->itemID;
+            mis->itemWidth  = mis16->itemWidth;
+            mis->itemHeight = mis16->itemHeight;
+            mis->itemData   = mis16->itemData;
+            *(LPARAM *)(mis + 1) = *plparam;  /* Store the previous lParam */
+            *plparam = (LPARAM)mis;
+        }
+        return 1;
     case WM_DRAWITEM:
         {
             DRAWITEMSTRUCT16* dis16 = (DRAWITEMSTRUCT16 *)PTR_SEG_TO_LIN(*plparam);
@@ -696,11 +740,8 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         }
         return 1;
     case WM_ASKCBFORMATNAME:
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
     case WM_DEVMODECHANGE:
     case WM_MDIACTIVATE:
-    case WM_MEASUREITEM:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
@@ -723,8 +764,21 @@ void WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam, LPARAM lParam )
 {
     switch(msg)
     {
+    case WM_COMPAREITEM:
+    case WM_DELETEITEM:
     case WM_DRAWITEM:
         HeapFree( SystemHeap, 0, (LPVOID)lParam );
+        break;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT16 *mis16;
+            MEASUREITEMSTRUCT32 *mis = (MEASUREITEMSTRUCT32 *)lParam;
+            lParam = *(LPARAM *)(mis + 1);
+            mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            mis16->itemWidth  = (UINT16)mis->itemWidth;
+            mis16->itemHeight = (UINT16)mis->itemHeight;
+            HeapFree( SystemHeap, 0, mis );
+        }
         break;
     case WM_GETMINMAXINFO:
         {
@@ -931,6 +985,34 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
         *plparam = MAKELPARAM( (HWND16)*plparam,
                                (WORD)msg32 - WM_CTLCOLORMSGBOX );
         return 0;
+    case WM_COMPAREITEM:
+        {
+            COMPAREITEMSTRUCT32 *cis32 = (COMPAREITEMSTRUCT32 *)*plparam;
+            COMPAREITEMSTRUCT16 *cis = SEGPTR_NEW(COMPAREITEMSTRUCT16);
+            if (!cis) return -1;
+            cis->CtlType    = (UINT16)cis32->CtlType;
+            cis->CtlID      = (UINT16)cis32->CtlID;
+            cis->hwndItem   = (HWND16)cis32->hwndItem;
+            cis->itemID1    = (UINT16)cis32->itemID1;
+            cis->itemData1  = cis32->itemData1;
+            cis->itemID2    = (UINT16)cis32->itemID2;
+            cis->itemData2  = cis32->itemData2;
+            *plparam = (LPARAM)SEGPTR_GET(cis);
+        }
+        return 1;
+    case WM_DELETEITEM:
+        {
+            DELETEITEMSTRUCT32 *dis32 = (DELETEITEMSTRUCT32 *)*plparam;
+            DELETEITEMSTRUCT16 *dis = SEGPTR_NEW(DELETEITEMSTRUCT16);
+            if (!dis) return -1;
+            dis->CtlType  = (UINT16)dis32->CtlType;
+            dis->CtlID    = (UINT16)dis32->CtlID;
+            dis->itemID   = (UINT16)dis32->itemID;
+            dis->hwndItem = (HWND16)dis32->hwndItem;
+            dis->itemData = dis32->itemData;
+            *plparam = (LPARAM)SEGPTR_GET(dis);
+        }
+        return 1;
     case WM_DRAWITEM:
         {
             DRAWITEMSTRUCT32 *dis32 = (DRAWITEMSTRUCT32 *)*plparam;
@@ -946,6 +1028,22 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
             dis->itemData   = dis32->itemData;
             CONV_RECT32TO16( &dis32->rcItem, &dis->rcItem );
             *plparam = (LPARAM)SEGPTR_GET(dis);
+        }
+        return 1;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT32 *mis32 = (MEASUREITEMSTRUCT32 *)*plparam;
+            MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)
+                                     SEGPTR_ALLOC(sizeof(*mis)+sizeof(LPARAM));
+            if (!mis) return -1;
+            mis->CtlType    = (UINT16)mis32->CtlType;
+            mis->CtlID      = (UINT16)mis32->CtlID;
+            mis->itemID     = (UINT16)mis32->itemID;
+            mis->itemWidth  = (UINT16)mis32->itemWidth;
+            mis->itemHeight = (UINT16)mis32->itemHeight;
+            mis->itemData   = mis32->itemData;
+            *(LPARAM *)(mis + 1) = *plparam;  /* Store the previous lParam */
+            *plparam = (LPARAM)SEGPTR_GET(mis);
         }
         return 1;
     case WM_GETMINMAXINFO:
@@ -1055,11 +1153,8 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
         }
         return 1;
     case WM_ASKCBFORMATNAME:
-    case WM_COMPAREITEM:
-    case WM_DELETEITEM:
     case WM_DEVMODECHANGE:
     case WM_MDIACTIVATE:
-    case WM_MEASUREITEM:
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
@@ -1082,8 +1177,19 @@ void WINPROC_UnmapMsg32ATo16( UINT16 msg, WPARAM16 wParam, LPARAM lParam )
 {
     switch(msg)
     {
+    case WM_COMPAREITEM:
+    case WM_DELETEITEM:
     case WM_DRAWITEM:
         SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
+        break;
+    case WM_MEASUREITEM:
+        {
+            MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            MEASUREITEMSTRUCT32 *mis32 = *(MEASUREITEMSTRUCT32 **)(mis + 1);
+            mis32->itemWidth  = mis->itemWidth;
+            mis32->itemHeight = mis->itemHeight;
+            SEGPTR_FREE(mis);
+        }
         break;
     case WM_GETMINMAXINFO:
         {

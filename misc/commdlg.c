@@ -56,12 +56,13 @@ static BOOL FileDlg_Init()
 /***********************************************************************
  *           GetOpenFileName   (COMMDLG.1)
  */
-BOOL GetOpenFileName(LPOPENFILENAME lpofn)
+BOOL GetOpenFileName( SEGPTR ofn )
 {
     HINSTANCE hInst;
     HANDLE hDlgTmpl, hResInfo;
     BOOL bRet;
-  
+    LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
+
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
     if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) hDlgTmpl = lpofn->hInstance;
@@ -85,7 +86,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FileOpenDlgProc"),
-                        (DWORD)lpofn );
+                        ofn );
 
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
@@ -102,11 +103,12 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
 /***********************************************************************
  *           GetSaveFileName   (COMMDLG.2)
  */
-BOOL GetSaveFileName(LPOPENFILENAME lpofn)
+BOOL GetSaveFileName( SEGPTR ofn)
 {
     HINSTANCE hInst;
     HANDLE hDlgTmpl, hResInfo;
     BOOL bRet;
+    LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
   
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
@@ -127,7 +129,7 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
     bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpofn->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FileSaveDlgProc"),
-                        (DWORD)lpofn); 
+                        ofn );
     if (!(lpofn->Flags & OFN_ENABLETEMPLATEHANDLE))
     {
         if (lpofn->Flags & OFN_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
@@ -227,7 +229,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int saved
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
-	SendMessage16(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
 
 	if (savedlg)       /* use _gray_ text in FileSaveDlg */
@@ -252,7 +254,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int saved
 	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
 	SelectObject(lpdis->hDC, hBrush);
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
-	SendMessage16(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
+	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
 
 	hBitmap = hFolder;
@@ -338,7 +340,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
   char tmpstr[512];
   LPSTR pstr;
   SetWindowLong32A(hWnd, DWL_USER, lParam);
-  lpofn = (LPOPENFILENAME)lParam;
+  lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(lParam);
   if (lpofn->lpstrTitle) SetWindowText16( hWnd, lpofn->lpstrTitle );
   /* read custom filter information */
   if (lpofn->lpstrCustomFilter)
@@ -440,11 +442,11 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       FILEDLG_StripEditControl(hWnd);
       if (notification == LBN_DBLCLK)
 	goto almost_ok;
-      lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL, 0, 0);
+      lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL16, 0, 0);
       if (lRet == LB_ERR) return TRUE;
       if ((pstr = SEGPTR_ALLOC(512)))
       {
-          SendDlgItemMessage16(hWnd, lst1, LB_GETTEXT, lRet,
+          SendDlgItemMessage16(hWnd, lst1, LB_GETTEXT16, lRet,
                                (LPARAM)SEGPTR_GET(pstr));
           SetDlgItemText32A( hWnd, edt1, pstr );
           SEGPTR_FREE(pstr);
@@ -459,10 +461,10 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       FILEDLG_StripEditControl(hWnd);
       if (notification == LBN_DBLCLK)
 	{
-	  lRet = SendDlgItemMessage16(hWnd, lst2, LB_GETCURSEL, 0, 0);
+	  lRet = SendDlgItemMessage16(hWnd, lst2, LB_GETCURSEL16, 0, 0);
 	  if (lRet == LB_ERR) return TRUE;
           pstr = SEGPTR_ALLOC(512);
-	  SendDlgItemMessage16(hWnd, lst2, LB_GETTEXT, lRet,
+	  SendDlgItemMessage16(hWnd, lst2, LB_GETTEXT16, lRet,
 			     (LPARAM)SEGPTR_GET(pstr));
           strcpy( tmpstr, pstr );
           SEGPTR_FREE(pstr);
@@ -582,8 +584,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	lpofn->nFileExtension++;
       if (PTR_SEG_TO_LIN(lpofn->lpstrFileTitle) != NULL) 
 	{
-	  lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL, 0, 0);
-	  SendDlgItemMessage16(hWnd, lst1, LB_GETTEXT, lRet,
+	  lRet = SendDlgItemMessage16(hWnd, lst1, LB_GETCURSEL16, 0, 0);
+	  SendDlgItemMessage16(hWnd, lst1, LB_GETTEXT16, lRet,
                                lpofn->lpstrFileTitle );
 	}
       if (FILEDLG_HookCallChk(lpofn))
@@ -702,11 +704,12 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           FindTextDlg   (COMMDLG.11)
  */
-BOOL FindText(LPFINDREPLACE lpFind)
+BOOL FindText( SEGPTR find )
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
     LPCVOID ptr;
+    LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -721,7 +724,7 @@ BOOL FindText(LPFINDREPLACE lpFind)
     if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
                         (DLGPROC16)MODULE_GetWndProcEntry16("FindTextDlgProc"),
-                        (DWORD)lpFind );
+                        find );
     GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
@@ -731,11 +734,12 @@ BOOL FindText(LPFINDREPLACE lpFind)
 /***********************************************************************
  *           ReplaceTextDlg   (COMMDLG.12)
  */
-BOOL ReplaceText(LPFINDREPLACE lpFind)
+BOOL ReplaceText( SEGPTR find )
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
     LPCVOID ptr;
+    LPFINDREPLACE lpFind = (LPFINDREPLACE)PTR_SEG_TO_LIN(find);
 
     /*
      * FIXME : Should respond to FR_ENABLETEMPLATE and FR_ENABLEHOOK here
@@ -750,7 +754,7 @@ BOOL ReplaceText(LPFINDREPLACE lpFind)
     if (!(ptr = GlobalLock16( hDlgTmpl ))) return -1;
     bRet = CreateDialogIndirectParam16( hInst, ptr, lpFind->hwndOwner,
                      (DLGPROC16)MODULE_GetWndProcEntry16("ReplaceTextDlgProc"),
-                     (DWORD)lpFind );
+                     find );
     GlobalUnlock16( hDlgTmpl );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
@@ -765,7 +769,7 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     LPFINDREPLACE lpfr;
 
     SetWindowLong32A(hWnd, DWL_USER, lParam);
-    lpfr = (LPFINDREPLACE)lParam;
+    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(lParam);
     lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the
@@ -868,7 +872,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
     LPFINDREPLACE lpfr;
 
     SetWindowLong32A(hWnd, DWL_USER, lParam);
-    lpfr = (LPFINDREPLACE)lParam;
+    lpfr = (LPFINDREPLACE)PTR_SEG_TO_LIN(lParam);
     lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
     /*
      * FIXME : If the initial FindWhat string is empty, we should disable the FinNext /
@@ -983,10 +987,11 @@ LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           PrintDlg   (COMMDLG.20)
  */
-BOOL PrintDlg(LPPRINTDLG lpPrint)
+BOOL PrintDlg( SEGPTR printdlg )
 {
     HANDLE hInst, hDlgTmpl;
     BOOL bRet;
+    LPPRINTDLG lpPrint = (LPPRINTDLG)PTR_SEG_TO_LIN(printdlg);
 
     dprintf_commdlg(stddeb,"PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
@@ -1004,7 +1009,7 @@ BOOL PrintDlg(LPPRINTDLG lpPrint)
                                (DLGPROC16)((lpPrint->Flags & PD_PRINTSETUP) ?
                                 MODULE_GetWndProcEntry16("PrintSetupDlgProc") :
                                 MODULE_GetWndProcEntry16("PrintDlgProc")),
-                               (DWORD)lpPrint );
+                                printdlg );
     SYSRES_FreeResource( hDlgTmpl );
     return bRet;
 }
@@ -1139,7 +1144,7 @@ BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
     hInst = WIN_GetWindowInstance( lpChCol->hwndOwner );
     bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChCol->hwndOwner,
                            (DLGPROC16)MODULE_GetWndProcEntry16("ColorDlgProc"),
-                           (DWORD)lpChCol );
+                           (DWORD)lpChCol);
     if (!(lpChCol->Flags & CC_ENABLETEMPLATEHANDLE))
     {
         if (lpChCol->Flags & CC_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
@@ -2220,7 +2225,7 @@ BOOL ChooseFont(LPCHOOSEFONT lpChFont)
     hInst = WIN_GetWindowInstance( lpChFont->hwndOwner );
     bRet = DialogBoxIndirectParam16( hInst, hDlgTmpl, lpChFont->hwndOwner,
                       (DLGPROC16)MODULE_GetWndProcEntry16("FormatCharDlgProc"),
-                      (DWORD)lpChFont );
+                      (DWORD)lpChFont);
     if (!(lpChFont->Flags & CF_ENABLETEMPLATEHANDLE))
     {
         if (lpChFont->Flags & CF_ENABLETEMPLATE) FreeResource16( hDlgTmpl );
@@ -2263,7 +2268,7 @@ INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
   int i;
   WORD w;
   HWND hwnd=LOWORD(lParam);
-  HWND hDlg=GetParent(hwnd);
+  HWND hDlg=GetParent16(hwnd);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
 
@@ -2380,7 +2385,7 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
 {
   HWND hcmb2=LOWORD(lParam);
   HWND hcmb3=HIWORD(lParam);
-  HWND hDlg=GetParent(hcmb3);
+  HWND hDlg=GetParent16(hcmb3);
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
   TEXTMETRIC16 *lptm = (TEXTMETRIC16 *)PTR_SEG_TO_LIN(metrics);

@@ -291,11 +291,8 @@ INT32 lstrncmpi32A( LPCSTR str1, LPCSTR str2, INT32 n )
 
     if (!n) return 0;
     while ((--n > 0) && *str1)
-    {
-        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
-        str1++;
-        str2++;
-    }
+      if ( (res = toupper(*str1++) - toupper(*str2++)) ) return res;
+
     return toupper(*str1) - toupper(*str2);
 }
 

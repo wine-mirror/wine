@@ -403,11 +403,16 @@ HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
     HBITMAP prevHandle = dc->w.hBitmap;
     
     if (!(dc->w.flags & DC_MEMORY)) return 0;
-    hrgn = CreateRectRgn( 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
-    if (!hrgn) return 0;
 
-    DeleteObject( dc->w.hVisRgn );
-    dc->w.hVisRgn    = hrgn;
+    if (dc->w.hVisRgn)
+       SetRectRgn(dc->w.hVisRgn, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
+    else
+    { 
+       hrgn = CreateRectRgn( 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
+       if (!hrgn) return 0;
+       dc->w.hVisRgn    = hrgn;
+    }
+
     dc->u.x.drawable = bmp->pixmap;
     dc->w.hBitmap    = hbitmap;
 

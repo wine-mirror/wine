@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
@@ -31,8 +32,13 @@
 #define HWND_BROADCAST16  ((HWND16)0xffff)
 #define HWND_BROADCAST32  ((HWND32)0xffffffff)
 
-extern BYTE* 	KeyStateTable;				 /* event.c */
+#define ASCII_CHAR_HACK 0x0800 
+
 extern WPARAM	lastEventChar;				 /* event.c */
+extern BOOL MouseButtonsStates[3];
+extern BOOL AsyncMouseButtonsStates[3];
+extern BYTE KeyStateTable[256];
+extern BYTE AsyncKeyStateTable[256];
 
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
@@ -263,8 +269,8 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
         HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0,
                         (LPARAM)SEGPTR_GET(event) );
     }
-    else if ((msg->message >= WM_NCMOUSEMOVE) &&
-             (msg->message <= WM_NCMBUTTONDBLCLK))
+    else if ((msg->message >= WM_NCMOUSEFIRST) &&
+             (msg->message <= WM_NCMOUSELAST))
     {
         event->paramL = LOWORD(msg->lParam);       /* X pos */
         event->paramH = HIWORD(msg->lParam);       /* Y pos */ 
@@ -275,6 +281,108 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
     SEGPTR_FREE(event);
 }
 
+/*****************************************************************
+ *              MSG_JournalPlayBackIsAscii
+ */
+static BOOL MSG_JournalPlayBackIsAscii(WPARAM wParam)
+{
+ return ((wParam>VK_HELP && wParam<VK_F1) || 
+          wParam == VK_SPACE  ||
+          wParam == VK_ESCAPE ||
+          wParam == VK_RETURN ||
+          wParam == VK_TAB    ||
+          wParam == VK_BACK);   
+}
+
+
+/***********************************************************************
+ *          MSG_JournalPlayBackMsg
+ *
+ * Get an EVENTMSG struct via call JOURNALPAYBACK hook function 
+ */
+static int MSG_JournalPlayBackMsg(void)
+{
+ EVENTMSG16 *tmpMsg;
+ long wtime,lParam;
+ WORD keyDown,i,wParam,result=0;
+
+ if ( HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+ {
+  tmpMsg = SEGPTR_NEW(EVENTMSG16);
+  wtime=HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_GETNEXT, 0, (LPARAM)SEGPTR_GET(tmpMsg));
+  /*  dprintf_msg(stddeb,"Playback wait time =%ld\n",wtime); */
+  if (wtime<=0)
+  {
+   wtime=0;
+   if ((tmpMsg->message>= WM_KEYFIRST) && (tmpMsg->message <= WM_KEYLAST))
+   {
+     wParam=tmpMsg->paramL & 0xFF;
+     lParam=MAKELONG(tmpMsg->paramH&0x7ffff,tmpMsg->paramL>>8);
+     if (tmpMsg->message == WM_KEYDOWN || tmpMsg->message == WM_SYSKEYDOWN)
+     {
+       for (keyDown=i=0; i<256 && !keyDown; i++)
+          if (KeyStateTable[i] & 0x80)
+            keyDown++;
+       if (!keyDown)
+         lParam |= 0x40000000;       
+       AsyncKeyStateTable[wParam]=KeyStateTable[wParam] |= 0x80;
+       if (MSG_JournalPlayBackIsAscii(wParam))
+       {
+         lastEventChar= wParam;         /* control TranslateMessage() */
+         lParam |= (LONG)((LONG)ASCII_CHAR_HACK*0x10000L);
+
+         if (!(KeyStateTable[VK_SHIFT] & 0x80) &&
+             !(KeyStateTable[VK_CAPITAL] & 0x80))
+           lastEventChar= tolower(lastEventChar);
+         if (KeyStateTable[VK_CONTROL] & 0x80)
+           lastEventChar&=0x1f;
+       }  
+     }  
+     else                                       /* WM_KEYUP, WM_SYSKEYUP */
+     {
+       lParam |= 0xC0000000;      
+       AsyncKeyStateTable[wParam]=KeyStateTable[wParam] &= ~0x80;
+     }
+     if (KeyStateTable[VK_MENU] & 0x80)
+       lParam |= 0x20000000;     
+     if (tmpMsg->paramH & 0x8000)              /*special_key bit*/
+       lParam |= 0x01000000;
+     hardware_event( tmpMsg->message, wParam, lParam,0, 0, tmpMsg->time, 0 );     
+   }
+   else
+   {
+    if ((tmpMsg->message>= WM_MOUSEFIRST) && (tmpMsg->message <= WM_MOUSELAST))
+    {
+     switch (tmpMsg->message)
+     {
+      case WM_LBUTTONDOWN:MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=1;break;
+      case WM_LBUTTONUP:  MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=0;break;
+      case WM_MBUTTONDOWN:MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=1;break;
+      case WM_MBUTTONUP:  MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=0;break;
+      case WM_RBUTTONDOWN:MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=1;break;
+      case WM_RBUTTONUP:  MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=0;break;      
+     }
+     AsyncKeyStateTable[VK_LBUTTON]= KeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] << 8;
+     AsyncKeyStateTable[VK_MBUTTON]= KeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] << 8;
+     AsyncKeyStateTable[VK_RBUTTON]= KeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] << 8;
+     SetCursorPos(tmpMsg->paramL,tmpMsg->paramH);
+     lParam=MAKELONG(tmpMsg->paramL,tmpMsg->paramH);
+     wParam=0;             
+     if (MouseButtonsStates[0]) wParam |= MK_LBUTTON;
+     if (MouseButtonsStates[1]) wParam |= MK_MBUTTON;
+     if (MouseButtonsStates[2]) wParam |= MK_RBUTTON;
+     hardware_event( tmpMsg->message, wParam, lParam,  
+                     tmpMsg->paramL, tmpMsg->paramH, tmpMsg->time, 0 );
+    }
+   }
+   HOOK_CallHooks( WH_JOURNALPLAYBACK, HC_SKIP, 0, (LPARAM)SEGPTR_GET(tmpMsg));
+  }
+  else
+    result= QS_MOUSE | QS_KEY;
+  SEGPTR_FREE(tmpMsg);
+ }
+ return result;
+} 
 
 /***********************************************************************
  *           MSG_PeekHardwareMsg
@@ -489,6 +597,8 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
             if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, pos );
             break;
         }
+
+        msgQueue->changeBits |= MSG_JournalPlayBackMsg();
 
         /* Now find a hardware event */
 
@@ -909,7 +1019,6 @@ void WaitMessage( void )
  * This should call ToAscii but it is currently broken
  */
 
-#define ASCII_CHAR_HACK 0x0800
 
 BOOL TranslateMessage( LPMSG16 msg )
 {

@@ -221,16 +221,50 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x0180 - Win32 Listboxes */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "LB_ADDSTRING32",           /* 0x0180 */
+    "LB_INSERTSTRING32",        /* 0x0181 */
+    "LB_DELETESTRING32",        /* 0x0182 */
+    "LB_SELITEMRANGEEX32",      /* 0x0183 */
+    "LB_RESETCONTENT32",        /* 0x0184 */
+    "LB_SETSEL32",              /* 0x0185 */
+    "LB_SETCURSEL32",           /* 0x0186 */
+    "LB_GETSEL32",              /* 0x0187 */
+    "LB_GETCURSEL32",           /* 0x0188 */
+    "LB_GETTEXT32",             /* 0x0189 */
+    "LB_GETTEXTLEN32",          /* 0x018a */
+    "LB_GETCOUNT32",            /* 0x018b */
+    "LB_SELECTSTRING32",        /* 0x018c */
+    "LB_DIR32",                 /* 0x018d */
+    "LB_GETTOPINDEX32",         /* 0x018e */
+    "LB_FINDSTRING32",          /* 0x018f */
 
-    /* 0x0190 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "LB_GETSELCOUNT32",         /* 0x0190 */
+    "LB_GETSELITEMS32",         /* 0x0191 */
+    "LB_SETTABSTOPS32",         /* 0x0192 */
+    "LB_GETHORIZONTALEXTENT32", /* 0x0193 */
+    "LB_SETHORIZONTALEXTENT32", /* 0x0194 */
+    "LB_SETCOLUMNWIDTH32",      /* 0x0195 */
+    "LB_ADDFILE32",             /* 0x0196 */
+    "LB_SETTOPINDEX32",         /* 0x0197 */
+    "LB_GETITEMRECT32",         /* 0x0198 */
+    "LB_GETITEMDATA32",         /* 0x0199 */
+    "LB_SETITEMDATA32",         /* 0x019a */
+    "LB_SELITEMRANGE32",        /* 0x019b */
+    "LB_SETANCHORINDEX32",      /* 0x019c */
+    "LB_GETANCHORINDEX32",      /* 0x019d */
+    "LB_SETCARETINDEX32",       /* 0x019e */
+    "LB_GETCARETINDEX32",       /* 0x019f */
 
-    /* 0x01A0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "LB_SETITEMHEIGHT32",       /* 0x01a0 */
+    "LB_GETITEMHEIGHT32",       /* 0x01a1 */
+    "LB_FINDSTRINGEXACT32",     /* 0x01a2 */
+    NULL, NULL,
+    "LB_SETLOCALE32",           /* 0x01a5 */
+    "LB_GETLOCALE32",           /* 0x01a6 */
+    "LB_SETCOUNT32",            /* 0x01a7 */
+    "LB_INITSTORAGE32",         /* 0x01a8 */
+    "LB_ITEMFROMPOINT32",       /* 0x01a9 */
+    NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x01B0 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -429,7 +463,7 @@ static int SPY_IndentLevel  = 0;
 /***********************************************************************
  *           SPY_GetMsgName
  */
-static const char *SPY_GetMsgName( UINT msg )
+const char *SPY_GetMsgName( UINT msg )
 {
     static char buffer[20];
 

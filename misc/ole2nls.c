@@ -23,19 +23,36 @@ DWORD GetUserDefaultLCID()
 /* Default sorting, neutral sublanguage */
     switch(Options.language)
     {
-    case LANG_En: return 0x09;
-    case LANG_Es: return 0x0a;
-    case LANG_De: return 0x07;
-    case LANG_No: return 0x14;
-    case LANG_Fr: return 0x0c;
-    case LANG_Fi: return 0x0b;
-    case LANG_Da: return 0x06;
-    case LANG_Cz: return 0x05;
-    case LANG_Eo: return 0x25; /* not official */
-    case LANG_It: return 0x10;
-    case LANG_Ko: return 0x12;
+ /* case LANG_Bu: return 0x02; */      /* Bulgarian */
+ /* case LANG_Ch: return 0x04; */      /* Chinese */
+    case LANG_Cz: return 0x05;         /* Czech */
+    case LANG_Da: return 0x06;         /* Danish */
+    case LANG_De: return 0x07;         /* German */
+ /* case LANG_Gr: return 0x08; */      /* Greek */
+    case LANG_En: return 0x09;         /* English */
+    case LANG_Es: return 0x0a;         /* Spanish */
+    case LANG_Fi: return 0x0b;         /* Finnish */
+    case LANG_Fr: return 0x0c;         /* French */
+ /* case LANG_Hu: return 0x0e; */      /* Hungarian */
+ /* case LANG_Ic: return 0x0f; */      /* Icelandic */
+    case LANG_It: return 0x10;         /* Italian */
+ /* case LANG_Jp: return 0x11; */      /* Japanese */
+    case LANG_Ko: return 0x12;         /* Korean */
+ /* case LANG_Du: return 0x13; */      /* Dutch */
+    case LANG_No: return 0x14;         /* Norwegian */
+ /* case LANG_Pl: return 0x15; */      /* Polish */
+ /* case LANG_Po: return 0x16; */      /* Portuguese */
+ /* case LANG_Ro: return 0x18; */      /* Romanian */
+ /* case LANG_Ru: return 0x19; */      /* Russian */
+ /* case LANG_Cr: return 0x1a; */      /* Croatian */
+ /* case LANG_Sl: return 0x1b; */      /* Slovak */
+ /* case LANG_Sw: return 0x1d; */      /* Swedish */
+ /* case LANG_Tu: return 0x1f; */      /* Turkish */
+ /* case LANG_Sv: return 0x24; */      /* Slovenian */
+    case LANG_Eo: return 0x25;         /* Esperanto (not official) */
+
     default:
-	return 0;  /* Neutral language */
+	return 0x00;                   /* Neutral language */
     }
 }
 

@@ -186,7 +186,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    {
 		 if( wndPtr->flags & WIN_NCACTIVATED )
 		 {
-		   FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+		   FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                                (HDC)wParam, sysColorObjects.hbrushActiveCaption );
 		   return 1;
 		 }
@@ -199,11 +199,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
             {
                 HBRUSH hbrush = CreateSolidBrush( 
 			        GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
-                 FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+                 FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                              (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
-            else FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+            else FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
                                   (HDC)wParam, wndPtr->class->hbrBackground );
 	    return 1;
 	}

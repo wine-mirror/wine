@@ -89,16 +89,6 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 		res=MCIERR_INVALID_DEVICE_NAME;\
 		break;\
 	}
-/* we need to have strings in 16 bit space for some things 
- * FIXME: this is bad.
- */
-#define	_MCI_STRDUP_TO_SEG(dest,source) {\
-	HANDLE	x;\
-	x=USER_HEAP_ALLOC(strlen(source));\
-	dest=(LPSTR)MAKELONG(x,USER_HeapSel);\
-	strcpy(PTR_SEG_TO_LIN(dest),source);\
-}
-
 /* print a DWORD in the specified timeformat */
 static void
 _MCISTR_printtf(char *buf,UINT uDevType,DWORD timef,DWORD val) {
@@ -315,7 +305,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	s=strchr(dev,'!');
 	if (s!=NULL) {
 		*s++='\0';
-		_MCI_STRDUP_TO_SEG(pU->openParams.lpstrElementName,s);
+		pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(s));
 	}
 	if (!STRCMP(dev,"cdaudio")) {
 		uDevTyp=MCI_DEVTYPE_CD_AUDIO;
@@ -328,37 +318,40 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	} else if (!STRCMP(dev,"avivideo")) {
 		uDevTyp=MCI_DEVTYPE_DIGITAL_VIDEO;
 	} else {
+		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
+		SEGPTR_FREE(pU);
 		return MCIERR_INVALID_DEVICE_NAME;
 	}
 	wDevID=0;
 	while(mciDrv[wDevID].wType) {
 		if (++wDevID>=MAXMCIDRIVERS) {
 			dprintf_mci(stddeb, __FILE__":MCISTR_Open:MAXMCIDRIVERS reached!\n");
+			SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
+			SEGPTR_FREE(pU);
 			return MCIERR_INTERNAL;
 		}
 	}
 	mciDrv[wDevID].wType		= uDevTyp;
 	mciDrv[wDevID].wDeviceID	= wDevID;
-	pU->openParams.dwCallback		= 0;
-	pU->openParams.wDeviceID		= wDevID;
+	pU->openParams.dwCallback	= 0;
+	pU->openParams.wDeviceID	= wDevID;
 	pU->ovlyopenParams.dwStyle	= 0; 
 	pU->animopenParams.dwStyle	= 0; 
-
-	_MCI_STRDUP_TO_SEG(pU->openParams.lpstrDeviceType,dev);
-	pU->openParams.lpstrAlias		= NULL;
+	pU->openParams.lpstrDeviceType	= SEGPTR_GET(SEGPTR_STRDUP(dev));
+	pU->openParams.lpstrAlias	= NULL;
 	dwFlags |= MCI_OPEN_TYPE;
 	i=0;
 	while (i<nrofkeywords) {
 		FLAG1("shareable",MCI_OPEN_SHAREABLE);
 		if (!strcmp(keywords[i],"alias") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ALIAS;
-			_MCI_STRDUP_TO_SEG(pU->openParams.lpstrAlias,keywords[i]);
+			pU->openParams.lpstrAlias=SEGPTR_GET(SEGPTR_STRDUP(keywords[i]));
 			i+=2;
 			continue;
 		}
 		if (!strcmp(keywords[i],"element") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ELEMENT;
-			_MCI_STRDUP_TO_SEG(pU->openParams.lpstrElementName,keywords[i]);
+			pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(keywords[i]));
 			i+=2;
 			continue;
 		}
@@ -429,7 +422,12 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	_MCI_CALL_DRIVER( MCI_OPEN, SEGPTR_GET(pU) );
 	if (res==0)
 		memcpy(&mciOpenDrv[wDevID],&pU->openParams,sizeof(MCI_OPEN_PARMS));
-        SEGPTR_FREE(pU);
+	else {
+		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
+		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrDeviceType));
+		SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrAlias));
+	}
+	SEGPTR_FREE(pU);
 	return res;
 }
 

@@ -668,13 +668,22 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
     case META_EXTTEXTOUT:
       {
         LPINT16 dxx;
-        s1=mr->rdParam[2];                              /* String length */
-        if (mr->rdSize-(s1+1))
-         dxx=&mr->rdParam[8+(s1+1)/2];                  /* start of array */
-        else
-         dxx=NULL;                                      /* NO array present */
-          
-	ExtTextOut16( hdc, mr->rdParam[1],              /* X position */
+        DWORD len;
+
+        s1 = mr->rdParam[2];                              /* String length */
+        len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
+         + sizeof(UINT16) + sizeof(RECT16);
+        if (mr->rdSize == len / 2)
+          dxx = NULL;                                    /* No array present */
+        else if (mr->rdSize == (len + s1 * sizeof(INT16)) / 2)
+          dxx = &mr->rdParam[8+(s1+1)/2];                /* start of array */
+        else {
+          fprintf(stderr,
+           "PlayMetaFileRecord ExtTextOut mr->rdSize = %08lx, count = %x\n",
+           mr->rdSize, s1);
+          dxx = NULL;
+        }
+        ExtTextOut16( hdc, mr->rdParam[1],              /* X position */
 	                   mr->rdParam[0],              /* Y position */
 	                   mr->rdParam[3],              /* options */
 	                   (LPRECT16) &mr->rdParam[4],  /* rectangle */
@@ -1247,7 +1256,8 @@ BOOL MF_ExtTextOut(DC *dc, short x, short y, UINT16 flags, const RECT16 *rect,
     HANDLE hmr;
     METARECORD *mr;
 
-    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 4 + sizeof(RECT16);
+    len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
+	    + sizeof(UINT16) + sizeof(RECT16);
     if (lpDx)
      len+=count*sizeof(INT16);
     if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))

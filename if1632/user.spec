@@ -46,7 +46,7 @@ heap	65520
 43  pascal16 CloseWindow(word) CloseWindow
 44  pascal16 OpenIcon(word) OpenIcon
 45  pascal16 BringWindowToTop(word) BringWindowToTop
-46  pascal16 GetParent(word) GetParent
+46  pascal16 GetParent(word) GetParent16
 47  pascal16 IsWindow(word) IsWindow
 48  pascal16 IsChild(word word) IsChild
 49  pascal16 IsWindowVisible(word) IsWindowVisible

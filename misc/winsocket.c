@@ -1559,3 +1559,14 @@ INT WSACleanup(void)
 	}
 	return 0;
 }
+
+VOID
+WsControl(DWORD x1,DWORD x2,LPDWORD x3,LPDWORD x4,LPDWORD x5,LPDWORD x6) {
+	fprintf(stdnimp,"WsControl(%lx,%lx,%lx,%lx,%lx,%lx)\n",
+		x1,x2,x3,x4,x5,x6
+	);
+	fprintf(stdnimp,"WsControl(x,x,%lx,%lx,%lx,%lx)\n",
+		x3?*x3:0,x4?*x4:0,x5?*x5:0,x6?*x6:0
+	);
+	return;
+}

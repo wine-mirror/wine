@@ -281,7 +281,7 @@ base	1
 0274 stub GetNextDlgGroupItem
 0275 stub GetNextDlgTabItem
 0276 stub GetOpenClipboardWindow
-0277 stdcall GetParent(long) GetParent
+0277 stdcall GetParent(long) GetParent32
 0278 stub GetPriorityClipboardFormat
 0279 stub GetProcessWindowStation
 0280 stdcall GetPropA(long ptr) GetProp32A
@@ -292,7 +292,7 @@ base	1
 0285 stub GetScrollRange
 0286 stub GetShellWindow
 0287 stdcall GetSubMenu(long long) GetSubMenu
-0288 	stdcall GetSysColor(long) GetSysColor
+0288 stdcall GetSysColor(long) GetSysColor
 0289 stdcall GetSysColorBrush(long) GetSysColorBrush
 0290 stdcall GetSystemMenu(long long) GetSystemMenu
 0291 stdcall GetSystemMetrics(long) GetSystemMetrics

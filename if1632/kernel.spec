@@ -145,8 +145,8 @@ type	win16
 144 pascal16 CreateDirectory(ptr ptr) CreateDirectory16
 145 pascal16 RemoveDirectory(ptr) RemoveDirectory16
 146 pascal16 DeleteFile(ptr) DeleteFile16
-147 stub SetLastError
-148 stub GetLastError
+147 pascal16 SetLastError(long) SetLastError
+148 pascal16 GetLastError() GetLastError
 149 stub GetVersionEx
 150 pascal16 DirectedYield(word) DirectedYield
 151 stub WinOldApCall

@@ -131,7 +131,7 @@ static LRESULT CBCreate(HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (cstyle & CBS_SORT) style |= LBS_SORT;
   if (cstyle & CBS_HASSTRINGS) style |= LBS_HASSTRINGS;
   style |= LBS_NOTIFY;
-  CreateListBoxStruct(hwnd, ODT_COMBOBOX, style, GetParent(hwnd));
+  CreateListBoxStruct(hwnd, ODT_COMBOBOX, style, GetParent16(hwnd));
   CreateComboStruct(hwnd,cstyle);
 
   lphl = ComboGetListHeader(hwnd);
@@ -726,13 +726,13 @@ static LRESULT CBCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
                                    InvalidateRect32(hwnd, NULL, TRUE); 
                                   }
                                  }
-                                 SendMessage16(GetParent(hwnd),WM_COMMAND,id,
+                                 SendMessage16(GetParent16(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_EDITUPDATE));
                                  break;
-                  case EN_CHANGE:SendMessage16(GetParent(hwnd),WM_COMMAND,id,
+                  case EN_CHANGE:SendMessage16(GetParent16(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_EDITCHANGE));
                                  break;
-                  case EN_ERRSPACE:SendMessage16(GetParent(hwnd),WM_COMMAND,id,
+                  case EN_ERRSPACE:SendMessage16(GetParent16(hwnd),WM_COMMAND,id,
                                          MAKELONG(hwnd, CBN_ERRSPACE));
                                  break;
                 }
@@ -886,7 +886,7 @@ static LRESULT CBLKeyDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
   
   ListBoxSetCurSel(lphl, newFocused);
   ListBoxSendNotification(lphl, CBN_SELCHANGE);
-  SendMessage16(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+  SendMessage16(GetParent16(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
   lphl->ItemFocused = newFocused;
   ListBoxScrollToFocus(lphl);
   SetScrollPos(hwnd, SB_VERT, lphl->FirstVisible, TRUE);
@@ -1039,7 +1039,7 @@ static LRESULT CBLLButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam )
   else if (lphl->PrevFocused != lphl->ItemFocused) 
           {
       		SendMessage16(CLBoxGetCombo(hwnd),CB_SETCURSEL,lphl->ItemFocused,0);
-      		SendMessage16(GetParent(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
+      		SendMessage16(GetParent16(hwnd), WM_COMMAND,ID_CLB,MAKELONG(0,CBN_SELCHANGE));
       		ListBoxSendNotification(lphl, CBN_SELCHANGE);
      	  }
 

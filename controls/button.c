@@ -61,7 +61,7 @@ static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
          ReleaseDC( (wndPtr)->hwndSelf, hdc ); }
 
 #define BUTTON_SEND_CTLCOLOR(wndPtr,hdc) \
-    SendMessage32A( GetParent((wndPtr)->hwndSelf), WM_CTLCOLORBTN, \
+    SendMessage32A( GetParent32((wndPtr)->hwndSelf), WM_CTLCOLORBTN, \
                     (hdc), (wndPtr)->hwndSelf )
 
 static HBITMAP hbitmapCheckBoxes = 0;
@@ -149,7 +149,7 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
                                 ((infoPtr->state & 3) + 1), 0 );
                 break;
             }
-            SendMessage32A( GetParent(hWnd), WM_COMMAND,
+            SendMessage32A( GetParent32(hWnd), WM_COMMAND,
                             MAKEWPARAM( wndPtr->wIDmenu, BN_CLICKED ), hWnd);
         }
         break;
@@ -519,6 +519,6 @@ static void OB_Paint( WND *wndPtr, HDC hDC, WORD action )
     dis.hDC        = hDC;
     dis.itemData   = 0;
     GetClientRect32( wndPtr->hwndSelf, &dis.rcItem );
-    SendMessage32A( GetParent(wndPtr->hwndSelf), WM_DRAWITEM,
+    SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_DRAWITEM,
                     wndPtr->wIDmenu, (LPARAM)&dis );
 }

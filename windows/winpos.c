@@ -1832,7 +1832,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
         }
 
         if ((winpos->hwnd == GetFocus()) || IsChild(winpos->hwnd, GetFocus()))
-            SetFocus( GetParent(winpos->hwnd) );  /* Revert focus to parent */
+            SetFocus( GetParent32(winpos->hwnd) ); /* Revert focus to parent */
 
 	if (winpos->hwnd == hwndActive)
 	{

@@ -227,7 +227,7 @@ HMENU MDISetMenu(HWND hwnd, BOOL fRefresh, HMENU hmenuFrame, HMENU hmenuWindow)
 
     if (!fRefresh) 
        {
-	HWND hwndFrame = GetParent(hwnd);
+	HWND hwndFrame = GetParent16(hwnd);
 	HMENU oldFrameMenu = GetMenu(hwndFrame);
         
 	if( ci->hwndChildMaximized && hmenuFrame && hmenuFrame!=oldFrameMenu )
@@ -504,7 +504,7 @@ HWND MDIDestroyChild(WND *w_parent, MDICLIENTINFO *ci, HWND parent,
 
         if (flagDestroy)
 	   {
-	     MDI_PostUpdate(GetParent(child), ci, SB_BOTH+1);
+	     MDI_PostUpdate(GetParent16(child), ci, SB_BOTH+1);
             DestroyWindow(child);
 	   }
     }
@@ -1329,7 +1329,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
 
-    clientWnd  = WIN_FindWndPtr(GetParent(hwnd));
+    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
 
     switch (message)
@@ -1471,7 +1471,7 @@ LRESULT DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
 
-    clientWnd  = WIN_FindWndPtr(GetParent(hwnd));
+    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
 
     switch (message)
@@ -1523,7 +1523,7 @@ LRESULT DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
 
-    clientWnd  = WIN_FindWndPtr(GetParent(hwnd));
+    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
 
     switch (message)

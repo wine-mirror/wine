@@ -99,7 +99,7 @@ static ERRNO_XLAT_TABLE errno_xlat_table[] = {
 };
 
 /**********************************************************************
- *              GetLastError            (KERNEL32.227)
+ *              GetLastError   (KERNEL.148) (KERNEL32.227)
  */
 DWORD GetLastError(void)
 {
@@ -107,7 +107,7 @@ DWORD GetLastError(void)
 }
 
 /**********************************************************************
- *              SetLastError            (KERNEL32.497)
+ *              SetLastError   (KERNEL.147) (KERNEL32.497)
  *
  * This is probably not used by apps too much, but it's useful for
  * our own internal use.

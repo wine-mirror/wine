@@ -145,10 +145,10 @@ void SYSCOLOR_Init(void)
 
 
 /*************************************************************************
- *             GetSysColor           (USER.180)
+ *             GetSysColor   (USER.180) (USER32.288)
  */
 
-COLORREF GetSysColor(short nIndex)
+COLORREF GetSysColor( INT32 nIndex )
 {
     dprintf_syscolor(stddeb,"System Color %d = %8lx\n", 
 		    nIndex, SysColors[nIndex]);

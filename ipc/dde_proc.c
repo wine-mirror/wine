@@ -521,14 +521,18 @@ void dde_msg_setup(int *msg_ptr)
  */
 void DDE_TestDDE(HWND hwnd)	   
 {
-
-  if (main_block != NULL)
+  static in_test = 0;
+  if (in_test++) return;
+  if (main_block != NULL) {
+     in_test--;
      return;
+  }
   dprintf_msg(stddeb,"DDE_TestDDE(0x%04x)\n", hwnd);
   if (hwnd==0)
       hwnd=-1;
   /* just send a message to see how things are going */
   SendMessage16( hwnd, WM_DDE_INITIATE, 0, 0);
+  in_test--;
 }
 
 void dde_proc_delete(int proc_idx)

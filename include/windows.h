@@ -2572,39 +2572,117 @@ DECL_WINELIB_TYPE(LPSCROLLINFO);
 #define LBS_STANDARD          (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
 
 /* Listbox messages */
-#define LB_ADDSTRING           (WM_USER+1)
-#define LB_INSERTSTRING        (WM_USER+2)
-#define LB_DELETESTRING        (WM_USER+3)
-#define LB_RESETCONTENT        (WM_USER+5)
-#define LB_SETSEL              (WM_USER+6)
-#define LB_SETCURSEL           (WM_USER+7)
-#define LB_GETSEL              (WM_USER+8)
-#define LB_GETCURSEL           (WM_USER+9)
-#define LB_GETTEXT             (WM_USER+10)
-#define LB_GETTEXTLEN          (WM_USER+11)
-#define LB_GETCOUNT            (WM_USER+12)
-#define LB_SELECTSTRING        (WM_USER+13)
-#define LB_DIR                 (WM_USER+14)
-#define LB_GETTOPINDEX         (WM_USER+15)
-#define LB_FINDSTRING          (WM_USER+16)
-#define LB_GETSELCOUNT         (WM_USER+17)
-#define LB_GETSELITEMS         (WM_USER+18)
-#define LB_SETTABSTOPS         (WM_USER+19)
-#define LB_GETHORIZONTALEXTENT (WM_USER+20)
-#define LB_SETHORIZONTALEXTENT (WM_USER+21)
-#define LB_SETCOLUMNWIDTH      (WM_USER+22)
-#define LB_SETTOPINDEX         (WM_USER+24)
-#define LB_GETITEMRECT         (WM_USER+25)
-#define LB_GETITEMDATA         (WM_USER+26)
-#define LB_SETITEMDATA         (WM_USER+27)
-#define LB_SELITEMRANGE        (WM_USER+28)
-#define LB_SETANCHORINDEX      (WM_USER+29) /* undoc. - for LBS_EXTENDEDSEL */
-#define LB_GETANCHORINDEX      (WM_USER+30) /* - * - */
-#define LB_SETCARETINDEX       (WM_USER+31)
-#define LB_GETCARETINDEX       (WM_USER+32)
-#define LB_SETITEMHEIGHT       (WM_USER+33)
-#define LB_GETITEMHEIGHT       (WM_USER+34)
-#define LB_FINDSTRINGEXACT     (WM_USER+35)
+#define LB_ADDSTRING16           (WM_USER+1)
+#define LB_ADDSTRING32           0x0180
+#define LB_ADDSTRING             WINELIB_NAME(LB_ADDSTRING)
+#define LB_INSERTSTRING16        (WM_USER+2)
+#define LB_INSERTSTRING32        0x0181
+#define LB_INSERTSTRING          WINELIB_NAME(LB_INSERTSTRING)
+#define LB_DELETESTRING16        (WM_USER+3)
+#define LB_DELETESTRING32        0x0182
+#define LB_DELETESTRING          WINELIB_NAME(LB_DELETESTRING)
+#define LB_SELITEMRANGEEX16      (WM_USER+4)
+#define LB_SELITEMRANGEEX32      0x0183
+#define LB_SELITEMRANGEEX        WINELIB_NAME(LB_SELITEMRANGEEX)
+#define LB_RESETCONTENT16        (WM_USER+5)
+#define LB_RESETCONTENT32        0x0184
+#define LB_RESETCONTENT          WINELIB_NAME(LB_RESETCONTENT)
+#define LB_SETSEL16              (WM_USER+6)
+#define LB_SETSEL32              0x0185
+#define LB_SETSEL                WINELIB_NAME(LB_SETSEL)
+#define LB_SETCURSEL16           (WM_USER+7)
+#define LB_SETCURSEL32           0x0186
+#define LB_SETCURSEL             WINELIB_NAME(LB_SETCURSEL)
+#define LB_GETSEL16              (WM_USER+8)
+#define LB_GETSEL32              0x0187
+#define LB_GETSEL                WINELIB_NAME(LB_GETSEL)
+#define LB_GETCURSEL16           (WM_USER+9)
+#define LB_GETCURSEL32           0x0188
+#define LB_GETCURSEL             WINELIB_NAME(LB_GETCURSEL)
+#define LB_GETTEXT16             (WM_USER+10)
+#define LB_GETTEXT32             0x0189
+#define LB_GETTEXT               WINELIB_NAME(LB_GETTEXT)
+#define LB_GETTEXTLEN16          (WM_USER+11)
+#define LB_GETTEXTLEN32          0x018a
+#define LB_GETTEXTLEN            WINELIB_NAME(LB_GETTEXTLEN)
+#define LB_GETCOUNT16            (WM_USER+12)
+#define LB_GETCOUNT32            0x018b
+#define LB_GETCOUNT              WINELIB_NAME(LB_GETCOUNT)
+#define LB_SELECTSTRING16        (WM_USER+13)
+#define LB_SELECTSTRING32        0x018c
+#define LB_SELECTSTRING          WINELIB_NAME(LB_SELECTSTRING)
+#define LB_DIR16                 (WM_USER+14)
+#define LB_DIR32                 0x018d
+#define LB_DIR                   WINELIB_NAME(LB_DIR)
+#define LB_GETTOPINDEX16         (WM_USER+15)
+#define LB_GETTOPINDEX32         0x018e
+#define LB_GETTOPINDEX           WINELIB_NAME(LB_GETTOPINDEX)
+#define LB_FINDSTRING16          (WM_USER+16)
+#define LB_FINDSTRING32          0x018f
+#define LB_FINDSTRING            WINELIB_NAME(LB_FINDSTRING)
+#define LB_GETSELCOUNT16         (WM_USER+17)
+#define LB_GETSELCOUNT32         0x0190
+#define LB_GETSELCOUNT           WINELIB_NAME(LB_GETSELCOUNT)
+#define LB_GETSELITEMS16         (WM_USER+18)
+#define LB_GETSELITEMS32         0x0191
+#define LB_GETSELITEMS           WINELIB_NAME(LB_GETSELITEMS)
+#define LB_SETTABSTOPS16         (WM_USER+19)
+#define LB_SETTABSTOPS32         0x0192
+#define LB_SETTABSTOPS           WINELIB_NAME(LB_SETTABSTOPS)
+#define LB_GETHORIZONTALEXTENT16 (WM_USER+20)
+#define LB_GETHORIZONTALEXTENT32 0x0193
+#define LB_GETHORIZONTALEXTENT   WINELIB_NAME(LB_GETHORIZONTALEXTENT)
+#define LB_SETHORIZONTALEXTENT16 (WM_USER+21)
+#define LB_SETHORIZONTALEXTENT32 0x0194
+#define LB_SETHORIZONTALEXTENT   WINELIB_NAME(LB_SETHORIZONTALEXTENT)
+#define LB_SETCOLUMNWIDTH16      (WM_USER+22)
+#define LB_SETCOLUMNWIDTH32      0x0195
+#define LB_SETCOLUMNWIDTH        WINELIB_NAME(LB_SETCOLUMNWIDTH)
+#define LB_ADDFILE16             (WM_USER+23)
+#define LB_ADDFILE32             0x0196
+#define LB_ADDFILE               WINELIB_NAME(LB_ADDFILE)
+#define LB_SETTOPINDEX16         (WM_USER+24)
+#define LB_SETTOPINDEX32         0x0197
+#define LB_SETTOPINDEX           WINELIB_NAME(LB_SETTOPINDEX)
+#define LB_GETITEMRECT16         (WM_USER+25)
+#define LB_GETITEMRECT32         0x0198
+#define LB_GETITEMRECT           WINELIB_NAME(LB_GETITEMRECT)
+#define LB_GETITEMDATA16         (WM_USER+26)
+#define LB_GETITEMDATA32         0x0199
+#define LB_GETITEMDATA           WINELIB_NAME(LB_GETITEMDATA)
+#define LB_SETITEMDATA16         (WM_USER+27)
+#define LB_SETITEMDATA32         0x019a
+#define LB_SETITEMDATA           WINELIB_NAME(LB_SETITEMDATA)
+#define LB_SELITEMRANGE16        (WM_USER+28)
+#define LB_SELITEMRANGE32        0x019b
+#define LB_SELITEMRANGE          WINELIB_NAME(LB_SELITEMRANGE)
+#define LB_SETANCHORINDEX16      (WM_USER+29)
+#define LB_SETANCHORINDEX32      0x019c
+#define LB_SETANCHORINDEX        WINELIB_NAME(LB_SETANCHORINDEX)
+#define LB_GETANCHORINDEX16      (WM_USER+30)
+#define LB_GETANCHORINDEX32      0x019d
+#define LB_GETANCHORINDEX        WINELIB_NAME(LB_GETANCHORINDEX)
+#define LB_SETCARETINDEX16       (WM_USER+31)
+#define LB_SETCARETINDEX32       0x019e
+#define LB_SETCARETINDEX         WINELIB_NAME(LB_SETCARETINDEX)
+#define LB_GETCARETINDEX16       (WM_USER+32)
+#define LB_GETCARETINDEX32       0x019f
+#define LB_GETCARETINDEX         WINELIB_NAME(LB_GETCARETINDEX)
+#define LB_SETITEMHEIGHT16       (WM_USER+33)
+#define LB_SETITEMHEIGHT32       0x01a0
+#define LB_SETITEMHEIGHT         WINELIB_NAME(LB_SETITEMHEIGHT)
+#define LB_GETITEMHEIGHT16       (WM_USER+34)
+#define LB_GETITEMHEIGHT32       0x01a1
+#define LB_GETITEMHEIGHT         WINELIB_NAME(LB_GETITEMHEIGHT)
+#define LB_FINDSTRINGEXACT16     (WM_USER+35)
+#define LB_FINDSTRINGEXACT32     0x01a2
+#define LB_FINDSTRINGEXACT       WINELIB_NAME(LB_FINDSTRINGEXACT)
+
+#define LB_SETLOCALE32           0x01a5
+#define LB_GETLOCALE32           0x01a6
+#define LB_SETCOUNT32            0x01a7
+#define LB_INITSTORAGE32         0x01a8
+#define LB_ITEMFROMPOINT32       0x01a9
 
 /* Listbox notification codes */
 #define LBN_ERRSPACE        (-2)
@@ -3587,6 +3665,8 @@ DWORD      GetAppCompatFlags(HTASK32);
 LONG       GetBitmapBits(HBITMAP32,LONG,LPVOID);
 WORD       GetClassWord(HWND32,INT32);
 INT16      GetDlgCtrlID(HWND32);
+DWORD      GetLastError(void);
+COLORREF   GetSysColor(INT32);
 DWORD      GetTickCount(void);
 INT16      GetUpdateRgn(HWND32,HRGN32,BOOL32);
 WORD       GetWindowWord(HWND32,INT32);
@@ -3605,14 +3685,16 @@ UINT16     RealizePalette(HDC32);
 DWORD      RegCloseKey(HKEY);
 DWORD      RegFlushKey(HKEY);
 LONG       SetBitmapBits(HBITMAP32,LONG,LPCVOID);
+COLORREF   SetBkColor(HDC32,COLORREF);
 BOOL16     SetCaretBlinkTime(UINT32);
 BOOL16     SetCaretPos(INT32,INT32);
 WORD       SetClassWord(HWND32,INT32,WORD);
 INT16      SetDIBits(HDC32,HBITMAP32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
 INT16      SetDIBitsToDevice(HDC32,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
-VOID       SetLastError(DWORD); /* FIXME: not 100% sure it's only in win32 */
+VOID       SetLastError(DWORD);
 VOID       SetLastErrorEx(DWORD,DWORD);
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
+COLORREF   SetTextColor(HDC32,COLORREF);
 WORD       SetWindowWord(HWND32,INT32,WORD);
 BOOL16     ShowCaret(HWND32);
 HWND16     WindowFromDC(HDC32);
@@ -3970,6 +4052,9 @@ INT16      GetObject16(HANDLE16,INT16,LPVOID);
 INT32      GetObject32A(HANDLE32,INT32,LPVOID);
 INT32      GetObject32W(HANDLE32,INT32,LPVOID);
 #define    GetObject WINELIB_NAME_AW(GetObject)
+HWND16     GetParent16(HWND16);
+HWND32     GetParent32(HWND32);
+#define    GetParent WINELIB_NAME(GetParent)
 FARPROC16  GetProcAddress16(HMODULE16,SEGPTR);
 FARPROC32  GetProcAddress32(HMODULE32,LPCSTR);
 #define    GetProcAddress WINELIB_NAME(GetProcAddress)
@@ -4741,7 +4826,6 @@ HWND       GetNextWindow(HWND,WORD);
 WORD       GetNumTasks(void);
 HWND       GetOpenClipboardWindow(void);
 WORD       GetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
-HWND       GetParent(HWND);
 DWORD      GetPixel(HDC,short,short);
 WORD       GetPolyFillMode(HDC);
 int        GetPriorityClipboardFormat(WORD*,short);
@@ -4760,7 +4844,6 @@ DWORD      GetSelectorLimit(WORD);
 HANDLE     GetStockObject(int);
 WORD       GetStretchBltMode(HDC);
 HMENU      GetSubMenu(HMENU,short);
-COLORREF   GetSysColor(short);
 HMENU      GetSystemMenu(HWND,BOOL);
 int        GetSystemMetrics(WORD);
 WORD       GetSystemPaletteEntries(HDC,WORD,WORD,LPPALETTEENTRY);
@@ -4891,7 +4974,6 @@ HPALETTE16 SelectPalette(HDC,HPALETTE16,BOOL);
 int        SelectVisRgn(HDC,HRGN);
 WORD       SelectorAccessRights(WORD,WORD,WORD);
 HWND       SetActiveWindow(HWND);
-COLORREF   SetBkColor(HDC,COLORREF);
 WORD       SetBkMode(HDC,WORD);
 HWND       SetCapture(HWND);
 HANDLE     SetClipboardData(WORD,HANDLE);
@@ -4939,7 +5021,6 @@ BOOL       SetSystemTime(const SYSTEMTIME*);
 HQUEUE16   SetTaskQueue(HTASK16,HQUEUE16);
 WORD       SetTextAlign(HDC,WORD);
 short      SetTextCharacterExtra(HDC,short);
-DWORD      SetTextColor(HDC,DWORD);
 short      SetTextJustification(HDC,short,short);
 int        SetVoiceAccent(int,int,int,int,int);
 int        SetVoiceEnvelope(int,int,int);

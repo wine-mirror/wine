@@ -1473,9 +1473,18 @@ BOOL16 IsWindow( HWND32 hwnd )
 
 
 /*****************************************************************
- *         GetParent              (USER.46)
+ *         GetParent16   (USER.46)
  */
-HWND GetParent(HWND hwnd)
+HWND16 GetParent16( HWND16 hwnd )
+{
+    return (HWND16)GetParent32( hwnd );
+}
+
+
+/*****************************************************************
+ *         GetParent32   (USER32.277)
+ */
+HWND32 GetParent32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (!wndPtr) return 0;

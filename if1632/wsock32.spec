@@ -9,14 +9,14 @@ base	0
 005 stub getpeername
 006 stub getsockname
 007 stub getsockopt
-008 stub htonl
-009 stub htons
+008 stdcall htonl(long) htonl
+009 stdcall htons(long) htons
 010 stdcall inet_addr(ptr) inet_addr
 011 stdcall inet_ntoa(ptr) inet_ntoa
 012 stub ioctlsocket
 013 stub listen
 014 stub ntohl
-015 stub ntohs
+015 stdcall ntohs(long) ntohs
 016 stub recv
 017 stub recvfrom
 018 stub select
@@ -53,8 +53,9 @@ base	0
 # applications *should* 'degrade gracefully if these are not present
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
-1100 stub inet_network
-1101 stub getnetbyname
+1001 stdcall WsControl(long long long long long long) WsControl
+1100 stdcall inet_network(ptr) inet_network
+1101 stdcall getnetbyname(ptr) getnetbyname
 #1102 stub rcmd
 #1103 stub rexec
 #1104 stub rresvport

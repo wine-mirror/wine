@@ -174,15 +174,18 @@ void EVENT_ProcessEvent( XEvent *event )
     {
     case KeyPress:
     case KeyRelease:
-	EVENT_key( (XKeyEvent*)event );
+        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+            EVENT_key( (XKeyEvent*)event );
 	break;
 	
     case ButtonPress:
-	EVENT_ButtonPress( (XButtonEvent*)event );
+        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+            EVENT_ButtonPress( (XButtonEvent*)event );
 	break;
 
     case ButtonRelease:
-	EVENT_ButtonRelease( (XButtonEvent*)event );
+        if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+            EVENT_ButtonRelease( (XButtonEvent*)event );
 	break;
 
     case MotionNotify:
@@ -194,9 +197,12 @@ void EVENT_ProcessEvent( XEvent *event )
 	   problems if the event order is important. I'm not yet seen
 	   of any problems. Jon 7/6/96.
 	 */
-        while (XCheckTypedWindowEvent(display, ((XAnyEvent *)event)->window,
-			  MotionNotify, event));    
-	EVENT_MotionNotify( (XMotionEvent*)event );
+	if (!HOOK_GetHook(WH_JOURNALPLAYBACK, 0) )
+	{
+            while (XCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
+                                          MotionNotify, event));    
+            EVENT_MotionNotify( (XMotionEvent*)event );
+	}
 	break;
 
     case FocusIn:

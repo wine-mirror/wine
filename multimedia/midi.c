@@ -26,9 +26,11 @@
 
 #ifdef linux
 #include <linux/soundcard.h>
+#elif __FreeBSD__
+#include <machine/soundcard.h>
 #endif
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 #define MIDI_DEV "/dev/sequencer"
 
 #ifdef SOUND_VERSION
@@ -89,7 +91,7 @@ static LINUX_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg, 
 				DWORD dwParam1, DWORD dwParam2)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	if (MidiInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
 		MidiInDev[wDevID].midiDesc.dwCallback, MidiInDev[wDevID].wFlags, 
 		MidiInDev[wDevID].midiDesc.hMidi, wMsg, 
@@ -109,7 +111,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 */
 static DWORD MIDI_ReadByte(UINT wDevID, BYTE *lpbyt)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	if (lpbyt != NULL) {
 		if (mmioRead(MCIMidiDev[wDevID].hFile, (HPSTR)lpbyt,
 			(long) sizeof(BYTE)) == (long) sizeof(BYTE)) {
@@ -196,7 +198,7 @@ static DWORD MIDI_ReadVaryLen(UINT wDevID, LPDWORD lpdw)
 */
 static DWORD MIDI_ReadMThd(UINT wDevID, DWORD dwOffset)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	DWORD	toberead;
 	FOURCC	fourcc;
 	dprintf_midi(stddeb, "MIDI_ReadMThd(%04X, %08lX);\n", wDevID, dwOffset);
@@ -239,7 +241,7 @@ static DWORD MIDI_ReadMThd(UINT wDevID, DWORD dwOffset)
 
 static DWORD MIDI_ReadMTrk(UINT wDevID, DWORD dwOffset)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	DWORD	toberead;
 	FOURCC	fourcc;
 	if (mmioSeek(MCIMidiDev[wDevID].hFile, dwOffset, SEEK_SET) != dwOffset) {
@@ -267,7 +269,7 @@ static DWORD MIDI_ReadMTrk(UINT wDevID, DWORD dwOffset)
 */
 static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	MIDIOPENDESC 	MidiDesc;
 	DWORD		dwRet;
 	DWORD		dwOffset;
@@ -362,7 +364,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 */
 static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciStop(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	MCIMidiDev[wDevID].dwStatus = MCI_MODE_STOP;
@@ -380,7 +382,7 @@ static DWORD MIDI_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 */
 static DWORD MIDI_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	DWORD		dwRet;
 	dprintf_midi(stddeb, "MIDI_mciClose(%u, %08lX, %p);\n", wDevID, dwParam, lpParms);
 	if (MCIMidiDev[wDevID].dwStatus != MCI_MODE_STOP) {
@@ -411,7 +413,7 @@ static DWORD MIDI_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpPar
 */
 static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int			count;
 	int			start, end;
 	LPMIDIHDR	lpMidiHdr;
@@ -501,7 +503,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 */
 static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int			start, end;
 	LPMIDIHDR	lpMidiHdr;
 	DWORD		dwRet;
@@ -563,7 +565,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
 */
 static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciPause(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
@@ -578,7 +580,7 @@ static DWORD MIDI_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 */
 static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciResume(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	return 0;
@@ -593,7 +595,7 @@ static DWORD MIDI_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 */
 static DWORD MIDI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciSet(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	dprintf_midi(stddeb, "MIDI_mciSet // dwTimeFormat=%08lX\n", lpParms->dwTimeFormat);
@@ -659,7 +661,7 @@ static DWORD MIDI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 */
 static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciStatus(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_STATUS_ITEM) {
@@ -748,7 +750,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 static DWORD MIDI_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 					LPMCI_GETDEVCAPS_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciGetDevCaps(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	if (dwFlags & MCI_GETDEVCAPS_ITEM) {
@@ -795,7 +797,7 @@ static DWORD MIDI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 */
 static DWORD MIDI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "MIDI_mciInfo(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
 	lpParms->lpstrReturn = NULL;
@@ -837,7 +839,7 @@ static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPS lpCaps, DWORD dwSize)
 */
 static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int		midi;
 	dprintf_midi(stddeb,
 		"midOpen(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
@@ -892,7 +894,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 */
 static DWORD midClose(WORD wDevID)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "midClose(%u);\n", wDevID);
 	if (MidiInDev[wDevID].unixdev == 0) {
 		dprintf_midi(stddeb,"Linux 'midClose' // can't close !\n");
@@ -1021,7 +1023,7 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS lpCaps, DWORD dwSize)
 */
 static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 {								 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int		midi;
 	dprintf_midi(stddeb,
 		"modOpen(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
@@ -1079,7 +1081,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 */
 static DWORD modClose(WORD wDevID)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb, "modClose(%u);\n", wDevID);
 	if (MidiOutDev[wDevID].unixdev == 0) {
 		dprintf_midi(stddeb,"Linux 'modClose' // can't close !\n");
@@ -1103,7 +1105,7 @@ static DWORD modClose(WORD wDevID)
 */
 static DWORD modData(WORD wDevID, DWORD dwParam)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	WORD	event;
 	dprintf_midi(stddeb,	
 		"modData(%u, %08lX);\n", wDevID, dwParam);
@@ -1128,7 +1130,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 */
 static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int		count;
 	LPWORD	ptr;
 	dprintf_midi(stddeb,	
@@ -1178,7 +1180,7 @@ static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 */
 static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb,
 		  "modPrepare(%u, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	if (MidiOutDev[wDevID].unixdev == 0) {
@@ -1205,7 +1207,7 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 */
 static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_midi(stddeb,
 		"modUnprepare(%u, %p, %08lX);\n", wDevID, lpMidiHdr, dwSize);
 	if (MidiOutDev[wDevID].unixdev == 0) {
@@ -1270,7 +1272,7 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 						DWORD dwParam1, DWORD dwParam2)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {
 		case DRV_LOAD:
 			return 1;

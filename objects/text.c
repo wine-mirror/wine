@@ -31,6 +31,8 @@ static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
 
+extern int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
+                                         short right, short bottom, UINT16 flags);
 
 static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
                                   char *dest, int *len, int width, WORD format)
@@ -321,10 +323,11 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
                      const RECT16 *lprect, LPCSTR str, UINT16 count,
                      const INT16 *lpDx )
 {
-    int dir, ascent, descent, i;
+    HRGN	hRgnClip = 0;
+    int 	dir, ascent, descent, i;
     XCharStruct info;
     XFontStruct *font;
-    RECT16 rect;
+    RECT16 	rect;
 
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -442,8 +445,17 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn( hdc );
-        IntersectVisRect( hdc, rect.left, rect.top, rect.right, rect.bottom );
+       if (dc->w.flags & DC_MEMORY)
+       {
+	  hRgnClip = dc->w.hClipRgn;
+	  CLIPPING_IntersectClipRect(dc, rect.left, rect.top, rect.right, rect.bottom,
+					 CLIP_INTERSECT | CLIP_KEEPRGN);
+       }
+       else
+       { 
+          SaveVisRgn( hdc );
+          IntersectVisRect( hdc, rect.left, rect.top, rect.right, rect.bottom );
+       }
     }
 
       /* Draw the text background if necessary */
@@ -550,7 +562,13 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }
-    if (flags & ETO_CLIPPED) RestoreVisRgn( hdc );
+
+    if (flags & ETO_CLIPPED) 
+    {
+	if( dc->w.flags & DC_MEMORY )
+	     SelectClipRgn( hdc, hRgnClip );
+	else RestoreVisRgn( hdc );
+    }
     return TRUE;
 }
 

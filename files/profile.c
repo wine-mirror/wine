@@ -429,7 +429,10 @@ static BOOL PROFILE_Open( const char *filename )
         fclose( file );
     }
     else
+    {
+        /* Does not exist yet, we will create it in PROFILE_FlushFile */
         fprintf( stderr, "Warning: profile file %s not found\n", newdos_name );
+    }
     dprintf_profile( stddeb, "PROFILE_Open(%s): successful\n", filename );
     return TRUE;
 }

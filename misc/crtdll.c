@@ -4,6 +4,7 @@
  * Implements C run-time functionality as known from UNIX.
  *
  * Copyright 1996 Marcus Meissner
+ * Copyright 1996 Jukka Iivonen
  */
 
 #include <stdio.h>
@@ -12,6 +13,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <ctype.h>
+#include <math.h>
 #include "win.h"
 #include "windows.h"
 #include "stddebug.h"
@@ -35,6 +37,10 @@ UINT32 CRTDLL_winmajor_dll;     /* CRTDLL.329 */
 UINT32 CRTDLL_winminor_dll;     /* CRTDLL.330 */
 UINT32 CRTDLL_winver_dll;       /* CRTDLL.331 */
 
+
+/*********************************************************************
+ *                  _GetMainArgs  (CRTDLL.022)
+ */
 DWORD
 CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,LPSTR *environ,DWORD flag)
 {
@@ -60,7 +66,6 @@ CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,LPSTR *environ,DWORD flag)
 	CRTDLL_osminor_dll     = version & 0xFF;
 	CRTDLL_osmajor_dll     = (version>>8) & 0xFF;
 
-	/* missing heapinit */
 	/* missing threading init */
 
 	i=0;xargv=NULL;xargc=0;afterlastspace=0;
@@ -93,8 +98,11 @@ CRTDLL__GetMainArgs(LPDWORD argc,LPSTR **argv,LPSTR *environ,DWORD flag)
 }
 
 typedef void (*_INITTERMFUN)();
-DWORD
-CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
+
+/*********************************************************************
+ *                  _initterm     (CRTDLL.135)
+ */
+DWORD CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 {
 	_INITTERMFUN	*current;
 
@@ -108,25 +116,37 @@ CRTDLL__initterm(_INITTERMFUN *start,_INITTERMFUN *end)
 	return 0;
 }
 
-void
-CRTDLL_srand(DWORD seed) {
+/*********************************************************************
+ *                  srand         (CRTDLL.460)
+ */
+void CRTDLL_srand(DWORD seed)
+{
 	/* FIXME: should of course be thread? process? local */
 	srand(seed);
 }
 
-int
-CRTDLL_fprintf(DWORD *args) {
+/*********************************************************************
+ *                  fprintf       (CRTDLL.373)
+ */
+int CRTDLL_fprintf(DWORD *args)
+{
 	/* FIXME: use args[0] */
 	return vfprintf(stderr,(LPSTR)(args[1]),args+2);
 }
 
-int
-CRTDLL_printf(DWORD *args) {
+/*********************************************************************
+ *                  printf        (CRTDLL.440)
+ */
+int CRTDLL_printf(DWORD *args)
+{
 	return vfprintf(stdout,(LPSTR)(args[0]),args+1);
 }
 
-time_t
-CRTDLL_time(time_t *timeptr) {
+/*********************************************************************
+ *                  time          (CRTDLL.488)
+ */
+time_t CRTDLL_time(time_t *timeptr)
+{
 	time_t	curtime = time(NULL);
 
 	if (timeptr)
@@ -134,14 +154,20 @@ CRTDLL_time(time_t *timeptr) {
 	return curtime;
 }
 
-BOOL32
-CRTDLL__isatty(DWORD x) {
+/*********************************************************************
+ *                  _isatty       (CRTDLL.137)
+ */
+BOOL32 CRTDLL__isatty(DWORD x)
+{
 	dprintf_crtdll(stderr,"CRTDLL__isatty(%ld)\n",x);
 	return TRUE;
 }
 
-INT32
-CRTDLL__write(DWORD x,LPVOID buf,DWORD len) {
+/*********************************************************************
+ *                  _write        (CRTDLL.332)
+ */
+INT32 CRTDLL__write(DWORD x,LPVOID buf,DWORD len)
+{
 	if (x<=2)
 		return write(x,buf,len);
 	/* hmm ... */
@@ -149,23 +175,143 @@ CRTDLL__write(DWORD x,LPVOID buf,DWORD len) {
 	return len;
 }
 
-void
-CRTDLL_exit(DWORD ret) {
-	dprintf_crtdll(stderr,"CRTDLL_exit(%ld)\n",ret);
+
+/*********************************************************************
+ *                  exit          (CRTDLL.359)
+ */
+void CRTDLL_exit(DWORD ret)
+{
+        dprintf_crtdll(stderr,"CRTDLL_exit(%ld)\n",ret);
 	ExitProcess(ret);
 }
 
-void
-CRTDLL_fflush(DWORD x) {
-	dprintf_crtdll(stderr,"CRTDLL_fflush(%ld)\n",x);
+
+/*********************************************************************
+ *                  fflush        (CRTDLL.365)
+ */
+void CRTDLL_fflush(DWORD x)
+{
+    dprintf_crtdll(stderr,"CRTDLL_fflush(%ld)\n",x);
 }
 
-/* BAD, for the whole WINE process blocks... just done this way to test
- * windows95's ftp.exe.
+
+/*********************************************************************
+ *                  gets          (CRTDLL.391)
  */
-LPSTR 
-CRTDLL_gets(LPSTR buf) {
-	return gets(buf);
+LPSTR CRTDLL_gets(LPSTR buf)
+{
+  /* BAD, for the whole WINE process blocks... just done this way to test
+   * windows95's ftp.exe.
+   */
+    return gets(buf);
+}
+
+
+/*********************************************************************
+ *                  abs           (CRTDLL.339)
+ */
+INT32 CRTDLL_abs(INT32 x)
+{
+    return abs(x);
+}
+
+
+/*********************************************************************
+ *                  acos          (CRTDLL.340)
+ */
+float CRTDLL_acos(float x)
+{
+    return acos(x);
+}
+
+
+/*********************************************************************
+ *                  asin          (CRTDLL.342)
+ */
+float CRTDLL_asin(float x)
+{
+    return asin(x);
+}
+
+
+/*********************************************************************
+ *                  atan          (CRTDLL.343)
+ */
+float CRTDLL_atan(float x)
+{
+    return atan(x);
+}
+
+
+/*********************************************************************
+ *                  atan2         (CRTDLL.344)
+ */
+float CRTDLL_atan2(float x, float y)
+{
+    return atan2(x,y);
+}
+
+
+/*********************************************************************
+ *                  atof          (CRTDLL.346)
+ */
+float CRTDLL_atof(LPCSTR x)
+{
+    return atof(x);
+}
+
+
+/*********************************************************************
+ *                  atoi          (CRTDLL.347)
+ */
+INT32 CRTDLL_atoi(LPCSTR x)
+{
+    return atoi(x);
+}
+
+
+/*********************************************************************
+ *                  atol          (CRTDLL.348)
+ */
+LONG CRTDLL_atol(LPCSTR x)
+{
+    return atol(x);
+}
+
+
+/*********************************************************************
+ *                  cos           (CRTDLL.354)
+ */
+float CRTDLL_cos(float x)
+{
+    return cos(x);
+}
+
+
+/*********************************************************************
+ *                  cosh          (CRTDLL.355)
+ */
+float CRTDLL_cosh(float x)
+{
+    return cosh(x);
+}
+
+
+/*********************************************************************
+ *                  exp           (CRTDLL.360)
+ */
+float CRTDLL_exp(float x)
+{
+    return exp(x);
+}
+
+
+/*********************************************************************
+ *                  fabs          (CRTDLL.361)
+ */
+float CRTDLL_fabs(float x)
+{
+    return fabs(x);
 }
 
 
@@ -260,6 +406,105 @@ CHAR CRTDLL_isupper(CHAR x)
 
 
 /*********************************************************************
+ *                  isxdigit      (CRTDLL.418)
+ */
+CHAR CRTDLL_isxdigit(CHAR x)
+{
+    return isxdigit(x);
+}
+
+
+/*********************************************************************
+ *                  labs          (CRTDLL.419)
+ */
+LONG CRTDLL_labs(LONG x)
+{
+    return labs(x);
+}
+
+
+/*********************************************************************
+ *                  log           (CRTDLL.424)
+ */
+float CRTDLL_log(float x)
+{
+    return log(x);
+}
+
+
+/*********************************************************************
+ *                  log10         (CRTDLL.425)
+ */
+float CRTDLL_log10(float x)
+{
+    return log10(x);
+}
+
+
+/*********************************************************************
+ *                  pow           (CRTDLL.439)
+ */
+float CRTDLL_pow(float x, float y)
+{
+    return pow(x,y);
+}
+
+
+/*********************************************************************
+ *                  rand          (CRTDLL.446)
+ */
+INT32 CRTDLL_rand()
+{
+    return rand();
+}
+
+
+/*********************************************************************
+ *                  sin           (CRTDLL.456)
+ */
+float CRTDLL_sin(float x)
+{
+    return sin(x);
+}
+
+
+/*********************************************************************
+ *                  sinh          (CRTDLL.457)
+ */
+float CRTDLL_sinh(float x)
+{
+    return sinh(x);
+}
+
+
+/*********************************************************************
+ *                  sqrt          (CRTDLL.459)
+ */
+float CRTDLL_sqrt(float x)
+{
+    return sqrt(x);
+}
+
+
+/*********************************************************************
+ *                  tan           (CRTDLL.486)
+ */
+float CRTDLL_tan(float x)
+{
+    return tan(x);
+}
+
+
+/*********************************************************************
+ *                  tanh          (CRTDLL.487)
+ */
+float CRTDLL_tanh(float x)
+{
+    return tanh(x);
+}
+
+
+/*********************************************************************
  *                  tolower       (CRTDLL.491)
  */
 CHAR CRTDLL_tolower(CHAR x)
@@ -271,53 +516,102 @@ CHAR CRTDLL_tolower(CHAR x)
 /*********************************************************************
  *                  toupper       (CRTDLL.492)
  */
-CHAR CRTDLL_toupper(CHAR x) {
-	return toupper(x);
-}
-
-
-void
-CRTDLL_putchar(INT32 x) {
-	putchar(x);
-}
-
-int
-CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
+CHAR CRTDLL_toupper(CHAR x)
 {
-	do {
-		if (!*x)
-			return !!*y;
-		if (!*y)
-			return !!*x;
-		/* FIXME: MBCS handling... */
-		if (*x!=*y)
-			return 1;
-                x++;
-                y++;
-	} while (1);
+    return toupper(x);
 }
 
-unsigned char*
-CRTDLL__mbsinc(unsigned char *x)
+
+/*********************************************************************
+ *                  putchar       (CRTDLL.442)
+ */
+void CRTDLL_putchar(INT32 x)
+{
+    putchar(x);
+}
+
+
+/*********************************************************************
+ *                  _mbsicmp      (CRTDLL.204)
+ */
+int CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
+{
+    do {
+	if (!*x)
+	    return !!*y;
+	if (!*y)
+	    return !!*x;
+	/* FIXME: MBCS handling... */
+	if (*x!=*y)
+	    return 1;
+        x++;
+        y++;
+    } while (1);
+}
+
+
+/*********************************************************************
+ *                  _mbsinc       (CRTDLL.205)
+ */
+unsigned char* CRTDLL__mbsinc(unsigned char *x)
 {
     /* FIXME: mbcs */
     return x++;
 }
 
-int
-CRTDLL_vsprintf(DWORD *args)
+
+/*********************************************************************
+ *                  vsprintf      (CRTDLL.500)
+ */
+int CRTDLL_vsprintf(DWORD *args)
 {
     return vsprintf((char *)args[0],(char *)args[1],args+2);
 }
 
-unsigned char*
-CRTDLL__mbscpy(unsigned char *x,unsigned char *y)
+
+/*********************************************************************
+ *                  _mbscpy       (CRTDLL.200)
+ */
+unsigned char* CRTDLL__mbscpy(unsigned char *x,unsigned char *y)
 {
     return strcpy(x,y);
 }
 
-unsigned char*
-CRTDLL__mbscat(unsigned char *x,unsigned char *y)
+
+/*********************************************************************
+ *                  _mbscat       (CRTDLL.197)
+ */
+unsigned char* CRTDLL__mbscat(unsigned char *x,unsigned char *y)
 {
     return strcat(x,y);
+}
+
+/*********************************************************************
+ *                  _strupr       (CRTDLL.300)
+ */
+CHAR* CRTDLL__strupr(CHAR *x)
+{
+	CHAR	*y=x;
+
+	while (*y) {
+		*y=toupper(*y);
+		y++;
+	}
+	return x;
+}
+
+/*********************************************************************
+ *                  malloc        (CRTDLL.427)
+ */
+VOID* CRTDLL_malloc(DWORD size)
+{
+    return HeapAlloc(GetProcessHeap(),0,size);
+}
+
+/*********************************************************************
+ *                  free          (CRTDLL.427)
+ */
+VOID CRTDLL_free(LPVOID ptr)
+{
+    HeapFree(GetProcessHeap(),0,ptr);
 }

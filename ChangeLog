@@ -1,4 +1,56 @@
 ----------------------------------------------------------------------
+Sun Sep  1 19:22:46 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [misc/commdlg.c] [if1632/commdlg.spec]
+	Fixed some SEGPTR problems.
+
+	* [windows/winproc.c]
+	Added message translation for WM_COMPAREITEM, WM_DELETEITEM
+	and WM_MEASUREITEM
+	Fixed 16-to-32 translation for WM_HSCROLL/WM_VSCROLL.
+
+Fri Aug 30 13:39:00 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+	* [files/drive.c]
+	GetDriveType16 should report CDROMs as DRIVE_REMOTE (ACME setup).
+
+	* [multimedia/audio.c]
+	The minimum audiobuffer size shrunk somewhere in linux 1.3.xx
+	below 4096 bytes.
+
+	* [multimedia/mcistring.c]
+	Segptr string handling fixed & enhanced.
+
+	* [if1632/crtdll.spec][misc/crtdll.c]
+	malloc,free,_strupr,_stricmp,_strcmpi added.
+
+	* [if1632/wsock32.spec][misc/winsock.c]
+	More direct thunks into unix libc and WsControl-stub added.
+
+Thu Aug 29 23:54:25 1996  Huw D. M. Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile.c]
+	Bug fixes to both recording and playback of ExtTextOut().
+
+Tue Aug 27 15:43:21 1996  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [multimedia/audio.c] [multimedia/mcianim.c]
+	  [multimedia/mcicda.c] [multimedia/midi.c]
+	Made cdaudio, audio and midi work for FreeBSD.
+
+Sun Aug 25 20:18:56 1996  Jukka Iivonen <iivonen@cc.helsinki.fi>
+
+	* [misc/crtdll.c] [if1632/crtdll.spec]
+	Added a lot of functions.
+
+	* [misc/ole2nls.c]
+	Added ID values for all languages in GetUserDefaultLCID().
+	
+Fri Aug 24 21:02:28 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/event.c] [windows/message.c]
+	First attempt at hook WH_JOURNALPLAYBACK.
+
+----------------------------------------------------------------------
 Sat Aug 24 13:57:01 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/scroll.c]

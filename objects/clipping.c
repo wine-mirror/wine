@@ -159,32 +159,32 @@ int OffsetVisRgn( HDC hdc, short x, short y )
 /***********************************************************************
  *           CLIPPING_IntersectClipRect
  *
- * Helper function for {Intersect,Exclude}ClipRect
+ * Helper function for {Intersect,Exclude}ClipRect, can be called from
+ * elsewhere (like ExtTextOut()) to skip redundant metafile update and
+ * coordinate conversion.
  */
-static int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
-                                       short right, short bottom, BOOL exclude)
+int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
+                                         short right, short bottom, UINT16 flags)
 {
-    HRGN tempRgn, newRgn;
-    int ret;
+    HRGN	newRgn;
+    int 	ret;
 
-    left   = XLPTODP( dc, left );
-    right  = XLPTODP( dc, right );
-    top    = YLPTODP( dc, top );
-    bottom = YLPTODP( dc, bottom );
-
-    if (!(newRgn = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
-    if (!(tempRgn = CreateRectRgn( left, top, right, bottom )))
+    if ( !(newRgn = CreateRectRgn( left, top, right, bottom )) ) return ERROR;
+    if ( !dc->w.hClipRgn )
     {
-        DeleteObject( newRgn );
-        return ERROR;
+       if( flags & CLIP_INTERSECT )
+       {
+	   dc->w.hClipRgn = newRgn;
+	   CLIPPING_UpdateGCRegion( dc );
+       }
+       return SIMPLEREGION;
     }
-    ret = CombineRgn( newRgn, dc->w.hClipRgn ? dc->w.hClipRgn : dc->w.hVisRgn,
-                      tempRgn, exclude ? RGN_DIFF : RGN_AND);
-    DeleteObject( tempRgn );
 
+    ret = CombineRgn( newRgn, dc->w.hClipRgn, newRgn, 
+			     (flags & CLIP_EXCLUDE)? RGN_DIFF : RGN_AND);
     if (ret != ERROR)
     {
-        if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
+        if ( !(flags & CLIP_KEEPRGN) ) DeleteObject( dc->w.hClipRgn );
         dc->w.hClipRgn = newRgn;    
         CLIPPING_UpdateGCRegion( dc );
     }
@@ -208,9 +208,14 @@ int ExcludeClipRect( HDC hdc, short left, short top,
 	return NULLREGION;   /* ?? */
     }
 
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
+
     dprintf_clipping(stddeb, "ExcludeClipRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
-    return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, TRUE );
+    return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_EXCLUDE );
 }
 
 
@@ -229,9 +234,14 @@ int IntersectClipRect( HDC hdc, short left, short top,
 	return NULLREGION;   /* ?? */
     }
 
+    left   = XLPTODP( dc, left );
+    right  = XLPTODP( dc, right );
+    top    = YLPTODP( dc, top );
+    bottom = YLPTODP( dc, bottom );
+
     dprintf_clipping(stddeb, "IntersectClipRect: %04x %dx%d,%dx%d\n",
 	    hdc, left, top, right, bottom );
-    return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, FALSE );
+    return CLIPPING_IntersectClipRect( dc, left, top, right, bottom, CLIP_INTERSECT );
 }
 
 

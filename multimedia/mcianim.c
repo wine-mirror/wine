@@ -29,7 +29,7 @@
 #define ANIMFRAMES_PERMIN 	1800
 #define SECONDS_PERMIN	 	60
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 typedef struct {
     int     nUseCount;          /* Incremented for each shared open */
     BOOL    fShareable;         /* TRUE if first open was shareable */
@@ -57,7 +57,7 @@ static LINUX_ANIM	AnimDev[MAX_ANIMDRV];
 */
 static DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	LPSTR		lpstrElementName;
 	char		str[128];
 	dprintf_mcianim(stddeb,"ANIM_mciOpen(%04X, %08lX, %p);\n", 
@@ -115,7 +115,7 @@ static DWORD ANIM_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms)
 */
 static DWORD ANIM_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciClose(%u, %08lX, %p);\n", 
 				wDevID, dwParam, lpParms);
 	if (AnimDev[wDevID].lpdwTrackLen != NULL) free(AnimDev[wDevID].lpdwTrackLen);
@@ -130,7 +130,7 @@ static DWORD ANIM_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpPar
 static DWORD ANIM_mciGetDevCaps(UINT wDevID, DWORD dwFlags, 
 						LPMCI_GETDEVCAPS_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciGetDevCaps(%u, %08lX, %p);\n", 
 				wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -186,7 +186,7 @@ static DWORD ANIM_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 static DWORD ANIM_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
 {
 	DWORD	dwTime = 0;
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	UINT	wTrack;
 	UINT	wMinutes;
 	UINT	wSeconds;
@@ -240,7 +240,7 @@ static DWORD ANIM_CalcTime(UINT wDevID, DWORD dwFormatType, DWORD dwFrame)
 static DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
 {
 	DWORD	dwFrame = 0;
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	UINT	wTrack;
 	dprintf_mcianim(stddeb,"ANIM_CalcFrame(%u, %08lX, %lu);\n", 
 			wDevID, dwFormatType, dwTime);
@@ -288,7 +288,7 @@ static DWORD ANIM_CalcFrame(UINT wDevID, DWORD dwFormatType, DWORD dwTime)
 */
 static DWORD ANIM_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciInfo(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -322,7 +322,7 @@ static DWORD ANIM_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms)
 */
 static DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciStatus(%u, %08lX, %p);\n", 
 			wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -411,7 +411,7 @@ static DWORD ANIM_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 */
 static DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	int 	start, end;
 	dprintf_mcianim(stddeb,"ANIM_mciPlay(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
@@ -450,7 +450,7 @@ static DWORD ANIM_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 */
 static DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciStop(%u, %08lX, %p);\n", 
 			wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -473,7 +473,7 @@ static DWORD ANIM_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParm
 */
 static DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciPause(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -496,7 +496,7 @@ static DWORD ANIM_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
 */
 static DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciResume(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -519,7 +519,7 @@ static DWORD ANIM_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 */
 static DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	DWORD	dwRet;
 	MCI_PLAY_PARMS PlayParms;
 	dprintf_mcianim(stddeb,"ANIM_mciSeek(%u, %08lX, %p);\n", 
@@ -559,7 +559,7 @@ static DWORD ANIM_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 */
 static DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	dprintf_mcianim(stddeb,"ANIM_mciSet(%u, %08lX, %p);\n", 
 		wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -608,7 +608,7 @@ static DWORD ANIM_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
 							DWORD dwParam1, DWORD dwParam2)
 {
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {
 		case DRV_LOAD:
 			return 1;

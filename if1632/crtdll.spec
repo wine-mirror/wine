@@ -284,12 +284,12 @@ base	1
 279 stub _splitpath
 280 stub _stat
 281 stub _statusfp
-282 stub _strcmpi
+282 cdecl _strcmpi(ptr ptr) lstrcmpi32A
 283 stub _strdate
 284 stub _strdec
 285 stub _strdup
 286 stub _strerror
-287 stub _stricmp
+287 cdecl _stricmp(ptr ptr) lstrcmpi32A
 288 stub _stricoll
 289 stub _strinc
 290 stub _strlwr
@@ -302,7 +302,7 @@ base	1
 297 stub _strset
 298 stub _strspnp
 299 stub _strtime
-300 stub _strupr
+300 cdecl _strupr(ptr) CRTDLL__strupr
 301 stub _swab
 302 stub _sys_errlist
 303 stub _sys_nerr_dll
@@ -341,29 +341,29 @@ base	1
 336 stub _y1
 337 stub _yn
 338 stub abort
-339 stub abs
-340 stub acos
+339 cdecl abs(long) CRTDLL_abs
+340 cdecl acos(long) CRTDLL_acos
 341 stub asctime
-342 stub asin
-343 stub atan
-344 stub atan2
+342 cdecl asin(long) CRTDLL_asin
+343 cdecl atan(long) CRTDLL_atan
+344 cdecl atan2(long long) CRTDLL_atan2
 345 stub atexit
-346 stub atof
-347 stub atoi
-348 stub atol
+346 cdecl atof(ptr) CRTDLL_atof
+347 cdecl atoi(ptr) CRTDLL_atoi
+348 cdecl atol(ptr) CRTDLL_atol
 349 stub bsearch
 350 stub calloc
 351 stub ceil
 352 stub clearerr
 353 stub clock
-354 stub cos
-355 stub cosh
+354 cdecl cos(long) CRTDLL_cos
+355 cdecl cosh(long) CRTDLL_cosh
 356 stub ctime
 357 stub difftime
 358 stub div
 359 cdecl exit(long) CRTDLL_exit
-360 stub exp
-361 stub fabs
+360 cdecl exp(long) CRTDLL_exp
+361 cdecl fabs(long) CRTDLL_fabs
 362 stub fclose
 363 stub feof
 364 stub ferror
@@ -380,7 +380,7 @@ base	1
 375 stub fputs
 376 stub fputwc
 377 stub fread
-378 stub free
+378 cdecl free(ptr) CRTDLL_free
 379 stub freopen
 380 stub frexp
 381 stub fscanf
@@ -420,16 +420,16 @@ base	1
 415 stub iswspace
 416 stub iswupper
 417 stub iswxdigit
-418 stub isxdigit
-419 stub labs
+418 cdecl isxdigit(long) CRTDLL_isxdigit
+419 cdecl labs(long) CRTDLL_labs
 420 stub ldexp
 421 stub ldiv
 422 stub localeconv
 423 stub localtime
-424 stub log
-425 stub log10
+424 cdecl log(long) CRTDLL_log
+425 cdecl log10(long) CRTDLL_log10
 426 stub longjmp
-427 stub malloc
+427 cdecl malloc(ptr) CRTDLL_malloc
 428 stub mblen
 429 stub mbstowcs
 430 stub mbtowc
@@ -441,14 +441,14 @@ base	1
 436 stub mktime
 437 stub modf
 438 stub perror
-439 stub pow
+439 cdecl pow(long long) CRTDLL_pow
 440 cdecl printf() CRTDLL_printf
 441 stub putc
 442 cdecl putchar(long) CRTDLL_putchar
 443 stub puts
 444 stub qsort
 445 stub raise
-446 stub rand
+446 cdecl rand() CRTDLL_rand
 447 stub realloc
 448 stub remove
 449 stub rename
@@ -458,10 +458,10 @@ base	1
 453 stub setlocale
 454 stub setvbuf
 455 stub signal
-456 stub sin
-457 stub sinh
+456 cdecl sin(long) CRTDLL_sin
+457 cdecl sinh(long) CRTDLL_sinh
 458 stub sprintf
-459 stub sqrt
+459 cdecl sqrt(long) CRTDLL_sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 stub sscanf
 462 cdecl strcat(ptr ptr) lstrcat32A
@@ -488,8 +488,8 @@ base	1
 483 stub swprintf
 484 stub swscanf
 485 stub system
-486 stub tan
-487 stub tanh
+486 cdecl tan(long) CRTDLL_tan
+487 cdecl tanh(long) CRTDLL_tanh
 488 cdecl time(ptr) CRTDLL_time
 489 stub tmpfile
 490 stub tmpnam

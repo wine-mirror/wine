@@ -888,7 +888,7 @@ static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
   LONG	       dwStyle = GetWindowLong32A(hwnd,GWL_STYLE);
   RECT16 rect;
 
-  CreateListBoxStruct(hwnd, ODT_LISTBOX, dwStyle, GetParent(hwnd));
+  CreateListBoxStruct(hwnd, ODT_LISTBOX, dwStyle, GetParent16(hwnd));
   lphl = ListBoxGetStorageHeader(hwnd);
   dprintf_listbox(stddeb,"ListBox created: lphl = %p dwStyle = %04x:%04x\n", 
 			  lphl, HIWORD(dwStyle), LOWORD(dwStyle));
@@ -2093,37 +2093,37 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case WM_SETFOCUS: return LBSetFocus(hwnd, wParam, lParam);
      case WM_KILLFOCUS: return LBKillFocus(hwnd, wParam, lParam);
      case WM_NCCALCSIZE: return LBNCCalcSize(hwnd, wParam, lParam);
-     case LB_RESETCONTENT: return LBResetContent(hwnd, wParam, lParam);
-     case LB_DIR: return LBDir(hwnd, wParam, lParam);
-     case LB_ADDSTRING: return LBAddString(hwnd, wParam, lParam);
-     case LB_INSERTSTRING: return LBInsertString(hwnd, wParam, lParam);
-     case LB_DELETESTRING: return LBDeleteString(hwnd, wParam, lParam);
-     case LB_FINDSTRING: return LBFindString(hwnd, wParam, lParam);
-     case LB_FINDSTRINGEXACT: return LBFindStringExact(hwnd, wParam, lParam);
-     case LB_GETCARETINDEX: return LBGetCaretIndex(hwnd, wParam, lParam);
-     case LB_GETCOUNT: return LBGetCount(hwnd, wParam, lParam);
-     case LB_GETCURSEL: return LBGetCurSel(hwnd, wParam, lParam);
-     case LB_GETHORIZONTALEXTENT: return LBGetHorizontalExtent(hwnd, wParam, lParam);
-     case LB_GETITEMDATA: return LBGetItemData(hwnd, wParam, lParam);
-     case LB_GETITEMHEIGHT: return LBGetItemHeight(hwnd, wParam, lParam);
-     case LB_GETITEMRECT: return LBGetItemRect(hwnd, wParam, lParam);
-     case LB_GETSEL: return LBGetSel(hwnd, wParam, lParam);
-     case LB_GETSELCOUNT: return LBGetSelCount(hwnd, wParam, lParam);
-     case LB_GETSELITEMS: return LBGetSelItems(hwnd, wParam, lParam);
-     case LB_GETTEXT: return LBGetText(hwnd, wParam, lParam);
-     case LB_GETTEXTLEN: return LBGetTextLen(hwnd, wParam, lParam);
-     case LB_GETTOPINDEX: return LBGetTopIndex(hwnd, wParam, lParam);
-     case LB_SELECTSTRING: return LBSelectString(hwnd, wParam, lParam);
-     case LB_SELITEMRANGE: return LBSelItemRange(hwnd, wParam, lParam);
-     case LB_SETCARETINDEX: return LBSetCaretIndex(hwnd, wParam, lParam);
-     case LB_SETCOLUMNWIDTH: return LBSetColumnWidth(hwnd, wParam, lParam);
-     case LB_SETHORIZONTALEXTENT: return LBSetHorizontalExtent(hwnd, wParam, lParam);
-     case LB_SETITEMDATA: return LBSetItemData(hwnd, wParam, lParam);
-     case LB_SETTABSTOPS: return LBSetTabStops(hwnd, wParam, lParam);
-     case LB_SETCURSEL: return LBSetCurSel(hwnd, wParam, lParam);
-     case LB_SETSEL: return LBSetSel(hwnd, wParam, lParam);
-     case LB_SETTOPINDEX: return LBSetTopIndex(hwnd, wParam, lParam);
-     case LB_SETITEMHEIGHT: return LBSetItemHeight(hwnd, wParam, lParam);
+     case LB_RESETCONTENT16: return LBResetContent(hwnd, wParam, lParam);
+     case LB_DIR16: return LBDir(hwnd, wParam, lParam);
+     case LB_ADDSTRING16: return LBAddString(hwnd, wParam, lParam);
+     case LB_INSERTSTRING16: return LBInsertString(hwnd, wParam, lParam);
+     case LB_DELETESTRING16: return LBDeleteString(hwnd, wParam, lParam);
+     case LB_FINDSTRING16: return LBFindString(hwnd, wParam, lParam);
+     case LB_FINDSTRINGEXACT16: return LBFindStringExact(hwnd, wParam, lParam);
+     case LB_GETCARETINDEX16: return LBGetCaretIndex(hwnd, wParam, lParam);
+     case LB_GETCOUNT16: return LBGetCount(hwnd, wParam, lParam);
+     case LB_GETCURSEL16: return LBGetCurSel(hwnd, wParam, lParam);
+     case LB_GETHORIZONTALEXTENT16: return LBGetHorizontalExtent(hwnd, wParam, lParam);
+     case LB_GETITEMDATA16: return LBGetItemData(hwnd, wParam, lParam);
+     case LB_GETITEMHEIGHT16: return LBGetItemHeight(hwnd, wParam, lParam);
+     case LB_GETITEMRECT16: return LBGetItemRect(hwnd, wParam, lParam);
+     case LB_GETSEL16: return LBGetSel(hwnd, wParam, lParam);
+     case LB_GETSELCOUNT16: return LBGetSelCount(hwnd, wParam, lParam);
+     case LB_GETSELITEMS16: return LBGetSelItems(hwnd, wParam, lParam);
+     case LB_GETTEXT16: return LBGetText(hwnd, wParam, lParam);
+     case LB_GETTEXTLEN16: return LBGetTextLen(hwnd, wParam, lParam);
+     case LB_GETTOPINDEX16: return LBGetTopIndex(hwnd, wParam, lParam);
+     case LB_SELECTSTRING16: return LBSelectString(hwnd, wParam, lParam);
+     case LB_SELITEMRANGE16: return LBSelItemRange(hwnd, wParam, lParam);
+     case LB_SETCARETINDEX16: return LBSetCaretIndex(hwnd, wParam, lParam);
+     case LB_SETCOLUMNWIDTH16: return LBSetColumnWidth(hwnd, wParam, lParam);
+     case LB_SETHORIZONTALEXTENT16: return LBSetHorizontalExtent(hwnd, wParam, lParam);
+     case LB_SETITEMDATA16: return LBSetItemData(hwnd, wParam, lParam);
+     case LB_SETTABSTOPS16: return LBSetTabStops(hwnd, wParam, lParam);
+     case LB_SETCURSEL16: return LBSetCurSel(hwnd, wParam, lParam);
+     case LB_SETSEL16: return LBSetSel(hwnd, wParam, lParam);
+     case LB_SETTOPINDEX16: return LBSetTopIndex(hwnd, wParam, lParam);
+     case LB_SETITEMHEIGHT16: return LBSetItemHeight(hwnd, wParam, lParam);
 
      case WM_DROPFILES: return LBPassToParent(hwnd, message, wParam, lParam);
 
@@ -2133,8 +2133,8 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       * range of currently selected items when listbox is in the extended 
       * selection mode.
       */
-     case LB_SETANCHORINDEX: return LB_SETANCHORINDEX; /* that's what Windows returns */
-     case LB_GETANCHORINDEX: return 0;
+     case LB_SETANCHORINDEX16: return LB_SETANCHORINDEX16; /* that's what Windows returns */
+     case LB_GETANCHORINDEX16: return 0;
 
 	case WM_DROPOBJECT:
 	case WM_QUERYDROPOBJECT:
@@ -2164,10 +2164,10 @@ BOOL DlgDirSelect( HWND hDlg, LPSTR lpStr, INT id )
     INT i;
 
     dprintf_listbox( stddeb, "DlgDirSelect: %04x '%s' %d\n", hDlg, lpStr, id );
-    if ((i = SendDlgItemMessage16( hDlg, id, LB_GETCURSEL, 0, 0 )) == LB_ERR)
+    if ((i = SendDlgItemMessage16( hDlg, id, LB_GETCURSEL16, 0, 0 )) == LB_ERR)
         return FALSE;
     if (!(buffer = SEGPTR_ALLOC( 20 * sizeof(char) ))) return FALSE;
-    SendDlgItemMessage16(hDlg, id, LB_GETTEXT, i, (LPARAM)SEGPTR_GET(buffer) );
+    SendDlgItemMessage16(hDlg, id, LB_GETTEXT16, i, (LPARAM)SEGPTR_GET(buffer) );
     if (buffer[0] == '[')  /* drive or directory */
     {
         if (buffer[1] == '-')  /* drive */
@@ -2246,17 +2246,17 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
         dprintf_listbox(stddeb, "ListBoxDirectory: path=%c:\\%s mask=%s\n",
                         'A' + drive, DRIVE_GetDosCwd(drive), mask);
         
-        SENDMSG( LB_RESETCONTENT, 0, 0 );
+        SENDMSG( LB_RESETCONTENT16, 0, 0 );
         if ((attrib & DDL_DIRECTORY) && !(attrib & DDL_EXCLUSIVE))
         {
             char *temp;
-            if (SENDMSG( LB_DIR, attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
+            if (SENDMSG( LB_DIR16, attrib & ~(DDL_DIRECTORY | DDL_DRIVES),
                          (LPARAM)spec ) == LB_ERR) return FALSE;
             if (!(temp = SEGPTR_ALLOC( 4*sizeof(char) ))) return FALSE;
             strcpy( temp, "*.*" );
             /* FIXME: this won't work with PostMessage(), as temp will */
             /* have been freed by the time we do a DispatchMessage().  */
-            if (SENDMSG( LB_DIR, (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
+            if (SENDMSG( LB_DIR16, (attrib & (DDL_DIRECTORY | DDL_DRIVES)) | DDL_EXCLUSIVE,
                          (LPARAM)SEGPTR_GET(temp) ) == LB_ERR)
             {
                 SEGPTR_FREE(temp);
@@ -2266,7 +2266,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
         }
         else
         {
-            if (SENDMSG( LB_DIR, attrib, (LPARAM)spec) == LB_ERR) return FALSE;
+            if (SENDMSG( LB_DIR16, attrib, (LPARAM)spec) == LB_ERR) return FALSE;
         }
     }
 
