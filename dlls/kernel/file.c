@@ -258,7 +258,8 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
 UINT WINAPI _lread( HFILE handle, LPVOID buffer, UINT count )
 {
     DWORD result;
-    if (!ReadFile( (HANDLE)handle, buffer, count, &result, NULL )) return -1;
+    if (!ReadFile( (HANDLE)handle, buffer, count, &result, NULL ))
+        return HFILE_ERROR;
     return result;
 }
 
