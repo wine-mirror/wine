@@ -566,8 +566,13 @@ static UINT32 MENU_FindItemByKey( HWND32 hwndOwner, HMENU32 hmenu,
 	     {
 		if (item->text && (IS_STRING_ITEM(item->fType)))
 		{
-		    char *p = strchr( item->text, '&' );
-		    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
+		    char *p = item->text - 2;
+		    do
+		    {
+		    	p = strchr (p + 2, '&');
+		    }
+		    while (p != NULL && p [1] == '&');
+		    if (p && (toupper(p[1]) == key)) return i;
 		}
 	     }
 	}
@@ -2364,11 +2369,6 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		    MENU_KeyRight( &mt );
 		    break;
 		    
-		case VK_SPACE:
-		case VK_RETURN:
-		    fEndMenu |= !MENU_ExecFocusedItem( &mt, mt.hCurrentMenu );
-		    break;
-
 		case VK_ESCAPE:
 		    fEndMenu = TRUE;
 		    break;
@@ -2391,6 +2391,12 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 	    case WM_CHAR:
 		{
 		    UINT32	pos;
+
+		    if (msg.wParam == '\r' || msg.wParam == ' ')
+		    {
+			fEndMenu |= !MENU_ExecFocusedItem( &mt, mt.hCurrentMenu );
+			break;
+		    }
 
 		      /* Hack to avoid control chars. */
 		      /* We will find a better way real soon... */

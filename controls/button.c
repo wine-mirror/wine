@@ -187,6 +187,10 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
 
     case WM_SETFOCUS:
         infoPtr->state |= BUTTON_HASFOCUS;
+	if (style == BS_AUTORADIOBUTTON)
+	{
+	    SendMessage32A( hWnd, BM_SETCHECK32, 1, 0 );
+	}
         PAINT_BUTTON( wndPtr, style, ODA_FOCUS );
         break;
 
@@ -218,6 +222,13 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
         if (wParam > maxCheckState[style]) wParam = maxCheckState[style];
         if ((infoPtr->state & 3) != wParam)
         {
+	    if ((style == BS_RADIOBUTTON) || (style == BS_AUTORADIOBUTTON))
+	    {
+		if (wParam)
+		    wndPtr->dwStyle |= WS_TABSTOP;
+		else
+		    wndPtr->dwStyle &= ~WS_TABSTOP;
+	    }
             infoPtr->state = (infoPtr->state & ~3) | wParam;
             PAINT_BUTTON( wndPtr, style, ODA_SELECT );
         }
