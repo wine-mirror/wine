@@ -36,6 +36,7 @@
 #include "win.h"
 #include "dinput.h"
 #include "debug.h"
+#include "message.h"
 
 extern BYTE InputKeyStateTable[256];
 extern int min_keycode, max_keycode;
@@ -69,38 +70,36 @@ static HRESULT WINAPI IDirectInputA_EnumDevices(
 
   TRACE(dinput, "(this=%p,0x%04lx,%p,%p,%04lx)\n", this, dwDevType, lpCallback, pvRef, dwFlags);
 
-#if 0 /* Not compiled for the moment as long as I do not find
-	 the needed constants */
-  /* Ignore this field for the moment */
-  if (dwDevType != 0) {
-    FIXME(dinput, "device filtering not supported.\n");
-  }
-    
   devInstance.dwSize = sizeof(DIDEVICEINSTANCE32A);
   
+  if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
   /* Return keyboard */
   devInstance.guidInstance = GUID_SysKeyboard;
   devInstance.guidProduct = GUID_SysKeyboard;
-  devInstance.dwDevType = 1; /* Constant unknown :-( */
+    devInstance.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
   strcpy(devInstance.tszInstanceName, "Keyboard");
   strcpy(devInstance.tszProductName, "Wine Keyboard");
   
   ret = lpCallback(&devInstance, pvRef);
-  TRACE(dinput, "Keyboard registered (%d)\n", ret);
+    TRACE(dinput, "Keyboard registered\n");
   
-  if (!ret)
+    if (ret == DIENUM_STOP)
     return 0;
+  }
   
+  if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_KEYBOARD)) {
   /* Return mouse */
   devInstance.guidInstance = GUID_SysMouse;
   devInstance.guidProduct = GUID_SysMouse;
-  devInstance.dwDevType = 2; /* Constant unknown :-( */
+    devInstance.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_UNKNOWN << 8);
   strcpy(devInstance.tszInstanceName, "Mouse");
   strcpy(devInstance.tszProductName, "Wine Mouse");
   
   ret = lpCallback(&devInstance, pvRef);
-  TRACE(dinput, "Mouse registered (%d)\n", ret);
-#endif
+    TRACE(dinput, "Mouse registered\n");
+  }
+
+  /* Should also do joystick enumerations.... */
   
 	return 0;
 }
@@ -263,12 +262,12 @@ static HRESULT WINAPI IDirectInputDeviceA_GetDeviceData(
 
 
 static HRESULT WINAPI IDirectInputDeviceA_Acquire(LPDIRECTINPUTDEVICE32A this) {
-	FIXME(dinput,"(this=%p): stub\n",this);
+	TRACE(dinput,"(this=%p): stub\n",this);
 	return 0;
 }
 
 static HRESULT WINAPI IDirectInputDeviceA_Unacquire(LPDIRECTINPUTDEVICE32A this) {
-	FIXME(dinput,"(this=%p): stub\n",this);
+        TRACE(dinput,"(this=%p): stub\n",this);
 	return 0;
 }
 
@@ -373,12 +372,12 @@ static HRESULT WINAPI SysKeyboardA_GetDeviceData(
 }
 
 static HRESULT WINAPI SysKeyboardA_Acquire(LPDIRECTINPUTDEVICE32A this) {
-	FIXME(dinput,"(this=%p): stub\n",this);
+	TRACE(dinput,"(this=%p): stub\n",this);
 	return 0;
 }
 
 static HRESULT WINAPI SysKeyboardA_Unacquire(LPDIRECTINPUTDEVICE32A this) {
-	FIXME(dinput,"(this=%p): stub\n",this);
+	TRACE(dinput,"(this=%p): stub\n",this);
 	return 0;
 }
 
