@@ -160,8 +160,6 @@ typedef struct tagDC
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
 } DC;
 
-typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONTEXW,NEWTEXTMETRICEXW *,DWORD,LPARAM);
-
 /* extra stock object: default 1x1 bitmap for memory DCs */
 #define DEFAULT_BITMAP (STOCK_LAST+1)
 

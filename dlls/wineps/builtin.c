@@ -396,7 +396,7 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
  *           PSDRV_EnumDeviceFonts
  */
 BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
-			    DEVICEFONTENUMPROC proc, LPARAM lp )
+			    FONTENUMPROCW proc, LPARAM lp )
 {
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
@@ -417,7 +417,7 @@ BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
 	if(family) {
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
-		if( (b = (*proc)( &lf, &tm,
+		if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
 			PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf ),
 				  lp )) )
 		     bRet = b;
@@ -430,7 +430,7 @@ BOOL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
         for(family = physDev->pi->Fonts; family; family = family->next) {
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
-	    if( (b = (*proc)( &lf, &tm,
+	    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
 		   PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf ),
 			      lp )) )
 	        bRet = b;

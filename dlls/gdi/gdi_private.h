@@ -70,7 +70,7 @@ typedef struct tagDC_FUNCS
     INT      (*pEndDoc)(PHYSDEV);
     INT      (*pEndPage)(PHYSDEV);
     BOOL     (*pEndPath)(PHYSDEV);
-    BOOL     (*pEnumDeviceFonts)(PHYSDEV,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
+    BOOL     (*pEnumDeviceFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
     INT      (*pExcludeClipRect)(PHYSDEV,INT,INT,INT,INT);
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
     INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
@@ -217,7 +217,7 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk );
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID);
 extern GdiFont WineEngCreateFontInstance(DC*, HFONT);
 extern BOOL WineEngDestroyFontInstance(HFONT handle);
-extern DWORD WineEngEnumFonts(LPLOGFONTW, DEVICEFONTENUMPROC, LPARAM);
+extern DWORD WineEngEnumFonts(LPLOGFONTW, FONTENUMPROCW, LPARAM);
 extern BOOL WineEngGetCharWidth(GdiFont, UINT, UINT, LPINT);
 extern DWORD WineEngGetFontData(GdiFont, DWORD, DWORD, LPVOID, DWORD);
 extern DWORD WineEngGetGlyphIndices(GdiFont font, LPCWSTR lpstr, INT count,

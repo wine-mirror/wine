@@ -1507,8 +1507,7 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
  * WineEngEnumFonts
  *
  */
-DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc,
-		       LPARAM lparam)
+DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 {
     Family *family;
     Face *face;
@@ -1561,7 +1560,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc,
 				      csi.ciCharset, type, debugstr_w(elf.elfScript),
 				      elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
 				      ntm.ntmTm.ntmFlags);
-				ret = proc(&elf, &ntm, type, lparam);
+				ret = proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam);
 				if(!ret) goto end;
 			    }
 			}
@@ -1593,7 +1592,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, DEVICEFONTENUMPROC proc,
 			      csi.ciCharset, type, debugstr_w(elf.elfScript),
 			      elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
 			      ntm.ntmTm.ntmFlags);
-			ret = proc(&elf, &ntm, type, lparam);
+			ret = proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam);
 			if(!ret) goto end;
 		    }
 		}

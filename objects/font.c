@@ -569,22 +569,25 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle, void *obj )
  *
  * Called by the device driver layer to pass font info
  * down to the application.
+ *
+ * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
+ *       We have to use other types because of the FONTENUMPROCW definition.
  */
-static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
-				DWORD fType, LPARAM lp )
+static INT CALLBACK FONT_EnumInstance16( const LOGFONTW *plf, const TEXTMETRICW *ptm,
+                                         DWORD fType, LPARAM lp )
 {
     fontEnum16 *pfe = (fontEnum16*)lp;
     INT ret = 1;
     DC *dc;
 
     if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
-	pfe->lpLogFontParam->lfCharSet == plf->elfLogFont.lfCharSet )
+        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet )
     {
         WORD args[7];
         DWORD result;
 
-        FONT_EnumLogFontExWTo16(plf, pfe->lpLogFont);
-	FONT_NewTextMetricExWTo16(ptm, pfe->lpTextMetric);
+        FONT_EnumLogFontExWTo16((const ENUMLOGFONTEXW *)plf, pfe->lpLogFont);
+        FONT_NewTextMetricExWTo16((const NEWTEXTMETRICEXW *)ptm, pfe->lpTextMetric);
         pfe->dwFlags |= ENUM_CALLED;
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 
@@ -612,9 +615,12 @@ static INT FONT_EnumInstance16( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
 
 /***********************************************************************
  *              FONT_EnumInstance
+ *
+ * Note: plf is really an ENUMLOGFONTEXW, and ptm is a NEWTEXTMETRICEXW.
+ *       We have to use other types because of the FONTENUMPROCW definition.
  */
-static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
-			      DWORD fType, LPARAM lp )
+static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *ptm,
+                                       DWORD fType, LPARAM lp )
 {
     fontEnum32 *pfe = (fontEnum32*)lp;
     INT ret = 1;
@@ -622,7 +628,7 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
 
     /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
     if( pfe->lpLogFontParam->lfCharSet == DEFAULT_CHARSET ||
-	pfe->lpLogFontParam->lfCharSet == plf->elfLogFont.lfCharSet )
+        pfe->lpLogFontParam->lfCharSet == plf->lfCharSet )
     {
 	/* convert font metrics */
         ENUMLOGFONTEXA logfont;
@@ -631,14 +637,14 @@ static INT FONT_EnumInstance( LPENUMLOGFONTEXW plf, NEWTEXTMETRICEXW *ptm,
         pfe->dwFlags |= ENUM_CALLED;
         if (!(pfe->dwFlags & ENUM_UNICODE))
         {
-            FONT_EnumLogFontExWToA( plf, &logfont);
-            FONT_NewTextMetricExWToA( ptm, &tmA );
-            plf = (LPENUMLOGFONTEXW)&logfont;
-            ptm = (NEWTEXTMETRICEXW *)&tmA;
+            FONT_EnumLogFontExWToA( (const ENUMLOGFONTEXW *)plf, &logfont);
+            FONT_NewTextMetricExWToA( (const NEWTEXTMETRICEXW *)ptm, &tmA );
+            plf = (LOGFONTW *)&logfont.elfLogFont;
+            ptm = (TEXTMETRICW *)&tmA;
         }
         GDI_ReleaseObj( pfe->hdc );  /* release the GDI lock */
 
-        ret = pfe->lpEnumFunc( &plf->elfLogFont, (TEXTMETRICW *)ptm, fType, pfe->lpData );
+        ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
 
         /* get the lock again and make sure the DC is still valid */
         dc = DC_GetDCPtr( pfe->hdc );

@@ -3347,7 +3347,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
  *           X11DRV_EnumDeviceFonts
  */
 BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
-			     DEVICEFONTENUMPROC proc, LPARAM lp )
+                             FONTENUMPROCW proc, LPARAM lp )
 {
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
@@ -3375,7 +3375,7 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 
 	        if(plf->lfCharSet == DEFAULT_CHARSET ||
 		   plf->lfCharSet == pfi->df.dfCharSet) {
-		    if( (b = (*proc)( &lf, &tm,
+		    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
 			       XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
 		        bRet = b;
 		    else break;
@@ -3388,7 +3388,7 @@ BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 	{
             if(pfr->fi)
             {
-	        if( (b = (*proc)( &lf, &tm,
+	        if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
 			   XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
 		    bRet = b;
 		else break;

@@ -121,7 +121,7 @@ extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                              INT width, INT height, X11DRV_PDEVICE *physDevSrc,
                              INT xSrc, INT ySrc, DWORD rop );
 extern BOOL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
-				    DEVICEFONTENUMPROC dfeproc, LPARAM lp );
+                                    FONTENUMPROCW dfeproc, LPARAM lp );
 extern LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
 extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
