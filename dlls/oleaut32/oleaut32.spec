@@ -39,8 +39,8 @@
 39 stdcall SafeArrayDestroyData(ptr)
 40 stdcall SafeArrayRedim(ptr ptr)
 41 stdcall SafeArrayAllocDescriptorEx(long long ptr)
-42 stub SafeArrayCreateEx
-43 stub SafeArrayCreateVectorEx
+42 stdcall SafeArrayCreateEx(long long ptr ptr)
+43 stdcall SafeArrayCreateVectorEx(long long long ptr)
 44 stdcall SafeArraySetRecordInfo(ptr ptr)
 45 stdcall SafeArrayGetRecordInfo(ptr ptr)
 46 stdcall VarParseNumFromStr(wstr long long ptr ptr)
@@ -385,8 +385,8 @@
 410 stdcall -private DllCanUnloadNow() OLEAUT32_DllCanUnloadNow
 411 stdcall SafeArrayCreateVector(long long long)
 412 stdcall SafeArrayCopyData(ptr ptr)
-413 stub VectorFromBstr
-414 stub BstrFromVector
+413 stdcall VectorFromBstr(ptr ptr)
+414 stdcall BstrFromVector(ptr ptr)
 415 stdcall OleIconToCursor(long long)
 416 stdcall OleCreatePropertyFrameIndirect(ptr)
 417 stdcall OleCreatePropertyFrame(ptr long long ptr long ptr long ptr ptr long ptr)
