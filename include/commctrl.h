@@ -3071,7 +3071,7 @@ typedef struct tagNMITEMACTIVATE
     UINT uKeyFlags;
 } NMITEMACTIVATE, *LPNMITEMACTIVATE;
 
-typedef struct tagLVDISPINFOA
+typedef struct tagLVDISPINFO
 {
     NMHDR hdr;
     LVITEMA item;
