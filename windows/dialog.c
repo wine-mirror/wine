@@ -688,8 +688,7 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if ((INT16)template.x == CW_USEDEFAULT16)
     {
-        rect.left = rect.top = (procType == WIN_PROC_16) ? CW_USEDEFAULT16
-                                                         : CW_USEDEFAULT;
+        rect.left = rect.top = win32Template? CW_USEDEFAULT : CW_USEDEFAULT16;
     }
     else
     {
@@ -721,7 +720,7 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
         }
     }
 
-    if (procType == WIN_PROC_16)
+    if (!win32Template)
         hwnd = CreateWindowEx16(template.exStyle, template.className,
                                 template.caption, template.style & ~WS_VISIBLE,
                                 rect.left, rect.top, rect.right, rect.bottom,
