@@ -6,6 +6,7 @@
  */
 
 #include "windows.h"
+#include "wine/winuser16.h"
 #include "progman.h"
 #include "mmsystem.h"
 
