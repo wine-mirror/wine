@@ -156,14 +156,12 @@ typedef struct tagWINE_MMIO {
 } WINE_MMIO, *LPWINE_MMIO;
 
 typedef struct tagWINE_PLAYSOUND {
-    HANDLE              hThread;
-    HANDLE		hReadyEvent;
-    BOOL 		bStop;
-    LPCWSTR		pszSound;
-    HMODULE		hMod;
-    DWORD		fdwSound;
-    BOOL	        bLoop;
-    BOOL                bAlloc;
+    BOOL                        bLoop : 1,
+                                bAlloc : 1;
+    LPCWSTR		        pszSound;
+    HMODULE		        hMod;
+    DWORD		        fdwSound;
+    struct tagWINE_PLAYSOUND*   lpNext;
 } WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
 
 typedef struct tagWINE_MM_IDATA {
@@ -190,7 +188,9 @@ typedef struct tagWINE_MM_IDATA {
     /* mmio part */
     LPWINE_MMIO			lpMMIO;
     /* playsound and sndPlaySound */
-    LPWINE_PLAYSOUND            lpPlaySound;
+    WINE_PLAYSOUND*             lpPlaySound;
+    HANDLE                      psLastEvent;
+    HANDLE                      psStopEvent;
 } WINE_MM_IDATA, *LPWINE_MM_IDATA;
 
 /* function prototypes */
