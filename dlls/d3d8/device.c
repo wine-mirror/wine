@@ -853,8 +853,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     object->myDesc.Usage = 0;
     object->myDesc.Pool = D3DPOOL_SYSTEMMEM;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
+    /* DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
+       it is based around 4x4 pixel blocks it requires padding, so allocate enough
+       space!                                                                      */
     if (Format == D3DFMT_DXT1) { 
-        object->myDesc.Size = ((Width * object->bytesPerPixel) * Height) / 2; /* DXT1 is half byte per pixel */
+        object->myDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2; /* DXT1 is half byte per pixel */
+    } else if (Format == D3DFMT_DXT2 || Format == D3DFMT_DXT3 || 
+               Format == D3DFMT_DXT4 || Format == D3DFMT_DXT5) { 
+        object->myDesc.Size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
     } else {
         object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     }
