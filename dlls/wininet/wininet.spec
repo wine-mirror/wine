@@ -51,7 +51,7 @@
 @ stub GetUrlCacheConfigInfoA
 @ stub GetUrlCacheConfigInfoW
 @ stdcall GetUrlCacheEntryInfoA(str ptr long) GetUrlCacheEntryInfoA
-@ stub GetUrlCacheEntryInfoExA
+@ stdcall GetUrlCacheEntryInfoExA(str ptr ptr str ptr ptr long) GetUrlCacheEntryInfoExA
 @ stub GetUrlCacheEntryInfoExW
 @ stub GetUrlCacheEntryInfoW
 @ stub GetUrlCacheHeaderData
@@ -138,7 +138,7 @@
 @ stdcall InternetWriteFile(ptr ptr long ptr) InternetWriteFile
 @ stub InternetWriteFileExA
 @ stub InternetWriteFileExW
-@ stub IsHostInProxyBypassList
+@ stdcall IsHostInProxyBypassList(long str long) IsHostInProxyBypassList
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
 @ stub ReadUrlCacheEntryStream

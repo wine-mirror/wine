@@ -87,3 +87,21 @@ BOOL WINAPI SetUrlCacheEntryGroup(LPCSTR lpszUrlName, DWORD dwFlags,
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
 }
+
+/***********************************************************************
+ *           GetUrlCacheEntryInfoExA (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoExA(
+    LPCSTR lpszUrl,
+    LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntryInfo,
+    LPDWORD lpdwCacheEntryInfoBufSize,
+    LPSTR lpszReserved,
+    LPDWORD lpdwReserved,
+    LPVOID lpReserved,
+    DWORD dwFlags)
+{
+    FIXME(" url=%s, flags=%ld\n",lpszUrl,dwFlags);
+    INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
+    return FALSE;
+}

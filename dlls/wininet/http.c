@@ -1622,3 +1622,15 @@ BOOL HTTP_DeleteCustomHeader(INT index)
     FIXME("STUB\n");
     return FALSE;
 }
+
+/***********************************************************************
+ *          IsHostInProxyBypassList (@)
+ *
+ * Undocumented
+ *
+ */
+BOOL WINAPI IsHostInProxyBypassList(DWORD flags, LPCSTR szHost, DWORD length)
+{
+   FIXME("STUB: flags=%ld host=%s length=%ld\n",flags,szHost,length);
+   return FALSE;
+}
