@@ -16,7 +16,7 @@ DLLs (under dlls/):
 
 	advapi32/		- Crypto, systeminfo, security, eventlogging
 	amstream/               - MultiMedia Streams
-	atl			- Active Template Library
+	atl/			- Active Template Library
 	avicap32/		- AVI capture window class
 	avifil32/		- COM object to play AVI files
 	cabinet/		- Cabinet file interface
@@ -117,7 +117,6 @@ DLLs (under dlls/):
 	secur32/                - Contains Windows Security functions
 	serialui/		- Serial port property pages
 	setupapi/		- Setup interface
-	setupx/                 - Contains functions used by the Windows Setup
 	shdocvw/		- Shell document object and control
 	shell32/		- COM object implementing shell views
 	shfolder/		- Shell folder service
