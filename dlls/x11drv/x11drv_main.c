@@ -237,7 +237,6 @@ static void setup_options(void)
 {
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey = 0;
-    DWORD count;
 
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
@@ -260,19 +259,6 @@ static void setup_options(void)
             if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
             RegCloseKey( tmpkey );
         }
-    }
-
-    /* get the display name */
-
-    strcpy( buffer, "DISPLAY=" );
-    count = sizeof(buffer) - 8;
-    if (!RegQueryValueExA( hkey, "display", 0, NULL, buffer + 8, &count ))
-    {
-        const char *display_name = getenv( "DISPLAY" );
-        if (display_name && strcmp( buffer, display_name ))
-            MESSAGE( "x11drv: Warning: $DISPLAY variable ignored, using '%s' specified in config file\n",
-                     buffer + 8 );
-        putenv( strdup(buffer) );
     }
 
     if (!get_config_key( hkey, appkey, "Desktop", buffer, sizeof(buffer) ))

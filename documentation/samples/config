@@ -116,8 +116,6 @@ WINE REGISTRY Version 2
 "PerfectGraphics" = "N"
 ; Color depth to use on multi-depth screens
 ;;"ScreenDepth" = "16"
-; Name of X11 display to use
-;;"Display" = ":0.0"
 ; Allow the window manager to manage created windows
 "Managed" = "Y"
 ; Use a desktop window of 640x480 for Wine
