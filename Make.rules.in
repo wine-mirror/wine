@@ -169,11 +169,6 @@ $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC) $(RC_BINARIES)
 $(MODULE).dbg.c: $(C_SRCS) $(C_SRCS16) $(WINEBUILD)
 	$(WINEBUILD) $(DEFS) -o $@ --debug -C$(SRCDIR) $(C_SRCS) $(C_SRCS16)
 
-# Rule to rebuild the tools
-
-$(MAKEDEP):
-	cd $(TOOLSDIR)/tools && $(MAKE) `basename $@`
-
 # Rules for makefile
 
 Makefile: Makefile.in $(TOPSRCDIR)/configure
@@ -202,10 +197,10 @@ winapi_check:: dummy
 
 # Rules for dependencies
 
-$(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
+$(SUBDIRS:%=%/__depend__): dummy
 	cd `dirname $@` && $(MAKE) depend
 
-depend: $(MAKEDEP) $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
+depend: $(IDL_SRCS:.idl=.h) $(SUBDIRS:%=%/__depend__)
 	$(MAKEDEP) $(INCLUDES) -C$(SRCDIR) $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(EXTRA_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)

@@ -121,20 +121,7 @@ fonts/__install__ loader/__install__ server/__install__: libs tools
 programs/__install__: libs tools include/__install__ dlls/__install-lib__
 tools/__install__: tools
 
-# Dependencies rules
-
-$(SUBDIRS:%=%/__depend__): idl
-
-idl: $(WIDL) dummy
-	cd include && $(MAKE) all
-
-$(WIDL): $(TOOLSDIR)/libs/libwpp.a $(TOOLSDIR)/libs/libwine_port.a
-	cd $(TOOLSDIR)/tools/widl && $(MAKE) `basename $@`
-
-$(TOOLSDIR)/libs/libwpp.a $(TOOLSDIR)/libs/libwine_port.a:
-	cd $(TOOLSDIR)/libs && $(MAKE) `basename $@`
-
-.PHONY: idl
+$(SUBDIRS:%=%/__depend__): tools include
 
 # Test rules
 
