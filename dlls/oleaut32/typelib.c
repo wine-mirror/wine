@@ -262,12 +262,11 @@ HRESULT WINAPI LoadTypeLibEx(
     ITypeLib **pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     WCHAR szPath[MAX_PATH+1], szFileCopy[MAX_PATH+1];
-    const WCHAR *pFile, *pIndexStr;
+    WCHAR *pIndexStr;
     HRESULT res;
     INT index = 1;
     TRACE("(%s,%d,%p)\n",debugstr_w(szFile), regkind, pptLib);
     
-    pFile = szFile;
     if(!SearchPathW(NULL,szFile,NULL,sizeof(szPath)/sizeof(WCHAR),szPath,
 		    NULL)) {
 
@@ -278,7 +277,6 @@ HRESULT WINAPI LoadTypeLibEx(
 	    memcpy(szFileCopy, szFile,
 		   (pIndexStr - szFile - 1) * sizeof(WCHAR));
 	    szFileCopy[pIndexStr - szFile - 1] = '\0';
-	    pFile = szFileCopy;
 	    if(!SearchPathW(NULL,szFileCopy,NULL,sizeof(szPath)/sizeof(WCHAR),
 			    szPath,NULL))
 	        return TYPE_E_CANTLOADLIBRARY;
@@ -286,9 +284,9 @@ HRESULT WINAPI LoadTypeLibEx(
 	    return TYPE_E_CANTLOADLIBRARY;
     }
 
-    TRACE("File %s index %d\n", debugstr_w(pFile), index);
+    TRACE("File %s index %d\n", debugstr_w(szPath), index);
 
-    res = TLB_ReadTypeLib(pFile, index, (ITypeLib2**)pptLib);
+    res = TLB_ReadTypeLib(szPath, index, (ITypeLib2**)pptLib);
 
     if (SUCCEEDED(res))
         switch(regkind)
