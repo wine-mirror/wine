@@ -282,6 +282,68 @@
 #define DUMMYUNIONNAME8  u8
 #endif /* !defined(NONAMELESSUNION) */
 
+/* C99 restrict support */
+
+#if defined(ENABLE_RESTRICTED) && !defined(MIDL_PASS) && !defined(RC_INVOKED)
+# if defined(_MSC_VER) && defined(_M_MRX000)
+#  define RESTRICTED_POINTER __restrict
+# elif defined(__GNUC__) && ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95)))
+#  define RESTRICTED_POINTER __restrict
+# else
+#  define RESTRICTED_POINTER
+# endif
+#else
+# define RESTRICTED_POINTER
+#endif
+
+/* C99 unaligned support */
+
+#if defined(_MSC_VER) && (defined(_M_MRX000) || defined(_M_ALPHA) || defined(_M_PPC) || defined(_M_IA64) || defined(_M_AMD64))
+# define UNALIGNED __unaligned
+# ifdef _WIN64
+#  define UNALIGNED64 __unaligned
+# else
+#  define UNALIGNED64
+# endif
+#else
+# define UNALIGNED
+# define UNALIGNED64
+#endif
+
+/* Alignment macros */
+
+#if defined(_WIN64) || (defined(_MSC_VER) && defined(_M_ALPHA)) || defined(__alpha__)
+#define MAX_NATURAL_ALIGNMENT sizeof(ULONGLONG)
+#define MEMORY_ALLOCATION_ALIGNMENT 16
+#else
+#define MAX_NATURAL_ALIGNMENT sizeof(DWORD)
+#define MEMORY_ALLOCATION_ALIGNMENT 8
+#endif
+
+#if (_MSC_VER >= 1300) && defined(__cplusplus)
+# define TYPE_ALIGNMENT(t) __alignof(t)
+#elif defined(__GNUC__)
+# define TYPE_ALIGNMENT(t) __alignof__(t)
+#else
+# define TYPE_ALIGNMENT(t) FIELD_OFFSET(struct { char x; t test; }, test)
+#endif
+
+#ifdef _WIN64
+# define PROBE_ALIGNMENT(_s) \
+    (TYPE_ALIGNMENT(_s) > TYPE_ALIGNMENT(DWORD) ? \
+    TYPE_ALIGNMENT(_s) : TYPE_ALIGNMENT(DWORD))
+# define PROBE_ALIGNMENT32(_s) TYPE_ALIGNMENT(DWORD)
+#else
+# define PROBE_ALIGNMENT(_s) TYPE_ALIGNMENT(DWORD)
+#endif
+
+/* Compile time assertion */
+
+#if defined(_MSC_VER)
+# define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
+#elif defined(__GNUC__) 
+# define C_ASSERT(e) extern char __C_ASSERT__[(e)?1:-1]
+#endif
 
 /**** Parts of windef.h that are needed here *****/
 
@@ -630,7 +692,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
 typedef struct _LIST_ENTRY {
   struct _LIST_ENTRY *Flink;
   struct _LIST_ENTRY *Blink;
-} LIST_ENTRY, *PLIST_ENTRY;
+} LIST_ENTRY, *PLIST_ENTRY, * RESTRICTED_POINTER PRLIST_ENTRY;
 
 typedef struct _SINGLE_LIST_ENTRY {
   struct _SINGLE_LIST_ENTRY *Next;
