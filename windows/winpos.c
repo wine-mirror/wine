@@ -1255,8 +1255,7 @@ UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
 		 if( wndPtr->dwStyle & WS_MINIMIZE )
 		 {
 		     if( wndPtr->flags & WIN_NATIVE )
-			 if( wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ICONICSTATE, FALSE ) )
-			     swpFlags |= MINMAX_NOSWP;
+			 wndPtr->pDriver->pSetHostAttr( wndPtr, HAK_ICONICSTATE, FALSE );
 
 		     WINPOS_ShowIconTitle( wndPtr, FALSE );
 		     wndPtr->dwStyle &= ~WS_MINIMIZE;
