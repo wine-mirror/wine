@@ -62,8 +62,8 @@ char *init_func = NULL;
 char **debug_channels = NULL;
 char **lib_path = NULL;
 
-const char *input_file_name;
-const char *output_file_name;
+char *input_file_name = NULL;
+const char *output_file_name = NULL;
 
 static FILE *input_file;
 static FILE *output_file;
@@ -81,17 +81,6 @@ static enum
     MODE_RELAY16,
     MODE_RELAY32
 } exec_mode = MODE_NONE;
-
-/* open the input file */
-static void open_input( const char *name )
-{
-    input_file_name = name;
-    if (!(input_file = fopen( name, "r" )))
-    {
-        fprintf( stderr, "Cannot open input file '%s'\n", name );
-        exit(1);
-    }
-}
 
 /* set the dll file name from the input file name */
 static void set_dll_file_name( const char *name )
@@ -135,11 +124,11 @@ static void do_module( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
 static void do_exe( const char *arg );
-static void do_glue( const char *arg );
+static void do_glue(void);
 static void do_relay16(void);
 static void do_relay32(void);
 static void do_debug(void);
-static void do_sym( const char *arg );
+static void do_sym(void);
 static void do_chdir( const char *arg );
 static void do_lib( const char *arg );
 static void do_import( const char *arg );
@@ -161,13 +150,13 @@ static const struct option_descr option_table[] =
     { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
     { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
     { "-res",     1, do_rsrc,    "-res rsrc.res    Load resources from rsrc.res" },
-    { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
-    { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'\n" },
+    { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)\n" },
+    { "-sym",     0, do_sym,     NULL },  /* ignored for backwards compatibility */
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
     { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
     { "-exe",     1, do_exe,     "-exe name        Build a .c file from the named executable" },
     { "-debug",   0, do_debug,   "-debug [files]   Build a .c file containing debug channels declarations" },
-    { "-glue",    1, do_glue,    "-glue file.c     Build the 16-bit glue for a .c file" },
+    { "-glue",    0, do_glue,    "-glue [files]    Build the 16-bit glue for the source files" },
     { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
     { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
     { NULL,       0, NULL,      NULL }
@@ -194,7 +183,9 @@ static void do_usage(void)
     const struct option_descr *opt;
     fprintf( stderr, "Usage: winebuild [options]\n\n" );
     fprintf( stderr, "Options:\n" );
-    for (opt = option_table; opt->name; opt++) fprintf( stderr, "   %s\n", opt->usage );
+    for (opt = option_table; opt->name; opt++)
+        if (opt->usage) fprintf( stderr, "   %s\n", opt->usage );
+
     fprintf( stderr, "\nExactly one of -spec, -def, -exe, -debug, -glue, -relay16 or -relay32 must be specified.\n\n" );
     exit(1);
 }
@@ -231,7 +222,7 @@ static void do_spec( const char *arg )
 {
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_SPEC;
-    open_input( arg );
+    input_file = open_input_file( NULL, arg );
     set_dll_file_name( arg );
 }
 
@@ -239,7 +230,7 @@ static void do_def( const char *arg )
 {
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
     exec_mode = MODE_DEF;
-    open_input( arg );
+    input_file = open_input_file( NULL, arg );
     set_dll_file_name( arg );
 }
 
@@ -270,11 +261,10 @@ static void do_module( const char *arg )
     strcpy( owner_name, arg );
 }
 
-static void do_glue( const char *arg )
+static void do_glue(void)
 {
-    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
+    if (exec_mode != MODE_NONE) do_usage();
     exec_mode = MODE_GLUE;
-    open_input( arg );
 }
 
 static void do_debug(void)
@@ -300,10 +290,9 @@ static void do_relay32(void)
     exec_mode = MODE_RELAY32;
 }
 
-static void do_sym( const char *arg )
+static void do_sym(void)
 {
-    extern void read_undef_symbols( const char *name );
-    read_undef_symbols( arg );
+    /* nothing */
 }
 
 static void do_lib( const char *arg )
@@ -331,10 +320,10 @@ static void do_rsrc( const char *arg )
 static void parse_options( char *argv[] )
 {
     const struct option_descr *opt;
-    char * const * ptr;
+    char **ptr, **last;
     const char* arg=NULL;
 
-    for (ptr = argv + 1; *ptr; ptr++)
+    for (ptr = last = argv + 1; *ptr; ptr++)
     {
         for (opt = option_table; opt->name; opt++)
         {
@@ -355,21 +344,18 @@ static void parse_options( char *argv[] )
             }
         }
 
-        if (!opt->name)
+        if (opt->name)
         {
-            if (exec_mode == MODE_DEBUG && **ptr != '-')
-            {
-                /* this a file name to parse for debug channels */
-                parse_debug_channels( current_src_dir, *ptr );
-                continue;
-            }
-            fprintf( stderr, "Unrecognized option '%s'\n", *ptr );
-            do_usage();
+            if (opt->has_arg && arg != NULL) opt->func( arg );
+            else opt->func( "" );
         }
-
-        if (opt->has_arg && arg!=NULL) opt->func( arg );
-        else opt->func( "" );
+        else  /* keep this argument */
+        {
+            if (last != ptr) *last = *ptr;
+            last++;
+        }
     }
+    *last = NULL;
 }
 
 
@@ -387,18 +373,23 @@ int main(int argc, char **argv)
         switch (ParseTopLevel( input_file, 0 ))
         {
             case SPEC_WIN16:
+                if (argv[1])
+                    fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
                 BuildSpec16File( output_file );
                 break;
             case SPEC_WIN32:
+                read_undef_symbols( argv + 1 );
                 BuildSpec32File( output_file );
                 break;
             default: assert(0);
         }
         break;
     case MODE_EXE:
+        read_undef_symbols( argv + 1 );
         BuildSpec32File( output_file );
         break;
     case MODE_DEF:
+        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
         switch (ParseTopLevel( input_file, 1 ))
         {
             case SPEC_WIN16:
@@ -411,15 +402,17 @@ int main(int argc, char **argv)
         }
         break;
     case MODE_DEBUG:
-        BuildDebugFile( output_file );
+        BuildDebugFile( output_file, current_src_dir, argv + 1 );
         break;
     case MODE_GLUE:
-        BuildGlue( output_file, input_file );
+        BuildGlue( output_file, current_src_dir, argv + 1 );
         break;
     case MODE_RELAY16:
+        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
         BuildRelays16( output_file );
         break;
     case MODE_RELAY32:
+        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
         BuildRelays32( output_file );
         break;
     default:

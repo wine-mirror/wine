@@ -595,20 +595,8 @@ void parse_debug_channels( const char *srcdir, const char *filename )
 {
     FILE *file;
     int eol_seen = 1;
-    char *fullname = NULL;
 
-    if (srcdir)
-    {
-        fullname = xmalloc( strlen(srcdir) + strlen(filename) + 2 );
-        strcpy( fullname, srcdir );
-        strcat( fullname, "/" );
-        strcat( fullname, filename );
-    }
-    else fullname = xstrdup( filename );
-
-    if (!(file = fopen( fullname, "r" ))) fatal_error( "Cannot open file '%s'\n", fullname );
-    input_file_name = fullname;
-    current_line = 1;
+    file = open_input_file( srcdir, filename );
     while (fgets( ParseBuffer, sizeof(ParseBuffer), file ))
     {
         char *channel, *end, *p = ParseBuffer;
@@ -645,8 +633,5 @@ void parse_debug_channels( const char *srcdir, const char *filename )
         }
         current_line++;
     }
-    fclose( file );
-    input_file_name = NULL;
-    current_line = 0;
-    free( fullname );
+    close_input_file( file );
 }

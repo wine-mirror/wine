@@ -894,10 +894,12 @@ void BuildDef32File(FILE *outfile)
  *
  * Build the debugging channels source file.
  */
-void BuildDebugFile( FILE *outfile )
+void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
 {
     int nr_debug;
     char *prefix, *p;
+
+    while (*argv) parse_debug_channels( srcdir, *argv++ );
 
     output_standard_file_header( outfile );
     nr_debug = output_debug( outfile );

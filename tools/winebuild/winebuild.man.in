@@ -3,7 +3,7 @@
 .SH NAME
 winebuild \- Wine dll builder
 .SH SYNOPSIS
-.BI "winebuild " "[options] " "[inputfile]"
+.BI winebuild\  [options]\ [input\ files]
 .SH DESCRIPTION
 .B winebuild
 generates the C and assembly files that are necessary to build a Wine
@@ -23,29 +23,42 @@ what you want winebuild to generate.
 Build a C file from a spec file (see \fBSPEC FILE SYNTAX\fR for
 details). The resulting C file must be compiled and linked to the
 other object files to build a working Wine dll.
-.TP
-.BI \-def\  file.spec
-Build a .def file from a spec file. This is used when building dlls
-with a PE (Win32) compiler.
+.br
+In that mode, the
+.I input files
+should be the list of all object files that will be linked into the
+final dll, to allow
+.B winebuild
+to get the list of all undefined symbols that need to be imported from
+other dlls.
 .TP
 .BI \-exe\  name
 Build a C file for the named executable. This is basically the same as
 the -spec mode except that it doesn't require a .spec file as input,
 since an executable doesn't export functions. The resulting C file
 must be compiled and linked to the other object files to build a
-working Wine executable.
+working Wine executable, and all the other object files must be listed
+as
+.I input files.
 .TP
-.BI \-debug\  [files]
-Build a C file containing the definitions for debugging channels. The
-\fIfiles\fR argument is a list of C files to search for debug channel
+.BI \-def\  file.spec
+Build a .def file from a spec file. This is used when building dlls
+with a PE (Win32) compiler.
+.TP
+.B \-debug
+Build a C file containing the definitions for debugging channels. In
+that mode the
+.I input files
+should be a list of C files to search for debug channel
 definitions. The resulting C file must be compiled and linked with the
 dll.
 .TP
-.BI \-glue\  file.c
+.B \-glue
 Build a C file containing the glue code for the 16-bit calls contained
-in the \fIfile.c\fR source. These calls must be specified in the
-source file using special markers, as described in the \fBGLUE
-FUNCTIONS\fR section.
+in the
+.I input files.
+These calls must be specified in the source files using special
+markers, as described in the \fBGLUE FUNCTIONS\fR section.
 .TP
 .B \-relay16
 Generate the assembly code for the 16-bit relay routines. This is for
@@ -58,7 +71,8 @@ Wine internal usage only, you should never need to use this option.
 .TP
 .BI \-C\  directory
 Change to the specified directory before reading source files. Only
-meaningful in \fB-debug\fR mode.
+meaningful in
+.BR \-debug\  and\  -glue\  modes.
 .TP
 .BI \-D\  symbol
 Ignored for compatibility with the C compiler.
@@ -125,8 +139,6 @@ Load resources from the specified binary resource file. The
 \fIrsrc.res\fR can be produced from a source resource file with
 .BR wrc(1)
 (or with a Windows resource compiler).
-.BI \-sym\  file.o
-Read the list of undefined symbols from the object file file.o.
 .TP
 .B \-w
 Turn on warnings.

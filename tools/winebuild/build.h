@@ -139,6 +139,8 @@ extern void fatal_error( const char *msg, ... );
 extern void fatal_perror( const char *msg, ... );
 extern void warning( const char *msg, ... );
 extern void output_standard_file_header( FILE *outfile );
+extern FILE *open_input_file( const char *srcdir, const char *name );
+extern void close_input_file( FILE *file );
 extern void dump_bytes( FILE *outfile, const unsigned char *data, int len,
                         const char *label, int constant );
 extern const char *make_c_identifier( const char *str );
@@ -146,6 +148,7 @@ extern int get_alignment(int alignBoundary);
 
 extern void add_import_dll( const char *name, int delay );
 extern void add_ignore_symbol( const char *name );
+extern void read_undef_symbols( char **argv );
 extern int resolve_imports( void );
 extern int output_imports( FILE *outfile );
 extern void load_res32_file( const char *name );
@@ -156,13 +159,13 @@ extern int output_res16_directory( unsigned char *buffer );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 extern void parse_debug_channels( const char *srcdir, const char *filename );
 
-extern void BuildGlue( FILE *outfile, FILE *infile );
+extern void BuildGlue( FILE *outfile, const char *srcdir, char **argv );
 extern void BuildRelays16( FILE *outfile );
 extern void BuildRelays32( FILE *outfile );
 extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
 extern void BuildDef32File( FILE *outfile );
-extern void BuildDebugFile( FILE *outfile );
+extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
 extern SPEC_TYPE ParseTopLevel( FILE *file, int def_only );
 
 /* global variables */
@@ -184,7 +187,7 @@ extern char DLLName[80];
 extern char DLLFileName[80];
 extern char owner_name[80];
 extern char *init_func;
-extern const char *input_file_name;
+extern char *input_file_name;
 extern const char *output_file_name;
 extern char **debug_channels;
 extern char **lib_path;

@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "build.h"
 
@@ -54,6 +55,8 @@ static int undef_size;
 static char **ignore_symbols; /* list of symbols to ignore */
 static int nb_ignore_symbols;
 static int ignore_size;
+
+static const char *ld_tmp_file;  /* ld temp file name */
 
 static struct import **dll_imports = NULL;
 static int nb_imports = 0;      /* number of imported dlls (delayed or not) */
@@ -101,6 +104,12 @@ inline static void sort_symbols( char **table, int size )
 {
     if (table )
         qsort( table, size, sizeof(*table), name_cmp );
+}
+
+/* remove the temp file at exit */
+static void remove_ld_tmp_file(void)
+{
+    if (ld_tmp_file) unlink( ld_tmp_file );
 }
 
 /* open the .so library for a given dll in a specified path */
@@ -385,14 +394,45 @@ static void warn_unused( const struct import* imp )
     current_line = curline;
 }
 
+/* combine a list of object files with ld into a single object file */
+/* returns the name of the combined file */
+static const char *ldcombine_files( char **argv )
+{
+    int i, len = 0;
+    char *cmd;
+    int fd, err;
+    char buffer[] = "/tmp/winebuild.tmp.XXXXXX";
+
+    if ((fd = mkstemp( buffer ) == -1)) fatal_error( "could not generate a temp file\n" );
+    close( fd );
+    ld_tmp_file = xstrdup( buffer );
+    atexit( remove_ld_tmp_file );
+
+    for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
+    cmd = xmalloc( len + strlen(ld_tmp_file) + 10 );
+    sprintf( cmd, "ld -r -o %s", ld_tmp_file );
+    for (i = 0; argv[i]; i++) sprintf( cmd + strlen(cmd), " %s", argv[i] );
+    err = system( cmd );
+    if (err) fatal_error( "ld -r failed with status %d\n", err );
+    free( cmd );
+    return ld_tmp_file;
+}
+
 /* read in the list of undefined symbols */
-void read_undef_symbols( const char *name )
+void read_undef_symbols( char **argv )
 {
     FILE *f;
     char buffer[1024];
     int err;
+    const char *name;
+
+    if (!argv[0]) return;
 
     undef_size = nb_undef_symbols = 0;
+
+    /* if we have multiple object files, link them together */
+    if (argv[1]) name = ldcombine_files( argv );
+    else name = argv[0];
 
     sprintf( buffer, "nm -u %s", name );
     if (!(f = popen( buffer, "r" )))

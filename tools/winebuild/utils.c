@@ -153,6 +153,46 @@ void dump_bytes( FILE *outfile, const unsigned char *data, int len,
 
 
 /*******************************************************************
+ *         open_input_file
+ *
+ * Open a file in the given srcdir and set the input_file_name global variable.
+ */
+FILE *open_input_file( const char *srcdir, const char *name )
+{
+    char *fullname;
+    FILE *file;
+
+    if (srcdir)
+    {
+        fullname = xmalloc( strlen(srcdir) + strlen(name) + 2 );
+        strcpy( fullname, srcdir );
+        strcat( fullname, "/" );
+        strcat( fullname, name );
+    }
+    else fullname = xstrdup( name );
+
+    if (!(file = fopen( fullname, "r" ))) fatal_error( "Cannot open file '%s'\n", fullname );
+    input_file_name = fullname;
+    current_line = 1;
+    return file;
+}
+
+
+/*******************************************************************
+ *         close_input_file
+ *
+ * Close the current input file (must have been opened with open_input_file).
+ */
+void close_input_file( FILE *file )
+{
+    fclose( file );
+    free( input_file_name );
+    input_file_name = NULL;
+    current_line = 0;
+}
+
+
+/*******************************************************************
  *         make_c_identifier
  *
  * Map a string to a valid C identifier.

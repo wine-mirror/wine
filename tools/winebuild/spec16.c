@@ -458,10 +458,7 @@ static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *p
 
     if (!strncmp( "word_", profile, 5 )) short_ret = 1;
     else if (strncmp( "long_", profile, 5 ))
-    {
-        fprintf( stderr, "Invalid function name '%s'.\n", profile );
-        exit(1);
-    }
+        fatal_error( "Invalid function name '%s'\n", profile );
 
     fprintf( outfile, "unsigned %s __stdcall %s_CallTo16_%s( void (*proc)()",
              short_ret? "short" : "int", prefix, profile );
@@ -473,6 +470,7 @@ static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *p
         {
         case 'w': fprintf( outfile, "unsigned short" ); argsize += 2; break;
         case 'l': fprintf( outfile, "unsigned int" ); argsize += 4; break;
+        default: fatal_error( "Invalid letter '%c' in function name '%s'\n", args[i], profile );
         }
         fprintf( outfile, " arg%d", i+1 );
     }
@@ -907,7 +905,7 @@ void BuildSpec16File( FILE *outfile )
  *
  * Build the 16-bit-to-Wine/Wine-to-16-bit callback glue code
  */
-void BuildGlue( FILE *outfile, FILE *infile )
+void BuildGlue( FILE *outfile, const char *srcdir, char **argv )
 {
     char buffer[1024];
 
@@ -924,26 +922,33 @@ void BuildGlue( FILE *outfile, FILE *infile )
 
     /* Build the callback glue functions */
 
-    while (fgets( buffer, sizeof(buffer), infile ))
+    while (*argv)
     {
-        if (strstr( buffer, "### start build ###" )) break;
-    }
-    while (fgets( buffer, sizeof(buffer), infile ))
-    {
-        char *p;
-        if ( (p = strstr( buffer, "CallTo16_" )) != NULL )
-        {
-            char *q, *profile = p + strlen( "CallTo16_" );
-            for (q = profile; (*q == '_') || isalpha(*q); q++ )
-                ;
-            *q = '\0';
-            for (q = p-1; q > buffer && ((*q == '_') || isalnum(*q)); q-- )
-                ;
-            if ( ++q < p ) p[-1] = '\0'; else q = "";
-            BuildCallTo16Func( outfile, profile, q );
-        }
-        if (strstr( buffer, "### stop build ###" )) break;
-    }
+        FILE *infile = open_input_file( srcdir, *argv );
 
-    fclose( infile );
+        while (fgets( buffer, sizeof(buffer), infile ))
+        {
+            current_line++;
+            if (strstr( buffer, "### start build ###" )) break;
+        }
+        while (fgets( buffer, sizeof(buffer), infile ))
+        {
+            char *p;
+            if ( (p = strstr( buffer, "CallTo16_" )) != NULL )
+            {
+                char *q, *profile = p + strlen( "CallTo16_" );
+                for (q = profile; (*q == '_') || isalpha(*q); q++ )
+                    ;
+                *q = '\0';
+                for (q = p-1; q > buffer && ((*q == '_') || isalnum(*q)); q-- )
+                    ;
+                if ( ++q < p ) p[-1] = '\0'; else q = "";
+                BuildCallTo16Func( outfile, profile, q );
+            }
+            current_line++;
+            if (strstr( buffer, "### stop build ###" )) break;
+        }
+        close_input_file( infile );
+        argv++;
+    }
 }
