@@ -117,61 +117,46 @@ void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 	}
 }
 
-/* WAV format info can be found at: */
-/* */
-/*	http://www.cwi.nl/ftp/audio/AudioFormats.part2 */
-/*	ftp://ftp.cwi.nl/pub/audio/RIFF-format */
-/* */
-/* Import points to remember: */
-/* */
-/*	8-bit WAV is unsigned */
-/*	16-bit WAV is signed */
-
-static inline INT16 cvtU8toS16(BYTE byte)
+/* WAV format info can be found at:
+ *
+ *    http://www.cwi.nl/ftp/audio/AudioFormats.part2
+ *    ftp://ftp.cwi.nl/pub/audio/RIFF-format
+ *
+ * Import points to remember:
+ *    8-bit WAV is unsigned
+ *    16-bit WAV is signed
+ */
+ /* Use the same formulas as pcmconverter.c */
+static inline INT16 cvtU8toS16(BYTE b)
 {
-	INT16	s = (byte - 128) << 8;
-
-	return s;
+    return (short)((b+(b << 8))-32768);
 }
 
-static inline BYTE cvtS16toU8(INT16 word)
+static inline BYTE cvtS16toU8(INT16 s)
 {
-	BYTE	b = (word + 32768) >> 8;
-
-	return b;
+    return (s >> 8) ^ (unsigned char)0x80;
 }
 
 static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE *obuf )
 {
-        INT     fl = 0, fr = 0;
-        if (dsb->wfx.nChannels == 2) {
-                if (dsb->wfx.wBitsPerSample == 8)  {
+        INT fl,fr;
+
+        if (dsb->wfx.wBitsPerSample == 8)  {
+                if (dsound->wfx.wBitsPerSample == 8 &&
+                    dsound->wfx.nChannels == dsb->wfx.nChannels) {
                         /* avoid needless 8->16->8 conversion */
-                        if ( (dsound->wfx.wBitsPerSample == 8) && (dsound->wfx.nChannels == 2) ) {
-                                *obuf=*ibuf;
+                        *obuf=*ibuf;
+                        if (dsb->wfx.nChannels==2)
                                 *(obuf+1)=*(ibuf+1);
-                                return;
-                        }
-                        fl = cvtU8toS16(*ibuf);
-                        fr = cvtU8toS16(*(ibuf + 1));
-                } else if (dsb->wfx.wBitsPerSample == 16) {
-                        fl = *((INT16 *)ibuf);
-                        fr = *(((INT16 *)ibuf) + 1);
+                        return;
                 }
-        } else if (dsb->wfx.nChannels == 1) {
-                if (dsb->wfx.wBitsPerSample == 8) {
-                        /* avoid needless 8->16->8 conversion */
-                        if ( (dsound->wfx.wBitsPerSample == 8) && (dsound->wfx.nChannels == 1) ) {
-                                *obuf=*ibuf;
-                                return;
-                        }
-                        fl = cvtU8toS16(*ibuf);
-                        fr = fl;
-                } else if (dsb->wfx.wBitsPerSample == 16) {
-                        fl = *((INT16 *)ibuf);
-                        fr = fl;
-                }
+                fl = cvtU8toS16(*ibuf);
+                fr = (dsb->wfx.nChannels==2 ? cvtU8toS16(*(ibuf + 1)) : fl);
+        } else {
+                fl = *((INT16 *)ibuf);
+                fr = (dsb->wfx.nChannels==2 ? *(((INT16 *)ibuf) + 1)  : fl);
         }
+
         if (dsound->wfx.nChannels == 2) {
                 if (dsound->wfx.wBitsPerSample == 8) {
                         *obuf = cvtS16toU8(fl);
