@@ -79,7 +79,7 @@ typedef struct
 /******************************************************************************
  * Positioning constants
  */
-#define SELECTED_TAB_OFFSET     2
+#define SELECTED_TAB_OFFSET     1
 #define HORIZONTAL_ITEM_PADDING 6
 #define VERTICAL_ITEM_PADDING   3
 #define ROUND_CORNER_SIZE       2
@@ -2313,7 +2313,7 @@ static void TAB_InvalidateTabArea(
   HWND      hwnd,
   TAB_INFO* infoPtr)
 {
-  RECT clientRect;
+  RECT clientRect, r;
   DWORD lStyle = GetWindowLongA(hwnd, GWL_STYLE);
   INT lastRow = infoPtr->uNumRows - 1;
 
@@ -2347,10 +2347,17 @@ static void TAB_InvalidateTabArea(
                       lastRow * (infoPtr->tabHeight - 2) +
                       ((lStyle & TCS_BUTTONS) ? lastRow * BUTTON_SPACINGY : 0) + 2;
   }
-
+  
+  /* Punch out the updown control */
+  if (infoPtr->needsScrolling && (clientRect.right > 0)) {
+    GetClientRect(infoPtr->hwndUpDown, &r);
+    clientRect.right = clientRect.right - (r.right - r.left);
+  }
+  
   TRACE("invalidate (%ld,%ld)-(%ld,%ld)\n",
 	clientRect.left,clientRect.top,
 	clientRect.right,clientRect.bottom);
+ 
   InvalidateRect(hwnd, &clientRect, TRUE);
 }
 
