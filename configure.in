@@ -17,6 +17,7 @@ EMU_TARGET=wine
 LIBEXT=so       # library type .so or .a
 TRACE_MSGS=yes	# the TRACE() macro
 DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
+CURSES=yes
 
 AC_ARG_ENABLE(emulator,
 [  --disable-emulator      build only the Wine library, not the emulator],
@@ -33,6 +34,10 @@ AC_ARG_ENABLE(debug,
 AC_ARG_ENABLE(trace,
 [  --disable-trace         compile out TRACE messages],
 [if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
+
+AC_ARG_WITH(curses,
+[  --without-curses        do not use curses],
+[if test "$withval" = "no"; then CURSES="no"; fi])
 
 AC_ARG_WITH(reentrant-x,
 [  --without-reentrant-x   compile for use with non-reentrant X libraries])
@@ -248,22 +253,28 @@ else
 fi
 
 dnl **** Check which curses lib to use ***
-AC_CHECK_HEADERS(ncurses.h)
-if test "$ac_cv_header_ncurses_h" = "yes"
-then 
-    AC_CHECK_LIB(ncurses,waddch)
-fi
-if test "$ac_cv_lib_ncurses_waddch" = "yes"
+if test "$CURSES" = "yes"
 then
-    AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-    AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
-else
-    AC_CHECK_HEADERS(curses.h)
-    if test "$ac_cv_header_curses_h" = "yes"
-    then    
-       AC_CHECK_LIB(curses,waddch)
-       AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
-       AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
+    AC_CHECK_HEADERS(ncurses.h)
+    if test "$ac_cv_header_ncurses_h" = "yes"
+    then 
+        AC_CHECK_LIB(ncurses,waddch)
+    fi
+    if test "$ac_cv_lib_ncurses_waddch" = "yes"
+    then
+        AC_CHECK_LIB(ncurses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+        AC_CHECK_LIB(ncurses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
+    else
+        AC_CHECK_HEADERS(curses.h)
+        if test "$ac_cv_header_curses_h" = "yes"
+        then    
+            AC_CHECK_LIB(curses,waddch)
+            if test "$ac_cv_lib_curses_waddch" = "yes"
+            then
+                AC_CHECK_LIB(curses,resizeterm,AC_DEFINE(HAVE_RESIZETERM))
+                AC_CHECK_LIB(curses,getbkgd,AC_DEFINE(HAVE_GETBKGD))
+            fi
+        fi
     fi
 fi
 
@@ -654,7 +665,6 @@ AC_CHECK_HEADERS(\
 	a_out.h \
 	arpa/inet.h \
 	arpa/nameser.h \
-	curses.h \
 	elf.h \
 	float.h \
 	libio.h \
@@ -662,7 +672,6 @@ AC_CHECK_HEADERS(\
 	linux/cdrom.h \
 	linux/joystick.h \
 	linux/ucdrom.h \
-	ncurses.h \
 	net/if.h \
 	netinet/in.h \
 	netinet/tcp.h \
