@@ -2,6 +2,7 @@
  * MPR Password Cache functions
  *
  * Copyright 1999 Ulrich Weigand
+ * Copyright 2003 Mike McCormack for Codeweavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +19,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
+
 #include "winbase.h"
 #include "winnetwk.h"
+#include "winreg.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mpr);
+
+static const char mpr_key[] = "Software\\Wine\\Wine\\Mpr\\";
+
+static LPSTR MPR_GetValueName( LPSTR pbResource, WORD cbResource, BYTE nType )
+{
+    LPSTR name;
+    DWORD  i, x = 0;
+
+    /* just a hash so the value name doesn't get too large */
+    for( i=0; i<cbResource; i++ )
+        x = ((x<<7) | (x >> 25)) ^ toupper(pbResource[i]);
+
+    name = HeapAlloc( GetProcessHeap(), 0, 0x10 );
+    if( name )
+        sprintf( name, "I-%08lX-%02X", x, nType );
+    TRACE( "Value is %s\n", name );
+    return name;
+}
 
 /**************************************************************************
  * WNetCachePassword [MPR.@]  Saves password in cache
@@ -45,12 +67,36 @@ DWORD WINAPI WNetCachePassword(
     WORD x)
 
 {
-    FIXME( "(%p(%s), %d, %p(%s), %d, %d, 0x%08x): stub\n",
+    HKEY hkey;
+    DWORD r;
+    LPSTR valname;
+
+    WARN( "(%p(%s), %d, %p(%s), %d, %d, 0x%08x): totally insecure\n",
            pbResource, debugstr_a(pbResource), cbResource,
 	   pbPassword, debugstr_a(pbPassword), cbPassword,
 	   nType, x );
 
-    return WN_NOT_SUPPORTED;
+    r = RegCreateKeyA( HKEY_CURRENT_USER, mpr_key, &hkey );
+    if( r )
+        return WN_ACCESS_DENIED;
+
+    valname = MPR_GetValueName( pbResource, cbResource, nType );
+    if( valname )
+    {
+        r = RegSetValueExA( hkey, valname, 0, REG_BINARY, 
+                            pbPassword, cbPassword );
+        if( r )
+            r = WN_ACCESS_DENIED;
+        else
+            r = WN_SUCCESS;
+        HeapFree( GetProcessHeap(), 0, valname );
+    }
+    else
+        r = WN_OUT_OF_MEMORY;
+
+    RegCloseKey( hkey );
+
+    return r;
 }
 
 /*****************************************************************
@@ -59,10 +105,31 @@ DWORD WINAPI WNetCachePassword(
 UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource,
                                       BYTE nType )
 {
-    FIXME( "(%p(%s), %d, %d): stub\n",
+    HKEY hkey;
+    DWORD r;
+    LPSTR valname;
+
+    WARN( "(%p(%s), %d, %d): totally insecure\n",
            pbResource, debugstr_a(pbResource), cbResource, nType );
 
-    return WN_NOT_SUPPORTED;
+    r = RegCreateKeyA( HKEY_CURRENT_USER, mpr_key, &hkey );
+    if( r )
+        return WN_ACCESS_DENIED;
+
+    valname = MPR_GetValueName( pbResource, cbResource, nType );
+    if( valname )
+    {
+        r = RegDeleteValueA( hkey, valname );
+        if( r )
+            r = WN_ACCESS_DENIED;
+        else
+            r = WN_SUCCESS;
+        HeapFree( GetProcessHeap(), 0, valname );
+    }
+    else
+        r = WN_OUT_OF_MEMORY;
+
+    return r;
 }
 
 /*****************************************************************
@@ -89,11 +156,34 @@ DWORD WINAPI WNetGetCachedPassword(
     LPWORD pcbPassword, /* [out] Receives size of password */
     BYTE nType)         /* [in]  Type of password to retrieve */
 {
-    FIXME( "(%p(%s), %d, %p, %p, %d): stub\n",
+    HKEY hkey;
+    DWORD r, type = 0, sz;
+    LPSTR valname;
+
+    WARN( "(%p(%s), %d, %p, %p, %d): stub\n",
            pbResource, debugstr_a(pbResource), cbResource,
 	   pbPassword, pcbPassword, nType );
 
-    return WN_NOT_SUPPORTED;
+    r = RegCreateKeyA( HKEY_CURRENT_USER, mpr_key, &hkey );
+    if( r )
+        return WN_ACCESS_DENIED;
+
+    valname = MPR_GetValueName( pbResource, cbResource, nType );
+    if( valname )
+    {
+        sz = *pcbPassword;
+        r = RegQueryValueExA( hkey, valname, 0, &type, pbPassword, &sz );
+        *pcbPassword = sz;
+        if( r )
+            r = WN_ACCESS_DENIED;
+        else
+            r = WN_SUCCESS;
+        HeapFree( GetProcessHeap(), 0, valname );
+    }
+    else
+        r = WN_OUT_OF_MEMORY;
+
+    return r;
 }
 
 /*******************************************************************
@@ -101,6 +191,10 @@ DWORD WINAPI WNetGetCachedPassword(
  *
  * NOTES
  *	the parameter count is verifyed
+ * 
+ *  This function is a huge security risk, as virii and such can use
+ * it to grab all the passwords in the cache.  It's bad enough to 
+ * store the passwords (insecurely).
  *
  *  observed values:
  *	arg1	ptr	0x40xxxxxx -> (no string)
@@ -115,7 +209,7 @@ DWORD WINAPI WNetGetCachedPassword(
 UINT WINAPI WNetEnumCachedPasswords( LPSTR pbPrefix, WORD cbPrefix,
                                      BYTE nType, ENUMPASSWORDPROC enumPasswordProc, DWORD x)
 {
-    FIXME( "(%p(%s), %d, %d, %p, 0x%08lx): stub\n",
+    WARN( "(%p(%s), %d, %d, %p, 0x%08lx): don't implement this\n",
            pbPrefix, debugstr_a(pbPrefix), cbPrefix,
 	   nType, enumPasswordProc, x );
 
