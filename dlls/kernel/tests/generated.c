@@ -5,13 +5,12 @@
  * Unit tests for data structure packing
  */
 
-#include <stdio.h>
+#define WINVER 0x0501
+#define WINE_NOWINSOCK
+
+#include "windows.h"
 
 #include "wine/test.h"
-#include "basetsd.h"
-#include "winnt.h"
-#include "windef.h"
-#include "winbase.h"
 
 /***********************************************************************
  * Windows API extension
@@ -119,7 +118,6 @@ void test_pack(void)
 
     /* COMSTAT (pack 4) */
     TEST_TYPE(COMSTAT, 12, 4);
-    TEST_FIELD(COMSTAT, DWORD, status, 0, 4, 4);
     TEST_FIELD(COMSTAT, DWORD, cbInQue, 4, 4, 4);
     TEST_FIELD(COMSTAT, DWORD, cbOutQue, 8, 4, 4);
 
@@ -211,7 +209,8 @@ void test_pack(void)
     TEST_FIELD(OFSTRUCT, BYTE, cBytes, 0, 1, 1);
     TEST_FIELD(OFSTRUCT, BYTE, fFixedDisk, 1, 1, 1);
     TEST_FIELD(OFSTRUCT, WORD, nErrCode, 2, 2, 2);
-    TEST_FIELD(OFSTRUCT, BYTE[4], reserved, 4, 4, 1);
+    TEST_FIELD(OFSTRUCT, WORD, Reserved1, 4, 2, 2);
+    TEST_FIELD(OFSTRUCT, WORD, Reserved2, 6, 2, 2);
     TEST_FIELD(OFSTRUCT, BYTE[OFS_MAXPATHNAME], szPathName, 8, 128, 1);
 
     /* OSVERSIONINFOA (pack 4) */
@@ -341,11 +340,6 @@ void test_pack(void)
     TEST_FIELD(STARTUPINFOW, HANDLE, hStdOutput, 60, 4, 4);
     TEST_FIELD(STARTUPINFOW, HANDLE, hStdError, 64, 4, 4);
 
-    /* SYSLEVEL (pack 4) */
-    TEST_TYPE(SYSLEVEL, 28, 4);
-    TEST_FIELD(SYSLEVEL, CRITICAL_SECTION, crst, 0, 24, 4);
-    TEST_FIELD(SYSLEVEL, INT, level, 24, 4, 4);
-
     /* SYSTEMTIME (pack 4) */
     TEST_TYPE(SYSTEMTIME, 16, 2);
     TEST_FIELD(SYSTEMTIME, WORD, wYear, 0, 2, 2);
@@ -362,7 +356,7 @@ void test_pack(void)
     TEST_FIELD(SYSTEM_POWER_STATUS, BYTE, ACLineStatus, 0, 1, 1);
     TEST_FIELD(SYSTEM_POWER_STATUS, BYTE, BatteryFlag, 1, 1, 1);
     TEST_FIELD(SYSTEM_POWER_STATUS, BYTE, BatteryLifePercent, 2, 1, 1);
-    TEST_FIELD(SYSTEM_POWER_STATUS, BYTE, reserved, 3, 1, 1);
+    TEST_FIELD(SYSTEM_POWER_STATUS, BYTE, Reserved1, 3, 1, 1);
     TEST_FIELD(SYSTEM_POWER_STATUS, DWORD, BatteryLifeTime, 4, 4, 4);
     TEST_FIELD(SYSTEM_POWER_STATUS, DWORD, BatteryFullLifeTime, 8, 4, 4);
 
@@ -417,7 +411,7 @@ void test_pack(void)
 
     /* WIN32_STREAM_ID (pack 4) */
     TEST_TYPE(WIN32_STREAM_ID, 24, 4);
-    TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamID, 0, 4, 4);
+    TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamId, 0, 4, 4);
     TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamAttributes, 4, 4, 4);
     TEST_FIELD(WIN32_STREAM_ID, LARGE_INTEGER, Size, 8, 8, 4);
     TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamNameSize, 16, 4, 4);

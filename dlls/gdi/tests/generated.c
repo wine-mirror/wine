@@ -5,13 +5,12 @@
  * Unit tests for data structure packing
  */
 
-#include <stdio.h>
+#define WINVER 0x0501
+#define WINE_NOWINSOCK
+
+#include "windows.h"
 
 #include "wine/test.h"
-#include "basetsd.h"
-#include "winnt.h"
-#include "windef.h"
-#include "wingdi.h"
 
 /***********************************************************************
  * Windows API extension
@@ -133,7 +132,7 @@ void test_pack(void)
     TEST_FIELD(BITMAPV4HEADER, LONG, bV4Height, 8, 4, 4);
     TEST_FIELD(BITMAPV4HEADER, WORD, bV4Planes, 12, 2, 2);
     TEST_FIELD(BITMAPV4HEADER, WORD, bV4BitCount, 14, 2, 2);
-    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4Compression, 16, 4, 4);
+    TEST_FIELD(BITMAPV4HEADER, DWORD, bV4V4Compression, 16, 4, 4);
     TEST_FIELD(BITMAPV4HEADER, DWORD, bV4SizeImage, 20, 4, 4);
     TEST_FIELD(BITMAPV4HEADER, LONG, bV4XPelsPerMeter, 24, 4, 4);
     TEST_FIELD(BITMAPV4HEADER, LONG, bV4YPelsPerMeter, 28, 4, 4);
@@ -429,7 +428,7 @@ void test_pack(void)
 
     /* EMRFORMAT (pack 4) */
     TEST_TYPE(EMRFORMAT, 16, 4);
-    TEST_FIELD(EMRFORMAT, DWORD, signature, 0, 4, 4);
+    TEST_FIELD(EMRFORMAT, DWORD, dSignature, 0, 4, 4);
     TEST_FIELD(EMRFORMAT, DWORD, nVersion, 4, 4, 4);
     TEST_FIELD(EMRFORMAT, DWORD, cbData, 8, 4, 4);
     TEST_FIELD(EMRFORMAT, DWORD, offData, 12, 4, 4);
@@ -520,7 +519,7 @@ void test_pack(void)
     TEST_TYPE(EMRPLGBLT, 140, 4);
     TEST_FIELD(EMRPLGBLT, EMR, emr, 0, 8, 4);
     TEST_FIELD(EMRPLGBLT, RECTL, rclBounds, 8, 16, 4);
-    TEST_FIELD(EMRPLGBLT, POINTL[3], aptlDst, 24, 24, 4);
+    TEST_FIELD(EMRPLGBLT, POINTL[3], aptlDest, 24, 24, 4);
     TEST_FIELD(EMRPLGBLT, LONG, xSrc, 48, 4, 4);
     TEST_FIELD(EMRPLGBLT, LONG, ySrc, 52, 4, 4);
     TEST_FIELD(EMRPLGBLT, LONG, cxSrc, 56, 4, 4);

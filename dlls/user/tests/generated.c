@@ -5,15 +5,12 @@
  * Unit tests for data structure packing
  */
 
-#include <stdio.h>
+#define WINVER 0x0501
+#define WINE_NOWINSOCK
+
+#include "windows.h"
 
 #include "wine/test.h"
-#include "basetsd.h"
-#include "winnt.h"
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 
 /***********************************************************************
  * Windows API extension
@@ -236,8 +233,8 @@ void test_pack(void)
 
     /* HARDWAREHOOKSTRUCT (pack 4) */
     TEST_TYPE(HARDWAREHOOKSTRUCT, 16, 4);
-    TEST_FIELD(HARDWAREHOOKSTRUCT, HWND, hWnd, 0, 4, 4);
-    TEST_FIELD(HARDWAREHOOKSTRUCT, UINT, wMessage, 4, 4, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, HWND, hwnd, 0, 4, 4);
+    TEST_FIELD(HARDWAREHOOKSTRUCT, UINT, message, 4, 4, 4);
     TEST_FIELD(HARDWAREHOOKSTRUCT, WPARAM, wParam, 8, 4, 4);
     TEST_FIELD(HARDWAREHOOKSTRUCT, LPARAM, lParam, 12, 4, 4);
 
@@ -253,7 +250,7 @@ void test_pack(void)
     TEST_FIELD(HELPINFO, INT, iContextType, 4, 4, 4);
     TEST_FIELD(HELPINFO, INT, iCtrlId, 8, 4, 4);
     TEST_FIELD(HELPINFO, HANDLE, hItemHandle, 12, 4, 4);
-    TEST_FIELD(HELPINFO, DWORD, dwContextId, 16, 4, 4);
+    TEST_FIELD(HELPINFO, DWORD_PTR, dwContextId, 16, 4, 4);
     TEST_FIELD(HELPINFO, POINT, MousePos, 20, 8, 4);
 
     /* HELPWININFOA (pack 4) */
@@ -498,7 +495,7 @@ void test_pack(void)
     TEST_FIELD(MSGBOXPARAMSA, LPCSTR, lpszCaption, 16, 4, 4);
     TEST_FIELD(MSGBOXPARAMSA, DWORD, dwStyle, 20, 4, 4);
     TEST_FIELD(MSGBOXPARAMSA, LPCSTR, lpszIcon, 24, 4, 4);
-    TEST_FIELD(MSGBOXPARAMSA, DWORD, dwContextHelpId, 28, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSA, DWORD_PTR, dwContextHelpId, 28, 4, 4);
     TEST_FIELD(MSGBOXPARAMSA, MSGBOXCALLBACK, lpfnMsgBoxCallback, 32, 4, 4);
     TEST_FIELD(MSGBOXPARAMSA, DWORD, dwLanguageId, 36, 4, 4);
 
@@ -511,7 +508,7 @@ void test_pack(void)
     TEST_FIELD(MSGBOXPARAMSW, LPCWSTR, lpszCaption, 16, 4, 4);
     TEST_FIELD(MSGBOXPARAMSW, DWORD, dwStyle, 20, 4, 4);
     TEST_FIELD(MSGBOXPARAMSW, LPCWSTR, lpszIcon, 24, 4, 4);
-    TEST_FIELD(MSGBOXPARAMSW, DWORD, dwContextHelpId, 28, 4, 4);
+    TEST_FIELD(MSGBOXPARAMSW, DWORD_PTR, dwContextHelpId, 28, 4, 4);
     TEST_FIELD(MSGBOXPARAMSW, MSGBOXCALLBACK, lpfnMsgBoxCallback, 32, 4, 4);
     TEST_FIELD(MSGBOXPARAMSW, DWORD, dwLanguageId, 36, 4, 4);
 
@@ -526,13 +523,13 @@ void test_pack(void)
     /* MULTIKEYHELPA (pack 4) */
     TEST_TYPE(MULTIKEYHELPA, 8, 4);
     TEST_FIELD(MULTIKEYHELPA, DWORD, mkSize, 0, 4, 4);
-    TEST_FIELD(MULTIKEYHELPA, CHAR, mkKeyList, 4, 1, 1);
+    TEST_FIELD(MULTIKEYHELPA, CHAR, mkKeylist, 4, 1, 1);
     TEST_FIELD(MULTIKEYHELPA, CHAR[1], szKeyphrase, 5, 1, 1);
 
     /* MULTIKEYHELPW (pack 4) */
     TEST_TYPE(MULTIKEYHELPW, 8, 4);
     TEST_FIELD(MULTIKEYHELPW, DWORD, mkSize, 0, 4, 4);
-    TEST_FIELD(MULTIKEYHELPW, WCHAR, mkKeyList, 4, 2, 2);
+    TEST_FIELD(MULTIKEYHELPW, WCHAR, mkKeylist, 4, 2, 2);
     TEST_FIELD(MULTIKEYHELPW, WCHAR[1], szKeyphrase, 6, 2, 2);
 
     /* NCCALCSIZE_PARAMS (pack 4) */
