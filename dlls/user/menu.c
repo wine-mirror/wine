@@ -679,7 +679,6 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 	{
 	     UINT i;
 
-	     key = toupperW(key);
 	     for (i = 0; i < menu->nItems; i++, item++)
 	     {
 		if (IS_STRING_ITEM(item->fType) && item->text)
@@ -690,7 +689,7 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 		    	p = strchrW (p + 2, '&');
 		    }
 		    while (p != NULL && p [1] == '&');
-		    if (p && (toupperW(p[1]) == key)) return i;
+		    if (p && (toupperW(p[1]) == toupperW(key))) return i;
 		}
 	     }
 	}
@@ -1475,7 +1474,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 
     /* store the owner for DrawItem */
     menu->hwndOwner = hwndOwner;
-
 
     MENU_PopupMenuCalcSize( menu, hwndOwner );
 
@@ -2848,13 +2846,9 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
     if (!(wFlags & TPM_NONOTIFY))
     {
        SendMessageW( hWnd, WM_INITMENU, (WPARAM)hMenu, 0 );
-       if ((menu = MENU_GetMenu( hMenu )) && (!menu->Height))
-       { /* app changed/recreated menu bar entries in WM_INITMENU
-            Recalculate menu sizes else clicks will not work */
-          SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-
-       }
+       /* If an app changed/recreated menu bar entries in WM_INITMENU
+        * menu sizes will be recalculated once the menu created/shown.
+        */
     }
     
     /* This makes the menus of applications built with Delphi work.
@@ -2927,7 +2921,6 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
     if (!hTrackMenu || IsIconic(hwnd) || wChar == ' ' )
     {
         if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_SYSMENU)) return;
-        if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_MANAGED) return;
         hTrackMenu = get_win_sys_menu( hwnd );
         uItem = 0;
         wParam |= HTSYSMENU; /* prevent item lookup */
@@ -2940,24 +2933,34 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
     if( wChar && wChar != ' ' )
     {
         uItem = MENU_FindItemByKey( hwnd, hTrackMenu, wChar, (wParam & HTSYSMENU) );
-        if( uItem >= (UINT)(-2) )
+        if ( uItem >= (UINT)(-2) )
         {
             if( uItem == (UINT)(-1) ) MessageBeep(0);
-            hTrackMenu = 0;
+            /* schedule end of menu tracking */
+            PostMessageW( hwnd, WM_CANCELMODE, 0, 0 );
+            goto track_menu;
+        }
+    }
+    else
+    {
+        /* prevent sysmenu activation for managed windows on Alt down/up */
+        if ((wParam & HTSYSMENU) && (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MANAGED))
+        {
+            /* schedule end of menu tracking */
+            PostMessageW( hwnd, WM_CANCELMODE, 0, 0 );
+            goto track_menu;
         }
     }
 
-    if( hTrackMenu )
-    {
-        MENU_SelectItem( hwnd, hTrackMenu, uItem, TRUE, 0 );
+    MENU_SelectItem( hwnd, hTrackMenu, uItem, TRUE, 0 );
 
-        if( uItem == NO_SELECTED_ITEM )
-            MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
-        else if( wChar )
-            PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
+    if( uItem == NO_SELECTED_ITEM )
+        MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
+    else
+        PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
 
-        MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
-    }
+track_menu:
+    MENU_TrackMenu( hTrackMenu, wFlags, 0, 0, hwnd, NULL );
     MENU_ExitTracking( hwnd );
 }
 
@@ -4518,13 +4521,17 @@ INT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
                                    BYTE fVirt, WORD key, WORD cmd )
 {
+    INT mask = 0;
     UINT mesg = 0;
 
     if (wParam != key) return FALSE;
 
+    if (GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+    if (GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
+
     if (message == WM_CHAR || message == WM_SYSCHAR)
     {
-        if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
+        if ( !(fVirt & FVIRTKEY) && (mask & FALT) == (fVirt & FALT) )
         {
             TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", wParam & 0xff);
             goto found;
@@ -4534,12 +4541,9 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
     {
         if(fVirt & FVIRTKEY)
         {
-            INT mask = 0;
             TRACE_(accel)("found accel for virt_key %04x (scan %04x)\n",
                           wParam, 0xff & HIWORD(lParam));
-            if(GetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
-            if(GetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
-            if(GetKeyState(VK_MENU) & 0x8000) mask |= FALT;
+
             if(mask == (fVirt & (FSHIFT | FCONTROL | FALT))) goto found;
             TRACE_(accel)(", but incorrect SHIFT/CTRL/ALT-state\n");
         }
@@ -4693,9 +4697,7 @@ INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
         return 0;
     }
     if ( msg->message != WM_KEYDOWN &&
-         msg->message != WM_KEYUP &&
          msg->message != WM_SYSKEYDOWN &&
-         msg->message != WM_SYSKEYUP &&
          msg->message != WM_SYSCHAR &&
          msg->message != WM_CHAR ) return 0;
 

@@ -553,10 +553,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	    }
 	}
 	else if( wParam == VK_F10 )
-	        iF10Key = 1;
-	     else
-	        if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
-                    SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
+            iF10Key = 1;
+        else if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
+            SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
 	break;
 
     case WM_KEYUP:

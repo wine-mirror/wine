@@ -2267,6 +2267,7 @@ static void test_messages(void)
     ok(!(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE), "WS_VISIBLE should not be set\n");
     ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
 
+    DestroyWindow(hchild);
     DestroyWindow(hparent);
     flush_sequence();
 
@@ -2308,6 +2309,7 @@ static void test_messages(void)
     EnableWindow(hparent, FALSE);
     ok_sequence(WmEnableWindowSeq, "EnableWindow", FALSE);
 
+    DestroyWindow(hchild);
     DestroyWindow(hparent);
     flush_sequence();
 }
@@ -2790,6 +2792,247 @@ static void test_interthread_messages(void)
     CloseHandle(hThread);
 }
 
+
+static const struct message WmVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_CHAR, wparam|lparam, 'n', 1 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1002,1), 0 },
+    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmShiftVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_CHAR, wparam|lparam, 'N', 1 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1001,1), 0 },
+    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmCtrlVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 1 },
+    { WM_CHAR, wparam|lparam, 0x000e, 1 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
+    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmCtrlVkN_2[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_N, 1 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
+    { WM_KEYUP, wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmAltVkN[] = {
+    { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, wparam|lparam, VK_N, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_N, 0x20000001 },
+    { WM_SYSCHAR, wparam|lparam, 'n', 0x20000001 },
+    { WM_SYSCHAR, sent|wparam|lparam, 'n', 0x20000001 },
+    { WM_SYSCOMMAND, sent|defwinproc|wparam|lparam, SC_KEYMENU, 'n' },
+    { HCBT_SYSCOMMAND, hook },
+    { WM_ENTERMENULOOP, sent|defwinproc|wparam|lparam, 0, 0 },
+    { WM_SETCURSOR, sent|defwinproc },
+    { WM_INITMENU, sent|defwinproc },
+    { WM_MENUCHAR, sent|defwinproc|wparam, MAKEWPARAM('n',MF_SYSMENU) },
+    { WM_CAPTURECHANGED, sent|defwinproc },
+    { WM_MENUSELECT, sent|defwinproc|wparam, MAKEWPARAM(0,0xffff) },
+    { WM_EXITMENULOOP, sent|defwinproc },
+    { WM_MENUSELECT, sent|defwinproc|wparam|optional, MAKEWPARAM(0,0xffff) }, /* Win95 bug */
+    { WM_EXITMENULOOP, sent|defwinproc|optional }, /* Win95 bug */
+    { WM_SYSKEYUP, wparam|lparam, VK_N, 0xe0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmAltVkN_2[] = {
+    { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, wparam|lparam, VK_N, 0x20000001 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1003,1), 0 },
+    { WM_SYSKEYUP, wparam|lparam, VK_N, 0xe0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmCtrlAltVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_KEYDOWN, wparam|lparam, VK_N, 0x20000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_N, 0x20000001 },
+    { WM_KEYUP, wparam|lparam, VK_N, 0xe0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_N, 0xe0000001 },
+    { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { 0 }
+};
+
+static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
+{
+    MSG msg;
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        struct message log_msg;
+
+        trace("accel: %p, %04x, %08x, %08lx\n", msg.hwnd, msg.message, msg.wParam, msg.lParam);
+
+        log_msg.message = msg.message;
+        log_msg.flags = wparam|lparam;
+        log_msg.wParam = msg.wParam;
+        log_msg.lParam = msg.lParam;
+        add_message(&log_msg);
+
+        if (!TranslateAccelerator(hwnd, hAccel, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+}
+
+static void test_accelerators(void)
+{
+    SHORT state;
+    HACCEL hAccel;
+    HWND hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                                100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(hwnd != 0);
+
+    SetFocus(hwnd);
+    ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
+
+    state = GetKeyState(VK_SHIFT);
+    ok(!(state & 0x8000), "wrong Shift state %04x\n", state);
+    state = GetKeyState(VK_CAPITAL);
+    ok(state == 0, "wrong CapsLock state %04x\n", state);
+
+    hAccel = LoadAccelerators(GetModuleHandleA(0), MAKEINTRESOURCE(1));
+    assert(hAccel != 0);
+
+    trace("testing VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmVkN, "VK_N press/release", FALSE);
+
+    trace("testing Shift+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
+
+    trace("testing Ctrl+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlVkN, "Ctrl+VK_N press/release", FALSE);
+
+    trace("testing Alt+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmAltVkN, "Alt+VK_N press/release", FALSE);
+
+    trace("testing Ctrl+Alt+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 1", FALSE);
+
+    ok(DestroyAcceleratorTable(hAccel), "DestroyAcceleratorTable error %ld\n", GetLastError());
+
+    hAccel = LoadAccelerators(GetModuleHandleA(0), MAKEINTRESOURCE(2));
+    assert(hAccel != 0);
+
+    trace("testing VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmVkN, "VK_N press/release", FALSE);
+
+    trace("testing Shift+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmShiftVkN, "Shift+VK_N press/release", FALSE);
+
+    trace("testing Ctrl+VK_N press/release 2\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlVkN_2, "Ctrl+VK_N press/release 2", FALSE);
+
+    trace("testing Alt+VK_N press/release 2\n");
+    flush_sequence();
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmAltVkN_2, "Alt+VK_N press/release 2", FALSE);
+
+    trace("testing Ctrl+Alt+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_N, 0, 0, 0);
+    keybd_event(VK_N, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 2", FALSE);
+
+    ok(DestroyAcceleratorTable(hAccel), "DestroyAcceleratorTable error %ld\n", GetLastError());
+
+    DestroyWindow(hwnd);
+}
+
 /************* window procedures ********************/
 
 static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -3159,6 +3402,7 @@ START_TEST(msg)
     test_paint_messages();
     test_interthread_messages();
     test_message_conversion();
+    test_accelerators();
 
     UnhookWindowsHookEx(hCBT_hook);
 }

@@ -2061,6 +2061,12 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     if (hkl != X11DRV_GetKeyboardLayout(0))
         FIXME("keyboard layout %p is not supported\n", hkl);
 
+    if ((lpKeyState[VK_MENU] & 0x80) && (lpKeyState[VK_CONTROL] & 0x80))
+    {
+        TRACE("Ctrl+Alt+[key] won't generate a character\n");
+        return 0;
+    }
+
     e.display = display;
     e.keycode = 0;
     e.state = 0;
