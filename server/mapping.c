@@ -289,6 +289,11 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         if (!size_high && !size_low)
         {
             if (!get_file_size( mapping->file, &size_high, &size_low )) goto error;
+            if (!size_high && !size_low)
+            {
+                set_error( STATUS_FILE_INVALID );
+                goto error;
+            }
         }
         else
         {
