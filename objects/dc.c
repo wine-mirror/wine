@@ -1360,3 +1360,18 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return 0;
 }
+
+/***********************************************************************
+ *           SetDCBrushColor    (GDI32.@)
+ *
+ * Sets the current device context (DC) brush color to the specified
+ * color value. If the device cannot represent the specified color
+ * value, the color is set to the nearest physical color.
+ *
+ */
+COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
+{
+    FIXME("(%08x, %08lx): stub\n", hdc, crColor);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return CLR_INVALID;
+}

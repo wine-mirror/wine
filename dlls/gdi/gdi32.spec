@@ -347,6 +347,7 @@
 @ stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 @ stdcall SetColorAdjustment(long ptr) SetColorAdjustment
 @ stdcall SetColorSpace(long long) SetColorSpace
+@ stdcall SetDCBrushColor(long long) SetDCBrushColor
 @ stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable
 @ stdcall SetDIBits(long long long long ptr ptr long) SetDIBits
 @ stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long) SetDIBitsToDevice
