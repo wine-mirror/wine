@@ -64,7 +64,7 @@ type	win32
 @ stub NtAlertResumeThread
 @ stub NtAlertThread
 @ stdcall NtAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
-@ stub NtAllocateUuids
+@ stdcall NtAllocateUuids(ptr ptr ptr) NtAllocateUuids
 @ stub NtAllocateVirtualMemory
 @ stub NtCallbackReturn
 @ stub NtCancelIoFile
