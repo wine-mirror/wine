@@ -533,7 +533,7 @@ void MACRO_FileOpen(void)
 
     szPath[0]='\0';
 
-    openfilename.lStructSize       = 0;
+    openfilename.lStructSize       = sizeof(OPENFILENAME);
     openfilename.hwndOwner         = Globals.active_win->hMainWnd;
     openfilename.hInstance         = Globals.hInstance;
     openfilename.lpstrFilter       = szzFilter;
