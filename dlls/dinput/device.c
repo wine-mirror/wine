@@ -211,7 +211,7 @@ void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) {
 }
 
 /* Conversion between internal data buffer and external data buffer */
-void fill_DataFormat(void *out, void *in, DataFormat *df) {
+void fill_DataFormat(void *out, const void *in, DataFormat *df) {
     int i;
     char *in_c = (char *) in;
     char *out_c = (char *) out;
@@ -272,6 +272,13 @@ void fill_DataFormat(void *out, void *in, DataFormat *df) {
 	    }
 	}
     }
+}
+
+void release_DataFormat(DataFormat * format)
+{
+    TRACE("Deleting DataTransform : \n");
+
+    HeapFree(GetProcessHeap(), 0, format->dt);
 }
 
 DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) {

@@ -48,8 +48,9 @@ typedef struct {
   int internal_format_size;
   DataTransform *dt;
 } DataFormat;
-extern void fill_DataFormat(void *out, void *in, DataFormat *df) ;
+extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
 extern DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) ;
+extern void release_DataFormat(DataFormat *df) ;
 
 /* Used to fill events in the queue */
 #define GEN_EVENT(offset,data,xtime,seq)					\
