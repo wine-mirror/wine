@@ -3602,10 +3602,6 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 {
         BOOL control;
 
-	/* Protect read-only edit control from modification */
-	if(es->style & ES_READONLY)
-	    return;
-
 	control = GetKeyState(VK_CONTROL) & 0x8000;
 
 	switch (c) {
@@ -3647,10 +3643,12 @@ static void EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 		SendMessageW(es->hwndSelf, WM_COPY, 0, 0);
 		break;
 	case 0x16: /* ^V */
-		SendMessageW(es->hwndSelf, WM_PASTE, 0, 0);
+	        if (!(es->style & ES_READONLY))
+		    SendMessageW(es->hwndSelf, WM_PASTE, 0, 0);
 		break;
 	case 0x18: /* ^X */
-		SendMessageW(es->hwndSelf, WM_CUT, 0, 0);
+	        if (!(es->style & ES_READONLY))
+		    SendMessageW(es->hwndSelf, WM_CUT, 0, 0);
 		break;
 
 	default:
