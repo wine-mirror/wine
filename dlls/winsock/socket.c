@@ -2235,7 +2235,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 /* FIXME: what is documented behavior if SO_LINGER optval
                    is null?? */
                 optval = (char*)&linger;
-                optlen = sizeof(struct WS_linger);
+                optlen = sizeof(struct linger);
             } else if (optlen < sizeof(int)){
                 woptval= *((INT16 *) optval);
                 optval= (char*) &woptval;
