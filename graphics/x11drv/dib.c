@@ -158,9 +158,12 @@ int *X11DRV_DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
 /***********************************************************************
  *           X11DRV_DIB_MapColor
  */
-int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys )
+int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys, int oldcol )
 {
     int color;
+
+    if ((oldcol < nPhysMap) && (physMap[oldcol] == phys))
+        return oldcol;
 
     for (color = 0; color < nPhysMap; color++)
         if (physMap[color] == phys)
@@ -778,13 +781,13 @@ static void X11DRV_DIB_GetImageBits_4( int lines, BYTE *dstbits,
       for (h = lines-1; h >= 0; h--) {
 	for (x = 0; x < dstwidth/2; x++) {
 	  *bits++ = (X11DRV_DIB_MapColor((int *)colors, 16, 
-					  XGetPixel( bmpImage, x++, h )) << 4)
+					  XGetPixel( bmpImage, x++, h ), 0) << 4)
 	    | (X11DRV_DIB_MapColor((int *)colors, 16,
-					XGetPixel( bmpImage, x++, h )) & 0x0f);
+					XGetPixel( bmpImage, x++, h ), 0) & 0x0f);
            }
            if (dstwidth & 1)
 	  *bits = (X11DRV_DIB_MapColor((int *)colors, 16,
-					XGetPixel( bmpImage, x++, h )) << 4);
+					XGetPixel( bmpImage, x++, h ), 0) << 4);
 	bits = (dstbits += linebytes);
        }
       break;
@@ -1166,7 +1169,7 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
       for (h = lines - 1; h >= 0; h--) {
 	for (x = 0; x < dstwidth; x++, bits++) {
 	  *bits = X11DRV_DIB_MapColor((int *)colors, 256,
-                                         XGetPixel( bmpImage, x, h ) );
+                                         XGetPixel( bmpImage, x, h ), *bits);
         }
 	bits = (dstbits += linebytes);
       }
