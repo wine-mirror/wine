@@ -639,7 +639,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl * This)
 	  }
 	}
 
-	if(GetShellOle())
+	if(GetShellOle() && pRegisterDragDrop)
 	{
 	  if (SUCCEEDED(IShellFolder_CreateViewObject(This->pSFParent, This->hWnd, &IID_IDropTarget, (LPVOID*)&pdt)))
 	  {
@@ -1141,6 +1141,10 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    SHFree((LPITEMIDLIST)lpnmlv->lParam);     /*delete the pidl because we made a copy of it*/
 	    break;
 
+	  case LVN_INSERTITEM:
+	    TRACE("-- LVN_INSERTITEM (STUB)%p\n",This);
+	    break;
+
 	  case LVN_ITEMACTIVATE:
 	    TRACE("-- LVN_ITEMACTIVATE %p\n",This);
 	    OnStateChange(This, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
@@ -1210,7 +1214,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	      DWORD dwAttributes = SFGAO_CANLINK;
 	      DWORD dwEffect = DROPEFFECT_COPY | DROPEFFECT_MOVE;
 
-	      if(GetShellOle())
+	      if(GetShellOle() && pDoDragDrop)
 	      {
 	        if (SUCCEEDED(IShellFolder_GetUIObjectOf(This->pSFParent, This->hWnd, This->cidl, This->apidl, &IID_IDataObject,0,(LPVOID *)&pda)))
 	        {
@@ -1361,7 +1365,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    break;
 
 	  default:
-	    TRACE("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
+	    FIXME("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
 	    break;
 	}
 	return 0;
@@ -1434,7 +1438,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 
 	  case WM_GETDLGCODE:   return SendMessageA(pThis->hWndList,uMessage,0,0);
 
-	  case WM_DESTROY:	if(GetShellOle())
+	  case WM_DESTROY:	if(GetShellOle() && pRevokeDragDrop)
 				{
 	  			  pRevokeDragDrop(pThis->hWnd);
 				}
