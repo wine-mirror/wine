@@ -292,19 +292,17 @@ static UINT16   __lfCheckSum( LPLOGFONT16 plf )
 {
     CHAR        font[LF_FACESIZE];
     UINT16      checksum = 0;
-    UINT16      i;
+    UINT16 *ptr;
+    int i;
 
-#define ptr ((UINT16*)plf)
-   for( i = 0; i < 9; i++ ) checksum ^= *ptr++;
-#undef ptr
-   i = 0;
-#define ptr ((CHAR*)plf)
-   do { font[i++] = tolower(*ptr++); } while (( i < LF_FACESIZE) && (*ptr) && (*ptr!=' '));
-   for( ptr = font, i >>= 1; i > 0; i-- ) 
-#undef ptr
-#define ptr ((UINT16*)plf)
-        checksum ^= *ptr++;
-#undef ptr
+    ptr = (UINT16 *)plf;
+    for (i = 0; i < 9; i++) checksum ^= *ptr++;
+    for (i = 0; i < LF_FACESIZE; i++)
+    {
+        font[i] = tolower(plf->lfFaceName[i]);
+        if (!font[i] || font[i] == ' ') break;
+    }
+    for (ptr = (UINT16 *)font, i >>= 1; i > 0; i-- ) checksum ^= *ptr++;
    return checksum;
 }
 
