@@ -28,6 +28,7 @@ C_SRCS = \
 	request.c \
 	select.c \
 	semaphore.c \
+	serial.c \
 	snapshot.c \
 	sock.c \
 	thread.c \

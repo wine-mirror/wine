@@ -2,6 +2,7 @@
 #define __WINE_COMM_H
 
 #include "windef.h"
+#include "winbase.h"
 
 #define MAX_PORTS   9
 
@@ -24,5 +25,6 @@ struct DosDeviceStruct {
 };
 
 extern void COMM_Init(void);
+extern HANDLE COMM_CreatePort(LPCSTR name, DWORD access);
 
 #endif  /* __WINE_COMM_H */

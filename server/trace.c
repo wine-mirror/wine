@@ -1417,6 +1417,20 @@ static void dump_wait_input_idle_reply( const struct wait_input_idle_request *re
     fprintf( stderr, " event=%d", req->event );
 }
 
+static void dump_create_serial_request( const struct create_serial_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " sharing=%08x,", req->sharing );
+    fprintf( stderr, " name=" );
+    dump_string( req, req->name );
+}
+
+static void dump_create_serial_reply( const struct create_serial_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_wait_process_request,
@@ -1525,6 +1539,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_msg_queue_request,
     (dump_func)dump_wake_queue_request,
     (dump_func)dump_wait_input_idle_request,
+    (dump_func)dump_create_serial_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1635,6 +1650,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_msg_queue_reply,
     (dump_func)0,
     (dump_func)dump_wait_input_idle_reply,
+    (dump_func)dump_create_serial_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1745,6 +1761,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_msg_queue",
     "wake_queue",
     "wait_input_idle",
+    "create_serial",
 };
 
 /* ### make_requests end ### */

@@ -28,6 +28,7 @@
 #include "winerror.h"
 #include "drive.h"
 #include "file.h"
+#include "comm.h"
 #include "heap.h"
 #include "msdos.h"
 #include "syslevel.h"
@@ -648,6 +649,7 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
 {
     int i;
     const char *p;
+    HFILE handle;
 
     if (!name) return (HFILE)NULL; /* if FILE_DupUnixHandle was used */
     if (name[0] && (name[1] == ':')) name += 2;
@@ -667,7 +669,6 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                                             OPEN_EXISTING, 0, -1, TRUE );
 		if (!strcmp(DOSFS_Devices[i].name,"CON")) {
 			HFILE to_dup;
-			HFILE handle;
 			switch (access & (GENERIC_READ|GENERIC_WRITE)) {
 			case GENERIC_READ:
 				to_dup = GetStdHandle( STD_INPUT_HANDLE );
@@ -690,22 +691,9 @@ HFILE DOSFS_OpenDevice( const char *name, DWORD access )
                 {
                     return FILE_CreateDevice( i, access, NULL );
 		}
-		{
-		    HFILE r;
-		    char devname[40];
-		    PROFILE_GetWineIniString("serialports",name,"",devname,sizeof devname);
 
-		    if(devname[0])
-		    {
-			TRACE_(file)("DOSFS_OpenDevice %s is %s\n",
-                                     DOSFS_Devices[i].name,devname);
-			r =  FILE_CreateFile( devname, access,
-				FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-				OPEN_EXISTING, 0, -1, TRUE );
-			TRACE_(file)("Create_File return %08X\n",r);
-			return r;
-		    }
-		}
+                if( (handle=COMM_CreatePort(name,access)) )
+                    return handle;
 
 		FIXME("device open %s not supported (yet)\n",DOSFS_Devices[i].name);
     		return HFILE_ERROR;

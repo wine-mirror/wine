@@ -1312,6 +1312,15 @@ struct wait_input_idle_request
     OUT int          event;        /* handle to idle event */
 };
 
+struct create_serial_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  unsigned int access;       /* wanted access rights */
+    IN  int          inherit;      /* inherit flag */
+    IN  unsigned int sharing;      /* sharing flags */
+    OUT int          handle;       /* handle to the port */
+    IN  char         name[1];      /* file name */
+};
 
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
@@ -1425,6 +1434,7 @@ enum request
     REQ_GET_MSG_QUEUE,
     REQ_WAKE_QUEUE,
     REQ_WAIT_INPUT_IDLE,
+    REQ_CREATE_SERIAL,
     REQ_NB_REQUESTS
 };
 
@@ -1539,9 +1549,10 @@ union generic_request
     struct get_msg_queue_request get_msg_queue;
     struct wake_queue_request wake_queue;
     struct wait_input_idle_request wait_input_idle;
+    struct create_serial_request create_serial;
 };
 
-#define SERVER_PROTOCOL_VERSION 20
+#define SERVER_PROTOCOL_VERSION 21
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

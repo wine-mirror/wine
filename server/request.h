@@ -201,6 +201,7 @@ DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
 DECL_HANDLER(wake_queue);
 DECL_HANDLER(wait_input_idle);
+DECL_HANDLER(create_serial);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -314,6 +315,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_msg_queue,
     (req_handler)req_wake_queue,
     (req_handler)req_wait_input_idle,
+    (req_handler)req_create_serial,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 
