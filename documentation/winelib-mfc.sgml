@@ -138,13 +138,80 @@
     <sect1 id="mfc-compiling">
       <title id="mfc-compiling.title">Compiling the MFC</title>
       <para>
-        Things to disable, 
-        why we have to disable them (lack of Wine support), 
-        where things don't compile, 
-        why, 
-        how to solve it, 
-        what to put in the Makefile, 
-        maybe try to point to a place with a ready-made makefile...
+        Here is a set of recommendations for getting the MFC compiled with
+        WineLib:
+      </para>
+      <para>
+        We recommend running winemaker in
+        '<option>--interactive</option>' mode to specify the right
+        options for the MFC and the ATL part (to get the include paths
+        right, to not consider the MFC MFC-based, and to get it to
+        build libraries, not executables).
+      </para>
+      <para>
+        Then when compiling it you will indeed need a number of
+        <literal>_AFX_NO_XXX</literal> macros. But this is not enough
+        and there are other things you will need to
+        '<literal>#ifdef</literal>-out'.  For instance Wine's richedit
+        support is not very good.  Here are the AFX options I use:
+      </para>
+      <para>
+        <programlisting>
+#define _AFX_PORTABLE
+#define _FORCENAMELESSUNION
+#define _AFX_NO_DAO_SUPPORT
+#define _AFX_NO_DHTML_SUPPORT
+#define _AFX_NO_OLEDB_SUPPORT
+#define _AFX_NO_RICHEDIT_SUPPORT
+        </programlisting>
+      </para>
+      <para>
+        You will also need custom ones for
+        <function>CMonikerFile</function>, <function>OleDB</function>,
+        <function>HtmlView</function>, ...
+      </para>
+      <para>
+        We recommend using Wine's msvcrt headers (<literal>-isystem
+        $(WINE_INCLUDE_ROOT)/msvcrt</literal>), though it means you
+        will have to temporarily disable winsock support
+        (<literal>#ifdef</literal> it out in
+        <filename>windows.h</filename>).
+      </para>
+      <para>
+        You should use g++ compiler more recent than g++ 2.95. g++
+        2.95 does not support unnamed structs while the more recent
+        ones do, and this helps a lot. Here are the options worth
+        mentioning:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <literal>-fms-extensions</literal> (helps get more code
+              to compile)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <literal>-fshort-wchar -DWINE_UNICODE_NATIVE</literal>
+              (helps with Unicode support)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <literal>-DICOM_USE_COM_INTERFACE_ATTRIBUTE</literal>
+              (to get the COM code to work)
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+      <para>
+        When you first reach the link stage you will get a lot of
+        undefined symbol errors. To fix these you will need to go back
+        to the source and <literal>#ifdef</literal>-out more code
+        until you reach a 'closure'. There are also some files that
+        don't need to be compiled.
+      </para>
+      <para>
+        Maybe we will have ready-made makefile here someday...
       </para>
     </sect1>
 
