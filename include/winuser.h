@@ -2990,15 +2990,18 @@ typedef struct
 #define CF_PENDATA          10
 #define CF_RIFF             11
 #define CF_WAVE             12
+#define CF_UNICODETEXT      13
 #define CF_ENHMETAFILE      14
 #define CF_HDROP            15
 #define CF_LOCALE           16
-#define CF_MAX              17
+#define CF_DIBV5            17
+#define CF_MAX              18
 
 #define CF_OWNERDISPLAY     0x0080
 #define CF_DSPTEXT          0x0081
 #define CF_DSPBITMAP        0x0082
 #define CF_DSPMETAFILEPICT  0x0083
+#define CF_DSPENHMETAFILE   0x008E
 
 /* "Private" formats don't get GlobalFree()'d */
 #define CF_PRIVATEFIRST     0x0200
