@@ -362,9 +362,9 @@ INT __cdecl CRTDLL__eof( INT fd )
  */
 INT __cdecl CRTDLL__fcloseall(VOID)
 {
-  int num_closed = 0, i = 3;
+  int num_closed = 0, i;
 
-  while(i < __CRTDLL_fdend)
+  for (i = 3; i < __CRTDLL_fdend; i++)
     if (__CRTDLL_handles[i] != INVALID_HANDLE_VALUE)
     {
       CRTDLL__close(i);
