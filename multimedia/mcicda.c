@@ -40,7 +40,7 @@ static	DWORD	CDAUDIO_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
     wmcda->wDevID = modp->wDeviceID;
     mciSetDriverData(wmcda->wDevID, (DWORD)wmcda);
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
-    modp->wType = MCI_DEVTYPE_SEQUENCER;
+    modp->wType = MCI_DEVTYPE_CD_AUDIO;
     return modp->wDeviceID;
 }
 
@@ -229,7 +229,7 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpe
     }
     if (dwFlags & MCI_OPEN_ELEMENT) {
 	TRACE("MCI_OPEN_ELEMENT !\n");
-	/*		return MCIERR_NO_ELEMENT_ALLOWED; */
+	return MCIERR_NO_ELEMENT_ALLOWED;
     }
 
     wmcda->wNotifyDeviceID = dwDeviceID;
@@ -241,7 +241,7 @@ static DWORD CDAUDIO_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpe
     wmcda->dwTimeFormat = MCI_FORMAT_TMSF;
     if (!CDAUDIO_GetTracksInfo(&wmcda->wcda)) {
 	WARN("error reading TracksInfo !\n");
-	/*		return MCIERR_INTERNAL; */
+	return MCIERR_INTERNAL;
     }
     
     CDAUDIO_mciSeek(wDevID, MCI_SEEK_TO_START, &seekParms);
@@ -261,9 +261,6 @@ static DWORD CDAUDIO_mciClose(UINT wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lp
     if (wmcda == NULL) 	return MCIERR_INVALID_DEVICE_ID;
     
     if (wmcda->nUseCount == 1) {
-	/* FIXME: I don't think we have to stop CD on exit
-	 * CDAUDIO_mciStop(wDevID, 0, NULL); 
-	 */
 	CDAUDIO_Close(&wmcda->wcda);
     }
     wmcda->nUseCount--;
@@ -592,7 +589,7 @@ static DWORD CDAUDIO_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS l
     if (lpParms && (dwFlags & MCI_NOTIFY)) {
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", lpParms->dwCallback);
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
 }
@@ -701,7 +698,7 @@ static DWORD CDAUDIO_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	TRACE("MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
 	      lpParms->dwCallback);
 	mciDriverNotify((HWND)LOWORD(lpParms->dwCallback), 
-			  wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
+			wmcda->wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
     }
     return 0;
 }
