@@ -48,8 +48,6 @@ typedef int Status;
 
 struct tagBITMAPOBJ;
 struct tagCURSORICONINFO;
-struct tagPALETTEOBJ;
-struct tagWINDOWPOS;
 
 extern void wine_tsx11_lock(void);
 extern void wine_tsx11_unlock(void);
@@ -198,7 +196,6 @@ extern BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
 extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
 
-struct tagBITMAPOBJ;
 extern int X11DRV_DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_BITMAP_GetXImage( const struct tagBITMAPOBJ *bmp );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
