@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ttydrv.dll
 IMPORTS   = user32 gdi32 kernel32
-LDIMPORTS = user32.dll gdi32.dll kernel32.dll ntdll.dll
+LDIMPORTS = user32.dll gdi32.dll kernel32.dll
 EXTRALIBS = @CURSESLIBS@
 
 LDDLLFLAGS = @LDDLLFLAGS@

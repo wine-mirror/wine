@@ -3,8 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mcicda.drv
-IMPORTS   = winmm kernel32
-DELAYIMPORTS = user32
+IMPORTS   = winmm user32 kernel32
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
