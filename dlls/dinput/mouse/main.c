@@ -108,6 +108,7 @@ struct SysMouseAImpl
         LONG				prevX, prevY;
         LPMOUSE_EVENT_PROC		prev_handler;
         HWND				win;
+        DWORD				dwCoopLevel;
         DWORD				win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_pos, queue_len;
@@ -259,6 +260,7 @@ static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
 
   /* Store the window which asks for the mouse */
   This->win = hwnd;
+  This->dwCoopLevel = dwflags;
   
   return 0;
 }
@@ -350,8 +352,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
 	      (posX == This->win_centerX) && (posX == This->win_centerX)) {
 	    /* Warp has been done... */
 	    This->need_warp = WARP_DONE;
-	    LeaveCriticalSection(&(This->crit));
-	    return;
+	    goto end;
 	  }
 	      	  
 	  /* Relative mouse input with absolute mouse event : the real fun starts here... */
@@ -426,8 +427,7 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     }
   } else {
     ERR("Mouse event not supported...\n");
-    LeaveCriticalSection(&(This->crit));
-    return ;
+    goto end;
   }
 
   if (TRACE_ON(dinput)) {
@@ -478,7 +478,13 @@ static void WINAPI dinput_mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
   TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
 	This->m_state.lX, This->m_state.lY,
 	This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
-  
+
+end:
+  if (This->dwCoopLevel & DISCL_NONEXCLUSIVE)
+  { /* pass the events down to previous handlers (e.g. win32 input) */
+    if (This->prev_handler)
+	This->prev_handler(dwFlags, dx, dy, cButtons, dwExtraInfo);
+  }
   LeaveCriticalSection(&(This->crit));
 }
 
