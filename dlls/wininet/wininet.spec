@@ -39,8 +39,8 @@
 @ stub FindFirstUrlCacheContainerA
 @ stub FindFirstUrlCacheContainerW
 @ stdcall FindFirstUrlCacheEntryA(str ptr ptr)
-@ stdcall FindFirstUrlCacheEntryExA(str long long long ptr ptr ptr ptr ptr)
-@ stdcall FindFirstUrlCacheEntryExW(wstr long long long ptr ptr ptr ptr ptr)
+@ stdcall FindFirstUrlCacheEntryExA(str long long double ptr ptr ptr ptr ptr)
+@ stdcall FindFirstUrlCacheEntryExW(wstr long long double ptr ptr ptr ptr ptr)
 @ stdcall FindFirstUrlCacheEntryW(wstr ptr ptr)
 @ stdcall FindFirstUrlCacheGroup(long long ptr long ptr ptr)
 @ stub FindNextUrlCacheContainerA
