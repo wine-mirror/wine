@@ -90,6 +90,15 @@ extern "C" {
 #define     ST_ISSELF               0x0100
 
 /*
+ * DdeEnableCallback function codes
+ */
+
+#define     EC_ENABLEALL                 0
+#define     EC_ENABLEONE                 ST_BLOCKNEXT
+#define     EC_DISABLE                   ST_BLOCKED
+#define     EC_QUERYWAITING              2
+
+/*
  * Callback filter flags for use with standard apps.
  */
 

@@ -41,36 +41,33 @@ extern "C" {
 #define WM_DDE_FIRST	  WM_DDE_INITIATE
 
 /* DDEACK: wStatus in WM_DDE_ACK message */
-struct tagDDEACK
+typedef struct
 {
     unsigned short bAppReturnCode:8, reserved:6, fBusy:1, fAck:1;
-};
-typedef struct tagDDEACK DDEACK;
+} DDEACK;
 
 /* DDEDATA: hData in WM_DDE_DATA message */
-struct tagDDEDATA
+typedef struct
 {
-    unsigned unused:12, fResponse:1, fRelease:1, reserved:1, fAckReq:1,
-         cfFormat:16;
+    unsigned short unused:12, fResponse:1, fRelease:1, reserved:1, fAckReq:1;
+    short cfFormat;
     BYTE Value[1];		/* undetermined array */
-};
-typedef struct tagDDEDATA DDEDATA;
-
+} DDEDATA;
 
 /* DDEADVISE: hOptions in WM_DDE_ADVISE message */
-struct tagDDEADVISE
+typedef struct
 {
-    unsigned reserved:14, fDeferUpd:1, fAckReq:1, cfFormat:16;
-};
-typedef struct tagDDEADVISE DDEADVISE;
+    unsigned short reserved:14, fDeferUpd:1, fAckReq:1;
+    short cfFormat;
+} DDEADVISE;
 
 /* DDEPOKE: hData in WM_DDE_POKE message. */
-struct tagDDEPOKE
+typedef struct
 {
-    unsigned unused:13, fRelease:1, fReserved:2, cfFormat:16;
+    unsigned short unused:13, fRelease:1, fReserved:2;
+    short cfFormat;
     BYTE Value[1];   	/* undetermined array */
-};
-typedef struct tagDDEPOKE DDEPOKE;
+} DDEPOKE;
 
 BOOL WINAPI DdeSetQualityOfService(HWND hwndClient,
 				   CONST SECURITY_QUALITY_OF_SERVICE *pqosNew,
@@ -80,10 +77,10 @@ BOOL WINAPI ImpersonateDdeClientWindow(HWND hWndClient, HWND hWndServer);
 
 /* lParam packing/unpacking API */
 
-LPARAM      WINAPI PackDDElParam(UINT,UINT,UINT);
-BOOL        WINAPI UnpackDDElParam(UINT,LPARAM,PUINT,PUINT);
+LPARAM      WINAPI PackDDElParam(UINT,UINT_PTR,UINT_PTR);
+BOOL        WINAPI UnpackDDElParam(UINT,LPARAM,PUINT_PTR,PUINT_PTR);
 BOOL        WINAPI FreeDDElParam(UINT,LPARAM);
-LPARAM      WINAPI ReuseDDElParam(LPARAM,UINT,UINT,UINT,UINT);
+LPARAM      WINAPI ReuseDDElParam(LPARAM,UINT,UINT,UINT_PTR,UINT_PTR);
 
 
 #ifdef __cplusplus

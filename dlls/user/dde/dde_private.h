@@ -195,6 +195,8 @@ extern	HDDEDATA 	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, H
 extern	WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
 extern	void		WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
 extern	WDML_SERVER*	WDML_FindServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
+/* transaction handler on the server side */
+extern WDML_QUEUE_STATE WDML_ServerHandle(WDML_CONV* pConv, WDML_XACT* pXAct);
 /* called both in DdeClientTransaction and server side. */
 extern	UINT		WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 					DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16);

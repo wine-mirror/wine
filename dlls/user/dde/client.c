@@ -115,7 +115,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     pConv = WDML_FindConv(pInstance, WDML_CLIENT_SIDE, hszService, hszTopic);
     if (pConv != NULL)
     {
-	ERR("This Conv already exists: (0x%lx)\n", (DWORD)pConv);
+	ERR("This Conv already exists: (%p)\n", pConv);
 	goto theEnd;
     }
 
@@ -234,6 +234,8 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
     WDML_CONV*	pNewConv = NULL;
     ATOM	aSrv = 0, aTpc = 0;
 
+    TRACE("(%p)\n", hConv);
+
     EnterCriticalSection(&WDML_CritSect);
     pConv = WDML_GetConv(hConv, FALSE);
     if (pConv != NULL && (pConv->wStatus & ST_CLIENT))
@@ -339,7 +341,7 @@ static WDML_XACT*	WDML_ClientQueueAdvise(WDML_CONV* pConv, UINT wType, UINT wFmt
     pDdeAdvise->cfFormat  = wFmt;
     GlobalUnlock(pXAct->hMem);
 
-    pXAct->lParam = PackDDElParam(WM_DDE_ADVISE, (UINT)pXAct->hMem, atom);
+    pXAct->lParam = PackDDElParam(WM_DDE_ADVISE, (UINT_PTR)pXAct->hMem, atom);
 
     return pXAct;
 }
@@ -352,7 +354,7 @@ static WDML_XACT*	WDML_ClientQueueAdvise(WDML_CONV* pConv, UINT wType, UINT wFmt
 static WDML_QUEUE_STATE WDML_HandleAdviseReply(WDML_CONV* pConv, MSG* msg, WDML_XACT* pXAct)
 {
     DDEACK		ddeAck;
-    UINT		uiLo, uiHi;
+    UINT_PTR		uiLo, uiHi;
     HSZ			hsz;
 
     if (msg->message != WM_DDE_ACK || WIN_GetFullHandle((HWND)msg->wParam) != pConv->hwndServer)
@@ -437,7 +439,7 @@ static WDML_XACT*	WDML_ClientQueueUnadvise(WDML_CONV* pConv, UINT wFmt, HSZ hszI
 static WDML_QUEUE_STATE WDML_HandleUnadviseReply(WDML_CONV* pConv, MSG* msg, WDML_XACT* pXAct)
 {
     DDEACK	ddeAck;
-    UINT	uiLo, uiHi;
+    UINT_PTR	uiLo, uiHi;
     HSZ		hsz;
 
     if (msg->message != WM_DDE_ACK || WIN_GetFullHandle((HWND)msg->wParam) != pConv->hwndServer)
@@ -509,7 +511,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 {
     DDEACK		ddeAck;
     WINE_DDEHEAD	wdh;
-    UINT		uiLo, uiHi;
+    UINT_PTR		uiLo, uiHi;
     HSZ			hsz;
 
     if (WIN_GetFullHandle((HWND)msg->wParam) != pConv->hwndServer)
@@ -530,7 +532,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 
     case WM_DDE_DATA:
         UnpackDDElParam(WM_DDE_DATA, msg->lParam, &uiLo, &uiHi);
-	TRACE("Got the result (%08lx)\n", (DWORD)uiLo);
+	TRACE("Got the result (%08x)\n", uiLo);
 
 	hsz = WDML_MakeHszFromAtom(pConv->instance, uiHi);
 
@@ -672,7 +674,7 @@ static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPCVOID pData, DWORD
 static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML_XACT* pXAct)
 {
     DDEACK	ddeAck;
-    UINT	uiLo, uiHi;
+    UINT_PTR	uiLo, uiHi;
 
     if (msg->message != WM_DDE_ACK || WIN_GetFullHandle((HWND)msg->wParam) != pConv->hwndServer)
     {
@@ -735,7 +737,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPCVOID pData, DWORD cb
 	}
     }
 
-    pXAct->lParam = PackDDElParam(WM_DDE_POKE, (UINT)pXAct->hMem, atom);
+    pXAct->lParam = PackDDElParam(WM_DDE_POKE, (UINT_PTR)pXAct->hMem, atom);
 
     return pXAct;
 }
@@ -748,7 +750,7 @@ static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPCVOID pData, DWORD cb
 static WDML_QUEUE_STATE WDML_HandlePokeReply(WDML_CONV* pConv, MSG* msg, WDML_XACT* pXAct)
 {
     DDEACK	ddeAck;
-    UINT	uiLo, uiHi;
+    UINT_PTR	uiLo, uiHi;
     HSZ		hsz;
 
     if (msg->message != WM_DDE_ACK && WIN_GetFullHandle((HWND)msg->wParam) != pConv->hwndServer)
@@ -825,7 +827,7 @@ static WDML_QUEUE_STATE WDML_HandleTerminateReply(WDML_CONV* pConv, MSG* msg, WD
  */
 static WDML_QUEUE_STATE WDML_HandleIncomingData(WDML_CONV* pConv, MSG* msg, HDDEDATA* hdd)
 {
-    UINT		uiLo, uiHi;
+    UINT_PTR		uiLo, uiHi;
     HDDEDATA		hDdeDataIn, hDdeDataOut;
     WDML_LINK*		pLink;
     WINE_DDEHEAD	wdh;
@@ -1087,7 +1089,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     WDML_XACT*		pXAct;
     HDDEDATA		hDdeData = 0;
 
-    TRACE("(%p,%ld,%p,%p,%d,%d,%ld,%p)\n",
+    TRACE("(%p,%ld,%p,%p,%x,%x,%ld,%p)\n",
 	  pData, cbData, hConv, hszItem, wFmt, wType, dwTimeout, pdwResult);
 
     if (hConv == 0)
@@ -1162,7 +1164,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     if (!PostMessageA(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
     {
-	TRACE("Failed posting message %d to %p (error=0x%lx)\n",
+	WARN("Failed posting message %x to %p (error=0x%lx)\n",
 	      pXAct->ddeMsg, pConv->hwndServer, GetLastError());
 	pConv->wStatus &= ~ST_CONNECTED;
 	WDML_UnQueueTransaction(pConv, pXAct);
@@ -1212,7 +1214,7 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
     WDML_CONV*		pConv;
     WDML_XACT*          pXAct;
 
-    TRACE("(%08lx,%08lx,%08ld);\n", idInst, (DWORD)hConv, idTransaction);
+    TRACE("(%08lx,%p,%08ld);\n", idInst, hConv, idTransaction);
 
     EnterCriticalSection(&WDML_CritSect);
     if ((pInstance = WDML_GetInstance(idInst)))
@@ -1352,7 +1354,7 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
     DWORD	count, i;
     BOOL	ret = FALSE;
 
-    TRACE("(%ld)\n", (DWORD)hConv);
+    TRACE("(%p)\n", hConv);
 
     if (hConv == 0)
     {
@@ -1401,6 +1403,8 @@ BOOL WINAPI DdeImpersonateClient(HCONV hConv)
 {
     WDML_CONV*	pConv;
     BOOL	ret = FALSE;
+
+    TRACE("(%p)\n", hConv);
 
     EnterCriticalSection(&WDML_CritSect);
     pConv = WDML_GetConv(hConv, TRUE);

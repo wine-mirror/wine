@@ -1170,7 +1170,7 @@ static HGLOBAL dde_get_pair(HGLOBAL shm)
 /***********************************************************************
  *		post_dde_message
  *
- * Post a DDE messag
+ * Post a DDE message
  */
 static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const struct send_message_info *info )
 {
@@ -1234,6 +1234,10 @@ static BOOL post_dde_message( DWORD dest_tid, struct packed_message *data, const
         {
             if ((ptr = GlobalLock( (HGLOBAL)uiLo) ))
             {
+                DDEDATA *dde_data = (DDEDATA *)ptr;
+                TRACE("unused %d, fResponse %d, fRelease %d, fDeferUpd %d, fAckReq %d, cfFormat %d\n",
+                       dde_data->unused, dde_data->fResponse, dde_data->fRelease,
+                       dde_data->reserved, dde_data->fAckReq, dde_data->cfFormat);
                 push_data( data, ptr, size );
                 hunlock = (HGLOBAL)uiLo;
             }
@@ -1305,7 +1309,7 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
             uiLo = *lparam;
             memcpy( &hMem, *buffer, size );
             uiHi = (UINT)hMem;
-            TRACE("recv dde-ack %u mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
+            TRACE("recv dde-ack %x mem=%x[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
         else
         {
@@ -1500,8 +1504,9 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 
         if (res) return FALSE;
 
-        TRACE( "got type %d msg %x hwnd %p wp %x lp %lx\n",
-               info.type, info.msg.message, info.msg.hwnd, info.msg.wParam, info.msg.lParam );
+        TRACE( "got type %d msg %x (%s) hwnd %p wp %x lp %lx\n",
+               info.type, info.msg.message, SPY_GetMsgName(info.msg.message, info.msg.hwnd),
+               info.msg.hwnd, info.msg.wParam, info.msg.lParam );
 
         switch(info.type)
         {
@@ -2043,6 +2048,9 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+
+    TRACE( "hwnd %p msg %x (%s) wp %x lp %lx\n",
+           hwnd, msg, SPY_GetMsgName(msg, hwnd), wparam, lparam );
 
     info.type   = MSG_POSTED;
     info.hwnd   = hwnd;

@@ -64,10 +64,10 @@ CRITICAL_SECTION	WDML_CritSect = CRITICAL_SECTION_INIT("WDML_CritSect");
  * RETURNS
  *   the packed lParam
  */
-LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
+LPARAM WINAPI PackDDElParam(UINT msg, UINT_PTR uiLo, UINT_PTR uiHi)
 {
     HGLOBAL hMem;
-    UINT* params;
+    UINT_PTR *params;
 
     switch (msg)
     {
@@ -75,7 +75,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
-        if (!(hMem = GlobalAlloc(GMEM_DDESHARE, sizeof(UINT) * 2)))
+        if (!(hMem = GlobalAlloc(GMEM_DDESHARE, sizeof(UINT_PTR) * 2)))
         {
             ERR("GlobalAlloc failed\n");
             return 0;
@@ -94,7 +94,7 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
         return uiHi;
 
     default:
-        return MAKELONG(uiLo, uiHi);
+        return MAKELPARAM(uiLo, uiHi);
     }
 }
 
@@ -107,9 +107,9 @@ LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
  *   failure: zero
  */
 BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
-			    PUINT uiLo, PUINT uiHi)
+			    PUINT_PTR uiLo, PUINT_PTR uiHi)
 {
-    UINT *params;
+    UINT_PTR *params;
 
     switch (msg)
     {
@@ -123,6 +123,7 @@ BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
             ERR("GlobalLock failed (%lx)\n", lParam);
             return FALSE;
         }
+        TRACE("unpacked: low %08x, high %08x\n", params[0], params[1]);
         if (uiLo) *uiLo = params[0];
         if (uiHi) *uiHi = params[1];
         GlobalUnlock( (HGLOBAL)lParam );
@@ -173,9 +174,9 @@ BOOL WINAPI FreeDDElParam(UINT msg, LPARAM lParam)
  *   the packed lParam
  */
 LPARAM WINAPI ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut,
-                             UINT uiLo, UINT uiHi)
+                             UINT_PTR uiLo, UINT_PTR uiHi)
 {
-    UINT* params;
+    UINT_PTR *params;
 
     switch (msgIn)
     {
@@ -207,7 +208,7 @@ LPARAM WINAPI ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut,
 
         default:
             FreeDDElParam( msgIn, lParam );
-            return MAKELONG(uiLo, uiHi);
+            return MAKELPARAM(uiLo, uiHi);
         }
 
     default:
@@ -623,6 +624,8 @@ BOOL WINAPI DdeUninitialize(DWORD idInst)
     WDML_CONV*			pConv;
     WDML_CONV*			pConvNext;
 
+    TRACE("(%ld)\n", idInst);
+
     EnterCriticalSection(&WDML_CritSect);
 
     /*  First check instance
@@ -716,7 +719,7 @@ HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInstance, UINT uType, UINT uFmt, H
 
     if (pInstance == NULL)
 	return NULL;
-    TRACE("invoking CB%d[%p] (%u %u %p %p %p %p %lu %lu)\n",
+    TRACE("invoking CB%d[%p] (%x %x %p %p %p %p %lx %lx)\n",
 	  pInstance->win16 ? 16 : 32, pInstance->callback, uType, uFmt,
 	  hConv, hsz1, hsz2, hdata, dwData1, dwData2);
     if (pInstance->win16)
@@ -728,7 +731,7 @@ HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInstance, UINT uType, UINT uFmt, H
     {
 	ret = pInstance->callback(uType, uFmt, hConv, hsz1, hsz2, hdata, dwData1, dwData2);
     }
-    TRACE("done => %08lx\n", (DWORD)ret);
+    TRACE("done => %p\n", ret);
     return ret;
 }
 
@@ -1022,7 +1025,7 @@ DWORD WINAPI DdeQueryStringA(DWORD idInst, HSZ hsz, LPSTR psz, DWORD cchMax, INT
     }
     LeaveCriticalSection(&WDML_CritSect);
 
-    TRACE("returning %s\n", debugstr_a(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
     return ret;
 }
 
@@ -1049,7 +1052,7 @@ DWORD WINAPI DdeQueryStringW(DWORD idInst, HSZ hsz, LPWSTR psz, DWORD cchMax, IN
     }
     LeaveCriticalSection(&WDML_CritSect);
 
-    TRACE("returning %s\n", debugstr_w(psz));
+    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
 
@@ -1092,7 +1095,7 @@ HSZ WINAPI DdeCreateStringHandleA(DWORD idInst, LPCSTR psz, INT codepage)
     HSZ			hsz = 0;
     WDML_INSTANCE*	pInstance;
 
-    TRACE("(%ld,%p,%d)\n", idInst, psz, codepage);
+    TRACE("(%ld,%s,%d)\n", idInst, debugstr_a(psz), codepage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1124,7 +1127,7 @@ HSZ WINAPI DdeCreateStringHandleW(DWORD idInst, LPCWSTR psz, INT codepage)
     WDML_INSTANCE*	pInstance;
     HSZ			hsz = 0;
 
-    TRACE("(%ld,%p,%d)\n", idInst, psz, codepage);
+    TRACE("(%ld,%s,%d)\n", idInst, debugstr_w(psz), codepage);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -1269,15 +1272,18 @@ HDDEDATA WINAPI DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD c
     HGLOBAL     		hMem;
     LPBYTE      		pByte;
     DDE_DATAHANDLE_HEAD*	pDdh;
+    WCHAR psz[MAX_BUFFER_LEN];
 
-    TRACE("(%ld,%p,%ld,%ld,0x%lx,%d,%d)\n",
-	  idInst, pSrc, cb, cbOff, (DWORD)hszItem, wFmt, afCmd);
+    GetAtomNameW(HSZ2ATOM(hszItem), psz, MAX_BUFFER_LEN);
+
+    TRACE("(%ld,%p,cb %ld, cbOff %ld,%p <%s>,%x,%x)\n",
+	  idInst, pSrc, cb, cbOff, hszItem, debugstr_w(psz), wFmt, afCmd);
 
     if (afCmd != 0 && afCmd != HDATA_APPOWNED)
         return 0;
 
     /* we use the first 4 bytes to store the size */
-    if (!(hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cb + sizeof(DDE_DATAHANDLE_HEAD))))
+    if (!(hMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cb + cbOff + sizeof(DDE_DATAHANDLE_HEAD))))
     {
 	ERR("GlobalAlloc failed\n");
 	return 0;
@@ -1311,6 +1317,8 @@ HDDEDATA WINAPI DdeAddData(HDDEDATA hData, LPBYTE pSrc, DWORD cb, DWORD cbOff)
 {
     DWORD	old_sz, new_sz;
     LPBYTE	pDst;
+
+    TRACE("(%p,%p,cb %ld, cbOff %ld)\n", hData, pSrc, cb, cbOff);
 
     pDst = DdeAccessData(hData, &old_sz);
     if (!pDst) return 0;
@@ -1349,7 +1357,7 @@ DWORD WINAPI DdeGetData(HDDEDATA hData, LPBYTE pDst, DWORD cbMax, DWORD cbOff)
     DWORD   dwSize, dwRet;
     LPBYTE  pByte;
 
-    TRACE("(%08lx,%p,%ld,%ld)\n",(DWORD)hData, pDst, cbMax, cbOff);
+    TRACE("(%p,%p,%ld,%ld)\n", hData, pDst, cbMax, cbOff);
 
     pByte = DdeAccessData(hData, &dwSize);
 
@@ -1392,7 +1400,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
     HGLOBAL			hMem = (HGLOBAL)hData;
     DDE_DATAHANDLE_HEAD*	pDdh;
 
-    TRACE("(%08lx,%p)\n", (DWORD)hData, pcbDataSize);
+    TRACE("(%p,%p)\n", hData, pcbDataSize);
 
     pDdh = (DDE_DATAHANDLE_HEAD*)GlobalLock(hMem);
     if (pDdh == NULL)
@@ -1405,7 +1413,7 @@ LPBYTE WINAPI DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
     {
 	*pcbDataSize = GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD);
     }
-    TRACE("=> %08lx (%lu)\n", (DWORD)(pDdh + 1), GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD));
+    TRACE("=> %p (%lu)\n", pDdh + 1, GlobalSize(hMem) - sizeof(DDE_DATAHANDLE_HEAD));
     return (LPBYTE)(pDdh + 1);
 }
 
@@ -1416,7 +1424,7 @@ BOOL WINAPI DdeUnaccessData(HDDEDATA hData)
 {
     HGLOBAL hMem = (HGLOBAL)hData;
 
-    TRACE("(0x%lx)\n", (DWORD)hData);
+    TRACE("(%p)\n", hData);
 
     GlobalUnlock(hMem);
 
@@ -1428,6 +1436,7 @@ BOOL WINAPI DdeUnaccessData(HDDEDATA hData)
  */
 BOOL WINAPI DdeFreeDataHandle(HDDEDATA hData)
 {
+    TRACE("(%p)\n", hData);
     return GlobalFree((HGLOBAL)hData) == 0;
 }
 
@@ -1571,6 +1580,7 @@ HGLOBAL WDML_DataHandle2Global(HDDEDATA hDdeData, BOOL fResponse, BOOL fRelease,
         }
         if (wdh)
         {
+            wdh->unused = 0;
             wdh->fResponse = fResponse;
             wdh->fRelease = fRelease;
             wdh->fDeferUpd = fDeferUpd;
@@ -1821,14 +1831,65 @@ void WDML_RemoveConv(WDML_CONV* pRef, WDML_SIDE side)
     }
 }
 
+/******************************************************************
+ *              WDML_EnableCallback
+ */
+static BOOL WDML_EnableCallback(WDML_CONV *pConv, UINT wCmd)
+{
+    if (wCmd == EC_DISABLE)
+    {
+        FIXME("EC_DISABLE is not implemented\n");
+        return TRUE;
+    }
+
+    if (wCmd == EC_QUERYWAITING)
+        return pConv->transactions ? TRUE : FALSE;
+
+    if (wCmd != EC_ENABLEALL && wCmd != EC_ENABLEONE)
+    {
+        FIXME("Unknown command code %04x\n", wCmd);
+        return FALSE;
+    }
+
+    while (pConv->transactions)
+    {
+        WDML_XACT *pXAct = pConv->transactions;
+        WDML_UnQueueTransaction(pConv, pXAct);
+
+        if (pConv->wStatus & ST_CLIENT)
+        {
+            /*WDML_ClientHandle(pConv, pXAct);*/
+            FIXME("Client delayed transaction queue handling is not supported\n");
+        }
+        else
+            WDML_ServerHandle(pConv, pXAct);
+
+        WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
+
+        if (wCmd == EC_ENABLEONE) break;
+    }
+    return TRUE;
+}
+
 /*****************************************************************
  *            DdeEnableCallback (USER32.@)
  */
 BOOL WINAPI DdeEnableCallback(DWORD idInst, HCONV hConv, UINT wCmd)
 {
-    FIXME("(%ld, %p, %d) stub\n", idInst, hConv, wCmd);
+    BOOL ret = FALSE;
+    WDML_CONV *pConv;
 
-    return 0;
+    TRACE("(%ld, %p, %04x)\n", idInst, hConv, wCmd);
+
+    EnterCriticalSection(&WDML_CritSect);
+
+    pConv = WDML_GetConv(hConv, TRUE);
+
+    if (pConv && pConv->instance->instanceID == idInst)
+        ret = WDML_EnableCallback(pConv, wCmd);
+
+    LeaveCriticalSection(&WDML_CritSect);
+    return ret;
 }
 
 /******************************************************************
@@ -1913,6 +1974,8 @@ BOOL WINAPI DdeSetUserHandle(HCONV hConv, DWORD id, DWORD hUser)
 {
     WDML_CONV*	pConv;
     BOOL	ret = TRUE;
+
+    TRACE("(%p,%lx,%lx)\n", hConv, id, hUser);
 
     EnterCriticalSection(&WDML_CritSect);
 
@@ -2033,6 +2096,7 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
     CONVINFO	ci;
     WDML_CONV*	pConv;
 
+    TRACE("(%p,%lx,%p)\n", hConv, id, lpConvInfo);
 
     if (!hConv)
     {
