@@ -32,7 +32,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_IOCTL_H 
 #include <sys/ioctl.h>
+#endif
 #include <time.h>
 #include <unistd.h>
 

@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#ifdef HAVE_SYS_IOCTL_H 
 #include <sys/ioctl.h>
+#endif
 
 #include "mmsystem.h"
 #include "winbase.h"
