@@ -65,6 +65,7 @@ INSTALLED_INCLUDES = \
 	msvcrt/mbstring.h \
 	msvcrt/process.h \
 	msvcrt/search.h \
+	msvcrt/share.h \
 	msvcrt/stddef.h \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
