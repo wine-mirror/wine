@@ -217,6 +217,8 @@ Main_IDirect3DViewportImpl_3_2_1_TransformVertices(LPDIRECT3DVIEWPORT3 iface,
 {
     ICOM_THIS_FROM(IDirect3DViewportImpl, IDirect3DViewport3, iface);
     FIXME("(%p/%p)->(%08lx,%p,%08lx,%p): stub!\n", This, iface, dwVertexCount, lpData, dwFlags, lpOffScreen);
+    if (lpOffScreen)
+	*lpOffScreen = 0;
     return DD_OK;
 }
 
