@@ -7,7 +7,6 @@ MODULE    = none
 LIBMODULE = library
 
 LIB_SRCS = \
-	arch.c \
 	libres.c \
 	miscstubs.c
 

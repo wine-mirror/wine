@@ -21,13 +21,15 @@ type	win32
  15 stub DrawInsert
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls
+# 18 pascal16 CreateStatusWindow(word ptr word word) CreateStatusWindow16
  18 stub CreateStatusWindow
- 19 stub CreateStatusWindowW
+ 19 stdcall CreateStatusWindowW(long ptr long long) CreateStatusWindow32W
  20 stub CreateToolbarEx
  21 stub DestroyPropertySheetPage
  22 stub DllGetVersion
+# 23 pascal16 DrawStatusText(word ptr ptr word) DrawStatusText16
  23 stub DrawStatusText
- 24 stub DrawStatusTextW
+ 24 stdcall DrawStatusTextW(long ptr ptr long) DrawStatusText32W
  25 stub ImageList_Add
  26 stub ImageList_AddIcon
  27 stub ImageList_AddMasked

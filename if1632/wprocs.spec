@@ -38,7 +38,7 @@ type	win16
 118 register INT_Int12Handler(word) INT_Int12Handler
 119 register INT_Int13Handler(word) INT_Int13Handler
 120 register INT_Int14Handler(word) BUILTIN_DefaultIntHandler
-121 register INT_Int15Handler(word) BUILTIN_DefaultIntHandler
+121 register INT_Int15Handler(word) INT_Int15Handler
 122 register INT_Int16Handler(word) BUILTIN_DefaultIntHandler
 123 register INT_Int17Handler(word) BUILTIN_DefaultIntHandler
 124 register INT_Int18Handler(word) BUILTIN_DefaultIntHandler

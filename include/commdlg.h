@@ -253,28 +253,80 @@ typedef CHOOSEFONT *LPCHOOSEFONT;
 #define CD_LBSELSUB      1
 #define CD_LBSELADD      2
 
-typedef struct {
-	DWORD 		lStructSize;
-	HWND16 		hwndOwner;
-	HGLOBAL16       hDevMode;
-	HGLOBAL16       hDevNames;
-	HDC16	       	hDC;
-	DWORD 		Flags;
-	UINT16		nFromPage;
-	UINT16		nToPage;
-	UINT16		nMinPage;
-	UINT16		nMaxPage;
-	UINT16		nCopies;
-	HINSTANCE16 	hInstance;
-	LPARAM 		lCustData;
-        WNDPROC16       lpfnPrintHook;
-        WNDPROC16       lpfnSetupHook;
-	SEGPTR 		lpPrintTemplateName;
-	SEGPTR 		lpSetupTemplateName;
-	HGLOBAL16       hPrintTemplate;
-	HGLOBAL16       hSetupTemplate;
-	} PRINTDLG;
-typedef PRINTDLG * LPPRINTDLG;
+typedef struct
+{
+    DWORD            lStructSize;
+    HWND16           hwndOwner;
+    HGLOBAL16        hDevMode;
+    HGLOBAL16        hDevNames;
+    HDC16            hDC;
+    DWORD            Flags;
+    WORD             nFromPage;
+    WORD             nToPage;
+    WORD             nMinPage;
+    WORD             nMaxPage;
+    WORD             nCopies;
+    HINSTANCE16      hInstance;
+    LPARAM           lCustData;
+    WNDPROC16        lpfnPrintHook;
+    WNDPROC16        lpfnSetupHook;
+    SEGPTR           lpPrintTemplateName;
+    SEGPTR           lpSetupTemplateName;
+    HGLOBAL16        hPrintTemplate;
+    HGLOBAL16        hSetupTemplate;
+} PRINTDLG16, *LPPRINTDLG16;
+
+typedef UINT32 (CALLBACK *LPPRINTHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
+typedef UINT32 (CALLBACK *LPSETUPHOOKPROC) (HWND32, UINT32, WPARAM32, LPARAM);
+
+typedef struct
+{
+    DWORD            lStructSize;
+    HWND32           hwndOwner;
+    HGLOBAL32        hDevMode;
+    HGLOBAL32        hDevNames;
+    HDC32            hDC;
+    DWORD            Flags;
+    WORD             nFromPage;
+    WORD             nToPage;
+    WORD             nMinPage;
+    WORD             nMaxPage;
+    WORD             nCopies;
+    HINSTANCE32      hInstance;
+    LPARAM           lCustData;
+    LPPRINTHOOKPROC  lpfnPrintHook;
+    LPSETUPHOOKPROC  lpfnSetupHook;
+    LPCSTR           lpPrintTemplateName;
+    LPCSTR           lpSetupTemplateName;
+    HGLOBAL32        hPrintTemplate;
+    HGLOBAL32        hSetupTemplate;
+} PRINTDLG32A, *LPPRINTDLG32A;
+
+typedef struct
+{
+    DWORD            lStructSize;
+    HWND32           hwndOwner;
+    HGLOBAL32        hDevMode;
+    HGLOBAL32        hDevNames;
+    HDC32            hDC;
+    DWORD            Flags;
+    WORD             nFromPage;
+    WORD             nToPage;
+    WORD             nMinPage;
+    WORD             nMaxPage;
+    WORD             nCopies;
+    HINSTANCE32      hInstance;
+    LPARAM           lCustData;
+    LPPRINTHOOKPROC  lpfnPrintHook;
+    LPSETUPHOOKPROC  lpfnSetupHook;
+    LPCWSTR          lpPrintTemplateName;
+    LPCWSTR          lpSetupTemplateName;
+    HGLOBAL32        hPrintTemplate;
+    HGLOBAL32        hSetupTemplate;
+} PRINTDLG32W, *LPPRINTDLG32W;
+
+DECL_WINELIB_TYPE_AW(PRINTDLG);
+DECL_WINELIB_TYPE_AW(LPPRINTDLG);
 
 #define PD_ALLPAGES                  0x00000000
 #define PD_SELECTION                 0x00000001

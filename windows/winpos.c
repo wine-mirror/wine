@@ -624,6 +624,62 @@ HWND32 WINAPI SetActiveWindow32( HWND32 hwnd )
 }
 
 
+/*******************************************************************
+ *         GetForegroundWindow16    (USER.608)
+ */
+HWND16 WINAPI GetForegroundWindow16(void)
+{
+    return (HWND16)GetForegroundWindow32();
+}
+
+
+/*******************************************************************
+ *         SetForegroundWindow16    (USER.609)
+ */
+BOOL16 WINAPI SetForegroundWindow16( HWND16 hwnd )
+{
+    return SetForegroundWindow32( hwnd );
+}
+
+
+/*******************************************************************
+ *         GetForegroundWindow32    (USER32.241)
+ */
+HWND32 WINAPI GetForegroundWindow32(void)
+{
+    return GetActiveWindow32();
+}
+
+
+/*******************************************************************
+ *         SetForegroundWindow32    (USER32.482)
+ */
+BOOL32 WINAPI SetForegroundWindow32( HWND32 hwnd )
+{
+    SetActiveWindow32( hwnd );
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *         GetShellWindow16    (USER.600)
+ */
+HWND16 WINAPI GetShellWindow16(void)
+{
+    return GetShellWindow32();
+}
+
+
+/*******************************************************************
+ *         GetShellWindow32    (USER32.287)
+ */
+HWND32 WINAPI GetShellWindow32(void)
+{
+    fprintf( stdnimp, "GetShellWindow: empty stub\n" );
+    return 0;
+}
+
+
 /***********************************************************************
  *           BringWindowToTop16   (USER.45)
  */
@@ -2423,10 +2479,10 @@ HDWP32 WINAPI DeferWindowPos32( HDWP32 hdwp, HWND32 hwnd, HWND32 hwndAfter,
                 pDWP->winPos[i].cx = cx;
                 pDWP->winPos[i].cy = cy;
             }
-            pDWP->winPos[i].flags &= flags & (SWP_NOSIZE | SWP_NOMOVE |
-                                              SWP_NOZORDER | SWP_NOREDRAW |
-                                              SWP_NOACTIVATE | SWP_NOCOPYBITS |
-                                              SWP_NOOWNERZORDER);
+            pDWP->winPos[i].flags &= flags | ~(SWP_NOSIZE | SWP_NOMOVE |
+                                               SWP_NOZORDER | SWP_NOREDRAW |
+                                               SWP_NOACTIVATE | SWP_NOCOPYBITS|
+                                               SWP_NOOWNERZORDER);
             pDWP->winPos[i].flags |= flags & (SWP_SHOWWINDOW | SWP_HIDEWINDOW |
                                               SWP_FRAMECHANGED);
             return hdwp;

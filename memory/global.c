@@ -846,7 +846,7 @@ BOOL16 WINAPI MemManInfo( MEMMANINFO *info )
 
 #define MAGIC_GLOBAL_USED 0x5342
 #define GLOBAL_LOCK_MAX   0xFF
-#define HANDLE_TO_INTERN(h)  (PGLOBAL32_INTERN)(((char *)(h))-2)
+#define HANDLE_TO_INTERN(h)  ((PGLOBAL32_INTERN)(((char *)(h))-2))
 #define INTERN_TO_HANDLE(i)  ((HGLOBAL32) &((i)->Pointer))
 #define POINTER_TO_HANDLE(p) (*(((HGLOBAL32 *)(p))-1))
 #define ISHANDLE(h)          (((DWORD)(h)&2)!=0)
@@ -970,7 +970,18 @@ BOOL32 WINAPI GlobalUnlock32(HGLOBAL32 hmem)
  */
 HGLOBAL32 WINAPI GlobalHandle32(LPCVOID pmem)
 {
-   return (HGLOBAL32) POINTER_TO_HANDLE(pmem);
+    HGLOBAL32 handle = POINTER_TO_HANDLE(pmem);
+    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, (LPCVOID)handle ))
+    {
+        if (HANDLE_TO_INTERN(handle)->Magic == MAGIC_GLOBAL_USED)
+            return handle;  /* valid moveable block */
+    }
+    /* maybe FIXED block */
+    if (HeapValidate( GetProcessHeap(), 0, pmem ))
+        return (HGLOBAL32)pmem;  /* valid fixed block */
+
+    SetLastError( ERROR_INVALID_HANDLE );
+    return 0;
 }
 
 

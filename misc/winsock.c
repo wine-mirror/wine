@@ -629,6 +629,9 @@ INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 	    /* application did AsyncSelect() but then went
 	     * ahead and called connect() without waiting for 
 	     * notification.
+	     *
+	     * FIXME: Do we have to post a notification message 
+	     *        in this case?
 	     */
 
 	    if( !(pws->flags & WS_FD_CONNECTED) )
@@ -641,10 +644,10 @@ INT32 WINAPI WINSOCK_connect32(SOCKET32 s, struct sockaddr *name, INT32 namelen)
 		    EVENT_AddIO( pws->fd, EVENT_IO_WRITE );
 		else
 		    EVENT_DeleteIO( pws->fd, EVENT_IO_WRITE );
-		pws->flags |= WS_FD_CONNECTED;
 	    }
 	}
-	pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT);
+	pws->flags |= WS_FD_CONNECTED;
+	pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_LISTENING);
         return 0; 
     }
     pwsi->err = (errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno();
@@ -899,14 +902,17 @@ INT32 WINAPI WINSOCK_listen32(SOCKET32 s, INT32 backlog)
 			    (unsigned)pwsi, s, backlog);
     if( _check_ws(pwsi, pws) )
     {
-	if( !pws->psop )
+	if (listen(pws->fd, backlog) == 0)
 	{
-	    int  fd_flags = fcntl(pws->fd, F_GETFL, 0);
-	    if( !(fd_flags & O_NONBLOCK) ) pws->flags |= WS_FD_ACCEPT;
+	    if( !pws->psop )
+	    {
+		int  fd_flags = fcntl(pws->fd, F_GETFL, 0);
+		if( !(fd_flags & O_NONBLOCK) ) pws->flags |= WS_FD_ACCEPT;
+	    }
+	    pws->flags |= WS_FD_LISTENING;
+	    pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECTED); /* just in case */
+	    return 0;
 	}
-	else if( !(pws->flags & WS_FD_CONNECTED) ) pws->flags |= WS_FD_LISTENING;
-
-	if (listen(pws->fd, backlog) == 0) return 0;
 	pwsi->err = wsaErrno();
     }
     else if( pwsi ) pwsi->err = WSAENOTSOCK;
@@ -1816,6 +1822,9 @@ BOOL32 WINSOCK_HandleIO( int* max_fd, int num_pending, fd_set io_set[3] )
 
 	    if((flags & WS_FD_ACCEPT) && (flags & WS_FD_LISTENING))
 	    {
+		/* WS_FD_ACCEPT is valid only if the socket is in the
+		 * listening state */
+
 		FD_CLR( fd, &io_set[EVENT_IO_WRITE] );
 		if( r )
 		{

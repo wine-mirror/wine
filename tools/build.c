@@ -5,6 +5,7 @@
  * Copyright 1997 Eric Youngdale
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,14 +34,14 @@
 typedef enum
 {
     TYPE_INVALID,
-    TYPE_BYTE,         /* byte variable */
-    TYPE_WORD,         /* word variable */
-    TYPE_LONG,         /* long variable */
+    TYPE_BYTE,         /* byte variable (Win16) */
+    TYPE_WORD,         /* word variable (Win16) */
+    TYPE_LONG,         /* long variable (Win16) */
     TYPE_PASCAL_16,    /* pascal function with 16-bit return (Win16) */
     TYPE_PASCAL,       /* pascal function with 32-bit return (Win16) */
+    TYPE_ABS,          /* absolute value (Win16) */
+    TYPE_RETURN,       /* simple return value function (Win16) */
     TYPE_REGISTER,     /* register function */
-    TYPE_ABS,          /* absolute value */
-    TYPE_RETURN,       /* simple return value function */
     TYPE_STUB,         /* unimplemented stub */
     TYPE_STDCALL,      /* stdcall function (Win32) */
     TYPE_CDECL,        /* cdecl function (Win32) */
@@ -57,9 +58,9 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "long",         /* TYPE_LONG */
     "pascal16",     /* TYPE_PASCAL_16 */
     "pascal",       /* TYPE_PASCAL */
-    "register",     /* TYPE_REGISTER */
     "equate",       /* TYPE_ABS */
     "return",       /* TYPE_RETURN */
+    "register",     /* TYPE_REGISTER */
     "stub",         /* TYPE_STUB */
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
@@ -425,6 +426,12 @@ static int ParseExportFunction( ORDDEF *odp )
     odp->u.func.arg_types[i] = '\0';
     if ((odp->type == TYPE_STDCALL) && !i)
         odp->type = TYPE_CDECL; /* stdcall is the same as cdecl for 0 args */
+    if ((odp->type == TYPE_REGISTER) && (SpecType == SPEC_WIN32) && i)
+    {
+        fprintf( stderr, "%s:%d: register functions cannot have arguments in Win32\n",
+                 SpecName, Line );
+        return -1;
+    }
     strcpy(odp->u.func.link_name, GetToken());
     return 0;
 }
@@ -446,6 +453,13 @@ static int ParseEquate( ORDDEF *odp )
 	fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
                 SpecName, Line, token);
 	return -1;
+    }
+
+    if (SpecType == SPEC_WIN32)
+    {
+        fprintf( stderr, "%s:%d: 'equate' not supported for Win32\n",
+                 SpecName, Line );
+        return -1;
     }
 
     odp->u.abs.value = value;
@@ -479,6 +493,13 @@ static int ParseReturn( ORDDEF *odp )
 	fprintf(stderr, "%s:%d: Expected number value, got '%s'\n",
                 SpecName, Line, token);
 	return -1;
+    }
+
+    if (SpecType == SPEC_WIN32)
+    {
+        fprintf( stderr, "%s:%d: 'return' not supported for Win32\n",
+                 SpecName, Line );
+        return -1;
     }
 
     return 0;
@@ -932,116 +953,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
 
 /*******************************************************************
- *         BuildModule32
- *
- * Build the in-memory representation of a 32-bit pseudo-NE module, and dump it
- * as a byte stream into the assembly code.
- */
-static int BuildModule32( FILE *outfile )
-{
-    char *buffer;
-    NE_MODULE *pModule;
-    OFSTRUCT *pFileInfo;
-    BYTE *pstr;
-    WORD *pword;
-
-    /*   Module layout:
-     * NE_MODULE            Module
-     * OFSTRUCT             File information
-     * SEGTABLEENTRY        Segment table (empty)
-     * WORD[2]              Resource table (empty)
-     * BYTE[2]              Imported names (empty)
-     * BYTE[n]              Resident names table (1 entry)
-     * BYTE[n]              Entry table (empty)
-     */
-
-    buffer = xmalloc( 0x10000 );
-
-    pModule = (NE_MODULE *)buffer;
-    pModule->magic = IMAGE_OS2_SIGNATURE;
-    pModule->count = 1;
-    pModule->next = 0;
-    pModule->dgroup_entry = 0;
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
-                     NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
-    pModule->dgroup = 0;
-    pModule->heap_size = DLLHeapSize;
-    pModule->stack_size = 0;
-    pModule->ip = 0;
-    pModule->cs = 0;
-    pModule->sp = 0;
-    pModule->ss = 0;
-    pModule->seg_count = 0;
-    pModule->modref_count = 0;
-    pModule->nrname_size = 0;
-    pModule->modref_table = 0;
-    pModule->nrname_fpos = 0;
-    pModule->moveable_entries = 0;
-    pModule->alignment = 0;
-    pModule->truetype = 0;
-    pModule->os_flags = NE_OSFLAGS_WINDOWS;
-    pModule->misc_flags = 0;
-    pModule->dlls_to_init  = 0;
-    pModule->nrname_handle = 0;
-    pModule->min_swap_area = 0;
-    pModule->expected_version = 0x030a;
-    pModule->pe_module = NULL;
-    pModule->self = 0;
-    pModule->self_loading_sel = 0;
-
-      /* File information */
-
-    pFileInfo = (OFSTRUCT *)(pModule + 1);
-    pModule->fileinfo = (int)pFileInfo - (int)pModule;
-    memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
-    pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
-                        + strlen(DLLFileName);
-    strcpy( pFileInfo->szPathName, DLLFileName );
-    pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
-        
-      /* Segment table */
-
-    pModule->seg_table = (int)pstr - (int)pModule;
-
-      /* Resource table */
-
-    pword = (WORD *)pstr;
-    pModule->res_table = (int)pword - (int)pModule;
-    *pword++ = 0;
-    *pword++ = 0;
-
-      /* Imported names table */
-
-    pstr = (char *)pword;
-    pModule->import_table = (int)pstr - (int)pModule;
-    *pstr++ = 0;
-    *pstr++ = 0;
-
-      /* Resident names table */
-
-    pModule->name_table = (int)pstr - (int)pModule;
-    /* First entry is module name */
-    *pstr = strlen(DLLName );
-    strcpy( pstr + 1, DLLName );
-    pstr += *pstr + 1;
-    *(WORD *)pstr = 0;
-    pstr += sizeof(WORD);
-    *pstr++ = 0;
-
-      /* Entry table */
-
-    pModule->entry_table = (int)pstr - (int)pModule;
-    *pstr++ = 0;
-
-      /* Dump the module content */
-
-    DumpBytes( outfile, (char *)pModule, (int)pstr - (int)pModule,
-               ".data", "Module_Start" );
-    return (int)pstr - (int)pModule;
-}
-
-
-/*******************************************************************
  *         BuildSpec32File
  *
  * Build a Win32 assembly file from a spec file.
@@ -1049,8 +960,9 @@ static int BuildModule32( FILE *outfile )
 static int BuildSpec32File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
-    int i, module_size, len;
+    int i, nb_names, nb_stubs;
     char buffer[1024];
+    unsigned char *args, *p;
 
     fprintf( outfile, "/* File generated automatically; do not edit! */\n" );
     fprintf( outfile, "\t.file\t\"%s\"\n", specfile );
@@ -1067,131 +979,54 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
     fprintf( outfile, "\t.text\n" );
     fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "Code_Start:\n\n" );
+    fprintf( outfile, "Code_Start:\n" );
+
+    /* Output code for all register functions */
 
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
     {
-        switch (odp->type)
-        {
-        case TYPE_INVALID:
-            break;
-
-        case TYPE_STDCALL:
-        case TYPE_CDECL:
-        case TYPE_STUB:
-        case TYPE_REGISTER:
-            fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
+        if (odp->type != TYPE_REGISTER) continue;
+        fprintf( outfile, "\n/* %s.%d (%s) */\n", DLLName, i, odp->name);
+        fprintf( outfile, "\t.align 4\n" );
 #ifdef USE_STABS
-	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
-		     DLLName, i, odp->lineno, DLLName, i);
+        fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
+                 DLLName, i, odp->lineno, DLLName, i);
 #endif
-            fprintf( outfile, "%s_%d:\n", DLLName, i );
+        fprintf( outfile, "%s_%d:\n", DLLName, i );
 #ifdef USE_STABS
-	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
+        fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
 #endif
-            fprintf( outfile, "\tpushl %%ebp\n" );
-            fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
-            fprintf( outfile, "\tcall " PREFIX "CallFrom32_%s_%d\n",
-                     (odp->type == TYPE_REGISTER) ? "regs" :
-                     ((odp->type == TYPE_STDCALL) ? "stdcall" : "cdecl"),
-                     strlen(odp->u.func.arg_types));
-            fprintf( outfile, "\tnop\n" );
-            break;
-
-        case TYPE_RETURN:
-            fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
-#ifdef USE_STABS
-	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
-		     DLLName, i, odp->lineno, DLLName, i);
-#endif
-            fprintf( outfile, "%s_%d:\n", DLLName, i );
-#ifdef USE_STABS
-	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
-#endif
-            fprintf( outfile, "\tmovl $%d,%%eax\n", odp->u.ret.ret_value );
-            if (odp->u.ret.arg_size)
-            {
-                fprintf( outfile, "\tret $%d\n", odp->u.ret.arg_size );
-            }
-            else
-            {
-                fprintf( outfile, "\tret\n" );
-                fprintf( outfile, "\tnop\n" );
-                fprintf( outfile, "\tnop\n" );
-            }
-            break;
-
-        case TYPE_BYTE:
-            fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
-            fprintf( outfile, "\t.data\n" );
-            fprintf( outfile, "%s_%d:\n", DLLName, i );
-            len = StoreVariableCode( buffer, 1, odp );
-            DumpBytes( outfile, buffer, len, NULL, NULL );
-            fprintf( outfile, "\t.text\n" );
-            break;
-
-        case TYPE_WORD:
-            fprintf( outfile, "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->name);
-            fprintf( outfile, "\t.data\n" );
-            fprintf( outfile, "%s_%d:\n", DLLName, i );
-            len = StoreVariableCode( buffer, 2, odp );
-            DumpBytes( outfile, buffer, len, NULL, NULL );
-            fprintf( outfile, "\t.text\n" );
-            break;
-
-        case TYPE_LONG:
-            fprintf( outfile, "/* %s.%d (%s) */\n",
-                     DLLName, i, odp->name);
-            fprintf( outfile, "\t.data\n" );
-            fprintf( outfile, "%s_%d:\n", DLLName, i );
-            len = StoreVariableCode( buffer, 4, odp );
-            DumpBytes( outfile, buffer, len, NULL, NULL );
-            fprintf( outfile, "\t.text\n" );
-            break;
-
-        case TYPE_VARARGS:
-        case TYPE_EXTERN:
-            break;
-
-        default:
-            fprintf(stderr,"build: function type %d not available for Win32\n",
-                    odp->type);
-            return -1;
-        }
+        fprintf( outfile, "\tpushl $" PREFIX "%s\n",odp->u.func.link_name);
+        fprintf( outfile, "\tjmp " PREFIX "CALL32_Regs\n" );
     }
 
-    module_size = BuildModule32( outfile );
+    /* Output code for all stubs functions */
 
-    /* Output the DLL functions table for no debugging code */
-
-    fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "NoDbg_Functions:\n" );
+    nb_stubs = 0;
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
     {
-        switch(odp->type)
+        if (odp->type != TYPE_STUB) continue;
+        fprintf( outfile, "\n/* %s.%d (%s) */\n", DLLName, i, odp->name);
+#ifdef USE_STABS
+        fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
+                 DLLName, i, odp->lineno, DLLName, i);
+#endif
+        fprintf( outfile, "%s_%d:\n", DLLName, i );
+#ifdef USE_STABS
+        fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
+#endif
+        fprintf( outfile, "\tpushl $Name_%d\n", i );
+        fprintf( outfile, "\tpushl $%d\n", i );
+        if (++nb_stubs == 1)
         {
-        case TYPE_INVALID:
-            fprintf( outfile, "\t.long 0\n" );
-            break;
-        case TYPE_VARARGS:
-            fprintf( outfile, "\t.long " PREFIX "%s\n",odp->u.vargs.link_name);
-            break;
-        case TYPE_EXTERN:
-            fprintf( outfile, "\t.long " PREFIX "%s\n", odp->u.ext.link_name );
-            break;
-        case TYPE_STDCALL:
-        case TYPE_CDECL:
-            fprintf( outfile, "\t.long " PREFIX "%s\n", odp->u.func.link_name);
-            break;
-        default:
-            fprintf( outfile, "\t.long %s_%d\n", DLLName, i );
-            break;
+            fprintf( outfile, "DoStub:\n" );
+            fprintf( outfile, "\tpushl $DLLName\n" );
+            fprintf( outfile, "\tcall " PREFIX "RELAY_Unimplemented32\n" );
         }
+        else fprintf( outfile, "\tjmp DoStub\n" );
     }
 
-    /* Output the DLL functions table for debugging code */
+    /* Output the DLL functions table */
 
     fprintf( outfile, "\t.text\n" );
     fprintf( outfile, "\t.align 4\n" );
@@ -1209,9 +1044,18 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_EXTERN:
             fprintf( outfile, "\t.long " PREFIX "%s\n", odp->u.ext.link_name );
             break;
-        default:
+        case TYPE_STDCALL:
+        case TYPE_CDECL:
+            fprintf( outfile, "\t.long " PREFIX "%s\n", odp->u.func.link_name);
+            break;
+        case TYPE_REGISTER:
+        case TYPE_STUB:
             fprintf( outfile, "\t.long %s_%d\n", DLLName, i );
             break;
+        default:
+            fprintf(stderr,"build: function type %d not available for Win32\n",
+                    odp->type);
+            return -1;
         }
     }
 
@@ -1220,8 +1064,20 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "FuncNames:\n" );
     for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
     {
-        if (odp->type == TYPE_INVALID) fprintf( outfile, "\t.long 0\n" );
-        else fprintf( outfile, "\t.long Name_%d\n", i );
+        if (odp->type != TYPE_INVALID)
+            fprintf( outfile, "\t.long Name_%d\n", i );
+    }
+
+    /* Output the DLL ordinals table */
+
+    fprintf( outfile, "FuncOrdinals:\n" );
+    nb_names = 0;
+    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    {
+        if (odp->type == TYPE_INVALID) continue;
+        nb_names++;
+        /* Some assemblers do not have .word */
+        fprintf( outfile, "\t.byte %d,%d\n", LOBYTE(i), HIBYTE(i) );
     }
 
     /* Output the DLL names */
@@ -1232,6 +1088,29 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             fprintf( outfile, "Name_%d:\t.ascii \"%s\\0\"\n", i, odp->name );
     }
 
+    /* Output the DLL functions arguments */
+
+    args = p = (unsigned char *)xmalloc( Limit - Base + 1 );
+    for (i = Base, odp = OrdinalDefinitions + Base; i <= Limit; i++, odp++)
+    {
+        switch(odp->type)
+        {
+        case TYPE_STDCALL:
+            *p++ = (unsigned char)strlen(odp->u.func.arg_types);
+            break;
+        case TYPE_CDECL:
+            *p++ = 0x80 | (unsigned char)strlen(odp->u.func.arg_types);
+            break;
+        case TYPE_REGISTER:
+            *p++ = 0xfe;
+            break;
+        default:
+            *p++ = 0xff;
+            break;
+        }
+    }
+    DumpBytes( outfile, args, Limit - Base + 1, NULL, "FuncArgs" );
+
     /* Output the DLL descriptor */
 
     fprintf( outfile, "DLLName:\t.ascii \"%s\\0\"\n", DLLName );
@@ -1239,14 +1118,13 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "\t.globl " PREFIX "%s_Descriptor\n", DLLName );
     fprintf( outfile, PREFIX "%s_Descriptor:\n", DLLName );
     fprintf( outfile, "\t.long DLLName\n" );          /* Name */
-    fprintf( outfile, "\t.long Module_Start\n" );     /* Module start */
-    fprintf( outfile, "\t.long %d\n", module_size );  /* Module size */
     fprintf( outfile, "\t.long %d\n", Base );         /* Base */
-    fprintf( outfile, "\t.long %d\n", Limit+1-Base ); /* Size */
-    fprintf( outfile, "\t.long Code_Start\n" );       /* Code start */
+    fprintf( outfile, "\t.long %d\n", Limit+1-Base ); /* Number of functions */
+    fprintf( outfile, "\t.long %d\n", nb_names );     /* Number of names */
     fprintf( outfile, "\t.long Functions\n" );        /* Functions */
-    fprintf( outfile, "\t.long NoDbg_Functions\n" );  /* Funcs without debug*/
     fprintf( outfile, "\t.long FuncNames\n" );        /* Function names */
+    fprintf( outfile, "\t.long FuncOrdinals\n" );     /* Function ordinals */
+    fprintf( outfile, "\t.long FuncArgs\n" );         /* Function arguments */
 #ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
@@ -1407,77 +1285,6 @@ static int BuildSpecFile( FILE *outfile, char *specname )
         fprintf( stderr, "%s: Missing 'type' declaration\n", specname );
         return -1;
     }
-}
-
-
-/*******************************************************************
- *         BuildCall32LargeStack
- *
- * Build the function used to switch to the original 32-bit stack
- * before calling a 32-bit function from 32-bit code. This is used for
- * functions that need a large stack, like X bitmaps functions.
- *
- * The generated function has the following prototype:
- *   int xxx( int (*func)(), void *arg );
- *
- * The pointer to the function can be retrieved by calling CALL32_Init,
- * which also takes care of saving the current 32-bit stack pointer.
- *
- * Stack layout:
- *   ...     ...
- * (ebp+12)  arg
- * (ebp+8)   func
- * (ebp+4)   ret addr
- * (ebp)     ebp
- */
-static void BuildCall32LargeStack( FILE *outfile )
-{
-    /* Initialization function */
-
-    fprintf( outfile, "\n\t.align 4\n" );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_Init:F1\",36,0,0," PREFIX "CALL32_Init\n");
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "CALL32_Init\n" );
-    fprintf( outfile, PREFIX "CALL32_Init:\n" );
-    fprintf( outfile, "\tleal -256(%%esp),%%eax\n" );
-    fprintf( outfile, "\tmovl %%eax,CALL32_Original32_esp\n" );
-    fprintf( outfile, "\tmovl $CALL32_LargeStack,%%eax\n" );
-    fprintf( outfile, "\tret\n" );
-
-    /* Function header */
-
-    fprintf( outfile, "\n\t.align 4\n" );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_LargeStack:F1\",36,0,0,CALL32_LargeStack\n");
-#endif
-    fprintf( outfile, "CALL32_LargeStack:\n" );
-    
-    /* Entry code */
-
-    fprintf( outfile, "\tpushl %%ebp\n" );
-    fprintf( outfile, "\tmovl %%esp,%%ebp\n" );
-
-    /* Switch to the original 32-bit stack pointer */
-
-    fprintf( outfile, "\tmovl CALL32_Original32_esp, %%esp\n" );
-
-    /* Transfer the argument and call the function */
-
-    fprintf( outfile, "\tpushl 12(%%ebp)\n" );
-    fprintf( outfile, "\tcall 8(%%ebp)\n" );
-
-    /* Restore registers and return */
-
-    fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
-    fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tret\n" );
-
-    /* Data */
-
-    fprintf( outfile, "\t.data\n" );
-    fprintf( outfile, "CALL32_Original32_esp:\t.long 0\n" );
-    fprintf( outfile, "\t.text\n" );
 }
 
 
@@ -2028,7 +1835,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 
         /* Push the return address */
 
-        fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_long\n" );
+        fprintf( outfile, "\tpushl " PREFIX "CALLTO16_RetAddr_regs\n" );
 
         /* Push the called routine address */
 
@@ -2111,16 +1918,25 @@ static void BuildRet16Func( FILE *outfile )
 {
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_long\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Ret_regs\n" );
 
-    /* Put return value into eax */
+    fprintf( outfile, PREFIX "CALLTO16_Ret_word:\n" );
+    fprintf( outfile, "\txorl %%edx,%%edx\n" );
+
+    /* Remove the arguments just in case */
 
     fprintf( outfile, PREFIX "CALLTO16_Ret_long:\n" );
+    fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
+                 STRUCTOFFSET(STACK16FRAME,bp) + 4 /* for saved %%esp */ );
+
+    /* Put return value into %eax */
+
+    fprintf( outfile, PREFIX "CALLTO16_Ret_regs:\n" );
     fprintf( outfile, "\tshll $16,%%edx\n" );
     fprintf( outfile, "\tmovw %%ax,%%dx\n" );
     fprintf( outfile, "\tmovl %%edx,%%eax\n" );
-    fprintf( outfile, PREFIX "CALLTO16_Ret_word:\n" );
 
-    /* Restore 32-bit segment registers */
+    /* Restore 32-bit segment registers and stack*/
 
     fprintf( outfile, "\tpopl %%ecx\n" );  /* Get the saved %%esp */
     fprintf( outfile, "\tmovw $0x%04x,%%bx\n", WINE_DATA_SELECTOR );
@@ -2158,30 +1974,120 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.data\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_word\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_long\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALLTO16_RetAddr_regs\n" );
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_Saved32_esp\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_word:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_RetAddr_long:\t.long 0\n" );
+    fprintf( outfile, PREFIX "CALLTO16_RetAddr_regs:\t.long 0\n" );
     fprintf( outfile, PREFIX "CALLTO16_Saved32_esp:\t.long 0\n" );
     fprintf( outfile, "\t.text\n" );
 }
 
 
 /*******************************************************************
- *         BuildContext32
+ *         BuildCallTo32LargeStack
  *
- * Build the CONTEXT structure on the stack.
+ * Build the function used to switch to the original 32-bit stack
+ * before calling a 32-bit function from 32-bit code. This is used for
+ * functions that need a large stack, like X bitmaps functions.
+ *
+ * The generated function has the following prototype:
+ *   int xxx( int (*func)(), void *arg );
+ *
+ * The pointer to the function can be retrieved by calling CALL32_Init,
+ * which also takes care of saving the current 32-bit stack pointer.
+ *
+ * Stack layout:
+ *   ...     ...
+ * (ebp+12)  arg
+ * (ebp+8)   func
+ * (ebp+4)   ret addr
+ * (ebp)     ebp
  */
-static void BuildContext32( FILE *outfile )
+static void BuildCallTo32LargeStack( FILE *outfile )
 {
+    /* Initialization function */
+
+    fprintf( outfile, "\n\t.align 4\n" );
+#ifdef USE_STABS
+    fprintf( outfile, ".stabs \"CALL32_Init:F1\",36,0,0," PREFIX "CALL32_Init\n");
+#endif
+    fprintf( outfile, "\t.globl " PREFIX "CALL32_Init\n" );
+    fprintf( outfile, PREFIX "CALL32_Init:\n" );
+    fprintf( outfile, "\tleal -256(%%esp),%%eax\n" );
+    fprintf( outfile, "\tmovl %%eax,CALL32_Original32_esp\n" );
+    fprintf( outfile, "\tmovl $CALL32_LargeStack,%%eax\n" );
+    fprintf( outfile, "\tret\n" );
+
+    /* Function header */
+
+    fprintf( outfile, "\n\t.align 4\n" );
+#ifdef USE_STABS
+    fprintf( outfile, ".stabs \"CALL32_LargeStack:F1\",36,0,0,CALL32_LargeStack\n");
+#endif
+    fprintf( outfile, "CALL32_LargeStack:\n" );
+    
+    /* Entry code */
+
+    fprintf( outfile, "\tpushl %%ebp\n" );
+    fprintf( outfile, "\tmovl %%esp,%%ebp\n" );
+
+    /* Switch to the original 32-bit stack pointer */
+
+    fprintf( outfile, "\tmovl CALL32_Original32_esp, %%esp\n" );
+
+    /* Transfer the argument and call the function */
+
+    fprintf( outfile, "\tpushl 12(%%ebp)\n" );
+    fprintf( outfile, "\tcall 8(%%ebp)\n" );
+
+    /* Restore registers and return */
+
+    fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
+    fprintf( outfile, "\tpopl %%ebp\n" );
+    fprintf( outfile, "\tret\n" );
+
+    /* Data */
+
+    fprintf( outfile, "\t.data\n" );
+    fprintf( outfile, "CALL32_Original32_esp:\t.long 0\n" );
+    fprintf( outfile, "\t.text\n" );
+}
+
+
+/*******************************************************************
+ *         BuildCallFrom32Regs
+ *
+ * Build a 32-bit-to-Wine call-back function for a 'register' function.
+ * 'args' is the number of dword arguments.
+ *
+ * Stack layout:
+ *   ...     ...
+ * (esp+208) ret addr (or relay addr when debugging_relay is on)
+ * (esp+204) entry point
+ * (esp+0)   CONTEXT struct
+ */
+static void BuildCallFrom32Regs( FILE *outfile )
+{
+    /* Function header */
+
+    fprintf( outfile, "\n\t.align 4\n" );
+#ifdef USE_STABS
+    fprintf( outfile, ".stabs \"CALL32_Regs:F1\",36,0,0," PREFIX "CALL32_Regs\n" );
+#endif
+    fprintf( outfile, "\t.globl " PREFIX "CALL32_Regs\n" );
+    fprintf( outfile, PREFIX "CALL32_Regs:\n" );
+
     /* Build the context structure */
 
     fprintf( outfile, "\tpushw $0\n" );
     fprintf( outfile, "\tpushw %%ss\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );  /* %esp */
+    fprintf( outfile, "\tpushl %%eax\n" );  /* %esp place holder */
     fprintf( outfile, "\tpushfl\n" );
     fprintf( outfile, "\tpushw $0\n" );
     fprintf( outfile, "\tpushw %%cs\n" );
-    fprintf( outfile, "\tsubl $8,%%esp\n" );  /* %eip + %ebp */
+    fprintf( outfile, "\tpushl 20(%%esp)\n" );  /* %eip at time of call */
+    fprintf( outfile, "\tpushl %%ebp\n" );
 
     fprintf( outfile, "\tpushl %%eax\n" );
     fprintf( outfile, "\tpushl %%ecx\n" );
@@ -2200,56 +2106,31 @@ static void BuildContext32( FILE *outfile )
     fprintf( outfile, "\tmovw %%gs,%%ax\n" );
     fprintf( outfile, "\tpushl %%eax\n" );
 
-    fprintf( outfile, "\tsubl $%d,%%esp\n",
+    fprintf( outfile, "\tleal -%d(%%esp),%%esp\n",
              sizeof(FLOATING_SAVE_AREA) + 6 * sizeof(DWORD) /* DR regs */ );
     fprintf( outfile, "\tpushl $0x0001001f\n" );  /* ContextFlags */
 
     fprintf( outfile, "\tfsave %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
-    fprintf( outfile, "\tmovl 4(%%ebp),%%eax\n" ); /* %eip at time of call */
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Eip) );
-    fprintf( outfile, "\tmovl 0(%%ebp),%%eax\n" ); /* %ebp at time of call */
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Ebp) );
-    fprintf( outfile, "\tleal 8(%%ebp),%%eax\n" ); /* %esp at time of call */
+    fprintf( outfile, "\tleal %d(%%esp),%%eax\n",
+             sizeof(CONTEXT) + 4 ); /* %esp at time of call */
     fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", CONTEXTOFFSET(Esp) );
 
-    /* Push pointer to context */
+    fprintf( outfile, "\tcall " PREFIX "RELAY_CallFrom32Regs\n" );
 
-    fprintf( outfile, "\tpushl %%esp\n" );
-}
-
-
-/*******************************************************************
- *         RestoreContext32
- *
- * Restore the registers from the context structure.
- * All registers except %cs and %ss are restored.
- */
-static void RestoreContext32( FILE *outfile )
-{
     /* Restore the context structure */
 
-    fprintf( outfile, "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-8 );
     fprintf( outfile, "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
-    /* Store flags over the relay addr */
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
-    fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
+    /* Store %eip value onto the new stack */
 
-    /* Get the new stack addr */
-    fprintf( outfile, "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Esp) );
-
-    /* Set eip and ebp value onto the new stack */
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
-    fprintf( outfile, "\tmovl %%eax,-4(%%ebx)\n" ); /* %eip at time of call */
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
-    fprintf( outfile, "\tmovl %%eax,-8(%%ebx)\n" ); /* %ebp at time of call */
-
-    /* Set ebp to point to the new stack */
-    fprintf( outfile, "\tleal -8(%%ebx),%%ebp\n" );
+    fprintf( outfile, "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Esp) );
+    fprintf( outfile, "\tmovl %%eax,0(%%ebx)\n" );
 
     /* Restore all registers */
-    fprintf( outfile, "\taddl $%d,%%esp\n",
+
+    fprintf( outfile, "\tleal %d(%%esp),%%esp\n",
              sizeof(FLOATING_SAVE_AREA) + 7 * sizeof(DWORD) );
     fprintf( outfile, "\tpopl %%eax\n" );
     fprintf( outfile, "\tmovw %%ax,%%gs\n" );
@@ -2266,124 +2147,11 @@ static void RestoreContext32( FILE *outfile )
     fprintf( outfile, "\tpopl %%edx\n" );
     fprintf( outfile, "\tpopl %%ecx\n" );
     fprintf( outfile, "\tpopl %%eax\n" );
-
-    fprintf( outfile, "\taddl $%d,%%esp\n",
-             6 * sizeof(DWORD) /* %ebp + %eip + %cs + %efl + %esp + %ss */ );
-    fprintf( outfile, "\tpopfl\n" );
-}
-
-
-/*******************************************************************
- *         BuildCallFrom32Func
- *
- * Build a 32-bit-to-Wine call-back function.
- * 'args' is the number of dword arguments.
- *
- * Stack layout:
- *   ...     ...
- * (ebp+12)  arg2
- * (ebp+8)   arg1
- * (ebp+4)   ret addr
- * (ebp)     ebp
- * (ebp-4)   entry point
- * (ebp-8)   relay addr
- */
-static void BuildCallFrom32Func( FILE *outfile, const char *profile )
-{
-    int args, stdcall, reg_func;
-
-    if (!strncmp( profile, "stdcall", 7 ))
-    {
-        stdcall = 1;
-        reg_func = 0;
-        args = atoi( profile + 8 );
-    }
-    else if (!strncmp( profile, "cdecl", 5 ))
-    {
-        stdcall = reg_func = 0;
-        args = atoi( profile + 6 );
-    }
-    else if (!strncmp( profile, "regs", 4 ))
-    {
-        stdcall = reg_func = 1;
-        args = atoi( profile + 5 );
-    }
-    else
-    {
-        fprintf( stderr, "Invalid function profile '%s', ignored\n", profile );
-        return;
-    }
-
-    /* Function header */
-
-    fprintf( outfile, "\n\t.align 4\n" );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CallFrom32_%s:F1\",36,0,0," PREFIX "CallFrom32_%s\n", 
-	     profile, profile);
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "CallFrom32_%s\n", profile );
-    fprintf( outfile, PREFIX "CallFrom32_%s:\n", profile );
-
-    /* Entry code */
-
-    fprintf( outfile, "\tleal 8(%%esp),%%ebp\n" );
-
-    /* Transfer the arguments */
-
-    if (reg_func) BuildContext32( outfile );
-
-    if (args)
-    {
-        int i;
-        for (i = args; i > 0; i--)
-            fprintf( outfile, "\tpushl %d(%%ebp)\n", 4 * i + 4 );
-    }
-
-#if 0
-    /* Set %es = %ds */
-
-    fprintf( outfile, "\tmovw %%ds,%%ax\n" );
-    fprintf( outfile, "\tmovw %%ax,%%es\n" );
-#endif
-
-    /* Print the debugging info */
-
-    if (debugging)
-    {
-        fprintf( outfile, "\tpushl $%d\n",  /* Nb args */
-                 reg_func ? args | 0x80000000 : args);
-        fprintf( outfile, "\tpushl %%ebp\n" );
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom32\n" );
-        fprintf( outfile, "\tadd $8, %%esp\n" );
-    }
-
-    /* Call the function */
-
-    fprintf( outfile, "\tcall -4(%%ebp)\n" );
-
-    /* Print the debugging info */
-
-    if (debugging)
-    {
-        fprintf( outfile, "\tpushl %%eax\n" );
-        fprintf( outfile, "\tpushl $%d\n",  /* Nb args */
-                 reg_func ? args | 0x80000000 : args);
-        fprintf( outfile, "\tpushl %%ebp\n" );
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom32Ret\n" );
-        fprintf( outfile, "\tpopl %%eax\n" );
-        fprintf( outfile, "\tpopl %%eax\n" );
-        fprintf( outfile, "\tpopl %%eax\n" );
-    }
-
-    if (reg_func) RestoreContext32( outfile );
-
-    fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
-
-    /* Return, removing arguments */
-
-    if (args && stdcall) fprintf( outfile, "\tret $%d\n", args * 4 );
-    else fprintf( outfile, "\tret\n" );
+    fprintf( outfile, "\tleal 8(%%esp),%%esp\n" );  /* skip %eip and %cs */
+    fprintf( outfile, "\tpopfl\n" );
+    fprintf( outfile, "\tpopl %%esp\n" );
+    fprintf( outfile, "\tret\n" );
 }
 
 
@@ -2512,14 +2280,13 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
 
 
 /*******************************************************************
- *         BuildCallFrom32
+ *         BuildCall32
  *
- * Build the 32-bit-to-Wine callbacks
+ * Build the 32-bit callbacks
  */
-static int BuildCallFrom32( FILE *outfile, char * outname, int argc, char *argv[] )
+static int BuildCall32( FILE *outfile, char * outname )
 {
     char buffer[1024];
-    int i;
 
     /* File header */
 
@@ -2538,16 +2305,16 @@ static int BuildCallFrom32( FILE *outfile, char * outname, int argc, char *argv[
     fprintf( outfile, ".stabs \"%s\",100,0,0,Code_Start\n", outname);
     fprintf( outfile, "\t.text\n" );
     fprintf( outfile, "\t.align 4\n" );
-    fprintf( outfile, "Code_Start:\n\n" );
+    fprintf( outfile, "Code_Start:\n" );
 #endif
-
-    /* Build the callback functions */
-
-    for (i = 2; i < argc; i++) BuildCallFrom32Func( outfile, argv[i] );
 
     /* Build the 32-bit large stack callback */
 
-    BuildCall32LargeStack( outfile );
+    BuildCallTo32LargeStack( outfile );
+
+    /* Build the register callback function */
+
+    BuildCallFrom32Regs( outfile );
 
 #ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
@@ -2568,7 +2335,7 @@ static void usage(void)
              "usage: build [-o outfile] -spec SPECNAMES\n"
              "       build [-o outfile] -callfrom16 FUNCTION_PROFILES\n"
              "       build [-o outfile] -callto16 FUNCTION_PROFILES\n"
-             "       build [-o outfile] -callfrom32 FUNCTION_PROFILES\n" );
+             "       build [-o outfile] -call32\n" );
     exit(1);
 }
 
@@ -2582,14 +2349,14 @@ int main(int argc, char **argv)
     FILE *outfile = stdout;
     int res = -1;
 
-    if (argc <= 2) usage();
+    if (argc < 2) usage();
 
     if (!strcmp( argv[1], "-o" ))
     {
         outname = argv[2];
         argv += 2;
         argc -= 2;
-        if (argc <= 2) usage();
+        if (argc < 2) usage();
         if (!(outfile = fopen( outname, "w" )))
         {
             fprintf( stderr, "Unable to create output file '%s'\n", outname );
@@ -2603,8 +2370,8 @@ int main(int argc, char **argv)
         res = BuildCallFrom16( outfile, outname, argc, argv );
     else if (!strcmp( argv[1], "-callto16" ))
         res = BuildCallTo16( outfile, outname, argc, argv );
-    else if (!strcmp( argv[1], "-callfrom32" ))
-        res = BuildCallFrom32( outfile, outname, argc, argv );
+    else if (!strcmp( argv[1], "-call32" ))
+        res = BuildCall32( outfile, outname );
     else
     {
         fclose( outfile );

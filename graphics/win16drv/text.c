@@ -97,7 +97,7 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
 #endif        
 
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, x, y, 
+	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, XLPTODP(dc,x), XLPTODP(dc,y), 
 				  &clipRect, str, 
 				  wCount,  physDev->segptrFontInfo, win16drv_SegPtr_DrawMode, 
 				  win16drv_SegPtr_TextXForm, NULL, lpOpaqueRect, wOptions);

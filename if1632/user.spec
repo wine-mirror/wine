@@ -232,7 +232,7 @@ file	user.exe
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
 229 pascal16 GetTopWindow(word) GetTopWindow16
 230 pascal16 GetNextWindow(word word) GetNextWindow16
-231 stub GetSystemDebugState
+231 return GetSystemDebugState 0 0  #FIXME
 232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos16
 233 pascal16 SetParent(word word) SetParent16
 234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
@@ -465,14 +465,14 @@ file	user.exe
 532 pascal16 WNetGetPropertyText(word word word ptr word) WNetGetPropertyText
 533 stub WNetInitialize
 534 stub WNetLogon
-600 stub GetShellWindow
+600 pascal16 GetShellWindow() GetShellWindow16
 601 stub DoHotkeyStuff
 602 stub SetCheckCursorTimer
 604 stub BroadcastSystemMessage
 605 stub HackTaskMonitor
 606 stub FormatMessage
-608 stub GetForegroundWindow
-609 stub SetForegroundWindow
+608 pascal16 GetForegroundWindow() GetForegroundWindow16
+609 pascal16 SetForegroundWindow(word) SetForegroundWindow16
 610 stub DestroyIcon32
 620 stub ChangeDisplaySettings
 621 stub EnumDisplaySettings

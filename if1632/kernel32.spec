@@ -555,7 +555,7 @@ type	win32
 564 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 565 stub QueryPerformanceFrequency
 566 stub QueueUserAPC
-567 register RaiseException(long long long ptr) RaiseException
+567 register RaiseException() EXC_RaiseException
 568 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
 569 stub ReadConsoleInputA
 570 stub ReadConsoleInputW
@@ -578,7 +578,7 @@ type	win32
 587 stdcall ResumeThread(long) ResumeThread
 588 stdcall RtlFillMemory(ptr long long) RtlFillMemory
 589 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
-590 register RtlUnwind(ptr long ptr long) RtlUnwind
+590 register RtlUnwind() EXC_RtlUnwind
 591 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
 592 register SMapLS() SMapLS
 593 register SMapLS_IP_EBP_12() SMapLS_IP_EBP_12

@@ -118,6 +118,17 @@ VOID* WINAPI FreeSid(LPSID pSid) {
 }
 
 /***********************************************************************
+ *           InitializeSecurityDescriptor  (ADVAPI.73)
+ */
+BOOL32 WINAPI InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
+                                            DWORD revision )
+{
+    fprintf( stdnimp, "InitializeSecurityDescriptor: empty stub\n" );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           InitializeSid  (ADVAPI.74)
  */
 BOOL32 WINAPI InitializeSid (LPSID pSid, LPSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,

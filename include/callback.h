@@ -45,9 +45,15 @@ extern WORD CALLBACK CallTo16_word_wwwww(FARPROC16,WORD,WORD,WORD,WORD,WORD);
 extern WORD CALLBACK CallTo16_word_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
 extern WORD CALLBACK CallTo16_word_llll (FARPROC16,LONG,LONG,LONG,LONG);
 extern LONG CALLBACK CallTo16_long_lwlll(FARPROC16,LONG,WORD,LONG,LONG,LONG);
+extern LONG CALLBACK CallTo16_word_lwwlllll(FARPROC16,LONG,WORD,WORD,LONG,LONG,
+                                            LONG,LONG,WORD);
 extern LONG CALLBACK CallTo16_long_lwwllwlllllw(FARPROC16,LONG,WORD,WORD,LONG,
                                                 LONG,WORD,LONG,LONG,LONG,LONG,
                                                 LONG,WORD);
+extern LONG CALLBACK CallTo16_word_lwwwwlwwwwllll(FARPROC16,LONG,WORD,WORD,
+                                                  WORD,WORD,LONG,WORD,WORD,
+                                                  WORD,WORD,LONG,LONG,LONG,
+                                                  LONG);
 
 #define CallDriverProc( func, dwId, msg, hdrvr, lparam1, lparam2 ) \
     CallTo16_long_lwwll( func, dwId, msg, hdrvr, lparam1, lparam2 )

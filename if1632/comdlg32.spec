@@ -18,8 +18,8 @@ type	win32
 14 stub LoadAlterBitmap
 15 stub PageSetupDlgA
 16 stub PageSetupDlgW
-17 return PrintDlgA 4 0
-18 return PrintDlgW 4 0
+17 stdcall PrintDlgA(ptr) PrintDlg32A
+18 stdcall PrintDlgW(ptr) PrintDlg32W
 19 stub ReplaceTextA
 20 stub ReplaceTextW
 21 stub WantArrows

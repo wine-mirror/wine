@@ -287,7 +287,7 @@ file	gdi.exe
 451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn16
 452 stub GDISEEGDIDO
 460 stub GDITASKTERMINATION
-461 return SetObjectOwner 4 0
+461 pascal16 SetObjectOwner(word word) SetObjectOwner16
 462 pascal16 IsGDIObject(word) IsGDIObject
 463 stub MAKEOBJECTPRIVATE
 464 stub FIXUPBOGUSPUBLISHERMETAFILE

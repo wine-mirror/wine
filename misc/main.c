@@ -205,6 +205,7 @@ struct options Options =
 {  /* default options */
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
+    NULL,           /* argv0 */
     FALSE,          /* usePrivateMap */
     FALSE,          /* useFixedMap */
     FALSE,          /* synchronous */
@@ -484,6 +485,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     char *xrm_string;
 
     Options.programName = MAIN_GetProgramName( *argc, argv );
+    Options.argv0 = argv[0];
 
       /* Get display name from command line */
     for (i = 1; i < *argc - 1; i++)

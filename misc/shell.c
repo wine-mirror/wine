@@ -1048,3 +1048,8 @@ void WINAPI Control_RunDLL(DWORD a1,DWORD a2,LPSTR a3,DWORD a4) {
 		a1,a2,a3,a4
 	);
 }
+
+void WINAPI FreeIconList( DWORD dw )
+{
+    fprintf( stdnimp, "FreeIconList: empty stub\n" );
+}

@@ -454,7 +454,7 @@ DWORD WINAPI auxOutMessage(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD d
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void (*LPTIMECALLBACK) (UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPTIMECALLBACK) (UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define TIME_ONESHOT    0   /* program timer for single event */
 #define TIME_PERIODIC   1   /* program for continuous periodic event */

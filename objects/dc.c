@@ -52,6 +52,7 @@ static const WIN_DC_INFO DC_defaultValues =
     0,                      /* breakRem */
     1,                      /* bitsPerPixel */
     MM_TEXT,                /* MapMode */
+    GM_COMPATIBLE,          /* GraphicsMode */
     0,                      /* DCOrgX */
     0,                      /* DCOrgY */
     0,                      /* CursPosX */
@@ -1034,6 +1035,42 @@ DWORD WINAPI SetDCOrg( HDC16 hdc, INT16 x, INT16 y )
     dc->w.DCOrgY = y;
     GDI_HEAP_UNLOCK( hdc );
     return prevOrg;
+}
+
+
+/***********************************************************************
+ *           GetGraphicsMode    (GDI32.188)
+ */
+INT32 WINAPI GetGraphicsMode( HDC32 hdc )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return 0;
+    return dc->w.GraphicsMode;
+}
+
+
+/***********************************************************************
+ *           SetGraphicsMode    (GDI32.317)
+ */
+INT32 WINAPI SetGraphicsMode( HDC32 hdc, INT32 mode )
+{
+    INT32 ret;
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc) return 0;
+    if ((mode <= 0) || (mode > GM_LAST)) return 0;
+    ret = dc->w.GraphicsMode;
+    dc->w.GraphicsMode = mode;
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetWorldTransform    (GDI32.244)
+ */
+BOOL32 WINAPI GetWorldTransform( HDC32 hdc, LPXFORM xform )
+{
+    fprintf( stdnimp, "GetWorldTransform: empty stub\n" );
+    return FALSE;
 }
 
 

@@ -548,7 +548,7 @@ DEBUG_EvalExpr(struct expr * exp)
 	  break;
 	case EXP_OP_SHR:
 	  rtn.seg = 0;
-	  exp->un.binop.result = ((unsigned) VAL(exp1) << VAL(exp2));
+	  exp->un.binop.result = ((unsigned) VAL(exp1) >> VAL(exp2));
 	  break;
 	case EXP_OP_MUL:
 	  rtn.seg = 0;

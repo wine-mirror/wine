@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "arch.h"
 #include "windows.h"
 #include "gdi.h"
 #include "global.h"

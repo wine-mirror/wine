@@ -417,6 +417,7 @@ HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
     char *pStr,*s;
+    int len;
     const char* basename;
 
     INT32 of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
@@ -473,19 +474,15 @@ HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->name_table = (int)pStr - (int)pModule;
-    /* strcpy( pStr, "\x08W32SXXXX" ); */
     basename = strrchr(ofs->szPathName,'\\');
-    if (!basename) 
-	    	basename=ofs->szPathName;
-    else
-	    	basename++;
-    basename=strdup(basename);
-    if ((s=strchr(basename,'.')))
-	    	*s='\0';
-    *pStr = strlen(basename);
-    if (*pStr>8) *pStr=8;
-    strncpy( pStr+1, basename, 8 );
-    free((void*)basename);
+    if (!basename) basename = ofs->szPathName;
+    else basename++;
+    len = strlen(basename);
+    if ((s = strchr(basename,'.'))) len = s - basename;
+    if (len > 8) len = 8;
+    *pStr = len;
+    strncpy( pStr+1, basename, len );
+    if (len < 8) pStr[len+1] = 0;
     pStr += 9;
 
     /* All tables zero terminated */
@@ -1609,7 +1606,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
         return 2;  /* File not found */
     if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) )))
         return 8;  /* Out of memory */
-    if (!(cmdLineHandle = GlobalAlloc16( 0, 256 )))
+    if (!(cmdLineHandle = GlobalAlloc16( 0, 2048 )))
     {
         GlobalFree16( cmdShowHandle );
         return 8;  /* Out of memory */
@@ -1660,6 +1657,11 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 
 	cmdline[0] = strlen( cmdline + 1 );
 	*p = '\0';
+	/* this is a (hopefully acceptable hack to get the whole
+	   commandline for PROCESS_Create
+	   we put it after the processed one */
+	lstrcpyn32A(cmdline + (unsigned char)cmdline[0] +2,
+		    lpCmdLine, 2048 - 256);
 
 	/* Now load the executable file */
 

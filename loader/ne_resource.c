@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "windows.h"
-#include "arch.h"
 #include "global.h"
 #include "ldt.h"
 #include "module.h"
@@ -264,11 +263,8 @@ HRSRC16 NE_FindResource( HMODULE16 hModule, SEGPTR typeId, SEGPTR resId )
     if (!pModule || !pModule->res_table) return 0;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
 
-    if ((pModule->expected_version < 0x030a) && (HIWORD(typeId) || HIWORD(resId)))
+    if (HIWORD(typeId) || HIWORD(resId))
     {
-        /* Search the names in the nametable (which is not present 
-         * since Windows 3.1).  */
-
         DWORD id = NE_FindNameTableId( pModule, typeId, resId );
         if (id)  /* found */
         {

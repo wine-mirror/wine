@@ -133,7 +133,7 @@ type	win32
 126 stub GdiDeleteLocalDC
 127 stub GdiDeleteLocalObject
 128 stub GdiFlush
-129 return GdiGetBatchLimit 0 1
+129 stdcall GdiGetBatchLimit() GdiGetBatchLimit
 130 stub GdiGetLocalBrush
 131 stub GdiGetLocalDC
 132 stub GdiGetLocalFont
@@ -143,7 +143,7 @@ type	win32
 136 stub GdiPlayScript
 137 stub GdiReleaseLocalDC
 138 stub GdiSetAttrs
-139 return GdiSetBatchLimit 4 1
+139 stdcall GdiSetBatchLimit(long) GdiSetBatchLimit
 140 stub GdiSetServerAttr
 141 stub GetArcDirection
 142 stub GetAspectRatioFilterEx
@@ -192,7 +192,7 @@ type	win32
 185 stub GetGlyphOutline
 186 stdcall GetGlyphOutlineA(long long long ptr long ptr ptr) GetGlyphOutline32A
 187 stdcall GetGlyphOutlineW(long long long ptr long ptr ptr) GetGlyphOutline32W
-188 return GetGraphicsMode 4 1 	# just return 1
+188 stdcall GetGraphicsMode(long) GetGraphicsMode
 189 stub GetICMProfileA
 190 stub GetICMProfileW
 191 stub GetKerningPairs
@@ -248,7 +248,7 @@ type	win32
 241 stub GetWinMetaFileBits
 242 stdcall GetWindowExtEx(long ptr) GetWindowExtEx32
 243 stdcall GetWindowOrgEx(long ptr) GetWindowOrgEx32
-244 return GetWorldTransform 8 0
+244 stdcall GetWorldTransform(long ptr) GetWorldTransform
 245 stdcall IntersectClipRect(long long long long long) IntersectClipRect32
 246 stdcall InvertRgn(long long) InvertRgn32
 247 stdcall LPtoDP(long ptr long) LPtoDP32
@@ -322,7 +322,7 @@ type	win32
 314 stub SetDeviceGammaRamp
 315 stub SetEnhMetaFileBits
 316 stub SetFontEnumeration
-317 return SetGraphicsMode 8 1
+317 stdcall SetGraphicsMode(long long) SetGraphicsMode
 318 stub SetICMMode
 319 stub SetICMProfileA
 320 stub SetICMProfileW
@@ -394,4 +394,4 @@ type	win32
 383 stub UpdateICMRegKeyA
 384 stub UpdateICMRegKeyW
 385 stub gdiPlaySpoolStream
-386 return SetObjectOwner 8 0
+386 stdcall SetObjectOwner(long long) SetObjectOwner32

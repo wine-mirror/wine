@@ -847,21 +847,3 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     return 0;
 }
 
-/***********************************************************************
- *           CreateUpDownControl  (COMCTL32.14)
- */
-HWND32 WINAPI CreateUpDownControl( DWORD style, INT32 x, INT32 y,
-                                   INT32 cx, INT32 cy, HWND32 parent,
-                                   INT32 id, HINSTANCE32 inst, HWND32 buddy,
-                                   INT32 maxVal, INT32 minVal, INT32 curVal )
-{
-  HWND32 hUD = CreateWindow32A(UPDOWN_CLASS32A, 0, style, x, y, cx, cy,
-			       parent, id, inst, 0);
-  if(hUD){
-    SendMessage32A(hUD, UDM_SETBUDDY, buddy, 0);
-    SendMessage32A(hUD, UDM_SETRANGE, 0, MAKELONG(maxVal, minVal));
-    SendMessage32A(hUD, UDM_SETPOS, 0, MAKELONG(curVal, 0));     
-  }
-
-  return hUD;
-}

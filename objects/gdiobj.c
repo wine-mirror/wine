@@ -698,6 +698,42 @@ BOOL16 WINAPI IsGDIObject( HGDIOBJ16 handle )
 
 
 /***********************************************************************
+ *           SetObjectOwner16    (GDI.461)
+ */
+void WINAPI SetObjectOwner16( HGDIOBJ16 handle, HANDLE16 owner )
+{
+    /* Nothing to do */
+}
+
+
+/***********************************************************************
+ *           SetObjectOwner32    (GDI32.386)
+ */
+void WINAPI SetObjectOwner32( HGDIOBJ32 handle, HANDLE32 owner )
+{
+    /* Nothing to do */
+}
+
+
+/***********************************************************************
+ *           GdiGetBatchLimit    (GDI32.129)
+ */
+DWORD WINAPI GdiGetBatchLimit(void)
+{
+    return 1;  /* FIXME */
+}
+
+
+/***********************************************************************
+ *           GdiSetBatchLimit    (GDI32.139)
+ */
+DWORD WINAPI GdiSetBatchLimit( DWORD limit )
+{
+    return 1; /* FIXME */
+}
+
+
+/***********************************************************************
  *           MulDiv16   (GDI.128)
  */
 INT16 WINAPI MulDiv16( INT16 foo, INT16 bar, INT16 baz )

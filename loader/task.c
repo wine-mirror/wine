@@ -434,7 +434,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
 #ifndef WINELIB32
-    extern DWORD CALLTO16_RetAddr_word;
+    extern DWORD CALLTO16_RetAddr_regs;
     extern void CALLTO16_Restore();
 #endif
     
@@ -586,8 +586,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance,
                         ((pModule->sp != 0) ? pModule->sp :
                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1 );
-    pTask->ss_sp -= sizeof(DWORD);  /* To store saved %%esp */
-    frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->ss_sp ) - 1;
+    pTask->ss_sp -= sizeof(STACK16FRAME) - sizeof(DWORD) /* for saved %esp */;
+    frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->ss_sp );
     frame16->saved_ss_sp = 0;
     frame16->ebp = 0;
     frame16->ds = frame16->es = pTask->hInstance;
@@ -595,13 +595,11 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
     frame16->entry_cs = SELECTOROF(TASK_RescheduleProc);
     frame16->bp = 0;
-    frame16->args[0] = LOWORD(frame32);
-    frame16->args[1] = HIWORD(frame32);
+    *(DWORD *)(frame16 + 1) = frame32; /* Store the 32-bit stack pointer */
 #ifndef WINELIB
-    frame16->ip = LOWORD( CALLTO16_RetAddr_word );
-    frame16->cs = HIWORD( CALLTO16_RetAddr_word );
+    frame16->ip = LOWORD( CALLTO16_RetAddr_regs );
+    frame16->cs = HIWORD( CALLTO16_RetAddr_regs );
 #endif  /* WINELIB */
-    pTask->ss_sp -= sizeof(STACK16FRAME);
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */
       /* This is only needed to have a stack to switch from on the first  */
@@ -1180,14 +1178,17 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     /* Switch to the new stack */
 
+    /* Note: we need to take the 3 arguments into account; otherwise,
+     * the stack will underflow upon return from this function.
+     */
     IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR( seg,
-                                                  ptr - sizeof(STACK16FRAME) );
+                             ptr - sizeof(STACK16FRAME) - 3 * sizeof(WORD) );
     newFrame = CURRENT_STACK16;
 
     /* Copy the stack frame and the local variables to the new stack */
 
     copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
-    memcpy( newFrame, oldFrame, MAX( copySize, sizeof(STACK16FRAME) ));
+    memmove( newFrame, oldFrame, MAX( copySize, sizeof(STACK16FRAME) ));
 }
 
 

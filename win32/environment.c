@@ -13,6 +13,7 @@
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "process.h"  /* for pCurrentProcess */
 
 
 /***********************************************************************
@@ -20,21 +21,7 @@
  */
 LPCSTR WINAPI GetCommandLine32A(void)
 {
-    static char buffer[256];
-    char *cp;
-    PDB *pdb = (PDB *)GlobalLock16( GetCurrentPDB() );
-
-    /* FIXME: should use pCurrentProcess->env_db->cmd_line here */
-    lstrcpyn32A( buffer, MODULE_GetModuleName(GetCurrentTask()),
-                 sizeof(buffer) - 1 );
-    cp = buffer + strlen(buffer);
-    if (pdb->cmdLine[0])
-    {
-        *cp++ = ' ';
-        memcpy( cp, &pdb->cmdLine[1], pdb->cmdLine[0] );
-    }
-    dprintf_win32(stddeb,"CommandLine = %s\n", buffer );
-    return buffer;
+    return pCurrentProcess->env_db->cmd_line;
 }
 
 /***********************************************************************

@@ -108,6 +108,7 @@ typedef struct
     BYTE          bitsPerPixel;
 
     INT32         MapMode;
+    INT32         GraphicsMode;      /* Graphics mode */
     INT32         DCOrgX;            /* DC origin */
     INT32         DCOrgY;
     INT32         CursPosX;          /* Current position */

@@ -9,12 +9,8 @@
 #include "win.h"
 #include "commctrl.h"
 #include "button.h"
-#include "progress.h"
 #include "static.h"
-#include "status.h"
-#include "updown.h"
 #include "scroll.h"
-#include "updown.h"
 #include "desktop.h"
 #include "mdi.h"
 #include "gdi.h"
@@ -99,22 +95,6 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
 
 static ATOM bicAtomTable[BIC32_NB_CLASSES];
 
-/* Win32 common controls */
-
-static WNDCLASS32A WIDGETS_CommonControls32[] =
-{
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, StatusWindowProc, 0,
-      sizeof(STATUSWINDOWINFO), 0, 0, 0, 0, 0, STATUSCLASSNAME32A },
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, UpDownWindowProc, 0,
-      sizeof(UPDOWN_INFO), 0, 0, 0, 0, 0, UPDOWN_CLASS32A },
-    { CS_GLOBALCLASS | CS_VREDRAW | CS_HREDRAW, ProgressWindowProc, 0,
-      sizeof(PROGRESS_INFO), 0, 0, 0, 0, 0, PROGRESS_CLASS32A }
-};
-
-#define NB_COMMON_CONTROLS32 \
-         (sizeof(WIDGETS_CommonControls32)/sizeof(WIDGETS_CommonControls32[0]))
-
-
 /***********************************************************************
  *           WIDGETS_Init
  * 
@@ -163,29 +143,6 @@ BOOL32 WIDGETS_Init(void)
     InitCommonControls();
     SEGPTR_FREE(name);
     return TRUE;
-}
-
-
-/***********************************************************************
- *           InitCommonControls   (COMCTL32.15)
- */
-void WINAPI InitCommonControls(void)
-{
-    int i;
-    char name[30];
-    const char *old_name;
-    WNDCLASS32A *class32 = WIDGETS_CommonControls32;
-
-    for (i = 0; i < NB_COMMON_CONTROLS32; i++, class32++)
-    {
-        /* Just to make sure the string is > 0x10000 */
-        old_name = class32->lpszClassName;
-        strcpy( name, (char *)class32->lpszClassName );
-        class32->lpszClassName = name;
-        class32->hCursor = LoadCursor16( 0, IDC_ARROW );
-        RegisterClass32A( class32 );
-        class32->lpszClassName = old_name;	
-    }
 }
 
 

@@ -510,27 +510,12 @@ DWORD WINAPI NtOpenFile(DWORD x1,DWORD flags,DWORD x3,DWORD x4,DWORD alignment,D
 	/* returns file io completion status */
 	return 0;
 }
-/*
-These functions were originally in CRTDLL. CRTFLL now call the C-Lib 
-function directly. So they were moved here
-*/
 
-/*********************************************************************
- *                  atoi          (NDLL.885)
+
+/**************************************************************************
+ *                 NTDLL_chkstk   (NTDLL.862)
  */
-INT32 NTDLL_atoi(LPCSTR x)
+void NTDLL_chkstk(void)
 {
-    if (!x) return 0;
-    return atoi(x);
+    /* FIXME: should subtract %eax bytes from stack pointer */
 }
-
-/*********************************************************************
- *                  atol          (NTDLL.886)
- */
-LONG NTDLL_atol(LPCSTR x)
-{
-    if (!x) return 0;
-    return atol(x);
-}
-
-

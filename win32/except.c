@@ -46,25 +46,6 @@
     ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
 
 /*******************************************************************
- *         _local_unwind2  (CRTDLL)
- */
-void WINAPI CRTDLL__local_unwind2(PEXCEPTION_FRAME endframe,DWORD nr,
-                                  PCONTEXT pcontext)
-{
-	fprintf(stderr,"CRTDLL__local_unwind2(%p,%ld)\n",endframe,nr);
-	return;
-}
-
-/*******************************************************************
- *         _global_unwind2  (CRTDLL)
- */
-void WINAPI CRTDLL__global_unwind2(PEXCEPTION_FRAME endframe,PCONTEXT pcontext)
-{
-	RtlUnwind(endframe,NULL/*should point to the return;*/,NULL,0,pcontext);
-	return;
-}
-
-/*******************************************************************
  *         RtlUnwind  (KERNEL32.443)
  *
  *  This function is undocumented. This is the general idea of 
@@ -78,7 +59,7 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
    DWORD            dispatch;
    int              retval;
   
-   pcontext->Eax=returnEax;
+   EAX_reg(pcontext) = returnEax;
    
    /* build an exception record, if we do not have one */
    if(!pRecord)
@@ -86,7 +67,7 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
      record.ExceptionCode    = STATUS_INVALID_DISPOSITION;
      record.ExceptionFlags   = 0;
      record.ExceptionRecord  = NULL;
-     record.ExceptionAddress = (LPVOID)pcontext->Eip; 
+     record.ExceptionAddress = (LPVOID)EIP_reg(pcontext); 
      record.NumberParameters = 0;
      pRecord = &record;
    }
@@ -125,6 +106,16 @@ void WINAPI RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip,
    }
 }
 
+/* This is the real entry point called by relay debugging code */
+void EXC_RtlUnwind( CONTEXT *context )
+{
+    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
+    DWORD *args = (DWORD *)ESP_reg(context);
+    ESP_reg(context) += 4 * sizeof(DWORD);  /* Pop the arguments */
+    RtlUnwind( (PEXCEPTION_FRAME)args[1], (LPVOID)args[2],
+               (PEXCEPTION_RECORD)args[3], args[4], context );
+}
+
 
 /*******************************************************************
  *         RaiseException  (KERNEL32.418)
@@ -147,7 +138,7 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
     record.ExceptionFlags      = dwExceptionFlags;
     record.ExceptionRecord     = NULL;
     record.NumberParameters    = cArguments;
-    record.ExceptionAddress    = (LPVOID) pcontext->Eip;
+    record.ExceptionAddress    = (LPVOID)EIP_reg(pcontext);
     
     if (lpArguments) for( i = 0; i < cArguments; i++)
         record.ExceptionInformation[i] = lpArguments[i];
@@ -162,6 +153,8 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
        dprintf_win32(stddeb,"calling exception handler at 0x%x\n",
                                                 (int) pframe->Handler);
        dispatch=0;  
+       dprintf_relay(stddeb,"CallTo32(except=%p,record=%p,frame=%p,context=%p,dispatch=%p)\n",
+                     pframe->Handler, &record, pframe, pcontext, &dispatch );
        retval=pframe->Handler(&record,pframe,pcontext,&dispatch);
  
        dprintf_win32(stddeb,"exception handler returns 0x%x, dispatch=0x%x\n",
@@ -180,6 +173,14 @@ void WINAPI RaiseException(DWORD dwExceptionCode,
    }
 }
 
+/* This is the real entry point called by relay debugging code */
+void EXC_RaiseException( CONTEXT *context )
+{
+    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
+    DWORD *args = (DWORD *)ESP_reg(context);
+    ESP_reg(context) += 4 * sizeof(DWORD);  /* Pop the arguments */
+    RaiseException( args[1], args[2], args[3], (LPDWORD)args[4], context );
+}
 
 /*******************************************************************
  *         UnhandledExceptionFilter   (KERNEL32.537)

@@ -37,11 +37,15 @@ HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle )
     switch(ptr->wMagic)
     {
     case PEN_MAGIC:
-        fprintf(stderr, "WIN16DRV_SelectObject for PEN not implemented\n");
+        ret = WIN16DRV_PEN_SelectObject( dc, handle, (PENOBJ *)ptr );	  
+        break;
     case BRUSH_MAGIC:
-        fprintf(stderr, "WIN16DRV_SelectObject for BRUSH not implemented\n");
+        ret = WIN16DRV_BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );	  
+        break;
     case BITMAP_MAGIC:
         fprintf(stderr, "WIN16DRV_SelectObject for BITMAP not implemented\n");
+        ret = 1;
+        break;
     case FONT_MAGIC:
         ret = WIN16DRV_FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
 	break;

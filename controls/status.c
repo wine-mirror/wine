@@ -10,7 +10,6 @@
 #include "status.h"
 #include "commctrl.h"
 #include "heap.h"
-#include "syscolor.h"
 #include "win.h"
 
 /*
@@ -33,49 +32,6 @@ static STATUSWINDOWINFO *GetStatusInfo(HWND32 hwnd)
 
     wndPtr = WIN_FindWndPtr(hwnd);
     return ((STATUSWINDOWINFO *) &wndPtr->wExtra[0]);
-}
-
-/***********************************************************************
- *           DrawStatusText32A   (COMCTL32.3)
- */
-void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
-                               UINT32 style )
-{
-    RECT32 r, rt;
-    int	oldbkmode;
-    UINT32 border;
-
-    r = *lprc;
-
-    if(style == SBT_OWNERDRAW){
-      /* FIXME for SBT_OWNERDRAW, SBT_RTLREADING */
-    }
-    else{
-      DrawEdge32(hdc, &r, BDR_RAISEDINNER, BF_RECT|BF_ADJUST|BF_FLAT);
-
-      if(style==SBT_POPOUT)
-	border = BDR_RAISEDOUTER;
-      else if(style==SBT_NOBORDERS)
-	border = 0;
-      else
-	border = BDR_SUNKENOUTER;
-
-      DrawEdge32(hdc, &r, border, BF_RECT | BF_ADJUST | BF_MIDDLE);
-
-      /* now draw text */
-      if (text) {
-	SelectObject32(hdc, sysColorObjects.hpenWindowText);
-	oldbkmode = SetBkMode32(hdc, TRANSPARENT);
-	rt = r;
-	rt.left += 3;
-	DrawText32A(hdc, text, lstrlen32A(text),
-		    &rt, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-
-	if (oldbkmode != TRANSPARENT)
-	  SetBkMode32(hdc, oldbkmode);
-      }
-    }
-
 }
 
 static BOOL32 SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
@@ -475,23 +431,4 @@ LRESULT WINAPI StatusWindowProc( HWND32 hwnd, UINT32 msg,
 }
 
 
-/***********************************************************************
- *           CreateStatusWindow32A   (COMCTL32.4)
- */
-HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
-                                     UINT32 wid )
-{
-    HWND32 ret;
-    ATOM atom;
 
-    atom = GlobalFindAtom32A(STATUSCLASSNAME32A);
-    if (!atom) {
-	/* Some apps don't call InitCommonControls */
-	InitCommonControls();
-    }
-
-    ret = CreateWindowEx32A(0, STATUSCLASSNAME32A, "Status Window",
-			    style, CW_USEDEFAULT32, CW_USEDEFAULT32,
-			    CW_USEDEFAULT32, CW_USEDEFAULT32, parent, 0, 0, 0);
-    return (ret);
-}

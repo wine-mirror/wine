@@ -280,8 +280,14 @@ static BOOL32 PROCESS_FillEnvDB( PDB32 *pdb, TDB *pTask, LPCSTR cmd_line )
     array = NULL;
 
     /* Copy the command line */
-
-    if (!(pdb->env_db->cmd_line = HEAP_strdupA( pdb->heap, 0, cmd_line )))
+    /* Fixme: Here we rely on the hack that loader/module.c put's the unprocessed
+       commandline after the processed one in Pascal notation.
+       We may access Null data if we get called another way.
+       If we have a real CreateProcess sometimes, the problem to get an unrestricted
+       commandline will go away and we won't need that hack any longer
+       */
+    if (!(pdb->env_db->cmd_line =
+	  HEAP_strdupA( pdb->heap, 0, cmd_line + (unsigned char)cmd_line[0] + 2)))
         goto error;
 
     return TRUE;

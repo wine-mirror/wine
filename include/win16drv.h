@@ -18,6 +18,20 @@
 #define INITPDEVICE 0x0000
 #endif
 
+#define     OS_ARC		3
+#define     OS_SCANLINES	4
+#define     OS_RECTANGLE	6
+#define     OS_ELLIPSE		7
+#define     OS_MARKER		8
+#define     OS_POLYLINE 	18
+#define     OS_ALTPOLYGON	22
+#define     OS_WINDPOLYGON	20
+#define     OS_PIE		23
+#define     OS_POLYMARKER	24
+#define     OS_CHORD		39
+#define     OS_CIRCLE		55
+#define     OS_ROUNDRECT	72
+
 /* Internal Data */
 #define ORD_BITBLT		1
 #define ORD_COLORINFO		2		
@@ -89,7 +103,7 @@ typedef struct PRINTER_FONTS_INFO
 
 typedef struct
 {
-    char 	szDriver[9];		/* Driver name eg EPSON */
+    LPSTR 	szDriver;		/* Driver name eg EPSON */
     HINSTANCE16	hInst;			/* Handle for driver */
     WORD	ds_reg;			/* DS of driver */
     FARPROC16 	fn[TOTAL_PRINTER_DRIVER_FUNCTIONS];	/* Printer functions */
@@ -97,9 +111,6 @@ typedef struct
     int		nPrinterFonts;		/* Number of printer fonts */
     PRINTER_FONTS_INFO *paPrinterFonts; /* array of printer fonts */
     int		nIndex;			/* Index in global driver array */
-    HGLOBAL16   hThunk;			/* Thunking buffer */
-    SEGPTR	ThunkBufSegPtr;
-    SEGPTR	ThunkBufLimit;
 } LOADED_PRINTER_DRIVER;
 
 typedef struct PDEVICE_HEADER
@@ -146,10 +157,12 @@ typedef struct WINE_ENUM_PRINTER_FONT_CALLBACK
 /* Win16 printer driver physical DC */
 typedef struct
 {
-    SEGPTR	segptrPDEVICE;	/* PDEVICE used by 16 bit printer drivers */
-    LOGFONT16	lf;		/* Current font details */
+    SEGPTR		segptrPDEVICE;	/* PDEVICE used by 16 bit printer drivers */
+    LOGFONT16		lf;		/* Current font details */
     TEXTMETRIC16	tm;		/* Current font metrics */
-    SEGPTR	segptrFontInfo; /* Current font realized by printer driver */
+    SEGPTR		segptrFontInfo; /* Current font realized by printer driver */
+    SEGPTR		segptrBrushInfo; /* Current brush realized by printer driver */
+    SEGPTR		segptrPenInfo;   /* Current pen realized by printer driver */
 } WIN16DRV_PDEVICE;
 
 /*
@@ -187,6 +200,10 @@ extern BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                                   const RECT32 *lprect, LPCSTR str, UINT32 count,
                                   const INT32 *lpDx );
+extern BOOL32 WIN16DRV_LineTo( DC *dc, INT32 x, INT32 y );
+extern BOOL32 WIN16DRV_MoveToEx(DC *dc,INT32 x,INT32 y,LPPOINT32 pt);
+extern BOOL32 WIN16DRV_Polygon(DC *dc, LPPOINT32 pt, INT32 count );
+extern BOOL32 WIN16DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom);
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
                                INT32 width, INT32 height, DWORD rop );
@@ -202,3 +219,4 @@ extern SEGPTR		win16drv_SegPtr_DrawMode;
 extern LPDRAWMODE 	win16drv_DrawModeP;
 
 #endif  /* __WINE_WIN16DRV_H */
+

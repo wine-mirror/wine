@@ -67,8 +67,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
-    NULL,                            /* pLineTo */
-    NULL,                            /* pMoveToEx */
+    WIN16DRV_LineTo,                 /* pLineTo */
+    WIN16DRV_MoveToEx,               /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrgEx */
     NULL,                            /* pOffsetWindowOrgEx */
@@ -76,10 +76,10 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     WIN16DRV_PatBlt,                 /* pPatBlt */
     NULL,                            /* pPie */
     NULL,                            /* pPolyPolygon */
-    NULL,                            /* pPolygon */
+    WIN16DRV_Polygon,                /* pPolygon */
     NULL,                            /* pPolyline */
     NULL,                            /* pRealizePalette */
-    NULL,                            /* pRectangle */
+    WIN16DRV_Rectangle,                            /* pRectangle */
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
@@ -278,11 +278,11 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
     physDev->segptrPDEVICE = WIN16_GlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
-    *(BYTE *)(PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+0) = 'N'; 
-    *(BYTE *)(PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+1) = 'B'; 
+    *((BYTE *)PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+0) = 'N'; 
+    *((BYTE *)PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+1) = 'B'; 
 
     /* Set up the header */
-    pPDH = (PDEVICE_HEADER *)(PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
+    pPDH = (PDEVICE_HEADER *)((BYTE*)PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
     pPDH->pLPD = pLPD;
     
     dprintf_win16drv(stddeb, "PRTDRV_Enable: PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
@@ -389,8 +389,14 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
                              INT32 width, INT32 height, DWORD rop )
 {
-  printf("In WIN16DRV_PatBlt\n");
-  return FALSE;
+  
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    BOOL32 bRet = 0;
+
+    bRet = PRTDRV_StretchBlt( physDev->segptrPDEVICE, left, top, width, height, NULL, 0, 0, width, height,
+                       PATCOPY, physDev->segptrBrushInfo, win16drv_SegPtr_DrawMode, NULL);
+
+    return bRet;
 }
 /* 
  * Escape (GDI.38)
@@ -415,17 +421,17 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 
           case NEXTBAND:
             {
-              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(POINT16)));
+              LPPOINT16 newInData =  SEGPTR_NEW(POINT16);
+
               nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
-                                    newInData, lpOutData);
-              GlobalFree16(newInData);
+                                    SEGPTR_GET(newInData), lpOutData);
+              SEGPTR_FREE(newInData);
               break;
             }
 
 	  case GETEXTENDEDTEXTMETRICS:
             {
-              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(EXTTEXTDATA)));
-              EXTTEXTDATA *textData = (EXTTEXTDATA *)(PTR_SEG_TO_LIN(newInData));
+	      EXTTEXTDATA *textData = SEGPTR_NEW(EXTTEXTDATA);
 
               textData->nSize = cbInput;
               textData->lpindata = lpInData;
@@ -433,9 +439,8 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
               textData->lpXForm = win16drv_SegPtr_TextXForm;
               textData->lpDrawMode = win16drv_SegPtr_DrawMode;
               nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
-                                    newInData, lpOutData);
-              GlobalFree16(newInData);
-              
+                                    SEGPTR_GET(textData), lpOutData);
+              SEGPTR_FREE(textData);
             }
           break;
           case STARTDOC:
@@ -443,13 +448,14 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 				  lpInData, lpOutData);
             if (nRet != -1)
             {
-              SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(HDC32)));
+              HDC32 *tmpHdc = SEGPTR_NEW(HDC32);
+
 #define SETPRINTERDC SETABORTPROC
-              HDC32 *tmpHdc = (HDC32 *)(PTR_SEG_TO_LIN(newInData));
+
               *tmpHdc = dc->hSelf;
               PRTDRV_Control(physDev->segptrPDEVICE, SETPRINTERDC,
-                             newInData, (SEGPTR)NULL);
-              GlobalFree16(newInData);
+                             SEGPTR_GET(tmpHdc), (SEGPTR)NULL);
+              SEGPTR_FREE(tmpHdc);
             }
             break;
 	  default:
@@ -659,7 +665,7 @@ static int FreePrintJob(HANDLE16 hJob)
 
 HANDLE16 WINAPI OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 {
-    HANDLE16 hHandle = SP_ERROR;
+    HANDLE16 hHandle = (HANDLE16)SP_ERROR;
     PPRINTJOB pPrintJob;
 
     dprintf_win16drv(stddeb, "OpenJob: \"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);

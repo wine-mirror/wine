@@ -60,7 +60,7 @@ type	win32
  56 stub _clearfp
  57 cdecl _close(long) CRTDLL__close
  58 stub _commit
- 59 long _commode_dll(0)
+ 59 extern _commode_dll CRTDLL_commode_dll
  60 stub _control87
  61 stub _controlfp
  62 stub _copysign
@@ -105,7 +105,7 @@ type	win32
 101 stub _finite
 102 stub _flsbuf
 103 stub _flushall
-104 long _fmode_dll(0)
+104 extern _fmode_dll CRTDLL_fmode_dll
 105 stub _fpclass
 106 stub _fpieee_flt
 107 stub _fpreset
@@ -130,7 +130,7 @@ type	win32
 126 stub _getpid
 127 stub _getsystime
 128 stub _getw
-129 register _global_unwind2(ptr) CRTDLL__global_unwind2
+129 register _global_unwind2() CRTDLL__global_unwind2
 130 stub _heapchk
 131 stub _heapmin
 132 stub _heapset
@@ -174,7 +174,7 @@ type	win32
 170 stub _kbhit
 171 stub _lfind
 172 stub _loaddll
-173 register _local_unwind2(ptr long) CRTDLL__local_unwind2
+173 register _local_unwind2() CRTDLL__local_unwind2
 174 stub _locking
 175 stub _logb
 176 cdecl _lrotl (long long) CRTDLL__lrotl
@@ -244,7 +244,7 @@ type	win32
 240 cdecl _open_osfhandle(long long) CRTDLL__open_osfhandle
 241 extern _osmajor_dll CRTDLL_osmajor_dll
 242 extern _osminor_dll CRTDLL_osminor_dll
-243 long _osmode_dll(0)
+243 extern _osmode_dll CRTDLL_osmode_dll
 244 extern _osver_dll CRTDLL_osver_dll
 245 extern _osversion_dll CRTDLL_osversion_dll
 246 stub _pclose
@@ -459,7 +459,7 @@ type	win32
 455 cdecl signal(long ptr) CRTDLL_signal
 456 cdecl sin(double) sin
 457 cdecl sinh(double) sinh
-458 varargs sprintf() wsprintf32A
+458 varargs sprintf() sprintf
 459 cdecl sqrt(double) sqrt
 460 cdecl srand(long) CRTDLL_srand
 461 varargs sscanf() sscanf

@@ -10,6 +10,8 @@
 #include "windows.h"
 #include "ldt.h"
 #include "stackframe.h"
+#include "debug.h"
+#include "stddebug.h"
 
 #define WPRINTF_LEFTALIGN   0x0001  /* Align output on the left ('-' prefix) */
 #define WPRINTF_PREFIX_HEX  0x0002  /* Prefix hex with 0x ('#' prefix) */
@@ -249,35 +251,27 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
         {
         case WPR_WCHAR:  /* No Unicode in Win16 */
         case WPR_CHAR:
-            cur_arg = (DWORD)*(CHAR *)args;
-            args = (WORD *)args + 1;
+            cur_arg = (DWORD)VA_ARG16( args, CHAR );
             break;
         case WPR_WSTRING:  /* No Unicode in Win16 */
         case WPR_STRING:
-            if (IsBadReadPtr16( *(SEGPTR *)args, 1 )) cur_arg = (DWORD)"";
-            else cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );
-            args = (SEGPTR *)args + 1;
+            cur_arg = (DWORD)VA_ARG16( args, SEGPTR );
+            if (IsBadReadPtr16( (SEGPTR)cur_arg, 1 )) cur_arg = (DWORD)"";
+            else cur_arg = (DWORD)PTR_SEG_TO_LIN( (SEGPTR)cur_arg );
             break;
         case WPR_SIGNED:
             if (!(format.flags & WPRINTF_LONG))
             {
-                cur_arg = (DWORD)(INT32)*(INT16 *)args;
-                args = (INT16 *)args + 1;
+                cur_arg = (DWORD)(INT32)VA_ARG16( args, INT16 );
                 break;
             }
             /* fall through */
         case WPR_HEXA:
         case WPR_UNSIGNED:
             if (format.flags & WPRINTF_LONG)
-            {
-                cur_arg = (DWORD)*(UINT32 *)args;
-                args = (UINT32 *)args + 1;
-            }
+                cur_arg = (DWORD)VA_ARG16( args, UINT32 );
             else
-            {
-                cur_arg = (DWORD)*(UINT16 *)args;
-                args = (UINT16 *)args + 1;
-            }
+                cur_arg = (DWORD)VA_ARG16( args, UINT16 );
             break;
         }
         len = WPRINTF_GetLen( &format, &cur_arg, number, maxlen - 1 );
@@ -286,11 +280,13 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
                 *p++ = ' ';
         switch(format.type)
         {
+        case WPR_WCHAR:
         case WPR_CHAR:
             if ((*p = (CHAR)cur_arg)) p++;
             else if (format.width > 1) *p++ = ' ';
             else len = 0;
             break;
+        case WPR_WSTRING:
         case WPR_STRING:
             if (len) memcpy( p, (LPCSTR)cur_arg, len );
             p += len;
@@ -311,10 +307,6 @@ INT16 WINAPI wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
             if (len) memcpy( p, number, len );
             p += len;
-            break;
-        case WPR_WCHAR:
-        case WPR_WSTRING:
-            fprintf( stderr, "Unicode not supported in wsprintf16\n" );
             break;
         }
         if (format.flags & WPRINTF_LEFTALIGN)
@@ -361,7 +353,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
             else len = 0;
             break;
         case WPR_STRING:
-            if (len) memcpy( p, va_arg( args, LPCSTR ), len );
+            memcpy( p, va_arg( args, LPCSTR ), len );
             p += len;
             break;
         case WPR_WSTRING:
@@ -384,7 +376,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
         case WPR_SIGNED:
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
-            if (len) memcpy( p, number, len );
+            memcpy( p, number, len );
             p += len;
             (void)va_arg( args, INT32 ); /* Go to the next arg */
             break;
@@ -395,6 +387,7 @@ INT32 WINAPI wvsnprintf32A( LPSTR buffer, UINT32 maxlen, LPCSTR spec,
         maxlen -= len;
     }
     *p = 0;
+    dprintf_string(stddeb,"%s\n",buffer);
     return (maxlen > 1) ? (INT32)(p - buffer) : -1;
 }
 
@@ -475,6 +468,7 @@ INT32 WINAPI wvsnprintf32W( LPWSTR buffer, UINT32 maxlen, LPCWSTR spec,
  */
 INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
 {
+    dprintf_string(stddeb,"wvsprintf16 for %p got ",buffer);
     return wvsnprintf16( buffer, 0xffff, spec, args );
 }
 
@@ -484,6 +478,7 @@ INT16 WINAPI wvsprintf16( LPSTR buffer, LPCSTR spec, LPCVOID args )
  */
 INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, va_list args )
 {
+    dprintf_string(stddeb,"wvsprintf32A for %p got ",buffer);
     return wvsnprintf32A( buffer, 0xffffffff, spec, args );
 }
 
@@ -493,6 +488,7 @@ INT32 WINAPI wvsprintf32A( LPSTR buffer, LPCSTR spec, va_list args )
  */
 INT32 WINAPI wvsprintf32W( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
+    dprintf_string(stddeb,"wvsprintf32W for %p got ",buffer);
     return wvsnprintf32W( buffer, 0xffffffff, spec, args );
 }
 
@@ -506,9 +502,10 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
     va_list valist;
     INT16 res;
 
+    dprintf_string(stddeb,"wsprintf16 for %p got ",buffer);
     va_start( valist, spec );
     /* Note: we call the 32-bit version, because the args are 32-bit */
-    res = (INT16)wvsprintf32A( buffer, spec, valist );
+    res = (INT16)wvsnprintf32A( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }
@@ -516,11 +513,18 @@ INT16 WINAPIV wsprintf16( LPSTR buffer, LPCSTR spec, ... )
 /* Emulator version */
 INT16 WINAPIV WIN16_wsprintf16(void)
 {
-    SEGPTR *win_stack = (SEGPTR *)CURRENT_STACK16->args;
-    LPSTR buffer = (LPSTR)PTR_SEG_TO_LIN(win_stack[0]);
-    LPCSTR spec  = (LPCSTR)PTR_SEG_TO_LIN(win_stack[1]);
-    return wvsprintf16( buffer, spec, &win_stack[2] );
+    VA_LIST16 valist;
+    INT16 res;
+    SEGPTR buffer, spec;
 
+    VA_START16( valist );
+    buffer = VA_ARG16( valist, SEGPTR );
+    spec   = VA_ARG16( valist, SEGPTR );
+    dprintf_string(stddeb,"WIN16_wsprintf16 got ");
+    res = wvsnprintf16( (LPSTR)PTR_SEG_TO_LIN(buffer), 0xffff,
+                        (LPCSTR)PTR_SEG_TO_LIN(spec), valist );
+    VA_END16( valist );
+    return res;
 }
 
 
@@ -532,8 +536,9 @@ INT32 WINAPIV wsprintf32A( LPSTR buffer, LPCSTR spec, ... )
     va_list valist;
     INT32 res;
 
+    dprintf_string(stddeb,"wsprintf32A for %p got ",buffer);
     va_start( valist, spec );
-    res = wvsprintf32A( buffer, spec, valist );
+    res = wvsnprintf32A( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }
@@ -547,8 +552,9 @@ INT32 WINAPIV wsprintf32W( LPWSTR buffer, LPCWSTR spec, ... )
     va_list valist;
     INT32 res;
 
+    dprintf_string(stddeb,"wsprintf32W for %p\n",buffer);
     va_start( valist, spec );
-    res = wvsprintf32W( buffer, spec, valist );
+    res = wvsnprintf32W( buffer, 0xffffffff, spec, valist );
     va_end( valist );
     return res;
 }

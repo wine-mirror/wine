@@ -975,13 +975,12 @@ INT32 WINAPI GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
  *           GetPrivateProfileSection32A   (KERNEL32.255)
  */
 INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
-                                         INT32 len, LPCSTR filename )
+                                          INT32 len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
         return PROFILE_GetString( section, NULL, NULL, buffer, len );
     return 0;
 }
-
 
 /***********************************************************************
  *           WritePrivateProfileString16   (KERNEL.129)

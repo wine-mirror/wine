@@ -39,6 +39,8 @@ Unresolved issues Uwe Bonnes 970904:
 #include "crtdll.h"
 #include "drive.h"
 #include "file.h"
+#include "except.h"
+#include "options.h"
 
 extern int FILE_GetUnixHandle( HFILE32  );
 
@@ -52,9 +54,12 @@ LPSTR  CRTDLL_acmdln_dll;       /* CRTDLL.38 */
 UINT32 CRTDLL_basemajor_dll;    /* CRTDLL.42 */
 UINT32 CRTDLL_baseminor_dll;    /* CRTDLL.43 */
 UINT32 CRTDLL_baseversion_dll;  /* CRTDLL.44 */
+UINT32 CRTDLL_commode_dll;      /* CRTDLL.59 */
 LPSTR  CRTDLL_environ_dll;      /* CRTDLL.75 */
+UINT32 CRTDLL_fmode_dll;        /* CRTDLL.104 */
 UINT32 CRTDLL_osmajor_dll;      /* CRTDLL.241 */
 UINT32 CRTDLL_osminor_dll;      /* CRTDLL.242 */
+UINT32 CRTDLL_osmode_dll;       /* CRTDLL.243 */
 UINT32 CRTDLL_osver_dll;        /* CRTDLL.244 */
 UINT32 CRTDLL_osversion_dll;    /* CRTDLL.245 */
 UINT32 CRTDLL_winmajor_dll;     /* CRTDLL.329 */
@@ -169,6 +174,29 @@ DWORD __cdecl CRTDLL__fdopen(INT32 handle, LPCSTR mode)
 		 "CRTDLL_fdopen open handle %d mode %s  got file %p\n",
 		 handle, mode, file);
   return (DWORD)file;
+}
+
+/*******************************************************************
+ *         _global_unwind2  (CRTDLL.129)
+ */
+void __cdecl CRTDLL__global_unwind2( CONTEXT *context )
+{
+    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
+    DWORD *args = (DWORD *)ESP_reg(context);
+    RtlUnwind( (PEXCEPTION_FRAME)args[1], (LPVOID)EIP_reg(context),
+               NULL, 0, context );
+}
+
+/*******************************************************************
+ *         _local_unwind2  (CRTDLL.173)
+ */
+void __cdecl CRTDLL__local_unwind2( CONTEXT *context )
+{
+    /* Retrieve the arguments (args[0] is return addr, args[1] is first arg) */
+    DWORD *args = (DWORD *)ESP_reg(context);
+    PEXCEPTION_FRAME endframe = (PEXCEPTION_FRAME)args[1];
+    DWORD nr = args[2];
+    fprintf(stderr,"CRTDLL__local_unwind2(%p,%ld)\n",endframe,nr);
 }
 
 /*********************************************************************
@@ -700,10 +728,14 @@ LPSTR CRTDLL__strlwr(LPSTR x)
 INT32 CRTDLL_system(LPSTR x)
 {
 #define SYSBUF_LENGTH 1500
-  char buffer[SYSBUF_LENGTH]="wine \"";
-  unsigned char *y =x;
-  unsigned char *bp =buffer+strlen(buffer);
-  int i =strlen(buffer) + strlen(x) +2;
+  char buffer[SYSBUF_LENGTH];
+  unsigned char *y = x;
+  unsigned char *bp;
+  int i;
+
+  sprintf( buffer, "%s \"", Options.argv0 );
+  bp = buffer + strlen(buffer);
+  i = strlen(buffer) + strlen(x) +2;
 
   /* Calculate needed buffer size tp prevent overflow*/
   while (*y) {
@@ -854,7 +886,7 @@ LPSTR __cdecl CRTDLL__strdup(LPSTR ptr)
 INT32 __cdecl CRTDLL_fclose( FILE *stream )
 {
     int unix_handle=fileno(stream);
-    HFILE32 dos_handle=3;
+    HFILE32 dos_handle=1;
     HFILE32 ret=EOF;
 
     if (unix_handle<4) ret= fclose(stream);

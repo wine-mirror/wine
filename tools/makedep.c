@@ -268,13 +268,13 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
     {
         if (!strcmp( ext, ".y" ))  /* yacc file */
         {
-            fprintf( file, "y.tab.o: ./y.tab.c" );
-            *column += 18;
+            fprintf( file, "y.tab.o: y.tab.c" );
+            *column += 16;
         }
         else if (!strcmp( ext, ".l" ))  /* lex file */
         {
-            fprintf( file, "lex.yy.o: ./lex.yy.c" );
-            *column += 20;
+            fprintf( file, "lex.yy.o: lex.yy.c" );
+            *column += 18;
         }
         else if (!strcmp( ext, ".rc" ))  /* resource file */
         {

@@ -7,10 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "windows.h"
-#include "dde_mem.h"
-#include "global.h"
-#include "debug.h"
+#include "wintypes.h"
 
 
 /* for windows/winproc.c */

@@ -1,7 +1,7 @@
 /*
  * Windows Device Context initialisation functions
  *
- * Copyright 1996 John Harvey
+ * Copyright 1996,1997 John Harvey
  */
 
 #include <stdlib.h>
@@ -12,7 +12,8 @@
 #include <errno.h>
 #include "windows.h"
 #include "win16drv.h"
-
+#include "heap.h"
+#include "brush.h"
 #include "callback.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -82,7 +83,6 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(const char *pszDriver)
 	      pLPD = ptmpLPD;
 	}
     }
-    if (pLPD == NULL) fprintf(stderr,"Couldn't find driver %s\n", pszDriver);
     return pLPD;
 }
 
@@ -142,27 +142,23 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
         strcat(drvName, ".DRV");
         hInst = LoadLibrary16(drvName);
     }
-    dprintf_win16drv(stddeb, "Loaded the library\n");
 
     
     if (hInst <= 32)
     {
 	/* Failed to load driver */
 	fprintf(stderr, "Failed to load printer driver %s\n", pszDriver);
-    }
-    else
-    {
-	HANDLE16 hHandle;
-
+    } else {
+        dprintf_win16drv(stddeb, "Loaded the library\n");
 	/* Allocate some memory for printer driver info */
 	pLPD = malloc(sizeof(LOADED_PRINTER_DRIVER));
 	memset(pLPD, 0 , sizeof(LOADED_PRINTER_DRIVER));
 	
-	pLPD->hInst = hInst;
-	strcpy(pLPD->szDriver,pszDriver);
+	pLPD->hInst	= hInst;
+	pLPD->szDriver	= HEAP_strdupA(SystemHeap,0,pszDriver);
 
 	/* Get DS for the printer module */
-	pLPD->ds_reg = hInst;
+	pLPD->ds_reg	= hInst;
 
 	dprintf_win16drv(stddeb, "DS for %s is %x\n", pszDriver, pLPD->ds_reg);
 
@@ -172,54 +168,12 @@ LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
 	/* Set initial usage count */
 	pLPD->nUsageCount = 1;
 
-	/* Create a thunking buffer */
-	hHandle = GlobalAlloc16(GHND, (1024 * 8));
-	pLPD->hThunk = hHandle;
-	pLPD->ThunkBufSegPtr = WIN16_GlobalLock16(hHandle);
-	pLPD->ThunkBufLimit = pLPD->ThunkBufSegPtr + (1024*8);
-
 	/* Update table of loaded printer drivers */
 	pLPD->nIndex = nDriverSlot;
 	gapLoadedPrinterDrivers[nDriverSlot] = pLPD;
     }
 
     return pLPD;
-}
-
-/* 
- * Thunking utility functions
- */
-
-static BOOL32 AddData(SEGPTR *pSegPtr, const void *pData, int nSize, SEGPTR Limit)
-{
-    BOOL32 bRet = FALSE;
-    char *pBuffer = PTR_SEG_TO_LIN((*pSegPtr));
-    char *pLimit = PTR_SEG_TO_LIN(Limit);
-
-
-    if ((pBuffer + nSize) < pLimit)
-    {
-	DWORD *pdw = (DWORD *)pSegPtr;
-	SEGPTR SegPtrOld = *pSegPtr;
-	SEGPTR SegPtrNew;
-
-	dprintf_win16drv(stddeb, "AddData: Copying %d from %p to %p(0x%x)\n", nSize, pData, pBuffer, (UINT32)*pSegPtr);
-	memcpy(pBuffer, pData, nSize); 
-	SegPtrNew = (SegPtrOld + nSize + 1);
-	*pdw = (DWORD)SegPtrNew;
-    }
-    return bRet;
-}
-
-
-static BOOL32 GetParamData(SEGPTR SegPtrSrc,void *pDataDest, int nSize)
-{
-    char *pSrc =  PTR_SEG_TO_LIN(SegPtrSrc);
-    char *pDest = pDataDest;
-
-    dprintf_win16drv(stddeb, "GetParamData: Copying %d from %lx(%lx) to %lx\n", nSize, (DWORD)pSrc, (DWORD)SegPtrSrc, (DWORD)pDataDest);
-    memcpy(pDest, pSrc, nSize);
-    return TRUE;
 }
 
 /*
@@ -273,61 +227,45 @@ WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType,
 
     /* Get the printer driver info */
     if (wStyle == INITPDEVICE)
-    {
 	pLPD = FindPrinterDriverFromPDEVICE((SEGPTR)lpDevInfo);
-    }
     else
-    {
 	pLPD = FindPrinterDriverFromName((char *)lpDeviceName);
-    }
-    if (pLPD != NULL)
-    {
-	LONG lP1, lP3, lP4, lP5;
-	WORD wP2;
-	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
-	SEGPTR Limit = pLPD->ThunkBufLimit;
-	int   nSize;
+    if (pLPD != NULL) {
+	LONG		lP5;
+	DeviceCaps	*lP1;
+	LPSTR		lP3,lP4;
+	WORD		wP2;
 
-	if (pLPD->fn[FUNC_ENABLE] == NULL)
-	{
+	if (!pLPD->fn[FUNC_ENABLE]) {
 	    dprintf_win16drv(stddeb, "PRTDRV_Enable: Not supported by driver\n");
 	    return 0;
 	}
 
 	if (wStyle == INITPDEVICE)
-	{
-	    /* All ready a 16 address */
-	    lP1 = (SEGPTR)lpDevInfo;
-	}
+	    lP1 = (DeviceCaps*)lpDevInfo;/* 16 bit segmented ptr already */
 	else
-	{
-	    /* 32 bit data */
-	    lP1 = SegPtr;
-	    nSize = sizeof(DeviceCaps);
-	    AddData(&SegPtr, lpDevInfo, nSize, Limit);	
-	}
+	    lP1 = SEGPTR_NEW(DeviceCaps);
 	
 	wP2 = wStyle;
 	
-	lP3 = SegPtr;
-	nSize = strlen(lpDestDevType) + 1;
-	AddData(&SegPtr, lpDestDevType, nSize, Limit);	
-
-	lP4 = SegPtr; 
-	nSize = strlen(lpOutputFile) + 1;
-	AddData(&SegPtr, lpOutputFile, nSize, Limit);	
-
+	/* SEGPTR_STRDUP handles NULL like a charm ... */
+	lP3 = SEGPTR_STRDUP(lpDestDevType);
+	lP4 = SEGPTR_STRDUP(lpOutputFile);
 	lP5 = (LONG)lpData;
         
-
 	wRet = CallTo16_word_lwlll(pLPD->fn[FUNC_ENABLE], 
-				   lP1, wP2, lP3, lP4, lP5);
+				   (wStyle==INITPDEVICE)?lP1:SEGPTR_GET(lP1),
+				   wP2,
+				   SEGPTR_GET(lP3),
+				   SEGPTR_GET(lP4),
+				   lP5);
+	SEGPTR_FREE(lP3);
+	SEGPTR_FREE(lP4);
 
 	/* Get the data back */
-	if (lP1 != 0 && wStyle != INITPDEVICE)
-	{
-	    nSize = sizeof(DeviceCaps);
-	    GetParamData(lP1, lpDevInfo, nSize);
+	if (lP1 != 0 && wStyle != INITPDEVICE) {
+	    memcpy(lpDevInfo,lP1,sizeof(DeviceCaps));
+	    SEGPTR_FREE(lP1);
 	}
     }
     dprintf_win16drv(stddeb, "PRTDRV_Enable: return %x\n", wRet);
@@ -348,39 +286,23 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
 
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
-	LONG lP1, lP2, lP3, lP4;
+	LONG lP1, lP3, lP4;
+	LPBYTE lP2;
 
-	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
-	SEGPTR Limit = pLPD->ThunkBufLimit;
-	int   nSize;
-
-	if (pLPD->fn[FUNC_ENUMDFONTS] == NULL)
-	{
+	if (pLPD->fn[FUNC_ENUMDFONTS] == NULL) {
 	    dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: Not supported by driver\n");
 	    return 0;
 	}
 
 	lP1 = (SEGPTR)lpDestDev;
-	
-	if (lpFaceName == NULL)
-	{
-	    lP2 = 0;
-	}
-	else
-	{
-	    lP2 = SegPtr;
-	    nSize = strlen(lpFaceName) + 1;
-	    AddData(&SegPtr, lpFaceName, nSize, Limit);	
-	}
-
+	lP2 = SEGPTR_STRDUP(lpFaceName);
 	lP3 = (LONG)lpCallbackFunc; 
-
 	lP4 = (LONG)lpClientData;
         
 	wRet = CallTo16_word_llll(pLPD->fn[FUNC_ENUMDFONTS], 
-                                  lP1, lP2, lP3, lP4);
-    }
-    else 
+                                  lP1, SEGPTR_GET(lP2), lP3, lP4);
+	SEGPTR_FREE(lP2);
+    } else 
         fprintf(stderr,"Failed to find device\n");
     
     dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: return %x\n", wRet);
@@ -429,6 +351,63 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
     return wRet;
 }
 
+/*
+ *	Output (ordinal 8)
+ */
+WORD PRTDRV_Output(LPPDEVICE 	 lpDestDev,
+                   WORD 	 wStyle, 
+                   WORD 	 wCount,
+                   POINT16     **points, 
+                   SEGPTR 	 lpPPen,
+                   SEGPTR	 lpPBrush,
+                   SEGPTR	 lpDrawMode,
+                   RECT16 	*lpClipRect)
+{
+    WORD wRet = 0;
+    LOADED_PRINTER_DRIVER *pLPD = NULL;
+    
+    dprintf_win16drv(stddeb, "PRTDRV_OUTPUT\n");
+    
+    if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
+    {
+        LONG lP1, lP5, lP6, lP7;
+        LPPOINT16 lP4;
+        LPRECT16 lP8;
+        WORD wP2, wP3;
+	int   nSize;
+	if (pLPD->fn[FUNC_OUTPUT] == NULL)
+	{
+	    dprintf_win16drv(stddeb, "PRTDRV_Output: Not supported by driver\n");
+	    return 0;
+	}
+
+        lP1 = lpDestDev;
+        wP2 = wStyle;
+        wP3 = wCount;
+        nSize = sizeof(POINT16) * wCount;
+ 	lP4 = (LPPOINT16 )SEGPTR_ALLOC(nSize);
+ 	memcpy(lP4,points,nSize);
+        lP5 = lpPPen;
+        lP6 = lpPBrush;
+        lP7 = lpDrawMode;
+        
+	if (lpClipRect != NULL)
+	{
+	    lP8 = SEGPTR_NEW(RECT16);
+	    memcpy(lP8,lpClipRect,sizeof(RECT16));
+
+	}
+	else
+	  lP8 = 0L;
+	wRet = CallTo16_word_lwwlllll(pLPD->fn[FUNC_OUTPUT], 
+                                      lP1, wP2, wP3, SEGPTR_GET(lP4), lP5,
+                                      lP6, lP7, SEGPTR_GET(lP8));
+        SEGPTR_FREE(lP4);
+        SEGPTR_FREE(lP8);
+    }
+    return wRet;
+}
+
 /* 
  * RealizeObject (ordinal 10)
  */
@@ -443,11 +422,10 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
-	LONG lP1, lP3, lP4, lP5;  
-	WORD wP2;
-	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
-	SEGPTR Limit = pLPD->ThunkBufLimit;
-	int   nSize;
+	LONG	lP1, lP4, lP5;  
+	LPBYTE	lP3;
+	WORD	wP2;
+	unsigned int	nSize;
 
 	if (pLPD->fn[FUNC_REALIZEOBJECT] == NULL)
 	{
@@ -458,31 +436,99 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 	lP1 = lpDestDev;
 	wP2 = wStyle;
 	
-	lP3 = SegPtr;
 	switch (wStyle)
 	{
-        case 3: 
+        case OBJ_BRUSH:
+            nSize = sizeof (LOGBRUSH16);
+            break;
+        case OBJ_FONT: 
             nSize = sizeof(LOGFONT16); 
             break;
+        case OBJ_PEN:
+            nSize = sizeof(LOGPEN16); 
+            break;
+        case OBJ_PBITMAP:
         default:
-	    fprintf(stderr,"PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
+	    fprintf(stderr, "PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
             nSize = 0;
             
 	}
-	AddData(&SegPtr, lpInObj, nSize, Limit);	
+ 	lP3 = SEGPTR_ALLOC(nSize);
+ 	memcpy(lP3,lpInObj,nSize);
 	
 	lP4 = (LONG)lpOutObj;
 
         lP5 = lpTextXForm;
 
 	dwRet = CallTo16_long_lwlll(pLPD->fn[FUNC_REALIZEOBJECT], 
-                                    lP1, wP2, lP3, lP4, lP5);
+                                    lP1, wP2, SEGPTR_GET(lP3), lP4, lP5);
+        SEGPTR_FREE(lP3);
 
     }
     dprintf_win16drv(stddeb, "PRTDRV_RealizeObject: return %x\n", dwRet);
     return dwRet;
 }
 
+/* 
+ * StretchBlt (ordinal 27)
+ */
+DWORD PRTDRV_StretchBlt(LPPDEVICE lpDestDev,
+                        WORD wDestX, WORD wDestY,
+                        WORD wDestXext, WORD wDestYext, 
+                        LPPDEVICE lpSrcDev,
+                        WORD wSrcX, WORD wSrcY,
+                        WORD wSrcXext, WORD wSrcYext, 
+                        DWORD Rop3,
+                        SEGPTR lpPBrush,
+                        SEGPTR lpDrawMode,
+                        RECT16 *lpClipRect)
+{
+    WORD wRet = 0;
+    LOADED_PRINTER_DRIVER *pLPD = NULL;
+    
+    dprintf_win16drv(stddeb, "PRTDRV_StretchBlt:\n");
+    
+    if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
+    {
+        LONG lP1,lP6, lP11, lP12, lP13;
+        LPRECT16 lP14;
+        WORD wP2, wP3, wP4, wP5, wP7, wP8, wP9, wP10;
+
+	if (pLPD->fn[FUNC_STRETCHBLT] == NULL)
+	{
+	    dprintf_win16drv(stddeb, "PRTDRV_StretchBlt: Not supported by driver\n");
+	    return 0;
+	}
+	lP1  = lpDestDev;
+	wP2  = wDestX;
+	wP3  = wDestY;
+	wP4  = wDestXext;
+	wP5  = wDestYext;
+        lP6  = lpSrcDev;
+        wP7  = wSrcX;
+        wP8  = wSrcY;
+        wP9  = wSrcXext;
+        wP10 = wSrcYext;
+        lP11 = Rop3;
+        lP12 = lpPBrush;
+        lP13 = lpDrawMode;
+	if (lpClipRect != NULL)
+	{
+	    lP14 = SEGPTR_NEW(RECT16);
+	    memcpy(lP14,lpClipRect,sizeof(RECT16));
+
+	}
+	else
+	  lP14 = 0L;
+	wRet = CallTo16_word_lwwwwlwwwwllll(pLPD->fn[FUNC_STRETCHBLT], 
+                                           lP1, wP2, wP3, wP4, wP5,
+                                            lP6, wP7, wP8, wP9, wP10, 
+                                            lP11, lP12, lP13, SEGPTR_GET(lP14));
+        SEGPTR_FREE(lP14);
+        printf("Called StretchBlt ret %d\n",wRet);
+    }
+    return wRet;
+}
 
 DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
                         RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
@@ -497,13 +543,12 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
-	LONG lP1, lP4, lP5, lP7, lP8, lP9, lP10, lP11;  
-	WORD wP2, wP3, wP12;
-        INT16 iP6;
-
-	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
-	SEGPTR Limit = pLPD->ThunkBufLimit;
-	int   nSize;
+	LONG		lP1, lP7, lP8, lP9, lP10;  
+	LPSTR		lP5;
+	LPRECT16	lP4,lP11;
+	WORD		wP2, wP3, wP12;
+        INT16		iP6;
+	unsigned int	nSize = -1;
 
 	if (pLPD->fn[FUNC_EXTTEXTOUT] == NULL)
 	{
@@ -515,28 +560,22 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	wP2 = wDestXOrg;
 	wP3 = wDestYOrg;
 	
-	if (lpClipRect != NULL)
-	{
-	    lP4 = SegPtr;
-	    nSize = sizeof(RECT16);
+	if (lpClipRect != NULL) {
+	    lP4 = SEGPTR_NEW(RECT16);
             dprintf_win16drv(stddeb, "Adding lpClipRect\n");
-            
-	    AddData(&SegPtr, lpClipRect, nSize, Limit);	
-	}
-	else
+	    memcpy(lP4,lpClipRect,sizeof(RECT16));
+	} else
 	  lP4 = 0L;
 
-	if (lpString != NULL)
-	{
+	if (lpString != NULL) {
 	    /* TTD WARNING THIS STRING ISNT NULL TERMINATED */
-	    lP5 = SegPtr;
 	    nSize = strlen(lpString);
-            nSize = abs(wCount);
-            dprintf_win16drv(stddeb, "Adding string size %d\n",nSize);
-            
-	    AddData(&SegPtr, lpString, nSize, Limit);	
-	}
-	else
+	    if (nSize>abs(wCount))
+	    	nSize = abs(wCount);
+	    lP5 = SEGPTR_ALLOC(nSize);
+            dprintf_win16drv(stddeb, "Adding lpString (nSize is %d)\n",nSize);
+	    memcpy(lP5,lpString,nSize);
+	} else
 	  lP5 = 0L;
 	
 	iP6 = wCount;
@@ -550,28 +589,23 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	  dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: Char widths not supported\n");
 	lP10 = 0;
 	
-	if (lpOpaqueRect != NULL)
-	{
-	    lP11 = SegPtr;
-	    nSize = sizeof(RECT16);
-            dprintf_win16drv(stddeb, "Adding opaqueRect\n");
-	    AddData(&SegPtr, lpOpaqueRect, nSize, Limit);	
-	}
-	else
+	if (lpOpaqueRect != NULL) {
+	    lP11 = SEGPTR_NEW(RECT16);
+            dprintf_win16drv(stddeb, "Adding lpOpaqueRect\n");
+	    memcpy(lP11,lpOpaqueRect,sizeof(RECT16));	
+	} else
 	  lP11 = 0L;
 	
 	wP12 = wOptions;
-	dprintf_win16drv(stddeb, "Calling exttextout 0x%lx 0x%x 0x%x 0x%lx\n0x%lx 0x%x 0x%lx 0x%lx\n"
-               "0x%lx 0x%lx 0x%lx 0x%x\n",lP1, wP2, wP3, lP4, 
-					   lP5, iP6, lP7, lP8, lP9, lP10,
+	dprintf_win16drv(stddeb, "Calling ExtTextOut 0x%lx 0x%x 0x%x %p\n%*s 0x%x 0x%lx 0x%lx\n"
+               "0x%lx 0x%lx %p 0x%x\n",lP1, wP2, wP3, lP4, 
+					   nSize,lP5, iP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
 	dwRet = CallTo16_long_lwwllwlllllw(pLPD->fn[FUNC_EXTTEXTOUT], 
-                                           lP1, wP2, wP3, lP4, 
-					   lP5, iP6, lP7, lP8, lP9, lP10,
-					   lP11, wP12);
+                                           lP1, wP2, wP3, SEGPTR_GET(lP4), 
+					   SEGPTR_GET(lP5), iP6, lP7, lP8, lP9, lP10,
+					   SEGPTR_GET(lP11), wP12);
     }
     dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: return %lx\n", dwRet);
     return dwRet;
 }
-
-

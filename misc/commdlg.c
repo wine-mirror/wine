@@ -1112,15 +1112,15 @@ LRESULT WINAPI ReplaceTextDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *           PrintDlg   (COMMDLG.20)
+ *           PrintDlg16   (COMMDLG.20)
  */
-BOOL16 WINAPI PrintDlg( SEGPTR printdlg )
+BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
 {
     HANDLE16 hInst;
     BOOL16 bRet = FALSE;
     LPCVOID template;
     HWND32 hwndDialog;
-    LPPRINTDLG lpPrint = (LPPRINTDLG)PTR_SEG_TO_LIN(printdlg);
+    LPPRINTDLG16 lpPrint = (LPPRINTDLG16)PTR_SEG_TO_LIN(printdlg);
 
     dprintf_commdlg(stddeb,"PrintDlg(%p) // Flags=%08lX\n", lpPrint, lpPrint->Flags );
 
@@ -1142,6 +1142,26 @@ BOOL16 WINAPI PrintDlg( SEGPTR printdlg )
                                 printdlg, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpPrint->hwndOwner);
     return bRet;
+}
+
+
+/***********************************************************************
+ *           PrintDlg32A   (COMDLG32.17)
+ */
+BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
+{
+    fprintf( stdnimp, "PrintDlg32A: empty stub\n" );
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           PrintDlg32W   (COMDLG32.18)
+ */
+BOOL32 WINAPI PrintDlg32W( LPPRINTDLG32W printdlg )
+{
+    fprintf( stdnimp, "PrintDlg32A: empty stub\n" );
+    return FALSE;
 }
 
 

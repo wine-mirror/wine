@@ -132,7 +132,7 @@ SEGPTR WINAPI AnsiPrev16( SEGPTR start, SEGPTR current )
 void WINAPI OutputDebugString16( LPCSTR str )
 {
     char *module;
-    char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+1 );
+    char *p, *buffer = HeapAlloc( GetProcessHeap(), 0, strlen(str)+2 );
     /* Remove CRs */
     for (p = buffer; *str; str++) if (*str != '\r') *p++ = *str;
     *p = '\0';

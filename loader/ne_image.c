@@ -18,7 +18,6 @@
 #include "neexe.h"
 #include "windows.h"
 #include "task.h"
-#include "arch.h"
 #include "selectors.h"
 #include "callback.h"
 #include "file.h"

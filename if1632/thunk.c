@@ -143,9 +143,8 @@ static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
         /* "Undocumented Windows" examples) want it that way.  */
         CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
         offset = sizeof(*cs);
-        memcpy( (char *)CURRENT_STACK16 - offset, cs, offset );
-        IF1632_Saved16_ss_sp -= offset;
-        lParam = IF1632_Saved16_ss_sp;
+        lParam = STACK16_PUSH( offset );
+        memcpy( PTR_SEG_TO_LIN(lParam), cs, offset );
     }
     args = (WORD *)CURRENT_STACK16 - 7;
     args[0] = LOWORD(lParam);
@@ -156,7 +155,7 @@ static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
     /* args[5] and args[6] are used by relay code to store the stack pointer */
 
     ret = CallTo16_regs_( &context, -(5 * sizeof(WORD)) );
-    IF1632_Saved16_ss_sp += offset;
+    if (offset) STACK16_POP(offset);
     return ret;
 }
 

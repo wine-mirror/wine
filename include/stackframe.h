@@ -7,7 +7,8 @@
 #ifndef __WINE_STACKFRAME_H
 #define __WINE_STACKFRAME_H
 
-#include <windows.h>
+#include <string.h>
+#include "windows.h"
 #include "ldt.h"
 
 #pragma pack(1)
@@ -25,7 +26,6 @@ typedef struct
     WORD    bp;             /* 14 16-bit bp */
     WORD    ip;             /* 16 return address */
     WORD    cs;             /* 18 */
-    WORD    args[1];        /* 1a arguments to API function */
 } STACK16FRAME;
 
   /* 32-bit stack layout after CallTo16() */
@@ -48,14 +48,30 @@ typedef struct
   /* Saved 16-bit stack for current process (Win16 only) */
 extern DWORD IF1632_Saved16_ss_sp;
 
-  /* Saved 32-bit stack for current process (Win16 only) */
-extern DWORD IF1632_Saved32_esp;
+#define CURRENT_STACK16 ((STACK16FRAME *)PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp))
+#define CURRENT_DS      (CURRENT_STACK16->ds)
 
-  /* Original Unix stack */
-extern DWORD IF1632_Original32_esp;
+/* varargs lists on the 16-bit stack */
 
-#define CURRENT_STACK16  ((STACK16FRAME *)PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp))
+typedef void *VA_LIST16;
 
-#define CURRENT_DS   (CURRENT_STACK16->ds)
+#define __VA_ROUNDED16(type) \
+    ((sizeof(type) + sizeof(WORD) - 1) / sizeof(WORD) * sizeof(WORD))
+#define VA_START16(list) ((list) = (VA_LIST16)(CURRENT_STACK16 + 1))
+#define VA_ARG16(list,type) \
+    (((list) = (VA_LIST16)((char *)(list) + __VA_ROUNDED16(type))), \
+     *((type *)(void *)((char *)(list) - __VA_ROUNDED16(type))))
+#define VA_END16(list) ((void)0)
+
+/* Push bytes on the 16-bit stack; return a segptr to the first pushed byte */
+#define STACK16_PUSH(size) \
+ (memmove((char*)CURRENT_STACK16-(size),CURRENT_STACK16,sizeof(STACK16FRAME)),\
+  IF1632_Saved16_ss_sp -= (size), \
+  (SEGPTR)(IF1632_Saved16_ss_sp + sizeof(STACK16FRAME)))
+
+/* Pop bytes from the 16-bit stack */
+#define STACK16_POP(size) \
+ (memmove((char*)CURRENT_STACK16+(size),CURRENT_STACK16,sizeof(STACK16FRAME)),\
+  IF1632_Saved16_ss_sp += (size))
 
 #endif /* __WINE_STACKFRAME_H */

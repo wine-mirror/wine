@@ -11,9 +11,9 @@ void WINAPI InitCommonControls(void);
 
 /* StatusWindow */
 
-#define STATUSCLASSNAME16  "msctls_statusbar"
-#define STATUSCLASSNAME32A "msctls_statusbar32"
-#define STATUSCLASSNAME32W "msctls_statusbar32"
+#define STATUSCLASSNAME16     "msctls_statusbar"
+#define STATUSCLASSNAME32A    "msctls_statusbar32"
+#define STATUSCLASSNAME32W   L"msctls_statusbar32"       /*FIXME*/
 #define STATUSCLASSNAME WINELIB_NAME_AW(STATUSCLASSNAME)
 
 #define SB_SETTEXT32A         (WM_USER+1)
@@ -43,9 +43,9 @@ void WINAPI InitCommonControls(void);
 
 /* UpDown */
 
-#define UPDOWN_CLASS32A       "msctls_updown32"
-#define UPDOWN_CLASS32W      L"msctls_updown32"
 #define UPDOWN_CLASS16        "msctls_updown"
+#define UPDOWN_CLASS32A       "msctls_updown32"
+#define UPDOWN_CLASS32W      L"msctls_updown32"   /*FIXME*/
 #define UPDOWN_CLASS          WINELIB_NAME_AW(UPDOWN_CLASS)
 
 typedef struct tagUDACCEL
@@ -96,12 +96,14 @@ typedef struct tagUDACCEL
  
 /* Functions prototypes */
 
+HWND16     WINAPI CreateStatusWindow16(INT16,LPCSTR,HWND16,UINT16);
 HWND32     WINAPI CreateStatusWindow32A(INT32,LPCSTR,HWND32,UINT32);
 HWND32     WINAPI CreateStatusWindow32W(INT32,LPCWSTR,HWND32,UINT32);
 #define    CreateStatusWindow WINELIB_NAME_AW(CreateStatusWindow)
 HWND32     WINAPI CreateUpDownControl(DWORD,INT32,INT32,INT32,INT32,
                                       HWND32,INT32,HINSTANCE32,HWND32,
                                       INT32,INT32,INT32);
+VOID       WINAPI DrawStatusText16(HDC16,LPRECT16,LPCSTR,UINT16);
 VOID       WINAPI DrawStatusText32A(HDC32,LPRECT32,LPCSTR,UINT32);
 VOID       WINAPI DrawStatusText32W(HDC32,LPRECT32,LPCWSTR,UINT32);
 #define    DrawStatusText WINELIB_NAME_AW(DrawStatusText)

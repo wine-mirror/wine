@@ -55,7 +55,7 @@ type	win32
  185 stub SHELL32_185
  186 stdcall FindExecutableA(ptr ptr ptr) FindExecutable32A
  187 stub FindExecutableW
- 188 return FreeIconList 4 0
+ 188 stdcall FreeIconList(long) FreeIconList
  189 stub InternalExtractIconListA
  190 stub InternalExtractIconListW
  191 stub OpenAs_RunDLL

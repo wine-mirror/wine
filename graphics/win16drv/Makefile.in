@@ -6,9 +6,12 @@ VPATH     = @srcdir@
 MODULE    = win16drv
 
 C_SRCS = \
+	brush.c \
 	font.c \
+	graphics.c \
 	init.c \
 	objects.c \
+	pen.c \
 	prtdrv.c \
 	text.c
 

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 #include "windows.h"
 #include "winerror.h"
 #include "shell.h"

@@ -132,12 +132,12 @@ extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WIN32_GetProcAddress16( HMODULE32 hmodule, LPSTR name );
 
 /* builtin.c */
-extern BOOL16 BUILTIN_Init(void);
-extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL16 force );
+extern BOOL32 BUILTIN_Init(void);
+extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL32 force );
 extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
-extern LPCSTR BUILTIN_GetEntryPoint32( void *relay );
+extern FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay );
 extern FARPROC32 BUILTIN_GetProcAddress32(NE_MODULE *pModule, LPCSTR function);
-extern BOOL16 BUILTIN_ParseDLLOptions( const char *str );
+extern BOOL32 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
 
 /* ne_image.c */

@@ -416,7 +416,8 @@ DWORD WINAPI GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
 	BYTE			*resdata = NULL;
-	int			reslen,res;
+	int			reslen=0;
+	int			res=0;
 
 	dprintf_ver(stddeb,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
@@ -452,7 +453,8 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	HFILE32			lzfd;
 	OFSTRUCT		ofs;
 	BYTE			*resdata=NULL;
-	int			res,reslen=datalen;
+	int			res=0;
+	int			reslen=datalen;
 
 	dprintf_ver(stddeb,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
@@ -1196,7 +1198,7 @@ _find_dataA(BYTE *block,LPCSTR str, WORD buff_remain) {
 }
 
 /* this one used for Win32 resources, which are always in UNICODE format */
-extern LPWSTR CRTDLL_wcschr(LPWSTR str,WCHAR xchar);
+extern LPWSTR CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
 static BYTE*
 _find_dataW(BYTE *block,LPCWSTR str, WORD buff_remain) {
 	LPWSTR	nextslash;

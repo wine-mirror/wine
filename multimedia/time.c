@@ -17,6 +17,7 @@
 #include "mmsystem.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 static BOOL32 mmTimeStarted = FALSE;
 static MMTIME mmSysTimeMS;

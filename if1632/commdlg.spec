@@ -16,7 +16,7 @@ type	win16
 16  pascal16 FormatCharDlgProc(word word word long) FormatCharDlgProc
 18  pascal16 FontStyleEnumProc(ptr ptr word long)   FontStyleEnumProc
 19  pascal16 FontFamilyEnumProc(ptr ptr word long)  FontFamilyEnumProc
-20  pascal16 PrintDlg(segptr) PrintDlg
+20  pascal16 PrintDlg(segptr) PrintDlg16
 21  pascal   PrintDlgProc(word word word long) PrintDlgProc
 22  pascal   PrintSetupDlgProc(word word word long) PrintSetupDlgProc
 #23  pascal  EDITINTEGERONLY exported, shared data

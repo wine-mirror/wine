@@ -74,7 +74,7 @@ type	win32
 0070 stub ImpersonateNamedPipeClient
 0071 stub ImpersonateSelf
 0072 stub InitializeAcl
-0073 return InitializeSecurityDescriptor 8 1
+0073 stdcall InitializeSecurityDescriptor(ptr long) InitializeSecurityDescriptor
 0074 stdcall InitializeSid(ptr ptr long) InitializeSid
 0075 stub InitiateSystemShutdownA
 0076 stub InitiateSystemShutdownW

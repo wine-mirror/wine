@@ -23,7 +23,7 @@ static const char * const DefSysColors[] =
     "Background", "192 192 192",     /* COLOR_BACKGROUND          */
     "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
     "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
-    "Menu", "255 255 255",             /* COLOR_MENU                */
+    "Menu", "255 255 255",           /* COLOR_MENU                */
     "Window", "255 255 255",         /* COLOR_WINDOW              */
     "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
     "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
@@ -97,6 +97,8 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushScrollbar = CreateSolidBrush32( color );
 	break;
     case COLOR_BACKGROUND:
+	DeleteObject32( sysColorObjects.hbrushBackground );
+	sysColorObjects.hbrushBackground = CreateSolidBrush32( color );
 	break;
     case COLOR_ACTIVECAPTION:
 	DeleteObject32( sysColorObjects.hbrushActiveCaption );
@@ -115,16 +117,26 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushWindow = CreateSolidBrush32( color );
 	break;
     case COLOR_WINDOWFRAME:
-	DeleteObject32( sysColorObjects.hpenWindowFrame );
+	DeleteObject32( sysColorObjects.hbrushWindowFrame );
+	sysColorObjects.hbrushWindowFrame = CreateSolidBrush32( color );
+	/* FIXME: we should not need this pen */
+	DeleteObject32( sysColorObjects.hpenWindowFrame ); 
 	sysColorObjects.hpenWindowFrame = CreatePen32( PS_SOLID, 1, color );
 	break;
     case COLOR_MENUTEXT:
+	DeleteObject32( sysColorObjects.hbrushMenuText );
+	sysColorObjects.hbrushMenuText = CreateSolidBrush32( color );
 	break;
     case COLOR_WINDOWTEXT:
+	DeleteObject32( sysColorObjects.hbrushWindowText );
+	sysColorObjects.hbrushWindowText = CreateSolidBrush32( color );
+	/* FIXME: we should not need this pen */
 	DeleteObject32( sysColorObjects.hpenWindowText );
 	sysColorObjects.hpenWindowText = CreatePen32( PS_DOT, 1, color );
 	break;
     case COLOR_CAPTIONTEXT:
+	DeleteObject32( sysColorObjects.hbrushCaptionText );
+	sysColorObjects.hbrushCaptionText = CreateSolidBrush32( color );
 	break;
     case COLOR_ACTIVEBORDER:
 	DeleteObject32( sysColorObjects.hbrushActiveBorder );
@@ -135,12 +147,16 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushInactiveBorder = CreateSolidBrush32( color );
 	break;
     case COLOR_APPWORKSPACE:
+	DeleteObject32( sysColorObjects.hbrushAppWorkspace );
+	sysColorObjects.hbrushAppWorkspace = CreateSolidBrush32( color );
 	break;
     case COLOR_HIGHLIGHT:
 	DeleteObject32( sysColorObjects.hbrushHighlight );
-	sysColorObjects.hbrushHighlight = CreateSolidBrush32(MAKE_SOLID(color));
+	sysColorObjects.hbrushHighlight = CreateSolidBrush32( color );
 	break;
     case COLOR_HIGHLIGHTTEXT:
+	DeleteObject32( sysColorObjects.hbrushHighlightText );
+	sysColorObjects.hbrushHighlightText = CreateSolidBrush32( color );
 	break;
     case COLOR_BTNFACE:
 	DeleteObject32( sysColorObjects.hbrushBtnFace );
@@ -151,17 +167,35 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 	sysColorObjects.hbrushBtnShadow = CreateSolidBrush32( color );
 	break;
     case COLOR_GRAYTEXT:
+	DeleteObject32( sysColorObjects.hbrushGrayText );
+	sysColorObjects.hbrushGrayText = CreateSolidBrush32( color );
     case COLOR_BTNTEXT:
+	DeleteObject32( sysColorObjects.hbrushBtnText );
+	sysColorObjects.hbrushBtnText = CreateSolidBrush32( color );
+	break;
     case COLOR_INACTIVECAPTIONTEXT:
+	DeleteObject32( sysColorObjects.hbrushInactiveCaptionText );
+	sysColorObjects.hbrushInactiveCaptionText = CreateSolidBrush32(color);
 	break;
     case COLOR_BTNHIGHLIGHT:
 	DeleteObject32( sysColorObjects.hbrushBtnHighlight );
 	sysColorObjects.hbrushBtnHighlight = CreateSolidBrush32( color );
 	break;
     case COLOR_3DDKSHADOW:
+	DeleteObject32( sysColorObjects.hbrush3DDkShadow );
+	sysColorObjects.hbrush3DDkShadow = CreateSolidBrush32( color );
+	break;
     case COLOR_3DLIGHT:
+	DeleteObject32( sysColorObjects.hbrush3DLight );
+	sysColorObjects.hbrush3DLight = CreateSolidBrush32( color );
+	break;
     case COLOR_INFOTEXT:
+	DeleteObject32( sysColorObjects.hbrushInfoText );
+	sysColorObjects.hbrushInfoText = CreateSolidBrush32( color );
+	break;
     case COLOR_INFOBK:
+	DeleteObject32( sysColorObjects.hbrushInfoBk );
+	sysColorObjects.hbrushInfoBk = CreateSolidBrush32( color );
 	break;
     }
 }

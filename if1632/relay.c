@@ -3,6 +3,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "windows.h"
@@ -33,8 +34,10 @@ BOOL32 RELAY_Init(void)
       /* Allocate the code selector for CallTo16 routines */
 
     extern void CALLTO16_Start(), CALLTO16_End();
-    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
-    extern DWORD CALLTO16_RetAddr_word, CALLTO16_RetAddr_long;
+    extern void CALLTO16_Ret_word(), CALLTO16_Ret_long(), CALLTO16_Ret_regs();
+    extern DWORD CALLTO16_RetAddr_word;
+    extern DWORD CALLTO16_RetAddr_long;
+    extern DWORD CALLTO16_RetAddr_regs;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
                                    (int)CALLTO16_End - (int)CALLTO16_Start,
@@ -46,6 +49,8 @@ BOOL32 RELAY_Init(void)
     CALLTO16_RetAddr_word=MAKELONG( (int)CALLTO16_Ret_word-(int)CALLTO16_Start,
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
+                                    codesel );
+    CALLTO16_RetAddr_regs=MAKELONG( (int)CALLTO16_Ret_regs-(int)CALLTO16_Start,
                                     codesel );
 
     /* Initialize thunking */
@@ -71,7 +76,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
     printf( "Call %s(", BUILTIN_GetEntryPoint16( frame->entry_cs,
                                                  frame->entry_ip,
                                                  &ordinal ));
-    args16 = (char *)frame->args;
+    VA_START16( args16 );
     for (i = 0; i < strlen(args); i++)
     {
         switch(args[i])
@@ -123,6 +128,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         if (*args) printf( "," );
     }
     printf( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
+    VA_END16( args16 );
 
     if (func_type == 2)  /* register function */
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
@@ -185,22 +191,6 @@ void RELAY_Unimplemented16(void)
 
 
 /***********************************************************************
- *           RELAY_Unimplemented32
- *
- * This function is called for unimplemented 32-bit entry points (declared
- * as 'stub' in the spec file).
- * (The args are the same than for RELAY_DebugCallFrom32).
- */
-void RELAY_Unimplemented32( void *relay_addr, void *entry_point,
-                            int ebp, int ret_addr )
-{
-    fprintf( stderr, "No handler for Win32 routine %s (called from %08x)\n",
-             BUILTIN_GetEntryPoint32( relay_addr ), ret_addr );
-    TASK_KillCurrentTask(1);
-}
-
-
-/***********************************************************************
  *           RELAY_DebugCallTo16
  *
  * 'stack' points to the called function address on the 32-bit stack.
@@ -241,73 +231,191 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 
 
 /***********************************************************************
- *           RELAY_DebugCallFrom32
+ *           RELAY_CallFrom32
  *
- * 'stack' points to the saved ebp on the stack.
- * Stack layout:
- *  ...        ...
- * (stack+12)  arg2
- * (stack+8)   arg1
- * (stack+4)   ret addr
- * (stack)     ebp
- * (stack-4)   entry point
- * (stack-8)   relay addr
+ * Stack layout on entry to this function:
+ *  ...      ...
+ * (esp+12)  arg2
+ * (esp+8)   arg1
+ * (esp+4)   ret_addr
+ * (esp)     return addr to relay code
  */
-void RELAY_DebugCallFrom32( int *stack, int nb_args )
+int RELAY_CallFrom32( int ret_addr, ... )
 {
-    int *parg, i;
+    int i, ret;
+    char buffer[80];
+    FARPROC32 func;
 
-    if (!debugging_relay) return;
-    printf( "Call %s(", BUILTIN_GetEntryPoint32( (void *)stack[-2] ));
-    for (i = nb_args & 0x7fffffff, parg = &stack[2]; i; parg++, i--)
+    int *args = &ret_addr;
+    /* Relay addr is the return address for this function */
+    BYTE *relay_addr = (BYTE *)args[-1];
+    WORD nb_args = *(WORD *)(relay_addr + 1) / sizeof(int);
+
+    assert(debugging_relay);
+    func = BUILTIN_GetEntryPoint32( buffer, relay_addr - 5 );
+    printf( "Call %s(", buffer );
+    args++;
+    for (i = 0; i < nb_args; i++)
     {
-        printf( "%08x", *parg );
-        if (i > 1) printf( "," );
+        if (i) printf( "," );
+        printf( "%08x", args[i] );
     }
-    printf( ") ret=%08x\n", stack[1] );
-    if (nb_args & 0x80000000)  /* Register function */
+    printf( ") ret=%08x\n", ret_addr );
+    if (*relay_addr == 0xc3) /* cdecl */
     {
-        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
-        printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-                context->Eax, context->Ebx, context->Ecx, context->Edx,
-                context->Esi, context->Edi );
-        printf( " EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                context->Ebp, context->Esp, context->Eip, context->SegDs,
-                context->SegEs, context->SegFs, context->SegGs,
-                context->EFlags );
+        LRESULT (*cfunc)() = (LRESULT(*)())func;
+        switch(nb_args)
+        {
+        case 0: ret = cfunc(); break;
+        case 1: ret = cfunc(args[0]); break;
+        case 2: ret = cfunc(args[0],args[1]); break;
+        case 3: ret = cfunc(args[0],args[1],args[2]); break;
+        case 4: ret = cfunc(args[0],args[1],args[2],args[3]); break;
+        case 5: ret = cfunc(args[0],args[1],args[2],args[3],args[4]); break;
+        case 6: ret = cfunc(args[0],args[1],args[2],args[3],args[4],
+                            args[5]); break;
+        case 7: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6]); break;
+        case 8: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7]); break;
+        case 9: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8]); break;
+        case 10: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9]); break;
+        case 11: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10]); break;
+        case 12: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10],
+                             args[11]); break;
+        case 13: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10],args[11],
+                             args[12]); break;
+        case 14: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10],args[11],
+                             args[12],args[13]); break;
+        case 15: ret = cfunc(args[0],args[1],args[2],args[3],args[4],args[5],
+                             args[6],args[7],args[8],args[9],args[10],args[11],
+                             args[12],args[13],args[14]); break;
+        default:
+            fprintf( stderr, "RELAY_CallFrom32: Unsupported nb args %d\n",
+                     nb_args );
+            assert(FALSE);
+        }
+    }
+    else  /* stdcall */
+    {
+        switch(nb_args)
+        {
+        case 0: ret = func(); break;
+        case 1: ret = func(args[0]); break;
+        case 2: ret = func(args[0],args[1]); break;
+        case 3: ret = func(args[0],args[1],args[2]); break;
+        case 4: ret = func(args[0],args[1],args[2],args[3]); break;
+        case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
+        case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
+                           args[5]); break;
+        case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                           args[6]); break;
+        case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                           args[6],args[7]); break;
+        case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                           args[6],args[7],args[8]); break;
+        case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9]); break;
+        case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10]); break;
+        case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10],
+                            args[11]); break;
+        case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10],args[11],
+                            args[12]); break;
+        case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10],args[11],
+                            args[12],args[13]); break;
+        case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                            args[6],args[7],args[8],args[9],args[10],args[11],
+                            args[12],args[13],args[14]); break;
+        default:
+            fprintf( stderr, "RELAY_CallFrom32: Unsupported nb args %d\n",
+                     nb_args );
+            assert(FALSE);
+        }
+    }
+    printf( "Ret  %s() retval=%08x ret=%08x\n", buffer, ret, ret_addr );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RELAY_CallFrom32Regs
+ *
+ * 'stack' points to the relay addr on the stack.
+ * Stack layout:
+ *  ...      ...
+ * (esp+216) ret_addr
+ * (esp+212) return to relay debugging code (only when debugging_relay)
+ * (esp+208) entry point to call
+ * (esp+4)   CONTEXT
+ * (esp)     return addr to relay code
+ */
+void RELAY_CallFrom32Regs( CONTEXT context,
+                           void (CALLBACK *entry_point)(CONTEXT *),
+                           BYTE *relay_addr, int ret_addr )
+{
+    if (!debugging_relay)
+    {
+        /* Simply call the entry point */
+        entry_point( &context );
+    }
+    else
+    {
+        char buffer[80];
+
+        /* Fixup the context structure because of the extra parameter */
+        /* pushed by the relay debugging code */
+
+        EIP_reg(&context) = ret_addr;
+        ESP_reg(&context) += sizeof(int);
+
+        BUILTIN_GetEntryPoint32( buffer, relay_addr - 5 );
+        printf("Call %s(regs) ret=%08x\n", buffer, ret_addr );
+        printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+                EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
+                EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
+        printf(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
+                DS_reg(&context), ES_reg(&context), FS_reg(&context),
+                GS_reg(&context), EFL_reg(&context) );
+
+        /* Now call the real function */
+        entry_point( &context );
+
+        printf("Ret  %s() retval=regs ret=%08x\n", buffer, ret_addr );
+        printf(" EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
+                EAX_reg(&context), EBX_reg(&context), ECX_reg(&context),
+                EDX_reg(&context), ESI_reg(&context), EDI_reg(&context) );
+        printf(" EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                EBP_reg(&context), ESP_reg(&context), EIP_reg(&context),
+                DS_reg(&context), ES_reg(&context), FS_reg(&context),
+                GS_reg(&context), EFL_reg(&context) );
     }
 }
 
 
 /***********************************************************************
- *           RELAY_DebugCallFrom32Ret
+ *           RELAY_Unimplemented32
  *
- * 'stack' points to the saved ebp on the stack.
- * Stack layout:
- *  ...        ...
- * (stack+12)  arg2
- * (stack+8)   arg1
- * (stack+4)   ret addr
- * (stack)     ebp
- * (stack-4)   entry point
- * (stack-8)   relay addr
+ * This function is called for unimplemented 32-bit entry points (declared
+ * as 'stub' in the spec file).
  */
-void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
+void RELAY_Unimplemented32( const char *dll_name, int ordinal,
+                            const char *func_name, int ret_addr )
 {
-    if (!debugging_relay) return;
-    printf( "Ret  %s() retval=%08x ret=%08x\n",
-            BUILTIN_GetEntryPoint32( (void *)stack[-2] ), ret_val, stack[1] );
-    if (nb_args & 0x80000000)  /* Register function */
-    {
-        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
-        printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
-                context->Eax, context->Ebx, context->Ecx, context->Edx,
-                context->Esi, context->Edi );
-        printf( " EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                context->Ebp, context->Esp, context->Eip, context->SegDs,
-                context->SegEs, context->SegFs, context->SegGs,
-                context->EFlags );
-    }
+    __RESTORE_ES;  /* Just in case */
+    fprintf( stderr, "No handler for Win32 routine %s.%d: %s (called from %08x)\n",
+             dll_name, ordinal, func_name, ret_addr );
+    TASK_KillCurrentTask(1);
 }
 
 
@@ -319,8 +427,15 @@ void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
  */
 void WINAPI Catch( CONTEXT *context )
 {
+    VA_LIST16 valist;
+    SEGPTR buf;
+    LPCATCHBUF lpbuf;
     STACK16FRAME *pFrame = CURRENT_STACK16;
-    LPCATCHBUF lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN(*(SEGPTR *)pFrame->args);
+
+    VA_START16( valist );
+    buf   = VA_ARG16( valist, SEGPTR );
+    lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN( buf );
+    VA_END16( valist );
 
     /* Note: we don't save the current ss, as the catch buffer is */
     /* only 9 words long. Hopefully no one will have the silly    */
@@ -359,9 +474,16 @@ void WINAPI Catch( CONTEXT *context )
  */
 void WINAPI Throw( CONTEXT *context )
 {
-    STACK16FRAME *pFrame = CURRENT_STACK16;
-    LPCATCHBUF lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN(*(SEGPTR *)&pFrame->args[1]);
-    WORD retval = pFrame->args[0];
+    VA_LIST16 valist;
+    SEGPTR buf;
+    LPCATCHBUF lpbuf;
+    STACK16FRAME *pFrame;
+
+    VA_START16( valist );
+    AX_reg(context) = VA_ARG16( valist, WORD );  /* retval */
+    buf    = VA_ARG16( valist, SEGPTR );
+    lpbuf  = (LPCATCHBUF)PTR_SEG_TO_LIN( buf );
+    VA_END16( valist );
 
     IF1632_Saved16_ss_sp = MAKELONG( lpbuf[7] - sizeof(WORD),
                                      HIWORD(IF1632_Saved16_ss_sp) );
@@ -373,7 +495,6 @@ void WINAPI Throw( CONTEXT *context )
     SI_reg(context) = lpbuf[4];
     DI_reg(context) = lpbuf[5];
     DS_reg(context) = lpbuf[6];
-    AX_reg(context) = retval;
 
     if (debugging_relay)  /* Make sure we have a valid entry point address */
     {
@@ -392,26 +513,34 @@ void WINAPI Throw( CONTEXT *context )
  */
 DWORD WINAPI WIN16_CallProc32W()
 {
-	DWORD *win_stack = (DWORD *)CURRENT_STACK16->args;
-	DWORD	nrofargs = win_stack[0];
-	DWORD	argconvmask = win_stack[1];
-	FARPROC32	proc32 = (FARPROC32)win_stack[2];
-	DWORD	*args,ret;
-        STACK16FRAME stf16;
-	int	i;
+	DWORD nrofargs, argconvmask;
+	FARPROC32 proc32;
+	DWORD *args, ret;
+        VA_LIST16 valist;
+	int i;
 
+        VA_START16( valist );
+        nrofargs    = VA_ARG16( valist, DWORD );
+        argconvmask = VA_ARG16( valist, DWORD );
+        proc32      = VA_ARG16( valist, FARPROC32 );
 	fprintf(stderr,"CallProc32W(%ld,%ld,%p,args[",nrofargs,argconvmask,proc32);
 	args = (DWORD*)xmalloc(sizeof(DWORD)*nrofargs);
 	for (i=nrofargs;i--;) {
-		if (argconvmask & (1<<i)) {
-			args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(win_stack[3+i]);
-			fprintf(stderr,"%08lx(%p),",win_stack[3+i],PTR_SEG_TO_LIN(win_stack[3+i]));
-		} else {
-			args[nrofargs-i-1] = win_stack[3+i];
-			fprintf(stderr,"%ld,",win_stack[3+i]);
+		if (argconvmask & (1<<i))
+                {
+                    SEGPTR ptr = VA_ARG16( valist, SEGPTR );
+                    args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(ptr);
+                    fprintf(stderr,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
+		}
+                else
+                {
+                    args[nrofargs-i-1] = VA_ARG16( valist, DWORD );
+                    fprintf(stderr,"%ld,",args[nrofargs-i-1]);
 		}
 	}
 	fprintf(stderr,"]) - ");
+        VA_END16( valist );
+
 	switch (nrofargs) {
 	case 0: ret = proc32();
 		break;
@@ -436,14 +565,7 @@ DWORD WINAPI WIN16_CallProc32W()
 		break;
 	}
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
-	/* FIXME: this is a BAD hack, but I don't see any other way to
-	 * pop a variable number of arguments.  -MM
-	 * The -2 in the size is for not copying WORD args[0] (which would
-	 * overwrite the top WORD on the return stack)
-	 */
-	memcpy(&stf16,CURRENT_STACK16,sizeof(stf16)-2);
-	IF1632_Saved16_ss_sp += (3+nrofargs)*sizeof(DWORD);
-	memcpy(CURRENT_STACK16,&stf16,sizeof(stf16)-2);
+        STACK16_POP( (3 + nrofargs) * sizeof(DWORD) );
 
 	fprintf(stderr,"returns %08lx\n",ret);
 	free(args);

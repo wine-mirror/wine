@@ -22,7 +22,7 @@ DWORD WINAPI OleBuildVersion()
 }
 
 /***********************************************************************
- *           OleInitialize       [OLE2.2]
+ *           OleInitialize       (OLE2.2) (OLE32.108)
  */
 HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
@@ -31,9 +31,9 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
 }
 
 /***********************************************************************
- *           OleUnitialize       [OLE2.3]
+ *           OleUnitialize       (OLE2.3) (OLE32.131)
  */
-void WINAPI OleUninitialize()
+void WINAPI OleUninitialize(void)
 {
     dprintf_ole(stdnimp,"OleUninitialize()\n");
 }

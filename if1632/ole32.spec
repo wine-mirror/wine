@@ -108,7 +108,7 @@ type	win32
 105 stub OleGetClipboard
 106 stub OleGetIconOfClass
 107 stub OleGetIconOfFile
-108 return OleInitialize 4 0
+108 stdcall OleInitialize(ptr) OleInitialize
 109 stub OleInitializeWOW
 110 stub OleIsCurrentClipboard
 111 stub OleIsRunning
@@ -131,7 +131,7 @@ type	win32
 128 stub OleSetContainedObject
 129 stub OleSetMenuDescriptor
 130 stub OleTranslateAccelerator
-131 return OleUninitialize 0 0
+131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream
 133 stub ProgIDFromCLSID
 134 stub ReadClassStg

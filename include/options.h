@@ -47,6 +47,7 @@ struct options
 {
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
+    char * argv0;           /* argv[0] of Wine process */
     int    usePrivateMap;
     int    useFixedMap;
     int    synchronous;     /* X synchronous mode */

@@ -42,12 +42,16 @@ static BYTE cmosimage[64] =
 #endif  /* linux && __i386__ */
 
 #ifdef DIRECT_IO_ACCESS
+
+extern int iopl(int level);
+
 static char do_direct_port_access = 0;
 static char port_permissions[0x10000];
 
 #define IO_READ  1
 #define IO_WRITE 2
-#endif
+
+#endif  /* DIRECT_IO_ACCESS */
 
 /**********************************************************************
  *	    IO_port_init

@@ -1,16 +1,17 @@
 name	ddeml
 type	win16
 
-2 stub DdeInitialize #(ptr segptr long long) DdeInitialize
-3 stub DdeUnInitialize #(long) DdeUnInitialize
+2 pascal16 DdeInitialize(ptr segptr long long) DdeInitialize16
+3 pascal16 DdeUninitialize(long) DdeUninitialize16
 4 stub DdeConnectList #(long word word word ptr) DdeConnectList
 5 stub DdeQueryNextServer #(word word) DdeQueryNextServer
 6 stub DdeDisconnectList #(word) DdeDisconnectList
-7 stub DdeConnect #(long word word ptr) DdeConnect
-8 stub DdeDisconnect #(word) DdeDisconnect
+7 pascal   DdeConnect(long long long ptr) DdeConnect16
+8 pascal16 DdeDisconnect(long) DdeDisconnect16
 9 stub DdeQueryConvInfo #(word long ptr) DdeQueryConvInfo
 10 stub DdeSetUserHandle #(word long long) DdeSetUserHandle
-11 stub DdeClientTransaction #(ptr long word word word word long ptr) DdeClientTransaction
+11 pascal   DdeClientTransaction(ptr long long long s_word s_word long ptr)
+            DdeClientTransaction16
 12 stub DdeAbandonTransaction #(long word long) DdeAbandonTransaction
 13 stub DdePostAdvise #(long word word) DdePostAdvise
 14 stub DdeCreateDataHandle #(long ptr long long word word word) DdeCreateDataHandle
@@ -18,15 +19,15 @@ type	win16
 16 stub DdeGetData #(word ptr long long) DdeGetData
 17 stub DdeAccessData #(word ptr) DdeAccessData
 18 stub DdeUnaccessData #(word) DdeUnaccessData
-19 stub DdeFreeDataHandle #(word) DdeFreeDataHandle
-20 stub DdeGetLastError #(long) DdeGetLastError
-21 stub DdeCreateStringHandle #(long str word) DdeCreateStringHandle
-22 stub DdeFreeStringHandle #(long word) DdeFreeStringHandle
+19 pascal16 DdeFreeDataHandle(long) DdeFreeDataHandle16
+20 pascal16 DdeGetLastError(long) DdeGetLastError16
+21 pascal   DdeCreateStringHandle(long str s_word) DdeCreateStringHandle16
+22 pascal16 DdeFreeStringHandle(long long) DdeFreeStringHandle16
 23 stub DdeQueryString #(long word ptr long word) DdeQueryString
-24 stub DdeKeepStringHandle #(long word) DdeKeepStringHandle
+24 pascal16 DdeKeepStringHandle(long long) DdeKeepStringHandle16
 
 26 stub DdeEnableCallback #(long word word) DdeEnableCallback
-27 stub DdeNameService #(long word word word)
+27 pascal   DdeNameService(long long long s_word) DdeNameService16
 
 36 stub DdeCmpStringHandles #(word word) DdeCmpStringHandles
-37 stub DdeReconnect #(word) DdeReconnect
+37 pascal   DdeReconnect(long) DdeReconnect

@@ -92,36 +92,36 @@ type	win32
  87 stub DdeAbandonTransaction
  88 stub DdeAccessData
  89 stub DdeAddData
- 90 return DdeClientTransaction 32 0
+ 90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction32
  91 stub DdeCmpStringHandles
- 92 return DdeConnect 16 0
+ 92 stdcall DdeConnect(long long long ptr) DdeConnect32
  93 stub DdeConnectList
  94 stub DdeCreateDataHandle
- 95 return DdeCreateStringHandleA 12 0
- 96 return DdeCreateStringHandleW 12 0
- 97 return DdeDisconnect 4 0
+ 95 stdcall DdeCreateStringHandleA(long ptr long) DdeCreateStringHandle32A
+ 96 stdcall DdeCreateStringHandleW(long ptr long) DdeCreateStringHandle32W
+ 97 stdcall DdeDisconnect(long) DdeDisconnect32
  98 stub DdeDisconnectList
  99 stub DdeEnableCallback
-100 return DdeFreeDataHandle 4 1
-101 return DdeFreeStringHandle 8 0
+100 stdcall DdeFreeDataHandle(long) DdeFreeDataHandle32
+101 stdcall DdeFreeStringHandle(long long) DdeFreeStringHandle32
 102 stub DdeGetData
-103 return DdeGetLastError 4 0
+103 stdcall DdeGetLastError(long) DdeGetLastError32
 104 stub DdeGetQualityOfService
 105 stub DdeImpersonateClient
-106 return DdeInitializeA 16 0
-107 return DdeInitializeW 16 0
-108 stub DdeKeepStringHandle
-109 return DdeNameService 16 0
+106 stdcall DdeInitializeA(ptr ptr long long) DdeInitialize32A
+107 stdcall DdeInitializeW(ptr ptr long long) DdeInitialize32W
+108 stdcall DdeKeepStringHandle(long long) DdeKeepStringHandle32
+109 stdcall DdeNameService(long long long long) DdeNameService32
 110 stub DdePostAdvise
 111 stub DdeQueryConvInfo
 112 stub DdeQueryNextServer
 113 stub DdeQueryStringA
 114 stub DdeQueryStringW
-115 stub DdeReconnect
+115 stdcall DdeReconnect(long) DdeReconnect
 116 stub DdeSetQualityOfService
 117 stub DdeSetUserHandle
 118 stub DdeUnaccessData
-119 return DdeUninitialize 4 0
+119 stdcall DdeUninitialize(long) DdeUninitialize32
 120 stdcall DefDlgProcA(long long long long) DefDlgProc32A
 121 stdcall DefDlgProcW(long long long long) DefDlgProc32W
 122 stdcall DefFrameProcA(long long long long long) DefFrameProc32A
@@ -243,7 +243,7 @@ type	win32
 238 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemText32W
 239 stdcall GetDoubleClickTime() GetDoubleClickTime32
 240 stdcall GetFocus() GetFocus32
-241 return GetForegroundWindow 0 0		#FIXME
+241 stdcall GetForegroundWindow() GetForegroundWindow32
 242 stub GetIconInfo
 243 stub GetInputDesktop
 244 stdcall GetInputState() GetInputState32
@@ -289,7 +289,7 @@ type	win32
 284 stdcall GetScrollInfo(long long ptr) GetScrollInfo32
 285 stdcall GetScrollPos(long long) GetScrollPos32
 286 stdcall GetScrollRange(long long ptr ptr) GetScrollRange32
-287 return GetShellWindow 0 0
+287 stdcall GetShellWindow() GetShellWindow32
 288 stdcall GetSubMenu(long long) GetSubMenu32
 289 stdcall GetSysColor(long) GetSysColor32
 290 stdcall GetSysColorBrush(long) GetSysColorBrush32
@@ -484,7 +484,7 @@ type	win32
 479 stdcall SetDlgItemTextW(long long ptr) SetDlgItemText32W
 480 stdcall SetDoubleClickTime(long) SetDoubleClickTime32
 481 stdcall SetFocus(long) SetFocus32
-482 return SetForegroundWindow 4 0
+482 stdcall SetForegroundWindow(long) SetForegroundWindow32
 483 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
 484 stdcall SetKeyboardState(ptr) SetKeyboardState
 485 stdcall SetLastErrorEx(long long) SetLastErrorEx

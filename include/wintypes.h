@@ -126,6 +126,7 @@ typedef HANDLE32        HMIXEROBJ;
 typedef DWORD           LCID;
 typedef WORD            LANGID;
 typedef DWORD           LCTYPE;
+typedef float           FLOAT;
 
 /* Pointers types. These are the same for emulator and library. */
 
@@ -145,6 +146,7 @@ typedef INT32          *LPINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
 typedef HMIXEROBJ      *LPHMIXEROBJ;
+typedef FLOAT          *LPFLOAT;
 
 /* Special case: a segmented pointer is just a pointer in the user's code. */
 

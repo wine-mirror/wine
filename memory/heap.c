@@ -1142,7 +1142,7 @@ DWORD WINAPI HeapSize( HANDLE32 heap, DWORD flags, LPVOID ptr )
 /***********************************************************************
  *           HeapValidate   (KERNEL32.343)
  */
-BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPVOID block )
+BOOL32 WINAPI HeapValidate( HANDLE32 heap, DWORD flags, LPCVOID block )
 {
     SUBHEAP *subheap;
     HEAP *heapPtr = (HEAP *)heap;
