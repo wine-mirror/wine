@@ -145,6 +145,8 @@ Main_IDirect3DDeviceImpl_7_3T_2T_1T_GetDirect3D(LPDIRECT3DDEVICE7 iface,
     TRACE("(%p/%p)->(%p)\n", This, iface, lplpDirect3D3);
 
     *lplpDirect3D3 = ICOM_INTERFACE(This->d3d, IDirect3D7);
+    IDirect3D7_AddRef(ICOM_INTERFACE(This->d3d, IDirect3D7));
+    
     TRACE(" returning interface %p\n", *lplpDirect3D3);
     return DD_OK;
 }
