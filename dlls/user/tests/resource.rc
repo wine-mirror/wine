@@ -33,6 +33,8 @@
   78, 1001, ASCII /* 'N' */
   110, 1002, ASCII /* 'n' */
   78, 1003, VIRTKEY, ALT /* Alt+'N' */
+  78, 1004, VIRTKEY, CONTROL, SHIFT /* Ctrl+Shift+'N' */
+  78, 1005, VIRTKEY, CONTROL, ALT, SHIFT /* Ctrl+Alt+Shift+'N' */
 }
 
 STRINGTABLE
@@ -64,7 +66,7 @@ CLASS_TEST_DIALOG DIALOG DISCARDABLE  0, 0, 91, 28
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "CreateDialogParams Test"
 CLASS "TestDialog"
-FONT 8, "System"
+FONT 8, "MS Shell Dlg"
 {
 }
 

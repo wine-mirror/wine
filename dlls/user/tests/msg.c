@@ -4046,6 +4046,40 @@ static const struct message WmCtrlAltVkN[] = {
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
+static const struct message WmCtrlShiftVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 1 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1004,1), 0 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { 0 }
+};
+static const struct message WmCtrlAltShiftVkN[] = {
+    { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { WM_KEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0x20000001 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 0x20000001 },
+    { WM_KEYDOWN, wparam|lparam, 'N', 0x20000001 },
+    { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1005,1), 0 },
+    { WM_KEYUP, wparam|lparam, 'N', 0xe0000001 },
+    { WM_KEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
+    { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xe0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xe0000001 },
+    { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
+    { 0 }
+};
 static const struct message WmAltPressRelease[] = {
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
@@ -4172,7 +4206,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN, "Alt+VK_N press/release", FALSE);
 
-    trace("testing Ctrl+Alt+VK_N press/release\n");
+    trace("testing Ctrl+Alt+VK_N press/release 1\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
@@ -4223,7 +4257,7 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmAltVkN_2, "Alt+VK_N press/release 2", FALSE);
 
-    trace("testing Ctrl+Alt+VK_N press/release\n");
+    trace("testing Ctrl+Alt+VK_N press/release 2\n");
     flush_sequence();
     keybd_event(VK_CONTROL, 0, 0, 0);
     keybd_event(VK_MENU, 0, 0, 0);
@@ -4233,6 +4267,30 @@ static void test_accelerators(void)
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, hAccel);
     ok_sequence(WmCtrlAltVkN, "Ctrl+Alt+VK_N press/release 2", FALSE);
+
+    trace("testing Ctrl+Shift+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlShiftVkN, "Ctrl+Shift+VK_N press/release", FALSE);
+
+    trace("testing Ctrl+Alt+Shift+VK_N press/release\n");
+    flush_sequence();
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event(VK_SHIFT, 0, 0, 0);
+    keybd_event('N', 0, 0, 0);
+    keybd_event('N', 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, hAccel);
+    ok_sequence(WmCtrlAltShiftVkN, "Ctrl+Alt+Shift+VK_N press/release", FALSE);
 
     ret = DestroyAcceleratorTable(hAccel);
     ok( ret, "DestroyAcceleratorTable error %ld\n", GetLastError());
@@ -5333,8 +5391,10 @@ static void test_scrollwindowex(void)
 static const struct message destroy_window_with_children[] = {
     { HCBT_DESTROYWND, hook|lparam, 0, WND_PARENT_ID }, /* parent */
     { HCBT_DESTROYWND, hook|lparam, 0, WND_POPUP_ID }, /* popup */
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, 0, 0 }, /* popup */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
     { WM_NCDESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, 0, 0 }, /* parent */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_PARENT_ID }, /* parent */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 2 }, /* child2 */
     { WM_DESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 1 }, /* child1 */
