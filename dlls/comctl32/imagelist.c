@@ -1735,7 +1735,7 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
         BITMAP bmp;
 
         GetIconInfo (handle, &ii);
-        GetObjectA (ii.hbmMask, sizeof(BITMAP), (LPVOID)&bmp);
+        GetObjectW (ii.hbmMask, sizeof(BITMAP), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight,
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
         if (!himl) {
