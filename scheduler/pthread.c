@@ -99,7 +99,7 @@ strong_alias(__pthread_once, pthread_once);
 void __pthread_kill_other_threads_np(void)
 {
   /* FIXME: this is supposed to be preparation for exec() */
-  P_OUTPUT("FIXME:pthread_kill_other_threads_np\n");
+  if (SystemHeap) P_OUTPUT("fixme:pthread_kill_other_threads_np\n");
 }
 strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
@@ -107,7 +107,7 @@ int __pthread_atfork(void (*prepare)(void),
 		     void (*parent)(void),
 		     void (*child)(void))
 {
-  P_OUTPUT("FIXME:pthread_atfork\n");
+  P_OUTPUT("fixme:pthread_atfork\n");
   return 0;
 }
 strong_alias(__pthread_atfork, pthread_atfork);
