@@ -52,10 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmtime);
 
 #define MMSYSTIME_STDINTERVAL (10) /* reasonable value? */
 
-/* ### start build ### */
-extern WORD CALLBACK TIME_CallTo16_word_wwlll(FARPROC16,WORD,WORD,LONG,LONG,LONG);
-/* ### stop build ### */
-
 static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 {
     TRACE("before CallBack => lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
@@ -70,9 +66,9 @@ static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
     case TIME_CALLBACK_FUNCTION:
 	if (lpTimer->wFlags & WINE_TIMER_IS32)
 	    ((LPTIMECALLBACK)lpTimer->lpFunc)(lpTimer->wTimerID, 0, lpTimer->dwUser, 0, 0);
-	else
-	    TIME_CallTo16_word_wwlll(lpTimer->lpFunc, lpTimer->wTimerID, 0,
-				     lpTimer->dwUser, 0, 0);
+	else if (pFnCallMMDrvFunc16)
+	    pFnCallMMDrvFunc16(lpTimer->lpFunc, lpTimer->wTimerID, 0,
+                               lpTimer->dwUser, 0, 0);
 	break;
     case TIME_CALLBACK_EVENT_SET:
 	SetEvent((HANDLE)lpTimer->lpFunc);
@@ -178,10 +174,6 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
  */
 void	TIME_MMTimeStart(void)
 {
-    if (IsBadWritePtr(WINMM_IData, sizeof(WINE_MM_IDATA))) {
-	ERR("iData is not correctly set, please report. Expect failure.\n");
-	return;
-    }
     /* one could think it's possible to stop the service thread activity when no more
      * mm timers are active, but this would require to keep mmSysTimeMS up-to-date
      * without being incremented within the service thread callback.
@@ -191,7 +183,6 @@ void	TIME_MMTimeStart(void)
 	WINMM_IData->lpTimerList = NULL;
 	WINMM_IData->hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, WINMM_IData, 0, NULL);
     }
-
 }
 
 /**************************************************************************
@@ -199,10 +190,6 @@ void	TIME_MMTimeStart(void)
  */
 void	TIME_MMTimeStop(void)
 {
-    if (IsBadWritePtr(WINMM_IData, sizeof(WINE_MM_IDATA))) {
-	ERR("WINMM_IData is not correctly set, please report. Expect failure.\n");
-	return;
-    }
     if (WINMM_IData->hMMTimer) {
 	HANDLE hMMTimer = WINMM_IData->hMMTimer;
 	WINMM_IData->hMMTimer = 0;
@@ -230,10 +217,10 @@ MMRESULT WINAPI timeGetSystemTime(LPMMTIME lpTime, UINT wSize)
 }
 
 /**************************************************************************
- * 				timeSetEventInternal	[internal]
+ * 				TIME_SetEventInternal	[internal]
  */
-WORD	timeSetEventInternal(UINT wDelay, UINT wResol,
-                             FARPROC16 lpFunc, DWORD dwUser, UINT wFlags)
+WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
+                              FARPROC16 lpFunc, DWORD dwUser, UINT wFlags)
 {
     WORD 		wNewID = 0;
     LPWINE_TIMERENTRY	lpNewTimer;
@@ -283,8 +270,8 @@ MMRESULT WINAPI timeSetEvent(UINT wDelay, UINT wResol, LPTIMECALLBACK lpFunc,
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
-				dwUser, wFlags|WINE_TIMER_IS32);
+    return TIME_SetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
+                                 dwUser, wFlags|WINE_TIMER_IS32);
 }
 
 /**************************************************************************

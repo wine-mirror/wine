@@ -2461,8 +2461,8 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol, LPTIMECALLBACK16 
     if (wFlags & WINE_TIMER_IS32)
 	WARN("Unknown windows flag... wine internally used.. ooch\n");
 
-    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
-				dwUser, wFlags & ~WINE_TIMER_IS32);
+    return TIME_SetEventInternal(wDelay, wResol, (FARPROC16)lpFunc,
+                                 dwUser, wFlags & ~WINE_TIMER_IS32);
 }
 
 /**************************************************************************

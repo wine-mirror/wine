@@ -275,9 +275,6 @@ UINT            MMSYSTEM_waveOpen(HANDLE* lphndl, UINT uDeviceID, UINT uType,
                                   const LPWAVEFORMATEX lpFormat, DWORD dwCallback, 
                                   DWORD dwInstance, DWORD dwFlags, BOOL bFrom32);
 
-WORD            timeSetEventInternal(UINT wDelay, UINT wResol,
-                                     FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
-
 HMMIO           MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo,
                           DWORD dwOpenFlags, enum mmioProcType type);
 LPMMIOPROC      MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
@@ -288,6 +285,8 @@ LPWINE_MMIO     MMIO_Get(HMMIO h);
 
 BOOL            MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSound, BOOL bUnicode);
 
+WORD            TIME_SetEventInternal(UINT wDelay, UINT wResol,
+                                      FARPROC16 lpFunc, DWORD dwUser, UINT wFlags);
 void    	TIME_MMTimeStart(void);
 void		TIME_MMTimeStop(void);
 
