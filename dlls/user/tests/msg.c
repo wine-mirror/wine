@@ -850,9 +850,9 @@ static void ok_sequence(const struct message *expected, const char *context, int
             todo_wine {
                 ok (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
                     context, expected->message, actual->message);
-                expected++;
-                actual++;
             }
+            flush_sequence();
+            return;
         }
         else
         {
