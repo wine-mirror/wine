@@ -1311,6 +1311,7 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
 {
   int vkey, ansi, scanCode;
   KeyCode keyc;
+  int keyi;
   KeySym keys;
   char *name;
 	
@@ -1374,11 +1375,12 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPSTR lpBuffer, INT nSize)
 
   /* let's do scancode -> keycode -> keysym -> String */
 
-  for (keyc=min_keycode; keyc<=max_keycode; keyc++)
-      if ((keyc2scan[keyc]) == scanCode)
+  for (keyi=min_keycode; keyi<=max_keycode; keyi++)
+      if ((keyc2scan[keyi]) == scanCode)
          break;
-  if (keyc <= max_keycode)
+  if (keyi <= max_keycode)
   {
+      keyc = (KeyCode) keyi;
       keys = TSXKeycodeToKeysym(thread_display(), keyc, 0);
       name = TSXKeysymToString(keys);
       TRACE("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
