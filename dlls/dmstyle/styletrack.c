@@ -242,15 +242,17 @@ HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_IsDirty (LPPERSISTSTREAM if
 }
 
 static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-  /*ICOM_THIS_MULTI(IDirectMusicStyleTrack, PersistStreamVtbl, iface);*/
+  ICOM_THIS_MULTI(IDirectMusicStyleTrack, PersistStreamVtbl, iface);
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
+  HRESULT hr;
 
-  DWORD dwTimeStamp;
+  IDirectMusicObject* pObject = NULL;
+  LPDMUS_PRIVATE_STYLE_ITEM pNewItem = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_STYLE_REF_LIST) {
-    ERR_(dmfile)(": %s chunk should be a SEGMENT list\n", debugstr_fourcc (pChunk->fccID));
+    ERR_(dmfile)(": %s chunk should be a STYLE list\n", debugstr_fourcc (pChunk->fccID));
     return E_FAIL;
   }
 
@@ -264,8 +266,14 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_TIME_STAMP_CHUNK: {
       TRACE_(dmfile)(": Time Stamp chunck \n");
-      IStream_Read (pStm, &dwTimeStamp, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - dwTimeStamp: %lu\n", dwTimeStamp);
+      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_ITEM));
+      if (NULL == pNewItem) {
+	ERR(": no more memory\n");
+	return  E_OUTOFMEMORY;
+      }
+      IStream_Read (pStm, &pNewItem->dwTimeStamp, sizeof(DWORD), NULL);
+      TRACE_(dmfile)(" - dwTimeStamp: %lu\n", pNewItem->dwTimeStamp);
+      list_add_tail (&This->Items, &pNewItem->entry);      
       break;
     }
     case FOURCC_LIST: {
@@ -279,8 +287,18 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
 	 */
       case DMUS_FOURCC_REF_LIST: {
 	FIXME_(dmfile)(": DMRF (DM References) list, not yet handled\n");
-	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	hr = IDirectMusicUtils_IPersistStream_ParseReference (iface,  &Chunk, pStm, &pObject);
+	if (FAILED(hr)) {
+	  ERR(": could not load Reference\n");
+	  return hr;
+	}
+	hr = IDirectMusicObject_QueryInterface(pObject, &IID_IDirectMusicStyle8, (LPVOID*)&pNewItem->pObject);
+	if (FAILED(hr)) {
+	  ERR(": Reference not a IDirectMusicStyle, exiting\n");
+	  exit(-1);
+	  return hr;
+	}
+	IDirectMusicObject_Release(pObject);
 	break;						
       }
       default: {
@@ -443,6 +461,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID *ppob
   track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
   memcpy (&track->pDesc->guidClass, &CLSID_DirectMusicStyleTrack, sizeof (CLSID));
   track->ref = 0; /* will be inited by QueryInterface */
+  list_init (&track->Items);
   
   return IDirectMusicStyleTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
 }

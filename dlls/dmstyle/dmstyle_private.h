@@ -104,13 +104,29 @@ typedef struct _DMUS_PRIVATE_STYLE_BAND {
   IDirectMusicBand* pBand;
 } DMUS_PRIVATE_STYLE_BAND, *LPDMUS_PRIVATE_STYLE_BAND;
 
-typedef struct _DMUS_PRIVATE_STYLE_MOTIF {
+typedef struct _DMUS_PRIVATE_STYLE_PARTREF_ITEM {
   struct list entry; /* for listing elements */
   DMUS_OBJECTDESC desc;
+  DMUS_IO_PARTREF part_ref;
+} DMUS_PRIVATE_STYLE_PARTREF_ITEM, *LPDMUS_PRIVATE_STYLE_PARTREF_ITEM;
+
+typedef struct _DMUS_PRIVATE_STYLE_MOTIF {
+  struct list entry; /* for listing elements */
+  DWORD dwRythm;
   DMUS_IO_PATTERN pattern;
+  DMUS_OBJECTDESC desc;
+  /** optional for motifs */
   DMUS_IO_MOTIFSETTINGS settings;
   IDirectMusicBand* pBand;
+
+  struct list Items;
 } DMUS_PRIVATE_STYLE_MOTIF, *LPDMUS_PRIVATE_STYLE_MOTIF;
+
+typedef struct _DMUS_PRIVATE_STYLE_ITEM {
+  struct list entry; /* for listing elements */
+  DWORD dwTimeStamp;
+  IDirectMusicStyle8* pObject;
+} DMUS_PRIVATE_STYLE_ITEM, *LPDMUS_PRIVATE_STYLE_ITEM;
 
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicAuditionTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
@@ -486,6 +502,8 @@ struct IDirectMusicStyleTrack {
 
   /* IDirectMusicStyleTrack fields */
   LPDMUS_OBJECTDESC pDesc;
+  
+  struct list Items;
 };
 
 /* IUnknown: */

@@ -39,6 +39,10 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IUnknown_QueryInterface (LPUNKNOWN iface, 
 		*ppobj = (LPVOID)&This->StyleVtbl;
 		IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef ((LPDIRECTMUSICSTYLE8)&This->StyleVtbl);
 		return S_OK;
+	} else if (IsEqualIID (riid, &IID_IDirectMusicStyle8)) {
+		*ppobj = (LPVOID)&This->StyleVtbl;
+		IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef ((LPDIRECTMUSICSTYLE8)&This->StyleVtbl);
+		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
 		*ppobj = (LPVOID)&This->ObjectVtbl;
 		IDirectMusicStyle8Impl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
@@ -463,7 +467,8 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
-  DMUS_OBJECTDESC desc;
+  LPDMUS_PRIVATE_STYLE_PARTREF_ITEM pNewItem = NULL;
+
 
   if (pChunk->fccID != DMUS_FOURCC_PARTREF_LIST) {
     ERR_(dmfile)(": %s chunk should be a PARTREF list\n", debugstr_fourcc (pChunk->fccID));
@@ -479,9 +484,16 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PARTREF_CHUNK: {
-      TRACE_(dmfile)(": PartRef chunk (skipping for now)\n");
-      liMove.QuadPart = Chunk.dwSize;
-      IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+      TRACE_(dmfile)(": PartRef chunk\n");
+      pNewItem = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_STYLE_PARTREF_ITEM));
+      if (NULL == pNewItem) {
+	ERR(": no more memory\n");
+	return  E_OUTOFMEMORY;
+      }
+      hr = IStream_Read (pStm, &pNewItem->part_ref, sizeof(DMUS_IO_PARTREF), NULL);
+      /*TRACE_(dmfile)(" - sizeof %lu\n",  sizeof(DMUS_IO_PARTREF));*/
+      list_add_tail (&pNewMotif->Items, &pNewItem->entry);      
+      DM_STRUCT_INIT(&pNewItem->desc);
       break;
     }    
     case FOURCC_LIST: {
@@ -497,7 +509,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartRefList (LPPERSIST
 	  ListCount[1] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
 	  TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 	  
-	  hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &desc);
+	  hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, &pNewItem->desc);
 	  if (FAILED(hr)) return hr;
 	  
 	  if (hr == S_FALSE) {
@@ -545,6 +557,8 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
   DMUS_OBJECTDESC desc;
+  DWORD dwSize = 0;
+  DWORD cnt = 0;
 
   if (pChunk->fccID != DMUS_FOURCC_PART_LIST) {
     ERR_(dmfile)(": %s chunk should be a PART list\n", debugstr_fourcc (pChunk->fccID));
@@ -560,20 +574,40 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     switch (Chunk.fccID) {
     case DMUS_FOURCC_PART_CHUNK: {
-      TRACE_(dmfile)(": Part chunk (skipping for now)\n");
+      TRACE_(dmfile)(": Part chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLEPART));
       liMove.QuadPart = Chunk.dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;
     }
     case DMUS_FOURCC_NOTE_CHUNK: { 
-      TRACE_(dmfile)(": Note chunk (skipping for now)\n");
-      liMove.QuadPart = Chunk.dwSize;
+      TRACE_(dmfile)(": Note chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLENOTE));
+      IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
+      cnt = (Chunk.dwSize - sizeof(DWORD));
+      TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
+      TRACE_(dmfile)(" - cnt: %lu (%lu / %lu)\n", cnt / dwSize, (Chunk.dwSize - sizeof(DWORD)), dwSize);
+      if (cnt % dwSize != 0) {
+	ERR("Invalid Array Size");
+	return E_FAIL;
+      }
+      cnt /= dwSize;
+      /** skip for now */
+      liMove.QuadPart = cnt * dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;
     }
     case DMUS_FOURCC_CURVE_CHUNK: { 
-      TRACE_(dmfile)(": Curve chunk (skipping for now)\n");
-      liMove.QuadPart = Chunk.dwSize;
+      TRACE_(dmfile)(": Curve chunk (skipping for now) (sizeof %u)\n", sizeof(DMUS_IO_STYLECURVE));
+      IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
+      cnt = (Chunk.dwSize - sizeof(DWORD));
+      TRACE_(dmfile)(" - dwSize: %lu\n", dwSize);
+      TRACE_(dmfile)(" - cnt: %lu (%lu / %lu)\n", cnt / dwSize, (Chunk.dwSize - sizeof(DWORD)), dwSize);
+      if (cnt % dwSize != 0) {
+	ERR("Invalid Array Size");
+	return E_FAIL;
+      }
+      cnt /= dwSize;
+      /** skip for now */
+      liMove.QuadPart = cnt * dwSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
       break;
     }
@@ -655,12 +689,10 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
-  DWORD dwRythm;
   DMUS_OBJECTDESC desc;
   IDirectMusicBand* pBand = NULL;
   LPDMUS_PRIVATE_STYLE_MOTIF pNewMotif = NULL;
 
-  dwRythm = 0;
   DM_STRUCT_INIT(&desc);
 
   if (pChunk->fccID != DMUS_FOURCC_PATTERN_LIST) {
@@ -690,14 +722,14 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       /** TODO trace pattern */
 
       /** reset all datas, as a new pattern begin */
-      dwRythm = 0;
       DM_STRUCT_INIT(&pNewMotif->desc);
+      list_init (&pNewMotif->Items);
       break;
     }
     case DMUS_FOURCC_RHYTHM_CHUNK: { 
       TRACE_(dmfile)(": Rythm chunk\n");
-      IStream_Read (pStm, &dwRythm, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - dwRythm: %lu\n", dwRythm);
+      IStream_Read (pStm, &pNewMotif->dwRythm, sizeof(DWORD), NULL);
+      TRACE_(dmfile)(" - dwRythm: %lu\n", pNewMotif->dwRythm);
       /** TODO understand why some Chunks have size > 4 */
       liMove.QuadPart = Chunk.dwSize - sizeof(DWORD);
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
