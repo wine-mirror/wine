@@ -48,7 +48,7 @@ static void do_version( const char *arg );
 static const struct option_descr option_table[] =
 {
     { "debugmsg",     0, 1, do_debugmsg,
-      "--debugmsg name  Turn debugging-messages on or off" },
+      "--debugmsg name  No longer supported, use the WINEDEBUG variable instead" },
     { "help",       'h', 0, do_help,
       "--help,-h        Show this help message" },
     { "version",    'v', 0, do_version,
@@ -70,29 +70,10 @@ static void do_version( const char *arg )
 
 static void do_debugmsg( const char *arg )
 {
-    char buffer[1024];
-
-    if (wine_dbg_parse_options( arg ))
-    {
-        MESSAGE("wine: Syntax: --debugmsg [class]+xxx,...  or -debugmsg [class]-xxx,...\n");
-        MESSAGE("Example: --debugmsg +all,warn-heap\n"
-                "  turn on all messages except warning heap messages\n");
-        MESSAGE("Available message classes: err, warn, fixme, trace\n\n");
-        ExitProcess(1);
-    }
-    MESSAGE("Warning: the --debugmsg option is deprecated. You should use\n");
+    MESSAGE("Error: the --debugmsg option is no longer supported. You should use\n");
     MESSAGE("the WINEDEBUG environment variable instead, like this:\n\n");
     MESSAGE("  WINEDEBUG=%s wine ...\n\n", arg );
-
-    /* append the argument to WINEDEBUG so that it gets inherited */
-    if (GetEnvironmentVariableA( "WINEDEBUG", buffer, sizeof(buffer)-1 ) && buffer[0])
-    {
-        char *p = buffer + strlen(buffer);
-        *p++ = ',';
-        lstrcpynA( p, arg, buffer + sizeof(buffer) - p );
-        SetEnvironmentVariableA( "WINEDEBUG", buffer );
-    }
-    else SetEnvironmentVariableA( "WINEDEBUG", arg );
+    ExitProcess(1);
 }
 
 static inline void remove_options( char *argv[], int pos, int count )
