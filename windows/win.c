@@ -650,10 +650,13 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     RedrawWindow( hwnd, NULL, 0,
                   RDW_VALIDATE | RDW_NOFRAME | RDW_NOERASE | RDW_NOINTERNALPAINT | RDW_NOCHILDREN);
 
+    /* Unlink now so we won't bother with the children later on */
+    WIN_UnlinkWindow( hwnd );
+
     /*
      * Send the WM_NCDESTROY to the window being destroyed.
      */
-    SendMessageA( hwnd, WM_NCDESTROY, 0, 0);
+    SendMessageW( hwnd, WM_NCDESTROY, 0, 0 );
 
     /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
 
@@ -812,9 +815,9 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         }
         else  /* overlapped window */
         {
-            STARTUPINFOA info;
+            STARTUPINFOW info;
 
-            GetStartupInfoA( &info );
+            GetStartupInfoW( &info );
 
             if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
             {
@@ -849,7 +852,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
                 else  /* if no other hint from the app, pick 3/4 of the screen real estate */
                 {
                     RECT r;
-                    SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+                    SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
                     cs->cx = (((r.right - r.left) * 3) / 4) - cs->x;
                     cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
                 }
@@ -858,7 +861,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
             else if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16)
             {
                 RECT r;
-                SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+                SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
                 cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
             }
         }
@@ -872,7 +875,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 	if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
 	    RECT r;
 	    FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
-	    SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+	    SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
 	    cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
 	}
     }
@@ -1431,7 +1434,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
     /*
      * Send the WM_DESTROY to the window.
      */
-    SendMessageA( hwnd, WM_DESTROY, 0, 0);
+    SendMessageW( hwnd, WM_DESTROY, 0, 0);
 
     /*
      * This WM_DESTROY message can trigger re-entrant calls to DestroyWindow
@@ -1444,10 +1447,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
 
         if (!(pWndArray = WIN_ListChildren( hwnd ))) return;
 
-        /* start from the end (FIXME: is this needed?) */
-        for (i = 0; pWndArray[i]; i++) ;
-
-        while (--i >= 0)
+        for (i = 0; pWndArray[i]; i++)
         {
             if (IsWindow( pWndArray[i] )) WIN_SendDestroyMsg( pWndArray[i] );
         }
@@ -1499,13 +1499,15 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         USER_Driver.pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
-
-    /* Only child windows receive WM_SHOWWINDOW in DestroyWindow() */
-    if (is_child)
-        ShowWindow( hwnd, SW_HIDE );
-    else
-        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
-                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
+    {
+        /* Only child windows receive WM_SHOWWINDOW in DestroyWindow() */
+        if (is_child)
+            ShowWindow( hwnd, SW_HIDE );
+        else
+            SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
+    }
 
     if (!IsWindow(hwnd)) return TRUE;
 
@@ -1543,10 +1545,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (GetClipboardOwner() == hwnd)
         CLIPBOARD_ReleaseOwner();
-
-      /* Unlink now so we won't bother with the children later on */
-
-    WIN_UnlinkWindow( hwnd );
 
       /* Destroy the window storage */
 
@@ -1736,13 +1734,13 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
     if (enable && retvalue)
     {
         WIN_SetStyle( hwnd, 0, WS_DISABLED );
-        SendMessageA( hwnd, WM_ENABLE, TRUE, 0 );
+        SendMessageW( hwnd, WM_ENABLE, TRUE, 0 );
     }
     else if (!enable && !retvalue)
     {
         HWND capture_wnd;
 
-        SendMessageA( hwnd, WM_CANCELMODE, 0, 0);
+        SendMessageW( hwnd, WM_CANCELMODE, 0, 0);
 
         WIN_SetStyle( hwnd, WS_DISABLED, 0 );
 
@@ -1753,7 +1751,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
         if (hwnd == capture_wnd || IsChild(hwnd, capture_wnd))
             ReleaseCapture();  /* A disabled window can't capture the mouse */
 
-        SendMessageA( hwnd, WM_ENABLE, FALSE, 0 );
+        SendMessageW( hwnd, WM_ENABLE, FALSE, 0 );
     }
     return retvalue;
 }
@@ -3122,7 +3120,7 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 
     while(1)
     {
-	while(PeekMessageA(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
+	while (PeekMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE ))
         {
             if( msg.message == WM_LBUTTONUP )
 	    {

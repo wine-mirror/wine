@@ -39,6 +39,11 @@
 #define SWP_NOCLIENTSIZE	0x0800
 #define SWP_NOCLIENTMOVE	0x1000
 
+#define WND_PARENT_ID		1
+#define WND_POPUP_ID		2
+#define WND_CHILD_ID		3
+
+static BOOL test_DestroyWindow_flag;
 static HWINEVENTHOOK hEvent_hook;
 
 /*
@@ -232,10 +237,6 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_NOTIFY, sent|optional|defwinproc },
-    { 0 }
-};
-/* ShowWindow(SW_HIDE) for an invisible overlapped window */
-static const struct message WmHideInvisibleOverlappedSeq[] = {
     { 0 }
 };
 /* DestroyWindow for a visible overlapped window */
@@ -1018,7 +1019,7 @@ static const struct message WmSHOWNATopInvisible[] = {
     { WM_NCPAINT, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
@@ -1946,7 +1947,8 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
-        message != WM_MDIGETACTIVE)
+        message != WM_MDIGETACTIVE &&
+        message != WM_DEVICECHANGE)
     {
         trace("mdi client: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
@@ -1991,7 +1993,8 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_ERASEBKGND &&
         message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
-        message != WM_GETTEXT)
+        message != WM_GETTEXT &&
+        message != WM_DEVICECHANGE)
     {
         trace("mdi child: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
@@ -2054,7 +2057,8 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_ERASEBKGND &&
         message != WM_NCPAINT &&
         message != WM_NCHITTEST &&
-        message != WM_GETTEXT)
+        message != WM_GETTEXT &&
+        message != WM_DEVICECHANGE)
     {
         trace("mdi frame: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
@@ -2819,7 +2823,7 @@ static void test_messages(void)
 
     /* test ShowWindow(SW_HIDE) on a newly created invisible window */
     ok( ShowWindow(hwnd, SW_HIDE) == FALSE, "ShowWindow: window was visible\n" );
-    ok_sequence(WmHideInvisibleOverlappedSeq, "ShowWindow(SW_HIDE):overlapped, invisible", FALSE);
+    ok_sequence(WmEmptySeq, "ShowWindow(SW_HIDE):overlapped, invisible", FALSE);
 
     /* test WM_SETREDRAW on a not visible top level window */
     test_WM_SETREDRAW(hwnd);
@@ -3840,6 +3844,7 @@ static void test_paint_messages(void)
 
     log_all_parent_messages--;
     DestroyWindow( hparent );
+    ok(!IsWindow(hchild), "child must be destroyed with its parent\n");
 
     DeleteObject( hrgn );
     DeleteObject( hrgn2 );
@@ -4090,7 +4095,8 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
         trace("accel: %p, %04x, %08x, %08lx\n", msg.hwnd, msg.message, msg.wParam, msg.lParam);
 
         /* ignore some unwanted messages */
-        if (msg.message == WM_MOUSEMOVE)
+        if (msg.message == WM_MOUSEMOVE ||
+            msg.message == WM_DEVICECHANGE)
             continue;
 
         log_msg.message = msg.message;
@@ -4274,6 +4280,23 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
     switch (message)
     {
+	case WM_NCDESTROY:
+	    ok(!GetWindow(hwnd, GW_CHILD), "children should be unlinked at this point\n");
+	/* fall through */
+	case WM_DESTROY:
+	    ok(GetAncestor(hwnd, GA_PARENT) != 0, "parent should NOT be unlinked at this point\n");
+	    if (test_DestroyWindow_flag)
+	    {
+		DWORD style = GetWindowLongA(hwnd, GWL_STYLE);
+		if (style & WS_CHILD)
+		    lParam = GetWindowLongA(hwnd, GWL_ID);
+		else if (style & WS_POPUP)
+		    lParam = WND_POPUP_ID;
+		else
+		    lParam = WND_PARENT_ID;
+	    }
+	    break;
+
 	/* test_accelerators() depends on this */
 	case WM_NCHITTEST:
 	    return HTCLIENT;
@@ -4281,6 +4304,7 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 	/* ignore */
 	case WM_MOUSEMOVE:
 	case WM_SETCURSOR:
+	case WM_DEVICECHANGE:
 	    return 0;
 
         case WM_WINDOWPOSCHANGING:
@@ -4531,6 +4555,20 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	add_message(&msg);
 
 	return CallNextHookEx(hCBT_hook, nCode, wParam, lParam);
+    }
+
+    if (nCode == HCBT_DESTROYWND)
+    {
+	if (test_DestroyWindow_flag)
+	{
+	    DWORD style = GetWindowLongA((HWND)wParam, GWL_STYLE);
+	    if (style & WS_CHILD)
+		lParam = GetWindowLongA((HWND)wParam, GWL_ID);
+	    else if (style & WS_POPUP)
+		lParam = WND_POPUP_ID;
+	    else
+		lParam = WND_PARENT_ID;
+	}
     }
 
     /* Log also SetFocus(0) calls */
@@ -5292,6 +5330,111 @@ static void test_scrollwindowex(void)
     flush_sequence();
 }
 
+static const struct message destroy_window_with_children[] = {
+    { HCBT_DESTROYWND, hook|lparam, 0, WND_PARENT_ID }, /* parent */
+    { HCBT_DESTROYWND, hook|lparam, 0, WND_POPUP_ID }, /* popup */
+    { WM_DESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
+    { WM_NCDESTROY, sent|wparam|lparam, 0, WND_POPUP_ID }, /* popup */
+    { WM_DESTROY, sent|wparam|lparam, 0, WND_PARENT_ID }, /* parent */
+    { WM_DESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 2 }, /* child2 */
+    { WM_DESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 1 }, /* child1 */
+    { WM_DESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 3 }, /* child3 */
+    { WM_NCDESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 2 }, /* child2 */
+    { WM_NCDESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 3 }, /* child3 */
+    { WM_NCDESTROY, sent|wparam|lparam, 0, WND_CHILD_ID + 1 }, /* child1 */
+    { WM_NCDESTROY, sent|wparam|lparam, 0, WND_PARENT_ID }, /* parent */
+    { 0 }
+};
+
+static void test_DestroyWindow(void)
+{
+    HWND parent, child1, child2, child3, child4, test;
+    UINT child_id = WND_CHILD_ID + 1;
+
+    parent = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+			     100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(parent != 0);
+    child1 = CreateWindowExA(0, "TestWindowClass", NULL, WS_CHILD,
+			     0, 0, 50, 50, parent, (HMENU)child_id++, 0, NULL);
+    assert(child1 != 0);
+    child2 = CreateWindowExA(0, "TestWindowClass", NULL, WS_CHILD,
+			     0, 0, 50, 50, GetDesktopWindow(), (HMENU)child_id++, 0, NULL);
+    assert(child2 != 0);
+    child3 = CreateWindowExA(0, "TestWindowClass", NULL, WS_CHILD,
+			     0, 0, 50, 50, child1, (HMENU)child_id++, 0, NULL);
+    assert(child3 != 0);
+    child4 = CreateWindowExA(0, "TestWindowClass", NULL, WS_POPUP,
+			     0, 0, 50, 50, parent, 0, 0, NULL);
+    assert(child4 != 0);
+
+    /* test owner/parent of child2 */
+    test = GetParent(child2);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    test = GetAncestor(child2, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    test = GetWindow(child2, GW_OWNER);
+    ok(!test, "wrong owner %p\n", test);
+
+    test = SetParent(child2, parent);
+    ok(test == GetDesktopWindow(), "wrong old parent %p\n", test);
+
+    /* test owner/parent of the parent */
+    test = GetParent(parent);
+    ok(!test, "wrong parent %p\n", test);
+    test = GetAncestor(parent, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    test = GetWindow(parent, GW_OWNER);
+    ok(!test, "wrong owner %p\n", test);
+
+    /* test owner/parent of child1 */
+    test = GetParent(child1);
+    ok(test == parent, "wrong parent %p\n", test);
+    test = GetAncestor(child1, GA_PARENT);
+    ok(test == parent, "wrong parent %p\n", test);
+    test = GetWindow(child1, GW_OWNER);
+    ok(!test, "wrong owner %p\n", test);
+
+    /* test owner/parent of child2 */
+    test = GetParent(child2);
+    ok(test == parent, "wrong parent %p\n", test);
+    test = GetAncestor(child2, GA_PARENT);
+    ok(test == parent, "wrong parent %p\n", test);
+    test = GetWindow(child2, GW_OWNER);
+    ok(!test, "wrong owner %p\n", test);
+
+    /* test owner/parent of child3 */
+    test = GetParent(child3);
+    ok(test == child1, "wrong parent %p\n", test);
+    test = GetAncestor(child3, GA_PARENT);
+    ok(test == child1, "wrong parent %p\n", test);
+    test = GetWindow(child3, GW_OWNER);
+    ok(!test, "wrong owner %p\n", test);
+
+    /* test owner/parent of child4 */
+    test = GetParent(child4);
+    ok(test == parent, "wrong parent %p\n", test);
+    test = GetAncestor(child4, GA_PARENT);
+    ok(test == GetDesktopWindow(), "wrong parent %p\n", test);
+    test = GetWindow(child4, GW_OWNER);
+    ok(test == parent, "wrong owner %p\n", test);
+
+    flush_sequence();
+
+    trace("parent %p, child1 %p, child2 %p, child3 %p, child4 %p\n",
+	   parent, child1, child2, child3, child4);
+
+    test_DestroyWindow_flag = TRUE;
+    ok(DestroyWindow(parent), "DestroyWindow() error %ld\n", GetLastError());
+    test_DestroyWindow_flag = FALSE;
+    ok_sequence(destroy_window_with_children, "destroy window with children\n", 0);
+
+    ok(!IsWindow(parent), "parent still exists");
+    ok(!IsWindow(child1), "child1 still exists");
+    ok(!IsWindow(child2), "child2 still exists");
+    ok(!IsWindow(child3), "child3 still exists");
+    ok(!IsWindow(child4), "child4 still exists");
+}
+
 START_TEST(msg)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
@@ -5340,6 +5483,7 @@ START_TEST(msg)
     test_accelerators();
     test_timers();
     test_set_hook();
+    test_DestroyWindow();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
