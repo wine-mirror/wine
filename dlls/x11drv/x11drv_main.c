@@ -98,7 +98,7 @@ int using_wine_desktop = 0;
 unsigned int X11DRV_server_startticks;
 
 static BOOL synchronous;  /* run in synchronous mode? */
-static BOOL desktop_dbl_buf;
+static BOOL desktop_dbl_buf = TRUE;
 static char *desktop_geometry;
 static XVisualInfo *desktop_vi;
 
