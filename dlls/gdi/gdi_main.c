@@ -10,7 +10,7 @@
 #include "global.h"
 #include "tweak.h"
 #include "win16drv.h"
-
+#include "winbase.h"
 
 /***********************************************************************
  *           GDI initialisation routine
