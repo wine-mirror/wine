@@ -87,7 +87,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 		case HELP_KEY:
 		case HELP_PARTIALKEY:
 		case HELP_COMMAND:
-			dsize = strlen( (LPSTR)dwData )+1;
+			dsize = dwData ? strlen( (LPSTR)dwData )+1: 0;
 			break;
 		case HELP_MULTIKEY:
 			dsize = ((LPMULTIKEYHELP)dwData)->mkSize;
