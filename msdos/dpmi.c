@@ -260,7 +260,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         DWORD esp,edi;
 
         INT_SetRealModeContext((REALMODECALL *)PTR_SEG_OFF_TO_LIN( rmcb->regs_sel, rmcb->regs_ofs ), context);
-        ss = SELECTOR_AllocBlock( DOSMEM_MemoryBase(0) + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+        ss = SELECTOR_AllocBlock( DOSMEM_MemoryBase() + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
         esp = ESP_reg(context);
 
         FIXME("untested!\n");
@@ -369,7 +369,7 @@ callrmproc_again:
     if (!already) {
         if (!SS_reg(context)) {
             alloc = 1; /* allocate default stack */
-            stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, (UINT16 *)&(SS_reg(context)) );
+            stack16 = addr = DOSMEM_GetBlock( 64, (UINT16 *)&(SS_reg(context)) );
             ESP_reg(context) = 64-2;
             stack16 += 32-1;
             if (!addr) {
@@ -415,7 +415,7 @@ callrmproc_again:
         ERR("cannot perform real-mode call\n");
 #endif
     }
-    if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
+    if (alloc) DOSMEM_FreeBlock( addr );
     return 0;
 }
 
@@ -487,7 +487,7 @@ static RMCB *DPMI_AllocRMCB( void )
 
     if (NewRMCB)
     {
-	LPVOID RMCBmem = DOSMEM_GetBlock(0, 4, &uParagraph);
+	LPVOID RMCBmem = DOSMEM_GetBlock(4, &uParagraph);
 	LPBYTE p = RMCBmem;
 
 	*p++ = 0xcd; /* RMCB: */
@@ -559,7 +559,7 @@ static int DPMI_FreeRMCB( DWORD address )
 	PrevRMCB->next = CurrRMCB->next;
 	    else
 	FirstRMCB = CurrRMCB->next;
-	DOSMEM_FreeBlock(0, DOSMEM_MapRealToLinear(CurrRMCB->address));
+	DOSMEM_FreeBlock(DOSMEM_MapRealToLinear(CurrRMCB->address));
 	HeapFree(GetProcessHeap(), 0, CurrRMCB);
 	return 0;
     }
@@ -590,7 +590,7 @@ void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
 
 static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
 {
-    char *base = DOSMEM_MemoryBase(0);
+    char *base = DOSMEM_MemoryBase();
     UINT16 cs, ss, ds, es;
     CONTEXT86 pm_ctx;
     DWORD psp_ofs = (DWORD)(lpDosTask->psp_seg<<4);
@@ -851,7 +851,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         {
 #ifdef MZ_SUPPORTED
             if (lpDosTask) {
-                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+                DWORD base = (DWORD)DOSMEM_MemoryBase();
 		dw = DOS_WINETOAPP(dw, base);
             }
 #endif
@@ -867,7 +867,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         dw = W32S_APP2WINE(MAKELONG(DX_reg(context), CX_reg(context)), offset);
 #ifdef MZ_SUPPORTED
         if (lpDosTask) {
-            DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+            DWORD base = (DWORD)DOSMEM_MemoryBase();
 	    dw = DOS_APPTOWINE(dw, base);
         }
 #endif
@@ -879,7 +879,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
         dw = MAKELONG( DX_reg(context), CX_reg(context) );
 #ifdef MZ_SUPPORTED
         if (lpDosTask) {
-	    DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+	    DWORD base = (DWORD)DOSMEM_MemoryBase();
             DWORD sbase = GetSelectorBase( BX_reg(context) );
 	    if (!sbase) {
 	        /* the app has set the limit without setting the base,
@@ -923,7 +923,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
 #ifdef MZ_SUPPORTED
             if (lpDosTask) {
-                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+                DWORD base = (DWORD)DOSMEM_MemoryBase();
 		entry.base = DOS_WINETOAPP(entry.base, base);
             }
 #endif
@@ -944,7 +944,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             entry.base = W32S_APP2WINE(entry.base, offset);
 #ifdef MZ_SUPPORTED
             if (lpDosTask) {
-                DWORD base = (DWORD)DOSMEM_MemoryBase(lpDosTask->hModule);
+                DWORD base = (DWORD)DOSMEM_MemoryBase();
 	        entry.base = DOS_APPTOWINE(entry.base, base);
 		if (DOS_BADLIMIT(entry.base, base, entry.limit)) {
 		    AX_reg(context) = 0x8021;  /* invalid value */
@@ -971,7 +971,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             DX_reg(context) = LOWORD(dw);
         } else {
             AX_reg(context) = 0x0008; /* insufficient memory */
-            BX_reg(context) = DOSMEM_Available(0)>>4;
+            BX_reg(context) = DOSMEM_Available()>>4;
             SET_CFLAG(context);
         }
         break;

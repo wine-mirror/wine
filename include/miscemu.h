@@ -137,11 +137,11 @@ extern struct _DOS_LISTOFLISTS * DOSMEM_LOL();
 extern BOOL DOSMEM_Init(HMODULE16 hModule);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
-extern char * DOSMEM_MemoryBase(HMODULE16 hModule);
-extern LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* p);
-extern BOOL DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr);
-extern LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* p);
-extern UINT DOSMEM_Available(HMODULE16 hModule);
+extern char * DOSMEM_MemoryBase(void);
+extern LPVOID DOSMEM_GetBlock(UINT size, UINT16* p);
+extern BOOL DOSMEM_FreeBlock(void* ptr);
+extern LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* p);
+extern UINT DOSMEM_Available(void);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */
 extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */

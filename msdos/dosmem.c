@@ -63,10 +63,10 @@ typedef struct {
  *
  * Gets the DOS memory base.
  */
-char *DOSMEM_MemoryBase(HMODULE16 hModule)
+char *DOSMEM_MemoryBase(void)
 {
-    TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
 
     GlobalUnlock16( GetCurrentTask() );
     if (pModule && pModule->dos_image)
@@ -80,9 +80,9 @@ char *DOSMEM_MemoryBase(HMODULE16 hModule)
  *
  * Gets the DOS memory top.
  */
-static char *DOSMEM_MemoryTop(HMODULE16 hModule)
+static char *DOSMEM_MemoryTop(void)
 {
-    return DOSMEM_MemoryBase(hModule)+0x9FFFC; /* 640K */
+    return DOSMEM_MemoryBase()+0x9FFFC; /* 640K */
 }
 
 /***********************************************************************
@@ -90,9 +90,9 @@ static char *DOSMEM_MemoryTop(HMODULE16 hModule)
  *
  * Gets the DOS memory info block.
  */
-static dosmem_info *DOSMEM_InfoBlock(HMODULE16 hModule)
+static dosmem_info *DOSMEM_InfoBlock(void)
 {
-    return (dosmem_info*)(DOSMEM_MemoryBase(hModule)+0x10000); /* 64K */
+    return (dosmem_info*)(DOSMEM_MemoryBase()+0x10000); /* 64K */
 }
 
 /***********************************************************************
@@ -100,10 +100,10 @@ static dosmem_info *DOSMEM_InfoBlock(HMODULE16 hModule)
  *
  * Gets the DOS memory root block.
  */
-static dosmem_entry *DOSMEM_RootBlock(HMODULE16 hModule)
+static dosmem_entry *DOSMEM_RootBlock(void)
 {
     /* first block has to be paragraph-aligned */
-    return (dosmem_entry*)(((char*)DOSMEM_InfoBlock(hModule)) +
+    return (dosmem_entry*)(((char*)DOSMEM_InfoBlock()) +
                            ((((sizeof(dosmem_info) + 0xf) & ~0xf) - sizeof(dosmem_entry))));
 }
 
@@ -119,9 +119,9 @@ static dosmem_entry *DOSMEM_RootBlock(HMODULE16 hModule)
  * to hook interrupts, as well as use their familiar retf tricks to call
  * them, AND let Wine handle any unhooked interrupts transparently.
  */
-static void DOSMEM_FillIsrTable(HMODULE16 hModule)
+static void DOSMEM_FillIsrTable(void)
 {
-    SEGPTR *isr = (SEGPTR*)DOSMEM_MemoryBase(hModule);
+    SEGPTR *isr = (SEGPTR*)DOSMEM_MemoryBase();
     DWORD *stub = (DWORD*)((char*)isr + (VM_STUB_SEGMENT << 4));
     int x;
  
@@ -141,19 +141,19 @@ static void DOSMEM_InitDPMI(void)
      0xCD,0x31, /* int $0x31 */
      0xCB       /* lret */
     };
-    LPSTR wrapper = (LPSTR)DOSMEM_GetBlock(0, sizeof(wrap_code), &DPMI_wrap_seg);
+    LPSTR wrapper = (LPSTR)DOSMEM_GetBlock(sizeof(wrap_code), &DPMI_wrap_seg);
 
     memcpy(wrapper, wrap_code, sizeof(wrap_code));
 }
 
 BIOSDATA * DOSMEM_BiosData()
 {
-    return (BIOSDATA *)(DOSMEM_MemoryBase(0)+0x400);
+    return (BIOSDATA *)(DOSMEM_MemoryBase()+0x400);
 }
 
 BYTE * DOSMEM_BiosSys()
 {
-    return DOSMEM_MemoryBase(0)+0xf0000;
+    return DOSMEM_MemoryBase()+0xf0000;
 }
 
 struct _DOS_LISTOFLISTS * DOSMEM_LOL()
@@ -348,16 +348,16 @@ static void DOSMEM_InitErrorTable()
  *
  * Initialises the DOS memory structures.
  */
-static void DOSMEM_InitMemory(HMODULE16 hModule)
+static void DOSMEM_InitMemory(void)
 {
    /* Low 64Kb are reserved for DOS/BIOS so the useable area starts at
     * 1000:0000 and ends at 9FFF:FFEF. */
 
-    dosmem_info*        info_block = DOSMEM_InfoBlock(hModule);
-    dosmem_entry*       root_block = DOSMEM_RootBlock(hModule);
+    dosmem_info*        info_block = DOSMEM_InfoBlock();
+    dosmem_entry*       root_block = DOSMEM_RootBlock();
     dosmem_entry*       dm;
 
-    root_block->size = DOSMEM_MemoryTop(hModule) - (((char*)root_block) + sizeof(dosmem_entry));
+    root_block->size = DOSMEM_MemoryTop() - (((char*)root_block) + sizeof(dosmem_entry));
 
     info_block->blocks = 0;
     info_block->free = root_block->size;
@@ -418,9 +418,9 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
                                      0x100, 0, FALSE, FALSE, FALSE, NULL );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
                                      0x10000, 0, FALSE, FALSE, FALSE, NULL );
-        DOSMEM_FillIsrTable(0);
+        DOSMEM_FillIsrTable();
         DOSMEM_FillBiosSegments();
-        DOSMEM_InitMemory(0);
+        DOSMEM_InitMemory();
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
         DOSMEM_InitDPMI();
@@ -432,7 +432,7 @@ BOOL DOSMEM_Init(HMODULE16 hModule)
         DOSMEM_FillIsrTable(hModule);
         DOSMEM_InitMemory(hModule);
 #else
-	LPVOID base = DOSMEM_MemoryBase(hModule);
+	LPVOID base = DOSMEM_MemoryBase();
 
         /* bootstrap the new V86 task with a copy of the "system" memory */
         memcpy(base, DOSMEM_dosmem, 0x100000);
@@ -460,18 +460,18 @@ void DOSMEM_Tick( WORD timer )
  *
  * Carve a chunk of the DOS memory block (without selector).
  */
-LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* pseg)
+LPVOID DOSMEM_GetBlock(UINT size, UINT16* pseg)
 {
    UINT  	 blocksize;
    char         *block = NULL;
-   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
+   dosmem_info  *info_block = DOSMEM_InfoBlock();
    dosmem_entry *dm;
 #ifdef __DOSMEM_DEBUG_
    dosmem_entry *prev = NULL;
 #endif
  
    if( size > info_block->free ) return NULL;
-   dm = DOSMEM_RootBlock(hModule);
+   dm = DOSMEM_RootBlock();
 
    while (dm && dm->size != DM_BLOCK_TERMINAL)
    {
@@ -517,7 +517,7 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* pseg)
 
 	       info_block->blocks++;
 	       info_block->free -= dm->size;
-	       if( pseg ) *pseg = (block - DOSMEM_MemoryBase(hModule)) >> 4;
+	       if( pseg ) *pseg = (block - DOSMEM_MemoryBase()) >> 4;
 #ifdef __DOSMEM_DEBUG__
                dm->size |= DM_BLOCK_DEBUG;
 #endif
@@ -533,13 +533,13 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT size, UINT16* pseg)
 /***********************************************************************
  *           DOSMEM_FreeBlock
  */
-BOOL DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
+BOOL DOSMEM_FreeBlock(void* ptr)
 {
-   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
+   dosmem_info  *info_block = DOSMEM_InfoBlock();
 
-   if( ptr >= (void*)(((char*)DOSMEM_RootBlock(hModule)) + sizeof(dosmem_entry)) &&
-       ptr < (void*)DOSMEM_MemoryTop(hModule) && !((((char*)ptr)
-                  - DOSMEM_MemoryBase(hModule)) & 0xf) )
+   if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
+       ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
+                  - DOSMEM_MemoryBase()) & 0xf) )
    {
        dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
 
@@ -562,18 +562,18 @@ BOOL DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
 /***********************************************************************
  *           DOSMEM_ResizeBlock
  */
-LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* pseg)
+LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* pseg)
 {
    char         *block = NULL;
-   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
+   dosmem_info  *info_block = DOSMEM_InfoBlock();
 
-   if( ptr >= (void*)(((char*)DOSMEM_RootBlock(hModule)) + sizeof(dosmem_entry)) &&
-       ptr < (void*)DOSMEM_MemoryTop(hModule) && !((((char*)ptr)
-                  - DOSMEM_MemoryBase(hModule)) & 0xf) )
+   if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
+       ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
+                  - DOSMEM_MemoryBase()) & 0xf) )
    {
        dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
 
-       if( pseg ) *pseg = ((char*)ptr - DOSMEM_MemoryBase(hModule)) >> 4;
+       if( pseg ) *pseg = ((char*)ptr - DOSMEM_MemoryBase()) >> 4;
 
        if( !(dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL))
 	 )
@@ -609,7 +609,7 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* pseg)
 		 info_block->free += orgsize - dm->size;
 	     } else {
 		 /* the collapse didn't help, try getting a new block */
-		 block = DOSMEM_GetBlock(hModule, size, pseg);
+		 block = DOSMEM_GetBlock(size, pseg);
 		 if (block) {
 		     /* we got one, copy the old data there (we do need to, right?) */
 		     memcpy(block, ((char*)dm) + sizeof(dosmem_entry),
@@ -648,12 +648,12 @@ LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT size, UINT16* pseg)
 /***********************************************************************
  *           DOSMEM_Available
  */
-UINT DOSMEM_Available(HMODULE16 hModule)
+UINT DOSMEM_Available(void)
 {
    UINT  	 blocksize, available = 0;
    dosmem_entry *dm;
    
-   dm = DOSMEM_RootBlock(hModule);
+   dm = DOSMEM_RootBlock();
 
    while (dm && dm->size != DM_BLOCK_TERMINAL)
    {
@@ -693,9 +693,9 @@ UINT DOSMEM_Available(HMODULE16 hModule)
  */
 UINT DOSMEM_MapLinearToDos(LPVOID ptr)
 {
-    if (((char*)ptr >= DOSMEM_MemoryBase(0)) &&
-        ((char*)ptr < DOSMEM_MemoryBase(0) + 0x100000))
-	  return (UINT)ptr - (UINT)DOSMEM_MemoryBase(0);
+    if (((char*)ptr >= DOSMEM_MemoryBase()) &&
+        ((char*)ptr < DOSMEM_MemoryBase() + 0x100000))
+	  return (UINT)ptr - (UINT)DOSMEM_MemoryBase();
     return (UINT)ptr;
 }
 
@@ -707,7 +707,7 @@ UINT DOSMEM_MapLinearToDos(LPVOID ptr)
  */
 LPVOID DOSMEM_MapDosToLinear(UINT ptr)
 {
-    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_MemoryBase(0));
+    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_MemoryBase());
     return (LPVOID)ptr;
 }
 
@@ -721,7 +721,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
 {
    LPVOID       lin;
 
-   lin=DOSMEM_MemoryBase(0)+(x&0xffff)+(((x&0xffff0000)>>16)*16);
+   lin=DOSMEM_MemoryBase()+(x&0xffff)+(((x&0xffff0000)>>16)*16);
    TRACE_(selector)("(0x%08lx) returns 0x%p.\n", x, lin );
    return lin;
 }

@@ -101,7 +101,7 @@ static char int08[]={
 static void MZ_InitHandlers( LPDOSTASK lpDosTask )
 {
  WORD seg;
- LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(int08),&seg);
+ LPBYTE start=DOSMEM_GetBlock(sizeof(int08),&seg);
  memcpy(start,int08,sizeof(int08));
 /* INT 08: point it at our tick-incrementing handler */
  ((SEGPTR*)(lpDosTask->img))[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
@@ -122,7 +122,7 @@ static char enter_xms[]={
 
 static void MZ_InitXMS( LPDOSTASK lpDosTask )
 {
- LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(enter_xms),&(lpDosTask->xms_seg));
+ LPBYTE start=DOSMEM_GetBlock(sizeof(enter_xms),&(lpDosTask->xms_seg));
  memcpy(start,enter_xms,sizeof(enter_xms));
 }
 
@@ -152,7 +152,7 @@ static char enter_pm[]={
 static void MZ_InitDPMI( LPDOSTASK lpDosTask )
 {
  unsigned size=sizeof(enter_pm);
- LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,size,&(lpDosTask->dpmi_seg));
+ LPBYTE start=DOSMEM_GetBlock(size,&(lpDosTask->dpmi_seg));
  
  lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, size, SEGMENT_CODE, FALSE, FALSE );
 
@@ -170,7 +170,7 @@ static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
   while (env[sz++]) sz+=strlen(env+sz)+1;
  } else sz++;
  /* allocate it */
- envblk=DOSMEM_GetBlock(lpDosTask->hModule,sz+sizeof(WORD)+strlen(name)+1,&seg);
+ envblk=DOSMEM_GetBlock(sz+sizeof(WORD)+strlen(name)+1,&seg);
  /* fill it */
  if (env) {
   memcpy(envblk,env,sz);
@@ -260,14 +260,14 @@ static BOOL MZ_LoadImage( HANDLE hFile, LPCSTR filename, LPCSTR cmdline,
 
  /* allocate memory for the executable */
  TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
- avail=DOSMEM_Available(lpDosTask->hModule);
+ avail=DOSMEM_Available();
  if (avail<min_size) {
   ERR("insufficient DOS memory\n");
   SetLastError(ERROR_NOT_ENOUGH_MEMORY);
   return FALSE;
  }
  if (avail>max_size) avail=max_size;
- psp_start=DOSMEM_GetBlock(lpDosTask->hModule,avail,&lpDosTask->psp_seg);
+ psp_start=DOSMEM_GetBlock(avail,&lpDosTask->psp_seg);
  if (!psp_start) {
   ERR("error allocating DOS memory\n");
   SetLastError(ERROR_NOT_ENOUGH_MEMORY);

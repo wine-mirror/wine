@@ -64,7 +64,7 @@ void INT_SetPMHandler( BYTE intnum, FARPROC16 handler )
  */
 FARPROC16 INT_GetRMHandler( BYTE intnum )
 {
-    return ((FARPROC16*)DOSMEM_MemoryBase(0))[intnum];
+    return ((FARPROC16*)DOSMEM_MemoryBase())[intnum];
 }
 
 
@@ -77,7 +77,7 @@ void INT_SetRMHandler( BYTE intnum, FARPROC16 handler )
 {
     TRACE("Set real mode interrupt vector %02x <- %04x:%04x\n",
                  intnum, HIWORD(handler), LOWORD(handler) );
-    ((FARPROC16*)DOSMEM_MemoryBase(0))[intnum] = handler;
+    ((FARPROC16*)DOSMEM_MemoryBase())[intnum] = handler;
 }
 
 

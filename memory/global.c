@@ -312,9 +312,9 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     TRACE("oldsize %08lx\n",oldsize);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
-    if (((char *)ptr >= DOSMEM_MemoryBase(0)) &&
-        ((char *)ptr <= DOSMEM_MemoryBase(0) + 0x100000))
-        ptr = DOSMEM_ResizeBlock(0, ptr, size, NULL);
+    if (((char *)ptr >= DOSMEM_MemoryBase()) &&
+        ((char *)ptr <= DOSMEM_MemoryBase() + 0x100000))
+        ptr = DOSMEM_ResizeBlock(ptr, size, NULL);
     else
         ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
     if (!ptr)
@@ -677,7 +677,7 @@ DWORD WINAPI GlobalDOSAlloc16(
              DWORD size /* [in] Number of bytes to be allocated */
 ) {
    UINT16    uParagraph;
-   LPVOID    lpBlock = DOSMEM_GetBlock( 0, size, &uParagraph );
+   LPVOID    lpBlock = DOSMEM_GetBlock( size, &uParagraph );
 
    if( lpBlock )
    {
@@ -706,7 +706,7 @@ WORD WINAPI GlobalDOSFree16(
    if( block && block < 0x100000 ) 
    {
        LPVOID lpBlock = DOSMEM_MapDosToLinear( block );
-       if( DOSMEM_FreeBlock( 0, lpBlock ) )
+       if( DOSMEM_FreeBlock( lpBlock ) )
 	   GLOBAL_FreeBlock( sel );
        sel = 0;
    }

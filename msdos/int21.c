@@ -1763,7 +1763,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
             LPVOID *mem; 
 	    if (ISV86(context))
 	      {
-		mem= DOSMEM_GetBlock(0,(DWORD)BX_reg(context)<<4,NULL);
+		mem= DOSMEM_GetBlock((DWORD)BX_reg(context)<<4,NULL);
             if (mem)
                 AX_reg(context) = DOSMEM_MapLinearToDos(mem)>>4;
 	      }
@@ -1777,7 +1777,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	      {
                 SET_CFLAG(context);
                 AX_reg(context) = 0x0008; /* insufficient memory */
-                BX_reg(context) = DOSMEM_Available(0)>>4;
+                BX_reg(context) = DOSMEM_Available()>>4;
             }
         }
         break;
@@ -1787,7 +1787,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
         {
 	  BOOL ret;
 	  if (ISV86(context))
-	    ret= DOSMEM_FreeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4));
+	    ret= DOSMEM_FreeBlock(DOSMEM_MapDosToLinear(ES_reg(context)<<4));
 	  else
 	    {
 	      ret = !GlobalDOSFree16(ES_reg(context));
@@ -1808,14 +1808,14 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	if (!ISV86(context))
 	  FIXME("RESIZE MEMORY probably insufficient implementation. Expect crash soon\n");
 	{
-	    LPVOID *mem = DOSMEM_ResizeBlock(0,DOSMEM_MapDosToLinear(ES_reg(context)<<4),
-					       BX_reg(context)<<4,NULL);
+	    LPVOID *mem = DOSMEM_ResizeBlock(DOSMEM_MapDosToLinear(ES_reg(context)<<4),
+					     BX_reg(context)<<4,NULL);
 	    if (mem)
 		AX_reg(context) = DOSMEM_MapLinearToDos(mem)>>4;
 	    else {
 		SET_CFLAG(context);
 		AX_reg(context) = 0x0008; /* insufficient memory */
-		BX_reg(context) = DOSMEM_Available(0)>>4; /* not quite right */
+		BX_reg(context) = DOSMEM_Available()>>4; /* not quite right */
 	    }
 	}
         break;
