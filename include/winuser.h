@@ -3298,6 +3298,7 @@ HWND      WINAPI GetNextDlgTabItem(HWND,HWND,BOOL);
 HWND      WINAPI GetOpenClipboardWindow(void);
 HWND      WINAPI GetParent(HWND);
 INT       WINAPI GetPriorityClipboardFormat(UINT*,INT);
+BOOL      WINAPI GetProcessDefaultLayout(DWORD*);
 HANDLE    WINAPI GetPropA(HWND,LPCSTR);
 HANDLE    WINAPI GetPropW(HWND,LPCWSTR);
 #define     GetProp WINELIB_NAME_AW(GetProp)
@@ -3522,6 +3523,7 @@ BOOL      WINAPI SetMenu(HWND,HMENU);
 BOOL      WINAPI SetMenuContextHelpId(HMENU,DWORD);
 BOOL      WINAPI SetMenuItemBitmaps(HMENU,UINT,UINT,HBITMAP,HBITMAP);
 BOOL      WINAPI SetMessageQueue(INT);
+BOOL      WINAPI SetProcessDefaultLayout(DWORD);
 HWND      WINAPI SetParent(HWND,HWND);
 BOOL      WINAPI SetPropA(HWND,LPCSTR,HANDLE);
 BOOL      WINAPI SetPropW(HWND,LPCWSTR,HANDLE);

@@ -631,3 +631,5 @@ init	MAIN_UserInit
 # win98
 800 stdcall GetMenuInfo(long ptr)GetMenuInfo
 801 stdcall SetMenuInfo(long ptr)SetMenuInfo
+802 stdcall GetProcessDefaultLayout(ptr) GetProcessDefaultLayout
+803 stdcall SetProcessDefaultLayout(long) SetProcessDefaultLayout

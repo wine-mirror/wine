@@ -345,3 +345,47 @@ DWORD dwNumberOfConcurrentThreads)
     FIXME_(win32)("(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
     return (HANDLE)NULL;
 }
+
+
+/******************************************************************************
+ *                    GetProcessDefaultLayout [USER32.802]
+ *
+ * Gets the default layout for parentless windows.
+ * Right now, just returns 0 (left-to-right).
+ *
+ * RETURNS
+ *    Success: Nonzero
+ *    Failure: Zero
+ *
+ * BUGS
+ *    No RTL
+ */
+BOOL WINAPI GetProcessDefaultLayout( DWORD *pdwDefaultLayout )
+{
+    if ( !pdwDefaultLayout ) {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    *pdwDefaultLayout = 0;
+ return TRUE;
+}
+
+
+/******************************************************************************
+ *                    SetProcessDefaultLayout [USER32.803]
+ *
+ * Sets the default layout for parentless windows.
+ * Right now, only accepts 0 (left-to-right).
+ *
+ * RETURNS
+ *    Success: Nonzero
+ *    Failure: Zero
+ *
+ * BUGS
+ *    No RTL
+ */
+BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
+{
+    return ( dwDefaultLayout == 0 );
+}
+
