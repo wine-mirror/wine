@@ -3302,35 +3302,6 @@ LPWSTR
 
 void
 
-%%rsabase.dll
-
-%long
-
-ALG_ID
-BOOL
-DWORD
-HCRYPTHASH
-HCRYPTKEY
-HCRYPTPROV
-HRESULT
-
-%ptr
-
-BYTE *
-DWORD *
-HCRYPTHASH *
-HCRYPTKEY *
-HCRYPTPROV *
-PVTableProvStruc
-
-%str
-
-LPSTR
-
-%wstr
-
-LPCWSTR
-
 %%rsaenh.dll
 
 %long
