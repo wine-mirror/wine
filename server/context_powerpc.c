@@ -252,7 +252,7 @@ void *get_thread_ip( struct thread *thread )
     if (suspend_for_ptrace( thread ))
     {
         get_thread_context( thread, CONTEXT_CONTROL, &context );
-        resume_thread( thread );
+        resume_after_ptrace( thread );
     }
     return (void *)context.Iar;
 }
@@ -293,7 +293,7 @@ DECL_HANDLER(get_thread_context)
         if (flags && suspend_for_ptrace( thread ))
         {
             get_thread_context( thread, flags, data );
-            resume_thread( thread );
+            resume_after_ptrace( thread );
         }
     }
     release_object( thread );
@@ -321,7 +321,7 @@ DECL_HANDLER(set_thread_context)
         if (flags && suspend_for_ptrace( thread ))
         {
             set_thread_context( thread, flags, get_req_data() );
-            resume_thread( thread );
+            resume_after_ptrace( thread );
         }
         release_object( thread );
     }

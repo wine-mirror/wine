@@ -653,6 +653,8 @@ void CLIENT_InitServer(void)
     sigaddset( &block_set, SIGIO );
     sigaddset( &block_set, SIGINT );
     sigaddset( &block_set, SIGHUP );
+    sigaddset( &block_set, SIGUSR1 );
+    sigaddset( &block_set, SIGUSR2 );
 
     /* receive the first thread request fd on the main socket */
     NtCurrentTeb()->request_fd = receive_fd( &dummy_handle );

@@ -301,11 +301,18 @@ static void set_thread_info( struct thread *thread,
     }
 }
 
+/* stop a thread (at the Unix level) */
+void stop_thread( struct thread *thread )
+{
+    /* can't stop a thread while initialisation is in progress */
+    if (is_process_init_done(thread->process)) send_thread_signal( thread, SIGUSR1 );
+}
+
 /* suspend a thread */
-int suspend_thread( struct thread *thread, int check_limit )
+static int suspend_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
-    if (thread->suspend < MAXIMUM_SUSPEND_COUNT || !check_limit)
+    if (thread->suspend < MAXIMUM_SUSPEND_COUNT)
     {
         if (!(thread->process->suspend + thread->suspend++)) stop_thread( thread );
     }
@@ -314,16 +321,12 @@ int suspend_thread( struct thread *thread, int check_limit )
 }
 
 /* resume a thread */
-int resume_thread( struct thread *thread )
+static int resume_thread( struct thread *thread )
 {
     int old_count = thread->suspend;
     if (thread->suspend > 0)
     {
-        if (!(--thread->suspend + thread->process->suspend))
-        {
-            continue_thread( thread );
-            wake_thread( thread );
-        }
+        if (!(--thread->suspend + thread->process->suspend)) wake_thread( thread );
     }
     return old_count;
 }
@@ -500,6 +503,7 @@ static void thread_timeout( void *ptr )
 
     wait->user = NULL;
     if (thread->wait != wait) return; /* not the top-level wait, ignore it */
+    if (thread->suspend + thread->process->suspend > 0) return;  /* suspended, ignore it */
 
     if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d cookie=%p\n",
                               thread->id, STATUS_TIMEOUT, cookie );
@@ -722,7 +726,7 @@ static void get_selector_entry( struct thread *thread, int entry,
         if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
         *flags = flags_buf[entry & 3];
     done:
-        resume_thread( thread );
+        resume_after_ptrace( thread );
     }
 }
 
@@ -933,7 +937,7 @@ DECL_HANDLER(suspend_thread)
     if ((thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME )))
     {
         if (thread->state == TERMINATED) set_error( STATUS_ACCESS_DENIED );
-        else reply->count = suspend_thread( thread, 1 );
+        else reply->count = suspend_thread( thread );
         release_object( thread );
     }
 }

@@ -195,6 +195,11 @@ static void dump_varargs_unicode_str( size_t size )
 
 static void dump_varargs_context( size_t size )
 {
+    if (!size)
+    {
+        fprintf( stderr, "{}" );
+        return;
+    }
     dump_context( cur_data );
     remove_data( size );
 }
@@ -202,6 +207,12 @@ static void dump_varargs_context( size_t size )
 static void dump_varargs_exc_event( size_t size )
 {
     const CONTEXT *ptr = cur_data;
+
+    if (!size)
+    {
+        fprintf( stderr, "{}" );
+        return;
+    }
     fprintf( stderr, "{context=" );
     dump_context( ptr );
     fprintf( stderr, ",rec=" );

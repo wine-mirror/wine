@@ -110,8 +110,7 @@ extern struct thread *create_thread( int fd, struct process *process );
 extern struct thread *get_thread_from_id( thread_id_t id );
 extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access );
 extern struct thread *get_thread_from_pid( int pid );
-extern int suspend_thread( struct thread *thread, int check_limit );
-extern int resume_thread( struct thread *thread );
+extern void stop_thread( struct thread *thread );
 extern int wake_thread( struct thread *thread );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );
@@ -127,11 +126,9 @@ extern struct thread_snapshot *thread_snap( int *count );
 /* ptrace functions */
 
 extern void sigchld_handler();
-extern void wait4_thread( struct thread *thread, int signal );
-extern void stop_thread( struct thread *thread );
-extern void continue_thread( struct thread *thread );
 extern void detach_thread( struct thread *thread, int sig );
 extern int suspend_for_ptrace( struct thread *thread );
+extern void resume_after_ptrace( struct thread *thread );
 extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
 extern void *get_thread_ip( struct thread *thread );

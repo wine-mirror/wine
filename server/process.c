@@ -673,11 +673,7 @@ void resume_process( struct process *process )
         while (thread)
         {
             struct thread *next = thread->proc_next;
-            if (!thread->suspend)
-            {
-                continue_thread( thread );
-                wake_thread( thread );
-            }
+            if (!thread->suspend) wake_thread( thread );
             thread = next;
         }
     }
@@ -781,7 +777,7 @@ static int read_process_memory( struct process *process, const int *addr, size_t
             if (read_thread_int( thread, addr++, dest++ ) == -1) break;
             len--;
         }
-        resume_thread( thread );
+        resume_after_ptrace( thread );
     }
     return !len;
 }
@@ -842,7 +838,7 @@ static void write_process_memory( struct process *process, int *addr, size_t len
         if (write_thread_int( thread, addr, *src, last_mask ) == -1) goto done;
 
     done:
-        resume_thread( thread );
+        resume_after_ptrace( thread );
     }
 }
 

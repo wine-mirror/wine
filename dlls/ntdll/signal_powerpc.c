@@ -381,6 +381,7 @@ static HANDLER_DEF(int_handler)
     }
 }
 
+
 /**********************************************************************
  *		abrt_handler
  *
@@ -399,6 +400,18 @@ static HANDLER_DEF(abrt_handler)
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		usr1_handler
+ *
+ * Handler for SIGUSR1, used to signal a thread that it got suspended.
+ */
+static HANDLER_DEF(usr1_handler)
+{
+    /* wait with 0 timeout, will only return once the thread is no longer suspended */
+    WaitForMultipleObjectsEx( 0, NULL, FALSE, 0, FALSE );
 }
 
 
@@ -461,6 +474,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGABRT, have_sigaltstack, (void (*)())abrt_handler ) == -1) goto error;
+    if (set_handler( SIGUSR1, have_sigaltstack, (void (*)())usr1_handler ) == -1) goto error;
 #ifdef SIGBUS
     if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
 #endif
@@ -488,6 +502,7 @@ void SIGNAL_Reset(void)
     sigaddset( &block_set, SIGALRM );
     sigaddset( &block_set, SIGIO );
     sigaddset( &block_set, SIGHUP );
+    sigaddset( &block_set, SIGUSR1 );
     sigaddset( &block_set, SIGUSR2 );
     sigprocmask( SIG_BLOCK, &block_set, NULL );
 

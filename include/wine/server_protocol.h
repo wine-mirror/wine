@@ -3551,6 +3551,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 98
+#define SERVER_PROTOCOL_VERSION 99
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

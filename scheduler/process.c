@@ -508,6 +508,14 @@ static void start_process(void)
     console_app = (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
     if (console_app) current_process.flags |= PDB32_CONSOLE_PROC;
 
+    /* Install signal handlers; this cannot be done before, since we cannot
+     * send exceptions to the debugger before the create process event that
+     * is sent by REQ_INIT_PROCESS_DONE.
+     * We do need the handlers in place by the time the request is over, so
+     * we set them up here. If we segfault between here and the server call
+     * something is very wrong... */
+    if (!SIGNAL_Init()) goto error;
+
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
@@ -523,11 +531,6 @@ static void start_process(void)
         debugged = reply->debugged;
     }
     SERVER_END_REQ;
-
-    /* Install signal handlers; this cannot be done before, since we cannot
-     * send exceptions to the debugger before the create process event that
-     * is sent by REQ_INIT_PROCESS_DONE */
-    if (!SIGNAL_Init()) goto error;
 
     /* create the main modref and load dependencies */
     if (!(wm = PE_CreateModule( current_process.module, main_exe_name, 0, 0, FALSE )))

@@ -69,24 +69,20 @@ inline static int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 static const int use_ptrace = 1;  /* set to 0 to disable ptrace */
 
 /* handle a status returned by wait4 */
-static int handle_child_status( struct thread *thread, int pid, int status )
+static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
     if (WIFSTOPPED(status))
     {
         int sig = WSTOPSIG(status);
         if (debug_level && thread)
             fprintf( stderr, "%04x: *signal* signal=%d\n", thread->id, sig );
-        switch(sig)
+        if (sig != want_sig)
         {
-        case SIGSTOP:  /* continue at once if not suspended */
-            if (thread && (thread->process->suspend + thread->suspend)) break;
-            /* fall through */
-        default:  /* ignore other signals for now */
+            /* ignore other signals for now */
             if (thread && get_thread_single_step( thread ))
                 ptrace( PTRACE_SINGLESTEP, pid, (caddr_t)1, sig );
             else
                 ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
-            break;
         }
         return sig;
     }
@@ -115,13 +111,13 @@ void sigchld_handler()
     for (;;)
     {
         if (!(pid = wait4( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
-        if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status );
+        if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status, -1 );
         else break;
     }
 }
 
 /* wait for a ptraced child to get a certain signal */
-void wait4_thread( struct thread *thread, int signal )
+static void wait4_thread( struct thread *thread, int signal )
 {
     int res, status;
 
@@ -129,10 +125,15 @@ void wait4_thread( struct thread *thread, int signal )
     {
         if ((res = wait4( thread->unix_pid, &status, WUNTRACED, NULL )) == -1)
         {
-            perror( "wait4" );
+            if (errno == ECHILD)  /* must have died */
+            {
+                thread->unix_pid = -1;
+                thread->attached = 0;
+            }
+            else perror( "wait4" );
             return;
         }
-        res = handle_child_status( thread, res, status );
+        res = handle_child_status( thread, res, status, signal );
     } while (res && res != signal);
 }
 
@@ -176,66 +177,48 @@ void detach_thread( struct thread *thread, int sig )
     if (thread->attached)
     {
         /* make sure it is stopped */
-        suspend_thread( thread, 0 );
+        suspend_for_ptrace( thread );
         if (sig) send_thread_signal( thread, sig );
         if (thread->unix_pid == -1) return;
         if (debug_level) fprintf( stderr, "%04x: *detached*\n", thread->id );
         ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
-        thread->suspend = 0;  /* detach makes it continue */
         thread->attached = 0;
     }
-    else
-    {
-        if (sig) send_thread_signal( thread, sig );
-        if (thread->suspend + thread->process->suspend) continue_thread( thread );
-    }
-}
-
-/* stop a thread (at the Unix level) */
-void stop_thread( struct thread *thread )
-{
-    /* can't stop a thread while initialisation is in progress */
-    if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) return;
-    /* first try to attach to it */
-    if (!thread->attached)
-        if (attach_thread( thread )) return;  /* this will have stopped it */
-    /* attached already, or attach failed -> send a signal */
-    if (thread->unix_pid == -1) return;
-    send_thread_signal( thread, SIGSTOP );
-    if (thread->attached) wait4_thread( thread, SIGSTOP );
-}
-
-/* make a thread continue (at the Unix level) */
-void continue_thread( struct thread *thread )
-{
-    if (thread->unix_pid == -1) return;
-    if (!thread->attached) send_thread_signal( thread, SIGCONT );
-    else ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
-                 thread->unix_pid, (caddr_t)1, SIGSTOP );
+    else if (sig) send_thread_signal( thread, sig );
 }
 
 /* suspend a thread to allow using ptrace on it */
-/* you must do a resume_thread when finished with the thread */
+/* you must do a resume_after_ptrace when finished with the thread */
 int suspend_for_ptrace( struct thread *thread )
 {
-    if (thread->attached)
-    {
-        suspend_thread( thread, 0 );
-        return 1;
-    }
     /* can't stop a thread while initialisation is in progress */
     if (thread->unix_pid == -1 || !is_process_init_done(thread->process)) goto error;
-    thread->suspend++;
+
+    if (thread->attached)
+    {
+        send_thread_signal( thread, SIGSTOP );
+        wait4_thread( thread, SIGSTOP );
+        return 1;
+    }
     if (attach_thread( thread )) return 1;
-    thread->suspend--;
  error:
     set_error( STATUS_ACCESS_DENIED );
     return 0;
 }
 
+/* resume a thread after we have used pthread on it */
+void resume_after_ptrace( struct thread *thread )
+{
+    if (thread->unix_pid == -1) return;
+    assert( thread->attached );
+    ptrace( get_thread_single_step(thread) ? PTRACE_SINGLESTEP : PTRACE_CONT,
+            thread->unix_pid, (caddr_t)1, 0 /* cancel the SIGSTOP */ );
+}
+
 /* read an int from a thread address space */
 int read_thread_int( struct thread *thread, const int *addr, int *data )
 {
+    errno = 0;
     *data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, (caddr_t)addr, 0 );
     if ( *data == -1 && errno)
     {

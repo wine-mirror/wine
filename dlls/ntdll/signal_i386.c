@@ -655,6 +655,36 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 
 
 /***********************************************************************
+ *           init_handler
+ *
+ * Handler initialization when the full context is not needed.
+ */
+static void init_handler( const SIGCONTEXT *sigcontext )
+{
+    /* restore a proper %fs for the fault handler */
+    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)) ||
+        !IS_SELECTOR_SYSTEM(SS_sig(sigcontext)))  /* 16-bit mode */
+    {
+        wine_set_fs( SYSLEVEL_Win16CurrentTeb );
+    }
+#ifdef __HAVE_VM86
+    else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
+    {
+        /* fetch the saved %fs on the stack */
+        wine_set_fs( *(unsigned int *)ESP_sig(sigcontext) );
+    }
+#endif  /* __HAVE_VM86 */
+#ifdef FS_sig
+    else  /* 32-bit mode, get %fs at time of the fault */
+    {
+        wine_set_fs( FS_sig(sigcontext) );
+    }
+#endif  /* FS_sig */
+    wine_set_gs( NtCurrentTeb()->gs_sel );
+}
+
+
+/***********************************************************************
  *           save_fpu
  *
  * Set the FPU context from a sigcontext.
@@ -1037,6 +1067,7 @@ static HANDLER_DEF(fpe_handler)
  */
 static HANDLER_DEF(int_handler)
 {
+    init_handler( HANDLER_CONTEXT );
     if (!dispatch_signal(SIGINT))
     {
         EXCEPTION_RECORD rec;
@@ -1071,6 +1102,19 @@ static HANDLER_DEF(abrt_handler)
     rec.NumberParameters = 0;
     EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
+}
+
+
+/**********************************************************************
+ *		usr1_handler
+ *
+ * Handler for SIGUSR1, used to signal a thread that it got suspended.
+ */
+static HANDLER_DEF(usr1_handler)
+{
+    init_handler( HANDLER_CONTEXT );
+    /* wait with 0 timeout, will only return once the thread is no longer suspended */
+    WaitForMultipleObjectsEx( 0, NULL, FALSE, 0, FALSE );
 }
 
 
@@ -1160,6 +1204,7 @@ BOOL SIGNAL_Init(void)
     if (set_handler( SIGSEGV, have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGILL,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
     if (set_handler( SIGABRT, have_sigaltstack, (void (*)())abrt_handler ) == -1) goto error;
+    if (set_handler( SIGUSR1, have_sigaltstack, (void (*)())usr1_handler ) == -1) goto error;
 #ifdef SIGBUS
     if (set_handler( SIGBUS,  have_sigaltstack, (void (*)())segv_handler ) == -1) goto error;
 #endif
@@ -1192,6 +1237,7 @@ void SIGNAL_Reset(void)
     sigaddset( &block_set, SIGALRM );
     sigaddset( &block_set, SIGIO );
     sigaddset( &block_set, SIGHUP );
+    sigaddset( &block_set, SIGUSR1 );
     sigaddset( &block_set, SIGUSR2 );
     sigprocmask( SIG_BLOCK, &block_set, NULL );
 
