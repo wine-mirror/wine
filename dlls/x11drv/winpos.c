@@ -1288,13 +1288,15 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
 	    break;
 
+	case SW_RESTORE:
+	    swp |= SWP_FRAMECHANGED;
+            /* fall through */
 	case SW_SHOWNOACTIVATE:
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
-	case SW_RESTORE:
-	    swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+	    swp |= SWP_SHOWWINDOW;
 
             if( wndPtr->dwStyle & (WS_MINIMIZE | WS_MAXIMIZE) )
 		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
@@ -1309,9 +1311,8 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
         if (!IsWindow( hwnd )) goto END;
     }
 
-    /* We can't activate a child window */
-    if ((wndPtr->dwStyle & WS_CHILD) &&
-        !(wndPtr->dwExStyle & WS_EX_MDICHILD))
+    /* ShowWindow won't activate a not being maximized child window */
+    if ((wndPtr->dwStyle & WS_CHILD) && cmd != SW_MAXIMIZE)
         swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 
     SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,

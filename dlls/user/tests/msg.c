@@ -1778,6 +1778,47 @@ static void test_mdi_messages(void)
     SetFocus(0);
     flush_sequence();
 
+    trace("creating invisible MDI child window\n");
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
+                                WS_CHILD,
+                                0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandleA(0), NULL);
+    assert(mdi_child);
+
+    flush_sequence();
+    ShowWindow(mdi_child, SW_SHOWNORMAL);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOWNORMAL) MDI child window", FALSE);
+
+    ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
+    ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(!active_child, "wrong active MDI child %p\n", active_child);
+    ok(!zoomed, "wrong zoomed state %d\n", zoomed);
+
+    ShowWindow(mdi_child, SW_HIDE);
+    ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE) MDI child window", FALSE);
+    flush_sequence();
+
+    ShowWindow(mdi_child, SW_SHOW);
+    ok_sequence(WmShowChildSeq, "ShowWindow(SW_SHOW) MDI child window", FALSE);
+
+    ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
+    ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
+
+    ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
+
+    active_child = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, (LPARAM)&zoomed);
+    ok(!active_child, "wrong active MDI child %p\n", active_child);
+    ok(!zoomed, "wrong zoomed state %d\n", zoomed);
+
+    DestroyWindow(mdi_child);
+    flush_sequence();
+
     trace("creating visible MDI child window\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE,
