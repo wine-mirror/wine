@@ -2,6 +2,7 @@
  * Large integer functions
  *
  * Copyright 2000 Alexandre Julliard
+ * Copyright 2003 Thomas Mertes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -191,13 +192,174 @@ LONGLONG WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b )
  * must be chosen such that b = 2^(64+shift) / c.
  * Then we have RtlExtendedMagicDivide(a,b,shift) == a * b / 2^(64+shift) == a / c.
  *
- * I'm too lazy to implement it right now...
+ * Parameter b although defined as LONGLONG is used as ULONGLONG.
  */
-/* LONGLONG WINAPI RtlExtendedMagicDivide( LONGLONG a, LONGLONG b, INT shift )
- * {
- *     return 0;
- * }
+#define LOWER_32(A) ((A) & 0xffffffff)
+#define UPPER_32(A) ((A) >> 32)
+LONGLONG WINAPI RtlExtendedMagicDivide(
+	LONGLONG a,
+	LONGLONG b,
+	INT shift)
+{
+    ULONGLONG a_high;
+    ULONGLONG a_low;
+    ULONGLONG b_high;
+    ULONGLONG b_low;
+    ULONGLONG ah_bl;
+    ULONGLONG al_bh;
+    LONGLONG result;
+    int positive;
+
+    if (a < 0) {
+	a_high = UPPER_32((ULONGLONG) -a);
+	a_low =  LOWER_32((ULONGLONG) -a);
+	positive = 0;
+    } else {
+	a_high = UPPER_32((ULONGLONG) a);
+	a_low =  LOWER_32((ULONGLONG) a);
+	positive = 1;
+    } /* if */
+    b_high = UPPER_32((ULONGLONG) b);
+    b_low =  LOWER_32((ULONGLONG) b);
+
+    ah_bl = a_high * b_low;
+    al_bh = a_low * b_high;
+
+    result = (LONGLONG) ((a_high * b_high +
+	    UPPER_32(ah_bl) +
+	    UPPER_32(al_bh) +
+	    UPPER_32(LOWER_32(ah_bl) + LOWER_32(al_bh) + UPPER_32(a_low * b_low))) >> shift);
+
+    if (positive) {
+	return result;
+    } else {
+	return -result;
+    } /* if */
+}
+
+
+/******************************************************************************
+ *      RtlLargeIntegerToChar	[NTDLL.@]
+ *
+ * Convert an unsigned large integer to a character string.
+ *
+ * On success assign a string and return STATUS_SUCCESS.
+ * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER
+ * Writes at most length characters to the string str.
+ * Str is '\0' terminated when length allowes it.
+ * When str fits exactly in length characters the '\0' is ommitted.
+ * When str would be larger than length: return STATUS_BUFFER_OVERFLOW
+ * For str == NULL return STATUS_ACCESS_VIOLATION.
+ * Do not check for value_ptr != NULL (as native DLL).
+ *
+ * Difference:
+ * - Accept base 0 as 10 instead of crashing as native DLL does.
+ * - The native DLL does produce garbage or STATUS_BUFFER_OVERFLOW for
+ *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF. 
  */
+NTSTATUS WINAPI RtlLargeIntegerToChar(
+	const ULONGLONG *value_ptr,
+	ULONG base,
+	ULONG length,
+	PCHAR str)
+{
+    ULONGLONG value = *value_ptr;
+    CHAR buffer[65];
+    PCHAR pos;
+    CHAR digit;
+    ULONG len;
+
+    if (base == 0) {
+	base = 10;
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	pos--;
+	digit = value % base;
+	value = value / base;
+	if (digit < 10) {
+	    *pos = '0' + digit;
+	} else {
+	    *pos = 'A' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    len = &buffer[64] - pos;
+    if (len > length) {
+	return STATUS_BUFFER_OVERFLOW;
+    } else if (str == NULL) {
+	return STATUS_ACCESS_VIOLATION;
+    } else if (len == length) {
+	memcpy(str, pos, len);
+    } else {
+	memcpy(str, pos, len + 1);
+    } /* if */
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlInt64ToUnicodeString (NTDLL.@)
+ *
+ * Convert a large unsigned integer to a NULL terminated unicode string.
+ *
+ * On success assign a NULL terminated string and return STATUS_SUCCESS.
+ * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER.
+ * If str is too small to hold the string (with the NULL termination):
+ * Set str->Length to the length the string would have (which can be
+ * larger than the MaximumLength) and return STATUS_BUFFER_OVERFLOW.
+ * Do not check for str != NULL (as native DLL).
+ *
+ * Difference:
+ * - Accept base 0 as 10 instead of crashing as native DLL does.
+ * - Do not return STATUS_BUFFER_OVERFLOW when the string is long enough.
+ *   The native DLL does this when the string would be longer than 31
+ *   characters even when the string parameter is long enough.
+ * - The native DLL does produce garbage or STATUS_BUFFER_OVERFLOW for
+ *   base 2, 8 and 16 when the value is larger than 0xFFFFFFFF. 
+ */
+NTSTATUS WINAPI RtlInt64ToUnicodeString(
+	ULONGLONG value,
+	ULONG base,
+	UNICODE_STRING *str)
+{
+    WCHAR buffer[65];
+    PWCHAR pos;
+    WCHAR digit;
+
+    if (base == 0) {
+	base = 10;
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
+
+    pos = &buffer[64];
+    *pos = '\0';
+
+    do {
+	pos--;
+	digit = value % base;
+	value = value / base;
+	if (digit < 10) {
+	    *pos = '0' + digit;
+	} else {
+	    *pos = 'A' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    str->Length = (&buffer[64] - pos) * sizeof(WCHAR);
+    if (str->Length >= str->MaximumLength) {
+	return STATUS_BUFFER_OVERFLOW;
+    } else {
+	memcpy(str->Buffer, pos, str->Length + 1);
+    } /* if */
+    return STATUS_SUCCESS;
+}
 
 
 /******************************************************************************

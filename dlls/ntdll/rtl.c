@@ -262,13 +262,6 @@ VOID WINAPI RtlReleasePebLock(void)
 }
 
 /******************************************************************************
- *  RtlIntegerToChar	[NTDLL.@]
- */
-DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
-	return 0;
-}
-/******************************************************************************
  *  RtlSetEnvironmentVariable		[NTDLL.@]
  */
 DWORD WINAPI RtlSetEnvironmentVariable(DWORD x1,PUNICODE_STRING key,PUNICODE_STRING val) {

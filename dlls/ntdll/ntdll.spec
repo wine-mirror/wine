@@ -289,7 +289,7 @@
 @ stdcall RtlAreBitsSet(ptr long long) RtlAreBitsSet
 @ stdcall RtlAssert(ptr ptr long long) RtlAssert
 @ stub RtlCaptureStackBackTrace
-@ stub RtlCharToInteger
+@ stdcall RtlCharToInteger(ptr long ptr) RtlCharToInteger
 @ stub RtlCheckRegistryKey
 @ stdcall RtlClearAllBits(ptr) RtlClearAllBits
 @ stdcall RtlClearBits(ptr long long) RtlClearBits
@@ -367,7 +367,7 @@
 @ stub RtlExtendHeap
 @ stdcall -ret64 RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
 @ stdcall -ret64 RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
-@ stub RtlExtendedMagicDivide
+@ stdcall -ret64 RtlExtendedMagicDivide(long long long long long) RtlExtendedMagicDivide
 @ stdcall RtlFillMemory(ptr long long) RtlFillMemory
 @ stdcall RtlFillMemoryUlong(ptr long long) RtlFillMemoryUlong
 @ stdcall RtlFindClearBits(ptr long long) RtlFindClearBits
@@ -432,8 +432,9 @@
 @ stdcall RtlInitializeResource(ptr) RtlInitializeResource
 @ stdcall RtlInitializeSid(ptr ptr long) RtlInitializeSid
 @ stub RtlInsertElementGenericTable
-@ stdcall RtlIntegerToChar(long long long long) RtlIntegerToChar
-@ stub RtlIntegerToUnicodeString
+@ stdcall RtlInt64ToUnicodeString(long long long ptr) RtlInt64ToUnicodeString
+@ stdcall RtlIntegerToChar(long long long ptr) RtlIntegerToChar
+@ stdcall RtlIntegerToUnicodeString(long long ptr) RtlIntegerToUnicodeString
 @ stub RtlIsDosDeviceName_U
 @ stub RtlIsGenericTableEmpty
 @ stub RtlIsNameLegalDOS8Dot3
@@ -445,7 +446,7 @@
 @ stdcall -ret64 RtlLargeIntegerShiftLeft(long long long) RtlLargeIntegerShiftLeft
 @ stdcall -ret64 RtlLargeIntegerShiftRight(long long long) RtlLargeIntegerShiftRight
 @ stdcall -ret64 RtlLargeIntegerSubtract(long long long long) RtlLargeIntegerSubtract
-@ stub RtlLargeIntegerToChar
+@ stdcall RtlLargeIntegerToChar(ptr long long ptr) RtlLargeIntegerToChar
 @ stdcall RtlLeaveCriticalSection(ptr) RtlLeaveCriticalSection
 @ stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 @ stdcall RtlLengthSecurityDescriptor(ptr) RtlLengthSecurityDescriptor
@@ -540,7 +541,7 @@
 @ stub RtlUniform
 @ stdcall RtlUnlockHeap(long) RtlUnlockHeap
 @ stdcall RtlUnwind(ptr ptr ptr long) RtlUnwind
-@ stub RtlUpcaseUnicodeChar
+@ stdcall RtlUpcaseUnicodeChar(long) RtlUpcaseUnicodeChar
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
 @ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long) RtlUpcaseUnicodeStringToAnsiString
 @ stub RtlUpcaseUnicodeStringToCountedOemString
@@ -548,7 +549,7 @@
 @ stub RtlUpcaseUnicodeToCustomCPN
 @ stdcall RtlUpcaseUnicodeToMultiByteN(ptr long ptr ptr long) RtlUpcaseUnicodeToMultiByteN
 @ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long) RtlUpcaseUnicodeToOemN
-@ stub RtlUpperChar
+@ stdcall RtlUpperChar(long) RtlUpperChar
 @ stdcall RtlUpperString(ptr ptr) RtlUpperString
 @ stub RtlUsageHeap
 @ stub RtlValidAcl

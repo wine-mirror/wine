@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1996-1998 Marcus Meissner
  * Copyright (C) 2000      Alexandre Julliard
+ * Copyright (C) 2003      Thomas Mertes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -198,9 +199,11 @@ void WINAPI RtlEraseUnicodeString( UNICODE_STRING *str )
     }
 }
 
+
 /*
     COMPARISON FUNCTIONS
 */
+
 
 /******************************************************************************
  *	RtlCompareString   (NTDLL.@)
@@ -315,7 +318,7 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
     if (ignore_case)
     {
         for (i = 0; i < s1->Length / sizeof(WCHAR); i++)
-            if (toupper(s1->Buffer[i]) != toupper(s2->Buffer[i])) return FALSE;
+            if (toupperW(s1->Buffer[i]) != toupperW(s2->Buffer[i])) return FALSE;
     }
     else
     {
@@ -515,6 +518,20 @@ NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
      CASE CONVERSIONS
 */
 
+
+/**************************************************************************
+ *	RtlUpperChar   (NTDLL.@)
+ */
+CHAR WINAPI RtlUpperChar( CHAR ch )
+{
+    if (ch >= 'a' && ch <= 'z') {
+        return ch - 'a' + 'A';
+    } else {
+        return ch;
+    }
+}
+
+
 /**************************************************************************
  *	RtlUpperString   (NTDLL.@)
  */
@@ -522,8 +539,17 @@ void WINAPI RtlUpperString( STRING *dst, const STRING *src )
 {
     unsigned int i, len = min(src->Length, dst->MaximumLength);
 
-    for (i = 0; i < len; i++) dst->Buffer[i] = toupper(src->Buffer[i]);
+    for (i = 0; i < len; i++) dst->Buffer[i] = RtlUpperChar(src->Buffer[i]);
     dst->Length = len;
+}
+
+
+/**************************************************************************
+ *	RtlUpcaseUnicodeChar   (NTDLL.@)
+ */
+WCHAR WINAPI RtlUpcaseUnicodeChar( WCHAR wch )
+{
+    return toupperW(wch);
 }
 
 
@@ -637,6 +663,7 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 /*
 	STRING SIZE
 */
+
 
 /**************************************************************************
  *      RtlOemStringToUnicodeSize   (NTDLL.@)
@@ -790,6 +817,7 @@ NTSTATUS WINAPI RtlAppendUnicodeStringToString( UNICODE_STRING *dst, const UNICO
 	MISC
 */
 
+
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
  *
@@ -836,75 +864,295 @@ out:
 	return len;
 }
 
+
 /**************************************************************************
- *	RtlUnicodeStringToInteger (NTDLL.@)
+ *      RtlCharToInteger   (NTDLL.@)
  *
- *	Convert a text buffer into its integer form
+ * Convert a character string into its integer equivalent.
+ *
+ * On success assign an integer value and return STATUS_SUCCESS.
+ * For base 0 accept: {whitespace} [+|-] [0[x|o|b]] {digits}
+ * For bases 2, 8, 10 and 16 accept: {whitespace} [+|-] {digits}
+ * For other bases return STATUS_INVALID_PARAMETER.
+ * For value == NULL return STATUS_ACCESS_VIOLATION.
+ * No check of value overflow: Just assign lower 32 bits (as native DLL).
+ * Do not check for str != NULL (as native DLL).
+ *
+ * Difference:
+ * - Do not read garbage behind '\0' as native DLL does.
+ */
+NTSTATUS WINAPI RtlCharToInteger(
+	PCSZ str,
+	ULONG base,
+	ULONG *value)
+{
+    CHAR chCurrent;
+    int digit;
+    ULONG RunningTotal = 0;
+    char bMinus = 0;
+
+    while (*str != '\0' && *str <= ' ') {
+	str++;
+    } /* while */
+
+    if (*str == '+') {
+	str++;
+    } else if (*str == '-') {
+	bMinus = 1;
+	str++;
+    } /* if */
+
+    if (base == 0) {
+	base = 10;
+	if (str[0] == '0') {
+	    if (str[1] == 'b') {
+		str += 2;
+		base = 2;
+	    } else if (str[1] == 'o') {
+		str += 2;
+		base = 8;
+	    } else if (str[1] == 'x') {
+		str += 2;
+		base = 16;
+	    } /* if */
+	} /* if */
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
+
+    if (value == NULL) {
+	return STATUS_ACCESS_VIOLATION;
+    } /* if */
+
+    while (*str != '\0') {
+	chCurrent = *str;
+	if (chCurrent >= '0' && chCurrent <= '9') {
+	    digit = chCurrent - '0';
+	} else if (chCurrent >= 'A' && chCurrent <= 'Z') {
+	    digit = chCurrent - 'A' + 10;
+	} else if (chCurrent >= 'a' && chCurrent <= 'z') {
+	    digit = chCurrent - 'a' + 10;
+	} else {
+	    digit = -1;
+	} /* if */
+	if (digit < 0 || digit >= base) {
+	    *value = bMinus ? -RunningTotal : RunningTotal;
+	    return STATUS_SUCCESS;
+	} /* if */
+
+	RunningTotal = RunningTotal * base + digit;
+	str++;
+    } /* while */
+
+    *value = bMinus ? -RunningTotal : RunningTotal;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlIntegerToChar   (NTDLL.@)
+ *
+ * Convert an unsigned integer to a character string.
+ *
+ * On success assign a string and return STATUS_SUCCESS.
+ * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER
+ * Writes at most length characters to the string str.
+ * Str is '\0' terminated when length allowes it.
+ * When str fits exactly in length characters the '\0' is ommitted.
+ * When str would be larger than length: return STATUS_BUFFER_OVERFLOW
+ * For str == NULL return STATUS_ACCESS_VIOLATION.
+ */
+NTSTATUS WINAPI RtlIntegerToChar(
+	ULONG value,
+	ULONG base,
+	ULONG length,
+	PCHAR str)
+{
+    CHAR buffer[33];
+    PCHAR pos;
+    CHAR digit;
+    ULONG len;
+
+    if (base == 0) {
+	base = 10;
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	pos--;
+	digit = value % base;
+	value = value / base;
+	if (digit < 10) {
+	    *pos = '0' + digit;
+	} else {
+	    *pos = 'A' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    len = &buffer[32] - pos;
+    if (len > length) {
+	return STATUS_BUFFER_OVERFLOW;
+    } else if (str == NULL) {
+	return STATUS_ACCESS_VIOLATION;
+    } else if (len == length) {
+	memcpy(str, pos, len);
+    } else {
+	memcpy(str, pos, len + 1);
+    } /* if */
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *      RtlUnicodeStringToInteger (NTDLL.@)
+ *
+ * Convert an unicode string into its integer equivalent.
+ *
+ * On success assign an integer value and return STATUS_SUCCESS.
+ * For base 0 accept: {whitespace} [+|-] [0[x|o|b]] {digits}
+ * For bases 2, 8, 10 and 16 accept: {whitespace} [+|-] {digits}
+ * For other bases return STATUS_INVALID_PARAMETER.
+ * For value == NULL return STATUS_ACCESS_VIOLATION.
+ * No check of value overflow: Just assign lower 32 bits (as native DLL).
+ * Do not check for str != NULL (as native DLL).
+ *
+ * Difference:
+ * - Do not read garbage on string length 0 as native DLL does.
  */
 NTSTATUS WINAPI RtlUnicodeStringToInteger(
 	const UNICODE_STRING *str,
-	int base,
-	int * pdest)
+	ULONG base,
+	ULONG *value)
 {
-	LPWSTR lpwstr = str->Buffer;
-	WCHAR wchCurrent = 0;
-	int CharsParsed = 0;
-	int RunningTotal = 0;
-	char bMinus = 0;
+    LPWSTR lpwstr = str->Buffer;
+    USHORT CharsRemaining = str->Length / sizeof(WCHAR);
+    WCHAR wchCurrent;
+    int digit;
+    ULONG RunningTotal = 0;
+    char bMinus = 0;
 
-	/* no checking done on UNICODE_STRING and int* in native DLL either */
-	TRACE("(%p, %d, %p)", str, base, pdest);
+    while (CharsRemaining >= 1 && *lpwstr <= ' ') {
+	lpwstr++;
+	CharsRemaining--;
+    } /* while */
 
-	switch (base)
-	{
-		case 0:
-			base = 10;
-			break;
-		case 2:
-		case 8:
-		case 10:
-		case 16:
-			break;
-		default:
-			return STATUS_INVALID_PARAMETER;
-	}
+    if (CharsRemaining >= 1) {
+	if (*lpwstr == '+') {
+	    lpwstr++;
+	    CharsRemaining--;
+	} else if (*lpwstr == '-') {
+	    bMinus = 1;
+	    lpwstr++;
+	    CharsRemaining--;
+	} /* if */
+    } /* if */
 
-	if ((str->Length) >= 4 && (base == 10) && (*lpwstr == '0') && (*(lpwstr+1) == 'x'))
-	{
-		lpwstr+=2;
+    if (base == 0) {
+	base = 10;
+	if (CharsRemaining >= 2 && lpwstr[0] == '0') {
+	    if (lpwstr[1] == 'b') {
+		lpwstr += 2;
+		CharsRemaining -= 2;
+		base = 2;
+	    } else if (lpwstr[1] == 'o') {
+		lpwstr += 2;
+		CharsRemaining -= 2;
+		base = 8;
+	    } else if (lpwstr[1] == 'x') {
+		lpwstr += 2;
+		CharsRemaining -= 2;
 		base = 16;
-	}
+	    } /* if */
+	} /* if */
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
 
-	*pdest = 0;
-	for (; (CharsParsed*sizeof(WCHAR) < str->Length) && (*lpwstr <= ' '); lpwstr++)
-		CharsParsed++;
+    if (value == NULL) {
+	return STATUS_ACCESS_VIOLATION;
+    } /* if */
 
-	if (*lpwstr == '+')
-		lpwstr++;
-	else if (*lpwstr == '-')
-	{
-		bMinus = 1;
-		lpwstr++;
-	}
+    while (CharsRemaining >= 1) {
+	wchCurrent = *lpwstr;
+	if (wchCurrent >= '0' && wchCurrent <= '9') {
+	    digit = wchCurrent - '0';
+	} else if (wchCurrent >= 'A' && wchCurrent <= 'Z') {
+	    digit = wchCurrent - 'A' + 10;
+	} else if (wchCurrent >= 'a' && wchCurrent <= 'z') {
+	    digit = wchCurrent - 'a' + 10;
+	} else {
+	    digit = -1;
+	} /* if */
+	if (digit < 0 || digit >= base) {
+	    *value = bMinus ? -RunningTotal : RunningTotal;
+	    return STATUS_SUCCESS;
+	} /* if */
 
-	for (; (CharsParsed*sizeof(WCHAR) < str->Length) && (*lpwstr != '\0'); lpwstr++)
-	{
-		CharsParsed++;
-		wchCurrent = *lpwstr;
-		if (wchCurrent >= 'A')
-			wchCurrent = '0' + 10 + wchCurrent - 'A';
-		if ((wchCurrent - '0') >= base || wchCurrent < '0')
-		{
-			*pdest = bMinus ? -RunningTotal: RunningTotal;
-			return STATUS_SUCCESS;
-		}
-		/*
-		 * increase significance of previous digits each time
-		 * we find another valid one and add on this valid one
-		 */
-		RunningTotal = wchCurrent - '0' + RunningTotal * base;
-	}
+	RunningTotal = RunningTotal * base + digit;
+	lpwstr++;
+	CharsRemaining--;
+    } /* while */
 
-	*pdest = bMinus ? -RunningTotal : RunningTotal;
-	return STATUS_SUCCESS;
+    *value = bMinus ? -RunningTotal : RunningTotal;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
+ *	RtlIntegerToUnicodeString (NTDLL.@)
+ *
+ * Convert an unsigned integer to a NULL terminated unicode string.
+ *
+ * On success assign a NULL terminated string and return STATUS_SUCCESS.
+ * If base is not 0 (=10), 2, 8, 10 or 16 return STATUS_INVALID_PARAMETER.
+ * If str is too small to hold the string (with the NULL termination):
+ * Set str->Length to the length the string would have (which can be
+ * larger than the MaximumLength) and return STATUS_BUFFER_OVERFLOW.
+ * Do not check for str != NULL (as native DLL).
+ *
+ * Difference:
+ * - Do not return STATUS_BUFFER_OVERFLOW when the string is long enough.
+ *   The native DLL does this when the string would be longer than 16
+ *   characters even when the string parameter is long enough.
+ */
+NTSTATUS WINAPI RtlIntegerToUnicodeString(
+	ULONG value,
+	ULONG base,
+	UNICODE_STRING *str)
+{
+    WCHAR buffer[33];
+    PWCHAR pos;
+    WCHAR digit;
+
+    if (base == 0) {
+	base = 10;
+    } else if (base != 2 && base != 8 && base != 10 && base != 16) {
+	return STATUS_INVALID_PARAMETER;
+    } /* if */
+
+    pos = &buffer[32];
+    *pos = '\0';
+
+    do {
+	pos--;
+	digit = value % base;
+	value = value / base;
+	if (digit < 10) {
+	    *pos = '0' + digit;
+	} else {
+	    *pos = 'A' + digit - 10;
+	} /* if */
+    } while (value != 0L);
+
+    str->Length = (&buffer[32] - pos) * sizeof(WCHAR);
+    if (str->Length >= str->MaximumLength) {
+	return STATUS_BUFFER_OVERFLOW;
+    } else {
+	memcpy(str->Buffer, pos, str->Length + 1);
+    } /* if */
+    return STATUS_SUCCESS;
 }
