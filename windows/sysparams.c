@@ -561,6 +561,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     switch (uiAction)
     {
     case SPI_GETBEEP:				/*      1 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETBEEP_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -587,6 +589,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_GETMOUSE:                          /*      3 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETMOUSE_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -611,6 +615,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_SETMOUSE:                          /*      4 */
     {
         char buf[10];
+
+        if (!pvParam) return FALSE;
 
         spi_idx = SPI_SETMOUSE_IDX;
         sprintf(buf, "%d", ((INT *)pvParam)[0]);
@@ -637,6 +643,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETBORDER:				/*      5 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETBORDER_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -682,6 +690,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETKEYBOARDSPEED:                  /*     10 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETKEYBOARDSPEED_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -760,6 +770,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
 
     case SPI_GETSCREENSAVETIMEOUT:              /*     14 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETSCREENSAVETIMEOUT_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -795,6 +807,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETSCREENSAVEACTIVE:               /*     16 */
+        if (!pvParam) return FALSE;
 	*(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
         break;
 
@@ -812,6 +825,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETGRIDGRANULARITY:                /*     18 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETGRIDGRANULARITY_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -847,8 +862,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_SETDESKWALLPAPER:			/*     20 */
+        if (!pvParam || !SetDeskWallPaper( (LPSTR)pvParam )) return FALSE;
         SYSPARAMS_Save(SPI_SETDESKWALLPAPER_REGKEY, SPI_SETDESKWALLPAPER_VALNAME, pvParam, fWinIni);
-	ret = SetDeskWallPaper( (LPSTR)pvParam );
 	break;
     case SPI_SETDESKPATTERN:			/*     21 */
 	/* FIXME: the ability to specify a pattern in pvParam
@@ -865,6 +880,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
 
     case SPI_GETKEYBOARDDELAY:                  /*     22 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETKEYBOARDDELAY_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -944,6 +961,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	break;
 
     case SPI_GETICONTITLEWRAP:                  /*     25 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETICONTITLEWRAP_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -980,6 +999,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETMENUDROPALIGNMENT:              /*     27 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETMENUDROPALIGNMENT_IDX;
 
         if (!spi_loaded[spi_idx])
@@ -993,7 +1014,6 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             }
             spi_loaded[spi_idx] = TRUE;
         }
-
 
         *(BOOL *)pvParam = GetSystemMetrics( SM_MENUDROPALIGNMENT );
         break;
@@ -1066,6 +1086,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	LPLOGFONTA lpLogFont = (LPLOGFONTA)pvParam;
 	LOGFONTA	lfDefault;
 
+        if (!pvParam) return FALSE;
+
 	/*
 	 * The 'default GDI fonts' seems to be returned.
 	 * If a returned font is not a correct font in your environment,
@@ -1133,6 +1155,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
 
     case SPI_GETFASTTASKSWITCH:			/*     35 */
+        if (!pvParam) return FALSE;
 	*(BOOL *)pvParam = 1;
         break;
 
@@ -1160,6 +1183,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETDRAGFULLWINDOWS:                /*     38  WINVER >= 0x0400 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETDRAGFULLWINDOWS_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -1177,6 +1202,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETNONCLIENTMETRICS: 		/*     41  WINVER >= 0x400 */
     {
 	LPNONCLIENTMETRICSA lpnm = (LPNONCLIENTMETRICSA)pvParam;
+
+        if (!pvParam) return FALSE;
 
 	if (lpnm->cbSize == sizeof(NONCLIENTMETRICSA))
 	{
@@ -1241,7 +1268,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETMINIMIZEDMETRICS: 		/*     43  WINVER >= 0x400 */
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
-	if (lpMm->cbSize == sizeof(*lpMm))
+	if (lpMm && lpMm->cbSize == sizeof(*lpMm))
 	{
 	    /* these taken from Win2k SP3 */
 	    lpMm->iWidth = 154;
@@ -1282,6 +1309,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         char buf[20];
         RECT *pr = (RECT *) pvParam;
 
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETWORKAREA_IDX;
         sprintf(buf, "%ld %ld %ld %ld",
                 pr->left, pr->top,
@@ -1300,6 +1329,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETWORKAREA:                       /*     48  WINVER >= 0x400 */
+        if (!pvParam) return FALSE;
+
       spi_idx = SPI_SETWORKAREA_IDX;
       if (!spi_loaded[spi_idx])
       {
@@ -1329,7 +1360,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPFILTERKEYS lpFilterKeys = (LPFILTERKEYS)pvParam;
         WARN("SPI_GETFILTERKEYS not fully implemented\n");
-        if (lpFilterKeys->cbSize == sizeof(FILTERKEYS))
+        if (lpFilterKeys && lpFilterKeys->cbSize == sizeof(FILTERKEYS))
         {
             /* Indicate that no FilterKeys feature available */
             lpFilterKeys->dwFlags = 0;
@@ -1350,7 +1381,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPTOGGLEKEYS lpToggleKeys = (LPTOGGLEKEYS)pvParam;
         WARN("SPI_GETTOGGLEKEYS not fully implemented\n");
-        if (lpToggleKeys->cbSize == sizeof(TOGGLEKEYS))
+        if (lpToggleKeys && lpToggleKeys->cbSize == sizeof(TOGGLEKEYS))
         {
             /* Indicate that no ToggleKeys feature available */
             lpToggleKeys->dwFlags = 0;
@@ -1367,7 +1398,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPMOUSEKEYS lpMouseKeys = (LPMOUSEKEYS)pvParam;
         WARN("SPI_GETMOUSEKEYS not fully implemented\n");
-        if (lpMouseKeys->cbSize == sizeof(MOUSEKEYS))
+        if (lpMouseKeys && lpMouseKeys->cbSize == sizeof(MOUSEKEYS))
         {
             /* Indicate that no MouseKeys feature available */
             lpMouseKeys->dwFlags = 0;
@@ -1386,6 +1417,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
 
     case SPI_GETSHOWSOUNDS:			/*     56 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETSHOWSOUNDS_IDX;
 
         if (!spi_loaded[spi_idx])
@@ -1399,7 +1432,6 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             }
             spi_loaded[spi_idx] = TRUE;
         }
-
 
         *(INT *)pvParam = GetSystemMetrics( SM_SHOWSOUNDS );
         break;
@@ -1426,7 +1458,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPSTICKYKEYS lpStickyKeys = (LPSTICKYKEYS)pvParam;
         WARN("SPI_GETSTICKYKEYS not fully implemented\n");
-        if (lpStickyKeys->cbSize == sizeof(STICKYKEYS))
+        if (lpStickyKeys && lpStickyKeys->cbSize == sizeof(STICKYKEYS))
         {
             /* Indicate that no StickyKeys feature available */
             lpStickyKeys->dwFlags = 0;
@@ -1443,7 +1475,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPACCESSTIMEOUT lpAccessTimeout = (LPACCESSTIMEOUT)pvParam;
         WARN("SPI_GETACCESSTIMEOUT not fully implemented\n");
-        if (lpAccessTimeout->cbSize == sizeof(ACCESSTIMEOUT))
+        if (lpAccessTimeout && lpAccessTimeout->cbSize == sizeof(ACCESSTIMEOUT))
         {
             /* Indicate that no accessibility features timeout is available */
             lpAccessTimeout->dwFlags = 0;
@@ -1461,7 +1493,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPSERIALKEYSA lpSerialKeysA = (LPSERIALKEYSA)pvParam;
         WARN("SPI_GETSERIALKEYS not fully implemented\n");
-        if (lpSerialKeysA->cbSize == sizeof(SERIALKEYSA))
+        if (lpSerialKeysA && lpSerialKeysA->cbSize == sizeof(SERIALKEYSA))
         {
             /* Indicate that no SerialKeys feature available */
             lpSerialKeysA->dwFlags = 0;
@@ -1482,7 +1514,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         LPSOUNDSENTRYA lpSoundSentryA = (LPSOUNDSENTRYA)pvParam;
         WARN("SPI_GETSOUNDSENTRY not fully implemented\n");
-        if (lpSoundSentryA->cbSize == sizeof(SOUNDSENTRYA))
+        if (lpSoundSentryA && lpSoundSentryA->cbSize == sizeof(SOUNDSENTRYA))
         {
             /* Indicate that no SoundSentry feature available */
             lpSoundSentryA->dwFlags = 0;
@@ -1509,7 +1541,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
 	LPHIGHCONTRASTA lpHighContrastA = (LPHIGHCONTRASTA)pvParam;
 	WARN("SPI_GETHIGHCONTRAST not fully implemented\n");
-	if (lpHighContrastA->cbSize == sizeof(HIGHCONTRASTA))
+	if (lpHighContrastA && lpHighContrastA->cbSize == sizeof(HIGHCONTRASTA))
 	{
 	    /* Indicate that no high contrast feature available */
 	    lpHighContrastA->dwFlags = 0;
@@ -1524,6 +1556,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETHIGHCONTRAST);	/*     67  WINVER >= 0x400 */
 
     case SPI_GETKEYBOARDPREF:                   /*     68  WINVER >= 0x400 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETKEYBOARDPREF_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -1557,6 +1591,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETSCREENREADER:                   /*     70  WINVER >= 0x400 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETSCREENREADER_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -1594,7 +1630,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 	LPANIMATIONINFO lpAnimInfo = (LPANIMATIONINFO)pvParam;
 
 	/* Tell it "disabled" */
-	if (lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
+	if (lpAnimInfo && lpAnimInfo->cbSize == sizeof(ANIMATIONINFO))
 	    lpAnimInfo->iMinAnimate = 0; /* Minimise and restore animation is disabled (nonzero == enabled) */
 	else
 	    ret = FALSE;
@@ -1660,27 +1696,32 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     }
 
     case SPI_GETMOUSEHOVERWIDTH:		/*     98  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
 	*(UINT *)pvParam = 4;
 	break;
     WINE_SPI_FIXME(SPI_SETMOUSEHOVERWIDTH);	/*     99  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETMOUSEHOVERHEIGHT:		/*    100  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
 	*(UINT *)pvParam = 4;
 	break;
     WINE_SPI_FIXME(SPI_SETMOUSEHOVERHEIGHT);	/*    101  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETMOUSEHOVERTIME:			/*    102  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
 	*(UINT *)pvParam = 400; /* default for menu dropdowns */
 	break;
     WINE_SPI_FIXME(SPI_SETMOUSEHOVERTIME);	/*    103  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETWHEELSCROLLLINES:		/*    104  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
 	*(UINT *)pvParam = 3; /* default for num scroll lines */
 	break;
 
     WINE_SPI_FIXME(SPI_SETWHEELSCROLLLINES);	/*    105  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETMENUSHOWDELAY:                  /*    106  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
         *(UINT *)pvParam = 400; /* Tested against Windows NT 4.0 and Windows 2000 */
         break;
 
@@ -1688,6 +1729,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETSCREENSAVERRUNNING:             /*    114  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
+
         spi_idx = SPI_SETSCREENSAVERRUNNING_IDX;
         if (!spi_loaded[spi_idx])
         {
@@ -1705,6 +1748,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     case SPI_GETDESKWALLPAPER:                  /*    115  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
     {
 	char buf[MAX_PATH];
+
+        if (!pvParam) return FALSE;
 
         if (uiParam > MAX_PATH)
 	{
@@ -1734,6 +1779,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETLISTBOXSMOOTHSCROLLING);/* 0x1007  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
 
     case SPI_GETGRADIENTCAPTIONS:    /* 0x1008  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        if (!pvParam) return FALSE;
         FIXME("case SPI_GETGRADIENTCAPTIONS always return false\n");
         *(BOOL *)pvParam = FALSE;
         break;
