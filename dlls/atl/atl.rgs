@@ -8,9 +8,9 @@ HKCR
         ForceRemove '%CLSID_ATLRegistrar%' = s 'Registrar Class'
         {
             ProgID = s 'ATL.Registrar'
-            InprocServer = s '%MODULE%'
+            InprocServer32 = s '%MODULE%'
             {
-               ThreadingModel = s 'Both' 
+               val ThreadingModel = s 'Both' 
             }
         }
     }
