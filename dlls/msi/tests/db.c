@@ -24,7 +24,7 @@
 
 #include "wine/test.h"
 
-START_TEST(db)
+static void test_msidatabase(void)
 {
     MSIHANDLE hdb = 0;
     CHAR szName[] = "C:\\mytest.msi";
@@ -41,4 +41,87 @@ START_TEST(db)
 
     res = MsiCloseHandle( hdb );
     ok( res == ERROR_SUCCESS , "Failed to close database" );
+}
+
+void test_msiinsert(void)
+{
+    const char *msifile = "winetest.msi";
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    UINT r;
+    char *query, buf[80];
+    DWORD sz;
+
+    DeleteFile(msifile);
+
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    /* create a table */
+    query = "CREATE TABLE `phone` ( "
+            "`id` INT, `name` CHAR(32), `number` CHAR(32) "
+            "PRIMARY KEY `id`)";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* insert a value into it */
+    query = "INSERT INTO `phone` ( `id`, `name`, `number` )"
+        "VALUES('1', 'Abe', '8675309')";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "SELECT * FROM `phone`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+
+    /* check the record contains what we put in it */
+    r = MsiRecordGetFieldCount(hrec);
+    ok(r == 3, "record count wrong\n");
+
+    r = MsiRecordGetInteger(hrec, 1);
+    ok(r == 1, "field 1 contents wrong\n");
+    sz = sizeof buf;
+    r = MsiRecordGetString(hrec, 2, buf, &sz);
+    ok(r == ERROR_SUCCESS, "field 2 content fetch failed\n");
+    ok(!strcmp(buf,"Abe"), "field 2 content incorrect\n");
+    sz = sizeof buf;
+    r = MsiRecordGetString(hrec, 3, buf, &sz);
+    ok(r == ERROR_SUCCESS, "field 3 content fetch failed\n");
+    ok(!strcmp(buf,"8675309"), "field 3 content incorrect\n");
+    
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = DeleteFile(msifile);
+    ok(r == TRUE, "file didn't exist after commit\n");
+}
+
+START_TEST(db)
+{
+    test_msidatabase();
+    test_msiinsert();
 }
