@@ -332,7 +332,7 @@ CALLOUT_TABLE Callout =
     DispatchMessage16, DispatchMessageA, DispatchMessageW,
     RedrawWindow16, RedrawWindow,
     UserSignalProc,
-    InitThreadInput16,
+    InitApp16, InitThreadInput16,
     UserYield16,
     CURSORICON_Destroy
 };

@@ -59,6 +59,9 @@ void MAIN_EmulatorRun( void )
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 
+    /* Call InitApp for initial task */
+    Callout.InitApp16( MapHModuleLS( 0 ) );
+
     /* Add the Default Program if no program on the command line */
     if (!MAIN_argv[1])
     {
@@ -76,7 +79,7 @@ void MAIN_EmulatorRun( void )
     if (MAIN_argc <= 1) 
     {
     	MAIN_Usage(MAIN_argv[0]);
-        exit(1);
+        ExitProcess( 1 );
     }
 
     /* Load and run executables given on command line */

@@ -888,6 +888,7 @@ void THUNK_InitCallout(void)
         GETADDR( TranslateMessage16, "TranslateMessage", word_l );
         GETADDR( DispatchMessage16, "DispatchMessage", long_l );
         GETADDR( RedrawWindow16, "RedrawWindow", word_wlww );
+        GETADDR( InitApp16, "InitApp", word_w );
         GETADDR( InitThreadInput16, "InitThreadInput", word_ww );
         GETADDR( UserYield16, "UserYield", word_ );
         GETADDR( DestroyIcon32, "DestroyIcon32", word_ww );
