@@ -18,4 +18,6 @@
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c))
 #endif
 
+extern LONG OSS_WaveInit(void);
+extern BOOL OSS_MidiInit(void);
 

@@ -135,7 +135,7 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
  *
  * Initializes the MIDI devices information variables
  */
-static	BOOL OSS_MidiInit(void)
+BOOL OSS_MidiInit(void)
 {
     int 		i, status, numsynthdevs = 255, nummididevs = 255;
     struct synth_info 	sinfo;
@@ -591,29 +591,12 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
  */
 static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSA lpCaps, DWORD dwSize)
 {
-    LPMIDIINCAPSA	tmplpCaps;
-    
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
     
-    if (wDevID >= MIDM_NUMDEVS) {
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (lpCaps == NULL) {
-	return MMSYSERR_INVALPARAM;
-    }
-    
-    tmplpCaps = midiInDevices[wDevID];
-    lpCaps->wMid = tmplpCaps->wMid;  
-    lpCaps->wPid = tmplpCaps->wPid;  
-    lpCaps->vDriverVersion = tmplpCaps->vDriverVersion;  
-    strcpy(lpCaps->szPname, tmplpCaps->szPname);    
-    if (dwSize == sizeof(MIDIINCAPSA)) { 
-	/* we should run win 95, so make use of dwSupport */
-	lpCaps->dwSupport = tmplpCaps->dwSupport;
-    } else if (dwSize != sizeof(MIDIINCAPSA) - sizeof(DWORD)) {
-	TRACE("bad size for lpCaps\n");
-	return MMSYSERR_INVALPARAM;
-    }
+    if (wDevID >= MIDM_NUMDEVS) return MMSYSERR_BADDEVICEID;
+    if (lpCaps == NULL)		return MMSYSERR_INVALPARAM;
+
+    memcpy(lpCaps, midiInDevices[wDevID], min(dwSize, sizeof(*lpCaps)));
     
     return MMSYSERR_NOERROR;
 }
@@ -956,42 +939,15 @@ static	void modFMReset(WORD wDevID)
 /**************************************************************************
  * 				modGetDevCaps			[internal]
  */
-static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSA lpCaps, 
-			   DWORD dwSize)
+static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSA lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
-    if (wDevID == (WORD) MIDI_MAPPER) { 
-	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
-	lpCaps->wPid = 0x0001; 	/* Product ID */
-	lpCaps->vDriverVersion = 0x001; /* Product Version */
-	strcpy(lpCaps->szPname, "MIDI Mapper (not functional yet)");
-	/* FIXME Does it make any difference ? */
-	lpCaps->wTechnology = MOD_FMSYNTH; 
-	lpCaps->wVoices     = 14;       /* FIXME */
-	lpCaps->wNotes      = 14;       /* FIXME */
-	/* FIXME Does it make any difference ? */
-	lpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME; 
-    } else {
-	LPMIDIOUTCAPSA	tmplpCaps;
-	
-	if (wDevID >= MODM_NUMDEVS) {
-	    TRACE("MAX_MIDIOUTDRV reached !\n");
-	    return MMSYSERR_BADDEVICEID;
-	}
-	/* FIXME There is a way to do it so easily, but I'm too
-	 * sleepy to think and I want to test
-	 */
-	
-	tmplpCaps = midiOutDevices[wDevID];
-	lpCaps->wMid = tmplpCaps->wMid;  
-	lpCaps->wPid = tmplpCaps->wPid;  
-	lpCaps->vDriverVersion = tmplpCaps->vDriverVersion;  
-	strcpy(lpCaps->szPname, tmplpCaps->szPname);    
-	lpCaps->wTechnology = tmplpCaps->wTechnology;
-	lpCaps->wVoices = tmplpCaps->wVoices;  
-	lpCaps->wNotes = tmplpCaps->wNotes;  
-	lpCaps->dwSupport = tmplpCaps->dwSupport;
-    }
+
+    if (wDevID >= MODM_NUMDEVS)	return MMSYSERR_BADDEVICEID;
+    if (lpCaps == NULL) 	return MMSYSERR_INVALPARAM;
+
+    memcpy(lpCaps, midiOutDevices[wDevID], min(dwSize, sizeof(*lpCaps)));
+
     return MMSYSERR_NOERROR;
 }
 
@@ -1578,9 +1534,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
     case DRVM_INIT:
-	OSS_MidiInit();
-	/* fall thru */
-    case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
@@ -1624,8 +1577,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     switch (wMsg) {
 #ifdef HAVE_OSS_MIDI
     case DRVM_INIT:
-	OSS_MidiInit();
-	/* fall thru */
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:

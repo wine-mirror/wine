@@ -49,7 +49,7 @@ LONG CALLBACK	OSS_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
     
     switch(wMsg) {
-    case DRV_LOAD:		return 1;
+    case DRV_LOAD:		OSS_WaveInit(); OSS_MidiInit(); return 1;
     case DRV_FREE:		return 1;
     case DRV_OPEN:		return OSS_drvOpen((LPSTR)dwParam1);
     case DRV_CLOSE:		return OSS_drvClose(dwDevID);
