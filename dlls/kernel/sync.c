@@ -491,7 +491,7 @@ HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
     if (!MultiByteToWideChar( CP_ACP, 0, name, -1, buffer, MAX_PATH ))
     {
         SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        return INVALID_HANDLE_VALUE;
     }
     return CreateNamedPipeW( buffer, dwOpenMode, dwPipeMode, nMaxInstances,
                              nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
@@ -540,8 +540,8 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         req->timeout = nDefaultTimeOut;
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
+        else ret = INVALID_HANDLE_VALUE;
     }
     SERVER_END_REQ;
     return ret;
