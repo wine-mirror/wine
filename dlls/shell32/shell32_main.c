@@ -1137,7 +1137,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	  case DLL_PROCESS_DETACH:
 	    shell32_RefCount--;
 	    if ( !shell32_RefCount )
-	    { FreeLibrary(hComctl32);
+	    { 
 	      bShell32IsInitialized = FALSE;
 
 	      if (pdesktopfolder) 
@@ -1145,6 +1145,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      }
 
 	      SIC_Destroy();
+              FreeLibrary(hComctl32);
 
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
