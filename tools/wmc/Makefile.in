@@ -24,11 +24,8 @@ mcl.o: y.tab.h
 
 @MAKE_RULES@
 
-wmc: $(OBJS)
-	$(CC) $(CFLAGS) -o wmc $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
-
-wmc.exe: $(OBJS)
-	$(CC) $(CFLAGS) -o wmc.exe $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
+wmc$(EXEEXT): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBUNICODE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
 y.tab.c y.tab.h: mcy.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y

@@ -1,0 +1,30 @@
+DEFS      = @DLLFLAGS@ -D__WINESRC__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = libwine_port.a
+
+C_SRCS = \
+	getpagesize.c \
+	lstat.c \
+	memmove.c \
+	mkstemp.c \
+	pread.c \
+	pwrite.c \
+	statfs.c \
+	strcasecmp.c \
+	strerror.c \
+	strncasecmp.c \
+	usleep.c
+
+all: $(MODULE)
+
+@MAKE_RULES@
+
+$(MODULE): $(OBJS) Makefile.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
+
+### Dependencies:

@@ -1,9 +1,9 @@
-DEFS      = -DNO_LIBWINE -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\"" -DBINDIR="\"$(bindir)\""
+DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\"" -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE   = none
+MODULE    = none
 
 PROGRAMS = \
 	bin2res \
@@ -40,19 +40,19 @@ all: $(PROGRAMS) $(SUBDIRS)
 widl wrc: wpp
 
 makedep: makedep.o
-	$(CC) $(CFLAGS) -o makedep makedep.o
+	$(CC) $(CFLAGS) -o makedep makedep.o $(LIBPORT)
 
 fnt2bdf: fnt2bdf.o
-	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o
+	$(CC) $(CFLAGS) -o fnt2bdf fnt2bdf.o $(LIBPORT)
 
 bin2res: bin2res.o
-	$(CC) $(CFLAGS) -o bin2res bin2res.o
+	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
 
 winegcc: winegcc.o
-	$(CC) $(CFLAGS) -o winegcc winegcc.o
+	$(CC) $(CFLAGS) -o winegcc winegcc.o $(LIBPORT)
 
 winewrap: winewrap.o
-	$(CC) $(CFLAGS) -o winewrap winewrap.o
+	$(CC) $(CFLAGS) -o winewrap winewrap.o $(LIBPORT)
 
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)

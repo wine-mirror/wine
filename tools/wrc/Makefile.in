@@ -27,11 +27,8 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-wrc: $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
-	$(CC) $(CFLAGS) -o wrc $(OBJS) $(EXTRALIBS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) $(LDFLAGS)
-
-wrc.exe: $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
-	$(CC) $(CFLAGS) -o wrc.exe $(OBJS) $(EXTRALIBS) $(LIBWINE) $(LIBUNICODE) $(LEXLIB) -liberty $(LDFLAGS)
+wrc$(EXEEXT): $(OBJS) $(TOPOBJDIR)/tools/wpp/libwpp.a
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(EXTRALIBS) $(LIBUNICODE) $(LIBPORT) $(LEXLIB) $(LDFLAGS)
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/parser.y

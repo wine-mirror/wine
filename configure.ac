@@ -1517,6 +1517,8 @@ dlls/x11drv/Makefile
 documentation/Makefile
 include/Makefile
 library/Makefile
+libs/Makefile
+libs/port/Makefile
 miscemu/Makefile
 ole/Makefile
 programs/Makefile

@@ -29,7 +29,6 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "wine/unicode.h"
 #include "widl.h"
 #include "utils.h"
 #include "parser.h"

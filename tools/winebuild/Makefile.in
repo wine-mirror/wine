@@ -23,7 +23,7 @@ all: $(PROGRAMS) winebuild.man
 @MAKE_RULES@
 
 winebuild$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBUNICODE) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBUNICODE) $(LIBPORT) $(LDFLAGS)
 
 winebuild.man: winebuild.man.in
 	sed -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/winebuild.man.in >$@ || $(RM) $@

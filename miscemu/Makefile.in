@@ -18,7 +18,7 @@ all: $(MODULE)
 ALL_OBJS = $(SPEC_SRCS:.spec=.spec.o) $(OBJS)
 
 $(MODULE): $(ALL_OBJS)
-	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBS) $(LDFLAGS)
+	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
 wine.spec.c: $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe wine -mgui -e wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)

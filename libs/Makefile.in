@@ -1,0 +1,25 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+
+SUBDIRS = \
+	port
+
+# Sub-directories to install for install-lib
+INSTALLLIBSUBDIRS =
+
+# Sub-directories to install for install-dev
+INSTALLDEVSUBDIRS =
+
+INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
+
+@MAKE_RULES@
+
+all: $(SUBDIRS)
+
+install-lib:: $(INSTALLLIBSUBDIRS:%=%/__install__)
+install-dev:: $(INSTALLDEVSUBDIRS:%=%/__install__)
+
+### Dependencies:
