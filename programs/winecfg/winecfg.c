@@ -106,7 +106,7 @@ end:
 }
 
 /*****************************************************************************
- * setConfigValue : Sets a configuration key in the registry
+ * setConfigValue : Sets a configuration key in the registry. Section will be created if it doesn't already exist
  *
  * HKEY  hCurrent : the registry key that the configuration is rooted at
  * char *subKey : the name of the config section
@@ -209,9 +209,9 @@ void addTransaction(char *section, char *key, enum transaction_action action, ch
     assert( key != NULL );
     if (action == ACTION_SET) assert( newValue != NULL );
 
-    trans->section = section;
-    trans->key = key;
-    trans->newValue = newValue;
+    trans->section = strdup(section);
+    trans->key = strdup(key);
+    trans->newValue = strdup(newValue);
     trans->action = action;
     trans->next = NULL;
     trans->prev = NULL;
@@ -225,7 +225,10 @@ void addTransaction(char *section, char *key, enum transaction_action action, ch
 	tqhead = trans;
     }
 
-    if (instantApply) processTransaction(trans);
+    if (instantApply) {
+	processTransaction(trans);
+	destroyTransaction(trans);
+    }
 }
 
 void processTransaction(struct transaction *trans) {
@@ -239,11 +242,25 @@ void processTransaction(struct transaction *trans) {
     /* TODO: implement notifications here */
 }
 
-void processTransQueue() {
+void processTransQueue(void)
+{
     WINE_TRACE("\n");
-    while (tqhead != NULL) {
-	processTransaction(tqhead);
-	tqhead = tqhead->next;
-	destroyTransaction(tqhead->prev);
+    while (tqtail != NULL) {
+	struct transaction *next = tqtail->next;
+	processTransaction(tqtail);
+	destroyTransaction(tqtail);
+	tqtail = next;	
     }
+}
+
+
+/* ================================== utility functions ============================ */
+
+/* returns a string with the window text of the dialog item. user is responsible for freeing the result */
+char *getDialogItemText(HWND hDlg, WORD controlID) {
+    HWND item = GetDlgItem(hDlg, controlID);
+    int len = GetWindowTextLength(item) + 1;
+    char *result = malloc(len);
+    if (GetWindowText(item, result, len) == 0) return NULL;
+    return result;
 }

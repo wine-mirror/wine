@@ -55,7 +55,7 @@ char *getDriveValue(char letter, char *valueName) {
   
   WINE_TRACE("letter=%c, valueName=%s\n", letter, valueName);
 
-  subKeyName = malloc(strlen("Drive X"));
+  subKeyName = malloc(strlen("Drive X")+1);
   sprintf(subKeyName, "Drive %c", letter);
 
   hr = RegOpenKeyEx(configKey, subKeyName, 0, KEY_READ, &hkDrive);
@@ -74,7 +74,14 @@ end:
   return result;
 }
 
-void initDriveDlg (HWND hDlg)
+void setDriveValue(char letter, char *valueName, char *newValue) {
+  char *driveSection = malloc(strlen("Drive X")+1);
+  sprintf(driveSection, "Drive %c", letter);
+  addTransaction(driveSection, valueName, ACTION_SET, newValue);
+  free(driveSection);
+}
+
+void refreshDriveDlg (HWND hDlg)
 {
   int i;
   char *subKeyName = malloc(MAX_NAME_LENGTH);
@@ -141,7 +148,7 @@ void initDriveDlg (HWND hDlg)
       SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_SETITEMDATA, itemIndex, (LPARAM) driveLetter);
       
       free(title);
-      free(label);
+      if (label && (strcmp(label, "no label") != 0)) free(label);
 
       driveCount++;
 	
@@ -149,6 +156,7 @@ void initDriveDlg (HWND hDlg)
   }
   
   WINE_TRACE("loaded %d drives\n", driveCount);
+  SendMessageA(GetDlgItem(hDlg, IDC_LIST_DRIVES), LB_SETSEL, TRUE, 0);
   
   free(subKeyName);  
   updatingUI = FALSE;
@@ -253,8 +261,8 @@ long drive_available_mask(char letter)
     }
   }
   
-  result = ~result; 
-  result |= DRIVE_MASK_BIT(letter);
+  result = ~result;
+  if (letter) result |= DRIVE_MASK_BIT(letter);
   
   WINE_TRACE( "finished drive letter loop with %lx\n", result );
   return result;
@@ -329,10 +337,12 @@ void refreshDriveEditDialog(HWND hDlg) {
     SendDlgItemMessage(hDlg, IDC_EDIT_DEVICE, WM_SETTEXT, 0,(LPARAM)device);
   } else WINE_WARN("no Device field?\n");
 
-  if( strcmp("cdrom", type) == 0 ||
-      strcmp("floppy", type) == 0) {
-    if( (strlen( device ) == 0) &&
-	((strlen( serial ) > 0) || (strlen( label ) > 0)) ) {
+  selection = IDC_RADIO_ASSIGN;
+  if ((type && strcmp("cdrom", type) == 0) ||
+      (type && strcmp("floppy", type) == 0)) {
+    
+    if( (type && (strlen( device ) == 0)) &&
+	((serial && strlen( serial ) > 0) || (label && strlen( label ) > 0)) ) {
       selection = IDC_RADIO_ASSIGN;
     }
     else {
@@ -347,7 +357,7 @@ void refreshDriveEditDialog(HWND hDlg) {
   }
 
   CheckRadioButton( hDlg, IDC_RADIO_AUTODETECT, IDC_RADIO_ASSIGN, selection );
-  SendDlgItemMessage(hDlg, IDC_EDIT_PATH, WM_SETTEXT, 0,(LPARAM)path);
+  if (path) SendDlgItemMessage(hDlg, IDC_EDIT_PATH, WM_SETTEXT, 0,(LPARAM)path);
   
   if (path) free(path);
   if (type) free(type);
@@ -355,10 +365,26 @@ void refreshDriveEditDialog(HWND hDlg) {
   if (serial) free(serial);
   if (label) free(label);
   if (device) free(device);
-  
+
   updatingUI = FALSE;
   
   return;
+}
+
+/* storing the drive propsheet HWND here is a bit ugly, but the simplest solution for now */
+static HWND driveDlgHandle;
+
+void onEditChanged(HWND hDlg, WORD controlID) {
+  WINE_TRACE("controlID=%d\n", controlID);
+  switch (controlID) {
+      case IDC_EDIT_LABEL: { /* drive label edit box */
+        char *label = getDialogItemText(hDlg, controlID);
+        setDriveValue(editWindowLetter, "Label", label);
+        refreshDriveDlg(driveDlgHandle);
+        free(label);
+        break;
+      }
+  }
 }
 
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -387,16 +413,45 @@ INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 	    }
 	    break;
 	    
-	  case ID_BUTTON_OK: break;
-	  
-	  /* Fall through. */
-	  
+	  case ID_BUTTON_OK:	  
 	  case ID_BUTTON_CANCEL:
 	    EndDialog(hDlg, wParam);
 	    return TRUE;
       }
+      if (HIWORD(wParam) == EN_CHANGE) onEditChanged(hDlg, LOWORD(wParam));
+      break;
   }
   return FALSE;
+}
+
+void onAddDriveClicked(HWND hDlg) {
+  /* we should allocate a drive letter automatically. We also need some way to let the user choose the mapping point,
+     for now we will just force them to enter a path automatically, with / being the default. In future we should
+     be able to temporarily map / then invoke the directory chooser dialog. */
+  
+  char newLetter = 'D'; /* we skip A, B and of course C is already mapped, right? */
+  long mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */
+  char *sectionName;
+  
+  while (mask & (1 << (newLetter - 'A'))) {
+    newLetter++;
+    if (newLetter > 'Z') {
+      MessageBox(NULL, "You cannot add any more drives.\n\nEach drive must have a letter, from A to Z, so you cannot have more than 26", "", MB_OK | MB_ICONEXCLAMATION);
+      return;
+    }
+  }
+  WINE_TRACE("allocating drive letter %c\n", newLetter);
+  
+  sectionName = malloc(strlen("Drive X") + 1);
+  sprintf(sectionName, "Drive %c", newLetter);
+  addTransaction(sectionName, "Path", ACTION_SET, "/"); /* default to root path */
+  addTransaction(sectionName, "Type", ACTION_SET, "hd");
+  processTransQueue(); /* make sure the drive has been added, even if we are not in instant apply mode */
+  free(sectionName);
+
+  refreshDriveDlg(driveDlgHandle);
+
+  DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_DRIVE_EDIT2), NULL, (DLGPROC) DriveEditDlgProc, (LPARAM) newLetter);
 }
 
 
@@ -414,9 +469,10 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    selection = -1;
 		    break;
 	      }
+	      break;
 
 	    case IDC_BUTTON_ADD:
-	      /* temporarily disabled, awaiting rewrite for transactional design (need to fill in defaults smartly, wizard?) */
+	      onAddDriveClicked(hDlg);
 	      break;
 
 	    case IDC_BUTTON_REMOVE:
@@ -443,7 +499,8 @@ DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      SetWindowLong(hDlg, DWL_MSGRESULT, PSNRET_NOERROR);
 	      break;
 	    case PSN_SETACTIVE:
-	      initDriveDlg (hDlg);
+	      driveDlgHandle = hDlg;
+	      refreshDriveDlg (driveDlgHandle);
 	      break;
 	}
 	break;

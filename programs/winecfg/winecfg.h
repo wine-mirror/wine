@@ -99,6 +99,9 @@ void saveDriveSettings (HWND hDlg);
 INT_PTR CALLBACK DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+/* some basic utilities to make win32 suck less */
+char *getDialogItemText(HWND hDlg, WORD controlID);
+
 #define WINE_KEY_ROOT "Software\\Wine\\WineCfg\\Config"
 
 #endif
