@@ -50,7 +50,7 @@ clean::
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	[ -d $(mandir)/man$(prog_manext) ] || $(MKDIR) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
+	$(INSTALL_DATA) $(SRCDIR)/wrc.man $(mandir)/man$(prog_manext)/wrc.$(prog_manext)
 	$(INSTALL_PROGRAM) wrc $(bindir)/wrc
 
 uninstall::

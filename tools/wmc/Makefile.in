@@ -20,7 +20,7 @@ EXTRA_OBJS = y.tab.o
 
 all: check_unicode $(PROGRAMS)
 
-depend: y.tab.h
+depend mcl.o: y.tab.h
 
 @MAKE_RULES@
 
@@ -28,7 +28,7 @@ wmc: $(OBJS) $(TOPOBJDIR)/unicode/unicode.o
 	$(CC) $(CFLAGS) -o wmc $(OBJS) $(TOPOBJDIR)/unicode/unicode.o $(LEXLIB)
 
 $(TOPOBJDIR)/unicode/unicode.o check_unicode:
-	cd $(TOPSRCDIR)/unicode && $(MAKE)
+	cd $(TOPOBJDIR)/unicode && $(MAKE)
 
 y.tab.c y.tab.h: mcy.y
 	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y
@@ -39,7 +39,7 @@ clean::
 install:: $(PROGRAMS)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	[ -d $(mandir)/man$(prog_manext) ] || $(MKDIR) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(INSTALL_DATA) $(SRCDIR)/wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
 	$(INSTALL_PROGRAM) wmc $(bindir)/wmc
 
 uninstall::
