@@ -2824,10 +2824,9 @@ BOOL32 WINAPI EnumTimeFormats32W(
 
 /**************************************************************************
  *              GetNumberFormat32A	(KERNEL32.355)
- * NOTE: type of lpFormat should be CONST NUMBERFORMAT 
  */
 INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
-			       LPCSTR lpvalue,  char *lpFormat,
+			       LPCSTR lpvalue,   const NUMBERFMT32A * lpFormat,
 			       LPSTR lpNumberStr, int cchNumber)
 {
  int n;
@@ -2837,6 +2836,27 @@ INT32 WINAPI GetNumberFormat32A(LCID locale, DWORD dwflags,
  n = strlen(lpvalue);
  if (cchNumber) { 
    strncpy(lpNumberStr,lpvalue,cchNumber);
+   if (cchNumber <= n) {
+     lpNumberStr[cchNumber-1] = 0;
+     n = cchNumber-1;
+   }
+ }
+ return n;
+}
+/**************************************************************************
+ *              GetNumberFormat32W	(KERNEL32.xxx)
+ */
+INT32 WINAPI GetNumberFormat32W(LCID locale, DWORD dwflags,
+			       LPCWSTR lpvalue,  const NUMBERFMT32W * lpFormat,
+			       LPWSTR lpNumberStr, int cchNumber)
+{
+ int n;
+
+ FIXME(file,"%s: stub, no reformating done\n",debugstr_w(lpvalue));
+
+ n = lstrlen32W(lpvalue);
+ if (cchNumber) { 
+   lstrcpyn32W(lpNumberStr,lpvalue,cchNumber);
    if (cchNumber <= n) {
      lpNumberStr[cchNumber-1] = 0;
      n = cchNumber-1;
