@@ -104,6 +104,21 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode);
+
+/* RtlCreateUnicodeStringFromAsciiz will return an empty string in the buffer
+   if passed a NULL string. This returns NULLs to the result. 
+*/
+static inline PWSTR asciitounicode( UNICODE_STRING * usBufferPtr, LPCSTR src )
+{
+    if ( (src) )
+    {
+        RtlCreateUnicodeStringFromAsciiz(usBufferPtr, src);
+        return usBufferPtr->Buffer;
+    }
+    usBufferPtr->Buffer = NULL; /* so that RtlFreeUnicodeString won't barf */
+    return NULL;
+}
+            
 static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     char qbuf[200];
@@ -157,9 +172,30 @@ CUPS_LoadPrinters(void) {
 
     nrofdests = pcupsGetPrinters(&printers);
     for (i=0;i<nrofdests;i++) {
-	const char *ppd = pcupsGetPPD(printers[i]);
+	const char *ppd;
 	char	*port,*devline;
+        WCHAR   *pNameW;
+        HKEY     hkeyPrinters, hkeyPrinter;
 
+        /* First check that the printer doesn't exist already */
+        pNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, printers[i]);
+        if (RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) ==
+            ERROR_SUCCESS) {
+             if (RegOpenKeyW(hkeyPrinters, pNameW, &hkeyPrinter) ==
+                 ERROR_SUCCESS) {
+                  /* We know this printer already */
+                  RegCloseKey(hkeyPrinter);
+                  RegCloseKey(hkeyPrinters);
+                  HeapFree(GetProcessHeap(),0,pNameW);
+                  TRACE("Printer %s already known. Skipping detection\n", printers[i]);
+                  continue;
+             }
+             RegCloseKey(hkeyPrinters);
+        }
+        HeapFree(GetProcessHeap(),0,pNameW);
+
+        /* OK, we haven't seen this one yet. Request PPD for it */
+	ppd = pcupsGetPPD(printers[i]);
 	if (!ppd) {
 	    WARN("No ppd file for %s.\n",printers[i]);
 	    /* If this was going to be the default printer,
@@ -554,29 +590,18 @@ static LPPRINTER_INFO_2W PRINTER_INFO_2AtoW(HANDLE heap, LPPRINTER_INFO_2A piA)
     piW = HeapAlloc(heap, 0, sizeof(*piW));
     memcpy(piW, piA, sizeof(*piW)); /* copy everything first */
     
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pServerName);
-    piW->pServerName = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPrinterName);
-    piW->pPrinterName = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pShareName);
-    piW->pShareName = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPortName);
-    piW->pPortName = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pDriverName);
-    piW->pDriverName = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pComment);
-    piW->pComment = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pLocation);
-    piW->pLocation = usBuffer.Buffer;
+    piW->pServerName = asciitounicode(&usBuffer,piA->pServerName);
+    piW->pPrinterName = asciitounicode(&usBuffer,piA->pPrinterName);
+    piW->pShareName = asciitounicode(&usBuffer,piA->pShareName);
+    piW->pPortName = asciitounicode(&usBuffer,piA->pPortName);
+    piW->pDriverName = asciitounicode(&usBuffer,piA->pDriverName);
+    piW->pComment = asciitounicode(&usBuffer,piA->pComment);
+    piW->pLocation = asciitounicode(&usBuffer,piA->pLocation);
     piW->pDevMode = DEVMODEdupAtoW(heap, piA->pDevMode);
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pSepFile);
-    piW->pSepFile = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pPrintProcessor);
-    piW->pPrintProcessor = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pDatatype);
-    piW->pDatatype = usBuffer.Buffer;
-    RtlCreateUnicodeStringFromAsciiz(&usBuffer,piA->pParameters);
-    piW->pParameters = usBuffer.Buffer;
+    piW->pSepFile = asciitounicode(&usBuffer,piA->pSepFile);
+    piW->pPrintProcessor = asciitounicode(&usBuffer,piA->pPrintProcessor);
+    piW->pDatatype = asciitounicode(&usBuffer,piA->pDatatype);
+    piW->pParameters = asciitounicode(&usBuffer,piA->pParameters);
     return piW;
 }
 
@@ -777,19 +802,19 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
     UNICODE_STRING lpPrinterNameW;
     UNICODE_STRING usBuffer;
     PRINTER_DEFAULTSW DefaultW, *pDefaultW = NULL;
+    PWSTR pwstrPrinterNameW;
     BOOL ret;
 
-    RtlCreateUnicodeStringFromAsciiz(&lpPrinterNameW,lpPrinterName);
+    pwstrPrinterNameW = asciitounicode(&lpPrinterNameW,lpPrinterName);
 
     if(pDefault) {
-        RtlCreateUnicodeStringFromAsciiz(&usBuffer,pDefault->pDatatype);
-        DefaultW.pDatatype = usBuffer.Buffer;
+        DefaultW.pDatatype = asciitounicode(&usBuffer,pDefault->pDatatype);
 	DefaultW.pDevMode = DEVMODEdupAtoW(GetProcessHeap(),
 					   pDefault->pDevMode);
 	DefaultW.DesiredAccess = pDefault->DesiredAccess;
 	pDefaultW = &DefaultW;
     }
-    ret = OpenPrinterW(lpPrinterNameW.Buffer, phPrinter, pDefaultW);
+    ret = OpenPrinterW(pwstrPrinterNameW, phPrinter, pDefaultW);
     if(pDefault) {
         RtlFreeUnicodeString(&usBuffer);
 	HeapFree(GetProcessHeap(), 0, DefaultW.pDevMode);
@@ -1183,6 +1208,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
     UNICODE_STRING pNameW;
+    PWSTR pwstrNameW;
     PRINTER_INFO_2W *piW;
     PRINTER_INFO_2A *piA = (PRINTER_INFO_2A*)pPrinter;
     HANDLE ret;
@@ -1193,10 +1219,10 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 	SetLastError(ERROR_INVALID_LEVEL);
 	return 0;
     }
-    RtlCreateUnicodeStringFromAsciiz(&pNameW,pName);
+    pwstrNameW = asciitounicode(&pNameW,pName);
     piW = PRINTER_INFO_2AtoW(GetProcessHeap(), piA);
 
-    ret = AddPrinterW(pNameW.Buffer, Level, (LPBYTE)piW);
+    ret = AddPrinterW(pwstrNameW, Level, (LPBYTE)piW);
 
     FREE_PRINTER_INFO_2W(GetProcessHeap(), piW);
     RtlFreeUnicodeString(&pNameW);
@@ -2166,8 +2192,11 @@ BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 {
     BOOL ret;
     UNICODE_STRING lpszNameW;
+    PWSTR pwstrNameW;
+    
     RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
-    ret = WINSPOOL_EnumPrinters(dwType, lpszNameW.Buffer, dwLevel, lpbPrinters, cbBuf,
+    pwstrNameW = asciitounicode(&lpszNameW,lpszName);
+    ret = WINSPOOL_EnumPrinters(dwType, pwstrNameW, dwLevel, lpbPrinters, cbBuf,
 				lpdwNeeded, lpdwReturned, FALSE);
     RtlFreeUnicodeString(&lpszNameW);
     return ret;
@@ -2440,8 +2469,10 @@ BOOL WINAPI GetPrinterDriverA(HANDLE hPrinter, LPSTR pEnvironment,
 {
     BOOL ret;
     UNICODE_STRING pEnvW;
-    RtlCreateUnicodeStringFromAsciiz(&pEnvW, pEnvironment);
-    ret = WINSPOOL_GetPrinterDriver(hPrinter, pEnvW.Buffer, Level, pDriverInfo,
+    PWSTR pwstrEnvW;
+    
+    pwstrEnvW = asciitounicode(&pEnvW, pEnvironment);
+    ret = WINSPOOL_GetPrinterDriver(hPrinter, pwstrEnvW, Level, pDriverInfo,
 				    cbBuf, pcbNeeded, FALSE);
     RtlFreeUnicodeString(&pEnvW);
     return ret;
@@ -2816,19 +2847,16 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
                                 LPDWORD pcbNeeded, LPDWORD pcReturned)
 {   BOOL ret;
     UNICODE_STRING pNameW, pEnvironmentW;
+    PWSTR pwstrNameW, pwstrEnvironmentW;
 
-    if(pName)
-        RtlCreateUnicodeStringFromAsciiz(&pNameW, pName);
-    if(pEnvironment)
-        RtlCreateUnicodeStringFromAsciiz(&pEnvironmentW, pEnvironment);
+    pwstrNameW = asciitounicode(&pNameW, pName);
+    pwstrEnvironmentW = asciitounicode(&pEnvironmentW, pEnvironment);
 
-    ret = WINSPOOL_EnumPrinterDrivers(pNameW.Buffer, pEnvironmentW.Buffer,
+    ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, pwstrEnvironmentW,
                                       Level, pDriverInfo, cbBuf, pcbNeeded,
                                       pcReturned, FALSE);
-    if(pName)
-        RtlFreeUnicodeString(&pNameW);
-    if(pEnvironment)
-        RtlFreeUnicodeString(&pEnvironmentW);
+    RtlFreeUnicodeString(&pNameW);
+    RtlFreeUnicodeString(&pEnvironmentW);
 
     return ret;
 }
