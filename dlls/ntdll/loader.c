@@ -21,6 +21,7 @@
 #include "winternl.h"
 
 #include "module.h"
+#include "file.h"
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/debug.h"
@@ -58,36 +59,118 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     return ret;
 }
 
-/* FIXME : MODULE_FindModule should depend on LdrGetDllHandle, not vice-versa */
+/**********************************************************************
+ *	    MODULE_FindModule
+ *
+ * Find a (loaded) win32 module depending on path
+ *	LPCSTR path: [in] pathname of module/library to be found
+ *
+ * The loader_section must be locked while calling this function
+ * RETURNS
+ *	the module handle if found
+ * 	0 if not
+ */
+WINE_MODREF *MODULE_FindModule(LPCSTR path)
+{
+    WINE_MODREF	*wm;
+    char dllname[260], *p;
 
+    /* Append .DLL to name if no extension present */
+    strcpy( dllname, path );
+    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
+            strcat( dllname, ".DLL" );
+
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    {
+        if ( !FILE_strcasecmp( dllname, wm->modname ) )
+            break;
+        if ( !FILE_strcasecmp( dllname, wm->filename ) )
+            break;
+        if ( !FILE_strcasecmp( dllname, wm->short_modname ) )
+            break;
+        if ( !FILE_strcasecmp( dllname, wm->short_filename ) )
+            break;
+    }
+
+    return wm;
+}
+
+/******************************************************************
+ *		LdrGetDllHandle (NTDLL.@)
+ *
+ *
+ */
 NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, PUNICODE_STRING name, HMODULE *base)
 {
-    STRING str;
     WINE_MODREF *wm;
 
-    FIXME("%08lx %08lx %s %p : partial stub\n",x,y,debugstr_wn(name->Buffer,name->Length),base);
+    TRACE("%08lx %08lx %s %p\n",
+          x, y, name ? debugstr_wn(name->Buffer, name->Length) : NULL, base);
 
-    *base = 0;
+    if (x != 0 || y != 0)
+        FIXME("Unknown behavior, please report\n");
 
-    RtlUnicodeStringToAnsiString(&str, name, TRUE);
-    wm = MODULE_FindModule(str.Buffer);
-    if(!wm)
+    /* FIXME: we should store module name information as unicode */
+    if (name)
+    {
+        STRING str;
+
+        RtlUnicodeStringToAnsiString( &str, name, TRUE );
+
+        wm = MODULE_FindModule( str.Buffer );
+        RtlFreeAnsiString( &str );
+    }
+    else
+        wm = exe_modref;
+
+    if (!wm)
+    {
+        *base = 0;
         return STATUS_DLL_NOT_FOUND;
-    *base = (PVOID) wm->module;
+    }
 
+    *base = wm->module;
     return STATUS_SUCCESS;
 }
 
-/* FIXME : MODULE_GetProcAddress should depend on LdrGetProcedureAddress, not vice-versa */
+/***********************************************************************
+ *           MODULE_GetProcAddress   		(internal)
+ */
+FARPROC MODULE_GetProcAddress(
+	HMODULE hModule, 	/* [in] current module handle */
+	LPCSTR function,	/* [in] function to be looked up */
+	int hint,
+	BOOL snoop )
+{
+    WINE_MODREF	*wm;
+    FARPROC	retproc = 0;
 
+    if (HIWORD(function))
+	TRACE("(%p,%s (%d))\n",hModule,function,hint);
+    else
+	TRACE("(%p,%p)\n",hModule,function);
+
+    RtlEnterCriticalSection( &loader_section );
+    if ((wm = MODULE32_LookupHMODULE( hModule )))
+    {
+        retproc = wm->find_export( wm, function, hint, snoop );
+        if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
+    }
+    RtlLeaveCriticalSection( &loader_section );
+    return retproc;
+}
+
+
+/******************************************************************
+ *		LdrGetProcedureAddress (NTDLL.@)
+ *
+ *
+ */
 NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE base, PANSI_STRING name, ULONG ord, PVOID *address)
 {
-    WARN("%p %s %ld %p\n", base, debugstr_an(name->Buffer,name->Length), ord, address);
+    WARN("%p %s %ld %p\n", base, name ? debugstr_an(name->Buffer, name->Length) : NULL, ord, address);
 
-    if(name)
-        *address = MODULE_GetProcAddress( base, name->Buffer, -1, FALSE);
-    else
-        *address = MODULE_GetProcAddress( base, (LPSTR) ord, -1, FALSE);
+    *address = MODULE_GetProcAddress( base, name ? name->Buffer : (LPSTR)ord, -1, TRUE );
 
     return (*address) ? STATUS_SUCCESS : STATUS_DLL_NOT_FOUND;
 }

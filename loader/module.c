@@ -47,7 +47,7 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
 WINE_MODREF *MODULE_modref_list = NULL;
 
-static WINE_MODREF *exe_modref;
+WINE_MODREF *exe_modref;
 static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
 
@@ -325,36 +325,6 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
     RtlLeaveCriticalSection( &loader_section );
 }
 
-/*************************************************************************
- *		MODULE_DllThreadDetach
- *
- * Send DLL thread detach notifications. These are sent in the
- * same sequence as process detach notification.
- *
- */
-void MODULE_DllThreadDetach( LPVOID lpReserved )
-{
-    WINE_MODREF *wm;
-
-    /* don't do any detach calls if process is exiting */
-    if (process_detaching) return;
-    /* FIXME: there is still a race here */
-
-    RtlEnterCriticalSection( &loader_section );
-
-    for ( wm = MODULE_modref_list; wm; wm = wm->next )
-    {
-        if ( !(wm->flags & WINE_MODREF_PROCESS_ATTACHED) )
-            continue;
-        if ( wm->flags & WINE_MODREF_NO_DLL_CALLS )
-            continue;
-
-        MODULE_InitDLL( wm, DLL_THREAD_DETACH, lpReserved );
-    }
-
-    RtlLeaveCriticalSection( &loader_section );
-}
-
 /****************************************************************************
  *              DisableThreadLibraryCalls (KERNEL32.@)
  *
@@ -472,42 +442,6 @@ HMODULE16 MODULE_CreateDummyModule( LPCSTR filename, HMODULE module32 )
 
     NE_RegisterModule( pModule );
     return hModule;
-}
-
-
-/**********************************************************************
- *	    MODULE_FindModule
- *
- * Find a (loaded) win32 module depending on path
- *
- * RETURNS
- *	the module handle if found
- * 	0 if not
- */
-WINE_MODREF *MODULE_FindModule(
-	LPCSTR path	/* [in] pathname of module/library to be found */
-) {
-    WINE_MODREF	*wm;
-    char dllname[260], *p;
-
-    /* Append .DLL to name if no extension present */
-    strcpy( dllname, path );
-    if (!(p = strrchr( dllname, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-            strcat( dllname, ".DLL" );
-
-    for ( wm = MODULE_modref_list; wm; wm = wm->next )
-    {
-        if ( !FILE_strcasecmp( dllname, wm->modname ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->filename ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->short_modname ) )
-            break;
-        if ( !FILE_strcasecmp( dllname, wm->short_filename ) )
-            break;
-    }
-
-    return wm;
 }
 
 
@@ -993,14 +927,26 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
  */
 HMODULE WINAPI GetModuleHandleA(LPCSTR module)
 {
-    WINE_MODREF *wm;
+    NTSTATUS            nts;
+    HMODULE             ret;
 
-    if ( module == NULL )
-        wm = exe_modref;
+    if (module)
+    {
+        UNICODE_STRING      wstr;
+
+        RtlCreateUnicodeStringFromAsciiz(&wstr, module);
+        nts = LdrGetDllHandle(0, 0, &wstr, &ret);
+        RtlFreeUnicodeString( &wstr );
+    }
     else
-        wm = MODULE_FindModule( module );
+        nts = LdrGetDllHandle(0, 0, NULL, &ret);
+    if (nts != STATUS_SUCCESS)
+    {
+        ret = 0;
+        SetLastError( RtlNtStatusToDosError( nts ) );
+    }
 
-    return wm? wm->module : 0;
+    return ret;
 }
 
 /***********************************************************************
@@ -1008,11 +954,25 @@ HMODULE WINAPI GetModuleHandleA(LPCSTR module)
  */
 HMODULE WINAPI GetModuleHandleW(LPCWSTR module)
 {
-    HMODULE hModule;
-    LPSTR modulea = HEAP_strdupWtoA( GetProcessHeap(), 0, module );
-    hModule = GetModuleHandleA( modulea );
-    HeapFree( GetProcessHeap(), 0, modulea );
-    return hModule;
+    NTSTATUS            nts;
+    HMODULE             ret;
+
+    if (module)
+    {
+        UNICODE_STRING      wstr;
+
+        RtlInitUnicodeString( &wstr, module );
+        nts = LdrGetDllHandle( 0, 0, &wstr, &ret);
+    }
+    else
+        nts = LdrGetDllHandle( 0, 0, NULL, &ret);
+
+    if (nts != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( nts ) );
+        ret = 0;
+    }
+    return ret;
 }
 
 
@@ -1601,7 +1561,24 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, LPCSTR name )
  */
 FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress( hModule, function, -1, TRUE );
+    NTSTATUS    nts;
+    FARPROC     fp;
+
+    if (HIWORD(function))
+    {
+        ANSI_STRING     str;
+
+        RtlInitAnsiString( &str, function );
+        nts = LdrGetProcedureAddress( hModule, &str, 0, (void**)&fp );
+    }
+    else
+        nts = LdrGetProcedureAddress( hModule, NULL, (DWORD)function, (void**)&fp );
+    if (nts != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( nts ) );
+        fp = NULL;
+    }
+    return fp;
 }
 
 /***********************************************************************
@@ -1609,36 +1586,9 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
  */
 FARPROC WINAPI GetProcAddress32_16( HMODULE hModule, LPCSTR function )
 {
-    return MODULE_GetProcAddress( hModule, function, -1, FALSE );
+    /* FIXME: we used to disable snoop when returning proc for Win16 subsystem */
+    return GetProcAddress( hModule, function );
 }
-
-/***********************************************************************
- *           MODULE_GetProcAddress   		(internal)
- */
-FARPROC MODULE_GetProcAddress(
-	HMODULE hModule, 	/* [in] current module handle */
-	LPCSTR function,	/* [in] function to be looked up */
-	int hint,
-	BOOL snoop )
-{
-    WINE_MODREF	*wm;
-    FARPROC	retproc = 0;
-
-    if (HIWORD(function))
-	TRACE_(win32)("(%08lx,%s (%d))\n",(DWORD)hModule,function,hint);
-    else
-	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
-
-    RtlEnterCriticalSection( &loader_section );
-    if ((wm = MODULE32_LookupHMODULE( hModule )))
-    {
-        retproc = wm->find_export( wm, function, hint, snoop );
-        if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
-    }
-    RtlLeaveCriticalSection( &loader_section );
-    return retproc;
-}
-
 
 /***************************************************************************
  *              HasGPHandler                    (KERNEL.338)

@@ -46,6 +46,7 @@
 #include "snoop.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win32);
 WINE_DECLARE_DEBUG_CHANNEL(module);

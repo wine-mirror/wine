@@ -209,6 +209,7 @@ extern void MODULE_WalkModref( DWORD id );
 /* the following parts of module.c are temporary exported during move of code
  * from loader/module.c to dlls/ntdll/loader.c
  */
+extern WINE_MODREF *exe_modref;
 extern CRITICAL_SECTION loader_section;
 extern int process_detaching;
 extern BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved );
@@ -267,9 +268,6 @@ extern DWORD PE_fixup_imports(WINE_MODREF *wm);
 extern BOOL MODULE_GetBuiltinPath( const char *libname, const char *ext, char *filename, UINT size );
 extern void MODULE_GetLoadOrder( enum loadorder_type plo[], const char *path, BOOL win32 );
 extern void MODULE_AddLoadOrderOption( const char *option );
-
-/* loader/elf.c */
-extern WINE_MODREF *ELF_LoadLibraryExA( LPCSTR libname, DWORD flags);
 
 /* relay32/builtin.c */
 extern WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR name, DWORD flags);
