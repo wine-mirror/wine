@@ -436,7 +436,7 @@ DWORD WINAPI WsControl(DWORD protocol,
              * interface are returned. */
                case CL_NL_ENTITY:
                {
-                  DWORD routeTableSize, numRoutes, ndx;
+                  DWORD routeTableSize, numRoutes, ndx, ret;
                   PMIB_IPFORWARDTABLE table;
                   IPRouteEntry *winRouteTable  = (IPRouteEntry *) pResponseInfo;
 
@@ -450,7 +450,11 @@ DWORD WINAPI WsControl(DWORD protocol,
                   table = (PMIB_IPFORWARDTABLE)calloc(1, routeTableSize);
                   if (!table)
                      return ERROR_NOT_ENOUGH_MEMORY;
-                  GetIpForwardTable(table, &routeTableSize, FALSE);
+                  ret = GetIpForwardTable(table, &routeTableSize, FALSE);
+                  if (ret != NO_ERROR) {
+                     free(table);
+                     return ret;
+                  }
 
                   memset(pResponseInfo, 0, sizeof(IPRouteEntry) * numRoutes);
                   for (ndx = 0; ndx < table->dwNumEntries; ndx++)
@@ -496,8 +500,10 @@ DWORD WINAPI WsControl(DWORD protocol,
                   if (!table)
                      return ERROR_NOT_ENOUGH_MEMORY;
                   ret = GetIpNetTable(table, &arpTableSize, FALSE);
-                  if (ret != NO_ERROR)
+                  if (ret != NO_ERROR) {
+                     free(table);
                      return ret;
+                  }
                   if (*pcbResponseInfoLen < sizeof(MIB_IPNETROW) *
                    table->dwNumEntries)
                   {
@@ -532,8 +538,10 @@ DWORD WINAPI WsControl(DWORD protocol,
                   if (!table)
                      return ERROR_NOT_ENOUGH_MEMORY;
                   ret = GetTcpTable(table, &tcpTableSize, FALSE);
-                  if (ret != NO_ERROR)
+                  if (ret != NO_ERROR) {
+                     free(table);
                      return ret;
+                  }
                   if (*pcbResponseInfoLen < sizeof(MIB_TCPROW) *
                    table->dwNumEntries)
                   {
