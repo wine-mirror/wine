@@ -2234,7 +2234,7 @@ static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu )
 
 	    return TRUE;
 	} 
-	else WARN("\tunable to find clicked item!\n");
+	/* Else the click was on the menu bar, finish the tracking */
     }
     return FALSE;
 }
@@ -2633,7 +2633,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    /* fall through */
 		case WM_LBUTTONDBLCLK:
 		case WM_LBUTTONDOWN:
-		    fEndMenu |= !MENU_ButtonDown( &mt, hmenu );
+		    fRemove = fEndMenu = !MENU_ButtonDown( &mt, hmenu );
 		    break;
 		
 		case WM_RBUTTONUP:
