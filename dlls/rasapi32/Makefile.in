@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = rasapi32
 SOVERSION = 1.0
+ALTNAMES  = rasapi16
 
 SPEC_SRCS = rasapi32.spec rasapi16.spec
 

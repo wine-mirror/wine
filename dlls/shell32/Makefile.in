@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
 SOVERSION = 1.0
+ALTNAMES  = shell shlwapi
 IMPORTS   = ole32 comctl32 winmm
 WRCEXTRA  = -s -p$(MODULE)
 

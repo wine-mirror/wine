@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winmm
 SOVERSION = 1.0
+ALTNAMES  = mmsystem
 WRCEXTRA  = -s -pwinmm
 
 SPEC_SRCS = \

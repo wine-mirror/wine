@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = lz32
 SOVERSION = 1.0
+ALTNAMES  = lzexpand
 
 SPEC_SRCS = lz32.spec lzexpand.spec
 

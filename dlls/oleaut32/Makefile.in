@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleaut32
 SOVERSION = 1.0
+ALTNAMES  = ole2disp typelib
 IMPORTS   = ole32 comctl32 winmm
 
 SPEC_SRCS = oleaut32.spec ole2disp.spec typelib.spec

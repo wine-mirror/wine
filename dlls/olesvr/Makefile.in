@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olesvr32
 SOVERSION = 1.0
+ALTNAMES  = olesvr
 
 SPEC_SRCS = olesvr32.spec olesvr.spec
 

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplayx
 SOVERSION = 1.0
+ALTNAMES  = dplay
 IMPORTS   = ole32
 
 SPEC_SRCS = dplay.spec dplayx.spec 

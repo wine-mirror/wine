@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comdlg32
 SOVERSION = 1.0
+ALTNAMES  = commdlg
 IMPORTS   = shell32 ole32 comctl32 winspool winmm
 WRCEXTRA  = -s -pcomdlg32
 

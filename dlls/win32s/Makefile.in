@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = w32skrnl
 SOVERSION = 1.0
+ALTNAMES  = w32sys win32s16
 
 SPEC_SRCS = w32sys.spec win32s16.spec w32skrnl.spec
 

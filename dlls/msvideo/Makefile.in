@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvfw32
 SOVERSION = 1.0
+ALTNAMES  = msvideo
 IMPORTS   = winmm
 
 SPEC_SRCS = msvfw32.spec msvideo.spec

@@ -4,6 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wsock32
 SOVERSION = 1.0
+ALTNAMES  = winsock
 
 SPEC_SRCS = winsock.spec wsock32.spec
 

@@ -51,197 +51,172 @@ DLLFILES = \
 	winspool/libwinspool.@LIBEXT@ \
 	wnaspi32/libwnaspi32.@LIBEXT@
 
-all: dlls
+# extra names for dlls containing multiple spec files
+EXTRADLLNAMES = \
+	avifile \
+	commdlg \
+	compobj \
+	dplay \
+	lzexpand \
+	mmsystem \
+	msvideo \
+	ole2 \
+	ole2disp \
+	olecli \
+	olesvr \
+	rasapi16 \
+	shell \
+	shlwapi \
+	storage \
+	typelib \
+	ver \
+	w32sys \
+	win32s16 \
+	winsock
 
 @MAKE_RULES@
 
-dlls: $(DLLS:%=lib%.@LIBEXT@)
+all: $(DLLS:%=lib%.@LIBEXT@) $(EXTRADLLNAMES:%=lib%.@LIBEXT@)
 
 # Map library name to directory
 
-libavifil32.@LIBEXT@: avifil32/libavifil32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) avifil32/libavifil32.@LIBEXT@ $@
+libavifil32.@LIBEXT@ libavifile.@LIBEXT@: avifil32/libavifil32.@LIBEXT@
+	$(RM) $@ && $(LN_S) avifil32/libavifil32.@LIBEXT@ $@
 
 libcomctl32.@LIBEXT@: comctl32/libcomctl32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) comctl32/libcomctl32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) comctl32/libcomctl32.@LIBEXT@ $@
 
-libcomdlg32.@LIBEXT@: commdlg/libcomdlg32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) commdlg/libcomdlg32.@LIBEXT@ $@
+libcomdlg32.@LIBEXT@ libcommdlg.@LIBEXT@: commdlg/libcomdlg32.@LIBEXT@
+	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.@LIBEXT@ $@
 
 libdciman32.@LIBEXT@: dciman32/libdciman32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) dciman32/libdciman32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) dciman32/libdciman32.@LIBEXT@ $@
 
-libdplayx.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
-	$(RM) $@
-	$(LN_S) dplayx/libdplayx.@LIBEXT@ $@
+libdplayx.@LIBEXT@ libdplay.@LIBEXT@: dplayx/libdplayx.@LIBEXT@
+	$(RM) $@ && $(LN_S) dplayx/libdplayx.@LIBEXT@ $@
 
 libdsound.@LIBEXT@: dsound/libdsound.@LIBEXT@
-	$(RM) $@
-	$(LN_S) dsound/libdsound.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) dsound/libdsound.@LIBEXT@ $@
 
 libicmp.@LIBEXT@: icmp/libicmp.@LIBEXT@
-	$(RM) $@
-	$(LN_S) icmp/libicmp.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) icmp/libicmp.@LIBEXT@ $@
 
 libimagehlp.@LIBEXT@: imagehlp/libimagehlp.@LIBEXT@
-	$(RM) $@
-	$(LN_S) imagehlp/libimagehlp.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) imagehlp/libimagehlp.@LIBEXT@ $@
 
 libimm32.@LIBEXT@: imm32/libimm32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) imm32/libimm32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) imm32/libimm32.@LIBEXT@ $@
 
 libjoystick.drv.@LIBEXT@: winmm/joystick/libjoystick.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/joystick/libjoystick.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/joystick/libjoystick.drv.@LIBEXT@ $@
 
-liblz32.@LIBEXT@: lzexpand/liblz32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) lzexpand/liblz32.@LIBEXT@ $@
+liblz32.@LIBEXT@ liblzexpand.@LIBEXT@: lzexpand/liblz32.@LIBEXT@
+	$(RM) $@ && $(LN_S) lzexpand/liblz32.@LIBEXT@ $@
 
 libmcianim.drv.@LIBEXT@: winmm/mcianim/libmcianim.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/mcianim/libmcianim.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/mcianim/libmcianim.drv.@LIBEXT@ $@
 
 libmciavi.drv.@LIBEXT@: winmm/mciavi/libmciavi.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/mciavi/libmciavi.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/mciavi/libmciavi.drv.@LIBEXT@ $@
 
 libmcicda.drv.@LIBEXT@: winmm/mcicda/libmcicda.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/mcicda/libmcicda.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/mcicda/libmcicda.drv.@LIBEXT@ $@
 
 libmciseq.drv.@LIBEXT@: winmm/mciseq/libmciseq.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/mciseq/libmciseq.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/mciseq/libmciseq.drv.@LIBEXT@ $@
 
 libmciwave.drv.@LIBEXT@: winmm/mciwave/libmciwave.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/mciwave/libmciwave.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/mciwave/libmciwave.drv.@LIBEXT@ $@
 
 libmidimap.drv.@LIBEXT@: winmm/midimap/libmidimap.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/midimap/libmidimap.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/midimap/libmidimap.drv.@LIBEXT@ $@
 
 libmsacm.@LIBEXT@: msacm/libmsacm.@LIBEXT@
-	$(RM) $@
-	$(LN_S) msacm/libmsacm.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) msacm/libmsacm.@LIBEXT@ $@
 
 libmsacm.drv.@LIBEXT@: winmm/wavemap/libmsacm.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/wavemap/libmsacm.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/wavemap/libmsacm.drv.@LIBEXT@ $@
 
 libmsacm32.@LIBEXT@: msacm32/libmsacm32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) msacm32/libmsacm32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) msacm32/libmsacm32.@LIBEXT@ $@
 
 libmsnet32.@LIBEXT@: msnet32/libmsnet32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) msnet32/libmsnet32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) msnet32/libmsnet32.@LIBEXT@ $@
 
-libmsvfw32.@LIBEXT@: msvideo/libmsvfw32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) msvideo/libmsvfw32.@LIBEXT@ $@
+libmsvfw32.@LIBEXT@ libmsvideo.@LIBEXT@: msvideo/libmsvfw32.@LIBEXT@
+	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.@LIBEXT@ $@
 
 libodbc32.@LIBEXT@: odbc32/libodbc32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) odbc32/libodbc32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) odbc32/libodbc32.@LIBEXT@ $@
 
-libole32.@LIBEXT@: ole32/libole32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) ole32/libole32.@LIBEXT@ $@
+libole32.@LIBEXT@ libole2.@LIBEXT@ libstorage.@LIBEXT@ libcompobj.@LIBEXT@: ole32/libole32.@LIBEXT@
+	$(RM) $@ && $(LN_S) ole32/libole32.@LIBEXT@ $@
 
-liboleaut32.@LIBEXT@: oleaut32/liboleaut32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) oleaut32/liboleaut32.@LIBEXT@ $@
+liboleaut32.@LIBEXT@ libole2disp.@LIBEXT@ libtypelib.@LIBEXT@: oleaut32/liboleaut32.@LIBEXT@
+	$(RM) $@ && $(LN_S) oleaut32/liboleaut32.@LIBEXT@ $@
 
-libolecli32.@LIBEXT@: olecli/libolecli32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) olecli/libolecli32.@LIBEXT@ $@
+libolecli32.@LIBEXT@ libolecli.@LIBEXT@: olecli/libolecli32.@LIBEXT@
+	$(RM) $@ && $(LN_S) olecli/libolecli32.@LIBEXT@ $@
 
 liboledlg.@LIBEXT@: oledlg/liboledlg.@LIBEXT@
-	$(RM) $@
-	$(LN_S) oledlg/liboledlg.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) oledlg/liboledlg.@LIBEXT@ $@
 
 libolepro32.@LIBEXT@: olepro32/libolepro32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) olepro32/libolepro32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) olepro32/libolepro32.@LIBEXT@ $@
 
-libolesvr32.@LIBEXT@: olesvr/libolesvr32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) olesvr/libolesvr32.@LIBEXT@ $@
+libolesvr32.@LIBEXT@ libolesvr.@LIBEXT@: olesvr/libolesvr32.@LIBEXT@
+	$(RM) $@ && $(LN_S) olesvr/libolesvr32.@LIBEXT@ $@
 
 libpsapi.@LIBEXT@: psapi/libpsapi.@LIBEXT@
-	$(RM) $@
-	$(LN_S) psapi/libpsapi.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) psapi/libpsapi.@LIBEXT@ $@
 
-librasapi32.@LIBEXT@: rasapi32/librasapi32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) rasapi32/librasapi32.@LIBEXT@ $@
+librasapi32.@LIBEXT@ librasapi16.@LIBEXT@: rasapi32/librasapi32.@LIBEXT@
+	$(RM) $@ && $(LN_S) rasapi32/librasapi32.@LIBEXT@ $@
 
 libsetupx.@LIBEXT@: setupx/libsetupx.@LIBEXT@
-	$(RM) $@
-	$(LN_S) setupx/libsetupx.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) setupx/libsetupx.@LIBEXT@ $@
 
-libshell32.@LIBEXT@: shell32/libshell32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) shell32/libshell32.@LIBEXT@ $@
+libshell32.@LIBEXT@ libshell.@LIBEXT@ libshlwapi.@LIBEXT@: shell32/libshell32.@LIBEXT@
+	$(RM) $@ && $(LN_S) shell32/libshell32.@LIBEXT@ $@
 
 libsound.@LIBEXT@: sound/libsound.@LIBEXT@
-	$(RM) $@
-	$(LN_S) sound/libsound.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) sound/libsound.@LIBEXT@ $@
 
 libstress.@LIBEXT@: stress/libstress.@LIBEXT@
-	$(RM) $@
-	$(LN_S) stress/libstress.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) stress/libstress.@LIBEXT@ $@
 
 libtapi32.@LIBEXT@: tapi32/libtapi32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) tapi32/libtapi32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) tapi32/libtapi32.@LIBEXT@ $@
 
-libversion.@LIBEXT@: version/libversion.@LIBEXT@
-	$(RM) $@
-	$(LN_S) version/libversion.@LIBEXT@ $@
+libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@
+	$(RM) $@ && $(LN_S) version/libversion.@LIBEXT@ $@
 
-libw32skrnl.@LIBEXT@: win32s/libw32skrnl.@LIBEXT@
-	$(RM) $@
-	$(LN_S) win32s/libw32skrnl.@LIBEXT@ $@
+libw32skrnl.@LIBEXT@ libw32sys.@LIBEXT@ libwin32s16.@LIBEXT@: win32s/libw32skrnl.@LIBEXT@
+	$(RM) $@ && $(LN_S) win32s/libw32skrnl.@LIBEXT@ $@
 
 libwin87em.@LIBEXT@: win87em/libwin87em.@LIBEXT@
-	$(RM) $@
-	$(LN_S) win87em/libwin87em.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) win87em/libwin87em.@LIBEXT@ $@
 
 libwindebug.@LIBEXT@: windebug/libwindebug.@LIBEXT@
-	$(RM) $@
-	$(LN_S) windebug/libwindebug.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) windebug/libwindebug.@LIBEXT@ $@
 
 libwineoss.drv.@LIBEXT@: winmm/wineoss/libwineoss.drv.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/wineoss/libwineoss.drv.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winmm/wineoss/libwineoss.drv.@LIBEXT@ $@
 
 libwing.@LIBEXT@: wing/libwing.@LIBEXT@
-	$(RM) $@
-	$(LN_S) wing/libwing.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) wing/libwing.@LIBEXT@ $@
 
-libwinmm.@LIBEXT@: winmm/libwinmm.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winmm/libwinmm.@LIBEXT@ $@
+libwinmm.@LIBEXT@ libmmsystem.@LIBEXT@: winmm/libwinmm.@LIBEXT@
+	$(RM) $@ && $(LN_S) winmm/libwinmm.@LIBEXT@ $@
 
 libwinspool.@LIBEXT@: winspool/libwinspool.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winspool/libwinspool.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) winspool/libwinspool.@LIBEXT@ $@
 
 libwnaspi32.@LIBEXT@: wnaspi32/libwnaspi32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) wnaspi32/libwnaspi32.@LIBEXT@ $@
+	$(RM) $@ && $(LN_S) wnaspi32/libwnaspi32.@LIBEXT@ $@
 
-libwsock32.@LIBEXT@: winsock/libwsock32.@LIBEXT@
-	$(RM) $@
-	$(LN_S) winsock/libwsock32.@LIBEXT@ $@
+libwsock32.@LIBEXT@ libwinsock.@LIBEXT@: winsock/libwsock32.@LIBEXT@
+	$(RM) $@ && $(LN_S) winsock/libwsock32.@LIBEXT@ $@
 
 $(DLLFILES): dummy
 	@cd `dirname $@` && $(MAKE)
@@ -270,4 +245,3 @@ uninstall:: $(DLLFILES:%=%_uninstall_)
 checklink:: $(DLLFILES:%=%_checklink_)
 
 clean:: $(DLLFILES:%=%_clean_)
-	$(RM) $(DLLLIBS)

@@ -3,6 +3,7 @@
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
 # SOVERSION    : version of the .so file
+# ALTNAMES     : alternate names for this dll (optional)
 # IMPORTS      : dlls to import (optional)
 #
 # plus all variables required by the global Make.rules.in
@@ -13,21 +14,29 @@ LIBEXT     = @LIBEXT@
 LDSHARED   = @LDSHARED@
 SONAME     = lib$(MODULE).so
 IMPORTLIBS = $(IMPORTS:%=$(DLLDIR)/lib%.$(LIBEXT))
+ALLNAMES   = lib$(MODULE).so $(ALTNAMES:%=lib%.so)
 
-all: lib$(MODULE).$(LIBEXT)
+all: lib$(MODULE).$(LIBEXT) $(ALTNAMES:%=lib%.$(LIBEXT))
 
 @MAKE_RULES@
+
+# Rules for .so files
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDSHARED) $(OBJS) -o $@
 
-lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
+$(ALLNAMES): lib$(MODULE).so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) lib$(MODULE).so.$(SOVERSION) $@
+
+# Rules for .a files
 
 lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(RM) $@
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
+
+$(ALTNAMES:%=lib%.a): lib$(MODULE).a
+	$(RM) $@ && $(LN_S) lib$(MODULE).a $@
 
 # Rules for checking that no imports are missing
 
@@ -46,7 +55,7 @@ $(IMPORTLIBS): dummy
 install_so: lib$(MODULE).so.$(SOVERSION)
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	$(INSTALL_PROGRAM) lib$(MODULE).so.$(SOVERSION) $(libdir)/lib$(MODULE).so.$(SOVERSION)
-	cd $(libdir) && $(RM) lib$(MODULE).so && $(LN_S) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).so
+	cd $(libdir) && for i in $(ALLNAMES); do $(RM) $$i && $(LN_S) lib$(MODULE).so.$(SOVERSION) $$i; done
 
 install_a: lib$(MODULE).a
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
@@ -55,7 +64,7 @@ install_a: lib$(MODULE).a
 install:: $(LIBEXT:%=install_%)
 
 uninstall::
-	cd $(libdir) && $(RM) lib$(MODULE).so lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
+	cd $(libdir) && $(RM) $(ALLNAMES) lib$(MODULE).so.$(SOVERSION) lib$(MODULE).a
 
 clean::
 	$(RM) lib$(MODULE).so.$(SOVERSION)
