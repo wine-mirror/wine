@@ -82,9 +82,11 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winsock2.h"
+#include "ws2spi.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
 #include "wine/port.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(winsock);
@@ -694,7 +696,7 @@ INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 /***********************************************************************
  *       WSApSetPostRoutine	(WS2_32.24)
  */
-INT WINAPI WSApSetPostRoutine(LPVOID /* LPWPUPOSTMESSAGE */lpPostRoutine)
+INT WINAPI WSApSetPostRoutine(LPWPUPOSTMESSAGE lpPostRoutine)
 {
     FIXME("(%p), stub !\n", lpPostRoutine);
     return 0;

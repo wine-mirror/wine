@@ -185,6 +185,7 @@ INSTALLED_INCLUDES = \
 	winver.h \
 	wnaspi32.h \
 	wownt32.h \
+	ws2spi.h \
 	wshisotp.h \
 	wsipx.h \
 	wtypes.h \
