@@ -38,6 +38,7 @@
 
 #include "wine/debug.h"
 #include "winbase.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "windef.h"
 #include "dinput_private.h"
@@ -51,6 +52,21 @@ static ICOM_VTABLE(IDirectInput7A) ddi7avt;
 #define MAX_WINE_DINPUT_DEVICES 4
 static dinput_device * dinput_devices[MAX_WINE_DINPUT_DEVICES];
 static int nrof_dinput_devices = 0;
+
+BOOL WINAPI Init( HINSTANCE inst, DWORD reason, LPVOID reserv)
+{
+    switch(reason)
+    {
+      case DLL_PROCESS_ATTACH:
+        keyboard_hook = SetWindowsHookExW( WH_KEYBOARD_LL, KeyboardCallback, 0, 0 );
+        break;
+      case DLL_PROCESS_DETACH:
+        UnhookWindowsHookEx(keyboard_hook);
+        break;
+    }
+    return TRUE;
+}
+
 
 /* register a direct draw driver. We better not use malloc for we are in 
  * the ELF startup initialisation at this point.

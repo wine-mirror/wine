@@ -49,13 +49,83 @@ struct SysKeyboardAImpl
 	IDirectInputAImpl *dinput;
 	
 	HANDLE	hEvent;	
-	HHOOK hook;
         /* SysKeyboardAImpl */
-        BYTE                            keystate[256];
 	int                             acquired;
+        int                             buffersize;  /* set in 'SetProperty'         */
+        LPDIDEVICEOBJECTDATA            buffer;      /* buffer for 'GetDeviceData'.
+                                                        Alloc at 'Acquire', Free at
+                                                        'Unacquire'                  */
+        int                             count;       /* number of objects in use in
+                                                        'buffer'                     */
+        int                             start;       /* 'buffer' rotates. This is the
+                                                        first in use (if count > 0)  */
+        BOOL                            overflow;    /* return DI_BUFFEROVERFLOW in
+                                                        'GetDeviceData'              */
+        CRITICAL_SECTION                crit;
 };
 
-static SysKeyboardAImpl* current_lock = NULL;
+SysKeyboardAImpl *current; /* Today's acquired device 
+FIXME: currently this can be only one.
+Maybe this should be a linked list or st.
+I don't know what the rules are for multiple acquired keyboards, 
+but 'DI_LOSTFOCUS' and 'DI_UNACQUIRED' exist for a reason.
+*/
+
+static BYTE DInputKeyState[256]; /* array for 'GetDeviceState' */
+
+HHOOK keyboard_hook;
+
+LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
+{
+  if (code == HC_ACTION)
+    {
+      BYTE dik_code;
+      BOOL down;
+      DWORD timestamp;
+
+      {
+        KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
+        dik_code = hook->scanCode;
+        if (hook->flags & LLKHF_EXTENDED) dik_code |= 0x80;
+        down = !(hook->flags & LLKHF_UP);
+        timestamp = hook->time;
+      }
+
+      DInputKeyState[dik_code] = (down ? 0x80 : 0);
+
+      if (current != NULL)
+        {
+          if (current->hEvent)
+            SetEvent(current->hEvent);
+
+          if (current->buffer != NULL)
+            {
+              int n;
+
+              EnterCriticalSection(&(current->crit));
+
+              n = (current->start + current->count) % current->buffersize;
+
+              current->buffer[n].dwOfs = dik_code;
+              current->buffer[n].dwData = down ? 0x80 : 0;
+              current->buffer[n].dwTimeStamp = timestamp;
+              current->buffer[n].dwSequence = current->dinput->evsequence++;
+
+              if (current->count == current->buffersize)
+                {
+                  current->start++;
+                  current->overflow = TRUE;
+                }
+              else 
+                current->count++;
+
+              LeaveCriticalSection(&(current->crit));
+            }
+        }
+    }
+
+  return CallNextHookEx(keyboard_hook, code, wparam, lparam);
+}
 
 static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
   0x0ab8648a,
@@ -88,7 +158,6 @@ static SysKeyboardAImpl *alloc_device(REFGUID rguid, ICOM_VTABLE(IDirectInputDev
     newDevice->ref = 1;
     ICOM_VTBL(newDevice) = kvt;
     memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
-    memset(newDevice->keystate,0,256);
     newDevice->dinput = dinput;
 
     return newDevice;
@@ -139,6 +208,12 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
 
 			TRACE("(buffersize=%ld)\n",pd->dwData);
+
+                        if (This->acquired)
+                           return DIERR_INVALIDPARAM;
+
+                        This->buffersize = pd->dwData;
+
 			break;
 		}
 		default:
@@ -153,23 +228,11 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 )
 {
-    DWORD i;
-
-    memset( ptr, 0, len );
+    /* Note: device does not need to be acquired */
     if (len != 256)
-    {
-        WARN("whoops, got len %ld?\n", len);
-        return DI_OK;
-    }
-    for (i = 0; i < 0x80; i++)
-    {
-        WORD vkey = MapVirtualKeyA( i, 1 );
-        if (vkey && (GetAsyncKeyState( vkey ) & 0x8000))
-        {
-            ((LPBYTE)ptr)[i] = 0x80;
-            ((LPBYTE)ptr)[i | 0x80] = 0x80;
-        }
-    }
+      return DIERR_INVALIDPARAM;
+
+    memcpy(ptr, DInputKeyState, 256);
     return DI_OK;
 }
 
@@ -179,43 +242,54 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 )
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	int i, n;
+	int ret = DI_OK, i = 0;
 
 	TRACE("(this=%p,%ld,%p,%p(%ld)),0x%08lx)\n",
 	      This,dodsize,dod,entries,entries?*entries:0,flags);
 
+        if (This->buffer == NULL)
+          return DIERR_NOTBUFFERED;
 
-        for (i = n = 0; (i < 0x80) && (n < *entries); i++)
-        {
-            WORD state, vkey = MapVirtualKeyA( i, 1 );
-            if (!vkey) continue;
-            state = (GetAsyncKeyState( vkey ) >> 8) & 0x80;
-            if (state != This->keystate[vkey])
-            {
-                if (dod)
-                {
-                    /* add an entry */
-                    dod[n].dwOfs       = i; /* scancode */
-                    dod[n].dwData      = state;
-                    dod[n].dwTimeStamp = GetCurrentTime(); /* umm */
-                    dod[n].dwSequence  = This->dinput->evsequence++;
-                    n++;
-                }
-                if (!(flags & DIGDD_PEEK)) This->keystate[vkey] = state;
-            }
-        }
-        if (n) TRACE_(dinput)("%d entries\n",n);
-        *entries = n;
-        return DI_OK;
+        if (dodsize < sizeof(*dod))
+          return DIERR_INVALIDPARAM;
+
+        EnterCriticalSection(&(This->crit));
+
+        /* Copy item at a time for the case dodsize > sizeof(buffer[n]) */
+        while ((i < *entries || *entries == INFINITE) && i < This->count)
+          {
+            if (dod != NULL)
+              {
+                int n = (This->start + i) % This->buffersize;
+                LPDIDEVICEOBJECTDATA pd
+                   = (LPDIDEVICEOBJECTDATA)((BYTE *)dod + dodsize * i);
+                pd->dwOfs       = This->buffer[n].dwOfs;
+                pd->dwData      = This->buffer[n].dwData;
+                pd->dwTimeStamp = This->buffer[n].dwTimeStamp;
+                pd->dwSequence  = This->buffer[n].dwSequence;
+              }
+            i++;
+          }
+
+        *entries = i;
+
+        if (This->overflow)
+          ret = DI_BUFFEROVERFLOW;
+
+        if (!(flags & DIGDD_PEEK))
+          {
+            /* Empty buffer */
+            This->count -= i;
+            This->start = (This->start + i) % This->buffersize;
+            This->overflow = FALSE;
+          }
+
+        LeaveCriticalSection(&(This->crit));
+
+        return ret;
 }
 
-static LRESULT CALLBACK dinput_keyboard_hook(int code, WPARAM wparam, LPARAM lparam)
-{
-	SysKeyboardAImpl *This = current_lock;
-	if (This && This->hEvent)
-		SetEvent(This->hEvent);
-	return 1;
-}
+static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface);
 
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
@@ -223,11 +297,31 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 	
 	TRACE("(this=%p)\n",This);
 	
-	if (This->acquired == 0) {
-	  This->acquired = 1;
-	}
-	
-	This->hook = SetWindowsHookExW(WH_KEYBOARD, dinput_keyboard_hook, 0, 0);
+        if (This->acquired)
+          return S_FALSE;
+
+        This->acquired = 1;
+
+        if (current != NULL) 
+          {
+            FIXME("Not more than one keyboard can be acquired at the same time.");
+            SysKeyboardAImpl_Unacquire(iface);
+          }
+
+        current = This;
+
+        if (This->buffersize > 0)
+          {
+            This->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     This->buffersize * sizeof(*(This->buffer)));
+            This->start = 0;
+            This->count = 0;
+            This->overflow = FALSE;
+            InitializeCriticalSection(&(This->crit));
+          }
+        else
+          This->buffer = NULL;
+
 	return DI_OK;
 }
 
@@ -236,19 +330,26 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	ICOM_THIS(SysKeyboardAImpl,iface);
 	TRACE("(this=%p)\n",This);
 
-	if (This->acquired == 1) {
-	  This->acquired = 0;
-          UnhookWindowsHookEx( This->hook );
-	} else {
-	  ERR("Unacquiring a not-acquired device !!!\n");
-	}
+        if (This->acquired == 0)
+          return DI_NOEFFECT;
+
+        if (current == This)
+          current = NULL;
+        else
+          ERR("this != current");
+
+        This->acquired = 0;
+
+        if (This->buffersize >= 0)
+          {
+            HeapFree(GetProcessHeap(), 0, This->buffer);
+            This->buffer = NULL;
+            DeleteCriticalSection(&(This->crit));
+          }
 
 	return DI_OK;
 }
 
-/******************************************************************************
-  *     GetCapabilities : get the device capablitites
-  */
 static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2A iface,
 							 HANDLE hnd) {
   ICOM_THIS(SysKeyboardAImpl,iface);
@@ -256,10 +357,12 @@ static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE2
   TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
 
   This->hEvent = hnd;
-  current_lock = This;
   return DI_OK;
 }
 
+/******************************************************************************
+  *     GetCapabilities : get the device capablitites
+  */
 static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE2A iface,
 	LPDIDEVCAPS lpDIDevCaps)

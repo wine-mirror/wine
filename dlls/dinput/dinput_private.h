@@ -42,4 +42,8 @@ typedef struct dinput_device {
 
 extern void dinput_register_device(dinput_device *device) ;
 
+HHOOK keyboard_hook;
+
+LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam );
+
 #endif /* __WINE_DLLS_DINPUT_DINPUT_PRIVATE_H */
