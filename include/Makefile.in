@@ -6,6 +6,7 @@ MODULE	  = none
 
 IDL_SRCS = \
 	comcat.idl \
+	docobj.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \
@@ -67,7 +68,6 @@ WINDOWS_INCLUDES = \
 	dmusicf.h \
 	dmusici.h \
 	dmusics.h \
-	docobj.h \
 	dpaddr.h \
 	dplay.h \
 	dplay8.h \
