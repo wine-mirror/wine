@@ -26,6 +26,7 @@ typedef unsigned int ALG_ID;
 typedef unsigned long HCRYPTPROV;
 typedef unsigned long HCRYPTKEY;
 typedef unsigned long HCRYPTHASH;
+typedef void *HCERTSTORE;
 
 /* CSP Structs */
 
@@ -62,6 +63,47 @@ typedef struct _PUBLICKEYSTRUC {
     WORD   reserved;
     ALG_ID aiKeyAlg;
 } BLOBHEADER, PUBLICKEYSTRUC;
+
+typedef struct _CRYPT_BIT_BLOB {
+    DWORD cbData;
+    BYTE  *pbData;
+    DWORD cUnusedBits;
+} CRYPT_BIT_BLOB, *PCRYPT_BIT_BLOB;
+
+typedef struct _CERT_PUBLIC_KEY_INFO {
+    CRYPT_ALGORITHM_IDENTIFIER Algorithm;
+    CRYPT_BIT_BLOB             PublicKey;
+} CERT_PUBLIC_KEY_INFO, *PCERT_PUBLIC_KEY_INFO;
+
+typedef struct _CERT_EXTENSION {
+    LPSTR               pszObjId;
+    BOOL                fCritical;
+    CRYPT_OBJID_BLOB    Value;
+} CERT_EXTENSION, *PCERT_EXTENSION;
+
+typedef struct _CERT_INFO {
+    DWORD                      dwVersion;
+    CRYPT_INTEGER_BLOB         SerialNumber;
+    CRYPT_ALGORITHM_IDENTIFIER SignatureAlgorithm;
+    CERT_NAME_BLOB             Issuer;
+    FILETIME                   NotBefore;
+    FILETIME                   NotAfter;
+    CERT_NAME_BLOB             Subject;
+    CERT_PUBLIC_KEY_INFO       SubjectPublicKeyInfo;
+    CRYPT_BIT_BLOB             IssuerUniqueId;
+    CRYPT_BIT_BLOB             SubjectUniqueId;
+    DWORD                      cExtension;
+    PCERT_EXTENSION            rgExtension;
+} CERT_INFO, *PCERT_INFO;
+
+typedef struct _CERT_CONTEXT {
+    DWORD      dwCertEncodingType;
+    BYTE       *pbCertEncoded;
+    DWORD      cbCertEncoded;
+    PCERT_INFO pCertInfo;
+    HCERTSTORE hCertStore;
+} CERT_CONTEXT, *PCERT_CONTEXT;
+typedef const CERT_CONTEXT *PCCERT_CONTEXT;
 
 /* Algorithm IDs */
 

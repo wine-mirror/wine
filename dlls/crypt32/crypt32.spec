@@ -31,7 +31,7 @@
 @ stub CertEnumCTLContextProperties
 @ stub CertEnumCTLsInStore
 @ stub CertEnumCertificateContextProperties
-@ stub CertEnumCertificatesInStore
+@ stdcall CertEnumCertificatesInStore(long ptr)
 @ stub CertFindAttribute
 @ stub CertFindCTLInStore
 @ stub CertFindCertificateInStore
@@ -63,7 +63,7 @@
 @ stub CertRDNValueToStrA
 @ stub CertRDNValueToStrW
 @ stub CertRemoveEnhancedKeyUsageIdentifier
-@ stub CertSaveStore
+@ stdcall CertSaveStore(long long long long ptr long)
 @ stub CertSerializeCRLStoreElement
 @ stub CertSerializeCTLStoreElement
 @ stub CertSerializeCertificateStoreElement

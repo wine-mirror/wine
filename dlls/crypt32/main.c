@@ -112,3 +112,17 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
           debugstr_w(pwszDll), pszOverrideFuncName);
     return FALSE;
 }
+
+PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
+{
+    FIXME("(%p,%p)\n", hCertStore, pPrev);
+    return NULL;
+}
+
+BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
+             DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags)
+{
+    FIXME("(%p,%ld,%ld,%ld,%p,%08lx) stub!\n", hCertStore, 
+          dwMsgAndCertEncodingType, dwSaveAs, dwSaveTo, pvSaveToPara, dwFlags);
+    return TRUE;
+}
