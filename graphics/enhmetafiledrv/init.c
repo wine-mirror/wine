@@ -13,7 +13,6 @@
 #include "enhmetafiledrv.h"
 #include "wine/winestring.h"
 #include "debugtools.h"
-#include "winuser.h"
 
 #include <string.h>
 
@@ -248,7 +247,7 @@ HDC WINAPI CreateEnhMetaFileW(
     )
 {
     DC *dc;
-    HDC hRefDC = hdc ? hdc : GetDC(0); /* If no ref, use current display */
+    HDC hRefDC = hdc ? hdc : CreateDCA("DISPLAY",NULL,NULL,NULL); /* If no ref, use current display */
     EMFDRV_PDEVICE *physDev;
     HFILE hFile;
     DWORD size = 0, length = 0;
@@ -336,7 +335,7 @@ HDC WINAPI CreateEnhMetaFileW(
     }
 
     if( !hdc )
-      ReleaseDC( 0, hRefDC );
+      DeleteDC( hRefDC );
 	
     TRACE("returning %04x\n", dc->hSelf);
     return dc->hSelf;
