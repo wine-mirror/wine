@@ -6001,6 +6001,19 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
       ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
     }
+    else
+    {
+      /* resize our header to nothing */
+      RECT zeroRect;
+      WINDOWPOS wp;
+      HDLAYOUT hd;
+      memset(&zeroRect,0,sizeof(RECT));
+      hd.prc = &zeroRect;
+      hd.pwpos = &wp;
+     
+      Header_Layout(infoPtr->hwndHeader,&hd);
+    }
+      
 
     infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
     infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
@@ -7166,7 +7179,7 @@ static VOID LISTVIEW_UpdateSize(HWND hwnd)
       }
     }
   }
-  else if (uView == LVS_REPORT)
+  else if ((uView == LVS_REPORT)&&(!(LVS_NOCOLUMNHEADER & lStyle)))
   {
     HDLAYOUT hl;
     WINDOWPOS wp;
@@ -7241,15 +7254,25 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
       HDLAYOUT hl;
       WINDOWPOS wp;
 
-      hl.prc = &rcList;
-      hl.pwpos = &wp;
-      Header_Layout(infoPtr->hwndHeader, &hl);
-      SetWindowPos(infoPtr->hwndHeader, hwnd, wp.x, wp.y, wp.cx, wp.cy, 
-                   wp.flags);
       if (!(LVS_NOCOLUMNHEADER & lpss->styleNew))
       {
+        hl.prc = &rcList;
+        hl.pwpos = &wp;
+        Header_Layout(infoPtr->hwndHeader, &hl);
+        SetWindowPos(infoPtr->hwndHeader, hwnd, wp.x, wp.y, wp.cx, wp.cy, 
+                   wp.flags);
         ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
       }
+      else
+      {
+        RECT zeroRect;
+        ZeroMemory(&zeroRect,sizeof(RECT));
+
+        hl.prc = &zeroRect;
+        hl.pwpos = &wp;
+        Header_Layout(infoPtr->hwndHeader, &hl);
+      }
+      
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXSMICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYSMICON);
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
