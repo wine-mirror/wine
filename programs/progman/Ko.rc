@@ -1,0 +1,119 @@
+/*
+ * Program Manager
+ *
+ * Copyright 1996 Ulrich Schmid
+ */
+
+#define LANGUAGE_ID                  Ko
+#define LANGUAGE_NUMBER              6
+#define LANGUAGE_MENU_ITEM           "&Korean"
+
+/* Menu */
+
+#define MENU_FILE                    "파일(&F)"
+#define MENU_FILE_NEW                "새 파일(&N)..."
+#define MENU_FILE_OPEN               "열기(&P)\tEnter"
+#define MENU_FILE_MOVE               "이동(&M)...\tF7"
+#define MENU_FILE_COPY               "복사(&C)...\tF8"
+#define MENU_FILE_DELETE             "삭제(&D)\tEntf"
+#define MENU_FILE_ATTRIBUTES         "속성(&A)...\tAlt+Enter"
+#define MENU_FILE_EXECUTE            "실행(&E)..."
+#define MENU_FILE_EXIT               "윈도우 종료(&X)..."
+
+#define MENU_OPTIONS                 "옵션(&O)"
+#define MENU_OPTIONS_AUTO_ARRANGE    "자동 정렬(&A)"
+#define MENU_OPTIONS_MIN_ON_RUN      "실행시 아이콘으로 됨(&M)"
+#define MENU_OPTIONS_SAVE_SETTINGS   "종료시 설정 내용 저장(&S)"
+
+#define MENU_WINDOWS                 "창(&W)"
+#define MENU_WINDOWS_OVERLAP         "중첩(&O)\tShift+F5"
+#define MENU_WINDOWS_SIDE_BY_SIDE    "분할(&S)\tShift+F4"
+#define MENU_WINDOWS_ARRANGE         "아이콘 정렬(&A)"
+
+#define MENU_LANGUAGE                "언어(&L)"
+
+#define MENU_HELP                    "도움말(&H)"
+#define MENU_HELP_CONTENTS           "목차(&C)"
+#define MENU_HELP_SEARCH             "찾기(&S)..."
+#define MENU_HELP_HELP_ON_HELP       "도움말 사용법(&H)"
+#define MENU_HELP_TUTORIAL           "자습서(&T)"
+
+#define MENU_INFO                    "정보(&I)..."
+#define MENU_INFO_LICENSE            "라이센스(&L)"
+#define MENU_INFO_NO_WARRANTY        "무보증(&N)"
+#define MENU_INFO_ABOUT_WINE         "와인에 관하여(&A)"
+
+/* Dialogs */
+
+#define DIALOG_OK                    "확인"
+#define DIALOG_CANCEL                "취소"
+#define DIALOG_BROWSE                "검색(&B)"
+#define DIALOG_HELP                  "도움말(&H)"
+
+#define DIALOG_NEW_CAPTION           "새 프로그램 개체"
+#define DIALOG_NEW_NEW               "새 개체"
+#define DIALOG_NEW_GROUP             "프로그램 그룹(&G)"
+#define DIALOG_NEW_PROGRAM           "프로그램(&P)"
+
+#define DIALOG_MOVE_CAPTION          "프로그램 이동"
+#define DIALOG_MOVE_PROGRAM          "프로그램 이동:"
+#define DIALOG_MOVE_FROM_GROUP       "이동 전:"
+#define DIALOG_MOVE_TO_GROUP         "이동 후(&T):"
+
+#define DIALOG_COPY_CAPTION          "프로그램 복사"
+#define DIALOG_COPY_PROGRAM          "프로그램 복사:"
+#define DIALOG_COPY_FROM_GROUP       DIALOG_MOVE_FROM_GROUP
+#define DIALOG_COPY_TO_GROUP         DIALOG_MOVE_TO_GROUP
+
+#define DIALOG_GROUP_CAPTION         "프로그램 그룹 속성"
+#define DIALOG_GROUP_DESCRIPTION     "설명(&D):"
+#define DIALOG_GROUP_FILE            "그룹 파일(&G):"
+
+#define DIALOG_PROGRAM_CAPTION       "프로그램 속성"
+#define DIALOG_PROGRAM_DESCRIPTION   DIALOG_GROUP_DESCRIPTION
+#define DIALOG_PROGRAM_COMMAND_LINE  "명령행(&C):"
+#define DIALOG_PROGRAM_DIRECTORY     "작업 디렉토리(&W):"
+#define DIALOG_PROGRAM_HOT_KEY       "키 조합(&K):"
+#define DIALOG_PROGRAM_SYMBOL        "아이콘으로(&S)"
+#define DIALOG_PROGRAM_OTHER_SYMBOL  "다른 아이콘(&O)..."
+
+#define DIALOG_SYMBOL_CAPTION        "아이콘 선택"
+#define DIALOG_SYMBOL_FILE           "파일명(&F):"
+#define DIALOG_SYMBOL_CURRENT        "현재 아이콘(&C):"
+
+#define DIALOG_EXECUTE_CAPTION       "프로그램 실행"
+#define DIALOG_EXECUTE_COMMAND_LINE  DIALOG_PROGRAM_COMMAND_LINE
+#define DIALOG_EXECUTE_SYMBOL        DIALOG_PROGRAM_SYMBOL
+
+/* Strings */
+
+#define STRING_PROGRAM_MANAGER            "프로그램 관리자"
+#define STRING_ERROR                      "오류"
+#define STRING_WARNING                    "경고"
+#define STRING_INFO                       "정보"
+#define STRING_DELETE                     "삭제"
+#define STRING_DELETE_GROUP_s             "그룹 `%s'를 삭제할까요?"
+#define STRING_DELETE_PROGRAM_s           "프로그램 `%s'를 삭제할까요?"
+#define STRING_NOT_IMPLEMENTED            "구현되지 않았음"
+#define STRING_FILE_READ_ERROR_s          "`%s' 읽기 오류"
+#define STRING_FILE_WRITE_ERROR_s         "`%s' 쓰기 오류"
+
+#define STRING_GRPFILE_READ_ERROR_s       "\
+그룹 파일 `%s'를 열 수 없습니다.\n\
+한번 더 시도해 볼까요?"
+
+#define STRING_OUT_OF_MEMORY              "메모리 부족"
+#define STRING_WINHELP_ERROR              "도움말이 없습니다"
+#define STRING_UNKNOWN_FEATURE_s          "%s에 알 수 없는 기능이 있음"
+#define STRING_FILE_NOT_OVERWRITTEN_s     "파일 `%s'가 존재합니다. 덮어쓰지 않습니다."
+#define STRING_SAVE_GROUP_AS_s            "원래 파일을 덮어쓰는 것을 막기 위해 그룹을 `%s'로 저장합니다"
+
+#define STRING_NO_HOT_KEY                 "없음"
+
+#define STRING_ALL_FILES                  "모든 파일 (*.*)"
+#define STRING_PROGRAMS                   "프로그램"
+#define STRING_LIBRARIES_DLL              "라이브러리 (*.dll)"
+#define STRING_SYMBOL_FILES               "아이콘 파일"
+#define STRING_SYMBOLS_ICO                "아이콘 (*.ico)"
+
+#include "Xx.rc"

@@ -435,6 +435,21 @@ BOOL32 GetFileTime( HFILE32 hFile, FILETIME *lpCreationTime,
     return TRUE;
 }
 
+/***********************************************************************
+ *           CompareFileTime   (KERNEL32.28)
+ */
+INT32 CompareFileTime( LPFILETIME x, LPFILETIME y )
+{
+	if (x->dwHighDateTime > y->dwHighDateTime)
+		return 1;
+	if (x->dwHighDateTime < y->dwHighDateTime)
+		return -1;
+	if (x->dwLowDateTime > y->dwLowDateTime)
+		return 1;
+	if (x->dwLowDateTime < y->dwLowDateTime)
+		return -1;
+	return 0;
+}
 
 /***********************************************************************
  *           FILE_Dup

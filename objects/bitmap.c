@@ -27,33 +27,6 @@ GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );  /* objects/clipping.c */
 
-/***********************************************************************
- *           BITMAP_Init
- */
-BOOL32 BITMAP_Init(void)
-{
-    Pixmap tmpPixmap;
-    
-      /* Create the necessary GCs */
-    
-    if ((tmpPixmap = XCreatePixmap( display, rootWindow, 1, 1, 1 )))
-    {
-	BITMAP_monoGC = XCreateGC( display, tmpPixmap, 0, NULL );
-	XSetGraphicsExposures( display, BITMAP_monoGC, False );
-	XFreePixmap( display, tmpPixmap );
-    }
-
-    if (screenDepth != 1)
-    {
-	if ((tmpPixmap = XCreatePixmap(display, rootWindow, 1,1,screenDepth)))
-	{
-	    BITMAP_colorGC = XCreateGC( display, tmpPixmap, 0, NULL );
-	    XSetGraphicsExposures( display, BITMAP_colorGC, False );
-	    XFreePixmap( display, tmpPixmap );
-	}
-    }
-    return TRUE;
-}
 
 
 /***********************************************************************
@@ -441,41 +414,6 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 }
     
 
-/***********************************************************************
- *           BITMAP_SelectObject
- */
-HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
-                               BITMAPOBJ * bmp )
-{
-    HRGN32 hrgn;
-    HBITMAP16 prevHandle = dc->w.hBitmap;
-    
-    if (!(dc->w.flags & DC_MEMORY)) return 0;
-
-    if (dc->w.hVisRgn)
-       SetRectRgn(dc->w.hVisRgn, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight );
-    else
-    { 
-       hrgn = CreateRectRgn32(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
-       if (!hrgn) return 0;
-       dc->w.hVisRgn    = hrgn;
-    }
-
-    dc->u.x.drawable = bmp->pixmap;
-    dc->w.hBitmap    = hbitmap;
-
-      /* Change GC depth if needed */
-
-    if (dc->w.bitsPerPixel != bmp->bitmap.bmBitsPixel)
-    {
-	XFreeGC( display, dc->u.x.gc );
-	dc->u.x.gc = XCreateGC( display, dc->u.x.drawable, 0, NULL );
-	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
-        DC_InitDC( dc );
-    }
-    else CLIPPING_UpdateGCRegion( dc );  /* Just update GC clip region */
-    return prevHandle;
-}
 
 /***********************************************************************
  *           CreateDiscardableBitmap    (GDI.156) (GDI32.38)

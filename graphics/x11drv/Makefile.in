@@ -7,10 +7,14 @@ MODULE    = x11drv
 
 C_SRCS = \
 	bitblt.c \
+	bitmap.c \
+	brush.c \
 	clipping.c \
 	font.c \
 	graphics.c \
 	init.c \
+	objects.c \
+	pen.c \
 	text.c
 
 all: $(MODULE).o

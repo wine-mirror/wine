@@ -11,6 +11,8 @@
 #include "task.h"
 #include "win.h"
 #include "hook.h"
+#include "thread.h"
+#include "process.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -666,6 +668,29 @@ HTASK16 GetWindowTask16( HWND16 hwnd )
 
     if (!wndPtr) return 0;
     return QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+}
+
+/***********************************************************************
+ *           GetWindowThreadProcessId   (USER32.312)
+ */
+DWORD
+GetWindowThreadProcessId(HWND32 hwnd,LPDWORD process) {
+    HTASK16 htask;
+    TDB	*tdb;
+
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+
+    if (!wndPtr) return 0;
+    htask=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+    tdb = (TDB*)GlobalLock16(htask);
+    if (!tdb) return 0;
+    if (tdb->thdb) {
+    	if (process)
+		*process = (DWORD)tdb->thdb->process;
+	return (DWORD)tdb->thdb;
+    }
+    return 0;
+
 }
 
 

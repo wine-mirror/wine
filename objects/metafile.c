@@ -262,9 +262,18 @@ BOOL PlayMetaFile(HDC16 hdc, HMETAFILE16 hmf)
     HGLOBAL16 hHT;
     int offset = 0;
     WORD i;
+    HPEN32 hPen;
+    HBRUSH32 hBrush;
+    HFONT32 hFont;
+    DC *dc;
 
     dprintf_metafile(stddeb,"PlayMetaFile(%04x %04x)\n",hdc,hmf);
-    
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    hPen = dc->w.hPen;
+    hBrush = dc->w.hBrush;
+    hFont = dc->w.hFont;
+
     /* create the handle table */
     hHT = GlobalAlloc16(GMEM_MOVEABLE|GMEM_ZEROINIT,
 		      sizeof(HANDLETABLE16) * mh->mtNoObjects);
@@ -280,6 +289,10 @@ BOOL PlayMetaFile(HDC16 hdc, HMETAFILE16 hmf)
 	offset += mr->rdSize * 2;
 	PlayMetaFileRecord(hdc, ht, mr, mh->mtNoObjects);
     }
+
+    SelectObject32(hdc, hBrush);
+    SelectObject32(hdc, hPen);
+    SelectObject32(hdc, hFont);
 
     /* free objects in handle table */
     for(i = 0; i < mh->mtNoObjects; i++)
@@ -364,7 +377,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
       break;
 
     case META_SETBKCOLOR:
-	SetBkColor(hdc, *(mr->rdParam));
+	SetBkColor(hdc, MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_SETBKMODE:
@@ -429,7 +442,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_LINETO:
-	LineTo32(hdc, *(mr->rdParam + 1), *(mr->rdParam));
+	LineTo32(hdc, (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_MOVETO:
@@ -447,36 +460,38 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_ARC:
-	Arc32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
-              *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-              *(mr->rdParam + 1), *(mr->rdParam));
+	Arc32(hdc, (INT16)*(mr->rdParam + 7), (INT16)*(mr->rdParam + 6),
+	      (INT16)*(mr->rdParam + 5), (INT16)*(mr->rdParam + 4),
+	      (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+             (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_ELLIPSE:
-	Ellipse32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-                  *(mr->rdParam + 1), *(mr->rdParam));
+	Ellipse32(hdc, (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+                  (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_FLOODFILL:
-	FloodFill32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-                    MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	FloodFill32(hdc, (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+                    MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_PIE:
-	Pie32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam + 5),
-              *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-              *(mr->rdParam + 1), *(mr->rdParam));
+	Pie32(hdc, (INT16)*(mr->rdParam + 7), (INT16)*(mr->rdParam + 6),
+	      (INT16)*(mr->rdParam + 5), (INT16)*(mr->rdParam + 4),
+	      (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+             (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_RECTANGLE:
-	Rectangle32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-                    *(mr->rdParam + 1), *(mr->rdParam));
+	Rectangle32(hdc, (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+                    (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_ROUNDRECT:
-	RoundRect32(hdc, *(mr->rdParam + 5), *(mr->rdParam + 4),
-                    *(mr->rdParam + 3), *(mr->rdParam + 2),
-                    *(mr->rdParam + 1), *(mr->rdParam));
+	RoundRect32(hdc, (INT16)*(mr->rdParam + 5), (INT16)*(mr->rdParam + 4),
+                    (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+                    (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_PATBLT:
@@ -490,8 +505,8 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_SETPIXEL:
-	SetPixel32(hdc, *(mr->rdParam + 3), *(mr->rdParam + 2),
-                   MAKELONG(*(mr->rdParam + 1), *(mr->rdParam)));
+	SetPixel32(hdc, (INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+                   MAKELONG(*(mr->rdParam), *(mr->rdParam + 1)));
 	break;
 
     case META_OFFSETCLIPRGN:
@@ -519,7 +534,7 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_RESTOREDC:
-	RestoreDC32(hdc, *(mr->rdParam));
+	RestoreDC32(hdc, (INT16)*(mr->rdParam));
 	break;
 
     case META_SELECTOBJECT:
@@ -527,9 +542,10 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
 	break;
 
     case META_CHORD:
-	Chord32(hdc, *(mr->rdParam + 7), *(mr->rdParam + 6), *(mr->rdParam+5),
-                *(mr->rdParam + 4), *(mr->rdParam + 3), *(mr->rdParam + 2),
-                *(mr->rdParam + 1), *(mr->rdParam));
+	Chord32(hdc, (INT16)*(mr->rdParam + 7), (INT16)*(mr->rdParam + 6),
+		(INT16)*(mr->rdParam+5), (INT16)*(mr->rdParam + 4),
+		(INT16)*(mr->rdParam + 3), (INT16)*(mr->rdParam + 2),
+               (INT16)*(mr->rdParam + 1), (INT16)*(mr->rdParam));
 	break;
 
     case META_CREATEPATTERNBRUSH:
@@ -677,9 +693,9 @@ void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
                             mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
                             (LPSTR)&mr->rdParam[12]/*bits*/);
        SelectObject32(hdcSrc,hbitmap);
-       BitBlt32(hdc,mr->rdParam[6],mr->rdParam[5],
-                mr->rdParam[4],mr->rdParam[3],
-                hdcSrc, mr->rdParam[2],mr->rdParam[1],
+       BitBlt32(hdc,(INT16)mr->rdParam[6],(INT16)mr->rdParam[5],
+                (INT16)mr->rdParam[4],(INT16)mr->rdParam[3],
+                hdcSrc, (INT16)mr->rdParam[2],(INT16)mr->rdParam[1],
                 MAKELONG(0,mr->rdParam[0]));
        DeleteDC32(hdcSrc);		    
       }
@@ -771,7 +787,7 @@ static BOOL32 MF_WriteRecord( DC *dc, METARECORD *mr, WORD rlen)
 	    return FALSE;
         break;
     default:
-        fprintf( stderr, "Uknown metafile type %d\n", physDev->mh->mtType );
+        fprintf( stderr, "Unknown metafile type %d\n", physDev->mh->mtType );
         return FALSE;
     }
 

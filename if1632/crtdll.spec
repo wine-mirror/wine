@@ -54,7 +54,7 @@ base	1
 049 stub _cexit
 050 stub _cgets
 051 stub _chdir
-052 stub _chdrive
+052 cdecl _chdrive(long) CRTDLL__chdrive
 053 stub _chgsign
 054 stub _chmod
 055 stub _chsize
@@ -79,7 +79,7 @@ base	1
 074 stub _endthread
 075 extern _environ_dll CRTDLL_environ_dll
 076 stub _eof
-077 stub _errno
+077 cdecl _errno() CRTDLL__errno
 078 stub _except_handler2
 079 stub _execl
 080 stub _execle
@@ -140,7 +140,7 @@ base	1
 135 cdecl _initterm(ptr ptr) CRTDLL__initterm
 136 stub _iob
 137 cdecl _isatty(long) CRTDLL__isatty
-138 stub _isctype
+138 cdecl _isctype(long long) CRTDLL__isctype
 139 stub _ismbbalnum
 140 stub _ismbbalpha
 141 stub _ismbbgraph
@@ -432,7 +432,7 @@ base	1
 427 cdecl malloc(ptr) CRTDLL_malloc
 428 stub mblen
 429 stub mbstowcs
-430 stub mbtowc
+430 cdecl mbtowc(long) CRTDLL_mbtowc
 431 cdecl memchr(ptr long long) memchr
 432 cdecl memcmp(ptr ptr long) memcmp
 433 cdecl memcpy(ptr ptr long) memcpy
@@ -510,7 +510,7 @@ base	1
 505 stub wcscmp
 506 cdecl wcscoll(ptr ptr) CRTDLL_wcscoll
 507 cdecl wcscpy(ptr ptr) lstrcpy32W
-508 stub wcscspn
+508 cdecl wcscspn(ptr ptr) CRTDLL_wcscspn
 509 stub wcsftime
 510 cdecl wcslen(ptr) lstrlen32W
 511 cdecl wcsncat(ptr ptr long) lstrcatn32W

@@ -1825,6 +1825,12 @@ typedef struct
 #define OF_EXIST              0x4000
 #define OF_REOPEN             0x8000
 
+/* SetErrorMode values */
+#define SEM_FAILCRITICALERRORS      0x0001
+#define SEM_NOGPFAULTERRORBOX       0x0002
+#define SEM_NOALIGNMENTFAULTEXCEPT  0x0004
+#define SEM_NOOPENFILEERRORBOX      0x8000
+
 /* GetTempFileName() Flags */
 #define TF_FORCEDRIVE	        0x80
 
@@ -3667,7 +3673,11 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 #define VK_X                0x58
 #define VK_Y                0x59
 #define VK_Z                0x5A
-/*                          0x5B-0x5F  Undefined */
+
+#define VK_LWIN             0x5B
+#define VK_RWIN             0x5C
+#define VK_APPS             0x5D
+/*                          0x5E-0x5F Unassigned */
 #define VK_NUMPAD0          0x60
 #define VK_NUMPAD1          0x61
 #define VK_NUMPAD2          0x62
@@ -3711,16 +3721,37 @@ DECL_WINELIB_TYPE(LPCOMPAREITEMSTRUCT);
 /*                          0x88-0x8F  Unassigned */
 #define VK_NUMLOCK          0x90
 #define VK_SCROLL           0x91
-/*                          0x92-0xB9  Unassigned */
+/*                          0x92-0x9F  Unassigned */
+/*
+ * differencing between right and left shift/control/alt key.
+ * Used only by GetAsyncKeyState() and GetKeyState().
+ */
+#define VK_LSHIFT           0xA0
+#define VK_RSHIFT           0xA1
+#define VK_LCONTROL         0xA2
+#define VK_RCONTROL         0xA3
+#define VK_LMENU            0xA4
+#define VK_RMENU            0xA5
+/*                          0xA6-0xB9  Unassigned */
 /*                          0xBA-0xC0  OEM specific */
 /*                          0xC1-0xDA  Unassigned */
 /*                          0xDB-0xE4  OEM specific */
-/*                          0xE5       Unassigned */
+
+#define VK_PROCESSKEY       0xE5
+
 /*                          0xE6       OEM specific */
 /*                          0xE7-0xE8  Unassigned */
 /*                          0xE9-0xF5  OEM specific */
-/*                          0xF6-0xFE  Unassigned */
 
+#define VK_ATTN             0xF6
+#define VK_CRSEL            0xF7
+#define VK_EXSEL            0xF8
+#define VK_EREOF            0xF9
+#define VK_PLAY             0xFA
+#define VK_ZOOM             0xFB
+#define VK_NONAME           0xFC
+#define VK_PA1              0xFD
+#define VK_OEM_CLEAR        0xFE
   
 #define LMEM_FIXED          0   
 #define LMEM_MOVEABLE       0x0002
@@ -4597,6 +4628,21 @@ typedef struct _UNICODE_STRING {
 
 #define PR_JOBSTATUS	0x0000
 
+typedef BOOL32 (*ENUMRESTYPEPROC32A)(HMODULE32 hModule, LPSTR type,LONG lParam);
+typedef BOOL32 (*ENUMRESTYPEPROC32W)(HMODULE32 hModule, LPWSTR type,LONG lParam);
+typedef BOOL32 (*ENUMRESNAMEPROC32A)(HMODULE32 hModule, LPCSTR type,
+				LPSTR name,LONG lParam);
+typedef BOOL32 (*ENUMRESNAMEPROC32W)(HMODULE32 hModule, LPCWSTR type,
+				LPWSTR name,LONG lParam);
+typedef BOOL32 (*ENUMRESLANGPROC32A)(HMODULE32 hModule, LPCSTR type,
+				LPCSTR name,WORD lang,LONG lParam);
+typedef BOOL32 (*ENUMRESLANGPROC32W)(HMODULE32 hModule, LPCWSTR type,
+				LPCWSTR name,WORD lang,LONG lParam);
+
+DECL_WINELIB_TYPE_AW(ENUMRESTYPEPROC);
+DECL_WINELIB_TYPE_AW(ENUMRESNAMEPROC);
+DECL_WINELIB_TYPE_AW(ENUMRESLANGPROC);
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -4637,6 +4683,7 @@ HDC16      GetDCState(HDC16);
 HWND16     GetDesktopHwnd(void);
 HMODULE16  GetExePtr(HANDLE16);
 WORD       GetExeVersion(void);
+INT16      GetKbCodePage(VOID);
 INT16      GetInstanceData(HINSTANCE16,WORD,INT16);
 BOOL16     GetModuleName(HINSTANCE16,LPSTR,INT16);
 FARPROC16  GetMouseEventProc(void);
@@ -4650,6 +4697,7 @@ DWORD      GetViewportExt(HDC16);
 DWORD      GetViewportOrg(HDC16);
 DWORD      GetWindowExt(HDC16);
 DWORD      GetWindowOrg(HDC16);
+DWORD      GetWinFlags(void);
 DWORD      GlobalDOSAlloc(DWORD);
 WORD       GlobalDOSFree(WORD);
 void       GlobalFreeAll(HGLOBAL16);
@@ -4720,6 +4768,7 @@ BOOL32     CloseHandle(HANDLE32);
 BOOL32     CopyFile32A(LPCSTR,LPCSTR,BOOL32);
 BOOL32     CopyFile32W(LPCWSTR,LPCWSTR,BOOL32);
 #define    CopyFile WINELIB_NAME_AW(CopyFile)
+INT32      CompareFileTime(LPFILETIME,LPFILETIME);
 HFILE32    CreateFile32A(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
 HFILE32    CreateFile32W(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE32);
 #define    CreateFile WINELIB_NAME_AW(CreateFile)
@@ -4730,6 +4779,15 @@ BOOL32     DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 INT32      EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
 INT32      EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
 #define    EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
+BOOL32     EnumResourceLanguages32A(HMODULE32,LPCSTR,LPCSTR,ENUMRESLANGPROC32A,LONG);
+BOOL32     EnumResourceLanguages32W(HMODULE32,LPCWSTR,LPCWSTR,ENUMRESLANGPROC32W,LONG);
+#define    EnumResourceLanguages WINELIB_NAME_AW(EnumResourceLanguages)
+BOOL32     EnumResourceNames32A(HMODULE32,LPCSTR,ENUMRESNAMEPROC32A,LONG);
+BOOL32     EnumResourceNames32W(HMODULE32,LPCWSTR,ENUMRESNAMEPROC32W,LONG);
+#define    EnumResourceNames WINELIB_NAME_AW(EnumResourceNames)
+BOOL32     EnumResourceTypes32A(HMODULE32,ENUMRESTYPEPROC32A,LONG);
+BOOL32     EnumResourceTypes32W(HMODULE32,ENUMRESTYPEPROC32W,LONG);
+#define    EnumResourceTypes WINELIB_NAME_AW(EnumResourceTypes)
 BOOL32     EnumSystemCodePages32A(CODEPAGE_ENUMPROC32A,DWORD);
 BOOL32     EnumSystemCodePages32W(CODEPAGE_ENUMPROC32W,DWORD);
 #define    EnumSystemCodePages WINELIB_NAME_AW(EnumSystemCodePages)
@@ -4787,6 +4845,7 @@ BOOL32     GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 VOID       GetSystemTime(LPSYSTEMTIME);
 LCID       GetThreadLocale();
 INT32      GetThreadPriority(HANDLE32);
+DWORD      GetWindowThreadProcessId(HWND32,LPDWORD);
 VOID       GlobalMemoryStatus(LPMEMORYSTATUS);
 LPVOID     HeapAlloc(HANDLE32,DWORD,DWORD);
 DWORD      HeapCompact(HANDLE32,DWORD);
@@ -4803,6 +4862,9 @@ BOOL32     IsWindowUnicode(HWND32);
 BOOL32     IsValidLocale(DWORD,DWORD);
 BOOL32     LocalFileTimeToFileTime(const FILETIME*,LPFILETIME);
 LPVOID     MapViewOfFileEx(HANDLE32,DWORD,DWORD,DWORD,DWORD,DWORD);
+INT32      MessageBoxEx32A(HWND32,LPCSTR,LPCSTR,UINT32,WORD);
+INT32      MessageBoxEx32W(HWND32,LPCWSTR,LPCWSTR,UINT32,WORD);
+#define    MessageBoxEx WINELIB_NAME_AW(MessageBoxEx)
 BOOL32     MoveFile32A(LPCSTR,LPCSTR);
 BOOL32     MoveFile32W(LPCWSTR,LPCWSTR);
 #define    MoveFile WINELIB_NAME_AW(MoveFile)
@@ -4883,6 +4945,7 @@ DWORD      GetAppCompatFlags(HTASK32);
 LONG       GetBitmapBits(HBITMAP32,LONG,LPVOID);
 WORD       GetClassWord(HWND32,INT32);
 DWORD      GetDialogBaseUnits(void);
+VOID       GetKeyboardState(LPBYTE);
 DWORD      GetLastError(void);
 DWORD      GetMenuCheckMarkDimensions(void);
 COLORREF   GetSysColor(INT32);
@@ -4891,7 +4954,8 @@ INT16      GetUpdateRgn(HWND32,HRGN32,BOOL32);
 WORD       GetWindowWord(HWND32,INT32);
 BOOL16     HideCaret(HWND32);
 BOOL16     IsWindow(HWND32);
-void       LZDone(void);
+VOID       LZDone(void);
+DWORD      OemKeyScan(WORD);
 UINT16     RealizePalette(HDC32);
 DWORD      RegCloseKey(HKEY);
 DWORD      RegFlushKey(HKEY);
@@ -4901,6 +4965,7 @@ COLORREF   SetBkColor(HDC32,COLORREF);
 BOOL16     SetCaretBlinkTime(UINT32);
 BOOL16     SetCaretPos(INT32,INT32);
 WORD       SetClassWord(HWND32,INT32,WORD);
+VOID       SetKeyboardState(LPBYTE);
 VOID       SetLastError(DWORD);
 VOID       SetRectRgn(HRGN32,INT32,INT32,INT32,INT32);
 COLORREF   SetTextColor(HDC32,COLORREF);
@@ -5419,6 +5484,9 @@ BOOL32     FreeResource32(HGLOBAL32);
 HWND16     GetActiveWindow16(void);
 HWND32     GetActiveWindow32(void);
 #define    GetActiveWindow WINELIB_NAME(GetActiveWindow)
+WORD       GetAsyncKeyState16(INT16);
+WORD       GetAsyncKeyState32(INT32);
+#define    GetAsyncKeyState WINELIB_NAME(GetAsyncKeyState)
 BOOL16     GetBitmapDimensionEx16(HBITMAP16,LPSIZE16);
 BOOL32     GetBitmapDimensionEx32(HBITMAP32,LPSIZE32);
 #define    GetBitmapDimensionEx WINELIB_NAME(GetBitmapDimensionEx)
@@ -5544,10 +5612,16 @@ HWND32     GetFocus32(void);
 UINT16     GetInternalWindowPos16(HWND16,LPRECT16,LPPOINT16);
 UINT32     GetInternalWindowPos32(HWND32,LPRECT32,LPPOINT32);
 #define    GetInternalWindowPos WINELIB_NAME(GetInternalWindowPos)
+INT16      GetKeyboardType16(INT16);
+INT32      GetKeyboardType32(INT32);
+#define    GetKeyboardType WINELIB_NAME(GetKeyboardType)
 INT16      GetKeyNameText16(LONG,LPSTR,INT16);
 INT32      GetKeyNameText32A(LONG,LPSTR,INT32);
 INT32      GetKeyNameText32W(LONG,LPWSTR,INT32);
 #define    GetKeyNameText WINELIB_NAME_AW(GetKeyNameText)
+WORD       GetKeyState16(INT16);
+WORD       GetKeyState32(INT32);
+#define    GetKeyState WINELIB_NAME(GetKeyState)
 UINT32     GetLogicalDriveStrings32A(UINT32,LPSTR);
 UINT32     GetLogicalDriveStrings32W(UINT32,LPWSTR);
 #define    GetLogicalDriveStrings WINELIB_NAME_AW(GetLogicalDriveStrings)
@@ -5979,6 +6053,10 @@ HFILE32    LZInit32(HFILE32);
 LONG       LZSeek16(HFILE16,LONG,INT16);
 LONG       LZSeek32(HFILE32,LONG,INT32);
 #define    LZSeek WINELIB_NAME(LZSeek)
+UINT16     MapVirtualKey16(UINT16,UINT16);
+UINT32     MapVirtualKey32A(UINT32,UINT32);
+UINT32     MapVirtualKey32W(UINT32,UINT32);
+#define    MapVirtualKey WINELIB_NAME_AW(MapVirtualKey)
 FARPROC16  MakeProcInstance16(FARPROC16,HANDLE16);
 #define    MakeProcInstance32(proc,inst) (proc)
 #define    MakeProcInstance WINELIB_NAME(MakeProcInstance)
@@ -6227,6 +6305,10 @@ BOOL32     SetCommBreak32(INT32);
 INT16      SetCommState16(LPDCB16);
 BOOL32     SetCommState32(INT32,LPDCB32);
 #define    SetCommState WINELIB_NAME(SetCommState)
+BOOL16     SetCurrentDirectory16(LPCSTR);
+BOOL32     SetCurrentDirectory32A(LPCSTR);
+BOOL32     SetCurrentDirectory32W(LPCWSTR);
+#define    SetCurrentDirectory WINELIB_NAME_AW(SetCurrentDirectory)
 BOOL16     SetDeskWallPaper16(LPCSTR);
 BOOL32     SetDeskWallPaper32(LPCSTR);
 #define    SetDeskWallPaper WINELIB_NAME(SetDeskWallPaper)
@@ -6245,6 +6327,9 @@ void       SetDlgItemText16(HWND16,INT16,SEGPTR);
 void       SetDlgItemText32A(HWND32,INT32,LPCSTR);
 void       SetDlgItemText32W(HWND32,INT32,LPCWSTR);
 #define    SetDlgItemText WINELIB_NAME_AW(SetDlgItemText)
+UINT16     SetErrorMode16(UINT16);
+UINT32     SetErrorMode32(UINT32);
+#define    SetErrorMode WINELIB_NAME(SetErrorMode)
 BOOL16     SetFileAttributes16(LPCSTR,DWORD);
 BOOL32     SetFileAttributes32A(LPCSTR,DWORD);
 BOOL32     SetFileAttributes32W(LPCWSTR,DWORD);
@@ -6366,6 +6451,9 @@ BOOL32     ShowScrollBar32(HWND32,INT32,BOOL32);
 BOOL16     ShowWindow16(HWND16,INT16);
 BOOL32     ShowWindow32(HWND32,INT32);
 #define    ShowWindow WINELIB_NAME(ShowWindow)
+DWORD      SizeofResource16(HMODULE16,HRSRC16);
+DWORD      SizeofResource32(HMODULE32,HRSRC32);
+#define    SizeofResource WINELIB_NAME(SizeofResource)
 BOOL16     StretchBlt16(HDC16,INT16,INT16,INT16,INT16,HDC16,INT16,INT16,
                         INT16,INT16,DWORD);
 BOOL32     StretchBlt32(HDC32,INT32,INT32,INT32,INT32,HDC32,INT32,INT32,
@@ -6387,9 +6475,15 @@ BOOL16     TextOut16(HDC16,INT16,INT16,LPCSTR,INT16);
 BOOL32     TextOut32A(HDC32,INT32,INT32,LPCSTR,INT32);
 BOOL32     TextOut32W(HDC32,INT32,INT32,LPCWSTR,INT32);
 #define    TextOut WINELIB_NAME_AW(TextOut)
+INT16      ToAscii16(UINT16,UINT16,LPBYTE,LPVOID,UINT16);
+INT32      ToAscii32(UINT32,UINT32,LPBYTE,LPWORD,UINT32);
+#define    ToAscii WINELIB_NAME(ToAscii)
 BOOL16     TrackPopupMenu16(HMENU16,UINT16,INT16,INT16,INT16,HWND16,const RECT16*);
 BOOL32     TrackPopupMenu32(HMENU32,UINT32,INT32,INT32,INT32,HWND32,const RECT32*);
 #define    TrackPopupMenu WINELIB_NAME(TrackPopupMenu)
+INT16      TranslateAccelerator16(HWND16,HACCEL16,LPMSG16);
+INT32      TranslateAccelerator32(HWND32,HACCEL32,LPMSG32);
+#define    TranslateAccelerator WINELIB_NAME(TranslateAccelerator)
 INT16      TransmitCommChar16(INT16,CHAR);
 BOOL32     TransmitCommChar32(INT32,CHAR);
 #define    TransmitCommChar WINELIB_NAME(TransmitCommChar)
@@ -6434,6 +6528,10 @@ DWORD      VerQueryValue16(SEGPTR,LPCSTR,SEGPTR*,UINT16*);
 DWORD      VerQueryValue32A(LPVOID,LPCSTR,LPVOID*,UINT32*);
 DWORD      VerQueryValue32W(LPVOID,LPCWSTR,LPVOID*,UINT32*);
 #define    VerQueryValue WINELIB_NAME_AW(VerQueryValue)
+WORD       VkKeyScan16(CHAR);
+WORD       VkKeyScan32A(CHAR);
+WORD       VkKeyScan32W(WCHAR);
+#define    VkKeyScan WINELIB_NAME_AW(VkKeyScan)
 HWND16     WindowFromDC16(HDC16);
 HWND32     WindowFromDC32(HDC32);
 #define    WindowFromDC WINELIB_NAME(WindowFromDC)
@@ -6529,6 +6627,7 @@ UINT32     _lwrite32(HFILE32,LPCSTR,UINT32);
 INT32      LoadMessage32A(HINSTANCE32,UINT32,WORD,LPSTR,INT32);
 INT32      LoadMessage32W(HINSTANCE32,UINT32,WORD,LPWSTR,INT32);
 SEGPTR     WIN16_GlobalLock16(HGLOBAL16);
+SEGPTR     WIN16_LockResource(HGLOBAL16);
 INT32      lstrncmp32A(LPCSTR,LPCSTR,INT32);
 INT32      lstrncmp32W(LPCWSTR,LPCWSTR,INT32);
 INT32      lstrncmpi32A(LPCSTR,LPCSTR,INT32);
@@ -6604,7 +6703,6 @@ void       FreeLibrary(HINSTANCE16);
 UINT       GDIRealizePalette(HDC16);
 HPALETTE16 GDISelectPalette(HDC16,HPALETTE16,WORD);
 DWORD      GetAspectRatioFilter(HDC16);
-int        GetAsyncKeyState(int);
 WORD       GetAtomName(ATOM,LPSTR,short);
 HANDLE16   GetClipboardData(WORD);
 int        GetClipboardFormatName(WORD,LPSTR,short);
@@ -6622,9 +6720,6 @@ DWORD      GetHeapSpaces(HMODULE16);
 BOOL       GetInputState(void);
 int        GetKBCodePage(void);
 int        GetKerningPairs(HDC16,int,LPKERNINGPAIR16);
-INT        GetKeyState(INT);
-void       GetKeyboardState(BYTE*);
-int        GetKeyboardType(int);
 HWND       GetLastActivePopup(HWND);
 BOOL       GetMessage(SEGPTR,HWND,UINT,UINT);
 LONG       GetMessageExtraInfo(void);
@@ -6649,7 +6744,6 @@ BYTE       GetTempDrive(BYTE);
 LPINT16    GetThresholdEvent(void);
 int        GetThresholdStatus(void);
 BOOL       GetWinDebugInfo(LPWINDEBUGINFO,UINT);
-LONG       GetWinFlags(void);
 ATOM       GlobalDeleteAtom(ATOM);
 void       GlobalFix(HGLOBAL16);
 BOOL16     GlobalUnWire(HGLOBAL16);
@@ -6663,9 +6757,7 @@ BOOL16     IsDialogMessage(HWND16,LPMSG16);
 BOOL       IsValidMetaFile(HMETAFILE16);
 HINSTANCE16 LoadModule(LPCSTR,LPVOID);
 FARPROC16  LocalNotify(FARPROC16);
-WORD       MapVirtualKey(WORD,WORD);
 void       MessageBeep(WORD);
-DWORD      OemKeyScan(WORD);
 BOOL       OpenClipboard(HWND);
 BOOL       OpenIcon(HWND);
 int        OpenSound(void);
@@ -6692,14 +6784,11 @@ HANDLE16   SetClipboardData(WORD,HANDLE16);
 HWND       SetClipboardViewer(HWND);
 void       SetConvertHook(BOOL);
 BOOL       SetConvertParams(int,int);
-BOOL32     SetCurrentDirectory(LPCSTR);
 HCURSOR16  SetCursor(HCURSOR16);
 void       SetCursorPos(short,short);
 void       SetDoubleClickTime(WORD);
 int        SetEnvironment(LPCSTR,LPCSTR,WORD);
-UINT       SetErrorMode(UINT);
 WORD       SetHookFlags(HDC16,WORD);
-void       SetKeyboardState(BYTE*);
 DWORD      SetMapperFlags(HDC16,DWORD);
 BOOL       SetMessageQueue(int);
 HMETAFILE16 SetMetaFileBits(HGLOBAL16);
@@ -6719,20 +6808,15 @@ BOOL       SetWinDebugInfo(LPWINDEBUGINFO);
 HINSTANCE16 ShellExecute(HWND,LPCSTR,LPCSTR,LPSTR,LPCSTR,INT);
 int        ShowCursor(BOOL);
 void       ShowOwnedPopups(HWND,BOOL);
-DWORD      SizeofResource(HMODULE16,HRSRC16);
 int        StartSound(void);
 int        StopSound(void);
 BOOL       SwapMouseButton(BOOL);
 void       SwapRecording(WORD);
 int        SyncAllVoices(void);
 LONG       TabbedTextOut(HDC16,short,short,LPSTR,short,short,LPINT16,short);
-int        ToAscii(WORD,WORD,LPSTR,LPVOID,WORD);
-INT16      TranslateAccelerator(HWND,HACCEL16,LPMSG16);
 BOOL       TranslateMDISysAccel(HWND,LPMSG16);
 BOOL       TranslateMessage(LPMSG16);
 int        UpdateColors(HDC16);
-WORD       VkKeyScan(WORD);
-SEGPTR     WIN16_LockResource(HGLOBAL16);
 void       WaitMessage(void);
 int        WaitSoundState(int);
 

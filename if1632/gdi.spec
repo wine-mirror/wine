@@ -209,9 +209,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 281 pascal DrvSetPrinterData(ptr ptr ptr ptr long) DrvSetPrinterData
 282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
 299 stub ENGINEGETCHARWIDTHEX
-300 pascal EnginEnumerateFont(ptr segptr long) EngineEnumerateFont
+300 pascal EngineEnumerateFont(ptr segptr long) EngineEnumerateFont
 301 stub ENGINEDELETEFONT
-302 pascal EnginRealizeFont(ptr ptr ptr) EngineRealizeFont
+302 pascal EngineRealizeFont(ptr ptr ptr) EngineRealizeFont
 303 stub ENGINEGETCHARWIDTH
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP

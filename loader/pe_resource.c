@@ -8,8 +8,7 @@
  * Based on the Win16 resource handling code in loader/resource.c
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995 Alexandre Julliard
- *
- * This is not even at ALPHA level yet. Don't expect it to work!
+ * Copyright 1997 Marcus Meissner
  */
 
 #include <sys/types.h>
@@ -18,22 +17,28 @@
 #include "pe_image.h"
 #include "module.h"
 #include "heap.h"
-#include "handle32.h"
 #include "libres.h"
 #include "stackframe.h"
 #include "neexe.h"
-#include "accel.h"
-#include "xmalloc.h"
 #include "stddebug.h"
 #include "debug.h"
 
-#define PrintIdA(name) \
-    if (HIWORD((DWORD)name)) \
-        dprintf_resource( stddeb, "'%s'", name); \
-    else \
-        dprintf_resource( stddeb, "#%04x", LOWORD(name)); 
-#define PrintIdW(name)
-#define PrintId(name)
+/**********************************************************************
+ *  HMODULE32toPE_MODULE 
+ *
+ * small helper function to get a PE_MODULE from a passed HMODULE32
+ */
+static PE_MODULE*
+HMODULE32toPE_MODULE(HMODULE32 hmod) {
+	NE_MODULE	*pModule;
+
+	if (!hmod) hmod = GetTaskDS(); /* FIXME: correct? */
+	hmod = GetExePtr( hmod );  /* In case we were passed an hInstance */
+
+	if (!(pModule = MODULE_GetPtr( hmod ))) return 0;
+	if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
+	return pModule->pe_module;
+}
 
 /**********************************************************************
  *	    GetResDirEntryW
@@ -87,50 +92,18 @@ LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
 }
 
 /**********************************************************************
- *	    GetResDirEntryA
- *
- *	Helper function - goes down one level of PE resource tree
- *
- */
-LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
-					   LPCSTR name,
-					   DWORD root)
-{
-	LPWSTR				xname;
-	LPIMAGE_RESOURCE_DIRECTORY	ret;
-
-	if (HIWORD((DWORD)name))
-		xname	= HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-	else
-		xname	= (LPWSTR)name;
-
-	ret=GetResDirEntryW(resdirptr,xname,root);
-	if (HIWORD((DWORD)name))
-            HeapFree( GetProcessHeap(), 0, xname );
-	return ret;
-}
-
-/**********************************************************************
  *	    PE_FindResourceEx32W
  */
 HANDLE32 PE_FindResourceEx32W(
 	HINSTANCE32 hModule,LPCWSTR name,LPCWSTR type,WORD lang
 ) {
-    PE_MODULE *pe;
-    NE_MODULE *pModule;
     LPIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
     HANDLE32 result;
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hModule);
 
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "FindResource: module=%08x type=", hModule );
-    PrintId( type );
-    dprintf_resource( stddeb, " name=" );
-    PrintId( name );
-    dprintf_resource( stddeb, "\n" );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
-    if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
+    if (!pe || !pe->pe_resource)
+    	return 0;
 
     resdirptr = pe->pe_resource;
     root = (DWORD) resdirptr;
@@ -151,18 +124,287 @@ HANDLE32 PE_FindResourceEx32W(
  */
 HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
 {
-    NE_MODULE *pModule;
-    PE_MODULE *pe;
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hModule);
 
-    if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
-    hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
-    dprintf_resource(stddeb, "PE_LoadResource32: module=%04x res=%04x\n",
-                     hModule, hRsrc );
+    if (!pe || !pe->pe_resource)
+    	return 0;
+    if (!hRsrc)
+   	 return 0;
+    return (HANDLE32) (pe->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+}
+
+
+/**********************************************************************
+ *	    PE_SizeofResource32
+ */
+void
+_check_ptr(DWORD x,DWORD start,LPDWORD lastmax) {
+	if ((x>start) && (x<*lastmax))
+		*lastmax=x;
+}
+
+static void
+walk_resdir(DWORD loadaddr,DWORD rootresdir,DWORD xres,DWORD data,DWORD lvl,LPDWORD max){
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DATA_ENTRY		dataent;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    int	i;
+
+    if (lvl==3) {
+    	dataent = (LPIMAGE_RESOURCE_DATA_ENTRY)(rootresdir+xres);
+	_check_ptr(loadaddr+dataent->OffsetToData,data,max);
+	return;
+    }
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)(rootresdir+xres);
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++)
+	walk_resdir(loadaddr,rootresdir,(lvl==2)?et[i].u2.OffsetToData:et[i].u2.s.OffsetToDirectory,data,lvl+1,max);
+}
+
+DWORD PE_SizeofResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
+{
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hModule);
+    DWORD	max,data;
+    IMAGE_DATA_DIRECTORY	dir;
+
+    if (!pe || !pe->pe_resource)
+    	return 0;
     if (!hRsrc) return 0;
 
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
-    if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
-    return (HANDLE32) (pe->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    max=(DWORD)-1;
+    dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
+    if(dir.Size)
+    	max=(DWORD)pe->pe_resource+dir.Size;
+
+    data=((DWORD)pe->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    walk_resdir(pe->load_addr,(DWORD)pe->pe_resource,0,data,0,&max);
+    return max-data;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceTypes32A
+ */
+BOOL32
+PE_EnumResourceTypes32A(HMODULE32 hmod,ENUMRESTYPEPROC32A lpfun,LONG lparam) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+    HANDLE32	heap = GetProcessHeap();	
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+    	LPSTR	name;
+
+	if (HIWORD(et[i].u1.Name))
+		name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pe->pe_resource+et[i].u1.Name));
+	else
+		name = (LPSTR)et[i].u1.Name;
+	ret = lpfun(hmod,name,lparam);
+	if (HIWORD(name))
+		HeapFree(heap,0,name);
+	if (!ret)
+		break;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceTypes32W
+ */
+BOOL32
+PE_EnumResourceTypes32W(HMODULE32 hmod,ENUMRESTYPEPROC32W lpfun,LONG lparam) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+	LPWSTR	type;
+    	if (HIWORD(et[i].u1.Name))
+		type = (LPWSTR)((LPBYTE)pe->pe_resource+et[i].u1.Name);
+	else
+		type = (LPWSTR)et[i].u1.Name;
+
+	ret = lpfun(hmod,type,lparam);
+	if (!ret)
+		break;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceNames32A
+ */
+BOOL32
+PE_EnumResourceNames32A(
+	HMODULE32 hmod,LPCSTR type,ENUMRESNAMEPROC32A lpfun,LONG lparam
+) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+    HANDLE32	heap = GetProcessHeap();	
+    LPWSTR	typeW;
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    if (HIWORD(type))
+	typeW = HEAP_strdupAtoW(heap,0,type);
+    else
+	typeW = (LPWSTR)type;
+    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pe->pe_resource);
+    if (HIWORD(typeW))
+    	HeapFree(heap,0,typeW);
+    if (!resdir)
+    	return FALSE;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+    	LPSTR	name;
+
+	if (HIWORD(et[i].u1.Name))
+	    name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pe->pe_resource+et[i].u1.Name));
+	else
+	    name = (LPSTR)et[i].u1.Name;
+	ret = lpfun(hmod,type,name,lparam);
+	if (HIWORD(name)) HeapFree(heap,0,name);
+	if (!ret)
+		break;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceNames32W
+ */
+BOOL32
+PE_EnumResourceNames32W(
+	HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32W lpfun,LONG lparam
+) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    resdir = GetResDirEntryW(resdir,type,(DWORD)pe->pe_resource);
+    if (!resdir)
+    	return FALSE;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+	LPWSTR	name;
+    	if (HIWORD(et[i].u1.Name))
+		name = (LPWSTR)((LPBYTE)pe->pe_resource+et[i].u1.Name);
+	else
+		name = (LPWSTR)et[i].u1.Name;
+	ret = lpfun(hmod,type,name,lparam);
+	if (!ret)
+		break;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceNames32A
+ */
+BOOL32
+PE_EnumResourceLanguages32A(
+	HMODULE32 hmod,LPCSTR name,LPCSTR type,ENUMRESLANGPROC32A lpfun,
+	LONG lparam
+) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+    HANDLE32	heap = GetProcessHeap();	
+    LPWSTR	nameW,typeW;
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    if (HIWORD(name))
+	nameW = HEAP_strdupAtoW(heap,0,name);
+    else
+    	nameW = (LPWSTR)name;
+    resdir = GetResDirEntryW(resdir,nameW,(DWORD)pe->pe_resource);
+    if (HIWORD(nameW))
+    	HeapFree(heap,0,nameW);
+    if (!resdir)
+    	return FALSE;
+    if (HIWORD(type))
+	typeW = HEAP_strdupAtoW(heap,0,type);
+    else
+	typeW = (LPWSTR)type;
+    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pe->pe_resource);
+    if (HIWORD(typeW))
+    	HeapFree(heap,0,typeW);
+    if (!resdir)
+    	return FALSE;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+    	/* languages are just ids... I hope */
+	ret = lpfun(hmod,name,type,et[i].u1.Id,lparam);
+	if (!ret)
+		break;
+    }
+    return ret;
+}
+
+/**********************************************************************
+ *	    PE_EnumResourceLanguages32W
+ */
+BOOL32
+PE_EnumResourceLanguages32W(
+	HMODULE32 hmod,LPCWSTR name,LPCWSTR type,ENUMRESLANGPROC32W lpfun,
+	LONG lparam
+) {
+    PE_MODULE	*pe = HMODULE32toPE_MODULE(hmod);
+    int		i;
+    LPIMAGE_RESOURCE_DIRECTORY		resdir;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    BOOL32	ret;
+
+    if (!pe || !pe->pe_resource)
+    	return FALSE;
+
+    resdir = (LPIMAGE_RESOURCE_DIRECTORY)pe->pe_resource;
+    resdir = GetResDirEntryW(resdir,name,(DWORD)pe->pe_resource);
+    if (!resdir)
+    	return FALSE;
+    resdir = GetResDirEntryW(resdir,type,(DWORD)pe->pe_resource);
+    if (!resdir)
+    	return FALSE;
+    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
+    ret = FALSE;
+    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
+	ret = lpfun(hmod,name,type,et[i].u1.Id,lparam);
+	if (!ret)
+		break;
+    }
+    return ret;
 }
 #endif

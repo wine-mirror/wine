@@ -167,18 +167,6 @@ BOOL32 GDI_Init(void)
     if (!(hpalette = COLOR_Init())) return FALSE;
     StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hpalette );
 
-      /* Create default bitmap */
-
-    if (!BITMAP_Init()) return FALSE;
-
-      /* Initialize brush dithering */
-
-    if (!BRUSH_Init()) return FALSE;
-
-      /* Initialize fonts */
-
-    if (!FONT_Init()) return FALSE;
-
     return TRUE;
 }
 
@@ -388,37 +376,10 @@ HGDIOBJ16 SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
  */
 HGDIOBJ32 SelectObject32( HDC32 hdc, HGDIOBJ32 handle )
 {
-    GDIOBJHDR * ptr = NULL;
-    DC * dc;
-    
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc || !dc->funcs->pSelectObject) return 0;
     dprintf_gdi(stddeb, "SelectObject: hdc=%04x %04x\n", hdc, handle );
-    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
-      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
-    else 
-      ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
-    if (!ptr) return 0;
-    
-    dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
-    
-    switch(ptr->wMagic)
-    {
-      case PEN_MAGIC:
-	  return PEN_SelectObject( dc, handle, (PENOBJ *)ptr );
-      case BRUSH_MAGIC:
-	  return BRUSH_SelectObject( dc, handle, (BRUSHOBJ *)ptr );
-      case BITMAP_MAGIC:
-	  return BITMAP_SelectObject( dc, handle, (BITMAPOBJ *)ptr );
-      case FONT_MAGIC:
-	  return FONT_SelectObject( dc, handle, (FONTOBJ *)ptr );	  
-      case REGION_MAGIC:
-	  return (HGDIOBJ16)SelectClipRgn16( hdc, handle );
-    }
-    return 0;
+    return dc->funcs->pSelectObject( dc, handle );
 }
 
 

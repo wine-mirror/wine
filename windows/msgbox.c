@@ -197,6 +197,9 @@ INT16 MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type )
 INT32 MessageBox32A( HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type )
 {
     MSGBOX mbox;
+
+    if (!text) text="<WINE-NULL>";
+    if (!title) title="<WINE-NULL>";
     mbox.title = title;
     mbox.text  = text;
     mbox.type  = type;
@@ -217,6 +220,26 @@ INT32 MessageBox32W( HWND32 hwnd, LPCWSTR text, LPCWSTR title, UINT32 type )
     HeapFree( GetProcessHeap(), 0, titleA );
     HeapFree( GetProcessHeap(), 0, textA );
     return ret;
+}
+
+
+/**************************************************************************
+ *           MessageBoxEx32A   (USER32.391)
+ */
+INT32
+MessageBoxEx32A(HWND32 hWnd,LPCSTR text,LPCSTR title,UINT32 type,WORD langid) {
+    /* ignore language id for now */
+    return MessageBox32A(hWnd,text,title,type);
+}
+
+/**************************************************************************
+ *           MessageBoxEx32W   (USER32.392)
+ */
+INT32
+MessageBoxEx32W(HWND32 hWnd,LPCWSTR text,LPCWSTR title,UINT32 type,WORD langid)
+{
+    /* ignore language id for now */
+    return MessageBox32W(hWnd,text,title,type);
 }
 
 
@@ -247,3 +270,5 @@ void FatalAppExit32W( UINT32 action, LPCWSTR str )
     MessageBox32W( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     TASK_KillCurrentTask(0);
 }
+
+

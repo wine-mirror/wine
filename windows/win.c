@@ -309,7 +309,7 @@ void WIN_SendParentNotify(HWND32 hwnd, WORD event, WORD idChild, LPARAM lValue)
 static void WIN_DestroyWindow( WND* wndPtr )
 {
     HWND hwnd = wndPtr->hwndSelf;
-    WND* pWnd,*pNext;
+    WND *pWnd;
 
     dprintf_win( stddeb, "WIN_DestroyWindow: %04x\n", wndPtr->hwndSelf );
 
@@ -320,10 +320,10 @@ static void WIN_DestroyWindow( WND* wndPtr )
 	
     /* free child windows */
 
-    pNext = wndPtr->child;
-    while( (pWnd = pNext) )
+    while ((pWnd = wndPtr->child))
     {
-        pNext = pWnd->next;
+        /* Make sure the linked list remains coherent */
+        wndPtr->child = pWnd->next;
         WIN_DestroyWindow( pWnd );
     }
 

@@ -52,7 +52,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
     MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
     NULL,                            /* pSelectClipRgn */
-    NULL,                            /* pSelectObject */
+    MFDRV_SelectObject,              /* pSelectObject */
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */

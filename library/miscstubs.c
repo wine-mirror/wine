@@ -84,7 +84,3 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
   return NULL;
 }
 
-void DEBUG_EnterDebugger(void)
-{
-}
-

@@ -208,9 +208,23 @@ void DEBUG_AddBreakpoint( const DBG_ADDR *address )
 {
     DBG_ADDR addr = *address;
     int num;
+    unsigned int seg2;
     BYTE *p;
 
     DBG_FIX_ADDR_SEG( &addr, CS_reg(&DEBUG_context) );
+
+    if( addr.type != NULL && addr.type == DEBUG_TypeIntConst )
+      {
+	/*
+	 * We know that we have the actual offset stored somewhere
+	 * else in 32-bit space.  Grab it, and we
+	 * should be all set.
+	 */
+	seg2 = addr.seg;
+	addr.seg = 0;
+	addr.off = DEBUG_GetExprValue(&addr, NULL);
+	addr.seg = seg2;
+      }
 
     if (next_bp < MAX_BREAKPOINTS)
         num = next_bp++;

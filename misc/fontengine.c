@@ -11,7 +11,7 @@
 WORD 
 EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    printf("In engineEnumerateFont for %s\n",fontname);
+    printf("In engineEnumerateFont for %s\n",(fontname)?fontname:"NULL");
     return 0;
 }
 #ifdef NOTDEF

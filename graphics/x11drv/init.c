@@ -52,7 +52,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pScaleViewportExt (optional) */
     NULL,                            /* pScaleWindowExt (optional) */
     NULL,                            /* pSelectClipRgn */
-    NULL,                            /* pSelectObject */
+    X11DRV_SelectObject,             /* pSelectObject */
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
@@ -84,6 +84,18 @@ static DeviceCaps X11DRV_DevCaps;
  */
 BOOL32 X11DRV_Init(void)
 {
+    /* Create default bitmap */
+
+    if (!X11DRV_BITMAP_Init()) return FALSE;
+
+    /* Initialize brush dithering */
+
+    if (!X11DRV_BRUSH_Init()) return FALSE;
+
+    /* Initialize fonts */
+
+    if (!X11DRV_FONT_Init()) return FALSE;
+
     return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_Funcs );
 }
 

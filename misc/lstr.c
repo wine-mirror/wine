@@ -567,6 +567,11 @@ FormatMessage32A(
 					HeapFree(GetProcessHeap(),0,sprintfbuf);
 					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
+				case 'n':
+					/* FIXME: perhaps add \r too? */
+					ADD_TO_T('\n');
+					f++;
+					break;
 				case '0':
 					nolinefeed=1;
 					f++;
@@ -759,6 +764,11 @@ FormatMessage32W(
 					}
 					HeapFree(GetProcessHeap(),0,sprintfbuf);
 					HeapFree(GetProcessHeap(),0,fmtstr);
+					break;
+				case 'n':
+					/* FIXME: perhaps add \r too? */
+					ADD_TO_T('\n');
+					f++;
 					break;
 				case '0':
 					nolinefeed=1;

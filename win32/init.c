@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <malloc.h>
 #include "windows.h"
 #include "winerror.h"
 #include "handle32.h"
@@ -82,56 +83,6 @@ VOID GetStartupInfo32W(LPSTARTUPINFO32W lpStartupInfo)
     lpStartupInfo->hStdInput  = (HANDLE32)0;
     lpStartupInfo->hStdOutput = (HANDLE32)1;
     lpStartupInfo->hStdError  = (HANDLE32)2;
-}
-
-/***********************************************************************
- *              GetStartupInfoA         (KERNEL32.284)
- * FIXME: perhaps supply better values. 
- *        add other architectures for WINELIB.
- */
-VOID
-GetSystemInfo(LPSYSTEM_INFO si) {
-    WORD cpu;
-    
-    si->u.x.wProcessorArchitecture	= PROCESSOR_ARCHITECTURE_INTEL;
-
-    si->dwPageSize			= 4096; /* 4K */
-    si->lpMinimumApplicationAddress	= (void *)0x40000000;
-    si->lpMaximumApplicationAddress	= (void *)0x80000000;
-    si->dwActiveProcessorMask		= 1;
-    si->dwNumberOfProcessors		= 1;
-#ifdef WINELIB
-    /* FIXME: perhaps check compilation defines ... */
-    si->dwProcessorType			= PROCESSOR_INTEL_386;
-    cpu = 3;
-#else
-    cpu = runtime_cpu();
-    switch (cpu) {
-    case 4: si->dwProcessorType		= PROCESSOR_INTEL_486;
-	    break;
-    case 5: si->dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
-	    break;
-    case 3:
-    default: si->dwProcessorType	= PROCESSOR_INTEL_386;
-	    break;
-    }
-#endif
-    si->dwAllocationGranularity		= 8; /* hmm? */
-    si->wProcessorLevel			= cpu;
-    si->wProcessorRevision		= 0; /* FIXME, see SDK */
-}
-
-/* Initialize whatever internal data structures we need.
- *
- * Returns 1 on success, 0 on failure.
- */
-int KERN32_Init(void)
-{
-#ifndef WINELIB
-    /* Initialize exception handling */
-    EXC_Init();
-#endif
-    return 1;
 }
 
 /***********************************************************************

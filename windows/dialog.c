@@ -5,10 +5,12 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "windows.h"
 #include "dialog.h"
 #include "drive.h"
@@ -904,7 +906,7 @@ BOOL16 IsDialogMessage( HWND16 hwndDlg, LPMSG16 msg )
             if (!(dlgCode & DLGC_WANTTAB))
             {
                 SendMessage16( hwndDlg, WM_NEXTDLGCTL,
-                             (GetKeyState(VK_SHIFT) & 0x8000), 0 );
+                             (GetKeyState32(VK_SHIFT) & 0x8000), 0 );
                 return TRUE;
             }
             break;

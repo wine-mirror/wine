@@ -309,7 +309,6 @@ extern void DEBUG_List(struct list_id * line1, struct list_id * line2,
 extern void DEBUG_NukePath(void);
 
   /* debugger/dbg.y */
-extern void DEBUG_EnterDebugger(void);
 extern void wine_debug( int signal, SIGCONTEXT *regs );
 
 #endif  /* __WINE_DEBUGGER_H */

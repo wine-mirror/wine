@@ -11,6 +11,7 @@
 #include "module.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "except.h"
 
 typedef void (*RELAY)();
 
@@ -41,7 +42,7 @@ static THUNK *firstThunk = NULL;
  */
 static THUNK *THUNK_Alloc( FARPROC32 func, RELAY relay )
 {
-    THUNK *thunk = HeapAlloc( SystemHeap, 0, sizeof(*thunk) );
+    THUNK *thunk = HeapAlloc( GetProcessHeap(), 0, sizeof(*thunk) );
     if (thunk)
     {
         thunk->popl_eax   = 0x58;
@@ -73,14 +74,14 @@ static THUNK *THUNK_Find( FARPROC32 func )
  */
 void THUNK_Free( THUNK *thunk )
 {
-    if (HEAP_IsInsideHeap( SystemHeap, 0, thunk ))
+    if (HEAP_IsInsideHeap( GetProcessHeap(), 0, thunk ))
     {
         THUNK **prev = &firstThunk;
         while (*prev && (*prev != thunk)) prev = &(*prev)->next;
         if (*prev)
         {
             *prev = thunk->next;
-            HeapFree( SystemHeap, 0, thunk );
+            HeapFree( GetProcessHeap(), 0, thunk );
             return;
         }
     }
@@ -396,6 +397,60 @@ BOOL32 THUNK_EnumSystemLocales32W( LOCALE_ENUMPROC32W func, DWORD flags )
     return EnumSystemLocales32W( (LOCALE_ENUMPROC32W)&thunk, flags );
 }
 
+/***********************************************************************
+ *           THUNK_EnumResourceLanguages32W   (KERNEL32.87)
+ */
+BOOL32 THUNK_EnumResourceLanguages32W( HMODULE32 hmod,LPCWSTR type,LPCWSTR name,ENUMRESLANGPROC32W func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_5 );
+    return EnumResourceLanguages32W( hmod,type,name,(ENUMRESLANGPROC32W)&thunk, lParam );
+}
+
+/***********************************************************************
+ *           THUNK_EnumResourceLanguages32A   (KERNEL32.86)
+ */
+BOOL32 THUNK_EnumResourceLanguages32A( HMODULE32 hmod,LPCSTR type,LPCSTR name,ENUMRESLANGPROC32A func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_5 );
+    return EnumResourceLanguages32A( hmod,type,name,(ENUMRESLANGPROC32A)&thunk, lParam );
+}
+
+/***********************************************************************
+ *           THUNK_EnumResourceNames32A   (KERNEL32.88)
+ */
+BOOL32 THUNK_EnumResourceNames32A( HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32A func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumResourceNames32A( hmod,type,(ENUMRESNAMEPROC32A)&thunk, lParam );
+}
+
+/***********************************************************************
+ *           THUNK_EnumResourceNames32W   (KERNEL32.89)
+ */
+BOOL32 THUNK_EnumResourceNames32W( HMODULE32 hmod,LPCWSTR type,ENUMRESNAMEPROC32W func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_4 );
+    return EnumResourceNames32W( hmod,type,(ENUMRESNAMEPROC32W)&thunk, lParam );
+}
+
+/***********************************************************************
+ *           THUNK_EnumResourceTypes32A   (KERNEL32.90)
+ */
+BOOL32 THUNK_EnumResourceTypes32A( HMODULE32 hmod,ENUMRESTYPEPROC32A func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_3 );
+    return EnumResourceTypes32A( hmod,(ENUMRESTYPEPROC32A)&thunk, lParam );
+}
+
+/***********************************************************************
+ *           THUNK_EnumResourceTypes32W   (KERNEL32.91)
+ */
+BOOL32 THUNK_EnumResourceTypes32W( HMODULE32 hmod,ENUMRESTYPEPROC32W func, LONG lParam )
+{
+    DECL_THUNK( thunk, func, CallTo32_3 );
+    return EnumResourceTypes32W( hmod,(ENUMRESTYPEPROC32W)&thunk, lParam );
+}
+
 
 /***********************************************************************
  *           THUNK_GrayString16   (USER.185)
@@ -461,6 +516,24 @@ BOOL16 THUNK_UnhookWindowsHookEx16( HHOOK hhook )
     BOOL16 ret = UnhookWindowsHookEx16( hhook );
     if (thunk) THUNK_Free( thunk );
     return ret;
+}
+
+
+/*************************************************************
+ *            THUNK_SetUnhandledExceptionFilter   (KERNEL32.516)
+ */
+LPTOP_LEVEL_EXCEPTION_FILTER THUNK_SetUnhandledExceptionFilter(
+                                          LPTOP_LEVEL_EXCEPTION_FILTER filter )
+{
+    LPTOP_LEVEL_EXCEPTION_FILTER old;
+    THUNK *thunk = THUNK_Alloc( (FARPROC16)filter, (RELAY)CallTo32_1 );
+    if (!thunk) return NULL;
+    old = SetUnhandledExceptionFilter( (LPTOP_LEVEL_EXCEPTION_FILTER)thunk );
+    if (!old) return NULL;
+    thunk = (THUNK *)old;
+    old = (LPTOP_LEVEL_EXCEPTION_FILTER)thunk->proc;
+    THUNK_Free( thunk );
+    return old;
 }
 
 

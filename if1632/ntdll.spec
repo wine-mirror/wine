@@ -863,7 +863,7 @@ base	0
 859 stub __eFYL2XP1
 860 stub __eGetStatusWord
 861 stub _alloca_probe
-862 stub _chkstk
+862 return _chkstk 0 0
 863 stub _fltused
 864 stub _ftol
 865 stub _itoa

@@ -751,8 +751,12 @@ void DEBUG_LoadEntryPoints(void)
     for (ok = ModuleFirst(&entry); ok; ok = ModuleNext(&entry))
     {
         if (!(pModule = MODULE_GetPtr( entry.hModule ))) continue;
+        if (pModule->flags & NE_FFLAGS_WIN32) continue;
 
         name = (unsigned char *)pModule + pModule->name_table;
+
+        fprintf( stderr, "Loading symbols from Win16 module %.*s...\n",
+                 *name, name + 1 );
 
         /* First search the resident names */
 
@@ -760,8 +764,7 @@ void DEBUG_LoadEntryPoints(void)
         while (*cpnt)
         {
             cpnt += *cpnt + 1 + sizeof(WORD);
-            sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
-                     *cpnt, *cpnt, cpnt + 1 );
+            sprintf( buffer, "%.*s_%.*s", *name, name + 1, *cpnt, cpnt + 1 );
             if ((address = MODULE_GetEntryPoint( entry.hModule,
                                             *(WORD *)(cpnt + *cpnt + 1) )))
             {
@@ -779,8 +782,7 @@ void DEBUG_LoadEntryPoints(void)
         while (*cpnt)
         {
             cpnt += *cpnt + 1 + sizeof(WORD);
-            sprintf( buffer, "%*.*s.%*.*s", *name, *name, name + 1,
-                     *cpnt, *cpnt, cpnt + 1 );
+            sprintf( buffer, "%.*s_%.*s", *name, name + 1, *cpnt, cpnt + 1 );
             if ((address = MODULE_GetEntryPoint( entry.hModule,
                                                 *(WORD *)(cpnt + *cpnt + 1) )))
             {

@@ -172,9 +172,9 @@ BOOL16 DestroyCaret(void)
     dprintf_caret(stddeb,"DestroyCaret: hwnd=%04x, timerid=%d\n",
 		Caret.hwnd, Caret.timerid);
 
-    DeleteObject32( Caret.hBrush );
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
+    DeleteObject32( Caret.hBrush );
     Caret.hwnd = 0;
     return TRUE;
 }

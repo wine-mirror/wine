@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/mman.h>
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
 
 #include "win.h"
 #include "debugger.h"
@@ -24,6 +26,9 @@
 #ifdef __ELF__
 #include <elf.h>
 #include <link.h>
+#include <sys/mman.h>
+#elif defined(__EMX__)
+#include <a_out.h>
 #else
 #include <a.out.h>
 #endif
@@ -883,7 +888,10 @@ DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 	    }
 	  else
 	    {
-	      strcat(currpath, ptr);
+	      if (*ptr != '/')
+	        strcat(currpath, ptr);
+	      else
+	        strcpy(currpath, ptr);
 	      subpath = ptr;
 	    }
 	  last_nso = i;

@@ -13,7 +13,7 @@
 #include "debug.h"
 
 
-#define FIRST_LDT_ENTRY_TO_ALLOC  6
+#define FIRST_LDT_ENTRY_TO_ALLOC  17
 
 
 /***********************************************************************

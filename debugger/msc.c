@@ -895,7 +895,7 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 
   orig_size = size;
   dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
-  for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
+  for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
 	{
@@ -908,7 +908,7 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 
   size = orig_size;
   dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
-  for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
+  for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
 	{

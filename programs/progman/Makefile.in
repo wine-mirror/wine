@@ -8,7 +8,7 @@ ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 DEFS      = -I$(SRCDIR)
 RCFLAGS   = -w32
 
-LANGUAGES   = En De Fr Fi
+LANGUAGES   = En De Fr Fi Ko
 LICENSELANG = En
 
 # Installation infos

@@ -932,9 +932,14 @@ static LRESULT CBLPaint( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
   int   i, top, height;
 
   top = 0;
+  if (!lphl)
+    return 0;
   hdc = BeginPaint16( hwnd, &ps );
 
-  if (!IsWindowVisible16(hwnd) || !lphl->bRedrawFlag) {
+  if (!lphl) {
+    fprintf(stdnimp,"CBLPaint: CLBoxGetListHeader returned NULL!\n");
+  }
+  if (!IsWindowVisible16(hwnd) || !lphl || !lphl->bRedrawFlag) {
     EndPaint16(hwnd, &ps);
     return 0;
   }

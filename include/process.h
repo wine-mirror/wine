@@ -9,6 +9,7 @@
 
 #include "windows.h"
 #include "winbase.h"
+#include "winnt.h"
 #include "handle32.h"
 #include "task.h"
 
@@ -82,7 +83,7 @@ typedef struct _PDB32
     DWORD            process_dword;    /* 90 Unknown */
     struct _PDB32   *group;            /* 94 Process group */
     void            *exe_modref;       /* 98 MODREF for the process EXE */
-    void            *top_exc_filter;   /* 9c Top exception filter */
+    LPTOP_LEVEL_EXCEPTION_FILTER top_filter; /* 9c Top exception filter */
     DWORD            priority;         /* a0 Priority level */
     HANDLE32         heap_list;        /* a4 Head of process heap list */
     void            *heap_handles;     /* a8 Head of heap handles list */

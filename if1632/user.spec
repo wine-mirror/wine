@@ -105,7 +105,7 @@ heap	65520
 103 pascal16 MapDialogRect(word ptr) MapDialogRect16
 104 pascal16 MessageBeep(word) MessageBeep
 105 pascal16 FlashWindow(word word) FlashWindow
-106 pascal16 GetKeyState(word) GetKeyState
+106 pascal16 GetKeyState(word) GetKeyState16
 107 pascal   DefWindowProc(word word word long) DefWindowProc16
 108 pascal16 GetMessage(segptr word word word) GetMessage
 109 pascal16 PeekMessage(ptr word word word word) PeekMessage16
@@ -177,7 +177,7 @@ heap	65520
 175 pascal16 LoadBitmap(word segptr) LoadBitmap16
 176 pascal16 LoadString(word word ptr s_word) LoadString16
 177 pascal16 LoadAccelerators(word segptr) LoadAccelerators16
-178 pascal16 TranslateAccelerator(word word ptr) TranslateAccelerator
+178 pascal16 TranslateAccelerator(word word ptr) TranslateAccelerator16
 179 pascal16 GetSystemMetrics(word) GetSystemMetrics
 180 pascal   GetSysColor(word) GetSysColor
 181 pascal16 SetSysColors(word ptr ptr) SetSysColors
@@ -251,7 +251,7 @@ heap	65520
 246 stub ExitWindowsExec
 247 pascal16 GetCursor() GetCursor
 248 pascal16 GetOpenClipboardWindow() GetOpenClipboardWindow
-249 pascal16 GetAsyncKeyState(word) GetAsyncKeyState
+249 pascal16 GetAsyncKeyState(word) GetAsyncKeyState16
 250 pascal16 GetMenuState(word word word) GetMenuState16
 251 pascal   SendDriverMessage(word word long long) SendDriverMessage
 252 pascal16 OpenDriver(ptr ptr long) OpenDriver

@@ -10,4 +10,16 @@
 #define CRTDLL_LC_MIN		LC_ALL
 #define CRTDLL_LC_MAX		LC_TIME
 
+/* ctype defines */
+#define CRTDLL_UPPER		0x1
+#define CRTDLL_LOWER		0x2
+#define CRTDLL_DIGIT		0x4
+#define CRTDLL_SPACE		0x8
+#define CRTDLL_PUNCT		0x10
+#define CRTDLL_CONTROL		0x20
+#define CRTDLL_BLANK		0x40
+#define CRTDLL_HEX		0x80
+#define CRTDLL_LEADBYTE		0x8000
+#define CRTDLL_ALPHA		(0x0100|CRTDLL_UPPER|CRTDLL_LOWER)
+
 #endif

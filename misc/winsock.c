@@ -18,6 +18,7 @@
 #endif
 #if defined(__EMX__)
 #include <sys/so_ioctl.h>
+#include <sys/param.h>
 #endif
 #include <sys/msg.h>
 #include <sys/wait.h>
@@ -1741,8 +1742,12 @@ UINT16 wsaErrno(void)
 #ifdef EDQUOT
 	case EDQUOT:		return WSAEDQUOT;
 #endif
+#ifdef ESTALE
 	case ESTALE:		return WSAESTALE;
+#endif
+#ifdef EREMOTE
 	case EREMOTE:		return WSAEREMOTE;
+#endif
 
        /* just in case we ever get here and there are no problems */
 	case 0:			return 0;

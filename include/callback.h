@@ -77,6 +77,7 @@ extern LONG CallTo32_1( FARPROC32, DWORD );
 extern LONG CallTo32_2( FARPROC32, DWORD, DWORD );
 extern LONG CallTo32_3( FARPROC32, DWORD, DWORD, DWORD );
 extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
+extern LONG CallTo32_5( FARPROC32, DWORD, DWORD, DWORD, DWORD, DWORD );
 
 #define CallTaskStart32( func ) \
     CallTo32_0( func )

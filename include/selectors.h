@@ -40,9 +40,9 @@ extern void SELECTOR_FreeBlock( WORD sel, WORD count );
 #define WINE_CODE_SELECTOR 0x17
 #endif  /* svr4 || SCO_DS */
 
-#ifdef __EMX__
-#define WINE_DATA_SELECTOR 0x00 /* FIXME: This is wrong */
-#define WINE_CODE_SELECTOR 0x00
+#ifdef __EMX__ /* Is this always true? */
+#define WINE_DATA_SELECTOR 0x53
+#define WINE_CODE_SELECTOR 0x5b
 #endif  /* OS/2 */
 
 #else  /* WINELIB */

@@ -61,7 +61,6 @@ int MAIN_Init(void)
     extern BOOL32 WIN16DRV_Init(void);
     extern BOOL32 SIGNAL_Init(void);
     extern BOOL32 WIDGETS_Init(void);
-    extern int KERN32_Init(void);
 
     int queueSize;
 
@@ -143,9 +142,6 @@ int MAIN_Init(void)
 
     /* Initialize message spying */
     if (!SPY_Init()) return 0;
-
-      /* Initialize Win32 data structures */
-    if (!KERN32_Init()) return 0;
 
       /* Create system message queue */
     queueSize = GetProfileInt32A( "windows", "TypeAhead", 120 );

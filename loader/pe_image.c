@@ -17,9 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#ifndef __EMX__
-#include <sys/mman.h>
-#endif
 #include "windows.h"
 #include "winbase.h"
 #include "callback.h"
@@ -65,14 +62,14 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
       if (i<pe_exports->NumberOfNames) {
 	  ename=(char*)RVA(*name++);
 	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx (%8.8lx)\n",ename,*ordinal,functions[*ordinal],*function);
-	  sprintf(buffer,"%s.%s",Module,ename);
+	  sprintf(buffer,"%s_%s",Module,ename);
 	  daddr.off=RVA(functions[*ordinal]);
 	  ordinal++;
 	  function++;
       } else {
       	  /* ordinals/names no longer valid, but we still got functions */
 	  dprintf_win32(stddeb,"%-32s %4s    %8s %8.8lx\n","","","",*function);
-	  sprintf(buffer,"%s.%d",Module,i);
+	  sprintf(buffer,"%s_%d",Module,i);
 	  daddr.off=RVA(*functions);
 	  function++;
       }
@@ -541,7 +538,7 @@ problem needs to be fixed properly at some stage */
 	if (pe->pe_export) {
 		/* add start of sections as debugsymbols */
 		for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
-			sprintf(buffer,"%s.%s",
+			sprintf(buffer,"%s_%s",
 				(char*)RVA(pe->pe_export->Name),
 				pe->pe_seg[i].Name
 			);
@@ -549,7 +546,7 @@ problem needs to be fixed properly at some stage */
 			DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		}
 		/* add entry point */
-		sprintf(buffer,"%s.EntryPoint",(char*)RVA(pe->pe_export->Name));
+		sprintf(buffer,"%s_EntryPoint",(char*)RVA(pe->pe_export->Name));
 		daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
 		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		/* add start of DLL */

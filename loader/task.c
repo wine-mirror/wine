@@ -361,7 +361,6 @@ static void TASK_CallToStart(void)
         /* FIXME: all this is an ugly hack */
 
         extern void InitTask( CONTEXT *context );
-        extern void PE_InitializeDLLs( HMODULE16 hModule );
 
         InitTask( NULL );
         InitApp( pTask->hModule );
@@ -536,7 +535,15 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     /* Create the Win32 part of the task */
 
     pdb32 = PROCESS_Create( pTask );
-    pTask->thdb = THREAD_Create( pdb32, 0 );
+    if (pModule->flags & NE_FFLAGS_WIN32)
+    {
+        LPTHREAD_START_ROUTINE start =
+            (LPTHREAD_START_ROUTINE)(pModule->pe_module->load_addr +
+            pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
+        pTask->thdb = THREAD_Create( pdb32, 0, start );
+    }
+    else
+        pTask->thdb = THREAD_Create( pdb32, 0, NULL );
 
     /* Create the 32-bit stack frame */
 
@@ -1274,17 +1281,27 @@ WORD GetExeVersion(void)
 
 
 /***********************************************************************
- *           SetErrorMode   (KERNEL.107)
+ *           SetErrorMode16   (KERNEL.107)
  */
-UINT SetErrorMode( UINT mode )
+UINT16 SetErrorMode16( UINT16 mode )
 {
     TDB *pTask;
-    UINT oldMode;
+    UINT16 oldMode;
 
     if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return 0;
     oldMode = pTask->error_mode;
     pTask->error_mode = mode;
+    pTask->thdb->process->error_mode = mode;
     return oldMode;
+}
+
+
+/***********************************************************************
+ *           SetErrorMode32   (KERNEL32.486)
+ */
+UINT32 SetErrorMode32( UINT32 mode )
+{
+    return SetErrorMode16( (UINT16)mode );
 }
 
 

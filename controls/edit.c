@@ -3450,11 +3450,11 @@ static LRESULT EDIT_WM_KeyDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	BOOL32 shift;
 	BOOL32 control;
 
-	if (GetKeyState(VK_MENU) & 0x8000)
+	if (GetKeyState32(VK_MENU) & 0x8000)
 		return 0;
 
-	shift = GetKeyState(VK_SHIFT) & 0x8000;
-	control = GetKeyState(VK_CONTROL) & 0x8000;
+	shift = GetKeyState32(VK_SHIFT) & 0x8000;
+	control = GetKeyState32(VK_CONTROL) & 0x8000;
 
 	EDIT_GetSel(wndPtr, &s, &e);
 	switch (wParam) {
@@ -3599,7 +3599,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	c = EDIT_ColFromWndX(wndPtr, l, x);
 	li = (INT32)EDIT_EM_LineIndex(wndPtr, l, 0);
 	e = li + c;
-	if (GetKeyState(VK_SHIFT) & 0x8000)
+	if (GetKeyState32(VK_SHIFT) & 0x8000)
 		EDIT_GetSel(wndPtr, &s, NULL);
 	else
 		s = e;

@@ -4,7 +4,7 @@ type	win16
 #1	pascal	Inquire
 #2	pascal	Enable
 #3	pascal	Disable
-4   pascal16 ToAscii(word word ptr ptr word) ToAscii
+4   pascal16 ToAscii(word word ptr ptr word) ToAscii16
 5   pascal16 AnsiToOem(ptr ptr) AnsiToOem16
 6   pascal16 OemToAnsi(ptr ptr) OemToAnsi16
 7   return   SetSpeed 2 65535
@@ -12,9 +12,9 @@ type	win16
 #126	pascal	GetTableSeg
 #127	pascal	NewTable
 128 pascal   OemKeyScan(word) OemKeyScan
-129 pascal16 VkKeyScan(byte) VkKeyScan
-130 pascal16 GetKeyboardType(byte) GetKeyboardType
-131 pascal16 MapVirtualKey(word word) MapVirtualKey
+129 pascal16 VkKeyScan(byte) VkKeyScan16
+130 pascal16 GetKeyboardType(byte) GetKeyboardType16
+131 pascal16 MapVirtualKey(word word) MapVirtualKey16
 132 pascal16 GetKbCodePage() GetKbCodePage
 133 pascal16 GetKeyNameText(long ptr word) GetKeyNameText16
 134 pascal16 AnsiToOemBuff(ptr ptr word) AnsiToOemBuff16

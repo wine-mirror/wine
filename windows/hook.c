@@ -990,7 +990,7 @@ HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
     HOOKDATA *data;
     if (HIWORD(hhook) != HOOK_MAGIC) return NULL;
     if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR( LOWORD(hhook) ))) return NULL;
-    if (data->flags & HOOK_WIN32) return NULL;
+    if ((data->flags & HOOK_MAPTYPE) != HOOK_WIN16) return NULL;
     return (HOOKPROC16)data->proc;
 }
 
@@ -1033,7 +1033,7 @@ LRESULT HOOK_CallHooks32A( INT32 id, INT32 code, WPARAM32 wParam,
 
     if (!(hook = HOOK_GetHook( id , GetTaskQueue(0) ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
-    return HOOK_CallHook( hook, HOOK_WIN32, code, wParam, lParam );
+    return HOOK_CallHook( hook, HOOK_WIN32A, code, wParam, lParam );
 }
 
 /***********************************************************************
@@ -1048,7 +1048,7 @@ LRESULT HOOK_CallHooks32W( INT32 id, INT32 code, WPARAM32 wParam,
 
     if (!(hook = HOOK_GetHook( id , GetTaskQueue(0) ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
-    return HOOK_CallHook( hook, HOOK_WIN32 | HOOK_UNICODE, code, wParam,
+    return HOOK_CallHook( hook, HOOK_WIN32W, code, wParam,
 			  lParam );
 }
 
@@ -1173,7 +1173,7 @@ HHOOK SetWindowsHook32A( INT32 id, HOOKPROC32 proc )
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32, hInst, hTask );
+    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32A, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
 }
 
@@ -1190,8 +1190,7 @@ HHOOK SetWindowsHook32W( INT32 id, HOOKPROC32 proc )
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 
-    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32 | HOOK_UNICODE,
-				    hInst, hTask );
+    HANDLE16 handle = HOOK_SetHook( id, proc, HOOK_WIN32W, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : 0;
 }
 
@@ -1221,7 +1220,7 @@ HHOOK SetWindowsHookEx32A( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
     else
       hTask = LOWORD(dwThreadID);
 
-    handle = HOOK_SetHook( id, proc, HOOK_WIN32, hInst, hTask );
+    handle = HOOK_SetHook( id, proc, HOOK_WIN32A, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
 }
 
@@ -1240,7 +1239,7 @@ HHOOK SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
     else
       hTask = LOWORD(dwThreadID);
 
-    handle = HOOK_SetHook( id, proc, HOOK_WIN32 | HOOK_UNICODE, hInst, hTask );
+    handle = HOOK_SetHook( id, proc, HOOK_WIN32W, hInst, hTask );
     return (handle) ? (HHOOK)MAKELONG( handle, HOOK_MAGIC ) : (HHOOK)NULL;
 }
 
@@ -1340,7 +1339,7 @@ LRESULT CallNextHookEx32( HHOOK hhook, INT32 code, WPARAM32 wParam,
     oldhook = (HOOKDATA *)USER_HEAP_LIN_ADDR( LOWORD(hhook) );
     fromtype = oldhook->flags & HOOK_MAPTYPE;
 
-    if (!(fromtype & HOOK_WIN32))
+    if (fromtype == HOOK_WIN16)
       fprintf(stderr, "CallNextHookEx32: called from 16bit hook!\n");
 
     return HOOK_CallHook( next, fromtype, code, wParam, lParam );

@@ -14,6 +14,13 @@
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <errno.h>
+#ifdef __EMX__
+#include <sys/so_ioctl.h>
+#include <sys/param.h>
+#endif
+#ifndef FASYNC
+#define FASYNC FIOASYNC
+#endif
 #ifdef __svr4__
 #include <sys/file.h>
 #include <sys/filio.h>
@@ -42,7 +49,9 @@ int WINSOCK_async_io(int fd, int async)
 {
     int fd_flags;
 
+#ifndef __EMX__
     fcntl(fd, F_SETOWN, getpid());
+#endif
 
     fd_flags = fcntl(fd, F_GETFL, 0);
     if (fcntl(fd, F_SETFL, (async)? fd_flags | FASYNC
@@ -213,7 +222,9 @@ static int notify_parent( unsigned flag )
   {
      write(async_ctl.ws_aop->fd[1], &async_ctl.lLength, sizeof(unsigned) );
      write(async_ctl.ws_aop->fd[1], async_ctl.buffer, async_ctl.lLength );
+#ifndef __EMX__
      kill(getppid(), SIGIO);    /* simulate async I/O */
+#endif
 #if __WS_ASYNC_DEBUG
   printf("handler - notify aop [%d, buf %d]\n", async_ctl.lLength, async_ctl.ws_aop->buflen);
 #endif
@@ -419,7 +430,9 @@ static void _async_fail()
         (h_errno < 0) ? (unsigned)WSAMAKEASYNCREPLY( 0, wsaErrno() )
                       : (unsigned)WSAMAKEASYNCREPLY( 0, wsaHerrno() );
      write(async_ctl.ws_aop->fd[1], &async_ctl.lLength, sizeof(unsigned) );
+#ifndef __EMX__
      kill(getppid(), SIGIO);    /* simulate async I/O */
+#endif
      pause();
 }
 

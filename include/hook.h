@@ -9,11 +9,12 @@
 
 #include "windows.h"
 
-#define HOOK_WIN16   0x0
-#define HOOK_WIN32   0x1
-#define HOOK_UNICODE 0x2
+#define HOOK_WIN16	0x0
+#define HOOK_WIN32A	0x1
+#define HOOK_WIN32W	0x2
 
-#define HOOK_MAPTYPE (HOOK_WIN32 | HOOK_UNICODE)
+/* hook type mask */
+#define HOOK_MAPTYPE (3)
 
 extern HOOKPROC16 HOOK_GetProc16( HHOOK hhook );
 extern BOOL32 HOOK_IsHooked( INT16 id );

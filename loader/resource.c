@@ -345,8 +345,12 @@ DWORD SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "SizeofResource32: module=%04x res=%04x\n",
                      hModule, hRsrc );
+#ifndef WINELIB
+    return PE_SizeofResource32(hModule,hRsrc);
+#else
     fprintf(stderr,"SizeofResource32: not implemented\n");
     return 0;
+#endif
 }
 
 
@@ -441,10 +445,15 @@ HACCEL16 LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 
 /**********************************************************************
  *			LoadAccelerators32W	[USER.177]
+ * The image layout seems to look like this (not 100% sure):
+ * 00:	BYTE	type		type of accelerator
+ * 01:	BYTE	pad		(to WORD boundary)
+ * 02:	WORD	event
+ * 04:	WORD	IDval		
+ * 06:	WORD	pad		(to DWORD boundary)
  */
 HACCEL32 LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
 {
-#if 0
     HACCEL32 	hAccel;
     HGLOBAL32 	rsc_mem;
     HRSRC32 hRsrc;
@@ -471,11 +480,12 @@ HACCEL32 LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
     lpAccelTbl->wCount = 0;
     for (i = 0; i < n; i++) {
-	lpAccelTbl->tbl[i].type = *(lp++);
+	lpAccelTbl->tbl[i].type = *lp;
+	lp += 2;
 	lpAccelTbl->tbl[i].wEvent = *((WORD *)lp);
 	lp += 2;
 	lpAccelTbl->tbl[i].wIDval = *((WORD *)lp);
-	lp += 2;
+	lp += 4;
     	if (lpAccelTbl->tbl[i].wEvent == 0) break;
 	dprintf_accel(stddeb,
 		"Accelerator #%u / event=%04X id=%04X type=%02X \n", 
@@ -486,10 +496,6 @@ HACCEL32 LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     GlobalUnlock16(hAccel);
     FreeResource32(rsc_mem);
     return hAccel;
-#else
-	fprintf(stderr,"LoadAcceleratorsW: not implemented\n");
-	return 0x100;  /* Return something anyway */
-#endif
 }
 
 HACCEL32 LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
@@ -744,3 +750,51 @@ SetResourceHandler(HINSTANCE16 instance,LPSTR s,FARPROC16 farproc)
 	fprintf(stderr,"SetResourceHandler(%04x,0x%04x,%p), empty STUB!\n",instance,LOWORD(s),farproc);
     return NULL;
 }
+
+#ifndef WINELIB
+/**********************************************************************
+ *	EnumResourceTypesA	(KERNEL32.90)
+ */
+BOOL32
+EnumResourceTypes32A(HMODULE32 hmodule,ENUMRESTYPEPROC32A lpfun,LONG lParam) {
+    return PE_EnumResourceTypes32A(hmodule,lpfun,lParam);
+}
+
+/**********************************************************************
+ *	EnumResourceTypesW	(KERNEL32.91)
+ */
+BOOL32
+EnumResourceTypes32W(HMODULE32 hmodule,ENUMRESTYPEPROC32W lpfun,LONG lParam) {
+    return PE_EnumResourceTypes32W(hmodule,lpfun,lParam);
+}
+
+/**********************************************************************
+ *	EnumResourceNamesA	(KERNEL32.88)
+ */
+BOOL32
+EnumResourceNames32A(HMODULE32 hmodule,LPCSTR type,ENUMRESNAMEPROC32A lpfun,LONG lParam) {
+    return PE_EnumResourceNames32A(hmodule,type,lpfun,lParam);
+}
+/**********************************************************************
+ *	EnumResourceNamesW	(KERNEL32.89)
+ */
+BOOL32
+EnumResourceNames32W(HMODULE32 hmodule,LPCWSTR type,ENUMRESNAMEPROC32W lpfun,LONG lParam) {
+    return PE_EnumResourceNames32W(hmodule,type,lpfun,lParam);
+}
+
+/**********************************************************************
+ *	EnumResourceLanguagesA	(KERNEL32.86)
+ */
+BOOL32
+EnumResourceLanguages32A(HMODULE32 hmodule,LPCSTR type,LPCSTR name,ENUMRESLANGPROC32A lpfun,LONG lParam) {
+    return PE_EnumResourceLanguages32A(hmodule,type,name,lpfun,lParam);
+}
+/**********************************************************************
+ *	EnumResourceLanguagesW	(KERNEL32.87)
+ */
+BOOL32
+EnumResourceLanguages32W(HMODULE32 hmodule,LPCWSTR type,LPCWSTR name,ENUMRESLANGPROC32W lpfun,LONG lParam) {
+    return PE_EnumResourceLanguages32W(hmodule,type,name,lpfun,lParam);
+}
+#endif  /* WINELIB */

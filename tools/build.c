@@ -26,6 +26,12 @@
 # define PREFIX
 #endif
 
+#if defined(__GNUC__) && !defined(__svr4__)
+# define USE_STABS
+#else
+# undef USE_STABS
+#endif
+
 typedef enum
 {
     TYPE_INVALID,
@@ -980,7 +986,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
 
     fprintf( outfile, "/* File generated automatically; do not edit! */\n" );
     fprintf( outfile, "\t.file\t\"%s\"\n", specfile );
-#ifdef __GNUC__
+#ifdef USE_STABS
     getcwd(buffer, sizeof(buffer));
 
     /*
@@ -1008,14 +1014,14 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_STUB:
         case TYPE_REGISTER:
             fprintf( outfile, "/* %s.%d (%s) */\n", DLLName, i, odp->name);
-#ifdef __GNUC__
+#ifdef USE_STABS
 	    fprintf( outfile, ".stabs \"%s_%d:F1\",36,0,%d,%s_%d\n", 
 		     DLLName, i,
 		     odp->lineno, DLLName, i);
 #endif
 
             fprintf( outfile, "%s_%d:\n", DLLName, i );
-#ifdef __GNUC__
+#ifdef USE_STABS
 	    fprintf( outfile, ".stabn 68,0,%d,0\n", odp->lineno);
 #endif
 
@@ -1138,7 +1144,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "\t.long Code_Start\n" );       /* Code start */
     fprintf( outfile, "\t.long Functions\n" );        /* Functions */
     fprintf( outfile, "\t.long FuncNames\n" );        /* Function names */
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");
@@ -1324,7 +1330,7 @@ static void BuildCall32LargeStack( FILE *outfile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, ".stabs \"CallTo32_LargeStack:F1\",36,0,0," PREFIX "CallTo32_LargeStack\n");
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo32_LargeStack\n" );
@@ -1603,7 +1609,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, ".stabs \"CallFrom16_%s:F1\",36,0,0," PREFIX "CallFrom16_%s\n", 
 	     profile, profile);
 #endif
@@ -1822,7 +1828,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, ".stabs \"CallTo16_%s:F1\",36,0,0," PREFIX "CallTo16_%s\n", 
 	     profile, profile);
 #endif
@@ -2067,7 +2073,8 @@ static void BuildContext32( FILE *outfile )
 /*******************************************************************
  *         RestoreContext32
  *
- * Restore the registers from the context structure
+ * Restore the registers from the context structure.
+ * All registers except %cs and %ss are restored.
  */
 static void RestoreContext32( FILE *outfile )
 {
@@ -2076,15 +2083,23 @@ static void RestoreContext32( FILE *outfile )
     fprintf( outfile, "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-8 );
     fprintf( outfile, "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
-    fprintf( outfile, "\tmovl %%eax,4(%%ebp)\n" ); /* %eip at time of call */
-    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
-    fprintf( outfile, "\tmovl %%eax,0(%%ebp)\n" ); /* %ebp at time of call */
-
     /* Store flags over the relay addr */
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
     fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
 
+    /* Get the new stack addr */
+    fprintf( outfile, "\tmovl %d(%%esp),%%ebx\n", CONTEXTOFFSET(Esp) );
+
+    /* Set eip and ebp value onto the new stack */
+    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
+    fprintf( outfile, "\tmovl %%eax,-4(%%ebx)\n" ); /* %eip at time of call */
+    fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
+    fprintf( outfile, "\tmovl %%eax,-8(%%ebx)\n" ); /* %ebp at time of call */
+
+    /* Set ebp to point to the new stack */
+    fprintf( outfile, "\tleal -8(%%ebx),%%ebp\n" );
+
+    /* Restore all registers */
     fprintf( outfile, "\taddl $%d,%%esp\n",
              sizeof(FLOATING_SAVE_AREA) + 7 * sizeof(DWORD) );
     fprintf( outfile, "\tpopl %%eax\n" );
@@ -2153,7 +2168,7 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, ".stabs \"CallFrom32_%s:F1\",36,0,0," PREFIX "CallFrom32_%s\n", 
 	     profile, profile);
 #endif
@@ -2182,11 +2197,17 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
         fprintf( outfile, "\tpushl %%eax\n" );
     }
 
+    /* Set %es = %ds */
+
+    fprintf( outfile, "\tmovw %%ds,%%ax\n" );
+    fprintf( outfile, "\tmovw %%ax,%%es\n" );
+
     /* Print the debugging info */
 
     if (debugging)
     {
-        fprintf( outfile, "\tpushl $%d\n", reg_func ? -1 : args); /* Nb args */
+        fprintf( outfile, "\tpushl $%d\n",  /* Nb args */
+                 reg_func ? args | 0x80000000 : args);
         fprintf( outfile, "\tpushl %%ebp\n" );
         fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom32\n" );
         fprintf( outfile, "\tadd $8, %%esp\n" );
@@ -2194,8 +2215,6 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
 
     /* Call the function */
 
-    fprintf( outfile, "\tpushw %%ds\n" );
-    fprintf( outfile, "\tpopw %%es\n" );  /* Set %es = %ds */
     fprintf( outfile, "\tcall -4(%%ebp)\n" );
 
     /* Print the debugging info */
@@ -2203,7 +2222,8 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
     if (debugging)
     {
         fprintf( outfile, "\tpushl %%eax\n" );
-        fprintf( outfile, "\tpushl $%d\n", reg_func ? -1 : args); /* Nb args */
+        fprintf( outfile, "\tpushl $%d\n",  /* Nb args */
+                 reg_func ? args | 0x80000000 : args);
         fprintf( outfile, "\tpushl %%ebp\n" );
         fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom32Ret\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
@@ -2244,7 +2264,7 @@ static void BuildCallTo32Func( FILE *outfile, int args )
     /* Function header */
 
     fprintf( outfile, "\n\t.align 4\n" );
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, ".stabs \"CallTo32_%d:F1\",36,0,0," PREFIX "CallTo32_%d\n", 
 	     args, args);
 #endif
@@ -2316,7 +2336,7 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
     getcwd(buffer, sizeof(buffer));
 
@@ -2351,7 +2371,7 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
         }
     }
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");
@@ -2376,7 +2396,7 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
     getcwd(buffer, sizeof(buffer));
 
@@ -2405,7 +2425,7 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_End\n" );
     fprintf( outfile, PREFIX "CALLTO16_End:\n" );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");
@@ -2430,7 +2450,7 @@ static int BuildCallFrom32( FILE *outfile, char * outname, int argc, char *argv[
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
     getcwd(buffer, sizeof(buffer));
 
@@ -2449,7 +2469,7 @@ static int BuildCallFrom32( FILE *outfile, char * outname, int argc, char *argv[
 
     for (i = 2; i < argc; i++) BuildCallFrom32Func( outfile, argv[i] );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");
@@ -2481,7 +2501,7 @@ static int BuildCallTo32( FILE *outfile, char * outname,
      * names as an indication that we should just step through it to whatever
      * is on the other side.
      */
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
     getcwd(buffer, sizeof(buffer));
 
@@ -2500,7 +2520,7 @@ static int BuildCallTo32( FILE *outfile, char * outname,
 
     for (i = 2; i < argc; i++) BuildCallTo32Func( outfile, atoi(argv[i]) );
 
-#ifdef __GNUC__
+#ifdef USE_STABS
     fprintf( outfile, "\t.text\n");
     fprintf( outfile, "\t.stabs \"\",100,0,0,.Letext\n");
     fprintf( outfile, ".Letext:\n");

@@ -30,35 +30,31 @@
  *   information in UnhandledExceptionFilter.
  *
  */
-#ifndef WINELIB
 
+#include <assert.h>
 #include <stdio.h>
 #include "windows.h"
 #include "winerror.h"
+#include "ldt.h"
+#include "process.h"
+#include "thread.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "except.h"
 
-LPTOP_LEVEL_EXCEPTION_FILTER pTopExcHandler = NULL;
+#define TEB_EXCEPTION_FRAME(pcontext) \
+    ((PEXCEPTION_FRAME)((TEB *)GET_SEL_BASE((pcontext)->SegFs))->except)
 
-void EXC_Init(void)
-{
-    pTopExcHandler = (LPTOP_LEVEL_EXCEPTION_FILTER)GetProcAddress32(
-                                                 GetModuleHandle("KERNEL32"),
-                                                 "UnhandledExceptionFilter" );
-}
 
-/*
- *       EXC_RtlUnwind
+/*******************************************************************
+ *         RtlUnwind  (KERNEL32.443)
  *
  *  This function is undocumented. This is the general idea of 
- *  RtlUnwind, though. Note that error handling is not yet implemented
- *  
+ *  RtlUnwind, though. Note that error handling is not yet implemented.
  */
-
-void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,LPVOID unusedEip, 
-                   PEXCEPTION_RECORD pRecord, DWORD returnEax,
-                   PCONTEXT pcontext)
+void RtlUnwind( PEXCEPTION_FRAME pEndFrame, LPVOID unusedEip, 
+                PEXCEPTION_RECORD pRecord, DWORD returnEax,
+                PCONTEXT pcontext /* Wine additional parameter */ )
 {   
    EXCEPTION_RECORD record;
    DWORD            dispatch;
@@ -69,12 +65,12 @@ void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,LPVOID unusedEip,
    /* build an exception record, if we do not have one */
    if(!pRecord)
    {
-     record.ExceptionCode=   0xC0000026;  /* invalid disposition */ 
-     record.ExceptionFlags=  0;
-     record.ExceptionRecord= NULL;
-     record.ExceptionAddress=(LPVOID) pcontext->Eip; 
-     record.NumberParameters= 0;
-     pRecord=&record;     
+     record.ExceptionCode    = STATUS_INVALID_DISPOSITION;
+     record.ExceptionFlags   = 0;
+     record.ExceptionRecord  = NULL;
+     record.ExceptionAddress = (LPVOID)pcontext->Eip; 
+     record.NumberParameters = 0;
+     pRecord = &record;
    }
 
    if(pEndFrame)
@@ -83,39 +79,39 @@ void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,LPVOID unusedEip,
      pRecord->ExceptionFlags|=EH_UNWINDING | EH_EXIT_UNWIND;
   
    /* get chain of exception frames */      
-   while((TebExceptionFrame!=NULL)&&
-         (TebExceptionFrame!=((void *)-1)) &&
-         (TebExceptionFrame!=pEndFrame))
+   while ((TEB_EXCEPTION_FRAME(pcontext) != NULL) &&
+          (TEB_EXCEPTION_FRAME(pcontext) != ((void *)0xffffffff)) &&
+          (TEB_EXCEPTION_FRAME(pcontext) != pEndFrame))
    {
-       dprintf_win32(stddeb,"calling exception handler at 0x%x\n",
-                                           (int) TebExceptionFrame->Handler);
+       dprintf_win32( stddeb, "calling exception handler at 0x%x\n",
+                      (int)TEB_EXCEPTION_FRAME(pcontext)->Handler );
 
        dispatch=0;       
-       retval=TebExceptionFrame->Handler(pRecord, TebExceptionFrame,
-                                         pcontext, &dispatch);
+       retval = TEB_EXCEPTION_FRAME(pcontext)->Handler( pRecord,
+                                                TEB_EXCEPTION_FRAME(pcontext),
+                                                pcontext, &dispatch);
                                          
        dprintf_win32(stddeb,"exception handler returns 0x%x, dispatch=0x%x\n",
                               retval, (int) dispatch);
   
-       if(retval==ExceptionCollidedUnwind)
-          TebExceptionFrame=(LPVOID) dispatch;
-       else if(TebExceptionFrame!=pEndFrame)
-          TebExceptionFrame=TebExceptionFrame->Prev;
+       if (retval == ExceptionCollidedUnwind)
+           TEB_EXCEPTION_FRAME(pcontext) = (LPVOID)dispatch;
+       else if (TEB_EXCEPTION_FRAME(pcontext) != pEndFrame)
+           TEB_EXCEPTION_FRAME(pcontext) = TEB_EXCEPTION_FRAME(pcontext)->Prev;
        else
           break;  
    }
 }
 
-/*
- *    EXC_RaiseException
- *
+
+/*******************************************************************
+ *         RaiseException  (KERNEL32.418)
  */
- 
-VOID EXC_RaiseException(DWORD dwExceptionCode,
+void RaiseException(DWORD dwExceptionCode,
 		    DWORD dwExceptionFlags,
 		    DWORD cArguments,
 		    const LPDWORD lpArguments,
-		    PCONTEXT pcontext)
+		    PCONTEXT pcontext /* Wine additional parameter */ )
 {
     PEXCEPTION_FRAME    pframe; 
     EXCEPTION_RECORD    record;
@@ -131,13 +127,13 @@ VOID EXC_RaiseException(DWORD dwExceptionCode,
     record.NumberParameters    = cArguments;
     record.ExceptionAddress    = (LPVOID) pcontext->Eip;
     
-    for(i=0;i<cArguments;i++)
-       record.ExceptionInformation[i]=lpArguments[i];
+    if (lpArguments) for( i = 0; i < cArguments; i++)
+        record.ExceptionInformation[i] = lpArguments[i];
     
     /* get chain of exception frames */    
     
-    retval=ExceptionContinueSearch;    
-    pframe=TebExceptionFrame;
+    retval = ExceptionContinueSearch;    
+    pframe = TEB_EXCEPTION_FRAME( pcontext );
     
     while((pframe!=NULL)&&(pframe!=((void *)0xFFFFFFFF)))
     {
@@ -154,62 +150,47 @@ VOID EXC_RaiseException(DWORD dwExceptionCode,
        pframe=pframe->Prev;
    }
 
-   if(retval!=ExceptionContinueExecution)
+   if (retval!=ExceptionContinueExecution)
    {    
-      retval=EXC_CallUnhandledExceptionFilter(&record,pcontext);
-      if(retval!=EXCEPTION_CONTINUE_EXECUTION)
-      {
-         dprintf_win32(stddeb,"no handler wanted to handle "
-                              "the exception, exiting\n"     );
-         ExitProcess(dwExceptionCode); /* what status should be used here ? */         
-      }                   
-   } 
+       /* FIXME: what should we do here? */
+       dprintf_win32(stddeb,"no handler wanted to handle the exception, exiting\n");
+       ExitProcess(dwExceptionCode); /* what status should be used here ? */
+   }
 }
+
 
 /*******************************************************************
- *         UnhandledExceptionFilter (KERNEL32.537)
- * 
- *  This is the unhandled exception code. 
- *  Actually, this should show up a dialog box, with all kinds of
- *  fancy debugging information. It does nothing now!
+ *         UnhandledExceptionFilter   (KERNEL32.537)
  */
- 
 DWORD UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-   PEXCEPTION_RECORD pRecord;
-   PCONTEXT          pContext;
-   
-   pRecord=epointers->ExceptionRecord;
-   pContext=epointers->ContextRecord;
-   
-   if(pRecord->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND) )
-   {
-      dprintf_win32(stddeb,"UnhandledExceptionFilter: exiting\n");
-      ExitProcess(pRecord->ExceptionCode);            
-   }
-   else
-   {
-      RtlUnwind(0,pRecord,0,-1 );
-   }
-   
-   /* 
-    * This is just to avoid a warning, code should not get here 
-    * if it does, EXC_RaiseException will terminate it. 
-    */
-   return EXCEPTION_CONTINUE_SEARCH;
+    char message[80];
+
+    /* FIXME: Should check if the process is being debugged */
+
+    if (pCurrentProcess && pCurrentProcess->top_filter)
+    {
+        DWORD ret = pCurrentProcess->top_filter( epointers );
+        if (ret != EXCEPTION_CONTINUE_SEARCH) return ret;
+    }
+
+    /* FIXME: Should check the current error mode */
+
+    sprintf( message, "Unhandled exception 0x%08lx at address 0x%08lx.",
+             epointers->ExceptionRecord->ExceptionCode,
+             (DWORD)epointers->ExceptionRecord->ExceptionAddress );
+    MessageBox32A( 0, message, "Error", MB_OK | MB_ICONHAND );
+    return EXCEPTION_EXECUTE_HANDLER;
 }
+
 
 /*************************************************************
- *    SetUnhandledExceptionFilter    (KERNEL32.516)
- *  
- *
+ *            SetUnhandledExceptionFilter   (KERNEL32.516)
  */
-  
-LPTOP_LEVEL_EXCEPTION_FILTER 
-        SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER efilter)
-{  
-   pTopExcHandler=efilter;
-   return efilter;
+LPTOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(
+                                          LPTOP_LEVEL_EXCEPTION_FILTER filter )
+{
+    LPTOP_LEVEL_EXCEPTION_FILTER old = pCurrentProcess->top_filter;
+    pCurrentProcess->top_filter = filter;
+    return old;
 }
-
-#endif  /* WINELIB */

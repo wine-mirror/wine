@@ -10,6 +10,7 @@ C_SRCS = \
 	graphics.c \
 	init.c \
 	mapping.c \
+	objects.c \
 	text.c
 
 all: $(MODULE).o

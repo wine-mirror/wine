@@ -858,7 +858,7 @@ INT16 SetCommState16(LPDCB16 lpdcb)
 			commerror = IE_BAUDRATE;
 			return -1;
 	}
-#else
+#elif !defined(__EMX__)
         switch (lpdcb->BaudRate) {
                 case 110:
                 case CBR_110:
@@ -1059,7 +1059,7 @@ BOOL32 SetCommState32(INT32 fd,LPDCB32 lpdcb)
 			commerror = IE_BAUDRATE;
 			return FALSE;
 	}
-#else
+#elif !defined(__EMX__)
         switch (lpdcb->BaudRate) {
                 case 110:
                 case CBR_110:
@@ -1194,6 +1194,7 @@ INT16 GetCommState16(INT16 fd, LPDCB16 lpdcb)
 		return -1;
 	}
 	lpdcb->Id = fd;
+#ifndef __EMX__
 #ifdef CBAUD
         switch (port.c_cflag & CBAUD) {
 #else
@@ -1227,7 +1228,7 @@ INT16 GetCommState16(INT16 fd, LPDCB16 lpdcb)
 			lpdcb->BaudRate = 38400;
 			break;
 	}
-
+#endif
 	switch (port.c_cflag & CSIZE) {
 		case CS5:
 			lpdcb->ByteSize = 5;
@@ -1312,6 +1313,7 @@ BOOL32 GetCommState32(INT32 fd, LPDCB32 lpdcb)
 		commerror = WinError();	
 		return FALSE;
 	}
+#ifndef __EMX__
 #ifdef CBAUD
         switch (port.c_cflag & CBAUD) {
 #else
@@ -1345,7 +1347,7 @@ BOOL32 GetCommState32(INT32 fd, LPDCB32 lpdcb)
 			lpdcb->BaudRate = 38400;
 			break;
 	}
-
+#endif
 	switch (port.c_cflag & CSIZE) {
 		case CS5:
 			lpdcb->ByteSize = 5;

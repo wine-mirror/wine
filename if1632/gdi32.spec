@@ -294,7 +294,7 @@ base	1
 0286 stub RemoveFontResourceW
 0287 stdcall ResetDCA(long ptr) ResetDC32A
 0288 stdcall ResetDCW(long ptr) ResetDC32W
-0289 stub ResizePalette
+0289 stdcall ResizePalette(long long) ResizePalette
 0290 stdcall RestoreDC(long long) RestoreDC32
 0291 stdcall RoundRect(long long long long long long long) RoundRect32
 0292 stdcall SaveDC(long) SaveDC32
@@ -332,7 +332,7 @@ base	1
 0323 stub SetMetaFileBitsEx
 0324 stub SetMetaRgn
 0325 stub SetMiterLimit
-0326 stub SetPaletteEntries
+0326 stdcall SetPaletteEntries(long long long ptr) SetPaletteEntries
 0327 stdcall SetPixel(long long long long) SetPixel32
 0328 stub SetPixelFormat
 0329 stub SetPixelV
@@ -341,7 +341,7 @@ base	1
 0332 stdcall SetRectRgn(long long long long long) SetRectRgn
 0333 stdcall SetRelAbs(long long) SetRelAbs32
 0334 stdcall SetStretchBltMode(long long) SetStretchBltMode32
-0335 stub SetSystemPaletteUse
+0335 stdcall SetSystemPaletteUse(long long) SetSystemPaletteUse
 0336 stdcall SetTextAlign(long long) SetTextAlign32
 0337 stdcall SetTextCharacterExtra(long long) SetTextCharacterExtra32
 0338 stdcall SetTextColor(long long) SetTextColor

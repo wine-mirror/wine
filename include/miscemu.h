@@ -35,9 +35,6 @@ extern void IO_outport( int port, int count, DWORD value );
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
 
-/* misc/cpu.c */
-extern int runtime_cpu(void);
-
 #define INT_BARF(context,num) \
     fprintf( stderr, "int%x: unknown/not implemented parameters:\n" \
                      "int%x: AX %04x, BX %04x, CX %04x, DX %04x, " \

@@ -8,6 +8,7 @@
 #define __WINE_THREAD_H
 
 #include "process.h"
+#include "winnt.h"
 
 /* Thread exception block */
 typedef struct _TEB
@@ -35,7 +36,7 @@ typedef struct _THDB
     K32OBJ       header;         /*  00 Kernel object header */
     PDB32       *process;        /*  08 Process owning this thread */
     K32OBJ      *event;          /*  0c Thread event */
-    TEB          teb;            /*  10 Thread information block */
+    TEB          teb;            /*  10 Thread exception block */
     PDB32       *process2;       /*  40 Same as offset 08 (?) */
     DWORD        flags;          /*  44 Flags */
     DWORD        exit_code;      /*  48 Termination status */
@@ -52,7 +53,7 @@ typedef struct _THDB
     DWORD        last_error;     /*  70 Last error code */
     void        *debugger_CB;    /*  74 Debugger context block */
     DWORD        debug_thread;   /*  78 Thread debugging this one (?) */
-    void        *context;        /*  7c Thread register context */
+    void        *pcontext;       /*  7c Thread register context */
     DWORD        unknown3[3];    /*  80 Unknown */
     WORD         current_ss;     /*  8c Another 16-bit stack selector */
     WORD         pad2;           /*  8e */
@@ -69,11 +70,14 @@ typedef struct _THDB
     K32OBJ      *win16_mutex;    /* 1e8 Pointer to Win16 mutex */
     K32OBJ      *win32_mutex;    /* 1ec Pointer to KERNEL32 mutex */
     K32OBJ      *crit_section2;  /* 1f0 Another critical section */
-    DWORD        unknown6[2];    /* 1f4 Unknown */
+    DWORD        unknown6[3];    /* 1f4 Unknown */
+    /* The following are Wine-specific fields */
+    CONTEXT      context;        /* 200 Thread context */
 } THDB;
 
 
-extern THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size );
+extern THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
+                            LPTHREAD_START_ROUTINE start_addr );
 extern void THREAD_Destroy( K32OBJ *ptr );
 
 extern THDB *pCurrentThread;

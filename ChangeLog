@@ -1,4 +1,92 @@
 ----------------------------------------------------------------------
+Sun Feb  2 12:31:03 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [files/drive.c]
+	Fixed SetCurrentDirectory() to also change the current drive.
+
+	* [win32/except.c] [tools/build.c]
+	Use Win32 register functions to implement exception handling.
+	Fixed UnhandledExceptionFilter.
+
+Fri Jan 31 15:42:41  1997  David Faure  <david.faure@ihamy.insa-lyon.fr>
+
+	* [windows/keyboard.c]
+	Added KEYBOARD_GenerateMsg to generate Caps Lock and NumLock events
+	Added calls to KEYBOARD_GenerateMsg when the key is pressed/released
+	or when the state has changed, out of wine.
+	Changed type 3-state 'ToggleKeyState' to boolean. The On/Off is given
+	by InputKeyStateTable.
+
+Wed Jan 29 21:53:04 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [loader/*resource.c][if1632/thunk.c]
+	EnumResource* added.
+
+	* [loader/pe_resource.] [loader/resource.c]
+	SizeofResource32(), LoadAccelerators32() added.
+
+	* [misc/lstr.c]
+	FormatMessage %n added.
+
+	* [misc/crtdll.c][include/ctrdll.h][if1632/crtdll.spec]
+	_chdrive,_errno,_isctype added.
+
+	* [misc/cpu.c]
+	Replaced runtime_cpu by GetSystemInfo().
+
+	* [windows/hook.c][include/hook.h]
+	Fixed mapping of hooks to win32/unicode.
+
+	* [windows/keyboard.c] [windows/defwnd.c]
+	Updated to win32 standard.
+	ALT-<Menukey> fixed.
+
+	* [windows/queue.c]
+	GetWindowThreadProcessId() implemented.
+
+Mon Jan 27 16:42:49 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/metafiledrv/*] [graphics/x11drv/*]
+	  [objects/bitmap.c] [objects/brush.c] [objects/font.c]
+	  [objects/gdiobj.c] [objects/pen.c]
+	Moved SelectObject to graphics drivers. Printer support now works
+	in a few cases but is definitely not complete. Generic/text driver
+	works. The postscript driver works if true type fonts are disabled
+	from the control panel. To enable printer support add Printer=on
+	to the wine section of your wine.conf file. This causes write not
+	to work properly. I know that several other printer drivers do not
+	work.
+
+	* [tools/build.c]
+	Make .stabs not used for svr4 since it doesn't use GNU assembler.
+
+	* [misc/fontengine.c]
+	Make sure a printf doesn't crash the system.
+
+Sat Jan 25 15:53:35 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile.c]
+	Fixed some problems with PlayMetaFileRecord().
+
+	* [objects/dc.c]
+	hClipRgn gets initialized in GetDCState().
+
+Fri Jan 24 21:22:26 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [debugger/stabs.c]
+	Handle file names beginning with '/'.
+
+Fri Jan 24 18:33:04 1997  Robert Pouliot <krynos@clic.net>
+
+	* [*/*]
+	Some more patches for OS/2 support.
+
+Fri Jan 24 11:30:41 1997  Bang Jun-Young  <bangjy@nownuri.nowcom.co.kr>
+
+	* [resources/sysres_Ko.rc]
+	Updated support for Korean (Ko) language.
+
+----------------------------------------------------------------------
 Sun Jan 19 11:46:48 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [loader/module.c]

@@ -103,7 +103,7 @@ type	win16
 104 stub GetCodeInfo
 105 pascal16 GetExeVersion() GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
-107 pascal16 SetErrorMode(word) SetErrorMode
+107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
 109 register SwitchStackBack() SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle

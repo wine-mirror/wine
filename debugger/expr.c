@@ -418,7 +418,14 @@ DEBUG_EvalExpr(struct expr * exp)
       rtn.type = DEBUG_TypeIntConst;
       exp->un.rgister.result = DEBUG_GetRegister(exp->un.rgister.reg);
       rtn.off = (unsigned int) &exp->un.rgister.result;
-      rtn.seg = 0;
+      if( exp->un.rgister.reg == REG_EIP )
+	{
+	  rtn.seg = CS_reg(&DEBUG_context);
+	}
+      else
+	{
+	  rtn.seg = DS_reg(&DEBUG_context);
+	}
       break;
     case EXPR_TYPE_BINOP:
       exp1 = DEBUG_EvalExpr(exp->un.binop.exp1);

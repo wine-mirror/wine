@@ -11,6 +11,7 @@
 #include "winerror.h"
 #include "heap.h"
 #include "handle32.h"
+#include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
 

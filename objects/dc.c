@@ -432,6 +432,8 @@ HDC16 GetDCState( HDC16 hdc )
 	newdc->w.hClipRgn = CreateRectRgn32( 0, 0, 0, 0 );
 	CombineRgn32( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
     }
+    else
+	newdc->w.hClipRgn = 0;
     return handle;
 }
 

@@ -349,18 +349,22 @@ static LRESULT LISTBOX_GetItemRect( WND *wnd, LB_DESCR *descr, INT32 index,
     else if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         INT32 i;
-        if (index < descr->top_item)
-        {
-            for (i = descr->top_item-1; i >= index; i--)
-                rect->top -= descr->items[i].height;
-        }
-        else
-        {
-            for (i = descr->top_item; i < index; i++)
-                rect->top += descr->items[i].height;
-        }
-        rect->bottom = rect->top + descr->items[index].height;
         rect->right += descr->horz_pos;
+        if ((index >= 0) && (index < descr->nb_items))
+        {
+            if (index < descr->top_item)
+            {
+                for (i = descr->top_item-1; i >= index; i--)
+                    rect->top -= descr->items[i].height;
+            }
+            else
+            {
+                for (i = descr->top_item; i < index; i++)
+                    rect->top += descr->items[i].height;
+            }
+            rect->bottom = rect->top + descr->items[index].height;
+
+        }
     }
     else
     {
@@ -1892,7 +1896,7 @@ static LRESULT LISTBOX_HandleKeyDown( WND *wnd, LB_DESCR *descr,
     if (caret >= 0)
     {
         if ((descr->style & LBS_EXTENDEDSEL) &&
-            !(GetKeyState( VK_SHIFT ) & 0x8000))
+            !(GetKeyState32( VK_SHIFT ) & 0x8000))
             descr->anchor_item = caret;
         LISTBOX_MoveCaret( wnd, descr, caret, TRUE );
         if (descr->style & LBS_NOTIFY)

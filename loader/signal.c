@@ -143,7 +143,6 @@ static void SIGNAL_fault(int signal, void *siginfo, SIGCONTEXT *context)
 static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
 {
 #endif
-#ifndef __EMX__ /* FIXME: XX_sig(constext)=pointer to incomplete type (EMX) */
     if (CS_sig(context) == WINE_CODE_SELECTOR)
     {
         fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
@@ -157,7 +156,6 @@ static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
                  CS_sig(context), EIP_sig(context) );
     }
     wine_debug( signal, context );
-#endif
 }
 
 

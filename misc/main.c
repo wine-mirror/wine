@@ -774,15 +774,17 @@ BOOL32 GetVersionEx32W(OSVERSIONINFO32W *v)
 /***********************************************************************
  *	GetWinFlags (KERNEL.132)
  */
-LONG GetWinFlags(void)
+DWORD GetWinFlags(void)
 {
   static const long cpuflags[5] =
     { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
+  SYSTEM_INFO	si;
+  long result = 0,cpuflag;
 
-  long result = 0;
+  GetSystemInfo(&si);
 
   /* There doesn't seem to be any Pentium flag.  */
-  long cpuflag = cpuflags[MIN (runtime_cpu (), 4)];
+  cpuflag = cpuflags[MIN (si.wProcessorLevel, 4)];
 
   switch(Options.mode) {
   case MODE_STANDARD:

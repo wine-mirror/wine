@@ -1273,7 +1273,8 @@ LOCVAL(LOCALE_INEGSEPBYSPACE,"0")
 			retString);
 		return 0;
 	}
-	lstrcpyn32A(buf,retString,len);
+	if (buf)
+		lstrcpyn32A(buf,retString,len);
 	return strlen(retString)+1;
 }
 
@@ -1286,9 +1287,9 @@ INT32 GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
 	int i;
 	LPSTR abuf = (LPSTR) wbuf;
 	INT32 n = GetLocaleInfoA(lcid, LCType, abuf, len);
-	for (i = n; i > 0; --i) {
-		wbuf[i] = abuf[i];
-	}
+	if (wbuf)
+		for (i = n; i > 0; --i)
+			wbuf[i] = abuf[i];
 	return n;
 }
 

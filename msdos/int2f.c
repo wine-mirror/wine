@@ -121,16 +121,20 @@ static void do_int2f_16( CONTEXT *context )
 
     /* FIXME: is this right?  Specs say that this should only be callable
        in real (v86) mode which we never enter.  */
-    case 0x87:  /* DPMI installation check */
-        AX_reg(context) = 0x0000; /* DPMI Installed */
-        BX_reg(context) = 0x0001; /* 32bits available */
-        CL_reg(context) = runtime_cpu();
-        DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
-        SI_reg(context) = 0;      /* # of para. of DOS extended private data */
-        ES_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
-        DI_reg(context) = 0;
-        break;
+    case 0x87: /* DPMI installation check */
+        {
+	    SYSTEM_INFO si;
 
+	    GetSystemInfo(&si);
+	    AX_reg(context) = 0x0000; /* DPMI Installed */
+            BX_reg(context) = 0x0001; /* 32bits available */
+            CL_reg(context) = si.wProcessorLevel;
+            DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
+            SI_reg(context) = 0;      /* # of para. of DOS extended private data */
+            ES_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
+            DI_reg(context) = 0;
+            break;
+        }
     case 0x8a:  /* DPMI get vendor-specific API entry point. */
 	/* The 1.0 specs say this should work with all 0.9 hosts.  */
 	break;

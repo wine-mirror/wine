@@ -217,28 +217,26 @@ void RELAY_DebugCallTo16( int* stack, int nbargs )
  */
 void RELAY_DebugCallFrom32( int *stack, int nb_args )
 {
-    int *parg;
+    int *parg, i;
 
     if (!debugging_relay) return;
     printf( "Call %s(", BUILTIN_GetEntryPoint32( (void *)stack[-2] ));
-    if (nb_args > 0)
+    for (i = nb_args & 0x7fffffff, parg = &stack[2]; i; parg++, i--)
     {
-        for (parg = &stack[2]; nb_args; parg++, nb_args--)
-        {
-            printf( "%08x", *parg );
-            if (nb_args > 1) printf( "," );
-        }
+        printf( "%08x", *parg );
+        if (i > 1) printf( "," );
     }
     printf( ") ret=%08x\n", stack[1] );
-    if (nb_args == -1)  /* Register function */
+    if (nb_args & 0x80000000)  /* Register function */
     {
         CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
         printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 context->Eax, context->Ebx, context->Ecx, context->Edx,
                 context->Esi, context->Edi );
-        printf( " EBP=%08lx ESP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                context->Ebp, context->Esp, context->SegDs, context->SegEs,
-                context->SegFs, context->SegGs, context->EFlags );
+        printf( " EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                context->Ebp, context->Esp, context->Eip, context->SegDs,
+                context->SegEs, context->SegFs, context->SegGs,
+                context->EFlags );
     }
 }
 
@@ -261,15 +259,16 @@ void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
     if (!debugging_relay) return;
     printf( "Ret  %s() retval=%08x ret=%08x\n",
             BUILTIN_GetEntryPoint32( (void *)stack[-2] ), ret_val, stack[1] );
-    if (nb_args == -1)  /* Register function */
+    if (nb_args & 0x80000000)  /* Register function */
     {
         CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
         printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 context->Eax, context->Ebx, context->Ecx, context->Edx,
                 context->Esi, context->Edi );
-        printf( " EBP=%08lx ESP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
-                context->Ebp, context->Esp, context->SegDs, context->SegEs,
-                context->SegFs, context->SegGs, context->EFlags );
+        printf( " EBP=%08lx ESP=%08lx EIP=%08lx DS=%04lx ES=%04lx FS=%04lx GS=%04lx EFL=%08lx\n",
+                context->Ebp, context->Esp, context->Eip, context->SegDs,
+                context->SegEs, context->SegFs, context->SegGs,
+                context->EFlags );
     }
 }
 

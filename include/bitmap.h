@@ -7,11 +7,12 @@
 #ifndef __WINE_BITMAP_H
 #define __WINE_BITMAP_H
 
-#include <X11/extensions/XShm.h>
 #include "gdi.h"
 #include "xmalloc.h"
 
 #ifdef PRELIMINARY_WING16_SUPPORT
+/* FIXME: this doesn't belong here */
+#include <X11/extensions/XShm.h>
 
 typedef struct
 {
@@ -52,8 +53,6 @@ extern BOOL32 BITMAP_Init(void);
 extern INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
 extern INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bitmap );
-extern HBITMAP16 BITMAP_SelectObject( DC * dc, HBITMAP16 hbitmap,
-                                      BITMAPOBJ * bmp );
 
   /* objects/dib.c */
 extern int DIB_GetImageWidthBytes( int width, int depth );

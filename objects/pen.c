@@ -12,10 +12,6 @@
 #include "debug.h"
 
 
-static const char PEN_dash[]       = { 5,3 };      /* -----   -----   -----  */
-static const char PEN_dot[]        = { 1,1 };      /* --  --  --  --  --  -- */
-static const char PEN_dashdot[]    = { 4,3,2,3 };  /* ----   --   ----   --  */
-static const char PEN_dashdotdot[] = { 4,2,2,2,2,2 }; /* ----  --  --  ----  */
 
 /***********************************************************************
  *           CreatePen16    (GDI.61)
@@ -102,50 +98,3 @@ INT32 PEN_GetObject32( PENOBJ * pen, INT32 count, LPSTR buffer )
     return count;
 }
 
-
-/***********************************************************************
- *           PEN_SelectObject
- */
-HPEN32 PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
-{
-    HPEN32 prevHandle = dc->w.hPen;
-
-    if (dc->header.wMagic == METAFILE_DC_MAGIC)
-    {
-        LOGPEN16 logpen = { pen->logpen.lopnStyle,
-                            { pen->logpen.lopnWidth.x,
-                              pen->logpen.lopnWidth.y },
-                            pen->logpen.lopnColor };
-        if (MF_CreatePenIndirect( dc, hpen, &logpen )) return prevHandle;
-        else return 0;
-    }
-
-    dc->w.hPen = hpen;
-
-    dc->u.x.pen.style = pen->logpen.lopnStyle;
-    dc->u.x.pen.width = pen->logpen.lopnWidth.x * dc->vportExtX / dc->wndExtX;
-    if (dc->u.x.pen.width < 0) dc->u.x.pen.width = -dc->u.x.pen.width;
-    if (dc->u.x.pen.width == 1) dc->u.x.pen.width = 0;  /* Faster */
-    dc->u.x.pen.pixel = COLOR_ToPhysical( dc, pen->logpen.lopnColor );    
-    switch(pen->logpen.lopnStyle)
-    {
-      case PS_DASH:
-	dc->u.x.pen.dashes = (char *)PEN_dash;
-	dc->u.x.pen.dash_len = 2;
-	break;
-      case PS_DOT:
-	dc->u.x.pen.dashes = (char *)PEN_dot;
-	dc->u.x.pen.dash_len = 2;
-	break;
-      case PS_DASHDOT:
-	dc->u.x.pen.dashes = (char *)PEN_dashdot;
-	dc->u.x.pen.dash_len = 4;
-	break;
-      case PS_DASHDOTDOT:
-	dc->u.x.pen.dashes = (char *)PEN_dashdotdot;
-	dc->u.x.pen.dash_len = 6;
-	break;
-    }
-    
-    return prevHandle;
-}

@@ -593,7 +593,8 @@ DWORD SearchPath32A( LPCSTR path, LPCSTR name, LPCSTR ext, DWORD buflen,
     lstrcpyn32A( buffer, full_name.short_name, buflen );
     res = full_name.long_name +
               strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
-    if (*res && (buflen > 3)) lstrcpyn32A( buffer + 3, res + 1, buflen - 3 );
+    while (*res == '/') res++;
+    if (buflen > 3) lstrcpyn32A( buffer + 3, res, buflen - 3 );
     for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
     if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
     return *res ? strlen(res) + 2 : 3;
@@ -622,7 +623,8 @@ DWORD SearchPath32W( LPCWSTR path, LPCWSTR name, LPCWSTR ext, DWORD buflen,
     lstrcpynAtoW( buffer, full_name.short_name, buflen );
     res = full_name.long_name +
               strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
-    if (*res && (buflen > 3)) lstrcpynAtoW( buffer + 3, res + 1, buflen - 3 );
+    while (*res == '/') res++;
+    if (buflen > 3) lstrcpynAtoW( buffer + 3, res + 1, buflen - 3 );
     for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
     if (lastpart)
     {

@@ -1223,8 +1223,8 @@ BOOL TranslateMessage( LPMSG16 msg )
 		msg->wParam, HIWORD(msg->lParam) );
 
 	/* FIXME : should handle ToAscii yielding 2 */
-	switch (ToAscii(msg->wParam, HIWORD(msg->lParam),
-		(LPSTR)&QueueKeyStateTable, wparam, 0)) 
+	switch (ToAscii32(msg->wParam, HIWORD(msg->lParam),
+		QueueKeyStateTable,(LPWORD)wparam, 0)) 
 	    {
 	    case 1 :
 		message = message == WM_KEYDOWN ? WM_CHAR : WM_SYSCHAR;

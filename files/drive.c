@@ -678,36 +678,38 @@ UINT32 GetCurrentDirectory32W( UINT32 buflen, LPWSTR buf )
  */
 BOOL16 SetCurrentDirectory16( LPCSTR dir )
 {
-    if (dir[0] && (dir[1]==':'))
-    {
-        int drive = tolower( *dir ) - 'a';
-        if (!DRIVE_IsValid(drive))
-        {
-            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
-            return 0;
-        }
-        dir += 2;
-    }
-    /* FIXME: what about empty strings? Add a \\ ? */
-    return DRIVE_Chdir( DRIVE_GetCurrentDrive(), dir );
+    return SetCurrentDirectory32A( dir );
 }
+
 
 /***********************************************************************
  *           SetCurrentDirectory32A   (KERNEL32.479)
  */
 BOOL32 SetCurrentDirectory32A( LPCSTR dir )
 {
-    /* FIXME: Unauthorized Windows 95 mentions that SetCurrentDirectory 
-     * may change drive and current directory for there is no drive based
-     * currentdir table?
-     */
-    return SetCurrentDirectory16(dir);
+    int drive = DRIVE_GetCurrentDrive();
+
+    if (dir[0] && (dir[1]==':'))
+    {
+        drive = tolower( *dir ) - 'a';
+        if (!DRIVE_IsValid( drive ))
+        {
+            DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
+            return FALSE;
+        }
+        dir += 2;
+    }
+    /* FIXME: what about empty strings? Add a \\ ? */
+    if (!DRIVE_Chdir( drive, dir )) return FALSE;
+    if (drive == DRIVE_GetCurrentDrive()) return TRUE;
+    return DRIVE_SetCurrentDrive( drive );
 }
+
 
 /***********************************************************************
  *           SetCurrentDirectory32W   (KERNEL32.480)
  */
-BOOL32 SetCurrentDirectory32W( LPCWSTR dirW)
+BOOL32 SetCurrentDirectory32W( LPCWSTR dirW )
 {
     LPSTR dir = HEAP_strdupWtoA( GetProcessHeap(), 0, dirW );
     BOOL32 res = SetCurrentDirectory32A( dir );

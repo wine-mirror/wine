@@ -60,9 +60,6 @@ C_SRCS = \
 	relay.c \
 	thunk.c
 
-ASM_SRCS = \
-	except.S
-
 GEN_ASM_SRCS = \
 	$(SPEC_FILES) \
 	callfrom16.s \
@@ -92,8 +89,5 @@ callto16.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
 
 callto32.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
 	$(BUILD) -o $@ -callto32 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq`
-
-except.o: except.S $(TOPOBJDIR)/include/config.h
-	$(CC) -c $(DIVINCL) -o $*.o $(SRCDIR)/except.S
 
 ### Dependencies:

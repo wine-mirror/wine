@@ -354,12 +354,16 @@ void INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0400:  /* Get DPMI version */
-        AX_reg(context) = 0x005a;  /* DPMI version 0.90 */
-        BX_reg(context) = 0x0005;  /* Flags: 32-bit, virtual memory */
-        CL_reg(context) = runtime_cpu ();
-        DX_reg(context) = 0x0102;  /* Master/slave interrupt controller base*/
-        break;
+    	{
+	    SYSTEM_INFO si;
 
+	    GetSystemInfo(&si);
+	    AX_reg(context) = 0x005a;  /* DPMI version 0.90 */
+	    BX_reg(context) = 0x0005;  /* Flags: 32-bit, virtual memory */
+	    CL_reg(context) = si.wProcessorLevel;
+	    DX_reg(context) = 0x0102;  /* Master/slave interrupt controller base*/
+	    break;
+	}
     case 0x0500:  /* Get free memory information */
         {
             MEMMANINFO mmi;

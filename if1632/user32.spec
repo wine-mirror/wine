@@ -104,7 +104,7 @@ base	1
 0097 stub DdeDisconnectList
 0098 stub DdeEnableCallback
 0099 stub DdeFreeDataHandle
-0100 stub DdeFreeStringHandle
+0100 return DdeFreeStringHandle 8 0
 0101 stub DdeGetData
 0102 return DdeGetLastError 4 0
 0103 stub DdeGetQualityOfService
@@ -122,7 +122,7 @@ base	1
 0115 stub DdeSetQualityOfService
 0116 stub DdeSetUserHandle
 0117 stub DdeUnaccessData
-0118 stub DdeUninitialize
+0118 return DdeUninitialize 4 0
 0119 stdcall DefDlgProcA(long long long long) DefDlgProc32A
 0120 stdcall DefDlgProcW(long long long long) DefDlgProc32W
 0121 stdcall DefFrameProcA(long long long long long) DefFrameProc32A
@@ -210,7 +210,7 @@ base	1
 0203 stub FreeDDElParam
 0204 stdcall GetActiveWindow() GetActiveWindow32
 0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags
-0206 stdcall GetAsyncKeyState(long) GetAsyncKeyState
+0206 stdcall GetAsyncKeyState(long) GetAsyncKeyState32
 0207 stdcall GetCapture() GetCapture32
 0208 stdcall GetCaretBlinkTime() GetCaretBlinkTime32
 0209 stdcall GetCaretPos(ptr) GetCaretPos32
@@ -250,15 +250,15 @@ base	1
 0243 stub GetInputState
 0244 stdcall GetInternalWindowPos(long ptr ptr) GetInternalWindowPos32
 0245 stub GetKBCodePage
-0246 stub GetKeyNameTextA
-0247 stub GetKeyNameTextW
-0248 stdcall GetKeyState(long) GetKeyState
+0246 stdcall GetKeyNameTextA(long ptr long) GetKeyNameText32A
+0247 stdcall GetKeyNameTextW(long ptr long) GetKeyNameText32W
+0248 stdcall GetKeyState(long) GetKeyState32
 0249 stub GetKeyboardLayout
 0250 stub GetKeyboardLayoutList
 0251 stub GetKeyboardLayoutNameA
 0252 stub GetKeyboardLayoutNameW
-0253 stub GetKeyboardState
-0254 stub GetKeyboardType
+0253 stdcall GetKeyboardState(ptr) GetKeyboardState
+0254 stdcall GetKeyboardType(long) GetKeyboardType32
 0255 stdcall GetLastActivePopup(long) GetLastActivePopup
 0256 stdcall GetMenu(long) GetMenu32
 0257 stdcall GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
@@ -275,7 +275,7 @@ base	1
 0268 stdcall GetMenuStringW(long long ptr long long) GetMenuString32W
 0269 stdcall GetMessageA(ptr long long long) USER32_GetMessageA
 0270 stub GetMessageExtraInfo
-0271 stub GetMessagePos
+0271 stdcall GetMessagePos() GetMessagePos
 0272 stub GetMessageTime
 0273 stdcall GetMessageW(ptr long long long) USER32_GetMessageA
 0274 stdcall GetNextDlgGroupItem(long long long) GetNextDlgGroupItem32
@@ -313,10 +313,10 @@ base	1
 0306 stdcall GetWindowPlacement(long ptr) GetWindowPlacement32
 0307 stdcall GetWindowRect(long ptr) GetWindowRect32
 0308 stdcall GetWindowTextA(long ptr long) GetWindowText32A
-0309 stub GetWindowTextLengthA
-0310 stub GetWindowTextLengthW
+0309 stdcall GetWindowTextLengthA(long) GetWindowTextLength32A
+0310 stdcall GetWindowTextLengthW(long) GetWindowTextLength32W
 0311 stdcall GetWindowTextW(long ptr long) GetWindowText32W
-0312 stub GetWindowThreadProcessId
+0312 stdcall GetWindowThreadProcessId(long ptr) GetWindowThreadProcessId
 0313 stdcall GetWindowWord(long long) GetWindowWord
 0314 stub GrayStringA
 0315 stub GrayStringW
@@ -346,7 +346,7 @@ base	1
 0339 stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
 0340 stub IsDialogMessage
 0341 stdcall IsDialogMessageA(long ptr) IsDialogMessage32A
-0342 stub IsDialogMessageW
+0342 stdcall IsDialogMessageW(long ptr) IsDialogMessage32W
 0343 stdcall IsDlgButtonChecked(long long) IsDlgButtonChecked32
 0344 stdcall IsIconic(long) IsIconic32
 0345 stdcall IsMenu(long) IsMenu32
@@ -386,17 +386,17 @@ base	1
 0379 stub LookupIconIdFromDirectoryEx
 0380 stub MBToWCSEx
 0381 stdcall MapDialogRect(long ptr) MapDialogRect32
-0382 stub MapVirtualKeyA
+0382 stdcall MapVirtualKeyA(long long) MapVirtualKey32A
 0383 stub MapVirtualKeyExA
-0384 stub MapVirtualKeyW
+0384 stdcall MapVirtualKeyW(long long) MapVirtualKey32A
 0385 stdcall MapWindowPoints(long long ptr long) MapWindowPoints32
 0386 stub MenuItemFromPoint
 0387 stub MenuWindowProcA
 0388 stub MenuWindowProcW
 0389 stdcall MessageBeep(long) MessageBeep
 0390 stdcall MessageBoxA(long ptr ptr long) MessageBox32A
-0391 stub MessageBoxExA
-0392 stub MessageBoxExW
+0391 stdcall MessageBoxExA(long ptr ptr long long) MessageBoxEx32A
+0392 stdcall MessageBoxExW(long ptr ptr long long) MessageBoxEx32W
 0393 stub MessageBoxIndirectA
 0394 stub MessageBoxIndirectW
 0395 stdcall MessageBoxW(long ptr ptr long) MessageBox32W
@@ -404,7 +404,7 @@ base	1
 0397 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
 0398 stdcall MoveWindow(long long long long long long) MoveWindow32
 0399 stub MsgWaitForMultipleObjects
-0400 stub OemKeyScan
+0400 stdcall OemKeyScan(long) OemKeyScan
 0401 stdcall OemToCharA(ptr ptr) OemToChar32A
 0402 stdcall OemToCharBuffA(ptr ptr long) OemToCharBuff32A
 0403 stdcall OemToCharBuffW(ptr ptr long) OemToCharBuff32W
@@ -487,7 +487,7 @@ base	1
 0480 stdcall SetFocus(long) SetFocus32
 0481 return SetForegroundWindow 4 0
 0482 stdcall SetInternalWindowPos(long long ptr ptr) SetInternalWindowPos32
-0483 stub SetKeyboardState
+0483 stdcall SetKeyboardState(ptr) SetKeyboardState
 0484 stdcall SetLastErrorEx(long long) SetLastErrorEx
 0485 stub SetLogonNotifyWindow
 0486 stdcall SetMenu(long long) SetMenu32
@@ -549,14 +549,14 @@ base	1
 0542 stub TabbedTextOutW
 0543 stub TileChildWindows
 0544 stub TileWindows
-0545 stub ToAscii
+0545 stdcall ToAscii32(long long ptr ptr long) ToAscii32
 0546 stub ToAsciiEx
 0547 stub ToUnicode
 0548 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu32
 0549 stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
-0550 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator
-0551 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator
-0552 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator
+0550 stdcall TranslateAccelerator(long long ptr) TranslateAccelerator32
+0551 stdcall TranslateAcceleratorA(long long ptr) TranslateAccelerator32
+0552 stdcall TranslateAcceleratorW(long long ptr) TranslateAccelerator32
 0553 stub TranslateCharsetInfo
 0554 stub TranslateMDISysAccel
 0555 stdcall TranslateMessage(ptr) USER32_TranslateMessage
@@ -576,10 +576,10 @@ base	1
 0569 stub UserRegisterWowHandlers
 0570 stdcall ValidateRect(long ptr) ValidateRect32
 0571 stdcall ValidateRgn(long long) ValidateRgn32
-0572 stdcall VkKeyScanA(long) VkKeyScan
+0572 stdcall VkKeyScanA(long) VkKeyScan32A
 0573 stub VkKeyScanExA
 0574 stub VkKeyScanExW
-0575 stub VkKeyScanW
+0575 stdcall VkKeyScanW(long) VkKeyScan32W
 0576 stub WaitForInputIdle
 0577 stub WaitMessage
 0578 stdcall WinHelpA(long ptr long long) WinHelp32A

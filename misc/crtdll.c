@@ -22,6 +22,7 @@
 #include "xmalloc.h"
 #include "heap.h"
 #include "crtdll.h"
+#include "drive.h"
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
 LPSTR *CRTDLL_argv_dll;         /* CRTDLL.24 */
@@ -764,6 +765,23 @@ INT32 CRTDLL_wcsspn(LPWSTR str,LPWSTR accept)
 }
 
 /*********************************************************************
+ *                  wcscspn           (CRTDLL.508)
+ */
+INT32 CRTDLL_wcscspn(LPWSTR str,LPWSTR reject)
+{
+	LPWSTR	s,t;
+
+	s=str;
+	do {
+		t=reject;
+		while (*t) { if (*t==*s) break;t++;}
+		if (*t) break;
+		s++;
+	} while (*s);
+	return s-str; /* nr of wchars */
+}
+
+/*********************************************************************
  *                  wcschr           (CRTDLL.504)
  */
 LPWSTR CRTDLL_wcschr(LPWSTR str,WCHAR xchar)
@@ -867,4 +885,59 @@ CRTDLL_atexit(LPVOID x) {
 	/* FIXME */
 	fprintf(stdnimp,"CRTDLL.atexit(%p), STUB.\n",x);
 	return 0; /* successful */
+}
+
+/*********************************************************************
+ *                  mbtowc           (CRTDLL.430)
+ * FIXME: check multibyte support
+ */
+WCHAR
+CRTDLL_mbtowc(CHAR a) {
+	return a;
+}
+
+/*********************************************************************
+ *                  _isctype           (CRTDLL.138)
+ */
+BOOL32
+CRTDLL__isctype(CHAR x,CHAR type) {
+	if ((type & CRTDLL_SPACE) && isspace(x))
+		return TRUE;
+	if ((type & CRTDLL_PUNCT) && ispunct(x))
+		return TRUE;
+	if ((type & CRTDLL_LOWER) && islower(x))
+		return TRUE;
+	if ((type & CRTDLL_UPPER) && isupper(x))
+		return TRUE;
+	if ((type & CRTDLL_ALPHA) && isalpha(x))
+		return TRUE;
+	if ((type & CRTDLL_DIGIT) && isdigit(x))
+		return TRUE;
+	if ((type & CRTDLL_CONTROL) && iscntrl(x))
+		return TRUE;
+	/* check CRTDLL_LEADBYTE */
+	return FALSE;
+}
+
+/*********************************************************************
+ *                  _chdrive           (CRTDLL.52)
+ */
+BOOL32
+CRTDLL__chdrive(INT32 newdrive) {
+	/* FIXME: generates errnos */
+	return DRIVE_SetCurrentDrive(newdrive);
+}
+
+/*********************************************************************
+ *                  _errno           (CRTDLL.52)
+ * Yes, this is a function.
+ */
+LPINT32
+CRTDLL__errno() {
+	static	int crtdllerrno;
+	extern int LastErrorToErrno(DWORD);
+
+	/* FIXME: we should set the error at the failing function call time */
+	crtdllerrno = LastErrorToErrno(GetLastError());
+	return &crtdllerrno;
 }

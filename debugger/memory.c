@@ -146,6 +146,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
     unsigned int	* dump;
     int			  i;
     unsigned char	* pnt;
+    unsigned int	  seg2;
     struct datatype	* testtype;
     unsigned short int	* wdump;
 
@@ -159,13 +160,33 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
      */
     if( addr.type != NULL )
       {
-	if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
-	DEBUG_TypeDerefPointer(&addr, &testtype);
-	if( testtype != NULL || addr.type == DEBUG_TypeIntConst )
+	if( addr.type == DEBUG_TypeIntConst )
 	  {
+	    /*
+	     * We know that we have the actual offset stored somewhere
+	     * else in 32-bit space.  Grab it, and we
+	     * should be all set.
+	     */
+	    seg2 = addr.seg;
+	    addr.seg = 0;
 	    addr.off = DEBUG_GetExprValue(&addr, NULL);
+	    addr.seg = seg2;
+	  }
+	else
+	  {
+	    if (!DBG_CHECK_READ_PTR( &addr, 1 )) return;
+	    DEBUG_TypeDerefPointer(&addr, &testtype);
+	    if( testtype != NULL || addr.type == DEBUG_TypeIntConst )
+	      {
+		addr.off = DEBUG_GetExprValue(&addr, NULL);
+	      }
 	  }
       }
+    else if (!addr.seg && !addr.off)
+    {
+	fprintf(stderr,"Invalid expression\n");
+	return;
+    }
 
     if (format != 'i' && count > 1)
     {

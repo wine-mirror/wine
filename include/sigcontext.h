@@ -59,7 +59,40 @@ typedef struct ucontext SIGCONTEXT;
 #endif  /* svr4 || SCO_DS */
 
 #ifdef __EMX__
-typedef struct CONTEXTRECORD SIGCONTEXT;
+typedef unsigned long ULONG;
+typedef unsigned short USHORT;
+typedef struct _fpreg		/* Note 1 */
+{
+  ULONG	 losig;
+  ULONG	 hisig;
+  USHORT signexp;
+} FPREG;
+typedef FPREG *PFPREG;
+
+typedef struct _CONTEXT		/* Note 1 */
+{
+  ULONG ContextFlags;
+  ULONG ctx_env[7];
+  FPREG ctx_stack[8];
+  ULONG ctx_SegGs;
+  ULONG ctx_SegFs;
+  ULONG ctx_SegEs;
+  ULONG ctx_SegDs;
+  ULONG ctx_RegEdi;
+  ULONG ctx_RegEsi;
+  ULONG ctx_RegEax;
+  ULONG ctx_RegEbx;
+  ULONG ctx_RegEcx;
+  ULONG ctx_RegEdx;
+  ULONG ctx_RegEbp;
+  ULONG ctx_RegEip;
+  ULONG ctx_SegCs;
+  ULONG ctx_EFlags;
+  ULONG ctx_RegEsp;
+  ULONG ctx_SegSs;
+} SIGCONTEXT;
+/*typedef CONTEXTRECORD *PCONTEXTRECORD;*/
+
 #endif  /* __EMX__ */
 
 
@@ -138,12 +171,12 @@ typedef struct CONTEXTRECORD SIGCONTEXT;
 #define EDI_sig(context)     ((context)->ctx_RegEdi)
 #define EBP_sig(context)     ((context)->ctx_RegEbp)
 #define ESP_sig(context)     ((context)->ctx_RegEsp)
-#define CS_sig(context)      ((context)->ctx_SegCS)
-#define DS_sig(context)      ((context)->ctx_SegDS)
-#define ES_sig(context)      ((context)->ctx_SegES)
-#define SS_sig(context)      ((context)->ctx_SegSS)
-#define FS_sig(context)      ((context)->ctx_SegFS)
-#define GS_sig(context)      ((context)->ctx_SegGS)
+#define CS_sig(context)      ((context)->ctx_SegCs)
+#define DS_sig(context)      ((context)->ctx_SegDs)
+#define ES_sig(context)      ((context)->ctx_SegEs)
+#define SS_sig(context)      ((context)->ctx_SegSs)
+#define FS_sig(context)      ((context)->ctx_SegFs)
+#define GS_sig(context)      ((context)->ctx_SegGs)
 #define EFL_sig(context)     ((context)->ctx_EFlags)
 #define EIP_sig(context)     ((context)->ctx_RegEip)
 

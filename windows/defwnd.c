@@ -260,7 +260,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	else if( wParam == VK_F10 )
 	         iF10Key = 1;
 	     else
-	         if( wParam == VK_ESCAPE && GetKeyState(VK_SHIFT) < 0 )
+	         if( wParam == VK_ESCAPE && (GetKeyState32(VK_SHIFT) & 0x8000))
 		     SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
                                     (WPARAM16)SC_KEYMENU, (LPARAM)VK_SPACE);
 	break;

@@ -11,14 +11,11 @@
 #include <stdlib.h>
 
 #include <assert.h>
-#ifndef __EMX__
-#include <sys/mman.h>
-#endif
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <malloc.h>
 

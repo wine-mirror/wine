@@ -30,7 +30,7 @@ base	1
 0025 stub CmdBatNotification
 0026 stub CommConfigDialogA
 0027 stub CommConfigDialogW
-0028 stub CompareFileTime
+0028 stdcall CompareFileTime(ptr ptr) CompareFileTime
 0029 stdcall CompareStringA(long long ptr long ptr long) CompareString32A
 0030 stdcall CompareStringW(long long ptr long ptr long) CompareString32W
 0031 stub ConnectNamedPipe
@@ -65,7 +65,7 @@ base	1
 0060 stub CreateSemaphoreA
 0061 stub CreateSemaphoreW
 0062 stub CreateTapePartition
-0063 stub CreateThread
+0063 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 0064 stub CreateVirtualBuffer
 0065 stub DebugActiveProcess
 0066 stub DebugBreak
@@ -88,12 +88,12 @@ base	1
 0083 stub EnumCalendarInfoW
 0084 stub EnumDateFormatsA
 0085 stub EnumDateFormatsW
-0086 stub EnumResourceLanguagesA
-0087 stub EnumResourceLanguagesW
-0088 stub EnumResourceNamesA
-0089 stub EnumResourceNamesW
-0090 stub EnumResourceTypesA
-0091 stub EnumResourceTypesW
+0086 stdcall EnumResourceLanguagesA(long ptr ptr ptr long) THUNK_EnumResourceLanguages32A
+0087 stdcall EnumResourceLanguagesW(long ptr ptr ptr long) THUNK_EnumResourceLanguages32W
+0088 stdcall EnumResourceNamesA(long ptr ptr long) THUNK_EnumResourceNames32A
+0089 stdcall EnumResourceNamesW(long ptr ptr long) THUNK_EnumResourceNames32W
+0090 stdcall EnumResourceTypesA(long ptr long) THUNK_EnumResourceTypes32A
+0091 stdcall EnumResourceTypesW(long ptr long) THUNK_EnumResourceTypes32W
 0092 stdcall EnumSystemCodePagesA(ptr long) THUNK_EnumSystemCodePages32A
 0093 stdcall EnumSystemCodePagesW(ptr long) THUNK_EnumSystemCodePages32W
 0094 stdcall EnumSystemLocalesA(ptr long) THUNK_EnumSystemLocales32A
@@ -407,7 +407,7 @@ base	1
 0402 stub OpenProfileUserMapping
 0403 stub OpenSemaphoreA
 0404 stub OpenSemaphoreW
-0405 stub OutputDebugStringA
+0405 stdcall OutputDebugStringA(ptr) OutputDebugString
 0406 stub OutputDebugStringW
 0407 stub PeekConsoleInputA
 0408 stub PeekConsoleInputW
@@ -420,7 +420,7 @@ base	1
 0415 stdcall QueryPerformanceCounter(ptr) QueryPerformanceCounter
 0416 stub QueryPerformanceFrequency
 0417 stub QueryWin31IniFilesMappedToRegistry
-0418 stdcall RaiseException(long long long ptr) RaiseException
+0418 register RaiseException(long long long ptr) RaiseException
 0419 stdcall ReadConsoleA(long ptr long ptr ptr) ReadConsole32A
 0420 stub ReadConsoleInputA
 0421 stub ReadConsoleInputW
@@ -445,7 +445,7 @@ base	1
 0440 stub ResumeThread
 0441 stdcall RtlFillMemory(ptr long long) RtlFillMemory
 0442 stdcall RtlMoveMemory(ptr ptr long) RtlMoveMemory
-0443 stdcall RtlUnwind(ptr long ptr long) RtlUnwind
+0443 register RtlUnwind(ptr long ptr long) RtlUnwind
 0444 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
 0445 stub ScrollConsoleScreenBufferA
 0446 stub ScrollConsoleScreenBufferW
@@ -488,7 +488,7 @@ base	1
 0483 stdcall SetEndOfFile(long) SetEndOfFile
 0484 stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariable32A
 0485 stdcall SetEnvironmentVariableW(ptr ptr) SetEnvironmentVariable32W
-0486 stdcall SetErrorMode(long) SetErrorMode
+0486 stdcall SetErrorMode(long) SetErrorMode32
 0487 	stdcall	SetEvent(long) SetEvent
 0488 stdcall SetFileApisToANSI() SetFileApisToANSI
 0489 stdcall SetFileApisToOEM() SetFileApisToOEM
@@ -518,7 +518,7 @@ base	1
 0513 stub SetThreadLocale
 0514 stdcall SetThreadPriority(long long) SetThreadPriority
 0515 stdcall SetTimeZoneInformation(ptr) SetTimeZoneInformation
-0516 stdcall SetUnhandledExceptionFilter(ptr) SetUnhandledExceptionFilter
+0516 stdcall SetUnhandledExceptionFilter(ptr) THUNK_SetUnhandledExceptionFilter
 0517 stub SetVDMCurrentDirectories
 0518 stub SetVolumeLabelA
 0519 stub SetVolumeLabelW

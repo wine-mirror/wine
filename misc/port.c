@@ -9,6 +9,9 @@
 #include <sys/time.h>
 
 #ifndef HAVE_USLEEP
+#ifdef __EMX__
+unsigned int usleep (unsigned int useconds) { DosSleep(useconds); }
+#else
 unsigned int usleep (unsigned int useconds)
 {
     struct timeval delay;
@@ -19,6 +22,7 @@ unsigned int usleep (unsigned int useconds)
     select( 0, 0, 0, 0, &delay );
     return 0;
 }
+#endif
 #endif /* HAVE_USLEEP */
 
 #ifndef HAVE_MEMMOVE

@@ -14,6 +14,7 @@
 #include "options.h"
 #include "queue.h"
 #include "win.h"
+#include "winnt.h"
 #include "debugger.h"
 
 #include "expr.h"
@@ -289,7 +290,7 @@ type_expr:
     | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(ENUM, $2); }
 
 expr_addr:
-    expr			 { $$ = DEBUG_EvalExpr($1) }
+    expr			 { $$ = DEBUG_EvalExpr($1); }
 
 expr_value:
       expr        { DBG_ADDR addr  = DEBUG_EvalExpr($1);
@@ -348,7 +349,7 @@ expr:
  * of expression that is suitable to be used as an lvalue.
  */
 lval_addr:
-    lval			 { $$ = DEBUG_EvalExpr($1) }
+    lval			 { $$ = DEBUG_EvalExpr($1); }
 
 lval:
       lvalue                     { $$ = $1; }
@@ -535,17 +536,6 @@ static void DEBUG_Main( int signal )
 
 
 /***********************************************************************
- *           DEBUG_EnterDebugger
- *
- * Force an entry into the debugger.
- */
-void DEBUG_EnterDebugger(void)
-{
-    kill( getpid(), SIGHUP );
-}
-
-
-/***********************************************************************
  *           DebugBreak16   (KERNEL.203)
  */
 void DebugBreak16( CONTEXT *regs )
@@ -560,6 +550,17 @@ void DebugBreak16( CONTEXT *regs )
 void wine_debug( int signal, SIGCONTEXT *regs )
 {
     DEBUG_SetSigContext( regs );
+#if 0
+    DWORD *stack = (DWORD *)ESP_reg(&DEBUG_context);
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = EH_NONCONTINUABLE;
+    *(--stack) = EXCEPTION_ACCESS_VIOLATION;
+    *(--stack) = EIP_reg(&DEBUG_context);
+    ESP_reg(&DEBUG_context) = (DWORD)stack;
+    EIP_reg(&DEBUG_context) = GetProcAddress32( GetModuleHandle("KERNEL32"),
+                                                "RaiseException" );
+#endif
     DEBUG_Main( signal );
     DEBUG_GetSigContext( regs );
 }

@@ -109,3 +109,20 @@ DWORD ErrnoToLastError(int errno_num)
 
     return rc;
 }
+
+int LastErrorToErrno(DWORD lasterror)
+{
+    int rc = 0; /* no error */
+    int i = 0;
+
+    while(errno_xlat_table[i].errno != -1)
+    {
+        if(errno_xlat_table[i].win32err == lasterror )
+        {
+            rc = errno_xlat_table[i].errno;
+            break;
+        }
+        i++;
+    }
+    return rc;
+}

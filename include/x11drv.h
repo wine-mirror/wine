@@ -90,11 +90,19 @@ extern BOOL32 X11DRV_Polygon( struct tagDC *dc, LPPOINT32 pt, INT32 count );
 extern BOOL32 X11DRV_PolyPolygon( struct tagDC *dc, LPPOINT32 pt,
 				  LPINT32 counts, UINT32 polygons);
 
+extern HGDIOBJ32 X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ32 handle );
+
 extern BOOL32 X11DRV_ExtFloodFill( struct tagDC *dc, INT32 x, INT32 y,
 				   COLORREF color, UINT32 fillType );
 extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
 				 UINT32 flags, const RECT32 *lprect,
 				 LPCSTR str, UINT32 count, const INT32 *lpDx );
 
+
+/* X11 driver internal functions */
+
+extern BOOL32 X11DRV_BITMAP_Init(void);
+extern BOOL32 X11DRV_BRUSH_Init(void);
+extern BOOL32 X11DRV_FONT_Init(void);
 
 #endif  /* __WINE_X11DRV_H */

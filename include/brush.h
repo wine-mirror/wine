@@ -16,10 +16,10 @@ typedef struct
     LOGBRUSH32  logbrush;
 } BRUSHOBJ;
 
-extern BOOL32 BRUSH_Init(void);
+#define NB_HATCH_STYLES  6
+
 extern INT16 BRUSH_GetObject16( BRUSHOBJ * brush, INT16 count, LPSTR buffer );
 extern INT32 BRUSH_GetObject32( BRUSHOBJ * brush, INT32 count, LPSTR buffer );
 extern BOOL32 BRUSH_DeleteObject( HBRUSH16 hbrush, BRUSHOBJ * brush );
-extern HBRUSH32 BRUSH_SelectObject(DC * dc, HBRUSH32 hbrush, BRUSHOBJ * brush);
 
 #endif  /* __WINE_BRUSH_H */
