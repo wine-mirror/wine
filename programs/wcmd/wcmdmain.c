@@ -67,6 +67,16 @@ HANDLE h;
     }
   }
 
+  /* If we do a "wcmd /c command", we don't want to allocate a new
+   * console since the command returns immediately. Rather, we use
+   * the surrently allocated input and output handles. This allows
+   * us to pipe to and read from the command interpreter.
+   */
+  if (strstr(args, "/c") != NULL) {
+    WCMD_process_command (param);
+    return 0;
+  }
+
 /*
  *	Allocate a console and set it up.
  */
@@ -85,11 +95,6 @@ HANDLE h;
 
   if (strstr(args, "/q") != NULL) {
     WCMD_echo ("OFF");
-  }
-
-  if (strstr(args, "/c") != NULL) {
-    WCMD_process_command (param);
-    return 0;
   }
 
   if (strstr(args, "/k") != NULL) {
