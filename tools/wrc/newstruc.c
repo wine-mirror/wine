@@ -702,7 +702,9 @@ static const char anih[4] = "anih";
 static const char rate[4] = "rate";
 static const char seq[4]  = "seq ";
 
-#define NEXT_TAG(p)	((riff_tag_t *)(((char *)p) + (isswapped ? BYTESWAP_DWORD(p->size) : p->size) + sizeof(*p)))
+#define SKIP_TAG(p,size) 	((riff_tag_t *)(((char *)p) + (size)))
+
+#define NEXT_TAG(p)	SKIP_TAG(p,(isswapped ? BYTESWAP_DWORD(p->size) : p->size) + sizeof(*p))
 
 static void handle_ani_icon(riff_tag_t *rtp, enum res_e type, int isswapped)
 {
@@ -768,7 +770,7 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 	{
 		if(!memcmp(rtp->tag, info, sizeof(info)))
 		{
-			rtp = (riff_tag_t *)(((char *)rtp) + 4);
+			rtp = SKIP_TAG(rtp,4);
 		}
 		else if(!memcmp(rtp->tag, inam, sizeof(inam)))
 		{
@@ -786,7 +788,7 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 			 * simply ignore this because it is pure
 			 * non-information.
 			 */
-			rtp = (riff_tag_t *)(((char *)rtp) + 4);
+			rtp = SKIP_TAG(rtp,4);
 		}
 		else if(!memcmp(rtp->tag, icon, sizeof(icon)))
 		{
@@ -802,7 +804,7 @@ static void handle_ani_list(riff_tag_t *lst, enum res_e type, int isswapped)
 
 		/* FIXME: This relies in sizeof(DWORD) == sizeof(pointer_type) */
 		if((DWORD)rtp & 1)
-			((char *)rtp)++;
+			rtp = SKIP_TAG(rtp,1);
 	}
 }
 
@@ -865,7 +867,7 @@ ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
 		{
 			if(!memcmp(rtp->tag, acon, sizeof(acon)))
 			{
-				rtp = (riff_tag_t *)(((char *)rtp) + 4);
+				rtp = SKIP_TAG(rtp,4);
 			}
 			else if(!memcmp(rtp->tag, list, sizeof(list)))
 			{
@@ -913,7 +915,7 @@ ani_curico_t *new_ani_curico(enum res_e type, raw_data_t *rd, int *memopt)
 
 			/* FIXME: This relies in sizeof(DWORD) == sizeof(pointer_type) */
 			if((DWORD)rtp & 1)
-				((char *)rtp)++;
+				rtp = SKIP_TAG(rtp,1);
 		}
 
 		/* We must end correctly here */
