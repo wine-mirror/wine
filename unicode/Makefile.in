@@ -98,7 +98,7 @@ libwine_unicode.a: $(OBJS)
 
 # --export-all doesn't work correctly because of dllwrap's bug
 libwine_unicode.dll: $(OBJS) wine_unicode.def
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
+	$(DLLWRAP) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
 
 .PHONY: install_so install_a install_dll
 

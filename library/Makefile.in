@@ -33,7 +33,7 @@ libwine.a: $(OBJS)
 	$(RANLIB) $@
 
 libwine.dll: $(OBJS)
-	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS) $(EXTRALIBS)
+	$(DLLWRAP) --export-all --implib libwine.a -o libwine.dll $(OBJS) $(EXTRALIBS)
 
 .PHONY: install_so install_a install_dll
 

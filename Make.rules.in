@@ -39,7 +39,6 @@ CROSSCC   = @CROSSCC@
 LDSHARED  = @LDSHARED@
 DLLTOOL   = @DLLTOOL@
 DLLWRAP   = @DLLWRAP@
-DLLWRAPFLAGS = --add-stdcall-alias
 AR        = @AR@ rc
 RANLIB    = @RANLIB@
 STRIP     = @STRIP@
