@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
+#define WINE_FONTDATA "__WINE_FONTDLGDATA"
+
 #include "cdlg.h"
 
 static HBITMAP hBitmapTT = 0;
@@ -686,7 +688,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     LPLOGFONTA lpxx;
     HCURSOR hcursor=SetCursor(LoadCursorA(0,(LPSTR)IDC_WAIT));
 
-    SetWindowLongA(hDlg, DWL_USER, lParam);
+    SetPropA(hDlg, WINE_FONTDATA, (HANDLE)lParam);
     lpxx=lpcf->lpLogFont;
     TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
 
@@ -1072,7 +1074,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
     case psh15:
         i=RegisterWindowMessageA( HELPMSGSTRINGA );
         if (lpcf->hwndOwner)
-            SendMessageA(lpcf->hwndOwner, i, 0, (LPARAM)GetWindowLongA(hDlg, DWL_USER));
+            SendMessageA(lpcf->hwndOwner, i, 0, (LPARAM)GetPropA(hDlg, WINE_FONTDATA));
         /* if (CFn_HookCallChk(lpcf))
            CallWindowProc16(lpcf->lpfnHook,hDlg,WM_COMMAND,psh15,(LPARAM)lpcf);*/
         break;
@@ -1163,7 +1165,7 @@ INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
     if (uMsg!=WM_INITDIALOG)
     {
-        lpcf=(LPCHOOSEFONTA)GetWindowLongA(hDlg, DWL_USER);
+        lpcf=(LPCHOOSEFONTA)GetPropA(hDlg, WINE_FONTDATA);
         if (!lpcf && uMsg != WM_MEASUREITEM)
             return FALSE;
         if (CFn_HookCallChk32(lpcf))
@@ -1214,7 +1216,7 @@ INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
     if (uMsg!=WM_INITDIALOG)
     {
-        lpcf32w=(LPCHOOSEFONTW)GetWindowLongA(hDlg, DWL_USER);
+        lpcf32w=(LPCHOOSEFONTW)GetPropA(hDlg, WINE_FONTDATA);
         if (!lpcf32w)
             return FALSE;
         if (CFn_HookCallChk32((LPCHOOSEFONTA)lpcf32w))
