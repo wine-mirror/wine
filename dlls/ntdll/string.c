@@ -65,7 +65,7 @@ LPSTR  __cdecl _ultoa( unsigned long x, LPSTR buf, INT radix )
         *--p = (rem <= 9) ? rem + '0' : rem + 'a' - 10;
         x /= radix;
     } while (x);
-    strcpy( buf, p + 1 );
+    strcpy( buf, p );
     return buf;
 }
 
