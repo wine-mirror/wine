@@ -394,7 +394,6 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
         if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
         {
             if (!exe_modref) exe_modref = wm;
-            else FIXME( "Trying to load second .EXE file: %s\n", filename );
         }
         else wm->ldr.Flags |= LDR_IMAGE_IS_DLL;
     }
