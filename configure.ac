@@ -137,6 +137,8 @@ dnl Check for -lresolv for Solaris
 AC_CHECK_FUNCS(inet_aton,,AC_CHECK_LIB(resolv,inet_aton))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
+dnl Check for -lpoll for Mac OS X/Darwin
+AC_CHECK_LIB(poll,poll)
 dnl Check for -lpthread
 AC_CHECK_LIB(pthread,pthread_create,AC_SUBST(LIBPTHREAD,"-lpthread"))
 
@@ -915,6 +917,17 @@ case $host_os in
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
           LDDLL="\$(CC) -Wl,-G,-B,symbolic"
+
+        else
+          AC_CACHE_CHECK(whether we can build a Mach-O (Mac OS X/Darwin) dll, ac_cv_c_dll_macho,
+            [WINE_TRY_CFLAGS([-bundle], ac_cv_c_dll_macho="yes", ac_cv_c_dll_macho="no")])
+          if test "$ac_cv_c_dll_macho" = "yes"
+          then
+            LIBEXT="dylib"
+            LDDLL="\$(CC) -bundle -flat_namespace -undefined suppress"
+            LDSHARED="\$(CC) -dynamiclib"
+            CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp"
+          fi
         fi
       fi
     fi
@@ -943,6 +956,8 @@ fi
 case $build_os in
   cygwin*|mingw32*)
     AC_SUBST(LDPATH,"PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$PATH\"") ;;
+  darwin*|macosx*)
+    AC_SUBST(LDPATH,"DYLD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$DYLD_LIBRARY_PATH\"") ;;
   *)
     AC_SUBST(LDPATH,"LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/unicode:\$\$LD_LIBRARY_PATH\"") ;;
 esac

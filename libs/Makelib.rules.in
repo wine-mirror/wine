@@ -31,7 +31,13 @@ $(LIBNAME).a: $(DEFNAME)
 $(LIBNAME).dll: $(OBJS) $(DEFNAME) Makefile.in
 	$(DLLWRAP) --def $(SRCDIR)/$(DEFNAME) -o $@ $(OBJS) $(EXTRALIBS)
 
-.PHONY: install-lib-so install-lib-dll install-dev-so install-dev-dll
+$(LIBNAME).$(SOVERSION).dylib: $(OBJS) Makefile.in
+	$(LDSHARED) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
+
+$(LIBNAME).dylib: $(LIBNAME).$(SOVERSION).dylib
+	$(RM) $@ && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $@
+
+.PHONY: install-lib-so install-lib-dll install-lib-dylib install-dev-so install-dev-dll install-dev-dylib
 
 install-lib-so: $(LIBNAME).so.$(SOVERSION) dummy
 	$(MKINSTALLDIRS) $(libdir)
@@ -41,6 +47,10 @@ install-lib-dll: $(LIBNAME).dll dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) $(LIBNAME).dll $(libdir)/$(LIBNAME).dll
 
+install-lib-dylib: $(LIBNAME).$(SOVERSION).dylib dummy
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_PROGRAM) $(LIBNAME).$(SOVERSION).dylib $(libdir)/$(LIBNAME).$(SOVERSION).dylib
+
 install-dev-so: dummy
 	$(MKINSTALLDIRS) $(libdir)
 	cd $(libdir) && $(RM) $(LIBNAME).so && $(LN_S) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).so
@@ -49,11 +59,15 @@ install-dev-dll: $(LIBNAME).a dummy
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) $(LIBNAME).a $(libdir)/$(LIBNAME).a
 
+install-dev-dylib: dummy
+	$(MKINSTALLDIRS) $(libdir)
+	cd $(libdir) && $(RM) $(LIBNAME).dylib && $(LN_S) $(LIBNAME).$(SOVERSION).dylib $(LIBNAME).dylib
+
 install install-lib:: $(LIBEXT:%=install-lib-%)
 install install-dev:: $(LIBEXT:%=install-dev-%)
 
 uninstall::
-	$(RM) $(libdir)/$(LIBNAME).a $(libdir)/$(LIBNAME).dll $(libdir)/$(LIBNAME).so $(libdir)/$(LIBNAME).so.$(SOVERSION)
+	$(RM) $(libdir)/$(LIBNAME).a $(libdir)/$(LIBNAME).dll $(libdir)/$(LIBNAME).so $(libdir)/$(LIBNAME).so.$(SOVERSION) $(libdir)/$(LIBNAME).dylib $(libdir)/$(LIBNAME).$(SOVERSION).dylib
 
 clean::
-	$(RM) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dll
+	$(RM) $(LIBNAME).so.$(SOVERSION) $(LIBNAME).dll $(LIBNAME).$(SOVERSION).dylib

@@ -2403,10 +2403,26 @@ else
       LDSHARED="\$(CC) -Wl,-Bshareable,-Bforcearchive"
       LDXXSHARED="\$(CXX) -Wl,-Bshareable,-Bforcearchive"
       LDDLLFLAGS="" #FIXME
+    else
+      AC_CACHE_CHECK([whether we can build a Mach-O (Mac OS X/Darwin) dll],
+                   ac_cv_c_dll_macho,
+      [saved_cflags=$CFLAGS
+      CFLAGS="$CFLAGS -bundle"
+      AC_TRY_LINK(,[return 1], ac_cv_c_dll_macho="yes", ac_cv_c_dll_macho="no")
+      CFLAGS=$saved_cflags
+      ])
+      if test "$ac_cv_c_dll_macho" = "yes"
+      then
+        LDSHARED="\$(CC) -bundle -flat_namespace -undefined suppress"
+        LDXXSHARED="\$(CXX) -bundle -flat_namespace -undefined suppress"
+        LDDLLFLAGS="-fno-common"
+        CFLAGS="$CFLAGS -ffixed-r13 -no-cpp-precomp -Dsocklen_t=u_int32_t"
+        CXXFLAGS="$CXXFLAGS -ffixed-r13 -no-cpp-precomp -Dsocklen_t=u_int32_t"
+      fi
     fi
   fi
 fi
-if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
+if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no" -a "$ac_cv_c_dll_macho" = "no"
 then
   AC_MSG_ERROR([Could not find how to build a dynamically linked library])
 fi
@@ -2454,6 +2470,20 @@ then
     CFLAGS="$CFLAGS -D__sun__"
     CXXFLAGS="$CXXFLAGS -D__sun__"
 fi
+
+dnl *** check for the need to define __powerpc__
+
+AC_CACHE_CHECK(whether we need to define __powerpc__,ac_cv_cpp_def_powerpc,
+ AC_EGREP_CPP(yes,[#if (defined(__ppc__) || defined(__PPC__) || defined(__POWERPC__)) && !defined(__powerpc__)
+yes
+#endif],
+ ac_cv_cpp_def_powerpc="yes", ac_cv_cpp_def_powerpc="no"))
+if test "$ac_cv_cpp_def_powerpc" = "yes"
+then
+    CFLAGS="$CFLAGS -D__powerpc__"
+    CXXFLAGS="$CXXFLAGS -D__powerpc__"
+fi
+
 
 dnl **** Test Winelib-related features of the C++ compiler
 AC_LANG_CPLUSPLUS()
@@ -2710,9 +2740,12 @@ if test -z "$WINE_LIBRARY_ROOT"
 then
   WINE_LIBRARY_ROOT=":/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine:/opt/wine/lib"
 else
-  AC_PATH_FILE(WINE_LIBRARY_ROOT,[libwine.so],[
-    AC_MSG_ERROR([Could not find the Wine libraries (libwine.so)])
-  ],$WINE_LIBRARY_ROOT)
+  AC_PATH_FILE(WINE_LIBRARY_ROOT,[libwine.so],
+    [
+    AC_PATH_FILE(WINE_LIBRARY_ROOT,[libwine.dylib],
+      [AC_MSG_ERROR([Could not find the Wine libraries (libwine.dylib or libwine.so)])],
+      $WINE_LIBRARY_ROOT)
+    ], $WINE_LIBRARY_ROOT)
 fi
 AC_PATH_LIBRARY(WINE_LIBRARY_ROOT,[-lwine],[],[
   AC_MSG_ERROR([Could not link with the Wine libraries (libwine.so)])
@@ -2746,6 +2779,7 @@ then
     WINE_DLL_ROOT="/lib:/lib/wine:/usr/lib:/usr/lib/wine:/usr/local/lib:/usr/local/lib/wine"
   fi
 fi
+
 AC_PATH_FILE(WINE_DLL_ROOT,[libntdll.def],[
   AC_MSG_ERROR([Could not find the Wine dlls (libntdll.def)])
 ],[$WINE_DLL_ROOT])
@@ -2771,7 +2805,13 @@ then
   AC_MSG_ERROR([Could not find Wine's wrc tool])
 fi
 
-LDPATH="LD_LIBRARY_PATH=\"$LDPATH:\$\$LD_LIBRARY_PATH\""
+case $build_os in
+  darwin*|macosx*)
+    LDPATH="DYLD_LIBRARY_PATH=\"$LDPATH:\$\$DYLD_LIBRARY_PATH\"";;
+  *)
+    LDPATH="LD_LIBRARY_PATH=\"$LDPATH:\$\$LD_LIBRARY_PATH\""
+esac
+
 AC_SUBST(LDPATH)
 AC_SUBST(WINE_INCLUDE_PATH)
 AC_SUBST(WINE_LIBRARY_PATH)
@@ -3000,8 +3040,6 @@ ALL_LIBRARIES = $(LIBRARIES:%=-l%) $(GLOBAL_LIBRARIES:%=-l%) $(WINE_LIBRARIES)
 LDSHARED  = @LDSHARED@
 LDXXSHARED= @LDXXSHARED@
 LDDLLFLAGS= @LDDLLFLAGS@
-STRIP     = strip
-STRIPFLAGS= --strip-unneeded
 LN_S      = @LN_S@
 RM        = rm -f
 MV        = mv
