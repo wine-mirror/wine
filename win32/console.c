@@ -285,6 +285,8 @@ CONSOLE_get_input( HANDLE32 handle )
 	char inchar;
         if (WaitForSingleObject( handle, 0 )) break;
         if (!ReadFile( handle, &inchar, 1, &res, NULL )) break;
+	if (!res) /* res 0 but readable means EOF? Hmm. */
+		break;
 	buf = HeapReAlloc(GetProcessHeap(),0,buf,len+1);
 	buf[len++]=inchar;
     }
@@ -582,7 +584,9 @@ static BOOL32 CONSOLE_make_complex(HANDLE32 handle)
 
 	MSG("Console: Making console complex (creating an xterm)...\n");
 
-	if (tcgetattr(0, &term) < 0) return FALSE;
+	if (tcgetattr(0, &term) < 0) {
+		/* ignore failure, or we can't run from a script */
+	}
 	term.c_lflag = ~(ECHO|ICANON);
 
         if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), handle,
@@ -1223,10 +1227,18 @@ BOOL32 WINAPI SetConsoleCursorPosition( HANDLE32 hcon, COORD pos )
     char 	xbuf[20];
     DWORD	xlen;
 
-    CONSOLE_make_complex(hcon);
+    /* make console complex only if we change lines, not just in the line */
+    if (pos.y)
+    	CONSOLE_make_complex(hcon);
+
     TRACE(console, "%d (%dx%d)\n", hcon, pos.x , pos.y );
     /* x are columns, y rows */
-    sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.y+1, pos.x+1);
+    if (pos.y) 
+    	/* full screen cursor absolute positioning */
+	sprintf(xbuf,"%c[%d;%dH", 0x1B, pos.y+1, pos.x+1);
+    else
+    	/* relative cursor positioning in line (\r to go to 0) */
+	sprintf(xbuf,"\r%c[%dC", 0x1B, pos.x);
     /* FIXME: store internal if we start using own console buffers */
     WriteFile(hcon,xbuf,strlen(xbuf),&xlen,NULL);
     return TRUE;
