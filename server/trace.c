@@ -1414,10 +1414,41 @@ static void dump_get_msg_queue_reply( const struct get_msg_queue_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
-static void dump_wake_queue_request( const struct wake_queue_request *req )
+static void dump_set_queue_bits_request( const struct set_queue_bits_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " bits=%08x", req->bits );
+    fprintf( stderr, " set=%08x,", req->set );
+    fprintf( stderr, " clear=%08x,", req->clear );
+    fprintf( stderr, " mask_cond=%08x", req->mask_cond );
+}
+
+static void dump_set_queue_bits_reply( const struct set_queue_bits_request *req )
+{
+    fprintf( stderr, " changed_mask=%08x", req->changed_mask );
+}
+
+static void dump_set_queue_mask_request( const struct set_queue_mask_request *req )
+{
+    fprintf( stderr, " wake_mask=%08x,", req->wake_mask );
+    fprintf( stderr, " changed_mask=%08x,", req->changed_mask );
+    fprintf( stderr, " skip_wait=%d", req->skip_wait );
+}
+
+static void dump_set_queue_mask_reply( const struct set_queue_mask_request *req )
+{
+    fprintf( stderr, " wake_bits=%08x,", req->wake_bits );
+    fprintf( stderr, " changed_bits=%08x", req->changed_bits );
+}
+
+static void dump_get_queue_status_request( const struct get_queue_status_request *req )
+{
+    fprintf( stderr, " clear=%d", req->clear );
+}
+
+static void dump_get_queue_status_reply( const struct get_queue_status_request *req )
+{
+    fprintf( stderr, " wake_bits=%08x,", req->wake_bits );
+    fprintf( stderr, " changed_bits=%08x", req->changed_bits );
 }
 
 static void dump_wait_input_idle_request( const struct wait_input_idle_request *req )
@@ -1429,6 +1460,84 @@ static void dump_wait_input_idle_request( const struct wait_input_idle_request *
 static void dump_wait_input_idle_reply( const struct wait_input_idle_request *req )
 {
     fprintf( stderr, " event=%d", req->event );
+}
+
+static void dump_send_message_request( const struct send_message_request *req )
+{
+    fprintf( stderr, " posted=%d,", req->posted );
+    fprintf( stderr, " id=%p,", req->id );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " wparam=%08x,", req->wparam );
+    fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " info=%08x", req->info );
+}
+
+static void dump_get_message_request( const struct get_message_request *req )
+{
+    fprintf( stderr, " remove=%d,", req->remove );
+    fprintf( stderr, " posted=%d,", req->posted );
+    fprintf( stderr, " get_win=%d,", req->get_win );
+    fprintf( stderr, " get_first=%08x,", req->get_first );
+    fprintf( stderr, " get_last=%08x", req->get_last );
+}
+
+static void dump_get_message_reply( const struct get_message_request *req )
+{
+    fprintf( stderr, " sent=%d,", req->sent );
+    fprintf( stderr, " type=%d,", req->type );
+    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " wparam=%08x,", req->wparam );
+    fprintf( stderr, " lparam=%08x,", req->lparam );
+    fprintf( stderr, " info=%08x", req->info );
+}
+
+static void dump_reply_message_request( const struct reply_message_request *req )
+{
+    fprintf( stderr, " result=%08x,", req->result );
+    fprintf( stderr, " remove=%d", req->remove );
+}
+
+static void dump_get_message_reply_request( const struct get_message_reply_request *req )
+{
+    fprintf( stderr, " cancel=%d", req->cancel );
+}
+
+static void dump_get_message_reply_reply( const struct get_message_reply_request *req )
+{
+    fprintf( stderr, " result=%08x", req->result );
+}
+
+static void dump_in_send_message_request( const struct in_send_message_request *req )
+{
+}
+
+static void dump_in_send_message_reply( const struct in_send_message_request *req )
+{
+    fprintf( stderr, " flags=%d", req->flags );
+}
+
+static void dump_cleanup_window_queue_request( const struct cleanup_window_queue_request *req )
+{
+    fprintf( stderr, " win=%d", req->win );
+}
+
+static void dump_set_win_timer_request( const struct set_win_timer_request *req )
+{
+    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " id=%08x,", req->id );
+    fprintf( stderr, " rate=%08x,", req->rate );
+    fprintf( stderr, " lparam=%08x", req->lparam );
+}
+
+static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
+{
+    fprintf( stderr, " win=%d,", req->win );
+    fprintf( stderr, " msg=%08x,", req->msg );
+    fprintf( stderr, " id=%08x", req->id );
 }
 
 static void dump_create_serial_request( const struct create_serial_request *req )
@@ -1589,8 +1698,18 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_request,
     (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
-    (dump_func)dump_wake_queue_request,
+    (dump_func)dump_set_queue_bits_request,
+    (dump_func)dump_set_queue_mask_request,
+    (dump_func)dump_get_queue_status_request,
     (dump_func)dump_wait_input_idle_request,
+    (dump_func)dump_send_message_request,
+    (dump_func)dump_get_message_request,
+    (dump_func)dump_reply_message_request,
+    (dump_func)dump_get_message_reply_request,
+    (dump_func)dump_in_send_message_request,
+    (dump_func)dump_cleanup_window_queue_request,
+    (dump_func)dump_set_win_timer_request,
+    (dump_func)dump_kill_win_timer_request,
     (dump_func)dump_create_serial_request,
     (dump_func)dump_get_serial_info_request,
     (dump_func)dump_set_serial_info_request,
@@ -1700,8 +1819,18 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_atom_name_reply,
     (dump_func)0,
     (dump_func)dump_get_msg_queue_reply,
-    (dump_func)0,
+    (dump_func)dump_set_queue_bits_reply,
+    (dump_func)dump_set_queue_mask_reply,
+    (dump_func)dump_get_queue_status_reply,
     (dump_func)dump_wait_input_idle_reply,
+    (dump_func)0,
+    (dump_func)dump_get_message_reply,
+    (dump_func)0,
+    (dump_func)dump_get_message_reply_reply,
+    (dump_func)dump_in_send_message_reply,
+    (dump_func)0,
+    (dump_func)0,
+    (dump_func)0,
     (dump_func)dump_create_serial_reply,
     (dump_func)dump_get_serial_info_reply,
     (dump_func)0,
@@ -1811,8 +1940,18 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_atom_name",
     "init_atom_table",
     "get_msg_queue",
-    "wake_queue",
+    "set_queue_bits",
+    "set_queue_mask",
+    "get_queue_status",
     "wait_input_idle",
+    "send_message",
+    "get_message",
+    "reply_message",
+    "get_message_reply",
+    "in_send_message",
+    "cleanup_window_queue",
+    "set_win_timer",
+    "kill_win_timer",
     "create_serial",
     "get_serial_info",
     "set_serial_info",

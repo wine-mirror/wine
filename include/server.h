@@ -1296,13 +1296,40 @@ struct get_msg_queue_request
     OUT handle_t     handle;       /* handle to the queue */
 };
 
-/* Wake up a message queue */
-struct wake_queue_request
+
+/* Set the message queue wake bits */
+struct set_queue_bits_request
 {
     REQUEST_HEADER;                /* request header */
     IN  handle_t     handle;       /* handle to the queue */
-    IN  unsigned int bits;         /* wake bits */
+    IN  unsigned int set;          /* wake bits to set */
+    IN  unsigned int clear;        /* wake bits to clear */
+    IN  unsigned int mask_cond;    /* mask for conditional bit setting */
+    OUT unsigned int changed_mask; /* changed bits wake mask */
 };
+
+
+/* Set the current message queue wakeup mask */
+struct set_queue_mask_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  unsigned int wake_mask;    /* wakeup bits mask */
+    IN  unsigned int changed_mask; /* changed bits mask */
+    IN  int          skip_wait;    /* will we skip waiting if signaled? */
+    OUT unsigned int wake_bits;    /* current wake bits */
+    OUT unsigned int changed_bits; /* current changed bits */
+};
+
+
+/* Get the current message queue status */
+struct get_queue_status_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int          clear;        /* should we clear the change bits? */
+    OUT unsigned int wake_bits;    /* wake bits */
+    OUT unsigned int changed_bits; /* changed bits since last time */
+};
+
 
 /* Wait for a process to start waiting on input */
 struct wait_input_idle_request
@@ -1312,6 +1339,97 @@ struct wait_input_idle_request
     IN  int          timeout;      /* timeout */
     OUT handle_t     event;        /* handle to idle event */
 };
+
+
+/* Send a message to a thread queue */
+struct send_message_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int             posted;    /* posted instead of sent message? */
+    IN  void*           id;        /* thread id */
+    IN  int             type;      /* message type */
+    IN  handle_t        win;       /* window handle */
+    IN  unsigned int    msg;       /* message code */
+    IN  unsigned int    wparam;    /* parameters */
+    IN  unsigned int    lparam;    /* parameters */
+    IN  unsigned int    info;      /* extra info */
+};
+
+
+/* Get a message from the current queue */
+struct get_message_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int             remove;    /* remove it? */
+    IN  int             posted;    /* check posted messages too? */
+    IN  handle_t        get_win;   /* window handle to get */
+    IN  unsigned int    get_first; /* first message code to get */
+    IN  unsigned int    get_last;  /* last message code to get */
+    OUT int             sent;      /* it is a sent message */
+    OUT int             type;      /* message type */
+    OUT handle_t        win;       /* window handle */
+    OUT unsigned int    msg;       /* message code */
+    OUT unsigned int    wparam;    /* parameters */
+    OUT unsigned int    lparam;    /* parameters */
+    OUT unsigned int    info;      /* extra info */
+};
+
+
+/* Reply to a sent message */
+struct reply_message_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  unsigned int    result;    /* message result */
+    IN  int             remove;    /* should we remove the message? */
+};
+
+
+/* Retrieve the reply for the last message sent */
+struct get_message_reply_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int             cancel;    /* cancel message if not ready? */
+    OUT unsigned int    result;    /* message result */
+};
+
+
+/* Check if we are processing a sent message */
+struct in_send_message_request
+{
+    REQUEST_HEADER;                /* request header */
+    OUT int             flags;     /* ISMEX_* flags */
+};
+
+
+/* Cleanup a queue when a window is deleted */
+struct cleanup_window_queue_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  handle_t        win;       /* window handle */
+};
+
+
+/* Set a window timer */
+struct set_win_timer_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  handle_t        win;       /* window handle */
+    IN  unsigned int    msg;       /* message to post */
+    IN  unsigned int    id;        /* timer id */
+    IN  unsigned int    rate;      /* timer rate in ms */
+    IN  unsigned int    lparam;    /* message lparam (callback proc) */
+};
+
+
+/* Kill a window timer */
+struct kill_win_timer_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  handle_t        win;       /* window handle */
+    IN  unsigned int    msg;       /* message to post */
+    IN  unsigned int    id;        /* timer id */
+};
+
 
 struct create_serial_request
 {
@@ -1473,8 +1591,18 @@ enum request
     REQ_get_atom_name,
     REQ_init_atom_table,
     REQ_get_msg_queue,
-    REQ_wake_queue,
+    REQ_set_queue_bits,
+    REQ_set_queue_mask,
+    REQ_get_queue_status,
     REQ_wait_input_idle,
+    REQ_send_message,
+    REQ_get_message,
+    REQ_reply_message,
+    REQ_get_message_reply,
+    REQ_in_send_message,
+    REQ_cleanup_window_queue,
+    REQ_set_win_timer,
+    REQ_kill_win_timer,
     REQ_create_serial,
     REQ_get_serial_info,
     REQ_set_serial_info,
@@ -1588,15 +1716,25 @@ union generic_request
     struct get_atom_name_request get_atom_name;
     struct init_atom_table_request init_atom_table;
     struct get_msg_queue_request get_msg_queue;
-    struct wake_queue_request wake_queue;
+    struct set_queue_bits_request set_queue_bits;
+    struct set_queue_mask_request set_queue_mask;
+    struct get_queue_status_request get_queue_status;
     struct wait_input_idle_request wait_input_idle;
+    struct send_message_request send_message;
+    struct get_message_request get_message;
+    struct reply_message_request reply_message;
+    struct get_message_reply_request get_message_reply;
+    struct in_send_message_request in_send_message;
+    struct cleanup_window_queue_request cleanup_window_queue;
+    struct set_win_timer_request set_win_timer;
+    struct kill_win_timer_request kill_win_timer;
     struct create_serial_request create_serial;
     struct get_serial_info_request get_serial_info;
     struct set_serial_info_request set_serial_info;
     struct create_async_request create_async;
 };
 
-#define SERVER_PROTOCOL_VERSION 44
+#define SERVER_PROTOCOL_VERSION 45
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

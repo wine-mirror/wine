@@ -13,6 +13,7 @@
 #include "wine/winbase16.h"
 #include "message.h"
 #include "winerror.h"
+#include "server.h"
 #include "win.h"
 #include "heap.h"
 #include "hook.h"
@@ -24,6 +25,7 @@
 #include "winproc.h"
 #include "user.h"
 #include "thread.h"
+#include "task.h"
 #include "options.h"
 #include "controls.h"
 #include "struct32.h"
@@ -115,9 +117,9 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     POINT16 pt;
     HANDLE16 hQ = GetFastQueue16();
     MESSAGEQUEUE *queue = QUEUE_Lock(hQ);
-    BOOL mouseClick = ((message == WM_LBUTTONDOWN) ||
-		         (message == WM_RBUTTONDOWN) ||
-		         (message == WM_MBUTTONDOWN))?1:0;
+    int mouseClick = ((message == WM_LBUTTONDOWN) ||
+                      (message == WM_RBUTTONDOWN) ||
+                      (message == WM_MBUTTONDOWN));
     DWORD retvalue;
 
     /* Find the window to dispatch this mouse message to */
@@ -155,7 +157,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
         /* Wake up the other task */
         QUEUE_Unlock( queue );
         queue = QUEUE_Lock( pWnd->hmemTaskQ );
-        if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
+        if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE, 0 );
 
         QUEUE_Unlock( queue );
         retvalue = SYSQ_MSG_ABANDON;
@@ -387,7 +389,7 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
         
         /* Wake up the other task */
         queue = QUEUE_Lock( pWnd->hmemTaskQ );
-        if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
+        if (queue) QUEUE_SetWakeBit( queue, QS_KEY, 0 );
         QUEUE_Unlock( queue );
         WIN_ReleaseWndPtr(pWnd);
         return SYSQ_MSG_ABANDON;
@@ -771,127 +773,59 @@ UINT WINAPI GetDoubleClickTime(void)
 static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
                                            HWND hwnd, UINT msg,
                                            WPARAM wParam, LPARAM lParam,
-                                           DWORD timeout, WORD flags,
+                                           DWORD timeout, WORD type,
                                            LRESULT *pRes)
 {
-    MESSAGEQUEUE *queue, *destQ;
-    SMSG         *smsg;
-    LRESULT      retVal = 1;
-    int          iWndsLocks;
-    
-    if (pRes) *pRes = 0;
+    MESSAGEQUEUE *destQ;
+    BOOL ret;
+    int iWndsLocks;
+    LRESULT result = 0;
 
-    if (IsTaskLocked16() || !IsWindow(hwnd))
-        return 0;
+    TRACE( "hwnd %x msg %x (%s) wp %x lp %lx\n", hwnd, msg, SPY_GetMsgName(msg), wParam, lParam );
 
-    /* create a SMSG structure to hold SendMessage() parameters */
-    if (! (smsg = (SMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(SMSG) )) )
-        return 0;
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
+    if (!(destQ = QUEUE_Lock( hDestQueue ))) return 0;
 
-    if (!(destQ = QUEUE_Lock( hDestQueue )))
+    SERVER_START_REQ( send_message )
     {
-        QUEUE_Unlock( queue );
-        return 0;
+        req->posted = FALSE;
+        req->id     = destQ->teb->tid;
+        req->type   = type;
+        req->win    = hwnd;
+        req->msg    = msg;
+        req->wparam = wParam;
+        req->lparam = lParam;
+        req->info   = 0;
+        ret = !SERVER_CALL_ERR();
     }
-
-    TRACE_(sendmsg)("SM: %s [%04x] (%04x -> %04x)\n",
-		    SPY_GetMsgName(msg), msg, queue->self, hDestQueue );
-
-    /* fill up SMSG structure */
-    smsg->hWnd = hwnd;
-    smsg->msg = msg;
-    smsg->wParam = wParam;
-    smsg->lParam = lParam;
-    
-    smsg->lResult = 0;
-    smsg->hSrcQueue = pRes ? GetFastQueue16() : 0;
-    smsg->hDstQueue = hDestQueue;
-    smsg->flags = flags;
-
-    if (pRes) {
-        /* add smsg struct in the processing SM list of the source queue */
-        QUEUE_AddSMSG(queue, SM_PROCESSING_LIST, smsg);
-    } else {
-        /* this is a notification message, we don't need a reply */
-        smsg->flags |= SMSG_ALREADY_REPLIED | SMSG_RECEIVER_CLEANS;
-    }
-
-    /* add smsg struct in the pending list of the destination queue */
-    if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
-    {
-        retVal = 0;
-	goto CLEANUP;
-    }
-
-    if (!pRes) goto CLEANUP; /* don't need a reply */
+    SERVER_END_REQ;
+    QUEUE_Unlock( destQ );
+    if (!ret) return 0;
 
     iWndsLocks = WIN_SuspendWndsLock();
 
     /* wait for the result */
-    while ( TRUE )
+    QUEUE_WaitBits( QS_SMRESULT, timeout );
+
+    SERVER_START_REQ( get_message_reply )
     {
-        /*
-         * The sequence is crucial to avoid deadlock situations:
-         * - first, we clear the QS_SMRESULT bit
-         * - then, we check the SMSG_HAVE_RESULT bit
-         * - only if this isn't set, we enter the wait state.
-         *
-         * As the receiver first sets the SMSG_HAVE_RESULT and then wakes us,
-         * we are guaranteed that -should we now clear the QS_SMRESULT that
-         * was signalled already by the receiver- we will not start waiting.
-         */
-
-        if ( smsg->flags & SMSG_HAVE_RESULT )
-        {
-got:
-             *pRes = smsg->lResult;
-             TRACE_(sendmsg)("smResult = %08x\n", (unsigned)*pRes );
-             break;
-        }
-
-        QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-
-        if ( smsg->flags & SMSG_HAVE_RESULT )
-             goto got;
-
-        if(  QUEUE_WaitBits( QS_SMRESULT, timeout ) == 0 )
-        {
-             /* return with timeout */
-             SetLastError( 0 );
-             retVal = 0;
-             break;
-        }
+        req->cancel = 1;
+        if ((ret = !SERVER_CALL_ERR())) result = req->result;
     }
+    SERVER_END_REQ;
+
+    TRACE( "hwnd %x msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
+           hwnd, msg, SPY_GetMsgName(msg), wParam, lParam, result, GetLastError() );
+
+    if (!ret && (GetLastError() == ERROR_IO_PENDING))
+    {
+        if (timeout == INFINITE) ERR("no timeout but no result\n");
+        SetLastError(0);  /* timeout */
+    }
+
+    if (pRes) *pRes = result;
+
     WIN_RestoreWndsLock(iWndsLocks);
-
-    /* remove the smsg from the processing list of the source queue */
-    QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
-
-    /* Note: the destination thread is in charge of removing the smsg from
-       the pending list */
-
-    /* In the case of an early reply (or a timeout), sender thread will
-       released the smsg structure if the receiver thread is done
-       (SMSG_RECEIVED set). If the receiver thread isn't done,
-       SMSG_RECEIVER_CLEANS_UP flag is set, and it will be the receiver
-       responsibility to release smsg */
-        EnterCriticalSection( &queue->cSection );
-    
-        if (smsg->flags & SMSG_RECEIVED)
-            HeapFree(GetProcessHeap(), 0, smsg);
-        else
-            smsg->flags |= SMSG_RECEIVER_CLEANS;
-        
-        LeaveCriticalSection( &queue->cSection );
-
-
-CLEANUP:
-    QUEUE_Unlock( queue );
-    QUEUE_Unlock( destQ );
-    
-    TRACE_(sendmsg)("done!\n");
-    return retVal;
+    return ret;
 }
 
 
@@ -908,77 +842,14 @@ void WINAPI ReplyMessage16( LRESULT result )
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
-    MESSAGEQUEUE *senderQ = 0;
-    MESSAGEQUEUE *queue = 0;
-    SMSG         *smsg;
-    BOOL       ret = FALSE;
-
-    if (!(queue = QUEUE_Lock( GetFastQueue16() )))
-        return FALSE;
-
-    TRACE_(sendmsg)("ReplyMessage, queue %04x\n", queue->self);
-
-
-    if (    !(smsg = queue->smWaiting)
-         || !(  (senderQ = QUEUE_Lock( smsg->hSrcQueue ))
-              || (smsg->flags & SMSG_ALREADY_REPLIED)) )
-        goto ReplyMessageEnd;
-
-    if ( !(smsg->flags & SMSG_ALREADY_REPLIED) )
+    BOOL ret;
+    SERVER_START_REQ( reply_message )
     {
-        /* This is the first reply, so pass result to sender */
-
-        TRACE_(sendmsg)("\trpm: smResult = %08lx\n", (long) result );
-
-        EnterCriticalSection(&senderQ->cSection);
-        
-        smsg->lResult = result;
-        smsg->flags |= SMSG_ALREADY_REPLIED;
-
-        /* check if it's an early reply (called by the application) or
-           a regular reply (called by ReceiveMessage) */
-        if ( !(smsg->flags & SMSG_SENDING_REPLY) )
-            smsg->flags |= SMSG_EARLY_REPLY;
-
-        smsg->flags |= SMSG_HAVE_RESULT;
-
-        LeaveCriticalSection(&senderQ->cSection);
-
-        /* tell the sending task that its reply is ready */
-        QUEUE_SetWakeBit( senderQ, QS_SMRESULT );
-
-        ret = TRUE;
+        req->result = result;
+        req->remove = 0;
+        ret = !SERVER_CALL_ERR();
     }
-    
-    if (smsg->flags & SMSG_SENDING_REPLY)
-    {
-        /* remove msg from the waiting list, since this is the last
-          ReplyMessage */
-        QUEUE_RemoveSMSG( queue, SM_WAITING_LIST, smsg );
-        
-        if (senderQ) EnterCriticalSection(&senderQ->cSection);
-        
-        /* tell the sender we're all done with smsg structure */
-        smsg->flags |= SMSG_RECEIVED;
-
-        /* sender will set SMSG_RECEIVER_CLEANS_UP if it wants the
-         receiver to clean up smsg, it could only happen when there is
-         an early reply or a timeout */
-        if ( smsg->flags & SMSG_RECEIVER_CLEANS )
-        {
-            TRACE_(sendmsg)("Receiver cleans up!\n" );
-            HeapFree( GetProcessHeap(), 0, smsg );
-        }
-
-        if (senderQ) LeaveCriticalSection(&senderQ->cSection);
-    }
-
-ReplyMessageEnd:
-    if ( senderQ )
-    QUEUE_Unlock( senderQ );
-    if ( queue )
-    QUEUE_Unlock( queue );
-
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -1116,9 +987,9 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
     iWndsLocks = WIN_SuspendWndsLock();
 
     while(1)
-    {    
-        QMSG *qmsg;
-        
+    {
+        WORD wakeBits = HIWORD(GetQueueStatus( mask ));
+
 	hQueue   = GetFastQueue16();
         msgQueue = QUEUE_Lock( hQueue );
         if (!msgQueue)
@@ -1127,10 +998,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
             return FALSE;
         }
 
-        EnterCriticalSection( &msgQueue->cSection );
-        msgQueue->changeBits = 0;
-        LeaveCriticalSection( &msgQueue->cSection );
-
+#if 0
         /* First handle a message put by SendMessage() */
 
         while ( QUEUE_ReceiveMessage( msgQueue ) )
@@ -1152,36 +1020,69 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
             break;
         }
         LeaveCriticalSection( &msgQueue->cSection );
-    
+#endif
+
         /* Now find a normal message */
 
   retry:
-        if ((QUEUE_TestWakeBit(msgQueue, mask & QS_POSTMESSAGE)) &&
-            ((qmsg = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != 0))
+        if (wakeBits & (QS_POSTMESSAGE|QS_TIMER|QS_PAINT))
         {
-            /* Try to convert message to requested type */
-            MSG tmpMsg = qmsg->msg;
-            if ( !MSG_ConvertMsg( &tmpMsg, qmsg->type, type ) )
+            QMSG qmsg;
+            if (QUEUE_FindMsg( hwnd, first, last, flags & PM_REMOVE, FALSE, &qmsg ))
             {
-                ERR( "Message %s of wrong type contains pointer parameters. Skipped!\n",
-		    SPY_GetMsgName(tmpMsg.message));
-                QUEUE_RemoveMsg( msgQueue, qmsg );
-                goto retry;
+                /* Try to convert message to requested type */
+                MSG tmpMsg = qmsg.msg;
+                if ( !MSG_ConvertMsg( &tmpMsg, qmsg.type, type ) )
+                {
+                    ERR( "Message %s of wrong type contains pointer parameters. Skipped!\n",
+                         SPY_GetMsgName(tmpMsg.message));
+                    /* remove it (FIXME) */
+                    if (!(flags & PM_REMOVE)) QUEUE_FindMsg( hwnd, first, last, TRUE, FALSE, &qmsg );
+                    goto retry;
+                }
+
+                msg = tmpMsg;
+                msgQueue->GetMessageTimeVal      = msg.time;
+                msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg.pt.x, (INT16)msg.pt.y );
+                msgQueue->GetMessageExtraInfoVal = qmsg.extraInfo;
+
+                /* need to fill the window handle for WM_PAINT message */
+                if (msg.message == WM_PAINT)
+                {
+                    WND* wndPtr;
+                    msg.hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
+                    if ((wndPtr = WIN_FindWndPtr(msg.hwnd)))
+                    {
+                        if( wndPtr->dwStyle & WS_MINIMIZE &&
+                            (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON) )
+                        {
+                            msg.message = WM_PAINTICON;
+                            msg.wParam = 1;
+                        }
+
+                        if( !hwnd || msg.hwnd == hwnd || IsChild16(hwnd,msg.hwnd) )
+                        {
+                            if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
+                            {
+                                wndPtr->flags &= ~WIN_INTERNAL_PAINT;
+                                QUEUE_DecPaintCount( hQueue );
+                            }
+                            WIN_ReleaseWndPtr(wndPtr);
+                            break;
+                        }
+                        WIN_ReleaseWndPtr(wndPtr);
+                    }
+                }
+                else break;
             }
-
-            msg = tmpMsg;
-            msgQueue->GetMessageTimeVal      = msg.time;
-            msgQueue->GetMessagePosVal       = MAKELONG( (INT16)msg.pt.x, (INT16)msg.pt.y );
-            msgQueue->GetMessageExtraInfoVal = qmsg->extraInfo;
-
-            if (flags & PM_REMOVE) QUEUE_RemoveMsg( msgQueue, qmsg );
-            break;
         }
 
         changeBits = MSG_JournalPlayBackMsg();
+#if 0  /* FIXME */
         EnterCriticalSection( &msgQueue->cSection );
         msgQueue->changeBits |= changeBits;
         LeaveCriticalSection( &msgQueue->cSection );
+#endif
 
         /* Now find a hardware event */
 
@@ -1194,68 +1095,14 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
             break;
         }
 
-        /* Check again for SendMessage */
-
-        while ( QUEUE_ReceiveMessage( msgQueue ) )
-            ;
-
-        /* Now find a WM_PAINT message */
-
-	if (QUEUE_TestWakeBit(msgQueue, mask & QS_PAINT))
-	{
-	    WND* wndPtr;
-	    msg.hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
-	    msg.message = WM_PAINT;
-	    msg.wParam = 0;
-	    msg.lParam = 0;
-
-	    if ((wndPtr = WIN_FindWndPtr(msg.hwnd)))
-	    {
-                if( wndPtr->dwStyle & WS_MINIMIZE &&
-                    (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON) )
-                {
-                    msg.message = WM_PAINTICON;
-                    msg.wParam = 1;
-                }
-
-                if( !hwnd || msg.hwnd == hwnd || IsChild16(hwnd,msg.hwnd) )
-                {
-                    if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
-                    {
-                        wndPtr->flags &= ~WIN_INTERNAL_PAINT;
-                        QUEUE_DecPaintCount( hQueue );
-                    }
-                    WIN_ReleaseWndPtr(wndPtr);
-                    break;
-                }
-                WIN_ReleaseWndPtr(wndPtr);
-	    }
-	}
-
-        /* Check for timer messages, but yield first */
-
-#if 0  /* FIXME */
-        if (!(flags & PM_NOYIELD))
-        {
-            UserYield16();
-            while ( QUEUE_ReceiveMessage( msgQueue ) )
-                ;
-        }
-#endif
-
-	if (QUEUE_TestWakeBit(msgQueue, mask & QS_TIMER))
-	{
-	    if (TIMER_GetTimerMsg(&msg, hwnd, hQueue, flags & PM_REMOVE)) break;
-	}
-
         if (peek)
         {
 #if 0  /* FIXME */
             if (!(flags & PM_NOYIELD)) UserYield16();
 #endif
             /* check for graphics events */
-            if (USER_Driver.pMsgWaitForMultipleObjects)
-                USER_Driver.pMsgWaitForMultipleObjects( 0, NULL, FALSE, 0 );
+            if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+                USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, 0, 0 );
 
             QUEUE_Unlock( msgQueue );
             WIN_RestoreWndsLock(iWndsLocks);
@@ -1556,22 +1403,37 @@ BOOL WINAPI GetMessageW(
 /***********************************************************************
  *           MSG_PostToQueue
  */
-static BOOL MSG_PostToQueue( HQUEUE16 hQueue, int type, HWND hwnd, 
+static BOOL MSG_PostToQueue( DWORD tid, int type, HWND hwnd,
                              UINT message, WPARAM wParam, LPARAM lParam )
 {
-    MSG msg;
+    unsigned int res;
 
-    if ( !hQueue ) return FALSE;
+    TRACE( "posting %x %x (%s) %x %lx\n", hwnd, message, SPY_GetMsgName(message), wParam, lParam );
 
-    msg.hwnd    = hwnd;
-    msg.message = message;
-    msg.wParam  = wParam;
-    msg.lParam  = lParam;
-    msg.time    = GetTickCount();
-    GetCursorPos(&msg.pt);
+    SERVER_START_REQ( send_message )
+    {
+        req->posted = TRUE;
+        req->id     = (void *)tid;
+        req->type   = type;
+        req->win    = hwnd;
+        req->msg    = message;
+        req->wparam = wParam;
+        req->lparam = lParam;
+        req->info   = 0;
+        res = SERVER_CALL();
+    }
+    SERVER_END_REQ;
 
-    return QUEUE_AddMsg( hQueue, type, &msg, 0 );
+    if (res)
+    {
+        if (res == STATUS_INVALID_PARAMETER)
+            SetLastError( ERROR_INVALID_THREAD_ID );
+        else
+            SetLastError( RtlNtStatusToDosError(res) );
+    }
+    return !res;
 }
+
 
 /***********************************************************************
  *           MSG_IsPointerMessage
@@ -1652,7 +1514,6 @@ static BOOL MSG_IsPointerMessage(UINT message, WPARAM wParam, LPARAM lParam) {
 static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message, 
                              WPARAM wParam, LPARAM lParam )
 {
-    HQUEUE16 hQueue;
     WND *wndPtr;
 
     /* See thread on wine-devel around 6.2.2001. Basically posted messages
@@ -1680,7 +1541,7 @@ static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message,
             {
                 TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04X l=%08lX !\n",
                       wndPtr->hwndSelf, message, wParam, lParam);
-                MSG_PostToQueue( wndPtr->hmemTaskQ, type, 
+                MSG_PostToQueue( GetWindowThreadProcessId( wndPtr->hwndSelf, NULL ), type,
                                  wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
@@ -1689,11 +1550,8 @@ static BOOL MSG_PostMessage( int type, HWND hwnd, UINT message,
         return TRUE;
     }
 
-    wndPtr = WIN_FindWndPtr( hwnd );
-    hQueue = wndPtr? wndPtr->hmemTaskQ : 0;
-    WIN_ReleaseWndPtr(wndPtr);
-
-    return MSG_PostToQueue( hQueue, type, hwnd, message, wParam, lParam );
+    return MSG_PostToQueue( GetWindowThreadProcessId( hwnd, NULL ),
+                            type, hwnd, message, wParam, lParam );
 }
 
 /***********************************************************************
@@ -1730,8 +1588,9 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT message, WPARAM wParam,
 BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message, 
                                 WPARAM16 wParam, LPARAM lParam )
 {
-    return MSG_PostToQueue( GetTaskQueue16(hTask), QMSG_WIN16, 
-                            0, message, wParam, lParam );
+    TDB *pTask = TASK_GetPtr( hTask );
+    if (!pTask) return FALSE;
+    return MSG_PostToQueue( (DWORD)pTask->teb->tid, QMSG_WIN16, 0, message, wParam, lParam );
 }
 
 /**********************************************************************
@@ -1740,8 +1599,7 @@ BOOL16 WINAPI PostAppMessage16( HTASK16 hTask, UINT16 message,
 BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
                                 WPARAM wParam, LPARAM lParam )
 {
-    return MSG_PostToQueue( GetThreadQueue16(idThread), QMSG_WIN32A, 
-                            0, message, wParam, lParam );
+    return MSG_PostToQueue( idThread, QMSG_WIN32A, 0, message, wParam, lParam );
 }
 
 /**********************************************************************
@@ -1750,8 +1608,7 @@ BOOL WINAPI PostThreadMessageA( DWORD idThread, UINT message,
 BOOL WINAPI PostThreadMessageW( DWORD idThread, UINT message,
                                  WPARAM wParam, LPARAM lParam )
 {
-    return MSG_PostToQueue( GetThreadQueue16(idThread), QMSG_WIN32W, 
-                            0, message, wParam, lParam );
+    return MSG_PostToQueue( idThread, QMSG_WIN32W, 0, message, wParam, lParam );
 }
 
 
@@ -1784,7 +1641,7 @@ static void  MSG_CallWndProcHook( LPMSG pmsg, BOOL bUnicode )
  *                1 otherwise
  */
 static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
-                         LPARAM lParam, DWORD timeout, WORD flags,
+                                LPARAM lParam, DWORD timeout, WORD type,
                          LRESULT *pRes)
 {
     WND * wndPtr = 0;
@@ -1814,7 +1671,7 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
                 TRACE("BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
                       wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
                 MSG_SendMessage( wndPtr->hwndSelf, msg, wParam, lParam,
-                               timeout, flags, pRes);
+                               timeout, type, pRes);
             }
         }
         WIN_ReleaseWndPtr(wndPtr);
@@ -1825,29 +1682,35 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
 
     if (HOOK_IsHooked( WH_CALLWNDPROC ))
     {
-        if (flags & SMSG_UNICODE)
-            MSG_CallWndProcHook( (LPMSG)&hwnd, TRUE);
-        else if (flags & SMSG_WIN32)
-            MSG_CallWndProcHook( (LPMSG)&hwnd, FALSE);
-        else
+        switch(type)
         {
-	LPCWPSTRUCT16 pmsg;
+        case QMSG_WIN16:
+            {
+                LPCWPSTRUCT16 pmsg;
 
-	if ((pmsg = SEGPTR_NEW(CWPSTRUCT16)))
-	{
-                pmsg->hwnd   = hwnd & 0xffff;
-                pmsg->message= msg & 0xffff;
-                pmsg->wParam = wParam & 0xffff;
-	    pmsg->lParam = lParam;
-	    HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1,
-			      (LPARAM)SEGPTR_GET(pmsg) );
-	    hwnd   = pmsg->hwnd;
-	    msg    = pmsg->message;
-	    wParam = pmsg->wParam;
-	    lParam = pmsg->lParam;
-	    SEGPTR_FREE( pmsg );
-	}
-    }
+                if ((pmsg = SEGPTR_NEW(CWPSTRUCT16)))
+                {
+                    pmsg->hwnd   = hwnd & 0xffff;
+                    pmsg->message= msg & 0xffff;
+                    pmsg->wParam = wParam & 0xffff;
+                    pmsg->lParam = lParam;
+                    HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 1,
+                                      (LPARAM)SEGPTR_GET(pmsg) );
+                    hwnd   = pmsg->hwnd;
+                    msg    = pmsg->message;
+                    wParam = pmsg->wParam;
+                    lParam = pmsg->lParam;
+                    SEGPTR_FREE( pmsg );
+                }
+            }
+            break;
+        case QMSG_WIN32A:
+            MSG_CallWndProcHook( (LPMSG)&hwnd, FALSE);
+            break;
+        case QMSG_WIN32W:
+            MSG_CallWndProcHook( (LPMSG)&hwnd, TRUE);
+            break;
+        }
     }
 
     if (!(wndPtr = WIN_FindWndPtr( hwnd )))
@@ -1860,33 +1723,35 @@ static LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         ret = 0;  /* Don't send anything if the task is dying */
         goto END;
     }
-    if (flags & SMSG_WIN32)
+    if (type != QMSG_WIN16)
         SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wParam, lParam );
     else
         SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
 
     if (wndPtr->hmemTaskQ && wndPtr->hmemTaskQ != GetFastQueue16())
         ret = MSG_SendMessageInterThread( wndPtr->hmemTaskQ, hwnd, msg,
-                                          wParam, lParam, timeout, flags, pRes );
+                                          wParam, lParam, timeout, type, pRes );
     else
     {
-        LRESULT res;
+        LRESULT res = 0;
 
         /* Call the right CallWindowProc flavor */
-        if (flags & SMSG_UNICODE)
-            res = CallWindowProcW( (WNDPROC)wndPtr->winproc,
-                                   hwnd, msg, wParam, lParam );
-        else if (flags & SMSG_WIN32)
-            res = CallWindowProcA( (WNDPROC)wndPtr->winproc,
-                                   hwnd, msg, wParam, lParam );
-        else
-            res = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
-                                    (HWND16) hwnd, (UINT16) msg,
-                                    (WPARAM16) wParam, lParam );
+        switch(type)
+        {
+        case QMSG_WIN16:
+            res = CallWindowProc16( (WNDPROC16)wndPtr->winproc, hwnd, msg, wParam, lParam );
+            break;
+        case QMSG_WIN32A:
+            res = CallWindowProcA( (WNDPROC)wndPtr->winproc, hwnd, msg, wParam, lParam );
+            break;
+        case QMSG_WIN32W:
+            res = CallWindowProcW( (WNDPROC)wndPtr->winproc, hwnd, msg, wParam, lParam );
+            break;
+        }
         if (pRes) *pRes = res;
     }
 
-    if (flags & SMSG_WIN32)
+    if (type != QMSG_WIN16)
         SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, pRes?*pRes:0, wParam, lParam );
     else
         SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, pRes?*pRes:0, wParam, lParam );
@@ -1903,7 +1768,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                               LPARAM lParam)
 {
     LRESULT res;
-    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, 0, &res);
+    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN16, &res);
     return res;
 }
 
@@ -1916,8 +1781,7 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
         {
     LRESULT res;
 
-    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
-                    SMSG_WIN32, &res);
+    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32A, &res);
 
     return res;
 }
@@ -1952,8 +1816,7 @@ LRESULT WINAPI SendMessageW(
 ) {
     LRESULT res;
 
-    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
-                    SMSG_WIN32 | SMSG_UNICODE, &res);
+    MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32W, &res);
 
     return res;
 }
@@ -1971,7 +1834,7 @@ LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     
     /* FIXME: need support for SMTO_BLOCK */
     
-    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, 0, &msgRet);
+    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, QMSG_WIN16, &msgRet);
     if (resultp) *resultp = (WORD) msgRet;
     return ret;
 }
@@ -1989,8 +1852,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wParam,
 
     /* FIXME: need support for SMTO_BLOCK */
     
-    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, SMSG_WIN32,
-                          &msgRet);
+    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, QMSG_WIN32A, &msgRet);
 
     if (resultp) *resultp = (DWORD) msgRet;
     return ret;
@@ -2009,8 +1871,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
     
     /* FIXME: need support for SMTO_BLOCK */
 
-    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout,
-                          SMSG_WIN32 | SMSG_UNICODE, &msgRet);
+    ret = MSG_SendMessage(hwnd, msg, wParam, lParam, timeout, QMSG_WIN32W, &msgRet);
     
     if (resultp) *resultp = (DWORD) msgRet;
     return ret;
@@ -2022,76 +1883,81 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
  *
  * WaitMessage() suspends a thread until events appear in the thread's
  * queue.
- *
- * BUGS
- *
- * Is supposed to return BOOL under Win32.
- *
- * Thread-local message queues are not supported.
- *
- * CONFORMANCE
- *
- * ECMA-234, Win32
- * 
  */
-void WINAPI WaitMessage( void )
+BOOL WINAPI WaitMessage(void)
 {
-    QUEUE_WaitBits( QS_ALLINPUT, INFINITE );
+    return (MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, QS_ALLINPUT, 0 ) != WAIT_FAILED);
 }
 
+
 /***********************************************************************
- *		MsgWaitForMultipleObjects (USER32.@)
+ *		MsgWaitForMultipleObjectsEx   (USER32.@)
  */
-DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
-                                        BOOL fWaitAll, DWORD dwMilliseconds,
-                                        DWORD dwWakeMask )
+DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
+                                          DWORD timeout, DWORD mask, DWORD flags )
 {
-    DWORD i;
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-    DWORD ret;
-
+    DWORD i, ret;
     HQUEUE16 hQueue = GetFastQueue16();
-    MESSAGEQUEUE *msgQueue = QUEUE_Lock( hQueue );
-    if (!msgQueue) return WAIT_FAILED;
+    MESSAGEQUEUE *msgQueue;
 
-    if (nCount > MAXIMUM_WAIT_OBJECTS-1)
+    if (count > MAXIMUM_WAIT_OBJECTS-1)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
-        QUEUE_Unlock( msgQueue );
         return WAIT_FAILED;
     }
 
-    EnterCriticalSection( &msgQueue->cSection );
-    msgQueue->changeBits = 0;
-    msgQueue->wakeMask = dwWakeMask;
-    LeaveCriticalSection( &msgQueue->cSection );
+    if (!(msgQueue = QUEUE_Lock( hQueue ))) return WAIT_FAILED;
+
+    /* set the queue mask */
+    SERVER_START_REQ( set_queue_mask )
+    {
+        req->wake_mask    = (flags & MWMO_INPUTAVAILABLE) ? mask : 0;
+        req->changed_mask = mask;
+        req->skip_wait    = 0;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
 
     /* Add the thread event to the handle list */
-    for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
-    handles[nCount] = msgQueue->server_queue;
-    if (USER_Driver.pMsgWaitForMultipleObjects)
+    for (i = 0; i < count; i++) handles[i] = pHandles[i];
+    handles[count] = msgQueue->server_queue;
+
+
+    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
     {
-        ret = USER_Driver.pMsgWaitForMultipleObjects(nCount+1, handles, fWaitAll, dwMilliseconds);
-        if (ret == nCount+1) ret = nCount; /* pretend the msg queue is ready */
+        ret = USER_Driver.pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
+        if (ret == count+1) ret = count; /* pretend the msg queue is ready */
     }
     else
-        ret = WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
-
+        ret = WaitForMultipleObjectsEx( count+1, handles, flags & MWMO_WAITALL,
+                                        timeout, flags & MWMO_ALERTABLE );
     QUEUE_Unlock( msgQueue );
     return ret;
 }
 
+
 /***********************************************************************
- *		MsgWaitForMultipleObjects (USER.640)
+ *		MsgWaitForMultipleObjects (USER32.@)
  */
-DWORD WINAPI MsgWaitForMultipleObjects16( DWORD nCount, HANDLE *pHandles,
-                                          BOOL fWaitAll, DWORD dwMilliseconds,
-                                          DWORD dwWakeMask )
+DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, CONST HANDLE *handles,
+                                        BOOL wait_all, DWORD timeout, DWORD mask )
 {
-	TRACE("(%lu,%p,%u,%lu,0x%lx)\n", 
-			nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
-	return MsgWaitForMultipleObjects(nCount, pHandles, fWaitAll, dwMilliseconds, dwWakeMask);
+    return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
+                                        wait_all ? MWMO_WAITALL : 0 );
 }
+
+
+/***********************************************************************
+ *		MsgWaitForMultipleObjects16  (USER.640)
+ */
+DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, CONST HANDLE *handles,
+                                          BOOL wait_all, DWORD timeout, DWORD mask )
+{
+    return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
+                                        wait_all ? MWMO_WAITALL : 0 );
+}
+
 
 struct accent_char
 {
@@ -2594,16 +2460,24 @@ BOOL16 WINAPI InSendMessage16(void)
  */
 BOOL WINAPI InSendMessage(void)
 {
-    MESSAGEQUEUE *queue;
-    BOOL ret;
+    return (InSendMessageEx(NULL) & (ISMEX_SEND|ISMEX_REPLIED)) == ISMEX_SEND;
+}
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() )))
-        return 0;
-    ret = (BOOL)queue->smWaiting;
 
-    QUEUE_Unlock( queue );
+/***********************************************************************
+ *		InSendMessageEx  (USER32.@)
+ */
+DWORD WINAPI InSendMessageEx( LPVOID reserved )
+{
+    DWORD ret = 0;
+    SERVER_START_REQ( in_send_message )
+    {
+        if (!SERVER_CALL_ERR()) ret = req->flags;
+    }
+    SERVER_END_REQ;
     return ret;
 }
+
 
 /***********************************************************************
  *		BroadcastSystemMessage (USER32.@)
@@ -2623,8 +2497,7 @@ LONG WINAPI BroadcastSystemMessage(
  */
 BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
-   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
-                          SMSG_WIN32, NULL);
+   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32A, NULL);
 }
 
 /***********************************************************************
@@ -2632,8 +2505,7 @@ BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
  */
 BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
-   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE,
-                          SMSG_WIN32 | SMSG_UNICODE, NULL);
+   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32W, NULL);
 }
 
 /***********************************************************************

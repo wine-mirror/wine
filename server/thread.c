@@ -169,6 +169,16 @@ static void cleanup_thread( struct thread *thread )
     if (thread->reply_fd != -1) close( thread->reply_fd );
     if (thread->wait_fd != -1) close( thread->wait_fd );
     if (thread->request_fd) release_object( thread->request_fd );
+    if (thread->queue)
+    {
+        if (thread->process->queue == thread->queue)
+        {
+            release_object( thread->process->queue );
+            thread->process->queue = NULL;
+        }
+        release_object( thread->queue );
+        thread->queue = NULL;
+    }
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
         if (thread->inflight[i].client != -1)
@@ -191,14 +201,13 @@ static void destroy_thread( struct object *obj )
     assert( obj->ops == &thread_ops );
 
     assert( !thread->debug_ctx );  /* cannot still be debugging something */
-    release_object( thread->process );
     if (thread->next) thread->next->prev = thread->prev;
     if (thread->prev) thread->prev->next = thread->next;
     else first_thread = thread->next;
     while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
     if (thread->info) release_object( thread->info );
-    if (thread->queue) release_object( thread->queue );
     cleanup_thread( thread );
+    release_object( thread->process );
 }
 
 /* dump a thread on stdout for debugging purposes */
@@ -223,6 +232,7 @@ struct thread *get_thread_from_id( void *id )
     struct thread *t = first_thread;
     while (t && (t != id)) t = t->next;
     if (t) grab_object( t );
+    else set_error( STATUS_INVALID_PARAMETER );
     return t;
 }
 

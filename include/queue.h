@@ -31,43 +31,6 @@ typedef struct tagQMSG
 #define QMSG_HARDWARE 3
 
 
-typedef struct tagSMSG
-{
-    struct tagSMSG *nextProcessing; /* next SMSG in the processing list */
-    struct tagSMSG *nextPending;    /* next SMSG in the pending list */
-    struct tagSMSG *nextWaiting;    /* next SMSG in the waiting list */
-    
-    HQUEUE16       hSrcQueue;       /* sending Queue, (NULL if it didn't wait) */
-    HQUEUE16       hDstQueue;       /* destination Queue */
-
-    HWND         hWnd;            /* destination window */
-    UINT         msg;             /* message sent */
-    WPARAM       wParam;          /* wParam of the sent message */
-    LPARAM         lParam;          /* lParam of the sent message */
-
-    LRESULT        lResult;         /* result of SendMessage */
-    WORD           flags;           /* see below SMSG_XXXX */
-} SMSG;
-
-
-/* SMSG -> flags values */
-/* set when lResult contains a good value */
-#define SMSG_HAVE_RESULT            0x0001
-/* protection for multiple call to ReplyMessage16() */
-#define SMSG_ALREADY_REPLIED        0x0002
-/* use with EARLY_REPLY for forcing the receiver to clean SMSG */
-#define SMSG_RECEIVER_CLEANS        0x0010
-/* used with EARLY_REPLY to indicate to sender, receiver is done with SMSG */
-#define SMSG_RECEIVED               0x0020
-/* set in ReceiveMessage() to indicate it's not an early reply */
-#define SMSG_SENDING_REPLY          0x0040
-/* set when ReplyMessage16() is called by the application */
-#define SMSG_EARLY_REPLY            0x0080
-/* set when sender is Win32 thread */
-#define SMSG_WIN32                  0x1000
-/* set when sender is a unicode thread */
-#define SMSG_UNICODE                0x2000
-
 /* Per-queue data for the message queue
  * Note that we currently only store the current values for
  * Active, Capture and Focus windows currently.
@@ -87,7 +50,6 @@ typedef struct tagPERQUEUEDATA
 /* Message queue */
 typedef struct tagMESSAGEQUEUE
 {
-  HQUEUE16  next;                   /* Next queue */
   HQUEUE16  self;                   /* Handle to self (was: reserved) */
   TEB*      teb;                    /* Thread owning queue */
   HANDLE    server_queue;           /* Handle to server-side queue */
@@ -96,27 +58,17 @@ typedef struct tagMESSAGEQUEUE
   DWORD     magic;                  /* magic number should be QUEUE_MAGIC */
   DWORD     lockCount;              /* reference counter */
   
-  WORD      msgCount;               /* Number of waiting messages */
   QMSG*     firstMsg;               /* First message in linked list */
   QMSG*     lastMsg;                /* Last message in linked list */
   
   WORD      wPostQMsg;              /* PostQuitMessage flag */
   WORD      wExitCode;              /* PostQuitMessage exit code */
   WORD      wPaintCount;            /* Number of WM_PAINT needed */
-  WORD      wTimerCount;            /* Number of timers for this task */
-
-  WORD      changeBits;             /* Changed wake-up bits */
-  WORD      wakeBits;               /* Queue wake-up bits */
-  WORD      wakeMask;               /* Queue wake-up mask */
 
   DWORD     GetMessageTimeVal;      /* Value for GetMessageTime */
   DWORD     GetMessagePosVal;       /* Value for GetMessagePos */
   DWORD     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
-  
-  SMSG*     smWaiting;              /* SendMessage waiting for reply */
-  SMSG*     smProcessing;           /* SendMessage currently being processed */
-  SMSG*     smPending;              /* SendMessage waiting to be received */
-  
+
   HANDLE16  hCurHook;               /* Current hook */
   HANDLE16  hooks[WH_NB_HOOKS];     /* Task hooks list */
 
@@ -124,14 +76,6 @@ typedef struct tagMESSAGEQUEUE
   
 } MESSAGEQUEUE;
 
-
-/* Extra (undocumented) queue wake bits - see "Undoc. Windows" */
-#define QS_SMRESULT      0x8000  /* Queue has a SendMessage() result */
-
-/* Types of SMSG stack */
-#define SM_PROCESSING_LIST    1  /* list of SM currently being processed */
-#define SM_PENDING_LIST       2  /* list of SM wating to be received */
-#define SM_WAITING_LIST       3  /* list of SM waiting for reply */
 
 #define QUEUE_MAGIC        0xD46E80AF
 
@@ -152,28 +96,22 @@ INT16 PERQDATA_SetCaptureInfo( PERQUEUEDATA *pQData, INT16 nCaptureHT );
 extern MESSAGEQUEUE *QUEUE_Lock( HQUEUE16 hQueue );
 extern void QUEUE_Unlock( MESSAGEQUEUE *queue );
 extern void QUEUE_DumpQueue( HQUEUE16 hQueue );
-extern void QUEUE_WalkQueues(void);
 extern BOOL QUEUE_IsExitingQueue( HQUEUE16 hQueue );
 extern void QUEUE_SetExitingQueue( HQUEUE16 hQueue );
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
-extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
+extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear );
 extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern WORD QUEUE_TestWakeBit( MESSAGEQUEUE *queue, WORD bit );
-extern BOOL QUEUE_ReceiveMessage( MESSAGEQUEUE *queue );
 extern int QUEUE_WaitBits( WORD bits, DWORD timeout );
 extern void QUEUE_IncPaintCount( HQUEUE16 hQueue );
 extern void QUEUE_DecPaintCount( HQUEUE16 hQueue );
-extern void QUEUE_IncTimerCount( HQUEUE16 hQueue );
-extern void QUEUE_DecTimerCount( HQUEUE16 hQueue );
 extern BOOL QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue );
 extern HTASK16 QUEUE_GetQueueTask( HQUEUE16 hQueue );
-extern BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG * msg, DWORD extraInfo );
-extern QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
-                          int first, int last );
+extern BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove,
+                           BOOL sent_only, QMSG *msg );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg );
-extern SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
-extern BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg );
+extern void QUEUE_CleanupWindow( HWND hwnd );
 extern void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 

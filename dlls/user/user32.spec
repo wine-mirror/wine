@@ -414,7 +414,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall ModifyMenuW(long long long long ptr) ModifyMenuW
 @ stdcall MoveWindow(long long long long long long) MoveWindow
 @ stdcall MsgWaitForMultipleObjects(long ptr long long long) MsgWaitForMultipleObjects
-@ stub MsgWaitForMultipleObjectsEx
+@ stdcall MsgWaitForMultipleObjectsEx(long ptr long long long) MsgWaitForMultipleObjectsEx
 @ stdcall OemKeyScan(long) OemKeyScan
 @ stdcall OemToCharA(ptr ptr) OemToCharA
 @ stdcall OemToCharBuffA(ptr ptr long) OemToCharBuffA

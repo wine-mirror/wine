@@ -458,29 +458,8 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 
     /* toss stale messages from the queue */
 
-    if( wndPtr->hmemTaskQ )
-    {
-	BOOL	      bPostQuit = FALSE;
-	WPARAM      wQuitParam = 0;
-        MESSAGEQUEUE* msgQ = (MESSAGEQUEUE*) QUEUE_Lock(wndPtr->hmemTaskQ);
-        QMSG *qmsg;
-
-	while( (qmsg = QUEUE_FindMsg(msgQ, hwnd, 0, 0)) != 0 )
-	{
-	    if( qmsg->msg.message == WM_QUIT )
-	    {
-		bPostQuit = TRUE;
-		wQuitParam = qmsg->msg.wParam;
-	    }
-	    QUEUE_RemoveMsg(msgQ, qmsg);
-	}
-
-        QUEUE_Unlock(msgQ);
-        
-	/* repost WM_QUIT to make sure this app exits its message loop */
-	if( bPostQuit ) PostQuitMessage(wQuitParam);
-	wndPtr->hmemTaskQ = 0;
-    }
+    QUEUE_CleanupWindow( hwnd );
+    wndPtr->hmemTaskQ = 0;
 
     if (!(wndPtr->dwStyle & WS_CHILD))
        if (wndPtr->wIDmenu)

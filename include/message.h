@@ -21,8 +21,6 @@ extern BOOL MSG_InternalGetMessage( struct tagMSG *msg, HWND hwnd, HWND hwndOwne
 /* timer.c */
 extern void TIMER_RemoveWindowTimers( HWND hwnd );
 extern void TIMER_RemoveQueueTimers( HQUEUE16 hqueue );
-extern BOOL TIMER_GetTimerMsg( struct tagMSG *msg, HWND hwnd,
-                                 HQUEUE16 hQueue, BOOL remove );
 extern BOOL TIMER_IsTimerValid( HWND hwnd, UINT id, HWINDOWPROC hProc );
 
 /* input.c */

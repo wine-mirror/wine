@@ -1,4 +1,5 @@
-/* * Message queues related functions
+/*
+ * Message queues related functions
  *
  * Copyright 1993, 1994 Alexandre Julliard
  */
@@ -20,12 +21,11 @@
 #include "server.h"
 #include "spy.h"
 
-DECLARE_DEBUG_CHANNEL(msg);
 DECLARE_DEBUG_CHANNEL(sendmsg);
+DEFAULT_DEBUG_CHANNEL(msg);
 
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
-static HQUEUE16 hFirstQueue = 0;
 static HQUEUE16 hExitingQueue = 0;
 static HQUEUE16 hmemSysMsgQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
@@ -59,7 +59,7 @@ PERQUEUEDATA * PERQDATA_CreateInstance( )
     TRACE_(msg)("()\n");
 
     /* Share a single instance of perQData for all 16 bit tasks */
-    if ( ( bIsWin16 = THREAD_IsWin16( NtCurrentTeb() ) ) )
+    if ( ( bIsWin16 = !(NtCurrentTeb()->tibflags & TEBF_WIN32) ) )
     {
         /* If previously allocated, just bump up ref count */
         if ( pQDataWin16 )
@@ -363,53 +363,18 @@ void QUEUE_DumpQueue( HQUEUE16 hQueue )
 
     EnterCriticalSection( &pq->cSection );
 
-    DPRINTF( "next: %12.4x  Intertask SendMessage:\n"
-             "thread: %10p  ----------------------\n"
-             "firstMsg: %8p   smWaiting:     %10p\n"
-             "lastMsg:  %8p   smPending:     %10p\n"
-             "msgCount: %8.4x   smProcessing:  %10p\n"
+    DPRINTF( "thread: %10p  Intertask SendMessage:\n"
+             "firstMsg: %8p   lastMsg:  %8p\n"
              "lockCount: %7.4x\n"
              "paints: %10.4x\n"
-             "timers: %10.4x\n"
-             "wakeBits: %8.4x\n"
-             "wakeMask: %8.4x\n"
              "hCurHook: %8.4x\n",
-             pq->next, pq->teb, pq->firstMsg, pq->smWaiting, pq->lastMsg,
-             pq->smPending, pq->msgCount, pq->smProcessing,
-             (unsigned)pq->lockCount, pq->wPaintCount, pq->wTimerCount,
-             pq->wakeBits, pq->wakeMask, pq->hCurHook);
+             pq->teb, pq->firstMsg, pq->lastMsg,
+             (unsigned)pq->lockCount, pq->wPaintCount,
+             pq->hCurHook);
 
     LeaveCriticalSection( &pq->cSection );
 
     QUEUE_Unlock( pq );
-}
-
-
-/***********************************************************************
- *	     QUEUE_WalkQueues
- */
-void QUEUE_WalkQueues(void)
-{
-    char module[10];
-    HQUEUE16 hQueue = hFirstQueue;
-
-    DPRINTF( "Queue Msgs Thread   Task Module\n" );
-    while (hQueue)
-    {
-        MESSAGEQUEUE *queue = QUEUE_Lock( hQueue );
-        if (!queue)
-        {
-            WARN_(msg)("Bad queue handle %04x\n", hQueue );
-            return;
-        }
-        if (!GetModuleName16( queue->teb->htask16, module, sizeof(module )))
-            strcpy( module, "???" );
-        DPRINTF( "%04x %4d %p %04x %s\n", hQueue,queue->msgCount,
-                 queue->teb, queue->teb->htask16, module );
-        hQueue = queue->next;
-        QUEUE_Unlock( queue );
-    }
-    DPRINTF( "\n" );
 }
 
 
@@ -452,24 +417,25 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
     if ( !msgQueue )
         return 0;
 
-    SERVER_START_REQ( get_msg_queue )
+    if (bCreatePerQData)
     {
-        SERVER_CALL_ERR();
-        handle = req->handle;
+        SERVER_START_REQ( get_msg_queue )
+        {
+            SERVER_CALL_ERR();
+            handle = req->handle;
+        }
+        SERVER_END_REQ;
+        if (!handle)
+        {
+            ERR_(msg)("Cannot get thread queue");
+            GlobalFree16( hQueue );
+            return 0;
+        }
+        msgQueue->server_queue = handle;
     }
-    SERVER_END_REQ;
-    if (!handle)
-    {
-        ERR_(msg)("Cannot get thread queue");
-        GlobalFree16( hQueue );
-        return 0;
-    }
-    msgQueue->server_queue = handle;
-    msgQueue->server_queue = ConvertToGlobalHandle( msgQueue->server_queue );
 
-    msgQueue->self        = hQueue;
-    msgQueue->wakeBits    = msgQueue->changeBits = 0;
-    
+    msgQueue->self = hQueue;
+
     InitializeCriticalSection( &msgQueue->cSection );
     MakeCriticalSectionGlobal( &msgQueue->cSection );
 
@@ -484,44 +450,6 @@ static HQUEUE16 QUEUE_CreateMsgQueue( BOOL16 bCreatePerQData )
 
 
 /***********************************************************************
- *           QUEUE_FlushMessage
- * 
- * Try to reply to all pending sent messages on exit.
- */
-static void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
-{
-    SMSG *smsg;
-    MESSAGEQUEUE *senderQ = 0;
-
-    if( queue )
-    {
-        EnterCriticalSection( &queue->cSection );
-
-        /* empty the list of pending SendMessage waiting to be received */
-        while (queue->smPending)
-        {
-            smsg = QUEUE_RemoveSMSG( queue, SM_PENDING_LIST, 0);
-
-            senderQ = QUEUE_Lock( smsg->hSrcQueue );
-            if ( !senderQ )
-                continue;
-
-            /* return 0, to unblock other thread */
-            smsg->lResult = 0;
-            smsg->flags |= SMSG_HAVE_RESULT;
-            QUEUE_SetWakeBit( senderQ, QS_SMRESULT);
-            
-            QUEUE_Unlock( senderQ );
-        }
-
-        QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
-        
-        LeaveCriticalSection( &queue->cSection );
-    }
-}
-
-
-/***********************************************************************
  *	     QUEUE_DeleteMsgQueue
  *
  * Unlinks and deletes a message queue.
@@ -532,7 +460,6 @@ static void QUEUE_FlushMessages( MESSAGEQUEUE *queue )
 BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
 {
     MESSAGEQUEUE * msgQueue = QUEUE_Lock(hQueue);
-    HQUEUE16 *pPrev;
 
     TRACE_(msg)("(): Deleting message queue %04x\n", hQueue);
 
@@ -547,9 +474,6 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
     if( hCursorQueue == hQueue ) hCursorQueue = 0;
     if( hActiveQueue == hQueue ) hActiveQueue = 0;
 
-    /* flush sent messages */
-    QUEUE_FlushMessages( msgQueue );
-
     HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
 
     /* Release per queue data if present */
@@ -558,24 +482,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE16 hQueue )
         PERQDATA_Release( msgQueue->pQData );
         msgQueue->pQData = 0;
     }
-    
-    /* remove the message queue from the global link list */
-    pPrev = &hFirstQueue;
-    while (*pPrev && (*pPrev != hQueue))
-    {
-        MESSAGEQUEUE *msgQ = (MESSAGEQUEUE*)GlobalLock16(*pPrev);
 
-        /* sanity check */
-        if ( !msgQ || (msgQ->magic != QUEUE_MAGIC) )
-        {
-            /* HQUEUE link list is corrupted, try to exit gracefully */
-            ERR_(msg)("HQUEUE link list corrupted!\n");
-            pPrev = 0;
-            break;
-        }
-        pPrev = &msgQ->next;
-    }
-    if (pPrev && *pPrev) *pPrev = msgQueue->next;
     msgQueue->self = 0;
 
     HeapUnlock( GetProcessHeap() );
@@ -619,47 +526,34 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
  *
  * See "Windows Internals", p.449
  */
-static BOOL QUEUE_TrySetWakeBit( MESSAGEQUEUE *queue, WORD bit, BOOL always )
+static BOOL QUEUE_TrySetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear, BOOL always )
 {
     BOOL wake = FALSE;
 
-    EnterCriticalSection( &queue->cSection );
+    TRACE_(msg)("queue = %04x, set = %04x, clear = %04x, always = %d\n",
+                queue->self, set, clear, always );
+    if (!queue->server_queue) return FALSE;
 
-    TRACE_(msg)("queue = %04x (wm=%04x), bit = %04x, always = %d\n", 
-	                queue->self, queue->wakeMask, bit, always );
-
-    if ((queue->wakeMask & bit) || always)
+    SERVER_START_REQ( set_queue_bits )
     {
-        if (bit & QS_MOUSE) pMouseQueue = queue;
-        if (bit & QS_KEY) pKbdQueue = queue;
-        queue->changeBits |= bit;
-        queue->wakeBits   |= bit;
+        req->handle    = queue->server_queue;
+        req->set       = set;
+        req->clear     = clear;
+        req->mask_cond = always ? 0 : set;
+        if (!SERVER_CALL()) wake = (req->changed_mask & set) != 0;
     }
-    if (queue->wakeMask & bit)
+    SERVER_END_REQ;
+
+    if (wake || always)
     {
-        queue->wakeMask = 0;
-        wake = TRUE;
+        if (set & QS_MOUSE) pMouseQueue = queue;
+        if (set & QS_KEY) pKbdQueue = queue;
     }
-
-    LeaveCriticalSection( &queue->cSection );
-
-    if ( wake )
-    {
-        /* Wake up thread waiting for message */
-        SERVER_START_REQ( wake_queue )
-        {
-            req->handle = queue->server_queue;
-            req->bits   = bit;
-            SERVER_CALL();
-        }
-        SERVER_END_REQ;
-    }
-
     return wake;
 }
-void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
+void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD set, WORD clear )
 {
-    QUEUE_TrySetWakeBit( queue, bit, TRUE );
+    QUEUE_TrySetWakeBit( queue, set, clear, TRUE );
 }
 
 
@@ -668,24 +562,8 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
  */
 void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
 {
-    EnterCriticalSection( &queue->cSection );
-    queue->changeBits &= ~bit;
-    queue->wakeBits   &= ~bit;
-    LeaveCriticalSection( &queue->cSection );
+    QUEUE_SetWakeBit( queue, 0, bit );
 }
-
-/***********************************************************************
- *           QUEUE_TestWakeBit
- */
-WORD QUEUE_TestWakeBit( MESSAGEQUEUE *queue, WORD bit )
-{
-    WORD ret;
-    EnterCriticalSection( &queue->cSection );
-    ret = queue->wakeBits & bit;
-    LeaveCriticalSection( &queue->cSection );
-    return ret;
-}
-
 
 /***********************************************************************
  *           QUEUE_WaitBits
@@ -708,38 +586,44 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
     
     for (;;)
     {
+        unsigned int wake_bits = 0, changed_bits = 0;
         DWORD dwlc;
 
-        EnterCriticalSection( &queue->cSection );
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->wake_mask    = QS_SENDMESSAGE;
+            req->changed_mask = bits | QS_SENDMESSAGE;
+            req->skip_wait    = 1;
+            if (!SERVER_CALL())
+            {
+                wake_bits    = req->wake_bits;
+                changed_bits = req->changed_bits;
+            }
+        }
+        SERVER_END_REQ;
 
-        if (queue->changeBits & bits)
+        if (changed_bits & bits)
         {
             /* One of the bits is set; we can return */
-            queue->wakeMask = 0;
-
-            LeaveCriticalSection( &queue->cSection );
             QUEUE_Unlock( queue );
             return 1;
         }
-        if (queue->wakeBits & QS_SENDMESSAGE)
+        if (wake_bits & QS_SENDMESSAGE)
         {
             /* Process the sent message immediately */
-	    queue->wakeMask = 0;
-
-            LeaveCriticalSection( &queue->cSection );
-            QUEUE_ReceiveMessage( queue );
-	    continue;				/* nested sm crux */
+            QMSG msg;
+            QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg );
+            continue;  /* nested sm crux */
         }
 
-        queue->wakeMask = bits | QS_SENDMESSAGE;
-        TRACE_(msg)("%04x: wakeMask is %04x, waiting\n", queue->self, queue->wakeMask);
-        LeaveCriticalSection( &queue->cSection );
+        TRACE_(msg)("(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
+                    queue->self, bits, wake_bits, changed_bits );
 
         ReleaseThunkLock( &dwlc );
         if (dwlc) TRACE_(msg)("had win16 lock\n");
 
-        if (USER_Driver.pMsgWaitForMultipleObjects)
-            USER_Driver.pMsgWaitForMultipleObjects( 1, &queue->server_queue, FALSE, timeout );
+        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, timeout, 0, 0 );
         else
             WaitForSingleObject( queue->server_queue, timeout );
         if (dwlc) RestoreThunkLock( dwlc );
@@ -747,285 +631,52 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 }
 
 
-/***********************************************************************
- *           QUEUE_AddSMSG
- *
- * This routine is called when a SMSG need to be added to one of the three
- * SM list.  (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST)
- */
-BOOL QUEUE_AddSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
+/* handle the reception of a sent message by calling the corresponding window proc */
+static void handle_sent_message( QMSG *msg )
 {
-    TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
-          smsg, SPY_GetMsgName(smsg->msg));
-    
-    switch (list)
+    LRESULT result = 0;
+    MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
+    DWORD extraInfo = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
+    WND *wndPtr = WIN_FindWndPtr( msg->msg.hwnd );
+
+    TRACE( "got hwnd %x msg %x (%s) wp %x lp %lx\n",
+           msg->msg.hwnd, msg->msg.message, SPY_GetMsgName(msg->msg.message),
+           msg->msg.wParam, msg->msg.lParam );
+
+    queue->GetMessageExtraInfoVal = msg->extraInfo;
+
+    /* call the right version of CallWindowProcXX */
+    switch(msg->type)
     {
-        case SM_PROCESSING_LIST:
-            /* don't need to be thread safe, only accessed by the
-             thread associated with the sender queue */
-            smsg->nextProcessing = queue->smProcessing;
-            queue->smProcessing = smsg;
-            break;
-            
-        case SM_WAITING_LIST:
-            /* don't need to be thread safe, only accessed by the
-             thread associated with the receiver queue */
-            smsg->nextWaiting = queue->smWaiting;
-            queue->smWaiting = smsg;
-            break;
-            
-        case SM_PENDING_LIST:
-        {
-            /* make it thread safe, could be accessed by the sender and
-             receiver thread */
-            SMSG **prev;
-
-            EnterCriticalSection( &queue->cSection );
-            smsg->nextPending = NULL;
-            prev = &queue->smPending;
-            while ( *prev )
-                prev = &(*prev)->nextPending;
-            *prev = smsg;
-            LeaveCriticalSection( &queue->cSection );
-
-            QUEUE_SetWakeBit( queue, QS_SENDMESSAGE );
-            break;
-        }
-
-        default:
-            ERR_(sendmsg)("Invalid list: %d", list);
-            break;
+    case QMSG_WIN16:
+        result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
+                                   (HWND16) msg->msg.hwnd,
+                                   (UINT16) msg->msg.message,
+                                   LOWORD(msg->msg.wParam),
+                                   msg->msg.lParam );
+        break;
+    case QMSG_WIN32A:
+        result = CallWindowProcA( wndPtr->winproc, msg->msg.hwnd, msg->msg.message,
+                                  msg->msg.wParam, msg->msg.lParam );
+        break;
+    case QMSG_WIN32W:
+        result = CallWindowProcW( wndPtr->winproc, msg->msg.hwnd, msg->msg.message,
+                                  msg->msg.wParam, msg->msg.lParam );
+        break;
     }
 
-    return TRUE;
+    queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
+    WIN_ReleaseWndPtr(wndPtr);
+    QUEUE_Unlock( queue );
+
+    SERVER_START_REQ( reply_message )
+    {
+        req->result = result;
+        req->remove = 1;
+        SERVER_CALL();
+    }
+    SERVER_END_REQ;
 }
-
-
-/***********************************************************************
- *           QUEUE_RemoveSMSG
- *
- * This routine is called when a SMSG needs to be removed from one of the three
- * SM lists (SM_PROCESSING_LIST, SM_PENDING_LIST, SM_WAITING_LIST).
- * If smsg == 0, remove the first smsg from the specified list
- */
-SMSG *QUEUE_RemoveSMSG( MESSAGEQUEUE *queue, int list, SMSG *smsg )
-{
-
-    switch (list)
-    {
-        case SM_PROCESSING_LIST:
-            /* don't need to be thread safe, only accessed by the
-             thread associated with the sender queue */
-
-            /* if smsg is equal to null, it means the first in the list */
-            if (!smsg)
-                smsg = queue->smProcessing;
-
-            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
-                  smsg, SPY_GetMsgName(smsg->msg));
-            /* In fact SM_PROCESSING_LIST is a stack, and smsg
-             should be always at the top of the list */
-            if ( (smsg != queue->smProcessing) || !queue->smProcessing )
-            {
-                ERR_(sendmsg)("smsg not at the top of Processing list, smsg=0x%p queue=0x%p\n", smsg, queue);
-                return 0;
-            }
-            else
-            {
-                queue->smProcessing = smsg->nextProcessing;
-                smsg->nextProcessing = 0;
-            }
-            return smsg;
-
-        case SM_WAITING_LIST:
-            /* don't need to be thread safe, only accessed by the
-             thread associated with the receiver queue */
-
-            /* if smsg is equal to null, it means the first in the list */
-            if (!smsg)
-                smsg = queue->smWaiting;
-            
-            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
-                  smsg, SPY_GetMsgName(smsg->msg));
-            /* In fact SM_WAITING_LIST is a stack, and smsg
-             should be always at the top of the list */
-            if ( (smsg != queue->smWaiting) || !queue->smWaiting )
-            {
-                ERR_(sendmsg)("smsg not at the top of Waiting list, smsg=0x%p queue=0x%p\n", smsg, queue);
-                return 0;
-            }
-            else
-            {
-                queue->smWaiting = smsg->nextWaiting;
-                smsg->nextWaiting = 0;
-            }
-            return smsg;
-
-        case SM_PENDING_LIST:
-            /* make it thread safe, could be accessed by the sender and
-             receiver thread */
-            EnterCriticalSection( &queue->cSection );
-    
-            if (!smsg)
-                smsg = queue->smPending;
-	    if ( (smsg != queue->smPending) || !queue->smPending )
-            {
-                ERR_(sendmsg)("should always remove the top one in Pending list, smsg=0x%p queue=0x%p\n", smsg, queue);
-		LeaveCriticalSection( &queue->cSection );
-                return 0;
-            }
-            
-            TRACE_(sendmsg)("queue=%x, list=%d, smsg=%p msg=%s\n", queue->self, list,
-                  smsg, SPY_GetMsgName(smsg->msg));
-
-            queue->smPending = smsg->nextPending;
-            smsg->nextPending = 0;
-
-            /* if no more SMSG in Pending list, clear QS_SENDMESSAGE flag */
-            if (!queue->smPending)
-                QUEUE_ClearWakeBit( queue, QS_SENDMESSAGE );
-            
-            LeaveCriticalSection( &queue->cSection );
-            return smsg;
-
-        default:
-            ERR_(sendmsg)("Invalid list: %d\n", list);
-            break;
-    }
-
-    return 0;
-}
-
-
-/***********************************************************************
- *           QUEUE_ReceiveMessage
- * 
- * This routine is called to check whether a sent message is waiting 
- * for the queue.  If so, it is received and processed.
- */
-BOOL QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
-{
-    LRESULT       result = 0;
-    SMSG          *smsg;
-    MESSAGEQUEUE  *senderQ;
-
-    EnterCriticalSection( &queue->cSection );
-    if ( !((queue->wakeBits & QS_SENDMESSAGE) && queue->smPending) )
-    {
-        LeaveCriticalSection( &queue->cSection );
-        return FALSE;
-    }
-    LeaveCriticalSection( &queue->cSection );
-
-    TRACE_(sendmsg)("queue %04x\n", queue->self );
-
-    /* remove smsg on the top of the pending list and put it in the processing list */
-    smsg = QUEUE_RemoveSMSG(queue, SM_PENDING_LIST, 0);
-    QUEUE_AddSMSG(queue, SM_WAITING_LIST, smsg);
-
-    TRACE_(sendmsg)("RM: %s [%04x] (%04x -> %04x)\n",
-       	    SPY_GetMsgName(smsg->msg), smsg->msg, smsg->hSrcQueue, smsg->hDstQueue );
-
-    if (IsWindow( smsg->hWnd ))
-    {
-        WND *wndPtr = WIN_FindWndPtr( smsg->hWnd );
-        DWORD extraInfo = queue->GetMessageExtraInfoVal; /* save ExtraInfo */
-
-        /* use sender queue extra info value while calling the window proc */
-        senderQ = QUEUE_Lock( smsg->hSrcQueue );
-        if (senderQ)
-        {
-            queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
-            QUEUE_Unlock( senderQ );
-        }
-
-        /* call the right version of CallWindowProcXX */
-        if (smsg->flags & SMSG_WIN32)
-        {
-            TRACE_(sendmsg)("\trcm: msg is Win32\n" );
-            if (smsg->flags & SMSG_UNICODE)
-                result = CallWindowProcW( wndPtr->winproc,
-                                            smsg->hWnd, smsg->msg,
-                                            smsg->wParam, smsg->lParam );
-            else
-                result = CallWindowProcA( wndPtr->winproc,
-                                            smsg->hWnd, smsg->msg,
-                                            smsg->wParam, smsg->lParam );
-        }
-        else  /* Win16 message */
-            result = CallWindowProc16( (WNDPROC16)wndPtr->winproc,
-                                       (HWND16) smsg->hWnd,
-                                       (UINT16) smsg->msg,
-                                       LOWORD (smsg->wParam),
-                                       smsg->lParam );
-
-        queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
-        WIN_ReleaseWndPtr(wndPtr);
-	TRACE_(sendmsg)("result =  %08x\n", (unsigned)result );
-    }
-    else WARN_(sendmsg)("\trcm: bad hWnd\n");
-
-    
-    /* set SMSG_SENDING_REPLY flag to tell ReplyMessage16, it's not
-       an early reply */
-    smsg->flags |= SMSG_SENDING_REPLY;
-    ReplyMessage( result );
-
-    TRACE_(sendmsg)("done!\n" );
-    return TRUE;
-}
-
-
-
-/***********************************************************************
- *           QUEUE_AddMsg
- *
- * Add a message to the queue. Return FALSE if queue is full.
- */
-BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG *msg, DWORD extraInfo )
-{
-    MESSAGEQUEUE *msgQueue;
-    QMSG         *qmsg;
-
-
-    if (!(msgQueue = QUEUE_Lock( hQueue ))) return FALSE;
-
-    /* allocate new message in global heap for now */
-    if (!(qmsg = (QMSG *) HeapAlloc( GetProcessHeap(), 0, sizeof(QMSG) ) ))
-    {
-        QUEUE_Unlock( msgQueue );
-        return 0;
-    }
-
-    EnterCriticalSection( &msgQueue->cSection );
-
-      /* Store message */
-    qmsg->type = type;
-    qmsg->msg = *msg;
-    qmsg->extraInfo = extraInfo;
-
-    /* insert the message in the link list */
-    qmsg->nextMsg = 0;
-    qmsg->prevMsg = msgQueue->lastMsg;
-
-    if (msgQueue->lastMsg)
-        msgQueue->lastMsg->nextMsg = qmsg;
-
-    /* update first and last anchor in message queue */
-    msgQueue->lastMsg = qmsg;
-    if (!msgQueue->firstMsg)
-        msgQueue->firstMsg = qmsg;
-    
-    msgQueue->msgCount++;
-
-    LeaveCriticalSection( &msgQueue->cSection );
-
-    QUEUE_SetWakeBit( msgQueue, QS_POSTMESSAGE );
-    QUEUE_Unlock( msgQueue );
-    
-    return TRUE;
-}
-
 
 
 /***********************************************************************
@@ -1033,37 +684,45 @@ BOOL QUEUE_AddMsg( HQUEUE16 hQueue, int type, MSG *msg, DWORD extraInfo )
  *
  * Find a message matching the given parameters. Return -1 if none available.
  */
-QMSG* QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
+BOOL QUEUE_FindMsg( HWND hwnd, UINT first, UINT last, BOOL remove, BOOL sent_only, QMSG *msg )
 {
-    QMSG* qmsg;
+    BOOL ret = FALSE, sent = FALSE;
 
-    EnterCriticalSection( &msgQueue->cSection );
+    if (!first && !last) last = ~0;
 
-    if (!msgQueue->msgCount)
-        qmsg = 0;
-    else if (!hwnd && !first && !last)
-        qmsg = msgQueue->firstMsg;
-    else
+    for (;;)
     {
-        /* look in linked list for message matching first and last criteria */
-        for (qmsg = msgQueue->firstMsg; qmsg; qmsg = qmsg->nextMsg)
+        SERVER_START_REQ( get_message )
         {
-            MSG *msg = &(qmsg->msg);
-
-            if (!hwnd || (msg->hwnd == hwnd))
+            req->remove    = remove;
+            req->posted    = !sent_only;
+            req->get_win   = hwnd;
+            req->get_first = first;
+            req->get_last  = last;
+            if ((ret = !SERVER_CALL()))
             {
-                if (!first && !last)
-                    break;   /* found it */
-                
-                if ((msg->message >= first) && (!last || (msg->message <= last)))
-                    break;   /* found it */
+                sent             = req->sent;
+                msg->type        = req->type;
+                msg->msg.hwnd    = req->win;
+                msg->msg.message = req->msg;
+                msg->msg.wParam  = req->wparam;
+                msg->msg.lParam  = req->lparam;
+                msg->msg.time    = 0;  /* FIXME */
+                msg->msg.pt.x    = 0;  /* FIXME */
+                msg->msg.pt.y    = 0;  /* FIXME */
+                msg->extraInfo   = req->info;
             }
-	}
-    }
-    
-    LeaveCriticalSection( &msgQueue->cSection );
+        }
+        SERVER_END_REQ;
 
-    return qmsg;
+        if (!ret || !sent) break;
+        handle_sent_message( msg );
+    }
+
+    if (ret) TRACE( "got hwnd %x msg %x (%s) wp %x lp %lx\n",
+                    msg->msg.hwnd, msg->msg.message, SPY_GetMsgName(msg->msg.message),
+                    msg->msg.wParam, msg->msg.lParam );
+    return ret;
 }
 
 
@@ -1092,82 +751,25 @@ void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, QMSG *qmsg )
 
     /* deallocate the memory for the message */
     HeapFree( GetProcessHeap(), 0, qmsg );
-    
-    msgQueue->msgCount--;
-    if (!msgQueue->msgCount) msgQueue->wakeBits &= ~QS_POSTMESSAGE;
 
     LeaveCriticalSection( &msgQueue->cSection );
 }
 
 
-#if 0
 /***********************************************************************
- *           QUEUE_WakeSomeone
+ *           QUEUE_CleanupWindow
  *
- * Wake a queue upon reception of a hardware event.
+ * Cleanup the queue to account for a window being deleted.
  */
-static void QUEUE_WakeSomeone( UINT message )
+void QUEUE_CleanupWindow( HWND hwnd )
 {
-    WND*	  wndPtr = NULL;
-    WORD          wakeBit;
-    HWND hwnd;
-    HQUEUE16     hQueue = 0;
-    MESSAGEQUEUE *queue = NULL;
-
-    if (hCursorQueue)
-        hQueue = hCursorQueue;
-
-    if( (message >= WM_KEYFIRST) && (message <= WM_KEYLAST) )
+    SERVER_START_REQ( cleanup_window_queue )
     {
-       wakeBit = QS_KEY;
-       if( hActiveQueue )
-           hQueue = hActiveQueue;
+        req->win = hwnd;
+        SERVER_CALL();
     }
-    else 
-    {
-       wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
-       if( (hwnd = GetCapture()) )
-	 if( (wndPtr = WIN_FindWndPtr( hwnd )) ) 
-           {
-               hQueue = wndPtr->hmemTaskQ;
-               WIN_ReleaseWndPtr(wndPtr);
-           }
-    }
-
-    if( (hwnd = GetSysModalWindow16()) )
-    {
-      if( (wndPtr = WIN_FindWndPtr( hwnd )) )
-        {
-            hQueue = wndPtr->hmemTaskQ;
-            WIN_ReleaseWndPtr(wndPtr);
-        }
-    }
-
-    if (hQueue)
-    {
-        queue = QUEUE_Lock( hQueue );
-        QUEUE_SetWakeBit( queue, wakeBit );
-        QUEUE_Unlock( queue );
-        return;
-    }
-
-    /* Search for someone to wake */
-    hQueue = hFirstQueue;
-    while ( (queue = QUEUE_Lock( hQueue )) )
-    {
-        if (QUEUE_TrySetWakeBit( queue, wakeBit, FALSE )) 
-        {
-            QUEUE_Unlock( queue );
-            return;
-        }
-        
-        hQueue = queue->next; 
-        QUEUE_Unlock( queue );
-    }
-
-    WARN_(msg)("couldn't find queue\n"); 
+    SERVER_END_REQ;
 }
-#endif
 
 
 /***********************************************************************
@@ -1227,8 +829,6 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
         sysMsgQueue->lastMsg = qmsg;
         if (!sysMsgQueue->firstMsg)
             sysMsgQueue->firstMsg = qmsg;
-        
-        sysMsgQueue->msgCount++;
     }
 
       /* Store message */
@@ -1252,7 +852,7 @@ void hardware_event( UINT message, WPARAM wParam, LPARAM lParam,
         if ((message >= WM_KEYFIRST) && (message <= WM_KEYLAST)) wakeBit = QS_KEY;
         else wakeBit = (message == WM_MOUSEMOVE) ? QS_MOUSEMOVE : QS_MOUSEBUTTON;
 
-        QUEUE_SetWakeBit( queue, wakeBit );
+        QUEUE_SetWakeBit( queue, wakeBit, 0 );
         QUEUE_Unlock( queue );
     }
 }
@@ -1289,7 +889,7 @@ void QUEUE_IncPaintCount( HQUEUE16 hQueue )
     EnterCriticalSection( &queue->cSection );
     queue->wPaintCount++;
     LeaveCriticalSection( &queue->cSection );
-    QUEUE_SetWakeBit( queue, QS_PAINT );
+    QUEUE_SetWakeBit( queue, QS_PAINT, 0 );
     QUEUE_Unlock( queue );
 }
 
@@ -1304,39 +904,7 @@ void QUEUE_DecPaintCount( HQUEUE16 hQueue )
     if (!(queue = QUEUE_Lock( hQueue ))) return;
     EnterCriticalSection( &queue->cSection );
     queue->wPaintCount--;
-    if (!queue->wPaintCount) queue->wakeBits &= ~QS_PAINT;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
-}
-
-
-/***********************************************************************
- *           QUEUE_IncTimerCount
- */
-void QUEUE_IncTimerCount( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Lock( hQueue ))) return;
-    EnterCriticalSection( &queue->cSection );
-    queue->wTimerCount++;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_SetWakeBit( queue, QS_TIMER );
-    QUEUE_Unlock( queue );
-}
-
-
-/***********************************************************************
- *           QUEUE_DecTimerCount
- */
-void QUEUE_DecTimerCount( HQUEUE16 hQueue )
-{
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Lock( hQueue ))) return;
-    EnterCriticalSection( &queue->cSection );
-    queue->wTimerCount--;
-    if (!queue->wTimerCount) queue->wakeBits &= ~QS_TIMER;
+    if (!queue->wPaintCount) QUEUE_ClearWakeBit( queue, QS_PAINT );
     LeaveCriticalSection( &queue->cSection );
     QUEUE_Unlock( queue );
 }
@@ -1367,14 +935,7 @@ void WINAPI PostQuitMessage16( INT16 exitCode )
  */
 void WINAPI PostQuitMessage( INT exitCode )
 {
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return;
-    EnterCriticalSection( &queue->cSection );
-    queue->wPostQMsg = TRUE;
-    queue->wExitCode = (WORD)exitCode;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
+    PostThreadMessageW( GetCurrentThreadId(), WM_QUIT, exitCode, 0 );
 }
 
 
@@ -1470,9 +1031,6 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
         HeapLock( GetProcessHeap() );  /* FIXME: a bit overkill */
         SetThreadQueue16( 0, hQueue );
         teb->queue = hQueue;
-            
-        queuePtr->next  = hFirstQueue;
-        hFirstQueue = hQueue;
         HeapUnlock( GetProcessHeap() );
         
         QUEUE_Unlock( queuePtr );
@@ -1486,17 +1044,7 @@ HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
  */
 DWORD WINAPI GetQueueStatus16( UINT16 flags )
 {
-    MESSAGEQUEUE *queue;
-    DWORD ret;
-
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
-    EnterCriticalSection( &queue->cSection );
-    ret = MAKELONG( queue->changeBits, queue->wakeBits );
-    queue->changeBits = 0;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
-    
-    return ret & MAKELONG( flags, flags );
+    return GetQueueStatus( flags );
 }
 
 /***********************************************************************
@@ -1504,17 +1052,16 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
  */
 DWORD WINAPI GetQueueStatus( UINT flags )
 {
-    MESSAGEQUEUE *queue;
-    DWORD ret;
+    DWORD ret = 0;
 
-    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
-    EnterCriticalSection( &queue->cSection );
-    ret = MAKELONG( queue->changeBits, queue->wakeBits );
-    queue->changeBits = 0;
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
-    
-    return ret & MAKELONG( flags, flags );
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear = 1;
+        SERVER_CALL();
+        ret = MAKELONG( req->changed_bits & flags, req->wake_bits & flags );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1524,6 +1071,23 @@ DWORD WINAPI GetQueueStatus( UINT flags )
 BOOL16 WINAPI GetInputState16(void)
 {
     return GetInputState();
+}
+
+/***********************************************************************
+ *		GetInputState   (USER32.@)
+ */
+BOOL WINAPI GetInputState(void)
+{
+    DWORD ret = 0;
+
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear = 0;
+        SERVER_CALL();
+        ret = req->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /***********************************************************************
@@ -1552,10 +1116,8 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
         ret = MsgWaitForMultipleObjects ( 1, &idle_event, FALSE, dwTimeOut, QS_SENDMESSAGE );
         if ( ret == ( WAIT_OBJECT_0 + 1 )) 
         {
-            MESSAGEQUEUE * queue;
-            if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0xFFFFFFFF;
-            QUEUE_ReceiveMessage ( queue );
-            QUEUE_Unlock ( queue );
+            QMSG msg;
+            QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg );
             continue; 
         }
         if ( ret == WAIT_TIMEOUT || ret == 0xFFFFFFFF ) 
@@ -1574,49 +1136,23 @@ DWORD WINAPI WaitForInputIdle (HANDLE hProcess, DWORD dwTimeOut)
 }
 
 /***********************************************************************
- *		GetInputState (USER32.@)
- */
-BOOL WINAPI GetInputState(void)
-{
-    MESSAGEQUEUE *queue;
-    BOOL ret;
-
-    if (!(queue = QUEUE_Lock( GetFastQueue16() )))
-        return FALSE;
-    EnterCriticalSection( &queue->cSection );
-    ret = queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
-    LeaveCriticalSection( &queue->cSection );
-    QUEUE_Unlock( queue );
-
-    return ret;
-}
-
-/***********************************************************************
  *		UserYield (USER.332)
  *		UserYield16 (USER32.@)
  */
 void WINAPI UserYield16(void)
 {
-    MESSAGEQUEUE *queue;
+    QMSG msg;
 
     /* Handle sent messages */
-    queue = QUEUE_Lock( GetFastQueue16() );
-
-    while ( queue && QUEUE_ReceiveMessage( queue ) )
+    while (QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg ))
         ;
-
-    QUEUE_Unlock( queue );
 
     /* Yield */
     OldYield16();
 
     /* Handle sent messages again */
-    queue = QUEUE_Lock( GetFastQueue16() );
-
-    while ( queue && QUEUE_ReceiveMessage( queue ) )
+    while (QUEUE_FindMsg( 0, 0, 0, TRUE, TRUE, &msg ))
         ;
-
-    QUEUE_Unlock( queue );
 }
 
 /***********************************************************************

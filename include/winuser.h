@@ -902,6 +902,10 @@ typedef struct
 
 #define WM_APP               0x8000
 
+/* MsgWaitForMultipleObjectsEx flags */
+#define MWMO_WAITALL         0x0001
+#define MWMO_ALERTABLE       0x0002
+#define MWMO_INPUTAVAILABLE  0x0004
 
 #define DLGC_WANTARROWS      0x0001
 #define DLGC_WANTTAB         0x0002
@@ -3026,6 +3030,16 @@ typedef struct
 #define QS_ALLEVENTS	(QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY)
 #define QS_ALLINPUT     (QS_ALLEVENTS | QS_SENDMESSAGE)
 
+/* Extra (undocumented) queue wake bits - see "Undoc. Windows" */
+#define QS_SMRESULT      0x8000
+
+/* InSendMessageEx flags */
+#define ISMEX_NOSEND      0x00000000
+#define ISMEX_SEND        0x00000001
+#define ISMEX_NOTIFY      0x00000002
+#define ISMEX_CALLBACK    0x00000004
+#define ISMEX_REPLIED     0x00000008
+
 #define DDL_READWRITE	0x0000
 #define DDL_READONLY	0x0001
 #define DDL_HIDDEN	0x0002
@@ -3184,10 +3198,11 @@ INT       WINAPI MessageBoxExW(HWND,LPCWSTR,LPCWSTR,UINT,WORD);
 HMONITOR    WINAPI MonitorFromPoint(POINT,DWORD);
 HMONITOR    WINAPI MonitorFromRect(LPRECT,DWORD);
 HMONITOR    WINAPI MonitorFromWindow(HWND,DWORD);
-DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,HANDLE*,BOOL,DWORD,DWORD);
-BOOL      WINAPI PaintDesktop(HDC);
-BOOL      WINAPI PostThreadMessageA(DWORD, UINT, WPARAM, LPARAM);
-BOOL      WINAPI PostThreadMessageW(DWORD, UINT, WPARAM, LPARAM);
+DWORD       WINAPI MsgWaitForMultipleObjects(DWORD,CONST HANDLE*,BOOL,DWORD,DWORD);
+DWORD       WINAPI MsgWaitForMultipleObjectsEx(DWORD,CONST HANDLE*,DWORD,DWORD,DWORD);
+BOOL        WINAPI PaintDesktop(HDC);
+BOOL        WINAPI PostThreadMessageA(DWORD,UINT,WPARAM,LPARAM);
+BOOL        WINAPI PostThreadMessageW(DWORD,UINT,WPARAM,LPARAM);
 #define     PostThreadMessage WINELIB_NAME_AW(PostThreadMessage)
 BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
 HDEVNOTIFY  WINAPI RegisterDeviceNotificationA(HANDLE,LPVOID,DWORD);
@@ -3229,7 +3244,6 @@ LONG        WINAPI GetMessageTime(void);
 DWORD       WINAPI OemKeyScan(WORD);
 BOOL        WINAPI ReleaseCapture(void);
 BOOL        WINAPI SetKeyboardState(LPBYTE);
-VOID        WINAPI WaitMessage(void);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
@@ -3589,12 +3603,13 @@ BOOL      WINAPI GrayStringA(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
 BOOL      WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
                                  INT,INT,INT,INT,INT);
 #define     GrayString WINELIB_NAME_AW(GrayString)
-BOOL      WINAPI HideCaret(HWND);
-BOOL      WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);
-BOOL      WINAPI InflateRect(LPRECT,INT,INT);
-BOOL      WINAPI InSendMessage(void);
-BOOL      WINAPI InsertMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
-BOOL      WINAPI InsertMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
+BOOL        WINAPI HideCaret(HWND);
+BOOL        WINAPI HiliteMenuItem(HWND,HMENU,UINT,UINT);
+BOOL        WINAPI InflateRect(LPRECT,INT,INT);
+BOOL        WINAPI InSendMessage(void);
+DWORD       WINAPI InSendMessageEx(LPVOID);
+BOOL        WINAPI InsertMenuA(HMENU,UINT,UINT,UINT,LPCSTR);
+BOOL        WINAPI InsertMenuW(HMENU,UINT,UINT,UINT,LPCWSTR);
 #define     InsertMenu WINELIB_NAME_AW(InsertMenu)
 BOOL      WINAPI InsertMenuItemA(HMENU,UINT,BOOL,const MENUITEMINFOA*);
 BOOL      WINAPI InsertMenuItemW(HMENU,UINT,BOOL,const MENUITEMINFOW*);
@@ -3837,6 +3852,7 @@ WORD        WINAPI VkKeyScanW(WCHAR);
 WORD        WINAPI VkKeyScanExA(CHAR, HKL);
 WORD        WINAPI VkKeyScanExW(WCHAR, HKL);
 #define     VkKeyScanEx WINELIB_NAME_AW(VkKeyScanEx)
+BOOL        WINAPI WaitMessage(void);
 HWND      WINAPI WindowFromDC(HDC);
 HWND      WINAPI WindowFromPoint(POINT);
 BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);

@@ -167,17 +167,18 @@ void X11DRV_Synchronize( void )
 
 
 /***********************************************************************
- *           MsgWaitForMultipleObjects   (X11DRV.@)
+ *           MsgWaitForMultipleObjectsEx   (X11DRV.@)
  */
-DWORD X11DRV_MsgWaitForMultipleObjects( DWORD count, HANDLE *handles,
-                                        BOOL wait_all, DWORD timeout )
+DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                          DWORD timeout, DWORD mask, DWORD flags )
 {
     HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
     DWORD i, ret;
     struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
 
     if (!data || data->process_event_count)
-        return WaitForMultipleObjects( count, handles, wait_all, timeout );
+        return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
+                                         timeout, flags & MWMO_ALERTABLE );
 
     for (i = 0; i < count; i++) new_handles[i] = handles[i];
     new_handles[count] = data->display_fd;
@@ -187,7 +188,8 @@ DWORD X11DRV_MsgWaitForMultipleObjects( DWORD count, HANDLE *handles,
     XFlush( gdi_display );
     XFlush( data->display );
     wine_tsx11_unlock();
-    ret = WaitForMultipleObjects( count+1, new_handles, wait_all, timeout );
+    ret = WaitForMultipleObjectsEx( count+1, new_handles, flags & MWMO_WAITALL,
+                                    timeout, flags & MWMO_ALERTABLE );
     if (ret == count) process_events( data->display );
     data->process_event_count--;
     return ret;

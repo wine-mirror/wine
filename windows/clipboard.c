@@ -131,6 +131,7 @@ BOOL CLIPBOARD_IsLocked()
        * by another client. However the handler must have access to the
        * clipboard in order to update data in response to this message.
        */
+#if 0
       MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
       
       if ( queue
@@ -141,6 +142,10 @@ BOOL CLIPBOARD_IsLocked()
   	bIsLocked = FALSE;
         
       QUEUE_Unlock( queue );
+#else
+      /* FIXME: queue check no longer possible */
+      bIsLocked = FALSE;
+#endif
   }
 
   return bIsLocked;

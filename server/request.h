@@ -170,8 +170,18 @@ DECL_HANDLER(find_atom);
 DECL_HANDLER(get_atom_name);
 DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
-DECL_HANDLER(wake_queue);
+DECL_HANDLER(set_queue_bits);
+DECL_HANDLER(set_queue_mask);
+DECL_HANDLER(get_queue_status);
 DECL_HANDLER(wait_input_idle);
+DECL_HANDLER(send_message);
+DECL_HANDLER(get_message);
+DECL_HANDLER(reply_message);
+DECL_HANDLER(get_message_reply);
+DECL_HANDLER(in_send_message);
+DECL_HANDLER(cleanup_window_queue);
+DECL_HANDLER(set_win_timer);
+DECL_HANDLER(kill_win_timer);
 DECL_HANDLER(create_serial);
 DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
@@ -284,8 +294,18 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_atom_name,
     (req_handler)req_init_atom_table,
     (req_handler)req_get_msg_queue,
-    (req_handler)req_wake_queue,
+    (req_handler)req_set_queue_bits,
+    (req_handler)req_set_queue_mask,
+    (req_handler)req_get_queue_status,
     (req_handler)req_wait_input_idle,
+    (req_handler)req_send_message,
+    (req_handler)req_get_message,
+    (req_handler)req_reply_message,
+    (req_handler)req_get_message_reply,
+    (req_handler)req_in_send_message,
+    (req_handler)req_cleanup_window_queue,
+    (req_handler)req_set_win_timer,
+    (req_handler)req_kill_win_timer,
     (req_handler)req_create_serial,
     (req_handler)req_get_serial_info,
     (req_handler)req_set_serial_info,
