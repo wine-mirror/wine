@@ -583,6 +583,18 @@ DWORD CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda)
     int i;
     DWORD dwFrame, msf;
     WORD wMinutes, wSeconds, wFrames;
+	WORD wMagic;
+	DWORD dwStart, dwEnd;
+
+	/*
+	 * wMagic collects the wFrames from track 1
+	 * dwStart, dwEnd collect the begining and end of the disc respectively, in
+	 * frames.
+	 * There is is collected for correcting the serial when there are less than
+	 * 3 tracks.
+	 */
+	wMagic = 0;
+	dwStart = dwEnd = 0;
 
     for (i = 0; i < wcda->nTracks; i++) {
 	dwFrame = wcda->lpdwTrackPos[i];
@@ -594,7 +606,20 @@ DWORD CDROM_Audio_GetSerial(WINE_CDAUDIO* wcda)
 	serial += (CDROM_MSF_MINUTE(msf) << 16) +
 	(CDROM_MSF_SECOND(msf) << 8) +
 	(CDROM_MSF_FRAME(msf));
-    }
+
+	if (i==0)
+	{
+		wMagic = wFrames;
+		dwStart = dwFrame;
+	}
+	dwEnd = dwFrame + wcda->lpdwTrackLen[i];
+	
+	}
+
+	if (wcda->nTracks < 3)
+	{
+		serial += wMagic + (dwEnd - dwStart);
+	}
     return serial;
 }
 
