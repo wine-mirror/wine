@@ -1309,7 +1309,7 @@ BOOL WINAPI GetCPInfoExA( UINT codepage, DWORD dwFlags, LPCPINFOEXA cpinfo )
     if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
       return FALSE;
 
-    cpinfo->CodePage = codepage;
+    cpinfo->CodePage = table->info.codepage;
     cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
     strcpy(cpinfo->CodePageName, table->info.name);
     return TRUE;
@@ -1327,7 +1327,7 @@ BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD dwFlags, LPCPINFOEXW cpinfo )
     if (!GetCPInfo( codepage, (LPCPINFO)cpinfo ))
       return FALSE;
 
-    cpinfo->CodePage = codepage;
+    cpinfo->CodePage = table->info.codepage;
     cpinfo->UnicodeDefaultChar = table->info.def_unicode_char;
     MultiByteToWideChar( CP_ACP, 0, table->info.name, -1, cpinfo->CodePageName,
                          sizeof(cpinfo->CodePageName)/sizeof(WCHAR));
