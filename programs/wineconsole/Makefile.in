@@ -4,7 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineconsole
-IMPORTS   = gdi32.dll user32.dll advapi32.dll kernel32.dll ntdll.dll
+APPMODE   = gui
+IMPORTS   = gdi32 user32 advapi32 kernel32 ntdll
 DELAYIMPORTS = comctl32
 
 C_SRCS = \
@@ -13,8 +14,7 @@ C_SRCS = \
 	user.c \
 	wineconsole.c
 
-RC_SRCS = \
-        wineconsole_res.rc
+RC_SRCS = wineconsole_res.rc
 
 @MAKE_PROG_RULES@
 

@@ -1,7 +1,6 @@
 name winmm
 type win32
 init WINMM_LibMain
-rsrc winmm_res.res
 
 debug_channels (driver mci mmio mmsys mmtime sound)
 

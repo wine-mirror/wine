@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = riched32.dll
-IMPORTS   = user32.dll kernel32.dll ntdll.dll
+IMPORTS   = user32 kernel32 ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -3,7 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wcmd
-IMPORTS   = shell32.dll user32.dll kernel32.dll ntdll.dll
+APPMODE   = cui
+IMPORTS   = shell32 user32 kernel32 ntdll
 
 C_SRCS = \
 	batch.c \
@@ -11,8 +12,7 @@ C_SRCS = \
 	directory.c \
 	wcmdmain.c
 
-RC_SRCS = \
-	wcmdrc.rc
+RC_SRCS = wcmdrc.rc
 
 @MAKE_PROG_RULES@
 

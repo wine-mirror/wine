@@ -1,7 +1,6 @@
 name dplayx
 type win32
 init DPLAYX_LibMain
-rsrc version.res
 
 debug_channels (dplay)
 

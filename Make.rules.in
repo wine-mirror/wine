@@ -68,7 +68,6 @@ WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WMC       = $(TOPOBJDIR)/tools/wmc/wmc
 LDPATH    = @LDPATH@
 DLLDIR    = $(TOPOBJDIR)/dlls
-MAINSPEC  = $(MODULE:%.dll=%).spec
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
@@ -104,7 +103,7 @@ includedir      = @includedir@/wine
 CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 
-OBJS = $(SPEC_SRCS:.spec=.spec.o) $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
+OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
        $(ASM_SRCS:.S=.o) $(GLUE:.c=.glue.o) $(EXTRA_OBJS)
 
 LINTS = $(C_SRCS:.c=.ln)
@@ -157,14 +156,9 @@ filter:
 
 # Rule for main module intermediate object
 
-$(MODULE).tmp.o: $(OBJS) Makefile.in
-	$(LDCOMBINE) $(OBJS) -o $@
+$(MODULE).tmp.o: $(SPEC_SRCS:.spec=.spec.o) $(OBJS) Makefile.in
+	$(LDCOMBINE) $(SPEC_SRCS:.spec=.spec.o) $(OBJS) -o $@
 	-strip --strip-unneeded $@
-
-# Rule for main module spec file
-
-$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rule to rebuild the resource compiler
 
@@ -283,14 +277,12 @@ $(TESTPROGRAM).tmp.o: $(TESTOBJS)
 	$(LDCOMBINE) $(TESTOBJS) -o $@
 	-strip --strip-unneeded $@
 
-$(TESTPROGRAM).spec.c: $(TESTPROGRAM).spec $(TESTPROGRAM).tmp.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym $(TESTPROGRAM).tmp.o -o $@ -spec $(SRCDIR)/$(TESTPROGRAM).spec -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
+$(TESTPROGRAM).spec.c: $(TESTPROGRAM).tmp.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym $(TESTPROGRAM).tmp.o -o $@ -exe $(TESTPROGRAM) -mcui -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
 
 # Misc. rules
 
 $(SPEC_SRCS:.spec=.spec.c): $(WINEBUILD)
-
-$(SPEC_SRCS:.spec=.spec.def): $(WINEBUILD)
 
 $(GLUE:.c=.glue.c): $(WINEBUILD)
 

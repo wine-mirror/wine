@@ -1,7 +1,6 @@
 name    gdi32
 type    win32
 init    MAIN_GdiInit
-rsrc    version.res
 
 debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
                 metafile palette print region text win16drv wing)

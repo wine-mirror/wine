@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
-IMPORTS   = ntdll.dll
+IMPORTS   = ntdll
 ALTNAMES  = krnl386.exe comm.dll stress.dll system.dll toolhelp.dll windebug.dll win87em.dll wprocs.dll
 LDIMPORTS = ntdll.dll
 
@@ -24,8 +24,7 @@ C_SRCS = \
 	windebug.c \
 	wowthunk.c
 
-RC_SRCS = \
-	kernel.rc
+RC_SRCS = kernel.rc
 
 RC_SRCS16 = \
 	version16.rc

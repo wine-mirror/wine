@@ -3,13 +3,13 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = cmdlgtst
-IMPORTS   = comdlg32.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
+APPMODE   = gui
+IMPORTS   = comdlg32 user32 gdi32 kernel32 ntdll
 
 C_SRCS = \
 	cmdlgtst.c
 
-RC_SRCS = \
-	cmdlgr.rc
+RC_SRCS = cmdlgr.rc
 
 @MAKE_PROG_RULES@
 

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winmm.dll
-IMPORTS   = user32.dll advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = user32 advapi32 kernel32 ntdll
 ALTNAMES  = mmsystem.dll sound.dll
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -25,8 +25,7 @@ GLUE = \
 	mmsystem.c \
 	time.c
 
-RC_SRCS = \
-	winmm_res.rc
+RC_SRCS = winmm_res.rc
 
 @MAKE_DLL_RULES@
 

@@ -1,6 +1,5 @@
 name oleaut32
 type win32
-rsrc version.res
 
 debug_channels (ole olerelay typelib)
 

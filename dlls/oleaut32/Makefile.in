@@ -3,8 +3,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleaut32.dll
-IMPORTS   = ole32.dll user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
-DELAYIMPORTS = comctl32.dll
+IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
+DELAYIMPORTS = comctl32
 ALTNAMES  = ole2disp.dll typelib.dll
 EXTRALIBS = $(LIBUUID) @JPEGLIB@
 
@@ -26,8 +26,7 @@ C_SRCS = \
 	typelib.c \
 	variant.c
 
-RC_SRCS = \
-	version.rc
+RC_SRCS = version.rc
 
 CTESTS = tests/vartest.c
 

@@ -73,6 +73,7 @@ static enum
 {
     MODE_NONE,
     MODE_SPEC,
+    MODE_EXE,
     MODE_GLUE,
     MODE_DEF,
     MODE_RELAY16,
@@ -113,8 +114,10 @@ static void do_pic(void);
 static void do_output( const char *arg );
 static void do_usage(void);
 static void do_warnings(void);
+static void do_exe_mode( const char *arg );
 static void do_spec( const char *arg );
 static void do_def( const char *arg );
+static void do_exe( const char *arg );
 static void do_glue( const char *arg );
 static void do_relay16(void);
 static void do_relay32(void);
@@ -122,19 +125,23 @@ static void do_sym( const char *arg );
 static void do_lib( const char *arg );
 static void do_import( const char *arg );
 static void do_dimport( const char *arg );
+static void do_rsrc( const char *arg );
 
 static const struct option_descr option_table[] =
 {
     { "-fPIC",    0, do_pic,     "-fPIC            Generate PIC code" },
     { "-h",       0, do_usage,   "-h               Display this help message" },
     { "-w",       0, do_warnings,"-w               Turn on warnings" },
+    { "-m",       1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
     { "-L",       1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
     { "-l",       1, do_import,  "-l lib.dll       Import the specified library" },
     { "-dl",      1, do_dimport, "-dl lib.dll      Delay-import the specified library" },
+    { "-res",     1, do_rsrc,    "-res rsrc.res    Load resources from rsrc.res" },
     { "-o",       1, do_output,  "-o name          Set the output file name (default: stdout)" },
     { "-sym",     1, do_sym,     "-sym file.o      Read the list of undefined symbols from 'file.o'" },
     { "-spec",    1, do_spec,    "-spec file.spec  Build a .c file from a spec file" },
     { "-def",     1, do_def,     "-def file.spec   Build a .def file from a spec file" },
+    { "-exe",     1, do_exe,     "-exe name        Build a .c file from the named executable" },
     { "-glue",    1, do_glue,    "-glue file.c     Build the 16-bit glue for a .c file" },
     { "-relay16", 0, do_relay16, "-relay16         Build the 16-bit relay assembly routines" },
     { "-relay32", 0, do_relay32, "-relay32         Build the 32-bit relay assembly routines" },
@@ -191,6 +198,29 @@ static void do_def( const char *arg )
     open_input( arg );
 }
 
+static void do_exe( const char *arg )
+{
+    const char *p;
+
+    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
+    exec_mode = MODE_EXE;
+    if ((p = strrchr( arg, '/' ))) p++;
+    else p = arg;
+    strcpy( DLLName, p );
+    strcpy( DLLFileName, p );
+    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".exe" );
+    if (SpecMode == SPEC_MODE_DLL) SpecMode = SPEC_MODE_GUIEXE;
+}
+
+static void do_exe_mode( const char *arg )
+{
+    if (!strcmp( arg, "gui" )) SpecMode = SPEC_MODE_GUIEXE;
+    else if (!strcmp( arg, "cui" )) SpecMode = SPEC_MODE_CUIEXE;
+    else if (!strcmp( arg, "guiw" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
+    else if (!strcmp( arg, "cuiw" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
+    else do_usage();
+}
+
 static void do_glue( const char *arg )
 {
     if (exec_mode != MODE_NONE || !arg[0]) do_usage();
@@ -230,6 +260,11 @@ static void do_import( const char *arg )
 static void do_dimport( const char *arg )
 {
     add_import_dll( arg, 1 );
+}
+
+static void do_rsrc( const char *arg )
+{
+    load_res32_file( arg );
 }
 
 /* parse options from the argv array and remove all the recognized ones */
@@ -295,6 +330,9 @@ int main(int argc, char **argv)
                 break;
             default: assert(0);
         }
+        break;
+    case MODE_EXE:
+        BuildSpec32File( output_file );
         break;
     case MODE_DEF:
         switch (ParseTopLevel( input_file, 1 ))

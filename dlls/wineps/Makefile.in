@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineps.dll
-IMPORTS   = user32.dll gdi32.dll winspool.drv advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = user32 gdi32 winspool.drv advapi32 kernel32 ntdll
 ALTNAMES  = wineps16.dll
 EXTRALIBS = @CUPSLIBS@
 EXTRAINCL = @FREETYPEINCL@
@@ -74,8 +74,7 @@ C_SRCS = \
 	type1afm.c \
 	$(DATA_C_SRCS)
 
-RC_SRCS= \
-	rsrc.rc
+RC_SRCS= rsrc.rc
 
 EXTRASUBDIRS = data
 

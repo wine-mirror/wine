@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olepro32.dll
-IMPORTS   = oleaut32.dll ntdll.dll
+IMPORTS   = oleaut32 ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

@@ -961,7 +961,7 @@ static void DEBUG_InitConsole(void)
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), mode | WINE_ENABLE_LINE_INPUT_EMACS);
 }
 
-int DEBUG_main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     DWORD	retv = 0;
 

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32.dll
-IMPORTS   = kernel32.dll ntdll.dll
+IMPORTS   = kernel32 ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o

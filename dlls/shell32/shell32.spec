@@ -1,7 +1,6 @@
 name	shell32
 type	win32
 init	Shell32LibMain
-rsrc	shres.res
 
 debug_channels (exec pidl shell shlctrl)
 

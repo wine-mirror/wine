@@ -4,7 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = regsvr32
-IMPORTS   = msvcrt.dll kernel32.dll ntdll.dll
+APPMODE   = cui
+IMPORTS   = msvcrt kernel32 ntdll
 
 C_SRCS = \
 	regsvr32.c

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32.dll
-IMPORTS   = gdi32.dll advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = gdi32 advapi32 kernel32 ntdll
 ALTNAMES  = user.exe keyboard.dll ddeml.dll display.dll mouse.dll
 LDIMPORTS = gdi32.dll kernel32.dll ntdll.dll
 
@@ -32,8 +32,7 @@ C_SRCS = \
 	wnd16.c \
 	wsprintf.c
 
-RC_SRCS = \
-	resources/user32.rc
+RC_SRCS = resources/user32.rc
 
 RC_SRCS16 = \
 	resources/display.rc \

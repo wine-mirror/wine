@@ -489,14 +489,14 @@ static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned *evt)
 }
 
 /******************************************************************
- *		WINECON_WinMain
+ *		WinMain
  *
  * wineconsole can either be started as:
  *	wineconsole --use-event=<int>	used when a new console is created (AllocConsole)
  *	wineconsole <pgm> <arguments>	used to start the program <pgm> from the command line in
  *					a freshly created console
  */
-int PASCAL WINECON_WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPCSTR lpCmdLine, UINT nCmdShow)
+int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdShow)
 {
     struct inner_data*	data;
     int			ret = 1;

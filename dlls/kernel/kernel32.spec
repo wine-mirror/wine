@@ -1,7 +1,6 @@
 name	kernel32
 type	win32
 init	MAIN_KernelInit
-rsrc	kernel.res
 
 debug_channels (comm console debugstr dll int resource stress thunk toolhelp
                 win32)

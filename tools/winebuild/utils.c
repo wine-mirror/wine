@@ -125,8 +125,11 @@ void warning( const char *msg, ... )
 /* output a standard header for generated files */
 void output_standard_file_header( FILE *outfile )
 {
-    fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n",
-             input_file_name );
+    if (input_file_name)
+        fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n",
+                 input_file_name );
+    else
+        fprintf( outfile, "/* File generated automatically; do not edit! */\n" );
     fprintf( outfile,
              "/* This file can be copied, modified and distributed without restriction. */\n\n" );
 }

@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mciavi.drv
-IMPORTS   = msvfw32.dll winmm.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
+IMPORTS   = msvfw32 winmm user32 gdi32 kernel32 ntdll
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
@@ -14,8 +14,7 @@ C_SRCS = \
 	mmoutput.c \
 	wnd.c
 
-RC_SRCS = \
-	mciavi_res.rc
+RC_SRCS = mciavi_res.rc
 
 @MAKE_DLL_RULES@
 

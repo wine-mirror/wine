@@ -3,15 +3,15 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = view
-IMPORTS   = comdlg32.dll user32.dll gdi32.dll kernel32.dll ntdll.dll
+APPMODE   = gui
+IMPORTS   = comdlg32 user32 gdi32 kernel32 ntdll
 
 C_SRCS = \
 	init.c \
 	view.c \
 	winmain.c
 
-RC_SRCS = \
-	viewrc.rc
+RC_SRCS = viewrc.rc
 
 @MAKE_PROG_RULES@
 

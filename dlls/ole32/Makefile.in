@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ole32.dll
-IMPORTS   = advapi32.dll user32.dll gdi32.dll rpcrt4.dll kernel32.dll ntdll.dll
+IMPORTS   = advapi32 user32 gdi32 rpcrt4 kernel32 ntdll
 ALTNAMES  = ole2.dll ole2nls.dll ole2conv.dll ole2prox.dll ole2thk.dll storage.dll compobj.dll
 EXTRALIBS = $(LIBUUID)
 
@@ -40,8 +40,7 @@ C_SRCS = \
 	storage.c \
 	storage32.c
 
-RC_SRCS = \
-	ole32res.rc
+RC_SRCS = ole32res.rc
 
 @MAKE_DLL_RULES@
 

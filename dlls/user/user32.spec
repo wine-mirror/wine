@@ -1,7 +1,6 @@
 name	user32
 type	win32
 init	UserClientDllInitialize
-rsrc	resources/user32.res
 
 debug_channels (accel caret class clipboard combo comm cursor dc ddeml dialog
                 driver edit event graphics hook icon key keyboard listbox local

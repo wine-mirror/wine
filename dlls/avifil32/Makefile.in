@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = avifil32.dll
-IMPORTS   = msvfw32.dll kernel32.dll ntdll.dll
+IMPORTS   = msvfw32 kernel32 ntdll
 ALTNAMES  = avifile.dll
 EXTRALIBS = $(LIBUUID)
 

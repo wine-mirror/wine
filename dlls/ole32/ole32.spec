@@ -1,7 +1,6 @@
 name	ole32
 type	win32
 init	OLE32_DllEntryPoint
-rsrc	ole32res.res
 
 debug_channels (accel ole relay storage)
 

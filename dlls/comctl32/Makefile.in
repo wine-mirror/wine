@@ -4,8 +4,8 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32.dll
-IMPORTS   = user32.dll gdi32.dll advapi32.dll kernel32.dll ntdll.dll
-DELAYIMPORTS = winmm.dll
+IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
+DELAYIMPORTS = winmm
 EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -39,8 +39,7 @@ C_SRCS = \
 	treeview.c \
 	updown.c
 
-RC_SRCS= \
-	rsrc.rc
+RC_SRCS= rsrc.rc
 
 @MAKE_DLL_RULES@
 

@@ -12,14 +12,20 @@ DEFS        = @DLLFLAGS@ -D__WINE__ $(EXTRADEFS)
 DLLEXT      = @DLLEXT@
 ALTSPECS    = $(ALTNAMES:%.dll=%)
 SPEC_SRCS   = $(ALTSPECS:%=%.spec)
-ALL_OBJS    = $(MODULE:%.dll=%).spec.o $(OBJS)
+MAINSPEC    = $(MODULE:%.dll=%).spec
+SPEC_DEF    = $(MAINSPEC).def
+ALL_OBJS    = $(MAINSPEC).o $(SPEC_SRCS:.spec=.spec.o) $(OBJS)
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
-SPEC_DEF    = $(MODULE:%.dll=%).spec.def
 TESTIMPORTS = $(MODULE) $(DELAYIMPORTS) $(IMPORTS)
 
 all: $(MODULE)$(DLLEXT)
 
 @MAKE_RULES@
+
+# Rule for main module spec file
+
+$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
 # Rules for .so files
 
@@ -28,8 +34,10 @@ $(MODULE).so: $(ALL_OBJS) Makefile.in
 
 # Rules for .dll files
 
-$(MODULE): $(ALL_OBJS) $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib $(MODULE:.dll=.a) -o $(MODULE) $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS)
+$(MODULE): $(OBJS) $(SPEC_DEF) Makefile.in
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SPEC_DEF) --implib $(MODULE:.dll=.a) -o $(MODULE) $(OBJS) -L$(DLLDIR) $(IMPORTS:%=-l%) $(ALL_LIBS)
+
+$(SPEC_DEF): $(WINEBUILD)
 
 # Rules for checking that no imports are missing
 

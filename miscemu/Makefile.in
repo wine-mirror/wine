@@ -4,7 +4,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = miscemu
-IMPORTS   = ntdll.dll
+IMPORTS   = ntdll
 
 SPEC_SRCS = wine.spec
 
@@ -15,7 +15,7 @@ all: $(MODULE).o
 
 @MAKE_RULES@
 
-$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
-	$(LDCOMBINE) $(OBJS) -o $@
+$(MODULE).o: $(SPEC_SRCS:.spec=.spec.o) $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDCOMBINE) $(SPEC_SRCS:.spec=.spec.o) $(OBJS) -o $@
 
 ### Dependencies:

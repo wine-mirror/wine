@@ -1,7 +1,6 @@
 name	comdlg32
 type	win32
 init	COMDLG32_DllEntryPoint
-rsrc	rsrc.res
 
 debug_channels (commdlg)
 

@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = gdi32.dll
-IMPORTS   = advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = advapi32 kernel32 ntdll
 ALTNAMES  = gdi.exe dispdib.dll wing.dll
 LDIMPORTS = kernel32.dll ntdll.dll
 EXTRAINCL = @FREETYPEINCL@
@@ -35,11 +35,8 @@ C_SRCS = \
 	win16drv/text.c \
 	wing.c
 
-RC_SRCS= \
-	version.rc
-
-RC_SRCS16= \
-	version16.rc
+RC_SRCS = version.rc
+RC_SRCS16 = version16.rc
 
 GLUE = \
 	printdrv.c \

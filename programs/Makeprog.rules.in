@@ -2,6 +2,7 @@
 #
 # Each individual makefile should define the following variables:
 # MODULE       : name of the main module being built
+# APPMODE      : program mode (cui,gui,cuiw,guiw)
 # EXTRALIBS    : extra libraries to link in (optional)
 # EXTRADEFS    : extra symbol definitions, like -DWINELIB (optional)
 #
@@ -19,10 +20,15 @@ all: $(MODULE)
 
 @MAKE_RULES@
 
+# Rule for main module spec file
+
+$(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
+
 # Rules for main module
 
-$(MODULE).so: $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(ALL_OBJS) -o $@ $(ALL_LIBS)
+$(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
+	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS)
 
 $(MODULE): $(MODULE).so
 	$(RM) $(MODULE) && $(LN_S) $(TOPOBJDIR)/wine $(MODULE)

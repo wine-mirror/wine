@@ -8,23 +8,18 @@ MODULE     = none
 PROGRAMS   = icinfo aviinfo aviplay
 ALL_LIBS   = $(LIBWINE) $(LIBS)
 
-SPEC_SRCS = \
-	icinfo.spec \
-	aviinfo.spec \
-	aviplay.spec
-
 all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-aviinfo.spec.c: aviinfo.spec aviinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviinfo.o -o aviinfo.spec.c -spec $(SRCDIR)/aviinfo.spec -L$(DLLDIR) -lkernel32.dll -lntdll.dll
+aviinfo.spec.c: aviinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviinfo.o -o aviinfo.spec.c -exe aviinfo -mgui -L$(DLLDIR) -lkernel32 -lntdll
 
-aviplay.spec.c: aviplay.spec aviplay.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviplay.o -o aviplay.spec.c -spec $(SRCDIR)/aviplay.spec -L$(DLLDIR) -lddraw.dll -lkernel32.dll -lntdll.dll
+aviplay.spec.c: aviplay.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym aviplay.o -o aviplay.spec.c -exe aviplay -mgui -L$(DLLDIR) -lddraw -lkernel32 -lntdll
 
-icinfo.spec.c: icinfo.spec icinfo.o $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym icinfo.o -o icinfo.spec.c -spec $(SRCDIR)/icinfo.spec -L$(DLLDIR) -lmsvfw32.dll -lkernel32.dll -lntdll.dll
+icinfo.spec.c: icinfo.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym icinfo.o -o icinfo.spec.c -exe icinfo -mgui -L$(DLLDIR) -lmsvfw32 -lkernel32 -lntdll
 
 aviinfo.so: aviinfo.o aviinfo.spec.o
 	$(LDSHARED) $(LDDLLFLAGS) -o aviinfo.so aviinfo.o aviinfo.spec.o $(ALL_LIBS)

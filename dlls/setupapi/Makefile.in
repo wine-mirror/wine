@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = setupapi.dll
-IMPORTS   = user32.dll advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = user32 advapi32 kernel32 ntdll
 ALTNAMES  = setupx.dll
 EXTRALIBS = $(LIBUNICODE)
 
@@ -25,8 +25,7 @@ C_SRCS = \
 GLUE = \
 	virtcopy.c
 
-RC_SRCS= \
-	setupapi.rc
+RC_SRCS= setupapi.rc
 
 @MAKE_DLL_RULES@
 

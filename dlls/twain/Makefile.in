@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = twain_32.dll
-IMPORTS   = user32.dll gdi32.dll kernel32.dll ntdll.dll
+IMPORTS   = user32 gdi32 kernel32 ntdll
 EXTRALIBS = @SANELIBS@
 EXTRAINCL = @SANEINCL@
 

@@ -1,7 +1,6 @@
 name ddraw
 type win32
 init DDRAW_DllMain
-rsrc version.res
 
 debug_channels (ddraw)
 

@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplayx.dll
-IMPORTS   = winmm.dll ole32.dll user32.dll advapi32.dll kernel32.dll ntdll.dll
+IMPORTS   = winmm ole32 user32 advapi32 kernel32 ntdll
 EXTRALIBS = $(LIBUUID)
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -20,8 +20,7 @@ C_SRCS = \
 	lobbysp.c \
 	name_server.c
 
-RC_SRCS = \
-	version.rc
+RC_SRCS = version.rc
 
 @MAKE_DLL_RULES@
 

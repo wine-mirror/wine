@@ -1,7 +1,6 @@
 name	serialui
 type	win32
 init	SERIALUI_LibMain
-rsrc	serialui_rc.res
 
 debug_channels (comm)
 

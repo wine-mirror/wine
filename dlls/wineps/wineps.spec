@@ -1,7 +1,6 @@
 name	wineps
 type	win32
 init	PSDRV_Init
-rsrc	rsrc.res
 
 debug_channels (psdrv)
 

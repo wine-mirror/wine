@@ -560,31 +560,6 @@ SPEC_TYPE ParseTopLevel( FILE *file, int def_only )
                 fatal_error( "init cannot be used for Win16 spec files\n" );
             init_func = xstrdup( GetToken(0) );
         }
-        else if (strcmp(token, "import") == 0)
-        {
-            const char* name;
-            int delay = 0;
-
-            if (SpecType != SPEC_WIN32)
-                fatal_error( "Imports not supported for Win16\n" );
-            name = GetToken(0);
-            if (*name == '-')
-            {
-                name = GetToken(0);
-                if (!strcmp(name, "delay"))
-                {
-
-                    name = GetToken(0);
-#ifndef __PPC__
-                    delay = 1;
-#else
-		    warning( "The 'delay' option is not yet supported on the PPC. 'delay' will be ignored.\n");
-#endif /* __PPC__ */
-                }
-                else fatal_error( "Unknown option '%s' for import directive\n", name );
-            }
-            if (!def_only) add_import_dll( name, delay );
-        }
         else if (strcmp(token, "rsrc") == 0)
         {
             if (!def_only)

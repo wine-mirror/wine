@@ -1,7 +1,6 @@
 name	comctl32
 type	win32
 init	COMCTL32_LibMain
-rsrc	rsrc.res
 
 debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddress
                 listview message monthcal nativefont pager progress propsheet

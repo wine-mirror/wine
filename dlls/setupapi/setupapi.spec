@@ -1,6 +1,5 @@
 name setupapi
 type win32
-rsrc setupapi.res
 
 debug_channels (setupapi)
 

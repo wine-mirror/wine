@@ -86,7 +86,6 @@ static char *try_library_path( const char *path, const char *name )
 
     buffer = xmalloc( strlen(path) + strlen(name) + 9 );
     sprintf( buffer, "%s/%s", path, name );
-    if (!strchr( name, '.' )) strcat( buffer, ".dll" );
     strcat( buffer, ".so" );
     /* check if the file exists */
     if ((fd = open( buffer, O_RDONLY )) != -1)
@@ -162,14 +161,25 @@ static void read_exported_symbols( const char *name, struct import *imp )
 void add_import_dll( const char *name, int delay )
 {
     struct import *imp;
+    char *fullname;
     int i;
+
+    fullname = xmalloc( strlen(name) + 5 );
+    strcpy( fullname, name );
+    if (!strchr( fullname, '.' )) strcat( fullname, ".dll" );
 
     /* check if we already imported it */
     for (i = 0; i < nb_imports; i++)
-        if (!strcmp( dll_imports[i]->dll, name )) return;
+    {
+        if (!strcmp( dll_imports[i]->dll, fullname ))
+        {
+            free( fullname );
+            return;
+        }
+    }
 
     imp = xmalloc( sizeof(*imp) );
-    imp->dll        = xstrdup( name );
+    imp->dll        = fullname;
     imp->delay      = delay;
     imp->imports    = NULL;
     imp->nb_imports = 0;
@@ -177,7 +187,7 @@ void add_import_dll( const char *name, int delay )
     imp->lineno = current_line - 1;
 
     if (delay) nb_delayed++;
-    read_exported_symbols( name, imp );
+    read_exported_symbols( fullname, imp );
 
     dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
     dll_imports[nb_imports++] = imp;
