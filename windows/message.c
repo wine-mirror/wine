@@ -256,7 +256,7 @@ void MSG_JournalPlayBackMsg(void)
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static void process_raw_keyboard_message( MSG *msg )
+static BOOL process_raw_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UINT last )
 {
     EVENTMSG event;
 
@@ -267,6 +267,7 @@ static void process_raw_keyboard_message( MSG *msg )
     event.paramH  = msg->lParam & 0x7FFF;
     if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
     HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
+    return check_message_filter( msg, hwnd_filter, first, last );
 }
 
 
@@ -310,11 +311,13 @@ static BOOL process_cooked_keyboard_message( MSG *msg, BOOL remove )
 /***********************************************************************
  *          process_raw_mouse_message
  */
-static void process_raw_mouse_message( MSG *msg, BOOL remove )
+static BOOL process_raw_mouse_message( MSG *msg, HWND hwnd_filter, UINT first,
+                                       UINT last, BOOL remove )
 {
     static MSG clk_msg;
 
     POINT pt;
+    UINT message;
     INT hittest;
     EVENTMSG event;
     GUITHREADINFO info;
@@ -340,13 +343,37 @@ static void process_raw_mouse_message( MSG *msg, BOOL remove )
     event.paramH  = msg->pt.y;
     HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
 
+    if (hwnd_filter)
+    {
+        if (msg->hwnd != hwnd_filter && !IsChild( hwnd_filter, msg->hwnd )) return FALSE;
+    }
+
+    pt = msg->pt;
+    message = msg->message;
+    /* Note: windows has no concept of a non-client wheel message */
+    if (message != WM_MOUSEWHEEL)
+    {
+        if (hittest != HTCLIENT)
+        {
+            message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
+            msg->wParam = hittest;
+        }
+        else
+        {
+            /* coordinates don't get translated while tracking a menu */
+            /* FIXME: should differentiate popups and top-level menus */
+            if (!(info.flags & GUI_INMENUMODE))
+                ScreenToClient( msg->hwnd, &pt );
+        }
+    }
+    msg->lParam = MAKELONG( pt.x, pt.y );
+
     /* translate double clicks */
 
     if ((msg->message == WM_LBUTTONDOWN) ||
         (msg->message == WM_RBUTTONDOWN) ||
         (msg->message == WM_MBUTTONDOWN))
     {
-        BOOL update = remove;
         /* translate double clicks -
 	 * note that ...MOUSEMOVEs can slip in between
 	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
@@ -361,36 +388,21 @@ static void process_raw_mouse_message( MSG *msg, BOOL remove )
                (abs(msg->pt.x - clk_msg.pt.x) < GetSystemMetrics(SM_CXDOUBLECLK)/2) &&
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {
-               msg->message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
-               if (remove)
-               {
-                   clk_msg.message = 0;
-                   update = FALSE;
-               }
+               message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
+               msg->message = 0;  /* to clear the double click conditions */
            }
         }
+        if (first || last)
+        {
+            if (message < first || message > last) remove = FALSE;
+        }
         /* update static double click conditions */
-        if (update) clk_msg = *msg;
+        if (remove) clk_msg = *msg;
     }
 
-    pt = msg->pt;
-    /* Note: windows has no concept of a non-client wheel message */
-    if (msg->message != WM_MOUSEWHEEL)
-    {
-        if (hittest != HTCLIENT)
-        {
-            msg->message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
-            msg->wParam = hittest;
-        }
-        else
-        {
-            /* coordinates don't get translated while tracking a menu */
-            /* FIXME: should differentiate popups and top-level menus */
-            if (!(info.flags & GUI_INMENUMODE))
-                ScreenToClient( msg->hwnd, &pt );
-        }
-    }
-    msg->lParam = MAKELONG( pt.x, pt.y );
+    msg->message = message;
+    if (first || last) return (message >= first && message <= last);
+    return TRUE;
 }
 
 
@@ -511,19 +523,13 @@ BOOL MSG_process_raw_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd
                                        UINT first, UINT last, BOOL remove )
 {
     if (is_keyboard_message( msg->message ))
-    {
-        process_raw_keyboard_message( msg );
-    }
-    else if (is_mouse_message( msg->message ))
-    {
-        process_raw_mouse_message( msg, remove );
-    }
-    else
-    {
-        ERR( "unknown message type %x\n", msg->message );
-        return FALSE;
-    }
-    return check_message_filter( msg, hwnd_filter, first, last );
+        return process_raw_keyboard_message( msg, hwnd_filter, first, last );
+
+    if (is_mouse_message( msg->message ))
+        return process_raw_mouse_message( msg, hwnd_filter, first, last, remove );
+
+    ERR( "unknown message type %x\n", msg->message );
+    return FALSE;
 }
 
 
