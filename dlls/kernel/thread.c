@@ -121,6 +121,32 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
                             LPTHREAD_START_ROUTINE start, LPVOID param,
                             DWORD flags, LPDWORD id )
 {
+     return CreateRemoteThread( GetCurrentProcess(),
+                                sa, stack, start, param, flags, id );
+}
+
+
+/***************************************************************************
+ *                  CreateRemoteThread   (KERNEL32.@)
+ *
+ * Creates a thread that runs in the address space of another process
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *   Success: Handle to the new thread.
+ *   Failure: NULL. Use GetLastError() to find the error cause.
+ *
+ * BUGS
+ *   Improper memory allocation: there's no ability to free new_thread_info
+ *   in other process.
+ *   Bad start address for RtlCreateUserThread because the library
+ *   may be loaded at different address in other process.
+ */
+HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
+                                  LPTHREAD_START_ROUTINE start, LPVOID param,
+                                  DWORD flags, LPDWORD id )
+{
     HANDLE handle;
     CLIENT_ID client_id;
     NTSTATUS status;
@@ -138,7 +164,7 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
-    status = RtlCreateUserThread( GetCurrentProcess(), NULL, (flags & CREATE_SUSPENDED) != 0,
+    status = RtlCreateUserThread( hProcess, NULL, (flags & CREATE_SUSPENDED) != 0,
                                   NULL, stack_reserve, stack_commit,
                                   THREAD_Start, info, &handle, &client_id );
     if (status == STATUS_SUCCESS)
@@ -154,31 +180,6 @@ HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, SIZE_T stack,
         handle = 0;
     }
     return handle;
-}
-
-
-/***************************************************************************
- *                  CreateRemoteThread   (KERNEL32.@)
- *
- * Creates a thread that runs in the address space of another process
- *
- * PARAMS
- *
- * RETURNS
- *   Success: Handle to the new thread.
- *   Failure: NULL. Use GetLastError() to find the error cause.
- *
- * BUGS
- *   Unimplemented
- */
-HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE_T stack,
-                                  LPTHREAD_START_ROUTINE start, LPVOID param,
-                                  DWORD flags, LPDWORD id )
-{
-    FIXME("(): stub, Write Me.\n");
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
 }
 
 
