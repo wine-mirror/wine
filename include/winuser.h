@@ -3697,7 +3697,6 @@ BOOL        WINAPI EnumDisplaySettingsExW(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
 HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
-LONG        WINAPI BroadcastSystemMessage(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 WORD        WINAPI CascadeWindows(HWND, UINT, const LPRECT, UINT, const HWND *);
 INT       WINAPI CopyAcceleratorTableA(HACCEL,LPACCEL,INT);
 INT       WINAPI CopyAcceleratorTableW(HACCEL,LPACCEL,INT);
@@ -3827,7 +3826,7 @@ HDC         WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
 BOOL        WINAPI BringWindowToTop(HWND);
 LONG        WINAPI BroadcastSystemMessageA(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 LONG        WINAPI BroadcastSystemMessageW(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
-#define     BroadcastSystemMessage WINELIB_NAME_A(BroadcastSystemMessage)
+#define     BroadcastSystemMessage WINELIB_NAME_AW(BroadcastSystemMessage)
 void        WINAPI CalcChildScroll(HWND, INT);
 BOOL        WINAPI CallMsgFilterA(LPMSG,INT);
 BOOL        WINAPI CallMsgFilterW(LPMSG,INT);
