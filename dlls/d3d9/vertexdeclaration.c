@@ -55,6 +55,7 @@ ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
+        IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -63,16 +64,16 @@ ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION
 /* IDirect3DVertexDeclaration9 Interface follow: */
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEXDECLARATION9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->Device);
-    *ppDevice = (LPDIRECT3DDEVICE9) This->Device;
-    IDirect3DDevice9Impl_AddRef(*ppDevice);
+    IWineD3DDevice *myDevice = NULL;
+    IWineD3DVertexDeclaration_GetDevice(This->wineD3DVertexDeclaration, &myDevice);
+    IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
+    IWineD3DDevice_Release(myDevice);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDECLARATION9 iface, D3DVERTEXELEMENT9* pDecl, UINT* pNumElements) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    return IWineD3DVertexDeclaration_GetDeclaration(This->wineD3DVertexDeclaration, 9, pDecl, (DWORD*) pNumElements);
 }
 
 
@@ -89,18 +90,63 @@ IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 /* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    IDirect3DVertexDeclaration9Impl *object = NULL;
+    HRESULT hr = D3D_OK;
+    
+    if (NULL == ppDecl) {
+      return D3DERR_INVALIDCALL;
+    }
+    /* Allocate the storage for the device */
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexDeclaration9Impl));
+    if (NULL == object) {
+      FIXME("Allocation of memory failed\n");
+      *ppDecl = NULL;
+      return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
+    object->ref = 1;
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, 9, pVertexElements, &(object->wineD3DVertexDeclaration));
+
+    if (FAILED(hr)) {
+      /* free up object */ 
+      FIXME("(%p) call to IWineD3DDevice_CreateVertexDeclaration failed\n", This);
+      HeapFree(GetProcessHeap(), 0, object);
+      *ppDecl = NULL;
+    } else {
+      *ppDecl = (LPDIRECT3DVERTEXDECLARATION9) object;
+    }
+    return hr;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9* pDecl) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    IDirect3DVertexDeclaration9Impl *pDeclImpl = (IDirect3DVertexDeclaration9Impl *)pDecl;
+    HRESULT hr = S_OK;
+
+    This->UpdateStateBlock->vertexDecl = NULL;
+    if (NULL != pDecl) {
+      hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl->wineD3DVertexDeclaration);
+      if (SUCCEEDED(hr)) {
+	This->UpdateStateBlock->vertexDecl = (IDirect3DVertexDeclaration9Impl*) pDecl;
+      }
+    }
+    return hr;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9** ppDecl) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+    IDirect3DDevice9Impl* This = (IDirect3DDevice9Impl*) iface;
+    IWineD3DVertexDeclaration* pTest = NULL;
+    HRESULT hr = S_OK;
+    IDirect3DVertexDeclaration9Impl* pCur = This->StateBlock->vertexDecl;
+
+    if (NULL == ppDecl) {
+      return D3DERR_INVALIDCALL;
+    }
+    *ppDecl = NULL;
+    hr = IWineD3DDevice_GetVertexDeclaration(This->WineD3DDevice, &pTest);
+    if (SUCCEEDED(hr) && (NULL == pCur || pCur->wineD3DVertexDeclaration == pTest)) {
+      *ppDecl = (IDirect3DVertexDeclaration9*) pCur;
+    }
+    return hr;
 }

@@ -232,7 +232,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateTexture(LPDIRECT3DDEVICE9 iface, UIN
     hrc = IWineD3DDevice_CreateTexture(This->WineD3DDevice, Width, Height, Levels, Usage,
                                  Format, Pool, &(object->wineD3DTexture), pSharedHandle, (IUnknown *)object, D3D9CB_CreateSurface);
 
-    if (hrc != D3D_OK) {
+    if (FAILED(hrc)) {
         /* free up object */ 
         FIXME("(%p) call to IWineD3DDevice_CreateTexture failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);

@@ -1000,15 +1000,7 @@ struct IDirect3DVertexDeclaration9Impl {
   DWORD   ref;
 
   /* IDirect3DVertexDeclaration9 fields */
-  IDirect3DDevice9Impl* Device;
-
-  /** precomputed fvf if simple declaration */
-  DWORD   fvf[MAX_STREAMS];
-  DWORD   allFVF;
-
-  /** dx8 compatible Declaration fields */
-  DWORD*  pDeclaration8;
-  DWORD   declaration8Length;
+  IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
 };
 
 /* IUnknown: */

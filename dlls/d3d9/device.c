@@ -1,7 +1,7 @@
 /*
  * IDirect3DDevice9 implementation
  *
- * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2005 Jason Edmeades
  *                     Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
@@ -21,9 +21,6 @@
 
 #include "config.h"
 #include "d3d9_private.h"
-
-/** currently desactiving 1_4 support as mesa doesn't implement all 1_4 support while defining it */
-#undef GL_VERSION_1_4
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
@@ -319,25 +316,50 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVI
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    HRESULT hr = S_OK;
+
+    /* If pRenderTarget == NULL, it seems to default to back buffer */
+    if (pRenderTarget == NULL) pRenderTarget = (IDirect3DSurface9*) This->backBuffer;
+ 
+    /* If we are trying to set what we already have, don't bother */
+    if ((IDirect3DSurface9Impl*) pRenderTarget == This->renderTarget) {
+      TRACE("Trying to do a NOP SetRenderTarget operation\n");
+    } else {
+      /* Otherwise, set the render target up */
+      TRACE("(%p) : newRender@%p (default is backbuffer=(%p))\n", This, pRenderTarget, This->backBuffer);
+      hr = E_FAIL; /* not supported yet */
+    }
+
+   return hr;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9** ppRenderTarget) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p)->returning (%p) default is backbuffer=(%p)\n", This, This->renderTarget, This->backBuffer);
+    *ppRenderTarget = (LPDIRECT3DSURFACE9) This->renderTarget;
+    IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppRenderTarget);
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetDepthStencilSurface(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pZStencilSurface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    HRESULT hr = S_OK;
+    /* If we are trying to set what we already have, don't bother */
+    if ((IDirect3DSurface9Impl*) pZStencilSurface == This->stencilBufferTarget) {
+      TRACE("Trying to do a NOP SetDepthStencilSurface operation\n");
+    } else {
+      /* Otherwise, set the target up */
+      TRACE("(%p) : newDepthStencil@%p (default is stencilbuffer=(%p))\n", This, pZStencilSurface, This->depthStencilBuffer);
+      hr = E_FAIL; /* not supported yet */
+    }
     return D3D_OK;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9** ppZStencilSurface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p)->returning (%p) default is stencilbuffer=(%p)\n", This, This->stencilBufferTarget, This->depthStencilBuffer);
+    *ppZStencilSurface = (LPDIRECT3DSURFACE9) This->stencilBufferTarget;
+    IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppZStencilSurface);
     return D3D_OK;
 }
 

@@ -109,7 +109,36 @@ IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
 
 /* IDirect3DDevice9 IDirect3DQuery9 Methods follow: */
 HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(LPDIRECT3DDEVICE9 iface, D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);    
-    return D3D_OK;
+#if 0
+  IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+#endif
+  IDirect3DQuery9Impl *object = NULL;
+  HRESULT hr = D3D_OK;
+    
+  if (NULL == ppQuery) {
+    return D3DERR_INVALIDCALL;
+  }
+  /* Allocate the storage for the device */
+  object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DQuery9Impl));
+  if (NULL == object) {
+    FIXME("Allocation of memory failed\n");
+    *ppQuery = NULL;
+    return D3DERR_OUTOFVIDEOMEMORY;
+  }
+  
+  object->lpVtbl = &Direct3DQuery9_Vtbl;
+  object->ref = 1;
+#if 0
+  hr = IWineD3DDevice_CreateQuery(This->WineD3DDevice, 9, pVertexElements, &(object->wineD3DQuery));
+  
+  if (FAILED(hr)) {
+    /* free up object */ 
+    FIXME("(%p) call to IWineD3DDevice_CreateQuery failed\n", This);
+    HeapFree(GetProcessHeap(), 0, object);
+    *ppQuery = NULL;
+  } else {
+    *ppQuery = (LPDIRECT3DQUERY9) object;
+  }
+#endif
+  return hr;
 }

@@ -164,12 +164,19 @@ HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
     IDirect3DSurface9Impl *d3dSurface = NULL;
+    IDirect3DDevice9Impl* pDeviceImpl = (IDirect3DDevice9Impl*) device;
 
     res = IDirect3DDevice9_CreateRenderTarget((IDirect3DDevice9 *)device, Width, Height, 
                                          Format, MultiSample, MultisampleQuality, Lockable, 
                                          (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
-    if (res == D3D_OK) {
+
+    if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+	if (NULL == pDeviceImpl->backBuffer) {
+	  pDeviceImpl->backBuffer = d3dSurface;
+	  pDeviceImpl->renderTarget = d3dSurface;
+	  IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) pDeviceImpl->renderTarget);
+	}
     } else {
         *ppSurface = NULL;
     }
