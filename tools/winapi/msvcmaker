@@ -339,6 +339,50 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
     $modules{$module}{resource_files} = $resource_files;
 }
 
+# FIMXE: Parse the Makefile.in's instead.
+
+my @wine_test_dsp_files = (
+    "dlls/gdi/tests/gdi32_test.dsp",
+    "dlls/kernel/tests/kernel32_test.dsp",
+    "dlls/ntdll/tests/ntdll_test.dsp",
+    "dlls/user/tests/user32_test.dsp",
+    "programs/winetest/winetest.dsp",
+);
+
+foreach my $dsp_file (@wine_test_dsp_files) {
+    my $project = $dsp_file;
+    $project =~ s%^.*?/([^/]+)\.dsp$%$1%;
+
+    my $type;
+    my $c_srcs = [];
+    my $source_files = [];
+    my $header_files = [];
+    my $resource_files = [];
+
+    if ($project eq "winetest") {
+	$type = "lib";
+	$c_srcs = ["wtmain.c"];
+	$source_files = ["wtmain.c"];
+	$header_files = [];
+	$resource_files = [];
+    } else {
+	$type = "exe";
+	$c_srcs = ["generated.c", "testlist.c"];
+	$source_files = ["generated.c", "testlist.c"];
+	$header_files = [];
+	$resource_files = [];
+    }
+    my $module = "$project.$type";
+
+    $modules{$module}{project} = $project;
+    $modules{$module}{type} = $type;
+    $modules{$module}{dsp_file} = $dsp_file;
+    $modules{$module}{c_srcs} = $c_srcs;
+    $modules{$module}{source_files} = $source_files;
+    $modules{$module}{header_files} = $header_files;
+    $modules{$module}{resource_files} = $resource_files;
+}
+
 foreach my $module (sort(keys(%modules))) {
     if($module =~ /^(?:ttydrv.dll|x11drv.dll)$/) {
 	delete $modules{$module};
@@ -367,6 +411,7 @@ sub _generate_dsp {
     my $dll = ($modules{$module}{type} eq "dll");
     my $exe = ($modules{$module}{type} eq "exe");
 
+    my $console = $exe; # FIXME: Not always correct
 
     my $wine_include_dir = do {
 	my @parts = split(m%/%, $dsp_file);
@@ -387,8 +432,9 @@ sub _generate_dsp {
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
 
-    if($project !~ /^(?:wine(?:_unicode)?|winebuild)$/ &&
-       $project !~ /^(?:gdi32|ntdll|user32)_.+?$/)
+    if ($project !~ /^(?:wine(?:_unicode)?|wine(?:build|test))$/ &&
+        $project !~ /^(?:gdi32|ntdll|user32)_.+?$/ &&
+        $project !~ /_test$/)
     {
 	push @source_files, "$project.spec";
 	# push @source_files, "$project.spec.c";
@@ -419,10 +465,12 @@ sub _generate_dsp {
     print OUT "# ** DO NOT EDIT **\r\n";
     print OUT "\r\n";
 
-    if($lib) {
+    if ($lib) {
 	print OUT "# TARGTYPE \"Win32 (x86) Static Library\" 0x0104\r\n";
-    } else {
+    } elsif ($dll) {
 	print OUT "# TARGTYPE \"Win32 (x86) Dynamic-Link Library\" 0x0102\r\n";
+    } else {
+	print OUT "# TARGTYPE \"Win32 (x86) Console Application\" 0x0103\r\n";
     }
     print OUT "\r\n";
 
@@ -440,10 +488,12 @@ sub _generate_dsp {
     print OUT "!MESSAGE Possible choices for configuration are:\r\n";
     print OUT "!MESSAGE \r\n";
     foreach my $cfg (@cfgs) {
-	if($lib) {
+	if ($lib) {
 	    print OUT "!MESSAGE \"$cfg\" (based on \"Win32 (x86) Static Library\")\r\n";
-	} else {
+	} elsif ($dll) {
 	    print OUT "!MESSAGE \"$cfg\" (based on \"Win32 (x86) Dynamic-Link Library\")\r\n";
+	} else {
+	    print OUT "!MESSAGE \"$cfg\" (based on \"Win32 (x86) Console Application\")\r\n";
 	}
     }
     print OUT "!MESSAGE \r\n";
@@ -454,7 +504,7 @@ sub _generate_dsp {
     print OUT "# PROP Scc_ProjName \"\"\r\n";
     print OUT "# PROP Scc_LocalPath \"\"\r\n";
     print OUT "CPP=cl.exe\r\n";
-    print OUT "MTL=midl.exe\r\n" if !$lib;
+    print OUT "MTL=midl.exe\r\n" if !$lib && !$exe;
     print OUT "RSC=rc.exe\r\n";
 
     my $n = 0;
@@ -504,12 +554,12 @@ sub _generate_dsp {
 	print OUT "# PROP Output_Dir \"$output_dir\"\r\n";
 	print OUT "# PROP Intermediate_Dir \"$output_dir\"\r\n";
 
-	print OUT "# PROP Ignore_Export_Lib 0\r\n" if !$lib;
+	print OUT "# PROP Ignore_Export_Lib 0\r\n" if $dll;
 	print OUT "# PROP Target_Dir \"\"\r\n";
 
 	my @defines;
 	if($debug) {
-	    if($lib) {
+	    if($lib || $exe) {
 		print OUT "# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od";
 		@defines = (qw(WIN32 _DEBUG _MBCS _LIB));
 	    } else {
@@ -517,7 +567,7 @@ sub _generate_dsp {
 		@defines = (qw(WIN32 _DEBUG _WINDOWS _MBCS _USRDLL), ("\U${project}\E_EXPORTS"));
 	    }
 	} else {
-	    if($lib) {
+	    if($lib || $exe) {
 		print OUT "# ADD BASE CPP /nologo /W3 /GX /O2";
 		@defines = (qw(WIN32 NDEBUG _MBCS _LIB));
 	    } else {
@@ -529,10 +579,10 @@ sub _generate_dsp {
 	foreach my $define (@defines) {
 	    print OUT " /D \"$define\"";
 	}
-	print OUT " /YX" if $lib;
+	print OUT " /YX" if $lib || $exe;
 	print OUT " /FD";
 	print OUT " /GZ" if $debug;
-	print OUT " " if $debug && $lib;
+	print OUT " " if $debug && ($lib || $exe);
 	print OUT " /c";
 	print OUT "\r\n";
 
@@ -603,9 +653,9 @@ sub _generate_dsp {
 	print OUT "\r\n";
 
 	if($debug) {
-	    print OUT "# SUBTRACT CPP /X /YX\r\n" if !$lib;
-	    print OUT "# ADD BASE MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
-	    print OUT "# ADD MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# SUBTRACT CPP /X /YX\r\n" if $dll;
+	    print OUT "# ADD BASE MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if $dll;
+	    print OUT "# ADD MTL /nologo /D \"_DEBUG\" /mktyplib203 /win32\r\n" if $dll;
 	    print OUT "# ADD BASE RSC /l 0x41d /d \"_DEBUG\"\r\n";
 	    print OUT "# ADD RSC /l 0x41d";
 	    if($wine) {
@@ -615,9 +665,9 @@ sub _generate_dsp {
 	    }
 	    print OUT " /d \"_DEBUG\"\r\n";
 	} else {
-	    print OUT "# SUBTRACT CPP /YX\r\n" if !$lib;;
-	    print OUT "# ADD BASE MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
-	    print OUT "# ADD MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if !$lib;
+	    print OUT "# SUBTRACT CPP /YX\r\n" if $dll;
+	    print OUT "# ADD BASE MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if $dll;
+	    print OUT "# ADD MTL /nologo /D \"NDEBUG\" /mktyplib203 /win32\r\n" if $dll;
 	    print OUT "# ADD BASE RSC /l 0x41d /d \"NDEBUG\"\r\n";
 	    print OUT "# ADD RSC /l 0x41d";
 	    if($wine) {
@@ -640,15 +690,19 @@ sub _generate_dsp {
 	    foreach my $library (@libraries) {
 		print OUT "$library ";
 	    }
-	    if($debug) {
-		print OUT "/nologo /dll /debug /machine:I386 /pdbtype:sept\r\n";
-	    } else {
-		print OUT "/nologo /dll /machine:I386\r\n";
-	    }
+	    print OUT " /nologo";
+	    print OUT " /dll" if $dll;
+            print OUT " /subsystem:console" if $console;
+	    print OUT " /debug" if $debug;
+	    print OUT " /machine:I386";
+	    print OUT " /pdbtype:sept" if $debug;
+	    print OUT "\r\n";
 
-	    print OUT "# ADD LINK32 /nologo";
+	    print OUT "# ADD LINK32";
+	    print OUT " /nologo";
 	    print OUT " libcmt.lib" if $project =~ /^ntdll$/; # FIXME: Kludge
 	    print OUT " /dll" if $dll;
+            print OUT " /subsystem:console" if $console;
 	    print OUT " /debug" if $debug;
 	    print OUT " /machine:I386";
 	    print OUT " /nodefaultlib" if $project =~ /^ntdll$/; # FIXME: Kludge
@@ -792,25 +846,79 @@ sub _generate_dsp {
     close(OUT);
 }
 
-
-do {
-    my $dsw_file = "wine.dsw";
-    $output->progress("$dsw_file");
-    replace_file("$wine_dir/$dsw_file", \&_generate_dsw);
-};
-
-sub _generate_dsw {
+sub _generate_dsw_header {
     local *OUT = shift;
 
     print OUT "Microsoft Developer Studio Workspace File, Format Version 6.00\r\n";
     print OUT "# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!\r\n";
     print OUT "\r\n";
+}
+
+sub _generate_dsw_project {
+    local *OUT = shift;
+
+    my $project = shift;
+    my $dsp_file = shift;
+    my @dependencies = @{(shift)};
+
+    $dsp_file = "./$dsp_file";
+    $dsp_file =~ y%/%\\%;
+    
+    @dependencies = sort(@dependencies);
+
+    print OUT "###############################################################################\r\n";
+    print OUT "\r\n";
+    print OUT "Project: \"$project\"=$dsp_file - Package Owner=<4>\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<5>\r\n";
+    print OUT "{{{\r\n";
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<4>\r\n";
+    print OUT "{{{\r\n";
+    foreach my $dependency (@dependencies) {
+	print OUT "    Begin Project Dependency\r\n";
+	print OUT "    Project_Dep_Name $dependency\r\n";
+	print OUT "    End Project Dependency\r\n";
+    }
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+}
+
+sub _generate_dsw_footer {
+    local *OUT = shift;
+
+    print OUT "###############################################################################\r\n";
+    print OUT "\r\n";
+    print OUT "Global:\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<5>\r\n";
+    print OUT "{{{\r\n";
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+    print OUT "Package=<3>\r\n";
+    print OUT "{{{\r\n";
+    print OUT "}}}\r\n";
+    print OUT "\r\n";
+    print OUT "###############################################################################\r\n";
+    print OUT "\r\n";
+}
+
+do {
+    my $dsw_file = "wine.dsw";
+    $output->progress("$dsw_file");
+    replace_file("$wine_dir/$dsw_file", \&_generate_wine_dsw);
+};
+
+sub _generate_wine_dsw {
+    local *OUT = shift;
+
+    _generate_dsw_header(\*OUT);
     foreach my $module (sort(keys(%modules))) {
+	next if $module =~ /(?:winetest\.lib|_test\.exe)$/;
+
 	my $project = $modules{$module}{project};
 	my $dsp_file = $modules{$module}{dsp_file};
-
-	$dsp_file = "./$dsp_file";
-	$dsp_file =~ y%/%\\%;
 
 	my @dependencies;
 	if($project =~ /^wine(?:_unicode)?$/) {
@@ -849,43 +957,79 @@ sub _generate_dsw {
 	    }
         }
 
-	@dependencies = sort(@dependencies);
-
-	print OUT "###############################################################################\r\n";
-	print OUT "\r\n";
-	print OUT "Project: \"$project\"=$dsp_file - Package Owner=<4>\r\n";
-	print OUT "\r\n";
-	print OUT "Package=<5>\r\n";
-	print OUT "{{{\r\n";
-	print OUT "}}}\r\n";
-	print OUT "\r\n";
-	print OUT "Package=<4>\r\n";
-	print OUT "{{{\r\n";
-	foreach my $dependency (@dependencies) {
-	    print OUT "    Begin Project Dependency\r\n";
-	    print OUT "    Project_Dep_Name $dependency\r\n";
-	    print OUT "    End Project Dependency\r\n";
-	}
-	print OUT "}}}\r\n";
-	print OUT "\r\n";
+	_generate_dsw_project(\*OUT, $project, $dsp_file, \@dependencies);
     }
-
-    print OUT "###############################################################################\r\n";
-    print OUT "\r\n";
-    print OUT "Global:\r\n";
-    print OUT "\r\n";
-    print OUT "Package=<5>\r\n";
-    print OUT "{{{\r\n";
-    print OUT "}}}\r\n";
-    print OUT "\r\n";
-    print OUT "Package=<3>\r\n";
-    print OUT "{{{\r\n";
-    print OUT "}}}\r\n";
-    print OUT "\r\n";
-    print OUT "###############################################################################\r\n";
-    print OUT "\r\n";
+    _generate_dsw_footer(\*OUT);
 
     return 1;
+}
+
+do {
+    my $dsw_file = "winetest.dsw";
+    $output->progress("$dsw_file");
+    replace_file("$wine_dir/$dsw_file", \&_generate_winetest_dsw);
+};
+
+sub _generate_winetest_dsw {
+    local *OUT = shift;
+
+    _generate_dsw_header(\*OUT);
+
+    foreach my $module (sort(keys(%modules))) {
+	next if $module !~ /(?:winetest\.lib|_test\.exe)$/;
+
+	my $project = $modules{$module}{project};
+	my $dsp_file = $modules{$module}{dsp_file};
+
+	my @dependencies;
+	if($project =~ /^winetest$/) {
+	    @dependencies = ();
+	} else {
+	    @dependencies = ("winetest");
+	}
+
+	_generate_dsw_project(\*OUT, $project, $dsp_file, \@dependencies);
+    }
+
+    _generate_dsw_footer(\*OUT);
+}
+
+do {
+    foreach my $module (sort(keys(%modules))) {
+	next if $module !~ /_test\.exe$/;
+
+	my $project = $modules{$module}{project};
+	my $dsp_file = $modules{$module}{dsp_file};
+
+	my $testlist_c = $dsp_file;
+	$testlist_c =~ s%[^/]*\.dsp$%testlist.c%;
+
+	replace_file("$wine_dir/$testlist_c", \&_generate_testlist_c);
+    }
+};
+
+sub _generate_testlist_c {
+    local *OUT = shift;
+
+    my @tests = qw(generated); # FIXME: Not alway correct
+
+    print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
+    print OUT "\n";
+    foreach my $test (@tests) {
+	print OUT "extern void func_$test(void);\n";
+    }
+    print OUT "\n";
+    print OUT "const struct\n";
+    print OUT "{\n";
+    print OUT "    const char *name;\n";
+    print OUT "    void (*func)(void);\n";
+    print OUT "} winetest_testlist[] =\n";
+    print OUT "{\n";
+    foreach my $test (@tests) {
+	print OUT "    { \"$test\", func_$test },\n";
+    }
+    print OUT "    { 0, 0 }\n";
+    print OUT "};\n";
 }
 
 do {
