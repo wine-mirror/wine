@@ -775,7 +775,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
   if ((dwFlags == DIDFT_ALL) ||
       (dwFlags & DIDFT_BUTTON)) {
-    BYTE i;
+    int i;
 
     /*The DInput SDK says that GUID_Button is only for mouse buttons but well*/
 
