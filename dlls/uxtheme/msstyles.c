@@ -98,31 +98,39 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     hTheme = LoadLibraryExW(lpThemeFile, NULL, LOAD_LIBRARY_AS_DATAFILE);
 
     /* Validate that this is really a theme */
-    if(!hTheme) goto invalid_theme;
+    if(!hTheme) {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto invalid_theme;
+    }
     if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szPackThemVersionResource))) {
         TRACE("No version resource found\n");
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
     if((versize = SizeofResource(hTheme, hrsc)) != 2)
     {
         TRACE("Version resource found, but wrong size: %ld\n", versize);
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
     version = *(WORD*)LoadResource(hTheme, hrsc);
     if(version != MSSTYLES_VERSION)
     {
         TRACE("Version of theme file is unsupported: 0x%04x\n", version);
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
 
     if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szColorNamesResource))) {
         TRACE("Color names resource not found\n");
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
     pszColors = (LPWSTR)LoadResource(hTheme, hrsc);
 
     if(!(hrsc = FindResourceW(hTheme, MAKEINTRESOURCEW(1), szSizeNamesResource))) {
         TRACE("Size names resource not found\n");
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
         goto invalid_theme;
     }
     pszSizes = (LPWSTR)LoadResource(hTheme, hrsc);
@@ -173,7 +181,6 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
 
 invalid_theme:
     if(hTheme) FreeLibrary(hTheme);
-    if(!hr) hr = HRESULT_FROM_WIN32(GetLastError());
     return hr;
 }
 
