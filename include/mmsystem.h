@@ -30,9 +30,15 @@ typedef LRESULT CALLBACK (*DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
    
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
+#ifndef _MCIERROR_
+#define _MCIERROR_
 typedef DWORD   MCIERROR;
+#endif
 typedef UINT	MMVERSION;
+#ifndef _MCIDEVICEID_
+#define _MCIDEVICEID_
 typedef UINT	MCIDEVICEID;
+#endif
 typedef	UINT	MMRESULT;
 
 typedef struct {

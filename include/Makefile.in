@@ -40,6 +40,7 @@ INSTALLED_INCLUDES = \
 	mmreg.h \
 	mmsystem.h \
 	msacm.h \
+	msacmdlg.h \
 	ntsecapi.h \
 	oaidl.h \
 	objbase.h \
