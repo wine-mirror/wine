@@ -74,13 +74,15 @@ typedef struct
   /* Dialog base units */
 static WORD xBaseUnit = 0, yBaseUnit = 0;
 
-
 /***********************************************************************
  *           DIALOG_GetCharSizeFromDC
  *
  * 
  *  Calculates the *true* average size of English characters in the 
  *  specified font as oppposed to the one returned by GetTextMetrics.
+ *
+ *  Latest: the X font driver will now compute a proper average width
+ *  so this code can be removed
  */
 static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
 {
@@ -103,7 +105,7 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
             if (tm.tmPitchAndFamily & TMPF_FIXED_PITCH) 
             {
                 SIZE total;
-                static const char szAvgChars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                const char* szAvgChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
                 /* Calculate a true average as opposed to the one returned 
                  * by tmAveCharWidth. This works better when dealing with 
@@ -122,21 +124,21 @@ static BOOL DIALOG_GetCharSizeFromDC( HDC hDC, HFONT hFont, SIZE * pSize )
             {
                 Success = TRUE;
             }
+	    /* Use the text metrics */
+	    TRACE("Using tm: %ldx%ld (dlg: %dx%d) (%s)\n", tm.tmAveCharWidth, tm.tmHeight, pSize->cx, pSize->cy,
+		  tm.tmPitchAndFamily & TMPF_FIXED_PITCH ? "variable" : "fixed");		
+	    pSize->cx = tm.tmAveCharWidth;
+	    pSize->cy = tm.tmHeight;
         }
-
         /* select the original font */
         if (hFontPrev) SelectFont(hDC,hFontPrev);
     }
     return (Success);
 }
 
-
 /***********************************************************************
  *           DIALOG_GetCharSize
  *
- * 
- *  Calculates the *true* average size of English characters in the 
- *  specified font as oppposed to the one returned by GetTextMetrics.
  *  A convenient variant of DIALOG_GetCharSizeFromDC.
  */
 static BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
@@ -146,7 +148,6 @@ static BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
     ReleaseDC(0, hDC);
     return Success;
 }
-
 
 /***********************************************************************
  *           DIALOG_Init
@@ -652,17 +653,23 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     if (template.style & DS_SETFONT)
     {
-          /* The font height must be negative as it is a point size */
+	  /* The font height must be negative as it is a point size */
+	  /* and must be converted to pixels first */
           /* (see CreateFont() documentation in the Windows SDK).   */
+	HDC dc = GetDC(0);
+	int pixels = template.pointSize * GetDeviceCaps(dc , LOGPIXELSY)/72;
+	ReleaseDC(0, dc);
 
 	if (win32Template)
-	    hFont = CreateFontW( -template.pointSize, 0, 0, 0,
-                                   template.weight, template.italic, FALSE,
-                                   FALSE, DEFAULT_CHARSET, 0, 0, PROOF_QUALITY,
-                                   FF_DONTCARE, (LPCWSTR)template.faceName );
+	    hFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
+				 template.italic, FALSE, FALSE, 
+				 DEFAULT_CHARSET, 0, 0,
+				 PROOF_QUALITY, FF_DONTCARE,
+				 (LPCWSTR)template.faceName );
 	else
-	    hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
-				  FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
+	    hFont = CreateFont16( -pixels, 0, 0, 0, FW_DONTCARE,
+				  FALSE, FALSE, FALSE,
+				  DEFAULT_CHARSET, 0, 0,
 				  PROOF_QUALITY, FF_DONTCARE,
 				  template.faceName );
         if (hFont)
@@ -672,6 +679,7 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
             xUnit = charSize.cx;
             yUnit = charSize.cy;
         }
+	TRACE("units = %d,%d\n", xUnit, yUnit );
     }
     
     /* Create dialog main window */
