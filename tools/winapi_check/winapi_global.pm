@@ -38,6 +38,7 @@ sub check_modules {
 		if(!$winapi->is_module($module)) { next; }
 		my $functions = $$module2functions{$module};
 		foreach my $internal_name ($winapi->all_internal_functions_in_module($module)) {
+		    next if $internal_name =~ /\./;
 		    my $function = $functions->{$internal_name};
 		    if(!defined($function) && !$nativeapi->is_function($internal_name) &&
 		       !($module eq "user" && $internal_name =~

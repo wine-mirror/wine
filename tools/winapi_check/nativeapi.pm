@@ -54,6 +54,9 @@ sub new {
     $configure_ac_file =~ s/^\.\///;
     $config_h_in_file =~ s/^\.\///;
 
+
+    $$conditional_headers{"config.h"}++;
+
     $output->progress("$api_file");
 
     open(IN, "< $api_file");
@@ -101,16 +104,28 @@ sub new {
 	# skip comments
 	if(/^dnl/) { next; }
 
-	if(/^AC_CHECK_HEADERS\(\s*([^,\)]*)(?:,|\))?/) {
-	    foreach my $name (split(/\s+/, $1)) {
+	if(/AC_CHECK_HEADERS\(\s*([^,\)]*)(?:,|\))?/) {
+	    my $headers = $1;
+	    $headers =~ s/^\s*\[\s*(.*?)\s*\]\s*$/$1/;
+	    foreach my $name (split(/\s+/, $headers)) {
 		$$conditional_headers{$name}++;
 	    }
-	} elsif(/^AC_CHECK_FUNCS\(\s*([^,\)]*)(?:,|\))?/) {
-	    foreach my $name (split(/\s+/, $1)) {
+	} elsif(/AC_CHECK_FUNCS\(\s*([^,\)]*)(?:,|\))?/) {
+	    my $funcs = $1;
+	    $funcs =~ s/^\s*\[\s*(.*?)\s*\]\s*$/$1/;
+	    foreach my $name (split(/\s+/, $funcs)) {
 		$$conditional_functions{$name}++;
 	    }
-	} elsif(/^AC_FUNC_ALLOCA/) {
+	} elsif(/AC_FUNC_ALLOCA/) {
 	    $$conditional_headers{"alloca.h"}++;
+        } elsif (/AC_DEFINE\(\s*HAVE_(.*?)_H/) {
+	    my $name = lc($1);
+	    $name =~ s/_/\//;
+	    $name .= ".h";
+
+	    next if $name =~ m%correct/%;
+
+	    $$conditional_headers{$name}++;
 	}
 
     }

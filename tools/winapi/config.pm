@@ -53,7 +53,7 @@ sub file_type {
 
     m%^(?:libtest|rc|server|tests|tools)/% && return "";
     m%^(?:programs|debugger|miscemu)/% && return "wineapp";
-    m%^(?:library|tsx11|unicode)/% && return "library";
+    m%^(?:libs)/% && return "library";
     m%^windows/x11drv/wineclipsrv\.c$% && return "application";
 
     return "winelib";
@@ -78,7 +78,7 @@ sub file_skip {
     $_ = file_absolutize($_);
 
     m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
-    m%^(?:debugger|miscemu|tsx11|server|unicode)/% && return 1;
+    m%^(?:debugger|miscemu|libs|server)/% && return 1;
     m%^dlls/wineps/data/% && return 1;
     m%^windows/x11drv/wineclipsrv\.c$% && return 1;
     m%^dlls/winmm/wineoss/midipatch\.c$% && return 1;

@@ -79,27 +79,42 @@ sub begin_if {
     local $_ = shift;
 
     while(!/^$/) {
-	if(/^0\s*\&\&/) {
+	if(/^0\s*\&\&/s) {
 	    $_ = "0";
-	} elsif(/^1\s*\|\|/) {
+	} elsif(/^1\s*\|\|/s) {
 	    $_ = "1";
 	}
 
-	if(/^(!)?defined\s*\(\s*(.+?)\s*\)\s*((\&\&|\|\|)\s*)?/){
+	if (/^(!\s*)?defined\s*\(\s*(\w+)\s*\)\s*(?:(\&\&|\|\|)\s*)?/s ||
+	    /^(!\s*)?defined\s*(\w+)\s*(?:(\&\&|\|\|)\s*)?/s)
+	{
 	    $_ = $';
-	    if(defined($1) && $1 eq "!") {
-		$self->undefine($2);
-		push @$stack, $2;
+
+	    my $sign = $1;
+	    my $var = $2;
+
+	    if (defined($sign) && $sign eq "!") {
+		$self->undefine($var);
+		push @$stack, $var;
 	    } else {
-		$self->define($2);
-		push @$stack, $2;
+		$self->define($var);
+		push @$stack, $var;
 	    }
-	} elsif(/^(\w+)\s*(<|<=|==|!=|>=|>)\s*(\w+)\s*((\&\&|\|\|)\s*)?/) {
+	} elsif (/^(!\s*)?(\w+)\s*(?:(<|<=|==|!=|>=|>|\+|\-|\*\/)\s*(\w+)\s*)?(?:(\&\&|\|\|)\s*)?/s) {
 	    $_ = $';
-	} elsif(/^(!)?(\w+)\s*$/) {
-	    $_ = $';
-	} elsif(/^\(|\)/) {
-	    $_ = $';
+
+	    my $sign = $1;
+	    my $var = $2;
+
+	    if (defined($sign) && $sign eq "!") {
+		$self->undefine($var);
+		push @$stack, $var;
+	    } else {
+		$self->define($var);
+		push @$stack, $var;
+	    }
+	} elsif(/^(!\s*)?\(/s) {
+	    $_ = "";
 	} else {
 	    print "*** Can't parse '#$directive $_' ***\n";
 	    $_ = "";

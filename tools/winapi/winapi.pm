@@ -257,7 +257,7 @@ sub parse_spec_file {
 	s/^\s*(.*?)\s*$/$1/;
 	if(s/^(.*?)\s*\#\s*(.*)\s*$/$1/) {
 	    my $comment = $2;
-	    if ($comment =~ /^Wine/) { # FIXME: Kludge
+	    if ($comment =~ /^Wine/i) { # FIXME: Kludge
 		$wine_extension = 1;
 	    }
 	}
@@ -271,7 +271,7 @@ sub parse_spec_file {
 	my $ordinal;
 	if(/^(\d+|@)\s+
 	   (pascal|pascal16|stdcall|cdecl|varargs)\s+
-	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
+	   ((?:(?:-noimport|-noname|-norelay|-i386|-ret64|-register|-interrupt|-private)\s+)*)(\S+)\s*\(\s*(.*?)\s*\)\s*(\S*)$/x)
 	{
 	    my $calling_convention = $2;
 	    my $flags = $3;
@@ -282,6 +282,8 @@ sub parse_spec_file {
 	    $ordinal = $1;
 
 	    $flags =~ s/\s+/ /g;
+
+	    $internal_name = $external_name if !$internal_name;
 
 	    if($flags =~ /-noname/) {
 		# $external_name = "@";
@@ -294,7 +296,7 @@ sub parse_spec_file {
 	    }
 
 	    if ($internal_name =~ /^(.*?)\.(.*?)$/) {
-		my $forward_module = $1;
+		my $forward_module = lc($1);
 		my $forward_name = $2;
 
 		if (0) {
@@ -378,7 +380,7 @@ sub parse_spec_file {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub(?:\s+(-noimport|-noname|-norelay|-i386|-ret64))?\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub(?:\s+(-noimport|-noname|-norelay|-i386|-ret64|-private))?\s+(\S+)$/) {
 	    $ordinal = $1;
 
 	    my $flags = $2;
@@ -427,24 +429,13 @@ sub parse_spec_file {
 	    } else { # if($$function_external_module{$external_name} !~ /$module/) {
 		$$function_external_module{$external_name} .= " & $module";
 	    }
-	} elsif(/^(\d+|@)\s+forward(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s+(\S+)\.(\S+)$/) {
-	    $ordinal = $1;
-
-	    my $external_name = $2;
-	    my $forward_module = lc($3);
-	    my $forward_name = $4;
-
-            if ($external_name ne "@") {
-                $$module_external_calling_convention{$module}{$external_name} = "forward";
-            } else {
-                $$module_external_calling_convention{$module}{"\@$ordinal"} = "forward";
-            }
-	    $$function_forward{$module}{$external_name} = [$forward_module, $forward_name];
-	} elsif(/^(\d+|@)\s+extern\s+(\S+)\s*(\S*)$/) {
+	} elsif(/^(\d+|@)\s+extern(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s*(\S*)$/) {
 	    $ordinal = $1;
 
 	    my $external_name = $2;
 	    my $internal_name = $3;
+
+	    $internal_name = $external_name if !$internal_name;
 
             if ($external_name ne "@") {
                 $$module_external_calling_convention{$module}{$external_name} = "extern";
@@ -928,17 +919,13 @@ sub function_wine_extension {
 sub is_function_stub {
     my $self = shift;
     my $module_external_calling_convention = \%{$self->{MODULE_EXTERNAL_CALLING_CONVENTION}};
-    my $modules = \%{$self->{MODULES}};
 
     my $module = shift;
     my $name = shift;
 
-    foreach my $module (keys(%$modules)) {
-	if($$module_external_calling_convention{$module}{$name} eq "stub") {
-	    return 1;
-	}
+    if($$module_external_calling_convention{$module}{$name} eq "stub") {
+	return 1;
     }
-
     return 0;
 }
 

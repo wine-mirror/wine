@@ -221,7 +221,8 @@ sub parse_c_file {
 
 	# remove preprocessor directives
 	if(s/^\s*\#/\#/s) {
-	    if(/^\#.*?\\$/s) {
+	    if(/^(\#.*?)\\$/s) {
+		$_ = "$1\n";
 		$lookahead = 1;
 		next;
 	    } elsif(s/^\#\s*(\w+)((?:\s+(.*?))?\s*)$//s) {
@@ -533,7 +534,7 @@ sub parse_c_file {
 		((?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
 		(\w+)
 		(?:\s+const)?
-		((?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?
+		((?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])*
 		(?:\s*,\s*(?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
 		\s*;/sx)
 	{

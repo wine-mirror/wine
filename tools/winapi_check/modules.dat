@@ -46,7 +46,11 @@ dlls/crypt32
 
 % dlls/ctl3d/ctl3d.spec
 
+dlls/ctl3d
+
 % dlls/ctl3d/ctl3d32.spec
+
+dlls/ctl3d
 
 % dlls/ctl3d/ctl3dv2.spec
 
@@ -63,6 +67,10 @@ dlls/d3d8
 % dlls/d3d9/d3d9.spec
 
 dlls/d3d9
+
+% dlls/d3dim/d3dim.spec
+
+dlls/d3dim
 
 % dlls/d3dx8/d3dx8.spec
 
@@ -240,6 +248,10 @@ dlls/msvcrt20
 
 dlls/msvcrtd
 
+% dlls/mswsock/mswsock.spec
+
+dlls/mswsock
+
 % dlls/kernel/stress.spec
 
 dlls/kernel
@@ -305,6 +317,8 @@ dlls/msacm/msg711
 dlls/msacm/winemp3
 
 % dlls/msnet32/msnet32.spec
+
+dlls/msnet32
 
 % dlls/msvideo/msvfw32.spec
 

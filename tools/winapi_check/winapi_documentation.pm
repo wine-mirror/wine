@@ -87,7 +87,7 @@ sub check_documentation {
 			my $ordinal2 = $7;
 
 			if ($winapi->function_wine_extension(lc($module2), $external_name2)) {
-			    $output->write("documentation: $external_name2 (\U$module2\E.$ordinal2) is a Wine extension \\\n$documentation\n");
+			    # $output->write("documentation: $external_name2 (\U$module2\E.$ordinal2) is a Wine extension \\\n$documentation\n");
 			}
 
 			if(length($1) != 1 || length($2) < 1 ||
@@ -108,6 +108,7 @@ sub check_documentation {
 		}
 		if((($options->documentation_name && !$found_name) ||
 		   ($options->documentation_ordinal && !$found_ordinal)) &&
+		   !$winapi->is_function_stub($module, $external_name) &&
 		   !$winapi->function_wine_extension($module, $external_name))
 		{
 		    $documentation_error = 1;
@@ -202,7 +203,7 @@ sub check_documentation {
 	    for my $argument_documentation (@$refargument_documentations) {
 		$n++;
 		if($argument_documentation ne "") {
-		    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out|\?\?\?)\].*?\*\/$/s) {
+		    if($argument_documentation !~ /^\/\*\s+\[(?:in|out|in\/out|\?\?\?|I|O|I\/O)\].*?\*\/$/s) {
 			$output->write("argument $n documentation: \\\n$argument_documentation\n");
 		    }
 		}
