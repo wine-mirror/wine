@@ -322,7 +322,6 @@ RETERR16 WINAPI VcpQueueDelete16(
 	LPCSTR lpszDstFileName,
 	LPCSTR lpszDstDir,
 	LOGDISKID16 ldidDst,
-	LPEXPANDVTBL lpExpandVtbl,
 	LPARAM lParamRef
 )
 {
@@ -335,8 +334,7 @@ RETERR16 WINAPI VcpQueueDelete16(
     vfsDst.vhstrDir = vsmStringAdd16(lpszDstDir);
     vfsDst.vhstrFileName = vsmStringAdd16(lpszDstFileName);
 
-    return VCP_VirtnodeCreate(NULL, &vfsDst, VNFL_DELETE, lParamRef,
-		    lpExpandVtbl);
+    return VCP_VirtnodeCreate(NULL, &vfsDst, VNFL_DELETE, lParamRef, 0);
 }
 
 /***********************************************************************
