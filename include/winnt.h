@@ -2319,6 +2319,16 @@ typedef struct _IMAGE_FUNCTION_ENTRY {
   DWORD EndOfPrologue;
 } IMAGE_FUNCTION_ENTRY, *PIMAGE_FUNCTION_ENTRY;
 
+#define IMAGE_DEBUG_MISC_EXENAME    1
+ 
+typedef struct _IMAGE_DEBUG_MISC {
+    DWORD       DataType;
+    DWORD       Length;
+    BYTE        Unicode;
+    BYTE        Reserved[ 3 ];
+    BYTE        Data[ 1 ];
+} IMAGE_DEBUG_MISC, *PIMAGE_DEBUG_MISC;
+
 /* This is the structure that appears at the very start of a .DBG file. */
 
 typedef struct _IMAGE_SEPARATE_DEBUG_HEADER {
