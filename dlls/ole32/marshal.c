@@ -596,45 +596,68 @@ CoReleaseMarshalData(IStream *pStm) {
 /***********************************************************************
  *		CoMarshalInterThreadInterfaceInStream	[OLE32.@]
  *
- * Marshal interfaces across threads. We don't have a thread distinction,
- * meaning most interfaces just work across different threads, the RPC
- * handles it.
+ * Marshal an interface across threads in the same process.
+ *
+ * PARAMS
+ *  riid  [I] Identifier of the interface to be marshalled.
+ *  pUnk  [I] Pointer to IUnknown-derived interface that will be marshalled.
+ *  ppStm [O] Pointer to IStream object that is created and then used to store the marshalled inteface.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: E_OUTOFMEMORY and other COM error codes
+ *
+ * SEE
+ *   CoMarshalInterface(), CoUnmarshalInterface() and CoGetInterfaceAndReleaseStream()
  */
 HRESULT WINAPI
 CoMarshalInterThreadInterfaceInStream(
-  REFIID riid, LPUNKNOWN pUnk, LPSTREAM * ppStm
-) {
-  ULONG res;
-  ULARGE_INTEGER	xpos;
-  LARGE_INTEGER		seekto;
-  HRESULT		hres;
+  REFIID riid, LPUNKNOWN pUnk, LPSTREAM * ppStm)
+{
+    ULARGE_INTEGER	xpos;
+    LARGE_INTEGER		seekto;
+    HRESULT		hres;
 
-  TRACE("(%s, %p, %p)\n",debugstr_guid(riid), pUnk, ppStm);
-  hres = CreateStreamOnHGlobal(0, TRUE, ppStm);
-  if (hres) return hres;
-  /* CoMarshalInterface(...); */
-  hres = IStream_Write(*ppStm,&pUnk,sizeof(LPUNKNOWN),&res);
-  if (hres) return hres;
-  memset(&seekto,0,sizeof(seekto));
-  IStream_Seek(*ppStm,seekto,SEEK_SET,&xpos);
-  return S_OK;
+    TRACE("(%s, %p, %p)\n",debugstr_guid(riid), pUnk, ppStm);
+
+    hres = CreateStreamOnHGlobal(0, TRUE, ppStm);
+    if (FAILED(hres)) return hres;
+    hres = CoMarshalInterface(*ppStm, riid, pUnk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+
+    /* FIXME: is this needed? */
+    memset(&seekto,0,sizeof(seekto));
+    IStream_Seek(*ppStm,seekto,SEEK_SET,&xpos);
+
+    return hres;
 }
 
 /***********************************************************************
  *		CoGetInterfaceAndReleaseStream	[OLE32.@]
+ *
+ * Unmarshalls an inteface from a stream and then releases the stream.
+ *
+ * PARAMS
+ *  pStm [I] Stream that contains the marshalled inteface.
+ *  riid [I] Interface identifier of the object to unmarshall.
+ *  ppv  [O] Address of pointer where the requested interface object will be stored.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: A COM error code
+ *
+ * SEE
+ *  CoMarshalInterThreadInterfaceInStream() and CoUnmarshalInteface()
  */
 HRESULT WINAPI
-CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv) {
-  ULONG res;
-  HRESULT		hres;
-  LPUNKNOWN		pUnk;
+CoGetInterfaceAndReleaseStream(LPSTREAM pStm,REFIID riid, LPVOID *ppv)
+{
+    HRESULT hres;
 
-  TRACE("(,%s,)\n",debugstr_guid(riid));
-  /* CoUnmarshalInterface(...); */
-  hres = IStream_Read(pStm,&pUnk,sizeof(LPUNKNOWN),&res);
-  if (hres) return hres;
-  IStream_Release(pStm);
-  return IUnknown_QueryInterface(pUnk,riid,ppv);
+    TRACE("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
+
+    hres = CoUnmarshalInterface(pStm, riid, ppv);
+    IStream_Release(pStm);
+    return hres;
 }
 
 static HRESULT WINAPI
