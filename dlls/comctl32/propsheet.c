@@ -1381,7 +1381,6 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   DLGTEMPLATE* pTemplate;
   HWND hwndPage;
   RECT rc;
-  PropPageInfo* ppInfo = psInfo->proppage;
   PADDING_INFO padding;
   UINT pageWidth,pageHeight;
   DWORD resSize;
@@ -1494,7 +1493,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   if(temp)
       Free(temp);
 
-  ppInfo[index].hwndPage = hwndPage;
+  psInfo->proppage[index].hwndPage = hwndPage;
 
   if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {
       /* FIXME: This code may no longer be correct.
@@ -2278,7 +2277,6 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   if (!psInfo) {
     return FALSE;
   }
-  oldPages = psInfo->proppage;
   /*
    * hpage takes precedence over index.
    */
@@ -2345,6 +2343,7 @@ static BOOL PROPSHEET_RemovePage(HWND hwndDlg,
   /* Remove the tab */
   SendMessageW(hwndTabControl, TCM_DELETEITEM, index, 0);
 
+  oldPages = psInfo->proppage;
   psInfo->nPages--;
   psInfo->proppage = Alloc(sizeof(PropPageInfo) * psInfo->nPages);
 
