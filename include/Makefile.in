@@ -153,6 +153,7 @@ INSTALLED_INCLUDES = \
 	wine/obj_dataobject.h \
 	wine/obj_dockingwindowframe.h \
 	wine/obj_dragdrop.h \
+	wine/obj_dragdrophelper.h \
 	wine/obj_enumguid.h \
 	wine/obj_enumidlist.h \
 	wine/obj_errorinfo.h \

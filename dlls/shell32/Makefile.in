@@ -21,6 +21,7 @@ C_SRCS = \
 	dataobject.c \
 	debughlp.c \
 	dialogs.c \
+	dragdrophelper.c \
 	enumidlist.c \
 	folders.c \
 	iconcache.c \

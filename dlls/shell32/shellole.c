@@ -38,6 +38,7 @@
 #include "shlwapi.h"
 #include "winuser.h"
 #include "debughlp.h"
+#include "wine/obj_dragdrophelper.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -58,11 +59,12 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 struct {
 	REFIID			riid;
 	LPFNCREATEINSTANCE	lpfnCI;
-} InterfaceTable[5] = {
+} InterfaceTable[6] = {
 	{&CLSID_ShellFSFolder,	&IFSFolder_Constructor},
 	{&CLSID_MyComputer,	&ISF_MyComputer_Constructor},
 	{&CLSID_ShellDesktop,	&ISF_Desktop_Constructor},
 	{&CLSID_ShellLink,	&IShellLink_Constructor},
+	{&CLSID_DragDropHelper, &IDropTargetHelper_Constructor},
 	{NULL,NULL}
 };
 
