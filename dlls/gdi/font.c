@@ -1649,6 +1649,8 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 
 /***********************************************************************
  *           ExtTextOutA    (GDI32.@)
+ *
+ * See ExtTextOutW.
  */
 BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                          const RECT *lprect, LPCSTR str, UINT count, const INT *lpDx )
@@ -1684,6 +1686,33 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
 
 /***********************************************************************
  *           ExtTextOutW    (GDI32.@)
+ *
+ * Draws text using the currently selected font, background color, and text color.
+ * 
+ * 
+ * PARAMS
+ *    x,y    [I] coordinates of string
+ *    flags  [I]
+ *        ETO_GRAYED - undocumented on MSDN
+ *        ETO_OPAQUE - use background color for fill the rectangle
+ *        ETO_CLIPPED - clipping text to the rectangle
+ *        ETO_GLYPH_INDEX - Buffer is of glyph locations in fonts rather
+ *                          than encoded characters. Implies ETO_IGNORELANGUAGE
+ *        ETO_RTLREADING - Paragraph is basically a right-to-left paragraph.
+ *                         Affects BiDi ordering
+ *        ETO_IGNORELANGUAGE - Undocumented in MSDN - instructs ExtTextOut not to do BiDi reordering
+ *        ETO_PDY - unimplemented
+ *        ETO_NUMERICSLATIN - unimplemented always assumed -
+ *                            do not translate numbers into locale representations
+ *        ETO_NUMERICSLOCAL - unimplemented - Numerals in Arabic/Farsi context should assume local form
+ *    lprect [I] dimensions for clipping or/and opaquing
+ *    str    [I] text string
+ *    count  [I] number of symbols in string
+ *    lpDx   [I] optional parameter with distance between drawing characters
+ *
+ * RETURNS
+ *    Success: TRUE
+ *    Failure: FALSE
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                          const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
@@ -1692,6 +1721,9 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
+        if (flags&(ETO_NUMERICSLOCAL|ETO_NUMERICSLATIN|ETO_PDY))
+            FIXME("flags ETO_NUMERICSLOCAL|ETO_NUMERICSLATIN|ETO_PDY unimplemented\n");
+
         if(PATH_IsPathOpen(dc->path))
             FIXME("called on an open path\n");
         else if(dc->funcs->pExtTextOut)
