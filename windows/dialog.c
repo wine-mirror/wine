@@ -1794,6 +1794,13 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
         *pWndDlg = NULL;
     HWND retvalue;
 
+    if(hwndCtrl)
+    {
+        /* if the hwndCtrl is the child of the control in the hwndDlg then the hwndDlg has to be the parent of the hwndCtrl */
+        if(GetParent(hwndCtrl) != hwndDlg && GetParent(GetParent(hwndCtrl)) == hwndDlg)
+            hwndDlg = GetParent(hwndCtrl);
+    }
+
     if (!(pWndDlg = WIN_FindWndPtr( hwndDlg ))) return 0;
     if (hwndCtrl)
     {
@@ -1927,7 +1934,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
         {
             dsStyle = GetWindowLongA(hChildFirst,GWL_STYLE);
             exStyle = GetWindowLongA(hChildFirst,GWL_EXSTYLE);
-            if(dsStyle & DS_CONTROL || exStyle & WS_EX_CONTROLPARENT)
+            if( (dsStyle & DS_CONTROL || exStyle & WS_EX_CONTROLPARENT) && (dsStyle & WS_VISIBLE) && !(dsStyle & WS_DISABLED))
             {
                 bCtrl=TRUE;
                 break;
