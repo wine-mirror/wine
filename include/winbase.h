@@ -1588,14 +1588,15 @@ INT       WINAPI GetLocaleInfoW(LCID,LCTYPE,LPWSTR,INT);
 DWORD       WINAPI GetModuleFileNameA(HMODULE,LPSTR,DWORD);
 DWORD       WINAPI GetModuleFileNameW(HMODULE,LPWSTR,DWORD);
 #define     GetModuleFileName WINELIB_NAME_AW(GetModuleFileName)
-HMODULE   WINAPI GetModuleHandleA(LPCSTR);
-HMODULE   WINAPI GetModuleHandleW(LPCWSTR);
+HMODULE     WINAPI GetModuleHandleA(LPCSTR);
+HMODULE     WINAPI GetModuleHandleW(LPCWSTR);
 #define     GetModuleHandle WINELIB_NAME_AW(GetModuleHandle)
-UINT      WINAPI GetPrivateProfileIntA(LPCSTR,LPCSTR,INT,LPCSTR);
-UINT      WINAPI GetPrivateProfileIntW(LPCWSTR,LPCWSTR,INT,LPCWSTR);
+BOOL        WINAPI GetOverlappedResult(HANDLE,LPOVERLAPPED,LPDWORD,BOOL);
+UINT        WINAPI GetPrivateProfileIntA(LPCSTR,LPCSTR,INT,LPCSTR);
+UINT        WINAPI GetPrivateProfileIntW(LPCWSTR,LPCWSTR,INT,LPCWSTR);
 #define     GetPrivateProfileInt WINELIB_NAME_AW(GetPrivateProfileInt)
-INT       WINAPI GetPrivateProfileSectionA(LPCSTR,LPSTR,DWORD,LPCSTR);
-INT       WINAPI GetPrivateProfileSectionW(LPCWSTR,LPWSTR,DWORD,LPCWSTR);
+INT         WINAPI GetPrivateProfileSectionA(LPCSTR,LPSTR,DWORD,LPCSTR);
+INT         WINAPI GetPrivateProfileSectionW(LPCWSTR,LPWSTR,DWORD,LPCWSTR);
 #define     GetPrivateProfileSection WINELIB_NAME_AW(GetPrivateProfileSection)
 DWORD       WINAPI GetPrivateProfileSectionNamesA(LPSTR,DWORD,LPCSTR);
 DWORD       WINAPI GetPrivateProfileSectionNamesW(LPWSTR,DWORD,LPCWSTR);
@@ -1760,6 +1761,7 @@ INT       WINAPI lstrcmpW(LPCWSTR,LPCWSTR);
 INT       WINAPI lstrcmpiA(LPCSTR,LPCSTR);
 INT       WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 #define     lstrcmpi WINELIB_NAME_AW(lstrcmpi)
+
 
 /* the following may be macros when compiling Wine */
 #ifndef SetLastError

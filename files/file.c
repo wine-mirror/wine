@@ -1107,6 +1107,19 @@ HFILE WINAPI _lclose( HFILE hFile )
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR;
 }
 
+/***********************************************************************
+ *              GetOverlappedResult     (KERNEL32.360)
+ */
+BOOL WINAPI GetOverlappedResult(HANDLE hFile,LPOVERLAPPED lpOverlapped,
+                                LPDWORD lpNumberOfBytesTransferred,
+                                BOOL bWait)
+{
+    /* Since all i/o is currently synchronuos,
+     * return true, assuming ReadFile/WriteFile
+     * have completed the operation */
+    FIXME("NO Asynch I/O, assuming Read/Write succeeded\n" );
+    return TRUE;
+}
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.428)

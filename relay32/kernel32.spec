@@ -375,7 +375,7 @@ import  ntdll.dll
 357 stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
 358 stdcall GetNumberOfConsoleMouseButtons(ptr) GetNumberOfConsoleMouseButtons
 359 stdcall GetOEMCP() GetOEMCP
-360 stub GetOverlappedResult
+360 stdcall GetOverlappedResult(long ptr ptr long) GetOverlappedResult
 361 stdcall GetPriorityClass(long) GetPriorityClass
 362 stdcall GetPrivateProfileIntA(str str long str) GetPrivateProfileIntA
 363 stdcall GetPrivateProfileIntW(wstr wstr long wstr) GetPrivateProfileIntW
