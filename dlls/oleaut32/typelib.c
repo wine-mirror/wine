@@ -1647,7 +1647,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
      * of this (first) part excluding this field. Then follow the records,
      * for each member there is one record.
      *
-     * First entry is always the length of the record (excluding this
+     * First entry is always the length of the record (including this
      * length word).
      * Rest of the record depends on the type of the member. If there is
      * a field indicating the member type (function variable intereface etc)
