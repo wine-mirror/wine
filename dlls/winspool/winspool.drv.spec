@@ -52,7 +52,7 @@ init	WINSPOOL_EntryPoint
 147 stub DeletePrinterDriverW
 148 stub DeletePrinterIC
 149 stub DevQueryPrint
-150 stub DeviceCapabilities
+150 stdcall DeviceCapabilities(str str long ptr ptr) DeviceCapabilitiesA
 151 stdcall DeviceCapabilitiesA(str str long ptr ptr) DeviceCapabilitiesA
 152 stdcall DeviceCapabilitiesW(wstr wstr long wstr ptr) DeviceCapabilitiesW
 153 stub DeviceMode

@@ -277,7 +277,7 @@ static void FREE_PRINTER_INFO_2W(HANDLE heap, LPPRINTER_INFO_2W piW)
 }
 
 /******************************************************************
- *              DeviceCapabilitiesA    [WINSPOOL.151]
+ *              DeviceCapabilitiesA    [WINSPOOL.150 & WINSPOOL.151]
  *
  */
 INT WINAPI DeviceCapabilitiesA(LPCSTR pDeivce,LPCSTR pPort, WORD cap,
@@ -300,7 +300,7 @@ INT WINAPI DeviceCapabilitiesA(LPCSTR pDeivce,LPCSTR pPort, WORD cap,
 
 
 /*****************************************************************************
- *          DeviceCapabilitiesW
+ *          DeviceCapabilitiesW        [WINSPOOL.152]
  *
  * Call DeviceCapabilitiesA since we later call 16bit stuff anyway
  *
