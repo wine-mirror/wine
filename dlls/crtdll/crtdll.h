@@ -205,7 +205,7 @@ struct _timeb
   INT16   dstflag;
 };
 
-typedef long fpos_t;
+typedef long CRTDLL_fpos_t;
 
 struct complex
 {
@@ -294,7 +294,7 @@ INT    __cdecl CRTDLL__fcloseall( VOID );
 LONG   __cdecl CRTDLL__lseek( INT fd, LONG offset, INT whence );
 LONG   __cdecl CRTDLL_fseek( CRTDLL_FILE* file, LONG offset, INT whence );
 VOID   __cdecl CRTDLL_rewind( CRTDLL_FILE* file );
-INT    __cdecl CRTDLL_fsetpos( CRTDLL_FILE* file, fpos_t *pos );
+INT    __cdecl CRTDLL_fsetpos( CRTDLL_FILE* file, CRTDLL_fpos_t *pos );
 LONG   __cdecl CRTDLL_ftell( CRTDLL_FILE* file );
 UINT   __cdecl CRTDLL_fwrite( LPCVOID ptr,INT size,INT nmemb,CRTDLL_FILE*file);
 INT    __cdecl CRTDLL_setbuf( CRTDLL_FILE* file, LPSTR buf );

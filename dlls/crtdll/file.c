@@ -1182,7 +1182,7 @@ INT __cdecl CRTDLL_fgetc( CRTDLL_FILE* file )
 /*********************************************************************
  *                  fgetpos       (CRTDLL.364)
  */
-INT __cdecl CRTDLL_fgetpos( CRTDLL_FILE* file, fpos_t *pos)
+INT __cdecl CRTDLL_fgetpos( CRTDLL_FILE* file, CRTDLL_fpos_t *pos)
 {
   *pos = CRTDLL__tell(file->_file);
   return (*pos == -1? -1 : 0);
@@ -1384,7 +1384,7 @@ CRTDLL_FILE* __cdecl CRTDLL_freopen(LPCSTR path, LPCSTR mode,CRTDLL_FILE* file)
 /*********************************************************************
  *                  fsetpos       (CRTDLL.380)
  */
-INT __cdecl CRTDLL_fsetpos( CRTDLL_FILE* file, fpos_t *pos)
+INT __cdecl CRTDLL_fsetpos( CRTDLL_FILE* file, CRTDLL_fpos_t *pos)
 {
   return CRTDLL__lseek(file->_file,*pos,SEEK_SET);
 }
