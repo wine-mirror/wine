@@ -364,6 +364,16 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			COM[port].eventmask = 0;
                         /* save terminal state */
                         tcgetattr(fd,&m_stat[port]);
+                        /* set default parameters */
+                        if(COM[port].baudrate>-1){
+                            DCB16 dcb;
+                            GetCommState16(port, &dcb);
+                            dcb.BaudRate=COM[port].baudrate;
+                            /* more defaults:
+                             * databits, parity, stopbits
+                             */
+                            SetCommState16( &dcb);
+                        }
 #if 0
 			/* allocate buffers */
 			/* ... */
@@ -738,8 +748,6 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 	port.c_lflag &= ~(ICANON|ECHO|ISIG);
 	port.c_lflag |= NOFLSH;
 
-	if (ptr->baudrate > 0)
-	  	lpdcb->BaudRate = ptr->baudrate;
     	TRACE(comm,"baudrate %d\n",lpdcb->BaudRate);
 #ifdef CBAUD
 	port.c_cflag &= ~CBAUD;
@@ -858,25 +866,25 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 			return -1;
 	}
 
-    	TRACE(comm,"parity %d\n",lpdcb->Parity);
+    	TRACE(comm,"fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
-		switch (lpdcb->Parity) {
-			case NOPARITY:
-				port.c_iflag &= ~INPCK;
-				break;
-			case ODDPARITY:
-				port.c_cflag |= (PARENB | PARODD);
-				port.c_iflag |= INPCK;
-				break;
-			case EVENPARITY:
-				port.c_cflag |= PARENB;
-				port.c_iflag |= INPCK;
-				break;
-			default:
-				ptr->commerror = IE_BYTESIZE;
-				return -1;
-		}
+            port.c_iflag |= INPCK;
+        else
+            port.c_iflag &= ~INPCK;
+        switch (lpdcb->Parity) {
+                case NOPARITY:
+                        break;
+                case ODDPARITY:
+                        port.c_cflag |= (PARENB | PARODD);
+                        break;
+                case EVENPARITY:
+                        port.c_cflag |= PARENB;
+                        break;
+                default:
+                        ptr->commerror = IE_BYTESIZE;
+                        return -1;
+        }
 	
 
     	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
@@ -927,7 +935,7 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	struct termios port;
 
     	TRACE(comm,"cid %d, ptr %p\n", cid, lpdcb);
-	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
+	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		return -1;
 	}
 	if (tcgetattr(ptr->fd, &port) == -1) {
@@ -995,17 +1003,18 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 			break;
 	}	
 	
+        if(port.c_iflag & INPCK)
+            lpdcb->fParity = TRUE;
+        else
+            lpdcb->fParity = FALSE;
 	switch (port.c_cflag & (PARENB | PARODD)) {
 		case 0:
-			lpdcb->fParity = FALSE;
 			lpdcb->Parity = NOPARITY;
 			break;
 		case PARENB:
-			lpdcb->fParity = TRUE;
 			lpdcb->Parity = EVENPARITY;
 			break;
 		case (PARENB | PARODD):
-			lpdcb->fParity = TRUE;		
 			lpdcb->Parity = ODDPARITY;		
 			break;
 	}
@@ -1768,25 +1777,25 @@ BOOL WINAPI SetCommState(INT handle,LPDCB lpdcb)
 			return FALSE;
 	}
 
-    	TRACE(comm,"parity %d\n",lpdcb->Parity);
+    	TRACE(comm,"fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
 	port.c_cflag &= ~(PARENB | PARODD);
 	if (lpdcb->fParity)
-		switch (lpdcb->Parity) {
-			case NOPARITY:
-				port.c_iflag &= ~INPCK;
-				break;
-			case ODDPARITY:
-				port.c_cflag |= (PARENB | PARODD);
-				port.c_iflag |= INPCK;
-				break;
-			case EVENPARITY:
-				port.c_cflag |= PARENB;
-				port.c_iflag |= INPCK;
-				break;
-			default:
-				commerror = IE_BYTESIZE;
-				return FALSE;
-		}
+            port.c_iflag |= INPCK;
+        else
+            port.c_iflag &= ~INPCK;
+        switch (lpdcb->Parity) {
+                case NOPARITY:
+                        break;
+                case ODDPARITY:
+                        port.c_cflag |= (PARENB | PARODD);
+                        break;
+                case EVENPARITY:
+                        port.c_cflag |= PARENB;
+                        break;
+                default:
+                        commerror = IE_BYTESIZE;
+                        return FALSE;
+        }
 	
 
     	TRACE(comm,"stopbits %d\n",lpdcb->StopBits);
@@ -1902,17 +1911,18 @@ BOOL WINAPI GetCommState(INT handle, LPDCB lpdcb)
 			break;
 	}	
 	
+        if(port.c_iflag & INPCK)
+            lpdcb->fParity = TRUE;
+        else
+            lpdcb->fParity = FALSE;
 	switch (port.c_cflag & (PARENB | PARODD)) {
 		case 0:
-			lpdcb->fParity = FALSE;
 			lpdcb->Parity = NOPARITY;
 			break;
 		case PARENB:
-			lpdcb->fParity = TRUE;
 			lpdcb->Parity = EVENPARITY;
 			break;
 		case (PARENB | PARODD):
-			lpdcb->fParity = TRUE;		
 			lpdcb->Parity = ODDPARITY;		
 			break;
 	}
