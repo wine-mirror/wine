@@ -12,6 +12,7 @@
 #include "win.h"
 #include "debugtools.h"
 #include "user.h"
+#include "spy.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll);
 
@@ -933,8 +934,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           lastMousePos  = lastClickPos;
           trackThumbPos = thumbPos;
           prevPt = pt;
-          SetCapture( hwnd );
           if (nBar == SB_CTL && (GetWindowLongA(hwnd, GWL_STYLE) & WS_TABSTOP)) SetFocus( hwnd );
+          SetCapture( hwnd );
           break;
 
       case WM_MOUSEMOVE:
@@ -958,8 +959,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           return;  /* Should never happen */
     }
 
-    TRACE("Event: hwnd=%04x bar=%d msg=%x pt=%ld,%ld hit=%d\n",
-		 hwnd, nBar, msg, pt.x, pt.y, hittest );
+    TRACE("Event: hwnd=%04x bar=%d msg=%s pt=%ld,%ld hit=%d\n",
+          hwnd, nBar, SPY_GetMsgName(msg,hwnd), pt.x, pt.y, hittest );
 
     switch(SCROLL_trackHitTest)
     {
@@ -1153,6 +1154,42 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return 0;
 	
     case WM_LBUTTONDOWN:
+        {
+	    POINT pt;
+	    MSG msg;
+
+	    pt.x = SLOWORD(lParam);
+	    pt.y = SHIWORD(lParam);
+	    SetCapture( hwnd );
+	    SCROLL_HandleScrollEvent( hwnd, SB_CTL, message, pt );
+
+	    TRACE("Doing LBUTTONDOWN loop hwnd=%08x\n", hwnd);
+	    do {
+		if (!GetMessageW( &msg, 0, 0, 0 )) break;
+		if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
+		switch(msg.message)
+		    {
+		    case WM_LBUTTONUP:
+		    case WM_MOUSEMOVE:
+		    case WM_SYSTIMER:
+			pt.x = LOWORD(msg.lParam);
+			pt.y = HIWORD(msg.lParam);
+			SCROLL_HandleScrollEvent( hwnd, SB_CTL, msg.message, pt );
+			break;
+		    default:
+			TranslateMessage( &msg );
+			DispatchMessageW( &msg );
+			break;
+		    }
+		if (!IsWindow( hwnd ))
+		    {
+			ReleaseCapture();
+			break;
+		    }
+	    } while (msg.message != WM_LBUTTONUP);
+	    TRACE("Out ofLBUTTON loop hwnd=%08x\n", hwnd);
+	}
+        break;
     case WM_LBUTTONUP:
     case WM_MOUSEMOVE:
     case WM_SYSTIMER:
