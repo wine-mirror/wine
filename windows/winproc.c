@@ -33,7 +33,6 @@
 #include "wine/winuser16.h"
 #include "stackframe.h"
 #include "controls.h"
-#include "heap.h"
 #include "win.h"
 #include "winproc.h"
 #include "message.h"
@@ -1010,22 +1009,36 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case LB_DIR:
     case LB_ADDFILE:
     case EM_REPLACESEL:
-        if(!*plparam) return 0;
-        *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
-        return (*plparam ? 1 : -1);
+        if (*plparam)
+        {
+            LPCWSTR str = (LPCWSTR)*plparam;
+            int len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, 0, 0);
+            *plparam = (LPARAM)HeapAlloc(GetProcessHeap(), 0, len);
+            if (!*plparam) return -1;
+            WideCharToMultiByte(CP_ACP, 0, str, -1, (LPSTR)*plparam, len, 0, 0);
+            return 1;
+        }
+        return 0;
 
     case WM_MDICREATE:
         {
-            MDICREATESTRUCTA *cs =
-                (MDICREATESTRUCTA *)HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
+            MDICREATESTRUCTA *cs = HeapAlloc( GetProcessHeap(), 0, sizeof(*cs) );
             if (!cs) return -1;
             *cs = *(MDICREATESTRUCTA *)*plparam;
             if (HIWORD(cs->szTitle))
-                cs->szTitle = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                               (LPCWSTR)cs->szTitle );
+            {
+                int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szTitle, -1, NULL, 0, 0, 0);
+                LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
+                if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szTitle, -1, buf, len, 0, 0);
+                cs->szTitle = buf;
+            }
             if (HIWORD(cs->szClass))
-                cs->szClass = HEAP_strdupWtoA( GetProcessHeap(), 0,
-                                               (LPCWSTR)cs->szClass );
+            {
+                int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szClass, -1, NULL, 0, 0, 0);
+                LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
+                if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)cs->szClass, -1, buf, len, 0, 0);
+                cs->szClass = buf;
+            }
             *plparam = (LPARAM)cs;
         }
         return 1;
@@ -1037,8 +1050,13 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
         if(!*plparam) return 0;
-	if ( WINPROC_TestLBForStr( hwnd ))
-          *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
+        if ( WINPROC_TestLBForStr( hwnd ))
+        {
+            int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*plparam, -1, NULL, 0, 0, 0);
+            LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
+            if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*plparam, -1, buf, len, 0, 0);
+            *plparam = (LPARAM)buf;
+        }
         return (*plparam ? 1 : -1);
 
     case LB_GETTEXT:			/* FIXME: fixed sized buffer */
@@ -1058,8 +1076,13 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
     case CB_FINDSTRINGEXACT:
     case CB_SELECTSTRING:
         if(!*plparam) return 0;
-	if ( WINPROC_TestCBForStr( hwnd ))
-          *plparam = (LPARAM)HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)*plparam );
+        if ( WINPROC_TestCBForStr( hwnd ))
+        {
+            int len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*plparam, -1, NULL, 0, 0, 0);
+            LPSTR buf = HeapAlloc(GetProcessHeap(), 0, len);
+            if (buf) WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)*plparam, -1, buf, len, 0, 0);
+            *plparam = (LPARAM)buf;
+        }
         return (*plparam ? 1 : -1);
 
     case CB_GETLBTEXT:		/* FIXME: fixed sized buffer */
