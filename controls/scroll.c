@@ -1278,6 +1278,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     SCROLLBAR_INFO *infoPtr;
     UINT new_flags;
+    BOOL bChangeParams = FALSE; /* don't show/hide scrollbar if params don't change */
 
    *action = 0;
 
@@ -1303,6 +1304,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 	{
             infoPtr->Page = info->nPage;
 	   *action |= SA_SSI_REFRESH;
+           bChangeParams = TRUE; 
 	}
     }
 
@@ -1327,15 +1329,17 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
         {
             infoPtr->MinVal = 0;
             infoPtr->MaxVal = 0;
+            bChangeParams = TRUE;
         }
         else
         {
 	    if( infoPtr->MinVal != info->nMin ||
 		infoPtr->MaxVal != info->nMax )
 	    {
-	       *action |= SA_SSI_REFRESH;
+                *action |= SA_SSI_REFRESH; 
                 infoPtr->MinVal = info->nMin;
                 infoPtr->MaxVal = info->nMax;
+                bChangeParams = TRUE;
 	    }
         }
     }
@@ -1375,7 +1379,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
                 new_flags = ESB_DISABLE_BOTH;
 	       *action |= SA_SSI_REFRESH;
 	    }
-            else if (nBar != SB_CTL)
+            else if ((nBar != SB_CTL) && bChangeParams)
 	    {
 		*action = SA_SSI_HIDE;
 		goto done;
@@ -1384,7 +1388,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
         else  /* Show and enable scroll-bar */
         {
 	    new_flags = 0;
-            if (nBar != SB_CTL)
+            if ((nBar != SB_CTL) && bChangeParams)
 		*action |= SA_SSI_SHOW;
         }
 
