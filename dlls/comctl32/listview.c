@@ -2910,12 +2910,14 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isNew
 	if (!(lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0))) return FALSE;
     }
 
-    /* we need to handle the focus, and selection differently */
+    /* we need to get the lParam and state of the item */
     item.iItem = lpLVItem->iItem;
     item.iSubItem = lpLVItem->iSubItem;
     item.mask = LVIF_STATE | LVIF_PARAM;
     item.stateMask = ~0;
-    if (!LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
+    item.state = 0;
+    item.lParam = 0;
+    if (!isNew && !LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
 
     TRACE("oldState=%x, newState=%x\n", item.state, lpLVItem->state);
     /* determine what fields will change */    
