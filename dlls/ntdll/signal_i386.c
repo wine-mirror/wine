@@ -29,6 +29,7 @@
 # include <sys/vm86.h>
 #endif
 
+#include "winnt.h"
 #include "selectors.h"
 
 /***********************************************************************
@@ -108,21 +109,26 @@ static inline int wine_sigaltstack( const struct sigaltstack *new,
 }
 #endif
 
-static inline int wine_vm86plus( int func, struct vm86plus_struct *ptr )
-{
-    int res;
-    __asm__ __volatile__( "pushl %%fs\n\t"
-                          "pushl %%ebx\n\t"
-                          "movl %2,%%ebx\n\t"
-                          "int $0x80\n\t"
-                          "popl %%ebx\n\t"
-                          "popl %%fs"
-                          : "=a" (res)
-                          : "0" (166 /*SYS_vm86*/), "g" (func), "c" (ptr) );
-    if (res >= 0) return res;
-    errno = -res;
-    return -1;
-}
+int vm86_enter( struct vm86plus_struct *ptr );
+void vm86_return();
+__ASM_GLOBAL_FUNC(vm86_enter,
+                  "pushl %ebp\n\t"
+                  "movl %esp, %ebp\n\t"
+                  "movl $166,%eax\n\t"  /*SYS_vm86*/
+                  "pushl %fs\n\t"
+                  "movl 8(%ebp),%ecx\n\t"
+                  "pushl %ebx\n\t"
+                  "movl $1,%ebx\n\t"    /*VM86_ENTER*/
+                  "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
+                  "int $0x80\n"
+                  ".globl " __ASM_NAME("vm86_return") "\n\t"
+                  ".type " __ASM_NAME("vm86_return") ",@function\n"
+                  __ASM_NAME("vm86_return") ":\n\t"
+                  "popl %ecx\n\t"
+                  "popl %ebx\n\t"
+                  "popl %fs\n\t"
+                  "popl %ebp\n\t"
+                  "ret" );
 
 #endif  /* linux */
 
@@ -331,33 +337,8 @@ typedef struct
 #include "syslevel.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(seh)
+DEFAULT_DEBUG_CHANNEL(seh);
 
-
-
-/***********************************************************************
- *           handler_init
- *
- * Initialization code for a signal handler.
- * Restores the proper %fs value for the current thread.
- */
-static inline void handler_init( CONTEXT *context, const SIGCONTEXT *sigcontext )
-{
-    WORD fs;
-    /* get %fs at time of the fault */
-#ifdef FS_sig
-    fs = FS_sig(sigcontext);
-#else
-    fs = __get_fs();
-#endif
-    context->SegFs = fs;
-    /* now restore a proper %fs for the fault handler */
-    if ((EFL_sig(sigcontext) & 0x00020000) ||  /* vm86 mode */
-        !IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))  /* 16-bit mode */
-        fs = SYSLEVEL_Win16CurrentTeb;
-    if (!fs) fs = SYSLEVEL_EmergencyTeb;
-    __set_fs(fs);
-}
 
 /***********************************************************************
  *           get_trap_code
@@ -408,6 +389,57 @@ static inline void *get_cr2_value( const SIGCONTEXT *sigcontext )
  */
 static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
+    WORD fs;
+    /* get %fs at time of the fault */
+#ifdef FS_sig
+    fs = FS_sig(sigcontext);
+#else
+    fs = __get_fs();
+#endif
+    context->SegFs = fs;
+
+    /* now restore a proper %fs for the fault handler */
+    if (!IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))  /* 16-bit mode */
+    {
+        fs = SYSLEVEL_Win16CurrentTeb;
+    }
+#ifdef linux
+    else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */
+    {
+        /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
+        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)ESP_sig(sigcontext);
+        /* fetch the saved %fs on the stack */
+        fs = *((unsigned int *)ESP_sig(sigcontext) + 2);
+        __set_fs(fs);
+        /* get context from vm86 struct */
+        context->Eax    = vm86->regs.eax;
+        context->Ebx    = vm86->regs.ebx;
+        context->Ecx    = vm86->regs.ecx;
+        context->Edx    = vm86->regs.edx;
+        context->Esi    = vm86->regs.esi;
+        context->Edi    = vm86->regs.edi;
+        context->Esp    = vm86->regs.esp;
+        context->Ebp    = vm86->regs.ebp;
+        context->Eip    = vm86->regs.eip;
+        context->SegCs  = vm86->regs.cs;
+        context->SegDs  = vm86->regs.ds;
+        context->SegEs  = vm86->regs.es;
+        context->SegFs  = vm86->regs.fs;
+        context->SegGs  = vm86->regs.gs;
+        context->SegSs  = vm86->regs.ss;
+        context->EFlags = vm86->regs.eflags;
+        return;
+    }
+#endif  /* linux */
+
+    if (!fs)
+    {
+        fs = SYSLEVEL_EmergencyTeb;
+        __set_fs(fs);
+        ERR("fallback to emergency TEB\n");
+    }
+    __set_fs(fs);
+
     context->Eax    = EAX_sig(sigcontext);
     context->Ebx    = EBX_sig(sigcontext);
     context->Ecx    = ECX_sig(sigcontext);
@@ -422,7 +454,6 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     context->SegDs  = LOWORD(DS_sig(sigcontext));
     context->SegEs  = LOWORD(ES_sig(sigcontext));
     context->SegSs  = LOWORD(SS_sig(sigcontext));
-    /* %fs already handled in handler_init */
 #ifdef GS_sig
     context->SegGs  = LOWORD(GS_sig(sigcontext));
 #else
@@ -438,6 +469,33 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  */
 static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
 {
+#ifdef linux
+    /* check if exception occurred in vm86 mode */
+    if ((void *)EIP_sig(sigcontext) == vm86_return &&
+        IS_SELECTOR_SYSTEM(CS_sig(sigcontext)))
+    {
+        /* retrieve pointer to vm86plus struct that was stored in vm86_enter */
+        struct vm86plus_struct *vm86 = *(struct vm86plus_struct **)ESP_sig(sigcontext);
+        vm86->regs.eax    = context->Eax;
+        vm86->regs.ebx    = context->Ebx;
+        vm86->regs.ecx    = context->Ecx;
+        vm86->regs.edx    = context->Edx;
+        vm86->regs.esi    = context->Esi;
+        vm86->regs.edi    = context->Edi;
+        vm86->regs.esp    = context->Esp;
+        vm86->regs.ebp    = context->Ebp;
+        vm86->regs.eip    = context->Eip;
+        vm86->regs.cs     = context->SegCs;
+        vm86->regs.ds     = context->SegDs;
+        vm86->regs.es     = context->SegEs;
+        vm86->regs.fs     = context->SegFs;
+        vm86->regs.gs     = context->SegGs;
+        vm86->regs.ss     = context->SegSs;
+        vm86->regs.eflags = context->EFlags;
+        return;
+    }
+#endif /* linux */
+
     EAX_sig(sigcontext) = context->Eax;
     EBX_sig(sigcontext) = context->Ebx;
     ECX_sig(sigcontext) = context->Ecx;
@@ -685,7 +743,6 @@ static void do_fpe( CONTEXT *context, int trap_code )
 static HANDLER_DEF(segv_handler)
 {
     CONTEXT context;
-    handler_init( &context, HANDLER_CONTEXT );
     save_context( &context, HANDLER_CONTEXT );
     do_segv( &context, get_trap_code(HANDLER_CONTEXT),
              get_cr2_value(HANDLER_CONTEXT), get_error_code(HANDLER_CONTEXT) );
@@ -701,7 +758,6 @@ static HANDLER_DEF(segv_handler)
 static HANDLER_DEF(trap_handler)
 {
     CONTEXT context;
-    handler_init( &context, HANDLER_CONTEXT );
     save_context( &context, HANDLER_CONTEXT );
     do_trap( &context, get_trap_code(HANDLER_CONTEXT) );
     restore_context( &context, HANDLER_CONTEXT );
@@ -716,7 +772,6 @@ static HANDLER_DEF(trap_handler)
 static HANDLER_DEF(fpe_handler)
 {
     CONTEXT context;
-    handler_init( &context, HANDLER_CONTEXT );
     save_fpu( &context, HANDLER_CONTEXT );
     save_context( &context, HANDLER_CONTEXT );
     do_fpe( &context, get_trap_code(HANDLER_CONTEXT) );
@@ -735,7 +790,6 @@ static HANDLER_DEF(int_handler)
     EXCEPTION_RECORD rec;
     CONTEXT context;
 
-    handler_init( &context, HANDLER_CONTEXT );
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionCode    = CONTROL_C_EXIT;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -842,6 +896,7 @@ void __wine_enter_vm86( CONTEXT *context )
     int res;
     struct vm86plus_struct vm86;
 
+    memset( &vm86, 0, sizeof(vm86) );
     for (;;)
     {
         vm86.regs.eax    = context->Eax;
@@ -858,10 +913,18 @@ void __wine_enter_vm86( CONTEXT *context )
         vm86.regs.es     = context->SegEs;
         vm86.regs.fs     = context->SegFs;
         vm86.regs.gs     = context->SegGs;
+        vm86.regs.ss     = context->SegSs;
         vm86.regs.eflags = context->EFlags;
-        if (vm86.regs.eflags & IF_MASK) vm86.regs.eflags |= VIF_MASK;
 
-        res = wine_vm86plus( VM86_ENTER, &vm86 );
+        do
+        {
+            res = vm86_enter( &vm86 );
+            if (res < 0)
+            {
+                errno = -res;
+                return;
+            }
+        } while (VM86_TYPE(res) == VM86_SIGNAL);
 
         context->Eax    = vm86.regs.eax;
         context->Ebx    = vm86.regs.ebx;
@@ -877,34 +940,16 @@ void __wine_enter_vm86( CONTEXT *context )
         context->SegEs  = vm86.regs.es;
         context->SegFs  = vm86.regs.fs;
         context->SegGs  = vm86.regs.gs;
+        context->SegSs  = vm86.regs.ss;
         context->EFlags = vm86.regs.eflags;
 
         switch(VM86_TYPE(res))
         {
-        case VM86_SIGNAL: /* return due to signal */
-            switch(VM86_ARG(res))
-            {
-            case SIGILL:
-            case SIGSEGV:
-#ifdef SIGBUS
-            case SIGBUS:
-#endif
-                do_segv( context, T_UNKNOWN, 0, 0 );
-                continue;
-            case SIGTRAP:
-                do_trap( context, T_UNKNOWN  );
-                continue;
-            case SIGFPE:
-                do_fpe( context, T_UNKNOWN );
-                continue;
-            }
-            rec.ExceptionCode = EXCEPTION_VM86_SIGNAL;
-            break;
         case VM86_UNKNOWN: /* unhandled GP fault - IO-instruction or similar */
             do_segv( context, T_PROTFLT, 0, 0 );
             continue;
         case VM86_TRAP: /* return due to DOS-debugger request */
-            do_trap( context, T_UNKNOWN  );
+            do_trap( context, VM86_ARG(res)  );
             continue;
         case VM86_INTx: /* int3/int x instruction (ARG = x) */
             rec.ExceptionCode = EXCEPTION_VM86_INTx;

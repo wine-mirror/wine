@@ -349,6 +349,14 @@ BOOL SIGNAL_Init(void)
 }
 
 /**********************************************************************
+ *		__wine_enter_vm86
+ */
+void __wine_enter_vm86( CONTEXT *context )
+{
+    MESSAGE("vm86 mode not supported on this platform\n");
+}
+
+/**********************************************************************
  *              DbgBreakPoint   (NTDLL)
  */
 void WINAPI DbgBreakPoint(void)
