@@ -140,7 +140,7 @@ type	win32
 137 stub ReadOleStg
 138 stub ReadStringStream
 139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop
-140 stub ReleaseStgMedium
+140 stdcall ReleaseStgMedium(ptr) ReleaseStgMedium
 141 stdcall RevokeDragDrop(long) RevokeDragDrop
 142 stub SetConvertStg
 143 stub SetDocumentBitStg

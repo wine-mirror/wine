@@ -500,6 +500,105 @@ HRESULT WINAPI OleSetMenuDescriptor(
   return E_FAIL;
 }
 
+/***********************************************************************
+ * ReleaseStgMedium [OLE32.140]
+ */
+void WINAPI ReleaseStgMedium(
+  STGMEDIUM* pmedium)
+{
+  switch (pmedium->tymed)
+  {
+    case TYMED_HGLOBAL:
+    {
+      if ( (pmedium->pUnkForRelease==0) && 
+	   (pmedium->u.hGlobal!=0) )
+	GlobalFree(pmedium->u.hGlobal);
+
+      pmedium->u.hGlobal = 0;
+      break;
+    }
+    case TYMED_FILE:
+    {
+      if (pmedium->u.lpszFileName!=0)
+      {
+	if (pmedium->pUnkForRelease==0)
+	{
+	  DeleteFileW(pmedium->u.lpszFileName);
+	}
+	
+	CoTaskMemFree(pmedium->u.lpszFileName);
+      }
+
+      pmedium->u.lpszFileName = 0;
+      break;
+    }
+    case TYMED_ISTREAM:
+    {
+      if (pmedium->u.pstm!=0)
+      {
+	IStream_Release(pmedium->u.pstm);
+      }
+
+      pmedium->u.pstm = 0;
+      break;
+    }
+    case TYMED_ISTORAGE:
+    {
+      if (pmedium->u.pstg!=0)
+      {
+	IStorage_Release(pmedium->u.pstg);
+      }
+
+      pmedium->u.pstg = 0;
+      break;
+    }
+    case TYMED_GDI:
+    {
+      if ( (pmedium->pUnkForRelease==0) && 
+	   (pmedium->u.hGlobal!=0) )
+	DeleteObject(pmedium->u.hGlobal);
+
+      pmedium->u.hGlobal = 0;
+      break;
+    }
+    case TYMED_MFPICT:
+    {
+      if ( (pmedium->pUnkForRelease==0) && 
+	   (pmedium->u.hMetaFilePict!=0) )
+      {
+	DeleteMetaFile(pmedium->u.hMetaFilePict);
+	GlobalFree(pmedium->u.hMetaFilePict);
+      }
+
+      pmedium->u.hMetaFilePict = 0;
+      break;
+    }
+    case TYMED_ENHMF:
+    {
+      if ( (pmedium->pUnkForRelease==0) && 
+	   (pmedium->u.hEnhMetaFile!=0) )
+      {
+	DeleteEnhMetaFile(pmedium->u.hEnhMetaFile);
+      }
+
+      pmedium->u.hEnhMetaFile = 0;
+      break;
+    }
+    case TYMED_NULL:
+    default:
+      break;
+  }
+
+  /*
+   * After cleaning up, the unknown is released
+   */
+  if (pmedium->pUnkForRelease!=0)
+  {
+    IUnknown_Release(pmedium->pUnkForRelease);
+    pmedium->pUnkForRelease = 0;
+  }
+}
+
 /***
  * OLEDD_Initialize()
  *
