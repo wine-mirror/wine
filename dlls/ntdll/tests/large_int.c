@@ -51,6 +51,7 @@ static void InitFunctionPtrs()
     } /* if */
 }
 
+#define ULL(a,b) (((ULONGLONG)(a) << 32) | (b))
 
 typedef struct {
     LONGLONG a;
@@ -60,48 +61,48 @@ typedef struct {
 } magic_divide_t;
 
 static const magic_divide_t magic_divide[] = {
-    {                  3,   0x5555555555555555U, 0,                   0}, /* 1 */
-    {          333333333,   0x5555555555555555U, 0,           111111110}, /* 111111111 */
-    { 0x7fffffffffffffff,   0x5555555555555555U, 0,  0x2aaaaaaaaaaaaaaa},
-    {                  3,   0xaaaaaaaaaaaaaaaaU, 1,                   0}, /* 1 */
-    {          333333333,   0xaaaaaaaaaaaaaaaaU, 1,           111111110}, /* 111111111 */
-    { 0x7fffffffffffffff,   0xaaaaaaaaaaaaaaaaU, 1,  0x2aaaaaaaaaaaaaaa},
-    {                 -3,   0x5555555555555555U, 0,                   0}, /* -1 */
-    {         -333333333,   0x5555555555555555U, 0,          -111111110}, /* -111111111 */
-    {-0x7fffffffffffffff,   0x5555555555555555U, 0, -0x2aaaaaaaaaaaaaaa},
-    {                 -3,   0xaaaaaaaaaaaaaaaaU, 1,                   0}, /* -1 */
-    {         -333333333,   0xaaaaaaaaaaaaaaaaU, 1,          -111111110}, /* -111111111 */
-    {-0x7fffffffffffffff,   0xaaaaaaaaaaaaaaaaU, 1, -0x2aaaaaaaaaaaaaaa},
-    {                 -3,  -0x5555555555555555U, 0,                  -2}, /* -1 */
-    {         -333333333,  -0x5555555555555555U, 0,          -222222222}, /* -111111111 */
-    {-0x7fffffffffffffff,  -0x5555555555555555U, 0, -0x5555555555555554},
-    {                 -3,  -0xaaaaaaaaaaaaaaaaU, 1,                   0}, /* -1 */
-    {         -333333333,  -0xaaaaaaaaaaaaaaaaU, 1,           -55555555}, /* -111111111 */
-    {-0x7fffffffffffffff,  -0xaaaaaaaaaaaaaaaaU, 1, -0x1555555555555555},
-    {                  3,  -0x5555555555555555U, 0,                   2}, /* -1 */
-    {          333333333,  -0x5555555555555555U, 0,           222222222}, /* -111111111 */
-    { 0x7fffffffffffffff,  -0x5555555555555555U, 0,  0x5555555555555554},
-    {                  3,  -0xaaaaaaaaaaaaaaaaU, 1,                   0}, /* -1 */
-    {          333333333,  -0xaaaaaaaaaaaaaaaaU, 1,            55555555}, /* -111111111 */
-    { 0x7fffffffffffffff,  -0xaaaaaaaaaaaaaaaaU, 1,  0x1555555555555555},
-    {                  3, 12297829382473033728U, 1,                   0}, /* 1 */
-    {          333333333, 12297829382473033728U, 1,           111111110}, /* 111111111 */
-    { 0x7fffffffffffffff, 12297829382473033728U, 1,  0x2aaaaaaaaaaaa9ff}, /* 0x2aaaaaaaaaaaaaaa */
-    {                  5,  3689348814741910527U, 0,                   1},
-    {          555555555,  3689348814741910527U, 0,           111111111},
-    { 0x7fffffffffffffff,  3689348814741910527U, 0,  0x19999999999999ff}, /* 0x199999999999999a */
-    {                  5,  7378697629483821054U, 1,                   1},
-    {          555555555,  7378697629483821054U, 1,           111111111},
-    { 0x7fffffffffffffff,  7378697629483821054U, 1,  0x19999999999999ff}, /* 0x199999999999999a */
-    {                  5, 14757395258967642109U, 2,                   1},
-    {          555555555, 14757395258967642109U, 2,           111111111},
-    { 0x7fffffffffffffff, 14757395258967642109U, 2,  0x19999999999999ff}, /* 0x199999999999999a */
-    {      0xaddcafeface,     0x2f1e28fd1b5ccaU, 33,                  1},
-    {  0x81ac1b9c2310a80,     0x2f1e28fd1b5ccaU, 33,             0xbeef},
-    { 0x74ae3b5f1558c800,     0x2f1e28fd1b5ccaU, 33,            0xabcde},
-    {      0xaddcafeface,   0x2f1e28fd1b5cca00U, 41,                  1},
-    {  0x81ac1b9c2310a80,   0x2f1e28fd1b5cca00U, 41,             0xbeef},
-    { 0x74ae3b5f1558c800,   0x2f1e28fd1b5cca00U, 41,            0xabcde},
+    {                          3,  ULL(0x55555555,0x55555555), 0,                   0}, /* 1 */
+    {                  333333333,  ULL(0x55555555,0x55555555), 0,           111111110}, /* 111111111 */
+    { ULL(0x7fffffff,0xffffffff),  ULL(0x55555555,0x55555555), 0,  ULL(0x2aaaaaaa,0xaaaaaaaa)},
+    {                          3,  ULL(0xaaaaaaaa,0xaaaaaaaa), 1,                   0}, /* 1 */
+    {                  333333333,  ULL(0xaaaaaaaa,0xaaaaaaaa), 1,           111111110}, /* 111111111 */
+    { ULL(0x7fffffff,0xffffffff),  ULL(0xaaaaaaaa,0xaaaaaaaa), 1,  ULL(0x2aaaaaaa,0xaaaaaaaa)},
+    {                         -3,  ULL(0x55555555,0x55555555), 0,                   0}, /* -1 */
+    {                 -333333333,  ULL(0x55555555,0x55555555), 0,          -111111110}, /* -111111111 */
+    {-ULL(0x7fffffff,0xffffffff),  ULL(0x55555555,0x55555555), 0, -ULL(0x2aaaaaaa,0xaaaaaaaa)},
+    {                         -3,  ULL(0xaaaaaaaa,0xaaaaaaaa), 1,                   0}, /* -1 */
+    {                 -333333333,  ULL(0xaaaaaaaa,0xaaaaaaaa), 1,          -111111110}, /* -111111111 */
+    {-ULL(0x7fffffff,0xffffffff),  ULL(0xaaaaaaaa,0xaaaaaaaa), 1, -ULL(0x2aaaaaaa,0xaaaaaaaa)},
+    {                         -3, -ULL(0x55555555,0x55555555), 0,                  -2}, /* -1 */
+    {                 -333333333, -ULL(0x55555555,0x55555555), 0,          -222222222}, /* -111111111 */
+    {-ULL(0x7fffffff,0xffffffff), -ULL(0x55555555,0x55555555), 0, -ULL(0x55555555,0x55555554)},
+    {                         -3, -ULL(0xaaaaaaaa,0xaaaaaaaa), 1,                   0}, /* -1 */
+    {                 -333333333, -ULL(0xaaaaaaaa,0xaaaaaaaa), 1,           -55555555}, /* -111111111 */
+    {-ULL(0x7fffffff,0xffffffff), -ULL(0xaaaaaaaa,0xaaaaaaaa), 1, -ULL(0x15555555,0x55555555)},
+    {                          3, -ULL(0x55555555,0x55555555), 0,                   2}, /* -1 */
+    {                  333333333, -ULL(0x55555555,0x55555555), 0,           222222222}, /* -111111111 */
+    { ULL(0x7fffffff,0xffffffff), -ULL(0x55555555,0x55555555), 0,  ULL(0x55555555,0x55555554)},
+    {                          3, -ULL(0xaaaaaaaa,0xaaaaaaaa), 1,                   0}, /* -1 */
+    {                  333333333, -ULL(0xaaaaaaaa,0xaaaaaaaa), 1,            55555555}, /* -111111111 */
+    { ULL(0x7fffffff,0xffffffff), -ULL(0xaaaaaaaa,0xaaaaaaaa), 1,  ULL(0x15555555,0x55555555)},
+    {                          3,  ULL(0xaaaaaaaa,0xaaaaa800), 1,                   0}, /* 1 */
+    {                  333333333,  ULL(0xaaaaaaaa,0xaaaaa800), 1,           111111110}, /* 111111111 */
+    { ULL(0x7fffffff,0xffffffff),  ULL(0xaaaaaaaa,0xaaaaa800), 1,  ULL(0x2aaaaaaa,0xaaaaa9ff)}, /* 0x2aaaaaaaaaaaaaaa */
+    {                          5,  ULL(0x33333333,0x333333ff), 0,                   1},
+    {                  555555555,  ULL(0x33333333,0x333333ff), 0,           111111111},
+    { ULL(0x7fffffff,0xffffffff),  ULL(0x33333333,0x333333ff), 0,  ULL(0x19999999,0x999999ff)}, /* 0x199999999999999a */
+    {                          5,  ULL(0x66666666,0x666667fe), 1,                   1},
+    {                  555555555,  ULL(0x66666666,0x666667fe), 1,           111111111},
+    { ULL(0x7fffffff,0xffffffff),  ULL(0x66666666,0x666667fe), 1,  ULL(0x19999999,0x999999ff)}, /* 0x199999999999999a */
+    {                          5,  ULL(0xcccccccc,0xcccccffd), 2,                   1},
+    {                  555555555,  ULL(0xcccccccc,0xcccccffd), 2,           111111111},
+    { ULL(0x7fffffff,0xffffffff),  ULL(0xcccccccc,0xcccccffd), 2,  ULL(0x19999999,0x999999ff)}, /* 0x199999999999999a */
+    { ULL(0x00000add,0xcafeface),  ULL(0x002f1e28,0xfd1b5cca), 33,                  1},
+    { ULL(0x081ac1b9,0xc2310a80),  ULL(0x002f1e28,0xfd1b5cca), 33,             0xbeef},
+    { ULL(0x74ae3b5f,0x1558c800),  ULL(0x002f1e28,0xfd1b5cca), 33,            0xabcde},
+    { ULL(0x00000add,0xcafeface),  ULL(0x2f1e28fd,0x1b5cca00), 41,                  1},
+    { ULL(0x081ac1b9,0xc2310a80),  ULL(0x2f1e28fd,0x1b5cca00), 41,             0xbeef},
+    { ULL(0x74ae3b5f,0x1558c800),  ULL(0x2f1e28fd,0x1b5cca00), 41,            0xabcde},
 
 };
 #define NB_MAGIC_DIVIDE (sizeof(magic_divide)/sizeof(*magic_divide))
@@ -161,17 +162,17 @@ static const largeint2str_t largeint2str[] = {
     { 0,  2147483649U, 10, 11, "2147483649\0--------------------------------------------------------", STATUS_SUCCESS},
     { 0,  4294967294U, 10, 11, "4294967294\0--------------------------------------------------------", STATUS_SUCCESS},
     { 0,  4294967295U, 10, 11, "4294967295\0--------------------------------------------------------", STATUS_SUCCESS},
-    { 0,       12345678901U, 11, 12, "12345678901\0-------------------------------------------------------", STATUS_SUCCESS},
-    { 0,      987654321012U, 12, 13, "987654321012\0------------------------------------------------------", STATUS_SUCCESS},
-    { 0,     1928374656574U, 13, 14, "1928374656574\0-----------------------------------------------------", STATUS_SUCCESS},
-    { 0,      0xBADCAFEFACE, 14, 15, "12841062955726\0----------------------------------------------------", STATUS_SUCCESS},
-    { 0,     0x5BADCAFEFACE, 15, 16, "100801993177806\0---------------------------------------------------", STATUS_SUCCESS},
-    { 0,    0xAFACEBEEFCAFE, 16, 20, "3090515640699646\0--------------------------------------------------", STATUS_SUCCESS},
-    { 0,   0xA5BEEFABCDCAFE, 17, 20, "46653307746110206\0-------------------------------------------------", STATUS_SUCCESS},
-    { 0,  0x1F8CF9BF2DF3AF1, 18, 20, "142091656963767025\0------------------------------------------------", STATUS_SUCCESS},
-    { 0,  0xFFFFFFFFFFFFFFF, 19, 20, "1152921504606846975\0-----------------------------------------------", STATUS_SUCCESS},
-    { 0, 0xFFFFFFFFFFFFFFFE, 20, 21, "18446744073709551614\0----------------------------------------------", STATUS_SUCCESS},
-    { 0, 0xFFFFFFFFFFFFFFFF, 20, 21, "18446744073709551615\0----------------------------------------------", STATUS_SUCCESS},
+    { 0,  ULL(0x2,0xdfdc1c35), 11, 12, "12345678901\0-------------------------------------------------------", STATUS_SUCCESS},
+    { 0,  ULL(0xe5,0xf4c8f374), 12, 13, "987654321012\0------------------------------------------------------", STATUS_SUCCESS},
+    { 0,  ULL(0x1c0,0xfc161e3e), 13, 14, "1928374656574\0-----------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0xbad,0xcafeface), 14, 15, "12841062955726\0----------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0x5bad,0xcafeface), 15, 16, "100801993177806\0---------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0xaface,0xbeefcafe), 16, 20, "3090515640699646\0--------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0xa5beef,0xabcdcafe), 17, 20, "46653307746110206\0-------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0x1f8cf9b,0xf2df3af1), 18, 20, "142091656963767025\0------------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0x0fffffff,0xffffffff), 19, 20, "1152921504606846975\0-----------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0xffffffff,0xfffffffe), 20, 21, "18446744073709551614\0----------------------------------------------", STATUS_SUCCESS},
+    { 0, ULL(0xffffffff,0xffffffff), 20, 21, "18446744073709551615\0----------------------------------------------", STATUS_SUCCESS},
 
     { 2,  0x80000000U, 32, 33, "10000000000000000000000000000000\0----------------------------------", STATUS_SUCCESS},
 /*
