@@ -1387,7 +1387,6 @@ BOOL16 WINAPI EnableCommNotification16( INT16 cid, HWND16 hwnd,
 	TRACE("(%d, %x, %d, %d)\n", cid, hwnd, cbWriteNotify, cbOutQueue);
 	if ((ptr = GetDeviceStruct(cid)) == NULL) {
 		FIXME("no handle for cid = %0x!.\n",cid);
-		ptr->commerror = IE_BADID;
 		return -1;
 	}
 	ptr->wnd = hwnd;
