@@ -12,6 +12,7 @@ format_msg.ok
 generated.ok
 kernel32_test.exe.spec.c
 locale.ok
+mailslot.ok
 path.ok
 pipe.ok
 process.ok

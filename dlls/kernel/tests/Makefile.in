@@ -18,6 +18,7 @@ CTESTS = \
 	format_msg.c \
 	generated.c \
 	locale.c \
+	mailslot.c \
 	path.c \
 	pipe.c \
 	process.c \
