@@ -2,7 +2,7 @@ name	wprocs
 type	win16
 
 23 pascal UTGlue16(ptr long ptr long) UTGlue16
-27 pascal EntryAddrProc(word word) NE_GetEntryPoint
+27 pascal EntryAddrProc(word word) WIN16_NE_GetEntryPoint
 28 pascal MyAlloc(word word word) NE_AllocateSegment
  
 # Interrupt vectors 0-255 are ordinals 100-355
