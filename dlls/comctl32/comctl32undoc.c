@@ -37,6 +37,8 @@
 #include <ctype.h>
 #include <limits.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "commctrl.h"
 #include "objbase.h"
 #include "winbase.h"

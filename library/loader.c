@@ -30,6 +30,8 @@
 #include <sys/mman.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "wine/library.h"
 

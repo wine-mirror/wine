@@ -24,7 +24,6 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/library.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +36,10 @@
 #  define CUPS_SONAME "libcups.so"
 # endif
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "wine/library.h"
 #include "winspool.h"
 #include "winbase.h"
 #include "winerror.h"

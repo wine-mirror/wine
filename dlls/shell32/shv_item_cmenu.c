@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winerror.h"
 #include "wine/debug.h"
 

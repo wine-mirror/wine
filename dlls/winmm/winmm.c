@@ -30,6 +30,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "mmsystem.h"
 #include "winbase.h"
 #include "wine/winuser16.h" /* FIXME: should be removed, only used for UserYield16 */

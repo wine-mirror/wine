@@ -20,6 +20,8 @@
  */
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/debug.h"
 
 #include "pidl.h"

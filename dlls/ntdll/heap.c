@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "winbase.h"

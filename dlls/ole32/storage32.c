@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h" /* for lstrlenW() and the likes */
 #include "winnls.h"
 #include "wine/unicode.h"

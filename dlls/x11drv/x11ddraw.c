@@ -22,6 +22,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ts_xlib.h"
 #include "x11drv.h"
 #include "x11ddraw.h"

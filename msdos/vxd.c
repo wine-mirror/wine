@@ -28,6 +28,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "windef.h"
 #include "winternl.h"

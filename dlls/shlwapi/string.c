@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"

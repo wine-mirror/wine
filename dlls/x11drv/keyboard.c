@@ -38,6 +38,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "wingdi.h"
 #include "wine/winuser16.h"

@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/debug.h"
 #include "undocshell.h"
 #include "shlguid.h"

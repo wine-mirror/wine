@@ -31,6 +31,8 @@
 # include <unistd.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "windef.h"
 #include "winerror.h"

@@ -38,6 +38,8 @@
 #endif
 #include <fcntl.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winedump.h"
 #include "pe.h"

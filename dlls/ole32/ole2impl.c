@@ -19,6 +19,9 @@
  */
 
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"

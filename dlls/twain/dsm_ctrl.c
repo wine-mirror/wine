@@ -21,6 +21,9 @@
 #include "config.h"
 
 #include <stdlib.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "twain.h"
 #include "twain_i.h"

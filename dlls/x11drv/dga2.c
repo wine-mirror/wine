@@ -22,6 +22,8 @@
 
 #ifdef HAVE_LIBXXF86DGA2
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ts_xlib.h"
 #include <X11/extensions/xf86dga.h>
 

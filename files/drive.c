@@ -54,6 +54,8 @@
 # endif
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */

@@ -28,6 +28,8 @@
 #include <ctype.h>
 #include <assert.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winnls.h"
 #include "winbase.h"

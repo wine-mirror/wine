@@ -49,6 +49,8 @@
 #include <string.h>
 #include <math.h>	/* Insomnia - pow() function */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

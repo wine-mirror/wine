@@ -24,9 +24,11 @@
 #include "config.h"
 
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/winbase16.h"
 #include "miscemu.h"
-/* #define DEBUG_INT */
 #include "wine/debug.h"
 #include "winioctl.h"
 #include "ntddstor.h"

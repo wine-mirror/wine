@@ -38,6 +38,8 @@
 #include <sys/mman.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winternl.h"
 #include "global.h"
 #include "wine/library.h"

@@ -22,6 +22,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/debug.h"
 #include "ddraw_private.h"
 #include "ddraw/user.h"

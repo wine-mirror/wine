@@ -20,6 +20,9 @@
 
 #include <assert.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"

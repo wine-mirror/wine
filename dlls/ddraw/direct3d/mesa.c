@@ -27,6 +27,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "d3d.h"
 #include "ddraw.h"
 #include "winerror.h"

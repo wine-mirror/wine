@@ -21,6 +21,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winnls.h"
 #include "winerror.h"
 #include "winreg.h"

@@ -24,6 +24,8 @@
 #include <assert.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "objbase.h"

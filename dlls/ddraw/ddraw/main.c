@@ -31,6 +31,8 @@
 #include <assert.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winerror.h"
 #include "ddraw.h"
 #include "d3d.h"

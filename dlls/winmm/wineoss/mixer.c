@@ -36,6 +36,8 @@
 # include <sys/ioctl.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "mmddk.h"
 #include "oss.h"

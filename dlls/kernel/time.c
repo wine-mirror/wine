@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "file.h"
 #include "winternl.h"
 #include "winerror.h"

@@ -18,12 +18,13 @@
  */
 
 #include "config.h"
-#include "wine/debug.h"
-#include "ddraw.h"
 
 #include <assert.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "ddraw.h"
 #include "ddraw_private.h"
 #include "ddraw/main.h"
 #include "ddraw/user.h"
@@ -32,6 +33,7 @@
 #include "dsurface/main.h"
 #include "dsurface/dib.h"
 #include "dsurface/user.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

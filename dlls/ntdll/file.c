@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/server.h"

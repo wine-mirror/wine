@@ -32,6 +32,9 @@ at a later date. */
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"

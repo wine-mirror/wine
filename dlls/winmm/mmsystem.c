@@ -32,6 +32,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "mmsystem.h"
 #include "winbase.h"
 

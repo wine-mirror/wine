@@ -46,6 +46,8 @@
 # include <float.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "oleauto.h"
 #include "heap.h"

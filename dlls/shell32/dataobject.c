@@ -21,6 +21,8 @@
  */
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"

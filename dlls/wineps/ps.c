@@ -21,6 +21,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "gdi.h"
 #include "psdrv.h"
 #include "winspool.h"

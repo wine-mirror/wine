@@ -59,6 +59,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "winternl.h"
 #include "winnls.h"

@@ -29,6 +29,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "objbase.h"
 #include "ole2.h"

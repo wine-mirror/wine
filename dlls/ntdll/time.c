@@ -34,6 +34,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

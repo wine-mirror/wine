@@ -19,11 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 #include "config.h"
-#include "winerror.h"
 
 #include <assert.h>
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "winerror.h"
 #include "mesa_private.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"

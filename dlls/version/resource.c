@@ -29,6 +29,8 @@
 # include <unistd.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "lzexpand.h"
 

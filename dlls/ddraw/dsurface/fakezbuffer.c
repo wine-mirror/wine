@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ddraw.h"
 #include "d3d.h"
 

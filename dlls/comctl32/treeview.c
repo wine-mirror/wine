@@ -47,6 +47,8 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "wingdi.h"
 #include "commctrl.h"

@@ -29,6 +29,8 @@
 # include <unistd.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winnls.h"
 #include "winbase.h"
 #include "winternl.h"

@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"

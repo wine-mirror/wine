@@ -25,6 +25,8 @@
 #include <X11/extensions/xf86dga.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "wine/winuser16.h"
 

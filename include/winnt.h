@@ -136,19 +136,27 @@
 
 /* Anonymous union/struct handling */
 
-#ifdef __WINESRC__
-# define NONAMELESSSTRUCT
-# define NONAMELESSUNION
-#else
-/* Anonymous struct support starts with gcc 2.96 or gcc/g++ 3.x */
-# if !defined(NONAMELESSSTRUCT) && (defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && (defined(__cplusplus) || (__GNUC_MINOR__ < 96))))) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#ifndef NONAMELESSSTRUCT
+# ifdef __GNUC__
+   /* Anonymous struct support starts with gcc 2.96 or gcc/g++ 3.x */
+#  if (__GNUC__ < 2) || ((__GNUC__ == 2) && (defined(__cplusplus) || (__GNUC_MINOR__ < 96)))
+#   define NONAMELESSSTRUCT
+#  endif
+# elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #  define NONAMELESSSTRUCT
 # endif
-/* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
-# if !defined(NONAMELESSUNION) && (defined(__GNUC__) && ((__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus)))))) || defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+#endif  /* NONAMELESSSTRUCT */
+
+#ifndef NONAMELESSUNION
+# ifdef __GNUC__
+   /* Anonymous unions support starts with gcc 2.96/g++ 2.95 */
+#  if (__GNUC__ < 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ < 95) || ((__GNUC_MINOR__ == 95) && !defined(__cplusplus))))
+#   define NONAMELESSUNION
+#  endif
+# elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 #  define NONAMELESSUNION
 # endif
-#endif
+#endif  /* NONAMELESSUNION */
 
 #ifndef NONAMELESSSTRUCT
 #define DUMMYSTRUCTNAME

@@ -23,6 +23,9 @@
 
 #include <assert.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"

@@ -61,6 +61,8 @@
 # include <sys/cdio.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winternl.h"
 #include "winioctl.h"
 #include "ntddstor.h"

@@ -25,6 +25,8 @@
 
 #include <string.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "winbase.h"
 #include "commctrl.h"
 #include "prsht.h"

@@ -27,6 +27,8 @@
 # include <unistd.h>
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"

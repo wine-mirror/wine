@@ -23,6 +23,9 @@
  */
 
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "psdrv.h"
 #include "wine/debug.h"
 #include "winuser.h"
