@@ -175,17 +175,17 @@ static struct {
  WORD lang, ansi_codepage, oem_codepage;
  const char (*key)[MAIN_LEN][4];
 } main_key_tab[]={
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US), 1252, 437, &main_key_US},
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK), 1252, 850, &main_key_UK},
- {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),     1252, 850, &main_key_FR},
- {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),     1252, 850, &main_key_DE},
- {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),1252, 850, &main_key_SG},
- {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &main_key_NO},
- {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),     1252, 865, &main_key_DA},
- {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN),1252,863,&main_key_CF},
- {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT), 1252, 860, &main_key_PT},
- {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),    1252, 850, &main_key_FI},
- {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),    1251, 866, &main_key_RU},
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US},
+ {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK),     1252, 850, &main_key_UK},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),         1252, 850, &main_key_FR},
+ {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE},
+ {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),    1252, 850, &main_key_SG},
+ {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),      1252, 865, &main_key_NO},
+ {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),         1252, 865, &main_key_DA},
+ {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN), 1252, 863, &main_key_CF},
+ {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT),     1252, 860, &main_key_PT},
+ {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),        1252, 850, &main_key_FI},
+ {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),        1251, 866, &main_key_RU},
 
  {0} /* sentinel */
 };
@@ -520,10 +520,11 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 void
 X11DRV_KEYBOARD_DetectLayout (void)
 {
-  unsigned current, match, mismatch;
-  int score, keyc, i, key, ok, syms;
+  unsigned current, match, mismatch, seq;
+  int score, keyc, i, key, pkey, ok, syms;
   KeySym keysym;
   const char (*lkey)[MAIN_LEN][4];
+  unsigned max_seq = 0;
   int max_score = 0, ismatch = 0;
   char ckey[4] =
   {0, 0, 0, 0};
@@ -539,7 +540,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
     match = 0;
     mismatch = 0;
     score = 0;
+    seq = 0;
     lkey = main_key_tab[current].key;
+    pkey = -1;
     for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
       /* get data for keycode from X server */
       for (i = 0; i < syms; i++) {
@@ -570,9 +573,12 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	  }
 	}
 	/* count the matches and mismatches */
-	if (ok > 0)
+	if (ok > 0) {
 	  match++;
-	else {
+	  /* and how much the keycode order matches */
+	  if (key > pkey) seq++;
+	  pkey = key;
+	} else {
 	  TRACE (key, "mismatch for keycode %d, character %c\n", keyc,
 		 ckey[0]);
 	  mismatch++;
@@ -582,19 +588,21 @@ X11DRV_KEYBOARD_DetectLayout (void)
     }
     TRACE (keyboard, "matches=%d, mismatches=%d, score=%d\n",
 	   match, mismatch, score);
-    if (score > max_score) {
+    if ((score > max_score) ||
+	((score == max_score) && (seq > max_seq))) {
       /* best match so far */
       kbd_layout = current;
       max_score = score;
+      max_seq = seq;
       ismatch = !mismatch;
     }
   }
   /* we're done, report results if necessary */
   if (!ismatch) {
     FIXME (keyboard,
-	 "Your keyboard layout was not found! Using closest match (%04x).\n"
-	   "Please define your layout in windows/x11drv/keyboard.c "
-	   "and submit them\n"
+	   "Your keyboard layout was not found!\n"
+	   "Instead using closest match (%04x) for scancode mapping.\n"
+	   "Please define your layout in windows/x11drv/keyboard.c and submit them\n"
 	   "to us for inclusion into future Wine releases.\n"
 	   "See documentation/keyboard for more information.\n",
 	   main_key_tab[kbd_layout].lang);
@@ -705,8 +713,11 @@ void X11DRV_KEYBOARD_Init(void)
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
 		keysym = TSXKeycodeToKeysym(display, keyc, i);
-		if ((keysym<0x100)&&(keysym!=' ')) ckey[i] = keysym;
-		else ckey[i] = 0;
+		if ((keysym<0x800) && (keysym!=' ')) {
+		  ckey[i] = keysym & 0xFF;
+		} else {
+		  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
+		}
 	      }
 	      /* find key with longest match streak */
 	      for (keyn=0; keyn<MAIN_LEN; keyn++) {
