@@ -746,7 +746,12 @@ int X11DRV_GetCurrentPacket(LPWTPACKET *packet)
 
 int static inline CopyTabletData(LPVOID target, LPVOID src, INT size)
 {
-    memcpy(target,src,size);
+    /*
+     * It is valid to call CopyTabletData with NULL.
+     * This handles the WTInfo() case where lpOutput is null.
+     */
+    if(target != NULL)
+        memcpy(target,src,size);
     return(size);
 }
 
@@ -755,6 +760,14 @@ int static inline CopyTabletData(LPVOID target, LPVOID src, INT size)
  */
 UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
+    /*
+     * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
+     * lpOutput == NULL signifies the user only wishes
+     * to find the size of the data.
+     * NOTE:
+     * From now on use CopyTabletData to fill lpOutput. memcpy will break
+     * the code.
+     */
     int rc = 0;
     LPWTI_CURSORS_INFO  tgtcursor;
     TRACE("(%u, %u, %p)\n", wCategory, nIndex, lpOutput);
@@ -799,9 +812,8 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
             switch (nIndex)
             {
                 case 0:
-                    memcpy(lpOutput, &gSysContext,
+                    rc = CopyTabletData(lpOutput, &gSysContext,
                             sizeof(LOGCONTEXTA));
-                    rc = sizeof(LOGCONTEXTA);
                     break;
                 case CTX_NAME:
                     rc = CopyTabletData(lpOutput, &gSysContext.lcName,
@@ -988,8 +1000,8 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                                         sizeof(BYTE)*32);
                     break;
                 case CSR_NPBTNMARKS:
-                    memcpy(lpOutput,&tgtcursor->NPBTNMARKS,sizeof(UINT)*2);
-                    rc = sizeof(UINT)*2;
+                    rc = CopyTabletData(lpOutput,&tgtcursor->NPBTNMARKS,
+                                        sizeof(UINT)*2);
                     break;
                 case CSR_NPBUTTON:
                     rc = CopyTabletData(lpOutput,&tgtcursor->NPBUTTON,
@@ -1004,8 +1016,8 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                                         sizeof(BYTE));
                     break;
                 case CSR_TPBTNMARKS:
-                    memcpy(lpOutput,&tgtcursor->TPBTNMARKS,sizeof(UINT)*2);
-                    rc = sizeof(UINT)*2;
+                    rc = CopyTabletData(lpOutput,&tgtcursor->TPBTNMARKS,
+                                        sizeof(UINT)*2);
                     break;
                 case CSR_TPRESPONSE:
                     FIXME("Not returning CSR_TPRESPONSE correctly\n");
@@ -1014,10 +1026,9 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                 case CSR_PHYSID:
                 {
                     DWORD id;
-                    rc = CopyTabletData(&id,&tgtcursor->PHYSID,
-                                        sizeof(DWORD));
+                    id = tgtcursor->PHYSID;
                     id += (wCategory - WTI_CURSORS);
-                    memcpy(lpOutput,&id,sizeof(DWORD));
+                    rc = CopyTabletData(lpOutput,&id,sizeof(DWORD));
                 }
                     break;
                 case CSR_MODE:
@@ -1121,14 +1132,14 @@ UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
                     */
                     break;
                 case DVC_ORIENTATION:
-                    memcpy(lpOutput,&gSysDevice.ORIENTATION,sizeof(AXIS)*3);
-                    rc = sizeof(AXIS)*3;
+                    rc = CopyTabletData(lpOutput,&gSysDevice.ORIENTATION,
+                                        sizeof(AXIS)*3);
                     break;
                 case DVC_ROTATION:
                     rc = 0; /* unsupported */
                     /*
-                    memcpy(lpOutput,&gSysDevice.ROTATION,sizeof(AXIS)*3);
-                    rc = sizeof(AXIS)*3;
+                    rc = CopyTabletData(lpOutput,&gSysDevice.ROTATION,
+                                        sizeof(AXIS)*3);
                     */
                     break;
                 case DVC_PNPID:
