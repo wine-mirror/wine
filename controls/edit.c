@@ -2951,16 +2951,14 @@ static void EDIT_WM_Char(WND *wnd, EDITSTATE *es, CHAR c, DWORD key_data)
 			}
 		}
 		break;
-	case 0x03: /* Ctrl-C */
-		EDIT_WM_Copy(wnd, es);
+	case 0x03: /* ^C */
+		SendMessageA(wnd->hwndSelf, WM_COPY, 0, 0);
 		break;
-	case 0x16: /* Ctrl-V */
-		if (!(es->style & ES_READONLY))
-			EDIT_WM_Paste(wnd, es);
+	case 0x16: /* ^V */
+		SendMessageA(wnd->hwndSelf, WM_PASTE, 0, 0);
 		break;
-	case 0x18: /* Ctrl-X */
-		if (!(es->style & ES_READONLY))
-			EDIT_WM_Cut(wnd, es);
+	case 0x18: /* ^X */
+		SendMessageA(wnd->hwndSelf, WM_CUT, 0, 0);
 		break;
 	
 	default:
