@@ -1,4 +1,4 @@
-EXTRADEFS = -DBINDIR="\"$(bindir)\"" -DWINE_NO_STRICT
+EXTRADEFS = -DBINDIR="\"$(bindir)\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

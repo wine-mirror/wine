@@ -3257,7 +3257,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
     LOGFONT16 lf;
     DC *dc = physDev->dc;
 
-    TRACE("dc=%p, hfont=%04x\n", dc, hfont);
+    TRACE("dc=%p, hfont=%p\n", dc, hfont);
 
     if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
 
@@ -3307,7 +3307,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 	LPCSTR faceMatched;
 	WORD charsetMatched;
 
-	TRACE("hfont=%04x\n", hfont); /* to connect with the trace from RealizeFont */
+	TRACE("hfont=%p\n", hfont); /* to connect with the trace from RealizeFont */
 	physDev->font = XFONT_RealizeFont( &lf, &faceMatched,
 					   FALSE, lf.lfCharSet,
 					   &charsetMatched );

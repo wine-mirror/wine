@@ -602,7 +602,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     HDC hdc = physDev->hdc;
     DC *dc = physDev->dc;
 
-    TRACE("%04x, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
+    TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
 
     if(flags & ETO_GLYPH_INDEX)

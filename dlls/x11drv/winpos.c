@@ -393,7 +393,7 @@ void X11DRV_Expose( HWND hwnd, XExposeEvent *event )
     int flags = RDW_INVALIDATE | RDW_ERASE;
     WND *win;
 
-    TRACE( "win %x (%lx) %d,%d %dx%d\n",
+    TRACE( "win %p (%lx) %d,%d %dx%d\n",
            hwnd, event->window, event->x, event->y, event->width, event->height );
 
     rect.left   = event->x;
@@ -645,7 +645,7 @@ static HWND SWP_DoOwnedPopups(HWND hwnd, HWND hwndInsertAfter)
     HWND owner = GetWindow( hwnd, GW_OWNER );
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-    WARN("(%04x) hInsertAfter = %04x\n", hwnd, hwndInsertAfter );
+    WARN("(%p) hInsertAfter = %p\n", hwnd, hwndInsertAfter );
 
     if ((style & WS_POPUP) && owner)
     {
@@ -779,7 +779,7 @@ static void set_visible_style( HWND hwnd, BOOL set )
     if (!(win = WIN_GetPtr( hwnd ))) return;
     if (win == WND_OTHER_PROCESS) return;
 
-    TRACE( "hwnd %x (%lx) set %d visible %d empty %d\n",
+    TRACE( "hwnd %p (%lx) set %d visible %d empty %d\n",
            hwnd, get_whole_window(win),
            set, (win->dwStyle & WS_VISIBLE) != 0, IsRectEmpty(&win->rectWindow) );
 
@@ -792,7 +792,7 @@ static void set_visible_style( HWND hwnd, BOOL set )
             Display *display = thread_display();
             X11DRV_sync_window_style( display, win );
             X11DRV_set_wm_hints( display, win );
-            TRACE( "mapping win %x\n", hwnd );
+            TRACE( "mapping win %p\n", hwnd );
             TSXMapWindow( display, get_whole_window(win) );
         }
     }
@@ -802,7 +802,7 @@ static void set_visible_style( HWND hwnd, BOOL set )
         WIN_SetStyle( hwnd, win->dwStyle & ~WS_VISIBLE );
         if (!IsRectEmpty( &win->rectWindow ) && get_whole_window(win) && is_window_top_level(win))
         {
-            TRACE( "unmapping win %x\n", hwnd );
+            TRACE( "unmapping win %p\n", hwnd );
             TSXUnmapWindow( thread_display(), get_whole_window(win) );
         }
     }
@@ -834,12 +834,12 @@ void X11DRV_SetWindowStyle( HWND hwnd, LONG oldStyle )
         {
             if (wndPtr->dwStyle & WS_VISIBLE)
             {
-                TRACE( "mapping win %x\n", hwnd );
+                TRACE( "mapping win %p\n", hwnd );
                 TSXMapWindow( display, get_whole_window(wndPtr) );
             }
             else
             {
-                TRACE( "unmapping win %x\n", hwnd );
+                TRACE( "unmapping win %p\n", hwnd );
                 TSXUnmapWindow( display, get_whole_window(wndPtr) );
             }
         }
@@ -878,7 +878,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
     UINT wvrFlags = 0;
     BOOL bChangePos;
 
-    TRACE( "hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n",
+    TRACE( "hwnd %p, swp (%i,%i)-(%i,%i) flags %08x\n",
            winpos->hwnd, winpos->x, winpos->y,
            winpos->x + winpos->cx, winpos->y + winpos->cy, winpos->flags);
 
@@ -957,7 +957,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
                  !IsRectEmpty( &oldWindowRect ) && IsRectEmpty( &newWindowRect ))
         {
             /* resizing to zero size -> unmap */
-            TRACE( "unmapping zero size win %x\n", winpos->hwnd );
+            TRACE( "unmapping zero size win %p\n", winpos->hwnd );
             TSXUnmapWindow( display, get_whole_window(wndPtr) );
         }
 
@@ -986,7 +986,7 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
                  IsRectEmpty( &oldWindowRect ) && !IsRectEmpty( &newWindowRect ))
         {
             /* resizing from zero size to non-zero -> map */
-            TRACE( "mapping non zero size win %x\n", winpos->hwnd );
+            TRACE( "mapping non zero size win %p\n", winpos->hwnd );
             XMapWindow( display, get_whole_window(wndPtr) );
         }
         XFlush( display );  /* FIXME: should not be necessary */
@@ -1117,7 +1117,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
     LONG old_style;
     WINDOWPLACEMENT wpl;
 
-    TRACE("0x%04x %u\n", hwnd, cmd );
+    TRACE("%p %u\n", hwnd, cmd );
 
     wpl.length = sizeof(wpl);
     GetWindowPlacement( hwnd, &wpl );
@@ -1211,7 +1211,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     if (!wndPtr) return FALSE;
     hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
-    TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
+    TRACE("hwnd=%p, cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -1545,7 +1545,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     rect.top    = y;
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
-    TRACE( "win %x new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
+    TRACE( "win %p new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( win, &rect );
@@ -1580,7 +1580,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
     GetWindowRect( hwnd, &rect );
     if (rect.left == winpos.x && rect.top == winpos.y) winpos.flags |= SWP_NOMOVE;
     else
-        TRACE( "%04x moving from (%d,%d) to (%d,%d)\n",
+        TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
                hwnd, rect.left, rect.top, winpos.x, winpos.y );
 
     if ((rect.right - rect.left == winpos.cx && rect.bottom - rect.top == winpos.cy) ||
@@ -1588,13 +1588,13 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         (IsRectEmpty( &rect ) && winpos.cx == 1 && winpos.cy == 1))
         winpos.flags |= SWP_NOSIZE;
     else
-        TRACE( "%04x resizing from (%dx%d) to (%dx%d)\n",
+        TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top,
                winpos.cx, winpos.cy );
 
     if (winpos.hwndInsertAfter == oldInsertAfter) winpos.flags |= SWP_NOZORDER;
     else
-        TRACE( "%04x restacking from after %04x to after %04x\n",
+        TRACE( "%p restacking from after %p to after %p\n",
                hwnd, oldInsertAfter, winpos.hwndInsertAfter );
 
     /* if nothing changed, don't do anything */
@@ -1617,7 +1617,7 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %x\n", hwnd );
+            FIXME( "not supported on other process window %p\n", hwnd );
         wndPtr = NULL;
     }
     if (!wndPtr)

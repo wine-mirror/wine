@@ -1105,7 +1105,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
         Window w = X11DRV_get_whole_window( GetAncestor( hWnd, GA_ROOT ));
         if(!w)
         {
-            FIXME("No parent win found %x %x\n", hWnd, hWndClipWindow);
+            FIXME("No parent win found %p %p\n", hWnd, hWndClipWindow);
             return FALSE;
         }
 
@@ -1192,7 +1192,7 @@ void X11DRV_ResetSelectionOwner(HWND hwnd, BOOL bFooBar)
     hWndClipOwner = GetClipboardOwner();
     xaClipboard = TSXInternAtom(display, _CLIPBOARD, False);
 
-    TRACE("clipboard owner = %04x, selection window = %08x\n",
+    TRACE("clipboard owner = %p, selection window = %08x\n",
           hWndClipOwner, (unsigned)selectionWindow);
 
     /* now try to salvage current selection from being destroyed by X */

@@ -114,7 +114,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
 
     if(!bmp) {
-        WARN("Bad bitmap handle %08x\n", hbitmap);
+        WARN("Bad bitmap handle %p\n", hbitmap);
 	return FALSE;
     }
 
@@ -138,7 +138,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         return FALSE;
     }
 
-    TRACE("(%08x) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
+    TRACE("(%p) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
       /* Create the pixmap */
@@ -464,7 +464,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapHeaderFromPixmap(Pixmap pixmap)
     GDI_ReleaseObj( hBmp );
 
 END:
-    TRACE("\tReturning HBITMAP %x\n", hBmp);
+    TRACE("\tReturning HBITMAP %p\n", hBmp);
     return hBmp;
 }
 
@@ -509,7 +509,7 @@ HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeletePixmap)
     DeleteObject(hBmp);
 
 END:
-    TRACE("\tReturning HBITMAP %x\n", hBmpCopy);
+    TRACE("\tReturning HBITMAP %p\n", hBmpCopy);
     return hBmpCopy;
 }
 
@@ -555,7 +555,7 @@ Pixmap X11DRV_BITMAP_Pixmap(HBITMAP hbitmap)
       GDI_ReleaseObj( hbitmap );
     }
     else {
-      ERR("handle %08x returned no obj\n", hbitmap);
+      ERR("handle %p returned no obj\n", hbitmap);
       pixmap = 0;
     }
     return pixmap;

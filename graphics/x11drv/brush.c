@@ -231,7 +231,7 @@ HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
-    TRACE("hdc=%04x hbrush=%04x\n", physDev->hdc,hbrush);
+    TRACE("hdc=%p hbrush=%p\n", physDev->hdc,hbrush);
 
     if (physDev->brush.pixmap)
     {

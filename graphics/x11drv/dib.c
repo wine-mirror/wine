@@ -5828,7 +5828,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   /* Clean up in case of errors */
   if (!res || !bmp || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
     {
-      TRACE("got an error res=%08x, bmp=%p, dib=%p, bm.bmBits=%p\n",
+      TRACE("got an error res=%p, bmp=%p, dib=%p, bm.bmBits=%p\n",
 	    res, bmp, dib, bm.bmBits);
       if (bm.bmBits)
         {
@@ -5994,7 +5994,7 @@ HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc, BOOL bDeletePixma
     DeleteObject(hBmp);
 
 END:
-    TRACE("\tReturning packed DIB %x\n", hPackedDIB);
+    TRACE("\tReturning packed DIB %p\n", hPackedDIB);
     return hPackedDIB;
 }
 
@@ -6032,7 +6032,7 @@ Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc )
 
     GlobalUnlock(hPackedDIB);
 
-    TRACE("CreateDIBitmap returned %x\n", hBmp);
+    TRACE("CreateDIBitmap returned %p\n", hBmp);
 
     /* Retrieve the internal Pixmap from the DDB */
 

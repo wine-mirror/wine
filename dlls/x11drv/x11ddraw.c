@@ -68,7 +68,7 @@ static LRESULT WINAPI GrabWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
   if(message != X11DRV_DD_GrabMessage)
     return CallWindowProcA(X11DRV_DD_GrabOldProcedure, hWnd, message, wParam, lParam);
 
-  TRACE("hwnd=%d, grab=%d\n", hWnd, wParam);
+  TRACE("hwnd=%p, grab=%d\n", hWnd, wParam);
 
   if (wParam)
   {

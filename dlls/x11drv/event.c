@@ -273,7 +273,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       WARN( "Got event %s for unknown Window %08lx\n",
             event_names[event->type], event->xany.window );
   else
-      TRACE("Got event %s for hwnd %04x\n",
+      TRACE("Got event %s for hwnd %p\n",
             event_names[event->type], hWnd );
 
   switch(event->type)
@@ -356,8 +356,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       break;
 
     default:
-      WARN("Unprocessed event %s for hwnd %04x\n",
-	   event_names[event->type], hWnd );
+      WARN("Unprocessed event %s for hwnd %p\n", event_names[event->type], hWnd );
       break;
     }
     TRACE( "returns.\n" );
@@ -397,7 +396,7 @@ static void set_focus( HWND hwnd, Time time )
     HWND focus;
     Window win;
 
-    TRACE( "setting foreground window to %x\n", hwnd );
+    TRACE( "setting foreground window to %p\n", hwnd );
     SetForegroundWindow( hwnd );
 
     focus = GetFocus();
@@ -406,7 +405,7 @@ static void set_focus( HWND hwnd, Time time )
     if (win)
     {
         Display *display = thread_display();
-        TRACE( "setting focus to %x (%lx) time=%ld\n", focus, win, time );
+        TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
         X11DRV_expect_error( display, set_focus_error_handler, NULL );
         XSetInputFocus( display, win, RevertToParent, time );
         if (X11DRV_check_error()) TRACE("got BadMatch, ignoring\n" );
@@ -436,7 +435,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
         Time event_time = (Time)event->data.l[1];
         HWND last_focus = x11drv_thread_data()->last_focus;
 
-        TRACE( "got take focus msg for %x, enabled=%d, focus=%x, active=%x, fg=%x, last=%x\n",
+        TRACE( "got take focus msg for %p, enabled=%d, focus=%p, active=%p, fg=%p, last=%p\n",
                hwnd, IsWindowEnabled(hwnd), GetFocus(), GetActiveWindow(),
                GetForegroundWindow(), last_focus );
 
@@ -445,10 +444,10 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
             /* simulate a mouse click on the caption to find out
              * whether the window wants to be activated */
             LRESULT ma = SendMessageW( hwnd, WM_MOUSEACTIVATE,
-                                       GetAncestor( hwnd, GA_ROOT ),
+                                       (WPARAM)GetAncestor( hwnd, GA_ROOT ),
                                        MAKELONG(HTCAPTION,WM_LBUTTONDOWN) );
             if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE) set_focus( hwnd, event_time );
-            else TRACE( "not setting focus to %x (%lx), ma=%ld\n", hwnd, event->window, ma );
+            else TRACE( "not setting focus to %p (%lx), ma=%ld\n", hwnd, event->window, ma );
         }
         else
         {
@@ -480,7 +479,7 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
 {
     if (!hwnd) return;
 
-    TRACE( "win %x xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
+    TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (wmTakeFocus) return;  /* ignore FocusIn if we are using take focus */
     if (event->detail == NotifyPointer) return;
@@ -507,7 +506,7 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     Window focus_win;
     int revert;
 
-    TRACE( "win %x xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
+    TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
     x11drv_thread_data()->last_focus = hwnd;

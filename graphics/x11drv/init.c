@@ -210,7 +210,7 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case LOGPIXELSY:
         return log_pixels_y;
     case CAPS1:
-        FIXME("(%04x): CAPS1 is unimplemented, will return 0\n", physDev->hdc );
+        FIXME("(%p): CAPS1 is unimplemented, will return 0\n", physDev->hdc );
         /* please see wingdi.h for the possible bit-flag values that need
            to be returned. also, see
            http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm */
@@ -231,7 +231,7 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
+        FIXME("(%p): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }

@@ -914,7 +914,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
     {
 
 	if( !palPtr->mapping )
-            WARN("Palette %04x is not realized\n", dc->hPalette);
+            WARN("Palette %p is not realized\n", dc->hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{

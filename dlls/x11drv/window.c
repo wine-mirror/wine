@@ -821,7 +821,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 
     if (data->whole_window)
     {
-        TRACE( "win %x xwin %lx/%lx\n", hwnd, data->whole_window, data->client_window );
+        TRACE( "win %p xwin %lx/%lx\n", hwnd, data->whole_window, data->client_window );
         if (thread_data->cursor_window == data->whole_window) thread_data->cursor_window = None;
         if (thread_data->last_focus == hwnd) thread_data->last_focus = 0;
         wine_tsx11_lock();
@@ -929,7 +929,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     WIN_ReleasePtr( wndPtr );
 
     /* send WM_NCCREATE */
-    TRACE( "hwnd %x cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
+    TRACE( "hwnd %p cs %d,%d %dx%d\n", hwnd, cs->x, cs->y, cs->cx, cs->cy );
     if (unicode)
         ret = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
     else
@@ -955,7 +955,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     X11DRV_sync_client_window_position( display, wndPtr );
     X11DRV_register_window( display, hwnd, data );
 
-    TRACE( "win %x window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x/%x\n",
+    TRACE( "win %p window %d,%d,%d,%d client %d,%d,%d,%d whole %d,%d,%d,%d X client %d,%d,%d,%d xwin %x/%x\n",
            hwnd, wndPtr->rectWindow.left, wndPtr->rectWindow.top,
            wndPtr->rectWindow.right, wndPtr->rectWindow.bottom,
            wndPtr->rectClient.left, wndPtr->rectClient.top,

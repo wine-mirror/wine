@@ -78,7 +78,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
-    TRACE("hdc=%04x df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
+    TRACE("hdc=%p df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
 	  dc->hSelf, (UINT16)(physDev->font), x, y,
 	  debugstr_wn (wstr, count), count, flags, lpDx);
 
