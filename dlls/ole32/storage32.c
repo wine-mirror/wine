@@ -7155,3 +7155,44 @@ HRESULT WINAPI GetConvertStg(LPGUID guid) {
     FIXME("(%s), unimplemented stub!\n",debugstr_guid(guid));
     return E_FAIL;
 }
+
+/******************************************************************************
+ * StgIsStorageFile [OLE32.146]
+ */
+HRESULT WINAPI
+StgIsStorageFile(LPCOLESTR fn)
+{
+	HANDLE		hf;
+	BYTE		magic[8];
+	DWORD		bytes_read;
+
+	TRACE("(\'%s\')\n", debugstr_w(fn));
+	hf = CreateFileW(fn, GENERIC_READ,
+	                 FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+	                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+	if (hf == INVALID_HANDLE_VALUE)
+		return STG_E_FILENOTFOUND;
+
+	if (!ReadFile(hf, magic, 8, &bytes_read, NULL))
+	{
+		WARN(" unable to read file\n");
+		CloseHandle(hf);
+		return S_FALSE;
+	}
+
+	CloseHandle(hf);
+
+	if (bytes_read != 8) {
+		WARN(" too short\n");
+		return S_FALSE;
+	}
+
+	if (!memcmp(magic,STORAGE_magic,8)) {
+		WARN(" -> YES\n");
+		return S_OK;
+	}
+
+	WARN(" -> Invalid header.\n");
+	return S_FALSE;
+}

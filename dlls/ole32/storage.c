@@ -76,8 +76,6 @@ struct storage_pps_entry {
 
 
 static const BYTE STORAGE_magic[8]   ={0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1};
-static const BYTE STORAGE_notmagic[8]={0x0e,0x11,0xfc,0x0d,0xd0,0xcf,0x11,0xe0};
-static const BYTE STORAGE_oldmagic[8]={0xd0,0xcf,0x11,0xe0,0x0e,0x11,0xfc,0x0d};
 
 #define BIGSIZE		512
 #define SMALLSIZE		64
@@ -1638,55 +1636,15 @@ HRESULT WINAPI StgCreateDocFile16(
  * StgIsStorageFile [STORAGE.5]
  */
 HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
-	HFILE		hf;
-	OFSTRUCT	ofs;
-	BYTE		magic[24];
+	UNICODE_STRING strW;
+	HRESULT ret;
 
-	TRACE("(\'%s\')\n",fn);
-	hf = OpenFile(fn,&ofs,OF_SHARE_DENY_NONE);
-	if (hf==HFILE_ERROR)
-		return STG_E_FILENOTFOUND;
-	if (24!=_lread(hf,magic,24)) {
-		WARN(" too short\n");
-		_lclose(hf);
-		return S_FALSE;
-	}
-	if (!memcmp(magic,STORAGE_magic,8)) {
-		WARN(" -> YES\n");
-		_lclose(hf);
-		return S_OK;
-	}
-	if (!memcmp(magic,STORAGE_notmagic,8)) {
-		WARN(" -> NO\n");
-		_lclose(hf);
-		return S_FALSE;
-	}
-	if (!memcmp(magic,STORAGE_oldmagic,8)) {
-		WARN(" -> old format\n");
-		_lclose(hf);
-		return STG_E_OLDFORMAT;
-	}
-	WARN(" -> Invalid header.\n");
-	_lclose(hf);
-	return STG_E_INVALIDHEADER;
+	RtlCreateUnicodeStringFromAsciiz(&strW, fn);
+	ret = StgIsStorageFile( strW.Buffer );
+	RtlFreeUnicodeString( &strW );
+
+	return ret;
 }
-
-/******************************************************************************
- * StgIsStorageFile [OLE32.146]
- */
-HRESULT WINAPI
-StgIsStorageFile(LPCOLESTR fn)
-{
-    HRESULT ret;
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, fn, -1, NULL, 0, NULL, NULL );
-    LPSTR strA = HeapAlloc( GetProcessHeap(), 0, len );
-
-    WideCharToMultiByte( CP_ACP, 0, fn, -1, strA, len, NULL, NULL );
-    ret = StgIsStorageFile16(strA);
-    HeapFree( GetProcessHeap(), 0, strA );
-    return ret;
-}
-
 
 /******************************************************************************
  * StgOpenStorage [STORAGE.3]
