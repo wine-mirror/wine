@@ -928,59 +928,71 @@ BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
  */
 static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT flags )
 {
-    WND *pWnd = WIN_FindWndPtr( hwnd );
-    if( pWnd )
+    LPINTERNALPOS lpPos;
+    DWORD style;
+    WND *pWnd = WIN_GetPtr( hwnd );
+
+    if (!pWnd || pWnd == WND_OTHER_PROCESS) return FALSE;
+    lpPos = WINPOS_InitInternalPos( pWnd );
+
+    if( flags & PLACE_MIN )
     {
-	LPINTERNALPOS lpPos = WINPOS_InitInternalPos( pWnd );
-
-        if( flags & PLACE_MIN )
-        {
-            lpPos->ptIconPos.x = wndpl->ptMinPosition.x;
-            lpPos->ptIconPos.y = wndpl->ptMinPosition.y;
-        }
-        if( flags & PLACE_MAX )
-        {
-            lpPos->ptMaxPos.x = wndpl->ptMaxPosition.x;
-            lpPos->ptMaxPos.y = wndpl->ptMaxPosition.y;
-        }
-        if( flags & PLACE_RECT)
-        {
-            lpPos->rectNormal.left   = wndpl->rcNormalPosition.left;
-            lpPos->rectNormal.top    = wndpl->rcNormalPosition.top;
-            lpPos->rectNormal.right  = wndpl->rcNormalPosition.right;
-            lpPos->rectNormal.bottom = wndpl->rcNormalPosition.bottom;
-        }
-	if( pWnd->dwStyle & WS_MINIMIZE )
-	{
-	    WINPOS_ShowIconTitle( pWnd->hwndSelf, FALSE );
-	    if( wndpl->flags & WPF_SETMINPOSITION && !EMPTYPOINT(lpPos->ptIconPos))
-		SetWindowPos( hwnd, 0, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
-				0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
-	}
-	else if( pWnd->dwStyle & WS_MAXIMIZE )
-	{
-	    if( !EMPTYPOINT(lpPos->ptMaxPos) )
-		SetWindowPos( hwnd, 0, lpPos->ptMaxPos.x, lpPos->ptMaxPos.y,
-				0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
-	}
-	else if( flags & PLACE_RECT )
-		SetWindowPos( hwnd, 0, lpPos->rectNormal.left, lpPos->rectNormal.top,
-				lpPos->rectNormal.right - lpPos->rectNormal.left,
-				lpPos->rectNormal.bottom - lpPos->rectNormal.top,
-				SWP_NOZORDER | SWP_NOACTIVATE );
-
-	ShowWindow( hwnd, wndpl->showCmd );
-	if( IsWindow(hwnd) && pWnd->dwStyle & WS_MINIMIZE )
-	{
-	    if( pWnd->dwStyle & WS_VISIBLE ) WINPOS_ShowIconTitle( pWnd->hwndSelf, TRUE );
-
-	    /* SDK: ...valid only the next time... */
-	    if( wndpl->flags & WPF_RESTORETOMAXIMIZED ) pWnd->flags |= WIN_RESTORE_MAX;
-	}
-        WIN_ReleaseWndPtr(pWnd);
-	return TRUE;
+        lpPos->ptIconPos.x = wndpl->ptMinPosition.x;
+        lpPos->ptIconPos.y = wndpl->ptMinPosition.y;
     }
-    return FALSE;
+    if( flags & PLACE_MAX )
+    {
+        lpPos->ptMaxPos.x = wndpl->ptMaxPosition.x;
+        lpPos->ptMaxPos.y = wndpl->ptMaxPosition.y;
+    }
+    if( flags & PLACE_RECT)
+    {
+        lpPos->rectNormal.left   = wndpl->rcNormalPosition.left;
+        lpPos->rectNormal.top    = wndpl->rcNormalPosition.top;
+        lpPos->rectNormal.right  = wndpl->rcNormalPosition.right;
+        lpPos->rectNormal.bottom = wndpl->rcNormalPosition.bottom;
+    }
+
+    style = pWnd->dwStyle;
+    WIN_ReleasePtr( pWnd );
+
+    if( style & WS_MINIMIZE )
+    {
+        WINPOS_ShowIconTitle( hwnd, FALSE );
+        if( wndpl->flags & WPF_SETMINPOSITION && !EMPTYPOINT(lpPos->ptIconPos))
+            SetWindowPos( hwnd, 0, lpPos->ptIconPos.x, lpPos->ptIconPos.y,
+                          0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+    }
+    else if( style & WS_MAXIMIZE )
+    {
+        if( !EMPTYPOINT(lpPos->ptMaxPos) )
+            SetWindowPos( hwnd, 0, lpPos->ptMaxPos.x, lpPos->ptMaxPos.y,
+                          0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+    }
+    else if( flags & PLACE_RECT )
+        SetWindowPos( hwnd, 0, lpPos->rectNormal.left, lpPos->rectNormal.top,
+                      lpPos->rectNormal.right - lpPos->rectNormal.left,
+                      lpPos->rectNormal.bottom - lpPos->rectNormal.top,
+                      SWP_NOZORDER | SWP_NOACTIVATE );
+
+    ShowWindow( hwnd, wndpl->showCmd );
+
+    if (IsIconic( hwnd ))
+    {
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE) WINPOS_ShowIconTitle( hwnd, TRUE );
+
+        /* SDK: ...valid only the next time... */
+        if( wndpl->flags & WPF_RESTORETOMAXIMIZED )
+        {
+            pWnd = WIN_GetPtr( hwnd );
+            if (pWnd && pWnd != WND_OTHER_PROCESS)
+            {
+                pWnd->flags |= WIN_RESTORE_MAX;
+                WIN_ReleasePtr( pWnd );
+            }
+        }
+    }
+    return TRUE;
 }
 
 

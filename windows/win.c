@@ -2788,7 +2788,8 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
     while (--count >= 0)
     {
         if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
-        if (!(pWnd = WIN_FindWndPtr( win_array[count] ))) continue;
+        if (!(pWnd = WIN_GetPtr( win_array[count] ))) continue;
+        if (pWnd == WND_OTHER_PROCESS) continue;
 
         if (pWnd->dwStyle & WS_POPUP)
         {
@@ -2796,28 +2797,32 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
             {
                 if (pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
                 {
+                    pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    WIN_ReleasePtr( pWnd );
                     /* In Windows, ShowOwnedPopups(TRUE) generates
                      * WM_SHOWWINDOW messages with SW_PARENTOPENING,
                      * regardless of the state of the owner
                      */
-                    SendMessageA(pWnd->hwndSelf, WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
-                    pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    SendMessageW(win_array[count], WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
+                    continue;
                 }
             }
             else
             {
-                if (IsWindowVisible(pWnd->hwndSelf))
+                if (pWnd->dwStyle & WS_VISIBLE)
                 {
+                    pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    WIN_ReleasePtr( pWnd );
                     /* In Windows, ShowOwnedPopups(FALSE) generates
                      * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
                      * regardless of the state of the owner
                      */
-                    SendMessageA(pWnd->hwndSelf, WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
-                    pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+                    SendMessageW(win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
+                    continue;
                 }
             }
         }
-        WIN_ReleaseWndPtr( pWnd );
+        WIN_ReleasePtr( pWnd );
     }
     HeapFree( GetProcessHeap(), 0, win_array );
     return TRUE;
@@ -3053,16 +3058,16 @@ BOOL WINAPI AnyPopup(void)
  */
 BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 {
-    WND *wndPtr = WIN_FindWndPtr(hWnd);
+    WND *wndPtr;
 
     TRACE("%p\n", hWnd);
 
-    if (!wndPtr) return FALSE;
-    hWnd = wndPtr->hwndSelf;  /* make it a full handle */
-
-    if (wndPtr->dwStyle & WS_MINIMIZE)
+    if (IsIconic( hWnd ))
     {
         RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+
+        wndPtr = WIN_GetPtr(hWnd);
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
         if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
         {
             wndPtr->flags |= WIN_NCACTIVATED;
@@ -3071,16 +3076,21 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         {
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
         return TRUE;
     }
     else
     {
-        WPARAM16 wparam;
+        WPARAM wparam;
+
+        wndPtr = WIN_GetPtr(hWnd);
+        if (!wndPtr || wndPtr == WND_OTHER_PROCESS) return FALSE;
+        hWnd = wndPtr->hwndSelf;  /* make it a full handle */
+
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
         else wparam = (hWnd == GetForegroundWindow());
 
-        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleasePtr( wndPtr );
         SendMessageW( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         return wparam;
     }
