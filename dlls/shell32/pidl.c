@@ -183,9 +183,13 @@ BOOL WINAPI ILGetDisplayName(LPCITEMIDLIST pidl, LPVOID path)
  *   observed: pidl=Desktop return=pidl
  */
 LPITEMIDLIST WINAPI ILFindLastID(LPCITEMIDLIST pidl)
-{	LPCITEMIDLIST   pidlLast = pidl;
+{
+	LPCITEMIDLIST   pidlLast = pidl;
 
 	TRACE("(pidl=%p)\n",pidl);
+
+	if (!pidl)
+	  return NULL;
 
 	while (pidl->mkid.cb)
 	{
