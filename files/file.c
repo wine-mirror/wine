@@ -652,38 +652,11 @@ INT WINAPI CompareFileTime( LPFILETIME x, LPFILETIME y )
 	return 0;
 }
 
-
 /***********************************************************************
- *           GetTempFileName16   (KERNEL.97)
+ *           FILE_GetTempFileName : utility for GetTempFileName
  */
-UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
-                                 LPSTR buffer )
-{
-    char temppath[144];
-
-    if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
-        drive |= DRIVE_GetCurrentDrive() + 'A';
-
-    if ((drive & TF_FORCEDRIVE) &&
-        !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
-    {
-        drive &= ~TF_FORCEDRIVE;
-        WARN("invalid drive %d specified\n", drive );
-    }
-
-    if (drive & TF_FORCEDRIVE)
-        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
-    else
-        GetTempPathA( 132, temppath );
-    return (UINT16)GetTempFileNameA( temppath, prefix, unique, buffer );
-}
-
-
-/***********************************************************************
- *           GetTempFileName32A   (KERNEL32.290)
- */
-UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
-                                  LPSTR buffer)
+static UINT FILE_GetTempFileName( LPCSTR path, LPCSTR prefix, UINT unique,
+                                  LPSTR buffer, BOOL isWin16 )
 {
     static UINT unique_temp;
     DOS_FULL_NAME full_name;
@@ -703,7 +676,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
     if ( !((strlen(buffer) == 2) && (buffer[1] == ':')) 
 	&& ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
 
-    *p++ = '~';
+    if (isWin16) *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
     sprintf( p, "%04x.tmp", num );
 
@@ -745,6 +718,15 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
 
 
 /***********************************************************************
+ *           GetTempFileName32A   (KERNEL32.290)
+ */
+UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
+                                  LPSTR buffer)
+{
+    return FILE_GetTempFileName(path, prefix, unique, buffer, FALSE);
+}
+
+/***********************************************************************
  *           GetTempFileName32W   (KERNEL32.291)
  */
 UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
@@ -757,13 +739,38 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
     if (!path) return 0;
     patha   = HEAP_strdupWtoA( GetProcessHeap(), 0, path );
     prefixa = HEAP_strdupWtoA( GetProcessHeap(), 0, prefix );
-    ret     = GetTempFileNameA( patha, prefixa, unique, buffera );
+    ret     = FILE_GetTempFileName( patha, prefixa, unique, buffera, FALSE );
     lstrcpyAtoW( buffer, buffera );
     HeapFree( GetProcessHeap(), 0, patha );
     HeapFree( GetProcessHeap(), 0, prefixa );
     return ret;
 }
 
+
+/***********************************************************************
+ *           GetTempFileName16   (KERNEL.97)
+ */
+UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
+                                 LPSTR buffer )
+{
+    char temppath[144];
+
+    if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
+        drive |= DRIVE_GetCurrentDrive() + 'A';
+
+    if ((drive & TF_FORCEDRIVE) &&
+        !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
+    {
+        drive &= ~TF_FORCEDRIVE;
+        WARN("invalid drive %d specified\n", drive );
+    }
+
+    if (drive & TF_FORCEDRIVE)
+        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
+    else
+        GetTempPathA( 132, temppath );
+    return (UINT16)FILE_GetTempFileName( temppath, prefix, unique, buffer, TRUE );
+}
 
 /***********************************************************************
  *           FILE_DoOpenFile
