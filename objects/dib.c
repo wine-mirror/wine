@@ -415,12 +415,19 @@ INT WINAPI GetDIBits(
     DC * dc;
     BITMAPOBJ * bmp;
     int i;
+    HDC memdc;
 
     if (!info) return 0;
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    memdc = CreateCompatibleDC(hdc);
+    if (!(dc = DC_GetDCUpdate( hdc )))
+    {
+        DeleteDC(memdc);
+        return 0;
+    }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
+        DeleteDC(memdc);
 	return 0;
     }
 
@@ -433,8 +440,12 @@ INT WINAPI GetDIBits(
 	/* If the bitmap object already has a dib section at the
 	   same color depth then get the color map from it */
 	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == info->bmiHeader.biBitCount) {
-            if(coloruse == DIB_RGB_COLORS)
-                GetDIBColorTable(hdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
+            if(coloruse == DIB_RGB_COLORS) {
+                HBITMAP oldbm;
+                oldbm = SelectObject(memdc, hbitmap);
+                GetDIBColorTable(memdc, 0, 1 << info->bmiHeader.biBitCount, info->bmiColors);
+                SelectObject(memdc, oldbm);
+            }
             else {
                 WORD *index = (WORD*)info->bmiColors;
                 int i;
@@ -450,6 +461,7 @@ INT WINAPI GetDIBits(
                 if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC ))) {
                     GDI_ReleaseObj( hdc );
                     GDI_ReleaseObj( hbitmap );
+                    DeleteDC(memdc);
                     return 0;
                 }
                 palEntry = palette->logpalette.palPalEntry;
@@ -742,7 +754,7 @@ INT WINAPI GetDIBits(
 
     GDI_ReleaseObj( hdc );
     GDI_ReleaseObj( hbitmap );
-
+    DeleteDC(memdc);
     return lines;
 }
 
