@@ -1978,7 +1978,8 @@ static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control
 		defaultstyle |= LBS_NOTIFY | WS_BORDER;
 		break;
 	case CT_COMBOBOX:
-		defaultstyle |= CBS_SIMPLE;
+                if (!(ctrl->style->or_mask & (CBS_SIMPLE | CBS_DROPDOWN | CBS_DROPDOWNLIST)))
+                    defaultstyle |= CBS_SIMPLE;
 		break;
 	case CT_STATIC:
 		if(special_style == SS_CENTER || special_style == SS_LEFT || special_style == SS_RIGHT)
