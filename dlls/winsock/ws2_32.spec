@@ -88,7 +88,7 @@ init WSOCK32_LibMain
 79  stub     WSASocketW
 80  stub     WSAStringToAddressA
 81  stub     WSAStringToAddressW
-82  stub     WSAWaitForMultipleEvents
+82  forward  WSAWaitForMultipleEvents KERNEL32.WaitForMultipleObjectsEx
 83  stub     WSCDeinstallProvider
 84  stub     WSCEnableNSProvider
 85  stub     WSCEnumProtocols
