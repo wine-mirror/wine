@@ -125,7 +125,11 @@ static void setup_options(void)
 
 	count = sizeof(buffer);
         if (!RegQueryValueExA( hkey, "Desktop", 0, &type, buffer, &count ))
-            Options.desktopGeometry = strdup(buffer);
+            /* Imperfect validation:  If Desktop=N, then we don't turn on
+            ** the --desktop option.  We should really validate for a correct
+            ** sizing entry */
+            if (! IS_OPTION_FALSE(buffer[0]))
+                Options.desktopGeometry = strdup(buffer);
     }
 
     if (Options.managed)
