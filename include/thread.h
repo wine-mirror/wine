@@ -63,7 +63,6 @@ typedef struct
     DWORD         count;     /* Count of valid objects */
     DWORD         signaled;  /* Index of signaled object (or WAIT_FAILED)*/
     BOOL32        wait_all;  /* Wait for all objects flag */
-    BOOL32        wait_msg;  /* Wait for message flag */
     K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
     int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
 } WAIT_STRUCT;
@@ -73,7 +72,7 @@ typedef struct _THDB
 {
     K32OBJ         header;         /*  00 Kernel object header */
     struct _PDB32 *process;        /*  08 Process owning this thread */
-    K32OBJ        *event;          /*  0c Thread event */
+    HANDLE32       event;          /*  0c Thread event */
     TEB            teb;            /*  10 Thread exception block */
     DWORD          flags;          /*  44 Flags */
     DWORD          exit_code;      /*  48 Termination status */
@@ -118,6 +117,7 @@ typedef struct _THDB
     void          *server_tid;     /*     Server id for this thread */
 } THDB;
 
+
 /* Thread queue entry */
 typedef struct _THREAD_ENTRY
 {
@@ -159,12 +159,6 @@ extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
 extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 extern DWORD THREAD_TlsAlloc( THDB *thread );
-
-/* scheduler/synchro.c */
-extern DWORD SYNC_DoWait( DWORD count, const HANDLE32 *handles,
-                          BOOL32 wait_all, DWORD timeout,
-                          BOOL32 alertable, BOOL32 wait_msg );
-
 
 /* scheduler/sysdeps.c */
 extern int SYSDEPS_SpawnThread( THDB *thread );

@@ -11,6 +11,7 @@
 #include <sys/types.h>
 
 #include "message.h"
+#include "winerror.h"
 #include "win.h"
 #include "gdi.h"
 #include "sysmetrics.h"
@@ -1475,19 +1476,27 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE32 *pHandles,
                                         BOOL32 fWaitAll, DWORD dwMilliseconds,
                                         DWORD dwWakeMask )
 {
-    DWORD retv;
+    DWORD i;
+    HANDLE32 handles[MAXIMUM_WAIT_OBJECTS];
 
     TDB *currTask = (TDB *)GlobalLock16( GetCurrentTask() );
     HQUEUE16 hQueue = currTask? currTask->hQueue : 0;
     MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
-    if (!msgQueue) return 0xFFFFFFFF;
+    if (!msgQueue) return WAIT_FAILED;
+
+    if (nCount > MAXIMUM_WAIT_OBJECTS-1)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return WAIT_FAILED;
+    }
 
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
 
-    retv = SYNC_DoWait( nCount, pHandles, fWaitAll, dwMilliseconds, FALSE, TRUE );
-
-    return retv;
+    /* Add the thread event to the handle list */
+    for (i = 0; i < nCount; i++) handles[i] = pHandles[i];
+    handles[nCount] = currTask->thdb->event;
+    return WaitForMultipleObjects( nCount+1, handles, fWaitAll, dwMilliseconds );
 }
 
 

@@ -100,7 +100,6 @@ THDB *THREAD_IdToTHDB( DWORD id )
 }
 
 
-
 /***********************************************************************
  *           THREAD_AddQueue
  *
@@ -232,6 +231,11 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
 
     THREAD_AddQueue( &pdb->thread_list, thdb );
 
+    /* Create the thread event */
+
+    if (!(thdb->event = CreateEvent32A( NULL, FALSE, FALSE, NULL ))) goto error;
+    thdb->event = ConvertToGlobalHandle( thdb->event );
+
     /* Initialize the thread context */
 
     GET_CS(cs);
@@ -250,7 +254,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
 
 error:
     if (thdb->socket != -1) close( thdb->socket );
-    if (thdb->event) K32OBJ_DecCount( thdb->event );
+    if (thdb->event) CloseHandle( thdb->event );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
@@ -283,6 +287,7 @@ static void THREAD_Destroy( K32OBJ *ptr )
         }
     }
 #endif
+    CloseHandle( thdb->event );
     close( thdb->socket );
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
@@ -683,11 +688,12 @@ BOOL32 WINAPI GetExitCodeThread(
     HANDLE32 hthread, /* [in]  Handle to thread */
     LPDWORD exitcode) /* [out] Address to receive termination status */
 {
-    struct get_thread_info_reply info;
+    struct get_thread_info_reply reply;
     int handle = HANDLE_GetServerHandle( PROCESS_Current(), hthread,
                                          K32OBJ_THREAD, THREAD_QUERY_INFORMATION );
-    if (CLIENT_GetThreadInfo( handle, &info )) return FALSE;
-    if (exitcode) *exitcode = info.exit_code;
+    CLIENT_SendRequest( REQ_GET_THREAD_INFO, -1, 1, &handle, sizeof(handle) );
+    if (CLIENT_WaitSimpleReply( &reply, sizeof(reply), NULL )) return FALSE;
+    if (exitcode) *exitcode = reply.exit_code;
     return TRUE;
 }
 
