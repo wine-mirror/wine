@@ -3502,7 +3502,11 @@ DWORD WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR lpszClass,
 	int		nrofkeys,maxsubkey,maxclass,maxvname,maxvdata;
 	int		i;
 
-	TRACE_(reg)("(%x,%p,...)\n",hkey,lpszClass);
+	TRACE_(reg)("(%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n",
+		hkey, lpszClass, lpcchClass?*lpcchClass:0,lpdwReserved,
+		lpcSubKeys,lpcchMaxSubkey,lpcValues,lpcchMaxValueName,
+		lpccbMaxValueData,lpcbSecurityDescriptor,ft
+	);
 	lpkey = lookup_hkey(hkey);
 	if (!lpkey)
 		return ERROR_INVALID_HANDLE;
@@ -3580,7 +3584,11 @@ DWORD WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR lpszClass, LPDWORD lpcchClass,
 	LPWSTR		lpszClassW = NULL;
 	DWORD		ret;
 
-	TRACE_(reg)("(%x,%p,%p......)\n",hkey, lpszClass, lpcchClass);
+	TRACE_(reg)("(%x,%p,%ld,%p,%p,%p,%p,%p,%p,%p,%p)\n",
+		hkey, lpszClass, lpcchClass?*lpcchClass:0,lpdwReserved,
+		lpcSubKeys,lpcchMaxSubkey,lpcValues,lpcchMaxValueName,
+		lpccbMaxValueData,lpcbSecurityDescriptor,ft
+	);
 	if (lpszClass) {
 		if (lpcchClass) {
 		    lpszClassW  = (LPWSTR)xmalloc((*lpcchClass) * 2);
