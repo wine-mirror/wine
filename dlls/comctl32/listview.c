@@ -248,7 +248,8 @@ typedef struct tagLISTVIEW_INFO
   HCURSOR hHotCursor;
   HFONT hDefaultFont;
   HFONT hFont;
-  INT ntmHeight;		/* From GetTextMetrics from above font */
+  INT ntmHeight;		/* Some cached metrics of the font used */
+  INT ntmAveCharWidth;		/* by the listview to draw items */
   BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
   BOOL bFirstPaint;		/* Flags if the control has never painted before */
   BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
@@ -1244,7 +1245,7 @@ static inline void LISTVIEW_InvalidateColumn(LISTVIEW_INFO *infoPtr, INT nColumn
 {
     RECT rcCol;
     
-    if(!infoPtr->bRedraw) return; 
+    if(!is_redrawing(infoPtr)) return; 
     LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     rcCol.top = infoPtr->rcList.top;
     rcCol.bottom = infoPtr->rcList.bottom;
@@ -2045,6 +2046,8 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
 
     if (uView != LVS_ICON && uView != LVS_SMALLICON) return FALSE;
   
+    TRACE("nAlignCode=%d\n", nAlignCode);
+
     if (nAlignCode == LVA_DEFAULT)
     {
 	if (infoPtr->dwStyle & LVS_ALIGNLEFT) nAlignCode = LVA_ALIGNLEFT;
@@ -2192,7 +2195,9 @@ static SUBITEM_INFO* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
 static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    INT nItemWidth;
+    INT nItemWidth = 0;
+
+    TRACE("uView=%d\n", uView);
 
     if (uView == LVS_ICON)
 	nItemWidth = infoPtr->iconSpacing.cx;
@@ -2205,13 +2210,12 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
 	    LISTVIEW_GetHeaderRect(infoPtr, infoPtr->hdpaColumns->nItemCount - 1, &rcHeader);
             nItemWidth = rcHeader.right;
 	}
-	else nItemWidth = 0;
     }
     else /* LVS_SMALLICON, or LVS_LIST */
     {
 	INT i;
 	
-	for (nItemWidth = i = 0; i < infoPtr->nItemCount; i++)
+	for (i = 0; i < infoPtr->nItemCount; i++)
 	    nItemWidth = max(LISTVIEW_GetLabelWidth(infoPtr, i), nItemWidth);
 
         if (infoPtr->himlSmall) nItemWidth += infoPtr->iconSize.cx + IMAGE_PADDING; 
@@ -2237,6 +2241,8 @@ static INT LISTVIEW_CalculateItemHeight(LISTVIEW_INFO *infoPtr)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nItemHeight;
+
+    TRACE("uView=%d\n", uView);
 
     if (uView == LVS_ICON)
 	nItemHeight = infoPtr->iconSpacing.cy;
@@ -2288,7 +2294,10 @@ static void LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
     TEXTMETRICW tm;
 
     if (GetTextMetricsW(hdc, &tm))
+    {
 	infoPtr->ntmHeight = tm.tmHeight;
+	infoPtr->ntmAveCharWidth = tm.tmAveCharWidth;
+    }
     SelectObject(hdc, hOldFont);
     ReleaseDC(infoPtr->hwndSelf, hdc);
     
@@ -6447,6 +6456,8 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
     INT oldHeight = infoPtr->nItemHeight;
     HIMAGELIST himlOld = 0;
 
+    TRACE("(nType=%d, himl=%p\n", nType, himl);
+
     switch (nType)
     {
     case LVSIL_NORMAL:
@@ -7637,9 +7648,18 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, LPNMHEADERW l
 	    dx = cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
 	    if (dx != 0)
 	    {
+		RECT rcCol = lpColumnInfo->rcHeader;
+
 		lpColumnInfo->rcHeader.right += dx;
 		LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
-		if (uView == LVS_REPORT) LISTVIEW_InvalidateColumn(infoPtr, lpnmh->iItem);
+		if (uView == LVS_REPORT && is_redrawing(infoPtr))
+		{
+		    rcCol.right = min (rcCol.right, lpColumnInfo->rcHeader.right);
+		    rcCol.left = max (rcCol.left, rcCol.right - 3 * infoPtr->ntmAveCharWidth);
+		    rcCol.top = infoPtr->rcList.top;
+		    rcCol.bottom = infoPtr->rcList.bottom;
+		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
+		}
 	    }
 	}
 	break;
