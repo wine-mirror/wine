@@ -219,7 +219,11 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED)
     {
-        HRGN clip_region = CreateRectRgn( lprect->left, lprect->top, lprect->right, lprect->bottom );
+        HRGN clip_region;
+        RECT clip_rect = *lprect;
+
+        LPtoDP( physDev->hdc, (POINT *)&clip_rect, 2 );
+        clip_region = CreateRectRgnIndirect( &clip_rect );
         /* make a copy of the current device region */
         saved_region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( saved_region, physDev->region, 0, RGN_COPY );
