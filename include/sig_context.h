@@ -244,7 +244,12 @@ typedef struct _CONTEXT		/* Note 1 */
          if (!fs) fs = SYSLEVEL_EmergencyTeb;                         \
          SET_FS(fs);                           } while (0)
 #else
-#define HANDLER_INIT() /* nothing */
+#define HANDLER_INIT() \
+    do { int fs; GET_FS(fs); fs &= 0xffff;                      \
+         if (!IS_SELECTOR_SYSTEM(CS_sig(HANDLER_CONTEXT)))      \
+             fs = SYSLEVEL_Win16CurrentTeb;                     \
+         if (!fs) fs = SYSLEVEL_EmergencyTeb;                   \
+         SET_FS(fs);                          } while (0)
 #endif
 
 #else /* __i386__ */
