@@ -312,7 +312,12 @@ typedef struct tagRASENTRYW {
 
 DECL_WINELIB_TYPE_AW(RASENTRY)
 
-
+DWORD WINAPI RasDeleteEntryA(LPCSTR,LPCSTR);
+DWORD WINAPI RasDeleteEntryW(LPCWSTR,LPCWSTR);
+#define      RasDeleteEntry WINELIB_NAME_AW(RasDeleteEntry)
+DWORD WINAPI RasDeleteSubEntryA(LPCSTR,LPCSTR,DWORD);
+DWORD WINAPI RasDeleteSubEntryW(LPCWSTR,LPCWSTR,DWORD);
+#define      RasDeleteSubEntry WINELIB_NAME_AW(RasDeleteSubEntry)
 DWORD WINAPI RasEnumConnectionsA(LPRASCONNA,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumConnectionsW(LPRASCONNW,LPDWORD,LPDWORD);
 #define      RasEnumConnections WINELIB_NAME_AW(RasEnumConnections)

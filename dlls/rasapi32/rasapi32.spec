@@ -51,6 +51,9 @@
 44  stub RasGetErrorStringWow
 54  stub RasHangUpWow
 
+@ stub RasDeleteSubEntryA
+@ stub RasDeleteSubEntryW
+
 500 stub	RnaEngineRequest
 501 stub	DialEngineRequest
 502 stub	SuprvRequest
