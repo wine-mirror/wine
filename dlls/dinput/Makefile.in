@@ -17,6 +17,8 @@ C_SRCS = \
 	keyboard/main.c \
 	mouse/main.c
 
+RC_SRCS = version.rc
+
 EXTRASUBDIRS = \
 	joystick \
 	keyboard \
@@ -25,4 +27,3 @@ EXTRASUBDIRS = \
 @MAKE_DLL_RULES@
 
 ### Dependencies:
-
