@@ -752,89 +752,78 @@ __declspec(naked) long interlocked_xchg_add( long *dest, long incr )
 #elif defined(__powerpc__)
 void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
 {
-    long ret;
+    long ret = 0;
     long scratch;
     __asm__ __volatile__(
-    "sync; "
     "0:    lwarx %0,0,%2 ;"
     "      xor. %1,%4,%0;"
     "      bne 1f;"
     "      stwcx. %3,0,%2;"
     "      bne- 0b;"
     "1:    "
-    "sync; "
     : "=&r"(ret), "=&r"(scratch)
     : "r"(dest), "r"(xchg), "r"(compare)
-    : "cr0", "memory");
+    : "cr0","memory");
     return (void*)ret;
 }
 
 long interlocked_cmpxchg( long *dest, long xchg, long compare)
 {
-    long ret;
+    long ret = 0;
     long scratch;
     __asm__ __volatile__(
-    "sync; "
     "0:    lwarx %0,0,%2 ;"
     "      xor. %1,%4,%0;"
     "      bne 1f;"
     "      stwcx. %3,0,%2;"
     "      bne- 0b;"
     "1:    "
-    "sync; "
     : "=&r"(ret), "=&r"(scratch)
     : "r"(dest), "r"(xchg), "r"(compare)
-    : "cr0", "memory");
+    : "cr0","memory");
     return ret;
 }
 
 long interlocked_xchg_add( long *dest, long incr )
 {
-    void *ret __attribute__ ((aligned (4))) = &ret;
-    long inc = incr;
+    long ret = 0;
     long zero = 0;
     __asm__ __volatile__(
-	"sync; "
 	"0:    lwarx %0, %3, %1;"
 	"      add %0, %2, %0;"
 	"      stwcx. %0, %3, %1;"
 	"      bne- 0b;"
-	"sync; "
-	: "=&r"(ret)
-	: "r"(dest), "r"(inc), "r"(zero)
+	: "=&r" (ret)
+	: "r"(dest), "r"(incr), "r"(zero)
 	: "cr0", "memory"
     );
-    return (long)ret;
+    return ret-incr;
 }
 
 long interlocked_xchg( long* dest, long val )
 {
-    void *ret __attribute__ ((aligned (4))) = &ret;
+    long ret = 0;
     __asm__ __volatile__(
-    "sync; "
     "0:    lwarx %0,0,%1 ;"
     "      stwcx. %2,0,%1;"
     "      bne- 0b;"
-    "sync; "
     : "=&r"(ret)
     : "r"(dest), "r"(val)
-    : "cr0", "memory");
-    return (long)ret;
+    : "cr0","memory");
+    return ret;
 }
 
 void* interlocked_xchg_ptr( void** dest, void* val )
 {
-    void *ret __attribute__ ((aligned (4))) = &ret;
+    void *ret = NULL;
     __asm__ __volatile__(
-    "sync; "
     "0:    lwarx %0,0,%1 ;"
     "      stwcx. %2,0,%1;"
     "      bne- 0b;"
-    "sync; "
     : "=&r"(ret)
     : "r"(dest), "r"(val)
-    : "cr0", "memory");
-    return (void*)ret;
+    : "cr0","memory");
+    return ret;
 }
 
 #elif defined(__sparc__) && defined(__sun__)
