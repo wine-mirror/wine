@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "debugger.h"
@@ -49,7 +50,7 @@ int	DEBUG_Printf(int chn, const char* format, ...)
     int		len;
 
     va_start(valist, format);
-    len = wvsnprintf(buf, sizeof(buf), format, valist);
+    len = vsnprintf(buf, sizeof(buf), format, valist);
     va_end(valist);
 
     if (len <= -1) {

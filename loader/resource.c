@@ -12,12 +12,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "winbase.h"
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "winbase.h"
 #include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "wine/exception.h"
 #include "ldt.h"
 #include "global.h"

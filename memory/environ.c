@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "wine/winestring.h"
 #include "process.h"
 #include "heap.h"

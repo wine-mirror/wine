@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include "winbase.h"
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winnt.h"
 #include "heap.h"
 #include "global.h"

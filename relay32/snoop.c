@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winnt.h"
 #include "heap.h"
 #include "builtin32.h"
@@ -231,7 +229,7 @@ SNOOP_PrintArg(DWORD x) {
 		}
 		if (!nostring) {
 			if (i>5) {
-				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_an((LPSTR)x,sizeof(buf)-10));
+				snprintf(buf,sizeof(buf),"%08lx %s",x,debugstr_an((LPSTR)x,sizeof(buf)-10));
 				ret=buf;
 			}
 		}
@@ -251,7 +249,7 @@ SNOOP_PrintArg(DWORD x) {
 		}
 		if (!nostring) {
 			if (i>5) {
-				wsnprintfA(buf,sizeof(buf),"%08lx %s",x,debugstr_wn((LPWSTR)x,sizeof(buf)-10));
+				snprintf(buf,sizeof(buf),"%08lx %s",x,debugstr_wn((LPWSTR)x,sizeof(buf)-10));
 				ret=buf;
 			}
 		}

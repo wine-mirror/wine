@@ -11,7 +11,6 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "dc.h"
 #include "gdi.h"

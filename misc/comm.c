@@ -52,8 +52,6 @@
 #include <unistd.h>
 
 #include "windef.h"
-#include "wingdi.h"
-#include "wine/winuser16.h"
 #include "comm.h"
 #ifdef HAVE_SYS_MODEM_H
 # include <sys/modem.h>

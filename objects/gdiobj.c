@@ -23,9 +23,8 @@
 #include "tweak.h"
 #include "windef.h"
 #include "wingdi.h"
-#include "winuser.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 /**********************************************************************/
 

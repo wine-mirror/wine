@@ -25,8 +25,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include "windef.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "ntddk.h"
 #include "wine/exception.h"

@@ -85,7 +85,6 @@ SOFTWARE.
 #include <string.h>
 #include "windef.h"
 #include "wingdi.h"
-#include "winuser.h"
 #include "debugtools.h"
 #include "region.h"
 #include "heap.h"

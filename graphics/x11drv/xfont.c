@@ -26,7 +26,6 @@
 
 #include "windef.h"
 #include "wingdi.h"
-#include "winuser.h"
 #include "winnls.h"
 #include "heap.h"
 #include "options.h"
@@ -1307,7 +1306,7 @@ static void XFONT_WindowsNames(void)
 	    }
 
 	lpch = fr->lfFaceName;
-	wsnprintfA( fr->lfFaceName, sizeof(fr->lfFaceName), "%s %s",
+	snprintf( fr->lfFaceName, sizeof(fr->lfFaceName), "%s %s",
 					  /* prepend vendor name */
 					  (pfr==fr) ? "" : fr->resource->foundry,
 					  fr->resource->family);
@@ -1570,7 +1569,7 @@ static void XFONT_LoadAliases(void)
     {
         BOOL bHaveAlias, bSubst;
 	char subsection[32];
-        wsnprintfA( subsection, sizeof subsection, "%s%i", INIAliasSection, i++ );
+        snprintf( subsection, sizeof subsection, "%s%i", INIAliasSection, i++ );
 
 	bHaveAlias = PROFILE_GetWineIniString( INIFontSection, 
 						subsection, "", buffer, sizeof buffer);
@@ -1700,7 +1699,7 @@ static void XFONT_LoadIgnores(void)
     /* Others from INI file */
     do
     {
-	wsprintfA( subsection, "%s%i", INIIgnoreSection, i++ );
+	sprintf( subsection, "%s%i", INIIgnoreSection, i++ );
 
 	if( PROFILE_GetWineIniString( INIFontSection,
 				      subsection, "", buffer, sizeof buffer) )

@@ -23,9 +23,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include "windef.h"
-#include "wingdi.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
 #include "winversion.h"

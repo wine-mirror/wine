@@ -932,22 +932,6 @@ int __cdecl CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
 
 
 /*********************************************************************
- *                  vsprintf      (CRTDLL.500)
- */
-INT __cdecl CRTDLL_vsprintf( LPSTR buffer, LPCSTR spec, va_list args )
-{
-    return wvsprintfA( buffer, spec, args );
-}
-
-/*********************************************************************
- *                  _vsnprintf      (CRTDLL.@)
- */
-INT __cdecl CRTDLL__vsnprintf(LPSTR buffer,DWORD size,LPCSTR spec,va_list args )
-{
-    return wvsnprintfA( buffer, size, spec, args );
-}
-
-/*********************************************************************
  *                  vswprintf      (CRTDLL.501)
  */
 INT __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args )
@@ -1637,15 +1621,6 @@ LPSTR __cdecl CRTDLL_tmpnam(LPSTR s)
      else 
        return CRTDLL_tmpname.short_name;
 
-}
-
-/*********************************************************************
- *                  _itoa           (CRTDLL.165)
- */
-LPSTR  __cdecl CRTDLL__itoa(INT x,LPSTR buf,INT buflen)
-{
-    wsnprintfA(buf,buflen,"%d",x);
-    return buf;
 }
 
 

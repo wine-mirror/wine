@@ -3097,13 +3097,10 @@ DWORD       WINAPI GetMenuCheckMarkDimensions(void);
 LONG        WINAPI GetMessageExtraInfo(void);
 DWORD       WINAPI GetMessagePos(void);
 LONG        WINAPI GetMessageTime(void);
-DWORD       WINAPI GetTickCount(void);
-ATOM        WINAPI GlobalDeleteAtom(ATOM);
 DWORD       WINAPI OemKeyScan(WORD);
 BOOL        WINAPI ReleaseCapture(void);
 BOOL        WINAPI SetKeyboardState(LPBYTE);
 VOID        WINAPI WaitMessage(void);
-
 
 /* Declarations for functions that change between Win16 and Win32 */
 
@@ -3369,7 +3366,6 @@ INT       WINAPI GetClipboardFormatNameW(UINT,LPWSTR,INT);
 HWND      WINAPI GetClipboardOwner(void);
 HWND      WINAPI GetClipboardViewer(void);
 BOOL      WINAPI GetClipCursor(LPRECT);
-#define     GetCurrentTime() GetTickCount()
 HCURSOR   WINAPI GetCursor(void);
 BOOL      WINAPI GetCursorPos(LPPOINT);
 HDC       WINAPI GetDC(HWND);
@@ -3453,15 +3449,6 @@ INT       WINAPI GetWindowTextLengthA(HWND);
 INT       WINAPI GetWindowTextLengthW(HWND);
 #define     GetWindowTextLength WINELIB_NAME_AW(GetWindowTextLength)
 WORD        WINAPI GetWindowWord(HWND,INT);
-ATOM        WINAPI GlobalAddAtomA(LPCSTR);
-ATOM        WINAPI GlobalAddAtomW(LPCWSTR);
-#define     GlobalAddAtom WINELIB_NAME_AW(GlobalAddAtom)
-ATOM        WINAPI GlobalFindAtomA(LPCSTR);
-ATOM        WINAPI GlobalFindAtomW(LPCWSTR);
-#define     GlobalFindAtom WINELIB_NAME_AW(GlobalFindAtom)
-UINT      WINAPI GlobalGetAtomNameA(ATOM,LPSTR,INT);
-UINT      WINAPI GlobalGetAtomNameW(ATOM,LPWSTR,INT);
-#define     GlobalGetAtomName WINELIB_NAME_AW(GlobalGetAtomName)
 BOOL      WINAPI GrayStringA(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
                                  INT,INT,INT,INT,INT);
 BOOL      WINAPI GrayStringW(HDC,HBRUSH,GRAYSTRINGPROC,LPARAM,
