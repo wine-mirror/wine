@@ -1609,6 +1609,31 @@ QueryServiceConfigW( SC_HANDLE hService,
     return TRUE;
 }
 
+
+/******************************************************************************
+ * GetServiceDisplayNameA  [ADVAPI32.@]
+ */
+BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
+  LPSTR lpDisplayName, LPDWORD lpcchBuffer)
+{
+    FIXME("%p %s %p %p\n", hSCManager,
+          debugstr_a(lpServiceName), lpDisplayName, lpcchBuffer);
+    return FALSE;
+}
+
+
+/******************************************************************************
+ * GetServiceDisplayNameW  [ADVAPI32.@]
+ */
+BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
+  LPWSTR lpDisplayName, LPDWORD lpcchBuffer)
+{
+    FIXME("%p %s %p %p\n", hSCManager,
+          debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
+    return FALSE;
+}
+
+
 /******************************************************************************
  * ChangeServiceConfigW  [ADVAPI32.@]
  */

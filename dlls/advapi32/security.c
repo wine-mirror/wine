@@ -2655,3 +2655,39 @@ DWORD WINAPI GetNamedSecurityInfoW(LPWSTR pObjectName,
         ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * DecryptFileW [ADVAPI32.@]
+ */
+BOOL WINAPI DecryptFileW(LPCWSTR lpFileName, DWORD dwReserved)
+{
+    FIXME("%s %08lx\n", debugstr_w(lpFileName), dwReserved);
+    return TRUE;
+}
+
+/******************************************************************************
+ * DecryptFileA [ADVAPI32.@]
+ */
+BOOL WINAPI DecryptFileA(LPCSTR lpFileName, DWORD dwReserved)
+{
+    FIXME("%s %08lx\n", debugstr_a(lpFileName), dwReserved);
+    return TRUE;
+}
+
+/******************************************************************************
+ * EncryptFileW [ADVAPI32.@]
+ */
+BOOL WINAPI EncryptFileW(LPCWSTR lpFileName)
+{
+    FIXME("%s\n", debugstr_w(lpFileName));
+    return TRUE;
+}
+
+/******************************************************************************
+ * EncryptFileA [ADVAPI32.@]
+ */
+BOOL WINAPI EncryptFileA(LPCSTR lpFileName)
+{
+    FIXME("%s\n", debugstr_a(lpFileName));
+    return TRUE;
+}

@@ -91,12 +91,16 @@
 @ stdcall CryptSetProvParam(long long ptr long)
 @ stdcall CryptVerifySignatureA(long ptr long long ptr long)
 @ stdcall CryptVerifySignatureW(long ptr long long ptr long) CryptVerifySignatureA
+@ stdcall DecryptFileA(str long)
+@ stdcall DecryptFileW(wstr long)
 @ stdcall DeleteAce(ptr long)
 @ stdcall DeleteService(long)
 @ stdcall DeregisterEventSource(long)
 @ stub DestroyPrivateObjectSecurity
 @ stub DuplicateToken #(long long ptr) DuplicateToken
 @ stub DuplicateTokenEx #(long long ptr long long ptr) DuplicateTokenEx
+@ stdcall EncryptFileA(str)
+@ stdcall EncryptFileW(wstr)
 @ stub EnumDependentServicesA
 @ stub EnumDependentServicesW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
@@ -130,8 +134,8 @@
 @ stdcall GetSecurityDescriptorSacl (ptr ptr ptr ptr)
 @ stdcall GetSecurityInfo (long long long ptr ptr ptr ptr ptr)
 @ stdcall GetSecurityInfoExW (long long long wstr wstr ptr ptr wstr wstr)
-@ stub GetServiceDisplayNameA
-@ stub GetServiceDisplayNameW
+@ stdcall GetServiceDisplayNameA(ptr str ptr ptr)
+@ stdcall GetServiceDisplayNameW(ptr wstr ptr ptr)
 @ stub GetServiceKeyNameA
 @ stub GetServiceKeyNameW
 @ stdcall GetSidIdentifierAuthority(ptr)
