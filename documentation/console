@@ -127,22 +127,33 @@ II. Wine.conf Configuration
       XtermProg=<program>
 
          Use this program instead of xterm. This eliminates the need for a
-         recompile.
+         recompile. See the table below for a comparison of various
+         terminals.
 
-      XtermResolution=<cols>x<rows>
+      InitialRows=<number>
 
-         (Example: XtermResolution=80x25)
-         Start your xterm program with this text resolution. 80x25 is
-         recommended, a NULL value will mean to use the terminal's default
-         resolution, determined however your specific terminal figures
-         that out. Most console-based programs expect eother 80x25 or
-         80x40 displays.
+         Attempt to start all drivers with this number of rows. This
+         causes xterms to be resized, for instance.
 
-         Note: The default for many terminals is 80x24. One row smaller
-         than what the console subsystem generally expects.
- 
-         Note 2: This information is passed on the command-line with the
+         Note: This information is passed on the command-line with the
          -g switch.
+
+      InitialColumns=<number>
+
+         Attempt to start all drivers with this number of columns. This
+         causes xterms to be resized, for instance.
+
+         Note: This information is passed on the command-line with the
+         -g switch.
+
+      TerminalType=<name>
+
+         Tell any driver that is interested (ncurses) which termcap
+         and/or terminfo type to use. The default is xterm which is
+         appropiate for most uses. "nxterm" may give you better support
+         if you use that terminal. This can also be changed to
+         "linux" (or "console" on older systems) if you manage to hack
+         the ability to write to the console into this driver.
 
 III. Terminal Types
 
@@ -162,6 +173,5 @@ III. Terminal Types
 
    As X terminals typically use a 24x80 screen resolution rather than the
    typical 25x80 one, it is necessary to resize the screen to allow a DOS
-   program to work full-screen. Soon, I will add an option to the
-   configuration to set this up at run time. On the fly resizing will
-   still be disabled however.
+   program to work full-screen. There is a wine.conf option to work
+   around this in some cases but run-time resizing will be disabled.
