@@ -1970,18 +1970,18 @@ TREEVIEW_GetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
     if (tvItem->mask & TVIF_STATE) {
         tvItem->state = wineItem->state & tvItem->stateMask;
     }
-#if 0
+
     if (tvItem->mask & TVIF_TEXT) {
-        if (wineItem->pszText == LPSTR_TEXTCALLBACKW) {
-            tvItem->pszText = LPSTR_TEXTCALLBACKW;  /* FIXME:send notification? */
-            ERR(" GetItem called with LPSTR_TEXTCALLBACK\n");
+        if (wineItem->pszText == LPSTR_TEXTCALLBACKA) {
+            tvItem->pszText = LPSTR_TEXTCALLBACKA;
+            FIXME(" GetItem called with LPSTR_TEXTCALLBACK\n");
         }
         else if (wineItem->pszText) {
-            lstrcpynAtoW(tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
+            MultiByteToWideChar(CP_ACP, 0, wineItem->pszText,
+                                -1 , (LPWSTR)tvItem->pszText, tvItem->cchTextMax);
         }
     }
-#endif
-    wineItem->pszText = NULL;
+
     TRACE("item %d<%p>, txt %p, img %p, action %x\n",
         iItem, tvItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
     return TRUE;
