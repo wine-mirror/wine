@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 
 #include "wine/winbase16.h"
 #include "wine/exception.h"
@@ -1524,12 +1527,21 @@ VOID WINAPI GlobalMemoryStatus(
 #ifdef linux
     FILE *f;
 #endif
-
+#ifdef __FreeBSD__
+    int *tmp;
+    int size_sys;
+#endif
     if (time(NULL)==cache_lastchecked) {
 	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
 	return;
     }
     cache_lastchecked = time(NULL);
+
+    lpmem->dwMemoryLoad    = 0;
+    lpmem->dwTotalPhys     = 16*1024*1024;
+    lpmem->dwAvailPhys     = 16*1024*1024;
+    lpmem->dwTotalPageFile = 16*1024*1024;
+    lpmem->dwAvailPageFile = 16*1024*1024;
 
 #ifdef linux
     f = fopen( "/proc/meminfo", "r" );
@@ -1578,16 +1590,36 @@ VOID WINAPI GlobalMemoryStatus(
             lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
                                       / (TotalPhysical / 100);
         }
-    } else
-#endif
-    {
-	/* FIXME: should do something for other systems */
-	lpmem->dwMemoryLoad    = 0;
-	lpmem->dwTotalPhys     = 16*1024*1024;
-	lpmem->dwAvailPhys     = 16*1024*1024;
-	lpmem->dwTotalPageFile = 16*1024*1024;
-	lpmem->dwAvailPageFile = 16*1024*1024;
     }
+#elif defined(__FreeBSD__)
+    sysctlbyname("hw.physmem", NULL, &size_sys, NULL, 0);
+    tmp = malloc(size_sys * sizeof(int));
+    sysctlbyname("hw.physmem", tmp, &size_sys, NULL, 0);
+    if (tmp && *tmp)
+    {
+        lpmem->dwTotalPhys = *tmp;
+	free(tmp);
+	sysctlbyname("hw.usermem", NULL, &size_sys, NULL, 0);
+	tmp = malloc(size_sys * sizeof(int));
+	sysctlbyname("hw.usermem", tmp, &size_sys, NULL, 0);
+	if (tmp && *tmp)
+	{
+	    lpmem->dwAvailPhys = *tmp;
+            lpmem->dwTotalPageFile = *tmp;
+	    lpmem->dwAvailPageFile = *tmp;
+	    lpmem->dwMemoryLoad = lpmem->dwTotalPhys - lpmem->dwAvailPhys;
+	} else
+	{
+	    lpmem->dwAvailPhys = lpmem->dwTotalPhys;
+	    lpmem->dwTotalPageFile = lpmem->dwTotalPhys;
+	    lpmem->dwAvailPageFile = lpmem->dwTotalPhys;
+	    lpmem->dwMemoryLoad = 0;
+	}
+	free(tmp);
+	
+    }
+#endif
+    /* FIXME: should do something for other systems */
     GetSystemInfo(&si);
     lpmem->dwTotalVirtual  = si.lpMaximumApplicationAddress-si.lpMinimumApplicationAddress;
     /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
