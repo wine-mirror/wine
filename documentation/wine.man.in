@@ -203,10 +203,10 @@ Examples:
 Try to load comdlg32 and commdlg as native windows dll first and try
 the builtin version if the native load fails.
 .br
-.I --dll shell,shell32=n --dll c:\\foo\\bar\\baz=b
+.I --dll shell,shell32=n --dll c:\(rs\(rsfoo\(rs\(rsbar\(rs\(rsbaz=b
 .br
 Try to load the libraries shell and shell32 as native windows dlls. Furthermore, if 
-an application request to load c:\\foo\\bar\\baz.dll load the builtin library baz. 
+an application request to load c:\(rsfoo\(rsbar\(rsbaz.dll load the builtin library baz. 
 .br
 .I --dll comdlg32,commdlg=e,n:shell,shell32=b+comctl32,commctrl=n
 .br
@@ -246,13 +246,13 @@ Possible arguments are: win31, win95, nt351, and nt40.
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
 .I
-C:\\WINDOWS\\SOL.EXE)
+C:\(rs\(rsWINDOWS\(rs\(rsSOL.EXE)
 or in Unix format (
 .I /msdos/windows/sol.exe
 ).  The program being executed may be passed arguments by adding them on 
 to the end of the command line invoking
 .B wine
-(such as: wine notepad C:\\TEMP\\README.TXT). Command line processing goes as
+(such as: wine notepad C:\(rs\(rsTEMP\(rs\(rsREADME.TXT). Command line processing goes as
 follows: first 
 .B wine
 checks, if one or more of the above mentioned 
@@ -327,7 +327,7 @@ expects a configuration file (
 man page. A sample configuration file is wine.ini in the base directory of the 
 .B wine 
 source archive. Alternatively a configuration file with the name
-.I winerc 
+.I.winerc 
 in the home directory of the user running 
 .B wine 
 can be used. The third option is to specify the name of the 
