@@ -413,6 +413,16 @@ static const char main_key_PL[MAIN_LEN][4] =
  "<>|"
 };
 
+/*** Slovenian keyboard layout by Rok Mandeljc <rok.mandeljc@gimb.org> ***/
+static const char main_key_SI[MAIN_LEN][4] =
+{
+ "¸¨","1!","2\"·","3#^","4$¢","5%°","6&²","7/`","8(ÿ","9)´","0=½","'?¨","+*¸",
+ "qQ\\","wW|","eE","rR","tT","zZ","uU","iI","oO","pP","¹©÷","ðÐ×",
+ "aA","sS","dD","fF[","gG]","hH","jJ","kK³","lL£","èÈ","æÆß","¾®¤",
+ "yY","xX","cC","vV@","bB{","nN}","mM§",",;",".:","-_",
+ "<>"
+};
+
 /*** Croatian keyboard layout specific for me <jelly@srk.fer.hr> ***/
 static const char main_key_HR_jelly[MAIN_LEN][4] =
 {
@@ -599,6 +609,7 @@ static const struct {
  {"Icelandic keyboard layout", 28591, &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Hungarian keyboard layout", 28592, &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Polish (programmer's) keyboard layout", 28592, &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Slovenian keyboard layout", 28592, &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Croatian keyboard layout", 28592, &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Croatian keyboard layout (specific)", 28592, &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Japanese 106 keyboard layout", 932, &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
