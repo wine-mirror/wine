@@ -502,8 +502,6 @@ BOOL WINAPI ShellExecuteExAW (LPVOID sei)
  *	%S ???
  *	%* all following parameters (see batfile)
  */
-#include "process.h" /* we can get rid of it hopefully */
-#include "task.h"
 BOOL WINAPI ShellExecuteExA (LPSHELLEXECUTEINFOA sei)
 { 	CHAR szApplicationName[MAX_PATH],szCommandline[MAX_PATH],szPidl[20];
 	LPSTR pos;

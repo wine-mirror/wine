@@ -34,7 +34,6 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "debugtools.h"
-#include "spy.h"
 #include "message.h"
 #include "options.h"
 

@@ -73,4 +73,7 @@ extern int DOSFS_FindNext( const char *path, const char *short_mask,
                            const char *long_mask, int drive, BYTE attr,
                            int skip, WIN32_FIND_DATAA *entry );
 
+/* win32/device.c */
+extern HANDLE DEVICE_Open( LPCSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
+
 #endif  /* __WINE_FILE_H */

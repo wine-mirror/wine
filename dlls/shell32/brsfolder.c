@@ -7,10 +7,8 @@
 #include "win.h"
 #include "debugtools.h"
 #include "winreg.h"
-#include "authors.h"
 #include "winnls.h"
 #include "commctrl.h"
-#include "spy.h"
 
 #include "wine/obj_base.h"
 #include "wine/obj_enumidlist.h"

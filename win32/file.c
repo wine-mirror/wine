@@ -23,7 +23,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"
-#include "device.h"
 #include "process.h"
 #include "heap.h"
 #include "debugtools.h"

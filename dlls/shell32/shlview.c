@@ -38,7 +38,6 @@
 #include "wine/obj_dragdrop.h"
 #include "wine/undocshell.h"
 #include "shresdef.h"
-#include "spy.h"
 #include "debugtools.h"
 #include "winerror.h"
 #include "wine/winestring.h"
@@ -47,7 +46,7 @@
 #include "pidl.h"
 #include "shell32_main.h"
 
-DEFAULT_DEBUG_CHANNEL(shell)
+DEFAULT_DEBUG_CHANNEL(shell);
 
 typedef struct
 {   BOOL    bIsAscending;
@@ -1283,7 +1282,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    }
 	    break;
 	  default:
-	    TRACE("-- %p WM_COMMAND %s unhandled\n", This, SPY_GetMsgName(lpnmh->code));
+	    TRACE("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
 	    break;;
 	}
 	return 0;

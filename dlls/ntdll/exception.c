@@ -9,7 +9,6 @@
 #include <signal.h>
 #include "winnt.h"
 #include "ntddk.h"
-#include "process.h"
 #include "global.h"
 #include "wine/exception.h"
 #include "stackframe.h"

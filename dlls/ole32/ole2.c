@@ -16,7 +16,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"
-#include "process.h"
 #include "commctrl.h"
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
@@ -215,8 +214,9 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
  * NOTES
  *   Is DWORD really the correct return type for this function?
  */
-DWORD WINAPI CoGetCurrentProcess(void) {
-	return (DWORD)PROCESS_Current();
+DWORD WINAPI CoGetCurrentProcess(void)
+{
+	return GetCurrentProcessId();
 }
 
 /******************************************************************************

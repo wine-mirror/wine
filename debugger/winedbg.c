@@ -12,7 +12,6 @@
 #include "debugger.h"
 
 #include "thread.h"
-#include "process.h"
 #include "file.h"
 #include "wincon.h"
 #include "wingdi.h"

@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "local.h"
-#include "process.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
 #include "heap.h"

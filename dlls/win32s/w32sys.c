@@ -6,11 +6,17 @@
  */
 
 #include "windef.h"
-#include "w32sys.h"
-
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(dll)
+DEFAULT_DEBUG_CHANNEL(dll);
+
+typedef struct
+{
+    BYTE   bMajor;
+    BYTE   bMinor;
+    WORD   wBuildNumber;
+    BOOL16 fDebug;
+} WIN32SINFO, *LPWIN32SINFO;
 
 /***********************************************************************
  *           GetWin32sInfo   (W32SYS.12)
