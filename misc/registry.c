@@ -1861,6 +1861,7 @@ static void convert_environment( HKEY hkey_current_user )
     static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
     static const WCHAR systemW[] = {'s','y','s','t','e','m',0};
     static const WCHAR windirW[] = {'w','i','n','d','i','r',0};
+    static const WCHAR systemrootW[] = {'S','y','s','t','e','m','r','o','o','t',0};
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
     static const WCHAR envW[] = {'E','n','v','i','r','o','n','m','e','n','t',0};
     static const WCHAR tempW[] = {'T','E','M','P',0};
@@ -1894,59 +1895,83 @@ static void convert_environment( HKEY hkey_current_user )
         NtClose( hkey_old );
         return;
     }
-    if (disp != REG_CREATED_NEW_KEY) goto done;
 
-    /* convert TEMP */
+    /* Test for existence of TEMP */
     RtlInitUnicodeString( &nameW, tempW );
-    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    if (NtQueryValueKey(hkey_env, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
     {
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        RtlInitUnicodeString( &nameW, tmpW );
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        MESSAGE( "Converted temp dir to new entry HKCU\\Environment \"TEMP\" = %s\n",
-                 debugstr_w( (WCHAR*)info->Data ) );
+        /* convert TEMP */
+        RtlInitUnicodeString( &nameW, tempW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        {
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            RtlInitUnicodeString( &nameW, tmpW );
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            MESSAGE( "Converted temp dir to new entry HKCU\\Environment \"TEMP\" = %s\n",
+                    debugstr_w( (WCHAR*)info->Data ) );
+        }
     }
 
-    /* convert PATH */
+    /* Test for existence of PATH */
     RtlInitUnicodeString( &nameW, pathW );
-    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    if (NtQueryValueKey(hkey_env, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
     {
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        MESSAGE( "Converted path dir to new entry HKCU\\Environment \"PATH\" = %s\n",
-                 debugstr_w( (WCHAR*)info->Data ) );
+        /* convert PATH */
+        RtlInitUnicodeString( &nameW, pathW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        {
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            MESSAGE( "Converted path dir to new entry HKCU\\Environment \"PATH\" = %s\n",
+                    debugstr_w( (WCHAR*)info->Data ) );
+        }
     }
 
-    /* convert USERPROFILE */
-    RtlInitUnicodeString( &nameW, profileW );
-    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    /* Test for existence of USERPROFILE */
+    RtlInitUnicodeString( &nameW, userprofileW );
+    if (NtQueryValueKey(hkey_env, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
     {
-        RtlInitUnicodeString( &nameW, userprofileW );
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        MESSAGE( "Converted profile dir to new entry HKCU\\Environment \"USERPROFILE\" = %s\n",
-                 debugstr_w( (WCHAR*)info->Data ) );
+        /* convert USERPROFILE */
+        RtlInitUnicodeString( &nameW, profileW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        {
+            RtlInitUnicodeString( &nameW, userprofileW );
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            MESSAGE( "Converted profile dir to new entry HKCU\\Environment \"USERPROFILE\" = %s\n",
+                    debugstr_w( (WCHAR*)info->Data ) );
+        }
     }
 
-    /* convert windir */
-    RtlInitUnicodeString( &nameW, windowsW );
-    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+    /* Test for existence of windir */
+    RtlInitUnicodeString( &nameW, windirW );
+    if (NtQueryValueKey(hkey_env, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
     {
-        RtlInitUnicodeString( &nameW, windirW );
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        MESSAGE( "Converted windows dir to new entry HKCU\\Environment \"windir\" = %s\n",
-                 debugstr_w( (WCHAR*)info->Data ) );
+        /* convert windir */
+        RtlInitUnicodeString( &nameW, windowsW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        {
+            RtlInitUnicodeString( &nameW, windirW );
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            RtlInitUnicodeString( &nameW, systemrootW );
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            MESSAGE( "Converted windows dir to new entry HKCU\\Environment \"windir\" = %s\n",
+                    debugstr_w( (WCHAR*)info->Data ) );
+        }
     }
-
-    /* convert winsysdir */
-    RtlInitUnicodeString( &nameW, systemW );
-    if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        
+    /* Test for existence of winsysdir */
+    RtlInitUnicodeString( &nameW, winsysdirW );
+    if (NtQueryValueKey(hkey_env, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
     {
-        RtlInitUnicodeString( &nameW, winsysdirW );
-        NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
-        MESSAGE( "Converted system dir to new entry HKCU\\Environment \"winsysdir\" = %s\n",
-                 debugstr_w( (WCHAR*)info->Data ) );
+        /* convert winsysdir */
+        RtlInitUnicodeString( &nameW, systemW );
+        if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, buffer, sizeof(buffer), &dummy ))
+        {
+            RtlInitUnicodeString( &nameW, winsysdirW );
+            NtSetValueKey( hkey_env, &nameW, 0, info->Type, info->Data, info->DataLength );
+            MESSAGE( "Converted system dir to new entry HKCU\\Environment \"winsysdir\" = %s\n",
+                    debugstr_w( (WCHAR*)info->Data ) );
+        }
     }
-
-done:
     NtClose( hkey_old );
     NtClose( hkey_env );
 }
