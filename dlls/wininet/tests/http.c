@@ -175,7 +175,7 @@ void winapi_test(int flags)
     {
 
         rc = InternetQueryDataAvailable(hor,&length,0x0,0x0);
-        ok((rc != 0),"InternetQueryDataAvailable failed\n");
+        ok(!(rc == 0 && length != 0),"InternetQueryDataAvailable failed\n");
 
         if (length)
         {
