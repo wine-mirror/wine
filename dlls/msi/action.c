@@ -4676,10 +4676,44 @@ UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder,
     return ret;
 }
 
-BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, DWORD iRunMode)
+/***********************************************************************
+ *           MsiGetMode    (MSI.@)
+ *
+ * Returns an internal installer state (if it is running in a mode iRunMode)
+ *
+ * PARAMS
+ *   hInstall    [I]  Handle to the installation
+ *   hRunMode    [I]  Checking run mode
+ *        MSIRUNMODE_ADMIN             Administrative mode
+ *        MSIRUNMODE_ADVERTISE         Advertisement mode
+ *        MSIRUNMODE_MAINTENANCE       Maintenance mode
+ *        MSIRUNMODE_ROLLBACKENABLED   Rollback is enabled
+ *        MSIRUNMODE_LOGENABLED        Log file is writing
+ *        MSIRUNMODE_OPERATIONS        Operations in progress??
+ *        MSIRUNMODE_REBOOTATEND       We need to reboot after installation completed
+ *        MSIRUNMODE_REBOOTNOW         We need to reboot to continue the installation
+ *        MSIRUNMODE_CABINET           Files from cabinet are installed
+ *        MSIRUNMODE_SOURCESHORTNAMES  Long names in source files is supressed
+ *        MSIRUNMODE_TARGETSHORTNAMES  Long names in destination files is supressed
+ *        MSIRUNMODE_RESERVED11        Reserved
+ *        MSIRUNMODE_WINDOWS9X         Running under Windows95/98
+ *        MSIRUNMODE_ZAWENABLED        Demand installation is supported
+ *        MSIRUNMODE_RESERVED14        Reserved
+ *        MSIRUNMODE_RESERVED15        Reserved
+ *        MSIRUNMODE_SCHEDULED         called from install script
+ *        MSIRUNMODE_ROLLBACK          called from rollback script
+ *        MSIRUNMODE_COMMIT            called from commit script
+ *
+ * RETURNS
+ *    In the state: TRUE
+ *    Not in the state: FALSE
+ *
+ */
+
+BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 {
-    FIXME("STUB (%li)\n",iRunMode);
-    return FALSE;
+    FIXME("STUB (iRunMode=%i)\n",iRunMode);
+    return TRUE;
 }
 
 /*
