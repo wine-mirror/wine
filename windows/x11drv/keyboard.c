@@ -51,7 +51,7 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym);
 
 /* Keyboard translation tables */
 #define MAIN_LEN 48
-static const int main_key_scan[MAIN_LEN] =
+static const WORD main_key_scan_qwerty[MAIN_LEN] =
 {
 /* this is my (102-key) keyboard layout, sorry if it doesn't quite match yours */
    0x29,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,
@@ -60,6 +60,18 @@ static const int main_key_scan[MAIN_LEN] =
    0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
    0x56 /* the 102nd key (actually to the right of l-shift) */
 };
+
+static const WORD main_key_vkey_qwerty[MAIN_LEN] =
+{
+/* NOTE: this layout must be identical to the above one */
+   VK_OEM_3,VK_1,VK_2,VK_3,VK_4,VK_5,VK_6,VK_7,VK_8,VK_9,VK_0,VK_OEM_MINUS,VK_OEM_PLUS,
+   VK_Q,VK_W,VK_E,VK_R,VK_T,VK_Y,VK_U,VK_I,VK_O,VK_P,VK_OEM_4,VK_OEM_6,
+   VK_A,VK_S,VK_D,VK_F,VK_G,VK_H,VK_J,VK_K,VK_L,VK_OEM_1,VK_OEM_7,VK_OEM_5,
+   VK_Z,VK_X,VK_C,VK_V,VK_B,VK_N,VK_M,VK_OEM_COMMA,VK_OEM_PERIOD,VK_OEM_2,
+   VK_OEM_102 /* the 102nd key (actually to the right of l-shift) */
+};
+
+/* FIXME: add other layouts, such as DVORAK and German QWERTZ */
 
 /*** DEFINE YOUR NEW LANGUAGE-SPECIFIC MAPPINGS BELOW, SEE EXISTING TABLES */
 
@@ -243,6 +255,16 @@ static const char main_key_RU[MAIN_LEN][4] =
  "zZÑñ","xXÞþ","cCÓó","vVÍí","bBÉé","nNÔô","mMØø",",<Ââ",".>Àà","/?"
 };
 
+/*** Russian keyboard layout KOI8-R */
+static const char main_key_RU_koi8r[MAIN_LEN][4] =
+{
+ "()","1!","2\"","3/","4$","5:","6,","7.","8;","9?","0%","-_","=+",
+ "Êê","Ãã","Õõ","Ëë","Åå","Îî","Çç","Ûû","Ýý","Úú","Èè","ßÿ",
+ "Ææ","Ùù","×÷","Áá","Ðð","Òò","Ïï","Ìì","Ää","Öö","Üü","\\|",
+ "Ññ","Þþ","Óó","Íí","Éé","Ôô","Øø","Ââ","Àà","/?",
+ "<>" /* the phantom key */
+};
+
 /*** Spanish keyboard layout (contributed by José Marcos López) */
 static const char main_key_ES[MAIN_LEN][4] =
 {
@@ -335,37 +357,39 @@ static const char main_key_PT_br[MAIN_LEN][4] =
 
 /*** Layout table. Add your keyboard mappings to this list */
 static const struct {
- WORD lang, ansi_codepage, oem_codepage;
- const char (*key)[MAIN_LEN][4];
+    const char *comment;
+    const UINT layout_cp; /* Code page for this layout */
+    const char (*key)[MAIN_LEN][4];
+    const WORD (*scan)[MAIN_LEN]; /* scan codes mapping */
+    const WORD (*vkey)[MAIN_LEN]; /* virtual key codes mapping */
 } main_key_tab[]={
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US},
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),     1252, 437, &main_key_US_phantom},
- {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK),     1252, 850, &main_key_UK},
- {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE},
- {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),         1252, 850, &main_key_DE_nodead},
- {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),    1252, 850, &main_key_SG},
- {MAKELANGID(LANG_SWEDISH,SUBLANG_SWEDISH),        1252, 850, &main_key_SE},
- {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),      1252, 865, &main_key_NO},
- {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),         1252, 865, &main_key_DA},
- {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),         1252, 850, &main_key_FR},
- {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN), 1252, 863, &main_key_CF},
- {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_BELGIAN),  1252, 850, &main_key_BE},
- {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_SWISS),    1252, 850, &main_key_SF},
- {MAKELANGID(LANG_WALON,SUBLANG_DEFAULT),          1252, 850, &main_key_BE},
- {MAKELANGID(LANG_PORTUGUESE,SUBLANG_DEFAULT),     1252, 860, &main_key_PT},
- {MAKELANGID(LANG_FINNISH,SUBLANG_DEFAULT),        1252, 850, &main_key_FI},
- {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),        1251, 866, &main_key_RU},
- {MAKELANGID(LANG_SPANISH,SUBLANG_DEFAULT),        1252, 850, &main_key_ES},
- {MAKELANGID(LANG_DUTCH,SUBLANG_DUTCH_BELGIAN),    1252, 850, &main_key_BE},
- {MAKELANGID(LANG_ITALIAN,SUBLANG_DEFAULT),        1252, 850, &main_key_IT},
- {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
- {MAKELANGID(LANG_HUNGARIAN,SUBLANG_DEFAULT),      1252, 850, &main_key_HU},
- {MAKELANGID(LANG_POLISH,SUBLANG_DEFAULT),         1250, 852, &main_key_PL},
- {MAKELANGID(LANG_CROATIAN,SUBLANG_CROATIAN),      1250, 852, &main_key_HR},
- {MAKELANGID(LANG_CROATIAN,SUBLANG_CROATIAN),      1250, 852, &main_key_HR_jelly},
- {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_jp106},
- {MAKELANGID(LANG_JAPANESE,SUBLANG_DEFAULT),        932, 932, &main_key_JA_pc98x1},
- {MAKELANGID(LANG_PORTUGUESE,SUBLANG_PORTUGUESE_BRAZILIAN), 1252, 860, &main_key_PT_br},
+ {"United States keyboard layout", 28591, &main_key_US, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"United States keyboard layout (phantom key version)", 28591, &main_key_US_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"British keyboard layout", 28591, &main_key_UK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout", 28591, &main_key_DE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"German keyboard layout without dead keys", 28591, &main_key_DE_nodead, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Swiss German keyboard layout", 28591, &main_key_SG, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Swedish keyboard layout", 28591, &main_key_SE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Norwegian keyboard layout", 28591, &main_key_NO, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Danish keyboard layout", 28591, &main_key_DA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"French keyboard layout", 28591, &main_key_FR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Canadian French keyboard layout", 28591, &main_key_CF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Belgian keyboard layout", 28591, &main_key_BE, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Swiss French keyboard layout", 28591, &main_key_SF, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Portuguese keyboard layout", 28591, &main_key_PT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Brazilian ABNT-2 keyboard layout", 28591, &main_key_PT_br, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Finnish keyboard layout", 28591, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Spanish keyboard layout", 28591, &main_key_ES, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Italian keyboard layout", 28591, &main_key_IT, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Icelandic keyboard layout", 28591, &main_key_IS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Hungarian keyboard layout", 28592, &main_key_HU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Polish (programmer's) keyboard layout", 28592, &main_key_PL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Croatian keyboard layout", 28592, &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Croatian keyboard layout (specific)", 28592, &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Japanese 106 keyboard layout", 932, &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Japanese pc98x1 keyboard layout", 932, &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {0} /* sentinel */
 };
@@ -380,41 +404,41 @@ static unsigned kbd_layout=0; /* index into above table of layouts */
                 /* Yes, to distinguish based on scan codes, also
                    for PrtScn key ... GA */
 
-static const int special_key_vkey[] =
+static const WORD special_key_vkey[] =
 {
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
     0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
     0, 0, 0, VK_ESCAPE                                          /* FF18 */
 };
-static const int special_key_scan[] =
+static const WORD special_key_scan[] =
 {
     0x0E, 0x0F, 0, /*?*/ 0, 0, 0x1C, 0, 0,                      /* FF08 */
     0,    0,    0, 0x45, 0x46, 0   , 0, 0,                      /* FF10 */
     0,    0,    0, 0x01                                         /* FF18 */
 };
 
-static const int cursor_key_vkey[] =
+static const WORD cursor_key_vkey[] =
 {
     VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
                                        VK_NEXT, VK_END          /* FF50 */
 };
-static const int cursor_key_scan[] =
+static const WORD cursor_key_scan[] =
 {
     0x147, 0x14B, 0x148, 0x14D, 0x150, 0x149, 0x151, 0x14F      /* FF50 */
 };
 
-static const int misc_key_vkey[] =
+static const WORD misc_key_vkey[] =
 {
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
     VK_CANCEL, VK_HELP, VK_CANCEL, VK_CANCEL                    /* FF68 */
 };
-static const int misc_key_scan[] =
+static const WORD misc_key_scan[] =
 {
     /*?*/ 0, 0x137, /*?*/ 0, 0x152, 0, 0, 0, 0,                 /* FF60 */
     /*?*/ 0, /*?*/ 0, 0x38, 0x146                               /* FF68 */
 };
 
-static const int keypad_key_vkey[] =
+static const WORD keypad_key_vkey[] =
 {
     0, VK_NUMLOCK,                                        	/* FF7E */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
@@ -429,7 +453,7 @@ static const int keypad_key_vkey[] =
                             VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7, /* FFB0 */
     VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
 };
-static const int keypad_key_scan[] =
+static const WORD keypad_key_scan[] =
 {
     0x138, 0x145,                                               /* FF7E */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
@@ -442,25 +466,25 @@ static const int keypad_key_scan[] =
     0x48, 0x49                                                  /* FFB8 */
 };
     
-static const int function_key_vkey[] =
+static const WORD function_key_vkey[] =
 {
     VK_F1, VK_F2,                                               /* FFBE */
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
     VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
 };
-static const int function_key_scan[] =
+static const WORD function_key_scan[] =
 {
     0x3B, 0x3C,                                                 /* FFBE */
     0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,             /* FFC0 */
     0x57, 0x58, 0, 0, 0, 0                                      /* FFC8 */
 };
 
-static const int modifier_key_vkey[] =
+static const WORD modifier_key_vkey[] =
 {
     VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL, 0, /* FFE1 */
     VK_MENU, VK_MENU, VK_MENU, VK_MENU                         /* FFE7 */
 };
-static const int modifier_key_scan[] =
+static const WORD modifier_key_scan[] =
 {
     0x2A, 0x36, 0x1D, 0x11D, 0x3A, 0,                          /* FFE1 */
     0x38, 0x138, 0x38, 0x138                                   /* FFE7 */
@@ -596,12 +620,10 @@ void X11DRV_KEYBOARD_UpdateState ( void )
 void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 {
     char Str[24]; 
-    XComposeStatus cs; 
     KeySym keysym;
     WORD vkey = 0, bScan;
     DWORD dwFlags;
     static BOOL force_extended = FALSE; /* hack for AltGr translation */
-    
     int ascii_chars;
 
     INT event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
@@ -612,7 +634,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     if ((event->keycode >> 8) == 0x10)
 	event->keycode=(event->keycode & 0xff);
 
-    ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
+    ascii_chars = TSXLookupString(event, Str, sizeof(Str), &keysym, NULL);
 
     TRACE_(key)("state = %X\n", event->state);
 
@@ -740,9 +762,8 @@ X11DRV_KEYBOARD_DetectLayout (void)
     WARN("%d keysyms per keycode not supported, set to 4", syms);
     syms = 4;
   }
-  for (current = 0; main_key_tab[current].lang; current++) {
-    TRACE("Attempting to match against layout %04x\n",
-	   main_key_tab[current].lang);
+  for (current = 0; main_key_tab[current].comment; current++) {
+    TRACE("Attempting to match against \"%s\"\n", main_key_tab[current].comment);
     match = 0;
     mismatch = 0;
     score = 0;
@@ -807,13 +828,14 @@ X11DRV_KEYBOARD_DetectLayout (void)
   if (!ismatch) {
     FIXME(
 	   "Your keyboard layout was not found!\n"
-	   "Instead using closest match (%04x) for scancode mapping.\n"
+	   "Instead of using closest match (%s) for scancode mapping.\n"
 	   "Please define your layout in windows/x11drv/keyboard.c and submit them\n"
 	   "to us for inclusion into future Wine releases.\n"
 	   "See documentation/keyboard for more information.\n",
-	   main_key_tab[kbd_layout].lang);
+	   main_key_tab[kbd_layout].comment);
   }
-  TRACE("detected layout is %04x\n", main_key_tab[kbd_layout].lang);
+
+  TRACE("detected layout is \"%s\"\n", main_key_tab[kbd_layout].comment);
 }
 
 /**********************************************************************
@@ -936,7 +958,10 @@ void X11DRV_InitKeyboard(void)
 	      }
 	      if (maxval>=0) {
 		/* got it */
-		scan = main_key_scan[maxval];
+		const WORD (*lscan)[MAIN_LEN] = main_key_tab[kbd_layout].scan;
+		const WORD (*lvkey)[MAIN_LEN] = main_key_tab[kbd_layout].vkey;
+		scan = (*lscan)[maxval];
+		vkey = (*lvkey)[maxval];
 	      }
 	    }
 
@@ -1357,7 +1382,6 @@ INT16 X11DRV_ToAscii(
 {
     XKeyEvent e;
     KeySym keysym;
-    static XComposeStatus cs;
     INT ret;
     int keyc;
 
@@ -1416,7 +1440,7 @@ INT16 X11DRV_ToAscii(
       }
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
-    ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
+    ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, NULL);
     if (ret == 0)
 	{
 	BYTE dead_char = 0;
@@ -1445,6 +1469,8 @@ INT16 X11DRV_ToAscii(
 	    }
 	}
     else {  /* ret = 1 */
+	UINT ansi_cp = GetACP();
+
         /* We have a special case to handle : Shift + arrow, shift + home, ...
            X returns a char for it, but Windows doesn't. Let's eat it. */
         if (!(lpKeyState[VK_NUMLOCK] & 0x01)  /* NumLock is off */
@@ -1462,10 +1488,21 @@ INT16 X11DRV_ToAscii(
             *(char*)lpChar = 0;
             ret = 0;
         }
+
+	/* perform translation to the current ansi code page */
+	if(ret && ansi_cp != main_key_tab[kbd_layout].layout_cp)
+	{
+	    WCHAR uni_char;
+	    TRACE_(key)("Translating char 0x%02x from cp %d to cp %d\n",
+		*(BYTE *)lpChar, main_key_tab[kbd_layout].layout_cp, ansi_cp);
+	    MultiByteToWideChar(main_key_tab[kbd_layout].layout_cp, 0, lpChar, 1, &uni_char, 1);
+	    ret = WideCharToMultiByte(ansi_cp, 0, &uni_char, 1, lpChar, 2, NULL, NULL);
+	    TRACE_(key)("Translation result: 0x%04x, 0x%02x (%d)\n", uni_char, *(BYTE *)lpChar, ret);
+	}
     }
 
     TRACE_(key)("ToAscii about to return %d with char %x\n",
-		ret, *(char*)lpChar);
+		ret, *(BYTE *)lpChar);
     return ret;
 }
 
