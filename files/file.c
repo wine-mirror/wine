@@ -1427,6 +1427,30 @@ BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     return FILE_ReadFileEx(hFile,buffer,bytesToRead,overlapped,lpCompletionRoutine);
 }
 
+static VOID CALLBACK FILE_TimeoutComplete(DWORD status, DWORD count, LPOVERLAPPED ov)
+{
+    NtSetEvent(ov->hEvent,NULL);
+}
+
+static BOOL FILE_TimeoutRead(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD bytesRead)
+{
+    OVERLAPPED ov;
+    BOOL r = FALSE;
+
+    TRACE("%d %p %ld %p\n", hFile, buffer, bytesToRead, bytesRead );
+
+    ZeroMemory(&ov, sizeof (OVERLAPPED));
+    if(STATUS_SUCCESS==NtCreateEvent(&ov.hEvent, SYNCHRONIZE, NULL, 0, 0))
+    {
+        if(ReadFileEx(hFile, buffer, bytesToRead, &ov, FILE_TimeoutComplete))
+        {
+            r = GetOverlappedResult(hFile, &ov, bytesRead, TRUE);
+        }
+    }
+    CloseHandle(ov.hEvent);
+    return r;
+}
+
 /***********************************************************************
  *              ReadFile                (KERNEL32.@)
  */
@@ -1485,6 +1509,11 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     case FD_TYPE_CONSOLE:
 	return ReadConsoleA(hFile, buffer, bytesToRead, bytesRead, NULL);
+
+    case FD_TYPE_TIMEOUT:
+        close(unix_handle);
+        return FILE_TimeoutRead(hFile, buffer, bytesToRead, bytesRead);
+
     default:
 	/* normal unix files */
 	if (unix_handle == -1)
