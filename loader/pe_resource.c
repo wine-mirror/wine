@@ -12,10 +12,12 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
+
 #include "wine/winestring.h"
 #include "wine/unicode.h"
 #include "windef.h"
 #include "winnls.h"
+#include "winerror.h"
 #include "module.h"
 #include "heap.h"
 #include "task.h"
@@ -23,6 +25,8 @@
 #include "stackframe.h"
 #include "neexe.h"
 #include "debugtools.h"
+
+DEFAULT_DEBUG_CHANNEL(resource);
 
 /**********************************************************************
  *  get_resdir
@@ -35,6 +39,12 @@ static IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
     IMAGE_RESOURCE_DIRECTORY *ret = NULL;
 
     if (!hmod) hmod = GetModuleHandleA( NULL );
+    else if (!HIWORD(hmod))
+    {
+        FIXME("Enumeration of 16-bit resources is not supported\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
     dir = &PE_HEADER(hmod)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
     if (dir->Size && dir->VirtualAddress)
         ret = (IMAGE_RESOURCE_DIRECTORY *)((char *)hmod + dir->VirtualAddress);
