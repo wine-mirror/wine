@@ -15,8 +15,95 @@
 #include "thread.h"
 #include "debugtools.h"
 #include "wine/obj_errorinfo.h"
+#include "wine/unicode.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
+
+/* this code is from SysAllocStringLen (ole2disp.c in oleaut32) */
+static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
+{
+    DWORD  bufferSize;
+    DWORD* newBuffer;
+    WCHAR* stringBuffer;
+    DWORD len;
+    
+    if (in == NULL)
+	return NULL;
+    /*
+     * Find the lenth of the buffer passed-in in bytes.
+     */
+    len = strlenW(in);
+    bufferSize = len * sizeof (WCHAR);
+
+    /*
+     * Allocate a new buffer to hold the string.
+     * dont't forget to keep an empty spot at the begining of the
+     * buffer for the character count and an extra character at the
+     * end for the NULL.
+     */
+    newBuffer = (DWORD*)HeapAlloc(GetProcessHeap(),
+                                 0,
+                                 bufferSize + sizeof(WCHAR) + sizeof(DWORD));
+
+    /*
+     * If the memory allocation failed, return a null pointer.
+     */
+    if (newBuffer==0)
+      return 0;
+
+    /*
+     * Copy the length of the string in the placeholder.
+     */
+    *newBuffer = bufferSize;
+
+    /*
+     * Skip the byte count.
+     */
+    newBuffer++;
+
+    /*
+     * Copy the information in the buffer.
+     * Since it is valid to pass a NULL pointer here, we'll initialize the
+     * buffer to nul if it is the case.
+     */
+    if (in != 0)
+      memcpy(newBuffer, in, bufferSize);
+    else
+      memset(newBuffer, 0, bufferSize);
+
+    /*
+     * Make sure that there is a nul character at the end of the
+     * string.
+     */
+    stringBuffer = (WCHAR*)newBuffer;
+    stringBuffer[len] = 0;
+
+    return (LPWSTR)stringBuffer;
+}
+
+/* this code is from SysFreeString (ole2disp.c in oleaut32)*/
+static VOID WINAPI ERRORINFO_SysFreeString(BSTR in)
+{
+    DWORD* bufferPointer;
+    
+    /* NULL is a valid parameter */
+    if(!in) return;
+
+    /*
+     * We have to be careful when we free a BSTR pointer, it points to
+     * the beginning of the string but it skips the byte count contained
+     * before the string.
+     */
+    bufferPointer = (DWORD*)in;
+
+    bufferPointer--;
+
+    /*
+     * Free the memory from it's "real" origin.
+     */
+    HeapFree(GetProcessHeap(), 0, bufferPointer);
+}
+
 
 typedef struct ErrorInfoImpl
 {
@@ -25,7 +112,11 @@ typedef struct ErrorInfoImpl
 	ICOM_VTABLE(ISupportErrorInfo)	*lpvtsei;
 	DWORD				ref;
 	
-	const GUID *pGuid;
+	GUID m_Guid;
+	BSTR bstrSource;
+	BSTR bstrDescription;
+	BSTR bstrHelpFile;
+	DWORD m_dwHelpContext;
 } ErrorInfoImpl;
 
 static ICOM_VTABLE(IErrorInfo)		IErrorInfoImpl_VTable;
@@ -60,6 +151,10 @@ IErrorInfo * IErrorInfoImpl_Constructor()
 	  ei->lpvtcei = &ICreateErrorInfoImpl_VTable;
 	  ei->lpvtsei = &ISupportErrorInfoImpl_VTable;
 	  ei->ref = 1;
+	  ei->bstrSource = NULL;
+	  ei->bstrDescription = NULL;
+	  ei->bstrHelpFile = NULL;
+	  ei->m_dwHelpContext = 0;
 	}
 	return (IErrorInfo *)ei;
 }
@@ -121,69 +216,14 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 	return This->ref;
 }
 
-static HRESULT WINAPI IErrorInfoImpl_GetTypeInfoCount(
-	IErrorInfo* iface,
-	unsigned int* pctinfo)
-{
-	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IErrorInfoImpl_GetTypeInfo(
-	IErrorInfo* iface,
-	UINT iTInfo,
-	LCID lcid,
-	ITypeInfo** ppTInfo)
-{
-	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IErrorInfoImpl_GetIDsOfNames(
-	IErrorInfo* iface,
-	REFIID riid,
-	LPOLESTR* rgszNames,
-	UINT cNames,
-	LCID lcid,
-	DISPID* rgDispId)
-{
-	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IErrorInfoImpl_Invoke(
-	IErrorInfo* iface,
-	DISPID dispIdMember,
-	REFIID riid,
-	LCID lcid,
-	WORD wFlags,
-	DISPPARAMS* pDispParams,
-	VARIANT* pVarResult,
-	EXCEPINFO* pExepInfo,
-	UINT* puArgErr)
-{
-	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
-}
-
-/* FIXME: is this OK? Original is GUID* pGUID! This can't work! (js) */
 static HRESULT WINAPI IErrorInfoImpl_GetGUID(
 	IErrorInfo* iface,
-	GUID const ** pGUID) 
+	GUID * pGUID) 
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p) check function prototype\n", This);
-
-	if(!pGUID || !*pGUID)return E_INVALIDARG;
-	*pGUID = This->pGuid;
+	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	if(!pGUID )return E_INVALIDARG;
+	memcpy(pGUID, &This->m_Guid, sizeof(GUID));
 	return S_OK;
 }
 
@@ -192,9 +232,11 @@ static HRESULT WINAPI IErrorInfoImpl_GetSource(
 	BSTR *pBstrSource)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
+	TRACE("(%p)->(pBstrSource=%p)\n",This,pBstrSource);
+	if (pBstrSource == NULL)
+	    return E_INVALIDARG;
+	*pBstrSource = ERRORINFO_SysAllocString(This->bstrSource);
+	return S_OK;
 }
 
 static HRESULT WINAPI IErrorInfoImpl_GetDescription(
@@ -202,9 +244,13 @@ static HRESULT WINAPI IErrorInfoImpl_GetDescription(
 	BSTR *pBstrDescription)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+
+	TRACE("(%p)->(pBstrDescription=%p)\n",This,pBstrDescription);
+	if (pBstrDescription == NULL)
+	    return E_INVALIDARG;
+	*pBstrDescription = ERRORINFO_SysAllocString(This->bstrDescription);
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(
@@ -212,9 +258,13 @@ static HRESULT WINAPI IErrorInfoImpl_GetHelpFile(
 	BSTR *pBstrHelpFile)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+
+	TRACE("(%p)->(pBstrHelpFile=%p)\n",This, pBstrHelpFile);
+	if (pBstrHelpFile == NULL)
+	    return E_INVALIDARG;
+	*pBstrHelpFile = ERRORINFO_SysAllocString(This->bstrHelpFile);
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static HRESULT WINAPI IErrorInfoImpl_GetHelpContext(
@@ -222,9 +272,12 @@ static HRESULT WINAPI IErrorInfoImpl_GetHelpContext(
 	DWORD *pdwHelpContext)
 {
 	_ICOM_THIS_From_IErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+	TRACE("(%p)->(pdwHelpContext=%p)\n",This, pdwHelpContext);
+	if (pdwHelpContext == NULL)
+	    return E_INVALIDARG;
+	*pdwHelpContext = This->m_dwHelpContext;
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static ICOM_VTABLE(IErrorInfo) IErrorInfoImpl_VTable =
@@ -233,11 +286,7 @@ static ICOM_VTABLE(IErrorInfo) IErrorInfoImpl_VTable =
   IErrorInfoImpl_QueryInterface,
   IErrorInfoImpl_AddRef,
   IErrorInfoImpl_Release,
-  IErrorInfoImpl_GetTypeInfoCount,
-  IErrorInfoImpl_GetTypeInfo,
-  IErrorInfoImpl_GetIDsOfNames,
-  IErrorInfoImpl_Invoke,
-
+ 
   IErrorInfoImpl_GetGUID,
   IErrorInfoImpl_GetSource,
   IErrorInfoImpl_GetDescription,
@@ -272,55 +321,6 @@ static ULONG WINAPI ICreateErrorInfoImpl_Release(
 	return IErrorInfo_Release(_IErrorInfo_(This));
 }
 
-static HRESULT WINAPI ICreateErrorInfoImpl_GetTypeInfoCount(
-	ICreateErrorInfo* iface,
-	unsigned int* pctinfo)
-{
-	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetTypeInfoCount(_IErrorInfo_(This), pctinfo);
-}
-
-static HRESULT WINAPI ICreateErrorInfoImpl_GetTypeInfo(
-	ICreateErrorInfo* iface,
-	UINT iTInfo,
-	LCID lcid,
-	ITypeInfo** ppTInfo)
-{
-	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetTypeInfo(_IErrorInfo_(This),iTInfo,lcid,ppTInfo);
-}
-
-static HRESULT WINAPI ICreateErrorInfoImpl_GetIDsOfNames(
-	ICreateErrorInfo* iface,
-	REFIID riid,
-	LPOLESTR* rgszNames,
-	UINT cNames,
-	LCID lcid,
-	DISPID* rgDispId)
-{
-	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetIDsOfNames(_IErrorInfo_(This),riid,rgszNames,cNames,lcid,rgDispId);
-}
-
-static HRESULT WINAPI ICreateErrorInfoImpl_Invoke(
-	ICreateErrorInfo* iface,
-	DISPID dispIdMember,
-	REFIID riid,
-	LCID lcid,
-	WORD wFlags,
-	DISPPARAMS* pDispParams,
-	VARIANT* pVarResult,
-	EXCEPINFO* pExepInfo,
-	UINT* puArgErr)
-{
-	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_Invoke(_IErrorInfo_(This),dispIdMember,riid,lcid,wFlags,pDispParams,
-		pVarResult,pExepInfo,puArgErr);
-}
 
 static HRESULT WINAPI ICreateErrorInfoImpl_SetGUID(
 	ICreateErrorInfo* iface,
@@ -328,7 +328,7 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetGUID(
 {
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
 	TRACE("(%p)->(%s)\n", This, debugstr_guid(rguid));
-	This->pGuid = rguid;
+	memcpy(&This->m_Guid,  rguid, sizeof(GUID));
 	return S_OK;
 }
 
@@ -337,9 +337,12 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetSource(
 	LPOLESTR szSource)
 {
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+	TRACE("(%p)\n",This);
+	if (This->bstrSource != NULL)
+	    ERRORINFO_SysFreeString(This->bstrSource);
+	This->bstrSource = ERRORINFO_SysAllocString(szSource);
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static HRESULT WINAPI ICreateErrorInfoImpl_SetDescription(
@@ -347,9 +350,12 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetDescription(
 	LPOLESTR szDescription)
 {
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+	TRACE("(%p)\n",This);
+	if (This->bstrDescription != NULL)
+	    ERRORINFO_SysFreeString(This->bstrDescription);
+	This->bstrDescription = ERRORINFO_SysAllocString(szDescription);
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpFile(
@@ -357,9 +363,12 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpFile(
 	LPOLESTR szHelpFile)
 {
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
-	
-	return E_NOTIMPL;
+	TRACE("(%p)\n",This);
+	if (This->bstrHelpFile != NULL)
+	    ERRORINFO_SysFreeString(This->bstrHelpFile);
+	This->bstrHelpFile = ERRORINFO_SysAllocString(szHelpFile);
+
+	return S_OK;
 }
 
 static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpContext(
@@ -367,9 +376,10 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpContext(
  	DWORD dwHelpContext)
 {
 	_ICOM_THIS_From_ICreateErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+	TRACE("(%p)\n",This);
+	This->m_dwHelpContext = dwHelpContext;
 	
-	return E_NOTIMPL;
+	return S_OK;
 }
 
 static ICOM_VTABLE(ICreateErrorInfo) ICreateErrorInfoImpl_VTable =
@@ -378,11 +388,6 @@ static ICOM_VTABLE(ICreateErrorInfo) ICreateErrorInfoImpl_VTable =
   ICreateErrorInfoImpl_QueryInterface,
   ICreateErrorInfoImpl_AddRef,
   ICreateErrorInfoImpl_Release,
-
-  ICreateErrorInfoImpl_GetTypeInfoCount,
-  ICreateErrorInfoImpl_GetTypeInfo,
-  ICreateErrorInfoImpl_GetIDsOfNames,
-  ICreateErrorInfoImpl_Invoke,
 
   ICreateErrorInfoImpl_SetGUID,
   ICreateErrorInfoImpl_SetSource,
@@ -397,7 +402,7 @@ static HRESULT WINAPI ISupportErrorInfoImpl_QueryInterface(
 	VOID**     ppvoid)
 {
 	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
-	FIXME("(%p)\n", This);
+	TRACE("(%p)\n", This);
 	
 	return IErrorInfo_QueryInterface(_IErrorInfo_(This), riid, ppvoid);
 }
@@ -418,55 +423,6 @@ static ULONG WINAPI ISupportErrorInfoImpl_Release(
 	return IErrorInfo_Release(_IErrorInfo_(This));
 }
 
-static HRESULT WINAPI ISupportErrorInfoImpl_GetTypeInfoCount(
-	ISupportErrorInfo* iface,
-	unsigned int* pctinfo)
-{
-	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetTypeInfoCount(_IErrorInfo_(This), pctinfo);
-}
-
-static HRESULT WINAPI ISupportErrorInfoImpl_GetTypeInfo(
-	ISupportErrorInfo* iface,
-	UINT iTInfo,
-	LCID lcid,
-	ITypeInfo** ppTInfo)
-{
-	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetTypeInfo(_IErrorInfo_(This),iTInfo,lcid,ppTInfo);
-}
-
-static HRESULT WINAPI ISupportErrorInfoImpl_GetIDsOfNames(
-	ISupportErrorInfo* iface,
-	REFIID riid,
-	LPOLESTR* rgszNames,
-	UINT cNames,
-	LCID lcid,
-	DISPID* rgDispId)
-{
-	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_GetIDsOfNames(_IErrorInfo_(This),riid,rgszNames,cNames,lcid,rgDispId);
-}
-
-static HRESULT WINAPI ISupportErrorInfoImpl_Invoke(
-	ISupportErrorInfo* iface,
-	DISPID dispIdMember,
-	REFIID riid,
-	LCID lcid,
-	WORD wFlags,
-	DISPPARAMS* pDispParams,
-	VARIANT* pVarResult,
-	EXCEPINFO* pExepInfo,
-	UINT* puArgErr)
-{
-	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
-	TRACE("(%p)\n", This);
-	return IErrorInfo_Invoke(_IErrorInfo_(This),dispIdMember,riid,lcid,wFlags,pDispParams,
-		pVarResult,pExepInfo,puArgErr);
-}
 
 static HRESULT WINAPI ISupportErrorInfoImpl_InterfaceSupportsErrorInfo(
 	ISupportErrorInfo* iface,
@@ -474,7 +430,7 @@ static HRESULT WINAPI ISupportErrorInfoImpl_InterfaceSupportsErrorInfo(
 {
 	_ICOM_THIS_From_ISupportErrorInfo(ErrorInfoImpl, iface);
 	TRACE("(%p)->(%s)\n", This, debugstr_guid(riid));
-	return (riid == This->pGuid) ? S_OK : S_FALSE;
+	return (IsEqualIID(riid, &This->m_Guid)) ? S_OK : S_FALSE;
 }
 
 static ICOM_VTABLE(ISupportErrorInfo) ISupportErrorInfoImpl_VTable =
@@ -484,10 +440,6 @@ static ICOM_VTABLE(ISupportErrorInfo) ISupportErrorInfoImpl_VTable =
   ISupportErrorInfoImpl_AddRef,
   ISupportErrorInfoImpl_Release,
 
-  ISupportErrorInfoImpl_GetTypeInfoCount,
-  ISupportErrorInfoImpl_GetTypeInfo,
-  ISupportErrorInfoImpl_GetIDsOfNames,
-  ISupportErrorInfoImpl_Invoke,
 
   ISupportErrorInfoImpl_InterfaceSupportsErrorInfo
 };
@@ -498,10 +450,8 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
 {
 	IErrorInfo * pei;
 	HRESULT res;
-
 	TRACE("(%p): stub:\n", pperrinfo);
-
-	if(! pperrinfo || !*pperrinfo) return E_INVALIDARG;
+	if(! pperrinfo ) return E_INVALIDARG;
 	if(!(pei=IErrorInfoImpl_Constructor()))return E_OUTOFMEMORY;
 	
 	res = IErrorInfo_QueryInterface(pei, &IID_ICreateErrorInfo, (LPVOID*)pperrinfo);
@@ -514,9 +464,9 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
  */
 HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
-	TRACE("(%ld, %p): stub:\n", dwReserved, pperrinfo);
+	TRACE("(%ld, %p, %p): stub:\n", dwReserved, pperrinfo, NtCurrentTeb()->ErrorInfo);
 
-	if(! pperrinfo || !*pperrinfo) return E_INVALIDARG;
+	if(! pperrinfo ) return E_INVALIDARG;
 	if(!(*pperrinfo = (IErrorInfo*)(NtCurrentTeb()->ErrorInfo))) return S_FALSE;
 
 	/* clear thread error state */
