@@ -36,7 +36,7 @@ static int DEBUG_FetchFromLine(const char* pfx, char* buf, int size);
 
 #define YY_INPUT(buf,result,max_size) \
 	if ( (result = DEBUG_FetchFromLine("Wine-dbg>", buf, max_size)) < 0 ) \
-	    YY_FATAL_ERROR( "ReadLine() in flex scanner failed" );
+	    YY_FATAL_ERROR( "FetchFromLine() in flex scanner failed" );
 
 #define YY_NO_UNPUT
 
@@ -227,7 +227,7 @@ static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* allo
     do
     {
 	if (!ReadFile(DEBUG_hParserInput, buf_line, sizeof(buf_line) - 1, &nread, NULL) || nread == 0)
-	    break;
+            break;
 	buf_line[nread] = '\0';
 
         if (check_nl && len == 0 && nread == 1 && buf_line[0] == '\n')
@@ -246,9 +246,7 @@ static int      DEBUG_FetchEntireLine(const char* pfx, char** line, size_t* allo
     {
         *line = HeapReAlloc(GetProcessHeap(), 0, *line, *alloc = 1);
         **line = '\0';
-        strcpy(*line + len, buf_line);
-        len += nread;
-    } while (nread == 0 || buf_line[nread - 1] != '\n');
+    }
 
     /* Remove leading and trailing whitespace from the line */
     stripwhite(*line);
@@ -294,10 +292,14 @@ int DEBUG_ReadLine(const char* pfx, char* buf, int size)
     size_t      len = 0;
 
     DEBUG_FetchEntireLine(pfx, &line, &len, FALSE);
-    len = min(size, len);
-    memcpy(buf, line, len - 1);
+    len = strlen(line);
+    /* remove trailing \n */
+    if (len > 0 && line[len - 1] == '\n') len--;
+    len = min(size - 1, len);
+    memcpy(buf, line, len);
     buf[len] = '\0';
-    return len - 1;
+    HeapFree(GetProcessHeap(), 0, line);
+    return 1;
 }
 
 static char** local_symbols /* = NULL */;

@@ -110,7 +110,7 @@ static  void*   DEBUG_MapFile(const char* name, HANDLE* hMap, unsigned* size)
 {
     HANDLE              hFile;
 
-    hFile = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL, 
+    hFile = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) return (void*)-1;
     if (size != NULL && (*size = GetFileSize(hFile, NULL)) == -1) return (void*)-1;
@@ -152,13 +152,13 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
     HANDLE                      hMap;
     DWORD			status;
     char			tmppath[PATH_MAX];
-    
+
     /*
      * First see whether we have the file open already.  If so, then
      * use that, otherwise we have to try and open it.
      */
     ol = DEBUG_SearchOpenFile(sourcefile);
-    
+
     if ( ol == NULL )
     {
         /*
@@ -171,10 +171,10 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
             basename = sourcefile;
         else
             basename++;
-        
+
         ol = DEBUG_SearchOpenFile(basename);
     }
-    
+
     if ( ol == NULL )
     {
         /*
@@ -202,11 +202,11 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                  * Now append the base file name.
                  */
                 strcat(tmppath, basename);
-                
+
                 status = GetFileAttributes(tmppath);
                 if ( status != -1 ) break;
             }
-            
+
             if ( sl == NULL )
             {
                 if (DEBUG_InteractiveP)
@@ -217,12 +217,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                      */
                     sprintf(zbuf, "Enter path to file '%s': ", sourcefile);
                     DEBUG_ReadLine(zbuf, tmppath, sizeof(tmppath));
-                    
-                    if ( tmppath[strlen(tmppath)-1] == '\n' )
-                    {
-                        tmppath[strlen(tmppath)-1] = '\0';
-                    }
-                    
+
                     if ( tmppath[strlen(tmppath)-1] != '/' )
                     {
                         strcat(tmppath, "/");
@@ -231,7 +226,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                      * Now append the base file name.
                      */
                     strcat(tmppath, basename);
-                    
+
                     status = GetFileAttributes(tmppath);
                 }
                 else
@@ -239,7 +234,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                     status = -1;
                     strcpy(tmppath, sourcefile);
                 }
-                
+
                 if ( status == -1 )
                 {
                     /*
@@ -269,7 +264,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
         ol->linelist = NULL;
         ol->size = 0;
         ofiles = ol;
-        
+
         addr = DEBUG_MapFile(tmppath, &hMap, &ol->size);
         if ( addr == (char *) -1 )
         {
@@ -287,10 +282,10 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
                 ol->nlines++;
             }
         }
-        
+
         ol->nlines++;
         ol->linelist = (unsigned int*) DBG_alloc( ol->nlines * sizeof(unsigned int) );
-        
+
         nlines = 0;
         pnt = addr;
         ol->linelist[nlines++] = 0;
@@ -302,7 +297,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
             }
         }
         ol->linelist[nlines++] = pnt - addr;
-        
+
     }
     else
     {
@@ -324,7 +319,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	{
             continue;
 	}
-        
+
         rtn = TRUE;
         memset(&buffer, 0, sizeof(buffer));
         if ( ol->linelist[i+1] != ol->linelist[i] )
@@ -334,7 +329,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	}
         DEBUG_Printf(DBG_CHN_MESG,"%d\t%s\n", i + 1,  buffer);
     }
-    
+
     DEBUG_UnmapFile(addr, hMap);
     return rtn;
 }
