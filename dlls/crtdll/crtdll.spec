@@ -35,8 +35,8 @@ init    CRTDLL_Init
  30 stub __iscsymf
  31 stub __mb_cur_max_dll
  32 stub __pxcptinfoptrs
- 33 stub __threadhandle
- 34 stub __threadid
+ 33 cdecl __threadhandle() GetCurrentThread
+ 34 cdecl __threadid() GetCurrentThreadId
  35 stub __toascii
  36 cdecl _abnormal_termination() CRTDLL__abnormal_termination
  37 cdecl _access(str long) CRTDLL__access
@@ -199,16 +199,16 @@ init    CRTDLL_Init
 194 stub _mbctoupper
 195 stub _mbctype
 196 stub _mbsbtype
-197 cdecl _mbscat(str str) CRTDLL__mbscat
+197 cdecl _mbscat(str str) strcat
 198 stub _mbschr
 199 stub _mbscmp
-200 cdecl _mbscpy(ptr str) CRTDLL__mbscpy
+200 cdecl _mbscpy(ptr str) strcpy
 201 stub _mbscspn
 202 stub _mbsdec
-203 stub _mbsdup
+203 cdecl _mbsdup(str) CRTDLL__strdup
 204 cdecl _mbsicmp(str str) CRTDLL__mbsicmp
 205 cdecl _mbsinc(str) CRTDLL__mbsinc
-206 stub _mbslen
+206 cdecl _mbslen(str) CRTDLL__mbslen
 207 stub _mbslwr
 208 stub _mbsnbcat
 209 stub _mbsnbcmp
@@ -327,9 +327,9 @@ init    CRTDLL_Init
 322 cdecl _wcsicoll(wstr wstr) CRTDLL__wcsicoll
 323 cdecl _wcslwr(wstr) CRTDLL__wcslwr
 324 cdecl _wcsnicmp(wstr wstr long) CRTDLL__wcsnicmp
-325 stub _wcsnset
+325 cdecl _wcsnset(wstr long long) CRTDLL__wcsnset
 326 cdecl _wcsrev(wstr) CRTDLL__wcsrev
-327 stub _wcsset
+327 cdecl _wcsset(wstr long) CRTDLL__wcsset
 328 cdecl _wcsupr(wstr) CRTDLL__wcsupr
 329 extern _winmajor_dll CRTDLL_winmajor_dll
 330 extern _winminor_dll CRTDLL_winminor_dll
@@ -430,7 +430,7 @@ init    CRTDLL_Init
 425 cdecl log10(double) log10
 426 cdecl longjmp(ptr long) CRTDLL_longjmp
 427 cdecl malloc(ptr) CRTDLL_malloc
-428 cdecl mblen(str long) CRTDLL_mblen
+428 cdecl mblen(str long) mblen
 429 cdecl mbstowcs(ptr str long) CRTDLL_mbstowcs
 430 cdecl mbtowc(ptr ptr long) CRTDLL_mbtowc
 431 cdecl memchr(ptr long long) memchr
@@ -516,7 +516,7 @@ init    CRTDLL_Init
 511 cdecl wcsncat(wstr wstr long) CRTDLL_wcsncat
 512 cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
 513 cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
-514 stub wcspbrk
+514 cdecl wcspbrk(wstr wstr) CRTDLL_wcspbrk
 515 cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
 516 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
 517 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr
@@ -526,6 +526,6 @@ init    CRTDLL_Init
 521 cdecl wcstombs(ptr ptr long) CRTDLL_wcstombs
 522 stub wcstoul
 523 stub wcsxfrm
-524 stub wctomb
+524 cdecl wctomb(ptr long) CRTDLL_wctomb
 525 stub wprintf
 526 stub wscanf

@@ -8,7 +8,9 @@ MODULE    = crtdll
 SPEC_SRCS = crtdll.spec
 
 C_SRCS = \
-	crtdll_main.c
+	crtdll_main.c \
+	mbstring.c \
+	wcstring.c
 
 all: $(MODULE).o
 

@@ -907,7 +907,7 @@ type	win32
 899 cdecl isxdigit(long) isxdigit
 900 stub labs
 901 stub log
-902 stub mbstowcs
+902 cdecl mbstowcs(ptr str long) CRTDLL_mbstowcs
 903 cdecl memchr(ptr long long) memchr
 904 cdecl memcmp(ptr ptr long) memcmp
 905 cdecl memcpy(ptr ptr long) memcpy
@@ -943,12 +943,12 @@ type	win32
 935 cdecl wcschr(wstr long) CRTDLL_wcschr
 936 cdecl wcscmp(wstr wstr) CRTDLL_wcscmp
 937 cdecl wcscpy(ptr wstr) CRTDLL_wcscpy
-938 stub wcscspn
+938 cdecl wcscspn(wstr wstr) CRTDLL_wcscspn
 939 cdecl wcslen(wstr) CRTDLL_wcslen
-940 stub wcsncat
+940 cdecl wcsncat(wstr wstr long) CRTDLL_wcsncat
 941 cdecl wcsncmp(wstr wstr long) CRTDLL_wcsncmp
 942 cdecl wcsncpy(ptr wstr long) CRTDLL_wcsncpy
-943 stub wcspbrk
+943 cdecl wcspbrk(wstr wstr) CRTDLL_wcspbrk
 944 cdecl wcsrchr(wstr long) CRTDLL_wcsrchr
 945 cdecl wcsspn(wstr wstr) CRTDLL_wcsspn
 946 cdecl wcsstr(wstr wstr) CRTDLL_wcsstr

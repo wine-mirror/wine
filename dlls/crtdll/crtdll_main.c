@@ -876,16 +876,6 @@ int __cdecl CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
 
 
 /*********************************************************************
- *                  _mbsinc       (CRTDLL.205)
- */
-unsigned char * __cdecl CRTDLL__mbsinc(unsigned char *x)
-{
-    /* FIXME: mbcs */
-    return x++;
-}
-
-
-/*********************************************************************
  *                  vsprintf      (CRTDLL.500)
  */
 INT __cdecl CRTDLL_vsprintf( LPSTR buffer, LPCSTR spec, va_list args )
@@ -900,25 +890,6 @@ INT __cdecl CRTDLL_vswprintf( LPWSTR buffer, LPCWSTR spec, va_list args )
 {
     return wvsprintfW( buffer, spec, args );
 }
-
-/*********************************************************************
- *                  _mbscpy       (CRTDLL.200)
- */
-unsigned char* __cdecl CRTDLL__mbscpy(unsigned char *x,unsigned char *y)
-{
-    TRACE("CRTDLL_mbscpy %s and %s\n",x,y);
-    return strcpy(x,y);
-}
-
-
-/*********************************************************************
- *                  _mbscat       (CRTDLL.197)
- */
-unsigned char* __cdecl CRTDLL__mbscat(unsigned char *x,unsigned char *y)
-{
-    return strcat(x,y);
-}
-
 
 /*********************************************************************
  *                  _strcmpi   (CRTDLL.282) (CRTDLL.287)
@@ -1017,35 +988,6 @@ LPSTR __cdecl CRTDLL__strupr(LPSTR x)
 }
 
 /*********************************************************************
- *                  _wcsupr       (CRTDLL.328)
- */
-LPWSTR __cdecl CRTDLL__wcsupr(LPWSTR x)
-{
-	LPWSTR	y=x;
-
-	while (*y) {
-		*y=towupper(*y);
-		y++;
-	}
-	return x;
-}
-
-/*********************************************************************
- *                  _wcslwr       (CRTDLL.323)
- */
-LPWSTR __cdecl CRTDLL__wcslwr(LPWSTR x)
-{
-	LPWSTR	y=x;
-
-	while (*y) {
-		*y=towlower(*y);
-		y++;
-	}
-	return x;
-}
-
-
-/*********************************************************************
  *                  longjmp        (CRTDLL.426)
  */
 VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
@@ -1121,14 +1063,6 @@ VOID __cdecl CRTDLL_delete(VOID* ptr)
 LPSTR __cdecl CRTDLL__strdup(LPCSTR ptr)
 {
     return HEAP_strdupA(GetProcessHeap(),0,ptr);
-}
-
-/*********************************************************************
- *                  _wcsdup          (CRTDLL.320)
- */
-LPWSTR __cdecl CRTDLL__wcsdup(LPCWSTR ptr)
-{
-    return HEAP_strdupW(GetProcessHeap(),0,ptr);
 }
 
 /*********************************************************************
@@ -1319,207 +1253,6 @@ LPSTR __cdecl CRTDLL_setlocale(INT category,LPCSTR locale)
 }
 
 /*********************************************************************
- *                  wcscat           (CRTDLL.503)
- */
-LPWSTR __cdecl CRTDLL_wcscat( LPWSTR s1, LPCWSTR s2 )
-{
-    return lstrcatW( s1, s2 );
-}
-
-/*********************************************************************
- *                  wcschr           (CRTDLL.504)
- */
-LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar)
-{
-	LPCWSTR	s;
-
-	s=str;
-	do {
-		if (*s==xchar)
-			return (LPWSTR)s;
-	} while (*s++);
-	return NULL;
-}
-
-/*********************************************************************
- *                  wcscmp           (CRTDLL.505)
- */
-INT __cdecl CRTDLL_wcscmp( LPCWSTR s1, LPCWSTR s2 )
-{
-    return lstrcmpW( s1, s2 );
-}
-
-/*********************************************************************
- *                  wcscpy           (CRTDLL.507)
- */
-LPWSTR __cdecl CRTDLL_wcscpy( LPWSTR s1, LPCWSTR s2 )
-{
-    return lstrcpyW( s1, s2 );
-}
-
-/*********************************************************************
- *                  wcscspn           (CRTDLL.508)
- */
-INT __cdecl CRTDLL_wcscspn(LPWSTR str,LPWSTR reject)
-{
-	LPWSTR	s,t;
-
-	s=str;
-	do {
-		t=reject;
-		while (*t) { if (*t==*s) break;t++;}
-		if (*t) break;
-		s++;
-	} while (*s);
-	return s-str; /* nr of wchars */
-}
-
-/*********************************************************************
- *                  wcslen           (CRTDLL.510)
- */
-INT __cdecl CRTDLL_wcslen( LPCWSTR s )
-{
-    return lstrlenW( s );
-}
-
-/*********************************************************************
- *                  wcsncat           (CRTDLL.511)
- */
-LPWSTR __cdecl CRTDLL_wcsncat( LPWSTR s1, LPCWSTR s2, INT n )
-{
-    return lstrcatnW( s1, s2, n );
-}
-
-/*********************************************************************
- *                  wcsncmp           (CRTDLL.512)
- */
-INT __cdecl CRTDLL_wcsncmp( LPCWSTR s1, LPCWSTR s2, INT n )
-{
-    return lstrncmpW( s1, s2, n );
-}
-
-/*********************************************************************
- *                  wcsncpy           (CRTDLL.513)
- */
-LPWSTR __cdecl CRTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
-{
-    return lstrcpynW( s1, s2, n );
-}
-
-/*********************************************************************
- *                  wcsspn           (CRTDLL.516)
- */
-INT __cdecl CRTDLL_wcsspn(LPWSTR str,LPWSTR accept)
-{
-	LPWSTR	s,t;
-
-	s=str;
-	do {
-		t=accept;
-		while (*t) { if (*t==*s) break;t++;}
-		if (!*t) break;
-		s++;
-	} while (*s);
-	return s-str; /* nr of wchars */
-}
-
-/*********************************************************************
- *                  _wcsicmp           (CRTDLL.321)
- */
-DWORD __cdecl CRTDLL__wcsicmp( LPCWSTR s1, LPCWSTR s2 )
-{
-    return lstrcmpiW( s1, s2 );
-}
-
-/*********************************************************************
- *                  _wcsicoll           (CRTDLL.322)
- */
-DWORD __cdecl CRTDLL__wcsicoll(LPCWSTR a1,LPCWSTR a2)
-{
-    /* FIXME: handle collates */
-    return lstrcmpiW(a1,a2);
-}
-
-/*********************************************************************
- *                  _wcsnicmp           (CRTDLL.324)
- */
-DWORD __cdecl CRTDLL__wcsnicmp( LPCWSTR s1, LPCWSTR s2, INT len )
-{
-    return lstrncmpiW( s1, s2, len );
-}
-
-/*********************************************************************
- *                  wcscoll           (CRTDLL.506)
- */
-DWORD __cdecl CRTDLL_wcscoll(LPWSTR a1,LPWSTR a2)
-{
-    /* FIXME: handle collates */
-    return lstrcmpW(a1,a2);
-}
-
-/*********************************************************************
- *                  _wcsrev           (CRTDLL.326)
- */
-VOID __cdecl CRTDLL__wcsrev(LPWSTR s) {
-	LPWSTR	e;
-
-	e=s;
-	while (*e)
-		e++;
-	while (s<e) {
-		WCHAR	a;
-
-		a=*s;*s=*e;*e=a;
-		s++;e--;
-	}
-}
-
-/*********************************************************************
- *                  wcsstr           (CRTDLL.517)
- */
-LPWSTR __cdecl CRTDLL_wcsstr(LPWSTR s,LPWSTR b)
-{
-	LPWSTR	x,y,c;
-
-	x=s;
-	while (*x) {
-		if (*x==*b) {
-			y=x;c=b;
-			while (*y && *c && *y==*c) { c++;y++; }
-			if (!*c)
-				return x;
-		}
-		x++;
-	}
-	return NULL;
-}
-
-/*********************************************************************
- *                  wcstombs   (CRTDLL.521)
- */
-INT __cdecl CRTDLL_wcstombs( LPSTR dst, LPCWSTR src, INT len )
-{
-    lstrcpynWtoA( dst, src, len );
-    return strlen(dst);  /* FIXME: is this right? */
-}
-
-/*********************************************************************
- *                  wcsrchr           (CRTDLL.515)
- */
-LPWSTR __cdecl CRTDLL_wcsrchr(LPWSTR str,WCHAR xchar)
-{
-	LPWSTR	s;
-
-	s=str+lstrlenW(str);
-	do {
-		if (*s==xchar)
-			return s;
-		s--;
-	} while (s>=str);
-	return NULL;
-}
-
-/*********************************************************************
  *                  _setmode           (CRTDLL.265)
  * FIXME: At present we ignore the request to translate CR/LF to LF.
  *
@@ -1553,82 +1286,6 @@ INT __cdecl CRTDLL_atexit(LPVOID x)
 {
 	FIXME("(%p), STUB.\n",x);
 	return 0; /* successful */
-}
-
-/*********************************************************************
- *                  mblen          (CRTDLL.428)
- * FIXME: check multibyte support
- */
-WCHAR  __cdecl CRTDLL_mblen(CHAR *mb,INT size)
-{
-
-    int ret=1;
-    
-    if (!mb)
-      ret = 0;
-    else if ((size<1)||(!*(mb+1)))
-      ret = -1;
-    else if (!(*mb))
-      ret =0;
-      
-    TRACE("CRTDLL_mlen %s for max %d bytes ret %d\n",mb,size,ret);
-
-    return ret;
-}
-
-/*********************************************************************
- *                  mbstowcs           (CRTDLL.429)
- * FIXME: check multibyte support
- */
-INT __cdecl CRTDLL_mbstowcs(LPWSTR wcs, LPCSTR mbs, INT size)
-{
-
-/* Slightly modified lstrcpynAtoW functions from memory/strings.c
- *  We need the number of characters transfered 
- *  FIXME: No multibyte support yet
- */
-
-    LPWSTR p = wcs;
-    LPCSTR src= mbs;
-    int ret, n=size;
-
-    while ((n-- > 0) && *src) {
-      *p++ = (WCHAR)(unsigned char)*src++;
-	}
-    p++;
-    ret = (p -wcs);
-          
-    TRACE("CRTDLL_mbstowcs %s for %d chars put %d wchars\n",
-		   mbs,size,ret);
-    return ret;
-}
-
-/*********************************************************************
- *                  mbtowc           (CRTDLL.430)
- * FIXME: check multibyte support
- */
-WCHAR __cdecl CRTDLL_mbtowc(WCHAR* wc,CHAR* mb,INT size) 
-{
-   int ret;
-
-   if (!mb)
-     ret = 0;
-   else if (!wc)
-     ret =-1;
-   else 
-     if ( (ret = mblen(mb,size)) != -1 )
-       {
-	 if (ret <= sizeof(char))
-	   *wc = (WCHAR) ((unsigned char)*mb);
-        else
-        ret=   -1;
-        }   
-     else
-       ret = -1;
-   
-   TRACE("CRTDLL_mbtowc %s for %d chars\n",mb,size);
-         
-   return ret;
 }
 
 /*********************************************************************
@@ -2138,30 +1795,6 @@ INT __cdecl CRTDLL__memicmp(
 VOID __cdecl CRTDLL__dllonexit ()
 {	
 	FIXME("stub\n");
-}
-
-/*********************************************************************
- *                  wcstok           (CRTDLL.519)
- * Like strtok, but for wide character strings. s is modified, yes.
- */
-LPWSTR __cdecl CRTDLL_wcstok(LPWSTR s,LPCWSTR delim) {
-	static LPWSTR nexttok = NULL;
-	LPWSTR	x,ret;
-
-	if (!s)
-		s = nexttok;
-	if (!s)	
-		return NULL;
-	x = s;
-	while (*x && !CRTDLL_wcschr(delim,*x))
-		x++;
-	ret = nexttok;
-	if (*x) {
-		*x='\0';
-		nexttok = x+1;
-	} else
-		nexttok = NULL;
-	return ret;
 }
 
 /*********************************************************************
