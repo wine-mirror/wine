@@ -23,5 +23,6 @@
 
 #include "version.rc"
 
+#include "De.rc"
 #include "En.rc"
 #include "Pt.rc"

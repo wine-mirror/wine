@@ -1,7 +1,7 @@
 /*
- * Resources for MSI
+ * German resources for MSI
  *
- * Copyright 2005 Mike McCormack
+ * Copyright 2005 Henning Gerhardt
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,15 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
+LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#include "version.rc"
-
-#include "msi_De.rc"
-#include "msi_En.rc"
-#include "msi_Pt.rc"
+STRINGTABLE DISCARDABLE
+{
+	5 "Der Pfad %s wurde nicht gefunden."
+	9 "Bitte Disk %s einlegen."
+	10 "schlechte Parameter"
+	11 "Geben Sie das Verzeichnis ein, dass %s enthält."
+	12 "Die Installationsquelle für das Feature fehlt."
+	13 "Das Netzwerklaufwerk für das Feature fehlt."
+	14 "Feature von:"
+	15 "Wählen Sie das Verzeichnis aus, dass %s enthält."
+}
