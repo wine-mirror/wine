@@ -1839,30 +1839,18 @@ struct save_registry_reply
 
 
 
-struct save_registry_atexit_request
+struct load_user_registries_request
 {
     struct request_header __header;
     obj_handle_t hkey;
-    /* VARARG(file,string); */
-};
-struct save_registry_atexit_reply
-{
-    struct reply_header __header;
-};
-
-
-
-struct set_registry_levels_request
-{
-    struct request_header __header;
-    int          current;
     int          saving;
     int          period;
 };
-struct set_registry_levels_reply
+struct load_user_registries_reply
 {
     struct reply_header __header;
 };
+
 
 
 struct set_registry_notification_request
@@ -3187,8 +3175,7 @@ enum request
     REQ_load_registry,
     REQ_unload_registry,
     REQ_save_registry,
-    REQ_save_registry_atexit,
-    REQ_set_registry_levels,
+    REQ_load_user_registries,
     REQ_set_registry_notification,
     REQ_create_timer,
     REQ_open_timer,
@@ -3370,8 +3357,7 @@ union generic_request
     struct load_registry_request load_registry_request;
     struct unload_registry_request unload_registry_request;
     struct save_registry_request save_registry_request;
-    struct save_registry_atexit_request save_registry_atexit_request;
-    struct set_registry_levels_request set_registry_levels_request;
+    struct load_user_registries_request load_user_registries_request;
     struct set_registry_notification_request set_registry_notification_request;
     struct create_timer_request create_timer_request;
     struct open_timer_request open_timer_request;
@@ -3551,8 +3537,7 @@ union generic_reply
     struct load_registry_reply load_registry_reply;
     struct unload_registry_reply unload_registry_reply;
     struct save_registry_reply save_registry_reply;
-    struct save_registry_atexit_reply save_registry_atexit_reply;
-    struct set_registry_levels_reply set_registry_levels_reply;
+    struct load_user_registries_reply load_user_registries_reply;
     struct set_registry_notification_reply set_registry_notification_reply;
     struct create_timer_reply create_timer_reply;
     struct open_timer_reply open_timer_reply;
@@ -3629,6 +3614,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 140
+#define SERVER_PROTOCOL_VERSION 141
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

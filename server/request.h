@@ -203,8 +203,7 @@ DECL_HANDLER(delete_key_value);
 DECL_HANDLER(load_registry);
 DECL_HANDLER(unload_registry);
 DECL_HANDLER(save_registry);
-DECL_HANDLER(save_registry_atexit);
-DECL_HANDLER(set_registry_levels);
+DECL_HANDLER(load_user_registries);
 DECL_HANDLER(set_registry_notification);
 DECL_HANDLER(create_timer);
 DECL_HANDLER(open_timer);
@@ -385,8 +384,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_load_registry,
     (req_handler)req_unload_registry,
     (req_handler)req_save_registry,
-    (req_handler)req_save_registry_atexit,
-    (req_handler)req_set_registry_levels,
+    (req_handler)req_load_user_registries,
     (req_handler)req_set_registry_notification,
     (req_handler)req_create_timer,
     (req_handler)req_open_timer,

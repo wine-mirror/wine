@@ -1320,21 +1320,15 @@ enum char_info_mode
 @END
 
 
-/* Save a registry branch at server exit */
-@REQ(save_registry_atexit)
-    obj_handle_t hkey;         /* key to save */
-    VARARG(file,string);       /* file to save to */
-@END
-
-
-/* Set the current and saving level for the registry */
-@REQ(set_registry_levels)
-    int          current;      /* new current level */
+/* Load the user registry files */
+@REQ(load_user_registries)
+    obj_handle_t hkey;         /* key for HKCU */
     int          saving;       /* new saving level */
     int          period;       /* duration between periodic saves (milliseconds) */
 @END
 
 
+/* Add a registry key change notification */
 @REQ(set_registry_notification)
     obj_handle_t hkey;         /* key to watch for changes */
     obj_handle_t event;        /* event to set */

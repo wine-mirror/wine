@@ -78,11 +78,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define SAVE_GLOBAL_REGBRANCH_USER_DEFAULT  "/wine.userreg"
 #define SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE "/wine.systemreg"
 
-/* relative in ~user/.wine/ : */
-#define SAVE_LOCAL_REGBRANCH_CURRENT_USER  "user.reg"
-#define SAVE_LOCAL_REGBRANCH_USER_DEFAULT  "userdef.reg"
-#define SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE "system.reg"
-
 #define MAX_PATHNAME_LEN   1024
 
 static const WCHAR ClassesRootW[] = {'M','a','c','h','i','n','e','\\',
@@ -1082,39 +1077,6 @@ static int _nt_dump_nk(LPCSTR key_name,char *base,nt_nk *nk,FILE *f,int level)
 
 /* end nt loader */
 
-/**********************************************************************************
- * _set_registry_levels [Internal]
- *
- * set level to 0 for loading system files
- * set level to 1 for loading user files
- */
-static void _set_registry_levels(int level,int saving,int period)
-{
-    SERVER_START_REQ( set_registry_levels )
-    {
-	req->current = level;
-	req->saving  = saving;
-        req->period  = period;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-/* _save_at_exit [Internal] */
-static void _save_at_exit(HKEY hkey,LPCSTR path)
-{
-    LPCSTR confdir = wine_get_config_dir();
-
-    SERVER_START_REQ( save_registry_atexit )
-    {
-        req->hkey = hkey;
-        wine_server_add_data( req, confdir, strlen(confdir) );
-        wine_server_add_data( req, path, strlen(path)+1 );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
 /******************************************************************************
  * _allocate_default_keys [Internal]
  * Registry initialisation, allocates some default keys.
@@ -1652,27 +1614,6 @@ static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_u
     if (profile_key) NtClose( profile_key );
 }
 
-/* load home registry files (stored in ~/.wine) [Internal] */
-static void _load_home_registry( HKEY hkey_local_machine, HKEY hkey_current_user,
-                                 HKEY hkey_users_default )
-{
-    LPCSTR confdir = wine_get_config_dir();
-    LPSTR tmp = _xmalloc(strlen(confdir)+20);
-
-    strcpy(tmp,confdir);
-    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
-    load_wine_registry(hkey_users_default,tmp);
-
-    strcpy(tmp,confdir);
-    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER);
-    load_wine_registry(hkey_current_user,tmp);
-
-    strcpy(tmp,confdir);
-    strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
-    load_wine_registry(hkey_local_machine,tmp);
-
-    free(tmp);
-}
 
 
 /******************************************************************
@@ -1910,10 +1851,8 @@ void SHELL_LoadRegistry( void )
                                       'R','e','g','i','s','t','r','y',0};
     static const WCHAR load_win_reg_filesW[] = {'L','o','a','d','W','i','n','d','o','w','s','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
-    static const WCHAR load_home_reg_filesW[] = {'L','o','a','d','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR SaveOnlyUpdatedKeysW[] = {'S','a','v','e','O','n','l','y','U','p','d','a','t','e','d','K','e','y','s',0};
     static const WCHAR PeriodicSaveW[] = {'P','e','r','i','o','d','i','c','S','a','v','e',0};
-    static const WCHAR WritetoHomeRegistryFilesW[] = {'W','r','i','t','e','t','o','H','o','m','e','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR GlobalRegistryDirW[] = {'G','l','o','b','a','l','R','e','g','i','s','t','r','y','D','i','r',0};
 
     TRACE("(void)\n");
@@ -1946,7 +1885,6 @@ void SHELL_LoadRegistry( void )
     }
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey_current_user );
 
-    _set_registry_levels(0,0,0);
     _allocate_default_keys();
 
     attr.RootDirectory = 0;
@@ -2002,23 +1940,6 @@ void SHELL_LoadRegistry( void )
         load_wine_registry( hkey_local_machine, configfile );
     }
 
-    _set_registry_levels(1,0,0);
-
-    /* load home registry if required */
-
-    res = TRUE;
-    RtlInitUnicodeString( &nameW, load_home_reg_filesW );
-    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-        res = !IS_OPTION_FALSE(str[0]);
-    }
-    if (res) _load_home_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
-
-    /* create hardware registry branch */
-
-    create_hardware_branch();
-
     /* setup registry saving */
 
     all = FALSE;
@@ -2037,24 +1958,21 @@ void SHELL_LoadRegistry( void )
         period = (int)strtolW(str, NULL, 10);
     }
 
-    /* set saving level (0 for saving everything, 1 for saving only modified keys) */
-    _set_registry_levels(1,!all,period*1000);
+    /* load home registry and set saving level (0 for saving everything,
+     * 1 for saving only modified keys) */
 
-    /* setup keys to save */
+    SERVER_START_REQ( load_user_registries )
+    {
+        req->hkey = hkey_current_user;
+        req->saving = !all;
+        req->period = period * 1000;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
 
-    res = TRUE;
-    RtlInitUnicodeString( &nameW, WritetoHomeRegistryFilesW );
-    if (!NtQueryValueKey( hkey_config, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        WCHAR *str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-        res = !IS_OPTION_FALSE(str[0]);
-    }
-    if (res)
-    {
-        _save_at_exit(hkey_current_user,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
-        _save_at_exit(hkey_local_machine,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
-        _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
-    }
+    /* create hardware registry branch */
+
+    create_hardware_branch();
 
     /* convert keys from config file to new registry format */
 

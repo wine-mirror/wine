@@ -118,7 +118,7 @@ struct save_branch_info
     char        *path;
 };
 
-#define MAX_SAVE_BRANCH_INFO 8
+#define MAX_SAVE_BRANCH_INFO 3
 static int save_branch_count;
 static struct save_branch_info save_branch_info[MAX_SAVE_BRANCH_INFO];
 
@@ -1411,6 +1411,71 @@ static void load_registry( struct key *key, obj_handle_t handle )
     }
 }
 
+/* load one of the initial registry files */
+static void load_init_registry_from_file( const char *filename, struct key *key )
+{
+    FILE *f;
+
+    if (!(f = fopen( filename, "r" ))) return;
+    load_keys( key, f, 0 );
+    fclose( f );
+    if (get_error() == STATUS_NOT_REGISTRY_FILE)
+        fatal_error( "%s is not a valid registry file\n", filename );
+    if (get_error())
+        fatal_error( "loading %s failed with error %x\n", filename, get_error() );
+
+    if (!(key->flags & KEY_VOLATILE))
+    {
+        assert( save_branch_count < MAX_SAVE_BRANCH_INFO );
+
+        if ((save_branch_info[save_branch_count].path = strdup( filename )))
+            save_branch_info[save_branch_count++].key = (struct key *)grab_object( key );
+    }
+}
+
+/* load the user registry files */
+static void load_user_registries( struct key *key_current_user )
+{
+    static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
+    static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
+
+    const char *config = wine_get_config_dir();
+    char *p, *filename;
+    struct key *key;
+    int dummy;
+
+    if (!(filename = mem_alloc( strlen(config) + 16 ))) return;
+    strcpy( filename, config );
+    p = filename + strlen(filename);
+
+    /* load system.reg into Registry\Machine */
+
+    if (!(key = create_key( root_key, copy_path( HKLM, sizeof(HKLM), 0 ),
+                            NULL, 0, time(NULL), &dummy )))
+        fatal_error( "could not create Machine registry key\n" );
+
+    strcpy( p, "/system.reg" );
+    load_init_registry_from_file( filename, key );
+    release_object( key );
+
+    /* load userdef.reg into Registry\User\.Default */
+
+    if (!(key = create_key( root_key, copy_path( HKU_default, sizeof(HKU_default), 0 ),
+                            NULL, 0, time(NULL), &dummy )))
+        fatal_error( "could not create User\\.Default registry key\n" );
+
+    strcpy( p, "/userdef.reg" );
+    load_init_registry_from_file( filename, key );
+    release_object( key );
+
+    /* load user.reg into HKEY_CURRENT_USER */
+
+    strcpy( p, "/user.reg" );
+    load_init_registry_from_file( filename, key_current_user );
+
+    free( filename );
+}
+
 /* registry initialisation */
 void init_registry(void)
 {
@@ -1419,39 +1484,28 @@ void init_registry(void)
     { 'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
       'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g',0 };
 
+    const char *config = wine_get_config_dir();
     char *filename;
-    const char *config;
-    FILE *f;
+    struct key *key;
+    int dummy;
 
     /* create the root key */
     root_key = alloc_key( root_name, time(NULL) );
     assert( root_key );
 
     /* load the config file */
-    config = wine_get_config_dir();
-    if (!(filename = malloc( strlen(config) + 8 ))) fatal_error( "out of memory\n" );
+    if (!(filename = malloc( strlen(config) + sizeof("/config") ))) fatal_error( "out of memory\n" );
     strcpy( filename, config );
     strcat( filename, "/config" );
-    if ((f = fopen( filename, "r" )))
-    {
-        struct key *key;
-        int dummy;
 
-        /* create the config key */
-        if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name), 0 ),
-                                NULL, 0, time(NULL), &dummy )))
-            fatal_error( "could not create config key\n" );
-        key->flags |= KEY_VOLATILE;
+    if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name), 0 ),
+                            NULL, 0, time(NULL), &dummy )))
+        fatal_error( "could not create Config registry key\n" );
 
-        load_keys( key, f, 0 );
-        fclose( f );
-        if (get_error() == STATUS_NOT_REGISTRY_FILE)
-            fatal_error( "%s is not a valid registry file\n", filename );
-        if (get_error())
-            fatal_error( "loading %s failed with error %x\n", filename, get_error() );
+    key->flags |= KEY_VOLATILE;
+    load_init_registry_from_file( filename, key );
+    release_object( key );
 
-        release_object( key );
-    }
     free( filename );
 }
 
@@ -1507,20 +1561,6 @@ static void save_registry( struct key *key, obj_handle_t handle )
             close( fd );
         }
     }
-}
-
-/* register a key branch for being saved on exit */
-static void register_branch_for_saving( struct key *key, const char *path, size_t len )
-{
-    if (save_branch_count >= MAX_SAVE_BRANCH_INFO)
-    {
-        set_error( STATUS_NO_MORE_ENTRIES );
-        return;
-    }
-    if (!len || !(save_branch_info[save_branch_count].path = memdup( path, len ))) return;
-    save_branch_info[save_branch_count].path[len - 1] = 0;
-    save_branch_info[save_branch_count].key = (struct key *)grab_object( key );
-    save_branch_count++;
 }
 
 /* save a registry branch to a file */
@@ -1836,11 +1876,19 @@ DECL_HANDLER(save_registry)
     }
 }
 
-/* set the current and saving level for the registry */
-DECL_HANDLER(set_registry_levels)
+/* load the user registry files */
+DECL_HANDLER(load_user_registries)
 {
-    current_level  = req->current;
-    saving_level   = req->saving;
+    struct key *key;
+
+    current_level = 1;
+    saving_level  = req->saving;
+
+    if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
+    {
+        load_user_registries( key );
+        release_object( key );
+    }
 
     /* set periodic save timer */
 
@@ -1855,18 +1903,6 @@ DECL_HANDLER(set_registry_levels)
         gettimeofday( &next_save_time, 0 );
         add_timeout( &next_save_time, save_period );
         save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
-    }
-}
-
-/* save a registry branch at server exit */
-DECL_HANDLER(save_registry_atexit)
-{
-    struct key *key;
-
-    if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
-    {
-        register_branch_for_saving( key, get_req_data(), get_req_data_size() );
-        release_object( key );
     }
 }
 
