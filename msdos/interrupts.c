@@ -111,8 +111,14 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
         case 0x11:
             INT_Int11Handler(context);
             break;
+	case 0x13:
+	    INT_Int13Handler(context);
+            break;
         case 0x16:
             INT_Int16Handler(context);
+            break;
+        case 0x17:
+            INT_Int17Handler(context);
             break;
         case 0x1a:
             INT_Int1aHandler(context);

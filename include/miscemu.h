@@ -46,15 +46,21 @@ extern void IO_outport( int port, int count, DWORD value );
 /* msdos/int10.c */
 extern void WINAPI INT_Int10Handler(CONTEXT*);
 
-/* msdos/int10.c */
-extern void WINAPI INT_Int10Handler(CONTEXT*);
-
 /* msdos/int11.c */
 extern void WINAPI INT_Int11Handler(CONTEXT*);
 
+/* msdos/int13.c */
+extern void WINAPI INT_Int13Handler(CONTEXT*);
+
 /* msdos/int16.c */
 extern void WINAPI INT_Int16Handler(CONTEXT*);
-	
+
+/* msdos/int17.c */
+extern void WINAPI INT_Int17Handler(CONTEXT*);
+
+/* msdos/int19.c */
+extern void WINAPI INT_Int19Handler(CONTEXT*);
+
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
 extern void WINAPI INT_Int1aHandler(CONTEXT*);
