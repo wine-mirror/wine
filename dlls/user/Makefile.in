@@ -68,7 +68,6 @@ C_SRCS = \
 	misc.c \
 	mouse.c \
 	msg16.c \
-	network.c \
 	painting.c \
 	property.c \
 	resource.c \
@@ -79,6 +78,7 @@ C_SRCS = \
 
 C_SRCS16 = \
 	bidi16.c \
+	network.c \
 	user16.c
 
 RC_SRCS = resources/user32.rc
