@@ -48,9 +48,11 @@ DLLs (under dlls/):
 	dplayx/			- DirectPlay (networking)
 	dpnhpast/		- DirectPlay NAT Helper PAST
 	dsound/			- DirectSound (audio)
+	dswave/			- DirectMusic Wave
 	gdi/			- GDI (graphics)
 	glu32/			- OpenGL Utility library (graphics)
 	glut32/			- OpenGL Utility Toolkit
+	iccvid/			- Radius Cinepak Video Decoder
 	icmp/			- ICMP protocol (networking)
 	imagehlp/		- PE (Portable Executable) Image Helper lib
 	imm32/			- Input Method Manager
@@ -72,7 +74,9 @@ DLLs (under dlls/):
 	msnet32/		- Network interface
 	msvcrt/			- C runtime library 
 	msvcrt20/		- C runtime library version 2.0
+	msvcrt40/		- C runtime library version 4.0
 	msvcrtd/		- C runtime library debugging
+	msvidc32/		- Microsoft Video-1 Decoder
 	msvideo/		- 16 bit video manager
 	msvideo/msrle32/	- Video codecs
 	mswsock/		- Misc networking
