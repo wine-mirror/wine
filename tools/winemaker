@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-# Copyright 2000-2002 Francois Gouget for CodeWeavers
+# Copyright 2000-2004 Francois Gouget for CodeWeavers
 # Copyright 2004 Dimitrie O. Paun
 #
 # This library is free software; you can redistribute it and/or
@@ -115,8 +115,7 @@ my $opt_ask_project_options;
 my $opt_ask_target_options;
 
 ##
-# If false then winemaker should not generate any file, i.e.
-# no makefiles, but also no .spec files, etc.
+# If false then winemaker should not generate the makefiles.
 my $opt_no_generated_files;
 
 ##
@@ -144,52 +143,66 @@ my $T_NAME=0;
 my $T_TYPE=1;
 
 ##
-# Defines the target's enty point, i.e. the function that is called
-# on startup.
-my $T_INIT=2;
-
-##
 # This is a bitfield containing flags refining the way the target
 # should be handled. See the TF_xxx constants below
-my $T_FLAGS=3;
+my $T_FLAGS=2;
 
 ##
 # This is a reference to an array containing the list of the
 # resp. C, C++, RC, other (.h, .hxx, etc.) source files.
-my $T_SOURCES_C=4;
-my $T_SOURCES_CXX=5;
-my $T_SOURCES_RC=6;
-my $T_SOURCES_MISC=7;
+my $T_SOURCES_C=3;
+my $T_SOURCES_CXX=4;
+my $T_SOURCES_RC=5;
+my $T_SOURCES_MISC=6;
+
+##
+# This is a reference to an array containing the list of
+# C compiler options
+my $T_CEXTRA=7;
+
+##
+# This is a reference to an array containing the list of
+# C++ compiler options
+my $T_CXXEXTRA=8;
+
+##
+# This is a reference to an array containing the list of
+# RC compiler options
+my $T_RCEXTRA=9;
 
 ##
 # This is a reference to an array containing the list of macro
 # definitions
-my $T_DEFINES=8;
+my $T_DEFINES=10;
 
 ##
 # This is a reference to an array containing the list of directory
 # names that constitute the include path
-my $T_INCLUDE_PATH=9;
+my $T_INCLUDE_PATH=11;
+
+##
+# Flags for the linker
+my $T_LDFLAGS=12;
 
 ##
 # Same as T_INCLUDE_PATH but for the dll search path
-my $T_DLL_PATH=10;
+my $T_DLL_PATH=13;
 
 ##
 # The list of Windows dlls to import
-my $T_DLLS=11;
+my $T_DLLS=14;
 
 ##
 # Same as T_INCLUDE_PATH but for the library search path
-my $T_LIBRARY_PATH=12;
+my $T_LIBRARY_PATH=15;
 
 ##
 # The list of Unix libraries to link with
-my $T_LIBRARIES=13;
+my $T_LIBRARIES=16;
 
 ##
 # The list of dependencies between targets
-my $T_DEPENDS=14;
+my $T_DEPENDS=17;
 
 
 # The following constants define the recognized types of target
@@ -247,24 +260,16 @@ sub target_init($)
   @$target[$T_SOURCES_CXX]=[];
   @$target[$T_SOURCES_RC]=[];
   @$target[$T_SOURCES_MISC]=[];
+  @$target[$T_CEXTRA]=[];
+  @$target[$T_CXXEXTRA]=[];
+  @$target[$T_RCEXTRA]=[];
   @$target[$T_DEFINES]=[];
   @$target[$T_INCLUDE_PATH]=[];
+  @$target[$T_LDFLAGS]=[];
   @$target[$T_DLL_PATH]=[];
   @$target[$T_DLLS]=[];
   @$target[$T_LIBRARY_PATH]=[];
   @$target[$T_LIBRARIES]=[];
-}
-
-sub get_default_init($)
-{
-  my $type=$_[0];
-  if ($type == $TT_GUIEXE) {
-    return "WinMain";
-  } elsif ($type == $TT_CUIEXE) {
-    return "main";
-  } elsif ($type == $TT_DLL) {
-    return "DllMain";
-  }
 }
 
 
@@ -479,6 +484,8 @@ sub source_scan_directory($$$$)
   my @sources_misc=();
   # true if this directory contains a Windows project
   my $has_win_project=0;
+  # true if this directory contains headers
+  my $has_headers=0;
   # If we don't find any executable/library then we might make up targets
   # from the list of .dsp/.mak files we find since they usually have the
   # same name as their target.
@@ -537,6 +544,7 @@ sub source_scan_directory($$$$)
       } elsif ($dentry =~ /\.rc$/i) {
 	push @sources_rc,"$dentry";
       } elsif ($dentry =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
+	$has_headers=1;
 	push @sources_misc,"$dentry";
 	if ($dentry =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
 	  @$project_settings[$T_FLAGS]|=$TF_MFC;
@@ -554,6 +562,9 @@ sub source_scan_directory($$$$)
   }
   closedir(DIRECTORY);
 
+  if ($has_headers) {
+    push @{@$project_settings[$T_INCLUDE_PATH]},"-I.";
+  }
   # If we have a single target then all we have to do is assign
   # all the sources to it and we're done
   # FIXME: does this play well with the --interactive mode?
@@ -741,13 +752,12 @@ sub source_scan_directory($$$$)
     @$target[$T_FLAGS]|=@$project_settings[$T_FLAGS];
     if ($target_name =~ /\.dll$/) {
       @$target[$T_TYPE]=$TT_DLL;
-      @$target[$T_INIT]=get_default_init($TT_DLL);
       push @local_depends,"$target_name.so";
       push @local_dlls,$target_name;
     } else {
       @$target[$T_TYPE]=$opt_target_type;
-      @$target[$T_INIT]=get_default_init($opt_target_type);
       push @exe_list,$target;
+      push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
     }
     my $basename=$target_name;
     $basename=~ s/\.(dll|exe)$//i;
@@ -761,6 +771,9 @@ sub source_scan_directory($$$$)
     } else {
       @$target[$T_DLLS]=[];
       @$target[$T_LIBRARIES]=[];
+    }
+    if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
+      push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
     }
     push @{@$project[$P_TARGETS]},$target;
 
@@ -851,7 +864,8 @@ sub source_scan_directory($$$$)
   }
 
   if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
-    push @{@$project_settings[$T_DEFINES]},"-mno-cygwin";
+    push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
+    push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
   }
 
   if (@$project_settings[$T_FLAGS] & $TF_MFC) {
@@ -1594,7 +1608,9 @@ sub generate_project_files($)
 
     print FILEO "### Common settings\n\n";
     # Make it so that the project-wide settings override the global settings
-    generate_list("DEFINES",1,@$project_settings[$T_DEFINES]);
+    generate_list("CEXTRA",1,@$project_settings[$T_CEXTRA]);
+    generate_list("CXXEXTRA",1,@$project_settings[$T_CXXEXTRA]);
+    generate_list("RCEXTRA",1,@$project_settings[$T_RCEXTRA]);
     generate_list("INCLUDE_PATH",1,@$project_settings[$T_INCLUDE_PATH]);
     generate_list("DLL_PATH",1,@$project_settings[$T_DLL_PATH]);
     generate_list("LIBRARY_PATH",1,@$project_settings[$T_LIBRARY_PATH]);
@@ -1618,28 +1634,14 @@ sub generate_project_files($)
     # Iterate over all the targets...
     foreach my $target (@{@$project[$P_TARGETS]}) {
       print FILEO "### @$target[$T_NAME] sources and settings\n\n";
-      my $appmode;
-      my $basemodule=@$target[$T_NAME];
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s+_so$++;
-      if (@$target[$T_TYPE] == $TT_CUIEXE) {
-        $appmode = "cui";
-        $basemodule =~ s/\.exe$//;
-      } elsif (@$target[$T_TYPE] == $TT_GUIEXE) {
-        $appmode = "gui";
-        $basemodule =~ s/\.exe$//;
-      } else {
-        $appmode = "";
-        $basemodule =~ s/\.dll$//;
-      }
 
       generate_list("${canon}_MODULE",1,[@$target[$T_NAME]]);
-      generate_list("${canon}_BASEMODULE",1,[$basemodule]);
-      generate_list("${canon}_APPMODE",1,[$appmode]);
       generate_list("${canon}_C_SRCS",1,@$target[$T_SOURCES_C]);
       generate_list("${canon}_CXX_SRCS",1,@$target[$T_SOURCES_CXX]);
       generate_list("${canon}_RC_SRCS",1,@$target[$T_SOURCES_RC]);
-      generate_list("${canon}_SPEC_SRCS",1,[ (@$target[$T_TYPE] == $TT_DLL?"@$target[$T_NAME].spec":"") ]);
+      generate_list("${canon}_LDFLAGS",1,@$target[$T_LDFLAGS]);
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
@@ -1676,12 +1678,6 @@ sub generate_project_files($)
     if (!$no_extra) {
       generate_list("",1,[ "\$(EXTRA_RC_SRCS)" ]);
     }
-    generate_list("SPEC_SRCS",1,@$project[$P_TARGETS],sub
-		  {
-		    my $canon=canonize(@{$_[0]}[$T_NAME]);
-		    $canon =~ s+_so$++;
-		    return "\$(${canon}_SPEC_SRCS)";
-		  });
   }
   print FILEO "\n\n";
   print FILEO "### Tools\n\n";
@@ -1691,7 +1687,7 @@ sub generate_project_files($)
   print FILEO "WINEBUILD = winebuild\n";
   print FILEO "\n\n";
 
-  print FILEO "### Generic autoconf targets\n\n";
+  print FILEO "### Generic targets\n\n";
   print FILEO "all:";
   if (@$project[$P_PATH] eq "") {
     print FILEO " \$(SUBDIRS)";
@@ -1700,28 +1696,53 @@ sub generate_project_files($)
     print FILEO " \$(DLLS:%=%.so) \$(EXES:%=%.so)";
   }
   print FILEO "\n\n";
+  print FILEO "### Build rules\n";
+  print FILEO "\n";
+  print FILEO ".PHONY: all clean dummy\n";
+  print FILEO "\n";
+  print FILEO "\$(SUBDIRS): dummy\n";
+  print FILEO "\t\@cd \$\@ && \$(MAKE)\n";
+  print FILEO "\n";
+  print FILEO "# Implicit rules\n";
+  print FILEO "\n";
+  print FILEO ".SUFFIXES: .cpp .rc .res\n";
+  print FILEO "DEFINCL = \$(INCLUDE_PATH) \$(DEFINES) \$(OPTIONS)\n";
+  print FILEO "\n";
+  print FILEO ".c.o:\n";
+  print FILEO "\t\$(CC) -c \$(CFLAGS) \$(CEXTRA) \$(DEFINCL) -o \$\@ \$<\n";
+  print FILEO "\n";
+  print FILEO ".cpp.o:\n";
+  print FILEO "\t\$(CXX) -c \$(CXXFLAGS) \$(CXXEXTRA) \$(DEFINCL) -o \$\@ \$<\n";
+  print FILEO "\n";
+  print FILEO ".cxx.o:\n";
+  print FILEO "\t\$(CXX) -c \$(CXXFLAGS) \$(CXXEXTRA) \$(DEFINCL) -o \$\@ \$<\n";
+  print FILEO "\n";
+  print FILEO ".rc.res:\n";
+  print FILEO "\t\$(RC) \$(RCFLAGS) \$(RCEXTRA) \$(DEFINCL) -fo\$@ \$<\n";
+  print FILEO "\n";
+  print FILEO "# Rules for cleaning\n";
+  print FILEO "\n";
+  print FILEO "CLEAN_FILES     = *.dbg.c y.tab.c y.tab.h lex.yy.c \\\n";
+  print FILEO "                  core *.orig *.rej \\\n";
+  print FILEO "                  \\\\\\#*\\\\\\# *~ *% .\\\\\\#*\n";
+  print FILEO "\n";
+  print FILEO "clean:: \$(SUBDIRS:%=%/__clean__) \$(EXTRASUBDIRS:%=%/__clean__)\n";
+  print FILEO "\t\$(RM) \$(CLEAN_FILES) \$(RC_SRCS:.rc=.res) \$(C_SRCS:.c=.o) \$(CXX_SRCS:.cpp=.o)\n";
+  print FILEO "\t\$(RM) \$(DLLS:%=%.dbg.o) \$(DLLS:%=%.so)\n";
+  print FILEO "\t\$(RM) \$(EXES:%=%.dbg.o) \$(EXES:%=%.so) \$(EXES:%.exe=%)\n";
+  print FILEO "\n";
+  print FILEO "\$(SUBDIRS:%=%/__clean__): dummy\n";
+  print FILEO "\tcd `dirname \$\@` && \$(MAKE) clean\n";
+  print FILEO "\n";
+  print FILEO "\$(EXTRASUBDIRS:%=%/__clean__): dummy\n";
+  print FILEO "\t-cd `dirname \$\@` && \$(RM) \$(CLEAN_FILES)\n";
+  print FILEO "\n";
 
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "### Target specific build rules\n\n";
     foreach my $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
-      my $mode;
-      my $all_dlls;
-      my $all_libs;
-
       $canon =~ s/_so$//;
-      if ((@$target[$T_TYPE]==$TT_GUIEXE) || (@$target[$T_TYPE]==$TT_CUIEXE)) {
-	  $mode = "--exe \$(${canon}_MODULE) -m\$(${canon}_APPMODE)";
-      } else {
-	  $mode = "";
-      }
-
-      $all_dlls="\$(${canon}_DLLS:%=-l%) \$(GLOBAL_DLLS:%=-l%)";
-      $all_libs="\$(${canon}_LIBRARIES:%=-l%) \$(ALL_LIBRARIES)";
-
-      print FILEO "%.res: %.rc:\n";
-      print FILEO "	\$(RC) \$(RCFLAGS) -fo\$@ \$<\n";
-      print FILEO "\n";
 
       print FILEO "\$(${canon}_MODULE).dbg.c: \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
       print FILEO "\t\$(WINEBUILD) -o \$\@ --debug -C\$(SRCDIR) \$(${canon}_C_SRCS) \$(${canon}_CXX_SRCS)\n";
@@ -1732,12 +1753,7 @@ sub generate_project_files($)
       } else {
         print FILEO "\t\$(CC)";
       }
-      if ($opt_target_type == $TT_GUIEXE) {
-	print FILEO " -mwindows";
-      } else {
-	print FILEO " -mconsole";
-      }
-      print FILEO " \$(LDDLLFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_LIBRARY_PATH) \$(ALL_LIBRARY_PATH) $all_libs \$(LIBS)\n";
+      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_MODULE).dbg.o \$(${canon}_LIBRARY_PATH) \$(LIBRARY_PATH) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       print FILEO "\n\n";
     }
   }
@@ -1746,8 +1762,6 @@ sub generate_project_files($)
 }
 
 
-##
-#
 ##
 # This is where we finally generate files. In fact this method does not
 # do anything itself but calls the methods that do the actual work.
@@ -1779,8 +1793,8 @@ $opt_backup=1;
 $opt_lower=$OPT_LOWER_UPPERCASE;
 $opt_lower_include=1;
 
-# $opt_work_dir=<undefined>
-# $opt_single_target=<undefined>
+$opt_work_dir=undef;
+$opt_single_target=undef;
 $opt_target_type=$TT_GUIEXE;
 $opt_flags=0;
 $opt_is_interactive=$OPT_ASK_NO;
@@ -1930,6 +1944,3 @@ if (! $opt_no_source_fix) {
 if (! $opt_no_generated_files) {
   generate();
 }
-
-
-__DATA__
