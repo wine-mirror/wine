@@ -208,7 +208,8 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     TRACE("%s, %d , [(%d,%d),(%d,%d)]\n",
 	  debugstr_an (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
-    
+
+    if (!str) return 0;
     if (count == -1) count = strlen(str);
     strPtr = str;
 
