@@ -269,6 +269,7 @@ SCSI_printprocentry( const struct LinuxProcScsiDevice * dev )
 		dev->type,
 		dev->ansirev );
 }
+#endif
 
 static void
 SCSI_GetProcinfo()
@@ -277,6 +278,7 @@ SCSI_GetProcinfo()
  * HKEY_DYN_DATA would be a lot less messy
  */
 {
+#ifdef linux
 	FILE * procfile = NULL;
 
 	int result = 0;
@@ -344,5 +346,5 @@ SCSI_GetProcinfo()
 	}
 	RegCloseKey(hkeyScsi);
 	return;
-}
 #endif
+}
