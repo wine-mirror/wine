@@ -153,6 +153,12 @@ typedef struct _DMUS_PRIVATE_SEGMENT_TRACK {
   IDirectMusicTrack* pTrack;
 } DMUS_PRIVATE_SEGMENT_TRACK, *LPDMUS_PRIVATE_SEGMENT_TRACK;
 
+typedef struct _DMUS_PRIVATE_TEMPO_ITEM {
+  struct list entry; /* for listing elements */
+  DMUS_IO_TEMPO_ITEM item;
+} DMUS_PRIVATE_TEMPO_ITEM, *LPDMUS_PRIVATE_TEMPO_ITEM;
+
+
 /* some sort of aux. performance channel: as far as i can understand, these are 
    used to represent a particular midi channel in particular group at particular
    group; so all we need to do is to fill it with parent port, group and midi 
@@ -796,6 +802,8 @@ struct IDirectMusicTempoTrack {
 
   /* IDirectMusicTempoTrack fields */
   LPDMUS_OBJECTDESC pDesc;
+  BOOL enabled;
+  struct list Items;
 };
 
 /* IUnknown: */
