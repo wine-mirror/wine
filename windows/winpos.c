@@ -1050,15 +1050,16 @@ BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow )
 	    lpPos->hwndIconTitle = hWnd = ICONTITLE_Create( pWnd );
 	if( bShow )
         {
-	    pWnd = WIN_FindWndPtr(hWnd);
-
-	    if( !(pWnd->dwStyle & WS_VISIBLE) )
+	    if( ( pWnd = WIN_FindWndPtr(hWnd) ) != NULL) 
 	    {
-		SendMessageA( hWnd, WM_SHOWWINDOW, TRUE, 0 );
-		SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-			        SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
+	        if( !(pWnd->dwStyle & WS_VISIBLE) )
+		{
+		   SendMessageA( hWnd, WM_SHOWWINDOW, TRUE, 0 );
+		   SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+				 SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW );
+		}
+		WIN_ReleaseWndPtr(pWnd);
 	    }
-            WIN_ReleaseWndPtr(pWnd);
 	}
 	else ShowWindow( hWnd, SW_HIDE );
     }
@@ -2562,8 +2563,8 @@ Pos:  /* -----------------------------------------------------------------------
 
     if(!(winpos.flags & SWP_NOZORDER))
     {
-        WIN_UnlinkWindow( winpos.hwnd );
-        WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
+        if ( WIN_UnlinkWindow( winpos.hwnd ) )
+	   WIN_LinkWindow( winpos.hwnd, hwndInsertAfter );
     }
 
     /* Reset active DCEs */
