@@ -12,6 +12,7 @@
 
 typedef struct CAsyncSourceImpl	CAsyncSourceImpl;
 typedef struct CAsyncSourcePinImpl	CAsyncSourcePinImpl;
+typedef struct AsyncSourceRequest	AsyncSourceRequest;
 typedef struct AsyncSourceHandlers	AsyncSourceHandlers;
 
 typedef struct CAsyncReaderImpl
@@ -23,13 +24,20 @@ typedef struct CAsyncReaderImpl
 	/* IAsyncReader fields */
 	CAsyncSourceImpl*	pSource;
 
-	CRITICAL_SECTION*	pcsReader;
+	CRITICAL_SECTION	m_csReader;
+	BOOL	m_bInFlushing;
+	BOOL	m_bAbortThread;
 	HANDLE	m_hEventInit;
-	HANDLE	m_hEventAbort;
+	HANDLE	m_hEventCancel;
 	HANDLE	m_hEventReqQueued;
 	HANDLE	m_hEventSampQueued;
-	HANDLE	m_hEventCompletion;
 	HANDLE	m_hThread;
+	CRITICAL_SECTION	m_csRequest;
+	AsyncSourceRequest*	m_pRequestFirst;
+	CRITICAL_SECTION	m_csReply;
+	AsyncSourceRequest*	m_pReplyFirst;
+	CRITICAL_SECTION	m_csFree;
+	AsyncSourceRequest*	m_pFreeFirst;
 } CAsyncReaderImpl;
 
 typedef struct CFileSourceFilterImpl
@@ -70,15 +78,27 @@ struct CAsyncSourcePinImpl
 	CAsyncSourceImpl*	pSource;
 };
 
+struct AsyncSourceRequest
+{
+	AsyncSourceRequest*	pNext;
+
+	LONGLONG	llStart;
+	LONG	lLength;
+	LONG	lActual;
+	BYTE*	pBuf;
+	IMediaSample*	pSample; /* for async req. */
+	DWORD_PTR	dwContext; /* for async req. */
+};
+
 struct AsyncSourceHandlers
 {
 	/* all handlers MUST be implemented. */
 	HRESULT (*pLoad)( CAsyncSourceImpl* pImpl, LPCWSTR lpwszSourceName );
 	HRESULT (*pCleanup)( CAsyncSourceImpl* pImpl );
 	HRESULT (*pGetLength)( CAsyncSourceImpl* pImpl, LONGLONG* pllTotal, LONGLONG* pllAvailable );
-	HRESULT (*pReadAsync)( CAsyncSourceImpl* pImpl, LONGLONG llOfsStart, LONG lLength, BYTE* pBuf, HANDLE hEventCompletion );
-	HRESULT (*pGetResult)( CAsyncSourceImpl* pImpl, LONG* plReturned );
-	HRESULT (*pCancelAsync)( CAsyncSourceImpl* pImpl );
+	/* S_OK = OK / S_FALSE = Canceled / other = error */
+	/* hEventCancel may be NULL */
+	HRESULT (*pRead)( CAsyncSourceImpl* pImpl, LONGLONG llOfsStart, LONG lLength, BYTE* pBuf, LONG* plReturned, HANDLE hEventCancel );
 };
 
 #define	CAsyncSourceImpl_THIS(iface,member)		CAsyncSourceImpl*	This = ((CAsyncSourceImpl*)(((char*)iface)-offsetof(CAsyncSourceImpl,member)))
@@ -87,8 +107,7 @@ struct AsyncSourceHandlers
 
 HRESULT CAsyncReaderImpl_InitIAsyncReader(
 	CAsyncReaderImpl* This, IUnknown* punkControl,
-	CAsyncSourceImpl* pSource,
-	CRITICAL_SECTION* pcsReader );
+	CAsyncSourceImpl* pSource );
 void CAsyncReaderImpl_UninitIAsyncReader(
 	CAsyncReaderImpl* This );
 HRESULT CFileSourceFilterImpl_InitIFileSourceFilter(
@@ -110,6 +129,12 @@ HRESULT QUARTZ_CreateAsyncSourcePin(
 	CRITICAL_SECTION* pcsPin,
 	CAsyncSourcePinImpl** ppPin,
 	LPCWSTR pwszPinName );
+
+
+HRESULT QUARTZ_CreateAsyncReader(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateURLReader(IUnknown* punkOuter,void** ppobj);
+
+#define ASYNCSRC_FILE_BLOCKSIZE	4096
 
 
 #endif	/* WINE_DSHOW_ASYNCSRC_H */

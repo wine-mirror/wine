@@ -14,14 +14,7 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
-#include "objidl.h"
-#include "oleidl.h"
-#include "ocidl.h"
 #include "strmif.h"
-#include "control.h"
-#include "uuids.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -159,7 +152,7 @@ ICreateDevEnum_fnCreateClassEnumerator(ICreateDevEnum* iface,REFCLSID rclsidDevi
 		0, KEY_READ, &hKey ) != ERROR_SUCCESS )
 		return E_FAIL;
 
-	dwLen = strlenW(wszPath);
+	dwLen = lstrlenW(wszPath);
 	wszPath[dwLen++] = '\\'; wszPath[dwLen] = 0;
 	dwNameMax = sizeof(wszPath)/sizeof(wszPath[0]) - dwLen - 8;
 

@@ -2,6 +2,8 @@
  * Implements IBaseFilter for parsers. (internal)
  *
  * hidenori@a2.ctktv.ne.jp
+ *
+ * FIXME - save the array of pSample and handle errors/flushing correctly.
  */
 
 #include "config.h"
@@ -12,7 +14,6 @@
 #include "winuser.h"
 #include "mmsystem.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
@@ -179,6 +180,8 @@ HRESULT CParserImpl_ProcessNextSample( CParserImpl* This )
 		hr = NOERROR;
 
 	IMediaSample_Release(pSample);
+	TRACE("return %08lx\n",hr);
+
 	return hr;
 }
 
@@ -232,6 +235,9 @@ DWORD WINAPI CParserImpl_ThreadEntry( LPVOID pv )
 				}
 				continue;
 			}
+			if ( This->m_ppOutPins[nIndex]->pin.pPinConnectedTo == NULL )
+				continue;
+
 			rtSampleTimeStart = llReqStart * QUARTZ_TIMEUNITS;
 			rtSampleTimeEnd = (llReqStart + lReqLength) * QUARTZ_TIMEUNITS;
 			bReqNext = FALSE;

@@ -13,14 +13,12 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "objidl.h"
 #include "oleidl.h"
 #include "ocidl.h"
 #include "oleauto.h"
 #include "strmif.h"
 #include "uuids.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -366,7 +364,7 @@ static HRESULT CDeviceMoniker_InitIMoniker(
 	pdm->m_hkRoot = hkRoot;
 	pdm->m_pwszPath = NULL;
 
-	dwLen = sizeof(WCHAR)*(strlenW(lpKeyPath)+1);
+	dwLen = sizeof(WCHAR)*(lstrlenW(lpKeyPath)+1);
 	pdm->m_pwszPath = (WCHAR*)QUARTZ_AllocMem( dwLen );
 	if ( pdm->m_pwszPath == NULL )
 		return E_OUTOFMEMORY;

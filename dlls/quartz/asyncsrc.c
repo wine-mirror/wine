@@ -1,7 +1,7 @@
 /*
  * Implements Asynchronous File/URL Source.
  *
- * FIXME - not work yet.
+ * FIXME - URL source is not implemented yet.
  *
  * hidenori@a2.ctktv.ne.jp
  */
@@ -13,7 +13,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
@@ -26,41 +25,192 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "memalloc.h"
 
 
+
+const WCHAR QUARTZ_wszAsyncFileSourceName[] =
+{'F','i','l','e',' ','S','o','u','r','c','e',' ','(','A','s','y','n','c','.',')',0};
+const WCHAR QUARTZ_wszAsyncFileSourcePinName[] =
+{'O','u','t',0};
+const WCHAR QUARTZ_wszAsyncURLSourceName[] =
+{'F','i','l','e',' ','S','o','u','r','c','e',' ','(','U','R','L',')',0};
+const WCHAR QUARTZ_wszAsyncURLSourcePinName[] =
+{'O','u','t',0};
+
+
+
 /***************************************************************************
  *
  *	CAsyncReaderImpl internal methods
  *
  */
 
+static
+AsyncSourceRequest* CAsyncReaderImpl_AllocRequest( CAsyncReaderImpl* This )
+{
+	AsyncSourceRequest* pReq;
+
+	EnterCriticalSection( &This->m_csFree );
+	pReq = This->m_pFreeFirst;
+	if ( pReq != NULL )
+		This->m_pFreeFirst = pReq->pNext;
+	LeaveCriticalSection( &This->m_csFree );
+
+	if ( pReq == NULL )
+	{
+		pReq = (AsyncSourceRequest*)QUARTZ_AllocMem(
+			sizeof(AsyncSourceRequest) );
+		if ( pReq == NULL )
+			return NULL;
+	}
+
+	pReq->pNext = NULL;
+	pReq->llStart = 0;
+	pReq->lLength = 0;
+	pReq->lActual = 0;
+	pReq->pBuf = NULL;
+	pReq->pSample = NULL;
+	pReq->dwContext = 0;
+
+	return pReq;
+}
+
+static
+void CAsyncReaderImpl_FreeRequest( CAsyncReaderImpl* This, AsyncSourceRequest* pReq, BOOL bReleaseMem )
+{
+	if ( !bReleaseMem )
+	{
+		EnterCriticalSection( &This->m_csFree );
+		pReq->pNext = This->m_pFreeFirst;
+		This->m_pFreeFirst = pReq;
+		LeaveCriticalSection( &This->m_csFree );
+	}
+	else
+	{
+		QUARTZ_FreeMem( pReq );
+	}
+}
+
+static
+AsyncSourceRequest* CAsyncReaderImpl_GetRequest( CAsyncReaderImpl* This )
+{
+	AsyncSourceRequest*	pReq;
+
+	EnterCriticalSection( &This->m_csRequest );
+	pReq = This->m_pRequestFirst;
+	if ( pReq != NULL )
+		This->m_pRequestFirst = pReq->pNext;
+	LeaveCriticalSection( &This->m_csRequest );
+
+	return pReq;
+}
+
+static
+AsyncSourceRequest* CAsyncReaderImpl_GetReply( CAsyncReaderImpl* This )
+{
+	AsyncSourceRequest*	pReq;
+
+	EnterCriticalSection( &This->m_csReply );
+	pReq = This->m_pReplyFirst;
+	if ( pReq != NULL )
+		This->m_pReplyFirst = pReq->pNext;
+	LeaveCriticalSection( &This->m_csReply );
+
+	return pReq;
+}
+
+static
+void CAsyncReaderImpl_PostRequest( CAsyncReaderImpl* This, AsyncSourceRequest* pReq )
+{
+	/* FIXME - add to tail */
+	EnterCriticalSection( &This->m_csRequest );
+	pReq->pNext = This->m_pRequestFirst;
+	This->m_pRequestFirst = pReq;
+	if ( This->m_hEventReqQueued != (HANDLE)NULL )
+		SetEvent( This->m_hEventReqQueued );
+	LeaveCriticalSection( &This->m_csRequest );
+}
+
+static
+void CAsyncReaderImpl_PostReply( CAsyncReaderImpl* This, AsyncSourceRequest* pReq )
+{
+	/* FIXME - add to tail */
+	EnterCriticalSection( &This->m_csReply );
+	pReq->pNext = This->m_pReplyFirst;
+	This->m_pReplyFirst = pReq;
+	if ( This->m_hEventSampQueued != (HANDLE)NULL )
+		SetEvent( This->m_hEventSampQueued );
+	LeaveCriticalSection( &This->m_csReply );
+}
+
+static
+void CAsyncReaderImpl_ReleaseReqList( CAsyncReaderImpl* This, AsyncSourceRequest* pReq, BOOL bReleaseMem )
+{
+	AsyncSourceRequest* pReqNext;
+
+	while ( pReq != NULL )
+	{
+		pReqNext = pReq->pNext;
+		CAsyncReaderImpl_FreeRequest(This,pReq,bReleaseMem);
+		pReq = pReqNext;
+	}
+}
+
 static DWORD WINAPI
 CAsyncReaderImpl_ThreadEntry( LPVOID pv )
 {
 	CAsyncReaderImpl*	This = (CAsyncReaderImpl*)pv;
 	HANDLE hWaitEvents[2];
-	HANDLE hReadEvents[2];
+	HRESULT hr;
 	DWORD	dwRes;
+	AsyncSourceRequest*	pReq = NULL;
 
 	SetEvent( This->m_hEventInit );
 
 	hWaitEvents[0] = This->m_hEventReqQueued;
-	hWaitEvents[1] = This->m_hEventAbort;
+	hWaitEvents[1] = This->m_hEventCancel;
 
-	hReadEvents[0] = This->m_hEventSampQueued;
-	hReadEvents[1] = This->m_hEventAbort;
+	TRACE("enter message loop.\n");
 
 	while ( 1 )
 	{
-		dwRes = WaitForMultipleObjects(2,hWaitEvents,FALSE,INFINITE);
-		if ( dwRes != WAIT_OBJECT_0 )
-			break;
+		ResetEvent( This->m_hEventReqQueued );
+		pReq = CAsyncReaderImpl_GetRequest(This);
+		if ( pReq == NULL )
+		{
+			dwRes = WaitForMultipleObjects(2,hWaitEvents,FALSE,INFINITE);
+			if ( dwRes != WAIT_OBJECT_0 )
+			{
+				if ( This->m_bAbortThread )
+					break;
+			}
+			continue;
+		}
 
-		/* FIXME - process a queued request */
+		/* process a queued request */
+		EnterCriticalSection( &This->m_csReader );
+		hr = This->pSource->m_pHandler->pRead( This->pSource, pReq->llStart, pReq->lLength, pReq->pBuf, &pReq->lActual, This->m_hEventCancel );
+		LeaveCriticalSection( &This->m_csReader );
 
-		dwRes = WaitForMultipleObjects(2,hReadEvents,FALSE,INFINITE);
-		if ( dwRes != WAIT_OBJECT_0 )
+		if ( FAILED(hr) )
+		{
+			/* Notify(ABORT) */
 			break;
+		}
+		if ( hr != S_OK )
+		{
+			if ( This->m_bAbortThread )
+				break;
+			ResetEvent( This->m_hEventCancel );
+		}
+
+		CAsyncReaderImpl_PostReply( This, pReq );
+		SetEvent( This->m_hEventSampQueued );
+		pReq = NULL;
 	}
 
+	if ( pReq != NULL )
+		CAsyncReaderImpl_PostRequest( This, pReq );
+
+	SetEvent( This->m_hEventSampQueued );
 	return 0;
 }
 
@@ -72,27 +222,24 @@ CAsyncReaderImpl_BeginThread( CAsyncReaderImpl* This )
 	HANDLE hEvents[2];
 
 	if ( This->m_hEventInit != (HANDLE)NULL ||
-		 This->m_hEventAbort != (HANDLE)NULL ||
+		 This->m_hEventCancel != (HANDLE)NULL ||
 		 This->m_hEventReqQueued != (HANDLE)NULL ||
 		 This->m_hEventSampQueued != (HANDLE)NULL ||
-		 This->m_hEventCompletion != (HANDLE)NULL ||
 		 This->m_hThread != (HANDLE)NULL )
 		return E_UNEXPECTED;
+	This->m_bAbortThread = FALSE;
 
 	This->m_hEventInit = CreateEventA(NULL,TRUE,FALSE,NULL);
 	if ( This->m_hEventInit == (HANDLE)NULL )
 		return E_OUTOFMEMORY;
-	This->m_hEventAbort = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventAbort == (HANDLE)NULL )
+	This->m_hEventCancel = CreateEventA(NULL,TRUE,FALSE,NULL);
+	if ( This->m_hEventCancel == (HANDLE)NULL )
 		return E_OUTOFMEMORY;
 	This->m_hEventReqQueued = CreateEventA(NULL,TRUE,FALSE,NULL);
 	if ( This->m_hEventReqQueued == (HANDLE)NULL )
 		return E_OUTOFMEMORY;
 	This->m_hEventSampQueued = CreateEventA(NULL,TRUE,FALSE,NULL);
 	if ( This->m_hEventSampQueued == (HANDLE)NULL )
-		return E_OUTOFMEMORY;
-	This->m_hEventCompletion = CreateEventA(NULL,TRUE,FALSE,NULL);
-	if ( This->m_hEventCompletion == (HANDLE)NULL )
 		return E_OUTOFMEMORY;
 
 	/* create the processing thread. */
@@ -119,9 +266,13 @@ CAsyncReaderImpl_EndThread( CAsyncReaderImpl* This )
 {
 	if ( This->m_hThread != (HANDLE)NULL )
 	{
-		SetEvent( This->m_hEventAbort );
-
-		WaitForSingleObject( This->m_hThread, INFINITE );
+		while ( 1 )
+		{
+			This->m_bAbortThread = TRUE;
+			SetEvent( This->m_hEventCancel );
+			if ( WaitForSingleObject( This->m_hThread, 100 ) == WAIT_OBJECT_0 )
+				break;
+		}
 		CloseHandle( This->m_hThread );
 		This->m_hThread = (HANDLE)NULL;
 	}
@@ -130,10 +281,10 @@ CAsyncReaderImpl_EndThread( CAsyncReaderImpl* This )
 		CloseHandle( This->m_hEventInit );
 		This->m_hEventInit = (HANDLE)NULL;
 	}
-	if ( This->m_hEventAbort != (HANDLE)NULL )
+	if ( This->m_hEventCancel != (HANDLE)NULL )
 	{
-		CloseHandle( This->m_hEventAbort );
-		This->m_hEventAbort = (HANDLE)NULL;
+		CloseHandle( This->m_hEventCancel );
+		This->m_hEventCancel = (HANDLE)NULL;
 	}
 	if ( This->m_hEventReqQueued != (HANDLE)NULL )
 	{
@@ -144,11 +295,6 @@ CAsyncReaderImpl_EndThread( CAsyncReaderImpl* This )
 	{
 		CloseHandle( This->m_hEventSampQueued );
 		This->m_hEventSampQueued = (HANDLE)NULL;
-	}
-	if ( This->m_hEventCompletion != (HANDLE)NULL )
-	{
-		CloseHandle( This->m_hEventCompletion );
-		This->m_hEventCompletion = (HANDLE)NULL;
 	}
 }
 
@@ -233,52 +379,146 @@ static HRESULT WINAPI
 CAsyncReaderImpl_fnRequest(IAsyncReader* iface,IMediaSample* pSample,DWORD_PTR dwContext)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
+	HRESULT hr = NOERROR;
+	REFERENCE_TIME	rtStart;
+	REFERENCE_TIME	rtEnd;
+	AsyncSourceRequest*	pReq;
+	BYTE*	pData = NULL;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p,%u)\n",This,pSample,dwContext);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	hr = IMediaSample_GetPointer(pSample,&pData);
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_GetTime(pSample,&rtStart,&rtEnd);
+	if ( FAILED(hr) )
+		return hr;
 
-	return E_NOTIMPL;
+	pReq = CAsyncReaderImpl_AllocRequest(This);
+	if ( pReq == NULL )
+		return E_OUTOFMEMORY;
+
+	pReq->llStart = rtStart / QUARTZ_TIMEUNITS;
+	pReq->lLength = (LONG)(rtEnd / QUARTZ_TIMEUNITS - rtStart / QUARTZ_TIMEUNITS);
+	pReq->lActual = 0;
+	pReq->pBuf = pData;
+	pReq->pSample = pSample;
+	pReq->dwContext = dwContext;
+	CAsyncReaderImpl_PostRequest( This, pReq );
+
+	return NOERROR;
 }
 
 static HRESULT WINAPI
-CAsyncReaderImpl_fnWaitForNext(IAsyncReader* iface,DWORD dwTimeout,IMediaSample** pSample,DWORD_PTR* pdwContext)
+CAsyncReaderImpl_fnWaitForNext(IAsyncReader* iface,DWORD dwTimeout,IMediaSample** ppSample,DWORD_PTR* pdwContext)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
+	HRESULT hr = NOERROR;
+	DWORD dwRes;
+	AsyncSourceRequest*	pReq;
+	REFERENCE_TIME	rtStart;
+	REFERENCE_TIME	rtEnd;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%lu,%p,%p)\n",This,dwTimeout,ppSample,pdwContext);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	EnterCriticalSection( &This->m_csRequest );
+	if ( This->m_bInFlushing )
+		hr = VFW_E_TIMEOUT;
+	LeaveCriticalSection( &This->m_csRequest );
 
-	return E_NOTIMPL;
+	if ( hr == NOERROR )
+	{
+		ResetEvent( This->m_hEventSampQueued );
+		pReq = CAsyncReaderImpl_GetReply(This);
+		if ( pReq == NULL )
+		{
+			dwRes = WaitForSingleObject( This->m_hEventSampQueued, dwTimeout );
+			if ( dwRes == WAIT_OBJECT_0 )
+				pReq = CAsyncReaderImpl_GetReply(This);
+		}
+		if ( pReq != NULL )
+		{
+			hr = IMediaSample_SetActualDataLength(pReq->pSample,pReq->lActual);
+			if ( hr == S_OK )
+			{
+				rtStart = pReq->llStart * QUARTZ_TIMEUNITS;
+				rtEnd = (pReq->llStart + pReq->lActual) * QUARTZ_TIMEUNITS;
+				hr = IMediaSample_SetTime(pReq->pSample,&rtStart,&rtEnd);
+			}
+			*ppSample = pReq->pSample;
+			*pdwContext = pReq->dwContext;
+			if ( hr == S_OK && pReq->lActual != pReq->lLength )
+				hr = S_FALSE;
+		}
+		else
+		{
+			hr = VFW_E_TIMEOUT;
+		}
+	}
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CAsyncReaderImpl_fnSyncReadAligned(IAsyncReader* iface,IMediaSample* pSample)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
+	HRESULT hr;
+	REFERENCE_TIME	rtStart;
+	REFERENCE_TIME	rtEnd;
+	BYTE*	pData = NULL;
+	LONGLONG	llStart;
+	LONG	lLength;
+	LONG	lActual;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->(%p)\n",This,pSample);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	hr = IMediaSample_GetPointer(pSample,&pData);
+	if ( SUCCEEDED(hr) )
+		hr = IMediaSample_GetTime(pSample,&rtStart,&rtEnd);
+	if ( FAILED(hr) )
+		return hr;
 
-	return E_NOTIMPL;
+	llStart = rtStart / QUARTZ_TIMEUNITS;
+	lLength = (LONG)(rtEnd / QUARTZ_TIMEUNITS - rtStart / QUARTZ_TIMEUNITS);
+	lActual = 0;
+
+	EnterCriticalSection( &This->m_csReader );
+	hr = This->pSource->m_pHandler->pRead( This->pSource, llStart, lLength, pData, &lActual, (HANDLE)NULL );
+	LeaveCriticalSection( &This->m_csReader );
+
+	if ( hr == NOERROR )
+	{
+		hr = IMediaSample_SetActualDataLength(pSample,lActual);
+		if ( hr == S_OK )
+		{
+			rtStart = llStart * QUARTZ_TIMEUNITS;
+			rtEnd = (llStart + lActual) * QUARTZ_TIMEUNITS;
+			hr = IMediaSample_SetTime(pSample,&rtStart,&rtEnd);
+		}
+		if ( hr == S_OK && lActual != lLength )
+			hr = S_FALSE;
+	}
+
+	return hr;
 }
 
 static HRESULT WINAPI
 CAsyncReaderImpl_fnSyncRead(IAsyncReader* iface,LONGLONG llPosStart,LONG lLength,BYTE* pbBuf)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
+	HRESULT hr;
+	LONG lActual;
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	EnterCriticalSection( &This->m_csReader );
+	hr = This->pSource->m_pHandler->pRead( This->pSource, llPosStart, lLength, pbBuf, &lActual, (HANDLE)NULL );
+	LeaveCriticalSection( &This->m_csReader );
 
-	return E_NOTIMPL;
+	if ( hr == S_OK && lLength != lActual )
+		hr = S_FALSE;
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -289,9 +529,7 @@ CAsyncReaderImpl_fnLength(IAsyncReader* iface,LONGLONG* pllTotal,LONGLONG* pllAv
 
 	TRACE("(%p)->()\n",This);
 
-	EnterCriticalSection( This->pcsReader );
 	hr = This->pSource->m_pHandler->pGetLength( This->pSource, pllTotal, pllAvailable );
-	LeaveCriticalSection( This->pcsReader );
 
 	return hr;
 }
@@ -301,12 +539,15 @@ CAsyncReaderImpl_fnBeginFlush(IAsyncReader* iface)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	EnterCriticalSection( &This->m_csRequest );
+	This->m_bInFlushing = TRUE;
+	SetEvent( This->m_hEventCancel );
+	CAsyncReaderImpl_ReleaseReqList(This,This->m_pRequestFirst,FALSE);
+	LeaveCriticalSection( &This->m_csRequest );
 
-	return E_NOTIMPL;
+	return NOERROR;
 }
 
 static HRESULT WINAPI
@@ -314,12 +555,14 @@ CAsyncReaderImpl_fnEndFlush(IAsyncReader* iface)
 {
 	ICOM_THIS(CAsyncReaderImpl,iface);
 
-	FIXME("(%p)->() stub!\n",This);
+	TRACE("(%p)->()\n",This);
 
-	EnterCriticalSection( This->pcsReader );
-	LeaveCriticalSection( This->pcsReader );
+	EnterCriticalSection( &This->m_csRequest );
+	This->m_bInFlushing = FALSE;
+	ResetEvent( This->m_hEventCancel );
+	LeaveCriticalSection( &This->m_csRequest );
 
-	return E_NOTIMPL;
+	return NOERROR;
 }
 
 
@@ -344,8 +587,7 @@ static ICOM_VTABLE(IAsyncReader) iasyncreader =
 
 HRESULT CAsyncReaderImpl_InitIAsyncReader(
 	CAsyncReaderImpl* This, IUnknown* punkControl,
-	CAsyncSourceImpl* pSource,
-	CRITICAL_SECTION* pcsReader )
+	CAsyncSourceImpl* pSource )
 {
 	TRACE("(%p,%p)\n",This,punkControl);
 
@@ -358,13 +600,21 @@ HRESULT CAsyncReaderImpl_InitIAsyncReader(
 	ICOM_VTBL(This) = &iasyncreader;
 	This->punkControl = punkControl;
 	This->pSource = pSource;
-	This->pcsReader = pcsReader;
+	This->m_bInFlushing = FALSE;
+	This->m_bAbortThread = FALSE;
 	This->m_hEventInit = (HANDLE)NULL;
-	This->m_hEventAbort = (HANDLE)NULL;
+	This->m_hEventCancel = (HANDLE)NULL;
 	This->m_hEventReqQueued = (HANDLE)NULL;
 	This->m_hEventSampQueued = (HANDLE)NULL;
-	This->m_hEventCompletion = (HANDLE)NULL;
 	This->m_hThread = (HANDLE)NULL;
+	This->m_pRequestFirst = NULL;
+	This->m_pReplyFirst = NULL;
+	This->m_pFreeFirst = NULL;
+
+	InitializeCriticalSection( &This->m_csReader );
+	InitializeCriticalSection( &This->m_csRequest );
+	InitializeCriticalSection( &This->m_csReply );
+	InitializeCriticalSection( &This->m_csFree );
 
 	return NOERROR;
 }
@@ -373,6 +623,15 @@ void CAsyncReaderImpl_UninitIAsyncReader(
 	CAsyncReaderImpl* This )
 {
 	TRACE("(%p)\n",This);
+
+	CAsyncReaderImpl_ReleaseReqList(This,This->m_pRequestFirst,TRUE);
+	CAsyncReaderImpl_ReleaseReqList(This,This->m_pReplyFirst,TRUE);
+	CAsyncReaderImpl_ReleaseReqList(This,This->m_pFreeFirst,TRUE);
+
+	DeleteCriticalSection( &This->m_csReader );
+	DeleteCriticalSection( &This->m_csRequest );
+	DeleteCriticalSection( &This->m_csReply );
+	DeleteCriticalSection( &This->m_csFree );
 }
 
 /***************************************************************************
@@ -449,6 +708,9 @@ CFileSourceFilterImpl_fnLoad(IFileSourceFilter* iface,LPCOLESTR pFileName,const 
 	hr = This->pSource->m_pHandler->pLoad( This->pSource, pFileName );
 	if ( FAILED(hr) )
 		goto err;
+
+	This->pSource->pPin->pin.pmtAcceptTypes = &This->m_mt;
+	This->pSource->pPin->pin.cAcceptTypes = 1;
 
 	return NOERROR;
 err:;
@@ -544,6 +806,8 @@ static HRESULT CAsyncSourcePinImpl_OnPreConnect( CPinBaseImpl* pImpl, IPin* pPin
 {
 	CAsyncSourcePinImpl_THIS(pImpl,pin);
 
+	TRACE("(%p,%p)\n",This,pPin);
+
 	This->bAsyncReaderQueried = FALSE;
 
 	return NOERROR;
@@ -552,6 +816,8 @@ static HRESULT CAsyncSourcePinImpl_OnPreConnect( CPinBaseImpl* pImpl, IPin* pPin
 static HRESULT CAsyncSourcePinImpl_OnPostConnect( CPinBaseImpl* pImpl, IPin* pPin )
 {
 	CAsyncSourcePinImpl_THIS(pImpl,pin);
+
+	TRACE("(%p,%p)\n",This,pPin);
 
 	if ( !This->bAsyncReaderQueried )
 		return E_FAIL;
@@ -562,6 +828,8 @@ static HRESULT CAsyncSourcePinImpl_OnPostConnect( CPinBaseImpl* pImpl, IPin* pPi
 static HRESULT CAsyncSourcePinImpl_OnDisconnect( CPinBaseImpl* pImpl )
 {
 	CAsyncSourcePinImpl_THIS(pImpl,pin);
+
+	TRACE("(%p)\n",This);
 
 	This->bAsyncReaderQueried = FALSE;
 
@@ -723,7 +991,14 @@ HRESULT QUARTZ_CreateAsyncSource(
 	InitializeCriticalSection( &This->csFilter );
 
 	/* create the output pin. */
-	hr = S_OK;
+	hr = QUARTZ_CreateAsyncSourcePin(
+		This, &This->csFilter,
+		&This->pPin, pwszOutPinName );
+	if ( SUCCEEDED(hr) )
+		hr = QUARTZ_CompList_AddComp(
+			This->basefilter.pOutPins,
+			(IUnknown*)&(This->pPin->pin),
+			NULL, 0 );
 
 	if ( FAILED(hr) )
 	{
@@ -756,6 +1031,7 @@ static HRESULT CAsyncSourceImpl_OnQueryInterface(
 
 	if ( IsEqualGUID( &IID_IAsyncReader, piid ) )
 	{
+		TRACE("IAsyncReader has been queried.\n");
 		*ppobj = (void*)&This->async;
 		IUnknown_AddRef(punk);
 		This->bAsyncReaderQueried = TRUE;
@@ -813,8 +1089,7 @@ HRESULT QUARTZ_CreateAsyncSourcePin(
 		hr = CAsyncReaderImpl_InitIAsyncReader(
 			&This->async,
 			This->unk.punkControl,
-			pFilter,
-			pcsPin );
+			pFilter );
 		if ( FAILED(hr) )
 		{
 			CPinBaseImpl_UninitIPin( &This->pin );
@@ -838,3 +1113,231 @@ HRESULT QUARTZ_CreateAsyncSourcePin(
 	return S_OK;
 }
 
+
+
+/***************************************************************************
+ *
+ *	Implements File Source.
+ *
+ */
+
+typedef struct AsyncSourceFileImpl
+{
+	HANDLE	hFile;
+	LONGLONG	llTotal;
+} AsyncSourceFileImpl;
+
+
+static HRESULT AsyncSourceFileImpl_Load( CAsyncSourceImpl* pImpl, LPCWSTR lpwszSourceName )
+{
+	AsyncSourceFileImpl*	This = (AsyncSourceFileImpl*)pImpl->m_pUserData;
+	DWORD	dwLow;
+	DWORD	dwHigh;
+
+	if ( This != NULL )
+		return E_UNEXPECTED;
+	This = (AsyncSourceFileImpl*)QUARTZ_AllocMem( sizeof(AsyncSourceFileImpl) );
+	pImpl->m_pUserData = (void*)This;
+	if ( This == NULL )
+		return E_OUTOFMEMORY;
+	This->hFile = INVALID_HANDLE_VALUE;
+	This->llTotal = 0;
+
+	This->hFile = CreateFileW( lpwszSourceName,
+		GENERIC_READ, FILE_SHARE_READ,
+		NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, (HANDLE)NULL );
+	if ( This->hFile == INVALID_HANDLE_VALUE )
+		return E_FAIL;
+
+	SetLastError(NO_ERROR);
+	dwLow = GetFileSize( This->hFile, &dwHigh );
+	if ( dwLow == 0xffffffff && GetLastError() != NO_ERROR )
+		return E_FAIL;
+
+	This->llTotal = (LONGLONG)dwLow | ((LONGLONG)dwHigh << 32);
+
+	return NOERROR;
+}
+
+static HRESULT AsyncSourceFileImpl_Cleanup( CAsyncSourceImpl* pImpl )
+{
+	AsyncSourceFileImpl*	This = (AsyncSourceFileImpl*)pImpl->m_pUserData;
+
+	if ( This == NULL )
+		return NOERROR;
+
+	if ( This->hFile != INVALID_HANDLE_VALUE )
+		CloseHandle(This->hFile);
+
+	QUARTZ_FreeMem(This);
+	pImpl->m_pUserData = NULL;
+
+	return NOERROR;
+}
+
+static HRESULT AsyncSourceFileImpl_GetLength( CAsyncSourceImpl* pImpl, LONGLONG* pllTotal, LONGLONG* pllAvailable )
+{
+	AsyncSourceFileImpl*	This = (AsyncSourceFileImpl*)pImpl->m_pUserData;
+
+	if ( This == NULL )
+		return E_UNEXPECTED;
+
+	*pllTotal = This->llTotal;
+	*pllAvailable = This->llTotal;
+
+	return NOERROR;
+}
+
+static HRESULT AsyncSourceFileImpl_Read( CAsyncSourceImpl* pImpl, LONGLONG llOfsStart, LONG lLength, BYTE* pBuf, LONG* plReturned, HANDLE hEventCancel )
+{
+	AsyncSourceFileImpl*	This = (AsyncSourceFileImpl*)pImpl->m_pUserData;
+	LONG	lReturned;
+	LONG	lBlock;
+	LONG	lOfsLow;
+	LONG	lOfsHigh;
+	DWORD	dw;
+	HRESULT hr = S_OK;
+
+	if ( This == NULL || This->hFile == INVALID_HANDLE_VALUE )
+		return E_UNEXPECTED;
+
+	lReturned = 0;
+
+	lOfsLow = (LONG)(llOfsStart & 0xffffffff);
+	lOfsHigh = (LONG)(llOfsStart >> 32);
+	SetLastError(NO_ERROR);
+	lOfsLow = SetFilePointer( This->hFile, lOfsLow, &lOfsHigh, FILE_BEGIN );
+	if ( lOfsLow == (LONG)0xffffffff && GetLastError() != NO_ERROR )
+		return E_FAIL;
+
+	while ( lLength > 0 )
+	{
+		if ( WaitForSingleObject( hEventCancel, 0 ) == WAIT_OBJECT_0 )
+		{
+			hr = S_FALSE;
+			break;
+		}
+
+		lBlock = ( lLength > ASYNCSRC_FILE_BLOCKSIZE ) ?
+			ASYNCSRC_FILE_BLOCKSIZE : lLength;
+
+		if ( !ReadFile(This->hFile,pBuf,(DWORD)lBlock,&dw,NULL) )
+		{
+			hr = E_FAIL;
+			break;
+		}
+		pBuf += dw;
+		lReturned += (LONG)dw;
+		lLength -= (LONG)dw;
+		if ( lBlock > (LONG)dw )
+			break;
+	}
+
+	*plReturned = lReturned;
+
+	return hr;
+}
+
+static const struct AsyncSourceHandlers asyncsrc_file =
+{
+	AsyncSourceFileImpl_Load,
+	AsyncSourceFileImpl_Cleanup,
+	AsyncSourceFileImpl_GetLength,
+	AsyncSourceFileImpl_Read,
+};
+
+HRESULT QUARTZ_CreateAsyncReader(IUnknown* punkOuter,void** ppobj)
+{
+	return QUARTZ_CreateAsyncSource(
+		punkOuter, ppobj,
+		&CLSID_AsyncReader,
+		QUARTZ_wszAsyncFileSourceName,
+		QUARTZ_wszAsyncFileSourcePinName,
+		&asyncsrc_file );
+}
+
+/***************************************************************************
+ *
+ *	Implements URL Source.
+ *
+ */
+
+typedef struct AsyncSourceURLImpl
+{
+	DWORD dwDummy;
+} AsyncSourceURLImpl;
+
+
+static HRESULT AsyncSourceURLImpl_Load( CAsyncSourceImpl* pImpl, LPCWSTR lpwszSourceName )
+{
+	AsyncSourceURLImpl*	This = (AsyncSourceURLImpl*)pImpl->m_pUserData;
+
+	FIXME("(%p,%p) stub!\n", pImpl, lpwszSourceName);
+
+	if ( This != NULL )
+		return E_UNEXPECTED;
+	This = (AsyncSourceURLImpl*)QUARTZ_AllocMem( sizeof(AsyncSourceURLImpl) );
+	pImpl->m_pUserData = (void*)This;
+	if ( This == NULL )
+		return E_OUTOFMEMORY;
+
+	return E_NOTIMPL;
+}
+
+static HRESULT AsyncSourceURLImpl_Cleanup( CAsyncSourceImpl* pImpl )
+{
+	AsyncSourceURLImpl*	This = (AsyncSourceURLImpl*)pImpl->m_pUserData;
+
+	FIXME("(%p) stub!\n", This);
+
+	if ( This == NULL )
+		return NOERROR;
+
+	QUARTZ_FreeMem(This);
+	pImpl->m_pUserData = NULL;
+
+	return NOERROR;
+}
+
+static HRESULT AsyncSourceURLImpl_GetLength( CAsyncSourceImpl* pImpl, LONGLONG* pllTotal, LONGLONG* pllAvailable )
+{
+	AsyncSourceURLImpl*	This = (AsyncSourceURLImpl*)pImpl->m_pUserData;
+
+	FIXME("(%p,%p,%p) stub!\n", This, pllTotal, pllAvailable);
+
+	if ( This == NULL )
+		return E_UNEXPECTED;
+
+	return E_NOTIMPL;
+}
+
+static HRESULT AsyncSourceURLImpl_Read( CAsyncSourceImpl* pImpl, LONGLONG llOfsStart, LONG lLength, BYTE* pBuf, LONG* plReturned, HANDLE hEventCancel )
+{
+	AsyncSourceURLImpl*	This = (AsyncSourceURLImpl*)pImpl->m_pUserData;
+
+	FIXME("(%p) stub!\n", This);
+
+	if ( This == NULL )
+		return E_UNEXPECTED;
+
+	return E_NOTIMPL;
+}
+
+static const struct AsyncSourceHandlers asyncsrc_url =
+{
+	AsyncSourceURLImpl_Load,
+	AsyncSourceURLImpl_Cleanup,
+	AsyncSourceURLImpl_GetLength,
+	AsyncSourceURLImpl_Read,
+};
+
+
+HRESULT QUARTZ_CreateURLReader(IUnknown* punkOuter,void** ppobj)
+{
+	return QUARTZ_CreateAsyncSource(
+		punkOuter, ppobj,
+		&CLSID_URLReader,
+		QUARTZ_wszAsyncURLSourceName,
+		QUARTZ_wszAsyncURLSourcePinName,
+		&asyncsrc_url );
+}

@@ -10,7 +10,10 @@
 #ifndef __WINE_STRMIF_H_
 #define __WINE_STRMIF_H_
 
-#include "ole2.h"
+#include "wine/obj_base.h"
+#include "wine/obj_misc.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 #include "wine/obj_oleaut.h"
 #include "wine/obj_property.h"
 #include "wine/obj_ksproperty.h"

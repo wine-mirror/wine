@@ -22,6 +22,9 @@ void QUARTZ_MediaSubType_FromFourCC(
 BOOL QUARTZ_MediaSubType_IsFourCC(
 	const GUID* psubtype );
 
+HRESULT QUARTZ_MediaSubType_FromBitmap(
+	GUID* psubtype, const BITMAPINFOHEADER* pbi );
+
 HRESULT QUARTZ_CreateEnumMediaTypes(
 	IEnumMediaTypes** ppobj,
 	const AM_MEDIA_TYPE* pTypes, ULONG cTypes );

@@ -8,11 +8,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "winerror.h"
 #include "wine/obj_base.h"
-#include "strmif.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -126,7 +123,7 @@ QUARTZ_CompList* QUARTZ_CompList_Dup(
 	return pNewList;
 }
 
-HRESULT QUARTZ_CompList_AddComp(
+static QUARTZ_CompListItem* QUARTZ_CompList_AllocComp(
 	QUARTZ_CompList* pList, IUnknown* punk,
 	const void* pvData, DWORD dwDataLen )
 {
@@ -134,7 +131,7 @@ HRESULT QUARTZ_CompList_AddComp(
 
 	pItem = (QUARTZ_CompListItem*)QUARTZ_AllocMem( sizeof(QUARTZ_CompListItem) );
 	if ( pItem == NULL )
-		return E_OUTOFMEMORY; /* out of memory. */
+		return NULL;
 
 	pItem->pvData = NULL;
 	pItem->dwDataLen = 0;
@@ -144,13 +141,26 @@ HRESULT QUARTZ_CompList_AddComp(
 		if ( pItem->pvData == NULL )
 		{
 			QUARTZ_FreeMem( pItem );
-			return E_OUTOFMEMORY;
+			return NULL;
 		}
 		memcpy( pItem->pvData, pvData, dwDataLen );
 		pItem->dwDataLen = dwDataLen;
 	}
 
 	pItem->punk = punk; IUnknown_AddRef(punk);
+
+	return pItem;
+}
+
+HRESULT QUARTZ_CompList_AddComp(
+	QUARTZ_CompList* pList, IUnknown* punk,
+	const void* pvData, DWORD dwDataLen )
+{
+	QUARTZ_CompListItem*	pItem;
+
+	pItem = QUARTZ_CompList_AllocComp( pList, punk, pvData, dwDataLen );
+	if ( pItem == NULL )
+		return E_OUTOFMEMORY;
 
 	if ( pList->pFirst != NULL )
 		pList->pFirst->pPrev = pItem;
@@ -159,6 +169,27 @@ HRESULT QUARTZ_CompList_AddComp(
 	pItem->pNext = pList->pFirst;
 	pList->pFirst = pItem;
 	pItem->pPrev = NULL;
+
+	return S_OK;
+}
+
+HRESULT QUARTZ_CompList_AddTailComp(
+	QUARTZ_CompList* pList, IUnknown* punk,
+	const void* pvData, DWORD dwDataLen )
+{
+	QUARTZ_CompListItem*	pItem;
+
+	pItem = QUARTZ_CompList_AllocComp( pList, punk, pvData, dwDataLen );
+	if ( pItem == NULL )
+		return E_OUTOFMEMORY;
+
+	if ( pList->pLast != NULL )
+		pList->pLast->pNext = pItem;
+	else
+		pList->pFirst = pItem;
+	pItem->pPrev = pList->pLast;
+	pList->pLast = pItem;
+	pItem->pNext = NULL;
 
 	return S_OK;
 }
@@ -230,10 +261,22 @@ QUARTZ_CompListItem* QUARTZ_CompList_GetFirst(
 	return pList->pFirst;
 }
 
+QUARTZ_CompListItem* QUARTZ_CompList_GetLast(
+	QUARTZ_CompList* pList )
+{
+	return pList->pLast;
+}
+
 QUARTZ_CompListItem* QUARTZ_CompList_GetNext(
 	QUARTZ_CompList* pList, QUARTZ_CompListItem* pPrev )
 {
 	return pPrev->pNext;
+}
+
+QUARTZ_CompListItem* QUARTZ_CompList_GetPrev(
+	QUARTZ_CompList* pList, QUARTZ_CompListItem* pNext )
+{
+	return pNext->pPrev;
 }
 
 IUnknown* QUARTZ_CompList_GetItemPtr( QUARTZ_CompListItem* pItem )

@@ -11,8 +11,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmsystem.h"
+#include "mmreg.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
@@ -21,9 +21,7 @@
 DEFAULT_DEBUG_CHANNEL(quartz);
 
 #include "quartz_private.h"
-
-/* for CLSID_quartzWaveParser. */
-#include "initguid.h"
+#include "audioutl.h"
 #include "parser.h"
 
 
@@ -63,25 +61,83 @@ HRESULT RIFF_GetNext(
 /* S_OK = found, S_FALSE = not found */
 HRESULT RIFF_SearchChunk(
 	CParserImpl* pImpl,
+	DWORD dwSearchLengthMax,
 	LONGLONG llOfs, DWORD dwChunk,
 	LONGLONG* pllOfs, DWORD* pdwChunkLength )
 {
 	HRESULT hr;
 	DWORD dwCurCode;
 	DWORD dwCurLen;
+	LONGLONG llCurLen;
 
 	while ( 1 )
 	{
 		hr = RIFF_GetNext( pImpl, llOfs, &dwCurCode, &dwCurLen );
 		if ( hr != S_OK )
 			break;
+		TRACE("%c%c%c%c len %lu\n",
+			(int)(dwCurCode>> 0)&0xff,
+			(int)(dwCurCode>> 8)&0xff,
+			(int)(dwCurCode>>16)&0xff,
+			(int)(dwCurCode>>24)&0xff,
+			(unsigned long)dwCurLen);
 		if ( dwChunk == dwCurCode )
 			break;
-		llOfs += 8 + (LONGLONG)((dwCurLen+1)&(~1));
+		llCurLen = 8 + (LONGLONG)((dwCurLen+1)&(~1));
+		llOfs += llCurLen;
+		if ( (LONGLONG)dwSearchLengthMax <= llCurLen )
+			return S_FALSE;
+		if ( dwSearchLengthMax != (DWORD)0xffffffff )
+			dwSearchLengthMax -= (DWORD)llCurLen;
 	}
 
-	*pllOfs = llOfs;
+	*pllOfs = llOfs + 8;
 	*pdwChunkLength = dwCurLen;
+
+	return hr;
+}
+
+/* S_OK = found, S_FALSE = not found */
+HRESULT RIFF_SearchList(
+	CParserImpl* pImpl,
+	DWORD dwSearchLengthMax,
+	LONGLONG llOfs, DWORD dwListChunk,
+	LONGLONG* pllOfs, DWORD* pdwChunkLength )
+{
+	HRESULT hr;
+	DWORD dwCurLen;
+	LONGLONG llCurLen;
+	BYTE bTemp[4];
+
+	while ( 1 )
+	{
+		hr = RIFF_SearchChunk(
+			pImpl, dwSearchLengthMax,
+			llOfs, PARSER_LIST,
+			&llOfs, &dwCurLen );
+		if ( hr != S_OK )
+			break;
+
+		hr = IAsyncReader_SyncRead( pImpl->m_pReader, llOfs, 4, bTemp );
+		if ( hr != S_OK )
+			break;
+
+		if ( mmioFOURCC(bTemp[0],bTemp[1],bTemp[2],bTemp[3]) == dwListChunk )
+			break;
+
+		llCurLen = (LONGLONG)((dwCurLen+1)&(~1));
+		llOfs += llCurLen;
+		if ( (LONGLONG)dwSearchLengthMax <= (llCurLen+8) )
+			return S_FALSE;
+		if ( dwSearchLengthMax != (DWORD)0xffffffff )
+			dwSearchLengthMax -= (DWORD)(llCurLen+8);
+	}
+
+	if ( dwCurLen < 12 )
+		return E_FAIL;
+
+	*pllOfs = llOfs+4;
+	*pdwChunkLength = dwCurLen-4;
 
 	return hr;
 }
@@ -122,13 +178,13 @@ static HRESULT CWavParseImpl_InitWAV( CParserImpl* pImpl, CWavParseImpl* This )
 	DWORD	dwChunkLength;
 
 	hr = RIFF_SearchChunk(
-		pImpl, PARSER_RIFF_OfsFirst,
-		PARSER_fmt, &llOfs, &dwChunkLength );
+		pImpl, (DWORD)0xffffffff,
+		PARSER_RIFF_OfsFirst, PARSER_fmt,
+		&llOfs, &dwChunkLength );
 	if ( FAILED(hr) )
 		return hr;
 	if ( hr != S_OK || ( dwChunkLength < (sizeof(WAVEFORMATEX)-2) ) )
 		return E_FAIL;
-	llOfs += 8;
 
 	This->cbFmt = dwChunkLength;
 	if ( dwChunkLength < sizeof(WAVEFORMATEX) )
@@ -149,8 +205,9 @@ static HRESULT CWavParseImpl_InitWAV( CParserImpl* pImpl, CWavParseImpl* This )
 
 
 	hr = RIFF_SearchChunk(
-		pImpl, PARSER_RIFF_OfsFirst,
-		PARSER_data, &llOfs, &dwChunkLength );
+		pImpl, (DWORD)0xffffffff,
+		PARSER_RIFF_OfsFirst, PARSER_data,
+		&llOfs, &dwChunkLength );
 	if ( FAILED(hr) )
 		return hr;
 	if ( hr != S_OK || dwChunkLength == 0 )
@@ -195,18 +252,18 @@ static HRESULT CWavParseImpl_InitAU( CParserImpl* pImpl, CWavParseImpl* This )
 	switch ( datafmt )
 	{
 	case 1:
-		wfx.wFormatTag = 7;
+		wfx.wFormatTag = WAVE_FORMAT_MULAW;
 		wfx.nBlockAlign = datachannels;
 		wfx.wBitsPerSample = 8;
 		break;
 	case 2:
-		wfx.wFormatTag = 1;
+		wfx.wFormatTag = WAVE_FORMAT_PCM;
 		wfx.nBlockAlign = datachannels;
 		wfx.wBitsPerSample = 8;
 		This->iFmtType = WaveParse_Signed8;
 		break;
 	case 3:
-		wfx.wFormatTag = 1;
+		wfx.wFormatTag = WAVE_FORMAT_PCM;
 		wfx.nBlockAlign = datachannels;
 		wfx.wBitsPerSample = 16;
 		This->iFmtType = WaveParse_Signed16BE;
@@ -417,12 +474,35 @@ static HRESULT CWavParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 static HRESULT CWavParseImpl_ProcessSample( CParserImpl* pImpl, ULONG nStreamIndex, LONGLONG llStart, LONG lLength, IMediaSample* pSample )
 {
 	CWavParseImpl*	This = (CWavParseImpl*)pImpl->m_pUserData;
+	BYTE*	pData;
+	LONG	lActLen;
+	HRESULT hr;
 
 	TRACE("(%p)\n",This);
+
+	hr = IMediaSample_GetPointer(pSample,&pData);
+	if ( FAILED(hr) )
+		return hr;
+	lActLen = (LONG)IMediaSample_GetActualDataLength(pSample);
+	if ( lActLen != lLength )
+		return E_FAIL;
 
 	switch ( This->iFmtType )
 	{
 	case WaveParse_Native:
+		break;
+	case WaveParse_Signed8:
+		AUDIOUTL_ChangeSign8(pData,lActLen);
+		break;
+	case WaveParse_Signed16BE:
+		AUDIOUTL_ByteSwap(pData,lActLen);
+		break;
+	case WaveParse_Unsigned16LE:
+		AUDIOUTL_ChangeSign16LE(pData,lActLen);
+		break;
+	case WaveParse_Unsigned16BE:
+		AUDIOUTL_ChangeSign16BE(pData,lActLen);
+		AUDIOUTL_ByteSwap(pData,lActLen);
 		break;
 	default:
 		FIXME("(%p) - %d not implemented\n", This, This->iFmtType );

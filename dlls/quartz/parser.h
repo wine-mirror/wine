@@ -124,7 +124,6 @@ HRESULT QUARTZ_CreateParserOutPin(
 	LPCWSTR pwszPinName );
 
 
-#define QUARTZ_TIMEUNITS		((LONGLONG)10000000)
 #define PARSER_POLL_INTERVAL	100
 
 #define PARSER_RIFF_OfsFirst 12
@@ -136,6 +135,9 @@ HRESULT QUARTZ_CreateParserOutPin(
 #define PARSER_fact mmioFOURCC('f','a','c','t')
 #define PARSER_data mmioFOURCC('d','a','t','a')
 
+#define PARSER_LIST mmioFOURCC('L','I','S','T')
+
+#define PARSER_hdrl mmioFOURCC('h','d','r','l')
 #define PARSER_avih mmioFOURCC('a','v','i','h')
 #define PARSER_strl mmioFOURCC('s','t','r','l')
 #define PARSER_strh mmioFOURCC('s','t','r','h')
@@ -156,7 +158,22 @@ HRESULT QUARTZ_CreateParserOutPin(
 #define PARSER_BE_UINT32(ptr)	(((DWORD)(ptr)[0]<<24)|((DWORD)(ptr)[1]<<16)|((DWORD)(ptr)[2]<<8)|((DWORD)(ptr)[3]))
 
 HRESULT QUARTZ_CreateWaveParser(IUnknown* punkOuter,void** ppobj);
+HRESULT QUARTZ_CreateAVISplitter(IUnknown* punkOuter,void** ppobj);
 
+
+HRESULT RIFF_GetNext(
+	CParserImpl* pImpl, LONGLONG llOfs,
+	DWORD* pdwCode, DWORD* pdwLength );
+HRESULT RIFF_SearchChunk(
+	CParserImpl* pImpl,
+	DWORD dwSearchLengthMax,
+	LONGLONG llOfs, DWORD dwChunk,
+	LONGLONG* pllOfs, DWORD* pdwChunkLength );
+HRESULT RIFF_SearchList(
+	CParserImpl* pImpl,
+	DWORD dwSearchLengthMax,
+	LONGLONG llOfs, DWORD dwListChunk,
+	LONGLONG* pllOfs, DWORD* pdwChunkLength );
 
 
 #endif	/* WINE_DSHOW_PARSER_H */

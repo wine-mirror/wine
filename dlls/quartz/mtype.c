@@ -11,7 +11,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
+#include "mmsystem.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
 #include "uuids.h"
@@ -118,6 +118,108 @@ BOOL QUARTZ_MediaSubType_IsFourCC(
 		&guidTemp, psubtype->Data1 );
 	return IsEqualGUID( psubtype, &guidTemp );
 }
+
+HRESULT QUARTZ_MediaSubType_FromBitmap(
+	GUID* psubtype, const BITMAPINFOHEADER* pbi )
+{
+	HRESULT hr;
+	DWORD*	pdwBitf;
+
+	if ( (pbi->biCompression & 0xffff) != 0 )
+		return S_FALSE;
+
+	if ( pbi->biWidth <= 0 || pbi->biHeight == 0 )
+		return E_FAIL;
+
+	hr = E_FAIL;
+	switch ( pbi->biCompression )
+	{
+	case 0:
+		if ( pbi->biPlanes != 1 )
+			break;
+		switch ( pbi->biBitCount )
+		{
+		case  1:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB1, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		case  4:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB4, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		case  8:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB8, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		case 16:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB555, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		case 24:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB24, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		case 32:
+			memcpy( psubtype, &MEDIASUBTYPE_RGB32, sizeof(GUID) );
+			hr = S_OK;
+			break;
+		}
+		break;
+	case 1:
+		if ( pbi->biPlanes == 1 && pbi->biHeight > 0 &&
+			 pbi->biBitCount == 8 )
+		{
+			QUARTZ_MediaSubType_FromFourCC( psubtype, mmioFOURCC('M','R','L','E') );
+			hr = S_OK;
+		}
+		break;
+	case 2:
+		if ( pbi->biPlanes == 1 && pbi->biHeight > 0 &&
+			 pbi->biBitCount == 4 )
+		{
+			QUARTZ_MediaSubType_FromFourCC( psubtype, mmioFOURCC('M','R','L','E') );
+			hr = S_OK;
+		}
+		break;
+	case 3:
+		if ( pbi->biPlanes != 1 )
+			break;
+		pdwBitf = (DWORD*)( (BYTE*)pbi + sizeof(BITMAPINFOHEADER) );
+		switch ( pbi->biBitCount )
+		{
+		case 16:
+			if ( pdwBitf[0] == 0x7c00 &&
+				 pdwBitf[1] == 0x03e0 &&
+				 pdwBitf[2] == 0x001f )
+			{
+				memcpy( psubtype, &MEDIASUBTYPE_RGB555, sizeof(GUID) );
+				hr = S_OK;
+			}
+			if ( pdwBitf[0] == 0xf800 &&
+				 pdwBitf[1] == 0x07e0 &&
+				 pdwBitf[2] == 0x001f )
+			{
+				memcpy( psubtype, &MEDIASUBTYPE_RGB565, sizeof(GUID) );
+				hr = S_OK;
+			}
+			break;
+		case 32:
+			if ( pdwBitf[0] == 0x00ff0000 &&
+				 pdwBitf[1] == 0x0000ff00 &&
+				 pdwBitf[2] == 0x000000ff )
+			{
+				memcpy( psubtype, &MEDIASUBTYPE_RGB32, sizeof(GUID) );
+				hr = S_OK;
+			}
+			break;
+		}
+		break;
+	}
+
+	return hr;
+}
+
+
 
 /****************************************************************************/
 

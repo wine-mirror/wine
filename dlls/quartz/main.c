@@ -14,7 +14,6 @@
 #include "winnls.h"
 #include "mmsystem.h"
 #include "ole2.h"
-#include "wine/obj_oleaut.h"
 #include "strmif.h"
 #include "control.h"
 #include "uuids.h"
@@ -23,17 +22,19 @@
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
 
+#include "initguid.h"
+
 #include "quartz_private.h"
 #include "fgraph.h"
 #include "sysclock.h"
 #include "memalloc.h"
 #include "devenum.h"
 #include "fmap.h"
-#include "fmap2.h"
 #include "seekpass.h"
 #include "audren.h"
 #include "vidren.h"
 #include "parser.h"
+#include "asyncsrc.h"
 
 typedef struct QUARTZ_CLASSENTRY
 {
@@ -80,6 +81,9 @@ static const QUARTZ_CLASSENTRY QUARTZ_ClassList[] =
 	{ &CLSID_AudioRender, &QUARTZ_CreateAudioRenderer },
 	{ &CLSID_VideoRenderer, &QUARTZ_CreateVideoRenderer },
 	{ &CLSID_quartzWaveParser, &QUARTZ_CreateWaveParser },
+	{ &CLSID_AviSplitter, &QUARTZ_CreateAVISplitter },
+	{ &CLSID_AsyncReader, &QUARTZ_CreateAsyncReader },
+	{ &CLSID_URLReader, &QUARTZ_CreateURLReader },
 	{ NULL, NULL },
 };
 

@@ -125,7 +125,6 @@ typedef struct CFilterGraph
 	/* IFilterGraph2 fields. */
 	QUARTZ_CompList*	m_pFilterList;
 	/* IGraphVersion fields. */
-	CRITICAL_SECTION	m_csGraphVersion;
 	LONG	m_lGraphVersion;
 	/* IMediaControl fields. */
 	/* IMediaFilter fields. */

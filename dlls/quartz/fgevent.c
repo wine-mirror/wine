@@ -11,8 +11,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
-#include "wine/obj_oleaut.h"
 #include "strmif.h"
 #include "control.h"
 #include "evcode.h"

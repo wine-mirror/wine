@@ -13,7 +13,6 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "uuids.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -46,7 +45,7 @@ const WCHAR QUARTZ_wszMerit[] =
 static
 void QUARTZ_CatPathSepW( WCHAR* pBuf )
 {
-	int	len = strlenW(pBuf);
+	int	len = lstrlenW(pBuf);
 	pBuf[len] = '\\';
 	pBuf[len+1] = 0;
 }
@@ -96,7 +95,7 @@ LONG QUARTZ_RegSetValueString(
 	return RegSetValueExW(
 		hKey, lpszName, 0, REG_SZ,
 		(const BYTE*)lpValue,
-		sizeof(lpValue[0]) * (strlenW(lpValue)+1) );
+		sizeof(lpValue[0]) * (lstrlenW(lpValue)+1) );
 }
 
 static
@@ -124,16 +123,16 @@ HRESULT QUARTZ_CreateCLSIDPath(
 {
 	int avail;
 
-	strcpyW( pwszBuf, QUARTZ_wszCLSID );
+	lstrcpyW( pwszBuf, QUARTZ_wszCLSID );
 	QUARTZ_CatPathSepW( pwszBuf+5 );
 	QUARTZ_GUIDtoString( pwszBuf+6, pclsid );
 	if ( lpszPathFromCLSID != NULL )
 	{
-		avail = (int)dwBufLen - strlenW(pwszBuf) - 8;
-		if ( avail <= strlenW(lpszPathFromCLSID) )
+		avail = (int)dwBufLen - lstrlenW(pwszBuf) - 8;
+		if ( avail <= lstrlenW(lpszPathFromCLSID) )
 			return E_FAIL;
 		QUARTZ_CatPathSepW( pwszBuf );
-		strcatW( pwszBuf, lpszPathFromCLSID );
+		lstrcatW( pwszBuf, lpszPathFromCLSID );
 	}
 
 	return NOERROR;
@@ -245,9 +244,9 @@ HRESULT QUARTZ_RegisterCategory(
 	WCHAR	szCLSID[ 256 ];
 
 	QUARTZ_GUIDtoString( szCLSID, pguidFilterCategory );
-	strcpyW( szFilterPath, QUARTZ_wszInstance );
+	lstrcpyW( szFilterPath, QUARTZ_wszInstance );
 	QUARTZ_CatPathSepW( szFilterPath );
-	strcatW( szFilterPath, szCLSID );
+	lstrcatW( szFilterPath, szCLSID );
 
 	if ( fRegister )
 	{
@@ -313,9 +312,9 @@ HRESULT QUARTZ_RegisterAMovieFilter(
 	WCHAR	szCLSID[ 256 ];
 
 	QUARTZ_GUIDtoString( szCLSID, pclsid );
-	strcpyW( szFilterPath, QUARTZ_wszInstance );
+	lstrcpyW( szFilterPath, QUARTZ_wszInstance );
 	QUARTZ_CatPathSepW( szFilterPath );
-	strcatW( szFilterPath, ( lpInstance != NULL ) ? lpInstance : szCLSID );
+	lstrcatW( szFilterPath, ( lpInstance != NULL ) ? lpInstance : szCLSID );
 
 	if ( fRegister )
 	{

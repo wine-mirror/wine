@@ -11,10 +11,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -67,7 +65,7 @@ CPinBaseImpl_fnConnect(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt)
 	HRESULT	hr = E_NOTIMPL;
 	ULONG	i;
 
-	FIXME("(%p)->(%p,%p) stub!\n",This,pPin,pmt);
+	FIXME("(%p)->(%p,%p)\n",This,pPin,pmt);
 
 	if ( !This->bOutput )
 		return E_UNEXPECTED;
@@ -167,7 +165,7 @@ CPinBaseImpl_fnReceiveConnection(IPin* iface,IPin* pPin,const AM_MEDIA_TYPE* pmt
 	ICOM_THIS(CPinBaseImpl,iface);
 	HRESULT	hr = E_NOTIMPL;
 
-	FIXME("(%p)->(%p,%p) stub!\n",This,pPin,pmt);
+	FIXME("(%p)->(%p,%p)\n",This,pPin,pmt);
 
 	if ( This->bOutput )
 		return E_UNEXPECTED;
@@ -559,7 +557,7 @@ HRESULT CPinBaseImpl_InitIPin(
 	ICOM_VTBL(This) = &ipin;
 	This->punkControl = punkControl;
 	This->pHandlers = pHandlers;
-	This->cbIdLen = sizeof(WCHAR)*(strlenW(pwszId)+1);
+	This->cbIdLen = sizeof(WCHAR)*(lstrlenW(pwszId)+1);
 	This->pwszId = NULL;
 	This->bOutput = bOutput;
 	This->pmtAcceptTypes = NULL;
@@ -986,7 +984,7 @@ HRESULT CPinBaseImpl_SendNewSegment( CPinBaseImpl* This, REFERENCE_TIME rtStart,
 HRESULT OutputPinSync_Receive( CPinBaseImpl* pImpl, IMediaSample* pSample )
 {
 	if ( pImpl->pMemInputPinConnectedTo == NULL )
-		return E_UNEXPECTED;
+		return NOERROR;
 
 	return IMemInputPin_Receive(pImpl->pMemInputPinConnectedTo,pSample);
 }

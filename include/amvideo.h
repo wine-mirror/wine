@@ -1,7 +1,6 @@
 #ifndef __WINE_AMVIDEO_H_
 #define __WINE_AMVIDEO_H_
 
-#include "ole2.h"
 #include "ddraw.h"
 
 

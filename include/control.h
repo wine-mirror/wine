@@ -1,8 +1,6 @@
 #ifndef __WINE_CONTROL_H_
 #define __WINE_CONTROL_H_
 
-#include "ole2.h"
-
 /* forward decls. */
 
 typedef struct IAMCollection IAMCollection;

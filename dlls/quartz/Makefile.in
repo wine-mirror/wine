@@ -11,7 +11,9 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	amundoc.c \
 	asyncsrc.c \
+	audioutl.c \
 	audren.c \
+	aviparse.c \
 	basefilt.c \
 	basepin.c \
 	complist.c \
@@ -19,14 +21,10 @@ C_SRCS = \
 	devmon.c \
 	enumunk.c \
 	fgevent.c \
-	fgidisp.c \
 	fgpass.c \
 	fgraph.c \
 	fmap.c \
-	fmap2.c \
 	ifgraph.c \
-	igconfig.c \
-	igrver.c \
 	imcntl.c \
 	imfilter.c \
 	impos.c \

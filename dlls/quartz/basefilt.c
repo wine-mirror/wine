@@ -11,10 +11,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "wine/obj_base.h"
 #include "strmif.h"
 #include "vfwmsgs.h"
-#include "wine/unicode.h"
 
 #include "debugtools.h"
 DEFAULT_DEBUG_CHANNEL(quartz);
@@ -355,7 +353,7 @@ CBaseFilterImpl_fnJoinFilterGraph(IBaseFilter* iface,IFilterGraph* pfg,LPCWSTR l
 	}
 
 	This->pfg = pfg;
-	This->cbNameGraph = sizeof(WCHAR) * (strlenW(lpwszName)+1);
+	This->cbNameGraph = sizeof(WCHAR) * (lstrlenW(lpwszName)+1);
 	This->pwszNameGraph = (WCHAR*)QUARTZ_AllocMem( This->cbNameGraph );
 	if ( This->pwszNameGraph == NULL )
 	{
@@ -440,7 +438,7 @@ HRESULT CBaseFilterImpl_InitIBaseFilter(
 	This->rtStart = 0;
 	This->fstate = State_Stopped;
 
-	This->cbNameGraph = sizeof(WCHAR) * (strlenW(lpwszNameGraph)+1);
+	This->cbNameGraph = sizeof(WCHAR) * (lstrlenW(lpwszNameGraph)+1);
 	This->pwszNameGraph = (WCHAR*)QUARTZ_AllocMem( This->cbNameGraph );
 	if ( This->pwszNameGraph == NULL )
 		return E_OUTOFMEMORY;
