@@ -145,6 +145,8 @@ static UINT ACTION_ProcessComponents(MSIHANDLE hPackage);
 static UINT ACTION_RegisterTypeLibraries(MSIHANDLE hPackage);
 static UINT ACTION_RegisterClassInfo(MSIHANDLE hPackage);
 static UINT ACTION_RegisterProgIdInfo(MSIHANDLE hPackage);
+static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage);
+static UINT ACTION_PublishProduct(MSIHANDLE hPackage);
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -199,6 +201,10 @@ const static WCHAR szRegisterClassInfo[] =
 {'R','e','g','i','s','t','e','r','C','l','a','s','s','I','n','f','o',0};
 const static WCHAR szRegisterProgIdInfo[] = 
 {'R','e','g','i','s','t','e','r','P','r','o','g','I','d','I','n','f','o',0};
+const static WCHAR szCreateShortcuts[] = 
+{'C','r','e','a','t','e','S','h','o','r','t','c','u','t','s',0};
+const static WCHAR szPublishProduct[] = 
+{'P','u','b','l','i','s','h','P','r','o','d','u','c','t',0};
 
 /******************************************************** 
  * helper functions to get around current HACKS and such
@@ -852,12 +858,15 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_RegisterClassInfo(hPackage);
      else if (strcmpW(action,szRegisterProgIdInfo)==0)
         rc = ACTION_RegisterProgIdInfo(hPackage);
+     else if (strcmpW(action,szCreateShortcuts)==0)
+        rc = ACTION_CreateShortcuts(hPackage);
+    else if (strcmpW(action,szPublishProduct)==0)
+        rc = ACTION_PublishProduct(hPackage);
 
     /*
      Called during itunes but unimplemented and seem important
 
      ResolveSource  (sets SourceDir)
-     CreateShortcuts (would be nice to have soon)
      RegisterProduct
      InstallFinalize
      */
@@ -3049,6 +3058,13 @@ static void resolve_keypath(MSIHANDLE hPackage, MSIPACKAGE* package, INT
     }
 }
 
+/*
+ * Ok further analysis makes me think that this work is
+ * actually done in the PublishComponents and PublishFeatures
+ * step. And not here.  It appears like the keypath and all that is
+ * resolved in this step, however actaully written in the Publish steps.
+ * But we will leave it here for now 
+ */
 static UINT ACTION_ProcessComponents(MSIHANDLE hPackage)
 {
     MSIPACKAGE* package;
@@ -3712,12 +3728,326 @@ static UINT ACTION_RegisterProgIdInfo(MSIHANDLE hPackage)
         }
         
         register_progid(hPackage,row,clsid);
+        ui_actiondata(hPackage,szRegisterProgIdInfo,row);
 
         MsiCloseHandle(row);
     }
     MsiViewClose(view);
     MsiCloseHandle(view);
     return rc;
+}
+
+static UINT build_icon_path(MSIHANDLE hPackage, LPCWSTR icon_name, 
+                            LPWSTR FilePath)
+{
+    WCHAR ProductCode[0x100];
+    WCHAR SystemFolder[MAX_PATH];
+    DWORD sz;
+
+    static const WCHAR szInstaller[] = 
+{'I','n','s','t','a','l','l','e','r','\\',0};
+    static const WCHAR szProductCode[] =
+{'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szFolder[] =
+{'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
+
+    sz = 0x100;
+    MsiGetPropertyW(hPackage,szProductCode,ProductCode,&sz);
+    if (strlenW(ProductCode)==0)
+        return ERROR_FUNCTION_FAILED;
+
+    sz = MAX_PATH;
+    MsiGetPropertyW(hPackage,szFolder,SystemFolder,&sz);
+    strcatW(SystemFolder,szInstaller); 
+    strcatW(SystemFolder,ProductCode);
+    create_full_pathW(SystemFolder);
+
+    strcpyW(FilePath,SystemFolder);
+    strcatW(FilePath,cszbs);
+    strcatW(FilePath,icon_name);
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_CreateShortcuts(MSIHANDLE hPackage)
+{
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *Query = "SELECT * from Shortcut";
+    MSIPACKAGE* package;
+
+    IShellLinkW *sl;
+    IPersistFile *pf;
+    HRESULT res;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    res = CoInitialize( NULL );
+    if (FAILED (res))
+    {
+        ERR("CoInitialize failed\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    rc = MsiDatabaseOpenViewA(package->db, Query, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    while (1)
+    {
+        WCHAR target_file[MAX_PATH];
+        WCHAR buffer[0x1000];
+        DWORD sz;
+        DWORD index;
+        static const WCHAR szlnk[]={'.','l','n','k',0};
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        
+        sz = 0x1000;
+        MsiRecordGetStringW(row,4,buffer,&sz);
+
+        index = get_loaded_component(package,buffer);
+
+        if (index < 0)
+        {
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        if (!package->components[index].Enabled ||
+            !package->components[index].FeatureState)
+        {
+            TRACE("Skipping shortcut creation due to disabled component\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        ui_actiondata(hPackage,szCreateShortcuts,row);
+
+        res = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                              &IID_IShellLinkW, (LPVOID *) &sl );
+
+        if (FAILED(res))
+        {
+            ERR("Is IID_IShellLink\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        res = IShellLinkW_QueryInterface( sl, &IID_IPersistFile,(LPVOID*) &pf );
+        if( FAILED( res ) )
+        {
+            ERR("Is IID_IPersistFile\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        sz = 0x1000;
+        MsiRecordGetStringW(row,2,buffer,&sz);
+        resolve_folder(hPackage, buffer,target_file,FALSE,FALSE,NULL);
+
+        sz = 0x1000;
+        MsiRecordGetStringW(row,3,buffer,&sz);
+        reduce_to_longfilename(buffer);
+        strcatW(target_file,buffer);
+        if (!strchrW(target_file,'.'))
+            strcatW(target_file,szlnk);
+
+        sz = 0x1000;
+        MsiRecordGetStringW(row,5,buffer,&sz);
+        if (strchrW(buffer,'['))
+        {
+            LPWSTR deformated;
+            deformat_string(hPackage,buffer,&deformated);
+            IShellLinkW_SetPath(sl,deformated);
+            HeapFree(GetProcessHeap(),0,deformated);
+        }
+        else
+        {
+            FIXME("UNHANDLED shortcut format, advertised shortcut\n");
+            IPersistFile_Release( pf );
+            IShellLinkW_Release( sl );
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        if (!MsiRecordIsNull(row,6))
+        {
+            LPWSTR deformated;
+            sz = 0x1000;
+            MsiRecordGetStringW(row,6,buffer,&sz);
+            deformat_string(hPackage,buffer,&deformated);
+            IShellLinkW_SetArguments(sl,deformated);
+            HeapFree(GetProcessHeap(),0,deformated);
+        }
+
+        if (!MsiRecordIsNull(row,7))
+        {
+            LPWSTR deformated;
+            sz = 0;
+            MsiRecordGetStringW(row,7,NULL,&sz);
+            sz++;
+            deformated = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+            MsiRecordGetStringW(row,7,deformated,&sz);
+            IShellLinkW_SetDescription(sl,deformated);
+            HeapFree(GetProcessHeap(),0,deformated);
+        }
+
+        if (!MsiRecordIsNull(row,8))
+            IShellLinkW_SetHotkey(sl,MsiRecordGetInteger(row,8));
+
+        if (!MsiRecordIsNull(row,9))
+        {
+            WCHAR Path[MAX_PATH];
+            INT index; 
+
+            sz = 0x1000;
+            MsiRecordGetStringW(row,9,buffer,&sz);
+
+            build_icon_path(hPackage,buffer,Path);
+            index = MsiRecordGetInteger(row,10);
+
+            IShellLinkW_SetIconLocation(sl,Path,index);
+        }
+
+        if (!MsiRecordIsNull(row,11))
+            IShellLinkW_SetShowCmd(sl,MsiRecordGetInteger(row,11));
+
+        if (!MsiRecordIsNull(row,12))
+        {
+            WCHAR Path[MAX_PATH];
+
+            sz = 0x1000;
+            MsiRecordGetStringW(row,12,buffer,&sz);
+            resolve_folder(hPackage, buffer, Path, FALSE, FALSE, NULL);
+            IShellLinkW_SetWorkingDirectory(sl,Path);
+        }
+
+        TRACE("Writing shortcut to %s\n",debugstr_w(target_file));
+        IPersistFile_Save(pf,target_file,FALSE);
+        
+        IPersistFile_Release( pf );
+        IShellLinkW_Release( sl );
+
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+
+
+    CoUninitialize();
+
+    return rc;
+}
+
+
+/*
+ * 99% of the work done here is only done for 
+ * advertised installs. However this is where the
+ * Icon table is processed and written out
+ * so that is waht i am going to do here
+ */
+static UINT ACTION_PublishProduct(MSIHANDLE hPackage)
+{
+    UINT rc;
+    MSIHANDLE view;
+    MSIHANDLE row = 0;
+    static const CHAR *Query="SELECT * from Icon";
+    MSIPACKAGE* package;
+    DWORD sz;
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MsiDatabaseOpenViewA(package->db, Query, &view);
+
+    if (rc != ERROR_SUCCESS)
+        return rc;
+
+    rc = MsiViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MsiViewClose(view);
+        MsiCloseHandle(view);
+        return rc;
+    }
+
+    while (1)
+    {
+        HANDLE the_file;
+        WCHAR FilePath[MAX_PATH];
+        WCHAR FileName[MAX_PATH];
+        CHAR buffer[1024];
+
+        rc = MsiViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+    
+        sz = MAX_PATH;
+        MsiRecordGetStringW(row,1,FileName,&sz);
+        if (sz == 0)
+        {
+            ERR("Unable to get FileName\n");
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        build_icon_path(hPackage,FileName,FilePath);
+
+        TRACE("Creating icon file at %s\n",debugstr_w(FilePath));
+        
+        the_file = CreateFileW(FilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+
+        if (the_file == INVALID_HANDLE_VALUE)
+        {
+            ERR("Unable to create file %s\n",debugstr_w(FilePath));
+            MsiCloseHandle(row);
+            continue;
+        }
+
+        do 
+        {
+            DWORD write;
+            sz = 1024;
+            rc = MsiRecordReadStream(row,2,buffer,&sz);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Failed to get stream\n");
+                CloseHandle(the_file);  
+                DeleteFileW(FilePath);
+                break;
+            }
+            WriteFile(the_file,buffer,sz,&write,NULL);
+        } while (sz == 1024);
+
+        CloseHandle(the_file);
+        MsiCloseHandle(row);
+    }
+    MsiViewClose(view);
+    MsiCloseHandle(view);
+    return rc;
+
 }
 
 /* Msi functions that seem approperate here */

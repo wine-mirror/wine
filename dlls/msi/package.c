@@ -173,27 +173,6 @@ static VOID set_installer_properties(MSIHANDLE hPackage)
     static const WCHAR TF[]=
 {'T','e','m','p','F','o','l','d','e','r',0};
 
-/* Not yet set ...  but needed by iTunes
- *
-DesktopFolder
-FavoritesFolder
-FontsFolder
-PrimaryVolumePath
-ProgramFiles64Folder
-ProgramMenuFolder
-SendToFolder
-StartMenuFolder
-StartupFolder
-System16Folder
-System64Folder
-TemplateFolder
- */
-
-/* asked for by iTunes ... but are they installer set? 
- *
- *  GlobalAssemblyCache
- */
-
 /*
  * Other things i notice set
  *
@@ -266,6 +245,7 @@ Privilaged
     GetTempPathW(MAX_PATH,pth);
     MsiSetPropertyW(hPackage, TF, pth);
 
+
     /* in a wine enviroment the user is always admin and privlaged */
     MsiSetPropertyA(hPackage,"AdminUser","1");
     MsiSetPropertyA(hPackage,"Privileged","1");
@@ -288,8 +268,26 @@ Privilaged
     MsiSetPropertyA(hPackage,"WindowsBuild",verstr);
     /* just fudge this */
     MsiSetPropertyA(hPackage,"ServicePackLevel","6");
-}
 
+    /* FIXME: these need to be set properly */
+
+    MsiSetPropertyA(hPackage,"ProgramMenuFolder",
+                    "C:\\Windows\\Start Menu\\Programs\\");
+    MsiSetPropertyA(hPackage,"FavoritesFolder",
+                    "C:\\Windows\\Favorites\\");
+    MsiSetPropertyA(hPackage,"FontsFolder",
+                    "C:\\Windows\\Fonts\\");
+    MsiSetPropertyA(hPackage,"SendToFolder",
+                    "C:\\Windows\\SendTo\\");
+    MsiSetPropertyA(hPackage,"StartMenuFolder",
+                    "C:\\Windows\\Start Menu\\");
+    MsiSetPropertyA(hPackage,"StartupFolder",
+                    "C:\\Windows\\Start Menu\\Programs\\Startup\\");
+    MsiSetPropertyA(hPackage,"TemplateFolder",
+                    "C:\\Windows\\ShellNew\\");
+    MsiSetPropertyA(hPackage, "DesktopFolder",
+                    "C:\\Windows\\Desktop\\");
+}
 
 UINT WINAPI MsiOpenPackageW(LPCWSTR szPackage, MSIHANDLE *phPackage)
 {
