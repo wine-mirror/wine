@@ -1563,7 +1563,7 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
 
     *pRes = 0;
 
-    if (hwnd == HWND_BROADCAST)
+    if (hwnd == HWND_BROADCAST|| hwnd == HWND_TOPMOST)
     {
         *pRes = 1;
         
