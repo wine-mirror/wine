@@ -450,15 +450,9 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 	    FE(INTERNET_OPEN_TYPE_PROXY),
 	    FE(INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY)
 	};
-	static const wininet_flag_info flag[] = {
-	    FE(INTERNET_FLAG_ASYNC),
-	    FE(INTERNET_FLAG_FROM_CACHE),
-	    FE(INTERNET_FLAG_OFFLINE)
-	};
 #undef FE
 	DWORD i;
 	const char *access_type_str = "Unknown";
-	DWORD flag_val = dwFlags;
 	
 	TRACE("(%s, %li, %s, %s, %li)\n", debugstr_w(lpszAgent), dwAccessType,
 	      debugstr_w(lpszProxy), debugstr_w(lpszProxyBypass), dwFlags);
@@ -470,14 +464,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 	}
 	TRACE("  access type : %s\n", access_type_str);
 	TRACE("  flags       :");
-	for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
-	    if (flag[i].val & flag_val) {
-		DPRINTF(" %s", flag[i].name);
-		flag_val &= ~flag[i].val;
-	    }
-	}	
-	if (flag_val) DPRINTF(" Unknown flags (%08lx)", flag_val);
-	DPRINTF("\n");
+	dump_INTERNET_FLAGS(dwFlags);
     }
 
     /* Clear any error information */
@@ -2182,7 +2169,7 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
     WCHAR password[1024], path[2048], extra[1024];
     HINTERNET client = NULL, client1 = NULL;
     
-    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx)\n", hIC, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
     
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
@@ -2268,9 +2255,13 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     HINTERNET ret = NULL;
     LPWININETAPPINFOW hIC = NULL;
 
-    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
- 	  dwHeadersLength, dwFlags, dwContext);
- 
+    if (TRACE_ON(wininet)) {
+	TRACE("(%p, %s, %s, %08lx, %08lx, %08lx)\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
+	      dwHeadersLength, dwFlags, dwContext);
+	TRACE("  flags :");
+	dump_INTERNET_FLAGS(dwFlags);
+    }
+
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
 	INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -3039,4 +3030,59 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 {
     FIXME("\n");
     return FALSE;
+}
+
+/***********************************************************************
+ *           dump_INTERNET_FLAGS
+ *
+ * Helper function to DPRINTF the internet flags.
+ *
+ * RETURNS
+ *    None
+ *
+ */
+void dump_INTERNET_FLAGS(DWORD dwFlags) 
+{
+#define FE(x) { x, #x }
+    static const wininet_flag_info flag[] = {
+        FE(INTERNET_FLAG_RELOAD),
+        FE(INTERNET_FLAG_RAW_DATA),
+        FE(INTERNET_FLAG_EXISTING_CONNECT),
+        FE(INTERNET_FLAG_ASYNC),
+        FE(INTERNET_FLAG_PASSIVE),
+        FE(INTERNET_FLAG_NO_CACHE_WRITE),
+        FE(INTERNET_FLAG_MAKE_PERSISTENT),
+        FE(INTERNET_FLAG_FROM_CACHE),
+        FE(INTERNET_FLAG_SECURE),
+        FE(INTERNET_FLAG_KEEP_CONNECTION),
+        FE(INTERNET_FLAG_NO_AUTO_REDIRECT),
+        FE(INTERNET_FLAG_READ_PREFETCH),
+        FE(INTERNET_FLAG_NO_COOKIES),
+        FE(INTERNET_FLAG_NO_AUTH),
+        FE(INTERNET_FLAG_CACHE_IF_NET_FAIL),
+        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTP),
+        FE(INTERNET_FLAG_IGNORE_REDIRECT_TO_HTTPS),
+        FE(INTERNET_FLAG_IGNORE_CERT_DATE_INVALID),
+        FE(INTERNET_FLAG_IGNORE_CERT_CN_INVALID),
+        FE(INTERNET_FLAG_RESYNCHRONIZE),
+        FE(INTERNET_FLAG_HYPERLINK),
+        FE(INTERNET_FLAG_NO_UI),
+        FE(INTERNET_FLAG_PRAGMA_NOCACHE),
+        FE(INTERNET_FLAG_CACHE_ASYNC),
+        FE(INTERNET_FLAG_FORMS_SUBMIT),
+        FE(INTERNET_FLAG_NEED_FILE),
+        FE(INTERNET_FLAG_TRANSFER_ASCII),
+        FE(INTERNET_FLAG_TRANSFER_BINARY)
+    };
+#undef FE
+    int i;
+    
+    for (i = 0; i < (sizeof(flag) / sizeof(flag[0])); i++) {
+	if (flag[i].val & dwFlags) {
+	    DPRINTF(" %s", flag[i].name);
+	    dwFlags &= ~flag[i].val;
+	}
+    }	
+    if (dwFlags) DPRINTF(" Unknown flags (%08lx)", dwFlags);
+    DPRINTF("\n");   
 }

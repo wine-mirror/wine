@@ -200,12 +200,7 @@ static const char *get_callback_name(DWORD dwInternetStatus) {
 	FE(INTERNET_STATUS_PRIVACY_IMPACTED),
 	FE(INTERNET_STATUS_P3P_HEADER),
 	FE(INTERNET_STATUS_P3P_POLICYREF),
-	FE(INTERNET_STATUS_COOKIE_HISTORY),
-	FE(INTERNET_STATE_CONNECTED),
-	FE(INTERNET_STATE_DISCONNECTED),
-	FE(INTERNET_STATE_DISCONNECTED_BY_USER),
-	FE(INTERNET_STATE_IDLE),
-	FE(INTERNET_STATE_BUSY)
+	FE(INTERNET_STATUS_COOKIE_HISTORY)
 #undef FE
     };
     DWORD i;
@@ -231,11 +226,11 @@ VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
     if( !dwContext )
         return;
 
-    TRACE("--> Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
-
     hHttpSession = WININET_FindHandle( hdr );
-    if( !hHttpSession )
+    if( !hHttpSession ) {
+	TRACE(" Could not convert header '%p' into a handle !\n", hdr);
         return;
+    }
 
     lpvNewInfo = lpvStatusInfo;
     if(!(hdr->dwInternalFlags & INET_CALLBACKW)) {
@@ -246,12 +241,18 @@ VOID SendSyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
             lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
         }
     }
+    
+    TRACE(" callback(%p) (%08lx (%p), %08lx, %ld (%s), %p, %ld)\n",
+	  hdr->lpfnStatusCB, (DWORD) hHttpSession, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
+	  lpvNewInfo, dwStatusInfoLength);
+    
     hdr->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
                       lpvNewInfo, dwStatusInfoLength);
+
+    TRACE(" end callback().\n");
+
     if(lpvNewInfo != lpvStatusInfo)
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
-
-    TRACE("<-- Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
 
     WININET_Release( hdr );
 }
@@ -262,26 +263,31 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength)
 {
-        TRACE("Send Callback %ld (%s)\n",dwInternetStatus, get_callback_name(dwInternetStatus));
-
-        if (!(hdr->lpfnStatusCB))
-            return;
-        if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
-        {
-            WORKREQUEST workRequest;
-            struct WORKREQ_SENDCALLBACK *req;
-
-            workRequest.asyncall = SENDCALLBACK;
-            workRequest.hdr = WININET_AddRef( hdr );
-            req = &workRequest.u.SendCallback;
-            req->dwContext = dwContext;
-            req->dwInternetStatus = dwInternetStatus;
-            req->lpvStatusInfo = lpvStatusInfo;
-            req->dwStatusInfoLength = dwStatusInfoLength;
-
-            INTERNET_AsyncCall(&workRequest);
-        }
-        else
-            SendSyncCallback(hdr, dwContext, dwInternetStatus,
-                             lpvStatusInfo, dwStatusInfoLength);
+    TRACE("(%p, %08lx, %ld (%s), %p, %ld): %sasync call with callback %p\n",
+	  hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
+	  lpvStatusInfo, dwStatusInfoLength,
+	  hdr->dwFlags & INTERNET_FLAG_ASYNC ? "" : "non ",
+	  hdr->lpfnStatusCB);
+    
+    if (!(hdr->lpfnStatusCB))
+	return;
+    
+    if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
+    {
+	WORKREQUEST workRequest;
+	struct WORKREQ_SENDCALLBACK *req;
+	
+	workRequest.asyncall = SENDCALLBACK;
+	workRequest.hdr = WININET_AddRef( hdr );
+	req = &workRequest.u.SendCallback;
+	req->dwContext = dwContext;
+	req->dwInternetStatus = dwInternetStatus;
+	req->lpvStatusInfo = lpvStatusInfo;
+	req->dwStatusInfoLength = dwStatusInfoLength;
+	
+	INTERNET_AsyncCall(&workRequest);
+    }
+    else
+	SendSyncCallback(hdr, dwContext, dwInternetStatus,
+			 lpvStatusInfo, dwStatusInfoLength);
 }
