@@ -804,22 +804,6 @@ enum fd_type
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 
 
-struct set_file_pointer_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          low;
-    int          high;
-    int          whence;
-};
-struct set_file_pointer_reply
-{
-    struct reply_header __header;
-    int          new_low;
-    int          new_high;
-};
-
-
 
 struct truncate_file_request
 {
@@ -3179,7 +3163,6 @@ enum request
     REQ_create_file,
     REQ_alloc_file_handle,
     REQ_get_handle_fd,
-    REQ_set_file_pointer,
     REQ_truncate_file,
     REQ_flush_file,
     REQ_get_file_info,
@@ -3365,7 +3348,6 @@ union generic_request
     struct create_file_request create_file_request;
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_fd_request get_handle_fd_request;
-    struct set_file_pointer_request set_file_pointer_request;
     struct truncate_file_request truncate_file_request;
     struct flush_file_request flush_file_request;
     struct get_file_info_request get_file_info_request;
@@ -3549,7 +3531,6 @@ union generic_reply
     struct create_file_reply create_file_reply;
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
-    struct set_file_pointer_reply set_file_pointer_reply;
     struct truncate_file_reply truncate_file_reply;
     struct flush_file_reply flush_file_reply;
     struct get_file_info_reply get_file_info_reply;
@@ -3691,6 +3672,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 137
+#define SERVER_PROTOCOL_VERSION 138
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1145,26 +1145,44 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
 DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword,
                              DWORD method )
 {
+    static const int whence[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
     DWORD ret = INVALID_SET_FILE_POINTER;
+    NTSTATUS status;
+    int fd;
 
     TRACE("handle %p offset %ld high %ld origin %ld\n",
           hFile, distance, highword?*highword:0, method );
 
-    SERVER_START_REQ( set_file_pointer )
+    if (method > FILE_END)
     {
-        req->handle = hFile;
-        req->low = distance;
-        req->high = highword ? *highword : (distance >= 0) ? 0 : -1;
-        /* FIXME: assumes 1:1 mapping between Windows and Unix seek constants */
-        req->whence = method;
-        SetLastError( 0 );
-        if (!wine_server_call_err( req ))
-        {
-            ret = reply->new_low;
-            if (highword) *highword = reply->new_high;
-        }
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ret;
     }
-    SERVER_END_REQ;
+
+    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
+    {
+        off_t pos, res;
+
+        if (highword) pos = ((off_t)*highword << 32) | (ULONG)distance;
+        else pos = (off_t)distance;
+        if ((res = lseek( fd, pos, whence[method] )) == (off_t)-1)
+        {
+            /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
+            if (((errno == EINVAL) || (errno == EPERM)) && (method != FILE_BEGIN) && (pos < 0))
+                SetLastError( ERROR_NEGATIVE_SEEK );
+            else
+                FILE_SetDosError();
+        }
+        else
+        {
+            ret = (DWORD)res;
+            if (highword) *highword = (res >> 32);
+            if (ret == INVALID_SET_FILE_POINTER) SetLastError( 0 );
+        }
+        wine_server_release_fd( hFile, fd );
+    }
+    else SetLastError( RtlNtStatusToDosError(status) );
+
     return ret;
 }
 

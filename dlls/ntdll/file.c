@@ -858,23 +858,21 @@ NTSTATUS WINAPI NtQueryInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
         break;
     case FilePositionInformation:
         {
+            int fd;
             FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)answer;
-            if (sizeof(answer) < sizeof(*fpi)) goto too_small;
 
-            SERVER_START_REQ( set_file_pointer )
+            if (sizeof(answer) < sizeof(*fpi)) goto too_small;
+            if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
             {
-                req->handle = hFile;
-                req->low = 0;
-                req->high = 0;
-                req->whence = SEEK_CUR;
-                if (!(status = wine_server_call( req )))
+                off_t res = lseek( fd, 0, SEEK_CUR );
+                if (res == (off_t)-1) status = FILE_GetNtStatus();
+                else
                 {
-                    fpi->CurrentByteOffset.u.HighPart = reply->new_high;
-                    fpi->CurrentByteOffset.u.LowPart  = reply->new_low;
+                    fpi->CurrentByteOffset.QuadPart = res;
                     used = sizeof(*fpi);
                 }
+                wine_server_release_fd( hFile, fd );
             }
-            SERVER_END_REQ;
         }
         break;
     default:
@@ -920,18 +918,15 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE hFile, PIO_STATUS_BLOCK io_status,
     case FilePositionInformation:
         if (len >= sizeof(FILE_POSITION_INFORMATION))
         {
+            int fd;
             FILE_POSITION_INFORMATION*  fpi = (FILE_POSITION_INFORMATION*)ptr;
 
-            SERVER_START_REQ( set_file_pointer )
+            if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL, NULL )))
             {
-                req->handle = hFile;
-                req->low = fpi->CurrentByteOffset.u.LowPart;
-                req->high = fpi->CurrentByteOffset.u.HighPart;
-                req->whence = SEEK_SET;
-                status = wine_server_call( req );
+                if (lseek( fd, fpi->CurrentByteOffset.QuadPart, SEEK_SET ) == (off_t)-1)
+                    status = FILE_GetNtStatus();
+                wine_server_release_fd( hFile, fd );
             }
-            SERVER_END_REQ;
-            status = STATUS_SUCCESS;
         }
         break;
     default:

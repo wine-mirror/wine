@@ -426,33 +426,6 @@ int get_file_unix_fd( struct file *file )
     return get_unix_fd( file->fd );
 }
 
-static int set_file_pointer( obj_handle_t handle, unsigned int *low, int *high, int whence )
-{
-    struct file *file;
-    off_t result,xto;
-
-    xto = *low+((off_t)*high<<32);
-    if (!(file = get_file_obj( current->process, handle, 0 )))
-        return 0;
-    if ((result = lseek( get_file_unix_fd(file), xto, whence))==-1)
-    {
-        /* Check for seek before start of file */
-
-        /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
-        if (((errno == EINVAL) || (errno == EPERM))
-            && (whence != SEEK_SET) && (*high < 0))
-            set_win32_error( ERROR_NEGATIVE_SEEK );
-        else
-            file_set_error();
-        release_object( file );
-        return 0;
-    }
-    *low  = result & 0xffffffff;
-    *high = result >> 32;
-    release_object( file );
-    return 1;
-}
-
 /* extend a file beyond the current end of file */
 static int extend_file( struct file *file, off_t size )
 {
@@ -540,16 +513,6 @@ DECL_HANDLER(alloc_file_handle)
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
         release_object( file );
     }
-}
-
-/* set a file current position */
-DECL_HANDLER(set_file_pointer)
-{
-    int high = req->high;
-    int low  = req->low;
-    set_file_pointer( req->handle, &low, &high, req->whence );
-    reply->new_low  = low;
-    reply->new_high = high;
 }
 
 /* truncate (or extend) a file */

@@ -614,17 +614,6 @@ enum fd_type
 #define FD_FLAG_RECV_SHUTDOWN      0x04
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 
-/* Set a file current position */
-@REQ(set_file_pointer)
-    obj_handle_t handle;        /* handle to the file */
-    int          low;           /* position low word */
-    int          high;          /* position high word */
-    int          whence;        /* whence to seek */
-@REPLY
-    int          new_low;       /* new position low word */
-    int          new_high;      /* new position high word */
-@END
-
 
 /* Truncate (or extend) a file */
 @REQ(truncate_file)
