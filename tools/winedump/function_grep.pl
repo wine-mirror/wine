@@ -75,7 +75,7 @@ foreach my $file (@files) {
 	}
 
 	# remove C comments
-	if(s/^(.*?)(\/\*.*?\*\/)(.*)$/$1 $3/s) {
+	if(s/^(|.*?[^\/])(\/\*.*?\*\/)(.*)$/$1 $3/s) {
 	    $again = 1;
 	    next;
 	} elsif(/^(.*?)\/\*/s) {
@@ -101,9 +101,12 @@ foreach my $file (@files) {
 	}
 
 	# Remove extern "C"
-	if(s/^\s*extern\s+"C"\s+\{//m) {
+	if(s/^\s*extern[\s\n]+"C"[\s\n]+\{//m) {
 	    $extern_c = 1;
 	    $again = 1;
+	    next;
+	} elsif(m/^\s*extern[\s\n]+"C"/m) {
+	    $lookahead = 1;
 	    next;
 	}
 
