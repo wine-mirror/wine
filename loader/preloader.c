@@ -73,6 +73,9 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_SYSCALL_H
+# include <sys/syscall.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -156,6 +159,140 @@ __ASM_GLOBAL_FUNC(_start,
                   "\txor %edx,%edx\n"
                   "\tret\n")
 
+/* wrappers for Linux system calls */
+
+#define SYSCALL_RET(ret) (((ret) < 0 && (ret) > -4096) ? -1 : (ret))
+
+static inline __attribute__((noreturn)) void wld_exit( int code )
+{
+    for (;;)  /* avoid warning */
+        __asm__ __volatile__( "int $0x80" : : "a" (SYS_exit), "b" (code) );
+}
+
+static inline int wld_open( const char *name, int flags )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret) : "0" (SYS_open), "b" (name), "c" (flags) );
+    return SYSCALL_RET(ret);
+}
+
+static inline int wld_close( int fd )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret) : "0" (SYS_close), "b" (fd) );
+    return SYSCALL_RET(ret);
+}
+
+static inline ssize_t wld_read( int fd, void *buffer, size_t len )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret)
+                          : "0" (SYS_read), "b" (fd), "c" (buffer), "d" (len)
+                          : "memory" );
+    return SYSCALL_RET(ret);
+}
+
+static inline ssize_t wld_write( int fd, const void *buffer, size_t len )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret)
+                          : "0" (SYS_write), "b" (fd), "c" (buffer), "d" (len) );
+    return SYSCALL_RET(ret);
+}
+
+static inline int wld_mprotect( const void *addr, size_t len, int prot )
+{
+    int ret;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret) : "0" (SYS_mprotect), "b" (addr), "c" (len), "d" (prot) );
+    return SYSCALL_RET(ret);
+}
+
+static void *wld_mmap( void *start, size_t len, int prot, int flags, int fd, off_t offset )
+{
+    int ret;
+
+    struct
+    {
+        void        *addr;
+        unsigned int length;
+        unsigned int prot;
+        unsigned int flags;
+        unsigned int fd;
+        unsigned int offset;
+    } args;
+
+    args.addr   = start;
+    args.length = len;
+    args.prot   = prot;
+    args.flags  = flags;
+    args.fd     = fd;
+    args.offset = offset;
+    __asm__ __volatile__( "int $0x80" : "=a" (ret) : "0" (SYS_mmap), "b" (&args) : "memory" );
+    return (void *)SYSCALL_RET(ret);
+}
+
+static inline uid_t wld_getuid(void)
+{
+    uid_t ret;
+    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getuid) );
+    return ret;
+}
+
+static inline uid_t wld_geteuid(void)
+{
+    uid_t ret;
+    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_geteuid) );
+    return ret;
+}
+
+static inline gid_t wld_getgid(void)
+{
+    gid_t ret;
+    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getgid) );
+    return ret;
+}
+
+static inline gid_t wld_getegid(void)
+{
+    gid_t ret;
+    __asm__( "int $0x80" : "=a" (ret) : "0" (SYS_getegid) );
+    return ret;
+}
+
+
+/* replacement for libc functions */
+
+static int wld_strcmp( const char *str1, const char *str2 )
+{
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
+static int wld_strncmp( const char *str1, const char *str2, size_t len )
+{
+    if (len <= 0) return 0;
+    while ((--len > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
+    return *str1 - *str2;
+}
+
+static inline void *wld_memset( void *dest, int val, size_t len )
+{
+    char *dst = dest;
+    while (len--) *dst++ = val;
+    return dest;
+}
+
+static inline void *wld_memmove( void *dest, const void *src, size_t len )
+{
+    const char *s = src;
+    char *d = dest;
+    int i;
+
+    if (d < s) for (i = 0; i < len; i++) d[i] = s[i];
+    else for (i = len - 1; i >= 0; i--) d[i] = s[i];
+    return dest;
+}
+
 /*
  * wld_printf - just the basics
  *
@@ -202,10 +339,10 @@ static void wld_printf(const char *fmt, ... )
     va_start( args, fmt );
     wld_vsprintf(buffer, fmt, args );
     va_end( args );
-    write(2, buffer, strlen(buffer));
+    wld_write(2, buffer, strlen(buffer));
 }
 
-static void fatal_error(const char *fmt, ... )
+static __attribute__((noreturn)) void fatal_error(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -213,8 +350,8 @@ static void fatal_error(const char *fmt, ... )
     va_start( args, fmt );
     wld_vsprintf(buffer, fmt, args );
     va_end( args );
-    write(2, buffer, strlen(buffer));
-    _exit(1);
+    wld_write(2, buffer, strlen(buffer));
+    wld_exit(1);
 }
 
 #ifdef DUMP_AUX_INFO
@@ -278,7 +415,7 @@ static void set_auxiliary_values( ElfW(auxv_t) *av, const ElfW(auxv_t) *new_av, 
     if (new_count)  /* need to make room for the extra values */
     {
         char *new_stack = (char *)*stack - new_count * sizeof(*av);
-        memmove( new_stack, *stack, (char *)(av + av_count) - (char *)*stack );
+        wld_memmove( new_stack, *stack, (char *)(av + av_count) - (char *)*stack );
         *stack = new_stack;
         av -= new_count;
     }
@@ -337,10 +474,10 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
       } loadcmds[16], *c;
     size_t nloadcmds = 0, maplength;
 
-    fd = open( name, O_RDONLY );
+    fd = wld_open( name, O_RDONLY );
     if (fd == -1) fatal_error("%s: could not open\n", name );
 
-    if (read( fd, buf, sizeof(buf) ) != sizeof(buf))
+    if (wld_read( fd, buf, sizeof(buf) ) != sizeof(buf))
         fatal_error("%s: failed to read ELF header\n", name);
 
     phdr = (void*) (((unsigned char*)buf) + header->e_phoff);
@@ -452,7 +589,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
                    - MAP_BASE_ADDR (l));
 
         /* Remember which part of the address space this object uses.  */
-        l->l_map_start = (ElfW(Addr)) mmap ((void *) mappref, maplength,
+        l->l_map_start = (ElfW(Addr)) wld_mmap ((void *) mappref, maplength,
                                               c->prot, MAP_COPY | MAP_FILE,
                                               fd, c->mapoff);
         /* wld_printf("set  : offset = %x\n", c->mapoff); */
@@ -461,7 +598,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
         l->l_map_end = l->l_map_start + maplength;
         l->l_addr = l->l_map_start - c->mapstart;
 
-        mprotect ((caddr_t) (l->l_addr + c->mapend),
+        wld_mprotect ((caddr_t) (l->l_addr + c->mapend),
                     loadcmds[nloadcmds - 1].allocend - c->mapend,
                     PROT_NONE);
         goto postmap;
@@ -485,7 +622,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
       {
         if (c->mapend > c->mapstart)
             /* Map the segment contents from the file.  */
-            mmap ((void *) (l->l_addr + c->mapstart),
+            wld_mmap ((void *) (l->l_addr + c->mapstart),
                         c->mapend - c->mapstart, c->prot,
                         MAP_FIXED | MAP_COPY | MAP_FILE, fd, c->mapoff);
 
@@ -526,18 +663,18 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
                 if ((c->prot & PROT_WRITE) == 0)
                   {
                     /* Dag nab it.  */
-                    mprotect ((caddr_t) (zero & ~page_mask), page_size, c->prot|PROT_WRITE);
+                    wld_mprotect ((caddr_t) (zero & ~page_mask), page_size, c->prot|PROT_WRITE);
                   }
-                memset ((void *) zero, '\0', zeropage - zero);
+                wld_memset ((void *) zero, '\0', zeropage - zero);
                 if ((c->prot & PROT_WRITE) == 0)
-                  mprotect ((caddr_t) (zero & ~page_mask), page_size, c->prot);
+                  wld_mprotect ((caddr_t) (zero & ~page_mask), page_size, c->prot);
               }
 
             if (zeroend > zeropage)
               {
                 /* Map the remaining zero pages in from the zero fill FD.  */
                 caddr_t mapat;
-                mapat = mmap ((caddr_t) zeropage, zeroend - zeropage,
+                mapat = wld_mmap ((caddr_t) zeropage, zeroend - zeropage,
                                 c->prot, MAP_ANON|MAP_PRIVATE|MAP_FIXED,
                                 -1, 0);
               }
@@ -551,7 +688,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
     l->l_phdr = (void *)((ElfW(Addr))l->l_phdr + l->l_addr);
     l->l_entry += l->l_addr;
 
-    close( fd );
+    wld_close( fd );
 }
 
 
@@ -607,7 +744,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, char *var )
     for (i = 0; i < symtabend; i++)
     {
         if( ( ELF32_ST_BIND(symtab[i].st_info) == STT_OBJECT ) &&
-            ( 0 == strcmp( strings+symtab[i].st_name, var ) ) )
+            ( 0 == wld_strcmp( strings+symtab[i].st_name, var ) ) )
         {
 #ifdef DUMP_SYMS
             wld_printf("Found %s -> %x\n", strings+symtab[i].st_name, symtab[i].st_value );
@@ -694,7 +831,7 @@ void* wld_start( void **stack )
     while (*p)
     {
         static const char res[] = "WINEPRELOADRESERVE=";
-        if (!strncmp( *p, res, sizeof(res)-1 )) reserve = *p + sizeof(res) - 1;
+        if (!wld_strncmp( *p, res, sizeof(res)-1 )) reserve = *p + sizeof(res) - 1;
         p++;
     }
 
@@ -714,8 +851,8 @@ void* wld_start( void **stack )
     /* reserve memory that Wine needs */
     if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
-        mmap( preload_info[i].addr, preload_info[i].size,
-              PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
+        wld_mmap( preload_info[i].addr, preload_info[i].size,
+                  PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
 
     /* load the main binary */
     map_so_lib( argv[1], &main_binary_map );
@@ -738,10 +875,10 @@ void* wld_start( void **stack )
     SET_NEW_AV( 4, AT_BASE, ld_so_map.l_addr );
     SET_NEW_AV( 5, AT_FLAGS, get_auxiliary( av, AT_FLAGS, 0 ) );
     SET_NEW_AV( 6, AT_ENTRY, main_binary_map.l_entry );
-    SET_NEW_AV( 7, AT_UID, get_auxiliary( av, AT_UID, getuid() ) );
-    SET_NEW_AV( 8, AT_EUID, get_auxiliary( av, AT_EUID, geteuid() ) );
-    SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, getgid() ) );
-    SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, getegid() ) );
+    SET_NEW_AV( 7, AT_UID, get_auxiliary( av, AT_UID, wld_getuid() ) );
+    SET_NEW_AV( 8, AT_EUID, get_auxiliary( av, AT_EUID, wld_geteuid() ) );
+    SET_NEW_AV( 9, AT_GID, get_auxiliary( av, AT_GID, wld_getgid() ) );
+    SET_NEW_AV(10, AT_EGID, get_auxiliary( av, AT_EGID, wld_getegid() ) );
 #undef SET_NEW_AV
 
     /* get rid of first argument */
