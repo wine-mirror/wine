@@ -11,9 +11,11 @@ LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
+	cookie.c \
 	ftp.c \
 	http.c \
 	internet.c \
+	netconnection.c \
 	urlcache.c \
 	utility.c \
 	wininet_main.c

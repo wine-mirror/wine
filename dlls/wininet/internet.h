@@ -31,6 +31,20 @@
 # include <sys/types.h>
 # include <netinet/in.h>
 #endif
+#ifdef HAVE_OPENSSL_SSL_H
+# include <openssl/ssl.h>
+#endif
+
+/* used for netconnection.c stuff */
+typedef struct
+{
+    BOOL useSSL;
+    int socketFD;
+#ifdef HAVE_OPENSSL_SSL_H
+    SSL *ssl_s;
+    int ssl_sock;
+#endif
+} WININET_NETCONNECTION;
 
 typedef enum
 {
@@ -93,7 +107,7 @@ typedef struct
     LPSTR lpszPath;
     LPSTR lpszVerb;
     LPSTR lpszHostName;
-    INT	nSocketFD;
+    WININET_NETCONNECTION netConnection;
     HTTPHEADERA StdHeaders[HTTP_QUERY_MAX+1];
     HTTPHEADERA *pCustHeaders;
     INT nCustHeaders;
@@ -264,6 +278,19 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
+
+BOOL NETCON_connected(WININET_NETCONNECTION *connection);
+void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
+BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
+	      int type, int protocol);
+BOOL NETCON_close(WININET_NETCONNECTION *connection);
+BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
+		    socklen_t addrlen);
+BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
+		int *sent /* out */);
+BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
+		int *recvd /* out */);
+BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPDWORD dwBuffer);
 
 #define MAX_REPLY_LEN	 	0x5B4
 

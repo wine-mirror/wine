@@ -3,11 +3,12 @@
  *
  * Copyright 1999 Corel Corporation
  * Copyright 2002 CodeWeavers Inc.
+ * Copyright 2002 Jaco Greeff
+ * Copyright 2002 TransGaming Technologies Inc.
  *
  * Ulrich Czekalla
  * Aric Stewart
- *
- * Copyright 2002 Jaco Greeff
+ * David Hammerton
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -222,7 +223,8 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
 {
     LPWININETAPPINFOA lpwai = NULL;
 
-    TRACE("\n");
+    TRACE("(%s, %li, %s, %s, %li)\n", debugstr_a(lpszAgent), dwAccessType,
+	 debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
@@ -278,6 +280,7 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
         lpwai->dwAccessType = dwAccessType;
     }
 
+    TRACE("returning %p\n", (HINTERNET)lpwai);
     return (HINTERNET)lpwai;
 }
 
@@ -299,9 +302,9 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     INT lenAgent = lstrlenW(lpszAgent)+1;
     INT lenProxy = lstrlenW(lpszProxy)+1;
     INT lenBypass = lstrlenW(lpszProxyBypass)+1;
-    CHAR *szAgent = (CHAR *)malloc(lenAgent*sizeof(CHAR));
-    CHAR *szProxy = (CHAR *)malloc(lenProxy*sizeof(CHAR));
-    CHAR *szBypass = (CHAR *)malloc(lenBypass*sizeof(CHAR));
+    CHAR *szAgent = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenAgent*sizeof(CHAR));
+    CHAR *szProxy = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenProxy*sizeof(CHAR));
+    CHAR *szBypass = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenBypass*sizeof(CHAR));
 
     if (!szAgent || !szProxy || !szBypass)
     {
@@ -323,9 +326,9 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 
     rc = InternetOpenA(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
 
-    free(szAgent);
-    free(szProxy);
-    free(szBypass);
+    HeapFree(GetProcessHeap(), 0, szAgent);
+    HeapFree(GetProcessHeap(), 0, szProxy);
+    HeapFree(GetProcessHeap(), 0, szBypass);
 
     return rc;
 }
@@ -422,7 +425,9 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
 {
     HINTERNET rc = (HINTERNET) NULL;
 
-    TRACE("ServerPort %i\n",nServerPort);
+    TRACE("(%p, %s, %i, %s, %s, %li, %li, %li)\n", hInternet, debugstr_a(lpszServerName),
+	  nServerPort, debugstr_a(lpszUserName), debugstr_a(lpszPassword),
+	  dwService, dwFlags, dwContext);
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
@@ -444,6 +449,7 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
             break;
     }
 
+    TRACE("returning %p\n", rc);
     return rc;
 }
 
@@ -464,37 +470,42 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET rc = (HINTERNET)NULL;
-    INT lenServer = lstrlenW(lpszServerName)+1;
-    INT lenUser = lstrlenW(lpszUserName)+1;
-    INT lenPass = lstrlenW(lpszPassword)+1;
-    CHAR *szServerName = (CHAR *)malloc(lenServer*sizeof(CHAR));
-    CHAR *szUserName = (CHAR *)malloc(lenUser*sizeof(CHAR));
-    CHAR *szPassword = (CHAR *)malloc(lenPass*sizeof(CHAR));
+    INT lenServer = 0;
+    INT lenUser = 0;
+    INT lenPass = 0;
+    CHAR *szServerName = NULL;
+    CHAR *szUserName = NULL;
+    CHAR *szPassword = NULL;
 
-    if (!szServerName || !szUserName || !szPassword)
+    if (lpszServerName)
     {
-        if (szServerName)
-            free(szServerName);
-        if (szUserName)
-            free(szUserName);
-        if (szPassword)
-            free(szPassword);
-        return (HINTERNET)NULL;
+	lenServer = lstrlenW(lpszServerName)+1;
+        szServerName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenServer*sizeof(CHAR));
+        WideCharToMultiByte(CP_ACP, -1, lpszServerName, -1, szServerName, lenServer,
+                            NULL, NULL);
+    }
+    if (lpszUserName)
+    {
+	lenUser = lstrlenW(lpszUserName)+1;
+        szUserName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUser*sizeof(CHAR));
+        WideCharToMultiByte(CP_ACP, -1, lpszUserName, -1, szUserName, lenUser,
+                            NULL, NULL);
+    }
+    if (lpszPassword)
+    {
+	lenPass = lstrlenW(lpszPassword)+1;
+        szPassword = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenPass*sizeof(CHAR));
+        WideCharToMultiByte(CP_ACP, -1, lpszPassword, -1, szPassword, lenPass,
+                            NULL, NULL);
     }
 
-    WideCharToMultiByte(CP_ACP, -1, lpszServerName, -1, szServerName, lenServer,
-        NULL, NULL);
-    WideCharToMultiByte(CP_ACP, -1, lpszUserName, -1, szUserName, lenUser,
-        NULL, NULL);
-    WideCharToMultiByte(CP_ACP, -1, lpszPassword, -1, szPassword, lenPass,
-        NULL, NULL);
 
     rc = InternetConnectA(hInternet, szServerName, nServerPort,
         szUserName, szPassword, dwService, dwFlags, dwContext);
 
-    free(szServerName);
-    free(szUserName);
-    free(szPassword);
+    if (szServerName) HeapFree(GetProcessHeap(), 0, szServerName);
+    if (szUserName) HeapFree(GetProcessHeap(), 0, szUserName);
+    if (szPassword) HeapFree(GetProcessHeap(), 0, szPassword);
     return rc;
 }
 
@@ -870,7 +881,7 @@ BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen, LPCWS
 {
     TRACE("%s (%d)\n", debugstr_wn(lpszStart,len), len);
 
-    if (*dwComponentLen != 0)
+    if (*dwComponentLen != 0 || *lppszComponent == NULL)
     {
         if (*lppszComponent == NULL)
         {
@@ -1244,7 +1255,10 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD;
+            FIXME("This shouldn't be here! We don't support this kind"
+                  " of connection anymore. Must use NETCON functions,"
+                  " especially if using SSL\n");
+            nSocket = ((LPWININETHTTPREQA)hFile)->netConnection.socketFD;
             break;
 
         case WH_HFILE:
@@ -1288,14 +1302,29 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     if (NULL == lpwh)
         return FALSE;
 
+    /* FIXME: this should use NETCON functions! */
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            nSocket = ((LPWININETHTTPREQA)hFile)->nSocketFD;
+            if (!NETCON_recv(&((LPWININETHTTPREQA)hFile)->netConnection, lpBuffer,
+                             dwNumOfBytesToRead, 0, (int *)dwNumOfBytesRead))
+            {
+                *dwNumOfBytesRead = 0;
+                retval = TRUE; /* Under windows, it seems to return 0 even if nothing was read... */
+            }
+            else
+                retval = TRUE;
             break;
 
         case WH_HFILE:
+            /* FIXME: FTP should use NETCON_ stuff */
             nSocket = ((LPWININETFILE)hFile)->nDataSocket;
+            if (nSocket != -1)
+            {
+                int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, 0);
+                retval = (res >= 0);
+                *dwNumOfBytesRead = retval ? res : 0;
+            }
             break;
 
         default:
@@ -1356,7 +1385,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
     LPWININETHANDLEHEADER lpwhh;
     BOOL bSuccess = FALSE;
 
-    TRACE("0x%08lx\n", dwOption);
+    TRACE("(%p, 0x%08lx, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
     if (NULL == hInternet)
     {
@@ -1631,86 +1660,6 @@ BOOL WINAPI InternetSetOptionExW(HINTERNET hInternet, DWORD dwOption,
 
 
 /***********************************************************************
- *           InternetGetCookieA (WININET.@)
- *
- * Retrieve cookie from the specified url
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
-    LPSTR lpCookieData, LPDWORD lpdwSize)
-{
-    FIXME("STUB\n");
-    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl),debugstr_a(lpszCookieName),
-        lpCookieData);
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           InternetGetCookieW (WININET.@)
- *
- * Retrieve cookie from the specified url
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI InternetGetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
-    LPWSTR lpCookieData, LPDWORD lpdwSize)
-{
-    FIXME("STUB\n");
-    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl), debugstr_w(lpszCookieName),
-        lpCookieData);
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           InternetSetCookieA (WININET.@)
- *
- * Sets cookie for the specified url
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
-    LPCSTR lpCookieData)
-{
-    FIXME("STUB\n");
-    TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
-        debugstr_a(lpszCookieName), debugstr_a(lpCookieData));
-    return FALSE;
-}
-
-
-/***********************************************************************
- *           InternetSetCookieW (WININET.@)
- *
- * Sets cookie for the specified url
- *
- * RETURNS
- *    TRUE  on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI InternetSetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
-    LPCWSTR lpCookieData)
-{
-    FIXME("STUB\n");
-    TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
-        debugstr_w(lpszCookieName), debugstr_w(lpCookieData));
-    return FALSE;
-}
-
-
-/***********************************************************************
  *	InternetCheckConnectionA (WININET.@)
  *
  * Pings a requested host to check internet connection
@@ -1807,11 +1756,11 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
     BOOL rc;
 
     len = lstrlenW(lpszUrl)+1;
-    if (!(szUrl = (CHAR *)malloc(len*sizeof(CHAR))))
+    if (!(szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, len*sizeof(CHAR))))
         return FALSE;
     WideCharToMultiByte(CP_ACP, -1, lpszUrl, -1, szUrl, len, NULL, NULL);
     rc = InternetCheckConnectionA((LPCSTR)szUrl, dwFlags, dwReserved);
-    free(szUrl);
+    HeapFree(GetProcessHeap(), 0, szUrl);
     
     return rc;
 }
@@ -1832,6 +1781,10 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
   char protocol[32], hostName[MAXHOSTNAME], userName[1024];
   char password[1024], path[2048], extra[1024];
   HINTERNET client = NULL, client1 = NULL;
+
+  TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
+       dwHeadersLength, dwFlags, dwContext);
+
   urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
   urlComponents.lpszScheme = protocol;
   urlComponents.dwSchemeLength = 32;
@@ -1907,15 +1860,15 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 
     INT lenUrl = lstrlenW(lpszUrl)+1;
     INT lenHeaders = lstrlenW(lpszHeaders)+1;
-    CHAR *szUrl = (CHAR *)malloc(lenUrl*sizeof(CHAR));
-    CHAR *szHeaders = (CHAR *)malloc(lenHeaders*sizeof(CHAR));
+    CHAR *szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(CHAR));
+    CHAR *szHeaders = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(CHAR));
 
     if (!szUrl || !szHeaders)
     {
         if (szUrl)
-            free(szUrl);
+            HeapFree(GetProcessHeap(), 0, szUrl);
         if (szHeaders)
-            free(szHeaders);
+            HeapFree(GetProcessHeap(), 0, szHeaders);
         return (HINTERNET)NULL;
     }
 
@@ -1927,8 +1880,8 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     rc = InternetOpenUrlA(hInternet, szUrl, szHeaders,
         dwHeadersLength, dwFlags, dwContext);
 
-    free(szUrl);
-    free(szHeaders);
+    HeapFree(GetProcessHeap(), 0, szUrl);
+    HeapFree(GetProcessHeap(), 0, szHeaders);
 
     return rc;
 }
@@ -2266,7 +2219,6 @@ LPSTR INTERNET_GetResponseBuffer()
     return lpwite->response;
 }
 
-
 /***********************************************************************
  *           INTERNET_GetNextLine  (internal)
  *
@@ -2340,7 +2292,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
 {
     LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hFile;
     INT retval = -1;
-    int nSocket = -1;
+    char buffer[4048];
 
 
     if (NULL == lpwhr)
@@ -2349,32 +2301,24 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
         return FALSE;
     }
 
-    TRACE("-->  %p %i %i\n",lpwhr,lpwhr->hdr.htype,lpwhr->nSocketFD);
+    TRACE("-->  %p %i\n",lpwhr,lpwhr->hdr.htype);
 
     switch (lpwhr->hdr.htype)
     {
-        case WH_HHTTPREQ:
-            nSocket = lpwhr->nSocketFD;
-            break;
+    case WH_HHTTPREQ:
+        if (!NETCON_recv(&((LPWININETHTTPREQA)hFile)->netConnection, buffer,
+                         4048, MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
+        {
+            SetLastError(ERROR_NO_MORE_FILES);
+            retval = FALSE;
+        }
+        else
+            retval = TRUE;
+        break;
 
-        default:
-            break;
-    }
-
-    if (nSocket != -1)
-    {
-        char buffer[4048];
-
-        retval = recv(nSocket,buffer,4048,MSG_PEEK);
-    }
-    else
-    {
-        SetLastError(ERROR_NO_MORE_FILES);
-    }
-
-    if (lpdwNumberOfBytesAvailble)
-    {
-        (*lpdwNumberOfBytesAvailble) = retval;
+    default:
+        FIXME("unsuported file type\n");
+        break;
     }
 
     TRACE("<-- %i\n",retval);

@@ -161,7 +161,6 @@ AC_CHECK_HEADERS(gif_lib.h,
                       [AC_DEFINE(HAVE_LIBGIF,1)
                        GIFLIB="-lgif"])]))
 
-
 AC_SUBST(XLIB)
 AC_SUBST(XFILES)
 XFILES=""
@@ -910,6 +909,8 @@ then
   WINE_GET_SONAME(GL,glXQueryExtension,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(cups,cupsGetDefault)
   WINE_GET_SONAME(jack,jack_client_new)
+  WINE_GET_SONAME(ssl,SSL_library_init)
+  WINE_GET_SONAME(crypto,BIO_new_socket)
 fi
 
 
@@ -1004,6 +1005,7 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	openssl/ssl.h \
 	pty.h \
 	pwd.h \
 	regex.h \

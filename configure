@@ -6672,7 +6672,6 @@ done
 
 
 
-
 XFILES=""
 
 OPENGLFILES=""
@@ -12848,6 +12847,136 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBJACK "$ac_cv_lib_soname_jack"
 _ACEOF
 fi
+
+echo "$as_me:$LINENO: checking for -lssl soname" >&5
+echo $ECHO_N "checking for -lssl soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_ssl+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lssl  $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char SSL_library_init ();
+int
+main ()
+{
+SSL_library_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_ssl=`$ac_cv_path_LDD conftest$ac_exeext | grep libssl\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_ssl" = "x"
+  then
+     ac_cv_lib_soname_ssl="libssl.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_soname_ssl="libssl.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_ssl" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_ssl" >&6
+if test "x$ac_cv_lib_soname_ssl" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBSSL "$ac_cv_lib_soname_ssl"
+_ACEOF
+fi
+
+echo "$as_me:$LINENO: checking for -lcrypto soname" >&5
+echo $ECHO_N "checking for -lcrypto soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_crypto+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char BIO_new_socket ();
+int
+main ()
+{
+BIO_new_socket ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_crypto=`$ac_cv_path_LDD conftest$ac_exeext | grep libcrypto\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_crypto" = "x"
+  then
+     ac_cv_lib_soname_crypto="libcrypto.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_soname_crypto="libcrypto.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_crypto" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_crypto" >&6
+if test "x$ac_cv_lib_soname_crypto" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBCRYPTO "$ac_cv_lib_soname_crypto"
+_ACEOF
+fi
 fi
 
 
@@ -13445,6 +13574,7 @@ done
 
 
 
+
 for ac_header in \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -13473,6 +13603,7 @@ for ac_header in \
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	openssl/ssl.h \
 	pty.h \
 	pwd.h \
 	regex.h \
