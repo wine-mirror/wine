@@ -31,10 +31,11 @@ TODO:
   - (started)Implement mutual exclusion on object data for existing functions
   - (done) Create and move to correct dll directories (dplay and dplayx)
   - (done) Implement dplay in terms of dplayx
-  - (started) Need a better internal implementation for the objects which scales and 
-    preferably doesn't involve casting structures (dplobby done)
-  - (started) More generic initialization and destruction helper methods based off
-    the chosen internal implementation (dplobby done)
+  - (done) Need a better internal implementation for the objects which scales and 
+    preferably doesn't involve casting structures. Solution is a crude ctor/dtor
+    which can actually trap some runtime errors.
+  - (done) More generic initialization and destruction helper methods based off
+    the chosen internal implementation. Solution is a crude ctor/dtor.
   - Use only windows routines where an equivalent is available
   - (done) Fix wine dplay.h and dplobby.h header files to allow apps to create the ansi versions
   - (started) Port some WineLib test programs using sdk programs (both C and C++ progs)  
@@ -45,6 +46,8 @@ TODO:
   - Addition of DirectX 7.0 functionality for direct play (try to catch that moving train)
   - bug fixes ;)
   - Implement some WineLib test programs using sdk programs as a skeleton
+  - Change all RegEnumKey calls to RegEnumKeyEx and change enumeration pattern to allow
+    error handling.
 
 Programs to make work:
   - lserver.exe (from sdk)
