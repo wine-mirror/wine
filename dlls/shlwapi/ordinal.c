@@ -1572,29 +1572,41 @@ DWORD WINAPI SHLWAPI_241 ()
 
 /*************************************************************************
  *      @	[SHLWAPI.266]
+ *
+ * native does at least approximately:
+ *     strcpyW(newstr, x);
+ *     strcatW(newstr, "\\Restrictions");
+ *     if (RegOpenKeyExA(80000001, newstr, 00000000,00000001,40520b78))
+ *        return 0;
+ *    *unknown*
  */
 DWORD WINAPI SHLWAPI_266 (
 	LPVOID w,
-	LPVOID x,
+	LPVOID x,   /* [in] partial registry key */
 	LPVOID y,
 	LPVOID z)
 {
 	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
-	return 0xabba1248;
+	return /* 0xabba1248 */ 0;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.267]
  */
 HRESULT WINAPI SHLWAPI_267 (
-	LPVOID w, /* [???] NOTE: same as 1th parameter of SHLWAPI_219 */
-	LPVOID x, /* [???] NOTE: same as 2nd parameter of SHLWAPI_219 */
-	LPVOID y,
-	LPVOID z)
+	LPVOID w, 
+	LPVOID x, 
+	LPVOID y, /* [???] NOTE: same as 3rd parameter of SHLWAPI_219 */
+	LPVOID z) /* [???] NOTE: same as 4th parameter of SHLWAPI_219 */
 {
 	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
+
+	/* native seems to do:
+	 *  SHLWAPI_219 ((LPVOID)(((LPSTR)x)-4), ???, (REFIID) y, (LPVOID*) z);
+	 */
+
 	*((LPDWORD)z) = 0xabba1200;
-	return 0xabba1254;
+	return /* 0xabba1254 */ 0;
 }
 
 /*************************************************************************
@@ -1611,11 +1623,19 @@ DWORD WINAPI SHLWAPI_268 (
 /*************************************************************************
  *      @	[SHLWAPI.276]
  *
+ * on first call process does following:  other calls just returns 2
+ *  instance = LoadLibraryA("SHELL32.DLL");
+ *  func = GetProcAddress(instance, "DllGetVersion");
+ *  ret = RegOpenKeyExA(80000002, "Software\\Microsoft\\Internet Explorer",00000000,0002001f, newkey);
+ *  ret = RegQueryValueExA(newkey, "IntegratedBrowser",00000000,00000000,4052588c,40525890);
+ *  RegCloseKey(newkey);
+ *  FreeLibrary(instance);
+ *  return 2;
  */
 DWORD WINAPI SHLWAPI_276 ()
 {
 	FIXME("()stub\n");
-	return /* 0xabba1244 */ 0;
+	return /* 0xabba1244 */ 2;
 }
 
 /*************************************************************************
@@ -1814,26 +1834,24 @@ DWORD WINAPI SHLWAPI_346 (
 /*************************************************************************
  *      @	[SHLWAPI.350]
  *
- * seems to be W interface to GetFileVersionInfoSizeA
+ * seems to be late bound call to GetFileVersionInfoSizeW
  */
 DWORD WINAPI SHLWAPI_350 (
 	LPWSTR x,
 	LPVOID y)
 {
-static DWORD   WINAPI (*pfnFunc)(LPCSTR,LPDWORD) = NULL;
-        CHAR mbpath[MAX_PATH];
+static DWORD   WINAPI (*pfnFunc)(LPCWSTR,LPDWORD) = NULL;
         DWORD ret;
 
-	GET_FUNC(version, "GetFileVersionInfoSizeA", 0);
-        WideCharToMultiByte(0, 0, x, -1, mbpath, MAX_PATH, 0, 0);
-	ret = pfnFunc(mbpath, y);
+	GET_FUNC(version, "GetFileVersionInfoSizeW", 0);
+	ret = pfnFunc(x, y);
 	return 0x208 + ret;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.351]
  *
- * seems to be W interface to GetFileVersionInfoA
+ * seems to be late bound call to GetFileVersionInfoW
  */
 BOOL  WINAPI SHLWAPI_351 (
 	LPWSTR w,   /* [in] path to dll */
@@ -1841,18 +1859,16 @@ BOOL  WINAPI SHLWAPI_351 (
 	DWORD  y,   /* [in] return value from .350 - assume length */
 	LPVOID z)   /* [in/out] buffer (+0x208 sent to GetFileVersionInfoA) */
 {
-        static BOOL    WINAPI (*pfnFunc)(LPCSTR,DWORD,DWORD,LPVOID) = NULL;
-        CHAR mbpath[MAX_PATH];
+        static BOOL    WINAPI (*pfnFunc)(LPCWSTR,DWORD,DWORD,LPVOID) = NULL;
 
-	GET_FUNC(version, "GetFileVersionInfoA", 0);
-	WideCharToMultiByte(0, 0, w, -1, mbpath, MAX_PATH, 0, 0);
-	return pfnFunc(mbpath  , x, y-0x208, z+0x208);
+	GET_FUNC(version, "GetFileVersionInfoW", 0);
+	return pfnFunc(w, x, y-0x208, z+0x208);
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.352]
  *
- * seems to be W interface to VerQueryValueA
+ * seems to be late bound call to VerQueryValueW
  */
 WORD WINAPI SHLWAPI_352 (
 	LPVOID w,   /* [in] buffer from _351 */
@@ -1861,18 +1877,10 @@ WORD WINAPI SHLWAPI_352 (
 	LPVOID y,   /* [out]  ver buffer - passed to VerQueryValueA as #3 */
 	UINT*  z)   /* [in]   ver length - passed to VerQueryValueA as #4 */
 {
-        static WORD    WINAPI (*pfnFunc)(LPVOID,LPCSTR,LPVOID*,UINT*) = NULL;
-        CHAR buf1[MAX_PATH];
-	WORD ret;
+        static WORD    WINAPI (*pfnFunc)(LPVOID,LPCWSTR,LPVOID*,UINT*) = NULL;
 
-	GET_FUNC(version, "VerQueryValueA", 0);
-	WideCharToMultiByte(0, 0, x, lstrlenW(x)+1, buf1, MAX_PATH, 0, 0);
-	ret = pfnFunc(w+0x208, buf1, y, z);
-	if (CompareStringA(GetThreadLocale(), NORM_IGNORECASE, buf1, 1,
-			   "\\StringFileInfo", 15) == 2 /* CSTR_EQUAL */) {
-	    ERR("Need to translate back to wide - should fail now\n");
-	}
-	return ret;
+	GET_FUNC(version, "VerQueryValueW", 0);
+	return pfnFunc(w+0x208, x, y, z);
 }
 
 /**************************************************************************
