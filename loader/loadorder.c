@@ -58,6 +58,7 @@ static struct tagDllOverride {
         {"icmp",                        "builtin"},
 	/* we have to use libglide2x.so instead of glide2x.dll ... */
 	{"glide2x",			"so,native"},
+	{"glide3x",			"so,native"},
 	{"odbc32",			"builtin"},
 	{"opengl32",                    "builtin,native"},
 	{"shfolder",                    "builtin,native"},
