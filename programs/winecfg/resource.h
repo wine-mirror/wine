@@ -54,9 +54,12 @@
 #define IDC_XSHM                        1028
 #define IDC_RAD_BUILTIN                 1029
 #define IDC_RAD_NATIVE                  1030
-#define IDC_LIST_DLLS                   1031
-#define IDC_LIST_BUILTIN_DLLS           1031
-#define IDC_LIST_NATIVE_DLLS            1032
+#define IDC_TREE_DLLS                   1031
+#define IDC_DLLS_ADDAPP                 8000
+#define IDC_DLLS_ADDDLL                 8001
+#define IDC_DLLS_REMOVEAPP              8002
+#define IDC_DLLS_REMOVEDLL              8003
+#define IDC_DLLLIST                     8004
 #define IDC_RADIO_DEFAULT_BUILTIN       1033
 #define IDC_RADIO_DEFAULT_NATIVE        1034
 #define IDC_RADIO_VIRTUAL               1035

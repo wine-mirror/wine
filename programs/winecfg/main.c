@@ -177,22 +177,6 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-
-INT_PTR CALLBACK
-DllDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-    case WM_COMMAND:
-	break;
-
-    default:
-	break;
-    }
-    return FALSE;
-}
-
-
 #define NUM_PROPERTY_PAGES 5
 INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
@@ -235,7 +219,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
     psp[2].hInstance = hInstance;
     psp[2].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
     psp[2].u2.pszIcon = NULL;
-    psp[2].pfnDlgProc = DllDlgProc;
+    psp[2].pfnDlgProc = LibrariesDlgProc;
     psp[2].pszTitle = "Libraries";
     psp[2].lParam = 0;
     

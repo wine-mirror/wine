@@ -132,7 +132,8 @@ end:
  * const char *value : the value to set the configuration key to
  *
  * Returns 0 on success, non-zero otherwise
- *
+ * 
+ * If *valueName or *value is NULL, an empty section will be created
  */
 int setConfigValue (const char *subkey, const char *valueName, const char *value) {
     DWORD res = 1;
@@ -141,11 +142,10 @@ int setConfigValue (const char *subkey, const char *valueName, const char *value
     WINE_TRACE("subkey=%s, valueName=%s, value=%s\n", subkey, valueName, value);
 
     assert( subkey != NULL );
-    assert( valueName != NULL );
-    assert( value != NULL );
     
     res = RegCreateKey(configKey, subkey, &key);
     if (res != ERROR_SUCCESS) goto end;
+    if (value == NULL || valueName == NULL) goto end;
 
     res = RegSetValueEx(key, valueName, 0, REG_SZ, value, strlen(value) + 1);
     if (res != ERROR_SUCCESS) goto end;

@@ -84,15 +84,6 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Estático",IDC_STATIC,8,4,244,157
-    CONTROL         "Integrado (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,59,144,57,10
-    CONTROL         "Nativo (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,121,144,72,10
-    LTEXT           "Las librerías pueden especificarse individualmente para ser integradas o nativas. Una entrada de DLL especificada como ""*"" se refiere a todas las DLL no especificadas explícitamente.",
-                    IDC_STATIC,15,17,228,27
-    CONTROL         "List3",IDC_LIST_DLLS,"SysListView32",LVS_LIST | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | 
-                    WS_TABSTOP,15,47,227,90
-    LTEXT           "Orden de carga:",IDC_STATIC,16,144,37,8
 END
 
 IDD_SYSTEMCFG DIALOG DISCARDABLE  0, 0, 260, 250
