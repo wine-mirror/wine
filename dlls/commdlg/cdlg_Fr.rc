@@ -92,6 +92,37 @@ FONT 8, "Helv"
  COMBOBOX 1138, 155, 110, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
 }
 
+PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Mise en page"
+FONT 8, "Helv"
+BEGIN
+  CONTROL "", rct1, 130, 0x00020006, 80, 8, 80, 80,  SS_WHITERECT
+  CONTROL "", rct2, 130, 0x00020005, 160, 12, 4, 80, SS_GRAYRECT
+  CONTROL "", rct3, 130, 0x00020005, 84, 88, 80, 4,  SS_GRAYRECT
+  GROUPBOX "Papier", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Taille:", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "&Source:", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Orientation", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "&Portrait", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "P&aysage", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "Marges", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "&Droite:", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Gauche:", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Haut:", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Bas:", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "Annuler", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "&Imprimante...", psh3, 184, 220, 48, 14
+END
+
+
 CHOOSE_FONT DIALOG DISCARDABLE  13, 54, 264, 147
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Polices"
@@ -187,4 +218,195 @@ FONT 8, "Helv"
  PUSHBUTTON "Remplacer &tout", 1025, 174, 38, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Fermer", 2, 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Aide", 1038, 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 307, 165
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ouvrir"
+FONT 8, "helv"
+{
+    LTEXT	"&Rechercher dans",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+    COMBOBOX	IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 122, 17, NOT WS_GROUP | NOT WS_VISIBLE
+    LISTBOX	IDC_SHELLSTATIC,4,20,292,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
+    
+    LTEXT	"&Nom du fichier:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
+    EDITTEXT	IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
+    
+    LTEXT	"&Type du fichier",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
+    COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL	"&Schreibgeschützt",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+
+
+    DEFPUSHBUTTON	"Ouvrir",		 IDOK,242,110,50,14
+    PUSHBUTTON		"Annuler",		 IDCANCEL,242,128,50,14
+    PUSHBUTTON		"&Aide",		 pshHelp,242,145,50,14
+}
+
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Impression"
+FONT 8, "Helv"
+{
+    DEFPUSHBUTTON   "OK",             IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    PUSHBUTTON      "Annuler",        IDCANCEL, 232,164, 48,14, WS_GROUP
+    PUSHBUTTON      "&Aide",          pshHelp,  50, 161, 48,14, WS_GROUP
+
+    GROUPBOX        "Imprimante",     grp4,   8,  4, 272,84, WS_GROUP
+    CONTROL         "Imprimer dans un fichier", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    PUSHBUTTON      "Propriétés",     psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Nom:",          stc6,  16, 20,  36,8
+    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Etat:",          stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Emplacement:",   stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Commentaire:",   stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Copies",         grp2, 160, 92, 120,64, WS_GROUP
+    LTEXT           "Nombre de copies:",stc5,168,108,68,8
+    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "Copies assemblées",chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+
+    GROUPBOX        "Etendue de pages",  grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "Toutes",         rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "Pages",          rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+    CONTROL         "Selection",      rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&de:",           stc2,  52,124,  20,8
+    RTEXT           "&à:",            stc3, 100,124,  16,8
+}
+
+PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Configuration de l'imprimante"
+FONT 8, "Helv"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,156,48,14,WS_GROUP
+    PUSHBUTTON      "Annuler",IDCANCEL,232,156,48,14
+/*    PUSHBUTTON      "Réseau...", psh5, 284,156,48,14 */
+
+    GROUPBOX        "Imprimante",     grp4,   8,  4, 272,84, WS_GROUP
+    PUSHBUTTON      "&Propriétés", psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Nom:",          stc6,  16, 20,  36,8
+    COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Etat:",          stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "[aucun]",        stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "[keiner]",       stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Emplacement:",   stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "[aucun]",        stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Commentaire:",   stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "[aucun]",        stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Papier",         grp2,   8, 92, 164,56, WS_GROUP
+    LTEXT           "&Taille:",       stc2,  16,108,  36, 8
+    COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Source:",        stc3,  16,128,  36, 8
+    COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    
+    GROUPBOX        "Orientattion",   grp1, 180, 92, 100,56, WS_GROUP
+    ICON            "",               ico1, 195,112,  18,20, WS_GROUP
+    CONTROL         "&Portrait",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "&Paysage",       rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+END
+
+STRINGTABLE DISCARDABLE 
+{
+    IDS_ABOUTBOX            "A propos du choix de répertoires"
+    IDS_DOCUMENTFOLDERS     "Répertoire Documents"
+    IDS_PERSONAL            "Mes Documents"
+    IDS_FAVORITES           "Mes Favoris"
+    IDS_PATH                "System Directory"
+    IDS_DESKTOP             "Desktop"
+    IDS_FONTS               "Polices"
+    IDS_MYCOMPUTER          "Poste de travail"
+}
+
+STRINGTABLE DISCARDABLE 
+{
+    IDS_SYSTEMFOLDERS       "Répertoires système"
+    IDS_LOCALHARDRIVES      "Disques locaux"
+    IDS_FILENOTFOUND        "Fichier non trouvé"
+    IDS_VERIFYFILE          "Prière de vérifier que le nom de fichier indiqué est correct"
+    IDS_CREATEFILE          "Ce fichier n'existe pas.\nSouhaitez-vous le créer ?"
+    IDL_OVERWRITEFILE       "Ce fichier existe déjà.\nVoulez-vous le remplacer ?"
+    IDS_INVALID_FILENAME_TITLE "Le chemin d'accès contient des caractères invalides"
+    IDS_INVALID_FILENAME    "Une nom de fichier ne peut contenir un des caractères suivants : \n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Le chemin d'accès n'existe pas"
+    IDS_FILENOTEXISTING     "Le fichier n'existe pas"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_UPFOLDER         "Remonter d'un niveau"
+    IDS_NEWFOLDER        "Créer un nouveau dossier"
+    IDS_LISTVIEW         "Liste"
+    IDS_REPORTVIEW       "Détails"
+    IDS_TODESKTOP        "Browse to Desktop"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    PD32_PRINT_TITLE       "Imprimer"
+
+    PD32_VALUE_UREADABLE                  "Entrée illisible"
+    PD32_INVALID_PAGE_RANGE "Cette valeur n'est pas dans l'intervalle de pages\n\
+Veuillez indiquer une valeur entre %d et %d."
+    PD32_FROM_NOT_ABOVE_TO                "Le champ 'de' ne peut être plus grand que le champ 'à'."
+    PD32_MARGINS_OVERLAP                  "Les marges se recouvrent ou dépassent du papier\n\
+Veuillez indiquer de nouvelles valeurs."
+    PD32_NR_OF_COPIES_EMPTY               "Le champ 'Copies' est vide.\n\
+Veuillez entrer un nombre et r&essayer."
+    PD32_TOO_LARGE_COPIES                 "Votre imprimante ne peut gérer autant de copies.\n\
+Veuillez indiquer un nombre de copies entre 1 et %d."
+    PD32_PRINT_ERROR                      "Une erreur d'impression est intervenue."
+    PD32_NO_DEFAULT_PRINTER               "Pas d'imprimante par défaut."
+    PD32_CANT_FIND_PRINTER                "Impossible de trouver l'imprimante."
+    PD32_OUT_OF_MEMORY                    "Pas assez de mémoire."
+    PD32_GENERIC_ERROR                    "Une erreur est intervenue."
+    PD32_DRIVER_UNKNOWN                   "Pilote d'imprimante inconnu."
+
+    PD32_DEFAULT_PRINTER                  "Imprimante par défaut; "
+    PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Il y a %d documents dans la file d'attente"
+    PD32_PRINT_ALL_X_PAGES                "&Toutes les %d pages"
+    PD32_MARGINS_IN_INCHES                "Marges [pouces]"
+    PD32_MARGINS_IN_MILIMETERS            "Marges [mm]"
+    PD32_MILIMETERS                       "mm"
+
+    PD32_PRINTER_STATUS_READY             "Prêt; "
+    PD32_PRINTER_STATUS_PAUSED            "Suspendu; "
+    PD32_PRINTER_STATUS_ERROR             "Erreur; "
+    PD32_PRINTER_STATUS_PENDING_DELETION  "En attente de suppression; "
+    PD32_PRINTER_STATUS_PAPER_JAM         "Bourrage papier; "
+    PD32_PRINTER_STATUS_PAPER_OUT         "Plus de papier; "
+    PD32_PRINTER_STATUS_MANUAL_FEED       "Insertion manuelle du papier; "
+    PD32_PRINTER_STATUS_PAPER_PROBLEM     "Problème de papier; "
+    PD32_PRINTER_STATUS_OFFLINE           "L'imprimante n'est pas en ligne; "
+    PD32_PRINTER_STATUS_IO_ACTIVE         "IO Active; "
+    PD32_PRINTER_STATUS_BUSY              "Occupée; "
+    PD32_PRINTER_STATUS_PRINTING          "En cours d'impression; "
+    PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Le bac de sortie est plein; "
+    PD32_PRINTER_STATUS_NOT_AVAILABLE     "Non disponible; "
+    PD32_PRINTER_STATUS_WAITING           "En attente; "
+    PD32_PRINTER_STATUS_PROCESSING        "Traitement en cours; "
+    PD32_PRINTER_STATUS_INITIALIZING      "Démarrage en cours; "
+    PD32_PRINTER_STATUS_WARMING_UP        "Préchauffage; "
+    PD32_PRINTER_STATUS_TONER_LOW         "Toner presque vide; "
+    PD32_PRINTER_STATUS_NO_TONER          "Pas de toner; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_USER_INTERVENTION "Annulé par utilisateur; "
+    PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Plus assez de mémoire; "
+    PD32_PRINTER_STATUS_DOOR_OPEN         "La porte de l'imprimante est ouverte; "
+    PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Serveur d'impression inconnu; "
+    PD32_PRINTER_STATUS_POWER_SAVE        "Mode économie d'énergie; "
 }
