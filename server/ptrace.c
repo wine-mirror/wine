@@ -51,10 +51,10 @@ static int handle_child_status( struct thread *thread, int pid, int status )
         {
         case SIGSTOP:  /* continue at once if not suspended */
             if (!thread || !(thread->process->suspend + thread->suspend))
-                ptrace( PTRACE_CONT, pid, 1, sig );
+                ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
             break;
         default:  /* ignore other signals for now */
-            ptrace( PTRACE_CONT, pid, 1, sig );
+            ptrace( PTRACE_CONT, pid, (caddr_t)1, sig );
             break;
         }
         return sig;
@@ -126,7 +126,7 @@ void detach_thread( struct thread *thread, int sig )
         if (!(thread->suspend + thread->process->suspend)) stop_thread( thread );
         if (sig) kill( thread->unix_pid, sig );
         if (debug_level) fprintf( stderr, "%08x: *detached*\n", (unsigned int)thread );
-        ptrace( PTRACE_DETACH, thread->unix_pid, 1, sig );
+        ptrace( PTRACE_DETACH, thread->unix_pid, (caddr_t)1, sig );
         thread->attached = 0;
     }
     else
@@ -154,7 +154,7 @@ void continue_thread( struct thread *thread )
 {
     if (!thread->unix_pid) return;
     if (!thread->attached) kill( thread->unix_pid, SIGCONT );
-    else ptrace( PTRACE_CONT, thread->unix_pid, 1, SIGSTOP );
+    else ptrace( PTRACE_CONT, thread->unix_pid, (caddr_t)1, SIGSTOP );
 }
 
 /* suspend a thread to allow using ptrace on it */
@@ -179,7 +179,8 @@ int suspend_for_ptrace( struct thread *thread )
 /* read an int from a thread address space */
 int read_thread_int( struct thread *thread, const int *addr, int *data )
 {
-    if (((*data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, addr, 0 )) == -1) && errno)
+    *data = ptrace( PTRACE_PEEKDATA, thread->unix_pid, (caddr_t)addr, 0 );
+    if ( *data == -1 && errno)
     {
         file_set_error();
         return -1;
@@ -196,6 +197,7 @@ int write_thread_int( struct thread *thread, int *addr, int data, unsigned int m
         if (read_thread_int( thread, addr, &res ) == -1) return -1;
         data = (data & mask) | (res & ~mask);
     }
-    if ((res = ptrace( PTRACE_POKEDATA, thread->unix_pid, addr, data )) == -1) file_set_error();
+    if ((res = ptrace( PTRACE_POKEDATA, thread->unix_pid, (caddr_t)addr, data )) == -1)
+        file_set_error();
     return res;
 }
