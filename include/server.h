@@ -1616,11 +1616,15 @@ struct server_buffer_info
 
 /* client communication functions */
 
-extern unsigned int server_call_noerr( enum request req );
+extern unsigned int wine_server_call( enum request req );
 extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
-extern void *server_alloc_req( size_t fixed_size, size_t var_size );
+extern void *wine_server_alloc_req( size_t fixed_size, size_t var_size );
 extern const char *get_config_dir(void);
+
+/* compatibility macros */
+#define server_alloc_req(f,v) wine_server_alloc_req(f,v)
+#define server_call_noerr(req) wine_server_call(req)
 
 /* get a pointer to the request buffer */
 static inline void WINE_UNUSED *get_req_buffer(void)
@@ -1635,33 +1639,11 @@ static inline int WINE_UNUSED server_remaining( const void *ptr )
 }
 
 /* do a server call and set the last error code */
-static inline int server_call( enum request req )
+inline static unsigned int server_call( enum request req )
 {
-    unsigned int res = server_call_noerr( req );
+    unsigned int res = wine_server_call( req );
     if (res) SetLastError( RtlNtStatusToDosError(res) );
     return res;
-}
-
-/* copy a Unicode string to the server buffer */
-static inline void server_strcpyW( WCHAR *dst, const WCHAR *src )
-{
-    if (src)
-    {
-        WCHAR *end = (WCHAR *)NtCurrentTeb()->buffer_info - 1;
-        while ((dst < end) && *src) *dst++ = *src++;
-    }
-    *dst = 0;
-}
-
-/* copy and convert an ASCII string to the server buffer */
-static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
-{
-    if (src)
-    {
-        WCHAR *end = (WCHAR *)NtCurrentTeb()->buffer_info - 1;
-        while ((dst < end) && *src) *dst++ = (WCHAR)(unsigned char)*src++;
-    }
-    *dst = 0;
 }
 
 /* get a pointer to the variable part of the request */
@@ -1679,8 +1661,8 @@ inline static size_t server_data_size( const void *req )
 
 /* exception support for server calls */
 
-extern DWORD server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                       CONTEXT *context, EXCEPTION_FRAME **pdispatcher );
+extern DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                              CONTEXT *context, EXCEPTION_FRAME **pdispatcher );
 
 struct __server_exception_frame
 {
@@ -1691,7 +1673,7 @@ struct __server_exception_frame
 #define SERVER_START_REQ \
     do { \
         struct __server_exception_frame __f; \
-        __f.frame.Handler = server_exception_handler; \
+        __f.frame.Handler = __wine_server_exception_handler; \
         __f.info = *NtCurrentTeb()->buffer_info; \
         __wine_push_frame( &__f.frame ); \
         do {

@@ -46,6 +46,8 @@
 #define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
 
+#undef server_alloc_req
+
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
 {
@@ -112,10 +114,10 @@ static void server_perror( const char *err )
 
 
 /***********************************************************************
- *           server_exception_handler
+ *           __wine_server_exception_handler
  */
-DWORD server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
-                                CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
+DWORD __wine_server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                       CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
 {
     struct __server_exception_frame *server_frame = (struct __server_exception_frame *)frame;
     if ((record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
@@ -125,9 +127,9 @@ DWORD server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame
 
 
 /***********************************************************************
- *           server_alloc_req
+ *           wine_server_alloc_req
  */
-void *server_alloc_req( size_t fixed_size, size_t var_size )
+void *wine_server_alloc_req( size_t fixed_size, size_t var_size )
 {
     unsigned int pos = NtCurrentTeb()->buffer_info->cur_pos;
     union generic_request *req = (union generic_request *)((char *)NtCurrentTeb()->buffer + pos);
@@ -287,11 +289,11 @@ static void wait_reply_fd( int *fd )
 
 
 /***********************************************************************
- *           server_call_noerr
+ *           wine_server_call
  *
  * Perform a server call.
  */
-unsigned int server_call_noerr( enum request req )
+unsigned int wine_server_call( enum request req )
 {
     void *req_ptr = get_req_buffer();
     send_request( req, req_ptr );
@@ -586,11 +588,11 @@ int CLIENT_InitThread(void)
 
     SERVER_START_REQ
     {
-        struct init_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct init_thread_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->unix_pid = getpid();
         req->teb      = teb;
         req->entry    = teb->entry_point;
-        ret = server_call_noerr( REQ_INIT_THREAD );
+        ret = wine_server_call( REQ_INIT_THREAD );
     }
     SERVER_END_REQ;
     return ret;
@@ -606,7 +608,7 @@ int CLIENT_BootDone( int debug_level )
     int ret;
     SERVER_START_REQ
     {
-        struct boot_done_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct boot_done_request *req = wine_server_alloc_req( sizeof(*req), 0 );
         req->debug_level = debug_level;
         ret = server_call( REQ_BOOT_DONE );
     }
