@@ -573,9 +573,11 @@ static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename,
                 }
                 else
                 {
-                    /* Unknown extended header, so abort.
+                    /* Unknown extended header, but this file is nonetheless
+		       DOS-executable.
                      */
-                    return FALSE;
+                    *lpBinaryType = SCS_DOS_BINARY;
+	            return TRUE;
                 }
             }
         }
