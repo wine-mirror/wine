@@ -90,6 +90,7 @@ typedef struct
 {
     UINT      uFlags;
     HWND      hwnd;
+    BOOL      bNotifyUnicode;
     UINT      uId;
     RECT      rect;
     HINSTANCE hinst;
@@ -117,7 +118,6 @@ typedef struct
     INT      nAutoPopTime;
     INT      nInitialTime;
     RECT     rcMargin;
-    BOOL     bNotifyUnicode;
 
     TTTOOL_INFO *tools;
 } TOOLTIPS_INFO;
@@ -171,6 +171,100 @@ TOOLTIPS_Refresh (HWND hwnd, HDC hdc)
 	SetBkMode (hdc, oldBkMode);
 }
 
+static void TOOLTIPS_GetDispInfoA(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
+{
+    NMTTDISPINFOA ttnmdi;
+
+    /* fill NMHDR struct */
+    ZeroMemory (&ttnmdi, sizeof(NMTTDISPINFOA));
+    ttnmdi.hdr.hwndFrom = hwnd;
+    ttnmdi.hdr.idFrom = toolPtr->uId;
+    ttnmdi.hdr.code = TTN_GETDISPINFOA;
+    ttnmdi.lpszText = (LPSTR)&ttnmdi.szText;
+    ttnmdi.uFlags = toolPtr->uFlags;
+    ttnmdi.lParam = toolPtr->lParam;
+
+    TRACE("hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
+    SendMessageA(toolPtr->hwnd, WM_NOTIFY,
+                 (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
+
+    if (HIWORD((UINT)ttnmdi.lpszText) == 0) {
+        LoadStringW(ttnmdi.hinst, (UINT)ttnmdi.lpszText,
+               infoPtr->szTipText, INFOTIPSIZE);
+        if (ttnmdi.uFlags & TTF_DI_SETITEM) {
+            toolPtr->hinst = ttnmdi.hinst;
+            toolPtr->lpszText = (LPWSTR)ttnmdi.lpszText;
+        }
+    }
+    else if (ttnmdi.lpszText == 0) {
+        /* no text available */
+        infoPtr->szTipText[0] = '\0';
+    }
+    else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
+        INT max_len = (ttnmdi.lpszText == &ttnmdi.szText[0]) ? 
+                sizeof(ttnmdi.szText)/sizeof(ttnmdi.szText[0]) : -1;
+        MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, max_len,
+                            infoPtr->szTipText, INFOTIPSIZE);
+        if (ttnmdi.uFlags & TTF_DI_SETITEM) {
+            INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText,
+					  max_len, NULL, 0);
+            toolPtr->hinst = 0;
+            toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
+            MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
+                                toolPtr->lpszText, len);
+        }
+    }
+    else {
+        ERR("recursive text callback!\n");
+        infoPtr->szTipText[0] = '\0';
+    }
+}
+
+static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
+{
+    NMTTDISPINFOW ttnmdi;
+
+    /* fill NMHDR struct */
+    ZeroMemory (&ttnmdi, sizeof(NMTTDISPINFOW));
+    ttnmdi.hdr.hwndFrom = hwnd;
+    ttnmdi.hdr.idFrom = toolPtr->uId;
+    ttnmdi.hdr.code = TTN_GETDISPINFOW;
+    ttnmdi.lpszText = (LPWSTR)&ttnmdi.szText;
+    ttnmdi.uFlags = toolPtr->uFlags;
+    ttnmdi.lParam = toolPtr->lParam;
+
+    TRACE("hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
+    SendMessageW(toolPtr->hwnd, WM_NOTIFY,
+                 (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
+
+    if (HIWORD((UINT)ttnmdi.lpszText) == 0) {
+        LoadStringW(ttnmdi.hinst, (UINT)ttnmdi.lpszText,
+               infoPtr->szTipText, INFOTIPSIZE);
+        if (ttnmdi.uFlags & TTF_DI_SETITEM) {
+            toolPtr->hinst = ttnmdi.hinst;
+            toolPtr->lpszText = ttnmdi.lpszText;
+        }
+    }
+    else if (ttnmdi.lpszText == 0) {
+        /* no text available */
+        infoPtr->szTipText[0] = '\0';
+    }
+    else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKW) {
+        INT max_len = (ttnmdi.lpszText == &ttnmdi.szText[0]) ? 
+                sizeof(ttnmdi.szText)/sizeof(ttnmdi.szText[0]) : INFOTIPSIZE-1;
+        strncpyW(infoPtr->szTipText, ttnmdi.lpszText, max_len);
+        if (ttnmdi.uFlags & TTF_DI_SETITEM) {
+            INT len = max(strlenW(ttnmdi.lpszText), max_len);
+            toolPtr->hinst = 0;
+            toolPtr->lpszText =	Alloc ((len+1) * sizeof(WCHAR));
+            memcpy(toolPtr->lpszText, ttnmdi.lpszText, (len+1) * sizeof(WCHAR));
+        }
+    }
+    else {
+        ERR("recursive text callback!\n");
+        infoPtr->szTipText[0] = '\0';
+    }
+}
 
 static VOID
 TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
@@ -186,61 +280,10 @@ TOOLTIPS_GetTipText (HWND hwnd, TOOLTIPS_INFO *infoPtr, INT nTool)
     }
     else if (toolPtr->lpszText) {
 	if (toolPtr->lpszText == LPSTR_TEXTCALLBACKW) {
-	    NMTTDISPINFOA ttnmdi;
-
-	    /* fill NMHDR struct */
-	    ZeroMemory (&ttnmdi, sizeof(NMTTDISPINFOA));
-	    ttnmdi.hdr.hwndFrom = hwnd;
-	    ttnmdi.hdr.idFrom = toolPtr->uId;
-	    ttnmdi.hdr.code = TTN_GETDISPINFOA;
-	    ttnmdi.lpszText = (LPSTR)&ttnmdi.szText;
-	    ttnmdi.uFlags = toolPtr->uFlags;
-	    ttnmdi.lParam = toolPtr->lParam;
-
-	    TRACE("hdr.idFrom = %x\n", ttnmdi.hdr.idFrom);
-	    SendMessageA (toolPtr->hwnd, WM_NOTIFY,
-			    (WPARAM)toolPtr->uId, (LPARAM)&ttnmdi);
-
-	    if (HIWORD((UINT)ttnmdi.lpszText) == 0) {
-		LoadStringW (ttnmdi.hinst, (UINT)ttnmdi.lpszText,
-			       infoPtr->szTipText, INFOTIPSIZE);
-		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-		    toolPtr->hinst = ttnmdi.hinst;
-		    toolPtr->lpszText = (LPWSTR)ttnmdi.lpszText;
-		}
-	    }
-	    else if (ttnmdi.szText[0]) {
-	        MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText, 80,
-				    infoPtr->szTipText, INFOTIPSIZE);
-		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-		    INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText,
-						  80, NULL, 0);
-		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
-		    MultiByteToWideChar(CP_ACP, 0, ttnmdi.szText, 80,
-					toolPtr->lpszText, len);
-		}
-	    }
-	    else if (ttnmdi.lpszText == 0) {
-		/* no text available */
-		infoPtr->szTipText[0] = L'\0';
-	    }
-	    else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
-		MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
-				    infoPtr->szTipText, INFOTIPSIZE);
-		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
-		    INT len = MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText,
-						  -1, NULL, 0);
-		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
-		    MultiByteToWideChar(CP_ACP, 0, ttnmdi.lpszText, -1,
-					toolPtr->lpszText, len);
-		}
-	    }
-	    else {
-		ERR("recursive text callback!\n");
-		infoPtr->szTipText[0] = '\0';
-	    }
+	    if (toolPtr->bNotifyUnicode)
+		TOOLTIPS_GetDispInfoW(hwnd, infoPtr, toolPtr);
+	    else
+		TOOLTIPS_GetDispInfoA(hwnd, infoPtr, toolPtr);
 	}
 	else {
 	    /* the item is a usual (unicode) text */
@@ -668,6 +711,7 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     LPTTTOOLINFOA lpToolInfo = (LPTTTOOLINFOA)lParam;
     TTTOOL_INFO *toolPtr;
+    INT nResult;
 
     if (lpToolInfo == NULL)
 	return FALSE;
@@ -736,6 +780,18 @@ TOOLTIPS_AddToolA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TRACE("subclassing installed!\n");
     }
 
+    nResult = (INT) SendMessageA (toolPtr->hwnd, WM_NOTIFYFORMAT,
+				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
+    if (nResult == NFR_ANSI) {
+        toolPtr->bNotifyUnicode = FALSE;
+	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
+    } else if (nResult == NFR_UNICODE) {
+        toolPtr->bNotifyUnicode = TRUE;
+	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
+    } else {
+        TRACE (" -- WM_NOTIFYFORMAT returns: error!\n");
+    }
+
     return TRUE;
 }
 
@@ -746,6 +802,7 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr (hwnd);
     LPTTTOOLINFOW lpToolInfo = (LPTTTOOLINFOW)lParam;
     TTTOOL_INFO *toolPtr;
+    INT nResult;
 
     if (lpToolInfo == NULL)
 	return FALSE;
@@ -811,6 +868,18 @@ TOOLTIPS_AddToolW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			      (DWORD_PTR)hwnd);
 	}
 	TRACE("subclassing installed!\n");
+    }
+
+    nResult = (INT) SendMessageA (toolPtr->hwnd, WM_NOTIFYFORMAT,
+				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
+    if (nResult == NFR_ANSI) {
+        toolPtr->bNotifyUnicode = FALSE;
+	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
+    } else if (nResult == NFR_UNICODE) {
+        toolPtr->bNotifyUnicode = TRUE;
+	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
+    } else {
+        TRACE (" -- WM_NOTIFYFORMAT returns: error!\n");
     }
 
     return TRUE;
@@ -1906,7 +1975,6 @@ TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     TOOLTIPS_INFO *infoPtr;
     NONCLIENTMETRICSA nclm;
-    INT nResult;
 
     /* allocate memory for info structure */
     infoPtr = (TOOLTIPS_INFO *)Alloc (sizeof(TOOLTIPS_INFO));
@@ -1928,18 +1996,6 @@ TOOLTIPS_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     infoPtr->nTrackTool = -1;
 
     TOOLTIPS_SetDelayTime(hwnd, TTDT_AUTOMATIC, 0L);
-
-    nResult = (INT) SendMessageA (lpcs->hwndParent, WM_NOTIFYFORMAT,
-				  (WPARAM)hwnd, (LPARAM)NF_QUERY);
-    if (nResult == NFR_ANSI) {
-        infoPtr->bNotifyUnicode = FALSE;
-	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_ANSI\n");
-    } else if (nResult == NFR_UNICODE) {
-        infoPtr->bNotifyUnicode = TRUE;
-	TRACE(" -- WM_NOTIFYFORMAT returns: NFR_UNICODE\n");
-    } else {
-        TRACE (" -- WM_NOTIFYFORMAT returns: error!\n");
-    }
 
     SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOACTIVATE);
 
