@@ -97,8 +97,6 @@ typedef struct tagPropSheetInfo
   PropPageInfo* proppage;
   HFONT hFont;
   HFONT hFontBold;
-  int x;
-  int y;
   int width;
   int height;
   HIMAGELIST hImageList;
@@ -125,6 +123,10 @@ const WCHAR PropSheetInfoStr[] =
 
 #define INTRNL_ANY_WIZARD (PSH_WIZARD | PSH_WIZARD97_OLD | PSH_WIZARD97_NEW | PSH_WIZARD_LITE)
 
+/* Wizard metrics specified in DLUs */
+#define WIZARD_PADDING 7
+#define WIZARD_HEADER_HEIGHT 36
+                         	
 /******************************************************************************
  * Prototypes
  */
@@ -232,13 +234,43 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
  *
  * Retrieve rect from tab control and map into the dialog for SetWindowPos
  */
-static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg, RECT *rc)
+static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
+                                  RECT *rc, LPCPROPSHEETPAGEW ppshpage)
 {
-    HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+    if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {     
+        HWND hwndChild;
+        RECT r;
 
-    GetClientRect(hwndTabCtrl, rc);
-    SendMessageW(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)rc);
-    MapWindowPoints(hwndTabCtrl, hwndDlg, (LPPOINT)rc, 2);
+        if (((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
+             (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
+             !(ppshpage->dwFlags & PSP_HIDEHEADER)) ||
+            (psInfo->ppshheader.dwFlags & PSH_WIZARD))
+        {
+            rc->left = rc->top = WIZARD_PADDING;
+        }
+        else
+        {
+            rc->left = rc->top = 0;
+        }
+        rc->right = psInfo->width - rc->left;
+        rc->bottom = psInfo->height - rc->top;
+        MapDialogRect(hwndDlg, rc);
+
+        if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
+            (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
+            !(ppshpage->dwFlags & PSP_HIDEHEADER))
+        {
+            hwndChild = GetDlgItem(hwndDlg, IDC_SUNKEN_LINEHEADER);
+            GetClientRect(hwndChild, &r);
+            MapWindowPoints(hwndChild, hwndDlg, (LPPOINT) &r, 2);
+            rc->top += r.bottom + 1;
+        }
+    } else {
+        HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+        GetClientRect(hwndTabCtrl, rc);
+        SendMessageW(hwndTabCtrl, TCM_ADJUSTRECT, FALSE, (LPARAM)rc);
+        MapWindowPoints(hwndTabCtrl, hwndDlg, (LPPOINT)rc, 2);
+    }
 }
 
 /******************************************************************************
@@ -474,6 +506,23 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
   width  = (WORD)*p; p++;
   height = (WORD)*p; p++;
 
+  /* Special calculation for interior wizard pages so the largest page is
+   * calculated correctly. We need to add all the padding and space occupied
+   * by the header so the width and height sums up to the whole wizard client
+   * area. */
+  if ((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) &&
+      (psInfo->ppshheader.dwFlags & PSH_HEADER) &&
+      !(dwFlags & PSP_HIDEHEADER))
+  {
+      height += 2 * WIZARD_PADDING + WIZARD_HEADER_HEIGHT;
+      width += 2 * WIZARD_PADDING;
+  }
+  if (psInfo->ppshheader.dwFlags & PSH_WIZARD)
+  {
+      height += 2 * WIZARD_PADDING;
+      width += 2 * WIZARD_PADDING;
+  }
+
   /* remember the largest width and height */
   if (width > psInfo->width)
     psInfo->width = width;
@@ -681,8 +730,8 @@ static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Biggest page size.
    */
-  rcPage.left   = psInfo->x;
-  rcPage.top    = psInfo->y;
+  rcPage.left   = 0;
+  rcPage.top    = 0;
   rcPage.right  = psInfo->width;
   rcPage.bottom = psInfo->height;
 
@@ -693,49 +742,6 @@ static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo)
   if ( (rcPage.right - rcPage.left) != (rcOrigTab.right - rcOrigTab.left) )
     return TRUE;
   if ( (rcPage.bottom - rcPage.top) != (rcOrigTab.bottom - rcOrigTab.top) )
-    return TRUE;
-
-  return FALSE;
-}
-
-/******************************************************************************
- *            PROPSHEET_IsTooSmallWizard
- *
- * Verify that the default property sheet is big enough.
- */
-static BOOL PROPSHEET_IsTooSmallWizard(HWND hwndDlg, PropSheetInfo* psInfo)
-{
-  RECT rcSheetRect, rcPage, rcLine, rcSheetClient;
-  HWND hwndLine = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
-  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg, psInfo);
-
-  GetClientRect(hwndDlg, &rcSheetClient);
-  GetWindowRect(hwndDlg, &rcSheetRect);
-  GetWindowRect(hwndLine, &rcLine);
-
-  /* Remove the space below the sunken line */
-  rcSheetClient.bottom -= (rcSheetRect.bottom - rcLine.top);
-
-  /* Remove the buffer zone all around the edge */
-  rcSheetClient.bottom -= (padding.y * 2);
-  rcSheetClient.right -= (padding.x * 2);
-
-  /*
-   * Biggest page size.
-   */
-  rcPage.left   = psInfo->x;
-  rcPage.top    = psInfo->y;
-  rcPage.right  = psInfo->width;
-  rcPage.bottom = psInfo->height;
-
-  MapDialogRect(hwndDlg, &rcPage);
-  TRACE("biggest page %ld %ld %ld %ld\n", rcPage.left, rcPage.top,
-        rcPage.right, rcPage.bottom);
-
-  if (rcPage.right > rcSheetClient.right)
-    return TRUE;
-
-  if (rcPage.bottom > rcSheetClient.bottom)
     return TRUE;
 
   return FALSE;
@@ -762,8 +768,8 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
   /*
    * Biggest page size.
    */
-  rc.left   = psInfo->x;
-  rc.top    = psInfo->y;
+  rc.left   = 0;
+  rc.top    = 0;
   rc.right  = psInfo->width;
   rc.bottom = psInfo->height;
 
@@ -830,69 +836,33 @@ static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo)
  */
 static BOOL PROPSHEET_AdjustSizeWizard(HWND hwndDlg, PropSheetInfo* psInfo)
 {
-  HWND hwndButton = GetDlgItem(hwndDlg, IDCANCEL);
   HWND hwndLine = GetDlgItem(hwndDlg, IDC_SUNKEN_LINE);
-  HWND hwndTabCtrl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
-  RECT rc,tabRect;
-  int buttonHeight, lineHeight;
-  PADDING_INFO padding = PROPSHEET_GetPaddingInfoWizard(hwndDlg, psInfo);
-  RECT units;
+  RECT rc, lineRect, dialogRect;
 
-  /* Get the height of buttons */
-  GetClientRect(hwndButton, &rc);
-  buttonHeight = rc.bottom;
-
-  GetClientRect(hwndLine, &rc);
-  lineHeight = rc.bottom;
-
-  /* retrieve the dialog units */
-  units.left = units.right = 4;
-  units.top = units.bottom = 8;
-  MapDialogRect(hwndDlg, &units);
-
-  /*
-   * Biggest page size.
-   */
-  rc.left   = psInfo->x;
-  rc.top    = psInfo->y;
+  /* Biggest page size */
+  rc.left   = 0;
+  rc.top    = 0;
   rc.right  = psInfo->width;
   rc.bottom = psInfo->height;
-
   MapDialogRect(hwndDlg, &rc);
 
-  GetClientRect(hwndTabCtrl,&tabRect);
-
-  if ((rc.bottom - rc.top) < (tabRect.bottom - tabRect.top))
-  {
-      rc.bottom = rc.top + tabRect.bottom - tabRect.top;
-      psInfo->height = MulDiv((rc.bottom - rc.top), 8, units.top);
-  }
-
-  if ((rc.right - rc.left) < (tabRect.right - tabRect.left))
-  {
-      rc.right = rc.left + tabRect.right - tabRect.left;
-      psInfo->width  = MulDiv((rc.right - rc.left), 4, units.left);
-  }
-
   TRACE("Biggest page %ld %ld %ld %ld\n", rc.left, rc.top, rc.right, rc.bottom);
-  TRACE("   constants padx=%d, pady=%d, butH=%d, lH=%d\n",
-	padding.x, padding.y, buttonHeight, lineHeight);
 
-  /* Make room */
-  rc.right += (padding.x * 2);
-  rc.bottom += (buttonHeight + lineHeight);
-  if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW))
-      rc.bottom += (4 * padding.y);
-  else 
-      rc.bottom += (5 * padding.y);
+  /* Add space for the buttons row */
+  GetWindowRect(hwndLine, &lineRect);
+  MapWindowPoints(NULL, hwndDlg, (LPPOINT)&lineRect, 2);
+  GetClientRect(hwndDlg, &dialogRect);
+  rc.bottom += dialogRect.bottom - lineRect.top - 1;
 
-  /*
-   * Resize the property sheet.
-   */
+  /* Convert the client coordinates to window coordinates */
+  AdjustWindowRect(&rc, GetWindowLongW(hwndDlg, GWL_STYLE), FALSE);
+
+  /* Resize the property sheet */
   TRACE("setting dialog %08lx, rc (0,0)-(%ld,%ld)\n",
         (DWORD)hwndDlg, rc.right, rc.bottom);
-  SetWindowPos(hwndDlg, 0, 0, 0, rc.right, rc.bottom,
+  SetWindowPos(hwndDlg, 0, 0, 0, rc.right - rc.left, rc.bottom - rc.top,
                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
   return TRUE;
 }
 
@@ -1086,7 +1056,8 @@ static BOOL PROPSHEET_AdjustButtonsWizard(HWND hwndParent,
   else
     ShowWindow(hwndButton, SW_HIDE);
 
-  if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW)) 
+  if (psInfo->ppshheader.dwFlags &
+      (PSH_WIZARD97_OLD | PSH_WIZARD97_NEW | PSH_WIZARD_LITE)) 
       padding.x = 0;
 
   /*
@@ -1096,7 +1067,6 @@ static BOOL PROPSHEET_AdjustButtonsWizard(HWND hwndParent,
   y = rcSheet.bottom - ((padding.y * 2) + buttonHeight + lineHeight);
 
   lineWidth = rcSheet.right - (padding.x * 2);
-
   SetWindowPos(hwndLine, 0, x, y, lineWidth, 2,
                SWP_NOZORDER | SWP_NOACTIVATE);
 
@@ -1418,9 +1388,6 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 {
   DLGTEMPLATE* pTemplate;
   HWND hwndPage;
-  RECT rc;
-  PADDING_INFO padding;
-  UINT pageWidth,pageHeight;
   DWORD resSize;
   LPVOID temp = NULL;
 
@@ -1490,7 +1457,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 
   if (((MyDLGTEMPLATEEX*)pTemplate)->signature == 0xFFFF)
   {
-    ((MyDLGTEMPLATEEX*)pTemplate)->style |= WS_CHILD | DS_CONTROL;
+    ((MyDLGTEMPLATEEX*)pTemplate)->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~DS_MODALFRAME;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_CAPTION;
     ((MyDLGTEMPLATEEX*)pTemplate)->style &= ~WS_SYSMENU;
@@ -1503,7 +1470,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
   }
   else
   {
-    pTemplate->style |= WS_CHILD | DS_CONTROL;
+    pTemplate->style |= WS_CHILD | WS_TABSTOP | DS_CONTROL;
     pTemplate->style &= ~DS_MODALFRAME;
     pTemplate->style &= ~WS_CAPTION;
     pTemplate->style &= ~WS_SYSMENU;
@@ -1536,44 +1503,6 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
       Free(temp);
 
   psInfo->proppage[index].hwndPage = hwndPage;
-
-  /* NOTE: This code should be most probably moved to PROPSHEET_SetCurSel,
-   * but until it will be proved with test case it's left here. */
-  if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD) {     
-      int offsety = 0;
-      HWND hwndChild;
-      RECT r;
-
-      rc.left = psInfo->x;
-      rc.top = psInfo->y;
-      rc.right = psInfo->width;
-      rc.bottom = psInfo->height;
-
-      MapDialogRect(hwndParent, &rc);
-
-      pageWidth = rc.right - rc.left;
-      pageHeight = rc.bottom - rc.top;
-
-      padding = PROPSHEET_GetPaddingInfoWizard(hwndParent, psInfo);
-      TRACE("setting page %08lx, rc (%ld,%ld)-(%ld,%ld) w=%d, h=%d, padx=%d, pady=%d\n",
-	    (DWORD)hwndPage, rc.left, rc.top, rc.right, rc.bottom,
-	    pageWidth, pageHeight, padding.x, padding.y);
-
-      if (psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD) &&
-          psInfo->ppshheader.dwFlags & PSH_HEADER)
-      {
-	  hwndChild = GetDlgItem(hwndParent, IDC_SUNKEN_LINEHEADER);
-
-	  GetClientRect(hwndChild, &r);
-	  MapWindowPoints(hwndChild, hwndParent, (LPPOINT) &r, 2);
-	  offsety = (ppshpage->dwFlags & PSP_HIDEHEADER)?0:r.bottom + 1;
-      }
-
-      SetWindowPos(hwndPage, HWND_TOP,
-		   rc.left + padding.x/2,
-		   rc.top + padding.y/2 + offsety,
-		   pageWidth, pageHeight - offsety, 0);
-  }
 
   /* Subclass exterior wizard pages */
   if((psInfo->ppshheader.dwFlags & (PSH_WIZARD97_NEW | PSH_WIZARD97_OLD)) &&
@@ -2104,6 +2033,7 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     int result;
     PSHNOTIFY psn;
     RECT rc;
+    LPCPROPSHEETPAGEW ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
 
     if (hwndTabControl)
 	SendMessageW(hwndTabControl, TCM_SETCURSEL, index, 0);
@@ -2114,25 +2044,21 @@ static BOOL PROPSHEET_SetCurSel(HWND hwndDlg,
     psn.lParam       = 0;
 
     if (!psInfo->proppage[index].hwndPage) {
-      LPCPROPSHEETPAGEW ppshpage = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
       PROPSHEET_CreatePage(hwndDlg, index, psInfo, ppshpage);
     }
 
-    /* NOTE: The resizing happens every time the page is selected and
+    /* Resize the property sheet page to the fit in the Tab control
+     * (for regular property sheets) or to fit in the client area (for
+     * wizards).
+     * NOTE: The resizing happens every time the page is selected and
      * not only when it's created (some applications depend on it). */
-    if (!(psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)) {
-      /*
-       * Ask the Tab control to reduce the client rectangle to that
-       * it has available.
-       */
-      PROPSHEET_GetPageRect(psInfo, hwndDlg, &rc);
-      TRACE("setting page %p, rc (%ld,%ld)-(%ld,%ld) w=%ld, h=%ld\n",
-	    psInfo->proppage[index].hwndPage, rc.left, rc.top, rc.right, rc.bottom,
-	    rc.right - rc.left, rc.bottom - rc.top);
-      SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP,
-		   rc.left, rc.top,
-		   rc.right - rc.left, rc.bottom - rc.top, 0);
-    }
+    PROPSHEET_GetPageRect(psInfo, hwndDlg, &rc, ppshpage);
+    TRACE("setting page %p, rc (%ld,%ld)-(%ld,%ld) w=%ld, h=%ld\n",
+          psInfo->proppage[index].hwndPage, rc.left, rc.top, rc.right, rc.bottom,
+          rc.right - rc.left, rc.bottom - rc.top);
+    SetWindowPos(psInfo->proppage[index].hwndPage, HWND_TOP,
+                 rc.left, rc.top,
+                 rc.right - rc.left, rc.bottom - rc.top, 0);
 
     result = SendMessageW(psInfo->proppage[index].hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
     if (!result)
@@ -2958,7 +2884,7 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
      HeapFree(GetProcessHeap(), 0, (LPVOID)psp->u2.pszIcon);
 
   if ((psp->dwFlags & PSP_USETITLE) && HIWORD( psp->pszTitle ))
-      HeapFree(GetProcessHeap(), 0, (LPVOID)psp->pszTitle);
+     HeapFree(GetProcessHeap(), 0, (LPVOID)psp->pszTitle);
 
   Free(hPropPage);
 
@@ -3361,11 +3287,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (psInfo->ppshheader.dwFlags & INTRNL_ANY_WIZARD)
       {
         ShowWindow(hwndTabCtrl, SW_HIDE);
-        if (PROPSHEET_IsTooSmallWizard(hwnd, psInfo))
-        {
-          PROPSHEET_AdjustSizeWizard(hwnd, psInfo);
-          PROPSHEET_AdjustButtonsWizard(hwnd, psInfo);
-        }
+        PROPSHEET_AdjustSizeWizard(hwnd, psInfo);
+        PROPSHEET_AdjustButtonsWizard(hwnd, psInfo);
       }
       else
       {
