@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+#ifdef HAVE_LINUX_MAJOR_H
+# include <linux/major.h>
+#endif
 #ifdef HAVE_SYS_STATVFS_H
 # include <sys/statvfs.h>
 #endif
@@ -963,6 +966,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                                               FS_INFORMATION_CLASS info_class )
 {
     int fd;
+    struct stat st;
 
     if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
@@ -984,15 +988,25 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         else
         {
             FILE_FS_SIZE_INFORMATION *info = buffer;
-            struct statvfs st;
+            struct statvfs stvfs;
 
-            if (fstatvfs( fd, &st ) < 0) io->u.Status = FILE_GetNtStatus();
+            if (fstat( fd, &st ) < 0)
+            {
+                io->u.Status = FILE_GetNtStatus();
+                break;
+            }
+            if (!S_ISREG(st.st_mode) && !S_ISDIR(st.st_mode))
+            {
+                io->u.Status = STATUS_INVALID_DEVICE_REQUEST;
+                break;
+            }
+            if (fstatvfs( fd, &stvfs ) < 0) io->u.Status = FILE_GetNtStatus();
             else
             {
-                info->TotalAllocationUnits.QuadPart = st.f_blocks;
-                info->AvailableAllocationUnits.QuadPart = st.f_bavail;
+                info->TotalAllocationUnits.QuadPart = stvfs.f_blocks;
+                info->AvailableAllocationUnits.QuadPart = stvfs.f_bavail;
                 info->SectorsPerAllocationUnit = 1;
-                info->BytesPerSector = st.f_frsize;
+                info->BytesPerSector = stvfs.f_frsize;
                 io->Information = sizeof(*info);
                 io->u.Status = STATUS_SUCCESS;
             }
@@ -1006,40 +1020,74 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
             FILE_FS_DEVICE_INFORMATION *info = buffer;
 
 #if defined(linux) && defined(HAVE_FSTATFS)
-            struct stat st;
             struct statfs stfs;
 
-            info->DeviceType = FILE_DEVICE_DISK;
             info->Characteristics = 0;
-            if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
-            switch (stfs.f_type)
+
+            if (fstat( fd, &st ) < 0)
             {
-            case 0x9660:      /* iso9660 */
-            case 0x15013346:  /* udf */
-                info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-                info->Characteristics = FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
-                break;
-            case 0x6969:  /* nfs */
-            case 0x517B:  /* smbfs */
-            case 0x564c:  /* ncpfs */
-                info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-                info->Characteristics = FILE_REMOTE_DEVICE;
-                break;
-            case 0x01021994:  /* tmpfs */
-            case 0x28cd3d45:  /* cramfs */
-            case 0x1373:      /* devfs */
-            case 0x9fa0:      /* procfs */
-                info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
-                info->Characteristics = 0;
-                break;
-            default:
-                info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-                info->Characteristics = 0;
+                io->u.Status = FILE_GetNtStatus();
                 break;
             }
-            /* check for floppy disk */
-            if (!fstat( fd, &st ) && major(st.st_dev) == 2 /*FLOPPY_MAJOR*/)
-                info->Characteristics |= FILE_REMOVABLE_MEDIA;
+            if (S_ISCHR( st.st_mode ))
+            {
+                switch(major(st.st_rdev))
+                {
+                case MEM_MAJOR:
+                    info->DeviceType = FILE_DEVICE_NULL;
+                    break;
+                case TTY_MAJOR:
+                    info->DeviceType = FILE_DEVICE_SERIAL_PORT;
+                    break;
+                case LP_MAJOR:
+                    info->DeviceType = FILE_DEVICE_PARALLEL_PORT;
+                    break;
+                default:
+                    info->DeviceType = FILE_DEVICE_UNKNOWN;
+                    break;
+                }
+            }
+            else if (S_ISBLK( st.st_mode ))
+            {
+                info->DeviceType = FILE_DEVICE_DISK;
+            }
+            else if (S_ISFIFO( st.st_mode ) || S_ISSOCK( st.st_mode ))
+            {
+                info->DeviceType = FILE_DEVICE_NAMED_PIPE;
+            }
+            else  /* regular file or directory */
+            {
+                info->Characteristics |= FILE_DEVICE_IS_MOUNTED;
+
+                /* check for floppy disk */
+                if (major(st.st_dev) == FLOPPY_MAJOR)
+                    info->Characteristics |= FILE_REMOVABLE_MEDIA;
+
+                if (fstatfs( fd, &stfs ) < 0) stfs.f_type = 0;
+                switch (stfs.f_type)
+                {
+                case 0x9660:      /* iso9660 */
+                case 0x15013346:  /* udf */
+                    info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                    info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+                    break;
+                case 0x6969:  /* nfs */
+                case 0x517B:  /* smbfs */
+                case 0x564c:  /* ncpfs */
+                    info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+                    info->Characteristics |= FILE_REMOTE_DEVICE;
+                    break;
+                case 0x01021994:  /* tmpfs */
+                case 0x28cd3d45:  /* cramfs */
+                case 0x1373:      /* devfs */
+                case 0x9fa0:      /* procfs */
+                    info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+                    break;
+                default:
+                    info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                    break;
+                }
+            }
 #else
             static int warned;
             if (!warned++) FIXME( "device info not supported on this platform\n" );
