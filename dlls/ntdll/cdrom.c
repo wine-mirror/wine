@@ -1736,7 +1736,7 @@ static NTSTATUS DVD_EndSession(int fd, PDVD_SESSION_ID sid)
     TRACE("\n");
     return CDROM_GetStatusCode(ioctl(fd, DVD_AUTH, &auth_info));
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    return CDROM_GetStatusCode(ioctl(cdrom_cache[dev].fd, (rmv->PreventMediaRemoval) ? CDIOCPREVENT : CDIOCALLOW, NULL));
+    return STATUS_NOT_SUPPORTED;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
