@@ -180,6 +180,7 @@ PWINE_ACMOBJ32 MSACM_GetObj32(HACMOBJ32 hObj)
  */
 HDRVR32 MSACM_OpenDriverProc32(DRIVERPROC32 pfnDriverProc)
 {
+#if 0
   LPDRIVERITEM32A pDrvr;
 
   /* FIXME: This is a very bad solution */
@@ -190,6 +191,9 @@ HDRVR32 MSACM_OpenDriverProc32(DRIVERPROC32 pfnDriverProc)
   /* FIXME: Send DRV_OPEN among others to DriverProc */
 
   return (HDRVR32) pDrvr;
+#else
+  return (HDRVR32) 0;
+#endif
 }
 
 
