@@ -413,6 +413,9 @@ int X11DRV_GetScreenSaveTimeout(void)
  */
 void X11DRV_SetScreenSaveTimeout(int nTimeout)
 {
+    /* timeout is a 16bit entity (CARD16) in the protocol, so it should
+     * not get over 32767 or it will get negative. */
+    if (nTimeout>32767) nTimeout = 32767;
     TSXSetScreenSaver(display, nTimeout, 60, DefaultBlanking, DefaultExposures);
 }
 
