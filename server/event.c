@@ -61,7 +61,7 @@ static struct event *create_event( const WCHAR *name, size_t len,
 
 struct event *get_event_obj( struct process *process, int handle, unsigned int access )
 {
-    return (struct event *)get_handle_obj( current->process, handle, access, &event_ops );
+    return (struct event *)get_handle_obj( process, handle, access, &event_ops );
 }
 
 void pulse_event( struct event *event )

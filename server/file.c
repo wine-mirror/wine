@@ -371,11 +371,9 @@ void file_set_error(void)
     }
 }
 
-struct file *get_file_obj( struct process *process, int handle,
-                           unsigned int access )
+struct file *get_file_obj( struct process *process, int handle, unsigned int access )
 {
-    return (struct file *)get_handle_obj( current->process, handle,
-                                          access, &file_ops );
+    return (struct file *)get_handle_obj( process, handle, access, &file_ops );
 }
 
 int file_get_mmap_fd( struct file *file )
