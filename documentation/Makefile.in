@@ -50,7 +50,8 @@ $(INCLUDES):
 	for i in $(INCLUDES); do $(LN_S) $(TOPSRCDIR)/$$i $$i || exit 1; done
 
 install:: 
-	[ -d $(mandir) ] || mkdir -p $(mandir)
+	$(INSTALL) -d $(mandir)/man$(prog_manext)
+	$(INSTALL) -d $(mandir)/man$(conf_manext)
 	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.conf.man $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
