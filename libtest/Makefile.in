@@ -32,7 +32,7 @@ depend:: $(RC_SRCS:.rc=.h)
 $(RC_SRCS:.rc=.s): $(WRC)
 
 $(WINESTUB):
-	@cd ../library && $(SUBMAKE)
+	@cd ../library && $(MAKE)
 
 expand: expand.o $(WINESTUB)
 	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)

@@ -14,8 +14,7 @@ dnl **** Command-line arguments ****
 
 dnl Default values
 MAIN_TARGET=emu
-LIB_TARGET=libwine.a
-ALT_LINK="-Wl,--whole-archive -L\$(TOPOBJDIR) -lwine -Wl,--no-whole-archive"
+LIB_TYPE=dll    # one of static, dll, nolib
 TRACE_MSGS=yes	# the TRACE() macro
 DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 
@@ -24,12 +23,12 @@ AC_ARG_ENABLE(emulator,
 [if test "$enableval" = "no"; then MAIN_TARGET="lib"; fi])
 
 AC_ARG_ENABLE(dll,
-[  --enable-dll            build the Wine library as a DLL],
-[if test "$enableval" = "no"; then : ; else LIB_TARGET="libwine.so.1.0"; fi])
+[  --disable-dll           build static libraries instead of DLLs],
+[if test "$enableval" = "no"; then LIB_TYPE="static"; fi])
 
 AC_ARG_ENABLE(lib,
 [  --disable-lib           build the Wine without building libwine.a],
-[if test "$enableval" = "no"; then ALT_LINK="\$(LIBOBJS) \$(X11OBJS)"; LIB_TARGET=""; fi])
+[if test "$enableval" = "no"; then LIB_TYPE="nolib"; fi])
 
 AC_ARG_ENABLE(debug,
 [  --disable-debug         compile out all debugging messages],
@@ -43,8 +42,6 @@ AC_ARG_WITH(reentrant-x,
 [  --without-reentrant-x   compile for use with non-reentrant X libraries])
 
 AC_SUBST(MAIN_TARGET)
-AC_SUBST(LIB_TARGET)
-AC_SUBST(ALT_LINK)
 AC_SUBST(OPTIONS)
 
 if test "$DEBUG_MSGS" = "no"
@@ -379,10 +376,8 @@ fi
 
 dnl **** Check for working dll ****
 
-DLLFLAGS=""
-BUILDFLAGS=""
 LDSHARED=""
-if test "$LIB_TARGET" = "libwine.so.1.0"
+if test "$LIB_TYPE" = "dll"
 then
   AC_CACHE_CHECK("whether we can build a Linux dll",
                  ac_cv_c_dll_linux,
@@ -393,9 +388,7 @@ then
   ])
   if test "$ac_cv_c_dll_linux" = "yes"
   then
-    BUILDFLAGS="-pic"
-    DLLFLAGS="-fPIC"
-    LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so,-rpath,\$(libdir)"
+    LDSHARED="\$(CC) -shared -Wl,-soname,\$(SONAME),-rpath,\$(libdir)"
   else
     AC_CACHE_CHECK("whether we can build a UnixWare dll",
                  ac_cv_c_dll_unixware,
@@ -406,9 +399,7 @@ then
     ])
     if test "$ac_cv_c_dll_unixware" = "yes"
     then
-      BUILDFLAGS="-pic"
-      DLLFLAGS="-fPIC"
-      LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/libwine.so"
+      LDSHARED="\$(CC) -Wl,-G,-h,\$(libdir)/\$(SONAME)"
     else
       AC_CACHE_CHECK("whether we can build a NetBSD dll",
                    ac_cv_c_dll_netbsd,
@@ -419,20 +410,42 @@ then
       ])
       if test "$ac_cv_c_dll_netbsd" = "yes"
       then
-        BUILDFLAGS="-pic"
-        DLLFLAGS="-fPIC"
         LDSHARED="ld -Bshareable -Bforcearchive"
       fi
     fi
   fi
   if test "$ac_cv_c_dll_linux" = "no" -a "$ac_cv_c_dll_unixware" = "no" -a "$ac_cv_c_dll_netbsd" = "no"
   then
-    LIB_TARGET="libwine.a"
+    LIB_TYPE="static"
   fi
 fi
+
+DLLFLAGS=""
+BUILDFLAGS=""
+LIBEXT="a"
+
+if test "$LIB_TYPE" = "nolib"; then
+    ALT_LINK="\$(LIBOBJS) \$(X11OBJS)"
+    LIB_TARGET=""
+else
+    ALT_LINK="-Wl,--whole-archive -L\$(TOPOBJDIR) -lwine -Wl,--no-whole-archive"
+    if test "$LIB_TYPE" = "dll"; then
+        LIB_TARGET="libwine.so"
+        BUILDFLAGS="-pic"
+        DLLFLAGS="-fPIC"
+        LIBEXT="so"
+    else
+        LIB_TARGET="libwine.a"
+    fi
+fi
+
+AC_SUBST(LIB_TARGET)
+AC_SUBST(LIB_TYPE)
+AC_SUBST(ALT_LINK)
 AC_SUBST(BUILDFLAGS)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
+AC_SUBST(LIBEXT)
 
 dnl **** Check for reentrant libc ****
 dnl

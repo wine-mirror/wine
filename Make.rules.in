@@ -35,6 +35,7 @@ LN_S      = @LN_S@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS) $(X_CFLAGS)
 LDCOMBINE = ld -r
+SONAME    = lib$(MODULE).so
 LDSHARED  = @LDSHARED@
 AR        = ar rc
 RM        = rm -f
@@ -53,11 +54,10 @@ ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
-WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
 WRCFLAGS  = -c
 WINESTUB  = $(TOPOBJDIR)/library/winestub.o
-SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
+DLLDIR    = $(TOPOBJDIR)/dlls
 @SET_MAKE@
 
 # Installation infos
@@ -123,31 +123,40 @@ LINTS = $(C_SRCS:.c=.ln)
 
 # Rule to rebuild the resource compiler
 
-$(WINERC) check_winerc:
-	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc@PROGEXT@
-
 $(WRC) check_wrc:
-	cd $(TOPOBJDIR)/tools/wrc; $(SUBMAKE) wrc@PROGEXT@
+	cd $(TOPOBJDIR)/tools/wrc && $(MAKE) wrc@PROGEXT@
 
 # Rule to rebuild the 'makedep' program
 
 $(MAKEDEP) check_makedep:
-	cd $(TOPOBJDIR)/tools; $(SUBMAKE) makedep@PROGEXT@
+	cd $(TOPOBJDIR)/tools && $(MAKE) makedep@PROGEXT@
 
 # Rule to rebuild the 'build' program
 
 $(BUILD) checkbuild:
-	cd $(TOPOBJDIR)/tools; $(SUBMAKE) build@PROGEXT@
+	cd $(TOPOBJDIR)/tools && $(MAKE) build@PROGEXT@
 
 # Rule to rebuild winestub.o
 
 $(WINESTUB) check_winestub:
-	cd $(TOPOBJDIR)/library; $(SUBMAKE) winestub.o
+	cd $(TOPOBJDIR)/library && $(MAKE) winestub.o
 
 # Rule for main module
 
 $(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
+
+lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(LDSHARED) $(OBJS) -o $@
+
+lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
+	$(RM) $@
+	$(LN_S) $< $@
+
+lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
+	$(RM) $@
+	$(AR) $@ $(OBJS)
+	$(RANLIB) $@
 
 # Rules for makefile
 
@@ -193,7 +202,7 @@ depend:: $(MAKEDEP) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(EXTRA_SRCS)
 
 clean::
-	$(RM) *.o *.ln \#*\# *~ *% .#* *.bak *.orig *.rej *.flc y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(SPEC_SRCS:.spec=.spec.c) $(GLUE:.c=.glue.c) $(PROGRAMS)
+	$(RM) *.o *.a *.so *.ln \#*\# *~ *% .\#* *.bak *.orig *.rej *.flc *.spec.c *.glue.c y.tab.c y.tab.h lex.yy.c core $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.s) $(RC_SRCS:.rc=.h) $(PROGRAMS)
 
 dummy:
 

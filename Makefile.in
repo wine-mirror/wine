@@ -14,6 +14,9 @@
 # Main target to build
 
 MAIN_TARGET = @MAIN_TARGET@
+LIB_TARGET  = @LIB_TARGET@
+LIB_TYPE    = @LIB_TYPE@
+ALT_LINK    = @ALT_LINK@
 
 # Directories
 
@@ -21,7 +24,8 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = .
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = none
+MODULE    = wine
+SOVERSION = 1.0
 
 TOOLSUBDIRS = \
 	tools \
@@ -226,9 +230,7 @@ EMUOBJS = \
 	debugger/debugger.o \
 	miscemu/miscemu.o
 
-LIB_TARGET  = @LIB_TARGET@
-
-ALT_LINK    = @ALT_LINK@
+EXTRA_OBJS = $(LIBOBJS) $(X11OBJS)
 
 all: Makefile Make.rules server $(MAIN_TARGET)
 	@echo "Wine build complete."
@@ -250,8 +252,6 @@ Make.rules: Make.rules.in configure
 
 install:: install_$(MAIN_TARGET)
 
-uninstall:: uninstall_$(MAIN_TARGET)
-
 emu: wine
 
 lib: $(LIBSUBDIRS) $(X11SUBDIRS) $(LIB_TARGET)
@@ -260,61 +260,47 @@ wine wine.sym: $(LIB_TARGET) $(EMUOBJS) $(X11OBJS) $(LIBOBJS)
 	$(CC) -o wine $(EMUOBJS) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
-libwine.a: $(LIBOBJS) $(X11OBJS)
-	$(RM) $@
-	$(AR) $@ $(LIBOBJS) $(X11OBJS)
-	$(RANLIB) $@
-
 llib-lwine.ln : $(LIBLINTS) $(X11LINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS) $(X11LINTS)
 
-libwine.so.1.0: $(LIBOBJS) $(X11OBJS)
-	$(LDSHARED) -o$@ $(LIBOBJS) $(X11OBJS) $(LDOPTIONS)
-	$(RM) libwine.so
-	$(LN_S) $@ libwine.so
-
 install_emu: install_lib
-	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) wine $(bindir)/wine
-	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 
-uninstall_emu: uninstall_lib
-	$(RM) $(bindir)/wine $(bindir)/dosmod
+install_lib: install_$(LIB_TYPE)
 
-install_lib: dummy
+install_nolib: dummy
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
 	if [ -f wine.sym ]; then $(INSTALL_DATA) wine.sym $(libdir)/wine.sym; fi
-	if [ $(LIB_TARGET) ]; then \
-	    if [ $(LIB_TARGET) = libwine.so.1.0 ]; then \
-	        $(INSTALL_PROGRAM) $(LIB_TARGET) $(libdir); \
-	        $(LDCONFIG) || (cd $(libdir) ; $(RM) libwine.so ; $(LN_S) $(LIB_TARGET) libwine.so) ; \
-	    else \
-	        $(INSTALL_DATA) $(LIB_TARGET) $(libdir); \
-	    fi \
-	fi
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
 	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
+	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 
-uninstall_lib: dummy
+install_dll: install_nolib
+	$(INSTALL_PROGRAM) $(LIB_TARGET) $(libdir)
+	$(LDCONFIG) || (cd $(libdir) ; $(RM) libwine.so ; $(LN_S) $(LIB_TARGET) libwine.so)
+
+install_static: install_nolib
+	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)
+
+uninstall::
 	cd $(libdir) && $(RM) $(LIB_TARGET) libwine.a libwine.so wine.sym
-	$(RM) $(bindir)/wineserver $(bindir)/wineclipsrv
+	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod
 
 $(X11OBJS) $(EMUOBJS) $(LIBOBJS): $(TOOLSUBDIRS) dummy
-	@cd `dirname $@`; $(SUBMAKE)
+	@cd `dirname $@` && $(MAKE) `basename $@`
 
 $(BUILDSUBDIRS): dummy
-	@cd $@; $(SUBMAKE)
+	@cd $@ && $(MAKE)
 
 $(LIBLINTS) $(X11LINTS) $(EMULINTS): dummy
 	@echo $@ | sed 's%\(.*\)\/[^\/]*%cd \1 \&\& make lint%' | sh
 
-
 install_programs: dummy
-	@cd programs; $(SUBMAKE) install
+	@cd programs && $(MAKE) install
 
 uninstall_programs: dummy
-	@cd programs; $(SUBMAKE) uninstall
+	@cd programs && $(MAKE) uninstall
 
 install::
 	for i in $(INSTALLSUBDIRS); do (cd $$i && $(MAKE) install) || exit 1; done
@@ -339,7 +325,7 @@ htmlpages:
 clean::
 	for i in $(BUILDSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
 	for i in $(CLEANSUBDIRS); do (cd $$i; $(RM) *.o \#*\# .#* *~ *% *.bak *.orig *.rej *.flc); done
-	$(RM) wine wine.sym libwine.a libwine.so.1.0 libwine.so TAGS .#*
+	$(RM) wine wine.sym libwine.so.1.0 TAGS .#*
 
 distclean: clean
 	$(RM) config.* Make.rules include/config.h documentation/wine.man documentation/wine.conf.man
