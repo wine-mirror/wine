@@ -75,6 +75,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     INT   retVal = NULLREGION;
     BOOL  bOwnRgn = TRUE;
     BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
+    int rdw_flags;
     HRGN  hrgnTemp;
     HDC   hDC;
     RECT  rc, cliprc;
@@ -84,6 +85,11 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     TRACE( "%p, %d,%d hrgnUpdate=%p rcUpdate = %p %s %04x\n",
            hwnd, dx, dy, hrgnUpdate, rcUpdate, wine_dbgstr_rect(rect), flags );
     TRACE( "clipRect = %s\n", wine_dbgstr_rect(clipRect));
+    if( flags & ~( SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE))
+        FIXME("some flags (%04x) are unhandled\n", flags);
+
+    rdw_flags = (flags & SW_ERASE) && (flags & SW_INVALIDATE) ?
+                                RDW_INVALIDATE | RDW_ERASE  : RDW_INVALIDATE ;
 
     if (!WIN_IsWindowDrawable( hwnd, TRUE )) return ERROR;
     hwnd = WIN_GetFullHandle( hwnd );
@@ -109,7 +115,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
             ReleaseDC( hwnd, hDC );
 
             if (!bUpdate)
-                RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE );
+                RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags);
         }
 
         /* Take into account the fact that some damage may have occurred during
@@ -121,7 +127,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
             HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);
             OffsetRgn( hrgnTemp, dx, dy );
             CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
-            RedrawWindow( hwnd, NULL, hrgnTemp, RDW_INVALIDATE | RDW_ERASE );
+            RedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
             DeleteObject( hrgnClip );
         }
         DeleteObject( hrgnTemp );
@@ -153,8 +159,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     }
 
     if( flags & (SW_INVALIDATE | SW_ERASE) )
-        RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE |
-                      ((flags & SW_ERASE) ? RDW_ERASENOW : 0) |
+        RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags |
                       ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
 
     if( hwndCaret ) {

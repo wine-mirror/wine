@@ -5226,6 +5226,72 @@ todo_wine {
 	"unexpected error %ld\n", GetLastError());
 }
 
+static const struct message ScrollWindowPaint1[] = {
+    { WM_PAINT, sent },
+    { WM_ERASEBKGND, sent|beginpaint },
+    { 0 }
+};
+
+static const struct message ScrollWindowPaint2[] = {
+    { WM_PAINT, sent },
+    { 0 }
+};
+
+static void test_scrollwindowex(void)
+{
+    HWND hwnd, hchild;
+    RECT rect={0,0,130,130};
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test Scroll",
+            WS_VISIBLE|WS_OVERLAPPEDWINDOW,
+            100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", 
+            WS_VISIBLE|WS_CAPTION|WS_CHILD,
+            10, 10, 150, 150, hwnd, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child\n");
+    UpdateWindow(hwnd);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+
+    /* scroll without the child window */
+    trace("start scroll\n");
+    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
+            SW_ERASE|SW_INVALIDATE);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+    trace("end scroll\n");
+    flush_sequence();
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx\n", 0);
+
+    /* Now without the SW_ERASE flag */
+    trace("start scroll\n");
+    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+    trace("end scroll\n");
+    flush_sequence();
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(ScrollWindowPaint2, "ScrollWindowEx\n", 0);
+
+    /* now scroll the child window as well */
+    trace("start scroll\n");
+    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
+            SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
+    todo_wine { /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
+                /* windows sometimes a WM_MOVE */
+        ok_sequence(WmEmptySeq, "ScrollWindowEx\n", 0);
+    }
+    trace("end scroll\n");
+    flush_sequence();
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx\n", 0);
+
+    ok(DestroyWindow(hchild), "failed to destroy window\n");
+    ok(DestroyWindow(hwnd), "failed to destroy window\n");
+    flush_sequence();
+}
+
 START_TEST(msg)
 {
     HMODULE user32 = GetModuleHandleA("user32.dll");
@@ -5264,6 +5330,7 @@ START_TEST(msg)
     pUnhookWinEvent = 0;
     hEvent_hook = 0;
 
+    test_scrollwindowex();
     test_messages();
     test_mdi_messages();
     test_button_messages();
