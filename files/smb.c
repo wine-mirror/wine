@@ -1580,10 +1580,9 @@ static NTSTATUS SMB_SetOffset(HANDLE hFile, DWORD offset)
     return status;
 }
 
-NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, 
+NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, int fd, LPVOID buffer, DWORD bytesToRead,
                              PIO_STATUS_BLOCK io_status)
 {
-    int fd;
     DWORD count, offset;
     USHORT user_id, tree_id, dialect, file_id, read;
 
@@ -1593,9 +1592,6 @@ NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 
     io_status->u.Status = SMB_GetSmbInfo(hFile, &tree_id, &user_id, &dialect, &file_id, &offset);
     if (io_status->u.Status) return io_status->u.Status;
-
-    fd = FILE_GetUnixHandle(hFile, GENERIC_READ);
-    if (fd<0) return io_status->u.Status = STATUS_INVALID_HANDLE;
 
     while(1)
     {
@@ -1615,8 +1611,6 @@ NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         if(io_status->Information >= bytesToRead)
             break;
     }
-    close(fd);
-
     return io_status->u.Status = SMB_SetOffset(hFile, offset);
 }
 

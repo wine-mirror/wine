@@ -201,28 +201,6 @@ static void fileio_async_cleanup( struct async_private *ovp )
 }
 
 /***********************************************************************
- *           FILE_GetUnixHandleType
- *
- * Retrieve the Unix handle corresponding to a file handle.
- * Returns -1 on failure.
- */
-static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags_ptr, int *fd )
-{
-    int ret, flags;
-
-    *fd = -1;
-    ret = wine_server_handle_to_fd( handle, access, fd, type, &flags );
-    if (flags_ptr) *flags_ptr = flags;
-    if (!ret && (((access & GENERIC_READ)  && (flags & FD_FLAG_RECV_SHUTDOWN)) ||
-                 ((access & GENERIC_WRITE) && (flags & FD_FLAG_SEND_SHUTDOWN))))
-    {
-        close(*fd);
-        ret = STATUS_PIPE_DISCONNECTED;
-    }
-    return ret;
-}
-
-/***********************************************************************
  *           FILE_GetNtStatus(void)
  *
  * Retrieve the Nt Status code from errno.
@@ -351,8 +329,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     io_status->Information = 0;
-    io_status->u.Status = FILE_GetUnixHandleType( hFile, GENERIC_READ, &type, &flags, &unix_handle );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, &type, &flags );
     if (io_status->u.Status) return io_status->u.Status;
+
+    if (flags & FD_FLAG_RECV_SHUTDOWN)
+    {
+        wine_server_release_fd( hFile, unix_handle );
+        return STATUS_PIPE_DISCONNECTED;
+    }
 
     if (flags & FD_FLAG_TIMEOUT)
     {
@@ -360,10 +344,15 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         {
             /* this shouldn't happen, but check it */
             FIXME("NIY-hEvent\n");
+            wine_server_release_fd( hFile, unix_handle );
             return STATUS_NOT_IMPLEMENTED;
         }
         io_status->u.Status = NtCreateEvent(&hEvent, SYNCHRONIZE, NULL, 0, 0);
-        if (io_status->u.Status) return io_status->u.Status;
+        if (io_status->u.Status)
+        {
+            wine_server_release_fd( hFile, unix_handle );
+            return io_status->u.Status;
+        }
     }
 
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
@@ -371,14 +360,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         async_fileio*   ovp;
         NTSTATUS ret;
 
-        if (unix_handle < 0) return STATUS_INVALID_HANDLE;
-
-        ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio));
-        if (!ovp) return STATUS_NO_MEMORY;
-
+        if (!(ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio))))
+        {
+            wine_server_release_fd( hFile, unix_handle );
+            return STATUS_NO_MEMORY;
+        }
         ovp->async.ops = (apc ? &fileio_async_ops : &fileio_nocomp_async_ops );
         ovp->async.handle = hFile;
-        ovp->async.fd = unix_handle;
+        ovp->async.fd = unix_handle;  /* FIXME */
         ovp->async.type = ASYNC_TYPE_READ;
         ovp->async.func = FILE_AsyncReadService;
         ovp->async.event = hEvent;
@@ -419,19 +408,18 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     {
     case FD_TYPE_SMB:
         FIXME("NIY-SMB\n");
-        close(unix_handle);
         /* FIXME */
-        /* return SMB_ReadFile(hFile, buffer, length, io_status); */
+        /* return SMB_ReadFile(hFile, unix_handle, buffer, length, io_status); */
+        wine_server_release_fd( hFile, unix_handle );
         return STATUS_INVALID_HANDLE;
 
     case FD_TYPE_DEFAULT:
-        /* normal unix files */
-        if (unix_handle == -1) return STATUS_INVALID_HANDLE;
+        /* normal unix file */
         break;
 
     default:
         FIXME("Unsupported type of fd %d\n", type);
-	if (unix_handle == -1) close(unix_handle);
+        wine_server_release_fd( hFile, unix_handle );
         return STATUS_INVALID_HANDLE;
     }
 
@@ -444,7 +432,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                                                    FilePositionInformation);
         if (io_status->u.Status)
         {
-            close(unix_handle);
+            wine_server_release_fd( hFile, unix_handle );
             return io_status->u.Status;
         }
     }
@@ -456,7 +444,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 	io_status->u.Status = FILE_GetNtStatus();
 	break;
     }
-    close( unix_handle );
+    wine_server_release_fd( hFile, unix_handle );
     return io_status->u.Status;
 }
 
@@ -543,23 +531,28 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     io_status->Information = 0;
-
-    io_status->u.Status = FILE_GetUnixHandleType( hFile, GENERIC_WRITE, &type, &flags, &unix_handle );
+    io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, &type, &flags );
     if (io_status->u.Status) return io_status->u.Status;
+
+    if (flags & FD_FLAG_SEND_SHUTDOWN)
+    {
+        wine_server_release_fd( hFile, unix_handle );
+        return STATUS_PIPE_DISCONNECTED;
+    }
 
     if (flags & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT))
     {
         async_fileio*   ovp;
         NTSTATUS ret;
 
-        if (unix_handle < 0) return STATUS_INVALID_HANDLE;
-
-        ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio));
-        if (!ovp) return STATUS_NO_MEMORY;
-
+        if (!(ovp = RtlAllocateHeap(ntdll_get_process_heap(), 0, sizeof(async_fileio))))
+        {
+            wine_server_release_fd( hFile, unix_handle );
+            return STATUS_NO_MEMORY;
+        }
         ovp->async.ops = (apc ? &fileio_async_ops : &fileio_nocomp_async_ops );
         ovp->async.handle = hFile;
-        ovp->async.fd = unix_handle;
+        ovp->async.fd = unix_handle;  /* FIXME */
         ovp->async.type = ASYNC_TYPE_WRITE;
         ovp->async.func = FILE_AsyncWriteService;
         ovp->async.event = hEvent;
@@ -595,7 +588,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     {
     case FD_TYPE_SMB:
         FIXME("NIY-SMB\n");
-        close(unix_handle);
+        wine_server_release_fd( hFile, unix_handle );
         return STATUS_NOT_IMPLEMENTED;
 
     case FD_TYPE_DEFAULT:
@@ -605,7 +598,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     default:
         FIXME("Unsupported type of fd %d\n", type);
-	if (unix_handle == -1) close(unix_handle);
+        wine_server_release_fd( hFile, unix_handle );
         return STATUS_INVALID_HANDLE;
     }
 
@@ -618,7 +611,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                                                    FilePositionInformation);
         if (io_status->u.Status)
         {
-            close(unix_handle);
+            wine_server_release_fd( hFile, unix_handle );
             return io_status->u.Status;
         }
     }
@@ -632,7 +625,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         else io_status->u.Status = FILE_GetNtStatus();
         break;
     }
-    close( unix_handle );
+    wine_server_release_fd( hFile, unix_handle );
     return io_status->u.Status;
 }
 

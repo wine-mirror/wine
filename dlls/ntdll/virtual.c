@@ -555,8 +555,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
  * Map an executable (PE format) image into memory.
  */
 static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
-                           DWORD header_size, int shared_fd, DWORD shared_size,
-                           BOOL removable, PVOID *addr_ptr )
+                           DWORD header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -756,13 +755,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
         VIRTUAL_SetProt( view, ptr + sec->VirtualAddress, size, vprot );
     }
 
-    close( fd );
     *addr_ptr = ptr;
     return STATUS_SUCCESS;
 
  error:
     if (ptr != (char *)-1) munmap( ptr, total_size );
-    close( fd );
     return status;
 }
 
@@ -1415,27 +1412,32 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         removable   = reply->removable;
     }
     SERVER_END_REQ;
-    if (res) goto error;
+    if (res) return res;
 
-    if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL, NULL ))) goto error;
+    if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL, NULL ))) return res;
 
     if (prot & VPROT_IMAGE)
     {
-        int shared_fd = -1;
-
         if (shared_file)
         {
+            int shared_fd;
+
             if ((res = wine_server_handle_to_fd( shared_file, GENERIC_READ, &shared_fd,
                                                  NULL, NULL ))) goto error;
-            NtClose( shared_file );  /* we no longer need it */
+            res = map_image( handle, unix_handle, base, size_low, header_size,
+                             shared_fd, removable, addr_ptr );
+            wine_server_release_fd( shared_file, shared_fd );
+            NtClose( shared_file );
         }
-        res = map_image( handle, unix_handle, base, size_low, header_size,
-                         shared_fd, shared_size, removable, addr_ptr );
-        if (shared_fd != -1) close( shared_fd );
+        else
+        {
+            res = map_image( handle, unix_handle, base, size_low, header_size,
+                             -1, removable, addr_ptr );
+        }
+        wine_server_release_fd( handle, unix_handle );
         if (!res) *size_ptr = size_low;
         return res;
     }
-
 
     if (size_high)
         ERR("Sizes larger than 4Gb not supported\n");
@@ -1507,12 +1509,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = STATUS_NO_MEMORY;
         goto error;
     }
-    if (unix_handle != -1) close( unix_handle );
+    wine_server_release_fd( handle, unix_handle );
     *size_ptr = size;
     return STATUS_SUCCESS;
 
 error:
-    if (unix_handle != -1) close( unix_handle );
+    wine_server_release_fd( handle, unix_handle );
     if (ptr != (void *)-1) munmap( ptr, size );
     return res;
 }

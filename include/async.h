@@ -77,7 +77,7 @@ inline static void finish_async( async_private *ovp )
 
     ovp->next = ovp->prev = NULL;
 
-    close(ovp->fd);
+    wine_server_release_fd( ovp->handle, ovp->fd );
     if ( ovp->event != INVALID_HANDLE_VALUE )
         NtSetEvent( ovp->event, NULL );
 

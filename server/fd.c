@@ -1040,8 +1040,8 @@ DECL_HANDLER(get_handle_fd)
         if (unix_fd != -1) reply->fd = unix_fd;
         else if (!get_error())
         {
-            unix_fd = fd->unix_fd;
-            if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
+            assert( fd->unix_fd != -1 );
+            send_client_fd( current->process, fd->unix_fd, req->handle );
         }
         reply->type = fd->fd_ops->get_file_info( fd, NULL, &reply->flags );
         release_object( fd );

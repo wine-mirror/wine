@@ -360,31 +360,33 @@ static int receive_fd( obj_handle_t *handle )
  * Returns the new fd, which can be different if there was already an
  * fd in the cache for that handle.
  */
-inline static int store_cached_fd( int fd, obj_handle_t handle )
+inline static int store_cached_fd( int *fd, obj_handle_t handle )
 {
+    int ret;
+
     SERVER_START_REQ( set_handle_info )
     {
         req->handle = handle;
         req->flags  = 0;
         req->mask   = 0;
-        req->fd     = fd;
-        if (!wine_server_call( req ))
+        req->fd     = *fd;
+        if (!(ret = wine_server_call( req )))
         {
-            if (reply->cur_fd != fd)
+            if (reply->cur_fd != *fd)
             {
                 /* someone was here before us */
-                close( fd );
-                fd = reply->cur_fd;
+                close( *fd );
+                *fd = reply->cur_fd;
             }
         }
         else
         {
-            close( fd );
-            fd = -1;
+            close( *fd );
+            *fd = -1;
         }
     }
     SERVER_END_REQ;
-    return fd;
+    return ret;
 }
 
 
@@ -442,7 +444,8 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
         /* it wasn't in the cache, get it from the server */
         fd = receive_fd( &fd_handle );
         /* and store it back into the cache */
-        fd = store_cached_fd( fd, fd_handle );
+        ret = store_cached_fd( &fd, fd_handle );
+        if (ret) return ret;
 
         if (fd_handle == handle) break;
         /* if we received a different handle this means there was
@@ -454,6 +457,17 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
     if ((fd != -1) && ((fd = dup(fd)) == -1)) return STATUS_TOO_MANY_OPENED_FILES;
     *unix_fd = fd;
     return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
+ *           wine_server_release_fd   (NTDLL.@)
+ *
+ * Release the Unix fd returned by wine_server_handle_to_fd.
+ */
+void wine_server_release_fd( obj_handle_t handle, int unix_fd )
+{
+    close( unix_fd );
 }
 
 
