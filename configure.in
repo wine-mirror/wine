@@ -68,6 +68,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, /sbin:/usr/sbin:$PATH)
+AC_CYGWIN
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
@@ -78,6 +79,14 @@ then
 fi
 AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
+
+if test "$CYGWIN" = "yes"
+then
+    LDCOMBINE="ld -r --enable-stdcall-fixup"
+else
+    LDCOMBINE="ld -r"
+fi
+AC_SUBST(LDCOMBINE)
 
 dnl **** Check for some libraries ****
 
