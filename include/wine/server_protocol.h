@@ -573,6 +573,21 @@ struct open_process_reply
 
 
 
+struct open_thread_request
+{
+    struct request_header __header;
+    void*        tid;
+    unsigned int access;
+    int          inherit;
+};
+struct open_thread_reply
+{
+    struct reply_header __header;
+    handle_t     handle;
+};
+
+
+
 struct select_request
 {
     struct request_header __header;
@@ -2717,6 +2732,7 @@ enum request
     REQ_set_handle_info,
     REQ_dup_handle,
     REQ_open_process,
+    REQ_open_thread,
     REQ_select,
     REQ_create_event,
     REQ_event_op,
@@ -2877,6 +2893,7 @@ union generic_request
     struct set_handle_info_request set_handle_info_request;
     struct dup_handle_request dup_handle_request;
     struct open_process_request open_process_request;
+    struct open_thread_request open_thread_request;
     struct select_request select_request;
     struct create_event_request create_event_request;
     struct event_op_request event_op_request;
@@ -3035,6 +3052,7 @@ union generic_reply
     struct set_handle_info_reply set_handle_info_reply;
     struct dup_handle_reply dup_handle_reply;
     struct open_process_reply open_process_reply;
+    struct open_thread_reply open_thread_reply;
     struct select_reply select_reply;
     struct create_event_reply create_event_reply;
     struct event_op_reply event_op_reply;
@@ -3166,6 +3184,6 @@ union generic_reply
     struct get_window_properties_reply get_window_properties_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 76
+#define SERVER_PROTOCOL_VERSION 77
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

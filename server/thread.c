@@ -854,6 +854,19 @@ DECL_HANDLER(terminate_thread)
     }
 }
 
+/* open a handle to a thread */
+DECL_HANDLER(open_thread)
+{
+    struct thread *thread = get_thread_from_id( req->tid );
+
+    reply->handle = 0;
+    if (thread)
+    {
+        reply->handle = alloc_handle( current->process, thread, req->access, req->inherit );
+        release_object( thread );
+    }
+}
+
 /* fetch information about a thread */
 DECL_HANDLER(get_thread_info)
 {

@@ -462,6 +462,16 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC };
 @END
 
 
+/* Open a handle to a thread */
+@REQ(open_thread)
+    void*        tid;          /* thread id to open */
+    unsigned int access;       /* wanted access rights */
+    int          inherit;      /* inherit flag */
+@REPLY
+    handle_t     handle;       /* handle to the thread */
+@END
+
+
 /* Wait for handles */
 @REQ(select)
     int          flags;        /* wait flags (see below) */

@@ -638,6 +638,18 @@ static void dump_open_process_reply( const struct open_process_reply *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
+static void dump_open_thread_request( const struct open_thread_request *req )
+{
+    fprintf( stderr, " tid=%p,", req->tid );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d", req->inherit );
+}
+
+static void dump_open_thread_reply( const struct open_thread_reply *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
 static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
@@ -2177,6 +2189,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
     (dump_func)dump_open_process_request,
+    (dump_func)dump_open_thread_request,
     (dump_func)dump_select_request,
     (dump_func)dump_create_event_request,
     (dump_func)dump_event_op_request,
@@ -2333,6 +2346,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
+    (dump_func)dump_open_thread_reply,
     (dump_func)0,
     (dump_func)dump_create_event_reply,
     (dump_func)0,
@@ -2489,6 +2503,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_handle_info",
     "dup_handle",
     "open_process",
+    "open_thread",
     "select",
     "create_event",
     "event_op",

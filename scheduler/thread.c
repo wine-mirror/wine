@@ -382,6 +382,25 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     }
 }
 
+/***********************************************************************
+ * OpenThread Retrieves a handle to a thread from its thread id
+ *
+ * RETURNS
+ *    None
+ */
+HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId )
+{
+    HANDLE ret = 0;
+    SERVER_START_REQ( open_thread )
+    {
+        req->tid     = (void *)dwThreadId;
+        req->access  = dwDesiredAccess;
+        req->inherit = bInheritHandle;
+        if (!wine_server_call_err( req )) ret = reply->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
 
 /***********************************************************************
  * SetThreadContext [KERNEL32.@]  Sets context of thread.

@@ -124,6 +124,100 @@ void __pthread_initialize(void)
 {
 }
 
+struct pthread_thread_init {
+	 void* (*start_routine)(void*);
+	 void* arg;
+}; 
+
+static DWORD CALLBACK pthread_thread_start(LPVOID data)
+{
+  struct pthread_thread_init init = *(struct pthread_thread_init*)data; 
+  HeapFree(GetProcessHeap(),0,data);
+  return (DWORD)init.start_routine(init.arg);
+}
+
+int pthread_create(pthread_t* thread, const pthread_attr_t* attr, void*
+        (*start_routine)(void *), void* arg)
+{
+  HANDLE hThread;
+  struct pthread_thread_init* idata = HeapAlloc(GetProcessHeap(), 0, 
+		sizeof(struct pthread_thread_init));
+
+  idata->start_routine = start_routine; 
+  idata->arg = arg;
+  hThread = CreateThread(NULL, 0, pthread_thread_start, idata, 0, thread);
+
+  if(hThread)
+    CloseHandle(hThread);
+  else
+  {
+    HeapFree(GetProcessHeap(),0,idata); /* free idata struct on failure */
+    return EAGAIN;
+  }
+ 
+  return 0;
+}
+ 
+int pthread_cancel(pthread_t thread)
+{
+  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
+    
+  if(!TerminateThread(hThread, 0))
+  {
+    CloseHandle(hThread);
+    return EINVAL;      /* return error */
+  }
+ 
+  CloseHandle(hThread);
+ 
+  return 0;             /* return success */
+}   
+
+int pthread_join(pthread_t thread, void **value_ptr)
+{
+  HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, thread);
+ 
+  WaitForSingleObject(hThread, INFINITE);
+  if(!GetExitCodeThread(hThread, (LPDWORD)value_ptr))
+  {
+    CloseHandle(hThread);
+    return EINVAL; /* FIXME: make this more correctly match */
+  }                /* windows errors */
+
+  CloseHandle(hThread);
+  return 0;
+}   
+
+/*FIXME: not sure what to do with this one... */
+int pthread_detach(pthread_t thread)
+{
+  P_OUTPUT("FIXME:pthread_detach\n");
+  return 0;
+}
+
+/* FIXME: we have no equivalents in win32 for the policys */
+/* so just keep this as a stub */
+int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
+{
+  P_OUTPUT("FIXME:pthread_attr_setschedpolicy\n");
+  return 0;
+}
+
+/* FIXME: no win32 equivalent for scope */
+int pthread_attr_setscope(pthread_attr_t *attr, int scope)
+{
+  P_OUTPUT("FIXME:pthread_attr_setscope\n");
+  return 0; /* return success */
+}
+  
+/* FIXME: no win32 equivalent for schedule param */
+int pthread_attr_setschedparam(pthread_attr_t *attr,
+    const struct sched_param *param)
+{
+  P_OUTPUT("FIXME:pthread_attr_setschedparam\n");
+  return 0; /* return success */
+}
+
 int __pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
   static pthread_once_t the_once = PTHREAD_ONCE_INIT;

@@ -125,6 +125,7 @@ DECL_HANDLER(close_handle);
 DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
 DECL_HANDLER(open_process);
+DECL_HANDLER(open_thread);
 DECL_HANDLER(select);
 DECL_HANDLER(create_event);
 DECL_HANDLER(event_op);
@@ -284,6 +285,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_handle_info,
     (req_handler)req_dup_handle,
     (req_handler)req_open_process,
+    (req_handler)req_open_thread,
     (req_handler)req_select,
     (req_handler)req_create_event,
     (req_handler)req_event_op,
