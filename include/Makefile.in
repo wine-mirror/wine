@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	comcat.idl \
 	oaidl.idl \
 	objidl.idl \
 	strmif.idl \
@@ -23,7 +24,6 @@ WINDOWS_INCLUDES = \
 	basetsd.h \
 	cderr.h \
 	cguid.h \
-	comcat.h \
 	commctrl.h \
 	commdlg.h \
 	compobj.h \
@@ -242,7 +242,6 @@ WINE_INCLUDES = \
 	exception.h \
 	library.h \
 	obj_cache.h \
-	obj_comcat.h \
 	obj_commdlgbrowser.h \
 	obj_connection.h \
 	obj_contextmenu.h \
@@ -250,7 +249,6 @@ WINE_INCLUDES = \
 	obj_dockingwindowframe.h \
 	obj_dragdrop.h \
 	obj_dragdrophelper.h \
-	obj_enumguid.h \
 	obj_enumidlist.h \
 	obj_extracticon.h \
 	obj_inplace.h \
