@@ -491,7 +491,8 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 	{
 		if( (GetWindow(hwndChildDlg,GW_CHILD)) == (HWND) NULL)
                    return;
-		ptParentClient.x = rectParent.right-rectParent.left;
+		SetRectEmpty(&rectTemp);
+		ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
 		ptParentClient.y = (rectParent.bottom-rectParent.top) + (rectChild.bottom-rectChild.top);
 		ptMoveCtl.y = rectParent.bottom-rectParent.top;
 		ptMoveCtl.x=0;
@@ -528,14 +529,14 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 				   Check the initial position of the controls relative to the initial
 				   position and size of stc32 (before it is expanded).
 				*/
-                if (rectCtrl.left > rectTemp.right && rectCtrl.top > rectTemp.bottom)
+                if (rectCtrl.left >= rectTemp.right && rectCtrl.top >= rectTemp.bottom)
 				{
 					rectCtrl.left += ptMoveCtl.x;
 				rectCtrl.top  += ptMoveCtl.y;
 				}
-				else if (rectCtrl.left > rectTemp.right)
+				else if (rectCtrl.left >= rectTemp.right)
 					rectCtrl.left += ptMoveCtl.x;
-				else if (rectCtrl.top > rectTemp.bottom)
+				else if (rectCtrl.top >= rectTemp.bottom)
 					rectCtrl.top  += ptMoveCtl.y;
 					
 				SetWindowPos( hwndChild, 0, rectCtrl.left, rectCtrl.top, 
