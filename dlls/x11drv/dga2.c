@@ -63,7 +63,7 @@ void X11DRV_XF86DGA2_Init(void)
 
   /* test that it works */
   if (!TSXDGAOpenFramebuffer(gdi_display, DefaultScreen(gdi_display))) {
-    TRACE("disabling XF86DGA2 (insufficient permissions?)\n");
+    WARN("disabling XF86DGA2 (insufficient permissions?)\n");
     return;
   }
   TSXDGACloseFramebuffer(gdi_display, DefaultScreen(gdi_display));
@@ -84,7 +84,7 @@ void X11DRV_XF86DGA2_Init(void)
   for (i=0; i<nmodes; i++)
     convert_mode(&modes[i], &xf86dga2_modes[i+1]);
 
-  TRACE("Enabling DGA\n");
+  TRACE("Enabling XF86DGA2 mode\n");
 }
 
 void X11DRV_XF86DGA2_Cleanup(void)

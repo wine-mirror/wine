@@ -94,7 +94,7 @@ if the buffer is already locked, so you can call it whenever you feel it
 
 At the end of EditWndProc(), EDIT_ReleasePointer() is automatically called
 which cleans up the initialized pointer.  So you don't have to worry about
-unlocking the memory block. This way, the buffer gets locked / unlock only
+unlocking the memory block. This way, the buffer gets locked / unlocked only
 once every message, although EDIT_GetPointer() may actually have been called
 a hundred times.  Only when the actual HLOCAL is needed (for example to
 ReAlloc), an extra call (besides the cleanup at the end of EditWndProc()) to
@@ -192,12 +192,7 @@ poorly documented.  Somebody that knows ?
 
 D) Known bugs / Features
 
--	The control still calls GetTabbedTextExtent() and TabbedTextOut() in
-	their 16 bit version (since the 32 bit versions don't yet exist).
-	Therefore the tab list is 16 bits (should be 32).
 -	Scrollbar tracking is broken.
--	Lots of API calls are to 16 bit functions, because their 32 bit
-	versions haven't been implemented yet (e.g. clipboard).
 -	Turning on WordWrap with 16-bit Notepad leaves part of the horizontal
 	scrollbar visible (problem with WM_ERASEBKGND ???).
 -	FIXME's (grep for them).

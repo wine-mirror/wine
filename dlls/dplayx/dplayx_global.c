@@ -221,7 +221,7 @@ BOOL DPLAYX_ConstructData(void)
   }
   else
   {
-    ERR( ": semaphore error 0x%08lx\n", GetLastError() );
+    ERR( ": semaphore error %ld\n", GetLastError() );
     return FALSE;
   }
 
@@ -246,7 +246,7 @@ BOOL DPLAYX_ConstructData(void)
   }
   else
   {
-    ERR( ": unable to create shared memory 0x%08lx\n", GetLastError() );
+    ERR( ": unable to create shared memory (%ld)\n", GetLastError() );
     return FALSE;
   }
 
@@ -256,7 +256,7 @@ BOOL DPLAYX_ConstructData(void)
 
   if( lpSharedStaticData == NULL )
   {
-    ERR( ": unable to map static data into process memory space: 0x%08lx\n", 
+    ERR( ": unable to map static data into process memory space (%ld)\n", 
          GetLastError() );
     return FALSE;
   }

@@ -1222,13 +1222,13 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     int namelen,drive=0;
 
     if ((strlen(name) >1)&& (name[1]==':'))
-      /*drive letter given */
+      /* drive letter given */
       {
 	driveletter = name[0];
       }
     if ((strlen(name) >2)&& (name[1]==':') &&
 	     ((name[2]=='\\') || (name[2]=='/')))
-      /*absolute path given */
+      /* absolute path given */
       {
 	lstrcpynA(full_name.short_name,name,MAX_PATHNAME_LEN);
 	drive = (int)FILE_toupper(name[0]) - 'A';
@@ -1285,7 +1285,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 	if ( *p == '/' )
 	  *p = '\\';
       }
-     /* Use memmove, as areas overlap*/
+     /* Use memmove, as areas overlap */
      /* Delete .. */
     while ((p = strstr(full_name.short_name,"\\..\\")))
       {
@@ -1317,8 +1317,8 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     namelen=strlen(full_name.short_name);
     if (!strcmp(full_name.short_name+namelen-3,"\\.."))
 	{
-	  /* one more starnge case: "c:\test\test1\.." 
-	   return "c:\test"*/
+	  /* one more strange case: "c:\test\test1\.." 
+	   return "c:\test" */
 	  *(full_name.short_name+namelen-3)=0;
 	  q = strrchr(full_name.short_name,'\\');
 	  *q =0;
@@ -1332,7 +1332,7 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 
     /* If the lpBuffer buffer is too small, the return value is the 
     size of the buffer, in characters, required to hold the path 
-    plus the terminating \0 (tested against win95osr, bon 001118)
+    plus the terminating \0 (tested against win95osr2, bon 001118)
     . */
     ret = strlen(full_name.short_name);
     if (ret >= len )

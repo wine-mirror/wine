@@ -378,7 +378,7 @@ then {
     then {
       rm -f $TMPCONF $TMPREG > /dev/null
 
-      echo " not found."
+      echo " not found. (no matching /etc/fstab mount entry found)"
       conf_question low do_without_windows \
        "Windows was not found on your system, so I assume you want" \
        "a Wine-only installation. Am I correct?"

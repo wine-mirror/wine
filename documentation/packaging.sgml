@@ -8,6 +8,7 @@
         <para>
           Written by &name-marcus-meissner; <email>&email-marcus-meissner;</email>
           Updated by &name-jeremy-white; <email>&email-jeremy-white;</email>
+          Updated by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
         </para>
     </sect1>
 
@@ -18,9 +19,15 @@
       The information contained in this document is extremely
       time sensitive.  <emphasis>It is vital that a packager
       stay current with changes in Wine. </>
+      Changes to this document could be tracked e.g. by viewing its CVS log.
+      Due to Wine's fast development, a recent revision date
+      does not necessarily indicate that this document is 100% on par
+      with what Wine's full installation requirements are
+      (especially whenever lazy developers don't properly update the
+      documentation to include info about new features they implemented).
       </para>
       <para>
-      This document was last revised on November 2, 2000.</para>
+      This document was last revised on November 14, 2001.</para>
 
       </sect1>
 
@@ -34,7 +41,7 @@
         <orderedlist>
             <listitem id=WINECONFDIR><para id=wineconfdir.id><EnVar>WINECONFDIR</EnVar></para>
                 <para>
-                <envar>WINECONFDIR</envar> is the users Wine configuration directory.
+                <envar>WINECONFDIR</envar> is the user's Wine configuration directory.
                 This is almost always ~/.wine, but can be overridden
                 by the user by setting the <EnVar>WINECONFDIR</EnVar> environment
                 variable.
@@ -73,7 +80,7 @@
                 </para>
                 <para>
                 This directory is specified by the user, in
-                the users <link linkend=winerc>configuration file</link>.
+                the user's <link linkend=winerc>configuration file</link>.
                 </para>
                 <para>
                 Generally speaking, this directory is either set
@@ -118,7 +125,7 @@
 
         <sect1 id="pkg-goals"> <title>Goals</title>
         <para>
-            An installation from a Wine pacakage should:
+            An installation from a Wine package should:
         </para>
           <itemizedlist>
 
@@ -128,7 +135,7 @@
                 </para>
                 <para>
                 The initial installation should require no user
-                input.  An rpm -i wine.rpm or apt get wine
+                input.  An rpm -i wine.rpm or apt-get install wine
                 should suffice for initial installation.
                 </para>
             </listitem>
@@ -199,7 +206,7 @@
         Successfully installing Wine requires:
       </para>
 
-          <itemizedlist>
+        <itemizedlist>
         <listitem>
           <para>Much thought and work from the packager (1x)</para>
         </listitem>
@@ -208,11 +215,11 @@
           A configuration file
           </para>
           <para>
-          Wine will not run with out a configuration file.  Further,
+          Wine will not run without a configuration file.  Further,
           no default is currently provided by Wine.  Some packagers may attempt
           to provide (or dynamically generate) a default configuration
           file.  Some packagers may wish to
-          rely on winecfg to generate the configuration file.
+          rely on winesetup to generate the configuration file.
           </para>
         </listitem>
 
@@ -220,13 +227,12 @@
             <listitem>
               <para>
                 A writeable <filename>C:\</filename> directory
-                structure on a per user basis. Applications do dump
+                structure on a per-user basis. Applications do dump
                 <filename>.ini</filename> files into
                 <filename>c:\windows</filename>, installers dump
                 <filename>.exe</filename>, <filename>.dll</filename>
-                and more into <filename>c:\windows\</filename> and
-                subdirectories or into <filename>C:\Program
-                  Files\</filename>.
+                and more into <filename>c:\windows</filename> and
+                subdirectories or into <filename>C:\Program Files</filename>.
               </para>
             </listitem>
 
@@ -244,7 +250,7 @@
                 There are several other choices that could be made;
                 registries can be imported from a Windows partition.
                 At this time, Wine does not completely support
-                a complex multi user installation, ala Windows NT,
+                a complex multi-user installation ala Windows NT,
                 but it could fairly readily.
                 </para>
             </listitem>
@@ -277,9 +283,9 @@
         <sect1 id="pkg-static"><title>Wine Static and Shareable Files</title>
 
         <para>
-        At the time of this writing, the following components
+        At the time of this writing, almost all of the following components
         are installed through a standard 'make install'
-        of Wine.
+        of Wine. Exceptions from the rule are noted.
 
         <caution>
         <para>
@@ -316,6 +322,20 @@
                     </listitem>
                   </varlistentry>
 
+                  <varlistentry><term><filename>winebootup</filename></term>
+                    <listitem>
+                    <para>
+		    Winelib app to be found in programs/.
+		    It'll be called by the winelauncher wine wrapper startup
+		    script for every first-time wine invocation.
+		    Its purpose is to process all Windows startup autorun
+		    mechanisms, such as wininit.ini, win.ini Load=/Run=,
+		    registry keys: RenameFiles/Run/RunOnce*/RunServices*,
+		    Startup folders.
+                    </para>
+                    </listitem>
+                  </varlistentry>
+
                   <varlistentry><term><filename>wineclipsrv</filename></term>
                     <listitem>
                     <para>
@@ -334,7 +354,27 @@
                     </listitem>
                   </varlistentry>
 
-                  <varlistentry><term><filename>winecfg</filename></term>
+                  <varlistentry><term><filename>winelauncher</filename></term>
+                    <listitem>
+                    <para>
+		    (not getting installed via make install)
+		    A wine wrapper shell script that intelligently handles
+		    wine invocation by informing the user about what's going
+		    on, among other things.
+		    To be found in tools/ directory.
+		    Use of this wrapper script instead of directly using wine
+		    is strongly encouraged, as it not only improves the user
+		    interface, but also adds important functionality to wine,
+		    such as session bootup/startup actions.
+		    If you intend to use this script, then you might want to
+		    rename the wine executable to e.g. wine.bin and
+		    winelauncher to wine.
+                    the <link linkend=WINECONFDIR endterm=wineconfdir.id></link>/config file.
+                    </para>
+                    </listitem>
+                  </varlistentry>
+
+                  <varlistentry><term><filename>winesetup</filename></term>
                     <listitem>
                     <para>
                     This is a Tcl/Tk based front end that provides
@@ -348,7 +388,7 @@
                     <listitem>
                     <para>
                     This shell script can be called by Wine in order
-                    to propogate Desktop icon and menu creation
+                    to propagate Desktop icon and menu creation
                     requests out to a GNOME or KDE (or other
                     Window Managers).
                     </para>
@@ -387,7 +427,7 @@
                     <listitem>
                     <para>
                     The fnt2bdf utility extracts fonts from .fnt or
-                    .dll files and stores then in .dbf format files.
+                    .dll files and stores them in .bdf format files.
                     </para>
                     </listitem>
                   </varlistentry>
@@ -395,6 +435,22 @@
                     <listitem>
                     <para>
                     DOS Virtual Machine.
+                    </para>
+                    </listitem>
+                  </varlistentry>
+
+                  <varlistentry><term><filename>uninstaller</filename></term>
+                    <listitem>
+                    <para>
+		    (not getting installed via make install)
+                    A Winelib program to uninstall installed Windows programs.
+		    To be found in the programs/ source directory.
+		    This program can be used to uninstall most Windows programs
+		    (just like the Add/Remove Programs item in Windows)
+		    by taking the registry uninstall strings that get created
+		    by installers such as InstallShield or WISE.
+		    In binary packages, it should probably be renamed
+		    to something like wine-uninstaller for consistency's sake.
                     </para>
                     </listitem>
                   </varlistentry>
@@ -407,16 +463,15 @@
 
         <simplelist columns=5>
 
-<member>libwine.so.1.0</>
-<member>libddraw.so.1.0</>
-<member>libopengl32.so.1.0</>
-<member>libx11drv.so.1.0</>
 <member>libadvapi32.so.1.0</>
+<member>libavicap32.so.1.0</>
 <member>libavifil32.so.1.0</>
 <member>libcomctl32.so.1.0</>
 <member>libcomdlg32.so.1.0</>
 <member>libcrtdll.so.1.0</>
 <member>libdciman32.so.1.0</>
+<member>libddraw.so.1.0</>
+<member>libdevenum.so.1.0</>
 <member>libdinput.so.1.0</>
 <member>libdplay.so.1.0</>
 <member>libdplayx.so.1.0</>
@@ -425,12 +480,27 @@
 <member>libicmp.so.1.0</>
 <member>libimagehlp.so.1.0</>
 <member>libimm32.so.1.0</>
+<member>libjoystick.drv.so.1.0</>
 <member>libkernel32.so.1.0</>
 <member>liblz32.so.1.0</>
+<member>libmapi.so.1.0</>
+<member>libmcianim.drv.so.1.0</>
+<member>libmciavi.drv.so.1.0</>
+<member>libmcicda.drv.so.1.0</>
+<member>libmciseq.drv.so.1.0</>
+<member>libmciwave.drv.so.1.0</>
+<member>libmidimap.drv.so.1.0</>
 <member>libmpr.so.1.0</>
+<member>libmsacm.drv.so.1.0</>
 <member>libmsacm32.so.1.0</>
+<member>libmsdmo.so.1.0</>
+<member>libmsimg32.so.1.0</>
 <member>libmsnet32.so.1.0</>
+<member>libmsrle32.so.1.0</>
+<member>libmsvcrt.so.1.0</>
 <member>libmsvfw32.so.1.0</>
+<member>libnetapi32.so.1.0</>
+<member>libntdll.so.1.0</>
 <member>libodbc32.so.1.0</>
 <member>libole32.so.1.0</>
 <member>liboleaut32.so.1.0</>
@@ -438,39 +508,42 @@
 <member>liboledlg.so.1.0</>
 <member>libolepro32.so.1.0</>
 <member>libolesvr32.so.1.0</>
+<member>libopengl32.so.1.0</>
 <member>libpsapi.so.1.0</>
+<member>libqcap.so.1.0</>
+<member>libquartz.so.1.0</>
 <member>librasapi32.so.1.0</>
 <member>libriched32.so.1.0</>
 <member>librpcrt4.so.1.0</>
 <member>libserialui.so.1.0</>
 <member>libsetupapi.so.1.0</>
+<member>libshdocvw.so.1.0</>
 <member>libshell32.so.1.0</>
 <member>libshfolder.so.1.0</>
 <member>libshlwapi.so.1.0</>
+<member>libsti.so.1.0</>
 <member>libtapi32.so.1.0</>
 <member>libttydrv.so.1.0</>
+<member>liburl.so.1.0</>
 <member>liburlmon.so.1.0</>
 <member>libuser32.so.1.0</>
 <member>libversion.so.1.0</>
 <member>libw32skrnl.so.1.0</>
-<member>libwnaspi32.so.1.0</>
+<member>libwine.so.1.0</>
+<member>libwine_unicode.so.1.0</>
+<member>libwinedos.so.1.0</>
+<member>libwineoss.drv.so.1.0</>
 <member>libwineps.so.1.0</>
 <member>libwininet.so.1.0</>
-<member>libjoystick.drv.so.1.0</>
 <member>libwinmm.so.1.0</>
-<member>libmcianim.drv.so.1.0</>
-<member>libmciavi.drv.so.1.0</>
-<member>libmcicda.drv.so.1.0</>
-<member>libmciseq.drv.so.1.0</>
-<member>libmciwave.drv.so.1.0</>
-<member>libmidimap.drv.so.1.0</>
-<member>libmsacm.drv.so.1.0</>
-<member>libwineoss.drv.so.1.0</>
-<member>libws2_32.so.1.0</>
+<member>libwinnls32.so.1.0</>
 <member>libwinspool.drv.so.1.0</>
+<member>libwintrust.so.1.0</>
+<member>libwnaspi32.so.1.0</>
 <member>libwow32.so.1.0</>
+<member>libws2_32.so.1.0</>
 <member>libwsock32.so.1.0</>
-<member>libwine_unicode.so.1.0</>
+<member>libx11drv.so.1.0</>
         </simplelist>
 
         </listitem>
@@ -752,7 +825,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/system.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the users local copy of 
+                    This file contains the user's local copy of 
                     the HKEY_LOCAL_MACHINE registry hive.  In general
                     use, it will contain only changes made to the
                     default registry values.
@@ -763,7 +836,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/user.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the users local copy of 
+                    This file contains the user's local copy of 
                     the HKEY_CURRENT_USER registry hive.  In
                     general use, it will contain only changes made to the
                     default registry values.
@@ -774,7 +847,7 @@
                   <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/userdef.reg</filename></term>
                     <listitem>
                     <para>
-                    This file contains the users local copy of 
+                    This file contains the user's local copy of 
                     the HKEY_USERS\.Default registry hive.  In
                     general use, it will contain only changes made to the
                     default registry values.
@@ -797,11 +870,11 @@
                     <para>
                     This file contains the global values for
                     HKEY_LOCAL_MACHINE.  The values in this file
-                    can be overriden by the users local settings.
+                    can be overridden by the user's local settings.
                     </para>
                     <note>
                     <para>
-                    The location of this directory is hard coded within
+                    The location of this directory is hardcoded within
                     wine, generally to /etc.  This will hopefully be
                     fixed at some point in the future.
                     </para>
@@ -815,7 +888,7 @@
                     <para>
                     This file contains the global values for
                     HKEY_USERS.  The values in this file
-                    can be overriden by the users local settings.
+                    can be overridden by the user's local settings.
                     This file is likely to be deprecated in
                     favor of a global wine.userdef.reg that will
                     only contain HKEY_USERS/.Default.
@@ -830,7 +903,7 @@
 
         <listitem>
                 <variablelist><title>Other files in <link linkend=WINECONFDIR endterm=wineconfdir.id></link></title>
-                  <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/wineserver-[username]</filename></term>
+                  <varlistentry><term><filename><link linkend=WINECONFDIR endterm=wineconfdir.id></link>/wineserver-[hostname]</filename></term>
                     <listitem>
                     <para>
                     This directory contains files used by Wine and the Wineserver
@@ -911,7 +984,7 @@
                 Windows Dynamic Link Libraries ([WINDOWSDIR]/system32/*.dll)
                 </para>
                 <para> 
-                Wine has the ability to use the actuall Windows DLL files
+                Wine has the ability to use the actual Windows DLL files
                 when running an application.  An end user can configure
                 Wine so that Wine uses some or all of these DLL files
                 when running a given application.
@@ -944,8 +1017,8 @@
         The most basic question to ask is given the Wine CVS tree,
         what physical files are you, the packager, going to produce?
         Are you going to produce only a wine.rpm (as Marcus has done),
-        or are you going to produce 5 debian files
-        (libwine-dev, libwine, wine-doc, wine-utils, and wine) as
+        or are you going to produce 6 Debian files
+        (libwine, libwine-dev, wine, wine-doc, wine-utils and winesetuptk) as
         Ove has done?
         </para>
         <para>
@@ -1007,6 +1080,12 @@
         and the OpenLinux package for specific details on how
         those packages are built.
         </para>
+	<para>
+	You might also want to use the wine wrapper script winelauncher
+	that can be found in tools/ directory, as it has several important
+	advantages over directly invoking the wine binary.
+	See the <link linkend=binfiles>Executable Files</link> section
+	for details.
 
         <sect2 id=opt><title>The question of /opt/wine</title>
         <para>
@@ -1034,15 +1113,15 @@
                 Rely completely on user file space - install nothing
                 </para>
                 <para>
-                This approach relies upon the new winecfg utility and
-                the new ability of Wine to launch winecfg if no configuration file is found.
+                This approach relies upon the new winesetup utility and
+                the new ability of Wine to launch winesetup if no configuration file is found.
                 The basic concept is that no global configuration files
                 are created at install time.
                 Instead, Wine configuration files are created on the
-                fly by the winecfg program when Wine is invoked.
-                Further, winecfg creates default Windows directories
+                fly by the winesetup program when Wine is invoked.
+                Further, winesetup creates default Windows directories
                 and paths that are stored completely in
-                the users <link linkend=WINECONFDIR endterm=wineconfdir.id></link>.
+                the user's <link linkend=WINECONFDIR endterm=wineconfdir.id></link>.
                 </para>
                 <para>
                 This approach has the benefit of simplicity in that all
@@ -1054,7 +1133,7 @@
                 This approach, however, adds another level of complexity.
                 It does not allow Wine to run Solitaire 'out of the box';
                 the user must run the configuration program first.  Further,
-                winecfg requires Tcl/Tk, a requirement not beloved by some.
+                winesetup requires Tcl/Tk, a requirement not beloved by some.
                 Additionally, this approach closes the door on multi
                 user configurations and presumes a single user approach.
                 </para>
@@ -1234,7 +1313,7 @@ fi
               <para>Creating a good default configuration file</para>
               <para>
                 For the rationales of needing as less input from the
-                user as possible  arises the need for a very good
+                user as possible arises the need for a very good
                 configuration file. The one supplied with WINE is
                 currently lacking. We need:
               </para>
@@ -1246,7 +1325,7 @@ fi
                   <itemizedlist>
                     <listitem>
                       <para>
-                        A for the floppy. Specify your distributions
+                        A for the floppy. Specify your distribution's
                         default floppy mountpoint here.
                       </para>
                       <programlisting>
@@ -1256,7 +1335,7 @@ Path=/auto/floppy
                     <listitem>
                       <para>
                         C for the <filename>C:\</filename> directory.
-                        Here we use the users homedirectory, for most
+                        Here we use the user's home directory, for most
                         applications do see <filename>C:\</filename>
                         as root-writeable directory of every windows
                         installation and this basically is it in the
@@ -1269,7 +1348,7 @@ Path=${HOME}
                     <listitem>
                       <para>
                         R for the CD-Rom drive. Specify your
-                        distributions default CD-ROM drives mountpoint
+                        distribution's default CD-ROM drives mountpoint
                         here.
                         </para>
                       <programlisting>
@@ -1295,7 +1374,7 @@ Path=/auto/cdrom
                         for instance <filename>lose95</filename>,
                         <filename>win</filename> or
                         <filename>sys\win95</filename>). During
-                        compile/package/install we leave this  to be
+                        compile/package/install we leave this to be
                         <filename>/</filename>, it has to be
                         configured after the package install.
                       </para>
@@ -1304,8 +1383,8 @@ Path=/auto/cdrom
                       <para>
                         Z for the UNIX Root directory. This avoids any
                         problems with "could not find drive for
-                        current directory" users occasionaly complain
-                        about in the newsgroup and the ircchannel. It
+                        current directory" users occasionally complain
+                        about in the newsgroup and the irc channel. It
                         also makes the whole directory structure
                         browseable. The type of Z should be network,
                         so applications expect it to be readonly.
@@ -1321,10 +1400,10 @@ Path=/
                     [wine]:
                   </para>
                   <screen>
-  Windows=c:\windows\ 		(the windows/ subdirectory in the users
-  				 homedirectory)
-  System=c:\windows\system\	(the windows/system subdirectory in the users
-  				 homedirectory)
+  Windows=c:\windows\ 		(the windows/ subdirectory in the user's
+  				 home directory)
+  System=c:\windows\system\	(the windows/system subdirectory in the user's
+  				 home directory)
   Path=c:\windows;c:\windows\system;c:\windows\system32;w:\;w:\system;w:\system32;
   ; Using this trick we have in fact two windows installations in one, we
   ; get the stuff from the readonly installation and can write to our own.
@@ -1374,6 +1453,9 @@ Path=/
                 that <filename>setup.ins</filename> or some other mess
                 is missing... If you choose to do so, then please make
                 this change verbose to the admin.
+		Also make sure that the kernel you use includes the Joliet
+		CD-ROM support, for the very same reasons as given above
+		(no long filenames due to missing Joliet, files not found).
               </para>
             </listitem>
             <listitem>
@@ -1420,7 +1502,7 @@ Path=/
                   </para>
                   <para>
                     This will give a huge number of symlinks, yes.
-                    However, if an installer later overwrites on of
+                    However, if an installer later overwrites one of
                     those files, it will overwrite the symlink (so
                     that the file now lies in the
                     <filename>windows/</filename> subdirectory).
@@ -1433,7 +1515,7 @@ Path=/
                 <listitem>
                   <para>
                     On later invocation the script might want to
-                    compare regular files in  the users windows
+                    compare regular files in the user's windows
                     directories and in the global windows directories
                     and replace same files by symlinks (to avoid
                     diskspace problems).
@@ -1446,7 +1528,7 @@ Path=/
           </orderedlist>
 
 
-      <sect2 id=sample><title>Sample <filename>wine.ini</filename> for OpenLinux 2.x:</title>
+      <sect2 id=sample><title>Sample <filename>wine.ini</filename> for OpenLinux 2.x (outdated, for review purposes only !):</title>
 
 <programlisting>
 
@@ -1498,7 +1580,7 @@ Filesystem=win95
 
 
 ;
-; Drive 'C' links to the users homedirectory. 
+; Drive 'C' links to the user's homedirectory. 
 ; 
 ; This must point to a writeable directory structure (not your readonly
 ; mounted DOS partitions!) since programs want to dump stuff into
@@ -1768,40 +1850,40 @@ Startup=
     <orderedlist>
         <listitem>
             <para>
-            Remove duplication of code between winecfg and
+            Remove duplication of code between winesetup and
             wineconf/wineinstall.
             </para>
             <para>
-            Currently, winecfg duplicates all of the code contained 
+            Currently, winesetup duplicates all of the code contained 
             in wineconf.
             </para>
             <para>
             Instead, wineconf should be improved to generate
-            the new style config file, and then winecfg should
+            the new style config file, and then winesetup should
             rely on wineconf to generate the default
             configuration file.
             </para>
             <para>
             Similarly, there is functionality such as creating
             the default registry files that is now done by
-            both winecfg and wineinstall.
+            both winesetup and wineinstall.
             </para>
             <para>
             At this time, it seems like the right thing to do
             is to break up or parameterize wineinstall, so that
             it can be used for single function actions,
-            and then have winecfg call those functions.
+            and then have winesetup call those functions.
             </para>
         </listitem>
 
         <listitem>
             <para>
-            Enhance winecfg to support W: drive generation.
+            Enhance winesetup to support W: drive generation.
             </para>
             <para>
             The best practices convention now seems to be
             to generate a set of drives from M: through W:.
-            At this point, winecfg does not generate
+            At this point, winesetup does not generate
             a default wine config file that follows
             these conventions. It should.
             </para>
@@ -1838,7 +1920,7 @@ Startup=
             Get Marcus's winesetup facilities into CVS
             </para>
             <para>
-            Along the lines of the changes to winecfg,
+            Along the lines of the changes to winesetup,
             and the consolidation of wineconf and wineinstall,
             we should extract the good stuff from Marcus's
             winesetup script, and get it into CVS.

@@ -2448,7 +2448,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     }
 
     if ((context->EFlags & 0x0001))
-        TRACE("failed, error 0x%04lx\n", GetLastError() );
+        TRACE("failed, error %ld\n", GetLastError() );
  
     TRACE("returning: AX=%04x BX=%04x CX=%04x DX=%04x "
                  "SI=%04x DI=%04x DS=%04x ES=%04x EFL=%08lx\n",

@@ -1942,7 +1942,7 @@ int TLB_ReadTypeLib(LPCWSTR pszFileName, INT index, ITypeLib2 **ppTypeLib)
     if(*ppTypeLib)
       ret = S_OK;
     else
-      ERR("Loading of typelib %s failed with error 0x%08lx\n",
+      ERR("Loading of typelib %s failed with error %ld\n",
 	  debugstr_w(pszFileName), GetLastError());
 
     return ret;

@@ -1454,7 +1454,7 @@ HRESULT WINAPI CoCreateInstance(
 			  (LPVOID)&lpclf);
 
   if (FAILED(hres)) {
-    FIXME("no classfactory created for %s, hres is 0x%08lx\n",
+    FIXME("no classfactory created for CLSID %s, hres is 0x%08lx\n",
 	  debugstr_guid(rclsid),hres);
     return hres;
   }

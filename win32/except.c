@@ -291,12 +291,12 @@ EXIT:
 /******************************************************************
  *		start_debugger_atomic
  *
- * starts the debugger is an atomic way:
+ * starts the debugger in an atomic way:
  *	- either the debugger is not started and it is started
- *	- either the debugger has already been started by an other thread
- *	- either the debugger couldn't be started
+ *	- or the debugger has already been started by another thread
+ *	- or the debugger couldn't be started
  *
- * returns TRUE for the two first condition, FALSE for the last
+ * returns TRUE for the two first conditions, FALSE for the last
  */
 static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 {
@@ -314,9 +314,8 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	attr.SecurityDescriptor       = NULL;
 	attr.SecurityQualityOfService = NULL;
 
-	/* ask for manual reset, so that once the debugger is started, every thread will be
-	 * know it
-	 */
+	/* ask for manual reset, so that once the debugger is started,
+	 * every thread will know it */
 	NtCreateEvent( &hEvent, EVENT_ALL_ACCESS, &attr, TRUE, FALSE );
 	if (InterlockedCompareExchange( (LPLONG)&hRunOnce, hEvent, 0 ) == 0)
 	{
@@ -338,9 +337,9 @@ static	int	start_debugger_atomic(PEXCEPTION_POINTERS epointers)
 	
     /* and wait for the winner to have actually created the debugger */
     WaitForSingleObject( hRunOnce, INFINITE );
-    /* in fact, here, we only know that someone has tried to start the debugger, we'll know
-     * by reposting the exception if it has actually attached to the current process
-     */
+    /* in fact, here, we only know that someone has tried to start the debugger,
+     * we'll know by reposting the exception if it has actually attached
+     * to the current process */
     return TRUE;
 }
 

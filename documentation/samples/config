@@ -210,6 +210,8 @@ WINE REGISTRY Version 2
 
 [Tweak.Layout]
 ;; supported styles are 'Win31'(default), 'Win95', 'Win98'
+;; this has *nothing* to do with the windows version Wine returns:
+;; use cmdline option --winver if you want that.
 "WineLook" = "Win95"
 
 [Console]

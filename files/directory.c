@@ -121,7 +121,7 @@ int DIR_Init(void)
                              path, sizeof(path) );
     if (strchr(path, '/'))
     {
-	MESSAGE("No '/' allowed in [wine] 'Path=' statement of wine config!\n");
+	MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
 	PROFILE_UsageWineIni();
 	ExitProcess(1);
     }

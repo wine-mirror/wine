@@ -1,7 +1,7 @@
 /*
  * Q&D Uninstaller (main.c)
  * 
- * Copyright 2000 Andreas Mohr <a.mohr@mailto.de>
+ * Copyright 2000 Andreas Mohr <andi@lisas.de>
  * To be distributed under the Wine License
  */
 
@@ -40,7 +40,7 @@
 char appname[18];
 
 static char about_string[] =
-    "Windows program uninstaller (C) 2000 by Andreas Mohr <a.mohr@mailto.de>";
+    "Windows program uninstaller (C) 2000 by Andreas Mohr <andi@lisas.de>";
 static char program_description[] =
 	"Welcome to the Wine uninstaller !\n\nThe purpose of this program is to let you get rid of all those fantastic programs that somehow manage to always take way too much space on your HDD :-)";
 

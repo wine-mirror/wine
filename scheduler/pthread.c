@@ -2,7 +2,7 @@
  * pthread emulation for re-entrant libcs
  *
  * We can't use pthreads directly, so why not let libcs
- * that wants pthreads use Wine's own threading instead...
+ * that want pthreads use Wine's own threading instead...
  *
  * Copyright 1999 Ove Kåven
  */

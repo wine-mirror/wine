@@ -869,7 +869,7 @@ DWORD CDROM_GetLabel(int drive, char *label)
 
 	    case CDS_MIXED:
 		cdname = "Mixed mode";
-		ERR("We don't have a way of determining the label of a mixed mode CD - Linux doesn't allow raw access !!\n");
+		FIXME("Need to get the label of a mixed mode CD: not implemented yet !\n");
 		/* fall through */
 
 	    case CDS_NO_INFO:
