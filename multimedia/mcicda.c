@@ -216,7 +216,7 @@ static BOOL32 CDAUDIO_GetTracksInfo(WINE_CDAUDIO* wcda)
 #ifdef linux
 	wcda->lpbTrackFlags[i] =
 		(entry.cdte_adr << 4) | (entry.cdte_ctrl & 0x0f);
-#elif
+#else
 	wcda->lpbTrackFlags[i] =
 		(toc_buffer.addr_type << 4) | (toc_buffer.control & 0x0f);
 #endif 
