@@ -32,6 +32,7 @@
 #include "wownt32.h"
 #include "digitalv.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciwave);
 
@@ -41,7 +42,7 @@ typedef struct {
     int				nUseCount;	/* Incremented for each shared open */
     BOOL			fShareable;	/* TRUE if first open was shareable */
     HMMIO			hFile;		/* mmio file handle open as Element */
-    MCI_WAVE_OPEN_PARMSA 	openParms;
+    MCI_WAVE_OPEN_PARMSW 	openParms;
     WAVEFORMATEX		wfxRef;
     LPWAVEFORMATEX		lpWaveFormat;
     BOOL			fInput;		/* FALSE = Output, TRUE = Input */
@@ -134,7 +135,7 @@ static DWORD WAVE_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 /**************************************************************************
  * 				MCIWAVE_drvOpen			[internal]
  */
-static	DWORD	WAVE_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+static	DWORD	WAVE_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIWAVE*	wmw;
 
@@ -344,11 +345,11 @@ err:
 /**************************************************************************
  * 			WAVE_mciOpen	                        [internal]
  */
-static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpOpenParms)
+static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSW lpOpenParms)
 {
     DWORD		dwRet = 0;
     WINE_MCIWAVE*	wmw = (WINE_MCIWAVE*)mciGetDriverData(wDevID);
-    CHAR*               pszTmpFileName = 0;
+    WCHAR*              pszTmpFileName = 0;
 
     TRACE("(%04X, %08lX, %p)\n", wDevID, dwFlags, lpOpenParms);
     if (lpOpenParms == NULL)	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -379,18 +380,18 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 	     */
 	    dwRet = MCIERR_UNRECOGNIZED_COMMAND;
 	} else {
-	    if (strlen(lpOpenParms->lpstrElementName) > 0) {
+	    if (strlenW(lpOpenParms->lpstrElementName) > 0) {
 	        lpOpenParms->lpstrElementName = lpOpenParms->lpstrElementName;
 
 		/* FIXME : what should be done id wmw->hFile is already != 0, or the driver is playin' */
-		TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpOpenParms->lpstrElementName);
+		TRACE("MCI_OPEN_ELEMENT %s!\n", debugstr_w(lpOpenParms->lpstrElementName));
 
-		if (lpOpenParms->lpstrElementName && (strlen(lpOpenParms->lpstrElementName) > 0)) {
-		    wmw->hFile = mmioOpenA((LPSTR)lpOpenParms->lpstrElementName, NULL,
-				    MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READWRITE);
+		if (lpOpenParms->lpstrElementName && (strlenW(lpOpenParms->lpstrElementName) > 0)) {
+		    wmw->hFile = mmioOpenW((LPWSTR)lpOpenParms->lpstrElementName, NULL,
+                                           MMIO_ALLOCBUF | MMIO_DENYWRITE | MMIO_READWRITE);
 
 		    if (wmw->hFile == 0) {
-			WARN("can't find file='%s' !\n", lpOpenParms->lpstrElementName);
+			WARN("can't find file=%s!\n", debugstr_w(lpOpenParms->lpstrElementName));
 			dwRet = MCIERR_FILE_NOT_FOUND;
 		    }
 		    else
@@ -423,38 +424,42 @@ static DWORD WAVE_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMSA lpO
 		}
 	    }
 	    else {
-		CHAR  szTmpPath[MAX_PATH];
-		CHAR  szPrefix[4]    = "TMP\0";
+		WCHAR  szTmpPath[MAX_PATH];
+		WCHAR  szPrefix[4];
 
+                szPrefix[0] = 'T';
+                szPrefix[1] = 'M';
+                szPrefix[2] = 'P';
+                szPrefix[3] = '\0';
 		pszTmpFileName = HeapAlloc(GetProcessHeap(),
 				           HEAP_ZERO_MEMORY,
 					   MAX_PATH * sizeof(*pszTmpFileName));
 
-		if (!GetTempPathA(sizeof(szTmpPath), szTmpPath)) {
+		if (!GetTempPathW(sizeof(szTmpPath), szTmpPath)) {
 		    WARN("can't retrieve temp path!\n");
 		    HeapFree(GetProcessHeap(), 0, pszTmpFileName);
 		    return MCIERR_FILE_NOT_FOUND;
 		}
 
-		if (!GetTempFileNameA(szTmpPath, szPrefix, 0, pszTmpFileName)) {
-			WARN("can't retrieve temp file name!\n");
-			HeapFree(GetProcessHeap(), 0, pszTmpFileName);
-			return MCIERR_FILE_NOT_FOUND;
+		if (!GetTempFileNameW(szTmpPath, szPrefix, 0, pszTmpFileName)) {
+                    WARN("can't retrieve temp file name!\n");
+                    HeapFree(GetProcessHeap(), 0, pszTmpFileName);
+                    return MCIERR_FILE_NOT_FOUND;
 		}
 
 		wmw->bTemporaryFile = TRUE;
 
-		TRACE("MCI_OPEN_ELEMENT '%s' !\n", pszTmpFileName);
+		TRACE("MCI_OPEN_ELEMENT %s!\n", debugstr_w(pszTmpFileName));
 
-		if (pszTmpFileName && (strlen(pszTmpFileName) > 0)) {
+		if (pszTmpFileName && (strlenW(pszTmpFileName) > 0)) {
 
-		    wmw->hFile = mmioOpenA(pszTmpFileName, NULL,
+		    wmw->hFile = mmioOpenW(pszTmpFileName, NULL,
 				           MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_CREATE);
 
 		    if (wmw->hFile == 0) {
+			WARN("can't create file=%s!\n", debugstr_w(pszTmpFileName));
 			/* temporary file could not be created. clean filename. */
 			HeapFree(GetProcessHeap(), 0, pszTmpFileName);
-			WARN("can't create file='%s' !\n", pszTmpFileName);
 			dwRet = MCIERR_FILE_NOT_FOUND;
 		    }
 		}
@@ -617,7 +622,7 @@ static DWORD WAVE_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPar
      */
     if (wmw->bTemporaryFile)
     {
-	HeapFree(GetProcessHeap(), 0, (char*)wmw->openParms.lpstrElementName);
+	HeapFree(GetProcessHeap(), 0, (WCHAR*)wmw->openParms.lpstrElementName);
 	wmw->openParms.lpstrElementName = NULL;
     }
 
@@ -702,7 +707,7 @@ static DWORD WAVE_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     }
 
     if (wmw->hFile == 0) {
-	WARN("Can't play: no file='%s' !\n", wmw->openParms.lpstrElementName);
+	WARN("Can't play: no file=%s!\n", debugstr_w(wmw->openParms.lpstrElementName));
 	return MCIERR_FILE_NOT_FOUND;
     }
 
@@ -1230,12 +1235,13 @@ static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 	    return MCIERR_BAD_INTEGER;
 	}
 
-	if (lpParms->dwAudio & MCI_SET_AUDIO_ALL)
-	    TRACE("MCI_SET_AUDIO_ALL !\n");
-	if (lpParms->dwAudio & MCI_SET_AUDIO_LEFT)
-	    TRACE("MCI_SET_AUDIO_LEFT !\n");
-	if (lpParms->dwAudio & MCI_SET_AUDIO_RIGHT)
-	    TRACE("MCI_SET_AUDIO_RIGHT !\n");
+	switch (lpParms->dwAudio)
+        {
+        case MCI_SET_AUDIO_ALL:         TRACE("MCI_SET_AUDIO_ALL !\n"); break;
+        case MCI_SET_AUDIO_LEFT:        TRACE("MCI_SET_AUDIO_LEFT !\n"); break;
+        case MCI_SET_AUDIO_RIGHT:       TRACE("MCI_SET_AUDIO_RIGHT !\n"); break;
+        default:                        WARN("Unknown audio channel %lu\n", lpParms->dwAudio); break;
+        }
     }
     if (dwFlags & MCI_WAVE_INPUT)
 	TRACE("MCI_WAVE_INPUT !\n");
@@ -1275,7 +1281,7 @@ static DWORD WAVE_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 /**************************************************************************
  *				WAVE_mciSave		[internal]
  */
-static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
+static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMSW lpParms)
 {
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
     DWORD		ret = MCIERR_FILE_NOT_SAVED, tmpRet;
@@ -1306,10 +1312,10 @@ static DWORD WAVE_mciSave(UINT wDevID, DWORD dwFlags, LPMCI_SAVE_PARMS lpParms)
       careful not to lose our previous error code.
     */
     tmpRet = GetLastError();
-    DeleteFileA (lpParms->lpfilename);
+    DeleteFileW (lpParms->lpfilename);
     SetLastError(tmpRet);
 
-    if (0 == mmioRenameA(wmw->openParms.lpstrElementName, lpParms->lpfilename, 0, 0 )) {
+    if (0 == mmioRenameW(wmw->openParms.lpstrElementName, lpParms->lpfilename, 0, 0 )) {
 	ret = ERROR_SUCCESS;
     }
 
@@ -1541,10 +1547,10 @@ static DWORD WAVE_mciGetDevCaps(UINT wDevID, DWORD dwFlags,
 /**************************************************************************
  * 				WAVE_mciInfo			[internal]
  */
-static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
+static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 {
     DWORD		ret = 0;
-    LPCSTR		str = 0;
+    LPCWSTR		str = 0;
     WINE_MCIWAVE*	wmw = WAVE_mciGetOpenDev(wDevID);
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
@@ -1554,31 +1560,27 @@ static DWORD WAVE_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
     } else if (wmw == NULL) {
 	ret = MCIERR_INVALID_DEVICE_ID;
     } else {
+        static const WCHAR wszAudio  [] = {'W','i','n','e','\'','s',' ','a','u','d','i','o',' ','p','l','a','y','e','r',0};
+        static const WCHAR wszWaveIn [] = {'W','i','n','e',' ','W','a','v','e',' ','I','n',0};
+        static const WCHAR wszWaveOut[] = {'W','i','n','e',' ','W','a','v','e',' ','O','u','t',0};
+
 	TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
 	switch (dwFlags & ~(MCI_WAIT|MCI_NOTIFY)) {
-	case MCI_INFO_PRODUCT:
-	    str = "Wine's audio player";
-	    break;
-	case MCI_INFO_FILE:
-	    str = wmw->openParms.lpstrElementName;
-	    break;
-	case MCI_WAVE_INPUT:
-	    str = "Wine Wave In";
-	    break;
-	case MCI_WAVE_OUTPUT:
-	    str = "Wine Wave Out";
-	    break;
+	case MCI_INFO_PRODUCT: str = wszAudio; break;
+	case MCI_INFO_FILE:    str = wmw->openParms.lpstrElementName; break;
+	case MCI_WAVE_INPUT:   str = wszWaveIn; break;
+	case MCI_WAVE_OUTPUT:  str = wszWaveOut; break;
 	default:
 	    WARN("Don't know this info command (%lu)\n", dwFlags);
 	    ret = MCIERR_UNRECOGNIZED_COMMAND;
 	}
     }
     if (str) {
-	if (strlen(str) + 1 > lpParms->dwRetSize) {
+	if (strlenW(str) + 1 > lpParms->dwRetSize) {
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
-	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize);
+	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize);
 	}
     } else {
 	lpParms->lpstrReturn[0] = 0;
@@ -1599,7 +1601,7 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return WAVE_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_OPEN:		return WAVE_drvOpen((LPCWSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSW)dwParam2);
     case DRV_CLOSE:		return WAVE_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
@@ -1612,7 +1614,7 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
 
     switch (wMsg) {
-    case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSA)  dwParam2);
+    case MCI_OPEN_DRIVER:	return WAVE_mciOpen      (dwDevID, dwParam1, (LPMCI_WAVE_OPEN_PARMSW)  dwParam2);
     case MCI_CLOSE_DRIVER:	return WAVE_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_CUE:		return WAVE_mciCue       (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_PLAY:		return WAVE_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)        dwParam2);
@@ -1623,9 +1625,9 @@ LONG CALLBACK	MCIWAVE_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_RESUME:		return WAVE_mciResume    (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)     dwParam2);
     case MCI_STATUS:		return WAVE_mciStatus    (dwDevID, dwParam1, (LPMCI_STATUS_PARMS)      dwParam2);
     case MCI_GETDEVCAPS:	return WAVE_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)  dwParam2);
-    case MCI_INFO:		return WAVE_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSA)       dwParam2);
+    case MCI_INFO:		return WAVE_mciInfo      (dwDevID, dwParam1, (LPMCI_INFO_PARMSW)       dwParam2);
     case MCI_SEEK:		return WAVE_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)        dwParam2);
-    case MCI_SAVE:		return WAVE_mciSave	 (dwDevID, dwParam1, (LPMCI_SAVE_PARMS)	       dwParam2);
+    case MCI_SAVE:		return WAVE_mciSave	 (dwDevID, dwParam1, (LPMCI_SAVE_PARMSW)       dwParam2);
 	/* commands that should be supported */
     case MCI_LOAD:
     case MCI_FREEZE:

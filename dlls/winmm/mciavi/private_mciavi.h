@@ -41,12 +41,12 @@ struct MMIOPos {
 };
 
 typedef struct {
-    MCIDEVICEID                wDevID;
+    MCIDEVICEID         wDevID;
     int			nUseCount;          	/* Incremented for each shared open          */
     BOOL  		fShareable;         	/* TRUE if first open was shareable 	     */
     WORD		wCommandTable;		/* custom MCI command table */
-    DWORD              dwStatus;               /* One of MCI_MODE_XXX                       */
-    LPSTR              lpFileName;
+    DWORD               dwStatus;               /* One of MCI_MODE_XXX                       */
+    LPWSTR              lpFileName;
     DWORD		dwMciTimeFormat;	/* current time format */
     DWORD		dwSet;			/* what's turned on: video & audio l&r */
     /* information on the loaded AVI file */
@@ -90,9 +90,9 @@ extern HINSTANCE MCIAVI_hInstance;
 DWORD 	MCIAVI_ConvertFrameToTimeFormat(WINE_MCIAVI* wma, DWORD val, LPDWORD lpRet);
 DWORD 	MCIAVI_ConvertTimeFormatToFrame(WINE_MCIAVI* wma, DWORD val);
 DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS lpParms);
-DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms);
+DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms);
 DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms);
-DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpParms);
+DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms);
 
 /* mmoutput.c */
 BOOL	MCIAVI_GetInfo(WINE_MCIAVI* wma);
@@ -108,9 +108,9 @@ DWORD MCIAVI_mciClose(UINT, DWORD, LPMCI_GENERIC_PARMS);
 /* wnd.c */
 BOOL    MCIAVI_RegisterClass(void);
 BOOL    MCIAVI_UnregisterClass(void);
-BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms);
+BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSW lpOpenParms);
 DWORD	MCIAVI_mciPut(UINT wDevID, DWORD dwFlags, LPMCI_DGV_PUT_PARMS lpParms);
 DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms);
-DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpParms);
+DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSW lpParms);
 
 #endif  /* __WINE_PRIVATE_MCIAVI_H */

@@ -28,6 +28,7 @@
 #include "wownt32.h"
 #include "mmddk.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcianim);
 
@@ -40,7 +41,7 @@ typedef struct {
         int     	nUseCount;          /* Incremented for each shared open */
         BOOL		fShareable;         /* TRUE if first open was shareable */
         WORD    	wNotifyDeviceID;    /* MCI device ID with a pending notification */
-	MCI_OPEN_PARMSA openParms;
+	MCI_OPEN_PARMSW openParms;
 	DWORD		dwTimeFormat;
 	int		mode;
 	UINT		nCurTrack;
@@ -56,7 +57,7 @@ typedef struct {
 /**************************************************************************
  * 				MCIANIM_drvOpen			[internal]
  */
-static	DWORD	MCIANIM_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+static	DWORD	MCIANIM_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIANIM*	wma;
 
@@ -105,7 +106,7 @@ static WINE_MCIANIM*  MCIANIM_mciGetOpenDrv(UINT16 wDevID)
 /**************************************************************************
  * 				MCIANIM_mciOpen			[internal]
  */
-static DWORD MCIANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
+static DWORD MCIANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenParms)
 {
     DWORD		dwDeviceID;
     WINE_MCIANIM*	wma = (WINE_MCIANIM*)mciGetDriverData(wDevID);
@@ -136,8 +137,8 @@ static DWORD MCIANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpO
 
     /*TRACE("lpParms->wDevID=%04X\n", lpParms->wDeviceID);*/
     if (dwFlags & MCI_OPEN_ELEMENT) {
-	TRACE("MCI_OPEN_ELEMENT '%s' !\n", lpOpenParms->lpstrElementName);
-	if (lpOpenParms->lpstrElementName && strlen(lpOpenParms->lpstrElementName) > 0) {
+	TRACE("MCI_OPEN_ELEMENT %s!\n", debugstr_w(lpOpenParms->lpstrElementName));
+	if (lpOpenParms->lpstrElementName && strlenW(lpOpenParms->lpstrElementName) > 0) {
 	}
 	FIXME("element is not opened\n");
     }
@@ -343,11 +344,13 @@ static DWORD MCIANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTi
 /**************************************************************************
  * 				MCIANIM_mciInfo			[internal]
  */
-static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
+static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 {
     WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
-    LPCSTR		str = 0;
+    LPCWSTR		str = 0;
     DWORD		ret = 0;
+    static const WCHAR wszAnimation[] = {'W','i','n','e','\'','s',' ','a','n','i','m','a','t','i','o','n',0};
+    static const WCHAR wszWindow   [] = {'A','n','i','m','a','t','i','o','n',' ','W','i','n','d','o','w',0};
 
     TRACE("(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
@@ -360,26 +363,20 @@ static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpP
     TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
     switch(dwFlags) {
-    case MCI_INFO_PRODUCT:
-	str = "Wine's animation";
-	break;
-    case MCI_INFO_FILE:
-	str = wma->openParms.lpstrElementName;
-	break;
-    case MCI_ANIM_INFO_TEXT:
-	str = "Animation Window";
-	break;
+    case MCI_INFO_PRODUCT:      str = wszAnimation; break;
+    case MCI_INFO_FILE:         str = wma->openParms.lpstrElementName; break;
+    case MCI_ANIM_INFO_TEXT:    str = wszWindow; break;
     default:
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
 
     if (str) {
-	if (lpParms->dwRetSize <= strlen(str)) {
-	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	if (lpParms->dwRetSize <= strlenW(str)) {
+	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
-	    strcpy(lpParms->lpstrReturn, str);
+	    strcpyW(lpParms->lpstrReturn, str);
 	}
     } else {
 	*lpParms->lpstrReturn = 0;
@@ -658,7 +655,7 @@ LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch (wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return MCIANIM_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_OPEN:		return MCIANIM_drvOpen((LPCWSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSW)dwParam2);
     case DRV_CLOSE:		return MCIANIM_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
@@ -671,10 +668,10 @@ LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
 
     switch (wMsg) {
-    case MCI_OPEN_DRIVER:	return MCIANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
+    case MCI_OPEN_DRIVER:	return MCIANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSW)dwParam2);
     case MCI_CLOSE_DRIVER:	return MCIANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MCIANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MCIANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMSA)dwParam2);
+    case MCI_INFO:		return MCIANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMSW)dwParam2);
     case MCI_STATUS:		return MCIANIM_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
     case MCI_SET:		return MCIANIM_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
     case MCI_PLAY:		return MCIANIM_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);

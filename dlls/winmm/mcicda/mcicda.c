@@ -37,6 +37,7 @@
 #include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mcicda);
 
@@ -60,13 +61,13 @@ typedef struct {
 /**************************************************************************
  * 				MCICDA_drvOpen			[internal]
  */
-static	DWORD	MCICDA_drvOpen(LPSTR str, LPMCI_OPEN_DRIVER_PARMSA modp)
+static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCICDAUDIO*	wmcda;
 
     if (!modp) return 0xFFFFFFFF;
 
-    wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,  sizeof(WINE_MCICDAUDIO));
+    wmcda = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINE_MCICDAUDIO));
 
     if (!wmcda)
 	return 0;
@@ -264,14 +265,13 @@ static DWORD MCICDA_Stop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms
 /**************************************************************************
  * 				MCICDA_Open			[internal]
  */
-static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenParms)
+static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSW lpOpenParms)
 {
     DWORD		dwDeviceID;
     DWORD               ret = MCIERR_HARDWARE;
     WINE_MCICDAUDIO* 	wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(wDevID);
-    char                root[7];
+    WCHAR               root[7], drive = 0;
     int                 count;
-    char                drive = 0;
 
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpOpenParms);
 
@@ -297,18 +297,18 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
             WARN("MCI_OPEN_ELEMENT_ID %8lx ! Abort\n", (DWORD)lpOpenParms->lpstrElementName);
             return MCIERR_NO_ELEMENT_ALLOWED;
         }
-        TRACE("MCI_OPEN_ELEMENT element name: %s\n", debugstr_a(lpOpenParms->lpstrElementName));
+        TRACE("MCI_OPEN_ELEMENT element name: %s\n", debugstr_w(lpOpenParms->lpstrElementName));
         if (!isalpha(lpOpenParms->lpstrElementName[0]) || lpOpenParms->lpstrElementName[1] != ':' ||
             (lpOpenParms->lpstrElementName[2] && lpOpenParms->lpstrElementName[2] != '\\'))
         {
-            WARN("MCI_OPEN_ELEMENT unsupported format: %s\n", lpOpenParms->lpstrElementName);
+            WARN("MCI_OPEN_ELEMENT unsupported format: %s\n", 
+                 debugstr_w(lpOpenParms->lpstrElementName));
             ret = MCIERR_NO_ELEMENT_ALLOWED;
             goto the_error;
         }
         drive = toupper(lpOpenParms->lpstrElementName[0]);
-        strcpy(root, "A:\\");
-        root[0] = drive;
-        if (GetDriveTypeA(root) != DRIVE_CDROM)
+        root[0] = drive; root[1] = ':'; root[2] = '\\'; root[3] = '\0';
+        if (GetDriveTypeW(root) != DRIVE_CDROM)
         {
             ret = MCIERR_INVALID_DEVICE_NAME;
             goto the_error;
@@ -317,10 +317,10 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     else
     {
         /* drive letter isn't passed... get the dwDeviceID'th cdrom in the system */
-        strcpy(root, "A:\\");
+        root[0] = 'A'; root[1] = ':'; root[2] = '\\'; root[3] = '\0';
         for (count = 0; root[0] <= 'Z'; root[0]++)
         {
-            if (GetDriveTypeA(root) == DRIVE_CDROM && ++count >= dwDeviceID)
+            if (GetDriveTypeW(root) == DRIVE_CDROM && ++count >= dwDeviceID)
             {
                 drive = root[0];
                 break;
@@ -337,9 +337,8 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     wmcda->dwTimeFormat = MCI_FORMAT_MSF;
 
     /* now, open the handle */
-    strcpy(root, "\\\\.\\A:");
-    root[4] = drive;
-    wmcda->handle = CreateFileA(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    root[0] = root[1] = '\\'; root[2] = '.'; root[3] = '\\'; root[4] = drive; root[5] = ':'; root[6] = '\0';
+    wmcda->handle = CreateFileW(root, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (wmcda->handle != INVALID_HANDLE_VALUE)
         return 0;
 
@@ -462,12 +461,12 @@ static DWORD CDROM_Audio_GetSerial(CDROM_TOC* toc)
 /**************************************************************************
  * 				MCICDA_Info			[internal]
  */
-static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
+static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
 {
-    LPCSTR		str = NULL;
+    LPCWSTR		str = NULL;
     WINE_MCICDAUDIO*	wmcda = MCICDA_GetOpenDrv(wDevID);
     DWORD		ret = 0;
-    char		buffer[16];
+    WCHAR		buffer[16];
 
     TRACE("(%04X, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 
@@ -478,13 +477,15 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
     TRACE("buf=%p, len=%lu\n", lpParms->lpstrReturn, lpParms->dwRetSize);
 
     if (dwFlags & MCI_INFO_PRODUCT) {
-	str = "Wine's audio CD";
+        static const WCHAR wszAudioCd[] = {'W','i','n','e','\'','s',' ','a','u','d','i','o',' ','C','D',0};
+        str = wszAudioCd;
     } else if (dwFlags & MCI_INFO_MEDIA_UPC) {
 	ret = MCIERR_NO_IDENTITY;
     } else if (dwFlags & MCI_INFO_MEDIA_IDENTITY) {
 	DWORD	    res = 0;
         CDROM_TOC   toc;
         DWORD       br;
+	static const WCHAR wszLu[] = {'%','l','u',0};
 
         if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_TOC, NULL, 0,
                              &toc, sizeof(toc), &br, NULL)) {
@@ -492,23 +493,23 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 	}
 
 	res = CDROM_Audio_GetSerial(&toc);
-	sprintf(buffer, "%lu", res);
+	sprintfW(buffer, wszLu, res);
 	str = buffer;
     } else {
 	WARN("Don't know this info command (%lu)\n", dwFlags);
 	ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (str) {
-	if (lpParms->dwRetSize <= strlen(str)) {
-	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
+	if (lpParms->dwRetSize <= strlenW(str)) {
+	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize - 1);
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
-	    strcpy(lpParms->lpstrReturn, str);
+	    strcpyW(lpParms->lpstrReturn, str);
 	}
     } else {
 	*lpParms->lpstrReturn = 0;
     }
-    TRACE("=> %s (%ld)\n", lpParms->lpstrReturn, ret);
+    TRACE("=> %s (%ld)\n", debugstr_w(lpParms->lpstrReturn), ret);
     return ret;
 }
 
@@ -992,7 +993,7 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     switch(wMsg) {
     case DRV_LOAD:		return 1;
     case DRV_FREE:		return 1;
-    case DRV_OPEN:		return MCICDA_drvOpen((LPSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSA)dwParam2);
+    case DRV_OPEN:		return MCICDA_drvOpen((LPCWSTR)dwParam1, (LPMCI_OPEN_DRIVER_PARMSW)dwParam2);
     case DRV_CLOSE:		return MCICDA_drvClose(dwDevID);
     case DRV_ENABLE:		return 1;
     case DRV_DISABLE:		return 1;
@@ -1005,10 +1006,10 @@ LONG CALLBACK	MCICDA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     if (dwDevID == 0xFFFFFFFF) return MCIERR_UNSUPPORTED_FUNCTION;
 
     switch (wMsg) {
-    case MCI_OPEN_DRIVER:	return MCICDA_Open(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2);
+    case MCI_OPEN_DRIVER:	return MCICDA_Open(dwDevID, dwParam1, (LPMCI_OPEN_PARMSW)dwParam2);
     case MCI_CLOSE_DRIVER:	return MCICDA_Close(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MCICDA_GetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MCICDA_Info(dwDevID, dwParam1, (LPMCI_INFO_PARMSA)dwParam2);
+    case MCI_INFO:		return MCICDA_Info(dwDevID, dwParam1, (LPMCI_INFO_PARMSW)dwParam2);
     case MCI_STATUS:		return MCICDA_Status(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
     case MCI_SET:		return MCICDA_Set(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
     case MCI_PLAY:		return MCICDA_Play(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);

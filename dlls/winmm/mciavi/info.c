@@ -23,6 +23,7 @@
 #include <string.h>
 #include "private_mciavi.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciavi);
 
@@ -148,11 +149,12 @@ DWORD	MCIAVI_mciGetDevCaps(UINT wDevID, DWORD dwFlags,  LPMCI_GETDEVCAPS_PARMS l
 /***************************************************************************
  * 				MCIAVI_mciInfo			[internal]
  */
-DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
+DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
 {
-    LPCSTR		str = 0;
+    LPCWSTR		str = 0;
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;
+    static const WCHAR wszAviPlayer[] = {'W','i','n','e','\'','s',' ','A','V','I',' ','p','l','a','y','e','r',0};
 
     if (lpParms == NULL || lpParms->lpstrReturn == NULL)
 	return MCIERR_NULL_PARAMETER_BLOCK;
@@ -163,22 +165,18 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSA lpParms)
     EnterCriticalSection(&wma->cs);
 
     switch (dwFlags) {
-    case MCI_INFO_PRODUCT:
-	str = "Wine's AVI player";
-	break;
-    case MCI_INFO_FILE:
-       str = wma->lpFileName;
-	break;
+    case MCI_INFO_PRODUCT:      str = wszAviPlayer; break;
+    case MCI_INFO_FILE:         str = wma->lpFileName; break;
     default:
 	WARN("Don't know this info command (%lu)\n", dwFlags);
         LeaveCriticalSection(&wma->cs);
 	return MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (str) {
-	if (strlen(str) + 1 > lpParms->dwRetSize) {
+	if (strlenW(str) + 1 > lpParms->dwRetSize) {
 	    ret = MCIERR_PARAM_OVERFLOW;
 	} else {
-	    lstrcpynA(lpParms->lpstrReturn, str, lpParms->dwRetSize);
+	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize);
 	}
     } else {
 	lpParms->lpstrReturn[0] = 0;
@@ -325,7 +323,7 @@ DWORD	MCIAVI_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
 /***************************************************************************
  * 				MCIAVI_mciStatus			[internal]
  */
-DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSA lpParms)
+DWORD	MCIAVI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
     DWORD		ret = 0;

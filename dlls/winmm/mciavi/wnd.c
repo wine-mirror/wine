@@ -85,7 +85,6 @@ static LRESULT WINAPI MCIAVI_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
     default:
         return DefWindowProcW(hWnd, uMsg, wParam, lParam);
     }
-    return 0;
 }
 
 BOOL MCIAVI_UnregisterClass(void)
@@ -112,13 +111,13 @@ BOOL MCIAVI_RegisterClass(void)
     return FALSE;
 }
 
-BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSA lpOpenParms)
+BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARMSW lpOpenParms)
 {
     static const WCHAR captionW[] = {'W','i','n','e',' ','M','C','I','-','A','V','I',' ','p','l','a','y','e','r',0};
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
     int		p = CW_USEDEFAULT;
-    RECT rc;
+    RECT        rc;
 
     /* what should be done ? */
     if (wma->hWnd) return TRUE;
@@ -134,9 +133,9 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     AdjustWindowRect(&rc, dwStyle, FALSE);
 
     wma->hWnd = CreateWindowW(mciaviW, captionW,
-                             dwStyle, rc.left, rc.top,
-                             rc.right, rc.bottom,
-                             hParent, 0, MCIAVI_hInstance,
+                              dwStyle, rc.left, rc.top,
+                              rc.right, rc.bottom,
+                              hParent, 0, MCIAVI_hInstance,
                               (LPVOID)wma->wDevID);
     wma->hWndPaint = wma->hWnd;
     return (BOOL)wma->hWnd;
@@ -264,7 +263,7 @@ DWORD	MCIAVI_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
 /***************************************************************************
  * 				MCIAVI_mciWindow			[internal]
  */
-DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpParms)
+DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSW lpParms)
 {
     WINE_MCIAVI*	wma = MCIAVI_mciGetOpenDev(wDevID);
 
@@ -288,8 +287,8 @@ DWORD	MCIAVI_mciWindow(UINT wDevID, DWORD dwFlags, LPMCI_DGV_WINDOW_PARMSA lpPar
         ShowWindow(wma->hWndPaint, lpParms->nCmdShow);
     }
     if (dwFlags & MCI_DGV_WINDOW_TEXT) {
-	TRACE("Setting caption to '%s'\n", lpParms->lpstrText);
-       SetWindowTextA(wma->hWndPaint, lpParms->lpstrText);
+	TRACE("Setting caption to %s\n", debugstr_w(lpParms->lpstrText));
+        SetWindowTextW(wma->hWndPaint, lpParms->lpstrText);
     }
 
     LeaveCriticalSection(&wma->cs);
