@@ -69,7 +69,7 @@ FONT 8, "Helv"
 
 PRINT_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 264, 134
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Skrivar inställningar"
+CAPTION "Skrivarinställningar"
 FONT 8, "Helv"
 {
  GROUPBOX "Skrivare", 1072, 6, 10, 180, 65, BS_GROUPBOX
@@ -95,19 +95,17 @@ FONT 8, "Helv"
 
 CHOOSE_FONT DIALOG DISCARDABLE  13, 54, 264, 147
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Font"
+CAPTION "Typsnitt"
 FONT 8, "Helv"
 {
-    LTEXT           "&Font:",1088 ,6,3,40,9
+    LTEXT           "&Typsnitt:",1088 ,6,3,40,9
     COMBOBOX        1136 ,6,13,94,54,  CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
-    LTEXT           "Font S&til:",1089 ,108,3,44,9
-    COMBOBOX        1137,108,13,64,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
-                    WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
+    LTEXT           "Typsnittss&til:",1089 ,108,3,44,9
+    COMBOBOX        1137,108,13,64,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
     LTEXT           "&Storlek:",1090,179,3,30,9
-    COMBOBOX        1138,179,13,32,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
-                    WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE | CBS_SORT
-    DEFPUSHBUTTON   "OK",IDOK,218,6,40,14,WS_GROUP
+    COMBOBOX        1138,179,13,32,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE | CBS_SORT
+    DEFPUSHBUTTON   "Ok",IDOK,218,6,40,14,WS_GROUP
     PUSHBUTTON      "Avbryt",IDCANCEL,218,23,40,14,WS_GROUP
     PUSHBUTTON      "&Använd", 1026,218,40,40,14,WS_GROUP
     PUSHBUTTON      "&Hjälp" , 1038,218,57,40,14,WS_GROUP
@@ -192,3 +190,220 @@ FONT 8, "Helv"
  PUSHBUTTON "&Hjälp", 1038, 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Skriv ut"
+FONT 8, "Helv"
+{
+ DEFPUSHBUTTON   "Ok",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+ PUSHBUTTON      "Avbryt", IDCANCEL, 232,164, 48,14, WS_GROUP
+ PUSHBUTTON      "&Hjälp",  pshHelp,  50, 161, 48,14, WS_GROUP
+	
+ GROUPBOX        "Skrivare",       grp4,   8,  4, 272,84, WS_GROUP
+ CONTROL         "Skr&iv till fil",chx1,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+ PUSHBUTTON      "&Egenskaper",    psh2, 212, 17,  60,14, WS_GROUP
+ LTEXT           "&Namn:",         stc6,  16, 20,  36,8
+ COMBOBOX                          cmb4,  52, 18,  152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+ LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+ LTEXT           "Dum status",     stc12, 52, 36, 224,10, SS_NOPREFIX |SS_LEFTNOWORDWRAP
+ LTEXT           "Typ:",           stc7,  16, 48,  36,10, SS_NOPREFIX
+ LTEXT           "Dum typ",        stc11, 52, 48, 224,10, SS_NOPREFIX| SS_LEFTNOWORDWRAP
+ LTEXT           "Plats:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+ LTEXT           "Dum plats",      stc14, 52, 60, 224,10, SS_NOPREFIX| SS_LEFTNOWORDWRAP
+ LTEXT           "Kommentar:",     stc9,  16, 72,  36,10, SS_NOPREFIX
+ LTEXT           "Dum kommentar",  stc13, 52, 72, 152,10, SS_NOPREFIX| SS_LEFTNOWORDWRAP
+
+ GROUPBOX        "Kopior",         grp2, 160, 92, 120,64, WS_GROUP
+ LTEXT           "Antal k&opior:", stc5,168,108,68,8
+ ICON            "",               ico3, 162,124,  76,24,WS_GROUP | SS_CENTERIMAGE
+ CONTROL         "&Sortera",       chx2,"Button",BS_AUTOCHECKBOX |WS_GROUP | WS_TABSTOP,240,130,36,12
+ EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP |ES_NUMBER
+
+ GROUPBOX        "Skriv ut",       grp1,   8,92,  144,64, WS_GROUP
+ CONTROL         "&Alla",          rad1,"Button",BS_AUTORADIOBUTTON |WS_GROUP | WS_TABSTOP,16,106,64,12
+ CONTROL         "Si&dor",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+ CONTROL         "&Markering",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+ EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP |ES_NUMBER
+ EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP |ES_NUMBER
+ RTEXT           "&från:",         stc2,  52,124,  20,8
+ RTEXT           "&till:",         stc3, 100,124,  16,8
+ 
+}
+	
+PRINT32_SETUP DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Utskriftsformat"
+FONT 8, "Helv"
+BEGIN
+ DEFPUSHBUTTON   "Ok",IDOK,180,156,48,14,WS_GROUP
+ PUSHBUTTON      "Avbryt",IDCANCEL,232,156,48,14
+	      
+ GROUPBOX        "Skrivare",   grp4,   8,  4, 272,84, WS_GROUP
+ PUSHBUTTON      "&Egenskaper",    psh2, 212, 17, 60,14, WS_GROUP
+ LTEXT           "&Namn:",         stc6,  16, 20,  36,8
+ COMBOBOX                          cmb1,  52, 18,152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+ LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+ LTEXT           "Dum State",      stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+ LTEXT           "Typ:",           stc7,  16, 48,  36,10, SS_NOPREFIX
+ LTEXT           "Dum typ",        stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+ LTEXT           "Plats:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+ LTEXT           "Dum plats",      stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+ LTEXT           "Kommentar:",     stc9,  16, 72,  36,10, SS_NOPREFIX 
+ LTEXT           "Dum kommnetar",  stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+ GROUPBOX        "Papper",         grp2,   8, 92, 164,56, WS_GROUP
+ LTEXT           "St&orlek:",      stc2,  16,108,  36, 8
+ COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+ LTEXT           "&Källa:",        stc3,  16,128,  36, 8
+ COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+ GROUPBOX        "Orientering",    grp1, 180, 92, 100,56, WS_GROUP
+ ICON            "",               ico1, 195,112,  18,20, WS_GROUP
+ CONTROL         "St&ående",       rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+ CONTROL         "L&iggande",      rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+END
+
+PAGESETUPDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Utskriftsformat"
+FONT 8, "Helv"
+BEGIN
+  CONTROL "", rct1, 130, 0x00020006, 80, 8, 80, 80,  SS_WHITERECT
+  CONTROL "", rct2, 130, 0x00020005, 160, 12, 4, 80, SS_GRAYRECT
+  CONTROL "", rct3, 130, 0x00020005, 84, 88, 80, 4,  SS_GRAYRECT
+  GROUPBOX "Papper", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Storlek:", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160,CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "&Tray:", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160,CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Orientering", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "&Stående", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Liggande", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "Marginaler", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "&Vänster:", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Höger:", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Överkant:", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Nederkant:", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  DEFPUSHBUTTON "Ok", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "Avbryt", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "&Skrivare...", psh3, 184, 220, 48, 14
+END
+
+NEWFILEOPENORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 287, 165
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Öppna"
+FONT 8, "helv"
+{
+ LTEXT       "Leta &i",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+ COMBOBOX    IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+
+ LTEXT       "" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
+ LISTBOX     IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
+    
+ LTEXT       "Fil&namn:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
+ EDITTEXT    IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
+	
+ LTEXT       "&Filformat",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
+ COMBOBOX    IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+
+ CONTROL     "Öppna som &skrivskyddad",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+
+ DEFPUSHBUTTON       "&Öppna",                 IDOK,222,110,50,14
+ PUSHBUTTON          "Avbryt",                IDCANCEL,222,128,50,14
+ PUSHBUTTON          "&Hjälp",                 pshHelp,222,145,50,14
+}
+
+STRINGTABLE DISCARDABLE
+{
+ IDS_ABOUTBOX            "&Om FolderPicker Test"
+ IDS_DOCUMENTFOLDERS     "Dokumentmappar"
+ IDS_PERSONAL            "Mina Documents"
+ IDS_FAVORITES           "Mina Favorites"
+ IDS_PATH                "Systemsökväg"
+ IDS_DESKTOP             "Skrivbord"
+ IDS_FONTS               "Typsnitt"
+ IDS_MYCOMPUTER          "Den här datorn"
+}
+				
+STRINGTABLE DISCARDABLE
+{
+ IDS_SYSTEMFOLDERS       "Systemmappar"
+ IDS_LOCALHARDRIVES      "Lokala hårddiskar"
+ IDS_FILENOTFOUND        "Kunde inte hitta filen"
+ IDS_VERIFYFILE          "Vad god verifiera så korrekt filnamn är angivet"
+ IDS_CREATEFILE          "Filen finns inte\nVill du skapa fil"
+ IDL_OVERWRITEFILE       "Filen finns redan.\nVill du ersätta den?"
+ IDS_INVALID_FILENAME_TITLE "Illegalt tecken i sökväg"
+ IDS_INVALID_FILENAME    "Ett filnamn kan inte innehålla någon av följande tecken: \n                                               / : < > |"
+ IDS_PATHNOTEXISTING     "Sökvägen finns inte"
+ IDS_FILENOTEXISTING     "Filen finns inte"
+}
+    
+STRINGTABLE DISCARDABLE
+{
+ IDS_UPFOLDER         "Upp en nivå"
+ IDS_NEWFOLDER        "Skapa ny mapp"
+ IDS_LISTVIEW         "Lista"
+ IDS_REPORTVIEW       "Detaljerat"
+ IDS_TODESKTOP        "Visa Skrivbordet"
+}
+
+STRINGTABLE DISCARDABLE
+{
+ PD32_PRINT_TITLE       "Skriv ut"
+    
+ PD32_VALUE_UREADABLE                  "Oläsbart fält"
+ PD32_INVALID_PAGE_RANGE "Detta värdet ligger inte inom sidourvalet.\n\
+Var god skriv in ett värde mellan %d och %d."
+ PD32_FROM_NOT_ABOVE_TO                "'från'-fältet kan inte överskrida 'till'-fältet"
+ PD32_MARGINS_OVERLAP                  "Marginalerna överlappar eller är utanför \
+pappersgränserna.\nVar god skriv in marginallerna igen."
+ PD32_NR_OF_COPIES_EMPTY               "Numret 'Antal kopior' kan inte vara tomt."
+ PD32_TOO_LARGE_COPIES                 "Din skrivare stödjer inte så många kopior som du angav. Vad god skriv in ett värde mellan 1 och %d."
+ PD32_PRINT_ERROR                      "Ett skrivarfel inträffade."
+ PD32_NO_DEFAULT_PRINTER               "Det finns ingen standardskrivare."
+ PD32_CANT_FIND_PRINTER                "Kan inte hitta skrivare."
+ PD32_OUT_OF_MEMORY                    "Slut på minne."
+ PD32_GENERIC_ERROR                    "Ett fel uppstog."
+ PD32_DRIVER_UNKNOWN                   "Okänd skrivardrivrutin."
+
+ PD32_DEFAULT_PRINTER                  "Standardskrivare; "
+ PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Det är %d dokument i kön"
+ PD32_PRINT_ALL_X_PAGES                "&Alla %d sidor"
+ PD32_MARGINS_IN_INCHES                "Marginaler [inches]"
+ PD32_MARGINS_IN_MILIMETERS            "Marginaler [millimeter]"
+ PD32_MILIMETERS                       "millimeter"
+		
+ PD32_PRINTER_STATUS_READY             "Redo"
+ PD32_PRINTER_STATUS_PAUSED            "Stannad; "
+ PD32_PRINTER_STATUS_ERROR             "Fel; "
+ PD32_PRINTER_STATUS_PENDING_DELETION  "Pendlande borttagning; "
+ PD32_PRINTER_STATUS_PAPER_JAM         "Papperskrångel; "
+ PD32_PRINTER_STATUS_PAPER_OUT         "Slut på papper; "
+ PD32_PRINTER_STATUS_MANUAL_FEED       "Fyll på papper manuellet; "
+ PD32_PRINTER_STATUS_PAPER_PROBLEM     "Pappersproblem; "
+ PD32_PRINTER_STATUS_OFFLINE           "Skriverare än avstängd; "
+ PD32_PRINTER_STATUS_IO_ACTIVE         "I/O Aktiv; "
+ PD32_PRINTER_STATUS_BUSY              "Upptagen; "
+ PD32_PRINTER_STATUS_PRINTING          "Skriver ut; "
+ PD32_PRINTER_STATUS_OUTPUT_BIN_FULL   "Utmatningsfacket är fullt; "
+ PD32_PRINTER_STATUS_NOT_AVAILABLE     "Inte tillgänglig; "
+ PD32_PRINTER_STATUS_WAITING           "Väntar; "
+ PD32_PRINTER_STATUS_PROCESSING        "Proceserar; "
+ PD32_PRINTER_STATUS_INITIALIZING      "Initialiserar; "
+ PD32_PRINTER_STATUS_WARMING_UP        "Värmer upp; "
+ PD32_PRINTER_STATUS_TONER_LOW         "Toner snart slut; "
+ PD32_PRINTER_STATUS_NO_TONER          "Inga toner; "
+ PD32_PRINTER_STATUS_PAGE_PUNT         "Sidopunt; "
+ PD32_PRINTER_STATUS_USER_INTERVENTION "Avbruten av användaren; "
+ PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Slut på minne; "
+ PD32_PRINTER_STATUS_DOOR_OPEN         "Skrivardörren är öppen; "
+ PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Skrivarserver okänd; "
+ PD32_PRINTER_STATUS_POWER_SAVE        "Felsäkert läge; "
+}
+	
+		    
