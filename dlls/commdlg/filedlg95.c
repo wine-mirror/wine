@@ -356,13 +356,13 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
       fodInfos->ofnInfos.lpstrFileTitle = (LPSTR)MemAlloc(ofn->nMaxFileTitle);
   if (ofn->lpstrInitialDir)
   {
-      fodInfos->ofnInfos.lpstrInitialDir = (LPSTR)MemAlloc(strlen(ofn->lpstrInitialDir));
+      fodInfos->ofnInfos.lpstrInitialDir = (LPSTR)MemAlloc(strlen(ofn->lpstrInitialDir)+1);
       strcpy((LPSTR)fodInfos->ofnInfos.lpstrInitialDir,ofn->lpstrInitialDir);
   }
 
   if (ofn->lpstrTitle)
   {
-      fodInfos->ofnInfos.lpstrTitle = (LPSTR)MemAlloc(strlen(ofn->lpstrTitle));
+      fodInfos->ofnInfos.lpstrTitle = (LPSTR)MemAlloc(strlen(ofn->lpstrTitle)+1);
       strcpy((LPSTR)fodInfos->ofnInfos.lpstrTitle,ofn->lpstrTitle);
   }
 
@@ -371,7 +371,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   fodInfos->ofnInfos.nFileExtension = ofn->nFileExtension;
   if (ofn->lpstrDefExt)
   {
-      fodInfos->ofnInfos.lpstrDefExt = MemAlloc(strlen(ofn->lpstrDefExt));
+      fodInfos->ofnInfos.lpstrDefExt = MemAlloc(strlen(ofn->lpstrDefExt)+1);
       strcpy((LPSTR)fodInfos->ofnInfos.lpstrDefExt,ofn->lpstrDefExt);
   }
   fodInfos->ofnInfos.lCustData = ofn->lCustData;
@@ -1065,13 +1065,13 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       	  }
        	  else
        	  {
-       	      lpstrExt = MemAlloc(strlen(lpstrTemp)-1);
+       	      lpstrExt = MemAlloc(strlen(lpstrTemp));
        	      strcpy(lpstrExt,&lpstrTemp[1]);
        	  }
 		  
 	  if(!strcmp(&lpstrExt[1],"*") && fodInfos->ofnInfos.lpstrDefExt)
 	  {
-       	      lpstrExt = MemAlloc(strlen(fodInfos->ofnInfos.lpstrDefExt)+1);
+       	      lpstrExt = MemAlloc(strlen(fodInfos->ofnInfos.lpstrDefExt)+2);
        	      strcat(lpstrExt,".");
        	      strcat(lpstrExt,(LPSTR) fodInfos->ofnInfos.lpstrDefExt);
        	  }
@@ -1286,7 +1286,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
       if(!lpstrExtTmp)
           break;
 
-      lpstrExt = (LPSTR) MemAlloc(strlen(lpstrExtTmp));
+      lpstrExt = (LPSTR) MemAlloc(strlen(lpstrExtTmp)+1);
       if(!lpstrExt)
           break;
       
