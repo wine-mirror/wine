@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include "config.h"
 #include "windef.h"
 #include "wine/windef16.h"
 

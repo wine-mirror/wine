@@ -4,6 +4,7 @@
 /* This file contains all X11 private and specific definitions.
  * It may also be used by all ports that reuse X11 stuff (like XF86 DGA)
  */
+#include "config.h"
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 

@@ -51,6 +51,8 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 
+#include "config.h"
+
 /*
  *  Lightweight debug definitions for Wine Clipboard Server.
  *  The standard FIXME, ERR, WARN & TRACE classes are supported

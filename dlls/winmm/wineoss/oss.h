@@ -1,5 +1,7 @@
 /* Definition for OSS drivers : wine multimedia system */
 
+#include "config.h"
+
 #if defined(HAVE_SYS_SOUNDCARD_H)
 # include <sys/soundcard.h>
 #elif defined(HAVE_MACHINE_SOUNDCARD_H)

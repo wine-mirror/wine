@@ -1,6 +1,7 @@
 #ifndef __WINE_ELFDLL_H
 #define __WINE_ELFDLL_H
 
+#include "config.h"
 #include "module.h"
 #include "windef.h"
 
