@@ -1239,6 +1239,8 @@ static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT index,
 static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT index,
                                      BOOL on, BOOL send_notify )
 {
+    TRACE( "index=%d notify=%s\n", index, send_notify ? "YES" : "NO" );
+
     if ((index < -1) || (index >= descr->nb_items)) return LB_ERR;
     if (descr->style & LBS_MULTIPLESEL)
     {
@@ -1254,7 +1256,7 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT index,
         if (oldsel != -1) descr->items[oldsel].selected = FALSE;
         if (index != -1) descr->items[index].selected = TRUE;
         descr->selected_item = index;
-        if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, ODA_SELECT);
+        if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, 0 );
         if (index != -1) LISTBOX_RepaintItem( wnd, descr, index, ODA_SELECT );
         if (send_notify && descr->nb_items) SEND_NOTIFICATION( wnd, descr,
                                (index != -1) ? LBN_SELCHANGE : LBN_SELCANCEL );
@@ -1768,7 +1770,8 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
             {
                 LISTBOX_SetCaretIndex( wnd, descr, index, FALSE );
                 LISTBOX_SetSelection( wnd, descr, index,
-                                      !descr->items[index].selected, FALSE );
+                                      !descr->items[index].selected,
+                                      (descr->style & LBS_NOTIFY) != 0);
             }
             else LISTBOX_MoveCaret( wnd, descr, index, FALSE );
         }
@@ -1776,8 +1779,9 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
         {
             LISTBOX_MoveCaret( wnd, descr, index, FALSE );
             LISTBOX_SetSelection( wnd, descr, index,
-                                  (!(descr->style & LBS_MULTIPLESEL) || 
-                                   !descr->items[index].selected), FALSE );
+                                  (!(descr->style & LBS_MULTIPLESEL) ||
+                                   !descr->items[index].selected),
+                                  (descr->style & LBS_NOTIFY) != 0 );
         }
     }
 
