@@ -176,28 +176,29 @@ Winelib programs (under programs/):
 Support programs, libraries, etc:
 ---------------------------------
 
+	dlls/dxguid/		- DirectX UUID import lib
+	dlls/uuid/		- Windows-compatible UUID import lib
 	documentation/		- some documentation
-	documentation/samples	- sample configuration files
+	documentation/samples/	- sample configuration files
 	include/		- Windows standard includes
-	include/msvcrt		- MSVC compatible libc headers
-	include/wine		- Wine specific headers
+	include/msvcrt/		- MSVC compatible libc headers
+	include/wine/		- Wine specific headers
 	libs/			- the Wine libraries
 	libs/port/		- portability library
 	libs/unicode/		- Unicode support shared
-	libs/uuid/		- Windows-compatible UUID numbers
 	libs/wine/		- Wine bootstrap library
 	libs/wpp/		- C preprocessor
 	loader/			- the main Wine loader
 	server/			- the Wine server
 	tools/			- various tools used to build/check Wine
-	tools/widl		- the IDL compiler
-	tools/winapi{,_check}	- A Win32 API checker
-	tools/winebuild		- Wine build tool
-	tools/winedump		- a .DLL dump utility
-	tools/winegcc		- a MinGW command line compatible gcc wrapper
-	tools/wmc		- the message compiler
-	tools/wpp		- the C pre-processor library
-	tools/wrc		- the resource compiler
+	tools/widl/		- the IDL compiler
+	tools/winapi{,_check}/	- A Win32 API checker
+	tools/winebuild/	- Wine build tool
+	tools/winedump/		- a .DLL dump utility
+	tools/winegcc/		- a MinGW command line compatible gcc wrapper
+	tools/wmc/		- the message compiler
+	tools/wpp/		- the C pre-processor library
+	tools/wrc/		- the resource compiler
 
 
 Miscellaneous:
