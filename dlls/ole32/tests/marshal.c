@@ -803,9 +803,7 @@ static void test_message_filter()
 
     IClassFactory_Release(cf);
 
-    /* FIXME: this is a regression caused by the fact that I faked the
-     * IUnknown unmarshaling too much and didn't give it its own ifstub. */
-    todo_wine { ok_no_locks(); }
+    ok_no_locks();
 
     end_host_object(tid, thread);
 }
@@ -861,7 +859,7 @@ static void test_proxy_interfaces()
     ok_more_than_one_lock();
 	
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
-    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
     ok_ole_success(hr, CoReleaseMarshalData);
     IStream_Release(pStream);
 

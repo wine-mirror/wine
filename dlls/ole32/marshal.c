@@ -375,7 +375,7 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
 static void ifproxy_disconnect(struct ifproxy * This)
 {
     ifproxy_release_public_refs(This);
-    IRpcProxyBuffer_Disconnect(This->proxy);
+    if (This->proxy) IRpcProxyBuffer_Disconnect(This->proxy);
 }
 
 static void ifproxy_destroy(struct ifproxy * This)
@@ -483,26 +483,36 @@ static HRESULT proxy_manager_create_ifproxy(
     ifproxy->refs = cPublicRefs;
     ifproxy->proxy = NULL;
 
-    hr = get_facbuf_for_iid(riid, &psfb);
-    if (hr == S_OK)
+    /* the IUnknown interface is special because it does not have a
+     * proxy associated with the ifproxy as we handle IUnknown ourselves */
+    if (IsEqualIID(riid, &IID_IUnknown))
     {
-        /* important note: the outer unknown is set to the proxy manager.
-         * This ensures the COM identity rules are not violated, by having a
-         * one-to-one mapping of objects on the proxy side to objects on the
-         * stub side, no matter which interface you view the object through */
-        hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown *)&This->lpVtbl, riid,
-                                          &ifproxy->proxy, &ifproxy->iface);
-        IPSFactoryBuffer_Release(psfb);
-        if (hr != S_OK)
-            ERR("Could not create proxy for interface %s, error 0x%08lx\n",
-                debugstr_guid(riid), hr);
+        ifproxy->iface = (void *)&This->lpVtbl;
+        hr = S_OK;
     }
     else
-        ERR("Could not get IPSFactoryBuffer for interface %s, error 0x%08lx\n",
-            debugstr_guid(riid), hr);
+    {
+        hr = get_facbuf_for_iid(riid, &psfb);
+        if (hr == S_OK)
+        {
+            /* important note: the outer unknown is set to the proxy manager.
+             * This ensures the COM identity rules are not violated, by having a
+             * one-to-one mapping of objects on the proxy side to objects on the
+             * stub side, no matter which interface you view the object through */
+            hr = IPSFactoryBuffer_CreateProxy(psfb, (IUnknown *)&This->lpVtbl, riid,
+                                              &ifproxy->proxy, &ifproxy->iface);
+            IPSFactoryBuffer_Release(psfb);
+            if (hr != S_OK)
+                ERR("Could not create proxy for interface %s, error 0x%08lx\n",
+                    debugstr_guid(riid), hr);
+        }
+        else
+            ERR("Could not get IPSFactoryBuffer for interface %s, error 0x%08lx\n",
+                debugstr_guid(riid), hr);
 
-    if (hr == S_OK)
-        hr = IRpcProxyBuffer_Connect(ifproxy->proxy, This->chan);
+        if (hr == S_OK)
+            hr = IRpcProxyBuffer_Connect(ifproxy->proxy, This->chan);
+    }
 
     /* get at least one external reference to the object to keep it alive */
     if (hr == S_OK)
@@ -844,29 +854,18 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt, REFI
 
     if (hr == S_OK)
     {
-        /* the IUnknown interface is special because it does not have an
-         * ifproxy associated with it. we simply return the controlling
-         * IUnknown of the proxy manager. */
-        if (IsEqualIID(riid, &IID_IUnknown))
-        {
-            ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
-            *object = (LPVOID)(&proxy_manager->lpVtbl);
-        }
-        else
-        {
-            struct ifproxy * ifproxy;
-            hr = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
-            if (hr == E_NOINTERFACE)
-                hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref->ipid,
-                                                  riid, stdobjref->cPublicRefs,
-                                                  &ifproxy);
+        struct ifproxy * ifproxy;
+        hr = proxy_manager_find_ifproxy(proxy_manager, riid, &ifproxy);
+        if (hr == E_NOINTERFACE)
+            hr = proxy_manager_create_ifproxy(proxy_manager, stdobjref->ipid,
+                                              riid, stdobjref->cPublicRefs,
+                                              &ifproxy);
 
-            if (hr == S_OK)
-            {
-                /* FIXME: push this AddRef inside proxy_manager_find_ifproxy/create_ifproxy? */
-                ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
-                *object = ifproxy->iface;
-            }
+        if (hr == S_OK)
+        {
+            /* FIXME: push this AddRef inside proxy_manager_find_ifproxy/create_ifproxy? */
+            ClientIdentity_AddRef((IMultiQI*)&proxy_manager->lpVtbl);
+            *object = ifproxy->iface;
         }
     }
 
