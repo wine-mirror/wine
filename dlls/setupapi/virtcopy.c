@@ -63,13 +63,15 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
 
     TRACE("add string '%s'\n", lpszName);
     /* search whether string already inserted */
+    TRACE("searching for existing string...\n");
     for (n = 0; n < vhstr_alloc; n++)
     {
 	if ((vhstrlist[n]) && (vhstrlist[n]->refcount))
 	{
-		TRACE("comp %d\n", n);
+		TRACE("checking item: %d\n", n);
 	    if (!strcmp(vhstrlist[n]->pStr, lpszName))
 	    {
+		TRACE("found\n");
 		vhstrlist[n]->refcount++;
 		return n;
 	    }
@@ -77,6 +79,7 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
     }
 
     /* hmm, not found yet, let's insert it */
+    TRACE("inserting item\n");
     for (n = 0; n < vhstr_alloc; n++)
     {
 	if ((!(vhstrlist[n])) || (!(vhstrlist[n]->refcount)))
@@ -292,6 +295,11 @@ RETERR16 WINAPI VcpQueueCopy16(
     if (!VCP_opened)
 	return ERR_VCP_NOTOPEN;
 
+    TRACE("srcdir: %s, srcfile: %s, dstdir: %s, dstfile: %s\n", 
+      lpszSrcDir, lpszSrcFileName, lpszDstDir, lpszDstFileName);
+
+    TRACE("ldidSrc == %d, ldidDst == %d\n", ldidSrc, ldidDst);
+
     vfsSrc.ldid = ldidSrc;
     vfsSrc.vhstrDir = vsmStringAdd16(lpszSrcDir);
     vfsSrc.vhstrFileName = vsmStringAdd16(lpszSrcFileName);
@@ -387,9 +395,13 @@ LPCSTR WINAPI VcpExplain16(LPVIRTNODE lpVn, DWORD dwWhat)
 		LPVCPFILESPEC lpvfs =
 		    (dwWhat == VCPEX_SRC_FULL) ?  &lpVn->vfsSrc : &lpVn->vfsDst;
 
+                /* if we have an ldid, use it, otherwise use the string */
+                /* from the vhstrlist array */
 		if (lpvfs->ldid != 0xffff)
-		    CtlGetLddPath16(lpvfs->ldid, buffer);
-                strcat(buffer, vsmGetStringRawName16(lpvfs->vhstrDir));
+                  CtlGetLddPath16(lpvfs->ldid, buffer);
+                else
+                  strcat(buffer, vsmGetStringRawName16(lpvfs->vhstrDir));
+
                 strcat(buffer, "\\");
                 strcat(buffer, vsmGetStringRawName16(lpvfs->vhstrFileName));
 	    }
@@ -438,12 +450,16 @@ RETERR16 VCP_CopyFiles(void)
 	/* FIXME: what is this VCPM_VSTATWRITE here for ?
 	 * I guess it's to signal successful destination file creation */
 	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATWRITE, 0, 0, VCP_MsgRef);
+
 	/* FIXME: need to do the file copy in small chunks for notifications */
 	TRACE("copying '%s' to '%s'\n", fn_src, fn_dst);
-#if DO_A_REAL_COPY
+        /* perform the file copy */
         if (!(CopyFileA(fn_src, fn_dst, TRUE)))
+        {
+            ERR("error copying, src: %s -> dst: %s\n", fn_src, fn_dst);
 	    res = ERR_VCP_IOFAIL;
-#endif
+        }
+
 	vcp_status.prgFileRead.dwSoFar++;
 	cbres = VCP_CALLBACK(&vcp_status, VCPM_VSTATREAD, 0, 0, VCP_MsgRef);
 	vcp_status.prgFileWrite.dwSoFar++;
