@@ -577,7 +577,7 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
             struct find_atom_request *req = server_alloc_req( sizeof(*req), len * sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, str, strlen(str), server_data_ptr(req), len );
             req->local = local;
-            if (!server_call( REQ_ADD_ATOM )) atom = req->atom + MIN_STR_ATOM;
+            if (!server_call( REQ_FIND_ATOM )) atom = req->atom + MIN_STR_ATOM;
         }
         SERVER_END_REQ;
     }
