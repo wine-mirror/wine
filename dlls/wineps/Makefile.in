@@ -69,6 +69,7 @@ C_SRCS = \
 	ps.c \
 	text.c \
 	truetype.c \
+	type1afm.c \
 	$(DATA_C_SRCS)
 
 RC_SRCS= \

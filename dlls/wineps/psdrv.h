@@ -303,7 +303,7 @@ extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 extern BOOL PSDRV_GetFontMetrics(void);
 extern PPD *PSDRV_ParsePPD(char *fname);
 extern PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name);
-extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, char *name);
+extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, LPCSTR name);
 extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
     	BOOL *p_added);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
@@ -431,10 +431,11 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
 VOID PSDRV_DrawLine( DC *dc );
-INT PSDRV_GlyphListInit();
+INT PSDRV_GlyphListInit(void);
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
-VOID PSDRV_IndexGlyphList();
-BOOL PSDRV_GetTrueTypeMetrics();
+VOID PSDRV_IndexGlyphList(void);
+BOOL PSDRV_GetTrueTypeMetrics(void);
+BOOL PSDRV_GetType1Metrics(void);
 const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm);
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm);
 

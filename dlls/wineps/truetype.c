@@ -577,7 +577,7 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
     HKEY    	hkey;
     DWORD   	type, name_len, value_len;
 
-    if(RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
     	    "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
 	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
 	return TRUE;
@@ -593,7 +593,7 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
     name_len = sizeof(name_buf);
     value_len = sizeof(value_buf);
     
-    while(RegEnumValueA(hkey, i++, name_buf, &name_len, NULL, &type, value_buf,
+    while (RegEnumValueA(hkey, i++, name_buf, &name_len, NULL, &type, value_buf,
     	    &value_len) == ERROR_SUCCESS)
     {
     	value_buf[sizeof(value_buf) - 1] = '\0';
