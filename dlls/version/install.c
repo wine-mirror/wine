@@ -15,7 +15,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "lzexpand.h"
-#include "xmalloc.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);
@@ -355,17 +354,25 @@ _fetch_versioninfo(LPSTR fn,VS_FIXEDFILEINFO **vffi) {
     DWORD	ret;
 
     alloclen = 1000;
-    buf= xmalloc(alloclen);
+    buf=HeapAlloc(GetProcessHeap(), 0, alloclen);
+    if(buf == NULL) {
+        WARN("Memory exausted while fetching version info!");
+        return NULL;
+    }
     while (1) {
     	ret = GetFileVersionInfoA(fn,0,alloclen,buf);
 	if (!ret) {
-	    free(buf);
-	    return 0;
+	    HeapFree(GetProcessHeap(), 0, buf);
+	    return NULL;
 	}
 	if (alloclen<*(WORD*)buf) {
-	    free(buf);
 	    alloclen = *(WORD*)buf;
-	    buf = xmalloc(alloclen);
+	    HeapFree(GetProcessHeap(), 0, buf);
+	    buf = HeapAlloc(GetProcessHeap(), 0, alloclen);
+            if(buf == NULL) {
+               WARN("Memory exausted while fetching version info!");
+               return NULL;
+            }                                                                 
 	} else {
 	    *vffi = (VS_FIXEDFILEINFO*)(buf+0x14);
 	    if ((*vffi)->dwSignature == 0x004f0049) /* hack to detect unicode */
@@ -510,10 +517,10 @@ DWORD WINAPI VerInstallFileA(
 		     * generiert DIFFLANG|MISMATCH
 		     */
 		}
-		free(buf2);
+		HeapFree(GetProcessHeap(), 0, buf2);
 	    } else
 		xret=VIF_MISMATCH|VIF_SRCOLD;
-	    free(buf1);
+	    HeapFree(GetProcessHeap(), 0, buf1);
 	}
     }
     if (xret) {

@@ -20,7 +20,6 @@
 #include "bitmap.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "xmalloc.h"
 #include "local.h"
 #include "x11drv.h"
 #include "wingdi.h"

@@ -26,8 +26,7 @@ C_SRCS = \
 	tweak.c \
 	version.c \
 	w32scomb.c \
-	wsprintf.c \
-	xmalloc.c
+	wsprintf.c
 
 GLUE = printdrv.c
 
