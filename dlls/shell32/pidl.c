@@ -1284,16 +1284,16 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
  */
 HRESULT SHELL_GetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSize)
 {
-	LPSTR pstr = pszPath;
-	LPSTR end = pszPath + uOutSize;
 	HRESULT hr = S_OK;
+
+        pszPath[0]=0;
 
 	/* One case is a PIDL rooted at desktop level */
 	if (_ILIsValue(pidl) || _ILIsFolder(pidl)) {
-	    hr = SHGetSpecialFolderPathA(0, pstr, CSIDL_DESKTOP, FALSE);
+	    hr = SHGetSpecialFolderPathA(0, pszPath, CSIDL_DESKTOP, FALSE);
 
 	    if (SUCCEEDED(hr))
-		pstr = PathAddBackslashA(pstr);
+		PathAddBackslashA(pszPath);
 	}
 	/* The only other valid case is a item ID list beginning at "My Computer" */
  	else if (_ILIsMyComputer(pidl))
@@ -1302,7 +1302,7 @@ HRESULT SHELL_GetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSiz
         if (SUCCEEDED(hr)) {
 	    LPSTR txt;
 
-	    while(pidl && pidl->mkid.cb && pstr<end) {
+	    while(pidl && pidl->mkid.cb) {
 		if (_ILIsSpecialFolder(pidl))
 		    {hr = E_INVALIDARG; break;}
 
@@ -1310,7 +1310,13 @@ HRESULT SHELL_GetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSiz
 		if (!txt)
 		    {hr = E_INVALIDARG; break;}
 
-		lstrcpynA(pstr, txt, end-pstr);
+                if (lstrlenA(txt) > pidl->mkid.cb)
+                    ERR("pidl %p is borked\n",pidl);
+
+                /* make sure there's enough space for the next segment */
+                if ( (lstrlenA(txt) + lstrlenA(pszPath)) > uOutSize)
+		    {hr = E_INVALIDARG; break;}
+		lstrcatA( pszPath, txt );
 
 		pidl = ILGetNext(pidl);
 		if (!pidl)
@@ -1321,8 +1327,9 @@ HRESULT SHELL_GetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSiz
 		    break;
 		}
 
-		pstr = PathAddBackslashA(pstr);
-		if (!pstr)
+                if( (lstrlenA(pszPath) + 1) > uOutSize)
+		    {hr = E_INVALIDARG; break;}
+		if (!PathAddBackslashA(pszPath))
 		    {hr = E_INVALIDARG; break;}
 	    }
 	} else
@@ -1367,16 +1374,17 @@ BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
  */
 HRESULT SHELL_GetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSize)
 {
-	LPWSTR pstr = pszPath;
-	LPWSTR end = pszPath + uOutSize;
 	HRESULT hr = S_OK;
+	UINT len;
+
+        pszPath[0]=0;
 
 	/* One case is a PIDL rooted at desktop level */
 	if (_ILIsValue(pidl) || _ILIsFolder(pidl)) {
-	    hr = SHGetSpecialFolderPathW(0, pstr, CSIDL_DESKTOP, FALSE);
+	    hr = SHGetSpecialFolderPathW(0, pszPath, CSIDL_DESKTOP, FALSE);
 
 	    if (SUCCEEDED(hr))
-		pstr = PathAddBackslashW(pstr);
+		PathAddBackslashW(pszPath);
 	}
 	/* The only other valid case is a item ID list beginning at "My Computer" */
  	else if (_ILIsMyComputer(pidl))
@@ -1385,7 +1393,7 @@ HRESULT SHELL_GetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSi
         if (SUCCEEDED(hr)) {
 	    LPSTR txt;
 
-	    while(pidl && pidl->mkid.cb && pstr<end) {
+	    while(pidl && pidl->mkid.cb) {
 		if (_ILIsSpecialFolder(pidl))
 		    {hr = E_INVALIDARG; break;}
 
@@ -1393,8 +1401,14 @@ HRESULT SHELL_GetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSi
 		if (!txt)
 		    {hr = E_INVALIDARG; break;}
 
-		if (!MultiByteToWideChar(CP_ACP, 0, txt, -1, pstr, uOutSize))
-		    {hr = E_OUTOFMEMORY; break;}
+                if (lstrlenA(txt) > pidl->mkid.cb)
+                    ERR("pidl %p is borked\n",pidl);
+		len = MultiByteToWideChar(CP_ACP, 0, txt, -1, NULL, 0);
+                if ( (lstrlenW(pszPath) + len) > uOutSize )
+		    {hr = E_INVALIDARG; break;}
+
+		MultiByteToWideChar(CP_ACP, 0, txt, -1, 
+                                    &pszPath[lstrlenW(pszPath)], len);
 
 		pidl = ILGetNext(pidl);
 		if (!pidl)
@@ -1405,8 +1419,9 @@ HRESULT SHELL_GetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSi
 		    break;
 		}
 
-		pstr = PathAddBackslashW(pstr);
-		if (!pstr)
+                if ( (lstrlenW(pszPath) + 1) > uOutSize )
+		    {hr = E_INVALIDARG; break;}
+		if (!PathAddBackslashW(pszPath))
 		    {hr = E_INVALIDARG; break;}
 	    }
 	} else
