@@ -186,13 +186,13 @@ static void identify_lib_files(strarray *lib_files)
     {
         for (j = 0; j < lib_paths->size; j++)
         {
-            if (identify_lib_file(lib_paths->base[i], lib_files->base[i])) 
+            if (identify_lib_file(lib_paths->base[j], lib_files->base[i])) 
 		break;
 	}
 	if (j < lib_paths->size) continue;
 	for (j = 0; j < sizeof(std_paths)/sizeof(std_paths[0]); j++)
 	{
-            if (identify_lib_file(std_paths[i], lib_files->base[i])) 
+            if (identify_lib_file(std_paths[j], lib_files->base[i])) 
 		break;
 	}
 	if (j < sizeof(std_paths)/sizeof(std_paths[0])) continue;
