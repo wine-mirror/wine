@@ -1012,6 +1012,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
+    /* Initialize volume to full level */
+    wwo->volume_left = 100;
+    wwo->volume_right = 100;
+
     ARTS_InitRingMessage(&wwo->msgRing);
 
     /* create player thread */
