@@ -220,7 +220,7 @@ HICON WINAPI ICO_ExtractIconEx(LPCSTR lpszExeFileName, HICON * RetPtr, UINT nIco
 	
 	TRACE("(file %s,start %d,extract %d\n", lpszExeFileName, nIconIndex, n);
 
-	if( hFile == HFILE_ERROR || !n )
+	if( hFile == HFILE_ERROR || (nIconIndex!=-1 && !n) )
 	  return hRet;
 
 	sig = SHELL_GetResourceTable(hFile,&pData);
