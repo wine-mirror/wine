@@ -945,6 +945,58 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
+{
+    BOOL rc;
+    MINIMIZEDMETRICS lpMm_orig;
+    MINIMIZEDMETRICS lpMm_new;
+    MINIMIZEDMETRICS lpMm_cur;
+
+    lpMm_orig.cbSize = sizeof(MINIMIZEDMETRICS);
+    lpMm_new.cbSize = sizeof(MINIMIZEDMETRICS);
+    lpMm_cur.cbSize = sizeof(MINIMIZEDMETRICS);
+
+    trace("testing SPI_{GET,SET}MINIMIZEDMETRICS\n");
+    rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    lpMm_cur.iWidth = 180;
+    lpMm_cur.iHorzGap = 1;
+    lpMm_cur.iVertGap = 1;
+    lpMm_cur.iArrange = 5;
+    
+    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_cur, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+
+    eq( lpMm_new.iWidth,   lpMm_cur.iWidth,   "iWidth",   "%d" );
+    eq( lpMm_new.iHorzGap, lpMm_cur.iHorzGap, "iHorzGap", "%d" );
+    eq( lpMm_new.iVertGap, lpMm_cur.iVertGap, "iVertGap", "%d" );
+    eq( lpMm_new.iArrange, lpMm_cur.iArrange, "iArrange", "%d" );
+
+    eq( GetSystemMetrics( SM_CXMINIMIZED ) - 6,
+        lpMm_new.iWidth,   "iWidth",   "%d" );
+    eq( GetSystemMetrics( SM_CXMINSPACING ) - GetSystemMetrics( SM_CXMINIMIZED ),
+        lpMm_new.iHorzGap, "iHorzGap", "%d" );
+    eq( GetSystemMetrics( SM_CYMINSPACING ) - GetSystemMetrics( SM_CYMINIMIZED ),
+        lpMm_new.iVertGap, "iVertGap", "%d" );
+    eq( GetSystemMetrics( SM_ARRANGE ),
+        lpMm_new.iArrange, "iArrange", "%d" );
+
+    rc=SystemParametersInfoA( SPI_SETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
+    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    
+    rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_new, FALSE );
+    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    
+    eq( lpMm_new.iWidth,   lpMm_orig.iWidth,   "iWidth",   "%d" );
+    eq( lpMm_new.iHorzGap, lpMm_orig.iHorzGap, "iHorzGap", "%d" );
+    eq( lpMm_new.iVertGap, lpMm_orig.iVertGap, "iVertGap", "%d" );
+    eq( lpMm_new.iArrange, lpMm_orig.iArrange, "iArrange", "%d" );
+}
+
 static void test_SPI_SETWORKAREA( void )               /*     47 */
 {
     BOOL rc;
@@ -1290,6 +1342,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
     test_SPI_SETMOUSEBUTTONSWAP();              /*     33 */
     test_SPI_SETFASTTASKSWITCH();               /*     36 */
     test_SPI_SETDRAGFULLWINDOWS();              /*     37 */
+    test_SPI_SETMINIMIZEDMETRICS();             /*     44 */
     test_SPI_SETWORKAREA();                     /*     47 */
     test_SPI_SETSHOWSOUNDS();                   /*     57 */
     test_SPI_SETKEYBOARDPREF();                 /*     69 */
