@@ -62,6 +62,8 @@ LIBSUBDIRS = \
 	dlls/win87em \
 	dlls/winaspi \
 	dlls/windebug \
+	dlls/winmm \
+	dlls/winmm/wineoss \
 	dlls/wing \
 	dlls/winspool \
 	dlls/wnaspi32 \
@@ -159,6 +161,7 @@ LIBOBJS = \
 	dlls/win87em/win87em.o \
 	dlls/winaspi/winaspi.o \
 	dlls/windebug/windebug.o \
+	dlls/winmm/wineoss/wineoss.o \
 	dlls/wing/wing.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \

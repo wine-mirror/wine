@@ -857,6 +857,8 @@ dlls/win32s/Makefile
 dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/windebug/Makefile
+dlls/winmm/Makefile
+dlls/winmm/wineoss/Makefile
 dlls/wing/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile

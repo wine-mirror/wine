@@ -1,0 +1,20 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wineoss
+
+SPEC_SRCS = \
+	wineoss.spec
+
+C_SRCS = 
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+call32.s: $(BUILD)
+	$(BUILD) @BUILDFLAGS@ -o $@ -call32
+
+### Dependencies:
