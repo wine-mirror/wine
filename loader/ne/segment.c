@@ -648,6 +648,7 @@ void NE_InitializeDLLs( HMODULE16 hModule )
  *
  * Call the DllEntryPoint of DLLs with subsystem >= 4.0 
  */
+typedef DWORD WINAPI (*WinNEEntryProc)(DWORD,WORD,WORD,WORD,DWORD,WORD);
 
 static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 {
@@ -668,9 +669,8 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 
     if ( pModule->flags & NE_FFLAGS_BUILTIN )
     {
-        DWORD WINAPI (*entryProc)(DWORD,WORD,WORD,WORD,DWORD,WORD) =
-              (DWORD WINAPI (*)(DWORD,WORD,WORD,WORD,DWORD,WORD))
-              ((ENTRYPOINT16 *)PTR_SEG_TO_LIN( entryPoint ))->target;
+        WinNEEntryProc entryProc = (WinNEEntryProc)
+			  ((ENTRYPOINT16 *)PTR_SEG_TO_LIN( entryPoint ))->target;
 
         entryProc( dwReason, hInst, ds, heap, 0, 0 );
     }
