@@ -371,10 +371,10 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 		HeapFree(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	} else
-		DPRINTF("%08lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx tid=%08lx\n",
+		DPRINTF("%08lx:RET  %s.%ld: %s() retval = %08lx ret=%08lx\n",
 			GetCurrentThreadId(),
 			ret->dll->name,ret->dll->ordbase+ret->ordinal,ret->dll->funs[ret->ordinal].name,
-			context->Eax, (DWORD)ret->origreturn, GetCurrentThreadId());
+			context->Eax, (DWORD)ret->origreturn);
 	ret->origreturn = NULL; /* mark as empty */
 }
 
