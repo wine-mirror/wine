@@ -229,8 +229,8 @@ lmap	: token '=' tNUMBER setfile ':' tFILE optcp {
 		$1->alias = $6;
 		$1->codepage = $7;
 		do_add_token(tok_language, $1, "language");
-		if(!find_language($1->token) && !find_cpxlat($1->token))
-			yywarning("Language 0x%x not built-in, using codepage %d; use explicit codepage to override", $1->token, WMC_DEFAULT_CODEPAGE);
+		if(!find_language($3) && !find_cpxlat($3))
+			yywarning("Language 0x%x not built-in, using codepage %d; use explicit codepage to override", $3, WMC_DEFAULT_CODEPAGE);
 	}
 	| token '=' tNUMBER setfile ':' error	{ xyyerror("Filename expected"); }
 	| token '=' tNUMBER error		{ xyyerror(err_colon); }
