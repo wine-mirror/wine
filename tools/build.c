@@ -2131,6 +2131,156 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\t.text\n" );
 }
 
+/*******************************************************************
+ *         BuildCallTo32CBClient
+ *
+ * Call a CBClient relay stub from 32-bit code (KERNEL.620).
+ *
+ * Since the relay stub is itself 32-bit, this should not be a problem;
+ * unfortunately, the relay stubs are expected to switch back to a 
+ * 16-bit stack (and 16-bit code) after completion :-(
+ *
+ * This would conflict with our 16- vs. 32-bit stack handling, so
+ * we simply switch *back* to our 32-bit stack before returning to
+ * the caller ...
+ *
+ * The CBClient relay stub expects to be called with:
+ *   - ebp pointing to the 16-bit stack at ss:bp
+ *   - ebx pointing to a buffer containing the saved 16-bit ss:sp
+ * 
+ * After completion, the stub will load ss:sp from the buffer at ebx
+ * and perform a far return to 16-bit code.
+ *
+ * To trick the relay stub into returning to us, we push a 16-bit
+ * cs:ip pair pointing to out return entry point onto the 16-bit stack,
+ * followed by a ss:sp pair pointing to *that* cs:ip pair.
+ * Our return stub thus called will then reload the 32-bit ss:esp and
+ * return to 32-bit code (by using and ss:esp value that we have also
+ * pushed onto the 16-bit stack before and a cs:eip values found at
+ * that position on the 32-bit stack). The layout of our
+ * temporary area used on the 16-bit stack is thus as follows:
+ *
+ *     (ebx+12) 32-bit ss  (flat)
+ *     (ebx+8)  32-bit sp  (32-bit stack pointer)
+ *     (ebx+6)  16-bit cs  (this segment)
+ *     (ebx+4)  16-bit ip  ('16-bit' return entry point)
+ *     (ebx+2)  16-bit ss  (16-bit stack segment)
+ *     (ebx+0)  16-bit sp  (points to ebx+4)
+ *
+ * The stack layout of this function:
+ * (ebp+12)  arg       ebp value to be set for relay stub
+ * (ebp+8)   func      CBClient relay stub address
+ * (ebp+4)   ret addr
+ * (ebp)     ebp
+ */
+static void BuildCallTo32CBClient( FILE *outfile )
+{
+    /* Function header */
+
+    fprintf( outfile, "\n\t.align 4\n" );
+#ifdef USE_STABS
+    fprintf( outfile, ".stabs \"CALL32_CBClient:F1\",36,0,0," PREFIX "CALL32_CBClient\n" );
+#endif
+    fprintf( outfile, "\t.globl " PREFIX "CALL32_CBClient\n" );
+    fprintf( outfile, PREFIX "CALL32_CBClient:\n" );
+
+    /* Entry code */
+
+    fprintf( outfile, "\tpushl %%ebp\n" );
+    fprintf( outfile, "\tmovl %%esp,%%ebp\n" );
+    fprintf( outfile, "\tpushl %%edi\n" );
+    fprintf( outfile, "\tpushl %%esi\n" );
+    fprintf( outfile, "\tpushl %%ebx\n" );
+
+    /* Get the 16-bit stack */
+
+    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%ebx\n", STACKOFFSET);
+    
+    /* Convert it to a flat address */
+
+    fprintf( outfile, "\tshldl $16,%%ebx,%%eax\n" );
+    fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
+    fprintf( outfile, "\tmovl " PREFIX "ldt_copy(%%eax),%%esi\n" );
+    fprintf( outfile, "\tmovw %%bx,%%ax\n" );
+    fprintf( outfile, "\taddl %%eax,%%esi\n" );
+
+    /* Allocate temporary area (simulate STACK16_PUSH) */
+
+    fprintf( outfile, "\tpushf\n" );
+    fprintf( outfile, "\tcld\n" );
+    fprintf( outfile, "\tleal -16(%%esi), %%edi\n" );
+    fprintf( outfile, "\tmovl $%d, %%ecx\n", sizeof(STACK16FRAME) );
+    fprintf( outfile, "\trep\n\tmovsb\n" );
+    fprintf( outfile, "\tpopf\n" );
+
+    fprintf( outfile, "\t.byte 0x64\n\tsubw $16,(%d)\n", STACKOFFSET );
+
+    fprintf( outfile, "\tpushl %%edi\n" );  /* remember address */
+
+    /* Set up temporary area */
+
+    fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-16+4 );
+    fprintf( outfile, "\tmovl %%ebx, (%%edi)\n" );
+
+    fprintf( outfile, "\tmovl " PREFIX "CALL32_CBClient_RetAddr, %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax, 4(%%edi)\n" );
+
+    fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax, 8(%%edi)\n" );
+
+    fprintf( outfile, "\tmovl %%ss, %%ax\n" );
+    fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
+    fprintf( outfile, "\tmovl %%eax, 12(%%edi)\n" );
+
+    /* Setup registers and call CBClient relay stub (simulating a far call) */
+
+    fprintf( outfile, "\tmovl %%edi, %%ebx\n" );
+    fprintf( outfile, "\tmovl 8(%%ebp), %%eax\n" );
+    fprintf( outfile, "\tmovl 12(%%ebp), %%ebp\n" );
+
+    fprintf( outfile, "\tpushl %%cs\n" );
+    fprintf( outfile, "\tcall *%%eax\n" );
+
+    /* Cleanup temporary area (simulate STACK16_POP) */
+
+    fprintf( outfile, "\tpop %%esi\n" );
+
+    fprintf( outfile, "\tpushf\n" );
+    fprintf( outfile, "\tstd\n" );
+    fprintf( outfile, "\tdec %%esi\n" );
+    fprintf( outfile, "\tleal 16(%%esi), %%edi\n" );
+    fprintf( outfile, "\tmovl $%d, %%ecx\n", sizeof(STACK16FRAME) );
+    fprintf( outfile, "\trep\n\tmovsb\n" );
+    fprintf( outfile, "\tpopf\n" );
+
+    fprintf( outfile, "\t.byte 0x64\n\taddw $16,(%d)\n", STACKOFFSET );
+
+    /* Restore registers and return */
+
+    fprintf( outfile, "\tpopl %%ebx\n" );
+    fprintf( outfile, "\tpopl %%esi\n" );
+    fprintf( outfile, "\tpopl %%edi\n" );
+    fprintf( outfile, "\tpopl %%ebp\n" );
+    fprintf( outfile, "\tret\n" );
+
+    /* '16-bit' return stub */
+
+    fprintf( outfile, "\t.globl " PREFIX "CALL32_CBClient_Ret\n" );
+    fprintf( outfile, PREFIX "CALL32_CBClient_Ret:\n" );
+
+    fprintf( outfile, "\tmovzwl %%sp, %%ebx\n" );
+    fprintf( outfile, "\tlssl %%ss:(%%ebx), %%esp\n" );
+    fprintf( outfile, "\tlret\n" );
+
+    /* Declare the return address variable */
+
+    fprintf( outfile, "\t.data\n" );
+    fprintf( outfile, "\t.globl " PREFIX "CALL32_CBClient_RetAddr\n" );
+    fprintf( outfile, PREFIX "CALL32_CBClient_RetAddr:\t.long 0\n" );
+    fprintf( outfile, "\t.text\n" );
+}
+
+
 
 /*******************************************************************
  *         BuildCallTo32LargeStack
@@ -2454,6 +2604,14 @@ static int BuildCallTo16( FILE *outfile, char * outname, int argc, char *argv[] 
     /* Output the 16-bit return code */
 
     BuildRet16Func( outfile );
+
+    /* Output the CBClient callback function
+     * (while this does not really 'call to 16-bit' code, it is placed
+     * here so that its 16-bit return stub is defined within the CALLTO16
+     * 16-bit segment) 
+     */
+    BuildCallTo32CBClient( outfile );
+
 
     fprintf( outfile, "\t.globl " PREFIX "CALLTO16_End\n" );
     fprintf( outfile, PREFIX "CALLTO16_End:\n" );

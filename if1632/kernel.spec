@@ -234,7 +234,7 @@ file	krnl386.exe
 225 pascal RegQueryValueEx(long str ptr ptr ptr ptr) RegQueryValueEx16
 226 pascal RegSetValueEx(long str long long ptr long) RegSetValueEx16
 227 pascal RegFlushKey(long) RegFlushKey
-228 stub K228
+228 pascal16 K228(word) GetExePtr
 229 pascal16 K229(long) Local32GetSegment
 230 pascal GlobalSmartPageLock(word) GlobalPageLock #?
 231 stub GlobalSmartPageUnlock
@@ -243,7 +243,7 @@ file	krnl386.exe
 234 stub RegSaveKey
 235 stub InvalidateNlsCache
 236 stub GetProductName
-237 stub K237
+237 return K237 0 0
 
 
 # 262-274 are WinNT extensions; those are not present in Win95
@@ -307,7 +307,7 @@ file	krnl386.exe
 360 pascal16 OpenFileEx(str ptr word) OpenFile16
 361 return PIGLET_361 0 0
 362 stub ThunkTerminateProcess
-365 stub KERNEL_365
+365 register KERNEL_365(word word) KERNEL_365
 
 
 # 403-404 are common to all versions
@@ -351,13 +351,13 @@ file	krnl386.exe
 444 stub KERNEL_444     # Local32 ???
 445 stub KERNEL_445     # Local32 ???
 446 stub KERNEL_446     # Local32 ???
-447 stub KERNEL_447
+447 return KERNEL_447 0 0
 448 stub KERNEL_448
 449 pascal GetpWin16Lock() GetpWin16Lock16
 450 pascal VWin32_EventWait(long) VWin32_EventWait
 451 pascal VWin32_EventSet(long) VWin32_EventSet
 452 pascal LoadLibrary32(str) LoadLibrary32A
-453 pascal GetProcAddress32(long str) GetProcAddress32
+453 pascal GetProcAddress32(long str) WIN16_GetProcAddress32
 454 equate __FLATCS 0   # initialized by BUILTIN_Init()
 455 equate __FLATDS 0   # initialized by BUILTIN_Init()
 456 pascal DefResourceHandler(word word word) NE_DefResourceHandler
@@ -455,15 +455,14 @@ file	krnl386.exe
 #541 stub KERNEL_541
 542 stub KERNEL_542
 543 stub KERNEL_543
-560 stub KERNEL_560  # (thunklet)  # InitThunkletHandler
-561 stub KERNEL_561  # (thunklet)  # AllocLSThunklet
-562 stub KERNEL_562  # (thunklet)  # AllocSLThunklet
-563 stub KERNEL_563  # (thunklet)  # FindSLThunklet
-564 stub KERNEL_564  # (thunklet)  # FindLSThunklet
-565 stub KERNEL_565  # (thunklet)  # AllocLSThunklet_Special
-566 stub KERNEL_566  # (thunklet)  # AllocSLThunklet_Special
-567 stub KERNEL_567  # (thunklet)  # AllocLSThunkletEx
-568 stub KERNEL_568  # (thunklet)  # AllocSLThunkletEx
+560 pascal SetThunkletCallbackGlue(long segptr) SetThunkletCallbackGlue
+561 pascal AllocLSThunkletCallback(segptr long) AllocLSThunkletCallback
+562 pascal AllocSLThunkletCallback(long long) AllocSLThunkletCallback
+563 pascal FindLSThunkletCallback(segptr long) FindLSThunkletCallback
+564 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
+566 stub KERNEL_566  # (thunklet) FIXME!!!
+567 pascal AllocLSThunkletCallbackEx(segptr long word) AllocLSThunkletCallbackEx
+568 pascal AllocSLThunkletCallbackEx(long long word) AllocSLThunkletCallbackEx
 
 
 # 600-653 are Win95 only
@@ -472,25 +471,25 @@ file	krnl386.exe
 601 stub KERNEL_601  # FreeSelector (?)
 602 stub GetCurrentHInstanceDS
 603 stub KERNEL_603  # OutputDebugString (?)
-604 stub KERNEL_604  # (cbclient) # Thunk_CBClient
-605 stub KERNEL_605  # (thunklet) # AllocSLThunklet
-606 stub KERNEL_606  # (thunklet) # AllocLSThunklet
-607 pascal KERNEL_607(long long long) _KERNEL_607  # AllocLSThunklet_Systhunk
-608 pascal KERNEL_608(long long long) _KERNEL_608  # AllocSLThunklet_Systhunk
-609 stub KERNEL_609  # (thunklet) # FindSLThunklet
-610 stub KERNEL_610  # (thunklet) # FindLSThunklet
-611 pascal16 KERNEL_611(long long) _KERNEL_611  # FreeThunklet
-612 pascal16 KERNEL_612(ptr) _KERNEL_612  # IsSLThunklet
+604 register CBClientGlueSL() CBClientGlueSL
+605 pascal AllocSLThunkletCallback(long long) AllocSLThunkletCallback
+606 pascal AllocLSThunkletCallback(segptr long) AllocLSThunkletCallback
+607 pascal AllocLSThunkletSysthunk(segptr long long) AllocLSThunkletSysthunk
+608 pascal AllocSLThunkletSysthunk(long segptr long) AllocSLThunkletSysthunk
+609 pascal FindLSThunkletCallback(segptr long) FindLSThunkletCallback
+610 pascal FindSLThunkletCallback(long long) FindSLThunkletCallback
+611 return FreeThunklet 8 0
+612 pascal16 IsSLThunklet(ptr) IsSLThunklet
 613 stub KERNEL_613  # (cbclient)
 614 stub KERNEL_614  # (cbclient)
 615 stub KERNEL_615  # (cbclient)
 616 stub KERNEL_616  # (cbclient)
 617 stub KERNEL_617  # (cbclient)
 618 stub KERNEL_618  # (cbclient)
-619 pascal16 RegisterCBClient(word long long) RegisterCBClient
-620 stub KERNEL_620  # (cbclient)
+619 pascal16 RegisterCBClient(word ptr long) RegisterCBClient
+620 register CBClientThunkSL() CBClientThunkSL
 621 stub KERNEL_621  # (cbclient)
-622 stub UnRegisterCBClient
+622 pascal16 UnRegisterCBClient(word ptr long) UnRegisterCBClient
 623 pascal16 InitCBClient(long) InitCBClient
 624 pascal SetFastQueue(long long) SetFastQueue
 625 pascal GetFastQueue() GetFastQueue

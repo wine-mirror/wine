@@ -29,9 +29,11 @@ BOOL32 RELAY_Init(void)
     extern void CALLTO16_Start(), CALLTO16_End();
     extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
     extern void CALLTO16_Ret_eax();
+    extern void CALL32_CBClient_Ret();
     extern DWORD CALLTO16_RetAddr_word;
     extern DWORD CALLTO16_RetAddr_long;
     extern DWORD CALLTO16_RetAddr_eax;
+    extern DWORD CALL32_CBClient_RetAddr;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
                                    (int)CALLTO16_End - (int)CALLTO16_Start,
@@ -46,6 +48,8 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_eax =MAKELONG( (int)CALLTO16_Ret_eax -(int)CALLTO16_Start,
                                     codesel );
+    CALL32_CBClient_RetAddr = 
+        MAKELONG( (int)CALL32_CBClient_Ret -(int)CALLTO16_Start, codesel );
 
     /* Create built-in modules */
     if (!BUILTIN_Init()) return FALSE;

@@ -134,6 +134,8 @@ static BOOL32 WINAPI THUNK_WOWCallback16Ex( FARPROC16,DWORD,DWORD,
 /* TASK_Reschedule() 16-bit entry point */
 static FARPROC16 TASK_RescheduleProc;
 
+static BOOL32 THUNK_ThunkletInit( void );
+
 extern void CallFrom16_p_long_wwwll(void);
 
 /* Callbacks function table for the emulator */
@@ -177,9 +179,9 @@ BOOL32 THUNK_Init(void)
     Callbacks = &CALLBACK_EmulatorTable;
     /* Get the 16-bit reschedule function pointer */
     TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
-    return TRUE;
+    /* Initialize Thunklets */
+    return THUNK_ThunkletInit();
 }
-
 
 /***********************************************************************
  *           THUNK_Alloc
@@ -935,3 +937,399 @@ WOW16Call(WORD x,WORD y,WORD z) {
 	DPRINTF(") calling address was 0x%08lx\n",calladdr);
 	return 0;
 }
+
+
+/***********************************************************************
+ * 16<->32 Thunklet/Callback API:
+ */
+
+#pragma pack(1)
+typedef struct _THUNKLET
+{
+    BYTE        prefix_target;
+    BYTE        pushl_target;
+    DWORD       target;
+
+    BYTE        prefix_relay;
+    BYTE        pushl_relay;
+    DWORD       relay;
+
+    BYTE        jmp_glue;
+    DWORD       glue;
+
+    BYTE        type;
+    HINSTANCE16 owner;
+    struct _THUNKLET *next;
+} THUNKLET;
+#pragma pack(4)
+
+#define THUNKLET_TYPE_LS  1
+#define THUNKLET_TYPE_SL  2
+
+static HANDLE32  ThunkletHeap = 0;
+static THUNKLET *ThunkletAnchor = NULL;
+
+static FARPROC32 ThunkletSysthunkGlueLS = 0;
+static SEGPTR    ThunkletSysthunkGlueSL = 0;
+
+static FARPROC32 ThunkletCallbackGlueLS = 0;
+static SEGPTR    ThunkletCallbackGlueSL = 0;
+
+/***********************************************************************
+ *     THUNK_ThunkletInit
+ */
+static BOOL32 THUNK_ThunkletInit( void )
+{
+    LPBYTE thunk;
+
+    ThunkletHeap = HeapCreate(HEAP_WINE_SEGPTR | HEAP_WINE_CODE16SEG, 0, 0);
+    if (!ThunkletHeap) return FALSE;
+
+    thunk = HeapAlloc( ThunkletHeap, 0, 5 );
+    if (!thunk) return FALSE;
+    
+    ThunkletSysthunkGlueLS = (FARPROC32)thunk;
+    *thunk++ = 0x58;                             /* popl eax */
+    *thunk++ = 0xC3;                             /* ret      */
+
+    ThunkletSysthunkGlueSL = HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+    *thunk++ = 0x66; *thunk++ = 0x58;            /* popl eax */
+    *thunk++ = 0xCB;                             /* lret     */
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *     SetThunkletCallbackGlue             (KERNEL.560)
+ */
+void WINAPI SetThunkletCallbackGlue( FARPROC32 glueLS, SEGPTR glueSL )
+{
+    ThunkletCallbackGlueLS = glueLS;
+    ThunkletCallbackGlueSL = glueSL;
+}
+
+
+/***********************************************************************
+ *     THUNK_FindThunklet
+ */
+THUNKLET *THUNK_FindThunklet( DWORD target, DWORD relay, 
+                              DWORD glue, BYTE type ) 
+{
+    THUNKLET *thunk; 
+
+    for (thunk = ThunkletAnchor; thunk; thunk = thunk->next)
+        if (    thunk->type   == type
+             && thunk->target == target
+             && thunk->relay  == relay 
+             && thunk->glue   == glue )
+            return thunk;
+
+     return NULL;
+}
+
+/***********************************************************************
+ *     THUNK_AllocLSThunklet
+ */
+FARPROC32 THUNK_AllocLSThunklet( SEGPTR target, DWORD relay, 
+                                 FARPROC32 glue, HTASK16 owner ) 
+{
+    THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
+                                          THUNKLET_TYPE_LS );
+    if (!thunk)
+    {
+        TDB *pTask = (TDB*)GlobalLock16( owner );
+
+        if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )
+            return 0;
+
+        thunk->prefix_target = thunk->prefix_relay = 0x90;
+        thunk->pushl_target  = thunk->pushl_relay  = 0x68;
+        thunk->jmp_glue = 0xE9;
+
+        thunk->target  = (DWORD)target;
+        thunk->relay   = (DWORD)relay;
+        thunk->glue    = (DWORD)glue - (DWORD)&thunk->owner;
+
+        thunk->type    = THUNKLET_TYPE_LS;
+        thunk->owner   = pTask? pTask->hInstance : 0;
+
+        thunk->next    = ThunkletAnchor;
+        ThunkletAnchor = thunk;
+    }
+
+    return (FARPROC32)thunk;
+}
+
+/***********************************************************************
+ *     THUNK_AllocSLThunklet
+ */
+SEGPTR THUNK_AllocSLThunklet( FARPROC32 target, DWORD relay,
+                              SEGPTR glue, HTASK16 owner )
+{
+    THUNKLET *thunk = THUNK_FindThunklet( (DWORD)target, relay, (DWORD)glue,
+                                          THUNKLET_TYPE_SL );
+    if (!thunk)
+    {
+        TDB *pTask = (TDB*)GlobalLock16( owner );
+
+        if ( !(thunk = HeapAlloc( ThunkletHeap, 0, sizeof(THUNKLET) )) )
+            return 0;
+
+        thunk->prefix_target = thunk->prefix_relay = 0x66;
+        thunk->pushl_target  = thunk->pushl_relay  = 0x68;
+        thunk->jmp_glue = 0xEA;
+
+        thunk->target  = (DWORD)target;
+        thunk->relay   = (DWORD)relay;
+        thunk->glue    = (DWORD)glue;
+
+        thunk->type    = THUNKLET_TYPE_SL;
+        thunk->owner   = pTask? pTask->hInstance : 0;
+
+        thunk->next    = ThunkletAnchor;
+        ThunkletAnchor = thunk;
+    }
+
+    return HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+}
+
+/**********************************************************************
+ *     IsLSThunklet
+ */
+BOOL16 WINAPI IsLSThunklet( THUNKLET *thunk )
+{
+    return    thunk->prefix_target == 0x90 && thunk->pushl_target == 0x68
+           && thunk->prefix_relay  == 0x90 && thunk->pushl_relay  == 0x68
+           && thunk->jmp_glue == 0xE9 && thunk->type == THUNKLET_TYPE_LS;
+}
+
+/**********************************************************************
+ *     IsSLThunklet                        (KERNEL.612)
+ */
+BOOL16 WINAPI IsSLThunklet( THUNKLET *thunk )
+{
+    return    thunk->prefix_target == 0x66 && thunk->pushl_target == 0x68
+           && thunk->prefix_relay  == 0x66 && thunk->pushl_relay  == 0x68
+           && thunk->jmp_glue == 0xEA && thunk->type == THUNKLET_TYPE_SL;
+}
+
+
+
+/***********************************************************************
+ *     AllocLSThunkletSysthunk             (KERNEL.607)
+ */
+FARPROC32 WINAPI AllocLSThunkletSysthunk( SEGPTR target, 
+                                          FARPROC32 relay, DWORD dummy )
+{
+    return THUNK_AllocLSThunklet( (SEGPTR)relay, (DWORD)target, 
+                                  ThunkletSysthunkGlueLS, GetCurrentTask() );
+}
+
+/***********************************************************************
+ *     AllocSLThunkletSysthunk             (KERNEL.608)
+ */
+SEGPTR WINAPI AllocSLThunkletSysthunk( FARPROC32 target, 
+                                       SEGPTR relay, DWORD dummy )
+{
+    return THUNK_AllocSLThunklet( (FARPROC32)relay, (DWORD)target, 
+                                  ThunkletSysthunkGlueSL, GetCurrentTask() );
+}
+
+
+/***********************************************************************
+ *     AllocLSThunkletCallbackEx           (KERNEL.567)
+ */
+FARPROC32 WINAPI AllocLSThunkletCallbackEx( SEGPTR target, 
+                                            DWORD relay, HTASK16 task )
+{
+    THUNKLET *thunk = (THUNKLET *)target;
+    if (   IsSLThunklet( thunk ) && thunk->relay == relay 
+        && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
+        return (FARPROC32)thunk->target;
+
+    return THUNK_AllocLSThunklet( target, relay, 
+                                  ThunkletCallbackGlueLS, task );
+}
+
+/***********************************************************************
+ *     AllocSLThunkletCallbackEx           (KERNEL.568)
+ */
+SEGPTR WINAPI AllocSLThunkletCallbackEx( FARPROC32 target, 
+                                         DWORD relay, HTASK16 task )
+{
+    THUNKLET *thunk = (THUNKLET *)target;
+    if (   IsLSThunklet( thunk ) && thunk->relay == relay 
+        && thunk->glue == (DWORD)ThunkletCallbackGlueLS )
+        return (SEGPTR)thunk->target;
+
+    return THUNK_AllocSLThunklet( target, relay, 
+                                  ThunkletCallbackGlueSL, task );
+}
+
+/***********************************************************************
+ *     AllocLSThunkletCallback             (KERNEL.561) (KERNEL.606)
+ */
+FARPROC32 WINAPI AllocLSThunkletCallback( SEGPTR target, DWORD relay )
+{
+    return AllocLSThunkletCallbackEx( target, relay, GetCurrentTask() );
+}
+
+/***********************************************************************
+ *     AllocSLThunkletCallback             (KERNEL.562) (KERNEL.605)
+ */
+SEGPTR WINAPI AllocSLThunkletCallback( FARPROC32 target, DWORD relay )
+{
+    return AllocSLThunkletCallbackEx( target, relay, GetCurrentTask() );
+}
+
+/***********************************************************************
+ *     FindLSThunkletCallback              (KERNEL.563) (KERNEL.609)
+ */
+FARPROC32 WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
+{
+    THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
+    if (   thunk && IsSLThunklet( thunk ) && thunk->relay == relay 
+        && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
+        return (FARPROC32)thunk->target;
+
+    thunk = THUNK_FindThunklet( (DWORD)target, relay, 
+                                (DWORD)ThunkletCallbackGlueLS, 
+                                THUNKLET_TYPE_LS );
+    return (FARPROC32)thunk;
+}
+
+/***********************************************************************
+ *     FindSLThunkletCallback              (KERNEL.564) (KERNEL.610)
+ */
+SEGPTR WINAPI FindSLThunkletCallback( FARPROC32 target, DWORD relay )
+{
+    THUNKLET *thunk = (THUNKLET *)target;
+    if (   thunk && IsLSThunklet( thunk ) && thunk->relay == relay 
+        && thunk->glue == (DWORD)ThunkletCallbackGlueLS )
+        return (SEGPTR)thunk->target;
+
+    thunk = THUNK_FindThunklet( (DWORD)target, relay, 
+                                (DWORD)ThunkletCallbackGlueSL, 
+                                THUNKLET_TYPE_SL );
+    return HEAP_GetSegptr( ThunkletHeap, 0, thunk );
+}
+
+
+/***********************************************************************
+ * Callback Client API
+ */
+
+#define N_CBC_FIXED    20
+#define N_CBC_VARIABLE 10
+#define N_CBC_TOTAL    (N_CBC_FIXED + N_CBC_VARIABLE)
+
+static SEGPTR    *CBClientRelay16[ N_CBC_TOTAL ];
+static FARPROC32 *CBClientRelay32[ N_CBC_TOTAL ];
+
+/***********************************************************************
+ *     RegisterCBClient                    (KERNEL.619)
+ */
+INT16 WINAPI RegisterCBClient( INT16 wCBCId, 
+                               SEGPTR *relay16, FARPROC32 *relay32 )
+{
+    /* Search for free Callback ID */
+    if ( wCBCId == -1 )
+        for ( wCBCId = N_CBC_FIXED; wCBCId < N_CBC_TOTAL; wCBCId++ )
+            if ( !CBClientRelay16[ wCBCId ] )
+                break;
+
+    /* Register Callback ID */
+    if ( wCBCId > 0 && wCBCId < N_CBC_TOTAL )
+    {
+        CBClientRelay16[ wCBCId ] = relay16;
+        CBClientRelay32[ wCBCId ] = relay32;
+    }
+    else
+        wCBCId = 0;
+
+    return wCBCId;
+}
+
+/***********************************************************************
+ *     UnRegisterCBClient                  (KERNEL.622)
+ */
+INT16 WINAPI UnRegisterCBClient( INT16 wCBCId, 
+                                 SEGPTR *relay16, FARPROC32 *relay32 )
+{
+    if (    wCBCId >= N_CBC_FIXED && wCBCId < N_CBC_TOTAL 
+         && CBClientRelay16[ wCBCId ] == relay16 
+         && CBClientRelay32[ wCBCId ] == relay32 )
+    {
+        CBClientRelay16[ wCBCId ] = 0;
+        CBClientRelay32[ wCBCId ] = 0;
+    }
+    else
+        wCBCId = 0;
+
+    return wCBCId;
+}
+
+
+/***********************************************************************
+ *     InitCBClient                        (KERNEL.623)
+ */
+void WINAPI InitCBClient( FARPROC32 glueLS )
+{
+    HMODULE16 kernel = GetModuleHandle16( "KERNEL" );
+    SEGPTR glueSL = (SEGPTR)WIN32_GetProcAddress16( kernel, (LPCSTR)604 );
+
+    SetThunkletCallbackGlue( glueLS, glueSL );
+}
+
+/***********************************************************************
+ *     CBClientGlueSL                      (KERNEL.604)
+ */
+void WINAPI CBClientGlueSL( CONTEXT *context )
+{
+    /* Create stack frame */
+    SEGPTR stackSeg = STACK16_PUSH( THREAD_Current(), 12 );
+    LPWORD stackLin = PTR_SEG_TO_LIN( stackSeg );
+    SEGPTR glue;
+    
+    stackLin[3] = BP_reg( context );
+    stackLin[2] = SI_reg( context );
+    stackLin[1] = DI_reg( context );
+    stackLin[0] = DS_reg( context );
+
+    BP_reg( context ) = OFFSETOF( stackSeg ) + 6;
+    SP_reg( context ) = OFFSETOF( stackSeg ) - 4;
+    GS_reg( context ) = 0;
+
+    /* Jump to 16-bit relay code */
+    glue = CBClientRelay16[ stackLin[5] ][ stackLin[4] ];
+    CS_reg ( context ) = SELECTOROF( glue );
+    EIP_reg( context ) = OFFSETOF  ( glue );
+}
+
+/***********************************************************************
+ *     CBClientThunkSL                      (KERNEL.620)
+ */
+void WINAPI CBClientThunkSL( CONTEXT *context )
+{
+    /* Call 32-bit relay code */
+    extern DWORD WINAPI CALL32_CBClient( FARPROC32 proc, LPWORD args );
+
+    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), BP_reg( context ) );
+    FARPROC32 proc = CBClientRelay32[ args[2] ][ args[1] ];
+
+    EAX_reg(context) = CALL32_CBClient( proc, args );
+}
+
+/***********************************************************************
+ *     KERNEL_365                      (KERNEL.365)
+ *
+ * This is declared as a register function as it has to preserve
+ * *all* registers, even AX/DX !
+ *
+ */
+void WINAPI KERNEL_365( CONTEXT *context )
+{
+    LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
+    FIXME( thunk, "(%04X, %d): stub!\n", args[3], (INT16)args[2] );
+}
+
