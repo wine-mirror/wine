@@ -68,6 +68,7 @@ BASEDIRS = \
 	msnet32 \
 	msvcrt \
 	msvcrt20 \
+	msvcrt40 \
 	msvcrtd \
 	msvideo \
 	msvideo/msrle32 \
@@ -267,6 +268,7 @@ SYMLINKS = \
 	msrle32.dll$(DLLEXT) \
 	msvcrt.dll$(DLLEXT) \
 	msvcrt20.dll$(DLLEXT) \
+	msvcrt40.dll$(DLLEXT) \
 	msvcrtd.dll$(DLLEXT) \
 	msvfw32.dll$(DLLEXT) \
 	mswsock.dll$(DLLEXT) \
@@ -554,6 +556,9 @@ msvcrt.dll$(DLLEXT): msvcrt/msvcrt.dll$(DLLEXT)
 
 msvcrt20.dll$(DLLEXT): msvcrt20/msvcrt20.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrt20/msvcrt20.dll$(DLLEXT) $@
+
+msvcrt40.dll$(DLLEXT): msvcrt40/msvcrt40.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) msvcrt40/msvcrt40.dll$(DLLEXT) $@
 
 msvcrtd.dll$(DLLEXT): msvcrtd/msvcrtd.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.dll$(DLLEXT) $@
@@ -850,6 +855,7 @@ IMPORT_LIBS = \
 	libmsrle32 \
 	libmsvcrt \
 	libmsvcrt20 \
+	libmsvcrt40 \
 	libmsvcrtd \
 	libmsvfw32 \
 	libmswsock \
@@ -1174,6 +1180,11 @@ libmsvcrt20.def: msvcrt20/msvcrt20.spec.def
 libmsvcrt20.a: msvcrt20/msvcrt20.spec.def
 	$(DLLTOOL) -k -l $@ -d msvcrt20/msvcrt20.spec.def
 
+libmsvcrt40.def: msvcrt40/msvcrt40.spec.def
+	$(RM) $@ && $(LN_S) msvcrt40/msvcrt40.spec.def $@
+libmsvcrt40.a: msvcrt40/msvcrt40.spec.def
+	$(DLLTOOL) -k -l $@ -d msvcrt40/msvcrt40.spec.def
+
 libmsvcrtd.def: msvcrtd/msvcrtd.spec.def
 	$(RM) $@ && $(LN_S) msvcrtd/msvcrtd.spec.def $@
 libmsvcrtd.a: msvcrtd/msvcrtd.spec.def
@@ -1493,6 +1504,7 @@ msnet32/msnet32.spec.def: $(WINEBUILD)
 msvideo/msrle32/msrle32.spec.def: $(WINEBUILD)
 msvcrt/msvcrt.spec.def: $(WINEBUILD)
 msvcrt20/msvcrt20.spec.def: $(WINEBUILD)
+msvcrt40/msvcrt40.spec.def: $(WINEBUILD)
 msvcrtd/msvcrtd.spec.def: $(WINEBUILD)
 msvideo/msvfw32.spec.def: $(WINEBUILD)
 mswsock/mswsock.spec.def: $(WINEBUILD)
@@ -1619,6 +1631,7 @@ msnet32/msnet32.dll$(DLLEXT): msnet32
 msvideo/msrle32/msrle32.dll$(DLLEXT): msvideo/msrle32
 msvcrt/msvcrt.dll$(DLLEXT): msvcrt
 msvcrt20/msvcrt20.dll$(DLLEXT): msvcrt20
+msvcrt40/msvcrt40.dll$(DLLEXT): msvcrt40
 msvcrtd/msvcrtd.dll$(DLLEXT): msvcrtd
 msvideo/msvfw32.dll$(DLLEXT): msvideo
 mswsock/mswsock.dll$(DLLEXT): mswsock
