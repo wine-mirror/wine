@@ -696,34 +696,180 @@ static void test_MDI_create(HWND parent, HWND mdi_client)
 {
     MDICREATESTRUCTA mdi_cs;
     HWND mdi_child;
+    static const WCHAR classW[] = {'M','D','I','_','c','h','i','l','d','_','C','l','a','s','s','_','1',0};
+    static const WCHAR titleW[] = {'M','D','I',' ','c','h','i','l','d',0};
+    BOOL isWin9x = FALSE;
 
     mdi_cs.szClass = "MDI_child_Class_1";
-    mdi_cs.szTitle = "MDI child 1";
+    mdi_cs.szTitle = "MDI child";
     mdi_cs.hOwner = GetModuleHandle(0);
-    mdi_cs.x = 0;
-    mdi_cs.y = 0;
+    mdi_cs.x = CW_USEDEFAULT;
+    mdi_cs.y = CW_USEDEFAULT;
     mdi_cs.cx = CW_USEDEFAULT;
     mdi_cs.cy = CW_USEDEFAULT;
-    mdi_cs.style = WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/;
+    mdi_cs.style = 0;
     mdi_cs.lParam = (LPARAM)mdi_lParam_test_message;
     mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
-    assert(mdi_child);
+    ok(mdi_child != 0, "MDI child creation failed\n");
     DestroyWindow(mdi_child);
 
-    mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child 2",
-                                 WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/,
-                                 10, 10, CW_USEDEFAULT, CW_USEDEFAULT,
+    mdi_cs.style = 0x7fffffff; /* without WS_POPUP */
+    mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    mdi_cs.style = 0xffffffff; /* with WS_POPUP */
+    mdi_child = (HWND)SendMessageA(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
+    if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
+    {
+        ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
+        DestroyWindow(mdi_child);
+    }
+    else
+        ok(mdi_child != 0, "MDI child creation failed\n");
+
+    /* test MDICREATESTRUCT A<->W mapping */
+    /* MDICREATESTRUCTA and MDICREATESTRUCTW have the same layout */
+    mdi_cs.style = 0;
+    mdi_cs.szClass = (LPCSTR)classW;
+    mdi_cs.szTitle = (LPCSTR)titleW;
+    SetLastError(0xdeadbeef);
+    mdi_child = (HWND)SendMessageW(mdi_client, WM_MDICREATE, 0, (LPARAM)&mdi_cs);
+    if (!mdi_child)
+    {
+        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+            isWin9x = TRUE;
+        else
+            ok(mdi_child != 0, "MDI child creation failed\n");
+    }
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
+                                 0,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                  mdi_client, GetModuleHandle(0),
                                  (LPARAM)mdi_lParam_test_message);
-    assert(mdi_child);
+    ok(mdi_child != 0, "MDI child creation failed\n");
     DestroyWindow(mdi_child);
 
-    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child 3",
-                                WS_CAPTION | WS_CHILD /*| WS_VISIBLE*/,
-                                20, 20, CW_USEDEFAULT, CW_USEDEFAULT,
+    mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
+                                 0x7fffffff, /* without WS_POPUP */
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 mdi_client, GetModuleHandle(0),
+                                 (LPARAM)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateMDIWindowA("MDI_child_Class_1", "MDI child",
+                                 0xffffffff, /* with WS_POPUP */
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 mdi_client, GetModuleHandle(0),
+                                 (LPARAM)mdi_lParam_test_message);
+    if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
+    {
+        ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
+        DestroyWindow(mdi_child);
+    }
+    else
+        ok(mdi_child != 0, "MDI child creation failed\n");
+
+    /* test MDICREATESTRUCT A<->W mapping */
+    SetLastError(0xdeadbeef);
+    mdi_child = CreateMDIWindowW(classW, titleW,
+                                 0,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 CW_USEDEFAULT, CW_USEDEFAULT,
+                                 mdi_client, GetModuleHandle(0),
+                                 (LPARAM)mdi_lParam_test_message);
+    if (!mdi_child)
+    {
+        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+            isWin9x = TRUE;
+        else
+            ok(mdi_child != 0, "MDI child creation failed\n");
+    }
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
+                                0,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandle(0),
                                 (LPVOID)mdi_lParam_test_message);
-    assert(mdi_child);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
+                                0x7fffffff, /* without WS_POPUP */
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
+                                0xffffffff, /* with WS_POPUP */
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    if (GetWindowLongA(mdi_client, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
+    {
+        ok(!mdi_child, "MDI child with WS_POPUP and with MDIS_ALLCHILDSTYLES should fail\n");
+        DestroyWindow(mdi_child);
+    }
+    else
+        ok(mdi_child != 0, "MDI child creation failed\n");
+
+    /* test MDICREATESTRUCT A<->W mapping */
+    SetLastError(0xdeadbeef);
+    mdi_child = CreateWindowExW(WS_EX_MDICHILD, classW, titleW,
+                                0,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    if (!mdi_child)
+    {
+        if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+            isWin9x = TRUE;
+        else
+            ok(mdi_child != 0, "MDI child creation failed\n");
+    }
+    DestroyWindow(mdi_child);
+
+    /* This test fails on Win9x */
+    if (!isWin9x)
+    {
+        mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                parent, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+        ok(!mdi_child, "WS_EX_MDICHILD with a not MDIClient parent should fail\n");
+    }
+
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD, /* without WS_POPUP */
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
+    DestroyWindow(mdi_child);
+
+    mdi_child = CreateWindowExA(0, "MDI_child_Class_2", "MDI child",
+                                WS_CHILD | WS_POPUP, /* with WS_POPUP */
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandle(0),
+                                (LPVOID)mdi_lParam_test_message);
+    ok(mdi_child != 0, "MDI child creation failed\n");
     DestroyWindow(mdi_child);
 }
 
@@ -731,16 +877,53 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
 {
     switch (msg)
     {
+        case WM_NCCREATE:
         case WM_CREATE:
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
             MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs->lpCreateParams;
 
-todo_wine /* apparently Windows has a common code for MDI and other windows */
-{
             ok(cs->dwExStyle & WS_EX_MDICHILD, "WS_EX_MDICHILD should be set\n");
-}
             ok(mdi_cs->lParam == (LPARAM)mdi_lParam_test_message, "wrong mdi_cs->lParam\n");
+
+            ok(!lstrcmpA(cs->lpszClass, "MDI_child_Class_1"), "wrong class name\n");
+            ok(!lstrcmpA(cs->lpszClass, mdi_cs->szClass), "class name does not match\n");
+            ok(!lstrcmpA(cs->lpszName, "MDI child"), "wrong title\n");
+            ok(!lstrcmpA(cs->lpszName, mdi_cs->szTitle), "title does not match\n");
+            ok(cs->hInstance == mdi_cs->hOwner, "%p != %p\n", cs->hInstance, mdi_cs->hOwner);
+
+            /* MDICREATESTRUCT should have original values */
+            ok(mdi_cs->style == 0 || mdi_cs->style == 0x7fffffff || mdi_cs->style == 0xffffffff,
+                "mdi_cs->style does not match (%08lx)\n", mdi_cs->style);
+            ok(mdi_cs->x == CW_USEDEFAULT, "%d != CW_USEDEFAULT\n", mdi_cs->x);
+            ok(mdi_cs->y == CW_USEDEFAULT, "%d != CW_USEDEFAULT\n", mdi_cs->y);
+            ok(mdi_cs->cx == CW_USEDEFAULT, "%d != CW_USEDEFAULT\n", mdi_cs->cx);
+            ok(mdi_cs->cy == CW_USEDEFAULT, "%d != CW_USEDEFAULT\n", mdi_cs->cy);
+
+            /* CREATESTRUCT should have fixed values */
+            ok(cs->x != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->x);
+            ok(cs->y != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->y);
+
+            /* cx/cy == CW_USEDEFAULT are translated to NOT zero values */
+            ok(cs->cx != CW_USEDEFAULT && cs->cx != 0, "%d == CW_USEDEFAULT\n", cs->cx);
+            ok(cs->cy != CW_USEDEFAULT && cs->cy != 0, "%d == CW_USEDEFAULT\n", cs->cy);
+
+            ok(!(cs->style & WS_POPUP), "WS_POPUP is not allowed\n");
+
+            if (GetWindowLongA(cs->hwndParent, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
+            {
+                ok(cs->style == (mdi_cs->style | WS_CHILD | WS_CLIPSIBLINGS),
+                   "cs->style does not match (%08lx)\n", cs->style);
+            }
+            else
+            {
+                DWORD style = mdi_cs->style;
+                style &= ~WS_POPUP;
+                style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION |
+                    WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+                ok(cs->style == style,
+                   "cs->style does not match (%08lx)\n", cs->style);
+            }
             break;
         }
     }
@@ -751,12 +934,26 @@ static LRESULT WINAPI mdi_child_wnd_proc_2(HWND hwnd, UINT msg, WPARAM wparam, L
 {
     switch (msg)
     {
+        case WM_NCCREATE:
         case WM_CREATE:
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
 
             ok(!(cs->dwExStyle & WS_EX_MDICHILD), "WS_EX_MDICHILD should not be set\n");
             ok(cs->lpCreateParams == mdi_lParam_test_message, "wrong cs->lpCreateParams\n");
+
+            ok(!lstrcmpA(cs->lpszClass, "MDI_child_Class_2"), "wrong class name\n");
+            ok(!lstrcmpA(cs->lpszName, "MDI child"), "wrong title\n");
+
+            /* CREATESTRUCT should have fixed values */
+            /* For some reason Win9x doesn't translate cs->x from CW_USEDEFAULT,
+               while NT does. */
+            /*ok(cs->x != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->x);*/
+            ok(cs->y != CW_USEDEFAULT, "%d == CW_USEDEFAULT\n", cs->y);
+
+            /* cx/cy == CW_USEDEFAULT are translated to 0 */
+            ok(cs->cx == 0, "%d != 0\n", cs->cx);
+            ok(cs->cy == 0, "%d != 0\n", cs->cy);
             break;
         }
     }
@@ -779,15 +976,29 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
             client_cs.hWindowMenu = 0;
             client_cs.idFirstChild = 1;
 
+            /* MDIClient without MDIS_ALLCHILDSTYLES */
             mdi_client = CreateWindowExA(0, "mdiclient",
                                          NULL,
-                                         WS_CHILD | WS_CLIPCHILDREN /*| WS_VISIBLE*/,
+                                         WS_CHILD /*| WS_VISIBLE*/,
+                                          /* tests depend on a not zero MDIClient size */
                                          0, 0, rc.right, rc.bottom,
                                          hwnd, 0, GetModuleHandle(0),
                                          (LPVOID)&client_cs);
             assert(mdi_client);
-
             test_MDI_create(hwnd, mdi_client);
+            DestroyWindow(mdi_client);
+
+            /* MDIClient with MDIS_ALLCHILDSTYLES */
+            mdi_client = CreateWindowExA(0, "mdiclient",
+                                         NULL,
+                                         WS_CHILD | MDIS_ALLCHILDSTYLES /*| WS_VISIBLE*/,
+                                          /* tests depend on a not zero MDIClient size */
+                                         0, 0, rc.right, rc.bottom,
+                                         hwnd, 0, GetModuleHandle(0),
+                                         (LPVOID)&client_cs);
+            assert(mdi_client);
+            test_MDI_create(hwnd, mdi_client);
+            DestroyWindow(mdi_client);
             break;
         }
 
@@ -890,20 +1101,23 @@ static void test_icons(void)
 
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == 0, "wrong small icon %p/0\n", res );
-    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res != 0, "wrong small icon %p\n", res );
+    /* this test is XP specific */
+    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res != 0, "wrong small icon %p\n", res );*/
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon );
     ok( res == 0, "wrong previous small icon %p/0\n", res );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
-    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
+    /* this test is XP specific */
+    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );*/
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon );
     ok( res == icon, "wrong previous small icon %p/%p\n", res, icon );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
-    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
+    /* this test is XP specific */
+    /*res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );*/
 
     /* make sure the big icon hasn't changed */
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );

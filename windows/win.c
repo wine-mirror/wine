@@ -805,8 +805,29 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
     {
         if (cs->style & (WS_CHILD | WS_POPUP))
         {
-            if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16) cs->x = cs->y = 0;
-            if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16) cs->cx = cs->cy = 0;
+            if (cs->dwExStyle & WS_EX_MDICHILD)
+            {
+                POINT pos[2];
+
+                MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0);
+
+                if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+                {
+                    cs->x = pos[0].x;
+                    cs->y = pos[0].y;
+                }
+                if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16 || !cs->cx)
+                    cs->cx = pos[1].x;
+                if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16 || !cs->cy)
+                    cs->cy = pos[1].y;
+            }
+            else
+            {
+                if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+                    cs->x = cs->y = 0;
+                if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+                    cs->cx = cs->cy = 0;
+            }
         }
         else  /* overlapped window */
         {
@@ -979,7 +1000,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 {
     INT sw = SW_SHOW;
     WND *wndPtr;
-    HWND hwnd, parent, owner;
+    HWND hwnd, parent, owner, top_child = 0;
     BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
@@ -992,6 +1013,62 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 
     TRACE("winproc type is %d (%s)\n", type, (type == WIN_PROC_16) ? "WIN_PROC_16" :
 	    ((type == WIN_PROC_32A) ? "WIN_PROC_32A" : "WIN_PROC_32W") );
+
+    /* Fix the styles for MDI children */
+    if (cs->dwExStyle & WS_EX_MDICHILD)
+    {
+        MDICREATESTRUCTA mdi_cs;
+        UINT flags = 0;
+
+        wndPtr = WIN_GetPtr(cs->hwndParent);
+        if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+        {
+            flags = wndPtr->flags;
+            WIN_ReleasePtr(wndPtr);
+        }
+
+        if (!(flags & WIN_ISMDICLIENT))
+        {
+            WARN("WS_EX_MDICHILD, but parent %p is not MDIClient\n", cs->hwndParent);
+            return 0;
+        }
+
+        /* cs->lpCreateParams of WM_[NC]CREATE is different for MDI children.
+         * MDICREATESTRUCT members have the originally passed values.
+         *
+         * Note: we rely on the fact that MDICREATESTRUCTA and MDICREATESTRUCTW
+         * have the same layout.
+         */
+        mdi_cs.szClass = cs->lpszClass;
+        mdi_cs.szTitle = cs->lpszName;
+        mdi_cs.hOwner = cs->hInstance;
+        mdi_cs.x = cs->x;
+        mdi_cs.y = cs->y;
+        mdi_cs.cx = cs->cx;
+        mdi_cs.cy = cs->cy;
+        mdi_cs.style = cs->style;
+        mdi_cs.lParam = (LPARAM)cs->lpCreateParams;
+
+        cs->lpCreateParams = (LPVOID)&mdi_cs;
+
+        if (GetWindowLongW(cs->hwndParent, GWL_STYLE) & MDIS_ALLCHILDSTYLES)
+        {
+            if (cs->style & WS_POPUP)
+            {
+                TRACE("WS_POPUP with MDIS_ALLCHILDSTYLES is not allowed\n");
+                return 0;
+            }
+            cs->style |= WS_CHILD | WS_CLIPSIBLINGS;
+        }
+        else
+        {
+            cs->style &= ~WS_POPUP;
+            cs->style |= WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CAPTION |
+                WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+        }
+
+        top_child = GetWindow(cs->hwndParent, GW_CHILD);
+    }
 
     /* Find the parent window */
 
@@ -1136,6 +1213,21 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     send_parent_notify( hwnd, WM_CREATE );
     if (!IsWindow( hwnd )) return 0;
 
+    if (cs->dwExStyle & WS_EX_MDICHILD)
+    {
+        if (top_child)
+        {
+            /* Restore current maximized child */
+            if((cs->style & WS_VISIBLE) && IsZoomed(top_child))
+            {
+                TRACE("Restoring current maximized child %p\n", top_child);
+                ShowWindow(top_child, SW_SHOWNOACTIVATE);
+            }
+        }
+
+        SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
+    }
+
     if (cs->style & WS_VISIBLE)
     {
         /* in case WS_VISIBLE got set in the meantime */
@@ -1237,9 +1329,6 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     CREATESTRUCTA cs;
     char buffer[256];
 
-    if(exStyle & WS_EX_MDICHILD)
-        return CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
-
     /* Find the class atom */
 
     if (HIWORD(className))
@@ -1292,9 +1381,6 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
     ATOM classAtom;
     CREATESTRUCTW cs;
     WCHAR buffer[256];
-
-    if(exStyle & WS_EX_MDICHILD)
-        return CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
 
     /* Find the class atom */
 
@@ -1408,6 +1494,9 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
         if (parent == GetDesktopWindow()) parent = 0;
         SetFocus( parent );
     }
+
+    if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+        SendMessageW(GetAncestor(hwnd, GA_PARENT), WM_MDIREFRESHMENU, 0, 0);
 
       /* Call hooks */
 

@@ -671,6 +671,25 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
                 RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)xs->cs.lpszClass);
                 xs->lpszClass = xs->cs.lpszClass = usBuffer.Buffer;
             }
+
+            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)HeapAlloc(GetProcessHeap(), 0,
+                                                                         sizeof(*mdi_cs));
+                *mdi_cs = *(MDICREATESTRUCTW *)xs->cs.lpCreateParams;
+                if (HIWORD(mdi_cs->szTitle))
+                {
+                    RtlCreateUnicodeStringFromAsciiz(&usBuffer, (LPCSTR)mdi_cs->szTitle);
+                    mdi_cs->szTitle = usBuffer.Buffer;
+                }
+                if (HIWORD(mdi_cs->szClass))
+                {
+                    RtlCreateUnicodeStringFromAsciiz(&usBuffer, (LPCSTR)mdi_cs->szClass);
+                    mdi_cs->szClass = usBuffer.Buffer;
+                }
+                xs->cs.lpCreateParams = mdi_cs;
+            }
+
             *plparam = (LPARAM)xs;
         }
         return 1;
@@ -829,6 +848,16 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             struct s *xs = (struct s *)lParam;
             if (xs->lpszName)  HeapFree( GetProcessHeap(), 0, xs->lpszName );
             if (xs->lpszClass) HeapFree( GetProcessHeap(), 0, xs->lpszClass );
+
+            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)xs->cs.lpCreateParams;
+                if (HIWORD(mdi_cs->szTitle))
+                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szTitle);
+                if (HIWORD(mdi_cs->szClass))
+                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szClass);
+                HeapFree(GetProcessHeap(), 0, mdi_cs);
+            }
             HeapFree( GetProcessHeap(), 0, xs );
         }
         break;
@@ -952,6 +981,25 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             if (HIWORD(cs->lpszClass))
                 cs->lpszClass = HEAP_strdupWtoA( GetProcessHeap(), 0,
                                                  (LPCWSTR)cs->lpszClass);
+
+            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)HeapAlloc(GetProcessHeap(), 0,
+                                                                         sizeof(*mdi_cs));
+                if (!mdi_cs)
+                {
+                    HeapFree(GetProcessHeap(), 0, cs);
+                    return -1;
+                }
+                *mdi_cs = *(MDICREATESTRUCTA *)cs->lpCreateParams;
+                if (HIWORD(mdi_cs->szTitle))
+                    mdi_cs->szTitle = HEAP_strdupWtoA(GetProcessHeap(), 0,
+                                                      (LPCWSTR)mdi_cs->szTitle);
+                if (HIWORD(mdi_cs->szClass))
+                    mdi_cs->szClass = HEAP_strdupWtoA(GetProcessHeap(), 0,
+                                                      (LPCWSTR)mdi_cs->szClass);
+                cs->lpCreateParams = (LPVOID)mdi_cs;
+            }
             *plparam = (LPARAM)cs;
         }
         return 1;
@@ -1100,6 +1148,15 @@ void WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
                 HeapFree( GetProcessHeap(), 0, (LPVOID)cs->lpszName );
             if (HIWORD(cs->lpszClass))
                 HeapFree( GetProcessHeap(), 0, (LPVOID)cs->lpszClass );
+            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            {
+                MDICREATESTRUCTA *mdi_cs = (MDICREATESTRUCTA *)cs->lpCreateParams;
+                if (HIWORD(mdi_cs->szTitle))
+                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szTitle);
+                if (HIWORD(mdi_cs->szClass))
+                    HeapFree(GetProcessHeap(), 0, (LPVOID)mdi_cs->szClass);
+                HeapFree(GetProcessHeap(), 0, mdi_cs);
+            }
             HeapFree( GetProcessHeap(), 0, cs );
         }
         break;
