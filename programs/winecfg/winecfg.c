@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,6 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #include "winecfg.h"
 
+HKEY configKey = NULL;
 
 /*****************************************************************************
  */
@@ -188,13 +190,12 @@ end:
 int loadConfig (WINECFG_DESC* pCfg)
 {
     const DLL_DESC *pDllDefaults;
-    
-    HKEY hSession=NULL;
+    char buffer[MAX_PATH];
     DWORD res;
 
     WINE_TRACE("\n");
 
-    res = RegCreateKey(HKEY_LOCAL_MACHINE, WINE_KEY_ROOT, &hSession);
+    res = RegCreateKey(HKEY_LOCAL_MACHINE, WINE_KEY_ROOT, &configKey);
     if (res != ERROR_SUCCESS)
     {
         WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
@@ -202,19 +203,19 @@ int loadConfig (WINECFG_DESC* pCfg)
     }
 
     /* Windows and DOS versions */
-    getConfigValue(hSession, "Version", "Windows", pCfg->szWinVer, MAX_VERSION_LENGTH, "win95");
-    getConfigValue(hSession, "Version", "DOS", pCfg->szDOSVer, MAX_VERSION_LENGTH, "6.22");
-    getConfigValue(hSession, "Tweak.Layout", "WineLook", pCfg->szWinLook, MAX_VERSION_LENGTH, "win95");
+    getConfigValue(configKey, "Version", "Windows", pCfg->szWinVer, MAX_VERSION_LENGTH, "win95");
+    getConfigValue(configKey, "Version", "DOS", pCfg->szDOSVer, MAX_VERSION_LENGTH, "6.22");
+    getConfigValue(configKey, "Tweak.Layout", "WineLook", pCfg->szWinLook, MAX_VERSION_LENGTH, "win95");
 
     /* System Paths */
-    getConfigValue(hSession, "Wine", "Windows", pCfg->szWinDir, MAX_PATH, "c:\\Windows");
-    getConfigValue(hSession, "Wine", "System", pCfg->szWinSysDir, MAX_PATH, "c:\\Windows\\System");
-    getConfigValue(hSession, "Wine", "Temp", pCfg->szWinTmpDir, MAX_PATH, "c:\\Windows\\Temp");
-    getConfigValue(hSession, "Wine", "Profile", pCfg->szWinProfDir, MAX_PATH, "c:\\Windows\\Profiles\\Administrator");
-    getConfigValue(hSession, "Wine", "Path", pCfg->szWinPath, MAX_PATH, "c:\\Windows;c:\\Windows\\System");
+    getConfigValue(configKey, "Wine", "Windows", pCfg->szWinDir, MAX_PATH, "c:\\Windows");
+    getConfigValue(configKey, "Wine", "System", pCfg->szWinSysDir, MAX_PATH, "c:\\Windows\\System");
+    getConfigValue(configKey, "Wine", "Temp", pCfg->szWinTmpDir, MAX_PATH, "c:\\Windows\\Temp");
+    getConfigValue(configKey, "Wine", "Profile", pCfg->szWinProfDir, MAX_PATH, "c:\\Windows\\Profiles\\Administrator");
+    getConfigValue(configKey, "Wine", "Path", pCfg->szWinPath, MAX_PATH, "c:\\Windows;c:\\Windows\\System");
 
     /* Graphics driver */
-    getConfigValue(hSession, "Wine", "GraphicsDriver", pCfg->szGraphDriver, MAX_NAME_LENGTH, "x11drv");
+    getConfigValue(configKey, "Wine", "GraphicsDriver", pCfg->szGraphDriver, MAX_NAME_LENGTH, "x11drv");
     
     /*
      * DLL defaults for all applications is built using
@@ -232,15 +233,28 @@ int loadConfig (WINECFG_DESC* pCfg)
      * level (if not set, this defaults to what 
      * is already there)
      */
-    /* FIXME: TODO */
+    
+    /* FIXME: Finish these off. Do we actually need GUI for all of them? */
 
     /*
      * X11Drv defaults
      */
-    strcpy(pCfg->sX11Drv.szX11Display, ":0.0");
-    pCfg->sX11Drv.nSysColors = 100;
-    pCfg->sX11Drv.nPrivateMap = 0;
-    pCfg->sX11Drv.nPerfect = 0;
+    getConfigValue(configKey, "x11drv", "Display", pCfg->sX11Drv.szX11Display, sizeof(pCfg->sX11Drv.szX11Display), ":0.0");
+    
+    getConfigValue(configKey, "x11drv", "AllocSystemColors", buffer, sizeof(buffer), "100");
+    pCfg->sX11Drv.nSysColors = atoi(buffer);
+    
+    getConfigValue(configKey, "x11drv", "PrivateColorMap", buffer, sizeof(buffer), "N");
+    pCfg->sX11Drv.nPrivateMap = IS_OPTION_TRUE(buffer[0]);
+    
+    getConfigValue(configKey, "x11drv", "PerfectGraphics", buffer, sizeof(buffer), "N");
+    pCfg->sX11Drv.nPerfect = IS_OPTION_TRUE(buffer[0]);
+    
+    getConfigValue(configKey, "x11drv", "Desktop", buffer, sizeof(buffer), "640x480");
+    sscanf(buffer, "%dx%d", &pCfg->sX11Drv.nDesktopSizeX, &pCfg->sX11Drv.nDesktopSizeY);
+
+    pCfg->sX11Drv.nTextCP = 0;
+    pCfg->sX11Drv.nXVideoPort = 43;
     pCfg->sX11Drv.nDepth = 16;
     pCfg->sX11Drv.nManaged = 1;
     pCfg->sX11Drv.nDesktopSizeX = 640;
@@ -252,8 +266,7 @@ int loadConfig (WINECFG_DESC* pCfg)
     pCfg->sX11Drv.nDoubleBuffered = 0;
     pCfg->sX11Drv.nSynchronous = 1;
     
-    RegCloseKey( hSession );
-
+    RegCloseKey( configKey );
     return 0;
 }
 

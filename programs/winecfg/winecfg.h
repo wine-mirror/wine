@@ -25,6 +25,11 @@
 
 #include "properties.h"
 
+#define IS_OPTION_TRUE(ch) \
+    ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+#define IS_OPTION_FALSE(ch) \
+    ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
+
 typedef struct structWineCfg
 {
     char   szWinVer[MAX_VERSION_LENGTH];
@@ -45,11 +50,20 @@ typedef struct structWineCfg
     X11DRV_DESC sX11Drv;
 } WINECFG_DESC;
 
+extern WINECFG_DESC config;
+
 WINECFG_DESC *allocConfig(void);
 int freeConfig(WINECFG_DESC *pCfg);
 
 int loadConfig(WINECFG_DESC *pCfg);
 int saveConfig(const WINECFG_DESC *pCfg);
+
+int setConfigValue (HKEY hCurrent, char *subkey, char *valueName, const char *value);
+int getConfigValue (HKEY hCurrent, char *subkey, char *valueName, char *retVal, int length, char *defaultResult);
+
+void initX11DrvDlg (HWND hDlg);
+void saveX11DrvDlgSettings (HWND hDlg);
+INT_PTR CALLBACK X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 

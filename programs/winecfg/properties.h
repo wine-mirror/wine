@@ -64,6 +64,9 @@ typedef struct
     int    nDesktopSizeY;
     int    nDGA;
     int    nXVidMode;
+    int    nXShm;
+    int    nTextCP;
+    int    nXVideoPort;
     int    nTakeFocus;
     int    nDXGrab;
     int    nDoubleBuffered;

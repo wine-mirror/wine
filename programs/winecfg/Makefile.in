@@ -9,7 +9,8 @@ IMPORTS   = comctl32 user32 advapi32
 C_SRCS = \
 	main.c \
 	properties.c \
-	winecfg.c
+	winecfg.c \
+	x11drvdlg.c
 
 RC_SRCS = winecfg.rc
 

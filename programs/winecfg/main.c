@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Jaco Greeff
  * Copyright 2003 Dimitrie O. Paun
+ * Copyright 2003 Mike Hearn
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-WINECFG_DESC sCfg;
+WINECFG_DESC config;
 
 void CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
@@ -68,7 +69,7 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_WINVER, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, sCfg.szWinVer))
+	    if (!strcmp (pVer->szVersion, config.szWinVer))
 		SendDlgItemMessage (hDlg, IDC_WINVER, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
@@ -79,7 +80,7 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_DOSVER, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, sCfg.szDOSVer))
+	    if (!strcmp (pVer->szVersion, config.szDOSVer))
 		SendDlgItemMessage (hDlg, IDC_DOSVER, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
@@ -90,7 +91,7 @@ initGeneralDlg (HWND hDlg)
 	{
 	    SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_ADDSTRING,
 				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, sCfg.szWinLook))
+	    if (!strcmp (pVer->szVersion, config.szWinLook))
 		SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_SETCURSEL,
 				    (WPARAM) i, 0);
 	}
@@ -116,7 +117,7 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    while (selection > 0) {
 			desc++; selection--;
 		    }
-		    strcpy(sCfg.szWinVer, desc->szVersion);
+		    strcpy(config.szWinVer, desc->szVersion);
 		}
 	        break;
 	    }
@@ -150,39 +151,6 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
-    case WM_COMMAND:
-	break;
-
-    default:
-	break;
-    }
-    return FALSE;
-}
-
-void
-initX11DrvDlg (HWND hDlg)
-{
-    char szBuf[20];
-
-    sprintf (szBuf, "%d", sCfg.sX11Drv.nSysColors);
-    SendDlgItemMessage (hDlg, IDC_SYSCOLORS, WM_SETTEXT, 0, (LPARAM) szBuf);
-    sprintf (szBuf, "%d", sCfg.sX11Drv.nDesktopSizeX);
-    SendDlgItemMessage (hDlg, IDC_DESKTOP_WIDTH, WM_SETTEXT, 0,
-			(LPARAM) szBuf);
-    sprintf (szBuf, "%d", sCfg.sX11Drv.nDesktopSizeY);
-    SendDlgItemMessage (hDlg, IDC_DESKTOP_HEIGHT, WM_SETTEXT, 0,
-			(LPARAM) szBuf);
-}
-
-INT_PTR CALLBACK
-X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-    case WM_INITDIALOG:
-	initX11DrvDlg (hDlg);
-	break;
-
     case WM_COMMAND:
 	break;
 
@@ -286,21 +254,21 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 
     /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
     WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
-    WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.");
+    WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.\n");
     
     /*
      * Load the configuration from registry
      */
-    loadConfig (&sCfg);
+    loadConfig (&config);
 
     /*
      * The next 3 lines should be all that is needed
      * for the Wine Configuration property sheet
      */
     InitCommonControls ();
-    if (doPropertySheet (hInstance, NULL) >= 0) {
+    if (doPropertySheet (hInstance, NULL) > 0) {
 	WINE_TRACE("OK\n");
-	saveConfig(&sCfg);
+	saveConfig(&config);
     } else
 	WINE_TRACE("Cancel\n");
     
