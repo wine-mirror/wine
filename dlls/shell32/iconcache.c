@@ -619,6 +619,9 @@ BOOL SIC_Initialize(void)
 	ShellSmallIconList = pImageList_Create(16,16,ILC_COLORDDB | ILC_MASK,0,0x20);
 	ShellBigIconList = pImageList_Create(32,32,ILC_COLORDDB | ILC_MASK,0,0x20);
 
+	pImageList_SetBkColor(ShellSmallIconList, GetSysColor(COLOR_WINDOW));
+	pImageList_SetBkColor(ShellBigIconList, GetSysColor(COLOR_WINDOW));
+
 	for (index=0; index<40; index++)
 	{ if (! pSmRet[index] )
 	  { MESSAGE("*** failure loading resources from %s\n", szShellPath );
