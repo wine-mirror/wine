@@ -44,12 +44,5 @@ BOOL EVENT_CheckFocus(void)
   return EVENT_Driver->pCheckFocus();
 }
 
-/***********************************************************************
- *		EVENT_QueryPointer
- */
-BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
-{
-  return EVENT_Driver->pQueryPointer(posX, posY, state);
-}
 
 

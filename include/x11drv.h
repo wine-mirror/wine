@@ -369,11 +369,18 @@ extern int X11DRV_DESKTOP_GetScreenDepth(struct tagDESKTOP *pDesktop);
 
 extern struct tagEVENT_DRIVER X11DRV_EVENT_Driver;
 
+extern WORD X11DRV_EVENT_XStateToKeyState( int state ) ;
+
 extern BOOL X11DRV_EVENT_Init(void);
 extern void X11DRV_EVENT_Synchronize( void );
 extern BOOL X11DRV_EVENT_CheckFocus( void );
-extern BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void X11DRV_EVENT_UserRepaintDisable( BOOL bDisable );
+
+typedef enum {
+  X11DRV_INPUT_RELATIVE,
+  X11DRV_INPUT_ABSOLUTE
+} INPUT_TYPE;
+extern INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type);
 
 /* X11 keyboard driver */
 
@@ -425,7 +432,7 @@ extern void X11DRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int
 extern struct tagMOUSE_DRIVER X11DRV_MOUSE_Driver;
 
 extern BOOL X11DRV_MOUSE_DisableWarpPointer;
-
+extern void X11DRV_MOUSE_Init();
 extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
 extern BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable);

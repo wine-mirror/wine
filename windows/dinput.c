@@ -41,6 +41,7 @@
 #include "debugtools.h"
 #include "dinput.h"
 #include "display.h"
+#include "input.h"
 #include "keyboard.h"
 #include "message.h"
 #include "mouse.h"
@@ -320,7 +321,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
                 JoystickAImpl* newDevice;
 		newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickAImpl));
 		newDevice->ref		= 1;
-		ICOM_VTBL(newDevice)	= &JoystickAvt;
+		ICOM_VTBL(newDevice)    = &JoystickAvt;
 		newDevice->joyfd	= -1;
 		memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
                 *pdev=(IDirectInputDeviceA*)newDevice;
@@ -1012,7 +1013,6 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
-  DWORD rx, ry, state;
   struct DIMOUSESTATE *mstate = (struct DIMOUSESTATE *) ptr;
   
   TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
@@ -1023,25 +1023,24 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     return DIERR_INVALIDPARAM;
   }
   
-  /* Get the mouse position */
-  EVENT_QueryPointer(&rx, &ry, &state);
-  TRACE("(X:%ld - Y:%ld)\n", rx, ry);
+  TRACE("(X:%ld - Y:%ld)\n", PosX, PosY);
 
   /* Fill the mouse state structure */
   if (This->absolute) {
-    mstate->lX = rx;
-    mstate->lY = ry;
+    mstate->lX = PosX;
+    mstate->lY = PosY;
   } else {
-    mstate->lX = rx - This->win_centerX;
-    mstate->lY = ry - This->win_centerY;
+    mstate->lX = PosX - This->win_centerX;
+    mstate->lY = PosY - This->win_centerY;
 
     if ((mstate->lX != 0) || (mstate->lY != 0))
       This->need_warp = 1;
   }
   mstate->lZ = 0;
-  mstate->rgbButtons[0] = (state & MK_LBUTTON ? 0xFF : 0x00);
-  mstate->rgbButtons[1] = (state & MK_RBUTTON ? 0xFF : 0x00);
-  mstate->rgbButtons[2] = (state & MK_MBUTTON ? 0xFF : 0x00);
+  /* WARNING : this supposes that DInput takes into account the 'SwapButton' option */
+  mstate->rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
+  mstate->rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
+  mstate->rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
   mstate->rgbButtons[3] = 0x00;
   
   /* Check if we need to do a mouse warping */

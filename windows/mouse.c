@@ -46,8 +46,14 @@ WORD WINAPI MOUSE_Inquire(LPMOUSEINFO mouseInfo)
  */
 VOID WINAPI MOUSE_Enable(LPMOUSE_EVENT_PROC lpMouseEventProc)
 {
+    static BOOL initDone = FALSE;
+    
     THUNK_Free( (FARPROC)DefMouseEventProc );
     DefMouseEventProc = lpMouseEventProc;
+
+    /* Now initialize the mouse driver */
+    if (initDone == FALSE) MOUSE_Driver->pInit();
+    initDone = TRUE;
 }
 
 static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
@@ -102,15 +108,19 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 
     TRACE("(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
 
-    mouseStatus |= MOUSEEVENTF_ABSOLUTE;
-    posX = (((long)posX << 16) + width-1)  / width;
-    posY = (((long)posY << 16) + height-1) / height;
+    if (mouseStatus & MOUSEEVENTF_MOVE) {
+      if (mouseStatus & MOUSEEVENTF_ABSOLUTE) {
+	/* Relative mouse movements seems not to be scaled as absolute ones */
+	posX = (((long)posX << 16) + width-1)  / width;
+	posY = (((long)posY << 16) + height-1) / height;
+      }
+    }
 
     wme.magic    = WINE_MOUSEEVENT_MAGIC;
-    wme.keyState = keyState;
     wme.time     = time;
     wme.hWnd     = hWnd;
-
+    wme.keyState = keyState;
+    
     bOldWarpPointer = MOUSE_Driver->pEnableWarpPointer(FALSE);
     /* To avoid deadlocks, we have to suspend all locks on windows structures
        before the program control is passed to the mouse driver */

@@ -45,7 +45,6 @@ EVENT_DRIVER TTYDRV_EVENT_Driver =
   TTYDRV_EVENT_Init,
   TTYDRV_EVENT_Synchronize,
   TTYDRV_EVENT_CheckFocus,
-  TTYDRV_EVENT_QueryPointer,
   TTYDRV_EVENT_UserRepaintDisable
 };
 
@@ -79,6 +78,7 @@ MONITOR_DRIVER TTYDRV_MONITOR_Driver =
 
 MOUSE_DRIVER TTYDRV_MOUSE_Driver =
 {
+  TTYDRV_MOUSE_Init,
   TTYDRV_MOUSE_SetCursor,
   TTYDRV_MOUSE_MoveCursor,
   TTYDRV_MOUSE_EnableWarpPointer

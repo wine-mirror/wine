@@ -112,6 +112,9 @@ static void EVENT_GetGeometry( Window win, int *px, int *py,
 
 static BOOL bUserRepaintDisabled = TRUE;
 
+/* Static used for the current input method */
+static INPUT_TYPE current_input_type = X11DRV_INPUT_ABSOLUTE;
+static BOOL in_transition = FALSE; /* This is not used as for today */
 
 /***********************************************************************
  *           EVENT_Init
@@ -257,8 +260,11 @@ static void EVENT_ProcessEvent( XEvent *event )
 	 problems if the event order is important. I'm not yet seen
 	 of any problems. Jon 7/6/96.
       */
-      while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
-				      MotionNotify, event));    
+      if ((current_input_type == X11DRV_INPUT_ABSOLUTE) &&
+	  (in_transition == FALSE))
+	/* Only cumulate events if in absolute mode */
+	while (TSXCheckTypedWindowEvent(display,((XAnyEvent *)event)->window,
+					MotionNotify, event));    
       EVENT_MotionNotify( hWnd, (XMotionEvent*)event );
       break;
       
@@ -500,12 +506,12 @@ static HWND EVENT_QueryZOrder( HWND hWndCheck)
 }
 
 /***********************************************************************
- *           EVENT_XStateToKeyState
+ *           X11DRV_EVENT_XStateToKeyState
  *
  * Translate a X event state (Button1Mask, ShiftMask, etc...) to
  * a Windows key state (MK_SHIFT, MK_CONTROL, etc...)
  */
-static WORD EVENT_XStateToKeyState( int state )
+WORD X11DRV_EVENT_XStateToKeyState( int state )
 {
   int kstate = 0;
   
@@ -515,29 +521,6 @@ static WORD EVENT_XStateToKeyState( int state )
   if (state & ShiftMask)   kstate |= MK_SHIFT;
   if (state & ControlMask) kstate |= MK_CONTROL;
   return kstate;
-}
-
-/***********************************************************************
- *           X11DRV_EVENT_QueryPointer
- */
-BOOL X11DRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
-{
-  Window root, child;
-  int rootX, rootY, winX, winY;
-  unsigned int xstate;
-  
-  if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
-			&rootX, &rootY, &winX, &winY, &xstate )) 
-    return FALSE;
-  
-  if(posX)
-    *posX  = (DWORD)winX;
-  if(posY)
-    *posY  = (DWORD)winY;
-  if(state)
-    *state = EVENT_XStateToKeyState( xstate );
-  
-  return TRUE;
 }
 
 /***********************************************************************
@@ -605,16 +588,24 @@ static void EVENT_Key( HWND hWnd, XKeyEvent *event )
  */
 static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
 {
-  WND *pWnd = WIN_FindWndPtr(hWnd);
-  int xOffset = pWnd? pWnd->rectWindow.left : 0;
-  int yOffset = pWnd? pWnd->rectWindow.top  : 0;
-  WIN_ReleaseWndPtr(pWnd);
-
-  MOUSE_SendEvent( MOUSEEVENTF_MOVE, 
-		   xOffset + event->x, yOffset + event->y,
-		   EVENT_XStateToKeyState( event->state ), 
-		   event->time - MSG_WineStartTicks,
-		   hWnd);
+  if (current_input_type == X11DRV_INPUT_ABSOLUTE) {
+    WND *pWnd = WIN_FindWndPtr(hWnd);
+    int xOffset = pWnd? pWnd->rectWindow.left : 0;
+    int yOffset = pWnd? pWnd->rectWindow.top  : 0;
+    WIN_ReleaseWndPtr(pWnd);
+    
+    MOUSE_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
+		     xOffset + event->x, yOffset + event->y,
+		     X11DRV_EVENT_XStateToKeyState( event->state ), 
+		     event->time - MSG_WineStartTicks,
+		     hWnd);
+  } else {
+    MOUSE_SendEvent( MOUSEEVENTF_MOVE,
+                     event->x_root, event->y_root,
+                     X11DRV_EVENT_XStateToKeyState( event->state ), 
+                     event->time - MSG_WineStartTicks,
+                     hWnd);
+  }
 }
 
 
@@ -639,7 +630,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
   /*
    * Get the compatible keystate
    */
-  keystate = EVENT_XStateToKeyState( event->state );
+  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
   
   /*
    * Make sure that the state of the button that was just 
@@ -686,7 +677,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
   /*
    * Get the compatible keystate
    */
-  keystate = EVENT_XStateToKeyState( event->state );
+  keystate = X11DRV_EVENT_XStateToKeyState( event->state );
 
   /*
    * Make sure that the state of the button that was just 
@@ -1775,5 +1766,18 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
   WIN_ReleaseWndPtr(pWnd);
 }
 
+/**********************************************************************
+ *              X11DRV_EVENT_SetInputMehod
+ */
+INPUT_TYPE X11DRV_EVENT_SetInputMehod(INPUT_TYPE type)
+{
+  INPUT_TYPE prev = current_input_type;
+
+  /* Flag not used yet */
+  in_transition = FALSE;
+  current_input_type = type;
+
+  return prev;
+}
 
 #endif /* !defined(X_DISPLAY_MISSING) */

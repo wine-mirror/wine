@@ -23,6 +23,7 @@
 #include "debugtools.h"
 #include "local.h"
 #include "ldt.h"
+#include "input.h"
 
 DEFAULT_DEBUG_CHANNEL(win)
 
@@ -2830,17 +2831,12 @@ Pos:  /* -----------------------------------------------------------------------
     if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
     { 
         /* Simulate a mouse event to set the cursor */
-        DWORD posX, posY, keyState;
-
-        if ( EVENT_QueryPointer( &posX, &posY, &keyState ) )
-        {
-            int iWndsLocks = WIN_SuspendWndsLock();
-
-            hardware_event( WM_MOUSEMOVE, keyState, 0,
-                            posX, posY, GetTickCount(), 0 );
-
-            WIN_RestoreWndsLock(iWndsLocks);
-        }
+	int iWndsLocks = WIN_SuspendWndsLock();
+	
+	hardware_event( WM_MOUSEMOVE, GET_KEYSTATE(), 0,
+		        PosX, PosY, GetTickCount(), 0 );
+	
+	WIN_RestoreWndsLock(iWndsLocks);
     }
 
     wndTemp = WIN_GetDesktop();

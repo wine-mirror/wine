@@ -29,7 +29,6 @@ typedef struct tagEVENT_DRIVER {
   BOOL   (*pInit)(void);
   void   (*pSynchronize)(void);
   BOOL   (*pCheckFocus)(void);
-  BOOL   (*pQueryPointer)(DWORD *, DWORD *, DWORD *);
   void   (*pUserRepaintDisable)(BOOL);
 } EVENT_DRIVER;
 
@@ -38,12 +37,10 @@ extern EVENT_DRIVER *EVENT_Driver;
 extern BOOL EVENT_Init( void );
 extern void EVENT_Synchronize( void );
 extern BOOL EVENT_CheckFocus( void );
-extern BOOL EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 
 /* input.c */
 
 extern HWND EVENT_Capture( HWND, INT16 );
-extern BOOL EVENT_QueryPointer( DWORD *posX, DWORD *posY, DWORD *state );
 
 extern void joySendMessages(void);
 

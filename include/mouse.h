@@ -35,6 +35,7 @@ VOID WINAPI MOUSE_Disable(VOID);
 /* Wine internals */
 
 typedef struct tagMOUSE_DRIVER {
+  VOID (*pInit)(VOID);
   VOID (*pSetCursor)(struct tagCURSORICONINFO *);
   VOID (*pMoveCursor)(WORD, WORD);
   BOOL (*pEnableWarpPointer)(BOOL);
@@ -52,8 +53,8 @@ typedef struct _WINE_MOUSEEVENT
 
 } WINE_MOUSEEVENT;
 
-void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
-                      DWORD keyState, DWORD time, HWND hWnd );
+extern void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
+			     DWORD keyState, DWORD time, HWND hWnd );
 
 /***********************************
  * 	MouseWheel support (defines)

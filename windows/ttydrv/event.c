@@ -30,23 +30,6 @@ BOOL TTYDRV_EVENT_CheckFocus(void)
 }
 
 /***********************************************************************
- *		TTYDRV_EVENT_QueryPointer
- */
-BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state)
-{
-  if(posX)
-    *posX = 0;
-
-  if(posY)
-    *posY = 0;
-
-  if(state)
-    *state = 0;
-
-  return TRUE;
-}
-
-/***********************************************************************
  *		TTYDRV_EVENT_UserRepaintDisable
  */
 void TTYDRV_EVENT_UserRepaintDisable( BOOL bDisable )

@@ -37,13 +37,16 @@ DECLARE_DEBUG_CHANNEL(keyboard)
 DECLARE_DEBUG_CHANNEL(win)
 
 static BOOL InputEnabled = TRUE;
-static BOOL SwappedButtons = FALSE;
+BOOL SwappedButtons = FALSE;
 
 BOOL MouseButtonsStates[3];
 BOOL AsyncMouseButtonsStates[3];
 BYTE InputKeyStateTable[256];
 BYTE QueueKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
+
+/* Storage for the USER-maintained mouse positions */
+DWORD PosX, PosY;
 
 typedef union
 {
@@ -67,7 +70,7 @@ typedef union
 void WINAPI keybd_event( BYTE bVk, BYTE bScan,
                          DWORD dwFlags, DWORD dwExtraInfo )
 {
-    DWORD posX, posY, time, extra;
+    DWORD time, extra;
     WORD message;
     KEYLP keylp;
     keylp.lp2 = 0;
@@ -84,19 +87,13 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
         && ((WINE_KEYBDEVENT *)dwExtraInfo)->magic == WINE_KEYBDEVENT_MAGIC )
     {
         WINE_KEYBDEVENT *wke = (WINE_KEYBDEVENT *)dwExtraInfo;
-        posX = wke->posX;
-        posY = wke->posY;
         time = wke->time;
         extra = 0;
     }
     else
     {
-        DWORD keyState;
         time = GetTickCount();
         extra = dwExtraInfo;
-
-        if ( !EVENT_QueryPointer( &posX, &posY, &keyState ))
-            return;
     }
 
 
@@ -140,7 +137,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
     TRACE_(key)("            wParam=%04X, lParam=%08lX\n", bVk, keylp.lp2 );
     TRACE_(key)("            InputKeyState=%X\n", InputKeyStateTable[bVk] );
 
-    hardware_event( message, bVk, keylp.lp2, posX, posY, time, extra );
+    hardware_event( message, bVk, keylp.lp2, PosX, PosY, time, extra );
 }
 
 /***********************************************************************
@@ -163,9 +160,38 @@ void WINAPI WIN16_keybd_event( CONTEXT86 *context )
 void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
                          DWORD cButtons, DWORD dwExtraInfo )
 {
-    DWORD posX, posY, keyState, time, extra;
-
+    DWORD time, extra;
+    DWORD keyState;
+    
     if (!InputEnabled) return;
+
+    if ( dwFlags & MOUSEEVENTF_MOVE )
+      {
+	if ( dwFlags & MOUSEEVENTF_ABSOLUTE )
+	  {
+	    PosX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
+	    PosY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+	  }
+	else
+	  {
+	    int width  = GetSystemMetrics(SM_CXSCREEN);
+	    int height = GetSystemMetrics(SM_CYSCREEN);
+	    long posX = (long) PosX, posY = (long) PosY;
+
+	    /* dx and dy can be negative numbers for relative movements */
+	    posX += (long) dx;
+	    posY += (long) dy;
+
+	    /* Clip to the current screen size */
+	    if (posX < 0) PosX = 0;
+	    else if (posX >= width) PosX = width - 1;
+	    else PosX = posX;
+
+	    if (posY < 0) PosY = 0;
+	    else if (posY >= height) PosY = height - 1;
+	    else PosY = posY;
+	  }
+      }
 
     /*
      * If we are called by the Wine mouse driver, use the additional
@@ -177,79 +203,73 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
         && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC )
     {
         WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
-        keyState = wme->keyState;
         time = wme->time;
         extra = (DWORD)wme->hWnd;
-
-        assert( dwFlags & MOUSEEVENTF_ABSOLUTE );
-        posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-        posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
+	keyState = wme->keyState;
+	
+	if (keyState != GET_KEYSTATE()) {
+	  /* We need to update the keystate with what X provides us */
+	  MouseButtonsStates[SwappedButtons ? 2 : 0] = (keyState & MK_LBUTTON ? TRUE : FALSE);
+	  MouseButtonsStates[SwappedButtons ? 0 : 2] = (keyState & MK_RBUTTON ? TRUE : FALSE);
+	  MouseButtonsStates[1]                      = (keyState & MK_MBUTTON ? TRUE : FALSE);
+	  InputKeyStateTable[VK_SHIFT]               = (keyState & MK_SHIFT   ? 0x80 : 0);
+	  InputKeyStateTable[VK_CONTROL]             = (keyState & MK_CONTROL ? 0x80 : 0);
+	}
     }
     else
     {
         time = GetTickCount();
         extra = dwExtraInfo;
-
-        if ( !EVENT_QueryPointer( &posX, &posY, &keyState ))
-            return;
-
-        if ( dwFlags & MOUSEEVENTF_MOVE )
-        {
-            if ( dwFlags & MOUSEEVENTF_ABSOLUTE )
-            {
-                posX = (dx * GetSystemMetrics(SM_CXSCREEN)) >> 16;
-                posY = (dy * GetSystemMetrics(SM_CYSCREEN)) >> 16;
-            }
-            else
-            {
-                posX += dx;
-                posY += dy;
-            }
-            /* We have to actually move the cursor */
-            SetCursorPos( posX, posY );
-        }
+	keyState = GET_KEYSTATE();
+	
+	if ( dwFlags & MOUSEEVENTF_MOVE )
+	  {
+	    /* We have to actually move the cursor */
+	    SetCursorPos( PosX, PosY );
+	  }
     }
+
 
     if ( dwFlags & MOUSEEVENTF_MOVE )
     {
         hardware_event( WM_MOUSEMOVE,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_RIGHTDOWN) )
     {
         MouseButtonsStates[0] = AsyncMouseButtonsStates[0] = TRUE;
         hardware_event( WM_LBUTTONDOWN,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_LEFTUP : MOUSEEVENTF_RIGHTUP) )
     {
         MouseButtonsStates[0] = FALSE;
         hardware_event( WM_LBUTTONUP,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_LEFTDOWN) )
     {
         MouseButtonsStates[2] = AsyncMouseButtonsStates[2] = TRUE;
         hardware_event( WM_RBUTTONDOWN,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & (!SwappedButtons? MOUSEEVENTF_RIGHTUP : MOUSEEVENTF_LEFTUP) )
     {
         MouseButtonsStates[2] = FALSE;
         hardware_event( WM_RBUTTONUP,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & MOUSEEVENTF_MIDDLEDOWN )
     {
         MouseButtonsStates[1] = AsyncMouseButtonsStates[1] = TRUE;
         hardware_event( WM_MBUTTONDOWN,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
     if ( dwFlags & MOUSEEVENTF_MIDDLEUP )
     {
         MouseButtonsStates[1] = FALSE;
         hardware_event( WM_MBUTTONUP,
-                        keyState, 0L, posX, posY, time, extra );
+                        keyState, 0L, PosX, PosY, time, extra );
     }
 }
 

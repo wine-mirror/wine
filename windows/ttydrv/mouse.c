@@ -27,3 +27,10 @@ BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable)
 {
   return TRUE;
 }
+
+/***********************************************************************
+ *           TTYDRV_MOUSE_Init
+ */
+void TTYDRV_MOUSE_Init()
+{
+}

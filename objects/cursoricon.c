@@ -1499,28 +1499,11 @@ BOOL WINAPI ClipCursor( const RECT *rect )
  */
 BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 {
-    DWORD posX, posY, state;
-
     if (!pt) return 0;
-    if (!EVENT_QueryPointer( &posX, &posY, &state ))
-	pt->x = pt->y = 0;
-    else
-    {
-	pt->x = posX;
-	pt->y = posY;
-        if (state & MK_LBUTTON)
-            AsyncMouseButtonsStates[0] = MouseButtonsStates[0] = TRUE;
-        else
-            MouseButtonsStates[0] = FALSE;
-        if (state & MK_MBUTTON)
-            AsyncMouseButtonsStates[1] = MouseButtonsStates[1] = TRUE;
-        else       
-            MouseButtonsStates[1] = FALSE;
-        if (state & MK_RBUTTON)
-            AsyncMouseButtonsStates[2] = MouseButtonsStates[2] = TRUE;
-        else
-            MouseButtonsStates[2] = FALSE;
-    }
+    
+    pt->x = PosX;
+    pt->y = PosY;
+    
     TRACE_(cursor)("ret=%d,%d\n", pt->x, pt->y );
     return 1;
 }

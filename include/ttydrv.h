@@ -99,7 +99,6 @@ extern struct tagEVENT_DRIVER TTYDRV_EVENT_Driver;
 extern BOOL TTYDRV_EVENT_Init(void);
 extern void TTYDRV_EVENT_Synchronize(void);
 extern BOOL TTYDRV_EVENT_CheckFocus(void);
-extern BOOL TTYDRV_EVENT_QueryPointer(DWORD *posX, DWORD *posY, DWORD *state);
 extern void TTYDRV_EVENT_UserRepaintDisable(BOOL bDisable);
 
 /* TTY keyboard driver */
@@ -144,6 +143,7 @@ extern void TTYDRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int
 
 extern struct tagMOUSE_DRIVER TTYDRV_MOUSE_Driver;
 
+extern void TTYDRV_MOUSE_Init();
 extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
 extern BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);

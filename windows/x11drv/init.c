@@ -49,7 +49,6 @@ EVENT_DRIVER X11DRV_EVENT_Driver =
   X11DRV_EVENT_Init,
   X11DRV_EVENT_Synchronize,
   X11DRV_EVENT_CheckFocus,
-  X11DRV_EVENT_QueryPointer,
   X11DRV_EVENT_UserRepaintDisable
 };
 
@@ -83,6 +82,7 @@ MONITOR_DRIVER X11DRV_MONITOR_Driver =
 
 MOUSE_DRIVER X11DRV_MOUSE_Driver =
 {
+  X11DRV_MOUSE_Init,
   X11DRV_MOUSE_SetCursor,
   X11DRV_MOUSE_MoveCursor,
   X11DRV_MOUSE_EnableWarpPointer

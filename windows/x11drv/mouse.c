@@ -253,4 +253,26 @@ BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable)
   return bOldEnable;
 }
 
+/***********************************************************************
+ *           X11DRV_MOUSE_Init
+ */
+void X11DRV_MOUSE_Init()
+{
+  Window root, child;
+  int root_x, root_y, child_x, child_y;
+  unsigned int KeyState;
+  
+  /* Get the current mouse position and simulate an absolute mouse
+     movement to initialize the mouse global variables */
+  TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
+		   &root_x, &root_y, &child_x, &child_y, &KeyState);
+
+  MOUSE_SendEvent(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
+		  root_x, root_y,
+		  X11DRV_EVENT_XStateToKeyState(KeyState),
+		  GetTickCount(),
+		  0);
+}
+
+
 #endif /* !defined(X_DISPLAY_MISSING) */
