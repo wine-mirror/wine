@@ -209,6 +209,10 @@ SNOOP_PrintArg(DWORD x) {
 	int		i,nostring;
 	char * volatile ret=0;
 
+	if ( !HIWORD(x) ) { /* trivial reject to avoid faults */
+	    sprintf(buf,"%08lx",x);
+	    return buf;
+	}
 	__TRY{
 		LPBYTE	s=(LPBYTE)x;
 		i=0;nostring=0;
