@@ -23,6 +23,25 @@
 #include "oleauto.h"
 #include <math.h>
 
+/* Some Visual C++ versions choke on __uint64 to float conversions.
+ * To fix this you need either VC++ 6.0 plus the processor pack
+ * or Visual C++ >=7.0.
+ */
+#ifndef _MSC_VER
+#  define HAS_UINT64_TO_FLOAT
+#else
+#  if _MSC_VER >= 1300
+#    define HAS_UINT64_TO_FLOAT
+#  else
+#    include <malloc.h>
+#    if defined(_mm_free)
+/*     _mm_free is defined if the Processor Pack has been installed */
+#      define HAS_UINT64_TO_FLOAT
+#    endif
+
+#  endif
+#endif
+
 static HMODULE hOleaut32;
 
 #ifdef NONAMELESSUNION
@@ -2765,6 +2784,7 @@ static void test_VarR4Copy(void)
 
 static void test_VarR4ChangeTypeEx(void)
 {
+#ifdef HAS_UINT64_TO_FLOAT
   CONVVARS(CONV_TYPE);
   VARIANTARG vSrc, vDst;
 
@@ -2772,6 +2792,7 @@ static void test_VarR4ChangeTypeEx(void)
 
   INITIAL_TYPETEST(VT_R4, V_R4, "%f");
   COMMON_TYPETEST;
+#endif
 }
 
 /*
@@ -2972,6 +2993,7 @@ static void test_VarR8Copy(void)
 
 static void test_VarR8ChangeTypeEx(void)
 {
+#ifdef HAS_UINT64_TO_FLOAT
   CONVVARS(CONV_TYPE);
   VARIANTARG vSrc, vDst;
 
@@ -2979,6 +3001,7 @@ static void test_VarR8ChangeTypeEx(void)
 
   INITIAL_TYPETEST(VT_R8, V_R8, "%g");
   COMMON_TYPETEST;
+#endif
 }
 
 #define MATHRND(l, r) left = l; right = r; hres = pVarR8Round(left, right, &out)
@@ -3374,8 +3397,10 @@ static void test_VarDateChangeTypeEx(void)
 
   in = 1.0;
 
+#ifdef HAS_UINT64_TO_FLOAT
   INITIAL_TYPETEST(VT_DATE, V_DATE, "%g");
   COMMON_TYPETEST;
+#endif
 
   V_VT(&vDst) = VT_EMPTY;
   V_VT(&vSrc) = VT_DATE;
@@ -4527,7 +4552,7 @@ static void test_VarBstrFromR4(void)
   CHECKPTR(VarBstrFromR4);
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
-  f = 654322.23456,
+  f = 654322.23456f;
   hres = pVarBstrFromR4(f, lcid, 0, &bstr);
   ok(hres == S_OK, "got hres 0x%08lx\n", hres);
   if (bstr)
