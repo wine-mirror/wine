@@ -80,7 +80,7 @@ copy_icon()
 {
   dir=$1
   mkdir -p "$dir"
-  mkdir -p "$dir/"`dirname "$link"` || true
+  mkdir -p "$dir/""`dirname "$link"`" || true
   if [ -f "$icon" ]
   then
     cp "$icon" "$dir/$link.xpm"
