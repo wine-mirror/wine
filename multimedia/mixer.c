@@ -505,16 +505,22 @@ static	DWORD	MIX_SetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd, DWO
 #endif /* HAVE_OSS */
 
 /**************************************************************************
- * 				mixMessage			[sample driver]
+ * 				OSS_mixMessage		[sample driver]
  */
-DWORD WINAPI mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-			DWORD dwParam1, DWORD dwParam2)
+DWORD WINAPI OSS_mixMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
+			    DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", 
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     
 #ifdef HAVE_OSS
     switch(wMsg) {
+    case DRVM_INIT:
+    case DRVM_EXIT:
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+	/* FIXME: Pretend this is supported */
+	return 0;
     case MXDM_GETDEVCAPS:	
 	return MIX_GetDevCaps(wDevID, (LPMIXERCAPSA)dwParam1, dwParam2);
     case MXDM_GETLINEINFO:
