@@ -851,7 +851,7 @@ static LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 #endif  
   LPDRAWITEMSTRUCT lpdi = (LPDRAWITEMSTRUCT)lParam;
 
-  if (lpdi->itemID == 0xFFFF) 			/* got no items */
+  if (lpdi->itemID == (UINT)-1)  /* got no items */
     DrawFocusRect(lpdi->hDC, &lpdi->rcItem);
   else
   {
