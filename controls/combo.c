@@ -1106,7 +1106,7 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
  */
 static void CBDropDown( LPHEADCOMBO lphc )
 {
-   RECT	rect;
+   RECT rect,r;
    int nItems = 0;
    int nDroppedHeight;
 
@@ -1148,6 +1148,10 @@ static void CBDropDown( LPHEADCOMBO lphc )
 
   /* And Remove any extra space (Best Fit) */
    nDroppedHeight = lphc->droppedRect.bottom - lphc->droppedRect.top;
+  /* if listbox length has been set directly by its handle */
+   GetWindowRect(lphc->hWndLBox, &r);
+   if (nDroppedHeight < r.bottom - r.top)
+       nDroppedHeight = r.bottom - r.top;
    nItems = (int)SendMessageA (lphc->hWndLBox, LB_GETCOUNT, 0, 0);
 
    if (nItems > 0)
