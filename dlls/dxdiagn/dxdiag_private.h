@@ -129,6 +129,11 @@ extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkO
 extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj);
 extern HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont);
 
-
+/**********************************************************************
+ * Dll lifetime tracking declaration for dxdiagn.dll
+ */
+extern LONG DXDIAGN_refCount;
+static inline void DXDIAGN_LockModule() { InterlockedIncrement( &DXDIAGN_refCount ); }
+static inline void DXDIAGN_UnlockModule() { InterlockedDecrement( &DXDIAGN_refCount ); }
 
 #endif

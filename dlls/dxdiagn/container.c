@@ -48,6 +48,8 @@ ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface) {
 
     TRACE("(%p)->(ref before=%lu)\n", This, refCount - 1);
 
+    DXDIAGN_LockModule();
+
     return refCount;
 }
 
@@ -60,6 +62,9 @@ ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
     if (!refCount) {
         HeapFree(GetProcessHeap(), 0, This);
     }
+
+    DXDIAGN_UnlockModule();
+    
     return refCount;
 }
 

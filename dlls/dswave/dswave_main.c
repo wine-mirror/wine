@@ -23,41 +23,49 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dswave);
 
+LONG DSWAVE_refCount = 0;
+
 typedef struct {
-    /* IUnknown fields */
     IClassFactoryVtbl          *lpVtbl;
-    DWORD                       ref;
 } IClassFactoryImpl;
 
 /******************************************************************
  *		DirectMusicWave ClassFactory
  */
 static HRESULT WINAPI WaveCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %s, %p): stub\n", This, debugstr_dmguid(riid), ppobj);
+	FIXME("- no interface\n\tIID:\t%s\n", debugstr_guid(riid));
+
+	if (ppobj == NULL) return E_POINTER;
+	
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI WaveCF_AddRef(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	return InterlockedIncrement(&This->ref);
+	DSWAVE_LockModule();
+
+	return 2; /* non-heap based object */
 }
 
 static ULONG WINAPI WaveCF_Release(LPCLASSFACTORY iface) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	/* static class, won't be  freed */
-	return InterlockedDecrement(&This->ref);
+	DSWAVE_UnlockModule();
+
+	return 1; /* non-heap based object */
 }
 
 static HRESULT WINAPI WaveCF_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	TRACE ("(%p, %p, %s, %p)\n", This, pOuter, debugstr_dmguid(riid), ppobj);
+	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
+	
 	return DMUSIC_CreateDirectMusicWaveImpl (riid, ppobj, pOuter);
 }
 
 static HRESULT WINAPI WaveCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-	FIXME("(%p, %d): stub\n", This, dolock);
+	TRACE("(%d)\n", dolock);
+
+	if (dolock)
+		DSWAVE_LockModule();
+	else
+		DSWAVE_UnlockModule();
+	
 	return S_OK;
 }
 
@@ -69,7 +77,7 @@ static IClassFactoryVtbl WaveCF_Vtbl = {
 	WaveCF_LockServer
 };
 
-static IClassFactoryImpl Wave_CF = {&WaveCF_Vtbl, 1 };
+static IClassFactoryImpl Wave_CF = {&WaveCF_Vtbl};
 
 /******************************************************************
  *		DllMain
@@ -94,8 +102,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  *
  */
 HRESULT WINAPI DSWAVE_DllCanUnloadNow(void) {
-    FIXME("(void): stub\n");
-    return S_FALSE;
+	return DSWAVE_refCount != 0 ? S_FALSE : S_OK;
 }
 
 

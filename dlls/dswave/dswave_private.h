@@ -130,6 +130,12 @@ extern HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Load (LPPERSISTSTREAM 
 extern HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
 extern HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
+/**********************************************************************
+ * Dll lifetime tracking declaration for dswave.dll
+ */
+extern LONG DSWAVE_refCount;
+static inline void DSWAVE_LockModule() { InterlockedIncrement( &DSWAVE_refCount ); }
+static inline void DSWAVE_UnlockModule() { InterlockedDecrement( &DSWAVE_refCount ); }
 
 /*****************************************************************************
  * Misc.
