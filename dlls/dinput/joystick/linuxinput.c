@@ -432,8 +432,10 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     if (This->joyfd!=-1) {
   	close(This->joyfd);
 	This->joyfd = -1;
+	return DI_OK;
     }
-    return DI_OK;
+    else 
+    	return DI_NOEFFECT;
 }
 
 /*
