@@ -1862,6 +1862,15 @@ HRESULT WINAPI CoSetState(LPDWORD state)
     if (state) *state = 0;
     return S_OK;
 }
+/***********************************************************************
+ *          CoCreateFreeThreadedMarshaler [OLE32.5]
+ */
+HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal)
+{
+   FIXME ("(%p %p): stub\n", punkOuter, ppunkMarshal);
+    
+   return S_OK;
+}
 
 
 /***********************************************************************

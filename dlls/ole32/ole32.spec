@@ -5,7 +5,7 @@ type	win32
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID
   3 stdcall CLSIDFromString(wstr ptr) CLSIDFromString
   4 stdcall CoBuildVersion() CoBuildVersion
-  5 stub CoCreateFreeThreadedMarshaler # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+  5 stdcall CoCreateFreeThreadedMarshaler(ptr ptr) CoCreateFreeThreadedMarshaler
   6 stdcall CoCreateGuid(ptr) CoCreateGuid
   7 stdcall CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance
   8 stdcall CoDisconnectObject(ptr long) CoDisconnectObject
