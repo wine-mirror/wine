@@ -538,7 +538,7 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
         }
         /* we have a valid mode */
         TRACE("Matches mode %ld\n", i);
-        X11DRV_XF86VM_SetCurrentMode(i-1);
+        X11DRV_XF86VM_SetCurrentMode(i);
 #if 0 /* FIXME */
         SYSMETRICS_Set( SM_CXSCREEN, devmode->dmPelsWidth );
         SYSMETRICS_Set( SM_CYSCREEN, devmode->dmPelsHeight );
