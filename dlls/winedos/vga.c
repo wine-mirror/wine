@@ -232,6 +232,18 @@ typedef struct {
   int ret;
 } ModeSet;
 
+static void WINAPI VGA_DoExit(ULONG_PTR arg)
+{
+    VGA_DeinstallTimer();
+    IDirectDrawSurface_SetPalette(lpddsurf,NULL);
+    IDirectDrawSurface_Release(lpddsurf);
+    lpddsurf=NULL;
+    IDirectDrawPalette_Release(lpddpal);
+    lpddpal=NULL;
+    IDirectDraw_Release(lpddraw);
+    lpddraw=NULL;
+}
+
 static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 {
     LRESULT	res;
@@ -239,7 +251,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
     ModeSet *par = (ModeSet *)arg;
     par->ret=1;
 
-    if (lpddraw) VGA_Exit();
+    if (lpddraw) VGA_DoExit(NULL);
     if (!lpddraw) {
         if (!pDirectDrawCreate)
         {
@@ -332,18 +344,6 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
     if (Width) *Width=sdesc.dwWidth;
     if (Depth) *Depth=sdesc.ddpfPixelFormat.u1.dwRGBBitCount;
     return 0;
-}
-
-static void WINAPI VGA_DoExit(ULONG_PTR arg)
-{
-    VGA_DeinstallTimer();
-    IDirectDrawSurface_SetPalette(lpddsurf,NULL);
-    IDirectDrawSurface_Release(lpddsurf);
-    lpddsurf=NULL;
-    IDirectDrawPalette_Release(lpddpal);
-    lpddpal=NULL;
-    IDirectDraw_Release(lpddraw);
-    lpddraw=NULL;
 }
 
 void VGA_Exit(void)
