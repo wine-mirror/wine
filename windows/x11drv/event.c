@@ -1845,7 +1845,6 @@ static void EVENT_ShmCompletion( XShmCompletionEvent *event )
   if (event->drawable == shm_draw) {
     HANDLE event = shm_event;
     shm_draw = 0;
-    shm_event = 0;
     SetEvent(event);
     TRACE_(event)("Event object triggered\n" );
   } else ERR_(event)("Got ShmCompletion for unknown drawable %ld\n", event->drawable );
@@ -1890,6 +1889,6 @@ void X11DRV_EVENT_WaitShmCompletion( int compl )
   TRACE_(event)("Wait complete (time %ld)\n", GetTickCount() );
 }
 
-#endif
+#endif /* defined(HAVE_LIBXXSHM) */
 
 #endif /* !defined(X_DISPLAY_MISSING) */
