@@ -1347,6 +1347,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_GetPixelFormat(
 
 	*pf = This->s.surface_desc.ddpfPixelFormat;
 	
+	_dump_pixelformat(pf);
+	
 	return DD_OK;
 }
 
@@ -4479,18 +4481,27 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	if (!(flags & XF86DGADirectPresent))
 		MSG("direct video is NOT PRESENT.\n");
 	TSXF86DGAGetVideo(display,DefaultScreen(display),&addr,&width,&banksize,&memsize);
+	(*ilplpDD)->e.dga.fb_width = width;
+	TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
+	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
+	(*ilplpDD)->e.dga.fb_height = height;
 	TRACE(ddraw,"video framebuffer: begin %p, width %d,banksize %d,memsize %d\n",
 		addr,width,banksize,memsize
 	);
-	(*ilplpDD)->e.dga.fb_width = width;
-	(*ilplpDD)->d.width = width;
+	TRACE(ddraw,"viewport height: %d\n",height);
+
+	/* Get the screen dimensions as seen by Wine.
+	   In that case, it may be better to ignore the -desktop mode and return the
+	   real screen size => print a warning */
+	(*ilplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+	(*ilplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+	if (((*ilplpDD)->d.height != height) ||
+	    ((*ilplpDD)->d.width != width))
+	  WARN(ddraw, "You seem to be runnin in -desktop mode. This may prove dangerous in DGA mode...\n");
 	(*ilplpDD)->e.dga.fb_addr = addr;
 	(*ilplpDD)->e.dga.fb_memsize = memsize;
 	(*ilplpDD)->e.dga.fb_banksize = banksize;
 
-	TSXF86DGAGetViewPortSize(display,DefaultScreen(display),&width,&height);
-	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
-	(*ilplpDD)->e.dga.fb_height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 #ifdef DIABLO_HACK
 	(*ilplpDD)->e.dga.vpmask = 1;
 #else
