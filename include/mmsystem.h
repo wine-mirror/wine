@@ -459,9 +459,12 @@ typedef WORD *LPKEYARRAY;
 #define MIM_LONGDATA    MM_MIM_LONGDATA
 #define MIM_ERROR       MM_MIM_ERROR
 #define MIM_LONGERROR   MM_MIM_LONGERROR
+#define MIM_MOREDATA	MM_MIM_MOREDATA
+
 #define MOM_OPEN        MM_MOM_OPEN
 #define MOM_CLOSE       MM_MOM_CLOSE
 #define MOM_DONE        MM_MOM_DONE
+#define MOM_POSITIONCB	MM_MOM_POSITIONCB
 
 /* device ID for MIDI mapper */
 
