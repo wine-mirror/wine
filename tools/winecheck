@@ -242,10 +242,12 @@ sub Check_BaseFiles {
   }
   close (LDCONF);
   # Next parse LD_LIBRARY_PATH to find user-specific lib dirs.
-  my (@ld_dirs) = split (/:/, $ENV{'LD_LIBRARY_PATH'});
   my ($dir);
-  foreach $dir (@ld_dirs) {
-    if (-d $dir) { push @dirlist, $dir; }
+  if ($ENV{'LD_LIBRARY_PATH'}) {
+    my (@ld_dirs) = split (/:/, $ENV{'LD_LIBRARY_PATH'});
+    foreach $dir (@ld_dirs) {
+      if (-d $dir) { push @dirlist, $dir; }
+    }
   }
 
   # Now check for a libwine.so in each directory
@@ -253,7 +255,7 @@ sub Check_BaseFiles {
     my ($target) = $dir . "/libwine.so";
     if (-f $target) { push @output, $target; }
   }
-  print "DEBUG: found libwine: @output\n";
+  #print "DEBUG: found libwine: @output\n";
 
   if (@output > 1)
   {
