@@ -5966,7 +5966,7 @@ static BOOL column_fill_info(LISTVIEW_INFO *infoPtr, COLUMN_INFO *lpColumnInfo, 
         else if (lpColumn->fmt & LVCFMT_RIGHT) lpColumnInfo->align = DT_RIGHT;
         else if (lpColumn->fmt & LVCFMT_CENTER) lpColumnInfo->align = DT_CENTER;
 	
-        if (lpColumn->fmt & LVCFMT_IMAGE) lpColumnInfo->hasImage = TRUE;
+        if (nColumn == 0 || (lpColumn->fmt & LVCFMT_IMAGE)) lpColumnInfo->hasImage = TRUE;
     } 
     else
     {
