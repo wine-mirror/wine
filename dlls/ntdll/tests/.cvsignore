@@ -4,6 +4,7 @@ error.ok
 generated.ok
 large_int.ok
 path.ok
+reg.ok
 rtl.ok
 rtlbitmap.ok
 rtlstr.ok
