@@ -793,6 +793,8 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  No Driver\n");
     else if (rc == DSERR_ALLOCATED)
         trace("  Already In Use\n");
+    else if (rc == E_FAIL)
+        trace("  No Device\n");
     else {
         test_block_align(lpGuid);
         test_primary(lpGuid);

@@ -320,7 +320,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         if (rc==DSERR_NODRIVER)
             trace("  No Driver\n");
         else if (rc==E_FAIL)
-            trace("  E_FAIL\n");
+            trace("  No Device\n");
         else if (rc==DSERR_ALLOCATED)
             trace("  Already In Use\n");
 	goto EXIT;

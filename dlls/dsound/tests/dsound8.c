@@ -767,6 +767,8 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  No Driver\n");
     else if (rc == DSERR_ALLOCATED)
         trace("  Already In Use\n");
+    else if (rc == E_FAIL)
+        trace("  No Device\n");
     else {
         test_primary8(lpGuid);
         test_primary_secondary8(lpGuid);
