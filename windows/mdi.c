@@ -373,6 +373,23 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
             return oldFrameMenu;
         }
     }
+    else
+    {
+	INT nItems = GetMenuItemCount(w->parent->wIDmenu) - 1;
+	UINT iId = GetMenuItemID(w->parent->wIDmenu,nItems) ;
+
+	if( !(iId == SC_RESTORE || iId == SC_CLOSE) )
+	{
+	    /* SetMenu() may already have been called, meaning that this window
+	     * already has its menu. But they may have done a SetMenu() on
+	     * an MDI window, and called MDISetMenu() after the fact, meaning
+	     * that the "if" to this "else" wouldn't catch the need to
+	     * augment the frame menu.
+	     */
+	    if( ci->hwndChildMaximized )
+		MDI_AugmentFrameMenu(ci, w->parent, ci->hwndChildMaximized );
+	}
+    }
     WIN_ReleaseWndPtr(w);
     return 0;
 }
