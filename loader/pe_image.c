@@ -17,7 +17,7 @@
  * - If you want to enhance, speed up or clean up something in here, think
  *   twice WHY it is implemented in that strange way. There is usually a reason.
  *   Though sometimes it might just be lazyness ;)
- * - In PE_MapImage, right before fixup_imports() all external and internal 
+ * - In PE_MapImage, right before PE_fixup_imports() all external and internal 
  *   state MUST be correct since this function can be called with the SAME image
  *   AGAIN. (Thats recursion for you.) That means MODREF.module and
  *   NE_MODULE.module32.
@@ -242,7 +242,10 @@ static FARPROC PE_FindExportedFunction(
 	}
 }
 
-DWORD fixup_imports( WINE_MODREF *wm )
+/****************************************************************
+ * 	PE_fixup_imports
+ */
+DWORD PE_fixup_imports( WINE_MODREF *wm )
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     unsigned int load_addr	= wm->module;
@@ -633,7 +636,8 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
 
     /* Fixup Imports */
 
-    if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) && fixup_imports( wm ))
+    if (!(wm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
+        PE_fixup_imports( wm ))
     {
         /* remove entry from modref chain */
 

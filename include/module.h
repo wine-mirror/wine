@@ -234,6 +234,7 @@ extern WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename,
                                      DWORD flags, HANDLE hFile, BOOL builtin );
 extern void PE_InitTls(void);
 extern BOOL PE_InitDLL( HMODULE module, DWORD type, LPVOID lpReserved );
+extern DWORD PE_fixup_imports(WINE_MODREF *wm);
 
 /* loader/loadorder.c */
 extern void MODULE_InitLoadOrder(void);

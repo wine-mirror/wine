@@ -1316,6 +1316,37 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 }
 
 /***********************************************************************
+ *      allocate_lib_dir
+ *
+ * helper for MODULE_LoadLibraryExA.  Allocate space to hold the directory
+ * portion of the provided name and put the name in it.
+ * 
+ */
+static LPCSTR allocate_lib_dir(LPCSTR libname)
+{
+    LPCSTR p, pmax;
+    LPSTR result;
+    int length;
+
+    pmax = libname;
+    if ((p = strrchr( pmax, '\\' ))) pmax = p + 1;
+    if ((p = strrchr( pmax, '/' ))) pmax = p + 1; /* Naughty.  MSDN says don't */
+    if (pmax == libname && pmax[0] && pmax[1] == ':') pmax += 2;
+
+    length = pmax - libname;
+
+    result = HeapAlloc (GetProcessHeap(), 0, length+1);
+
+    if (result)
+    {
+        strncpy (result, libname, length);
+        result [length] = '\0';
+    }
+
+    return result;
+}
+
+/***********************************************************************
  *	MODULE_LoadLibraryExA	(internal)
  *
  * Load a PE style module according to the load order.
@@ -1325,6 +1356,16 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
  * ignore the parameter because it would be extremely difficult to
  * integrate this with different types of module represenations.
  *
+ * libdir is used to support LOAD_WITH_ALTERED_SEARCH_PATH during the recursion
+ *        on this function.  When first called from LoadLibraryExA it will be
+ *        NULL but thereafter it may point to a buffer containing the path 
+ *        portion of the library name.  Note that the recursion all occurs 
+ *        within a Critical section (see LoadLibraryExA) so the use of a 
+ *        static is acceptable.
+ *        (We have to use a static variable at some point anyway, to pass the
+ *        information from BUILTIN32_dlopen through dlopen and the builtin's
+ *        init function into load_library).
+ * allocated_libdir is TRUE in the stack frame that allocated libdir
  */
 WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 {
@@ -1334,14 +1375,30 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	enum loadorder_type loadorder[LOADORDER_NTYPES];
 	LPSTR filename, p;
         const char *filetype = "";
+        DWORD found;
+        BOOL allocated_libdir = FALSE;
+        static LPCSTR libdir = NULL; /* See above */
 
 	if ( !libname ) return NULL;
 
 	filename = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
 	if ( !filename ) return NULL;
 
+        RtlAcquirePebLock();
+
+        if ((flags & LOAD_WITH_ALTERED_SEARCH_PATH) && FILE_contains_path(libname))
+        {
+            if (!(libdir = allocate_lib_dir(libname))) goto error;
+            allocated_libdir = TRUE;
+        }
+
+        if (!libdir || allocated_libdir)
+            found = SearchPathA(NULL, libname, ".dll", MAX_PATH, filename, NULL);
+        else
+            found = DIR_SearchAlternatePath(libdir, libname, ".dll", MAX_PATH, filename, NULL);
+
 	/* build the modules filename */
-	if (!SearchPathA( NULL, libname, ".dll", MAX_PATH, filename, NULL ))
+        if (!found)
 	{
 	    if ( ! GetSystemDirectoryA ( filename, MAX_PATH ) ) 
   	        goto error;
@@ -1357,26 +1414,18 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	        strcpy ( filename, libname );
 	    else
 	    {
-	        if ( strchr ( libname, '\\' ) || strchr ( libname, ':') || strchr ( libname, '/' ) ) 
-		    goto error;
-		else 
-		{
-  		    strcat ( filename, "\\" );
-		    strcat ( filename, libname );
-		}
+                if (FILE_contains_path(libname)) goto error;
+                strcat ( filename, "\\" );
+                strcat ( filename, libname );
 	    }
       
 	    /* if the filename doesn't have an extension append .DLL */
 	    if (!(p = strrchr( filename, '.')) || strchr( p, '/' ) || strchr( p, '\\'))
-	        strcat( filename, ".DLL" );
+	        strcat( filename, ".dll" );
 	}
 
-        RtlAcquirePebLock();
-
 	/* Check for already loaded module */
-	if (!(pwm = MODULE_FindModule(filename)) && 
-	    /* no path in libpath */
-	    !strchr( libname, '\\' ) && !strchr( libname, ':') && !strchr( libname, '/' )) 
+	if (!(pwm = MODULE_FindModule(filename)) && !FILE_contains_path(libname))
         {
 	    LPSTR	fn = HeapAlloc ( GetProcessHeap(), 0, MAX_PATH + 1 );
 	    if (fn)
@@ -1404,11 +1453,15 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                 if ((pwm->flags & WINE_MODREF_DONT_RESOLVE_REFS) &&
 		    !(flags & DONT_RESOLVE_DLL_REFERENCES))
                 {
-                    extern DWORD fixup_imports(WINE_MODREF *wm); /*FIXME*/
                     pwm->flags &= ~WINE_MODREF_DONT_RESOLVE_REFS;
-                    fixup_imports( pwm );
+                    PE_fixup_imports( pwm );
 		}
 		TRACE("Already loaded module '%s' at 0x%08x, count=%d, \n", filename, pwm->module, pwm->refCount);
+                if (allocated_libdir)
+                {
+                    HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
+                    libdir = NULL;
+                }
                 RtlReleasePebLock();
 		HeapFree ( GetProcessHeap(), 0, filename );
 		return pwm;
@@ -1456,6 +1509,11 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			/* decrement the dependencies through the MODULE_FreeLibrary call. */
 			pwm->refCount++;
 
+                        if (allocated_libdir)
+                        {
+                            HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
+                            libdir = NULL;
+                        }
                         RtlReleasePebLock();
                         SetLastError( err );  /* restore last error */
 			HeapFree ( GetProcessHeap(), 0, filename );
@@ -1466,8 +1524,13 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 			break;
 	}
 
-        RtlReleasePebLock();
  error:
+        if (allocated_libdir)
+        {
+            HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
+            libdir = NULL;
+        }
+        RtlReleasePebLock();
 	WARN("Failed to load module '%s'; error=0x%08lx, \n", filename, GetLastError());
 	HeapFree ( GetProcessHeap(), 0, filename );
 	return NULL;

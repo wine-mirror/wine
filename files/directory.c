@@ -582,8 +582,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
     p = strrchr( name, '.' );
     if (p && !strchr( p, '/' ) && !strchr( p, '\\' ))
         ext = NULL;  /* Ignore the specified extension */
-    if ((*name && (name[1] == ':')) ||
-        strchr( name, '/' ) || strchr( name, '\\' ))
+    if (FILE_contains_path (name))
         path = NULL;  /* Ignore path if name already contains a path */
     if (path && !*path) path = NULL;  /* Ignore empty path */
 
@@ -604,7 +603,7 @@ DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
 
     /* If the name contains an explicit path, everything's easy */
 
-    if ((*name && (name[1] == ':')) || strchr( name, '/' ) || strchr( name, '\\' ))
+    if (FILE_contains_path(name))
     {
         ret = DOSFS_GetFullName( name, TRUE, full_name );
         goto done;
@@ -746,3 +745,104 @@ DWORD WINAPI SearchPathW( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
 }
 
 
+/***********************************************************************
+ *           search_alternate_path
+ *
+ *
+ * FIXME: should return long path names.?
+ */
+static BOOL search_alternate_path(LPCSTR dll_path, LPCSTR name, LPCSTR ext,
+                                  DOS_FULL_NAME *full_name)
+{
+    LPCSTR p;
+    LPSTR tmp = NULL;
+    BOOL ret = TRUE;
+
+    /* First check the supplied parameters */
+
+    p = strrchr( name, '.' );
+    if (p && !strchr( p, '/' ) && !strchr( p, '\\' ))
+        ext = NULL;  /* Ignore the specified extension */
+
+    /* Allocate a buffer for the file name and extension */
+
+    if (ext)
+    {
+        DWORD len = strlen(name) + strlen(ext);
+        if (!(tmp = HeapAlloc( GetProcessHeap(), 0, len + 1 )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return 0;
+        }
+        strcpy( tmp, name );
+        strcat( tmp, ext );
+        name = tmp;
+    }
+
+    if (DIR_TryEnvironmentPath (name, full_name, dll_path))
+        ;
+    else if (DOSFS_GetFullName (name, TRUE, full_name)) /* current dir */
+        ;
+    else if (DIR_TryPath (&DIR_System, name, full_name)) /* System dir */
+        ;
+    else if (DIR_TryPath (&DIR_Windows, name, full_name)) /* Windows dir */
+        ;
+    else
+        ret = DIR_TryEnvironmentPath( name, full_name, NULL );
+
+    if (tmp) HeapFree( GetProcessHeap(), 0, tmp );
+    return ret;
+}
+
+
+/***********************************************************************
+ * DIR_SearchAlternatePath
+ *
+ * Searches for a specified file in the search path.
+ *
+ * PARAMS
+ *    dll_path	[I] Path to search
+ *    name	[I] Filename to search for.
+ *    ext	[I] File extension to append to file name. The first
+ *		    character must be a period. This parameter is
+ *                  specified only if the filename given does not
+ *                  contain an extension.
+ *    buflen	[I] size of buffer, in characters
+ *    buffer	[O] buffer for found filename
+ *    lastpart  [O] address of pointer to last used character in
+ *                  buffer (the final '\') (May be NULL)
+ *
+ * RETURNS
+ *    Success: length of string copied into buffer, not including
+ *             terminating null character. If the filename found is
+ *             longer than the length of the buffer, the length of the
+ *             filename is returned.
+ *    Failure: Zero
+ * 
+ * NOTES
+ *    If the file is not found, calls SetLastError(ERROR_FILE_NOT_FOUND)
+ */
+DWORD DIR_SearchAlternatePath( LPCSTR dll_path, LPCSTR name, LPCSTR ext,
+                               DWORD buflen, LPSTR buffer, LPSTR *lastpart )
+{
+    LPSTR p, res;
+    DOS_FULL_NAME full_name;
+
+    if (!search_alternate_path( dll_path, name, ext, &full_name))
+    {
+	SetLastError(ERROR_FILE_NOT_FOUND);
+	return 0;
+    }
+    lstrcpynA( buffer, full_name.short_name, buflen );
+    res = full_name.long_name +
+              strlen(DRIVE_GetRoot( full_name.short_name[0] - 'A' ));
+    while (*res == '/') res++;
+    if (buflen)
+    {
+        if (buflen > 3) lstrcpynA( buffer + 3, res, buflen - 3 );
+        for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
+        if (lastpart) *lastpart = strrchr( buffer, '\\' ) + 1;
+    }
+    TRACE("Returning %d\n", strlen(res) + 3 );
+    return strlen(res) + 3;
+}

@@ -61,6 +61,12 @@ inline static char FILE_toupper( char c )
     return c;
 }
 
+inline static int FILE_contains_path (LPCSTR name)
+{
+    return ((*name && (name[1] == ':')) ||
+            strchr (name, '/') || strchr (name, '\\'));
+}
+
 /* files/file.c */
 extern int FILE_strcasecmp( const char *str1, const char *str2 );
 extern int FILE_strncasecmp( const char *str1, const char *str2, int len );
@@ -80,6 +86,8 @@ extern LONG WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 extern int DIR_Init(void);
 extern UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count );
 extern UINT DIR_GetSystemUnixDir( LPSTR path, UINT count );
+extern DWORD DIR_SearchAlternatePath( LPCSTR dll_path, LPCSTR name, LPCSTR ext,
+                                      DWORD buflen, LPSTR buffer, LPSTR *lastpart);
 extern DWORD DIR_SearchPath( LPCSTR path, LPCSTR name, LPCSTR ext,
                              DOS_FULL_NAME *full_name, BOOL win32 );
 
