@@ -73,10 +73,11 @@ QueryPathOfRegTypeLib16(
 	DWORD	plen;
 
 	if (HIWORD(guid)) {
-		WINE_StringFromCLSID(guid,xguid);
-		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%lx\\win16",
-			xguid,wMaj,wMin,lcid
-		);
+            sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%lx\\win16",
+                     guid->Data1, guid->Data2, guid->Data3,
+                     guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                     guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7],
+                     wMaj,wMin,lcid);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
 		FIXME("(%s,%d,%d,0x%04lx,%p),can't handle non-string guids.\n",xguid,wMaj,wMin,(DWORD)lcid,path);
@@ -113,10 +114,11 @@ QueryPathOfRegTypeLib(
 
 
 	if (HIWORD(guid)) {
-		WINE_StringFromCLSID(guid,xguid);
-		sprintf(typelibkey,"SOFTWARE\\Classes\\Typelib\\%s\\%d.%d\\%lx\\win32",
-			xguid,wMaj,wMin,lcid
-		);
+            sprintf( typelibkey, "SOFTWARE\\Classes\\Typelib\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\%d.%d\\%lx\\win32",
+                     guid->Data1, guid->Data2, guid->Data3,
+                     guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                     guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7],
+                     wMaj,wMin,lcid);
 	} else {
 		sprintf(xguid,"<guid 0x%08lx>",(DWORD)guid);
 		FIXME("(%s,%d,%d,0x%04lx,%p),stub!\n",xguid,wMaj,wMin,(DWORD)lcid,path);
@@ -222,12 +224,8 @@ HRESULT WINAPI LoadRegTypeLib(
         res= LoadTypeLib(bstr, ppTLib);
         SysFreeString(bstr);
     }
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)rguid,xriid);
-        TRACE("(IID: %s) load %s (%p)\n",xriid,
-              SUCCEEDED(res)? "SUCCESS":"FAILED", *ppTLib);
-    }
+    TRACE("(IID: %s) load %s (%p)\n",debugstr_guid(rguid),
+          SUCCEEDED(res)? "SUCCESS":"FAILED", *ppTLib);
     return res;
 }	
 
@@ -270,9 +268,7 @@ HRESULT WINAPI UnRegisterTypeLib(
 	LCID lcid,	/* [in] locale id */
 	SYSKIND syskind)
 {   
-    char xriid[50];
-    WINE_StringFromCLSID((LPCLSID)libid,xriid);
-    TRACE("(IID: %s): stub\n",xriid);
+    TRACE("(IID: %s): stub\n",debugstr_guid(libid));
     return S_OK;	/* FIXME: pretend everything is OK */
 }
 
@@ -1260,11 +1256,7 @@ int TLB_ReadTypeLib(PCHAR file, ITypeLib **ppTypeLib)
 static HRESULT WINAPI ITypeLib_fnQueryInterface( LPTYPELIB This, REFIID riid,
     VOID **ppvObject)
 {
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)riid,xriid);
-        TRACE("(%p)->(IID: %s)\n",This,xriid);
-    }
+    TRACE("(%p)->(IID: %s)\n",This,debugstr_guid(riid));
     *ppvObject=NULL;
     if(IsEqualIID(riid, &IID_IUnknown) || 
             IsEqualIID(riid,&IID_ITypeLib)||
@@ -1362,13 +1354,9 @@ static HRESULT WINAPI ITypeLib_fnGetTypeInfoOfGuid( LPTYPELIB iface,
 				REFGUID guid, ITypeInfo **ppTInfo)
 {
     int i;
-	ICOM_THIS( TLBLibInfo, iface);
-	TLBTypeInfo **ppTLBTInfo=(TLBTypeInfo **)ppTInfo;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %sx)\n",This,xriid);
-    }
+    ICOM_THIS( TLBLibInfo, iface);
+    TLBTypeInfo **ppTLBTInfo=(TLBTypeInfo **)ppTInfo;
+    TRACE("(%p) guid %sx)\n",This,debugstr_guid(guid));
     for(i=0,*ppTLBTInfo=This->pTypeInfo;*ppTLBTInfo && 
             !IsEqualIID(guid,&(*ppTLBTInfo)->TypeAttr.guid);i++)
         *ppTLBTInfo=(*ppTLBTInfo)->next;
@@ -1551,11 +1539,7 @@ static HRESULT WINAPI ITypeLib2_fnGetCustData( ITypeLib * iface, REFGUID guid,
     TLBCustData *pCData;
     for(pCData=This->pCustData; pCData; pCData = pCData->next)
         if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);
@@ -1654,12 +1638,8 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData( ITypeLib * iface,
 static HRESULT WINAPI ITypeInfo_fnQueryInterface( LPTYPEINFO iface, REFIID riid,
     VOID **ppvObject)
 {
-	ICOM_THIS( TLBTypeInfo, iface);
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)riid,xriid);
-        TRACE("(%p)->(IID: %s)\n",This,xriid);
-    }
+    ICOM_THIS( TLBTypeInfo, iface);
+    TRACE("(%p)->(IID: %s)\n",This,debugstr_guid(riid));
     *ppvObject=NULL;
     if(IsEqualIID(riid, &IID_IUnknown) || 
             IsEqualIID(riid,&IID_ITypeInfo)||
@@ -2243,11 +2223,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData( ITypeInfo * iface,
     TLBCustData *pCData;
     for(pCData=This->pCustData; pCData; pCData = pCData->next)
         if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);
@@ -2273,11 +2249,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData( ITypeInfo * iface,
     if(pFDesc)
         for(pCData=pFDesc->pCustData; pCData; pCData = pCData->next)
             if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);
@@ -2304,11 +2276,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData( ITypeInfo * iface,
         for(pCData=pFDesc->pParamDesc[indexParam].pCustData; pCData; 
                 pCData = pCData->next)
             if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);
@@ -2334,11 +2302,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarCustData( ITypeInfo * iface,
     if(pVDesc)
         for(pCData=pVDesc->pCustData; pCData; pCData = pCData->next)
             if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);
@@ -2364,11 +2328,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData( ITypeInfo * iface,
     if(pRDesc)
         for(pCData=pRDesc->pCustData; pCData; pCData = pCData->next)
             if( IsEqualIID(guid, &pCData->guid)) break;
-    if(TRACE_ON(typelib)){
-        char xriid[50];
-        WINE_StringFromCLSID((LPCLSID)guid,xriid);
-        TRACE("(%p) guid %s %s found!x)\n", This, xriid, pCData? "" : "NOT");
-    }
+    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
     if(pCData){
         VariantInit( pVarVal);
         VariantCopy( pVarVal, &pCData->data);

@@ -26,9 +26,9 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ntddk.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/unicode.h"
 #include "winnls.h"
 #include "task.h"
 #include "heap.h"
@@ -283,7 +283,6 @@ DWORD WINAPI CharLowerBuffA(LPSTR x,DWORD buflen)
 
 /***********************************************************************
  *           CharLowerBuffW   (USER32.27)
- * FIXME: handle current locale
  */
 DWORD WINAPI CharLowerBuffW(LPWSTR x,DWORD buflen)
 {
@@ -292,7 +291,7 @@ DWORD WINAPI CharLowerBuffW(LPWSTR x,DWORD buflen)
     if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=NTDLL_towlower(*x);
+        *x=tolowerW(*x);
         x++;
         done++;
     }
@@ -310,12 +309,12 @@ LPWSTR WINAPI CharLowerW(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=NTDLL_towlower(*s);
+            *s = tolowerW(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)((UINT)NTDLL_towlower(LOWORD(x)));
+    else return (LPWSTR)((UINT)tolowerW(LOWORD(x)));
 }
 
 /***********************************************************************
@@ -366,7 +365,7 @@ DWORD WINAPI CharUpperBuffW(LPWSTR x,DWORD buflen)
     if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=NTDLL_towupper(*x);
+        *x=toupperW(*x);
         x++;
         done++;
     }
@@ -384,12 +383,12 @@ LPWSTR WINAPI CharUpperW(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=NTDLL_towupper(*s);
+            *s = toupperW(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)((UINT)NTDLL_towupper(LOWORD(x)));
+    else return (LPWSTR)((UINT)toupperW(LOWORD(x)));
 }
 
 /***********************************************************************

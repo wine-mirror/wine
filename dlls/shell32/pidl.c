@@ -1209,9 +1209,13 @@ LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
 
 LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
 {
-	IID	iid;
-	CLSIDFromString16(szGUID,&iid);
-	return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
+    IID iid;
+    WCHAR buffer[40];
+
+    if (!MultiByteToWideChar( CP_ACP, 0, szGUID, -1, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+        return NULL;
+    CLSIDFromString( buffer, &iid );
+    return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
 }
 
 /**************************************************************************

@@ -9,8 +9,8 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "wtypes.h"
+#include "ldt.h"
 #include "ole.h"
-#include "gdi.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -156,30 +156,21 @@ OLESTATUS WINAPI OleQueryCreateFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIP
 }
 
 /******************************************************************************
- *		OleIsDcMeta16	[OLECLI.60]
- */
-BOOL16 WINAPI OleIsDcMeta16(HDC16 hdc)
-{
-	TRACE("(%04x)\n",hdc);
-	if (GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0) {
-	    GDI_HEAP_UNLOCK( hdc );
-	    return TRUE;
-	}
-	return FALSE;
-}
-
-
-/******************************************************************************
  *		OleIsDcMeta	[OLECLI32.60]
  */
 BOOL WINAPI OleIsDcMeta(HDC hdc)
 {
-        TRACE("(%04x)\n",hdc);
-	if (GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ) != 0) {
-	    GDI_HEAP_UNLOCK( hdc );
-	    return TRUE;
-	}
-	return FALSE;
+    TRACE("(%04x)\n",hdc);
+    return GetObjectType( hdc ) == OBJ_METADC;
+}
+
+
+/******************************************************************************
+ *		OleIsDcMeta16	[OLECLI.60]
+ */
+BOOL16 WINAPI OleIsDcMeta16(HDC16 hdc)
+{
+    return OleIsDcMeta( hdc );
 }
 
 

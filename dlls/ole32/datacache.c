@@ -35,7 +35,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "crtdll.h"
 #include "wine/obj_oleview.h"
 #include "wine/obj_cache.h"
 #include "wine/unicode.h"
@@ -683,9 +682,9 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
 	&& (elem->cbSize.s.LowPart >= sizeof(PresentationDataHeader))
 	&& (strlenW(name) == 11)
 	&& (strncmpW(name, OlePres, 8) == 0)
-	&& CRTDLL_iswdigit(name[8])
-	&& CRTDLL_iswdigit(name[9])
-	&& CRTDLL_iswdigit(name[10]);
+	&& (name[8] >= '0') && (name[8] <= '9')
+	&& (name[9] >= '0') && (name[9] <= '9')
+	&& (name[10] >= '0') && (name[10] <= '9');
 }
 
 /************************************************************************

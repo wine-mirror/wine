@@ -798,11 +798,4 @@ void WINAPI CoUninitialize(void);
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI DllCanUnloadNow(void);
 
-/*****************************************************************************
- * Internal WINE API
- */
-#ifdef __WINE__
-HRESULT WINE_StringFromCLSID(const CLSID *id, LPSTR);
-#endif
-
 #endif /* __WINE_WINE_OBJ_BASE_H */

@@ -117,8 +117,10 @@ BOOL HCR_GetClassName (REFIID riid, LPSTR szDest, DWORD len)
 	BOOL ret = FALSE;
 	DWORD buflen = len;
 
-	strcpy(xriid,"CLSID\\");
-	WINE_StringFromCLSID(riid,&xriid[strlen(xriid)]);
+        sprintf( xriid, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 riid->Data1, riid->Data2, riid->Data3,
+                 riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
+                 riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7] );
 
 	TRACE("%s\n",xriid );
 
@@ -165,8 +167,10 @@ BOOL HCR_GetFolderAttributes (REFIID riid, LPDWORD szDest)
 	DWORD	attributes;
 	DWORD	len = 4;
 
-	strcpy(xriid,"CLSID\\");
-	WINE_StringFromCLSID(riid,&xriid[strlen(xriid)]);
+        sprintf( xriid, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 riid->Data1, riid->Data2, riid->Data3,
+                 riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
+                 riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7] );
 	TRACE("%s\n",xriid );
 
 	if (!szDest) return FALSE;

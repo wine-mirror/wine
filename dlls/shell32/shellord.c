@@ -1013,10 +1013,13 @@ DWORD WINAPI SHLWAPI_23 (
 	LPSTR str,	/* [out] buffer */
 	INT cmax)	/* [in]  size of buffer */
 {
-	char xguid[80];
-	TRACE("(%s %p 0x%08x)stub\n", debugstr_guid(guid), str, cmax);
+	char xguid[40];
 
-	if (WINE_StringFromCLSID(guid,xguid)) return 0;
+        sprintf( xguid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 guid->Data1, guid->Data2, guid->Data3,
+                 guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                 guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+	TRACE("(%s %p 0x%08x)stub\n", xguid, str, cmax);
 	if (strlen(xguid)>=cmax) return 0;
 	strcpy(str,xguid);
 	return strlen(xguid) + 1;
@@ -1108,7 +1111,7 @@ LPWSTR WINAPI SHLWAPI_215 (
 	int len)
 {
 	WARN("(%s %p %u)\n",lpStrSrc,lpwStrDest,len);
-	return CRTDLL_wcsncpy(lpwStrDest, lpStrSrc, len);
+	return NTDLL_wcsncpy(lpwStrDest, lpStrSrc, len);
 }
 
 /*************************************************************************
@@ -1120,9 +1123,11 @@ LPWSTR WINAPI SHLWAPI_215 (
 HANDLE WINAPI SHLWAPI_222 (LPCLSID guid)
 {
 	char lpstrName[80];
-	strcpy( lpstrName,"shell.");
-	WINE_StringFromCLSID(guid, lpstrName + strlen(lpstrName));
 
+        sprintf( lpstrName, "shell.{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 guid->Data1, guid->Data2, guid->Data3,
+                 guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                 guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
 	FIXME("(%s) stub\n", lpstrName);
 	return CreateSemaphoreA(NULL,0, 0x7fffffff, lpstrName);
 }

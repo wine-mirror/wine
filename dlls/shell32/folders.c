@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "wine/obj_base.h"
@@ -153,8 +154,10 @@ static HRESULT WINAPI IExtractIconA_fnGetIconLocation(
 	else if ( (riid = _ILGetGUIDPointer(pSimplePidl)) )
 	{ 
 	  char xriid[50];
-	  strcpy(xriid,"CLSID\\");
-	  WINE_StringFromCLSID((LPCLSID)riid,&xriid[strlen(xriid)]);
+          sprintf( xriid, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                   riid->Data1, riid->Data2, riid->Data3,
+                   riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
+                   riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7] );
 
 	  if (HCR_GetDefaultIcon(xriid, sTemp, MAX_PATH, &dwNr))
 	  {

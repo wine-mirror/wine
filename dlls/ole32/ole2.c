@@ -393,7 +393,6 @@ HRESULT WINAPI OleRegGetUserType(
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
-  char    xclsid[50];
   char    keyName[60];
   DWORD   dwKeyType;
   DWORD   cbData;
@@ -409,11 +408,10 @@ HRESULT WINAPI OleRegGetUserType(
   /*
    * Build the key name we're looking for
    */
-  WINE_StringFromCLSID((LPCLSID)clsid, xclsid);
-
-  strcpy(keyName, "CLSID\\");
-  strcat(keyName, xclsid);
-  strcat(keyName, "\\");
+  sprintf( keyName, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
+           clsid->Data1, clsid->Data2, clsid->Data3,
+           clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
+           clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
   TRACE("(%s, %ld, %p)\n", keyName, dwFormOfType, pszUserType);
 
@@ -602,7 +600,6 @@ HRESULT WINAPI OleRegGetMiscStatus(
   DWORD    dwAspect,
   DWORD*   pdwStatus)
 {
-  char    xclsid[50];
   char    keyName[60];
   HKEY    clsidKey;
   HKEY    miscStatusKey;
@@ -617,11 +614,10 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Build the key name we're looking for
    */
-  WINE_StringFromCLSID((LPCLSID)clsid, xclsid);
-
-  strcpy(keyName, "CLSID\\");
-  strcat(keyName, xclsid);
-  strcat(keyName, "\\");
+  sprintf( keyName, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
+           clsid->Data1, clsid->Data2, clsid->Data3,
+           clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
+           clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
   TRACE("(%s, %ld, %p)\n", keyName, dwAspect, pdwStatus);
 

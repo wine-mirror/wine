@@ -763,7 +763,7 @@ HRESULT WINAPI CLSIDFromString(
  * RETURNS
  *	the string representation and OLESTATUS
  */
-HRESULT WINE_StringFromCLSID(
+static HRESULT WINE_StringFromCLSID(
 	const CLSID *id,	/* [in] GUID to be converted */
 	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
 ) {
