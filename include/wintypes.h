@@ -12,6 +12,10 @@
 # undef UNICODE
 #endif  /* __WINE__ */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on __WINE__ and UNICODE macros.                      */
 /* Note that Winelib is purely Win32.                             */
@@ -377,5 +381,9 @@ DECL_WINELIB_TYPE(HWND)
 #ifdef __WINE__
 extern int __winelib;
 #endif  /* __WINE__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_WINTYPES_H */

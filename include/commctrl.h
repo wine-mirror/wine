@@ -8,6 +8,10 @@
 #include "windows.h"
 #include "imagelist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BOOL32 WINAPI ShowHideMenuCtl (HWND32, UINT32, LPINT32);
 VOID WINAPI GetEffectiveClientRect (HWND32, LPRECT32, LPINT32);
 VOID WINAPI InitCommonControls (VOID);
@@ -2484,5 +2488,8 @@ LRESULT WINAPI COMCTL32_SendNotify (HWND32, HWND32, UINT32, LPNMHDR);
 /* type and functionality of last parameter is still unknown */
 LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_COMMCTRL_H */

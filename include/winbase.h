@@ -3,6 +3,10 @@
 
 #include "windows.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WAIT_FAILED		0xffffffff
 #define WAIT_OBJECT_0		0
 #define WAIT_ABANDONED		STATUS_ABANDONED_WAIT_0
@@ -194,5 +198,9 @@ BOOL32    WINAPI SetProcessWorkingSetSize(HANDLE32,DWORD,DWORD);
 void      WINAPI RaiseException(DWORD,DWORD,DWORD,const LPDWORD);
 BOOL32    WINAPI TerminateProcess(HANDLE32,DWORD);
 BOOL32    WINAPI TerminateThread(HANDLE32,DWORD);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __WINE_WINBASE_H */
