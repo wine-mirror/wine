@@ -882,7 +882,7 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
  */
 static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 				DWORD srcwidth, DWORD dstwidth, int left,
-                                int *colors, XImage *bmpImage )
+                                const int *colors, XImage *bmpImage )
 {
     DWORD x;
     int h, color;
@@ -901,6 +901,40 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
     }
 
     bits = srcbits + left;
+
+    switch (bmpImage->depth) {
+    case 15:
+    case 16:
+#if defined(__i386__) && defined(__GNUC__)
+	/* Some X servers might have 32 bit/ 16bit deep pixel */
+	if (bmpImage->bits_per_pixel == 16)
+	{
+	    for (h = lines ; h--; ) {
+		/* Borrowed from DirectDraw */
+		__asm__ __volatile__(
+		"xor %%eax,%%eax\n"
+		"1:\n"
+		"    lodsb\n"
+		"    movw (%%edx,%%eax,4),%%ax\n"
+		"    stosw\n"
+		"      xor %%eax,%%eax\n"
+		"    loop 1b\n"
+		: /*"=S" (bits), "=D" (dstbits)*/
+		:"S" (bits),
+		 "D" (bmpImage->data+h*bmpImage->bytes_per_line+left*2),
+		 "c" (dstwidth-left),
+		 "d" (colors)
+		:"eax", "cc", "memory"
+		);
+		bits = (srcbits += linebytes) + left;
+	    }
+	    return;
+	}
+	break;
+#endif
+    default:
+    	break; /* use slow generic case below */
+    }
 
     for (h = lines - 1; h >= 0; h--) {
         for (x = left; x < dstwidth; x++, bits++) {
