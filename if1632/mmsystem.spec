@@ -115,7 +115,7 @@ type	win16
 708    pascal  mciGetDriverData(word) mciGetDriverData16
 710    pascal  mciDriverYield(word) mciDriverYield16
 711    pascal  mciDriverNotify(word word word) mciDriverNotify16
-712    stub    MCIEXECUTE
+712    pascal  mciExecute(ptr) mciExecute
 713    pascal  mciFreeCommandResource(word) mciFreeCommandResource16
 714    pascal  mciSetYieldProc(word ptr long) mciSetYieldProc16
 715    pascal  mciGetDeviceIDFromElementID(long ptr) mciGetDeviceIDFromElementID16
@@ -131,11 +131,11 @@ type	win16
 807    pascal  mixerGetLineControls(word ptr long) mixerGetLineControls16
 808    pascal  mixerGetControlDetails(word ptr long) mixerGetControlDetails16
 809    pascal  mixerSetControlDetails(word ptr long) mixerSetControlDetails16
-900    pascal  mmTaskCreate(ptr long long) mmTaskCreate16
-902    stub    MMTASKBLOCK
+900    pascal  mmTaskCreate(long ptr long) mmTaskCreate16
+902    pascal  mmTaskBlock(word) mmTaskBlock16
 903    pascal  mmTaskSignal(word) mmTaskSignal16
 904    pascal  mmGetCurrentTask() WIN16_GetCurrentTask #just the same
-905    stub    MMTASKYIELD
+905    pascal  mmTaskYield() mmTaskYield16
 1100   pascal  DRVOPEN(str str long) DrvOpen
 1101   pascal  DRVCLOSE(word long long) DrvClose
 1102   pascal  DRVSENDMESSAGE(word word long long) DrvSendMessage
@@ -143,11 +143,11 @@ type	win16
 1104   pascal  DRVDEFDRIVERPROC(long word word long long) DrvDefDriverProc
 1120   pascal  mmThreadCreate(ptr ptr long long) mmThreadCreate16
 1121   pascal  mmThreadSignal(word) mmThreadSignal16
-1122   stub    MMTHREADBLOCK
-1123   stub    MMTHREADISCURRENT
-1124   stub    MMTHREADISVALID
+1122   pascal  mmThreadBlock(word) mmThreadBlock16
+1123   pascal  mmThreadIsCurrent(word) mmThreadIsCurrent16
+1124   pascal  mmThreadIsValid(word) mmThreadIsValid16
 1125   pascal  mmThreadGetTask(word) mmThreadGetTask16
-1150   stub    MMSHOWMMCPLPROPERTYSHEET
+1150   pascal  mmShowMMCPLPropertySheet(word word word word word word word) mmShowMMCPLPropertySheet16
 
 1210   pascal  mmioOpen(str ptr long) mmioOpen16
 1211   pascal  mmioClose(word word) mmioClose16

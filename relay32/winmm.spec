@@ -38,7 +38,7 @@ type win32
  35 stdcall joySetThreshold(long long) joySetThreshold
  36 stdcall mciDriverNotify(long long long) mciDriverNotify
  37 stdcall mciDriverYield(long) mciDriverYield
- 38 stub mciExecute
+ 38 stdcall mciExecute(str) mciExecute
  39 stdcall mciFreeCommandResource(long) mciFreeCommandResource
  40 stdcall mciGetCreatorTask(long) mciGetCreatorTask
  41 stdcall mciGetDeviceIDA(str) mciGetDeviceIDA
