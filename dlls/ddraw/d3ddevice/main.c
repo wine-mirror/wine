@@ -58,9 +58,13 @@ ULONG WINAPI IDirect3DDevice2Impl_AddRef(LPDIRECT3DDEVICE2 iface)
 ULONG WINAPI IDirect3DDevice2Impl_Release(LPDIRECT3DDEVICE2 iface)
 {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
-    FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
+    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
+	/* Release texture associated with the device */ 
+	if (This->current_texture)
+	    IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)This->current_texture);
+	    	  
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
@@ -108,7 +112,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_AddViewport(
 ) {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
-    FIXME("(%p)->(%p): stub\n", This, ilpvp);
+    TRACE("(%p)->(%p)\n", This, ilpvp);
 
     /* Adds this viewport to the viewport list */
     ilpvp->next = This->viewport_list;
@@ -123,7 +127,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_DeleteViewport(
     ICOM_THIS(IDirect3DDevice2Impl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
     IDirect3DViewport2Impl *cur, *prev;
-    FIXME("(%p)->(%p): stub\n", This, lpvp);
+    TRACE("(%p)->(%p)\n", This, lpvp);
 
     /* Finds this viewport in the list */
     prev = NULL;
@@ -150,7 +154,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_NextViewport(
     ICOM_THIS(IDirect3DDevice2Impl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
     IDirect3DViewport2Impl** ilplpvp=(IDirect3DViewport2Impl**)lplpvp;
-    FIXME("(%p)->(%p,%p,%08lx): stub\n", This, lpvp, lpvp, dwFlags);
+    TRACE("(%p)->(%p,%p,%08lx)\n", This, lpvp, lpvp, dwFlags);
 
     switch (dwFlags) {
     case D3DNEXT_NEXT:
@@ -204,7 +208,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_GetDirect3D(
     LPDIRECT3DDEVICE2 iface, LPDIRECT3D2 *lpd3d2
 ) {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
-    TRACE("(%p)->(%p): stub\n", This, lpd3d2);
+    TRACE("(%p)->(%p)\n", This, lpd3d2);
     *lpd3d2 = (LPDIRECT3D2)This->d3d;
     return DD_OK;
 }
@@ -215,7 +219,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_SetCurrentViewport(
 ) {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
-    FIXME("(%p)->(%p): stub\n", This, ilpvp);
+    TRACE("(%p)->(%p)\n", This, ilpvp);
 
     /* Should check if the viewport was added or not */
 
@@ -256,7 +260,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_GetRenderTarget(
     LPDIRECT3DDEVICE2 iface, LPDIRECTDRAWSURFACE *lplpdds
 ) {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
-    FIXME("(%p)->(%p): stub\n", This, lplpdds);
+    TRACE("(%p)->(%p)\n", This, lplpdds);
 
     /* Returns the current rendering target (the surface on wich we render) */
     *lplpdds = (LPDIRECTDRAWSURFACE)This->surface;
@@ -385,7 +389,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_DrawPrimitive(
 ) {
   ICOM_THIS(IDirect3DDevice2Impl,iface);
 
-  TRACE("(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
+  FIXME("(%p)->(%d,%d,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, dwFlags);
 
   return D3D_OK;
 }
@@ -396,7 +400,7 @@ HRESULT WINAPI IDirect3DDevice2Impl_DrawIndexedPrimitive(
     DWORD dwFlags
 ) {
     ICOM_THIS(IDirect3DDevice2Impl,iface);
-    TRACE("(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
+    FIXME("(%p)->(%d,%d,%p,%ld,%p,%ld,%08lx): stub\n", This, d3dp, d3dv, lpvertex, vertcount, lpindexes, indexcount, dwFlags);
     return D3D_OK;
 }
 
@@ -440,9 +444,13 @@ ULONG WINAPI IDirect3DDeviceImpl_AddRef(LPDIRECT3DDEVICE iface)
 ULONG WINAPI IDirect3DDeviceImpl_Release(LPDIRECT3DDEVICE iface)
 {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    FIXME("(%p)->() decrementing from %lu.\n", This, This->ref );
+    TRACE("(%p)->() decrementing from %lu.\n", This, This->ref );
 
     if (!--(This->ref)) {
+	/* Release texture associated with the device */ 
+	if (This->current_texture)
+	    IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)This->current_texture);
+	    
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
@@ -454,7 +462,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_Initialize(
     LPD3DDEVICEDESC lpd3ddvdesc
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p,%p): stub\n", This, lpd3d,lpGUID, lpd3ddvdesc);
+    FIXME("(%p)->(%p,%p,%p): stub\n", This, lpd3d,lpGUID, lpd3ddvdesc);
 
     return DDERR_ALREADYINITIALIZED;
 }
@@ -465,7 +473,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetCaps(
     LPD3DDEVICEDESC lpD3DSWDevDesc
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p): stub\n", This, lpD3DHWDevDesc, lpD3DSWDevDesc);
+    FIXME("(%p)->(%p,%p): stub\n", This, lpD3DHWDevDesc, lpD3DSWDevDesc);
 
     return DD_OK;
 }
@@ -499,7 +507,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetStats(
     LPDIRECT3DDEVICE iface, LPD3DSTATS lpD3DStats
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p): stub\n", This, lpD3DStats);
+    FIXME("(%p)->(%p): stub\n", This, lpD3DStats);
 
     return DD_OK;
 }
@@ -510,7 +518,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_Execute(
     LPDIRECT3DVIEWPORT lpDirect3DViewport, DWORD dwFlags
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p,%08ld): stub\n", This, lpDirect3DExecuteBuffer, lpDirect3DViewport, dwFlags);
+    TRACE("(%p)->(%p,%p,%08ld)\n", This, lpDirect3DExecuteBuffer, lpDirect3DViewport, dwFlags);
 
     /* Put this as the default context */
 
@@ -525,7 +533,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_AddViewport(
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
-    FIXME("(%p)->(%p): stub\n", This, ilpvp);
+    TRACE("(%p)->(%p)\n", This, ilpvp);
 
     /* Adds this viewport to the viewport list */
     ilpvp->next = This->viewport_list;
@@ -542,7 +550,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_DeleteViewport(
     ICOM_THIS(IDirect3DDeviceImpl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
     IDirect3DViewport2Impl *cur, *prev;
-    FIXME("(%p)->(%p): stub\n", This, lpvp);
+    TRACE("(%p)->(%p)\n", This, lpvp);
 
     /* Finds this viewport in the list */
     prev = NULL;
@@ -569,7 +577,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_NextViewport(
     ICOM_THIS(IDirect3DDeviceImpl,iface);
     IDirect3DViewport2Impl* ilpvp=(IDirect3DViewport2Impl*)lpvp;
     IDirect3DViewport2Impl** ilplpvp=(IDirect3DViewport2Impl**)lplpvp;
-    FIXME("(%p)->(%p,%p,%08lx): stub\n", This, ilpvp, ilplpvp, dwFlags);
+    TRACE("(%p)->(%p,%p,%08lx)\n", This, ilpvp, ilplpvp, dwFlags);
 
     switch (dwFlags) {
     case D3DNEXT_NEXT:
@@ -603,7 +611,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetPickRecords(
     LPDIRECT3DDEVICE iface, LPDWORD lpCount, LPD3DPICKRECORD lpD3DPickRec
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p): stub\n", This, lpCount, lpD3DPickRec);
+    FIXME("(%p)->(%p,%p): stub\n", This, lpCount, lpD3DPickRec);
 
     return DD_OK;
 }
@@ -614,7 +622,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_EnumTextureFormats(
     LPVOID lpArg
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p,%p): stub\n", This, lpd3dEnumTextureProc, lpArg);
+    FIXME("(%p)->(%p,%p): stub\n", This, lpd3dEnumTextureProc, lpArg);
     return D3D_OK;
 }
 
@@ -687,7 +695,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_GetDirect3D(
     LPDIRECT3DDEVICE iface, LPDIRECT3D *lpDirect3D
 ) {
     ICOM_THIS(IDirect3DDeviceImpl,iface);
-    TRACE("(%p)->(%p): stub\n", This, lpDirect3D);
+    FIXME("(%p)->(%p): stub\n", This, lpDirect3D);
 
     return DD_OK;
 }

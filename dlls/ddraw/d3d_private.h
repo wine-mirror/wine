@@ -358,6 +358,7 @@ struct IDirect3DDeviceImpl
 
     IDirect3DViewport2Impl*  viewport_list;
     IDirect3DViewport2Impl*  current_viewport;
+    IDirect3DTexture2Impl*   current_texture;
 
     void (*set_context)(IDirect3DDeviceImpl*);
     LPVOID		private;
@@ -377,6 +378,7 @@ struct IDirect3DDevice2Impl
 
     IDirect3DViewport2Impl* viewport_list;
     IDirect3DViewport2Impl* current_viewport;
+    IDirect3DTexture2Impl*  current_texture;
 
     void (*set_context)(IDirect3DDevice2Impl*);
     LPVOID		private;

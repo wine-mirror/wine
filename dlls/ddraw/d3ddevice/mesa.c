@@ -225,6 +225,7 @@ is_OpenGL(
     (*device)->surface = surface;
     (*device)->viewport_list = NULL;
     (*device)->current_viewport = NULL;
+    (*device)->current_texture = NULL;
     (*device)->set_context = set_context;
 
     TRACE("Creating OpenGL device for surface %p\n", surface);
@@ -401,10 +402,10 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   TRACE("Enumerating GL_RGB packed GL_UNSIGNED_BYTE_3_3_2 (8)\n");
   pformat->dwFlags = DDPF_RGB;
   pformat->u1.dwRGBBitCount = 8;
-  pformat->u2.dwRBitMask =         0x0000F800;
-  pformat->u3.dwGBitMask =         0x000007C0;
-  pformat->u4.dwBBitMask =        0x0000003E;
-  pformat->u5.dwRGBAlphaBitMask = 0x00000001;
+  pformat->u2.dwRBitMask =        0x000000E0;
+  pformat->u3.dwGBitMask =        0x0000001C;
+  pformat->u4.dwBBitMask =        0x00000003;
+  pformat->u5.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 #endif
@@ -891,6 +892,7 @@ int is_OpenGL_dx3(REFCLSID rguid, IDirectDrawSurfaceImpl* surface, IDirect3DDevi
 
     (*device)->viewport_list = NULL;
     (*device)->current_viewport = NULL;
+    (*device)->current_texture = NULL;
 
     (*device)->set_context = (void*)set_context;
 

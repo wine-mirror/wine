@@ -298,12 +298,19 @@ HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
     *lpHandle = (D3DTEXTUREHANDLE) This;
 
     /* Now, bind a new texture */
-    ENTER_GL();
     ilpD3DDevice->set_context(ilpD3DDevice);
     This->D3Ddevice = (void *) ilpD3DDevice;
+    ENTER_GL();
     if (dtpriv->tex_name == 0)
 	glGenTextures(1, &(dtpriv->tex_name));
     LEAVE_GL();
+
+    /* Associate the texture with the device and perform the appropriate AddRef/Release */
+    /* FIXME: Is there only one or several textures associated with the device ? */
+    if (ilpD3DDevice->current_texture)
+      IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)ilpD3DDevice->current_texture);           
+    IDirect3DTexture2Impl_AddRef((LPDIRECT3DTEXTURE2)iface);
+    ilpD3DDevice->current_texture = (IDirect3DTexture2Impl*)iface;   
 
     TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
 
@@ -342,12 +349,19 @@ HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
     *lpHandle = (D3DTEXTUREHANDLE) This;
 
     /* Now, bind a new texture */
-    ENTER_GL();
     ilpD3DDevice2->set_context(ilpD3DDevice2);
     This->D3Ddevice = (void *) ilpD3DDevice2;
+    ENTER_GL();
     if (dtpriv->tex_name == 0)
 	glGenTextures(1, &(dtpriv->tex_name));
     LEAVE_GL();
+
+    /* Associate the texture with the device and perform the appropriate AddRef/Release */
+    /* FIXME: Is there only one or several textures associated with the device ? */
+    if (ilpD3DDevice2->current_texture)
+      IDirect3DTexture2Impl_Release((LPDIRECT3DTEXTURE2)ilpD3DDevice2->current_texture);           
+    IDirect3DTexture2Impl_AddRef(iface);
+    ilpD3DDevice2->current_texture = (IDirect3DTexture2Impl*)iface;   
 
     TRACE("OpenGL texture handle is : %d\n", dtpriv->tex_name);
 
@@ -430,7 +444,7 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
       /* ****************
 	 Paletted Texture
 	 **************** */
-      IDirectDrawPaletteImpl* pal = This->surface->palette;
+      IDirectDrawPaletteImpl* pal = ilpD3DTexture2->surface->palette;
       BYTE table[256][4];
       int i;
 
