@@ -185,7 +185,10 @@ BOOL X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCTA *cs, BO
       XWMHints* wm_hints;
       XSetWindowAttributes win_attr;
       
-      if (Options.managed && ((cs->style & (WS_DLGFRAME | WS_THICKFRAME)) ||
+      /* Create "managed" windows only if a title bar or resizable */
+      /* frame is required. */
+      if (Options.managed && ( ((cs->style & WS_CAPTION) == WS_CAPTION) ||
+                              (cs->style & WS_THICKFRAME) ||
 			      (cs->dwExStyle & WS_EX_DLGMODALFRAME)))
         {
 	  win_attr.event_mask = ExposureMask | KeyPressMask |
