@@ -128,6 +128,18 @@ static void msvcrt_wfttofdi64( const WIN32_FIND_DATAW *fd, struct _wfinddatai64_
 
 /*********************************************************************
  *		_chdir (MSVCRT.@)
+ *
+ * Change the current working directory.
+ *
+ * PARAMS
+ *  newdir [I] Directory to change to
+ *
+ * RETURNS
+ *  Success: 0. The current working directory is set to newdir.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See SetCurrentDirectoryA.
  */
 int _chdir(const char * newdir)
 {
@@ -141,6 +153,8 @@ int _chdir(const char * newdir)
 
 /*********************************************************************
  *		_wchdir (MSVCRT.@)
+ *
+ * Unicode version of _chdir.
  */
 int _wchdir(const MSVCRT_wchar_t * newdir)
 {
@@ -154,12 +168,25 @@ int _wchdir(const MSVCRT_wchar_t * newdir)
 
 /*********************************************************************
  *		_chdrive (MSVCRT.@)
+ *
+ * Change the current drive.
+ *
+ * PARAMS
+ *  newdrive [I] Drive number to change to (1 = 'A', 2 = 'B', ...)
+ *
+ * RETURNS
+ *  Success: 0. The current drive is set to newdrive.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See SetCurrentDirectoryA.
  */
 int _chdrive(int newdrive)
 {
-  char buffer[3] = "A:";
+  WCHAR buffer[3] = {'A', ':', 0};
+
   buffer[0] += newdrive - 1;
-  if (!SetCurrentDirectoryA( buffer ))
+  if (!SetCurrentDirectoryW( buffer ))
   {
     MSVCRT__set_errno(GetLastError());
     if (newdrive <= 0)
@@ -171,6 +198,18 @@ int _chdrive(int newdrive)
 
 /*********************************************************************
  *		_findclose (MSVCRT.@)
+ *
+ * Close a handle returned by _findfirst().
+ *
+ * PARAMS
+ *  hand [I] Handle to close
+ *
+ * RETURNS
+ *  Success: 0. All resources associated with hand are freed.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See FindClose.
  */
 int _findclose(long hand)
 {
@@ -185,6 +224,20 @@ int _findclose(long hand)
 
 /*********************************************************************
  *		_findfirst (MSVCRT.@)
+ *
+ * Open a handle for iterating through a directory.
+ *
+ * PARAMS
+ *  fspec [I] File specification of files to iterate.
+ *  ft    [O] Information for the first file found.
+ *
+ * RETURNS
+ *  Success: A handle suitable for passing to _findnext() and _findclose().
+ *           ft is populated with the details of the found file.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See FindFirstFileA.
  */
 long _findfirst(const char * fspec, struct _finddata_t* ft)
 {
@@ -204,6 +257,8 @@ long _findfirst(const char * fspec, struct _finddata_t* ft)
 
 /*********************************************************************
  *		_wfindfirst (MSVCRT.@)
+ *
+ * Unicode version of _findfirst.
  */
 long _wfindfirst(const MSVCRT_wchar_t * fspec, struct _wfinddata_t* ft)
 {
@@ -223,6 +278,8 @@ long _wfindfirst(const MSVCRT_wchar_t * fspec, struct _wfinddata_t* ft)
 
 /*********************************************************************
  *		_findfirsti64 (MSVCRT.@)
+ *
+ * 64-bit version of _findfirst.
  */
 long _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
 {
@@ -242,6 +299,8 @@ long _findfirsti64(const char * fspec, struct _finddatai64_t* ft)
 
 /*********************************************************************
  *		_wfindfirsti64 (MSVCRT.@)
+ *
+ * Unicode version of _findfirsti64.
  */
 long _wfindfirsti64(const MSVCRT_wchar_t * fspec, struct _wfinddatai64_t* ft)
 {
@@ -261,6 +320,19 @@ long _wfindfirsti64(const MSVCRT_wchar_t * fspec, struct _wfinddatai64_t* ft)
 
 /*********************************************************************
  *		_findnext (MSVCRT.@)
+ *
+ * Find the next file from a file search handle.
+ *
+ * PARAMS
+ *  hand  [I] Handle to the search returned from _findfirst().
+ *  ft    [O] Information for the file found.
+ *
+ * RETURNS
+ *  Success: 0. ft is populated with the details of the found file.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See FindNextFileA.
  */
 int _findnext(long hand, struct _finddata_t * ft)
 {
@@ -278,6 +350,8 @@ int _findnext(long hand, struct _finddata_t * ft)
 
 /*********************************************************************
  *		_wfindnext (MSVCRT.@)
+ *
+ * Unicode version of _findnext.
  */
 int _wfindnext(long hand, struct _wfinddata_t * ft)
 {
@@ -295,6 +369,8 @@ int _wfindnext(long hand, struct _wfinddata_t * ft)
 
 /*********************************************************************
  *		_findnexti64 (MSVCRT.@)
+ *
+ * 64-bit version of _findnext.
  */
 int _findnexti64(long hand, struct _finddatai64_t * ft)
 {
@@ -312,6 +388,8 @@ int _findnexti64(long hand, struct _finddatai64_t * ft)
 
 /*********************************************************************
  *		_wfindnexti64 (MSVCRT.@)
+ *
+ * Unicode version of _findnexti64.
  */
 int _wfindnexti64(long hand, struct _wfinddatai64_t * ft)
 {
@@ -329,6 +407,17 @@ int _wfindnexti64(long hand, struct _wfinddatai64_t * ft)
 
 /*********************************************************************
  *		_getcwd (MSVCRT.@)
+ *
+ * Get the current working directory.
+ *
+ * PARAMS
+ *  buf  [O] Destination for current working directory.
+ *  size [I] Size of buf in characters
+ *
+ * RETURNS
+ * Success: If buf is NULL, returns an allocated string containing the path.
+ *          Otherwise populates buf with the path and returns it.
+ * Failure: NULL. errno indicates the error.
  */
 char* _getcwd(char * buf, int size)
 {
@@ -355,6 +444,8 @@ char* _getcwd(char * buf, int size)
 
 /*********************************************************************
  *		_wgetcwd (MSVCRT.@)
+ *
+ * Unicode version of _getcwd.
  */
 MSVCRT_wchar_t* _wgetcwd(MSVCRT_wchar_t * buf, int size)
 {
@@ -381,17 +472,39 @@ MSVCRT_wchar_t* _wgetcwd(MSVCRT_wchar_t * buf, int size)
 
 /*********************************************************************
  *		_getdrive (MSVCRT.@)
+ *
+ * Get the current drive number.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  Success: The drive letter number from 1 to 26 ("A:" to "Z:").
+ *  Failure: 0.
  */
 int _getdrive(void)
 {
-    char buffer[MAX_PATH];
-    if (!GetCurrentDirectoryA( sizeof(buffer), buffer )) return 0;
-    if (buffer[1] != ':') return 0;
-    return toupper(buffer[0]) - 'A' + 1;
+    WCHAR buffer[MAX_PATH];
+    if (GetCurrentDirectoryW( MAX_PATH, buffer ) &&
+        buffer[0] >= 'A' && buffer[0] <= 'z' && buffer[1] == ':')
+        return toupperW(buffer[0]) - 'A' + 1;
+    return 0;
 }
 
 /*********************************************************************
  *		_getdcwd (MSVCRT.@)
+ *
+ * Get the current working directory on a given disk.
+ * 
+ * PARAMS
+ *  drive [I] Drive letter to get the current working directory from.
+ *  buf   [O] Destination for the current working directory.
+ *  size  [I] Length of drive in characters.
+ *
+ * RETURNS
+ *  Success: If drive is NULL, returns an allocated string containing the path.
+ *           Otherwise populates drive with the path and returns it.
+ *  Failure: NULL. errno indicates the error.
  */
 char* _getdcwd(int drive, char * buf, int size)
 {
@@ -432,6 +545,8 @@ char* _getdcwd(int drive, char * buf, int size)
 
 /*********************************************************************
  *		_wgetdcwd (MSVCRT.@)
+ *
+ * Unicode version of _wgetdcwd.
  */
 MSVCRT_wchar_t* _wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size)
 {
@@ -471,10 +586,23 @@ MSVCRT_wchar_t* _wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size)
 
 /*********************************************************************
  *		_getdiskfree (MSVCRT.@)
+ *
+ * Get information about the free space on a drive.
+ *
+ * PARAMS
+ *  disk [I] Drive number to get information about (1 = 'A', 2 = 'B', ...)
+ *  info [O] Destination for the resulting information.
+ *
+ * RETURNS
+ *  Success: 0. info is updated with the free space information.
+ *  Failure: An error code from GetLastError().
+ *
+ * NOTES
+ *  See GetLastError().
  */
 unsigned int _getdiskfree(unsigned int disk, struct _diskfree_t* d)
 {
-  char drivespec[4] = {'@', ':', '\\', 0};
+  WCHAR drivespec[4] = {'@', ':', '\\', 0};
   DWORD ret[4];
   unsigned int err;
 
@@ -483,7 +611,7 @@ unsigned int _getdiskfree(unsigned int disk, struct _diskfree_t* d)
 
   drivespec[0] += disk; /* make a drive letter */
 
-  if (GetDiskFreeSpaceA(disk==0?NULL:drivespec,ret,ret+1,ret+2,ret+3))
+  if (GetDiskFreeSpaceW(disk==0?NULL:drivespec,ret,ret+1,ret+2,ret+3))
   {
     d->sectors_per_cluster = (unsigned)ret[0];
     d->bytes_per_sector = (unsigned)ret[1];
@@ -498,6 +626,18 @@ unsigned int _getdiskfree(unsigned int disk, struct _diskfree_t* d)
 
 /*********************************************************************
  *		_mkdir (MSVCRT.@)
+ *
+ * Create a directory.
+ *
+ * PARAMS
+ *  newdir [I] Name of directory to create.
+ *
+ * RETURNS
+ *  Success: 0. The directory indicated by newdir is created.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See CreateDirectoryA.
  */
 int _mkdir(const char * newdir)
 {
@@ -509,6 +649,8 @@ int _mkdir(const char * newdir)
 
 /*********************************************************************
  *		_wmkdir (MSVCRT.@)
+ *
+ * Unicode version of _mkdir.
  */
 int _wmkdir(const MSVCRT_wchar_t* newdir)
 {
@@ -520,6 +662,18 @@ int _wmkdir(const MSVCRT_wchar_t* newdir)
 
 /*********************************************************************
  *		_rmdir (MSVCRT.@)
+ *
+ * Delete a directory.
+ *
+ * PARAMS
+ *  dir [I] Name of directory to delete.
+ *
+ * RETURNS
+ *  Success: 0. The directory indicated by newdir is deleted.
+ *  Failure: -1. errno indicates the error.
+ *
+ * NOTES
+ *  See RemoveDirectoryA.
  */
 int _rmdir(const char * dir)
 {
@@ -531,6 +685,8 @@ int _rmdir(const char * dir)
 
 /*********************************************************************
  *		_wrmdir (MSVCRT.@)
+ *
+ * Unicode version of _rmdir.
  */
 int _wrmdir(const MSVCRT_wchar_t * dir)
 {
@@ -542,6 +698,8 @@ int _wrmdir(const MSVCRT_wchar_t * dir)
 
 /*********************************************************************
  *		_wsplitpath (MSVCRT.@)
+ *
+ * Unicode version of _splitpath.
  */
 void _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
                  MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext )
@@ -625,7 +783,7 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
     {
       /* Ignore leading ".." */
       for (p = (r += 2); *p && (*p != '\\'); ++p)
-	;
+        ;
     }
     else
     {
@@ -653,20 +811,20 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
       q = p - 1;
       while (q > r)           /* Backup one level           */
       {
-	if (*q == '\\')
-	  break;
-	--q;
+        if (*q == '\\')
+          break;
+        --q;
       }
       if (q > r)
       {
-	strcpyW(q, p + 3);
-	s = q;
+        strcpyW(q, p + 3);
+        s = q;
       }
       else if ('.' != *q)
       {
-	strcpyW(q + ((*q == '\\') ? 1 : 0),
-	       p + 3 + ((*(p + 3)) ? 1 : 0));
-	s = q;
+        strcpyW(q + ((*q == '\\') ? 1 : 0),
+                p + 3 + ((*(p + 3)) ? 1 : 0));
+        s = q;
       }
       else  s = ++p;
     }
@@ -675,7 +833,7 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
       /* Execute this section if "." found */
       q = p + 2;
       for ( ;*q && (*q != '\\'); ++q)
-	;
+        ;
       strcpyW (p, q);
     }
   }
@@ -691,13 +849,15 @@ static void wmsvcrt_fln_fix(MSVCRT_wchar_t *path)
   if (dir_flag)
   {
     MSVCRT_wchar_t szbs[] = { '\\', 0 };
-    
+
     strcatW(path, szbs);
   }
 }
 
 /*********************************************************************
  *		_wfullpath (MSVCRT.@)
+ *
+ * Unicode version of _fullpath.
  */
 MSVCRT_wchar_t *_wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, MSVCRT_size_t size)
 {
@@ -789,12 +949,12 @@ static void msvcrt_fln_fix(char *path)
     {
       /* Ignore leading ".." */
       for (p = (r += 2); *p && (*p != '\\'); ++p)
-	;
+        ;
     }
     else
     {
       for (p = r + 1 ;*p && (*p != '\\'); ++p)
-	;
+        ;
     }
     strcpy(r, p + ((*p) ? 1 : 0));
   }
@@ -817,20 +977,20 @@ static void msvcrt_fln_fix(char *path)
       q = p - 1;
       while (q > r)           /* Backup one level           */
       {
-	if (*q == '\\')
-	  break;
-	--q;
+        if (*q == '\\')
+          break;
+        --q;
       }
       if (q > r)
       {
-	strcpy(q, p + 3);
-	s = q;
+        strcpy(q, p + 3);
+        s = q;
       }
       else if ('.' != *q)
       {
-	strcpy(q + ((*q == '\\') ? 1 : 0),
-	       p + 3 + ((*(p + 3)) ? 1 : 0));
-	s = q;
+        strcpy(q + ((*q == '\\') ? 1 : 0),
+               p + 3 + ((*(p + 3)) ? 1 : 0));
+        s = q;
       }
       else  s = ++p;
     }
@@ -839,7 +999,7 @@ static void msvcrt_fln_fix(char *path)
       /* Execute this section if "." found */
       q = p + 2;
       for ( ;*q && (*q != '\\'); ++q)
-	;
+        ;
       strcpy (p, q);
     }
   }
@@ -858,6 +1018,18 @@ static void msvcrt_fln_fix(char *path)
 
 /*********************************************************************
  *		_fullpath (MSVCRT.@)
+ *
+ * Create an absolute path from a relative path.
+ *
+ * PARAMS
+ *  absPath [O] Destination for absolute path
+ *  relPath [I] Relative path to convert to absolute
+ *  size    [I] Length of absPath in characters.
+ *
+ * RETURNS
+ * Success: If absPath is NULL, returns an allocated string containing the path.
+ *          Otherwise populates absPath with the path and returns it.
+ * Failure: NULL. errno indicates the error.
  */
 char *_fullpath(char * absPath, const char* relPath, unsigned int size)
 {
@@ -914,10 +1086,23 @@ char *_fullpath(char * absPath, const char* relPath, unsigned int size)
 
 /*********************************************************************
  *		_makepath (MSVCRT.@)
+ *
+ * Create a pathname.
+ *
+ * PARAMS
+ *  path      [O] Destination for created pathname
+ *  drive     [I] Drive letter (e.g. "A:")
+ *  directory [I] Directory
+ *  filename  [I] Name of the file, excluding extension
+ *  extension [I] File extension (e.g. ".TXT")
+ *
+ * RETURNS
+ *  Nothing. If path is not large enough to hold the resulting pathname,
+ *  random process memory will be overwritten.
  */
 VOID _makepath(char * path, const char * drive,
-                              const char *directory, const char * filename,
-                              const char * extension )
+               const char *directory, const char * filename,
+               const char * extension)
 {
     char ch;
     char tmpPath[MAX_PATH];
@@ -959,13 +1144,15 @@ VOID _makepath(char * path, const char * drive,
 
 /*********************************************************************
  *		_wmakepath (MSVCRT.@)
+ *
+ * Unicode version of _wmakepath.
  */
 VOID _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_wchar_t *directory,
-		const MSVCRT_wchar_t *filename, const MSVCRT_wchar_t *extension)
+                const MSVCRT_wchar_t *filename, const MSVCRT_wchar_t *extension)
 {
     MSVCRT_wchar_t ch;
     TRACE("%s %s %s %s\n", debugstr_w(drive), debugstr_w(directory),
-	  debugstr_w(filename), debugstr_w(extension));
+          debugstr_w(filename), debugstr_w(extension));
 
     if ( !path )
         return;
@@ -982,10 +1169,10 @@ VOID _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_
         strcatW(path, directory);
         ch = path[strlenW(path) - 1];
         if (ch != '/' && ch != '\\')
-	{
-	    static const MSVCRT_wchar_t backslashW[] = {'\\',0};
+        {
+            static const MSVCRT_wchar_t backslashW[] = {'\\',0};
             strcatW(path, backslashW);
-	}
+        }
     }
     if (filename && filename[0])
     {
@@ -993,10 +1180,10 @@ VOID _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_
         if (extension && extension[0])
         {
             if ( extension[0] != '.' )
-	    {
-		static const MSVCRT_wchar_t dotW[] = {'.',0};
+            {
+                static const MSVCRT_wchar_t dotW[] = {'.',0};
                 strcatW(path, dotW);
-	    }
+            }
             strcatW(path, extension);
         }
     }
@@ -1006,6 +1193,17 @@ VOID _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_
 
 /*********************************************************************
  *		_searchenv (MSVCRT.@)
+ *
+ * Search for a file in a list of paths from an envronment variable.
+ *
+ * PARAMS
+ *  file   [I] Name of the file to search for.
+ *  env    [I] Name of the environment variable containing a list of paths.
+ *  buf    [O] Destination for the found file path.
+ *
+ * RETURNS
+ *  Nothing. If the file is not found, buf will contain an empty string
+ *  and errno is set.
  */
 void _searchenv(const char* file, const char* env, char *buf)
 {
