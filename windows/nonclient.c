@@ -1961,7 +1961,8 @@ static LONG NC_StartSizeMove( WND* wndPtr, WPARAM16 wParam,
     {
 	while(!hittest)
 	{
-            MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+            MSG_InternalGetMessage( &msg, 0, 0, WM_KEYFIRST, WM_MOUSELAST,
+                                    MSGF_SIZE, PM_REMOVE, FALSE, NULL );
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
@@ -2128,7 +2129,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     {
         int dx = 0, dy = 0;
 
-        MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE, NULL );
+        MSG_InternalGetMessage( &msg, 0, 0, 0, 0, MSGF_SIZE, PM_REMOVE, FALSE, NULL );
 
 	  /* Exit on button-up, Return, or Esc */
 	if ((msg.message == WM_LBUTTONUP) ||
@@ -2359,7 +2360,8 @@ static void NC_TrackMinMaxBox95( HWND hwnd, WORD wParam )
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
+        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
+                                0, PM_REMOVE, FALSE, NULL );
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;
@@ -2414,7 +2416,8 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
+        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
+                                0, PM_REMOVE, FALSE, NULL );
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;
@@ -2475,7 +2478,8 @@ NC_TrackCloseButton95 (HWND hwnd, WORD wParam)
     while(1)
     {
 	BOOL oldstate = pressed;
-        MSG_InternalGetMessage( QMSG_WIN32A, &msg, 0, 0, 0, PM_REMOVE, FALSE, NULL );
+        MSG_InternalGetMessage( &msg, 0, 0, WM_MOUSEFIRST, WM_MOUSELAST,
+                                0, PM_REMOVE, FALSE, NULL );
 
 	if(msg.message == WM_LBUTTONUP)
 	    break;

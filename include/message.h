@@ -14,8 +14,8 @@
 struct tagMSG;
 
 /* message.c */
-extern BOOL MSG_InternalGetMessage( int type, struct tagMSG *msg, HWND hwnd,
-                                    HWND hwndOwner, WPARAM code,
+extern BOOL MSG_InternalGetMessage( struct tagMSG *msg, HWND hwnd, HWND hwndOwner,
+                                    UINT first, UINT last, WPARAM code,
                                     WORD flags, BOOL sendIdle, BOOL* idleSent );
 
 /* timer.c */

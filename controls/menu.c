@@ -2768,7 +2768,7 @@ static INT MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	/* we have to keep the message in the queue until it's
 	 * clear that menu loop is not over yet. */
 
-	if (!MSG_InternalGetMessage( QMSG_WIN32A, &msg, msg.hwnd, mt.hOwnerWnd,
+	if (!MSG_InternalGetMessage( &msg, msg.hwnd, mt.hOwnerWnd, 0, 0,
 				     MSGF_MENU, PM_NOREMOVE, !enterIdleSent, &enterIdleSent )) break;
 
 	/* check if EndMenu() tried to cancel us, by posting this message */

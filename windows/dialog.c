@@ -1048,7 +1048,7 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     if (!(dlgInfo->flags & DF_END)) /* was EndDialog called in WM_INITDIALOG ? */
     {
         ShowWindow( hwnd, SW_SHOW );
-        while (MSG_InternalGetMessage(QMSG_WIN32A, &msg, hwnd, ownerMsg, MSGF_DIALOGBOX, 
+        while (MSG_InternalGetMessage(&msg, hwnd, ownerMsg, 0, 0, MSGF_DIALOGBOX,
                                       PM_REMOVE, !(wndPtr->dwStyle & DS_NOIDLEMSG), NULL ))
         {
             if (!(dlgInfo->flags & DF_END) && (!IsDialogMessageA( hwnd, &msg)))

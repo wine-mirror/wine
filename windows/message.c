@@ -1316,14 +1316,14 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
  * 'hwnd' must be the handle of the dialog or menu window.
  * 'code' is the message filter value (MSGF_??? codes).
  */
-BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
+BOOL MSG_InternalGetMessage( MSG *msg, HWND hwnd, HWND hwndOwner, UINT first, UINT last,
                              WPARAM code, WORD flags, BOOL sendIdle, BOOL* idleSent ) 
 {
     for (;;)
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( type, msg, 0, 0, 0, flags, TRUE ))
+	    if (!MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
@@ -1334,11 +1334,11 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
 		    if (idleSent!=NULL)
 		      *idleSent=TRUE;
 		}
-		MSG_PeekMessage( type, msg, 0, 0, 0, flags, FALSE );
+		MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( type, msg, 0, 0, 0, flags, FALSE );
+	    MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, flags, FALSE );
 
         /* Call message filters */
 
@@ -1360,7 +1360,7 @@ BOOL MSG_InternalGetMessage( int type, MSG *msg, HWND hwnd, HWND hwndOwner,
                     /* Message filtered -> remove it from the queue */
                     /* if it's still there. */
                     if (!(flags & PM_REMOVE))
-                        MSG_PeekMessage( type, msg, 0, 0, 0, PM_REMOVE, TRUE );
+                        MSG_PeekMessage( QMSG_WIN32A, msg, 0, first, last, PM_REMOVE, TRUE );
                     continue;
                 }
             }
