@@ -3659,7 +3659,7 @@ UINT X11DRV_DIB_SetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count,
 
   if (dib && dib->colorMap) {
     X11DRV_DIB_GenColorMap( dc, dib->colorMap, DIB_RGB_COLORS, dib->dibSection.dsBm.bmBitsPixel,
-                            TRUE, colors, start, count - start );
+                            TRUE, colors, start, count + start );
     return count;
   }
   return 0;
@@ -3673,7 +3673,8 @@ UINT X11DRV_DIB_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count,
   X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
 
   if (dib && dib->colorMap) {
-    int i, end = count - start;
+    int i, end = count + start;
+    if (end > dib->nColorMap) end = dib->nColorMap;
     for (i = start; i < end; i++,colors++) {
       COLORREF col = X11DRV_PALETTE_ToLogical( dib->colorMap[i] );
       colors->rgbBlue  = GetBValue(col);
@@ -3681,7 +3682,7 @@ UINT X11DRV_DIB_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count,
       colors->rgbRed   = GetRValue(col);
       colors->rgbReserved = 0;
     }
-    return count;
+    return end-start;
   }
   return 0;
 }
