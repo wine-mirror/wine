@@ -1514,10 +1514,10 @@ static	DWORD	MIX_GetNumDevs(void)
 DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
+#ifdef HAVE_OSS
     TRACE("(%04X, %s, %08lX, %08lX, %08lX);\n", wDevID, getMessage(wMsg),
           dwUser, dwParam1, dwParam2);
 
-#ifdef HAVE_OSS
     switch (wMsg)
     {
     case DRVM_INIT:
@@ -1550,6 +1550,9 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	return MMSYSERR_NOTSUPPORTED;
     }
 #else
+    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg,
+          dwUser, dwParam1, dwParam2);
+
     return MMSYSERR_NOTENABLED;
 #endif
 }
