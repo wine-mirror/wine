@@ -45,7 +45,10 @@
 	do {						\
 	    	DWORD __size = (to)->dwSize;		\
 	    	DWORD __copysize = __size;		\
-                memset(to,0,__size);                    \
+	    	DWORD __resetsize = __size;		\
+	        if (__resetsize > sizeof(*to))		\
+		    __resetsize = sizeof(*to);		\
+	    	memset(to,0,__resetsize);               \
 	        if ((from)->dwSize < __size) 		\
 		    __copysize = (from)->dwSize;	\
 		memcpy(to,from,__copysize);		\
