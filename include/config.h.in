@@ -155,6 +155,9 @@
 /* Define to 1 if you have the `getservbyport' function. */
 #undef HAVE_GETSERVBYPORT
 
+/* Define to 1 if you have the `gettid' function. */
+#undef HAVE_GETTID
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -466,6 +469,9 @@
 
 /* Define to 1 if `si_fd' is member of `siginfo_t'. */
 #undef HAVE_SIGINFO_T_SI_FD
+
+/* Define to 1 if you have the sigsetjmp (and siglongjmp) function */
+#undef HAVE_SIGSETJMP
 
 /* Define to 1 if the system has the type `size_t'. */
 #undef HAVE_SIZE_T

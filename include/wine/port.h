@@ -216,6 +216,10 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 size_t getpagesize(void);
 #endif  /* HAVE_GETPAGESIZE */
 
+#ifndef HAVE_GETTID
+pid_t gettid(void);
+#endif /* HAVE_GETTID */
+
 #ifndef HAVE_LSTAT
 int lstat(const char *file_name, struct stat *buf);
 #endif /* HAVE_LSTAT */
@@ -231,6 +235,13 @@ ssize_t pread( int fd, void *buf, size_t count, off_t offset );
 #ifndef HAVE_PWRITE
 ssize_t pwrite( int fd, const void *buf, size_t count, off_t offset );
 #endif /* HAVE_PWRITE */
+
+#ifndef HAVE_SIGSETJMP
+# include <setjmp.h>
+typedef jmp_buf sigjmp_buf;
+int sigsetjmp( sigjmp_buf buf, int savesigs );
+void siglongjmp( sigjmp_buf buf, int val );
+#endif /* HAVE_SIGSETJMP */
 
 #ifndef HAVE_STATFS
 int statfs(const char *name, struct statfs *info);

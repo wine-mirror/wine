@@ -44,19 +44,6 @@ static struct wine_pthread_functions funcs;
 static pthread_key_t teb_key;
 #endif
 
-static inline int gettid(void)
-{
-#if defined(__linux__) && defined(__i386__)
-    int ret;
-    __asm__("int $0x80" : "=a" (ret) : "0" (224) /* SYS_gettid */);
-    if (ret < 0) ret = -1;
-    return ret;
-#else
-    return -1;  /* FIXME */
-#endif
-}
-
-
 /***********************************************************************
  *           wine_pthread_init_process
  *
