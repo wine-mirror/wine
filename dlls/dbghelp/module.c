@@ -200,10 +200,11 @@ struct module* module_get_containee(const struct process* pcs,
  */
 struct module* module_get_debug(const struct process* pcs, struct module* module)
 {
+    BOOL        ret;
+
     if (!module) return NULL;
     switch (module->module.SymType)
     {
-    case -1: break;
     case SymNone:
         module = module_get_container(pcs, module);
         if (!module || module->module.SymType != SymDeferred) break;
@@ -211,18 +212,15 @@ struct module* module_get_debug(const struct process* pcs, struct module* module
     case SymDeferred:
         switch (module->type)
         {
-        case DMT_ELF:
-            elf_load_debug_info(module);
-            break;
-        case DMT_PE:
-            pe_load_debug_info(pcs, module);
-            break;
-        default: break;
+        case DMT_ELF: ret = elf_load_debug_info(module);     break;
+        case DMT_PE:  ret = pe_load_debug_info(pcs, module); break;
+        default:      ret = FALSE;                           break;
         }
+        if (!ret) module->module.SymType = SymNone;
         break;
     default: break;
     }
-    return (module && module->module.SymType > SymNone) ? module : NULL;
+    return (module && module->module.SymType != SymNone) ? module : NULL;
 }
 
 /***********************************************************************
@@ -461,10 +459,10 @@ BOOL  WINAPI SymGetModuleInfo(HANDLE hProcess, DWORD dwAddr,
     if (!module) return FALSE;
 
     *ModuleInfo = module->module;
-    if (module->module.SymType <= SymNone)
+    if (module->module.SymType == SymNone)
     {
         module = module_get_container(pcs, module);
-        if (module && module->module.SymType > SymNone)
+        if (module && module->module.SymType != SymNone)
             ModuleInfo->SymType = module->module.SymType;
     }
 

@@ -1078,9 +1078,9 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
     }
 }
 
-SYM_TYPE stabs_parse(struct module* module, const char* addr, 
-                     unsigned long load_offset, unsigned int staboff, int stablen,
-                     unsigned int strtaboff, int strtablen)
+BOOL stabs_parse(struct module* module, const char* addr, 
+                 unsigned long load_offset, unsigned int staboff, int stablen,
+                 unsigned int strtaboff, int strtablen)
 {
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
@@ -1102,7 +1102,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
     struct pending_loc_var*     pending_vars = NULL;
     unsigned                    num_pending_vars = 0;
     unsigned                    num_allocated_pending_vars = 0;
-    SYM_TYPE                    ret = SymDia;
+    BOOL                        ret = TRUE;
 
     nstab = stablen / sizeof(struct stab_nlist);
     stab_ptr = (const struct stab_nlist*)(addr + staboff);
@@ -1437,7 +1437,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
             {
                 ERR("Excluded header not found (%s,%ld)\n", ptr, stab_ptr->n_value);
                 module_reset_debug_info(module);
-                ret = SymNone;
+                ret = FALSE;
                 goto done;
             }
             break;
@@ -1452,6 +1452,7 @@ SYM_TYPE stabs_parse(struct module* module, const char* addr,
         TRACE("0x%02x %lx %s\n", 
               stab_ptr->n_type, stab_ptr->n_value, debugstr_a(strs + stab_ptr->n_un.n_strx));
     }
+    module->module.SymType = SymDia;
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();

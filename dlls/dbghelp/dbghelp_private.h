@@ -287,7 +287,7 @@ struct process
 extern struct process* process_find_by_handle(HANDLE hProcess);
 
 /* elf_module.c */
-extern SYM_TYPE     elf_load_debug_info(struct module* module);
+extern BOOL         elf_load_debug_info(struct module* module);
 extern struct module*
                     elf_load_module(struct process* pcs, const char* name);
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
@@ -329,7 +329,7 @@ extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs, 
                                   struct module* module);
 /* msc.c */
-extern SYM_TYPE     pe_load_debug_directory(const struct process* pcs, 
+extern BOOL         pe_load_debug_directory(const struct process* pcs, 
                                             struct module* module, 
                                             const BYTE* file_map,
                                             const IMAGE_DEBUG_DIRECTORY* dbg, int nDbg);
@@ -340,14 +340,14 @@ extern struct module*
 extern struct module*
                     pe_load_module_from_pcs(struct process* pcs, const char* name, 
                                             const char* mod_name, DWORD base, DWORD size);
-extern SYM_TYPE     pe_load_debug_info(const struct process* pcs, 
+extern BOOL         pe_load_debug_info(const struct process* pcs, 
                                        struct module* module);
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* source);
 extern const char*  source_get(const struct module* module, unsigned idx);
 
 /* stabs.c */
-extern SYM_TYPE     stabs_parse(struct module* module, const char* addr, 
+extern BOOL         stabs_parse(struct module* module, const char* addr, 
                                 unsigned long load_offset,
                                 unsigned int staboff, int stablen,
                                 unsigned int strtaboff, int strtablen);

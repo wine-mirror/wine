@@ -161,6 +161,9 @@ struct symt_public* symt_new_public(struct module* module,
 
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n", 
                          module->module.ModuleName, name, address);
+    if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) && 
+        symt_find_nearest(module, address) != -1)
+        return NULL;
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagPublicSymbol;
@@ -548,12 +551,6 @@ static BOOL symt_enum_module(struct module* module, regex_t* regex,
     while ((ptr = hash_table_iter_up(&hti)))
     {
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
-        /* FIXME: this is not true, we should only drop the public
-         * symbol iff no other one is found
-         */
-        if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
-            sym->symt.tag == SymTagPublicSymbol) continue;
-
         if (sym->hash_elt.name &&
             regexec(regex, sym->hash_elt.name, 0, NULL, 0) == 0)
         {

@@ -171,7 +171,7 @@ static void coff_add_symbol(struct CoffFile* coff_file, struct symt* sym)
     coff_file->entries[coff_file->neps++] = sym;
 }
 
-static SYM_TYPE coff_process_info(const struct msc_debug_info* msc_dbg)
+static BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 {
     const IMAGE_AUX_SYMBOL*		aux;
     const IMAGE_COFF_SYMBOLS_HEADER*	coff;
@@ -189,7 +189,7 @@ static SYM_TYPE coff_process_info(const struct msc_debug_info* msc_dbg)
     int		       		        linetab_indx;
     const char*                         nampnt;
     int		       		        naux;
-    SYM_TYPE                            sym_type = SymNone;
+    BOOL                                ret = FALSE;
     DWORD                               addr;
 
     TRACE("Processing COFF symbols...\n");
@@ -466,8 +466,6 @@ static SYM_TYPE coff_process_info(const struct msc_debug_info* msc_dbg)
             }
         }
 
-        sym_type = SymCoff;
-
         for (j = 0; j < coff_files.nfiles; j++)
 	{
             if (coff_files.files[j].entries != NULL)
@@ -476,9 +474,11 @@ static SYM_TYPE coff_process_info(const struct msc_debug_info* msc_dbg)
 	    }
 	}
         HeapFree(GetProcessHeap(), 0, coff_files.files);
+        msc_dbg->module->module.SymType = SymCoff;
+        ret = TRUE;
     }
 
-    return sym_type;
+    return ret;
 }
 
 
@@ -2701,11 +2701,11 @@ static HANDLE open_pdb_file(const struct process* pcs, struct module* module,
     return (h == INVALID_HANDLE_VALUE) ? NULL : h;
 }
 
-static SYM_TYPE pdb_process_file(const struct process* pcs, 
-                                 const struct msc_debug_info* msc_dbg,
-                                 const char* filename, DWORD timestamp)
+static BOOL pdb_process_file(const struct process* pcs, 
+                             const struct msc_debug_info* msc_dbg,
+                             const char* filename, DWORD timestamp)
 {
-    SYM_TYPE    sym_type = -1;
+    BOOL        ret = FALSE;
     HANDLE      hFile, hMap = NULL;
     char*       image = NULL;
     PDB_HEADER* pdb = NULL;
@@ -2855,7 +2855,8 @@ static SYM_TYPE pdb_process_file(const struct process* pcs,
         file = (char*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
     }
 
-    sym_type = SymCv;
+    msc_dbg->module->module.SymType = SymCv;
+    ret = TRUE;
 
  leave:
 
@@ -2871,7 +2872,7 @@ static SYM_TYPE pdb_process_file(const struct process* pcs,
     if (hMap) CloseHandle(hMap);
     if (hFile) CloseHandle(hFile);
 
-    return sym_type;
+    return ret;
 }
 
 /*========================================================================
@@ -2915,11 +2916,12 @@ typedef struct _CV_DIRECTORY_ENTRY
 #define	sstAlignSym		0x125
 #define	sstSrcModule		0x127
 
-static SYM_TYPE codeview_process_info(const struct process* pcs, 
-                                      const struct msc_debug_info* msc_dbg)
+static BOOL codeview_process_info(const struct process* pcs, 
+                                  const struct msc_debug_info* msc_dbg)
 {
     const CODEVIEW_HEADER*      cv = (const CODEVIEW_HEADER*)msc_dbg->root;
-    SYM_TYPE                    sym_type = -1;
+    BOOL                        ret = FALSE;
+
 
     switch (cv->dwSignature)
     {
@@ -2963,7 +2965,8 @@ static SYM_TYPE codeview_process_info(const struct process* pcs,
             }
         }
 
-        sym_type = SymCv;
+        msc_dbg->module->module.SymType = SymCv;
+        ret = TRUE;
         break;
     }
 
@@ -2972,7 +2975,7 @@ static SYM_TYPE codeview_process_info(const struct process* pcs,
         const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)(cv + 1);
 
         codeview_init_basic_types(msc_dbg->module);
-        sym_type = pdb_process_file(pcs, msc_dbg, pdb->name, pdb->timestamp);
+        ret = pdb_process_file(pcs, msc_dbg, pdb->name, pdb->timestamp);
         break;
     }
     default:
@@ -2981,17 +2984,17 @@ static SYM_TYPE codeview_process_info(const struct process* pcs,
         break;
     }
 
-    return sym_type;
+    return ret;
 }
 
 /*========================================================================
  * Process debug directory.
  */
-SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* module, 
-                                 const BYTE* mapping, const IMAGE_DEBUG_DIRECTORY* dbg, 
-                                 int nDbg)
+BOOL pe_load_debug_directory(const struct process* pcs, struct module* module, 
+                             const BYTE* mapping, const IMAGE_DEBUG_DIRECTORY* dbg, 
+                             int nDbg)
 {
-    SYM_TYPE                    sym_type;
+    BOOL                        ret;
     int                         i;
     struct msc_debug_info       msc_dbg;
     const IMAGE_NT_HEADERS*     nth = RtlImageNtHeader((void*)mapping);
@@ -3004,7 +3007,7 @@ SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* modul
 
     __TRY
     {
-        sym_type = -1;
+        ret = FALSE;
 
         /* First, watch out for OMAP data */
         for (i = 0; i < nDbg; i++)
@@ -3023,8 +3026,7 @@ SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* modul
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_CODEVIEW)
             {
                 msc_dbg.root = mapping + dbg[i].PointerToRawData;
-                sym_type = codeview_process_info(pcs, &msc_dbg);
-                if (sym_type == SymCv) goto done;
+                if ((ret = codeview_process_info(pcs, &msc_dbg))) goto done;
             }
         }
     
@@ -3034,8 +3036,7 @@ SYM_TYPE pe_load_debug_directory(const struct process* pcs, struct module* modul
             if (dbg[i].Type == IMAGE_DEBUG_TYPE_COFF)
             {
                 msc_dbg.root = mapping + dbg[i].PointerToRawData;
-                sym_type = coff_process_info(&msc_dbg);
-                if (sym_type == SymCoff) goto done;
+                if ((ret = coff_process_info(&msc_dbg))) goto done;
             }
         }
     done:
@@ -3073,8 +3074,8 @@ typedef struct _FPO_DATA
     __EXCEPT(page_fault)
     {
         ERR("Got a page fault while loading symbols\n");
-        sym_type = -1;
+        ret = FALSE;
     }
     __ENDTRY
-    return sym_type;
+    return ret;
 }

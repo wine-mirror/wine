@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  * look for stabs information in PE header (it's how the mingw compiler provides 
  * its debugging information)
  */
-static SYM_TYPE pe_load_stabs(const struct process* pcs, struct module* module, 
-                              const void* mapping, IMAGE_NT_HEADERS* nth)
+static BOOL pe_load_stabs(const struct process* pcs, struct module* module, 
+                          const void* mapping, IMAGE_NT_HEADERS* nth)
 {
     IMAGE_SECTION_HEADER*       section;
     int                         i, stabsize = 0, stabstrsize = 0;
     unsigned int                stabs = 0, stabstr = 0;
-    SYM_TYPE                    sym_type = SymNone;
+    BOOL                        ret = FALSE;
 
     section = (IMAGE_SECTION_HEADER*)
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
@@ -66,10 +66,10 @@ static SYM_TYPE pe_load_stabs(const struct process* pcs, struct module* module,
 
     if (stabstrsize && stabsize)
     {
-        sym_type = stabs_parse(module, mapping, module->module.BaseOfImage, 
-                               stabs, stabsize, stabstr, stabstrsize);
+        ret = stabs_parse(module, mapping, module->module.BaseOfImage, 
+                          stabs, stabsize, stabstr, stabstrsize);
     }
-    return sym_type;
+    return ret;
 }
 
 static BOOL CALLBACK dbg_match(char* file, void* user)
@@ -83,15 +83,15 @@ static BOOL CALLBACK dbg_match(char* file, void* user)
  *
  * loads a .dbg file
  */
-static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* module,
-                                 const char* dbg_name, DWORD timestamp)
+static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
+                             const char* dbg_name, DWORD timestamp)
 {
     char                                tmp[MAX_PATH];
     HANDLE                              hFile = INVALID_HANDLE_VALUE, hMap = 0;
     const BYTE*                         dbg_mapping = NULL;
     const IMAGE_SEPARATE_DEBUG_HEADER*  hdr;
     const IMAGE_DEBUG_DIRECTORY*        dbg;
-    SYM_TYPE                            sym_type = -1;
+    BOOL                                ret = FALSE;
 
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
@@ -120,8 +120,8 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
              hdr->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
              hdr->ExportedNamesSize);
 
-        sym_type = pe_load_debug_directory(pcs, module, dbg_mapping, dbg, 
-                                           hdr->DebugDirectorySize / sizeof(*dbg));
+        ret = pe_load_debug_directory(pcs, module, dbg_mapping, dbg, 
+                                      hdr->DebugDirectorySize / sizeof(*dbg));
     }
     else
         WINE_ERR("-Unable to peruse .DBG file %s (%s)\n", dbg_name, debugstr_a(tmp));
@@ -129,7 +129,7 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
     if (dbg_mapping) UnmapViewOfFile((void*)dbg_mapping);
     if (hMap) CloseHandle(hMap);
     if (hFile != NULL) CloseHandle(hFile);
-    return sym_type;
+    return ret;
 }
 
 /******************************************************************
@@ -137,11 +137,11 @@ static SYM_TYPE pe_load_dbg_file(const struct process* pcs, struct module* modul
  *
  * Process MSC debug information in PE file.
  */
-static SYM_TYPE pe_load_msc_debug_info(const struct process* pcs, 
-                                       struct module* module,
-                                       const void* mapping, IMAGE_NT_HEADERS* nth)
+static BOOL pe_load_msc_debug_info(const struct process* pcs, 
+                                   struct module* module,
+                                   const void* mapping, IMAGE_NT_HEADERS* nth)
 {
-    SYM_TYPE                    sym_type = -1;
+    BOOL                        ret = FALSE;
     const IMAGE_DATA_DIRECTORY* dir;
     const IMAGE_DEBUG_DIRECTORY*dbg = NULL;
     int                         nDbg;
@@ -149,9 +149,9 @@ static SYM_TYPE pe_load_msc_debug_info(const struct process* pcs,
     /* Read in debug directory */
     dir = nth->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_DEBUG;
     nDbg = dir->Size / sizeof(IMAGE_DEBUG_DIRECTORY);
-    if (!nDbg) return sym_type;
+    if (!nDbg) return FALSE;
 
-    dbg = (const IMAGE_DEBUG_DIRECTORY*)((const char*)mapping + dir->VirtualAddress);
+    dbg = RtlImageRvaToVa(nth, (void*)mapping, dir->VirtualAddress, NULL);
 
     /* Parse debug directory */
     if (nth->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED)
@@ -168,32 +168,31 @@ static SYM_TYPE pe_load_msc_debug_info(const struct process* pcs,
         }
         else
         {
-            sym_type = pe_load_dbg_file(pcs, module, misc->Data, nth->FileHeader.TimeDateStamp);
+            ret = pe_load_dbg_file(pcs, module, misc->Data, nth->FileHeader.TimeDateStamp);
         }
     }
     else
     {
         /* Debug info is embedded into PE module */
-        sym_type = pe_load_debug_directory(pcs, module, mapping, dbg, nDbg);
+        ret = pe_load_debug_directory(pcs, module, mapping, dbg, nDbg);
     }
 
-    return sym_type;
+    return ret;
 }
 
 /***********************************************************************
  *			pe_load_export_debug_info
  */
-static SYM_TYPE pe_load_export_debug_info(const struct process* pcs, 
-                                          struct module* module, 
-                                          const void* mapping, IMAGE_NT_HEADERS* nth)
+static BOOL pe_load_export_debug_info(const struct process* pcs, 
+                                      struct module* module, 
+                                      const void* mapping, IMAGE_NT_HEADERS* nth)
 {
-    unsigned int 		i;
-    IMAGE_DATA_DIRECTORY* 	dir;
-    DWORD			base = module->module.BaseOfImage;
-    ADDRESS                     addr;
+    unsigned int 		        i;
+    const IMAGE_EXPORT_DIRECTORY* 	exports;
+    DWORD			        base = module->module.BaseOfImage;
+    DWORD                               size;
 
-    addr.Mode = AddrModeFlat;
-    addr.Segment = 0;
+    if (dbghelp_options & SYMOPT_NO_PUBLICS) return TRUE;
 
 #if 0
     /* Add start of DLL (better use the (yet unimplemented) Exe SymTag for this) */
@@ -205,8 +204,7 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
     /* Add entry point */
     symt_new_public(module, NULL, "EntryPoint", 
                     base + nth->OptionalHeader.AddressOfEntryPoint, 0,
-                    TRUE /* FIXME */, TRUE /* FIXME */);
-
+                    TRUE, TRUE);
 #if 0
     /* FIXME: we'd better store addresses linked to sections rather than 
        absolute values */
@@ -216,33 +214,33 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
         ((char*)&nth->OptionalHeader + nth->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nth->FileHeader.NumberOfSections; i++, section++) 
     {
-	symt_new_public(module, NULL, section->Name, base + section->VirtualAddress, 0,
-                        TRUE /* FIXME */, TRUE /* FIXME */);
+	symt_new_public(module, NULL, section->Name, 
+                        RtlImageRvaToVa(nth, (void*)mapping, section->VirtualAddress, NULL), 
+                        0, TRUE /* FIXME */, TRUE /* FIXME */);
     }
 #endif
-    
-    /* Add exported functions */
-    if ((dir = RtlImageDirectoryEntryToData((void*)mapping, TRUE, 
-                                            IMAGE_DIRECTORY_ENTRY_EXPORT, NULL)))
-    {
-	const IMAGE_EXPORT_DIRECTORY*   exports;
-	const WORD*			ordinals = NULL;
-	const void* const*		functions = NULL;
-	const DWORD*			names = NULL;
-	unsigned int		        j;
-	char                            buffer[16];
 
-        exports   = (const void*)((const char*)mapping + dir->VirtualAddress);
-        functions = (const void*)((const char*)mapping + exports->AddressOfFunctions);
-        ordinals  = (const void*)((const char*)mapping + exports->AddressOfNameOrdinals);
-        names     = (const void*)((const char*)mapping + exports->AddressOfNames);
-	    
+    /* Add exported functions */
+    if ((exports = RtlImageDirectoryEntryToData((void*)mapping, FALSE,
+                                                IMAGE_DIRECTORY_ENTRY_EXPORT, &size)))
+    {
+        const WORD*             ordinals = NULL;
+        const DWORD_PTR*	functions = NULL;
+        const DWORD*		names = NULL;
+        unsigned int		j;
+        char			buffer[16];
+
+        functions = RtlImageRvaToVa(nth, (void*)mapping, exports->AddressOfFunctions, NULL);
+        ordinals  = RtlImageRvaToVa(nth, (void*)mapping, exports->AddressOfNameOrdinals, NULL);
+        names     = RtlImageRvaToVa(nth, (void*)mapping, exports->AddressOfNames, NULL);
+
         for (i = 0; i < exports->NumberOfNames; i++) 
         {
             if (!names[i]) continue;
-            symt_new_public(module, NULL, (const char*)base + names[i], 
-                            base + (DWORD)functions[ordinals[i]], 0,
-                            TRUE /* FIXME */, TRUE /* FIXME */);
+            symt_new_public(module, NULL, 
+                            RtlImageRvaToVa(nth, (void*)mapping, names[i], NULL),
+                            base + functions[ordinals[i]], 
+                            0, TRUE /* FIXME */, TRUE /* FIXME */);
         }
 	    
         for (i = 0; i < exports->NumberOfFunctions; i++) 
@@ -258,16 +256,17 @@ static SYM_TYPE pe_load_export_debug_info(const struct process* pcs,
         }
     }
     /* no real debug info, only entry points */
-    return module->module.SymType = SymExport;
+    module->module.SymType = SymExport;
+    return TRUE;
 }
 
 /******************************************************************
  *		pe_load_debug_info
  *
  */
-SYM_TYPE pe_load_debug_info(const struct process* pcs, struct module* module)
+BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
 {
-    SYM_TYPE            sym_type = -1;
+    BOOL                ret = FALSE;
     HANDLE              hFile;
     HANDLE              hMap;
     void*               mapping;
@@ -275,7 +274,7 @@ SYM_TYPE pe_load_debug_info(const struct process* pcs, struct module* module)
 
     hFile = CreateFileA(module->module.LoadedImageName, GENERIC_READ, FILE_SHARE_READ,
                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE) return -1;
+    if (hFile == INVALID_HANDLE_VALUE) return ret;
     if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0)
     {
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
@@ -284,24 +283,22 @@ SYM_TYPE pe_load_debug_info(const struct process* pcs, struct module* module)
 
             if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
             {
-                sym_type = pe_load_stabs(pcs, module, mapping, nth);
-                if (sym_type <= SymNone)
-                    sym_type = pe_load_msc_debug_info(pcs, module, mapping, nth);
+                ret = pe_load_stabs(pcs, module, mapping, nth) ||
+                    pe_load_msc_debug_info(pcs, module, mapping, nth);
                 /* if we still have no debug info (we could only get SymExport at this
                  * point), then do the SymExport except if we have an ELF container, 
                  * in which case we'll rely on the export's on the ELF side
                  */
             }
-            if (sym_type <= SymNone && !module_get_debug(pcs, module))
-                sym_type = pe_load_export_debug_info(pcs, module, mapping, nth);
+            if (pe_load_export_debug_info(pcs, module, mapping, nth) && !ret)
+                ret = TRUE;
             UnmapViewOfFile(mapping);
         }
         CloseHandle(hMap);
     }
     CloseHandle(hFile);
 
-    module->module.SymType = (sym_type >= SymNone) ? sym_type : SymNone;
-    return sym_type;
+    return ret;
 }
 
 /******************************************************************
@@ -349,8 +346,10 @@ struct module* pe_load_module(struct process* pcs, char* name,
                                     nth->OptionalHeader.CheckSum);
                 if (module)
                 {
-                    module->module.SymType = (dbghelp_options & SYMOPT_DEFERRED_LOADS) ? 
-                        SymDeferred : pe_load_debug_info(pcs, module);
+                    if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
+                        module->module.SymType = SymDeferred;
+                    else
+                        pe_load_debug_info(pcs, module);
                 }
             }
             UnmapViewOfFile(mapping);

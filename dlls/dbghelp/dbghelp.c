@@ -33,8 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *      + funcargtype:s are (partly) wrong: they should be a specific struct (like
  *        typedef) pointing to the actual type (and not a direct access)
  *      + we should store the underlying type for an enum in the symt_enum struct
- *  - most options (dbghelp_options) are not used (loading lines, decoration, 
- *    deferring reading of module symbols, public symbols...)
+ *  - most options (dbghelp_options) are not used (loading lines, decoration...)
  *  - in symbol lookup by name, we don't use RE everywhere we should. Moreover, when
  *    we're supposed to use RE, it doesn't make use of our hash tables. Therefore,
  *    we could use hash if name isn't a RE, and fall back to a full search when we
@@ -46,9 +45,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
  *      + we should add parameters' types to the function's signature
  *        while processing a function's parameters
  *      + get rid of MSC reading FIXME:s (lots of types are not defined)
- *      + support the PUBLICS_ONLY, NO_PUBLICS and AUTO_PUBLICS options
  *      + C++ management
  *  - stabs: 
+ *      + when, in a same module, the same definition is used in several compilation
+ *        units, we get several definitions of the same object (especially 
+ *        struct/union). we should find a way not to duplicate them
+ *      + in some cases (dlls/user/dialog16.c DIALOG_GetControl16), the same static
+ *        global variable is defined several times (at different scopes). We are
+ *        getting several of those while looking for a unique symbol. Part of the 
+ *        issue is that we don't give a scope to a static variable inside a function
  *      + C++ management
  *  - implement the callback notification mechanism
  */
