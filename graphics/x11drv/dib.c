@@ -4734,29 +4734,57 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 				const BITMAPINFO *info, UINT coloruse )
 {
     X11DRV_DIB_IMAGEBITS_DESCR descr;
-    DWORD width, oldcy = cy;
+    DWORD width;
     INT result;
-    int height, tmpheight;
+    int height;
+    BOOL top_down;
     POINT pt;
     DC *dc = physDev->dc;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
         return 0;
-    tmpheight = height;
-    if (height < 0) height = -height;
-    if (!lines || (startscan >= height)) return 0;
-    if (startscan + lines > height) lines = height - startscan;
-    if (ySrc < startscan) ySrc = startscan;
-    else if (ySrc >= startscan + lines) return 0;
-    if (xSrc >= width) return 0;
-    if (ySrc + cy >= startscan + lines) cy = startscan + lines - ySrc;
-    if (xSrc + cx >= width) cx = width - xSrc;
-    if (!cx || !cy) return 0;
+    top_down = (height < 0);
+    if (top_down) height = -height;
 
     pt.x = xDest;
     pt.y = yDest;
     LPtoDP(physDev->hdc, &pt, 1);
+
+    if (!lines || (startscan >= height)) return 0;
+    if (!top_down && startscan + lines > height) lines = height - startscan;
+
+    /* make xSrc,ySrc point to the upper-left corner, not the lower-left one,
+     * and clamp all values to fit inside [startscan,startscan+lines]
+     */
+    if (ySrc + cy <= startscan + lines)
+    {
+        INT y = startscan + lines - (ySrc + cy);
+        if (ySrc < startscan) cy -= (startscan - ySrc);
+        if (!top_down)
+        {
+            /* avoid getting unnecessary lines */
+            ySrc = 0;
+            if (y >= lines) return 0;
+            lines -= y;
+        }
+        else
+        {
+            if (y >= lines) return lines;
+            ySrc = y;  /* need to get all lines in top down mode */
+        }
+    }
+    else
+    {
+        if (ySrc >= startscan + lines) return lines;
+        pt.y += ySrc + cy - (startscan + lines);
+        cy = startscan + lines - ySrc;
+        ySrc = 0;
+        if (cy > lines) cy = lines;
+    }
+    if (xSrc >= width) return lines;
+    if (xSrc + cx >= width) cx = width - xSrc;
+    if (!cx || !cy) return lines;
 
     X11DRV_SetupGCForText( physDev );  /* To have the correct colors */
     TSXSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
@@ -4793,16 +4821,15 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     descr.bits      = bits;
     descr.image     = NULL;
     descr.palentry  = NULL;
-    descr.lines     = tmpheight >= 0 ? lines : -lines;
+    descr.lines     = top_down ? -lines : lines;
     descr.infoWidth = width;
     descr.depth     = dc->bitsPerPixel;
     descr.drawable  = physDev->drawable;
     descr.gc        = physDev->gc;
     descr.xSrc      = xSrc;
-    descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy)
-                                     : ySrc - startscan;
+    descr.ySrc      = ySrc;
     descr.xDest     = physDev->org.x + pt.x;
-    descr.yDest     = physDev->org.y + pt.y + (tmpheight >= 0 ? oldcy-cy : 0);
+    descr.yDest     = physDev->org.y + pt.y;
     descr.width     = cx;
     descr.height    = cy;
     descr.useShm    = FALSE;
