@@ -95,6 +95,16 @@ static const char main_key_FR[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Icelandic keyboard layout (contributed by Ríkharður Egilsson) */
+static const char main_key_IS[MAIN_LEN][4] =
+{
+ "°","1!","2\"","3#","4$","5%","6&","7/{","8([","9)]","0=}","öÖ\\","-_",
+ "qQ@","wW","eE","rR","tT","yY","uU","iI","oO","pP","ðÐ","'?~",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","æÆ","´^","+*`",
+ "zZ","xX","cC","vV","bB","nN","mM",",;",".:","þÞ",
+ "<>|"
+};
+
 /*** German keyboard layout (contributed by Ulrich Weigand) */
 static const char main_key_DE[MAIN_LEN][4] =
 {
@@ -235,6 +245,7 @@ static struct {
  {MAKELANGID(LANG_SPANISH,SUBLANG_DEFAULT),        1252, 850, &main_key_ES},
  {MAKELANGID(LANG_DUTCH,SUBLANG_DUTCH_BELGIAN),    1252, 850, &main_key_BE},
  {MAKELANGID(LANG_ITALIAN,SUBLANG_DEFAULT),        1252, 850, &main_key_IT},
+ {MAKELANGID(LANG_ICELANDIC,SUBLANG_DEFAULT),      1252, 850, &main_key_IS},
 
  {0} /* sentinel */
 };
