@@ -11,5 +11,6 @@ resource.ok
 resource.res
 sysparams.ok
 testlist.c
+text.ok
 win.ok
 wsprintf.ok

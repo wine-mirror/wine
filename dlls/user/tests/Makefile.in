@@ -16,6 +16,7 @@ CTESTS = \
 	msg.c \
 	resource.c \
 	sysparams.c \
+	text.c \
 	win.c \
 	wsprintf.c
 
