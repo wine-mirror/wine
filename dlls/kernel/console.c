@@ -196,9 +196,9 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, LPSECURITY_ATTRIBUTES sa,
     BOOL        output;
     HANDLE ret;
 
-    if (strcmpW(coninW, name) == 0) 
+    if (strcmpiW(coninW, name) == 0) 
         output = FALSE;
-    else if (strcmpW(conoutW, name) == 0) 
+    else if (strcmpiW(conoutW, name) == 0) 
         output = TRUE;
     else
     {
