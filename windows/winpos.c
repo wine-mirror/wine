@@ -308,12 +308,6 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         goto done;
     }
 
-    if (wndPtr->hrgnWnd)
-    {
-        /* delete previous region */
-        DeleteObject(wndPtr->hrgnWnd);
-        wndPtr->hrgnWnd = 0;
-    }
 
     /* we'd like to set it back to 0 */
     if (hrgn == 0)
@@ -326,13 +320,32 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         if (GetRgnBox(hrgn, &tempRect) == ERROR) goto done;
     }
 
-    /* valid region handle */
-    wndPtr->hrgnWnd = hrgn;
+
+    /* Size the window to the rectangle of the new region 
+       (if it isn't NULL) */
     SetWindowPos( hwnd, NULL, tempRect.left, tempRect.top,
                   tempRect.right  - tempRect.left, tempRect.bottom - tempRect.top,
                   SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE |
                   SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
 
+    
+    if (wndPtr->hrgnWnd)
+    {
+        /* delete previous region */
+        DeleteObject(wndPtr->hrgnWnd);
+        wndPtr->hrgnWnd = 0;
+    }
+    else if (hrgn == NULL)
+    {
+        /* if there was no previous region (stored in wndPtr->hrgnWnd) and 
+           the region to be set is also NULL, there is nothing more to do
+         */
+        ret = TRUE;
+        goto done;
+    }
+    
+    /* valid region handle */
+    wndPtr->hrgnWnd = hrgn;
     wndPtr->pDriver->pSetWindowRgn(wndPtr, hrgn);
 
     ret = TRUE;
