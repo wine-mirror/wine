@@ -101,7 +101,7 @@
 @ stdcall InternetCreateUrlW(ptr long ptr ptr)
 @ stub InternetDebugGetLocalTime
 @ stub InternetDial
-@ stub InternetErrorDlg
+@ stdcall InternetErrorDlg(long long long long ptr)
 @ stdcall InternetFindNextFileA(ptr ptr)
 @ stub InternetFindNextFileW
 @ stub InternetGetCertByURL

@@ -83,8 +83,9 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
 void HTTP_CloseConnection(LPWININETHTTPREQA lpwhr);
 BOOL HTTP_InterpretHttpHeader(LPSTR buffer, LPSTR field, INT fieldlen, LPSTR value, INT valuelen);
 INT HTTP_GetStdHeaderIndex(LPCSTR lpszField);
-INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr);
+BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr);
 INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQA lpwhr, LPCSTR lpszField);
+BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQA lpwhr, INT index);
 
 inline static LPSTR HTTP_strdup( LPCSTR str )
 {
@@ -374,6 +375,160 @@ end:
 }
 
 /***********************************************************************
+ *  HTTP_Base64
+ */
+static UINT HTTP_Base64( LPCSTR bin, LPSTR base64 )
+{
+    UINT n = 0, x;
+    static LPSTR HTTP_Base64Enc = 
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    while( bin[0] )
+    {
+        /* first 6 bits, all from bin[0] */
+        base64[n++] = HTTP_Base64Enc[(bin[0] & 0xfc) >> 2];
+        x = (bin[0] & 3) << 4;
+
+        /* next 6 bits, 2 from bin[0] and 4 from bin[1] */
+        if( !bin[1] )
+        {
+            base64[n++] = HTTP_Base64Enc[x];
+            base64[n++] = '=';
+            base64[n++] = '=';
+            break;
+        }
+        base64[n++] = HTTP_Base64Enc[ x | ( (bin[1]&0xf0) >> 4 ) ];
+        x = ( bin[1] & 0x0f ) << 2;
+
+        /* next 6 bits 4 from bin[1] and 2 from bin[2] */
+        if( !bin[2] )
+        {
+            base64[n++] = HTTP_Base64Enc[x];
+            base64[n++] = '=';
+            break;
+        }
+        base64[n++] = HTTP_Base64Enc[ x | ( (bin[2]&0xc0 ) >> 6 ) ];
+
+        /* last 6 bits, all from bin [2] */
+        base64[n++] = HTTP_Base64Enc[ bin[2] & 0x3f ];
+        bin += 3;
+    }
+    base64[n] = 0;
+    return n;
+}
+
+/***********************************************************************
+ *  HTTP_EncodeBasicAuth
+ *
+ *  Encode the basic authentication string for HTTP 1.1
+ */
+static LPSTR HTTP_EncodeBasicAuth( LPCSTR username, LPCSTR password)
+{
+    UINT len;
+    LPSTR in, out, szBasic = "Basic ";
+
+    len = strlen( username ) + 1 + strlen ( password ) + 1;
+    in = HeapAlloc( GetProcessHeap(), 0, len );
+    if( !in )
+        return NULL;
+
+    len = strlen(szBasic) +
+          (strlen( username ) + 1 + strlen ( password ))*2 + 1 + 1;
+    out = HeapAlloc( GetProcessHeap(), 0, len );
+    if( out )
+    {
+        strcpy( in, username );
+        strcat( in, ":" );
+        strcat( in, password );
+        strcpy( out, szBasic );
+        HTTP_Base64( in, &out[strlen(out)] );
+    }
+    HeapFree( GetProcessHeap(), 0, in );
+
+    return out;
+}
+
+/***********************************************************************
+ *  HTTP_InsertProxyAuthorization
+ *
+ *   Insert the basic authorization field in the request header
+ */
+BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
+                       LPCSTR username, LPCSTR password )
+{
+    HTTPHEADERA hdr;
+    INT index;
+
+    hdr.lpszField = "Proxy-Authorization";
+    hdr.lpszValue = HTTP_EncodeBasicAuth( username, password );
+    hdr.wFlags = HDR_ISREQUEST;
+    hdr.wCount = 0;
+    if( !hdr.lpszValue )
+        return FALSE;
+
+    TRACE("Inserting %s = %s\n",
+          debugstr_a( hdr.lpszField ), debugstr_a( hdr.lpszValue ) );
+
+    /* remove the old proxy authorization header */
+    index = HTTP_GetCustomHeaderIndex( lpwhr, hdr.lpszField );
+    if( index >=0 )
+        HTTP_DeleteCustomHeader( lpwhr, index );
+    
+    HTTP_InsertCustomHeader(lpwhr, &hdr);
+    HeapFree( GetProcessHeap(), 0, hdr.lpszValue );
+    
+    return TRUE;
+}
+
+/***********************************************************************
+ *           HTTP_DealWithProxy
+ */
+static BOOL HTTP_DealWithProxy( LPWININETAPPINFOA hIC,
+    LPWININETHTTPSESSIONA lpwhs, LPWININETHTTPREQA lpwhr)
+{
+    char buf[MAXHOSTNAME];
+    char proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
+    char* url, *szNul = "";
+    URL_COMPONENTSA UrlComponents;
+
+    memset( &UrlComponents, 0, sizeof UrlComponents );
+    UrlComponents.dwStructSize = sizeof UrlComponents;
+    UrlComponents.lpszHostName = buf;
+    UrlComponents.dwHostNameLength = MAXHOSTNAME;
+
+    sprintf(proxy, "http://%s/", hIC->lpszProxy);
+    if( !InternetCrackUrlA(proxy, 0, 0, &UrlComponents) )
+        return FALSE;
+    if( UrlComponents.dwHostNameLength == 0 )
+        return FALSE;
+
+    if( !lpwhr->lpszPath )
+        lpwhr->lpszPath = szNul;
+    TRACE("server='%s' path='%s'\n",
+          lpwhs->lpszServerName, lpwhr->lpszPath);
+    /* for constant 15 see above */
+    url = HeapAlloc(GetProcessHeap(), 0,
+        strlen(lpwhs->lpszServerName) + strlen(lpwhr->lpszPath) + 15);
+
+    if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
+        UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
+
+    sprintf(url, "http://%s:%d", lpwhs->lpszServerName,
+            lpwhs->nServerPort);
+    if( lpwhr->lpszPath[0] != '/' )
+        strcat( url, "/" );
+    strcat(url, lpwhr->lpszPath);
+    if(lpwhr->lpszPath != szNul)
+        HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
+    lpwhr->lpszPath = url;
+    /* FIXME: Do I have to free lpwhs->lpszServerName here ? */
+    lpwhs->lpszServerName = HTTP_strdup(UrlComponents.lpszHostName);
+    lpwhs->nServerPort = UrlComponents.nPort;
+
+    return TRUE;
+}
+
+/***********************************************************************
  *           HTTP_HttpOpenRequestA (internal)
  *
  * Open a HTTP request handle
@@ -454,54 +609,19 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         char buf[MAXHOSTNAME];
         URL_COMPONENTSA UrlComponents;
 
-        UrlComponents.lpszExtraInfo = NULL;
-        UrlComponents.lpszPassword = NULL;
-        UrlComponents.lpszScheme = NULL;
-        UrlComponents.lpszUrlPath = NULL;
-        UrlComponents.lpszUserName = NULL;
+        memset( &UrlComponents, 0, sizeof UrlComponents );
+        UrlComponents.dwStructSize = sizeof UrlComponents;
         UrlComponents.lpszHostName = buf;
         UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
         InternetCrackUrlA(lpszReferrer, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName))
             lpwhr->lpszHostName = HTTP_strdup(UrlComponents.lpszHostName);
-    } else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0) {
-        char buf[MAXHOSTNAME];
-        char proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
-        URL_COMPONENTSA UrlComponents;
-
-        UrlComponents.lpszExtraInfo = NULL;
-        UrlComponents.lpszPassword = NULL;
-        UrlComponents.lpszScheme = NULL;
-        UrlComponents.lpszUrlPath = NULL;
-        UrlComponents.lpszUserName = NULL;
-        UrlComponents.lpszHostName = buf;
-        UrlComponents.dwHostNameLength = MAXHOSTNAME;
-
-        sprintf(proxy, "http://%s/", hIC->lpszProxy);
-        InternetCrackUrlA(proxy, 0, 0, &UrlComponents);
-        if (strlen(UrlComponents.lpszHostName)) {
-			 /* for constant 15 see above */
-             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhs->lpszServerName) + strlen(lpwhr->lpszPath) + 15);
-
-             if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-                 UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-			
-            if(lpwhr->lpszHostName != 0) {
-                HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
-                lpwhr->lpszHostName = 0;
-            }
-            sprintf(url, "http://%s:%d/%s", lpwhs->lpszServerName, lpwhs->nServerPort, lpwhr->lpszPath);
-            if(lpwhr->lpszPath)
-                HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
-            lpwhr->lpszPath = url;
-            /* FIXME: Do I have to free lpwhs->lpszServerName here ? */
-            lpwhs->lpszServerName = HTTP_strdup(UrlComponents.lpszHostName);
-            lpwhs->nServerPort = UrlComponents.nPort;
-        }
     } else {
         lpwhr->lpszHostName = HTTP_strdup(lpwhs->lpszServerName);
     }
+    if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
+        HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
 
     if (hIC->lpszAgent)
     {
@@ -913,6 +1033,11 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
         /* if it's an absolute path, keep the same session info */
         strcpy(path,lpszUrl);
     }
+    else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
+    {
+        TRACE("Redirect through proxy\n");
+        strcpy(path,lpszUrl);
+    }
     else
     {
         URL_COMPONENTSA urlComponents;
@@ -937,9 +1062,22 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQA lpwhr, LPCSTR lpszUrl, LPCSTR 
         if (urlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
             urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-        /* consider the current host as the referef */
+#if 0
+        /*
+         * This upsets redirects to binary files on sourceforge.net 
+         * and gives an html page instead of the target file
+         * Examination of the HTTP request sent by native wininet.dll
+         * reveals that it doesn't send a referrer in that case.
+         * Maybe there's a flag that enables this, or maybe a referrer
+         * shouldn't be added in case of a redirect.
+         */
+
+        /* consider the current host as the referrer */
         if (NULL != lpwhs->lpszServerName && strlen(lpwhs->lpszServerName))
-            HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpwhs->lpszServerName, HTTP_ADDHDR_FLAG_REQ|HTTP_ADDREQ_FLAG_REPLACE|HTTP_ADDHDR_FLAG_ADD_IF_NEW);
+            HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpwhs->lpszServerName,
+                           HTTP_ADDHDR_FLAG_REQ|HTTP_ADDREQ_FLAG_REPLACE|
+                           HTTP_ADDHDR_FLAG_ADD_IF_NEW);
+#endif
         
         if (NULL != lpwhs->lpszServerName)
             HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
@@ -1085,6 +1223,13 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         {
             headerLength = -1 == dwHeaderLength ?  strlen(lpszHeaders) : dwHeaderLength;
             requestStringLen += headerLength +  2; /* \r\n */
+        }
+
+
+        /* if there isa proxy username and password, add it to the headers */
+        if( hIC && (hIC->lpszProxyUsername || hIC->lpszProxyPassword ) )
+        {
+            HTTP_InsertProxyAuthorization( lpwhr, hIC->lpszProxyUsername, hIC->lpszProxyPassword );
         }
 
         /* Calculate length of custom request headers */
@@ -1263,60 +1408,6 @@ BOOL WINAPI HTTP_HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
                 if (domain) HeapFree(GetProcessHeap(), 0, domain);
                 nPosStart = nPosEnd;
             }
-        }
-
-        /* FIXME: is this right? I'm not sure if this should be here or elsewhere (the loop, too)
-         * FIXME: don't do this if they specify INTERNET_FLAG_NO_AUTO_REDIRECT */
-        if (lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue)
-        {
-            URL_COMPONENTSA urlComponents;
-            char protocol[32], hostName[MAXHOSTNAME], userName[1024];
-            char password[1024], path[2048], extra[1024];
-
-            TRACE("Got a Location header: Going around to a new location: %s",
-                  debugstr_a(lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue));
-
-            urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
-            urlComponents.lpszScheme = protocol;
-            urlComponents.dwSchemeLength = 32;
-            urlComponents.lpszHostName = hostName;
-            urlComponents.dwHostNameLength = MAXHOSTNAME;
-            urlComponents.lpszUserName = userName;
-            urlComponents.dwUserNameLength = 1024;
-            urlComponents.lpszPassword = password;
-            urlComponents.dwPasswordLength = 1024;
-            urlComponents.lpszUrlPath = path;
-            urlComponents.dwUrlPathLength = 2048;
-            urlComponents.lpszExtraInfo = extra;
-            urlComponents.dwExtraInfoLength = 1024;
-            if (!InternetCrackUrlA(lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue,
-                                   strlen(lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue),
-                                   0, &urlComponents))
-                goto lend;
-
-            if (urlComponents.nScheme != INTERNET_SCHEME_HTTP)
-            {
-                FIXME("cannot redirect to non HTTP page\n");
-                goto lend;
-            }
-
-            HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
-            HeapAlloc(GetProcessHeap(), 0, strlen(path) + 1);
-            strcpy(lpwhr->lpszPath, path);
-
-            if (urlComponents.dwHostNameLength)
-            {
-                HeapFree(GetProcessHeap(), 0, lpwhr->lpszHostName);
-                HeapAlloc(GetProcessHeap(), 0, strlen(hostName) + 1);
-                strcpy(lpwhr->lpszHostName, hostName);
-            }
-
-            SendAsyncCallback(hIC, hHttpRequest, lpwhr->hdr.dwContext,
-                              INTERNET_STATUS_REDIRECT, NULL, 0);
-
-            HeapFree(GetProcessHeap(), 0, lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue);
-            lpwhr->StdHeaders[HTTP_QUERY_LOCATION].lpszValue = NULL;
-            loop_next = TRUE;
         }
     }
     while (loop_next);
@@ -1699,6 +1790,8 @@ INT HTTP_GetStdHeaderIndex(LPCSTR lpszField)
         index = HTTP_QUERY_CONTENT_LENGTH;
     else if (!strcasecmp(lpszField,"User-Agent"))
         index = HTTP_QUERY_USER_AGENT;
+    else if (!strcasecmp(lpszField,"Proxy-Authenticate"))
+        index = HTTP_QUERY_PROXY_AUTHENTICATE;
     else
     {
        TRACE("Couldn't find %s in standard header table\n", lpszField);
@@ -1757,8 +1850,7 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQA lpwhr, LPCSTR field, LPCSTR value, DWO
             if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
                 hdr.wFlags |= HDR_ISREQUEST;
 
-            index = HTTP_InsertCustomHeader(lpwhr, &hdr);
-            return index >= 0;
+            return HTTP_InsertCustomHeader(lpwhr, &hdr);
         }
     }
 
@@ -2011,10 +2103,11 @@ INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQA lpwhr, LPCSTR lpszField)
  * Insert header into array
  *
  */
-INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
+BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
 {
     INT count;
     LPHTTPHEADERA lph = NULL;
+    BOOL r = FALSE;
 
     TRACE("--> %s: %s\n", lpHdr->lpszField, lpHdr->lpszValue);
     count = lpwhr->nCustHeaders + 1;
@@ -2031,15 +2124,14 @@ INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
         lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
         lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
 	lpwhr->nCustHeaders++;
+        r = TRUE;
     }
     else
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-	count = 0;
     }
 
-    TRACE("%d <--\n", count-1);
-    return count - 1;
+    return r;
 }
 
 
@@ -2047,12 +2139,21 @@ INT HTTP_InsertCustomHeader(LPWININETHTTPREQA lpwhr, LPHTTPHEADERA lpHdr)
  *           HTTP_DeleteCustomHeader (internal)
  *
  * Delete header from array
- *
+ *  If this function is called, the indexs may change.
  */
-BOOL HTTP_DeleteCustomHeader(INT index)
+BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQA lpwhr, INT index)
 {
-    FIXME("STUB\n");
-    return FALSE;
+    if( lpwhr->nCustHeaders <= 0 )
+        return FALSE;
+    if( lpwhr->nCustHeaders >= index )
+        return FALSE;
+    lpwhr->nCustHeaders--;
+
+    memmove( &lpwhr->pCustHeaders[index], &lpwhr->pCustHeaders[index+1],
+             (lpwhr->nCustHeaders - index)* sizeof(HTTPHEADERA) );
+    memset( &lpwhr->pCustHeaders[lpwhr->nCustHeaders], 0, sizeof(HTTPHEADERA) );
+
+    return TRUE;
 }
 
 /***********************************************************************

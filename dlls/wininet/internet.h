@@ -73,6 +73,8 @@ typedef struct
     LPSTR  lpszAgent;
     LPSTR  lpszProxy;
     LPSTR  lpszProxyBypass;
+    LPSTR  lpszProxyUsername;
+    LPSTR  lpszProxyPassword;
     DWORD   dwAccessType;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
 } WININETAPPINFOA, *LPWININETAPPINFOA;
@@ -281,6 +283,8 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
                              DWORD dwContext, DWORD dwInternetStatus, LPVOID
                              lpvStatusInfo , DWORD dwStatusInfoLength);
 
+BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQA lpwhr,
+                       LPCSTR username, LPCSTR password );
 
 BOOL NETCON_connected(WININET_NETCONNECTION *connection);
 void NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);

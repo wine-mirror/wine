@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wininet.dll
-IMPORTS   = shlwapi user32 advapi32 kernel32
+IMPORTS   = mpr shlwapi user32 advapi32 kernel32
 EXTRALIBS = $(LIBUNICODE)
 
 LDDLLFLAGS = @LDDLLFLAGS@
@@ -12,6 +12,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 
 C_SRCS = \
 	cookie.c \
+	dialogs.c \
 	ftp.c \
 	http.c \
 	internet.c \
@@ -20,7 +21,9 @@ C_SRCS = \
 	utility.c \
 	wininet_main.c
 
-RC_SRCS = version.rc
+RC_SRCS = \
+	rsrc.rc \
+	version.rc
 
 SUBDIRS = tests
 

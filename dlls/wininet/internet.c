@@ -209,6 +209,68 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
 
 
 /***********************************************************************
+ *           INTERNET_ConfigureProxyFromReg
+ *
+ * FIXME:
+ * The proxy may be specified in the form 'http=proxy.my.org'
+ * Presumably that means there can be ftp=ftpproxy.my.org too.
+ */
+static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOA lpwai )
+{
+    HKEY key;
+    DWORD r, keytype, len, enabled;
+    LPSTR lpszInternetSettings =
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
+
+    r = RegOpenKeyA(HKEY_CURRENT_USER, lpszInternetSettings, &key);
+    if ( r != ERROR_SUCCESS )
+        return FALSE;
+
+    len = sizeof enabled;
+    r = RegQueryValueExA( key, "ProxyEnable", NULL, &keytype,
+                          (BYTE*)&enabled, &len);
+    if( (r == ERROR_SUCCESS) && enabled )
+    {
+        TRACE("Proxy is enabled.\n");
+
+        /* figure out how much memory the proxy setting takes */
+        r = RegQueryValueExA( key, "ProxyServer", NULL, &keytype, 
+                              NULL, &len);
+        if( (r == ERROR_SUCCESS) && len && (keytype == REG_SZ) )
+        {
+            LPSTR szProxy, p, szHttp = "http=";
+
+            szProxy=HeapAlloc( GetProcessHeap(), 0, len+1 );
+            RegQueryValueExA( key, "ProxyServer", NULL, &keytype,
+                              (BYTE*)szProxy, &len);
+
+            /* find the http proxy, and strip away everything else */
+            p = strstr( szProxy, szHttp );
+            if( p )
+            {
+                 p += strlen(szHttp);
+                 strcpy( szProxy, p );
+            }
+            p = strchr( szProxy, ' ' );
+            if( p )
+                *p = 0;
+
+            lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
+            lpwai->lpszProxy = szProxy;
+
+            TRACE("http proxy = %s\n", lpwai->lpszProxy);
+        }
+        else
+            ERR("Couldn't read proxy server settings.\n");
+    }
+    else
+        TRACE("Proxy is not enabled.\n");
+    RegCloseKey(key);
+
+    return enabled;
+}
+
+/***********************************************************************
  *           InternetOpenA   (WININET.@)
  *
  * Per-application initialization of wininet
@@ -231,53 +293,42 @@ HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
 
     lpwai = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETAPPINFOA));
     if (NULL == lpwai)
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-    else
     {
-        memset(lpwai, 0, sizeof(WININETAPPINFOA));
-        lpwai->hdr.htype = WH_HINIT;
-        lpwai->hdr.lpwhparent = NULL;
-        lpwai->hdr.dwFlags = dwFlags;
-        if (NULL != lpszAgent)
-        {
-            if ((lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,strlen(lpszAgent)+1)))
-                strcpy( lpwai->lpszAgent, lpszAgent );
-        }
-        if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
-        {
-            HKEY key;
-            if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", &key))
-            {
-                DWORD keytype, len, enabled;
-                RegQueryValueExA(key, "ProxyEnable", NULL, NULL, (BYTE*)&enabled, NULL);
-                if(enabled)
-                {
-                    if(!RegQueryValueExA(key, "ProxyServer", NULL, &keytype, NULL, &len) && len && keytype == REG_SZ)
-                    {
-                        lpwai->lpszProxy=HeapAlloc( GetProcessHeap(), 0, len+1 );
-                        RegQueryValueExA(key, "ProxyServer", NULL, &keytype, (BYTE*)lpwai->lpszProxy, &len);
-						TRACE("Proxy = %s\n", lpwai->lpszProxy);
-                        dwAccessType = INTERNET_OPEN_TYPE_PROXY;
-                    }
-                }
-                else
-                {
-                    TRACE("Proxy is not enabled.\n");
-                }
-                RegCloseKey(key);
-            }
-        }
-        else if (NULL != lpszProxy)
-        {
-            if ((lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0, strlen(lpszProxy)+1 )))
-                strcpy( lpwai->lpszProxy, lpszProxy );
-        }
-        if (NULL != lpszProxyBypass)
-        {
-            if ((lpwai->lpszProxyBypass = HeapAlloc( GetProcessHeap(), 0, strlen(lpszProxyBypass)+1)))
-                strcpy( lpwai->lpszProxyBypass, lpszProxyBypass );
-        }
-        lpwai->dwAccessType = dwAccessType;
+        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        return NULL;
+    }
+ 
+    memset(lpwai, 0, sizeof(WININETAPPINFOA));
+    lpwai->hdr.htype = WH_HINIT;
+    lpwai->hdr.lpwhparent = NULL;
+    lpwai->hdr.dwFlags = dwFlags;
+    lpwai->dwAccessType = dwAccessType;
+    lpwai->lpszProxyUsername = NULL;
+    lpwai->lpszProxyPassword = NULL;
+
+    if (NULL != lpszAgent)
+    {
+        lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,
+                                      strlen(lpszAgent)+1);
+        if (lpwai->lpszAgent)
+            strcpy( lpwai->lpszAgent, lpszAgent );
+    }
+    if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
+        INTERNET_ConfigureProxyFromReg( lpwai );
+    else if (NULL != lpszProxy)
+    {
+        lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0,
+                                      strlen(lpszProxy)+1);
+        if (lpwai->lpszProxy)
+            strcpy( lpwai->lpszProxy, lpszProxy );
+    }
+
+    if (NULL != lpszProxyBypass)
+    {
+        lpwai->lpszProxyBypass = HeapAlloc( GetProcessHeap(), 0,
+                                            strlen(lpszProxyBypass)+1);
+        if (lpwai->lpszProxyBypass)
+            strcpy( lpwai->lpszProxyBypass, lpszProxyBypass );
     }
 
     TRACE("returning %p\n", (HINTERNET)lpwai);
@@ -647,6 +698,12 @@ VOID INTERNET_CloseHandle(LPWININETAPPINFOA lpwai)
 
     if (lpwai->lpszProxyBypass)
         HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
+
+    if (lpwai->lpszProxyUsername)
+        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
+
+    if (lpwai->lpszProxyPassword)
+        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
 
     HeapFree(GetProcessHeap(), 0, lpwai);
 }
