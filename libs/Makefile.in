@@ -34,10 +34,10 @@ clean::
 
 # Symlinks
 
-libwine.so libwine.so.1 libwine.dll libwine.a: wine/libwine.$(LIBEXT)
+libwine.so libwine.so.1 libwine.dll libwine.dylib libwine.a: wine/libwine.$(LIBEXT)
 	$(RM) $@ && $(LN_S) wine/$@ $@
 
-libwine_unicode.so libwine_unicode.so.1 libwine_unicode.dll libwine_unicode.a: unicode/libwine_unicode.$(LIBEXT)
+libwine_unicode.so libwine_unicode.so.1 libwine_unicode.dll libwine_unicode.dylib libwine_unicode.a: unicode/libwine_unicode.$(LIBEXT)
 	$(RM) $@ && $(LN_S) unicode/$@ $@
 
 libwine_port.a: port/libwine_port.a
