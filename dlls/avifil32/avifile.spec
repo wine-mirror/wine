@@ -15,7 +15,7 @@
 100 pascal   AVIFileInit() AVIFileInit
 101 pascal   AVIFileExit() AVIFileExit
 102 pascal   AVIFileOpen(ptr str word ptr) AVIFileOpenA
-103 pascal   AVIStreamOpenFromFile(ptr str long word ptr) AVIStreamOpenFromFileA
+103 pascal   AVIStreamOpenFromFile(ptr str long long word ptr) AVIStreamOpenFromFileA
 104 pascal   AVIStreamCreate(ptr long long ptr) AVIStreamCreate
 105 stub     AVIMAKECOMPRESSEDSTREAM
 106 stub     AVIMAKEFILEFROMSTREAMS

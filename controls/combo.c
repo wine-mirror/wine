@@ -2326,8 +2326,8 @@ static LRESULT WINAPI ComboWndProcW( HWND hwnd, UINT message, WPARAM wParam, LPA
 /*************************************************************************
  *           GetComboBoxInfo   (USER32.@)
  */
-BOOL WINAPI GetComboBoxInfo(HWND hwndCombo,      /* handle to combo box */
-			    PCOMBOBOXINFO pcbi   /* combo box information */)
+BOOL WINAPI GetComboBoxInfo(HWND hwndCombo,      /* [in] handle to combo box */
+			    PCOMBOBOXINFO pcbi   /* [in/out] combo box information */)
 {
     FIXME("\n");
     return FALSE;

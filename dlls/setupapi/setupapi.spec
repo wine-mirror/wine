@@ -95,7 +95,7 @@
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
 @ stub SetupDiCreateDeviceInfoList
-@ stdcall SetupDiCreateDeviceInfoListExW(ptr ptr)  SetupDiCreateDeviceInfoListExW
+@ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)  SetupDiCreateDeviceInfoListExW
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo

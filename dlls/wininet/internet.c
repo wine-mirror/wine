@@ -180,7 +180,7 @@ WININET_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *     FALSE on failure
  *
  */
-BOOL InternetInitializeAutoProxyDll(DWORD dwReserved)
+BOOL WINAPI InternetInitializeAutoProxyDll(DWORD dwReserved)
 {
     FIXME("STUB\n");
     INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

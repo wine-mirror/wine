@@ -203,7 +203,7 @@ init	RPCRT4_LibMain
 @ stdcall UuidToStringA(ptr ptr) UuidToStringA
 @ stdcall UuidToStringW(ptr ptr) UuidToStringW
 
-@ stdcall CStdStubBuffer_QueryInterface(ptr ptr) CStdStubBuffer_QueryInterface
+@ stdcall CStdStubBuffer_QueryInterface(ptr ptr ptr) CStdStubBuffer_QueryInterface
 @ stdcall CStdStubBuffer_AddRef(ptr) CStdStubBuffer_AddRef
 @ stdcall CStdStubBuffer_Connect(ptr ptr) CStdStubBuffer_Connect
 @ stdcall CStdStubBuffer_Disconnect(ptr) CStdStubBuffer_Disconnect
