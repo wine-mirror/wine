@@ -980,7 +980,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient,
 
     if (ci->frameTitle)
     {
-	if (IsZoomed(ci->hwndActiveChild))
+	if (IsZoomed(ci->hwndActiveChild) && IsWindowVisible(ci->hwndActiveChild))
 	{
 	    /* combine frame title and child title if possible */
 
@@ -1216,7 +1216,8 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return 0;
 
       case WM_SIZE:
-        if( IsWindow(ci->hwndActiveChild) && IsZoomed(ci->hwndActiveChild) )
+        if( IsWindow(ci->hwndActiveChild) && IsZoomed(ci->hwndActiveChild) &&
+            IsWindowVisible(ci->hwndActiveChild) )
 	{
 	    RECT	rect;
 
@@ -1506,6 +1507,9 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         break;
 
     case WM_SIZE:
+        if (wParam == SIZE_MAXIMIZED && !IsWindowVisible(hwnd))
+            wParam = SIZE_RESTORED;
+
         if( hwnd == ci->hwndActiveChild && wParam != SIZE_MAXIMIZED )
         {
             MDI_RestoreFrameMenu( GetParent(client), hwnd );
