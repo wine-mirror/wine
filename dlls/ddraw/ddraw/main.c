@@ -548,8 +548,23 @@ HRESULT common_off_screen_CreateSurface(
 	    lpdsf->s.surface_desc.dwFlags |= DDSD_PIXELFORMAT;
 	}
 	bpp = GET_BPP(lpdsf->s.surface_desc);
-    }
 
+	if (bpp != PFGET_BPP(This->d->directdraw_pixelformat)) {
+	  /* When the application is requesting a 24 bpp surface and the Direct Draw bpp
+	     is set to 32, we 'upgrade' the requested bpp to 32 to make the blit faster
+	     from off-screen surface to visible surfaces.
+
+	     With this, Windows Media Player works in 32 bpp mode.
+                                                   Lionel */
+	  if ((bpp == 3) && (PFGET_BPP(This->d->directdraw_pixelformat) == 4)) {
+	    TRACE("Warning: 'upgrading' requested 24 bpp format to 32 bpp for efficiencies reasons\n");
+	    TRACE("         some applications may have problems with it.\n");
+	    bpp = PFGET_BPP(This->d->directdraw_pixelformat);
+	    lpdsf->s.surface_desc.ddpfPixelFormat = This->d->directdraw_pixelformat;
+	  }
+	}
+    }
+    
     if (lpdsf->s.surface_desc.dwFlags & DDSD_LPSURFACE)
 	ERR("Creates a surface that is already allocated : assuming this is an application bug !\n");
 
