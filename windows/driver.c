@@ -9,7 +9,6 @@
  */
 
 #include <string.h>
-#include "wine/winuser16.h"
 #include "heap.h"
 #include "callback.h"
 #include "driver.h"
