@@ -10,12 +10,10 @@
 #include "wine/winbase16.h"
 #include "ldt.h"
 #include "global.h"
-#include "module.h"
 #include "miscemu.h"
 #include "msdos.h"
+#include "dosexe.h"
 #include "task.h"
-#include "thread.h"	/* for !MZ_SUPPORTED */
-#include "stackframe.h"	/* for !MZ_SUPPORTED */
 #include "toolhelp.h"
 #include "selectors.h"
 #include "process.h"
@@ -183,6 +181,8 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT86 *context )
     call->ss  = SS_reg(context);
 }
 
+#ifdef __i386__
+
 void DPMI_CallRMCB32(RMCB *rmcb, UINT16 ss, DWORD esp, UINT16*es, DWORD*edi)
 #if 0 /* original code, which early gccs puke on */
 {
@@ -211,7 +211,6 @@ void DPMI_CallRMCB32(RMCB *rmcb, UINT16 ss, DWORD esp, UINT16*es, DWORD*edi)
 __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
     "pushl %ebp\n\t"
     "movl %esp,%ebp\n\t"
-    "subl $0x10,%esp\n\t"
     "pushl %edi\n\t"
     "pushl %esi\n\t"
     "movl 0x8(%ebp),%eax\n\t"
@@ -220,7 +219,6 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
     "movl 0x10(%eax),%ecx\n\t"
     "movl 0xc(%eax),%edi\n\t"
     "addl $0x4,%eax\n\t"
-    "movl %eax,-0x8(%ebp)\n\t"
     "pushl %ebp\n\t"
     "pushl %ebx\n\t"
     "pushl %es\n\t"
@@ -243,6 +241,8 @@ __ASM_GLOBAL_FUNC(DPMI_CallRMCB32,
     "leave\n\t"
     "ret")
 #endif
+
+#endif /* __i386__ */
 
 /**********************************************************************
  *	    DPMI_CallRMCBProc
@@ -307,8 +307,7 @@ int DPMI_CallRMProc( CONTEXT86 *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
     LPVOID addr = NULL; /* avoid gcc warning */
-    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+    LPDOSTASK lpDosTask = MZ_Current();
     RMCB *CurrRMCB;
     int alloc = 0, already = 0;
     BYTE *code;
@@ -353,11 +352,11 @@ callrmproc_again:
     while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
         CurrRMCB = CurrRMCB->next;
 
-    if (!(CurrRMCB || pModule->lpDosTask)) {
+    if (!(CurrRMCB || lpDosTask)) {
 #ifdef MZ_SUPPORTED
         FIXME("DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE("creating VM86 task\n");
-        if (!MZ_InitTask( MZ_AllocDPMITask() )) {
+        if (!MZ_InitTask( lpDosTask = MZ_AllocDPMITask() )) {
             ERR("could not setup VM86 task\n");
             return 1;
         }
@@ -397,7 +396,7 @@ callrmproc_again:
 
     if (CurrRMCB) {
         /* RMCB call, invoke protected-mode handler directly */
-        DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask?pModule->lpDosTask->dpmi_flag:0);
+        DPMI_CallRMCBProc(context, CurrRMCB, lpDosTask ? lpDosTask->dpmi_flag : 0);
         /* check if we returned to where we thought we would */
         if ((CS_reg(context) != DPMI_wrap_seg) ||
             (LOWORD(EIP_reg(context)) != 0)) {
