@@ -25,7 +25,8 @@ C_SRCS = \
 	shellord.c \
 	shellpath.c \
 	shlfolder.c \
-	shlview.c
+	shlview.c \
+	shv_bg_cmenu.c
 
 RC_SRCS= \
 	shres.rc
