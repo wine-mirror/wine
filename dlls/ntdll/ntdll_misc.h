@@ -27,7 +27,6 @@
 #include "winreg.h"
 #include "ntstatus.h"
 #include "winternl.h"
-#include "module.h"
 #include "thread.h"
 #include "wine/server.h"
 

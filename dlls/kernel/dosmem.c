@@ -41,7 +41,6 @@
 #include "wine/winbase16.h"
 
 #include "global.h"
-#include "selectors.h"
 #include "miscemu.h"
 #include "wine/debug.h"
 

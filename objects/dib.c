@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "bitmap.h"
-#include "selectors.h"
 #include "gdi.h"
 #include "wownt32.h"
 #include "wine/debug.h"

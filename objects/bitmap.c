@@ -25,7 +25,6 @@
 #include "wine/winbase16.h"
 #include "gdi.h"
 #include "bitmap.h"
-#include "selectors.h"
 #include "wine/debug.h"
 #include "wine/winuser16.h"
 

@@ -30,7 +30,6 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "options.h"
-#include "module.h"
 #include "wine/debug.h"
 
 struct option_descr

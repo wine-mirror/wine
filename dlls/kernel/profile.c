@@ -42,7 +42,6 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "file.h"
-#include "heap.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/library.h"

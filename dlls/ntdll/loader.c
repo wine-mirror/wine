@@ -29,7 +29,6 @@
 #include "winternl.h"
 
 #include "module.h"
-#include "file.h"
 #include "wine/exception.h"
 #include "excpt.h"
 #include "wine/unicode.h"

@@ -56,10 +56,8 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/exception.h"
-#include "selectors.h"
 #include "global.h"
 #include "ntdll_misc.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);

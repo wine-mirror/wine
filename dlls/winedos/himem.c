@@ -19,6 +19,7 @@
  */
 
 #include "dosexe.h"
+#include "selectors.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dosmem);

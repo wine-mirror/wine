@@ -36,7 +36,6 @@
 #include "winerror.h"
 #include "ntstatus.h"
 #include "wine/unicode.h"
-#include "heap.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "winternl.h"

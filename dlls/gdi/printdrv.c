@@ -50,7 +50,6 @@
 #include "wine/debug.h"
 #include "gdi.h"
 #include "heap.h"
-#include "file.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(print);
 

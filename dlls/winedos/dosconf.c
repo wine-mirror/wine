@@ -34,7 +34,6 @@
 #include "winbase.h"
 #include "winreg.h"
 
-#include "file.h"
 #include "dosexe.h"
 
 #include "wine/debug.h"

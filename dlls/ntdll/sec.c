@@ -35,15 +35,14 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
-#include "file.h"
 #include "winnls.h"
-#include "wine/debug.h"
 #include "winerror.h"
-
 #include "winreg.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "excpt.h"
+#include "wine/library.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 

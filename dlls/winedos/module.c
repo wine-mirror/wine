@@ -44,8 +44,6 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "task.h"
-#include "file.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 #include "dosexe.h"
 #include "dosvm.h"

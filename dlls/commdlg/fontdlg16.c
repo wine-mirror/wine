@@ -31,7 +31,6 @@
 #include "winnls.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "wine/debug.h"

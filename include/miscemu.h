@@ -22,7 +22,7 @@
 #define __WINE_MISCEMU_H
 
 #include <windef.h>
-#include <selectors.h>
+#include <wine/library.h>
 #include <wine/windef16.h>
 
 /* msdos/dosmem.c */

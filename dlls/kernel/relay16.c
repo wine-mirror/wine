@@ -31,7 +31,6 @@
 #include "wine/winbase16.h"
 #include "module.h"
 #include "stackframe.h"
-#include "selectors.h"
 #include "builtin16.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"

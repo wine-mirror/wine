@@ -28,14 +28,14 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "user.h"
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"
 #include "message.h"
 #include "local.h"
-#include "module.h"
-#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(hook);

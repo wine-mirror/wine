@@ -42,7 +42,6 @@
 #include "global.h"
 #include "module.h"
 #include "winternl.h"
-#include "selectors.h"
 #include "wine/server.h"
 #include "stackframe.h"
 #include "task.h"

@@ -50,7 +50,6 @@
 #include "shlobj.h"
 #include "undocshell.h"
 
-#include "heap.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"

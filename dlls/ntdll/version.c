@@ -36,7 +36,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
-#include "module.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
