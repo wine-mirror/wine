@@ -214,6 +214,8 @@ typedef struct tagMSIPACKAGE
     UINT CurrentInstallState;
     msi_dialog *dialog;
     LPWSTR next_dialog;
+
+    BOOL ExecuteSequenceRun;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW
