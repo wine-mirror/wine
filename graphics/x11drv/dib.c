@@ -2878,6 +2878,14 @@ INT X11DRV_DIB_GetDIBits(
       return 0;
 
   if( lines > info->bmiHeader.biHeight )  lines = info->bmiHeader.biHeight;
+  /* Top-down images have a negative biHeight, the scanlines of theses images
+   * were inverted in X11DRV_DIB_GetImageBits_xx
+   * To prevent this we simply change the sign of lines
+   * (the number of scan lines to copy).
+   * Negative lines are correctly handled by X11DRV_DIB_GetImageBits_xx.
+   */
+  if( info->bmiHeader.biHeight < 0 && lines > 0) lines = -lines;
+
   if( startscan >= bmp->bitmap.bmHeight ) return FALSE;
   
   if (DIB_GetBitmapInfo( &info->bmiHeader, &descr.infoWidth, &descr.lines,
@@ -3306,7 +3314,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     bm.bmBits = MapViewOfFile(section, FILE_MAP_ALL_ACCESS, 
 			      0L, offset, totalSize);
   else if (ovr_pitch && offset)
-    bm.bmBits = offset;
+    bm.bmBits = (LPVOID) offset;
   else {
     offset = 0;
     bm.bmBits = VirtualAlloc(NULL, totalSize, 
