@@ -24,7 +24,9 @@
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug to happen :-/ */
 #include <GL/gl.h>
 #include <GL/glx.h>
-#include <GL/glext.h>
+#ifdef HAVE_GL_GLEXT_H
+# include <GL/glext.h>
+#endif
 #undef  XMD_H
 
 #undef APIENTRY

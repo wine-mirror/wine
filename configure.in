@@ -234,7 +234,7 @@ then
     if test $OPENGL = "yes" -o $OPENGL = "normal"
     then
 	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h)
-	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes" -a "$ac_cv_header_GL_glext_h" = "yes"
+	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
 	    dnl Check for some problems due to old Mesa versions
 	    AC_CACHE_CHECK("for up-to-date OpenGL version", wine_cv_opengl_version_OK,
@@ -266,6 +266,9 @@ then
 			     ,,
 			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
 
+
+		OPENGLFILES='$(OPENGLFILES)'
+
 		if test $ac_cv_lib_GL_glXCreateContext = "yes"
 		then
 			AC_CHECK_LIB(GL,glXGetProcAddressARB,AC_DEFINE(HAVE_GLX_GETPROCADDRESS),,$X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
@@ -287,7 +290,6 @@ then
 
 				AC_DEFINE(HAVE_OPENGL)
 				OPENGL32_DLL=opengl32
-				OPENGLFILES='$(OPENGLFILES)'
 			fi
 		fi
 	     fi
