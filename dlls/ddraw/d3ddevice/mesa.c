@@ -1320,12 +1320,9 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	}
     }
     
-    /* Just a hack for now.. Will have to find better algorithm :-/ */
-    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
+    if ( ((d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) ||
+         ((d3dvtVertexType & D3DFVF_NORMAL) == 0) )
         vertex_lighted = TRUE;
-    } else {
-        if ((d3dvtVertexType & D3DFVF_NORMAL) == 0) glNormal3f(0.0, 0.0, 0.0);
-    }
     
     /* Compute the number of active texture stages and set the various texture parameters */
     num_active_stages = draw_primitive_handle_textures(This);
