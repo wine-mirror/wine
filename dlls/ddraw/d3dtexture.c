@@ -174,7 +174,6 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This, BOOLEAN init_upload) {
 	
 	if (pal == NULL) {
 	    ERR("Palettized texture Loading with a NULL palette !\n");
-	    LEAVE_GL();
 	    return;
 	}
 	/* Get the surface's palette */
