@@ -1102,6 +1102,18 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
     }
 
+    if (msg == WM_LBUTTONDOWN)
+    {
+
+        if (hittest == SCROLL_THUMB)
+        {
+            UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+                                 trackThumbPos + lastMousePos - lastClickPos );
+            SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                            MAKEWPARAM( SB_THUMBTRACK, val ), (LPARAM)hwndCtl );
+        }
+    }
+
     if (msg == WM_LBUTTONUP)
     {
 	hittest = SCROLL_trackHitTest;
@@ -1114,8 +1126,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBPOSITION, val ), (LPARAM)hwndCtl );
         }
-        else
-            SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+        SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                           SB_ENDSCROLL, (LPARAM)hwndCtl );
     }
 
