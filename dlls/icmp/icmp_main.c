@@ -67,6 +67,9 @@
 #endif
 #endif /* BYTE_ORDER */
 
+#define u_int16_t  WORD
+#define u_int32_t  DWORD
+
 /* These are BSD headers. We use these here because they are needed on 
  * libc5 Linux systems. On other platforms they are usually simply more 
  * complete than the native stuff, and cause less portability problems 
