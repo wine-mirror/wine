@@ -2038,3 +2038,17 @@ INT32 CRTDLL_wcstol(LPWSTR s,LPWSTR *end,INT32 base) {
 	if (end) *end = s+(endA-sA); /* pointer magic checked. */
 	return ret;
 }
+/*********************************************************************
+ *                  strdate           (CRTDLL.283)
+ */
+LPSTR __cdecl CRTDLL__strdate (LPSTR date)
+{	FIXME (crtdll,"%p stub\n", date);
+	return 0;
+}
+/*********************************************************************
+ *                  strtime           (CRTDLL.299)
+ */
+LPSTR __cdecl CRTDLL__strtime (LPSTR date)
+{	FIXME (crtdll,"%p stub\n", date);
+	return 0;
+}

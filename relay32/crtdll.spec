@@ -284,7 +284,7 @@ type	win32
 280 cdecl _stat (str ptr) CRTDLL__stat
 281 stub _statusfp
 282 cdecl _strcmpi(str str) CRTDLL__strcmpi
-283 stub _strdate
+283 cdecl _strdate(str) CRTDLL__strdate
 284 stub _strdec
 285 cdecl _strdup(str) CRTDLL__strdup
 286 stub _strerror
@@ -300,7 +300,7 @@ type	win32
 296 stub _strrev
 297 stub _strset
 298 stub _strspnp
-299 stub _strtime
+299 cdecl _strtime(str) CRTDLL__strtime
 300 cdecl _strupr(str) CRTDLL__strupr
 301 stub _swab
 302 stub _sys_errlist
