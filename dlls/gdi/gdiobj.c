@@ -140,7 +140,7 @@ static const struct DefaultFontInfo default_fonts[] =
 {
     {   ANSI_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -162,7 +162,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   EASTEUROPE_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, EASTEUROPE_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -184,7 +184,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   RUSSIAN_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, RUSSIAN_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -206,7 +206,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   GREEK_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GREEK_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -228,7 +228,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   TURKISH_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, TURKISH_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -250,7 +250,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   HEBREW_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HEBREW_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -272,7 +272,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   ARABIC_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ARABIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -294,7 +294,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   BALTIC_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, BALTIC_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -316,7 +316,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   THAI_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, THAI_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -338,7 +338,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   SHIFTJIS_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, SHIFTJIS_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -360,7 +360,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   GB2312_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, GB2312_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -382,7 +382,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   HANGEUL_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, HANGEUL_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -404,7 +404,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   CHINESEBIG5_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, CHINESEBIG5_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
@@ -426,7 +426,7 @@ static const struct DefaultFontInfo default_fonts[] =
     },
     {   JOHAB_CHARSET,
         { /* System */
-          16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
+          16, 7, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, JOHAB_CHARSET,
            0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS,
            {'S','y','s','t','e','m','\0'}
         },
