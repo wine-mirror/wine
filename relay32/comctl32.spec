@@ -1,6 +1,6 @@
 name	comctl32
 type	win32
-init	ComCtl32LibMain
+init	COMCTL32_LibMain
 
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 
@@ -16,7 +16,7 @@ init	ComCtl32LibMain
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
  10 stub COMCTL32_10
- 11 stdcall COMCTL32_11(ptr ptr long long long long) COMCTL32_11
+ 11 stdcall DPA_Merge(ptr ptr long ptr ptr long) DPA_Merge
 #12 stub Cctl1632_ThunkData32
  13 stub MakeDragList
  14 stub LBItemFromPt
@@ -67,7 +67,7 @@ init	ComCtl32LibMain
  59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
  60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 63 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32A
+ 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32AW
  63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImage32A
  64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
@@ -100,7 +100,7 @@ init	ComCtl32LibMain
 154 stub EnumMRUListA@16
 155 stub FindMRUStringA@12
 156 stub DelMRUString@8
-157 stdcall COMCTL32_157(ptr long long long) CreateMRUListEx32A
+157 stdcall CreateMRUListLazyA(ptr long long long) CreateMRUListLazy32A
 
 163 stub CreatePage
 164 stub CreateProxyPage
@@ -168,10 +168,10 @@ init	ComCtl32LibMain
 382 stub SmoothScrollWindow@4
 383 stub DoReaderMode@4
 384 stub SetPathWordBreakProc@8
-385 stdcall COMCTL32_385(long long long) COMCTL32_385
-386 stdcall COMCTL32_386(long long long) COMCTL32_386
-387 stdcall COMCTL32_387(long long long) COMCTL32_387
-388 stdcall COMCTL32_388(long long long) COMCTL32_388
+385 stdcall DPA_EnumCallback(long long long) DPA_EnumCallback
+386 stdcall DPA_DestroyCallback(ptr ptr long) DPA_DestroyCallback
+387 stdcall DSA_EnumCallback(ptr ptr long) DSA_EnumCallback
+388 stdcall DSA_DestroyCallback(ptr ptr long) DSA_DestroyCallback
 389 stub COMCTL32_389
 390 stub COMCTL32_390
 
@@ -179,7 +179,7 @@ init	ComCtl32LibMain
 401 stub AddMRUStringW@8
 402 stub FindMRUStringW@12
 403 stub EnumMRUListW@16
-404 stub COMCTL32_404
+404 stub CreateMRUListLazyW@16
 
 410 stub COMCTL32_410
 411 stub COMCTL32_411

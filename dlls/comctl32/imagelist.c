@@ -31,6 +31,7 @@
 
  
 #include "windows.h"
+#include "winversion.h"
 #include "compobj.h"
 #include "storage.h"
 #include "imagelist.h"
@@ -1383,7 +1384,7 @@ ImageList_GetImageRect (HIMAGELIST himl, INT32 i, LPRECT32 lpRect)
 
 
 /*************************************************************************
- * ImageList_LoadImage32A [COMCTL32.62][COMCTL32.63]
+ * ImageList_LoadImage32A [COMCTL32.63]
  *
  * Creates an image list from a bitmap, icon or cursor.
  *
@@ -1507,6 +1508,41 @@ ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
     DeleteObject32 (handle);
     
     return himl;
+}
+
+
+/*************************************************************************
+ * ImageList_LoadImage32AW [COMCTL32.62]
+ *
+ * Creates an image list from a bitmap, icon or cursor.
+ *
+ * PARAMS
+ *     hi      [I] instance handle
+ *     lpbmp   [I] name or id of the image
+ *     cx      [I] width of each image
+ *     cGrow   [I] number of images to expand
+ *     clrMask [I] mask color
+ *     uType   [I] type of image to load
+ *     uFlags  [I] loading flags
+ *
+ * RETURNS
+ *     Success: handle to image list
+ *     Failure: NULL
+ *
+ * SEE
+ *     LoadImage ()
+ */
+
+HIMAGELIST WINAPI
+ImageList_LoadImage32AW (HINSTANCE32 hi, const LPVOID lpbmp, INT32 cx,
+			 INT32 cGrow, COLORREF clrMask, UINT32 uType,
+			 UINT32 uFlags)
+{
+    if (VERSION_OsIsUnicode())
+	return ImageList_LoadImage32W (hi, (LPCWSTR)lpbmp, cx, cGrow,
+				       clrMask, uType, uFlags);
+    return ImageList_LoadImage32A (hi, (LPCSTR)lpbmp, cx, cGrow,
+				   clrMask, uType, uFlags);
 }
 
 
