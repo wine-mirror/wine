@@ -1,0 +1,43 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = wcmd
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
+RCFLAGS   = -w32 -h
+WRCEXTRA  = -A -t -p $*
+
+C_SRCS = \
+	batch.c \
+	builtins.c \
+	directory.c \
+	wcmdmain.c
+
+RC_SRCS = \
+	wcmdrc.rc
+
+all: check_wrc $(PROGRAMS)
+
+depend:: $(RC_SRCS:.rc=.h)
+
+@MAKE_RULES@
+
+#this line is needed to prevent winestub.o being linked
+WINESTUB = 
+
+wcmd: $(OBJS)
+	$(CC) -o wcmd $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+
+install: dummy
+	$(INSTALL_PROGRAM) wcmd $(bindir)/wcmd
+
+uninstall: dummy
+	$(RM) $(bindir)/wcmd
+
+$(RC_SRCS:.rc=.s): $(WRC)
+
+dummy:
+
+### Dependencies:

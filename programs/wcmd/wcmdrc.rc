@@ -1,0 +1,294 @@
+
+#include "wcmd.h"
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "Help about ATTRIB\n"
+  WCMD_CALL,   "Help about CALL\n"
+  WCMD_CD,     "Help about CD\n"
+  WCMD_CHDIR,  "Help about CHDIR\n"
+
+  WCMD_CLS,
+"CLS clears the console screen\n"
+
+  WCMD_COPY,   "Help about COPY\n"
+  WCMD_CTTY,   "Help about CTTY\n"
+  WCMD_DATE,   "Help about DATE\n"
+  WCMD_DEL,    "Help about DEL\n"
+  WCMD_DIR,    "Help about DIR\n"
+
+  WCMD_ECHO,
+"ECHO <string> displays <string> on the current terminal device.\
+ \
+ECHO ON causes all subsequent commands in a batch file to be displayed\
+on the terminal device before they are executed.\
+ \
+ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\
+default). The ECHO OFF command can be prevented from displaying by\
+preceding it with an @ sign.\n"
+
+  WCMD_ERASE,  "Help about ERASE\n"
+  WCMD_FOR,    "Help about FOR\n"
+  WCMD_GOTO,   "Help about GOTO\n"
+  WCMD_HELP,   "Help about HELP\n"
+  WCMD_IF,     "Help about IF\n"
+  WCMD_LABEL,  "Help about LABEL\n"
+  WCMD_MD,     "Help about MD\n"
+  WCMD_MKDIR,  "Help about MKDIR\n"
+  WCMD_MOVE,   "Help about MOVE\n"
+  WCMD_PATH,
+"PATH displays or changes the wcmd search path. \
+ \
+Entering PATH will display the current PATH setting (initially this is \
+the value given in your wine.conf file). To change the setting follow the \
+PATH command with the new value. \
+ \
+It is also possible to modify the PATH by using the PATH environment \
+variable, for example: \
+		PATH %PATH%;c:\\temp \n"
+
+  WCMD_PAUSE,
+"PAUSE displays a message on the screen 'Press Return key to continue'\
+and waits for the user to press the Return key. It is mainly useful in\
+batch files to allow the user to read the output of a previous command\
+before it scrolls off the screen.\n"
+
+  WCMD_PROMPT,
+"PROMPT sets the command-line prompt.\
+ \
+The string following the PROMPT command (and the space immediately after)\
+appears at the beginning of the line when wcmd is waiting for input.\
+ \
+The following character strings have the special meaning shown:\
+ \
+$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\
+$d    Current date        $e    Escape              $g    > sign\
+$l    > sign              $n    Current drive       $p    Current path\
+$q    Equal sign          $t    Current time        $v    wcmd version\
+ \
+Note that entering the PROMPT command without a prompt-string resets the\
+prompt to the default, which is the current drive letter followed by a\
+greater-than (>) sign.\
+ \
+The prompt can also be changed by altering the PROMPT environment variable,\
+so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+
+  WCMD_REM,
+"A command line beginning REM (followed by a space) performs no\
+action, and can therefore be used as a comment in a batch file.\n"
+
+  WCMD_REN,    "Help about REN\n"
+  WCMD_RENAME, "Help about RENAME\n"
+  WCMD_RD,     "Help about RD\n"
+  WCMD_RMDIR,  "Help about RMDIR\n"
+
+  WCMD_SET,
+"SET displays or changes the wcmd environment variables.\
+ \
+SET without parameters shows all of the current environment.\
+ \
+To create or modify an environment variable the syntax is:\
+ \
+      SET <variable>=<value>\
+ \
+where <variable> and <value> are character strings. There must be no\
+spaces either side of the equals sign, nor can the variable or value\
+have embedded spaces.\
+ \
+Under Wine, the environment of the underlying operating system is\
+included into the Win32 environment, there will generally therefore be\
+many more values than in a native Win32 implementation. Note that it is\
+not possible to affect the operating system environment from within wcmd.\n"
+
+  WCMD_SHIFT,  "Help about SHIFT\n"
+  WCMD_TIME,   "Help about TIME\n"
+
+  WCMD_TYPE,
+"TYPE <filename> copies <filename> to the console device (or elsewhere\
+if redirected). No check is made that the file is readable text.\n"
+
+  WCMD_VERIFY, "Help about VERIFY\n"
+
+  WCMD_VER,
+"VER displays the version of wcmd you are running\n"
+
+  WCMD_VOL,    "Help about VOL\n"
+
+  WCMD_EXIT,   
+"EXIT terminates the current command session and returns\
+to the operating system or shell from which you invoked wcmd.\n"
+
+  1000, "WCMD built-in commands are:\
+ATTRIB\t\tShow or change DOS file attributes\
+CALL\t\tInvoke a batch file from inside another\
+CD (CHDIR)\tChange current default directory\
+CLS\t\tClear the console screen\
+COPY\t\tCopy file\
+CTTY\t\tChange input/output device\
+DATE\t\tShow or change the system date\
+DEL (ERASE)\tDelete a file or set of files\
+DIR\t\tList the contents of a directory\
+ECHO\t\tCopy text directly to the console output\
+HELP\t\tShow brief help details on a topic\
+MD (MKDIR)\tCreate a subdirectory\
+MOVE\t\tMove a file, set of files or directory tree\
+PATH\t\tSet or show the search path\
+PROMPT\t\tChange the command prompt\
+REN (RENAME)\tRename a file\
+RD (RMDIR)\tDelete a subdirectory\
+SET\t\tSet or show environment variables\
+TIME\t\tSet or show the current system time\
+TYPE\t\tType the contents of a text file\
+VER\t\tShow the current version of WCMD\
+VOL\t\tShow the volume label of a disk device\
+EXIT\t\tClose down WCMD\n\
+Enter HELP <command> for further information on any of the above commands\n"
+}
+LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
+
+
+IDI_ICON1 ICON 
+{
+ '00 00 01 00 01 00 20 20 00 01 00 00 00 00 A8 08'
+ '00 00 16 00 00 00 28 00 00 00 20 00 00 00 40 00'
+ '00 00 01 00 08 00 00 00 00 00 80 04 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 40 00 00 00 80 00 00 00 FF 00 00 00 00 20'
+ '00 00 40 20 00 00 80 20 00 00 FF 20 00 00 00 40'
+ '00 00 40 40 00 00 80 40 00 00 FF 40 00 00 00 60'
+ '00 00 40 60 00 00 80 60 00 00 FF 60 00 00 00 80'
+ '00 00 40 80 00 00 80 80 00 00 FF 80 00 00 00 A0'
+ '00 00 40 A0 00 00 80 A0 00 00 FF A0 00 00 00 C0'
+ '00 00 40 C0 00 00 80 C0 00 00 FF C0 00 00 00 FF'
+ '00 00 40 FF 00 00 80 FF 00 00 FF FF 00 00 00 00'
+ '20 00 40 00 20 00 80 00 20 00 FF 00 20 00 00 20'
+ '20 00 40 20 20 00 80 20 20 00 FF 20 20 00 00 40'
+ '20 00 40 40 20 00 80 40 20 00 FF 40 20 00 00 60'
+ '20 00 40 60 20 00 80 60 20 00 FF 60 20 00 00 80'
+ '20 00 40 80 20 00 80 80 20 00 FF 80 20 00 00 A0'
+ '20 00 40 A0 20 00 80 A0 20 00 FF A0 20 00 00 C0'
+ '20 00 40 C0 20 00 80 C0 20 00 FF C0 20 00 00 FF'
+ '20 00 40 FF 20 00 80 FF 20 00 FF FF 20 00 00 00'
+ '40 00 40 00 40 00 80 00 40 00 FF 00 40 00 00 20'
+ '40 00 40 20 40 00 80 20 40 00 FF 20 40 00 00 40'
+ '40 00 40 40 40 00 80 40 40 00 FF 40 40 00 00 60'
+ '40 00 40 60 40 00 80 60 40 00 FF 60 40 00 00 80'
+ '40 00 40 80 40 00 80 80 40 00 FF 80 40 00 00 A0'
+ '40 00 40 A0 40 00 80 A0 40 00 FF A0 40 00 00 C0'
+ '40 00 40 C0 40 00 80 C0 40 00 FF C0 40 00 00 FF'
+ '40 00 40 FF 40 00 80 FF 40 00 FF FF 40 00 00 00'
+ '60 00 40 00 60 00 80 00 60 00 FF 00 60 00 00 20'
+ '60 00 40 20 60 00 80 20 60 00 FF 20 60 00 00 40'
+ '60 00 40 40 60 00 80 40 60 00 FF 40 60 00 00 60'
+ '60 00 40 60 60 00 80 60 60 00 FF 60 60 00 00 80'
+ '60 00 40 80 60 00 80 80 60 00 FF 80 60 00 00 A0'
+ '60 00 40 A0 60 00 80 A0 60 00 FF A0 60 00 00 C0'
+ '60 00 40 C0 60 00 80 C0 60 00 FF C0 60 00 00 FF'
+ '60 00 40 FF 60 00 80 FF 60 00 FF FF 60 00 00 00'
+ '80 00 40 00 80 00 80 00 80 00 FF 00 80 00 00 20'
+ '80 00 40 20 80 00 80 20 80 00 FF 20 80 00 00 40'
+ '80 00 40 40 80 00 80 40 80 00 FF 40 80 00 00 60'
+ '80 00 40 60 80 00 80 60 80 00 FF 60 80 00 00 80'
+ '80 00 40 80 80 00 80 80 80 00 FF 80 80 00 00 A0'
+ '80 00 40 A0 80 00 80 A0 80 00 FF A0 80 00 00 C0'
+ '80 00 40 C0 80 00 80 C0 80 00 FF C0 80 00 00 FF'
+ '80 00 40 FF 80 00 80 FF 80 00 FF FF 80 00 00 00'
+ 'A0 00 40 00 A0 00 80 00 A0 00 FF 00 A0 00 00 20'
+ 'A0 00 40 20 A0 00 80 20 A0 00 FF 20 A0 00 00 40'
+ 'A0 00 40 40 A0 00 80 40 A0 00 FF 40 A0 00 00 60'
+ 'A0 00 40 60 A0 00 80 60 A0 00 FF 60 A0 00 00 80'
+ 'A0 00 40 80 A0 00 80 80 A0 00 FF 80 A0 00 00 A0'
+ 'A0 00 40 A0 A0 00 80 A0 A0 00 FF A0 A0 00 00 C0'
+ 'A0 00 40 C0 A0 00 80 C0 A0 00 FF C0 A0 00 00 FF'
+ 'A0 00 40 FF A0 00 80 FF A0 00 FF FF A0 00 00 00'
+ 'C0 00 40 00 C0 00 80 00 C0 00 FF 00 C0 00 00 20'
+ 'C0 00 40 20 C0 00 80 20 C0 00 FF 20 C0 00 00 40'
+ 'C0 00 40 40 C0 00 80 40 C0 00 FF 40 C0 00 00 60'
+ 'C0 00 40 60 C0 00 80 60 C0 00 FF 60 C0 00 00 80'
+ 'C0 00 40 80 C0 00 80 80 C0 00 FF 80 C0 00 00 A0'
+ 'C0 00 40 A0 C0 00 80 A0 C0 00 FF A0 C0 00 00 C0'
+ 'C0 00 40 C0 C0 00 80 C0 C0 00 FF C0 C0 00 00 FF'
+ 'C0 00 40 FF C0 00 80 FF C0 00 FF FF C0 00 00 00'
+ 'FF 00 40 00 FF 00 80 00 FF 00 FF 00 FF 00 00 20'
+ 'FF 00 40 20 FF 00 80 20 FF 00 FF 20 FF 00 00 40'
+ 'FF 00 40 40 FF 00 80 40 FF 00 FF 40 FF 00 00 60'
+ 'FF 00 40 60 FF 00 80 60 FF 00 FF 60 FF 00 00 80'
+ 'FF 00 40 80 FF 00 80 80 FF 00 FF 80 FF 00 00 A0'
+ 'FF 00 40 A0 FF 00 80 A0 FF 00 FF A0 FF 00 00 C0'
+ 'FF 00 40 C0 FF 00 80 C0 FF 00 FF C0 FF 00 00 FF'
+ 'FF 00 40 FF FF 00 80 FF FF 00 FF FF FF 00 FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF B6 24 FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF 6D 24 FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF B6 00 B6 FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF 92 00 FF FF 24 FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF 24 FF FF FF FF 92 FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF 24 FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF 92 FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF 6D FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF B6 FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF 6D FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF 92 FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF 6D FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF 6D FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 92 FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 24 FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 92'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 24'
+ 'FF B6 FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 24'
+ '80 81 60 6C FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 24 81'
+ 'C1 81 80 81 20 FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF C0 C1'
+ '80 80 C1 81 C1 20 FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 81 81'
+ '81 80 81 80 80 80 24 FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF 6D 80 81'
+ '81 80 81 C1 C0 80 80 92 FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF B6 FF FF'
+ 'FF FF FF 81 C0 80 80 20 FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF 92 FF FF'
+ 'FF FF FF FF C5 C0 80 81 6D FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FB 81 81 24 FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 92 FF'
+ 'FF FF FF FF FF FF FF FF 24 FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF 6D FF'
+ 'FF FF FF FF FF FF FF FF 6D FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF 92'
+ 'FF FF FF FF FF FF FF 24 24 FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ '92 FF FF FF FF 24 6D FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ '92 FF FF 00 92 FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF'
+ 'FF 24 B6 FF FF FF FF FF FF FF FF FF FF FF 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+ '00 00 00 00 00 00 00 00 00 00 00 00 00 00'
+}
+
+

@@ -1,0 +1,46 @@
+
+v0.10 - 2 June 1999
+Additional help text and error codes.
+
+v0.09 - 5 May 1999
+Directory byte counts and disk free space are reported with commas and in 64-bit.
+File sizes have commas but are computed in 32 bits.
+Handling of DIR /S on non-current path corrected.
+DEL with wildcard or directory name works correctly.
+
+v0.08 - 21 Mar 1999
+Invoke an AUTOEXEC.BAT file if it exists in the root directory of the startup drive.
+
+v0.07 - 8 Mar 1999
+Can now be compiled as a WineLib app (conditional code added).
+Additional help text.
+Icon added to resources (the Wine-glass).
+
+v0.06 - 23 Feb 1999
+Help text moved into resource file to allow localisation.
+Simple batch files (without parameters) can be executed.
+
+v0.05 - 17 Feb 1999
+Fixed problem with DIR command & long, complex relative paths.
+DIR /S and /P implemented.
+Date and time in PROMPT localised.
+More work on batch files (they are echoed to screen but not executed). 
+
+v0.04 - 7 Feb 1999
+Command-line qualifiers /c /q /k implemented (as NT's CMD.EXE).
+ECHO command implemented, though echo mode is not honoured.
+Environment variables in commands (eg %envvar%) expanded.
+REN and COPY added, but no wildcard support or relative paths.
+Filenames in quotes now handled.
+PAUSE command.
+Preliminary coding for batch files.
+
+v0.03 - 5 Feb 1999
+Added relative path and alternate drive support to DIR, also free disk space
+(32-bit only!).
+
+v0.02 - 27 Jan 1999
+Added change-drive code.
+
+v0.01 - 25 Jan 1999
+Initial version.

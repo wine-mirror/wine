@@ -802,6 +802,7 @@ programs/progman/Makefile
 programs/regtest/Makefile
 programs/regapi/Makefile
 programs/view/Makefile
+programs/wcmd/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile

@@ -1,0 +1,47 @@
+#-----------------------------------------------------------------------------
+VERSION = BCB.01
+#-----------------------------------------------------------------------------
+!ifndef BCB
+BCB = $(MAKEDIR)\..
+!endif
+PROJECT = wcmd.exe
+OBJFILES = builtins.obj wcmdmain.obj directory.obj batch.obj
+RESFILES = wcmdrc.rc
+RESDEPEN = $(RESFILES)
+LIBFILES = 
+DEFFILE = 
+#-----------------------------------------------------------------------------
+CFLAG1 = -c
+CFLAG2 = -H=C:\BC\PROJECTS\CMD.CSM -nC:\BC\PROJECTS\CMD \
+         -IC:\BC\INCLUDE;C:\BC\PROJECTS\CMD
+PFLAGS = -U$(BCB)\lib\obj -jph -m 
+RFLAGS = -I$(BCB)\include;C:\BC\INCLUDE;C:\BC\PROJECTS\CMD
+LFLAGS = -ap -Tpe -c -x -L$(BCB)\lib;$(BCB)\lib\obj;C:\BC\LIB 
+IFLAGS = -i
+LINKER = tlink32
+#-----------------------------------------------------------------------------
+ALLOBJ = c0x32.obj $(OBJFILES)
+ALLRES = $(RESFILES)
+ALLLIB = $(LIBFILES) noeh32.lib import32.lib cw32mt.lib
+# ---------------------------------------------------------------------------
+.autodepend
+
+$(PROJECT): $(OBJFILES) $(RESDEPEN) $(DEFFILE)
+    $(BCB)\BIN\$(LINKER) @&&!
+    $(LFLAGS) +
+    $(ALLOBJ), +
+    $(PROJECT),, +
+    $(ALLLIB), +
+    $(DEFFILE), +
+    $(ALLRES)
+!
+
+.cpp.obj:
+    $(BCB)\BIN\bcc32 $(CFLAG1) $(CFLAG2) -o$* $*
+
+.c.obj:
+    $(BCB)\BIN\bcc32 $(CFLAG1) $(CFLAG2) -o$* $**
+
+.rc.res:
+    $(BCB)\BIN\brcc32 $(RFLAGS) $<
+#-----------------------------------------------------------------------------
