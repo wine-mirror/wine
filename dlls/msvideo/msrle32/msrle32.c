@@ -803,14 +803,14 @@ LRESULT MSRLE32_CompressRLE8(CodecInfo *pi, LPBITMAPINFOHEADER lpbiIn, LPBYTE lp
       if (jumpy == 0) {
 	/* add EOL -- end of line */
 	lpbiOut->biSizeImage += 2;
-	*((LPDWORD)lpOut)++ = 0;
+	*((LPWORD)lpOut)++ = 0;
 	assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
       }
     }
 
     /* add EOL -- will be changed to EOI */
     lpbiOut->biSizeImage += 2;
-    *((LPDWORD)lpOut)++ = 0;
+    *((LPWORD)lpOut)++ = 0;
   }
 
   /* change EOL to EOI -- end of image */
