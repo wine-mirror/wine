@@ -676,16 +676,17 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND32 hwnd, UINT32 msg,
         if (! (smsg->flags & SMSG_HAVE_RESULT) )
         {
             /* not supposed to happen */
-            ERR(sendmsg, "SMSG_HAVE_RESULT not set smsg->flags=%x\n", smsg->flags);
+            ERR(sendmsg, "SMSG_HAVE_RESULT not set: smsg->flags=%x\n", smsg->flags);
+            QUEUE_ClearWakeBit( queue, QS_SMRESULT );
       }
         else
         {
             lResult = smsg->lResult;
             TRACE(sendmsg,"smResult = %08x\n", (unsigned)lResult );
         }
+    }
 
       QUEUE_ClearWakeBit( queue, QS_SMRESULT );
-    }
 
     /* remove the smsg from the processingg list of the source queue */
     QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
@@ -2218,7 +2219,7 @@ BOOL32 WINAPI InSendMessage32(void)
 
     if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue() )))
         return 0;
-    ret = (BOOL32)queue->smProcessing;
+    ret = (BOOL32)queue->smWaiting;
 
     QUEUE_Unlock( queue );
     return ret;
