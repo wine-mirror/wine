@@ -150,7 +150,7 @@ sub kill_subprocesses {
 	# kill all subprocesses called 'wine'. Do not kill find, diff, sh
 	# and friends, which are also subprocesses of us.
 	foreach (keys %kids) {
-		next unless ($cmdline{$_} =~ /(wine|dosmod)/);
+		next unless ($cmdline{$_} =~ /((.|)wine|dosmod)/);
 		# if we have already killed it using -TERM, use -KILL
 		if ($killedalready{$_}) {
 			kill(9,$_);	# FIXME: use correct number?
@@ -250,7 +250,7 @@ while ($exe=<FIND>) {
 	alarm(1000);# so it doesn't trigger in the diff, kill or find.
 
 	system("touch $cwd/runs/${runfile}.out");
-	system("$diff $cwd/runs/${runfile}.out $cwd/${runfile}.out");
+	system("$diff $cwd/runs/${runfile}.out $cwd/${runfile}.out|head -$trunclines");
 	system("head -$trunclines $cwd/${runfile}.out >$cwd/runs/${runfile}.out");
 	unlink("$cwd/${runfile}.out");
 	&kill_subprocesses;
