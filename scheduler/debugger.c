@@ -129,7 +129,7 @@ void WINAPI OutputDebugStringA( LPCSTR str )
     req->unicode = 0;
     req->length  = strlen(str) + 1;
     server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
-    TRACE("%s\n", str);
+    WARN("%s\n", str);
 }
 
 
@@ -143,7 +143,7 @@ void WINAPI OutputDebugStringW( LPCWSTR str )
     req->unicode = 1;
     req->length  = (lstrlenW(str) + 1) * sizeof(WCHAR);
     server_call_noerr( REQ_OUTPUT_DEBUG_STRING );
-    TRACE("%s\n", debugstr_w(str));
+    WARN("%s\n", debugstr_w(str));
 }
 
 
