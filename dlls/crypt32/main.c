@@ -293,3 +293,9 @@ BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
     FIXME("%p %08lx\n", hCertStore, dwFlags );
     return TRUE;
 }
+
+BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext )
+{
+    FIXME("%p stub\n", pCertContext);
+    return TRUE;
+}

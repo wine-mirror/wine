@@ -42,7 +42,7 @@
 @ stub CertFreeCTLContext
 @ stub CertFreeCertificateChain
 @ stub CertFreeCertificateChainEngine
-@ stub CertFreeCertificateContext
+@ stdcall CertFreeCertificateContext(ptr)
 @ stub CertGetCRLContextProperty
 @ stub CertGetCRLFromStore
 @ stub CertGetCTLContextProperty
