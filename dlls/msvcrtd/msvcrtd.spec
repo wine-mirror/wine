@@ -223,7 +223,7 @@
 @ stub _dstbias
 @ cdecl _dup (long) msvcrt._dup
 @ cdecl _dup2 (long long) msvcrt._dup2
-@ cdecl _ecvt( double long ptr ptr) ecvt
+@ cdecl _ecvt( double long ptr ptr) msvcrt._ecvt
 @ cdecl _endthread () msvcrt._endthread
 @ cdecl _endthreadex(long) msvcrt._endthreadex
 @ extern _environ msvcrt._environ
@@ -243,7 +243,7 @@
 @ cdecl _expand(ptr long) msvcrt._expand
 @ cdecl _expand_dbg(ptr long) msvcrt._expand
 @ cdecl _fcloseall() msvcrt._fcloseall
-@ cdecl _fcvt( double long ptr ptr) fcvt
+@ cdecl _fcvt( double long ptr ptr) msvcrt._fcvt
 @ cdecl _fdopen(long str) msvcrt._fdopen
 @ cdecl _fgetchar() msvcrt._fgetchar
 @ cdecl _fgetwchar() msvcrt._fgetwchar
@@ -274,7 +274,7 @@
 @ cdecl _ftol() ntdll._ftol
 @ cdecl _fullpath(ptr str long) msvcrt._fullpath
 @ cdecl _futime(long ptr) msvcrt._futime
-@ cdecl _gcvt( double long str) gcvt
+@ cdecl _gcvt( double long str) msvcrt._gcvt
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ stub _get_sbh_threshold #()
 @ cdecl _getch() msvcrt._getch
