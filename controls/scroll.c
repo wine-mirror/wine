@@ -10,6 +10,7 @@
 #include "heap.h"
 #include "win.h"
 #include "debugtools.h"
+#include "tweak.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll)
 
@@ -383,11 +384,13 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
     HBITMAP hbmpPrev = SelectObject( hdcMem, vertical ?
                                     TOP_ARROW(infoPtr->flags, top_pressed)
                                     : LEFT_ARROW(infoPtr->flags, top_pressed));
+    INT offset = (TWEAK_WineLook > WIN31_LOOK) ? 1 : 0;
 
+    if (offset) arrowSize--;
     SetStretchBltMode( hdc, STRETCH_DELETESCANS );
-    StretchBlt( hdc, rect->left, rect->top,
-                  vertical ? rect->right-rect->left : arrowSize,
-                  vertical ? arrowSize : rect->bottom-rect->top,
+    StretchBlt( hdc, rect->left+offset, rect->top+offset,
+                  vertical ? rect->right-(rect->left+offset) : arrowSize,
+                  vertical ? arrowSize : rect->bottom-(rect->top+offset),
                   hdcMem, 0, 0,
                   GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
                   SRCCOPY );
@@ -396,14 +399,14 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
                     BOTTOM_ARROW( infoPtr->flags, bottom_pressed )
                     : RIGHT_ARROW( infoPtr->flags, bottom_pressed ) );
     if (vertical)
-        StretchBlt( hdc, rect->left, rect->bottom - arrowSize,
-                      rect->right - rect->left, arrowSize,
+        StretchBlt( hdc, (rect->left+offset), rect->bottom - arrowSize,
+                      rect->right - (rect->left+offset), arrowSize,
                       hdcMem, 0, 0,
                       GetSystemMetrics(SM_CXVSCROLL),GetSystemMetrics(SM_CYHSCROLL),
                       SRCCOPY );
     else
-        StretchBlt( hdc, rect->right - arrowSize, rect->top,
-                      arrowSize, rect->bottom - rect->top,
+        StretchBlt( hdc, rect->right - arrowSize, rect->top+offset,
+                      arrowSize, rect->bottom - (rect->top+offset),
                       hdcMem, 0, 0,
                       GetSystemMetrics(SM_CXVSCROLL), GetSystemMetrics(SM_CYHSCROLL),
                       SRCCOPY );
@@ -460,6 +463,12 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
                                  BOOL top_selected, BOOL bottom_selected )
 {
     RECT r;
+    BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
+
+    if (Save_SCROLL_MovingThumb &&
+        (SCROLL_TrackingWin == hwnd) &&
+        (SCROLL_TrackingBar == nBar))
+        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
 
       /* Select the correct brush and pen */
 
@@ -496,7 +505,9 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
 
       /* Draw the scroll bar frame */
 
-    Rectangle( hdc, r.left, r.top, r.right, r.bottom );
+	/* Only draw outline if Win 3.1.  Mar 24, 1999 - Ronald B. Cemer */
+    if (TWEAK_WineLook == WIN31_LOOK)
+	Rectangle( hdc, r.left, r.top, r.right, r.bottom );
 
       /* Draw the scroll rectangles and thumb */
 
@@ -537,16 +548,23 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
       /* Draw the thumb */
 
     SelectObject( hdc, GetSysColorBrush(COLOR_BTNFACE) );
-    Rectangle( hdc, r.left, r.top, r.right, r.bottom );
-    r.top++, r.left++;
+    if (TWEAK_WineLook == WIN31_LOOK)
+    {
+	Rectangle( hdc, r.left, r.top, r.right, r.bottom );
+	r.top++, r.left++;
+    }
+    else
+    {
+	r.top++, r.left++;
+	r.bottom--; r.right--;
+	Rectangle( hdc, r.left, r.top, r.right-1, r.bottom-1 );
+    }
     DrawEdge( hdc, &r, EDGE_RAISED, BF_RECT );
-    if (SCROLL_MovingThumb &&
+
+    if (Save_SCROLL_MovingThumb &&
         (SCROLL_TrackingWin == hwnd) &&
         (SCROLL_TrackingBar == nBar))
-    {
         SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
-        SCROLL_MovingThumb = TRUE;
-    }
 }
 
 
@@ -563,6 +581,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     BOOL vertical;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLBAR_INFO *infoPtr = SCROLL_GetPtrScrollInfo( wndPtr, nBar );
+    BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
 
     if (!wndPtr || !infoPtr ||
         ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
@@ -571,6 +590,11 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
 
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbSize, &thumbPos );
+
+    if (Save_SCROLL_MovingThumb &&
+        (SCROLL_TrackingWin == hwnd) &&
+        (SCROLL_TrackingBar == nBar))
+        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
 
       /* Draw the arrows */
 
@@ -587,6 +611,12 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     if( interior )
 	SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                          thumbPos, infoPtr->flags, vertical, FALSE, FALSE );
+
+    if (Save_SCROLL_MovingThumb &&
+        (SCROLL_TrackingWin == hwnd) &&
+        (SCROLL_TrackingBar == nBar))
+        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
+
 END:
     WIN_ReleaseWndPtr(wndPtr);
 }
@@ -756,12 +786,14 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             SCROLL_TrackingWin = hwnd;
             SCROLL_TrackingBar = nBar;
             SCROLL_TrackingPos = trackThumbPos + lastMousePos - lastClickPos;
-            SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
+	    if (!SCROLL_MovingThumb)
+		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
         }
         else if (msg == WM_LBUTTONUP)
         {
+	    if (SCROLL_MovingThumb)
+		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
             SCROLL_TrackingWin = 0;
-            SCROLL_MovingThumb = FALSE;
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                                  thumbPos, infoPtr->flags, vertical,
                                  FALSE, FALSE );
@@ -776,9 +808,10 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 		pt = SCROLL_ClipPos( &rect, pt );
 		pos = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
 	    }
-            if (pos != lastMousePos)
+            if ( (pos != lastMousePos) || (!SCROLL_MovingThumb) )
             {
-                SCROLL_DrawMovingThumb( hdc, &rect, vertical,
+		if (SCROLL_MovingThumb)
+		    SCROLL_DrawMovingThumb( hdc, &rect, vertical,
                                         arrowSize, thumbSize );
                 lastMousePos = pos;
                 SCROLL_TrackingPos = trackThumbPos + pos - lastClickPos;
@@ -788,7 +821,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
                                 hwndCtl );
-                SCROLL_DrawMovingThumb( hdc, &rect, vertical,
+		if (!SCROLL_MovingThumb)
+		    SCROLL_DrawMovingThumb( hdc, &rect, vertical,
                                         arrowSize, thumbSize );
             }
         }
