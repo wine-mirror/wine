@@ -70,6 +70,14 @@ inline static void call_finally_block( void *code_block, void *base_ptr )
     __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax" \
                           : : "a" (code_block), "g" (base_ptr));
 }
+
+static DWORD call_filter( void *func, void *arg, void *ebp )
+{
+    DWORD ret;
+    __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"
+                          : "=a" (ret) : "0" (func), "g" (ebp), "g" (arg) );
+    return ret;
+}
 #endif
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
@@ -206,7 +214,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
       {
         TRACE("filter = %p\n", pScopeTable[trylevel].lpfnFilter);
 
-        retval = pScopeTable[trylevel].lpfnFilter(&exceptPtrs);
+        retval = call_filter( pScopeTable[trylevel].lpfnFilter, &exceptPtrs, &frame->_ebp );
 
         TRACE("filter returned %s\n", retval == EXCEPTION_CONTINUE_EXECUTION ?
               "CONTINUE_EXECUTION" : retval == EXCEPTION_EXECUTE_HANDLER ?
