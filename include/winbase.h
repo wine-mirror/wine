@@ -1243,6 +1243,7 @@ BOOL        WINAPI BuildCommDCBW(LPCWSTR,LPDCB);
 BOOL        WINAPI BuildCommDCBAndTimeoutsA(LPCSTR,LPDCB,LPCOMMTIMEOUTS);
 BOOL        WINAPI BuildCommDCBAndTimeoutsW(LPCWSTR,LPDCB,LPCOMMTIMEOUTS);
 #define     BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
+BOOL        WINAPI CancelIo(HANDLE);
 BOOL        WINAPI CancelWaitableTimer(HANDLE);
 BOOL        WINAPI ClearCommBreak(HANDLE);
 BOOL        WINAPI ClearCommError(HANDLE,LPDWORD,LPCOMSTAT);

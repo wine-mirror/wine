@@ -900,7 +900,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stub WriteConsoleInputVDMW
 
 # NT 4.0 additions
-@ stub CancelIo
+@ stdcall CancelIo(long) CancelIo
 @ stdcall CancelWaitableTimer(long) CancelWaitableTimer
 @ stdcall CopyFileExA (str str ptr ptr ptr long) CopyFileExA
 @ stdcall CopyFileExW (wstr wstr ptr ptr ptr long) CopyFileExW

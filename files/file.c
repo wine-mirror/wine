@@ -1238,6 +1238,15 @@ BOOL WINAPI GetOverlappedResult(
 
 
 /***********************************************************************
+ *             CancelIo                   (KERNEL32.@)
+ */
+BOOL WINAPI CancelIo(HANDLE handle)
+{
+    FIXME("(%d) stub\n",handle);
+    return FALSE;
+}
+
+/***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
  *
  *  This function is called while the client is waiting on the
