@@ -193,10 +193,6 @@ int main(int argc, char **argv)
                 case 'v':        /* verbose */
                     if (argv[i][2] == 0) verbose = 1;
                     break;
-		case 'V':
-		    printf("winegcc v0.3\n");
-		    exit(0);
-		    break;
                 case 'W':
                     if (strncmp("-Wl,", argv[i], 4) == 0)
 		    {
@@ -220,6 +216,12 @@ int main(int argc, char **argv)
     if (linking)
     {
 	int has_output_name = 0;
+	int has_input_files = 0;
+	char **temp_argv;
+
+	/* we need this to erase some of the parameters as we go along */
+	temp_argv = malloc(sizeof(char*) * argc);
+	memcpy(temp_argv, argv, sizeof(char*) * argc);
 
 	gcc_argv[i++] = "winewrap";
 	if (gui_app) gcc_argv[i++] = "-mgui";
@@ -234,17 +236,17 @@ int main(int argc, char **argv)
 		case 'L':
 		case 'o':
 		    gcc_argv[i++] = argv[j];
-		    argv[j] = 0;
+		    temp_argv[j] = 0;
 		    if (!gcc_argv[i-1][2] && j + 1 < argc)
 		    {
 			gcc_argv[i++] = argv[++j];
-			argv[j] = 0;
+			temp_argv[j] = 0;
 		    }
 		    has_output_name = 1;
 		    break;
 		case 'l':
 		    gcc_argv[i++] = strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"; 
-		    argv[j] = 0;
+		    temp_argv[j] = 0;
 		    break;
 		default:
 		    ; /* ignore the rest */
@@ -252,21 +254,32 @@ int main(int argc, char **argv)
 	    }
 	    else
 	    {
-		gcc_argv[i++] = get_obj_file(argv, j);
-		argv[j] = 0;
+		gcc_argv[i++] = get_obj_file(temp_argv, j);
+		temp_argv[j] = 0;
+		has_input_files = 1;
 	    }
+	}
 
+	if (has_input_files)
+	{
 	    /* Support the a.out default name, to appease configure */
 	    if (!has_output_name)
 	    {
 		gcc_argv[i++] = "-o";
 		gcc_argv[i++] = "a.out";
 	    }
+	    if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
+	    if (gui_app) gcc_argv[i++] = "-lcomdlg32";
+	    gcc_argv[i++] = "-ladvapi32";
+	    gcc_argv[i++] = "-lshell32";
 	}
-	if (use_stdlib && use_msvcrt) gcc_argv[i++] = "-lmsvcrt";
-	if (gui_app) gcc_argv[i++] = "-lcomdlg32";
-	gcc_argv[i++] = "-ladvapi32";
-	gcc_argv[i++] = "-lshell32";
+	else
+	{
+	    /* if we have nothing to process, just forward stuff to gcc */
+	    memcpy(gcc_argv, argv,  sizeof(char*) * argc);
+	    gcc_argv[0] = cpp ? "g++" : "gcc";
+	    i = argc;
+	}
     }
     else
     {
