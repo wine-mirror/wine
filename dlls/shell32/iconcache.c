@@ -405,7 +405,7 @@ HICON WINAPI ExtractIconExA ( LPCSTR lpszFile, INT nIconIndex, HICON * phiconLar
 	}
 
 	/* if no pointers given and one icon expected, return the handle directly*/
-	if (!phiconLarge && ! phiconSmall && nIcons==1 )
+	if (!phiconLarge && !phiconSmall && nIcons==1 )
 	  phiconSmall = &ret;
 	
 	if (phiconSmall)

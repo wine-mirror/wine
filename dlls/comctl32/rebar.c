@@ -1727,7 +1727,7 @@ REBAR_Layout (REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify, BOOL resetclient)
 	    iband = infoPtr->rows[i-1].istartband;
 	    lpBand = &infoPtr->bands[iband];
 	    if(HIDDENBAND(lpBand)) continue;
-	    if (!lpBand->fMask & RBBS_VARIABLEHEIGHT) continue;
+	    if (!(lpBand->fMask & RBBS_VARIABLEHEIGHT)) continue;
 	    if (((INT)lpBand->cyMaxChild < 1) || 
 		((INT)lpBand->cyIntegral < 1)) {
 		if (lpBand->cyMaxChild + lpBand->cyIntegral == 0) continue;

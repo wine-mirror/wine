@@ -453,7 +453,7 @@ static char *demangle_datatype (char **str, compound_type *ct,
           fatal ("Out of Memory");
 
         /* If we're a reference, re-use the pointer already in the type */
-        if (!ct->flags & CT_BY_REFERENCE)
+        if (!(ct->flags & CT_BY_REFERENCE))
           stripped[ strlen (stripped) - 2] = '\0'; /* otherwise, strip it */
 
         ct->expression = str_create (2, ct->flags & CT_CONST ? "const " :

@@ -51,7 +51,7 @@ typedef struct _LOADDATA
     PVOID ptr;
 } LOADDATA, *LPLOADDATA;
 
-typedef HRESULT CALLBACK (*DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
+typedef HRESULT (CALLBACK *DPALOADPROC)(LPLOADDATA,IStream*,LPARAM);
 
 INT __cdecl _wtoi(LPWSTR string);
 
@@ -264,7 +264,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	}
 	else if (nResult < 0)
 	{
-	    if (!dwFlags & 8)
+	    if (!(dwFlags & 8))
 	    {
 		PVOID ptr;
 
@@ -277,7 +277,7 @@ DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	}
 	else
 	{
-	    if (!dwFlags & 4)
+	    if (!(dwFlags & 4))
 	    {
 		PVOID ptr;
 

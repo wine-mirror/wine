@@ -883,7 +883,7 @@ HEADER_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lpItem->fmt == 0)
 	lpItem->fmt = HDF_LEFT;
 
-    if (!(lpItem->fmt &HDF_STRING) && (phdi->mask & HDI_TEXT))
+    if (!(lpItem->fmt & HDF_STRING) && (phdi->mask & HDI_TEXT))
       {
 	lpItem->fmt |= HDF_STRING;
       }

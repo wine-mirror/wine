@@ -1225,7 +1225,7 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
         {
             for (pConv = pInstance->convs[WDML_CLIENT_SIDE]; pConv; pConv = pConv->next)
             {
-                if (!pConv->wStatus & ST_CONNECTED) continue;
+                if (!(pConv->wStatus & ST_CONNECTED)) continue;
                 for (pXAct = pConv->transactions; pXAct; pXAct = pXAct->next)
                 {
                     if (pXAct->dwTimeout == TIMEOUT_ASYNC)

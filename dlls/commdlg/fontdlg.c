@@ -636,9 +636,9 @@ static INT AddFontStyle(const LOGFONTA *lplf, UINT nFontType,
 
   if (!SendMessageA(hcmb2, CB_GETCOUNT, 0, 0))
   {
-       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+       HDC hdc= ((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
        i=SetFontStylesToCombo2(hcmb2,hdc,lplf);
-       if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+       if (!((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC))
          ReleaseDC(hDlg,hdc);
        if (i)
         return 0;
@@ -733,7 +733,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
     ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
   }
-  hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+  hdc= ((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
   if (hdc)
   {
     CFn_ENUMSTRUCT s;
@@ -811,7 +811,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
     return FALSE;
   }
 
-  if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+  if (!((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC))
     ReleaseDC(hDlg,hdc);
   SetCursor(hcursor);   
   return TRUE;
@@ -968,7 +968,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
   {
 	case cmb1:if (HIWORD(wParam)==CBN_SELCHANGE)
 		  {
-		    hdc=(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
+		    hdc=((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC) ? lpcf->hDC : GetDC(hDlg);
 		    if (hdc)
 		    {
                       SendDlgItemMessageA(hDlg, cmb2, CB_RESETCONTENT16, 0, 0); 
@@ -990,7 +990,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
 			SendDlgItemMessageA(hDlg,cmb3, CB_SETCURSEL, 0, 0);
 		        SetCursor(hcursor);
 		      }
-		      if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
+		      if (!((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC))
  		        ReleaseDC(hDlg,hdc);
  		    }
  		    else
