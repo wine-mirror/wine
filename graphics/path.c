@@ -244,8 +244,6 @@ BOOL WINAPI CloseFigure(HDC hdc)
       return FALSE;
    }
    
-   /* FIXME: Shouldn't we draw a line to the beginning of the figure? */
-   
    /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
    if(pPath->numEntriesUsed)
    {
@@ -360,39 +358,13 @@ HRGN WINAPI PathToRegion(HDC hdc)
    return hrgnRval;
 }
 
-/***********************************************************************
- *           FillPath16    (GDI.515)
- */
-BOOL16 WINAPI FillPath16(HDC16 hdc)
+static BOOL PATH_FillPath(HDC hdc, GdiPath *pPath)
 {
-  return (BOOL16) FillPath((HDC) hdc); 
-}
-
-/***********************************************************************
- *           FillPath    (GDI32.100)
- *
- * FIXME
- *    Check that SetLastError is being called correctly 
- */
-BOOL WINAPI FillPath(HDC hdc)
-{
-   GdiPath *pPath;
    INT   mapMode, graphicsMode;
    SIZE  ptViewportExt, ptWindowExt;
    POINT ptViewportOrg, ptWindowOrg;
-   XFORM   xform;
+   XFORM xform;
    HRGN  hrgn;
-   DC *dc = DC_GetDCPtr( hdc );
-   
-   if(!dc) {
-     SetLastError(ERROR_INVALID_HANDLE);
-     return FALSE;
-   }
-
-   if(dc->funcs->pFillPath)
-     return dc->funcs->pFillPath(dc);
-
-   pPath = &dc->w.path;
 
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
@@ -434,7 +406,7 @@ BOOL WINAPI FillPath(HDC hdc)
 
       /* Paint the region */
       PaintRgn(hdc, hrgn);
-
+      DeleteObject(hrgn);
       /* Restore the old mapping mode */
       SetMapMode(hdc, mapMode);
       SetViewportExtEx(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
@@ -447,17 +419,43 @@ BOOL WINAPI FillPath(HDC hdc)
       SetGraphicsMode(hdc, GM_ADVANCED);
       SetWorldTransform(hdc, &xform);
       SetGraphicsMode(hdc, graphicsMode);
-
-      /* Empty the path */
-      PATH_EmptyPath(pPath);
       return TRUE;
    }
-   else
-   {
-      /* FIXME: Should the path be emptied even if conversion failed? */
-      /* PATH_EmptyPath(pPath); */
-      return FALSE;
+   return FALSE;
+}
+
+/***********************************************************************
+ *           FillPath16    (GDI.515)
+ */
+BOOL16 WINAPI FillPath16(HDC16 hdc)
+{
+  return (BOOL16) FillPath((HDC) hdc); 
+}
+
+/***********************************************************************
+ *           FillPath    (GDI32.100)
+ *
+ * FIXME
+ *    Check that SetLastError is being called correctly 
+ */
+BOOL WINAPI FillPath(HDC hdc)
+{
+   DC *dc = DC_GetDCPtr( hdc );
+   
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
    }
+
+   if(dc->funcs->pFillPath)
+     return dc->funcs->pFillPath(dc);
+
+   if(!PATH_FillPath(hdc, &dc->w.path))
+      return FALSE;
+
+   /* FIXME: Should the path be emptied even if conversion failed? */
+   PATH_EmptyPath(&dc->w.path);
+   return TRUE;
 }
 
 /***********************************************************************
@@ -1454,69 +1452,12 @@ BOOL WINAPI FlattenPath(HDC hdc)
    return PATH_FlattenPath(pPath);
 }
 
-/*******************************************************************
- *      StrokeAndFillPath16 [GDI.520]
- *
- *
- */
-BOOL16 WINAPI StrokeAndFillPath16(HDC16 hdc)
+
+static BOOL PATH_StrokePath(HDC hdc, GdiPath *pPath)
 {
-  return (BOOL16) StrokeAndFillPath((HDC) hdc);
-}
-
-/*******************************************************************
- *      StrokeAndFillPath [GDI32.352]
- *
- *
- */
-BOOL WINAPI StrokeAndFillPath(HDC hdc)
-{
-   DC *dc = DC_GetDCPtr( hdc );
-   
-   if(!dc) {
-     SetLastError(ERROR_INVALID_HANDLE);
-     return FALSE;
-   }
-
-   if(dc->funcs->pStrokeAndFillPath)
-     return dc->funcs->pStrokeAndFillPath(dc);
-
-   FIXME("stub\n");
-   return StrokePath(hdc);
-}
-
-/*******************************************************************
- *      StrokePath16 [GDI.521]
- *
- *
- */
-BOOL16 WINAPI StrokePath16(HDC16 hdc)
-{
-  return (BOOL16) StrokePath((HDC) hdc);
-}
-
-/*******************************************************************
- *      StrokePath [GDI32.353]
- *
- *
- */
-BOOL WINAPI StrokePath(HDC hdc)
-{
-    DC *dc = DC_GetDCPtr( hdc );
-    GdiPath *pPath;
     INT i;
     POINT ptLastMove = {0,0};
 
-    TRACE("(%08x)\n", hdc);
-    if(!dc) {
-        SetLastError(ERROR_INVALID_HANDLE);
-	return FALSE;
-    }
-
-    if(dc->funcs->pStrokePath)
-        return dc->funcs->pStrokePath(dc);
-
-    pPath = &dc->w.path;
     if(pPath->state != PATH_Closed)
         return FALSE;
 
@@ -1525,7 +1466,7 @@ BOOL WINAPI StrokePath(HDC hdc)
     SetViewportOrgEx(hdc, 0, 0, NULL);
     SetWindowOrgEx(hdc, 0, 0, NULL);
     for(i = 0; i < pPath->numEntriesUsed; i++) {
-	switch(pPath->pFlags[i]) {
+        switch(pPath->pFlags[i]) {
 	case PT_MOVETO:
 	    TRACE("Got PT_MOVETO (%ld, %ld)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
@@ -1556,6 +1497,75 @@ BOOL WINAPI StrokePath(HDC hdc)
 	    LineTo(hdc, ptLastMove.x, ptLastMove.y);
     }
     RestoreDC(hdc, -1);
+    return TRUE;
+}
+
+
+/*******************************************************************
+ *      StrokeAndFillPath16 [GDI.520]
+ *
+ *
+ */
+BOOL16 WINAPI StrokeAndFillPath16(HDC16 hdc)
+{
+  return (BOOL16) StrokeAndFillPath((HDC) hdc);
+}
+
+/*******************************************************************
+ *      StrokeAndFillPath [GDI32.352]
+ *
+ *
+ */
+BOOL WINAPI StrokeAndFillPath(HDC hdc)
+{
+   DC *dc = DC_GetDCPtr( hdc );
+   BOOL bRet;
+
+   if(!dc) {
+     SetLastError(ERROR_INVALID_HANDLE);
+     return FALSE;
+   }
+
+   if(dc->funcs->pStrokeAndFillPath)
+     return dc->funcs->pStrokeAndFillPath(dc);
+
+   bRet = PATH_FillPath(hdc, &dc->w.path);
+   if(bRet) bRet = PATH_StrokePath(hdc, &dc->w.path);
+   if(bRet) PATH_EmptyPath(&dc->w.path);
+   return bRet;
+}
+
+/*******************************************************************
+ *      StrokePath16 [GDI.521]
+ *
+ *
+ */
+BOOL16 WINAPI StrokePath16(HDC16 hdc)
+{
+  return (BOOL16) StrokePath((HDC) hdc);
+}
+
+/*******************************************************************
+ *      StrokePath [GDI32.353]
+ *
+ *
+ */
+BOOL WINAPI StrokePath(HDC hdc)
+{
+    DC *dc = DC_GetDCPtr( hdc );
+    GdiPath *pPath;
+
+    TRACE("(%08x)\n", hdc);
+    if(!dc) {
+        SetLastError(ERROR_INVALID_HANDLE);
+	return FALSE;
+    }
+
+    if(dc->funcs->pStrokePath)
+        return dc->funcs->pStrokePath(dc);
+
+    pPath = &dc->w.path;
+    PATH_StrokePath(hdc, pPath);
     PATH_EmptyPath(pPath);
     return TRUE;
 }
