@@ -554,7 +554,7 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
 	_wsi_list = pwsi;
 	pTask->pwsi = pwsi;
     }
-    else pwsi->num_startup++;
+    pwsi->num_startup++;
 
     /* return winsock information */
 
