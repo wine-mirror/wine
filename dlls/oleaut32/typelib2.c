@@ -942,6 +942,31 @@ static int ctl2_encode_typedesc(
     return 0;
 }
 
+/****************************************************************************
+ *	ctl2_find_nth_reference
+ *
+ *  Finds a reference by index into the linked list of reference records.
+ *
+ * RETURNS
+ *
+ *  Success: Offset of the desired reference record.
+ *  Failure: -1.
+ */
+static int ctl2_find_nth_reference(
+	ICreateTypeLib2Impl *This, /* [I] The type library in which to search. */
+	int offset,                /* [I] The starting offset of the reference list. */
+	int index)                 /* [I] The index of the reference to find. */
+{
+    MSFT_RefRecord *ref;
+
+    for (; index && (offset != -1); index--) {
+	ref = (MSFT_RefRecord *)&This->typelib_segment_data[MSFT_SEG_REFERENCES][offset];
+	offset = ref->onext;
+    }
+
+    return offset;
+}
+
 /*================== ICreateTypeInfo2 Implementation ===================================*/
 
 /******************************************************************************
@@ -1288,8 +1313,63 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddImplType(
         UINT index,
         HREFTYPE hRefType)
 {
-    FIXME("(%p,%d,%ld), stub!\n", iface, index, hRefType);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    TRACE("(%p,%d,%ld)\n", iface, index, hRefType);
+
+    if ((This->typeinfo->typekind & 15) == TKIND_COCLASS) {
+	int offset;
+	MSFT_RefRecord *ref;
+
+	if (index == 0) {
+	    if (This->typeinfo->datatype1 != -1) return TYPE_E_ELEMENTNOTFOUND;
+
+	    offset = ctl2_alloc_segment(This->typelib, MSFT_SEG_REFERENCES, sizeof(MSFT_RefRecord), 0);
+	    if (offset == -1) return E_OUTOFMEMORY;
+
+	    This->typeinfo->datatype1 = offset;
+	} else {
+	    int lastoffset;
+
+	    lastoffset = ctl2_find_nth_reference(This->typelib, This->typeinfo->datatype1, index - 1);
+	    if (lastoffset == -1) return TYPE_E_ELEMENTNOTFOUND;
+
+	    ref = (MSFT_RefRecord *)&This->typelib->typelib_segment_data[MSFT_SEG_REFERENCES][lastoffset];
+	    if (ref->onext != -1) return TYPE_E_ELEMENTNOTFOUND;
+
+	    offset = ctl2_alloc_segment(This->typelib, MSFT_SEG_REFERENCES, sizeof(MSFT_RefRecord), 0);
+	    if (offset == -1) return E_OUTOFMEMORY;
+
+	    ref->onext = offset;
+	}
+
+	ref = (MSFT_RefRecord *)&This->typelib->typelib_segment_data[MSFT_SEG_REFERENCES][offset];
+
+	ref->reftype = hRefType;
+	ref->flags = 0;
+	ref->oCustData = -1;
+	ref->onext = -1;
+    } else if ((This->typeinfo->typekind & 15) == TKIND_DISPATCH) {
+	FIXME("dispatch case unhandled.\n");
+    } else if ((This->typeinfo->typekind & 15) == TKIND_INTERFACE) {
+	if (This->typeinfo->cImplTypes) {
+	    return (index == 1)? TYPE_E_BADMODULEKIND: TYPE_E_ELEMENTNOTFOUND;
+	}
+
+	if (index != 0)  return TYPE_E_ELEMENTNOTFOUND;
+
+	This->typeinfo->cImplTypes++;
+
+	/* hacked values for IDispatch only, and maybe only for stdole. */
+	This->typeinfo->cbSizeVft += 0x0c; /* hack */
+	This->typeinfo->datatype1 = hRefType;
+	This->typeinfo->datatype2 = (3 << 16) | 1; /* ? */
+    } else {
+	FIXME("AddImplType unsupported on typekind %d\n", This->typeinfo->typekind & 15);
+	return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1302,8 +1382,23 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetImplTypeFlags(
         UINT index,
         INT implTypeFlags)
 {
-    FIXME("(%p,%d,0x%x), stub!\n", iface, index, implTypeFlags);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+    int offset;
+    MSFT_RefRecord *ref;
+
+    TRACE("(%p,%d,0x%x)\n", iface, index, implTypeFlags);
+
+    if ((This->typeinfo->typekind & 15) != TKIND_COCLASS) {
+	return TYPE_E_BADMODULEKIND;
+    }
+
+    offset = ctl2_find_nth_reference(This->typelib, This->typeinfo->datatype1, index);
+    if (offset == -1) return TYPE_E_ELEMENTNOTFOUND;
+
+    ref = (MSFT_RefRecord *)&This->typelib->typelib_segment_data[MSFT_SEG_REFERENCES][offset];
+    ref->flags = implTypeFlags;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -3027,6 +3122,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_GUID);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_IMPORTINFO);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_IMPORTFILES);
+    filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_REFERENCES);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_NAMEHASH);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_NAME);
     filepos += ctl2_finalize_segment(This, filepos, MSFT_SEG_STRING);
@@ -3045,6 +3141,7 @@ static HRESULT WINAPI ICreateTypeLib2_fnSaveAllChanges(ICreateTypeLib2 * iface)
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_GUID        )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTINFO  )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_IMPORTFILES )) return retval;
+    if (!ctl2_write_segment(This, hFile, MSFT_SEG_REFERENCES  )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAMEHASH    )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_NAME        )) return retval;
     if (!ctl2_write_segment(This, hFile, MSFT_SEG_STRING      )) return retval;
