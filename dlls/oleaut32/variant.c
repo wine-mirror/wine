@@ -1668,14 +1668,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         int exponentSize = 0;
         if (dwState & B_EXPONENT_START)
         {
+          if (!isdigitW(*lpszStr))
+            break; /* No exponent digits - invalid */
           while (*lpszStr == '0')
           {
             /* Skip leading zero's in the exponent */
             cchUsed++;
             lpszStr++;
           }
-          if (!isdigitW(*lpszStr))
-            break; /* No exponent digits - invalid */
         }
 
         while (isdigitW(*lpszStr))
