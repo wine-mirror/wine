@@ -271,7 +271,6 @@ OBM_Colors[] =
     { "purple",           NULL, (Pixel)RGB(128,0,128) },
     { "ltgray",           NULL, (Pixel)RGB(192,192,192) },
     { "dkgray",           NULL, (Pixel)RGB(128,128,128) },
-    { "foldercol",        NULL, (Pixel)RGB(0,191,191) },
     { "button_face",      NULL, (Pixel)PALETTEINDEX(COLOR_BTNFACE) },
     { "button_shadow",    NULL, (Pixel)PALETTEINDEX(COLOR_BTNSHADOW) },
     { "button_highlight", NULL, (Pixel)PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
