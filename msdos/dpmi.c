@@ -50,7 +50,6 @@ BOOL DPMI_LoadDosSystem(void)
     GET_ADDR(GetTimer);
     GET_ADDR(inport);
     GET_ADDR(outport);
-    GET_ADDR(ASPIHandler);
     GET_ADDR(EmulateInterruptPM);
     GET_ADDR(CallBuiltinHandler);
 #undef GET_ADDR

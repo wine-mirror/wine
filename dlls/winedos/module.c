@@ -136,8 +136,13 @@ static void MZ_FillPSP( LPVOID lpPSP, LPBYTE cmdline, int length )
   /* command.com does not skip over multiple spaces */
 
   if(length > 126) {
-    ERR("Command line truncated! (length %d > maximum length 126)\n",
-       length);
+    /*
+     * FIXME: If length > 126 we should put truncated command line to
+     *        PSP and store the entire command line in the environment 
+     *        variable CMDLINE.
+     */
+    FIXME("Command line truncated! (length %d > maximum length 126)\n",
+          length);
     length = 126;
   }
 
@@ -385,6 +390,12 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       LPBYTE envblock = PTR_REAL_TO_LIN(psp->environment, 0);
       BYTE cmdLength = cmdline[0];
 
+      /*
+       * FIXME: If cmdLength == 126, PSP may contain truncated version
+       *        of the full command line. In this case environment
+       *        variable CMDLINE contains the entire command line.
+       */
+
       fullCmdLength = (strlen(filename) + 1) + cmdLength + 1; /* filename + space + cmdline + terminating null character */
 
       fullCmdLine = HeapAlloc(GetProcessHeap(), 0, fullCmdLength);
@@ -556,6 +567,9 @@ static void MZ_Launch(void)
 
   MZ_FillPSP(psp_start, cmdline, cmdline ? strlen(cmdline) : 0);
   pTask->flags |= TDBF_WINOLDAP;
+
+  /* DTA is set to PSP:0080h when a program is started. */
+  pTask->dta = MAKESEGPTR( DOSVM_psp, 0x80 );
 
   GetpWin16Lock( &lock );
   _LeaveSysLevel( lock );

@@ -908,17 +908,6 @@ INT21_networkfunc (CONTEXT86 *context)
 }
 
 
-static void ASPI_DOS_HandleInt( CONTEXT86 *context )
-{
-    if (!Dosvm.ASPIHandler && !DPMI_LoadDosSystem())
-    {
-        ERR("could not setup ASPI handler\n");
-        return;
-    }
-    Dosvm.ASPIHandler( context );
-}
-
-
 /***********************************************************************
  *           INT_Int21Handler
  */
@@ -928,21 +917,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
     switch(AH_reg(context))
     {
-    case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
-        TRACE("WRITE '$'-terminated string from %04lX:%04X to stdout\n",
-	      context->SegDs,DX_reg(context) );
-        {
-            LPSTR data = CTX_SEG_OFF_TO_LIN(context,context->SegDs,context->Edx);
-            LPSTR p = data;
-            /* do NOT use strchr() to calculate the string length,
-            as '\0' is valid string content, too !
-            Maybe we should check for non-'$' strings, but DOS doesn't. */
-            while (*p != '$') p++;
-            _hwrite16( 1, data, (int)p - (int)data);
-            SET_AL( context, '$' ); /* yes, '$' (0x24) gets returned in AL */
-        }
-        break;
-
     case 0x0e: /* SELECT DEFAULT DRIVE */
 	TRACE("SELECT DEFAULT DRIVE %d\n", DL_reg(context));
         DRIVE_SetCurrentDrive( DL_reg(context) );
@@ -967,14 +941,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         SET_AL( context, DRIVE_GetCurrentDrive() );
         break;
 
-    case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-        {
-            TDB *pTask = TASK_GetCurrent();
-            pTask->dta = MAKESEGPTR(context->SegDs,DX_reg(context));
-            TRACE("Set DTA: %08lx\n", pTask->dta);
-        }
-        break;
-
     case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
         SET_DL( context, 0 );
         if (!INT21_GetDriveAllocInfo(context)) SET_AX( context, 0xffff );
@@ -990,15 +956,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
     case 0x29: /* PARSE FILENAME INTO FCB */
         INT21_ParseFileNameIntoFCB(context);
-        break;
-
-    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
-        TRACE("GET DISK TRANSFER AREA ADDRESS\n");
-        {
-            TDB *pTask = TASK_GetCurrent();
-            context->SegEs = SELECTOROF( pTask->dta );
-            SET_BX( context, OFFSETOF( pTask->dta ) );
-        }
         break;
 
     case 0x32: /* GET DOS DRIVE PARAMETER BLOCK FOR SPECIFIC DRIVE */
@@ -1061,28 +1018,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	      INT21_DriveName( DL_reg(context)));
         if (!INT21_GetFreeDiskSpace(context)) SET_AX( context, 0xffff );
         break;
-
-    case 0x37:
-      {
-	unsigned char switchchar='/';
-	switch (AL_reg(context))
-	{
-	case 0x00: /* "SWITCHAR" - GET SWITCH CHARACTER */
-	  TRACE("SWITCHAR - GET SWITCH CHARACTER\n");
-	  SET_AL( context, 0x00 ); /* success*/
-	  SET_DL( context, switchchar );
-	  break;
-	case 0x01: /*"SWITCHAR" - SET SWITCH CHARACTER*/
-	  TRACE("SWITCHAR - SET SWITCH CHARACTER\n");
-	  switchchar = DL_reg(context);
-	  SET_AL( context, 0x00 ); /* success*/
-	  break;
-	default: /*"AVAILDEV" - SPECIFY \DEV\ PREFIX USE*/
-	  INT_BARF( context, 0x21 );
-	  break;
-	}
-	break;
-      }
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
         TRACE("MKDIR %s\n",
@@ -1216,16 +1151,7 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 
         case 0x01:
             break;
-        case 0x02:{
-            const DOS_DEVICE *dev;
-            static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
-            if ((dev = DOSFS_GetDeviceByHandle( DosFileHandleToWin32Handle(BX_reg(context)) )) &&
-                !strcmpiW( dev->name, scsimgrW ))
-            {
-                ASPI_DOS_HandleInt(context);
-            }
-            break;
-       }
+  
 	case 0x05:{	/* IOCTL - WRITE TO BLOCK DEVICE CONTROL CHANNEL */
 	    /*BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx);*/
 	    int	drive = DOS_GET_DRIVE(BL_reg(context));
@@ -1308,20 +1234,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	    }
             break;
 	    }
-
-        case 0xe0:  /* Sun PC-NFS API */
-            /* not installed */
-            break;
-
-	case 0x52:  /* DR-DOS version */
-            /* This is not DR-DOS */
-
-            TRACE("GET DR-DOS VERSION requested\n");
-
-            SET_AX( context, 0x0001 ); /* Invalid function */
-            SET_CFLAG(context);       /* Error */
-            SetLastError( ERROR_INVALID_FUNCTION );
-            break;
 
         default:
             INT_BARF( context, 0x21 );

@@ -34,7 +34,6 @@ typedef struct {
     unsigned (WINAPI *GetTimer)( void );
     BOOL (WINAPI *inport)( int port, int size, DWORD *res );
     BOOL (WINAPI *outport)( int port, int size, DWORD val );
-    void (WINAPI *ASPIHandler)( CONTEXT86 *context );
 } DOSVM_TABLE;
 
 extern DOSVM_TABLE Dosvm;

@@ -111,6 +111,9 @@ extern int DMA_Transfer(int channel,int reqlength,void* buffer);
 extern void DMA_ioport_out( WORD port, BYTE val );
 extern BYTE DMA_ioport_in( WORD port );
 
+/* dosaspi.c */
+void WINAPI DOSVM_ASPIHandler(CONTEXT86*);
+
 /* fpu.c */
 extern void WINAPI DOSVM_Int34Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int35Handler(CONTEXT86*);

@@ -32,6 +32,7 @@
 #include "miscemu.h"
 #include "msdos.h"
 #include "file.h"
+#include "task.h"
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/unicode.h"
@@ -598,40 +599,135 @@ static void INT21_GetPSP( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_Ioctl_Block
+ *
+ * Handler for block device IOCTLs.
+ */
+static void INT21_Ioctl_Block( CONTEXT86 *context )
+{
+    INT_Int21Handler( context );
+}
+
+
+/***********************************************************************
+ *           INT21_Ioctl_Char
+ *
+ * Handler for character device IOCTLs.
+ */
+static void INT21_Ioctl_Char( CONTEXT86 *context )
+{
+    static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
+    static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
+
+    HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
+    const DOS_DEVICE *dev = DOSFS_GetDeviceByHandle(handle);
+
+    if (dev && !strcmpiW( dev->name, emmxxxx0W )) 
+    {
+        EMS_Ioctl_Handler(context);
+        return;
+    }
+
+    if (dev && !strcmpiW( dev->name, scsimgrW ) && AL_reg(context) == 2)
+    {
+        DOSVM_ASPIHandler(context);
+        return;
+    }
+
+    INT_Int21Handler( context );
+}
+
+
+/***********************************************************************
  *           INT21_Ioctl
  *
  * Handler for function 0x44.
  */
 static void INT21_Ioctl( CONTEXT86 *context )
 {
-  static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
-  const DOS_DEVICE *dev = DOSFS_GetDeviceByHandle(
-      DosFileHandleToWin32Handle(BX_reg(context)) );
+    switch (AL_reg(context))
+    {
+    case 0x00:
+    case 0x01:
+    case 0x02:
+    case 0x03:
+        INT21_Ioctl_Char( context );
+        break;
 
-  if (dev && !strcmpiW( dev->name, emmxxxx0W )) {
-    EMS_Ioctl_Handler(context);
-    return;
-  }
+    case 0x04:
+    case 0x05:
+        INT21_Ioctl_Block( context );
+        break;
 
-  switch (AL_reg(context))
-  {
-  case 0x0b: /* SET SHARING RETRY COUNT */
-      TRACE("IOCTL - SET SHARING RETRY COUNT pause %d retries %d\n",
-           CX_reg(context), DX_reg(context));
-      if (!CX_reg(context))
-      {
-         SET_AX( context, 1 );
-         SET_CFLAG(context);
-         break;
-      }
-      DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
-      if (!DX_reg(context))
-         DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
-      RESET_CFLAG(context);
-      break;
-  default:
-      INT_Int21Handler( context );
-  }
+    case 0x06:
+    case 0x07:
+        INT21_Ioctl_Char( context );
+        break;
+
+    case 0x08:
+    case 0x09:
+        INT21_Ioctl_Block( context );
+        break;
+
+    case 0x0a:
+        INT21_Ioctl_Char( context );
+        break;
+
+    case 0x0b: /* SET SHARING RETRY COUNT */
+        TRACE( "SET SHARING RETRY COUNT: Pause %d, retries %d.\n",
+               CX_reg(context), DX_reg(context) );
+        if (!CX_reg(context))
+        {
+            SET_AX( context, 1 );
+            SET_CFLAG( context );
+        }
+        else
+        {
+            DOSMEM_LOL()->sharing_retry_delay = CX_reg(context);
+            if (DX_reg(context))
+                DOSMEM_LOL()->sharing_retry_count = DX_reg(context);
+            RESET_CFLAG( context );
+        }
+        break;
+
+    case 0x0c:
+        INT21_Ioctl_Char( context );
+        break;
+
+    case 0x0d:
+    case 0x0e:
+    case 0x0f:
+        INT21_Ioctl_Block( context );
+        break;
+
+    case 0x10:
+        INT21_Ioctl_Char( context );
+        break;
+
+    case 0x11:
+        INT21_Ioctl_Block( context );
+        break;
+
+    case 0x12: /*  DR DOS - DETERMINE DOS TYPE (OBSOLETE FUNCTION) */
+        TRACE( "DR DOS - DETERMINE DOS TYPE (OBSOLETE FUNCTION)\n" );
+        SET_CFLAG(context);        /* Error / This is not DR DOS. */
+        SET_AX( context, 0x0001 ); /* Invalid function */
+        break;
+
+    case 0x52: /* DR DOS - DETERMINE DOS TYPE */
+        TRACE( "DR DOS - DETERMINE DOS TYPE\n" );
+        SET_CFLAG(context);        /* Error / This is not DR DOS. */
+        SET_AX( context, 0x0001 ); /* Invalid function */
+        break;
+
+    case 0xe0:  /* Sun PC-NFS API */
+        TRACE( "Sun PC-NFS API\n" );
+        /* not installed */
+        break;
+
+    default:
+        INT_BARF( context, 0x21 );
+    }
 }
 
 
@@ -862,7 +958,29 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x09: /* WRITE STRING TO STANDARD OUTPUT */
-        INT_Int21Handler( context );
+        TRACE("WRITE '$'-terminated string from %04lX:%04X to stdout\n",
+	      context->SegDs, DX_reg(context) );
+        {
+            LPSTR data = CTX_SEG_OFF_TO_LIN( context, 
+                                             context->SegDs, context->Edx );
+            LPSTR p = data;
+
+            /*
+             * Do NOT use strchr() to calculate the string length,
+             * as '\0' is valid string content, too!
+             * Maybe we should check for non-'$' strings, but DOS doesn't.
+             */
+            while (*p != '$') p++;
+
+            if (DOSVM_IsWin16())
+                WriteFile( DosFileHandleToWin32Handle(1), 
+                           data, p - data, 0, 0 );
+            else
+                for(; data != p; data++)
+                    DOSVM_PutChar( *data );
+
+            SET_AL( context, '$' ); /* yes, '$' (0x24) gets returned in AL */
+        }
         break;
 
     case 0x0a: /* BUFFERED INPUT */
@@ -930,8 +1048,19 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x19: /* GET CURRENT DEFAULT DRIVE */
+        INT_Int21Handler( context );
+        break;
+
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-    case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */        
+        TRACE( "SET DISK TRANSFER AREA ADDRESS %04lX:%04X\n",
+               context->SegDs, DX_reg(context) );
+        {
+            TDB *task = GlobalLock16( GetCurrentTask() );
+            task->dta = MAKESEGPTR( context->SegDs, DX_reg(context) );
+        }
+        break;
+
+    case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
     case 0x1c: /* GET ALLOCATION INFORMATION FOR SPECIFIC DRIVE */
         INT_Int21Handler( context );
         break;
@@ -1019,8 +1148,13 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         /* we cannot change the behaviour anyway, so just ignore it */
         break;
 
-    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */ 
-        INT_Int21Handler( context );
+    case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
+        TRACE( "GET DISK TRANSFER AREA ADDRESS\n" );
+        {
+            TDB *task = GlobalLock16( GetCurrentTask() );
+            context->SegEs = SELECTOROF( task->dta );
+            SET_BX( context, OFFSETOF( task->dta ) );
+        }
         break;
 
     case 0x30: /* GET DOS VERSION */
@@ -1068,9 +1202,29 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x36: /* GET FREE DISK SPACE */
-    case 0x37: /* SWITCHAR */
         INT_Int21Handler( context );
         break;
+
+    case 0x37: /* SWITCHAR */
+        {
+            switch (AL_reg(context))
+            {
+            case 0x00: /* "SWITCHAR" - GET SWITCH CHARACTER */
+                TRACE( "SWITCHAR - GET SWITCH CHARACTER\n" );
+                SET_AL( context, 0x00 ); /* success*/
+                SET_DL( context, '/' );
+                break;
+            case 0x01: /*"SWITCHAR" - SET SWITCH CHARACTER*/
+                FIXME( "SWITCHAR - SET SWITCH CHARACTER: %c\n",
+                       DL_reg( context ));
+                SET_AL( context, 0x00 ); /* success*/
+                break;
+            default:
+                INT_BARF( context, 0x21 );
+                break;
+            }
+	}
+	break;
 
     case 0x38: /* GET COUNTRY-SPECIFIC INFORMATION */
         TRACE( "GET COUNTRY-SPECIFIC INFORMATION\n" );
