@@ -2004,7 +2004,7 @@ TREEVIEW_GetVisibleCount(TREEVIEW_INFO *infoPtr)
 
 
 static LRESULT
-TREEVIEW_GetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
+TREEVIEW_GetItemT(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
 {
     TREEVIEW_ITEM *wineItem;
 
@@ -2015,7 +2015,11 @@ TREEVIEW_GetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
     TREEVIEW_UpdateDispInfo(infoPtr, wineItem, tvItem->mask);
 
     if (tvItem->mask & TVIF_CHILDREN)
+    {
+        if (TVIF_CHILDREN==I_CHILDRENCALLBACK)
+            FIXME("I_CHILDRENCALLBACK not supported\n");
 	tvItem->cChildren = wineItem->cChildren;
+    }
 
     if (tvItem->mask & TVIF_HANDLE)
 	tvItem->hItem = wineItem;
@@ -2034,16 +2038,40 @@ TREEVIEW_GetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
     if (tvItem->mask & TVIF_SELECTEDIMAGE)
 	tvItem->iSelectedImage = wineItem->iSelectedImage;
 
-    if (tvItem->mask & TVIF_STATE) {
+    if (tvItem->mask & TVIF_STATE)
         /* Careful here - Windows ignores the stateMask when you get the state
  	    That contradicts the documentation, but makes more common sense, masking
 	    retrieval in this way seems overkill */
         tvItem->state = wineItem->state;
-    }
 
     if (tvItem->mask & TVIF_TEXT)
-	lstrcpynW(tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
-
+    {
+        if (isW)
+        {
+            if (wineItem->pszText == LPSTR_TEXTCALLBACKW)
+            {
+                tvItem->pszText = LPSTR_TEXTCALLBACKW;
+                FIXME(" GetItem called with LPSTR_TEXTCALLBACK\n");
+            }
+            else
+            {
+                lstrcpynW(tvItem->pszText, wineItem->pszText, tvItem->cchTextMax);
+            }
+        }
+        else
+        {
+            if (wineItem->pszText == LPSTR_TEXTCALLBACKW)
+            {
+                tvItem->pszText = (LPWSTR)LPSTR_TEXTCALLBACKA;
+                FIXME(" GetItem called with LPSTR_TEXTCALLBACK\n");
+            }
+            else
+            {
+                WideCharToMultiByte(CP_ACP, 0, wineItem->pszText, -1,
+                                    (LPSTR)tvItem->pszText, tvItem->cchTextMax, NULL, NULL);
+            }
+        }
+    }
     TRACE("item <%p>, txt %p, img %p, mask %x\n",
 	  wineItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
 
@@ -2105,60 +2133,6 @@ TREEVIEW_SetItemW(TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem)
         }
     }
 
-    return TRUE;
-}
-
-static LRESULT
-TREEVIEW_GetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
-{
-    TREEVIEW_ITEM *wineItem;
-
-    wineItem = tvItem->hItem;
-    if(!TREEVIEW_ValidItem (infoPtr, wineItem))
-        return FALSE;
-
-    TREEVIEW_UpdateDispInfo(infoPtr, wineItem, tvItem->mask);
-
-    if (tvItem->mask & TVIF_CHILDREN) {
-        if (TVIF_CHILDREN==I_CHILDRENCALLBACK)
-            FIXME("I_CHILDRENCALLBACK not supported\n");
-        tvItem->cChildren = wineItem->cChildren;
-    }
-
-    if (tvItem->mask & TVIF_HANDLE) {
-        tvItem->hItem = wineItem;
-    }
-    if (tvItem->mask & TVIF_IMAGE) {
-        tvItem->iImage = wineItem->iImage;
-    }
-    if (tvItem->mask & TVIF_INTEGRAL) {
-        tvItem->iIntegral = wineItem->iIntegral;
-    }
-    /* undocumented: windows ignores TVIF_PARAM and
-     * always sets lParam           */
-    tvItem->lParam = wineItem->lParam;
-    if (tvItem->mask & TVIF_SELECTEDIMAGE) {
-        tvItem->iSelectedImage = wineItem->iSelectedImage;
-    }
-    if (tvItem->mask & TVIF_STATE) {
-        tvItem->state = wineItem->state & tvItem->stateMask;
-    }
-
-    if (tvItem->mask & TVIF_TEXT) {
-        if (wineItem->pszText == LPSTR_TEXTCALLBACKW) {
-            tvItem->pszText = LPSTR_TEXTCALLBACKA;
-            FIXME(" GetItem called with LPSTR_TEXTCALLBACK\n");
-        }
-        else if (wineItem->pszText) {
-	    TRACE("orig str %s at %p\n",
-		  debugstr_w(wineItem->pszText), wineItem->pszText);
-            WideCharToMultiByte(CP_ACP, 0, wineItem->pszText,
-                                -1 , tvItem->pszText, tvItem->cchTextMax, NULL, NULL);
-        }
-    }
-
-    TRACE("item <%p>, txt %p, img %p, action %x\n",
-	  tvItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
     return TRUE;
 }
 
@@ -4379,7 +4353,7 @@ static INT TREEVIEW_ProcessLetterKeys(
         item.hItem = idx;
         item.pszText = buffer;
         item.cchTextMax = sizeof(buffer);
-        TREEVIEW_GetItemW( infoPtr, &item );
+        TREEVIEW_GetItemT( infoPtr, &item, TRUE );
 
         /* check for a match */
         if (strncmpiW(item.pszText,infoPtr->szSearchParam,infoPtr->nSearchParamLength) == 0) {
@@ -5262,10 +5236,10 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 
     case TVM_GETITEMA:
-	return TREEVIEW_GetItemA(infoPtr, (LPTVITEMEXA)lParam);
+	return TREEVIEW_GetItemT(infoPtr, (LPTVITEMEXW)lParam, FALSE);
 
     case TVM_GETITEMW:
-	return TREEVIEW_GetItemW(infoPtr, (LPTVITEMEXW)lParam);
+	return TREEVIEW_GetItemT(infoPtr, (LPTVITEMEXW)lParam, TRUE);
 
     case TVM_GETITEMHEIGHT:
 	return TREEVIEW_GetItemHeight(infoPtr);
