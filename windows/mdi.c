@@ -771,12 +771,20 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
     /* set appearance */
     if (clientInfo->hwndChildMaximized && clientInfo->hwndChildMaximized != child)
     {
+        INT cmd = SW_SHOWNORMAL;
+
         if( child )
         {
+            UINT state = GetMenuState(GetSystemMenu(child, FALSE), SC_MAXIMIZE, MF_BYCOMMAND);
+            if (state != 0xFFFFFFFF && (state & (MF_DISABLED | MF_GRAYED)))
+                SendMessageW(clientInfo->hwndChildMaximized, WM_SYSCOMMAND, SC_RESTORE, 0);
+            else
+                cmd = SW_SHOWMAXIMIZED;
+
             clientInfo->hwndActiveChild = child;
-            ShowWindow( child, SW_SHOWMAXIMIZED);
         }
-        else ShowWindow( clientInfo->hwndActiveChild, SW_SHOWNORMAL );
+
+        ShowWindow( clientInfo->hwndActiveChild, cmd );
     }
 
     clientInfo->hwndActiveChild = child;
