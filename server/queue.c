@@ -681,7 +681,7 @@ DECL_HANDLER(get_message)
     {
         /* check against the filters */
         if (req->get_win && msg->win != req->get_win) continue;
-        if (req->msg >= req->get_first && req->msg <= req->get_last)
+        if (msg->msg >= req->get_first && msg->msg <= req->get_last)
         {
             /* found one */
             req->type   = msg->type;
