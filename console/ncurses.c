@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "config.h"
-#include "console.h"
+#include "console.h"	/* Must define WINE_NCURSES */
 
 #ifdef WINE_NCURSES
 
@@ -22,6 +22,8 @@
 */
 
 #include "debug.h"
+#include "options.h"
+
 #undef ERR /* Use ncurses's err() */
 #ifdef HAVE_NCURSES_H
 # include <ncurses.h>
@@ -34,6 +36,11 @@
 SCREEN *ncurses_screen;
 
 static int get_color_pair(int fg_color, int bg_color);
+
+const char *color_names[] = {"null", "black", "blue", "green",
+   "cyan", "magenta", "brown", "red", "light gray", "dark gray",
+   "light blue", "light green", "light red", "light magenta",
+   "light cyan", "yellow", "white"};
 
 void NCURSES_Start()
 {
@@ -53,7 +60,7 @@ void NCURSES_Start()
    driver.setBackgroundColor = NCURSES_SetBackgroundColor;
 #ifdef HAVE_RESIZETERM
    driver.notifyResizeScreen = NCURSES_NotifyResizeScreen;
-#endif
+#endif /* HAVE_RESIZETERM */
 
    driver.checkForKeystroke = NCURSES_CheckForKeystroke;
    driver.getKeystroke = NCURSES_GetKeystroke;
@@ -63,14 +70,19 @@ void NCURSES_Start()
 
 void NCURSES_Init()
 {
-   ncurses_screen = newterm("xterm", driver.console_out,
+   char terminal_type[80];
+
+   PROFILE_GetWineIniString("console", "TerminalType",
+      "xterm", terminal_type, 79);
+
+   ncurses_screen = newterm(terminal_type, driver.console_out,
       driver.console_in);
    set_term(ncurses_screen);
    start_color();
    raw();
    noecho();
    nonl();
-/*   intrflush(stdscr, FALSE); */ 
+   intrflush(stdscr, FALSE);
    keypad(stdscr, TRUE);
    nodelay(stdscr, TRUE);
 }
@@ -185,7 +197,8 @@ int NCURSES_AllocColor(int color)
       case WINE_CYAN:		return COLOR_CYAN;
    }
 
-   FIXME(console, "Unable to allocate color %d\n", color);
+   FIXME(console, "Unable to allocate color %d (%s)\n", color,
+      color_names[color]);
 
    /* Don't allocate a color... yet */
    return 0;
@@ -208,6 +221,8 @@ void NCURSES_NotifyResizeScreen(int x, int y)
       calls ResizeScreen(). It is meant to resize the ncurses internal
       data structures to know about the new window dimensions. */
  
+   TRACE(console, "Terminal resized to y: %d, x: %d\n", y, x);
+
    resizeterm(y, x);
 }
 
