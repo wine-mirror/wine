@@ -255,6 +255,9 @@ void CALLBACK VGA_Poll( ULONG_PTR arg )
               dest.Top=Y; dest.Bottom=Y;
               for (X=0; X<Width; X++) {
                   ch[X].Char.AsciiChar = *dat++;
+		  /* WriteConsoleOutputA doesn't like "dead" chars */
+		  if (ch[X].Char.AsciiChar == '\0')
+		      ch[X].Char.AsciiChar = ' ';
                   ch[X].Attributes = *dat++;
               }
               dest.Left=0; dest.Right=Width+1;
