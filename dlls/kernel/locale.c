@@ -789,6 +789,99 @@ BOOL WINAPI SetThreadLocale( LCID lcid ) /* [in] Locale identifier */
 }
 
 
+/******************************************************************************
+ *		ConvertDefaultLocale (KERNEL32.@)
+ */
+LCID WINAPI ConvertDefaultLocale( LCID lcid )
+{
+    switch (lcid)
+    {
+    case LOCALE_SYSTEM_DEFAULT:
+        return GetSystemDefaultLCID();
+    case LOCALE_USER_DEFAULT:
+        return GetUserDefaultLCID();
+    case LOCALE_NEUTRAL:
+        return MAKELCID (LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    }
+    return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
+}
+
+
+/******************************************************************************
+ *           IsValidLocale   (KERNEL32.@)
+ */
+BOOL WINAPI IsValidLocale( LCID lcid, DWORD flags )
+{
+    /* check if language is registered in the kernel32 resources */
+    return FindResourceExW( GetModuleHandleA("KERNEL32"), RT_STRINGW,
+                            (LPCWSTR)LOCALE_ILANGUAGE, LANGIDFROMLCID(lcid)) != 0;
+}
+
+
+static BOOL CALLBACK enum_lang_proc_a( HMODULE hModule, LPCSTR type,
+                                       LPCSTR name, WORD LangID, LONG lParam )
+{
+    LOCALE_ENUMPROCA lpfnLocaleEnum = (LOCALE_ENUMPROCA)lParam;
+    char buf[20];
+
+    sprintf(buf, "%08x", (UINT)LangID);
+    return lpfnLocaleEnum( buf );
+}
+
+static BOOL CALLBACK enum_lang_proc_w( HMODULE hModule, LPCWSTR type,
+                                       LPCWSTR name, WORD LangID, LONG lParam )
+{
+    static const WCHAR formatW[] = {'%','0','8','x',0};
+    LOCALE_ENUMPROCW lpfnLocaleEnum = (LOCALE_ENUMPROCW)lParam;
+    WCHAR buf[20];
+    sprintfW( buf, formatW, (UINT)LangID );
+    return lpfnLocaleEnum( buf );
+}
+
+/******************************************************************************
+ *           EnumSystemLocalesA  (KERNEL32.@)
+ */
+BOOL WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA lpfnLocaleEnum,
+                                   DWORD flags)
+{
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
+    EnumResourceLanguagesA( GetModuleHandleA("KERNEL32"), RT_STRINGA,
+                            (LPCSTR)LOCALE_ILANGUAGE, enum_lang_proc_a,
+                            (LONG)lpfnLocaleEnum);
+    return TRUE;
+}
+
+
+/******************************************************************************
+ *           EnumSystemLocalesW  (KERNEL32.@)
+ */
+BOOL WINAPI EnumSystemLocalesW( LOCALE_ENUMPROCW lpfnLocaleEnum, DWORD flags )
+{
+    TRACE("(%p,%08lx)\n", lpfnLocaleEnum,flags);
+    EnumResourceLanguagesW( GetModuleHandleA("KERNEL32"), RT_STRINGW,
+                            (LPCWSTR)LOCALE_ILANGUAGE, enum_lang_proc_w,
+                            (LONG)lpfnLocaleEnum);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           VerLanguageNameA  (KERNEL32.@)
+ */
+DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
+{
+    return GetLocaleInfoA( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
+}
+
+
+/***********************************************************************
+ *           VerLanguageNameW  (KERNEL32.@)
+ */
+DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
+{
+    return GetLocaleInfoW( MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize );
+}
+
 
 /******************************************************************************
  *           GetStringTypeW    (KERNEL32.@)
