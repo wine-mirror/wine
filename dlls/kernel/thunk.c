@@ -299,9 +299,24 @@ UINT WINAPI ThunkConnect32(
  * 		QT_Thunk			(KERNEL32.@)
  *
  * The target address is in EDX.
- * The 16 bit arguments start at ESP.
+ * The 16bit arguments start at ESP.
  * The number of 16bit argument bytes is EBP-ESP-0x40 (64 Byte thunksetup).
+ * So the stack layout is 16bit argument bytes and then the 64 byte
+ * scratch buffer.
+ * The scratch buffer is used as work space by Windows' QT_Thunk
+ * function.
+ * As the programs unfortunately don't always provide a fixed size
+ * scratch buffer (danger, stack corruption ahead !!), we simply resort
+ * to copying over the whole EBP-ESP range to the 16bit stack
+ * (as there's no way to safely figure out the param count
+ * due to this misbehaviour of some programs).
  * [ok]
+ *
+ * See DDJ article 9614c for a very good description of QT_Thunk (also
+ * available online !).
+ *
+ * FIXME: DDJ talks of certain register usage rules; I'm not sure
+ * whether we cover this 100%.
  */
 void WINAPI QT_Thunk( CONTEXT86 *context )
 {
@@ -312,19 +327,35 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
 
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
+    /* point EBP to the STACK16FRAME on the stack
+     * for the call_to_16 to set up the register content on calling */
     context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
                            + (WORD)&((STACK16FRAME*)0)->bp;
 
-    argsize = context->Ebp-context->Esp-0x40;
+    /*
+     * used to be (problematic):
+     * argsize = context->Ebp - context->Esp - 0x40;
+     * due to some programs abusing the API, we better assume the full
+     * EBP - ESP range for copying instead: */
+    argsize = context->Ebp - context->Esp;
+
+    /* ok, too much is insane; let's limit param count a bit again */
+    if (argsize > 64)
+	argsize = 64; /* 32 WORDs */
 
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)context->Esp, argsize );
 
+    /* let's hope call_to_16 won't mind getting called with such a
+     * potentially bogus large number of arguments */
     wine_call_to_16_regs_short( &context16, argsize );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
 
+    /* make sure to update the Win32 ESP, too, in order to throw away
+     * the number of parameters that the Win16 function
+     * accepted (that it popped from the corresponding Win16 stack) */
     context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
