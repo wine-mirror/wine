@@ -697,7 +697,10 @@ static BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
         char buffer[260];
         BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
         memcpy( buffer, pstr + 1, *pstr );
-        strcpy( buffer + *pstr, ".dll" );
+       *(buffer + *pstr) = 0; /* terminate it */
+        if (!strchr(buffer,'.')) /* only append .dll if no extension yet.
+                                   handles a request for krnl386.exe*/
+            strcpy( buffer + *pstr, ".dll" );
         TRACE(module, "Loading '%s'\n", buffer );
         if (!(*pModRef = GetModuleHandle16( buffer )))
         {
