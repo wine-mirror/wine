@@ -327,7 +327,7 @@ LPSTR WINAPI StrRChrA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
     BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
 
     TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
-
+    if (!lpStart && !lpEnd) return NULL;
     if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
 
     for(; lpStart < lpEnd; lpStart = CharNextA(lpStart))
@@ -349,6 +349,7 @@ LPWSTR WINAPI StrRChrW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
     LPCWSTR lpGotIt = NULL;
 
     TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+    if (!lpStart && !lpEnd) return NULL;
     if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
 
     for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))
@@ -368,7 +369,7 @@ LPSTR WINAPI StrRChrIA( LPCSTR lpStart, LPCSTR lpEnd, WORD wMatch )
     BOOL dbcs = IsDBCSLeadByte( LOBYTE(wMatch) );
 
     TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
-
+    if (!lpStart && !lpEnd) return NULL;
     if (!lpEnd) lpEnd = lpStart + strlen(lpStart);
 
     for(; lpStart < lpEnd; lpStart = CharNextA(lpStart))
@@ -396,6 +397,7 @@ LPWSTR WINAPI StrRChrIW( LPCWSTR lpStart, LPCWSTR lpEnd, WORD wMatch)
     LPCWSTR lpGotIt = NULL;
 
     TRACE("(%p, %p, %x)\n", lpStart, lpEnd, wMatch);
+    if (!lpStart && !lpEnd) return NULL;
     if (!lpEnd) lpEnd = lpStart + strlenW(lpStart);
 
     for(; lpStart < lpEnd; lpStart = CharNextW(lpStart))

@@ -18,6 +18,22 @@ DEFAULT_DEBUG_CHANNEL(urlmon);
 /* native urlmon.dll uses this key, too */
 static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
+
+/***********************************************************************
+ *           CreateAsyncBindCtxEx (URLMON.@)
+ *
+ * not implemented
+ *
+ */
+HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
+    IBindStatusCallback *callback, IEnumFORMATETC *format, IBindCtx** pbind,
+    DWORD reserved)
+{
+     FIXME("stub, returns failure\n");
+     return E_INVALIDARG;
+}
+
+
 /***********************************************************************
  *           CreateURLMoniker (URLMON.@)
  *

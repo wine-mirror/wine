@@ -25,7 +25,7 @@ debug_channels (urlmon win32)
 @ stub CopyBindInfo
 @ stub CopyStgMedium
 @ stub CreateAsyncBindCtx
-@ stub CreateAsyncBindCtxEx
+@ stdcall CreateAsyncBindCtxEx(ptr long ptr ptr ptr long) CreateAsyncBindCtxEx
 @ stub CreateFormatEnumerator
 @ stdcall CreateURLMoniker(ptr str ptr) CreateURLMoniker
 @ stdcall DllCanUnloadNow() URLMON_DllCanUnloadNow

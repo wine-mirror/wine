@@ -11,7 +11,7 @@ debug_channels (wininet)
 
 @ stub InternetInitializeAutoProxyDll
 @ stub ShowCertificate
-@ stub CommitUrlCacheEntryA
+@ stdcall CommitUrlCacheEntryA(str str long long long str long str str) CommitUrlCacheEntryA
 @ stub CommitUrlCacheEntryW
 @ stub CreateUrlCacheContainerA
 @ stub CreateUrlCacheContainerW
@@ -61,7 +61,7 @@ debug_channels (wininet)
 @ stub FtpSetCurrentDirectoryW
 @ stub GetUrlCacheConfigInfoA
 @ stub GetUrlCacheConfigInfoW
-@ stub GetUrlCacheEntryInfoA
+@ stdcall GetUrlCacheEntryInfoA(str ptr long) GetUrlCacheEntryInfoA
 @ stub GetUrlCacheEntryInfoExA
 @ stub GetUrlCacheEntryInfoExW
 @ stub GetUrlCacheEntryInfoW

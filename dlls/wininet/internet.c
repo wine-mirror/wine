@@ -700,6 +700,31 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
 
 /***********************************************************************
+ *           GetUrlCacheEntryInfoA (WININET.@)
+ *
+ */
+BOOL WINAPI GetUrlCacheEntryInfoA(LPCSTR lpszUrl, 
+  LPINTERNET_CACHE_ENTRY_INFOA lpCacheEntry,
+  LPDWORD lpCacheEntrySize)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
+ *           CommitUrlCacheEntryA (WININET.@)
+ *
+ */
+BOOL WINAPI CommitUrlCacheEntryA(LPCSTR lpszUrl, LPCSTR lpszLocalName,
+    FILETIME ExpireTime, FILETIME lastModified, DWORD cacheEntryType,
+    LPBYTE lpHeaderInfo, DWORD headerSize, LPCSTR fileExtension,
+    DWORD originalUrl)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
+
+/***********************************************************************
  *           InternetAttemptConnect (WININET.@)
  *
  * Attempt to make a connection to the internet
