@@ -127,6 +127,8 @@ WINE REGISTRY Version 2
 "UseDGA" = "Y"
 ; Use XVidMode extension if present
 "UseXVidMode" = "Y"
+; Use XRandR extension if present
+"UseXRandR" = "Y"
 ; Use the take focus protocol
 "UseTakeFocus" = "Y"
 ; Enable DirectX mouse grab
