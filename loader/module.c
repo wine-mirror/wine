@@ -1452,11 +1452,18 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
     }
 
     RtlEnterCriticalSection( &loader_section );
-    free_lib_count++;
 
-    if ((wm = MODULE32_LookupHMODULE( hLibModule ))) retv = MODULE_FreeLibrary( wm );
+    /* if we're stopping the whole process (and forcing the removal of all
+     * DLLs) the library will be freed anyway
+     */
+    if (process_detaching) retv = TRUE;
+    else
+    {
+        free_lib_count++;
+        if ((wm = MODULE32_LookupHMODULE( hLibModule ))) retv = MODULE_FreeLibrary( wm );
+        free_lib_count--;
+    }
 
-    free_lib_count--;
     RtlLeaveCriticalSection( &loader_section );
 
     return retv;
