@@ -42,6 +42,7 @@ static struct tagLOCALE_NAME2ID {
 	LOCALE_ENTRY(IDEFAULTCOUNTRY),
 	LOCALE_ENTRY(IDEFAULTCODEPAGE),
 	LOCALE_ENTRY(IDEFAULTANSICODEPAGE),
+	LOCALE_ENTRY(IDEFAULTMACCODEPAGE),
 	LOCALE_ENTRY(SLIST),
 	LOCALE_ENTRY(IMEASURE),
 	LOCALE_ENTRY(SDECIMAL),
@@ -127,7 +128,9 @@ static struct tagLOCALE_NAME2ID {
 	LOCALE_ENTRY(IPOSSEPBYSPACE),
 	LOCALE_ENTRY(INEGSYMPRECEDES),
 	LOCALE_ENTRY(INEGSEPBYSPACE),
-/*	LOCALE_ENTRY(FONTSIGNATURE),*/
+	LOCALE_ENTRY(FONTSIGNATURE),
+	LOCALE_ENTRY(SISO639LANGNAME),
+	LOCALE_ENTRY(SISO3166CTRYNAME),
 	{NULL,0},
 };
 
@@ -419,6 +422,11 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	TRACE(ole,"(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",
 			lcid,LCType,buf,len);
 
+	if (len && (! buf) )
+	{	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return 0;
+	}
+
 	if (lcid == LOCALE_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) ) 
 	{ lcid = GetSystemDefaultLCID();
 	} 
@@ -517,39 +525,53 @@ LANG_END
 /*Insert other languages here*/
 
 	default:
-	    found=0;
-	    break;
-	}  /* switch */
+	  found=0;
+	  break;
+	  }  /* switch */
 
-	/* language not found, try without a sublanguage*/
-	lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
-	i++;
-    } while (!found && i<2);
 
-	if(!found) {
-		ERR(ole,"'%s' not supported for your language.\n",
-			retString);
-		retString = "<WINE-NLS-unknown>";
+	  /* language not found, try without a sublanguage*/
+	  if (i==1) lang=MAKELANGID( PRIMARYLANGID(lang), SUBLANG_DEFAULT);
+
+	  /* mask the LC Value */
+	  if (i==2) LCType &= 0xfff;
+
+	  i++;
+	} while (!found && i<3);
+
+	if(!found) 
+	{	ERR(ole,"'%s' not supported for your language.\n", retString);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;			
 	}
-	if (buf)
+	/* if len=0 return only the length, don't touch the buffer*/
+	if (len)
 		lstrcpyn32A(buf,retString,len);
+
 	return strlen(retString)+1;
 }
 
 /******************************************************************************
  *		GetLocaleInfo32W	[KERNEL32.343]
  *
- * Is the last parameter really WORD for Win16?
  */
 INT32 WINAPI GetLocaleInfo32W(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT32 len)
-{
-	LPSTR abuf = (LPSTR)HeapAlloc(GetProcessHeap(),0,len);
+{	WORD wlen;
+	LPSTR abuf;
+	
+	if (len && (! wbuf) )
+	{ SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	  return 0;
+	}
 
-	INT32 n = GetLocaleInfo32A(lcid, LCType, abuf, len);
-	if (wbuf)
-		lstrcpynAtoW(wbuf,abuf,len);
+	abuf = (LPSTR)HeapAlloc(GetProcessHeap(),0,len);
+	wlen = 2 * GetLocaleInfo32A(lcid, LCType, abuf, len);
+
+	if (wlen && len)	/* if len=0 return only the length*/
+	  lstrcpynAtoW(wbuf,abuf,len/2);
+
 	HeapFree(GetProcessHeap(),0,abuf);
-	return n;
+	return wlen;
 }
 
 /******************************************************************************
