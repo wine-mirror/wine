@@ -32,7 +32,6 @@
 #include "excpt.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "file.h"
 #include "miscemu.h"
 #include "module.h"
 #include "stackframe.h"
@@ -756,11 +755,9 @@ DWORD WINAPI GetVDMPointer32W16( SEGPTR vp, UINT16 fMode )
 DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags )
 {
     HMODULE hModule;
-    DOS_FULL_NAME full_name;
     DWORD mutex_count;
-    UNICODE_STRING libfileW;
-    LPCWSTR filenameW;
-    static const WCHAR dllW[] = {'.','D','L','L',0};
+    OFSTRUCT ofs;
+    const char *p;
 
     if (!lpszLibFile)
     {
@@ -768,24 +765,26 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
         return 0;
     }
 
-    if (!RtlCreateUnicodeStringFromAsciiz(&libfileW, lpszLibFile))
+    /* if the file can not be found, call LoadLibraryExA anyway, since it might be
+       a builtin module. This case is handled in MODULE_LoadLibraryExA */
+
+    if ((p = strrchr( lpszLibFile, '.' )) && !strchr( p, '\\' ))  /* got an extension */
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return 0;
+        if (OpenFile16( lpszLibFile, &ofs, OF_EXIST ) != HFILE_ERROR16)
+            lpszLibFile = ofs.szPathName;
+    }
+    else
+    {
+        char buffer[MAX_PATH+4];
+        strcpy( buffer, lpszLibFile );
+        strcat( buffer, ".dll" );
+        if (OpenFile16( buffer, &ofs, OF_EXIST ) != HFILE_ERROR16)
+            lpszLibFile = ofs.szPathName;
     }
 
-    /* if the file can not be found, call LoadLibraryExA anyway, since it might be
-       a buildin module. This case is handled in MODULE_LoadLibraryExA */
-
-    filenameW = libfileW.Buffer;
-    if ( DIR_SearchPath( NULL, filenameW, dllW, &full_name, FALSE ) )
-        filenameW = full_name.short_name;
-
     ReleaseThunkLock( &mutex_count );
-    hModule = LoadLibraryExW( filenameW, (HANDLE)hFile, dwFlags );
+    hModule = LoadLibraryExA( lpszLibFile, (HANDLE)hFile, dwFlags );
     RestoreThunkLock( mutex_count );
-
-    RtlFreeUnicodeString(&libfileW);
 
     return (DWORD)hModule;
 }
