@@ -173,6 +173,20 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             INT_BARF( context, 0x2f );
         }
         break;
+    case 0x4b:
+	switch(AL_reg(context))
+	{
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+	case 0x05:
+	    FIXME(int,"Task Switcher - not implemented\n");
+	    break;
+	default:
+	    INT_BARF( context, 0x2f );
+	}
+	break;
     case 0x56:  /* INTERLNK */
 	switch(AL_reg(context))
 	{
