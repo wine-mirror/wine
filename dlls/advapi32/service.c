@@ -1357,3 +1357,16 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         FIXME("STUB: %p %ld %p\n",hService, dwInfoLevel, lpInfo);
     return TRUE;
 }
+
+/******************************************************************************
+ * QueryServiceObjectSecurity [ADVAPI32.@]
+ */
+BOOL WINAPI QueryServiceObjectSecurity(SC_HANDLE hService,
+       SECURITY_INFORMATION dwSecurityInformation,
+       PSECURITY_DESCRIPTOR lpSecurityDescriptor,
+       DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+{
+    FIXME("%p %ld %p %lu %p\n", hService, dwSecurityInformation,
+          lpSecurityDescriptor, cbBufSize, pcbBytesNeeded);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

@@ -194,7 +194,7 @@
 @ stdcall QueryServiceConfigW(long ptr long ptr)
 @ stub QueryServiceLockStatusA
 @ stub QueryServiceLockStatusW
-@ stub QueryServiceObjectSecurity
+@ stdcall QueryServiceObjectSecurity(long long ptr long ptr)
 @ stdcall QueryServiceStatus(long ptr)
 @ stdcall QueryServiceStatusEx (long long ptr long ptr)
 @ stdcall ReadEventLogA (long long long ptr long ptr ptr)
