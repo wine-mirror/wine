@@ -1355,7 +1355,7 @@ static	BOOL	DEBUG_WalkList(struct r_debug* dbg_hdr)
 	DEBUG_READ_MEM_VERBOSE((void*)lm.l_addr, &ehdr, sizeof(ehdr)) &&
 	ehdr.e_type == ET_DYN && /* only look at dynamic modules */
 	lm.l_name != NULL &&
-	DEBUG_READ_MEM_VERBOSE(lm.l_name, bufstr, sizeof(bufstr))) {
+	DEBUG_READ_MEM_VERBOSE((void*)lm.l_name, bufstr, sizeof(bufstr))) {
       bufstr[sizeof(bufstr) - 1] = '\0';
       DEBUG_ProcessElfObject(bufstr, (unsigned)lm.l_addr);
     }
