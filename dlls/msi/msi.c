@@ -1340,41 +1340,64 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
     WCHAR squished_pc[GUID_SIZE];
     UINT rc;
     INSTALLSTATE rrc = INSTALLSTATE_UNKNOWN;
-    HKEY hkey=0;
+    HKEY hkey = 0;
+    LPWSTR path = NULL;
+    DWORD sz, type;
 
     TRACE("%s %s %p %p\n", debugstr_w(szProduct),
            debugstr_w(szComponent), lpPathBuf, pcchBuf);
 
+    if( lpPathBuf && !pcchBuf )
+        return INSTALLSTATE_INVALIDARG;
+
     squash_guid(szProduct,squished_pc);
 
-    rc = MSIREG_OpenProductsKey(szProduct,&hkey,FALSE);
-    if (rc != ERROR_SUCCESS)
+    rc = MSIREG_OpenProductsKey( szProduct, &hkey, FALSE);
+    if( rc != ERROR_SUCCESS )
         goto end;
 
     RegCloseKey(hkey);
 
-    rc = MSIREG_OpenComponentsKey(szComponent,&hkey,FALSE);
-    if (rc != ERROR_SUCCESS)
+    rc = MSIREG_OpenComponentsKey( szComponent, &hkey, FALSE);
+    if( rc != ERROR_SUCCESS )
         goto end;
 
-    *pcchBuf *= sizeof(WCHAR);
-    rc = RegQueryValueExW(hkey,squished_pc,NULL,NULL,(LPVOID)lpPathBuf,
-                          pcchBuf);
-    *pcchBuf /= sizeof(WCHAR);
+    sz = 0;
+    type = 0;
+    rc = RegQueryValueExW( hkey, squished_pc, NULL, &type, NULL, &sz );
+    if( rc != ERROR_SUCCESS )
+        goto end;
+    if( type != REG_SZ )
+        goto end;
 
-    if (rc!= ERROR_SUCCESS)
+    sz += sizeof(WCHAR);
+    path = HeapAlloc( GetProcessHeap(), 0, sz );
+    if( !path )
+        goto end;
+
+    rc = RegQueryValueExW( hkey, squished_pc, NULL, NULL, (LPVOID) path, &sz );
+    if( rc != ERROR_SUCCESS )
         goto end;
 
     TRACE("found path of (%s:%s)(%s)\n", debugstr_w(szComponent),
-           debugstr_w(szProduct), debugstr_w(lpPathBuf));
+           debugstr_w(szProduct), debugstr_w(path));
 
     FIXME("Only working for installed files, not registry keys\n");
-    if (GetFileAttributesW(lpPathBuf) != INVALID_FILE_ATTRIBUTES)
+    if ( GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES )
         rrc = INSTALLSTATE_LOCAL;
     else
         rrc = INSTALLSTATE_ABSENT;
 
+    if( pcchBuf )
+    {
+        sz = sz / sizeof(WCHAR);
+        if( *pcchBuf >= sz )
+            strcpyW( lpPathBuf, path );
+        *pcchBuf = sz;
+    }
+
 end:
+    HeapFree(GetProcessHeap(), 0, path );
     RegCloseKey(hkey);
     return rrc;
 }
