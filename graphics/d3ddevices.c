@@ -16,6 +16,12 @@
 
 #include "d3d_private.h"
 
+/* Define this variable if you have an unpatched Mesa 3.0 (patches are available
+   on Mesa's home page) or version 3.1b.
+
+   Version 3.2b should correct this bug */
+#undef HAVE_BUGGY_MESAGL
+
 #ifdef HAVE_MESAGL
 
 static GUID IID_D3DDEVICE2_OpenGL = {
@@ -81,11 +87,11 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
 
 static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
 {
-  GLint maxlight;
+  /* GLint maxlight; */
   
   d1->dwSize  = sizeof(*d1);
   d1->dwFlags = D3DDD_DEVCAPS | D3DDD_BCLIPPING | D3DDD_COLORMODEL | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH
-    | D3DDD_LIGHTINGCAPS | D3DDD_LINECAPS | D3DDD_MAXBUFFERSIZE | D3DDD_TRANSFORMCAPS | D3DDD_TRICAPS;
+    | D3DDD_LIGHTINGCAPS | D3DDD_LINECAPS | D3DDD_MAXBUFFERSIZE | D3DDD_MAXVERTEXCOUNT | D3DDD_TRANSFORMCAPS | D3DDD_TRICAPS;
   d1->dcmColorModel = D3DCOLOR_RGB;
   d1->dwDevCaps = D3DDEVCAPS_CANRENDERAFTERFLIP | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_EXECUTESYSTEMMEMORY |
     D3DDEVCAPS_EXECUTEVIDEOMEMORY | D3DDEVCAPS_FLOATTLVERTEX | D3DDEVCAPS_TEXTURENONLOCALVIDMEM | D3DDEVCAPS_TEXTURESYSTEMMEMORY |
@@ -102,6 +108,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
   d1->dwDeviceRenderBitDepth  = DDBD_16;
   d1->dwDeviceZBufferBitDepth = DDBD_16;
   d1->dwMaxBufferSize = 0;
+  d1->dwMaxVertexCount = 65536;
   d1->dwMinTextureWidth  = 1;
   d1->dwMinTextureHeight = 1;
   d1->dwMaxTextureWidth  = 256; /* This is for Mesa on top of Glide (in the future :-) ) */
@@ -342,17 +349,17 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat->dwSize = sizeof(DDPIXELFORMAT);
   pformat->dwFourCC = 0;
   
-  TRACE(ddraw, "Enumerating GL_RGBA (32)\n");
+  TRACE(ddraw, "Enumerating GL_RGBA unpacked (32)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
   pformat->x.dwRGBBitCount = 32;
-  pformat->y.dwRBitMask =  0x00FF0000;
-  pformat->z.dwGBitMask =  0x0000FF00;
-  pformat->xx.dwBBitMask = 0x000000FF;
-  pformat->xy.dwRGBAlphaBitMask = 0xFF000000;
+  pformat->y.dwRBitMask =         0xFF000000;
+  pformat->z.dwGBitMask =         0x00FF0000;
+  pformat->xx.dwBBitMask =        0x0000FF00;
+  pformat->xy.dwRGBAlphaBitMask = 0x000000FF;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
-  TRACE(ddraw, "Enumerating GL_RGB (24)\n");
+  TRACE(ddraw, "Enumerating GL_RGB unpacked (24)\n");
   pformat->dwFlags = DDPF_RGB;
   pformat->x.dwRGBBitCount = 24;
   pformat->y.dwRBitMask =  0x00FF0000;
@@ -362,7 +369,10 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
-  TRACE(ddraw, "Enumerating GL_RGB (16)\n");
+#ifndef HAVE_BUGGY_MESAGL
+  /* The packed texture format are buggy in Mesa. The bug was reported and corrected,
+     so that future version will work great. */
+  TRACE(ddraw, "Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
   pformat->dwFlags = DDPF_RGB;
   pformat->x.dwRGBBitCount = 16;
   pformat->y.dwRBitMask =  0x0000F800;
@@ -372,6 +382,37 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
+  TRACE(ddraw, "Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_5_5_5_1 (16)\n");
+  pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+  pformat->x.dwRGBBitCount = 16;
+  pformat->y.dwRBitMask =         0x0000F800;
+  pformat->z.dwGBitMask =         0x000007C0;
+  pformat->xx.dwBBitMask =        0x0000003E;
+  pformat->xy.dwRGBAlphaBitMask = 0x00000001;
+  if (cb(&sdesc, context) == 0)
+    return DD_OK;
+
+  TRACE(ddraw, "Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
+  pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+  pformat->x.dwRGBBitCount = 16;
+  pformat->y.dwRBitMask =         0x0000F000;
+  pformat->z.dwGBitMask =         0x00000F00;
+  pformat->xx.dwBBitMask =        0x000000F0;
+  pformat->xy.dwRGBAlphaBitMask = 0x0000000F;
+  if (cb(&sdesc, context) == 0)
+    return DD_OK;
+
+  TRACE(ddraw, "Enumerating GL_RGB packed GL_UNSIGNED_BYTE_3_3_2 (8)\n");
+  pformat->dwFlags = DDPF_RGB;
+  pformat->x.dwRGBBitCount = 8;
+  pformat->y.dwRBitMask =         0x0000F800;
+  pformat->z.dwGBitMask =         0x000007C0;
+  pformat->xx.dwBBitMask =        0x0000003E;
+  pformat->xy.dwRGBAlphaBitMask = 0x00000001;
+  if (cb(&sdesc, context) == 0)
+    return DD_OK;
+#endif
+  
   TRACE(ddraw, "Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
   pformat->x.dwRGBBitCount = 8;
@@ -400,7 +441,7 @@ static HRESULT WINAPI IDirect3DDevice2_EnumTextureFormats(LPDIRECT3DDEVICE2 this
 
 static HRESULT WINAPI IDirect3DDevice2_BeginScene(LPDIRECT3DDEVICE2 this)
 {
-  OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this;
+  /* OpenGL_IDirect3DDevice2 *odev = (OpenGL_IDirect3DDevice2 *) this; */
   
   FIXME(ddraw, "(%p)->(): stub\n", this);
   
@@ -1331,6 +1372,7 @@ static HRESULT WINAPI IDirect3DDevice_SetMatrix(LPDIRECT3DDEVICE this,
   TRACE(ddraw, "(%p)->(%08lx,%p)\n", this, d3dMatHandle, lpD3DMatrix);
 
   dump_mat(lpD3DMatrix);
+  
   *((D3DMATRIX *) d3dMatHandle) = *lpD3DMatrix;
   
   return DD_OK;
@@ -1362,7 +1404,7 @@ static HRESULT WINAPI IDirect3DDevice_DeleteMatrix(LPDIRECT3DDEVICE this,
 
 static HRESULT WINAPI IDirect3DDevice_BeginScene(LPDIRECT3DDEVICE this)
 {
-  OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) this;
+  /* OpenGL_IDirect3DDevice *odev = (OpenGL_IDirect3DDevice *) this; */
   
   FIXME(ddraw, "(%p)->(): stub\n", this);
   
@@ -1406,6 +1448,7 @@ static HRESULT WINAPI IDirect3DDevice_EndScene(LPDIRECT3DDEVICE this)
       unsigned char g =  *lsrc++;
       unsigned char b =  *lsrc++;
       lsrc++; /* Alpha */
+
       *dest = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
       
       dest++;

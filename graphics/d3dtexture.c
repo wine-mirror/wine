@@ -18,6 +18,11 @@
 
 #ifdef HAVE_MESAGL
 
+/* Define this if you want to save to a file all the textures used by a game
+   (can be funny to see how they managed to cram all the pictures in
+   texture memory) */
+#undef TEXTURE_SNOOP
+
 static IDirect3DTexture2_VTable texture2_vtable;
 static IDirect3DTexture_VTable texture_vtable;
 
@@ -106,6 +111,14 @@ static HRESULT WINAPI IDirect3DTexture_GetHandle(LPDIRECT3DTEXTURE this,
 
   *lpHandle = (DWORD) this;
   
+  /* Now, bind a new texture */
+  lpD3DDevice->set_context(lpD3DDevice);
+  this->D3Ddevice = (void *) lpD3DDevice;
+  if (this->tex_name == 0)
+    glGenTextures(1, &(this->tex_name));
+
+  TRACE(ddraw, "OpenGL texture handle is : %d\n", this->tex_name);
+  
   return D3D_OK;
 }
 
@@ -138,6 +151,7 @@ static HRESULT WINAPI IDirect3DTexture2_GetHandle(LPDIRECT3DTEXTURE2 this,
   /* Now, bind a new texture */
   lpD3DDevice2->set_context(lpD3DDevice2);
   this->D3Ddevice = (void *) lpD3DDevice2;
+  if (this->tex_name == 0)
   glGenTextures(1, &(this->tex_name));
 
   TRACE(ddraw, "OpenGL texture handle is : %d\n", this->tex_name);
@@ -155,14 +169,17 @@ static HRESULT WINAPI IDirect3DTexture2_PaletteChanged(LPDIRECT3DTEXTURE2 this,
   return D3D_OK;
 }
 
+/* NOTE : if you experience crashes in this function, you must have a buggy
+          version of Mesa. See the file d3dtexture.c for a cure */
 static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 					     LPDIRECT3DTEXTURE2 lpD3DTexture2)
 {
   DDSURFACEDESC	*src_d, *dst_d;
   TRACE(ddraw, "(%p)->(%p)\n", this, lpD3DTexture2);
 
-  /* Hack ? */
   TRACE(ddraw, "Copied to surface %p, surface %p\n", this->surface, lpD3DTexture2->surface);
+
+  /* Suppress the ALLOCONLOAD flag */
   this->surface->s.surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
   /* Copy one surface on the other */
@@ -187,9 +204,16 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
     /* Now, load the texture */
     /* d3dd->set_context(d3dd); We need to set the context somehow.... */
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &current_texture);
+
+    /* If the GetHandle was not done, get the texture name here */
+    if (this->tex_name == 0)
+      glGenTextures(1, &(this->tex_name));
     glBindTexture(GL_TEXTURE_2D, this->tex_name);
 
     if (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
+      /* ****************
+	 Paletted Texture
+	 **************** */
       LPDIRECTDRAWPALETTE pal = this->surface->s.palette;
       BYTE table[256][4];
       int i;
@@ -212,8 +236,7 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 	table[i][3] = 0xFF;
       }
       
-#if 0
-      /* If you want to see how the game manages its textures :-) */
+#ifdef TEXTURE_SNOOP
       {
 	FILE *f;
 	char buf[32];
@@ -249,8 +272,117 @@ static HRESULT WINAPI IDirect3DTexture2_Load(LPDIRECT3DTEXTURE2 this,
 		   GL_COLOR_INDEX,      /* texture format */
 		   GL_UNSIGNED_BYTE,    /* texture type */
 		   src_d->y.lpSurface); /* the texture */
+    } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
+      /* ************
+	 RGB Textures
+	 ************ */
+      if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 8) {
+	/* **********************
+	   GL_UNSIGNED_BYTE_3_3_2 
+	   ********************** */
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGB,
+		     src_d->dwWidth, src_d->dwHeight,
+		     0,
+		     GL_RGB,
+		     GL_UNSIGNED_BYTE_3_3_2,
+		     src_d->y.lpSurface);
+      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
+	if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
+#ifdef TEXTURE_SNOOP
+	  {
+	    FILE *f;
+	    char buf[32];
+	    int x, y;
+	    
+	    sprintf(buf, "%d.pnm", this->tex_name);
+	    f = fopen(buf, "wb");
+	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
+	    for (y = 0; y < src_d->dwHeight; y++) {
+	      for (x = 0; x < src_d->dwWidth; x++) {
+		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
+		fputc((c & 0xF800) >> 8, f);
+		fputc((c & 0x07E0) >> 3, f);
+		fputc((c & 0x001F) << 3, f);
+	      }
+	    }
+	    fclose(f);
+	  }
+#endif
+	  glTexImage2D(GL_TEXTURE_2D,
+		       0,
+		       GL_RGB,
+		       src_d->dwWidth, src_d->dwHeight,
+		       0,
+		       GL_RGB,
+		       GL_UNSIGNED_SHORT_5_6_5,
+		       src_d->y.lpSurface);
+	} else if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
+#ifdef TEXTURE_SNOOP
+	  {
+	    FILE *f;
+	    char buf[32];
+	    int x, y;
+	    
+	    sprintf(buf, "%d.pnm", this->tex_name);
+	    f = fopen(buf, "wb");
+	    fprintf(f, "P6\n%d %d\n255\n", src_d->dwWidth, src_d->dwHeight);
+	    for (y = 0; y < src_d->dwHeight; y++) {
+	      for (x = 0; x < src_d->dwWidth; x++) {
+		unsigned short c = ((unsigned short *) src_d->y.lpSurface)[y * src_d->dwWidth + x];
+		fputc((c & 0xF800) >> 8, f);
+		fputc((c & 0x07C0) >> 3, f);
+		fputc((c & 0x003E) << 2, f);
+	      }
+	    }
+	    fclose(f);
+	  }
+#endif
+	  
+	  glTexImage2D(GL_TEXTURE_2D,
+		       0,
+		       GL_RGBA,
+		       src_d->dwWidth, src_d->dwHeight,
+		       0,
+		       GL_RGBA,
+		       GL_UNSIGNED_SHORT_5_5_5_1,
+		       src_d->y.lpSurface);
+	} else if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x0000000F) {
+	  glTexImage2D(GL_TEXTURE_2D,
+		       0,
+		       GL_RGBA,
+		       src_d->dwWidth, src_d->dwHeight,
+		       0,
+		       GL_RGBA,
+		       GL_UNSIGNED_SHORT_4_4_4_4,
+		       src_d->y.lpSurface);
+	} else {
+	  ERR(ddraw, "Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
+	}
+      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGB,
+		     src_d->dwWidth, src_d->dwHeight,
+		     0,
+		     GL_RGB,
+		     GL_UNSIGNED_BYTE,
+		     src_d->y.lpSurface);
+      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 32) {
+	glTexImage2D(GL_TEXTURE_2D,
+		     0,
+		     GL_RGBA,
+		     src_d->dwWidth, src_d->dwHeight,
+		     0,
+		     GL_RGBA,
+		     GL_UNSIGNED_BYTE,
+		     src_d->y.lpSurface);
+      } else {
+	ERR(ddraw, "Unhandled texture format (bad RGB count)\n");
+      }
     } else {
-      ERR(ddraw, "Unhandled texture format\n");
+      ERR(ddraw, "Unhandled texture format (neither RGB nor INDEX)\n");
     }
 
     glBindTexture(GL_TEXTURE_2D, current_texture);
