@@ -18,26 +18,25 @@ typedef struct tagTRACKBAR_INFO
     INT  nPos;
     UINT uThumbLen;
     UINT uNumTics;
-	UINT  uTicFreq;
-	HWND hwndNotify;
+    UINT  uTicFreq;
+    HWND hwndNotify;
     HWND hwndToolTip;
     HWND hwndBuddyLA;
     HWND hwndBuddyRB;
     INT  fLocation;
-	COLORREF clrBk;
-	
-	INT  flags;
+    COLORREF clrBk;
+    INT  flags;
     BOOL bFocus;
     RECT rcChannel;
     RECT rcSelection;
     RECT rcThumb;
-	INT  dragPos;
+    INT  dragPos;
     LPLONG tics;
 } TRACKBAR_INFO;
 
 
-#define TB_REFRESH_TIMER       1
-#define TB_REFRESH_DELAY       1
+/* #define TB_REFRESH_TIMER       1 */
+/* #define TB_REFRESH_DELAY       1 */
 
 
 
