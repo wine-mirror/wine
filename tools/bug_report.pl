@@ -6,6 +6,8 @@
 ##hunt you down and kill you like the savage animal I am.
 ##Released under the WINE licence
 ##Changelog: 
+##March 21, 1999 - Bash 2.0 STDERR workaround (Thanks Ryan Cumming!)
+##March 1, 1999 - Check for stripped build
 ##February 3, 1999 - Fix to chdir to the program's directory
 ##February 1, 1999 - Cleaned up code
 ##January 26, 1999 - Fixed various bugs...
@@ -103,6 +105,15 @@ if ($debuglevel > 1) {
 	}
 	$wineloc=<STDIN>;
 	chomp $wineloc; 
+}
+print "Checking if $wineloc is stripped...\n";
+$ifstrip = `nm $wineloc 2>&1`;
+if ($ifstrip =~ /no symbols/) {
+	print "Your wine is stripped! Please re-download an unstripped version!\n";
+	exit;
+}
+else {
+	print "$wineloc is unstripped\n";
 }
 $var5 = qq{
 What version of windows are you using with wine? 0-None, 1-Win3.x,
@@ -329,13 +340,16 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var21);
 }
+$bashver=qw("/bin/bash -version");
+if ($bashver =~ /2\./) { $outflags = "2>" }
+else { $outflags = ">&" }
 print "Hit enter to start wine!\n";
 $blank=<STDIN>;
 $dir=$program;
 $dir=~m#(.*)/#;
 $dir=$1;
 chdir($dir);
-system("echo quit|$wineloc -debugmsg $debugopts $extraops \"$program\" >& $dbgoutfile");
+system("echo quit|$wineloc -debugmsg $debugopts $extraops \"$program\" $outflags $dbgoutfile");
 $lastlines=`tail -n $lastnlines $dbgoutfile`;
 system("gzip $dbgoutfile");
 open(OUTFILE,">$outfile");
