@@ -20,9 +20,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
+# ***** Keep in sync with tools/winapi/msvcmaker:_generate_testlist_c *****
+
 cat <<EOF
 /* Automatically generated file; DO NOT EDIT!! */
 
+/* stdarg.h is needed for Winelib */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1142,6 +1142,7 @@ if ($options->winetest) {
     }
 }
 
+# ***** Keep in sync with tools/make_ctests *****
 sub _generate_testlist_c {
     local *OUT = shift;
 
@@ -1149,6 +1150,8 @@ sub _generate_testlist_c {
 
     print OUT "/* Automatically generated file; DO NOT EDIT!! */\n";
     print OUT "\n";
+    print OUT "/* stdarg.h is needed for Winelib */\n";
+    print OUT "#include <stdarg.h>\n";
     print OUT "#include <stdio.h>\n";
     print OUT "#include <stdlib.h>\n";
     print OUT "#include \"windef.h\"\n";
