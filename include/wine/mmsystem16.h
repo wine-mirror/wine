@@ -518,6 +518,11 @@ typedef struct {
 
 typedef struct {
     DWORD	dwCallback;
+    SEGPTR      lpstrSoundName;
+} MCI_SOUND_PARMS16, *LPMCI_SOUND_PARMS16;
+
+typedef struct {
+    DWORD	dwCallback;
     SEGPTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMS16, *LPMCI_VD_ESCAPE_PARMS16;
 
