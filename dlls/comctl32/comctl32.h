@@ -61,6 +61,9 @@ extern HMODULE COMCTL32_hModule;
 #define IDM_NOV				311
 #define IDM_DEC				312
 
+#define IDM_TODAY                      4163
+#define IDM_GOTODAY                    4164
+
 /* Treeview Checboxes */
 
 #define IDT_CHECK        401
