@@ -76,7 +76,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     char 		format[256];
     char 		buffer[256];
     HKEY		hDbgConf;
-    DWORD		bAuto;
+    DWORD		bAuto = FALSE;
     DWORD		ret = EXCEPTION_EXECUTE_HANDLER;
 
     /* send a last chance event to the debugger */
@@ -110,7 +110,8 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
        
        RegCloseKey(hDbgConf);
     } else {
-       format[0] = 0;
+       /* format[0] = 0; */
+       strcpy(format, "winedbg %ld %ld");
     }
 
     if (!bAuto) {
