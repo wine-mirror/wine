@@ -495,7 +495,7 @@ TREEVIEW_GetBkColor (HWND hwnd)
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
 	
   TRACE("\n");
-  return (LRESULT) infoPtr->clrText;
+  return (LRESULT) infoPtr->clrBk;
 }
 
 static LRESULT
@@ -515,7 +515,7 @@ TREEVIEW_GetTextColor (HWND hwnd)
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(hwnd);
 	
   TRACE("\n");
-  return (LRESULT) infoPtr->clrBk;
+  return (LRESULT) infoPtr->clrText;
 }
 
 
@@ -986,13 +986,11 @@ TREEVIEW_Refresh (HWND hwnd)
     viewleft=infoPtr->cx;
     viewright=infoPtr->cx + rect.right-rect.left;
 
-
-
     /* draw background */
     
-    hbrBk = GetSysColorBrush (COLOR_WINDOW);
+    hbrBk = CreateSolidBrush (infoPtr->clrBk);
     FillRect(hdc, &rect, hbrBk);
-
+    DeleteObject(hbrBk);
 
     iItem=(INT)infoPtr->TopRootItem;
     infoPtr->firstVisible=0;
