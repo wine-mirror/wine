@@ -219,7 +219,7 @@ static BOOL CALLBACK COMDLG32_FindReplaceDlgProc(HWND hDlgWnd, UINT iMsg, WPARAM
 		/* We do not do ShowWindow if hook exists and is FALSE  */
 		/*   per MSDN Article Q96135                            */
               	if((pdata->fr.Flags & FR_ENABLEHOOK)
-	             && ! pdata->fr.lpfnHook(hDlgWnd, iMsg, wParam, pdata->fr.lCustData))
+	             && ! pdata->fr.lpfnHook(hDlgWnd, iMsg, wParam, (LPARAM) &pdata->fr))
 		        return TRUE;
 		ShowWindow(hDlgWnd, SW_SHOWNORMAL);
 		UpdateWindow(hDlgWnd);
