@@ -133,9 +133,10 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     }
 
     if (!bAuto && Callout.MessageBoxA) {
-       sprintf( buffer, "Unhandled exception 0x%08lx at address 0x%08lx.\n"
+       sprintf( buffer, "Unhandled exception 0x%08lx at address 0x%04lx:0x%08lx.\n"
 	                "Do you wish to debug it ?",
 		epointers->ExceptionRecord->ExceptionCode,
+		epointers->ContextRecord->SegCs,
 		(DWORD)epointers->ExceptionRecord->ExceptionAddress );
        if (Callout.MessageBoxA( 0, buffer, "Error", MB_YESNO | MB_ICONHAND ) == IDNO) {
 	  TRACE("Killing process\n");
@@ -168,7 +169,9 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	  WaitForSingleObject(hEvent, INFINITE);
 	  ret = EXCEPTION_CONTINUE_SEARCH;
        } else {
-	  ERR("Couldn't start debugger (%s) (%ld)\n", buffer, GetLastError());
+           ERR("Couldn't start debugger (%s) (%ld)\n"
+               "Read the documentation on how to set up winedbg or another debugger\n",
+               buffer, GetLastError());
        }
        CloseHandle(hEvent);
     } else {
