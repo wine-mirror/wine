@@ -2023,7 +2023,9 @@ HRESULT WINAPI StorageImpl_SetStateBits(
 HRESULT StorageImpl_Construct(
   StorageImpl* This,
   HANDLE       hFile,
-  DWORD          openFlags)
+  ILockBytes*  pLkbyt,
+  DWORD        openFlags,
+  BOOL         fileBased)
 {
   HRESULT     hr = S_OK;
   StgProperty currentProperty;
@@ -2058,8 +2060,10 @@ HRESULT StorageImpl_Construct(
   This->bigBlockSize   = DEF_BIG_BLOCK_SIZE;
   This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
   This->bigBlockFile   = BIGBLOCKFILE_Construct(hFile,
+                                                pLkbyt,
                                                 openFlags,
-                                                This->bigBlockSize);
+                                                This->bigBlockSize,
+                                                fileBased);
 
   if (This->bigBlockFile == 0)
     return E_FAIL;
@@ -5277,7 +5281,9 @@ HRESULT WINAPI StgCreateDocfile(
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
-         grfMode);
+         NULL,
+         grfMode,
+         TRUE);
  
   if (FAILED(hr))
   {
@@ -5365,7 +5371,9 @@ HRESULT WINAPI StgOpenStorage(
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
-         grfMode);
+         NULL,
+         grfMode,
+         TRUE);
   
   if (FAILED(hr))
   {
@@ -5385,7 +5393,141 @@ HRESULT WINAPI StgOpenStorage(
 }
 
 /******************************************************************************
- *              WriteClassStg32        [OLE32.148]
+ *    StgCreateDocfileOnILockBytes    [OLE32.145]
+ */
+HRESULT WINAPI StgCreateDocfileOnILockBytes(
+      ILockBytes *plkbyt,
+      DWORD grfMode,
+      DWORD reserved,
+      IStorage** ppstgOpen)
+{
+  StorageImpl*   newStorage = 0;
+  HRESULT        hr         = S_OK;
+
+  /*
+   * Validate the parameters
+   */
+  if ((ppstgOpen == 0) || (plkbyt == 0))
+    return STG_E_INVALIDPOINTER;
+
+  /*
+   * Allocate and initialize the new IStorage object.
+   */
+  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
+
+  if (newStorage == 0)
+    return STG_E_INSUFFICIENTMEMORY;
+
+  hr = StorageImpl_Construct(
+         newStorage,
+         0,
+         plkbyt,
+         grfMode,
+         FALSE);
+
+  if (FAILED(hr))
+  {
+    HeapFree(GetProcessHeap(), 0, newStorage);
+    return hr;
+  }
+
+  /*
+   * Get an "out" pointer for the caller.
+   */
+  hr = StorageBaseImpl_QueryInterface(
+         (IStorage*)newStorage,
+         (REFIID)&IID_IStorage,
+         (void**)ppstgOpen);
+
+  return hr;  
+}
+
+/******************************************************************************
+ *    StgOpenStorageOnILockBytes    [OLE32.149]
+ */
+HRESULT WINAPI StgOpenStorageOnILockBytes(
+      ILockBytes *plkbyt,
+      IStorage *pstgPriority,
+      DWORD grfMode,
+      SNB snbExclude,
+      DWORD reserved,
+      IStorage **ppstgOpen)
+{
+  StorageImpl* newStorage = 0;
+  HRESULT        hr = S_OK;
+
+  /*
+   * Perform a sanity check
+   */
+  if ((plkbyt == 0) || (ppstgOpen == 0))
+    return STG_E_INVALIDPOINTER;
+
+  /*
+   * Validate the STGM flags
+   */
+  if ( FAILED( validateSTGM(grfMode) ))
+    return STG_E_INVALIDFLAG;
+
+  /*
+   * Initialize the "out" parameter.
+   */
+  *ppstgOpen = 0;
+
+  /*
+   * Allocate and initialize the new IStorage object.
+   */
+  newStorage = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
+ 
+  if (newStorage == 0)
+    return STG_E_INSUFFICIENTMEMORY;
+
+  hr = StorageImpl_Construct(
+         newStorage,
+         0,
+         plkbyt,
+         grfMode,
+         FALSE);
+
+  if (FAILED(hr))
+  {
+    HeapFree(GetProcessHeap(), 0, newStorage);
+    return hr;
+  }
+
+  /*
+   * Get an "out" pointer for the caller.
+   */
+  hr = StorageBaseImpl_QueryInterface(
+         (IStorage*)newStorage,
+         (REFIID)&IID_IStorage,
+         (void**)ppstgOpen);
+
+  return hr;
+}
+
+/******************************************************************************
+ *              StgIsStorageILockBytes        [OLE32.147]
+ *
+ * Determines if the ILockBytes contains a storage object.
+ */
+HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt)
+{
+  BYTE sig[8];
+  ULARGE_INTEGER offset;
+
+  offset.HighPart = 0;
+  offset.LowPart  = 0;
+
+  ILockBytes_ReadAt(plkbyt, offset, sig, sizeof(sig), NULL);
+
+  if (memcmp(sig, STORAGE_magic, sizeof(STORAGE_magic)) == 0)
+    return S_OK;
+
+  return S_FALSE;
+}
+
+/******************************************************************************
+ *              WriteClassStg32        [OLE32.158]
  *
  * This method will store the specified CLSID in the specified storage object
  */

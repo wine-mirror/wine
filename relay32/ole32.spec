@@ -147,7 +147,7 @@ type	win32
 144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocfile
 145 stdcall StgCreateDocfileOnILockBytes(ptr long long ptr) StgCreateDocfileOnILockBytes
 146 stdcall StgIsStorageFile(wstr) StgIsStorageFile
-147 stub StgIsStorageILockBytes
+147 stdcall StgIsStorageILockBytes(ptr) StgIsStorageILockBytes
 148 stdcall StgOpenStorage(wstr ptr long ptr long ptr) StgOpenStorage
 149 stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr) StgOpenStorageOnILockBytes
 150 stub StgSetTimes

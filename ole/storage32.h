@@ -135,12 +135,16 @@ typedef struct BigBlock     BigBlock,*LPBIGBLOCK;
 
 struct BigBlockFile
 {
+  BOOL fileBased;
   ULARGE_INTEGER filesize;
   ULONG blocksize;
   HANDLE hfile;
   HANDLE hfilemap;
   DWORD flProtect;
   MappedPage *maplisthead;
+  ILockBytes *pLkbyt;
+  HGLOBAL hbytearray;
+  LPVOID pbytearray;
   BigBlock *headblock;
 };
 
@@ -149,8 +153,10 @@ struct BigBlockFile
  * data structure.
  */
 BigBlockFile*  BIGBLOCKFILE_Construct(HANDLE hFile,
+                                      ILockBytes* pLkByt,
                                       DWORD openFlags,
-                                      ULONG blocksize);
+                                      ULONG blocksize,
+                                      BOOL fileBased);
 void           BIGBLOCKFILE_Destructor(LPBIGBLOCKFILE This);
 void*          BIGBLOCKFILE_GetBigBlock(LPBIGBLOCKFILE This, ULONG index);
 void*          BIGBLOCKFILE_GetROBigBlock(LPBIGBLOCKFILE This, ULONG index);
@@ -367,7 +373,9 @@ void StorageImpl_Destroy(
 HRESULT StorageImpl_Construct(
 	    StorageImpl* This,
 	    HANDLE       hFile,
-	    DWORD          openFlags);
+      ILockBytes*  pLkbyt,
+	    DWORD        openFlags,
+      BOOL         fileBased);
 
 BOOL StorageImpl_ReadBigBlock(
             StorageImpl* This,

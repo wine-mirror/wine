@@ -157,11 +157,11 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
   HGLOBALLockBytesImpl* const pMemLockBytes = (HGLOBALLockBytesImpl*)plkbyt;
 
   if (pMemLockBytes->lpvtbl == &HGLOBALLockBytesImpl_Vtbl)
-    phglobal = &pMemLockBytes->supportHandle;
+    *phglobal = pMemLockBytes->supportHandle;
   else
-    phglobal = NULL;
+    *phglobal = 0;
 
-  if (phglobal == NULL)
+  if (*phglobal == 0)
     return E_INVALIDARG;
 
   return S_OK;

@@ -690,6 +690,7 @@ HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,
 
 HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn);
 HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
+HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
 
 HRESULT WINAPI StgOpenStorage16(const OLECHAR16* pwcsName,IStorage16* pstgPriority,DWORD grfMode,SNB16 snbExclude,DWORD reserved,IStorage16**ppstgOpen);
 HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
