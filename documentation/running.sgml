@@ -112,7 +112,11 @@ Options:
           complex application, your debug logs can easily top 1 MB and
           higher.  A <parameter>relay</parameter> trace can often
           generate more than 10 MB of log messages, depending on how
-          long you run the application.  Logging does slow down Wine
+          long you run the application.  (As described in the
+          <link linkend = "config-debug-etc">Debug</link>
+          section of configuring wine you can 
+          modify what the <parameter>relay</parameter> trace reports).
+          Logging does slow down Wine
           quite a bit, so don't use <parameter>--debugmsg</parameter>
           unless you really do want log files.
         </para>
