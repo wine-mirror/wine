@@ -271,3 +271,5 @@ type	win32
 0267 stub LsaICLookupSids
 0268 stub SystemFunction031
 0269 stub I_ScSetServiceBitsA
+0270 stub EnumServiceGroupA
+0271 stub EnumServiceGroupW

@@ -136,17 +136,15 @@ Disassembling programs:
   The best, freely available, disassembler for Win16 programs is
   Windows Codeback, archivename wcbxxx.zip, which usually can be found
   in the Cica-Mirror subdirectory on the WINE ftpsites. (See ANNOUNCE).
+
   Disassembling win32 programs is possible using the Windows Disassembler 32,
-  which can be found at http://www.winsite.com/ and mirrors by searching for
-  w32dsm87.zip. This file used to be available under the name w32dasm.zip.
-  The shareware version does not allow saving of disassembly listings.
+  archivename something like w32dsm87.zip (or similar) on ftp.winsite.com
+  and mirrors.  The shareware version does not allow saving of disassembly
+  listings.
+  You can also use the newer (and in the full version better) Interactive
+  Disassembler (IDA) from the ftp sites mentioned at the end of the document.
 
-  [It also has a bug, it disassembles the dll and immediately after that
-   crashes, leaving a very large file caled 'winsys' in the directory of the
-   disassembled file. This file contains nothing of value (just the disassembly)
-   and can be safely deleted.]
-
-  Understanding disassembled code is just a question of exercise.
+  Understanding disassembled code is mostly a question of exercise.
 
   Most code out there uses standard C function entries (for it is usually 
   written in C). Win16 function entries usually look like that:

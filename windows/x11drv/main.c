@@ -225,29 +225,16 @@ void X11DRV_MAIN_ParseOptions(int *argc, char *argv[])
     }
   
   if (X11DRV_MAIN_GetResource( db, ".dll", &value))
-    {
-      /* Hack: store option value in Options to be retrieved */
-      /* later on inside the emulator code. */
-      if (!__winelib)
-	{
-	  if (Options.dllFlags)
-	    {
-	      /* don't overwrite previous value. Should we
-	       * automatically add the ',' between multiple DLLs ?
-	       */
-	      MSG("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
-	    }
-	  else
-	    {
-	      Options.dllFlags = xstrdup((char *)value.addr);
-	    }
-	}
-      else
-	{
-	  MSG("-dll not supported in Winelib\n" );
-	  exit(1);
-	}
-    }
+  {
+      if (Options.dllFlags)
+      {
+          /* don't overwrite previous value. Should we
+           * automatically add the ',' between multiple DLLs ?
+           */
+          MSG("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
+      }
+      else Options.dllFlags = xstrdup((char *)value.addr);
+  }
   
   if (X11DRV_MAIN_GetResource( db, ".winver", &value))
     VERSION_ParseWinVersion( (char*)value.addr );

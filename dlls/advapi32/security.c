@@ -266,7 +266,7 @@ GetTokenInformation( HANDLE32 token, DWORD tokeninfoclass, LPVOID tokeninfo,
 {
 	FIXME(advapi,"(%08x,%ld,%p,%ld,%p): stub\n",
 	      token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
-	return TRUE;
+	return FALSE;
 }
 
 /******************************************************************************

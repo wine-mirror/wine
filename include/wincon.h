@@ -142,6 +142,30 @@ typedef struct tagINPUT_RECORD
 BOOL32 WINAPI WriteConsoleOutput32A( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
 BOOL32 WINAPI WriteConsoleOutput32W( HANDLE32 hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, LPSMALL_RECT lpWriteRegion);
 #define WriteConsoleOutput WINELIB_NAME_AW(WriteConsoleOutput)
+BOOL32 WINAPI WriteConsoleInput32A( HANDLE32 handle, INPUT_RECORD *buffer,
+                                    DWORD count, LPDWORD written );
+BOOL32 WINAPI WriteConsoleInput32W( HANDLE32 handle, INPUT_RECORD *buffer,
+                                    DWORD count, LPDWORD written );
+#define WriteConsoleInput WINELIB_NAME_AW(WriteConsoleInput)
+BOOL32 WINAPI PeekConsoleInput32A( HANDLE32 handle, LPINPUT_RECORD buffer,
+                                   DWORD count, LPDWORD read );
+BOOL32 WINAPI PeekConsoleInput32W( HANDLE32 handle, LPINPUT_RECORD buffer,
+                                   DWORD count, LPDWORD read );
+#define PeekConsoleInput WINELIB_NAME_AW(PeekConsoleInput)
+BOOL32 WINAPI ReadConsole32A(	HANDLE32 hConsoleInput, LPVOID lpBuffer,
+				DWORD nNumberOfCharsToRead,
+	  			LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
+BOOL32 WINAPI ReadConsole32W(	HANDLE32 hConsoleInput, LPVOID lpBuffer,
+				DWORD nNumberOfCharsToRead,
+	  			LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
+#define ReadConsole WINELIB_NAME_AW(ReadConsole)
+BOOL32 WINAPI ReadConsoleInput32A(HANDLE32 hConsoleInput,
+				  LPINPUT_RECORD lpBuffer, DWORD nLength,
+				  LPDWORD lpNumberOfEventsRead);
+BOOL32 WINAPI ReadConsoleInput32W(HANDLE32 hConsoleInput,
+				  LPINPUT_RECORD lpBuffer, DWORD nLength,
+				  LPDWORD lpNumberOfEventsRead);
+#define ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
 
 #ifdef __WINE__
 extern HANDLE32 CONSOLE_OpenHandle( BOOL32 output, DWORD access, LPSECURITY_ATTRIBUTES sa );
