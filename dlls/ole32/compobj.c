@@ -1467,8 +1467,7 @@ HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid)
 
     if (res==ERROR_MORE_DATA){
 
-        CoTaskMemRealloc(progId,sizeProgId);
-
+        progId = CoTaskMemRealloc(progId,sizeProgId);
         res=RegQueryValueW(HKEY_CLASSES_ROOT,extention,progId,&sizeProgId);
     }
     if (res==ERROR_SUCCESS)
