@@ -38,7 +38,7 @@ extern LONG WINPOS_SendNCCalcSize(HWND hwnd, BOOL calcValidRect,
                                   RECT *newClientRect );
 extern LONG WINPOS_HandleWindowPosChanging16(struct tagWND *wndPtr, struct tagWINDOWPOS16 *winpos);
 extern LONG WINPOS_HandleWindowPosChanging(struct tagWND *wndPtr, WINDOWPOS *winpos);
-extern INT16 WINPOS_WindowFromPoint( struct tagWND* scopeWnd, POINT16 pt, struct tagWND **ppWnd );
+extern INT16 WINPOS_WindowFromPoint( struct tagWND* scopeWnd, POINT pt, struct tagWND **ppWnd );
 extern void WINPOS_CheckInternalPos( struct tagWND* wndPtr );
 extern BOOL WINPOS_ActivateOtherWindow(struct tagWND* pWnd);
 extern BOOL WINPOS_CreateInternalPosAtom(void);

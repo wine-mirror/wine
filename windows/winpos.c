@@ -419,33 +419,32 @@ BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
  *
  * Find the window and hittest for a given point.
  */
-INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
+INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT pt, WND **ppWnd )
 {
     WND *wndPtr;
     INT16 hittest = HTERROR;
     INT16 retvalue;
-    POINT16 xy = pt;
+    POINT xy = pt;
 
-    TRACE("scope %04x %d,%d\n", wndScope->hwndSelf, pt.x, pt.y);
+    TRACE("scope %04x %ld,%ld\n", wndScope->hwndSelf, pt.x, pt.y);
    *ppWnd = NULL;
     wndPtr = WIN_LockWndPtr(wndScope->child);
 
     if( wndScope->dwStyle & WS_DISABLED )
     {
-	    retvalue = HTERROR;
-	    goto end;
+        retvalue = HTERROR;
+        goto end;
     }
-   
-    if( wndScope->dwExStyle & WS_EX_MANAGED)
-    {
-	/* In managed mode we have to check wndScope first as it is also
-	 * a window which received the mouse event. */
 
-	if( pt.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
-	    pt.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom )
-	    goto hittest;
-    }
-    MapWindowPoints16( GetDesktopWindow16(), wndScope->hwndSelf, &xy, 1 );
+    if (wndScope->parent)
+        MapWindowPoints( GetDesktopWindow(), wndScope->parent->hwndSelf, &xy, 1 );
+
+    if (xy.x < wndScope->rectClient.left || pt.x >= wndScope->rectClient.right ||
+        xy.y < wndScope->rectClient.top || pt.y >= wndScope->rectClient.bottom)
+        goto hittest;
+
+    xy.x -= wndScope->rectClient.left;
+    xy.y -= wndScope->rectClient.top;
 
     for (;;)
     {
@@ -467,7 +466,7 @@ INT16 WINPOS_WindowFromPoint( WND* wndScope, POINT16 pt, WND **ppWnd )
 		 (xy.y >= wndPtr->rectWindow.top) &&
 		 (xy.y < wndPtr->rectWindow.bottom))))
             {
-	        TRACE("%d,%d is inside %04x\n", xy.x, xy.y, wndPtr->hwndSelf);
+                TRACE("%ld,%ld is inside %04x\n", xy.x, xy.y, wndPtr->hwndSelf);
                 *ppWnd = wndPtr;  /* Got a suitable window */
 
                 /* If window is minimized or disabled, return at once */
@@ -505,8 +504,8 @@ hittest:
         /* Send the WM_NCHITTEST message (only if to the same task) */
         if ((*ppWnd)->hmemTaskQ == GetFastQueue16())
 	{
-            hittest = (INT16)SendMessage16( (*ppWnd)->hwndSelf, WM_NCHITTEST, 
-						 0, MAKELONG( pt.x, pt.y ) );
+            hittest = SendMessageA( (*ppWnd)->hwndSelf, WM_NCHITTEST,
+                                    0, MAKELONG( pt.x, pt.y ) );
             if (hittest != HTTRANSPARENT)
             {
                 retvalue = hittest;  /* Found the window */
@@ -542,10 +541,10 @@ end:
  */
 HWND16 WINAPI WindowFromPoint16( POINT16 pt )
 {
-    WND *pWnd;
-    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt, &pWnd );
-    WIN_ReleaseDesktop();
-    return pWnd->hwndSelf;
+    POINT pt32;
+
+    CONV_POINT16TO32( &pt, &pt32 );
+    return WindowFromPoint( pt32 );
 }
 
 
@@ -555,9 +554,7 @@ HWND16 WINAPI WindowFromPoint16( POINT16 pt )
 HWND WINAPI WindowFromPoint( POINT pt )
 {
     WND *pWnd;
-    POINT16 pt16;
-    CONV_POINT32TO16( &pt, &pt16 );
-    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt16, &pWnd );
+    WINPOS_WindowFromPoint( WIN_GetDesktop(), pt, &pWnd );
     WIN_ReleaseDesktop();
     return (HWND)pWnd->hwndSelf;
 }

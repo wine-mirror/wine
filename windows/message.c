@@ -11,6 +11,7 @@
 #include <sys/types.h>
 
 #include "wine/winbase16.h"
+#include "wine/winuser16.h"
 #include "message.h"
 #include "winerror.h"
 #include "server.h"
@@ -26,9 +27,7 @@
 #include "user.h"
 #include "thread.h"
 #include "task.h"
-#include "options.h"
 #include "controls.h"
-#include "struct32.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(msg);
@@ -114,7 +113,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     HWND hWnd;
     INT16 ht, hittest;
     UINT message = msg->message;
-    POINT16 pt;
+    POINT pt = msg->pt;
     HANDLE16 hQ = GetFastQueue16();
     MESSAGEQUEUE *queue = QUEUE_Lock(hQ);
     int mouseClick = ((message == WM_LBUTTONDOWN) ||
@@ -124,8 +123,6 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 
     /* Find the window to dispatch this mouse message to */
 
-    CONV_POINT32TO16( &msg->pt, &pt );
-    
     hWnd = GetCapture();
 
     /* If no capture HWND, find window which contains the mouse position.
@@ -194,7 +191,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	}
     }
     /* save mouse position */
-    CONV_POINT16TO32( &pt, screen_pt );
+    *screen_pt = pt;
 
     if (hittest != HTCLIENT)
     {
@@ -202,7 +199,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	msg->wParam = hittest;
     }
     else
-        ScreenToClient16( hWnd, &pt );
+        ScreenToClient( hWnd, &pt );
 
 	/* check message filter */
 
@@ -604,8 +601,7 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
             HWND hWndScope = (HWND)qmsg->extraInfo;
-            WND *tmpWnd = (Options.managed && IsWindow(hWndScope) ) 
-                           ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop();
+            WND *tmpWnd = IsWindow(hWndScope) ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop();
 
             status = MSG_TranslateMouseMsg(hwnd, first, last, msg, remove, tmpWnd,
                                            &hittest, &screen_pt, &mouseClick );
@@ -1025,7 +1021,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg_out, HWND hwnd,
         /* Now find a normal message */
 
   retry:
-        if (wakeBits & (QS_POSTMESSAGE|QS_TIMER|QS_PAINT))
+        if (wakeBits & (QS_SENDMESSAGE|QS_POSTMESSAGE|QS_TIMER|QS_PAINT))
         {
             QMSG qmsg;
             if (QUEUE_FindMsg( hwnd, first, last, flags & PM_REMOVE, FALSE, &qmsg ))
