@@ -715,27 +715,20 @@ static	void	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 	    DEBUG_InitCurrProcess();
 	    DEBUG_InitCurrThread();
 
+            /* module is either PE, NE or ELF module (for WineLib), but all
+             * are loaded with wine, so load its symbols, then the main module
+             */
+            do 
+            {
+                char*   ptr = getenv("WINELOADER");
+                    
+                if (!ptr || DEBUG_ReadExecutableDbgInfo( ptr ) == DIL_ERROR)
+                    DEBUG_ReadExecutableDbgInfo( "wine" );
+            } while (0);
+
 	    DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile, 
 			       (DWORD)de->u.CreateProcessInfo.lpBaseOfImage);
 
-            if (buffer[0])  /* we got a process name */
-            {
-                DWORD type;
-                if (!GetBinaryTypeA( buffer, &type ))
-                {
-                    /* not a Windows binary, assume it's a Unix executable then */
-                    char unixname[MAX_PATH];
-                    /* HACK!! should fix DEBUG_ReadExecutableDbgInfo to accept DOS filenames */
-                    if (wine_get_unix_file_name( buffer, unixname, sizeof(unixname) ))
-                    {
-                        DEBUG_ReadExecutableDbgInfo( unixname );
-                        break;
-                    }
-                }
-            }
-            /* if it is a Windows binary, or an invalid or missing file name,
-             * we use wine itself as the main executable */
-            DEBUG_ReadExecutableDbgInfo( "wine" );
 	    break;
 	    
 	case EXIT_THREAD_DEBUG_EVENT:
