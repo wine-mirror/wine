@@ -147,6 +147,21 @@ typedef enum _THREADINFOCLASS
 	MaxThreadInfoClass
 } THREADINFOCLASS;
 
+typedef struct {
+/* This is used by NtQuerySystemInformation */
+	FILETIME ftCreationTime;
+	DWORD dwUnknown1;
+	DWORD dwStartAddress;
+	DWORD dwOwningPID;
+	DWORD dwThreadID;
+	DWORD dwCurrentPriority;
+	DWORD dwBasePriority;
+	DWORD dwContextSwitches;
+	DWORD dwThreadState;
+	DWORD dwWaitReason;
+	DWORD dwUnknown2[5];
+} THREADINFO, *PTHREADINFO;
+
 /*	file information */
 
 typedef enum _FILE_INFORMATION_CLASS {
@@ -220,12 +235,122 @@ typedef enum _OBJECT_INFORMATION_CLASS
 /*	system information */
 
 typedef enum SYSTEM_INFORMATION_CLASS
-{	Unknown1 = 1,
-	Unknown2,
-	Unknown3,
-	Unknown4,
-	SystemPerformanceInformation
+{       SystemBasicInformation = 0,
+        Unknown1,
+        SystemPerformanceInformation,
+        SystemTimeInformation,
+        Unknown4,
+        SystemProcessInformation,
+        Unknown6,
+        Unknown7,
+        Unknown8,
+        Unknown9,
+        Unknown10,
+        SystemDriverInformation,
+        Unknown12,
+        Unknown13,
+        Unknown14,
+        Unknown15,
+        SystemHandleList,
+        Unknown17,
+        Unknown18,
+        Unknown19,
+        Unknown20,
+        SystemCacheInformation
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
+
+typedef struct {
+/* System Information Class 0x00 */
+        DWORD dwUnknown1;
+        ULONG uKeMaximumIncrement;
+        ULONG uPageSize;
+        ULONG uMmNumberOfPhysicalPages;
+        ULONG uMmLowestPhysicalPage;
+        ULONG uMmHighestPhysicalPage;
+        ULONG uAllocationGranularity;
+        PVOID pLowestUserAddress;
+        PVOID pMmHighestUserAddress;
+        ULONG uKeActiveProcessors;
+        BYTE bKeNumberProcessors;
+        BYTE bUnknown2;
+        WORD wUnknown3;
+} SYSTEM_BASIC_INFORMATION;
+
+typedef struct {
+/* System Information Class 0x02 */
+        LARGE_INTEGER liIdleTime;
+        DWORD dwSpare[76];
+} SYSTEM_PERFORMANCE_INFORMATION;
+
+typedef struct {
+/* System Information Class 0x03 */
+        LARGE_INTEGER liKeBootTime;
+        LARGE_INTEGER liKeSystemTime;
+        LARGE_INTEGER liExpTimeZoneBias;
+        ULONG uCurrentTimeZoneId;
+        DWORD dwReserved;
+} SYSTEM_TIME_INFORMATION;
+
+typedef struct {
+/* System Information Class 0x05 */
+        DWORD dwOffset;
+        DWORD dwThreadCount;
+        DWORD dwUnknown1[6];
+        FILETIME ftCreationTime;
+        DWORD dwUnknown2[5];
+        WCHAR* pszProcessName;
+        DWORD dwBasePriority;
+        DWORD dwProcessID;
+        DWORD dwParentProcessID;
+        DWORD dwHandleCount;
+        DWORD dwUnknown3;
+        DWORD dwUnknown4;
+        DWORD dwVirtualBytesPeak;
+        DWORD dwVirtualBytes;
+        DWORD dwPageFaults;
+        DWORD dwWorkingSetPeak;
+        DWORD dwWorkingSet;
+        DWORD dwUnknown5;
+        DWORD dwPagedPool;
+        DWORD dwUnknown6;
+        DWORD dwNonPagedPool;
+        DWORD dwPageFileBytesPeak;
+        DWORD dwPrivateBytes;
+        DWORD dwPageFileBytes;
+        DWORD dwUnknown7[4];
+        THREADINFO ti[0];
+} SYSTEM_PROCESS_INFORMATION;
+
+typedef struct {
+/* System Information Class 0x0b */
+        PVOID pvAddress;
+        DWORD dwUnknown1;
+        DWORD dwUnknown2;
+        DWORD dwEntryIndex;
+        DWORD dwUnknown3;
+        char szName[MAX_PATH + 1];
+} SYSTEM_DRIVER_INFORMATION;
+
+typedef struct {
+/* System Information Class 0x10 */
+        USHORT dwPID;
+        USHORT dwCreatorBackTraceIndex;
+        BYTE bObjectType;
+        BYTE bHandleAttributes;
+        USHORT usHandleOffset;
+        DWORD dwKeObject;
+        ULONG ulGrantedAccess;
+} HANDLEINFO, *PHANDLEINFO;
+
+typedef struct {
+/* System Information Class 0x15 */
+        ULONG CurrentSize;
+        ULONG PeakSize;
+        ULONG PageFaultCount;
+        ULONG MinimumWorkingSet;
+        ULONG MaximumWorkingSet;
+        ULONG unused[4];
+} SYSTEM_CACHE_INFORMATION;
 
 /* reading coffee grounds... */
 typedef struct _THREAD_INFO
@@ -320,17 +445,6 @@ typedef struct _SYSTEM_CONFIGURATION_INFO
 
 } SYSTEM_CONFIGURATION_INFO, *PSYSTEM_CONFIGURATION_INFO;
 
-
-typedef struct _SYSTEM_CACHE_INFORMATION 
-{
-	ULONG	CurrentSize;
-	ULONG	PeakSize;
-	ULONG	PageFaultCount;
-	ULONG	MinimumWorkingSet;
-	ULONG	MaximumWorkingSet;
-	ULONG	Unused[4];
-
-} SYSTEM_CACHE_INFORMATION;
 
 /*
  *	NtQueryProcessInformation
