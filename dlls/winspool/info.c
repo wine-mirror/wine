@@ -151,6 +151,11 @@ CUPS_LoadPrinters(void) {
     PRINTER_INFO_2A	pinfo2a;
     const char*		def;
     void *cupshandle = NULL;
+    const  char *ppd;
+    char   *port,*devline;
+    UNICODE_STRING  lpszNameW;
+    PWSTR pwstrNameW;
+    HKEY hkeyPrinters, hkeyPrinter;
 
     cupshandle = wine_dlopen(CUPS_SONAME, RTLD_NOW, NULL, 0);
     if (!cupshandle) 
@@ -172,27 +177,22 @@ CUPS_LoadPrinters(void) {
 
     nrofdests = pcupsGetPrinters(&printers);
     for (i=0;i<nrofdests;i++) {
-	const char *ppd;
-	char	*port,*devline;
-        WCHAR   *pNameW;
-        HKEY     hkeyPrinters, hkeyPrinter;
-
         /* First check that the printer doesn't exist already */
-        pNameW = HEAP_strdupAtoW(GetProcessHeap(), 0, printers[i]);
+        pwstrNameW = asciitounicode(&lpszNameW, printers[i]);
         if (RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) ==
             ERROR_SUCCESS) {
-             if (RegOpenKeyW(hkeyPrinters, pNameW, &hkeyPrinter) ==
+             if (RegOpenKeyW(hkeyPrinters, pwstrNameW, &hkeyPrinter) ==
                  ERROR_SUCCESS) {
                   /* We know this printer already */
                   RegCloseKey(hkeyPrinter);
                   RegCloseKey(hkeyPrinters);
-                  HeapFree(GetProcessHeap(),0,pNameW);
+                  RtlFreeUnicodeString(&lpszNameW);
                   TRACE("Printer %s already known. Skipping detection\n", printers[i]);
                   continue;
              }
              RegCloseKey(hkeyPrinters);
         }
-        HeapFree(GetProcessHeap(),0,pNameW);
+        RtlFreeUnicodeString(&lpszNameW);
 
         /* OK, we haven't seen this one yet. Request PPD for it */
 	ppd = pcupsGetPPD(printers[i]);
@@ -2194,7 +2194,6 @@ BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
     UNICODE_STRING lpszNameW;
     PWSTR pwstrNameW;
     
-    RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
     pwstrNameW = asciitounicode(&lpszNameW,lpszName);
     ret = WINSPOOL_EnumPrinters(dwType, pwstrNameW, dwLevel, lpbPrinters, cbBuf,
 				lpdwNeeded, lpdwReturned, FALSE);
