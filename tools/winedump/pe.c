@@ -822,8 +822,13 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
     if (fstat(fd, &s) < 0) fatal("Can't get size");
     total_len = s.st_size;
 
-    base = mmap(NULL, total_len, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (base == (void*)-1) fatal("Can't map file");
+#ifdef HAVE_MMAP
+    if ((base = mmap(NULL, total_len, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
+#endif
+    {
+        if (!(base = malloc( total_len ))) fatal( "Out of memory" );
+        if (read( fd, base, total_len ) != total_len) fatal( "Cannot read file" );
+    }
 
     effective_sig = check_headers();
 
@@ -856,7 +861,12 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
     }
 
     if (ret) printf("Done dumping %s\n", name);
-    munmap(base, total_len);
+#ifdef HAVE_MMAP
+    if (munmap(base, total_len) == -1)
+#endif
+    {
+        free( base );
+    }
     close(fd);
 
     return ret;
