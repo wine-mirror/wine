@@ -547,6 +547,11 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     const char *cp, *submit = NULL, *tag = NULL;
     int reset_env = 1;
 
+    if (!running_on_visible_desktop ()) {
+        report (R_ERROR, "Tests must be run on a visible desktop");
+        exit (2);
+    }
+
     /* initialize the revision information first */
     extract_rev_infos();
 
