@@ -2554,8 +2554,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
 
-    if (Index > This->maxLights) {
-        FIXME("Cannot handle more lights than device supports\n");
+    if (Index >= This->maxLights) {
+        TRACE("Cannot handle more lights than device supports\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2695,8 +2695,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetLight(LPDIRECT3DDEVICE8 iface, DWORD In
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), pLight(%p)\n", This, Index, pLight);
     
-    if (Index > This->maxLights) {
-        FIXME("Cannot handle more lights than device supports\n");
+    if (Index >= This->maxLights) {
+        TRACE("Cannot handle more lights than device supports\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2707,8 +2707,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_LightEnable(LPDIRECT3DDEVICE8 iface, DWORD
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : Idx(%ld), enable? %d\n", This, Index, Enable);
 
-    if (Index > This->maxLights) {
-        FIXME("Cannot handle more lights than device supports\n");
+    if (Index >= This->maxLights) {
+        TRACE("Cannot handle more lights than device supports\n");
         return D3DERR_INVALIDCALL;
     }
 
@@ -2735,8 +2735,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetLightEnable(LPDIRECT3DDEVICE8 iface, DW
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     TRACE("(%p) : for idx(%ld)\n", This, Index);
 
-    if (Index > This->maxLights) {
-        FIXME("Cannot handle more lights than device supports\n");
+    if (Index >= This->maxLights) {
+        TRACE("Cannot handle more lights than device supports\n");
         return D3DERR_INVALIDCALL;
     }
 
