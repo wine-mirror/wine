@@ -59,7 +59,7 @@ Winedump can be used for different usages:
 - demangling MSVC C++ symbol names
 - dumping the 'PE' files contents
 
-Usage: winedump [-h sym <sym> spec <dll> dump <dll>] [mode options]
+Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll>] [mode options]
 When used in -h mode
    -h           Display this help message
 When used in sym mode
@@ -436,7 +436,7 @@ The definition for the _complex struct needs to be given. Since it is passed
 by value, its size also needs to be correct in order to forward the call
 correctly to a native DLL. In this case the structure is 8 bytes in size, which
 means that the gcc compile flag -freg-struct-return must be given when
-compiling the function in order to be compatable with the native DLL. (In 
+compiling the function in order to be compatable with the native DLL. (In
 general this is not an issue, but you need to be aware of such issues if you
 encounter problems with your forwarding DLL).
 
@@ -472,7 +472,7 @@ struct foobar { int _FIXME; };
 The output should be piped through 'sort' and 'uniq' to remove multiple
 declarations, e.g:
 
-winedump -d foo -c -I "inc/*.h" -v | grep FIXME | sort | uniq > fixup.h
+winedump foo -c -I "inc/*.h" -v | grep FIXME | sort | uniq > fixup.h
 
 By adding '#include "fixup.h"' to foobar_dll.h your compile errors will be
 greatly reduced.
@@ -481,7 +481,7 @@ If winedump encounters a type it doesnt know that is passed by value (as in
 the _cabs example above), it also prints a FIXME message like:
 
 /* FIXME: By value type: Assumed 'int' */ typedef int ldiv_t;
- 
+
 If the type is not an int, you will need to change the code and possibly
 the .spec entry in order to forward correctly. Otherwise, include the typedef
 in your fixup header to avoid compile errors.
@@ -582,10 +582,13 @@ Which is enough information to begin implementing the function.
 Dumping
 -------
 
-Another tool might be helpful digging into a 32bit DLL (and any PE image file):
+Another tool might be helpful for digging into a 32bit DLL (and any PE image file):
 pedump.
 
 Usage:
+winedump [-h | sym <sym> | spec <dll> | dump <dll> ] [switches]
+
+winedump switches:
    -h           Display this help message
    -d <dll>     Use dll for input file and generate implementation code
    -C           Turns on symbol demangling
@@ -593,13 +596,13 @@ Usage:
    -j dir_name  Dumps only the content of directory dir_name (import, export, debug)
    -x           Dumps everything
 
-The basic usage, to look everything in a file is:
-winedump dump -d mydll.dll -x
+The basic usage, to look at everything in a file is:
+winedump dump mydll.dll -x
 
 It'll print any available information on the file. This information can be splitted
 into sub-categories:
-- file hedaers (request by -f or -x) are made of the standard PE header structures, 
+- file headers (request by -f or -x) are made of the standard PE header structures,
   plus the COFF sections
-- directories: you can print them one after the other using the -j switch. Currently, 
-  only the import, export and debug directories are implemented.
+- directories: you can print them one after the other using the -j switch.
+  Currently, only the import, export and debug directories are implemented.
 - -x displays the file headers and any available directory.

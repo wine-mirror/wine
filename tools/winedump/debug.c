@@ -97,6 +97,10 @@
  *    (OMFDirHeader.cDir)
  */
 
+extern void			*PE_base;
+
+extern IMAGE_NT_HEADERS*        PE_nt_headers;
+
 static	void*		cv_base /* = 0 */;
 
 static int dump_cv_sst_module(OMFDirEntry* omfde)
@@ -482,7 +486,106 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     dump_codeview_all_modules(dirHeader);
 }
 
+static const char*   get_coff_name( PIMAGE_SYMBOL coff_sym, const char* coff_strtab )
+{
+   static       char    namebuff[9];
+   const char*          nampnt;
+
+   if( coff_sym->N.Name.Short )
+      {
+         memcpy(namebuff, coff_sym->N.ShortName, 8);
+         namebuff[8] = '\0';
+         nampnt = &namebuff[0];
+      }
+   else
+      {
+         nampnt = coff_strtab + coff_sym->N.Name.Long;
+      }
+
+   if( nampnt[0] == '_' )
+      nampnt++;
+   return nampnt;
+}
+
+void	dump_coff(unsigned long coffbase, unsigned long len)
+{
+    PIMAGE_COFF_SYMBOLS_HEADER coff;
+    PIMAGE_SYMBOL                 coff_sym;
+    PIMAGE_SYMBOL                 coff_symbols;
+    PIMAGE_LINENUMBER             coff_linetab;
+    char                        * coff_strtab;
+    IMAGE_SECTION_HEADER *sectHead = (IMAGE_SECTION_HEADER*)((char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+    unsigned int i;
+    const char                  * nampnt;
+    int naux;
+
+    coff = (PIMAGE_COFF_SYMBOLS_HEADER)PRD(coffbase, len);
+
+    coff_symbols = (PIMAGE_SYMBOL) ((unsigned int) coff + coff->LvaToFirstSymbol);
+    coff_linetab = (PIMAGE_LINENUMBER) ((unsigned int) coff + coff->LvaToFirstLinenumber);
+    coff_strtab = (char *) (coff_symbols + coff->NumberOfSymbols);
+
+    printf("\nDebug table: COFF format. modbase %p, coffbase %p\n", PE_base, coff);
+    printf("  ID  | seg:offs    [  abs   ] | symbol/function name\n");
+  for(i=0; i < coff->NumberOfSymbols; i++ )
+    {
+      coff_sym = coff_symbols + i;
+      naux = coff_sym->NumberOfAuxSymbols;
+
+      if( coff_sym->StorageClass == IMAGE_SYM_CLASS_FILE )
+        {
+	  printf("file %s\n", (char *) (coff_sym + 1));
+          i += naux;
+          continue;
+        }
+
+      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_STATIC)
+          && (naux == 0)
+          && (coff_sym->SectionNumber == 1) )
+        {
+          DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
+          /*
+           * This is a normal static function when naux == 0.
+           * Just register it.  The current file is the correct
+           * one in this instance.
+           */
+          nampnt = get_coff_name( coff_sym, coff_strtab );
+
+	  printf("%05d | %02d:%08lx [%08lx] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
+	  i += naux;
+	  continue;
+	}
+
+      if(    (coff_sym->StorageClass == IMAGE_SYM_CLASS_EXTERNAL)
+          && ISFCN(coff_sym->Type)
+          && (coff_sym->SectionNumber > 0) )
+        {
+          DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
+
+          nampnt = get_coff_name( coff_sym, coff_strtab );
+
+	  /* FIXME: add code to find out the file this symbol belongs to,
+	   * see winedbg */
+	  printf("%05d | %02d:%08lx [%08lx] | %s\n", i, coff_sym->SectionNumber - 1, coff_sym->Value - base, coff_sym->Value, nampnt);
+          i += naux;
+          continue;
+	}
+
+      /*
+       * For now, skip past the aux entries.
+       */
+      i += naux;
+
+    }
+}
+
 void	dump_codeview(unsigned long base, unsigned long len)
 {
     dump_codeview_headers(base, len);
+}
+
+void	dump_frame_pointer_omission(unsigned long base, unsigned long len)
+{
+	/* FPO is used to describe nonstandard stack frames */
+	printf("FIXME: FPO (frame pointer omission) debug symbol dumping not implemented yet.\n");
 }

@@ -46,9 +46,9 @@
 # define O_BINARY 0
 #endif
 
-static void*			base;
-static unsigned long		total_len;
-static IMAGE_NT_HEADERS*	nt_headers;
+void*			PE_base;
+unsigned long		PE_total_len;
+IMAGE_NT_HEADERS*	PE_nt_headers;
 
 enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG};
 
@@ -85,14 +85,14 @@ static	const char* get_machine_str(DWORD mach)
 
 void*	PRD(unsigned long prd, unsigned long len)
 {
-    return (prd + len > total_len) ? NULL : (char*)base + prd;
+    return (prd + len > PE_total_len) ? NULL : (char*)PE_base + prd;
 }
 
 unsigned long Offset(void* ptr)
 {
-    if (ptr < base) {printf("<<<<<ptr below\n");return 0;}
-    if ((char *)ptr >= (char*)base + total_len) {printf("<<<<<ptr above\n");return 0;}
-    return (char*)ptr - (char*)base;
+    if (ptr < PE_base) {printf("<<<<<ptr below\n");return 0;}
+    if ((char *)ptr >= (char*)PE_base + PE_total_len) {printf("<<<<<ptr above\n");return 0;}
+    return (char*)ptr - (char*)PE_base;
 }
 
 void*	RVA(unsigned long rva, unsigned long len)
@@ -100,13 +100,13 @@ void*	RVA(unsigned long rva, unsigned long len)
     IMAGE_SECTION_HEADER*	sectHead;
     int				i;
 
-    sectHead = (IMAGE_SECTION_HEADER*)((char*)nt_headers + sizeof(DWORD) +
+    sectHead = (IMAGE_SECTION_HEADER*)((char*)PE_nt_headers + sizeof(DWORD) +
 				       sizeof(IMAGE_FILE_HEADER) +
-				       nt_headers->FileHeader.SizeOfOptionalHeader);
+				       PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 
     if (rva == 0) return NULL;
 
-    for (i = nt_headers->FileHeader.NumberOfSections - 1; i >= 0; i--)
+    for (i = PE_nt_headers->FileHeader.NumberOfSections - 1; i >= 0; i--)
     {
         if (sectHead[i].VirtualAddress <= rva &&
             rva + len <= (DWORD)sectHead[i].VirtualAddress + sectHead[i].SizeOfRawData)
@@ -125,10 +125,10 @@ void*	RVA(unsigned long rva, unsigned long len)
 
 static	void*	get_dir(unsigned idx)
 {
-    if (idx >= nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+    if (idx >= PE_nt_headers->OptionalHeader.NumberOfRvaAndSizes)
 	return NULL;
-    return RVA(nt_headers->OptionalHeader.DataDirectory[idx].VirtualAddress,
-	       nt_headers->OptionalHeader.DataDirectory[idx].Size);
+    return RVA(PE_nt_headers->OptionalHeader.DataDirectory[idx].VirtualAddress,
+	       PE_nt_headers->OptionalHeader.DataDirectory[idx].Size);
 }
 
 static const char*	DirectoryNames[16] = {
@@ -146,7 +146,7 @@ static	void	dump_pe_header(void)
     unsigned			i;
 
     printf("File Header\n");
-    fileHeader = &nt_headers->FileHeader;
+    fileHeader = &PE_nt_headers->FileHeader;
 
     printf("  Machine:                      %04X (%s)\n",
 	   fileHeader->Machine, get_machine_str(fileHeader->Machine));
@@ -175,7 +175,7 @@ static	void	dump_pe_header(void)
 
     /* hope we have the right size */
     printf("Optional Header\n");
-    optionalHeader = &nt_headers->OptionalHeader;
+    optionalHeader = &PE_nt_headers->OptionalHeader;
     printf("  Magic                              0x%-4X         %u\n",
 	   optionalHeader->Magic, optionalHeader->Magic);
     printf("  linker version                     %u.%02u\n",
@@ -401,12 +401,12 @@ static	void	dump_dir_imported_functions(void)
     unsigned			nb_imp, i;
 
     if (!importDesc)	return;
-    nb_imp = nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size /
+    nb_imp = PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size /
 	sizeof(*importDesc);
     if (!nb_imp) return;
 
     printf("Import Table size: %lu\n",
-	   nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size);/* FIXME */
+	   PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size);/* FIXME */
 
     for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
     {
@@ -495,11 +495,13 @@ static	void	dump_dir_debug_dir(IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_UNKNOWN:
 	break;
     case IMAGE_DEBUG_TYPE_COFF:
+	dump_coff(idd->PointerToRawData, idd->SizeOfData);
 	break;
     case IMAGE_DEBUG_TYPE_CODEVIEW:
 	dump_codeview(idd->PointerToRawData, idd->SizeOfData);
 	break;
     case IMAGE_DEBUG_TYPE_FPO:
+	dump_frame_pointer_omission(idd->PointerToRawData, idd->SizeOfData);
 	break;
     case IMAGE_DEBUG_TYPE_MISC:
     {
@@ -535,7 +537,7 @@ static void	dump_dir_debug(void)
     unsigned			nb_dbg, i;
 
     if (!debugDir) return;
-    nb_dbg = nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Size /
+    nb_dbg = PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Size /
 	sizeof(*debugDir);
     if (!nb_dbg) return;
 
@@ -740,10 +742,10 @@ static	void	do_dump(void)
     if (globals.do_dumpheader)
     {
 	dump_pe_header();
-	/* FIX%E: should check ptr */
-	dump_sections((char*)nt_headers + sizeof(DWORD) +
-		      sizeof(IMAGE_FILE_HEADER) + nt_headers->FileHeader.SizeOfOptionalHeader,
-		      nt_headers->FileHeader.NumberOfSections);
+	/* FIXME: should check ptr */
+	dump_sections((char*)PE_nt_headers + sizeof(DWORD) +
+		      sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader,
+		      PE_nt_headers->FileHeader.NumberOfSections);
     }
     else if (!globals.dumpsect)
     {
@@ -792,7 +794,7 @@ static	enum FileSig	check_headers(void)
 	    {
 		if (*pdw == IMAGE_NT_SIGNATURE)
 		{
-		    nt_headers = PRD(dh->e_lfanew, sizeof(DWORD));
+		    PE_nt_headers = PRD(dh->e_lfanew, sizeof(DWORD));
 		    sig = SIG_PE;
 		}
 		else
@@ -830,14 +832,14 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
     if (fd == -1) fatal("Can't open file");
 
     if (fstat(fd, &s) < 0) fatal("Can't get size");
-    total_len = s.st_size;
+    PE_total_len = s.st_size;
 
 #ifdef HAVE_MMAP
-    if ((base = mmap(NULL, total_len, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
+    if ((PE_base = mmap(NULL, PE_total_len, PROT_READ, MAP_PRIVATE, fd, 0)) == (void *)-1)
 #endif
     {
-        if (!(base = malloc( total_len ))) fatal( "Out of memory" );
-        if (read( fd, base, total_len ) != total_len) fatal( "Cannot read file" );
+        if (!(PE_base = malloc( PE_total_len ))) fatal( "Out of memory" );
+        if (read( fd, PE_base, PE_total_len ) != PE_total_len) fatal( "Cannot read file" );
     }
 
     effective_sig = check_headers();
@@ -854,7 +856,7 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 	case SIG_UNKNOWN: /* shouldn't happen... */
 	    ret = 0; break;
 	case SIG_PE:
-	    printf("Contents of \"%s\": %ld bytes\n\n", name, total_len);
+	    printf("Contents of \"%s\": %ld bytes\n\n", name, PE_total_len);
 	    (*fn)();
 	    break;
 	case SIG_DBG:
@@ -872,10 +874,10 @@ int pe_analysis(const char* name, void (*fn)(void), enum FileSig wanted_sig)
 
     if (ret) printf("Done dumping %s\n", name);
 #ifdef HAVE_MMAP
-    if (munmap(base, total_len) == -1)
+    if (munmap(PE_base, PE_total_len) == -1)
 #endif
     {
-        free( base );
+        free( PE_base );
     }
     close(fd);
 
