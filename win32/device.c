@@ -60,6 +60,11 @@ static BOOL32 DeviceIo_VTDAPI(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
 			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
+static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped);
 
 static BOOL32 VxDCall_VMM( DWORD *retv, DWORD service, CONTEXT *context );
 
@@ -206,6 +211,8 @@ struct VxDInfo
     { "TFILTER",  0x04A0, NULL, NULL },
     { "AFILTER",  0x04A1, NULL, NULL },
     { "IRLAMP",   0x04A2, NULL, NULL },
+
+    { "MONODEBG.VXD", 0x4242, NULL, DeviceIo_MONODEBG },
 
     { NULL,       0,      NULL, NULL }
 };
@@ -829,4 +836,31 @@ static BOOL32 DeviceIo_IFSMgr(DEVICE_OBJECT *dev, DWORD dwIoControlCode,
     }
 
     return retv;
+}
+
+/* this is used by some Origin games */
+static BOOL32 DeviceIo_MONODEBG(DEVICE_OBJECT *dev, DWORD dwIoControlCode, 
+			      LPVOID lpvInBuffer, DWORD cbInBuffer,
+			      LPVOID lpvOutBuffer, DWORD cbOutBuffer,
+			      LPDWORD lpcbBytesReturned,
+			      LPOVERLAPPED lpOverlapped)
+{
+	switch (dwIoControlCode) {
+	case 1:	/* version */
+		*(LPDWORD)lpvOutBuffer = 0x20004; /* WC SecretOps */
+		break;
+	case 9: /* debug output */
+		fprintf(stderr,"MONODEBG: %s\n",debugstr_a(lpvInBuffer));
+		break;
+	default:
+		FIXME(win32,"(%p,%ld,%p,%ld,%p,%ld,%p,%p): stub\n",
+			dev,dwIoControlCode,
+			lpvInBuffer,cbInBuffer,
+			lpvOutBuffer,cbOutBuffer,
+			lpcbBytesReturned,
+			lpOverlapped
+		);
+		break;
+	}
+	return TRUE;
 }
