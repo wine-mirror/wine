@@ -1247,6 +1247,49 @@ static void LISTVIEW_UnsupportedStyles(LONG lStyle)
     FIXME("  LVS_SORTDESCENDING\n");
 }
 
+
+/***
+ * DESCRIPTION:            [INTERNAL]
+ * Computes an item's (left,top) corner, relative to rcView.
+ * That is, the position has NOT been made relative to the Origin.
+ * This is deliberate, to avoid computing the Origin over, and
+ * over again, when this function is call in a loop. Instead,
+ * one ca factor the computation of the Origin before the loop,
+ * and offset the value retured by this function, on every iteration.
+ * 
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nItem  : item number
+ * [O] lpptOrig : item top, left corner
+ *
+ * RETURN:
+ *   TRUE if computations OK
+ *   FALSE otherwise
+ */
+static BOOL LISTVIEW_GetItemListOrigin(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
+{
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
+
+    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+    {
+	lpptPosition->x = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
+	lpptPosition->y = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
+    }
+    else if (uView == LVS_LIST)
+    {
+        INT nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
+	lpptPosition->x = nItem / nCountPerColumn * infoPtr->nItemWidth;
+	lpptPosition->y = nItem % nCountPerColumn * infoPtr->nItemHeight;
+    }
+    else /* LVS_REPORT */
+    {
+	lpptPosition->x = REPORT_MARGINX;
+	lpptPosition->y = nItem * infoPtr->nItemHeight;
+    }
+
+    return TRUE;
+}
+    
 /***
  * DESCRIPTION:            [INTERNAL]
  * Compute the rectangles of an item.  This is to localize all
@@ -1288,11 +1331,8 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     BOOL doIcon = FALSE, doLabel = FALSE, oversizedBox = FALSE;
     WCHAR szDispText[DISP_TEXT_SIZE] = { '\0' };
     RECT Box, Icon, Label;
-    POINT Origin;
+    POINT Position, Origin;
     LVITEMW lvItem;
-
-    /* This should be very cheap to compute */
-    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
 
     /* Be smart and try to figure out the minimum we have to do */
     if (lprcBounds)
@@ -1306,30 +1346,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     if (lprcLabel) doLabel = TRUE;
     if (doLabel || lprcIcon) doIcon = TRUE;
     
-    /************************************************************/
-    /* compute the box rectangle (it should be cheap to do)     */
-    /************************************************************/
-    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
-    {
-	Box.left = (LONG)DPA_GetPtr(infoPtr->hdpaPosX, nItem);
-	Box.top = (LONG)DPA_GetPtr(infoPtr->hdpaPosY, nItem);
-    }
-    else if (uView == LVS_LIST)
-    {
-        INT nCountPerColumn = LISTVIEW_GetCountPerColumn(infoPtr);
-	Box.left = nItem / nCountPerColumn * infoPtr->nItemWidth;
-	Box.top = nItem % nCountPerColumn * infoPtr->nItemHeight;
-    }
-    else /* LVS_REPORT */
-    {
-	Box.left = REPORT_MARGINX;
-	Box.top = nItem * infoPtr->nItemHeight;
-    }
-    Box.left += Origin.x;
-    Box.top += Origin.y;
-    Box.right = Box.left + infoPtr->nItemWidth;
-    Box.bottom = Box.top + infoPtr->nItemHeight;
-
     /* get what we need from the item before hand, so we make
      * only one request. This can speed up things, if data
      * is stored on the app side */
@@ -1344,6 +1360,16 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     	lvItem.cchTextMax = DISP_TEXT_SIZE;
 	if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return FALSE;
     }
+
+    /************************************************************/
+    /* compute the box rectangle (it should be cheap to do)     */
+    /************************************************************/
+    if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) return FALSE;
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
+    Box.left = Position.x + Origin.x;
+    Box.top = Position.y + Origin.y;
+    Box.right = Box.left + infoPtr->nItemWidth;
+    Box.bottom = Box.top + infoPtr->nItemHeight;
 
     /************************************************************/
     /* compute ICON bounding box (ala LVM_GETITEMRECT)          */
@@ -4958,22 +4984,21 @@ static BOOL LISTVIEW_GetItemExtT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOO
 static BOOL LISTVIEW_GetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, LPPOINT lpptPosition)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-    RECT Box;
+    POINT Origin;
 
     TRACE("(nItem=%d, lpptPosition=%p)\n", nItem, lpptPosition);
 
     if (!lpptPosition || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
+    if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, lpptPosition)) return FALSE;
+    if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
 
-    /* These should be very cheap to compute */
-    if (!LISTVIEW_GetItemMeasures(infoPtr, nItem, &Box, NULL, NULL, NULL)) return FALSE;
-
-    lpptPosition->x = Box.left;
-    lpptPosition->y = Box.top;
     if (uView == LVS_ICON)
     {
         lpptPosition->x += (infoPtr->iconSpacing.cx - infoPtr->iconSize.cx) / 2;
         lpptPosition->y += ICON_TOP_PADDING;
     }
+    lpptPosition->x += Origin.x;
+    lpptPosition->y += Origin.y;
     
     TRACE ("  lpptPosition=%s\n", debugpoint(lpptPosition));
     return TRUE;
