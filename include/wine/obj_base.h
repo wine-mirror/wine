@@ -584,8 +584,11 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 #endif /* ICOM_MSVTABLE_COMPAT */
 
 
-#define ICOM_THIS(impl,iface)          impl* const This=(impl*)iface
-#define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)iface
+#define ICOM_THIS(impl,iface)          impl* const This=(impl*)(iface)
+#define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)(iface)
+
+#define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
+#define ICOM_CTHIS_MULTI(impl,field,iface) const impl* const This=(const impl*)((char*)(iface) - offsetof(impl,field))
 
 #endif /*ICOM_CINTERFACE  */
 
@@ -675,6 +678,10 @@ struct IUnknown {
 #define IUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
 #define IUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
 #define IUnknown_Release(p)            ICOM_CALL (Release,p)
+
+HRESULT CALLBACK IUnknown_QueryInterface_Proxy(IUnknown *This,REFIID riid,LPVOID*ppvObj);
+ULONG   CALLBACK IUnknown_AddRef_Proxy(IUnknown *This);
+ULONG   CALLBACK IUnknown_Release_Proxy(IUnknown *This);
 
 /*****************************************************************************
  * IClassFactory interface
@@ -797,6 +804,8 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsC
 
 HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
 
+HRESULT WINAPI CoGetPSClsid(REFIID riid,CLSID *pclsid);
+                    
 /*****************************************************************************
  *	COM Server dll - exports
  */
