@@ -309,6 +309,7 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     if (i == MAX_MM_MLDRVS) {
 	/* the MM_MLDrvs table could be made growable in the future if needed */
 	ERR("Too many open drivers\n");
+        HeapFree(GetProcessHeap(), 0, mld);
 	return NULL;
     }
     MM_MLDrvs[i] = mld;
