@@ -32,6 +32,9 @@ typedef unsigned int MSVCRT(size_t);
 #endif
 
 /* Best to leave this one alone: wchar_t */
+#ifdef WINE_DEFINE_WCHAR_T
+typedef unsigned short wchar_t;
+#endif
 
 
 #define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
