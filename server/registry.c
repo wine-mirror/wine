@@ -52,12 +52,11 @@
 
 struct notify
 {
+    struct list       entry;    /* entry in list of notifications */
     struct event     *event;    /* event to set when changing this key */
     int               subtree;  /* true if subtree notification */
     unsigned int      filter;   /* which events to notify on */
     obj_handle_t      hkey;     /* hkey associated with this notification */
-    struct notify    *next;     /* list of notifications */
-    struct notify    *prev;     /* list of notifications */
 };
 
 /* a registry key */
@@ -76,8 +75,7 @@ struct key
     short             flags;       /* flags */
     short             level;       /* saving level */
     time_t            modif;       /* last modification time */
-    struct notify    *first_notify; /* list of notifications */
-    struct notify    *last_notify; /* list of notifications */
+    struct list       notify_list; /* list of notifications */
 };
 
 /* key flags */
@@ -280,28 +278,22 @@ static void do_notification( struct key *key, struct notify *notify, int del )
         release_object( notify->event );
         notify->event = NULL;
     }
-
-    if ( !del )
-        return;
-    if( notify->next )
-        notify->next->prev = notify->prev;
-    else
-        key->last_notify = notify->prev;
-    if( notify->prev )
-        notify->prev->next = notify->next;
-    else
-        key->first_notify = notify->next;
-    free( notify );
+    if (del)
+    {
+        list_remove( &notify->entry );
+        free( notify );
+    }
 }
 
 static struct notify *find_notify( struct key *key, obj_handle_t hkey)
 {
-    struct notify *n;
+    struct notify *notify;
 
-    for( n=key->first_notify; n; n = n->next)
-        if( n->hkey == hkey )
-            break;
-    return n;
+    LIST_FOR_EACH_ENTRY( notify, &key->notify_list, struct notify, entry )
+    {
+        if (notify->hkey == hkey) return notify;
+    }
+    return NULL;
 }
 
 /* close the notification associated with a handle */
@@ -321,6 +313,7 @@ void registry_close_handle( struct object *obj, obj_handle_t hkey )
 static void key_destroy( struct object *obj )
 {
     int i;
+    struct list *ptr;
     struct key *key = (struct key *)obj;
     assert( obj->ops == &key_ops );
 
@@ -337,8 +330,11 @@ static void key_destroy( struct object *obj )
         release_object( key->subkeys[i] );
     }
     /* unconditionally notify everything waiting on this key */
-    while ( key->first_notify )
-        do_notification( key, key->first_notify, 1 );
+    while ((ptr = list_head( &key->notify_list )))
+    {
+        struct notify *notify = LIST_ENTRY( ptr, struct notify, entry );
+        do_notification( key, notify, 1 );
+    }
 }
 
 /* duplicate a key path */
@@ -426,8 +422,7 @@ static struct key *alloc_key( const WCHAR *name, time_t modif )
         key->level       = current_level;
         key->modif       = modif;
         key->parent      = NULL;
-        key->first_notify = NULL;
-        key->last_notify  = NULL;
+        list_init( &key->notify_list );
         if (!(key->name = strdupW( name )))
         {
             release_object( key );
@@ -462,13 +457,13 @@ static void make_clean( struct key *key )
 /* go through all the notifications and send them if necessary */
 void check_notify( struct key *key, unsigned int change, int not_subtree )
 {
-    struct notify *n = key->first_notify;
-    while (n)
+    struct list *ptr, *next;
+
+    LIST_FOR_EACH_SAFE( ptr, next, &key->notify_list )
     {
-        struct notify *next = n->next;
+        struct notify *n = LIST_ENTRY( ptr, struct notify, entry );
         if ( ( not_subtree || n->subtree ) && ( change & n->filter ) )
             do_notification( key, n, 0 );
-        n = next;
     }
 }
 
@@ -1931,7 +1926,7 @@ DECL_HANDLER(set_registry_notification)
             }
             else
             {
-                notify = (struct notify *) malloc (sizeof(*notify));
+                notify = mem_alloc( sizeof(*notify) );
                 if( notify )
                 {
                     grab_object( event );
@@ -1939,18 +1934,8 @@ DECL_HANDLER(set_registry_notification)
                     notify->subtree = req->subtree;
                     notify->filter  = req->filter;
                     notify->hkey    = req->hkey;
-    
-                    /* add to linked list */
-                    notify->prev = NULL;
-                    notify->next = key->first_notify;
-                    if ( notify->next )
-                        notify->next->prev = notify;
-                    else
-                        key->last_notify = notify;
-                    key->first_notify = notify;
+                    list_add_head( &key->notify_list, &notify->entry );
                 }
-                else
-                    set_error( STATUS_NO_MEMORY );
             }
             release_object( event );
         }
