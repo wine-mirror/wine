@@ -1339,10 +1339,32 @@ DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
 }
 
 /*************************************************************************
- * TranslateCharSetInfo [GDI32.382]
+ * TranslateCharsetInfo [GDI32.382]
+ *
+ * Fills a CHARSETINFO structure for a character set, code page, or
+ * font. This allows making the correspondance between different labelings
+ * (character set, Windows, ANSI, and OEM codepages, and Unicode ranges) 
+ * of the same encoding.
+ *
+ * Only one codepage will be set in lpCs->fs. If TCI_SRCFONTSIG is used,
+ * only one codepage should be set in *lpSrc.
+ *
+ * RETURNS
+ *   TRUE on success, FALSE on failure.
+ *
+ * BUGS
+ *  Not implemented.
  */
-BOOL32 WINAPI TranslateCharSetInfo(LPDWORD lpSrc,LPCHARSETINFO lpCs,DWORD dwFlags) {
-    FIXME(font,"(%p,%p,0x%08lx), stub.\n",lpSrc,lpCs,dwFlags);
+BOOL32 WINAPI TranslateCharsetInfo(
+  LPDWORD lpSrc, /*
+       if flags == TCI_SRCFONTSIG: pointer to fsCsb of a FONTSIGNATURE
+       if flags == TCI_SRCCHARSET: a character set value
+       if flags == TCI_SRCCODEPAGE: a code page value
+		 */
+  LPCHARSETINFO lpCs, /* structure to receive charset information */
+  DWORD flags /* determines interpretation of lpSrc */
+) {
+    FIXME(font,"(%p,%p,0x%08lx), stub.\n",lpSrc,lpCs, flags);
     return TRUE;
 }
 

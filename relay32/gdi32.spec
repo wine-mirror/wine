@@ -385,7 +385,7 @@ init	MAIN_GdiInit
 379 stub GdiWinWatchOpen
 380 stub GetGlyphOutlineWow
 381 stdcall GetTextCharsetInfo(long ptr long) GetTextCharsetInfo
-382 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharSetInfo
+382 stdcall TranslateCharsetInfo(ptr ptr long) TranslateCharsetInfo
 383 stub UpdateICMRegKeyA
 384 stub UpdateICMRegKeyW
 385 stub gdiPlaySpoolStream

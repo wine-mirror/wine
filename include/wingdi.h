@@ -394,6 +394,18 @@ DECL_WINELIB_TYPE_AW(ENUMLOGFONT)
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONT)
 DECL_WINELIB_TYPE_AW(LPENUMLOGFONTEX)
 
+/*
+ * The FONTSIGNATURE tells which Unicode ranges and which code pages
+ * have glyphs in a font.
+ *
+ * fsUsb  128-bit bitmap. The most significant bits are 10 (magic number).
+ *        The remaining 126 bits map the Unicode ISO 10646 subranges
+ *        for which the font provides glyphs.
+ *
+ * fsCsb  64-bit bitmap. The low 32 bits map the Windows codepages for
+ *        which the font provides glyphs. The high 32 bits are for 
+ *        non Windows codepages.
+ */
 typedef struct
 {
   DWORD fsUsb[4];
@@ -402,10 +414,16 @@ typedef struct
 
 typedef struct 
 {
-  UINT32	ciCharset;
-  UINT32	ciACP;
+  UINT32	ciCharset; /* character set */
+  UINT32	ciACP; /* ANSI code page */
   FONTSIGNATURE	fs;
 } CHARSETINFO,*LPCHARSETINFO;
+
+/* Flags for TranslateCharsetInfo */
+/* FIXME */
+#define TCI_SRCCHARSET 
+#define TCI_SRCCODEPAGE
+#define TCI_SRCFONTSIG
 
 /* Flags for ModifyWorldTransform */
 #define MWT_IDENTITY      1
