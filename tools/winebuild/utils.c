@@ -45,7 +45,7 @@ void *xmalloc (size_t size)
 void *xrealloc (void *ptr, size_t size)
 {
     void *res = realloc (ptr, size);
-    if (res == NULL)
+    if (size && res == NULL)
     {
         fprintf (stderr, "Virtual memory exhausted.\n");
         exit (1);
