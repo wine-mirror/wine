@@ -1276,128 +1276,6 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 
 
 /***********************************************************************
- *           query_zorder
- *
- * Synchronize internal z-order with the window manager's.
- */
-static Window __get_common_ancestor( Display *display, Window A, Window B,
-                                     Window** children, unsigned* total )
-{
-    /* find the real root window */
-
-    Window      root, *childrenB;
-    unsigned    totalB;
-
-    wine_tsx11_lock();
-    while( A != B && A && B )
-    {
-      XQueryTree( display, A, &root, &A, children, total );
-      XQueryTree( display, B, &root, &B, &childrenB, &totalB );
-      if( childrenB ) XFree( childrenB );
-      if( *children ) XFree( *children ), *children = NULL;
-    }
-
-    if( A && B )
-    {
-        XQueryTree( display, A, &root, &B, children, total );
-        wine_tsx11_unlock();
-        return A;
-    }
-    wine_tsx11_unlock();
-    return 0 ;
-}
-
-static Window __get_top_decoration( Display *display, Window w, Window ancestor )
-{
-    Window*     children, root, prev = w, parent = w;
-    unsigned    total;
-
-    wine_tsx11_lock();
-    do
-    {
-        w = parent;
-        XQueryTree( display, w, &root, &parent, &children, &total );
-        if( children ) XFree( children );
-    } while( parent && parent != ancestor );
-    wine_tsx11_unlock();
-    TRACE("\t%08x -> %08x\n", (unsigned)prev, (unsigned)w );
-    return ( parent ) ? w : 0 ;
-}
-
-static unsigned __td_lookup( Window w, Window* list, unsigned max )
-{
-    unsigned    i;
-    for( i = max; i > 0; i-- ) if( list[i - 1] == w ) break;
-    return i;
-}
-
-static HWND query_zorder( Display *display, HWND hWndCheck)
-{
-    HWND      hwndInsertAfter = HWND_TOP;
-    Window      w, parent, *children = NULL;
-    unsigned    total, check, pos, best;
-    HWND *list = WIN_ListChildren( GetDesktopWindow() );
-    HWND hwndA = 0, hwndB = 0;
-    int i;
-
-    /* find at least two managed windows */
-    if (!list) return 0;
-    for (i = 0; list[i]; i++)
-    {
-        if (!(GetWindowLongW( list[i], GWL_STYLE ) & WS_VISIBLE)) continue;
-        if (!GetPropA( list[i], "__wine_x11_managed" )) continue;
-        if (!hwndA) hwndA = list[i];
-        else
-        {
-            hwndB = list[i];
-            break;
-        }
-    }
-    if (!hwndA || !hwndB) goto done;
-
-    parent = __get_common_ancestor( display, X11DRV_get_whole_window(hwndA),
-                                    X11DRV_get_whole_window(hwndB), &children, &total );
-    if( parent && children )
-    {
-        /* w is the ancestor if hWndCheck that is a direct descendant of 'parent' */
-
-        w = __get_top_decoration( display, X11DRV_get_whole_window(hWndCheck), parent );
-
-        if( w != children[total-1] ) /* check if at the top */
-        {
-            /* X child at index 0 is at the bottom, at index total-1 is at the top */
-            check = __td_lookup( w, children, total );
-            best = total;
-
-            /* go through all windows in Wine z-order... */
-            for (i = 0; list[i]; i++)
-            {
-                if (list[i] == hWndCheck) continue;
-                if (!GetPropA( list[i], "__wine_x11_managed" )) continue;
-                if (!(w = __get_top_decoration( display, X11DRV_get_whole_window(list[i]),
-                                                parent ))) continue;
-                pos = __td_lookup( w, children, total );
-                if( pos < best && pos > check )
-                {
-                    /* find a nearest Wine window precedes hWndCheck in the real z-order */
-                    best = pos;
-                    hwndInsertAfter = list[i];
-                }
-                if( best - check == 1 ) break;
-            }
-        }
-    }
-    wine_tsx11_lock();
-    if( children ) XFree( children );
-    wine_tsx11_unlock();
-
- done:
-    HeapFree( GetProcessHeap(), 0, list );
-    return hwndInsertAfter;
-}
-
-
-/***********************************************************************
  *		X11DRV_handle_desktop_resize
  */
 void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
@@ -1421,11 +1299,10 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
 {
     XConfigureEvent *event = &xev->xconfigure;
-    HWND oldInsertAfter;
     struct x11drv_win_data *data;
     RECT rect;
-    WINDOWPOS winpos;
-    int x = event->x, y = event->y;
+    UINT flags;
+    int cx, cy, x = event->x, y = event->y;
 
     if (!hwnd) return;
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
@@ -1449,57 +1326,32 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
            event->x, event->y, event->width, event->height );
     X11DRV_X_to_window_rect( data, &rect );
 
-    winpos.hwnd  = hwnd;
-    winpos.x     = rect.left;
-    winpos.y     = rect.top;
-    winpos.cx    = rect.right - rect.left;
-    winpos.cy    = rect.bottom - rect.top;
-    winpos.flags = SWP_NOACTIVATE;
-
-    /* Get Z-order (FIXME) */
-
-    winpos.hwndInsertAfter = query_zorder( event->display, hwnd );
-
-    /* needs to find the first Visible Window above the current one */
-    oldInsertAfter = hwnd;
-    for (;;)
-    {
-        oldInsertAfter = GetWindow( oldInsertAfter, GW_HWNDPREV );
-        if (!oldInsertAfter)
-        {
-            oldInsertAfter = HWND_TOP;
-            break;
-        }
-        if (GetWindowLongA( oldInsertAfter, GWL_STYLE ) & WS_VISIBLE) break;
-    }
+    x     = rect.left;
+    y     = rect.top;
+    cx    = rect.right - rect.left;
+    cy    = rect.bottom - rect.top;
+    flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE;
 
     /* Compare what has changed */
 
     GetWindowRect( hwnd, &rect );
-    if (rect.left == winpos.x && rect.top == winpos.y) winpos.flags |= SWP_NOMOVE;
+    if (rect.left == x && rect.top == y) flags |= SWP_NOMOVE;
     else
         TRACE( "%p moving from (%ld,%ld) to (%d,%d)\n",
-               hwnd, rect.left, rect.top, winpos.x, winpos.y );
+               hwnd, rect.left, rect.top, x, y );
 
-    if ((rect.right - rect.left == winpos.cx && rect.bottom - rect.top == winpos.cy) ||
+    if ((rect.right - rect.left == cx && rect.bottom - rect.top == cy) ||
         IsIconic(hwnd) ||
-        (IsRectEmpty( &rect ) && winpos.cx == 1 && winpos.cy == 1))
-        winpos.flags |= SWP_NOSIZE;
+        (IsRectEmpty( &rect ) && cx == 1 && cy == 1))
+    {
+        if (flags & SWP_NOMOVE) return;  /* if nothing changed, don't do anything */
+        flags |= SWP_NOSIZE;
+    }
     else
         TRACE( "%p resizing from (%ldx%ld) to (%dx%d)\n",
-               hwnd, rect.right - rect.left, rect.bottom - rect.top,
-               winpos.cx, winpos.cy );
+               hwnd, rect.right - rect.left, rect.bottom - rect.top, cx, cy );
 
-    if (winpos.hwndInsertAfter == oldInsertAfter) winpos.flags |= SWP_NOZORDER;
-    else
-        TRACE( "%p restacking from after %p to after %p\n",
-               hwnd, oldInsertAfter, winpos.hwndInsertAfter );
-
-    /* if nothing changed, don't do anything */
-    if (winpos.flags == (SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)) return;
-
-    SetWindowPos( hwnd, winpos.hwndInsertAfter, winpos.x, winpos.y,
-                  winpos.cx, winpos.cy, winpos.flags | SWP_WINE_NOHOSTMOVE );
+    SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
 
 
