@@ -74,7 +74,6 @@ static HBITMAP  hbmBackBuffer = 0;
  * NOTES
  *     This function can NOT be used to reduce the number of images.
  */
-
 static VOID
 IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount)
 {
@@ -126,6 +125,296 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount)
 
 
 /*************************************************************************
+ * IMAGELIST_InternalDraw [Internal] 
+ *
+ * Draws the image in the ImageList (without the mask)
+ *
+ * PARAMS
+ *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
+ *     cx            [I] the width of the image to display
+ *     cy............[I] the height of the image to display
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     required to draw only the Image (without the mask) to the screen.
+ *
+ *     Blending and Overlays styles are accomplised by another function
+ */
+static VOID
+IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
+{
+    HDC hImageDC;
+    HBITMAP hOldBitmap;
+    hImageDC = CreateCompatibleDC(0);
+    hOldBitmap = SelectObject(hImageDC, pimldp->himl->hbmImage);
+    BitBlt(pimldp->hdcDst, 
+        pimldp->x, pimldp->y, cx, cy,
+        hImageDC, 
+        pimldp->himl->cx * pimldp->i, 0, 
+        SRCCOPY);
+
+    SelectObject(hImageDC, hOldBitmap);
+    DeleteDC(hImageDC);
+}
+
+
+/*************************************************************************
+ * IMAGELIST_InternalDrawMask [Internal] 
+ *
+ * Draws the image in the ImageList witht the mask
+ *
+ * PARAMS
+ *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
+ *     cx            [I] the width of the image to display
+ *     cy............[I] the height of the image to display
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     required to draw the Image with the mask to the screen.
+ *
+ *     Blending and Overlays styles are accomplised by another function.
+ */
+static VOID
+IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
+{
+    HDC     hMaskDC, hImageDC;
+    BOOL bUseCustomBackground, bBlendFlag;
+    HBRUSH hBrush, hOldBrush;
+    HBITMAP hOldBitmapImage, hOldBitmapMask;
+    HIMAGELIST himlLocal = pimldp->himl;
+
+    bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
+    bBlendFlag = (pimldp->fStyle & ILD_BLEND50 ) 
+        || (pimldp->fStyle & ILD_BLEND25);
+
+    hImageDC = CreateCompatibleDC(0);
+    hMaskDC = CreateCompatibleDC(0);
+
+    hOldBitmapImage = SelectObject(hImageDC, himlLocal->hbmImage);
+    hOldBitmapMask = SelectObject(hMaskDC, himlLocal->hbmMask);
+    /* Draw the Background for the appropriate Styles
+    */
+    if( bUseCustomBackground && (pimldp->fStyle == ILD_NORMAL 
+          || pimldp->fStyle & ILD_IMAGE 
+          || bBlendFlag))
+    {
+        hBrush = CreateSolidBrush (himlLocal->clrBk);
+        hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
+        PatBlt (pimldp->hdcDst, 
+            pimldp->x, pimldp->y, cx, cy, 
+            PATCOPY);
+
+        DeleteObject (SelectObject (pimldp->hdcDst, hOldBrush));
+    }
+
+    /* Draw Image Transparently over the current background
+    */
+    if(pimldp->fStyle == ILD_NORMAL
+        || pimldp->fStyle & ILD_TRANSPARENT
+        || ((pimldp->fStyle & ILD_IMAGE) && bUseCustomBackground)
+        || bBlendFlag)
+    {
+        BitBlt(pimldp->hdcDst, 
+            pimldp->x, pimldp->y, cx, cy,
+            hMaskDC, 
+            himlLocal->cx * pimldp->i, 0, 
+            SRCAND);
+
+        BitBlt(pimldp->hdcDst, 
+            pimldp->x, pimldp->y, cx, cy,
+            hImageDC, 
+            himlLocal->cx * pimldp->i, 0, 
+            SRCPAINT);
+    }
+    /* Draw the image when no Background is specified
+    */
+    else if(pimldp->fStyle & ILD_IMAGE && !bUseCustomBackground)
+    {
+        BitBlt(pimldp->hdcDst, 
+            pimldp->x, pimldp->y, cx, cy,
+            hImageDC, 
+            himlLocal->cx * pimldp->i, 0, 
+            SRCCOPY);
+    }
+    /* Draw the mask with or without a background
+    */
+    else if(pimldp->fStyle & ILD_MASK)
+    {
+        BitBlt(pimldp->hdcDst, 
+            pimldp->x, pimldp->y, cx, cy,
+            hMaskDC, 
+            himlLocal->cx * pimldp->i, 0,
+            bUseCustomBackground ? SRCCOPY : SRCAND);
+    }
+    SelectObject(hImageDC, hOldBitmapImage);
+    SelectObject(hMaskDC, hOldBitmapMask);
+    DeleteDC(hImageDC);
+    DeleteDC(hMaskDC);
+}
+
+/*************************************************************************
+ * IMAGELIST_InternalDrawBlend [Internal] 
+ *
+ * Draws the Blend over the current image 
+ *
+ * PARAMS
+ *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
+ *     cx            [I] the width of the image to display
+ *     cy............[I] the height of the image to display
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     required to add the blend to the current image.  
+ *     
+ */
+static VOID
+IMAGELIST_InternalDrawBlend(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
+{
+
+    HDC         hBlendMaskDC,hMaskDC;
+    HBRUSH      hBlendColorBrush, hBlendBrush, hOldBrush;
+    HBITMAP     hBlendMaskBitmap, hOldBitmap;
+    COLORREF    clrBlend, OldTextColor, OldBkColor;
+    HIMAGELIST  himlLocal = pimldp->himl;
+
+    clrBlend = GetSysColor (COLOR_HIGHLIGHT);
+    if (!(pimldp->rgbFg == CLR_DEFAULT))
+    {
+        clrBlend = pimldp->rgbFg;
+    }
+    /* Create the blend Mask
+    */
+    hBlendMaskDC = CreateCompatibleDC(0);
+    hBlendBrush = pimldp->fStyle & ILD_BLEND50 ?
+        himlLocal->hbrBlend50 : himlLocal->hbrBlend25;
+
+    hBlendMaskBitmap = CreateBitmap(cx, cy, 1, 1, NULL);
+    hOldBitmap = SelectObject(hBlendMaskDC, hBlendMaskBitmap);
+
+    hOldBrush = (HBRUSH) SelectObject(hBlendMaskDC, hBlendBrush);
+    PatBlt(hBlendMaskDC, 0, 0, cx, cy, PATCOPY);
+    SelectObject(hBlendMaskDC, hOldBrush);
+
+    /* Modify the blend mask if an Image Mask exist
+    */
+    if(pimldp->himl->hbmMask != 0)
+    {
+        HBITMAP hOldMaskBitmap;
+        hMaskDC = CreateCompatibleDC(0);
+        hOldMaskBitmap = (HBITMAP) SelectObject(hMaskDC, himlLocal->hbmMask);
+
+        BitBlt(hBlendMaskDC,
+            0,0, cx, cy, 
+            hMaskDC,
+            himlLocal->cx * pimldp->i,0,
+            0x220326); /* NOTSRCAND */
+
+        BitBlt(hBlendMaskDC,
+            0,0, cx, cy, 
+            hBlendMaskDC,
+            0,0, 
+            NOTSRCCOPY);
+
+        SelectObject(hMaskDC, hOldMaskBitmap);
+        DeleteDC(hMaskDC);
+
+    }
+    /* Apply blend to the current image given the BlendMask
+    */
+    OldTextColor = SetTextColor(pimldp->hdcDst, 0);
+    OldBkColor = SetBkColor(pimldp->hdcDst, RGB(255,255,255));
+    hBlendColorBrush = CreateSolidBrush(clrBlend);
+    hOldBrush = (HBRUSH) SelectObject (pimldp->hdcDst, hBlendColorBrush);
+
+    BitBlt (pimldp->hdcDst, 
+        pimldp->x, pimldp->y, cx, cy, 
+        hBlendMaskDC, 
+        0, 0, 
+        0xB8074A); /* PSDPxax */
+
+    SelectObject(pimldp->hdcDst, hOldBrush);
+    SetTextColor(pimldp->hdcDst, OldTextColor);
+    SetBkColor(pimldp->hdcDst, OldBkColor);
+    SelectObject(hBlendMaskDC, hOldBitmap);
+    DeleteDC(hBlendMaskDC);
+    DeleteObject(hBlendMaskBitmap);
+    DeleteObject(hBlendColorBrush);
+}
+
+/*************************************************************************
+ * IMAGELIST_InternalDrawOverlay [Internal] 
+ *
+ * Draws the overlay image 
+ *
+ * PARAMS
+ *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
+ *     cx            [I] the width of the image to display
+ *     cy............[I] the height of the image to display
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     required to draw the overlay
+ *
+ *     
+ */
+static VOID 
+IMAGELIST_InternalDrawOverlay(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
+{
+    INT     nOvlIdx;
+    HDC     hImageDC;
+    HBITMAP hOldBitmap;
+
+    nOvlIdx = (pimldp->fStyle & 0x0700) >> 8;
+    if ((nOvlIdx >= 1) && (nOvlIdx <= MAX_OVERLAYIMAGE))
+    {
+        nOvlIdx = pimldp->himl->nOvlIdx[nOvlIdx - 1];
+        if ((nOvlIdx >= 0) && (nOvlIdx <= pimldp->himl->cCurImage))
+        {
+            hImageDC = CreateCompatibleDC(0);
+            if (pimldp->himl->hbmMask)
+            {
+                hOldBitmap = (HBITMAP) SelectObject (hImageDC, 
+                    pimldp->himl->hbmMask);
+
+                BitBlt (pimldp->hdcDst, 
+                    pimldp->x, pimldp->y, cx, cy,
+                    hImageDC, pimldp->himl->cx * nOvlIdx, 0,
+                    SRCAND);
+
+                SelectObject(hImageDC, hOldBitmap);
+            }
+            hOldBitmap = (HBITMAP) SelectObject (hImageDC, 
+                pimldp->himl->hbmImage);
+
+            BitBlt (pimldp->hdcDst, 
+                pimldp->x, pimldp->y, cx, cy, 
+                hImageDC,
+                pimldp->himl->cx * nOvlIdx, 0,
+                SRCPAINT);
+
+            SelectObject(hImageDC, hOldBitmap);
+            DeleteDC(hImageDC);
+        }
+    }
+}
+
+
+
+
+
+/*************************************************************************
  * ImageList_Add [COMCTL32.39]
  *
  * Add an image or images to an image list.
@@ -143,13 +432,14 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount)
 INT WINAPI
 ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 {
-    HDC    hdcSrc, hdcDst;
-    INT    nFirstIndex, nImageCount;
-    INT    nStartX;
-    BITMAP bmp;
+    HDC     hdcImage, hdcBitmap;
+    INT     nFirstIndex, nImageCount;
+    INT     nStartX;
+    BITMAP  bmp;
+    HBITMAP hOldBitmapImage, hOldBitmap;
 
     if (!himl || !hbmImage)
-	return -1;
+        return -1;
 
     GetObjectA (hbmImage, sizeof(BITMAP), (LPVOID)&bmp);
     nImageCount = bmp.bmWidth / himl->cx;
@@ -159,36 +449,51 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 
     nStartX = himl->cCurImage * himl->cx;
 
-    hdcSrc = CreateCompatibleDC (0);
-    hdcDst = CreateCompatibleDC (0);
+    hdcImage  = CreateCompatibleDC(0);
+    hdcBitmap = CreateCompatibleDC(0);
 
-    /* copy image bitmap */
-    SelectObject (hdcDst, himl->hbmImage);
-    SelectObject (hdcSrc, hbmImage);
-    BitBlt (hdcDst, himl->cCurImage * himl->cx, 0,
-              bmp.bmWidth, himl->cy, hdcSrc, 0, 0, SRCCOPY);
-          
-    if (himl->hbmMask) {
-        if (hbmMask) {
-	    /* copy mask bitmap */
-            SelectObject (hdcDst, himl->hbmMask);
-            SelectObject (hdcSrc, hbmMask);
-            BitBlt (hdcDst, nStartX, 0, bmp.bmWidth, himl->cy,
-		      hdcSrc, 0, 0, SRCCOPY);
-        }
-        else {
-	    /* copy monochrome image to the mask bitmap */
-            SelectObject (hdcDst, himl->hbmMask);
-            SelectObject (hdcSrc, hbmImage);
-	    SetBkColor (hdcSrc, GetNearestColor (hdcSrc,
-			  GetPixel (hdcSrc, 0, 0)));
-	    BitBlt (hdcDst, nStartX, 0, bmp.bmWidth, himl->cy,
-		      hdcSrc, nStartX, 0, SRCCOPY);
-        }
+    hOldBitmapImage = SelectObject(hdcImage, himl->hbmImage);
+    hOldBitmap = SelectObject(hdcBitmap, hbmImage);
+
+    /* Copy result to the imagelist
+    */
+    BitBlt (hdcImage, nStartX, 0, bmp.bmWidth, himl->cy,
+        hdcBitmap, 0, 0, SRCCOPY);
+
+    if(himl->hbmMask)
+    {
+        HDC hdcMask, hdcTemp, hOldBitmapMask, hOldBitmapTemp;
+
+        hdcMask   = CreateCompatibleDC (0);
+        hdcTemp   = CreateCompatibleDC(0);
+        hOldBitmapMask = (HBITMAP) SelectObject(hdcMask, himl->hbmMask);
+        hOldBitmapTemp = (HBITMAP) SelectObject(hdcTemp, hbmMask);
+
+        BitBlt (hdcMask, 
+            nStartX, 0, bmp.bmWidth, himl->cy,
+            hdcTemp, 
+            0, 0, 
+            SRCCOPY);
+
+        SelectObject(hdcTemp, hOldBitmapTemp);
+        DeleteDC(hdcTemp);
+
+        /* Remove the background from the image
+        */
+        BitBlt (hdcImage, 
+            nStartX, 0, bmp.bmWidth, himl->cy,
+            hdcMask, 
+            nStartX, 0, 
+            0x220326); /* NOTSRCAND */
+
+        SelectObject(hdcMask, hOldBitmapMask);
+        DeleteDC(hdcMask);
     }
 
-    DeleteDC (hdcSrc);
-    DeleteDC (hdcDst);
+    SelectObject(hdcImage, hOldBitmapImage);
+    SelectObject(hdcBitmap, hOldBitmap);
+    DeleteDC(hdcImage);
+    DeleteDC(hdcBitmap);
 
     nFirstIndex = himl->cCurImage;
     himl->cCurImage += nImageCount;
@@ -238,50 +543,96 @@ INT WINAPI
 ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 {
     HDC    hdcImage, hdcMask, hdcBitmap;
-    INT    nIndex, nImageCount;
+    INT    nIndex, nImageCount, nMaskXOffset=0;
     BITMAP bmp;
+    HBITMAP hOldBitmap, hOldBitmapMask, hOldBitmapImage;
+    HBITMAP hMaskBitmap=0;
+    COLORREF bkColor;
 
     if (himl == NULL)
-	return -1;
+        return -1;
 
     if (!GetObjectA (hBitmap, sizeof(BITMAP), &bmp))
-	return -1;
+        return -1;
 
     nImageCount = bmp.bmWidth / himl->cx;
 
     if (himl->cCurImage + nImageCount >= himl->cMaxImage)
+    {
         IMAGELIST_InternalExpandBitmaps (himl, nImageCount);
+    }
 
     nIndex = himl->cCurImage;
     himl->cCurImage += nImageCount;
 
-    hdcImage  = CreateCompatibleDC (0);
-    hdcBitmap = CreateCompatibleDC (0);
+    hdcMask   = CreateCompatibleDC (0);
+    hdcImage  = CreateCompatibleDC(0);
+    hdcBitmap = CreateCompatibleDC(0);
 
-    SelectObject (hdcBitmap, hBitmap);
-    SelectObject (hdcImage, himl->hbmImage);
-    BitBlt (hdcImage, nIndex * himl->cx, 0, bmp.bmWidth, himl->cy,
-              hdcBitmap, 0, 0, SRCCOPY);
 
-    if (himl->hbmMask) {
-	COLORREF bkColor = (clrMask != CLR_DEFAULT) ? clrMask :
-	    GetNearestColor (hdcBitmap, GetPixel (hdcBitmap, 0, 0));
+    hOldBitmapImage = SelectObject(hdcImage, himl->hbmImage);
+    hOldBitmap = SelectObject(hdcBitmap, hBitmap);
+    if(himl->hbmMask)
+    {
+        hOldBitmapMask = SelectObject(hdcMask, himl->hbmMask);
+        nMaskXOffset = nIndex * himl->cx;
+    }
+    else
+    {
+        /*
+            Create a temp Mask so we can remove the background of
+            the Image (Windows does this even if there is no mask)
+        */
+        hMaskBitmap = CreateBitmap(bmp.bmWidth, himl->cy, 1, 1, NULL);
+        hOldBitmapMask = SelectObject(hdcMask, hMaskBitmap);
+        nMaskXOffset = 0;
+    }
+    /* create monochrome image to the mask bitmap */
+    bkColor = (clrMask != CLR_DEFAULT) ? clrMask :
+        GetPixel (hdcBitmap, 0, 0);
+    SetBkColor (hdcBitmap, bkColor);
+    BitBlt (hdcMask, 
+        nMaskXOffset, 0, bmp.bmWidth, himl->cy,
+        hdcBitmap, 0, 0, 
+        SRCCOPY);
 
-	/* create mask from image */
-        hdcMask = CreateCompatibleDC (0);
-        SelectObject (hdcMask, himl->hbmMask);
-
-	/* create monochrome image to the mask bitmap */
-	SetBkColor (hdcBitmap, bkColor);
-	BitBlt (hdcMask, nIndex * himl->cx, 0, bmp.bmWidth, himl->cy,
-		  hdcBitmap, 0, 0, SRCCOPY);
-
-        DeleteDC (hdcMask);
+    SetBkColor(hdcBitmap, RGB(255,255,255));
+    /*Remove the background from the image
+    */
+    /*
+        WINDOWS BUG ALERT!!!!!!
+        The statement below should not be done in common practice
+        but this is how ImageList_AddMasked works in Windows.
+        It overwrites the original bitmap passed, this was discovered
+        by using the same bitmap to itterated the different styles
+        on windows where it failed (BUT ImageList_Add is OK)
+        This is here in case some apps really on this bug
+    */
+    BitBlt(hdcBitmap, 
+        0, 0, bmp.bmWidth, himl->cy,
+        hdcMask, 
+        nMaskXOffset, 0, 
+        0x220326); /* NOTSRCAND */
+    /* Copy result to the imagelist
+    */
+    BitBlt (hdcImage, 
+        nIndex * himl->cx, 0, bmp.bmWidth, himl->cy,
+        hdcBitmap, 
+        0, 0, 
+        SRCCOPY);
+    /* Clean up
+    */
+    SelectObject(hdcMask,hOldBitmapMask);
+    SelectObject(hdcImage, hOldBitmapImage);
+    SelectObject(hdcBitmap, hOldBitmap);
+    DeleteDC(hdcMask);
+    DeleteDC(hdcImage);
+    DeleteDC(hdcBitmap);
+    if(!himl->hbmMask)
+    {
+        DeleteObject(hMaskBitmap);
     }
 
-    DeleteDC (hdcImage);
-    DeleteDC (hdcBitmap);
-  
     return nIndex;
 }
 
@@ -876,177 +1227,50 @@ ImageList_DrawEx (HIMAGELIST himl, INT i, HDC hdc, INT x, INT y,
 BOOL WINAPI
 ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 {
-    HIMAGELIST himlLocal;
-    HDC      hdcImageList, hdcTempImage;
-    HBITMAP  hbmTempImage;
-    HBRUSH   hBrush, hOldBrush;
-    INT      cx, cy;
-    INT      nOvlIdx;
-    COLORREF   clrBlend;
-    BOOL     bImage;       /* draw image ? */
-    BOOL     bImageTrans;  /* draw image transparent ? */
-    BOOL     bMask;        /* draw mask ? */
-    BOOL     bMaskTrans;   /* draw mask transparent ? */
-    BOOL     bBlend25;
-    BOOL     bBlend50;
-
+    INT      cx, cy;    
+    /* 
+        Do some Error Checking
+    */
     if (pimldp == NULL)
-	return FALSE;
+        return FALSE;
     if (pimldp->cbSize < sizeof(IMAGELISTDRAWPARAMS))
-	return FALSE;
+        return FALSE;
     if (pimldp->himl == NULL)
-	return FALSE;
+        return FALSE;
     if ((pimldp->i < 0) || (pimldp->i > pimldp->himl->cCurImage))
-	return FALSE;
-
-    himlLocal = pimldp->himl;
-
-    cx = (pimldp->cx == 0) ? himlLocal->cx : pimldp->cx;
-    cy = (pimldp->cy == 0) ? himlLocal->cy : pimldp->cy;
-
-    /* ILD_NORMAL state */
-    bImage      = TRUE;
-    bImageTrans = FALSE;
-    bMask       = FALSE;
-    bMaskTrans  = FALSE;
-    bBlend25    = FALSE;
-    bBlend50    = FALSE;
-    if ((himlLocal->clrBk == CLR_NONE) && (himlLocal->hbmMask))
+        return FALSE;
+    /*
+        Get the Height and Width to display
+    */
+    cx = (pimldp->cx == 0) ? pimldp->himl->cx : pimldp->cx;
+    cy = (pimldp->cy == 0) ? pimldp->himl->cy : pimldp->cy;
+    /*
+        Draw the image
+    */
+    if(pimldp->himl->hbmMask != 0)
     {
-        bImageTrans = TRUE;
-        bMask = TRUE;
-        bMaskTrans = TRUE;
+        IMAGELIST_InternalDrawMask(pimldp, cx, cy);
     }
-    
-    /* ILD_IMAGE state (changes) */
-    if (pimldp->fStyle & ILD_IMAGE)
+    else
     {
-        bMask = FALSE;
-        bImage = TRUE;
-        bImageTrans = FALSE;
+        IMAGELIST_InternalDraw(pimldp, cx, cy);
     }
-    
-    /* ILD_MASK state (changes) */
-    if ((pimldp->fStyle & ILD_MASK) && (himlLocal->hbmMask))
+    /* 
+        Apply the blend if needed to the Image
+    */
+    if((pimldp->fStyle & ILD_BLEND50)
+        || (pimldp->fStyle & ILD_BLEND25))
     {
-        bMask  = TRUE;
-        bMaskTrans = FALSE;
-        bImage = FALSE;
+        IMAGELIST_InternalDrawBlend(pimldp, cx, cy);
     }
-    if ((pimldp->fStyle & ILD_TRANSPARENT) && (himlLocal->hbmMask))
+    /*
+        Apply the Overlay if needed
+    */
+    if (pimldp->fStyle & 0x0700)
     {
-        bMaskTrans = TRUE;
-        bImageTrans = TRUE;
-    }
-    if ((himlLocal->clrBk == CLR_NONE) && (himlLocal->hbmMask))
-        bMaskTrans = TRUE;
-
-    if (pimldp->fStyle & ILD_BLEND50)
-        bBlend50 = TRUE;
-    else if (pimldp->fStyle & ILD_BLEND25)
-        bBlend25 = TRUE;
-
-    hdcImageList = CreateCompatibleDC (0);
-
-    if (bMask)
-    {
-	/* draw the mask */
-	SelectObject (hdcImageList, himlLocal->hbmMask);
-	SetBkColor (hdcImageList, RGB(255, 255, 255));
-	SetTextColor (hdcImageList, RGB(0, 0, 0));
-	BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-		  hdcImageList, himlLocal->cx * pimldp->i, 0,
-		  bMaskTrans ? SRCAND : SRCCOPY);
+        IMAGELIST_InternalDrawOverlay(pimldp, cx, cy);
     }
 
-    if (bImage)
-    {
-	/* draw the image */
-	SelectObject (hdcImageList, himlLocal->hbmImage);
-
-        if (!bImageTrans)
-        {
-            hBrush = CreateSolidBrush (himlLocal->clrBk);
-            hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
-            PatBlt (pimldp->hdcDst, pimldp->x, pimldp->y,
-                      cx, cy, PATCOPY);
-            DeleteObject (SelectObject (pimldp->hdcDst, hOldBrush));
-        }
-
-        BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-                  hdcImageList, himlLocal->cx * pimldp->i, 0, SRCPAINT);
-
-        if (bBlend25 || bBlend50)
-        {
-            if (pimldp->rgbFg == CLR_DEFAULT)
-                clrBlend = GetSysColor (COLOR_HIGHLIGHT);
-            else
-                clrBlend = pimldp->rgbFg;
-
-            hdcTempImage = CreateCompatibleDC (0);
-            hbmTempImage = CreateBitmap (himlLocal->cx, himlLocal->cy,
-                                           1, himlLocal->uBitsPixel, NULL);
-            SelectObject (hdcTempImage, hbmTempImage);
-
-
-            /* mask */
-            SelectObject (hdcTempImage,
-                            bBlend50 ? himlLocal->hbrBlend50 : himlLocal->hbrBlend25);
-            PatBlt (hdcTempImage, 0, 0, himlLocal->cx, himlLocal->cy, PATCOPY);
-
-            SelectObject (hdcImageList, himlLocal->hbmMask);
-            BitBlt (hdcTempImage, 0, 0, himlLocal->cx,
-                      himlLocal->cy, hdcImageList, 
-                      pimldp->i * himlLocal->cx, 0, SRCPAINT);
-
-            BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-		      hdcTempImage, 0, 0, SRCAND);
-
-            /* fill */
-            hBrush = CreateSolidBrush (clrBlend);
-            SelectObject (hdcTempImage, hBrush);
-            PatBlt (hdcTempImage, 0, 0, himlLocal->cx, himlLocal->cy, PATCOPY);
-            DeleteObject (hBrush);
-
-            SelectObject (hdcTempImage,
-                            bBlend50 ? himlLocal->hbrBlend50 : himlLocal->hbrBlend25);
-            PatBlt (hdcTempImage, 0, 0, himlLocal->cx, himlLocal->cy, 0x0A0329);
-
-            SelectObject (hdcImageList, himlLocal->hbmMask);
-            BitBlt (hdcTempImage, 0, 0, himlLocal->cx,
-                      himlLocal->cy, hdcImageList, 
-                      pimldp->i * himlLocal->cx, 0, SRCPAINT);
-
-            BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-                      hdcTempImage, 0, 0, SRCPAINT);
-
-            DeleteObject (hbmTempImage);
-            DeleteDC (hdcTempImage);
-        }
-    }   
-
-    /* Draw overlay image */
-    if (pimldp->fStyle & 0x0700) {
-	nOvlIdx = (pimldp->fStyle & 0x0700) >> 8;
-	if ((nOvlIdx >= 1) && (nOvlIdx <= MAX_OVERLAYIMAGE)) {
-	    nOvlIdx = pimldp->himl->nOvlIdx[nOvlIdx - 1];
-	    if ((nOvlIdx >= 0) && (nOvlIdx <= pimldp->himl->cCurImage)) {
-		if (pimldp->himl->hbmMask) {  
-                    SelectObject (hdcImageList, pimldp->himl->hbmMask);
-                    BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
-                              hdcImageList, pimldp->himl->cx * nOvlIdx, 0,
-			      SRCAND);
-		}  
-                SelectObject (hdcImageList, pimldp->himl->hbmImage);
-                BitBlt (pimldp->hdcDst, pimldp->x, pimldp->y,
-                          cx, cy, hdcImageList,
-                          pimldp->himl->cx * nOvlIdx, 0, SRCPAINT);
-            }
-        }
-    }
-
-    DeleteDC (hdcImageList);
-  
     return TRUE;
 }
 
@@ -1209,6 +1433,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 {
     ICONINFO ii;
     HICON  hIcon;
+    HBITMAP hOldSrcBitmap,hOldDstBitmap;
     HDC    hdcSrc, hdcDst;
 
     if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage))
@@ -1221,7 +1446,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
     ii.hbmMask  = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
 
     /* draw mask*/
-    SelectObject (hdcDst, ii.hbmMask);
+    hOldDstBitmap = (HBITMAP)SelectObject (hdcDst, ii.hbmMask);
     if (himl->hbmMask) {
 	SelectObject (hdcSrc, himl->hbmMask);
 	BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
@@ -1231,11 +1456,18 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 	PatBlt (hdcDst, 0, 0, himl->cx, himl->cy, BLACKNESS);
 
     /* draw image*/
-    SelectObject (hdcSrc, himl->hbmImage);
+    hOldSrcBitmap = (HBITMAP)SelectObject (hdcSrc, himl->hbmImage);
     ii.hbmColor = CreateCompatibleBitmap (hdcSrc, himl->cx, himl->cy);
     SelectObject (hdcDst, ii.hbmColor);
     BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
 	      hdcSrc, i * himl->cx, 0, SRCCOPY);
+
+    /*
+     * CreateIconIndirect requires us to deselect the bitmaps from
+     * the DCs before calling 
+     */
+    SelectObject(hdcSrc, hOldSrcBitmap);
+    SelectObject(hdcDst, hOldDstBitmap);
 
     hIcon = CreateIconIndirect (&ii);    
 
