@@ -876,6 +876,8 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     HANDLE data,wait;
     PROCESS_INFORMATION procinfo;
     STARTUPINFOW startupinfo;
+    BOOL ret = FALSE;
+
     TRACE("(%p,%ld,%p)\n",hService,dwNumServiceArgs,
           lpServiceArgVectors);
 
@@ -934,19 +936,27 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
     if(r == FALSE)
     {
         ERR("Couldn't start process\n");
-        /* ReleaseSemaphore(data, 1, NULL);
-        return FALSE; */
+        goto done;
     }
+    CloseHandle( procinfo.hThread );
 
     /* docs for StartServiceCtrlDispatcher say this should be 30 sec */
     r = WaitForSingleObject(wait,30000);
+    if( WAIT_FAILED == r )
+    {
+        CloseHandle( procinfo.hProcess );
+        goto done;
+    }
 
+    /* allright */
+    CloseHandle( procinfo.hProcess );
+    ret = TRUE;
+
+done:
+    CloseHandle( wait );
     ReleaseSemaphore(data, 1, NULL);
-
-    if( r == WAIT_FAILED)
-        return FALSE;
-
-    return TRUE;
+    CloseHandle( data );
+    return ret;
 }
 
 /******************************************************************************
