@@ -10,6 +10,9 @@ SPEC_SRCS = x11drv.spec
 C_SRCS = \
 	x11drv_main.c
 
+PROGRAMS = \
+	$(TOPOBJDIR)/windows/x11drv/wineclipsrv
+
 EXTRA_OBJS = \
 	$(TOPOBJDIR)/graphics/x11drv/x11drv.o \
 	$(TOPOBJDIR)/tsx11/tsx11.o \
@@ -22,7 +25,16 @@ SUBDIRS = \
 
 @MAKE_DLL_RULES@
 
-$(EXTRA_OBJS): $(TOOLSUBDIRS) dummy
+all: $(PROGRAMS)
+
+$(EXTRA_OBJS) $(PROGRAMS): $(TOOLSUBDIRS) dummy
 	@cd `dirname $@` && $(MAKE) `basename $@`
+
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	$(INSTALL_PROGRAM) $(TOPOBJDIR)/windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
+
+uninstall::
+	cd $(bindir) && $(RM) wineclipsrv
 
 ### Dependencies:

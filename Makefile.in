@@ -71,8 +71,7 @@ INCSUBDIRS = include
 # Stand-alone programs
 PROGRAMS = \
 	loader/dos/dosmod \
-	server/wineserver \
-	windows/x11drv/wineclipsrv
+	server/wineserver
 
 # Programs that link with libwine
 LIBPROGRAMS = \
@@ -176,13 +175,12 @@ install_wine: wine
 install:: $(PROGRAMS) $(LIBPROGRAMS) $(EMU_TARGET:%=install_%) $(LIBEXT:%=install_%)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) server/wineserver $(bindir)/wineserver
-	$(INSTALL_PROGRAM) windows/x11drv/wineclipsrv $(bindir)/wineclipsrv
 	$(INSTALL_PROGRAM) loader/dos/dosmod $(bindir)/dosmod
 	$(INSTALL_PROGRAM) debugger/winedbg $(bindir)/winedbg
 
 uninstall::
 	cd $(libdir) && $(RM) libwine.a libwine.so libwine.so.$(SOVERSION) wine.sym
-	cd $(bindir) && $(RM) wine wineserver wineclipsrv dosmod winedbg
+	cd $(bindir) && $(RM) wine wineserver dosmod winedbg
 
 lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in Make.rules.in
 	$(LDSHARED) $(OBJS) -o $@
