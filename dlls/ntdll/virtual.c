@@ -658,7 +658,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
                         sec->PointerToRawData, sec->SizeOfRawData,
                         sec->Characteristics );
 
-        if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) continue;
+        if ((sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) &&
+            !(sec->Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec->PointerToRawData || !sec->SizeOfRawData) continue;
 
         /* Note: if the section is not aligned properly VIRTUAL_mmap will magically
