@@ -930,7 +930,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 
     *ppobj = NULL;
 
-    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) { 
+    if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
 	if (!This->notify)
 	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
 	if (This->notify) {
@@ -1065,6 +1065,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     LPDWORD lpdwReadPosition )
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    HRESULT hres = DS_OK;
     TRACE( "(%p,%p,%p)\n", This, lpdwCapturePosition, lpdwReadPosition );
 
     if (This == NULL) {
@@ -1078,12 +1079,9 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     }
 
     if (This->dsound->driver) {
-	HRESULT	hres;
         hres = IDsCaptureDriverBuffer_GetPosition(This->dsound->hwbuf, lpdwCapturePosition, lpdwReadPosition );
-	if (hres != DS_OK) {
+	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_GetPosition failed\n");
-	    return hres;
-	}
     } else if (This->dsound->hwi) {
 	EnterCriticalSection(&(This->dsound->lock));
 	TRACE("old This->dsound->state=%s\n",captureStateString[This->dsound->state]);
@@ -1111,11 +1109,11 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
 	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%ld\n",*lpdwReadPosition);
     } else {
         WARN("no driver\n");
-        return DSERR_NODRIVER;
+        hres = DSERR_NODRIVER;
     }
 
-    TRACE("returning DS_OK\n");
-    return DS_OK;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
@@ -1126,6 +1124,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
     LPDWORD lpdwSizeWritten )
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
+    HRESULT hres = DS_OK;
     TRACE( "(%p,%p,0x%08lx,%p)\n", This, lpwfxFormat, dwSizeAllocated,
         lpdwSizeWritten );
 
@@ -1151,12 +1150,12 @@ IDirectSoundCaptureBufferImpl_GetFormat(
             *lpdwSizeWritten = sizeof(WAVEFORMATEX) + This->dsound->pwfx->cbSize;
         else {
             TRACE("invalid parameter: lpdwSizeWritten = NULL\n");
-            return DSERR_INVALIDPARAM;
+            hres = DSERR_INVALIDPARAM;
         }
     }
 
-    TRACE("returning DS_OK\n");
-    return DS_OK;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
@@ -1226,7 +1225,7 @@ IDirectSoundCaptureBufferImpl_Lock(
     LPDWORD lpdwAudioBytes2,
     DWORD dwFlags )
 {
-    HRESULT err = DS_OK;
+    HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %ld\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
@@ -1255,10 +1254,11 @@ IDirectSoundCaptureBufferImpl_Lock(
     EnterCriticalSection(&(This->dsound->lock));
 
     if (This->dsound->driver) {
-        err = IDsCaptureDriverBuffer_Lock(This->dsound->hwbuf, lplpvAudioPtr1,
-					   lpdwAudioBytes1, lplpvAudioPtr2, lpdwAudioBytes2,
-					   dwReadCusor, dwReadBytes, dwFlags);
-	if (err != DS_OK)
+        hres = IDsCaptureDriverBuffer_Lock(This->dsound->hwbuf, lplpvAudioPtr1,
+                                           lpdwAudioBytes1, lplpvAudioPtr2,
+                                           lpdwAudioBytes2, dwReadCusor,
+                                           dwReadBytes, dwFlags);
+	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Lock failed\n");
     } else if (This->dsound->hwi) {
         *lplpvAudioPtr1 = This->dsound->buffer + dwReadCusor;
@@ -1277,12 +1277,13 @@ IDirectSoundCaptureBufferImpl_Lock(
         }
     } else {
         TRACE("invalid call\n");
-        err = DSERR_INVALIDCALL;   /* DSERR_NODRIVER ? */
+        hres = DSERR_INVALIDCALL;   /* DSERR_NODRIVER ? */
     }
 
     LeaveCriticalSection(&(This->dsound->lock));
 
-    return err;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
@@ -1290,7 +1291,7 @@ IDirectSoundCaptureBufferImpl_Start(
     LPDIRECTSOUNDCAPTUREBUFFER8 iface,
     DWORD dwFlags )
 {
-    HRESULT err = DS_OK;
+    HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,0x%08lx)\n", This, dwFlags );
 
@@ -1322,11 +1323,10 @@ IDirectSoundCaptureBufferImpl_Start(
     LeaveCriticalSection(&(This->dsound->lock));
 
     if (This->dsound->driver) {
-        err = IDsCaptureDriverBuffer_Start(This->dsound->hwbuf, dwFlags);
-	if (err != DS_OK)
+        hres = IDsCaptureDriverBuffer_Start(This->dsound->hwbuf, dwFlags);
+	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Start failed\n");
-        return err;
-    } else {
+    } else if (This->dsound->hwi) {
         IDirectSoundCaptureImpl* ipDSC = This->dsound;
 
         if (ipDSC->buffer) {
@@ -1365,9 +1365,9 @@ IDirectSoundCaptureBufferImpl_Start(
                     ipDSC->pwave[c].dwUser = (DWORD)ipDSC;
                     ipDSC->pwave[c].dwFlags = 0;
                     ipDSC->pwave[c].dwLoops = 0;
-                    err = mmErr(waveInPrepareHeader(ipDSC->hwi,
+                    hres = mmErr(waveInPrepareHeader(ipDSC->hwi,
                         &(ipDSC->pwave[c]),sizeof(WAVEHDR)));
-		    if (err != DS_OK) {
+		    if (hres != DS_OK) {
                         WARN("waveInPrepareHeader failed\n");
 			while (c--)
 			    waveInUnprepareHeader(ipDSC->hwi,
@@ -1375,9 +1375,9 @@ IDirectSoundCaptureBufferImpl_Start(
 			break;
 		    }
 
-	            err = mmErr(waveInAddBuffer(ipDSC->hwi,
+	            hres = mmErr(waveInAddBuffer(ipDSC->hwi,
 			&(ipDSC->pwave[c]), sizeof(WAVEHDR)));
-		    if (err != DS_OK) {
+		    if (hres != DS_OK) {
                         WARN("waveInAddBuffer failed\n");
                         while (c--)
 			    waveInUnprepareHeader(ipDSC->hwi,
@@ -1404,16 +1404,16 @@ IDirectSoundCaptureBufferImpl_Start(
                 ipDSC->pwave[0].dwFlags = 0;
                 ipDSC->pwave[0].dwLoops = 0;
 
-                err = mmErr(waveInPrepareHeader(ipDSC->hwi,
+                hres = mmErr(waveInPrepareHeader(ipDSC->hwi,
                     &(ipDSC->pwave[0]),sizeof(WAVEHDR)));
-                if (err != DS_OK) {
+                if (hres != DS_OK) {
 		    WARN("waveInPrepareHeader failed\n");
                     waveInUnprepareHeader(ipDSC->hwi,
                         &(ipDSC->pwave[0]),sizeof(WAVEHDR));
 		}
-	        err = mmErr(waveInAddBuffer(ipDSC->hwi,
+	        hres = mmErr(waveInAddBuffer(ipDSC->hwi,
 		    &(ipDSC->pwave[0]), sizeof(WAVEHDR)));
-		if (err != DS_OK) {
+		if (hres != DS_OK) {
 		    WARN("waveInAddBuffer failed\n");
 	    	    waveInUnprepareHeader(ipDSC->hwi,
 			&(ipDSC->pwave[0]),sizeof(WAVEHDR));
@@ -1424,28 +1424,31 @@ IDirectSoundCaptureBufferImpl_Start(
         ipDSC->index = 0;
         ipDSC->read_position = 0;
 
-	if (err == DS_OK) {
+	if (hres == DS_OK) {
 	    /* start filling the first buffer */
-	    err = mmErr(waveInStart(ipDSC->hwi));
-            if (err != DS_OK)
+	    hres = mmErr(waveInStart(ipDSC->hwi));
+            if (hres != DS_OK)
                 WARN("waveInStart failed\n");
         }
+
+        if (hres != DS_OK) {
+            WARN("calling waveInClose because of error\n");
+            waveInClose(This->dsound->hwi);
+            This->dsound->hwi = 0;
+        }
+    } else {
+        WARN("no driver\n");
+        hres = DSERR_NODRIVER;
     }
 
-    if (err != DS_OK) {
-	WARN("calling waveInClose because of error\n");
-	waveInClose(This->dsound->hwi);
-	This->dsound->hwi = 0;
-    }
-
-    TRACE("returning %ld\n", err);
-    return err;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
-    HRESULT err = DS_OK;
+    HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p)\n", This );
 
@@ -1471,28 +1474,20 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
     LeaveCriticalSection(&(This->dsound->lock));
 
     if (This->dsound->driver) {
-        err = IDsCaptureDriverBuffer_Stop(This->dsound->hwbuf);
-	if (err == DSERR_BUFFERLOST) {
-	    /* Wine-only: the driver wants us to reopen the device */
-	    IDsCaptureDriverBuffer_Release(This->dsound->hwbuf);
-	    err = IDsCaptureDriver_CreateCaptureBuffer(This->dsound->driver,
-		This->dsound->pwfx,0,0,&(This->dsound->buflen),&(This->dsound->buffer),
-		(LPVOID*)&(This->dsound->hwbuf));
-	    if (err != DS_OK) {
-		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
-		This->dsound->hwbuf = 0;
-	    }
-	} else if (err != DS_OK)
-	    WARN("IDsCaptureDriverBuffer_Stop failed\n");
+        hres = IDsCaptureDriverBuffer_Stop(This->dsound->hwbuf);
+        if (hres != DS_OK)
+            WARN("IDsCaptureDriverBuffer_Stop() failed\n");
     } else if (This->dsound->hwi) {
-        err = waveInStop(This->dsound->hwi);
+        hres = mmErr(waveInReset(This->dsound->hwi));
+        if (hres != DS_OK)
+            WARN("waveInReset() failed\n");
     } else {
 	WARN("no driver\n");
-        err = DSERR_NODRIVER;
+        hres = DSERR_NODRIVER;
     }
 
-    TRACE( "(%p) returning 0x%08lx\n", This,err);
-    return err;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
@@ -1503,6 +1498,7 @@ IDirectSoundCaptureBufferImpl_Unlock(
     LPVOID lpvAudioPtr2,
     DWORD dwAudioBytes2 )
 {
+    HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p,%08lu,%p,%08lu)\n", This, lpvAudioPtr1, dwAudioBytes1,
         lpvAudioPtr2, dwAudioBytes2 );
@@ -1518,21 +1514,20 @@ IDirectSoundCaptureBufferImpl_Unlock(
     }
 
     if (This->dsound->driver) {
-	HRESULT	hres;
         hres = IDsCaptureDriverBuffer_Unlock(This->dsound->hwbuf, lpvAudioPtr1,
-					   dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
+                                             dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
 	if (hres != DS_OK)
 	    WARN("IDsCaptureDriverBuffer_Unlock failed\n");
-	return hres;
     } else if (This->dsound->hwi) {
         This->dsound->read_position = (This->dsound->read_position +
             (dwAudioBytes1 + dwAudioBytes2)) % This->dsound->buflen;
     } else {
         WARN("invalid call\n");
-        return DSERR_INVALIDCALL;
+        hres = DSERR_INVALIDCALL;
     }
 
-    return DS_OK;
+    TRACE("returning %08lx\n", hres);
+    return hres;
 }
 
 static HRESULT WINAPI
