@@ -262,7 +262,10 @@ NTSTATUS WINAPI NtClearEvent ( HANDLE handle )
 NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
 {
     NTSTATUS ret;
-    FIXME("(%p,%p)\n", handle, PulseCount);
+
+    if (PulseCount)
+      FIXME("(%p,%ld)\n", handle, *PulseCount);
+
     SERVER_START_REQ( event_op )
     {
         req->handle = handle;
