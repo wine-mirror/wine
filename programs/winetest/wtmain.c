@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "wine/test.h"
+
 /* debug level */
 int winetest_debug = 1;
 
@@ -37,12 +39,18 @@ struct test
 
 extern const struct test winetest_testlist[];
 static const struct test *current_test; /* test currently being run */
+/* FIXME: Access to all the following variables must be protected in a 
+ * multithread test. Either via thread local storage or via critical sections
+ */
+static const char* current_file;        /* file of current check */
+static int current_line;                /* line of current check */
 
 static int successes;         /* number of successful tests */
 static int failures;          /* number of failures */
 static int todo_successes;    /* number of successful tests inside todo block */
 static int todo_failures;     /* number of failures inside todo block */
 static int todo_level;        /* current todo nesting level */
+static int todo_do_loop;
 
 /*
  * Checks condition.
@@ -51,17 +59,29 @@ static int todo_level;        /* current todo nesting level */
  *   - msg test description;
  *   - file - test application source code file name of the check
  *   - line - test application source code file line number of the check
+ * Return:
+ *   0 if condition does not have the expected value, 1 otherwise
  */
-void winetest_ok( int condition, const char *msg, const char *file, int line )
+int winetest_ok( int condition, const char *msg, ... )
 {
+    va_list valist;
+
     if (todo_level)
     {
         if (condition)
         {
-            fprintf( stderr, "%s:%d: Test succeeded inside todo block", file, line );
-            if (msg && msg[0]) fprintf( stderr, ": %s", msg );
+            fprintf( stderr, "%s:%d: Test succeeded inside todo block",
+                     current_file, current_line );
+            if (msg && msg[0])
+            {
+                va_start(valist, msg);
+                fprintf(stderr,": ");
+                vfprintf(stderr, msg, valist);
+                va_end(valist);
+            }
             fputc( '\n', stderr );
             todo_failures++;
+            return 0;
         }
         else todo_successes++;
     }
@@ -69,15 +89,69 @@ void winetest_ok( int condition, const char *msg, const char *file, int line )
     {
         if (!condition)
         {
-            fprintf( stderr, "%s:%d: Test failed", file, line );
-            if (msg && msg[0]) fprintf( stderr, ": %s", msg );
+            fprintf( stderr, "%s:%d: Test failed",
+                     current_file, current_line );
+            if (msg && msg[0])
+            {
+                va_start(valist, msg);
+                fprintf( stderr,": ");
+                vfprintf(stderr, msg, valist);
+                va_end(valist);
+            }
             fputc( '\n', stderr );
             failures++;
+            return 0;
         }
         else successes++;
     }
+    return 1;
 }
 
+winetest_ok_funcptr winetest_set_ok_location( const char* file, int line )
+{
+    current_file=file;
+    current_line=line;
+    return &winetest_ok;
+}
+
+void winetest_trace( const char *msg, ... )
+{
+    va_list valist;
+
+    if (winetest_debug > 0)
+    {
+        va_start(valist, msg);
+        vfprintf(stderr, msg, valist);
+        va_end(valist);
+    }
+}
+
+winetest_trace_funcptr winetest_set_trace_location( const char* file, int line )
+{
+    current_file=file;
+    current_line=line;
+    return &winetest_trace;
+}
+
+void winetest_start_todo( const char* platform )
+{
+    if (strcmp(winetest_platform,platform)==0)
+        todo_level++;
+    todo_do_loop=1;
+}
+
+int winetest_loop_todo(void)
+{
+    int do_loop=todo_do_loop;
+    todo_do_loop=0;
+    return do_loop;
+}
+
+void winetest_end_todo( const char* platform )
+{
+    if (strcmp(winetest_platform,platform)==0)
+        todo_level--;
+}
 
 /* Find a test by name */
 static const struct test *find_test( const char *name )

@@ -21,16 +21,32 @@
 #ifndef __WINE_TEST_H
 #define __WINE_TEST_H
 
+#include <stdarg.h>
+#include "windef.h"
+
 /* debug level */
 extern int winetest_debug;
 
 /* current platform */
 extern const char *winetest_platform;
 
-extern void winetest_ok( int condition, const char *msg, const char *file, int line );
+typedef int (*winetest_ok_funcptr)( int condition, const char *msg, ...);
+typedef void (*winetest_trace_funcptr)( const char *msg, ...);
+
+extern winetest_ok_funcptr winetest_set_ok_location( const char* file, int line );
+extern winetest_trace_funcptr winetest_set_trace_location( const char* file, int line );
+extern void winetest_start_todo( const char* platform );
+extern int winetest_loop_todo(void);
+extern void winetest_end_todo( const char* platform );
 
 #define START_TEST(name) void func_##name(void)
 
-#define ok(test,msg) winetest_ok( (test), (msg), __FILE__, __LINE__ )
+#define ok             (*winetest_set_ok_location(__FILE__, __LINE__))
+#define trace          (*winetest_set_trace_location(__FILE__, __LINE__))
+
+#define todo(platform) for (winetest_start_todo(platform); \
+                            winetest_loop_todo(); \
+                            winetest_end_todo(platform))
+#define todo_wine      todo("wine")
 
 #endif  /* __WINE_TEST_H */
