@@ -349,37 +349,6 @@ static void test_pack_CHAR(void)
     TEST_TYPE_SIGNED(CHAR);
 }
 
-static void test_pack_CONTEXT86(void)
-{
-    /* CONTEXT86 (pack 4) */
-    TEST_TYPE(CONTEXT86, 716, 4);
-    TEST_FIELD(CONTEXT86, DWORD, ContextFlags, 0, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr0, 4, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr1, 8, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr2, 12, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr3, 16, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr6, 20, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Dr7, 24, 4, 4);
-    TEST_FIELD(CONTEXT86, FLOATING_SAVE_AREA, FloatSave, 28, 112, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegGs, 140, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegFs, 144, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegEs, 148, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegDs, 152, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Edi, 156, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Esi, 160, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Ebx, 164, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Edx, 168, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Ecx, 172, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Eax, 176, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Ebp, 180, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Eip, 184, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegCs, 188, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, EFlags, 192, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, Esp, 196, 4, 4);
-    TEST_FIELD(CONTEXT86, DWORD, SegSs, 200, 4, 4);
-    TEST_FIELD(CONTEXT86, BYTE[MAXIMUM_SUPPORTED_EXTENSION], ExtendedRegisters, 204, 512, 1);
-}
-
 static void test_pack_DWORDLONG(void)
 {
     /* DWORDLONG */
@@ -1050,12 +1019,6 @@ static void test_pack_PCWSTR(void)
     /* PCWSTR */
     TEST_TYPE(PCWSTR, 4, 4);
     TEST_TYPE_POINTER(PCWSTR, 2, 2);
-}
-
-static void test_pack_PEXCEPTION_HANDLER(void)
-{
-    /* PEXCEPTION_HANDLER */
-    TEST_TYPE(PEXCEPTION_HANDLER, 4, 4);
 }
 
 static void test_pack_PEXCEPTION_POINTERS(void)
@@ -2099,7 +2062,6 @@ static void test_pack(void)
     test_pack_CCHAR();
     test_pack_CHAR();
     test_pack_COLORREF();
-    test_pack_CONTEXT86();
     test_pack_DWORD();
     test_pack_DWORD32();
     test_pack_DWORD64();
@@ -2195,7 +2157,6 @@ static void test_pack(void)
     test_pack_PCTSTR();
     test_pack_PCWCH();
     test_pack_PCWSTR();
-    test_pack_PEXCEPTION_HANDLER();
     test_pack_PEXCEPTION_POINTERS();
     test_pack_PEXCEPTION_RECORD();
     test_pack_PFLOATING_SAVE_AREA();

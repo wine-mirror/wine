@@ -964,14 +964,6 @@ static void test_pack_STARTUPINFOW(void)
     TEST_FIELD(STARTUPINFOW, HANDLE, hStdError, 64, 4, 4);
 }
 
-static void test_pack_SYSLEVEL(void)
-{
-    /* SYSLEVEL (pack 4) */
-    TEST_TYPE(SYSLEVEL, 28, 4);
-    TEST_FIELD(SYSLEVEL, CRITICAL_SECTION, crst, 0, 24, 4);
-    TEST_FIELD(SYSLEVEL, INT, level, 24, 4, 4);
-}
-
 static void test_pack_SYSTEMTIME(void)
 {
     /* SYSTEMTIME (pack 4) */
@@ -1170,7 +1162,6 @@ static void test_pack(void)
     test_pack_SECURITY_ATTRIBUTES();
     test_pack_STARTUPINFOA();
     test_pack_STARTUPINFOW();
-    test_pack_SYSLEVEL();
     test_pack_SYSTEMTIME();
     test_pack_SYSTEM_POWER_STATUS();
     test_pack_TIME_ZONE_INFORMATION();

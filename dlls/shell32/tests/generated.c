@@ -399,12 +399,6 @@ static void test_pack_WORD_SIZEDARR(void)
     TEST_FIELD(WORD_SIZEDARR, unsigned short *, pData, 4, 4, 4);
 }
 
-static void test_pack__VARIANT_BOOL(void)
-{
-    /* _VARIANT_BOOL */
-    TEST_TYPE(_VARIANT_BOOL, 2, 2);
-}
-
 static void test_pack_remoteMETAFILEPICT(void)
 {
     /* remoteMETAFILEPICT (pack 4) */
@@ -413,15 +407,6 @@ static void test_pack_remoteMETAFILEPICT(void)
     TEST_FIELD(remoteMETAFILEPICT, long, xExt, 4, 4, 4);
     TEST_FIELD(remoteMETAFILEPICT, long, yExt, 8, 4, 4);
     TEST_FIELD(remoteMETAFILEPICT, userHMETAFILE *, hMF, 12, 4, 4);
-}
-
-static void test_pack_rpcLOGPALETTE(void)
-{
-    /* rpcLOGPALETTE (pack 4) */
-    TEST_TYPE(rpcLOGPALETTE, 8, 2);
-    TEST_FIELD(rpcLOGPALETTE, WORD, palVersion, 0, 2, 2);
-    TEST_FIELD(rpcLOGPALETTE, WORD, palNumEntries, 2, 2, 2);
-    TEST_FIELD(rpcLOGPALETTE, PALETTEENTRY[1], palPalEntry, 4, 4, 1);
 }
 
 static void test_pack_userBITMAP(void)
@@ -1131,9 +1116,7 @@ static void test_pack(void)
     test_pack_VARIANT_BOOL();
     test_pack_VARTYPE();
     test_pack_WORD_SIZEDARR();
-    test_pack__VARIANT_BOOL();
     test_pack_remoteMETAFILEPICT();
-    test_pack_rpcLOGPALETTE();
     test_pack_userBITMAP();
     test_pack_userCLIPFORMAT();
     test_pack_userHBITMAP();
