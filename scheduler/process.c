@@ -541,7 +541,7 @@ static void start_process(void)
  */
 void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win16_exe_file )
 {
-    char error[100];
+    char error[100], *p;
     DWORD stack_size = 0;
 
     /* Initialize everything */
@@ -579,9 +579,6 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
 
     switch( MODULE_GetBinaryType( main_exe_file ))
     {
-    case BINARY_UNKNOWN:
-        MESSAGE( "%s: cannot determine executable type for '%s'\n", argv0, main_exe_name );
-        ExitProcess(1);
     case BINARY_PE_EXE:
         TRACE( "starting Win32 binary %s\n", debugstr_a(main_exe_name) );
         if ((current_process.module = PE_LoadImage( main_exe_file, main_exe_name, 0 ))) goto found;
@@ -590,6 +587,14 @@ void PROCESS_InitWine( int argc, char *argv[], LPSTR win16_exe_name, HANDLE *win
     case BINARY_PE_DLL:
         MESSAGE( "%s: '%s' is a DLL, not an executable\n", argv0, main_exe_name );
         ExitProcess(1);
+    case BINARY_UNKNOWN:
+        /* check for .com extension */
+        if (!(p = strrchr( main_exe_name, '.' )) || FILE_strcasecmp( p, ".com" ))
+        {
+            MESSAGE( "%s: cannot determine executable type for '%s'\n", argv0, main_exe_name );
+            ExitProcess(1);
+        }
+        /* fall through */
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting Win16/DOS binary %s\n", debugstr_a(main_exe_name) );
