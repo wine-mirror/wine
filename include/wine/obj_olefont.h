@@ -13,6 +13,8 @@
 /*****************************************************************************
  * Predeclare the interfaces
  */
+DEFINE_GUID(CLSID_StdFont, 0x0BE35203, 0x8F91, 0x11CE, 0x9D, 0xE3, 0x00, 0xAA, 0x00, 0x4B, 0xB8, 0x51);
+
 DEFINE_GUID(IID_IFont, 0xBEF6E002, 0xA874, 0x101A, 0x8B, 0xBA, 0x00, 0xAA, 0x00, 0x30, 0x0C, 0xAB);
 typedef struct IFont IFont,*LPFONT;
 
@@ -43,7 +45,6 @@ typedef TEXTMETRICW TEXTMETRICOLE;
   ICOM_METHOD1(HRESULT, get_Charset, short*, pcharset); \
   ICOM_METHOD1(HRESULT, put_Charset, short, charset); \
   ICOM_METHOD1(HRESULT, get_hFont, HFONT*, phfont); \
-  ICOM_METHOD1(HRESULT, put_hFont, HFONT, hfont); \
   ICOM_METHOD1(HRESULT, Clone, IFont**, ppfont); \
   ICOM_METHOD1(HRESULT, IsEqual, IFont*, pFontOther); \
   ICOM_METHOD2(HRESULT, SetRatio, long, cyLogical, long, cyHimetric); \
