@@ -442,6 +442,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 * iface, 
       szDrive[18];
     int len = 0;
     BOOL bSimplePidl;
+    HRESULT hr = S_OK;
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
@@ -461,7 +462,48 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 * iface, 
     } else if (_ILIsSpecialFolder (pidl)) {
 	/* take names of special folders only if its only this folder */
 	if (bSimplePidl) {
-	    _ILSimpleGetText (pidl, szPath, MAX_PATH);	/* append my own path */
+	    GUID const *clsid;
+
+	    if ((clsid = _ILGetGUIDPointer (pidl))) {
+		if (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING) {
+		    int bWantsForParsing;
+
+		    /*
+		     * we can only get a filesystem path from a shellfolder if the value WantsFORPARSING in
+		     * CLSID\\{...}\\shellfolder exists
+		     * exception: the MyComputer folder has this keys not but like any filesystem backed
+		     *            folder it needs these behaviour
+		     */
+		    /* get the "WantsFORPARSING" flag from the registry */
+		    char szRegPath[100];
+
+		    lstrcpyA (szRegPath, "CLSID\\");
+		    SHELL32_GUIDToStringA (clsid, &szRegPath[6]);
+		    lstrcatA (szRegPath, "\\shellfolder");
+		    bWantsForParsing =
+			(ERROR_SUCCESS ==
+			 SHGetValueA (HKEY_CLASSES_ROOT, szRegPath, "WantsFORPARSING", NULL, NULL, NULL));
+
+		    if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) && bWantsForParsing) {
+			/* we need the filesystem path to the destination folder. Only the folder itself can know it */
+			hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags, szPath, MAX_PATH);
+		    } else {
+			LPSTR p;
+
+			/* parsing name like ::{...} */
+			p = lstrcpyA(szPath, "::") + 2;
+			p += SHELL32_GUIDToStringA(&CLSID_MyComputer, p);
+
+			lstrcatA(p, "\\::");
+			p += 3;
+			SHELL32_GUIDToStringA(clsid, p);
+		    }
+		} else {
+		    /* user friendly name */
+		    HCR_GetClassNameA (clsid, szPath, MAX_PATH);
+		}
+	    } else
+		_ILSimpleGetText (pidl, szPath, MAX_PATH);	/* append my own path */
 	} else {
 	    FIXME ("special folder\n");
 	}
@@ -492,15 +534,16 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 * iface, 
 	PathAddBackslashA (szPath);
 	len = strlen (szPath);
 
-	if (!SUCCEEDED
-	    (SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags | SHGDN_INFOLDER, szPath + len, MAX_PATH - len)))
-	    return E_OUTOFMEMORY;
+	hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags | SHGDN_INFOLDER, szPath + len, MAX_PATH - len);
     }
-    strRet->uType = STRRET_CSTR;
-    lstrcpynA (strRet->u.cStr, szPath, MAX_PATH);
+
+    if (SUCCEEDED (hr)) {
+	strRet->uType = STRRET_CSTR;
+	lstrcpynA (strRet->u.cStr, szPath, MAX_PATH);
+    }
 
     TRACE ("-- (%p)->(%s)\n", This, szPath);
-    return S_OK;
+    return hr;
 }
 
 /**************************************************************************
