@@ -20,7 +20,7 @@
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(icon)
+DEFAULT_DEBUG_CHANNEL(icon);
 
 #include "pshpack1.h"
 
@@ -59,6 +59,47 @@ static void dumpIcoDir ( LPicoICONDIR entry )
 	TRACE("type = 0x%08x count = 0x%08x\n", entry->idType, entry->idCount);
 }
 #endif
+
+/**********************************************************************
+ *  find_entry_by_id
+ *
+ * Find an entry by id in a resource directory
+ * Copied from loader/pe_resource.c (FIXME: should use exported resource functions)
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                         WORD id, const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int min, max, pos;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    min = dir->NumberOfNamedEntries;
+    max = min + dir->NumberOfIdEntries - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        if (entry[pos].u1.Id == id)
+            return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s.OffsetToDirectory);
+        if (entry[pos].u1.Id > id) max = pos - 1;
+        else min = pos + 1;
+    }
+    return NULL;
+}
+
+/**********************************************************************
+ *  find_entry_default
+ *
+ * Find a default entry in a resource directory
+ * Copied from loader/pe_resource.c (FIXME: should use exported resource functions)
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                           const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry->u2.s.OffsetToDirectory);
+}
+
 /*************************************************************************
  *				USER32_GetResourceTable
  */
@@ -348,7 +389,7 @@ static HRESULT ICO_ExtractIconExW(
 	  }
 
 	  /* search for the group icon directory */
-	  if (!(icongroupresdir = GetResDirEntryW(rootresdir, RT_GROUP_ICONW, rootresdir, FALSE))) 
+	  if (!(icongroupresdir = find_entry_by_id(rootresdir, LOWORD(RT_GROUP_ICONW), rootresdir))) 
 	  {
 	    WARN("No Icongroupresourcedirectory!\n");
 	    goto end;		/* failure */
@@ -410,7 +451,7 @@ static HRESULT ICO_ExtractIconExW(
 	    resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
 
 	    /* default language (0) */
-	    resdir = GetResDirEntryW(resdir,(LPWSTR)0,rootresdir,TRUE);
+	    resdir = find_entry_default(resdir,rootresdir);
 	    igdataent = (PIMAGE_RESOURCE_DATA_ENTRY)resdir;
 
 	    /* lookup address in mapped image for virtual address */
@@ -438,7 +479,7 @@ static HRESULT ICO_ExtractIconExW(
 	    RetPtr[i] = (HICON)LookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
-	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,rootresdir,FALSE))) 
+	  if (!(iconresdir=find_entry_by_id(rootresdir,LOWORD(RT_ICONW),rootresdir)))
 	  {
 	    WARN("No Iconresourcedirectory!\n");
 	    goto end;		/* failure */
@@ -447,8 +488,8 @@ static HRESULT ICO_ExtractIconExW(
 	  for (i=0; i<nIcons; i++) 
 	  {
               const IMAGE_RESOURCE_DIRECTORY *xresdir;
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)(DWORD)RetPtr[i],rootresdir,FALSE);
-	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,rootresdir,TRUE);
+              xresdir = find_entry_by_id(iconresdir,RetPtr[i],rootresdir);
+              xresdir = find_entry_default(xresdir,rootresdir);
 	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	    idata = NULL;
 
