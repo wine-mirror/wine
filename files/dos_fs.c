@@ -2183,11 +2183,28 @@ DWORD WINAPI QueryDosDeviceA(LPCSTR devname,LPSTR target,DWORD bufsize)
         memcpy( target, devices, min(bufsize,sizeof(devices)) );
         return min(bufsize,sizeof(devices));
     }
-    strcpy(buffer,"\\DEV\\");
-    strcat(buffer,devname);
-    if ((s=strchr(buffer,':'))) *s='\0';
-    lstrcpynA(target,buffer,bufsize);
-    return strlen(buffer)+1;
+    /* In theory all that are possible and have been defined.
+     * Now just those below, since mirc uses it to check for special files.
+     *
+     * (It is more complex, and supports netmounted stuff, and \\.\ stuff, 
+     *  but currently we just ignore that.)
+     */
+#define CHECK(x) (strstr(devname,#x)==devname)
+    if (CHECK(con) || CHECK(com) || CHECK(lpt) || CHECK(nul)) {
+	strcpy(buffer,"\\DEV\\");
+	strcat(buffer,devname);
+	if ((s=strchr(buffer,':'))) *s='\0';
+	lstrcpynA(target,buffer,bufsize);
+	return strlen(buffer)+1;
+    } else {
+	if (strchr(devname,':') || devname[0]=='\\') {
+	    /* This might be a DOS device we do not handle yet ... */
+	    FIXME("(%s) not detected as DOS device!\n",devname);
+	}
+	SetLastError(ERROR_DEV_NOT_EXIST);
+	return 0;
+    }
+
 }
 
 
