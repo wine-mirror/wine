@@ -89,9 +89,10 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     IMAGE_SECTION_HEADER *sec;
     IMAGE_EXPORT_DIRECTORY *exp;
     IMAGE_IMPORT_DESCRIPTOR *imp;
+    const BUILTIN32_RESOURCE *rsrc = descr->rsrc;
     LPVOID *funcs;
     LPSTR *names;
-    LPSTR pfwd;
+    LPSTR pfwd, rtab;
     DEBUG_ENTRY_POINT *debug;
     INT i, size, nb_sections;
     BYTE *addr;
@@ -112,6 +113,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     if (WARN_ON(relay) || TRACE_ON(relay))
         size += descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
+    if (rsrc) size += rsrc->restabsize;
     addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
     if (!addr) return 0;
     dos   = (IMAGE_DOS_HEADER *)addr;
@@ -122,7 +124,8 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     funcs = (LPVOID *)(exp + 1);
     names = (LPSTR *)(funcs + descr->nb_funcs);
     pfwd  = (LPSTR)(names + descr->nb_names);
-    debug = (DEBUG_ENTRY_POINT *)(pfwd + descr->fwd_size);
+    rtab  = pfwd + descr->fwd_size;
+    debug = (DEBUG_ENTRY_POINT *)(rtab + (rsrc ? rsrc->restabsize : 0));
 
     /* Build the DOS and NT headers */
 
@@ -219,20 +222,10 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     sec++;
 
     /* Build the resource directory */
-    if(descr->rsrc)
-    {
-	const BUILTIN32_RESOURCE *rsrc = descr->rsrc;
-	int i;
-	void *rtab;
-	IMAGE_RESOURCE_DATA_ENTRY *rdep;
 
-	rtab = HeapAlloc(GetProcessHeap(), 0, rsrc->restabsize);
-	if(!rtab)
-	{
-		ERR("Failed to get memory for resource directory\n");
-		VirtualFree(addr, size, MEM_RELEASE);
-		return 0;
-	}
+    if (rsrc)
+    {
+	IMAGE_RESOURCE_DATA_ENTRY *rdep;
 
 	/*
 	 * The resource directory has to be copied because it contains
@@ -241,7 +234,7 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
 	memcpy(rtab, rsrc->restab, rsrc->restabsize);
 
 	dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
-	dir->VirtualAddress = (DWORD)rtab - (DWORD)addr;
+	dir->VirtualAddress = (BYTE *)rtab - addr;
 	dir->Size = rsrc->restabsize;
 	rdep = (IMAGE_RESOURCE_DATA_ENTRY *)((DWORD)rtab + (DWORD)rsrc->entries - (DWORD)rsrc->restab);
 	for(i = 0; i < rsrc->nresources; i++)
