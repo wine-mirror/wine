@@ -56,7 +56,7 @@ struct lzstate {
 static struct lzstate *lzstates[MAX_LZSTATES];
 
 #define IS_LZ_HANDLE(h) (((h) >= 0x400) && ((h) < 0x400+MAX_LZSTATES))
-#define GET_LZ_STATE(h) (IS_LZ_HANDLE(h) ? lzstates[(h)] : NULL)
+#define GET_LZ_STATE(h) (IS_LZ_HANDLE(h) ? lzstates[(h)-0x400] : NULL)
 
 /* reads one compressed byte, including buffering */
 #define GET(lzs,b)	_lzget(lzs,&b)
