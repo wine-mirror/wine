@@ -20,7 +20,7 @@ all: libwine.$(LIBEXT)
 @MAKE_RULES@
 
 libwine.so.$(SOVERSION): $(OBJS)
-	$(LDSHARED) $(OBJS) -o $@
+	$(LDSHARED) $(OBJS) $(LIBS) -o $@
 
 libwine.so: libwine.so.$(SOVERSION)
 	$(RM) $@ && $(LN_S) libwine.so.$(SOVERSION) $@
