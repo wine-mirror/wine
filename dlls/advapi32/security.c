@@ -14,6 +14,20 @@
 DECLARE_DEBUG_CHANNEL(advapi)
 DECLARE_DEBUG_CHANNEL(security)
 
+
+static BOOL Wine_HasSecurity(void)
+{
+    OSVERSIONINFOA osi;
+    osi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA); 
+    GetVersionExA(&osi);
+    if (osi.dwPlatformId != VER_PLATFORM_WIN32_NT) { 
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+        return FALSE;
+    }
+    return TRUE;
+}  
+
+
 #define CallWin32ToNt(func) \
 	{ NTSTATUS ret; \
 	  ret = (func); \
@@ -42,6 +56,7 @@ BOOL WINAPI
 OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess, 
                   HANDLE *TokenHandle )
 {
+        if (!Wine_HasSecurity()) return FALSE;
 	CallWin32ToNt(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
 }
 
@@ -58,6 +73,7 @@ BOOL WINAPI
 OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess, 
 		 BOOL OpenAsSelf, HANDLE *TokenHandle)
 {
+        if (!Wine_HasSecurity()) return FALSE;
 	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
 }
 
