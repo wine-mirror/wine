@@ -572,42 +572,65 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 					  DWORD dwLightState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
-
+    
     TRACE("(%p/%p)->(%08x,%08lx)\n", This, iface, dwLightStateType, dwLightState);
 
-    switch (dwLightStateType) {
-        case D3DLIGHTSTATE_MATERIAL: {  /* 1 */
-	    IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) dwLightState;
+    if (!dwLightStateType && (dwLightStateType > D3DLIGHTSTATE_COLORVERTEX))
+	TRACE("Unexpected Light State Type\n");
+	return DDERR_INVALIDPARAMS;
+	
+    if (dwLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */) {
+	IDirect3DMaterialImpl *mat = (IDirect3DMaterialImpl *) dwLightState;
 
-	    if (mat != NULL) {
-	        ENTER_GL();
-		mat->activate(mat);
-		LEAVE_GL();
-	    } else {
-	        ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
-	    }
-	} break;
+	if (mat != NULL) {
+	    ENTER_GL();
+	    mat->activate(mat);
+	    LEAVE_GL();
+	} else {
+	    ERR(" D3DLIGHTSTATE_MATERIAL called with NULL material !!!\n");
+	}
+    } else if (dwLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */) {
+	switch (dwLightState) {
+	    case D3DCOLOR_MONO:
+	       ERR("DDCOLOR_MONO should not happend!\n");
+	       break;
+	    case D3DCOLOR_RGB:
+	       /* We are already in this mode */
+	       break;
+	    default:
+	       ERR("Unknown color model!\n");
+	       break;
+	}
+    } else {
+        D3DRENDERSTATETYPE rs;
+	switch (dwLightStateType) {
 
-	case D3DLIGHTSTATE_AMBIENT:     /* 2 */
-	    IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
-					    D3DRENDERSTATE_AMBIENT,
-					    dwLightState);
-	    break;
+	    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
+		rs = D3DRENDERSTATE_AMBIENT;
+		break;		
+	    case D3DLIGHTSTATE_FOGMODE:       /* 4 */
+		rs = D3DRENDERSTATE_FOGVERTEXMODE;
+		break;
+	    case D3DLIGHTSTATE_FOGSTART:      /* 5 */
+		rs = D3DRENDERSTATE_FOGSTART;
+		break;
+	    case D3DLIGHTSTATE_FOGEND:        /* 6 */
+		rs = D3DRENDERSTATE_FOGEND;
+		break;
+	    case D3DLIGHTSTATE_FOGDENSITY:    /* 7 */
+		rs = D3DRENDERSTATE_FOGDENSITY;
+		break;
+	    case D3DLIGHTSTATE_COLORVERTEX:   /* 8 */
+		rs = D3DRENDERSTATE_COLORVERTEX;
+		break;
+	    default:
+		break;
+	}
 
-#define UNSUP(x) case D3DLIGHTSTATE_##x: FIXME("unsupported D3DLIGHTSTATE_" #x "!\n");break;
-	UNSUP(COLORMODEL);
-	UNSUP(FOGMODE);
-	UNSUP(FOGSTART);
-	UNSUP(FOGEND);
-	UNSUP(FOGDENSITY);
-	UNSUP(COLORVERTEX);
-#undef UNSUP
-
-	default:
-	    TRACE("Unexpected Light State Type\n");
-	    return DDERR_INVALIDPARAMS;
+	IDirect3DDevice7_SetRenderState(ICOM_INTERFACE(This, IDirect3DDevice7),
+	                   		rs,dwLightState);
     }
-    
+
     return DD_OK;
 }
 
