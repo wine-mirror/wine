@@ -4241,10 +4241,33 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	    return hres;
 
 	case TKIND_INTERFACE:
-	    FIXME("TKIND_INTERFACE unhandled.\n");
+	    if (V_VT(arg) == VT_DISPATCH) {
+		IDispatch *disp;
+		if (IsEqualIID(&IID_IDispatch,&(tattr->guid))) {
+		    memcpy(argpos, &V_UNION(arg,pdispVal), 4);
+		    return S_OK;
+		}
+		hres=IUnknown_QueryInterface(V_UNION(arg,pdispVal),&IID_IDispatch,(LPVOID*)&disp);
+		if (SUCCEEDED(hres)) {
+		    memcpy(argpos,&disp,4);
+		    IUnknown_Release(V_UNION(arg,pdispVal));
+		    return S_OK;
+		}
+		FIXME("Failed to query IDispatch interface from %s while converting to VT_DISPATCH!\n",debugstr_guid(&(tattr->guid)));
+		return E_FAIL;
+	    }
+	    if (V_VT(arg) == VT_UNKNOWN) {
+		memcpy(argpos, &V_UNION(arg,punkVal), 4);
+		return S_OK;
+	    }
+	    FIXME("vt 0x%x -> TKIND_INTERFACE(%s) unhandled\n",V_VT(arg),debugstr_guid(&(tattr->guid)));
 	    break;
 	case TKIND_DISPATCH:
-	    FIXME("TKIND_DISPATCH unhandled.\n");
+	    if (V_VT(arg) == VT_DISPATCH) {
+		memcpy(argpos, &V_UNION(arg,pdispVal), 4);
+		return S_OK;
+	    }
+	    FIXME("TKIND_DISPATCH unhandled for target vt 0x%x.\n",V_VT(arg));
 	    break;
 	case TKIND_RECORD:
 	    FIXME("TKIND_RECORD unhandled.\n");
