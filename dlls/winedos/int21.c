@@ -3889,7 +3889,8 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
 {
     BYTE *fcb = (BYTE *)CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
     FINDFILE_FCB *pFCB;
-    DOS_DIRENTRY_LAYOUT *pResult = (DOS_DIRENTRY_LAYOUT *)INT21_GetCurrentDTA(context);
+    LPBYTE pResult = INT21_GetCurrentDTA(context);
+    DOS_DIRENTRY_LAYOUT *ddl;
     WIN32_FIND_DATAW entry;
     BYTE attr;
     int n;
@@ -3920,26 +3921,25 @@ static int INT21_FindNextFCB( CONTEXT86 *context )
     if (*fcb == 0xff)
     {
         /* place extended FCB header before pResult if called with extended FCB */
-	*(BYTE *)pResult = 0xff;
-	(BYTE *)pResult +=6; /* leave reserved field behind */
-	*(BYTE *)pResult = entry.dwFileAttributes;
-	((BYTE *)pResult)++;
+	*pResult = 0xff;
+	 pResult += 6; /* leave reserved field behind */
+	*pResult++ = entry.dwFileAttributes;
     }
-    *(BYTE *)pResult = INT21_MapDrive( pFCB->drive ); /* DOS_DIRENTRY_LAYOUT after current drive number */
-    ((BYTE *)pResult)++;
-    pResult->fileattr = entry.dwFileAttributes;
-    pResult->cluster  = 0;  /* what else? */
-    pResult->filesize = entry.nFileSizeLow;
-    memset( pResult->reserved, 0, sizeof(pResult->reserved) );
+    *pResult++ = INT21_MapDrive( pFCB->drive ); /* DOS_DIRENTRY_LAYOUT after current drive number */
+    ddl = (DOS_DIRENTRY_LAYOUT*)pResult;
+    ddl->fileattr = entry.dwFileAttributes;
+    ddl->cluster  = 0;  /* what else? */
+    ddl->filesize = entry.nFileSizeLow;
+    memset( ddl->reserved, 0, sizeof(ddl->reserved) );
     FileTimeToDosDateTime( &entry.ftLastWriteTime,
-                           &pResult->filedate, &pResult->filetime );
+                           &ddl->filedate, &ddl->filetime );
 
     /* Convert file name to FCB format */
     if (entry.cAlternateFileName[0])
         INT21_ToDosFCBFormat( entry.cAlternateFileName, nameW );
     else
         INT21_ToDosFCBFormat( entry.cFileName, nameW );
-    WideCharToMultiByte(CP_OEMCP, 0, nameW, 11, pResult->filename, 11, NULL, NULL);
+    WideCharToMultiByte(CP_OEMCP, 0, nameW, 11, ddl->filename, 11, NULL, NULL);
     return 1;
 }
 
