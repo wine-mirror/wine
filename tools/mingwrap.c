@@ -112,6 +112,7 @@ int main(int argc, char **argv)
     if (linking)
     {
 	gcc_argv[i++] = BINDIR "/winewrap";
+	if (gui_app) gcc_argv[i++] = "-mgui";
     }
     else
     {
