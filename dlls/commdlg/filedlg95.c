@@ -792,6 +792,58 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
     return TRUE;
 }
 
+HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPSTR buffer)
+{
+    UINT sizeUsed = 0, n, total;
+    LPWSTR lpstrFileList = NULL;
+    WCHAR lpstrCurrentDir[MAX_PATH];
+    FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+
+    TRACE("CDM_GETFILEPATH:\n");
+
+    if ( ! (fodInfos->ofnInfos->Flags & OFN_EXPLORER ) )
+        return -1;
+
+    /* get path and filenames */
+    SHGetPathFromIDListW(fodInfos->ShellInfos.pidlAbsCurrent,lpstrCurrentDir);
+    n = FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed);
+
+    TRACE("path >%s< filespec >%s< %d files\n",
+         debugstr_w(lpstrCurrentDir),debugstr_w(lpstrFileList),n);
+
+    total = WideCharToMultiByte(CP_ACP, 0, lpstrCurrentDir, -1, 
+                                NULL, 0, NULL, NULL);
+    total += WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed, 
+                                NULL, 0, NULL, NULL);
+
+    /* Prepend the current path */
+    n = WideCharToMultiByte(CP_ACP, 0, lpstrCurrentDir, -1, 
+                            buffer, size, NULL, NULL);
+
+    if(n<size)
+        WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed, 
+                           &buffer[n], size-n, NULL, NULL);
+    MemFree(lpstrFileList);
+
+    TRACE("returned -> %s\n",debugstr_a(buffer));
+
+    return total;
+}
+
+HRESULT FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPSTR buffer)
+{
+    UINT sizeUsed = 0;
+    LPWSTR lpstrFileList = NULL;
+
+    TRACE("CDM_GETSPEC:\n");
+
+    FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed);
+    WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed, buffer, size, NULL, NULL);
+    MemFree(lpstrFileList);
+
+    return sizeUsed;
+}
+
 /***********************************************************************
 *         FILEDLG95_HandleCustomDialogMessages
 *
@@ -799,8 +851,6 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 */
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    LPSTR lpstrFileSpec;
-    int reqSize;
     char lpstrPath[MAX_PATH];
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
     if(!fodInfos) return -1;
@@ -808,39 +858,20 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
     switch(uMsg)
     {
         case CDM_GETFILEPATH:
-            GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrPath, sizeof(lpstrPath));
-            lpstrFileSpec = (LPSTR)PathFindFileNameA(lpstrPath);
-            if (lpstrFileSpec==lpstrPath)
-	    {
-                char lpstrCurrentDir[MAX_PATH];
-                /* Prepend the current path */
-                SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrCurrentDir);
-                if ((LPSTR)lParam!=NULL)
-                    snprintf((LPSTR)lParam,(int)wParam,"%s\\%s",lpstrCurrentDir,lpstrPath);
-                reqSize=strlen(lpstrCurrentDir)+1+strlen(lpstrPath)+1;
-            }
-	    else
-	    {
-                lstrcpynA((LPSTR)lParam,(LPSTR)lpstrPath,(int)wParam);
-                reqSize=strlen(lpstrPath);
-            }
-            /* return the required buffer size */
-            return reqSize;
+            return FILEDLG95_Handle_GetFilePath(hwnd, (UINT)wParam, (LPSTR)lParam);
 
         case CDM_GETFOLDERPATH:
+            TRACE("CDM_GETFOLDERPATH:\n");
 	    SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
             if ((LPSTR)lParam!=NULL)
                 lstrcpynA((LPSTR)lParam,lpstrPath,(int)wParam);
             return strlen(lpstrPath);
 
         case CDM_GETSPEC:
-	    reqSize=GetDlgItemTextA(hwnd,IDC_FILENAME,lpstrPath, sizeof(lpstrPath));
-            lpstrFileSpec = (LPSTR)PathFindFileNameA(lpstrPath);
-            if ((LPSTR)lParam!=NULL)
-                lstrcpynA((LPSTR)lParam, lpstrFileSpec, (int)wParam);
-            return strlen(lpstrFileSpec);
+            return FILEDLG95_Handle_GetFileSpec(hwnd, (UINT)wParam, (LPSTR)lParam);
 
         case CDM_SETCONTROLTEXT:
+            TRACE("CDM_SETCONTROLTEXT:\n");
 	    if ( 0 != lParam )
 	        SetDlgItemTextA( hwnd, (UINT) wParam, (LPSTR) lParam );
 	    return TRUE;
@@ -1384,6 +1415,37 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd)
 
 
 /***********************************************************************
+ *      FILEDLG95_SendFileOK
+ *
+ * Sends the CDN_FILEOK notification if required
+ *
+ * RETURNS
+ *  TRUE if the dialog should close
+ *  FALSE if the dialog should not be closed
+ */
+static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
+{
+    /* ask the hook if we can close */
+    if(IsHooked(fodInfos))
+    {
+        TRACE("---\n");
+        /* First send CDN_FILEOK as MSDN doc says */
+        SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+
+        /* fodInfos->ofnInfos points to an ASCII or UNICODE structure as appropriate */
+        CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,
+                            fodInfos->DlgInfos.hwndCustomDlg,
+                            fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
+        if (GetWindowLongA(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
+        {
+            TRACE("canceled\n");
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *      FILEDLG95_OnOpenMultipleFiles
  *
  * Handles the opening of multiple files.
@@ -1482,6 +1544,9 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
 
   fodInfos->ofnInfos->nFileOffset = nSizePath + 1;
   fodInfos->ofnInfos->nFileExtension = 0;
+
+  if ( !FILEDLG95_SendFileOK(hwnd, fodInfos) )
+    return FALSE;
 
   /* clean and exit */
   FILEDLG95_Clean(hwnd);
@@ -1837,24 +1902,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             }
 	  }
 
-          /* ask the hook if we can close */
-          if(IsHooked(fodInfos))
-	  {
-	    TRACE("---\n");
-            /* First send CDN_FILEOK as MSDN doc says */
-            SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
-
-	    /* FIXME we are sending ASCII-structures. Does not work with NT */
-            CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,
-                            fodInfos->DlgInfos.hwndCustomDlg,
-                            fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
-            if (GetWindowLongA(fodInfos->DlgInfos.hwndCustomDlg, DWL_MSGRESULT))
-	    {
-	      TRACE("canceled\n");
-	      ret = FALSE;
+          if ( !FILEDLG95_SendFileOK(hwnd, fodInfos) )
 	      goto ret;
-	    }
-	  }
 
           TRACE("close\n");
 	  FILEDLG95_Clean(hwnd);
