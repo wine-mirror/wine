@@ -138,9 +138,9 @@ BOOL32 WINAPI MAIN_KernelInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvR
         SET_ENTRY_POINT( 195, 0xc0000 );  /* KERNEL.195: __C000H */
         SET_ENTRY_POINT( 179, 0xd0000 );  /* KERNEL.179: __D000H */
         SET_ENTRY_POINT( 190, 0xe0000 );  /* KERNEL.190: __E000H */
-        SET_ENTRY_POINT( 173, 0xf0000 );  /* KERNEL.173: __ROMBIOS */
-        SET_ENTRY_POINT( 194, 0xf0000 );  /* KERNEL.194: __F000H */
-        NE_SetEntryPoint( hModule, 193, DOSMEM_BiosSeg ); /* KERNEL.193: __0040H */
+        NE_SetEntryPoint( hModule, 173, DOSMEM_BiosSysSeg );  /* KERNEL.173: __ROMBIOS */
+        NE_SetEntryPoint( hModule, 193, DOSMEM_BiosDataSeg ); /* KERNEL.193: __0040H */
+        NE_SetEntryPoint( hModule, 194, DOSMEM_BiosSysSeg );  /* KERNEL.194: __F000H */
 #undef SET_ENTRY_POINT
     }
 

@@ -18,7 +18,8 @@
 #include "task.h"
 #include "debug.h"
 
-HANDLE16 DOSMEM_BiosSeg;  /* BIOS data segment at 0x40:0 */
+HANDLE16 DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
+HANDLE16 DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
 
 #pragma pack(1)
 
@@ -199,13 +200,16 @@ static void DOSMEM_InitDPMI(void)
 }
 
 /***********************************************************************
- *           DOSMEM_FillBiosSegment
+ *           DOSMEM_FillBiosSegments
  *
  * Fill the BIOS data segment with dummy values.
  */
-static void DOSMEM_FillBiosSegment(void)
+static void DOSMEM_FillBiosSegments(void)
 {
-    pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosSeg );
+    BYTE *pBiosSys = (BYTE *)GlobalLock16( DOSMEM_BiosSysSeg );
+    BYTE *pBiosROMTable = pBiosSys+0xe6f5;
+
+    pBiosData = (BIOSDATA *)GlobalLock16( DOSMEM_BiosDataSeg );
 
       /* Clear all unused values */
     memset( pBiosData, 0, sizeof(*pBiosData) );
@@ -229,6 +233,23 @@ static void DOSMEM_FillBiosSegment(void)
     pBiosData->NbHardDisks          = 2;
     pBiosData->KbdBufferStart       = 0x1e;
     pBiosData->KbdBufferEnd         = 0x3e;
+
+    /* fill ROM configuration table (values from Award) */
+    *(WORD *)(pBiosROMTable)= 0x08; /* number of bytes following */
+    *(pBiosROMTable+0x2)	= 0xfc; /* model */
+    *(pBiosROMTable+0x3)	= 0x01; /* submodel */
+    *(pBiosROMTable+0x4)	= 0x00; /* BIOS revision */
+    *(pBiosROMTable+0x5)	= 0x74; /* feature byte 1 */
+    *(pBiosROMTable+0x6)	= 0x00; /* feature byte 2 */
+    *(pBiosROMTable+0x7)	= 0x00; /* feature byte 3 */
+    *(pBiosROMTable+0x8)	= 0x00; /* feature byte 4 */
+    *(pBiosROMTable+0x9)	= 0x00; /* feature byte 5 */
+
+    /* BIOS date string */
+    strcpy((char *)pBiosSys+0xfff5, "13/01/99");
+
+    /* BIOS ID */
+    *(pBiosSys+0xfffe) = 0xfc;
 }
 
 /***********************************************************************
@@ -353,10 +374,12 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
             WARN(dosmem, "Could not allocate DOS memory.\n" );
             return FALSE;
         }
-        DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
-                                        0, FALSE, FALSE, FALSE, NULL );
+        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,
+                                     0x100, 0, FALSE, FALSE, FALSE, NULL );
+        DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
+                                     0x10000, 0, FALSE, FALSE, FALSE, NULL );
         DOSMEM_FillIsrTable(0);
-        DOSMEM_FillBiosSegment();
+        DOSMEM_FillBiosSegments();
         DOSMEM_InitMemory(0);
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();

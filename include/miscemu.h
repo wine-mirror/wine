@@ -15,7 +15,9 @@
 extern int DOSCONF_ReadConfig(void);
 
 /* msdos/dosmem.c */
-extern HANDLE16 DOSMEM_BiosSeg;
+extern HANDLE16 DOSMEM_BiosDataSeg;
+extern HANDLE16 DOSMEM_BiosSysSeg;
+
 extern DWORD DOSMEM_CollateTable;
 
 extern DWORD DOSMEM_ErrorCall;
