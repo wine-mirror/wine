@@ -3270,8 +3270,8 @@ static void test_VarDateFromStr(void)
   /* If the numbers can't be day/month, they are assumed to be year/month */
   DFS("30 2");   EXPECT_DBL(10990.0);
   DFS("2 30");   EXPECT_DBL(10990.0);
-  DFS("32 49");  EXPECT_MISMATCH; /* Cant be any format */
-  DFS("0 49");   EXPECT_MISMATCH; /* Cant be any format */
+  DFS("32 49");  EXPECT_MISMATCH; /* Can't be any format */
+  DFS("0 49");   EXPECT_MISMATCH; /* Can't be any format */
   /* If a month name is given the other number is the day */
   DFS("Jan 2");  MKRELDATE(2,1); EXPECT_DBL(relative);
   DFS("2 Jan");  EXPECT_DBL(relative);

@@ -2516,13 +2516,13 @@ REBAR_HandleLRDrag (REBAR_INFO *infoPtr, POINTS *ptsmove)
 
 	}
     }
-    if (RHeaderSum) RHeaderSum -= SEP_WIDTH; /* no separator afterlast band */
+    if (RHeaderSum) RHeaderSum -= SEP_WIDTH; /* no separator after last band */
 
     mindBand = &infoPtr->bands[imindBand];
     maxdBand = &infoPtr->bands[imaxdBand];
 
-    if (imindBand == imaxdBand) return; /* nothing to drag agains */
-    if (imindBand == ihitBand) return; /* first band in row, cant drag */
+    if (imindBand == imaxdBand) return; /* nothing to drag against */
+    if (imindBand == ihitBand) return; /* first band in row, can't drag */
 
     /* limit movement to inside adjustable bands - Left */
     if ( (ptsmove->x < mindBand->rcBand.left) ||

@@ -1962,8 +1962,9 @@ DWORD WINAPI SHGetCurColorRes()
  *  dwTimeout [I] Timeout in ticks or INFINITE to never timeout
  *
  * RETURNS
- *  STATUS_TIMEOUT if no message is recieved before dwTimeout ticks passes.
- *  Otherwise returns value from MsgWaitForMultipleObjectsEx when a message is available.
+ *  STATUS_TIMEOUT if no message is received before dwTimeout ticks passes.
+ *  Otherwise returns the value from MsgWaitForMultipleObjectsEx when a
+ *  message is available.
  */
 DWORD WINAPI SHWaitForSendMessageThread(HANDLE hand, DWORD dwTimeout)
 {

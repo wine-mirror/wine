@@ -3848,7 +3848,7 @@ HRESULT WINAPI VarCyRound(const CY cyIn, int cDecimals, CY* pCyOut)
  * RETURNS
  *  Success: VARCMP_LT, VARCMP_EQ or VARCMP_GT indicating that the value to
  *           compare is less, equal or greater than source respectively.
- *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparason
+ *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
 HRESULT WINAPI VarCyCmp(const CY cyLeft, const CY cyRight)
 {
@@ -3882,7 +3882,7 @@ HRESULT WINAPI VarCyCmp(const CY cyLeft, const CY cyRight)
  * RETURNS
  *  Success: VARCMP_LT, VARCMP_EQ or VARCMP_GT indicating that dblRight is
  *           less than, equal to or greater than cyLeft respectively.
- *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparason
+ *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
 HRESULT WINAPI VarCyCmpR8(const CY cyLeft, double dblRight)
 {
@@ -4677,7 +4677,7 @@ HRESULT WINAPI VarDecRound(const DECIMAL* pDecIn, int cDecimals, DECIMAL* pDecOu
  * RETURNS
  *  Success: VARCMP_LT, VARCMP_EQ or VARCMP_GT indicating that pDecLeft
  *           is less than, equal to or greater than pDecRight respectively.
- *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparason
+ *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
 HRESULT WINAPI VarDecCmp(const DECIMAL* pDecLeft, const DECIMAL* pDecRight)
 {
@@ -4713,7 +4713,7 @@ HRESULT WINAPI VarDecCmp(const DECIMAL* pDecLeft, const DECIMAL* pDecRight)
  * RETURNS
  *  Success: VARCMP_LT, VARCMP_EQ or VARCMP_GT indicating that dblRight
  *           is less than, equal to or greater than pDecLeft respectively.
- *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparason
+ *  Failure: DISP_E_OVERFLOW, if overflow occurs during the comparison
  */
 HRESULT WINAPI VarDecCmpR8(const DECIMAL* pDecLeft, double dblRight)
 {
@@ -5706,7 +5706,7 @@ HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
  * PARAMS
  *  pbstrLeft  [I] Source
  *  pbstrRight [I] Value to compare
- *  lcid       [I] LCID for the comparason
+ *  lcid       [I] LCID for the comparison
  *  dwFlags    [I] Flags to pass directly to CompareStringW().
  *
  * RETURNS

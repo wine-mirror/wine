@@ -1240,7 +1240,7 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
     return E_INVALIDARG;
 
   if (psa->cLocks)
-    return DISP_E_ARRAYISLOCKED; /* Cant delete a locked array */
+    return DISP_E_ARRAYISLOCKED; /* Can't delete a locked array */
 
   if (psa->pvData)
   {

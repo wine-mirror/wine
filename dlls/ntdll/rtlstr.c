@@ -530,7 +530,7 @@ BOOLEAN WINAPI RtlPrefixUnicodeString( const UNICODE_STRING *s1,
  *  0 if the names are equal, non-zero otherwise.
  *
  * NOTES
- *  The comparason is case insensitive.
+ *  The comparison is case insensitive.
  */
 NTSTATUS WINAPI RtlEqualComputerName(const UNICODE_STRING *left,
                                      const UNICODE_STRING *right)
@@ -564,7 +564,7 @@ NTSTATUS WINAPI RtlEqualComputerName(const UNICODE_STRING *left,
  *  0 if the names are equal, non-zero otherwise.
  *
  * NOTES
- *  The comparason is case insensitive.
+ *  The comparison is case insensitive.
  */
 NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
                                    const UNICODE_STRING *right)

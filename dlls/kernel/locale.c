@@ -2265,8 +2265,8 @@ INT WINAPI CompareStringW(LCID lcid, DWORD style,
  * Compare two locale sensitive strings.
  *
  * PARAMS
- *  lcid  [I] LCID for the comparason
- *  style [I] Flags for the comparason (NORM_ constants from "winnls.h").
+ *  lcid  [I] LCID for the comparison
+ *  style [I] Flags for the comparison (NORM_ constants from "winnls.h").
  *  str1  [I] First string to compare
  *  len1  [I] Length of str1, or -1 if str1 is NUL terminated
  *  str2  [I] Second string to compare

@@ -1588,22 +1588,22 @@ HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree)
 /***********************************************************************
  *           CoFreeLibrary [OLE32.@]
  *
- * NOTES: don't belive the docu
+ * NOTES: don't believe the documentation
  */
 void WINAPI CoFreeLibrary(HINSTANCE hLibrary)
 {
-	FreeLibrary(hLibrary);
+    FreeLibrary(hLibrary);
 }
 
 
 /***********************************************************************
  *           CoFreeAllLibraries [OLE32.@]
  *
- * NOTES: don't belive the docu
+ * NOTES: don't believe the documentation
  */
 void WINAPI CoFreeAllLibraries(void)
 {
-        /* NOP */
+    /* NOP */
 }
 
 

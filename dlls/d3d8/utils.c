@@ -1013,7 +1013,7 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
                 op2 = This->UpdateStateBlock->texture_state[Stage][D3DTSS_ALPHAOP];
             }
 
-           /* Note: If COMBINE4 in effect cant go back to combine! */
+           /* Note: If COMBINE4 in effect can't go back to combine! */
            switch (op2)
            {
            case D3DTOP_ADDSMOOTH:

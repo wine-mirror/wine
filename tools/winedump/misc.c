@@ -208,7 +208,7 @@ FILE *open_file (const char *name, const char *ext, const char *mode)
 
   fp = fopen (fname, mode);
   if (!fp)
-    fatal ("Cant open file");
+    fatal ("Can't open file");
   return fp;
 }
 

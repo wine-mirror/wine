@@ -1152,7 +1152,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(
  * SHGetFolderLocation [SHELL32.@]
  *
  * NOTES
- *  the pidl can be a simple one. since we cant get the path out of the pidl
+ *  the pidl can be a simple one. since we can't get the path out of the pidl
  *  we have to take all data from the pidl
  */
 HRESULT WINAPI SHGetFolderLocation(
@@ -1171,7 +1171,7 @@ HRESULT WINAPI SHGetFolderLocation(
  * SHGetDataFromIDListA [SHELL32.247]
  *
  * NOTES
- *  the pidl can be a simple one. since we cant get the path out of the pidl
+ *  the pidl can be a simple one. since we can't get the path out of the pidl
  *  we have to take all data from the pidl
  */
 HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len)

@@ -190,7 +190,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 	lpbmi = (LPBITMAPINFOHEADER)decodedframe;
 	decodedbits = (LPVOID)(((DWORD)decodedframe)+lpbmi->biSize);
 	if (lpbmi->biBitCount == 8) {
-	/* cant detect palette change that way I think */
+	/* can't detect palette change that way I think */
 	    RGBQUAD	*rgb = (RGBQUAD*)(lpbmi+1);
 	    int		i,palchanged;
 
