@@ -167,6 +167,20 @@ struct MSVCRT(_stat) {
   MSVCRT(time_t) st_ctime;
 };
 
+struct MSVCRT(stat) {
+  MSVCRT(_dev_t) st_dev;
+  MSVCRT(_ino_t) st_ino;
+  unsigned short st_mode;
+  short          st_nlink;
+  short          st_uid;
+  short          st_gid;
+  MSVCRT(_dev_t) st_rdev;
+  MSVCRT(_off_t) st_size;
+  MSVCRT(time_t) st_atime;
+  MSVCRT(time_t) st_mtime;
+  MSVCRT(time_t) st_ctime;
+};
+
 struct MSVCRT(_stati64) {
   MSVCRT(_dev_t) st_dev;
   MSVCRT(_ino_t) st_ino;
