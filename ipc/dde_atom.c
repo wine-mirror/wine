@@ -6,6 +6,7 @@
  * File:      dde_atom.c
  * Purpose :  atom functionality for DDE
  */
+#ifdef CONFIG_IPC
 
 #include <ctype.h>
 #include <string.h>
@@ -106,11 +107,11 @@ void ATOM_GlobalInit(void)
 }
 
 /***********************************************************************
- *           GlobalAddAtom   (USER.268)
+ *           DDE_GlobalAddAtom
  */
 
 /* important! don't forget to unlock semaphores before return */
-ATOM GlobalAddAtom( SEGPTR name )
+ATOM DDE_GlobalAddAtom( SEGPTR name )
 {
   int atom_idx;
   int atom_ofs;
@@ -164,10 +165,10 @@ ATOM GlobalAddAtom( SEGPTR name )
 }
 
 /***********************************************************************
- *           GlobalDeleteAtom   (USER.269)
+ *           DDE_GlobalDeleteAtom
  */
 
-ATOM GlobalDeleteAtom( ATOM atom )
+ATOM DDE_GlobalDeleteAtom( ATOM atom )
 {
   int atom_idx;
   int atom_ofs;
@@ -203,9 +204,9 @@ ATOM GlobalDeleteAtom( ATOM atom )
 }
 
 /***********************************************************************
- *           GlobalFindAtom   (USER.270)
+ *           DDE_GlobalFindAtom
  */
-ATOM GlobalFindAtom( SEGPTR name )
+ATOM DDE_GlobalFindAtom( SEGPTR name )
 {
   int atom_idx;
   int atom_ofs;
@@ -242,9 +243,9 @@ ATOM GlobalFindAtom( SEGPTR name )
 }
 
 /***********************************************************************
- *           GlobalGetAtomName   (USER.271)
+ *           DDE_GlobalGetAtomName
  */
-WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
+WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
 {
   int atom_idx, atom_ofs;
   int size;
@@ -283,3 +284,4 @@ WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
   return size;
 }
 
+#endif  /* CONFIG_IPC */

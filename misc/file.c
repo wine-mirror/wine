@@ -75,7 +75,7 @@ INT _lread (INT hFile, LPSTR lpBuffer, WORD wBytes)
   dprintf_file(stddeb, "_lread: handle %d, buffer = %p, length = %d\n",
 	  		hFile, lpBuffer, wBytes);
   
-  result = wBytes == 0 ? 0 : read (hFile, lpBuffer, wBytes);
+  result = (wBytes == 0) ? 0 : read (hFile, lpBuffer, wBytes);
 
   if (result == -1)
   	return HFILE_ERROR;
@@ -454,12 +454,12 @@ WORD SetErrorMode(WORD x)
  ***************************************************************************/
 LONG _hread(INT hf, LPSTR hpvBuffer, LONG cbBuffer)
 {
-    return cbBuffer == 0 ? 0 : read(hf, hpvBuffer, cbBuffer);
+    return (cbBuffer == 0) ? 0 : read(hf, hpvBuffer, cbBuffer);
 }
 /***************************************************************************
  _hwrite
  ***************************************************************************/
 LONG _hwrite(INT hf, LPCSTR hpvBuffer, LONG cbBuffer)
 {
-    return cbBuffer == 0 ? 0 : write(hf, hpvBuffer, cbBuffer);
+    return (cbBuffer == 0) ? 0 : write(hf, hpvBuffer, cbBuffer);
 }

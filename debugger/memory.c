@@ -115,7 +115,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 		{
 			fprintf(stderr," %04x", *wdump++);
                         addr.off += 2;
-			if ((i % 10) == 7) {
+			if ((i % 8) == 7) {
 				fprintf(stderr,"\n");
 				DEBUG_PrintAddress( &addr, dbg_mode );
 				fprintf(stderr,":  ");
@@ -133,7 +133,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 			} else
 				fprintf(stderr," %c", *pnt++);
                         addr.off++;
-			if ((i % 32) == 7) {
+			if ((i % 32) == 31) {
 				fprintf(stderr,"\n");
 				DEBUG_PrintAddress( &addr, dbg_mode );
 				fprintf(stderr,":  ");
@@ -147,7 +147,7 @@ void DEBUG_ExamineMemory( const DBG_ADDR *address, int count, char format )
 		{
 			fprintf(stderr," %02x", (*pnt++) & 0xff);
                         addr.off++;
-			if ((i % 32) == 7) {
+			if ((i % 16) == 15) {
 				fprintf(stderr,"\n");
 				DEBUG_PrintAddress( &addr, dbg_mode );
 				fprintf(stderr,":  ");

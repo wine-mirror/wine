@@ -28,15 +28,6 @@
 #define MAX_QUEUE_SIZE   120  /* Max. size of a message queue */
 
 
-/* used for passing message information when sending message */ 
-typedef struct {
-    LONG lParam;
-    WORD wParam;
-    WORD wMsg;
-    WORD hWnd;
-} msgstruct;
-
-
 extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
@@ -146,8 +137,8 @@ static int MSG_FindMsg(MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last)
 {
     int i, pos = msgQueue->nextMessage;
 
-    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x%04x, proc=%d\n",
-		hwnd, curr_proc_idx);
+    dprintf_msg(stddeb,"MSG_FindMsg: hwnd=0x%04x\n\n", hwnd );
+
     if (!msgQueue->msgCount) return -1;
     if (!hwnd && !first && !last) return pos;
         
@@ -436,6 +427,7 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
+        if (pos >= sysMsgQueue->queueSize) pos = 0;
 	*msg = sysMsgQueue->messages[pos].msg;
 
           /* Translate message */
@@ -455,7 +447,8 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         if (hwnd && (msg->hwnd != hwnd)) continue;
         if ((first || last) && 
             ((msg->message < first) || (msg->message > last))) continue;
-        if (GetWindowTask(msg->hwnd) != GetCurrentTask())
+        if ((msg->hwnd != GetDesktopWindow()) && 
+            (GetWindowTask(msg->hwnd) != GetCurrentTask()))
             continue;  /* Not for this task */
         if (remove) MSG_RemoveMsg( sysMsgQueue, pos );
         return TRUE;
@@ -734,12 +727,16 @@ BOOL MSG_WaitXEvent( LONG maxWait )
     XEvent event;
     int fd = ConnectionNumber(display);
 
-    if (!XPending(display))
+    if (!XPending(display) && (maxWait != -1))
     {
         FD_ZERO( &read_set );
         FD_SET( fd, &read_set );
+
+	timeout.tv_usec = (maxWait % 1000) * 1000;
+	timeout.tv_sec = maxWait / 1000;
+
+#ifdef CONFIG_IPC
 	sigsetjmp(env_wait_x, 1);
-	
 	stop_wait_op= CONT;
 	    
 	if (DDE_GetRemoteMessage()) {
@@ -747,10 +744,6 @@ BOOL MSG_WaitXEvent( LONG maxWait )
 		;
 	    return TRUE;
 	}
-
-	timeout.tv_usec = (maxWait % 1000) * 1000;
-	timeout.tv_sec = maxWait / 1000;
-
 	stop_wait_op= STOP_WAIT_X;
 	/* The code up to the next "stop_wait_op= CONT" must be reentrant  */
 	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
@@ -760,17 +753,25 @@ BOOL MSG_WaitXEvent( LONG maxWait )
 	} else {
 	    stop_wait_op= CONT;
 	}
-	    
+#else  /* CONFIG_IPC */
+	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
+            return FALSE;  /* Timeout or error */
+#endif  /* CONFIG_IPC */
+
     }
 
     /* Process the event (and possibly others that occurred in the meantime) */
     do
     {
-	if (DDE_GetRemoteMessage()) {
-	    while(DDE_GetRemoteMessage())
-		;
+
+#ifdef CONFIG_IPC
+	if (DDE_GetRemoteMessage())
+        {
+	    while(DDE_GetRemoteMessage()) ;
 	    return TRUE;
 	}
+#endif  /* CONFIG_IPC */
+
         XNextEvent( display, &event );
         EVENT_ProcessEvent( &event );
     }
@@ -789,8 +790,10 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
     MESSAGEQUEUE *msgQueue;
     LONG nextExp;  /* Next timer expiration time */
 
+#ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
     DDE_GetRemoteMessage();
+#endif  /* CONFIG_IPC */
     
     if (first || last)
     {
@@ -974,8 +977,10 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     msg.pt.x    = 0;
     msg.pt.y    = 0;
 
+#ifdef CONFIG_IPC
     if (DDE_PostMessage(&msg))
        return TRUE;
+#endif  /* CONFIG_IPC */
     
     if (hwnd == HWND_BROADCAST) {
       dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
@@ -1026,7 +1031,6 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 {
     WND * wndPtr;
     LONG ret;
-    MSG DDE_msg;
     struct
     {
 	LONG lParam;
@@ -1035,11 +1039,10 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 	WORD hWnd;
     } msgstruct = { lParam, wParam, msg, hwnd };
 
-    DDE_msg.hwnd    = hwnd;
-    DDE_msg.message = msg;
-    DDE_msg.wParam  = wParam;
-    DDE_msg.lParam  = lParam;
+#ifdef CONFIG_IPC
+    MSG DDE_msg = { hwnd, msg, wParam, lParam };
     if (DDE_SendMessage(&DDE_msg)) return TRUE;
+#endif  /* CONFIG_IPC */
 
     if (hwnd == HWND_BROADCAST)
     {
@@ -1080,7 +1083,9 @@ void WaitMessage( void )
     MESSAGEQUEUE *queue;
     LONG nextExp = -1;  /* Next timer expiration time */
 
+#ifdef CONFIG_IPC
     DDE_GetRemoteMessage();
+#endif  /* CONFIG_IPC */
     
     if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
     if ((queue->wPostQMsg) || 
@@ -1197,7 +1202,7 @@ LONG GetMessageExtraInfo(void)
 WORD RegisterWindowMessage( SEGPTR str )
 {
     dprintf_msg(stddeb, "RegisterWindowMessage: '%08lx'\n", str );
-    return LocalAddAtom( str );
+    return GlobalAddAtom( str );
 }
 
 

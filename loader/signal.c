@@ -80,19 +80,21 @@ void init_wine_signals(void)
 	   it aligned  */
 	segv_act.sa_restorer = 
 	    (void (*)()) (((unsigned int)(cstack) + sizeof(cstack) - 4) & ~3);
-	usr2_act.sa_restorer= segv_act.sa_restorer;
-	usr2_act.sa_handler = (__sighandler_t) stop_wait;
 	/* Point to the top of the stack, minus 4 just in case, and make
 	   it aligned  */
 	wine_sigaction(SIGSEGV, &segv_act, NULL);
 	wine_sigaction(SIGILL, &segv_act, NULL);
 	wine_sigaction(SIGFPE, &segv_act, NULL);
-	wine_sigaction(SIGUSR2, &usr2_act, NULL);
 #ifdef SIGBUS
 	wine_sigaction(SIGBUS, &segv_act, NULL);
 #endif
 	wine_sigaction(SIGTRAP, &segv_act, NULL); /* For breakpoints */
-#endif
+#ifdef CONFIG_IPC
+	usr2_act.sa_restorer= segv_act.sa_restorer;
+	usr2_act.sa_handler = (__sighandler_t) stop_wait;
+	wine_sigaction(SIGUSR2, &usr2_act, NULL);
+#endif  /* CONFIG_IPC */
+#endif  /* linux */
 #if defined(__NetBSD__) || defined(__FreeBSD__)
         sigset_t sig_mask;
         struct sigaltstack ss;
@@ -134,6 +136,7 @@ void init_wine_signals(void)
                 perror("sigaction: SIGTRAP");
                 exit(1);
         }
+#ifdef CONFIG_IPC
         usr2_act.sa_handler = (void (*)) stop_wait; /* For breakpoints */
 	usr2_act.sa_flags = SA_ONSTACK;
         usr2_act.sa_mask = sig_mask;
@@ -141,7 +144,8 @@ void init_wine_signals(void)
                 perror("sigaction: SIGUSR2");
                 exit(1);
         }
-#endif
+#endif  /* CONFIG_IPC */
+#endif  /* __FreeBSD__ || __NetBSD__ */
 }
 
 #endif /* ifndef WINELIB */

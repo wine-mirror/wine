@@ -13,6 +13,12 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
+  --with-language=LANG    change the default language (LANG=En/De/No)"
+ac_help="$ac_help
+  --with-ipc              use inter-process communication for DDE"
+ac_help="$ac_help
+  --with-malloc-debug     enable malloc() debugging"
+ac_help="$ac_help
   --with-x                use the X Window System"
 
 # Initialize some variables set by options.
@@ -402,10 +408,37 @@ fi
 
 		
 
-
 # We want these before the checks, so the checks can modify their values.
 test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" 
 test -z "$LDFLAGS" && LDFLAGS=-g 
+
+# Check whether --with-language or --without-language was given.
+withval="$with_language"
+if test -n "$withval"; then
+  LANG="-ALANG\($withval\)"
+else
+  LANG="-ALANG\(En\)"
+fi
+
+
+# Check whether --with-ipc or --without-ipc was given.
+withval="$with_ipc"
+if test -n "$withval"; then
+  cat >> confdefs.h <<\EOF
+#define CONFIG_IPC 1
+EOF
+
+fi
+
+# Check whether --with-malloc-debug or --without-malloc-debug was given.
+withval="$with_malloc_debug"
+if test -n "$withval"; then
+  cat >> confdefs.h <<\EOF
+#define MALLOC_DEBUGGING 1
+EOF
+
+fi
+
 
 echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
 set dummy ${MAKE-make}; ac_make=$2
@@ -521,7 +554,7 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 525 "configure"
+#line 558 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -535,7 +568,7 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 539 "configure"
+#line 572 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -621,7 +654,7 @@ test -z "$x_direct_test_library" && x_direct_test_library=Xt
 test -z "$x_direct_test_function" && x_direct_test_function=XtMalloc
 test -z "$x_direct_test_include" && x_direct_test_include=X11/Intrinsic.h
 cat > conftest.$ac_ext <<EOF
-#line 625 "configure"
+#line 658 "configure"
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
@@ -684,7 +717,7 @@ rm -f conftest*
 ac_save_LIBS="$LIBS"
 LIBS="-l$x_direct_test_library $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 688 "configure"
+#line 721 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -840,7 +873,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-l$ac_lib  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 844 "configure"
+#line 877 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -891,7 +924,7 @@ if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 895 "configure"
+#line 928 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func(); below.  */
@@ -943,7 +976,7 @@ if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 947 "configure"
+#line 980 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
@@ -971,122 +1004,12 @@ else
 fi
 done
 
-ac_header_dirent=no
-for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h
-do
-ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
-echo $ac_n "checking for $ac_hdr that defines DIR""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_header_dirent_$ac_safe'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 984 "configure"
-#include "confdefs.h"
-#include <sys/types.h>
-#include <$ac_hdr>
-int main() { return 0; }
-int t() {
-DIR *dirp = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  eval "ac_cv_header_dirent_$ac_safe=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_header_dirent_$ac_safe=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_header_dirent_'$ac_safe`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-    ac_tr_hdr=HAVE_`echo $ac_hdr | tr '[a-z]./\055' '[A-Z]___'`
-  cat >> confdefs.h <<EOF
-#define $ac_tr_hdr 1
-EOF
- ac_header_dirent=$ac_hdr; break
-else
-  echo "$ac_t""no" 1>&6
-fi
-done
-# Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
-if test $ac_header_dirent = dirent.h; then
-echo $ac_n "checking for -ldir""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_lib_dir'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-ldir  $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 1023 "configure"
-#include "confdefs.h"
-
-int main() { return 0; }
-int t() {
-opendir()
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_dir=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_dir=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
-
-fi
-if eval "test \"`echo '$ac_cv_lib_'dir`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  LIBS="$LIBS -ldir"
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-else
-echo $ac_n "checking for -lx""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_lib_x'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  ac_save_LIBS="$LIBS"
-LIBS="-lx  $LIBS"
-cat > conftest.$ac_ext <<EOF
-#line 1057 "configure"
-#include "confdefs.h"
-
-int main() { return 0; }
-int t() {
-opendir()
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_lib_x=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_lib_x=no"
-fi
-rm -f conftest*
-LIBS="$ac_save_LIBS"
-
-fi
-if eval "test \"`echo '$ac_cv_lib_'x`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  LIBS="$LIBS -lx"
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-fi
-
 echo $ac_n "checking whether stat file-mode macros are broken""... $ac_c" 1>&6
 if eval "test \"`echo '$''{'ac_cv_header_stat_broken'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1090 "configure"
+#line 1013 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1140,7 +1063,7 @@ if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1144 "configure"
+#line 1067 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1217,7 +1140,7 @@ else
   ac_cv_c_cross=yes
 else
 cat > conftest.$ac_ext <<EOF
-#line 1221 "configure"
+#line 1144 "configure"
 #include "confdefs.h"
 main(){return(0);}
 EOF
@@ -1238,7 +1161,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1242 "configure"
+#line 1165 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1260,7 +1183,7 @@ rm -f conftest*
 if test $ac_cv_header_stdc = yes; then
   # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1264 "configure"
+#line 1187 "configure"
 #include "confdefs.h"
 #include <string.h>
 EOF
@@ -1278,7 +1201,7 @@ fi
 if test $ac_cv_header_stdc = yes; then
   # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 1282 "configure"
+#line 1205 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 EOF
@@ -1299,7 +1222,7 @@ if test "$cross_compiling" = yes; then
   ac_cv_header_stdc=no
 else
 cat > conftest.$ac_ext <<EOF
-#line 1303 "configure"
+#line 1226 "configure"
 #include "confdefs.h"
 #include <ctype.h>
 #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
@@ -1333,7 +1256,7 @@ if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1337 "configure"
+#line 1260 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -1364,82 +1287,6 @@ if test -z "${top_srcdir}"; then
 TOP_SRCDIR="."
 else
 TOP_SRCDIR="${top_srcdir}"
-fi
-echo $ac_n "checking for language in autoconf.h""... $ac_c" 1>&6
-if test -f ${TOP_SRCDIR}/autoconf.h; then
-LANG=`tr ' ' '\n' < ${TOP_SRCDIR}/autoconf.h | grep '\-ALANG' | head -1`
-if test -n "${LANG}"; then
-echo "$ac_t""`echo "${LANG}" | cut -b9-10`" 1>&6
-fi
-fi
-if test -z "${LANG}"; then
-echo "$ac_t""no" 1>&6
-fi
-
-
-if test -z "${LANG}"; then
-echo $ac_n "checking for language through domainname""... $ac_c" 1>&6
-DNAME=`domainname`
-if test `echo "${DNAME}" | grep -c "\.no"` -ne 0; then
-LANG="-ALANG\(No\)"
-echo "$ac_t""No" 1>&6
-fi
-if test `echo "${DNAME}" | grep -c "\.de"` -ne 0; then
-LANG="-ALANG\(De\)"
-echo "$ac_t""De" 1>&6
-fi
-if test `echo "${DNAME}" | grep -c "\.uk"` -ne 0; then
-LANG="-ALANG\(En\)"
-echo "$ac_t""En" 1>&6
-fi
-if test `echo "${DNAME}" | grep -c "\.com"` -ne 0; then
-LANG="-ALANG\(En\)"
-echo "$ac_t""En" 1>&6
-fi
-if test `echo "${DNAME}" | grep -c "\.edu"` -ne 0; then
-LANG="-ALANG\(En\)"
-echo "$ac_t""En" 1>&6
-fi
-if test `echo "${DNAME}" | grep -c "\.gov"` -ne 0; then
-LANG="-ALANG\(En\)"
-echo "$ac_t""En" 1>&6
-fi
-if test -z "${LANG}"; then
-echo "$ac_t""no" 1>&6
-fi
-fi
-
-if test -z "${LANG}"; then
-echo $ac_n "checking for linux""... $ac_c" 1>&6
-cat > conftest.$ac_ext <<EOF
-#line 1416 "configure"
-#include "confdefs.h"
-#ifdef linux
-   yes
-#endif
-
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "yes" >/dev/null 2>&1; then
-  rm -rf conftest*
-  echo "$ac_t""yes" 1>&6
-echo $ac_n "checking for language by examining keymap""... $ac_c" 1>&6
-if test `dumpkeys | grep "keycode *26" | tr ' ' '\n' | grep -c udiaeresis` -ne 0; then
-echo "$ac_t""De" 1>&6
-LANG='-ALANG\(De\)'
-else
-echo "$ac_t""no" 1>&6
-LANG='-ALANG\(En\)'
-fi
-
-else
-  rm -rf conftest*
-  echo "$ac_t""no" 1>&6
-LANG='-ALANG\(En\)'
-
-fi
-rm -f conftest*
-
 fi
 
 echo $ac_n "checking for wine.ini in autoconf.h""... $ac_c" 1>&6
@@ -1518,7 +1365,19 @@ fi
 
 trap 'rm -f $CONFIG_STATUS conftest*; exit 1' 1 2 15
 
-DEFS=-DHAVE_CONFIG_H
+# Transform confdefs.h into DEFS.
+# Protect against shell expansion while executing Makefile rules.
+# Protect against Makefile macro expansion.
+cat > conftest.defs <<\EOF
+s%#define \([A-Za-z_][A-Za-z0-9_]*\) \(.*\)%-D\1=\2%g
+s%[ 	`~#$^&*(){}\\|;'"<>?]%\\&%g
+s%\[%\\&%g
+s%\]%\\&%g
+s%\$%$$%g
+EOF
+DEFS=`sed -f conftest.defs confdefs.h | tr '\012' ' '`
+rm -f conftest.defs
+
 
 # Without the "./", some shells look in PATH for config.status.
 : ${CONFIG_STATUS=./config.status}
@@ -1555,7 +1414,7 @@ done
 
 ac_given_srcdir=$srcdir
 
-trap 'rm -fr `echo "controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile Makefile autoconf.h include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile Makefile autoconf.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 
 # Protect against being on the right side of a sed subst in config.status. 
 sed 's/%@/@@/; s/@%/@@/; s/%g$/@g/; /@g$/s/[\\\\&%]/\\\\&/g; 
@@ -1571,6 +1430,7 @@ s%@LIBS@%$LIBS%g
 s%@exec_prefix@%$exec_prefix%g
 s%@prefix@%$prefix%g
 s%@program_transform_name@%$program_transform_name%g
+s%@LANG@%$LANG%g
 s%@SET_MAKE@%$SET_MAKE%g
 s%@CC@%$CC%g
 s%@CPP@%$CPP%g
@@ -1583,7 +1443,6 @@ s%@x_libraries@%$x_libraries%g
 s%@LIBOBJS@%$LIBOBJS%g
 s%@LD@%$LD%g
 s%@LDCOMBINEFLAGS@%$LDCOMBINEFLAGS%g
-s%@LANG@%$LANG%g
 s%@WINE_INI_GLOBAL@%$WINE_INI_GLOBAL%g
 
 CEOF
@@ -1641,104 +1500,8 @@ s%@top_srcdir@%$top_srcdir%g
 fi; done
 rm -f conftest.subs
 
-# These sed commands are passed to sed as "A NAME B NAME C VALUE D", where
-# NAME is the cpp macro being defined and VALUE is the value it is being given.
-#
-# ac_d sets the value in "#define NAME VALUE" lines.
-ac_dA='s%^\([ 	]*\)#\([ 	]*define[ 	][ 	]*\)'
-ac_dB='\([ 	][ 	]*\)[^ 	]*%\1#\2'
-ac_dC='\3'
-ac_dD='%g'
-# ac_u turns "#undef NAME" with trailing blanks into "#define NAME VALUE".
-ac_uA='s%^\([ 	]*\)#\([ 	]*\)undef\([ 	][ 	]*\)'
-ac_uB='\([ 	]\)%\1#\2define\3'
-ac_uC=' '
-ac_uD='\4%g'
-# ac_e turns "#undef NAME" without trailing blanks into "#define NAME VALUE".
-ac_eA='s%^\([ 	]*\)#\([ 	]*\)undef\([ 	][ 	]*\)'
-ac_eB='$%\1#\2define\3'
-ac_eC=' '
-ac_eD='%g'
-
-CONFIG_HEADERS=${CONFIG_HEADERS-"include/config.h"}
-for ac_file in .. $CONFIG_HEADERS; do if test "x$ac_file" != x..; then
-  # Support "outfile[:infile]", defaulting infile="outfile.in".
-  case "$ac_file" in
-  *:*) ac_file_in=`echo "$ac_file"|sed 's%.*:%%'`
-       ac_file=`echo "$ac_file"|sed 's%:.*%%'` ;;
-  *) ac_file_in="${ac_file}.in" ;;
-  esac
-
-  echo creating $ac_file
-
-  rm -f conftest.frag conftest.in conftest.out
-  cp $ac_given_srcdir/$ac_file_in conftest.in
-
-EOF
-
-# Transform confdefs.h into a sed script conftest.vals that substitutes
-# the proper values into config.h.in to produce config.h.  And first:
-# Protect against being on the right side of a sed subst in config.status. 
-# Protect against being in an unquoted here document in config.status.
-rm -f conftest.vals
-cat > conftest.hdr <<\EOF
-s/[\\&%]/\\&/g
-s%[\\$`]%\\&%g
-s%#define \([A-Za-z_][A-Za-z0-9_]*\) \(.*\)%${ac_dA}\1${ac_dB}\1${ac_dC}\2${ac_dD}%gp
-s%ac_d%ac_u%gp
-s%ac_u%ac_e%gp
-EOF
-sed -n -f conftest.hdr confdefs.h > conftest.vals
-rm -f conftest.hdr
-
-# This sed command replaces #undef with comments.  This is necessary, for
-# example, in the case of _POSIX_SOURCE, which is predefined and required
-# on some systems where configure will not decide to define it.
-cat >> conftest.vals <<\EOF
-s%^[ 	]*#[ 	]*undef[ 	][ 	]*[a-zA-Z_][a-zA-Z_0-9]*%/* & */%
-EOF
-
-# Break up conftest.vals because some shells have a limit on
-# the size of here documents, and old seds have small limits too.
-# Maximum number of lines to put in a single here document.
-ac_max_here_lines=12
-
-rm -f conftest.tail
-while :
-do
-  ac_lines=`grep -c . conftest.vals`
-  # grep -c gives empty output for an empty file on some AIX systems.
-  if test -z "$ac_lines" || test "$ac_lines" -eq 0; then break; fi
-  # Write a limited-size here document to conftest.frag.
-  echo '  cat > conftest.frag <<CEOF' >> $CONFIG_STATUS
-  sed ${ac_max_here_lines}q conftest.vals >> $CONFIG_STATUS
-  echo 'CEOF
-  sed -f conftest.frag conftest.in > conftest.out
-  rm -f conftest.in
-  mv conftest.out conftest.in
-' >> $CONFIG_STATUS
-  sed 1,${ac_max_here_lines}d conftest.vals > conftest.tail
-  rm -f conftest.vals
-  mv conftest.tail conftest.vals
-done
-rm -f conftest.vals
-
-cat >> $CONFIG_STATUS <<\EOF
-  rm -f conftest.frag conftest.h
-  echo "/* $ac_file.  Generated automatically by configure.  */" > conftest.h
-  cat conftest.in >> conftest.h
-  rm -f conftest.in
-  if cmp -s $ac_file conftest.h 2>/dev/null; then
-    echo "$ac_file is unchanged"
-    rm -f conftest.h
-  else
-    rm -f $ac_file
-    mv conftest.h $ac_file
-  fi
-fi; done
 
 
-touch stamp-config
 exit 0
 EOF
 chmod +x $CONFIG_STATUS

@@ -189,8 +189,10 @@ static void WIN_DestroyWindow( HWND hwnd )
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     CLASS *classPtr = CLASS_FindClassPtr( wndPtr->hClass );
 
+#ifdef CONFIG_IPC
     if (main_block)
 	DDE_DestroyWindow(hwnd);
+#endif  /* CONFIG_IPC */
 	
     if (!wndPtr || !classPtr) return;
     WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */

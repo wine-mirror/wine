@@ -9,6 +9,9 @@
  */
 #ifndef __WINE_DDE_PROC_H
 #define __WINE_DDE_PROC_H
+
+#ifdef CONFIG_IPC
+
 #include <setjmp.h>
 #include "wintypes.h"
 #include "windows.h"
@@ -54,4 +57,7 @@ BOOL DDE_SendMessage( MSG *msg);
 int DDE_GetRemoteMessage();
 void DDE_DestroyWindow(HWND hwnd); /* delete DDE info regarding hwnd */
 void DDE_TestDDE(HWND hwnd);	   /* do we have dde handling in the window ?*/
+
+#endif  /* CONFIG_IPC */
+
 #endif /* __WINE_DDE_PROC_H */

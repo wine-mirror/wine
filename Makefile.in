@@ -12,6 +12,7 @@
 
 CC 	= @CC@
 CFLAGS 	= @CFLAGS@
+DEFS    = @DEFS@
 XINCL 	= @x_includes@
 TOPSRC  = @top_srcdir@
 DIVINCL = -I$(TOPSRC)/include
@@ -22,7 +23,7 @@ LDLIBS	= -lm
 LD	= @LD@
 LANG	= @LANG@
 LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
- 
+@SET_MAKE@
 
 COMMONSUBDIRS = controls rc ipc loader misc multimedia objects windows
 
@@ -53,7 +54,7 @@ wine: $(SUBDIRS) dummy
 	$(CC) -o wine $(OBJS) $(LDOPTIONS) $(XDIR) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
 $(SUBDIRS): dummy
-	@cd $@; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)' 'LANG=$(LANG)'
+	@cd $@; $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'DEFS=$(DEFS)' 'LD=$(LD)' 'LDCOMBINEFLAGS=$(LDCOMBINEFLAGS)' 'LANG=$(LANG)'
 
 depend:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) depend); done
@@ -63,14 +64,14 @@ etags:
 
 clean:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) clean); done
-	rm -f *.o \#*\# *~ wine wine.sym TAGS
+	rm -f *.o \#*\# *~ *.bak wine wine.sym TAGS
 
 distclean:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) distclean); done
 	echo "/* autoconf.h generated automatically.  Run Configure */" >autoconf.h
 	echo "#error You must run Configure before you can build the makefiles." >>autoconf.h
-	rm -f *.o \#*\# *~ wine wine.sym
-	rm -f stamp-config config.* include/config.h Makefile
+	rm -f *.o \#*\# *~ *.bak wine wine.sym TAGS
+	rm -f config.* include/config.h Makefile
 
 countryclean:
 	for i in $(SUBDIRS); do (cd $$i; $(MAKE) countryclean); done

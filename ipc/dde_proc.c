@@ -7,6 +7,12 @@
  * Purpose :  DDE signals and processes functionality for DDE
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+#define msgbuf mymsg
+#endif
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -716,3 +722,4 @@ void DDE_DestroyWindow(HWND hwnd)
   }
 }
 
+#endif  /* CONFIG_IPC */

@@ -9,9 +9,16 @@ LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
 
 MODULE 	= multimedia
 
-SRCS 	= audio.c joystick.c mcianim.c mcicda.c midi.c mmaux.c \
-	  mmsystem.c time.c
-
+SRCS = \
+	audio.c \
+	joystick.c \
+	mcianim.c \
+	mcicda.c \
+	mcistring.c \
+	midi.c \
+	mmaux.c \
+	mmsystem.c \
+	time.c
 
 OBJS = $(SRCS:.c=.o)
 
@@ -29,7 +36,7 @@ depend:
 	mv tmp_make Makefile
 
 clean:
-	rm -f *.o \#*\# *~ tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
 
 distclean: clean
 	rm -f Makefile

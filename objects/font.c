@@ -78,7 +78,7 @@ BOOL FONT_Init( void )
     FontNames[0].x11 = strdup( temp );
 
   } else {
-    FontNames[0].window = NULL; FontNames[0].x11 = "bitstream-courier";
+    FontNames[0].window = NULL; FontNames[0].x11 = "*-helvetica";
     FontNames[1].window = "ms sans serif"; FontNames[1].x11 = "*-helvetica";
     FontNames[2].window = "ms serif"; FontNames[2].x11 = "*-times";
     FontNames[3].window = "fixedsys"; FontNames[3].x11 = "*-fixed";
@@ -313,7 +313,8 @@ HFONT CreateFont( int height, int width, int esc, int orient, int weight,
 {
     LOGFONT logfont = { height, width, esc, orient, weight, italic, underline,
 		    strikeout, charset, outpres, clippres, quality, pitch, };
-    strncpy( logfont.lfFaceName, name, LF_FACESIZE );
+    if (name) strncpy( logfont.lfFaceName, name, LF_FACESIZE );
+    else logfont.lfFaceName[0] = '\0';
     return CreateFontIndirect( &logfont );
 }
 

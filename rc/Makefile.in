@@ -34,8 +34,8 @@ rc.o: sysres.o
 	$(COMPILE) -c -o $*.o $<
 
 clean:
-	rm -f *.o \#*\# *~ lex.yy.c sysres.tmp sysres.rct winerc y.tab.c \
-	y.tab.h sysres.c sysres.h tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
+	rm -f lex.yy.c sysres.tmp sysres.rct winerc y.tab.c y.tab.h sysres.c sysres.h
 
 distclean: clean
 	rm -f Makefile

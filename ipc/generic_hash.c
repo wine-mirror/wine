@@ -5,6 +5,8 @@
  * Purpose :  dynamically growing hash, may use shared or local memory.
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -677,3 +679,5 @@ HASH_ITEM *access_local_hash(HASH_PTR ptr)
 {
    return ptr.ptr;
 }
+
+#endif  /* CONFIG_IPC */

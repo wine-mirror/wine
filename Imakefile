@@ -3,7 +3,6 @@
 
 #if defined(i386FreeBsd) || defined(FreeBSDArchitecture)
 MAKE = gmake
-CC = gcc -D__FreeBSD__
 #endif
 
 DEFINES = AutoDefines -DUSE_READLINE

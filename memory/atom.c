@@ -22,6 +22,11 @@
 #include "stackframe.h"
 #include "user.h"
 
+#ifdef CONFIG_IPC
+#include "dde_atom.h"
+#include "options.h"
+#endif
+
 #define DEFAULT_ATOMTABLE_SIZE    37
 #define MIN_STR_ATOM              0xc000
 
@@ -321,36 +326,48 @@ WORD GetAtomName( ATOM atom, LPSTR buffer, short count )
 
 
 /***********************************************************************
- *           LocalAddAtom   (USER.268)
+ *           GlobalAddAtom   (USER.268)
  */
-ATOM LocalAddAtom( SEGPTR str )
+ATOM GlobalAddAtom( SEGPTR str )
 {
+#ifdef CONFIG_IPC
+    if (Options.ipc) return DDE_GlobalAddAtom( str );
+#endif
     return ATOM_AddAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           LocalDeleteAtom   (USER.269)
+ *           GlobalDeleteAtom   (USER.269)
  */
-ATOM LocalDeleteAtom( ATOM atom )
+ATOM GlobalDeleteAtom( ATOM atom )
 {
+#ifdef CONFIG_IPC
+    if (Options.ipc) return DDE_GlobalDeleteAtom( atom );
+#endif
     return ATOM_DeleteAtom( USER_HeapSel, atom );
 }
 
 
 /***********************************************************************
- *           LocalFindAtom   (USER.270)
+ *           GlobalFindAtom   (USER.270)
  */
-ATOM LocalFindAtom( SEGPTR str )
+ATOM GlobalFindAtom( SEGPTR str )
 {
+#ifdef CONFIG_IPC
+    if (Options.ipc) return DDE_GlobalFindAtom( str );
+#endif
     return ATOM_FindAtom( USER_HeapSel, str );
 }
 
 
 /***********************************************************************
- *           LocalGetAtomName   (USER.271)
+ *           GlobalGetAtomName   (USER.271)
  */
-WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count )
+WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
 {
+#ifdef CONFIG_IPC
+    if (Options.ipc) return DDE_GlobalGetAtomName( atom, buffer, count );
+#endif
     return ATOM_GetAtomName( USER_HeapSel, atom, buffer, count );
 }

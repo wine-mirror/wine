@@ -232,7 +232,7 @@ id	1
 #351 BUNNY_351
 353 pascal lstrcpyn(segptr segptr word) lstrcpyn
 354 stub GetAppCompatFlags
-355 stub GetWinDebugInfo
-356 stub SetWinDebugInfo
+355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
+356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
 403 pascal16 FarSetOwner(word word) FarSetOwner
 404 pascal16 FarGetOwner(word) FarGetOwner

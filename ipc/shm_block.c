@@ -7,6 +7,7 @@
  * Purpose:   Treat a shared memory block.
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
 
 #define inline __inline__
 #include <sys/types.h>
@@ -76,7 +77,7 @@ struct shm_block *shm_attach_block(int shm_id, int proc_idx,
   shmctl(shm_id, IPC_STAT, &ds );
 
   block=(struct shm_block*)shmat(shm_id, NULL, 0);
-  if (block==NULL) return NULL;
+  if (block==NULL || block == (struct shm_block*) -1) return NULL;
 
   this=(struct local_shm_map *)malloc(sizeof(*this));
   this->next= shm_map;
@@ -190,3 +191,5 @@ void shm_delete_chain(int *shmid)
   *shmid=-1;
   shmdt((char *)block);
 }
+
+#endif  /* CONFIG_IPC */

@@ -7,6 +7,8 @@
  * Purpose :  shared DDE memory functionality for DDE
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
 #include <stdio.h>
 #include <stddebug.h>
 #include <debug.h>
@@ -280,3 +282,5 @@ void DDE_mem_init()
   nr_of_bits= BITS_PER_BYTE * sizeof(main_block->free_handles);
   AssembleArray( &free_handles, main_block->free_handles, nr_of_bits);
 }
+
+#endif  /* CONFIG_IPC */

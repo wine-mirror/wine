@@ -72,11 +72,12 @@ void WIN87_fpmath( struct sigcontext_struct context )
         /* IN: AX&0x0C00 rounding protocol */
         /* OUT: DX:AX variable popped */
         {
-            DWORD dw,junk;
+            DWORD dw;
             /* I don't know much about asm() programming. This could be 
              * wrong. 
              */
-            __asm__("fistp %1\nwait":"=m" (junk):"m" (dw):"memory");
+/* FIXME: could someone who really understands asm() fix this please? --AJ */
+/*            __asm__("fistp %0;wait" : "=m" (dw) : : "memory"); */
             dprintf_int(stddeb,"emulate.c:On top of stack was %ld\n",dw);
             AX_reg(&context) = LOWORD(dw);
             DX_reg(&context) = HIWORD(dw);

@@ -2318,6 +2318,56 @@ typedef METAFILEPICT *LPMETAFILEPICT;
 #define META_CREATEBITMAP            0x06FE
 #define META_CREATEREGION            0x06FF
 
+/* Debugging support (DEBUG SYSTEM ONLY) */
+typedef struct tagWINDEBUGINFO
+{
+    UINT    flags;
+    DWORD   dwOptions;
+    DWORD   dwFilter;
+    char    achAllocModule[8];
+    DWORD   dwAllocBreak;
+    DWORD   dwAllocCount;
+} WINDEBUGINFO;
+typedef WINDEBUGINFO FAR* LPWINDEBUGINFO;
+
+/* WINDEBUGINFO flags values */
+#define WDI_OPTIONS         0x0001
+#define WDI_FILTER          0x0002
+#define WDI_ALLOCBREAK      0x0004
+
+/* dwOptions values */
+#define DBO_CHECKHEAP       0x0001
+#define DBO_BUFFERFILL      0x0004
+#define DBO_DISABLEGPTRAPPING 0x0010
+#define DBO_CHECKFREE       0x0020
+
+#define DBO_SILENT          0x8000
+
+#define DBO_TRACEBREAK      0x2000
+#define DBO_WARNINGBREAK    0x1000
+#define DBO_NOERRORBREAK    0x0800
+#define DBO_NOFATALBREAK    0x0400
+#define DBO_INT3BREAK       0x0100
+
+/* DebugOutput flags values */
+#define DBF_TRACE           0x0000
+#define DBF_WARNING         0x4000
+#define DBF_ERROR           0x8000
+#define DBF_FATAL           0xc000
+
+/* dwFilter values */
+#define DBF_KERNEL          0x1000
+#define DBF_KRN_MEMMAN      0x0001
+#define DBF_KRN_LOADMODULE  0x0002
+#define DBF_KRN_SEGMENTLOAD 0x0004
+#define DBF_USER            0x0800
+#define DBF_GDI             0x0400
+#define DBF_MMSYSTEM        0x0040
+#define DBF_PENWIN          0x0020
+#define DBF_APPLICATION     0x0008
+#define DBF_DRIVER          0x0010
+
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif
@@ -2439,6 +2489,7 @@ Fa(BOOL,RemoveFontResource,LPSTR,a)
 Fa(BOOL,SetDeskWallPaper,LPSTR,a)
 Fa(BOOL,SetErrorMode,WORD,a)
 Fa(BOOL,SetMessageQueue,int,a)
+Fa(BOOL,SetWinDebugInfo,LPWINDEBUGINFO,a)
 Fa(BOOL,SwapMouseButton,BOOL,a)
 Fa(BOOL,TranslateMessage,LPMSG,a)
 Fa(BOOL,UnhookWindowsHookEx,HHOOK,a)
@@ -2623,6 +2674,7 @@ Fb(BOOL,GetCurrentPositionEx,HDC,a,LPPOINT,b)
 Fb(BOOL,GetTextMetrics,HDC,a,LPTEXTMETRIC,b)
 Fb(BOOL,GetViewportExtEx,HDC,a,LPPOINT,b)
 Fb(BOOL,GetViewportOrgEx,HDC,a,LPPOINT,b)
+Fb(BOOL,GetWinDebugInfo,LPWINDEBUGINFO,a,UINT,b)
 Fb(BOOL,GetWindowExtEx,HDC,a,LPPOINT,b)
 Fb(BOOL,GetWindowOrgEx,HDC,a,LPPOINT,b)
 Fb(BOOL,GetWindowPlacement,HWND,a,LPWINDOWPLACEMENT,b)

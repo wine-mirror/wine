@@ -9,6 +9,9 @@
  */
 #ifndef __WINE_DDE_MEM_H
 #define __WINE_DDE_MEM_H
+
+#ifdef CONFIG_IPC
+
 #include "wintypes.h"
 #include "global.h"
 #include "shm_block.h"
@@ -30,5 +33,7 @@ int DDE_GlobalUnlock(int);
 HANDLE DDE_GlobalSize(WORD);
 HANDLE DDE_GlobalHandle(WORD);
 HANDLE DDE_GlobalFlags(WORD);
+
+#endif  /* CONFIG_IPC */
 
 #endif /* __WINE_DDE_MEM_H */

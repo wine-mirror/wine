@@ -34,7 +34,7 @@ HCLASS CLASS_FindClassByName( SEGPTR name, WORD hinstance, CLASS **ptr )
     HCLASS class;
     CLASS * classPtr;
 
-    if (!(atom = LocalFindAtom( name ))) return 0;
+    if (!(atom = GlobalFindAtom( name ))) return 0;
 
       /* First search task-specific classes */
 
@@ -128,7 +128,7 @@ ATOM RegisterClass( LPWNDCLASS class )
     newClass->wc.cbWndExtra = (class->cbWndExtra < 0) ? 0 : class->cbWndExtra;
     newClass->wc.cbClsExtra = classExtra;
 
-    newClass->atomName = LocalAddAtom( class->lpszClassName );
+    newClass->atomName = GlobalAddAtom( class->lpszClassName );
     newClass->wc.lpszClassName = 0;
 
     if (newClass->wc.style & CS_CLASSDC)
@@ -189,8 +189,7 @@ BOOL UnregisterClass( SEGPTR className, HANDLE hinstance )
       /* Delete the class */
     if (classPtr->hdce) DCE_FreeDCE( classPtr->hdce );
     if (classPtr->wc.hbrBackground) DeleteObject( classPtr->wc.hbrBackground );
-    /*if (classPtr->wc.style & CS_GLOBALCLASS)*/ LocalDeleteAtom( classPtr->atomName );
-    /*else DeleteAtom( classPtr->atomName );*/
+    GlobalDeleteAtom( classPtr->atomName );
     if (HIWORD(classPtr->wc.lpszMenuName))
 	USER_HEAP_FREE( LOWORD(classPtr->wc.lpszMenuName) );
     USER_HEAP_FREE( class );
@@ -270,7 +269,7 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
     
-    return LocalGetAtomName(classPtr->atomName, lpClassName, maxCount);
+    return GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
 }
 
 
@@ -315,7 +314,7 @@ BOOL ClassNext( CLASSENTRY *pClassEntry )
 
     pClassEntry->hInst = classPtr->wc.hInstance;
     pClassEntry->wNext = classPtr->hNext;
-    LocalGetAtomName( classPtr->atomName, pClassEntry->szClassName,
+    GlobalGetAtomName( classPtr->atomName, pClassEntry->szClassName,
                        sizeof(pClassEntry->szClassName) );
     return TRUE;
 }

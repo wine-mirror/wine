@@ -7,6 +7,7 @@ SRCS = \
 	joystick.c \
 	mcianim.c \
 	mcicda.c \
+	mcistring.c \
 	midi.c \
 	mmaux.c \
 	mmsystem.c \

@@ -9,9 +9,22 @@ LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
 
 MODULE 	= miscemu
 
-SRCS 	= dpmi.c emulate.c instr.c int10.c int13.c \
-        int1a.c int21.c int25.c int26.c int2a.c int2f.c int5c.c interrupts.c \
-        ioports.c
+SRCS = \
+	dosmem.c \
+	dpmi.c \
+	emulate.c \
+	instr.c \
+	int10.c \
+	int13.c \
+	int1a.c \
+	int21.c \
+	int25.c \
+	int26.c \
+	int2a.c \
+	int2f.c \
+	int5c.c \
+	interrupts.c \
+	ioports.c
 
 OBJS = $(SRCS:.c=.o)
 
@@ -29,7 +42,7 @@ depend:
 	mv tmp_make Makefile
 
 clean:
-	rm -f *.o \#*\# *~ tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
 
 distclean: clean
 	rm -f Makefile

@@ -10,6 +10,8 @@
 #ifndef __WINE_SHM_FRAGMENT_H
 #define __WINE_SHM_FRAGMENT_H
 
+#ifdef CONFIG_IPC
+
 #include "shm_block.h"
 
 #define NIL ((int) 0)
@@ -43,5 +45,7 @@ void shm_FragPtrFree(struct shm_block *block, void *ptr);
 
 /* This is used for debugging only */
 void shm_print_free_list(struct shm_block *block);
+
+#endif  /* CONFIG_IPC */
 
 #endif /* __WINE_SHM_FRAGMENT_H */

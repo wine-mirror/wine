@@ -382,6 +382,8 @@ WORD GetProfileInt (LPSTR AppName, LPSTR KeyName, int Default)
 BOOL WritePrivateProfileString (LPSTR AppName, LPSTR KeyName, LPSTR String,
 				LPSTR FileName)
 {
+    if (!AppName || !KeyName || !String)  /* Flush file to disk */
+        return TRUE;
     return GetSetProfile (1, AppName, KeyName, String, "", 0, FileName);
 }
 

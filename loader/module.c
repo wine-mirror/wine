@@ -39,7 +39,6 @@ BOOL MODULE_Init(void)
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     struct dll_table_s *table;
-    char *dosmem;
     int i;
 
       /* Create the built-in modules */
@@ -82,47 +81,10 @@ BOOL MODULE_Init(void)
         hFirstModule = hModule;
     }
 
-      /* Initialize some KERNEL exported values */
+    /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
-    if (!(hModule = GetModuleHandle( "KERNEL" ))) return TRUE;
+    MODULE_SetEntryPoint( GetModuleHandle( "KERNEL" ), 178, GetWinFlags() );
 
-      /* KERNEL.178: __WINFLAGS */
-    MODULE_SetEntryPoint( hModule, 178, GetWinFlags() );
-
-    /* Allocate 7 64k segments for 0000, A000, B000, C000, D000, E000, F000. */
-
-    dosmem = malloc( 0x70000 );
-
-    MODULE_SetEntryPoint( hModule, 183,  /* KERNEL.183: __0000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 193,  /* KERNEL.193: __0040H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x400,
-                                  0x100, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 174,  /* KERNEL.174: __A000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x10000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 181,  /* KERNEL.181: __B000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x20000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 182,  /* KERNEL.182: __B800H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x28000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 195,  /* KERNEL.195: __C000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x30000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 179,  /* KERNEL.179: __D000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x40000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 190,  /* KERNEL.190: __E000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x50000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 173,  /* KERNEL.173: __ROMBIOS */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
-    MODULE_SetEntryPoint( hModule, 194,  /* KERNEL.194: __F000H */
-                          GLOBAL_CreateBlock( GMEM_FIXED, dosmem + 0x60000,
-                                0x10000, hModule, FALSE, FALSE, FALSE, NULL ));
     return TRUE;
 }
 

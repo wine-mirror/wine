@@ -66,6 +66,9 @@ int MAIN_Init(void)
       /* Initialize interrupt vectors */
     if (!INT_Init()) return 0;
 
+      /* Initialize DOS memory */
+    if (!DOSMEM_Init()) return 0;
+
       /* Initialize signal handling */
     init_wine_signals();
 

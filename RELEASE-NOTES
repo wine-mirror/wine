@@ -12,16 +12,19 @@ realises the problem later on. 'make' again and watch the output. Be
 sure to analyze the problem before you report it to the newsgroup.
 
 2. What are these questions in Configure?
-Emulator/Library: You need an emulator when you want to run MS-Win
-binaries. You need a library when you want to compile the source code
-of a Windows program.
-Language: Wine can present the system menu in multiple languages. Select
-one of English, German, or Norwegian here.
-Malloc debugging: When enabled, the mtrace and mcheck GNU libc functions
-are called. You might want to set the MALLOC_TRACE environment variable
-to a trace file name. If your system supports another way of malloc 
-debugging, feel free to add it.
-Config file: Sets the Wine environment. See README for details.
+- Emulator/Library: You need an emulator when you want to run MS-Win
+    binaries. You need a library when you want to compile the source code
+    of a Windows program.
+- Language: Wine can present the system menu in multiple languages. Select
+    one of English, German, or Norwegian here.
+- Inter-process communication: Allows setting up a DDE conversation
+    between different instances of Wine. Only really useful when
+    building Wine as a library.
+- Malloc debugging: When enabled, the mtrace and mcheck GNU libc functions
+    are called. You might want to set the MALLOC_TRACE environment variable
+    to a trace file name. If your system supports another way of malloc 
+    debugging, feel free to add it.
+- Config file: Sets the Wine environment. See README for details.
 
 3. BAR.EXE used to work, but does not work anymore
 Look at the ChangeLog to see what files have been changed. Try to undo

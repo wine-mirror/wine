@@ -9,6 +9,9 @@
  */
 #ifndef __WINE_SHM_MAIN_BLK_H
 #define __WINE_SHM_MAIN_BLK_H
+
+#ifdef CONFIG_IPC
+
 #include <sys/shm.h>
 #include "shm_block.h"
 #include "shm_semaph.h"
@@ -51,5 +54,7 @@ void shm_delete_all(int shm_id);
 void DDE_mem_init();
 int DDE_no_of_attached();
 #define DDE_IPC_init()  ( (main_block==NULL) ?  (DDE_mem_init()) : 0 )
+
+#endif  /* CONFIG_IPC */
 
 #endif /* __WINE_SHM_MAIN_BLK_H */

@@ -9,15 +9,20 @@
  */
 #ifndef __WINE_DDE_ATOM_H
 #define __WINE_DDE_ATOM_H
+
+#ifdef CONFIG_IPC
+
 #include "windows.h"
 
 #define DDE_ATOMS 157		   /* a prime number for hashing */
 
 void ATOM_GlobalInit(void);
-/*
-ATOM GlobalAddAtom( LPCSTR str );
-ATOM GlobalDeleteAtom( ATOM atom );
-ATOM GlobalFindAtom( LPCSTR str );
-WORD GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
-*/
+
+ATOM DDE_GlobalAddAtom( SEGPTR str );
+ATOM DDE_GlobalDeleteAtom( ATOM atom );
+ATOM DDE_GlobalFindAtom( SEGPTR str );
+WORD DDE_GlobalGetAtomName( ATOM atom, LPSTR buffer, short count )
+
+#endif  /* CONFIG_IPC */
+
 #endif __WINE_DDE_ATOM_H

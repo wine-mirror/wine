@@ -1,3 +1,108 @@
+Thu Aug 31 17:19:57 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
+
+	* [Configure]
+	Added compile-time option for IPC.
+
+	* [configure.in]
+	Added command-line options for language, IPC and malloc
+	debugging.
+
+	* [controls/menu.c]
+	WM_MENUSELECT was sometimes sent to the wrong window.
+
+	* [debugger/break.c]
+	For the 'next' command, only step over instruction that require
+	it. This allows 'next' to do the right thing with jmp and ret
+	instructions.
+
+	* [ipc/*.c] [memory/atom.c] [memory/global.c]
+	IPC can now be configured out at compile-time.
+
+	* [loader/task.c]
+	Bug fix in TASK_Reschedule() that could cause a task to be deleted
+	twice.
+
+	* [miscemu/dosmem.c] (New file)
+	Partial emulation of the BIOS data segment.
+
+	* [miscemu/instr.c]
+	Trap attempts to access selector 0x40 and remap the access to
+	segment __0040H.
+
+	* [tools/build.c]
+	Fixed bug in CallTo32_LargeStack() that caused problems when
+	compiling Wine with the -fomit-frame-pointer option.
+
+	* [windows/message.c]
+	Fixed bug in hardware event handling that could cause some events
+	to get ignored.
+
+Sat Aug 26 13:12:59 IST 1995 Michael Veksler <mveksler@vnet.ibm.com>
+
+	* [ipc/README] [ipc/dde.tex]
+	LaTeX documentation for the ipc and DDE stuff.
+
+Wed Aug 23 22:01:23 GMT 1995 Michael Veksler <mveksler@vnet.ibm.com>
+
+	* [ipc/Imakefile] [ipc/wine_test_stub.c]
+	Fixed IPC testing. Now it can be compiled with "make tests"
+
+Wed Aug 23 21:04:14 1995  Fons Botman  <botman@wab-tis.rabobank.nl>
+
+	* [if1632/kernel.spec] [include/windows.h] [misc/main.c]
+	Added GetWinDebugInfo/SetWinDebugInfo stub for player.exe
+
+Sun Aug  20 13:49:42 1995  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [miscemu/int21.c]
+	Misc fix to int21,ah=40 (write) to match _lwrite().
+	AX=0x440A (check if handle is remote) added.
+
+	* [multimedia/mmsystem.c]
+	Moved mciSendString to mcistring.c.
+
+	* [multimedia/mcistring.c]
+	New file, string interface for MCI (not complete, not thoroughly
+	tested).
+
+	* [multimedia/audio.c]
+	IOCTL prints errors; one paranoid check disabled.
+
+	* [misc/file.c]
+	Misc operator precedence fixes.
+
+	* [if1632/gdi.spec] [objects/bitblt.c]
+	Stub for FastWindowFrame (parameters not correct).
+
+Sat Aug 19 01:31:23 1995  Graham Menhennitt <gfm@werple.mira.net.au>
+
+	* [loader/ne_image.c]
+	Preliminary support for iterated segments.
+
+Sat Aug 19 00:43:04 1995  Andrew Taylor  (andrew@riscan.com)
+
+	* [windows/mapping.c]
+	In function MAPPING_FixIsotropic(), VportExt[XY] is multiplied by
+ 	the absolute value of (ydim / xdim) or (xdim / ydim).
+
+Thu Aug 15 23:00:16  Gregory Trubetskoy  <grisha@mira.com>
+
+	* [objects/oembitmap.c]
+	Added some includes for Windows 95.
+
+	* [include/sysmetrics.h]
+	Added some sysmetrics for Windows 95.
+
+	* [include/bitmaps/*95]
+	New files: obm_close_95, obm_closed_95, obm_reduce_95, obm_reduced_95
+	obm_zoom_95, obm_zoomd_95 - these are some pixmaps for Windows 95.
+
+Thu Aug 10 12:00:00 1995  Jan Willamowius  (jan@janhh.shnet.org)
+
+	* [misc/shell.c] [rc/sysres*.rc]
+	The caption of the ShellAbout dialog box is language specific and
+ 	should be defined in the resources.
+
 ----------------------------------------------------------------------
 Thu Aug 17 19:30:14 1995  Alexandre Julliard  <julliard@sunsite.unc.edu>
 

@@ -1,0 +1,962 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Written by Michael Veksler.
+%% May be freely redistributed as long as this header is unchanged.
+%% The file be modified as long as there will be appropriate comment
+%% containing the Author and a description.
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentstyle{article}
+\renewcommand{\thepage}{}
+\newcommand{\Wine}{Wine}
+\newcommand{\WINE}{{\em WINdows Emulator}}
+\newcommand{\DDE}{{\em Dynamic Data Exchange}}
+\newcommand{\windoz}{MS-Win\-dows}
+\newcommand{\fname}[1]{{\tt #1}}
+\newcommand{\libwine}{\fname{libwine.a}}
+\title{DDE\footnote{DDE is \DDE\ mechanism provided by \windoz.
+    (Appendix~\protect\ref{sec:DDE}).
+    }
+  \ capability for \Wine\footnote{\Wine\ (\WINE) Runs \windoz\
+    programs under UNIX\@. (Appendix~\protect\ref{sec:Wine}).
+    }
+}
+\author{Michael Veksler 11678223}
+%%\date{Aug 6, 1995}
+\begin{document}
+\maketitle
+\vfill
+\abstract{\Wine{} provides an environment for running or compiling
+  \windoz{} applications for UNIX clones (such as Linux).
+  \Wine{} is not yet finished and lacks many basic important features.
+  One of the missing features is DDE\@. DDE implementation
+  (especially for \libwine) requires
+  UNIX IPC\footnote{IPC - Inter-Process Communication}. This Project
+  introduces the IPC mechanism into \Wine{}, thus allowing DDE to work
+  between different \Wine{} processes.}
+
+
+\vfill
+{\LARGE
+  \begin{itemize}
+    \item[Instructor:] Avner Lottem
+    \item[Done for:] Technion- Israel Institute of Technology,\\
+      Electrical Engineering software lab$^{\mbox{\small\copyright}}$.
+  \end{itemize}
+  }
+\vfill
+
+\newpage
+\renewcommand{\thepage}{\roman{page}}
+\setcounter{page}{1}
+\begin{center}
+    {\LARGE Table Of Contents}
+\end{center}
+\tableofcontents
+
+\newpage
+\renewcommand{\thepage}{\arabic{page}}
+\setcounter{page}{1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% end of title
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+\subsection{The project}
+The purpose of the project is to add DDE capabilities into \Wine.
+The project enables \Wine{} DDE client-server applications communication.
+This involved messing around with:
+\begin{itemize}
+  \item \windoz\ message mechanism.
+  \item \windoz\ memory management.
+  \item \windoz\ task management.
+  \item UNIX messages among  \Wine\ processes.
+  \item Exchanging (sharing) UNIX memory.
+\end{itemize}
+
+\subsection{Problem description}
+DDE is essentially a communication protocol between \windoz\
+tasks. Implementing this protocol requires communication among
+\Wine{} processes and among tasks in one process (each \Wine{} process
+can contain several tasks). Since \Wine\ already provides
+communication among internal tasks, this project provides communication
+between \Wine\ processes. 
+
+Different \Wine\ processes should be able to send \windoz\ messages
+and to pass \windoz\ memory handles. There also has to be a
+synchronization mechanism between the processes (\windoz\ applications
+make assumptions about task switching - and don't use semaphores, or
+any \windoz\ equivalent).
+
+Passing messages is a bit tricky. \windoz\ gives a feedback about the
+success of a message (fails if the window does not exist).
+In case of SendMessage (see Appendix~\ref{sec:WindozMsg}), the process
+will have to halt until the message has been processed.
+In case of PostMessage, things are simpler - only the existence of the
+recipient has to be checked.
+
+\windoz\ switches tasks only when certain system calls are used (such
+as delivering or polling messages). \windoz\ applications rely on this
+behavior. The problem arises when two applications run on different
+\Wine\ processes. Since UNIX preempts processes there is no guaranty
+that the UNIX task will occur at the correct place (in respect of the
+application).
+One one hand is the need for compatibility (no UNIX ``current''
+execution), and on the other hand is performance and stability.
+
+Another problem is passing handles between \Wine\ processes. \windoz\
+applications pass atoms\footnote{See appendix~\ref{sec:WhatAreAtoms}},
+memory handles and window handles. These handles have to be allocated
+globally (in shared memory) or translated on the fly.
+
+
+If a process dies from ``unnatural causes'' (e.g.\ kill $-9$). It will
+leave garbage in memory and other IPC handles will start floating
+around. There should be some way to collect this garbage.
+
+\subsection{Solutions}
+\label{sec:ProjSolutions}
+\Wine\ uses Sys-V IPC mechanism (See
+Appendix~\ref{sec:SysV-IPC}). This allows sharing data and passing
+data between processes (The alternatives are not that good in that
+respect - see Appendix~\ref{DDE-Alternatives}).
+The shared data contains only essential information (performance or
+compatibility). The minimum is kept on shared memory in order to get
+maximum stability (\windoz\ is known as an unstable system, \Wine\
+should not imitate \windoz\ in this respect).
+
+Communications are done by Sys-V messages and UNIX signals (a signal
+wakes \Wine\ up and the message passes the data). Sys-V messages are
+used for carrying \windoz\ messages, as well as synchronization
+information. There are 3 types of messages: sent, posted and ack.
+Ack message is used for synchronization as well as for returning error
+codes (In case sending/posting messages fail). When a message is sent,
+the sending process will block until \Wine's {\em ack}{} message is
+received.
+
+Synchronization between \Wine\ processes is divided into 2 categories,
+in both cases the sender of a message waits for an ack message:
+\begin{enumerate}
+  \item Sent messages - Wait until the recipient delivers ack message.
+    (When the recipient finished message processing) 
+  \item Posted message - The recipient will send ack only during
+    task switching instructions (like PostMessage, GetMessage, Yield,
+    etc.). This way nothing will be done after PostMessage until it is
+    safe. 
+\end{enumerate}
+
+There is no real \Wine\ server. Every \Wine\ process has to handle
+it's end. This approach somehow resembles a distributed OS\@. This
+introduces some problems (Resources might not be freed in case of a
+crash). On the other hand this ``distributed OS'' approach simplifies
+installation and use, and improves performance.
+
+Atoms are stored on shared memory, so every two \Wine\ processes will
+be in sync in this respect (atom 5 will mean the same on both
+processes). Shared memory handles are stored on shared memory as
+well. Shared memory handles are not from the same range as local
+memory handles (\windoz\ requires an plication to declare about it's
+shared memory). Since local memory handles have different range they
+can be allocated locally (without any sync requirements - handle x may
+appear on 10 different \Wine\ processes and address different data).
+
+Window handles are allocated locally. This approach gives stability,
+but window handles are no longer unique (same handle may appear
+on different processes). This requires on the fly window handle
+translation. When an \windoz\ message is transfered, \Wine\ will
+translate any contained window handle. The sender translates the
+handle to a global (unique) handle, the receiver translates the global
+handle to the local window handle.
+
+Collecting the garbage of dead processes is done in two cases:
+\begin{enumerate}
+  \item When setting up a new \Wine\ process: If no \Wine\ process is
+    running and shared memory is floating around all the IPC stuff is
+    deleted. 
+  \item When sending a message: If the recipient is dead it's IPC
+    handles are deleted.
+\end{enumerate}
+
+
+
+\section{The software}
+
+\subsection{DDE project structure}
+Old \Wine\ functions call the new DDE functions whenever needed.
+(e.g.\ when sending a DDE message, the original SendMessage function calls
+DDE\_SendMessage). This approach minimizes changes to original \Wine{}
+code. The new code was written in C. The new capabilities where written
+as much as possible in OOP\footnote{OOP stands for Object Oriented
+Programming}{} style.
+
+Currently DDE uses Sys-V IPC mechanism, for it's operation.
+
+
+\paragraph{Major OOP objects and files:}
+
+\begin{table}[h]
+    \begin{center}
+        \leavevmode
+        \begin{tabular}{|l|p{20em}|} \hline
+            Object           & Description \\ \hline
+            shm\_block       & shared memory block operations. \\
+            shm\_main\_block & (derived from shm\_block.) Things all
+                               DDE applications need access to. \\
+            shm\_fragment    & Allocation of in-block fragments. \\
+            shm\_semaph      & Semaphore operations. \\
+            dde\_proc        & Process and DDE message handling. \\
+            dde\_mem         & Front end of DDE memory handling
+                               (Interface of DDE to outer world). \\
+            dde\_atom        & Handling global atoms. \\ 
+            bit\_array       & Array of bits. It has atomic
+                               operations, so bits can be used instead
+                               of semaphores. \\ \hline
+        \end{tabular}
+        \caption{Objects constructing the DDE extension.}
+        \label{tab:ObjList}
+    \end{center}
+\end{table}
+
+Table~\ref{tab:ObjList}{} lists the objects used in the DDE code.
+The following rules apply to objects:
+
+\begin{itemize} 
+  \item Object names that begin with {\em dde\_$\cdots$}{} are the front
+    end. These objects are working directly with the rest of
+    \Wine. Objects that start with {\em shm\_$\cdots$}{} are the back
+    end. These objects provide services for the rest of the
+    implementation. 
+  \item The objects are stored in file with the same name as the object.
+    (e.g.\ dde\_mem is stored in dde\_mem.c and dde\_mem.h).
+  \item For each object there is a test file (that partially tests it).
+    The name of this file is object's name with the word ``test''
+    (e.g.\ dde\_mem object has dde\_mem\_test.c).
+  \item dde.h file has declarations used by dde\_proc and external DDE
+    users.
+\end{itemize}
+    
+
+\subsection{Major algorithms}
+
+\paragraph{Delivering messages:}
+\label{sec:DeliveringMessages}
+\windoz\ messages are passed using Sys-V IPC messages. Processing
+starts with SendMessage() or PostMessage() \windoz\ system
+functions:
+\begin{enumerate}
+  \item SendMessage and PostMessage call the DDE functions (same names
+    prefixed with DDE\_). If the DDE functions pass, don't go any
+    further. If it fails try to process the message in the
+    conventional way. 
+  \item The DDE message functions call DDE\_DoMessage, which is
+    the main DDE message processing function. From now on there is no
+    difference between sending and posting messages (from initiator's
+    point of view).
+  \item If the message is not a DDE message or the recipient is not
+    remote, fail and return to original message functions.
+  \item Bring the message to a format suitable for IPC delivery. The
+    format includes:
+    \begin{itemize}
+      \item message type (sent or posted).
+      \item Sender window handle (translated to global window id.)
+      \item Other message ingredients (msg, lParam).
+    \end{itemize}
+  \item Deliver the message to every recipients using
+    DDE\_DoOneMessage. There might be many recipients in case of a
+    broadcast (when the ``recipient'' window is -1). 
+  \item DDE\_DoOneMessage delivers the message and waits for response.
+    Fail if timeout is reached.
+\end{enumerate}
+
+
+\paragraph{Receiving messages:}
+Messages from other \Wine\ processes are received. Processing start
+from DDE\_GetRemoteMessage():
+\begin{enumerate}
+  \item DDE\_GetRemoteMessage is called whenever wine is going to wait
+    or receive X-windows message. If wine is sleeping (waiting for X),
+    it will waken by a SIGUSR2 signal. In this case the handler will
+    siglongjmp() out of the select() function.
+  \item If no remote message is pending in the message queue - exit.
+    (Sys-V message queue holds the remote messages until they are
+    read).
+  \item If the message is broadcasted, goto stage~\ref{BroadcastAlgo}.
+  \item Translate the global window handle of the recipient to local
+    handle. 
+  \item Do this if the message was sent. Send the message to the
+    recipient window. Reply with ack to the sender. (Reply with the
+    return code of the SendMessage function). {\em \bf Return}\ with
+    positive return value.
+  \item Post the message.
+  \item If PostMessage fails - send failing ack message. 
+  \item If PostMessage passes, add the message data into a FIFO\@. This
+    FIFO contains all messages that have to be acknowledged (who's
+    sender is waiting for ack). Whenever internal task switch occurs,
+    a item from this FIFO is popped out and an ack message is sent.  
+  \item \label{BroadcastAlgo} Iterate through the local windows and
+    deliver the message to every one of them.
+  \item Send a positive ack message.
+\end{enumerate}
+
+\paragraph{Allocating memory:}
+Shared memory allocation is divided into two categories: internal wine
+and \windoz\ application. The memory used by \windoz\ applications is
+allocated in two phases - allocate internal wine, and then prepare all
+the stuff needed by \windoz.
+
+The internal allocation (DDE\_malloc):
+\begin{enumerate}
+  \item Try to allocate big enough memory fragment in allocated shared
+    memory. 
+  \item If fragment could not be allocated, allocate a new shared
+    memory block. Allocate the memory fragment.
+  \item Allocate a shared memory handle (call the dde\_alloc\_handle() 
+    function). The allocated handle is from a range used only by
+    shared memory handles. This allocation function is used only for
+    shared DDE memory.
+  \item Write the handle in the data structure. Also write the
+    relative location of this handle (Pointer location is useless since
+    it differs from one \Wine\ process to another).
+    This information is written in the main shared memory block.    
+\end{enumerate}
+When a fragment is allocated, it is removed from the list of free
+memory.
+
+Allocation for \windoz\ applications (this is done in GlobalAlloc):
+\begin{enumerate}
+  \item Do the internal allocation (instead of malloc in the local
+    allocation). 
+  \item Everything else is the same as with local memory. A segment is
+    allocated for the new memory, and it's data is kept in the data
+    structure. 
+\end{enumerate}
+
+
+\paragraph{Atoms:}
+Atoms have pretty simple algorithms operating on them. Since atoms are
+supposed to give a unique number for each string - atoms are
+implemented as hash tables. The id of the atom is the entry in the
+hash table. The disadvantage of this approach is that there is a limit
+on the number of atoms, the big advantages are simplicity and
+speed.
+
+Since implementing a hash tables is strait forward, I will not
+discuss it in depth. This hash table has two hash functions - primary
+and secondary. When searching for an item (for deletion, addition, or
+a seek) the following steps are taken:
+\begin{enumerate}
+  \item The primary hash function returns the first entry.
+  \item \label{AtomHashLoop}
+    If the entry is empty or no unchecked entries {\bf \em fail}.
+  \item If the entry is correct, {\bf \em success!!!}.
+  \item Add the result of secondary hash function to the item index.
+  \item Goto step~\ref{AtomHashLoop}.
+\end{enumerate}
+
+
+\subsection{Major data structures}
+There are two kinds of data structure, local and shared. The local
+data structures are strait forward and will not be discussed in
+detail.
+
+The shared data structures have four level hierarchy. Each level
+depend on the other and can not exist without it. Most structures have
+much less than four levels.
+
+\paragraph{Level one data structure - the main block:}
+This data structure is part of the shm\_main\_block object. It
+contains essential information needed by all \Wine\ processes. : 
+\begin{enumerate}
+  \item Semaphore identifier used for locking the data structure.
+  \item A table containing information about \Wine\ processes.
+  \item Relative pointers to atoms.
+  \item A table containing window information.
+  \item Tables with global memory handles.
+\end{enumerate}
+
+The first level is allocated and initialized when \Wine\ calls a DDE
+function the first time. DDE functions are: global memory allocation,
+global atoms or DDE messages. 
+
+The first level data structure contains the second level data
+structure. 
+
+
+\paragraph{Atom element (level two):}
+Each element is allocated dynamically (the size of the string is
+unknown). The allocation is gained from the shm\_fragment object (each
+atom is an instance of that object). Each atom contains:
+\begin{enumerate}
+  \item Count of links. Each allocation of the atom establishes a new
+    link and each deallocation deletes one link (until all links are
+    removed). 
+  \item The string of the atom. The string ends with a null character.
+\end{enumerate}
+
+\paragraph{Wine processes data (level two):}
+(part of the dde\_proc object) :
+\begin{enumerate}
+  \item pid (\Wine\ process id).
+  \item Message queue id.
+  \item Semaphore used for locking process's data structure.
+  \item Sys-V shared memory id of the first block in the chain of
+    process's blocks.
+\end{enumerate}
+
+
+\paragraph{Window information (level two):}
+This is part of the dde\_proc object. The index of array entry
+specifies the window handle. Each entry contains:
+\begin{enumerate}
+  \item The process index of the \Wine\ process running this window.
+  \item The local window handle of this window (remember that each DDE
+    window has different global and local handles).
+\end{enumerate}
+
+
+\paragraph{Global memory handles (Level two):}
+(part of bit\_array and dde\_mem objects):
+\begin{enumerate}
+  \item A bit array contains '1' in every entry that refers to
+    used global memory handle.
+  \item Array of handles contains handle data. Each entry refers
+    to a global memory handle (The index is a function of the
+    handle).  The data includes: 1) Sys-V shared memory handles 2)
+    offset into the memory block. 
+\end{enumerate}
+
+\paragraph{Block allocation data structure (Level three):}
+This data structure a part of the shm\_block object. It is local to
+each shared memory block, so every memory block has it's own data
+structure. The shared memory blocks are organized in chains grouped by
+processes (each DDE process has one and only one chain): 
+\begin{enumerate}
+  \item The id of the next shared memory block in the chain.
+  \item The size of the block.
+  \item Number of free bytes in the block.
+  \item The index of the owner process.
+  \item The first item in the free list (a linked list of free items).
+\end{enumerate}
+
+
+\paragraph{Fragment allocation (Level four):}
+This data is a part of the shm\_fragment object. It is a part of the shared
+memory allocation mechanism. Every fragment is a part of shared memory
+block. Each fragments contain:
+\begin{enumerate}
+  \item The size of the fragment (for allocating and freeing this
+    fragment). 
+  \item A union that contains one of:
+    \begin{itemize}
+      \item data - if it is allocated.
+      \item offset of the next free fragment (if it is a member of the
+        free list).
+    \end{itemize}
+\end{enumerate}
+
+
+\paragraph{Local reference to global memory:}
+Global memory blocks are referenced from local memory. This is used
+for storing pointers that refer to the memory block. It contains:
+\begin{enumerate}
+  \item next item in the list.
+  \item shared memory block id.
+  \item Owner process.
+  \item Pointer to the data.
+\end{enumerate}
+
+\paragraph{Local mirroring of global handles:}
+Global handles require local segments handles (when they are locked).
+These segments have to be deleted when the handle is freed.
+There is a minimal mirroring of handles in the original tables of
+wine, this information is stored the way local handles have always
+been stored.
+
+\subsection{Interface and IO}
+The DDE section of wine has several interfaces to different entities:
+\begin{enumerate}
+  \item User debug information.
+  \item Interface between several \Wine\ processes.
+  \item Interface to the `old' code of \Wine.
+\end{enumerate}
+
+
+\paragraph{User debug information:}
+The debug information is written according to \Wine's
+conventions. This means that dprintf\_$\cdots$ macros are used to
+print the debug information. (These macros allow runtime or compile time
+disabling of a any sort of debug information).
+
+In some cases the dprintf\_$\cdots$ macros are not powerful enough. In
+those cases the following construct is used instead:
+\begin{verbatim}
+    if (debugging_dde) {
+      /* print whatever is needed for dde debugging */
+    }
+\end{verbatim}
+
+
+\paragraph{Interface between \Wine\ processes:}
+The interface between processes includes:
+\begin{itemize}
+  \item Message delivery (see Section~\ref{sec:DeliveringMessages}).
+  \item Sharing \windoz\ constructs (atoms, memory, window
+    handles).
+  \item Synchronization among different \Wine\ processes so it will
+    appear to a \windoz\ as if there is only one process.
+\end{itemize}
+
+\paragraph{Interface to the rest of \Wine:}
+Most of the interface has been minimized to an additional few lines in
+the original functions. The hook for DDE are in the following
+locations:
+\begin{itemize}
+  \item Global atoms functions - these are called directly from
+    \windoz\ applications. 
+  \item Message delivery - a hook calls the DDE functions from the
+    original message delivery functions.
+  \item Initialization - Every PeekMessage() call a DDE function to
+    check if the current window has DDE management (by sending
+    a dummy WM\_DDE\_INITIATE message).
+  \item Waiting on messages - The original code for waiting on X
+    messages was enhanced to wait on DDE messages as well. This
+    includes aborting sleeps when SIGUSR2 signal is sent. The actual
+    test for DDE messages is done in the DDE code.
+\end{itemize}
+
+\subsection{Major functions and their role}
+\paragraph{Message delivery functions:}
+\begin{itemize}
+  \item DDE\_SendMessage and DDE\_PostMessage - hooks used by original
+    \Wine's SendMessage and PostMessage. They return true if the
+    message could be successfully sent to a remote \Wine\ process.
+    Only in this case SendMessage and PostMessage stop further
+    processing.
+  \item DDE\_DoMessage - Try to post or send a message to another
+    \Wine\ process. This function can do broadcasting as well as
+    sending. (A message is `broadcasted' if it is delivered to every
+    window on the system).
+  \item DDE\_DoOneMessage - Deliver a message to a given wine
+    {\bf process}.
+  \item dde\_proc\_send\_ack - Send ack message to \Wine\
+    process. The input window handle is used for detecting the
+    process.
+  \item get\_ack - wait for ack or timeout.
+\end{itemize}
+
+\paragraph{Memory allocation functions:}
+\begin{itemize}
+  \item DDE\_malloc - Allocate a shared memory fragment. This function
+    also allocates global memory handle.
+  \item DDE\_GlobalFree - Free a shared memory fragment according to
+    it's handle. And free the handle.
+  \item DDE\_SyncHandle - synchronize the global handles mirrored
+    locally. Delete any outdated handles, or remap reallocated
+    handles. 
+  \item DDE\_mem\_init - initialize or attach the main shared memory
+    block, and relevant local data structures.
+  \item shm\_delete\_all - delete all IPC stuff related to this
+    process. Kill the main memory block if appropriate.
+\end{itemize}
+
+
+\section{Software testing}
+The testing of this module was a substantial part of the
+development. Testing revealed bugs just as they where created.
+
+\subsection{Testing methods utilized}
+\label{sec:TestMethod}
+Two major testing methods where used:
+\begin{enumerate}
+  \item Running DDE \windoz\ applications. The applications used are
+    DDE demonstration applications. This applications seem to show 
+    precisely what DDE is all about. The applications used where:
+    ddepop1.exe (server), showpop1.exe (client). These
+    applications come with \windoz\ programming manual by Charles
+    Petzold \cite{bib:WinManual}. 
+  \item Running standalone DDE objects linked with a test
+    object. Every object was tested this way. Some objects had to be
+    linked with a stub that emulated \Wine's functions. The stub is
+    pretty poor with dde\_mem object since this object requires hard
+    to emulate functionalities (things like allocating a segment).
+
+    For some objects the coverage seems to be perfect (100\%). For
+    some object the coverage is poor. The objects with massive stub
+    usage suffer from this (especially dde\_mem).
+\end{enumerate}
+
+\subsection{input for testing}
+Most of the testing described in section~\ref{sec:TestMethod} has no
+input. Most of the testing knowledge is in the test objects
+themselves. There are two exceptions to this rule:
+\begin{enumerate}
+  \item The \windoz\ applications described in
+    section~\ref{sec:TestMethod} - which are essentially an input to
+    the software. These applications can't be distributed since it
+    will be a \copyright{} violation.
+  \item A trace file which is used for comparing test's output with
+    the expected trace result. This trace file is used for
+    shm\_fragment validation. This file is implementation Dependants
+    and should be updated whenever the object is rewritten. When
+    updating the trace, it should be inspected manually before it is
+    released. 
+\end{enumerate}
+
+\subsection{usage instructions}
+
+\paragraph{Running the DDE applications:}
+To test the DDE applications one must run:
+\begin{verbatim}
+   prompt> wine /full-path/ddepop1.exe > /dev/null &
+\end{verbatim}
+Wait for the server window to pop up (A tiny window should appear at
+the lower left corner of your screen). Then activate the client by
+typing: 
+\begin{verbatim}
+   prompt> wine /full-path/showpop1.exe > /dev/null 
+\end{verbatim}
+The server updates ``USA population'' data every 5 seconds. The client
+asks for a hot link (i.e.\ it sends a WM\_DDE\_ADVISE on every
+item). From that point on the server updates the client of any
+population change.
+
+
+\paragraph{Running the object tests:}
+The {\em run\_tests}{} script is provided to automate the object
+tests. Every object test is run and the script checks for results. At
+the end the script prints a nice summary table.
+
+Invoking tests outside the {\em run\_tests}{} script is not as simple
+as it may look. Every test has differently looking output.
+\begin{itemize}
+  \item dde\_atom\_test - The executable is run. It passes if no
+    errors are printed at the bottom. 
+  \item dde\_mem\_test - The same as for dde\_atom\_test.
+  \item shm\_semaph\_test - The same as for dde\_atom\_test.
+  \item bit\_array\_test -  The same as for dde\_atom\_test.
+  \item shm\_fragment\_test - After the executable is run,  the output
+    has to be compared with TEST\_FRAGMENT.std 
+  \item dde\_proc\_test - This actually runs as a client and as a
+    server. To activate the server one should write:
+\begin{verbatim}
+  prompt> dde_proc_test 1 > server.log
+\end{verbatim}
+    Then the client has to be activated within five seconds by
+    writing:
+\begin{verbatim}
+  prompt> dde_proc_test > client.log
+\end{verbatim}
+    The log files should contain:
+    \begin{description}
+      \item[server.log:] Should contain traces of received
+        WM\_DDE\_INITIATE message, and ack sent for it. (Pretty much
+        the same what  {\em run\_tests}{} does).  
+      \item[client.log:] Should contain traces of sending
+        WM\_DDE\_INITIATE and then receiving an ack message.
+    \end{description}
+    No `timeout' traces should be present in the log files.
+
+\end{itemize}
+
+
+\section{Summary}
+\subsection{Software limitations}
+\begin{itemize}
+  \item Only most fundamental memory management functions where
+    written. This means that the following functions will not work:
+    \begin{itemize}
+      \item GlobalReAlloc
+      \item GlobalSize - two line fix.
+      \item GlobalFlags - two line fix.
+      \item LockSegment - two line fix.
+      \item UnlockSegment - two line fix.
+      \item GlobalFreeAll - will not free DDE memory.
+      \item GlobalPageLock - two line fix.
+      \item GlobalPageUnlock - two line fix.
+      \item GlobalFix - two line fix.
+      \item GlobalUnfix - two line fix.
+    \end{itemize}
+  \item Non DDE messages to remote windows will not work. This is
+    currently only a sanity check, it may be removed in the future.
+  \item Message sending has a timeout limit. This is incompatible with
+    \windoz. This limit increases stability of a singe \Wine\ process.
+  \item Synchronization mechanism between wine processes is not
+    perfect. It was not proved theoretically. I never saw it fail.
+\end{itemize}
+
+\subsection{Concluding Remarks}
+This extension to \Wine{} enables further development of \windoz\ IPC
+support. Things like OLE can be extended using these features -
+although some modifications might be inevitable.
+
+The most important contribution of this project is the support for
+\libwine{}. Any \windoz\ application compiled under UNIX and linked to
+\libwine{} will need the IPC mechanism provided by this project.
+
+During the progress of the project it got a bit outdated. During that
+time \Wine{} started to handle tasks internally, so the external IPC
+was no longer needed for the emulator configuration of
+wine. Nevertheless the support of IPC for \libwine will never
+be obsolete.
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Appendixes
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\appendix
+
+\section{\Wine}
+\label{sec:Wine}
+\Wine\ stand for {\em WINdows Emulator}. It is an X-windows - UNIX 
+application (Linux and FreeBSD). \Wine\ emulates \windoz\  environment
+for the \windoz\  applications. It has two uses:
+\begin{enumerate}
+  \item Run \windoz\  binary code (compiled under \windoz).
+  \item To be used as a toolkit for compiling \windoz\ applications
+    under UNIX. (The \libwine\ library is provided)
+\end{enumerate}
+For emulation, only  Intel-Architecture CPU (386, 486, Pentium) are
+supported. \libwine\ Toolkit should run on any platforms, but it was not
+tested. \Wine\ is still in alpha state, and does not support all \windoz\
+capabilities yet.
+
+
+\section{Messages under \windoz}
+\label{sec:WindozMsg}
+Messages are the means of communication to a user window (from another
+window or from \windoz\ itself).
+Messages can be delivered in two ways:
+\begin{itemize}
+  \item Messages can be sent. The sent message enters the window handler
+    asynchronously (The handler may be reentered many times).
+    A window sending the message waits for the recipient to process
+    the message and return an exit code.
+  \item Messages can be posted. The posted message enters a queue, and
+    it's up to the recipient to process it. If the recipient ignores
+    it, the message might be eventually sent to the recipient from
+    WinMain handler.
+\end{itemize}
+
+\section{DDE}
+\label{sec:DDE}
+DDE stands for \DDE\@. DDE is an \windoz\ 
+protocol used for data exchange between applications.
+It has synchronous and asynchronous operation modes.
+DDE mechanism is based on messages, atoms
+(Section~\ref{sec:WhatAreAtoms}) and shared memory.
+
+DDE applications are divided roughly into two classes: servers AND
+clients. Clients have the initiative, they try to connect to the
+server. Servers only maintain an existing DDE link.
+
+
+\subsection{DDE Messages}
+\paragraph{DDE message format}:
+
+\label{sec:DDEMessageFormat}
+
+DDE messages contain the following fields.
+\begin{description}
+  \item[wnd] The recipient of this message ($-1$ if every window
+    should receive).
+  \item[msg]    The ID of the message.
+  \item[wParam] Who sent this message.
+  \item[lParam] 32 bit parameter, divided into two 16 bit words.
+    Usually, the lower 16 bits contain a memory handle. The handle
+    points to some extra DATA about this message.
+    
+\end{description}
+
+\paragraph{Available messages:}
+\begin{description}
+  \item[WM\_DDE\_INITIATE]
+    This message is sent by the client to the whole ``world''.
+    {\em lParam}{} contains the two atoms used for passing the topic and
+    application information.
+
+    Every server application checks if this message refers to it
+    (According to the Application and the Topic atoms).
+
+
+  \item[WM\_DDE\_ACK]
+    This is a generic response to various events
+    (one of them is WM\_DDE\_INITIATE).
+    The low part of {\em lParam}{} passes extra information, such as
+    success/failure.
+
+  \item[WM\_DDE\_TERMINATE]
+    Kill the DDE link.
+
+
+  \item[WM\_DDE\_ADVISE]
+    Tell the server to inform the client of any updates.
+
+
+  \item[WM\_DDE\_UNADVISE]
+    Stop the WM\_DDE\_UNADVISE mode.
+
+
+  \item[WM\_DDE\_DATA]
+    Transfer data handle (note that the data handle must be globally allocated
+    with the GMEM\_DDESHARE flag).
+
+  \item[WM\_DDE\_REQUEST]
+    Request a data item from the server. This message is used in a
+    cold link. {\em lParam}{} contains an atom describing the desired
+    item, and a WORD describing the wanted data format.
+  \item[WM\_DDE\_POKE]
+    The client gives the server new data.
+  \item[WM\_DDE\_EXECUTE]
+    The client asks the server to execute a procedure (according to a
+    command string).
+
+\end{description}
+
+\subsection{Atoms}
+\label{sec:WhatAreAtoms}
+Atoms are represented by numbers. Every atom maps uniquely to a string
+(i.e.\ two atoms can't map to the same string).
+There are two types of atoms - local and global. The local are visible
+only to the application that created them. Global atoms are seen by all
+\windoz\  applications.
+
+Functions:
+\begin{description}
+  \item[AddAtom(str)]   create a local atom that maps to ``str''.
+    If it exists, increment the allocation-counter,
+    and return the atom.
+  \item[DeleteAtom(atom)] decrement the allocation-counter.  When it
+    reaches zero the atom, will be deleted.
+  \item[FindAtom(str)]  Find the atom that maps to this string (if exist).
+    
+  \item[GetAtomName(\ldots)] Find the string that this atom points to.
+\end{description}
+
+NOTE:
+\begin{description}
+  \item[Global atoms] Add ``Global'' before the listed names to get Global
+    atom functions.
+  \item[Case sensitivity] All atom operations ignore case.
+\end{description}
+
+
+\section{DDE under \Wine\ - Alternatives}
+\label{DDE-Alternatives}
+There where three possible approaches for this project. I have chosen
+System-V IPC, but it can be easily changed.
+
+\subsection{IPC - Inter-Process Communication}
+\label{sec:SysV-IPC}
+
+The IPC mechanism was originated from System-V UNIX\@. This mechanism
+allows complicate communication between two process (on the same machine). 
+IPC includes the following capabilities:
+\begin{enumerate}
+  \item Shared Memory (shm) - can be shared among few processes and users.
+  \item Semaphores (These semaphores allow grouped operations - i.e.\ 
+    operations gathered as an atomic operation).
+  \item Message Queues (allow few messages at a time).
+\end{enumerate}
+
+The advantages of IPC over the other variants are:
+\begin{itemize}
+  \item Memory access speed is good. (after the memory was attached).
+  \item Easy to block critical code (don't enter critical code from two
+    processes at the same time)
+\end{itemize}
+Disadvantages of IPC:
+\begin{itemize}
+  \item Impossible to communicate to other machine.
+  \item Requires complex mechanism to wait both for X and IPC messages.
+\end{itemize}
+
+\subsection{X-Windows Communication mechanisms}
+The advantages of X-Windows Communication over the other variants are:
+\begin{itemize}
+  \item Possible to communicate to other machines.
+  \item No need for additional mechanism that will wait both for X and DDE\@.
+  \item Many of the required capabilities are already there.
+\end{itemize}
+Disadvantages of X-windows communication:
+\begin{itemize}
+  \item {\em Slow}\ and complex memory access.
+  \item May be hard to avoid two applications from entering critical
+    code at the same time.
+\end{itemize}
+
+\subsection{BSD Sockets}
+The advantages of Sockets are:
+\begin{itemize}
+  \item Possible to communicate to other machines.
+  \item No need for complex mechanism that will wait both for X and
+    DDE\@. (can use one ``select'' on X-windows socket in concert with
+    the DDE socket).
+\end{itemize}
+Disadvantages of socket are:
+\begin{itemize}
+  \item {\em Slow}{} and complex memory access. (note that mmap on a
+    descriptor does not work for Linux 0.99).
+  \item May be hard to avoid two applications from entering critical
+    code at the same time.
+\end{itemize}
+
+\subsection{Why was it written in C? Pros and cons.}
+Advantages of C:
+
+\begin{itemize}
+  \item History- \Wine{} is already written in C.
+  \item Portability- not all systems have C++.
+  \item Speed- C++ sometimes makes it very difficult to write fast code.
+  \item Maintenance- More programmers know C than C++. 
+\end{itemize}
+
+Advantages of C++:
+
+\begin{itemize}
+  \item smaller code - Templates allow Smaller and more readable code.
+  \item Maintenance - It is easier to add and modify code in C++ (than in C).
+  \item Verification - Functionality can be verified and debugged for
+    individual objects.
+\end{itemize}
+
+I have decided to use C. Most of C++ advantages can be acquired
+by using OOP methodologies. OOP methods that require inline functions
+can't be used (without performance impact). GCC supports inline functions,
+but this solution is not compatible.
+
+
+
+\section{\Wine\ basics}
+\subsection{How it runs}
+\Wine\ works in the following order:
+\begin{enumerate}
+  \item \Wine\ loads the \windoz\  application into it's memory.
+    (in the process it, links
+    DLL's\footnote{DLL (Dynamically Linked Library) is linked on load-time.}
+    creates 16-bit segments).
+  \item \windoz\  code is executed.
+\end{enumerate}
+
+\section{bibliography}
+\begin{thebibliography}{99}
+  \bibitem{bib:WinManual} Charles Petzold {\em  Programming
+      Windows~3.1}{} - 1992. \\ 
+    On cover: {\em the Microsoft guide to writing applications for
+      windows~3.1}. \\
+    Published by {\em Microsoft press}. 
+\end{thebibliography}
+
+
+\newpage
+
+
+\end{document}

@@ -261,7 +261,6 @@ static void PB_Paint( HWND hButton, HDC hDC, WORD action )
     HBRUSH hOldBrush;
     char *text;
     DWORD dwTextSize;
-    int delta;
     TEXTMETRIC tm;
     WND *wndPtr = WIN_FindWndPtr( hButton );
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;

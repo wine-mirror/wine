@@ -1,19 +1,38 @@
+/*
+ * Misc. emulation definitions
+ *
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #ifndef __WINE_MISCEMU_H
 #define __WINE_MISCEMU_H
 
 #include "wintypes.h"
 #include "registers.h"
 
+
+  /* miscemu/dosmem.c */
+extern BOOL DOSMEM_Init(void);
+extern void DOSMEM_FillBiosSegment(void);
+extern HANDLE DOSMEM_BiosSeg;
+
+  /* miscemu/instr.c */
 extern BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context );
 
-extern DWORD inport( int port, int count );
-extern void outport( int port, int count, DWORD value );
-
+  /* miscemu/interrupts.c */
 extern BOOL INT_Init(void);
 extern SEGPTR INT_GetHandler( BYTE intnum );
 extern void INT_SetHandler( BYTE intnum, SEGPTR handler );
 
+  /* miscemu/int1a.c */
+extern DWORD INT1A_GetTicksSinceMidnight(void);
+
+  /* miscemu/int21.c */
 extern void INT21_Init(void);
+
+  /* miscemu/ioports.c */
+extern DWORD inport( int port, int count );
+extern void outport( int port, int count, DWORD value );
 
 
 #define INT_BARF(context,num) \

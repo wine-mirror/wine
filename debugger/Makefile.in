@@ -41,11 +41,12 @@ depend:
 
 clean:
 	(cd readline; $(MAKE) clean)
-	rm -f *.o \#*\# *~ dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
+	rm -f dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h
 
 distclean:
 	(cd readline; $(MAKE) distclean)
-	rm -f *.o \#*\# *~ dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h tmp_make Makefile
+	rm -f *.o \#*\# *~ *.bak dbg.tab.c dbg.tab.h lex.yy.c y.tab.c y.tab.h tmp_make Makefile
 
 countryclean:
 

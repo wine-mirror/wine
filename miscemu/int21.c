@@ -341,14 +341,9 @@ static void WriteFile(struct sigcontext_struct *context)
 		AX_reg(context) = CX_reg(context);
 		RESET_CFLAG(context);
 	} else {
-		size = write(BX_reg(context), ptr , CX_reg(context));
-		if (size == 0) {
-			Error (WriteFault, EC_Unknown, EL_Unknown);
-			AX_reg(context) = ExtendedError;
-			return;
-		}
-
-		if (size == -1) {
+		/* well, this function already handles everything we need */
+		size = _lwrite(BX_reg(context),ptr,CX_reg(context));
+		if (size == -1) { /* HFILE_ERROR == -1 */
 			errno_to_doserr();
 			AX_reg(context) = ExtendedError;
 			SET_CFLAG(context);
@@ -417,8 +412,12 @@ static void ioctlGetDeviceInfo(struct sigcontext_struct *context)
 			return;
 		    }
 	    
-		    /* This isn't the right answer, but should be close enough. */
 		    DX_reg(context) = 0x0943;
+		    /* bits 0-5 are current drive
+		     * bit 6 - file has NOT been written..FIXME: correct?
+		     * bit 8 - generate int24 if no diskspace on write/ read past end of file
+		     * bit 11 - media not removable
+		     */
 		}
 	}
 	RESET_CFLAG(context);
@@ -1526,7 +1525,13 @@ void DOS3Call( struct sigcontext_struct context )
 		    RESET_CFLAG(&context);
                 }
 		break;
-
+	      case 0x0a: /* check if handle (BX) is remote */
+	      	/* returns DX, bit 15 set if remote, bit 14 set if date/time
+	      	 * not set on close
+	      	 */
+		DX_reg(&context) = 0;
+		RESET_CFLAG(&context);
+		break;
 	      case 0x0b:   /* SET SHARING RETRY COUNT */
 		if (!CX_reg(&context))
 		{ 

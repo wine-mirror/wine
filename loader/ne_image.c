@@ -39,6 +39,8 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     int fd;
     struct relocation_entry_s *rep, *reloc_entries;
     BYTE *func_name;
+    int size;
+    char* mem;
 
     char buffer[100];
     int ordinal, additive;
@@ -51,23 +53,37 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
-	if (pSeg->flags & NE_SEGFLAGS_ITERATED)
-	{
-		fprintf(stderr, "Sorry, iterated segments are not supported\n"
-			"Please report that %*.*s, segment %d is such a segment\n",
-			*((BYTE*)pModule + pModule->name_table), 
-			*((BYTE*)pModule + pModule->name_table), 
-			(char *)pModule + pModule->name_table + 1,
-			segnum
-		);
-		exit(1);
-	}
-
     fd = MODULE_OpenFile( hModule );
     dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
-    read( fd, GlobalLock( pSeg->selector ), pSeg->size ? pSeg->size : 0x10000);
+    size = pSeg->size ? pSeg->size : 0x10000;
+    mem = GlobalLock(pSeg->selector);
+    if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
+      read(fd, mem, size);
+    else {
+      /*
+	 The following bit of code for "iterated segments" was written without
+	 any documentation on the format of these segments. It seems to work,
+	 but may be missing something. If you have any doco please either send
+	 it to me or fix the code yourself. gfm@werple.mira.net.au
+      */
+      char* buff = malloc(size);
+      char* curr = buff;
+      read(fd, buff, size);
+      while(curr < buff + size) {
+	unsigned int rept = *((short*) curr)++;
+	unsigned int len = *((short*) curr)++;
+	for(; rept > 0; rept--) {
+	  char* bytes = curr;
+	  unsigned int byte;
+	  for(byte = 0; byte < len; byte++)
+	    *mem++ = *bytes++;
+	}
+	curr += len;
+      }
+      free(buff);
+    }
 
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
         return TRUE;  /* No relocation data, we are done */

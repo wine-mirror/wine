@@ -245,7 +245,7 @@ id	3
 380 stub ENDPAGE
 381 stub SETABORTPROC
 382 stub ABORTDOC
-400 stub FASTWINDOWFRAME
+400 pascal16 FastWindowFrame(word long word word long) FastWindowFrame
 401 stub GDIMOVEBITMAP
 403 stub GDIINIT2
 405 stub FINALGDIINIT

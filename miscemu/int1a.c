@@ -15,6 +15,27 @@
 
 
 /**********************************************************************
+ *	    INT1A_GetTicksSinceMidnight
+ *
+ * Return number of clock ticks since midnight.
+ */
+DWORD INT1A_GetTicksSinceMidnight(void)
+{
+    struct tm *bdtime;
+    struct timeval tvs;
+
+    /* This should give us the (approximately) correct
+     * 18.206 clock ticks per second since midnight.
+     */
+    gettimeofday( &tvs, NULL );
+    bdtime = localtime( &tvs.tv_sec );
+    return (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
+              bdtime->tm_sec) * 18206) / 1000) +
+                  (tvs.tv_usec / 54927);
+}
+
+
+/**********************************************************************
  *	    INT_Int1aHandler
  *
  * Handler for int 1ah (date and time).
@@ -24,25 +45,16 @@ void INT_Int1aHandler( struct sigcontext_struct context )
     time_t ltime;
     DWORD ticks;
     struct tm *bdtime;
-    struct timeval tvs;
 
     switch(AH_reg(&context))
     {
 	case 0:
-                /* This should give us the (approximately) correct
-                 * 18.206 clock ticks per second since midnight
-                 * expected from this interrupt
-                 */
-                gettimeofday(&tvs, NULL);
-                bdtime = localtime(&tvs.tv_sec);
-                ticks = (((bdtime->tm_hour * 3600 + bdtime->tm_min * 60 +
-                        bdtime->tm_sec) * 18206) / 1000) +
-                        (tvs.tv_usec / 54927);
-		CX_reg(&context) = HIWORD(ticks);
-		DX_reg(&context) = LOWORD(ticks);
-		AX_reg(&context) = 0;  /* No midnight rollover */
-		dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
-		break;
+            ticks = INT1A_GetTicksSinceMidnight();
+            CX_reg(&context) = HIWORD(ticks);
+            DX_reg(&context) = LOWORD(ticks);
+            AX_reg(&context) = 0;  /* No midnight rollover */
+            dprintf_int(stddeb,"int1a_00 // ticks=%ld\n", ticks);
+            break;
 		
 	case 2: 
 		ltime = time(NULL);

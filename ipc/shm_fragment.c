@@ -7,6 +7,8 @@
  * Purpose:   Data fragments and free list items. Allocate and free blocks.
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
 #include <stdio.h>		   /* for debugging only */
 #include <stddebug.h>
 #include <debug.h>		   /* for "stddeb" */
@@ -176,3 +178,5 @@ void shm_print_free_list(struct shm_block *block)
   fprintf(stddeb," [total free=%04x]\n",block->free);
   fflush(stddeb);
 }
+
+#endif  /* CONFIG_IPC */

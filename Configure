@@ -49,6 +49,12 @@ do
 done
 ALLDEFINES="$ALLDEFINES -ALANG\($LANGUAGE\)"
 
+prompt "Inter-process communication" CONFIG_IPC N
+if [ CONFIG_IPC = 'Y' -o $CONFIG_IPC = 'y' ]
+then
+       ALLDEFINES="$ALLDEFINES -DCONFIG_IPC"
+fi
+
 prompt "Malloc debugging" MALLOC_DEBUGGING N
 if [ MALLOC_DEBUGGING = 'Y' -o $MALLOC_DEBUGGING = 'y' ]
 then

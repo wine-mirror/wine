@@ -35,16 +35,11 @@
 #include "bitmaps/obm_dnarrowd"
 #include "bitmaps/obm_uparrowd"
 #include "bitmaps/obm_restored"
-#include "bitmaps/obm_zoomd"
-#include "bitmaps/obm_reduced"
 #include "bitmaps/obm_restore"
-#include "bitmaps/obm_zoom"
-#include "bitmaps/obm_reduce"
 #include "bitmaps/obm_lfarrow"
 #include "bitmaps/obm_rgarrow"
 #include "bitmaps/obm_dnarrow"
 #include "bitmaps/obm_uparrow"
-#include "bitmaps/obm_close"
 #include "bitmaps/obm_old_restore"
 #include "bitmaps/obm_old_zoom"
 #include "bitmaps/obm_old_reduce"
@@ -58,6 +53,21 @@
 #include "bitmaps/obm_old_uparrow"
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
+
+#ifndef WIN_95_LOOK
+#include "bitmaps/obm_zoomd"
+#include "bitmaps/obm_reduced"
+#include "bitmaps/obm_zoom"
+#include "bitmaps/obm_reduce"
+#include "bitmaps/obm_close"
+#else
+#include "bitmaps/obm_zoomd_95"
+#include "bitmaps/obm_reduced_95"
+#include "bitmaps/obm_zoom_95"
+#include "bitmaps/obm_reduce_95"
+#include "bitmaps/obm_close_95"
+#include "bitmaps/obm_closed_95"
+#endif  /* WIN_95_LOOK */
 
 #define OBM_FIRST  OBM_CDROM      /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
@@ -86,13 +96,22 @@ static const struct
     { obm_zoomd, TRUE },        /* OBM_ZOOMD */
     { obm_reduced, TRUE },      /* OBM_REDUCED */
     { obm_restore, TRUE },      /* OBM_RESTORE */
+#ifdef WIN_95_LOOK
+    { obm_zoom_95, TRUE },      /* OBM_ZOOM */
+    { obm_reduce_95, TRUE },    /* OBM_REDUCE */
+#else
     { obm_zoom, TRUE },         /* OBM_ZOOM */
     { obm_reduce, TRUE },       /* OBM_REDUCE */
+#endif
     { obm_lfarrow, TRUE },      /* OBM_LFARROW */
     { obm_rgarrow, TRUE },      /* OBM_RGARROW */
     { obm_dnarrow, TRUE },      /* OBM_DNARROW */
     { obm_uparrow, TRUE },      /* OBM_UPARROW */
+#ifdef WIN_95_LOOK
+    { obm_close_95, TRUE },     /* OBM_CLOSE */
+#else
     { obm_close, TRUE },        /* OBM_CLOSE */
+#endif
     { obm_old_restore, FALSE }, /* OBM_OLD_RESTORE */
     { obm_old_zoom, FALSE },    /* OBM_OLD_ZOOM */
     { obm_old_reduce, FALSE },  /* OBM_OLD_REDUCE */
@@ -163,6 +182,7 @@ static const struct
     { "button_face",      PALETTEINDEX(COLOR_BTNFACE) },
     { "button_shadow",    PALETTEINDEX(COLOR_BTNSHADOW) },
     { "button_highlight", PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
+    { "button_edge",      PALETTEINDEX(COLOR_BTNHIGHLIGHT) },
     { "button_text",      PALETTEINDEX(COLOR_BTNTEXT) },
     { "window_frame",     PALETTEINDEX(COLOR_WINDOWFRAME) }
 };

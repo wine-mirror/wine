@@ -35,7 +35,7 @@
 #define SOUND_DEV "/dev/dsp"
 
 #ifdef SOUND_VERSION
-#define IOCTL(a,b,c)		ioctl(a,b,&c)
+#define IOCTL(a,b,c)		((-1==ioctl(a,b,&c))&&(perror("ioctl:"#b":"#c),0))
 #else
 #define IOCTL(a,b,c)		(c = ioctl(a,b,c) )
 #endif
@@ -863,10 +863,11 @@ static DWORD wodClose(WORD wDevID)
 	close(WOutDev[wDevID].unixdev);
 	WOutDev[wDevID].unixdev = 0;
 	WOutDev[wDevID].bufsize = 0;
+	WOutDev[wDevID].lpQueueHdr = NULL;
 	if (WAVE_NotifyClient(wDevID, WOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'wodClose' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
-		}
+	}
 	return MMSYSERR_NOERROR;
 }
 
@@ -920,10 +921,13 @@ static DWORD wodPrepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 		dprintf_mciwave(stddeb,"Linux 'wodPrepare' // can't prepare !\n");
 		return MMSYSERR_NOTENABLED;
 		}
+	/* the COOL waveeditor feels much better without this check... 
+	 * someone please have a look at available documentation
 	if (WOutDev[wDevID].lpQueueHdr != NULL) {
 		dprintf_mciwave(stddeb,"Linux 'wodPrepare' // already prepare !\n");
 		return MMSYSERR_NOTENABLED;
-		}
+	}
+	*/
 	WOutDev[wDevID].dwTotalPlayed = 0;
 	WOutDev[wDevID].lpQueueHdr = lpWaveHdr;
 	if (lpWaveHdr->dwFlags & WHDR_INQUEUE) return WAVERR_STILLPLAYING;

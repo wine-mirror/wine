@@ -66,6 +66,71 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
 
 
 /***********************************************************************
+ *           DEBUG_IsStepOverInstr
+ *
+ * Determine if the instruction at CS:EIP is an instruction that
+ * we need to step over (like a call or a repetitive string move).
+ */
+static BOOL DEBUG_IsStepOverInstr( struct sigcontext_struct *context )
+{
+    BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN(CS_reg(context),EIP_reg(context));
+
+    for (;;)
+    {
+        switch(*instr)
+        {
+          /* Skip all prefixes */
+
+        case 0x2e:  /* cs: */
+        case 0x36:  /* ss: */
+        case 0x3e:  /* ds: */
+        case 0x26:  /* es: */
+        case 0x64:  /* fs: */
+        case 0x65:  /* gs: */
+        case 0x66:  /* opcode size prefix */
+        case 0x67:  /* addr size prefix */
+        case 0xf0:  /* lock */
+        case 0xf2:  /* repne */
+        case 0xf3:  /* repe */
+            instr++;
+            continue;
+
+          /* Handle call instructions */
+
+        case 0xe8:  /* call <offset> */
+        case 0x9a:  /* lcall <seg>:<off> */
+            return TRUE;
+
+        case 0xff:  /* call <regmodrm> */
+            return (((instr[1] & 0x38) == 0x10) ||
+                    ((instr[1] & 0x38) == 0x18));
+
+          /* Handle string instructions */
+
+        case 0x6c:  /* insb */
+        case 0x6d:  /* insw */
+        case 0x6e:  /* outsb */
+        case 0x6f:  /* outsw */
+        case 0xa4:  /* movsb */
+        case 0xa5:  /* movsw */
+        case 0xa6:  /* cmpsb */
+        case 0xa7:  /* cmpsw */
+        case 0xaa:  /* stosb */
+        case 0xab:  /* stosw */
+        case 0xac:  /* lodsb */
+        case 0xad:  /* lodsw */
+        case 0xae:  /* scasb */
+        case 0xaf:  /* scasw */
+            return TRUE;
+
+        default:
+            return FALSE;
+        }
+    }
+}
+
+
+/***********************************************************************
  *           DEBUG_SetBreakpoints
  *
  * Set or remove all the breakpoints.
@@ -257,14 +322,18 @@ void DEBUG_RestartExecution( struct sigcontext_struct *context,
         break;
 
     case EXEC_STEP_OVER:  /* Stepping over a call */
-        EFL_reg(DEBUG_context) &= ~STEP_FLAG;
-        addr.off += instr_len;
-        breakpoints[0].addr    = addr;
-        breakpoints[0].enabled = TRUE;
-        breakpoints[0].in_use  = TRUE;
-        breakpoints[0].opcode  = *(BYTE *)DBG_ADDR_TO_LIN( &addr );
-        DEBUG_SetBreakpoints( TRUE );
-        break;
+        if (DEBUG_IsStepOverInstr(DEBUG_context))
+        {
+            EFL_reg(DEBUG_context) &= ~STEP_FLAG;
+            addr.off += instr_len;
+            breakpoints[0].addr    = addr;
+            breakpoints[0].enabled = TRUE;
+            breakpoints[0].in_use  = TRUE;
+            breakpoints[0].opcode  = *(BYTE *)DBG_ADDR_TO_LIN( &addr );
+            DEBUG_SetBreakpoints( TRUE );
+            break;
+        }
+        /* else fall through to single-stepping */
 
     case EXEC_STEP_INSTR: /* Single-stepping an instruction */
         EFL_reg(DEBUG_context) |= STEP_FLAG;

@@ -1,0 +1,23 @@
+/* XPM */
+static char * obm_reduced_95[] = {
+"16 14 6 1",
+"O	s button_highlight	c white",
+"o	s button_edge	c grey85",
+"X	s button_face	c grey75",
+"+	s button_shadow	c grey50",
+".	s button_text	c black",
+" 	s window_frame	c black",
+"                ",
+" +++++++++++++oO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" +XXX......XXXoO",
+" +XXX......XXXoO",
+" ooooooooooooooO",
+"OOOOOOOOOOOOOOOO"};

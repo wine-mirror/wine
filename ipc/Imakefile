@@ -2,31 +2,35 @@
 
 MODULE = ipc
 
-TEST_SRCS =  \
-          shm_fragment_test.c \
-          bit_array_test.c\
-          dde_proc_test.c \
-          dde_atom_test.c \
-          shm_semaph_test.c \
-          wine_test_stub.c \
-          hash_test.c \
-          dde_mem_test.c 
-
 SRCS =    bit_array.c \
-	  dde_atom.c  \
-	  dde_mem.c \
           dde_proc.c  \
-          generic_hash.c \
-          shm_block.c \
-          shm_fragment.c \
           shm_main_blk.c \
-          shm_semaph.c
+	  dde_atom.c  \
+          shm_semaph.c \
+	  dde_mem.c \
+          shm_block.c \
+          shm_fragment.c
 
 OBJS = $(SRCS:.c=.o)
-TEST_OBJS = $(TEST_SRCS:.c=.o)
+
+SHM_OBJ=shm_block.o shm_semaph.o shm_main_blk.o dde_proc.o \
+               	   dde_mem.o bit_array.o shm_fragment.o wine_test_stub.o
+
 
 WineRelocatableTarget($(MODULE),,$(OBJS))
+
 DependTarget()
+
+tests:: dde_mem_test dde_proc_test dde_atom_test shm_fragment_test \
+        shm_semaph_test
+
+NormalProgramTarget(bit_array_test, bit_array.o bit_array_test.o,,,)
+NormalProgramTarget(shm_semaph_test, shm_semaph_test.o shm_semaph.o,,,)
+NormalProgramTarget(shm_fragment_test, shm_fragment_test.o shm_fragment.o,,,)
+NormalProgramTarget(dde_atom_test, dde_atom_test.o dde_atom.o $(SHM_OBJ),,,)
+NormalProgramTarget(dde_mem_test, dde_mem_test.o $(SHM_OBJ),,,)
+NormalProgramTarget(dde_proc_test, dde_proc_test.o $(SHM_OBJ) ,,,)
+
 
 includes::
 

@@ -3,6 +3,7 @@
 MODULE = miscemu
 
 SRCS = \
+	dosmem.c \
 	dpmi.c \
 	emulate.c \
 	instr.c \

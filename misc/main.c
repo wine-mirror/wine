@@ -846,3 +846,27 @@ void FileCDR(FARPROC x)
 {
 	printf("FileCDR(%8x)\n", (int) x);
 }
+
+/***********************************************************************
+*	GetWinDebugInfo (KERNEL.355)
+*/
+BOOL GetWinDebugInfo(WINDEBUGINFO FAR* lpwdi, UINT flags)
+{
+	printf("GetWinDebugInfo(%8lx,%d) stub returning 0\n", (unsigned long)lpwdi, flags);
+	/* 0 means not in debugging mode/version */
+	/* Can this type of debugging be used in wine ? */
+	/* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
+	return 0;
+}
+
+/***********************************************************************
+*	GetWinDebugInfo (KERNEL.355)
+*/
+BOOL SetWinDebugInfo(WINDEBUGINFO FAR* lpwdi)
+{
+	printf("SetWinDebugInfo(%8lx) stub returning 0\n", (unsigned long)lpwdi);
+	/* 0 means not in debugging mode/version */
+	/* Can this type of debugging be used in wine ? */
+	/* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
+	return 0;
+}

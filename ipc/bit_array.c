@@ -14,13 +14,15 @@
  ***************************************************************************
  */
 
+#ifdef CONFIG_IPC
+
 /*
 ** uncoment the following line to disable assertions,
 ** this may boost performance by up to 50%
 */
 /* #define NDEBUG */
 
-#ifndef NO_ASM
+#if defined(linux) && !defined(NO_ASM)
 #define HAS_BITOPS
 #endif
 
@@ -275,3 +277,5 @@ int AllocateBit(bit_array *bits)
 
   return bit_nr;
 }
+
+#endif  /* CONFIG_IPC */

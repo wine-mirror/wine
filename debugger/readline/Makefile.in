@@ -1,11 +1,12 @@
 CC 	= @CC@
 CFLAGS 	= @CFLAGS@
+DEFS    = @DEFS@
 XINCL 	= @x_includes@
 TOPSRC  = @top_srcdir@
 DIVINCL = -I$(TOPSRC)/include
 LD	= @LD@
 LDCOMBINEFLAGS = @LDCOMBINEFLAGS@
-DIVDEFS	= @DEFS@ -DHIDE -DANSI_ARROWS
+DIVDEFS	= $(DEFS) -DHIDE -DANSI_ARROWS
 
 
 MODULE 	= readline
@@ -28,7 +29,7 @@ depend:
 	mv tmp_make Makefile
 
 clean:
-	rm -f *.o \#*\# *~ tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
 
 distclean: clean
 	rm -f Makefile

@@ -528,7 +528,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
 /***********************************************************************
  *           TASK_DeleteTask
  */
-void TASK_DeleteTask( HTASK hTask )
+static void TASK_DeleteTask( HTASK hTask )
 {
     TDB *pTask;
 
@@ -600,11 +600,16 @@ void TASK_Reschedule(void)
     TDB *pOldTask = NULL, *pNewTask;
     HTASK hTask = 0;
 
+#ifdef CONFIG_IPC
     dde_reschedule();
+#endif
       /* First check if there's a task to kill */
 
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
+    {
         TASK_DeleteTask( hTaskToKill );
+        hTaskToKill = 0;
+    }
 
       /* If current task is locked, simply return */
 

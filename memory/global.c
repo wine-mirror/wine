@@ -81,21 +81,6 @@ void debug_handles()
     if (printed)
 	printf("\n");
 }
-/***********************************************************************
- *           GLOBAL_FindArena
- *
- * Find the arena  for a given handle
- * (when handle is not serial - e.g. DDE)
- */
-static GLOBALARENA *GLOBAL_FindArena( HGLOBAL handle)
-{
-    int i;
-    for (i = globalArenaSize-1 ; i>=0 ; i--) {
-	if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == handle)
-	    return ( &pGlobalArena[i] );
-    }
-    return NULL;
-}
 
 
 /***********************************************************************
@@ -196,9 +181,11 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
       /* Allocate the linear memory */
 
+#ifdef CONFIG_IPC
     if ((flags & GMEM_DDESHARE) && Options.ipc)
-        ptr= DDE_malloc(flags, size, &shmdata);
+        ptr = DDE_malloc(flags, size, &shmdata);
     else 
+#endif  /* CONFIG_IPC */
 	ptr = malloc( size );
     if (!ptr) return 0;
 
@@ -215,6 +202,25 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
     if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
     return handle;
 }
+
+
+#ifdef CONFIG_IPC
+/***********************************************************************
+ *           GLOBAL_FindArena
+ *
+ * Find the arena  for a given handle
+ * (when handle is not serial - e.g. DDE)
+ */
+static GLOBALARENA *GLOBAL_FindArena( HGLOBAL handle)
+{
+    int i;
+    for (i = globalArenaSize-1 ; i>=0 ; i--) {
+	if (pGlobalArena[i].size!=0 && pGlobalArena[i].handle == handle)
+	    return ( &pGlobalArena[i] );
+    }
+    return NULL;
+}
+
 
 /***********************************************************************
  *           DDE_GlobalHandleToSel
@@ -238,6 +244,7 @@ WORD DDE_GlobalHandleToSel( HGLOBAL handle )
 
     return SELECTOROF( segptr );
 }
+#endif  /* CONFIG_IPC */
 
 
 /***********************************************************************
@@ -268,11 +275,13 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
                     handle, size, flags );
     if (!handle) return 0;
     
+#ifdef CONFIG_IPC
     if (Options.ipc && (flags & GMEM_DDESHARE || is_dde_handle(handle))) {
 	fprintf(stdnimp,
 		"GlobalReAlloc: shared memory reallocating unimplemented\n"); 
 	return 0;
     }
+#endif  /* CONFIG_IPC */
 
     pArena = GET_ARENA_PTR( handle );
 
@@ -366,7 +375,9 @@ HGLOBAL GlobalFree( HGLOBAL handle )
 
     dprintf_global( stddeb, "GlobalFree: %04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
+#ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_GlobalFree(handle);
+#endif  /* CONFIG_IPC */
     if (ptr) free( ptr );
     return 0;
 }
@@ -382,9 +393,13 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
     dprintf_global( stddeb, "WIN16_GlobalLock(%04x) -> %08lx\n",
                     handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
-    if ( !is_dde_handle(handle) && !GET_ARENA_PTR(handle)->base)
-	return (SEGPTR)0;
 
+#ifdef CONFIG_IPC
+    if (is_dde_handle(handle))
+        return (SEGPTR)MAKELONG( 0, DDE_GlobalHandleToSel(handle) );
+#endif  /* CONFIG_IPC */
+
+    if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
     return (SEGPTR)MAKELONG( 0, GlobalHandleToSel(handle) );
 }
 
@@ -397,9 +412,9 @@ SEGPTR WIN16_GlobalLock( HGLOBAL handle )
 LPSTR GlobalLock( HGLOBAL handle )
 {
     if (!handle) return 0;
-    if (is_dde_handle(handle)) {
-       return DDE_AttachHandle(handle, NULL);
-    }
+#ifdef CONFIG_IPC
+    if (is_dde_handle(handle)) return DDE_AttachHandle(handle, NULL);
+#endif
     return (LPSTR)GET_ARENA_PTR(handle)->base;
 }
 
@@ -644,9 +659,9 @@ WORD GlobalHandleToSel( HGLOBAL handle )
 {
     dprintf_toolhelp( stddeb, "GlobalHandleToSel: %04x\n", handle );
     if (!handle) return 0;
-    if (is_dde_handle(handle)) 
-	return DDE_GlobalHandleToSel(handle);
-
+#ifdef CONFIG_IPC
+    if (is_dde_handle(handle)) return DDE_GlobalHandleToSel(handle);
+#endif
     if (!(handle & 7))
     {
         fprintf( stderr, "Program attempted invalid selector conversion\n" );

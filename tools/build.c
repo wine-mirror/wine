@@ -974,21 +974,19 @@ static void BuildCall32LargeStack(void)
     printf( "\tpushl %%ebp\n" );
     printf( "\tmovl %%esp,%%ebp\n" );
 
-    /* Retrieve the original 32-bit stack pointer */
-
-    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%eax\n" );
-    printf( "\torl %%eax,%%eax\n" );
-    printf( "\tje 0f\n" );
-
     /* Save registers */
 
     printf( "\tpushl %%ecx\n" );
     printf( "\tpushl %%esi\n" );
     printf( "\tpushl %%edi\n" );
 
-    /* Switch to the new stack */
+    /* Retrieve the original 32-bit stack pointer and switch to it if any */
 
+    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%eax\n" );
+    printf( "\torl %%eax,%%eax\n" );
+    printf( "\tje 0f\n" );
     printf( "\tmovl %%eax,%%esp\n" );
+    printf( "0:\n" );
 
     /* Transfer the arguments */
 
@@ -1016,28 +1014,7 @@ static void BuildCall32LargeStack(void)
     printf( "\tpopl %%edi\n" );
     printf( "\tpopl %%esi\n" );
     printf( "\tpopl %%ecx\n" );
-
     printf( "\tpopl %%ebp\n" );
-    printf( "\tret\n" );
-
-    /* We get here if IF1632_Original32_esp is 0, i.e. we have not */
-    /* switched to another 32-bit stack yet. */
-
-    printf( "0:\n" );
-
-    /* Move the return address up the stack */
-
-    printf( "\tmovl 4(%%ebp),%%eax\n" );
-    printf( "\tmovl %%eax,12(%%ebp)\n" );
-
-    /* Restore ebp and remove old return address */
-
-    printf( "\tpopl %%ebp\n" );
-    printf( "\taddl $4,%%esp\n" );
-
-    /* Now jump to the routine, leaving the original return address and */
-    /* the arguments on the stack. */
-
     printf( "\tret\n" );
 }
 

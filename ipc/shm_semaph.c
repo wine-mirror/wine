@@ -7,6 +7,8 @@
  * Purpose:   Handle semaphores for shared memory operations.
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
 #define inline __inline__
 #include <assert.h>
 #include <unistd.h>
@@ -134,3 +136,5 @@ void shm_sem_done(shm_sem *semptr)
 
   *semptr= -1;
 }
+
+#endif  /* CONFIG_IPC */

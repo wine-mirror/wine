@@ -9,6 +9,9 @@
  */
 #ifndef __WINE_SHM_BLOCK_H
 #define __WINE_SHM_BLOCK_H
+
+#ifdef CONFIG_IPC
+
 #include <sys/shm.h>
 #include "wintypes.h"
 #define SEGSIZE                 0x10000 /* 64 */ 
@@ -83,4 +86,5 @@ struct shm_block *shm_attach_block(int shm_id, int proc_idx,
 /* delete chain of shm blocks (pointing to each other */
 void shm_delete_chain(int *shmid);
 
-#endif /* __WINE_SHM_BLOCK_H */
+#endif  /* CONFIG_IPC */
+#endif  /* __WINE_SHM_BLOCK_H */

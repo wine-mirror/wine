@@ -1,0 +1,23 @@
+/* XPM */
+static char * obm_close_95[] = {
+"16 14 6 1",
+" 	s button_highlight	c white",
+"+	s button_edge	c grey85",
+"X	s button_face	c grey75",
+"o	s button_shadow c grey50",
+".	s button_text	c black",
+"O	s window_frame	c black",
+"               O",
+" +++++++++++++oO",
+" +XXXXXXXXXXXXoO",
+" +XX..XXXX..XXoO",
+" +XXX..XX..XXXoO",
+" +XXXX....XXXXoO",
+" +XXXXX..XXXXXoO",
+" +XXXX....XXXXoO",
+" +XXX..XX..XXXoO",
+" +XX..XXXX..XXoO",
+" +XXXXXXXXXXXXoO",
+" +XXXXXXXXXXXXoO",
+" ooooooooooooooO",
+"OOOOOOOOOOOOOOOO"};

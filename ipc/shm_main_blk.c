@@ -7,6 +7,8 @@
  * Purpose:   Main Wine's shared memory block
  ***************************************************************************
  */
+#ifdef CONFIG_IPC
+
 #define inline __inline__
 #include <sys/types.h>
 #include <sys/sem.h>
@@ -265,3 +267,5 @@ static void shm_main_refresh()
   for (proc_idx= 0 ; proc_idx < DDE_PROCS ; proc_idx++)
      dde_proc_refresh( &main_block->proc[proc_idx] );
 }
+
+#endif  /* CONFIG_IPC */

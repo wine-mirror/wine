@@ -1302,3 +1302,11 @@ BOOL StretchBlt( HDC hdcDst, short xDst, short yDst,
                                 dcDst, xDst, yDst, widthDst, heightDst,
                                 dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 }
+/***********************************************************************
+ *           FastWindowFrame    (GDI.400)
+ */
+WORD
+FastWindowFrame(WORD x1,DWORD x2,WORD x3,WORD x4,DWORD x5) {
+	dprintf_gdi(stdnimp,"FastWindowFrame (%04x, %08lx, %04x, %04x, %08lx) // unimplemented!\n",x1,x2,x3,x4,x5);
+	return 0xFFFF; /* failed? */
+}

@@ -27,7 +27,7 @@ depend:
 	mv tmp_make Makefile
 
 clean:
-	rm -f *.o \#*\# *~ tmp_make
+	rm -f *.o \#*\# *~ *.bak tmp_make
 
 distclean: clean
 	rm -f Makefile

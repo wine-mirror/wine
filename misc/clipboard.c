@@ -143,6 +143,7 @@ HANDLE GetClipboardData(WORD wFormat)
 {
     LPCLIPFORMAT lpFormat = ClipFormats; 
     dprintf_clipboard(stddeb,"GetClipboardData(%04X) !\n", wFormat);
+    if (!hWndClipboardOwner) return 0;
     if(wFormat == CF_TEXT && !wineOwnsSelection)
     {	wait_for_selection=True;
         dprintf_clipboard(stddeb,"Requesting selection\n");

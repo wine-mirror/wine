@@ -4,6 +4,7 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include <math.h>
 #include "gdi.h"
 #include "metafile.h"
 #include "stddebug.h"
@@ -24,12 +25,12 @@ void MAPPING_FixIsotropic( DC * dc )
 	          (dc->w.devCaps->vertRes * dc->w.WndExtY);
     if (xdim > ydim)
     {
-	dc->w.VportExtX = dc->w.VportExtX * ydim / xdim;
+	dc->w.VportExtX = dc->w.VportExtX * fabs( ydim / xdim );
 	if (!dc->w.VportExtX) dc->w.VportExtX = 1;
     }
     else
     {
-	dc->w.VportExtY = dc->w.VportExtY * xdim / ydim;
+	dc->w.VportExtY = dc->w.VportExtY * fabs( xdim / ydim );
 	if (!dc->w.VportExtY) dc->w.VportExtY = 1;
     }	
 }

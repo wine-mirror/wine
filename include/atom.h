@@ -25,10 +25,4 @@ typedef struct
     HANDLE      entries[1];
 } ATOMTABLE;
 
-
-ATOM LocalAddAtom( SEGPTR str );
-ATOM LocalDeleteAtom( ATOM atom );
-ATOM LocalFindAtom( SEGPTR str );
-WORD LocalGetAtomName( ATOM atom, LPSTR buffer, short count );
-
 #endif  /* ATOM_H */

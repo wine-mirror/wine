@@ -174,7 +174,7 @@ struct sockproto {
  * compatibility purposes.
  */
 
-#define h_errno         WSAGetLastError()
+/* #define h_errno         WSAGetLastError() */
 
 /* Authoritative Answer: Host not found */
 #define WSAHOST_NOT_FOUND       (WSABASEERR+1001)

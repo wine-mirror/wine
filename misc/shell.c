@@ -450,10 +450,14 @@ static char AppName[512], AppMisc[512];
  */
 INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 {
+  char Template[512], AppTitle[512];
+ 
   switch(msg) {
    case WM_INITDIALOG:
     SendDlgItemMessage(hWnd,stc1,STM_SETICON,LOWORD(lParam),0);
-    SetWindowText(hWnd, AppName);
+    GetWindowText(hWnd, Template, 511);
+    sprintf(AppTitle, Template, AppName);
+    SetWindowText(hWnd, AppTitle);
     SetWindowText(GetDlgItem(hWnd,100), AppMisc);
     return 1;
     
@@ -474,7 +478,7 @@ INT AboutDlgProc(HWND hWnd, WORD msg, WORD wParam, LONG lParam)
 INT ShellAbout(HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIcon)
 {
   if (szApp) {
-    sprintf(AppName, "About %s", szApp);
+    strcpy(AppName, szApp);
   } else  {
     *AppName = 0;
   }

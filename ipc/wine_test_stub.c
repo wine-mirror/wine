@@ -23,7 +23,7 @@ int LDT_GetEntry( int entry, ldt_entry *content )
     return 0;
 }
 
-int LDT_SetEntry( int entry, ldt_entry *content )
+int LDT_SetEntry( int entry, ldt_entry const *content )
 {
     return 0;
 }

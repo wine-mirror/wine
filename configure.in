@@ -3,11 +3,22 @@ dnl Author: Michael Patra   <micky@marie.physik.tu-berlin.de>
 dnl                         <patra@itp1.physik.tu-berlin.de>
 AC_REVISION([configure.in 1.00])
 AC_INIT(controls/edit.c)		
-AC_CONFIG_HEADER(include/config.h)
 
 # We want these before the checks, so the checks can modify their values.
 test -z "$CFLAGS" && CFLAGS="-g -O2 -Wall" AC_SUBST(CFLAGS)
 test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
+
+AC_ARG_WITH(language,
+[  --with-language=LANG    change the default language (LANG=En/De/No)],
+[LANG="-ALANG\($withval\)"],
+[LANG="-ALANG\(En\)"],)
+AC_SUBST(LANG)
+AC_ARG_WITH(ipc,
+[  --with-ipc              use inter-process communication for DDE],
+[AC_DEFINE(CONFIG_IPC)])
+AC_ARG_WITH(malloc-debug,
+[  --with-malloc-debug     enable malloc() debugging],
+[AC_DEFINE(MALLOC_DEBUGGING)])
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
@@ -41,70 +52,6 @@ TOP_SRCDIR="."
 else
 TOP_SRCDIR="${top_srcdir}"
 fi
-AC_MSG_CHECKING(for language in autoconf.h)
-if test -f ${TOP_SRCDIR}/autoconf.h; then
-LANG=`tr ' ' '\n' < ${TOP_SRCDIR}/autoconf.h | grep '\-ALANG' | head -1`
-if test -n "${LANG}"; then
-AC_MSG_RESULT(`echo "${LANG}" | cut -b9-10`)
-fi
-fi
-if test -z "${LANG}"; then
-AC_MSG_RESULT(no)
-fi
-AC_SUBST(LANG)
-
-if test -z "${LANG}"; then
-AC_MSG_CHECKING(for language through domainname)
-DNAME=`domainname`
-if test `echo "${DNAME}" | grep -c "\.no"` -ne 0; then
-LANG="-ALANG\(No\)"
-AC_MSG_RESULT(No)
-fi
-if test `echo "${DNAME}" | grep -c "\.de"` -ne 0; then
-LANG="-ALANG\(De\)"
-AC_MSG_RESULT(De)
-fi
-if test `echo "${DNAME}" | grep -c "\.uk"` -ne 0; then
-LANG="-ALANG\(En\)"
-AC_MSG_RESULT(En)
-fi
-if test `echo "${DNAME}" | grep -c "\.com"` -ne 0; then
-LANG="-ALANG\(En\)"
-AC_MSG_RESULT(En)
-fi
-if test `echo "${DNAME}" | grep -c "\.edu"` -ne 0; then
-LANG="-ALANG\(En\)"
-AC_MSG_RESULT(En)
-fi
-if test `echo "${DNAME}" | grep -c "\.gov"` -ne 0; then
-LANG="-ALANG\(En\)"
-AC_MSG_RESULT(En)
-fi
-if test -z "${LANG}"; then
-AC_MSG_RESULT(no)
-fi
-fi
-
-if test -z "${LANG}"; then
-AC_MSG_CHECKING(for linux)
-AC_EGREP_CPP(yes,
-[#ifdef linux
-   yes
-#endif
-], AC_MSG_RESULT(yes)
-AC_MSG_CHECKING(for language by examining keymap)
-if test `dumpkeys | grep "keycode *26" | tr ' ' '\n' | grep -c udiaeresis` -ne 0; then
-AC_MSG_RESULT(De)
-LANG='-ALANG\(De\)'
-else
-AC_MSG_RESULT(no)
-LANG='-ALANG\(En\)'
-fi
-,
-AC_MSG_RESULT(no)
-LANG='-ALANG\(En\)'
-)
-fi
 
 AC_MSG_CHECKING(for wine.ini in autoconf.h)
 if test -f ${TOP_SRCDIR}/autoconf.h; then
@@ -129,11 +76,7 @@ fi
 fi
 AC_SUBST(WINE_INI_GLOBAL)
 
-
-test -z "$LDFLAGS" && LDFLAGS=-g AC_SUBST(LDFLAGS)
-
-
-AC_OUTPUT(controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile Makefile autoconf.h, [touch stamp-config])
+AC_OUTPUT(controls/Makefile ipc/Makefile loader/Makefile memory/Makefile misc/Makefile miscemu/Makefile multimedia/Makefile objects/Makefile windows/Makefile rc/Makefile debugger/Makefile debugger/readline/Makefile tools/Makefile if1632/Makefile Makefile autoconf.h)
 
 echo
 echo "Configure finished.  Do 'make depend; make' to compile Wine."

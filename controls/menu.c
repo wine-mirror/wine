@@ -697,7 +697,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU hmenu, WORD id, int x, int y)
 /***********************************************************************
  *           MENU_SelectItem
  */
-static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
+static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, WORD wIndex )
 {
     MENUITEM *items;
     LPPOPUPMENU lppop;
@@ -739,8 +739,9 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 	    MENU_DrawMenuItem( lppop->hWnd, hdc, &items[lppop->FocusedItem], lppop->Height,
 			       !(lppop->wFlags & MF_POPUP) );
 	    dprintf_menu(stddeb,"Sending WM_MENUSELECT %04x %04x\n", items[lppop->FocusedItem].item_id,items[lppop->FocusedItem].item_flags);
-	    SendMessage(lppop->hWnd, WM_MENUSELECT, items[lppop->FocusedItem].item_id,
-		       MAKELONG( items[lppop->FocusedItem].item_flags | MF_MOUSESELECT, hmenu));
+	    SendMessage( hwndOwner, WM_MENUSELECT,
+                         items[lppop->FocusedItem].item_id,
+		         MAKELONG( items[lppop->FocusedItem].item_flags | MF_MOUSESELECT, hmenu));
 	}
     }
     ReleaseDC( lppop->hWnd, hdc );
@@ -750,7 +751,7 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 /***********************************************************************
  *           MENU_SelectNextItem
  */
-static void MENU_SelectNextItem( HMENU hmenu )
+static void MENU_SelectNextItem( HWND hwndOwner, HMENU hmenu )
 {
     int i;
     MENUITEM *items;
@@ -766,13 +767,13 @@ static void MENU_SelectNextItem( HMENU hmenu )
 	{
 	    if (!(items[i].item_flags & MF_SEPARATOR))
 	    {
-		MENU_SelectItem( hmenu, i );
+		MENU_SelectItem( hwndOwner, hmenu, i );
 		return;
 	    }
 	}
 	if (MENU_HasSysMenu( menu ))
 	{
-	    MENU_SelectItem( hmenu, SYSMENU_SELECTED );
+	    MENU_SelectItem( hwndOwner, hmenu, SYSMENU_SELECTED );
 	    return;
 	}
     }
@@ -780,18 +781,19 @@ static void MENU_SelectNextItem( HMENU hmenu )
     {
 	if (!(items[i].item_flags & MF_SEPARATOR))
 	{
-	    MENU_SelectItem( hmenu, i );
+	    MENU_SelectItem( hwndOwner, hmenu, i );
 	    return;
 	}
     }
-    if (MENU_HasSysMenu( menu )) MENU_SelectItem( hmenu, SYSMENU_SELECTED );
+    if (MENU_HasSysMenu( menu ))
+        MENU_SelectItem( hwndOwner, hmenu, SYSMENU_SELECTED );
 }
 
 
 /***********************************************************************
  *           MENU_SelectPrevItem
  */
-static void MENU_SelectPrevItem( HMENU hmenu )
+static void MENU_SelectPrevItem( HWND hwndOwner, HMENU hmenu )
 {
     int i;
     MENUITEM *items;
@@ -807,13 +809,13 @@ static void MENU_SelectPrevItem( HMENU hmenu )
 	{
 	    if (!(items[i].item_flags & MF_SEPARATOR))
 	    {
-		MENU_SelectItem( hmenu, i );
+		MENU_SelectItem( hwndOwner, hmenu, i );
 		return;
 	    }
 	}
 	if (MENU_HasSysMenu( menu ))
 	{
-	    MENU_SelectItem( hmenu, SYSMENU_SELECTED );
+	    MENU_SelectItem( hwndOwner, hmenu, SYSMENU_SELECTED );
 	    return;
 	}
     }
@@ -821,11 +823,12 @@ static void MENU_SelectPrevItem( HMENU hmenu )
     {
 	if (!(items[i].item_flags & MF_SEPARATOR))
 	{
-	    MENU_SelectItem( hmenu, i );
+	    MENU_SelectItem( hwndOwner, hmenu, i );
 	    return;
 	}
     }
-    if (MENU_HasSysMenu( menu )) MENU_SelectItem( hmenu, SYSMENU_SELECTED );
+    if (MENU_HasSysMenu( menu ))
+        MENU_SelectItem( hwndOwner, hmenu, SYSMENU_SELECTED );
 }
 
 
@@ -856,7 +859,7 @@ static HMENU MENU_GetSubPopup( HMENU hmenu )
  *
  * Hide the sub-popup menus of this menu.
  */
-static void MENU_HideSubPopups( HMENU hmenu )
+static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu )
 {
     MENUITEM *item;
     POPUPMENU *menu, *submenu;
@@ -877,9 +880,9 @@ static void MENU_HideSubPopups( HMENU hmenu )
 	hsubmenu = item->item_id;
     }
     submenu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hsubmenu );
-    MENU_HideSubPopups( hsubmenu );
+    MENU_HideSubPopups( hwndOwner, hsubmenu );
     if (submenu->hWnd) ShowWindow( submenu->hWnd, SW_HIDE );
-    MENU_SelectItem( hsubmenu, NO_SELECTED_ITEM );
+    MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM );
 }
 
 
@@ -902,7 +905,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
     {
 	MENU_ShowPopup(hwndOwner, wndPtr->hSysMenu, 0, wndPtr->rectClient.left,
 		wndPtr->rectClient.top - menu->Height - 2*SYSMETRICS_CYBORDER);
-	if (selectFirst) MENU_SelectNextItem( wndPtr->hSysMenu );
+	if (selectFirst) MENU_SelectNextItem( hwndOwner, wndPtr->hSysMenu );
 	return wndPtr->hSysMenu;
     }
     item = ((MENUITEM *)USER_HEAP_LIN_ADDR(menu->hItems)) + menu->FocusedItem;
@@ -921,7 +924,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu, BOOL selectFirst )
 		        wndPtr->rectWindow.left + item->rect.left,
 		        wndPtr->rectWindow.top + item->rect.bottom );
     }
-    if (selectFirst) MENU_SelectNextItem( (HMENU)item->item_id );
+    if (selectFirst) MENU_SelectNextItem( hwndOwner, (HMENU)item->item_id );
     return (HMENU)item->item_id;
 }
 
@@ -1027,7 +1030,7 @@ static BOOL MENU_ButtonDown( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 	    {
 		if (menu->wFlags & MF_POPUP)
 		{
-		    MENU_HideSubPopups( hmenu );
+		    MENU_HideSubPopups( hwndOwner, hmenu );
 		    *hmenuCurrent = hmenu;
 		}
 		else return FALSE;
@@ -1037,8 +1040,8 @@ static BOOL MENU_ButtonDown( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
     }
     else
     {
-	MENU_HideSubPopups( hmenu );
-	MENU_SelectItem( hmenu, id );
+	MENU_HideSubPopups( hwndOwner, hmenu );
+	MENU_SelectItem( hwndOwner, hmenu, id );
 	*hmenuCurrent = MENU_ShowSubPopup( hwndOwner, hmenu, FALSE );
     }
     return TRUE;
@@ -1081,8 +1084,8 @@ static BOOL MENU_ButtonUp( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
 	hsubmenu = item->item_id;
     }
       /* Select first item of sub-popup */
-    MENU_SelectItem( hsubmenu, NO_SELECTED_ITEM );
-    MENU_SelectNextItem( hsubmenu );
+    MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM );
+    MENU_SelectNextItem( hwndOwner, hsubmenu );
     return TRUE;
 }
 
@@ -1113,12 +1116,12 @@ static BOOL MENU_MouseMove( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent,
     }	
     if (id == NO_SELECTED_ITEM)
     {
-	MENU_SelectItem( *hmenuCurrent, NO_SELECTED_ITEM );
+	MENU_SelectItem( hwndOwner, *hmenuCurrent, NO_SELECTED_ITEM );
     }
     else if (menu->FocusedItem != id)
     {
-	MENU_HideSubPopups( hmenu );
-	MENU_SelectItem( hmenu, id );
+	MENU_HideSubPopups( hwndOwner, hmenu );
+	MENU_SelectItem( hwndOwner, hmenu, id );
 	*hmenuCurrent = MENU_ShowSubPopup( hwndOwner, hmenu, FALSE );
     }
     return TRUE;
@@ -1143,12 +1146,12 @@ static void MENU_KeyLeft( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent )
 	hmenutmp = MENU_GetSubPopup( hmenuprev );
 	if (hmenutmp != *hmenuCurrent) hmenuprev = hmenutmp;
     }
-    MENU_HideSubPopups( hmenuprev );
+    MENU_HideSubPopups( hwndOwner, hmenuprev );
 
     if ((hmenuprev == hmenu) && !(menu->wFlags & MF_POPUP))
     {
 	  /* Select previous item on the menu bar */
-	MENU_SelectPrevItem( hmenu );
+	MENU_SelectPrevItem( hwndOwner, hmenu );
 	if (*hmenuCurrent != hmenu)
 	{
 	      /* A popup menu was displayed -> display the next one */
@@ -1186,8 +1189,8 @@ static void MENU_KeyRight( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent )
       /* If on menu-bar, go to next item */
     if (!(menu->wFlags & MF_POPUP))
     {
-	MENU_HideSubPopups( hmenu );
-	MENU_SelectNextItem( hmenu );
+	MENU_HideSubPopups( hwndOwner, hmenu );
+	MENU_SelectNextItem( hwndOwner, hmenu );
 	if (*hmenuCurrent != hmenu)
 	{
 	      /* A popup menu was displayed -> display the next one */
@@ -1203,7 +1206,7 @@ static void MENU_KeyRight( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent )
 	    hmenutmp = MENU_GetSubPopup( hmenuprev );
 	    if (hmenutmp != *hmenuCurrent) hmenuprev = hmenutmp;
 	}
-	MENU_HideSubPopups( hmenuprev );
+	MENU_HideSubPopups( hwndOwner, hmenuprev );
 	*hmenuCurrent = hmenuprev;
     }
 }
@@ -1293,17 +1296,17 @@ static BOOL MENU_TrackMenu( HMENU hmenu, WORD wFlags, int x, int y,
 		switch(msg->wParam)
 		{
 		case VK_HOME:
-		    MENU_SelectItem( hmenuCurrent, NO_SELECTED_ITEM );
-		    MENU_SelectNextItem( hmenuCurrent );
+		    MENU_SelectItem( hwnd, hmenuCurrent, NO_SELECTED_ITEM );
+		    MENU_SelectNextItem( hwnd, hmenuCurrent );
 		    break;
 
 		case VK_END:
-		    MENU_SelectItem( hmenuCurrent, NO_SELECTED_ITEM );
-		    MENU_SelectPrevItem( hmenuCurrent );
+		    MENU_SelectItem( hwnd, hmenuCurrent, NO_SELECTED_ITEM );
+		    MENU_SelectPrevItem( hwnd, hmenuCurrent );
 		    break;
 
 		case VK_UP:
-		    MENU_SelectPrevItem( hmenuCurrent );
+		    MENU_SelectPrevItem( hwnd, hmenuCurrent );
 		    break;
 
 		case VK_DOWN:
@@ -1311,7 +1314,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, WORD wFlags, int x, int y,
 		    if (!(menu->wFlags & MF_POPUP) && (hmenuCurrent == hmenu))
 			hmenuCurrent = MENU_ShowSubPopup( hwnd, hmenu, TRUE );
 		    else
-			MENU_SelectNextItem( hmenuCurrent );
+			MENU_SelectNextItem( hwnd, hmenuCurrent );
 		    break;
 
 		case VK_LEFT:
@@ -1357,7 +1360,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, WORD wFlags, int x, int y,
 		    else if (pos == (WORD)-1) MessageBeep(0);
 		    else
 		    {
-			MENU_SelectItem( hmenuCurrent, pos );
+			MENU_SelectItem( hwnd, hmenuCurrent, pos );
 			fClosed = !MENU_ExecFocusedItem( hwnd, hmenuCurrent,
 							 &hmenuCurrent );
 			
@@ -1378,9 +1381,10 @@ static BOOL MENU_TrackMenu( HMENU hmenu, WORD wFlags, int x, int y,
     }
     USER_HEAP_FREE( hMsg );
     ReleaseCapture();
-    MENU_HideSubPopups( hmenu );
+    MENU_HideSubPopups( hwnd, hmenu );
     if (menu->wFlags & MF_POPUP) ShowWindow( menu->hWnd, SW_HIDE );
-    MENU_SelectItem( hmenu, NO_SELECTED_ITEM );
+    MENU_SelectItem( hwnd, hmenu, NO_SELECTED_ITEM );
+    SendMessage( hwnd, WM_MENUSELECT, 0, MAKELONG( 0xffff, 0 ) );
     fEndMenuCalled = FALSE;
     return TRUE;
 }
@@ -1412,8 +1416,8 @@ void MENU_TrackKbdMenuBar( HWND hwnd, WORD wParam )
     if (!wndPtr->wIDmenu) return;
     SendMessage( hwnd, WM_ENTERMENULOOP, 0, 0 );
       /* Select first selectable item */
-    MENU_SelectItem( wndPtr->wIDmenu, NO_SELECTED_ITEM );
-    MENU_SelectNextItem( (HMENU)wndPtr->wIDmenu );
+    MENU_SelectItem( hwnd, wndPtr->wIDmenu, NO_SELECTED_ITEM );
+    MENU_SelectNextItem( hwnd, (HMENU)wndPtr->wIDmenu );
     MENU_TrackMenu( (HMENU)wndPtr->wIDmenu, TPM_LEFTALIGN | TPM_LEFTBUTTON,
 		    0, 0, hwnd, NULL );
     SendMessage( hwnd, WM_EXITMENULOOP, 0, 0 );
@@ -1595,8 +1599,8 @@ BOOL HiliteMenuItem(HWND hWnd, HMENU hMenu, WORD wItemID, WORD wHilite)
     if (!(lpitem = MENU_FindItem( &hMenu, &wItemID, wHilite ))) return FALSE;
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return FALSE;
     if (menu->FocusedItem == wItemID) return TRUE;
-    MENU_HideSubPopups( hMenu );
-    MENU_SelectItem( hMenu, wItemID );
+    MENU_HideSubPopups( hWnd, hMenu );
+    MENU_SelectItem( hWnd, hMenu, wItemID );
     return TRUE;
 }
 
@@ -1957,16 +1961,13 @@ BOOL DestroyMenu(HMENU hMenu)
  */
 HMENU GetSystemMenu(HWND hWnd, BOOL bRevert)
 {
-	WND		*wndPtr;
-	wndPtr = WIN_FindWndPtr(hWnd);
-	if (!bRevert) {
-		return wndPtr->hSysMenu;
-		}
-	else {
-		DestroyMenu(wndPtr->hSysMenu);
-		wndPtr->hSysMenu = CopySysMenu();
-		}
-	return wndPtr->hSysMenu;
+    WND *wndPtr = WIN_FindWndPtr( hWnd );
+    if (!wndPtr) return 0;
+
+    if (!bRevert) return wndPtr->hSysMenu;
+    DestroyMenu(wndPtr->hSysMenu);
+    wndPtr->hSysMenu = CopySysMenu();
+    return wndPtr->hSysMenu;
 }
 
 /**********************************************************************
