@@ -137,6 +137,14 @@ static const WCHAR SPI_SETSHOWSOUNDS_REGKEY[]=                {'C','o','n','t','
                                                                'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
                                                                'S','h','o','w','S','o','u','n','d','s',0};
 static const WCHAR SPI_SETSHOWSOUNDS_VALNAME[]=               {'O','n',0};
+static const WCHAR SPI_SETKEYBOARDPREF_REGKEY[]=              {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                                               'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
+                                                               'K','e','y','b','o','a','r','d',' ','P','r','e','f','e','r','e','n','c','e',0};
+static const WCHAR SPI_SETKEYBOARDPREF_VALNAME[]=             {'O','n',0};
+static const WCHAR SPI_SETSCREENREADER_REGKEY[]=              {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
+                                                               'A','c','c','e','s','s','i','b','i','l','i','t','y','\\',
+                                                               'B','l','i','n','d',' ','A','c','c','e','s','s',0};
+static const WCHAR SPI_SETSCREENREADER_VALNAME[]=             {'O','n',0};
 static const WCHAR SPI_SETDESKWALLPAPER_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETDESKWALLPAPER_VALNAME[]=            {'W','a','l','l','p','a','p','e','r',0};
 static const WCHAR SPI_SETFONTSMOOTHING_REGKEY[]=             {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
@@ -161,10 +169,6 @@ static const WCHAR SPI_SETMENUSHOWDELAY_REGKEY[]=             {'C','o','n','t','
 static const WCHAR SPI_SETMENUSHOWDELAY_VALNAME[]=            {'M','e','n','u','S','h','o','w','D','e','l','a','y',0};
 
 /* FIXME - real values */
-static const WCHAR SPI_SETKEYBOARDPREF_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-static const WCHAR SPI_SETKEYBOARDPREF_VALNAME[]=        {'W','I','N','E','_','K','e','y','b','o','a','r','d','P','r','e','f',0};
-static const WCHAR SPI_SETSCREENREADER_REGKEY[]=         {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
-static const WCHAR SPI_SETSCREENREADER_VALNAME[]=        {'W','I','N','E','_','S','c','r','e','e','n','R','e','a','d','e','r',0};
 static const WCHAR SPI_SETSCREENSAVERRUNNING_REGKEY[]=   {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETSCREENSAVERRUNNING_VALNAME[]=  {'W','I','N','E','_','S','c','r','e','e','n','S','a','v','e','r','R','u','n','n','i','n','g',0};
 
