@@ -698,17 +698,22 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
     else if( IsHooked(fodInfos))
     {
       RECT rectHwnd;
-      DLGTEMPLATE tmplate;
+      struct  {
+         DLGTEMPLATE tmplate;
+         WORD menu,class,title;
+         } temp;
       GetClientRect(hwnd,&rectHwnd);
-      tmplate.style = WS_CHILD | WS_CLIPSIBLINGS;
-      tmplate.dwExtendedStyle = 0;
-      tmplate.cdit = 0;
-      tmplate.x = 0;
-      tmplate.y = 0;
-      tmplate.cx = rectHwnd.right-rectHwnd.left;
-      tmplate.cy = rectHwnd.bottom-rectHwnd.top;
-       
-      return CreateDialogIndirectParamA(fodInfos->ofnInfos->hInstance,&tmplate,hwnd,(DLGPROC)FileOpenDlgProcUserTemplate,(LPARAM)fodInfos);
+      temp.tmplate.style = WS_CHILD | WS_CLIPSIBLINGS;
+      temp.tmplate.dwExtendedStyle = 0;
+      temp.tmplate.cdit = 0;
+      temp.tmplate.x = 0;
+      temp.tmplate.y = 0;
+      temp.tmplate.cx = rectHwnd.right-rectHwnd.left;
+      temp.tmplate.cy = rectHwnd.bottom-rectHwnd.top;
+      temp.menu = temp.class = temp.title = 0;
+      hChildDlg = CreateDialogIndirectParamA(fodInfos->ofnInfos->hInstance,&temp,
+                  hwnd,(DLGPROC)FileOpenDlgProcUserTemplate,(LPARAM)fodInfos);
+      return hChildDlg;
     }
     return (HWND)NULL;
 }
