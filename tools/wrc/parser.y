@@ -423,6 +423,32 @@ resources
 			want_id = 1;
 		dont_want_id = 0;
 		}
+	/*
+	 * The following newline rule will never get reduced because we never
+	 * get the tNL token, unless we explicitely set the 'want_nl'
+	 * flag, which we don't.
+	 * The *ONLY* reason for this to be here is because Berkeley
+	 * yacc (byacc), at least version 1.9, has a bug.
+	 * (identified in the generated parser on the second
+	 *  line with:
+	 *  static char yysccsid[] = "@(#)yaccpar   1.9 (Berkeley) 02/21/93";
+	 * )
+	 * This extra rule fixes it.
+	 * The problem is that the expression handling rule "expr: xpr"
+	 * is not reduced on non-terminal tokens, defined above in the
+	 * %token declarations. Token tNL is the only non-terminal that
+	 * can occur. The error becomes visible in the language parsing
+	 * rule below, which looks at the look-ahead token and tests it
+	 * for tNL. However, byacc already generates an error upon reading
+	 * the token instead of keeping it as a lookahead. The reason
+	 * lies in the lack of a $default transition in the "expr : xpr . "
+	 * state (currently state 25). It is probably ommitted because tNL
+	 * is a non-terminal and the state contains 2 s/r conflicts. The
+	 * state enumerates all possible transitions instead of using a
+	 * $default transition.
+	 * All in all, it is a bug in byacc. (period)
+	 */
+	| resources tNL
 	;
 
 
