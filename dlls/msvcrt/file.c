@@ -1525,36 +1525,61 @@ int _write(int fd, const void* buf, unsigned int count)
 	}
     }
   else
-    {
+  {
+      unsigned int i, j, nr_lf;
       char *s=(char*)buf, *buf_start=(char*)buf, *p;
-      char crlf[]= {'\r','\n'};
-      unsigned int i;
-      DWORD num_to_write;
-      for (i = 0; i< count && !(MSVCRT_flags[fd] & MSVCRT__IOERR);i++, s++)
-	{
-	  if (*s == '\n')
-	    {
-	      p = crlf;
-	      num_to_write = 2;
-	    }
-	  else
-	    { 
-	      p = s;
-	      num_to_write = 1;
-	    }
-	  if ((WriteFile(hand, p, num_to_write, &num_written, NULL) == 0 ) || (num_written != num_to_write))
-	    {
-	      TRACE(":failed-last error (%ld) num_written %ld\n",GetLastError(),num_written);
-	      if (MSVCRT_files[fd])
-		{
-		  MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
-		  *MSVCRT__errno() = MSVCRT_ENOSPC;
-		  return s - buf_start;
-		}
-	    }
-	}
-      return s - buf_start;
-    }
+      /* find number of \n ( without preceeding \r */
+      for ( nr_lf=0,i = 0; i <count; i++)
+      {
+          if (s[i]== '\n')
+          {
+              nr_lf++;
+              /*if ((i >1) && (s[i-1] == '\r'))	nr_lf--; */
+          }
+      }
+      if (nr_lf)
+      {
+          if ((p = MSVCRT_malloc(count + nr_lf)))
+          {
+              for(s=(char*)buf, i=0, j=0; i<count; i++)
+              {
+                  if (s[i]== '\n')
+                  {
+                      p[j++] = '\r';
+                      /*if ((i >1) && (s[i-1] == '\r'))j--;*/
+                  }
+                  p[j++] = s[i];
+              }
+          }
+          else
+          {
+              FIXME("Malloc failed\n");
+              nr_lf =0;
+              p = (char*)buf;
+          }
+      }
+      else
+          p = (char*)buf;
+
+      if ((WriteFile(hand, p, count+nr_lf, &num_written, NULL) == 0 ) || (num_written != count+nr_lf))
+      {
+          TRACE(":failed-last error (%ld) num_written %ld\n",GetLastError(),num_written);
+          if (MSVCRT_files[fd])
+          {
+              MSVCRT_files[fd]->_flag |= MSVCRT__IOERR;
+              *MSVCRT__errno() = MSVCRT_ENOSPC;
+              if(nr_lf)
+                  MSVCRT_free(p);
+              return s - buf_start;
+          }
+      }
+      else
+      {
+          if(nr_lf)
+              MSVCRT_free(p);
+          return count;
+      }
+  }
   return -1;
 }
 
