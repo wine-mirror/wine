@@ -123,6 +123,11 @@
 # "Arial (TrueType)"="ARIAL.TTF"      # sample entry
 @=""
 
+# Same for Version Windows NT
+[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Fonts]
+# "Arial (TrueType)"="ARIAL.TTF"      # sample entry
+@=""
+
 # This is intended for a centrally managed (server) directory where
 # system files and e.g. fonts can reside. Most installs have this set
 # to C:\WINDOWS, though.
