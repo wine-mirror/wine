@@ -1376,7 +1376,7 @@ static UINT GetTemplateSize(DLGTEMPLATE* pTemplate)
 	  p += lstrlenW( (LPCWSTR)p ) + 1;
 	  break;
 	}
-      p += *p + 1;    /* Skip extra data */
+      p += *p / sizeof(WORD) + 1;    /* Skip extra data */
       --nrofitems;
     }
   
