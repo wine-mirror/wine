@@ -173,21 +173,19 @@ static file_pos_t max_unix_offset = OFF_T_MAX;
 
 struct timeout_user
 {
-    struct timeout_user  *next;       /* next in sorted timeout list */
-    struct timeout_user  *prev;       /* prev in sorted timeout list */
+    struct list           entry;      /* entry in sorted timeout list */
     struct timeval        when;       /* timeout expiry (absolute time) */
     timeout_callback      callback;   /* callback function */
     void                 *private;    /* callback private data */
 };
 
-static struct timeout_user *timeout_head;   /* sorted timeouts list head */
-static struct timeout_user *timeout_tail;   /* sorted timeouts list tail */
+static struct list timeout_list = LIST_INIT(timeout_list);   /* sorted timeouts list */
 
 /* add a timeout user */
 struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback func, void *private )
 {
     struct timeout_user *user;
-    struct timeout_user *pos;
+    struct list *ptr;
 
     if (!(user = mem_alloc( sizeof(*user) ))) return NULL;
     user->when     = *when;
@@ -196,34 +194,19 @@ struct timeout_user *add_timeout_user( struct timeval *when, timeout_callback fu
 
     /* Now insert it in the linked list */
 
-    for (pos = timeout_head; pos; pos = pos->next)
-        if (!time_before( &pos->when, when )) break;
-
-    if (pos)  /* insert it before 'pos' */
+    LIST_FOR_EACH( ptr, &timeout_list )
     {
-        if ((user->prev = pos->prev)) user->prev->next = user;
-        else timeout_head = user;
-        user->next = pos;
-        pos->prev = user;
+        struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+        if (!time_before( &timeout->when, when )) break;
     }
-    else  /* insert it at the tail */
-    {
-        user->next = NULL;
-        if (timeout_tail) timeout_tail->next = user;
-        else timeout_head = user;
-        user->prev = timeout_tail;
-        timeout_tail = user;
-    }
+    list_add_before( ptr, &user->entry );
     return user;
 }
 
 /* remove a timeout user */
 void remove_timeout_user( struct timeout_user *user )
 {
-    if (user->next) user->next->prev = user->prev;
-    else timeout_tail = user->prev;
-    if (user->prev) user->prev->next = user->next;
-    else timeout_head = user->next;
+    list_remove( &user->entry );
     free( user );
 }
 
@@ -314,44 +297,44 @@ void main_loop(void)
     while (active_users)
     {
         long diff = -1;
-        if (timeout_head)
+        if (!list_empty( &timeout_list ))
         {
-            struct timeout_user *first = timeout_head;
+            struct list expired_list, *ptr;
             struct timeval now;
             gettimeofday( &now, NULL );
 
             /* first remove all expired timers from the list */
 
-            while (timeout_head && !time_before( &now, &timeout_head->when ))
-                timeout_head = timeout_head->next;
-
-            if (timeout_head)
+            list_init( &expired_list );
+            while ((ptr = list_head( &timeout_list )) != NULL)
             {
-                if (timeout_head->prev)
+                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+
+                if (!time_before( &now, &timeout->when ))
                 {
-                    timeout_head->prev->next = NULL;
-                    timeout_head->prev = NULL;
+                    list_remove( &timeout->entry );
+                    list_add_tail( &expired_list, &timeout->entry );
                 }
-                else first = NULL;  /* no timer removed */
+                else break;
             }
-            else timeout_tail = NULL;  /* all timers removed */
 
             /* now call the callback for all the removed timers */
 
-            while (first)
+            while ((ptr = list_head( &expired_list )) != NULL)
             {
-                struct timeout_user *next = first->next;
-                first->callback( first->private );
-                free( first );
-                first = next;
+                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+                list_remove( &timeout->entry );
+                timeout->callback( timeout->private );
+                free( timeout );
             }
 
             if (!active_users) break;  /* last user removed by a timeout */
 
-            if (timeout_head)
+            if ((ptr = list_head( &timeout_list )) != NULL)
             {
-                diff = (timeout_head->when.tv_sec - now.tv_sec) * 1000
-                     + (timeout_head->when.tv_usec - now.tv_usec) / 1000;
+                struct timeout_user *timeout = LIST_ENTRY( ptr, struct timeout_user, entry );
+                diff = (timeout->when.tv_sec - now.tv_sec) * 1000
+                     + (timeout->when.tv_usec - now.tv_usec) / 1000;
                 if (diff < 0) diff = 0;
             }
         }
