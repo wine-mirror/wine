@@ -131,11 +131,11 @@ TAB_SetCurFocus (HWND hwnd,WPARAM wParam)
  
   if ((iItem < 0) || (iItem >= infoPtr->uNumItem)) return 0;
 
-  infoPtr->uFocus=iItem;
   if (GetWindowLongA(hwnd, GWL_STYLE) & TCS_BUTTONS) {
     FIXME("Should set input focus\n");
   } else { 
-    if (infoPtr->iSelected != iItem) {
+    if (infoPtr->iSelected != iItem || infoPtr->uFocus == -1 ) {
+      infoPtr->uFocus=iItem;
       if (TAB_SendSimpleNotify(hwnd, TCN_SELCHANGING)!=TRUE)  {
         infoPtr->iSelected = iItem;
         TAB_SendSimpleNotify(hwnd, TCN_SELCHANGE);
@@ -575,6 +575,10 @@ static void TAB_SetupScrolling(
      */
     if (infoPtr->hwndUpDown==0)
     {
+      /*
+       * I use a scrollbar since it seems to be more stable than the Updown
+       * control.
+       */
       infoPtr->hwndUpDown = CreateWindowA("msctls_updown32",
 					  "",
 					  WS_VISIBLE | WS_CHILD | UDS_HORZ,
@@ -782,6 +786,10 @@ static void TAB_SetItemBounds (HWND hwnd)
    */
   infoPtr->needsScrolling = (curItemLeftPos + (2*SELECTED_TAB_OFFSET) > 
                              clientRect.right);
+
+  /* Don't need scrolling, then update infoPtr->leftmostVisible */
+  if(!infoPtr->needsScrolling)
+    infoPtr->leftmostVisible = 0; 
 
   TAB_SetupScrolling(hwnd, infoPtr, &clientRect);      
   
@@ -1172,6 +1180,13 @@ static void TAB_Refresh (HWND hwnd, HDC hdc)
      * Then, draw the selected item
      */
     TAB_DrawItem (hwnd, hdc, infoPtr->iSelected);
+    
+    /*
+     * If we haven't set the current focus yet, set it now.
+     * Only happens when we first paint the tab controls.
+     */
+     if (infoPtr->uFocus == -1)
+       TAB_SetCurFocus(hwnd, infoPtr->iSelected); 
   }
 
   SelectObject (hdc, hOldFont);
@@ -1374,12 +1389,12 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (pti->mask & TCIF_PARAM)
     infoPtr->items[iItem].lParam = pti->lParam;
   
+  TAB_SetItemBounds(hwnd);
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
   TRACE("[%04x]: added item %d '%s'\n",
 	hwnd, iItem, infoPtr->items[iItem].pszText);
 
-  TAB_SetItemBounds(hwnd);
   return iItem;
 }
 
@@ -1657,7 +1672,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->items           = 0;
   infoPtr->hcurArrow       = LoadCursorA (0, IDC_ARROWA);
   infoPtr->iSelected       = -1;
-  infoPtr->uFocus          = 0;  
+  infoPtr->uFocus          = -1;  
   infoPtr->hwndToolTip     = 0;
   infoPtr->DoRedraw        = TRUE;
   infoPtr->needsScrolling  = FALSE;
@@ -1923,7 +1938,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     default:
       if (uMsg >= WM_USER)
-	ERR("unknown msg %04x wp=%08x lp=%08lx\n",
+	WARN("unknown msg %04x wp=%08x lp=%08lx\n",
 	     uMsg, wParam, lParam);
       return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     }
