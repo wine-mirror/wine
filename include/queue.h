@@ -100,4 +100,6 @@ extern void QUEUE_FlushMessages(HQUEUE16);
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
 
+extern HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags );
+
 #endif  /* __WINE_QUEUE_H */

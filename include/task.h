@@ -155,4 +155,10 @@ extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern BOOL32 TASK_Reschedule(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
+extern HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue );
+extern HQUEUE16 WINAPI GetThreadQueue( DWORD thread );
+extern VOID WINAPI SetFastQueue( DWORD thread, HANDLE32 hQueue );
+extern HANDLE32 WINAPI GetFastQueue( void );
+
+
 #endif /* __WINE_TASK_H */

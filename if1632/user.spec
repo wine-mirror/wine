@@ -375,7 +375,7 @@ file	user.exe
 407 pascal16 CreateIcon(word word word word word ptr ptr) CreateIcon16
 408 pascal16 CreateCursorIconIndirect(word ptr ptr ptr)
 	     CreateCursorIconIndirect
-409 stub InitThreadInput
+409 pascal16 InitThreadInput(word word) InitThreadInput
 410 pascal16 InsertMenu(word word word word segptr) InsertMenu16
 411 pascal16 AppendMenu(word word word segptr) AppendMenu16
 412 pascal16 RemoveMenu(word word word) RemoveMenu16

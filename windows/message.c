@@ -102,7 +102,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hTopWnd, DWORD filter,
     INT16 ht, hittest, sendSC = 0;
     UINT16 message = msg->message;
     POINT16 screen_pt, pt;
-    HANDLE16 hQ = GetTaskQueue(0);
+    HANDLE16 hQ = GetFastQueue();
     MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16(hQ);
     BOOL32 eatMsg = FALSE;
     BOOL32 mouseClick = ((message == WM_LBUTTONDOWN) ||
@@ -278,10 +278,10 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hTopWnd, DWORD filter,
 	    message += WM_SYSKEYDOWN - WM_KEYDOWN;
     }
     pWnd = WIN_FindWndPtr( hWnd );
-    if (pWnd && (pWnd->hmemTaskQ != GetTaskQueue(0)))
+    if (pWnd && (pWnd->hmemTaskQ != GetFastQueue()))
     {
         /* Not for the current task */
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) );
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() );
         if (queue) QUEUE_ClearWakeBit( queue, QS_KEY );
         /* Wake up the other task */
         queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
@@ -596,7 +596,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     QSMCTRL 	  qCtrl = { 0, 1};
     MESSAGEQUEUE *queue, *destQ;
 
-    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetFastQueue() ))) return 0;
     if (!(destQ = (MESSAGEQUEUE*)GlobalLock16( hDestQueue ))) return 0;
 
     if (IsTaskLocked() || !IsWindow32(hwnd)) return 0;
@@ -619,7 +619,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
     queue->wParamHigh = HIWORD(wParam);
     queue->lParam     = lParam;
     queue->hPrevSendingTask = destQ->hSendingTask;
-    destQ->hSendingTask = GetTaskQueue(0);
+    destQ->hSendingTask = GetFastQueue();
 
     QUEUE_ClearWakeBit( queue, QS_SMPARAMSFREE );
     queue->flags = (queue->flags & ~(QUEUE_SM_WIN32|QUEUE_SM_UNICODE)) | flags;
@@ -670,7 +670,7 @@ void WINAPI ReplyMessage16( LRESULT result )
     MESSAGEQUEUE *senderQ;
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetTaskQueue(0) ))) return;
+    if (!(queue = (MESSAGEQUEUE*)GlobalLock16( GetFastQueue() ))) return;
 
     TRACE(msg,"ReplyMessage, queue %04x\n", queue->self);
 
@@ -736,7 +736,7 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
 
     while(1)
     {    
-	hQueue   = GetTaskQueue(0);
+	hQueue   = GetFastQueue();
         msgQueue = (MESSAGEQUEUE *)GlobalLock16( hQueue );
         if (!msgQueue) return FALSE;
         msgQueue->changeBits = 0;
@@ -1222,7 +1222,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
     SPY_EnterMessage( SPY_SENDMESSAGE16, hwnd, msg, wParam, lParam );
 
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    if (wndPtr->hmemTaskQ != GetFastQueue())
         ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg,
                                wParam, lParam, 0 );
     else
@@ -1329,7 +1329,7 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
 
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    if (wndPtr->hmemTaskQ != GetFastQueue())
         ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
                                QUEUE_SM_WIN32 );
     else
@@ -1400,7 +1400,7 @@ LRESULT WINAPI SendMessage32W(
 
     SPY_EnterMessage( SPY_SENDMESSAGE32, hwnd, msg, wParam, lParam );
 
-    if (wndPtr->hmemTaskQ != GetTaskQueue(0))
+    if (wndPtr->hmemTaskQ != GetFastQueue())
         ret = MSG_SendMessage( wndPtr->hmemTaskQ, hwnd, msg, wParam, lParam,
                                 QUEUE_SM_WIN32 | QUEUE_SM_UNICODE );
     else
@@ -1938,7 +1938,7 @@ BOOL32 WINAPI InSendMessage32(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) )))
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() )))
         return 0;
     return (BOOL32)queue->InSendMessageHandle;
 }

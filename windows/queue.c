@@ -312,11 +312,11 @@ void QUEUE_WaitBits( WORD bits )
 {
     MESSAGEQUEUE *queue;
 
-    TRACE(msg,"q %04x waiting for %04x\n", GetTaskQueue(0), bits);
+    TRACE(msg,"q %04x waiting for %04x\n", GetFastQueue(), bits);
 
     for (;;)
     {
-        if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
+        if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return;
 
         if (queue->changeBits & bits)
         {
@@ -752,7 +752,7 @@ void WINAPI PostQuitMessage32( INT32 exitCode )
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return;
     queue->wPostQMsg = TRUE;
     queue->wExitCode = (WORD)exitCode;
 }
@@ -819,7 +819,7 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
     SIGNAL_MaskAsyncEvents( TRUE );
 
     /* Copy data and free the old message queue */
-    if ((hQueue = GetTaskQueue(0)) != 0) 
+    if ((hQueue = GetThreadQueue(0)) != 0) 
     {
        MESSAGEQUEUE *oldQ = (MESSAGEQUEUE *)GlobalLock16( hQueue );
        memcpy( &queuePtr->wParamHigh, &oldQ->wParamHigh,
@@ -838,12 +838,25 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
     hFirstQueue = hNewQueue;
     
     if( !queuePtr->next ) pCursorQueue = queuePtr;
-    SetTaskQueue( 0, hNewQueue );
+    SetThreadQueue( 0, hNewQueue );
     
     SIGNAL_MaskAsyncEvents( FALSE );
     return TRUE;
 }
 
+/***********************************************************************
+ *           InitThreadInput   (USER.409)
+ */
+HQUEUE16 WINAPI InitThreadInput( WORD unknown, WORD flags )
+{
+    HQUEUE16 hQueue = GetTaskQueue( 0 );
+
+    FIXME( msg, "(%04X,%04X): should create thread-local message queue!\n",
+                unknown, flags );
+
+    SetFastQueue( 0, hQueue );    
+    return hQueue;
+}
 
 /***********************************************************************
  *           GetQueueStatus16   (USER.334)
@@ -853,7 +866,7 @@ DWORD WINAPI GetQueueStatus16( UINT16 flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
     return ret & MAKELONG( flags, flags );
@@ -867,7 +880,7 @@ DWORD WINAPI GetQueueStatus32( UINT32 flags )
     MESSAGEQUEUE *queue;
     DWORD ret;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     ret = MAKELONG( queue->changeBits, queue->wakeBits );
     queue->changeBits = 0;
     return ret & MAKELONG( flags, flags );
@@ -900,11 +913,35 @@ BOOL32 WINAPI GetInputState32(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) )))
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() )))
         return FALSE;
     return queue->wakeBits & (QS_KEY | QS_MOUSEBUTTON);
 }
 
+/***********************************************************************
+ *           UserYield  (USER.332)
+ */
+void WINAPI UserYield(void)
+{
+    TDB *pCurTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+
+    if ( !THREAD_IsWin16( THREAD_Current() ) )
+    {
+        FIXME(task, "called for Win32 thread (%04x)!\n", THREAD_Current()->teb_sel);
+        return;
+    }
+
+    /* Handle sent messages */
+    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
+        QUEUE_ReceiveMessage( queue );
+
+    OldYield();
+
+    queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
+    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
+        QUEUE_ReceiveMessage( queue );
+}
 
 /***********************************************************************
  *           GetMessagePos   (USER.119) (USER32.272)
@@ -931,7 +968,7 @@ DWORD WINAPI GetMessagePos(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     return queue->GetMessagePosVal;
 }
 
@@ -959,7 +996,7 @@ LONG WINAPI GetMessageTime(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     return queue->GetMessageTimeVal;
 }
 
@@ -971,6 +1008,6 @@ LONG WINAPI GetMessageExtraInfo(void)
 {
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetFastQueue() ))) return 0;
     return queue->GetMessageExtraInfoVal;
 }
