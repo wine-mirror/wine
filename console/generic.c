@@ -15,6 +15,9 @@
 #include "config.h"
 #include "debug.h"
 
+static void GENERIC_MoveLine(char row1, char row2, char col1, char col2);
+static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
+   int attribute);
 void GENERIC_Start()
 {
    /* Here, we only want to add a driver if there is not one already
@@ -38,11 +41,9 @@ void GENERIC_Start()
 void GENERIC_ClearWindow(char row1, char col1, char row2, char col2, 
    int bg_color, int attribute)
 {
-   char trow, tcol;
-   char x, y;
+   char trow, tcol, x;
    int old_refresh;
 
-   TRACE(console, "GENERIC_ClearWindow()\n");
    /* Abort if we have only partial functionality */
    if (!(driver.getCursorPosition && driver.moveCursor && driver.write))
       return;
@@ -52,102 +53,73 @@ void GENERIC_ClearWindow(char row1, char col1, char row2, char col2,
 
    CONSOLE_GetCursorPosition(&trow, &tcol);
    
-   for (x = row1; x < row2; x++)
-   {
-      CONSOLE_MoveCursor(x, col1);
+   for (x = row1; x <= row2; x++)
+      GENERIC_ClearLine(x, col1, col2, bg_color, attribute);
 
-      for (y = col1; y < col2; y++)
-      {
-         CONSOLE_Write(' ', 0, bg_color, attribute);
-      }
-   }
    CONSOLE_MoveCursor(trow, tcol);
 
    CONSOLE_SetRefresh(old_refresh);
-
-   TRACE(console, "GENERIC_ClearWindow() completed.\n");
 }      
 
-/* These are in-progress. I just haven't finished them yet... */
 void GENERIC_ScrollUpWindow(char row1, char col1, char row2, char col2, 
    char lines, int bg_color, int attribute)
 {
-   char trow, tcol;
-   int x, y;
-   char ch;
-   int bg, fg, attr;
-   int old_refresh;
+   /* Scroll Up Window: Characters go down */
 
-   TRACE(console, "GENERIC_ScrollUpWindow()\n");
+   char trow, tcol;
+   int old_refresh, x;
+
+   TRACE(console, "Scroll Up %d lines from %d to %d.\n", lines, row1,
+      row2);
 
    /* Abort if we have only partial functionality */
    if (!(driver.getCursorPosition && driver.moveCursor && driver.write
       && driver.getCharacterAtCursor && driver.clearWindow))
       return;
-
+   
+   /* Save initial state... */
    old_refresh = CONSOLE_GetRefresh();
    CONSOLE_SetRefresh(FALSE);
-
    CONSOLE_GetCursorPosition(&trow, &tcol);
-   
-   for (x = row1 + lines; x < row2; x++)
+
+   for (x = row1 + lines; x <= row2; x++)
    {
-      for (y = col1; y < col2; y++)
-      {
-         CONSOLE_MoveCursor(x, y);
-         CONSOLE_GetCharacterAtCursor(&ch, &fg, &bg, &attr);
-         CONSOLE_MoveCursor(x - lines, y);
-         CONSOLE_Write(ch, fg, bg, attr);
-      }
-   }         
-   CONSOLE_ClearWindow(row2 - lines, col1, row2, col2, bg_color,
-      attribute);         
-   CONSOLE_MoveCursor(trow, tcol);
+      GENERIC_MoveLine(x, x - lines, col1, col2);
+      GENERIC_ClearLine(x, col1, col2, bg_color, attribute);
+   }
 
+   /* Restore State */
+   CONSOLE_MoveCursor(trow, tcol); 
    CONSOLE_SetRefresh(old_refresh);
-
-   TRACE(console, "GENERIC_ScrollUpWindow() completed.\n");
 }
 
 void GENERIC_ScrollDownWindow(char row1, char col1, char row2, char col2, 
    char lines, int bg_color, int attribute)
 {
-   char trow, tcol;
-   int x, y;
-   char ch;
-   int bg, fg, attr;
-   int old_refresh;
+   /* Scroll Down Window: Characters go up */
 
-   TRACE(console, "GENERIC_ScrollDownWindow()\n");
+   char trow, tcol;
+   int old_refresh, x;
 
    /* Abort if we have only partial functionality */
    if (!(driver.getCursorPosition && driver.moveCursor && driver.write
       && driver.getCharacterAtCursor && driver.clearWindow))
       return;
-
+   
+   /* Save initial state... */
    old_refresh = CONSOLE_GetRefresh();
    CONSOLE_SetRefresh(FALSE);
-
    CONSOLE_GetCursorPosition(&trow, &tcol);
-   
-   for (x = row2 - lines; x > row1; x--)
+
+   for (x = row2; x >= row1 + lines; x--)
    {
-      for (y = col1; y < col2; y++)
-      {
-         CONSOLE_MoveCursor(x, y);
-         CONSOLE_GetCharacterAtCursor(&ch, &fg, &bg, &attr);
-         CONSOLE_MoveCursor(x + lines, y);
-         CONSOLE_Write(ch, fg, bg, attr);
-      }
-   }         
-   CONSOLE_ClearWindow(row1, col1, row1 + lines, col2, bg_color,
-      attribute); 
-   CONSOLE_MoveCursor(trow, tcol);
+      GENERIC_MoveLine(x, x + lines, col1, col2);
+      GENERIC_ClearLine(x, col1, col1, bg_color, attribute);
+   }
 
+   /* Restore State */
+   CONSOLE_MoveCursor(trow, tcol); 
    CONSOLE_SetRefresh(old_refresh);
-
-   TRACE(console, "GENERIC_ScrollDownWindow() completed.\n");
-
 }
 
 char GENERIC_GetCharacter()
@@ -162,3 +134,49 @@ char GENERIC_GetCharacter()
    return ch;
 }
 
+static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
+   int attribute)
+{
+   /* This function is here to simplify the logic of the scroll and clear
+      functions but may be useful elsewhere. If it can be used from
+      outside here, it should be made non-static */
+
+   int x;
+
+   TRACE(console, "Clear Line: %d from %d to %d.\n", row, col1, col2);
+
+   for (x = col1; x <= col2; x++)
+   {
+      CONSOLE_MoveCursor(row, x);
+      CONSOLE_Write(' ', 0, 0, 0);
+   }
+
+   /* Assume that the calling function will make sure that the cursor is
+   repositioned properly. If this becomes non-static, that will need to be
+   changed. */
+}
+   
+static void GENERIC_MoveLine(char row1, char row2, char col1, char col2)
+{
+   /* This function is here to simplify the logic of the scroll and clear
+      functions but may be useful elsewhere. If it can be used from
+      outside here, it should be made non-static */
+
+   int x;
+   int bg_color, fg_color, attribute;
+   char ch;
+
+   TRACE(console, "Move Line: Move %d to %d.\n", row1, row2);
+
+   for (x = col1; x <= col2; x++)
+   {
+      CONSOLE_MoveCursor(row1, x);
+      CONSOLE_GetCharacterAtCursor(&ch, &fg_color, &bg_color, &attribute);
+      CONSOLE_MoveCursor(row2, x);
+      CONSOLE_Write(ch, fg_color, bg_color, attribute);
+   }
+
+   /* Assume that the calling function will make sure that the cursor is
+   repositioned properly. If this becomes non-static, that will need to be
+   changed. */
+}   
