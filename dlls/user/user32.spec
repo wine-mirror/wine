@@ -180,8 +180,8 @@
 @ stub EndTask
 @ stdcall EnumChildWindows(long ptr long)
 @ stdcall EnumClipboardFormats(long)
-@ stub EnumDesktopsA
-@ stub EnumDesktopsW
+@ stdcall EnumDesktopsA(ptr ptr long)
+@ stdcall EnumDesktopsW(ptr ptr long)
 @ stub EnumDisplayDeviceModesA
 @ stub EnumDisplayDeviceModesW
 @ stdcall EnumDisplayDevicesA(ptr long ptr long)

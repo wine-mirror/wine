@@ -26,10 +26,38 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
+
+/* callback to allow EnumDesktopsA to use EnumDesktopsW */
+typedef struct {
+    DESKTOPENUMPROCA lpEnumFunc;
+    LPARAM lParam;
+} ENUMDESKTOPS_LPARAM;
+
+/* EnumDesktopsA passes this callback function to EnumDesktopsW.
+ * It simply converts the string to ASCII and calls the callback
+ * function provided by the original caller
+ */
+static BOOL CALLBACK EnumDesktopProcWtoA(LPWSTR lpszDesktop, LPARAM lParam)
+{
+    LPSTR buffer;
+    INT   len;
+    BOOL  ret;
+    ENUMDESKTOPS_LPARAM *data = (ENUMDESKTOPS_LPARAM *)lParam;
+
+    len = WideCharToMultiByte(CP_ACP, 0, lpszDesktop, -1, NULL, 0, NULL, NULL);
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, len))) return FALSE;
+    WideCharToMultiByte(CP_ACP, 0, lpszDesktop, -1, buffer, len, NULL, NULL);
+
+    ret = data->lpEnumFunc(buffer, data->lParam);
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return ret;
+}
 
 /**********************************************************************
  * SetLastErrorEx [USER32.@]  Sets the last-error code.
@@ -173,6 +201,30 @@ HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags,
     return 0;
 }
 
+/******************************************************************************
+ *              EnumDesktopsA [USER32.@]
+ */
+BOOL WINAPI EnumDesktopsA( HWINSTA hwinsta, DESKTOPENUMPROCA lpEnumFunc,
+                    LPARAM lParam )
+{
+    ENUMDESKTOPS_LPARAM caller_data;
+
+    caller_data.lpEnumFunc = lpEnumFunc;
+    caller_data.lParam     = lParam;
+    
+    return EnumDesktopsW(hwinsta, EnumDesktopProcWtoA, (LPARAM) &caller_data);
+}
+
+/******************************************************************************
+ *              EnumDesktopsW [USER32.@]
+ */
+BOOL WINAPI EnumDesktopsW( HWINSTA hwinsta, DESKTOPENUMPROCW lpEnumFunc,
+                    LPARAM lParam )
+{
+    FIXME("%p,%p,%lx): stub\n",hwinsta,lpEnumFunc,lParam);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /******************************************************************************
  *		SetUserObjectInformationA   (USER32.@)
