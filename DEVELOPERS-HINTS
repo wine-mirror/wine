@@ -186,7 +186,6 @@ respective dlls.
 	misc/			- KERNEL shell, registry, winsock, etc.
 	msdos/			- KERNEL DOS support
 	scheduler/		- KERNEL process and thread management
-	win32/			- KERNEL misc Win32 functions
 
 	graphics/		- GDI graphics drivers
 	objects/		- GDI logical objects
@@ -534,3 +533,5 @@ MORE INFO
 3. http://www.sonic.net/~undoc/bookstore.html
 
 4. In 1993 Dr. Dobbs Journal published a column called "Undocumented Corner".
+
+5. www.geocities.com/SiliconValley/4942/
