@@ -208,18 +208,24 @@ HANDLE WINAPI K32WOWHandle32( WORD handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HDROP:
     case WOW_TYPE_HDC:
     case WOW_TYPE_HFONT:
-    case WOW_TYPE_HMETAFILE:
     case WOW_TYPE_HRGN:
     case WOW_TYPE_HBITMAP:
     case WOW_TYPE_HBRUSH:
     case WOW_TYPE_HPALETTE:
     case WOW_TYPE_HPEN:
     case WOW_TYPE_HACCEL:
-    case WOW_TYPE_FULLHWND:
+        return (HANDLE)(ULONG_PTR)handle;
+
+    case WOW_TYPE_HMETAFILE:
+        FIXME( "conversion of metafile handles not supported yet\n" );
         return (HANDLE)(ULONG_PTR)handle;
 
     case WOW_TYPE_HTASK:
         return (HANDLE)TASK_GetPtr(handle)->teb->tid;
+
+    case WOW_TYPE_FULLHWND:
+        FIXME( "conversion of full window handles not supported yet\n" );
+        return (HANDLE)(ULONG_PTR)handle;
 
     default:
         ERR( "handle 0x%04x of unknown type %d\n", handle, type );
@@ -243,7 +249,6 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HDROP:
     case WOW_TYPE_HDC:
     case WOW_TYPE_HFONT:
-    case WOW_TYPE_HMETAFILE:
     case WOW_TYPE_HRGN:
     case WOW_TYPE_HBITMAP:
     case WOW_TYPE_HBRUSH:
@@ -251,6 +256,10 @@ WORD WINAPI K32WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
     case WOW_TYPE_HPEN:
     case WOW_TYPE_HACCEL:
     case WOW_TYPE_FULLHWND:
+        return LOWORD(handle);
+
+    case WOW_TYPE_HMETAFILE:
+        FIXME( "conversion of metafile handles not supported yet\n" );
         return LOWORD(handle);
 
     case WOW_TYPE_HTASK:
