@@ -51,4 +51,6 @@ int freeConfig(WINECFG_DESC *pCfg);
 int loadConfig(WINECFG_DESC *pCfg);
 int saveConfig(const WINECFG_DESC *pCfg);
 
+#define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
+
 #endif

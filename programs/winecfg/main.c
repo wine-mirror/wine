@@ -27,10 +27,13 @@
 #include <commctrl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <wine/debug.h>
 
 #include "properties.h"
 #include "resource.h"
 #include "winecfg.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 WINECFG_DESC sCfg;
 
@@ -97,17 +100,31 @@ initGeneralDlg (HWND hDlg)
 INT_PTR CALLBACK
 GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    switch (uMsg)
-    {
-    case WM_INITDIALOG:
-	initGeneralDlg (hDlg);
-	break;
+    switch (uMsg) {
+	
+	case WM_INITDIALOG:
+	    initGeneralDlg (hDlg);
+	    break;
 
-    case WM_COMMAND:
-	break;
+	case WM_COMMAND:
+	    switch (LOWORD(wParam)) {
+		case IDC_WINVER: if (HIWORD(wParam) == CBN_SELCHANGE) {
+		    /* user changed the wine version combobox */
+		    int selection = SendDlgItemMessage( hDlg, IDC_WINVER, CB_GETCURSEL, 0, 0);
+		    const VERSION_DESC *desc = getWinVersions();
 
-    default:
-	break;
+		    while (selection > 0) {
+			desc++; selection--;
+		    }
+		    strcpy(sCfg.szWinVer, desc->szVersion);
+		}
+	        break;
+	    }
+	    break;
+	    
+	default:
+	    break;
+	    
     }
     return FALSE;
 }
@@ -266,9 +283,11 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 int WINAPI
 WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 {
-    /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
-    MessageBox(NULL, "The winecfg tool is not yet complete, and does not actually alter your configuration. If you want to alter the way Wine works, look in the ~/.wine/config file for more information.", "winecfg", MB_OK | MB_ICONWARNING);
 
+    /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
+    WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
+    WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.");
+    
     /*
      * Load the configuration from registry
      */
@@ -279,7 +298,12 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
      * for the Wine Configuration property sheet
      */
     InitCommonControls ();
-    doPropertySheet (hInstance, NULL);
+    if (doPropertySheet (hInstance, NULL) >= 0) {
+	WINE_TRACE("OK\n");
+	saveConfig(&sCfg);
+    } else
+	WINE_TRACE("Cancel\n");
+    
     ExitProcess (0);
 
     return 0;

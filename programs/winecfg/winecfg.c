@@ -74,44 +74,53 @@ int freeConfig (WINECFG_DESC* pCfg)
 }
 
 /*****************************************************************************
+ * getConfigValue: Retrieves a configuration value from the registry
+ *
+ * HKEY  hCurrent : the registry key that the configuration is rooted at
+ * char *subKey : the name of the config section
+ * char *valueName : the name of the config value
+ * char *retVal : pointer to the start of a buffer that has room for >= length chars
+ * int   length : length of the buffer pointed to by retVal
+ * char *defaultResult : if the key isn't found, return this value instead
+ *
+ * Returns 0 upon success, non-zero otherwise
+ *
  */
-int GetConfigValueSZ (HKEY hCurrent, LPSTR subkey, LPSTR valueName, LPSTR RetVal, 
-                    int length, LPSTR DefRes)
+int getConfigValue (HKEY hCurrent, char *subkey, char *valueName, char *retVal, int length, char *defaultResult)
 {
-    CHAR *buffer=NULL;
-    DWORD dataLength=0;
-    HKEY hSubKey=NULL;
-    DWORD res;
+    CHAR *buffer;
+    DWORD dataLength;
+    HKEY hSubKey = NULL;
+    DWORD res = 1; /* assume failure */
 
+    WINE_TRACE("subkey=%s, valueName=%s, defaultResult=%s\n", subkey, valueName, defaultResult);
+    
     if( (res=RegOpenKeyEx( hCurrent, subkey, 0, KEY_ALL_ACCESS, &hSubKey ))
             !=ERROR_SUCCESS )
     {
         if( res==ERROR_FILE_NOT_FOUND )
         {
-            WINE_TRACE("Value not present - using default\n");
-            strncpy( RetVal,DefRes,length);
-            res=TRUE;
+            WINE_TRACE("Section key not present - using default\n");
+            strncpy(retVal, defaultResult, length);
         }
         else
         {
-            WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
-            res=FALSE;
+            WINE_ERR("RegOpenKey failed on wine config key (res=%ld)\n", res);
         }
         goto end;
     }
+    
     res = RegQueryValueExA( hSubKey, valueName, NULL, NULL, NULL, &dataLength);
-        if( res==ERROR_FILE_NOT_FOUND )
+    if( res == ERROR_FILE_NOT_FOUND )
     {
         WINE_TRACE("Value not present - using default\n");
-        strncpy( RetVal,DefRes,length);
-        res=TRUE;
+        strncpy(retVal, defaultResult, length);
         goto end;
     }
 
     if( res!=ERROR_SUCCESS )
     {
-        WINE_ERR("Couldn't query value's length (%ld)\n", res );
-        res=FALSE;
+        WINE_ERR("Couldn't query value's length (res=%ld)\n", res );
         goto end;
     }
 
@@ -119,21 +128,52 @@ int GetConfigValueSZ (HKEY hCurrent, LPSTR subkey, LPSTR valueName, LPSTR RetVal
     if( buffer==NULL )
     {
         WINE_ERR("Couldn't allocate %lu bytes for the value\n", dataLength );
-        res=FALSE;
         goto end;
     }
     
-    RegQueryValueEx( hSubKey, valueName, NULL, NULL, (LPBYTE)buffer, &dataLength);
-    strncpy( RetVal,buffer,length);
+    RegQueryValueEx(hSubKey, valueName, NULL, NULL, (LPBYTE)buffer, &dataLength);
+    strncpy(retVal, buffer, length);
     free(buffer);
+    res = 0;
     
 end:
-   if( hSubKey!=NULL )
+    if( hSubKey!=NULL )
         RegCloseKey( hSubKey );
 
     return res;
     
 }
+
+/*****************************************************************************
+ * setConfigValue : Sets a configuration key in the registry
+ *
+ * HKEY  hCurrent : the registry key that the configuration is rooted at
+ * char *subKey : the name of the config section
+ * char *valueName : the name of the config value
+ * char *value : the value to set the configuration key to
+ *
+ * Returns 0 on success, non-zero otherwise
+ *
+ */
+int setConfigValue (HKEY hCurrent, char *subkey, char *valueName, const char *value) {
+    DWORD res = 1;
+    HKEY key = NULL;
+
+    WINE_TRACE("subkey=%s, valueName=%s, value=%s\n", subkey, valueName, value);
+    
+    res = RegCreateKey(hCurrent, subkey, &key);
+    if (res != ERROR_SUCCESS) goto end;
+
+    res = RegSetValueEx(key, valueName, 0, REG_SZ, value, strlen(value) + 1);
+    if (res != ERROR_SUCCESS) goto end;
+
+    res = 0;
+end:
+    if (key) RegCloseKey(key);
+    if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s to %s, res=%ld\n", valueName, subkey, value, res);
+    return res;
+}
+
 
 /*****************************************************************************
  * Name       : loadConfig
@@ -152,32 +192,29 @@ int loadConfig (WINECFG_DESC* pCfg)
     HKEY hSession=NULL;
     DWORD res;
 
-    if( (res=RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, KEY_ALL_ACCESS, &hSession ))
-            !=ERROR_SUCCESS )
+    WINE_TRACE("\n");
+
+    res = RegCreateKey(HKEY_LOCAL_MACHINE, WINE_KEY_ROOT, &hSession);
+    if (res != ERROR_SUCCESS)
     {
-        if( res==ERROR_FILE_NOT_FOUND )
-            WINE_ERR("Wine config key does not exist");
-        else
-            WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
-        
-        res=FALSE;
-        return 1;
+        WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
+        return -1;
     }
-    
+
     /* Windows and DOS versions */
-    GetConfigValueSZ(hSession,"Version","Windows",pCfg->szWinVer,MAX_VERSION_LENGTH,"win95");
-    GetConfigValueSZ(hSession,"Version","DOS",pCfg->szDOSVer,MAX_VERSION_LENGTH,"6.22");
-    GetConfigValueSZ(hSession,"Tweak.Layout","WineLook",pCfg->szWinLook,MAX_VERSION_LENGTH,"win95");
+    getConfigValue(hSession, "Version", "Windows", pCfg->szWinVer, MAX_VERSION_LENGTH, "win95");
+    getConfigValue(hSession, "Version", "DOS", pCfg->szDOSVer, MAX_VERSION_LENGTH, "6.22");
+    getConfigValue(hSession, "Tweak.Layout", "WineLook", pCfg->szWinLook, MAX_VERSION_LENGTH, "win95");
 
     /* System Paths */
-    GetConfigValueSZ(hSession,"Wine","Windows",pCfg->szWinDir,MAX_PATH,"c:\\Windows");
-    GetConfigValueSZ(hSession,"Wine","System",pCfg->szWinSysDir,MAX_PATH,"c:\\Windows\\System");
-    GetConfigValueSZ(hSession,"Wine","Temp",pCfg->szWinTmpDir,MAX_PATH,"c:\\Windows\\Temp");
-    GetConfigValueSZ(hSession,"Wine","Profile",pCfg->szWinProfDir,MAX_PATH,"c:\\Windows\\Profiles\\Administrator");
-    GetConfigValueSZ(hSession,"Wine","Path",pCfg->szWinPath,MAX_PATH,"c:\\Windows;c:\\Windows\\System");
+    getConfigValue(hSession, "Wine", "Windows", pCfg->szWinDir, MAX_PATH, "c:\\Windows");
+    getConfigValue(hSession, "Wine", "System", pCfg->szWinSysDir, MAX_PATH, "c:\\Windows\\System");
+    getConfigValue(hSession, "Wine", "Temp", pCfg->szWinTmpDir, MAX_PATH, "c:\\Windows\\Temp");
+    getConfigValue(hSession, "Wine", "Profile", pCfg->szWinProfDir, MAX_PATH, "c:\\Windows\\Profiles\\Administrator");
+    getConfigValue(hSession, "Wine", "Path", pCfg->szWinPath, MAX_PATH, "c:\\Windows;c:\\Windows\\System");
 
     /* Graphics driver */
-    GetConfigValueSZ(hSession,"Wine","GraphicsDriver",pCfg->szGraphDriver,MAX_NAME_LENGTH,"x11drv");
+    getConfigValue(hSession, "Wine", "GraphicsDriver", pCfg->szGraphDriver, MAX_NAME_LENGTH, "x11drv");
     
     /*
      * DLL defaults for all applications is built using
@@ -221,9 +258,8 @@ int loadConfig (WINECFG_DESC* pCfg)
 }
 
 /*****************************************************************************
- * Name: saveConfig
- * Description: Stores the configuration structure
- * Parameters : pCfg
+ * saveConfig : Stores the configuration structure
+ *
  * Returns    : 0 on success, -1 otherwise
  *
  * FIXME: This is where we are to write the changes to the registry.
@@ -231,5 +267,20 @@ int loadConfig (WINECFG_DESC* pCfg)
  */
 int saveConfig (const WINECFG_DESC* pCfg)
 {
+    HKEY key;
+    DWORD res;
+
+    WINE_TRACE("\n");
+    
+    res = RegOpenKeyEx(HKEY_LOCAL_MACHINE, WINE_KEY_ROOT, 0, KEY_ALL_ACCESS, &key);
+    if (res != ERROR_SUCCESS) {
+	WINE_ERR("Failed to open Wine config registry branch, res=%ld\n", res);
+	return -1;
+    }
+
+    /* Windows and DOS versions */
+    setConfigValue(key, "Version", "Windows", pCfg->szWinVer);
+    
+    WINE_FIXME("We don't write out the entire configuration yet\n");
     return 0;
 }
