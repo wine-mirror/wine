@@ -1207,25 +1207,51 @@ BOOL WINAPI EnumEnhMetaFile(
      const RECT *lpRect  /* bounding rectangle for rendered metafile */
     )
 {
-    BOOL ret = TRUE;
-    LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
-    INT count, i;
+    BOOL ret;
+    ENHMETAHEADER *emh, *emhTemp;
+    ENHMETARECORD *emr;
+    DWORD offset;
+    INT i;
     HANDLETABLE *ht;
     INT savedMode = 0;
     FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
     XFORM savedXform, xform;
+    HPEN hPen;
+    HBRUSH hBrush;
+    HFONT hFont;
 
+    if(!lpRect)
+    {
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+
+    emh = EMF_GetEnhMetaHeader(hmf);
     if(!emh) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
-    if(!lpRect) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+
+    /* Copy the metafile into memory, because we need to avoid deadlock. */
+    emhTemp = HeapAlloc(GetProcessHeap(), 0, emh->nSize + emh->nBytes);
+    if(!emhTemp)
+    {
+	EMF_ReleaseEnhMetaHeader(hmf);
+	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return FALSE;
     }
-    count = emh->nHandles;
+    memcpy(emhTemp, emh, emh->nSize + emh->nBytes);
+    emh = emhTemp;
+    EMF_ReleaseEnhMetaHeader(hmf);
+
     ht = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-		    sizeof(HANDLETABLE) * count );
+		    sizeof(HANDLETABLE) * emh->nHandles );
+    if(!ht)
+    {
+	HeapFree(GetProcessHeap(), 0, emhTemp);
+	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+	return FALSE;
+    }
     ht->objectHandle[0] = hmf;
 
     xSrcPixSize = (FLOAT) emh->szlMillimeters.cx / emh->szlDevice.cx;
@@ -1250,18 +1276,39 @@ BOOL WINAPI EnumEnhMetaFile(
         ERR("World transform failed!\n");
     }
 
-    while (ret) {
-        ret = (*callback)(hdc, ht, (LPENHMETARECORD) emh, count, data); 
-	if (emh->iType == EMR_EOF) break;
-	emh = (LPENHMETAHEADER) ((char *) emh + emh->nSize);
+    /* save the current pen, brush and font */
+    hPen = GetCurrentObject(hdc, OBJ_PEN);
+    hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
+    hFont = GetCurrentObject(hdc, OBJ_FONT);
+
+    TRACE("nSize = %ld, nBytes = %ld, nHandles = %d, nRecords = %ld, nPalEntries = %ld\n",
+	emh->nSize, emh->nBytes, emh->nHandles, emh->nRecords, emh->nPalEntries);
+
+    ret = TRUE;
+    offset = 0;
+    while(ret && offset < emh->nBytes)
+    {
+	emr = (ENHMETARECORD *)((char *)emh + offset);
+	TRACE("Calling EnumFunc with record type %ld, size %ld\n", emr->iType, emr->nSize);
+	ret = (*callback)(hdc, ht, emr, emh->nRecords, data);
+	offset += emr->nSize;
     }
-    for(i = 1; i < count; i++) /* Don't delete element 0 (hmf) */
+
+    /* restore pen, brush and font */
+    SelectObject(hdc, hBrush);
+    SelectObject(hdc, hPen);
+    SelectObject(hdc, hFont);
+
+    for(i = 1; i < emh->nRecords; i++) /* Don't delete element 0 (hmf) */
         if( (ht->objectHandle)[i] )
 	    DeleteObject( (ht->objectHandle)[i] );
+
     HeapFree( GetProcessHeap(), 0, ht );
-    EMF_ReleaseEnhMetaHeader(hmf);
+    HeapFree(GetProcessHeap(), 0, emhTemp);
+
     SetWorldTransform(hdc, &savedXform);
     if (savedMode) SetGraphicsMode(hdc, savedMode);
+
     return ret;
 }
 
