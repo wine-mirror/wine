@@ -337,8 +337,17 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
      /* Send the WM_SETCURSOR message */
 
     if (sendSC)
+    {
+        UINT uSCMessage = message;
+
+        /* Windows sends the normal mouse message as the message parameter
+           in the WM_SETCURSOR message even if it's non-client mouse message */
+
+        if (uSCMessage >= WM_NCMOUSEFIRST && uSCMessage <= WM_NCMOUSELAST)
+	        uSCMessage += WM_MOUSEFIRST - WM_NCMOUSEFIRST;
         SendMessageA( hWnd, WM_SETCURSOR, hWnd,
-                       MAKELONG( hittest, message ));
+                       MAKELONG( hittest, uSCMessage));
+    }
     if (eatMsg)
     {
         retvalue = MAKELONG( (UINT16)SYSQ_MSG_SKIP, hittest);
