@@ -36,17 +36,17 @@
 #define YYLEX_PARAM info
 #define YYPARSE_PARAM info
 
-extern int yyerror(const char *str);
+extern int SQL_error(const char *str);
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-typedef struct tag_yyinput
+typedef struct tag_SQL_input
 {
     MSIDATABASE *db;
     LPCWSTR command;
     DWORD n, len;
     MSIVIEW **view;  /* view structure for the resulting query */
-} yyinput;
+} SQL_input;
 
 struct string_list
 {
@@ -54,9 +54,9 @@ struct string_list
     struct string_list *next;
 };
 
-static LPWSTR yygetstring( yyinput *info );
-static INT yygetint( yyinput *sql );
-static int yylex( void *yylval, yyinput *info);
+static LPWSTR SQL_getstring( SQL_input *info );
+static INT SQL_getint( SQL_input *sql );
+static int SQL_lex( void *SQL_lval, SQL_input *info);
 
 static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
                         struct string_list *columns );
@@ -131,7 +131,7 @@ static struct expr * EXPR_sval( LPWSTR string );
 oneselect:
     unorderedsel TK_ORDER TK_BY selcollist
         {
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
 
             if( !$1 )
                 YYABORT;
@@ -142,7 +142,7 @@ oneselect:
         }
   | unorderedsel
         {
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
 
             *sql->view = $1;
         }
@@ -151,7 +151,7 @@ oneselect:
 unorderedsel:
     TK_SELECT selcollist from 
         {
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
             if( !$3 )
                 YYABORT;
             if( $2 )
@@ -161,7 +161,7 @@ unorderedsel:
         }
   | TK_SELECT TK_DISTINCT selcollist from 
         {
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
             MSIVIEW *view = $4;
 
             if( !view )
@@ -208,7 +208,7 @@ selcollist:
 from:
     TK_FROM table
         { 
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
 
             $$ = NULL;
             TRACE("From table: %s\n",debugstr_w($2));
@@ -216,7 +216,7 @@ from:
         }
   | TK_FROM table TK_WHERE expr
         { 
-            yyinput* sql = (yyinput*) info;
+            SQL_input* sql = (SQL_input*) info;
             MSIVIEW *view = NULL;
             UINT r;
 
@@ -293,8 +293,8 @@ val:
         }
   | TK_INTEGER
         {
-            yyinput* sql = (yyinput*) info;
-            $$ = EXPR_ival( yygetint(sql) );
+            SQL_input* sql = (SQL_input*) info;
+            $$ = EXPR_ival( SQL_getint(sql) );
         }
   | TK_STRING
         {
@@ -330,19 +330,19 @@ table:
 string_or_id:
     TK_ID
         {
-            yyinput* sql = (yyinput*) info;
-            $$ = yygetstring(sql);
+            SQL_input* sql = (SQL_input*) info;
+            $$ = SQL_getstring(sql);
         }
   | TK_STRING
         {
-            yyinput* sql = (yyinput*) info;
-            $$ = yygetstring(sql);
+            SQL_input* sql = (SQL_input*) info;
+            $$ = SQL_getstring(sql);
         }
     ;
 
 %%
 
-int yylex( void *yylval, yyinput *sql)
+int SQL_lex( void *SQL_lval, SQL_input *sql)
 {
     int token;
 
@@ -364,7 +364,7 @@ int yylex( void *yylval, yyinput *sql)
     return token;
 }
 
-LPWSTR yygetstring( yyinput *sql )
+LPWSTR SQL_getstring( SQL_input *sql )
 {
     LPCWSTR p = &sql->command[sql->n];
     LPWSTR str;
@@ -385,14 +385,14 @@ LPWSTR yygetstring( yyinput *sql )
     return str;
 }
 
-INT yygetint( yyinput *sql )
+INT SQL_getint( SQL_input *sql )
 {
     LPCWSTR p = &sql->command[sql->n];
 
     return atoiW( p );
 }
 
-int yyerror(const char *str)
+int SQL_error(const char *str)
 {
     return 0;
 }
@@ -493,7 +493,7 @@ static struct expr * EXPR_sval( LPWSTR string )
 
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
 {
-    yyinput sql;
+    SQL_input sql;
     int r;
 
     *phview = NULL;
@@ -504,7 +504,7 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
     sql.len = 0;
     sql.view = phview;
 
-    r = yyparse(&sql);
+    r = SQL_parse(&sql);
 
     TRACE("Parse returned %d\n", r);
     if( r )

@@ -1,6 +1,8 @@
 Makefile
+cond.tab.c
+cond.tab.h
 msi.dll.dbg.c
 msi.spec.c
 msi.spec.def
-y.tab.c
-y.tab.h
+sql.tab.c
+sql.tab.h

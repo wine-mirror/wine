@@ -21,18 +21,23 @@ C_SRCS = \
 
 #RC_SRCS= msi_rc.rc
 
-EXTRA_SRCS = sql.y 
-EXTRA_OBJS = y.tab.o
+EXTRA_SRCS = sql.y cond.y
+EXTRA_OBJS = sql.tab.o cond.tab.o
 
 @MAKE_DLL_RULES@
 
-y.tab.c y.tab.h: sql.y
-	$(YACC) -d -t $(SRCDIR)/sql.y
+sql.tab.c sql.tab.h: sql.y
+	$(BISON) -p SQL_ -d $(SRCDIR)/sql.y
+
+cond.tab.c cond.tab.h: cond.y
+	$(BISON) -p COND_ -d $(SRCDIR)/cond.y
 
 # hack to allow parallel make
-y.tab.h: y.tab.c
-y.tab.o: y.tab.h
+sql.tab.h: sql.tab.c
+sql.tab.o: sql.tab.h
+cond.tab.h: cond.tab.c
+cond.tab.o: cond.tab.h
 
-tokenize.o: y.tab.h
+tokenize.o: sql.tab.h
 
 ### Dependencies:

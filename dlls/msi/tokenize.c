@@ -25,7 +25,7 @@
 #include "wine/debug.h"
 #include "winnls.h"
 #include "query.h"
-#include "y.tab.h"
+#include "sql.tab.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
