@@ -3618,14 +3618,13 @@ postpaint:
  * RETURN:
  * None
  */
-static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
+static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc)
 {
     UINT uID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     HWND hwndParent = GetParent(infoPtr->hwndSelf);
     POINT Origin, Position;
     DRAWITEMSTRUCT dis;
     LVITEMW item;
-    ITERATOR i;
     
     TRACE("()\n");
 
@@ -3633,26 +3632,11 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     
     /* Get scroll info once before loop */
     LISTVIEW_GetOrigin(infoPtr, &Origin);
-
-    /* figure out what we need to draw */
-    iterator_visibleitems(&i, infoPtr, hdc);
     
-    /* send cache hint notification */
-    if (infoPtr->dwStyle & LVS_OWNERDATA)
-    {
-	RANGE range = iterator_range(&i);
-        NMLVCACHEHINT nmlv;
-
-	ZeroMemory(&nmlv, sizeof(NMLVCACHEHINT));
-        nmlv.iFrom = range.lower;
-        nmlv.iTo   = range.upper - 1;
-        notify_hdr(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
-    }
-
     /* iterate through the invalidated rows */
-    while(iterator_next(&i))
+    while(iterator_next(i))
     {
-	item.iItem = i.nItem;
+	item.iItem = i->nItem;
 	item.iSubItem = 0;
 	item.mask = LVIF_PARAM | LVIF_STATE;
 	item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
@@ -3677,7 +3661,6 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
 	TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
 	SendMessageW(hwndParent, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     }
-    iterator_destroy(&i);
 }
 
 /***
@@ -3692,13 +3675,13 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
  * RETURN:
  * None
  */
-static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
+static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, DWORD cdmode)
 {
     INT rgntype;
     RECT rcClip, rcItem;
     POINT Origin, Position;
     RANGE colRange;
-    ITERATOR i, j;
+    ITERATOR j;
 
     TRACE("()\n");
 
@@ -3726,16 +3709,13 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
 	j.nSpecial = 0;
 
-    /* figure out what we need to draw */
-    iterator_visibleitems(&i, infoPtr, hdc);
-    
     /* iterate through the invalidated rows */
-    while(iterator_next(&i))
+    while(iterator_next(i))
     {
 	/* iterate through the invalidated columns */
 	while(iterator_next(&j))
 	{
-	    LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position);
+	    LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
 	    Position.x += Origin.x;
 	    Position.y += Origin.y;
 
@@ -3748,10 +3728,10 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 		if (!RectVisible(hdc, &rcItem)) continue;
 	    }
 
-	    LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, j.nItem, Position, cdmode);
+	    LISTVIEW_DrawItem(infoPtr, hdc, i->nItem, j.nItem, Position, cdmode);
 	}
     }
-    iterator_destroy(&i);
+    iterator_destroy(&j);
 }
 
 /***
@@ -3766,26 +3746,21 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
  * RETURN:
  * None
  */
-static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
+static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc, DWORD cdmode)
 {
     POINT Origin, Position;
-    ITERATOR i;
 
     /* Get scroll info once before loop */
     LISTVIEW_GetOrigin(infoPtr, &Origin);
     
-    /* figure out what we need to draw */
-    iterator_visibleitems(&i, infoPtr, hdc);
-    
-    while(iterator_prev(&i))
+    while(iterator_prev(i))
     {
-	LISTVIEW_GetItemOrigin(infoPtr, i.nItem, &Position);
+	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
 	Position.x += Origin.x;
 	Position.y += Origin.y;
 
-        LISTVIEW_DrawItem(infoPtr, hdc, i.nItem, 0, Position, cdmode);
+        LISTVIEW_DrawItem(infoPtr, hdc, i->nItem, 0, Position, cdmode);
     }
-    iterator_destroy(&i);
 }
 
 
@@ -3809,6 +3784,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     DWORD cdmode;
     INT oldBkMode;
     RECT rcClient;
+    ITERATOR i;
 
     LISTVIEW_DUMP(infoPtr);
   
@@ -3835,19 +3811,35 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
 
+    /* figure out what we need to draw */
+    iterator_visibleitems(&i, infoPtr, hdc);
+    
+    /* send cache hint notification */
+    if (infoPtr->dwStyle & LVS_OWNERDATA)
+    {
+    	RANGE range = iterator_range(&i);
+	NMLVCACHEHINT nmlv;
+	
+    	ZeroMemory(&nmlv, sizeof(NMLVCACHEHINT));
+    	nmlv.iFrom = range.lower;
+    	nmlv.iTo   = range.upper - 1;
+    	notify_hdr(infoPtr, LVN_ODCACHEHINT, &nmlv.hdr);
+    }
+
     if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
-	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
+	LISTVIEW_RefreshOwnerDraw(infoPtr, &i, hdc);
     else
     {
     	if (uView == LVS_REPORT)
-            LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
+            LISTVIEW_RefreshReport(infoPtr, &i, hdc, cdmode);
 	else /* LVS_LIST, LVS_ICON or LVS_SMALLICON */
-	    LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
+	    LISTVIEW_RefreshList(infoPtr, &i, hdc, cdmode);
 
 	/* if we have a focus rect, draw it */
 	if (infoPtr->bFocus)
 	    DrawFocusRect(hdc, &infoPtr->rcFocus);
     }
+    iterator_destroy(&i);
     
 enddraw:
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
