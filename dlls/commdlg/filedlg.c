@@ -263,7 +263,7 @@ static void FILEDLG_StripEditControl(HWND hwnd)
 {
     WCHAR temp[BUFFILE], *cp;
 
-    GetDlgItemTextW( hwnd, edt1, temp, sizeof(temp) );
+    GetDlgItemTextW( hwnd, edt1, temp, sizeof(temp)/sizeof(WCHAR));
     cp = strrchrW(temp, '\\');
     if (cp != NULL) {
 	strcpyW(temp, cp+1);
@@ -320,10 +320,10 @@ static BOOL FILEDLG_ScanDir(HWND hWnd, LPWSTR newPath)
 
     if  ( !SetCurrentDirectoryW( newPath ))
         return FALSE;
-    lstrcpynW(buffer, newPath, sizeof(buffer));
+    lstrcpynW(buffer, newPath, sizeof(buffer)/sizeof(WCHAR));
 
     /* get the list of spec files */
-    GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer));
+    GetDlgItemTextW(hWnd, edt1, buffer, sizeof(buffer)/sizeof(WCHAR));
 
     hCursorWait = LoadCursorA(0, IDC_WAITA);
     oldCursor = SetCursor(hCursorWait);
@@ -650,13 +650,24 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
         ofnW->nFileExtension++;
     /* update the real client structures if any */
     if (lfs->ofn16)
-    {
-        char *dest = MapSL(lfs->ofn16->lpstrFile);
+    { /* we have to convert to short (8.3) path */
+	char tmp[1024]; /* MAX_PATHNAME_LEN */
+	LPOPENFILENAME16 ofn16 = lfs->ofn16;
+        char *dest = MapSL(ofn16->lpstrFile);
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
-                                  dest, ofnW->nMaxFile, NULL, NULL ))
-            dest[ofnW->nMaxFile-1] = 0;
-        lfs->ofn16->nFileOffset = ofnW->nFileOffset;
-        lfs->ofn16->nFileExtension = ofnW->nFileExtension;
+                                  tmp, ofnW->nMaxFile, NULL, NULL ))
+            tmp[ofnW->nMaxFile-1] = 0;
+	GetShortPathNameA(tmp, dest, ofn16->nMaxFile);
+
+	/* the same procedure as every year... */
+        ofn16->nFileOffset = strrchr(dest,'\\') - dest +1;
+        ofn16->nFileExtension = 0;
+        while(dest[ofn16->nFileExtension] != '.' && dest[ofn16->nFileExtension] != '\0')
+            ofn16->nFileExtension++;
+        if (dest[ofn16->nFileExtension] == '\0')
+            ofn16->nFileExtension = 0;
+        else
+            ofn16->nFileExtension++;
     }
     if (lfs->ofnA)
     {
@@ -826,7 +837,7 @@ static LRESULT FILEDLG_TestPath( LFSPRIVATE lfs, LPWSTR path )
         *pBeginFileName = 0;
         SetDlgItemTextW( hWnd, edt1, pBeginFileName + 1 );
 
-        lstrcpynW(tmpstr2, pBeginFileName + 1, sizeof(tmpstr2) );
+        lstrcpynW(tmpstr2, pBeginFileName + 1, sizeof(tmpstr2)/sizeof(WCHAR) );
         /* Should we MessageBox() if this fails? */
         if (!FILEDLG_ScanDir(hWnd, path))
         {
@@ -856,9 +867,9 @@ static LRESULT FILEDLG_Validate( LFSPRIVATE lfs, LPWSTR path, UINT control, INT 
 
     /* get current file name */
     if (path)
-        lstrcpynW(filename, path, sizeof(filename));
+        lstrcpynW(filename, path, sizeof(filename)/sizeof(WCHAR));
     else
-        GetDlgItemTextW( hWnd, edt1, filename, sizeof(filename) );
+        GetDlgItemTextW( hWnd, edt1, filename, sizeof(filename)/sizeof(WCHAR));
 
     /* if we did not click in file list to get there */
     if (control != lst1)
