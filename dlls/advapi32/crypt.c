@@ -453,7 +453,6 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		/* CRYPT_LoadProvider calls SetLastError */
 		goto error;
 	}
-	CRYPT_Free(temp);
 	pProv->pVTable->dwProvType = dwProvType;
 	pProv->pVTable->pszProvName = provname;
 	if (pProv->pFuncs->pCPAcquireContext(&pProv->hPrivate, (CHAR*)pszContainer, dwFlags, pProv->pVTable))
@@ -471,6 +470,8 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		} else {
 			*phProv = (HCRYPTPROV)pProv;
 		}
+		CRYPT_Free(temp);
+		CRYPT_Free(imagepath);
 		return TRUE;
 	}
 	/* FALLTHROUGH TO ERROR IF FALSE - CSP internal error! */
