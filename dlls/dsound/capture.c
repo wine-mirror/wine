@@ -197,7 +197,7 @@ DirectSoundCaptureEnumerateA(
 	    		if (err == DS_OK) {
 			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
 		    		debugstr_guid(&DSDEVID_DefaultCapture),"Primary Sound Capture Driver",desc.szDrvName,lpContext);
-			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
+			    if (lpDSEnumCallback(NULL, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
 				return DS_OK;
 			}
 		    }
@@ -270,7 +270,7 @@ DirectSoundCaptureEnumerateW(
 			        wDesc, sizeof(wDesc)/sizeof(WCHAR) );
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
 		    	        wName, sizeof(wName)/sizeof(WCHAR) );
-			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultCapture, wDesc, wName, lpContext) == FALSE)
+			    if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
 				return DS_OK;
 			}
 		    }
@@ -325,10 +325,10 @@ DSOUND_capture_callback(
 		This->read_position = mtime.u.cb;
 		This->state = STATE_CAPTURING;
 	    }
-	    This->index = (This->index + 1) % This->nrofpwaves;
 	    waveInUnprepareHeader(hwi,&(This->pwave[This->index]),sizeof(WAVEHDR));
 	    if (This->capture_buffer->nrofnotifies)
 		SetEvent(This->capture_buffer->notifies[This->index].hEventNotify);
+	    This->index = (This->index + 1) % This->nrofpwaves;
 	    if ( (This->index == 0) && !(This->capture_buffer->flags & DSCBSTART_LOOPING) ) {
 		TRACE("end of buffer\n");
 		This->state = STATE_STOPPED;

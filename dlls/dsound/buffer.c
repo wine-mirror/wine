@@ -235,15 +235,18 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,vol);
 
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
+
 	if (vol == NULL) {
 		WARN("invalid parameter: vol == NULL\n");
 		return DSERR_INVALIDPARAM;
 	}
 
-	if (This->dsbd.dwFlags & DSBCAPS_CTRL3D)
-		*vol = This->ds3db_lVolume;
-	else
-		*vol = This->volpan.lVolume;
+	*vol = This->volpan.lVolume;
+
 	return DS_OK;
 }
 
@@ -758,6 +761,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,pan);
+
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
 
 	if (pan == NULL) {
 		WARN("invalid parameter: pan = NULL\n");

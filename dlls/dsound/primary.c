@@ -745,11 +745,53 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LONG pan
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
+	IDirectSoundImpl* dsound = This->dsound;
+	LONG oldPan;
+
 	TRACE("(%p,%ld)\n",This,pan);
 
-	/* You cannot set the pan of the primary buffer */
-	WARN("control unavailable\n");
-	return DSERR_CONTROLUNAVAIL;
+	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
+
+	if ((pan > DSBPAN_RIGHT) || (pan < DSBPAN_LEFT)) {
+		WARN("invalid parameter: pan = %ld\n", pan);
+		return DSERR_INVALIDPARAM;
+	}
+
+	/* **** */
+	EnterCriticalSection(&(dsound->mixlock));
+
+	oldPan = dsound->volpan.lPan;
+	dsound->volpan.lPan = pan;
+	DSOUND_RecalcVolPan(&dsound->volpan);
+
+	if (pan != oldPan) {
+		if (dsound->hwbuf) {
+			HRESULT hres;
+			hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &(dsound->volpan));
+			if (hres != DS_OK) {
+				LeaveCriticalSection(&(dsound->mixlock));
+				WARN("IDsDriverBuffer_SetVolumePan failed\n");
+				return hres;
+			}
+		}
+		else {
+#if 0 /* should we really do this? */
+			/* the DS volume ranges from 0 (max, 0dB attenuation) to -10000 (min, 100dB attenuation) */
+			/* the MM volume ranges from 0 to 0xffff in an unspecified logarithmic scale */
+			WORD cvol = 0xffff + vol*6 + vol/2;
+			DWORD vol = cvol | ((DWORD)cvol << 16)
+			waveOutSetVolume(dsound->hwo, vol);
+#endif
+		}
+	}
+
+	LeaveCriticalSection(&(dsound->mixlock));
+	/* **** */
+
+	return DS_OK;
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_GetPan(
@@ -757,6 +799,11 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	TRACE("(%p,%p)\n",This,pan);
+
+	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
+		WARN("control unavailable\n");
+		return DSERR_CONTROLUNAVAIL;
+	}
 
 	if (pan == NULL) {
 		WARN("invalid parameter: pan == NULL\n");
@@ -774,7 +821,7 @@ static HRESULT WINAPI PrimaryBufferImpl_Unlock(
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
 
-	TRACE("(%p,%p,%ld,%p,%ld):stub\n", This,p1,x1,p2,x2);
+	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
 
 	if (dsound->priolevel != DSSCL_WRITEPRIMARY) {
 		WARN("failed priority check!\n");

@@ -336,7 +336,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 			if (err == DS_OK) {
 			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
 				debugstr_guid(&DSDEVID_DefaultPlayback),"Primary Sound Driver",desc.szDrvName,lpContext);
-			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback, "Primary Sound Driver", desc.szDrvName, lpContext) == FALSE)
+			    if (lpDSEnumCallback(NULL, "Primary Sound Driver", desc.szDrvName, lpContext) == FALSE)
 				return DS_OK;
 			}
 		    }
@@ -408,7 +408,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
 				wDesc, sizeof(wDesc)/sizeof(WCHAR) );
 				MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1,
 				wName, sizeof(wName)/sizeof(WCHAR) );
-			    if (lpDSEnumCallback((LPGUID)&DSDEVID_DefaultPlayback, wDesc, wName, lpContext) == FALSE)
+			    if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
 				return DS_OK;
 			}
 		    }

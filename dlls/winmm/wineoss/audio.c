@@ -2140,7 +2140,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 {
     /* ICOM_THIS(IDsDriverBufferImpl,iface); */
     FIXME("(%p,%p): stub!\n",iface,pVolPan);
-    return DSERR_UNSUPPORTED;
+    /* FIXME: the dsound software mixer does this for us so don't return an error */
+    return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
