@@ -475,8 +475,8 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
 {
     int ret;
-    DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return ERROR;    
+    DC *dc = DC_GetDCUpdate( hdc );
+    if (!dc) return ERROR;
     ret = GetRgnBox16( dc->hGCClipRgn, rect );
     rect->left   -= dc->DCOrgX;
     rect->right  -= dc->DCOrgX;
@@ -495,8 +495,8 @@ INT16 WINAPI GetClipBox16( HDC16 hdc, LPRECT16 rect )
 INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
     INT ret;
-    DC *dc = DC_GetDCPtr( hdc );
-    if (!dc) return ERROR;    
+    DC *dc = DC_GetDCUpdate( hdc );
+    if (!dc) return ERROR;
     ret = GetRgnBox( dc->hGCClipRgn, rect );
     rect->left   -= dc->DCOrgX;
     rect->right  -= dc->DCOrgX;
