@@ -48,11 +48,29 @@ static const WCHAR profile2W[] =
   '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
   's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
 
-static LPSTR standardprofile = NULL;
-static LPWSTR standardprofileW = NULL;
+static LPSTR standardprofile;
+static LPWSTR standardprofileW;
 
-static LPSTR testprofile = NULL;
-static LPWSTR testprofileW = NULL;
+static LPSTR testprofile;
+static LPWSTR testprofileW;
+
+#define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
+
+static void MSCMS_basenameA( LPCSTR path, LPSTR name )
+{
+    INT i = strlen( path );
+
+    while (i > 0 && !IS_SEPARATOR(path[i - 1])) i--;
+    strcpy( name, &path[i] );
+}
+
+static void MSCMS_basenameW( LPCWSTR path, LPWSTR name )
+{
+    INT i = lstrlenW( path );
+
+    while (i > 0 && !IS_SEPARATOR(path[i - 1])) i--;
+    lstrcpyW( name, &path[i] );
+}
 
 static void test_GetColorDirectoryA()
 {
@@ -139,7 +157,7 @@ static void test_InstallColorProfileA()
     ok( !ret, "InstallColorProfileA() succeeded (%ld)\n", GetLastError() );
 
     ret = InstallColorProfileA( NULL, machine );
-    ok( !ret, "InstallColorProfileA() failed (%ld)\n", GetLastError() );
+    ok( !ret, "InstallColorProfileA() succeeded (%ld)\n", GetLastError() );
 
     if (standardprofile)
     {
@@ -151,10 +169,28 @@ static void test_InstallColorProfileA()
 
     if (testprofile)
     {
+        CHAR dest[MAX_PATH], base[MAX_PATH];
+        DWORD size = sizeof(dest);
+        CHAR slash[] = "\\";
+        HANDLE handle;
+
         ret = InstallColorProfileA( NULL, testprofile );
         ok( ret, "InstallColorProfileA() failed (%ld)\n", GetLastError() );
 
-        ret = UninstallColorProfileA( NULL, testprofile, TRUE );
+        ret = GetColorDirectoryA( NULL, dest, &size );
+        ok( ret, "GetColorDirectoryA() failed (%ld)\n", GetLastError() );
+
+        MSCMS_basenameA( testprofile, base );
+
+        strcat( dest, slash );
+        strcat( dest, base );
+
+        /* Check if the profile is really there */ 
+        handle = CreateFileA( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+        ok( handle != INVALID_HANDLE_VALUE, "Couldn't find the profile (%ld)\n", GetLastError() );
+        CloseHandle( handle );
+        
+        ret = UninstallColorProfileA( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileA() failed (%ld)\n", GetLastError() );
     }
 }
@@ -184,10 +220,28 @@ static void test_InstallColorProfileW()
 
     if (testprofileW)
     {
+        WCHAR dest[MAX_PATH], base[MAX_PATH];
+        DWORD size = sizeof(dest);
+        WCHAR slash[] = { '\\', 0 };
+        HANDLE handle;
+
         ret = InstallColorProfileW( NULL, testprofileW );
         ok( ret, "InstallColorProfileW() failed (%ld)\n", GetLastError() );
 
-        ret = UninstallColorProfileW( NULL, testprofileW, TRUE );
+        ret = GetColorDirectoryW( NULL, dest, &size );
+        ok( ret, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
+
+        MSCMS_basenameW( testprofileW, base );
+
+        lstrcatW( dest, slash );
+        lstrcatW( dest, base );
+
+        /* Check if the profile is really there */
+        handle = CreateFileW( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+        ok( handle != INVALID_HANDLE_VALUE, "Couldn't find the profile (%ld)\n", GetLastError() );
+        CloseHandle( handle );
+
+        ret = UninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%ld)\n", GetLastError() );
     }
 }
@@ -304,11 +358,29 @@ static void test_UninstallColorProfileA()
 
     if (testprofile)
     {
+        CHAR dest[MAX_PATH], base[MAX_PATH];
+        DWORD size = sizeof(dest);
+        CHAR slash[] = "\\";
+        HANDLE handle;
+
         ret = InstallColorProfileA( NULL, testprofile );
         ok( ret, "InstallColorProfileA() failed (%ld)\n", GetLastError() );
 
-        ret = UninstallColorProfileA( NULL, testprofile, TRUE );
+        ret = GetColorDirectoryA( NULL, dest, &size );
+        ok( ret, "GetColorDirectoryA() failed (%ld)\n", GetLastError() );
+
+        MSCMS_basenameA( testprofile, base );
+
+        strcat( dest, slash );
+        strcat( dest, base );
+
+        ret = UninstallColorProfileA( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileA() failed (%ld)\n", GetLastError() );
+
+        /* Check if the profile is really gone */
+        handle = CreateFileA( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+        ok( handle == INVALID_HANDLE_VALUE, "Found the profile (%ld)\n", GetLastError() );
+        CloseHandle( handle );
     }
 }
 
@@ -328,11 +400,29 @@ static void test_UninstallColorProfileW()
 
     if (testprofileW)
     {
+        WCHAR dest[MAX_PATH], base[MAX_PATH];
+        DWORD size = sizeof(dest);
+        WCHAR slash[] = { '\\', 0 };
+        HANDLE handle;
+
         ret = InstallColorProfileW( NULL, testprofileW );
         ok( ret, "InstallColorProfileW() failed (%ld)\n", GetLastError() );
 
-        ret = UninstallColorProfileW( NULL, testprofileW, TRUE );
+        ret = GetColorDirectoryW( NULL, dest, &size );
+        ok( ret, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
+
+        MSCMS_basenameW( testprofileW, base );
+
+        lstrcatW( dest, slash );
+        lstrcatW( dest, base );
+
+        ret = UninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%ld)\n", GetLastError() );
+
+        /* Check if the profile is really gone */
+        handle = CreateFileW( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+        ok( handle == INVALID_HANDLE_VALUE, "Found the profile (%ld)\n", GetLastError() );
+        CloseHandle( handle );
     }
 }
 

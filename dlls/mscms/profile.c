@@ -34,6 +34,16 @@
 #include "lcms_api.h"
 #undef LCMS_API_FUNCTION
 
+#define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
+
+static void MSCMS_basename( LPCWSTR path, LPWSTR name )
+{
+    INT i = lstrlenW( path );
+
+    while (i > 0 && !IS_SEPARATOR(path[i - 1])) i--;
+    lstrcpyW( name, &path[i] );
+}
+
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
@@ -62,7 +72,6 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
 
         HeapFree( GetProcessHeap(), 0, bufferW );
     }
-
     return ret;
 }
 
@@ -83,7 +92,7 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 
     if (len <= *size)
     {
-        lstrcatW( buffer, colordir );
+        lstrcpyW( buffer, colordir );
         return TRUE;
     }
 
@@ -111,27 +120,54 @@ BOOL WINAPI InstallColorProfileA( PCSTR machine, PCSTR profile )
         ret = InstallColorProfileW( NULL, profileW );
         HeapFree( GetProcessHeap(), 0, profileW );
     }
-
     return ret;
 }
 
 BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 {
-    FIXME( "( %s ) stub\n", debugstr_w(profile) );
+    WCHAR dest[MAX_PATH], base[MAX_PATH];
+    DWORD size = sizeof(dest);
+    static const WCHAR slash[] = { '\\', 0 };
+
+    TRACE( "( %s )\n", debugstr_w(profile) );
 
     if (machine || !profile) return FALSE;
 
-    return FALSE;
+    if (!GetColorDirectoryW( machine, dest, &size )) return FALSE;
+
+    MSCMS_basename( profile, base );
+
+    lstrcatW( dest, slash );
+    lstrcatW( dest, base );
+
+    /* Is source equal to destination? */
+    if (!lstrcmpW( profile, dest )) return TRUE;
+
+    return CopyFileW( profile, dest, TRUE );
 }
 
 BOOL WINAPI UninstallColorProfileA( PCSTR machine, PCSTR profile, BOOL delete )
 {
+    UINT len;
+    LPWSTR profileW;
+    BOOL ret = FALSE;
+
+    TRACE( "( %s )\n", debugstr_a(profile) );
+
     if (machine || !profile) return FALSE;
 
-    if (delete)
-        return DeleteFileA( profile );
+    len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
+    profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
 
-    return TRUE;
+    if (profileW)
+    {
+        MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
+
+        ret = UninstallColorProfileW( NULL, profileW , delete );
+
+        HeapFree( GetProcessHeap(), 0, profileW );
+    }
+    return ret;
 }
 
 BOOL WINAPI UninstallColorProfileW( PCWSTR machine, PCWSTR profile, BOOL delete )
@@ -175,7 +211,6 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
             HeapFree( GetProcessHeap(), 0, profileW.pProfileData );
         }
     }
-
     return handle;
 }
 
