@@ -4,7 +4,7 @@
  *
  *  Cdrom - device driver emulation - Audio features.
  * 	(c) 1998 Petr Tomasek <tomasek@etf.cuni.cz>
- *	(c) 1999 Eric Pouech
+ *	(c) 1999,2002 Eric Pouech
  */
 
 #include "config.h"
@@ -15,7 +15,9 @@
 #include "module.h"
 /* #define DEBUG_INT */
 #include "debugtools.h"
-#include "cdrom.h"
+#include "winioctl.h"
+#include "ntddstor.h"
+#include "ntddcdrm.h"
 
 DEFAULT_DEBUG_CHANNEL(int);
 
@@ -414,12 +416,19 @@ static	void	MSCDEX_Dump(char* pfx, BYTE* req, int dorealmode)
 #define MSCDEX_Dump(pfx, req, drm)
 #endif
 
+#define CDFRAMES_PERSEC                 75
+#define CDFRAMES_PERMIN                 (CDFRAMES_PERSEC * 60) 
+#define FRAME_OF_ADDR(a)        ((a)[1] * CDFRAMES_PERMIN + (a)[2] * CDFRAMES_PERSEC + (a)[3])
+#define FRAME_OF_TOC(toc, idx)  FRAME_OF_ADDR((toc).TrackData[idx - (toc).FirstTrack].Address)
+#define CTRL_OF_TOC(toc, idx)   (((toc).TrackData[idx - (toc).FirstTrack].Control << 4) | \
+                                  (toc).TrackData[idx - (toc).FirstTrack].Adr)
+
 static	void	MSCDEX_StoreMSF(DWORD frame, BYTE* val)
 {
     val[3] = 0;	/* zero */
     val[2] = frame / CDFRAMES_PERMIN; /* minutes */
-    val[1] = (frame - CDFRAMES_PERMIN * val[2]) / CDFRAMES_PERSEC; /* seconds */
-    val[0] = frame - CDFRAMES_PERMIN * val[2] - CDFRAMES_PERSEC * val[1]; /* frames */
+    val[1] = (frame / CDFRAMES_PERSEC) % 60; /* seconds */
+    val[0] = frame % CDFRAMES_PERSEC; /* frames */
 }
 
 static int is_cdrom( int drive)
@@ -434,7 +443,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
     int 	drive, count;
     char*	p;
 
-    switch(LOBYTE(context->Eax)) {
+    switch (LOBYTE(context->Eax)) {
     case 0x00: /* Installation check */
 	/* Count the number of contiguous CDROM drives
 	 */
@@ -470,13 +479,18 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	
     case 0x10: /* direct driver access */
 	{
-	    static 	WINE_CDAUDIO	wcda;
-	    int		dev = -1;
 	    BYTE* 	driver_request;
 	    BYTE* 	io_stru;	
 	    BYTE 	Error = 255; /* No Error */ 
 	    int		dorealmode = ISV86(context);
-	    
+            char        devName[] = "\\\\.\\@:";
+	    HANDLE      h;
+            CDROM_TOC                   toc;
+            CDROM_SUB_Q_DATA_FORMAT     fmt;
+            SUB_Q_CHANNEL_DATA          data;
+            DWORD                       br;
+            DWORD                       present = TRUE;
+
 	    driver_request = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
 	    
 	    if (!driver_request) {
@@ -489,16 +503,13 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		return;
 	    }
 	    /* FIXME
-	     *       - the current implementation only supports a single CD ROM
+             * the following tests are wrong because lots of functions don't require the
+             * tray to be closed with a CD inside
 	     */
-	    CDROM_Open(&wcda, -1);
-	    dev = CDROM_OpenDev(&wcda);
 	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
-	    for (drive = 0; drive < 26; drive++) if (is_cdrom(drive)) break;
-	    /* drive contains the first CD ROM */
-	    if (CX_reg(context) != drive) {
-		WARN("Request made doesn't match a CD ROM drive (%d/%d)\n", CX_reg(context), drive);
+	    if (!is_cdrom(CX_reg(context))) {
+		WARN("Request made doesn't match a CD ROM drive (%d)\n", CX_reg(context));
 		driver_request[4] |= 0x80;
 		driver_request[3] = 1;	/* unknown unit */
 		return;
@@ -508,8 +519,39 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    
 	    /* set status to 0 */
 	    PTR_AT(driver_request, 3, WORD) = 0;
-	    CDROM_Audio_GetCDStatus(&wcda, dev);
-	    
+            devName[4] = 'A' + CX_reg(context);
+            h = CreateFileA(devName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+            if (!h) {
+		WARN("Couldn't open cdrom handle\n");
+		driver_request[4] |= 0x80;
+		driver_request[3] = 1;	/* unknown unit */
+		return;
+	    }
+
+            fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
+            if (!DeviceIoControl(h, IOCTL_CDROM_READ_TOC, NULL, 0, &toc, sizeof(toc), &br, NULL) ||
+                !DeviceIoControl(h, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt), 
+                                 &data, sizeof(data), &br, NULL)) {
+                if (GetLastError() == STATUS_NO_MEDIA_IN_DEVICE)
+                {
+                    if (driver_request[2] != 6 && driver_request[2] != 15)
+                    {
+                        driver_request[4] |= 0x80;
+                        driver_request[3] = 2;	/* drive not ready */
+                        CloseHandle(h);
+                        return;
+                    }
+                    present = FALSE;
+                }
+                else
+                {
+                    driver_request[4] |= 0x80;
+                    driver_request[3] = 1;	/* unknown unit */
+                    CloseHandle(h);
+                    return;
+                }
+            }
+               
 	    switch (driver_request[2]) {
 	    case 3:
 		io_stru = (dorealmode) ? 
@@ -548,10 +590,12 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		case 1: /* location of head */
 		    switch (io_stru[1]) {
 		    case 0:
-			PTR_AT(io_stru, 2, DWORD) = wcda.dwCurFrame;
+			PTR_AT(io_stru, 2, DWORD) = 
+                            FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress);
 			break;
 		    case 1:
-			MSCDEX_StoreMSF(wcda.dwCurFrame, io_stru + 2);
+			MSCDEX_StoreMSF(FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress), 
+                                        io_stru + 2);
 			break;
 		    default:
 			ERR("CD-ROM driver: unsupported addressing mode !!\n");
@@ -588,13 +632,13 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		     * 0	Door locked
 		     * 0	see below (Door closed/opened)
 		     */
-		    if (wcda.cdaMode == WINE_CDA_OPEN)
-			io_stru[1] |= 1;
+		    if (!present) PTR_AT(io_stru, 1, DWORD) |= 1;
 		    TRACE(" ----> DEVICE STATUS <0x%08lx>\n", PTR_AT(io_stru, 1, DWORD));
 		    break;
 		    
 		case 8: /* Volume size */
-		    PTR_AT(io_stru, 1, DWORD) = wcda.dwLastFrame;
+		    PTR_AT(io_stru, 1, DWORD) = FRAME_OF_TOC(toc, toc.LastTrack + 1) -
+                        FRAME_OF_TOC(toc, toc.FirstTrack) - 1;
 		    TRACE(" ----> VOLUME SIZE <%ld>\n", PTR_AT(io_stru, 1, DWORD));
 		    break;
 		    
@@ -605,20 +649,20 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    break;
 		    
 		case 10: /* audio disk info */
-		    io_stru[1] = wcda.nFirstTrack; /* starting track of the disc */
-		    io_stru[2] = wcda.nLastTrack;  /* ending track */
-		    MSCDEX_StoreMSF(wcda.dwLastFrame, io_stru + 3);
+		    io_stru[1] = toc.FirstTrack; /* starting track of the disc */
+		    io_stru[2] = toc.LastTrack;  /* ending track */
+		    MSCDEX_StoreMSF(FRAME_OF_TOC(toc, toc.LastTrack + 1) -
+                                    FRAME_OF_TOC(toc, toc.FirstTrack) - 1, io_stru + 3);
 		    
 		    TRACE(" ----> AUDIO DISK INFO <%d-%d/%08lx>\n",
 			  io_stru[1], io_stru[2], PTR_AT(io_stru, 3, DWORD));
 		    break;
 		    
 		case 11: /* audio track info */
-		    if (io_stru[1] >= wcda.nFirstTrack && io_stru[1] <= wcda.nLastTrack) {
-			int	 nt = io_stru[1] - wcda.nFirstTrack;
-			MSCDEX_StoreMSF(wcda.lpdwTrackPos[nt], io_stru + 2);
+		    if (io_stru[1] >= toc.FirstTrack && io_stru[1] <= toc.LastTrack) {
+			MSCDEX_StoreMSF(FRAME_OF_TOC(toc, io_stru[1]), io_stru + 2);
 			/* starting point if the track */
-			io_stru[6] = (wcda.lpbTrackFlags[nt] & 0xF0) >> 4;
+			io_stru[6] = CTRL_OF_TOC(toc, io_stru[1]);
 		    } else {
 			PTR_AT(io_stru, 2, DWORD) = 0;
 			io_stru[6] = 0;
@@ -628,42 +672,43 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		    break;
 		    
 		case 12: /* get Q-Channel info */
-		    io_stru[1] = wcda.lpbTrackFlags[wcda.nCurTrack - 1];
-		    io_stru[2] = wcda.nCurTrack;
+		    io_stru[1] = CTRL_OF_TOC(toc, data.CurrentPosition.TrackNumber);
+		    io_stru[2] = data.CurrentPosition.TrackNumber;
 		    io_stru[3] = 0; /* FIXME ?? */ 
 
 		    /* why the heck did MS use another format for 0MSF information... sigh */
 		    {
 			BYTE	bTmp[4];
 
-			MSCDEX_StoreMSF(wcda.dwCurFrame - wcda.lpdwTrackPos[wcda.nCurTrack - 1], bTmp);
+			MSCDEX_StoreMSF(FRAME_OF_ADDR(data.CurrentPosition.TrackRelativeAddress), bTmp);
 			io_stru[ 4] = bTmp[2];
 			io_stru[ 5] = bTmp[1];
 			io_stru[ 6] = bTmp[0];
 			io_stru[ 7] = 0;
 
-			MSCDEX_StoreMSF(wcda.dwCurFrame, bTmp);
+			MSCDEX_StoreMSF(FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress), bTmp);
 			io_stru[ 8] = bTmp[2];
 			io_stru[ 9] = bTmp[1];
 			io_stru[10] = bTmp[0];
 			io_stru[11] = 0;
 		    }		    
-		    TRACE("Q-Channel info: Ctrl/adr=%02x TNO=%02x X=%02x rtt=%02x:%02x:%02x rtd=%02x:%02x:%02x (cf=%08lx, tp=%08lx)\n",
+		    TRACE("Q-Channel info: Ctrl/adr=%02x TNO=%02x X=%02x rtt=%02x:%02x:%02x rtd=%02x:%02x:%02x (cf=%08x, tp=%08x)\n",
 			  io_stru[ 1], io_stru[ 2], io_stru[ 3], 
 			  io_stru[ 4], io_stru[ 5], io_stru[ 6], 
 			  io_stru[ 8], io_stru[ 9], io_stru[10],
-			  wcda.dwCurFrame, wcda.lpdwTrackPos[wcda.nCurTrack - 1]);
+			  FRAME_OF_ADDR(data.CurrentPosition.AbsoluteAddress), 
+                          FRAME_OF_TOC(toc, data.CurrentPosition.TrackNumber));
 		    break;
 		    
 		case 15: /* Audio status info */
 		    /* !!!! FIXME FIXME FIXME !! */
-		    PTR_AT(io_stru, 1,  WORD) = 2 | ((wcda.cdaMode == WINE_CDA_PAUSE) ? 1 : 0);
-		    if (wcda.cdaMode == WINE_CDA_OPEN) {
+		    PTR_AT(io_stru, 1,  WORD) = 2 | ((data.CurrentPosition.Header.AudioStatus == AUDIO_STATUS_PAUSED) ? 1 : 0);
+		    if (!present) {
 			PTR_AT(io_stru, 3, DWORD) = 0;
 			PTR_AT(io_stru, 7, DWORD) = 0;
 		    } else {
-			PTR_AT(io_stru, 3, DWORD) = wcda.lpdwTrackPos[0];
-			PTR_AT(io_stru, 7, DWORD) = wcda.lpdwTrackPos[wcda.nTracks - 1];
+			PTR_AT(io_stru, 3, DWORD) = FRAME_OF_TOC(toc, toc.FirstTrack);
+			PTR_AT(io_stru, 7, DWORD) = FRAME_OF_TOC(toc, toc.LastTrack + 1);
 		    }
 		    TRACE("Audio status info: status=%04x startLoc=%ld endLoc=%ld\n",
 			  PTR_AT(io_stru, 1, WORD), PTR_AT(io_stru, 3, DWORD), PTR_AT(io_stru, 7, DWORD));
@@ -684,18 +729,18 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
 		case 0: /* eject */ 
-		    CDROM_SetDoor(&wcda, 1, dev);
+                    DeviceIoControl(h, IOCTL_STORAGE_EJECT_MEDIA, NULL, 0, NULL, 0, &br, NULL);
 		    TRACE(" ----> EJECT\n"); 
 		    break;
 		case 2: /* reset drive */
-		    CDROM_Reset(&wcda, dev);
+		    DeviceIoControl(h, IOCTL_STORAGE_RESET_DEVICE, NULL, 0, NULL, 0, &br, NULL);
 		    TRACE(" ----> RESET\n"); 
 		    break;
 		case 3: /* Audio Channel Control */
 		    FIXME(" ----> AUDIO CHANNEL CONTROL (NIY)\n");
 		    break;
 		case 5: /* close tray */
-		    CDROM_SetDoor(&wcda, 0, dev);
+                    DeviceIoControl(h, IOCTL_STORAGE_LOAD_MEDIA, NULL, 0, NULL, 0, &br, NULL);
 		    TRACE(" ----> CLOSE TRAY\n"); 
 		    break;
 		default:
@@ -705,10 +750,57 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		}	
 		break;
 		
+            case 128: /* read long */
+                {
+                    LPVOID              dst = MapSL(MAKESEGPTR(PTR_AT(driver_request, 16, WORD), 
+                                                               PTR_AT(driver_request, 14, WORD)));
+                    DWORD               at = PTR_AT(driver_request, 20, DWORD);
+                    WORD                num = PTR_AT(driver_request, 18, WORD);
+                    RAW_READ_INFO       rri;
+
+		    switch (driver_request[13]) {
+		    case 1: /* Red book addressing mode = 0:m:s:f */
+			/* FIXME : frame <=> msf conversion routines could be shared
+			 * between mscdex and mcicda
+			 */
+			at = LOBYTE(HIWORD(at)) * CDFRAMES_PERMIN +
+			    HIBYTE(LOWORD(at)) * CDFRAMES_PERSEC +
+			    LOBYTE(LOWORD(at));
+			/* fall through */
+		    case 0: /* HSG addressing mode */
+                        switch (PTR_AT(driver_request, 24, BYTE))
+                        {
+                        case 0: /* cooked */
+                            ReadFile(h, dst, num * 2048, &br, NULL);
+                            break;
+                        case 1:
+                            /* FIXME: computation is wrong */
+                            rri.DiskOffset.s.HighPart = 0;
+                            rri.DiskOffset.s.LowPart = at << 11;
+                            rri.TrackMode = YellowMode2;
+                            rri.SectorCount = num;
+                            DeviceIoControl(h, IOCTL_CDROM_RAW_READ, &rri, sizeof(rri), 
+                                            dst, num * 2352, &br, NULL);
+			break;
+                        default:
+                            ERR("Unsupported read mode !!\n");
+                            Error = 0x0c;
+                            break;
+                        }
+                        break;
+		    default:
+			ERR("Unsupported address mode !!\n");
+			Error = 0x0c;
+			break;
+		    }
+                }
+                break;
+
 	    case 131: /* seek */
 		{
-		    DWORD	at;
-		    
+		    DWORD	                at;
+                    CDROM_SEEK_AUDIO_MSF        seek;
+
 		    at = PTR_AT(driver_request, 20, DWORD);
 		    
 		    TRACE(" --> SEEK AUDIO mode :<0x%02X>, [%ld]\n", 
@@ -724,7 +816,11 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			    LOBYTE(LOWORD(at));
 			/* fall through */
 		    case 0: /* HSG addressing mode */
-			CDROM_Audio_Seek(&wcda, at, dev);
+                        seek.M = at / CDFRAMES_PERMIN;
+                        seek.S = (at / CDFRAMES_PERSEC) % 60;
+                        seek.F = at % CDFRAMES_PERSEC;
+                        DeviceIoControl(h, IOCTL_CDROM_SEEK_AUDIO_MSF, &seek, sizeof(seek), 
+                                        NULL, 0, &br, NULL);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -736,8 +832,9 @@ static void MSCDEX_Handler(CONTEXT86* context)
 
 	    case 132: /* play */
 		{
-		    DWORD	beg, end;
-		    
+		    DWORD	                beg, end;
+                    CDROM_PLAY_AUDIO_MSF        play;
+
 		    beg = end = PTR_AT(driver_request, 14, DWORD);
 		    end += PTR_AT(driver_request, 18, DWORD);
 		    
@@ -745,19 +842,27 @@ static void MSCDEX_Handler(CONTEXT86* context)
 			  (BYTE)driver_request[13], beg, end);
 		    
 		    switch (driver_request[13]) {
-		    case 1: /* Red book addressing mode = 0:m:s:f */
+		    case 1: 
+			/* Red book addressing mode = 0:m:s:f */
 			/* FIXME : frame <=> msf conversion routines could be shared
 			 * between mscdex and mcicda
 			 */
-			beg = LOBYTE(HIWORD(beg)) * CDFRAMES_PERMIN +
+			beg = LOBYTE(LOWORD(beg)) * CDFRAMES_PERMIN +
 			    HIBYTE(LOWORD(beg)) * CDFRAMES_PERSEC +
-			    LOBYTE(LOWORD(beg));
-			end = LOBYTE(HIWORD(end)) * CDFRAMES_PERMIN +
+			    LOBYTE(HIWORD(beg));
+			end = LOBYTE(LOWORD(end)) * CDFRAMES_PERMIN +
 			    HIBYTE(LOWORD(end)) * CDFRAMES_PERSEC +
-			    LOBYTE(LOWORD(end));
+			    LOBYTE(HIWORD(end));
 			/* fall through */
 		    case 0: /* HSG addressing mode */
-			CDROM_Audio_Play(&wcda, beg, end, dev);
+                        play.StartingM = beg / CDFRAMES_PERMIN;
+                        play.StartingS = (beg / CDFRAMES_PERSEC) % 60;
+                        play.StartingF = beg % CDFRAMES_PERSEC;
+                        play.EndingM   = end / CDFRAMES_PERMIN;
+                        play.EndingS   = (end / CDFRAMES_PERSEC) % 60;
+                        play.EndingF   = end % CDFRAMES_PERSEC;
+                        DeviceIoControl(h, IOCTL_CDROM_PLAY_AUDIO_MSF, &play, sizeof(play), 
+                                        NULL, 0, &br, NULL);
 			break;
 		    default:
 			ERR("Unsupported address mode !!\n");
@@ -768,18 +873,18 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		break;
 		
 	    case 133:
-		if (wcda.cdaMode == WINE_CDA_PLAY) {
-		    CDROM_Audio_Pause(&wcda, 1, dev);
+		if (data.CurrentPosition.Header.AudioStatus == AUDIO_STATUS_IN_PROGRESS) {
+                    DeviceIoControl(h, IOCTL_CDROM_PAUSE_AUDIO, NULL, 0, NULL, 0, &br, NULL);
 		    TRACE(" --> STOP AUDIO (Paused)\n");
 		} else {
-		    CDROM_Audio_Stop(&wcda, dev);
+                    DeviceIoControl(h, IOCTL_CDROM_STOP_AUDIO, NULL, 0, NULL, 0, &br, NULL);
 		    TRACE(" --> STOP AUDIO (Stopped)\n");
 		}
 		break;
 		
 	    case 136:
 		TRACE(" --> RESUME AUDIO\n");
-		CDROM_Audio_Pause(&wcda, 0, dev);
+                DeviceIoControl(h, IOCTL_CDROM_PAUSE_AUDIO, NULL, 0, NULL, 0, &br, NULL);
 		break;
 		
 	    default:
@@ -792,14 +897,14 @@ static void MSCDEX_Handler(CONTEXT86* context)
 		driver_request[4] |= 0x80;
 		driver_request[3] = Error;
 	    }
-	    
-	    CDROM_CloseDev(dev);
-	    CDROM_Close(&wcda);
+
+	    CloseHandle(h);
 	    /* setting status bits
 	     * 3 == playing && done
 	     * 1 == done 
 	     */
-	    driver_request[4] |= (wcda.cdaMode == WINE_CDA_PLAY) ? 3 : 1;
+	    driver_request[4] |= 
+                (data.CurrentPosition.Header.AudioStatus == AUDIO_STATUS_IN_PROGRESS) ? 3 : 1;
 	    
 	    MSCDEX_Dump("End", driver_request, dorealmode);
 	}
