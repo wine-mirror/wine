@@ -72,17 +72,6 @@ extern ICOM_VTABLE(IPersistStream) DirectMusicCollectionObjectStream_Vtbl;
  * Some stuff to make my life easier :=)
  */
  
-/* some sort of aux. performance channel: as far as i can understand, these are 
-   used to represent a particular midi channel in particular group at particular
-   group; so all we need to do is to fill it with parent port, group and midi 
-   channel ? */
-typedef struct DMUSIC_PRIVATE_PCHANNEL_
-{
-	DWORD channel; /* map to this channel... */
-	DWORD group; /* ... in this group ... */
-	IDirectMusicPort *port; /* ... at this port */
-} DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
-
 /* some sort of aux. midi channel: big fake at the moment; accepts only priority
    changes... more coming soon */
 typedef struct DMUSIC_PRIVATE_MCHANNEL_

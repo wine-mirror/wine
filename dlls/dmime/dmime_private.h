@@ -34,8 +34,6 @@
 #include "dmusicf.h"
 #include "dsound.h"
 
-#include "../dmusic/dmusic_private.h"
-
 /*****************************************************************************
  * Interfaces
  */
@@ -166,6 +164,17 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSysExTrack (LPCGUID lpcGUID, LPDIR
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicTempoTrack (LPCGUID lpcGUID, LPDIRECTMUSICTRACK8* ppTrack, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicTimeSigTrack (LPCGUID lpcGUID, LPDIRECTMUSICTRACK8* ppTrack, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicWaveTrack (LPCGUID lpcGUID, LPDIRECTMUSICTRACK8* ppTrack, LPUNKNOWN pUnkOuter);
+
+/* some sort of aux. performance channel: as far as i can understand, these are 
+   used to represent a particular midi channel in particular group at particular
+   group; so all we need to do is to fill it with parent port, group and midi 
+   channel ? */
+typedef struct DMUSIC_PRIVATE_PCHANNEL_
+{
+	DWORD channel; /* map to this channel... */
+	DWORD group; /* ... in this group ... */
+	IDirectMusicPort *port; /* ... at this port */
+} DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
 
 /*****************************************************************************
  * IDirectMusicPerformance8Impl implementation structure
