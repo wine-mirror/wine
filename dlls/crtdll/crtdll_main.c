@@ -1825,7 +1825,7 @@ INT __cdecl CRTDLL__memicmp(
 /*********************************************************************
  *                  __dllonexit           (CRTDLL.25)
  */
-VOID __cdecl CRTDLL__dllonexit ()
+VOID __cdecl CRTDLL___dllonexit ()
 {	
 	FIXME("stub\n");
 }

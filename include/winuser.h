@@ -3475,7 +3475,7 @@ INT       WINAPI LookupIconIdFromDirectoryEx(LPBYTE,BOOL,INT,INT,UINT);
 UINT      WINAPI MapVirtualKeyA(UINT,UINT);
 UINT      WINAPI MapVirtualKeyW(UINT,UINT);
 #define     MapVirtualKey WINELIB_NAME_AW(MapVirtualKey)
-UINT      WINAPI MapVirtualKeyEx32A(UINT,UINT,HKL);
+UINT        WINAPI MapVirtualKeyExA(UINT,UINT,HKL);
 #define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
 BOOL      WINAPI MapDialogRect(HWND,LPRECT);
 INT       WINAPI MapWindowPoints(HWND,HWND,LPPOINT,UINT);

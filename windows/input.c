@@ -320,7 +320,7 @@ BOOL16 WINAPI SwapMouseButton16( BOOL16 fSwap )
 
 
 /***********************************************************************
- *           SwapMouseButton32   (USER32.537)
+ *           SwapMouseButton   (USER32.537)
  */
 BOOL WINAPI SwapMouseButton( BOOL fSwap )
 {
@@ -422,7 +422,7 @@ HWND16 WINAPI SetCapture16( HWND16 hwnd )
 
 
 /**********************************************************************
- *              SetCapture32   (USER32.464)
+ *              SetCapture   (USER32.464)
  */
 HWND WINAPI SetCapture( HWND hwnd )
 {
@@ -448,7 +448,7 @@ HWND16 WINAPI GetCapture16(void)
 }
 
 /**********************************************************************
- *              GetCapture32   (USER32.208)
+ *              GetCapture   (USER32.208)
  */
 HWND WINAPI GetCapture(void)
 {
@@ -546,7 +546,7 @@ BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
 }
 
 /**********************************************************************
- *           GetAsyncKeyState32      (USER32.207)
+ *           GetAsyncKeyState      (USER32.207)
  *
  *	Determine if a key is or was pressed.  retval has high-order 
  * bit set to 1 if currently pressed, low-order bit set to 1 if key has
@@ -740,7 +740,7 @@ static BOOL KBD_translate_accelerator(HWND hWnd,LPMSG msg,
 }
 
 /**********************************************************************
- *      TranslateAccelerator32      (USER32.551)(USER32.552)(USER32.553)
+ *      TranslateAccelerator      (USER32.551)(USER32.552)(USER32.553)
  */
 INT WINAPI TranslateAccelerator(HWND hWnd, HACCEL hAccel, LPMSG msg)
 {
@@ -856,7 +856,7 @@ WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
 }
  
 /******************************************************************************
- *    	GetKeyboardType32      (USER32.255)
+ *    	GetKeyboardType      (USER32.255)
  */
 INT WINAPI GetKeyboardType(INT nTypeFlag)
 {
@@ -864,7 +864,7 @@ INT WINAPI GetKeyboardType(INT nTypeFlag)
 }
 
 /******************************************************************************
- *    	MapVirtualKey32A      (USER32.383)
+ *    	MapVirtualKeyA      (USER32.383)
  */
 UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 {
@@ -872,7 +872,7 @@ UINT WINAPI MapVirtualKeyA(UINT code, UINT maptype)
 }
 
 /******************************************************************************
- *    	MapVirtualKey32W      (USER32.385)
+ *    	MapVirtualKeyW      (USER32.385)
  */
 UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 {
@@ -880,9 +880,9 @@ UINT WINAPI MapVirtualKeyW(UINT code, UINT maptype)
 }
 
 /******************************************************************************
- *    	MapVirtualKeyEx32A      (USER32.384)
+ *    	MapVirtualKeyExA      (USER32.384)
  */
-UINT WINAPI MapVirtualKeyEx32A(UINT code, UINT maptype, HKL hkl)
+UINT WINAPI MapVirtualKeyExA(UINT code, UINT maptype, HKL hkl)
 {
     if (hkl)
     	FIXME_(keyboard)("(%d,%d,0x%08lx), hkl unhandled!\n",code,maptype,(DWORD)hkl);
@@ -890,7 +890,7 @@ UINT WINAPI MapVirtualKeyEx32A(UINT code, UINT maptype, HKL hkl)
 }
 
 /****************************************************************************
- *	GetKBCodePage32   (USER32.246)
+ *	GetKBCodePage   (USER32.246)
  */
 UINT WINAPI GetKBCodePage(void)
 {
@@ -922,7 +922,7 @@ HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
 }
 
 /****************************************************************************
- *	GetKeyboardLayoutName32A   (USER32.252)
+ *	GetKeyboardLayoutNameA   (USER32.252)
  */
 INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
 {
@@ -931,7 +931,7 @@ INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
 }
 
 /****************************************************************************
- *	GetKeyboardLayoutName32W   (USER32.253)
+ *	GetKeyboardLayoutNameW   (USER32.253)
  */
 INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
@@ -943,7 +943,7 @@ INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 }
 
 /****************************************************************************
- *	GetKeyNameText32A   (USER32.247)
+ *	GetKeyNameTextA   (USER32.247)
  */
 INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 {
@@ -951,7 +951,7 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 }
 
 /****************************************************************************
- *	GetKeyNameText32W   (USER32.248)
+ *	GetKeyNameTextW   (USER32.248)
  */
 INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
@@ -964,7 +964,7 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 }
 
 /****************************************************************************
- *	ToAscii32      (USER32.546)
+ *	ToAscii      (USER32.546)
  */
 INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
                         LPWORD lpChar,UINT flags )
@@ -973,7 +973,7 @@ INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
 }
 
 /****************************************************************************
- *	ToAscii32      (USER32.547)
+ *	ToAsciiEx      (USER32.547)
  */
 INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
                       LPWORD lpChar, UINT flags, HKL dwhkl )
@@ -983,7 +983,7 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 }
 
 /**********************************************************************
- *           ActivateKeyboardLayout32      (USER32.1)
+ *           ActivateKeyboardLayout      (USER32.1)
  *
  * Call ignored. WINE supports only system default keyboard layout.
  */
@@ -1034,7 +1034,7 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
 
 
 /***********************************************************************
- *           ToUnicode32                       (USER32.548)
+ *           ToUnicode                       (USER32.548)
  */
 INT WINAPI ToUnicode(
   UINT wVirtKey,
@@ -1049,7 +1049,7 @@ INT WINAPI ToUnicode(
 }
 
 /***********************************************************************
- *           LoadKeyboardLayout32A                (USER32.367)
+ *           LoadKeyboardLayoutA                (USER32.367)
  * Call ignored. WINE supports only system default keyboard layout.
  */
 HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
@@ -1060,7 +1060,7 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 }
 
 /***********************************************************************
- *           LoadKeyboardLayout32W                (USER32.368)
+ *           LoadKeyboardLayoutW                (USER32.368)
  */
 HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {

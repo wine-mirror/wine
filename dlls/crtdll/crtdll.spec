@@ -27,7 +27,7 @@ init    CRTDLL_Init
 @ cdecl __GetMainArgs(ptr ptr ptr long) CRTDLL__GetMainArgs
 @ extern __argc_dll CRTDLL_argc_dll
 @ extern __argv_dll CRTDLL_argv_dll
-@ cdecl __dllonexit() CRTDLL__dllonexit
+@ cdecl __dllonexit() CRTDLL___dllonexit
 @ stub __doserrno
 @ stub __fpecode
 @ stub __isascii

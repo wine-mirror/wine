@@ -386,7 +386,7 @@ rsrc	user32
 381 stub MBToWCSEx
 382 stdcall MapDialogRect(long ptr) MapDialogRect
 383 stdcall MapVirtualKeyA(long long) MapVirtualKeyA
-384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyEx32A
+384 stdcall MapVirtualKeyExA(long long long) MapVirtualKeyExA
 385 stdcall MapVirtualKeyW(long long) MapVirtualKeyA
 386 stdcall MapWindowPoints(long long ptr long) MapWindowPoints
 387 stdcall MenuItemFromPoint(long long long long) MenuItemFromPoint
