@@ -96,8 +96,8 @@ init	MAIN_UserInit
  92 stdcall DdeConnect(long long long ptr) DdeConnect32
  93 stdcall DdeConnectList(long long long long ptr) DdeConnectList32
  94 stub DdeCreateDataHandle
- 95 stdcall DdeCreateStringHandleA(long ptr long) DdeCreateStringHandle32A
- 96 stdcall DdeCreateStringHandleW(long ptr long) DdeCreateStringHandle32W
+ 95 stdcall DdeCreateStringHandleA(long str long) DdeCreateStringHandle32A
+ 96 stdcall DdeCreateStringHandleW(long wstr long) DdeCreateStringHandle32W
  97 stdcall DdeDisconnect(long) DdeDisconnect32
  98 stdcall DdeDisconnectList(long) DdeDisconnectList32
  99 stub DdeEnableCallback
