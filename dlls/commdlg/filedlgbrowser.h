@@ -100,6 +100,7 @@ typedef struct
 #define IDS_NEWFOLDER                   151
 #define IDS_LISTVIEW                    152
 #define IDS_REPORTVIEW                  153
+#define IDS_TODESKTOP                   154
 
 #define IDC_OPENREADONLY                chx1
 

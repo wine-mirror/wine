@@ -60,7 +60,7 @@ int (WINAPI *COMDLG32_PathGetDriveNumberA)(LPCSTR lpszPath);
 BOOL (WINAPI *COMDLG32_PathIsRelativeA) (LPCSTR lpszPath);
 LPSTR (WINAPI *COMDLG32_PathFindNextComponentA)(LPCSTR pszPath);
 LPWSTR (WINAPI *COMDLG32_PathAddBackslashW)(LPWSTR lpszPath);
-LPVOID (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
+LPSTR (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
 BOOL (WINAPI *COMDLG32_PathAddExtensionA)(LPSTR  pszPath,LPCSTR pszExtension);
 
 /***********************************************************************

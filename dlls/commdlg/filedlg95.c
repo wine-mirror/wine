@@ -135,11 +135,12 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd);
 static LRESULT FILEDLG95_InitUI(HWND hwnd);
 static void    FILEDLG95_Clean(HWND hwnd);
 
-/* Functions used by the shell object */
+/* Functions used by the shell navigation */
 static LRESULT FILEDLG95_SHELL_Init(HWND hwnd);
 static BOOL    FILEDLG95_SHELL_UpFolder(HWND hwnd);
 static BOOL    FILEDLG95_SHELL_ExecuteCommand(HWND hwnd, LPCSTR lpVerb);
 static void    FILEDLG95_SHELL_Clean(HWND hwnd);
+static BOOL    FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd);
 
 /* Functions used by the filetype combo box */
 static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd);
@@ -791,6 +792,12 @@ HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case FCIDM_TB_REPORTVIEW:
 		    stringId = IDS_REPORTVIEW;
 		    break;
+		/* Desktop button */
+		case FCIDM_TB_DESKTOP:
+		    stringId = IDS_TODESKTOP;
+		    break;
+		default:
+		    stringId = 0;
 	    }
 	    lpdi->hinst = COMMDLG_hInstance32; 
 	    lpdi->lpszText =  (LPSTR) stringId;
@@ -814,7 +821,19 @@ static LRESULT FILEDLG95_OnWMInitDialog(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPITEMIDLIST pidlItemId;
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) lParam;
 
-  TRACE("\n");
+  TRACE("dir=%s file=%s\n", 
+  fodInfos->ofnInfos->lpstrInitialDir, fodInfos->ofnInfos->lpstrFile);
+
+  /* Get the initial directory pidl */
+
+  if(!(pidlItemId = GetPidlFromName(fodInfos->Shell.FOIShellFolder,fodInfos->ofnInfos->lpstrInitialDir)))
+  {
+    char path[MAX_PATH];
+
+    GetCurrentDirectoryA(MAX_PATH,path);
+    pidlItemId = GetPidlFromName(fodInfos->Shell.FOIShellFolder, path);
+
+  }
 
   /* Initialise shell objects */
   FILEDLG95_SHELL_Init(hwnd);
@@ -827,18 +846,6 @@ static LRESULT FILEDLG95_OnWMInitDialog(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   /* Initialize the filter combo box */
   FILEDLG95_FILETYPE_Init(hwnd);
-
-  /* Get the initial directory pidl */
-
-  if(!(pidlItemId = GetPidlFromName(fodInfos->Shell.FOIShellFolder,fodInfos->ofnInfos->lpstrInitialDir)))
-  {
-    char path[MAX_PATH];
-
-    GetCurrentDirectoryA(MAX_PATH,path);
-    pidlItemId = GetPidlFromName(fodInfos->Shell.FOIShellFolder,
-                     path);
-
-  }
 
   /* Browse to the initial directory */
   IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser,pidlItemId, SBSP_ABSOLUTE);
@@ -908,6 +915,10 @@ static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
   case FCIDM_TB_REPORTVIEW:
     FILEDLG95_SHELL_ExecuteCommand(hwnd,CMDSTR_VIEWDETAILS);
     break;
+    /* Details option button */
+  case FCIDM_TB_DESKTOP:
+    FILEDLG95_SHELL_BrowseToDesktop(hwnd);
+    break;
 
   case IDC_FILENAME:
     break;
@@ -943,14 +954,23 @@ static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd)
 static LRESULT FILEDLG95_InitUI(HWND hwnd)
 {
   TBBUTTON tbb[] =
-  {{VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+  {
+   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_PARENTFOLDER, FCIDM_TB_UPFOLDER,   TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
+   {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
+   {VIEW_NEWFOLDER+1,  FCIDM_TB_DESKTOP,    TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
    {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
    {VIEW_NEWFOLDER,    FCIDM_TB_NEWFOLDER,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
    {0,                 0,                   TBSTATE_ENABLED, TBSTYLE_SEP, {0, 0}, 0, 0 },
    {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
    {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
   };
-  TBADDBITMAP tba = { HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR };
+  TBADDBITMAP tba[] =
+  {
+   { HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR },
+   { COMDLG32_hInstance, 800 } 			// desktop icon
+  };
+  
   RECT rectTB;
   
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -979,9 +999,10 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
 
 /* fixme: use TB_LOADIMAGES when implemented */
 /*  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_LOADIMAGES, (WPARAM) IDB_VIEW_SMALL_COLOR, HINST_COMMCTRL);*/
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 12, (LPARAM) &tba);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 12, (LPARAM) &tba[0]);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBITMAP, (WPARAM) 1, (LPARAM) &tba[1]);
 
-  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSA, (WPARAM) 6,(LPARAM) &tbb);
+  SendMessageA(fodInfos->DlgInfos.hwndTB, TB_ADDBUTTONSA, (WPARAM) 9,(LPARAM) &tbb);
   SendMessageA(fodInfos->DlgInfos.hwndTB, TB_AUTOSIZE, 0, 0); 
 
   /* Set the window text with the text specified in the OPENFILENAME structure */
@@ -997,7 +1018,8 @@ static LRESULT FILEDLG95_InitUI(HWND hwnd)
   /* Initialise the file name edit control */
   if(fodInfos->ofnInfos->lpstrFile)
   {
-      SetDlgItemTextA(hwnd,IDC_FILENAME,fodInfos->ofnInfos->lpstrFile);
+      LPSTR lpstrFile = COMDLG32_PathFindFileNameA(fodInfos->ofnInfos->lpstrFile);
+      SetDlgItemTextA(hwnd, IDC_FILENAME, lpstrFile);
   }
 
   /* Must the open as read only check box be checked ?*/
@@ -1267,7 +1289,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       dwAttributes = SFGAO_FOLDER;
       if(FAILED(IShellFolder_ParseDisplayName(lpsf, hwnd, NULL, lpwstrTemp, &dwEaten, &pidl, &dwAttributes)))
       {
-	if(lpszTemp)	/* is null for last path element */
+	if(*lpszTemp)	/* points to trailing null for last path element */
         {
 	  if(fodInfos->ofnInfos->Flags & OFN_PATHMUSTEXIST)
 	  {
@@ -1376,7 +1398,13 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       {
 	/* add default extension */
 	if (fodInfos->ofnInfos->lpstrDefExt)
-	  COMDLG32_PathAddExtensionA(lpstrPathAndFile, fodInfos->ofnInfos->lpstrDefExt);
+	{
+	  if (! *COMDLG32_PathFindExtensionA(lpstrPathAndFile))
+	  {
+	    strcat(lpstrPathAndFile, ".");
+	    strcat(lpstrPathAndFile, fodInfos->ofnInfos->lpstrDefExt);
+	  }
+	}
 
         /* Check that size size of the file does not exceed buffer size */
         if(strlen(lpstrPathAndFile) < fodInfos->ofnInfos->nMaxFile)
@@ -1392,7 +1420,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
  
           /* set extension offset */
           lpszTemp = COMDLG32_PathFindExtensionA(lpstrPathAndFile);
-          fodInfos->ofnInfos->nFileExtension = (lpszTemp) ? lpszTemp - lpstrPathAndFile + 1 : 0;
+          fodInfos->ofnInfos->nFileExtension = (*lpszTemp) ? lpszTemp - lpstrPathAndFile + 1 : 0;
     
           /* set the lpstrFileTitle */
           if(fodInfos->ofnInfos->lpstrFileTitle)
@@ -1510,6 +1538,25 @@ static BOOL FILEDLG95_SHELL_UpFolder(HWND hwnd)
   return FALSE;
 }
 
+/***********************************************************************
+ *      FILEDLG95_SHELL_BrowseToDesktop
+ *
+ * Browse to the Desktop
+ * If the function succeeds, the return value is nonzero.
+ */
+static BOOL FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd)
+{
+  FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+  LPITEMIDLIST pidl;
+  HRESULT hres;
+  
+  TRACE("\n");
+
+  COMDLG32_SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidl);
+  hres = IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
+  COMDLG32_SHFree(pidl);
+  return SUCCEEDED(hres);
+}
 /***********************************************************************
  *      FILEDLG95_SHELL_Clean
  *

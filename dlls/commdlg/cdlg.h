@@ -124,7 +124,7 @@ extern int (WINAPI *COMDLG32_PathGetDriveNumberA)(LPCSTR lpszPath);
 extern BOOL (WINAPI *COMDLG32_PathIsRelativeA) (LPCSTR lpszPath);
 extern LPSTR (WINAPI *COMDLG32_PathFindNextComponentA)(LPCSTR pszPath);
 extern LPWSTR (WINAPI *COMDLG32_PathAddBackslashW)(LPWSTR lpszPath);
-extern LPVOID (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
+extern LPSTR (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
 extern BOOL (WINAPI *COMDLG32_PathAddExtensionA)(LPSTR  pszPath,LPCSTR pszExtension);
 
 
