@@ -198,6 +198,26 @@ int WINAPI StrToIntW(LPCWSTR lpSrc)
 }
 
 /*************************************************************************
+ *	StrToIntExA			[SHLWAPI]
+ */
+BOOL WINAPI StrToIntExA( LPCSTR pszString, DWORD dwFlags, LPINT piRet)
+{
+	TRACE("%s %ld stub !\n", debugstr_a(pszString), dwFlags);
+	piRet = (LPINT) StrToIntA(pszString);
+	return TRUE;
+}
+
+/*************************************************************************
+ *	StrToIntExW			[SHLWAPI]
+ */
+BOOL WINAPI StrToIntExW( LPCWSTR pszString, DWORD dwFlags, LPINT piRet)
+{
+	TRACE("%s %ld stub !\n", debugstr_w(pszString), dwFlags);
+	piRet = (LPINT) StrToIntW(pszString);
+	return TRUE;
+}
+
+/*************************************************************************
  *	StrDupA			[SHLWAPI]
  */
 LPSTR WINAPI StrDupA (LPCSTR lpSrc)
@@ -463,6 +483,24 @@ LPWSTR WINAPI StrFormatByteSizeW ( DWORD dw, LPWSTR pszBuf, UINT cchBuf )
         if (!MultiByteToWideChar( CP_ACP, 0, buf, -1, pszBuf, cchBuf ) && cchBuf)
             pszBuf[cchBuf-1] = 0;
         return pszBuf;
+}
+
+/*************************************************************************
+ *      StrNCatA	[SHLWAPI]
+ */
+LPSTR WINAPI StrNCatA(LPSTR front, LPCSTR back, INT cchMax)
+{
+	TRACE("%s %s %i stub\n", debugstr_a(front),debugstr_a(back),cchMax);
+	return (front);
+}
+
+/*************************************************************************
+ *      StrNCatW	[SHLWAPI]
+ */
+LPWSTR WINAPI StrNCatW(LPWSTR front, LPCWSTR back, INT cchMax)
+{
+	TRACE("%s %s %i stub\n", debugstr_w(front),debugstr_w(back),cchMax);
+	return (front);
 }
 
 /*************************************************************************

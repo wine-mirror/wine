@@ -133,7 +133,7 @@ debug_channels (shell)
 121 forward @ advapi32.RegDeleteKeyW
 122 forward @ advapi32.RegEnumKeyW
 123 forward @ advapi32.RegEnumKeyExW
-124 forward @ dvapi32.RegOpenKeyW
+124 forward @ advapi32.RegOpenKeyW
 125 forward @ advapi32.RegOpenKeyExW
 126 forward @ advapi32.RegQueryInfoKeyW
 127 forward @ advapi32.RegQueryValueW
@@ -600,12 +600,12 @@ debug_channels (shell)
 @ stdcall SHRegGetBoolUSValueW(wstr wstr long long)SHRegGetBoolUSValueW
 @ stdcall SHRegGetUSValueA ( ptr str ptr ptr ptr long ptr long ) SHRegGetUSValueA
 @ stdcall SHRegGetUSValueW ( ptr wstr ptr ptr ptr long ptr long ) SHRegGetUSValueW
-@ stub    SHRegOpenUSKeyA
-@ stub    SHRegOpenUSKeyW
+@ stdcall SHRegOpenUSKeyA ( str long long long long ) SHRegOpenUSKeyA
+@ stdcall SHRegOpenUSKeyW ( wstr long long long long ) SHRegOpenUSKeyW
 @ stub    SHRegQueryInfoUSKeyA
 @ stub    SHRegQueryInfoUSKeyW
-@ stdcall SHRegQueryUSValueA(long str ptr ptr ptr long ptr long)SHRegQueryUSValueA
-@ stub    SHRegQueryUSValueW
+@ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long ) SHRegQueryUSValueA
+@ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long ) SHRegQueryUSValueW
 @ stub    SHRegSetUSValueA
 @ stub    SHRegSetUSValueW
 @ stub    SHRegWriteUSValueA
@@ -639,8 +639,8 @@ debug_channels (shell)
 @ stub    StrFromTimeIntervalW
 @ stub    StrIsIntlEqualA
 @ stub    StrIsIntlEqualW
-@ stub    StrNCatA
-@ stub    StrNCatW
+@ stdcall StrNCatA(str str long) StrNCatA
+@ stdcall StrNCatW(wstr wstr long) StrNCatW
 @ stub    StrPBrkA
 @ stub    StrPBrkW
 @ stdcall StrRChrA (str str long) StrRChrA
@@ -656,8 +656,8 @@ debug_channels (shell)
 @ stdcall StrStrIW(wstr wstr)StrStrIW
 @ stdcall StrStrW(wstr wstr)StrStrW
 @ stdcall StrToIntA(str)StrToIntA
-@ stub    StrToIntExA
-@ stub    StrToIntExW
+@ stdcall StrToIntExA(str long ptr) StrToIntExA
+@ stdcall StrToIntExW(wstr long ptr) StrToIntExW
 @ stdcall StrToIntW(wstr)StrToIntW
 @ stub    StrTrimA
 @ stub    StrTrimW
