@@ -41,7 +41,6 @@
 #include "toolhelp.h"
 #include "file.h"
 #include "task.h"
-#include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"

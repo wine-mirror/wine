@@ -27,8 +27,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/misc/version.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
-	$(TOPOBJDIR)/relay32/relay386.c \
-	$(TOPOBJDIR)/relay32/snoop.c \
 	$(TOPOBJDIR)/scheduler/handle.c \
 	$(TOPOBJDIR)/scheduler/process.c \
 	$(TOPOBJDIR)/scheduler/pthread.c \
@@ -51,6 +49,7 @@ C_SRCS = \
 	path.c \
 	process.c \
 	reg.c \
+	relay.c \
 	resource.c \
 	rtl.c \
 	rtlbitmap.c \
@@ -81,7 +80,6 @@ EXTRASUBDIRS = \
 	$(TOPOBJDIR)/memory \
 	$(TOPOBJDIR)/misc \
 	$(TOPOBJDIR)/msdos \
-	$(TOPOBJDIR)/relay32 \
 	$(TOPOBJDIR)/scheduler \
 	$(TOPOBJDIR)/win32
 

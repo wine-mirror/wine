@@ -31,10 +31,10 @@
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "global.h"
+#include "module.h"
 #include "stackframe.h"
 #include "builtin16.h"
 #include "toolhelp.h"
-#include "snoop.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
@@ -42,6 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 #ifdef __i386__
 
 #include "pshpack1.h"
+
+extern int SNOOP_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);  /* FIXME */
 
 void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);

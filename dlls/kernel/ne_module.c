@@ -44,7 +44,6 @@
 #include "global.h"
 #include "file.h"
 #include "task.h"
-#include "snoop.h"
 #include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"
@@ -93,6 +92,8 @@ typedef struct
 
 static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
 
+extern void SNOOP16_RegisterDLL(NE_MODULE*,LPCSTR);
+extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
 
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
