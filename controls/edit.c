@@ -2654,8 +2654,8 @@ static void EDIT_EM_SetLimitText(WND *wnd, EDITSTATE *es, INT limit)
  *	EM_SETMARGINS
  * 
  * EC_USEFONTINFO is used as a left or right value i.e. lParam and not as an
- * action wParam despite what the docs say. It also appears not to affect
- * multiline controls??
+ * action wParam despite what the docs say. EC_USEFONTINFO means one third
+ * of the char's width, according to the new docs.
  *
  */
 static void EDIT_EM_SetMargins(WND *wnd, EDITSTATE *es, INT action,
@@ -2665,20 +2665,14 @@ static void EDIT_EM_SetMargins(WND *wnd, EDITSTATE *es, INT action,
 		if (left != EC_USEFONTINFO)
 			es->left_margin = left;
 		else
-			if (es->style & ES_MULTILINE)
-				es->left_margin = 0; /* ?? */
-			else
-			  es->left_margin = es->char_width;
+			es->left_margin = es->char_width / 3;
 	}
 
 	if (action & EC_RIGHTMARGIN) {
 		if (right != EC_USEFONTINFO)
  			es->right_margin = right;
 		else
-			if (es->style & ES_MULTILINE)
-				es->right_margin = 0; /* ?? */
-			else
-				es->right_margin = es->char_width;
+			es->right_margin = es->char_width / 3;
 	}
 	TRACE(edit, "left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
