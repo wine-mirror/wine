@@ -81,9 +81,9 @@ VOID WINAPI GetSystemInfo(
 	cachedsi.lpMaximumApplicationAddress	= (void *)0x7FFFFFFF;
 	cachedsi.dwActiveProcessorMask		= 1;
 	cachedsi.dwNumberOfProcessors		= 1;
-	cachedsi.dwProcessorType		= PROCESSOR_INTEL_386;
+	cachedsi.dwProcessorType		= PROCESSOR_INTEL_PENTIUM;
 	cachedsi.dwAllocationGranularity	= 0x10000;
-	cachedsi.wProcessorLevel		= 3; /* 386 */
+	cachedsi.wProcessorLevel		= 5; /* 586 */
 	cachedsi.wProcessorRevision		= 0;
 
 	cache = 1; /* even if there is no more info, we now have a cacheentry */
