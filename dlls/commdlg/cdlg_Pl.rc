@@ -436,6 +436,11 @@ STRINGTABLE DISCARDABLE
     PD32_PRINTER_STATUS_POWER_SAVE        "Tryb oszczêdzania energii; "
 }
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_FONT_SIZE   "Wybierz czcionkê o rozmiarze pomiêdzy %d a %d punktami."
+}
+
 STRINGTABLE DISCARDABLE /* Color names */
 {
     IDS_COLOR_BLACK     "Czarny"

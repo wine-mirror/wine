@@ -145,6 +145,8 @@ typedef struct {
 #define IDS_COLOR_AQUA                  1054
 #define IDS_COLOR_WHITE                 1055
 
+#define IDS_FONT_SIZE    1200
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

@@ -460,6 +460,10 @@ STRINGTABLE DISCARDABLE /* Color names */
     IDS_COLOR_WHITE     "White"
 }
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_FONT_SIZE   "Select a font size between %d and %d points."
+}
 
 /****************************************************************/
 /* English neutral resources

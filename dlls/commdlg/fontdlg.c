@@ -393,16 +393,17 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, const LOGFONTW *lplf)
 static int AddFontSizeToCombo3(HWND hwnd, UINT h, LPCHOOSEFONTW lpcf)
 {
     int j;
-    char buffer[20];
+    WCHAR buffer[20];
+    static const WCHAR strFormat[] = {'%','2','d',0};
 
     if (  (!(lpcf->Flags & CF_LIMITSIZE))  ||
             ((lpcf->Flags & CF_LIMITSIZE) && (h >= lpcf->nSizeMin) && (h <= lpcf->nSizeMax)))
     {
-        sprintf(buffer, "%2d", h);
-        j=SendMessageA(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)buffer);
+        wsprintfW(buffer, strFormat, h);
+        j=SendMessageW(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)buffer);
         if (j==CB_ERR)
         {
-            j=SendMessageA(hwnd, CB_ADDSTRING, 0, (LPARAM)buffer);
+            j=SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)buffer);
             if (j!=CB_ERR) j = SendMessageW(hwnd, CB_SETITEMDATA, j, h);
             if (j==CB_ERR) return 1;
         }
@@ -1006,10 +1007,11 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
             EndDialog(hDlg, TRUE);
         else
         {
-            char buffer[80];
-            sprintf(buffer,"Select a font size between %d and %d points.",
-                    lpcf->nSizeMin,lpcf->nSizeMax);
-            MessageBoxA(hDlg, buffer, NULL, MB_OK);
+            WCHAR buffer[80];
+            WCHAR format[80];
+            LoadStringW(COMDLG32_hInstance, IDS_FONT_SIZE, format, sizeof(format)/sizeof(WCHAR));
+            wsprintfW(buffer, format, lpcf->nSizeMin,lpcf->nSizeMax);
+            MessageBoxW(hDlg, buffer, NULL, MB_OK);
         }
         return(TRUE);
     case IDCANCEL:
