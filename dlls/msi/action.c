@@ -827,6 +827,13 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
             p++;
             *p=0;
         }
+        else
+        {
+            HeapFree(GetProcessHeap(),0,path);
+            path = HeapAlloc(GetProcessHeap(),0,MAX_PATH*sizeof(WCHAR));
+            GetCurrentDirectoryW(MAX_PATH,path);
+            strcatW(path,cszbs);
+        }
 
         check = load_dynamic_property(package, cszSourceDir,NULL);
         if (!check)
@@ -2796,6 +2803,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
             }
         }
         rc = !extract_a_cabinet_file(package, source,path,NULL);
+    }
+    else
+    {
+        sz = MAX_PATH;
+        MSI_GetPropertyW(package,cszSourceDir,source,&sz);
+        strcpyW(path,source);
     }
     msiobj_release(&row->hdr);
     MSI_ViewClose(view);
@@ -5088,6 +5101,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'A','R','P','S','I','Z','E',0},
 {'A','R','P','U','R','L','I','N','F','O','A','B','O','U','T',0},
 {'A','R','P','U','R','L','U','P','D','A','T','E','I','N','F','O',0},
+{'P','r','o','d','u','c','t','I','D',0},
 {0},
     };
 
@@ -5107,6 +5121,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {'S','i','z','e',0},
 {'U','R','L','I','n','f','o','A','b','o','u','t',0},
 {'U','R','L','U','p','d','a','t','e','I','n','f','o',0},
+{'P','r','o','d','u','c','t','I','D',0},
 {0},
     };
 
