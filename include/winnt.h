@@ -3410,6 +3410,9 @@ typedef enum tagSID_NAME_USE {
 #define	FILE_256_BYTE_ALIGNMENT		0x000000ff
 #define	FILE_512_BYTE_ALIGNMENT		0x000001ff
 
+#define MAILSLOT_NO_MESSAGE             ((DWORD)-1)
+#define MAILSLOT_WAIT_FOREVER           ((DWORD)-1)
+
 #define REG_NONE		0	/* no type */
 #define REG_SZ			1	/* string type (ASCII) */
 #define REG_EXPAND_SZ		2	/* string, includes %ENVVAR% (expanded by caller) (ASCII) */
