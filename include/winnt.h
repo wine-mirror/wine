@@ -314,13 +314,13 @@ typedef ULONGLONG       DWORDLONG,  *PDWORDLONG;
 /* ANSI string types */
 typedef CHAR           *PCH,        *LPCH;
 typedef const CHAR     *PCCH,       *LPCCH;
-typedef CHAR           *PSTR,       *LPSTR;
+typedef CHAR           *PSTR,       *LPSTR,     *NPSTR;
 typedef const CHAR     *PCSTR,      *LPCSTR;
 
 /* Unicode string types */
 typedef WCHAR          *PWCH,       *LPWCH;
 typedef const WCHAR    *PCWCH,      *LPCWCH;
-typedef WCHAR          *PWSTR,      *LPWSTR;
+typedef WCHAR          *PWSTR,      *LPWSTR,    *NWPSTR;
 typedef const WCHAR    *PCWSTR,     *LPCWSTR;
 
 /* Neutral character and string types */
@@ -1270,8 +1270,6 @@ static DWORD __builtin_return_address(int p_iDepth)
 #endif
 
 #endif  /* __WINE__ */
-
-
 
 /*
  * Language IDs
@@ -2795,13 +2793,59 @@ typedef struct _ACL {
 #define	SECURITY_DESCRIPTOR_REVISION1	1
 
 
-#define	SE_OWNER_DEFAULTED	0x0001
-#define	SE_GROUP_DEFAULTED	0x0002
-#define	SE_DACL_PRESENT		0x0004
-#define	SE_DACL_DEFAULTED	0x0008
-#define	SE_SACL_PRESENT		0x0010
-#define	SE_SACL_DEFAULTED	0x0020
-#define	SE_SELF_RELATIVE	0x8000
+/*
+ * Privilege Names
+ */
+#define SE_CREATE_TOKEN_NAME		TEXT("SeCreateTokenPrivilege")
+#define SE_ASSIGNPRIMARYTOKEN_NAME	TEXT("SeAssignPrimaryTokenPrivilege")
+#define SE_LOCK_MEMORY_NAME		TEXT("SeLockMemoryPrivilege")
+#define SE_INCREASE_QUOTA_NAME		TEXT("SeIncreaseQuotaPrivilege")
+#define SE_UNSOLICITED_INPUT_NAME	TEXT("SeUnsolicitedInputPrivilege")
+#define SE_MACHINE_ACCOUNT_NAME 	TEXT("SeMachineAccountPrivilege")
+#define SE_TCB_NAME			TEXT("SeTcbPrivilege")
+#define SE_SECURITY_NAME		TEXT("SeSecurityPrivilege")
+#define SE_TAKE_OWNERSHIP_NAME		TEXT("SeTakeOwnershipPrivilege")
+#define SE_LOAD_DRIVER_NAME		TEXT("SeLoadDriverPrivilege")
+#define SE_SYSTEM_PROFILE_NAME		TEXT("SeSystemProfilePrivilege")
+#define SE_SYSTEMTIME_NAME		TEXT("SeSystemtimePrivilege")
+#define SE_PROF_SINGLE_PROCESS_NAME	TEXT("SeProfileSingleProcessPrivilege")
+#define SE_INC_BASE_PRIORITY_NAME	TEXT("SeIncreaseBasePriorityPrivilege")
+#define SE_CREATE_PAGEFILE_NAME 	TEXT("SeCreatePagefilePrivilege")
+#define SE_CREATE_PERMANENT_NAME	TEXT("SeCreatePermanentPrivilege")
+#define SE_BACKUP_NAME 			TEXT("SeBackupPrivilege")
+#define SE_RESTORE_NAME			TEXT("SeRestorePrivilege")
+#define SE_SHUTDOWN_NAME		TEXT("SeShutdownPrivilege")
+#define SE_DEBUG_NAME			TEXT("SeDebugPrivilege")
+#define SE_AUDIT_NAME			TEXT("SeAuditPrivilege")
+#define SE_SYSTEM_ENVIRONMENT_NAME	TEXT("SeSystemEnvironmentPrivilege")
+#define SE_CHANGE_NOTIFY_NAME		TEXT("SeChangeNotifyPrivilege")
+#define SE_REMOTE_SHUTDOWN_NAME		TEXT("SeRemoteShutdownPrivilege")
+
+#define SE_GROUP_MANDATORY 		0x00000001
+#define SE_GROUP_ENABLED_BY_DEFAULT 	0x00000002
+#define SE_GROUP_ENABLED 		0x00000004
+#define SE_GROUP_OWNER 			0x00000008
+#define SE_GROUP_USE_FOR_DENY_ONLY 	0x00000010
+#define SE_GROUP_LOGON_ID 		0xC0000000
+#define SE_GROUP_RESOURCE 		0x20000000
+
+#define SE_PRIVILEGE_ENABLED_BY_DEFAULT 0x00000001
+#define SE_PRIVILEGE_ENABLED 		0x00000002
+#define SE_PRIVILEGE_USED_FOR_ACCESS 	0x80000000
+
+#define SE_OWNER_DEFAULTED		0x00000001
+#define SE_GROUP_DEFAULTED		0x00000002
+#define SE_DACL_PRESENT			0x00000004
+#define SE_DACL_DEFAULTED		0x00000008
+#define SE_SACL_PRESENT			0x00000010
+#define SE_SACL_DEFAULTED		0x00000020
+#define SE_DACL_AUTO_INHERIT_REQ	0x00000100
+#define SE_SACL_AUTO_INHERIT_REQ	0x00000200
+#define SE_DACL_AUTO_INHERITED		0x00000400
+#define SE_SACL_AUTO_INHERITED		0x00000800
+#define SE_DACL_PROTECTED 		0x00001000
+#define SE_SACL_PROTECTED 		0x00002000
+#define SE_SELF_RELATIVE		0x00008000
 
 typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
 typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
