@@ -1,7 +1,7 @@
 /* This contains the implementation of the Lobby Service
  * Providers interface required to communicate with Direct Play
  *
- * Copyright 2001 Peter Hunnisett <hunnise@nortelnetworks.com>
+ * Copyright 2001 Peter Hunnisett
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /* This contains the implementation of the interface Service
  * Providers require to communicate with Direct Play
  *
- * Copyright 2000 Peter Hunnisett <hunnise@nortelnetworks.com>
+ * Copyright 2000 Peter Hunnisett
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -459,7 +459,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
   wCommandId = lpMsg->wCommandId;
   wVersion   = lpMsg->wVersion;
 
-  TRACE( "Incomming message has envelope of 0x%08lx, %u, %u\n",
+  TRACE( "Incoming message has envelope of 0x%08lx, %u, %u\n",
          lpMsg->dwMagic, wCommandId, wVersion );
 
   if( lpMsg->dwMagic != DPMSGMAGIC_DPLAYMSG )
@@ -975,4 +975,3 @@ extern LPVOID DPSP_CreateSPPlayerData(void)
   return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                     sizeof( DP_SPPLAYERDATA ) );
 }
-
