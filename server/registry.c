@@ -1416,13 +1416,15 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
 {
     FILE *f;
 
-    if (!(f = fopen( filename, "r" ))) return;
-    load_keys( key, f, 0 );
-    fclose( f );
-    if (get_error() == STATUS_NOT_REGISTRY_FILE)
-        fatal_error( "%s is not a valid registry file\n", filename );
-    if (get_error())
-        fatal_error( "loading %s failed with error %x\n", filename, get_error() );
+    if ((f = fopen( filename, "r" )))
+    {
+        load_keys( key, f, 0 );
+        fclose( f );
+        if (get_error() == STATUS_NOT_REGISTRY_FILE)
+            fatal_error( "%s is not a valid registry file\n", filename );
+        if (get_error())
+            fatal_error( "loading %s failed with error %x\n", filename, get_error() );
+    }
 
     if (!(key->flags & KEY_VOLATILE))
     {
