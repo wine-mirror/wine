@@ -550,9 +550,9 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
     SetRect(&rectParent,rectParent.left,rectParent.top,rectParent.left+ptParentClient.x,rectParent.top+ptParentClient.y);
     AdjustWindowRectEx( &rectParent,GetWindowLongA(hwndParentDlg,GWL_STYLE),FALSE,GetWindowLongA(hwndParentDlg,GWL_EXSTYLE));
 
-    SetWindowPos(hwndChildDlg, 0, 0,0, ptParentClient.x,ptParentClient.y, SWP_NOZORDER );
-    SetWindowPos(hwndParentDlg, 0, rectParent.left,rectParent.top, (rectParent.right- rectParent.left),
-        (rectParent.bottom-rectParent.top),SWP_NOMOVE | SWP_NOZORDER);
+    SetWindowPos(hwndChildDlg, 0, 0,0, ptParentClient.x + ptMoveCtl.x,ptParentClient.y + ptMoveCtl.y, SWP_NOZORDER );
+    SetWindowPos(hwndParentDlg, 0, rectParent.left,rectParent.top, (rectParent.right- rectParent.left) + ptMoveCtl.x,
+        (rectParent.bottom-rectParent.top) + ptMoveCtl.y,SWP_NOMOVE | SWP_NOZORDER);
 
     hwndChild = GetWindow(hwndChildDlg,GW_CHILD);
     if(hwndStc32)
@@ -586,10 +586,12 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
           else if (rectCtrl.left >= rectTemp.right)
 	  {
             rectCtrl.left += ptMoveCtl.x;
+            rectCtrl.right += ptMoveCtl.x;
 	  }
           else if (rectCtrl.top >= rectTemp.bottom)
           {
 	    rectCtrl.top  += ptMoveCtl.y;
+           rectCtrl.bottom  += ptMoveCtl.y;
 	  }
 
           SetWindowPos( hwndChild, 0, rectCtrl.left, rectCtrl.top,
@@ -618,7 +620,9 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
             MapWindowPoints( 0, hwndParentDlg,(LPPOINT)&rectCtrl,2);
 
             rectCtrl.left += ptMoveCtl.x;
+            rectCtrl.right += ptMoveCtl.x;
             rectCtrl.top += ptMoveCtl.y;
+            rectCtrl.bottom += ptMoveCtl.y;
 
             SetWindowPos( hwndChild, 0, rectCtrl.left, rectCtrl.top,
                 rectCtrl.right-rectCtrl.left,rectCtrl.bottom-rectCtrl.top,
@@ -809,8 +813,12 @@ HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPSTR buffer)
                             buffer, size, NULL, NULL);
 
     if(n<size)
+    {
+        /* 'n' includes trailing \0 */
+        buffer[n-1] = '\\';
         WideCharToMultiByte(CP_ACP, 0, lpstrFileList, sizeUsed, 
-                           &buffer[n], size-n, NULL, NULL);
+                            &buffer[n], size-n, NULL, NULL);
+    }
     MemFree(lpstrFileList);
 
     TRACE("returned -> %s\n",debugstr_a(buffer));
