@@ -97,7 +97,7 @@ static HRESULT BaseMemAllocator_Init(HRESULT (* fnAlloc)(IMemAllocator *), HRESU
 
     pMemAlloc->lpVtbl = &BaseMemAllocator_VTable;
 
-    pMemAlloc->ref = 0;
+    pMemAlloc->ref = 1;
     pMemAlloc->pProps = NULL;
     list_init(&pMemAlloc->free_list);
     list_init(&pMemAlloc->used_list);
@@ -474,7 +474,7 @@ static ULONG WINAPI StdMediaSample2_AddRef(IMediaSample2 * iface)
 {
     ICOM_THIS(StdMediaSample2, iface);
 
-    TRACE("()\n");
+    TRACE("(%p)->() AddRef from %ld\n", iface, This->ref);
 
     return InterlockedIncrement(&This->ref);
 }
@@ -483,7 +483,7 @@ static ULONG WINAPI StdMediaSample2_Release(IMediaSample2 * iface)
 {
     ICOM_THIS(StdMediaSample2, iface);
 
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %ld\n", iface, This->ref);
 
     if (!InterlockedDecrement(&This->ref))
     {

@@ -882,6 +882,7 @@ static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter
         pPinImpl->hEvent = CreateEventW(NULL, 0, 0, NULL);
         pPinImpl->bFlushing = FALSE;
         pPinImpl->pHead = NULL;
+        InitializeCriticalSection(&pPinImpl->csList);
 
         *ppPin = (IPin *)(&pPinImpl->pin.pin.lpVtbl);
         return S_OK;
@@ -1092,7 +1093,7 @@ static HRESULT WINAPI FileAsyncReader_WaitForNext(IAsyncReader * iface, DWORD dw
     {
         DWORD dwBytes;
         /* get any errors */
-        if (!GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, TRUE))
+        if (!GetOverlappedResult(This->hFile, &pDataRq->ovl, &dwBytes, FALSE))
             hr = HRESULT_FROM_WIN32(GetLastError());
     }
 
