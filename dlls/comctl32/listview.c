@@ -8638,8 +8638,6 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
         nmlv.iItem = -1;
         nmlv.iSubItem = 0;
     }
-    nmlv.iItem = lvHitTestInfo.iItem;
-    nmlv.iSubItem = lvHitTestInfo.iSubItem;
     nmlv.ptAction.x = wPosX;
     nmlv.ptAction.y = wPosY;
     ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
