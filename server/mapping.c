@@ -149,6 +149,12 @@ static void mapping_destroy( struct object *obj )
     if (mapping->file) release_object( mapping->file );
 }
 
+int get_page_size(void)
+{
+    if (!page_mask) init_page_size();
+    return page_mask + 1;
+}
+
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {

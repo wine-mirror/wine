@@ -159,6 +159,10 @@ extern int free_console( struct process *process );
 extern int debugger_attach( struct process *process, struct thread *debugger );
 extern void debug_exit_thread( struct thread *thread, int exit_code );
 
+/* mapping functions */
+
+extern int get_page_size(void);
+
 extern int debug_level;
 
 #endif  /* __WINE_SERVER_OBJECT_H */
