@@ -661,16 +661,54 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
     return done;
 }
 
+struct wc_init {
+    LPCSTR      ptr;
+    enum {from_event, from_process_name} mode;
+    BOOL        (*backend)(struct inner_data*);
+    HANDLE      event;
+};
+
 /******************************************************************
- *		 WINECON_HasEvent
+ *		 WINECON_ParseOptions
  *
  *
  */
-static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned* evt)
+static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
 {
-    while (*ptr == ' ' || *ptr == '\t') ptr++;
-    if (strncmp(ptr, "--use-event=", 12)) return FALSE;
-    return sscanf(ptr + 12, "%d", evt) == 1;
+    memset(wci, 0, sizeof(*wci));
+    wci->ptr = lpCmdLine;
+    wci->mode = from_process_name;
+    wci->backend = WCCURSES_InitBackend;
+
+    for (;;)
+    {
+        while (*wci->ptr == ' ' || *wci->ptr == '\t') wci->ptr++;
+        if (wci->ptr[0] != '-') break;
+        if (strncmp(wci->ptr, "--use-event=", 12) == 0)
+        {
+            char*           end;
+            wci->event = (HANDLE)strtol(wci->ptr + 12, &end, 10);
+            if (end == wci->ptr + 12) return FALSE;
+            wci->mode = from_event;
+            wci->ptr = end;
+        }
+        else if (strncmp(wci->ptr, "--backend=", 10) == 0)
+        {
+            if (strncmp(wci->ptr + 10, "user", 4) == 0)
+            {
+                wci->backend = WCUSER_InitBackend;
+                wci->ptr += 14;
+            }
+            else if (strncmp(wci->ptr + 10, "curses", 6) == 0)
+            {
+                wci->ptr += 16;
+            }
+            else
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 /******************************************************************
@@ -680,52 +718,48 @@ static BOOL WINECON_HasEvent(LPCSTR ptr, unsigned* evt)
  *	wineconsole --use-event=<int>	used when a new console is created (AllocConsole)
  *	wineconsole <pgm> <arguments>	used to start the program <pgm> from the command line in
  *					a freshly created console
+ * --backend=(curses|user) can also be used to select the desired backend
  */
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdShow)
 {
     struct inner_data*	data;
     int			ret = 1;
-    unsigned            evt;
+    struct wc_init      wci;
 
-    /* case of wineconsole <evt>, signal process that created us that we're up and running */
-    if (WINECON_HasEvent(lpCmdLine, &evt))
+    if (!WINECON_ParseOptions(lpCmdLine, &wci))
     {
-        if (!(data = WINECON_Init(hInst, 0, NULL, WCUSER_InitBackend))) return 0;
-	ret = SetEvent((HANDLE)evt);
-	if (!ret)
-	{
-	    WINE_ERR("SetEvent failed.\n");
-	    goto cleanup;
-	}
+        WINE_ERR("Wrong command line options\n");
+        return 0;
     }
-    else
+
+    switch (wci.mode)
     {
-        LPWSTR		wcmdLine = GetCommandLine() /* we're unicode... */;
-        LPWSTR          src, dst;
-        WCHAR           buffer[256];
+    case from_event:
+        /* case of wineconsole <evt>, signal process that created us that we're up and running */
+        if (!(data = WINECON_Init(hInst, 0, NULL, wci.backend))) return 0;
+	ret = SetEvent(wci.event);
+	if (!ret) WINE_ERR("SetEvent failed.\n");
+        break;
+    case from_process_name:
+        {
+            const char*     src;
+            LPWSTR          dst;
+            WCHAR           buffer[256];
 
-        /* remove wineconsole from commandline...
-         * we could have several ' ' in process command line... so try first space...
-         */
-        /* FIXME:
-         * the correct way would be to check the existence of the left part of ptr
-         * (to be a file)
-         */
-        /* FIXME: could also add an option to choose another backend if needed */
-        while (*wcmdLine && *wcmdLine++ != ' ');
+            src = wci.ptr; dst = buffer;
+            while (*src && *src != ' ' && (dst - buffer < sizeof(buffer) / sizeof(WCHAR) - 1))
+                *dst++ = *src++;
+            *dst = 0;
 
-        /* FIXME: see above */
-        src = wcmdLine; dst = buffer;
-        while (*src && *src != ' ') *dst++ = *src++;
-        *dst = 0;
-
-        if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, WCCURSES_InitBackend))) return 0;
-	ret = WINECON_Spawn(data, wcmdLine);
-        if (!ret)
-	{
-	    WINE_MESSAGE("wineconsole: spawning client program failed. Invalid/missing command line arguments ?\n");
-	    goto cleanup;
-	}
+            if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, wci.backend)))
+                return 0;
+            ret = WINECON_Spawn(data, buffer);
+            if (!ret)
+                WINE_MESSAGE("wineconsole: spawning client program failed (%s), invalid/missing command line arguments ?\n", wine_dbgstr_w(buffer));
+        }
+        break;
+    default:
+        return 0;
     }
 
     if (ret)
@@ -734,7 +768,6 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
 	ret = data->fnMainLoop(data);
     }
 
-cleanup:
     WINECON_Delete(data);
 
     return ret;
