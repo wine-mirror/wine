@@ -36,6 +36,7 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/exception.h"
 #include "heap.h"
 #include "palette.h"
 #include "bitmap.h"
@@ -2174,14 +2175,29 @@ HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
  * FIXME: implementation lacks some features, see LR_ defines in winuser.h
  */
 
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+	return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
                               INT desiredx, INT desiredy, UINT loadflags)
 {
     HANDLE res;
     LPWSTR u_name;
 
-    if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
-    else u_name=(LPWSTR)name;
+    __TRY {
+	if (HIWORD(name)) u_name = HEAP_strdupAtoW(GetProcessHeap(), 0, name);
+	else u_name=(LPWSTR)name;
+    }
+    __EXCEPT(page_fault) {
+	SetLastError( ERROR_INVALID_PARAMETER );
+	return 0;
+    }
+    __ENDTRY
     res = LoadImageW(hinst, u_name, type, desiredx, desiredy, loadflags);
     if (HIWORD(name)) HeapFree(GetProcessHeap(), 0, u_name);
     return res;
