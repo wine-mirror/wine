@@ -257,7 +257,8 @@ int main(int argc, char **argv)
                 if (paragraph->u.text.wFont)
                     printf(format.end_boldface);
                 break;
-            case para_image:
+            case para_bitmap:
+            case para_metafile:
                 break;
             }
 	}
@@ -332,7 +333,22 @@ HBITMAP WINAPI CreateDIBitmap(HDC hdc, CONST BITMAPINFOHEADER* bih, DWORD a, CON
     return 0;
 }
 
+HMETAFILE WINAPI SetMetaFileBitsEx(UINT cbBuffer, CONST BYTE *lpbBuffer)
+{
+    return 0;
+}
+
+BOOL WINAPI DeleteMetaFile(HMETAFILE h)
+{
+    return 0;
+}
+
 HDC WINAPI GetDC(HWND h)
+{
+    return 0;
+}
+
+int WINAPI ReleaseDC(HWND h, HDC hdc)
 {
     return 0;
 }

@@ -45,7 +45,7 @@ static void    WINHELP_InitFonts(HWND hWnd);
 static void    WINHELP_DeleteLines(WINHELP_WINDOW*);
 static void    WINHELP_DeleteWindow(WINHELP_WINDOW*);
 static void    WINHELP_SetupText(HWND hWnd);
-static WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam);
+static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, 0, 0, 0, 1, 0, 0};
 
@@ -852,16 +852,25 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                         DeleteObject(hPen);
                     }
                     break;
-                case hlp_line_part_image:
+                case hlp_line_part_bitmap:
                     {
                         HDC hMemDC;
 
                         hMemDC = CreateCompatibleDC(hDc);
-                        SelectObject(hMemDC, part->u.image.hBitmap);
+                        SelectObject(hMemDC, part->u.bitmap.hBitmap);
                         BitBlt(hDc, part->rect.left, part->rect.top - scroll_pos,
                                part->rect.right - part->rect.left, part->rect.bottom - part->rect.top,
                                hMemDC, 0, 0, SRCCOPY);
                         DeleteDC(hMemDC);
+                    }
+                    break;
+                case hlp_line_part_metafile:
+                    {
+                        POINT   pt;
+
+                        SetViewportOrgEx(hDc, part->rect.left, part->rect.top - scroll_pos, &pt);
+                        PlayMetaFile(hDc, part->u.metafile.hMetaFile);
+                        SetViewportOrgEx(hDc, pt.x, pt.y, NULL);
                     }
                     break;
                 }
@@ -874,7 +883,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_MOUSEMOVE:
         win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
 
-        if (WINHELP_IsOverLink(hWnd, wParam, lParam))
+        if (WINHELP_IsOverLink(win, wParam, lParam))
             SetCursor(win->hHandCur); /* set to hand pointer cursor to indicate a link */
         else
             SetCursor(win->hArrowCur); /* set to hand pointer cursor to indicate a link */
@@ -887,7 +896,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         hPopupWnd = Globals.hPopupWnd;
         Globals.hPopupWnd = 0;
 
-        part = WINHELP_IsOverLink(hWnd, wParam, lParam);
+        part = WINHELP_IsOverLink(win, wParam, lParam);
         if (part)
         {
             HLPFILE*            hlpfile;
@@ -896,35 +905,33 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             mouse.x = LOWORD(lParam);
             mouse.y = HIWORD(lParam);
 
-            switch (part->link.cookie)
+            if (part->link) switch (part->link->cookie)
             {
-            case hlp_link_none:
-                break;
             case hlp_link_link:
-                hlpfile = WINHELP_LookupHelpFile(part->link.lpszString);
-                if (part->link.window == -1)
+                hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
+                if (part->link->window == -1)
                     wi = win->info;
-                else if (part->link.window < hlpfile->numWindows)
-                    wi = &hlpfile->windows[part->link.window];
+                else if (part->link->window < hlpfile->numWindows)
+                    wi = &hlpfile->windows[part->link->window];
                 else
                 {
-                    WINE_WARN("link to window %d/%d\n", part->link.window, hlpfile->numWindows);
+                    WINE_WARN("link to window %d/%d\n", part->link->window, hlpfile->numWindows);
                     break;
                 }
-                WINHELP_CreateHelpWindowByHash(hlpfile, part->link.lHash, wi,
+                WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, wi,
                                                SW_NORMAL);
                 break;
             case hlp_link_popup:
-                hlpfile = WINHELP_LookupHelpFile(part->link.lpszString);
-                WINHELP_CreateHelpWindowByHash(hlpfile, part->link.lHash, 
+                hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
+                WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, 
                                                WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
                                                SW_NORMAL);
                 break;
             case hlp_link_macro:
-                MACRO_ExecuteMacro(part->link.lpszString);
+                MACRO_ExecuteMacro(part->link->lpszString);
                 break;
             default:
-                WINE_FIXME("Unknown link cookie %d\n", part->link.cookie);
+                WINE_FIXME("Unknown link cookie %d\n", part->link->cookie);
             }
         }
 
@@ -1061,7 +1068,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
         *line_ascent  = ascent;
 
         line = HeapAlloc(GetProcessHeap(), 0,
-                         sizeof(WINHELP_LINE) + textlen + (link ? lstrlen(link->lpszString) + 1 : 0));
+                         sizeof(WINHELP_LINE) + textlen);
         if (!line) return FALSE;
 
         line->next    = 0;
@@ -1094,8 +1101,7 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
 	}
 
         part = HeapAlloc(GetProcessHeap(), 0,
-                         sizeof(WINHELP_LINE_PART) + textlen +
-                         (link ? lstrlen(link->lpszString) + 1 : 0));
+                         sizeof(WINHELP_LINE_PART) + textlen);
         if (!part) return FALSE;
         **partp = part;
         ptr     = (char*)part + sizeof(WINHELP_LINE_PART);
@@ -1122,16 +1128,9 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
                part->u.text.lpsText,
                part->u.text.wTextLen,
                part->rect.left, part->rect.top, part->rect.right, part->rect.bottom);
-    if (link)
-    {
-        strcpy(ptr + textlen, link->lpszString);
-        part->link.lpszString = ptr + textlen;
-        part->link.cookie     = link->cookie;
-        part->link.lHash      = link->lHash;
-        part->link.bClrChange = link->bClrChange;
-        part->link.window     = link->window;
-    }
-    else part->link.cookie = hlp_link_none;
+
+    part->link = link;
+    if (link) link->wRefCount++;
 
     part->next          = 0;
     *partp              = &part->next;
@@ -1143,12 +1142,11 @@ static BOOL WINHELP_AppendText(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp
 
 /***********************************************************************
  *
- *           WINHELP_AppendBitmap
+ *           WINHELP_AppendGfxObject
  */
-static BOOL WINHELP_AppendBitmap(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp,
-                                 LPSIZE space,
-                                 HBITMAP hBmp, LPSIZE bmpSize,
-                                 HLPFILE_LINK *link, unsigned pos)
+static WINHELP_LINE_PART* WINHELP_AppendGfxObject(WINHELP_LINE ***linep, WINHELP_LINE_PART ***partp,
+                                                  LPSIZE space, LPSIZE gfxSize,
+                                                  HLPFILE_LINK *link, unsigned pos)
 {
     WINHELP_LINE      *line;
     WINHELP_LINE_PART *part;
@@ -1156,9 +1154,8 @@ static BOOL WINHELP_AppendBitmap(WINHELP_LINE ***linep, WINHELP_LINE_PART ***par
 
     if (!*partp || pos == 1) /* New line */
     {
-        line = HeapAlloc(GetProcessHeap(), 0,
-                         sizeof(WINHELP_LINE) + (link ? lstrlen(link->lpszString) + 1 : 0));
-        if (!line) return FALSE;
+        line = HeapAlloc(GetProcessHeap(), 0, sizeof(WINHELP_LINE));
+        if (!line) return NULL;
 
         line->next    = NULL;
         part          = &line->first_part;
@@ -1178,45 +1175,32 @@ static BOOL WINHELP_AppendBitmap(WINHELP_LINE ***linep, WINHELP_LINE_PART ***par
         if (pos == 2) WINE_FIXME("Left alignment not handled\n");
         line = **linep;
 
-        part = HeapAlloc(GetProcessHeap(), 0,
-                         sizeof(WINHELP_LINE_PART) +
-                         (link ? lstrlen(link->lpszString) + 1 : 0));
-        if (!part) return FALSE;
+        part = HeapAlloc(GetProcessHeap(), 0, sizeof(WINHELP_LINE_PART));
+        if (!part) return NULL;
         **partp = part;
         ptr = (char*)part + sizeof(WINHELP_LINE_PART);
     }
 
-    part->cookie          = hlp_line_part_image;
+    /* part->cookie should be set by caller (image or metafile) */
     part->rect.left       = line->rect.right + (*partp ? space->cx : 0);
-    part->rect.right      = part->rect.left + bmpSize->cx;
+    part->rect.right      = part->rect.left + gfxSize->cx;
     line->rect.right      = part->rect.right;
-    part->rect.top        =
-        ((*partp) ? line->rect.top : line->rect.bottom);
-    part->rect.bottom     = part->rect.top + bmpSize->cy;
+    part->rect.top        = (*partp) ? line->rect.top : line->rect.bottom;
+    part->rect.bottom     = part->rect.top + gfxSize->cy;
     line->rect.bottom     = max(line->rect.bottom, part->rect.bottom);
-    part->u.image.hBitmap = hBmp;
 
-    WINE_TRACE("Appended bitmap '%d' @ (%d,%d-%d,%d)\n",
-               (unsigned)part->u.image.hBitmap,
+    WINE_TRACE("Appended gfx @ (%d,%d-%d,%d)\n",
                part->rect.left, part->rect.top, part->rect.right, part->rect.bottom);
 
-    if (link)
-    {
-        strcpy(ptr, link->lpszString);
-        part->link.lpszString = ptr;
-        part->link.cookie     = link->cookie;
-        part->link.lHash      = link->lHash;
-        part->link.bClrChange = link->bClrChange;
-        part->link.window     = link->window;
-    }
-    else part->link.cookie = hlp_link_none;
+    part->link = link;
+    if (link) link->wRefCount++;
 
     part->next            = NULL;
     *partp                = &part->next;
 
     space->cx = 0;
 
-    return TRUE;
+    return part;
 }
 
 
@@ -1286,7 +1270,7 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                     hFont = win->fonts[wFont];
                 }
 
-                if (p->link)
+                if (p->link && p->link->bClrChange)
                 {
                     underline = (p->link->cookie == hlp_link_popup) ? 3 : 1;
                     color = RGB(0, 0x80, 0);
@@ -1371,13 +1355,14 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                 }
             }
             break;
-        case para_image:
+        case para_bitmap:
+        case para_metafile:
             {
-                DIBSECTION      dibs;
-                SIZE            bmpSize;
-                INT             free_width;
+                SIZE                    gfxSize;
+                INT                     free_width;
+                WINHELP_LINE_PART*      ref_part;
 
-                if (p->u.image.pos & 0x8000)
+                if (p->u.gfx.pos & 0x8000)
                 {
                     space.cx = rect.left;
                     if (*line)
@@ -1385,10 +1370,16 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                     part = 0;
                 }
 
-                GetObject(p->u.image.hBitmap, sizeof(dibs), &dibs);
-                bmpSize.cx = dibs.dsBm.bmWidth;
-                bmpSize.cy = dibs.dsBm.bmHeight;
-
+                if (p->cookie == para_bitmap)
+                {
+                    DIBSECTION              dibs;
+                    
+                    GetObject(p->u.gfx.u.bmp.hBitmap, sizeof(dibs), &dibs);
+                    gfxSize.cx = dibs.dsBm.bmWidth;
+                    gfxSize.cy = dibs.dsBm.bmHeight;
+                }
+                else gfxSize = p->u.gfx.u.mf.mfSize;
+                    
                 free_width = rect.right - ((part && *line) ? (*line)->rect.right : rect.left) - space.cx;
                 if (free_width <= 0)
                 {
@@ -1396,17 +1387,25 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                     space.cx = rect.left;
                     space.cx = min(space.cx, rect.right - rect.left - 1);
                 }
-                if (!WINHELP_AppendBitmap(&line, &part, &space,
-                                          p->u.image.hBitmap, &bmpSize,
-                                          p->link, p->u.image.pos) ||
-                    (!newsize && (*line)->rect.bottom > rect.bottom))
+                ref_part = WINHELP_AppendGfxObject(&line, &part, &space, &gfxSize,
+                                                   p->link, p->u.gfx.pos);
+                if (!ref_part || (!newsize && (*line)->rect.bottom > rect.bottom))
                 {
                     return FALSE;
+                }
+                if (p->cookie == para_bitmap)
+                {
+                    ref_part->cookie = hlp_line_part_bitmap;
+                    ref_part->u.bitmap.hBitmap = p->u.gfx.u.bmp.hBitmap;
+                }
+                else
+                {
+                    ref_part->cookie = hlp_line_part_metafile;
+                    ref_part->u.metafile.hMetaFile = p->u.gfx.u.mf.hMetaFile;
                 }
             }
             break;
         }
-
     }
 
     if (newsize)
@@ -1452,6 +1451,7 @@ static void WINHELP_DeleteLines(WINHELP_WINDOW *win)
         for (part = &line->first_part; part; part = next_part)
 	{
             next_part = part->next;
+            HLPFILE_FreeLink(part->link);
             HeapFree(GetProcessHeap(), 0, part);
 	}
     }
@@ -1574,13 +1574,12 @@ INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type
  *
  *
  */
-WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam)
+WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW* win, WPARAM wParam, LPARAM lParam)
 {
-    WINHELP_WINDOW* win = (WINHELP_WINDOW*) GetWindowLong(hWnd, 0);
     POINT mouse;
     WINHELP_LINE      *line;
     WINHELP_LINE_PART *part;
-    int scroll_pos = GetScrollPos(hWnd, SB_VERT);
+    int scroll_pos = GetScrollPos(win->hMainWnd, SB_VERT);
 
     mouse.x = LOWORD(lParam);
     mouse.y = HIWORD(lParam);
@@ -1588,8 +1587,8 @@ WINHELP_LINE_PART* WINHELP_IsOverLink(HWND hWnd, WPARAM wParam, LPARAM lParam)
     {
         for (part = &line->first_part; part; part = part->next)
         {
-            if (part->link.cookie != hlp_link_none &&
-                part->link.lpszString &&
+            if (part->link && 
+                part->link->lpszString &&
                 part->rect.left   <= mouse.x &&
                 part->rect.right  >= mouse.x &&
                 part->rect.top    <= mouse.y + scroll_pos &&

@@ -30,20 +30,21 @@ typedef struct
     SIZE        size;
     int         style;
     DWORD       win_style;
-    COLORREF    sr_color;          /* color for scrollable region */
+    COLORREF    sr_color;       /* color for scrollable region */
     COLORREF    nsr_color;      /* color for non scrollable region */
 } HLPFILE_WINDOWINFO;
 
 typedef struct
 {
-    enum {hlp_link_none, hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
-    LPCSTR      lpszString;
-    LONG        lHash;
-    BOOL        bClrChange;
-    unsigned    window;
+    enum {hlp_link_link, hlp_link_popup, hlp_link_macro} cookie;
+    LPCSTR      lpszString;     /* name of the file to for the link (NULL if same file) */
+    LONG        lHash;          /* topic index */
+    unsigned    bClrChange : 1, /* true if the link is green & underlined */
+                wRefCount;      /* number of internal references to this object */
+    unsigned    window;         /* window number for displaying the link (-1 is current) */
 } HLPFILE_LINK;
 
-enum para_type {para_normal_text, para_debug_text, para_image};
+enum para_type {para_normal_text, para_debug_text, para_bitmap, para_metafile};
 
 typedef struct tagHlpFileParagraph
 {
@@ -61,9 +62,20 @@ typedef struct tagHlpFileParagraph
         } text;
         struct
         {
-            HBITMAP                     hBitmap;
             unsigned                    pos;    /* 0: center, 1: left, 2: right */
-        } image;
+            union 
+            {
+                struct 
+                {
+                    HBITMAP             hBitmap;
+                } bmp;
+                struct
+                {
+                    HMETAFILE           hMetaFile;
+                    SIZE                mfSize;
+                } mf;
+            } u;
+        } gfx; /* for bitmaps and metafiles */
     } u;
 
     HLPFILE_LINK*               link;
@@ -142,4 +154,5 @@ HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
 HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
 HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
+void          HLPFILE_FreeLink(HLPFILE_LINK* link);
 void          HLPFILE_FreeHlpFile(HLPFILE*);

@@ -40,7 +40,7 @@
 typedef struct tagHelpLinePart
 {
     RECT      rect;
-    enum {hlp_line_part_text, hlp_line_part_image}      cookie;
+    enum {hlp_line_part_text, hlp_line_part_bitmap, hlp_line_part_metafile} cookie;
     union
     {
         struct
@@ -54,9 +54,13 @@ typedef struct tagHelpLinePart
         struct
         {
             HBITMAP     hBitmap;
-        } image;
+        } bitmap;
+        struct
+        {
+            HMETAFILE   hMetaFile;
+        } metafile;
     } u;
-    HLPFILE_LINK        link;
+    HLPFILE_LINK*       link;
 
     struct tagHelpLinePart *next;
 } WINHELP_LINE_PART;
