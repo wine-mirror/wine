@@ -931,10 +931,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         SET_AL( context, INT21_FindNextFCB(context) ? 0x00 : 0xff );
         break;
 
-    case 0x19: /* GET CURRENT DEFAULT DRIVE */
-        SET_AL( context, DRIVE_GetCurrentDrive() );
-        break;
-
     case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
         SET_DL( context, 0 );
         if (!INT21_GetDriveAllocInfo(context)) SET_AX( context, 0xffff );

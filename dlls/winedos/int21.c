@@ -86,8 +86,6 @@ typedef struct _INT21_HEAP {
     BYTE misc_indos;                 /* Interrupt 21 nesting flag */
 } INT21_HEAP;
 
-#include "poppack.h"
-
 
 struct FCB {
     BYTE  drive_number;
@@ -115,6 +113,44 @@ struct XFCB {
     BYTE  xfcb_file_attribute;
     BYTE  fcb[37];
 };
+
+#include "poppack.h"
+
+
+/***********************************************************************
+ *           INT21_GetCurrentDrive
+ *
+ * Return current drive using scheme (0=A:, 1=B:, 2=C:, ...) or
+ * MAX_DOS_DRIVES on error.
+ */
+static BYTE INT21_GetCurrentDrive()
+{
+    WCHAR current_directory[MAX_PATH];
+
+    if (!GetCurrentDirectoryW( MAX_PATH, current_directory ) ||
+        current_directory[1] != ':')
+    {
+        TRACE( "Failed to get current drive.\n" );
+        return MAX_DOS_DRIVES;
+    }
+
+    return toupperW( current_directory[0] ) - 'A';
+}
+
+
+/***********************************************************************
+ *           INT21_MapDrive
+ *
+ * Convert drive number from scheme (0=default, 1=A:, 2=B:, ...) into
+ * scheme (0=A:, 1=B:, 2=C:, ...) or MAX_DOS_DRIVES on error.
+ */
+static BYTE INT21_MapDrive( BYTE drive )
+{
+    if (drive)
+        return drive - 1;
+    
+    return INT21_GetCurrentDrive();
+}
 
 
 /***********************************************************************
@@ -376,7 +412,10 @@ static WORD INT21_BufferedInput( CONTEXT86 *context, BYTE *ptr, WORD capacity )
 }
 
 
-static BYTE *GetCurrentDTA( CONTEXT86 *context )
+/***********************************************************************
+ *           INT21_GetCurrentDTA
+ */
+static BYTE *INT21_GetCurrentDTA( CONTEXT86 *context )
 {
     TDB *pTask = GlobalLock16(GetCurrentTask());
 
@@ -407,7 +446,6 @@ static void INT21_OpenFileUsingFCB( CONTEXT86 *context )
 {
     struct FCB *fcb;
     struct XFCB *xfcb;
-    char current_directory[MAX_PATH];
     char file_path[16];
     char *pos;
     HANDLE handle;
@@ -422,16 +460,7 @@ static void INT21_OpenFileUsingFCB( CONTEXT86 *context )
     } /* if */
 
     AL_result = 0;
-    if (fcb->drive_number == 0) {
-        if (!GetCurrentDirectoryA(sizeof(current_directory), current_directory) ||
-                current_directory[1] != ':') {
-            TRACE("GetCurrentDirectoryA failed\n");
-            AL_result = 0xff; /* failed */
-        } /* if */
-        file_path[0] = toupper(current_directory[0]);
-    } else {
-        file_path[0] = 'A' + fcb->drive_number - 1;
-    } /* if */
+    file_path[0] = 'A' + INT21_MapDrive( fcb->drive_number );
 
     if (AL_result == 0) {
         file_path[1] = ':';
@@ -525,7 +554,7 @@ static void INT21_CloseFileUsingFCB( CONTEXT86 *context )
     } /* if */
 
     if (_lclose16((HFILE16) fcb->file_number) != 0) {
-        TRACE("_llclose16(%d) failed\n", fcb->file_number);
+        TRACE("_lclose16(%d) failed\n", fcb->file_number);
         AL_result = 0xff; /* failed */
     } else {
         TRACE("successful closed file %d\n", fcb->file_number);
@@ -536,7 +565,7 @@ static void INT21_CloseFileUsingFCB( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           INT21_SequenialReadFromFCB
+ *           INT21_SequentialReadFromFCB
  *
  * Handler for function 0x14.
  *
@@ -557,7 +586,7 @@ static void INT21_CloseFileUsingFCB( CONTEXT86 *context )
  *  are updated to point to the next record. If a partial record is
  *  read, it is filled with zeros up to the FCB->logical_record_size.
  */
-static void INT21_SequenialReadFromFCB( CONTEXT86 *context )
+static void INT21_SequentialReadFromFCB( CONTEXT86 *context )
 {
     struct FCB *fcb;
     struct XFCB *xfcb;
@@ -587,7 +616,7 @@ static void INT21_SequenialReadFromFCB( CONTEXT86 *context )
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             bytes_read = _lread((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
             if (bytes_read != fcb->logical_record_size) {
                 TRACE("_lread(%d, %p, %d) failed with %d\n",
@@ -618,7 +647,7 @@ static void INT21_SequenialReadFromFCB( CONTEXT86 *context )
 
 
 /***********************************************************************
- *           INT21_SequenialWriteToFCB
+ *           INT21_SequentialWriteToFCB
  *
  * Handler for function 0x15.
  *
@@ -637,7 +666,7 @@ static void INT21_SequenialReadFromFCB( CONTEXT86 *context )
  *  Then FCB->current_block_number and FCB->record_within_current_block
  *  are updated to point to the next record. 
  */
-static void INT21_SequenialWriteToFCB( CONTEXT86 *context )
+static void INT21_SequentialWriteToFCB( CONTEXT86 *context )
 {
     struct FCB *fcb;
     struct XFCB *xfcb;
@@ -667,7 +696,7 @@ static void INT21_SequenialWriteToFCB( CONTEXT86 *context )
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
             if (bytes_written != fcb->logical_record_size) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
@@ -743,7 +772,7 @@ static void INT21_ReadRandomRecordFromFCB( CONTEXT86 *context )
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* end of file, no data read */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             bytes_read = _lread((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
             if (bytes_read != fcb->logical_record_size) {
                 TRACE("_lread(%d, %p, %d) failed with %d\n",
@@ -816,7 +845,7 @@ static void INT21_WriteRandomRecordToFCB( CONTEXT86 *context )
                   fcb->file_number, record_number * fcb->logical_record_size, position);
             AL_result = 0x01; /* disk full */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             bytes_written = _lwrite((HFILE) handle, disk_transfer_area, fcb->logical_record_size);
             if (bytes_written != fcb->logical_record_size) {
                 TRACE("_lwrite(%d, %p, %d) failed with %d\n",
@@ -896,7 +925,7 @@ static void INT21_RandomBlockReadFromFCB( CONTEXT86 *context )
             records_read = 0;
             AL_result = 0x01; /* end of file, no data read */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             records_requested = CX_reg(context);
             bytes_requested = (UINT) records_requested * fcb->logical_record_size;
             bytes_read = _lread((HFILE) handle, disk_transfer_area, bytes_requested);
@@ -987,7 +1016,7 @@ static void INT21_RandomBlockWriteToFCB( CONTEXT86 *context )
             records_written = 0;
             AL_result = 0x01; /* disk full */
         } else {
-            disk_transfer_area = GetCurrentDTA(context);
+            disk_transfer_area = INT21_GetCurrentDTA(context);
             records_requested = CX_reg(context);
             bytes_requested = (UINT) records_requested * fcb->logical_record_size;
             bytes_written = _lwrite((HFILE) handle, disk_transfer_area, bytes_requested);
@@ -2144,11 +2173,11 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x14: /* SEQUENTIAL READ FROM FCB FILE */
-        INT21_SequenialReadFromFCB( context );
+        INT21_SequentialReadFromFCB( context );
         break;
 
     case 0x15: /* SEQUENTIAL WRITE TO FCB FILE */
-        INT21_SequenialWriteToFCB( context );
+        INT21_SequentialWriteToFCB( context );
         break;
 
     case 0x16: /* CREATE OR TRUNCATE FILE USING FCB */
@@ -2161,7 +2190,8 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x19: /* GET CURRENT DEFAULT DRIVE */
-        INT_Int21Handler( context );
+        SET_AL( context, INT21_GetCurrentDrive() );
+        TRACE( "GET CURRENT DRIVE -> %c:\n", 'A' + AL_reg( context ) );
         break;
 
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
