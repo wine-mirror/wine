@@ -1645,7 +1645,7 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
           default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
         }
 
-    if ((sock = socket(af, type, protocol)) >= 0) 
+    if ((sock = socket(af, type, protocol)) >= 0)
     {
         ws_socket*      pnew = wsi_alloc_socket(pwsi, sock);
 
@@ -1664,7 +1664,10 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
 
     if (errno == EPERM) /* raw socket denied */
     {
-        WARN(winsock, "WS_SOCKET: not enough privileges\n");
+	if (type == SOCK_RAW)
+	    MSG("WARNING: Trying to create a socket of type SOCK_RAW, will fail unless running as root\n");
+        else
+            MSG("WS_SOCKET: not enough privileges to create socket, try running as root\n");
         SetLastError(WSAESOCKTNOSUPPORT);
     } else SetLastError(wsaErrno());
   }
