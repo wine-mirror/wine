@@ -48,12 +48,12 @@ typedef struct _ILHEAD
     USHORT	usVersion;
     WORD	cCurImage;
     WORD	cMaxImage;
-    WORD	grow;	/* unclear */
+    WORD	cGrow;
     WORD	cx;
     WORD	cy;
     COLORREF	bkcolor;
     WORD	flags;
-    WORD	ovls[4];
+    SHORT	ovls[4];
 } ILHEAD;
 
 #include "poppack.h"
