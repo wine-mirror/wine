@@ -591,17 +591,18 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   return ret;
 }
 
+
 /***********************************************************************
  *		SetupIterateCabinetW (SETUPAPI.@)
  */
 BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
                                  PSP_FILE_CALLBACK_W MsgHandler, PVOID Context)
 {
-  CHAR CabinetFile_A[MAX_PATH];
-  UINT32 len;
+  CHAR pszCabinet[MAX_PATH], pszCabPath[MAX_PATH];
+  UINT len;
   SC_HSC_W my_hsc;
   ERF erf;
-  CHAR pszCabinet[MAX_PATH], pszCabPath[MAX_PATH], *p;
+  WCHAR pszCabPathW[MAX_PATH], *p;
   DWORD fpnsize;
   BOOL ret;
 
@@ -612,36 +613,33 @@ BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
     return FALSE;
 
   if (!CabinetFile) return FALSE;
-  if (!WideCharToMultiByte(CP_ACP, 0, CabinetFile, -1, CabinetFile_A, MAX_PATH, 0, 0))
-      return FALSE;
 
   memset(&my_hsc, 0, sizeof(SC_HSC_W));
-  pszCabinet[0] = '\0';
-  pszCabPath[0] = '\0';
 
-  fpnsize = GetFullPathNameA(CabinetFile_A, MAX_PATH, &(pszCabPath[0]), &p);
+  fpnsize = GetFullPathNameW(CabinetFile, MAX_PATH, pszCabPathW, &p);
   if (fpnsize > MAX_PATH) {
     SetLastError(ERROR_BAD_PATHNAME);
     return FALSE;
   }
 
   if (p) {
-    strcpy(pszCabinet, p);
-    *p = '\0';
+    strcpyW(my_hsc.most_recent_cabinet_name, p);
+    *p = 0;
+    len = WideCharToMultiByte(CP_ACP, 0, pszCabPathW, -1, pszCabPath,
+				MAX_PATH, 0, 0);
+    if (!len) return FALSE;
   } else {
-    strcpy(pszCabinet, CabinetFile_A);
+    strcpyW(my_hsc.most_recent_cabinet_name, CabinetFile);
     pszCabPath[0] = '\0';
   }
 
-  TRACE("path: %s, cabfile: %s\n", debugstr_a(pszCabPath), debugstr_a(pszCabinet));
+  len = WideCharToMultiByte(CP_ACP, 0, my_hsc.most_recent_cabinet_name, -1,
+				pszCabinet, MAX_PATH, 0, 0);
+  if (!len) return FALSE;
 
-  /* remember the cabinet name */
-  len = 1 + MultiByteToWideChar(CP_ACP, 0, pszCabinet, -1,
-             &(my_hsc.most_recent_cabinet_name[0]), MAX_PATH);
-  if (len > MAX_PATH)
-    return FALSE;
-  else if (len <= 1)
-    my_hsc.most_recent_cabinet_name[0] = '\0';
+  TRACE("path: %s, cabfile: %s\n",
+	debugstr_a(pszCabPath), debugstr_a(pszCabinet));
+
   my_hsc.magic = SC_HSC_W_MAGIC;
   my_hsc.msghandler = MsgHandler;
   my_hsc.context = Context;
