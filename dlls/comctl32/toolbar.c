@@ -325,9 +325,13 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	rcArrow.left = rc.right; 
     }
 
-    /* Take the border into account and center the bitmap horizontally */
-    rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth - 1-2) / 2;
-    rcBitmap.top+=1;
+    /* Center the bitmap horizontally and vertically */
+    rcBitmap.left+=(infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2;
+
+    if(TOOLBAR_HasText(infoPtr, btnPtr))
+        rcBitmap.top+=2; /* this looks to be the correct value from vmware comparison - cmm */
+    else
+        rcBitmap.top+=(infoPtr->nButtonHeight - infoPtr->nBitmapHeight) / 2;
 
     TRACE("iBitmap: %d\n", btnPtr->iBitmap);
 
@@ -446,13 +450,13 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
         if (hasDropDownArrow)
 	    TOOLBAR_DrawArrow(hdc, rcArrow.left+1, rcArrow.top, COLOR_WINDOWFRAME);
 
-	if (btnPtr->bHot && infoPtr->himlHot && 
+	if (btnPtr->bHot && infoPtr->himlHot &&
             TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlHot, btnPtr->iBitmap, hdc,
-			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
+			rcBitmap.left, rcBitmap.top, ILD_NORMAL);
 	else if (TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap))
 	    ImageList_Draw (infoPtr->himlDef, btnPtr->iBitmap, hdc,
-			rcBitmap.left + 1, rcBitmap.top + 1, ILD_NORMAL);
+			rcBitmap.left, rcBitmap.top, ILD_NORMAL);
     }
     else
     {
