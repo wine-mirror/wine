@@ -55,6 +55,8 @@ RC_BINARIES = \
 	drag_move.cur \
 	nodrop.cur 
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
