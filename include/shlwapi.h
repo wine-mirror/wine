@@ -725,6 +725,10 @@ LPWSTR WINAPI StrFormatByteSizeW (LONGLONG,LPWSTR,UINT);
 #endif
 #endif
 
+LPSTR WINAPI StrFormatKBSizeA(LONGLONG,LPSTR,UINT);
+LPWSTR WINAPI StrFormatKBSizeW(LONGLONG,LPWSTR,UINT);
+#define StrFormatKBSize WINELIB_NAME_AW(StrFormatKBSize)
+
 int WINAPI StrFromTimeIntervalA(LPSTR,UINT,DWORD,int);
 int WINAPI StrFromTimeIntervalW(LPWSTR,UINT,DWORD,int);
 #define StrFromTimeInterval WINELIB_NAME_AW(StrFromTimeInterval)
