@@ -599,8 +599,9 @@ static LPSTR escape(LPCWSTR arg)
     len += WideCharToMultiByte(CP_UNIXCP, 0, arg, -1, NULL, 0, NULL, NULL);
     narg = HeapAlloc(GetProcessHeap(), 0, len);
 
-     x = narg;
-     while (*arg) {
+    x = narg;
+    while (*arg)
+    {
         n = WideCharToMultiByte(CP_UNIXCP, 0, arg, 1, x, len, NULL, NULL);
         x += n;
         len -= n;
@@ -742,7 +743,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     char *escaped_path = NULL, *escaped_args = NULL, *escaped_description = NULL;
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
     WCHAR szArgs[INFOTIPSIZE], szIconPath[MAX_PATH];
-    int iIconId = 0, r;
+    int iIconId = 0, r = -1;
     DWORD csidl = -1;
 
     if ( !link )
@@ -763,7 +764,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     }
 
     szWorkDir[0] = 0;
-    IShellLinkW_GetWorkingDirectory(sl, szWorkDir, MAX_PATH);
+    IShellLinkW_GetWorkingDirectory( sl, szWorkDir, MAX_PATH );
     WINE_TRACE("workdir    : %s\n", wine_dbgstr_w(szWorkDir));
 
     szDescription[0] = 0;
@@ -808,6 +809,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     {
         static const WCHAR exeW[] = {'.','e','x','e',0};
         WCHAR *p;
+
         /* check for .exe extension */
         if (!(p = strrchrW( szPath, '.' ))) return FALSE;
         if (strchrW( p, '\\' ) || strchrW( p, '/' )) return FALSE;
@@ -819,7 +821,10 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link )
     }
     else
     {
-        static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d','\\','s','t','a','r','t','.','e','x','e',0};
+        static const WCHAR startW[] = {
+            '\\','c','o','m','m','a','n','d',
+            '\\','s','t','a','r','t','.','e','x','e',0};
+
         /* if there's no path... try run the link itself */
         lstrcpynW(szArgs, link, MAX_PATH);
         GetWindowsDirectoryW(szPath, MAX_PATH);
