@@ -349,3 +349,10 @@ BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
     return TRUE;
 }
 
+HANDLE WINAPI CreateIoCompletionPort(HANDLE hFileHandle,
+HANDLE hExistingCompletionPort, DWORD dwCompletionKey,
+DWORD dwNumberOfConcurrentThreads)
+{
+    FIXME(win32, "(%04x, %04x, %08lx, %08lx): stub.\n", hFileHandle, hExistingCompletionPort, dwCompletionKey, dwNumberOfConcurrentThreads);
+    return (HANDLE)NULL;
+}

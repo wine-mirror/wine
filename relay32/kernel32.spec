@@ -175,7 +175,7 @@ init	MAIN_KernelInit
 159 stdcall CreateFileMappingA(long ptr long long long str) CreateFileMappingA
 160 stdcall CreateFileMappingW(long ptr long long long wstr) CreateFileMappingW
 161 stdcall CreateFileW(wstr long long ptr long long long) CreateFileW
-162 stub CreateIoCompletionPort
+162 stdcall CreateIoCompletionPort(long long long long) CreateIoCompletionPort
 163 stub CreateKernelThread
 164 stdcall CreateMailslotA(ptr long long ptr) CreateMailslotA
 165 stdcall CreateMailslotW(ptr long long ptr) CreateMailslotW
