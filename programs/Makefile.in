@@ -18,6 +18,7 @@ SUBDIRS = \
 	rpcss \
 	rundll32 \
 	start \
+	taskmgr \
 	uninstaller \
 	view \
 	wcmd \
@@ -48,6 +49,7 @@ INSTALLSUBDIRS = \
 	rpcss \
 	rundll32 \
 	start \
+	taskmgr \
 	uninstaller \
 	wcmd \
 	wineboot \
@@ -98,6 +100,7 @@ SYMLINKS = \
 	rpcss.exe \
 	rundll32.exe \
 	start.exe \
+	taskmgr.exe \
 	uninstaller.exe \
 	view.exe \
 	wcmd.exe \
@@ -200,6 +203,9 @@ rundll32.exe$(DLLEXT): rundll32/rundll32.exe$(DLLEXT)
 start.exe$(DLLEXT): start/start.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) start/start.exe$(DLLEXT) $@
 
+taskmgr.exe$(DLLEXT): taskmgr/taskmgr.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) taskmgr/taskmgr.exe$(DLLEXT) $@
+
 uninstaller.exe$(DLLEXT): uninstaller/uninstaller.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) uninstaller/uninstaller.exe$(DLLEXT) $@
 
@@ -262,6 +268,7 @@ regsvr32/regsvr32.exe$(DLLEXT): regsvr32
 rpcss/rpcss.exe$(DLLEXT): rpcss
 rundll32/rundll32.exe$(DLLEXT): rundll32
 start/start.exe$(DLLEXT): start
+taskmgr/taskmgr.exe$(DLLEXT): taskmgr
 uninstaller/uninstaller.exe$(DLLEXT): uninstaller
 view/view.exe$(DLLEXT): view
 wcmd/wcmd.exe$(DLLEXT): wcmd
