@@ -17,6 +17,7 @@ CTESTS = \
 	file.c \
 	format_msg.c \
 	generated.c \
+	heap.c \
 	locale.c \
 	mailslot.c \
 	path.c \

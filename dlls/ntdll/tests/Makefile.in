@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ntdll.dll
-IMPORTS   = ntdll
+IMPORTS   = kernel32
 
 CTESTS = \
 	env.c \

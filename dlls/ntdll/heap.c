@@ -1231,11 +1231,11 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     HEAP *heapPtr;
     SUBHEAP *subheap;
 
-    if (!ptr) return RtlAllocateHeap( heap, flags, size );  /* FIXME: correct? */
+    if (!ptr) return NULL;
     if (!(heapPtr = HEAP_GetPtr( heap )))
     {
         set_status( STATUS_INVALID_HANDLE );
-        return FALSE;
+        return NULL;
     }
 
     /* Validate the parameters */
