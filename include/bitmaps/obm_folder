@@ -2,9 +2,9 @@
 static char * obm_folder[] = {
 "20 15 4 1",
 " 	s white c white",
-".	s black c black",
-"X	s foldercol c #00bfbf",
-"o	s cyan c cyan",
+".	s gray50 c gray50",
+"X	s yellow c yellow",
+"o	s gray75 c gray75",
 "                    ",
 "    ....            ",
 "   .XXXX.           ",
