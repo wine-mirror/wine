@@ -20,6 +20,9 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "ole32_main.h"
 #include "wine/debug.h"
 
@@ -28,9 +31,66 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 HINSTANCE OLE32_hInstance = 0;
 
 /***********************************************************************
+ *		OleMetafilePictFromIconAndLabel (OLE32.115)
+ */
+HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
+                                               LPOLESTR lpszSourceFile, UINT iIconIndex)
+{
+	HMETAFILE hmf;
+	HDC hdc;
+	UINT dy, mfsize;
+	HGLOBAL hmem = 0;
+	LPVOID mfdata;
+
+	TRACE("%p %p %p %d\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
+
+	if( !hIcon )
+		return 0;
+
+	hdc = CreateMetaFileW(NULL);
+	if( !hdc )
+		return 0;
+
+	/* FIXME: things are drawn in the wrong place */
+	DrawIcon(hdc, 0, 0, hIcon);
+	dy = GetSystemMetrics(SM_CXICON);
+	if(lpszLabel)
+		TextOutW(hdc, 0, dy, lpszLabel, lstrlenW(lpszLabel));
+
+	hmf = CloseMetaFile(hdc);
+	if( !hmf )
+		return 0;
+
+	mfsize = GetMetaFileBitsEx( hmf, 0, NULL);
+	if( !mfsize )
+		goto end;
+
+	hmem = GlobalAlloc( GMEM_MOVEABLE, mfsize );
+	if( !hmem )
+		goto end;
+
+	mfdata = GlobalLock( hmem );
+	if( !mfdata )
+	{
+		GlobalFree( hmem );
+		hmem = 0;
+		goto end;
+	}
+
+	GetMetaFileBitsEx( hmf, mfsize, mfdata );
+	GlobalUnlock( hmem );
+end:
+	DeleteMetaFile(hmf);
+
+	TRACE("returning %p\n",hmem);
+
+	return hmem;
+}
+
+
+/***********************************************************************
  *		DllMain (OLE32.@)
  */
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);

@@ -112,7 +112,7 @@
 112 stdcall OleLoad(ptr ptr ptr ptr)
 113 stdcall OleLoadFromStream(ptr ptr ptr)
 114 stdcall OleLockRunning(ptr long long)
-115 stub OleMetafilePictFromIconAndLabel
+115 stdcall OleMetafilePictFromIconAndLabel(long ptr ptr long)
 116 stub OleNoteObjectVisible
 117 stdcall OleQueryCreateFromData(ptr)
 118 stdcall OleQueryLinkFromData(ptr)
