@@ -26,7 +26,7 @@
 int main(int argc, char *argv[])
 {
   OFSTRUCT SourceOpenStruct1, SourceOpenStruct2;
-  DWORD dwreturn;
+  LONG ret;
   HFILE hSourceFile, hDestFile;
 
   if (argc < 2)
@@ -43,10 +43,9 @@ int main(int argc, char *argv[])
       GetExpandedName(argv[1], OriginalName);
       hDestFile = LZOpenFile(OriginalName, &SourceOpenStruct2, OF_CREATE | OF_WRITE);
   }
-  dwreturn = LZCopy(hSourceFile, hDestFile);
-  if (dwreturn != 0)
-      fprintf(stderr,"LZCopy failed: return is %ld\n",dwreturn);
+  ret = LZCopy(hSourceFile, hDestFile);
   LZClose(hSourceFile);
   LZClose(hDestFile);
-  return dwreturn;
+  if (ret <= 0) fprintf(stderr,"LZCopy failed: return is %ld\n",ret);
+  return (ret <= 0);
 }
