@@ -318,8 +318,8 @@ file	krnl386.exe
 
 # 406-494 are present only in Win95
 
-406 stub WritePrivateProfileStruct
-407 stub GetPrivateProfileStruct
+406 pascal16 WritePrivateProfileStruct(str str ptr word str) WritePrivateProfileStruct16
+407 pascal16 GetPrivateProfileStruct(str str ptr word str) GetPrivateProfileStruct16
 408 stub KERNEL_408
 409 stub KERNEL_409
 410 stub CreateProcessFromWinExec
@@ -328,10 +328,10 @@ file	krnl386.exe
 413 pascal16 FindFirstFile(ptr ptr) FindFirstFile16
 414 pascal16 FindNextFile(word ptr) FindNextFile16
 415 pascal16 FindClose(word) FindClose16
-416 stub WritePrivateProfileSection
-417 stub WriteProfileSection
-418 stub GetPrivateProfileSection
-419 stub GetProfileSection
+416 pascal16 WritePrivateProfileSection(str str str) WritePrivateProfileSection16
+417 pascal16 WriteProfileSection(str str) WriteProfileSection16
+418 pascal16 GetPrivateProfileSection(str ptr word str) GetPrivateProfileSection16
+419 pascal16 GetProfileSection(str ptr word) GetProfileSection16
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
