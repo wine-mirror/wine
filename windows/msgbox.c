@@ -17,6 +17,183 @@
 
 DEFAULT_DEBUG_CHANNEL(dialog)
 
+#define MSGBOX_IDICON 1088
+#define MSGBOX_IDTEXT 100
+
+static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
+{
+    static HFONT hFont = 0, hPrevFont = 0;
+    RECT rect;
+    HWND hItem;
+    HDC hdc;
+    int i, buttons;
+    int bspace, bw, bh, theight, tleft, wwidth, wheight, bpos;
+    int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
+    
+    if (TWEAK_WineLook >= WIN95_LOOK) {
+	NONCLIENTMETRICSA nclm;
+	INT i;
+	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
+	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	hFont = CreateFontIndirectA (&nclm.lfMessageFont);
+	/* set button font */
+	for (i=1; i < 8; i++)
+	    SendDlgItemMessageA (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
+	/* set text font */
+	SendDlgItemMessageA (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
+    }
+    if (lpmb->lpszCaption) SetWindowTextA(hwnd, lpmb->lpszCaption);
+    SetWindowTextA(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpmb->lpszText);
+    /* Hide not selected buttons */
+    switch(lpmb->dwStyle & MB_TYPEMASK) {
+    case MB_OK:
+	ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
+	/* fall through */
+    case MB_OKCANCEL:
+	ShowWindow(GetDlgItem(hwnd, IDABORT), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDRETRY), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDIGNORE), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDYES), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDNO), SW_HIDE);
+	break;
+    case MB_ABORTRETRYIGNORE:
+	ShowWindow(GetDlgItem(hwnd, IDOK), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDYES), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDNO), SW_HIDE);
+	break;
+    case MB_YESNO:
+	ShowWindow(GetDlgItem(hwnd, IDCANCEL), SW_HIDE);
+	/* fall through */
+    case MB_YESNOCANCEL:
+	ShowWindow(GetDlgItem(hwnd, IDOK), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDABORT), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDRETRY), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDIGNORE), SW_HIDE);
+	break;
+    case MB_RETRYCANCEL:
+	ShowWindow(GetDlgItem(hwnd, IDOK), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDABORT), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDIGNORE), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDYES), SW_HIDE);
+	ShowWindow(GetDlgItem(hwnd, IDNO), SW_HIDE);
+	break;
+    }
+    /* Set the icon */
+    switch(lpmb->dwStyle & MB_ICONMASK) {
+    case MB_ICONEXCLAMATION:
+	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
+			     (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION16), 0);
+	break;
+    case MB_ICONQUESTION:
+	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
+			     (WPARAM16)LoadIcon16(0, IDI_QUESTION16), 0);
+	break;
+    case MB_ICONASTERISK:
+	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
+			     (WPARAM16)LoadIcon16(0, IDI_ASTERISK16), 0);
+	break;
+    case MB_ICONHAND:
+    default:
+	SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
+			     (WPARAM16)LoadIcon16(0, IDI_HAND16), 0);
+	break;
+    }
+    
+    /* Position everything */
+    GetWindowRect(hwnd, &rect);
+    borheight = rect.bottom - rect.top;
+    borwidth  = rect.right - rect.left;
+    GetClientRect(hwnd, &rect);
+    borheight -= rect.bottom - rect.top;
+    borwidth  -= rect.right - rect.left;
+    
+    /* Get the icon height */
+    GetWindowRect(GetDlgItem(hwnd, MSGBOX_IDICON), &rect);
+    MapWindowPoints(0, hwnd, (LPPOINT)&rect, 2);
+    iheight = rect.bottom - rect.top;
+    ileft = rect.left;
+    iwidth = rect.right - ileft;
+    
+    hdc = GetDC(hwnd);
+    if (hFont)
+	hPrevFont = SelectObject(hdc, hFont);
+    
+    /* Get the number of visible buttons and their size */
+    bh = bw = 1; /* Minimum button sizes */
+    for (buttons = 0, i = 1; i < 8; i++)
+    {
+	hItem = GetDlgItem(hwnd, i);
+	if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE)
+	{
+	    char buttonText[1024];
+	    int w, h;
+	    buttons++;
+	    if (GetWindowTextA(hItem, buttonText, sizeof buttonText))
+	    {
+		DrawTextA( hdc, buttonText, -1, &rect, DT_LEFT | DT_EXPANDTABS | DT_CALCRECT);
+		h = rect.bottom - rect.top;
+		w = rect.right - rect.left;
+		if (h > bh) bh = h;
+		if (w > bw)  bw = w ;
+	    }
+	}
+    }
+    bw = MAX(bw, bh * 2);
+    /* Button white space */
+    bh = bh * 2;
+    bw = bw * 2;
+    bspace = bw/3; /* Space between buttons */
+    
+    /* Get the text size */
+    GetClientRect(GetDlgItem(hwnd, MSGBOX_IDTEXT), &rect);
+    rect.top = rect.left = rect.bottom = 0;
+    DrawTextA( hdc, lpmb->lpszText, -1, &rect,
+	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
+    /* Min text width corresponds to space for the buttons */
+    tleft = 2 * ileft + iwidth;
+    twidth = MAX((bw + bspace) * buttons + bspace - tleft, rect.right);
+    theight = rect.bottom;
+    
+    if (hFont)
+	SelectObject(hdc, hPrevFont);
+    ReleaseDC(hItem, hdc);
+    
+    tiheight = 16 + MAX(iheight, theight);
+    wwidth  = tleft + twidth + ileft + borwidth;
+    wheight = 8 + tiheight + bh + borheight;
+    
+    /* Resize the window */
+    SetWindowPos(hwnd, 0, 0, 0, wwidth, wheight,
+		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    
+    /* Position the icon */
+    SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDICON), 0, ileft, (tiheight - iheight) / 2, 0, 0,
+		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    
+    /* Position the text */
+    SetWindowPos(GetDlgItem(hwnd, MSGBOX_IDTEXT), 0, tleft, (tiheight - theight) / 2, twidth, theight,
+		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    
+    /* Position the buttons */
+    bpos = (wwidth - (bw + bspace) * buttons + bspace) / 2;
+    for (buttons = i = 0; i < 7; i++) {
+	/* some arithmetic to get the right order for YesNoCancel windows */
+	hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
+	if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE) {
+	    if (buttons++ == ((lpmb->dwStyle & MB_DEFMASK) >> 8)) {
+		SetFocus(hItem);
+		SendMessageA( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
+	    }
+	    SetWindowPos(hItem, 0, bpos, tiheight, bw, bh,
+			 SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
+	    bpos += bw + bspace;
+	}
+    }
+    return hFont;
+}
+
+
 /**************************************************************************
  *           MSGBOX_DlgProc
  *
@@ -24,153 +201,12 @@ DEFAULT_DEBUG_CHANNEL(dialog)
  */
 static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
-{
-  static HFONT hFont = 0;
-  LPMSGBOXPARAMSA lpmb;
-
-  RECT rect, textrect;
-  HWND hItem;
-  HDC hdc;
-  LRESULT lRet;
-  int i, buttons, bwidth, bheight, theight, wwidth, bpos;
-  int borheight, iheight, tiheight;
-  
+{  
+  static hFont;
   switch(message) {
    case WM_INITDIALOG:
-    lpmb = (LPMSGBOXPARAMSA)lParam;
-    if (TWEAK_WineLook >= WIN95_LOOK) {
-	NONCLIENTMETRICSA nclm;
-	INT i;
-	nclm.cbSize = sizeof(NONCLIENTMETRICSA);
-	SystemParametersInfoA (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-	hFont = CreateFontIndirectA (&nclm.lfMessageFont);
-        /* set button font */
-	for (i=1; i < 8; i++)
-	    SendDlgItemMessageA (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
-        /* set text font */
-	SendDlgItemMessageA (hwnd, 100, WM_SETFONT, (WPARAM)hFont, 0);
-    }
-    if (lpmb->lpszCaption) SetWindowTextA(hwnd, lpmb->lpszCaption);
-    SetWindowTextA(GetDlgItem(hwnd, 100), lpmb->lpszText);
-    /* Hide not selected buttons */
-    switch(lpmb->dwStyle & MB_TYPEMASK) {
-     case MB_OK:
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
-      /* fall through */
-     case MB_OKCANCEL:
-      ShowWindow(GetDlgItem(hwnd, 3), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 4), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 5), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 6), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 7), SW_HIDE);
-      break;
-     case MB_ABORTRETRYIGNORE:
-      ShowWindow(GetDlgItem(hwnd, 1), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 6), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 7), SW_HIDE);
-      break;
-     case MB_YESNO:
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
-      /* fall through */
-     case MB_YESNOCANCEL:
-      ShowWindow(GetDlgItem(hwnd, 1), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 3), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 4), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 5), SW_HIDE);
-      break;
-    }
-    /* Set the icon */
-    switch(lpmb->dwStyle & MB_ICONMASK) {
-     case MB_ICONEXCLAMATION:
-      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION16), 0);
-      break;
-     case MB_ICONQUESTION:
-      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_QUESTION16), 0);
-      break;
-     case MB_ICONASTERISK:
-      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_ASTERISK16), 0);
-      break;
-     case MB_ICONHAND:
-     default:
-      SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
-                           (WPARAM16)LoadIcon16(0, IDI_HAND16), 0);
-      break;
-    }
-    
-    /* Position everything */
-    GetWindowRect(hwnd, &rect);
-    borheight = rect.bottom - rect.top;
-    wwidth = rect.right - rect.left;
-    GetClientRect(hwnd, &rect);
-    borheight -= rect.bottom - rect.top;
-
-    /* Get the icon height */
-    GetWindowRect(GetDlgItem(hwnd, 1088), &rect);
-    iheight = rect.bottom - rect.top;
-    
-    /* Get the number of visible buttons and their width */
-    GetWindowRect(GetDlgItem(hwnd, 2), &rect);
-    bheight = rect.bottom - rect.top;
-    bwidth = rect.left;
-    GetWindowRect(GetDlgItem(hwnd, 1), &rect);
-    bwidth -= rect.left;
-    for (buttons = 0, i = 1; i < 8; i++)
-    {
-      hItem = GetDlgItem(hwnd, i);
-      if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE) buttons++;
-    }
-    
-    /* Get the text size */
-    hItem = GetDlgItem(hwnd, 100);
-    GetWindowRect(hItem, &textrect);
-    MapWindowPoints(0, hwnd, (LPPOINT)&textrect, 2);
-    
-    GetClientRect(hItem, &rect);
-    hdc = GetDC(hItem);
-    lRet = DrawTextA( hdc, lpmb->lpszText, -1, &rect,
-                        DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
-    theight = rect.bottom  - rect.top;
-    tiheight = 16 + MAX(iheight, theight);
-    ReleaseDC(hItem, hdc);
-    
-    /* Position the text */
-    SetWindowPos(hItem, 0, textrect.left, (tiheight - theight) / 2, 
-		   rect.right - rect.left, theight,
-		   SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
-    /* Position the icon */
-    hItem = GetDlgItem(hwnd, 1088);
-    GetWindowRect(hItem, &rect);
-    MapWindowPoints(0, hwnd, (LPPOINT)&rect, 2);
-    SetWindowPos(hItem, 0, rect.left, (tiheight - iheight) / 2, 0, 0,
-		   SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
-    /* Resize the window */
-    SetWindowPos(hwnd, 0, 0, 0, wwidth, 8 + tiheight + bheight + borheight,
-		   SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
-    
-    /* Position the buttons */
-    bpos = (wwidth - bwidth * buttons) / 2;
-    GetWindowRect(GetDlgItem(hwnd, 1), &rect);
-    for (buttons = i = 0; i < 7; i++) {
-      /* some arithmetic to get the right order for YesNoCancel windows */
-      hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
-      if (GetWindowLongA(hItem, GWL_STYLE) & WS_VISIBLE) {
-	if (buttons++ == ((lpmb->dwStyle & MB_DEFMASK) >> 8)) {
-	  SetFocus(hItem);
-	  SendMessageA( hItem, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
-	}
-	SetWindowPos(hItem, 0, bpos, tiheight, 0, 0,
-		       SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
-	bpos += bwidth;
-      }
-    }
+    hFont = MSGBOX_OnInit(hwnd, (LPMSGBOXPARAMSA)lParam);
     return 0;
-    break;
     
    case WM_COMMAND:
     switch (wParam)
@@ -182,9 +218,9 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
      case IDIGNORE:
      case IDYES:
      case IDNO:
-      if ((TWEAK_WineLook > WIN31_LOOK) && hFont)
-        DeleteObject (hFont);
       EndDialog(hwnd, wParam);
+      if (hFont)
+	  DeleteObject(hFont);
       break;
     }
 
