@@ -117,6 +117,7 @@ void X11DRV_StartGraphicsExposures( HDC hdc )
     {
         X11DRV_PDEVICE *physDev = dc->physDev;
         TSXSetGraphicsExposures( gdi_display, physDev->gc, True );
+        physDev->exposures = 0;
         GDI_ReleaseObj( hdc );
     }
 }
@@ -140,31 +141,34 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
         SetRectRgn( hrgn, 0, 0, 0, 0 );
         wine_tsx11_lock();
         XSetGraphicsExposures( gdi_display, physDev->gc, False );
-        XSync( gdi_display, False );
-        for (;;)
+        if (physDev->exposures)
         {
-            XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
-            if (event.type == NoExpose) break;
-            if (event.type == GraphicsExpose)
+            XSync( gdi_display, False );
+            for (;;)
             {
-                TRACE( "got %d,%d %dx%d count %d\n",
-                       event.xgraphicsexpose.x, event.xgraphicsexpose.y,
-                       event.xgraphicsexpose.width, event.xgraphicsexpose.height,
-                       event.xgraphicsexpose.count );
+                XWindowEvent( gdi_display, physDev->drawable, ~0, &event );
+                if (event.type == NoExpose) break;
+                if (event.type == GraphicsExpose)
+                {
+                    TRACE( "got %d,%d %dx%d count %d\n",
+                         event.xgraphicsexpose.x, event.xgraphicsexpose.y,
+                         event.xgraphicsexpose.width, event.xgraphicsexpose.height,
+                         event.xgraphicsexpose.count );
 
-                if (!tmp) tmp = CreateRectRgn( 0, 0, 0, 0 );
-                SetRectRgn( tmp, event.xgraphicsexpose.x, event.xgraphicsexpose.y,
-                            event.xgraphicsexpose.x + event.xgraphicsexpose.width,
-                            event.xgraphicsexpose.y + event.xgraphicsexpose.height );
-                CombineRgn( hrgn, hrgn, tmp, RGN_OR );
-                if (!event.xgraphicsexpose.count) break;
+                    if (!tmp) tmp = CreateRectRgn( 0, 0, 0, 0 );
+                    SetRectRgn( tmp, event.xgraphicsexpose.x, event.xgraphicsexpose.y,
+                                event.xgraphicsexpose.x + event.xgraphicsexpose.width,
+                                event.xgraphicsexpose.y + event.xgraphicsexpose.height );
+                    CombineRgn( hrgn, hrgn, tmp, RGN_OR );
+                    if (!event.xgraphicsexpose.count) break;
+                }
+                else
+                {
+                    ERR( "got unexpected event %d\n", event.type );
+                    break;
+                }
+                if (tmp) DeleteObject( tmp );
             }
-            else
-            {
-                ERR( "got unexpected event %d\n", event.type );
-                break;
-            }
-            if (tmp) DeleteObject( tmp );
         }
         wine_tsx11_unlock();
         GDI_ReleaseObj( hdc );
