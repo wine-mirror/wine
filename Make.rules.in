@@ -37,18 +37,23 @@ LIBS      = @LIBS@
 YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
+EXEEXT    = @EXEEXT@
+OBJEXT    = @OBJEXT@
 LIBEXT    = @LIBEXT@
 DLLEXT    = @DLLEXT@
 LDSHARED  = @LDSHARED@
 DLLWRAP   = @DLLWRAP@
 DLLWRAPFLAGS = --add-stdcall-alias
+AR        = @AR@ rc
 RANLIB    = @RANLIB@
+STRIP     = @STRIP@
+WINDRES   = @WINDRES@
 LN_S      = @LN_S@
+TOOLSDIR  = @TOOLSDIR@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS) $(X_CFLAGS)
 LDCOMBINE = @LDCOMBINE@
 LDFLAGS   = @LDFLAGS@
-AR        = ar rc
 RM        = rm -f
 MV        = mv
 C2MAN     = @C2MAN@
@@ -62,10 +67,10 @@ LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 MKINSTALLDIRS= $(TOPSRCDIR)/tools/mkinstalldirs
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
-WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
-MAKEDEP   = $(TOPOBJDIR)/tools/makedep
-WRC       = $(TOPOBJDIR)/tools/wrc/wrc
-WMC       = $(TOPOBJDIR)/tools/wmc/wmc
+WINEBUILD    = $(TOOLSDIR)/tools/winebuild/winebuild
+MAKEDEP      = $(TOOLSDIR)/tools/makedep
+WRC          = $(TOOLSDIR)/tools/wrc/wrc
+WMC          = $(TOOLSDIR)/tools/wmc/wmc
 LDPATH    = @LDPATH@
 DLLDIR    = $(TOPOBJDIR)/dlls
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
@@ -100,7 +105,7 @@ dlldir          = @libdir@/wine
 prog_manext     = 1
 conf_manext     = 5
 includedir      = @includedir@/wine
-CLEAN_FILES     = *.o *.a *.so *.ln \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
+CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.spec.c *.spec.def *.glue.c y.tab.c y.tab.h @LEX_OUTPUT_ROOT@.c core
 
 OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) \
@@ -110,7 +115,7 @@ LINTS = $(C_SRCS:.c=.ln)
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.c .spec.def .glue.c .pl .ok
+.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.c .spec.def .glue.c .pl .ok
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -127,11 +132,14 @@ LINTS = $(C_SRCS:.c=.ln)
 .rc.res:
 	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
 
+.res.res.o:
+	$(WINDRES) -i $< -o $@
+
 .spec.spec.c:
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -o $@ -spec $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -spec $<
 
 .spec.spec.def:
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -o $@ -def $<
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -def $<
 
 .c.glue.c:
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -o $@ -glue $<
@@ -158,27 +166,27 @@ filter:
 
 $(MODULE).tmp.o: $(SPEC_SRCS:.spec=.spec.o) $(OBJS) Makefile.in
 	$(LDCOMBINE) $(SPEC_SRCS:.spec=.spec.o) $(OBJS) -o $@
-	-strip --strip-unneeded $@
+	-$(STRIP) --strip-unneeded $@
 
 # Rule to rebuild the resource compiler
 
 $(WRC):
-	cd $(TOPOBJDIR)/tools/wrc && $(MAKE) wrc
+	cd $(TOOLSDIR)/tools/wrc && $(MAKE) wrc
 
 # Rule to rebuild the message compiler
 
 $(WMC):
-	cd $(TOPOBJDIR)/tools/wmc && $(MAKE) wmc
+	cd $(TOOLSDIR)/tools/wmc && $(MAKE) wmc
 
 # Rule to rebuild the 'makedep' program
 
 $(MAKEDEP):
-	cd $(TOPOBJDIR)/tools && $(MAKE) makedep
+	cd $(TOOLSDIR)/tools && $(MAKE) makedep
 
 # Rule to rebuild the 'winebuild' program
 
 $(WINEBUILD):
-	cd $(TOPOBJDIR)/tools/winebuild && $(MAKE) winebuild
+	cd $(TOOLSDIR)/tools/winebuild && $(MAKE) winebuild
 
 # Rules for makefile
 
@@ -241,7 +249,7 @@ testclean:: $(SUBDIRS:%=%/__testclean__)
 	$(RM) $(TESTRESULTS)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(TESTLIST) $(PROGRAMS)
+	$(RM) $(CLEAN_FILES) $(GEN_C_SRCS) $(GEN_ASM_SRCS) $(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res) $(MC_SRCS:.mc=.mc.rc) $(TESTRESULTS) $(TESTLIST) $(TESTPROGRAM)$(EXEEXT) $(PROGRAMS)
 
 # Rules for installing
 
@@ -259,7 +267,7 @@ $(SUBDIRS:%=%/__test__): dummy
 	@cd `dirname $@` && $(MAKE) test
 
 $(PLTESTS:.c=.ok): $(WINETEST)
-$(CTESTS:.c=.ok): $(TESTPROGRAM).so
+$(CTESTS:.c=.ok): $(TESTPROGRAM)$(EXEEXT)
 
 $(WINETEST):
 	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) winetest
@@ -270,15 +278,21 @@ $(TESTMAIN):
 $(TESTLIST): Makefile.in
 	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
+$(TESTPROGRAM): $(TESTPROGRAM).so
+	$(RM) $(TESTPROGRAM) && cd tests && $(LN_S) $(TOPOBJDIR)/../wine `basename $(TESTPROGRAM)`
+
 $(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
 	$(LDSHARED) $(LDDLLFLAGS) $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
 
 $(TESTPROGRAM).tmp.o: $(TESTOBJS)
 	$(LDCOMBINE) $(TESTOBJS) -o $@
-	-strip --strip-unneeded $@
+	-$(STRIP) --strip-unneeded $@
 
 $(TESTPROGRAM).spec.c: $(TESTPROGRAM).tmp.o $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -sym $(TESTPROGRAM).tmp.o -o $@ -exe $(TESTPROGRAM) -mcui -L$(DLLDIR) $(TESTIMPORTS:%=-l%)
+
+$(TESTPROGRAM).exe: $(TESTOBJS)
+	$(CC) $(TESTOBJS) -o $@ $(TESTIMPORTS:%=-l%) $(LIBWINE) $(LIBS)
 
 # Misc. rules
 

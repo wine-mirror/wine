@@ -18,7 +18,8 @@ LIBEXT=so       # library type .so or .a
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],[compile out all debugging messages]))
 AC_ARG_ENABLE(trace, AC_HELP_STRING([--disable-trace],[compile out TRACE messages]))
 AC_ARG_ENABLE(opengl,AC_HELP_STRING([--enable-opengl],[force usage of OpenGL even if the latter is thread-safe via pthread]))
-AC_ARG_WITH(curses,     AC_HELP_STRING([--without-curses],[do not use curses]))
+AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
+AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
 AC_SUBST(OPTIONS)
 if test "x$enable_debug" = "xno"
@@ -32,10 +33,28 @@ fi
 
 dnl **** Check for some programs ****
 
-AC_CANONICAL_TARGET
+AC_CANONICAL_HOST
 AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_PROG_CPP
+
+AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
+  [if test -z "$with_wine_tools"; then
+     if test "$cross_compiling" = "yes"; then
+       AC_MSG_ERROR([you must use the --with-wine-tools option when cross-compiling.])
+     else
+       wine_cv_toolsdir="\$(TOPOBJDIR)"
+     fi
+   elif test -d "$with_wine_tools/tools/winebuild"; then
+     case $with_wine_tools in
+       /*) wine_cv_toolsdir="$with_wine_tools" ;;
+       *)  wine_cv_toolsdir="\$(TOPOBJDIR)/$with_wine_tools" ;;
+     esac
+   else
+     AC_MSG_ERROR([could not find Wine tools in $with_wine_tools.])
+   fi])
+AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
+
 AC_PATH_XTRA
 AC_PROG_YACC
 AC_PROG_LEX
@@ -52,11 +71,22 @@ if test "$XLEX" = "none"
 then
   AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
 fi
+
+AC_CHECK_TOOL(AR,ar,ar)
 AC_PROG_RANLIB
+AC_CHECK_TOOL(STRIP,strip,strip)
+AC_CHECK_TOOL(WINDRES,windres,false)
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_CHECK_PROG(C2MAN,c2man,c2man,\$(TOPSRCDIR)/tools/c2man.pl)
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
+
+case $host_os in
+   cygwin*|mingw32*)
+      AC_CHECK_TOOL(LDCOMBINE,[ld -r --enable-stdcall-fixup],[ld -r --enable-stdcall-fixup]) ;;
+   *)
+      AC_CHECK_TOOL(LDCOMBINE,[ld -r],[ld -r]) ;;
+esac
 
 dnl Check for lint
 AC_CHECK_PROGS(LINT, lclint lint)
@@ -67,12 +97,6 @@ then
 fi
 AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
-
-case $host_os in
-  *cygwin*) LDCOMBINE="ld -r --enable-stdcall-fixup" ;;
-         *) LDCOMBINE="ld -r" ;;
-esac
-AC_SUBST(LDCOMBINE)
 
 dnl **** Check for some libraries ****
 
@@ -700,14 +724,14 @@ LDSHARED=""
 LDDLLFLAGS=""
 DLLIBS=""
 
-case $target_os in
-  cygwin|mingw32)
-    AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
-    if test "$DLLWRAP" = "dllwrap"; then
+case $host_os in
+  cygwin*|mingw32*)
+    AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
+    if test "$DLLWRAP" = "false"; then
+      LIBEXT="a"
+    else
       dnl FIXME - check whether dllwrap works correctly...
       LIBEXT="dll"
-    else
-      LIBEXT="a"
     fi
     ;;
   *)
@@ -759,17 +783,21 @@ If you are using Linux, you will need a newer binutils.]
 fi
 
 DLLFLAGS=""
-LDPATH=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
     DLLEXT=".so"
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
     DLLEXT=""
-    LDPATH="PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
+
+case $build_os in
+  cygwin*|mingw32*)
+    LDPATH="PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"" ;;
+  *)
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"" ;;
+esac
 
 AC_SUBST(DLLIBS)
 AC_SUBST(DLLFLAGS)
@@ -1191,7 +1219,7 @@ WINE_CHECK_STRUCT_MEMBER(sockaddr_un,sun_len,
 
 dnl *** check for the need to define __i386__
 
-case $target_cpu in
+case $host_cpu in
   *i[3456789]86* )
     AC_CACHE_CHECK([whether we need to define __i386__],ac_cv_cpp_def_i386,
       AC_EGREP_CPP(yes,[#ifndef __i386__

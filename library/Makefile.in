@@ -43,10 +43,14 @@ install_a: libwine.a
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine.a $(libdir)/libwine.a
 
-install:: all $(LIBEXT:%=install_%)
+install_dll: libwine.dll
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_DATA) libwine.dll $(libdir)/libwine.dll
+
+install:: $(LIBEXT:%=install_%)
 
 uninstall::
-	$(RM) $(libdir)/libwine.a $(libdir)/libwine.so $(libdir)/libwine.so.$(SOVERSION)
+	$(RM) $(libdir)/libwine.a $(libdir)/libwine.dll $(libdir)/libwine.so $(libdir)/libwine.so.$(SOVERSION)
 
 clean::
 	$(RM) libwine.so.$(SOVERSION)

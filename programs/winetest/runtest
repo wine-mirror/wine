@@ -123,9 +123,7 @@ if (defined($topobjdir))
     $ENV{WINESERVER} = $topobjdir . "/server/wineserver";
     $ENV{WINELOADER} = $topobjdir . "/wine";
     $ENV{WINETEST_PLATFORM} = $platform || "wine";
-    $ENV{WINEPRELOAD}=($program || ($topobjdir . "/programs/winetest/winetest")) . ".so";
-    # try to exec the wine loader directly; if it fails continue on to normal exec
-    exec $ENV{WINELOADER}, $infile, @ARGV;
+    $program ||= $topobjdir . "/programs/winetest/winetest";
 }
 else
 {

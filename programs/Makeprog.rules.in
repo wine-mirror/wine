@@ -11,27 +11,32 @@
 
 DEFS        = @DLLFLAGS@ -DSTRICT -DNONAMELESSUNION -DNONAMELESSSTRUCT $(EXTRADEFS)
 LDDLLFLAGS  = @LDDLLFLAGS@
-ALL_OBJS    = $(MODULE).spec.o $(OBJS)
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBS)
 SYMBOLFILE  = $(MODULE).tmp.o
 TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
-
-all: $(MODULE)
+RCOBJS      = $(RC_SRCS:.rc=.res.o)
 
 @MAKE_RULES@
+
+all: $(MODULE)$(EXEEXT)
 
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
 	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ $(SYMBOLFILE:%=-sym %) -o $@ -exe $(MODULE) $(APPMODE:%=-m%) $(RC_SRCS:%.rc=-res %.res) -L$(DLLDIR) $(DELAYIMPORTS:%=-dl%) $(IMPORTS:%=-l%)
 
-# Rules for main module
+# Rules for .so main module
 
 $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS)
 
 $(MODULE): $(MODULE).so
 	$(RM) $(MODULE) && $(LN_S) $(TOPOBJDIR)/wine $(MODULE)
+
+# Rules for .exe main module
+
+$(MODULE).exe: $(OBJS) $(RCOBJS) Makefile.in
+	$(CC) $(OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for checking that no imports are missing
 
@@ -49,13 +54,21 @@ debug_channels: dummy
 
 # Rules for installation
 
-install:: $(MODULE).so
+.PHONY: install_prog$(EXEEXT)
+
+install_prog:: $(MODULE).so
 	$(MKINSTALLDIRS) $(bindir)
 	$(INSTALL_PROGRAM) $(MODULE).so $(bindir)/$(MODULE).so
 	cd $(bindir) && $(RM) $(MODULE) && $(LN_S) wine $(MODULE)
 
+install_prog.exe:: $(MODULE).exe
+	$(MKINSTALLDIRS) $(bindir)
+	$(INSTALL_PROGRAM) $(MODULE).exe $(bindir)/$(MODULE).exe
+
+install:: install_prog$(EXEEXT)
+
 uninstall::
-	$(RM) $(bindir)/$(MODULE) $(bindir)/$(MODULE).so
+	$(RM) $(bindir)/$(MODULE)$(EXEEXT) $(bindir)/$(MODULE).so
 
 clean::
-	$(RM) $(MODULE)
+	$(RM) $(MODULE)$(EXEEXT)

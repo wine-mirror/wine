@@ -137,29 +137,7 @@ static int     init(void)
 {
     myARGC = winetest_get_mainargs( &myARGV );
     if (!GetCurrentDirectoryA(sizeof(base), base)) return 0;
-
-    if (strcmp(winetest_platform, "windows"))
-    {
-        char* ptr = getenv("WINELOADER");
-        char* root;
-
-        if (!ptr) return 0;
-        root = grab_memory(strlen(ptr) + 1);
-        strcpy(root, ptr);
-        ptr = strrchr(root, '/');
-        if (!ptr) return 0;
-        *ptr = '\0';
-
-        /* be sure to use absolute pathnames so we can change dirs whenever we want */
-        sprintf(selfname, 
-                "%s/programs/winetest/runtest -q -P wine -M kernel32.dll -T %s -p %s/dlls/kernel/tests/kernel32_test",
-                root, root, root);
-    }
-    else
-    {
-        strcpy(selfname, myARGV[0]);
-    }
-
+    strcpy(selfname, myARGV[0]);
     return 1;
 }
 

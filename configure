@@ -820,7 +820,6 @@ X features:
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
-  --target=TARGET   configure for building compilers for TARGET [HOST]
 _ACEOF
 fi
 
@@ -842,6 +841,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-curses        do not use curses
+  --with-wine-tools=<dir> use Wine tools from directory <dir>
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -1265,6 +1265,12 @@ if test "${with_curses+set}" = set; then
 
 fi;
 
+# Check whether --with-wine-tools or --without-wine-tools was given.
+if test "${with_wine_tools+set}" = set; then
+  withval="$with_wine_tools"
+
+fi;
+
 
 if test "x$enable_debug" = "xno"
 then
@@ -1338,34 +1344,6 @@ host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
 
-echo "$as_me:$LINENO: checking target system type" >&5
-echo $ECHO_N "checking target system type... $ECHO_C" >&6
-if test "${ac_cv_target+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_target_alias=$target_alias
-test "x$ac_cv_target_alias" = "x" &&
-  ac_cv_target_alias=$ac_cv_host_alias
-ac_cv_target=`$ac_config_sub $ac_cv_target_alias` ||
-  { { echo "$as_me:$LINENO: error: $ac_config_sub $ac_cv_target_alias failed" >&5
-echo "$as_me: error: $ac_config_sub $ac_cv_target_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_target" >&5
-echo "${ECHO_T}$ac_cv_target" >&6
-target=$ac_cv_target
-target_cpu=`echo $ac_cv_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
-target_vendor=`echo $ac_cv_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
-target_os=`echo $ac_cv_target | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
-
-
-# The aliases save the names the user supplied, while $host etc.
-# will get canonicalized.
-test -n "$target_alias" &&
-  test "$program_prefix$program_suffix$program_transform_name" = \
-    NONENONEs,x,x, &&
-  program_prefix=${target_alias}-
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \${MAKE}" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \${MAKE}... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,./+-,__p_,'`
@@ -2352,6 +2330,36 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+echo "$as_me:$LINENO: checking for the directory containing the Wine tools" >&5
+echo $ECHO_N "checking for the directory containing the Wine tools... $ECHO_C" >&6
+if test "${wine_cv_toolsdir+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -z "$with_wine_tools"; then
+     if test "$cross_compiling" = "yes"; then
+       { { echo "$as_me:$LINENO: error: you must use the --with-wine-tools option when cross-compiling." >&5
+echo "$as_me: error: you must use the --with-wine-tools option when cross-compiling." >&2;}
+   { (exit 1); exit 1; }; }
+     else
+       wine_cv_toolsdir="\$(TOPOBJDIR)"
+     fi
+   elif test -d "$with_wine_tools/tools/winebuild"; then
+     case $with_wine_tools in
+       /*) wine_cv_toolsdir="$with_wine_tools" ;;
+       *)  wine_cv_toolsdir="\$(TOPOBJDIR)/$with_wine_tools" ;;
+     esac
+   else
+     { { echo "$as_me:$LINENO: error: could not find Wine tools in $with_wine_tools." >&5
+echo "$as_me: error: could not find Wine tools in $with_wine_tools." >&2;}
+   { (exit 1); exit 1; }; }
+   fi
+fi
+echo "$as_me:$LINENO: result: $wine_cv_toolsdir" >&5
+echo "${ECHO_T}$wine_cv_toolsdir" >&6
+TOOLSDIR=$wine_cv_toolsdir
+
 
 
 
@@ -3906,6 +3914,87 @@ then
 echo "$as_me: error: no suitable lex found. Please install the 'flex' package." >&2;}
    { (exit 1); exit 1; }; }
 fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="${ac_tool_prefix}ar"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_AR"; then
+  ac_ct_AR=$AR
+  # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_AR"; then
+  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_AR="ar"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_AR" && ac_cv_prog_ac_ct_AR="ar"
+fi
+fi
+ac_ct_AR=$ac_cv_prog_ac_ct_AR
+if test -n "$ac_ct_AR"; then
+  echo "$as_me:$LINENO: result: $ac_ct_AR" >&5
+echo "${ECHO_T}$ac_ct_AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  AR=$ac_ct_AR
+else
+  AR="$ac_cv_prog_AR"
+fi
+
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -3984,6 +4073,166 @@ fi
   RANLIB=$ac_ct_RANLIB
 else
   RANLIB="$ac_cv_prog_RANLIB"
+fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}strip", so it can be a program name with args.
+set dummy ${ac_tool_prefix}strip; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_STRIP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$STRIP"; then
+  ac_cv_prog_STRIP="$STRIP" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_STRIP="${ac_tool_prefix}strip"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+STRIP=$ac_cv_prog_STRIP
+if test -n "$STRIP"; then
+  echo "$as_me:$LINENO: result: $STRIP" >&5
+echo "${ECHO_T}$STRIP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_STRIP"; then
+  ac_ct_STRIP=$STRIP
+  # Extract the first word of "strip", so it can be a program name with args.
+set dummy strip; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_STRIP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_STRIP"; then
+  ac_cv_prog_ac_ct_STRIP="$ac_ct_STRIP" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_STRIP="strip"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_STRIP" && ac_cv_prog_ac_ct_STRIP="strip"
+fi
+fi
+ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
+if test -n "$ac_ct_STRIP"; then
+  echo "$as_me:$LINENO: result: $ac_ct_STRIP" >&5
+echo "${ECHO_T}$ac_ct_STRIP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  STRIP=$ac_ct_STRIP
+else
+  STRIP="$ac_cv_prog_STRIP"
+fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}windres", so it can be a program name with args.
+set dummy ${ac_tool_prefix}windres; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_WINDRES+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$WINDRES"; then
+  ac_cv_prog_WINDRES="$WINDRES" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_WINDRES="${ac_tool_prefix}windres"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+WINDRES=$ac_cv_prog_WINDRES
+if test -n "$WINDRES"; then
+  echo "$as_me:$LINENO: result: $WINDRES" >&5
+echo "${ECHO_T}$WINDRES" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_WINDRES"; then
+  ac_ct_WINDRES=$WINDRES
+  # Extract the first word of "windres", so it can be a program name with args.
+set dummy windres; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_WINDRES+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_WINDRES"; then
+  ac_cv_prog_ac_ct_WINDRES="$ac_ct_WINDRES" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_WINDRES="windres"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_WINDRES" && ac_cv_prog_ac_ct_WINDRES="false"
+fi
+fi
+ac_ct_WINDRES=$ac_cv_prog_ac_ct_WINDRES
+if test -n "$ac_ct_WINDRES"; then
+  echo "$as_me:$LINENO: result: $ac_ct_WINDRES" >&5
+echo "${ECHO_T}$ac_ct_WINDRES" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  WINDRES=$ac_ct_WINDRES
+else
+  WINDRES="$ac_cv_prog_WINDRES"
 fi
 
 # Find a good install program.  We prefer a C program (faster),
@@ -4151,6 +4400,171 @@ echo "${ECHO_T}no" >&6
 fi
 
 
+case $host_os in
+   cygwin*|mingw32*)
+      if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ld -r --enable-stdcall-fixup", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ld -r --enable-stdcall-fixup; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_LDCOMBINE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$LDCOMBINE"; then
+  ac_cv_prog_LDCOMBINE="$LDCOMBINE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LDCOMBINE="${ac_tool_prefix}ld -r --enable-stdcall-fixup"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+LDCOMBINE=$ac_cv_prog_LDCOMBINE
+if test -n "$LDCOMBINE"; then
+  echo "$as_me:$LINENO: result: $LDCOMBINE" >&5
+echo "${ECHO_T}$LDCOMBINE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_LDCOMBINE"; then
+  ac_ct_LDCOMBINE=$LDCOMBINE
+  # Extract the first word of "ld -r --enable-stdcall-fixup", so it can be a program name with args.
+set dummy ld -r --enable-stdcall-fixup; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_LDCOMBINE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_LDCOMBINE"; then
+  ac_cv_prog_ac_ct_LDCOMBINE="$ac_ct_LDCOMBINE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_LDCOMBINE="ld -r --enable-stdcall-fixup"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_LDCOMBINE" && ac_cv_prog_ac_ct_LDCOMBINE="ld -r --enable-stdcall-fixup"
+fi
+fi
+ac_ct_LDCOMBINE=$ac_cv_prog_ac_ct_LDCOMBINE
+if test -n "$ac_ct_LDCOMBINE"; then
+  echo "$as_me:$LINENO: result: $ac_ct_LDCOMBINE" >&5
+echo "${ECHO_T}$ac_ct_LDCOMBINE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  LDCOMBINE=$ac_ct_LDCOMBINE
+else
+  LDCOMBINE="$ac_cv_prog_LDCOMBINE"
+fi
+ ;;
+   *)
+      if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ld -r", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ld -r; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_LDCOMBINE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$LDCOMBINE"; then
+  ac_cv_prog_LDCOMBINE="$LDCOMBINE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_LDCOMBINE="${ac_tool_prefix}ld -r"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+LDCOMBINE=$ac_cv_prog_LDCOMBINE
+if test -n "$LDCOMBINE"; then
+  echo "$as_me:$LINENO: result: $LDCOMBINE" >&5
+echo "${ECHO_T}$LDCOMBINE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_prog_LDCOMBINE"; then
+  ac_ct_LDCOMBINE=$LDCOMBINE
+  # Extract the first word of "ld -r", so it can be a program name with args.
+set dummy ld -r; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_LDCOMBINE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_LDCOMBINE"; then
+  ac_cv_prog_ac_ct_LDCOMBINE="$ac_ct_LDCOMBINE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_LDCOMBINE="ld -r"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_LDCOMBINE" && ac_cv_prog_ac_ct_LDCOMBINE="ld -r"
+fi
+fi
+ac_ct_LDCOMBINE=$ac_cv_prog_ac_ct_LDCOMBINE
+if test -n "$ac_ct_LDCOMBINE"; then
+  echo "$as_me:$LINENO: result: $ac_ct_LDCOMBINE" >&5
+echo "${ECHO_T}$ac_ct_LDCOMBINE" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  LDCOMBINE=$ac_ct_LDCOMBINE
+else
+  LDCOMBINE="$ac_cv_prog_LDCOMBINE"
+fi
+ ;;
+esac
+
 for ac_prog in lclint lint
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -4196,12 +4610,6 @@ then
   LINTFLAGS="$LINTFLAGS -errchk=%all,no%longptr64 -errhdr=%user -Ncheck=macro -Nlevel=4"
   fi
 
-
-
-case $host_os in
-  *cygwin*) LDCOMBINE="ld -r --enable-stdcall-fixup" ;;
-         *) LDCOMBINE="ld -r" ;;
-esac
 
 
 
@@ -9198,10 +9606,11 @@ LDSHARED=""
 LDDLLFLAGS=""
 DLLIBS=""
 
-case $target_os in
-  cygwin|mingw32)
-    # Extract the first word of "dllwrap", so it can be a program name with args.
-set dummy dllwrap; ac_word=$2
+case $host_os in
+  cygwin*|mingw32*)
+    if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}dllwrap", so it can be a program name with args.
+set dummy ${ac_tool_prefix}dllwrap; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_prog_DLLWRAP+set}" = set; then
@@ -9217,14 +9626,13 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DLLWRAP="dllwrap"
+    ac_cv_prog_DLLWRAP="${ac_tool_prefix}dllwrap"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
 done
 done
 
-  test -z "$ac_cv_prog_DLLWRAP" && ac_cv_prog_DLLWRAP="false"
 fi
 fi
 DLLWRAP=$ac_cv_prog_DLLWRAP
@@ -9236,10 +9644,54 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-    if test "$DLLWRAP" = "dllwrap"; then
-            LIBEXT="dll"
-    else
+fi
+if test -z "$ac_cv_prog_DLLWRAP"; then
+  ac_ct_DLLWRAP=$DLLWRAP
+  # Extract the first word of "dllwrap", so it can be a program name with args.
+set dummy dllwrap; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_ac_ct_DLLWRAP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_DLLWRAP"; then
+  ac_cv_prog_ac_ct_DLLWRAP="$ac_ct_DLLWRAP" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_DLLWRAP="dllwrap"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_ac_ct_DLLWRAP" && ac_cv_prog_ac_ct_DLLWRAP="false"
+fi
+fi
+ac_ct_DLLWRAP=$ac_cv_prog_ac_ct_DLLWRAP
+if test -n "$ac_ct_DLLWRAP"; then
+  echo "$as_me:$LINENO: result: $ac_ct_DLLWRAP" >&5
+echo "${ECHO_T}$ac_ct_DLLWRAP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  DLLWRAP=$ac_ct_DLLWRAP
+else
+  DLLWRAP="$ac_cv_prog_DLLWRAP"
+fi
+
+    if test "$DLLWRAP" = "false"; then
       LIBEXT="a"
+    else
+            LIBEXT="dll"
     fi
     ;;
   *)
@@ -9632,17 +10084,21 @@ If you are using Linux, you will need a newer binutils.
 fi
 
 DLLFLAGS=""
-LDPATH=""
 
 if test "$LIBEXT" = "so"; then
     DLLFLAGS="-fPIC"
     DLLEXT=".so"
-    LDPATH="LD_LIBRARY_PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$LD_LIBRARY_PATH\""
 elif test "$LIBEXT" = "dll"; then
     #DLLFLAGS="-fPIC" # -fPIC doesn't work(at least in cygwin-b20) - FIXME
     DLLEXT=""
-    LDPATH="PATH=\"\$(TOPOBJDIR)/library:\$(TOPOBJDIR)/unicode:\$\$PATH\""
 fi
+
+case $build_os in
+  cygwin*|mingw32*)
+    LDPATH="PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$PATH\"" ;;
+  *)
+    LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/library:\$(TOOLSDIR)/unicode:\$\$LD_LIBRARY_PATH\"" ;;
+esac
 
 
 
@@ -12320,7 +12776,7 @@ fi
 
 
 
-case $target_cpu in
+case $host_cpu in
   *i345678986* )
     echo "$as_me:$LINENO: checking whether we need to define __i386__" >&5
 echo $ECHO_N "checking whether we need to define __i386__... $ECHO_C" >&6
@@ -13155,10 +13611,6 @@ s,@host@,$host,;t t
 s,@host_cpu@,$host_cpu,;t t
 s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
-s,@target@,$target,;t t
-s,@target_cpu@,$target_cpu,;t t
-s,@target_vendor@,$target_vendor,;t t
-s,@target_os@,$target_os,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@CC@,$CC,;t t
 s,@CFLAGS@,$CFLAGS,;t t
@@ -13168,6 +13620,7 @@ s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
 s,@CPP@,$CPP,;t t
+s,@TOOLSDIR@,$TOOLSDIR,;t t
 s,@X_CFLAGS@,$X_CFLAGS,;t t
 s,@X_PRE_LIBS@,$X_PRE_LIBS,;t t
 s,@X_LIBS@,$X_LIBS,;t t
@@ -13178,17 +13631,24 @@ s,@LEXLIB@,$LEXLIB,;t t
 s,@LEX_OUTPUT_ROOT@,$LEX_OUTPUT_ROOT,;t t
 s,@XYACC@,$XYACC,;t t
 s,@XLEX@,$XLEX,;t t
+s,@AR@,$AR,;t t
+s,@ac_ct_AR@,$ac_ct_AR,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
+s,@STRIP@,$STRIP,;t t
+s,@ac_ct_STRIP@,$ac_ct_STRIP,;t t
+s,@WINDRES@,$WINDRES,;t t
+s,@ac_ct_WINDRES@,$ac_ct_WINDRES,;t t
 s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
 s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@LN_S@,$LN_S,;t t
 s,@C2MAN@,$C2MAN,;t t
 s,@LDCONFIG@,$LDCONFIG,;t t
+s,@LDCOMBINE@,$LDCOMBINE,;t t
+s,@ac_ct_LDCOMBINE@,$ac_ct_LDCOMBINE,;t t
 s,@LINT@,$LINT,;t t
 s,@LINTFLAGS@,$LINTFLAGS,;t t
-s,@LDCOMBINE@,$LDCOMBINE,;t t
 s,@JPEGLIB@,$JPEGLIB,;t t
 s,@XLIB@,$XLIB,;t t
 s,@XFILES@,$XFILES,;t t
@@ -13206,6 +13666,7 @@ s,@ARTSCCONFIG@,$ARTSCCONFIG,;t t
 s,@ARTSLIBS@,$ARTSLIBS,;t t
 s,@ARTSINCL@,$ARTSINCL,;t t
 s,@DLLWRAP@,$DLLWRAP,;t t
+s,@ac_ct_DLLWRAP@,$ac_ct_DLLWRAP,;t t
 s,@DLLIBS@,$DLLIBS,;t t
 s,@DLLFLAGS@,$DLLFLAGS,;t t
 s,@DLLEXT@,$DLLEXT,;t t

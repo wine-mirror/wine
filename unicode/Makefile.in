@@ -95,9 +95,9 @@ libwine_unicode.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
-# --export-all don't work correctly because of dllwrap's bug
+# --export-all doesn't work correctly because of dllwrap's bug
 libwine_unicode.dll: $(OBJS) wine_unicode.def
-	$(DLLWRAP) $(DLLWRAPFLAGS) --def wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --def $(SRCDIR)/wine_unicode.def --implib libwine_unicode.a -o libwine_unicode.dll $(OBJS)
 
 install_so: libwine_unicode.so.$(SOVERSION)
 	$(MKINSTALLDIRS) $(libdir)
@@ -108,10 +108,14 @@ install_a: libwine_unicode.a
 	$(MKINSTALLDIRS) $(libdir)
 	$(INSTALL_DATA) libwine_unicode.a $(libdir)/libwine_unicode.a
 
-install:: all $(LIBEXT:%=install_%)
+install_dll: libwine_unicode.dll
+	$(MKINSTALLDIRS) $(libdir)
+	$(INSTALL_DATA) libwine_unicode.dll $(libdir)/libwine_unicode.dll
+
+install:: $(LIBEXT:%=install_%)
 
 uninstall::
-	$(RM) $(libdir)/libwine_unicode.a $(libdir)/libwine_unicode.so $(libdir)/libwine_unicode.so.$(SOVERSION)
+	$(RM) $(libdir)/libwine_unicode.a $(libdir)/libwine_unicode.dll $(libdir)/libwine_unicode.so $(libdir)/libwine_unicode.so.$(SOVERSION)
 
 clean::
 	$(RM) libwine_unicode.so.$(SOVERSION)
