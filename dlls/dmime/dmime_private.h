@@ -165,6 +165,12 @@ typedef struct _DMUS_PRIVATE_SEGMENT_ITEM {
   WCHAR wszName[DMUS_MAX_NAME];
 } DMUS_PRIVATE_SEGMENT_ITEM, *LPDMUS_PRIVATE_SEGMENT_ITEM;
 
+typedef struct _DMUS_PRIVATE_GRAPH_TOOL {
+  struct list entry; /* for listing elements */
+  DWORD dwIndex;
+  IDirectMusicTool* pTool;
+} DMUS_PRIVATE_GRAPH_TOOL, *LPDMUS_PRIVATE_GRAPH_TOOL;
+
 typedef struct _DMUS_PRIVATE_TEMPO_PLAY_STATE {
   DWORD dummy;
 } DMUS_PRIVATE_TEMPO_PLAY_STATE, *LPDMUS_PRIVATE_TEMPO_PLAY_STATE;
@@ -385,9 +391,8 @@ struct IDirectMusicGraphImpl {
 
   /* IDirectMusicGraphImpl fields */
   LPDMUS_OBJECTDESC pDesc;
-  IDirectMusicTool8Impl* pFirst;
-  IDirectMusicTool8Impl* pLast;
-  WORD                  num_tools;
+  WORD              num_tools;
+  struct list       Tools;
 };
 
 /* IUnknown: */
@@ -478,8 +483,6 @@ struct IDirectMusicTool8Impl {
   DWORD          ref;
 
   /* IDirectMusicTool8Impl fields */
-  IDirectMusicTool8Impl* pPrev;
-  IDirectMusicTool8Impl* pNext;
 };
 
 /* IUnknown: */

@@ -98,82 +98,92 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg (LPDIRECTMUSICG
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex) {
-    int i;
-	IDirectMusicTool8Impl* p;
-	IDirectMusicTool8Impl* toAdd = (IDirectMusicTool8Impl*) pTool;
-	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
+  ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
 
-	FIXME("(%p, %p, %p, %ld, %li): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
+  HRESULT hr; 
+  struct list* pEntry = NULL;
+  struct list* pPrevEntry = NULL;
+  LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
+  LPDMUS_PRIVATE_GRAPH_TOOL pNewTool = NULL;
 
-	if (0 == This->num_tools) {
-	  This->pFirst = This->pLast = toAdd;
-	  toAdd->pPrev = toAdd->pNext = NULL;
-	} else if (lIndex == 0 || lIndex <= -This->num_tools) {
-	  This->pFirst->pPrev = toAdd;
-	  toAdd->pNext = This->pFirst;
-	  toAdd->pPrev = NULL;
-	  This->pFirst = toAdd;
-	} else if (lIndex < 0) {
-	  p = This->pLast;
-	  for (i = 0; i < -lIndex; ++i) {
-	    p = p->pPrev;
-	  }
-	  toAdd->pNext = p->pNext;
-	  if (p->pNext) p->pNext->pPrev = toAdd;
-	  p->pNext = toAdd;
-	  toAdd->pPrev = p;
-	} else if (lIndex >= This->num_tools) {
-	  This->pLast->pNext = toAdd;
-	  toAdd->pPrev = This->pLast;
-	  toAdd->pNext = NULL;
-	  This->pLast = toAdd;
-	} else if (lIndex > 0) {
-	  p = This->pFirst;
-	  for (i = 0; i < lIndex; ++i) {
-	    p = p->pNext;
-	  }
-	  toAdd->pPrev = p->pPrev;
-	  if (p->pPrev) p->pPrev->pNext = toAdd;
-	  p->pPrev = toAdd;
-	  toAdd->pNext = p;
-	}
-	++This->num_tools;
-	return DS_OK;
+  
+  FIXME("(%p, %p, %p, %ld, %li): use of pdwPChannels\n", This, pTool, pdwPChannels, cPChannels, lIndex);
+  
+  if (NULL == pTool) {
+    return E_POINTER;
+  }
+
+  if (0 > lIndex) {
+    lIndex = This->num_tools + lIndex;
+  }
+
+  pPrevEntry = &This->Tools;
+  LIST_FOR_EACH (pEntry, &This->Tools) {
+    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_GRAPH_TOOL, entry);
+    if (pIt->dwIndex == lIndex) {
+      return DMUS_E_ALREADY_EXISTS;
+    }
+    if (pIt->dwIndex > lIndex) {
+      break ;
+    }
+    pPrevEntry = pEntry;
+  }
+
+  ++This->num_tools;
+  pNewTool = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_GRAPH_TOOL));
+  pNewTool->pTool = pTool;
+  pNewTool->dwIndex = lIndex;
+  IDirectMusicTool8_AddRef(pTool);
+  hr = IDirectMusicTool8_Init(pTool, iface);
+  list_add_tail (pPrevEntry->next, &pNewTool->entry);
+
+#if 0
+  DWORD dwNum = 0;
+  hr = IDirectMusicTool8_GetMediaTypes(pTool, &dwNum);
+#endif
+ 
+  return DS_OK;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool) {
-	int i;
-	IDirectMusicTool8Impl* p = NULL;
-	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
-	
-	FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppTool);
+  ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
+  struct list* pEntry = NULL;
+  LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
+  
+  FIXME("(%p, %ld, %p): stub\n", This, dwIndex, ppTool);
 
-	p = This->pFirst;
-	for (i = 0; i < dwIndex && i < This->num_tools; ++i) {
-	  p = p->pNext;
-	}
-	*ppTool = (IDirectMusicTool*) p;
-	if (NULL != *ppTool) {
-	  IDirectMusicTool8Impl_AddRef((LPDIRECTMUSICTOOL8) *ppTool);
-	}
-	return S_OK;
+  LIST_FOR_EACH (pEntry, &This->Tools) {
+    pIt = LIST_ENTRY(pEntry, DMUS_PRIVATE_GRAPH_TOOL, entry);
+    if (pIt->dwIndex == dwIndex) {
+      *ppTool = pIt->pTool;
+      if (NULL != *ppTool) {
+	IDirectMusicTool8Impl_AddRef((LPDIRECTMUSICTOOL8) *ppTool);
+      }
+      return S_OK;      
+    }
+    if (pIt->dwIndex > dwIndex) {
+      break ;
+    }
+  }
+
+  return DMUS_E_NOT_FOUND;
 }
 
 HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool) {
-	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
-	FIXME("(%p, %p): stub\n", This, pTool);
-	return S_OK;
+  ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
+  FIXME("(%p, %p): stub\n", This, pTool);
+  return S_OK;
 }
 
 ICOM_VTABLE(IDirectMusicGraph) DirectMusicGraph_Graph_Vtbl = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface,
-	IDirectMusicGraphImpl_IDirectMusicGraph_AddRef,
-	IDirectMusicGraphImpl_IDirectMusicGraph_Release,
-	IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg,
-	IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool,
-	IDirectMusicGraphImpl_IDirectMusicGraph_GetTool,
-	IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool
+  ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+  IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface,
+  IDirectMusicGraphImpl_IDirectMusicGraph_AddRef,
+  IDirectMusicGraphImpl_IDirectMusicGraph_Release,
+  IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg,
+  IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool,
+  IDirectMusicGraphImpl_IDirectMusicGraph_GetTool,
+  IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool
 };
 
 
@@ -586,22 +596,23 @@ ICOM_VTABLE(IPersistStream) DirectMusicGraph_PersistStream_Vtbl = {
 
 /* for ClassFactory */
 HRESULT WINAPI DMUSIC_CreateDirectMusicGraphImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-	IDirectMusicGraphImpl* obj;
-	
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));
-	if (NULL == obj) {
-		*ppobj = (LPVOID) NULL;
-		return E_OUTOFMEMORY;
-	}
-	obj->UnknownVtbl = &DirectMusicGraph_Unknown_Vtbl;
-	obj->GraphVtbl = &DirectMusicGraph_Graph_Vtbl;
-	obj->ObjectVtbl = &DirectMusicGraph_Object_Vtbl;
-	obj->PersistStreamVtbl = &DirectMusicGraph_PersistStream_Vtbl;
-	obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(obj->pDesc);
-	obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	memcpy (&obj->pDesc->guidClass, &CLSID_DirectMusicGraph, sizeof (CLSID));
-	obj->ref = 0; /* will be inited by QueryInterface */
-	
-	return IDirectMusicGraphImpl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
+  IDirectMusicGraphImpl* obj;
+  
+  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));
+  if (NULL == obj) {
+    *ppobj = (LPVOID) NULL;
+    return E_OUTOFMEMORY;
+  }
+  obj->UnknownVtbl = &DirectMusicGraph_Unknown_Vtbl;
+  obj->GraphVtbl = &DirectMusicGraph_Graph_Vtbl;
+  obj->ObjectVtbl = &DirectMusicGraph_Object_Vtbl;
+  obj->PersistStreamVtbl = &DirectMusicGraph_PersistStream_Vtbl;
+  obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
+  DM_STRUCT_INIT(obj->pDesc);
+  obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
+  memcpy (&obj->pDesc->guidClass, &CLSID_DirectMusicGraph, sizeof (CLSID));
+  obj->ref = 0; /* will be inited by QueryInterface */
+  list_init (&obj->Tools);
+  
+  return IDirectMusicGraphImpl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
 }
