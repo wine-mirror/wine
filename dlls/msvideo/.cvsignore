@@ -1,3 +1,4 @@
+*.glue.c
 *.spec.c
 *.spec.glue.s
 Makefile

@@ -8,7 +8,10 @@ ALTNAMES  = msvideo
 IMPORTS   = winmm
 
 C_SRCS = \
-	msvideo_main.c
+	msvideo_main.c \
+	drawdib.c
+
+GLUE = msvideo_main.c
 
 @MAKE_DLL_RULES@
 

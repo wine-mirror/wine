@@ -220,8 +220,8 @@ static int DRIVER_MapMsg16To32(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	}
 	break;
     default:
-	if (wMsg >= 0x800 && wMsg < 0x900) {
-	    /* FIXME: another hack to handle MCI messages... 
+	if ((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100 )) {
+	    /* FIXME: another hack to handle MCI and ICM messages... 
 	     * should find a *NICE* way to integrate DRIVER_ and
 	     * MCI_ mapping/unmapping functions
 	     */
@@ -286,8 +286,8 @@ static int DRIVER_UnMapMsg16To32(WORD wMsg, DWORD lParam1, DWORD lParam2)
 	ret = 0;
 	break;
     default:
-	if (wMsg >= 0x800 && wMsg < 0x900) {
-	    /* FIXME: another hack to handle MCI messages... 
+	if ((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100 )) {
+	    /* FIXME: another hack to handle MCI and ICM messages... 
 	     * should find a *NICE* way to integrate DRIVER_ and
 	     * MCI_ mapping/unmapping functions
 	     */
@@ -396,8 +396,8 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	}
 	break;
     default:
-	if (wMsg >= 0x800 && wMsg < 0x900) {
-	    /* FIXME: another hack to handle MCI messages... 
+	if ((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100 )) {
+	    /* FIXME: another hack to handle MCI and ICM messages... 
 	     * should find a *NICE* way to integrate DRIVER_ and
 	     * MCI_ mapping/unmapping functions
 	     */
@@ -466,8 +466,8 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 	ret = 0;
 	break;
     default:
-	if (wMsg >= 0x800 && wMsg < 0x900) {
-	    /* FIXME: another hack to handle MCI messages... 
+	if ((wMsg >= 0x800 && wMsg < 0x900) || (wMsg >= 0x4000 && wMsg < 0x4100 )) {
+	    /* FIXME: another hack to handle MCI and ICM messages... 
 	     * should find a *NICE* way to integrate DRIVER_ and
 	     * MCI_ mapping/unmapping functions
 	     */
@@ -617,7 +617,6 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam, BOOL bCallFr
 	lpDrv->lpNextItem = lpNewDrv;
 	lpNewDrv->lpPrevItem = lpDrv;
     }
-
     /* Now just open a new instance of a driver on this module */
     if (bCallFrom32) {
 	lpNewDrv->dwDriverID = SendDriverMessage((HDRVR)lpNewDrv, DRV_OPEN, 0L, lParam);

@@ -10,13 +10,9 @@
 #define VFWAPI	WINAPI
 #define VFWAPIV	WINAPIV
 
+typedef HANDLE16 HDRAWDIB16;
 typedef HANDLE HDRAWDIB;
 
-BOOL        VFWAPI DrawDibBegin(HDRAWDIB hdd, HDC hdc, INT dxDest, INT dyDest, LPBITMAPINFOHEADER lpbi, INT dxSrc, INT dySrc, UINT wFlags);
-BOOL        VFWAPI DrawDibClose(HDRAWDIB hdd);
-HDRAWDIB    VFWAPI DrawDibOpen(void);
-UINT        VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground);
-BOOL        VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal);
 HWND        VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCSTR szFile);
 HWND        VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance, DWORD dwStyle, LPCWSTR szFile);
 #define     MCIWndCreate WINELIB_NAME_AW(MCIWndCreate)
@@ -42,7 +38,7 @@ typedef struct IAVIStream IAVIStream,*PAVISTREAM;
 typedef struct IAVIFile IAVIFile,*PAVIFILE;
 typedef struct IGetFrame IGetFrame,*PGETFRAME;
 
-/* Installable Compressor M? */
+/* Installable Compressor Manager */
 
 DECLARE_HANDLE(HIC);
 
@@ -162,6 +158,11 @@ typedef struct tagWINE_HIC {
 
 /* structs */
 
+/* NOTE: Only the 16 bit structs are packed. Structs that are packed anyway
+ * have not been changed. If a structure is later extended, you may need to create
+ * two versions of it.
+ */
+
 typedef struct {
 	DWORD	dwSize;		/* 00: size */
 	DWORD	fccType;	/* 04: type 'vidc' usually */
@@ -278,6 +279,25 @@ typedef struct {
 					/* 238: */
 } ICINFO;
 
+#include "pshpack1.h"
+
+typedef struct {
+	DWORD dwSize;
+	DWORD fccType;
+	DWORD fccHandler;
+	DWORD dwFlags;
+	DWORD dwVersion;
+	DWORD dwVersionICM;
+	/*
+	 * under Win16, normal chars are used
+	 */
+	CHAR szName[16];
+	CHAR szDescription[128];
+	CHAR szDriver[128];
+} ICINFO16;
+
+#include "poppack.h"
+
 /* ICINFO.dwFlags */
 #define	VIDCF_QUALITY		0x0001  /* supports quality */
 #define	VIDCF_CRUNCH		0x0002  /* supports crunching to a frame size */
@@ -343,8 +363,29 @@ typedef struct {
     INT		dySrc;
 } ICDECOMPRESSEX;
 
-DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits);
+#include "pshpack1.h"
 
+typedef struct {
+    DWORD		dwFlags;
+    LPBITMAPINFOHEADER	lpbiSrc;
+    LPVOID		lpSrc;
+    LPBITMAPINFOHEADER	lpbiDst;
+    LPVOID		lpDst;
+
+    INT16  	xDst;       /* destination rectangle */
+    INT16	yDst;
+    INT16  	dxDst;
+    INT16  	dyDst;
+
+    INT16	xSrc;       /* source rectangle */
+    INT16  	ySrc;
+	INT16	dxSrc;
+    INT16  	dySrc;
+} ICDECOMPRESSEX16;
+
+#include "poppack.h"
+
+DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpData,LPBITMAPINFOHEADER lpbi,LPVOID lpBits);
 
 #define ICDecompressBegin(hic, lpbiInput, lpbiOutput) 	\
     ICSendMessage(						\
@@ -389,11 +430,37 @@ DWORD VFWAPIV ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,L
 BOOL	VFWAPI	ICInfo(DWORD fccType, DWORD fccHandler, ICINFO * lpicinfo);
 LRESULT	VFWAPI	ICGetInfo(HIC hic,ICINFO *picinfo, DWORD cb);
 HIC	VFWAPI	ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode);
+HIC16 VFWAPI ICOpen16(DWORD fccType, DWORD fccHangler, UINT16 wMode);
 HIC	VFWAPI	ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler);
 
 LRESULT VFWAPI ICClose(HIC hic);
 LRESULT	VFWAPI	ICSendMessage(HIC hic, UINT msg, DWORD dw1, DWORD dw2);
+LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD dw1, DWORD dw2);
 HIC	VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
+HIC16 VFWAPI ICLocate16(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut, WORD wFlags);
+
+/* As passed to ICM_DRAW_SUGGESTFORMAT */
+typedef struct {
+	DWORD dwFlags;
+	LPBITMAPINFOHEADER lpbiIn;
+	LPBITMAPINFOHEADER lpbiSuggest;
+	INT dxSrc;
+	INT dySrc;
+	INT dxDst;
+	INT dyDst;
+	HIC hicDecompressor;
+} ICDRAWSUGGEST;
+
+typedef struct {
+	DWORD dwFlags;
+	LPBITMAPINFOHEADER lpbiIn;
+	LPBITMAPINFOHEADER lpbiSuggest;
+	INT16 dxSrc;
+	INT16 dySrc;
+	INT16 dxDst;
+	INT16 dyDst;
+	HIC16 hicDecompressor;
+} ICDRAWSUGGEST16;
 
 DWORD	VFWAPIV	ICDrawBegin(
         HIC			hic,
@@ -414,7 +481,26 @@ DWORD	VFWAPIV	ICDrawBegin(
         DWORD			dwScale
 );
 
-/* as passed to ICM_DRAW_BEGIN (FIXME: correct only for Win32?)  */
+DWORD	VFWAPIV	ICDrawBegin16(
+        HIC16			hic,
+        DWORD			dwFlags,/* flags */
+        HPALETTE16		hpal,	/* palette to draw with */
+        HWND16			hwnd,	/* window to draw to */
+        HDC16			hdc,	/* HDC to draw to */
+		INT16			xDst,	/* destination rectangle */
+        INT16			yDst,
+        INT16			dxDst,
+        INT16			dyDst,
+        LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
+        INT16			xSrc,	/* source rectangle */
+        INT16			ySrc,
+        INT16			dxSrc,
+        INT16			dySrc,
+        DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
+        DWORD			dwScale
+);
+
+/* as passed to ICM_DRAW_BEGIN */
 typedef struct {
 	DWORD		dwFlags;
 	HPALETTE	hpal;
@@ -432,6 +518,28 @@ typedef struct {
 	DWORD		dwRate;
 	DWORD		dwScale;
 } ICDRAWBEGIN;
+
+#include "pshpack1.h"
+
+typedef struct {
+	DWORD		dwFlags;
+	HPALETTE16	hpal;
+	HWND16		hwnd;
+	HDC16		hdc;
+	INT16		xDst;
+	INT16		yDst;
+	INT16		dxDst;
+	INT16		dyDst;
+	LPBITMAPINFOHEADER	lpbi;
+	INT16		xSrc;
+	INT16		ySrc;
+	INT16		dxSrc;
+	INT16		dySrc;
+	DWORD		dwRate;
+	DWORD		dwScale;
+} ICDRAWBEGIN16;
+
+#include "poppack.h"
 
 #define ICDRAW_HURRYUP      0x80000000L   /* don't draw just buffer (hurry up!) */
 #define ICDRAW_UPDATE       0x40000000L   /* don't draw just update screen */
@@ -815,5 +923,55 @@ ICOM_DEFINE(IGetFrame,IUnknown)
 #define AVIERR_USERABORT	MAKE_AVIERR(198)
 #define AVIERR_ERROR		MAKE_AVIERR(199)
 
+/********************************************
+ * DrawDib declarations
+ */
+
+HDRAWDIB VFWAPI DrawDibOpen( void );
+UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground);
+
+BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
+						 HDC hdc,
+						 INT dxDst,
+						 INT dyDst,
+						 LPBITMAPINFOHEADER lpbi,
+						 INT dxSrc,
+						 INT dySrc,
+						 UINT wFlags);
+
+BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd,
+						HDC hdc,
+						INT xDst,
+						INT yDst,
+						INT dxDst,
+						INT dyDst,
+						LPBITMAPINFOHEADER lpbi,
+						LPVOID lpBits,
+						INT xSrc,
+						INT ySrc,
+						INT dxSrc,
+						INT dySrc,
+						UINT wFlags);
+
+/* DrawDibDraw flags */
+
+#define DDF_UPDATE				0x0002
+#define DDF_SAME_HDC			0x0004
+#define DDF_SAME_DRAW			0x0008
+#define DDF_DONTDRAW			0x0010
+#define DDF_ANIMATE				0x0020
+#define DDF_BUFFER				0x0040
+#define DDF_JUSTDRAWIT			0x0080
+#define DDF_FULLSCREEN			0x0100
+#define DDF_BACKGROUNDPAL		0x0200
+#define DDF_NOTKEYFRAME			0x0400
+#define DDF_HURRYUP				0x0800
+#define DDF_HALFTONE			0x1000
+
+BOOL VFWAPI DrawDibSetPalette(HDRAWDIB hdd, HPALETTE hpal);
+HPALETTE VFWAPI DrawDibGetPalette(HDRAWDIB hdd);
+
+BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd);
+BOOL VFWAPI DrawDibClose(HDRAWDIB hdd);
 
 #endif /* __WINE_VFW_H */

@@ -10,16 +10,16 @@ import	winmm.dll
   3 stdcall DrawDibBegin(long long long long ptr long long long) DrawDibBegin
   4 stub    DrawDibChangePalette
   5 stdcall DrawDibClose(long) DrawDibClose
-  6 stub    DrawDibDraw
-  7 stub    DrawDibEnd
+  6 stdcall DrawDibDraw(long long long long long long ptr ptr long long long long long) DrawDibDraw
+  7 stdcall DrawDibEnd(long) DrawDibEnd
   8 stub    DrawDibGetBuffer
-  9 stub    DrawDibGetPalette
+  9 stdcall DrawDibGetPalette(long) DrawDibGetPalette
  10 stdcall DrawDibOpen() DrawDibOpen
  11 stub    DrawDibProfileDisplay
  12 stdcall DrawDibRealize(long long long) DrawDibRealize
  13 stdcall DrawDibSetPalette(long long) DrawDibSetPalette
- 14 stub    DrawDibStart
- 15 stub    DrawDibStop
+ 14 stdcall DrawDibStart(long long) DrawDibStart
+ 15 stdcall DrawDibStop(long) DrawDibStop
  16 stub    DrawDibTime
  17 stub    GetOpenFileNamePreview
  18 stub    GetOpenFileNamePreviewA
