@@ -134,6 +134,9 @@ typedef struct {
 
     snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
 
+    struct pollfd		*ufds;
+    int				count;
+
     DWORD                       dwBufferSize;           /* size of whole ALSA buffer in bytes */
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
@@ -835,6 +838,24 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
 }
 
+
+void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int count)
+{
+    unsigned short revents;
+
+    while (1) {
+	poll(ufds, count, -1);
+	snd_pcm_poll_descriptors_revents(handle, ufds, count, &revents);
+
+	if (revents & POLLERR)
+	    return;
+
+	/*if (revents & POLLOUT)
+		return 0;*/
+    }
+}
+
+
 /**************************************************************************
  * 				wodPlayer_Reset			[internal]
  *
@@ -846,6 +867,9 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
     DWORD		        param;
     HANDLE		        ev;
     int                         err;
+
+    /* flush all possible output */
+    wait_for_poll(wwo->p_handle, wwo->ufds, wwo->count);
 
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
@@ -1186,6 +1210,22 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
+    wwo->count = snd_pcm_poll_descriptors_count (wwo->p_handle);
+    if (wwo->count <= 0) {
+	ERR("Invalid poll descriptors count\n");
+	return MMSYSERR_ERROR;
+    }
+
+    wwo->ufds = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct pollfd) * wwo->count);
+    if (wwo->ufds == NULL) {
+	ERR("No enough memory\n");
+	return MMSYSERR_NOMEM;
+    }
+    if ((err = snd_pcm_poll_descriptors(wwo->p_handle, wwo->ufds, wwo->count)) < 0) {
+	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
+	return MMSYSERR_ERROR;
+    }
+
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
@@ -1243,6 +1283,8 @@ static DWORD wodClose(WORD wDevID)
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
+
+    HeapFree(GetProcessHeap(), 0, wwo->ufds);
     return ret;
 }
 
