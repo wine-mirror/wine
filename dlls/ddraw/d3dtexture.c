@@ -854,8 +854,8 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture,  VTABLE_IDirect3DTexture);
     ICOM_INIT_INTERFACE(surf, IDirect3DTexture2, VTABLE_IDirect3DTexture2);
 
+    ENTER_GL();
     if (mipmap_level == 0) {
-        ENTER_GL();
 	glGenTextures(1, &(private->tex_name));
 	if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
 	TRACE(" GL texture created (private data at %p and GL id %d).\n", private, private->tex_name);

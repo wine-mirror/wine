@@ -127,7 +127,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); 
 			break;
 		    default:
-			ERR("Unhandled fill mode !\n");
+			ERR("Unhandled fill mode %ld !\n",dwRenderState);
 		 }
 	         break;
 
@@ -140,7 +140,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			glShadeModel(GL_SMOOTH);
 			break;
 		    default:
-			ERR("Unhandled shade mode !\n");
+			ERR("Unhandled shade mode %ld !\n",dwRenderState);
 		}
 	        break;
 
@@ -167,7 +167,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			rs->mag = GL_LINEAR;
 			break;
 		    default:
-			ERR("Unhandled texture mag !\n");
+			ERR("Unhandled texture mag %ld !\n",dwRenderState);
 	        }
 	        break;
 
@@ -180,7 +180,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			rs->mag = GL_LINEAR;
 			break;
 		    default:
-			ERR("Unhandled texture min !\n");
+			ERR("Unhandled texture min %ld !\n",dwRenderState);
 		}
 	        break;
 
@@ -193,7 +193,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		          rs->src = GL_SRC_ALPHA;
 			  break;
 		    default:
-			  ERR("Unhandled blend mode !\n");
+			  ERR("Unhandled blend mode %ld !\n",dwRenderState);
 		}
 	        glBlendFunc(rs->src, rs->dst);
 	        break;
@@ -207,7 +207,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		        rs->dst = GL_ONE_MINUS_SRC_ALPHA;
 			break;
 		    default:
-			ERR("Unhandled blend mode !\n");
+			ERR("Unhandled blend mode %ld !\n",dwRenderState);
 		}
 	        glBlendFunc(rs->src, rs->dst);
 	        break;
@@ -219,7 +219,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			  break;
 		    default:
-			  ERR("Unhandled texture environment !\n");
+			  ERR("Unhandled texture environment %ld !\n",dwRenderState);
 		}
 	        break;
 
@@ -237,7 +237,7 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 			 glFrontFace(GL_CCW);
 			 break;
 		    default:
-			 ERR("Unhandled cull mode !\n");
+			 ERR("Unhandled cull mode %ld !\n",dwRenderState);
 		}
 	        break;
 
