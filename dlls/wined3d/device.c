@@ -3616,7 +3616,8 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, refCount + 1);
 
     if (!refCount) {
-        IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
+        /*TODO: Remove me once d3d8 stateblocks are converted */
+        if (This->stateBlock) IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
         IWineD3D_Release(This->wineD3D);
         HeapFree(GetProcessHeap(), 0, This);
     }
