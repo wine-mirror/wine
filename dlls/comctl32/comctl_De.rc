@@ -10,3 +10,8 @@ STRINGTABLE DISCARDABLE
      IDM_TODAY    "Heute:"
      IDM_GOTODAY  "Gehe zu Heute"
 }
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_SEPARATOR "Trennzeichen"
+}

@@ -36,6 +36,8 @@ extern HMODULE COMCTL32_hModule;
 #define IDC_MOVEUP_BTN      206
 #define IDC_MOVEDN_BTN      207
 
+#define IDS_SEPARATOR      1024
+
 /* Toolbar imagelist bitmaps */
 #define IDB_STD_SMALL       120
 #define IDB_STD_LARGE       121
