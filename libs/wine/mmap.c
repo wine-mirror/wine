@@ -225,9 +225,24 @@ static void reserve_area( void *addr, void *end )
  */
 void mmap_init(void)
 {
-    static char * const user_space_limit = (char *)0x80000000;
+    struct reserved_area *area;
+    struct list *ptr;
     char stack;
     char * const stack_ptr = &stack;
+    char *user_space_limit = (char *)0x80000000;
+
+    /* check for a reserved area starting at the user space limit */
+    /* to avoid wasting time trying to allocate it again */
+    LIST_FOR_EACH( ptr, &reserved_areas )
+    {
+        area = LIST_ENTRY( ptr, struct reserved_area, entry );
+        if ((char *)area->base > user_space_limit) break;
+        if ((char *)area->base + area->size > user_space_limit)
+        {
+            user_space_limit = (char *)area->base + area->size;
+            break;
+        }
+    }
 
     if (stack_ptr >= user_space_limit)
     {
