@@ -48,7 +48,6 @@ typedef struct tagMSIFIELD
     union
     {
         INT iVal;
-        LPSTR szVal;
         LPWSTR szwVal;
         IStream *stream;
     } u;
@@ -66,9 +65,6 @@ void MSI_FreeField( MSIFIELD *field )
     {
     case MSIFIELD_NULL:
     case MSIFIELD_INT:
-        break;
-    case MSIFIELD_STR:
-        HeapFree( GetProcessHeap(), 0, field->u.szVal);
         break;
     case MSIFIELD_WSTR:
         HeapFree( GetProcessHeap(), 0, field->u.szwVal);
@@ -125,29 +121,6 @@ unsigned int WINAPI MsiRecordGetFieldCount( MSIHANDLE handle )
     return rec->count;
 }
 
-static BOOL string2intA( LPCSTR str, int *out )
-{
-    int x = 0;
-    LPCSTR p = str;
-
-    if( *p == '-' ) /* skip the minus sign */
-        p++;
-    while ( *p )
-    {
-        if( (*p < '0') || (*p > '9') )
-            return FALSE;
-        x *= 10;
-        x += (*p - '0');
-        p++;
-    }
-
-    if( str[0] == '-' ) /* check if it's negative */
-        x = -x;
-    *out = x; 
-
-    return TRUE;
-}
-
 static BOOL string2intW( LPCWSTR str, int *out )
 {
     int x = 0;
@@ -189,10 +162,6 @@ int WINAPI MsiRecordGetInteger( MSIHANDLE handle, unsigned int iField)
     {
     case MSIFIELD_INT:
         return rec->fields[iField].u.iVal;
-    case MSIFIELD_STR:
-        if( string2intA( rec->fields[iField].u.szVal, &ret ) )
-            return ret;
-        return MSI_NULL_INTEGER;
     case MSIFIELD_WSTR:
         if( string2intW( rec->fields[iField].u.szwVal, &ret ) )
             return ret;
@@ -286,10 +255,6 @@ UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField,
         len = lstrlenA( buffer );
         lstrcpynA(szValue, buffer, *pcchValue);
         break;
-    case MSIFIELD_STR:
-        len = lstrlenA( rec->fields[iField].u.szVal );
-        lstrcpynA(szValue, rec->fields[iField].u.szVal, *pcchValue);
-        break;
     case MSIFIELD_WSTR:
         len = WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
                              NULL, 0 , NULL, NULL);
@@ -306,6 +271,20 @@ UINT WINAPI MsiRecordGetStringA(MSIHANDLE handle, unsigned int iField,
     *pcchValue = len;
 
     return ret;
+}
+
+const WCHAR *MSI_RecordGetString( MSIHANDLE handle, unsigned int iField )
+{
+    MSIRECORD *rec;
+
+    rec = msihandle2msiinfo( handle, MSIHANDLETYPE_RECORD );
+    if( !rec )
+        return NULL;
+
+    if( iField > rec->count )
+        return NULL;
+
+    return rec->fields[iField].u.szwVal;
 }
 
 UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
@@ -337,12 +316,6 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
         len = lstrlenW( rec->fields[iField].u.szwVal );
         lstrcpynW(szValue, rec->fields[iField].u.szwVal, *pcchValue);
         break;
-    case MSIFIELD_STR:
-        len = MultiByteToWideChar( CP_ACP, 0, rec->fields[iField].u.szVal, -1,
-                             NULL, 0 );
-        MultiByteToWideChar( CP_ACP, 0, rec->fields[iField].u.szVal, -1,
-                             szValue, *pcchValue);
-        break;
     default:
         break;
     }
@@ -363,7 +336,8 @@ UINT WINAPI MsiRecordDataSize(MSIHANDLE hRecord, unsigned int iField)
 UINT WINAPI MsiRecordSetStringA( MSIHANDLE handle, unsigned int iField, LPCSTR szValue )
 {
     MSIRECORD *rec;
-    LPSTR str;
+    LPWSTR str;
+    UINT len;
 
     TRACE("%ld %d %s\n", handle, iField, debugstr_a(szValue));
 
@@ -374,12 +348,12 @@ UINT WINAPI MsiRecordSetStringA( MSIHANDLE handle, unsigned int iField, LPCSTR s
     if( iField > rec->count )
         return ERROR_INVALID_FIELD;
 
-    str = HeapAlloc( GetProcessHeap(), 0, (lstrlenA(szValue) + 1)*sizeof str[0]);
-    lstrcpyA( str, szValue );
-
+    len = MultiByteToWideChar( CP_ACP, 0, szValue, -1, NULL, 0 );
+    str = HeapAlloc( GetProcessHeap(), 0, len );
+    MultiByteToWideChar( CP_ACP, 0, szValue, -1, str, len );
     MSI_FreeField( &rec->fields[iField] );
-    rec->fields[iField].type = MSIFIELD_STR;
-    rec->fields[iField].u.szVal = str;
+    rec->fields[iField].type = MSIFIELD_WSTR;
+    rec->fields[iField].u.szwVal = str;
 
     return 0;
 }

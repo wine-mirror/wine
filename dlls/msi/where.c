@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
@@ -95,8 +96,8 @@ static UINT INT_evaluate( UINT lval, UINT op, UINT rval )
     return 0;
 }
 
-static const char *STRING_evaluate( string_table *st,
-              MSIVIEW *table, UINT row, struct expr *expr )
+static const WCHAR *STRING_evaluate( string_table *st,
+              MSIVIEW *table, UINT row, struct expr *expr, MSIHANDLE record )
 {
     UINT val = 0, r;
 
@@ -108,8 +109,11 @@ static const char *STRING_evaluate( string_table *st,
             return NULL;
         return msi_string_lookup_id( st, val );
 
-    case EXPR_UTF8:
-        return expr->u.utf8;
+    case EXPR_SVAL:
+        return expr->u.sval;
+
+    case EXPR_WILDCARD:
+        return MSI_RecordGetString( record, 1 );
 
     default:
         ERR("Invalid expression type\n");
@@ -119,13 +123,13 @@ static const char *STRING_evaluate( string_table *st,
 }
 
 static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val )
+                             struct expr *cond, UINT *val, MSIHANDLE record )
 {
     int sr;
-    const char *l_str, *r_str;
+    const WCHAR *l_str, *r_str;
 
-    l_str = STRING_evaluate( st, table, row, cond->u.expr.left );
-    r_str = STRING_evaluate( st, table, row, cond->u.expr.right );
+    l_str = STRING_evaluate( st, table, row, cond->u.expr.left, record );
+    r_str = STRING_evaluate( st, table, row, cond->u.expr.right, record );
     if( l_str == r_str )
         sr = 0;
     else if( l_str && ! r_str )
@@ -133,7 +137,7 @@ static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row,
     else if( r_str && ! l_str )
         sr = -1;
     else
-        sr = strcmp( l_str, r_str );
+        sr = strcmpW( l_str, r_str );
 
     *val = ( cond->u.expr.op == OP_EQ && ( sr == 0 ) ) ||
            ( cond->u.expr.op == OP_LT && ( sr < 0 ) ) ||
@@ -143,7 +147,7 @@ static UINT STRCMP_Evaluate( string_table *st, MSIVIEW *table, UINT row,
 }
 
 static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row, 
-                             struct expr *cond, UINT *val )
+                             struct expr *cond, UINT *val, MSIHANDLE record )
 {
     UINT r, lval, rval;
 
@@ -155,26 +159,26 @@ static UINT WHERE_evaluate( MSIDATABASE *db, MSIVIEW *table, UINT row,
     case EXPR_COL_NUMBER:
         return table->ops->fetch_int( table, row, cond->u.col_number, val );
 
-    /* case EXPR_IVAL:
-        *val = cond->u.ival;
-        return ERROR_SUCCESS; */
-
     case EXPR_UVAL:
         *val = cond->u.uval;
         return ERROR_SUCCESS;
 
     case EXPR_COMPLEX:
-        r = WHERE_evaluate( db, table, row, cond->u.expr.left, &lval );
+        r = WHERE_evaluate( db, table, row, cond->u.expr.left, &lval, record );
         if( r != ERROR_SUCCESS )
             return r;
-        r = WHERE_evaluate( db, table, row, cond->u.expr.right, &rval );
+        r = WHERE_evaluate( db, table, row, cond->u.expr.right, &rval, record );
         if( r != ERROR_SUCCESS )
             return r;
         *val = INT_evaluate( lval, cond->u.expr.op, rval );
         return ERROR_SUCCESS;
 
     case EXPR_STRCMP:
-        return STRCMP_Evaluate( db->strings, table, row, cond, val );
+        return STRCMP_Evaluate( db->strings, table, row, cond, val, record );
+
+    case EXPR_WILDCARD:
+        *val = MsiRecordGetInteger( record, 1 );
+        return ERROR_SUCCESS;
 
     default:
         ERR("Invalid expression type\n");
@@ -211,7 +215,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
     for( i=0; i<count; i++ )
     {
         val = 0;
-        r = WHERE_evaluate( wv->db, table, i, wv->cond, &val );
+        r = WHERE_evaluate( wv->db, table, i, wv->cond, &val, record );
         if( r != ERROR_SUCCESS )
             return r;
         if( val )
@@ -350,8 +354,7 @@ UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
 static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr *cond,
                                    UINT *valid )
 {
-    UINT r, val = 0, len;
-    char *str;
+    UINT r, val = 0;
 
     switch( cond->type )
     {
@@ -380,8 +383,8 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
             return r;
 
         /* check the type of the comparison */
-        if( ( cond->u.expr.left->type == EXPR_UTF8 ) ||
-            ( cond->u.expr.right->type == EXPR_UTF8 ) )
+        if( ( cond->u.expr.left->type == EXPR_SVAL ) ||
+            ( cond->u.expr.right->type == EXPR_SVAL ) )
         {
             switch( cond->u.expr.op )
             {
@@ -405,18 +408,10 @@ static UINT WHERE_VerifyCondition( MSIDATABASE *db, MSIVIEW *table, struct expr 
         cond->type = EXPR_UVAL;
         cond->u.uval = cond->u.ival + (1<<15);
         break;
+    case EXPR_WILDCARD:
+        *valid = 1;
+        break;
     case EXPR_SVAL:
-        /* convert to UTF8 so we have the same format as the DB */
-        len = WideCharToMultiByte( CP_UTF8, 0,
-                 cond->u.sval, -1, NULL, 0, NULL, NULL);
-        str = HeapAlloc( GetProcessHeap(), 0, len );
-        if( !str )
-            return ERROR_OUTOFMEMORY;
-        WideCharToMultiByte( CP_UTF8, 0,
-                 cond->u.sval, -1, str, len, NULL, NULL);
-        HeapFree( GetProcessHeap(), 0, cond->u.sval );
-        cond->type = EXPR_UTF8;
-        cond->u.utf8 = str;
         *valid = 1;
         break;
     default:

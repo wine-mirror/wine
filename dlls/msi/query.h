@@ -50,6 +50,7 @@
 #define EXPR_UVAL     6
 #define EXPR_STRCMP   7
 #define EXPR_UTF8     8
+#define EXPR_WILDCARD 9
 
 struct sql_str {
     LPCWSTR data;
@@ -101,8 +102,8 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view );
 
-UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
-UINT SELECT_AddColumn( MSIVIEW *select, LPWSTR name );
+UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+                        string_list *columns );
 
 UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 

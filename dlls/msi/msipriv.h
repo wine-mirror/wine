@@ -182,13 +182,13 @@ extern HRESULT init_string_table( IStorage *stg );
 
 
 /* string table functions */
-extern BOOL msi_addstring( string_table *st, UINT string_no, const CHAR *data, UINT len, UINT refcount );
-extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, UINT len, UINT refcount );
+extern BOOL msi_addstring( string_table *st, UINT string_no, const CHAR *data, int len, UINT refcount );
+extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, UINT refcount );
 extern UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
 extern UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz );
 
 extern LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid);
-extern UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id );
+extern UINT msi_string2idW( string_table *st, LPCWSTR buffer, UINT *id );
 extern UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id );
 extern string_table *msi_init_stringtable( int entries, UINT codepage );
 extern VOID msi_destroy_stringtable( string_table *st );
@@ -196,7 +196,7 @@ extern UINT msi_string_count( string_table *st );
 extern UINT msi_id_refcount( string_table *st, UINT i );
 extern UINT msi_string_totalsize( string_table *st );
 extern UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res );
-extern const char *msi_string_lookup_id( string_table *st, UINT id );
+extern const WCHAR *msi_string_lookup_id( string_table *st, UINT id );
 
 
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
@@ -208,11 +208,15 @@ UINT read_raw_stream_data( MSIHANDLE hdb, LPCWSTR stname,
 UINT ACTION_DoTopLevelINSTALL(MSIHANDLE hPackage, LPCWSTR szPackagePath,
                               LPCWSTR szCommandLine);
 
+/* record internals */
 extern UINT WINAPI MSI_RecordSetIStream( MSIHANDLE handle, 
               unsigned int iField, IStream *stm );
+extern const WCHAR *MSI_RecordGetString( MSIHANDLE handle, unsigned int iField );
+
+
+/* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
 extern UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm );
 extern void enum_stream_names( IStorage *stg );
-
 
 #endif /* __WINE_MSI_PRIVATE__ */

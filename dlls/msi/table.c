@@ -935,7 +935,7 @@ static UINT get_tablecolumns( MSIDATABASE *db,
     }
 
     /* convert table and column names to IDs from the string table */
-    r = msi_string2id( db->strings, szTableName, &table_id );
+    r = msi_string2idW( db->strings, szTableName, &table_id );
     if( r != ERROR_SUCCESS )
     {
         release_table( db, table );
@@ -998,7 +998,7 @@ BOOL TABLE_Exists( MSIDATABASE *db, LPWSTR name )
     if( !lstrcmpW( name, szColumns ) )
         return TRUE;
 
-    r = msi_string2id( db->strings, name, &table_id );
+    r = msi_string2idW( db->strings, name, &table_id );
     if( r != ERROR_SUCCESS )
     {
         TRACE("Couldn't find id for %s\n", debugstr_w(name));

@@ -1,7 +1,7 @@
 /*
  * Implementation of the Microsoft Installer (msi.dll)
  *
- * Copyright 2002 Mike McCormack for CodeWeavers
+ * Copyright 2002-2004 Mike McCormack for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,35 @@ static UINT SELECT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     col = sv->cols[ col - 1 ];
 
     return sv->table->ops->fetch_int( sv->table, row, col, val );
+}
+
+static UINT SELECT_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
+{
+    MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
+
+    TRACE("%p %d %d %04x\n", sv, row, col, val );
+
+    if( !sv->table )
+         return ERROR_FUNCTION_FAILED;
+
+    if( (col==0) || (col>sv->num_cols) )
+         return ERROR_FUNCTION_FAILED;
+
+    col = sv->cols[ col - 1 ];
+
+    return sv->table->ops->set_int( sv->table, row, col, val );
+}
+
+static UINT SELECT_insert_row( struct tagMSIVIEW *view, UINT *num )  
+{
+    MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
+
+    TRACE("%p %p\n", sv, num );
+
+    if( !sv->table )
+         return ERROR_FUNCTION_FAILED;
+
+    return sv->table->ops->insert_row( sv->table, num );
 }
 
 static UINT SELECT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
@@ -152,8 +181,8 @@ static UINT SELECT_delete( struct tagMSIVIEW *view )
 MSIVIEWOPS select_ops =
 {
     SELECT_fetch_int,
-    NULL,
-    NULL,
+    SELECT_set_int,
+    SELECT_insert_row,
     SELECT_execute,
     SELECT_close,
     SELECT_get_dimensions,
@@ -162,39 +191,8 @@ MSIVIEWOPS select_ops =
     SELECT_delete
 };
 
-UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table )
+static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPWSTR name )
 {
-    MSISELECTVIEW *sv = NULL;
-    UINT count = 0, r;
-
-    TRACE("%p\n", sv );
-
-    r = table->ops->get_dimensions( table, NULL, &count );
-    if( r != ERROR_SUCCESS )
-    {
-        ERR("can't get table dimensions\n");
-        return r;
-    }
-
-    sv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                    sizeof *sv + count*sizeof (UINT) );
-    if( !sv )
-        return ERROR_FUNCTION_FAILED;
-    
-    /* fill the structure */
-    sv->view.ops = &select_ops;
-    sv->db = db;
-    sv->table = table;
-    sv->num_cols = 0;
-    sv->max_cols = count;
-    *view = (MSIVIEW*) sv;
-
-    return ERROR_SUCCESS;
-}
-
-UINT SELECT_AddColumn( MSIVIEW *view, LPWSTR name )
-{
-    MSISELECTVIEW *sv = (MSISELECTVIEW*)view;
     UINT r, n=0;
     MSIVIEW *table;
 
@@ -225,4 +223,50 @@ UINT SELECT_AddColumn( MSIVIEW *view, LPWSTR name )
     sv->num_cols++;
 
     return ERROR_SUCCESS;
+}
+
+UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+                        string_list *columns )
+{
+    MSISELECTVIEW *sv = NULL;
+    UINT count = 0, r;
+
+    TRACE("%p\n", sv );
+
+    r = table->ops->get_dimensions( table, NULL, &count );
+    if( r != ERROR_SUCCESS )
+    {
+        ERR("can't get table dimensions\n");
+        return r;
+    }
+
+    sv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                    sizeof *sv + count*sizeof (UINT) );
+    if( !sv )
+        return ERROR_FUNCTION_FAILED;
+    
+    /* fill the structure */
+    sv->view.ops = &select_ops;
+    sv->db = db;
+    sv->table = table;
+    sv->num_cols = 0;
+    sv->max_cols = count;
+
+    while( columns )
+    {
+        r = SELECT_AddColumn( sv, columns->string );
+        if( r )
+            break;
+        columns = columns->next;
+    }
+
+    if( r != ERROR_SUCCESS )
+    {
+        sv->view.ops->delete( &sv->view );
+        sv = NULL;
+    }
+
+    *view = &sv->view;
+
+    return r;
 }

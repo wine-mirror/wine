@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
@@ -40,7 +41,7 @@ typedef struct _msistring
 {
     UINT hash;
     UINT refcount;
-    LPSTR str;
+    LPWSTR str;
 } msistring;
 
 struct string_table
@@ -51,7 +52,7 @@ struct string_table
     msistring *strings; /* an array of strings (in the tree) */
 };
 
-static int msistring_makehash( const char *str )
+static int msistring_makehash( const WCHAR *str )
 {
     int hash = 0;
 
@@ -103,6 +104,8 @@ static int st_find_free_entry( string_table *st )
     int i, sz;
     msistring *p;
 
+    TRACE("%p\n", st);
+
     for( i = st->freeslot; i < st->count; i++ )
         if( !st->strings[i].refcount )
             return i;
@@ -131,8 +134,10 @@ static void st_mark_entry_used( string_table *st, int n )
     st->freeslot = n + 1;
 }
 
-int msi_addstring( string_table *st, UINT n, const CHAR *data, UINT len, UINT refcount )
+int msi_addstring( string_table *st, UINT n, const CHAR *data, int len, UINT refcount )
 {
+    int sz;
+
     if( !data[0] )
         return 0;
     if( n > 0 )
@@ -154,12 +159,13 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, UINT len, UINT re
 
     /* allocate a new string */
     if( len < 0 )
-        len = strlen( data );
-    st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, len + 1 );
+        len = strlen(data);
+    sz = MultiByteToWideChar( st->codepage, 0, data, len, NULL, 0 );
+    st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, (sz+1)*sizeof(WCHAR) );
     if( !st->strings[n].str )
         return -1;
-    memcpy( st->strings[n].str, data, len );
-    st->strings[n].str[len] = 0;
+    MultiByteToWideChar( st->codepage, 0, data, len, st->strings[n].str, sz );
+    st->strings[n].str[sz] = 0;
     st->strings[n].refcount = 1;
     st->strings[n].hash = msistring_makehash( st->strings[n].str );
 
@@ -168,10 +174,8 @@ int msi_addstring( string_table *st, UINT n, const CHAR *data, UINT len, UINT re
     return n;
 }
 
-int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT refcount )
+int msi_addstringW( string_table *st, UINT n, const WCHAR *data, int len, UINT refcount )
 {
-    int sz;
-
     /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
     if( !data[0] )
@@ -183,7 +187,7 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
     }
     else
     {
-        if( ERROR_SUCCESS == msi_string2id( st, data, &n ) )
+        if( ERROR_SUCCESS == msi_string2idW( st, data, &n ) )
         {
             st->strings[n].refcount++;
             return n;
@@ -194,13 +198,16 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
     }
 
     /* allocate a new string */
-    sz = WideCharToMultiByte( st->codepage, 0, data, len, NULL, 0, NULL, NULL );
-    st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, sz + 1 );
+    if(len<0)
+        len = strlenW(data);
+    TRACE("%s, n = %d len = %d\n", debugstr_w(data), n, len );
+
+    st->strings[n].str = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(WCHAR) );
     if( !st->strings[n].str )
         return -1;
-    WideCharToMultiByte( st->codepage, 0, data, len, 
-                         st->strings[n].str, sz, NULL, NULL );
-    st->strings[n].str[sz] = 0;
+    TRACE("%d\n",__LINE__);
+    memcpy( st->strings[n].str, data, len*sizeof(WCHAR) );
+    st->strings[n].str[len] = 0;
     st->strings[n].refcount = 1;
     st->strings[n].hash = msistring_makehash( st->strings[n].str );
 
@@ -210,10 +217,11 @@ int msi_addstringW( string_table *st, UINT n, const WCHAR *data, UINT len, UINT 
 }
 
 /* find the string identified by an id - return null if there's none */
-const char *msi_string_lookup_id( string_table *st, UINT id )
+const WCHAR *msi_string_lookup_id( string_table *st, UINT id )
 {
+    static const WCHAR zero[] = { 0 };
     if( id == 0 )
-        return "";
+        return zero;
 
     if( id >= st->count )
         return NULL;
@@ -239,7 +247,7 @@ const char *msi_string_lookup_id( string_table *st, UINT id )
 UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
 {
     UINT len;
-    const char *str;
+    const WCHAR *str;
 
     TRACE("Finding string %d of %d\n", id, st->count);
 
@@ -247,7 +255,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
     if( !str )
         return ERROR_FUNCTION_FAILED;
 
-    len = MultiByteToWideChar(st->codepage,0,str,-1,NULL,0); 
+    len = strlenW( str ) + 1;
 
     if( !buffer )
     {
@@ -255,7 +263,10 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    *sz = MultiByteToWideChar(st->codepage,0,str,-1,buffer,*sz); 
+    if( *sz < len )
+        *sz = len;
+    memcpy( buffer, str, (*sz)*sizeof(WCHAR) ); 
+    *sz = len;
 
     return ERROR_SUCCESS;
 }
@@ -275,7 +286,7 @@ UINT msi_id2stringW( string_table *st, UINT id, LPWSTR buffer, UINT *sz )
 UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
 {
     UINT len;
-    const char *str;
+    const WCHAR *str;
 
     TRACE("Finding string %d of %d\n", id, st->count);
 
@@ -283,7 +294,7 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
     if( !str )
         return ERROR_FUNCTION_FAILED;
 
-    len = strlen( str ) + 1;
+    len = WideCharToMultiByte( st->codepage, 0, str, -1, NULL, 0, NULL, NULL );
 
     if( !buffer )
     {
@@ -291,22 +302,19 @@ UINT msi_id2stringA( string_table *st, UINT id, LPSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    if( *sz < len )
-        *sz = len;
-    memcpy( buffer, str, *sz ); 
-    *sz = len;
+    *sz = WideCharToMultiByte( st->codepage, 0, str, -1, buffer, *sz, NULL, NULL );
 
     return ERROR_SUCCESS;
 }
 
 /*
- *  msi_string2idA
+ *  msi_string2idW
  *
  *  [in] st         - pointer to the string table
- *  [in] str        - UTF8 string to find in the string table
+ *  [in] str        - string to find in the string table
  *  [out] id        - id of the string, if found
  */
-UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id )
+UINT msi_string2idW( string_table *st, LPCWSTR str, UINT *id )
 {
     int hash;
     UINT i, r = ERROR_INVALID_PARAMETER;
@@ -315,7 +323,7 @@ UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id )
     for( i=0; i<st->count; i++ )
     {
         if( ( st->strings[i].hash == hash ) &&
-            !strcmp( st->strings[i].str, str ) )
+            !strcmpW( st->strings[i].str, str ) )
         {
             r = ERROR_SUCCESS;
             *id = i;
@@ -326,13 +334,13 @@ UINT msi_string2idA( string_table *st, LPCSTR str, UINT *id )
     return r;
 }
 
-UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
+UINT msi_string2idA( string_table *st, LPCSTR buffer, UINT *id )
 {
     DWORD sz;
     UINT r = ERROR_INVALID_PARAMETER;
-    LPSTR str;
+    LPWSTR str;
 
-    TRACE("Finding string %s in string table\n", debugstr_w(buffer) );
+    TRACE("Finding string %s in string table\n", debugstr_a(buffer) );
 
     if( buffer[0] == 0 )
     {
@@ -340,15 +348,15 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
         return ERROR_SUCCESS;
     }
 
-    sz = WideCharToMultiByte( st->codepage, 0, buffer, -1, NULL, 0, NULL, NULL );
+    sz = MultiByteToWideChar( st->codepage, 0, buffer, -1, NULL, 0 );
     if( sz <= 0 )
         return r;
-    str = HeapAlloc( GetProcessHeap(), 0, sz );
+    str = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
     if( !str )
         return ERROR_NOT_ENOUGH_MEMORY;
-    WideCharToMultiByte( st->codepage, 0, buffer, -1, str, sz, NULL, NULL );
+    MultiByteToWideChar( st->codepage, 0, buffer, -1, str, sz );
 
-    r = msi_string2idA( st, str, id );
+    r = msi_string2idW( st, str, id );
     if( str )
         HeapFree( GetProcessHeap(), 0, str );
 
@@ -357,7 +365,7 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
 
 UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
 {
-    const char *l_str, *r_str;  /* utf8 */
+    const WCHAR *l_str, *r_str;
 
     l_str = msi_string_lookup_id( st, lval );
     if( !l_str )
@@ -368,7 +376,7 @@ UINT msi_strcmp( string_table *st, UINT lval, UINT rval, UINT *res )
         return ERROR_INVALID_PARAMETER;
 
     /* does this do the right thing for all UTF-8 strings? */
-    *res = strcmp( l_str, r_str );
+    *res = strcmpW( l_str, r_str );
 
     return ERROR_SUCCESS;
 }
@@ -387,12 +395,18 @@ UINT msi_id_refcount( string_table *st, UINT i )
 
 UINT msi_string_totalsize( string_table *st )
 {
-    UINT size = 0, i;
+    UINT size = 0, i, len;
 
     for( i=0; i<st->count; i++)
     {
         if( st->strings[i].str )
-            size += strlen( st->strings[i].str );
+        {
+            len = WideCharToMultiByte( st->codepage, 0,
+                     st->strings[i].str, -1, NULL, 0, NULL, NULL);
+            if( len )
+                len--;
+            size += len;
+        }
     }
     return size;
 }

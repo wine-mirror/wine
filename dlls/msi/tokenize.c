@@ -318,6 +318,10 @@ int sqliteGetToken(const WCHAR *z, int *tokenType){
         return 2;
       }
     }
+    case '?': {
+      *tokenType = TK_WILDCARD;
+      return 1;
+    }
     case ',': {
       *tokenType = TK_COMMA;
       return 1;

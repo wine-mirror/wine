@@ -64,6 +64,7 @@ static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_column( LPWSTR );
 static struct expr * EXPR_ival( struct sql_str *);
 static struct expr * EXPR_sval( struct sql_str *);
+static struct expr * EXPR_wildcard();
 
 %}
 
@@ -114,7 +115,7 @@ static struct expr * EXPR_sval( struct sql_str *);
 %token TK_UMINUS TK_UNCLOSED_STRING TK_UNION TK_UNIQUE
 %token TK_UPDATE TK_UPLUS TK_USING
 %token TK_VACUUM TK_VALUES TK_VIEW
-%token TK_WHEN TK_WHERE
+%token TK_WHEN TK_WHERE TK_WILDCARD
 
 /*
  * These are extra tokens used by the lexer but never seen by the
@@ -460,7 +461,11 @@ expr:
 val:
     column_val
   | const_val
-        ;
+  | TK_WILDCARD
+        {
+            $$ = EXPR_wildcard();
+        }
+    ;
 
 constlist:
     const_val
@@ -603,21 +608,9 @@ static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in,
 {
     MSIVIEW *view = NULL;
 
-    SELECT_CreateView( db, &view, in );
-    if( view )
-    {
-        string_list *x = columns;
-
-        while( x )
-        {
-            string_list *t = x->next;
-            SELECT_AddColumn( view, x->string );
-            HeapFree( GetProcessHeap(), 0, x->string );
-            HeapFree( GetProcessHeap(), 0, x );
-            x = t;
-        }
-    }
-    else
+    SELECT_CreateView( db, &view, in, columns );
+    delete_string_list( columns );
+    if( !view )
         ERR("Error creating select query\n");
     return view;
 }
@@ -639,6 +632,16 @@ static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in,
         ERR("Error creating select query\n");
     delete_string_list( columns );
     return view;
+}
+
+static struct expr * EXPR_wildcard()
+{
+    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    if( e )
+    {
+        e->type = EXPR_WILDCARD;
+    }
+    return e;
 }
 
 static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r )

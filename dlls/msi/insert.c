@@ -42,10 +42,9 @@ typedef struct tagMSIINSERTVIEW
 {
     MSIVIEW          view;
     MSIDATABASE     *db;
-    LPWSTR           name;
     BOOL             bIsTemp;
-    string_list     *cols;
-    value_list      *vals;
+    MSIVIEW         *sv;
+    value_list      *vals;   /* looks like these may be ignored... */
 } MSIINSERTVIEW;
 
 static UINT INSERT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *val )
@@ -59,131 +58,102 @@ static UINT INSERT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
 
 static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
 {
-#if 0
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
-    create_col_info *col;
-    UINT r, nField, row, table_val, column_val;
-    static const WCHAR szTables[] =  { '_','T','a','b','l','e','s',0 };
-    static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
-    MSIVIEW *tv = NULL;
+    UINT n, type, val, r, row, col_count = 0;
+    MSIVIEW *sv;
 
-    TRACE("%p Table %s (%s)\n", iv, debugstr_w(iv->name), 
-          iv->bIsTemp?"temporary":"permanent");
+    TRACE("%p %ld\n", iv, record );
 
-    /* only add tables that don't exist already */
-    if( TABLE_Exists(iv->db, iv->name ) )
-        return ERROR_BAD_QUERY_SYNTAX;
-
-    /* add the name to the _Tables table */
-    table_val = msi_addstringW( iv->db->strings, 0, iv->name, -1, 1 );
-    TRACE("New string %s -> %d\n", debugstr_w( iv->name ), table_val );
-    if( table_val < 0 )
+    sv = iv->sv;
+    if( !sv )
         return ERROR_FUNCTION_FAILED;
 
-    r = TABLE_CreateView( iv->db, szTables, &tv );
-    TRACE("CreateView returned %x\n", r);
-    if( r )
-        return r;
-
-    r = tv->ops->execute( tv, 0 );
+    r = sv->ops->execute( sv, 0 );
     TRACE("tv execute returned %x\n", r);
     if( r )
         return r;
 
+    r = sv->ops->get_dimensions( sv, NULL, &col_count );
+    if( r )
+        goto err;
+
+    n = MsiRecordGetFieldCount( record );
+    if( n != col_count )
+    {
+        ERR("Number of fields do not match\n");
+        goto err;
+    }
+
     row = -1;
-    r = tv->ops->insert_row( tv, &row );
+    r = sv->ops->insert_row( sv, &row );
     TRACE("insert_row returned %x\n", r);
     if( r )
         goto err;
 
-    r = tv->ops->set_int( tv, row, 1, table_val );
-    if( r )
-        goto err;
-    tv->ops->delete( tv );
-    tv = NULL;
-
-    /* add each column to the _Columns table */
-    r = TABLE_CreateView( iv->db, szColumns, &tv );
-    if( r )
-        return r;
-
-    r = tv->ops->execute( tv, 0 );
-    TRACE("tv execute returned %x\n", r);
-    if( r )
-        return r;
-
-    /*
-     * need to set the table, column number, col name and type
-     * for each column we enter in the table
-     */
-    nField = 1;
-    for( col = iv->col_info; col; col = col->next )
+    for( n = 1; n <= col_count; n++ )
     {
-        row = -1;
-        r = tv->ops->insert_row( tv, &row );
-        if( r )
-            goto err;
-
-        column_val = msi_addstringW( iv->db->strings, 0, col->colname, -1, 1 );
-        TRACE("New string %s -> %d\n", debugstr_w( col->colname ), column_val );
-        if( column_val < 0 )
-            break;
-
-        r = tv->ops->set_int( tv, row, 1, table_val );
+        r = sv->ops->get_column_info( sv, n, NULL, &type );
         if( r )
             break;
 
-        r = tv->ops->set_int( tv, row, 2, 0x8000|nField );
-        if( r )
-            break;
-
-        r = tv->ops->set_int( tv, row, 3, column_val );
-        if( r )
-            break;
-
-        r = tv->ops->set_int( tv, row, 4, 0x8000|col->type );
+        if( type & MSITYPE_STRING )
+        {
+            const WCHAR *str = MSI_RecordGetString( record, n );
+            val = msi_addstringW( iv->db->strings, 0, str, -1, 1 );
+        }
+        else
+            val = MsiRecordGetInteger( record, n++ );
+        r = sv->ops->set_int( sv, row, 1, val );
         if( r )
             break;
     }
-    if( !col )
-        r = ERROR_SUCCESS;
 
 err:
-    /* FIXME: remove values from the string table on error */
-    if( tv )
-        tv->ops->delete( tv );
-    return r;
-#else
-    return ERROR_FUNCTION_FAILED;
-#endif
+    return ERROR_SUCCESS;
 }
+
 
 static UINT INSERT_close( struct tagMSIVIEW *view )
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
+    MSIVIEW *sv;
 
     TRACE("%p\n", iv);
 
-    return ERROR_SUCCESS;
+    sv = iv->sv;
+    if( !sv )
+        return ERROR_FUNCTION_FAILED;
+
+    return sv->ops->close( sv );
 }
 
 static UINT INSERT_get_dimensions( struct tagMSIVIEW *view, UINT *rows, UINT *cols )
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
+    MSIVIEW *sv;
 
     TRACE("%p %p %p\n", iv, rows, cols );
 
-    return ERROR_FUNCTION_FAILED;
+    sv = iv->sv;
+    if( !sv )
+        return ERROR_FUNCTION_FAILED;
+
+    return sv->ops->get_dimensions( sv, rows, cols );
 }
 
 static UINT INSERT_get_column_info( struct tagMSIVIEW *view,
                 UINT n, LPWSTR *name, UINT *type )
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
+    MSIVIEW *sv;
 
     TRACE("%p %d %p %p\n", iv, n, name, type );
 
-    return ERROR_FUNCTION_FAILED;
+    sv = iv->sv;
+    if( !sv )
+        return ERROR_FUNCTION_FAILED;
+
+    return sv->ops->get_column_info( sv, n, name, type );
 }
 
 static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHANDLE hrec)
@@ -198,12 +168,14 @@ static UINT INSERT_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode, MSIHA
 static UINT INSERT_delete( struct tagMSIVIEW *view )
 {
     MSIINSERTVIEW *iv = (MSIINSERTVIEW*)view;
+    MSIVIEW *sv;
 
     TRACE("%p\n", iv );
 
-    delete_string_list( iv->cols ); 
+    sv = iv->sv;
+    if( sv )
+        sv->ops->delete( sv );
     delete_value_list( iv->vals );
-    HeapFree( GetProcessHeap(), 0, iv->name );
     HeapFree( GetProcessHeap(), 0, iv );
 
     return ERROR_SUCCESS;
@@ -227,20 +199,33 @@ UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
                         string_list *columns, value_list *values, BOOL temp )
 {
     MSIINSERTVIEW *iv = NULL;
+    UINT r;
+    MSIVIEW *tv = NULL, *sv = NULL;
 
     TRACE("%p\n", iv );
 
+    r = TABLE_CreateView( db, table, &tv );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = SELECT_CreateView( db, &sv, tv, columns );
+    if( r != ERROR_SUCCESS )
+    {
+        if( tv )
+            tv->ops->delete( tv );
+        return r;
+    }
+    
     iv = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *iv );
     if( !iv )
         return ERROR_FUNCTION_FAILED;
-    
+
     /* fill the structure */
     iv->view.ops = &insert_ops;
     iv->db = db;
-    iv->name = table;  /* FIXME: strdupW it? */
-    iv->cols = columns;
     iv->vals = values;
     iv->bIsTemp = temp;
+    iv->sv = sv;
     *view = (MSIVIEW*) iv;
 
     return ERROR_SUCCESS;
