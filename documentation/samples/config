@@ -253,9 +253,15 @@ WINE REGISTRY Version 2
 "4" = "/usr/X11R6/lib/X11/fonts/Type1"
 
 [WinMM]
-#"Drivers" = "winearts.drv"
-#"Drivers" = "winejack.drv"
-"Drivers" = "wineoss.drv"
+; Uncomment the "Drivers" line matching your sound setting.
+
+"Drivers" = "wineoss.drv"      ; default for most common configurations
+;"Drivers" = "winearts.drv"    ; for KDE
+;"Drivers" = "winealsa.drv"    ; for ALSA users
+;"Drivers" = "winejack.drv"    ; for Jack sound server
+;"Drivers" = "winenas.drv"     ; for NAS sound system
+;"Drivers" = "wineaudioio.drv" ; for Solaris machines
+;"Drivers" = ""                ; to disable sound
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
 
