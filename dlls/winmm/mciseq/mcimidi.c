@@ -127,6 +127,7 @@ static DWORD CALLBACK	MCI_SCAStarter(LPVOID arg)
 static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 				   DWORD dwParam2, UINT size)
 {
+    HANDLE handle;
     struct SCA*	sca = HeapAlloc(GetProcessHeap(), 0, sizeof(struct SCA) + size);
 
     if (sca == 0)
@@ -146,10 +147,11 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 	sca->dwParam2 = dwParam2;
     }
 
-    if (CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL) == 0) {
+    if ((handle = CreateThread(NULL, 0, MCI_SCAStarter, sca, 0, NULL)) == 0) {
 	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
 	return MCI_SCAStarter(&sca);
     }
+    CloseHandle(handle);
     return 0;
 }
 

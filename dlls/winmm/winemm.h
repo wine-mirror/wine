@@ -193,6 +193,7 @@ typedef struct tagWINE_PLAYSOUND {
     LPCWSTR		        pszSound;
     HMODULE		        hMod;
     DWORD		        fdwSound;
+    HANDLE                      hThread;
     struct tagWINE_PLAYSOUND*   lpNext;
 } WINE_PLAYSOUND, *LPWINE_PLAYSOUND;
 
