@@ -1,0 +1,4 @@
+Makefile
+msvcrt_test.exe.spec.c
+scanf.ok
+testlist.c

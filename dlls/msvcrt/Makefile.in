@@ -37,6 +37,8 @@ C_SRCS = \
 	time.c \
 	wcs.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
