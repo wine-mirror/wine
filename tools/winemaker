@@ -3085,6 +3085,7 @@ OBJS            = $(C_SRCS:.c=.o) $(CXX_SRCS:.cpp=.o) \
 CLEAN_FILES     = *.spec.c y.tab.c y.tab.h lex.yy.c \
                   core *.orig *.rej \
                   \\\#*\\\# *~ *% .\\\#*
+DISTCLEAN_FILES = config.* Makefile Make.rules
 
 # Implicit rules
 
@@ -3124,6 +3125,11 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 	$(RM) $(CLEAN_FILES) $(RC_SRCS:.rc=.res) $(OBJS) $(EXES:%.exe=%) $(EXES:%=%.so) $(EXES:%=%.spec.o) $(DLLS:%=%.so) $(DLLS:%=%.spec.o)
+
+# Rule for distcleaning
+
+distclean: clean
+	$(RM) $(DISTCLEAN_FILES)
 
 # Rules for installing
 
