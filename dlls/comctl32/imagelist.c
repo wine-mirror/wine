@@ -2,6 +2,7 @@
  *  ImageList implementation
  *
  *  Copyright 1998 Eric Kohl
+ *            2000 Jason Mawdsley.
  *
  *  TODO:
  *    - Fix ImageList_DrawIndirect (xBitmap, yBitmap, rgbFg, rgbBk, dwRop).
@@ -179,16 +180,42 @@ IMAGELIST_InternalDraw(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
  *
  *     Blending and Overlays styles are accomplised by another function.
  */
+/*************************************************************************
+ * IMAGELIST_InternalDrawMask [Internal] 
+ *
+ * Draws the image in the ImageList witht the mask
+ *
+ * PARAMS
+ *     pimldp        [I] pointer to IMAGELISTDRAWPARAMS structure.
+ *     cx            [I] the width of the image to display
+ *     cy............[I] the height of the image to display
+ *
+ * RETURNS
+ *     nothing
+ *
+ * NOTES
+ *     This functions is used by ImageList_DrawIndirect, when it is 
+ *     required to draw the Image with the mask to the screen.
+ *
+ *     Blending and Overlays styles are accomplised by another function.
+ */
 static VOID
 IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
 {
-    HDC     hMaskDC, hImageDC;
     BOOL bUseCustomBackground, bBlendFlag;
     HBRUSH hBrush, hOldBrush;
+    HDC     hMaskDC, hImageDC;
     HBITMAP hOldBitmapImage, hOldBitmapMask;
     HIMAGELIST himlLocal = pimldp->himl;
     COLORREF oldBkColor, oldFgColor;
     UINT fStyle = pimldp->fStyle & (~ILD_OVERLAYMASK);
+
+    /* 
+     * We need a dc and bitmap to draw on that is 
+     * not on the screen.
+     */
+    HDC hOffScreenDC = 0;
+    HBITMAP hOffScreenBmp = 0;
 
     bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
     bBlendFlag = (fStyle & ILD_BLEND50 ) || (fStyle & ILD_BLEND25);
@@ -196,74 +223,106 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     hImageDC = CreateCompatibleDC(0);
     hMaskDC = CreateCompatibleDC(0);
 
+    /* Create a compatible DC. */
+    hOffScreenDC = CreateCompatibleDC( pimldp->hdcDst );
+
+    if ( hOffScreenDC ) 
+    {
+        hOffScreenBmp = CreateCompatibleBitmap( pimldp->hdcDst, cx, cy );
+
+        if ( hOffScreenBmp ) 
+            SelectObject( hOffScreenDC, hOffScreenBmp  );
+        else
+            goto cleanup;
+    }
+    else
+        goto cleanup;
+
     hOldBitmapImage = SelectObject(hImageDC, himlLocal->hbmImage);
     hOldBitmapMask = SelectObject(hMaskDC, himlLocal->hbmMask);
-    /* Draw the Background for the appropriate Styles
-    */
-    if( bUseCustomBackground &&
-	(fStyle == ILD_NORMAL || fStyle & ILD_IMAGE || bBlendFlag))
+    
+    /* 
+     * Get a copy of the image for the masking operations. 
+     * We will use the copy, and this dc for all the various
+     * blitting, and then do one final blit to the screen dc.
+     * This should clean up most of the flickering.
+     */
+    BitBlt( hOffScreenDC, 0, 0, cx, cy, pimldp->hdcDst, pimldp->x, 
+            pimldp->y, SRCCOPY);
+
+    /* 
+     * Draw the Background for the appropriate Styles
+     */
+    if( bUseCustomBackground && (fStyle == ILD_NORMAL || fStyle & ILD_IMAGE 
+         || bBlendFlag) )
     {
+        
         hBrush = CreateSolidBrush (himlLocal->clrBk);
         hOldBrush = SelectObject (pimldp->hdcDst, hBrush);
-        PatBlt (pimldp->hdcDst, 
-            pimldp->x, pimldp->y, cx, cy, 
-            PATCOPY);
+        
+        PatBlt( hOffScreenDC, pimldp->x, pimldp->y, cx, cy, PATCOPY );
 
         DeleteObject (SelectObject (pimldp->hdcDst, hOldBrush));
     }
 
-    /* Draw Image Transparently over the current background
-    */
-    if(fStyle == ILD_NORMAL
-        || (fStyle & ILD_TRANSPARENT)
-        || ((fStyle & ILD_IMAGE) && bUseCustomBackground)
-        || bBlendFlag)
-    {
-        /* to obtain a transparent look, background color should be set
-           to white and foreground color to black when blting the 
-           monochrome mask. */
-        oldBkColor = SetBkColor(pimldp->hdcDst, RGB(0xff, 0xff, 0xff)); 
-        oldFgColor = SetTextColor(pimldp->hdcDst, RGB(0, 0, 0));
+    /* 
+     * Draw Image Transparently over the current background
+     */
+    if(fStyle == ILD_NORMAL || (fStyle & ILD_TRANSPARENT) || 
+       ((fStyle & ILD_IMAGE) && bUseCustomBackground) || bBlendFlag) 
+    {   /* 
+         * To obtain a transparent look, background color should be set
+         * to white and foreground color to black when blting the 
+         * monochrome mask. 
+         */
+        
+        oldBkColor = SetBkColor( hOffScreenDC, RGB( 0xff, 0xff, 0xff ) ); 
+        oldFgColor = SetTextColor( hOffScreenDC, RGB( 0, 0, 0 ) );
 
-        BitBlt(pimldp->hdcDst, 
-            pimldp->x, pimldp->y, cx, cy,
-            hMaskDC, 
-            himlLocal->cx * pimldp->i, 0, 
-            SRCAND);
+        BitBlt( hOffScreenDC, 0, 0, cx, cy,hMaskDC, himlLocal->cx * pimldp->i,
+                0, SRCAND );
 
-        BitBlt(pimldp->hdcDst, 
-            pimldp->x, pimldp->y, cx, cy,
-            hImageDC, 
-            himlLocal->cx * pimldp->i, 0, 
-            SRCPAINT);
-
-	SetBkColor(pimldp->hdcDst, oldBkColor); 
-	SetTextColor(pimldp->hdcDst, oldFgColor);
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hImageDC,himlLocal->cx * pimldp->i,
+                0, SRCPAINT );
+    
     }
-    /* Draw the image when no Background is specified
-    */
+    
+    /*
+     * Draw the image when no Background is specified
+     */
     else if((fStyle & ILD_IMAGE) && !bUseCustomBackground)
     {
-        BitBlt(pimldp->hdcDst, 
-            pimldp->x, pimldp->y, cx, cy,
-            hImageDC, 
-            himlLocal->cx * pimldp->i, 0, 
-            SRCCOPY);
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hImageDC, 
+                himlLocal->cx * pimldp->i, 0, SRCCOPY);
     }
-    /* Draw the mask with or without a background
-    */
+    /* 
+     * Draw the mask with or without a background
+     */
     else if(fStyle & ILD_MASK)
     {
-        BitBlt(pimldp->hdcDst, 
-            pimldp->x, pimldp->y, cx, cy,
-            hMaskDC, 
-            himlLocal->cx * pimldp->i, 0,
-            bUseCustomBackground ? SRCCOPY : SRCAND);
+        BitBlt( hOffScreenDC, 0, 0, cx, cy, hMaskDC, himlLocal->cx * pimldp->i,
+                0, bUseCustomBackground ? SRCCOPY : SRCAND);
     }
+    
+    /*
+     * Blit the bitmap to the screen now.
+     */
+    BitBlt( pimldp->hdcDst, pimldp->x, pimldp->y, cx, cy,
+            hOffScreenDC, 0, 0, SRCCOPY);
+
+    
     SelectObject(hImageDC, hOldBitmapImage);
     SelectObject(hMaskDC, hOldBitmapMask);
+    
+cleanup:
+    
     DeleteDC(hImageDC);
     DeleteDC(hMaskDC);
+    
+    DeleteDC( hOffScreenDC );
+    DeleteObject( hOffScreenBmp );
+    
+    return;
 }
 
 /*************************************************************************
