@@ -683,10 +683,15 @@ static HRESULT WINAPI IPersistStream_fnSave(
     /* if there's no PIDL, generate one */
     if( ! This->pPidl )
     {
+        /*
+         * windows can create lnk files to executables that do not exist yet
+         * so if the executable does not exist the just trust the path they
+         * gave us
+         */
         if( !*exePath )
-            return E_FAIL;
-
-        This->pPidl = ILCreateFromPathW(exePath);
+            This->pPidl = ILCreateFromPathW(This->sPath);
+        else
+            This->pPidl = ILCreateFromPathW(exePath);
     }
 
     memset(&header, 0, sizeof(header));
