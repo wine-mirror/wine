@@ -395,6 +395,9 @@ extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);
 
+extern INT PSDRV_XWStoDS( PSDRV_PDEVICE *physDev, INT width );
+extern INT PSDRV_YWStoDS( PSDRV_PDEVICE *physDev, INT height );
+
 extern BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO);
 extern BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev );
 extern BOOL PSDRV_SetPen( PSDRV_PDEVICE *physDev );

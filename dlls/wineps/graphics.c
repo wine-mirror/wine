@@ -36,6 +36,40 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
+ *           PSDRV_XWStoDS
+ *
+ * Performs a world-to-viewport transformation on the specified width.
+ */
+INT PSDRV_XWStoDS( PSDRV_PDEVICE *physDev, INT width )
+{
+    POINT pt[2];
+
+    pt[0].x = 0;
+    pt[0].y = 0;
+    pt[1].x = width;
+    pt[1].y = 0;
+    LPtoDP( physDev->hdc, pt, 2 );
+    return pt[1].x - pt[0].x;
+}
+
+/***********************************************************************
+ *           PSDRV_YWStoDS
+ *
+ * Performs a world-to-viewport transformation on the specified height.
+ */
+INT PSDRV_YWStoDS( PSDRV_PDEVICE *physDev, INT height )
+{
+    POINT pt[2];
+
+    pt[0].x = 0;
+    pt[0].y = 0;
+    pt[1].x = 0;
+    pt[1].y = height;
+    LPtoDP( physDev->hdc, pt, 2 );
+    return pt[1].y - pt[0].y;
+}
+
+/***********************************************************************
  *           PSDRV_DrawLine
  */
 static void PSDRV_DrawLine( PSDRV_PDEVICE *physDev )

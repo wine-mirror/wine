@@ -37,7 +37,6 @@ static const char PEN_alternate[]  = { 1,1 };
 HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 {
     LOGPEN logpen;
-    DC *dc = physDev->dc;
 
     if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
 
@@ -46,12 +45,11 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
     physDev->pen.endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
     physDev->pen.linejoin = logpen.lopnStyle & PS_JOIN_MASK;
 
-    physDev->pen.width = GDI_ROUND((FLOAT)logpen.lopnWidth.x *
-                                   dc->xformWorld2Vport.eM11);
+    physDev->pen.width = X11DRV_XWStoDS( physDev, logpen.lopnWidth.x );
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
     if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = dc->dcPenColor;
+        logpen.lopnColor = GetDCPenColor( physDev->hdc );
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {

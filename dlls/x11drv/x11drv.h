@@ -210,6 +210,8 @@ extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapCo
 extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev );
 extern BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev );
 extern BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev );
+extern INT X11DRV_XWStoDS( X11DRV_PDEVICE *physDev, INT width );
+extern INT X11DRV_YWStoDS( X11DRV_PDEVICE *physDev, INT height );
 
 extern const int X11DRV_XROPfunction[];
 

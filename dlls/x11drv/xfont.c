@@ -3287,14 +3287,15 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
         /* FIXME - check that the other drivers do this correctly */
         if (lf.lfWidth)
         {
-            lf.lfWidth = GDI_ROUND((FLOAT)lf.lfWidth * fabs(dc->xformWorld2Vport.eM11));
+            INT width = X11DRV_XWStoDS( physDev, lf.lfWidth );
+            lf.lfWidth = (lf.lfWidth < 0) ? -abs(width) : abs(width);
             if (lf.lfWidth == 0)
                 lf.lfWidth = 1; /* Minimum width */
         }
         if (lf.lfHeight)
         {
-            lf.lfHeight = GDI_ROUND((FLOAT)lf.lfHeight * fabs(dc->xformWorld2Vport.eM22));
-
+            INT height = X11DRV_YWStoDS( physDev, lf.lfHeight );
+            lf.lfHeight = (lf.lfHeight < 0) ? -abs(height) : abs(height);
             if (lf.lfHeight == 0)
                 lf.lfHeight = MIN_FONT_SIZE;
         }

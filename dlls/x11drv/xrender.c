@@ -1070,14 +1070,14 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	}
 	width = sz.cx;
     }
-    width = INTERNAL_XWSTODS(dc, width);
+    width = X11DRV_XWStoDS(physDev, width);
     xwidth = width * cosEsc;
     ywidth = width * sinEsc;
 
     GetTextMetricsW(hdc, &tm);
 
-    tm.tmAscent = INTERNAL_YWSTODS(dc, tm.tmAscent);
-    tm.tmDescent = INTERNAL_YWSTODS(dc, tm.tmDescent);
+    tm.tmAscent = X11DRV_YWStoDS(physDev, tm.tmAscent);
+    tm.tmDescent = X11DRV_YWStoDS(physDev, tm.tmDescent);
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (dc->textAlign & TA_UPDATECP) {
@@ -1255,7 +1255,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 					  0, 0, physDev->org.x + x + xoff,
 					  physDev->org.y + y + yoff,
 					  glyphs + idx, 1);
-		offset += INTERNAL_XWSTODS(dc, deltas[idx]);
+		offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		xoff = offset * cosEsc;
 		yoff = offset * -sinEsc;
 	    }
@@ -1275,8 +1275,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
 
 	    if (lf.lfUnderline) {
-		linePos = INTERNAL_YWSTODS(dc, otm->otmsUnderscorePosition);
-		lineWidth = INTERNAL_YWSTODS(dc, otm->otmsUnderscoreSize);
+                linePos = X11DRV_YWStoDS(physDev, otm->otmsUnderscorePosition);
+                lineWidth = X11DRV_YWStoDS(physDev, otm->otmsUnderscoreSize);
 
                 XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
                                     LineSolid, CapProjecting, JoinBevel );
@@ -1286,8 +1286,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    }
 
 	    if (lf.lfStrikeOut) { 
-		linePos = INTERNAL_YWSTODS(dc, otm->otmsStrikeoutPosition);
-		lineWidth = INTERNAL_YWSTODS(dc, otm->otmsStrikeoutSize);
+                linePos = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutPosition);
+                lineWidth = X11DRV_YWStoDS(physDev, otm->otmsStrikeoutSize);
 
                 XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
                                     LineSolid, CapProjecting, JoinBevel );
@@ -1311,7 +1311,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 			       entry->bitmaps[glyphs[idx]],
 			       &entry->gis[glyphs[idx]]);
 		if(deltas) {
-		    offset += INTERNAL_XWSTODS(dc, deltas[idx]);
+		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 
@@ -1327,7 +1327,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 			       entry->bitmaps[glyphs[idx]],
 			       &entry->gis[glyphs[idx]]);
 		if(deltas) {
-		    offset += INTERNAL_XWSTODS(dc, deltas[idx]);
+		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 
@@ -1361,7 +1361,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		if(extents.bottom < cur.y - entry->gis[glyphs[idx]].y + entry->gis[glyphs[idx]].height)
 		    extents.bottom = cur.y - entry->gis[glyphs[idx]].y + entry->gis[glyphs[idx]].height;
 		if(deltas) {
-		    offset += INTERNAL_XWSTODS(dc, deltas[idx]);
+		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    cur.x = offset * cosEsc;
 		    cur.y = offset * -sinEsc;
 		} else {
@@ -1438,7 +1438,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				&entry->gis[glyphs[idx]],
 				dc->textColor);
 		if(deltas) {
-		    offset += INTERNAL_XWSTODS(dc, deltas[idx]);
+		    offset += X11DRV_XWStoDS(physDev, deltas[idx]);
 		    xoff = offset * cosEsc;
 		    yoff = offset * -sinEsc;
 		} else {

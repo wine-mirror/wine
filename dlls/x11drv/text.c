@@ -148,7 +148,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     if (lpDx) /* have explicit character cell x offsets in logical coordinates */
     {
         for (i = width = 0; i < count; i++) width += lpDx[i];
-        width = INTERNAL_XWSTODS(dc, width);
+        width = X11DRV_XWStoDS(physDev, width);
     }
     else
     {
@@ -158,7 +158,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
             result = FALSE;
             goto END;
         }
-	width = INTERNAL_XWSTODS(dc, sz.cx);
+        width = X11DRV_XWStoDS(physDev, sz.cx);
     }
     ascent = pfo->lpX11Trans ? pfo->lpX11Trans->ascent : font->ascent;
     descent = pfo->lpX11Trans ? pfo->lpX11Trans->descent : font->descent;
@@ -361,7 +361,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		x_i, y_i, &str2b[i], 1);
 	if (lpDx)
 	{
-	  offset += INTERNAL_XWSTODS(dc, lpDx[i]);
+	  offset += X11DRV_XWStoDS(physDev, lpDx[i]);
 	}
 	else
 	{

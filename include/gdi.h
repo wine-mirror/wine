@@ -175,34 +175,6 @@ static inline INT WINE_UNUSED GDI_ROUND(FLOAT val)
    return (int)floor(val + 0.5);
 }
 
-  /* World -> Device size conversion */
-
-/* Performs a world-to-viewport transformation on the specified width (which
- * is in integer format).
- */
-static inline INT WINE_UNUSED INTERNAL_XWSTODS(DC *dc, INT width)
-{
-    FLOAT floatWidth;
-
-    /* Perform operation with floating point */
-    floatWidth = (FLOAT)width * dc->xformWorld2Vport.eM11;
-    /* Round to integers */
-    return GDI_ROUND(floatWidth);
-}
-
-/* Performs a world-to-viewport transformation on the specified size (which
- * is in integer format).
- */
-static inline INT WINE_UNUSED INTERNAL_YWSTODS(DC *dc, INT height)
-{
-    FLOAT floatHeight;
-
-    /* Perform operation with floating point */
-    floatHeight = (FLOAT)height * dc->xformWorld2Vport.eM22;
-    /* Round to integers */
-    return GDI_ROUND(floatHeight);
-}
-
   /* GDI local heap */
 
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD );

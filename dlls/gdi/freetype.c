@@ -1182,6 +1182,7 @@ GdiFont WineEngCreateFontInstance(DC *dc, HFONT hfont)
     GdiFont ret;
     Face *face;
     Family *family = NULL;
+    INT height;
     BOOL bd, it;
     LOGFONTW lf;
     CHARSETINFO csi;
@@ -1341,10 +1342,9 @@ not_found:
     TRACE("Chosen: %s %s\n", debugstr_w(family->FamilyName),
 	  debugstr_w(face->StyleName));
 
+    height = GDI_ROUND( (FLOAT)lf.lfHeight * dc->xformWorld2Vport.eM22 );
     ret->ft_face = OpenFontFile(ret, face->file, face->face_index,
-				lf.lfHeight < 0 ?
-				-abs(INTERNAL_YWSTODS(dc,lf.lfHeight)) :
-				abs(INTERNAL_YWSTODS(dc, lf.lfHeight)));
+                                lf.lfHeight < 0 ? -abs(height) : abs(height));
     if (!ret->ft_face)
     {
         free_font( ret );

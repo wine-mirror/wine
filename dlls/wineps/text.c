@@ -172,12 +172,12 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	sz.cx = tmpsz.cx; /* sz.cy remains untouched */
     }
 
-    sz.cx = INTERNAL_XWSTODS(dc, sz.cx);
-    sz.cy = INTERNAL_YWSTODS(dc, sz.cy);
+    sz.cx = PSDRV_XWStoDS(physDev, sz.cx);
+    sz.cy = PSDRV_YWStoDS(physDev, sz.cy);
 
     GetTextMetricsW(physDev->hdc, &tm);
-    ascent = INTERNAL_YWSTODS(dc, tm.tmAscent);
-    descent = INTERNAL_YWSTODS(dc, tm.tmDescent);
+    ascent = PSDRV_YWStoDS(physDev, tm.tmAscent);
+    descent = PSDRV_YWStoDS(physDev, tm.tmDescent);
 
     TRACE("textAlign = %x\n", align);
     switch(align & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
@@ -260,8 +260,8 @@ static BOOL PSDRV_Text(PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags, LPCWSTR
 	        PSDRV_WriteBuiltinGlyphShow(physDev, str + i, 1);
 	    dx += deltas[i] * cos_theta;
 	    dy -= deltas[i] * sin_theta;
-	    PSDRV_WriteMoveTo(physDev, x + INTERNAL_XWSTODS(dc, dx),
-			      y + INTERNAL_YWSTODS(dc, dy));
+	    PSDRV_WriteMoveTo(physDev, x + PSDRV_XWStoDS(physDev, dx),
+			      y + PSDRV_YWStoDS(physDev, dy));
 	}
 	if(physDev->font.fontloc == Download)
 	    PSDRV_WriteDownloadGlyphShow(physDev, glyphs + i, 1);
