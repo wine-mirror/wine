@@ -32,7 +32,5 @@ extern WORD USER_HeapSel;
 void WINAPI USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
 void USER_ExitWindows(void);
 void USER_QueueCleanup( HQUEUE16 hQueue );
-HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
-				       HRSRC16 hRsrc );
 
 #endif  /* __WINE_USER_H */

@@ -299,10 +299,6 @@ FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
             return (FARPROC16)ReplaceTextDlgProc16;
         if (!strcmp(name,"DefResourceHandler"))
             return (FARPROC16)NE_DefResourceHandler;
-        if (!strcmp(name,"LoadDIBIconHandler"))
-            return (FARPROC16)LoadDIBIconHandler16;
-        if (!strcmp(name,"LoadDIBCursorHandler"))
-            return (FARPROC16)LoadDIBCursorHandler16;
         FIXME(module,"No mapping for %s(), add one in library/miscstubs.c\n",name);
         assert( FALSE );
         return NULL;

@@ -222,6 +222,9 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Initialize menus */
     if (!MENU_Init()) return FALSE;
 
+    /* Initialize cursor/icons */
+    CURSORICON_Init();
+
     /* Initialize multimedia */
     if (!MULTIMEDIA_Init()) return FALSE;
 

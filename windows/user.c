@@ -16,6 +16,7 @@
 #include "win.h"
 #include "clipboard.h"
 #include "menu.h"
+#include "cursoricon.h"
 #include "hook.h"
 #include "debug.h"
 #include "toolhelp.h"
@@ -96,51 +97,11 @@ BOOL16 WINAPI TimerCount16( TIMERINFO *pTimerInfo )
     return TRUE;
 }
 
-static FARPROC16 __r16loader = NULL;
-
-/**********************************************************************
- *           USER_CallDefaultRsrcHandler
- *
- * Called by the LoadDIBIcon/CursorHandler().
- */
-HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    return Callbacks->CallResourceHandlerProc( __r16loader, hMemObj, hModule, hRsrc );
-}
-
-/**********************************************************************
- *           USER_InstallRsrcHandler
- */
-static void USER_InstallRsrcHandler( HINSTANCE16 hInstance )
-{
-    FARPROC16 proc;
-
-    /* SetResourceHandler() returns previous function which is set
-     * when a module's resource table is loaded. */
-
-    proc = SetResourceHandler16( hInstance, RT_ICON16,
-                               MODULE_GetWndProcEntry16("LoadDIBIconHandler") );
-    if (!__r16loader) __r16loader = proc;
-
-    proc = SetResourceHandler16( hInstance, RT_CURSOR16,
-                               MODULE_GetWndProcEntry16("LoadDIBCursorHandler") );
-    if (!__r16loader) __r16loader = proc;
-}
-
 /**********************************************************************
  *           InitApp   (USER.5)
  */
 INT16 WINAPI InitApp16( HINSTANCE16 hInstance )
 {
-      /* InitTask() calls LibMain()'s of implicitly loaded DLLs 
-       * prior to InitApp() so there is no clean way to do
-       * SetTaskSignalHandler() in time. So, broken Windows bypasses 
-       * a pTask->userhandler on startup and simply calls a global 
-       * function pointer to the default USER signal handler.
-       */
-
-    USER_InstallRsrcHandler( hInstance );
-
     /* Hack: restore the divide-by-zero handler */
     /* FIXME: should set a USER-specific handler that displays a msg box */
     INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
@@ -158,6 +119,7 @@ static void USER_ModuleUnload( HMODULE16 hModule )
 {
     HOOK_FreeModuleHooks( hModule );
     CLASS_FreeModuleClasses( hModule );
+    CURSORICON_FreeModuleIcons( hModule );
 }
 
 /**********************************************************************
@@ -244,7 +206,6 @@ void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
 	     break;
 
 	case USIG_DLL_LOAD:
-	     USER_InstallRsrcHandler( hTaskOrModule ); /* module */
 	     break;
 
 	case USIG_DLL_UNLOAD:
