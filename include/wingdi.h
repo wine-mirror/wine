@@ -1388,22 +1388,28 @@ typedef struct
 #define SYSPAL_STATIC   1
 #define SYSPAL_NOSTATIC 2
 
+#ifndef _PALETTEENTRY_DEFINED
+#define _PALETTEENTRY_DEFINED
 typedef struct tagPALETTEENTRY
 {
 	BYTE peRed, peGreen, peBlue, peFlags;
 } PALETTEENTRY, *PPALETTEENTRY, *LPPALETTEENTRY;
+#endif
 
 /* Logical palette entry flags */
 #define PC_RESERVED     0x01
 #define PC_EXPLICIT     0x02
 #define PC_NOCOLLAPSE   0x04
 
+#ifndef _LOGPALETTE_DEFINED
+#define _LOGPALETTE_DEFINED
 typedef struct tagLOGPALETTE
 {
     WORD           palVersion;
     WORD           palNumEntries;
     PALETTEENTRY   palPalEntry[1];
 } LOGPALETTE, *PLOGPALETTE, *LPLOGPALETTE, *NPLOGPALETTE;
+#endif
 
   /* Pens */
 
