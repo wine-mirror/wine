@@ -1563,7 +1563,7 @@ BOOL WINAPI GetOpenFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
-
+    COMDLG32_SetCommDlgExtendedError(0);
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
@@ -1594,7 +1594,7 @@ BOOL WINAPI GetOpenFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
-
+    COMDLG32_SetCommDlgExtendedError(0);
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
@@ -1625,7 +1625,7 @@ BOOL WINAPI GetSaveFileNameA(
 	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
-
+    COMDLG32_SetCommDlgExtendedError(0);
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
@@ -1656,7 +1656,7 @@ BOOL WINAPI GetSaveFileNameW(
 	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
-
+    COMDLG32_SetCommDlgExtendedError(0);
     /* some flags don't allow to match the TWEAK_WineLook */
     if (ofn->Flags & (OFN_ALLOWMULTISELECT|OFN_ENABLEHOOK|OFN_ENABLETEMPLATE))
     {
