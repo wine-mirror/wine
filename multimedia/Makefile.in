@@ -13,7 +13,9 @@ C_SRCS = \
 	joystick.c \
 	mcianim.c \
 	mcicda.c \
+	mcimidi.c \
 	mcistring.c \
+	mciwave.c \
 	midi.c \
 	midipatch.c \
 	mixer.c \

@@ -4,9 +4,11 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 150
+#define DEBUG_CHANNEL_COUNT 152
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -233,6 +235,7 @@ const char* debug_ch_name[] = {
 "local",
 "mci",
 "mcianim",
+"mcimidi",
 "mciwave",
 "mdi",
 "menu",
@@ -301,6 +304,7 @@ const char* debug_ch_name[] = {
 "ver",
 "virtual",
 "vxd",
+"wave",
 "win",
 "win16drv",
 "win32",
