@@ -258,6 +258,7 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	PSTR imagepath = NULL, keyname = NULL, provname = NULL, temp = NULL;
 	BYTE* signature;
 	DWORD keytype, type, len;
+	ULONG r;
 
 	TRACE("(%p, %s, %s, %ld, %08lx)\n", phProv, pszContainer,
 		pszProvider, dwProvType, dwFlags);
@@ -300,9 +301,10 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 			}
 		}
 		CRYPT_Free(keyname);
-		RegQueryValueExA(key, "Name", NULL, &keytype, NULL, &len);
-		if (!len || keytype != REG_SZ)
+		r = RegQueryValueExA(key, "Name", NULL, &keytype, NULL, &len);
+		if( r != ERROR_SUCCESS || !len || keytype != REG_SZ)
 		{
+			TRACE("error %ld reading size of 'Name' from registry\n", r );
 			RegCloseKey(key);
 			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
 			goto error;
@@ -313,7 +315,14 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 			goto error;
 		}
-		RegQueryValueExA(key, "Name", NULL, NULL, provname, &len);
+		r = RegQueryValueExA(key, "Name", NULL, NULL, provname, &len);
+		if( r != ERROR_SUCCESS )
+		{
+			TRACE("error %ld reading 'Name' from registry\n", r );
+			RegCloseKey(key);
+			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+			goto error;
+		}
 		RegCloseKey(key);
 	} else {
 		if ( !(provname = CRYPT_Alloc(strlen(pszProvider) +1)) )
@@ -328,17 +337,18 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, keyname, &key)) goto error;
 	CRYPT_Free(keyname);
 	len = sizeof(DWORD);
-	RegQueryValueExA(key, "Type", NULL, NULL, (BYTE*)&type, &len);
-	if (type != dwProvType)
+	r = RegQueryValueExA(key, "Type", NULL, NULL, (BYTE*)&type, &len);
+	if (r != ERROR_SUCCESS || type != dwProvType)
 	{
 		FIXME("Crypto provider has wrong type (%ld vs expected %ld).\n", type, dwProvType);
 		SetLastError(NTE_BAD_PROV_TYPE);
 		goto error;
 	}
 
-	RegQueryValueExA(key, "Image Path", NULL, &keytype, NULL, &len);
-	if (keytype != REG_SZ)
+	r = RegQueryValueExA(key, "Image Path", NULL, &keytype, NULL, &len);
+	if ( r != ERROR_SUCCESS || keytype != REG_SZ)
 	{
+		TRACE("error %ld reading size of 'Image Path' from registry\n", r );
 		RegCloseKey(key);
 		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
 		goto error;
@@ -349,11 +359,19 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		goto error;
 	}
-	RegQueryValueExA(key, "Image Path", NULL, NULL, temp, &len);
-
-	RegQueryValueExA(key, "Signature", NULL, &keytype, NULL, &len);
-	if (keytype != REG_BINARY)
+	r = RegQueryValueExA(key, "Image Path", NULL, NULL, temp, &len);
+	if( r != ERROR_SUCCESS )
 	{
+		TRACE("error %ld reading 'Image Path' from registry\n", r );
+		RegCloseKey(key);
+		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		goto error;
+	}
+
+	r = RegQueryValueExA(key, "Signature", NULL, &keytype, NULL, &len);
+	if ( r != ERROR_SUCCESS || keytype != REG_BINARY)
+	{
+		TRACE("error %ld reading size of 'Signature'\n", r );
 		RegCloseKey(key);
 		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
 		goto error;
@@ -364,8 +382,14 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		goto error;
 	}
-	RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
-
+	r = RegQueryValueExA(key, "Signature", NULL, NULL, signature, &len);
+	if ( r != ERROR_SUCCESS )
+	{
+		TRACE("error %ld reading 'Signature'\n", r );
+		RegCloseKey(key);
+		SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
+		goto error;
+	}
 	RegCloseKey(key);
 	len = ExpandEnvironmentStringsA(temp, NULL, 0);
 	if ( !(imagepath = CRYPT_Alloc(len)) )
