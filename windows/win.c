@@ -655,6 +655,61 @@ BOOL WIN_CreateDesktopWindow(void)
 /***********************************************************************
  *           WIN_CreateWindowEx
  *
+ * Fix the coordinates - Helper for WIN_CreateWindowEx.
+ * returns default show mode in sw.
+ * Note: the feature presented as undocumented *is* in the MSDN since 1993.
+ */
+static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
+{
+    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
+        cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+    {
+        STARTUPINFOA info;
+        int defcx = 0, defcy = 0;
+        info.dwFlags = 0;
+        if (!(cs->style & (WS_CHILD | WS_POPUP))) GetStartupInfoA( &info );
+
+        if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
+        {
+            /* Never believe Microsoft's documentation... CreateWindowEx doc says 
+             * that if an overlapped window is created with WS_VISIBLE style bit 
+             * set and the x parameter is set to CW_USEDEFAULT, the system ignores
+             * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
+             * reveals that
+             *
+             * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
+             * 2) it does not ignore the y parameter as the docs claim; instead, it 
+             *    uses it as second parameter to ShowWindow() unless y is either
+             *    CW_USEDEFAULT or CW_USEDEFAULT16.
+             * 
+             * The fact that we didn't do 2) caused bogus windows pop up when wine
+             * was running apps that were using this obscure feature. Example - 
+             * calc.exe that comes with Win98 (only Win98, it's different from 
+             * the one that comes with Win95 and NT)
+             */
+            if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) *sw = cs->y;
+            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
+            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
+        }
+
+        if (!(cs->style & (WS_CHILD | WS_POPUP)))
+        { /* if no other hint from the app, pick 3/4 of the screen real estate */
+            RECT r;
+            SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+            defcx = (((r.right - r.left) * 3) / 4) - cs->x;
+            defcy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+        }
+        if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+        {
+            cs->cx = (info.dwFlags & STARTF_USESIZE) ? info.dwXSize : defcx;
+            cs->cy = (info.dwFlags & STARTF_USESIZE) ? info.dwYSize : defcy;
+        }
+    }
+}
+
+/***********************************************************************
+ *           WIN_CreateWindowEx
+ *
  * Implementation of CreateWindowEx().
  */
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
@@ -696,43 +751,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         return 0;
     }
 
-    /* Fix the coordinates */
-
-    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
-        cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
-    {
-        STARTUPINFOA info;
-        info.dwFlags = 0;
-        if (!(cs->style & (WS_CHILD | WS_POPUP))) GetStartupInfoA( &info );
-
-        if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
-        {
-            /* Never believe Microsoft's documentation... CreateWindowEx doc says 
-             * that if an overlapped window is created with WS_VISIBLE style bit 
-             * set and the x parameter is set to CW_USEDEFAULT, the system ignores
-             * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
-             * reveals that
-             *
-             * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
-             * 2) it does not ignore the y parameter as the docs claim; instead, it 
-             *    uses it as second parameter to ShowWindow() unless y is either
-             *    CW_USEDEFAULT or CW_USEDEFAULT16.
-             * 
-             * The fact that we didn't do 2) caused bogus windows pop up when wine
-             * was running apps that were using this obscure feature. Example - 
-             * calc.exe that comes with Win98 (only Win98, it's different from 
-             * the one that comes with Win95 and NT)
-             */
-            if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) sw = cs->y;
-            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
-            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
-        }
-        if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
-        {
-            cs->cx = (info.dwFlags & STARTF_USESIZE) ? info.dwXSize : 0;
-            cs->cy = (info.dwFlags & STARTF_USESIZE) ? info.dwYSize : 0;
-        }
-    }
+    WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
 
     /* Create the window structure */
 
@@ -2393,7 +2412,7 @@ HWND WINAPI SetParent( HWND hwndChild, HWND hwndNewParent )
      WM_WINDOWPOSCHANGED notification messages. 
   */
   SetWindowPos( hwndChild, HWND_TOPMOST, 0, 0, 0, 0,
-      SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
+      SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|((dwStyle & WS_VISIBLE)?SWP_SHOWWINDOW:0));
   /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
    * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
 
