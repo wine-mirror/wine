@@ -39,6 +39,7 @@ LIBSUBDIRS = \
 	files \
 	graphics \
 	graphics/metafiledrv \
+	graphics/psdrv \
 	ipc \
 	library \
 	loader \
@@ -64,7 +65,6 @@ X11SUBDIRS = \
 
 EMUSUBDIRS = \
 	debugger \
-	graphics/psdrv \
 	graphics/win16drv \
 	if1632 \
 	miscemu
@@ -101,6 +101,7 @@ LIBOBJS = \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/metafiledrv/metafiledrv.o \
+	graphics/psdrv/psdrv.o \
 	ipc/ipc.o \
 	loader/loader.o \
 	loader/ne/ne.o \
@@ -125,7 +126,6 @@ X11OBJS = \
 
 EMUOBJS = \
 	debugger/debugger.o \
-	graphics/psdrv/psdrv.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	miscemu/miscemu.o

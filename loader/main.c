@@ -41,7 +41,7 @@
 #include "thread.h"
 #include "task.h"
 #include "debug.h"
-
+#include "psdrv.h"
 
 int __winelib = 1;  /* Winelib run-time flag */
 
@@ -158,7 +158,12 @@ BOOL32 WINAPI MAIN_GdiInit(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRese
     }
 
     /* GDI initialisation */
-    return GDI_Init();
+    if(!GDI_Init()) return FALSE;
+
+    /* PSDRV initialization */
+    if(!PSDRV_Init()) return FALSE;
+
+    return TRUE;
 }
 
 /***********************************************************************

@@ -24,6 +24,7 @@ C_SRCS = \
 	registry.c \
 	shell.c \
 	sound.c \
+	spooler.c \
 	spy.c \
 	stress.c \
 	system.c \
