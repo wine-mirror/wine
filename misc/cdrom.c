@@ -60,7 +60,7 @@ int	CDROM_Open(WINE_CDAUDIO* wcda, int drive)
 
     wcda->unixdev = open(dev, O_RDONLY | O_NONBLOCK, 0);
     if (wcda->unixdev == -1) {
-	WARN("can't open '%s'!.  errno=%d\n", dev, errno);
+	WARN("can't open '%s'!. %s\n", dev, strerror(errno));
 	return -1;
     }
     wcda->cdaMode = WINE_CDA_OPEN;	/* to force reading tracks info */
@@ -227,7 +227,7 @@ BOOL CDROM_Audio_GetTracksInfo(WINE_CDAUDIO* wcda)
 	if (ioctl(wcda->unixdev, CDIOREADTOCENTRYS, &entry))
 #endif
 	{
-	    WARN("error read entry (%d)\n", errno);
+	    WARN("error read entry (%s)\n", strerror(errno));
 	    /* update status according to new status */
 	    CDROM_Audio_GetCDStatus(wcda);
 
@@ -296,7 +296,7 @@ BOOL CDROM_Audio_GetCDStatus(WINE_CDAUDIO* wcda)
     if (ioctl(wcda->unixdev, CDIOCREADSUBCHANNEL, &read_sc))
 #endif
     {
-	TRACE("opened or no_media (%d)!\n", errno);
+	TRACE("opened or no_media (%s)!\n", strerror(errno));
 	wcda->cdaMode = WINE_CDA_OPEN; /* was NOT_READY */
 	return TRUE;
     }
