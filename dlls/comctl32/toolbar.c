@@ -2590,6 +2590,15 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
+TOOLBAR_GetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
+    return infoPtr->hFont;
+}
+
+
+static LRESULT
 TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
@@ -3230,7 +3239,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_ERASEBKGND:
 	    return TOOLBAR_EraseBackground (hwnd, wParam, lParam);
 
-/*	case WM_GETFONT: */
+	case WM_GETFONT:
+		return TOOLBAR_GetFont (hwnd, wParam, lParam);
+
 /*	case WM_KEYDOWN: */
 /*	case WM_KILLFOCUS: */
 
