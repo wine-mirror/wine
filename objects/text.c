@@ -418,7 +418,7 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
 			LPSTR str, WORD count, LPINT lpDx)
 {
-	printf("EMPTY STUB !!! ExtTextOut(); ! (call TextOut() for new)\n");
+	printf("EMPTY STUB !!! ExtTextOut(); ! call TextOut() for now !\n");
 	TextOut(hDC, x, y, str, count);
 	return FALSE;
 }

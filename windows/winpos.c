@@ -230,7 +230,7 @@ BOOL ShowWindow( HWND hwnd, int cmd )
     int swpflags = 0;
 
 #ifdef DEBUG_WIN
-    printf("ShowWindow: hwnd=%d, cmd=%d\n", hwnd, cmd);
+    printf("ShowWindow: hwnd=%04X, cmd=%d\n", hwnd, cmd);
 #endif
     
     if (!wndPtr) return FALSE;
@@ -456,7 +456,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
     int changeMask = 0;
 
 #ifdef DEBUG_WIN
-    printf( "SetWindowPos: %d %d %d,%d %dx%d 0x%x\n",
+    printf( "SetWindowPos: %04X %d %d,%d %dx%d 0x%x\n",
 	    hwnd, hwndInsertAfter, x, y, cx, cy, flags );
 #endif
 
@@ -592,10 +592,14 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, short x, short y,
 	}
 	changeMask |= CWStackMode;
     }
-    if (changeMask) XConfigureWindow( display, wndPtr->window,
-				      changeMask, &winChanges );
+	if ((newWindowRect.right - newWindowRect.left) != 0 &&
+		(newWindowRect.bottom - newWindowRect.top) != 0)
+		if (changeMask) XConfigureWindow( display, wndPtr->window,
+									changeMask, &winChanges );
 
-    if (winPos->flags & SWP_SHOWWINDOW)
+	if ((newWindowRect.right - newWindowRect.left) != 0 &&
+		(newWindowRect.bottom - newWindowRect.top) != 0 &&
+		(winPos->flags & SWP_SHOWWINDOW))
     {
 	wndPtr->dwStyle |= WS_VISIBLE;
 	XMapWindow( display, wndPtr->window );

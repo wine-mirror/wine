@@ -131,6 +131,11 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 		if (!do_int26(scp)) 
 		    goto oops;
 		break;
+
+	      case 0x2f:
+		if (!do_int2f(scp)) 
+		    goto oops;
+		break;
 		
 	      default:
 		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);

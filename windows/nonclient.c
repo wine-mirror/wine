@@ -16,6 +16,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "syscolor.h"
 
 static HBITMAP hbitmapClose = 0;
+static HBITMAP hbitmapMDIClose = 0;
 static HBITMAP hbitmapMinimize = 0;
 static HBITMAP hbitmapMinimizeD = 0;
 static HBITMAP hbitmapMaximize = 0;
@@ -287,11 +288,15 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT pt )
 static void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 {
     RECT rect;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     HDC hdcMem = CreateCompatibleDC( hdc );
     if (hdcMem)
     {
 	NC_GetInsideRect( hwnd, &rect );
-	SelectObject( hdcMem, hbitmapClose );
+	if (wndPtr->dwStyle & WS_CHILD)
+		SelectObject( hdcMem, hbitmapMDIClose );
+	else
+		SelectObject( hdcMem, hbitmapClose );
 	BitBlt( hdc, rect.left, rect.top, SYSMETRICS_CXSIZE,
 	       SYSMETRICS_CYSIZE, hdcMem, 1, 1, down ? NOTSRCCOPY : SRCCOPY );
 	DeleteDC( hdcMem );
@@ -456,6 +461,8 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
     if (!hbitmapClose)
     {
 	if (!(hbitmapClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
+	    return;
+	if (!(hbitmapMDIClose = LoadBitmap( 0, MAKEINTRESOURCE(OBM_OLD_CLOSE) )))
 	    return;
 	hbitmapMinimize  = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCE) );
 	hbitmapMinimizeD = LoadBitmap( 0, MAKEINTRESOURCE(OBM_REDUCED) );

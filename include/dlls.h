@@ -65,5 +65,9 @@ extern struct dll_table_entry_s SOUND_table[];
 extern struct dll_table_entry_s KEYBOARD_table[];
 extern struct dll_table_entry_s WINSOCK_table[];
 extern struct dll_table_entry_s STRESS_table[];
+extern struct dll_table_entry_s SYSTEM_table[];
+extern struct dll_table_entry_s TOOLHELP_table[];
+
+#define N_BUILTINS	13
 
 #endif /* DLLS_H */

@@ -248,6 +248,43 @@ load_typeinfo (int fd, struct resource_typeinfo_s *typeinfo)
     return read (fd, typeinfo, sizeof (*typeinfo)) == sizeof (*typeinfo);
 }
 #endif
+
+int
+type_match(int type_id1, int type_id2, int fd, off_t off)
+{
+	off_t old_pos;
+	unsigned char c;
+	size_t nbytes;
+	char name[256];
+
+	if (type_id1 == -1)
+		return 1;
+	if ((type_id1 & 0xffff0000) == 0) {
+		if ((type_id2 & 0x8000) == 0)
+			return 0;
+		return (type_id1 & 0x000f) == (type_id2 & 0x000f);
+	}
+	if ((type_id2 & 0x8000) != 0)
+		return 0;
+#ifdef DEBUG_RESOURCE
+	printf("type_compare: type_id2=%04X !\n", type_id2);
+#endif
+	old_pos = lseek(fd, 0, SEEK_CUR);
+	lseek(fd, off + type_id2, SEEK_SET);
+	read(fd, &c, 1);
+	nbytes = CONV_CHAR_TO_LONG (c);
+#ifdef DEBUG_RESOURCE
+	printf("type_compare: namesize=%d\n", nbytes);
+#endif
+	read(fd, name, nbytes);
+	lseek(fd, old_pos, SEEK_SET);
+	name[nbytes] = '\0';
+#ifdef DEBUG_RESOURCE
+	printf("type_compare: name=`%s'\n", name);
+#endif
+	return strcasecmp((char *) type_id1, name) == 0;
+}
+
 /**********************************************************************
  *					FindResourceByNumber
  */
@@ -281,8 +318,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
     /*
      * Find resource.
      */
-    typeinfo.type_id = 0xffff;
-    while (typeinfo.type_id != 0) {
+    for (;;) {
 	if (!load_typeinfo (ResourceFd, &typeinfo)){
 	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
 	    return -1;
@@ -292,7 +328,8 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 			typeinfo.type_id, typeinfo.count, type_id);
 #endif
 	if (typeinfo.type_id == 0) break;
-	if (typeinfo.type_id == type_id || type_id == -1) {
+	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff)) {
+
 	    for (i = 0; i < typeinfo.count; i++) {
 #ifndef WINELIB
 		if (read(ResourceFd, &nameinfo, sizeof(nameinfo)) != 
@@ -306,7 +343,7 @@ FindResourceByNumber(struct resource_nameinfo_s *result_p,
 		    }
 #ifdef DEBUG_RESOURCE
 		printf("FindResource: search type=%X id=%X // type=%X id=%X\n",
-			type_id, resource_id, typeinfo.type_id, nameinfo.id);
+			type_id, resource_id, typeinfo.type_id, type_id2);
 #endif
 		if (nameinfo.id == resource_id) {
 		    memcpy(result_p, &nameinfo, sizeof(nameinfo));
@@ -377,8 +414,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
     /*
      * Find resource.
      */
-    typeinfo.type_id = 0xffff;
-    while (typeinfo.type_id != 0)
+    for (;;)
     {
 	if (!load_typeinfo (ResourceFd, &typeinfo))
 	{
@@ -390,7 +426,7 @@ FindResourceByName(struct resource_nameinfo_s *result_p,
 			typeinfo.type_id, typeinfo.count, type_id);
 #endif
 	if (typeinfo.type_id == 0) break;
-	if (typeinfo.type_id == type_id || type_id == -1)
+	if (type_match(type_id, typeinfo.type_id, ResourceFd, rtoff))
 	{
 	    for (i = 0; i < typeinfo.count; i++)
 	    {
@@ -529,6 +565,16 @@ HICON LoadIcon(HANDLE instance, LPSTR icon_name)
     rgbq[1].rgbGreen 	= 0x00;
     rgbq[1].rgbRed 	= 0x00;
     rgbq[1].rgbReserved = 0x00;
+    if (bih->biSizeImage == 0) {
+	if (bih->biCompression != BI_RGB) {
+	    printf("Unknown size for compressed Icon bitmap.\n");
+	    GlobalFree(rsc_mem);
+	    ReleaseDC(GetDesktopWindow(), hdc); 
+	    return 0;
+	    }
+	bih->biSizeImage = (bih->biWidth * bih->biHeight * bih->biBitCount
+			    + 7) / 8;
+	}
     lpico->hBitMask = CreateDIBitmap(hdc, bih, CBM_INIT,
     	(LPSTR)lp + bih->biSizeImage - sizeof(BITMAPINFOHEADER) / 2 - 4,
 	(BITMAPINFO *)bih, DIB_RGB_COLORS );
@@ -667,6 +713,7 @@ HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
 {
     RESOURCE *r;
     HANDLE rh;
+    int type;
 
     if (instance == 0)
 	return 0;
@@ -688,15 +735,39 @@ HANDLE FindResource(HANDLE instance, LPSTR resource_name, LPSTR type_name)
     r->info_mem = rh;
     r->rsc_mem = 0;
 
-    if (((int) resource_name & 0xffff0000) == 0)
+    if (((int) type_name & 0xffff0000) == 0)
     {
-	r->size_shift = FindResourceByNumber(&r->nameinfo, (int)type_name,
-					     (int) resource_name | 0x8000);
+	type = (int) type_name;
+    }
+    else if (type_name[0] == '\0')
+    {
+	type = -1;
+    }
+    else if (type_name[0] == '#')
+    {
+	type = atoi(type_name + 1);
     }
     else
     {
-	r->size_shift = FindResourceByName(&r->nameinfo, (int)type_name, 
-					   resource_name);
+	type = (int) type_name;
+    }
+    if (((int) resource_name & 0xffff0000) == 0)
+    {
+	r->size_shift = FindResourceByNumber(&r->nameinfo, type,
+					     (int) resource_name | 0x8000);
+    }
+    else if (resource_name[0] == '\0')
+    {
+	r->size_shift = FindResourceByNumber(&r->nameinfo, type, -1);
+    }
+    else if (resource_name[0] == '#')
+    {
+	r->size_shift = FindResourceByNumber(&r->nameinfo, type,
+					     atoi(resource_name + 1));
+    }
+    else
+    {
+	r->size_shift = FindResourceByName(&r->nameinfo, type, resource_name);
     }
     
     if (r->size_shift == -1)
@@ -906,7 +977,7 @@ LoadString(HANDLE instance, WORD resource_id, LPSTR buffer, int buflen)
     GlobalFree(hmem);
 
 #ifdef DEBUG_RESOURCE
-    printf("            '%s'\n", buffer);
+    printf("LoadString // '%s' copied !\n", buffer);
 #endif
     return i;
 }

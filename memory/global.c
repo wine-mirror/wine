@@ -790,5 +790,6 @@ DWORD GetFreeSpace(UINT wFlags)
 	if (free_map[i] == 1)
 	    total_free++;
     
+    printf("GetFreeSpace // return %ld !\n", total_free << 16);
     return total_free << 16;
 }

@@ -273,7 +273,7 @@ void ToDos(char *s)
 			*s++ = toupper(*p);
 		else {
 			*s++ = '\\';
-			if (*s == '/' || *s == '\\') 
+			if (*(p+1) == '/' || *(p+1) == '\\') 
 			    p++;
 		}
 	}
@@ -387,6 +387,26 @@ char *GetUnixFileName(char *dosfilename)
 	fprintf(stderr,"GetUnixFileName: %s => %s\n", dosfilename, temp);
 #endif
 
+	return(temp);
+}
+
+char *GetDosFileName(char *unixfilename)
+{ 
+	int i;
+	char temp[256];
+	/*   /dos/windows/system.ini => c:\windows\system.ini */
+	
+	for (i = 0 ; i != MAX_DOS_DRIVES; i++) {
+		if (DosDrives[i].rootdir != NULL) {
+		   if (strncmp(DosDrives[i].rootdir, unixfilename, strlen(DosDrives[i].rootdir)) == 0) {
+			sprintf(temp, "%c:\\%s", 'A' + i, unixfilename + strlen(DosDrives[i].rootdir) + 1);
+			ToDos(temp);
+			return temp;
+		   }	
+		}
+	}
+	strcpy(temp, unixfilename);
+	ToDos(temp);
 	return(temp);
 }
 
@@ -734,11 +754,7 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	
 	do {
 		if ((d = readdir(de->ds)) == NULL) 
-		{
-			closedir(de->ds);
-			de->inuse = 0;
-			return de;
-		}
+			return NULL;
 
 		strcpy(de->filename, d->d_name);
 		if (d->d_reclen > 12)
@@ -765,7 +781,7 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 
 void DOS_closedir(struct dosdirent *de)
 {
-	if (de->inuse)
+	if (de && de->inuse)
 	{
 		closedir(de->ds);
 		de->inuse = 0;

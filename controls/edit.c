@@ -309,7 +309,6 @@ LONG EditWndProc(HWND hwnd, WORD uMsg, WORD wParam, LONG lParam)
 	break;
 
     case WM_KEYDOWN:
-	printf("EDIT WM_KEYDOWN w=%04X !\n", wParam);
 	EDIT_KeyDownMsg(hwnd, wParam);
 	break;
 

@@ -61,7 +61,7 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
     extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
 
-    image = XCreateImage( XT_display, DefaultVisualOfScreen(XT_screen),
+    image = XCreateImage( XT_display, DefaultVisualOfScreen(screen),
 			  bmp->bmBitsPixel, ZPixmap, 0, bmpData,
 			  bmp->bmWidth, bmp->bmHeight, 16, bmp->bmWidthBytes );
     if (!image) return 0;

@@ -444,6 +444,9 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     
     if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+#ifdef DEBUG_WIN
+    printf( "CreateWindowEx: return %04X \n", hwnd);
+#endif
     return hwnd;
 }
 

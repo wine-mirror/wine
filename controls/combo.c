@@ -263,7 +263,9 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		if (lphc == NULL) return 0;
 		return(SendMessage(lphc->hWndLBox, LB_ADDSTRING, wParam, lParam));
     case CB_GETLBTEXT:
+#ifdef DEBUG_COMBO
 		printf("CB_GETLBTEXT #%u !\n", wParam);
+#endif
 		lphc = ComboGetStorageHeader(hwnd);
 		if (lphc == NULL) return 0;
 		return(SendMessage(lphc->hWndLBox, LB_GETTEXT, wParam, lParam));

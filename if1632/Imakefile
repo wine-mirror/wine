@@ -16,6 +16,8 @@ DLLOBJS = \
 	dll_shell.o \
 	dll_sound.o \
 	dll_stress.o \
+	dll_system.o \
+	dll_toolhelp.o \
 	dll_unixlib.o \
 	dll_user.o \
 	dll_win87em.o \
@@ -39,6 +41,8 @@ MakeDllFromSpec(shell,$(TOP)/$(MODULE))
 MakeDllFromSpec(mmsystem,$(TOP)/$(MODULE))
 MakeDllFromSpec(sound,$(TOP)/$(MODULE))
 MakeDllFromSpec(stress,$(TOP)/$(MODULE))
+MakeDllFromSpec(system,$(TOP)/$(MODULE))
+MakeDllFromSpec(toolhelp,$(TOP)/$(MODULE))
 MakeDllFromSpec(unixlib,$(TOP)/$(MODULE))
 MakeDllFromSpec(user,$(TOP)/$(MODULE))
 MakeDllFromSpec(win87em,$(TOP)/$(MODULE))

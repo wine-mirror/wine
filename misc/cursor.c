@@ -171,7 +171,7 @@ HCURSOR LoadCursor(HANDLE instance, LPSTR cursor_name)
 	ReleaseDC(GetDesktopWindow(), hdc); 
 	return 0;
  	}
-	(char *)lp += 2;
+	lp++;
     for (j = 0; j < 16; j++)
     	printf("%04X ", *(lp + j));
 /*

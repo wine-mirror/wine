@@ -709,7 +709,6 @@ static void FindNext(struct sigcontext_struct *context)
 
 	do {
 		if ((dp = DOS_readdir(dp)) == NULL) {
-			DOS_closedir(dp);
 			Error(NoMoreFiles, EC_MediaError , EL_Disk);
 			EAX = (EAX & 0xffffff00L) | NoMoreFiles;
 			SetCflag;
@@ -1026,7 +1025,6 @@ static void DeleteFileFCB(struct sigcontext_struct *context)
 		fprintf(stderr, "int21: delete file %s\n", temp);
 		/* unlink(GetUnixFileName(temp)); */
 	}
-
 	DOS_closedir(dp);
 	EAX = (EAX & 0xffffff00L);
 }
@@ -1072,7 +1070,6 @@ static void RenameFileFCB(struct sigcontext_struct *context)
 		strcpy(newnameptr, fcb + 1);
 		fprintf(stderr, "int21: renamefile %s -> %s\n", oldname, newname);
 	}
-
 	DOS_closedir(dp);
 	EAX = (EAX & 0xffffff00L);
 }

@@ -417,7 +417,7 @@ WORD FreeSelector(WORD sel)
     if (s->shm_key == 0)
     {
 	munmap(s->base_addr, ((s->length + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
-	memcpy(s, 0, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	SelectorMap[sel_idx] = 0;
     }
     else
@@ -432,7 +432,7 @@ WORD FreeSelector(WORD sel)
 	if (alias_count == 1)
 	    shmctl(s->shm_key, IPC_RMID, NULL);
 	    
-	memcpy(s, 0, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	SelectorMap[sel_idx] = 0;
     }
     
@@ -457,7 +457,7 @@ WORD FreeSelector(WORD sel)
     {
 	s = &Segments[sel_idx];
 	munmap(s->base_addr, ((s->length + PAGE_SIZE) & ~(PAGE_SIZE - 1)));
-	memcpy(s, 0, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	SelectorMap[sel >> 3] = 0;
     }
 #endif /* HAVE_IPC */
@@ -847,15 +847,10 @@ CreateSelectors(struct  w_files * wpnt)
 	 * First we need to check for local heap.  Second we nee to see if
 	 * this is also the stack segment.
 	 */
-	if (i + 1 == ne_header->auto_data_seg)
+	if (i + 1 == ne_header->auto_data_seg || i + 1 == ne_header->ss)
 	{
-	    s->length += ne_header->local_heap_length;
-
-	    if (i + 1 == ne_header->ss)
-	    {
-		s->length += ne_header->stack_length;
-		ne_header->sp = s->length;
-	    }
+	    s->length = 0x10000;
+	    ne_header->sp = s->length - 2;
 	}
 
 	/*

@@ -14,6 +14,7 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1993";
 #include "sysmetrics.h"
 #include "prototypes.h"
 #include "menu.h"
+#include "user.h"
 #include "heap.h"
 #include "win.h"
 
@@ -50,6 +51,7 @@ WORD GetSelectionKey(LPSTR str);
 LPSTR GetShortCutString(LPSTR str);
 WORD GetShortCutPos(LPSTR str);
 BOOL HideAllSubPopupMenu(LPPOPUPMENU menu);
+void InitStdBitmaps();
 HMENU CopySysMenu();
 WORD * ParseMenuResource(WORD *first_item, int level, HMENU hMenu);
 void SetMenuLogicalParent(HMENU hMenu, HWND hWnd);
@@ -84,10 +86,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 #ifdef DEBUG_MENU
 		printf("PopupMenu WM_CREATE lppop=%08X !\n", lppop);
 #endif
-		if (hStdCheck == (HBITMAP)NULL) 
-			hStdCheck = LoadBitmap((HANDLE)NULL, (LPSTR)OBM_CHECK);
-		if (hStdMnArrow == (HBITMAP)NULL) 
-			hStdMnArrow = LoadBitmap((HANDLE)NULL, (LPSTR)OBM_MNARROW);
+		InitStdBitmaps();
 #ifdef DEBUG_MENU
 		printf("PopupMenu End of WM_CREATE !\n");
 #endif
@@ -215,6 +214,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					ShowWindow(hwnd, SW_HIDE);
 					hwnd = lppop->hWndParent;
 					lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
+					printf("VK_LEFT // try to put focus on MenuBar %08X !\n", lppop);
 					if (lppop == NULL) break;
 					MenuItemSelect(hwnd, lppop, lppop->nItems - 1);
 				    break;
@@ -241,6 +241,7 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 					ShowWindow(hwnd, SW_HIDE);
 					hwnd = lppop->hWndParent;
 					lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
+					printf("VK_RIGHT // try to put focus on MenuBar %08X !\n", lppop);
 					if (lppop == NULL) break;
 					MenuItemSelect(hwnd, lppop, 0);
 				    break;
@@ -262,11 +263,6 @@ LONG PopupMenuWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 				    }
 				MenuItemSelect(hwnd, lppop, lppop->FocusedItem + 1);
 				break;
-			case VK_RETURN:
-			case VK_SPACE:
-ProceedSPACE:	lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
-				ExecFocusedMenuItem(hwnd, lppop);
-				break;
 			default:
 				break;
 			}
@@ -280,6 +276,11 @@ ProceedSPACE:	lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
 		lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
 		if (lppop == NULL) break;
 		switch(wParam) {
+			case VK_RETURN:
+			case VK_SPACE:
+ProceedSPACE:	lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
+				ExecFocusedMenuItem(hwnd, lppop);
+				break;
 			case VK_ESCAPE:
 				if (lppop->BarFlag) {
 #ifdef DEBUG_MENU
@@ -686,6 +687,7 @@ void StdDrawPopupMenu(HWND hwnd)
 		EndPaint(hwnd, &ps);
 		return;
 		}
+	InitStdBitmaps();
 	lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
 	if (lppop == NULL) goto EndOfPaint;
 	hBrush = GetStockObject(WHITE_BRUSH);
@@ -734,8 +736,13 @@ void StdDrawPopupMenu(HWND hwnd)
 		hMemDC = CreateCompatibleDC(hDC);
 		SelectObject(hMemDC, hBitMap);
 		GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
+#ifdef DEBUG_MENU
+		printf("StdDrawPopupMenu // MF_BITMAP hBit=%04X w=%d h=%d\n",
+				hBitMap, bm.bmWidth, bm.bmHeight);
+#endif
 		BitBlt(hDC, rect2.left, rect2.top,
-		bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+				bm.bmWidth, bm.bmHeight, 
+				hMemDC, 0, 0, SRCCOPY);
 		DeleteDC(hMemDC);
 		if ((lpitem->item_flags & MF_HILITE) == MF_HILITE)
 			InvertRect(hDC, &lpitem->rect);
@@ -812,9 +819,7 @@ void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop,
 	printf("StdDrawMenuBar(%04X, %08X, %08X); !\n", hDC, lprect, lppop);
 #endif
 	MenuBarCalcSize(hDC, lprect, lppop);
-	if (suppress_draw)
-	    return;
-	
+	if (suppress_draw) return;
 	hOldFont = SelectObject(hDC, GetStockObject(SYSTEM_FONT));
 	hOldPen = SelectObject(hDC, GetStockObject(BLACK_PEN));
 	hBrush = GetStockObject(WHITE_BRUSH);
@@ -855,8 +860,13 @@ void StdDrawMenuBar(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop,
 			hMemDC = CreateCompatibleDC(hDC);
 			SelectObject(hMemDC, hBitMap);
 			GetObject(hBitMap, sizeof(BITMAP), (LPSTR)&bm);
+#ifdef DEBUG_MENU
+			printf("StdDrawMenuBar // MF_BITMAP hBit=%04X w=%d h=%d\n",
+					hBitMap, bm.bmWidth, bm.bmHeight);
+#endif
 			BitBlt(hDC, rect2.left, rect2.top,
-			bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+						bm.bmWidth, bm.bmHeight, 
+						hMemDC, 0, 0, SRCCOPY);
 			DeleteDC(hMemDC);
 			}
 		if (((lpitem->item_flags & MF_BITMAP) != MF_BITMAP) &&
@@ -955,6 +965,7 @@ void PopupMenuCalcSize(HWND hwnd)
 #ifdef DEBUG_MENUCALC
 	printf("PopupMenuCalcSize hWnd=%04X !\n", hWnd);
 #endif
+	InitStdBitmaps();
 	lppop = PopupMenuGetWindowAndStorage(hwnd, &wndPtr);
 	if (lppop == NULL) return;
 	if (lppop->nItems == 0) return;
@@ -1039,6 +1050,7 @@ void MenuBarCalcSize(HDC hDC, LPRECT lprect, LPPOPUPMENU lppop)
 	DWORD	dwRet;
 	if (lppop == NULL) return;
 	if (lppop->nItems == 0) return;
+	InitStdBitmaps();
 #ifdef DEBUG_MENUCALC
 	printf("MenuBarCalcSize left=%d top=%d right=%d bottom=%d !\n", 
 		lprect->left, lprect->top, lprect->right, lprect->bottom);
@@ -1245,29 +1257,21 @@ BOOL ChangeMenu(HMENU hMenu, WORD nPos, LPSTR lpNewItem,
  */
 BOOL CheckMenuItem(HMENU hMenu, WORD wItemID, WORD wFlags)
 {
-	WND		*wndPtr;
-	LPPOPUPMENU	menu;
 	LPMENUITEM 	lpitem;
-	int		i;
 #ifdef DEBUG_MENU
 	printf("CheckMenuItem (%04X, %04X, %04X) !\n", hMenu, wItemID, wFlags);
 #endif
-	menu = (LPPOPUPMENU) GlobalLock(hMenu);
-	if (menu == NULL) return FALSE;
-	lpitem = menu->firstItem;
-	for (i = 0; i < menu->nItems; i++) {
-		if (lpitem == NULL) break;
-		if (i == wItemID) {
-			if (wFlags && MF_CHECKED)
-				lpitem->item_flags |= MF_CHECKED;
-			else
-				lpitem->item_flags &= ((WORD)-1 ^ MF_CHECKED);
-			GlobalUnlock(hMenu);
-			return(TRUE);
-			}
-		lpitem = (LPMENUITEM)lpitem->next;
+	lpitem = FindMenuItem(hMenu, wItemID, wFlags);
+	if (lpitem != NULL) {
+		if ((wFlags & MF_CHECKED) == MF_CHECKED)
+			lpitem->item_flags |= MF_CHECKED;
+		else
+			lpitem->item_flags &= ((WORD)-1 ^ MF_CHECKED);
+#ifdef DEBUG_MENU
+		printf("CheckMenuItem // Found !\n");
+#endif
+		return(TRUE);
 		}
-	GlobalUnlock(hMenu);
 	return FALSE;
 }
 
@@ -1277,30 +1281,113 @@ BOOL CheckMenuItem(HMENU hMenu, WORD wItemID, WORD wFlags)
  */
 BOOL EnableMenuItem(HMENU hMenu, WORD wItemID, WORD wFlags)
 {
-	WND		*wndPtr;
-	LPPOPUPMENU	menu;
 	LPMENUITEM 	lpitem;
-	int		i;
 #ifdef DEBUG_MENU
 	printf("EnableMenuItem (%04X, %04X, %04X) !\n", hMenu, wItemID, wFlags);
 #endif
+	lpitem = FindMenuItem(hMenu, wItemID, wFlags);
+	if (lpitem != NULL) {
+		if (wFlags && MF_DISABLED)
+			lpitem->item_flags |= MF_DISABLED;
+		else
+			lpitem->item_flags &= ((WORD)-1 ^ MF_DISABLED);
+#ifdef DEBUG_MENU
+		printf("EnableMenuItem // Found !\n");
+#endif
+		return(TRUE);
+		}
+	return FALSE;
+}
+
+
+/**********************************************************************
+ *			GetMenuString		[USER.161]
+ */
+int GetMenuString(HMENU hMenu, WORD wItemID, 
+	LPSTR str, short nMaxSiz, WORD wFlags)
+{
+	LPMENUITEM 	lpitem;
+	int		maxsiz;
+#ifdef DEBUG_MENU
+	printf("GetMenuString(%04X, %04X, %08X, %d, %04X);\n",
+					hMenu, wItemID, str, nMaxSiz, wFlags);
+#endif
+	if (str == NULL) return FALSE;
+	lpitem = FindMenuItem(hMenu, wItemID, wFlags);
+	if (lpitem != NULL) {
+		if (lpitem->item_text != NULL) {
+			maxsiz = min(nMaxSiz - 1, strlen(lpitem->item_text));
+			strncpy(str, lpitem->item_text, maxsiz + 1);
+			}
+		else
+			maxsiz = 0;
+#ifdef DEBUG_MENU
+		printf("GetMenuString // Found !\n");
+#endif
+		return maxsiz;
+		}
+	return 0;
+}
+
+
+/**********************************************************************
+ *			HiliteMenuItem		[USER.162]
+ */
+BOOL HiliteMenuItem(HWND hWnd, HMENU hMenu, WORD wItemID, WORD wHilite)
+{
+	LPPOPUPMENU	menu;
+	LPMENUITEM 	lpitem;
+	printf("HiliteMenuItem(%04X, %04X, %04X, %04X);\n", 
+						hWnd, hMenu, wItemID, wHilite);
 	menu = (LPPOPUPMENU) GlobalLock(hMenu);
 	if (menu == NULL) return FALSE;
+	lpitem = FindMenuItem(hMenu, wItemID, wHilite);
+	if (lpitem == NULL) return FALSE;
+	return FALSE;
+}
+
+
+/**********************************************************************
+ *			GetMenuItemCount		[USER.263]
+ */
+WORD GetMenuItemCount(HMENU hMenu)
+{
+	LPPOPUPMENU	menu;
+#ifdef DEBUG_MENU
+	printf("GetMenuItemCount(%04X);\n", hMenu);
+#endif
+	menu = (LPPOPUPMENU) GlobalLock(hMenu);
+	if (menu == NULL) return (WORD)-1;
+#ifdef DEBUG_MENU
+	printf("GetMenuItemCount(%04X) return %d \n", hMenu, menu->nItems);
+#endif
+	return menu->nItems;
+}
+
+
+/**********************************************************************
+ *			GetMenuItemID			[USER.264]
+ */
+WORD GetMenuItemID(HMENU hMenu, int nPos)
+{
+	WORD		i;
+	LPPOPUPMENU	menu;
+	LPMENUITEM 	lpitem;
+	printf("GetMenuItemID(%04X, %d);\n", hMenu, nPos);
+	menu = (LPPOPUPMENU) GlobalLock(hMenu);
+	if (menu == NULL) return -1;
 	lpitem = menu->firstItem;
 	for (i = 0; i < menu->nItems; i++) {
 		if (lpitem == NULL) break;
-		if (i == wItemID) {
-			if (wFlags && MF_DISABLED)
-				lpitem->item_flags |= MF_DISABLED;
-			else
-				lpitem->item_flags &= ((WORD)-1 ^ MF_DISABLED);
-			GlobalUnlock(hMenu);
-			return(TRUE);
+		if (i == nPos) {
+#ifdef DEBUG_MENU
+			printf("GetMenuItemID // Found !\n");
+#endif
+			return lpitem->item_id;
 			}
 		lpitem = (LPMENUITEM)lpitem->next;
 		}
-	GlobalUnlock(hMenu);
-	return FALSE;
+	return -1;
 }
 
 
@@ -1309,13 +1396,11 @@ BOOL EnableMenuItem(HMENU hMenu, WORD wItemID, WORD wFlags)
  */
 BOOL InsertMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewItem)
 {
-	WND		*wndPtr;
 	LPPOPUPMENU	menu;
 	HANDLE	hNewItem;
 	LPMENUITEM 	lpitem, lpitem2;
-	int		i;
 #ifdef DEBUG_MENU
-	if (wFlags & MF_STRING) 
+	if ((wFlags & (MF_BITMAP | MF_SEPARATOR | MF_MENUBREAK | MF_OWNERDRAW)) == 0)
 		printf("InsertMenu (%04X, %04X, %04X, '%s') !\n",
 					hMenu, wFlags, wItemID, lpNewItem);
 	else
@@ -1377,7 +1462,6 @@ BOOL InsertMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewIt
  */
 BOOL AppendMenu(HMENU hMenu, WORD wFlags, WORD wItemID, LPSTR lpNewItem)
 {
-	WND		*wndPtr;
 	LPPOPUPMENU	menu;
 	HANDLE	hNewItem;
 	LPMENUITEM 	lpitem, lpitem2;
@@ -1445,7 +1529,6 @@ BOOL AppendMenu(HMENU hMenu, WORD wFlags, WORD wItemID, LPSTR lpNewItem)
  */
 BOOL RemoveMenu(HMENU hMenu, WORD nPos, WORD wFlags)
 {
-	WND		*wndPtr;
 	LPPOPUPMENU	menu;
 	LPMENUITEM 	lpitem;
 	int		i;
@@ -1521,13 +1604,16 @@ BOOL DeleteMenu(HMENU hMenu, WORD nPos, WORD wFlags)
  */
 BOOL ModifyMenu(HMENU hMenu, WORD nPos, WORD wFlags, WORD wItemID, LPSTR lpNewItem)
 {
-	WND		*wndPtr;
 	LPPOPUPMENU	menu;
 	LPMENUITEM 	lpitem;
 	int		i;
 #ifdef DEBUG_MENU
-	printf("ModifyMenu (%04X, %04X, %04X, %04X, %08X) !\n",
-				hMenu, nPos, wFlags, wItemID, lpNewItem);
+	if ((wFlags & (MF_BITMAP | MF_SEPARATOR | MF_MENUBREAK | MF_OWNERDRAW)) == 0)
+		printf("ModifyMenu (%04X, %04X, %04X, %04X, '%s') !\n",
+					hMenu, nPos, wFlags, wItemID, lpNewItem);
+	else
+		printf("ModifyMenu (%04X, %04X, %04X, %04X, %08X) !\n",
+					hMenu, nPos, wFlags, wItemID, lpNewItem);
 #endif
 	menu = (LPPOPUPMENU) GlobalLock(hMenu);
 	if (menu == NULL) return FALSE;
@@ -1593,6 +1679,9 @@ HMENU CreatePopupMenu()
 	menu->Width 		= 100;
 	menu->Height 		= 0;
 	GlobalUnlock(hMenu);
+#ifdef DEBUG_MENU
+	printf("CreatePopupMenu // return %04X\n", hMenu);
+#endif
 	return hMenu;
 }
 
@@ -1692,7 +1781,6 @@ BOOL ActivateMenuBarFocus(HWND hWnd)
 
 BOOL MenuFocusLoop(HWND hWnd, LPPOPUPMENU lpmenu)
 {
-	WND		*wndPtr;
 	MSG		msg;
 #ifdef DEBUG_MENU
 	printf("Enter in Menu Focus Loop !\n");
@@ -1808,8 +1896,7 @@ void NC_TrackSysMenu(HWND hWnd)
 DWORD GetMenuCheckMarkDimensions()
 {
     BITMAP	bm;
-    if (hStdCheck == (HBITMAP)NULL) 
-	hStdCheck = LoadBitmap((HANDLE)NULL, (LPSTR)OBM_CHECK);
+	InitStdBitmaps();
     GetObject(hStdCheck, sizeof(BITMAP), (LPSTR)&bm);
     return MAKELONG(bm.bmWidth, bm.bmHeight);
 }
@@ -1821,7 +1908,6 @@ DWORD GetMenuCheckMarkDimensions()
 BOOL SetMenuItemBitmaps(HMENU hMenu, WORD nPos, WORD wFlags,
 		HBITMAP hNewCheck, HBITMAP hNewUnCheck)
 {
-	WND		*wndPtr;
 	LPPOPUPMENU	menu;
 	LPMENUITEM 	lpitem;
 	int		i;
@@ -1856,7 +1942,7 @@ HMENU CreateMenu()
 	HMENU	hMenu;
 	LPPOPUPMENU menu;
 #ifdef DEBUG_MENU
-	printf("CreatePopupMenu !\n");
+	printf("CreateMenu !\n");
 #endif
 	hMenu = GlobalAlloc(GMEM_MOVEABLE, sizeof(POPUPMENU));
 	menu = (LPPOPUPMENU) GlobalLock(hMenu);
@@ -1877,6 +1963,9 @@ HMENU CreateMenu()
 	menu->Width 		= 100;
 	menu->Height 		= 0;
 	GlobalUnlock(hMenu);
+#ifdef DEBUG_MENU
+	printf("CreateMenu // return %04X\n", hMenu);
+#endif
 	return hMenu;
 }
 
@@ -1983,7 +2072,10 @@ HMENU GetMenu(HWND hWnd)
  */
 BOOL SetMenu(HWND hWnd, HMENU hMenu)
 {
+	RECT	rect;
 	LPPOPUPMENU lpmenu;
+	NCCALCSIZE_PARAMS *params;
+	HANDLE hparams;
 	WND * wndPtr = WIN_FindWndPtr(hWnd);
 	if (wndPtr == NULL) {
 		printf("SetMenu(%04X, %04X) // Bad window handle !\n", hWnd, hMenu);
@@ -1992,7 +2084,22 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 #ifdef DEBUG_MENU
 	printf("SetMenu(%04X, %04X);\n", hWnd, hMenu);
 #endif
+	if (GetCapture() == hWnd) ReleaseCapture();
 	wndPtr->wIDmenu = hMenu;
+	if (hMenu == 0) {
+		printf("SetMenu(%04X, %04X) // Menu removed !\n", hWnd, hMenu);
+		hparams = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(NCCALCSIZE_PARAMS));
+		if (hparams) {
+			params = (NCCALCSIZE_PARAMS *) USER_HEAP_ADDR(hparams);
+			params->rgrc[0] = wndPtr->rectWindow;
+			params->lppos = NULL;
+			SendMessage(hWnd, WM_NCCALCSIZE, FALSE, (LONG)params);
+			wndPtr->rectClient = params->rgrc[0];
+			USER_HEAP_FREE(hparams);
+			}	
+		SendMessage(hWnd, WM_NCPAINT, 0, 0L);
+		return TRUE;
+		}
 	lpmenu = (LPPOPUPMENU) GlobalLock(hMenu);
 	if (lpmenu == NULL) {
 		printf("SetMenu(%04X, %04X) // Bad menu handle !\n", hWnd, hMenu);
@@ -2000,7 +2107,6 @@ BOOL SetMenu(HWND hWnd, HMENU hMenu)
 		}
 	lpmenu->ownerWnd = hWnd;
 	ResetHiliteFlags(lpmenu);
-	if (GetCapture() == hWnd) ReleaseCapture();
 	GlobalUnlock(hMenu);
 	return TRUE;
 }
@@ -2089,6 +2195,18 @@ HMENU LoadMenuIndirect(LPSTR menu_template)
 	ResetHiliteFlags(lppop);
 	GlobalUnlock(hMenu);
 	return hMenu;
+}
+
+
+/**********************************************************************
+ *			InitStdBitmaps (Internal)
+ */
+void InitStdBitmaps()
+{
+	if (hStdCheck == (HBITMAP)NULL) 
+		hStdCheck = LoadBitmap((HANDLE)NULL, (LPSTR)OBM_CHECK);
+	if (hStdMnArrow == (HBITMAP)NULL) 
+		hStdMnArrow = LoadBitmap((HANDLE)NULL, (LPSTR)OBM_MNARROW);
 }
 
 

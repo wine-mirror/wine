@@ -1,4 +1,90 @@
 ----------------------------------------------------------------------
+Mon May 23 15:07:36 1994  Bob Amstadt  (bob@pooh)
+
+	* [loader/selector.c]
+	Allocate heap and stack segments as 64k.
+
+Sat May 21 01:15:49 1994  Rick Sladkey  (jrs@world.std.com)
+
+        * [loader/selector.c]
+        Correct typos where memcpy is used instead of memset.
+
+        * [loader/resource.c]
+        Allow for legitimate cases where biSizeImage is 0 in LoadIcon
+        by calculating the value when the bitmap is not compressed.
+
+        * [miscemu/int21.c]
+        Fix NULL dereference caused by superfluous DOS_closedir in FindNext.
+
+        * [loader/resource.c]
+        New function type_match to handle string resource types as
+        well as IDs.  In addition, compare only low 4 bits of type_id
+        when both numbers are IDs so that 0x0002 matches 0x8002.
+        In FindResourceByNumber and FindResourceByName use type_match
+        instead of comparing numbers.  In FindResource handle the
+        "#number" syntax and empty strings in both the resource and
+        type names.
+
+Mon May 23 00:48:25 1994  Rick Sladkey  (jrs@world.std.com)
+
+        * [windows/dialog.c]
+        Fix inadvertent printing of string IDs as strings.
+
+May 16, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/menu.c]
+	New functions GetMenuItemCount(), GetMenuItemID().
+		GetMenuString() & HiliteMenuItem().
+	Bug fix in CheckMenuItem().
+	Function SetMenu() now make client area recalc if menu removed.
+
+	* [windows/winpos.c]
+	Bug fix in SetWindowPos(), no more XMapping or XConfiguring	of
+		windows with initial width or height equal zero.
+
+	* [objects/gdiobj.c]
+	New function EnumObjects(), using new lpPenBrushList buildup
+		from calls to new function GDI_AppendToPenBrushList().
+		('pbrush.exe' don't show its face yet ! ... :-( )
+	New EMPTY STUB for function SetObjectOwner(),
+		('mplayer.exe' call it via GetProcAddress() ...)
+
+	* [objects/font.c]
+	New internal functions ParseFontParms() & InitFontsList().
+	EnumFonts() & EnumFontFamilies() enumerates fonts (no more dummies).
+	FONT_MatchFont now make retries to find closest-smallest font.
+		('charmap.exe' can now show the differents fonts available)
+
+	* [windows/nonclient.c]
+	Use small dos OBM_OLD_CLOSE button for MDI windows.
+
+	* [windows/graphics.c] [objects/bitmap.c]
+	Start to remove obsolete globals such XT_screen ...
+
+	* [loader/library.c]
+	Make function GetProcAddress() working also with builtin DLLs.
+
+Tue May 24 20:18:02 1994  Erik Bos (erik@hacktic.nl)
+
+        * [if1632/system.spec] [if1632/toolhelp.spec]
+        system.dll & toolhelp.dll added.
+
+        * [loader/library.c]
+        Modified GetModuleFileName() to return the full
+        filename.
+        Added a check to LoadLibrary() to prevent loading
+        built in dlls. (eg. user.exe)
+        Added a check to FreeLibrary() to prevent built-in
+        dlls from being freed.
+        Modified GetProcAddress() to support builtin dlls.
+
+        * [loader/signal.c] [miscemu/int2f.c]
+        Added => pifedit runs.
+
+        * [misc/dos_fs.c]
+        Added a NULL-ptr check to DOS_closedir().
+
+----------------------------------------------------------------------
 Tue May 17 23:03:16 1994  Bob Amstadt  (bob@pooh)
 
 	* [windows/dce.c]

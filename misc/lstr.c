@@ -58,19 +58,25 @@ INT lstrlen(LPCSTR str)
   return strlen(str);
 }
 
+
 /* AnsiUpper USER.431 */
 char FAR* AnsiUpper(char FAR* strOrChar)
 {
   /* I am not sure if the locale stuff works with toupper, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
-  if((int)strOrChar<256)
+/*  if((int)strOrChar<256)
     return (char FAR*) toupper((int)strOrChar);
-  else {
+  else { 
     int i;
-    for(i=0;(i<65536)&&strOrChar[i];i++)
-      strOrChar[i]=toupper(strOrChar[i]);
+    for(i=0;(i<65536) && strOrChar[i];i++) 
+      strOrChar[i]=toupper(strOrChar[i]); 
     return strOrChar;	
-  }
+  } */
+    int i;
+	for (i = 0; (i < 65536 && strOrChar[i]);i++) 
+		strOrChar[i] = (strOrChar[i] >= 'a' && strOrChar[i] <= 'z') ?
+						strOrChar[i] - ('a' - 'A') : strOrChar[i];
+	return strOrChar;	
 }
 
 /* AnsiLower USER.432 */
@@ -78,14 +84,18 @@ char FAR* AnsiLower(char FAR* strOrChar)
 {
   /* I am not sure if the locale stuff works with tolower, but then again 
      I am not sure if the Linux libc locale stuffs works at all */
-  if((int)strOrChar<256)
+/*  if((int)strOrChar<256)
     return (char FAR*)tolower((int)strOrChar);
   else {
     int i;
     for(i=0;(i<65536)&&strOrChar[i];i++)
       strOrChar[i]=tolower(strOrChar[i]);
     return strOrChar;	
-  }
+   }*/
+    int i;
+	for (i = 0; (i < 65536 && strOrChar[i]);i++) 
+		strOrChar[i] = (strOrChar[i] >= 'A' && strOrChar[i] <= 'Z') ?
+						strOrChar[i] + ('a' - 'A') : strOrChar[i];
 }
 
 /* AnsiUpperBuff USER.437 */

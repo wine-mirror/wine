@@ -156,7 +156,7 @@ HWND CreateDialogParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     LPCSTR data;
 
 #ifdef DEBUG_DIALOG
-    printf( "CreateDialogParam: %d,'%s',%d,%p,%d\n",
+    printf( "CreateDialogParam: %d,'%x',%d,%p,%d\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
 #endif
      
@@ -295,10 +295,10 @@ HWND CreateDialogIndirectParam( HINSTANCE hInst, LPCSTR dlgTemplate,
 	    }
 	header->style |= WS_CHILD;
 	CreateWindowEx( WS_EX_NOPARENTNOTIFY, 
-		        class, text, header->style,
-		        header->x * xUnit / 4, header->y * yUnit / 8,
-		        header->cx * xUnit / 4, header->cy * yUnit / 8,
-		        hwnd, header->id, hInst, NULL );
+		       class, text, header->style,
+		       header->x * xUnit / 4, header->y * yUnit / 8,
+		       header->cx * xUnit / 4, header->cy * yUnit / 8,
+		       hwnd, header->id, hInst, NULL );
 	header = next_header;
     }    
 
@@ -381,7 +381,7 @@ int DialogBoxParam( HINSTANCE hInst, LPCSTR dlgTemplate,
     HWND hwnd;
     
 #ifdef DEBUG_DIALOG
-    printf( "DialogBoxParam: %d,'%s',%d,%p,%d\n",
+    printf( "DialogBoxParam: %d,'%x',%d,%p,%d\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
 #endif
     hwnd = CreateDialogParam( hInst, dlgTemplate, owner, dlgProc, param );
@@ -451,6 +451,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
 	int dlgCode = SendMessage( msg->hwnd, WM_GETDLGCODE, 0, 0 );
 	/* Process key message */
 	/* .... */
+	SendMessage( msg->hwnd, msg->message, msg->wParam, msg->lParam );
     }
     return TRUE;
 }

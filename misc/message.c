@@ -58,13 +58,15 @@ int MessageBox(HWND hWnd, LPSTR str, LPSTR title, WORD type)
 	if (wndPtr == NULL) {
 		hInst = hSysRes;
 #ifdef DEBUG_MSGBOX
-		printf("MessageBox(NULL, '%s', '%s', %04X)\n", str, title, type);
+		printf("MessageBox(NULL, %08X='%s', %08X='%s', %04X)\n", 
+									str, str, title, title, type);
 #endif
 		}
 	else {
 		hInst = wndPtr->hInstance;
 #ifdef DEBUG_MSGBOX
-		printf("MessageBox(%04X, '%s', '%s', %04X)\n", hWnd, str, title, type);
+		printf("MessageBox(%04X, %08X='%s', %08X='%s', %04X)\n", 
+							hWnd, str, str, title, title, type);
 #endif
 		}
     lpmb = (LPMSGBOX) malloc(sizeof(MSGBOX));
@@ -379,7 +381,7 @@ BOOL FAR PASCAL AboutWine_Proc(HWND hDlg, WORD msg, WORD wParam, LONG lParam)
 	strcpy(str, "WINELOGO");
 	hBitMap = LoadBitmap((HINSTANCE)NULL, (LPSTR)str);
 
-	strcpy(str, "PROPOSED_LICENSE");
+	strcpy(str, "LICENSE");
 	printf("str = '%s'\n", str);
 	hFile = OpenFile((LPSTR)str, &ofstruct, OF_READ);
 	ptr = (LPSTR)malloc(2048);

@@ -85,7 +85,7 @@ length	490
 68  pascal DeleteDC(word) DeleteDC(1)
 69  pascal DeleteObject(word) DeleteObject(1)
 70  pascal EnumFonts(word ptr ptr ptr) EnumFonts(1 2 3 4)
-#71  pascal EnumObjects
+71  pascal EnumObjects(word word ptr ptr) EnumObjects(1 2 3 4)
 72  pascal EqualRgn(word word) EqualRgn(1 2)
 73  pascal ExcludeVisRect(word s_word s_word s_word s_word)
 	   ExcludeVisRect(1 2 3 4 5)
@@ -136,8 +136,8 @@ length	490
 129 pascal SaveVisRgn(word) SaveVisRgn(1)
 130 pascal RestoreVisRgn(word) RestoreVisRgn(1)
 131 pascal InquireVisRgn(word) InquireVisRgn(1)
-#132 pascal SetEnvironment
-#133 pascal GetEnvironment
+132 pascal SetEnvironment(ptr ptr word) SetEnvironment(1 2 3)
+133 pascal GetEnvironment(ptr ptr word) GetEnvironment(1 2 3)
 134 pascal GetRgnBox(word ptr) GetRgnBox(1 2)
 #135 pascal ScanLr
 #136 pascal RemoveFontResource
@@ -276,7 +276,7 @@ length	490
 	   CreatePolyPolygonRgn(1 2 3 4)
 #452 pascal GDISEEGDIDO
 #460 pascal GDITASKTERMINATION
-#461 pascal SETOBJECTOWNER
+461 pascal SetObjectOwner(word) SetObjectOwner(1)
 #462 pascal ISGDIOBJECT
 #463 pascal MAKEOBJECTPRIVATE
 #464 pascal FIXUPBOGUSPUBLISHERMETAFILE

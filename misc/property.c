@@ -43,11 +43,15 @@ HANDLE RemoveProp(HWND hWnd, LPSTR lpStr)
     	return FALSE;
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
-	if (lpProp == NULL) return 0;
+	if (lpProp == NULL) {
+		printf("Property List Empty !\n");
+		return 0;
+		}
 	while (TRUE) {
 		if ((((DWORD)lpStr & 0xFFFF0000) == 0L && 
 			lpProp->Atom == LOWORD((DWORD)lpStr)) ||
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
+			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
 		   	printf("RemoveProp // Property found ! hData=%04X\n", lpProp->hData);
 			hOldData = lpProp->hData;
@@ -90,11 +94,15 @@ HANDLE GetProp(HWND hWnd, LPSTR lpStr)
     	return 0;
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
-	if (lpProp == NULL) return 0;
+	if (lpProp == NULL) {
+		printf("Property List Empty !\n");
+		return 0;
+		}
 	while (TRUE) {
 		if ((((DWORD)lpStr & 0xFFFF0000) == 0L && 
 			lpProp->Atom == LOWORD((DWORD)lpStr)) ||
 			(((DWORD)lpStr & 0xFFFF0000) != 0L && 
+			lpProp->PropName != NULL &&
 			strcmp(lpProp->PropName, lpStr) == 0)) {
 		   	printf("GetProp // Property found ! hData=%04X\n", lpProp->hData);
 			GlobalUnlock(wndPtr->hProp);
@@ -136,6 +144,7 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 			if ((((DWORD)lpStr & 0xFFFF0000) == 0L && 
 				lpProp->Atom == LOWORD((DWORD)lpStr)) ||
 				(((DWORD)lpStr & 0xFFFF0000) != 0L && 
+				lpProp->PropName != NULL &&
 				strcmp(lpProp->PropName, lpStr) == 0)) {
 #ifdef DEBUG_PROP
 			    printf("SetProp // change already exinsting property !\n");
@@ -177,7 +186,7 @@ BOOL SetProp(HWND hWnd, LPSTR lpStr, HANDLE hData)
 		}
 	else {
 		lpNewProp->Atom = 0;
-		lpNewProp->PropName = malloc(strlen(lpStr));
+		lpNewProp->PropName = malloc(strlen(lpStr) + 1);
 		if (lpNewProp->PropName == NULL) {
 	    	printf("SetProp // Can't allocate memory for Property Name !\n");
 			GlobalUnlock(wndPtr->hProp);
@@ -207,7 +216,10 @@ int EnumProps(HWND hWnd, FARPROC lpEnumFunc)
     	return 0;
     	}
 	lpProp = (LPPROPENTRY) GlobalLock(wndPtr->hProp);
-	if (lpProp == NULL) return 0;
+	if (lpProp == NULL) {
+		printf("Property List Empty !\n");
+		return 0;
+		}
 	if (lpEnumFunc != NULL)	return 0;
 	while (TRUE) {
     	printf("EnumProps // lpProp->Atom=%04X !\n", lpProp->Atom);

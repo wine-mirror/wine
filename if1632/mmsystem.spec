@@ -67,8 +67,33 @@ length 706
 509    pascal  WAVEINSTART(word) waveInStart(1)
 510    pascal  WAVEINSTOP(word) waveInStop(1)
 511    pascal  WAVEINRESET(word) waveInReset(1)
+512    pascal  WAVEINGETPOSITION(word ptr word) waveInGetPosition(1 2 3)
 513    pascal  WAVEINGETID(word ptr) waveInGetID(1 2)
 701    pascal  MCISENDCOMMAND(word word long long) mciSendCommand(1 2 3 4)
 702    pascal  MCISENDSTRING(ptr ptr word word) mciSendString(1 2 3 4)
 703    pascal  MCIGETDEVICEID(ptr) mciSendCommand(1)
 706    pascal  MCIGETERRORSTRING(long ptr word) mciGetErrorString(1 2 3)
+#1100   pascal  DRVOPEN
+#1101   pascal  DRVCLOSE
+#1102   pascal  DRVSENDMESSAGE
+#1103   pascal  DRVGETMODULEHANDLE
+#1104   pascal  DRVDEFDRIVERPROC
+#1210   pascal  MMIOOPEN
+#1211   pascal  MMIOCLOSE
+#1212   pascal  MMIOREAD
+#1213   pascal  MMIOWRITE
+#1214   pascal  MMIOSEEK
+#1215   pascal  MMIOGETINFO
+#1216   pascal  MMIOSETINFO
+#1217   pascal  MMIOSETBUFFER
+#1218   pascal  MMIOFLUSH
+#1219   pascal  MMIOADVANCE
+#1220   pascal  MMIOSTRINGTOFOURCC
+#1221   pascal  MMIOINSTALLIOPROC
+#1222   pascal  MMIOSENDMESSAGE
+#1223   pascal  MMIODESCEND
+#1224   pascal  MMIOASCEND
+#1225   pascal  MMIOCREATECHUNK
+#1226   pascal  MMIORENAME
+
+

@@ -20,8 +20,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
+LPSTR	lpEnvList;
+
 Display * XT_display;  /* To be removed */
-Screen * XT_screen;    /* To be removed */
 
 Display *display;
 Screen *screen;
@@ -298,7 +299,6 @@ int main( int argc, char *argv[] )
     screenWidth  = WidthOfScreen( screen );
     screenHeight = HeightOfScreen( screen );
     XT_display   = display;
-    XT_screen    = screen;
     if (screenDepth)  /* -depth option specified */
     {
 	depth_list = XListDepths(display,DefaultScreen(display),&depth_count);
@@ -357,6 +357,26 @@ LONG GetVersion(void)
 LONG GetWinFlags(void)
 {
 	return (WF_STANDARD | WF_CPU286 | WF_PMODE | WF_80x87);
+}
+
+/***********************************************************************
+ *	SetEnvironment (GDI.132)
+ */
+int SetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nCount)
+{
+	printf("EMPTY STUB ! // SetEnvironnement('%s', '%s', %d) !\n",
+								lpPortName, lpEnviron, nCount);
+	return 0;
+}
+
+/***********************************************************************
+ *	GetEnvironment (GDI.134)
+ */
+int GetEnvironment(LPSTR lpPortName, LPSTR lpEnviron, WORD nMaxSiz)
+{
+	printf("EMPTY STUB ! // GetEnvironnement('%s', '%s', %d) !\n",
+								lpPortName, lpEnviron, nMaxSiz);
+	return 0;
 }
 
 /***********************************************************************

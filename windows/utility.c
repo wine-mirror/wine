@@ -285,113 +285,72 @@ char *UTILITY_convertArgs(char *format, char *winarg)
 #ifndef WINELIB
 INT windows_wsprintf(BYTE *win_stack)
 {
-	LPSTR lpOutput, lpFormat;
-	BYTE *new_stack, *stack_ptr, *ptr;
-	int stacklength, result;
+	LPSTR lpOutput, lpFormat, ptr;
+	BYTE new_stack[1024], *stack_ptr;
 
 	lpOutput = (LPSTR) *(DWORD*)win_stack;
 	win_stack += 4;
 	lpFormat = (LPSTR) *(DWORD*)win_stack;
 	win_stack += 4;
 
-	/* determine # of bytes pushed on 16-bit stack by checking printf's
-	   format string */
-	
-	ptr = lpFormat;
-	stacklength = 0;
-	do {
-		if (*ptr++ != '%')
-			continue;
-
-		/* skip width/precision */
-		while (	*ptr == '-' || *ptr == '+' || *ptr == '.' ||
-			*ptr == ' ' || isdigit(*ptr))
-			ptr++;
-
-		switch(*ptr++) {
-			case 'l': ptr++; /* skip next type character */
-				stacklength += 4;
-				continue;
-			case 's':
-				stacklength += 4;
-				continue;
-			case 'c':
-			case 'd':
-			case 'i':
-			case 'u':
-			case 'x':
-			case 'X':
-				stacklength += 2;
-				continue;
-			default:
-				fprintf(stderr, "wsprintf: oops, unknown formattype `%c' used!\n", *ptr);
-		}
-	} while (*ptr);
-
 	/* create 32-bit stack for libc's vsprintf() */
 
-	new_stack = malloc(2 * stacklength); 
-	stack_ptr = new_stack + 2 * stacklength;
-	win_stack += stacklength;
-	ptr  = lpFormat;
-	do {
-		if (*ptr++ != '%')
+	for (ptr = lpFormat, stack_ptr = new_stack; *ptr; ptr++) {
+		if (*ptr != '%' || *++ptr == '%')
 			continue;
 
 		/* skip width/precision */
-		while (	*ptr == '-' || *ptr == '+' || *ptr == '.' ||
-			*ptr == ' ' || isdigit(*ptr))
+		while (*ptr == '-' || *ptr == '+' || *ptr == '.' ||
+		       *ptr == ' ' || isdigit(*ptr))
 			ptr++;
 			
-		switch(*ptr++) {
+		switch (*ptr++) {
 			case 's':
-				stack_ptr -= 4;
- 				win_stack -= 4;
 				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
-				continue;
+				stack_ptr += 4;
+ 				win_stack += 4;
+				break;
 			case 'l':
-				stack_ptr -= 4;
-				win_stack -= 4;
 				*(DWORD*)stack_ptr = *(DWORD*)win_stack;
+				stack_ptr += 4;
+				win_stack += 4;
 				ptr++; /* skip next type character */
-				continue;
+				break;
 			case 'c':
-				stack_ptr -= 4;
-				win_stack -= 2;
 	
-/* windows' wsprintf() %c ignores 0's, we replace 0 with 1 to make sure
+/* windows' wsprintf() %c ignores 0's, we replace 0 with SPACE to make sure
    that the remaining part of the string isn't ignored by the winapp */
 				
 				if (*(WORD*)win_stack)
 					*(DWORD*)stack_ptr = *(WORD*)win_stack;
 				else
-					*(DWORD*)stack_ptr = 1;
-				continue;
+					*(DWORD*)stack_ptr = ' ';
+				stack_ptr += 4;
+				win_stack += 2;
+				break;
 			case 'd':
 			case 'i':
-				stack_ptr -= 4;
-				win_stack -= 2;
 				*(int*)stack_ptr = *(INT*)win_stack;
-				continue;
+				stack_ptr += 4;
+				win_stack += 2;
+				break;
 			case 'u':
 			case 'x':
 			case 'X':
-				stack_ptr -= 4;
-				win_stack -= 2;
 				*(DWORD*)stack_ptr = *(WORD*)win_stack;
-				continue;
+				stack_ptr += 4;
+				win_stack += 2;
+				break;
 			default:
-				stack_ptr -= 4;
-				win_stack -= 4;
 				*(DWORD*)stack_ptr = 0;
+				stack_ptr += 4;
+				win_stack += 4;
 				fprintf(stderr, "wsprintf: oops, unknown formattype %c used!\n", *ptr);
+				break;
 		}
-	} while (*ptr);
+	}
 
-	result = vsprintf(lpOutput, lpFormat, stack_ptr);
-	free(new_stack);
-
-	return result;
+	return vsprintf(lpOutput, lpFormat, new_stack);
 }
 #endif
 
