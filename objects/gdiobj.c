@@ -717,6 +717,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = 0;
     obj->funcs   = funcs;
+    obj->hdcs    = NULL;
 
     TRACE_SEC( *handle, "enter" );
     return obj;
@@ -890,6 +891,23 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 	return TRUE;
     }
 
+    while (header->hdcs)
+    {
+        DC *dc = DC_GetDCPtr(header->hdcs->hdc);
+        struct hdc_list *tmp;
+
+        TRACE("hdc %p has interest in %p\n", header->hdcs->hdc, obj);
+        if(dc)
+        {
+            if(dc->funcs->pDeleteObject)
+                dc->funcs->pDeleteObject( dc->physDev, obj );
+            GDI_ReleaseObj( header->hdcs->hdc );
+        }
+        tmp = header->hdcs;
+        header->hdcs = header->hdcs->next;
+        HeapFree(GetProcessHeap(), 0, tmp);
+    }
+
     if (header->dwCount)
     {
         TRACE("delayed for %p because object in use, count %ld\n", obj, header->dwCount );
@@ -909,6 +927,78 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     return FALSE;
 }
 
+/***********************************************************************
+ *           GDI_hdc_using_object
+ *
+ * Call this if the dc requires DeleteObject notification
+ */
+BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
+{
+    GDIOBJHDR * header;
+    struct hdc_list **pphdc;
+
+    TRACE("obj %p hdc %p\n", obj, hdc);
+
+    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
+
+    if (!(header->wMagic & OBJECT_NOSYSTEM) &&
+         (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    {
+        GDI_ReleaseObj(obj);
+        return FALSE;
+    }
+
+    for(pphdc = &header->hdcs; *pphdc; pphdc = &(*pphdc)->next)
+        if((*pphdc)->hdc == hdc)
+            break;
+
+    if(!*pphdc) {
+        *pphdc = HeapAlloc(GetProcessHeap(), 0, sizeof(**pphdc));
+        (*pphdc)->hdc = hdc;
+        (*pphdc)->next = NULL;
+    }
+
+    GDI_ReleaseObj(obj);
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GDI_hdc_not_using_object
+ *
+ */
+BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
+{
+    GDIOBJHDR * header;
+    struct hdc_list *phdc, **prev;
+
+    TRACE("obj %p hdc %p\n", obj, hdc);
+
+    if (!(header = GDI_GetObjPtr( obj, MAGIC_DONTCARE ))) return FALSE;
+
+    if (!(header->wMagic & OBJECT_NOSYSTEM) &&
+         (header->wMagic >= FIRST_MAGIC) && (header->wMagic <= LAST_MAGIC))
+    {
+        GDI_ReleaseObj(obj);
+        return FALSE;
+    }
+
+    phdc = header->hdcs;
+    prev = &header->hdcs;
+
+    while(phdc) {
+        if(phdc->hdc == hdc) {
+            *prev = phdc->next;
+            HeapFree(GetProcessHeap(), 0, phdc);
+            phdc = *prev;
+        } else {
+            prev = &phdc->next;
+            phdc = phdc->next;
+        }
+    }
+
+    GDI_ReleaseObj(obj);
+    return TRUE;
+}
 
 /***********************************************************************
  *           GetStockObject    (GDI32.@)

@@ -35,7 +35,8 @@ typedef struct
     HDC             hdc;
     DC             *dc;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
-    UINT       nextHandle;         /* Next handle number */
+    UINT       handles_size, cur_handles;
+    HGDIOBJ   *handles;
     HANDLE     hFile;              /* Handle for disk based MetaFile */
     INT        horzres, vertres;
     INT        horzsize, vertsize;
@@ -49,9 +50,10 @@ typedef struct
 
 
 extern BOOL EMFDRV_WriteRecord( PHYSDEV dev, EMR *emr );
-extern int EMFDRV_AddHandleDC( PHYSDEV dev );
 extern void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect );
 extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush );
+
+#define HANDLE_LIST_INC 20
 
 /* Metafile driver functions */
 extern BOOL     EMFDRV_AbortPath( PHYSDEV dev );
@@ -66,6 +68,7 @@ extern BOOL     EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right,
                               INT bottom, INT xstart, INT ystart, INT xend,
                               INT yend );
 extern BOOL     EMFDRV_CloseFigure( PHYSDEV dev );
+extern BOOL     EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj );
 extern BOOL     EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top,
                                 INT right, INT bottom );
 extern BOOL     EMFDRV_EndPath( PHYSDEV dev );

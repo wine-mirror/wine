@@ -64,12 +64,19 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle, void *obj );
 };
 
+struct hdc_list
+{
+    HDC hdc;
+    struct hdc_list *next;
+};
+
 typedef struct tagGDIOBJHDR
 {
     HANDLE16    hNext;
     WORD        wMagic;
     DWORD       dwCount;
     const struct gdi_obj_funcs *funcs;
+    struct hdc_list *hdcs;
 } GDIOBJHDR;
 
 
@@ -189,6 +196,7 @@ typedef struct tagDC_FUNCS
     HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
+    BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
     INT      (*pDescribePixelFormat)(PHYSDEV,INT,UINT,PIXELFORMATDESCRIPTOR *);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
     BOOL     (*pEllipse)(PHYSDEV,INT,INT,INT,INT);
@@ -470,6 +478,9 @@ extern DC * DC_GetDCPtr( HDC hdc );
 extern DC * DC_GetDCUpdate( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
+
+BOOL GDI_hdc_using_object(HGDIOBJ obj, HDC hdc);
+BOOL GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc);
 
 /* bidi.c */
 

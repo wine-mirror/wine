@@ -28,6 +28,74 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
+
+/******************************************************************
+ *         EMFDRV_AddHandle
+ */
+static UINT EMFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    UINT index;
+
+    for(index = 0; index < physDev->handles_size; index++)
+        if(physDev->handles[index] == 0) break;
+    if(index == physDev->handles_size) {
+        physDev->handles_size += HANDLE_LIST_INC;
+	physDev->handles = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+				       physDev->handles,
+				       physDev->handles_size * sizeof(physDev->handles[0]));
+    }
+    physDev->handles[index] = obj;
+
+    physDev->cur_handles++;
+    if(physDev->cur_handles > physDev->emh->nHandles)
+        physDev->emh->nHandles++;
+
+    return index + 1; /* index 0 is reserved for the hmf, so we increment everything by 1 */
+}
+
+/******************************************************************
+ *         EMFDRV_FindObject
+ */
+static UINT EMFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    UINT index;
+
+    for(index = 0; index < physDev->handles_size; index++)
+        if(physDev->handles[index] == obj) break;
+
+    if(index == physDev->handles_size) return 0;
+
+    return index + 1;
+}
+
+
+/******************************************************************
+ *         EMFDRV_DeleteObject
+ */
+BOOL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+{
+    EMRDELETEOBJECT emr;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*) dev;
+    UINT index;
+    BOOL ret = TRUE;
+
+    if(!(index = EMFDRV_FindObject(dev, obj))) return 0;
+
+    emr.emr.iType = EMR_DELETEOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
+        ret = FALSE;
+
+    physDev->handles[index - 1] = 0;
+    physDev->cur_handles--;
+    return ret;
+}
+
+  
 /***********************************************************************
  *           EMFDRV_SelectBitmap
  */
@@ -55,7 +123,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	EMRCREATEBRUSHINDIRECT emr;
 	emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
 	emr.emr.nSize = sizeof(emr);
-	emr.ihBrush = index = EMFDRV_AddHandleDC( dev );
+	emr.ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
 	emr.lb = logbrush;
 
 	if(!EMFDRV_WriteRecord( dev, &emr.emr ))
@@ -80,7 +148,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	if(!emr) break;
 	emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
 	emr->emr.nSize = size;
-	emr->ihBrush = index = EMFDRV_AddHandleDC( dev );
+	emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
 	emr->iUsage = LOWORD(logbrush.lbColor);
 	emr->offBmi = sizeof(EMRCREATEDIBPATTERNBRUSHPT);
 	emr->cbBmi = biSize;
@@ -113,6 +181,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
  */
 HBRUSH EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -130,7 +199,11 @@ HBRUSH EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
             goto found;
         }
     }
+    if((index = EMFDRV_FindObject(dev, hBrush)) != 0)
+        goto found;
+
     if (!(index = EMFDRV_CreateBrushIndirect(dev, hBrush ))) return 0;
+    GDI_hdc_using_object(hBrush, physDev->hdc);
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -153,7 +226,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 
     emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
     emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
-    emr.ihFont = index = EMFDRV_AddHandleDC( dev );
+    emr.ihFont = index = EMFDRV_AddHandle( dev, hFont );
     emr.elfw.elfFullName[0] = '\0';
     emr.elfw.elfStyle[0]    = '\0';
     emr.elfw.elfVersion     = 0;
@@ -185,6 +258,7 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
  */
 HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -203,7 +277,13 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
             goto found;
         }
     }
+
+    if((index = EMFDRV_FindObject(dev, hFont)) != 0)
+        goto found;
+
     if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return HGDI_ERROR;
+    GDI_hdc_using_object(hFont, physDev->hdc);
+
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
@@ -227,7 +307,7 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);
-    emr.ihPen = index = EMFDRV_AddHandleDC( dev );
+    emr.ihPen = index = EMFDRV_AddHandle( dev, hPen );
 
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         index = 0;
@@ -239,6 +319,7 @@ static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
  */
 HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
 {
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
@@ -257,7 +338,12 @@ HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
             goto found;
         }
     }
+    if((index = EMFDRV_FindObject(dev, hPen)) != 0)
+        goto found;
+
     if (!(index = (DWORD)EMFDRV_CreatePenIndirect(dev, hPen ))) return 0;
+    GDI_hdc_using_object(hPen, physDev->hdc);
+
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);

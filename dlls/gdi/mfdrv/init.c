@@ -48,6 +48,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
+    NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     MFDRV_Ellipse,                   /* pEllipse */

@@ -47,6 +47,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
     NULL,                            /* pDeleteDC */
+    EMFDRV_DeleteObject,             /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
     EMFDRV_Ellipse,                  /* pEllipse */
@@ -159,8 +160,13 @@ static BOOL EMFDRV_DeleteDC( PHYSDEV dev )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
     DC *dc = physDev->dc;
+    UINT index;
 
     if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
+    for(index = 0; index < physDev->handles_size; index++)
+        if(physDev->handles[index])
+	    GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);
+    HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
     GDI_FreeObject( dc->hSelf, dc );
@@ -223,21 +229,6 @@ void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
     bounds->bottom = max(bounds->bottom, vportRect.bottom);
     return;
 }
-
-/******************************************************************
- *         EMFDRV_AddHandleDC
- *
- * Note: this function assumes that we never delete objects.
- * If we do someday, we'll need to maintain a table to re-use deleted
- * handles.
- */
-int EMFDRV_AddHandleDC( PHYSDEV dev )
-{
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-    physDev->emh->nHandles++;
-    return physDev->nextHandle++;
-}
-
 
 /**********************************************************************
  *          CreateEnhMetaFileA   (GDI32.@)
@@ -324,7 +315,9 @@ HDC WINAPI CreateEnhMetaFileW(
         return 0;
     }
 
-    physDev->nextHandle = 1;
+    physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
+    physDev->handles_size = HANDLE_LIST_INC;
+    physDev->cur_handles = 1;
     physDev->hFile = 0;
 
     physDev->horzres = GetDeviceCaps(hRefDC, HORZRES);
