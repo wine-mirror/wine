@@ -132,10 +132,10 @@ DWORD InitLightStateTab[] = {
 };
 
 DWORD InitTextureStageStateTab[] = {
-    D3DTSS_COLOROP,          D3DTOP_DISABLE,
+    D3DTSS_COLOROP,          D3DTOP_DISABLE, /* Note, it's manually set for stage 0 */
     D3DTSS_COLORARG1,        D3DTA_TEXTURE,
     D3DTSS_COLORARG2,        D3DTA_CURRENT,
-    D3DTSS_ALPHAOP,          D3DTOP_DISABLE,
+    D3DTSS_ALPHAOP,          D3DTOP_DISABLE, /* Note, it's manually set for stage 0 */
     D3DTSS_ALPHAARG1,        D3DTA_TEXTURE,
     D3DTSS_ALPHAARG2,        D3DTA_CURRENT,
     /* FIXME: D3DTSS_BUMPENVMAT00,01,10,11 */
@@ -143,13 +143,13 @@ DWORD InitTextureStageStateTab[] = {
     D3DTSS_ADDRESS,          D3DTADDRESS_WRAP,
     D3DTSS_ADDRESSU,         D3DTADDRESS_WRAP,
     D3DTSS_ADDRESSV,         D3DTADDRESS_WRAP,
-    /* FIXME: D3DTSS_BORDERCOLOR */
+    D3DTSS_BORDERCOLOR,      0x00000000,
     D3DTSS_MAGFILTER,        D3DTFG_POINT,
     D3DTSS_MINFILTER,        D3DTFN_POINT,
     D3DTSS_MIPFILTER,        D3DTFP_NONE,
     D3DTSS_MIPMAPLODBIAS,    0x00000000, /* 0.0f */
-    D3DTSS_MAXMIPLEVEL,      0
-    /* FIXME: D3DTSS_MAXANISOTROPY */
+    D3DTSS_MAXMIPLEVEL,      0,
+    D3DTSS_MAXANISOTROPY,    1,
     /* FIXME: D3DTSS_BUMPENVLSCALE */
     /* FIXME: D3DTSS_NUMPENVLOFFSET */
     /* FIXME: D3DTSS_TEXTURETRANSFORMFLAGS */
@@ -158,21 +158,21 @@ DWORD InitTextureStageStateTab[] = {
 	
 void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version)
 {
-    int i,j;  
+    int i, j;  
     TRACE("(%p,%d)\n", lpStateBlock, version);    
     memset(lpStateBlock, 0, sizeof(STATEBLOCK));
     
     /* Initialize render states */
-    for(i = 0; i < sizeof(InitRenderStateTab) / sizeof(InitRenderStateTab[0]); i += 2)
+    for (i = 0; i < sizeof(InitRenderStateTab) / sizeof(InitRenderStateTab[0]); i += 2)
     {
         lpStateBlock->render_state[InitRenderStateTab[i] - 1] = InitRenderStateTab[i + 1];
 	lpStateBlock->set_flags.render_state[InitRenderStateTab[i] - 1] = TRUE;
     }
 
     /* Initialize texture stages states */
-    for(i = 0; i < MAX_TEXTURES; i++)
+    for (i = 0; i < MAX_TEXTURES; i++)
     {
-       for(j = 0; j < sizeof(InitTextureStageStateTab) / sizeof(InitTextureStageStateTab[0]); j += 2)
+       for (j = 0; j < sizeof(InitTextureStageStateTab) / sizeof(InitTextureStageStateTab[0]); j += 2)
        {
            lpStateBlock->texture_stage_state[i][InitTextureStageStateTab[j] - 1] = InitTextureStageStateTab[j + 1];
            lpStateBlock->set_flags.texture_stage_state[i][InitTextureStageStateTab[j] - 1] = TRUE;
@@ -185,6 +185,8 @@ void InitDefaultStateBlock(STATEBLOCK* lpStateBlock, int version)
     /* The first texture is particular, update it consequently */
     lpStateBlock->texture_stage_state[0][D3DTSS_COLOROP - 1] = D3DTOP_MODULATE;
     lpStateBlock->texture_stage_state[0][D3DTSS_ALPHAOP - 1] = D3DTOP_SELECTARG1;
+    lpStateBlock->texture_stage_state[0][D3DTSS_COLORARG2 - 1] = D3DTA_DIFFUSE;
+    lpStateBlock->texture_stage_state[0][D3DTSS_ALPHAARG2 - 1] = D3DTA_DIFFUSE;
     
     /* Updates for particular versions */
     if ((version == 1) || (version==2))

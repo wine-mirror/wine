@@ -334,6 +334,8 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	    if (This->current_texture[i] != NULL)
 	        IDirectDrawSurface7_Release(ICOM_INTERFACE(This->current_texture[i], IDirectDrawSurface7));
 
+	/* TODO: remove the 'callbacks' for Flip and Lock/Unlock */
+	
 	/* And warn the D3D object that this device is no longer active... */
 	This->d3d->removed_device(This->d3d, This);
 
@@ -341,6 +343,8 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	HeapFree(GetProcessHeap(), 0, This->view_mat);
 	HeapFree(GetProcessHeap(), 0, This->proj_mat);
 
+	DeleteCriticalSection(&(This->crit));
+	
 	ENTER_GL();
 	glXDestroyContext(glThis->display, glThis->gl_context);
 	LEAVE_GL();
@@ -415,6 +419,18 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 
+#if 0 /* Enabling this breaks Tomb Raider 3, need to investigate... */
+    TRACE("Enumerating GL_RGB unpacked (32)\n");
+    pformat->dwFlags = DDPF_RGB;
+    pformat->u1.dwRGBBitCount = 32;
+    pformat->u2.dwRBitMask =        0x00FF0000;
+    pformat->u3.dwGBitMask =        0x0000FF00;
+    pformat->u4.dwBBitMask =        0x000000FF;
+    pformat->u5.dwRGBAlphaBitMask = 0x00000000;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+#endif
+    
     TRACE("Enumerating GL_RGB unpacked (24)\n");
     pformat->dwFlags = DDPF_RGB;
     pformat->u1.dwRGBBitCount = 24;
@@ -854,7 +870,7 @@ inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD
 	} break;
 
         default:
-	    FIXME("Unhandled vertex type\n");
+	    FIXME("Unhandled vertex type %08x\n", d3dvt);
 	    break;
     }
 }
@@ -1058,6 +1074,10 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     BOOLEAN vertex_lighted = FALSE;
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
 
+    /* This is to prevent 'thread contention' between a thread locking the device and another
+       doing 3D display on it... */
+    EnterCriticalSection(&(This->crit));   
+    
     if (TRACE_ON(ddraw)) {
         TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
     }
@@ -1239,6 +1259,8 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 
     LEAVE_GL();
     TRACE("End\n");    
+
+    LeaveCriticalSection(&(This->crit));
 }
 
 HRESULT WINAPI
@@ -1403,20 +1425,28 @@ GL_IDirect3DDeviceImpl_7_3T_DrawIndexedPrimitiveVB(LPDIRECT3DDEVICE7 iface,
 }
 
 static GLenum
-convert_min_filter_to_GL(D3DTEXTUREMINFILTER dwState)
+convert_min_filter_to_GL(D3DTEXTUREMINFILTER dwMinState, D3DTEXTUREMIPFILTER dwMipState)
 {
     GLenum gl_state;
 
-    switch (dwState) {
-        case D3DTFN_POINT:
-	    gl_state = GL_NEAREST;
-	    break;
-        case D3DTFN_LINEAR:
-	    gl_state = GL_LINEAR;
-	    break;
-        default:
-	    gl_state = GL_LINEAR;
-	    break;
+    if (dwMipState == D3DTFP_NONE) {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR;  break;
+	    default:            gl_state = GL_LINEAR;  break;
+	}
+    } else if (dwMipState == D3DTFP_POINT) {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_NEAREST; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
+	    default:            gl_state = GL_LINEAR_MIPMAP_NEAREST;  break;
+	}
+    } else {
+        switch (dwMinState) {
+            case D3DTFN_POINT:  gl_state = GL_NEAREST_MIPMAP_LINEAR; break;
+	    case D3DTFN_LINEAR: gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
+	    default:            gl_state = GL_LINEAR_MIPMAP_LINEAR;  break;
+	}
     }
     return gl_state;
 }
@@ -1440,6 +1470,73 @@ convert_mag_filter_to_GL(D3DTEXTUREMAGFILTER dwState)
     return gl_state;
 }
 
+/* We need a static function for that to handle the 'special' case of 'SELECT_ARG2' */
+static BOOLEAN
+handle_color_alpha_args(DWORD dwStage, D3DTEXTURESTAGESTATETYPE d3dTexStageStateType, DWORD dwState, D3DTEXTUREOP tex_op)
+{
+    BOOLEAN is_complement = FALSE;
+    BOOLEAN is_alpha_replicate = FALSE;
+    BOOLEAN handled = TRUE;
+    GLenum src;
+    BOOLEAN is_color = ((d3dTexStageStateType == D3DTSS_COLORARG1) || (d3dTexStageStateType == D3DTSS_COLORARG2));
+    int num;
+    
+    if (is_color) {
+        if (d3dTexStageStateType == D3DTSS_COLORARG1) num = 0;
+	else if (d3dTexStageStateType == D3DTSS_COLORARG2) num = 1;
+	else {
+	    handled = FALSE;
+	    num = 0;
+	}
+	if (tex_op == D3DTOP_SELECTARG2) {
+	    num = 1 - num;
+	}
+    } else {
+        if (d3dTexStageStateType == D3DTSS_ALPHAARG1) num = 0;
+	else if (d3dTexStageStateType == D3DTSS_ALPHAARG2) num = 1;
+	else {
+	    handled = FALSE;
+	    num = 0;
+	}
+	if (tex_op == D3DTOP_SELECTARG2) {
+	    num = 1 - num;
+	}
+    }
+    
+    if (dwState & D3DTA_COMPLEMENT) {
+        is_complement = TRUE;
+    }
+    if (dwState & D3DTA_ALPHAREPLICATE) {
+	is_alpha_replicate = TRUE;
+    }
+    dwState &= D3DTA_SELECTMASK;
+    if ((dwStage == 0) && (dwState == D3DTA_CURRENT)) {
+        dwState = D3DTA_DIFFUSE;
+    }
+
+    switch (dwState) {
+        case D3DTA_CURRENT: src = GL_PREVIOUS_EXT; break;
+	case D3DTA_DIFFUSE: src = GL_PRIMARY_COLOR_ARB; break;
+	case D3DTA_TEXTURE: src = GL_TEXTURE; break;
+	case D3DTA_TFACTOR: src = GL_CONSTANT_ARB; FIXME(" no handling yet of setting of constant value !\n"); break;
+	default: src = GL_TEXTURE; handled = FALSE; break;
+    }
+
+    if (is_color) {
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB + num, src);
+	if (is_alpha_replicate) {
+	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
+	} else {
+	    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB + num, is_complement ? GL_ONE_MINUS_SRC_COLOR : GL_SRC_COLOR);
+	}
+    } else {
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB + num, src);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB + num, is_complement ? GL_ONE_MINUS_SRC_ALPHA : GL_SRC_ALPHA);
+    }
+
+    return handled;
+}
+
 HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 						 DWORD dwStage,
@@ -1447,63 +1544,83 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 						 DWORD dwState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    const char *type;
+    DWORD prev_state;
     
     TRACE("(%p/%p)->(%08lx,%08x,%08lx)\n", This, iface, dwStage, d3dTexStageStateType, dwState);
 
     if (dwStage > 0) return DD_OK; /* We nothing in this case for now */
 
-    if (TRACE_ON(ddraw)) {
-        TRACE(" Stage type is : ");
-	switch (d3dTexStageStateType) {
-#define GEN_CASE(a) case a: TRACE(#a " "); break
-	    GEN_CASE(D3DTSS_COLOROP);
-	    GEN_CASE(D3DTSS_COLORARG1);
-	    GEN_CASE(D3DTSS_COLORARG2);
-	    GEN_CASE(D3DTSS_ALPHAOP);
-	    GEN_CASE(D3DTSS_ALPHAARG1);
-	    GEN_CASE(D3DTSS_ALPHAARG2);
-	    GEN_CASE(D3DTSS_BUMPENVMAT00);
-	    GEN_CASE(D3DTSS_BUMPENVMAT01);
-	    GEN_CASE(D3DTSS_BUMPENVMAT10);
-	    GEN_CASE(D3DTSS_BUMPENVMAT11);
-	    GEN_CASE(D3DTSS_TEXCOORDINDEX);
-	    GEN_CASE(D3DTSS_ADDRESS);
-	    GEN_CASE(D3DTSS_ADDRESSU);
-	    GEN_CASE(D3DTSS_ADDRESSV);
-	    GEN_CASE(D3DTSS_BORDERCOLOR);
-	    GEN_CASE(D3DTSS_MAGFILTER);
-	    GEN_CASE(D3DTSS_MINFILTER);
-	    GEN_CASE(D3DTSS_MIPFILTER);
-	    GEN_CASE(D3DTSS_MIPMAPLODBIAS);
-	    GEN_CASE(D3DTSS_MAXMIPLEVEL);
-	    GEN_CASE(D3DTSS_MAXANISOTROPY);
-	    GEN_CASE(D3DTSS_BUMPENVLSCALE);
-	    GEN_CASE(D3DTSS_BUMPENVLOFFSET);
-	    GEN_CASE(D3DTSS_TEXTURETRANSFORMFLAGS);
+    switch (d3dTexStageStateType) {
+#define GEN_CASE(a) case a: type = #a; break
+        GEN_CASE(D3DTSS_COLOROP);
+	GEN_CASE(D3DTSS_COLORARG1);
+	GEN_CASE(D3DTSS_COLORARG2);
+	GEN_CASE(D3DTSS_ALPHAOP);
+	GEN_CASE(D3DTSS_ALPHAARG1);
+	GEN_CASE(D3DTSS_ALPHAARG2);
+	GEN_CASE(D3DTSS_BUMPENVMAT00);
+	GEN_CASE(D3DTSS_BUMPENVMAT01);
+	GEN_CASE(D3DTSS_BUMPENVMAT10);
+	GEN_CASE(D3DTSS_BUMPENVMAT11);
+	GEN_CASE(D3DTSS_TEXCOORDINDEX);
+	GEN_CASE(D3DTSS_ADDRESS);
+	GEN_CASE(D3DTSS_ADDRESSU);
+	GEN_CASE(D3DTSS_ADDRESSV);
+	GEN_CASE(D3DTSS_BORDERCOLOR);
+	GEN_CASE(D3DTSS_MAGFILTER);
+	GEN_CASE(D3DTSS_MINFILTER);
+	GEN_CASE(D3DTSS_MIPFILTER);
+	GEN_CASE(D3DTSS_MIPMAPLODBIAS);
+	GEN_CASE(D3DTSS_MAXMIPLEVEL);
+	GEN_CASE(D3DTSS_MAXANISOTROPY);
+	GEN_CASE(D3DTSS_BUMPENVLSCALE);
+	GEN_CASE(D3DTSS_BUMPENVLOFFSET);
+	GEN_CASE(D3DTSS_TEXTURETRANSFORMFLAGS);
 #undef GEN_CASE
-	    default: TRACE("UNKNOWN !!!");
-	}
-	TRACE(" => ");
+        default: type = "UNKNOWN";
     }
 
+    /* Store the values in the state array */
+    prev_state = This->state_block.texture_stage_state[dwStage][d3dTexStageStateType - 1];
+    This->state_block.texture_stage_state[dwStage][d3dTexStageStateType - 1] = dwState;
+    /* Some special cases when one state modifies more than one... */
+    if (d3dTexStageStateType == D3DTSS_ADDRESS) {
+        This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSU - 1] = dwState;
+	This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSV - 1] = dwState;
+    }
+    
     switch (d3dTexStageStateType) {
         case D3DTSS_MINFILTER:
+        case D3DTSS_MIPFILTER:
 	    if (TRACE_ON(ddraw)) {
-	        switch ((D3DTEXTUREMINFILTER) dwState) {
-	            case D3DTFN_POINT:  TRACE("D3DTFN_POINT\n"); break;
-		    case D3DTFN_LINEAR: TRACE("D3DTFN_LINEAR\n"); break;
-		    default: TRACE(" state unhandled (%ld).\n", dwState); break;
+	        if (d3dTexStageStateType == D3DTSS_MINFILTER) {
+		    switch ((D3DTEXTUREMINFILTER) dwState) {
+	                case D3DTFN_POINT:  TRACE(" Stage type is : D3DTSS_MINFILTER => D3DTFN_POINT\n"); break;
+			case D3DTFN_LINEAR: TRACE(" Stage type is : D3DTSS_MINFILTER => D3DTFN_LINEAR\n"); break;
+			default: FIXME(" Unhandled stage type : D3DTSS_MINFILTER => %08lx\n", dwState); break;
+		    }
+		} else {
+		    switch ((D3DTEXTUREMIPFILTER) dwState) {
+	                case D3DTFP_NONE:   TRACE(" Stage type is : D3DTSS_MIPFILTER => D3DTFP_NONE\n"); break;
+			case D3DTFP_POINT:  TRACE(" Stage type is : D3DTSS_MIPFILTER => D3DTFP_POINT\n"); break;
+			case D3DTFP_LINEAR: TRACE(" Stage type is : D3DTSS_MIPFILTER => D3DTFP_LINEAR\n"); break;
+			default: FIXME(" Unhandled stage type : D3DTSS_MIPFILTER => %08lx\n", dwState); break;
+		    }
 		}
 	    }
-	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convert_min_filter_to_GL(dwState));
-            break;
+
+	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+			    convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1],
+						     This->state_block.texture_stage_state[dwStage][D3DTSS_MIPFILTER - 1]));
+	    break;
 	    
         case D3DTSS_MAGFILTER:
 	    if (TRACE_ON(ddraw)) {
 	        switch ((D3DTEXTUREMAGFILTER) dwState) {
-	            case D3DTFG_POINT:  TRACE("D3DTFN_POINT\n"); break;
-		    case D3DTFG_LINEAR: TRACE("D3DTFN_LINEAR\n"); break;
-		    default: TRACE(" state unhandled (%ld).\n", dwState); break;
+	            case D3DTFG_POINT:  TRACE(" Stage type is : D3DTSS_MAGFILTER => D3DTFN_POINT\n"); break;
+		    case D3DTFG_LINEAR: TRACE(" Stage type is : D3DTSS_MAGFILTER => D3DTFN_LINEAR\n"); break;
+		    default: FIXME(" Unhandled stage type : D3DTSS_MAGFILTER => %08lx\n", dwState); break;
 		}
 	    }
 	    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convert_mag_filter_to_GL(dwState));
@@ -1514,10 +1631,15 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
         case D3DTSS_ADDRESSV: {
 	    GLenum arg = GL_REPEAT; /* Default value */
 	    switch ((D3DTEXTUREADDRESS) dwState) {
-	        case D3DTADDRESS_WRAP:   if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_WRAP\n"); arg = GL_REPEAT; break;
-	        case D3DTADDRESS_CLAMP:  if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_CLAMP\n"); arg = GL_CLAMP; break;
-	        case D3DTADDRESS_BORDER: if (TRACE_ON(ddraw)) TRACE("D3DTADDRESS_BORDER\n"); arg = GL_CLAMP_TO_EDGE; break;
-	        default: TRACE(" state unhandled (%ld).\n", dwState);
+	        case D3DTADDRESS_WRAP:   TRACE(" Stage type is : %s => D3DTADDRESS_WRAP\n", type); arg = GL_REPEAT; break;
+	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); arg = GL_CLAMP; break;
+	        case D3DTADDRESS_BORDER: TRACE(" Stage type is : %s => D3DTADDRESS_BORDER\n", type); arg = GL_CLAMP_TO_EDGE; break;
+#if defined(GL_VERSION_1_4)
+		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); arg = GL_MIRRORED_REPEAT; break;
+#elif defined(GL_ARB_texture_mirrored_repeat)
+		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); arg = GL_MIRRORED_REPEAT_ARB; break;
+#endif
+	        default: FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState); break;
 	    }
 	    if ((d3dTexStageStateType == D3DTSS_ADDRESS) ||
 		(d3dTexStageStateType == D3DTSS_ADDRESSU))
@@ -1526,18 +1648,174 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 		(d3dTexStageStateType == D3DTSS_ADDRESSV))
 	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, arg);
         } break;
+
+	case D3DTSS_ALPHAOP:
+	case D3DTSS_COLOROP: {
+            int scale = 1;
+            GLenum parm = (d3dTexStageStateType == D3DTSS_ALPHAOP) ? GL_COMBINE_ALPHA_ARB : GL_COMBINE_RGB_ARB;
+	    const char *value;
+	    int handled = 1;
+	    
+	    switch (dwState) {
+#define GEN_CASE(a) case a: value = #a; break
+	        GEN_CASE(D3DTOP_DISABLE);
+		GEN_CASE(D3DTOP_SELECTARG1);
+		GEN_CASE(D3DTOP_SELECTARG2);
+		GEN_CASE(D3DTOP_MODULATE);
+		GEN_CASE(D3DTOP_MODULATE2X);
+		GEN_CASE(D3DTOP_MODULATE4X);
+		GEN_CASE(D3DTOP_ADD);
+		GEN_CASE(D3DTOP_ADDSIGNED);
+		GEN_CASE(D3DTOP_ADDSIGNED2X);
+		GEN_CASE(D3DTOP_SUBTRACT);
+		GEN_CASE(D3DTOP_ADDSMOOTH);
+		GEN_CASE(D3DTOP_BLENDDIFFUSEALPHA);
+		GEN_CASE(D3DTOP_BLENDTEXTUREALPHA);
+		GEN_CASE(D3DTOP_BLENDFACTORALPHA);
+		GEN_CASE(D3DTOP_BLENDTEXTUREALPHAPM);
+		GEN_CASE(D3DTOP_BLENDCURRENTALPHA);
+		GEN_CASE(D3DTOP_PREMODULATE);
+		GEN_CASE(D3DTOP_MODULATEALPHA_ADDCOLOR);
+		GEN_CASE(D3DTOP_MODULATECOLOR_ADDALPHA);
+		GEN_CASE(D3DTOP_MODULATEINVALPHA_ADDCOLOR);
+		GEN_CASE(D3DTOP_MODULATEINVCOLOR_ADDALPHA);
+		GEN_CASE(D3DTOP_BUMPENVMAP);
+		GEN_CASE(D3DTOP_BUMPENVMAPLUMINANCE);
+		GEN_CASE(D3DTOP_DOTPRODUCT3);
+		GEN_CASE(D3DTOP_FORCE_DWORD);
+#undef GEN_CASE
+	        default: value = "UNKNOWN";
+	    }
+
+            if ((d3dTexStageStateType == D3DTSS_COLOROP) && (dwState == D3DTOP_DISABLE) && (dwStage == 0)) {
+                glDisable(GL_TEXTURE_2D);
+		TRACE(" disabling 2D texturing.\n");
+            } else {
+	        /* Re-enable texturing */
+	        if ((dwStage == 0) && (This->current_texture[0] != NULL)) {
+		    glEnable(GL_TEXTURE_2D);
+		    TRACE(" enabling 2D texturing.\n");
+		}
+		
+                /* Re-Enable GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB */
+                if (dwState != D3DTOP_DISABLE) {
+                    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+                }
+
+                /* Now set up the operand correctly */
+                switch (dwState) {
+                    case D3DTOP_DISABLE:
+		        /* Contrary to the docs, alpha can be disabled when colorop is enabled
+			   and it works, so ignore this op */
+		        TRACE(" Note : disable ALPHAOP but COLOROP enabled!\n");
+			break;
+
+		    case D3DTOP_SELECTARG1:
+		    case D3DTOP_SELECTARG2:
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_REPLACE);
+			break;
+			
+		    case D3DTOP_MODULATE4X:
+			scale = scale * 2;  /* Drop through */
+		    case D3DTOP_MODULATE2X:
+			scale = scale * 2;  /* Drop through */
+		    case D3DTOP_MODULATE:
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_MODULATE);
+			break;
+
+		    case D3DTOP_ADD:
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_ADD);
+			break;
+
+		    case D3DTOP_ADDSIGNED2X:
+			scale = scale * 2;  /* Drop through */
+		    case D3DTOP_ADDSIGNED:
+			glTexEnvi(GL_TEXTURE_ENV, parm, GL_ADD_SIGNED_ARB);
+			break;
+
+		    default:
+			handled = FALSE;
+			break;
+                }
+            }
+
+	    if (((prev_state == D3DTOP_SELECTARG2) && (dwState != D3DTOP_SELECTARG2)) ||
+		((dwState == D3DTOP_SELECTARG2) && (prev_state != D3DTOP_SELECTARG2))) {
+	        /* Switch the arguments if needed... */
+	        if (d3dTexStageStateType == D3DTSS_COLOROP) {
+		    handle_color_alpha_args(dwStage, D3DTSS_COLORARG1,
+					    This->state_block.texture_stage_state[dwStage][D3DTSS_COLORARG1 - 1],
+					    dwState);
+		    handle_color_alpha_args(dwStage, D3DTSS_COLORARG2,
+					    This->state_block.texture_stage_state[dwStage][D3DTSS_COLORARG2 - 1],
+					    dwState);
+		} else {
+		    handle_color_alpha_args(dwStage, D3DTSS_ALPHAARG1,
+					    This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAARG1 - 1],
+					    dwState);
+		    handle_color_alpha_args(dwStage, D3DTSS_ALPHAARG2,
+					    This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAARG2 - 1],
+					    dwState);
+		}
+	    }
+	    
+	    if (handled) {
+	        if (d3dTexStageStateType == D3DTSS_ALPHAOP) {
+		    glTexEnvi(GL_TEXTURE_ENV, GL_ALPHA_SCALE, scale);
+		} else {
+		    glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, scale);
+		}			
+		TRACE(" Stage type is : %s => %s\n", type, value);
+	    } else {
+	        FIXME(" Unhandled stage type is : %s => %s\n", type, value);
+	    }
+        } break;
+
+	case D3DTSS_COLORARG1:
+	case D3DTSS_COLORARG2:
+	case D3DTSS_ALPHAARG1:
+	case D3DTSS_ALPHAARG2: {
+	    const char *value, *value_comp = "", *value_alpha = "";
+	    BOOLEAN handled;
+	    D3DTEXTUREOP tex_op;
+	    
+	    switch (dwState & D3DTA_SELECTMASK) {
+#define GEN_CASE(a) case a: value = #a; break
+	        GEN_CASE(D3DTA_DIFFUSE);
+		GEN_CASE(D3DTA_CURRENT);
+		GEN_CASE(D3DTA_TEXTURE);
+		GEN_CASE(D3DTA_TFACTOR);
+	        GEN_CASE(D3DTA_SPECULAR);
+#undef GEN_CASE
+	        default: value = "UNKNOWN";
+	    }
+	    if (dwState & D3DTA_COMPLEMENT) {
+	        value_comp = " | D3DTA_COMPLEMENT";
+	    }
+	    if (dwState & D3DTA_ALPHAREPLICATE) {
+	        value_alpha = " | D3DTA_ALPHAREPLICATE";
+	    }
+
+	    if ((d3dTexStageStateType == D3DTSS_COLORARG1) || (d3dTexStageStateType == D3DTSS_COLORARG2)) {
+	        tex_op = This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1];
+	    } else {
+	        tex_op = This->state_block.texture_stage_state[dwStage][D3DTSS_ALPHAOP - 1];
+	    }
+	    
+	    handled = handle_color_alpha_args(dwStage, d3dTexStageStateType, dwState, tex_op);
+	    
+	    if (handled) {
+	        TRACE(" Stage type : %s => %s%s%s\n", type, value, value_comp, value_alpha);
+	    } else {
+	        FIXME(" Unhandled stage type : %s => %s%s%s\n", type, value, value_comp, value_alpha);
+	    }
+	} break;
 	    
 	default:
-	    if (TRACE_ON(ddraw)) TRACE(" unhandled.\n");
+	    FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState);
+	    break;
     }
    
-    This->state_block.texture_stage_state[dwStage][d3dTexStageStateType - 1] = dwState;
-    /* Some special cases when one state modifies more than one... */
-    if (d3dTexStageStateType == D3DTSS_ADDRESS) {
-        This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSU - 1] = dwState;
-	This->state_block.texture_stage_state[dwStage][D3DTSS_ADDRESSV - 1] = dwState;
-    }
-
     return DD_OK;
 }
 
@@ -1565,17 +1843,30 @@ GL_IDirect3DDeviceImpl_7_3T_SetTexture(LPDIRECT3DDEVICE7 iface,
         glDisable(GL_TEXTURE_2D);
     } else {
         IDirectDrawSurfaceImpl *tex_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpTexture2);
+	GLint max_mip_level;
 	
 	This->current_texture[dwStage] = tex_impl;
 	IDirectDrawSurface7_AddRef(ICOM_INTERFACE(tex_impl, IDirectDrawSurface7)); /* Not sure about this either */
-	
-        glEnable(GL_TEXTURE_2D);
+
+	if (This->state_block.texture_stage_state[dwStage][D3DTSS_COLOROP - 1] != D3DTOP_DISABLE) {
+	    /* Do not re-enable texturing if it was disabled due to the COLOROP code */
+	    glEnable(GL_TEXTURE_2D);
+	    TRACE(" enabling 2D texturing.\n");
+	}
 	gltex_upload_texture(tex_impl);
 
+	if ((tex_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) == 0) {
+	    max_mip_level = 0;
+	} else {
+	    max_mip_level = tex_impl->surface_desc.u2.dwMipMapCount - 1;
+	}
+	
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
 			convert_mag_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MAGFILTER - 1]));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1]));
+			convert_min_filter_to_GL(This->state_block.texture_stage_state[dwStage][D3DTSS_MINFILTER - 1],
+						  This->state_block.texture_stage_state[dwStage][D3DTSS_MIPFILTER - 1]));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_mip_level);
     }
     LEAVE_GL();
     
@@ -2144,18 +2435,22 @@ d3ddevice_matrices_updated(IDirect3DDeviceImpl *This, DWORD matrices)
 */
 static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
 {
-    /* First, check if we need to do anything */
+    /* Try to acquire the device critical section */
+    EnterCriticalSection(&(This->d3ddevice->crit));
+
+    /* Then check if we need to do anything */
     if ((This->lastlocktype & DDLOCK_WRITEONLY) == 0) {
         GLenum buffer_type;
 	GLenum prev_read;
 	RECT loc_rect;
 
+        WARN(" application does a lock on a 3D surface - expect slow downs.\n");
+	
 	ENTER_GL();
 
 	glGetIntegerv(GL_READ_BUFFER, &prev_read);
 	glFlush();
 	
-        WARN(" application does a lock on a 3D surface - expect slow downs.\n");
 	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
 	    /* Application wants to lock the front buffer */
 	    glReadBuffer(GL_FRONT);
@@ -2181,10 +2476,12 @@ static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, D
 	} else {
 	    loc_rect = *pRect;
 	}
+#if 0
 	glReadPixels(loc_rect.left, loc_rect.top, loc_rect.right, loc_rect.bottom,
 		     GL_RGB, buffer_type, ((char *)This->surface_desc.lpSurface
 					   + loc_rect.top * This->surface_desc.u1.lPitch
 					   + loc_rect.left * GET_BPP(This->surface_desc)));
+#endif
 	glReadBuffer(prev_read);
 	LEAVE_GL();
     }
@@ -2197,11 +2494,12 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
         GLenum buffer_type;
 	GLenum prev_draw;
 
+        WARN(" application does an unlock on a 3D surface - expect slow downs.\n");
+	
 	ENTER_GL();
 
 	glGetIntegerv(GL_DRAW_BUFFER, &prev_draw);
 
-        WARN(" application does an unlock on a 3D surface - expect slow downs.\n");
 	if ((This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER|DDSCAPS_PRIMARYSURFACE)) != 0) {
 	    /* Application wants to lock the front buffer */
 	    glDrawBuffer(GL_FRONT);
@@ -2217,16 +2515,40 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	} else {
 	    WARN(" unsupported pixel format.\n");
 	    LEAVE_GL();
+	    
+	    /* And 'frees' the device critical section */
+	    LeaveCriticalSection(&(This->d3ddevice->crit));
 	    return;
 	}
 	glRasterPos2f(0.0, 0.0);
+#if 0
 	glDrawPixels(This->surface_desc.dwWidth, This->surface_desc.dwHeight, 
 		     GL_RGB, buffer_type, This->surface_desc.lpSurface);
+#endif
 	glDrawBuffer(prev_draw);
 
 	LEAVE_GL();
    }
+
+    /* And 'frees' the device critical section */
+    LeaveCriticalSection(&(This->d3ddevice->crit));
 }
+
+static void
+apply_texture_state(IDirect3DDeviceImpl *This)
+{
+    int stage, state;
+    
+    /* Initialize texture stages states */
+    for (stage = 0; stage < MAX_TEXTURES; stage++) {
+       for (state = 0; state < HIGHEST_TEXTURE_STAGE_STATE; state += 1) {
+	   if (This->state_block.set_flags.texture_stage_state[stage][state] == TRUE) {
+	       IDirect3DDevice7_SetTextureStageState(ICOM_INTERFACE(This, IDirect3DDevice7),
+						     stage, state + 1, This->state_block.texture_stage_state[stage][state]);
+	   }
+       }
+    }
+}     
 
 HRESULT
 d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surface)
@@ -2255,6 +2577,8 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     object->set_matrices = d3ddevice_set_matrices;
     object->matrices_updated = d3ddevice_matrices_updated;
 
+    InitializeCriticalSection(&(object->crit));
+    
     TRACE(" creating OpenGL device for surface = %p, d3d = %p\n", surface, d3d);
 
     device_context = GetDC(surface->ddraw_owner->window);
@@ -2302,18 +2626,26 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
         buffer = GL_FRONT;
     }
     
-    for (surf = surface; surf->prev_attached != NULL; surf = surf->prev_attached) ;
-    for (; surf != NULL; surf = surf->next_attached) {
-        if (((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_3DDEVICE)) == (DDSCAPS_3DDEVICE)) &&
-	    ((surf->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
-	    /* Override the Lock / Unlock function for all these surfaces */
-	    surf->lock_update = d3ddevice_lock_update;
-	    surf->unlock_update = d3ddevice_unlock_update;
-	    /* And install also the blt / bltfast overrides */
-	    surf->aux_blt = d3ddevice_blt;
-	    surf->aux_bltfast = d3ddevice_bltfast;
+    for (surf = surface; surf != NULL; surf = surf->surface_owner) {
+        IDirectDrawSurfaceImpl *surf2;
+	for (surf2 = surf; surf2->prev_attached != NULL; surf2 = surf2->prev_attached) ;
+	for (; surf2 != NULL; surf2 = surf2->next_attached) {
+	    TRACE(" checking surface %p :", surf2);
+	    if (((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_3DDEVICE)) == (DDSCAPS_3DDEVICE)) &&
+		((surf2->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)) != (DDSCAPS_ZBUFFER))) {
+	        /* Override the Lock / Unlock function for all these surfaces */
+	        surf2->lock_update = d3ddevice_lock_update;
+		surf2->unlock_update = d3ddevice_unlock_update;
+		/* And install also the blt / bltfast overrides */
+		surf2->aux_blt = d3ddevice_blt;
+		surf2->aux_bltfast = d3ddevice_bltfast;
+		
+		TRACE(" overiding direct surface access.\n");
+	    } else {
+	        TRACE(" no overide.\n");
+	    }
+	    surf2->d3ddevice = object;
 	}
-	surf->d3ddevice = object;
     }
 
     /* Set the various light parameters */
@@ -2376,9 +2708,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 
     /* FIXME: Should handle other versions than just 7 */
     InitDefaultStateBlock(&object->state_block, 7);
-    /* Apply default render state values */
+    /* Apply default render state and texture stage state values */
     apply_render_state(object, &object->state_block);
-    /* FIXME: do something similar for ligh_state and texture_stage_state */
+    apply_texture_state(object);
 
     /* And fill the fog table with the default fog value */
     build_fog_table(gl_object->fog_table, object->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1]);

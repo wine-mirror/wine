@@ -246,6 +246,9 @@ struct IDirect3DDeviceImpl
 			 D3DMATRIX *world_mat, D3DMATRIX *view_mat, D3DMATRIX *proj_mat);
 
     STATEBLOCK state_block;
+
+    /* Used to prevent locks and rendering to overlap */
+    CRITICAL_SECTION crit;
 };
 
 /*****************************************************************************
