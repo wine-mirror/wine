@@ -1371,7 +1371,12 @@ static int WS2_register_async_shutdown ( SOCKET s, int fd, int type )
         ws2_async_cleanup ( &wsa->async );
         goto out;
     }
-    return 0;
+    /* Try immediate completion */
+    if ( WSAGetOverlappedResult ( (HANDLE) s, ovl, NULL, FALSE, NULL ) )
+        return 0;
+    if ( (err = WSAGetLastError ()) == WSA_IO_INCOMPLETE )
+        return 0;
+    return WSAEINVAL;
 
 out_close:
     WSACloseEvent ( ovl->hEvent );
@@ -1414,7 +1419,8 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         SERVER_END_REQ;
 	if (as)
 	{
-	    WS_getpeername(as, addr, addrlen32);
+	    if (addr)
+                WS_getpeername(as, addr, addrlen32);
 	    return as;
 	}
     }
