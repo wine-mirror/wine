@@ -223,6 +223,21 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     if (dll->descr->dllentrypoint) 
         nt->OptionalHeader.AddressOfEntryPoint = (DWORD)dll->descr->dllentrypoint - (DWORD)addr;
     
+    /* Build the code section */
+
+    strcpy( sec->Name, ".code" );
+    sec->SizeOfRawData = 0;
+#ifdef __i386__
+    if (WARN_ON(relay) || TRACE_ON(relay))
+        sec->SizeOfRawData += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
+#endif
+    sec->Misc.VirtualSize = sec->SizeOfRawData;
+    sec->VirtualAddress   = (BYTE *)debug - addr;
+    sec->PointerToRawData = (BYTE *)debug - addr;
+    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
+                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
+    sec++;
+
     /* Build the import directory */
 
     if (dll->descr->nb_imports)
@@ -272,6 +287,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
                              IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
                              IMAGE_SCN_MEM_WRITE);
+    sec++;
 
     /* Build the resource directory */
     if(dll->rsc)
@@ -303,21 +319,6 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 		rdep[i].OffsetToData += (DWORD)dll->rsc->restab - (DWORD)addr;
 	}
     }
-
-    /* Build the code section */
-
-    sec++;
-    strcpy( sec->Name, ".code" );
-    sec->SizeOfRawData = 0;
-#ifdef __i386__
-    if (WARN_ON(relay) || TRACE_ON(relay))
-        sec->SizeOfRawData += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
-#endif
-    sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = (BYTE *)debug - addr;
-    sec->PointerToRawData = (BYTE *)debug - addr;
-    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
 
     /* Build the exports section data */
 
@@ -530,7 +531,7 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
         {
             IMAGE_SECTION_HEADER *sec = PE_SECTIONS(hModule);
             DEBUG_ENTRY_POINT *debug = 
-                 (DEBUG_ENTRY_POINT *)((DWORD)hModule + sec[1].VirtualAddress);
+                 (DEBUG_ENTRY_POINT *)((DWORD)hModule + sec[0].VirtualAddress);
             DEBUG_ENTRY_POINT *func = (DEBUG_ENTRY_POINT *)relay;
 
             if (debug <= func && func < debug + dll->descr->nb_funcs)
