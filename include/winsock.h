@@ -26,22 +26,8 @@
 # endif
 #endif
 
-#ifndef _WINSOCKAPI_
-#define _WINSOCKAPI_
-
-/*
- * Setup phase
- */
-
-#ifdef USE_WS_PREFIX
-# define WS(x)    WS_##x
-#else
-# define WS(x)    x
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* defined(__cplusplus) */
+#ifndef __WINE_WINSOCKAPI_STDLIB_H
+#define __WINE_WINSOCKAPI_STDLIB_H
 
 /*
  * This section defines the items that conflict with the Unix headers.
@@ -110,11 +96,16 @@ extern "C" {
 # include <stdlib.h>
 #endif /* !USE_WS_PREFIX */
 
+#endif /* __WINE_WINSOCKAPI_STDLIB_H */
+
 #ifndef __WINESRC__
 # include "windows.h"
 #else
 # include "windef.h"
 #endif
+
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
 
 #if defined(__MINGW_H) && !defined(MSVCRT_BSD_TYPES_DEFINED)
 /* MinGW doesn't define the u_xxx types */
@@ -123,6 +114,16 @@ typedef unsigned short u_short;
 typedef unsigned int  u_int;
 typedef unsigned long u_long;
 #endif
+
+#ifdef USE_WS_PREFIX
+# define WS(x)    WS_##x
+#else
+# define WS(x)    x
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* defined(__cplusplus) */
 
 /* proper 4-byte packing */
 #include "pshpack4.h"
