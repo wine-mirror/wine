@@ -1444,23 +1444,27 @@ const char *SPY_GetWndName( HWND hwnd )
     WND* pWnd = WIN_FindWndPtr( hwnd );
     if( pWnd )
     {
-	INT n = sizeof(wnd_buffer) - 6;
 	LPSTR p = wnd_buffer;
         char  postfix;
 	
 	if( pWnd->text && pWnd->text[0] != '\0' )
 	{
 	    LPWSTR src = pWnd->text;
+	    int n=sizeof(wnd_buffer)-2;
 	    *(p++) = postfix = '\"';
-	    while ((n-- > 1) && *src) *p++ = *src++;
-            if( *src ) for( n = 0; n < 3; n++ ) *(p++)='.';
+	    while ((n-- > 0) && *src) *p++ = *src++;
 	}
 	else /* get class name */
 	{
-	    *(p++)='{';
-	    GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), p, n + 1);
-	    p += strlen(p);
-	    postfix = '}';
+	    *(p++) = '{';
+	    p+=GlobalGetAtomNameA((ATOM) GetClassWord(pWnd->hwndSelf, GCW_ATOM), p, sizeof(wnd_buffer)-1);
+	    postfix='}';
+	}
+	if( p-wnd_buffer == sizeof(wnd_buffer)-1 ) {
+	    p=wnd_buffer+sizeof(wnd_buffer)-5;
+	    *(p++) = '.';
+	    *(p++) = '.';
+	    *(p++) = '.';
 	}
 	*(p++) = postfix;
 	*(p++) = '\0';
