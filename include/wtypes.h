@@ -263,7 +263,7 @@ typedef OLECHAR *LPOLESTR;
 typedef const OLECHAR *LPCOLESTR;
 
 #ifndef __WINESRC__
-#define OLESTR(str) WINE_UNICODE_TEXT(str)
+#define OLESTR(str) L##str
 #endif
 typedef CHAR OLECHAR16;
 
