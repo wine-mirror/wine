@@ -76,8 +76,8 @@ typedef struct tagMONTHCAL_INFO
 
 extern void MONTHCAL_CopyTime (const SYSTEMTIME *from, SYSTEMTIME *to);
 extern int MONTHCAL_CalculateDayOfWeek (DWORD day, DWORD month, DWORD year);
-extern char *daytxt[];
-extern char *monthtxt[];
+extern const char * const daytxt[];
+extern const char * const monthtxt[];
 extern void MONTHCAL_Register (void);
 extern void MONTHCAL_Unregister (void);
 

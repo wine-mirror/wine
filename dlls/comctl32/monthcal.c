@@ -34,13 +34,13 @@ DEFAULT_DEBUG_CHANNEL(monthcal)
  * we want full month-names, and abbreviated weekdays, so these are
  * defined here */
 
-extern int mdays[];    
+static const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
-char *monthtxt[] = {"January", "February", "March", "April", "May", 
+const char * const monthtxt[] = {"January", "February", "March", "April", "May", 
                       "June", "July", "August", "September", "October", 
                       "November", "December"};
-char *daytxt[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
+const char * const daytxt[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 
 
 #define MONTHCAL_GetInfoPtr(hwnd) ((MONTHCAL_INFO *)GetWindowLongA(hwnd, 0))
@@ -337,7 +337,8 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc)
   HBRUSH hbr;
   HFONT currentFont;
   /* LOGFONTA logFont; */
-  char buf[20], *thisMonthtxt;
+  char buf[20];
+  const char *thisMonthtxt;
   COLORREF oldTextColor, oldBkColor;
   DWORD dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
   BOOL prssed;

@@ -58,12 +58,12 @@ static int	DecodeTimezone(char *str, int *tzp);
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
-int			mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+static const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
-char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+static const char * const months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
-char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+static const char * const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
 /* those three vars are useless, and not even initialized, so 

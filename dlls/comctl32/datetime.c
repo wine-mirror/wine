@@ -26,8 +26,8 @@ static BOOL
 
 DATETIME_SendSimpleNotify (HWND hwnd, UINT code);
 
-extern char *days[];  /* from ole/parsedt.c */
-
+static const char * const days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
+"Thursday", "Friday", "Saturday", NULL};
 
 static LRESULT
 DATETIME_GetSystemTime (HWND hwnd, WPARAM wParam, LPARAM lParam )
