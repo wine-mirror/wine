@@ -355,7 +355,9 @@ void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
 {
     CONTEXT86 realmode_ctx;
     FARPROC16 rm_int = DOSVM_GetRMHandler( BL_reg(context) );
-    REALMODECALL *call = MapSL( MAKESEGPTR( context->SegEs, DI_reg(context) ));
+    REALMODECALL *call = CTX_SEG_OFF_TO_LIN( context, 
+                                             context->SegEs, 
+                                             context->Edi );
     INT_GetRealModeContext( call, &realmode_ctx );
 
     /* we need to check if a real-mode program has hooked the interrupt */
@@ -380,7 +382,9 @@ void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
  */
 void WINAPI DOSVM_CallRMProc( CONTEXT86 *context, int iret )
 {
-    REALMODECALL *p = MapSL( MAKESEGPTR( context->SegEs, DI_reg(context) ));
+    REALMODECALL *p = CTX_SEG_OFF_TO_LIN( context, 
+                                          context->SegEs, 
+                                          context->Edi );
     CONTEXT86 context16;
 
     TRACE("RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
@@ -585,10 +589,9 @@ void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
 
     if (NewRMCB)
     {
-	/* FIXME: if 32-bit DPMI client, use ESI and EDI */
-	NewRMCB->proc_ofs = LOWORD(context->Esi);
+       NewRMCB->proc_ofs = DOSVM_IsDos32() ? context->Esi : LOWORD(context->Esi);
 	NewRMCB->proc_sel = context->SegDs;
-	NewRMCB->regs_ofs = LOWORD(context->Edi);
+       NewRMCB->regs_ofs = DOSVM_IsDos32() ? context->Edi : LOWORD(context->Edi);
 	NewRMCB->regs_sel = context->SegEs;
 	SET_LOWORD( context->Ecx, HIWORD(NewRMCB->address) );
 	SET_LOWORD( context->Edx, LOWORD(NewRMCB->address) );
@@ -666,7 +669,7 @@ static BOOL DOSVM_CheckWrappers( CONTEXT86 *context )
 }
 
 /**********************************************************************
- *         DOSVM_Int31Handler
+ *         DOSVM_Int31Handler (WINEDOS16.149)
  *
  * Handler for int 31h (DPMI).
  */
@@ -678,22 +681,99 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
     RESET_CFLAG(context);
     switch(AX_reg(context))
     {
+    case 0x0000:  /* Allocate LDT descriptors */
+        TRACE( "allocate LDT descriptors (%d)\n", CX_reg(context) );
+        {
+            WORD sel =  AllocSelectorArray16( CX_reg(context) );
+            if(!sel) 
+            {
+               TRACE( "failed\n" );
+               SET_AX( context, 0x8011 ); /* descriptor unavailable */
+               SET_CFLAG( context );
+            } 
+            else 
+            { 
+                TRACE( "success, array starts at 0x%04x\n", sel );
+                SET_AX( context, sel );      
+            }
+        }
+        break;
+
+    case 0x0001:  /* Free LDT descriptor */
+        TRACE( "free LDT descriptor (0x%04x)\n", BX_reg(context) );
+        if (FreeSelector16( BX_reg(context) ))
+        {
+            SET_AX( context, 0x8022 );  /* invalid selector */
+            SET_CFLAG( context );
+        }
+        else
+        {
+            /* If a segment register contains the selector being freed, */
+            /* set it to zero. */
+            if (!((context->SegDs^BX_reg(context)) & ~3)) context->SegDs = 0;
+            if (!((context->SegEs^BX_reg(context)) & ~3)) context->SegEs = 0;
+            if (!((context->SegFs^BX_reg(context)) & ~3)) context->SegFs = 0;
+            if (!((context->SegGs^BX_reg(context)) & ~3)) context->SegGs = 0;
+        }
+        break;
+
+    case 0x0002:  /* Real mode segment to descriptor */
+    case 0x0003:  /* Get next selector increment */
+    case 0x0004:  /* Lock selector (not supported) */
+    case 0x0005:  /* Unlock selector (not supported) */
+    case 0x0006:  /* Get selector base address */
+    case 0x0007:  /* Set selector base address */
+        /* chain to protected mode handler */
+        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        break;
+
     case 0x0008:  /* Set selector limit */
         {
-           DWORD limit = MAKELONG( DX_reg(context), CX_reg(context) );
-           TRACE( "set selector limit (0x%04x,0x%08lx)\n",
-                  BX_reg(context), limit );
-           SetSelectorLimit16( BX_reg(context), limit );
-       }
+            DWORD limit = MAKELONG( DX_reg(context), CX_reg(context) );
+            TRACE( "set selector limit (0x%04x,0x%08lx)\n",
+                   BX_reg(context), limit );
+            SetSelectorLimit16( BX_reg(context), limit );
+        }
+        break;
+
+    case 0x0009:  /* Set selector access rights */
+    case 0x000a:  /* Allocate selector alias */
+    case 0x000b:  /* Get descriptor */
+    case 0x000c:  /* Set descriptor */
+    case 0x000d:  /* Allocate specific LDT descriptor */
+    case 0x0100:  /* Allocate DOS memory block */
+    case 0x0101:  /* Free DOS memory block */
+        /* chain to protected mode handler */
+        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        break;
+
+    case 0x0200: /* get real mode interrupt vector */
+        TRACE( "get realmode interupt vector (0x%02x)\n",
+               BL_reg(context) );
+        {
+            FARPROC16 proc = DOSVM_GetRMHandler( BL_reg(context) );
+            SET_CX( context, SELECTOROF(proc) );
+            SET_DX( context, OFFSETOF(proc) );
+        }
+        break;
+
+    case 0x0201: /* set real mode interrupt vector */
+        TRACE( "set realmode interrupt vector (0x%02x, 0x%04x:0x%04x)\n", 
+               BL_reg(context), CX_reg(context), DX_reg(context) );
+        DOSVM_SetRMHandler( BL_reg(context), 
+                            (FARPROC16)MAKESEGPTR(CX_reg(context), DX_reg(context)) );
         break;
 
     case 0x0202:  /* Get Processor Exception Handler Vector */
         FIXME( "Get Processor Exception Handler Vector (0x%02x)\n",
                BL_reg(context) );
-        if (DOSVM_IsDos32()) {
+        if (DOSVM_IsDos32()) 
+        {
             SET_CX( context, 0 );
             context->Edx = 0;
-        } else {
+        } 
+        else 
+        {
             SET_CX( context, 0 );
             SET_DX( context, 0 );
         }
@@ -701,17 +781,20 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
     case 0x0203:  /* Set Processor Exception Handler Vector */
          FIXME( "Set Processor Exception Handler Vector (0x%02x)\n",
-               BL_reg(context) );
+                BL_reg(context) );
          break;
 
     case 0x0204:  /* Get protected mode interrupt vector */
         TRACE("get protected mode interrupt handler (0x%02x)\n",
-             BL_reg(context));
-        if (DOSVM_IsDos32()) {
+              BL_reg(context));
+        if (DOSVM_IsDos32()) 
+        {
             FARPROC48 handler = DOSVM_GetPMHandler48( BL_reg(context) );
             SET_CX( context, handler.selector );
             context->Edx = handler.offset;
-        } else {
+        } 
+        else 
+        {
             FARPROC16 handler = DOSVM_GetPMHandler16( BL_reg(context) );
             SET_CX( context, SELECTOROF(handler) );
             SET_DX( context, OFFSETOF(handler) );
@@ -720,21 +803,136 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
     case 0x0205:  /* Set protected mode interrupt vector */
         TRACE("set protected mode interrupt handler (0x%02x,0x%04x:0x%08lx)\n",
-             BL_reg(context), CX_reg(context), context->Edx);
-        if (DOSVM_IsDos32()) {
+              BL_reg(context), CX_reg(context), context->Edx);
+        if (DOSVM_IsDos32()) 
+        {
             FARPROC48 handler;
             handler.selector = CX_reg(context);
             handler.offset = context->Edx;
             DOSVM_SetPMHandler48( BL_reg(context), handler );
-        } else {
+        } 
+        else 
+        {
             FARPROC16 handler;
             handler = (FARPROC16)MAKESEGPTR( CX_reg(context), DX_reg(context)); 
             DOSVM_SetPMHandler16( BL_reg(context), handler );
         }
         break;
 
-    default:
+    case 0x0300:  /* Simulate real mode interrupt */
+        DOSVM_CallRMInt( context );
+        break;
+
+    case 0x0301:  /* Call real mode procedure with far return */
+        DOSVM_CallRMProc( context, FALSE );
+        break;
+
+    case 0x0302:  /* Call real mode procedure with interrupt return */
+        DOSVM_CallRMProc( context, TRUE );
+        break;
+
+    case 0x0303:  /* Allocate Real Mode Callback Address */
+        DOSVM_AllocRMCB( context );
+        break;
+
+    case 0x0304:  /* Free Real Mode Callback Address */
+        DOSVM_FreeRMCB( context );
+        break;
+
+    case 0x0305:  /* Get State Save/Restore Addresses */
+        TRACE("get state save/restore addresses\n");
+        /* we probably won't need this kind of state saving */
+        SET_AX( context, 0 );
+
+        /* real mode: just point to the lret */
+        SET_BX( context, DOSVM_dpmi_segments->wrap_seg );
+        SET_CX( context, 2 );
+
+        /* protected mode: don't have any handler yet... */
+        /* FIXME: Use DI in 16-bit DPMI and EDI in 32-bit DPMI */
+        FIXME("no protected-mode dummy state save/restore handler yet\n");
+        SET_SI( context, 0 );
+        context->Edi = 0;
+        break;
+
+    case 0x0306:  /* Get Raw Mode Switch Addresses */
+        TRACE("get raw mode switch addresses\n");
+
+        /* real mode, point to standard DPMI return wrapper */
+        SET_BX( context, DOSVM_dpmi_segments->wrap_seg );
+        SET_CX( context, 0 );
+
+        /* protected mode, point to DPMI call wrapper */
+        /* FIXME: Use DI in 16-bit DPMI and EDI in 32-bit DPMI */
+        /* FIXME: Doesn't work in DPMI32... */
+        SET_SI( context, DOSVM_dpmi_segments->dpmi_sel );
+        context->Edi = 8; /* offset of the INT 0x31 call */
+        break;
+
+    case 0x0400:  /* Get DPMI version */
+        TRACE("get DPMI version\n");
+        {
+            SYSTEM_INFO si;
+
+            GetSystemInfo(&si);
+            SET_AX( context, 0x005a );  /* DPMI version 0.90 */
+            SET_BX( context, 0x0005 );  /* Flags: 32-bit, virtual memory */
+            SET_CL( context, si.wProcessorLevel );
+            SET_DX( context, 0x0102 );  /* Master/slave interrupt controller base */
+        }
+        break;
+
+    case 0x0500:  /* Get free memory information */
+    case 0x0501:  /* Allocate memory block */
+    case 0x0502:  /* Free memory block */
+    case 0x0503:  /* Resize memory block */
         /* chain to protected mode handler */
         INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        break;
+
+    case 0x0507:  /* Set page attributes (1.0) */
+        FIXME("set page attributes unimplemented\n");
+        break;  /* Just ignore it */
+
+    case 0x0600:  /* Lock linear region */
+        FIXME("lock linear region unimplemented\n");
+        break;  /* Just ignore it */
+
+    case 0x0601:  /* Unlock linear region */
+        FIXME("unlock linear region unimplemented\n");
+        break;  /* Just ignore it */
+
+    case 0x0602:  /* Unlock real-mode region */
+        FIXME("unlock realmode region unimplemented\n");
+        break;  /* Just ignore it */
+
+    case 0x0603:  /* Lock real-mode region */
+        FIXME("lock realmode region unimplemented\n");
+        break;  /* Just ignore it */
+
+    case 0x0604:  /* Get page size */
+        TRACE("get pagesize\n");
+        SET_BX( context, HIWORD(getpagesize()) );
+        SET_CX( context, LOWORD(getpagesize()) );
+        break;
+
+    case 0x0702:  /* Mark page as demand-paging candidate */
+        FIXME("mark page as demand-paging candidate\n");
+        break;  /* Just ignore it */
+
+    case 0x0703:  /* Discard page contents */
+        FIXME("discard page contents\n");
+        break;  /* Just ignore it */
+
+    case 0x0800:  /* Physical address mapping */
+        /* chain to protected mode handler */
+        INT_Int31Handler( context ); /* FIXME: move DPMI code here */
+        break;
+
+    default:
+        INT_BARF( context, 0x31 );
+        SET_AX( context, 0x8001 );  /* unsupported function */
+        SET_CFLAG(context);
+        break;
     }  
 }
