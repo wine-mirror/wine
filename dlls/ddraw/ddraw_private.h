@@ -3,8 +3,8 @@
 
 /* MAY NOT CONTAIN X11 or DGA specific includes/defines/structs! */
 
-#include "wtypes.h"
 #include "winbase.h"
+#include "wtypes.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddraw.h"

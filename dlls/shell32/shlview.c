@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "windef.h"
 #include "servprov.h"
 #include "shlguid.h"
 #include "shlobj.h"

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "windef.h"
 #include "wine/obj_base.h"
 #include "wine/obj_extracticon.h"
 #include "wine/undocshell.h"
