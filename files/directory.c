@@ -138,7 +138,7 @@ UINT32 WINAPI GetTempPath32A( UINT32 count, LPSTR path )
         if (!(ret = GetEnvironmentVariable32A( "TEMP", path, count )))
             if (!(ret = GetCurrentDirectory32A( count, path )))
                 return 0;
-    if ((ret < count - 1) && (path[ret-1] != '\\'))
+    if (count && (ret < count - 1) && (path[ret-1] != '\\'))
     {
         path[ret++] = '\\';
         path[ret]   = '\0';
@@ -159,7 +159,7 @@ UINT32 WINAPI GetTempPath32W( UINT32 count, LPWSTR path )
         if (!(ret = GetEnvironmentVariable32W( temp, path, count )))
             if (!(ret = GetCurrentDirectory32W( count, path )))
                 return 0;
-    if ((ret < count - 1) && (path[ret-1] != '\\'))
+    if (count && (ret < count - 1) && (path[ret-1] != '\\'))
     {
         path[ret++] = '\\';
         path[ret]   = '\0';
