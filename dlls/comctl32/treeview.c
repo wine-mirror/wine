@@ -2043,12 +2043,12 @@ TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 
     if (!TREEVIEW_ValidItem(infoPtr, wineItem))
 	return FALSE;
+    
+    /* store the orignal item values */
+    originalItem = *wineItem;
 
     if (!TREEVIEW_DoSetItem(infoPtr, wineItem, tvItem))
 	return FALSE;
-
-    /* store the orignal item values */
-    originalItem = *wineItem;
 
     /* If the text or TVIS_BOLD was changed, and it is visible, recalculate. */
     if ((tvItem->mask & TVIF_TEXT
