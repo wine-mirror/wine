@@ -760,6 +760,7 @@ DWORD WINAPI RtlIsTextUnicode(
 	DWORD *pf);
 
 INT __cdecl wcstol(LPCWSTR,LPWSTR*,INT);
+int __cdecl swprintf(LPWSTR,LPCWSTR,...);
 
 /*	resource functions */
 
