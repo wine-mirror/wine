@@ -1126,6 +1126,13 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 	{
 	  case WM_COMMAND:
 	    wndPtr = WIN_FindWndPtr(hwndMDIClient);
+
+            if (!wndPtr) {
+               ERR(mdi,"null wndPtr for mdi window hwndMDIClient=%04x\n",
+                             hwndMDIClient);
+               return 0;
+            } 
+
 	    ci     = (MDICLIENTINFO*)wndPtr->wExtra;
 
 	    /* check for possible syscommands for maximized MDI child */
