@@ -280,51 +280,12 @@ LPWSTR WINAPI StrChrIW(LPCWSTR lpszStr, WCHAR ch)
  */
 int WINAPI StrCmpIW(LPCWSTR lpszStr, LPCWSTR lpszComp)
 {
-  INT iRet;
+  int iRet;
 
   TRACE("(%s,%s)\n", debugstr_w(lpszStr),debugstr_w(lpszComp));
 
-  iRet = strcmpiW(lpszStr, lpszComp);
-  return iRet < 0 ? -1 : iRet ? 1 : 0;
-}
-
-/*************************************************************************
- * SHLWAPI_StrCmpNHelperA
- *
- * Internal helper for StrCmpNA/StrCmpNIA.
- */
-static INT WINAPI SHLWAPI_StrCmpNHelperA(LPCSTR lpszStr, LPCSTR lpszComp,
-                                         INT iLen,
-                                         BOOL (WINAPI *pChrCmpFn)(WORD,WORD))
-{
-  if (!lpszStr)
-  {
-    if (!lpszComp)
-      return 0;
-    return 1;
-  }
-  else if (!lpszComp)
-    return -1;
-
-  while (iLen-- > 0)
-  {
-    int iDiff;
-    WORD ch1, ch2;
-
-    ch1 = IsDBCSLeadByte(*lpszStr)? *lpszStr << 8 | lpszStr[1] : *lpszStr;
-    ch2 = IsDBCSLeadByte(*lpszComp)? *lpszComp << 8 | lpszComp[1] : *lpszComp;
-
-    if ((iDiff = pChrCmpFn(ch1, ch2)) < 0)
-      return -1;
-    else if (iDiff > 0)
-      return 1;
-    else if (!*lpszStr && !*lpszComp)
-      return 0;
-
-    lpszStr = CharNextA(lpszStr);
-    lpszComp = CharNextA(lpszComp);
-  }
-  return 0;
+  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, -1, lpszComp, -1);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -343,9 +304,12 @@ static INT WINAPI SHLWAPI_StrCmpNHelperA(LPCSTR lpszStr, LPCSTR lpszComp,
  */
 INT WINAPI StrCmpNA(LPCSTR lpszStr, LPCSTR lpszComp, INT iLen)
 {
+  INT iRet;
+
   TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
 
-  return SHLWAPI_StrCmpNHelperA(lpszStr, lpszComp, iLen, SHLWAPI_ChrCmpA);
+  iRet = CompareStringA(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -359,8 +323,8 @@ INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
 
   TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
 
-  iRet = strncmpW(lpszStr, lpszComp, iLen);
-  return iRet < 0 ? -1 : iRet ? 1 : 0;
+  iRet = CompareStringW(GetThreadLocale(), 0, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -376,23 +340,15 @@ INT WINAPI StrCmpNW(LPCWSTR lpszStr, LPCWSTR lpszComp, INT iLen)
  * RETURNS
  *  An integer less than, equal to or greater than 0, indicating that
  *  lpszStr is less than, the same, or greater than lpszComp.
- *
- * NOTES
- *  The Win32 version of this function is _completely_ broken for cases
- *  where iLen is greater than the length of lpszComp. Examples:
- *
- *|  StrCmpNIA("foo.gif", "foo", 5) is -1 under Win32; Should return 1.
- *|  StrCmpNIA("\", "\\", 3) is 0 under Win32; Should return -1.
- *|  StrCmpNIA("\", "\..\foo\", 3) is 1 under Win32; Should return -1.
- *
- *  This implementation behaves correctly, since it is unlikely any
- *  applications actually rely on this function being broken.
  */
 int WINAPI StrCmpNIA(LPCSTR lpszStr, LPCSTR lpszComp, int iLen)
 {
+  INT iRet;
+
   TRACE("(%s,%s,%i)\n", debugstr_a(lpszStr), debugstr_a(lpszComp), iLen);
 
-  return SHLWAPI_StrCmpNHelperA(lpszStr, lpszComp, iLen, ChrCmpIA);
+  iRet = CompareStringA(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -406,8 +362,8 @@ INT WINAPI StrCmpNIW(LPCWSTR lpszStr, LPCWSTR lpszComp, int iLen)
 
   TRACE("(%s,%s,%i)\n", debugstr_w(lpszStr), debugstr_w(lpszComp), iLen);
 
-  iRet = strncmpiW(lpszStr, lpszComp, iLen);
-  return iRet < 0 ? -1 : iRet ? 1 : 0;
+  iRet = CompareStringW(GetThreadLocale(), NORM_IGNORECASE, lpszStr, iLen, lpszComp, iLen);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************
@@ -429,8 +385,8 @@ int WINAPI StrCmpW(LPCWSTR lpszStr, LPCWSTR lpszComp)
 
   TRACE("(%s,%s)\n", debugstr_w(lpszStr), debugstr_w(lpszComp));
 
-  iRet = strcmpW(lpszStr, lpszComp);
-  return iRet < 0 ? -1 : iRet ? 1 : 0;
+  iRet = CompareStringW(GetThreadLocale(), 0, lpszStr, -1, lpszComp, -1);
+  return iRet == CSTR_LESS_THAN ? -1 : iRet == CSTR_GREATER_THAN ? 1 : 0;
 }
 
 /*************************************************************************

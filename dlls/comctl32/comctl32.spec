@@ -77,16 +77,16 @@
 363 stdcall -noname StrStrIW(wstr wstr)
 364 stdcall -noname StrSpnW(wstr wstr)
 365 stdcall -noname StrToIntW(wstr)
-366 stub -noname StrChrIA
-367 stub -noname StrChrIW
-368 stub -noname StrRChrIA
-369 stub -noname StrRChrIW
-372 stub -noname StrRStrIA
-373 stub -noname StrRStrIW
-374 stub -noname StrCSpnIA
-375 stub -noname StrCSpnIW
-376 stub -noname IntlStrEqWorkerA
-377 stub -noname IntlStrEqWorkerW
+366 stdcall -noname StrChrIA(str long)
+367 stdcall -noname StrChrIW(wstr long)
+368 stdcall -noname StrRChrIA(str str long)
+369 stdcall -noname StrRChrIW(wstr wstr long)
+372 stdcall -noname StrRStrIA(str str str)
+373 stdcall -noname StrRStrIW(wstr wstr wstr)
+374 stdcall -noname StrCSpnIA(str str)
+375 stdcall -noname StrCSpnIW(wstr wstr)
+376 stdcall -noname IntlStrEqWorkerA(long str str long)
+377 stdcall -noname IntlStrEqWorkerW(long wstr wstr long)
 382 stdcall -noname SmoothScrollWindow(ptr)
 383 stub -noname DoReaderMode
 384 stub -noname SetPathWordBreakProc
