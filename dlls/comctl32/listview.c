@@ -3073,7 +3073,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isNew
     item.stateMask = ~0;
     item.state = 0;
     item.lParam = 0;
-    if (!isNew && !LISTVIEW_GetItemT(infoPtr, &item, TRUE)) return FALSE;
+    if (!isNew && !LISTVIEW_GetItemW(infoPtr, &item)) return FALSE;
 
     TRACE("oldState=%x, newState=%x\n", item.state, lpLVItem->state);
     /* determine what fields will change */    
@@ -4723,6 +4723,7 @@ static HIMAGELIST LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
  */
 static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 {
+    ITEMHDR callbackHdr = { LPSTR_TEXTCALLBACKW, I_IMAGECALLBACK };
     NMLVDISPINFOW dispInfo;
     ITEM_INFO *lpItem;
     ITEMHDR* pItemHdr;
@@ -4808,8 +4809,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (lpLVItem->iSubItem)
     {
 	SUBITEM_INFO *lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
-        if(!lpSubItem) return FALSE;
-	pItemHdr = &lpSubItem->hdr;
+        pItemHdr = lpSubItem ? &lpSubItem->hdr : &callbackHdr;
     }
     else
 	pItemHdr = &lpItem->hdr;
@@ -4844,6 +4844,9 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
 	TRACE("   getdispinfo(2):item=%s\n", debuglvitem_t(&dispInfo.item, isW));
     }
+
+    /* we should not store values for subitems */
+    if (lpLVItem->iSubItem) dispInfo.item.mask &= ~LVIF_DI_SETITEM;
 
     /* Now, handle the iImage field */
     if (dispInfo.item.mask & LVIF_IMAGE)
