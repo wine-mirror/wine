@@ -263,7 +263,8 @@ static SUBHEAP *HEAP_FindSubHeap(
 static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
-    size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
+    DWORD pageMask = VIRTUAL_GetPageSize() - 1;
+    size = (size + pageMask) & ~pageMask;  /* Align size on a page boundary */
     if (size > subheap->size) size = subheap->size;
     if (size <= subheap->commitSize) return TRUE;
     if (!VirtualAlloc( (char *)subheap + subheap->commitSize,
@@ -289,7 +290,8 @@ static BOOL HEAP_Commit( SUBHEAP *subheap, void *ptr )
 static BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
     DWORD size = (DWORD)((char *)ptr - (char *)subheap);
-    size = (size + 0xfff) & 0xfffff000;  /* Align size on a page boundary */
+    DWORD pageMask = VIRTUAL_GetPageSize() - 1;
+    size = (size + pageMask) & ~pageMask;  /* Align size on a page boundary */
     if (size >= subheap->commitSize) return TRUE;
     if (!VirtualFree( (char *)subheap + size,
                       subheap->commitSize - size, MEM_DECOMMIT ))
