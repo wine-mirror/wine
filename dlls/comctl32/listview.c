@@ -7951,6 +7951,8 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
   NMHDR nmh;
   INT nItem = -1;
   BOOL bRedraw = FALSE;
+  LONG lStyle = GetWindowLongA(hwnd, GWL_STYLE);
+  UINT uView =  lStyle & LVS_TYPEMASK;
 
   /* send LVN_KEYDOWN notification */
   ZeroMemory(&nmKeyDown, sizeof(NMLVKEYDOWN));
@@ -8011,11 +8013,29 @@ static LRESULT LISTVIEW_KeyDown(HWND hwnd, INT nVirtualKey, LONG lKeyData)
     break;
 
   case VK_PRIOR:
-    /* TO DO */
+    if (uView == LVS_REPORT)
+    {
+      nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(hwnd);
+    }
+    else
+    {
+      nItem = infoPtr->nFocusedItem - LISTVIEW_GetCountPerColumn(hwnd) 
+                                    * LISTVIEW_GetCountPerRow(hwnd);
+    }
+    if(nItem < 0) nItem = 0;
     break;
 
   case VK_NEXT:
-    /* TO DO */
+    if (uView == LVS_REPORT)
+    {
+      nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(hwnd);
+    }
+    else
+    {
+      nItem = infoPtr->nFocusedItem + LISTVIEW_GetCountPerColumn(hwnd)
+                                    * LISTVIEW_GetCountPerRow(hwnd);
+    }
+    if(nItem >= GETITEMCOUNT(infoPtr)) nItem = GETITEMCOUNT(infoPtr) - 1;
     break;
   }
 
