@@ -510,6 +510,14 @@ static void SYSPARAMS_GetGUIFont( LOGFONTA* plf )
 	}
 }
 
+/* copied from GetSystemMetrics()'s RegistryTwips2Pixels() */
+inline static int SYSPARAMS_Twips2Pixels(int x)
+{
+    if (x < 0)
+        x = (-x+7)/15;
+    return x;
+}
+
 /***********************************************************************
  *		SystemParametersInfoA (USER32.@)
  *
@@ -531,6 +539,8 @@ static void SYSPARAMS_GetGUIFont( LOGFONTA* plf )
  * registry branch if saving is requested. Otherwise it is stored
  * in temporary branch
  *
+ * Some SPI values can also be stored as Twips values in the registry,
+ * don't forget the conversion!
  */
 BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 				   PVOID pvParam, UINT fWinIni )
@@ -635,12 +645,9 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         {
             char buf[10];
 
-            if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME,
-                                buf ))
-            {
-                int i = atoi( buf );
-                if (i > 0) border = i;
-            }
+            if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf ))
+                border = SYSPARAMS_Twips2Pixels( atoi(buf) );
+
             spi_loaded[spi_idx] = TRUE;
             if (TWEAK_WineLook > WIN31_LOOK)
             {
@@ -723,11 +730,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             if (!spi_loaded[spi_idx])
             {
                 char buf[10];
+		int val;
 
                 if (SYSPARAMS_Load( SPI_ICONHORIZONTALSPACING_REGKEY,
                                     SPI_ICONHORIZONTALSPACING_VALNAME, buf ))
                 {
-                    SYSMETRICS_Set( SM_CXICONSPACING, atoi( buf ) );
+                    val = SYSPARAMS_Twips2Pixels( atoi(buf) );
+                    SYSMETRICS_Set( SM_CXICONSPACING, val );
                 }
                 spi_loaded[spi_idx] = TRUE;
             }
@@ -904,11 +913,13 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             if (!spi_loaded[spi_idx])
             {
                 char buf[10];
+		int val;
 
                 if (SYSPARAMS_Load( SPI_ICONVERTICALSPACING_REGKEY,
                                     SPI_ICONVERTICALSPACING_VALNAME, buf ))
                 {
-                    SYSMETRICS_Set( SM_CYICONSPACING, atoi( buf ) );
+                    val = SYSPARAMS_Twips2Pixels( atoi(buf) );
+                    SYSMETRICS_Set( SM_CYICONSPACING, val );
                 }
                 spi_loaded[spi_idx] = TRUE;
             }

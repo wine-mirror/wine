@@ -43,7 +43,7 @@ static int sysMetrics[SM_WINE_CMETRICS+1];
  *   MSDN Library - April 2001 -> Resource Kits ->
  *       Windows 2000 Resource Kit Reference ->
  *       Technical Reference to the Windows 2000 Registry ->
- *       HKEY_CURRENT_USE -> Control Panel -> Desktop -> WindowMetrics
+ *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
  *
  * This is written as a function to prevent repeated evaluation of the
  * argument.
