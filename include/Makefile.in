@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	amvideo.idl \
 	comcat.idl \
 	docobj.idl \
 	exdisp.idl \
@@ -29,6 +30,7 @@ IDL_INCLUDES = \
 WINDOWS_INCLUDES = \
 	accctrl.h \
 	audevcod.h \
+	aviriff.h \
 	basetsd.h \
 	cderr.h \
 	cguid.h \
