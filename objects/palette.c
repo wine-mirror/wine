@@ -791,3 +791,12 @@ BOOL32 WINAPI UpdateColors32(
     return TRUE;
 }
 
+
+/*********************************************************************
+ *           SetMagicColors16   (GDI.606)
+ */
+VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
+{
+    FIXME(palette,"(hDC %04x, color %04x, index %04x): stub\n", hDC, (int)color, index);
+
+}

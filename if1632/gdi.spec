@@ -373,9 +373,9 @@ file	gdi.exe
 569 pascal16 GDI_569() stub_GDI_569
 602 pascal16 SetDIBColorTable(word word word ptr) SetDIBColorTable16
 603 pascal16 GetDIBColorTable(word word word ptr) GetDIBColorTable16
-604 stub SetSolidBrush
+604 pascal16 SetSolidBrush(word long) SetSolidBrush16
 605 pascal16 SysDeleteObject(word) DeleteObject16    # ???
-606 stub SetMagicColors
+606 pascal16 SetMagicColors(word long word) SetMagicColors16
 607 stub GetRegionData
 608 stub ExtCreateRegion
 609 stub GDIFreeResources

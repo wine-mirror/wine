@@ -334,3 +334,21 @@ INT32 BRUSH_GetObject32( BRUSHOBJ * brush, INT32 count, LPSTR buffer )
     memcpy( buffer, &brush->logbrush, count );
     return count;
 }
+
+
+/***********************************************************************
+ *           SetSolidBrush16   (GDI.604)
+ *
+ *  If hBrush is a solid brush, change it's color to newColor.
+ *
+ *  RETURNS
+ *           TRUE on success, FALSE on failure.
+ *   FIXME: not yet implemented!
+ */
+BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
+{
+     FIXME(gdi, "(hBrush %04x, newColor %04x): stub!\n", hBrush, (int)newColor);
+
+     return(FALSE);
+}
+
