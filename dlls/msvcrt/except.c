@@ -71,11 +71,13 @@ inline static void call_finally_block( void *code_block, void *base_ptr )
                           : : "a" (code_block), "g" (base_ptr));
 }
 
-static DWORD call_filter( void *func, void *arg, void *ebp )
+inline static DWORD call_filter( void *func, void *arg, void *ebp )
 {
     DWORD ret;
     __asm__ __volatile__ ("pushl %%ebp; pushl %3; movl %2,%%ebp; call *%%eax; popl %%ebp; popl %%ebp"
-                          : "=a" (ret) : "0" (func), "g" (ebp), "g" (arg) );
+                          : "=a" (ret)
+                          : "0" (func), "g" (ebp), "g" (arg)
+                          : "ecx", "edx", "memory" );
     return ret;
 }
 #endif

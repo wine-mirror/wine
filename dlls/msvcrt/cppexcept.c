@@ -139,8 +139,8 @@ static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* fram
 inline static void *call_ebp_func( void *func, void *ebp )
 {
     void *ret;
-    __asm__ __volatile__ ("pushl %%ebp; movl %2,%%ebp; call *%%eax;; popl %%ebp" \
-                          : "=a" (ret) : "0" (func), "g" (ebp));
+    __asm__ __volatile__ ("pushl %%ebp; movl %2,%%ebp; call *%%eax; popl %%ebp" \
+                          : "=a" (ret) : "0" (func), "g" (ebp) : "ecx", "edx", "memory" );
     return ret;
 }
 
@@ -151,16 +151,16 @@ inline static void call_copy_ctor( void *func, void *this, void *src, int has_vb
     if (has_vbase)
         /* in that case copy ctor takes an extra bool indicating whether to copy the base class */
         __asm__ __volatile__("pushl $1; pushl %2; call *%0"
-                             : : "r" (func), "c" (this), "g" (src) );
+                             : : "r" (func), "c" (this), "g" (src) : "eax", "edx", "memory" );
     else
         __asm__ __volatile__("pushl %2; call *%0"
-                             : : "r" (func), "c" (this), "g" (src) );
+                             : : "r" (func), "c" (this), "g" (src) : "eax", "edx", "memory" );
 }
 
 /* call the destructor of the exception object */
 inline static void call_dtor( void *func, void *object )
 {
-    __asm__ __volatile__("call *%0" : : "r" (func), "c" (object) );
+    __asm__ __volatile__("call *%0" : : "r" (func), "c" (object) : "eax", "edx", "memory" );
 }
 
 
