@@ -43,6 +43,7 @@ static struct tagDllOverride {
 	{"advapi32,crtdll,ntdll",	"builtin,native"},
 	{"lz32,lzexpand",		"builtin,native"},
 	{"version,ver",			"builtin,native"},
+        {"msvcrt",                      "native,builtin"},
 	/* "new" interface */
 	{"comdlg32,commdlg",		"builtin,native"},
 	{"shell32,shell",		"builtin,native"},

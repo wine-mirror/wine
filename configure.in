@@ -1200,6 +1200,7 @@ dlls/lzexpand/Makefile
 dlls/mpr/Makefile
 dlls/msacm/Makefile
 dlls/msnet32/Makefile
+dlls/msvcrt/Makefile
 dlls/msvideo/Makefile
 dlls/ntdll/Makefile
 dlls/odbc32/Makefile

@@ -32,6 +32,7 @@ DLLFILES = \
 	mpr/libmpr.@LIBEXT@ \
 	msacm/libmsacm32.@LIBEXT@ \
 	msnet32/libmsnet32.@LIBEXT@ \
+	msvcrt/libmsvcrt.@LIBEXT@ \
 	msvideo/libmsvfw32.@LIBEXT@ \
 	ntdll/libntdll.@LIBEXT@ \
 	odbc32/libodbc32.@LIBEXT@ \
@@ -145,6 +146,7 @@ SUBDIRS = \
 	mpr \
 	msacm \
 	msnet32 \
+	msvcrt \
 	msvideo \
 	ntdll \
 	odbc32 \
@@ -283,6 +285,9 @@ libmsacm32.@LIBEXT@ libmsacm.@LIBEXT@: msacm/libmsacm32.@LIBEXT@
 libmsnet32.@LIBEXT@: msnet32/libmsnet32.@LIBEXT@
 	$(RM) $@ && $(LN_S) msnet32/libmsnet32.@LIBEXT@ $@
 
+libmsvcrt.@LIBEXT@: msvcrt/libmsvcrt.@LIBEXT@
+	$(RM) $@ && $(LN_S) msvcrt/libmsvcrt.@LIBEXT@ $@
+
 libmsvfw32.@LIBEXT@ libmsvideo.@LIBEXT@: msvideo/libmsvfw32.@LIBEXT@
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.@LIBEXT@ $@
 
@@ -418,6 +423,7 @@ lzexpand/liblz32.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 mpr/libmpr.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msacm/libmsacm32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libadvapi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msnet32/libmsnet32.@LIBEXT@: libntdll.@LIBEXT@
+msvcrt/libmsvcrt.@LIBEXT@: libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 msvideo/libmsvfw32.@LIBEXT@: libwinmm.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@
 odbc32/libodbc32.@LIBEXT@: libntdll.@LIBEXT@
 ole32/libole32.@LIBEXT@: libadvapi32.@LIBEXT@ libuser32.@LIBEXT@ libgdi32.@LIBEXT@ librpcrt4.@LIBEXT@ libkernel32.@LIBEXT@ libntdll.@LIBEXT@

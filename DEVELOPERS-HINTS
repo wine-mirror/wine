@@ -45,6 +45,7 @@ Other DLLs:
 		avifil32/	- COM object to play AVI files
 		comctl32/	- common controls
 		commdlg/	- common dialog boxes (both 16 & 32 bit)
+		crtdll/		- Old C runtime library
 		dplayx/		- DirectX dplayx
 		dsound/		- DirectX dsound
 		imagehlp/	- PE (Portable Executable) Image Helper lib
@@ -55,6 +56,7 @@ Other DLLs:
 		msacm/		- audio compression manager (multimedia) (16 bit)
 		msacm32/	- audio compression manager (multimedia) (32 bit)
 		msnet/
+		msvcrt/		- C runtime library
 		msvideo/	- 16 bit video manager
 		ole32/		- 32 bit OLE 2.0 librairies
 		oleaut32/	- 32 bit OLE 2.0 automation

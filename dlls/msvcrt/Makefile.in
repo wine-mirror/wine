@@ -1,0 +1,36 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msvcrt
+EXTRALIBS = $(LIBUNICODE)
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	console.c \
+	cpp.c \
+	ctype.c \
+	data.c \
+	dir.c \
+	environ.c \
+	errno.c \
+	except.c \
+	exit.c \
+	file.c \
+	heap.c \
+	locale.c \
+	main.c \
+	math.c \
+	mbcs.c \
+	misc.c \
+	process.c \
+	string.c \
+	thread.c \
+	time.c \
+	wcs.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

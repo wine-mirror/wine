@@ -129,6 +129,7 @@ DLLS = \
 	msacm.drv \
 	msacm32 \
 	msnet32 \
+	msvcrt \
 	msvfw32 \
 	odbc32 \
 	ole32 \

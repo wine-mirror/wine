@@ -93,6 +93,7 @@ WINE REGISTRY Version 2
 "dsound"       = "builtin, native"
 "mmsystem"     = "builtin"
 "winmm"        = "builtin"
+"msvcrt"       = "native, builtin"
 "msvideo"      = "builtin, native"
 "msvfw32"      = "builtin, native"
 "mcicda.drv"   = "builtin, native"
