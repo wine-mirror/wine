@@ -29,7 +29,9 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     int i, buttons;
     int bspace, bw, bh, theight, tleft, wwidth, wheight, bpos;
     int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
-    
+    LPCSTR lpszText;
+    char buf[256];
+
     if (TWEAK_WineLook >= WIN95_LOOK) {
 	NONCLIENTMETRICSA nclm;
 	INT i;
@@ -42,8 +44,21 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
 	/* set text font */
 	SendDlgItemMessageA (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
     }
-    if (lpmb->lpszCaption) SetWindowTextA(hwnd, lpmb->lpszCaption);
-    SetWindowTextA(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpmb->lpszText);
+    if (HIWORD(lpmb->lpszCaption)) {
+       SetWindowTextA(hwnd, lpmb->lpszCaption);
+    } else {
+       if (LoadStringA(lpmb->hInstance, LOWORD(lpmb->lpszCaption), buf, sizeof(buf)))
+	  SetWindowTextA(hwnd, buf);
+    }
+    if (HIWORD(lpmb->lpszText)) {
+       lpszText = lpmb->lpszText;
+    } else {
+       lpszText = buf;
+       if (!LoadStringA(lpmb->hInstance, LOWORD(lpmb->lpszText), buf, sizeof(buf)))
+	  *buf = 0;	/* FIXME ?? */
+    }
+    SetWindowTextA(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
+
     /* Hide not selected buttons */
     switch(lpmb->dwStyle & MB_TYPEMASK) {
     case MB_OK:
@@ -148,7 +163,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSA lpmb)
     /* Get the text size */
     GetClientRect(GetDlgItem(hwnd, MSGBOX_IDTEXT), &rect);
     rect.top = rect.left = rect.bottom = 0;
-    DrawTextA( hdc, lpmb->lpszText, -1, &rect,
+    DrawTextA( hdc, lpszText, -1, &rect,
 	       DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     /* Min text width corresponds to space for the buttons */
     tleft = 2 * ileft + iwidth;
