@@ -572,6 +572,13 @@ static void test_pack_LPMEMORYSTATUS(void)
     TEST_TYPE_POINTER(LPMEMORYSTATUS, 32, 4);
 }
 
+static void test_pack_LPMEMORYSTATUSEX(void)
+{
+    /* LPMEMORYSTATUSEX */
+    TEST_TYPE(LPMEMORYSTATUSEX, 4, 4);
+    TEST_TYPE_POINTER(LPMEMORYSTATUSEX, 64, 8);
+}
+
 static void test_pack_LPOFSTRUCT(void)
 {
     /* LPOFSTRUCT */
@@ -674,6 +681,13 @@ static void test_pack_LPWIN32_FIND_DATAW(void)
     TEST_TYPE_POINTER(LPWIN32_FIND_DATAW, 592, 4);
 }
 
+static void test_pack_LPWIN32_STREAM_ID(void)
+{
+    /* LPWIN32_STREAM_ID */
+    TEST_TYPE(LPWIN32_STREAM_ID, 4, 4);
+    TEST_TYPE_POINTER(LPWIN32_STREAM_ID, 24, 8);
+}
+
 static void test_pack_MEMORYSTATUS(void)
 {
     /* MEMORYSTATUS (pack 4) */
@@ -686,6 +700,21 @@ static void test_pack_MEMORYSTATUS(void)
     TEST_FIELD(MEMORYSTATUS, SIZE_T, dwAvailPageFile, 20, 4, 4);
     TEST_FIELD(MEMORYSTATUS, SIZE_T, dwTotalVirtual, 24, 4, 4);
     TEST_FIELD(MEMORYSTATUS, SIZE_T, dwAvailVirtual, 28, 4, 4);
+}
+
+static void test_pack_MEMORYSTATUSEX(void)
+{
+    /* MEMORYSTATUSEX (pack 8) */
+    TEST_TYPE(MEMORYSTATUSEX, 64, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORD, dwLength, 0, 4, 4);
+    TEST_FIELD(MEMORYSTATUSEX, DWORD, dwMemoryLoad, 4, 4, 4);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullTotalPhys, 8, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullAvailPhys, 16, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullTotalPageFile, 24, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullAvailPageFile, 32, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullTotalVirtual, 40, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullAvailVirtual, 48, 8, 8);
+    TEST_FIELD(MEMORYSTATUSEX, DWORDLONG, ullAvailExtendedVirtual, 56, 8, 8);
 }
 
 static void test_pack_OFSTRUCT(void)
@@ -1060,6 +1089,17 @@ static void test_pack_WIN32_FIND_DATAW(void)
     TEST_FIELD(WIN32_FIND_DATAW, WCHAR[14], cAlternateFileName, 564, 28, 2);
 }
 
+static void test_pack_WIN32_STREAM_ID(void)
+{
+    /* WIN32_STREAM_ID (pack 8) */
+    TEST_TYPE(WIN32_STREAM_ID, 24, 8);
+    TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamId, 0, 4, 4);
+    TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamAttributes, 4, 4, 4);
+    TEST_FIELD(WIN32_STREAM_ID, LARGE_INTEGER, Size, 8, 8, 8);
+    TEST_FIELD(WIN32_STREAM_ID, DWORD, dwStreamNameSize, 16, 4, 4);
+    TEST_FIELD(WIN32_STREAM_ID, WCHAR[ANYSIZE_ARRAY], cStreamName, 20, 2, 2);
+}
+
 static void test_pack(void)
 {
     test_pack_ACTCTXA();
@@ -1099,6 +1139,7 @@ static void test_pack(void)
     test_pack_LPHW_PROFILE_INFOW();
     test_pack_LPLONG();
     test_pack_LPMEMORYSTATUS();
+    test_pack_LPMEMORYSTATUSEX();
     test_pack_LPOFSTRUCT();
     test_pack_LPOSVERSIONINFOA();
     test_pack_LPOSVERSIONINFOEXA();
@@ -1119,7 +1160,9 @@ static void test_pack(void)
     test_pack_LPWIN32_FILE_ATTRIBUTE_DATA();
     test_pack_LPWIN32_FIND_DATAA();
     test_pack_LPWIN32_FIND_DATAW();
+    test_pack_LPWIN32_STREAM_ID();
     test_pack_MEMORYSTATUS();
+    test_pack_MEMORYSTATUSEX();
     test_pack_OFSTRUCT();
     test_pack_OSVERSIONINFOA();
     test_pack_OSVERSIONINFOEXA();
@@ -1170,6 +1213,7 @@ static void test_pack(void)
     test_pack_WIN32_FILE_ATTRIBUTE_DATA();
     test_pack_WIN32_FIND_DATAA();
     test_pack_WIN32_FIND_DATAW();
+    test_pack_WIN32_STREAM_ID();
 }
 
 START_TEST(generated)

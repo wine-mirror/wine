@@ -3548,15 +3548,16 @@ typedef struct _RTL_CRITICAL_SECTION {
 
 typedef VOID (NTAPI * WAITORTIMERCALLBACKFUNC) (PVOID, BOOLEAN );
 
+#include <pshpack8.h>
 typedef struct _IO_COUNTERS {
-    ULONGLONG   ReadOperationCount;
-    ULONGLONG   WriteOperationCount;
-    ULONGLONG   OtherOperationCount;
-    ULONGLONG   ReadTransferCount;
-    ULONGLONG   WriteTransferCount;
-    ULONGLONG   OtherTransferCount;
-} IO_COUNTERS;
-typedef IO_COUNTERS *PIO_COUNTERS;
+    ULONGLONG DECLSPEC_ALIGN(8) ReadOperationCount;
+    ULONGLONG DECLSPEC_ALIGN(8) WriteOperationCount;
+    ULONGLONG DECLSPEC_ALIGN(8) OtherOperationCount;
+    ULONGLONG DECLSPEC_ALIGN(8) ReadTransferCount;
+    ULONGLONG DECLSPEC_ALIGN(8) WriteTransferCount;
+    ULONGLONG DECLSPEC_ALIGN(8) OtherTransferCount;
+} IO_COUNTERS, *PIO_COUNTERS;
+#include <poppack.h>
 
 typedef struct {
 	DWORD dwOSVersionInfoSize;

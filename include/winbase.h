@@ -456,17 +456,19 @@ typedef struct tagMEMORYSTATUS
     SIZE_T   dwAvailVirtual;
 } MEMORYSTATUS, *LPMEMORYSTATUS;
 
+#include <pshpack8.h>
 typedef struct tagMEMORYSTATUSEX {
   DWORD dwLength;
   DWORD dwMemoryLoad;
-  DWORDLONG ullTotalPhys;
-  DWORDLONG ullAvailPhys;
-  DWORDLONG ullTotalPageFile;
-  DWORDLONG ullAvailPageFile;
-  DWORDLONG ullTotalVirtual;
-  DWORDLONG ullAvailVirtual;
-  DWORDLONG ullAvailExtendedVirtual;
+  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPhys;
+  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPhys;
+  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPageFile;
+  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPageFile;
+  DWORDLONG DECLSPEC_ALIGN(8) ullTotalVirtual;
+  DWORDLONG DECLSPEC_ALIGN(8) ullAvailVirtual;
+  DWORDLONG DECLSPEC_ALIGN(8) ullAvailExtendedVirtual;
 } MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
+#include <poppack.h>
 
 
 typedef struct _SYSTEMTIME{
@@ -1134,13 +1136,15 @@ DECL_WINELIB_TYPE_AW(LPHW_PROFILE_INFO)
 #define STREAM_CONTAINS_PROPERTIES 4
 #define STREAM_SPARSE_ATTRIBUTE    8
 
+#include <pshpack8.h>
 typedef struct _WIN32_STREAM_ID {
 	DWORD   dwStreamId;
 	DWORD   dwStreamAttributes;
-	LARGE_INTEGER Size;
+	LARGE_INTEGER DECLSPEC_ALIGN(8) Size;
 	DWORD   dwStreamNameSize;
 	WCHAR   cStreamName[ANYSIZE_ARRAY];
 } WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
+#include <poppack.h>
 
 
 /* GetBinaryType return values.

@@ -825,6 +825,18 @@ static void test_pack_IMAGE_VXD_HEADER(void)
     TEST_FIELD(IMAGE_VXD_HEADER, WORD, e32_ddkver, 194, 2, 2);
 }
 
+static void test_pack_IO_COUNTERS(void)
+{
+    /* IO_COUNTERS (pack 8) */
+    TEST_TYPE(IO_COUNTERS, 48, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, ReadOperationCount, 0, 8, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, WriteOperationCount, 8, 8, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, OtherOperationCount, 16, 8, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, ReadTransferCount, 24, 8, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, WriteTransferCount, 32, 8, 8);
+    TEST_FIELD(IO_COUNTERS, ULONGLONG, OtherTransferCount, 40, 8, 8);
+}
+
 static void test_pack_LANGID(void)
 {
     /* LANGID */
@@ -1251,6 +1263,13 @@ static void test_pack_PIMAGE_VXD_HEADER(void)
     /* PIMAGE_VXD_HEADER */
     TEST_TYPE(PIMAGE_VXD_HEADER, 4, 4);
     TEST_TYPE_POINTER(PIMAGE_VXD_HEADER, 196, 2);
+}
+
+static void test_pack_PIO_COUNTERS(void)
+{
+    /* PIO_COUNTERS */
+    TEST_TYPE(PIO_COUNTERS, 4, 4);
+    TEST_TYPE_POINTER(PIO_COUNTERS, 48, 8);
 }
 
 static void test_pack_PISECURITY_DESCRIPTOR(void)
@@ -2127,6 +2146,7 @@ static void test_pack(void)
     test_pack_INT64();
     test_pack_INT8();
     test_pack_INT_PTR();
+    test_pack_IO_COUNTERS();
     test_pack_LANGID();
     test_pack_LARGE_INTEGER();
     test_pack_LCID();
@@ -2201,6 +2221,7 @@ static void test_pack(void)
     test_pack_PIMAGE_TLS_CALLBACK();
     test_pack_PIMAGE_TLS_DIRECTORY();
     test_pack_PIMAGE_VXD_HEADER();
+    test_pack_PIO_COUNTERS();
     test_pack_PISECURITY_DESCRIPTOR();
     test_pack_PISECURITY_DESCRIPTOR_RELATIVE();
     test_pack_PISID();
