@@ -530,7 +530,7 @@ sub output_header {
     print OUT "\n";
     print OUT "#ifdef _TYPE_ALIGNMENT\n";
     print OUT "#define TEST__TYPE_ALIGNMENT(type, align) \\\n";
-    print OUT "    ok(_TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\", _TYPE_ALIGNMENT(type))\n";
+    print OUT "    ok(_TYPE_ALIGNMENT(type) == align, \"TYPE_ALIGNMENT(\" #type \") == %d (expected \" #align \")\\n\", _TYPE_ALIGNMENT(type))\n";
     print OUT "#else\n";
     print OUT "# define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)\n";
     print OUT "#endif\n";
