@@ -143,6 +143,7 @@ int clone( int (*fn)(void *), void *stack, int flags, void *arg )
                           "popl %%ebx\n\t"   /* Contains fn in the child */
                           "testl %%eax,%%eax\n\t"
                           "jnz 0f\n\t"
+                          "xorl %ebp,%ebp\n\t"    /* Terminate the stack frames */
                           "call *%%ebx\n\t"       /* Should never return */
                           "xorl %%eax,%%eax\n\t"  /* Just in case it does*/
                           "0:"
