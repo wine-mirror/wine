@@ -723,7 +723,7 @@ static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
 {
 	memset(pCxt,0,sizeof(*pCxt));
 
-	pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
+	pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
 	pCxt->Eax = pIn->ar_eax;
 	pCxt->Ebx = pIn->ar_ebx;
 	pCxt->Ecx = pIn->ar_ecx;
@@ -731,7 +731,7 @@ static void win32apieq_2_CONTEXT(struct win32apireq *pIn,CONTEXT86 *pCxt)
 	pCxt->Esi = pIn->ar_esi;
 	pCxt->Edi = pIn->ar_edi;
 
-	/* FIXME: Only partial CONTEXT_CONTROL */
+	/* FIXME: Only partial CONTEXT86_CONTROL */
 	pCxt->Ebp = pIn->ar_ebp;
 
 	/* FIXME: pIn->ar_proid ignored */
@@ -750,7 +750,7 @@ static void CONTEXT_2_win32apieq(CONTEXT86 *pCxt,struct win32apireq *pOut)
 	pOut->ar_esi = pCxt->Esi;
 	pOut->ar_edi = pCxt->Edi;
 
-	/* FIXME: Only partial CONTEXT_CONTROL */
+	/* FIXME: Only partial CONTEXT86_CONTROL */
 	pOut->ar_ebp = pCxt->Ebp;
 
 	/* FIXME: pOut->ar_proid ignored */
@@ -830,7 +830,7 @@ static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
     /* Note: segment registers == 0 means that CTX_SEG_OFF_TO_LIN
              will interpret 32-bit register contents as linear pointers */
 
-    pCxt->ContextFlags=CONTEXT_INTEGER|CONTEXT_CONTROL;
+    pCxt->ContextFlags=CONTEXT86_INTEGER|CONTEXT86_CONTROL;
     pCxt->Eax = pIn->reg_EAX;
     pCxt->Ebx = pIn->reg_EBX;
     pCxt->Ecx = pIn->reg_ECX;
@@ -838,7 +838,7 @@ static void DIOCRegs_2_CONTEXT( DIOC_REGISTERS *pIn, CONTEXT86 *pCxt )
     pCxt->Esi = pIn->reg_ESI;
     pCxt->Edi = pIn->reg_EDI;
 
-    /* FIXME: Only partial CONTEXT_CONTROL */
+    /* FIXME: Only partial CONTEXT86_CONTROL */
     pCxt->EFlags = pIn->reg_Flags;
 }
 
@@ -853,7 +853,7 @@ static void CONTEXT_2_DIOCRegs( CONTEXT86 *pCxt, DIOC_REGISTERS *pOut )
     pOut->reg_ESI = pCxt->Esi;
     pOut->reg_EDI = pCxt->Edi;
 
-    /* FIXME: Only partial CONTEXT_CONTROL */
+    /* FIXME: Only partial CONTEXT86_CONTROL */
     pOut->reg_Flags = pCxt->EFlags;
 }
 
