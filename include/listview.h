@@ -71,6 +71,7 @@ typedef struct tagLISTVIEW_INFO
     PFNLVCOMPARE pfnCompare;
     LPARAM lParamSort;
     HWND hwndEdit;
+    BOOL bDoEditLabel;
     EDITLABEL_ITEM *pedititem;
     
 } LISTVIEW_INFO;
