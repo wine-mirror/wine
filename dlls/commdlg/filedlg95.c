@@ -281,8 +281,14 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
   fodInfos->ofnInfos.lCustData = ofn->lCustData;
   fodInfos->ofnInfos.lpfnHook = (LPOFNHOOKPROC)ofn->lpfnHook;
 
-  if (ofn->lpTemplateName)
+  if (HIWORD(ofn->lpTemplateName))
   {
+      fodInfos->ofnInfos.lpTemplateName = MemAlloc(strlen(ofn->lpTemplateName)+1);
+      strcpy ((LPSTR)fodInfos->ofnInfos.lpTemplateName, ofn->lpTemplateName);
+  }
+  else
+  {
+      /* resource id */
       fodInfos->ofnInfos.lpTemplateName = ofn->lpTemplateName;
   }
 
@@ -321,7 +327,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 
   if (fodInfos->ofnInfos.lpstrFilter)
       MemFree((LPVOID)(fodInfos->ofnInfos.lpstrFilter));
-  if (fodInfos->ofnInfos.lpTemplateName)
+  if (HIWORD(fodInfos->ofnInfos.lpTemplateName))
       MemFree((LPVOID)(fodInfos->ofnInfos.lpTemplateName));
   if (fodInfos->ofnInfos.lpstrDefExt)
       MemFree((LPVOID)(fodInfos->ofnInfos.lpstrDefExt));
@@ -441,10 +447,16 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   }
   fodInfos->ofnInfos.lCustData = ofn->lCustData;
   fodInfos->ofnInfos.lpfnHook = (LPOFNHOOKPROC)ofn->lpfnHook;
-  if (ofn->lpTemplateName) 
+
+  if (HIWORD(ofn->lpTemplateName))
   { 
     fodInfos->ofnInfos.lpTemplateName = (LPSTR)MemAlloc(lstrlenW(ofn->lpTemplateName)+1);
     lstrcpyWtoA((LPSTR)fodInfos->ofnInfos.lpTemplateName,ofn->lpTemplateName);
+  }
+  else
+  {
+      /* resource id */
+      fodInfos->ofnInfos.lpTemplateName = (LPSTR)ofn->lpTemplateName;
   }
   /* Initialise the dialog property */
   fodInfos->DlgInfos.dwDlgProp = 0;
@@ -474,7 +486,7 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
 
   if (fodInfos->ofnInfos.lpstrFilter)
     MemFree((LPVOID)(fodInfos->ofnInfos.lpstrFilter));
-  if (fodInfos->ofnInfos.lpTemplateName)
+  if (HIWORD(fodInfos->ofnInfos.lpTemplateName))
     MemFree((LPVOID)(fodInfos->ofnInfos.lpTemplateName));
   if (fodInfos->ofnInfos.lpstrDefExt)
     MemFree((LPVOID)(fodInfos->ofnInfos.lpstrDefExt));
@@ -816,10 +828,14 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
  */
 HRESULT WINAPI FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
   switch(uMsg)
   {
     case WM_INITDIALOG :
+
+         /* Adds the FileOpenDlgInfos in the property list of the dialog 
+            so it will be easily accessible through a GetPropA(...) */
+      	 SetPropA(hwnd, FileOpenDlgInfosStr, (HANDLE) lParam);
+
       	 ((FileOpenDlgInfos *)lParam)->DlgInfos.hwndCustomDlg = 
      	CreateTemplateDialog((FileOpenDlgInfos *)lParam,hwnd);
       	 FILEDLG95_OnWMInitDialog(hwnd, wParam, lParam);
@@ -862,10 +878,6 @@ static LRESULT FILEDLG95_OnWMInitDialog(HWND hwnd, WPARAM wParam, LPARAM lParam)
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) lParam;
 
   TRACE("\n");
-
-  /* Adds the FileOpenDlgInfos in the property list of the dialog 
-     so it will be easily accessible through a GetPropA(...) */
-  SetPropA(hwnd, FileOpenDlgInfosStr, (HANDLE) fodInfos);
 
   /* Make sure the common control DLL is loaded */      
   InitCommonControls();
