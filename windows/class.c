@@ -1184,11 +1184,17 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
 
     TRACE("%x %p %p\n",hInstance, name, wc);
 
-    if (!(atom = GlobalFindAtomW( name )) ||
-        !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
-	(classPtr->hInstance && (hInstance != classPtr->hInstance)))
+    if (	!(atom=GlobalFindAtomW(name)) ||
+		!(classPtr=CLASS_FindClassByAtom(atom,hInstance))
+    )
         return FALSE;
 
+    if  (classPtr->hInstance && (hInstance != classPtr->hInstance)) {
+        if (hInstance)
+		return FALSE;
+        else    
+            WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",debugstr_w(name));
+    }
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC)WINPROC_GetProc( classPtr->winproc,
                                                     WIN_PROC_32W );
