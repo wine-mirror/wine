@@ -1,0 +1,48 @@
+DEFS      = -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+YACCOPT   = #-v
+
+PROGRAMS = wmc@PROGEXT@
+MODULE   = none
+
+C_SRCS = \
+	lang.c \
+	mcl.c \
+	utils.c \
+	wmc.c \
+	write.c
+
+EXTRA_SRCS = mcy.y
+EXTRA_OBJS = y.tab.o
+
+all: check_unicode $(PROGRAMS)
+
+depend: y.tab.h
+
+@MAKE_RULES@
+
+wmc@PROGEXT@: $(OBJS) $(TOPOBJDIR)/unicode/unicode.o
+	$(CC) $(CFLAGS) -o wmc@PROGEXT@ $(OBJS) $(TOPOBJDIR)/unicode/unicode.o $(LEXLIB)
+
+$(TOPOBJDIR)/unicode/unicode.o check_unicode:
+	cd $(TOPSRCDIR)/unicode && $(MAKE)
+
+y.tab.c y.tab.h: mcy.y
+	$(YACC) $(YACCOPT) -d -t $(SRCDIR)/mcy.y
+
+clean::
+	$(RM) y.tab.c y.tab.h y.output
+
+install:: $(PROGRAMS)
+	[ -d $(bindir) ] || $(MKDIR) $(bindir)
+	[ -d $(mandir)/man$(prog_manext) ] || $(MKDIR) $(mandir)/man$(prog_manext)
+	$(INSTALL_DATA) wmc.man $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+	$(INSTALL_PROGRAM) wmc $(bindir)/wmc
+
+uninstall::
+	$(RM) $(bindir)/wmc $(mandir)/man$(prog_manext)/wmc.$(prog_manext)
+
+### Dependencies:

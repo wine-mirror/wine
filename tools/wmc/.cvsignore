@@ -1,0 +1,4 @@
+Makefile
+wmc
+y.tab.c
+y.tab.h

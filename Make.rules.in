@@ -58,6 +58,7 @@ BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc@PROGEXT@
 WRCFLAGS  = -c -s -p $*
+WMC       = $(TOPOBJDIR)/tools/wmc/wmc@PROGEXT@
 DLLDIR    = $(TOPOBJDIR)/dlls
 @SET_MAKE@
 
@@ -199,6 +200,11 @@ all: Makefile
 
 $(WRC) check_wrc:
 	cd $(TOPOBJDIR)/tools/wrc && $(MAKE) wrc@PROGEXT@
+
+# Rule to rebuild the message compiler
+
+$(WMC) check_wmc:
+	cd $(TOPOBJDIR)/tools/wmc && $(MAKE) wmc@PROGEXT@
 
 # Rule to rebuild the 'makedep' program
 

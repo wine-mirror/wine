@@ -208,6 +208,6 @@ int cp_wcstombs( const union cptable *table, int flags,
         if (flags || defchar || used)
             return wcstombs_dbcs_slow( &table->dbcs, flags, src, srclen,
                                        dst, dstlen, defchar, used );
-        return wcstombs_sbcs( &table->sbcs, src, srclen, dst, dstlen );
+        return wcstombs_dbcs( &table->dbcs, src, srclen, dst, dstlen );
     }
 }

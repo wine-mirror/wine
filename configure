@@ -6300,6 +6300,7 @@ server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
 tools/wrc/Makefile
+tools/wmc/Makefile
 tsx11/Makefile
 unicode/Makefile
 win32/Makefile
@@ -6534,6 +6535,7 @@ server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
 tools/wrc/Makefile
+tools/wmc/Makefile
 tsx11/Makefile
 unicode/Makefile
 win32/Makefile

@@ -11,6 +11,7 @@ C_SRCS = build.c makedep.c fnt2bdf.c bin2res.c
 
 SUBDIRS = \
 	cvdump \
+	wmc \
 	wrc
 
 EXTRASUBDIRS = \
@@ -19,7 +20,7 @@ EXTRASUBDIRS = \
 	winapi_check/win32 \
 	wineconf.libs
 
-all: $(PROGRAMS) wrc
+all: $(PROGRAMS) wmc wrc
 
 @MAKE_RULES@
 
