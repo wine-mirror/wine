@@ -19,7 +19,6 @@
 
 #include "bitmap.h"
 #include "debugtools.h"
-#include "dce.h"
 #include "gdi.h"
 #include "options.h"
 #include "message.h"

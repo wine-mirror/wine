@@ -22,7 +22,6 @@
 #include "winproc.h"
 #include "debugtools.h"
 #include "spy.h"
-#include "commctrl.h"
 #include "task.h"
 #include "thread.h"
 

@@ -13,7 +13,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
-#include "user.h"
 #include "digitalv.h"
 #include "debugtools.h"
 

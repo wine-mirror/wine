@@ -16,7 +16,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windef.h"
-#include "user.h"
 #include "mmddk.h"
 #include "oss.h"
 #include "debugtools.h"
