@@ -47,11 +47,13 @@ SCSI_OpenDevice( int h, int c, int t, int d );
 int
 SCSI_LinuxSetTimeout( int fd, int timeout );
 
+#ifdef linux
 BOOL
 SCSI_LinuxDeviceIo( int fd,
 		struct sg_header * lpvInBuffer, DWORD cbInBuffer,
 		struct sg_header * lpvOutBuffer, DWORD cbOutBuffer,
 		LPDWORD lpcbBytesReturned );
+#endif
 
 BOOL
 SCSI_GetDeviceName(int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData);

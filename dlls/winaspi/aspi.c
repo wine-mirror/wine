@@ -144,6 +144,7 @@ SCSI_OpenDevice( int h, int c, int t, int d )
 	return fd;
 }
 
+#ifdef linux
 int
 SCSI_LinuxSetTimeout( int fd, int timeout )
 {
@@ -344,4 +345,4 @@ SCSI_GetProcinfo()
 	RegCloseKey(hkeyScsi);
 	return;
 }
-
+#endif
