@@ -626,6 +626,7 @@ HRESULT WINAPI HGLOBALStreamImpl_SetSize(
 				     ULARGE_INTEGER  libNewSize)   /* [in] */
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBAL supportHandle;
 
   TRACE("(%p, %ld)\n", iface, libNewSize.s.LowPart);
 
@@ -641,10 +642,12 @@ HRESULT WINAPI HGLOBALStreamImpl_SetSize(
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  This->supportHandle = GlobalReAlloc(This->supportHandle,
-				      libNewSize.s.LowPart,
-				      0);
+  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.s.LowPart, 0);
 
+  if (supportHandle == 0)
+    return STG_E_MEDIUMFULL;
+
+  This->supportHandle = supportHandle;
   This->streamSize.s.LowPart = libNewSize.s.LowPart;
 
   return S_OK;

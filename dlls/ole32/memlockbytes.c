@@ -545,6 +545,7 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
       ULARGE_INTEGER  libNewSize)   /* [in] */
 {
   HGLOBALLockBytesImpl* const This=(HGLOBALLockBytesImpl*)iface;
+  HGLOBAL supportHandle;
 
   /*
    * As documented.
@@ -558,13 +559,12 @@ HRESULT WINAPI HGLOBALLockBytesImpl_SetSize(
   /*
    * Re allocate the HGlobal to fit the new size of the stream.
    */
-  This->supportHandle = GlobalReAlloc(This->supportHandle,
-                                      libNewSize.s.LowPart,
-                                      0);
+  supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.s.LowPart, 0);
 
-  if (This->supportHandle == 0)
+  if (supportHandle == 0)
     return STG_E_MEDIUMFULL;
 
+  This->supportHandle = supportHandle;
   This->byteArraySize.s.LowPart = libNewSize.s.LowPart;
 
   return S_OK;
