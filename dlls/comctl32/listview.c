@@ -7983,24 +7983,43 @@ static LRESULT LISTVIEW_LButtonDblClk(HWND hwnd, WORD wKey, WORD wPosX,
                                       WORD wPosY)
 {
   LONG nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMHDR nmh;
   LVHITTESTINFO htInfo;
+  NMHDR nmh;
+  NMLISTVIEW nmlv;
+  INT ret;
 
   TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
-  /* send NM_DBLCLK notification */
-  nmh.hwndFrom = hwnd;
-  nmh.idFrom = nCtrlId;
-  nmh.code = NM_DBLCLK;
-  ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
-
-  /* To send the LVN_ITEMACTIVATE, it must be on an Item */
-  ZeroMemory(&htInfo, sizeof(LVHITTESTINFO));
   htInfo.pt.x = wPosX;
   htInfo.pt.y = wPosY;
-  if(LISTVIEW_HitTest(hwnd, &htInfo) != -1)
+
+  /* send NM_DBLCLK notification */
+  ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+  nmlv.hdr.hwndFrom = hwnd;
+  nmlv.hdr.idFrom = nCtrlId;
+  nmlv.hdr.code = NM_DBLCLK;
+  ret = LISTVIEW_HitTestItem(hwnd, &htInfo);
+  if (ret != -1)
+  {
+    nmlv.iItem = htInfo.iItem;
+    nmlv.iSubItem = htInfo.iSubItem;
+  }
+  else
+  {
+    nmlv.iItem = -1;
+    nmlv.iSubItem = 0;
+  }  
+  nmlv.ptAction.x = wPosX;
+  nmlv.ptAction.y = wPosY;
+  ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
+
+
+  /* To send the LVN_ITEMACTIVATE, it must be on an Item */
+  if(ret != -1)
   {
     /* send LVN_ITEMACTIVATE notification */
+    nmh.hwndFrom = hwnd;
+    nmh.idFrom = nCtrlId;
     nmh.code = LVN_ITEMACTIVATE;
     ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
   }
@@ -8136,27 +8155,42 @@ static LRESULT LISTVIEW_LButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
   if (infoPtr->bLButtonDown != FALSE) 
   {
     INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-    NMHDR nmh;
+    NMLISTVIEW nmlv;
+    LVHITTESTINFO lvHitTestInfo;
+    INT ret;
 
-    /* send NM_CLICK notification */
-    nmh.hwndFrom = hwnd;
-    nmh.idFrom = nCtrlId;
-    nmh.code = NM_CLICK;
-    ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
+    lvHitTestInfo.pt.x = wPosX;
+    lvHitTestInfo.pt.y = wPosY;
+
+  /* send NM_CLICK notification */
+    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    nmlv.hdr.hwndFrom = hwnd;
+    nmlv.hdr.idFrom = nCtrlId;
+    nmlv.hdr.code = NM_CLICK;
+    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo);
+    if (ret != -1)
+    {
+        nmlv.iItem = lvHitTestInfo.iItem;
+        nmlv.iSubItem = lvHitTestInfo.iSubItem;
+    }
+    else
+    {
+        nmlv.iItem = -1;
+        nmlv.iSubItem = 0;
+    }
+    nmlv.ptAction.x = wPosX;
+    nmlv.ptAction.y = wPosY;
+    ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
+
 
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
 
     if(infoPtr->nEditLabelItem != -1)
     {
-      POINT ptPosition;
-      int nItem;
-      ptPosition.x = wPosX;
-      ptPosition.y = wPosY;
-      nItem = LISTVIEW_MouseSelection(hwnd, ptPosition);
-      if(nItem == infoPtr->nEditLabelItem)
+      if(lvHitTestInfo.iItem == infoPtr->nEditLabelItem)
       {
-        LISTVIEW_EditLabelA(hwnd, nItem);
+        LISTVIEW_EditLabelA(hwnd, lvHitTestInfo.iItem);
       }
       infoPtr->nEditLabelItem = -1;
     }
@@ -8468,23 +8502,44 @@ static LRESULT LISTVIEW_RButtonUp(HWND hwnd, WORD wKey, WORD wPosX,
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   INT nCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  NMHDR nmh;
 
   TRACE("(hwnd=%x,key=%hu,X=%hu,Y=%hu)\n", hwnd, wKey, wPosX, wPosY);
 
   if (infoPtr->bRButtonDown != FALSE) 
   {
+    NMLISTVIEW nmlv;
+    LVHITTESTINFO lvHitTestInfo;
     POINT pt;
+    INT ret;
+
+    lvHitTestInfo.pt.x = wPosX;
+    lvHitTestInfo.pt.y = wPosY;
+
+    /* Send NM_RClICK notification */
+    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
+    nmlv.hdr.hwndFrom = hwnd;
+    nmlv.hdr.idFrom = nCtrlId;
+    nmlv.hdr.code = NM_RCLICK;
+    ret = LISTVIEW_HitTestItem(hwnd, &lvHitTestInfo);
+    if (ret != -1)
+    {
+        nmlv.iItem = lvHitTestInfo.iItem;
+        nmlv.iSubItem = lvHitTestInfo.iSubItem;
+    }
+    else
+    {
+        nmlv.iItem = -1;
+        nmlv.iSubItem = 0;
+    }
+    nmlv.iItem = lvHitTestInfo.iItem;
+    nmlv.iSubItem = lvHitTestInfo.iSubItem;
+    nmlv.ptAction.x = wPosX;
+    nmlv.ptAction.y = wPosY;
+    ListView_LVNotify(GetParent(hwnd), nCtrlId, &nmlv);
+
     pt.x = wPosX;
     pt.y = wPosY;
 
-    /* Send NM_RClICK notification */
-    ZeroMemory(&nmh, sizeof(NMHDR));
-    nmh.hwndFrom = hwnd;
-    nmh.idFrom = nCtrlId;
-    nmh.code = NM_RCLICK;
-    ListView_Notify(GetParent(hwnd), nCtrlId, &nmh);
-    
     /* set button flag */
     infoPtr->bRButtonDown = FALSE;
     
