@@ -163,7 +163,7 @@ then {
   }
   fi
 
-  if [ `whoami` == 'root' ]
+  if [ `whoami` = 'root' ]
   then {
     echo "You are running wineinstall as root, this is not advisable. Please rerun as a user."
     echo "Aborting."
