@@ -505,62 +505,88 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
  *  This routine walks through the defined keyboard layouts and selects
  *  whichever matches most closely.
  */
-void X11DRV_KEYBOARD_DetectLayout(void)
+void
+X11DRV_KEYBOARD_DetectLayout (void)
 {
-    unsigned current, match, mismatch;
-    int max_score = 0, ismatch = 0;
-    int score, keyc, i, key, ok, syms = (keysyms_per_keycode>4) ? 4 : keysyms_per_keycode;
-    KeySym keysym;
-    char ckey[4]={0,0,0,0};
-    const char (*lkey)[MAIN_LEN][4];
+  unsigned current, match, mismatch;
+  int score, keyc, i, key, ok, syms;
+  KeySym keysym;
+  const char (*lkey)[MAIN_LEN][4];
+  int max_score = 0, ismatch = 0;
+  char ckey[4] =
+  {0, 0, 0, 0};
 
-    for (current=0; main_key_tab[current].lang; current++) {
-      TRACE(keyboard,"Attempting to match against layout %04x\n",main_key_tab[current].lang);
-      match = 0; mismatch = 0;
-      lkey = main_key_tab[current].key;
-      for (keyc=min_keycode; keyc<=max_keycode; keyc++) {
-	/* get data for keycode from X server */
-	for (i=0; i<syms; i++) {
-	  keysym = TSXKeycodeToKeysym(display, keyc, i);
-	  if ((keysym<0x100)&&(keysym!=' ')) ckey[i] = keysym;
-	  else ckey[i] = 0;
+  syms = keysyms_per_keycode;
+  if (syms > 4) {
+    WARN (keyboard, "%d keysyms per keycode not supported, set to 4", syms);
+    syms = 4;
+  }
+  for (current = 0; main_key_tab[current].lang; current++) {
+    TRACE (keyboard, "Attempting to match against layout %04x\n",
+	   main_key_tab[current].lang);
+    match = 0;
+    mismatch = 0;
+    score = 0;
+    lkey = main_key_tab[current].key;
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
+      /* get data for keycode from X server */
+      for (i = 0; i < syms; i++) {
+	keysym = TSXKeycodeToKeysym (display, keyc, i);
+	/* Allow both one-byte and two-byte national keysyms */
+	if ((keysym < 0x800) && (keysym != ' '))
+	  ckey[i] = keysym & 0xFF;
+	else
+	  ckey[i] = 0;
+      }
+      if (ckey[0]) {
+	/* search for a match in layout table */
+	/* right now, we just find an absolute match for defined positions */
+	/* (undefined positions are ignored, so if it's defined as "3#" in */
+	/* the table, it's okay that the X server has "3#£", for example) */
+	/* however, the score will be higher for longer matches */
+	for (key = 0; key < MAIN_LEN; key++) {
+	  for (ok = 0, i = 0; (ok >= 0) && (i < syms); i++) {
+	    if ((*lkey)[key][i] && ((*lkey)[key][i] == ckey[i]))
+	      ok++;
+	    if ((*lkey)[key][i] && ((*lkey)[key][i] != ckey[i]))
+	      ok = -1;
+	  }
+	  if (ok > 0) {
+	    score += ok;
+	    break;
+	  }
 	}
-	if (ckey[0]) {
-	  /* search for a match in layout table */
-	  /* right now, we just find an absolute match for defined positions */
-	  /* (undefined positions are ignored, so if it's defined as "3#"
-	     in the table, it's okay that the X server has "3#£", for example) */
-	  for (key=0; key<MAIN_LEN; key++) {
-	    for (ok=(*lkey)[key][i=0]; ok&&(i<4); i++)
-	      if ((*lkey)[key][i] && (*lkey)[key][i]!=ckey[i]) ok=0;
-	    if (ok) break;
-	  }
-	  /* count the matches and mismatches */
-	  if (key<MAIN_LEN) match++; else {
-	    TRACE(key,"mismatch for keycode %d, character %c\n",keyc,ckey[0]);
-	    mismatch++;
-	  }
+	/* count the matches and mismatches */
+	if (ok > 0)
+	  match++;
+	else {
+	  TRACE (key, "mismatch for keycode %d, character %c\n", keyc,
+		 ckey[0]);
+	  mismatch++;
+	  score -= syms;
 	}
       }
-      /* estimate and check score */
-      score = match - mismatch;
-      TRACE(keyboard,"matches=%d, mismatches=%d, score=%d\n",match,mismatch,score);
-      if (score > max_score) {
-	/* best match so far */
-	kbd_layout = current;
-	max_score = score;
-	ismatch = !mismatch;
-      }
     }
-    /* we're done, report results if necessary */
-    if (!ismatch) {
-      FIXME(keyboard,"Your keyboard layout was not found! Using closest match (%04x).\n",
-	    main_key_tab[kbd_layout].lang);
-      FIXME(keyboard,"Please define your layout in windows/x11drv/keyboard.c, and submit them\n");
-      FIXME(keyboard,"to us for inclusion into future Wine releases.\n");
-      FIXME(keyboard,"See documentation/keyboard for more information.\n");
+    TRACE (keyboard, "matches=%d, mismatches=%d, score=%d\n",
+	   match, mismatch, score);
+    if (score > max_score) {
+      /* best match so far */
+      kbd_layout = current;
+      max_score = score;
+      ismatch = !mismatch;
     }
-    TRACE(keyboard,"detected layout is %04x\n",main_key_tab[kbd_layout].lang);
+  }
+  /* we're done, report results if necessary */
+  if (!ismatch) {
+    FIXME (keyboard,
+	 "Your keyboard layout was not found! Using closest match (%04x).\n"
+	   "Please define your layout in windows/x11drv/keyboard.c "
+	   "and submit them\n"
+	   "to us for inclusion into future Wine releases.\n"
+	   "See documentation/keyboard for more information.\n",
+	   main_key_tab[kbd_layout].lang);
+  }
+  TRACE (keyboard, "detected layout is %04x\n", main_key_tab[kbd_layout].lang);
 }
 
 /**********************************************************************
