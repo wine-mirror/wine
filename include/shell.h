@@ -15,9 +15,9 @@
 /****************************************************************************
 * shell 16
 */
-extern void SHELL_LoadRegistry();
-extern void SHELL_SaveRegistry();
-extern void SHELL_Init();
+extern void SHELL_LoadRegistry(void);
+extern void SHELL_SaveRegistry(void);
+extern void SHELL_Init(void);
 
 /* global functions used from shell32 */
 extern HINSTANCE32 SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);

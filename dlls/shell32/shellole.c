@@ -77,9 +77,8 @@ static DWORD SH_get_instance(REFCLSID clsid,LPSTR dllname,LPVOID unknownouter,RE
 	}
 
 	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
-	if (hres<0 || (hres>=0x80000000))
-	{ return hres;
-	}
+	if ((hres<0) || (hres>=0x80000000))
+	    return hres;
 	if (!classfac)
 	{ FIXME(shell,"no classfactory, but hres is 0x%ld!\n",hres);
 	  return E_FAIL;
@@ -137,7 +136,7 @@ LRESULT WINAPI SHCoCreateInstance(LPSTR aclsid,CLSID *clsid,LPUNKNOWN unknownout
 	TRACE(shell, "Threading model is %s\n",tmodel);
 
 	hres=SH_get_instance(clsid,path,unknownouter,refiid,inst);
-	if (hres<0)
+	if (hres<0 || (hres>0x80000000))
 	{ hres=SH_get_instance(clsid,"shell32.dll",unknownouter,refiid,inst);
 	}
 	RegCloseKey(inprockey);

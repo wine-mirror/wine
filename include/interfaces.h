@@ -103,9 +103,9 @@ struct IMalloc16 {
 
 /* private prototypes for the constructors */
 #ifdef __WINE__
-LPUNKNOWN	IUnknown_Constructor();
-LPMALLOC16	IMalloc16_Constructor();
-LPMALLOC32	IMalloc32_Constructor();
+LPUNKNOWN	IUnknown_Constructor(void);
+LPMALLOC16	IMalloc16_Constructor(void);
+LPMALLOC32	IMalloc32_Constructor(void);
 #endif
 
 HRESULT WINAPI CoGetMalloc32(DWORD, LPMALLOC32*);

@@ -88,7 +88,7 @@
 				 KEY_CREATE_LINK	\
 				)
 
-void SHELL_Init();
-void SHELL_SaveRegistry();
-void SHELL_LoadRegistry();
+void SHELL_Init(void);
+void SHELL_SaveRegistry(void);
+void SHELL_LoadRegistry(void);
 #endif  /* __WINE_WINREG_H */

@@ -10,7 +10,7 @@
 #include "wintypes.h"
 #include "winnt.h"
 
-extern int (*IF1632_CallLargeStack)( int (*func)(), void *arg );
+extern int (*IF1632_CallLargeStack)( int (*func)(void), void *arg );
 
 #define CALL_LARGE_STACK(func,arg) \
     (IF1632_CallLargeStack ? \

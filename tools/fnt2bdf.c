@@ -46,7 +46,7 @@ static char*    errorEmpty = "No fonts found.\n";
 
 /* info */
 
-void usage()
+void usage(void)
 {
     printf("Usage: fnt2bdf [-t] [-c charset] [-o basename] [input file]\n");
     printf("  -c charset\tcharset name for OEM_CHARSET fonts\n");

@@ -612,5 +612,5 @@ type	win32
 608 stdcall GetMonitorInfoW(long ptr) GetMonitorInfo32W
 609 stdcall MonitorFromWindow(long long) MonitorFromPoint
 610 stdcall MonitorFromRect(ptr long) MonitorFromRect
-611 stdcall MonitorFromPoint(ptr long) MonitorFromPoint
+611 stdcall MonitorFromPoint(long long long) MonitorFromPoint
 612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
