@@ -932,6 +932,33 @@ MSVCRT_size_t _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
 
 
 /*********************************************************************
+ *		_mbsnbcat(MSVCRT.@)
+ */
+unsigned char* _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
+{
+    if(MSVCRT___mb_cur_max > 1)
+    {
+        char *res = dst;
+        while (*dst) {
+	    if (MSVCRT_isleadbyte(*dst++)) {
+		if (*dst) {
+		    dst++;
+		} else {
+		    /* as per msdn overwrite the lead byte in front of '\0' */
+		    dst--;
+		    break;
+		}
+	    }
+	}
+        while (*src && len--) *dst++ = *src++;
+        *dst = '\0';
+        return res;
+    }
+    return strncat(dst, src, len); /* ASCII CP */
+}
+
+
+/*********************************************************************
  *		_mbsncat(MSVCRT.@)
  */
 unsigned char* _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)

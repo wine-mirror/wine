@@ -359,7 +359,7 @@
 @ cdecl _mbsinc(str) _mbsinc
 @ cdecl _mbslen(str) _mbslen
 @ cdecl _mbslwr(str) _mbslwr
-@ stub _mbsnbcat #(str str long)
+@ cdecl _mbsnbcat (str str long) _mbsnbcat
 @ cdecl _mbsnbcmp(str str long) _mbsnbcmp
 @ cdecl _mbsnbcnt(ptr long) _mbsnbcnt
 @ stub _mbsnbcoll #(str str long)
