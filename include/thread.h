@@ -8,9 +8,8 @@
 #define __WINE_THREAD_H
 
 #include "config.h"
-#include "k32obj.h"
 #include "winbase.h"
-#include "winnt.h"
+#include "k32obj.h"
 #include "selectors.h"  /* for SET_FS */
 
 #ifdef linux
@@ -56,15 +55,6 @@ typedef struct _TEB
 #define TEBF_WIN32  0x0001
 #define TEBF_TRAP   0x0002
 
-/* Event waiting structure */
-typedef struct
-{
-    DWORD         count;     /* Count of valid objects */
-    BOOL32        wait_all;  /* Wait for all objects flag */
-    K32OBJ       *objs[MAXIMUM_WAIT_OBJECTS];  /* Object pointers */
-    int           server[MAXIMUM_WAIT_OBJECTS];  /* Server handles */
-} WAIT_STRUCT;
-
 /* Thread database */
 typedef struct _THDB
 {
@@ -77,7 +67,7 @@ typedef struct _THDB
     WORD           teb_sel;        /*  4c Selector to TEB */
     WORD           emu_sel;        /*  4e 80387 emulator selector */
     int            thread_errno;   /*  50 Per-thread errno (was: unknown) */
-    WAIT_STRUCT   *wait_list;      /*  54 Event waiting list */
+    void          *wait_list;      /*  54 Event waiting list */
     int            thread_h_errno; /*  50 Per-thread h_errno (was: unknown) */
     void          *ring0_thread;   /*  5c Pointer to ring 0 thread */
     void          *ptdbx;          /*  60 Pointer to TDBX structure */
@@ -102,29 +92,17 @@ typedef struct _THDB
     DWORD          suspend_count;  /* 1bc SuspendThread() counter */
     void          *entry_point;    /* 1c0 Thread entry point (was: unknown) */
     void          *entry_arg;      /* 1c4 Entry point arg (was: unknown) */
-    int            unix_pid;       /* 1c8 Unix thread pid (was: unknown) */
-    DWORD          unknown5[3];    /* 1cc Unknown */
+    DWORD          unknown5[4];    /* 1c8 Unknown */
     DWORD          sys_count[4];   /* 1d8 Syslevel mutex entry counters */
     CRITICAL_SECTION *sys_mutex[4];/* 1e8 Syslevel mutex pointers */
     DWORD          unknown6[2];    /* 1f8 Unknown */
     /* The following are Wine-specific fields */
-    WAIT_STRUCT    wait_struct;    /* 200 Event wait structure */
-    int            socket;         /*     Socket for server communication */
+    int            socket;         /* 200 Socket for server communication */
     unsigned int   seq;            /*     Server sequence number */
     void          *server_tid;     /*     Server id for this thread */
 } THDB;
 
 
-/* Thread queue entry */
-typedef struct _THREAD_ENTRY
-{
-    THDB                 *thread;
-    struct _THREAD_ENTRY *next;
-} THREAD_ENTRY;
-
-/* A thread queue is a circular list; a THREAD_QUEUE is a pointer */
-/* to the end of the queue (i.e. where we add elements) */
-typedef THREAD_ENTRY *THREAD_QUEUE;
 
 /* THDB <-> Thread id conversion macros */
 #define THREAD_OBFUSCATOR       ((DWORD)0xdeadbeef)
@@ -144,6 +122,7 @@ extern THDB *pCurrentThread;
 
 
 /* scheduler/thread.c */
+extern THDB *THREAD_CreateInitialThread( struct _PDB32 *pdb );
 extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
                             BOOL32 alloc_stack16,
                             int *server_thandle, int *server_phandle,
@@ -152,8 +131,6 @@ extern THDB *THREAD_Current(void);
 extern BOOL32 THREAD_IsWin16( THDB *thdb );
 extern THDB *THREAD_IdToTHDB( DWORD id );
 extern void THREAD_Start( THDB *thdb );
-extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );
-extern void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread );
 extern DWORD THREAD_TlsAlloc( THDB *thread );
 
 /* scheduler/sysdeps.c */

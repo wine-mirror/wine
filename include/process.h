@@ -81,7 +81,7 @@ typedef struct _PDB32
     HANDLE_TABLE    *handle_table;     /* 44 Handle table */
     struct _PDB32   *parent;           /* 48 Parent process */
     WINE_MODREF     *modref_list;      /* 4c MODREF list */
-    struct _THREAD_ENTRY *thread_list; /* 50 List of threads */
+    void            *thread_list;      /* 50 List of threads */
     void            *debuggee_CB;      /* 54 Debuggee context block */
     void            *local_heap_free;  /* 58 Head of local heap free list */
     DWORD            unknown4;         /* 5c Unknown */
@@ -132,9 +132,6 @@ extern void ENV_FreeEnvironment( PDB32 *pdb );
 extern BOOL32 HANDLE_CreateTable( PDB32 *pdb, BOOL32 inherit );
 extern HANDLE32 HANDLE_Alloc( PDB32 *pdb, K32OBJ *ptr, DWORD access,
                               BOOL32 inherit, int server_handle );
-extern K32OBJ *HANDLE_GetObjPtr( PDB32 *pdb, HANDLE32 handle,
-                                 K32OBJ_TYPE type, DWORD access,
-                                 int *server_handle );
 extern int HANDLE_GetServerHandle( PDB32 *pdb, HANDLE32 handle,
                                    K32OBJ_TYPE type, DWORD access );
 extern void HANDLE_CloseAll( PDB32 *pdb, K32OBJ *ptr );

@@ -80,7 +80,6 @@ int *__h_errno_location()
  */
 static void SYSDEPS_StartThread( THDB *thdb )
 {
-    thdb->unix_pid = getpid();
     SET_FS( thdb->teb_sel );
     THREAD_Start( thdb );
 }

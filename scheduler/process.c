@@ -31,7 +31,9 @@ const K32OBJ_OPS PROCESS_Ops =
     PROCESS_Destroy      /* destroy */
 };
 
-static DWORD PROCESS_InitialProcessID = 0;
+/* The initial process PDB */
+static PDB32 initial_pdb;
+
 static PDB32 *PROCESS_PDBList = NULL;
 static DWORD PROCESS_PDBList_Size = 0;
 
@@ -53,7 +55,7 @@ PDB32 *PROCESS_Current(void)
  */
 PDB32 *PROCESS_Initial(void)
 {
-    return PROCESS_IdToPDB( PROCESS_InitialProcessID );
+    return &initial_pdb;
 }
 
 /***********************************************************************
@@ -361,31 +363,39 @@ static BOOL32 PROCESS_FinishCreatePDB( PDB32 *pdb )
  */
 BOOL32 PROCESS_Init(void)
 {
-    PDB32 *pdb;
     THDB *thdb;
+
+    /* Fill the initial process structure */
+    initial_pdb.header.type     = K32OBJ_PROCESS;
+    initial_pdb.header.refcount = 1;
+    initial_pdb.exit_code       = 0x103; /* STILL_ACTIVE */
+    initial_pdb.threads         = 1;
+    initial_pdb.running_threads = 1;
+    initial_pdb.ring0_threads   = 1;
+    initial_pdb.group           = &initial_pdb;
+    initial_pdb.priority        = 8;  /* Normal */
 
     /* Initialize virtual memory management */
     if (!VIRTUAL_Init()) return FALSE;
 
-    /* Create the system heaps */
+    /* Create the system heap */
     if (!(SystemHeap = HeapCreate( HEAP_GROWABLE, 0x10000, 0 ))) return FALSE;
+    initial_pdb.system_heap = initial_pdb.heap = SystemHeap;
 
     /* Create the initial process and thread structures */
-    if (!(pdb = PROCESS_CreatePDB( NULL, FALSE ))) return FALSE;
-    if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL, NULL, NULL ))) return FALSE;
-    thdb->unix_pid = getpid();
-
-    PROCESS_InitialProcessID = PDB_TO_PROCESS_ID(pdb);
+    if (!HANDLE_CreateTable( &initial_pdb, FALSE )) return FALSE;
+    if (!(thdb = THREAD_CreateInitialThread( &initial_pdb ))) return FALSE;
 
     /* Remember TEB selector of initial process for emergency use */
     SYSLEVEL_EmergencyTeb = thdb->teb_sel;
 
     /* Create the environment DB of the first process */
-    if (!PROCESS_BuildEnvDB( pdb )) return FALSE;
+    PROCESS_PDBList_Insert( &initial_pdb );
+    if (!PROCESS_BuildEnvDB( &initial_pdb )) return FALSE;
 
     /* Initialize the first thread */
     if (CLIENT_InitThread()) return FALSE;
-    if (!PROCESS_FinishCreatePDB( pdb )) return FALSE;
+    if (!PROCESS_FinishCreatePDB( &initial_pdb )) return FALSE;
 
     /* Create the SEGPTR heap */
     if (!(SegptrHeap = HeapCreate( HEAP_WINE_SEGPTR, 0, 0 ))) return FALSE;
@@ -452,15 +462,6 @@ PDB32 *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         goto error;
     info->dwProcessId = PDB_TO_PROCESS_ID(pdb);
     info->dwThreadId  = THDB_TO_THREAD_ID(thdb);
-
-#if 0
-    thdb->unix_pid = getpid(); /* FIXME: wrong here ... */
-#else
-    /* All Win16 'threads' have the same unix_pid, no matter by which thread
-       they were created ! */
-    pTask = (TDB *)GlobalLock16( parent->task );
-    thdb->unix_pid = pTask? pTask->thdb->unix_pid : THREAD_Current()->unix_pid;
-#endif
 
     /* Duplicate the standard handles */
 
@@ -897,6 +898,7 @@ DWORD WINAPI GetProcessHeaps(DWORD nrofheaps,HANDLE32 *heaps) {
 
 void PROCESS_SuspendOtherThreads(void)
 {
+#if 0
     PDB32 *pdb;
     THREAD_ENTRY *entry;
 
@@ -919,6 +921,7 @@ void PROCESS_SuspendOtherThreads(void)
     }
 
     SYSTEM_UNLOCK();
+#endif
 }
 
 /***********************************************************************
@@ -927,6 +930,7 @@ void PROCESS_SuspendOtherThreads(void)
 
 void PROCESS_ResumeOtherThreads(void)
 {
+#if 0
     PDB32 *pdb;
     THREAD_ENTRY *entry;
 
@@ -949,5 +953,6 @@ void PROCESS_ResumeOtherThreads(void)
     }
 
     SYSTEM_UNLOCK();
+#endif
 }
 
