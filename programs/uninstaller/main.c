@@ -346,10 +346,12 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_PAINT:
       {
+	int prevsel = SendMessage(hwndList, LB_GETCURSEL, 0, 0);
 	SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
 	SendMessage(hwndList, WM_SETREDRAW, FALSE, 0);
 	for (i=0; i < numentries; i++)
 	    SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)entries[i].descr);
+	SendMessage(hwndList, LB_SETCURSEL, prevsel, 0 );
 	SendMessage(hwndList, WM_SETREDRAW, TRUE, 0);
         hdc = BeginPaint( hWnd, &ps );
         EndPaint( hWnd, &ps );
