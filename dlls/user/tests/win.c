@@ -1175,6 +1175,53 @@ static void test_SetWindowPos(HWND hwnd)
     SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
 }
 
+static void test_SetMenu(HWND parent)
+{
+    HWND child;
+    HMENU hMenu, ret;
+
+    hMenu = CreateMenu();
+    assert(hMenu);
+
+    /* parent */
+    ret = GetMenu(parent);
+    ok(ret == 0, "unexpected menu id %p\n", ret);
+
+    ok(!SetMenu(parent, (HMENU)20), "SetMenu with invalid menu handle should fail\n");
+    ret = GetMenu(parent);
+    ok(ret == 0, "unexpected menu id %p\n", ret);
+
+    ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
+    ret = GetMenu(parent);
+    ok(ret == (HMENU)hMenu, "unexpected menu id %p\n", ret);
+
+    ok(SetMenu(parent, 0), "SetMenu(0) on a top level window should not fail\n");
+    ret = GetMenu(parent);
+    ok(ret == 0, "unexpected menu id %p\n", ret);
+ 
+    /* child */
+    child = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 0, 0, parent, (HMENU)10, 0, NULL);
+    assert(child);
+
+    ret = GetMenu(child);
+    ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
+
+    ok(!SetMenu(child, (HMENU)20), "SetMenu with invalid menu handle should fail\n");
+    ret = GetMenu(child);
+    ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
+
+    ok(!SetMenu(child, hMenu), "SetMenu on a child window should fail\n");
+    ret = GetMenu(child);
+    ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
+
+    ok(!SetMenu(child, 0), "SetMenu(0) on a child window should fail\n");
+    ret = GetMenu(child);
+    ok(ret == (HMENU)10, "unexpected menu id %p\n", ret);
+
+    DestroyWindow(child);
+    DestroyMenu(hMenu);
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1203,6 +1250,7 @@ START_TEST(win)
     test_mdi();
     test_icons();
     test_SetWindowPos(hwndMain);
+    test_SetMenu(hwndMain);
 
     UnhookWindowsHookEx(hhook);
 }
