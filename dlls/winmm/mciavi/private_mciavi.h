@@ -51,6 +51,7 @@ typedef struct {
     DWORD		dwSet;			/* what's turned on: video & audio l&r */
     /* information on the loaded AVI file */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
+    DWORD               video_stream_n, audio_stream_n; /* stream #s */
     MainAVIHeader	mah;
     AVIStreamHeader	ash_video;
     AVIStreamHeader	ash_audio;

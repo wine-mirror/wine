@@ -164,16 +164,37 @@ struct AviListBuild {
 static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 				struct AviListBuild* alb)
 {
+    const BYTE *p;
+    DWORD stream_n;
+
     if (mmck->ckid == ckidAVIPADDING) return TRUE;
+
+    p = (const BYTE *)&mmck->ckid;
+
+    if (!isxdigit(p[0]) || !isxdigit(p[1]))
+    {
+        WARN("wrongly encoded stream #\n");
+        return FALSE;
+    }
+
+    stream_n = (p[0] <= '9') ? (p[0] - '0') : (tolower(p[0]) - 'a' + 10);
+    stream_n <<= 4;
+    stream_n |= (p[1] <= '9') ? (p[1] - '0') : (tolower(p[1]) - 'a' + 10);
+
+    TRACE("ckid %4.4s (stream #%ld)\n", (LPSTR)&mmck->ckid, stream_n);
 
     switch (TWOCCFromFOURCC(mmck->ckid)) {
     case cktypeDIBbits:
     case cktypeDIBcompressed:
     case cktypePALchange:
+        if (stream_n != wma->video_stream_n)
+        {
+            TRACE("data belongs to another video stream #%ld\n", stream_n);
+            return FALSE;
+        }
+
 	TRACE("Adding video frame[%ld]: %ld bytes\n",
 	      alb->numVideoFrames, mmck->cksize);
-        if (!mmck->cksize)
-            TRACE("got a zero sized frame\n");
 
 	if (alb->numVideoFrames < wma->dwPlayableVideoFrames) {
 	    wma->lpVideoIndex[alb->numVideoFrames].dwOffset = mmck->dwDataOffset;
@@ -186,6 +207,12 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 	}
 	break;
     case cktypeWAVEbytes:
+        if (stream_n != wma->audio_stream_n)
+        {
+            TRACE("data belongs to another audio stream #%ld\n", stream_n);
+            return FALSE;
+        }
+
 	TRACE("Adding audio frame[%ld]: %ld bytes\n",
 	      alb->numAudioBlocks, mmck->cksize);
 	if (wma->lpWaveFormat) {
@@ -209,7 +236,7 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
 	}
 	break;
     default:
-	WARN("Unknown frame type %04x\n", TWOCCFromFOURCC(mmck->ckid));
+        WARN("Unknown frame type %4.4s\n", (LPSTR)&mmck->ckid);
 	break;
     }
     return TRUE;
@@ -222,6 +249,7 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
     MMCKINFO		mmckList;
     MMCKINFO		mmckInfo;
     struct AviListBuild alb;
+    DWORD stream_n;
 
     if (mmioDescend(wma->hFile, &ckMainRIFF, NULL, 0) != 0) {
 	WARN("Can't find 'RIFF' chunk\n");
@@ -261,7 +289,10 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
     mmioAscend(wma->hFile, &mmckInfo, 0);
 
     TRACE("Start of streams\n");
-    do
+    wma->video_stream_n = 0;
+    wma->audio_stream_n = 0;
+
+    for (stream_n = 0; stream_n < wma->mah.dwStreams; stream_n++)
     {
         MMCKINFO mmckStream;
 
@@ -276,25 +307,37 @@ BOOL MCIAVI_GetInfo(WINE_MCIAVI* wma)
             continue;
         }
 
-        TRACE("Stream fccType %4.4s\n", (LPSTR)&mmckStream.fccType);
+        TRACE("Stream #%ld fccType %4.4s\n", stream_n, (LPSTR)&mmckStream.fccType);
 
         if (mmckStream.fccType == streamtypeVIDEO)
         {
             TRACE("found video stream\n");
-            if (!MCIAVI_GetInfoVideo(wma, &mmckList, &mmckStream))
-                return FALSE;
+            if (wma->inbih)
+                WARN("ignoring another video stream\n");
+            else
+            {
+                if (!MCIAVI_GetInfoVideo(wma, &mmckList, &mmckStream))
+                    return FALSE;
+                wma->video_stream_n = stream_n;
+            }
         }
         else if (mmckStream.fccType == streamtypeAUDIO)
         {
             TRACE("found audio stream\n");
-            if (!MCIAVI_GetInfoAudio(wma, &mmckList, &mmckStream))
-                return FALSE;
+            if (wma->lpWaveFormat)
+                WARN("ignoring another audio stream\n");
+            else
+            {
+                if (!MCIAVI_GetInfoAudio(wma, &mmckList, &mmckStream))
+                    return FALSE;
+                wma->audio_stream_n = stream_n;
+            }
         }
         else
             TRACE("Unsupported stream type %4.4s\n", (LPSTR)&mmckStream.fccType);
 
         mmioAscend(wma->hFile, &mmckList, 0);
-    } while(1);
+    }
 
     TRACE("End of streams\n");
 
@@ -583,7 +626,8 @@ LRESULT MCIAVI_DrawFrame(WINE_MCIAVI* wma)
 
     TRACE("Drawing frame %lu\n", wma->dwCurrVideoFrame);
 
-    if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset)
+    if (!wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset ||
+        !wma->lpVideoIndex[wma->dwCurrVideoFrame].dwSize)
 	return FALSE;
 
     mmioSeek(wma->hFile, wma->lpVideoIndex[wma->dwCurrVideoFrame].dwOffset, SEEK_SET);
