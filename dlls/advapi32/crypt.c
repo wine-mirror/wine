@@ -1077,6 +1077,7 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 	HKEY hKey, hSubkey;
 	DWORD keylen, numkeys, dwType;
 	PSTR keyname, ch;
+	DWORD result;
 
 	TRACE("(%ld, %p, %08ld, %p, %p, %p)\n", dwIndex, pdwReserved,
 		dwFlags, pdwProvType, pszTypeName, pcbTypeName);
@@ -1105,7 +1106,11 @@ BOOL WINAPI CryptEnumProviderTypesA (DWORD dwIndex, DWORD *pdwReserved,
 	*pdwProvType += (*(--ch) - '0') * 10;
 	*pdwProvType += (*(--ch) - '0') * 100;
 	CRYPT_Free(keyname);
-	RegQueryValueExA(hSubkey, "TypeName", NULL, &dwType, pszTypeName, pcbTypeName);
+	
+	result = RegQueryValueExA(hSubkey, "TypeName", NULL, &dwType, pszTypeName, pcbTypeName);
+	if (result)
+		CRYPT_ReturnLastError(result);
+
 	RegCloseKey(hSubkey);
 	RegCloseKey(hKey);
 	return TRUE;
