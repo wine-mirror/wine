@@ -34,18 +34,12 @@
  * The DomainName field of FIXED_INFO isn't NULL-terminated on Win98.
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "iphlpapi.h"
 #include "iprtrmib.h"
 #include "wine/test.h"
-#include <sys/types.h>
-#if HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 
