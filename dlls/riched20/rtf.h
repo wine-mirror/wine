@@ -353,7 +353,7 @@
 # define		rtfRTLDoc		76	/* new in 1.10 */
 # define		rtfLTRDoc		77	/* new in 1.10 */
 # define		rtfAnsiCodePage		78
-# define		rtfUnicodeLength	79
+# define		rtfUTF8RTF		79
 
 # define	rtfSectAttr	9
 # define		rtfSectDef		0
@@ -595,6 +595,7 @@
 # define		rtfCharCharSet		33	/* new in 1.10 */
 # define		rtfLanguage		34
 # define		rtfGray			35
+# define		rtfUnicodeLength	36
 
 # define	rtfPictAttr	13
 # define		rtfMacQD		0
@@ -933,20 +934,6 @@
 # define	rtfLangUrdu			0x0420
 
 /*
- * CharSet indices
- */
-
-# define	rtfCSGeneral	0	/* general (default) charset */
-# define	rtfCSSymbol	1	/* symbol charset */
-
-/*
- * Flags for auto-charset-processing.  Both are on by default.
- */
-
-# define	rtfReadCharSet		0x01	/* auto-read charset files */
-# define	rtfSwitchCharSet	0x02	/* auto-switch charset maps */
-
-/*
  * Style types
  */
 
@@ -1026,22 +1013,24 @@ struct RTFStyleElt
 
 # define        New(t)  ((t *) RTFAlloc ((int) sizeof (t)))
 
-/* maximum number of character values representable in a byte */
+/* Parser stack size */
 
-# define        charSetSize             256
-
-/* charset stack size */
-
-# define        maxCSStack              10
-
-/* character format stack size */
-
-# define        maxCharFormatStack      32
+# define        maxStack      32
 
 struct _RTF_Info;
 typedef struct _RTF_Info RTF_Info;
 
 typedef	void (*RTFFuncPtr) (RTF_Info *);		/* generic function pointer */
+
+
+/* RTF parser stack element */
+struct tagRTFState {
+        CHARFORMAT2W fmt;
+        int codePage;
+        int unicodeLength;
+};
+typedef struct tagRTFState RTFState;
+
 
 struct _RTF_Info {
     /*
@@ -1087,8 +1076,9 @@ struct _RTF_Info {
     RTFColor	*colorList;	/* initialized to NULL */
     RTFStyle	*styleList;
     int ansiCodePage; /* ANSI codepage used in conversion to Unicode */
-    int unicodeLength; /* The length of ANSI representation of Unicode characters */
 
+    /* Character attributes */
+    int unicodeLength; /* The length of ANSI representation of Unicode characters */
     int codePage; /* Current codepage for text conversion */
 
     char *inputName;
@@ -1118,9 +1108,12 @@ struct _RTF_Info {
     DWORD    dwOutputCount;
     WCHAR    OutputBuffer[0x1000];
 
-    CHARFORMAT2W     formatStack[maxCharFormatStack];
-    int              codePageStack[maxCharFormatStack];
-    int              formatStackTop;
+    DWORD    dwCPOutputCount;
+    DWORD    dwMaxCPOutputCount;
+    char     *cpOutputBuffer;
+
+    RTFState         stack[maxStack];
+    int              stackTop;
 };
 
 
@@ -1129,6 +1122,7 @@ struct _RTF_Info {
  */
 
 void		RTFInit (RTF_Info *);
+void	        RTFDestroy(RTF_Info *info);
 void		RTFSetInputName (RTF_Info *, char *);
 char		*RTFGetInputName (RTF_Info *);
 void		RTFSetOutputName (RTF_Info *, char *);

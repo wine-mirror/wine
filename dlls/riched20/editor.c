@@ -396,23 +396,24 @@ void ME_RTFReadHook(RTF_Info *info) {
       switch(info->rtfMajor)
       {
         case rtfBeginGroup:
-          if (info->formatStackTop < maxCharFormatStack) {
-            info->formatStack[info->formatStackTop].cbSize = sizeof(info->formatStack[0]);
-            memcpy(&info->formatStack[info->formatStackTop], &info->style->fmt, sizeof(CHARFORMAT2W));
-            info->codePageStack[info->formatStackTop] = info->codePage;
+          if (info->stackTop < maxStack) {
+            memcpy(&info->stack[info->stackTop].fmt, &info->style->fmt, sizeof(CHARFORMAT2W));
+            info->stack[info->stackTop].codePage = info->codePage;
+            info->stack[info->stackTop].unicodeLength = info->unicodeLength;
           }
-          info->formatStackTop++;
+          info->stackTop++;
           break;
         case rtfEndGroup:
         {
           ME_Style *s;
           RTFFlushOutputBuffer(info);
-          info->formatStackTop--;
+          info->stackTop--;
           /* FIXME too slow ? how come ? */
-          s = ME_ApplyStyle(info->style, &info->formatStack[info->formatStackTop]);
+          s = ME_ApplyStyle(info->style, &info->stack[info->stackTop].fmt);
           ME_ReleaseStyle(info->style);
           info->style = s;
-          info->codePage = info->codePageStack[info->formatStackTop];
+          info->codePage = info->stack[info->stackTop].codePage;
+          info->unicodeLength = info->stack[info->stackTop].unicodeLength;
           break;
         }
       }
@@ -476,6 +477,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     /* do the parsing */
     RTFRead(&parser);
     RTFFlushOutputBuffer(&parser);
+    RTFDestroy(&parser);
 
     style = parser.style;
   }

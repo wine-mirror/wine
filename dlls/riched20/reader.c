@@ -67,11 +67,12 @@ static void	LookupInit (void);
 static void	Lookup (RTF_Info *, char *);
 static int	Hash (char*);
 
-static void	RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len );
-
 static void	CharAttr(RTF_Info *info);
 static void	CharSet(RTF_Info *info);
 static void	DocAttr(RTF_Info *info);
+
+static void	RTFFlushCPOutputBuffer(RTF_Info *info);
+static void	RTFPutCodePageChar(RTF_Info *info, int c);
 
 
 int _RTFGetChar(RTF_Info *info)
@@ -113,6 +114,58 @@ void RTFSetEditStream(RTF_Info *info, EDITSTREAM *es)
 	info->editstream.pfnCallback = es->pfnCallback;
 }
 
+static void
+RTFDestroyAttrs(RTF_Info *info)
+{
+	RTFColor	*cp;
+	RTFFont		*fp;
+	RTFStyle	*sp;
+	RTFStyleElt	*eltList, *ep;
+
+	while (info->fontList != (RTFFont *) NULL)
+	{
+		fp = info->fontList->rtfNextFont;
+		RTFFree (info->fontList->rtfFName);
+		RTFFree ((char *) info->fontList);
+		info->fontList = fp;
+	}
+	while (info->colorList != (RTFColor *) NULL)
+	{
+		cp = info->colorList->rtfNextColor;
+		RTFFree ((char *) info->colorList);
+		info->colorList = cp;
+	}
+	while (info->styleList != (RTFStyle *) NULL)
+	{
+		sp = info->styleList->rtfNextStyle;
+		eltList = info->styleList->rtfSSEList;
+		while (eltList != (RTFStyleElt *) NULL)
+		{
+			ep = eltList->rtfNextSE;
+			RTFFree (eltList->rtfSEText);
+			RTFFree ((char *) eltList);
+			eltList = ep;
+		}
+		RTFFree (info->styleList->rtfSName);
+		RTFFree ((char *) info->styleList);
+		info->styleList = sp;
+	}
+}
+
+
+void
+RTFDestroy(RTF_Info *info)
+{
+        if (info->rtfTextBuf)
+        {
+                RTFFree(info->rtfTextBuf);
+                RTFFree(info->pushedTextBuf);
+        }
+        RTFDestroyAttrs(info);
+        RTFFree(info->cpOutputBuffer);
+}
+
+
 /*
  * Initialize the reader.  This may be called multiple times,
  * to read multiple files.  The only thing not reset is the input
@@ -122,10 +175,6 @@ void RTFSetEditStream(RTF_Info *info, EDITSTREAM *es)
 void RTFInit(RTF_Info *info)
 {
 	int	i;
-	RTFColor	*cp;
-	RTFFont		*fp;
-	RTFStyle	*sp;
-	RTFStyleElt	*eltList, *ep;
 
 	TRACE("\n");
 
@@ -164,36 +213,10 @@ void RTFInit(RTF_Info *info)
 
 	/* dump old lists if necessary */
 
-	while (info->fontList != (RTFFont *) NULL)
-	{
-		fp = info->fontList->rtfNextFont;
-		RTFFree (info->fontList->rtfFName);
-		RTFFree ((char *) info->fontList);
-		info->fontList = fp;
-	}
-	while (info->colorList != (RTFColor *) NULL)
-	{
-		cp = info->colorList->rtfNextColor;
-		RTFFree ((char *) info->colorList);
-		info->colorList = cp;
-	}
-	while (info->styleList != (RTFStyle *) NULL)
-	{
-		sp = info->styleList->rtfNextStyle;
-		eltList = info->styleList->rtfSSEList;
-		while (eltList != (RTFStyleElt *) NULL)
-		{
-			ep = eltList->rtfNextSE;
-			RTFFree (eltList->rtfSEText);
-			RTFFree ((char *) eltList);
-			eltList = ep;
-		}
-		RTFFree (info->styleList->rtfSName);
-		RTFFree ((char *) info->styleList);
-		info->styleList = sp;
-	}
+        RTFDestroyAttrs(info);
 
         info->ansiCodePage = 1252; /* Latin-1 */
+        
         info->unicodeLength = 1; /* \uc1 is the default */
         info->codePage = info->ansiCodePage;
 
@@ -205,6 +228,13 @@ void RTFInit(RTF_Info *info)
 	info->rtfLinePos = 0;
 	info->prevChar = EOF;
 	info->bumpLine = 0;
+
+        info->dwCPOutputCount = 0;
+        if (!info->cpOutputBuffer)
+        {
+                info->dwMaxCPOutputCount = 0x1000;
+                info->cpOutputBuffer = RTFAlloc(info->dwMaxCPOutputCount);
+        }
 }
 
 /*
@@ -475,17 +505,6 @@ static void _RTFGetToken(RTF_Info *info)
 }
 
 
-static WCHAR
-RTFANSIToUnicode(RTF_Info *info, char c)
-{
-        WCHAR buffer[2] = { 0, 0 };
-
-        /* TODO: Probably caching codepage conversion tables would be faster... */
-        MultiByteToWideChar(info->codePage, 0, &c, 1, buffer, 2);
-        return buffer[0];
-}
-
-
 static int
 RTFCharSetToCodePage(RTF_Info *info, int charset)
 {
@@ -493,7 +512,7 @@ RTFCharSetToCodePage(RTF_Info *info, int charset)
         {
                 case ANSI_CHARSET:
                 case DEFAULT_CHARSET:
-                        return 0;
+                        return info->ansiCodePage;
                 case SYMBOL_CHARSET:
                         return CP_SYMBOL;
                 case MAC_CHARSET:
@@ -603,10 +622,6 @@ static void _RTFGetToken2(RTF_Info *info)
 		else
 		{
 			info->rtfClass = rtfText;
-
-                        if (c & 0x80)
-                                info->rtfMajor = RTFANSIToUnicode(info, c);
-                        else
 			info->rtfMajor = c;
 		}
 		return;
@@ -632,7 +647,7 @@ static void _RTFGetToken2(RTF_Info *info)
 			{
 				/* should do isxdigit check! */
 				info->rtfClass = rtfText;
-				info->rtfMajor = RTFANSIToUnicode(info, RTFCharToHex (c) * 16 + RTFCharToHex (c2));
+				info->rtfMajor = RTFCharToHex (c) * 16 + RTFCharToHex (c2);
 				return;
 			}
 			/* early eof, whoops (class is rtfUnknown) */
@@ -1416,6 +1431,7 @@ static RTFKey	rtfKey[] =
 	{ rtfCharAttr,	rtfLanguage,		"lang",		0 },
 	/* this has disappeared from spec 1.2 */
 	{ rtfCharAttr,	rtfGray,		"gray",		0 },
+        { rtfCharAttr,	rtfUnicodeLength,	"uc",		0 },
 
 	/*
 	 * Paragraph formatting attributes
@@ -1704,9 +1720,9 @@ static RTFKey	rtfKey[] =
 
 	{ rtfDocAttr,	rtfRTLDoc,		"rtldoc",	0 },
 	{ rtfDocAttr,	rtfLTRDoc,		"ltrdoc",	0 },
-
+       
         { rtfDocAttr,	rtfAnsiCodePage,	"ansicpg",	0 },
-        { rtfDocAttr,	rtfUnicodeLength,	"uc",		0 },
+        { rtfDocAttr,	rtfUTF8RTF,		"urtf",		0 },
 
 	/*
 	 * Style attributes
@@ -2475,7 +2491,7 @@ static void	TextClass (RTF_Info *info);
 static void	ControlClass (RTF_Info *info);
 static void	Destination (RTF_Info *info);
 static void	SpecialChar (RTF_Info *info);
-static void	PutLitChar (RTF_Info *info, int c);
+static void	RTFPutUnicodeChar (RTF_Info *info, int c);
 
 /*
  * Initialize the writer.
@@ -2499,14 +2515,13 @@ BeginFile (RTF_Info *info )
 }
 
 /*
- * Write out a character. Seems to work for the default ANSI codepage,
- * contrary to TextClass_orig. 
+ * Write out a character.
  */
 
 static void
 TextClass (RTF_Info *info)
 {
-	PutLitChar (info, info->rtfMajor);
+	RTFPutCodePageChar(info, info->rtfMajor);
 }
 
 
@@ -2530,7 +2545,7 @@ ControlClass (RTF_Info *info)
                 DocAttr(info);
                 break;
 	case rtfSpecialChar:
-		SpecialChar (info);
+                SpecialChar (info);
 		break;
 	}
 }
@@ -2539,10 +2554,19 @@ ControlClass (RTF_Info *info)
 static void
 CharAttr(RTF_Info *info)
 {
+        RTFFont *font;
+        
         switch (info->rtfMinor)
         {
         case rtfFontNum:
-                info->codePage = RTFGetFont(info, info->rtfParam)->rtfFCodePage;
+                font = RTFGetFont(info, info->rtfParam);
+                if (font)
+                        info->codePage = font->rtfFCodePage;
+                else
+                        RTFMsg(info, "unknown font %d\n", info->rtfParam);
+                break;
+        case rtfUnicodeLength:
+                info->unicodeLength = info->rtfParam;
                 break;
         }
 }
@@ -2591,8 +2615,8 @@ DocAttr(RTF_Info *info)
         case rtfAnsiCodePage:
                 info->ansiCodePage = info->rtfParam;
                 break;
-        case rtfUnicodeLength:
-                info->unicodeLength = info->rtfParam;
+        case rtfUTF8RTF:
+                info->ansiCodePage = CP_UTF8;
                 break;
         }
 }
@@ -2616,23 +2640,20 @@ static void SpecialChar (RTF_Info *info)
 		break;
 	case rtfUnicode:
 	{
-		WCHAR buf[2];
                 int i;
-                
-		buf[0] = info->rtfParam;
-		buf[1] = 0;
-		RTFFlushOutputBuffer(info);
-		RTFOutputUnicodeString(info, buf, 1);
+               
+                RTFPutUnicodeChar(info, info->rtfParam);
 		
                 /* After \u we must skip number of character tokens set by \ucN */
                 for (i = 0; i < info->unicodeLength; i++)
                 {
-		RTFGetToken(info);
+			RTFGetToken(info);
                         if (info->rtfClass != rtfText)
-		{
+		        {
                                 ERR("The token behind \\u is not text, but (%d,%d,%d)\n",
 				info->rtfClass, info->rtfMajor, info->rtfMinor);
                                 RTFUngetToken(info);
+                                break;
                         }
 		}
 		break;
@@ -2642,64 +2663,117 @@ static void SpecialChar (RTF_Info *info)
 	case rtfRow:
 	case rtfLine:
 	case rtfPar:
-		PutLitChar (info, '\n');
+		RTFPutUnicodeChar (info, '\n');
 		break;
 	case rtfCell:
-                PutLitChar (info, ' ');	/* make sure cells are separated */
+                RTFPutUnicodeChar (info, ' ');	/* make sure cells are separated */
 		break;
 	case rtfNoBrkSpace:
-		PutLitChar (info, 0x00A0);
+		RTFPutUnicodeChar (info, 0x00A0);
 		break;
 	case rtfTab:
-		PutLitChar (info, '\t');
+		RTFPutUnicodeChar (info, '\t');
 		break;
 	case rtfNoBrkHyphen:
-		PutLitChar (info, 0x2011);
+		RTFPutUnicodeChar (info, 0x2011);
 		break;
 	case rtfBullet:
-		PutLitChar (info, 0x2022);
+		RTFPutUnicodeChar (info, 0x2022);
 		break;
 	case rtfEmDash:
-		PutLitChar (info, 0x2014);
+		RTFPutUnicodeChar (info, 0x2014);
 		break;
 	case rtfEnDash:
-		PutLitChar (info, 0x2013);
+		RTFPutUnicodeChar (info, 0x2013);
 		break;
 	case rtfLQuote:
-		PutLitChar (info, 0x2018);
+		RTFPutUnicodeChar (info, 0x2018);
 		break;
 	case rtfRQuote:
-		PutLitChar (info, 0x2019);
+		RTFPutUnicodeChar (info, 0x2019);
 		break;
 	case rtfLDblQuote:
-		PutLitChar (info, 0x201C);
+		RTFPutUnicodeChar (info, 0x201C);
 		break;
 	case rtfRDblQuote:
-		PutLitChar (info, 0x201D);
+		RTFPutUnicodeChar (info, 0x201D);
 		break;
 	}
 }
 
 
-static void PutLitChar (RTF_Info *info, int c)
+static void
+RTFFlushUnicodeOutputBuffer(RTF_Info *info)
 {
-	if( info->dwOutputCount >= ( sizeof info->OutputBuffer - 1 ) )
-		RTFFlushOutputBuffer( info );
+        if (info->dwOutputCount)
+        {
+                ME_InsertTextFromCursor(info->editor, 0, info->OutputBuffer,
+                                        info->dwOutputCount, info->style);
+                info->dwOutputCount = 0;
+        }
+}
+
+static void
+RTFPutUnicodeString(RTF_Info *info, WCHAR *string, int length)
+{
+        if (info->dwCPOutputCount)
+                RTFFlushCPOutputBuffer(info);
+        while (length)
+        {
+                int fit = min(length, sizeof(info->OutputBuffer) / sizeof(WCHAR) - info->dwOutputCount);
+
+                memmove(info->OutputBuffer + info->dwOutputCount, string, fit * sizeof(WCHAR));
+                if (fit == sizeof(info->OutputBuffer) / sizeof(WCHAR) - info->dwOutputCount)
+                        RTFFlushUnicodeOutputBuffer(info);
+                else
+                        info->dwOutputCount += fit;
+                length -= fit;
+                string += fit;
+        }
+}
+
+static void
+RTFFlushCPOutputBuffer(RTF_Info *info)
+{
+        int bufferMax = info->dwCPOutputCount * 2 * sizeof(WCHAR);
+        WCHAR *buffer = (WCHAR *)RTFAlloc(bufferMax);
+        int length;
+
+        length = MultiByteToWideChar(info->codePage, 0, info->cpOutputBuffer,
+                                     info->dwCPOutputCount, buffer, bufferMax);
+        info->dwCPOutputCount = 0;
+
+        RTFPutUnicodeString(info, buffer, length);
+        RTFFree((char *)buffer);
+}
+
+void
+RTFFlushOutputBuffer(RTF_Info *info)
+{
+        if (info->dwCPOutputCount)
+                RTFFlushCPOutputBuffer(info);
+        RTFFlushUnicodeOutputBuffer(info);
+}
+
+static void
+RTFPutUnicodeChar(RTF_Info *info, int c)
+{
+	if (info->dwCPOutputCount)
+                RTFFlushCPOutputBuffer(info);
+        if (info->dwOutputCount * sizeof(WCHAR) >= ( sizeof info->OutputBuffer - 1 ) )
+		RTFFlushUnicodeOutputBuffer( info );
 	info->OutputBuffer[info->dwOutputCount++] = c;
 }
 
-static void RTFOutputUnicodeString( RTF_Info *info, WCHAR *str, int len )
+static void
+RTFPutCodePageChar(RTF_Info *info, int c)
 {
-	assert(str[len] == '\0');
-	if (len) {
-		ME_InsertTextFromCursor( info->editor, 0, str, len, info->style );	  
-	}
-}
-
-
-void RTFFlushOutputBuffer( RTF_Info *info )
-{
-	info->OutputBuffer[info->dwOutputCount] = 0;
-	RTFOutputUnicodeString(info, info->OutputBuffer, info->dwOutputCount);
-	info->dwOutputCount = 0;
+        /* Use dynamic buffer here because it's the best way to handle
+         * MBCS codepages without having to worry about partial chars */
+        if (info->dwCPOutputCount >= info->dwMaxCPOutputCount)
+        {
+                info->dwMaxCPOutputCount *= 2;
+                info->cpOutputBuffer = RTFReAlloc(info->cpOutputBuffer, info->dwMaxCPOutputCount);
+        }
+        info->cpOutputBuffer[info->dwCPOutputCount++] = c;
 }
