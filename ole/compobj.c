@@ -25,6 +25,7 @@
 #include "dinput.h"
 #include "d3d.h"
 #include "dplay.h"
+#include "windows.h"
 
 
 LPMALLOC16 currentMalloc16=NULL;
@@ -33,13 +34,27 @@ LPMALLOC32 currentMalloc32=NULL;
 HTASK16 hETask = 0;
 WORD Table_ETask[62];
 
+
+/* this open DLL table belongs in a per process table, but my guess is that
+ * it shouldn't live in the kernel, so I'll put them out here in DLL
+ * space assuming that there is one OLE32 per process.
+ */
+typedef struct tagOpenDll {
+  char *DllName;                /* really only needed for debugging */
+    HINSTANCE32 hLibrary;       
+    struct tagOpenDll *next;
+} OpenDll;
+
+static OpenDll *openDllList = NULL; /* linked list of open dlls */
+
+
 /******************************************************************************
  *           CoBuildVersion [COMPOBJ.1]
  *
  * RETURNS
  *	Current built version, hiword is majornumber, loword is minornumber
  */
-DWORD WINAPI CoBuildVersion()
+DWORD WINAPI CoBuildVersion(void)
 {
     TRACE(ole,"(void)\n");
     return (rmm<<16)+rup;
@@ -63,17 +78,23 @@ HRESULT WINAPI CoInitialize16(
 HRESULT WINAPI CoInitialize32(
 	LPMALLOC32 lpReserved	/* [in] pointer to win32 malloc interface */
 ) {
+    /* FIXME: there really should be something here that incrememts a refcount
+     * but I'm supposing that it is a real COM object, so I won't bother
+     * creating one here.  (Decrement done in CoUnitialize()) */
     currentMalloc32 = lpReserved;
     return S_OK;
 }
 
 /***********************************************************************
  *           CoUnitialize   [COMPOBJ.3]
- * Don't know what it does.
+ * Don't know what it does. 
+ * 3-Nov-98 -- this was originally misspelled, I changed it to what I
+ *   believe is the correct spelling
  */
-void WINAPI CoUnitialize()
+void WINAPI CoUninitialize(void)
 {
     TRACE(ole,"(void)\n");
+    CoFreeAllLibraries();
 }
 
 /***********************************************************************
@@ -511,8 +532,8 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     char dllName[MAX_PATH+1];
     LONG dllNameLen = MAX_PATH+1;
     HINSTANCE32 hLibrary;
-    typedef HRESULT (*DllGetClassObjectFunc)(REFCLSID clsid,
-                            REFIID iid, LPVOID *ppv);
+    typedef HRESULT (*DllGetClassObjectFunc)(REFCLSID clsid, 
+			     REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
 
     HKEY CLSIDkey;
@@ -527,71 +548,74 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     /* out of process and remote servers not supported yet */
     if ((CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER) & dwClsContext) {
         FIXME(ole, "CLSCTX_LOCAL_SERVER and CLSCTX_REMOTE_SERVER not supported!\n");
-       return E_ACCESSDENIED;
+	return E_ACCESSDENIED;
     }
 
     if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
 
         /* lookup CLSID in registry key HKCR/CLSID */
-        hres = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, "CLSID", 0,
-                              KEY_ENUMERATE_SUB_KEYS, &CLSIDkey);
+        hres = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, "CLSID", 0, 
+			       KEY_ENUMERATE_SUB_KEYS, &CLSIDkey);
 
-       if (hres != ERROR_SUCCESS) {
-           return REGDB_E_READREGDB;
-       }
+	if (hres != ERROR_SUCCESS) {
+	    return REGDB_E_READREGDB;
+	}
 
-       /* search all the subkeys for a match to xclsid */
-       found=FALSE;
-       for (i=0; i<100000; i++) {
+	/* search all the subkeys for a match to xclsid */
+	found=FALSE;
+	for (i=0; i<100000; i++) {
+      
+	    char clsidKeyPath[MAX_PATH + 1];
+	    HKEY key;
+	    LONG res;
 
-           char clsidKeyPath[MAX_PATH + 1];
-           HKEY key;
-           LONG res;
+	    res = RegEnumKey32A(CLSIDkey, i, buf, MAX_PATH);
+	    if (res == ERROR_NO_MORE_ITEMS)
+  	        break;
+	    if (res != ERROR_SUCCESS)
+	        continue;
 
-           res = RegEnumKey32A(CLSIDkey, i, buf, MAX_PATH);
-           if (res == ERROR_NO_MORE_ITEMS)
-               break;
-           if (res != ERROR_SUCCESS)
-               continue;
+	    sprintf(clsidKeyPath, "CLSID\\%s", buf);
+	    
+	    if (lstrcmpi32A(buf, xclsid) != 0)
+	        continue;
 
-           sprintf(clsidKeyPath, "CLSID\\%s", buf);
+	    res = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, clsidKeyPath, 0, 
+				  KEY_QUERY_VALUE, &key);
+	    if (res != ERROR_SUCCESS) {
+	        return REGDB_E_READREGDB;
+	    }
+	    hres = RegQueryValue32A(key, "InprocServer32", dllName, &dllNameLen);
+	    if (res != ERROR_SUCCESS) {
+	        return REGDB_E_READREGDB;
+	    }
+	    TRACE(ole,"found InprocServer32 dll %s\n", dllName);
+	    found = TRUE;
+	    break;
+	}
 
-           if (lstrcmpi32A(buf, xclsid) != 0)
-               continue;
+	if (!found) {
+	    return REGDB_E_CLASSNOTREG;
+	}
 
-           res = RegOpenKeyEx32A(HKEY_CLASSES_ROOT, clsidKeyPath, 0,
-                                 KEY_QUERY_VALUE, &key);
-           if (res != ERROR_SUCCESS) {
-               return REGDB_E_READREGDB;
-           }
-           hres = RegQueryValue32A(key, "InprocServer32", dllName, &dllNameLen);
-           if (res != ERROR_SUCCESS) {
-               return REGDB_E_READREGDB;
-           }
-           TRACE(ole,"found InprocServer32 dll %s\n", dllName);
-           found = TRUE;
-           break;
-       }
+	
+	/* open dll, call DllGetClassFactory */
+	hLibrary = CoLoadLibrary(dllName, TRUE);
+	
+	
+	if (hLibrary == 0) {
+	    TRACE(ole,"couldn't load InprocServer32 dll %s\n", dllName);
+	    return E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
+	}
 
-       if (!found) {
-           return REGDB_E_CLASSNOTREG;
-       }
-
-       /* open dll, call DllGetClassFactory */
-       hLibrary = LoadLibrary32A(dllName);
-
-       if (hLibrary == 0) {
-           TRACE(ole,"couldn't load InprocServer32 dll %s\n", dllName);
-
-           return E_ACCESSDENIED; /* or should this be CO_E_DLLNOTFOUND? */
-       }
-
-       DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress32(hLibrary, "DllGetClassObject");
-       if (DllGetClassObject == NULL) {
-           TRACE(ole,"couldn't find function DllGetClassObject in %s\n", dllName);
-           return E_ACCESSDENIED;
-       }
-       return DllGetClassObject(rclsid, iid, ppv);
+	DllGetClassObject = (DllGetClassObjectFunc)GetProcAddress32(hLibrary, "DllGetClassObject");
+	if (DllGetClassObject == NULL) {
+	    /* not sure if this should be called here CoFreeLibrary(hLibrary);*/
+	    TRACE(ole,"couldn't find function DllGetClassObject in %s\n", dllName);
+	    return E_ACCESSDENIED;
+	}
+	
+	return DllGetClassObject(rclsid, iid, ppv);
     }
 
     return hres;
@@ -644,20 +668,85 @@ HRESULT WINAPI CoCreateInstance(
 #endif
 }
 
+
+
 /***********************************************************************
  *           CoFreeLibrary [COMPOBJ.13]
  */
-void WINAPI CoFreeLibrary(HINSTANCE32 hInst)
+void WINAPI CoFreeLibrary(HINSTANCE32 hLibrary)
 {
-	FIXME(ole,"(), stub !\n");
+    OpenDll *ptr, *prev;
+    OpenDll *tmp;
+
+    /* lookup library in linked list */
+    prev = NULL;
+    for (ptr = openDllList; ptr != NULL; ptr=ptr->next) {
+	if (ptr->hLibrary == hLibrary) {
+	    break;
+	}
+	prev = ptr;
+    }
+
+    if (ptr == NULL) {
+	/* shouldn't happen if user passed in a valid hLibrary */
+	return;
+    }
+    /* assert: ptr points to the library entry to free */
+
+    /* free library and remove node from list */
+    FreeLibrary32(hLibrary);
+    if (ptr == openDllList) {
+	tmp = openDllList->next;
+	HeapFree(GetProcessHeap(), 0, openDllList->DllName);
+	HeapFree(GetProcessHeap(), 0, openDllList);
+	openDllList = tmp;
+    } else {
+	tmp = ptr->next;
+	HeapFree(GetProcessHeap(), 0, ptr->DllName);
+	HeapFree(GetProcessHeap(), 0, ptr);
+	prev->next = tmp;
+    }
+
 }
+
+
+/***********************************************************************
+ *           CoFreeAllLibraries [COMPOBJ.12]
+ */
+void WINAPI CoFreeAllLibraries(void)
+{
+    OpenDll *ptr, *tmp;
+
+    for (ptr = openDllList; ptr != NULL; ) {
+	tmp=ptr->next;
+	CoFreeLibrary(ptr->hLibrary);
+	ptr = tmp;
+    }
+}
+
+
 
 /***********************************************************************
  *           CoFreeUnusedLibraries [COMPOBJ.17]
  */
-void WINAPI CoFreeUnusedLibraries()
+void WINAPI CoFreeUnusedLibraries(void)
 {
-	FIXME(ole,"(), stub !\n");
+    OpenDll *ptr, *tmp;
+    typedef HRESULT(*DllCanUnloadNowFunc)(void);
+    DllCanUnloadNowFunc DllCanUnloadNow;
+
+    for (ptr = openDllList; ptr != NULL; ) {
+	DllCanUnloadNow = (DllCanUnloadNowFunc)
+	    GetProcAddress32(ptr->hLibrary, "DllCanUnloadNow");
+	
+	if (DllCanUnloadNow() == S_OK) {
+	    tmp=ptr->next;
+	    CoFreeLibrary(ptr->hLibrary);
+	    ptr = tmp;
+	} else {
+	    ptr=ptr->next;
+	}
+    }
 }
 
 /***********************************************************************
@@ -699,6 +788,51 @@ VOID WINAPI CoTaskMemFree(
 
     if (ret) return;
     return lpmalloc->lpvtbl->fnFree(lpmalloc,ptr);
+}
+
+/***********************************************************************
+ *           CoLoadLibrary (OLE32.30)
+ */
+HINSTANCE32 WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL32 bAutoFree)
+{
+    HINSTANCE32 hLibrary;
+    OpenDll *ptr;
+    OpenDll *tmp;
+  
+    TRACE(ole,"CoLoadLibrary(%p, %d\n", lpszLibName, bAutoFree);
+
+    hLibrary = LoadLibrary32A(lpszLibName);
+
+    if (!bAutoFree)
+	return hLibrary;
+
+    if (openDllList == NULL) {
+        /* empty list -- add first node */
+        openDllList = (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+	openDllList->DllName = HEAP_strdupA(GetProcessHeap(), 0, lpszLibName);
+	openDllList->hLibrary = hLibrary;
+	openDllList->next = NULL;
+    } else {
+        /* search for this dll */
+        int found = FALSE;
+        for (ptr = openDllList; ptr->next != NULL; ptr=ptr->next) {
+  	    if (ptr->hLibrary == hLibrary) {
+	        found = TRUE;
+		break;
+	    }
+        }
+	if (!found) {
+	    /* dll not found, add it */
+ 	    tmp = openDllList;
+	    openDllList->next = 
+	        (OpenDll*)HeapAlloc(GetProcessHeap(),0, sizeof(OpenDll));
+	    openDllList->DllName = HEAP_strdupA(GetProcessHeap(), 0, lpszLibName);
+	    openDllList->hLibrary = hLibrary;
+	    openDllList->next = tmp;
+	}
+    }
+     
+    return hLibrary;
 }
 
 /***********************************************************************

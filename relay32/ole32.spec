@@ -12,7 +12,7 @@ type	win32
   9 stdcall CoDosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
  10 stdcall CoFileTimeNow(ptr) CoFileTimeNow
  11 stdcall CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
- 12 stub CoFreeAllLibraries
+ 12 stdcall CoFreeAllLibraries() CoFreeAllLibraries
  13 stdcall CoFreeLibrary(long) CoFreeLibrary
  14 stdcall CoFreeUnusedLibraries() CoFreeUnusedLibraries
  15 stub CoGetCallerTID
@@ -30,7 +30,7 @@ type	win32
  27 stdcall CoInitializeWOW(long long) CoInitializeWOW
  28 stub CoIsHandlerConnected
  29 stub CoIsOle1Class
- 30 stub CoLoadLibrary
+ 30 stdcall CoLoadLibrary(ptr long) CoLoadLibrary
  31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal32
  32 stub CoMarshalHresult
  33 stub CoMarshalInterThreadInterfaceInStream
@@ -47,7 +47,7 @@ type	win32
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
  45 stub CoTaskMemRealloc
  46 stub CoTreatAsClass
- 47 stdcall CoUninitialize() CoUnitialize
+ 47 stdcall CoUninitialize() CoUninitialize
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult
  50 stub CoUnmarshalInterface

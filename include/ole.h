@@ -290,6 +290,12 @@ OLESTATUS WINAPI OleRevokeServerDoc(LHSERVERDOC);
 OLESTATUS WINAPI OleRevokeClientDoc(LHCLIENTDOC);
 OLESTATUS WINAPI OleRevokeServer(LHSERVER);
 
+/* com functions */
+void WINAPI CoFreeUnusedLibraries(void);
+HINSTANCE32 WINAPI CoLoadLibrary(LPSTR lpszLibName, BOOL32 bAutoFree);
+void WINAPI CoFreeUnusedLibraries(void);
+void WINAPI CoFreeAllLibraries(void);
+
 typedef enum tagCALLCONV {
     CC_CDECL		= 1,
     CC_MSCPASCAL	= CC_CDECL + 1,
