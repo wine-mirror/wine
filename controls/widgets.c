@@ -54,7 +54,7 @@ static WNDCLASSA WIDGETS_BuiltinClasses[BIC32_NB_CLASSES] =
       (HCURSOR)IDC_ARROWA, 0, 0, "ScrollBar"},
     /* BIC32_MDICLIENT */
     { CS_GLOBALCLASS, MDIClientWndProc,
-      0, sizeof(MDICLIENTINFO), 0, 0, 0, STOCK_LTGRAY_BRUSH, 0, "MDIClient" },
+      0, sizeof(MDICLIENTINFO), 0, 0, (HCURSOR)IDC_ARROWA, STOCK_LTGRAY_BRUSH, 0, "MDIClient" },
     /* BIC32_DESKTOP */
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOP),
       0, 0, (HCURSOR)IDC_ARROWA, 0, 0, DESKTOP_CLASS_NAME },
