@@ -70,7 +70,8 @@ extern void release_DataFormat(DataFormat *df) ;
       This->data_queue[This->queue_head].dwTimeStamp = xtime;			\
       This->data_queue[This->queue_head].dwSequence = seq;			\
       This->queue_head = nq;							\
-    }										\
+    } else                                                                      \
+      This->overflow = TRUE;                                                    \
   }										\
 }
 

@@ -133,6 +133,7 @@ struct SysMouseImpl
     DWORD			    win_centerX, win_centerY;
     LPDIDEVICEOBJECTDATA 	    data_queue;
     int				    queue_head, queue_tail, queue_len;
+    BOOL			    overflow;
     /* warping: whether we need to move mouse back to middle once we
      * reach window borders (for e.g. shooters, "surface movement" games) */
     WARP_STATUS		            need_warp;

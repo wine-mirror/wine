@@ -98,6 +98,7 @@ struct JoystickImpl
         HANDLE				hEvent;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
+	BOOL				overflow;
 	DIJOYSTATE2			js;
 
 	/* data returned by the EVIOCGABS() ioctl */
