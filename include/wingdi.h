@@ -2039,7 +2039,7 @@ typedef struct {
     LONG     ySrc;
     XFORM    xformSrc;
     COLORREF crBkColorSrc;
-    DWORD    iUsegeSrc;
+    DWORD    iUsageSrc;
     DWORD    offBmiSrc;
     DWORD    cbBmiSrc;
     DWORD    offBitsSrc;
@@ -2517,10 +2517,10 @@ typedef struct {
     DWORD cbBmiSrc;
     DWORD offBitsSrc;
     DWORD cbBitsSrc;
-    DWORD iUsage;
+    DWORD iUsageSrc;
     DWORD dwRop;
     LONG  cxDest;
-    LONG  cyDst;
+    LONG  cyDest;
 } EMRSTRETCHDIBITS, *PEMRSTRETCHDIBITS;
 
 typedef struct {

@@ -1268,7 +1268,13 @@ typedef struct tagMSG
     POINT   pt;
 } MSG, *LPMSG;
 
-	
+#define POINTSTOPOINT(pt, pts)                          \
+        { (pt).x = (LONG)(SHORT)LOWORD(*(LONG*)&pts);   \
+          (pt).y = (LONG)(SHORT)HIWORD(*(LONG*)&pts); }          
+
+#define POINTTOPOINTS(pt)      (MAKELONG((short)((pt).x), (short)((pt).y)))
+
+
 /* Cursors / Icons */
 
 typedef struct {
@@ -2024,6 +2030,11 @@ typedef struct
 #define IDC_HELPA        MAKEINTRESOURCEA(32651)
 #define IDC_HELPW        MAKEINTRESOURCEW(32651)
 #define IDC_HELP           WINELIB_NAME_AW(IDC_HELP)
+
+#define MNC_IGNORE 0
+#define MNC_CLOSE 1
+#define MNC_EXECUTE 2
+#define MNC_SELECT 3 
 
 /* SystemParametersInfo */
 /* defines below are for all win versions */
