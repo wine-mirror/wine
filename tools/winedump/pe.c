@@ -54,7 +54,7 @@ void*			PE_base;
 unsigned long		PE_total_len;
 IMAGE_NT_HEADERS*	PE_nt_headers;
 
-enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE};
+enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE};
 
 static inline unsigned int strlenW( const WCHAR *str )
 {
@@ -954,6 +954,12 @@ static	void	do_dump( enum FileSig sig )
         return;
     }
 
+    if (sig == SIG_LE)
+    {
+        le_dump( PE_base, PE_total_len );
+        return;
+    }
+
     if (globals.do_dumpheader)
     {
 	dump_pe_header();
@@ -1018,6 +1024,10 @@ static	enum FileSig	check_headers(void)
                 {
                     sig = SIG_NE;
                 }
+		else if (*(WORD *)pdw == IMAGE_VXD_SIGNATURE)
+		{
+                    sig = SIG_LE;
+		}
 		else
 		{
 		    printf("No PE Signature found\n");
@@ -1078,6 +1088,7 @@ static int pe_analysis(const char* name, void (*fn)(enum FileSig), enum FileSig 
 	    ret = 0; break;
 	case SIG_PE:
 	case SIG_NE:
+	case SIG_LE:
 	    printf("Contents of \"%s\": %ld bytes\n\n", name, PE_total_len);
 	    (*fn)(effective_sig);
 	    break;

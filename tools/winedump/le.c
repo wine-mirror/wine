@@ -1,0 +1,358 @@
+/*
+ * Dumping of LE binaries
+ *
+ * Copyright 2004 Robert Reif
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "config.h"
+#include "wine/port.h"
+
+#include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include "windef.h"
+#include "winbase.h"
+#include "wine/winbase16.h"
+#include "winedump.h"
+
+struct o32_obj
+{
+    unsigned long       o32_size;
+    unsigned long       o32_base;
+    unsigned long       o32_flags;
+    unsigned long       o32_pagemap;
+    unsigned long       o32_mapsize;
+    char                o32_name[4];
+};
+
+struct o32_map
+{
+    unsigned short      o32_pagedataoffset;
+    unsigned char       o32_pagesize;
+    unsigned char       o32_pageflags;
+};
+
+struct b32_bundle
+{
+    unsigned char       b32_cnt;
+    unsigned char       b32_type;
+};
+
+struct vxd_descriptor
+{
+    unsigned long       next;
+    unsigned short      sdk_version;
+    unsigned short      device_number;
+    unsigned char       version_major;
+    unsigned char       version_minor;
+    unsigned short      flags;
+    char                name[8];
+    unsigned long       init_order;
+    unsigned long       ctrl_ofs;
+    unsigned long       v86_ctrl_ofs;
+    unsigned long       pm_ctrl_ofs;
+    unsigned long       v86_ctrl_csip;
+    unsigned long       pm_ctrl_csip;
+    unsigned long       rm_ref_data;
+    unsigned long       service_table_ofs;
+    unsigned long       service_table_size;
+    unsigned long       win32_service_table_ofs;
+    unsigned long       prev;
+    unsigned long       size;
+    unsigned long       reserved0;
+    unsigned long       reserved1;
+    unsigned long       reserved2;
+};
+
+static inline WORD get_word( const BYTE *ptr )
+{
+    return ptr[0] | (ptr[1] << 8);
+}
+
+static void dump_le_header( const IMAGE_VXD_HEADER *le )
+{
+    printf( "File header:\n" );
+    printf( "    Magic:                                %04x (%c%c)\n",
+            le->e32_magic, LOBYTE(le->e32_magic), HIBYTE(le->e32_magic));
+    printf( "    Byte order:                           %s\n",
+            le->e32_border == 0 ? "little-indian" : "big-endian");
+    printf( "    Word order:                           %s\n",
+            le->e32_worder ==  0 ? "little-indian" : "big-endian");
+    printf( "    Executable format level:              %ld\n",
+            le->e32_level);
+    printf( "    CPU type:                             %s\n",
+            le->e32_cpu == 0x01 ? "Intel 80286" :
+            le->e32_cpu == 0x02 ? "Intel 80386" :
+            le->e32_cpu == 0x03 ? "Intel 80486" :
+            le->e32_cpu == 0x04 ? "Intel 80586" :
+            le->e32_cpu == 0x20 ? "Intel i860 (N10)" :
+            le->e32_cpu == 0x21 ? "Intel i860 (N11)" :
+            le->e32_cpu == 0x40 ? "MIPS Mark I" :
+            le->e32_cpu == 0x41 ? "MIPS Mark II" :
+            le->e32_cpu == 0x42 ? "MIPS Mark III" :
+            "Unknown");
+    printf( "    Target operating system:              %s\n",
+            le->e32_os == 0x01 ? "OS/2" :
+            le->e32_os == 0x02 ? "Windows" :
+            le->e32_os == 0x03 ? "DOS 4.x" :
+            le->e32_os == 0x04 ? "Windows 386" :
+            "Unknown");
+    printf( "    Module version:                       %ld\n",
+            le->e32_ver);
+    printf( "    Module type flags:                    %08lx\n",
+            le->e32_mflags);
+    if (le->e32_mflags & 0x8000)
+    {
+        if (le->e32_mflags & 0x0004)
+            printf( "        Global initialization\n");
+        else
+            printf( "        Per-Process initialization\n");
+        if (le->e32_mflags & 0x0010)
+            printf( "        No internal fixup\n");
+        if (le->e32_mflags & 0x0020)
+            printf( "        No external fixup\n");
+        if ((le->e32_mflags & 0x0700) == 0x0100)
+            printf( "        Incompatible with PM windowing\n");
+        else if ((le->e32_mflags & 0x0700) == 0x0200)
+            printf( "        Compatible with PM windowing\n");
+        else if ((le->e32_mflags & 0x0700) == 0x0300)
+            printf( "        Uses PM windowing API\n");
+        if (le->e32_mflags & 0x2000)
+            printf( "        Module not loadable\n");
+        if (le->e32_mflags & 0x8000)
+            printf( "        Module is DLL\n");
+    }
+    printf( "    Number of memory pages:               %ld\n",
+            le->e32_mpages);
+    printf( "    Initial object CS number:             %08lx\n",
+            le->e32_startobj);
+    printf( "    Initial EIP:                          %08lx\n",
+            le->e32_eip);
+    printf( "    Initial object SS number:             %08lx\n",
+            le->e32_stackobj);
+    printf( "    Initial ESP:                          %08lx\n",
+            le->e32_esp);
+    printf( "    Memory page size:                     %ld\n",
+            le->e32_pagesize);
+    printf( "    Bytes on last page:                   %ld\n",
+            le->e32_lastpagesize);
+    printf( "    Fix-up section size:                  %ld\n",
+            le->e32_fixupsize);
+    printf( "    Fix-up section checksum:              %08lx\n",
+            le->e32_fixupsum);
+    printf( "    Loader section size:                  %ld\n",
+            le->e32_ldrsize);
+    printf( "    Loader section checksum:              %08lx\n",
+            le->e32_ldrsum);
+    printf( "    Offset of object table:               %08lx\n",
+            le->e32_objtab);
+    printf( "    Object table entries:                 %ld\n",
+            le->e32_objcnt);
+    printf( "    Object page map offset:               %08lx\n",
+            le->e32_objmap);
+    printf( "    Object iterate data map offset:       %08lx\n",
+            le->e32_itermap);
+    printf( "    Resource table offset:                %08lx\n",
+            le->e32_rsrctab);
+    printf( "    Resource table entries:               %ld\n",
+            le->e32_rsrccnt);
+    printf( "    Resident names table offset:          %08lx\n",
+            le->e32_restab);
+    printf( "    Entry table offset:                   %08lx\n",
+            le->e32_enttab);
+    printf( "    Module directives table offset:       %08lx\n",
+            le->e32_dirtab);
+    printf( "    Module directives entries:            %ld\n",
+            le->e32_dircnt);
+    printf( "    Fix-up page table offset:             %08lx\n",
+            le->e32_fpagetab);
+    printf( "    Fix-up record table offset:           %08lx\n",
+            le->e32_frectab);
+    printf( "    Imported modules name table offset:   %08lx\n",
+            le->e32_impmod);
+    printf( "    Imported modules count:               %ld\n",
+            le->e32_impmodcnt);
+    printf( "    Imported procedure name table offset: %08lx\n",
+            le->e32_impproc);
+    printf( "    Per-page checksum table offset:       %08lx\n",
+            le->e32_pagesum);
+    printf( "    Data pages offset from top of table:  %08lx\n",
+            le->e32_datapage);
+    printf( "    Preload page count:                   %08lx\n",
+            le->e32_preload);
+    printf( "    Non-resident names table offset:      %08lx\n",
+            le->e32_nrestab);
+    printf( "    Non-resident names table length:      %ld\n",
+            le->e32_cbnrestab);
+    printf( "    Non-resident names table checksum:    %08lx\n",
+            le->e32_nressum);
+    printf( "    Automatic data object:                %08lx\n",
+            le->e32_autodata);
+    printf( "    Debug information offset:             %08lx\n",
+            le->e32_debuginfo);
+    printf( "    Debug information length:             %ld\n",
+            le->e32_debuglen);
+    printf( "    Preload instance pages number:        %ld\n",
+            le->e32_instpreload);
+    printf( "    Demand instance pages number:         %ld\n",
+            le->e32_instdemand);
+    printf( "    Extra heap allocation:                %ld\n",
+            le->e32_heapsize);
+    printf( "    VxD resource table offset:            %08lx\n",
+            le->e32_winresoff);
+    printf( "    Size of VxD resource table:           %ld\n",
+            le->e32_winreslen);
+    printf( "    VxD identifier:                       %x\n",
+            le->e32_devid);
+    printf( "    VxD DDK version:                      %x\n",
+            le->e32_ddkver);
+}
+
+static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    struct o32_obj *pobj;
+    int i;
+
+    printf("\nObject table:\n");
+    pobj = (struct o32_obj *)((const unsigned char *)le + le->e32_objtab);
+    for (i = 0; i < le->e32_objcnt; i++)
+    {
+        int j;
+        struct o32_map *pmap=0;
+
+        printf("    Obj. Rel.Base Codesize Flags    Tableidx Tablesize Name\n");
+        printf("    %04X %08lx %08lx %08lx %08lx %08lx  ", i + 1,
+               pobj->o32_base, pobj->o32_size, pobj->o32_flags,
+               pobj->o32_pagemap, pobj->o32_mapsize);
+        for (j = 0; j < 4; j++)
+        {
+           if  (isprint(pobj->o32_name[j]))
+                printf("%c", pobj->o32_name[j]);
+           else
+                printf(".");
+        }
+        printf("\n");
+
+        if(pobj->o32_flags & 0x0001)
+            printf("\tReadable\n");
+        if(pobj->o32_flags & 0x0002)
+            printf("\tWriteable\n");
+        if(pobj->o32_flags & 0x0004)
+            printf("\tExecutable\n");
+        if(pobj->o32_flags & 0x0008)
+            printf("\tResource\n");
+        if(pobj->o32_flags & 0x0010)
+            printf("\tDiscardable\n");
+        if(pobj->o32_flags & 0x0020)
+            printf("\tShared\n");
+        if(pobj->o32_flags & 0x0040)
+            printf("\tPreloaded\n");
+        if(pobj->o32_flags & 0x0080)
+            printf("\tInvalid\n");
+        if(pobj->o32_flags & 0x2000)
+            printf("\tUse 32\n");
+
+        printf("    Page tables:\n");
+        printf("        Tableidx Offset Flags\n");
+        pmap = (struct o32_map *)((const unsigned char *)le + le->e32_objmap);
+        pmap = &(pmap[pobj->o32_pagemap - 1]);
+        for (j = 0; j < pobj->o32_mapsize; j++)
+        {
+            printf("        %08x %06x %02x\n",
+                   pobj->o32_pagemap + j,
+                   (pmap->o32_pagedataoffset << 8) + pmap->o32_pagesize,
+                   (int)pmap->o32_pageflags);
+            pmap++;
+        }
+        pobj++;
+    }
+}
+
+static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    const char *pstr = (const char *)le + le->e32_restab;
+
+    printf( "\nResident name table:\n" );
+    while (*pstr)
+    {
+        printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr,
+                pstr + 1 );
+        pstr += *pstr + 1 + sizeof(WORD);
+    }
+    if (le->e32_cbnrestab)
+    {
+        printf( "\nNon-resident name table:\n" );
+        pstr = (char *)base + le->e32_nrestab;
+        while (*pstr)
+        {
+            printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr,
+                    pstr + 1 );
+            pstr += *pstr + 1 + sizeof(WORD);
+        }
+    }
+}
+
+static void dump_le_resources( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    printf( "\nResources:\n" );
+    printf( "    Not Implemented\n" );
+}
+
+static void dump_le_modules( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    printf( "\nImported modulename table:\n" );
+    printf( "    Not Implemented\n" );
+}
+
+static void dump_le_entries( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    printf( "\nEntry table:\n" );
+    printf( "    Not Implemented\n" );
+}
+
+static void dump_le_fixups( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    printf( "\nFixup table:\n" );
+    printf( "    Not Implemented\n" );
+}
+
+static void dump_le_VxD( const void *base, const IMAGE_VXD_HEADER *le )
+{
+    printf( "\nVxD descriptor:\n" );
+    printf( "    Not Implemented\n" );
+}
+
+void le_dump( const void *exe, size_t exe_size )
+{
+    const IMAGE_DOS_HEADER *dos = exe;
+    const IMAGE_VXD_HEADER *le;
+
+    le = (const IMAGE_VXD_HEADER*)((const char *)dos + dos->e_lfanew);
+
+    dump_le_header( le );
+    dump_le_objects( exe, le );
+    dump_le_resources( exe, le );
+    dump_le_names( exe, le );
+    dump_le_entries( exe, le );
+    dump_le_modules( exe, le );
+    dump_le_fixups( exe, le );
+    dump_le_VxD( exe, le );
+}
