@@ -36,7 +36,8 @@ LRESULT WINAPI FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
 				  LPARAM lParam);
 LRESULT WINAPI FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
 				  LPARAM lParam);
-
+LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
+                                   LPARAM lParam);
 
 static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
@@ -64,10 +65,11 @@ static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl = 0;
-    BOOL16 bRet = FALSE, win32Format = FALSE;
+    HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
+    HGLOBAL16 hGlobal16 = 0;
+    BOOL16 bRet = FALSE;
     LPCVOID template;
-    HWND hwndDialog;
+    FARPROC16 ptr;
     CHOOSEFONTA cf32a;
     LOGFONTA lf32a;
     SEGPTR lpTemplateName;
@@ -96,8 +98,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
             return FALSE;
         }
-        if (!(hDlgTmpl = LoadResource16( lpChFont->hInstance, hResInfo )) ||
-            !(template = LockResource16( hDlgTmpl )))
+        if (!(hDlgTmpl16 = LoadResource16( lpChFont->hInstance, hResInfo )) ||
+            !(template = LockResource16( hDlgTmpl16 )))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
             return FALSE;
@@ -105,35 +107,57 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     }
     else
     {
-	HANDLE hResInfo;
-	if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
-	{
-	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-	    return FALSE;
-	}
-	if (!(hDlgTmpl = LoadResource(COMMDLG_hInstance32, hResInfo )) ||
-	    !(template = LockResource( hDlgTmpl )))
-	{
-	    COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-	    return FALSE;
-	}
-        win32Format = TRUE;
+        HANDLE hResInfo, hDlgTmpl32;
+        LPCVOID template32;
+        DWORD size;
+        if (!(hResInfo = FindResourceA(COMMDLG_hInstance32, "CHOOSE_FONT", RT_DIALOGA)))
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
+            return FALSE;
+        }
+        if (!(hDlgTmpl32 = LoadResource(COMMDLG_hInstance32, hResInfo)) ||
+            !(template32 = LockResource(hDlgTmpl32)))
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
+            return FALSE;
+        }
+        size = SizeofResource(GetModuleHandleA("COMDLG32"), hResInfo);
+        hGlobal16 = GlobalAlloc16(0, size);
+        if (!hGlobal16)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+            ERR("alloc failure for %ld bytes\n", size);
+            return FALSE;
+        }
+        template = GlobalLock16(hGlobal16);
+        if (!template)
+        {
+            COMDLG32_SetCommDlgExtendedError(CDERR_MEMLOCKFAILURE);
+            ERR("global lock failure for %x handle\n", hGlobal16);
+            GlobalFree16(hGlobal16);
+            return FALSE;
+        }
+        ConvertDialog32To16((LPVOID)template32, size, (LPVOID)template);
+        hDlgTmpl16 = hGlobal16;         
+
     }
 
-    hInst = GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
-    
     /* lpTemplateName is not used in the dialog */
     lpTemplateName=lpChFont->lpTemplateName;
     lpChFont->lpTemplateName=(SEGPTR)&cf32a;
-    
-    hwndDialog = DIALOG_CreateIndirect( hInst, template, win32Format,
-                                        lpChFont->hwndOwner,
-                                        (DLGPROC16)FormatCharDlgProcA,
-                                        (DWORD)lpChFont, WIN_PROC_32A );
-    if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);
-    if (hDlgTmpl) FreeResource16( hDlgTmpl );
+
+    ptr = GetProcAddress16(GetModuleHandle16("COMMDLG"), (SEGPTR) 16);
+    hInst = GetWindowLongA(lpChFont->hwndOwner, GWL_HINSTANCE);
+    bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChFont->hwndOwner,
+                     (DLGPROC16) ptr, (DWORD)lpChFont);
+    if (hResource16) FreeResource16(hDlgTmpl16);
+    if (hGlobal16)
+    {
+        GlobalUnlock16(hGlobal16);
+        GlobalFree16(hGlobal16);
+    }
     lpChFont->lpTemplateName=lpTemplateName;
-    FONT_LogFont32ATo16(cf32a.lpLogFont, 
+    FONT_LogFont32ATo16(cf32a.lpLogFont,
         (LPLOGFONT16)(PTR_SEG_TO_LIN(lpChFont->lpLogFont)));
     return bRet;
 }
@@ -144,9 +168,6 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
  */
 BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 {
-  BOOL bRet=FALSE;
-  HWND hwndDialog;
-  HINSTANCE hInst=GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
   LPCVOID template;
   HANDLE hResInfo, hDlgTmpl;
 
@@ -164,10 +185,8 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 
   if (lpChFont->Flags & (CF_SELECTSCRIPT | CF_NOVERTFONTS | CF_ENABLETEMPLATE |
     CF_ENABLETEMPLATEHANDLE)) FIXME(": unimplemented flag (ignored)\n");
-  hwndDialog = DIALOG_CreateIndirect(hInst, template, TRUE, lpChFont->hwndOwner,
-            (DLGPROC16)FormatCharDlgProcA, (LPARAM)lpChFont, WIN_PROC_32A );
-  if (hwndDialog) bRet = DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);  
-  return bRet;
+  return DialogBoxIndirectParamA(COMMDLG_hInstance32, template, 
+            lpChFont->hwndOwner, (DLGPROC)FormatCharDlgProcA, (LPARAM)lpChFont );
 }
 
 /***********************************************************************
@@ -176,8 +195,6 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {
   BOOL bRet=FALSE;
-  HWND hwndDialog;
-  HINSTANCE hInst=GetWindowLongA( lpChFont->hwndOwner, GWL_HINSTANCE );
   CHOOSEFONTA cf32a;
   LOGFONTA lf32a;
   LPCVOID template;
@@ -203,9 +220,8 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   cf32a.lpLogFont=&lf32a;
   cf32a.lpszStyle=HEAP_strdupWtoA(GetProcessHeap(), 0, lpChFont->lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)&cf32a;
-  hwndDialog=DIALOG_CreateIndirect(hInst, template, TRUE, lpChFont->hwndOwner,
-            (DLGPROC16)FormatCharDlgProcW, (LPARAM)lpChFont, WIN_PROC_32W );
-  if (hwndDialog)bRet=DIALOG_DoDialogBox(hwndDialog, lpChFont->hwndOwner);  
+  bRet = DialogBoxIndirectParamW(COMMDLG_hInstance32, template, 
+            lpChFont->hwndOwner, (DLGPROC)FormatCharDlgProcW, (LPARAM)lpChFont );
   HeapFree(GetProcessHeap(), 0, cf32a.lpszStyle);
   lpChFont->lpTemplateName=(LPWSTR)cf32a.lpTemplateName;
   memcpy(lpChFont->lpLogFont, &lf32a, sizeof(CHOOSEFONTA));
