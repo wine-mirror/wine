@@ -202,8 +202,8 @@ void volume_effect16(void *bufin, void* bufout, int length, int left,
 void volume_effect8(void *bufin, void* bufout, int length, int left,
 		int right, int 	nChannels)
 {
-  char *d_out = (char *)bufout;
-  char *d_in = (char *)bufin;
+  BYTE *d_out = (BYTE *)bufout;
+  BYTE *d_in = (BYTE *)bufin;
   int i, v;
 
 /*
@@ -214,11 +214,11 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
 
   for(i = 0; i < length; i+=(nChannels))
   {
-    v = (char) ((*(d_in++) * left) / 100);
+    v = (BYTE) ((*(d_in++) * left) / 100);
     *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
     if(nChannels == 2)
     {
-      v = (char) ((*(d_in++) * right) / 100);
+      v = (BYTE) ((*(d_in++) * right) / 100);
       *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
     }
   }
@@ -645,7 +645,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     {
       /* apply volume to the buffer we are about to send */
       volume_effect8(wwo->lpPlayPtr->lpData + wwo->dwPartialOffset,
-                wwo->sound_buffer, toWrite>>1, wwo->volume_left,
+                wwo->sound_buffer, toWrite, wwo->volume_left,
 		wwo->volume_right, wwo->format.wf.nChannels);
     } else
     {
