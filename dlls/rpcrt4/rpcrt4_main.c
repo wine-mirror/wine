@@ -214,6 +214,17 @@ RPC_STATUS WINAPI RpcStringFreeW(unsigned short** String)
 }
 
 /*************************************************************************
+ *           RpcRaiseException   [RPCRT4.@]
+ *
+ * Raises an exception.
+ */
+void WINAPI RpcRaiseException(RPC_STATUS exception)
+{
+  /* FIXME: translate exception? */
+  RaiseException(exception, 0, 0, NULL);
+}
+
+/*************************************************************************
  * UuidCompare [RPCRT4.@]
  *
  * (an educated-guess implementation)

@@ -109,7 +109,7 @@
 @ stub RpcObjectSetType
 @ stub RpcProtseqVectorFreeA
 @ stub RpcProtseqVectorFreeW
-@ stub RpcRaiseException
+@ stdcall RpcRaiseException(long) RpcRaiseException
 @ stub RpcRegisterAsyncInfo
 @ stub RpcRevertToSelf
 @ stub RpcRevertToSelfEx
