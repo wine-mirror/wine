@@ -425,6 +425,54 @@ static LPKEYSTRUCT lookup_hkey( HKEY hkey )
   }
   /*NOTREACHED*/
 }
+
+
+/*
+ * recursively searches for lpkey_to_find in the root key branch
+ * given in lpcurrkey.
+ */
+static int subkey_found(LPKEYSTRUCT lpcurrkey, LPKEYSTRUCT lpkey_to_find)
+{
+	if (lpcurrkey == lpkey_to_find)
+		return 1;
+
+	while (lpcurrkey)
+	{
+		if (subkey_found(lpcurrkey->nextsub, lpkey_to_find))
+			return 1;
+
+		lpcurrkey = lpcurrkey->next;
+	}
+
+	TRACE_(reg)("No key found in this root key branch\n");
+	return 0;
+}
+
+
+/*
+ * finds the corresponding root key for a sub key, i.e. e.g. HKEY_CLASSES_ROOT.
+ */ 
+static HKEY find_root_key(LPKEYSTRUCT lpkey)
+{
+	typedef struct tagROOT_KEYS {
+    	KEYSTRUCT *lpkey;
+    	HKEY hkey;
+	} ROOT_KEYS;
+    ROOT_KEYS root_keys[] = { { key_classes_root, HKEY_CLASSES_ROOT },
+                              { key_current_user, HKEY_CURRENT_USER },
+                              { key_local_machine, HKEY_LOCAL_MACHINE },
+                              { key_users, HKEY_USERS } };
+	int i;
+
+	for (i=0; i<4;i++)
+	{
+		if (subkey_found(root_keys[i].lpkey, lpkey))
+				return root_keys[i].hkey;				
+	}
+	ERR_(reg)("Didn't find corresponding root key entry ! Search strategy broken ??\n");
+	return 0;
+#undef ROOT_KEYS
+}
 #undef ADD_ROOT_KEY
 /* so we don't accidently access them ... */
 #define key_current_config NULL NULL
@@ -692,54 +740,34 @@ static BOOL _savereg( LPKEYSTRUCT lpkey, char *fn, int all )
 
 
 /******************************************************************************
- * SHELL_SaveRegistry [Internal]
+ * SHELL_SaveRegistryBranch [Internal]
+ *
+ * Saves main registry branch specified by hkey.
  */
-void SHELL_SaveRegistry( void )
+static void SHELL_SaveRegistryBranch(HKEY hkey, int all)
 {
     char   *fn, *home, *tmp;
-    char   buf[4];
-    HKEY   hkey;
-    int    all;
-    int    usedCfgUser = 0;
-    int    usedCfgLM   = 0;
 
-    TRACE_(reg)("(void)\n");
-
-    all=0;
-    if (RegOpenKey16(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)!=ERROR_SUCCESS) 
-    {
-        strcpy(buf,"yes");
-    } 
-    else 
-    {
-        DWORD len,junk,type;
-
-        len=4;
-        if ((ERROR_SUCCESS!=RegQueryValueExA( hkey,
-                                              VAL_SAVEUPDATED,
-                                              &junk,
-                                              &type,
-                                              buf,
-                                              &len)) || (type!=REG_SZ))
-        {
-            strcpy(buf,"yes");
-        }
-        RegCloseKey(hkey);
-    }
-
-    if (lstrcmpiA(buf,"yes")) all=1;
-
+    /* FIXME: does this check apply to all keys written below ? */
     if (!(home = getenv( "HOME" )))
-    {
-        WARN_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
+        {
+        ERR_(reg)("Failed to get homedirectory of UID %ld.\n",(long) getuid());
         return;
     }
-    /* 
-     * Save HKEY_CURRENT_USER 
-     * Try first saving according to the defined location in .winerc
-     */
+
+	/* HKEY_LOCAL_MACHINE contains the HKEY_CLASSES_ROOT branch */
+	if (hkey == HKEY_CLASSES_ROOT)
+		hkey = HKEY_LOCAL_MACHINE;
+
+	switch (hkey)
+    {
+		case HKEY_CURRENT_USER:
+			{
+				int usedCfgUser = 0;
+
     fn = xmalloc( MAX_PATHNAME_LEN ); 
-    if (PROFILE_GetWineIniString ( "Registry", "UserFileName", "", fn, MAX_PATHNAME_LEN - 1)) 
+				if (PROFILE_GetWineIniString ( "Registry", "UserFileName", "",
+												fn, MAX_PATHNAME_LEN - 1))
     {
         _savereg(lookup_hkey(HKEY_CURRENT_USER),fn,all);
         usedCfgUser = 1;
@@ -770,14 +798,15 @@ void SHELL_SaveRegistry( void )
         free(tmp);
         free(fn);
     }
-
-    /* 
-     * Save HKEY_LOCAL_MACHINE
-     * Try first saving according to the defined location in .winerc
-     */
+			}
+			break;
+		case HKEY_LOCAL_MACHINE:
+			{
+				int usedCfgLM = 0;
+				/* Try first saving according to the defined location in .winerc */
     fn = xmalloc ( MAX_PATHNAME_LEN);
-    if (PROFILE_GetWineIniString ( "Registry", "LocalMachineFileName", "", fn, 
-                                   MAX_PATHNAME_LEN - 1))
+				if (PROFILE_GetWineIniString ( "Registry",
+						"LocalMachineFileName",	"", fn, MAX_PATHNAME_LEN - 1))
     {
         _savereg(lookup_hkey(HKEY_LOCAL_MACHINE), fn, all);
         usedCfgLM = 1;
@@ -786,7 +815,8 @@ void SHELL_SaveRegistry( void )
 
     if ( usedCfgLM != 1)
     {
-        fn=(char*)xmalloc( strlen(home)+ strlen(WINE_PREFIX)+ strlen(SAVE_LOCAL_MACHINE)+2);
+					fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
+									   strlen(SAVE_LOCAL_MACHINE) + 2);
         strcpy(fn,home);
         strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_MACHINE);
 
@@ -803,11 +833,11 @@ void SHELL_SaveRegistry( void )
         free(tmp);
         free(fn);
     }
-
-    /* 
-     * Save HKEY_USERS
-     */
-    fn=(char*)xmalloc( strlen(home)+ strlen(WINE_PREFIX)+ strlen(SAVE_LOCAL_USERS_DEFAULT)+2);
+			}
+			break;
+		case HKEY_USERS:
+			fn=(char*)xmalloc( strlen(home) + strlen(WINE_PREFIX) +
+							   strlen(SAVE_LOCAL_USERS_DEFAULT) + 2);
 
     strcpy(fn,home);
     strcat(fn,WINE_PREFIX"/"SAVE_LOCAL_USERS_DEFAULT);
@@ -822,6 +852,52 @@ void SHELL_SaveRegistry( void )
     }
     free(tmp);
     free(fn);
+			break;
+		default:
+			ERR_(reg)("unknown/invalid key handle !\n");
+		}
+}
+
+
+/******************************************************************************
+ * SHELL_SaveRegistry [Internal]
+ */
+void SHELL_SaveRegistry( void )
+{
+    char   buf[4];
+    HKEY   hkey;
+    int    all;
+
+    TRACE_(reg)("(void)\n");
+
+    all=0;
+    if (RegOpenKey16(HKEY_CURRENT_USER,KEY_REGISTRY,&hkey)!=ERROR_SUCCESS) 
+    {
+        strcpy(buf,"yes");
+    } 
+    else 
+    {
+        DWORD len,junk,type;
+
+        len=4;
+        if ((ERROR_SUCCESS!=RegQueryValueExA( hkey,
+                                              VAL_SAVEUPDATED,
+                                              &junk,
+                                              &type,
+                                              buf,
+                                              &len)) || (type!=REG_SZ))
+        {
+            strcpy(buf,"yes");
+        }
+        RegCloseKey(hkey);
+}
+
+    if (lstrcmpiA(buf,"yes"))
+		all = 1;
+
+	SHELL_SaveRegistryBranch(HKEY_CURRENT_USER, all);
+	SHELL_SaveRegistryBranch(HKEY_LOCAL_MACHINE, all);
+	SHELL_SaveRegistryBranch(HKEY_USERS, all);
 }
 
 
@@ -3443,7 +3519,13 @@ DWORD WINAPI RegDeleteValue16( HKEY hkey, LPSTR lpszValue )
 
 /******************************************************************************
  * RegFlushKey [KERNEL.227] [ADVAPI32.143]
- * Writes key to registry
+ * Immediately writes key to registry.
+ * Only returns after data has been written to disk.
+ *
+ * FIXME: does it really wait until data is written ?
+ *
+ * I guess that we can remove the REG_OPTION_TAINTED flag from every key
+ * written if this function really works (and only if !).
  *
  * PARAMS
  *    hkey [I] Handle of key to write
@@ -3455,7 +3537,6 @@ DWORD WINAPI RegDeleteValue16( HKEY hkey, LPSTR lpszValue )
 DWORD WINAPI RegFlushKey( HKEY hkey )
 {
     LPKEYSTRUCT	lpkey;
-    BOOL ret;
 
     TRACE_(reg)("(%x)\n", hkey);
 
@@ -3463,14 +3544,8 @@ DWORD WINAPI RegFlushKey( HKEY hkey )
     if (!lpkey)
         return ERROR_BADKEY;
 
-    ERR_(reg)("What is the correct filename?\n");
-
-    ret = _savereg( lpkey, "foo.bar", TRUE);
-
-    if( ret ) {
+	SHELL_SaveRegistryBranch(find_root_key(lpkey), TRUE);
         return ERROR_SUCCESS;
-    } else
-        return ERROR_UNKNOWN;  /* FIXME */
 }
 
 
