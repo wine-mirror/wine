@@ -486,8 +486,8 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
     }
     else if ( s != IMAGE_OS2_SIGNATURE) return FILE_ERROR;
 
-    s = return_data_value(dfShort, &ne_header.resource_tab_offset);
-    size = return_data_value(dfShort, &ne_header.rname_tab_offset);
+    s = return_data_value(dfShort, &ne_header.ne_rsrctab);
+    size = return_data_value(dfShort, &ne_header.ne_restab);
 
     if( size > fsize ) return FILE_ERROR;
 

@@ -3,7 +3,17 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "peexe.h"
+
+#define PE_HEADER(module) \
+    ((IMAGE_NT_HEADERS*)((LPBYTE)(module) + \
+                         (((IMAGE_DOS_HEADER*)(module))->e_lfanew)))
+
+#define PE_SECTIONS(module) \
+    ((IMAGE_SECTION_HEADER*)((LPBYTE)&PE_HEADER(module)->OptionalHeader + \
+                           PE_HEADER(module)->FileHeader.SizeOfOptionalHeader))
+
+#define RVA_PTR(module,field) ((LPBYTE)(module) + PE_HEADER(module)->field)
+
 /* modreference used for attached processes
  * all section are calculated here, relocations etc.
  */

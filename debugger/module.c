@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "neexe.h"
-#include "peexe.h"
 #include "module.h"
 #include "file.h"
 #include "debugger.h"

@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "module.h"
 #include "neexe.h"
-#include "peexe.h"
 #include "toolhelp.h"
 #include "file.h"
 #include "ldt.h"
@@ -448,20 +447,20 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     size = sizeof(NE_MODULE) +
              /* segment table */
-           ne_header.n_segment_tab * sizeof(SEGTABLEENTRY) +
+           ne_header.ne_cseg * sizeof(SEGTABLEENTRY) +
              /* resource table */
-           ne_header.rname_tab_offset - ne_header.resource_tab_offset +
+           ne_header.ne_restab - ne_header.ne_rsrctab +
              /* resident names table */
-           ne_header.moduleref_tab_offset - ne_header.rname_tab_offset +
+           ne_header.ne_modtab - ne_header.ne_restab +
              /* module ref table */
-           ne_header.n_mod_ref_tab * sizeof(WORD) + 
+           ne_header.ne_cmod * sizeof(WORD) + 
              /* imported names table */
-           ne_header.entry_tab_offset - ne_header.iname_tab_offset +
+           ne_header.ne_enttab - ne_header.ne_imptab +
              /* entry table length */
-           ne_header.entry_tab_length +
+           ne_header.ne_cbenttab +
 	     /* entry table extra conversion space */
 	   sizeof(ET_BUNDLE) +
-	   2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6) +
+	   2 * (ne_header.ne_cbenttab - ne_header.ne_cmovent*6) +
              /* loaded file info */
            sizeof(OFSTRUCT)-sizeof(ofs.szPathName)+strlen(ofs.szPathName)+1;
 
@@ -491,10 +490,10 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Read the fast-load area */
 
-    if (ne_header.additional_flags & NE_AFLAGS_FASTLOAD)
+    if (ne_header.ne_flagsothers & NE_AFLAGS_FASTLOAD)
     {
-        fastload_offset=ne_header.fastload_offset<<ne_header.align_shift_count;
-        fastload_length=ne_header.fastload_length<<ne_header.align_shift_count;
+        fastload_offset=ne_header.fastload_offset << ne_header.ne_align;
+        fastload_length=ne_header.fastload_length << ne_header.ne_align;
         TRACE("Using fast-load area offset=%x len=%d\n",
                         fastload_offset, fastload_length );
         if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)
@@ -512,15 +511,15 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     /* Get the segment table */
 
     pModule->seg_table = (int)pData - (int)pModule;
-    buffer = HeapAlloc( GetProcessHeap(), 0, ne_header.n_segment_tab *
+    buffer = HeapAlloc( GetProcessHeap(), 0, ne_header.ne_cseg *
                                       sizeof(struct ne_segment_table_entry_s));
     if (buffer)
     {
         int i;
         struct ne_segment_table_entry_s *pSeg;
 
-        if (!READ( mz_header.e_lfanew + ne_header.segment_tab_offset,
-             ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
+        if (!READ( mz_header.e_lfanew + ne_header.ne_segtab,
+             ne_header.ne_cseg * sizeof(struct ne_segment_table_entry_s),
              buffer ))
         {
             HeapFree( GetProcessHeap(), 0, buffer );
@@ -531,7 +530,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             return (HMODULE16)11;  /* invalid exe */
         }
         pSeg = (struct ne_segment_table_entry_s *)buffer;
-        for (i = ne_header.n_segment_tab; i > 0; i--, pSeg++)
+        for (i = ne_header.ne_cseg; i > 0; i--, pSeg++)
         {
             memcpy( pData, pSeg, sizeof(*pSeg) );
             pData += sizeof(SEGTABLEENTRY);
@@ -549,17 +548,17 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Get the resource table */
 
-    if (ne_header.resource_tab_offset < ne_header.rname_tab_offset)
+    if (ne_header.ne_rsrctab < ne_header.ne_restab)
     {
         pModule->res_table = (int)pData - (int)pModule;
-        if (!READ(mz_header.e_lfanew + ne_header.resource_tab_offset,
-                  ne_header.rname_tab_offset - ne_header.resource_tab_offset,
+        if (!READ(mz_header.e_lfanew + ne_header.ne_rsrctab,
+                  ne_header.ne_restab - ne_header.ne_rsrctab,
                   pData )) 
         {
             _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
-        pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+        pData += ne_header.ne_restab - ne_header.ne_rsrctab;
 	NE_InitResourceHandler( hModule );
     }
     else pModule->res_table = 0;  /* No resource table */
@@ -567,8 +566,8 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     /* Get the resident names table */
 
     pModule->name_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.e_lfanew + ne_header.rname_tab_offset,
-               ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
+    if (!READ( mz_header.e_lfanew + ne_header.ne_restab,
+               ne_header.ne_modtab - ne_header.ne_restab,
                pData ))
     {
         if (fastload)
@@ -577,15 +576,15 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
-    pData += ne_header.moduleref_tab_offset - ne_header.rname_tab_offset;
+    pData += ne_header.ne_modtab - ne_header.ne_restab;
 
     /* Get the module references table */
 
-    if (ne_header.n_mod_ref_tab > 0)
+    if (ne_header.ne_cmod > 0)
     {
         pModule->modref_table = (int)pData - (int)pModule;
-        if (!READ( mz_header.e_lfanew + ne_header.moduleref_tab_offset,
-                  ne_header.n_mod_ref_tab * sizeof(WORD),
+        if (!READ( mz_header.e_lfanew + ne_header.ne_modtab,
+                  ne_header.ne_cmod * sizeof(WORD),
                   pData ))
         {
             if (fastload)
@@ -594,15 +593,15 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             _lclose16( hFile );
             return (HMODULE16)11;  /* invalid exe */
         }
-        pData += ne_header.n_mod_ref_tab * sizeof(WORD);
+        pData += ne_header.ne_cmod * sizeof(WORD);
     }
     else pModule->modref_table = 0;  /* No module references */
 
     /* Get the imported names table */
 
     pModule->import_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.e_lfanew + ne_header.iname_tab_offset, 
-               ne_header.entry_tab_offset - ne_header.iname_tab_offset,
+    if (!READ( mz_header.e_lfanew + ne_header.ne_imptab, 
+               ne_header.ne_enttab - ne_header.ne_imptab,
                pData ))
     {
         if (fastload)
@@ -611,18 +610,18 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         _lclose16( hFile );
         return (HMODULE16)11;  /* invalid exe */
     }
-    pData += ne_header.entry_tab_offset - ne_header.iname_tab_offset;
+    pData += ne_header.ne_enttab - ne_header.ne_imptab;
 
     /* Load entry table, convert it to the optimized version used by Windows */
 
-    if ((pTempEntryTable = HeapAlloc( GetProcessHeap(), 0, ne_header.entry_tab_length)) != NULL)
+    if ((pTempEntryTable = HeapAlloc( GetProcessHeap(), 0, ne_header.ne_cbenttab)) != NULL)
     {
         BYTE nr_entries, type, *s;
 
 	TRACE("Converting entry table.\n");
     pModule->entry_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.e_lfanew + ne_header.entry_tab_offset,
-                ne_header.entry_tab_length, pTempEntryTable ))
+    if (!READ( mz_header.e_lfanew + ne_header.ne_enttab,
+                ne_header.ne_cbenttab, pTempEntryTable ))
     {
             HeapFree( GetProcessHeap(), 0, pTempEntryTable );
             if (fastload)
@@ -633,7 +632,7 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
     }
 
         s = pTempEntryTable;
-        TRACE("entry table: offs %04x, len %04x, entries %d\n", ne_header.entry_tab_offset, ne_header.entry_tab_length, *s);
+        TRACE("entry table: offs %04x, len %04x, entries %d\n", ne_header.ne_enttab, ne_header.ne_cbenttab, *s);
 
 	bundle = (ET_BUNDLE *)pData;
         TRACE("first bundle: %p\n", bundle);
@@ -698,8 +697,8 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
         return (HMODULE16)11;  /* invalid exe */
     }
 
-    pData += ne_header.entry_tab_length + sizeof(ET_BUNDLE) +
-	     2 * (ne_header.entry_tab_length - ne_header.n_mov_entry_points*6);
+    pData += ne_header.ne_cbenttab + sizeof(ET_BUNDLE) +
+	     2 * (ne_header.ne_cbenttab - ne_header.ne_cmovent*6);
 
     if ((DWORD)entry > (DWORD)pData)
        ERR("converted entry table bigger than reserved space !!!\nentry: %p, pData: %p. Please report !\n", entry, pData);
@@ -720,9 +719,9 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
 
     /* Get the non-resident names table */
 
-    if (ne_header.nrname_tab_length)
+    if (ne_header.ne_cbnrestab)
     {
-        pModule->nrname_handle = GLOBAL_Alloc( 0, ne_header.nrname_tab_length,
+        pModule->nrname_handle = GLOBAL_Alloc( 0, ne_header.ne_cbnrestab,
                                                hModule, FALSE, FALSE, FALSE );
         if (!pModule->nrname_handle)
         {
@@ -731,9 +730,9 @@ static HMODULE16 NE_LoadExeHeader( LPCSTR filename )
             return (HMODULE16)11;  /* invalid exe */
         }
         buffer = GlobalLock16( pModule->nrname_handle );
-        _llseek16( hFile, ne_header.nrname_tab_offset, SEEK_SET );
-        if (_hread16( hFile, buffer, ne_header.nrname_tab_length )
-              != ne_header.nrname_tab_length)
+        _llseek16( hFile, ne_header.ne_nrestab, SEEK_SET );
+        if (_hread16( hFile, buffer, ne_header.ne_cbnrestab )
+              != ne_header.ne_cbnrestab)
         {
             GlobalFree16( pModule->nrname_handle );
             GlobalFree16( hModule );

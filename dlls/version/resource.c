@@ -67,7 +67,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
     if ( sizeof(nehd) != LZRead( lzfd, &nehd, sizeof(nehd) ) ) return 0;
 
-    resTabSize = nehd.rname_tab_offset - nehd.resource_tab_offset; 
+    resTabSize = nehd.ne_restab - nehd.ne_rsrctab; 
     if ( !resTabSize )
     {
         TRACE("No resources in NE dll\n" );
@@ -78,7 +78,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     resTab = HeapAlloc( GetProcessHeap(), 0, resTabSize );
     if ( !resTab ) return FALSE;
 
-    LZSeek( lzfd, nehd.resource_tab_offset + nehdoffset, SEEK_SET );
+    LZSeek( lzfd, nehd.ne_rsrctab + nehdoffset, SEEK_SET );
     if ( resTabSize != LZRead( lzfd, resTab, resTabSize ) )
     {
         HeapFree( GetProcessHeap(), 0, resTab );

@@ -6,7 +6,6 @@
 
 /* #define VERBOSE */
 
-#include "peexe.h"
 #include "neexe.h"
 #include "cvinclude.h"
 

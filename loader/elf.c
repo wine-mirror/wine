@@ -19,7 +19,6 @@
 #include "snoop.h"
 #include "process.h"
 #include "neexe.h"
-#include "peexe.h"
 #include "heap.h"
 #include "module.h"
 #include "pe_image.h"

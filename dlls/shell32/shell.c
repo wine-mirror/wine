@@ -684,12 +684,12 @@ static DWORD SHELL_GetResourceTable(HFILE hFile,LPBYTE *retptr)
 	  if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE)
 	    return 0;
 
-	  size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+	  size = ne_header.ne_restab - ne_header.ne_rsrctab;
 
 	  if( size > sizeof(NE_TYPEINFO) )
 	  { pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
 	    if( pTypeInfo ) 
-	    { _llseek(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
+	    { _llseek(hFile, mz_header.e_lfanew+ne_header.ne_rsrctab, SEEK_SET);
 	      if( _lread( hFile, (char*)pTypeInfo, size) != size )
 	      { HeapFree( GetProcessHeap(), 0, pTypeInfo); 
 		pTypeInfo = NULL;

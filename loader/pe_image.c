@@ -52,7 +52,6 @@
 #include "file.h"
 #include "heap.h"
 #include "neexe.h"
-#include "peexe.h"
 #include "process.h"
 #include "thread.h"
 #include "pe_image.h"

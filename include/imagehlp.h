@@ -62,18 +62,6 @@ typedef enum _IMAGEHLP_STATUS_REASON {
 #define SPLITSYM_EXTRACT_ALL       0x00000002
 #define SPLITSYM_SYMBOLPATH_IS_SRC 0x00000004
 
-#define IMAGE_DEBUG_TYPE_UNKNOWN        0
-#define IMAGE_DEBUG_TYPE_COFF           1
-#define IMAGE_DEBUG_TYPE_CODEVIEW       2
-#define IMAGE_DEBUG_TYPE_FPO            3
-#define IMAGE_DEBUG_TYPE_MISC           4
-#define IMAGE_DEBUG_TYPE_EXCEPTION      5
-#define IMAGE_DEBUG_TYPE_FIXUP          6
-#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC    7
-#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC  8
-#define IMAGE_DEBUG_TYPE_BORLAND        9
-#define IMAGE_DEBUG_TYPE_RESERVED10    10
-
 #define FRAME_FPO    0
 #define FRAME_TRAP   1
 #define FRAME_TSS    2
@@ -136,96 +124,9 @@ typedef enum _SYM_TYPE {
 #define CBA_SYMBOLS_UNLOADED                    0x00000004
 #define CBA_DUPLICATE_SYMBOL                    0x00000005
 
-#define IMAGE_DOS_SIGNATURE    0x5A4D     /* MZ   */
-#define IMAGE_OS2_SIGNATURE    0x454E     /* NE   */
-#define IMAGE_OS2_SIGNATURE_LE 0x454C     /* LE   */
-#define IMAGE_VXD_SIGNATURE    0x454C     /* LE   */
-#define IMAGE_NT_SIGNATURE     0x00004550 /* PE00 */
-
 /***********************************************************************
  * Structures
  */
-
-typedef struct _IMAGE_DATA_DIRECTORY {
-  DWORD VirtualAddress;
-  DWORD Size;
-} IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
-
-#define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
-
-typedef struct _IMAGE_OPTIONAL_HEADER {
-
-  /* Standard fields */
-
-  WORD  Magic;
-  BYTE  MajorLinkerVersion;
-  BYTE  MinorLinkerVersion;
-  DWORD SizeOfCode;
-  DWORD SizeOfInitializedData;
-  DWORD SizeOfUninitializedData;
-  DWORD AddressOfEntryPoint;
-  DWORD BaseOfCode;
-  DWORD BaseOfData;
-
-  /* NT additional fields */
-
-  DWORD ImageBase;
-  DWORD SectionAlignment;
-  DWORD FileAlignment;
-  WORD  MajorOperatingSystemVersion;
-  WORD  MinorOperatingSystemVersion;
-  WORD  MajorImageVersion;
-  WORD  MinorImageVersion;
-  WORD  MajorSubsystemVersion;
-  WORD  MinorSubsystemVersion;
-  DWORD Win32VersionValue;
-  DWORD SizeOfImage;
-  DWORD SizeOfHeaders;
-  DWORD CheckSum;
-  WORD  Subsystem;
-  WORD  DllCharacteristics;
-  DWORD SizeOfStackReserve;
-  DWORD SizeOfStackCommit;
-  DWORD SizeOfHeapReserve;
-  DWORD SizeOfHeapCommit;
-  DWORD LoaderFlags;
-  DWORD NumberOfRvaAndSizes;
-  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
-} IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
-
-typedef struct _IMAGE_FILE_HEADER {
-  WORD  Machine;
-  WORD  NumberOfSections;
-  DWORD TimeDateStamp;
-  DWORD PointerToSymbolTable;
-  DWORD NumberOfSymbols;
-  WORD  SizeOfOptionalHeader;
-  WORD  Characteristics;
-} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
-
-typedef struct _IMAGE_NT_HEADERS {
-  DWORD Signature;
-  IMAGE_FILE_HEADER FileHeader;
-  IMAGE_OPTIONAL_HEADER OptionalHeader;
-} IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
-
-#define IMAGE_SIZEOF_SHORT_NAME 8
-
-typedef struct _IMAGE_SECTION_HEADER {
-  BYTE  Name[IMAGE_SIZEOF_SHORT_NAME];
-  union {
-    DWORD PhysicalAddress;
-    DWORD VirtualSize;
-  } Misc;
-  DWORD VirtualAddress;
-  DWORD SizeOfRawData;
-  DWORD PointerToRawData;
-  DWORD PointerToRelocations;
-  DWORD PointerToLinenumbers;
-  WORD  NumberOfRelocations;
-  WORD  NumberOfLinenumbers;
-  DWORD Characteristics;
-} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
 
 typedef struct _LOADED_IMAGE {
   LPSTR                   ModuleName;
@@ -242,27 +143,6 @@ typedef struct _LOADED_IMAGE {
   ULONG                   SizeOfImage;
 } LOADED_IMAGE, *PLOADED_IMAGE;
 
-typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
-  DWORD Characteristics;
-  DWORD TimeDateStamp;
-  WORD  MajorVersion;
-  WORD  MinorVersion;
-  DWORD GlobalFlagsClear;
-  DWORD GlobalFlagsSet;
-  DWORD CriticalSectionDefaultTimeout;
-  DWORD DeCommitFreeBlockThreshold;
-  DWORD DeCommitTotalFreeThreshold;
-  PVOID LockPrefixTable;
-  DWORD MaximumAllocationSize;
-  DWORD VirtualMemoryThreshold;
-  DWORD ProcessHeapFlags;
-  DWORD ProcessAffinityMask;
-  WORD  CSDVersion;
-  WORD  Reserved1;
-  PVOID EditList;
-  DWORD Reserved[1];
-} IMAGE_LOAD_CONFIG_DIRECTORY, *PIMAGE_LOAD_CONFIG_DIRECTORY;
-
 typedef struct _WIN_CERTIFICATE {
   DWORD dwLength;
   WORD  wRevision;                   /*  WIN_CERT_REVISON_xxx */ 
@@ -276,47 +156,6 @@ typedef struct _API_VERSION {
   USHORT  Revision;
   USHORT  Reserved;
 } API_VERSION, *PAPI_VERSION;
-
-typedef struct _IMAGE_FUNCTION_ENTRY {
-  DWORD StartingAddress;
-  DWORD EndingAddress;
-  DWORD EndOfPrologue;
-} IMAGE_FUNCTION_ENTRY, *PIMAGE_FUNCTION_ENTRY;
-
-typedef struct _IMAGE_DEBUG_DIRECTORY {
-  DWORD Characteristics;
-  DWORD TimeDateStamp;
-  WORD  MajorVersion;
-  WORD  MinorVersion;
-  DWORD Type;
-  DWORD SizeOfData;
-  DWORD AddressOfRawData;
-  DWORD PointerToRawData;
-} IMAGE_DEBUG_DIRECTORY, *PIMAGE_DEBUG_DIRECTORY;
-
-typedef struct _IMAGE_COFF_SYMBOLS_HEADER {
-  DWORD NumberOfSymbols;
-  DWORD LvaToFirstSymbol;
-  DWORD NumberOfLinenumbers;
-  DWORD LvaToFirstLinenumber;
-  DWORD RvaToFirstByteOfCode;
-  DWORD RvaToLastByteOfCode;
-  DWORD RvaToFirstByteOfData;
-  DWORD RvaToLastByteOfData;
-} IMAGE_COFF_SYMBOLS_HEADER, *PIMAGE_COFF_SYMBOLS_HEADER;
-
-typedef struct _FPO_DATA {
-  DWORD ulOffStart;
-  DWORD cbProcSize;
-  DWORD cdwLocals;
-  WORD  cdwParams;
-  unsigned cbProlog : 8;
-  unsigned cbRegs   : 3;
-  unsigned fHasSEH  : 1;
-  unsigned fUseBP   : 1;
-  unsigned reserved : 1;
-  unsigned cbFrame  : 2;
-} FPO_DATA, *PFPO_DATA;
 
 typedef struct _IMAGE_DEBUG_INFORMATION {
   LIST_ENTRY List;
@@ -435,115 +274,6 @@ typedef struct _IMAGEHLP_DUPLICATE_SYMBOL {
   PIMAGEHLP_SYMBOL Symbol;
   ULONG              SelectedSymbol;
 } IMAGEHLP_DUPLICATE_SYMBOL, *PIMAGEHLP_DUPLICATE_SYMBOL;
-
-typedef struct _IMAGE_DOS_HEADER {
-  WORD e_magic;
-  WORD e_cblp;
-  WORD e_cp;
-  WORD e_crlc;
-  WORD e_cparhdr;
-  WORD e_minalloc;
-  WORD e_maxalloc;
-  WORD e_ss;
-  WORD e_sp;
-  WORD e_csum;
-  WORD e_ip;
-  WORD e_cs;
-  WORD e_lfarlc;
-  WORD e_ovno;
-  WORD e_res[4];
-  WORD e_oemid;
-  WORD e_oeminfo;
-  WORD e_res2[10];
-  LONG e_lfanew;
-} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-
-typedef struct _IMAGE_OS2_HEADER {
-  WORD ne_magic;
-  CHAR ne_ver;
-  CHAR ne_rev;
-  WORD ne_enttab;
-  WORD ne_cbenttab;
-  LONG ne_crc;
-  WORD ne_flags;
-  WORD ne_autodata;
-  WORD ne_heap;
-  WORD ne_stack;
-  LONG ne_csip;
-  LONG ne_sssp;
-  WORD ne_cseg;
-  WORD ne_cmod;
-  WORD ne_cbnrestab;
-  WORD ne_segtab;
-  WORD ne_rsrctab;
-  WORD ne_restab;
-  WORD ne_modtab;
-  WORD ne_imptab;
-  LONG ne_nrestab;
-  WORD ne_cmovent;
-  WORD ne_align;
-  WORD ne_cres;
-  BYTE ne_exetyp;
-  BYTE ne_flagsothers;
-  WORD ne_pretthunks;
-  WORD ne_psegrefbytes;
-  WORD ne_swaparea;
-  WORD ne_expver;
-} IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
-
-typedef struct _IMAGE_VXD_HEADER {
-  WORD  e32_magic;
-  BYTE  e32_border;
-  BYTE  e32_worder;
-  DWORD e32_level;
-  WORD  e32_cpu;
-  WORD  e32_os;
-  DWORD e32_ver;
-  DWORD e32_mflags;
-  DWORD e32_mpages;
-  DWORD e32_startobj;
-  DWORD e32_eip;
-  DWORD e32_stackobj;
-  DWORD e32_esp;
-  DWORD e32_pagesize;
-  DWORD e32_lastpagesize;
-  DWORD e32_fixupsize;
-  DWORD e32_fixupsum;
-  DWORD e32_ldrsize;
-  DWORD e32_ldrsum;
-  DWORD e32_objtab;
-  DWORD e32_objcnt;
-  DWORD e32_objmap;
-  DWORD e32_itermap;
-  DWORD e32_rsrctab;
-  DWORD e32_rsrccnt;
-  DWORD e32_restab;
-  DWORD e32_enttab;
-  DWORD e32_dirtab;
-  DWORD e32_dircnt;
-  DWORD e32_fpagetab;
-  DWORD e32_frectab;
-  DWORD e32_impmod;
-  DWORD e32_impmodcnt;
-  DWORD e32_impproc;
-  DWORD e32_pagesum;
-  DWORD e32_datapage;
-  DWORD e32_preload;
-  DWORD e32_nrestab;
-  DWORD e32_cbnrestab;
-  DWORD e32_nressum;
-  DWORD e32_autodata;
-  DWORD e32_debuginfo;
-  DWORD e32_debuglen;
-  DWORD e32_instpreload;
-  DWORD e32_instdemand;
-  DWORD e32_heapsize;
-  BYTE   e32_res3[12];
-  DWORD e32_winresoff;
-  DWORD e32_winreslen;
-  WORD  e32_devid;
-  WORD  e32_ddkver;
-} IMAGE_VXD_HEADER, *PIMAGE_VXD_HEADER;
 
 /***********************************************************************
  * Callbacks
@@ -821,6 +551,3 @@ extern HANDLE IMAGEHLP_hHeap;
 #endif /* defined(__cplusplus) */
 
 #endif  /* __WINE_IMAGEHLP_H */
-
-
-

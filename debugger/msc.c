@@ -25,7 +25,7 @@
 #endif
 #include "debugger.h"
 #include "neexe.h"
-#include "peexe.h"
+#include "pe_image.h"
 #include "file.h"
 
 typedef struct {
@@ -718,23 +718,6 @@ struct codeview_linetab_hdr
   unsigned int		 * offtab;
 };
 
-
-/*
- * A simple macro that tells us whether a given COFF symbol is a
- * function or not.
- */
-#define N_TMASK                             0x0030
-#define IMAGE_SYM_DTYPE_FUNCTION            2
-#define N_BTSHFT                            4
-#define ISFCN(x) (((x) & N_TMASK) == (IMAGE_SYM_DTYPE_FUNCTION << N_BTSHFT))
-
-
-/*
- * This is what we are looking for in the COFF symbols.
- */
-#define IMAGE_SYM_CLASS_EXTERNAL            0x2
-#define IMAGE_SYM_CLASS_STATIC              0x3
-#define IMAGE_SYM_CLASS_FILE                0x67
 
 static 
 struct datatype * DEBUG_GetCVType(unsigned int typeno)

@@ -17,7 +17,6 @@
 #include "builtin32.h"
 #include "snoop.h"
 #include "neexe.h"
-#include "peexe.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "debugtools.h"

@@ -12,7 +12,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "builtin32.h"
-#include "peexe.h"
 #include "neexe.h"
 #include "heap.h"
 #include "main.h"

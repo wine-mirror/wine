@@ -12,7 +12,6 @@
 #include <string.h>
 #include <windows.h>
 
-#include "peexe.h"
 #include "cvinclude.h"
 
 /************************ sstSrcModule ************************/

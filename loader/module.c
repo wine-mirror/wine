@@ -575,7 +575,7 @@ static BOOL MODULE_GetBinaryType( HANDLE hfile, LPCSTR filename,
                           && ReadFile( hfile, &ne, sizeof(ne), &len, NULL )
                           && len == sizeof(ne) )
                      {
-                         switch ( ne.operating_system )
+                         switch ( ne.ne_exetyp )
                          {
                          case 2:  *lpBinaryType = SCS_WOW_BINARY;   return TRUE;
                          case 5:  *lpBinaryType = SCS_DOS_BINARY;   return TRUE;
