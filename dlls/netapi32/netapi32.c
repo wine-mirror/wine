@@ -77,3 +77,48 @@ NET_API_STATUS WINAPI NetStatisticsGet(LPWSTR server, LPWSTR service,
     TRACE("(%p, %p, %ld, %ld, %p)\n", server, service, level, options, bufptr);
     return NERR_InternalError;
 }
+
+DWORD WINAPI NetpNetBiosStatusToApiStatus(DWORD nrc)
+{
+    DWORD ret;
+
+    switch (nrc)
+    {
+        case NRC_GOODRET:
+            ret = NO_ERROR;
+            break;
+        case NRC_NORES:
+            ret = NERR_NoNetworkResource;
+            break;
+        case NRC_DUPNAME:
+            ret = NERR_AlreadyExists;
+            break;
+        case NRC_NAMTFUL:
+            ret = NERR_TooManyNames;
+            break;
+        case NRC_ACTSES:
+            ret = NERR_DeleteLater;
+            break;
+        case NRC_REMTFUL:
+            ret = ERROR_REM_NOT_LIST;
+            break;
+        case NRC_NOCALL:
+            ret = NERR_NameNotFound;
+            break;
+        case NRC_NOWILD:
+            ret = ERROR_INVALID_PARAMETER;
+            break;
+        case NRC_INUSE:
+            ret = NERR_DuplicateName;
+            break;
+        case NRC_NAMERR:
+            ret = ERROR_INVALID_PARAMETER;
+            break;
+        case NRC_NAMCONF:
+            ret = NERR_DuplicateName;
+            break;
+        default:
+            ret = NERR_NetworkError;
+    }
+    return ret;
+}

@@ -242,7 +242,7 @@
 @ stub NetpNetBiosReceive
 @ stub NetpNetBiosReset
 @ stub NetpNetBiosSend
-@ stub NetpNetBiosStatusToApiStatus
+@ stdcall NetpNetBiosStatusToApiStatus(long)
 @ stub NetpNtStatusToApiStatus
 @ stub NetpOpenConfigData
 @ stub NetpPackString
