@@ -71,6 +71,7 @@ struct {
 	{&CLSID_DragDropHelper, &IDropTargetHelper_Constructor},
 	{&CLSID_ControlPanel,	&IControlPanel_Constructor},
 	{&CLSID_AutoComplete,   &IAutoComplete_Constructor},
+	{&CLSID_UnixFolder,     &UnixFolder_Constructor},
 	{NULL,NULL}
 };
 

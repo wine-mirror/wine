@@ -496,6 +496,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"shell32.dll",
 	"Apartment",
     },
+    {	&CLSID_UnixFolder,
+	"My UNIX Filesystem",
+	NULL,
+	"shell32.dll",
+	"Apartment"
+    },
     { NULL }			/* list terminator */
 };
 
